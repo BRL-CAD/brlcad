@@ -128,31 +128,49 @@ memory_summary(void)
 
 int fb_setup(void) {
     /* Framebuffer is desired */
+    static const char disk_file_interface[] = "Disk File Interface";
+    static const size_t minimum_framebuffer_dimension = 512;
+    static const int framebuffer_open_error = 12;
     size_t xx, yy;
     int zoom;
 
     /* make sure width/height are set via -g/-G */
     grid_sync_dimensions(viewsize);
 
-    /* Ask for a fb big enough to hold the image, at least 512. */
-    /* This is so MGED-invoked "postage stamps" get zoomed up big
-     * enough to see.
-     */
-    xx = yy = 512;
-    if (xx < width || yy < height) {
-	xx = width;
-	yy = height;
-    }
-
     bu_semaphore_acquire(BU_SEM_SYSCALL);
-    fbp = fb_open(framebuffer, xx, yy);
+    fbp = fb_open(framebuffer, width, height);
     bu_semaphore_release(BU_SEM_SYSCALL);
     if (fbp == FB_NULL) {
 	fprintf(stderr, "rt:  can't open frame buffer\n");
-	return 12;
+	return framebuffer_open_error;
     }
 
     bu_semaphore_acquire(BU_SEM_SYSCALL);
+    /* Enlarge small interactive framebuffers so MGED-invoked postage
+     * stamps remain visible.  Disk framebuffers intentionally ignore
+     * window configuration and retain the requested image dimensions.
+     */
+    xx = width > minimum_framebuffer_dimension ? width : minimum_framebuffer_dimension;
+    yy = height > minimum_framebuffer_dimension ? height : minimum_framebuffer_dimension;
+    if ((size_t)fb_getwidth(fbp) < xx || (size_t)fb_getheight(fbp) < yy) {
+	(void)fb_configure_window(fbp, (int)xx, (int)yy);
+
+	/* Some non-window framebuffers cannot be resized after opening.
+	 * Reopen those with the historical minimum dimensions, while
+	 * preserving exact dimensions for disk output.
+	 */
+	if (((size_t)fb_getwidth(fbp) < xx || (size_t)fb_getheight(fbp) < yy)
+	    && !BU_STR_EQUAL(fb_gettype(fbp), disk_file_interface)) {
+	    (void)fb_close(fbp);
+	    fbp = fb_open(framebuffer, xx, yy);
+	    if (fbp == FB_NULL) {
+		bu_semaphore_release(BU_SEM_SYSCALL);
+		fprintf(stderr, "rt:  can't reopen frame buffer\n");
+		return framebuffer_open_error;
+	    }
+	}
+    }
+
     /* If fb came out smaller than requested, do less work */
     size_t fbwidth = (size_t)fb_getwidth(fbp);
     size_t fbheight = (size_t)fb_getheight(fbp);
@@ -602,9 +620,7 @@ int main(int argc, char *argv[])
 	    }
 	}
 
-	/* orientation command has not been used */
-	if (!orientflag)
-	    do_ae(azimuth, elevation);
+	do_view_finalize(azimuth, elevation);
 
 	if (need_fb != 0 && !fbp) {
 	    int fb_status = fb_setup();

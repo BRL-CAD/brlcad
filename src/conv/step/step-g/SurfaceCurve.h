@@ -44,7 +44,7 @@ private:
 protected:
     Curve *curve_3d;
     LIST_OF_PCURVE_OR_SURFACE associated_geometry;
-    Preferred_surface_curve_representation master_representation;
+    int master_representation;
 
 public:
     SurfaceCurve();
@@ -58,6 +58,10 @@ public:
     virtual bool LoadONBrep(ON_Brep *brep);
     virtual const double *PointAtEnd();
     virtual const double *PointAtStart();
+    Curve *Curve3D() const { return curve_3d; }
+    const LIST_OF_PCURVE_OR_SURFACE &AssociatedGeometry() const {
+	return associated_geometry;
+    }
     virtual void Print(int level);
 
     //static methods

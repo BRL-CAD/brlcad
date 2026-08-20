@@ -117,6 +117,13 @@ ltrim_sv(std::string_view sv)
     return sv.substr(i);
 }
 
+static bool
+is_cmake_comment_line(std::string_view line)
+{
+    std::string_view trimmed = ltrim_sv(line);
+    return (!trimmed.empty() && trimmed[0] == '#');
+}
+
 /* Identifier char test */
 static inline bool
 is_ident_char(char c)
@@ -492,6 +499,7 @@ init_repo_config(RepoConfig &cfg)
 	};
 	add_func_ex(".*/bomb[.]c$", "abort");
 	add_func_ex(".*/test_process[.]c$", "abort");
+	add_func_ex(".*/libbu/tests/test_static_init[.]cpp$", "abort");
 	add_func_ex(".*/tests/test_dirname[.]c$", "dirname");
 	add_func_ex(".*/file[.]c$", "remove");
 	add_func_ex(".*/libtermio[.]h$", "strncmp");
@@ -547,7 +555,7 @@ init_repo_config(RepoConfig &cfg)
 	    "test_perm.cpp",
 	    "rt_ecmd_scanner.cpp",
 	    "sha1.c",
-	    "stb_truetype.h",
+	    "struetype.h",
 	    "ttcp.c",
 	    nullptr
 	};
@@ -825,6 +833,8 @@ scan_file(const RepoConfig &cfg,
 
 	// Platform symbols
 	if (check_platform && !any_regex_match(cfg.platform.exemptions, path) && !in_block_comment) {
+	    if (fclass == FileClass::Build && is_cmake_comment_line(line))
+		continue;
 	    std::string_view sv = ltrim_sv(sanitized);
 	    bool plausible =
 		(!sv.empty() && (sv[0] == '#' ||

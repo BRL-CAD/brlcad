@@ -90,6 +90,11 @@ if(TARGET qsketch)
   install(TARGETS qsketch RUNTIME DESTINATION ${BIN_DIR} LIBRARY DESTINATION ${LIB_DIR} ARCHIVE DESTINATION ${LIB_DIR})
 endif(TARGET qsketch)
 
+# On some platforms distclean has additional cleanup to do
+distclean("${CMAKE_BINARY_DIR}/${BIN_DIR}/qgmodel.pdb")
+distclean("${CMAKE_BINARY_DIR}/${BIN_DIR}/qgview.pdb")
+distclean("${CMAKE_BINARY_DIR}/${BIN_DIR}/qsketch.pdb")
+
 cmakefiles(
   CMakeLists.txt
   ${QGMODEL_SRCS}

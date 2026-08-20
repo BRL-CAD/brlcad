@@ -25,6 +25,8 @@
  */
 
 #include "STEPWrapper.h"
+#include "STEPGeneratedAPI.h"
+#include "ap_schema.h"
 #include "Factory.h"
 
 #include "MeasureValue.h"
@@ -128,73 +130,77 @@ MeasureValue::Load(STEPWrapper *sw, SDAI_Select *sse)
 {
     step = sw;
 
-    SdaiMeasure_value *v = (SdaiMeasure_value *)sse;
+    const SDAI_Select *v = sse;
+    const SDAI_Real *real_value = brlcad::step::SelectedReal(v);
+    const SDAI_Integer *integer_value = brlcad::step::SelectedInteger(v);
 
-    if (v->IsLength_measure()) {
+    if (brlcad::step::SelectIs(v, "LENGTH_MEASURE")) {
 	type = LENGTH_MEASURE;
-	rvalue = (double)*v;
-    } else if (v->IsMass_measure()) {
+	rvalue = real_value ? *real_value : 0.0;
+    } else if (brlcad::step::SelectIs(v, "MASS_MEASURE")) {
 	type = MASS_MEASURE;
-	rvalue = (double)*v;
-    } else if (v->IsPlane_angle_measure()) {
+	rvalue = real_value ? *real_value : 0.0;
+    } else if (brlcad::step::SelectIs(v, "PLANE_ANGLE_MEASURE")) {
 	type = PLANE_ANGLE_MEASURE;
-	rvalue = (double)*v;
-    } else if (v->IsSolid_angle_measure()) {
+	rvalue = real_value ? *real_value : 0.0;
+    } else if (brlcad::step::SelectIs(v, "SOLID_ANGLE_MEASURE")) {
 	type = SOLID_ANGLE_MEASURE;
-	rvalue = (double)*v;
-    } else if (v->IsArea_measure()) {
+	rvalue = real_value ? *real_value : 0.0;
+    } else if (brlcad::step::SelectIs(v, "AREA_MEASURE")) {
 	type = AREA_MEASURE;
-	rvalue = (double)*v;
-    } else if (v->IsVolume_measure()) {
+	rvalue = real_value ? *real_value : 0.0;
+    } else if (brlcad::step::SelectIs(v, "VOLUME_MEASURE")) {
 	type = VOLUME_MEASURE;
-	rvalue = (double)*v;
-    } else if (v->IsParameter_value()) {
+	rvalue = real_value ? *real_value : 0.0;
+    } else if (brlcad::step::SelectIs(v, "PARAMETER_VALUE")) {
 	type = PARAMETER_VALUE;
-	rvalue = (double)*v;
-    } else if (v->IsContext_dependent_measure()) {
+	rvalue = real_value ? *real_value : 0.0;
+    } else if (brlcad::step::SelectIs(v, "CONTEXT_DEPENDENT_MEASURE")) {
 	type = CONTEXT_DEPENDENT_MEASURE;
-	rvalue = (double)*v;
-    } else if (v->IsDescriptive_measure()) {
-	SdaiDescriptive_measure dm = *v;
+	rvalue = real_value ? *real_value : 0.0;
+    } else if (brlcad::step::SelectIs(v, "DESCRIPTIVE_MEASURE")) {
+	const SDAI_String *string_value = brlcad::step::SelectedString(v);
 	type = DESCRIPTIVE_MEASURE;
-	svalue = dm.c_str();
-    } else if (v->IsPositive_length_measure()) {
+	svalue = string_value ? string_value->c_str() : "";
+    } else if (brlcad::step::SelectIs(v, "POSITIVE_LENGTH_MEASURE")) {
 	type = POSITIVE_LENGTH_MEASURE;
-	rvalue = (double)*v;
-    } else if (v->IsPositive_plane_angle_measure()) {
+	rvalue = real_value ? *real_value : 0.0;
+    } else if (brlcad::step::SelectIs(v, "POSITIVE_PLANE_ANGLE_MEASURE")) {
 	type = PLANE_ANGLE_MEASURE;
-	rvalue = (double)*v;
-    } else if (v->IsCount_measure()) {
+	rvalue = real_value ? *real_value : 0.0;
+    } else if (brlcad::step::SelectIs(v, "COUNT_MEASURE")) {
 	type = COUNT_MEASURE;
-	ivalue = (int)*v;
-#ifdef AP203e2
-    } else if (v->IsAmount_of_substance_measure()) {
+	ivalue = integer_value ? static_cast<int>(*integer_value) :
+	    (real_value ? static_cast<int>(*real_value) : 0);
+#if defined(AP203e2) || defined(AP242)
+    } else if (brlcad::step::SelectIs(v, "AMOUNT_OF_SUBSTANCE_MEASURE")) {
 	type = AMOUNT_OF_SUBSTANCE_MEASURE;
-	rvalue = (double)*v;
-    } else if (v->IsCelsius_temperature_measure()) {
+	rvalue = real_value ? *real_value : 0.0;
+    } else if (brlcad::step::SelectIs(v, "CELSIUS_TEMPERATURE_MEASURE")) {
 	type = CELSIUS_TEMPERATURE_MEASURE;
-	rvalue = (double)*v;
-    } else if (v->IsElectric_current_measure()) {
+	rvalue = real_value ? *real_value : 0.0;
+    } else if (brlcad::step::SelectIs(v, "ELECTRIC_CURRENT_MEASURE")) {
 	type = ELECTRIC_CURRENT_MEASURE;
-	rvalue = (double)*v;
-    } else if (v->IsLuminous_intensity_measure()) {
+	rvalue = real_value ? *real_value : 0.0;
+    } else if (brlcad::step::SelectIs(v, "LUMINOUS_INTENSITY_MEASURE")) {
 	type = LUMINOUS_INTENSITY_MEASURE;
-	rvalue = (double)*v;
-    } else if (v->IsNumeric_measure()) {
+	rvalue = real_value ? *real_value : 0.0;
+    } else if (brlcad::step::SelectIs(v, "NUMERIC_MEASURE")) {
 	type = NUMERIC_MEASURE;
-	ivalue = (int)*v;
-    } else if (v->IsPositive_ratio_measure()) {
+	ivalue = integer_value ? static_cast<int>(*integer_value) :
+	    (real_value ? static_cast<int>(*real_value) : 0);
+    } else if (brlcad::step::SelectIs(v, "POSITIVE_RATIO_MEASURE")) {
 	type = POSITIVE_RATIO_MEASURE;
-	rvalue = (double)*v;
-    } else if (v->IsRatio_measure()) {
+	rvalue = real_value ? *real_value : 0.0;
+    } else if (brlcad::step::SelectIs(v, "RATIO_MEASURE")) {
 	type = RATIO_MEASURE;
-	rvalue = (double)*v;
-    } else if (v->IsThermodynamic_temperature_measure()) {
+	rvalue = real_value ? *real_value : 0.0;
+    } else if (brlcad::step::SelectIs(v, "THERMODYNAMIC_TEMPERATURE_MEASURE")) {
 	type = THERMODYNAMIC_TEMPERATURE_MEASURE;
-	rvalue = (double)*v;
-    } else if (v->IsTime_measure()) {
+	rvalue = real_value ? *real_value : 0.0;
+    } else if (brlcad::step::SelectIs(v, "TIME_MEASURE")) {
 	type = TIME_MEASURE;
-	rvalue = (double)*v;
+	rvalue = real_value ? *real_value : 0.0;
 #endif
     }
 

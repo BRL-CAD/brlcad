@@ -33,7 +33,7 @@
 #include <cstdint>
 #include <cmath>
 
-#include "bu/time.h"
+#include "bu/datetime.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "rt/functab.h"

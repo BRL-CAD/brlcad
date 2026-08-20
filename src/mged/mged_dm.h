@@ -26,14 +26,18 @@
 #ifndef MGED_MGED_DM_H
 #define MGED_MGED_DM_H
 
+
 #include "common.h"
 
 #include "dm.h"	/* struct dm */
 
 #include "pkg.h" /* struct pkg_conn */
 #include "ged.h"
+#include "menu.h"
 
 #include "mged.h"
+
+__BEGIN_DECLS
 
 struct scroll_item {
     char *scroll_string;
@@ -164,6 +168,12 @@ struct _axes_state {
     int		ax_edit_size2;
     int		ax_edit_linewidth1;
     int		ax_edit_linewidth2;
+    int		ax_model_tick_enable;		/* ticked scale on model axes */
+    fastf_t	ax_model_tick_interval;		/* tick spacing, mm */
+    int		ax_model_ticks_per_major;
+    int		ax_model_tick_length;		/* pixels */
+    int		ax_model_tick_major_length;	/* pixels */
+    int		ax_model_tick_threshold;
 };
 
 
@@ -341,7 +351,7 @@ struct _menu_state {
     int	ms_top;
     int	ms_cur_menu;
     int	ms_cur_item;
-    struct menu_item	*ms_menus[NMENU];    /* base of menu items array */
+    struct rt_edit_menu_item	*ms_menus[NMENU];    /* base of menu items array */
 };
 
 
@@ -416,7 +426,7 @@ __END_DECLS
 #define fbp s->mged_curr_dm->dm_fbp
 #define clients s->mged_curr_dm->dm_clients
 #define mapped s->mged_curr_dm->dm_mapped
-#define owner s->mged_curr_dm->dm_owner
+#define mged_dm_owner s->mged_curr_dm->dm_owner
 #define am_mode s->mged_curr_dm->dm_am_mode
 #define perspective_angle s->mged_curr_dm->dm_perspective_angle
 #define zclip_ptr s->mged_curr_dm->dm_zclip_ptr
@@ -520,6 +530,7 @@ __END_DECLS
     \
 }
 
+/* Ew.  Globals. */
 extern double frametime;		/* defined in mged.c */
 extern int dm_pipe[];			/* defined in mged.c */
 extern int update_views;		/* defined in mged.c */
@@ -562,6 +573,7 @@ extern void *set_hook_data(struct mged_state *s, struct mged_view_hook_state *hs
 
 int dm_commands(int argc, const char *argv[], void *data);
 
+__END_DECLS
 
 #endif /* MGED_MGED_DM_H */
 

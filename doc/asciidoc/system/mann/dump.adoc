@@ -17,7 +17,7 @@ dump {keep_file}
 [[description]]
 == DESCRIPTION
 
-Copies the entire dababase to the __keep_file__. The __keep_file__ is a _BRL-CAD_ database file and will be located in the current working direction (use the *pwd* command to show the current working directory). Note the new file might have a smaller filesize than the current file as dumping the file has the same effect that the *garbage_collect* command has. See also the *keep* command.
+Copies the entire dababase to the __keep_file__. The __keep_file__ is a _BRL-CAD_ database file and will be located in the current working direction (use the *pwd* command to show the current working directory). Note the new file might have a smaller filesize than the current file as dumping the file has the same effect that the *garbage_collect* command has.
 
 
 [[examples]]
@@ -36,6 +36,10 @@ Creates _sample.g_ file which is a copy of the current database.
 
 ====
 
+[[see_also]]
+== SEE ALSO
+
+*keep*(nged), *garbage_collect*(nged)
 
 [[author]]
 == AUTHOR

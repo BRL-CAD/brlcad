@@ -62,8 +62,8 @@ extern void rt_sketch_bounds(struct rt_sketch_internal *, fastf_t *);
  * Routine to make a new REVOLVE solid. The only purpose of this routine
  * is to initialize the internal to legal values (e.g., vls)
  */
-C_DECL void
-rt_revolve_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
+C_DECL int
+rt_revolve_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char *UNUSED(variant), const point_t UNUSED(origin), double UNUSED(scale))
 {
     struct rt_revolve_internal *rev;
 
@@ -79,6 +79,7 @@ rt_revolve_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
 
     BU_VLS_INIT(&rev->sketch_name);
     rev->skt = NULL;
+    return BRLCAD_OK;
 }
 
 
@@ -1002,6 +1003,16 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
     }
 
     return nhits;
+}
+
+
+/**
+ * Baseline flat-array vshot: delegates to the scalar shot via rt_vshot_via_shot().
+ */
+C_DECL void
+rt_revolve_vshot(struct soltab *stp[], struct xray *rp[], struct seg *segp, int n, struct application *ap)
+{
+    rt_vshot_via_shot(rt_revolve_shot, stp, rp, segp, n, ap);
 }
 
 

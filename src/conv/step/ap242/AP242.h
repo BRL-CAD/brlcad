@@ -1,0 +1,63 @@
+/*                      A P 2 4 2 . h
+ * BRL-CAD
+ *
+ * Copyright (c) 2013-2026 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @file step/ap242/AP242.h
+ *
+ */
+
+#ifndef AP242_H
+#define AP242_H
+
+#include "common.h"
+#include "ap_schema.h"
+
+#include "raytrace.h"
+
+#include "BRLCADWrapper.h"
+#include "STEPWrapper.h"
+#include "STEPfile.h"
+#include "sdai.h"
+#include "STEPcomplex.h"
+#include "STEPattribute.h"
+
+#include <sstream>
+#include <map>
+#include <set>
+
+#include "STEPExportContext.h"
+
+void XYZ_to_Cartesian_point(double x, double y, double z, STEPentity *step_pnt);
+void XYZ_to_Direction(double x, double y, double z, STEPentity *step_direction);
+
+struct AP242_tree_result *
+AP242_Add_Tree(struct directory *dp, struct rt_wdb *wdbp, Registry *registry, InstMgr *instance_list);
+
+struct AP242_primitive_result *
+AP242_Add_Primitive(struct directory *dp, struct rt_wdb *wdbp, Registry *registry, InstMgr *instance_list);
+
+#endif /* AP242_H */
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

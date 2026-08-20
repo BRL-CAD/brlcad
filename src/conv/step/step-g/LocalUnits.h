@@ -29,9 +29,18 @@
 class LocalUnits
 {
 public:
-    static double length;
-    static double planeangle;
-    static double solidangle;
+    static thread_local double length;
+    static thread_local double planeangle;
+    static thread_local double solidangle;
+    static thread_local double tolerance;
+    /**
+     * Uncertainty asserted by the representation which owns the current
+     * geometry item.  Keep tolerance as the conservative session value used
+     * for topology discovery; representation_tolerance is available only to
+     * dense source-locus validation which can prove a candidate before
+     * committing it.
+     */
+    static thread_local double representation_tolerance;
     LocalUnits();
     virtual ~LocalUnits();
 };

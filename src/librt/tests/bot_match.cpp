@@ -26,7 +26,7 @@
 #include "vmath.h"
 #include "bu/app.h"
 #include "bu/log.h"
-#include "bu/time.h"
+#include "bu/datetime.h"
 #include "bu/units.h"
 #include "bg/pca.h"
 #include "bg/trimesh.h"

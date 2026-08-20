@@ -48,7 +48,7 @@
 #include "bu/color.h"
 #include "bu/cv.h"
 #include "bu/opt.h"
-#include "bu/time.h"
+#include "bu/datetime.h"
 #include "bn/mat.h"
 #include "bg/plane.h"
 #include "bv/plot3.h"

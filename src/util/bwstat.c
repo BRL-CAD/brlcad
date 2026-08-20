@@ -76,7 +76,7 @@ main(int argc, char **argv)
     double d;
     unsigned char *bp;
     long num_pixels = 0L ;
-    long sum = 0L , partial_sum = 0L ;
+    long sum = 0L, cumulative_pixels = 0L, median_rank;
     int max = -1, min = 256 , mode = 0 , median = 0 ;
     double mean, var = 0.0 , skew = 0.0 ;
     FILE *fp;
@@ -86,7 +86,7 @@ main(int argc, char **argv)
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
 
-    if (BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?"))
+    if (argc > 1 && (BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?")))
 	bu_exit(1, "%s", Usage);
 
     /* check for verbose flag */
@@ -120,6 +120,16 @@ main(int argc, char **argv)
 	for (i = 0; i < n; i++)
 	    bin[ *bp++ ]++;
     }
+    if (ferror(fp)) {
+	bu_exit(1, "bwstat: error reading input\n");
+    }
+    if (fp != stdin) {
+	fclose(fp);
+    }
+    if (num_pixels == 0) {
+	bu_exit(1, "bwstat: input contains no pixels\n");
+    }
+    median_rank = num_pixels / 2 + num_pixels % 2;
 
     /*
      * Find sum, min, max, mode. (sum and mode initialized to 0;
@@ -143,13 +153,14 @@ main(int argc, char **argv)
 
     /*
      * Now do a second pass to compute median,
-     * variance and skew. (median and partial_sum initialized to 0;
+     * variance and skew. (median and cumulative_pixels initialized to 0;
      * var and skew initialized to 0.0)
      */
     for (i = 0; i < 256; i++) {
-	if (partial_sum < sum/2.0) {
-	    partial_sum += i * bin[i];
-	    median = i;
+	if (cumulative_pixels < median_rank) {
+	    cumulative_pixels += bin[i];
+	    if (cumulative_pixels >= median_rank)
+		median = i;
 	}
 	d = (double)i - mean;
 	var += bin[i] * d * d;

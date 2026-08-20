@@ -10,28 +10,79 @@ comb - Create and manipulate BRL-CAD combination with the name __combination_nam
 
 [source]
 ----
-comb [[-c] | [-r]] [[-w] | [-f] | [-l]] [[-S]] {combination_name} [<operator object_name>]...
+comb [options] {combination_name} [<operator> <member_name> ...]
+comb {combination_name} {command} [arguments ...]
+comb {command} {-C | --comb} {combination_name} [arguments ...]
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-The *comb* command creates and manipulates _BRL-CAD_ combination objects. For combination creation or appending, __operator/object_name__ pairs of boolean operators and object names are parsed into comb tree entries. (TODO - integrate full expression evaluation like that in *c*.)
+The *comb* command creates and manipulates _BRL-CAD_ combination objects. The
+first synopsis form preserves the established construction grammar: each
+boolean _operator_ applies to the member that follows it. (TODO - integrate
+full expression evaluation like that in *c*.)
+
+The second form is the canonical command form for editing an existing
+combination. The third form selects the command first and uses *-C* or
+*--comb* to name the target combination explicitly. It is useful when a
+combination name could otherwise be confused with a command or Boolean
+operator.
+
+Boolean operators are combination commands: for example, *comb assembly.c u
+bolt.s* and *comb u --comb assembly.c bolt.s* both union _bolt.s_ into
+_assembly.c_. The named commands are *rm*, *wrap*, *flatten*, *lift*,
+*region*, *unregion*, and *decimate*.
+
+*rm*::
+Removes one or more direct child member references from the specified
+combination without deleting the child objects from the database.
+
+*wrap*::
+Wraps a combination's contents in a new child combination.  This is equivalent
+to the existing *-w* option.
+
+*flatten*::
+Flattens a union-only combination.  This is equivalent to the existing *-f*
+option.
+
+*lift*::
+Lifts a region flag to the target combination.  This is equivalent to the
+existing *-l* option.
+
+*region*::
+Sets the target combination's region flag. This is equivalent to the existing
+*-r* option when applied to an existing combination.
+
+*unregion*::
+Clears the target combination's region flag. This is equivalent to the
+existing *-c* option when applied to an existing combination.
+
+*decimate*::
+Finds each unique BoT reachable below the target combination and attempts to
+decimate it in place. A BoT is written back only when decimation produces a
+valid solid result. This is equivalent to the existing *-d* option.
 
 The following options are recognized:
 
 
 *-c*::
 Ensures that the combination does not have the region flag set. Conflicts with *-r*.
+Use *comb combination unregion* to edit an existing combination.
 
 
 *-r*::
 Ensures that the combination does have the region flag set. Conflicts with *-c*.
+Use *comb combination region* to edit an existing combination.
+
+*-d*::
+Finds and decimates the unique BoTs reachable below the specified combination.
+Use *comb combination decimate* for the command form.
 
 
 *-w*::
-Moves the contents of a combination to a new combination and makes that combination the sole child of the original combination. See the "fixing nested regions" example below for an illustration of how this option is used. Conflicts with *-f* and *-l*.
+Moves the contents of a combination to a new combination and makes that combination the sole child of the original combination. See the "fixing nested regions" example below for an illustration of how this option is used. Conflicts with *-f* and *-l*. Use *comb combination wrap* for the command form.
 
 
 *-f*::
@@ -49,6 +100,7 @@ mged> search -type comb ! -below ( -bool + -or -bool - )
 
 +
 Conflicts with *-w* and *-l*.
+Use *comb combination flatten* for the command form.
 
 
 *-l*::
@@ -58,10 +110,17 @@ Conflicts with *-w* and *-l*.
 
 +
 Conflicts with *-w* and *-f*.
+Use *comb combination lift* for the command form.
 
 
 *-S*::
 Stop if the combination object already exists.
+
+*-C*::
+*--comb*::
+Identifies the target combination in selector-first command form. For example,
+*comb rm --comb assembly.c bolt.s* and *comb assembly.c rm bolt.s* are
+equivalent.
 
 
 
@@ -79,6 +138,16 @@ mged> **comb abc u a u b - a + d**::
 Creates a combination named _abc_.
 
 
+
+====
+
+.Removing members from a combination.
+[example]
+====
+
+mged> **comb assembly.c rm bolt.s nut.s**::
+Removes the _bolt.s_ and _nut.s_ member references from _assembly.c_ without
+deleting either object from the database.
 
 ====
 

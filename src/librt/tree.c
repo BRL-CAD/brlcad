@@ -126,6 +126,15 @@ _rt_gettree_region_start(struct db_tree_state *tsp, const struct db_full_path *p
 struct gettree_data
 {
     struct rt_cache *cache;
+    rti_clbk_t callback;
+    struct bu_ptbl callbacks;
+};
+
+
+struct gettree_callback_data
+{
+    struct region *regp;
+    struct db_tree_state tree_state;
 };
 
 
@@ -141,8 +150,9 @@ struct gettree_data
  * into the serial section.  (_rt_tree_region_assign, rt_bound_tree)
  */
 static union tree *
-_rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *UNUSED(client_data))
+_rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data)
 {
+    struct gettree_data *data = (struct gettree_data *)client_data;
     struct region *rp;
     struct directory *dp = NULL;
     size_t shader_len=0;
@@ -221,12 +231,19 @@ _rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
     /* Assign bit vector pos. */
     rp->reg_bit = rtip->stats.nregions++;
 
+    /* Save callback state while it is still available.  The callback itself
+     * runs in the serial finishing pass, after tree shaking, so it cannot
+     * retain pointers to nodes or soltabs that pruning subsequently frees. */
+    if (data->callback) {
+	struct gettree_callback_data *cdata;
+	BU_ALLOC(cdata, struct gettree_callback_data);
+	cdata->regp = rp;
+	db_dup_db_tree_state(&cdata->tree_state, tsp);
+	bu_ptbl_ins(&data->callbacks, (long *)cdata);
+    }
+
     /* leave critical section */
     bu_semaphore_release(RT_SEM_RESULTS);
-
-    /* If caller wants to do additional processing, now's the time */
-    if (rtip->rti_gettrees_clbk)
-	(*rtip->rti_gettrees_clbk)(rtip, tsp, rp);
 
     if (RT_G_DEBUG & RT_DEBUG_REGIONS) {
 	bu_log("Add Region %s instnum %ld\n",
@@ -630,6 +647,13 @@ rt_free_soltab(struct soltab *stp)
 	db_free_full_path(&stp->st_path);
     }
 
+    /* Dynamic reprep records newly created soltabs before the serial tree
+     * finishing pass.  Tree shaking may release one of those soltabs before
+     * reprep inserts the survivors into the BSP, so remove it from the pending
+     * table while the pointer is still valid. */
+    if (stp->st_rtip && stp->st_rtip->i->rti_add_to_new_solids_list)
+	bu_ptbl_rm(&stp->st_rtip->i->rti_new_solids, (long *)stp);
+
     bu_free((char *)stp, "struct soltab");
 }
 
@@ -709,7 +733,8 @@ _rt_tree_kill_dead_solid_refs(union tree *tp)
  */
 static union tree *
 rt_tree_prune_subtractor(union tree *tp,
-			 const vect_t cmin, const vect_t cmax)
+			 const vect_t cmin, const vect_t cmax,
+			 fastf_t dist_tol)
 {
     vect_t tp_min, tp_max;
 
@@ -731,9 +756,9 @@ rt_tree_prune_subtractor(union tree *tp,
 
     /* If this subtree bbox is entirely outside the constraint box,
      * the subtractor cannot contribute anything here – prune it. */
-    if (tp_min[X] >= cmax[X] || tp_max[X] <= cmin[X] ||
-	tp_min[Y] >= cmax[Y] || tp_max[Y] <= cmin[Y] ||
-	tp_min[Z] >= cmax[Z] || tp_max[Z] <= cmin[Z]) {
+    if (tp_min[X] > cmax[X] + dist_tol || tp_max[X] < cmin[X] - dist_tol ||
+	tp_min[Y] > cmax[Y] + dist_tol || tp_max[Y] < cmin[Y] - dist_tol ||
+	tp_min[Z] > cmax[Z] + dist_tol || tp_max[Z] < cmin[Z] - dist_tol) {
 	if (RT_G_DEBUG & RT_DEBUG_TREEWALK)
 	    bu_log("rt_tree_prune_subtractor: pruned disjoint subtractor branch\n");
 	db_free_tree(tp);
@@ -751,8 +776,8 @@ rt_tree_prune_subtractor(union tree *tp,
 	case OP_UNION:
 	case OP_XOR: {
 	    union tree *left, *right;
-	    left  = rt_tree_prune_subtractor(tp->tr_b.tb_left,  cmin, cmax);
-	    right = rt_tree_prune_subtractor(tp->tr_b.tb_right, cmin, cmax);
+	    left  = rt_tree_prune_subtractor(tp->tr_b.tb_left,  cmin, cmax, dist_tol);
+	    right = rt_tree_prune_subtractor(tp->tr_b.tb_right, cmin, cmax, dist_tol);
 	    if (!left && !right) {
 		BU_PUT(tp, union tree);
 		return TREE_NULL;
@@ -787,8 +812,9 @@ rt_tree_prune_subtractor(union tree *tp,
  * The pass is conservative:
  *  - Minuend bboxes that are infinite or degenerate (min > max) are
  *    skipped entirely.
- *  - Only subtractor branches that are AABB-disjoint from the minuend
- *    are removed; uncertain cases are left unchanged.
+ *  - Only subtractor branches separated from the minuend by more than the
+ *    raytrace distance tolerance are removed; touching and near-touching
+ *    cases are left unchanged.
  *  - When an entire subtractor is pruned, the OP_SUBTRACT node is
  *    replaced in-place by its left child (SUBTRACT(L, 0) == L).
  *
@@ -796,7 +822,7 @@ rt_tree_prune_subtractor(union tree *tp,
  * store back into the parent's child slot or into regp->reg_treetop.
  */
 static union tree *
-rt_tree_shake_subs(union tree *tp)
+rt_tree_shake_subs(union tree *tp, fastf_t dist_tol)
 {
     vect_t left_min, left_max;
     union tree *pruned;
@@ -814,9 +840,9 @@ rt_tree_shake_subs(union tree *tp)
 	case OP_SUBTRACT:
 	    /* Recursively shake children first. */
 	    if (tp->tr_b.tb_left)
-		tp->tr_b.tb_left  = rt_tree_shake_subs(tp->tr_b.tb_left);
+		tp->tr_b.tb_left  = rt_tree_shake_subs(tp->tr_b.tb_left, dist_tol);
 	    if (tp->tr_b.tb_right)
-		tp->tr_b.tb_right = rt_tree_shake_subs(tp->tr_b.tb_right);
+		tp->tr_b.tb_right = rt_tree_shake_subs(tp->tr_b.tb_right, dist_tol);
 
 	    if (!tp->tr_b.tb_left) {
 		/* Left side vanished – whole subtraction is empty. */
@@ -843,12 +869,14 @@ rt_tree_shake_subs(union tree *tp)
 	    /* Skip if the minuend has infinite or degenerate bounds. */
 	    if (left_max[X] >= INFINITY || left_max[Y] >= INFINITY || left_max[Z] >= INFINITY)
 		return tp;
-	    if (left_min[X] > left_max[X])
+	    if (left_min[X] > left_max[X] ||
+		left_min[Y] > left_max[Y] ||
+		left_min[Z] > left_max[Z])
 		return tp;	/* degenerate / empty minuend */
 
 	    /* Prune the subtractor using the minuend bbox as constraint. */
 	    pruned = rt_tree_prune_subtractor(
-		tp->tr_b.tb_right, left_min, left_max);
+		tp->tr_b.tb_right, left_min, left_max, dist_tol);
 
 	    if (!pruned) {
 		/* Entire subtractor eliminated: SUBTRACT(L, 0) = L. */
@@ -865,9 +893,9 @@ rt_tree_shake_subs(union tree *tp)
 	case OP_INTERSECT:
 	case OP_XOR:
 	    if (tp->tr_b.tb_left)
-		tp->tr_b.tb_left  = rt_tree_shake_subs(tp->tr_b.tb_left);
+		tp->tr_b.tb_left  = rt_tree_shake_subs(tp->tr_b.tb_left, dist_tol);
 	    if (tp->tr_b.tb_right)
-		tp->tr_b.tb_right = rt_tree_shake_subs(tp->tr_b.tb_right);
+		tp->tr_b.tb_right = rt_tree_shake_subs(tp->tr_b.tb_right, dist_tol);
 	    return tp;
 
 	case OP_NOT:
@@ -875,7 +903,7 @@ rt_tree_shake_subs(union tree *tp)
 	case OP_XNOP:
 	    /* Unary operators. */
 	    if (tp->tr_b.tb_left)
-		tp->tr_b.tb_left  = rt_tree_shake_subs(tp->tr_b.tb_left);
+		tp->tr_b.tb_left  = rt_tree_shake_subs(tp->tr_b.tb_left, dist_tol);
 	    return tp;
 
 	default:
@@ -887,6 +915,7 @@ rt_tree_shake_subs(union tree *tp)
 int
 rt_gettrees_and_attrs(struct rt_i *rtip, const char **attrs, int argc, const char **argv, int ncpus)
 {
+    struct gettree_data data;
     struct soltab *stp;
     struct region *regp;
 
@@ -906,10 +935,40 @@ rt_gettrees_and_attrs(struct rt_i *rtip, const char **attrs, int argc, const cha
     if (argc <= 0)
 	return -1;	/* FAIL */
 
+    /* Pre-walk existence check: verify each requested object or path
+     * exists in the database before attempting to walk it.  Without
+     * this, a typo or wrong object path only surfaces as a vague "no
+     * primitives found" warning or other message downstream.  Emit a
+     * message naming missing object(s).
+     */
+    for (int i = 0; i < argc; i++) {
+	char *top;
+	char *slash;
+
+	if (!argv[i] || argv[i][0] == '\0')
+	    continue;	/* skip NULL/empty defensively */
+
+	top = bu_strdup(argv[i]);
+	slash = strchr(top, '/');
+	if (slash)
+	    *slash = '\0';	/* isolate leading top-level component */
+
+	if (top[0] != '\0'
+	    && db_lookup(rtip->rti_dbip, top, LOOKUP_QUIET) == RT_DIR_NULL) {
+	    bu_log("ERROR: specified object '%s' does not exist in the database; check the name\n", top);
+	    bu_free(top, "rt_gettrees top-level name");
+	    return -1;	/* FAIL */
+	}
+
+	bu_free(top, "rt_gettrees top-level name");
+    }
+
     prev_sol_count = rtip->stats.nsolids;
+    data.cache = NULL;
+    data.callback = rtip->rti_gettrees_clbk;
+    bu_ptbl_init(&data.callbacks, 8, "deferred gettree callbacks");
 
     {
-	struct gettree_data data;
 	struct db_tree_state tree_state;
 
 	RT_DBTS_INIT(&tree_state);
@@ -1016,23 +1075,6 @@ again:
     } RT_VISIT_ALL_SOLTABS_END;
 
     /*
-     * Another pass, no restarting.  Assign "piecestate" indices
-     * for those solids which contain pieces.
-     */
-    RT_VISIT_ALL_SOLTABS_START(stp, rtip) {
-	if (stp->st_npieces > 1) {
-	    /* all pieces must be within model bounding box for pieces
-	     * to work correctly.
-	     */
-	    VMINMAX(rtip->mdl_min, rtip->mdl_max, stp->st_min);
-	    VMINMAX(rtip->mdl_min, rtip->mdl_max, stp->st_max);
-	    stp->st_piecestate_num = rtip->i->rti_nsolids_with_pieces++;
-	}
-	if (RT_G_DEBUG&RT_DEBUG_SOLIDS)
-	    rt_pr_soltab(stp);
-    } RT_VISIT_ALL_SOLTABS_END;
-
-    /*
      * Tree shaker: for each region, eliminate OP_SUBTRACT branches
      * whose subtractor bounding box is provably AABB-disjoint from
      * the minuend bounding box.  Runs in the serial section after
@@ -1048,8 +1090,46 @@ again:
 	 * (entire tree pruned, which shouldn't happen for well-formed
 	 * regions but is handled defensively), we must update
 	 * reg_treetop rather than leaving a dangling pointer. */
-	regp->reg_treetop = rt_tree_shake_subs(regp->reg_treetop);
+	regp->reg_treetop = rt_tree_shake_subs(regp->reg_treetop, rtip->rti_tol.dist);
     }
+
+    /* Region callbacks used to run before the serial finishing pass.  Invoke
+     * them now with copied tree state so callers only observe the post-prune
+     * tree and cannot retain pointers that the shaker later invalidates. */
+    for (size_t i = 0; i < BU_PTBL_LEN(&data.callbacks); i++) {
+	struct gettree_callback_data *cdata =
+	    (struct gettree_callback_data *)BU_PTBL_GET(&data.callbacks, i);
+	cdata->regp->reg_all_unions = cdata->regp->reg_treetop ?
+	    db_is_tree_all_unions(cdata->regp->reg_treetop) : 0;
+	(*data.callback)(rtip, &cdata->tree_state, cdata->regp);
+	db_free_db_tree_state(&cdata->tree_state);
+	BU_PUT(cdata, struct gettree_callback_data);
+    }
+    bu_ptbl_free(&data.callbacks);
+
+    /* Rebuild derived metadata from the surviving trees and solids.  This
+     * function may be called repeatedly before prep, and callbacks may alter
+     * region trees, so neither the old model bounds nor old piece-state
+     * indices are authoritative here. */
+    VSETALL(rtip->mdl_min,  INFINITY);
+    VSETALL(rtip->mdl_max, -INFINITY);
+    rtip->i->rti_nsolids_with_pieces = 0;
+
+    /* Assign piece-state indices only after pruning.  A disjoint piece-based
+     * subtractor must not enlarge the model bounds or reserve an unused piece
+     * resource slot. */
+    RT_VISIT_ALL_SOLTABS_START(stp, rtip) {
+	if (stp->st_npieces > 1) {
+	    /* all pieces must be within model bounding box for pieces
+	     * to work correctly.
+	     */
+	    VMINMAX(rtip->mdl_min, rtip->mdl_max, stp->st_min);
+	    VMINMAX(rtip->mdl_min, rtip->mdl_max, stp->st_max);
+	    stp->st_piecestate_num = rtip->i->rti_nsolids_with_pieces++;
+	}
+	if (RT_G_DEBUG&RT_DEBUG_SOLIDS)
+	    rt_pr_soltab(stp);
+    } RT_VISIT_ALL_SOLTABS_END;
 
     /* Handle finishing touches on the trees that needed soltab
      * structs that the parallel code couldn't look at yet.
@@ -1060,6 +1140,10 @@ again:
 	/* Skip regions whose tree was entirely pruned (defensive). */
 	if (!regp->reg_treetop)
 	    continue;
+
+	/* Tree shaking (and an optional application callback) may have changed
+	 * this property after region construction. */
+	regp->reg_all_unions = db_is_tree_all_unions(regp->reg_treetop);
 
 	/* The region and the entire tree are cross-referenced */
 	_rt_tree_region_assign(regp->reg_treetop, regp);
@@ -1086,7 +1170,8 @@ again:
     /* DEBUG:  Ensure that all region trees are valid */
     for (BU_LIST_FOR(regp, region, &(rtip->HeadRegion))) {
 	RT_CK_REGION(regp);
-	db_ck_tree(regp->reg_treetop);
+	if (regp->reg_treetop)
+	    db_ck_tree(regp->reg_treetop);
     }
 
     if (ret < 0)

@@ -262,7 +262,7 @@ namespace GEOBRL {
     void CentroidalVoronoiTesselation::Newton_iterations(
         index_t nb_iter, index_t m
     ) {
-        Optimizer_var optimizer = Optimizer::create("HLBFGS");
+        Optimizer_var optimizer = Optimizer::create("LBFGS");
         if(!optimizer) {
             Lloyd_iterations(nb_iter);
             return;

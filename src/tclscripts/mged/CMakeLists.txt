@@ -66,6 +66,7 @@ set(
   rt.tcl
   rt_script.tcl
   sample.tcl
+  search_gui.tcl
   shaders.tcl
   skt_ed.tcl
   solclick.tcl

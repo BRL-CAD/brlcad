@@ -281,8 +281,8 @@ C_DECL int rt_material_export5(struct bu_external *ep, const struct rt_db_intern
     return 0; /* OK */
 }
 
-C_DECL void
-rt_material_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
+C_DECL int
+rt_material_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char *UNUSED(variant), const point_t UNUSED(origin), double UNUSED(scale))
 {
     struct rt_material_internal* ip;
 
@@ -303,6 +303,7 @@ rt_material_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
     BU_AVS_INIT(&ip->mechanicalProperties);
     BU_AVS_INIT(&ip->opticalProperties);
     BU_AVS_INIT(&ip->thermalProperties);
+    return BRLCAD_OK;
 }
 
 C_DECL int

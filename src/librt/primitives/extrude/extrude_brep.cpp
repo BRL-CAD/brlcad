@@ -38,11 +38,9 @@ extern "C" {
 extern "C" void
 rt_extrude_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
 {
-    struct rt_db_internal *tmp_internal;
     struct rt_extrude_internal *eip;
-
-    BU_ALLOC(tmp_internal, struct rt_db_internal);
-    RT_DB_INTERNAL_INIT(tmp_internal);
+    struct rt_db_internal tmp_internal;
+    RT_DB_INTERNAL_INIT(&tmp_internal);
 
     eip = (struct rt_extrude_internal *)ip->idb_ptr;
     RT_EXTRUDE_CK_MAGIC(eip);
@@ -55,17 +53,44 @@ rt_extrude_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_to
     VMOVE(sketch.V, eip->V);
     VMOVE(sketch.u_vec, eip->u_vec);
     VMOVE(sketch.v_vec, eip->v_vec);
-    tmp_internal->idb_ptr = (void *)(&sketch);
-    rt_sketch_brep(b, tmp_internal, tol);
+    tmp_internal.idb_ptr = (void *)(&sketch);
+    ON_Brep *extrude_brep = ON_Brep::New();
+    rt_sketch_brep(&extrude_brep, &tmp_internal, tol);
+    if (!extrude_brep || extrude_brep->m_F.Count() != 1) {
+	delete extrude_brep;
+	bu_log("rt_extrude_brep: could not construct a bounded sketch face\n");
+	return;
+    }
 
     // Create the extrude path and make the extrude primitive.
     vect_t endpoint;
     VADD2(endpoint, eip->V, eip->h);
-    const ON_Curve* extrudepath = new ON_LineCurve(ON_3dPoint(eip->V), ON_3dPoint(endpoint));
-    ON_Brep& brep = *(*b);
-    ON_BrepExtrudeFace(brep, 0, *extrudepath, true);
-    bu_free(tmp_internal, "free temporary rt_db_internal");
-    delete extrudepath;
+    const ON_LineCurve extrude_path(ON_3dPoint(eip->V), ON_3dPoint(endpoint));
+    if (ON_BrepExtrudeFace(*extrude_brep, 0, extrude_path, true) != 2) {
+	delete extrude_brep;
+	bu_log("rt_extrude_brep: openNURBS could not extrude and cap the face\n");
+	return;
+    }
+
+    extrude_brep->Compact();
+    extrude_brep->SetTolerancesBoxesAndFlags(false);
+    const double model_tolerance = (tol && tol->dist > 0.0) ?
+	tol->dist : RT_LEN_TOL;
+    for (int i = 0; i < extrude_brep->m_E.Count(); ++i)
+	if (extrude_brep->m_E[i].m_tolerance < 0.0)
+	    extrude_brep->m_E[i].m_tolerance = model_tolerance;
+    ON_wString messages;
+    ON_TextLog log(messages);
+    if (!extrude_brep->IsValid(&log) || !extrude_brep->IsSolid()) {
+	ON_String text(messages);
+	bu_log("rt_extrude_brep: generated BRep is not a valid manifold solid:\n%s",
+	    text.Array());
+	delete extrude_brep;
+	return;
+    }
+
+    **b = *extrude_brep;
+    delete extrude_brep;
 }
 
 

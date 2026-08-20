@@ -24,10 +24,15 @@
  */
 
 #include "STEPWrapper.h"
+#include "STEPGeneratedAPI.h"
+#include "ap_schema.h"
 #include "Factory.h"
 
 #include "ShellBasedSurfaceModel.h"
+#include "ClosedShell.h"
 #include "OpenShell.h"
+
+#include <algorithm>
 
 #define CLASSNAME "ShellBasedSurfaceModel"
 #define ENTITYNAME "Shell_Based_Surface_Model"
@@ -75,17 +80,15 @@ ShellBasedSurfaceModel::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	    SDAI_Select *stype;
 	    while (sn != NULL) {
 		stype = static_cast<SDAI_Select *>(sn->node);
-		const TypeDescriptor *underlying_type = stype->CurrentUnderlyingType();
-		if (underlying_type == SCHEMA_NAMESPACE::e_open_shell) {
-		    SdaiShell *shell = (SdaiShell *)stype;
-		    if (shell->IsOpen_shell()) {
-			SdaiOpen_shell *oshell = *shell;
-			OpenShell *os = dynamic_cast<OpenShell *>(Factory::CreateObject(sw, (SDAI_Application_instance *)oshell));
-			if (os) {
-			    sbsm_boundary.push_back(os);
-			}
-		    }
+		SDAI_Application_instance *shell = brlcad::step::SelectedEntity(stype);
+		ConnectedFaceSet *boundary = NULL;
+		if (shell && sw->IsSchemaEntity(shell, "OPEN_SHELL")) {
+		    boundary = dynamic_cast<OpenShell *>(Factory::CreateObject(sw, shell));
+		} else if (shell && sw->IsSchemaEntity(shell, "CLOSED_SHELL")) {
+		    boundary = dynamic_cast<ClosedShell *>(Factory::CreateObject(sw, shell));
 		}
+		if (boundary)
+		    sbsm_boundary.push_back(boundary);
 		sn = (SelectNode *)sn->NextNode();
 	    }
 	}
@@ -107,12 +110,43 @@ ShellBasedSurfaceModel::Print(int level)
 
     TAB(level + 1);
     std::cout << "sbsm_boundary:" << std::endl;
-    LIST_OF_OPEN_SHELLS::iterator i;
+    LIST_OF_SHELL_BOUNDARIES::iterator i;
     for (i = sbsm_boundary.begin(); i != sbsm_boundary.end(); ++i) {
 	(*i)->Print(level + 1);
     }
 
     GeometricRepresentationItem::Print(level + 1);
+}
+
+size_t
+ShellBasedSurfaceModel::MaximumPullbackSpanEstimate() const
+{
+    size_t maximum = 1;
+    for (LIST_OF_SHELL_BOUNDARIES::const_iterator boundary =
+	    sbsm_boundary.begin(); boundary != sbsm_boundary.end(); ++boundary) {
+	if (*boundary && !(step && step->ImportOptions().skip_open_shells &&
+		dynamic_cast<OpenShell *>(*boundary)))
+	    maximum = std::max(maximum,
+		(*boundary)->MaximumPullbackSpanEstimate());
+    }
+    return maximum;
+}
+
+size_t
+ShellBasedSurfaceModel::BoundaryCount() const
+{
+    return sbsm_boundary.size();
+}
+
+size_t
+ShellBasedSurfaceModel::OpenShellCount() const
+{
+    size_t count = 0;
+    for (LIST_OF_SHELL_BOUNDARIES::const_iterator boundary =
+	    sbsm_boundary.begin(); boundary != sbsm_boundary.end(); ++boundary) {
+	if (dynamic_cast<OpenShell *>(*boundary)) ++count;
+    }
+    return count;
 }
 
 STEPEntity *

@@ -203,6 +203,11 @@ f_wait(ClientData clientData,	/* Main window associated with interpreter. */
 	while (!done && !mged_shutting_down(s)) {
 	    mged_update(s, 0);
 	}
+	if (mged_shutting_down(s)) {
+	    Tk_DeleteEventHandler(window, VisibilityChangeMask|StructureNotifyMask,
+			  WaitVisibilityProc, (ClientData) &done);
+	    return TCL_OK;
+	}
 	if (done != 1) {
 	    /*
 	     * Note that we do not delete the event handler because it
@@ -235,6 +240,11 @@ f_wait(ClientData clientData,	/* Main window associated with interpreter. */
 	done = 0;
 	while (!done && !mged_shutting_down(s)) {
 	    mged_update(s, 0);
+	}
+	if (mged_shutting_down(s)) {
+	    Tk_DeleteEventHandler(window, StructureNotifyMask,
+			  WaitWindowProc, (ClientData) &done);
+	    return TCL_OK;
 	}
 	/*
 	 * Note: there's no need to delete the event handler.  It was

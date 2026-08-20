@@ -30,12 +30,13 @@
 #include <functional>
 #include <thread>
 
-extern "C" {
+#include "./mged.h"
 
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
 #include <string.h>
+#include <signal.h>
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>
 #endif
@@ -49,7 +50,7 @@ extern "C" {
 #include "vmath.h"
 #include "bu/getopt.h"
 #include "bu/path.h"
-#include "bu/time.h"
+#include "bu/datetime.h"
 #include "bu/snooze.h"
 #include "bn.h"
 #include "bv/util.h"
@@ -64,21 +65,21 @@ extern "C" {
 
 #include "tclcad.h"
 
-#include "./mged.h"
 #include "./cmd.h"
 #include "./mged_dm.h"
 #include "./sedit.h"
 
-void mged_finish(struct mged_state *s, int exitcode); /* in mged.c */
-void update_grids(struct mged_state *s, fastf_t sf);		/* in grid.c */
-void set_localunit_TclVar(struct mged_state *s);		/* in chgmodel.c */
-extern void init_qray(void);			/* in qray.c */
+extern "C" void mged_finish(struct mged_state *s, int exitcode); /* in mged.c */
+extern "C" void update_grids(struct mged_state *s, fastf_t sf);		/* in grid.c */
+extern "C" void set_localunit_TclVar(struct mged_state *s);		/* in chgmodel.c */
+extern "C" void init_qray(void);			/* in qray.c */
 
 /* in tclsync.c */
-Tcl_Obj *BuildInterpSnapshot(Tcl_Interp *interp);
-int ReplayInterpSnapshot(Tcl_Interp *interp, Tcl_Obj *snapshot);
+extern "C" Tcl_Obj *BuildInterpSnapshot(Tcl_Interp *interp);
+extern "C" int ReplayInterpSnapshot(Tcl_Interp *interp, Tcl_Obj *snapshot);
 
 
+extern "C" {
 // FIXME: Globals
 extern int mged_default_dlist;			/* in attach.c */
 struct cmd_list head_cmd_list;
@@ -87,10 +88,10 @@ static int glob_compat_mode = 1;
 static int output_as_return = 1;
 Tk_Window tkwin = NULL;
 
-
-/* GUI output hooks use this variable to store the Tcl function used to run to
- * produce output. */
+/* GUI output hooks track the Tcl command which receives output and whether
+ * MGED's process-global bu_log hook is installed. */
 static struct bu_vls tcl_output_cmd = BU_VLS_INIT_ZERO;
+static int gui_output_hook_active = 0;
 
 /* Thread-safe buffer: bu_log output from any thread is accumulated here under
  * MGED_SEM_LOG protection.  The main thread drains it to the Tcl interp via
@@ -103,7 +104,23 @@ static struct bu_vls tcl_log_str = BU_VLS_INIT_ZERO;
  * deadlocks that would occur if Tcl callbacks triggered by mged_pr_output
  * themselves called bu_log (which also acquires BU_SEM_SYSCALL). */
 static int MGED_SEM_LOG = -1;
+}
 
+/* Wake event the worker posts to break the main thread out of Tcl_DoOneEvent.
+ * It carries no payload pointing into the run_ged_async frame,
+ * so it is safe to service even if a later Tcl_DoOneEvent runs it after the
+ * loop has already exited via 'done'. anonymous namespace is not technically
+ * required right now, but safely avoids potential collision in the future. */
+namespace { struct WakeEvent { Tcl_Event event; }; }
+
+/* No-op wake proc */
+static int
+wake_proc(Tcl_Event* UNUSED(evPtr), int UNUSED(mask))
+{
+    /* MUST return 1 so Tcl_ServiceEvent frees the event (ckfree);
+     * returning 0 would restore the proc and requeue it forever.  Do NOT free the
+     * event here -- Tcl owns it. */
+    return 1;
 }
 
 /* Internal C++ async helper.
@@ -131,38 +148,54 @@ run_ged_async(struct mged_state *s, std::function<int()> func)
     if (s->classic_mged || !s->interactive)
 	return func();
 
+    Tcl_ThreadId main_tid = Tcl_GetCurrentThread();
     std::atomic<bool> done{false};
     std::atomic<int>  result{0};
 
     s->cmd_running = 1;
 
+    /* must suppress SIGINT for the duration of the worker pump. Otherwise,
+     * SIGINT would longjmp to the outer frame, skipping worker.join(). SIG_IGN
+     * is just for this window and is be restored after .join()
+     * TODO/FIXME: this should be replaced with an intentional interrupt flag
+     * that can cooperate with callers for graceful handling
+     */
+    void (*prev_sigint)(int) = signal(SIGINT, SIG_IGN);
+
     std::thread worker([&]() {
 	result.store(func(), std::memory_order_release);
 	done.store(true, std::memory_order_release);
+	/* MUST allocate with ckalloc (NOT bu_malloc): Tcl_ServiceEvent
+	 * frees this block via ckfree after wake_proc returns 1 */
+	WakeEvent *ev = (WakeEvent *)ckalloc(sizeof(WakeEvent));
+	ev->event.proc = wake_proc;
+	Tcl_ThreadQueueEvent(main_tid, (Tcl_Event *)ev, TCL_QUEUE_TAIL);
+	Tcl_ThreadAlert(main_tid);
     });
 
-    /* Pump the Tcl event loop while the worker runs.
-     * TCL_DONT_WAIT means we never block waiting for an event, so we can
-     * check 'done' and sleep briefly to avoid a busy-loop.  The log-drain
-     * timer installed by mged_start_log_drain_timer() fires during these
-     * Tcl_DoOneEvent calls, streaming intermediate bu_log output to the
-     * command prompt as it arrives. */
+    /* Block until woken. The worker's queued wake event is the primary wakeup
+     * (Tcl services the event queue before it ever blocks, so there is no
+     * lost-wakeup race); log_drain_callback timer is the liveness backstop and
+     * continues to stream intermediate bu_log output to the command prompt */
     while (!done.load(std::memory_order_acquire) && !mged_shutting_down(s)) {
-	Tcl_DoOneEvent(TCL_ALL_EVENTS | TCL_DONT_WAIT);
+	Tcl_DoOneEvent(TCL_ALL_EVENTS);
 	mged_pr_output(s->interp);
-	bu_snooze(10000); /* 10 ms — keeps CPU low while staying responsive */
     }
 
-    /* Final drain to pick up anything written just before thread exit. */
-    mged_pr_output(s->interp);
-
     worker.join();
+
+    /* Restore the caller's SIGINT */
+    (void)signal(SIGINT, prev_sigint);
+
+    /* Join establishes that neither the command nor any worker-side cleanup
+     * can append more output before the final drain. */
+    mged_pr_output(s->interp);
     s->cmd_running = 0;
-    return result.load();
+    return result.load(std::memory_order_acquire);
 }
 
-
 extern "C" {
+
 
 /**
  * Initialise the dedicated MGED log-buffer semaphore.
@@ -222,6 +255,21 @@ mged_stop_log_drain_timer(struct mged_state *s)
 
 
 /**
+ * Release process-lifetime output buffers once no log hook or worker can use
+ * them.  This is separate from mged_stop_log_drain_timer() because shutdown
+ * must first remove the bu_log hook.
+ */
+void
+mged_output_cleanup(void)
+{
+    bu_semaphore_acquire(MGED_SEM_LOG);
+    bu_vls_free(&tcl_log_str);
+    bu_vls_free(&tcl_output_cmd);
+    bu_semaphore_release(MGED_SEM_LOG);
+}
+
+
+/**
  * bu_log hook: accumulates output from any thread into tcl_log_str under
  * MGED_SEM_LOG protection.  Never calls into the Tcl interpreter — that is
  * safe to do only from the main thread, and is done by mged_pr_output().
@@ -233,6 +281,9 @@ mged_stop_log_drain_timer(struct mged_state *s)
 int
 gui_output(void *UNUSED(clientData), void *str)
 {
+    if (!str)
+	return 0;
+
     bu_semaphore_acquire(MGED_SEM_LOG);
     bu_vls_printf(&tcl_log_str, "%s", (const char *)str);
     bu_semaphore_release(MGED_SEM_LOG);
@@ -252,11 +303,13 @@ void
 mged_pr_output(Tcl_Interp *interp)
 {
     struct bu_vls tmp = BU_VLS_INIT_ZERO;
+    struct bu_vls output_cmd = BU_VLS_INIT_ZERO;
 
     /* Grab and clear the accumulated text under the lock. */
     bu_semaphore_acquire(MGED_SEM_LOG);
     if (!bu_vls_strlen(&tcl_output_cmd))
 	bu_vls_sprintf(&tcl_output_cmd, "output_callback");
+    bu_vls_vlscat(&output_cmd, &tcl_output_cmd);
     if (bu_vls_strlen(&tcl_log_str)) {
 	bu_vls_vlscat(&tmp, &tcl_log_str);
 	bu_vls_trunc(&tcl_log_str, 0);
@@ -267,7 +320,7 @@ mged_pr_output(Tcl_Interp *interp)
     if (bu_vls_strlen(&tmp)) {
 	Tcl_DString tclcommand;
 	Tcl_DStringInit(&tclcommand);
-	(void)Tcl_DStringAppendElement(&tclcommand, bu_vls_cstr(&tcl_output_cmd));
+	(void)Tcl_DStringAppendElement(&tclcommand, bu_vls_cstr(&output_cmd));
 	(void)Tcl_DStringAppendElement(&tclcommand, bu_vls_cstr(&tmp));
 	Tcl_Obj *save_result = Tcl_GetObjResult(interp);
 	Tcl_IncrRefCount(save_result);
@@ -278,6 +331,7 @@ mged_pr_output(Tcl_Interp *interp)
     }
 
     bu_vls_free(&tmp);
+    bu_vls_free(&output_cmd);
 }
 
 
@@ -300,7 +354,7 @@ mged_ged_exec_async(struct mged_state *s, int argc, const char *argv[])
     });
 }
 
-} /* extern "C" */
+
 
 #define GED_OUTPUT do { \
     mged_pr_output(interpreter);\
@@ -311,9 +365,6 @@ mged_ged_exec_async(struct mged_state *s, int argc, const char *argv[])
 /* All remaining MGED command functions require C linkage because they are
  * called through Tcl command dispatch (function pointers stored with
  * Tcl_CreateCommand) and directly by name from other .c translation units. */
-extern "C" {
-
-
 /* Tcl command "_mged_ged_exec" registered inside search_interp.
  * Bridges Tcl scripts running in the search interpreter to the GED command
  * system so that GED commands (draw, ls, attr, ...) are reachable from
@@ -383,13 +434,22 @@ _create_search_interp(struct mged_state *s)
 	    mged_search_ged_exec, (ClientData)s,
 	    (Tcl_CmdDeleteProc *)NULL);
 
-    /* Sync the main interp state (procs, variables, namespaces).
+    /* Sync the main interp state (procs, variables, namespaces, aliases).
      * This must happen BEFORE installing the custom 'unknown' proc below,
      * because the snapshot includes the standard Tcl 'unknown' and replaying
      * it would overwrite our bridge if we installed it first. */
-    Tcl_Obj *snap = BuildInterpSnapshot(s->interp);
+    Tcl_Obj *snap = NULL;
+    if (s->search_snapshot) {
+	snap = Tcl_NewStringObj(s->search_snapshot, s->search_snapshot_len);
+	Tcl_IncrRefCount(snap);
+    } else if (!s->cmd_running) {
+	/* Synchronous callers own the main interpreter and may snapshot it here.
+	 * An asynchronous worker must only use the snapshot captured by cmd_search. */
+	snap = BuildInterpSnapshot(s->interp);
+    }
+
     if (!snap) {
-	bu_log("search interp: BuildInterpSnapshot failed\n");
+	bu_log("search interp: no main interpreter snapshot is available\n");
     } else {
 	if (ReplayInterpSnapshot(search_interp, snap) != TCL_OK)
 	    bu_log("search interp: snapshot replay error: %s\n",
@@ -411,6 +471,60 @@ _create_search_interp(struct mged_state *s)
     }
 
     return search_interp;
+}
+
+
+static void
+_clear_search_snapshot(struct mged_state *s)
+{
+    if (s->search_snapshot)
+	bu_free(s->search_snapshot, "search Tcl snapshot");
+    s->search_snapshot = NULL;
+    s->search_snapshot_len = 0;
+}
+
+
+/* Return true if a search might contain an -exec expression.  Search rebuilds
+ * its expression from argv before parsing it, so inspect every argument for
+ * the option spelling rather than requiring an exact argv match.  This is
+ * deliberately conservative: a false positive only retains the existing Tcl
+ * setup cost, while an actual -exec must never run without the worker-owned
+ * interpreter on platforms with strict Tcl thread ownership (notably
+ * Windows). */
+static int
+_search_may_exec(int argc, const char *argv[])
+{
+    if (!argv)
+	return 0;
+
+    for (int i = 1; i < argc; i++) {
+	if (argv[i] && strstr(argv[i], "-exec"))
+	    return 1;
+    }
+
+    return 0;
+}
+
+
+/* Capture on the main Tcl thread.  Tcl objects are not transferred between
+ * threads; only the snapshot's canonical list string crosses to the worker. */
+static int
+_capture_search_snapshot(struct mged_state *s)
+{
+    _clear_search_snapshot(s);
+
+    Tcl_Obj *snapshot = BuildInterpSnapshot(s->interp);
+    if (!snapshot)
+	return TCL_ERROR;
+
+    int len = 0;
+    const char *str = Tcl_GetStringFromObj(snapshot, &len);
+    s->search_snapshot = (char *)bu_malloc((size_t)len + 1, "search Tcl snapshot");
+    memcpy(s->search_snapshot, str, (size_t)len);
+    s->search_snapshot[len] = '\0';
+    s->search_snapshot_len = len;
+    Tcl_DecrRefCount(snapshot);
+    return TCL_OK;
 }
 
 
@@ -448,18 +562,19 @@ _exec_in_search_interp(Tcl_Interp *search_interp, int argc, const char *argv[])
 /**
  * PRE-execution callback for the "search" command.
  *
- * Creates a fresh, lifecycle-scoped secondary Tcl interpreter and stores it
- * in s->search_interp.  This interpreter is initialised once (snapshotting the
- * current main-interp state) and then reused for every -exec invocation fired
- * by mged_db_search_callback during this search run.  Creating the interpreter
- * here rather than inside each DURING callback avoids the overhead of repeated
- * snapshot replay.
+ * For searches which might contain -exec, creates a fresh, lifecycle-scoped
+ * secondary Tcl interpreter and stores it in s->search_interp.  This
+ * interpreter replays the main-interp snapshot captured by cmd_search and is
+ * then reused for every -exec invocation fired by mged_db_search_callback
+ * during this search run.  Creating the interpreter here rather than inside
+ * each DURING callback avoids repeated snapshot replay.  Searches which
+ * cannot contain -exec need neither the snapshot nor this interpreter.
  *
- * If a leftover interpreter from a previously interrupted search is found it is
- * cleaned up first, so we never accumulate dangling interpreters.
+ * A leftover interpreter from a previous search is a thread-ownership error:
+ * it cannot safely be deleted by an arbitrary later thread, so fail loudly.
  */
 int
-mged_search_pre_clbk(int UNUSED(argc), const char **UNUSED(argv),
+mged_search_pre_clbk(int argc, const char **argv,
 		     void *UNUSED(u1), void *u2)
 {
     struct mged_state *s = (struct mged_state *)u2;
@@ -467,10 +582,11 @@ mged_search_pre_clbk(int UNUSED(argc), const char **UNUSED(argv),
 
     /* Clean up any leftover interp from a previous search that did not finish
      * cleanly (i.e. where the POST callback was not reached). */
-    if (s->search_interp) {
-	Tcl_DeleteInterp(s->search_interp);
-	s->search_interp = NULL;
-    }
+    if (s->search_interp != NULL)
+	bu_bomb("ERROR - stale search interp, state is corrupted\n");
+
+    if (!_search_may_exec(argc, argv))
+	return BRLCAD_OK;
 
     s->search_interp = _create_search_interp(s);
     return BRLCAD_OK;
@@ -480,22 +596,34 @@ mged_search_pre_clbk(int UNUSED(argc), const char **UNUSED(argv),
 /**
  * POST-execution callback for the "search" command.
  *
- * Destroys the lifecycle-scoped interpreter created by mged_search_pre_clbk.
- * The interpreter must not be persisted beyond a single search invocation
- * because the user environment (procs, variables) may change before the next
- * search is run.
+ * For a search which might contain -exec, destroys the lifecycle-scoped
+ * interpreter created by mged_search_pre_clbk.  The interpreter must not be
+ * persisted beyond a single search invocation because the user environment
+ * (procs, variables) may change before the next search is run.  Other searches
+ * deliberately have no search interpreter to destroy.
+ *
+ * We deliberately run this after every search, succeed or fail,
+ * to make sure we get rid of the thread-owned Tcl interp - it must be
+ * destroyed from this thread.
  */
 int
-mged_search_post_clbk(int UNUSED(argc), const char **UNUSED(argv),
+mged_search_post_clbk(int argc, const char **argv,
 		      void *UNUSED(u1), void *u2)
 {
     struct mged_state *s = (struct mged_state *)u2;
     MGED_CK_STATE(s);
 
-    if (s->search_interp) {
-	Tcl_DeleteInterp(s->search_interp);
-	s->search_interp = NULL;
+    if (!_search_may_exec(argc, argv)) {
+	if (s->search_interp != NULL)
+	    bu_bomb("ERROR - unexpected search Tcl interp, state is corrupted.\n");
+	return BRLCAD_OK;
     }
+
+    if (s->search_interp == NULL)
+	bu_bomb("ERROR - search Tcl interp missing, state is corrupted.\n");
+
+    Tcl_DeleteInterp(s->search_interp);
+    s->search_interp = NULL;
     return BRLCAD_OK;
 }
 
@@ -510,11 +638,12 @@ mged_search_post_clbk(int UNUSED(argc), const char **UNUSED(argv),
  *
  * This callback uses s->search_interp — a secondary, fully independent Tcl
  * interpreter whose lifetime is scoped to the enclosing search command.  It is
- * created by mged_search_pre_clbk (fired before search begins), reused across
- * all -exec invocations, and destroyed by mged_search_post_clbk (fired after
- * search completes).  The main thread never touches search_interp while a
- * search is running, so there is no concurrent interpreter access and Tcl's
- * single-thread-per-interp requirement is satisfied.
+ * created by mged_search_pre_clbk (fired before a search which might contain
+ * -exec begins), reused across all -exec invocations, and destroyed by
+ * mged_search_post_clbk (fired after search completes).  The main thread never
+ * touches search_interp while a search is running, so there is no concurrent
+ * interpreter access and Tcl's single-thread-per-interp requirement is
+ * satisfied.
  *
  * A custom 'unknown' proc inside search_interp bridges any command that Tcl
  * does not recognise to ged_exec via _mged_ged_exec, so all GED commands
@@ -642,7 +771,6 @@ cmd_ged_edit_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, c
 
     return TCL_OK;
 }
-
 
 /**
  * Wrapper for the Mged simulate command : draws argv[argc-1] after execution.
@@ -817,6 +945,7 @@ cmd_ged_erase_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, 
 int
 cmd_ged_gqa(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[])
 {
+    static const char *gqa_options = "A:a:de:f:g:Gn:N:p:P:qrS:t:U:u:vV:W:h?";
     char **vp;
     int i;
     int ret;
@@ -835,21 +964,26 @@ cmd_ged_gqa(ClientData clientData, Tcl_Interp *interpreter, int argc, const char
 
     vp = &gd_rt_cmd[0];
 
-    /* Grab command name and any options */
+    /* Locate the first object without mistaking separate option values for
+     * geometry names.  ged_gqa_core() will perform the authoritative parse. */
+    char *saved_optarg = bu_optarg;
+    int saved_opterr = bu_opterr;
+    int saved_optopt = bu_optopt;
+    int saved_optind = bu_optind;
+    bu_opterr = 0;
+    bu_optind = 1;
+    while (bu_getopt(argc, (char * const *)argv, gqa_options) != -1)
+	;
+    i = bu_optind;
+    bu_optarg = saved_optarg;
+    bu_opterr = saved_opterr;
+    bu_optopt = saved_optopt;
+    bu_optind = saved_optind;
+
+    /* Grab command name and all options, including separate values. */
     *vp++ = (char *)argv[0];
-    for (i=1; i < argc; i++) {
-	if (argv[i][0] != '-')
-	    break;
-
-	if (argv[i][0] == '-' &&
-	    argv[i][1] == '-' &&
-	    argv[i][2] == '\0') {
-	    ++i;
-	    break;
-	}
-
-	*vp++ = (char *)argv[i];
-    }
+    for (int option_index = 1; option_index < i; option_index++)
+	*vp++ = (char *)argv[option_index];
 
     /*
      * Append remaining args, if any. Otherwise, append currently
@@ -1372,8 +1506,8 @@ cmd_tk(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *arg
 
 
 /**
- * Hooks the output to the given output hook.  Removes the existing
- * output hook!
+ * Routes output to the named Tcl command.  With no command argument, removes
+ * MGED's bu_log hook.
  */
 int
 cmd_output_hook(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[])
@@ -1394,10 +1528,13 @@ cmd_output_hook(ClientData clientData, Tcl_Interp *interpreter, int argc, const 
 	return TCL_ERROR;
     }
 
-    bu_log_delete_hook(gui_output, (void *)s);/* Delete the existing hook */
-
-    if (argc < 2)
+    if (argc < 2) {
+	if (gui_output_hook_active) {
+	    bu_log_delete_hook(gui_output, (void *)s);
+	    gui_output_hook_active = 0;
+	}
 	return TCL_OK;
+    }
 
     /* Make sure the command exists before putting in the hook! */
     /* Note - the parameters to proc could be wrong and/or the proc
@@ -1420,11 +1557,15 @@ cmd_output_hook(ClientData clientData, Tcl_Interp *interpreter, int argc, const 
 	return TCL_ERROR;
     }
 
-    /* Set up the command */
+    /* Update the callback name without removing a functioning hook. */
+    bu_semaphore_acquire(MGED_SEM_LOG);
     bu_vls_sprintf(&tcl_output_cmd, "%s", argv[1]);
+    bu_semaphore_release(MGED_SEM_LOG);
 
-    /* Set up the libbu hook */
-    bu_log_add_hook(gui_output, (void *)s);
+    if (!gui_output_hook_active) {
+	bu_log_add_hook(gui_output, (void *)s);
+	gui_output_hook_active = 1;
+    }
 
     Tcl_ResetResult(interpreter);
     return TCL_OK;
@@ -1777,9 +1918,10 @@ end:
 }
 
 
-void
-mged_print_result(struct mged_state *s, int UNUSED(status))
+int
+mged_print_result(int UNUSED(ac), const char **UNUSED(av), void *d, void *UNUSED(ud))
 {
+    struct mged_state *s = (struct mged_state *)d;
     size_t len;
     const char *result = Tcl_GetStringResult(s->interp);
 
@@ -1792,6 +1934,93 @@ mged_print_result(struct mged_state *s, int UNUSED(status))
     }
 
     Tcl_ResetResult(s->interp);
+
+    return TCL_OK;
+}
+
+
+int
+mged_print_str(int UNUSED(ac), const char **UNUSED(av), void *d, void *UNUSED(ud))
+{
+    struct mged_state *s = (struct mged_state *)d;
+
+    Tcl_AppendResult(s->interp, bu_vls_cstr(MEDIT(s)->log_str), (char *)NULL);
+
+    return TCL_OK;
+}
+
+int
+mged_view_update(int UNUSED(ac), const char **UNUSED(av), void *d, void *UNUSED(ud))
+{
+    struct mged_state *s = (struct mged_state *)d;
+
+    dm_set_dirty(s->mged_curr_dm->dm_dmp, 1);
+    (void)Tcl_Eval(s->interp, "active_edit_callback");
+
+    return TCL_OK;
+}
+
+int
+mged_view_set_flag(int UNUSED(ac), const char **UNUSED(av), void *d, void *flagp)
+{
+    struct mged_state *s = (struct mged_state *)d;
+    int *flag = (int *)flagp;
+
+    view_state->vs_flag = *flag;
+
+    return TCL_OK;
+}
+
+int
+mged_get_filename(int ac, const char **av, void *d, void *sret)
+{
+    if (!ac || !av || !d || !sret)
+	return BRLCAD_ERROR;
+
+    char *str = bu_strdup(av[0]);
+    char **ret = (char **)sret;
+
+    struct mged_state *s = (struct mged_state *)d;
+    struct bu_vls cmd = BU_VLS_INIT_ZERO;
+    struct bu_vls varname_vls = BU_VLS_INIT_ZERO;
+    char *dir;
+    char *fptr;
+    char *ptr1;
+    char *ptr2;
+
+    bu_vls_strcpy(&varname_vls, "mged_gui(getFileDir)");
+
+    if ((fptr=strrchr(str, '/'))) {
+	dir = (char *)bu_malloc((strlen(str)+1)*sizeof(char), "get_file_name: dir");
+	ptr1 = str;
+	ptr2 = dir;
+	while (ptr1 != fptr)
+	    *ptr2++ = *ptr1++;
+	*ptr2 = '\0';
+	Tcl_SetVar(s->interp, bu_vls_addr(&varname_vls), dir, TCL_GLOBAL_ONLY);
+	bu_free((void *)dir, "get_file_name: directory string");
+    }
+
+    if (dm_get_pathname(DMP)) {
+	bu_vls_printf(&cmd,
+		"getFile %s %s {{{All Files} {*}}} {Get File}",
+		bu_vls_addr(dm_get_pathname(DMP)),
+		bu_vls_addr(&varname_vls));
+    }
+    bu_vls_free(&varname_vls);
+
+    if (Tcl_Eval(s->interp, bu_vls_addr(&cmd))) {
+	(*ret) = NULL;
+	goto str_ret;
+    }
+    if (Tcl_GetStringResult(s->interp)[0] != '\0') {
+	(*ret) = bu_strdup(Tcl_GetStringResult(s->interp));
+	goto str_ret;
+    }
+str_ret:
+    bu_vls_free(&cmd);
+    bu_free(str, "str");
+    return BRLCAD_OK;
 }
 
 /**
@@ -2376,7 +2605,11 @@ cmd_search(ClientData clientData, Tcl_Interp *interpreter, int argc, const char 
     if (s->gedp == GED_NULL)
 	return TCL_OK;
 
+    if (_search_may_exec(argc, argv) && _capture_search_snapshot(s) != TCL_OK)
+	bu_log("search interp: failed to capture the main Tcl interpreter state\n");
+
     ret = run_ged_async(s, [&]() -> int { return ged_exec(s->gedp, argc, (const char **)argv); });
+    _clear_search_snapshot(s);
     GED_OUTPUT;
 
     if (ret)
@@ -2425,7 +2658,7 @@ cmd_tol(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *ar
 
 
 /* defined in chgview.c */
-extern int edit_com(struct mged_state *s, int argc, const char *argv[]);
+extern "C" int edit_com(struct mged_state *s, int argc, const char *argv[]);
 
 /**
  * Run ged_blast, then update the views
@@ -2581,9 +2814,9 @@ cmd_shaded_mode(ClientData clientData,
 	Tcl_Eval(interpreter, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
-	/* skip past -a */
+	/* Remove -a while retaining the command name at argv[0]. */
+	argv[1] = argv[2];
 	--argc;
-	++argv;
     }
 
     ret = run_ged_async(s, [&]() -> int { return ged_exec(s->gedp, argc, (const char **)argv); });
@@ -2629,28 +2862,6 @@ cmd_ps(ClientData clientData,
     return (ret) ? TCL_ERROR : TCL_OK;
 }
 
-
-int
-cmd_stub(ClientData clientData, Tcl_Interp *UNUSED(interpreter), int argc, const char *argv[])
-{
-    struct cmdtab *ctp = (struct cmdtab *)clientData;
-    MGED_CK_CMD(ctp);
-    struct mged_state *s = ctp->s;
-
-    CHECK_DBI_NULL;
-
-    if (argc != 1) {
-        struct bu_vls vls;
-        bu_vls_init(&vls);
-        bu_vls_printf(&vls, "helplib_alias wdb_%s %s", argv[0], argv[0]);
-        Tcl_Eval((Tcl_Interp *)s->wdbp->wdb_interp, bu_vls_addr(&vls));
-        bu_vls_free(&vls);
-        return TCL_ERROR;
-    }
-
-    Tcl_AppendResult((Tcl_Interp *)s->wdbp->wdb_interp, "%s: no database is currently opened!", argv[0], (char *)NULL);
-    return TCL_ERROR;
-}
 
 /**
  * Stuff a string to stdout while leaving the current command-line
@@ -3149,7 +3360,10 @@ cmd_view(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 }
 
 
-} /* extern "C" -- all MGED C-linkage command functions */
+} /* extern "C" */
+
+
+
 
 
 /*

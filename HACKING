@@ -1263,6 +1263,17 @@ Release steps are as follows:
 #####################################################################
 # 01: Sync main to RELEASE branch.
 
+TODO - we probably need to do a re-look at the RELEASE and STABLE setup.
+With Git and modern workflows, I'm leaning more towards a temporary
+working branch where we shake down for release, then tagging from that
+working branch and merging that back into main once complete.  For
+minor releases we should create a X-XX branch from the X-XX-0 tag, and
+any patch releases on that minor series will be handled in and tagged
+from the branch.  With AI driven change rates, it's unrealistic to
+try and put main back into a state where we can call a tag off of it
+a patch on an older minor.  Needs more thought - should try to hash out
+before the next minor release and update the workflow.
+
     git clone git@github.com:BRL-CAD/brlcad.git
     cd brlcad
     git checkout RELEASE
@@ -1529,8 +1540,26 @@ Release steps are as follows:
 # 18: Upload the source distributions and release notes.  Use source
 # tarballs to create binaries.
 
-------------- TODO - need new procedures for GitHub... ------------
+    # NON-AUTO:  Select the new tag at https://github.com/BRL-CAD/brlcad/releases/new
+    #
+    # Upload the NEWS entries and description for the web page's
+    # release notes.  Attach the tar.gz, tar.bz2 and .zip files as
+    # the initial archives.  Releases may be edited to add new files,
+    # so go ahead and publish the release to have our default webpage
+    # correctly reflect the most recent release.
 
+
+TODO - It would be nice to have some curated scripts for binary creation.
+For Linux I usually set up a fresh Rocky Linux image with a clean environment
+and install just what is needed to try and get a "this will probably run
+anywhere" binary, but as a manual process that's a pain - maybe there's a way
+to script qemu to do the job for us...
+
+Windows is still completely manual.  The .msi installer depends on an older
+version of WiX, and I don't know of another good solution there - we probably need
+to investigate whether we could produce MSIX packages instead.
+
+Mac - TODO.
 
 #####################################################################
 # 19: Notify binary platform maintainers:

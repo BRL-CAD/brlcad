@@ -50,7 +50,7 @@
 #include "bu/file.h"
 #include "bu/interrupt.h"
 #include "bu/snooze.h"
-#include "bu/time.h"
+#include "bu/datetime.h"
 #include "bu/process.h"
 #include "vmath.h"
 

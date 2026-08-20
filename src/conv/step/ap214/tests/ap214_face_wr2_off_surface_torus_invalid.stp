@@ -1,0 +1,51 @@
+ISO-10303-21;
+HEADER;
+FILE_DESCRIPTION(('BRL-CAD AP214 invalid FACE wr2 off-surface torus fixture'),'2;1');
+FILE_NAME('ap214_face_wr2_off_surface_torus_invalid.stp','2026-07-25T00:00:00',('BRL-CAD'),('BRL-CAD'),'','','');
+FILE_SCHEMA(('AUTOMOTIVE_DESIGN { 1 0 10303 214 3 1 1 1 }'));
+ENDSEC;
+DATA;
+/* The radius-5.2 circle lies on the torus.  The radius-5.6 circle is 0.4 mm
+ * outside it, and both are incorrectly declared FACE_OUTER_BOUND.  FACE.wr2
+ * is therefore violated and none of the supplied interpretations can define
+ * the asserted face without changing source geometry. */
+#1=CARTESIAN_POINT('',(0.,0.,0.));
+#2=CARTESIAN_POINT('',(5.2,0.,0.));
+#3=CARTESIAN_POINT('',(5.6,0.,0.));
+#4=VERTEX_POINT('',#2);
+#5=VERTEX_POINT('',#3);
+#10=DIRECTION('',(0.,0.,1.));
+#11=DIRECTION('',(1.,0.,0.));
+#12=AXIS2_PLACEMENT_3D('',#1,#10,#11);
+#20=CIRCLE('',#12,5.2);
+#21=CIRCLE('',#12,5.6);
+#22=EDGE_CURVE('',#4,#4,#20,.T.);
+#23=EDGE_CURVE('',#5,#5,#21,.T.);
+#24=ORIENTED_EDGE('',*,*,#22,.T.);
+#25=ORIENTED_EDGE('',*,*,#23,.T.);
+#26=EDGE_LOOP('',(#24));
+#27=EDGE_LOOP('',(#25));
+#28=FACE_OUTER_BOUND('',#26,.T.);
+#29=FACE_OUTER_BOUND('',#27,.T.);
+#30=TOROIDAL_SURFACE('',#12,5.,0.2);
+#31=ADVANCED_FACE('',(#28,#29),#30,.T.);
+#32=OPEN_SHELL('',(#31));
+#33=SHELL_BASED_SURFACE_MODEL('invalid FACE wr2 off-surface torus',(#32));
+
+#40=(LENGTH_UNIT() NAMED_UNIT(*) SI_UNIT(.MILLI.,.METRE.));
+#41=(NAMED_UNIT(*) PLANE_ANGLE_UNIT() SI_UNIT($,.RADIAN.));
+#42=(NAMED_UNIT(*) SI_UNIT($,.STERADIAN.) SOLID_ANGLE_UNIT());
+#43=UNCERTAINTY_MEASURE_WITH_UNIT(LENGTH_MEASURE(0.000001),#40,'distance_accuracy_value','maximum gap value');
+#44=(GEOMETRIC_REPRESENTATION_CONTEXT(3) GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT((#43)) GLOBAL_UNIT_ASSIGNED_CONTEXT((#40,#41,#42)) REPRESENTATION_CONTEXT('fixture','3D'));
+#50=APPLICATION_CONTEXT('automotive design');
+#51=APPLICATION_PROTOCOL_DEFINITION('fixture','automotive_design',2010,#50);
+#52=PRODUCT_CONTEXT('',#50,'mechanical');
+#53=PRODUCT_DEFINITION_CONTEXT('part definition',#50,'design');
+#54=PRODUCT('face_wr2_off_surface_torus','FACE wr2 Off-surface Torus','invalid multiple outer bounds with one off-surface edge',(#52));
+#55=PRODUCT_DEFINITION_FORMATION_WITH_SPECIFIED_SOURCE('1','',#54,.MADE.);
+#56=PRODUCT_DEFINITION('design','',#55,#53);
+#57=PRODUCT_DEFINITION_SHAPE('','',#56);
+#58=MANIFOLD_SURFACE_SHAPE_REPRESENTATION('',(#12,#33),#44);
+#59=SHAPE_DEFINITION_REPRESENTATION(#57,#58);
+ENDSEC;
+END-ISO-10303-21;

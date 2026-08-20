@@ -144,8 +144,11 @@ clean_pmp(struct plate_mode *pmp)
 	}
 	if ((pmp->bots[i]->bot_flags & RT_BOT_PLATE) ||
 	    (pmp->bots[i]->bot_flags & RT_BOT_PLATE_NOCOS)) {
-	    bu_bomb("about to free pmp->bots[i]->face_mode\n");
-	    bu_bitv_free(pmp->bots[i]->face_mode);
+	    /* dup_bot() only sets face_mode when the source had one, so
+	     * it may legitimately be NULL here; guard the free.
+	     */
+	    if (pmp->bots[i]->face_mode)
+		bu_bitv_free(pmp->bots[i]->face_mode);
 	}
 	bu_free(pmp->bots[i], "bots");
 	pmp->bots[i] = (struct rt_bot_internal *)NULL;
@@ -166,6 +169,7 @@ dup_bot(struct rt_bot_internal *bot_in)
     RT_BOT_CK_MAGIC(bot_in);
 
     BU_ALLOC(bot, struct rt_bot_internal);
+    bot->face_mode = NULL;
 
     bot->magic = bot_in->magic;
     bot->mode = bot_in->mode;

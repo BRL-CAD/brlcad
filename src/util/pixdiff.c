@@ -19,23 +19,18 @@
  */
 /** @file util/pixdiff.c
  *
- * Compute the difference between two .pix files.  To establish
- * context, a half-intensity monochrome image is produced when there
- * are no differences; otherwise the channels that differ are
- * highlighted for differing pixels.
+ * Compute the byte-wise difference between two raw image files.  To
+ * establish context, matching bytes are written at half intensity;
+ * differing bytes are highlighted.
  *
- * This routine operates on a pixel-by-pixel basis, and thus is
- * independent of the resolution of the image.
+ * This routine does not interpret pixel structure, and thus works for
+ * both .pix and .bw data independent of image resolution.
  *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <string.h>
-#ifdef HAVE_SYS_STAT_H
-#  include <sys/stat.h>
-#endif
 #include "bio.h"
 
 #include "bu/app.h"
@@ -43,33 +38,26 @@
 #include "bu/exit.h"
 
 
+#define BUFFER_SIZE 8192
+#define CONTEXT_DIVISOR 2
+#define OFF_BY_ONE_INTENSITY 0xC0
+#define OFF_BY_MANY_INTENSITY 0xFF
+
+
 static void
-rgb_diff(int c1, int c2, FILE *output, size_t *offmany, size_t *off1, size_t *matching)
+write_byte_diff(int c1, int c2, FILE *output, size_t *offmany, size_t *off1, size_t *matching)
 {
-    int i;
-
-    if (!output) {
-	output = stdout;
-    }
-    if (!offmany || !off1 || !matching)
-	return;
-
     if (c1 != c2) {
-	i = c1 - c2;
-	if (i < 0)
-	    i = -i;
-	if (i > 1) {
-	    if (output)
-		fputc(0xFF, output);
+	int difference = abs(c1 - c2);
+	if (difference > 1) {
+	    fputc(OFF_BY_MANY_INTENSITY, output);
 	    (*offmany)++;
 	} else {
-	    if (output)
-		fputc(0xC0, output);
+	    fputc(OFF_BY_ONE_INTENSITY, output);
 	    (*off1)++;
 	}
     } else {
-	if (output)
-	    fputc(0, output);
+	fputc(c1 / CONTEXT_DIVISOR, output);
 	(*matching)++;
     }
 }
@@ -83,7 +71,6 @@ main(int argc, char *argv[])
     size_t offmany = 0;
 
     FILE *f1, *f2;
-    struct stat sf1, sf2;
 
     bu_setprogname(argv[0]);
 
@@ -91,61 +78,54 @@ main(int argc, char *argv[])
     setmode(fileno(stdout), O_BINARY);
 
     if (argc != 3 || isatty(fileno(stdout))) {
-	bu_exit(1, "Usage: pixdiff f1.pix f2.pix >file.pix\n");
+	bu_exit(1, "Usage: pixdiff file1 file2 >diff\n");
     }
 
-    if (BU_STR_EQUAL(argv[1], "-"))
+    const char *file1 = argv[1];
+    const char *file2 = argv[2];
+
+    if (BU_STR_EQUAL(file1, "-") && BU_STR_EQUAL(file2, "-")) {
+	bu_exit(1, "pixdiff: standard input cannot supply both images\n");
+    }
+
+    if (BU_STR_EQUAL(file1, "-"))
 	f1 = stdin;
-    else if ((f1 = fopen(argv[1], "rb")) == NULL) {
-	perror(argv[1]);
+    else if ((f1 = fopen(file1, "rb")) == NULL) {
+	perror(file1);
 	return 1;
     }
-    if (BU_STR_EQUAL(argv[2], "-"))
+    if (BU_STR_EQUAL(file2, "-"))
 	f2 = stdin;
-    else if ((f2 = fopen(argv[2], "rb")) == NULL) {
-	perror(argv[2]);
+    else if ((f2 = fopen(file2, "rb")) == NULL) {
+	perror(file2);
+	if (f1 != stdin)
+	    fclose(f1);
 	return 1;
-    }
-
-    stat(argv[1], &sf1);
-    stat(argv[2], &sf2);
-
-    if (sf1.st_size != sf2.st_size) {
-	bu_exit(1, "Different file sizes found: %s(%jd) and %s(%jd).  Cannot perform pixdiff.\n", argv[1], (intmax_t)sf1.st_size, argv[2], (intmax_t)sf2.st_size);
     }
 
     while (1) {
-	int r1, g1, b1;
-	int r2, g2, b2;
+	unsigned char buffer1[BUFFER_SIZE];
+	unsigned char buffer2[BUFFER_SIZE];
+	size_t count1 = fread(buffer1, 1, sizeof(buffer1), f1);
+	size_t count2 = fread(buffer2, 1, sizeof(buffer2), f2);
+	size_t i;
 
-	r1 = fgetc(f1);
-	g1 = fgetc(f1);
-	b1 = fgetc(f1);
-	r2 = fgetc(f2);
-	g2 = fgetc(f2);
-	b2 = fgetc(f2);
-	if (feof(f1) || feof(f2)) break;
+	if (ferror(f1) || ferror(f2))
+	    bu_exit(1, "pixdiff: input read error\n");
+	if (count1 != count2)
+	    bu_exit(1, "pixdiff: input sizes differ\n");
+	if (count1 == 0)
+	    break;
 
-	if (r1 != r2 || g1 != g2 || b1 != b2) {
-	    rgb_diff(r1, r2, stdout, &offmany, &off1, &matching);
-	    rgb_diff(g1, g2, stdout, &offmany, &off1, &matching);
-	    rgb_diff(b1, b2, stdout, &offmany, &off1, &matching);
-	} else {
-	    /* Common case: equal.  Give B&W NTSC average of 0.35 R +
-	     * 0.55 G + 0.10 B, calculated in fixed-point, output at
-	     * half intensity.
-	     */
-	    long i;
-	    i = ((22937 * r1 + 36044 * g1 + 6553 * b1)>>17);
-	    if (i < 0)
-		i = 0;
-	    i /= 2;
-	    fputc(i, stdout);
-	    fputc(i, stdout);
-	    fputc(i, stdout);
-	    matching += 3;
-	}
+	for (i = 0; i < count1; i++)
+	    write_byte_diff(buffer1[i], buffer2[i], stdout, &offmany, &off1, &matching);
     }
+
+    if (f1 != stdin)
+	fclose(f1);
+    if (f2 != stdin)
+	fclose(f2);
+
     fprintf(stderr,
 	    "pixdiff bytes: %7zu matching, %7zu off by 1, %7zu off by many\n",
 	    matching, off1, offmany);

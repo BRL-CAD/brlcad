@@ -117,6 +117,11 @@ that directory, writing one report per model into an export folder.
   Number of CPUs to use. A non-positive value is added to the number of
   available cores; the default uses all available cores.
 
+*-Q*, *--preview*::
+  Generate a fast, low-resolution preview. The report retains the standard
+  page layout, using reduced-quality renderings and marking the omitted
+  surface-area, volume, and mass verification values as unavailable.
+
 *-v*::
   Enable verbose output.
 

@@ -28,6 +28,7 @@
 
 #include "vmath.h"
 #include "nmg.h"
+#include "bu/opt.h"
 #include "raytrace.h"
 #include "rt/geom.h"
 #include "wdb.h"
@@ -503,6 +504,93 @@ rt_edit_ell_edit_xy(
     }
 }
 
+int
+rt_edit_ell_repair(struct bu_vls *log_str, struct rt_db_internal *ip, const struct bn_tol *tol, int argc, const char **argv)
+{
+    struct rt_ell_internal *eip;
+    fastf_t mag_a, mag_b, mag_c;
+    int repaired = 0;
+    int options_json = 0;
+    int print_help = 0;
+
+    struct bu_opt_desc d[3];
+    BU_OPT(d[0], "h", "help", "", NULL, &print_help, "Print help");
+    BU_OPT(d[1], "", "options-json", "", NULL, &options_json, "Return JSON of supported options");
+    BU_OPT_NULL(d[2]);
+
+    if (argc > 0 && argv) {
+        bu_opt_parse(NULL, argc, argv, d);
+    }
+
+    if (options_json) {
+        if (log_str) {
+            bu_vls_printf(log_str, "{\"options\":[]}");
+        }
+        return 1;
+    }
+
+    if (print_help) {
+        if (log_str) {
+            char *option_help = bu_opt_describe(d, NULL);
+            bu_vls_printf(log_str, "{\"status\":\"help\",\"message\":\"Options:\\n%s\"}", option_help ? option_help : "");
+            if (option_help) bu_free(option_help, "help str");
+        }
+        return -1;
+    }
+
+    RT_CK_DB_INTERNAL(ip);
+    eip = (struct rt_ell_internal *)ip->idb_ptr;
+    RT_ELL_CK_MAGIC(eip);
+
+    if (!tol) {
+        static const struct bn_tol default_tol = BN_TOL_INIT_TOL;
+        tol = &default_tol;
+    }
+
+    mag_a = MAGNITUDE(eip->a);
+    mag_b = MAGNITUDE(eip->b);
+    mag_c = MAGNITUDE(eip->c);
+
+    if (mag_a > SQRT_SMALL_FASTF && mag_b > SQRT_SMALL_FASTF) {
+        fastf_t f = VDOT(eip->a, eip->b) / (mag_a * mag_b);
+        if (!NEAR_ZERO(f, tol->perp)) {
+            vect_t proj;
+            VSCALE(proj, eip->a, VDOT(eip->b, eip->a) / MAGSQ(eip->a));
+            VSUB2(eip->b, eip->b, proj);
+            /* Restore length */
+            VSCALE(eip->b, eip->b, mag_b / MAGNITUDE(eip->b));
+            repaired++;
+        }
+    }
+
+    if (mag_a > SQRT_SMALL_FASTF && mag_c > SQRT_SMALL_FASTF) {
+        fastf_t f1 = VDOT(eip->a, eip->c) / (mag_a * mag_c);
+        fastf_t f2 = 0;
+        if (mag_b > SQRT_SMALL_FASTF) {
+            f2 = VDOT(eip->b, eip->c) / (MAGNITUDE(eip->b) * mag_c);
+        }
+        if (!NEAR_ZERO(f1, tol->perp) || (mag_b > SQRT_SMALL_FASTF && !NEAR_ZERO(f2, tol->perp))) {
+            vect_t proj_a, proj_b;
+            VSCALE(proj_a, eip->a, VDOT(eip->c, eip->a) / MAGSQ(eip->a));
+            if (mag_b > SQRT_SMALL_FASTF) {
+                VSCALE(proj_b, eip->b, VDOT(eip->c, eip->b) / MAGSQ(eip->b));
+            } else {
+                VSETALL(proj_b, 0.0);
+            }
+            VSUB2(eip->c, eip->c, proj_a);
+            VSUB2(eip->c, eip->c, proj_b);
+            /* Restore length */
+            VSCALE(eip->c, eip->c, mag_c / MAGNITUDE(eip->c));
+            repaired++;
+        }
+    }
+
+    if (repaired > 0 && log_str) {
+        bu_vls_printf(log_str, "{\"status\":\"success\",\"message\":\"Successfully repaired ELL\"}");
+    }
+
+    return repaired > 0 ? 0 : -1;
+}
 
 /*
  * Local Variables:

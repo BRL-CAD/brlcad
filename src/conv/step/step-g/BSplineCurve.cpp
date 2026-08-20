@@ -43,13 +43,14 @@ static const char *B_spline_curve_form_string[] = {
     "unspecified",
     "unset"
 };
+static const int STEP_B_SPLINE_CURVE_FORM_UNSET = 6;
 
 BSplineCurve::BSplineCurve()
 {
     step = NULL;
     id = 0;
     degree = 0;
-    curve_form = B_spline_curve_form_unset;
+    curve_form = STEP_B_SPLINE_CURVE_FORM_UNSET;
     closed_curve = LUnset;
     self_intersect = LUnset;
 }
@@ -59,7 +60,7 @@ BSplineCurve::BSplineCurve(STEPWrapper *sw, int step_id)
     step = sw;
     id = step_id;
     degree = 0;
-    curve_form = B_spline_curve_form_unset;
+    curve_form = STEP_B_SPLINE_CURVE_FORM_UNSET;
     closed_curve = LUnset;
     self_intersect = LUnset;
 }
@@ -112,8 +113,10 @@ BSplineCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     closed_curve = step->getLogicalAttribute(sse, "closed_curve");
     self_intersect = step->getLogicalAttribute(sse, "self_intersect");
     degree = step->getIntegerAttribute(sse, "degree");
-    curve_form = (B_spline_curve_form)step->getEnumAttribute(sse, "curve_form");
-    V_MIN(curve_form, B_spline_curve_form_unset);
+    curve_form = step->getEnumAttributeIndex(sse, "curve_form",
+	B_spline_curve_form_string,
+	sizeof(B_spline_curve_form_string) / sizeof(B_spline_curve_form_string[0]),
+	STEP_B_SPLINE_CURVE_FORM_UNSET);
 
     sw->entity_status[id] = STEP_LOADED;
 

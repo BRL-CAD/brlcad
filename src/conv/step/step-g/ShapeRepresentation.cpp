@@ -39,6 +39,11 @@
 #define ENTITYNAME "Shape_Representation"
 
 std::string ShapeRepresentation::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)ShapeRepresentation::Create);
+/* AP242 tessellated items are converted by the schema runtime, but common
+ * representation relationships still need a valid ShapeRepresentation base
+ * object for their inherited attributes. */
+std::string ShapeRepresentation::tessellated_entityname = Factory::RegisterClass(
+    "Tessellated_Shape_Representation", (FactoryMethod)ShapeRepresentation::Create);
 
 
 ShapeRepresentation::ShapeRepresentation()

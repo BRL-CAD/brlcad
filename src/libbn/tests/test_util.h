@@ -39,6 +39,9 @@
 #include "bn.h"
 
 
+__BEGIN_DECLS
+
+
 struct bn_api_case {
     const char *name;
     int (*func)(void);
@@ -60,6 +63,8 @@ struct bn_table *make_table(const fastf_t *xs, size_t nx);
 struct bn_tabdata *make_tabdata(const struct bn_table *tabp, const fastf_t *ys);
 int bn_api_single(int argc, char *argv[], const char *name, int (*func)(void));
 int bn_api_dispatch(int argc, char *argv[], const struct bn_api_case *cases);
+
+__END_DECLS
 
 
 #endif /* LIBBN_TEST_UTIL_H */

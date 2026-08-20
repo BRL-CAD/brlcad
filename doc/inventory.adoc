@@ -1285,8 +1285,8 @@ vulnerability modeling)
 
 * *Rhino 3DM* (see above, via openNURBS)
 * *EGG*: Panda3D EGG scene graph format export
-* *VRML*: Virtual Reality Modeling Language v2
-export; generates geometry nodes with material bindings
+* *VRML*: Virtual Reality Modeling Language 1.0 and VRML97/2.0 import,
+plus VRML97/2.0 export; generates geometry nodes with material bindings
 * *X3D*: X3D (XML-based VRML successor) export
 * *ACII/ASC*: BRL-CAD ASCII representation
 * *SHP*: ESRI shapefile format for 2D/3D geographic

@@ -128,7 +128,7 @@ long syscall(long number, ...);
 void parallel_cpp11thread(void (*func)(int, void *), size_t ncpu, void *arg);
 #endif /* CPP11THREAD */
 
-int BU_SEM_THREAD;
+int BU_SEM_THREAD = BU_SEM_ID_THREAD;
 
 
 typedef enum {
@@ -375,68 +375,103 @@ bu_avail_cpus(void)
 static struct parallel_info *
 parallel_mapping(parallel_action_t action, int id, size_t max)
 {
-    /* container for keeping track of recursive invocation data, limits, current values */
+    /* Container for recursive invocation data, limits, and current values.
+     *
+     * FIXME: With MAX_PSW at 4096 this array contributes 512 MiB to
+     * libbu's BSS.  Loading libbu under Valgrind consequently emits two
+     * "set address range perms: large range" warnings while the dynamic
+     * loader establishes permissions on libbu's large RW segment.  Both
+     * warnings reproduce by preloading libbu into an otherwise empty
+     * process; they are not heap leaks.
+     *
+     * Do not simply reduce this to MAX_PSW.  The squared capacity was added
+     * for recursive bu_parallel() calls, whose live parent and child thread
+     * records can exceed MAX_PSW.  This should instead become sparse/dynamic
+     * bookkeeping as part of a fix that also keeps public parallel IDs safe
+     * for callers' MAX_PSW-sized per-thread arrays.
+     */
     static struct parallel_info mapping[MAX_PSW*MAX_PSW] = {{0, 0, 0, 0, 0}};
-    int got_cpu;
+    struct parallel_info *result = NULL;
+    int got_cpu = id;
+
+    /*
+     * The ID field is both the allocation marker and the publication point
+     * for the rest of a mapping entry.  Allocate, initialize, and release an
+     * entry while holding the same lock so an allocator cannot reuse a slot
+     * while its previous owner is still clearing it.
+     */
+    bu_semaphore_acquire(BU_SEM_THREAD);
 
     switch (action) {
 	case PARALLEL_GET:
 	    if (id < 0) {
-		bu_semaphore_acquire(BU_SEM_THREAD);
 		for (got_cpu = 1; got_cpu < MAX_PSW*MAX_PSW; got_cpu++) {
 		    if (mapping[got_cpu].id == 0) {
 			mapping[got_cpu].id = got_cpu;
+			mapping[got_cpu].started = 0;
+			mapping[got_cpu].finished = 0;
+			mapping[got_cpu].parent = bu_parallel_id();
 			break;
 		    }
 		}
-		bu_semaphore_release(BU_SEM_THREAD);
-
-		if (got_cpu >= MAX_PSW*MAX_PSW) {
-		    bu_log("Compile-time parallelism limit reached (%d >= %d).\n", got_cpu, MAX_PSW*MAX_PSW);
-		    bu_bomb("Unable to track threading.\n");
-		}
-
-		mapping[got_cpu].started = mapping[got_cpu].finished = 0;
-		mapping[got_cpu].parent = bu_parallel_id();
-
 	    } else {
-		got_cpu = id;
 		if (mapping[got_cpu].id != got_cpu) {
 		    /* presumably id == 0 */
 		    mapping[got_cpu].id = got_cpu;
 		}
 	    }
 
-	    if (mapping[got_cpu].lim == 0 && max > 0)
-		mapping[got_cpu].lim = max;
-
-	    return &mapping[got_cpu];
+	    if (got_cpu >= 0 && got_cpu < MAX_PSW*MAX_PSW) {
+		if (mapping[got_cpu].lim == 0 && max > 0)
+		    mapping[got_cpu].lim = max;
+		result = &mapping[got_cpu];
+	    }
+	    break;
 
 	case PARALLEL_PUT:
 	    mapping[id].started = mapping[id].finished = mapping[id].lim = mapping[id].parent = 0;
-	    mapping[id].id = 0; /* separate to avoid race */
+	    mapping[id].id = 0;
+	    break;
     }
 
-    return NULL;
+    bu_semaphore_release(BU_SEM_THREAD);
+
+    if (action == PARALLEL_GET && !result) {
+	bu_log("Compile-time parallelism limit reached (%d >= %d).\n", got_cpu, MAX_PSW*MAX_PSW);
+	bu_bomb("Unable to track threading.\n");
+    }
+
+    return result;
 }
 
 
 static void
 parallel_wait_for_slot(int throttle, struct parallel_info *parent, size_t max_threads)
 {
-    size_t threads = max_threads;
+    size_t started;
+    size_t finished;
+    size_t threads;
+
+    /* Explicit thread counts are not throttled and need no bookkeeping. */
+    if (!throttle)
+	return;
 
     while (1) {
-	if (parent->started < parent->finished) {
+	bu_semaphore_acquire(BU_SEM_THREAD);
+	started = parent->started;
+	finished = parent->finished;
+	bu_semaphore_release(BU_SEM_THREAD);
+
+	if (started < finished) {
 	    /*bu_log("Warning - parent->started (%d) is less than parent->finished (%d)\n", parent->started, parent->finished);*/
 	    return;
 	}
-	threads = parent->started - parent->finished;
+	threads = started - finished;
 
 	/*bu_log("threads=%d (start %d - done %d)\n", threads, parent->started, parent->finished);
 	  bu_log("max_threads=%d, throttle: %d\n", max_threads, throttle);*/
 
-	if (threads < max_threads || !throttle) {
+	if (threads < max_threads) {
 	    return;
 	}
 	bu_snooze(BU_SEC2USEC(1));
@@ -543,6 +578,7 @@ bu_parallel(void (*func)(int, void *), size_t ncpu, void *arg)
     int throttle = 0;
 
     struct parallel_info *parent;
+    struct parallel_info root = {0, 0, 0, 0, 0};
 
     rt_thread_t thread;
 
@@ -567,7 +603,18 @@ bu_parallel(void (*func)(int, void *), size_t ncpu, void *arg)
 	    bu_log("CPU affinity disabled.\n");
     }
 
-    parent = parallel_mapping(PARALLEL_GET, bu_parallel_id(), ncpu);
+    /*
+     * Threads not created by bu_parallel() all have ID zero.  Give each
+     * top-level invocation its own parent context instead of making unrelated
+     * callers share mapping[0].  Worker records remain in the mapping so
+     * recursive invocations can inherit their parent's limit.
+     */
+    if (bu_parallel_id() > 0) {
+	parent = parallel_mapping(PARALLEL_GET, bu_parallel_id(), ncpu);
+    } else {
+	root.lim = ncpu;
+	parent = &root;
+    }
 
     if (ncpu < 1) {
 	/* want to maximize threading potential, but have to throttle
@@ -597,8 +644,6 @@ bu_parallel(void (*func)(int, void *), size_t ncpu, void *arg)
     } else if (ncpu == 1) {
 	/* single cpu case bypasses nearly everything, just invoke */
 	(*func)(0, arg);
-
-	parallel_mapping(PARALLEL_PUT, bu_parallel_id(), 0); /* correct? we never got. */
 	return;
     }
 
@@ -625,14 +670,16 @@ bu_parallel(void (*func)(int, void *), size_t ncpu, void *arg)
     /* Give the thread system a hint... */
     {
 	static size_t concurrency = 0; /* Max concurrency we have set */
+	int set_concurrency_error = 0;
+	bu_semaphore_acquire(BU_SEM_THREAD);
 	if (ncpu > concurrency) {
-	    if (thr_setconcurrency((int)ncpu)) {
-		bu_log("ERROR parallel.c/bu_parallel(): thr_setconcurrency(%zd) failed\n", ncpu);
-		/* Not much to do, lump it */
-	    } else {
+	    set_concurrency_error = thr_setconcurrency((int)ncpu);
+	    if (!set_concurrency_error)
 		concurrency = ncpu;
-	    }
 	}
+	bu_semaphore_release(BU_SEM_THREAD);
+	if (set_concurrency_error)
+	    bu_log("ERROR parallel.c/bu_parallel(): thr_setconcurrency(%zd) failed\n", ncpu);
     }
 
     /* Create the threads */
@@ -642,6 +689,7 @@ bu_parallel(void (*func)(int, void *), size_t ncpu, void *arg)
 	if (thr_create(0, 0, parallel_interface_arg, &thread_context[x], 0, &thread)) {
 	    bu_log("ERROR: bu_parallel: thr_create(0x0, 0x0, 0x%x, 0x0, 0, 0x%x) failed for processor thread # %d\n",
 		   parallel_interface_arg, &thread, x);
+	    parallel_mapping(PARALLEL_PUT, thread_context[x].cpu_id, 0);
 	    /* Not much to do, lump it */
 	} else {
 	    if (UNLIKELY(bu_debug & BU_DEBUG_PARALLEL))
@@ -683,7 +731,7 @@ bu_parallel(void (*func)(int, void *), size_t ncpu, void *arg)
 	    }
 	}
 
-	if ((thread_tbl[i] != (rt_thread_t)-1) && i < nthreadc) {
+	if (i >= nthreadc) {
 	    bu_log("bu_parallel(): unknown thread %d completed.\n",
 		   thread);
 	}
@@ -714,6 +762,7 @@ bu_parallel(void (*func)(int, void *), size_t ncpu, void *arg)
 	if (pthread_create(&thread, &attrs, parallel_interface_arg, &thread_context[x])) {
 	    bu_log("ERROR: bu_parallel: pthread_create(0x0, 0x0, 0x%lx, 0x0, 0, %p) failed for processor thread # %zu\n",
 		   (unsigned long int)parallel_interface_arg, (void *)&thread, x);
+	    parallel_mapping(PARALLEL_PUT, thread_context[x].cpu_id, 0);
 
 	} else {
 	    if (UNLIKELY(bu_debug & BU_DEBUG_PARALLEL)) {
@@ -781,24 +830,23 @@ bu_parallel(void (*func)(int, void *), size_t ncpu, void *arg)
 	    0,
 	    NULL);
 
-	thread_tbl[i] = thread;
-	nthreadc++;
-
-	/* Ensure that all successfully created threads are in sequential order.*/
-	if (thread_tbl[i] == NULL) {
+	if (thread == NULL) {
 	    bu_log("bu_parallel(): Error in CreateThread, Win32 error code %d.\n", GetLastError());
-	    --nthreadc;
+	    parallel_mapping(PARALLEL_PUT, thread_context[i].cpu_id, 0);
+	} else {
+	    /* Keep successfully created handles contiguous for joining. */
+	    thread_tbl[nthreadc++] = thread;
 	}
     }
 
-
-    {
-	/* Wait for other threads in the array */
-	DWORD returnCode;
-	returnCode = WaitForMultipleObjects((DWORD)nthreadc, thread_tbl, TRUE, INFINITE);
-	if (returnCode == WAIT_FAILED) {
-	    bu_log("bu_parallel(): Error in WaitForMultipleObjects, Win32 error code %d.\n", GetLastError());
-	}
+    /*
+     * Wait for each worker individually.  WaitForMultipleObjects() is
+     * limited to MAXIMUM_WAIT_OBJECTS handles, which is smaller than the
+     * public MAX_PSW limit on Windows.
+     */
+    for (x = 0; x < nthreadc; x++) {
+	if (WaitForSingleObject(thread_tbl[x], INFINITE) == WAIT_FAILED)
+	    bu_log("bu_parallel(): Error in WaitForSingleObject, Win32 error code %d.\n", GetLastError());
     }
 
     nthreade = 0;

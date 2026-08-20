@@ -153,24 +153,28 @@ nmg_nurb_s_flat(struct face_g_snurb *srf, fastf_t epsilon)
 	int offset;
 
 	HMOVE(h1, mesh_ptr);
-	HDIVIDE(p1, h1);
+	HDIVIDE(h1, h1);
+	VMOVE(p1, h1);
 
 	offset = (srf->s_size[1] - 1) * coords;
 	HMOVE(h2, mesh_ptr + offset);
-	HDIVIDE(p2, h2);
+	HDIVIDE(h2, h2);
+	VMOVE(p2, h2);
 
 	offset =
 	    ((srf->s_size[1] *
 	      (srf->s_size[0] - 1)) +
 	     (srf->s_size[1] - 1)) * coords;
 	HMOVE(h3, mesh_ptr + offset);
-	HDIVIDE(p3, h3);
+	HDIVIDE(h3, h3);
+	VMOVE(p3, h3);
 
 	offset =
 	    (srf->s_size[1] *
 	     (srf->s_size[0] - 1)) * coords;
 	HMOVE(h4, mesh_ptr + offset);
-	HDIVIDE(p4, h4);
+	HDIVIDE(h4, h4);
+	VMOVE(p4, h4);
     }
 
     VSUB2(v1, p2, p1);
@@ -217,7 +221,8 @@ nmg_nurb_crv_flat(fastf_t *crv, int size, int pt_type)
 	VMOVE(p1, crv);
     } else {
 	HMOVE(h1, crv);
-	HDIVIDE(p1, h1);
+	HDIVIDE(h1, h1);
+	VMOVE(p1, h1);
     }
 
     length = 0.0;
@@ -231,7 +236,8 @@ nmg_nurb_crv_flat(fastf_t *crv, int size, int pt_type)
 	    VMOVE(p2, (crv + (i * coords)));
 	} else {
 	    HMOVE(h2, (crv + (i * coords)));
-	    HDIVIDE(p2, h2);
+	    HDIVIDE(h2, h2);
+	    VMOVE(p2, h2);
 	}
 
 	VSUB2(ln, p1, p2);

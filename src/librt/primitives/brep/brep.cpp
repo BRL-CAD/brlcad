@@ -43,7 +43,7 @@
 
 #include "bu/cv.h"
 #include "bu/opt.h"
-#include "bu/time.h"
+#include "bu/datetime.h"
 #include "brep.h"
 #include "bn/mat.h"
 #include "bn/dvec.h"
@@ -67,6 +67,7 @@ extern "C" {
     int rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip);
     void rt_brep_print(const struct soltab *stp);
     int rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead);
+    void rt_brep_vshot(struct soltab *stp[], struct xray *rp[], struct seg *segp, int n, struct application *ap);
     void rt_brep_norm(struct hit *hitp, struct soltab *stp, struct xray *rp);
     void rt_brep_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp);
     void rt_brep_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp);
@@ -82,7 +83,7 @@ extern "C" {
     int rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip);
     void rt_brep_ifree(struct rt_db_internal *ip);
     int rt_brep_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local);
-    void rt_brep_make(const struct rt_functab *ftp, struct rt_db_internal *intern);
+    int rt_brep_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char *variant, const point_t origin, double scale);
     int rt_brep_params(struct pc_pc_set *, const struct rt_db_internal *ip);
     RT_EXPORT extern int rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, const struct rt_db_internal *ip2, db_op_t operation);
     struct rt_selection_set *rt_brep_find_selections(const struct rt_db_internal *ip, const struct rt_selection_query *query);
@@ -1487,6 +1488,16 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 
 
 /**
+ * Baseline flat-array vshot: delegates to the scalar shot via rt_vshot_via_shot().
+ */
+void
+rt_brep_vshot(struct soltab *stp[], struct xray *rp[], struct seg *segp, int n, struct application *ap)
+{
+    rt_vshot_via_shot(rt_brep_shot, stp, rp, segp, n, ap);
+}
+
+
+/**
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
@@ -2316,6 +2327,7 @@ RT_MemoryArchive::Flush()
 }
 
 #define ON_opennurbs4_id { 0x17b3ecda, 0x17ba, 0x4e45,{ 0x9e, 0x67, 0xa2, 0xb8, 0xd9, 0xbe, 0x52, 0xd } }
+#define ON_brlcad_default_layer_id { 0xc4b29a7d, 0x766e, 0x478f,{ 0xa4, 0xe2, 0x5b, 0x61, 0xd4, 0xaf, 0x23, 0x91 } }
 
 static void
 brep_dbi2on(const struct rt_db_internal *intern, ONX_Model& model)
@@ -2331,7 +2343,21 @@ brep_dbi2on(const struct rt_db_internal *intern, ONX_Model& model)
     model.m_layer_table.Reserve(1);
     model.m_layer_table.Append(default_layer);
 #endif
-    model.AddDefaultLayer(L"Default", ON_Color::UnsetColor);
+    /* ONX_Model::AddDefaultLayer assigns a random component UUID.  A BREP
+     * primitive serializes a self-contained model, so that otherwise makes
+     * identical BRL-CAD databases differ on every write. */
+    const ON_UUID default_layer_id = ON_brlcad_default_layer_id;
+    ON_Layer default_layer;
+    default_layer.SetId(default_layer_id);
+    default_layer.SetIndex(0);
+    default_layer.SetName(L"Default");
+    default_layer.SetColor(ON_Color::UnsetColor);
+    model.AddModelComponent(default_layer, true);
+    /* Keep both forms coherent: SetCurrentLayerId() clears the legacy index,
+     * while SetV5CurrentLayerIndex() preserves the UUID.  BREP primitives are
+     * currently serialized as version 4 archives, which use the index. */
+    model.m_settings.SetCurrentLayerId(default_layer_id);
+    model.m_settings.SetV5CurrentLayerIndex(0);
 
 #if 0
     ON_DimStyle default_style;
@@ -2350,7 +2376,16 @@ brep_dbi2on(const struct rt_db_internal *intern, ONX_Model& model)
     delete gc;
     model.AddModelComponent(ngc);
 
-    model.m_properties.m_RevisionHistory.NewRevision();
+    /* ONX_Model::Write creates a current-time revision when the count is
+     * zero.  BREP primitives do not need an edit history; use a fixed valid
+     * epoch so serialization is reproducible. */
+    ON_3dmRevisionHistory &revision = model.m_properties.m_RevisionHistory;
+    revision = ON_3dmRevisionHistory::Empty;
+    revision.m_revision_count = 1;
+    revision.m_create_time.tm_year = 100;
+    revision.m_create_time.tm_mon = 0;
+    revision.m_create_time.tm_mday = 1;
+    revision.m_last_edit_time = revision.m_create_time;
     model.m_properties.m_Application.m_application_name = "BRL-CAD B-Rep primitive";
     //model.Polish();
 }
@@ -2551,6 +2586,8 @@ rt_brep_ifree(struct rt_db_internal *ip)
 
     bi = (struct rt_brep_internal*)ip->idb_ptr;
     RT_BREP_CK_MAGIC(bi);
+    delete bi->brep;
+    bi->brep = NULL;
     bu_free(bi, "rt_brep_internal free");
     ip->idb_ptr = ((void *)0);
 }
@@ -2593,8 +2630,8 @@ rt_brep_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbos
     return 0;
 }
 
-void
-rt_brep_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
+int
+rt_brep_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char *UNUSED(variant), const point_t UNUSED(origin), double UNUSED(scale))
 {
     struct rt_brep_internal* ip;
 
@@ -2609,6 +2646,8 @@ rt_brep_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
 
     ip->magic = RT_BREP_INTERNAL_MAGIC;
     ip->brep = (ON_Brep *)brep_create();
+
+    return BRLCAD_OK;
 }
 
 

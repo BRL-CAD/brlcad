@@ -22,9 +22,6 @@ set(
   dodraw.c
   doevent.c
   dozoom.c
-  edarb.c
-  edars.c
-  edpipe.c
   edsol.c
   f_db.c
   facedef.c
@@ -34,6 +31,7 @@ set(
   mater.c
   menu.c
   mged.c
+  mged_impl.cpp
   mover.c
   overlay.c
   plot.c
@@ -93,6 +91,16 @@ if(BRLCAD_ENABLE_TCL)
   # MGED needs the tclIndex and pkgIndex files set up correctly
   add_dependencies(mged TclIndexBld)
 
+  brlcad_add_test(
+    NAME mged_gqa_separate_prefix
+    COMMAND
+      "${CMAKE_COMMAND}"
+      "-DMGED=$<TARGET_FILE:mged>"
+      "-DDB=${CMAKE_SOURCE_DIR}/src/libged/tests/draw/moss.g"
+      "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}"
+      -P "${CMAKE_CURRENT_SOURCE_DIR}/test_gqa_prefix.cmake"
+  )
+
   # MGED is one of the programs that gets a start menu entry
   set_property(
     INSTALL "${BIN_DIR}/$<TARGET_FILE_NAME:mged>"
@@ -110,6 +118,7 @@ brlcad_addexec(cad_parea cad_parea.c libbu)
 set(
   mged_ignore_files
   CMakeLists.txt
+  LIBGED_COMMAND_COVERAGE.md
   cmd.h
   f_cmd.h
   menu.h
@@ -117,8 +126,10 @@ set(
   mged.ico
   mged.rc
   mged_dm.h
+  mged_impl.h
   mged_wdb.h
   sedit.h
+  test_gqa_prefix.cmake
 )
 cmakefiles(${mged_ignore_files})
 

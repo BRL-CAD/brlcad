@@ -150,6 +150,22 @@ rt_joint_shot(struct soltab *stp, struct xray *rp, struct application *ap, struc
 
 
 /**
+ * Vectorized rt_joint_shot(): joints are not solid geometry, so every
+ * ray in the batch misses.
+ */
+C_DECL void
+rt_joint_vshot(struct soltab **stp, struct xray **UNUSED(rp), struct seg *segp, int n, struct application *ap)
+{
+    int i;
+    if (ap) RT_CK_APPLICATION(ap);
+    for (i = 0; i < n; i++) {
+	if (stp[i] == 0) continue;		/* skip this ray */
+	segp[i].seg_stp = (struct soltab *)0;	/* always MISS */
+    }
+}
+
+
+/**
  * Given ONE ray distance, return the normal and entry/exit point.
  * The normal is already filled in.
  */
@@ -526,8 +542,8 @@ rt_joint_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
     return -1;
 }
 
-C_DECL void
-rt_joint_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
+C_DECL int
+rt_joint_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char *UNUSED(variant), const point_t origin, double UNUSED(scale))
 {
     struct rt_joint_internal* ip;
 
@@ -541,11 +557,13 @@ rt_joint_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
     intern->idb_ptr = (void *)ip;
 
     ip->magic = RT_JOINT_INTERNAL_MAGIC;
+    VMOVE(ip->location, origin);
     struct bu_vls empty = BU_VLS_INIT_ZERO;
     ip->reference_path_1 = empty;
     ip->reference_path_2 = empty;
     VSET(ip->vector1, 0.0, 1.0, 0.0);
     VSET(ip->vector2, 0.0, 1.0, 0.0);
+    return BRLCAD_OK;
 }
 
 

@@ -28,10 +28,11 @@
 #include "raytrace.h"
 #include "rt/geom.h"
 #include "brep.h"
+#include "primitives/brep/primitive_brep.h"
 
 
 extern "C" void
-rt_ehy_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
+rt_ehy_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
 {
     struct rt_ehy_internal *eip;
 
@@ -63,51 +64,9 @@ rt_ehy_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 	return;
     }
 
-    point_t p1_origin;
-    ON_3dPoint plane1_origin;
-    ON_3dVector plane_x_dir, plane_y_dir;
-
-    //  First, find plane in 3 space corresponding to the bottom face of the EPA.
-
-    vect_t x_dir, y_dir;
-
-    VMOVE(x_dir, eip->ehy_Au);
+    vect_t y_dir;
     VCROSS(y_dir, eip->ehy_Au, eip->ehy_H);
     VUNITIZE(y_dir);
-
-    VMOVE(p1_origin, eip->ehy_V);
-    plane1_origin = ON_3dPoint(p1_origin);
-    plane_x_dir = ON_3dVector(x_dir);
-    plane_y_dir = ON_3dVector(y_dir);
-    const ON_Plane ehy_bottom_plane(plane1_origin, plane_x_dir, plane_y_dir);
-
-    //  Next, create an ellipse in the plane corresponding to the edge of the ehy.
-
-    ON_Ellipse ellipse1(ehy_bottom_plane, eip->ehy_r1, eip->ehy_r2);
-    ON_NurbsCurve* ellcurve1 = ON_NurbsCurve::New();
-    ellipse1.GetNurbForm((*ellcurve1));
-    ellcurve1->SetDomain(0.0, 1.0);
-
-    // Generate the bottom cap
-    ON_SimpleArray<ON_Curve*> boundary;
-    boundary.Append(ON_Curve::Cast(ellcurve1));
-    ON_PlaneSurface* bp = new ON_PlaneSurface();
-    bp->m_plane = ehy_bottom_plane;
-    bp->SetDomain(0, -100.0, 100.0);
-    bp->SetDomain(1, -100.0, 100.0);
-    bp->SetExtents(0, bp->Domain(0));
-    bp->SetExtents(1, bp->Domain(1));
-    (*b)->m_S.Append(bp);
-    const int bsi = (*b)->m_S.Count() - 1;
-    ON_BrepFace& bface = (*b)->NewFace(bsi);
-    (*b)->NewPlanarFaceLoop(bface.m_face_index, ON_BrepLoop::outer, boundary, true);
-    const ON_BrepLoop* bloop = (*b)->m_L.Last();
-    bp->SetDomain(0, bloop->m_pbox.m_min.x, bloop->m_pbox.m_max.x);
-    bp->SetDomain(1, bloop->m_pbox.m_min.y, bloop->m_pbox.m_max.y);
-    bp->SetExtents(0, bp->Domain(0));
-    bp->SetExtents(1, bp->Domain(1));
-    (*b)->SetTrimIsoFlags(bface);
-    delete ellcurve1;
 
     //  Now, the hard part.  Need an elliptical hyperbolic NURBS surface
     //  First step is to create a nurbs curve.
@@ -154,56 +113,115 @@ rt_ehy_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     hyp_surf->m_curve = hypbnurbscurve;
     hyp_surf->m_axis = revaxis;
     hyp_surf->m_angle = ON_Interval(0, 2*ON_PI);
+    hyp_surf->m_t = hyp_surf->m_angle;
+    hyp_surf->m_bTransposed = false;
+    hyp_surf->BoundingBox();
 
-    // Get the NURBS form of the surface
     ON_NurbsSurface *ehycurvedsurf = ON_NurbsSurface::New();
-    hyp_surf->GetNurbForm(*ehycurvedsurf, 0.0);
-
+    if (hyp_surf->GetNurbForm(*ehycurvedsurf, 0.0) <= 0) {
+	delete ehycurvedsurf;
+	delete hyp_surf;
+	delete tnurbscurve;
+	delete bcurve;
+	bu_log("rt_ehy_brep: unable to construct exact NURBS side surface!\n");
+	return;
+    }
     delete hyp_surf;
     delete tnurbscurve;
     delete bcurve;
 
-    // Transformations
+    /* Map the canonical circular NURBS into the EHY's world-space elliptical
+     * frame before creating trims.  A nonuniform transform of an already
+     * trimmed plane would change its parameterization without changing its
+     * 2D trim curves. */
+    vect_t Hu;
+    VSCALE(Hu, eip->ehy_H, 1/MAGNITUDE(eip->ehy_H));
+    const double yscale = eip->ehy_r2 / eip->ehy_r1;
+    ON_Xform transform(1.0);
+    transform[0][0] = eip->ehy_Au[0];
+    transform[0][1] = yscale * y_dir[0];
+    transform[0][2] = Hu[0];
+    transform[0][3] = eip->ehy_V[0];
+    transform[1][0] = eip->ehy_Au[1];
+    transform[1][1] = yscale * y_dir[1];
+    transform[1][2] = Hu[1];
+    transform[1][3] = eip->ehy_V[1];
+    transform[2][0] = eip->ehy_Au[2];
+    transform[2][1] = yscale * y_dir[2];
+    transform[2][2] = Hu[2];
+    transform[2][3] = eip->ehy_V[2];
 
-    for (int i = 0; i < ehycurvedsurf->CVCount(0); i++) {
-	for (int j = 0; j < ehycurvedsurf->CVCount(1); j++) {
-	    point_t cvpt;
-	    ON_4dPoint ctrlpt;
-	    ehycurvedsurf->GetCV(i, j, ctrlpt);
 
-	    // Scale the control points of the
-	    // resulting surface to map to the shorter axis.
-	    VSET(cvpt, ctrlpt.x, ctrlpt.y * eip->ehy_r2/eip->ehy_r1, ctrlpt.z);
-
-	    // Rotate according to the directions of Au and H
-	    vect_t Hu;
-	    mat_t R;
-	    point_t new_cvpt;
-
-	    VSCALE(Hu, eip->ehy_H, 1/MAGNITUDE(eip->ehy_H));
-	    MAT_IDN(R);
-	    VMOVE(&R[0], eip->ehy_Au);
-	    VMOVE(&R[4], y_dir);
-	    VMOVE(&R[8], Hu);
-	    VEC3X3MAT(new_cvpt, cvpt, R);
-	    VMOVE(cvpt, new_cvpt);
-
-	    // Translate according to V
-	    vect_t scale_v;
-	    VSCALE(scale_v, eip->ehy_V, ctrlpt.w);
-	    VADD2(cvpt, cvpt, scale_v);
-
-	    ON_4dPoint newpt = ON_4dPoint(cvpt[0], cvpt[1], cvpt[2], ctrlpt.w);
-	    ehycurvedsurf->SetCV(i, j, newpt);
-	}
+    if (!ehycurvedsurf->Transform(transform)) {
+	delete ehycurvedsurf;
+	bu_log("rt_ehy_brep: unable to transform surface into the EHY frame!\n");
+	return;
     }
 
-    (*b)->m_S.Append(ehycurvedsurf);
-    int surfindex = (*b)->m_S.Count();
-    ON_BrepFace& face = (*b)->NewFace(surfindex - 1);
-    (*b)->FlipFace(face);
-    int faceindex = (*b)->m_F.Count();
-    (*b)->NewOuterLoop(faceindex-1);
+    ON_Brep *ehy_brep = new ON_Brep();
+    const int side_surface_index = ehy_brep->AddSurface(ehycurvedsurf);
+    ON_BrepFace &side_face = ehy_brep->NewFace(side_surface_index);
+    ehy_brep->FlipFace(side_face);
+    if (!ehy_brep->NewOuterLoop(side_face.m_face_index)) {
+	delete ehy_brep;
+	bu_log("rt_ehy_brep: unable to construct side boundary loop!\n");
+	return;
+    }
+
+    /* The full revolution has one naked closed edge at its bottom and a
+     * paired seam running to the apex.  Duplicate that exact bottom edge to
+     * trim the cap, then merge the duplicate topology so the two faces share
+     * one edge rather than merely occupying the same location. */
+    int side_edge_index = -1;
+    for (int i = 0; i < ehy_brep->m_E.Count(); ++i) {
+	if (ehy_brep->m_E[i].m_ti.Count() == 1 && ehy_brep->m_E[i].IsClosed()) {
+	    if (side_edge_index >= 0) {
+		delete ehy_brep;
+		bu_log("rt_ehy_brep: side has multiple candidate bottom edges!\n");
+		return;
+	    }
+	    side_edge_index = i;
+	}
+    }
+    if (side_edge_index < 0) {
+	delete ehy_brep;
+	bu_log("rt_ehy_brep: side has no closed bottom boundary edge!\n");
+	return;
+    }
+
+    const ON_Plane bottom_plane(ON_3dPoint(eip->ehy_V),
+	ON_3dVector(eip->ehy_Au), ON_3dVector(y_dir));
+    if (!rt_brep_mate_planar_cap(*ehy_brep, side_edge_index, bottom_plane,
+	false, tol, NULL)) {
+	delete ehy_brep;
+	bu_log("rt_ehy_brep: unable to mate bottom cap to side surface!\n");
+	return;
+    }
+
+    ehy_brep->Compact();
+    ehy_brep->SetTolerancesBoxesAndFlags(false);
+    /* openNURBS can retain an unset tolerance on the shared closed ellipse
+     * after replacing the analytic side surface.  The edge and both trims
+     * are still exact; bound only that sentinel with the caller's model
+     * tolerance so structural validation can evaluate the topology. */
+    const double model_tolerance = (tol && tol->dist > 0.0) ? tol->dist : RT_LEN_TOL;
+    for (int i = 0; i < ehy_brep->m_E.Count(); ++i)
+	if (ehy_brep->m_E[i].m_tolerance < 0.0)
+	    ehy_brep->m_E[i].m_tolerance = model_tolerance;
+    ON_wString messages;
+    ON_TextLog log(messages);
+    const bool valid = ehy_brep->IsValid(&log);
+    const bool solid = ehy_brep->IsSolid();
+    if (!valid || !solid) {
+	ON_String text(messages);
+	delete ehy_brep;
+	bu_log("rt_ehy_brep: generated BRep is not a valid manifold solid "
+	    "(valid=%d, solid=%d):\n%s", valid, solid, text.Array());
+	return;
+    }
+
+    **b = *ehy_brep;
+    delete ehy_brep;
 }
 
 

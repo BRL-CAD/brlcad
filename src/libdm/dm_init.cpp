@@ -81,6 +81,7 @@ libdm_init(void)
 	char pfile[MAXPATHLEN] = {0};
 	bu_dir(pfile, MAXPATHLEN, BU_DIR_LIBEXEC, "dm", dm_filenames[i], NULL);
 	void *dl_handle;
+	bool dm_without_fb = false;
 
 	dl_handle = bu_dlopen(pfile, BU_RTLD_NOW);
 	if (!dl_handle) {
@@ -137,6 +138,7 @@ libdm_init(void)
 	    }
 	    std::string key(dname);
 	    std::transform(key.begin(), key.end(), key.begin(), [](unsigned char c){ return std::tolower(c); });
+	    dm_without_fb = (key == "plot" || key == "ps" || key == "tkswrast");
 	    if (get_dm_map().find(key) != get_dm_map().end()) {
 		bu_vls_printf(&init_msgs, "Warning - file '%s' provides backend '%s' but that backend has already been loaded, skipping\n", pfile, dname);
 		bu_dlclose(dl_handle);
@@ -153,6 +155,10 @@ libdm_init(void)
 	    const struct fb_plugin *(*plugin_info)() = (const struct fb_plugin *(*)())(intptr_t)info_val;
 	    if (!plugin_info) {
 		const char * const error_msg = bu_dlerror();
+
+		/* These backends intentionally have no framebuffer implementation. */
+		if (dm_without_fb)
+		    continue;
 
 		if (error_msg)
 		    bu_vls_printf(&init_msgs, "%s\n", error_msg);

@@ -60,7 +60,7 @@
 
 #include "bu/cv.h"
 #include "bu/opt.h"
-#include "bu/time.h"
+#include "bu/datetime.h"
 #include "bn/dvec.h"
 #include "brep.h"
 #include "./cdt.h"

@@ -355,6 +355,12 @@ brlcad_addexec(bg_trimesh_sync trimesh_sync.c "${BG_TEST_LIBS}" TEST)
 
 brlcad_add_test(NAME bg_trimesh_sync  COMMAND bg_trimesh_sync)
 
+#  ************ trimesh_split.cpp tests ***********
+
+brlcad_addexec(bg_trimesh_split_test trimesh_split.cpp "${BG_TEST_LIBS}" TEST)
+
+brlcad_add_test(NAME bg_trimesh_split COMMAND bg_trimesh_split_test)
+
 #  ************ triangle area tests ***********
 
 brlcad_addexec(bg_tri_area tri_area.c "${BG_TEST_LIBS}" TEST)
@@ -369,8 +375,14 @@ brlcad_addexec(bg_trimesh_area trimesh_area.c "${BG_TEST_LIBS}" TEST)
 #  ************ trimesh_repair tests ***********
 
 brlcad_addexec(bg_trimesh_repair trimesh_repair.cpp "${BG_TEST_LIBS}" TEST)
+target_include_directories(
+  bg_trimesh_repair SYSTEM PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/../GTE
+  ${GTE_INCLUDE_DIR}
+)
 
 brlcad_add_test(NAME bg_trimesh_repair  COMMAND bg_trimesh_repair)
+set_tests_properties(bg_trimesh_repair PROPERTIES TIMEOUT 30)
 
 #  ************ trimesh_remesh tests ***********
 
@@ -378,8 +390,16 @@ brlcad_addexec(bg_trimesh_remesh trimesh_remesh.cpp "${BG_TEST_LIBS}" TEST)
 
 brlcad_add_test(NAME bg_trimesh_remesh  COMMAND bg_trimesh_remesh)
 
+#  ************ embedded Geogram optimizer tests ***********
+
+brlcad_addexec(bg_geogram_optimizer geogram_optimizer.cpp "${BG_TEST_LIBS}" TEST)
+target_include_directories(bg_geogram_optimizer PRIVATE "${GEOGRAM_INCLUDE_DIR}")
+
+brlcad_add_test(NAME bg_geogram_optimizer COMMAND bg_geogram_optimizer)
+
 cmakefiles(
   bg_test.c.in
+  geogram_optimizer.cpp
   plane_dist.c
   plane_isect.c
   plane_pt.c

@@ -12,8 +12,16 @@ The syntax of *oed* is fairly straightforward: footnote:[Note: _lhs_ is an abbre
 
 [source]
 ----
-oed {path_lhs} {path_rhs}
+oed {path_lhs} [{path_rhs}]
 ----
+
+When only __path_lhs__ is specified, it is the complete path to the
+object being edited. The matrix immediately above its final component is
+selected, and the center of that object's bounding box is used as the
+editing keypoint. When __path_rhs__ is also specified, the two paths are
+joined conceptually: the matrix between the final component of
+__path_lhs__ and the first component of __path_rhs__ is selected, and the
+primitive at the end of __path_rhs__ supplies the keypoint.
 
 *oed* serves primarily to make working with combinations and regions practical when there are large numbers of primitives involved. It is of course possible to move primitives one by one to desired locations, but the process is extremely tedious for any non-trivial combination of primitives and the result is inflexible - for example,if the modeler wished to return the primitives in a combination to their original position after moving them _as primitives_ the process of moving them would need to be reversed one by one as well. Barring being able to do everything perfectly the first time, individual primitive placement is impractical.
 
@@ -57,14 +65,22 @@ In the "file system" of a BRL-CAD object combinations can hold combinations, reg
     
 ....
 
-Note that if we wish to operate on this combination it is not enough to specify /lollipop/outer-candy-shell.r for the lhs and outer-candy-sphere.c for the rhs - _combinations and regions do not themselves have default control points._ In other words, if you want to rotate a combination there must be a point around which that rotation occurs - a combination will have no default point assigned. This is the reason the rhs must always end with a primitive - even though the intent is not to edit the primitive, information necessary for most operations on the combination will use information (such as default keypoint settings) that the primitive _does_ have. So,
+To operate on this combination without choosing a primitive keypoint, use
+the complete object path as the single argument:
 
 
 ....
-oed /lollipop/outer-candy-shell.r outer-candy-sphere.c
+oed /lollipop/outer-candy-shell.r/outer-candy-sphere.c
 ....
 
-is not enough. Either
+This form uses the center of the bounding box of
+__outer-candy-sphere.c__ as the keypoint. To use a primitive's default
+keypoint instead, split the path at the matrix to edit and supply a right
+hand path ending in that primitive. For example, any of the following
+selects the matrix between __outer-candy-shell.r__ and
+__outer-candy-sphere.c__ while obtaining the keypoint from a different
+primitive:
+
 
 
 ....
@@ -86,7 +102,10 @@ or
 oed /lollipop/outer-candy-shell.r outer-candy-sphere.c/stick.s
 ....
 
-is needed to have *oed* actually enter edit mode on lollipop's outer-candy-sphere.c. Because they are primitives in the outer-candy-sphere.c combination, outer-candy-sphere.s, core.s and stick.s are all legal - there will be illustrations later of the consequences of different primitive choices.
+Because they are primitives in the outer-candy-sphere.c combination,
+outer-candy-sphere.s, core.s and stick.s are all legal reference shapes -
+there will be illustrations later of the consequences of different
+primitive choices.
 
 To demonstrate basic *oed* behavior an example is in order. footnote:[Bear in mind that these examples will be using very basic primitives for the sake of simplicity and it is not guaranteed that they will behave well for things like raytracing. In this document raytraced screenshots are included to aid visualization. Most of them are simple but there are sometimes a number of extra steps needed to actually allow the objects to be raytraced with the results seen here.] footnote:[__path_lhs__ will be set to "/" for these simple cases - this means either we will be working with combinations that are not contained within any other combination/region or the intent is to transform _every_ instance of the combination/region present regardless of where it appears in the tree structure. "/" denotes the toplevel lhs path, or the "root of all trees" in the database. Because every object in the database exists "on its own" at the top level as well as inside tree structures, operating on any object with a "/" path_lhs will always edit the matrix associated with that particular combination/region independently of any other transformations applied within tree structures.]
 
@@ -381,7 +400,7 @@ Now the primitives have changed, and the combination is back to being just a boo
 [[Right_Hand_Path_Section]]
 == Right Hand Path Selection - Reasons and Implications
 
-Notice in the previous section that sphere.s was selected when using the *oed* command as part of the path_rhs. What would the impact have been had cube.s been selected instead?
+Notice in the previous section that sphere.s was explicitly selected as part of the *oed* __path_rhs__. What would the impact have been had cube.s been selected instead?
 
 Using the commands shown below, clear the old object1.c tree from MGED, re-insert the primitives, and make a combination as before. This time make two objects using the same primitives, for later use. At the moment, only the object2.c combination will be displayed.
 
@@ -522,13 +541,22 @@ object2.c:  --
 
 
 
-Selection of a particular primitive when using *oed* will depend on the particular situation. Combinations do not have control points of their own, and thus cannot provide any basis for these operations - a primitive MUST be supplied for every *oed* operation.
+Selection of a particular primitive when using the two-path form of *oed*
+will depend on the particular situation. If no primitive has an
+appropriate default keypoint, use the one-path form to select the object's
+bounding-box center or set the keypoint explicitly after entering object
+edit mode.
 
 
 [[Flexible_Manipulation]]
 == Flexible Manipulation with keypoint
 
-It might be reasonable to expect the *oed* command to use the center of the combination bounding box as a default if no primitive is supplied and/or take as an optional parameter an explicit keypoint setting, but this is not the current behavior of BRL-CAD - a primitive is required. As seen in the previous section, the *oed* uses the specified primitive to select a point from which translations/rotations/etc. are defined. BRL-CAD's term for this point is the _keypoint_. For cases where it is not practical to select a primitive that will provide the correct keypoint, BRL-CAD does offer an option for explicitly setting the keypoint.
+The one-path form of *oed* uses the center of the specified object's
+bounding box as the point from which translations, rotations, and scaling
+are defined. The two-path form instead derives this point from the
+specified primitive. BRL-CAD's term for this point is the _keypoint_. For
+cases where neither default is appropriate, BRL-CAD also offers an option
+for explicitly setting the keypoint.
 
 For example, to rotate object2.c around the z axis intersecting point (2,2,0) the keypoint must be set explicitly - this is not a point that can be selected by identifying a primitive.
 
@@ -550,7 +578,7 @@ keypoint
 
 
 ....
-(null) (-5, 5, 5)
+V (-5, 5, 5)
 ....
 
 In order to set a new keypoint, we simply supply an x y z style coordinate option to the keypoint command:
@@ -887,9 +915,11 @@ The major points of the *oed* command are:
 
 * *oed* is the standard tool when working with combinations and regions instead of primitives.
 * Object edit mode does not alter primitives directly but instead works on a transformation matrix that BRL-CAD uses when interpreting the primitive.
-* BRL-CAD requires that a primitive shape be supplied at the end of the __path_rhs__ for all object edit mode operations.
+* If __path_rhs__ is omitted, __path_lhs__ is the complete path to the object being edited and its bounding-box center is the keypoint.
+
+* If __path_rhs__ is supplied, it must end in a primitive shape whose default keypoint will be used for object editing.
 * *push* is used to force changes corresponding to the transformation down to the primitives, but the operation is destructive in that it replaces the previous information defining the primitive.
-* _keypoint_ is used in object edit mode as the point moved by *translate* operations and around with rotations occur - it is set from the primitive supplied to *oed* but can also be set manually when in object edit mode with the *keynote* command.
+* _keypoint_ is used in object edit mode as the point moved by *translate* operations and around which rotations occur. It is set from the object's bounding-box center or the primitive supplied to *oed*, and can also be set manually in object edit mode with the *keypoint* command.
 * When editing objects inside other objects it is important to remember to use __path_lhs__ to precisely identify the shape to be worked on - subtle and messy errors are possible if the wrong path is used.
 * When using *oed* in a script, the object must be in view so a *B* or *draw* command to select the object must be entered before using the *oed* command on it.
 

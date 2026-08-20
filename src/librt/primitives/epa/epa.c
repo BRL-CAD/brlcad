@@ -502,6 +502,130 @@ rt_epa_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 
 
 /**
+ * Vectorized counterpart to rt_epa_shot().
+ *
+ * Intersect a batch of n rays, each against its own epa soltab, writing
+ * exactly one seg per ray into the caller-supplied flat segp[] array.  A
+ * miss is flagged with segp[i].seg_stp == NULL; stp[i] == NULL signals a
+ * ray to skip.
+ *
+ * Unlike the scalar shot, no seg is acquired from the resource free list
+ * and no seg-list linkage is performed: results stream directly into the
+ * contiguous segp[] array.  Eliminating that per-hit allocation and list
+ * traffic is the data-coherency benefit of batching.  The per-ray
+ * arithmetic is a verbatim copy of rt_epa_shot() so the two paths agree
+ * to the bit; hit_vpriv/hit_surfno are preserved for rt_epa_norm().
+ */
+C_DECL void
+rt_epa_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
+/* An array of solid pointers */
+/* An array of ray pointers */
+/* array of segs (results returned) */
+/* Number of ray/object pairs */
+{
+    int i;
+
+    if (ap) RT_CK_APPLICATION(ap);
+
+    for (i = 0; i < n; i++) {
+	struct epa_specific *epa;
+	vect_t dprime;		/* D' */
+	vect_t pprime;		/* P' */
+	vect_t xlated;		/* translated vector */
+	fastf_t k1, k2;		/* distance constants of solution */
+	struct hit hits[3] = {RT_HIT_INIT_ZERO, RT_HIT_INIT_ZERO, RT_HIT_INIT_ZERO};
+	struct hit *hitp;
+
+	if (stp[i] == 0) continue;		/* skip this ray */
+	segp[i].seg_stp = (struct soltab *)0;	/* assume MISS */
+
+	epa = (struct epa_specific *)stp[i]->st_specific;
+	hitp = &hits[0];
+
+	/* out, Mat, vect */
+	MAT4X3VEC(dprime, epa->epa_SoR, rp[i]->r_dir);
+	VSUB2(xlated, rp[i]->r_pt, epa->epa_V);
+	MAT4X3VEC(pprime, epa->epa_SoR, xlated);
+
+	/* Find roots of the equation, using formula for quadratic */
+	{
+	    fastf_t a, b, c;	/* coeffs of polynomial */
+	    fastf_t disc;	/* disc of radical */
+
+	    a = dprime[X] * dprime[X] + dprime[Y] * dprime[Y];
+	    b = 2*(dprime[X] * pprime[X] + dprime[Y] * pprime[Y])
+		- dprime[Z];
+	    c = pprime[X] * pprime[X]
+		+ pprime[Y] * pprime[Y] - pprime[Z] - 1.0;
+	    if (!NEAR_ZERO(a, RT_PCOEF_TOL)) {
+		disc = b*b - 4 * a * c;
+		if (disc > 0) {
+		    disc = sqrt(disc);
+
+		    k1 = (-b + disc) / (2.0 * a);
+		    k2 = (-b - disc) / (2.0 * a);
+
+		    VJOIN1(hitp->hit_vpriv, pprime, k1, dprime);	/* hit' */
+		    if (hitp->hit_vpriv[Z] <= 0.0) {
+			hitp->hit_magic = RT_HIT_MAGIC;
+			hitp->hit_dist = k1;
+			hitp->hit_surfno = EPA_NORM_BODY;	/* compute N */
+			hitp++;
+		    }
+
+		    VJOIN1(hitp->hit_vpriv, pprime, k2, dprime);	/* hit' */
+		    if (hitp->hit_vpriv[Z] <= 0.0) {
+			hitp->hit_magic = RT_HIT_MAGIC;
+			hitp->hit_dist = k2;
+			hitp->hit_surfno = EPA_NORM_BODY;	/* compute N */
+			hitp++;
+		    }
+		}
+	    } else if (!NEAR_ZERO(b, RT_PCOEF_TOL)) {
+		k1 = -c/b;
+		VJOIN1(hitp->hit_vpriv, pprime, k1, dprime);	/* hit' */
+		if (hitp->hit_vpriv[Z] <= 0.0) {
+		    hitp->hit_magic = RT_HIT_MAGIC;
+		    hitp->hit_dist = k1;
+		    hitp->hit_surfno = EPA_NORM_BODY;	/* compute N */
+		    hitp++;
+		}
+	    }
+	}
+
+	/* Check for hitting the top plate. */
+	if (hitp == &hits[1] && !ZERO(dprime[Z])) {
+	    /* 1 hit so far, this is worthwhile */
+	    k1 = -pprime[Z] / dprime[Z];		/* top plate */
+
+	    VJOIN1(hitp->hit_vpriv, pprime, k1, dprime);	/* hit' */
+	    if (hitp->hit_vpriv[X] * hitp->hit_vpriv[X] +
+		hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y] <= 1.0) {
+		hitp->hit_magic = RT_HIT_MAGIC;
+		hitp->hit_dist = k1;
+		hitp->hit_surfno = EPA_NORM_TOP;	/* -H */
+		hitp++;
+	    }
+	}
+
+	if (hitp != &hits[2])
+	    continue;		/* MISS */
+
+	segp[i].seg_stp = stp[i];
+	if (hits[0].hit_dist < hits[1].hit_dist) {
+	    /* entry is [0], exit is [1] */
+	    segp[i].seg_in = hits[0];		/* struct copy */
+	    segp[i].seg_out = hits[1];		/* struct copy */
+	} else {
+	    /* entry is [1], exit is [0] */
+	    segp[i].seg_in = hits[1];		/* struct copy */
+	    segp[i].seg_out = hits[0];		/* struct copy */
+	}
+    }
+}
+
+
+/**
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 C_DECL void
@@ -2105,8 +2229,8 @@ rt_epa_ifree(struct rt_db_internal *ip)
     ip->idb_ptr = ((void *)0);	/* sanity */
 }
 
-C_DECL void
-rt_epa_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
+C_DECL int
+rt_epa_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char* UNUSED(variant), const point_t origin, double scale)
 {
     struct rt_epa_internal* epa_ip;
 
@@ -2120,11 +2244,12 @@ rt_epa_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
     intern->idb_ptr = (void *)epa_ip;
 
     epa_ip->epa_magic = RT_EPA_INTERNAL_MAGIC;
-    VSETALL(epa_ip->epa_V, 0);
-    VSET(epa_ip->epa_H, 0.0, 0.0, 1.0);
+    VSET(epa_ip->epa_V, origin[X], origin[Y], origin[Z]-scale*0.5);
+    VSET(epa_ip->epa_H, 0.0, 0.0, scale);
     VSET(epa_ip->epa_Au, 0.0, 1.0, 0.0);
-    epa_ip->epa_r1 = 1.0;
-    epa_ip->epa_r2 = 1.0;
+    epa_ip->epa_r1 = scale*0.5;
+    epa_ip->epa_r2 = scale*0.25;
+    return BRLCAD_OK;
 }
 
 
@@ -2334,6 +2459,63 @@ rt_epa_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int
     return BRLCAD_OK;
 }
 
+int
+rt_epa_functab_validate(struct bu_vls *error_msg, const struct rt_db_internal *ip, const struct bn_tol *tol)
+{
+    struct rt_epa_internal *epa;
+    fastf_t mag_h, f;
+    int issues = 0;
+    const char *comma = "";
+
+    RT_CK_DB_INTERNAL(ip);
+    epa = (struct rt_epa_internal *)ip->idb_ptr;
+    RT_EPA_CK_MAGIC(epa);
+
+    if (!tol) {
+        static const struct bn_tol default_tol = BN_TOL_INIT_TOL;
+        tol = &default_tol;
+    }
+
+    mag_h = MAGNITUDE(epa->epa_H);
+
+    bu_vls_printf(error_msg, "[");
+
+    if (NEAR_ZERO(mag_h, tol->dist)) {
+        bu_vls_printf(error_msg, "%s{\"problem_type\":\"zero_length_h_vector\"}", comma);
+        comma = ",";
+        issues++;
+    }
+
+    if (!NEAR_EQUAL(MAGSQ(epa->epa_Au), 1.0, tol->dist)) {
+        bu_vls_printf(error_msg, "%s{\"problem_type\":\"au_not_unit_length\"}", comma);
+        comma = ",";
+        issues++;
+    }
+
+    if (epa->epa_r1 <= 0.0) {
+        bu_vls_printf(error_msg, "%s{\"problem_type\":\"invalid_r1_value\"}", comma);
+        comma = ",";
+        issues++;
+    }
+
+    if (epa->epa_r2 <= 0.0) {
+        bu_vls_printf(error_msg, "%s{\"problem_type\":\"invalid_r2_value\"}", comma);
+        comma = ",";
+        issues++;
+    }
+
+    if (mag_h > SQRT_SMALL_FASTF) {
+        f = VDOT(epa->epa_Au, epa->epa_H) / mag_h;
+        if (!NEAR_ZERO(f, tol->perp)) {
+            bu_vls_printf(error_msg, "%s{\"problem_type\":\"au_not_perp_h\"}", comma);
+            comma = ",";
+            issues++;
+        }
+    }
+
+    bu_vls_printf(error_msg, "]");
+    return issues;
+}
 
 /** @} */
 /*

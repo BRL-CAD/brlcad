@@ -20,14 +20,18 @@
 
 #include "common.h"
 
+#include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
 #include <stdarg.h>
 
+#include "bio.h"
 #include "bu/log.h"
+#include "bu/malloc.h"
 #include "bu/parallel.h"
+#include "bu/snooze.h"
 
 
 /**
@@ -37,11 +41,105 @@
  * context instead of as a library-stateful set of callback functions
  */
 static struct bu_hook_list log_hook_list = BU_HOOK_LIST_INIT_ZERO;
-static int log_call_hooks_semaphore = -1;
+int BU_SEM_LOG_HOOK = BU_SEM_ID_LOG_HOOK;
 
 static int log_first_time = 1;
-static int log_hooks_called = 0;
+static THREADLOCAL int log_hooks_called = 0;
 static int log_indent_level = 0;
+
+
+/* A log call has historically blocked until its output is accepted.  Preserve
+ * that behavior if an application has made its standard stream non-blocking. */
+static int
+log_retryable_error(int error)
+{
+    if (error == EINTR || error == EAGAIN)
+	return 1;
+#ifdef EWOULDBLOCK
+    if (error == EWOULDBLOCK)
+	return 1;
+#endif
+    return 0;
+}
+
+
+/*
+ * Write all of a log message through a standard-stream file descriptor.
+ * stdio is unsuitable here: after a short non-blocking write it may accept
+ * additional bytes into its private buffer, making the retry boundary
+ * unknowable.  Raw writes have an unambiguous partial-write result on both
+ * the POSIX and Microsoft CRT interfaces.  The caller holds BU_SEM_SYSCALL.
+ *
+ * Returns 1 on success, 0 when no part of this message was written, and -1
+ * when an unrecoverable error follows a partial write.
+ */
+static int
+log_std_stream_write(FILE *fp, const char *buf, size_t len)
+{
+    size_t written = 0;
+    int fd;
+
+    if (!fp || !buf || !len)
+	return 0;
+
+    fd = fileno(fp);
+    if (fd < 0)
+	return 0;
+
+    while (written < len) {
+	size_t to_write = len - written;
+	int ret;
+
+	if (to_write > BU_PAGE_SIZE)
+	    to_write = BU_PAGE_SIZE;
+	errno = 0;
+#ifdef HAVE_WINDOWS_H
+	ret = _write(fd, buf + written, (unsigned int)to_write);
+#else
+	ret = (int)write(fd, buf + written, to_write);
+#endif
+	if (ret > 0) {
+	    written += (size_t)ret;
+	    continue;
+	}
+
+	int error = errno;
+	if (ret < 0 && log_retryable_error(error)) {
+	    if (error != EINTR)
+		(void)bu_snooze(1000);
+	    continue;
+	}
+
+	return written ? -1 : 0;
+    }
+    return 1;
+}
+
+
+static int
+log_output(const char *buf, size_t len, int set_line_buffer)
+{
+    int ret = 0;
+
+    if (stderr != NULL) {
+	bu_semaphore_acquire(BU_SEM_SYSCALL);
+	if (set_line_buffer && UNLIKELY(log_first_time)) {
+	    bu_setlinebuf(stderr);
+	    log_first_time = 0;
+	}
+	ret = log_std_stream_write(stderr, buf, len);
+	bu_semaphore_release(BU_SEM_SYSCALL);
+    }
+
+    /* Only fall back when stderr accepted none of this message. */
+    if (ret == 0 && stdout != NULL) {
+	bu_semaphore_acquire(BU_SEM_SYSCALL);
+	ret = log_std_stream_write(stdout, buf, len);
+	bu_semaphore_release(BU_SEM_SYSCALL);
+    }
+
+    return ret;
+}
 
 
 void
@@ -62,54 +160,68 @@ bu_log_indent_vls(struct bu_vls *v)
 void
 bu_log_add_hook(bu_hook_t func, void *clientdata)
 {
+    bu_semaphore_acquire(BU_SEM_LOG_HOOK);
     bu_hook_add(&log_hook_list, func, clientdata);
-
-    if(LIKELY(log_call_hooks_semaphore == -1))
-    {
-	/* initialize log_call_hooks_semaphore */
-	log_call_hooks_semaphore = bu_semaphore_register("log_call_hooks_semaphore");
-    }
+    bu_semaphore_release(BU_SEM_LOG_HOOK);
 }
 
 
 void
 bu_log_delete_hook(bu_hook_t func, void *clientdata)
 {
+    bu_semaphore_acquire(BU_SEM_LOG_HOOK);
     bu_hook_delete(&log_hook_list, func, clientdata);
+    bu_semaphore_release(BU_SEM_LOG_HOOK);
 }
 
 
-static void
+static int
 log_call_hooks(void *buf)
 {
-    if(LIKELY(log_call_hooks_semaphore != -1))
-	bu_semaphore_acquire(log_call_hooks_semaphore);
+    int called = 0;
 
-    bu_hook_call(&log_hook_list, buf);
+    /* A hook which logs must not recursively dispatch the same hook list. */
+    if (log_hooks_called)
+	return 0;
 
-    if(LIKELY(log_call_hooks_semaphore != -1))
-	bu_semaphore_release(log_call_hooks_semaphore);
+    bu_semaphore_acquire(BU_SEM_LOG_HOOK);
+
+    if (log_hook_list.size) {
+	log_hooks_called = 1;
+	bu_hook_call(&log_hook_list, buf);
+	log_hooks_called = 0;
+	called = 1;
+    }
+
+    bu_semaphore_release(BU_SEM_LOG_HOOK);
+    return called;
 }
 
 
 void
 bu_log_hook_save_all(struct bu_hook_list *save_hlp)
 {
+    bu_semaphore_acquire(BU_SEM_LOG_HOOK);
     bu_hook_save_all(&log_hook_list, save_hlp);
+    bu_semaphore_release(BU_SEM_LOG_HOOK);
 }
 
 
 void
 bu_log_hook_delete_all(void)
 {
+    bu_semaphore_acquire(BU_SEM_LOG_HOOK);
     bu_hook_delete_all(&log_hook_list);
+    bu_semaphore_release(BU_SEM_LOG_HOOK);
 }
 
 
 void
 bu_log_hook_restore_all(struct bu_hook_list *restore_hlp)
 {
+    bu_semaphore_acquire(BU_SEM_LOG_HOOK);
     bu_hook_restore_all(&log_hook_list, restore_hlp);
+    bu_semaphore_release(BU_SEM_LOG_HOOK);
 }
 
 
@@ -142,28 +254,15 @@ log_do_indent_level(struct bu_vls *new_vls, register const char *old_vls)
 void
 bu_putchar(int c)
 {
-    int ret = EOF;
+    char buf[2];
 
-    if (log_hook_list.size == 0) {
+    buf[0] = (char)c;
+    buf[1] = '\0';
 
-	if (LIKELY(stderr != NULL)) {
-	    ret = fputc(c, stderr);
-	}
-
-	if (UNLIKELY(ret == EOF && stdout)) {
-	    ret = fputc(c, stdout);
-	}
-
-	if (UNLIKELY(ret == EOF)) {
-	    bu_bomb("bu_putchar: write error");
-	}
-
-    } else {
-	char buf[2];
-	buf[0] = (char)c;
-	buf[1] = '\0';
-
-	log_call_hooks(buf);
+    if (!log_call_hooks(buf)) {
+	/* As with bu_log(), do not abort merely because the character could
+	 * not be written (no console / stream during teardown) - drop it. */
+	(void)log_output(buf, 1, 0);
     }
 
     if (log_indent_level > 0 && c == '\n') {
@@ -202,43 +301,22 @@ bu_log(const char *fmt, ...)
 
     len = bu_vls_strlen(&output);
 
-    if (log_hook_list.size == 0 || log_hooks_called) {
-	size_t ret = 0;
-
-	if (UNLIKELY(log_first_time)) {
-	    bu_setlinebuf(stderr);
-	    log_first_time = 0;
-	}
-
+    if (!log_call_hooks(bu_vls_addr(&output))) {
 	if (UNLIKELY(len <= 0)) {
 	    bu_vls_free(&output);
 	    return len;
 	}
 
-	if (LIKELY(stderr != NULL)) {
-	    bu_semaphore_acquire(BU_SEM_SYSCALL);
-	    ret = fwrite(bu_vls_addr(&output), len, 1, stderr);
-	    fflush(stderr);
-	    bu_semaphore_release(BU_SEM_SYSCALL);
-	}
-
-	if (UNLIKELY(ret == 0 && stdout)) {
-	    /* if stderr fails, try stdout instead */
-	    bu_semaphore_acquire(BU_SEM_SYSCALL);
-	    ret = fwrite(bu_vls_addr(&output), len, 1, stdout);
-	    fflush(stdout);
-	    bu_semaphore_release(BU_SEM_SYSCALL);
-	}
-
-	if (UNLIKELY(ret == 0)) {
-	    bu_semaphore_acquire(BU_SEM_SYSCALL);
-	    perror("fwrite failed");
-	    bu_semaphore_release(BU_SEM_SYSCALL);
-	    bu_bomb("bu_log: write error");
-	}
-
-    } else {
-	log_call_hooks(bu_vls_addr(&output));
+	/* No hook consumed the message, so fall back to the standard streams.
+	 *
+	 * A logging call must never terminate the program: being unable to emit
+	 * a diagnostic is a property of the environment (a GUI application with
+	 * no console, a closed stream, process teardown), not a failure of the
+	 * caller's real work.  Aborting here also risks recursion, since bu_bomb()
+	 * itself logs.  So if the message cannot be delivered we simply drop it
+	 * and continue; the formatted length is still returned below for callers
+	 * that want to detect non-delivery. */
+	(void)log_output(bu_vls_addr(&output), len, 1);
     }
 
     bu_vls_free(&output);
@@ -269,20 +347,14 @@ bu_flog(FILE *fp, const char *fmt, ...)
 
     len = bu_vls_strlen(&output);
 
-    if (log_hook_list.size == 0 || log_hooks_called) {
-	size_t ret;
-
+    if (!log_call_hooks(bu_vls_addr(&output))) {
 	if (LIKELY(len)) {
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);
-	    ret = fwrite(bu_vls_addr(&output), len, 1, fp);
+	    /* A failed write to the caller's stream must not abort the program
+	     * (see bu_log() above); drop the message and continue. */
+	    (void)fwrite(bu_vls_addr(&output), len, 1, fp);
 	    bu_semaphore_release(BU_SEM_SYSCALL);
-
-	    if (UNLIKELY(ret != 1))
-		bu_bomb("bu_flog: write error");
 	}
-
-    } else {
-	log_call_hooks(bu_vls_addr(&output));
     }
 
     bu_vls_free(&output);

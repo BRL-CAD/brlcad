@@ -152,13 +152,10 @@
  * Deep linear-chain topology used in -below timing test
  * ======================================================
  *
- * The -below filter uses a simple ancestor-walk: for each path at depth d,
- * walk up d-1 ancestors evaluating the inner plan, giving total work
- * proportional to D*(D-1)/2 for a chain of depth D (O(D²) for the chain,
- * O(N·D) for a general tree of N paths with average depth D).
- *
- * For typical BRL-CAD trees (depth 5-20) this is fast enough in practice.
- * Only degenerate very deep chains (D ≫ 100) show quadratic behaviour.
+ * The new -below filter propagates a match bit from each parent to its
+ * children, evaluating the inner expression at most once per path.  Its work
+ * is O(D) for a chain of depth D.  The old implementation rescans all
+ * ancestors for each path, giving O(D²) work on the same topology.
  *
  * The topology is a simple linear chain:
  *
@@ -288,6 +285,102 @@ run_both(struct db_i *dbip, int flags, const char *filter,
     db_search_free(&old_results);
     db_search_context_destroy(ctx);
     return ret;
+}
+
+
+struct mutation_callback_data {
+    struct db_i *dbip;
+    const char *object;
+    const char *attribute;
+    int calls;
+    int callback_result;
+};
+
+
+static int
+mutation_callback(int UNUSED(argc), const char **UNUSED(argv), void *u1, void *UNUSED(u2))
+{
+    struct mutation_callback_data *data = (struct mutation_callback_data *)u1;
+    data->calls++;
+    if (data->object && data->attribute &&
+        db5_update_attribute(data->object, data->attribute, "yes", data->dbip) < 0)
+        return 0;
+    return data->callback_result;
+}
+
+
+/* Regression tests for traversal pruning and callback/cache ordering. */
+static int
+test_plan_semantics(struct db_i *dbip)
+{
+    int failures = 0;
+    int cnt;
+    struct bu_ptbl results = BU_PTBL_INIT_ZERO;
+    struct mutation_callback_data data;
+
+    cnt = db_search(&results, DB_SEARCH_TREE,
+                    "-maxdepth 0 -or -name prim_target.s",
+                    0, NULL, dbip, NULL, NULL, NULL);
+    CHECK(cnt == 3, "-maxdepth under -or must not globally prune traversal");
+    CHECK(ptbl_has_path(&results, "/top1/upper_a/mid_a/leaf_t/prim_target.s"),
+          "-maxdepth/-or reaches the upper_a target path");
+    CHECK(ptbl_has_path(&results, "/top1/upper_b/mid_c/leaf_ts/prim_target.s"),
+          "-maxdepth/-or reaches the upper_b target path");
+    db_search_free(&results);
+
+    cnt = db_search(&results, DB_SEARCH_TREE, "! -maxdepth 0",
+                    0, NULL, dbip, NULL, NULL, NULL);
+    CHECK(cnt == 23, "negated -maxdepth must not globally prune traversal");
+    db_search_free(&results);
+
+    {
+        struct directory *hidden_dp = db_lookup(dbip, "mid_a", LOOKUP_QUIET);
+        struct directory *root_dp = db_lookup(dbip, "upper_a", LOOKUP_QUIET);
+        int saved_flags = hidden_dp->d_flags;
+        hidden_dp->d_flags |= RT_DIR_HIDDEN;
+        cnt = db_search(&results, DB_SEARCH_TREE,
+                        "-above -name prim_special.s",
+                        1, &root_dp, dbip, NULL, NULL, NULL);
+        CHECK(ptbl_has_path(&results, "/upper_a"),
+              "a hidden first child must not corrupt a visible sibling path");
+        db_search_free(&results);
+        hidden_dp->d_flags = saved_flags;
+    }
+
+    data.dbip = dbip;
+    data.object = "prim_target.s";
+    data.attribute = "search_above_callback_mutation";
+    data.calls = 0;
+    data.callback_result = 1;
+    cnt = db_search(&results, DB_SEARCH_TREE,
+                    "-maxdepth 0 -exec mutate ; -above -attr search_above_callback_mutation=yes",
+                    0, NULL, dbip, mutation_callback, &data, NULL);
+    CHECK(cnt == 1, "-above observes mutations from an earlier -exec");
+    CHECK(data.calls == 1, "root-limited -above mutation callback runs once");
+    db_search_free(&results);
+
+    data.object = "top1";
+    data.attribute = "search_below_callback_mutation";
+    data.calls = 0;
+    cnt = db_search(&results, DB_SEARCH_TREE,
+                    "-name prim_target.s -exec mutate ; -below -attr search_below_callback_mutation=yes",
+                    0, NULL, dbip, mutation_callback, &data, NULL);
+    CHECK(cnt == 2, "-below observes mutations from an earlier -exec");
+    CHECK(data.calls == 2, "-below mutation callback runs for both target paths");
+    db_search_free(&results);
+
+    data.object = NULL;
+    data.attribute = NULL;
+    data.calls = 0;
+    data.callback_result = 0;
+    cnt = db_search(&results, DB_SEARCH_TREE,
+                    "-maxdepth 0 -exec false_callback ;",
+                    0, NULL, dbip, mutation_callback, &data, NULL);
+    CHECK(cnt == 0, "a false -exec result is not counted as a match");
+    CHECK(data.calls == 1, "false callback runs once");
+    db_search_free(&results);
+
+    return failures;
 }
 
 
@@ -879,8 +972,6 @@ test_cross_validation(struct db_i *dbip)
         "-above<=2 -name prim_target.s",
         "-below -name mid_a",
         "-below -name upper_a",
-        "-below>2 -name top1",
-        "-below=3 -name top1",
         "-type shape",
         "-type comb",
         "-type region",
@@ -924,8 +1015,8 @@ test_cross_validation(struct db_i *dbip)
  *    one ancestor up.
  *
  * 2. -above combined with -below in the same plan: uses the full-path
- *    collection path, and f_below uses the ancestor-walk.  Results must
- *    match the old implementation.
+ *    collection path and a parallel top-down -below state pass.  Results
+ *    must match the old implementation.
  *
  * 3. Negated -above and -below (! -above, ! -below): ensure negation is
  *    applied correctly to both.
@@ -936,26 +1027,9 @@ test_cross_validation(struct db_i *dbip)
  *   top1/upper_a/mid_b/leaf_s/prim_special.s
  *   ...
  *
- * Ground truth for -below depth constraints (applying to top1 subtree):
- *
- *   -below>2 -name top1:
- *     Nodes where an ancestor named top1 is at distance >= 3 (min_depth=3)
- *     Using old-code distance convention: distance starts at 1, incremented
- *     before first check, so distance 3 = 2 actual hops (grandparent).
- *     Nodes at depth >= 2 from top1: mid_a, mid_b, mid_c, leaf_t, leaf_p,
- *     leaf_s, leaf_ts (via upper_a/b), and all primitives = 17 paths
- *     Actually: all paths at depth >= 3 from top1 (depth 0).
- *     top1=depth0, upper_a/b=depth1, mid_*=depth2, leaf_*=depth3, prim.*=depth4
- *     distance convention: depth1 nodes have distance 2 to top1 (1 hop)
- *     depth2 nodes have distance 3 to top1 (2 hops) -> passes -below>2
- *     depth3+ also pass.
- *     Paths at depth >= 2: mid_a, mid_b (x2), mid_c, leaf_t, leaf_p (x4),
- *     leaf_s (x2), leaf_ts, prim_target.s (x2), prim_plain.s (x4),
- *     prim_special.s (x3) = 7 mid+leaf + 9 prim = varies...
- *     Let's just cross-validate against old code for this.
- *
- * For simplicity, this test cross-validates all depth-constrained below
- * variants against old code rather than hardcoding counts.
+ * Relative depth is the actual number of parent-child hops, matching the
+ * documented -above convention.  These tests intentionally do not compare
+ * against search_old, whose -below walker counted the immediate parent as 2.
  */
 static int
 test_interactions(struct db_i *dbip)
@@ -967,25 +1041,33 @@ test_interactions(struct db_i *dbip)
     /* ---- 1: -below with depth constraints ---- */
 
     /* -below>2: min_depth=3, max_depth=INT_MAX
-     * Requires BFS fallback (min_depth > 2), ancestor-walk must reach depth 3 */
-    if (!run_both(dbip, DB_SEARCH_TREE,
-                  "-below>2 -name top1", &new_cnt, &old_cnt))
-        CROSS_CHECK(new_cnt, old_cnt, "-below>2 -name top1");
+     * Requires the ancestor-walk fallback to reach depth 3. */
+    new_cnt = db_search(&results, DB_SEARCH_TREE,
+                        "-below>2 -name top1", 0, NULL, dbip,
+                        NULL, NULL, NULL);
+    CHECK(new_cnt == 17, "-below>2 -name top1 uses actual hop distance");
+    db_search_free(&results);
 
     /* -below>3: min_depth=4, even deeper */
-    if (!run_both(dbip, DB_SEARCH_TREE,
-                  "-below>3 -name top1", &new_cnt, &old_cnt))
-        CROSS_CHECK(new_cnt, old_cnt, "-below>3 -name top1");
+    new_cnt = db_search(&results, DB_SEARCH_TREE,
+                        "-below>3 -name top1", 0, NULL, dbip,
+                        NULL, NULL, NULL);
+    CHECK(new_cnt == 9, "-below>3 -name top1 uses actual hop distance");
+    db_search_free(&results);
 
     /* -below=3: exact distance */
-    if (!run_both(dbip, DB_SEARCH_TREE,
-                  "-below=3 -name top1", &new_cnt, &old_cnt))
-        CROSS_CHECK(new_cnt, old_cnt, "-below=3 -name top1");
+    new_cnt = db_search(&results, DB_SEARCH_TREE,
+                        "-below=3 -name top1", 0, NULL, dbip,
+                        NULL, NULL, NULL);
+    CHECK(new_cnt == 8, "-below=3 -name top1 exact-hop count");
+    db_search_free(&results);
 
     /* -below>2 with a deeper named target */
-    if (!run_both(dbip, DB_SEARCH_TREE,
-                  "-below>2 -name mid_a", &new_cnt, &old_cnt))
-        CROSS_CHECK(new_cnt, old_cnt, "-below>2 -name mid_a");
+    new_cnt = db_search(&results, DB_SEARCH_TREE,
+                        "-below>2 -name mid_a", 0, NULL, dbip,
+                        NULL, NULL, NULL);
+    CHECK(new_cnt == 0, "-below>2 -name mid_a exact-hop count");
+    db_search_free(&results);
 
     /* ---- 2: -above and -below in same plan ---- */
 
@@ -1000,11 +1082,30 @@ test_interactions(struct db_i *dbip)
                   &new_cnt, &old_cnt))
         CROSS_CHECK(new_cnt, old_cnt, "( -above -name prim_target.s ) -or ( -below -name mid_a )");
 
+    /* Multiple propagation bits in one plan. */
+    if (!run_both(dbip, DB_SEARCH_TREE,
+                  "( -below -name mid_a ) -or ( -below -name upper_b )",
+                  &new_cnt, &old_cnt))
+        CROSS_CHECK(new_cnt, old_cnt, "( -below -name mid_a ) -or ( -below -name upper_b )");
+
+    /* Nested -below uses the containing path's inherited state. */
+    new_cnt = db_search(&results, DB_SEARCH_TREE,
+                        "-below -below -name top1", 0, NULL, dbip,
+                        NULL, NULL, NULL);
+    CHECK(new_cnt == 21, "nested -below is accepted and evaluated");
+    db_search_free(&results);
+
     /* Both in the same expression */
     if (!run_both(dbip, DB_SEARCH_TREE,
                   "-above -name prim_special.s -above -name prim_plain.s",
                   &new_cnt, &old_cnt))
         CROSS_CHECK(new_cnt, old_cnt, "-above -name prim_special.s -above -name prim_plain.s");
+
+    new_cnt = db_search(&results, DB_SEARCH_TREE,
+                        "-above -above -name prim_target.s",
+                        0, NULL, dbip, NULL, NULL, NULL);
+    CHECK(new_cnt == 5, "nested -above is accepted and evaluated");
+    db_search_free(&results);
 
     /* ---- 3: negated -above and -below ---- */
 
@@ -1429,8 +1530,8 @@ test_dag_cross_validation(struct db_i *dbip, int L, int M)
     /* -below -name dag_top: matches all paths that have dag_top as an
      * ancestor.  Since dag_top is the search root every path except
      * dag_top itself matches (M + 2*M*L results).  Like -name and -type,
-     * the new code uses on-the-fly BFS traversal here (no full-path table
-     * pre-build), giving the same performance advantage on large DAGs. */
+     * the new code uses on-the-fly traversal here (no full-path table
+     * pre-build) and propagates the -below result from parent to child. */
     t_new = bu_gettime();
     new_cnt = db_search(&new_results, DB_SEARCH_TREE,
 			"-below -name dag_top",
@@ -1543,13 +1644,10 @@ fail:
  * Query: -below -name chain_root
  *   Expected result count: D + 1  (every path except chain_root itself).
  *
- * f_below uses a simple ancestor-walk: O(D) per path, O(D²) total for
- * a chain of D nodes.  This is acceptable for the typical BRL-CAD tree
- * depth (5-20 levels).  For an extreme chain of D=1000 the cost is
- * proportional to D*(D+1)/2 ≈ 500,000 inner evaluations.
- *
- * Compare with the old code: both use the same ancestor-walk, so timing
- * is expected to be similar.
+ * The new propagation evaluates the inner expression once per parent, O(D)
+ * total for a chain of D nodes.  The old ancestor walker evaluates it up to D
+ * times per path, O(D²) total.  At D=1000 the old cost is proportional to
+ * D*(D+1)/2, while the new cost remains proportional to D.
  */
 static int
 test_below_deep_chain(struct db_i *dbip, int D)
@@ -1961,7 +2059,7 @@ test_csg_below_wide_deep(struct db_i *dbip, int fan_w, int fan_k)
      * (cwd_ch_{k_half-1} down to cwd_ch_0) plus the full fan subtree.
      * Expected = k_half + (25W² + fan_w + 2).
      *
-     * This test verifies that the BFS cache correctly identifies a
+     * This test verifies that the propagation cache correctly identifies a
      * mid-chain ancestor even when many thousands of paths pass through it.
      */
     expected = k_half + 25*W2 + fan_w + 2;
@@ -1989,7 +2087,7 @@ test_csg_below_wide_deep(struct db_i *dbip, int fan_w, int fan_k)
      *   leaves   (8W² at depth fan_k+4):            8W²*(fan_k+4)
      *   prims    (16W² at depth fan_k+5):           16W²*(fan_k+5)
      *
-     * The BFS propagation cache makes f_below cost O(1) per path; the old
+     * The top-down propagation cache makes f_below cost O(1) per path; the old
      * ancestor-walk costs O(depth) per path.  See the head-to-head perf
      * demo (fan_w=40, fan_k=2000) for measured times.
      */
@@ -2010,20 +2108,17 @@ test_csg_below_wide_deep(struct db_i *dbip, int fan_w, int fan_k)
 /*
  * Head-to-head performance demonstration for the wide+deep CSG tree.
  *
- * Runs three targeted queries using BOTH the new db_search() (ancestor-walk
- * f_below, O(N·D) total) AND the old db_search_old() (same algorithm) and
- * reports the actual measured times side-by-side.
+ * Runs three targeted queries using BOTH the new db_search() (top-down
+ * propagation, O(N) total for one -below node) AND the old db_search_old()
+ * (ancestor walking, O(N·D)) and reports measured times side-by-side.
  *
  *   -name cwd_pChain.s     -- chain-only marker, expected count = 1
  *   -name cwd_pA.s         -- fan probe,          expected count = 2*fan_w^2
  *   -below -name cwd_root  -- full traversal,      expected count = total-1
  *
- * For fan_w=40, fan_k=2000 (Sigma path-depths ~82M):
- *   new code: ~3s   (ancestor-walk, O(sigma_depths) inner-plan evals)
- *   old code: ~4.5s (ancestor-walk, same algorithm, slightly different overhead)
- *
- * Both implementations use the same ancestor-walk for f_below; the modest
- * difference reflects path-allocation and traversal overhead only.
+ * The wide, deep shape makes the asymptotic difference visible: the new code
+ * evaluates one parent per path while the old code performs approximately
+ * Sigma path-depths inner-plan evaluations.
  */
 static int
 test_csg_below_perf(struct db_i *dbip, int fan_w, int fan_k)
@@ -2090,10 +2185,9 @@ test_csg_below_perf(struct db_i *dbip, int fan_w, int fan_k)
     /*
      * Every non-root path has cwd_root as an ancestor (total-1 results).
      *
-     * Both new and old code use the ancestor-walk: for each path at depth d,
-     * walk up d parents evaluating the inner plan.  Total evaluations =
-     * Sigma path-depths ≈ 82M at W=40 K=2000.  The new code typically runs
-     * slightly faster due to improved path-object allocation patterns.
+     * The new code propagates one bit per path.  The old code walks up d
+     * parents for each path at depth d, for approximately Sigma path-depths
+     * inner-plan evaluations.
      */
     expected = total - 1;
 
@@ -2128,7 +2222,7 @@ test_csg_below_perf(struct db_i *dbip, int fan_w, int fan_k)
     bu_log("  Sigma path-depths (Sigma d_i for all paths): %lld\n",
 	   (long long)sigma_depths);
     bu_log("  -below -name cwd_root:\n");
-    bu_log("    new code (ancestor-walk):  %.4fs  (measured)\n",
+    bu_log("    new code (propagation):    %.4fs  (measured)\n",
 	   (double)t_new_main / 1e6);
     bu_log("    old code (ancestor-walk):  %.4fs  (measured)\n",
 	   (double)t_old_main / 1e6);
@@ -2187,6 +2281,9 @@ main(int argc, char *argv[])
     bu_log("Running -above/-below interaction and -below depth-constraint tests...\n");
     failures += test_interactions(dbip);
 
+    bu_log("Running plan-pruning and callback/cache semantic tests...\n");
+    failures += test_plan_semantics(dbip);
+
     bu_log("Running cross-validation (new vs old)...\n");
     failures += test_cross_validation(dbip);
 
@@ -2240,8 +2337,8 @@ main(int argc, char *argv[])
      * number of full paths to grow as 1 + M + 2*M*L.
      *
      * Expected outcome:
-     *   non-above queries (-name, -type): new code faster (~1.5x at
-     *     L=M=60 because it avoids pre-building the full-path table).
+     *   non-above queries (-name, -type): new code avoids pre-building the
+     *     full-path table.  Unconstrained -below also avoids ancestor rescans.
      *   -above queries: both implementations identical (~1.0x) because
      *     both use the same full-path pre-collection code path.
      */
@@ -2287,22 +2384,19 @@ main(int argc, char *argv[])
 	}
     }
 
-    /* ---- Deep linear-chain tests: verify -below ancestor-walk ---- */
+    /* ---- Deep linear-chain tests: compare -below algorithms ---- */
     /*
-     * A linear chain exposes the O(D²) cost of the -below ancestor-walk:
-     * for each of the D+2 paths, the code walks up all ancestors evaluating
-     * the inner plan.  For typical BRL-CAD tree depths (5-20) this is fast;
-     * at D=1000 the cost is ~500K inner-plan evaluations.
+     * A linear chain exposes the old O(D²) ancestor-walk cost.  The new code
+     * propagates state from each path to its child and is O(D).
      *
      * Each case verifies correctness (count == D+1) and reports new vs old
-     * elapsed time.  Both implementations use the same ancestor-walk so
-     * timing is expected to be similar.
+     * elapsed time.
      */
     {
 	int depths[] = {100, 500, 1000, 0};
 	int di;
 
-	bu_log("\nRunning deep-chain -below tests (ancestor-walk)...\n");
+	bu_log("\nRunning deep-chain -below tests (propagation vs ancestor-walk)...\n");
 
 	for (di = 0; depths[di] != 0; di++) {
 	    int D = depths[di];
@@ -2341,17 +2435,12 @@ main(int argc, char *argv[])
      * a tree that is simultaneously wide AND deep.
      *
      * It runs 13 queries with independently-computed ground-truth counts
-     * to verify that the BFS propagation cache handles subtree reuse,
+     * to verify that the top-down propagation cache handles subtree reuse,
      * deep ancestry, and mixed fan+chain structures correctly.
      *
      * The correctness run (fan_w=20, fan_k=500) completes quickly and validates
-     * all query types.  The performance note at the end of each run prints:
-     *   - Σ(path depths): the total work the old ancestor-walk would have done
-     *   - Estimated old-code time at ~126ns per depth unit
-     *   - Estimated new-code time at ~26ns per depth unit
-     *
-     * Scaling reference:
-     *   fan_w=30, fan_k=3000 → Σdepths ≈ 72M → old ~9s, new ~1.9s  (~10-second demo)
+     * all query types.  Its performance note reports Σ(path depths), the total
+     * number of ancestor visits the old implementation would perform.
      */
     {
 	/* {fan_w, fan_k} pairs:  fan_w=20 fan_k=500 for quick correctness; scale up for perf */
@@ -2399,11 +2488,6 @@ main(int argc, char *argv[])
      * Build a larger wide+deep tree (fan_w=40, fan_k=2000) and run 3 targeted
      * queries using BOTH the new db_search() and the old db_search_old() to
      * measure the actual performance delta on the same data set.
-     *
-     * For this tree: Sigma path-depths ~82M
-     *   new code (BFS cache):     ~1.3s  measured
-     *   old code (ancestor-walk): ~10s   measured
-     *   speedup:                  ~7x    measured
      *
      * The old code is the same algorithm as the root-level search.cpp kept
      * at the top of the repository; here it runs as db_search_old() from

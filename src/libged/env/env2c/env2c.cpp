@@ -40,6 +40,7 @@
 
 #include <cstdio>
 #include <algorithm>
+#include <functional>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -49,6 +50,7 @@
 #include <sstream>
 #include <string>
 #include <thread>
+#include <vector>
 
 /* Uncomment to debug stand-alone */
 //#define TEST_MAIN 1
@@ -63,19 +65,32 @@ class env_outputs {
 	int verbose;
 };
 
-void
-process_file(env_outputs &env_t)
-{
-    env_outputs &env = const_cast<env_outputs &>(env_t);
+class env_regexes {
+    public:
+	env_regexes() :
+	    getenv_regex(".*getenv\\(\\\".*"),
+	    evar_regex(".*getenv\\(\\\"([^\\\"]+)\\\"([^\\)]*)\\).*"),
+	    lp_regex(".*[\\/]lib([A-Za-z0-9_-]+)[\\/].*"),
+	    inc_regex(".*[\\/]include[\\/].*"),
+	    ep_regex(".*[\\/]src[\\/]([A-Za-z0-9_-]+)[\\/].*"),
+	    bench_regex(".*[\\/](bench)[\\/].*"),
+	    srcfile_regex(".*[.](cxx|c|cpp|h|hpp|hxx)(\\.in)*$")
+	{
+	}
 
-    std::regex getenv_regex(".*getenv\\(\\\".*");
-    std::regex evar_regex(".*getenv\\(\\\"([^\\\"]+)\\\"([^\\)]*)\\).*");
-    std::regex lp_regex(".*[\\/]lib([A-Za-z0-9_-]+)[\\/].*");
-    std::regex inc_regex(".*[\\/]include[\\/].*");
-    std::regex ep_regex(".*[\\/]src[\\/]([A-Za-z0-9_-]+)[\\/].*");
-    std::regex bench_regex(".*[\\/](bench)[\\/].*");
-    std::regex srcfile_regex(".*[.](cxx|c|cpp|h|hpp|hxx)(\\.in)*$");
-    if (!std::regex_match(env.f, srcfile_regex)) {
+	const std::regex getenv_regex;
+	const std::regex evar_regex;
+	const std::regex lp_regex;
+	const std::regex inc_regex;
+	const std::regex ep_regex;
+	const std::regex bench_regex;
+	const std::regex srcfile_regex;
+};
+
+void
+process_file(env_outputs &env, const env_regexes &patterns)
+{
+    if (!std::regex_match(env.f, patterns.srcfile_regex)) {
 	return;
     }
     std::string sline;
@@ -86,11 +101,11 @@ process_file(env_outputs &env_t)
 	return;
     }
     while (std::getline(fs, sline)) {
-	if (!std::regex_match(sline, getenv_regex)) {
+	if (!std::regex_match(sline, patterns.getenv_regex)) {
 	    continue;
 	}
 	std::smatch envvar;
-	if (!std::regex_search(sline, envvar, evar_regex)) {
+	if (!std::regex_search(sline, envvar, patterns.evar_regex)) {
 	    std::cerr << "Error, could not find environment variable in file " << env.f << " line:\n" << sline << "\n";
 	    continue;
 	}
@@ -102,7 +117,7 @@ process_file(env_outputs &env_t)
 
 	{
 	    std::smatch lp_match;
-	    if (std::regex_search(env.f, lp_match, lp_regex)) {
+	    if (std::regex_search(env.f, lp_match, patterns.lp_regex)) {
 		if (env.verbose) {
 		    std::cout << "lib" << lp_match[1] << ": " << envvar[1] << "\n";
 		}
@@ -114,7 +129,7 @@ process_file(env_outputs &env_t)
 
 	{
 	    std::smatch inc_match;
-	    if (std::regex_search(env.f, inc_match, inc_regex)) {
+	    if (std::regex_search(env.f, inc_match, patterns.inc_regex)) {
 		if (env.verbose) {
 		    std::cout << "include" << inc_match[1] << ": " << envvar[1] << "\n";
 		}
@@ -126,7 +141,7 @@ process_file(env_outputs &env_t)
 
 	{
 	    std::smatch ep_match;
-	    if (std::regex_search(env.f, ep_match, ep_regex)) {
+	    if (std::regex_search(env.f, ep_match, patterns.ep_regex)) {
 		if (env.verbose) {
 		    std::cout << ep_match[1] << ": " << envvar[1] << "\n";
 		}
@@ -136,7 +151,7 @@ process_file(env_outputs &env_t)
 	    }
 	}
 	{
-	    if (std::regex_match(env.f, bench_regex)) {
+	    if (std::regex_match(env.f, patterns.bench_regex)) {
 		if (env.verbose) {
 		    std::cout << "bench: " << envvar[1] << "\n";
 		}
@@ -214,6 +229,9 @@ main(int argc, const char *argv[])
 	    hwc = 10;
 	}
 	std::vector<env_outputs> envs;
+	/* Construct regexes before launching workers.  Some standard library
+	 * implementations initialize locale facets lazily during construction. */
+	const env_regexes patterns;
 	for (unsigned int i = 0; i < hwc; i++) {
 	    env_outputs enew;
 	    enew.verbose = verbose;
@@ -226,7 +244,8 @@ main(int argc, const char *argv[])
 	    for (unsigned int i = 0; i < hwc; i++) {
 		if (fcnt + i < sfiles.size()) {
 		    envs[i].f = sfiles[fcnt+i];
-		    t.push_back(std::thread(process_file, std::ref(envs[i])));
+		    t.push_back(std::thread(process_file, std::ref(envs[i]),
+				    std::cref(patterns)));
 		    athreads++;
 		}
 	    }
@@ -569,4 +588,3 @@ main(int argc, const char *argv[])
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

@@ -157,9 +157,21 @@ RT_EXPORT extern int rt_obj_adjust(struct bu_vls *logstr, struct rt_db_internal 
 RT_EXPORT extern int rt_obj_describe(struct bu_vls *logstr, const struct rt_db_internal *ip, int verbose, double mm2local);
 
 /**
- * create a 'default' object
+ * Return to @p labels (separated by @p sep, defaulting to space if NULL)
+ * the set of type labels accepted by rt_obj_make(); sorted alphabetically.
+ * Caller's responsibility to free bu_vls.
  */
-RT_EXPORT extern int rt_obj_make(const struct rt_functab *ftp, struct rt_db_internal *ip);
+RT_EXPORT extern void rt_obj_make_labels(struct bu_vls *labels, const char *sep);
+
+/**
+ * create a 'default' object of the type named by @p label, scaled by
+ * @p scale and positioned at @p origin.
+ *
+ * @p label is the user's type word ("sph", "rcc", "arb6", "tor", ...) and
+ * doubles as the variant selector for primitives with geometry aliases.
+ * Returns BRLCAD_OK on success, BRLCAD_ERROR otherwise.
+ */
+RT_EXPORT extern int rt_obj_make(const char *label, const point_t origin, double scale, struct rt_db_internal *ip);
 
 /**
  * apply a matrix transformation to an object (translation, rotation, scale)

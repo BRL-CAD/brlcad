@@ -2372,7 +2372,40 @@ nmg_isect_ray_model(struct nmg_ray_data *rd, struct bu_list *vlfree)
 	       rd->rp->r_dir[2]);
 
     NMG_CK_MODEL(rd->rd_m);
+
+    /* The global NMG hitmiss freelist head is de-initialized on the shot
+     * path (rt_clean_resource_basic() nulls re_nmgfree.forw at the end of
+     * rt_prep_parallel), so ensure it is a valid list before NMG_GET_HITMISS
+     * dereferences it -- otherwise it asserts/crashes.  (nmg_class_ray_vs_shell
+     * guards the same way.)
+     */
+    if (!BU_LIST_IS_INITIALIZED(&re_nmgfree))
+	BU_LIST_INIT(&re_nmgfree);
+
+    /* Ensure the per-ray hit/miss lists are valid list heads before any
+     * BU_LIST_INSERT into them.  No hits have been recorded yet at model
+     * entry, so (re)initializing empty lists here is always safe and makes
+     * the shot path robust regardless of how the caller set rd up. */
+    if (!BU_LIST_IS_INITIALIZED(&rd->rd_hit))
+	BU_LIST_INIT(&rd->rd_hit);
+    if (!BU_LIST_IS_INITIALIZED(&rd->rd_miss))
+	BU_LIST_INIT(&rd->rd_miss);
+
     NMG_CK_HITMISS_LISTS(rd);
+
+    /* re_nmgfree is a process-global freelist used by NMG_GET_HITMISS()
+     * (to draw hitmiss structs) and by NMG_FREE_HITLIST() (to return them).
+     * It must be a valid, initialized bu_list head before either is reached.
+     * The normal librt shot path initializes it in rt_init_resource(), but
+     * direct callers of this routine (and other public libnmg entry points)
+     * can reach it first, so guard it here. Take BU_SEM_GENERAL so the
+     * check-and-init is atomic with respect to the same lock
+     * NMG_GET_HITMISS()/NMG_FREE_HITLIST() use.
+     */
+    bu_semaphore_acquire(BU_SEM_GENERAL);
+    if (!BU_LIST_IS_INITIALIZED(&re_nmgfree))
+	BU_LIST_INIT(&re_nmgfree);
+    bu_semaphore_release(BU_SEM_GENERAL);
 
     /* Caller has assured us that the ray intersects the nmg model,
      * check ray for intersection with rpp's of nmgregion's
@@ -2665,8 +2698,12 @@ nmg_class_ray_vs_shell(struct nmg_ray *rp, const struct shell *s, const int in_o
 	       V3ARGS(rp->r_pt), V3ARGS(rp->r_dir));
     }
 
+    /* Guard the process-global freelist init under the same lock the
+     * NMG_GET_HITMISS()/NMG_FREE_HITLIST() macros use (see nmg_isect_ray_model). */
+    bu_semaphore_acquire(BU_SEM_GENERAL);
     if (!BU_LIST_IS_INITIALIZED(&re_nmgfree))
 	BU_LIST_INIT(&re_nmgfree);
+    bu_semaphore_release(BU_SEM_GENERAL);
 
     rd.rd_m = nmg_find_model(&s->l.magic);
 

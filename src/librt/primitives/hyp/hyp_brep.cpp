@@ -28,10 +28,11 @@
 #include "raytrace.h"
 #include "rt/geom.h"
 #include "brep.h"
+#include "primitives/brep/primitive_brep.h"
 
 
 extern "C" void
-rt_hyp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
+rt_hyp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
 {
     struct rt_hyp_internal *eip;
 
@@ -59,61 +60,6 @@ rt_hyp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     VADD2(p2_origin, eip->hyp_Vi, eip->hyp_Hi);
     plane2_origin = ON_3dPoint(p2_origin);
     const ON_Plane hyp_top_plane(plane2_origin, plane_x_dir, plane_y_dir);
-
-    // Next, create ellipses in the planes corresponding to the edges of the hyp
-
-    ON_Ellipse b_ell(hyp_bottom_plane, MAGNITUDE(eip->hyp_A), eip->hyp_b);
-    ON_NurbsCurve* bcurve = ON_NurbsCurve::New();
-    b_ell.GetNurbForm((*bcurve));
-    bcurve->SetDomain(0.0, 1.0);
-
-    ON_Ellipse t_ell(hyp_top_plane, MAGNITUDE(eip->hyp_A), eip->hyp_b);
-    ON_NurbsCurve* tcurve = ON_NurbsCurve::New();
-    t_ell.GetNurbForm((*tcurve));
-    tcurve->SetDomain(0.0, 1.0);
-
-    // Generate the bottom cap
-    ON_SimpleArray<ON_Curve*> boundary;
-    boundary.Append(ON_Curve::Cast(bcurve));
-    ON_PlaneSurface* bp = new ON_PlaneSurface();
-    bp->m_plane = hyp_bottom_plane;
-    bp->SetDomain(0, -100.0, 100.0);
-    bp->SetDomain(1, -100.0, 100.0);
-    bp->SetExtents(0, bp->Domain(0));
-    bp->SetExtents(1, bp->Domain(1));
-    (*b)->m_S.Append(bp);
-    const int bsi = (*b)->m_S.Count() - 1;
-    ON_BrepFace& bface = (*b)->NewFace(bsi);
-    (*b)->NewPlanarFaceLoop(bface.m_face_index, ON_BrepLoop::outer, boundary, true);
-    const ON_BrepLoop* bloop = (*b)->m_L.Last();
-    bp->SetDomain(0, bloop->m_pbox.m_min.x, bloop->m_pbox.m_max.x);
-    bp->SetDomain(1, bloop->m_pbox.m_min.y, bloop->m_pbox.m_max.y);
-    bp->SetExtents(0, bp->Domain(0));
-    bp->SetExtents(1, bp->Domain(1));
-    (*b)->FlipFace(bface);
-    (*b)->SetTrimIsoFlags(bface);
-    boundary.Empty();
-    delete bcurve;
-
-    // Generate the top cap
-    boundary.Append(ON_Curve::Cast(tcurve));
-    ON_PlaneSurface* tp = new ON_PlaneSurface();
-    tp->m_plane = hyp_top_plane;
-    tp->SetDomain(0, -100.0, 100.0);
-    tp->SetDomain(1, -100.0, 100.0);
-    tp->SetExtents(0, bp->Domain(0));
-    tp->SetExtents(1, bp->Domain(1));
-    (*b)->m_S.Append(tp);
-    int tsi = (*b)->m_S.Count() - 1;
-    ON_BrepFace& tface = (*b)->NewFace(tsi);
-    (*b)->NewPlanarFaceLoop(tface.m_face_index, ON_BrepLoop::outer, boundary, true);
-    ON_BrepLoop* tloop = (*b)->m_L.Last();
-    tp->SetDomain(0, tloop->m_pbox.m_min.x, tloop->m_pbox.m_max.x);
-    tp->SetDomain(1, tloop->m_pbox.m_min.y, tloop->m_pbox.m_max.y);
-    tp->SetExtents(0, bp->Domain(0));
-    tp->SetExtents(1, bp->Domain(1));
-    (*b)->SetTrimIsoFlags(tface);
-    delete tcurve;
 
     //  Now, the hard part.  Need an elliptical hyperbolic NURBS surface.
     //  First step is to create a nurbs curve.
@@ -195,12 +141,52 @@ rt_hyp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 	}
     }
 
-    (*b)->m_S.Append(hypcurvedsurf);
-    int surfindex = (*b)->m_S.Count();
-    ON_BrepFace& face = (*b)->NewFace(surfindex - 1);
-    (*b)->FlipFace(face);
-    int faceindex = (*b)->m_F.Count();
-    (*b)->NewOuterLoop(faceindex-1);
+    ON_Brep *hyp_brep = new ON_Brep();
+    const int surface_index = hyp_brep->AddSurface(hypcurvedsurf);
+    ON_BrepFace &side_face = hyp_brep->NewFace(surface_index);
+    hyp_brep->FlipFace(side_face);
+    if (!hyp_brep->NewOuterLoop(side_face.m_face_index)) {
+	delete hyp_brep;
+	bu_log("rt_hyp_brep: unable to construct side boundary loop!\n");
+	return;
+    }
+
+    int bottom_edge_index = -1;
+    int top_edge_index = -1;
+    const double model_tolerance = (tol && tol->dist > 0.0) ? tol->dist : RT_LEN_TOL;
+    for (int i = 0; i < hyp_brep->m_E.Count(); ++i) {
+	ON_BrepEdge &edge = hyp_brep->m_E[i];
+	if (edge.m_ti.Count() != 1 || !edge.IsClosed())
+	    continue;
+	const ON_3dPoint point = edge.PointAtStart();
+	if (fabs(hyp_bottom_plane.DistanceTo(point)) <= model_tolerance)
+	    bottom_edge_index = i;
+	else if (fabs(hyp_top_plane.DistanceTo(point)) <= model_tolerance)
+	    top_edge_index = i;
+    }
+    if (bottom_edge_index < 0 || top_edge_index < 0 ||
+	!rt_brep_mate_planar_cap(*hyp_brep, bottom_edge_index,
+	    hyp_bottom_plane, true, tol, NULL) ||
+	!rt_brep_mate_planar_cap(*hyp_brep, top_edge_index,
+	    hyp_top_plane, false, tol, NULL)) {
+	delete hyp_brep;
+	bu_log("rt_hyp_brep: unable to mate end caps to side surface!\n");
+	return;
+    }
+
+    hyp_brep->Compact();
+    hyp_brep->SetTolerancesBoxesAndFlags(false);
+    for (int i = 0; i < hyp_brep->m_E.Count(); ++i)
+	if (hyp_brep->m_E[i].m_tolerance < 0.0)
+	    hyp_brep->m_E[i].m_tolerance = model_tolerance;
+    if (!hyp_brep->IsValid() || !hyp_brep->IsSolid()) {
+	delete hyp_brep;
+	bu_log("rt_hyp_brep: generated BRep is not a valid manifold solid!\n");
+	return;
+    }
+
+    **b = *hyp_brep;
+    delete hyp_brep;
 
 }
 

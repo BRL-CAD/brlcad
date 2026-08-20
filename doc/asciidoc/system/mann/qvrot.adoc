@@ -33,7 +33,10 @@ mged>**qvrot 0 0 1 90**
 Sets the current view to the same as achieved by the *press top* command.
 
 ====
+[[see_also]]
+== SEE ALSO
 
+*view*(nged)
 
 [[author]]
 == AUTHOR

@@ -1,3 +1,7 @@
+if(POLICY CMP0053)
+  cmake_policy(SET CMP0053 NEW)
+endif()
+
 if(NOT DEFINED CHANGES_RULES_FILE)
   message(FATAL_ERROR "CHANGES_RULES_FILE is not defined")
 endif()
@@ -56,7 +60,7 @@ while(NOT _rules_text STREQUAL "")
 
   if(NOT _release STREQUAL _current_release)
     set(_current_release "${_release}")
-    string(APPEND _adoc "\n== ${_release}\n\n")
+    string(APPEND _adoc "== ${_release}\n\n")
   endif()
 
   math(EXPR _rule_count "${_rule_count} + 1")

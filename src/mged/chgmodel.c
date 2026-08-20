@@ -105,7 +105,8 @@ f_make(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	av[2] = argv[argc-2];
 	av[3] = NULL;
 	edit_com(s, 3, av);
-    } else {
+    } else if (ret != GED_HELP) {
+	/* not OK and not help */
 	return TCL_ERROR;
     }
 

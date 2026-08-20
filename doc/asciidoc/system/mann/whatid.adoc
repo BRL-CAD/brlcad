@@ -46,7 +46,7 @@ Retrieves the region ID of `turret.r` into a variable, then uses `whichid` to ve
 [[see_also]]
 == SEE ALSO
 
-*whichid*(nged), *whichair*(nged), *idents*(nged)
+*lc*(nged), *whichid*(nged), *whichair*(nged), *idents*(nged)
 
 
 [[author]]

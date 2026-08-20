@@ -47,7 +47,7 @@
 #include "bu/malloc.h"
 #include "bu/snooze.h"
 #include "bu/str.h"
-#include "bu/time.h"
+#include "bu/datetime.h"
 #include "bu/vls.h"
 #include "pkg.h"
 

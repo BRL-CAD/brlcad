@@ -30,7 +30,6 @@
 
 __BEGIN_DECLS
 
-/* forward declaration; full definition in bu/vls.h */
 struct bu_vls;
 
 /** @addtogroup bu_color
@@ -59,14 +58,7 @@ struct bu_vls;
 #define BU_COLOR_INDEX_VALUE 2
 
 /**
- * A single color value.
- *
- * The canonical representation is a red/green/blue/alpha quadruple of
- * floating point channels (buc_rgb[RED], buc_rgb[GRN], buc_rgb[BLU],
- * buc_rgb[ALP]).  Channels are normally in the [0.0, 1.0] range, but
- * the floating point storage is deliberately capable of holding the
- * out-of-gamut and greater-than-one values needed for future high
- * dynamic range (HDR) support without any change to this structure.
+ * A single color value, stored as a normalized RGBA quadruple.
  */
 struct bu_color
 {
@@ -74,6 +66,26 @@ struct bu_color
 };
 typedef struct bu_color bu_color_t;
 #define BU_COLOR_NULL ((struct bu_color *) 0)
+
+/** Color spaces supported by bu_color_convert(). */
+typedef enum bu_color_space {
+    BU_COLOR_SPACE_RGB = 0,
+    BU_COLOR_SPACE_HSL,
+    BU_COLOR_SPACE_HSV
+} bu_color_space_t;
+
+/** Text representations supported by bu_color_format(). */
+typedef enum bu_color_format {
+    BU_COLOR_FORMAT_RGB = 0,
+    BU_COLOR_FORMAT_RGBA,
+    BU_COLOR_FORMAT_HEX,
+    BU_COLOR_FORMAT_HEXA,
+    BU_COLOR_FORMAT_HSL,
+    BU_COLOR_FORMAT_HSLA,
+    BU_COLOR_FORMAT_HSV,
+    BU_COLOR_FORMAT_HSVA,
+    BU_COLOR_FORMAT_NAME
+} bu_color_format_t;
 
 /**
  * initializes a bu_color struct without allocating any memory.
@@ -208,66 +220,66 @@ BU_EXPORT extern int bu_hsv_to_rgb(const fastf_t *hsv, unsigned char *rgb);
 
 
 /**
- * Utility functions to convert between various containers
- * for color handling.
+ * Parse a human-readable color specification.
  *
- * FIXME: inconsistent input/output parameters!
+ * Accepted representations include the legacy BRL-CAD integer and
+ * normalized floating point RGB triplets, hexadecimal RGB and RGBA,
+ * CSS named colors, and RGB(A), HSL(A), and HSV(A) functional notation.
+ * RGB and alpha are normalized to [0.0, 1.0] in color.  An omitted alpha
+ * channel is set to 1.0 (opaque).
+ *
+ * Returns 1 on success and 0 on failure.  On failure, color is unchanged.
+ */
+BU_EXPORT extern int bu_color_parse(const char *str, struct bu_color *color);
+
+/**
+ * Append a human-readable representation of color to output.
+ *
+ * RGB(A) uses functional notation with 8-bit RGB channels and normalized
+ * alpha.  HSL(A) and HSV(A) use hue in degrees, percentages for the other
+ * model channels, and normalized alpha.  Hexadecimal output uses CSS RGBA
+ * channel order.  Named output fails when color has no exact CSS name.
+ *
+ * Returns 1 on success and 0 on failure.  On failure, output is unchanged.
+ */
+BU_EXPORT extern int bu_color_format(const struct bu_color *color,
+				     bu_color_format_t format,
+				     struct bu_vls *output);
+
+/**
+ * Convert a numeric color between RGB, HSL, and HSV.
+ *
+ * RGB channels, saturation, lightness, value, and alpha use [0.0, 1.0].
+ * Hue is expressed in degrees and is wrapped to [0.0, 360.0).  Alpha is
+ * copied without conversion.  All four input components must be finite.
+ *
+ * Returns 1 on success and 0 on failure.  On failure, out is unchanged.
+ */
+BU_EXPORT extern int bu_color_convert(const double in[4],
+				      bu_color_space_t in_space,
+				      bu_color_space_t out_space,
+				      double out[4]);
+
+
+/**
+ * Legacy utility functions for converting RGB storage containers.
+ * New color-space and text conversions should use bu_color_convert(),
+ * bu_color_parse(), and bu_color_format().
  */
 BU_EXPORT extern int bu_color_from_rgb_floats(struct bu_color *cp, const fastf_t *rgb);
 BU_EXPORT extern int bu_color_from_rgb_chars(struct bu_color *cp, const unsigned char *rgb);
-
-/**
- * Set a color from a human-readable color specification string.
- *
- * This is the single canonical entry point for turning any of the
- * color notations used throughout BRL-CAD into a normalized
- * struct bu_color.  Leading and trailing whitespace is ignored and
- * matching is case-insensitive.  The following notations are accepted:
- *
- *   - integer triplet, 0 to 255 per channel, separated by any of
- *     '/', ',', or whitespace, e.g. "255/0/0", "255,0,0", "255 0 0"
- *   - floating point triplet, 0.0 to 1.0 per channel, same separators,
- *     e.g. "1.0/0.0/0.0"
- *   - hexadecimal "#rgb", "#rgba", "#rrggbb", or "#rrggbbaa" (the
- *     three and four digit forms expand each nibble, so "#f00" is red);
- *     the "a" forms additionally set the alpha channel
- *   - a named color from the CSS/SVG set, e.g. "red", "navy",
- *     "cornflowerblue", "transparent"
- *   - functional notation "model(c0, c1, ...)" where model is one of
- *     rgb, rgba, hsv, hsl, cmyk, gray (or grey).  Channels may be
- *     separated by '/', ',', or whitespace and any channel may be
- *     given as a percentage with a trailing '%'.  An extra trailing
- *     channel is interpreted as alpha.  Examples: "rgb(255, 0, 0)",
- *     "hsv(120, 100%, 50%)", "cmyk(0, 1, 1, 0)", "gray(50%)".
- *
- * Returns 1 on success (color is set) and 0 on failure (color is left
- * unchanged).  Channels are clamped to the [0.0, 1.0] gamut; a
- * specification with an out-of-range channel is rejected.  The alpha
- * channel is only written when the specification supplies one.
+/** Compatibility parser equivalent to bu_color_parse(), except that cp's
+ * alpha channel is left unchanged.
  */
 BU_EXPORT extern int bu_color_from_str(struct bu_color *cp, const char *str);
-
-/**
- * Serialize a color into a human-readable string appended to the
- * provided vls.
- *
- * The 'format' argument selects the notation and may be NULL or "" for
- * the canonical "R/G/B" integer triplet.  Recognized formats mirror
- * the notations accepted by bu_color_from_str() so the output can be
- * round-tripped:  "rgb" ("R/G/B"), "rgba" ("R/G/B/A"), "hex"
- * ("#rrggbb"), "hexa" ("#rrggbbaa"), "float" ("r/g/b" in [0,1]),
- * "hsv" ("hsv(h,s,v)"), "hsl" ("hsl(h,s,l)"), and "cmyk"
- * ("cmyk(c,m,y,k)").
- *
- * Returns 1 on success and 0 on failure (unknown format or NULL args).
- */
-BU_EXPORT extern int bu_color_to_str(struct bu_vls *str, const struct bu_color *cp, const char *format);
+/* UNIMPLEMENTED: BU_EXPORT extern int bu_color_from_hsv_floats(struct bu_color *cp, fastf_t *hsv); */
 
 BU_EXPORT extern int bu_str_to_rgb(const char *str, unsigned char *rgb);  /* inconsistent, deprecate */
 
 BU_EXPORT extern int bu_color_to_rgb_floats(const struct bu_color *cp, fastf_t *rgb); /* bu_color_as_rgb_3fv */
 BU_EXPORT extern int bu_color_to_rgb_chars(const struct bu_color *cp, unsigned char *rgb); /* bu_color_as_rgb */
 BU_EXPORT extern int bu_color_to_rgb_ints(const struct bu_color *cp, int *r, int *g, int *b); /* bu_color_as_rgb_3i */
+/* UNIMPLEMENTED: BU_EXPORT extern int bu_color_to_hsv_floats(struct bu_color *cp, fastf_t *hsv); */ /* bu_color_as_hsv_3fv */
 
 
 /** @} */

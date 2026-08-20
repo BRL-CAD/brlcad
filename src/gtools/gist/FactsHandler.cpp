@@ -227,7 +227,14 @@ makeHierarchySection(IFPainter& img, InformationGatherer& info, int offsetX, int
 	for (size_t i = N; i < info.largestComponents.size(); i++) {
 	    subcomponents += info.largestComponents[i].name + " ";
 	}
-	std::string omitted_label = std::to_string(omitted_components) + " more";
+	subcomponents.pop_back();   // pop trailing space
+
+	std::string omitted_label;
+	if (omitted_components == 1)	// we just have one - print the name
+	    omitted_label = fitHierarchyLabel(img, textHeight, hierarchyLabelWidth, hierarchyDisplayLabel(subcomponents), TO_BOLD);
+	else
+	    omitted_label = std::to_string(omitted_components) + " more";
+
 	render = renderPerspective(GHOST, opt, subcomponents, info.largestComponents[0].name);
 	img.drawImageTransparentFitted(offX + (N-1)*imgW, offY, imgW, imgH, render);
 	img.drawTextCentered(offX + (N-1)*imgW + imgW/2, offY-70, textHeight, hierarchyLabelWidth, omitted_label, TO_BOLD);

@@ -77,29 +77,43 @@
 # in a regex string.
 if(NOT COMMAND is_subpath)
   function(is_subpath candidate_subpath full_path result_var)
-    # Just assume it isn't until we prove it is
-    set(${result_var} 0 PARENT_SCOPE)
+    string(SHA1 _subpath_cache_key "${candidate_subpath}|${full_path}")
+    get_property(_subpath_cache_set GLOBAL PROPERTY "BRLCAD_IS_SUBPATH_${_subpath_cache_key}" SET)
+    if(_subpath_cache_set)
+      get_property(_subpath_cache_result GLOBAL PROPERTY "BRLCAD_IS_SUBPATH_${_subpath_cache_key}")
+      set(${result_var} ${_subpath_cache_result} PARENT_SCOPE)
+      return()
+    endif()
 
     # get the CMake form of the path so we have something consistent to work on
     file(TO_CMAKE_PATH "${full_path}" c_full_path)
     file(TO_CMAKE_PATH "${candidate_subpath}" c_candidate_subpath)
+
+    # Just assume it isn't until we prove it is
+    set(_subpath_result 0)
 
     # check the string lengths - if the "subpath" is longer than the full path,
     # there's not point in going further
     string(LENGTH "${c_full_path}" FULL_LENGTH)
     string(LENGTH "${c_candidate_subpath}" SUB_LENGTH)
     if("${SUB_LENGTH}" GREATER "${FULL_LENGTH}")
+      set_property(GLOBAL PROPERTY "BRLCAD_IS_SUBPATH_${_subpath_cache_key}" "${_subpath_result}")
+      set(${result_var} ${_subpath_result} PARENT_SCOPE)
       return()
     endif("${SUB_LENGTH}" GREATER "${FULL_LENGTH}")
 
     # OK, maybe it's a subpath - time to actually check
     string(SUBSTRING "${c_full_path}" 0 ${SUB_LENGTH} c_full_subpath)
     if(NOT "${c_full_subpath}" STREQUAL "${c_candidate_subpath}")
+      set_property(GLOBAL PROPERTY "BRLCAD_IS_SUBPATH_${_subpath_cache_key}" "${_subpath_result}")
+      set(${result_var} ${_subpath_result} PARENT_SCOPE)
       return()
     endif(NOT "${c_full_subpath}" STREQUAL "${c_candidate_subpath}")
 
     # If we get here, it's a subpath
-    set(${result_var} 1 PARENT_SCOPE)
+    set(_subpath_result 1)
+    set_property(GLOBAL PROPERTY "BRLCAD_IS_SUBPATH_${_subpath_cache_key}" "${_subpath_result}")
+    set(${result_var} ${_subpath_result} PARENT_SCOPE)
   endfunction(is_subpath)
 endif(NOT COMMAND is_subpath)
 
@@ -160,35 +174,46 @@ if(NOT COMMAND check_source_dir_fullpath)
 endif(NOT COMMAND check_source_dir_fullpath)
 
 if(NOT COMMAND cmfile)
+  function(_cmakefiles_collect outvar)
+    set(_cmakefiles_items)
+    foreach(ITEM ${ARGN})
+      get_filename_component(ITEM_PATH "${ITEM}" PATH)
+      if(NOT "${ITEM_PATH}" STREQUAL "")
+        # The hard case - path specified, need some validation.
+        check_source_dir_fullpath("${ITEM_PATH}")
+
+        # Ignore files specified using full paths, since they
+        # should be generated files and are not part of the
+        # source code repository.
+        get_filename_component(ITEM_ABS_PATH "${ITEM_PATH}" ABSOLUTE)
+        if("${ITEM_PATH}" STREQUAL "${ITEM_ABS_PATH}")
+          continue()
+        endif("${ITEM_PATH}" STREQUAL "${ITEM_ABS_PATH}")
+      endif(NOT "${ITEM_PATH}" STREQUAL "")
+
+      # Handle fatal cases
+      if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
+        message(FATAL_ERROR "Trying to ignore directory: ${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
+      endif(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
+      if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
+        message(
+          FATAL_ERROR
+          "Attempting to ignore non-existent file ${ITEM}, in directory \"${CMAKE_CURRENT_SOURCE_DIR}\""
+        )
+      endif(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
+
+      # We're good - log it
+      get_filename_component(item_absolute "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}" ABSOLUTE)
+      list(APPEND _cmakefiles_items "${item_absolute}")
+    endforeach(ITEM ${ARGN})
+    set(${outvar} "${_cmakefiles_items}" PARENT_SCOPE)
+  endfunction(_cmakefiles_collect outvar)
+
   function(cmfile ITEM)
-    get_filename_component(ITEM_PATH "${ITEM}" PATH)
-    if(NOT "${ITEM_PATH}" STREQUAL "")
-      # The hard case - path specified, need some validation.
-      check_source_dir_fullpath("${ITEM_PATH}")
-
-      # Ignore files specified using full paths, since they
-      # should be generated files and are not part of the
-      # source code repository.
-      get_filename_component(ITEM_ABS_PATH "${ITEM_PATH}" ABSOLUTE)
-      if("${ITEM_PATH}" STREQUAL "${ITEM_ABS_PATH}")
-        return()
-      endif("${ITEM_PATH}" STREQUAL "${ITEM_ABS_PATH}")
-    endif(NOT "${ITEM_PATH}" STREQUAL "")
-
-    # Handle fatal cases
-    if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
-      message(FATAL_ERROR "Trying to ignore directory: ${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
-    endif(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
-    if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
-      message(
-        FATAL_ERROR
-        "Attempting to ignore non-existent file ${ITEM}, in directory \"${CMAKE_CURRENT_SOURCE_DIR}\""
-      )
-    endif(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
-
-    # We're good - log it
-    get_filename_component(item_absolute "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}" ABSOLUTE)
-    set_property(GLOBAL APPEND PROPERTY CMAKE_IGNORE_FILES "${item_absolute}")
+    _cmakefiles_collect(_cmakefiles_items "${ITEM}")
+    if(_cmakefiles_items)
+      set_property(GLOBAL APPEND PROPERTY CMAKE_IGNORE_FILES ${_cmakefiles_items})
+    endif(_cmakefiles_items)
   endfunction(cmfile ITEM)
 endif(NOT COMMAND cmfile)
 
@@ -217,9 +242,10 @@ if(NOT COMMAND cmakefiles)
     )
     list(FILTER ITEMS EXCLUDE REGEX "TARGET_OBJECTS")
 
-    foreach(ITEM ${ITEMS})
-      cmfile("${ITEM}")
-    endforeach(ITEM ${ITEMS})
+    _cmakefiles_collect(_cmakefiles_items ${ITEMS})
+    if(_cmakefiles_items)
+      set_property(GLOBAL APPEND PROPERTY CMAKE_IGNORE_FILES ${_cmakefiles_items})
+    endif(_cmakefiles_items)
   endfunction(CMAKEFILES FILESLIST)
 endif(NOT COMMAND cmakefiles)
 

@@ -159,6 +159,14 @@ brlcad_addlib(libbg "${LIBBG_SOURCES}" "" "${BG_INCLUDE_DIRS}"
     trimesh_plot3.cpp
     ${GEOGRAM_SRCS}
 )
+
+# LBFGS++ is a header-only third-party library used by Geogram's optimizer.
+# Keep its diagnostics separate from BRL-CAD's -Werror policy.
+foreach(_bg_target libbg libbg-obj libbg-static libbg-brlcad-obj)
+  if(TARGET ${_bg_target})
+    target_include_directories(${_bg_target} SYSTEM PRIVATE "${GEOGRAM_LBFGSPP_INCLUDE_DIR}")
+  endif()
+endforeach()
 set_target_properties(libbg PROPERTIES VERSION 20.0.1 SOVERSION 20)
 check_linker_flag("CXX" "-Wno-error=maybe-uninitialized" BG_LINKER_WNO_MAYBE_UNINITIALIZED)
 if(BG_LINKER_WNO_MAYBE_UNINITIALIZED)
@@ -179,13 +187,11 @@ endif()
 # altivec vectorization is broken in our bundled version of eigen.
 # looks like it was fixed in upstream long time ago, so just disable
 # for now.  TODO: remove this / retest after next Eigen upgrade.
-set_property(TARGET libbg APPEND PROPERTY COMPILE_DEFINITIONS "EIGEN_DONT_VECTORIZE")
-if(TARGET libbg-obj)
-  set_property(TARGET libbg-obj APPEND PROPERTY COMPILE_DEFINITIONS "EIGEN_DONT_VECTORIZE")
-endif(TARGET libbg-obj)
-if(TARGET libbg-brlcad-obj)
-  set_property(TARGET libbg-brlcad-obj APPEND PROPERTY COMPILE_DEFINITIONS "EIGEN_DONT_VECTORIZE")
-endif(TARGET libbg-brlcad-obj)
+foreach(_bg_target libbg libbg-obj libbg-static libbg-brlcad-obj)
+  if(TARGET ${_bg_target})
+    set_property(TARGET ${_bg_target} APPEND PROPERTY COMPILE_DEFINITIONS "EIGEN_DONT_VECTORIZE")
+  endif()
+endforeach()
 
 add_subdirectory(tests)
 

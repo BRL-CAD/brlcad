@@ -1,4 +1,4 @@
-/*                 PolyLoop.h
+/*                 P O L Y L O O P . H
  * BRL-CAD
  *
  * Copyright (c) 1994-2026 United States Government as represented by
@@ -17,24 +17,16 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file step/PolyLoop.h
- *
- * Class definition used to convert STEP "PolyLoop" to BRL-CAD BREP
- * structures.
- *
- */
 
 #ifndef CONV_STEP_STEP_G_POLYLOOP_H
 #define CONV_STEP_STEP_G_POLYLOOP_H
 
 #include "Loop.h"
 
-// forward declaration of class
 class CartesianPoint;
-class ON_Brep;
-
 typedef list<CartesianPoint *> LIST_OF_POINTS;
 
+/** The polygonal loop used by classic AP203 faceted_brep topology. */
 class PolyLoop : public Loop
 {
 private:
@@ -46,27 +38,14 @@ protected:
 
 public:
     PolyLoop();
-    virtual ~PolyLoop();
     PolyLoop(STEPWrapper *sw, int step_id);
+    virtual ~PolyLoop();
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
     virtual bool LoadONBrep(ON_Brep *brep);
     virtual void Print(int level);
-    const LIST_OF_POINTS &GetPolygon() const {
-	return polygon;
-    };
+    const LIST_OF_POINTS &Polygon() const { return polygon; }
 
-    //static methods
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* CONV_STEP_STEP_G_POLYLOOP_H */
-
-/*
- * Local Variables:
- * tab-width: 8
- * mode: C
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */

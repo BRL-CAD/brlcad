@@ -42,13 +42,14 @@ static const char *CompositeCurveSegment_Transition_code_string[] = {
     "cont_same_gradient_same_curvature",
     "unset"
 };
+static const int STEP_TRANSITION_CODE_UNSET = 4;
 
 CompositeCurveSegment::CompositeCurveSegment()
 {
     step = NULL;
     id = 0;
     parent_curve = NULL;
-    transition = Transition_code_unset;
+    transition = STEP_TRANSITION_CODE_UNSET;
     same_sense = BUnset;
 }
 
@@ -57,7 +58,7 @@ CompositeCurveSegment::CompositeCurveSegment(STEPWrapper *sw, int step_id)
     step = sw;
     id = step_id;
     parent_curve = NULL;
-    transition = Transition_code_unset;
+    transition = STEP_TRANSITION_CODE_UNSET;
     same_sense = BUnset;
 }
 
@@ -92,8 +93,11 @@ CompositeCurveSegment::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	}
     }
 
-    transition = (Transition_code)step->getEnumAttribute(sse, "transition");
-    V_MIN(transition, Transition_code_unset);
+    transition = step->getEnumAttributeIndex(sse, "transition",
+	CompositeCurveSegment_Transition_code_string,
+	sizeof(CompositeCurveSegment_Transition_code_string) /
+	    sizeof(CompositeCurveSegment_Transition_code_string[0]),
+	STEP_TRANSITION_CODE_UNSET);
 
     same_sense = step->getBooleanAttribute(sse, "same_sense");
 

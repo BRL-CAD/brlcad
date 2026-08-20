@@ -1250,6 +1250,16 @@ rt_ebm_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 
 
 /**
+ * Baseline flat-array vshot: delegates to the scalar shot via rt_vshot_via_shot().
+ */
+C_DECL void
+rt_ebm_vshot(struct soltab *stp[], struct xray *rp[], struct seg *segp, int n, struct application *ap)
+{
+    rt_vshot_via_shot(rt_ebm_shot, stp, rp, segp, n, ap);
+}
+
+
+/**
  * Given one ray distance, return the normal and entry/exit point.
  * This is mostly a matter of translating the stored code into the
  * proper normal.
@@ -1921,8 +1931,8 @@ rt_ebm_form(struct bu_vls *logstr, const struct rt_functab *ftp)
  * Routine to make a new EBM solid. The only purpose of this routine
  * is to initialize the matrix and height to legal values.
  */
-C_DECL void
-rt_ebm_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
+C_DECL int
+rt_ebm_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char *UNUSED(variant), const point_t UNUSED(origin), double UNUSED(scale))
 {
     struct rt_ebm_internal *ebm;
 
@@ -1939,6 +1949,7 @@ rt_ebm_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
     ebm->datasrc = RT_EBM_SRC_FILE;
 
     ebm->tallness = 1.0;
+    return BRLCAD_OK;
 }
 
 

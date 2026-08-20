@@ -1,4 +1,4 @@
-/*                 PolyLoop.cpp
+/*                 P O L Y L O O P . C P P
  * BRL-CAD
  *
  * Copyright (c) 1994-2026 United States Government as represented by
@@ -17,26 +17,17 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file step/PolyLoop.cpp
- *
- * Routines to convert STEP "PolyLoop" to BRL-CAD BREP
- * structures.
- *
- * A poly_loop is a loop whose bounding curve is defined by an ordered,
- * closed polygon of vertices (cartesian_point list).  It is the loop
- * type used by faceted_brep (planar polyhedral / mesh) geometry.
- *
- */
 
 #include "STEPWrapper.h"
 #include "Factory.h"
 #include "CartesianPoint.h"
-
 #include "PolyLoop.h"
 
 #define CLASSNAME "PolyLoop"
 #define ENTITYNAME "Poly_Loop"
-string PolyLoop::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)PolyLoop::Create);
+
+string PolyLoop::entityname = Factory::RegisterClass(ENTITYNAME,
+    (FactoryMethod)PolyLoop::Create);
 
 PolyLoop::PolyLoop()
 {
@@ -44,64 +35,55 @@ PolyLoop::PolyLoop()
     id = 0;
 }
 
-PolyLoop::PolyLoop(STEPWrapper *sw, int step_id)
+PolyLoop::PolyLoop(STEPWrapper *sw, int step_id) : Loop(sw, step_id)
 {
-    step = sw;
-    id = step_id;
 }
 
 PolyLoop::~PolyLoop()
 {
-    // elements created through factory will be deleted there.
     polygon.clear();
 }
 
 bool
 PolyLoop::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
+    if (!Loop::Load(sw, sse)) {
+	sw->entity_status[sse->STEPfile_id] = STEP_LOAD_ERROR;
+	return false;
+    }
     step = sw;
     id = sse->STEPfile_id;
-
-    if (!Loop::Load(step, sse)) {
-	std::cout << CLASSNAME << ":Error loading base class ::Loop." << std::endl;
+    sse = step->getEntity(sse, ENTITYNAME);
+    if (!sse) {
 	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
-
-    // need to do this for local attributes to makes sure we have
-    // the actual entity and not a complex/supertype parent
-    sse = step->getEntity(sse, ENTITYNAME);
-
     if (polygon.empty()) {
-	LIST_OF_ENTITIES *l = step->getListOfEntities(sse, "polygon");
-	LIST_OF_ENTITIES::iterator i;
-	for (i = l->begin(); i != l->end(); i++) {
-	    SDAI_Application_instance *entity = (*i);
-	    if (entity) {
-		CartesianPoint *aCP = dynamic_cast<CartesianPoint *>(Factory::CreateObject(sw, entity));
-		if (aCP) {
-		    polygon.push_back(aCP);
-		} else {
-		    std::cerr << CLASSNAME << ": Unhandled entity in attribute 'polygon'." << std::endl;
-		    l->clear();
-		    delete l;
-		    sw->entity_status[id] = STEP_LOAD_ERROR;
-		    return false;
-		}
-	    } else {
-		std::cerr << CLASSNAME << ": Unhandled entity in attribute 'polygon'." << std::endl;
-		l->clear();
-		delete l;
+	LIST_OF_ENTITIES *entities = step->getListOfEntities(sse, "polygon");
+	if (!entities) {
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
+	    return false;
+	}
+	for (LIST_OF_ENTITIES::iterator entity = entities->begin();
+		entity != entities->end(); ++entity) {
+	    CartesianPoint *point = *entity ? dynamic_cast<CartesianPoint *>(
+		Factory::CreateObject(sw, *entity)) : NULL;
+	    if (!point) {
+		entities->clear();
+		delete entities;
 		sw->entity_status[id] = STEP_LOAD_ERROR;
 		return false;
 	    }
+	    polygon.push_back(point);
 	}
-	l->clear();
-	delete l;
+	entities->clear();
+	delete entities;
     }
-
+    if (polygon.size() < 3) {
+	sw->entity_status[id] = STEP_LOAD_ERROR;
+	return false;
+    }
     sw->entity_status[id] = STEP_LOADED;
-
     return true;
 }
 
@@ -109,21 +91,11 @@ void
 PolyLoop::Print(int level)
 {
     TAB(level);
-    std::cout << CLASSNAME << ":" << name << "(";
-    std::cout << "ID:" << STEPid() << ")" << std::endl;
-
-    TAB(level);
-    std::cout << "Attributes:" << std::endl;
-    TAB(level + 1);
-    std::cout << "polygon:" << std::endl;
-    LIST_OF_POINTS::iterator i;
-    for (i = polygon.begin(); i != polygon.end(); ++i) {
-	(*i)->Print(level + 1);
-    }
-
-    TAB(level);
-    std::cout << "Inherited Attributes:" << std::endl;
-    Loop::Print(level + 1);
+    std::cout << CLASSNAME << ":" << name << "(ID:" << STEPid() << ')'
+	<< std::endl;
+    for (LIST_OF_POINTS::iterator point = polygon.begin();
+	    point != polygon.end(); ++point)
+	(*point)->Print(level + 1);
 }
 
 STEPEntity *
@@ -141,12 +113,9 @@ PolyLoop::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
 bool
 PolyLoop::LoadONBrep(ON_Brep *UNUSED(brep))
 {
-    /* poly_loop geometry is imported as a faceted BoT mesh via FacetedBrep
-     * rather than through the OpenNURBS BRep trimming path; see
-     * FacetedBrep::GetBoT().  When a poly_loop is encountered directly on the
-     * BRep path (rare) there is nothing to add here.
-     */
-    return true;
+    /* FacetedBrep builds these loops together with their supporting planes so
+     * they enter the normal validation and CDT pipeline transactionally. */
+    return false;
 }
 
 // Local Variables:

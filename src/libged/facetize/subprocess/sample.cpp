@@ -25,7 +25,7 @@
 #include "common.h"
 
 #include "vmath.h"
-#include "bu/time.h"
+#include "bu/datetime.h"
 #include "bg/trimesh.h"
 #include "raytrace.h"
 #include "analyze/polygonize.h"

@@ -136,7 +136,7 @@ reset_globals(void)
     extern char *string_pix_start;
     extern char *string_pix_end;
     extern int pix_start, pix_end;
-    extern int matflag, orientflag;
+    extern int matflag;
     extern int desiredframe, finalframe, curframe;
     extern char *outputfile;
     extern int benchmark;
@@ -193,7 +193,7 @@ reset_globals(void)
     objc = 0; objv = NULL;
     string_pix_start = string_pix_end = NULL;
     pix_start = -1; pix_end = 0;
-    matflag = orientflag = 0;
+    matflag = 0;
     desiredframe = 0; finalframe = -1; curframe = 0;
     outputfile    = NULL;
     benchmark     = 0;

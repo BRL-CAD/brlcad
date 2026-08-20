@@ -39,6 +39,9 @@ ConicalSurface::ConicalSurface()
     id = 0;
     radius = 0.0;
     semi_angle = 0.0;
+    curve_axis_bounds_valid = false;
+    curve_axis_minimum = 0.0;
+    curve_axis_maximum = 0.0;
 }
 
 ConicalSurface::ConicalSurface(STEPWrapper *sw, int step_id)
@@ -47,6 +50,9 @@ ConicalSurface::ConicalSurface(STEPWrapper *sw, int step_id)
     id = step_id;
     radius = 0.0;
     semi_angle = 0.0;
+    curve_axis_bounds_valid = false;
+    curve_axis_minimum = 0.0;
+    curve_axis_maximum = 0.0;
 }
 
 ConicalSurface::~ConicalSurface()

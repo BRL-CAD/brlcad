@@ -1,12 +1,3 @@
-#add_executable(iges
-#    BrepHandler.cpp
-#    brlcad_brep.cpp
-#    n_iges.cpp
-#    n_main.cpp
-#)
-#target_link_libraries(iges libwdb librt libbu ${OPENNURBS_LIBRARIES} ${WIN32LIBS} ${M_LIBRARY} ${WINSOCK_LIB} ${RPCRT_LIB})
-#install(TARGETS iges RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
-
 set(
   iges-g_SRCS
   add_face.c

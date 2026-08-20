@@ -29,6 +29,8 @@
 #include "CartesianPoint.h"
 #include "BSplineSurface.h"
 
+#include <algorithm>
+
 #define CLASSNAME "BSplineSurface"
 #define ENTITYNAME "B_Spline_Surface"
 string BSplineSurface::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)BSplineSurface::Create);
@@ -47,6 +49,7 @@ static const char *B_spline_surface_form_string[] = {
     "unspecified",
     "unset"
 };
+static const int STEP_B_SPLINE_SURFACE_FORM_UNSET = 11;
 
 BSplineSurface::BSplineSurface()
 {
@@ -55,7 +58,7 @@ BSplineSurface::BSplineSurface()
     control_points_list = NULL;
     u_degree = 0;
     v_degree = 0;
-    surface_form = B_spline_surface_form_unset;
+    surface_form = STEP_B_SPLINE_SURFACE_FORM_UNSET;
     u_closed = LUnset;
     v_closed = LUnset;
     self_intersect = LUnset;
@@ -68,7 +71,7 @@ BSplineSurface::BSplineSurface(STEPWrapper *sw, int step_id)
     control_points_list = NULL;
     u_degree = 0;
     v_degree = 0;
-    surface_form = B_spline_surface_form_unset;
+    surface_form = STEP_B_SPLINE_SURFACE_FORM_UNSET;
     u_closed = LUnset;
     v_closed = LUnset;
     self_intersect = LUnset;
@@ -119,8 +122,10 @@ BSplineSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	    goto step_error;
 	}
     }
-    surface_form = (B_spline_surface_form)step->getEnumAttribute(sse, "surface_form");
-    V_MIN(surface_form, B_spline_surface_form_unset);
+    surface_form = step->getEnumAttributeIndex(sse, "surface_form",
+	B_spline_surface_form_string,
+	sizeof(B_spline_surface_form_string) / sizeof(B_spline_surface_form_string[0]),
+	STEP_B_SPLINE_SURFACE_FORM_UNSET);
 
     u_closed = step->getLogicalAttribute(sse, "u_closed");
     v_closed = step->getLogicalAttribute(sse, "v_closed");
@@ -173,6 +178,20 @@ BSplineSurface::Print(int level)
     TAB(level);
     std::cout << "Inherited Attributes:" << std::endl;
     BoundedSurface::Print(level + 1);
+}
+
+size_t
+BSplineSurface::PullbackSpanEstimate() const
+{
+    if (!control_points_list || control_points_list->empty()) return 1;
+    const size_t u_points = control_points_list->size();
+    const LIST_OF_POINTS *first_row = control_points_list->front();
+    const size_t v_points = first_row ? first_row->size() : 0;
+    const size_t u_spans = u_points > static_cast<size_t>(std::max(0, u_degree)) ?
+	u_points - static_cast<size_t>(std::max(0, u_degree)) : 1;
+    const size_t v_spans = v_points > static_cast<size_t>(std::max(0, v_degree)) ?
+	v_points - static_cast<size_t>(std::max(0, v_degree)) : 1;
+    return std::max<size_t>(1, u_spans) * std::max<size_t>(1, v_spans);
 }
 
 STEPEntity *

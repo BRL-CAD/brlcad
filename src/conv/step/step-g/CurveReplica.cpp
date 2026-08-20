@@ -29,6 +29,7 @@
 #include "Direction.h"
 #include "CartesianPoint.h"
 #include "CartesianTransformationOperator.h"
+#include "LocalUnits.h"
 
 #include "CurveReplica.h"
 
@@ -150,39 +151,27 @@ CurveReplica::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
 bool
 CurveReplica::LoadONBrep(ON_Brep *brep)
 {
-    if (!brep) {
-	/* nothing to do */
+    if (!brep || !parent_curve || !transformation || !transformation->LocalOrigin())
+	return false;
+    if (GetONId() >= 0)
+	return true;
+    if (!parent_curve->LoadONBrep(brep))
+	return false;
+    const int parent_id = parent_curve->GetONId();
+    if (parent_id < 0 || parent_id >= brep->m_C3.Count() || !brep->m_C3[parent_id])
+	return false;
+
+    ON_Xform xform;
+    if (!transformation->GetONTransform(xform, LocalUnits::length))
+	return false;
+
+    ON_Curve *copy = brep->m_C3[parent_id]->DuplicateCurve();
+    if (!copy || !copy->Transform(xform)) {
+	delete copy;
 	return false;
     }
-
-    if (ON_id >= 0) {
-	return true;    // already loaded
-    }
-
-    if (parent_curve == NULL) {
-	std::cerr << "Error: " << entityname << "::LoadONBrep() - no parent_curve." << std::endl;
-	return false;
-    }
-
-    // Push our inherited trim vertices onto the parent curve, matching the
-    // IntersectionCurve/SurfaceCurve delegation pattern.
-    parent_curve->Start(start);
-    parent_curve->End(end);
-
-    if (!parent_curve->LoadONBrep(brep)) {
-	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading parent curve openNURBS brep." << std::endl;
-	return false;
-    }
-
-    // NOTE: 'transformation' (a CartesianTransformationOperator) should be
-    // applied to the replicated geometry here.  The codebase currently has no
-    // ON_Xform infrastructure for curves and CartesianTransformationOperator
-    // exposes no accessors for its axis/origin/scale, so the replica is emitted
-    // coincident with its parent (transform treated as identity), consistent
-    // with the existing simplifications for related delegating curves.
-    ON_id = parent_curve->GetONId();
-
-    return true;
+    SetONId(brep->AddEdgeCurve(copy));
+    return GetONId() >= 0;
 }
 
 // Local Variables:

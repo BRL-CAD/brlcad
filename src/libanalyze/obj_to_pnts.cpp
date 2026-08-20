@@ -31,7 +31,7 @@
 #include "bu/ptbl.h"
 #include "bn/mat.h"
 #include "bn/sobol.h"
-#include "bu/time.h"
+#include "bu/datetime.h"
 #include "raytrace.h"
 #include "analyze.h"
 #include "./analyze_private.h"

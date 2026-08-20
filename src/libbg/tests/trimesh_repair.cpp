@@ -27,8 +27,12 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <array>
+#include <vector>
+
 #include "bu.h"
 #include "bg.h"
+#include "Mathematics/MeshRepair.h"
 
 /* --------------------------------------------------------------------------
  * Test geometry helpers
@@ -346,6 +350,44 @@ test_split_nmv_backward_walk(void)
 }
 
 
+/* A malformed/non-manifold fan may produce an adjacency cycle that does not
+ * include the facet where the walk began.  The backward fan walk must stop
+ * when it encounters an already visited corner rather than circulating
+ * forever.  This is the topology encountered by the thin-face repair of
+ * havoc.g's rt_r.ecov1 region. */
+static int
+test_split_nmv_cycle_guard(void)
+{
+    std::vector<gte::Vector3<double>> verts = {
+	{0.0, 0.0, 0.0},
+	{1.0, 0.0, 0.0}, {0.0, 1.0, 0.0},
+	{-1.0, 0.0, 0.0}, {0.0, -1.0, 0.0},
+	{1.0, 1.0, 0.0}, {-1.0, -1.0, 0.0}
+    };
+    std::vector<std::array<int32_t, 3>> tris = {
+	{0, 1, 2}, {0, 3, 4}, {0, 5, 6}
+    };
+    std::vector<int32_t> adj(9, -1);
+
+    /* Starting facet 0 reaches a boundary in the forward direction.  Its
+     * backward direction enters the 1 -> 2 -> 1 cycle. */
+    adj[2] = 1;
+    adj[5] = 2;
+    adj[8] = 1;
+
+    gte::MeshRepair<double>::SplitNonManifoldVertices(verts, tris, adj);
+
+    if (verts.size() != 7) {
+	bu_log("FAIL test_split_nmv_cycle_guard: unexpected vertex split (%zu vertices)\n",
+		verts.size());
+	return -1;
+    }
+
+    bu_log("PASS test_split_nmv_cycle_guard\n");
+    return 0;
+}
+
+
 /* NULL parameter handling must not crash and must return -1. */
 static int
 test_null_params(void)
@@ -390,6 +432,7 @@ main(int UNUSED(argc), const char *argv[])
     failures += (test_tet_already_solid()         != 0) ? 1 : 0;
     failures += (test_open_cube_repair()          != 0) ? 1 : 0;
     failures += (test_split_nmv_backward_walk()   != 0) ? 1 : 0;
+    failures += (test_split_nmv_cycle_guard()     != 0) ? 1 : 0;
 
     if (failures) {
 	bu_log("%d test(s) FAILED\n", failures);

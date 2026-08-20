@@ -68,7 +68,7 @@ Scans for combinations using `plastic` and then separately for those using `glas
 [[see_also]]
 == SEE ALSO
 
-*wmater*(nged), *rmater*(nged)
+*search*(nged), *wmater*(nged), *rmater*(nged)
 
 
 [[author]]

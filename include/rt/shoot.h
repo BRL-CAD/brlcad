@@ -97,6 +97,27 @@ RT_EXPORT extern int rt_shootray(struct application *ap);
 
 /**
  * @brief
+ * EXPERIMENTAL vectorized single-ray shooter.
+ *
+ * A drop-in alternative to rt_shootray() that, instead of walking the
+ * space partitioning and shooting solids one at a time, shoots the ray
+ * against ALL solids of each type in one batched ft_vshot() call (falling
+ * back to the per-ray stub for types lacking a vshot), then weaves the
+ * resulting segments through the normal rt_boolweave()/rt_boolfinal()
+ * pipeline and invokes a_hit()/a_miss() exactly like rt_shootray().
+ *
+ * Intended for exercising and benchmarking the ft_vshot() callbacks from
+ * userland (e.g. toggled by an environment variable in rt).  Because it
+ * forgoes per-solid spatial culling and returns a single (outer-span)
+ * segment per solid, it is best suited to scenes of many convex solids of
+ * the same type; non-convex solids that produce multiple segments are
+ * approximated by their outer span.
+ */
+RT_EXPORT extern int rt_vshootray(struct application *ap);
+
+
+/**
+ * @brief
  * Shoot a bundle of rays
  *
  * Function for shooting a bundle of rays. Iteratively walks list of

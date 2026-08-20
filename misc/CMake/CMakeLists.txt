@@ -6,12 +6,14 @@ set(
   BRLCAD_CPack.cmake
   BRLCAD_CPackOptions.cmake.in
   BRLCAD_CheckFunctions.cmake
+  BRLCAD_Copy_Files.cmake.in
   BRLCAD_Environment_Setup.cmake
   BRLCAD_EXT_Setup.cmake
   BRLCAD_ExternalDeps.cmake
   BRLCAD_Find_Package.cmake
   BRLCAD_Install_Prefix.cmake
   BRLCAD_Options.cmake
+  BRLCAD_Probe_Validation.cmake
   BRLCAD_Regress_Util.cmake
   BRLCAD_Summary.cmake
   BRLCAD_Targets.cmake
@@ -46,7 +48,6 @@ set(
   FindOSMESA.cmake
   FindOpenCL.cmake
   FindOpenCV.cmake
-  FindOpenGL.cmake
   FindOpenVDB.cmake
   FindPERPLEX.cmake
   FindPkgMacros.cmake
@@ -104,6 +105,9 @@ set(
   distclean.cmake.in
   source_archive_setup.cmake.in
   tcltest.tcl.in
+  probe_validation/README.md
+  probe_validation/CMakeLists.txt
+  probe_validation/probe_validation.cpp
   scripts/printtime.cmake
   scripts/tcl_mkindex.cmake
   scripts/timestamp.cmake

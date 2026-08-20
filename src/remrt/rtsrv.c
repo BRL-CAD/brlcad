@@ -186,6 +186,7 @@ int
 main(int argc, char **argv)
 {
     int n;
+    pkg_mux_t *input_mux = NULL;
     const char *ipc_addr = NULL;   /* set by -I flag; enables IPC mode */
 
     bu_setprogname(argv[0]);
@@ -446,10 +447,18 @@ main(int argc, char **argv)
 
     BU_LIST_INIT(&WorkHead);
 
+    /* Do not use select() here.  On Windows the local transport uses an
+     * anonymous pipe, and Winsock select() only accepts sockets.  The libpkg
+     * multiplexer knows how to wait for each supported transport. */
+    input_mux = pkg_mux_create();
+    if (!input_mux || pkg_mux_add_conn(input_mux, pcsrv) < 0) {
+	bu_log("unable to create libpkg input multiplexer\n");
+	pkg_mux_destroy(input_mux);
+	return 1;
+    }
+
     for (;;) {
 	struct pkg_queue *lp;
-	fd_set ifds;
-	struct timeval tv;
 
 	/* Exit cleanly if the log hook detected a broken connection. */
 	if (rtsrv_connection_lost) {
@@ -463,18 +472,16 @@ main(int argc, char **argv)
 	    break;
 	}
 
-	/* Second, see if any input to read */
-	FD_ZERO(&ifds);
-	/* The transport may be a unidirectional pipe pair internally;
-	 * pkg_get_read_fd() returns the correct CRT fd to pass to select().
-	 */
+	/* Second, see if any input is ready on the active transport. */
 	{
-	    int sel_fd = pkg_get_read_fd(pcsrv);
-	    FD_SET(sel_fd, &ifds);
-	    tv.tv_sec = BU_LIST_NON_EMPTY(&WorkHead) ? 0L : 9999L;
-	    tv.tv_usec = 0L;
+	    int wait_ms = BU_LIST_NON_EMPTY(&WorkHead) ? 0 : 9999000;
+	    int wait_ret = pkg_mux_wait(input_mux, wait_ms);
+	    if (wait_ret < 0) {
+		bu_log("pkg_mux_wait error\n");
+		break;
+	    }
 
-	    if (select(sel_fd+1, &ifds, (fd_set *)0, (fd_set *)0, &tv) != 0) {
+	    if (wait_ret > 0 && pkg_mux_is_ready_conn(input_mux, pcsrv)) {
 		n = pkg_suckin(pcsrv);
 		if (n < 0) {
 		    bu_log("pkg_suckin error\n");
@@ -513,12 +520,14 @@ main(int argc, char **argv)
 		    break;
 		default:
 		    bu_log("bad list element, type=%d\n", lp->type);
+		    pkg_mux_destroy(input_mux);
 		    return 33;
 	    }
 	    BU_PUT(lp, struct pkg_queue);
 	}
     }
 
+    pkg_mux_destroy(input_mux);
     return 0;		/* bu_exit(0, NULL) */
 }
 

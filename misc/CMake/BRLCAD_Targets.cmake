@@ -43,6 +43,13 @@ define_property(
   FULL_DOCS "List of installed BRL-CAD binary programs"
 )
 
+define_property(
+  GLOBAL
+  PROPERTY BRLCAD_EXEC_MISSING_MANPAGES
+  BRIEF_DOCS "BRL-CAD binaries missing man pages"
+  FULL_DOCS "List of installed BRL-CAD binary programs without corresponding man pages"
+)
+
 # Installed BRL-CAD library targets and their object-library variants.  This
 # lets aggregate targets derive their contents from BRLCAD_ADDLIB declarations
 # instead of maintaining a separate, stale-prone library list.
@@ -237,6 +244,27 @@ function(BRLCAD_SORT_INCLUDE_DIRS DIR_LIST)
 endfunction(BRLCAD_SORT_INCLUDE_DIRS)
 
 
+function(BRLCAD_CLASSIFY_INCLUDE_DIR inc_dir local_var syspath_var)
+  get_filename_component(_abs_inc_dir "${inc_dir}" ABSOLUTE)
+
+  is_subpath("${BRLCAD_SOURCE_DIR}" "${_abs_inc_dir}" _is_local)
+  if(NOT _is_local)
+    is_subpath("${BRLCAD_BINARY_DIR}" "${_abs_inc_dir}" _is_local)
+  endif()
+
+  set(_is_syspath 0)
+  foreach(_sp ${SYS_INCLUDE_PATTERNS})
+    if("${inc_dir}" MATCHES "${_sp}")
+      set(_is_syspath 1)
+      break()
+    endif()
+  endforeach()
+
+  set(${local_var} "${_is_local}" PARENT_SCOPE)
+  set(${syspath_var} "${_is_syspath}" PARENT_SCOPE)
+endfunction()
+
+
 ###
 # wrapper for specifying include dirs.
 #
@@ -256,28 +284,31 @@ function(BRLCAD_INCLUDE_DIRS targetname dirlist itype)
   list(REMOVE_DUPLICATES INCLUDE_DIRS)
   brlcad_sort_include_dirs(INCLUDE_DIRS)
 
+  set(_local_include_dirs)
+  set(_system_include_dirs)
+  set(_system_after_include_dirs)
   foreach(inc_dir ${INCLUDE_DIRS})
-    get_filename_component(abs_inc_dir ${inc_dir} ABSOLUTE)
-    is_subpath("${BRLCAD_SOURCE_DIR}" "${abs_inc_dir}" IS_LOCAL)
-    if(NOT IS_LOCAL)
-      is_subpath("${BRLCAD_BINARY_DIR}" "${abs_inc_dir}" IS_LOCAL)
-    endif(NOT IS_LOCAL)
-    set(IS_SYSPATH 0)
-    foreach(sp ${SYS_INCLUDE_PATTERNS})
-      if("${inc_dir}" MATCHES "${sp}")
-        set(IS_SYSPATH 1)
-      endif("${inc_dir}" MATCHES "${sp}")
-    endforeach(sp ${SYS_INCLUDE_PATTERNS})
+    brlcad_classify_include_dir("${inc_dir}" IS_LOCAL IS_SYSPATH)
     if(IS_SYSPATH OR NOT IS_LOCAL)
       if(IS_SYSPATH)
-        target_include_directories(${targetname} SYSTEM ${itype} ${inc_dir})
+        list(APPEND _system_include_dirs "${inc_dir}")
       else(IS_SYSPATH)
-        target_include_directories(${targetname} SYSTEM AFTER ${itype} ${inc_dir})
+        list(APPEND _system_after_include_dirs "${inc_dir}")
       endif(IS_SYSPATH)
     else(IS_SYSPATH OR NOT IS_LOCAL)
-      target_include_directories(${targetname} BEFORE ${itype} ${inc_dir})
+      list(APPEND _local_include_dirs "${inc_dir}")
     endif(IS_SYSPATH OR NOT IS_LOCAL)
   endforeach(inc_dir ${INCLUDE_DIRS})
+
+  if(_local_include_dirs)
+    target_include_directories(${targetname} BEFORE ${itype} ${_local_include_dirs})
+  endif()
+  if(_system_include_dirs)
+    target_include_directories(${targetname} SYSTEM ${itype} ${_system_include_dirs})
+  endif()
+  if(_system_after_include_dirs)
+    target_include_directories(${targetname} SYSTEM AFTER ${itype} ${_system_after_include_dirs})
+  endif()
 endfunction(BRLCAD_INCLUDE_DIRS)
 
 
@@ -332,20 +363,6 @@ function(BRLCAD_ADDEXEC execname srcslist libslist)
     target_link_libraries(${execname} ${libslist})
   endif(NOT "${libslist}" STREQUAL "" AND NOT "${libslist}" STREQUAL "NONE")
 
-  # Handle include directories from targets
-  if(NOT "${libslist}" STREQUAL "" AND NOT "${libslist}" STREQUAL "NONE")
-    set(dep_includes)
-    foreach(ll ${libslist})
-      if(TARGET ${ll})
-        get_target_property(IDIRS ${ll} INTERFACE_INCLUDE_DIRECTORIES)
-        if(IDIRS)
-          list(APPEND dep_includes ${IDIRS})
-        endif(IDIRS)
-      endif(TARGET ${ll})
-    endforeach(ll ${libslist})
-    brlcad_include_dirs(${execname} dep_includes PRIVATE)
-  endif(NOT "${libslist}" STREQUAL "" AND NOT "${libslist}" STREQUAL "NONE")
-
   # NO_INSTALL flag forces binaries to remain in the local compilation
   # directory, bypassing the global CMAKE_RUNTIME_OUTPUT_DIRECTORY
   # setting.  This is useful for test executables or when an
@@ -382,7 +399,7 @@ function(BRLCAD_ADDEXEC execname srcslist libslist)
       if(EXISTS ${CMAKE_SOURCE_DIR}/doc/asciidoc/system/man1/${execname}.adoc)
 	add_asciidoc("MAN1" ${CMAKE_SOURCE_DIR}/doc/asciidoc/system/man1/${execname}.adoc man1 "")
       else()
-        message("No man page defined for ${execname}")
+        set_property(GLOBAL APPEND PROPERTY BRLCAD_EXEC_MISSING_MANPAGES "${execname}")
       endif()
     endif()
   endif(BRLCAD_EXTRADOCS)
@@ -409,6 +426,11 @@ function(BRLCAD_ADDEXEC execname srcslist libslist)
       endif(E_UNITY_BUILD_CODE_BEFORE_INCLUDE)
     endif(_srcs_count GREATER_EQUAL 8)
   endif(BRLCAD_ENABLE_UNITY_BUILD)
+
+  # On some platforms distclean has additional cleanup to do
+  distclean("${CMAKE_BINARY_DIR}/${BIN_DIR}/${execname}.pdb")
+  distclean("${CMAKE_BINARY_DIR}/${BIN_DIR}/${execname}.exp")
+
 endfunction(BRLCAD_ADDEXEC execname srcslist libslist)
 
 
@@ -445,46 +467,6 @@ function(BRLCAD_RESOLVE_LIBDEPS out_var link_mode)
   endforeach()
   set(${out_var} ${_resolved} PARENT_SCOPE)
 endfunction(BRLCAD_RESOLVE_LIBDEPS)
-
-
-# Collect include directories from dependency targets.  Also check one level
-# of interface-linked targets to account for transitive public headers.
-function(BRLCAD_COLLECT_DEP_INCLUDES out_var)
-  set(_incs)
-  foreach(_ll ${ARGN})
-    if(TARGET ${_ll})
-      get_target_property(IDIRS ${_ll} INTERFACE_INCLUDE_DIRECTORIES)
-      if(IDIRS)
-        foreach(_idir ${IDIRS})
-          if(_idir MATCHES "^\\$<BUILD_INTERFACE:(.+)>$")
-            list(APPEND _incs "${CMAKE_MATCH_1}")
-          elseif(NOT _idir MATCHES "^\\$<")
-            list(APPEND _incs "${_idir}")
-          endif()
-        endforeach()
-      endif(IDIRS)
-      get_target_property(_child_links ${_ll} INTERFACE_LINK_LIBRARIES)
-      if(_child_links)
-        foreach(_cl ${_child_links})
-          if(TARGET ${_cl})
-            get_target_property(_child_idirs ${_cl} INTERFACE_INCLUDE_DIRECTORIES)
-            if(_child_idirs)
-              foreach(_idir ${_child_idirs})
-                if(_idir MATCHES "^\\$<BUILD_INTERFACE:(.+)>$")
-                  list(APPEND _incs "${CMAKE_MATCH_1}")
-                elseif(NOT _idir MATCHES "^\\$<")
-                  list(APPEND _incs "${_idir}")
-                endif()
-              endforeach()
-            endif(_child_idirs)
-          endif(TARGET ${_cl})
-        endforeach(_cl ${_child_links})
-      endif(_child_links)
-    endif(TARGET ${_ll})
-  endforeach(_ll ${ARGN})
-  list(REMOVE_DUPLICATES _incs)
-  set(${out_var} ${_incs} PARENT_SCOPE)
-endfunction(BRLCAD_COLLECT_DEP_INCLUDES)
 
 
 # Check if the CXX compiler supports static linking of its standard libraries.
@@ -601,10 +583,10 @@ endfunction(BRLCAD_FILTER_AGGREGATE_DEPS)
 
 
 # Preserve non-BRL-CAD usage requirements from internal dependencies that are
-# filtered out of aggregate object targets.  For example, librt normally sees
-# OPENNURBS_IMPORTS through libbrep's interface, but the aggregate librt object
-# target cannot link to libbrep because libbrep's own object code is linked
-# directly into brlcad.dll.
+# filtered out of aggregate object targets.  The aggregate target cannot link
+# those internal libraries because their object code is linked directly into
+# brlcad.dll, but it must still inherit external compile definitions exposed by
+# their dependency targets.
 function(BRLCAD_AGGREGATE_DEP_COMPILE_DEFINITIONS out_var)
   set(_defs)
   foreach(_dep ${ARGN})
@@ -843,11 +825,7 @@ function(
 
   # Set up includes
   set(PUBLIC_HDRS ${include_dirs})
-  brlcad_collect_dep_includes(_pub_dep_includes ${SHARED_PUBLIC_LIBS} ${SHARED_INTERFACE_LIBS})
-  list(APPEND PUBLIC_HDRS ${_pub_dep_includes})
   set(PRIVATE_HDRS ${local_include_dirs})
-  brlcad_collect_dep_includes(_priv_dep_includes ${SHARED_PRIVATE_LIBS})
-  list(APPEND PRIVATE_HDRS ${_priv_dep_includes})
 
   # If we need it, set up the OBJECT library build used by the normal
   # per-library shared/static targets.  Link the object target to its deps so
@@ -1222,6 +1200,12 @@ function(
       )
     endif(NOT L_NO_INSTALL)
   endif(L_SHARED OR (BUILD_SHARED_LIBS AND NOT L_STATIC))
+
+  # On some platforms distclean has additional cleanup to do
+  distclean("${CMAKE_BINARY_DIR}/${BIN_DIR}/${libname}.pdb")
+  distclean("${CMAKE_BINARY_DIR}/${LIB_DIR}/${libname}.pdb")
+  distclean("${CMAKE_BINARY_DIR}/${LIB_DIR}/${libname}.exp")
+
 endfunction(BRLCAD_ADDLIB)
 
 
@@ -1239,29 +1223,43 @@ endfunction(BRLCAD_ADDLIB)
 # in a regex string.
 if(NOT COMMAND IS_SUBPATH)
   function(IS_SUBPATH candidate_subpath full_path result_var)
-    # Just assume it isn't until we prove it is
-    set(${result_var} 0 PARENT_SCOPE)
+    string(SHA1 _subpath_cache_key "${candidate_subpath}|${full_path}")
+    get_property(_subpath_cache_set GLOBAL PROPERTY "BRLCAD_IS_SUBPATH_${_subpath_cache_key}" SET)
+    if(_subpath_cache_set)
+      get_property(_subpath_cache_result GLOBAL PROPERTY "BRLCAD_IS_SUBPATH_${_subpath_cache_key}")
+      set(${result_var} ${_subpath_cache_result} PARENT_SCOPE)
+      return()
+    endif()
 
     # get the CMake form of the path so we have something consistent to work on
     file(TO_CMAKE_PATH "${full_path}" c_full_path)
     file(TO_CMAKE_PATH "${candidate_subpath}" c_candidate_subpath)
+
+    # Just assume it isn't until we prove it is
+    set(_subpath_result 0)
 
     # check the string lengths - if the "subpath" is longer than the full path,
     # there's not point in going further
     string(LENGTH "${c_full_path}" FULL_LENGTH)
     string(LENGTH "${c_candidate_subpath}" SUB_LENGTH)
     if("${SUB_LENGTH}" GREATER "${FULL_LENGTH}")
+      set_property(GLOBAL PROPERTY "BRLCAD_IS_SUBPATH_${_subpath_cache_key}" "${_subpath_result}")
+      set(${result_var} ${_subpath_result} PARENT_SCOPE)
       return()
     endif("${SUB_LENGTH}" GREATER "${FULL_LENGTH}")
 
     # OK, maybe it's a subpath - time to actually check
     string(SUBSTRING "${c_full_path}" 0 ${SUB_LENGTH} c_full_subpath)
     if(NOT "${c_full_subpath}" STREQUAL "${c_candidate_subpath}")
+      set_property(GLOBAL PROPERTY "BRLCAD_IS_SUBPATH_${_subpath_cache_key}" "${_subpath_result}")
+      set(${result_var} ${_subpath_result} PARENT_SCOPE)
       return()
     endif(NOT "${c_full_subpath}" STREQUAL "${c_candidate_subpath}")
 
     # If we get here, it's a subpath
-    set(${result_var} 1 PARENT_SCOPE)
+    set(_subpath_result 1)
+    set_property(GLOBAL PROPERTY "BRLCAD_IS_SUBPATH_${_subpath_cache_key}" "${_subpath_result}")
+    set(${result_var} ${_subpath_result} PARENT_SCOPE)
   endfunction(IS_SUBPATH)
 endif(NOT COMMAND IS_SUBPATH)
 
@@ -1328,24 +1326,23 @@ function(BRLCAD_MANAGE_FILES inputdata targetdir)
   if(NOT DEFINED HAVE_SYMLINK)
     message("--- Checking operating system support for file symlinking")
     file(WRITE "${CMAKE_BINARY_DIR}/CMakeTmp/link_test_src" "testing for symlink ability")
-    execute_process(
-      COMMAND
-      ${CMAKE_COMMAND} -E create_symlink "${CMAKE_BINARY_DIR}/CMakeTmp/link_test_src"
+    file(
+      CREATE_LINK "${CMAKE_BINARY_DIR}/CMakeTmp/link_test_src"
       "${CMAKE_BINARY_DIR}/CMakeTmp/link_test_dest"
-      OUTPUT_QUIET # Errors are expected on some platforms (Windows) so
-      ERROR_QUIET # by default quiet the output to avoid confusion
+      RESULT _brlcad_symlink_test_result
+      SYMBOLIC
     )
-    if(EXISTS "${CMAKE_BINARY_DIR}/CMakeTmp/link_test_dest")
+    if("${_brlcad_symlink_test_result}" STREQUAL "0" AND EXISTS "${CMAKE_BINARY_DIR}/CMakeTmp/link_test_dest")
       message("--- Checking operating system support for file symlinking - Supported")
       set(HAVE_SYMLINK 1 CACHE BOOL "Platform supports creation of symlinks" FORCE)
       mark_as_advanced(HAVE_SYMLINK)
       file(REMOVE "${CMAKE_BINARY_DIR}/CMakeTmp/link_test_src" "${CMAKE_BINARY_DIR}/CMakeTmp/link_test_dest")
-    else(EXISTS "${CMAKE_BINARY_DIR}/CMakeTmp/link_test_dest")
+    else("${_brlcad_symlink_test_result}" STREQUAL "0" AND EXISTS "${CMAKE_BINARY_DIR}/CMakeTmp/link_test_dest")
       message("--- Checking operating system support for file symlinking - Unsupported")
       set(HAVE_SYMLINK 0 CACHE BOOL "Platform does not support creation of symlinks" FORCE)
       mark_as_advanced(HAVE_SYMLINK)
       file(REMOVE "${CMAKE_BINARY_DIR}/CMakeTmp/link_test_src")
-    endif(EXISTS "${CMAKE_BINARY_DIR}/CMakeTmp/link_test_dest")
+    endif("${_brlcad_symlink_test_result}" STREQUAL "0" AND EXISTS "${CMAKE_BINARY_DIR}/CMakeTmp/link_test_dest")
   endif(NOT DEFINED HAVE_SYMLINK)
 
   # Now that the input data and target names are in order, define the
@@ -1355,7 +1352,7 @@ function(BRLCAD_MANAGE_FILES inputdata targetdir)
   if(HAVE_SYMLINK)
     # Make sure the target directory exists (symlinks need the target
     # directory already in place)
-    execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/${targetdir}")
+    file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/${targetdir}")
 
     # Using symlinks - in this case, the custom command doesn't
     # actually have to do the work every time the source file changes
@@ -1364,19 +1361,37 @@ function(BRLCAD_MANAGE_FILES inputdata targetdir)
     # the configure stage.
     foreach(filename ${fullpath_datalist})
       get_filename_component(ITEM_NAME ${filename} NAME)
-      execute_process(
-        COMMAND ${CMAKE_COMMAND} -E create_symlink ${filename} "${CMAKE_BINARY_DIR}/${targetdir}/${ITEM_NAME}"
-      )
+      set(_brlcad_link_path "${CMAKE_BINARY_DIR}/${targetdir}/${ITEM_NAME}")
+      set(_brlcad_create_link 1)
+      if(IS_SYMLINK "${_brlcad_link_path}")
+        file(READ_SYMLINK "${_brlcad_link_path}" _brlcad_link_target)
+        if("${_brlcad_link_target}" STREQUAL "${filename}")
+          set(_brlcad_create_link 0)
+        else()
+          file(REMOVE "${_brlcad_link_path}")
+        endif()
+      elseif(EXISTS "${_brlcad_link_path}")
+        set(_brlcad_create_link 0)
+      endif()
+      if(_brlcad_create_link)
+        file(CREATE_LINK "${filename}" "${_brlcad_link_path}" SYMBOLIC)
+      endif()
     endforeach(filename ${fullpath_datalist})
 
-    # check for and remove any dead symbolic links from a previous run
-    file(GLOB listing LIST_DIRECTORIES false "${CMAKE_BINARY_DIR}/${targetdir}/*")
-    foreach(filename ${listing})
-      if(NOT EXISTS ${filename})
-        message("Removing stale symbolic link ${filename}")
-        execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${filename})
-      endif(NOT EXISTS ${filename})
-    endforeach(filename ${listing})
+    # Check for and remove dead symbolic links from a previous run.  This scan
+    # is per target directory, not per managed-files call.
+    string(SHA1 _brlcad_link_scan_key "${CMAKE_BINARY_DIR}/${targetdir}")
+    get_property(_brlcad_link_scan_done GLOBAL PROPERTY "BRLCAD_MANAGED_LINK_SCAN_${_brlcad_link_scan_key}" SET)
+    if(NOT _brlcad_link_scan_done)
+      set_property(GLOBAL PROPERTY "BRLCAD_MANAGED_LINK_SCAN_${_brlcad_link_scan_key}" 1)
+      file(GLOB listing LIST_DIRECTORIES false "${CMAKE_BINARY_DIR}/${targetdir}/*")
+      foreach(filename ${listing})
+        if(IS_SYMLINK "${filename}" AND NOT EXISTS "${filename}")
+          message("Removing stale symbolic link ${filename}")
+          file(REMOVE "${filename}")
+        endif()
+      endforeach(filename ${listing})
+    endif()
 
     # The custom command is still necessary - since it depends on the
     # original source files, this will be the trigger that tells other
@@ -1389,14 +1404,13 @@ function(BRLCAD_MANAGE_FILES inputdata targetdir)
     )
   else(HAVE_SYMLINK)
     # Write out script for copying from source dir to build dir
-    set(${targetname}_cmake_contents "set(FILES_TO_COPY \"${fullpath_datalist}\")\n")
-    set(${targetname}_cmake_contents "${${targetname}_cmake_contents}foreach(filename \${FILES_TO_COPY})\n")
-    set(
-      ${targetname}_cmake_contents
-      "${${targetname}_cmake_contents}  file(COPY \${FILES_TO_COPY} DESTINATION \"${CMAKE_BINARY_DIR}/${targetdir}\")\n"
+    set(BRLCAD_COPY_FILES "${fullpath_datalist}")
+    set(BRLCAD_COPY_DESTINATION "${CMAKE_BINARY_DIR}/${targetdir}")
+    configure_file(
+      "${BRLCAD_CMAKE_DIR}/BRLCAD_Copy_Files.cmake.in"
+      "${CMAKE_CURRENT_BINARY_DIR}/${targetname}.cmake"
+      @ONLY
     )
-    set(${targetname}_cmake_contents "${${targetname}_cmake_contents}endforeach(filename \${CURRENT_FILE_LIST})\n")
-    file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/${targetname}.cmake" "${${targetname}_cmake_contents}")
 
     # Define custom command for copying from src to bin.
     add_custom_command(

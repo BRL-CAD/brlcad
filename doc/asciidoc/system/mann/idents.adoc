@@ -80,7 +80,7 @@ Writes the idents table for the single region `hull.r` to `report.txt`.
 [[see_also]]
 == SEE ALSO
 
-*regions*(nged), *solids*(nged)
+*rcodes*(nged), *wcodes*(nged), *lc*(nged), *regions*(nged), *solids*(nged)
 
 
 [[author]]

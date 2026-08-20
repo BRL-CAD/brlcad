@@ -61,6 +61,7 @@
 #include "rt/primitives/metaball.h"
 #include "raytrace.h"
 #include "wdb.h"
+#include "../../librt_private.h"
 
 #include "metaball.h"
 
@@ -501,6 +502,21 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 }
 
 
+/**
+ * Baseline flat-array vshot: delegates to the scalar shot via rt_vshot_via_shot().
+ */
+C_DECL void
+rt_metaball_vshot(struct soltab *stp[], struct xray *rp[], struct seg *segp, int n, struct application *ap)
+/* An array of solid pointers */
+/* An array of ray pointers */
+/* array of segs (results returned) */
+/* Number of ray/object pairs */
+
+{
+    rt_vshot_via_shot(rt_metaball_shot, stp, rp, segp, n, ap);
+}
+
+
 inline void
 rt_metaball_norm_internal(vect_t *n, point_t *p, struct rt_metaball_internal *mb)
 {
@@ -846,6 +862,19 @@ rt_metaball_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ve
 }
 
 
+/* Release every control point in an initialized metaball point list. */
+static void
+metaball_clear_points(struct bu_list *head)
+{
+    struct wdb_metaball_pnt *mbpt;
+
+    while (BU_LIST_WHILE(mbpt, wdb_metaball_pnt, head)) {
+	BU_LIST_DEQUEUE(&mbpt->l);
+	BU_PUT(mbpt, struct wdb_metaball_pnt);
+    }
+}
+
+
 /**
  * Free the storage associated with the rt_db_internal version of this
  * solid.  This only effects the in-memory copy.
@@ -854,7 +883,6 @@ C_DECL void
 rt_metaball_ifree(struct rt_db_internal *ip)
 {
     register struct rt_metaball_internal *metaball;
-    register struct wdb_metaball_pnt *mbpt;
 
     RT_CK_DB_INTERNAL(ip);
 
@@ -862,10 +890,7 @@ rt_metaball_ifree(struct rt_db_internal *ip)
     RT_METABALL_CK_MAGIC(metaball);
 
     if (metaball->metaball_ctrl_head.magic != 0)
-	while (BU_LIST_WHILE(mbpt, wdb_metaball_pnt, &metaball->metaball_ctrl_head)) {
-	    BU_LIST_DEQUEUE(&(mbpt->l));
-	    BU_PUT(mbpt, struct wdb_metaball_pnt);
-	}
+	metaball_clear_points(&metaball->metaball_ctrl_head);
     bu_free(ip->idb_ptr, "metaball ifree");
     ip->idb_ptr = ((void *)0);
 }
@@ -889,10 +914,11 @@ rt_metaball_add_point(struct rt_metaball_internal *mb, const point_t *loc, const
     return 0;
 }
 
-C_DECL void
-rt_metaball_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
+C_DECL int
+rt_metaball_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char* UNUSED(variant), const point_t origin, double UNUSED(scale))
 {
     struct rt_metaball_internal* ip;
+    struct wdb_metaball_pnt *mbpt;
 
     intern->idb_type = ID_METABALL;
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -904,7 +930,23 @@ rt_metaball_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
     intern->idb_ptr = (void *)ip;
 
     ip->magic = RT_METABALL_INTERNAL_MAGIC;
+    ip->threshold = 1.0;
+    ip->method = 1;
     BU_LIST_INIT(&ip->metaball_ctrl_head);
+
+    BU_ALLOC(mbpt, struct wdb_metaball_pnt);
+    mbpt->field_strength = 1.0;
+    mbpt->blobbiness = 1.0;
+    VSET(mbpt->coord, origin[X] - 1.0, origin[Y], origin[Z]);
+    BU_LIST_INSERT(&ip->metaball_ctrl_head, &mbpt->l);
+
+    BU_ALLOC(mbpt, struct wdb_metaball_pnt);
+    mbpt->field_strength = 1.0;
+    mbpt->blobbiness = 1.0;
+    VSET(mbpt->coord, origin[X] + 1.0, origin[Y], origin[Z]);
+    BU_LIST_INSERT(&ip->metaball_ctrl_head, &mbpt->l);
+
+    return BRLCAD_OK;
 }
 
 
@@ -945,9 +987,12 @@ C_DECL int
 rt_metaball_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)
 {
     struct rt_metaball_internal *mb;
+    struct rt_metaball_internal staged_mb = {0};
     const char *pts;
     const char *pend;
-    double thresh;
+    double new_threshold;
+    int new_method;
+    int replace_points = 0;
 
     if (argc % 2) {
 	int i;
@@ -960,21 +1005,27 @@ rt_metaball_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int arg
     RT_CK_DB_INTERNAL(intern);
     mb = (struct rt_metaball_internal *)intern->idb_ptr;
     RT_METABALL_CK_MAGIC(mb);
+    new_method = mb->method;
+    new_threshold = mb->threshold;
+    BU_LIST_INIT(&staged_mb.metaball_ctrl_head);
 
     while (argc >= 2) {
 
-	if (!bu_strncmp(argv[0], "method", 6)) {
+	if (BU_STR_EQUAL(argv[0], "method")) {
 	    if (strlen(argv[1]) != 1 || (argv[1][0] < '0' || argv[1][0] > '2')) {
 		bu_vls_printf(logstr, "Invalid method type, must be 0, 1, or 2.");
-		return BRLCAD_ERROR;
+		goto failure;
 	    }
-	    mb->method = *argv[1] - '0';
-	} else if (!bu_strncmp(argv[0], "thresh", 6)) {
-	    sscanf(argv[1], "%lG", &thresh);
-	    mb->threshold = thresh;
-	} else if (!bu_strncmp(argv[0], "PL", 2)) {
+	    new_method = *argv[1] - '0';
+	} else if (BU_STR_EQUAL(argv[0], "thresh")) {
+	    if (sscanf(argv[1], "%lG", &new_threshold) != 1) {
+		bu_vls_printf(logstr, "Invalid threshold value: \"%s\"", argv[1]);
+		goto failure;
+	    }
+	} else if (BU_STR_EQUAL(argv[0], "PL")) {
 
-	    BU_LIST_INIT(&mb->metaball_ctrl_head);
+	    metaball_clear_points(&staged_mb.metaball_ctrl_head);
+	    replace_points = 1;
 
 	    pts = argv[1];
 	    pend = pts + strlen(pts);
@@ -989,29 +1040,39 @@ rt_metaball_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int arg
 		while (pts < pend && *pts != '{') ++pts;
 		if (pts >= pend) break;
 		len = sscanf(pts, "{%lG %lG %lG %lG %lG}", &xyz[0], &xyz[1], &xyz[2], &field_strength, &blobbiness);
-		VMOVE(loc, xyz);
-
 		if (len == EOF) break;
 		if (len != 5) {
 		    bu_vls_printf(logstr, "Failed to parse point information: \"%s\"", pts);
-		    return BRLCAD_ERROR;
+		    goto failure;
 		}
+		VMOVE(loc, xyz);
 		pts++;
-		if (rt_metaball_add_point (mb, locp, field_strength, blobbiness)) {
+		if (rt_metaball_add_point(&staged_mb, locp, field_strength, blobbiness)) {
 		    bu_vls_printf(logstr, "Failure adding point: {%f %f %f %f %f}", V3ARGS(loc), field_strength, blobbiness);
-		    return BRLCAD_ERROR;
+		    goto failure;
 		}
 	    }
 	} else {
 	    bu_vls_printf(logstr, "Unknown metaball attribute \"%s\" (see 'form metaball')\n", argv[0]);
-	    return BRLCAD_ERROR;
+	    goto failure;
 	}
 
 	argc -= 2;
 	argv += 2;
     }
 
+    mb->method = new_method;
+    mb->threshold = new_threshold;
+    if (replace_points) {
+	metaball_clear_points(&mb->metaball_ctrl_head);
+	BU_LIST_APPEND_LIST(&mb->metaball_ctrl_head, &staged_mb.metaball_ctrl_head);
+    }
+
     return BRLCAD_OK;
+
+failure:
+    metaball_clear_points(&staged_mb.metaball_ctrl_head);
+    return BRLCAD_ERROR;
 }
 
 

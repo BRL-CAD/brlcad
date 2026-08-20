@@ -42,7 +42,12 @@ There are several environment variables (passed as `OPTION=value`) that modify h
 *DB*:: The directory containing the reference geometry (e.g., `../db`).
 *PIX*:: The directory containing the reference images (e.g., `../pix`).
 *LOG*:: The directory containing the reference logs (e.g., `../pix`).
-*CMP*:: The name of a pixel comparison tool (e.g., `./pixcmp` or `cmp`).
+*CMP*:: The name of a pixel comparison tool (e.g., `./pixcmp` or `cmp`). The
+benchmark interprets status 0 as an exact match, 1 as an acceptable difference,
+and 2 as an unacceptable difference. Other statuses indicate a comparison
+failure. A generic *cmp*(1) reports every content difference as status 1, so it
+cannot distinguish acceptable pixel variation from an incorrect image; when
+used as _CMP_, the benchmark consequently accepts any content difference.
 *ELP*:: The name of an elapsed time tool (e.g., `../sh/elapsed.sh`).
 *TIMEFRAME*:: Minimum number of seconds each ray-trace frame should take.
 *MAXTIME*:: Maximum number of seconds to spend on any test.

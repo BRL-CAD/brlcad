@@ -212,7 +212,6 @@ nmg_brep_face(ON_Brep **b, const struct faceuse *fu, const struct bn_tol *tol, l
 	    int c2i = (*b)->m_C2.Count();
 	    (*b)->m_C2.Append(c2d);
 	    ON_BrepTrim& trim = (*b)->NewTrim((*b)->m_E[(int)brepi[eu->e_p->index]], orientation, loop, c2i);
-	    trim.m_type = ON_BrepTrim::mated;
 	    trim.m_tolerance[0] = 0.0;
 	    trim.m_tolerance[1] = 0.0;
 	}
@@ -253,6 +252,7 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 	    (*b)->SetTrimIsoFlags();
 	}
     }
+    (*b)->SetTrimTypeFlags(false);
 }
 
 

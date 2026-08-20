@@ -36,6 +36,7 @@
 
 #include "vmath.h"
 #include "bu/list.h"
+#include "bu/parallel.h"
 #include "nmg/defines.h"
 //#include "nmg/model.h"
 
@@ -122,18 +123,24 @@ NMG_EXPORT extern struct bu_list re_nmgfree;     /**< @brief  head of NMG hitmis
     }
 #endif
 
+/* re_nmgfree is a process-global freelist shared by every rt_nmg_shot()
+ * worker thread, so all mutation of it must be serialized */
 #define NMG_GET_HITMISS(_p) { \
+        bu_semaphore_acquire(BU_SEM_GENERAL); \
         (_p) = BU_LIST_FIRST(nmg_hitmiss, &(re_nmgfree)); \
         if (BU_LIST_IS_HEAD((_p), &(re_nmgfree))) \
             BU_ALLOC((_p), struct nmg_hitmiss); \
         else \
             BU_LIST_DEQUEUE(&((_p)->l)); \
+        bu_semaphore_release(BU_SEM_GENERAL); \
     }
 
 
 #define NMG_FREE_HITLIST(_p) { \
         BU_CK_LIST_HEAD((_p)); \
+        bu_semaphore_acquire(BU_SEM_GENERAL); \
         BU_LIST_APPEND_LIST(&(re_nmgfree), (_p)); \
+        bu_semaphore_release(BU_SEM_GENERAL); \
     }
 
 #ifdef NO_BOMBING_MACROS

@@ -1,0 +1,832 @@
+BOT/POINT-CLOUD TO MANIFOLD B-REP NURBS
+Research findings and implementation plan
+
+Status: design and planning document; no implementation has begun
+Date: 2026-08-01
+
+
+1. PURPOSE
+
+This document records the repository archaeology and literature review for
+constructing manifold B-Rep NURBS models from triangle meshes and point
+clouds.  It proposes a BRL-CAD implementation based primarily on the
+Eck-Hoppe surface reconstruction pipeline:
+
+  Matthias Eck and Hugues Hoppe,
+  "Automatic Reconstruction of B-Spline Surfaces of Arbitrary
+  Topological Type," SIGGRAPH 1996.
+
+  Project: https://hhoppe.com/proj/bspline/
+  Paper:   https://hhoppe.com/bspline.pdf
+
+The intended result is a network of low-degree tensor-product B-spline
+patches with shared topology and exact G1 joins, represented as a valid
+manifold ON_Brep.  The goal is not merely to make independently fitted
+surfaces look close to one another.
+
+The implementation is to support:
+
+  * Closed, oriented, manifold triangle meshes as the primary initial input.
+  * Open manifold meshes where an open B-Rep is explicitly requested.
+  * Oriented point clouds through an initial surface reconstruction.
+  * Unoriented point clouds after normal estimation and orientation, subject
+    to the inherent ambiguity of topology reconstruction.
+  * Automatic construction of a patch domain.
+  * Low-level guided construction through APIs, constraint files, and
+    commands.
+
+Graphical interactive authoring of patch boundaries is not in the scope of
+this effort.  That work depends on interface modernization underway
+elsewhere.  The low-level representation must nevertheless be designed now
+so a future graphical editor can produce and consume exactly the same domain
+and constraint artifacts as the command-line path.
+
+
+2. SUMMARY AND PRINCIPAL DECISION
+
+The old BRL-CAD experiments used the wrong decomposition of the problem:
+
+  1. Partition a BoT into geometric patches.
+  2. Fit each surface independently.
+  3. Fit separate curves to the mesh patch boundaries.
+  4. Pull those curves back into the independently fitted UV domains.
+  5. Use the pullbacks as arbitrary trimming loops.
+
+This makes a valid common boundary an after-the-fact numerical coincidence.
+The source and its history show repeated problems with overlapping planar
+projections, invalid pullbacks, surface fit disagreement, and loops that do
+not close.
+
+The new pipeline must reverse that dependency:
+
+  1. Construct one global quadrilateral parameter-domain complex K.
+  2. Construct one shared Peters control topology over K.
+  3. Derive every patch and every common boundary from that topology.
+  4. Fit the positions of the global control vertices simultaneously.
+  5. Emit each full rectangular surface domain as one B-Rep face.
+
+Continuity and common boundaries are then properties of the construction,
+not penalties or tolerances imposed after fitting.
+
+The enduring part of Eck-Hoppe is the Peters surface-spline backend.  The
+fully automatic patch-layout front end is both the largest implementation
+task and the least reliable part for CAD-like geometry.  Consequently, the
+core fitter will accept a generic quadrilateral domain from any of three
+sources:
+
+  * The faithful Eck generalized-Voronoi and graph-matching pipeline.
+  * A low-level user-guided domain or set of constraints.
+  * A future external or field-aligned quadrangulation backend.
+
+This separation lets the spline and B-Rep backend be implemented and proven
+before automatic layout is complete.  It also follows Hoppe's hindsight that
+manual delineation of patch boundaries can be more practical for some data,
+without making the absent graphical editor a dependency.
+
+
+3. REPOSITORY ARCHAEOLOGY
+
+3.1 src/librt/test_nurbsfit.cpp
+
+test_nurbsfit.cpp is a minimal single-surface experiment.  It:
+
+  * Puts all BoT vertices into NurbsDataSurface::interior.
+  * Initializes one NURBS patch with a PCA bounding box.
+  * Refines the knot structure five times in both directions.
+  * Runs two regularized fitting iterations.
+  * Creates one ON_Brep face from the result.
+
+Its header explicitly notes that it does not check whether the BoT has a
+non-overlapping planar projection.  It tests the old fitting routines, not a
+general mesh-to-B-Rep algorithm.
+
+The test includes the now-missing opennurbs_fit.h.  The fitting code was
+introduced by commit a7f563c982 in 2012 as an adaptation of Thomas
+Moerwald's PCL on_nurbs implementation, with the commit message noting that
+it was not then building.  It was later moved to libbrep and removed by
+commit 55a4cd0a83 in 2020 as unused.
+
+3.2 src/librt/test_bot2nurbs.cpp
+
+test_bot2nurbs.cpp is the abandoned multi-patch effort.  Its major operations
+are:
+
+  * Categorize triangles using six axis-aligned normal directions.
+  * Grow patches using face-area, flatness, and normal heuristics.
+  * "Shave" triangles from patch boundaries.
+  * Project patches to PCA planes and split triangles that overlap in those
+    projections.
+  * Fit cubic 3D curves to patch boundary polylines.
+  * Fit one independent PCL-style NURBS surface to each patch, with extra
+    samples from the previously fitted edge curves.
+  * Sample each 3D edge curve and perform closest-point pullbacks to each
+    fitted surface.
+  * Interpolate 2D trim curves through the pullback points and force the final
+    curve to close the loop.
+
+The comments and history identify exactly the expected failure modes.  In
+particular, commit 815b445b57 concluded that two pullback methods were mostly
+consistent and that the problem was at least partly the surface fit.  Adding
+more edge samples, moving fitting boundaries, increasing tolerances, and
+forcing loop closure cannot make independently fitted surfaces share a
+mathematically common boundary.
+
+This file should remain a historical reference and potential source of test
+models.  Its partitioning, curve-fitting, and pullback architecture should
+not be used by the new implementation.
+
+3.3 src/librt/test_brepreport.cpp
+
+test_brepreport.cpp was added by commit b8ee726cdb in 2015.  It counts
+planar, spherical, cylindrical, conical, toroidal, and general surfaces in
+existing B-Reps to estimate CSG conversion candidates.  It is unrelated to
+mesh-to-NURBS reconstruction.
+
+3.4 Build status
+
+All three files are in librt_ignored_files, and their BRLCAD_ADDEXEC calls
+are commented out in src/librt/CMakeLists.txt.  The two fitting tests cannot
+build because opennurbs_fit.h no longer exists.
+
+3.5 What is worth salvaging
+
+The old opennurbs_fit implementation contained useful concepts:
+
+  * PCA initialization.
+  * B-spline basis assembly.
+  * Sparse least-squares solution using Eigen.
+  * Newton-style inverse mapping.
+  * Control-cage smoothness regularization.
+
+Those concepts may inform new code.  Restoring the 2020 sources wholesale is
+not recommended.  They do not provide the required domain construction,
+Peters affine masks, exact G1 network, global parameter correction, or
+adaptive quad refinement.
+
+
+4. ECK-HOPPE PIPELINE
+
+The 1996 algorithm has five stages.  For a triangle-mesh input, the paper
+explicitly permits skipping point-cloud reconstruction and using the input
+surface as M0.
+
+4.1 Construct M0 and initial sample parameterization
+
+For point data, construct a dense triangular manifold M0 that estimates the
+surface topology.  Project every original sample to its closest M0 face and
+store the face plus barycentric coordinates.  The original samples remain
+the fitting data; M0 supplies topology and initial parameterization.
+
+For mesh data, validate or repair the original mesh and use it directly as
+M0.  Generate fitting samples over its faces while retaining the exact source
+face and barycentric coordinates.  Do not discard a known input topology by
+passing a mesh through point-cloud reconstruction.
+
+4.2 Construct a simple triangular base complex
+
+The earlier multiresolution analysis work constructs a continuous map
+
+                  phi : K_tri -> M0
+
+from a simple triangular base complex to the dense mesh.  Its principal
+operations are:
+
+  * Select sites and grow generalized Voronoi regions over M0.
+  * Enforce that each region is a disk, adjacent regions have suitable
+    connected intersections, and no invalid multi-region junctions occur.
+  * Construct the dual Delaunay complex.
+  * Trace/refine the separating paths on M0.
+  * Harmonic-map each disk-like region to a convex triangle with compatible
+    boundary parameterizations.
+  * Transfer every sample from its M0 triangle/barycentric coordinates into
+    a face and UV coordinates on K_tri.
+
+The B-spline paper adds the requirement that K_tri have an even number of
+faces so all faces can potentially be paired.
+
+Primary references:
+
+  https://hhoppe.com/proj/mra/
+  https://hhoppe.com/mra.pdf
+
+4.3 Convert the triangular complex to a quadrilateral complex
+
+Construct the dual graph of K_tri.  Each graph vertex represents a triangle,
+and each graph edge represents two adjacent triangles that could be paired.
+
+For every candidate pair:
+
+  * Harmonic-map the corresponding two-triangle region of M0 to a unit
+    square.
+  * Reject folded or degenerate maps.
+  * Use harmonic energy as the distortion cost.
+
+Find a complete maximum-cardinality matching that maximizes the minimum edge
+weight, equivalently minimizing the worst pair distortion.  The paper calls
+this MAX-MIN MATCHING.  A practical implementation can sort the distinct
+distortion thresholds and repeatedly test for a perfect matching using a
+general Edmonds/blossom algorithm.  If no complete matching exists, perform
+the paper's global triangle-to-three-quads subdivision fallback.
+
+After pairing, merge configurations with degree-2 interior quad vertices as
+specified by the paper.  Transfer all sample parameters through the selected
+square maps.  The result is the oriented quadrilateral domain K.
+
+4.4 Construct and fit the Peters surface spline
+
+Use K as the control mesh Mc in Peters' construction:
+
+  * Apply two topological Doo-Sabin subdivisions to create the refined
+    control topology Mx.
+  * Associate a 4 by 4 grid of Mx vertices with every face of K.
+  * Construct a biquadratic Bezier patch around each regular Mx vertex and a
+    bicubic Bezier patch next to an extraordinary face.
+  * Express every Bezier control point as an affine combination of global Mx
+    vertex positions.
+  * Combine the 4 by 4 collection over each K face into one order-4, n=11
+    bicubic B-spline macro-patch.  In OpenNURBS terms this has 12 control
+    vertices in each parameter direction.
+
+These affine stencils make the patch network exactly G1, subject to a small
+number of linear constraints near even-valence extraordinary faces of
+valence greater than four.
+
+For fixed sample parameters, each data row is the local B-spline basis
+composed with the Peters affine stencil into global Mx unknowns.  Add a
+thin-plate fairness energy and solve one sparse constrained least-squares
+system for the X, Y, and Z positions.  The system matrix is common to all
+three coordinates.
+
+Alternate between:
+
+  1. Global least-squares fitting for fixed sample parameters.
+  2. Closest-point parameter correction for fixed control positions.
+
+The paper typically used four iterations.  Parameter correction in the new
+implementation must traverse adjacent patches when the closest point crosses
+a domain edge; it must not be confined to the sample's current patch.
+
+The initial implementation should use non-rational B-splines with all
+weights equal to one.  These are valid NURBS, preserve a linear fitting
+problem, and are sufficient for the Eck-Hoppe construction.  Optimizing
+rational weights would add nonlinear degrees of freedom without addressing
+the central topology and continuity problems.
+
+4.5 Adaptive refinement
+
+After fitting, identify domain faces containing samples whose errors exceed
+the requested tolerance.  Select domain edges for refinement and compute
+the closure required to give every quad zero, two, or four marked edges.
+Apply the paper's four conforming face templates, transfer parameters to the
+refined domain, rebuild the Peters topology, and refit.
+
+Continue until:
+
+  * The requested tolerance is achieved, or
+  * A patch/control-vertex limit is reached, or
+  * Improvement stagnates, or
+  * Further refinement would violate quality/embeddedness constraints.
+
+The command must report which termination condition occurred.  It must not
+claim a tolerance was achieved merely because refinement stopped.
+
+
+5. B-REP REPRESENTATION
+
+In OpenNURBS, even a full rectangular face has loops and trims.  In this
+document "untrimmed patch" means that the B-Rep face uses the entire
+rectangular parameter domain, bounded only by four straight isoparametric
+trims.  It does not mean omitting ON_BrepLoop and ON_BrepTrim records.
+
+For each face of K:
+
+  * Create one non-rational ON_NurbsSurface from the Peters macro-patch.
+  * Use the full [0,1] by [0,1] domain, or one consistent equivalent.
+  * Create four straight 2D trim curves on the domain boundary.
+
+For each edge of K:
+
+  * Create one canonical pair of ON_BrepVertex records.
+  * Create one canonical 3D edge curve from the shared surface boundary.
+  * Create one ON_BrepEdge shared by the two incident faces.
+  * Give the adjacent trims opposite 3D orientations.
+
+Boundary edges of an open model have one trim.  Every edge of a solid model
+must have exactly two mated trims.  Shared boundary control data must be
+generated once from the global stencil rather than recalculated
+independently for the two faces.
+
+No general 3D boundary curve fitting, closest-point curve pullback,
+surface-surface intersection, or arbitrary trim interpolation is needed.
+
+
+6. CURRENT BRL-CAD INFRASTRUCTURE
+
+Useful existing components include:
+
+  * include/bg/trimesh.h
+      - bg_trimesh_manifold_closed
+      - bg_trimesh_oriented and bg_trimesh_solid
+      - bg_trimesh_repair
+      - remeshing and other mesh utilities
+
+  * src/libbg/GTE/Mathematics/LSCMParameterization.h
+      - Despite its name, the current implementation uses positive
+        mean-value weights and a convex circular boundary.
+      - It supplies a useful sparse harmonic disk solver.
+      - It must be generalized to caller-specified convex triangle and square
+        boundaries, boundary corners, and boundary arc assignments.
+
+  * src/libbrep/cdt/mesh.cpp
+      - Already uses the mean-value parameterization to avoid foldovers in a
+        reverse B-Rep-to-CDT operation.
+      - Contains useful internal halfedge, spatial, and closest-point ideas,
+        although these need a neutral/public mesh-domain representation rather
+        than direct reuse of private CDT state.
+
+  * include/bg/spsr.h and include/bg/ballpivot.h
+      - Screened Poisson and ball-pivot surface reconstruction for oriented
+        point samples.
+      - Ball pivoting has fewer topology guarantees and requires validation.
+
+  * src/libbg/nanoflann.hpp, src/libbg/RTree.h, Geogram mesh AABB support,
+    and triangle-point utilities
+      - Spatial indexing for sample projection and closest-point searches.
+
+  * Eigen in libbg
+      - Sparse linear algebra is already a required dependency of libbg.
+
+  * include/brep/edit.h and src/libbrep/edit.cpp
+      - ON_NurbsSurface, face, edge, loop, trim, and straight isotrim creation.
+
+  * include/brep/quality.h and src/libbrep/quality.cpp
+      - Checks stricter than ON_Brep::IsValid(), including duplicate vertices,
+        two oppositely oriented trims per solid edge, degeneracies, aspect
+        ratios, and conservative self-intersection warnings.
+
+  * src/librt/primitives/nmg/nmg_brep.cpp
+      - An example of canonical shared B-Rep edge reuse and per-face trims.
+
+The current src/librt/primitives/bot/bot_brep.cpp converts a BoT through NMG
+to planar B-Rep faces.  It is not a smooth approximation pipeline.
+
+Major absent components are:
+
+  * A reusable manifold halfedge/domain structure with source provenance.
+  * Generalized Voronoi/Delaunay base-complex construction.
+  * The global continuous M0/K map.
+  * General-graph perfect matching and max-min optimization.
+  * Peters stencils, extraordinary-face constraints, and evaluator.
+  * Global spline-network fitting and cross-patch inverse mapping.
+  * Eck-Hoppe adaptive quad refinement.
+  * Point-cloud normal estimation and consistent orientation.
+  * Definitive spline self-intersection and embeddedness validation.
+
+
+7. PROPOSED SOFTWARE ARCHITECTURE
+
+The following names are working design names, not committed public ABI.
+
+7.1 Neutral geometry/domain layer in libbg
+
+libbg should own data that does not depend on OpenNURBS:
+
+  ManifoldMesh
+      Oriented vertices, halfedges, faces, boundary loops, components,
+      feature tags, and source element identifiers.
+
+  SurfaceSampleSet
+      Positions, optional normals, confidence/robust weights, source face and
+      barycentric coordinates, and current domain face/UV coordinates.
+
+  TriBaseComplex
+      Generalized Voronoi regions, oriented triangular topology, and the
+      piecewise-linear map to M0.
+
+  QuadDomain
+      Oriented vertices/edges/quads, adjacency, boundary and feature tags,
+      source-region map, and sample UV mapping.
+
+  DomainConstraints
+      Fixed sites/corners, required feature paths, required or forbidden
+      seams, required or forbidden triangle pairings, and optional complete
+      user-supplied QuadDomain data.
+
+Suggested libbg responsibilities:
+
+  * Mesh import into the neutral form, validation, repair, and provenance.
+  * Closest-point and barycentric mapping.
+  * Point-cloud normal estimation/orientation.
+  * M0 reconstruction adapters.
+  * Harmonic maps.
+  * Automatic and constrained base-complex construction.
+  * Matching and quadrilateral-domain construction.
+  * Domain refinement and serialization.
+
+7.2 Spline-network layer in libbrep
+
+libbrep should own OpenNURBS-dependent operations:
+
+  PetersTopology
+      Twice-subdivided Mx connectivity, extraordinary faces, affine control
+      stencils, and linear G1 constraints.
+
+  SplineNetworkFit
+      Sparse fitting/fairness system, robust weighting, parameter correction,
+      error measurement, and refinement feedback.
+
+  SplineNetworkBrep
+      ON_NurbsSurface construction and canonical ON_Brep assembly.
+
+libbrep consumes a validated QuadDomain and SurfaceSampleSet.  It must not
+know how the domain was produced.
+
+7.3 librt and libged adapters
+
+librt should translate rt_bot_internal and rt_pnts_internal objects into the
+neutral input types and translate completed ON_Brep objects into database
+objects.
+
+libged should provide command orchestration, progress reporting, option
+parsing, debug artifact export, and database writes.  Long-running fitting
+must expose cancellation and progress hooks suitable for future GUI use.
+
+
+8. LOW-LEVEL GUIDED DOMAIN AUTHORING
+
+Guided layout must be designed as a data/API capability, not as GUI code.
+The first implementation should support two levels of guidance.
+
+8.1 Constraints on automatic construction
+
+A versioned constraint artifact should be able to specify:
+
+  * Required domain vertices/sites on source mesh vertices or face/barycentric
+    locations.
+  * Ordered source-mesh edge paths that must become domain edges.
+  * Feature paths tagged as smooth seam, crease, boundary, or corner.
+  * Required or forbidden Voronoi adjacencies.
+  * Required or forbidden triangle pairings in the quad matching stage.
+  * Optional target valence or patch-count hints.
+
+The automatic layout code should honor these constraints and report a clear
+conflict when they cannot all be satisfied.
+
+8.2 Complete supplied domain
+
+A caller should also be able to supply a complete QuadDomain with its map to
+M0.  The low-level validator must check:
+
+  * Index and orientation consistency.
+  * Manifoldness and boundary correspondence.
+  * Topological equivalence to the selected M0 component.
+  * Valid source-face/barycentric positions for domain vertices and paths.
+  * Continuous, non-folded per-region parameter maps.
+  * Feature and boundary agreement.
+  * A source-mesh signature so a stale domain is not silently applied to a
+    different BoT.
+
+8.3 Serialization and command concepts
+
+Use a versioned, human-inspectable debug/interchange representation initially.
+It should preserve stable source identifiers and be round-trip testable.  A
+future binary or database-resident form can be added without changing the
+in-memory API.
+
+Provisional command behavior is:
+
+  bot2nurbs [options] input_bot output_brep
+      Fully automatic conversion.
+
+  bot2nurbs --constraints constraints_file [options] input_bot output_brep
+      Automatic conversion subject to low-level constraints.
+
+  bot2nurbs --domain-out domain_file [options] input_bot
+      Construct and export the automatic domain without fitting a B-Rep.
+
+  bot2nurbs --domain-in domain_file [options] input_bot output_brep
+      Validate and fit using a supplied domain.
+
+  bot2nurbs --validate-domain domain_file input_bot
+      Validate a domain and report topology, distortion, and foldovers.
+
+The final command names and argument conventions should follow libged
+standards when implementation begins.  Equivalent programmatic APIs are the
+primary interface; commands are thin wrappers.
+
+A future graphical editor will select points and paths visually, inspect the
+candidate layout, and write the same DomainConstraints or QuadDomain data.
+No spline-fitting or B-Rep logic should need to change when that editor
+arrives.
+
+
+9. POINT-CLOUD FRONT END
+
+9.1 Oriented point clouds
+
+Use Screened Poisson Surface Reconstruction as the default M0 generator for
+closed surfaces because it offers stronger topology behavior than ball
+pivoting.  Ball pivoting remains useful for data-following reconstructions
+but its result must pass the same mesh validation.
+
+Project every original point onto M0 and preserve the original position,
+normal, confidence, closest face, and barycentric coordinates.  Fit to the
+original points rather than to the reconstructed mesh vertices alone.
+
+9.2 Unoriented point clouds
+
+Add a point-normal module based on:
+
+  * k-nearest-neighbor search with nanoflann.
+  * Local PCA plane fitting.
+  * A confidence score based on eigenvalue separation, density, and residual.
+  * Consistent sign propagation over a neighborhood graph, using an MST or a
+    more robust graph optimization.
+  * Scanner/viewpoint constraints when available.
+  * Per-component orientation checks after surface reconstruction.
+
+Normal estimation parameters must scale with sample density and feature size,
+not only with the global bounding box.
+
+9.3 Topology limitations
+
+The topology of a sparse, noisy, unoriented, or partial point cloud is not
+uniquely determined.  The implementation must distinguish:
+
+  * Closed reconstruction requested and achieved.
+  * Open reconstruction requested.
+  * Holes filled under an explicit size policy.
+  * Topology uncertain or validation failed.
+
+It must not promise a solid manifold B-Rep from data that do not support that
+conclusion.
+
+
+10. FEATURES, CREASES, CORNERS, AND BOUNDARIES
+
+The Eck-Hoppe paper constructs a smooth G1 surface.  It reports difficulty
+with sharp features because repeated smooth refinement is used to approximate
+creases and corners.  The paper suggests that identifying such lines may
+require user intervention.
+
+Feature support should therefore be represented in the domain API from the
+start, even if complete feature-aware fitting is a later milestone:
+
+  * Creases must be domain edges.
+  * Corner points must be domain vertices.
+  * Adjacent patches share a positional boundary at a crease but have
+    independent cross-boundary derivative data, producing a G0 geometric
+    join instead of G1.
+  * Open surface boundaries are domain boundary edges with one B-Rep trim.
+  * Automatic dihedral/normal-change detection may propose feature paths,
+    while low-level constraints can override them.
+
+The smooth automatic mode should clearly report when detected sharp features
+are being approximated rather than preserved.
+
+
+11. FITTING AND NUMERICAL REQUIREMENTS
+
+The initial least-squares implementation should:
+
+  * Assemble sparse rows directly from sample basis values and Peters masks.
+  * Reuse one factorization for X, Y, and Z where the solver permits it.
+  * Avoid explicitly forming normal equations when their conditioning is
+    unacceptable; use sparse QR, augmented systems, or another suitable
+    least-squares formulation.
+  * Implement thin-plate fairness from exact or accurately integrated patch
+    derivatives.
+  * Enforce extraordinary-face constraints exactly, either through symbolic
+    elimination, a null-space basis, or a constrained solve.
+  * Normalize geometry and weights so tolerances behave consistently across
+    model scales.
+  * Support confidence weights and robust IRLS loss for outliers.
+  * Seed parameter correction from the continuous domain map and permit
+    transitions across patch boundaries.
+
+For a mesh input, fitting error must include a bidirectional approximation
+measure.  Sample-to-surface distances alone can miss surface overshoot and
+behavior between samples.  Use adaptive samples from both the source mesh and
+the fitted surface to estimate a bidirectional Hausdorff bound.
+
+
+12. VALIDATION AND ACCEPTANCE TESTS
+
+12.1 Input mesh checks
+
+  * Valid indices and finite coordinates.
+  * Degenerate/duplicate face removal.
+  * Vertex welding under a model-scaled tolerance.
+  * Consistent orientation.
+  * Two-manifold edges and vertices.
+  * Closedness when a solid output is requested.
+  * Component separation and explicit component policy.
+  * Self-intersection detection or a documented rejection policy.
+
+12.2 Domain checks
+
+  * Manifold oriented K topology.
+  * K and M0 have the same component topology and boundary structure.
+  * Every chart is a disk with the expected boundary correspondence.
+  * Positive/nonzero parameter Jacobians; no foldovers.
+  * Continuous source mapping along all shared domain edges.
+  * No illegal degree-2 or unsupported extraordinary configurations.
+  * Constraints and feature paths are satisfied.
+
+12.3 Peters and continuity tests
+
+Implement direct unit tests of every affine mask and extraordinary-valence
+case before fitting real data.  Check symbolically where possible and
+numerically along complete joins that:
+
+  * Adjacent patches have identical boundary position.
+  * Regular joins have the expected C1 relation.
+  * Extraordinary joins have matching tangent planes/G1 continuity.
+  * Even-valence extraordinary constraints are satisfied.
+  * Surface orientation is consistent and Jacobians do not collapse.
+
+12.4 B-Rep checks
+
+Every result must pass:
+
+  * ON_Brep::IsValid().
+  * ON_Brep::IsSolid() when a solid was requested.
+  * ON_Brep_Quality_Check().
+  * Exactly two oppositely oriented trims per solid edge.
+  * Shared edge geometry agreement with both incident surfaces.
+  * Nonzero trim and edge lengths.
+  * Robust non-adjacent face self-intersection testing.
+
+The current quality check's bounding-box/sample warning is useful screening
+but is not a proof of embeddedness.  A more definitive intersection check is
+required before production acceptance.
+
+12.5 Accuracy and regression corpus
+
+Use analytic and mesh-derived cases including:
+
+  * Plane/open disk and open cylinder.
+  * Sphere and ellipsoid.
+  * Torus and higher-genus smooth surfaces.
+  * Multiple connected components.
+  * Thin handles and close non-intersecting sheets.
+  * Cube and mechanical parts with marked creases/corners.
+  * Stanford bunny or similar smooth scan data.
+  * Clean, noisy, outlier-contaminated, nonuniform, and undersampled point
+    clouds.
+
+Round-trip each result through the existing B-Rep tessellator/CDT and compare
+topology, orientation, and bidirectional distance with the source.
+
+
+13. BLIND ALLEYS TO AVOID
+
+Do not repeat the following approaches:
+
+  * Axis-based or PCA-plane patch partitioning as the primary domain model.
+  * Independent patch fitting followed by attempts to reconcile boundaries.
+  * Oversampling fitted boundary curves to coerce a surface to contain them.
+  * Fitting 3D edge curves and then pulling them back into unrelated UV
+    spaces.
+  * Arbitrary trimmed oversized patches when a rectangular patch network is
+    available.
+  * Forcing trim loops closed or hiding disagreement with large tolerances.
+  * Treating ON_Brep::IsValid() alone as a geometry-quality guarantee.
+  * Reconstructing a known input mesh from point samples and thereby losing
+    its topology/provenance.
+  * Treating a dense quad remesh as a ready NURBS patch layout without a
+    continuous source map and patch-count strategy.
+  * Optimizing rational weights before the non-rational network is correct.
+  * Using the current simple libbg decimator as a MAPS implementation; it does
+    not preserve the progressive collapse history and parameter map MAPS
+    needs.
+
+
+14. IMPLEMENTATION PHASES AND EFFORT
+
+These estimates assume one experienced computational-geometry developer and
+are person-time, not guaranteed elapsed schedule.
+
+Phase 0: specification and test corpus                         1-2 weeks
+  * Finalize data structures, tolerances, and output contract.
+  * Capture analytic topology/continuity tests.
+  * Turn representative historical failures into regression inputs.
+
+Phase 1: manifold/domain kernel and provenance                 4-6 weeks
+  * Neutral halfedge mesh and sample mappings.
+  * Validation/repair adapters and closest-point provenance.
+  * Generalized convex-boundary harmonic maps.
+  * Versioned constraints/domain serialization and validation.
+
+Phase 2: Peters construction and evaluator                    6-9 weeks
+  * Doo-Sabin topology.
+  * Affine masks and extraordinary constraints from the paper appendix.
+  * Macro B-spline conversion.
+  * Exact continuity unit tests.
+
+Phase 3: global fitter and B-Rep assembly                      6-9 weeks
+  * Sparse fitting and thin-plate fairness.
+  * Cross-patch parameter correction.
+  * Full rectangular ON_NurbsSurface faces and canonical shared edges.
+  * End-to-end operation with a supplied QuadDomain.
+
+Phase 4: automatic Eck base complex and quad matching          8-12 weeks
+  * Generalized Voronoi/Delaunay topology.
+  * M0/K continuous parameter map.
+  * Blossom matching and max-min pairing.
+  * Distortion and foldover validation.
+
+Phase 5: adaptive refinement                                   4-6 weeks
+  * Marking, closure, four templates, parameter transfer, and refitting.
+  * Patch/error/stagnation termination policies.
+
+Phase 6: point-cloud front end                                 4-8 weeks
+  * Normal estimation/orientation.
+  * SPSR and ball-pivot adapters with original-point provenance.
+  * Confidence and outlier handling.
+
+Phase 7: features and production hardening                    8-12 weeks
+  * Creases, corners, open boundaries, and constrained layouts.
+  * Embeddedness/self-intersection checks.
+  * Performance, cancellation, deterministic output, and broad regressions.
+
+Expected milestones are:
+
+  * Supplied-domain smooth prototype: approximately 2-3 months.
+  * Automatic smooth mesh prototype: approximately 5-8 months total.
+  * Production smooth mesh plus oriented point-cloud pipeline:
+    approximately 10-15 person-months.
+  * Feature-aware, unoriented-point-cloud, adversarial-input quality:
+    approximately 15-24 person-months.
+
+Two developers can shorten elapsed time by separating the domain and spline
+work, but integration, mathematical validation, and test development will not
+parallelize linearly.
+
+
+15. RECOMMENDED FIRST DEVELOPMENT MILESTONE
+
+The first milestone should deliberately exclude automatic patch layout:
+
+  1. Define QuadDomain, SurfaceSampleSet, and their versioned serializer.
+  2. Build several hand-authored analytic domains in unit tests.
+  3. Implement and verify the Peters stencils and macro-patch evaluator.
+  4. Fit the global network to analytic and sampled smooth surfaces.
+  5. Emit full-domain B-Rep faces with canonical shared edges and isotrims.
+  6. Pass topology, G1, quality, embeddedness, and round-trip tests.
+  7. Expose --domain-in and --validate-domain command paths.
+
+Once this works, both the automatic Eck front end and future graphical domain
+editor have a stable, independently tested target.  This is the smallest
+milestone that proves the key architectural choice and retires the principal
+risk inherited from the old experiments.
+
+
+16. OPEN DESIGN QUESTIONS
+
+Questions to resolve during Phase 0 include:
+
+  * Exact public/private boundary of the neutral domain API and whether its
+    first version is C++-only.
+  * The versioned domain/constraint interchange syntax and source-mesh
+    signature method.
+  * The general matching implementation: internal blossom code versus an
+    acceptable existing dependency.
+  * Sparse constrained solver selection and conditioning policy.
+  * Default error metric, sampling strategy, tolerance units, and patch caps.
+  * Repair and hole-filling policy for solid requests.
+  * Behavior for multiple components and mixed open/closed inputs.
+  * Minimum supported feature semantics in the first automatic release.
+  * Whether MAPS-style progressive simplification should supplement or
+    eventually replace generalized Voronoi construction.
+  * Whether an external field-aligned quadrangulator is acceptable as an
+    optional backend and how its source map will be verified.
+
+
+17. RELATED WORK AND OPTIONAL FUTURE BACKENDS
+
+Eck et al., multiresolution parameterization:
+
+  https://hhoppe.com/proj/mra/
+  https://hhoppe.com/mra.pdf
+
+Lee et al., MAPS, a later simplification-induced parameterization supporting
+automatic and point/edge-constrained operation:
+
+  https://pixl.cs.princeton.edu/pubs/Lee_1998_MMA/index.php
+  https://multires.caltech.edu/pubs/maps.pdf
+
+QuadriFlow, an MIT-licensed manifold quadrangulation implementation with an
+optional sharp-preserving mode:
+
+  https://github.com/hjwdzh/QuadriFlow
+
+Myles, Pietroni, and Zorin, robust field-aligned global parameterization with
+locally bijective and feature-aligned quad layouts:
+
+  https://vcg.isti.cnr.it/publication/2014/MPZ14/
+
+These are possible domain front ends or sources of improvements.  None
+removes the need for BRL-CAD's neutral source mapping, Peters spline backend,
+global fitting, B-Rep assembly, and validation.
+

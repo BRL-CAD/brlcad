@@ -1,28 +1,12 @@
-/*                 RepresentationMap.h
+/*              R E P R E S E N T A T I O N M A P . H
  * BRL-CAD
  *
- * Copyright (c) 1994-2026 United States Government as represented by
+ * Copyright (c) 2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
- * This program is free software; you can redistribute it and/or
+ * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
  * version 2.1 as published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this file; see the file named COPYING for more
- * information.
- */
-/** @file step/RepresentationMap.h
- *
- * Class definition used to convert STEP "RepresentationMap" to BRL-CAD
- * structures.  A representation_map ties a source datum (mapping_origin)
- * to a mapped_representation so that mapped_item can instance the latter.
- *
  */
 
 #ifndef CONV_STEP_STEP_G_REPRESENTATIONMAP_H
@@ -30,12 +14,8 @@
 
 #include "STEPEntity.h"
 
-#include "sdai.h"
-
-// forward declaration of class
-class ON_Brep;
 class Representation;
-class Axis2Placement3D;
+class RepresentationItem;
 
 class RepresentationMap : virtual public STEPEntity
 {
@@ -44,35 +24,19 @@ private:
     static EntityInstanceFunc GetInstance;
 
 protected:
-    Axis2Placement3D *mapping_origin;
+    RepresentationItem *mapping_origin;
     Representation *mapped_representation;
 
 public:
     RepresentationMap();
-    virtual ~RepresentationMap();
     RepresentationMap(STEPWrapper *sw, int step_id);
-    Axis2Placement3D *GetMappingOrigin() {
-	return mapping_origin;
-    };
-    Representation *GetMappedRepresentation() {
-	return mapped_representation;
-    };
+    virtual ~RepresentationMap();
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
-    virtual bool LoadONBrep(ON_Brep *brep);
     virtual void Print(int level);
+    RepresentationItem *MappingOrigin() const { return mapping_origin; }
+    Representation *MappedRepresentation() const { return mapped_representation; }
 
-    //static methods
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
 #endif /* CONV_STEP_STEP_G_REPRESENTATIONMAP_H */
-
-/*
- * Local Variables:
- * tab-width: 8
- * mode: C
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */

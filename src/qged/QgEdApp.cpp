@@ -49,6 +49,12 @@ int
 qged_post_opendb_clbk(int UNUSED(ac), const char **UNUSED(av), void *UNUSED(gedp), void *ctx)
 {
     QgEdApp *a = (QgEdApp *)ctx;
+
+    // If the command didn't succeed, don't do anything.  Return OK for our execution
+    // so the ged_exec return code is the command's ret, not ours.
+    if (ged_results_ret(a->mdl->gedp->ged_results) != BRLCAD_OK)
+	return BRLCAD_OK;
+
     emit a->dbi_update(a->mdl->gedp->dbip);
     if (!a->w)
 	return BRLCAD_OK;
@@ -137,13 +143,6 @@ qt_delete_io_handler(struct ged_subprocess *p, bu_process_io_t t)
 	    }
 	    p->stderr_active = 0;
 	    break;
-    }
-
-    // All communication has ceased between the app and the subprocess,
-    // time to call the end callback (if any)
-    if (!p->stdin_active && !p->stdout_active && !p->stderr_active) {
-	if (p->end_clbk)
-	    p->end_clbk(0, NULL, NULL, p->end_clbk_data);
     }
 
     emit ca->view_update(QG_VIEW_REFRESH);
@@ -311,6 +310,8 @@ QgEdApp::QgEdApp(int &argc, char *argv[], int swrast_mode, int quad_mode) :QAppl
 }
 
 QgEdApp::~QgEdApp() {
+    if (mdl && mdl->gedp)
+	ged_subprocesses_terminate(mdl->gedp);
     delete mdl;
     // TODO - free rt_vlfree?
 }
@@ -652,4 +653,3 @@ QgEdApp::write_settings()
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

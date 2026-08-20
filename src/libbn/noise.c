@@ -47,8 +47,10 @@
 
 #ifdef __cplusplus
 extern "C" void bn_ensure_initialized(void);
+extern "C" int bn_noise_semaphore(void);
 #else
 extern void bn_ensure_initialized(void);
+extern int bn_noise_semaphore(void);
 #endif
 
 /**
@@ -165,7 +167,6 @@ struct str_ht {
 };
 
 static struct str_ht ht;
-static int sem_noise = 0;
 
 #define MAGIC_STRHT1 1771561
 #define MAGIC_STRHT2 1651771
@@ -194,9 +195,7 @@ static int sem_noise = 0;
 static int
 bn_noise_sem(void)
 {
-    if (UNLIKELY(sem_noise <= 0))
-	sem_noise = bu_semaphore_register("BN_SEM_NOISE");
-    return sem_noise;
+    return bn_noise_semaphore();
 }
 
 

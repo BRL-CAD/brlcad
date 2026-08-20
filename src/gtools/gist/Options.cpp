@@ -25,9 +25,9 @@ Options::Options()
     inFile = "";
     exeDir = "";
     workingDir = "";
-    ppi = 300;
-    width = 3508;
-    length = 2480;
+    ppi = DEFAULT_REPORT_PPI;
+    width = CANONICAL_REPORT_WIDTH;
+    length = CANONICAL_REPORT_LENGTH;
     isFolder = false;
     inFolderName = "";
     openGUI = false;
@@ -46,6 +46,7 @@ Options::Options()
     originalUnitsMass = true;
     ncpu = 0; // all available
     verbosePrint = 0;
+    previewMode = 0;
 }
 
 Options::~Options()
@@ -68,7 +69,7 @@ bool Options::readParameters(int argc, const char **argv) {
 
     int print_help = 0;			// user requested help
     int param_overwrite = 0;		// user requested to overwrite existing report
-    int param_ppi = 0;			// user requested ppi
+    int param_ppi = -1;			// user requested ppi
     int param_Lhand = 0;		// user requested left-handed coordinates
     int param_Yup = 0;			// user requested y-up
     std::string param_Ulength = "";	// user requested length units
@@ -77,7 +78,7 @@ bool Options::readParameters(int argc, const char **argv) {
     std::string param_densityFile = "";	// user requested density file
     int param_ncpu = 0;			// user requested num CPUs to use
 
-    struct bu_opt_desc options[26] = {
+    struct bu_opt_desc options[27] = {
 	{"i", "",     "filename.g",        &_param_set_std_str,     &this->inFile,         "input .g"					    },
 	{"o", "",     "filename.png",      &_param_set_std_str,     &param_oFile,          "output file name"				    },
 	{"F", "",     "folder",            &_param_set_std_str,     &this->inFolderName,   "folder of .g models to generate"		    },
@@ -100,6 +101,7 @@ bool Options::readParameters(int argc, const char **argv) {
 	{"w", "",     "wt_units",          &_param_set_std_str,     &param_Umass,          "specify weight units"			    },
 	{"a", "",     "path/to/dir",	   &_param_set_std_str,     &this->workingDir,     "specify dir to write c(a)ched work to"	    },
 	{"P", "",     "#cpus",             &bu_opt_int,             &param_ncpu,           "number of CPUs to use"			    },
+	{"Q", "preview", "",              NULL,                    &this->previewMode,    "fast preview: lower render quality and skip verification"},
 	{"v", "",     "",                  NULL,                    &this->verbosePrint,   "verbose printing"				    },
 	{"h", "help", "",                  NULL,                    &print_help,           "Print help and exit"			    },
 	{"?", "",     "",                  NULL,                    &print_help,           ""						    },
@@ -154,8 +156,13 @@ bool Options::readParameters(int argc, const char **argv) {
 	setOpenGUI();
     } else if (!setOutFile(param_oFile))    // out file was supplied, make sure .png
 	return false;
-    if (param_ppi)
+    if (param_ppi != -1) {
+	if (param_ppi <= 0) {
+	    bu_log("ERROR: pixels per inch must be greater than zero\n");
+	    return false;
+	}
 	setPPI(param_ppi);
+    }
     if (param_Lhand)
 	setCoordSystem(LEFT_HAND);
     if (param_Yup)
@@ -282,9 +289,10 @@ Options::setLogopath(std::string f)
 
 void Options::setPPI(int p) {
     ppi = p;
-    // TODO: magic numbers?
-    width = int(ppi * 11.69);
-    length = int(ppi * 8.27);
+    width = static_cast<int>(std::lround(
+	static_cast<double>(CANONICAL_REPORT_WIDTH) * ppi / DEFAULT_REPORT_PPI));
+    length = static_cast<int>(std::lround(
+	static_cast<double>(CANONICAL_REPORT_LENGTH) * ppi / DEFAULT_REPORT_PPI));
 }
 
 
@@ -552,6 +560,10 @@ size_t Options::getNCPU() {
 
 std::string Options::getDensityFile() {
     return densityFile;
+}
+
+bool Options::getPreviewMode() {
+    return previewMode;
 }
 
 

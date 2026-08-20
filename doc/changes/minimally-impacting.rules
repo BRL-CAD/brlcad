@@ -834,3 +834,6 @@ RENAME FORM "tp_sep" TO "plot3_float_split" SINCE 7.44 # remove tig.h/vectfont.h
 RENAME FORM "tp_ipow" TO "plot3_ipow" SINCE 7.44 # remove tig.h/vectfont.h, consolidate functionality into plot3.h [7.44]
 RENAME FORM "tp_ftoa" TO "plot3_float_to_ascii" SINCE 7.44 # remove tig.h/vectfont.h, consolidate functionality into plot3.h [7.44]
 RENAME FORM "tp_plot" TO "plot3_xy_plot" SINCE 7.44 # remove tig.h/vectfont.h, consolidate functionality into plot3.h [7.44]
+
+# 7.46
+RENAME HEADER bu\/time.h TO bu\/datetime.h SINCE 7.46 # renamed time.h header to match source datetime [7.46]

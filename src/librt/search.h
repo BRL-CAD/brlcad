@@ -74,8 +74,11 @@ struct _db_search_ctx {
 struct db_node_t {
     struct db_full_path *path;
     struct bu_ptbl *full_paths;
+    void *unique_dps;              /* C++ unordered_set<directory *>*, when unique output is requested */
     void *above_passes_map;       /* C++ map<db_plan_t*,unordered_set<bu_h128_t>>*, NULL without -above pre-pass */
     bu_h128_t above_path_hash;    /* precomputed path hash for above_passes_map lookup */
+    uint64_t below_passes;        /* bit i is set when this path passes cached -below plan i */
+    int below_cache_active;       /* below_passes is valid for this path */
     int flags;
     int matched_filters;
 };
@@ -104,6 +107,8 @@ struct db_plan_t {
 #define F_ATLEAST 1 /* perm */
     int min_depth;
     int max_depth;
+    int below_cache_index;                /* cached -below bit number, or -1 for ancestor-walk fallback */
+    void *compiled_regex;                 /* regex_t *, owned by regex plan nodes */
     mat_t m;
     int flags;				/* private flags */
     enum db_search_ntype type;		/* plan node type */

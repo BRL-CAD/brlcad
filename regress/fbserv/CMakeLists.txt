@@ -8,7 +8,7 @@
 # Two ctest registrations are provided:
 #
 #   regress-fbserv-stress-quick   -- 8 parallel workers, run in normal CI
-#   regress-fbserv-stress-heavy   -- 32 parallel workers, opt-in stress run
+#   regress-fbserv-stress-heavy   -- 32 parallel workers (16 on Windows)
 
 if(TARGET fbserv AND TARGET libpkg AND TARGET libbu)
 
@@ -25,10 +25,17 @@ if(TARGET fbserv AND TARGET libpkg AND TARGET libbu)
     brlcad_regression_test(regress-fbserv-stress-quick "fbserv;fbserv_stress" STAND_ALONE TEST_DEFINED)
     distclean(${CMAKE_CURRENT_BINARY_DIR}/regress-fbserv-stress-quick.log)
 
-    # Heavy variant: 32 workers.  Same PID-based port isolation applies.
+    # A BRL-CAD process has a comparatively large private-commit baseline on
+    # Windows.  Starting 32 servers there can exhaust system commit before the
+    # protocol test begins (STATUS_COMMITMENT_LIMIT), so retain a meaningful
+    # 2x stress step over the quick test while keeping the Unix width at 32.
+    set(FBSERV_STRESS_HEAVY_WORKERS 32)
+    if(WIN32)
+      set(FBSERV_STRESS_HEAVY_WORKERS 16)
+    endif(WIN32)
     brlcad_add_test(
       NAME regress-fbserv-stress-heavy
-      COMMAND fbserv_stress --workers 32
+      COMMAND fbserv_stress --workers ${FBSERV_STRESS_HEAVY_WORKERS}
     )
     brlcad_regression_test(regress-fbserv-stress-heavy "fbserv;fbserv_stress" STAND_ALONE TEST_DEFINED)
     distclean(${CMAKE_CURRENT_BINARY_DIR}/regress-fbserv-stress-heavy.log)

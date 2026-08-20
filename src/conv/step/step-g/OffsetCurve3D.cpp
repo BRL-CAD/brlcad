@@ -31,6 +31,11 @@
 #include "CartesianTransformationOperator.h"
 
 #include "OffsetCurve3D.h"
+#include "LocalUnits.h"
+
+#include <algorithm>
+#include <cmath>
+#include <functional>
 
 #define CLASSNAME "OffsetCurve3D"
 #define ENTITYNAME "Offset_Curve_3d"
@@ -154,99 +159,104 @@ OffsetCurve3D::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
 bool
 OffsetCurve3D::LoadONBrep(ON_Brep *brep)
 {
-    if (!brep) {
-	/* nothing to do */
+    if (!brep || !basis_curve || !ref_direction)
 	return false;
-    }
-
-    if (ON_id >= 0) {
-	return true; // already loaded
-    }
-
-    if (!basis_curve) {
-	std::cerr << "Error: " << entityname << "::LoadONBrep() - no basis_curve." << std::endl;
-	return false;
-    }
-
-    // Propagate any trim/endpoint info to the basis curve so it builds the
-    // same span we intend to offset.
+    if (GetONId() >= 0)
+	return true;
     if (trimmed) {
-	basis_curve->SetPointTrim(trim_startpoint, trim_endpoint);
-    }
-    if (start && end) {
+	if (parameter_trim)
+	    basis_curve->SetParameterTrim(t, s);
+	else
+	    basis_curve->SetPointTrim(trim_startpoint, trim_endpoint);
+    } else {
 	basis_curve->Start(start);
 	basis_curve->End(end);
     }
-
-    // Build the underlying basis curve geometry (delegation pattern from
-    // SurfaceOfRevolution::LoadONBrep, OpenNurbsInterfaces.cpp).
-    if (!basis_curve->LoadONBrep(brep)) {
-	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading basis_curve." << std::endl;
+    if (!basis_curve->LoadONBrep(brep))
 	return false;
-    }
-
-    int basis_id = basis_curve->GetONId();
-    if (basis_id < 0 || basis_id >= brep->m_C3.Count()) {
-	std::cerr << "Error: " << entityname << "::LoadONBrep() - basis_curve produced no 3d curve." << std::endl;
+    const int basis_id = basis_curve->GetONId();
+    const ON_Curve *basis = basis_id >= 0 && basis_id < brep->m_C3.Count() ?
+	brep->m_C3[basis_id] : NULL;
+    if (!basis)
 	return false;
-    }
-    const ON_Curve *base = brep->m_C3[basis_id];
-    if (!base) {
-	std::cerr << "Error: " << entityname << "::LoadONBrep() - null basis 3d curve." << std::endl;
+
+    const double *ratios = ref_direction->DirectionRatios();
+    ON_3dVector reference(ratios[0], ratios[1], ratios[2]);
+    if (!reference.Unitize())
 	return false;
-    }
-
-    if (!ref_direction) {
-	std::cerr << "Error: " << entityname << "::LoadONBrep() - no ref_direction." << std::endl;
+    const double offset_distance = distance * LocalUnits::length;
+    const double tolerance = std::max(LocalUnits::tolerance, 1.0e-9);
+    const ON_Interval domain = basis->Domain();
+    if (!domain.IsIncreasing())
 	return false;
-    }
-    double *dr = ref_direction->DirectionRatios();
-    ON_3dVector refdir(dr[0], dr[1], dr[2]);
-    refdir.Unitize();
 
-    double d = distance * LocalUnits::length;
-
-    // ISO 10303-42 offset_curve_3d: at each parameter the offset point is the
-    // basis point displaced by 'distance' along V = normalize(T x ref_direction),
-    // where T is the basis-curve unit tangent.  No ON_Curve::Offset() exists in
-    // this OpenNURBS build, so we sample the basis span and fit a degree-1
-    // (polyline) ON_NurbsCurve through the offset points, matching the
-    // control-point-driven ON_NurbsCurve construction used throughout this file.
-    ON_Interval dom = base->Domain();
-    const int nsamp = 128;                 // samples across the span
-    const int cv_count = nsamp + 1;
-
-    ON_NurbsCurve *curve = ON_NurbsCurve::New(3, false, 2, cv_count);
-
-    for (int i = 0; i <= nsamp; i++) {
-	double par = dom.ParameterAt((double)i / (double)nsamp);
-	ON_3dPoint p;
-	ON_3dVector tang;
-	if (!base->EvTangent(par, p, tang)) {
-	    std::cerr << "Error: " << entityname << "::LoadONBrep() - basis curve evaluation failed." << std::endl;
-	    delete curve;
+    const auto evaluate = [&](double parameter, ON_3dPoint *point) {
+	ON_3dPoint basis_point;
+	ON_3dVector tangent;
+	if (!point || !basis->EvTangent(parameter, basis_point, tangent))
 	    return false;
+	ON_3dVector normal = ON_CrossProduct(tangent, reference);
+	if (!normal.Unitize())
+	    return false;
+	*point = basis_point + offset_distance * normal;
+	return point->IsValid();
+    };
+    const auto segment_distance = [](const ON_3dPoint &point,
+	    const ON_3dPoint &start_point, const ON_3dPoint &end_point) {
+	const ON_3dVector chord = end_point - start_point;
+	const double squared_length = chord * chord;
+	if (!(squared_length > ON_ZERO_TOLERANCE * ON_ZERO_TOLERANCE))
+	    return point.DistanceTo(start_point);
+	double fraction = ((point - start_point) * chord) / squared_length;
+	fraction = std::max(0.0, std::min(1.0, fraction));
+	return point.DistanceTo(start_point + fraction * chord);
+    };
+
+    ON_3dPoint first, last;
+    if (!evaluate(domain.Min(), &first) || !evaluate(domain.Max(), &last))
+	return false;
+    ON_3dPointArray vertices;
+    vertices.Append(first);
+    const size_t maximum_vertices = 65536;
+    std::function<bool(double, const ON_3dPoint &, double,
+	const ON_3dPoint &, unsigned int)> refine;
+    refine = [&](double a, const ON_3dPoint &pa, double b,
+	    const ON_3dPoint &pb, unsigned int depth) {
+	const double parameters[3] = {
+	    a + 0.25 * (b - a), a + 0.5 * (b - a), a + 0.75 * (b - a)};
+	ON_3dPoint samples[3];
+	double deviation = 0.0;
+	for (int i = 0; i < 3; ++i) {
+	    if (!evaluate(parameters[i], &samples[i]))
+		return false;
+	    deviation = std::max(deviation,
+		segment_distance(samples[i], pa, pb));
 	}
-	ON_3dVector offdir = ON_CrossProduct(tang, refdir);
-	if (offdir.Length() < ON_ZERO_TOLERANCE) {
-	    // tangent parallel to ref_direction: offset direction undefined here,
-	    // leave the point on the basis curve.
-	    offdir.Zero();
-	} else {
-	    offdir.Unitize();
+	if (deviation <= tolerance) {
+	    if (vertices.Count() >= static_cast<int>(maximum_vertices))
+		return false;
+	    vertices.Append(pb);
+	    return true;
 	}
-	ON_3dPoint op = p + d * offdir;
-	curve->SetCV(i, op);
+	if (depth >= 24)
+	    return false;
+	return refine(a, pa, parameters[1], samples[1], depth + 1) &&
+	    refine(parameters[1], samples[1], b, pb, depth + 1);
+    };
+    if (!refine(domain.Min(), first, domain.Max(), last, 0))
+	return false;
+
+    ON_PolylineCurve *offset = new ON_PolylineCurve(vertices);
+    if (!offset->IsValid()) {
+	delete offset;
+	return false;
     }
-
-    // Uniform clamped knot vector for the degree-1 curve.
-    for (int i = 0; i < curve->KnotCount(); i++) {
-	curve->SetKnot(i, (double)i);
-    }
-
-    ON_id = brep->AddEdgeCurve(curve);
-
-    return true;
+    SetONId(brep->AddEdgeCurve(offset));
+    if (step)
+	step->RecordDiagnostic(brlcad::step::DiagnosticSeverity::Information,
+	    id, "OFFSET_CURVE_3D", "distance",
+	    "constructed an adaptive offset polyline within the model tolerance");
+    return GetONId() >= 0;
 }
 
 // Local Variables:

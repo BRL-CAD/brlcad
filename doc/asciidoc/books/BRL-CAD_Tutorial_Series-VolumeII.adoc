@@ -65,6 +65,7 @@ In this lesson, you will:
 * Create a sphere using the GUI menu.
 * Use the l command to list a shape's attributes or parameters.
 * Use the ls command to list the contents of the database.
+* Use the tops command to identify top-level objects in the database.
 * Eliminate a shape or object from the database using the kill command.
 * Edit a command.
 * Use the q or exit commands to quit the program.
@@ -274,6 +275,17 @@ Use the l command to list both sph1.s and sph2.s before continuing with this les
 
 In addition to viewing a shape's contents, you might also want to list the contents of the database to see what items have been created. To view the database contents, type at the Command Window prompt: *ls[ENTER]*
 
+The *ls* command lists every object, which can be overwhelming in an existing
+database. The *tops* command is usually the best starting point when exploring
+an unfamiliar database: it lists only objects that are not members of another
+combination. These top-level objects are typically the assemblies or models
+you will want to draw or inspect first. At the Command Window prompt, type:
+*tops[ENTER]*
+
+In the simple _sphere.g_ database, the primitive shapes are still top-level
+objects. As you build combinations in later lessons, *tops* will omit their
+member shapes and show the higher-level entry points instead.
+
 
 [[kill_object]]
 === Killing a Shape or Object
@@ -325,6 +337,7 @@ In this lesson, you:
 * Used the GUI to create a primitive shape.
 * Used the l command to view a shape's parameters.
 * Used the ls command to list the contents of the database.
+* Used the tops command to identify top-level database objects.
 * Used the kill command to eliminate a shape from the database.
 * Edited commands in the Command Window.
 * Used the q or Exit commands to quit the program.
@@ -2937,7 +2950,7 @@ On the Command Line, create rcc1.c by typing: *comb rcc1.c u rcc1.s - sph1.r - s
 
 [NOTE]
 ====
-Note that we could have achieved the same results on the Command Line by using the rm (remove) command to remove rcc1.s from base1.r and then adding rcc1.c: *rm base1.r rcc1.s[Enter]* *r base1.r u rcc1.c[Enter]*
+Note that we could have achieved the same results on the Command Line by using the rm command to remove rcc1.s from base1.r and then adding rcc1.c: *rm base1.r/rcc1.s[Enter]* *r base1.r u rcc1.c[Enter]*
 
 This would have resulted in a very similar tree as above:
 
@@ -3905,7 +3918,7 @@ image::../lessons/images/mged16_radio_structure_3.png[]
 
 
 
-To accomplish this restructuring according to functionality, create an assembly called electronics.c to hold these components together. Type: *g electronics.c board.r knob.r button.r[Enter]* Of course, we now need to remove board.r, knob.r, and button.r from the radio.c assembly so that when electronics.c is added to the radio.c assembly, we won't have the knob and button included twice in the model. To do this, use the rm (remove) command: *rm radio.c board.r knob.r button.r[Enter]* and then union in the electronics assembly: *g radio.c electronics.c[Enter]*
+To accomplish this restructuring according to functionality, create an assembly called electronics.c to hold these components together. Type: *g electronics.c board.r knob.r button.r[Enter]* Of course, we now need to remove board.r, knob.r, and button.r from the radio.c assembly so that when electronics.c is added to the radio.c assembly, we won't have the knob and button included twice in the model. To do this, use the combination-member removal command: *comb radio.c rm board.r knob.r button.r[Enter]* and then union in the electronics assembly: *g radio.c electronics.c[Enter]*
 
 Now the tree for radio.c should appear as follows:
 

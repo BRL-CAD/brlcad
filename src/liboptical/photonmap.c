@@ -1081,13 +1081,9 @@ Irradiance(int pid, struct Photon *P, struct application *ap)
  * Go through each photon and use it for the position of the hemisphere
  * and then determine whether that should be included as a Cache Pt.
  */
-void
-BuildIrradianceCache(int pid, struct PNode *Node, struct application *ap)
+static void
+build_irradiance_cache(int pid, struct PNode *Node, struct application *ap, int sem_photonmap)
 {
-    static int sem_photonmap = 0;
-    if (!sem_photonmap)
-	sem_photonmap = bu_semaphore_register("sem_photonmap");
-
     if (!Node)
 	return;
 
@@ -1106,8 +1102,17 @@ BuildIrradianceCache(int pid, struct PNode *Node, struct application *ap)
 	bu_semaphore_release(sem_photonmap);
     }
 
-    BuildIrradianceCache(pid, Node->L, ap);
-    BuildIrradianceCache(pid, Node->R, ap);
+    build_irradiance_cache(pid, Node->L, ap, sem_photonmap);
+    build_irradiance_cache(pid, Node->R, ap, sem_photonmap);
+}
+
+
+void
+BuildIrradianceCache(int pid, struct PNode *Node, struct application *ap)
+{
+    const int sem_photonmap = bu_semaphore_register("sem_photonmap");
+
+    build_irradiance_cache(pid, Node, ap, sem_photonmap);
 }
 
 

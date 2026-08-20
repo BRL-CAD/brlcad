@@ -38,6 +38,7 @@ Product::Product()
 {
     step = NULL;
     id = 0;
+    ident = "";
     name = "";
     description = "";
 }
@@ -46,6 +47,7 @@ Product::Product(STEPWrapper *sw, int step_id)
 {
     step = sw;
     id = step_id;
+    ident = "";
     name = "";
     description = "";
 }
@@ -59,6 +61,11 @@ Product::~Product()
 string Product::ClassName()
 {
     return entityname;
+}
+
+string Product::Ident()
+{
+    return ident;
 }
 
 string Product::Name()
@@ -80,6 +87,7 @@ bool Product::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     // the actual entity and not a complex/supertype parent
     sse = step->getEntity(sse, ENTITYNAME);
 
+    ident = step->getStringAttribute(sse, "id");
     name = step->getStringAttribute(sse, "name");
     description = step->getStringAttribute(sse, "description");
 
@@ -117,6 +125,8 @@ void Product::Print(int level)
 
     TAB(level);
     std::cout << "Attributes:" << std::endl;
+    TAB(level + 1);
+    std::cout << "ident:" << ident << std::endl;
     TAB(level + 1);
     std::cout << "name:" << name << std::endl;
     TAB(level + 1);

@@ -4,7 +4,7 @@
 :manmanual: BRL-CAD User Commands
 
 == NAME
-prefix - Changes the name of all the _objects_ listed by adding the specified __new_ prefix__.
+prefix - Changes the name of all the _objects_ listed by adding the specified __new_prefix__.
 
 == SYNOPSIS
 
@@ -17,7 +17,7 @@ prefix {new_prefix objects>}
 [[description]]
 == DESCRIPTION
 
-Changes the name of all the _objects_ listed by adding the specified __new_ prefix__. All references to the _objects_ will also be changed. The *mvall* command performs a similar function.
+Changes the name of all the _objects_ listed by adding the specified __new_prefix__. All references to the _objects_ will also be changed. The *mvall* command performs a similar function.
 
 
 [[examples]]
@@ -30,7 +30,7 @@ The example shows the use of the *prefix* command to change the names of specifi
 ====
 mged>**prefix test_ group1 regiona shapeb**
 
-Changes the names of objects _group1, regiona,_ and _shapeb_ to test_group1, test_regiona, and test_shapeb. All references to these objects will reflect the new names.
+Changes the names of objects _group1, regiona,_ and _shapeb_ to "test_group1," "test_regiona," and "test_shapeb." All references to these objects will reflect the new names.
 
 ====
 

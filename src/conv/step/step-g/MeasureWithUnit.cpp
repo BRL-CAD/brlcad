@@ -25,11 +25,14 @@
  */
 
 #include "STEPWrapper.h"
+#include "STEPGeneratedAPI.h"
+#include "ap_schema.h"
 #include "Factory.h"
 
 #include "MeasureValue.h"
 #include "Unit.h"
 #include "LengthSiUnit.h"
+#include "ConversionBasedUnit.h"
 
 #include "MeasureWithUnit.h"
 
@@ -66,6 +69,10 @@ MeasureWithUnit::GetLengthConversionFactor()
     if (si != NULL) {
 	//found SI length unit
 	sifactor = si->GetLengthConversionFactor();
+    } else {
+	ConversionBasedUnit *conversion = dynamic_cast<ConversionBasedUnit *>(unit_component);
+	if (conversion != NULL)
+	    sifactor = conversion->GetLengthConversionFactor();
     }
     mfactor = value_component.GetLengthMeasure();
 
@@ -79,8 +86,13 @@ MeasureWithUnit::GetPlaneAngleConversionFactor()
     double mfactor = 0.0;
     SiUnit *si = dynamic_cast<SiUnit *>(unit_component);
     if (si != NULL) {
-	//found SI length unit
+	// found SI plane angle unit
 	sifactor = si->GetPlaneAngleConversionFactor();
+	} else {
+	ConversionBasedUnit *conversion = dynamic_cast<ConversionBasedUnit *>(
+	    unit_component);
+	if (conversion != NULL)
+	    sifactor = conversion->GetPlaneAngleConversionFactor();
     }
     mfactor = value_component.GetPlaneAngleMeasure();
 
@@ -94,8 +106,13 @@ MeasureWithUnit::GetSolidAngleConversionFactor()
     double mfactor = 0.0;
     SiUnit *si = dynamic_cast<SiUnit *>(unit_component);
     if (si != NULL) {
-	//found SI length unit
+	// found SI solid angle unit
 	sifactor = si->GetSolidAngleConversionFactor();
+	} else {
+	ConversionBasedUnit *conversion = dynamic_cast<ConversionBasedUnit *>(
+	    unit_component);
+	if (conversion != NULL)
+	    sifactor = conversion->GetSolidAngleConversionFactor();
     }
     mfactor = value_component.GetSolidAngleMeasure();
 
@@ -128,14 +145,12 @@ MeasureWithUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	// select-select
 	select = step->getSelectAttribute(sse, "unit_component");
 	if (select) {
-	    SdaiUnit *u = (SdaiUnit *)select;
-	    if (u->IsNamed_unit()) {
-		SdaiNamed_unit *nu = *u;
-		unit_component = dynamic_cast<Unit *>(Factory::CreateObject(sw, (SDAI_Application_instance *)nu));
-#ifdef AP203e2
-	    } else if (u->IsDerived_unit()) {
-		SdaiDerived_unit *du = *u;
-		unit_component = dynamic_cast<Unit *>(Factory::CreateObject(sw, (SDAI_Application_instance *)du));
+	    SDAI_Application_instance *unit = brlcad::step::SelectedEntity(select);
+	    if (unit && sw->IsSchemaEntity(unit, "NAMED_UNIT")) {
+		unit_component = dynamic_cast<Unit *>(Factory::CreateObject(sw, unit));
+#if defined(AP203e2) || defined(AP242)
+	    } else if (unit && sw->IsSchemaEntity(unit, "DERIVED_UNIT")) {
+		unit_component = dynamic_cast<Unit *>(Factory::CreateObject(sw, unit));
 #endif
 	    } else {
 		std::cerr << CLASSNAME << ": Unknown 'Unit' type from select." << std::endl;

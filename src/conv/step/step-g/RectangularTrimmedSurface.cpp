@@ -29,6 +29,10 @@
 #include "Surface.h"
 #include "RectangularTrimmedSurface.h"
 
+#include <algorithm>
+#include <cmath>
+#include <memory>
+
 #define CLASSNAME "RectangularTrimmedSurface"
 #define ENTITYNAME "Rectangular_Trimmed_Surface"
 string RectangularTrimmedSurface::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)RectangularTrimmedSurface::Create);
@@ -150,45 +154,52 @@ RectangularTrimmedSurface::Create(STEPWrapper *sw, SDAI_Application_instance *ss
 bool
 RectangularTrimmedSurface::LoadONBrep(ON_Brep *brep)
 {
-    if (!brep) {
-	/* nothing to do */
+    if (!brep || !basis_surface)
 	return false;
-    }
-
-    if (ON_id >= 0) {
-	return true;    // already loaded
-    }
-
-    if (!basis_surface) {
-	std::cerr << "Error: " << entityname << "::LoadONBrep() - no basis_surface." << std::endl;
-	return false;
-    }
-
-    // Propagate the trimming-curve 3D bounds (supplied to us by the owning
-    // FaceSurface via SetCurveBounds) down to the basis surface so that
-    // infinitely-defined basis surfaces (plane/cylinder/cone/etc.) can be
-    // sized correctly.  Mirrors FaceSurface::LoadONBrep() which calls
-    // face_geometry->SetCurveBounds(bb) before face_geometry->LoadONBrep().
-    if (trim_curve_3d_bbox) {
+    if (GetONId() >= 0)
+	return true;
+    if (trim_curve_3d_bbox)
 	basis_surface->SetCurveBounds(trim_curve_3d_bbox);
-    }
-
-    // Delegate geometry creation to the basis surface; it registers itself
-    // with the brep via brep->AddSurface() and records its own ON_id.
-    if (!basis_surface->LoadONBrep(brep)) {
-	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading basis_surface." << std::endl;
+    if (!basis_surface->LoadONBrep(brep))
 	return false;
+    const int basis_id = basis_surface->GetONId();
+    if (basis_id < 0 || basis_id >= brep->m_S.Count() || !brep->m_S[basis_id])
+	return false;
+    std::unique_ptr<ON_Surface> trimmed(
+	brep->m_S[basis_id]->DuplicateSurface());
+    if (!trimmed)
+	return false;
+
+    const double starts[2] = {u1, v1};
+    const double ends[2] = {u2, v2};
+    const Boolean senses[2] = {usense, vsense};
+    for (int direction = 0; direction < 2; ++direction) {
+	const bool forward = ends[direction] > starts[direction];
+	const bool requested_forward = senses[direction] == BTrue;
+	/* A periodic interval whose direction disagrees with its numeric ordering
+	 * crosses the current seam.  Preserve correctness by rejecting that case
+	 * until a transactional seam relocation can represent the complement. */
+	if (trimmed->IsClosed(direction) && forward != requested_forward)
+	    return false;
+	ON_Interval interval(std::min(starts[direction], ends[direction]),
+	    std::max(starts[direction], ends[direction]));
+	if (!interval.IsIncreasing())
+	    return false;
+	const ON_Interval domain = trimmed->Domain(direction);
+	if (interval.Min() < domain.Min() || interval.Max() > domain.Max()) {
+	    if (trimmed->IsClosed(direction) ||
+		    !trimmed->Extend(direction, interval))
+		return false;
+	}
+	if (!trimmed->Trim(direction, interval))
+	    return false;
+	if (!requested_forward && !trimmed->Reverse(direction))
+	    return false;
     }
-
-    // Expose the basis surface's registered NURBS surface as our own, so the
-    // owning FaceSurface::AddFace() picks it up through our GetONId().  The
-    // u1/u2/v1/v2 rectangular parameter bounds are enforced by the face's
-    // trim loops (built from the edge Path/FaceBound), matching how the rest
-    // of this importer relies on 3D edge trimming rather than surface-domain
-    // restriction.
-    ON_id = basis_surface->GetONId();
-
-    return true;
+    if (!trimmed->IsValid())
+	return false;
+    SetONId(brep->AddSurface(trimmed.release()));
+    return GetONId() >= 0;
 }
 
 

@@ -25,6 +25,7 @@
  */
 
 #include "AP_Common.h"
+#include "STEPGeneratedAPI.h"
 #include "Shape_Definition_Representation.h"
 
 /* Shape Definition Representation
@@ -40,66 +41,72 @@
  *
  */
 STEPentity *
-Add_Shape_Definition_Representation(struct directory *dp, AP203_Contents *sc, SdaiRepresentation *sdairep)
+Add_Shape_Definition_Representation(struct directory *dp, AP203_Contents *sc, STEPentity *sdairep)
 {
-    std::ostringstream ss;
-    ss << "'" << dp->d_namep << "'";
-    std::string str = ss.str();
-
     // SHAPE_DEFINITION_REPRESENTATION
-    STEPentity *ret_entity = sc->registry->ObjCreate("SHAPE_DEFINITION_REPRESENTATION");
-    sc->instance_list->Append(ret_entity, completeSE);
-    SdaiShape_definition_representation *shape_def_rep = (SdaiShape_definition_representation *)ret_entity;
-    shape_def_rep->used_representation_(sdairep);
+    STEPentity *shape_def_rep = brlcad::step::CreateEntity(sc->registry,
+	    sc->instance_list, "SHAPE_DEFINITION_REPRESENTATION");
+    brlcad::step::SetEntity(shape_def_rep, "used_representation", sdairep);
 
     // PRODUCT_DEFINITION_SHAPE
-    SdaiProduct_definition_shape *prod_def_shape = (SdaiProduct_definition_shape *)sc->registry->ObjCreate("PRODUCT_DEFINITION_SHAPE");
-    sc->instance_list->Append((STEPentity *)prod_def_shape, completeSE);
-    prod_def_shape->name_("''");
-    prod_def_shape->description_("''");
-    shape_def_rep->definition_(prod_def_shape);
+    STEPentity *prod_def_shape = brlcad::step::CreateEntity(sc->registry,
+	    sc->instance_list, "PRODUCT_DEFINITION_SHAPE");
+    brlcad::step::SetString(prod_def_shape, "name", "");
+    brlcad::step::SetString(prod_def_shape, "description", "");
+    brlcad::step::SetEntity(shape_def_rep, "definition", prod_def_shape);
 
     // PRODUCT_DEFINITION
-    SdaiProduct_definition *prod_def = (SdaiProduct_definition *)sc->registry->ObjCreate("PRODUCT_DEFINITION");
-    sc->instance_list->Append((STEPentity *)prod_def, completeSE);
-    SdaiCharacterized_product_definition *char_def_prod = new SdaiCharacterized_product_definition(prod_def);
-    SdaiCharacterized_definition char_def(char_def_prod);
-    prod_def_shape->definition_(&char_def);
-    prod_def->id_("''");
-    prod_def->description_("''");
-    delete char_def_prod;
+    STEPentity *prod_def = brlcad::step::CreateEntity(sc->registry,
+	    sc->instance_list, "PRODUCT_DEFINITION");
+    brlcad::step::SetEntity(prod_def_shape, "definition", prod_def);
+    brlcad::step::SetString(prod_def, "id", "");
+    brlcad::step::SetString(prod_def, "description", "");
 
     // PRODUCT_DEFINITION_FORMATION
-    SdaiProduct_definition_formation *prod_def_form = (SdaiProduct_definition_formation *)sc->registry->ObjCreate("PRODUCT_DEFINITION_FORMATION");
-    sc->instance_list->Append((STEPentity *)prod_def_form, completeSE);
-    prod_def->formation_(prod_def_form);
-    prod_def_form->id_("''");
-    prod_def_form->description_("''");
+#if defined(AP203)
+    /* AP203 edition 1's subtype_mandatory_product_definition_formation
+     * global rule requires the specified-source subtype.  A plain formation
+     * is syntactically readable but is not a conforming AP203 instance. */
+    STEPentity *prod_def_form = brlcad::step::CreateEntity(sc->registry,
+	    sc->instance_list,
+	    "PRODUCT_DEFINITION_FORMATION_WITH_SPECIFIED_SOURCE");
+#else
+    STEPentity *prod_def_form = brlcad::step::CreateEntity(sc->registry,
+	    sc->instance_list, "PRODUCT_DEFINITION_FORMATION");
+#endif
+    brlcad::step::SetEntity(prod_def, "formation", prod_def_form);
+    brlcad::step::SetString(prod_def_form, "id", "");
+    brlcad::step::SetString(prod_def_form, "description", "");
+#if defined(AP203)
+    brlcad::step::SetEnum(prod_def_form, "make_or_buy", "MADE");
+#endif
 
     // PRODUCT
-    SdaiProduct *prod = (SdaiProduct *)sc->registry->ObjCreate("PRODUCT");
-    sc->instance_list->Append((STEPentity *)prod, completeSE);
-    prod_def_form->of_product_(prod);
-    prod->name_(str.c_str());
-    prod->description_("''");
-    prod->id_(str.c_str());
+    STEPentity *prod = brlcad::step::CreateEntity(sc->registry,
+	    sc->instance_list, "PRODUCT");
+    brlcad::step::SetEntity(prod_def_form, "of_product", prod);
+    brlcad::step::SetString(prod, "name", dp->d_namep);
+    brlcad::step::SetString(prod, "description", "");
+    brlcad::step::SetString(prod, "id", dp->d_namep);
 
     // MECHANICAL_CONTEXT
-    SdaiMechanical_context *mech_context = (SdaiMechanical_context *)sc->registry->ObjCreate("MECHANICAL_CONTEXT");
-    sc->instance_list->Append((STEPentity *)mech_context, completeSE);
-    prod->frame_of_reference_()->AddNode(new EntityNode((SDAI_Application_instance *)mech_context));
-    mech_context->name_("''");
-    mech_context->discipline_type_("''");
+    STEPentity *mech_context = brlcad::step::CreateEntity(sc->registry,
+	    sc->instance_list, "MECHANICAL_CONTEXT");
+    brlcad::step::AddEntity(prod, "frame_of_reference", mech_context);
+    brlcad::step::SetString(mech_context, "name", "");
+    brlcad::step::SetString(mech_context, "discipline_type", "");
 
     // APPLICATION_CONTEXT
-    mech_context->frame_of_reference_(sc->application_context);
+    brlcad::step::SetEntity(mech_context, "frame_of_reference",
+	    sc->application_context);
 
     // DESIGN_CONTEXT
-    prod_def->frame_of_reference_(sc->design_context);
+    if (sc->design_context)
+	brlcad::step::SetEntity(prod_def, "frame_of_reference", sc->design_context);
 
     //return ret_entity;
     // The product definition is what is used to define assemblies, so return that
-    return (STEPentity *)prod_def;
+    return prod_def;
 }
 
 

@@ -76,6 +76,7 @@ public:
     void justifyWithCenterWord(int x, int y, int height, int width, std::string centerWord, std::vector<std::string> leftText, std::vector<std::string> rightText, int flags, std::string suffix = "", double suffixFontScale = 0.0);
     void textWrapping(int x1, int y1, int x2, int y2, int width, int height, std::string text, int ellipsis, int numOfCharactersBeforeEllipsis, int flags = 0);
 
+    void scaleTo(int width, int height);
     void openInGUI();
     void exportToFile(std::string filePath);
 };

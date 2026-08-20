@@ -302,6 +302,7 @@ _ged_results_init(struct ged_results *results)
 	return BRLCAD_ERROR;
     BU_ALLOC(results->results_tbl, struct bu_ptbl);
     BU_PTBL_INIT(results->results_tbl);
+    results->ret = BRLCAD_ERROR;
     return BRLCAD_OK;
 }
 
@@ -325,6 +326,14 @@ _ged_results_add(struct ged_results *results, const char *result_string)
     bu_ptbl_ins(results->results_tbl, (long *)bu_strdup(result_string));
 
     return BRLCAD_OK;
+}
+
+int
+ged_results_ret(struct ged_results *results)
+{
+    if (!results)
+	return BRLCAD_ERROR;
+    return results->ret;
 }
 
 size_t

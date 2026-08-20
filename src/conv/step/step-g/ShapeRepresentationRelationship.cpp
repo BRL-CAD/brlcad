@@ -60,7 +60,6 @@ bool ShapeRepresentationRelationship::Load(STEPWrapper *sw, SDAI_Application_ins
     id = sse->STEPfile_id;
 
     if (!RepresentationRelationship::Load(step, sse)) {
-	std::cout << CLASSNAME << ":Error loading base class ::RepresentationRelationship." << std::endl;
 	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }

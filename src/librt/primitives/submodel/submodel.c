@@ -88,7 +88,6 @@ static void
 rt_submodel_resolve_path(struct bu_vls *resolved_path, const char *db_file, const char *submodel_file)
 {
     char *db_dir = NULL;
-    const char *normalized = NULL;
 
     BU_ASSERT(resolved_path);
 
@@ -102,10 +101,19 @@ rt_submodel_resolve_path(struct bu_vls *resolved_path, const char *db_file, cons
 	return;
     }
 
+    /* Resolve a relative submodel file= next to the parent .g.  Do NOT run the
+     * result through bu_path_normalize(): it is not relative/Windows aware and
+     * corrupts paths ("./x" -> "/x", drive letters "D:/x" -> "/D:/x"), which
+     * made db_open() fail and every submodel prep return -1. */
     db_dir = bu_path_dirname(db_file);
-    bu_vls_sprintf(resolved_path, "%s/%s", db_dir, submodel_file);
-    normalized = bu_path_normalize(bu_vls_addr(resolved_path));
-    bu_vls_sprintf(resolved_path, "%s", normalized);
+    if (db_dir && db_dir[0] && !BU_STR_EQUAL(db_dir, ".")) {
+	bu_vls_sprintf(resolved_path, "%s/%s", db_dir, submodel_file);
+    } else {
+	/* parent .g stored with no usable directory component (e.g. a bare
+	 * "main.g" as db_open records on Windows) -- resolve relative to the
+	 * current working directory. */
+	bu_vls_sprintf(resolved_path, "%s", submodel_file);
+    }
     bu_free(db_dir, "submodel db dir");
 }
 
@@ -414,9 +422,9 @@ rt_submodel_a_hit(struct application *ap, struct partition *PartHeadp, struct se
 	up_segp->seg_stp = up_stp;
 
 	/* Adjust for scale difference */
-	MAT4XSCALOR(up_segp->seg_in.hit_dist, submodel->subm2m, inseg->seg_in.hit_dist);
+	MAT4XSCALAR(up_segp->seg_in.hit_dist, submodel->subm2m, inseg->seg_in.hit_dist);
 	up_segp->seg_in.hit_dist -= gp->delta;
-	MAT4XSCALOR(up_segp->seg_out.hit_dist, submodel->subm2m, outseg->seg_out.hit_dist);
+	MAT4XSCALAR(up_segp->seg_out.hit_dist, submodel->subm2m, outseg->seg_out.hit_dist);
 	up_segp->seg_out.hit_dist -= gp->delta;
 
 	BU_ASSERT(up_segp->seg_in.hit_dist <= up_segp->seg_out.hit_dist);
@@ -569,6 +577,21 @@ rt_submodel_shot(struct soltab *stp, struct xray *rp, struct application *ap, st
     /* a_hit routine will have added the segs to seghead */
 
     return 1;		/* HIT */
+}
+
+
+/**
+ * Baseline flat-array vshot: delegates to the scalar shot via rt_vshot_via_shot().
+ */
+C_DECL void
+rt_submodel_vshot(struct soltab *stp[], struct xray *rp[], struct seg *segp, int n, struct application *ap)
+/* An array of solid pointers */
+/* An array of ray pointers */
+/* array of segs (results returned) */
+/* Number of ray/object pairs */
+
+{
+    rt_vshot_via_shot(rt_submodel_shot, stp, rp, segp, n, ap);
 }
 
 
@@ -986,7 +1009,7 @@ rt_submodel_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
 
     BU_CK_EXTERNAL(ep);
     bu_vls_struct_print(&str, rt_submodel_parse, (char *)sip);
-    ep->ext_nbytes = bu_vls_strlen(&str) + 1;
+    ep->ext_nbytes = bu_vls_strlen(&str) + 1;	/* null term for strcpy */
     if (ep->ext_nbytes <= 1)
 	return -1;
     ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "submodel external");
@@ -1022,8 +1045,8 @@ rt_submodel_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ve
     return 0;
 }
 
-C_DECL void
-rt_submodel_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
+C_DECL int
+rt_submodel_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char *UNUSED(variant), const point_t UNUSED(origin), double UNUSED(scale))
 {
     struct rt_submodel_internal* ip;
     struct bu_vls empty = BU_VLS_INIT_ZERO;
@@ -1040,6 +1063,7 @@ rt_submodel_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
     ip->magic = RT_SUBMODEL_INTERNAL_MAGIC;
     ip->file = empty;
     ip->treetop = empty;
+    return BRLCAD_OK;
 }
 
 

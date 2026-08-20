@@ -62,7 +62,7 @@
 #include "bu/debug.h"
 #include "bu/units.h"
 #include "bu/version.h"
-#include "bu/time.h"
+#include "bu/datetime.h"
 #include "bu/snooze.h"
 #include "vmath.h"
 #include "bn.h"
@@ -94,7 +94,7 @@ extern void draw_m_axes(struct mged_state *);
 extern void draw_v_axes(struct mged_state *);
 
 /* defined in chgmodel.c */
-extern void set_localunit_TclVar(void);
+extern void set_localunit_TclVar(struct mged_state *s);
 
 /* defined in history.c */
 extern struct bu_vls *history_prev(const char *);
@@ -128,7 +128,7 @@ extern struct _rubber_band default_rubber_band;
  * still work).
  */
 // FIXME: Global
-static int stdfd[2] = {1, 2};
+static int stdfd[2] = {-1, -1};
 #endif
 
 /* Container for passing I/O data through Tcl callbacks */
@@ -188,6 +188,16 @@ mged_quiesce_tcl(struct mged_state *s)
 
     mged_stop_log_drain_timer(s);
 
+#ifdef HAVE_TK
+    /* This handler is process-global in Tk and retains s as ClientData.  It
+     * must be removed explicitly: destroying individual Tk windows removes
+     * their window handlers, but not a generic handler. */
+    if (s->tk_generic_handler_active) {
+	Tk_DeleteGenericHandler(doEvent, (ClientData)s);
+	s->tk_generic_handler_active = 0;
+    }
+#endif
+
     if (s->stdin_chan && s->stdin_data) {
 	Tcl_DeleteChannelHandler(s->stdin_chan, stdin_input, (ClientData)s->stdin_data);
 	BU_PUT(s->stdin_data, struct stdio_data);
@@ -203,6 +213,102 @@ mged_quiesce_tcl(struct mged_state *s)
 	s->stderr_chan = NULL;
     }
 }
+
+
+#ifdef HAVE_PIPE
+/*
+ * Make a Tcl channel which owns a duplicate of fd.  In particular, do not
+ * give Tcl the HANDLE owned by a Windows CRT descriptor: closing that channel
+ * would leave the CRT descriptor referring to an invalid native handle.
+ */
+static Tcl_Channel
+mged_dup_file_channel(int fd, int mode)
+{
+#ifdef HAVE_WINDOWS_H
+    HANDLE source = (HANDLE)_get_osfhandle(fd);
+    HANDLE duplicate = INVALID_HANDLE_VALUE;
+
+    if (source == INVALID_HANDLE_VALUE ||
+	!DuplicateHandle(GetCurrentProcess(), source, GetCurrentProcess(),
+		&duplicate, 0, FALSE, DUPLICATE_SAME_ACCESS))
+	return NULL;
+
+    Tcl_Channel channel = Tcl_MakeFileChannel((ClientData)duplicate, mode);
+    if (!channel)
+	CloseHandle(duplicate);
+    return channel;
+#else
+    int duplicate = dup(fd);
+    if (duplicate == -1)
+	return NULL;
+
+    Tcl_Channel channel = Tcl_MakeFileChannel((ClientData)(size_t)duplicate, mode);
+    if (!channel)
+	(void)close(duplicate);
+    return channel;
+#endif
+}
+
+
+/*
+ * Move Tcl's standard channel to its own duplicate of the saved descriptor.
+ * This lets dup2 restore the C runtime descriptor without invalidating a
+ * channel which Tcl_Finalize will subsequently flush and close.
+ */
+static int
+mged_rebind_std_channel(struct mged_state *s, int fd, int type)
+{
+    Tcl_Channel old_channel;
+    Tcl_Channel new_channel;
+
+    if (!s || !s->interp || fd < 0)
+	return 0;
+
+    old_channel = Tcl_GetStdChannel(type);
+    new_channel = mged_dup_file_channel(fd, TCL_WRITABLE);
+    if (!new_channel)
+	return 0;
+
+    (void)Tcl_SetChannelOption(s->interp, new_channel, "-buffering", "line");
+    Tcl_RegisterChannel(s->interp, new_channel);
+    Tcl_SetStdChannel(new_channel, type);
+
+    if (old_channel && old_channel != new_channel &&
+	Tcl_IsChannelRegistered(s->interp, old_channel))
+	(void)Tcl_UnregisterChannel(s->interp, old_channel);
+
+    return 1;
+}
+
+
+/*
+ * Restore stdout and stderr without leaving Tcl holding channels backed by
+ * descriptors/handles which dup2 has replaced.  A failed rebind is deferred
+ * until after Tcl_Finalize, when no Tcl channel can refer to the descriptor.
+ */
+static void
+mged_restore_stdio(struct mged_state *s, int force_restore)
+{
+    static const int types[2] = {TCL_STDOUT, TCL_STDERR};
+    FILE *streams[2] = {stdout, stderr};
+
+    for (size_t i = 0; i < 2; i++) {
+	int can_restore = force_restore;
+	if (stdfd[i] < 0)
+	    continue;
+
+	if (!can_restore)
+	    can_restore = mged_rebind_std_channel(s, stdfd[i], types[i]);
+	if (!can_restore)
+	    continue;
+
+	if (dup2(stdfd[i], fileno(streams[i])) == -1)
+	    perror("dup2");
+	(void)close(stdfd[i]);
+	stdfd[i] = -1;
+    }
+}
+#endif
 
 
 static void
@@ -263,6 +369,7 @@ notify_parent_done(int parent) {
 }
 
 
+#if defined(HAVE_WINDOWS_H)
 void
 mgedInvalidParameterHandler(const wchar_t* UNUSED(expression),
 			    const wchar_t* UNUSED(function),
@@ -274,6 +381,7 @@ mgedInvalidParameterHandler(const wchar_t* UNUSED(expression),
  * Windows, I think you're number one!
  */
 }
+#endif
 
 
 void
@@ -289,14 +397,6 @@ pr_beep(void)
 {
     bu_log("%c", 7);
 }
-
-
-/* so the Windows-specific calls blend in */
-#if !defined(_WIN32) || defined(__CYGWIN__)
-void _set_invalid_parameter_handler(void (*callback)(const wchar_t*, const wchar_t*, const wchar_t*, unsigned int, uintptr_t)) { if (callback) return; }
-#endif
-
-
 
 
 /*
@@ -1355,7 +1455,7 @@ event_check(struct mged_state *s, int non_blocking)
 	if (s->global_editing_state == ST_S_EDIT) {
 	    save_edflag = MEDIT(s)->edit_flag;
 	    if (!SEDIT_ROTATE)
-		MEDIT(s)->edit_flag = SROT;
+		MEDIT(s)->edit_flag = RT_PARAMS_EDIT_ROT;
 	} else {
 	    save_edflag = edobj;
 	    edobj = BE_O_ROTATE;
@@ -1389,7 +1489,7 @@ event_check(struct mged_state *s, int non_blocking)
 	if (s->global_editing_state == ST_S_EDIT) {
 	    save_edflag = MEDIT(s)->edit_flag;
 	    if (!SEDIT_ROTATE)
-		MEDIT(s)->edit_flag = SROT;
+		MEDIT(s)->edit_flag = RT_PARAMS_EDIT_ROT;
 	} else {
 	    save_edflag = edobj;
 	    edobj = BE_O_ROTATE;
@@ -1423,7 +1523,7 @@ event_check(struct mged_state *s, int non_blocking)
 	if (s->global_editing_state == ST_S_EDIT) {
 	    save_edflag = MEDIT(s)->edit_flag;
 	    if (!SEDIT_ROTATE)
-		MEDIT(s)->edit_flag = SROT;
+		MEDIT(s)->edit_flag = RT_PARAMS_EDIT_ROT;
 	} else {
 	    save_edflag = edobj;
 	    edobj = BE_O_ROTATE;
@@ -1457,7 +1557,7 @@ event_check(struct mged_state *s, int non_blocking)
 	if (s->global_editing_state == ST_S_EDIT) {
 	    save_edflag = MEDIT(s)->edit_flag;
 	    if (!SEDIT_TRAN)
-		MEDIT(s)->edit_flag = STRANS;
+		MEDIT(s)->edit_flag = RT_PARAMS_EDIT_TRANS;
 	} else {
 	    save_edflag = edobj;
 	    edobj = BE_O_XY;
@@ -1490,7 +1590,7 @@ event_check(struct mged_state *s, int non_blocking)
 	if (s->global_editing_state == ST_S_EDIT) {
 	    save_edflag = MEDIT(s)->edit_flag;
 	    if (!SEDIT_TRAN)
-		MEDIT(s)->edit_flag = STRANS;
+		MEDIT(s)->edit_flag = RT_PARAMS_EDIT_TRANS;
 	} else {
 	    save_edflag = edobj;
 	    edobj = BE_O_XY;
@@ -1518,7 +1618,7 @@ event_check(struct mged_state *s, int non_blocking)
 	if (s->global_editing_state == ST_S_EDIT) {
 	    save_edflag = MEDIT(s)->edit_flag;
 	    if (!SEDIT_SCALE)
-		MEDIT(s)->edit_flag = SSCALE;
+		MEDIT(s)->edit_flag = RT_PARAMS_EDIT_SCALE;
 	} else {
 	    save_edflag = edobj;
 	    if (!OEDIT_SCALE)
@@ -1635,7 +1735,8 @@ void
 stdin_input(ClientData clientData, int UNUSED(mask))
 {
     int count;
-    char ch;
+    int to_read;
+    char buf[BU_PAGE_SIZE];
     struct stdio_data *sd = (struct stdio_data *)clientData;
     struct mged_state *s = sd->s;
 
@@ -1759,21 +1860,19 @@ stdin_input(ClientData clientData, int UNUSED(mask))
 	return;
     }
 
-    /*XXXXX*/
-#define TRY_STDIN_INPUT_HACK
-#ifdef TRY_STDIN_INPUT_HACK
-    /* Grab everything --- assuming everything is <= page size */
-    {
-	char buf[BU_PAGE_SIZE];
+    /* Tcl_Read on a blocking channel waits to satisfy its entire request.
+     * Read one byte first, which a readable-channel notification guarantees
+     * is available.  Then drain only input Tcl has already buffered; this
+     * preserves paste performance without risking another blocking read.
+     *
+     * Keeping the canonical stdin channel blocking is important: changing
+     * it to non-blocking can also change stdout/stderr when a terminal
+     * supplied all three descriptors from the same open file description.
+     */
+    to_read = 1;
+    for (;;) {
 	int idx;
-	/* Use Tcl_Read on the channel — consistent with how the channel handler
-	 * was registered and works cross-platform (POSIX and Windows). */
-	count = Tcl_Read(sd->chan, buf, BU_PAGE_SIZE);
-
-#else
-	/* Grab single character from stdin */
-	count = Tcl_Read(sd->chan, &ch, 1);
-#endif
+	count = Tcl_Read(sd->chan, buf, to_read);
 
 	if (count < 0)
 	    perror("READ ERROR");
@@ -1783,30 +1882,29 @@ stdin_input(ClientData clientData, int UNUSED(mask))
 	    return;
 	}
 
-	/* On a non-blocking channel Tcl_Read returns 0 for EAGAIN (no data
-	 * available right now).  Guard here so we don't crash on buf[0]. */
 	if (count <= 0)
 	    return;
 
 	if (buf[0] == '\0')
 	    bu_bomb("Read a buf with a 0 starting it?\n");
 
-#ifdef TRY_STDIN_INPUT_HACK
-	/* Process everything in buf */
-	for (idx = 0, ch = buf[idx]; idx < count; ch = buf[++idx]) {
-	    int c = ch;
+	for (idx = 0; idx < count; idx++) {
+	    int c = buf[idx];
 
-	    /* explicit input sanitization */
+	    /* Preserve the legacy line editor's byte sanitization. */
 	    if (c < 0)
 		c = 0;
 	    if (c > CHAR_MAX)
 		c = CHAR_MAX;
-#endif
 	    mged_process_char(s, c);
-#ifdef TRY_STDIN_INPUT_HACK
 	}
+
+	to_read = Tcl_InputBuffered(sd->chan);
+	if (to_read <= 0)
+	    break;
+	if (to_read > BU_PAGE_SIZE)
+	    to_read = BU_PAGE_SIZE;
     }
-#endif
 }
 
 void
@@ -1824,8 +1922,8 @@ std_out_or_err(ClientData clientData, int UNUSED(mask))
      * channel buffer and must be consumed with Tcl_Read, not read(). */
     Tcl_Channel chan = (Tcl_Channel)clientData;
     int count;
-    struct bu_vls vls = BU_VLS_INIT_ZERO;
     char line[RT_MAXLINE+1] = {0};
+    Tcl_DString tclcommand;
     Tcl_Obj *save_result;
 
     count = Tcl_Read(chan, line, RT_MAXLINE);
@@ -1835,15 +1933,18 @@ std_out_or_err(ClientData clientData, int UNUSED(mask))
 
     line[count] = '\0';
 
+    /* Treat bytes read from the pipe as one Tcl argument.  Constructing this
+     * as "output_callback {%s}" breaks on unmatched braces in program output. */
+    Tcl_DStringInit(&tclcommand);
+    (void)Tcl_DStringAppendElement(&tclcommand, "output_callback");
+    (void)Tcl_DStringAppendElement(&tclcommand, line);
+
     save_result = Tcl_GetObjResult(s->interp);
     Tcl_IncrRefCount(save_result);
-
-    bu_vls_printf(&vls, "output_callback {%s}", line);
-    (void)Tcl_Eval(s->interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-
+    (void)Tcl_Eval(s->interp, Tcl_DStringValue(&tclcommand));
     Tcl_SetObjResult(s->interp, save_result);
     Tcl_DecrRefCount(save_result);
+    Tcl_DStringFree(&tclcommand);
 }
 
 
@@ -2064,38 +2165,28 @@ mged_finish(struct mged_state *s, int exitcode)
 {
     char place[64];
     struct cmd_list *c;
-    int ret;
+    int finalize_tcl = (getenv("TCL_FINALIZE_ON_EXIT") != NULL);
 
     if (!s)
-	Tcl_Exit(exitcode);
+	exit(exitcode);
 
     if (s->shutdown_state == MGED_SHUTDOWN_FINALIZED)
-	Tcl_Exit(exitcode);
+	exit(exitcode);
 
     mged_quiesce_tcl(s);
 
+    /* Subprocess completion callbacks may reference the active display.
+     * Stop and reap them before releasing any display manager; ged_close()
+     * repeats this operation as an idempotent final safeguard. */
+    if (s->gedp)
+	ged_subprocesses_terminate(s->gedp);
+
+    /* No Tcl trace may retain or access a display resource after this point. */
+    mged_variable_teardown(s);
+    mged_global_variable_teardown(s);
+
     (void)sprintf(place, "exit_status=%d", exitcode);
     size_t active_dm_cnt;
-
-    /* If we're in script mode, wait for subprocesses to finish before we
-     * wrap up */
-    if (s->gedp && !s->interactive) {
-	struct bu_ptbl rmp = BU_PTBL_INIT_ZERO;
-	while (BU_PTBL_LEN(&s->gedp->ged_subp)) {
-	    for (size_t i = 0; i < BU_PTBL_LEN(&s->gedp->ged_subp); i++) {
-		struct ged_subprocess *rrp = (struct ged_subprocess *)BU_PTBL_GET(&s->gedp->ged_subp, i);
-		if (!bu_process_wait_n(&rrp->p, 1)) {
-		    bu_ptbl_ins(&rmp, (long *)rrp);
-		}
-	    }
-	    for (size_t i = 0; i < BU_PTBL_LEN(&rmp); i++) {
-		struct ged_subprocess *rrp = (struct ged_subprocess *)BU_PTBL_GET(&s->gedp->ged_subp, i);
-		bu_ptbl_rm(&s->gedp->ged_subp, (long *)rrp);
-		BU_PUT(rrp, struct ged_subprocess);
-	    }
-	    bu_ptbl_reset(&rmp);
-	}
-    }
 
     /* Release all displays. */
     active_dm_cnt = BU_PTBL_LEN(&active_dm_set);
@@ -2107,47 +2198,54 @@ mged_finish(struct mged_state *s, int exitcode)
 
 	bu_ptbl_rm(&active_dm_set, (long *)p);
 
-	if (p && p->dm_dmp) {
-	    dm_close(p->dm_dmp);
+	if (p) {
+	    if (p->dm_dmp)
+		dm_close(p->dm_dmp);
 	    BV_FREE_VLIST(s->vlfree, &p->dm_p_vlist);
 	    mged_slider_free_vls(p);
+	    free_all_resources(p);
+	    if (p->dm_dlist_state && !--p->dm_dlist_state->dl_rc)
+		bu_free(p->dm_dlist_state, "mged_finish: dlist_state");
 	    bu_free(p, "release: mged_curr_dm");
 	}
 
 	set_curr_dm(s, MGED_DM_NULL);
     }
     bu_ptbl_free(&active_dm_set);
+    mged_dm_init_state = MGED_DM_NULL;
 
-    for (BU_LIST_FOR (c, cmd_list, &head_cmd_list.l)) {
+    history_cleanup();
+    while (BU_LIST_NON_EMPTY(&head_cmd_list.l)) {
+	c = BU_LIST_FIRST(cmd_list, &head_cmd_list.l);
+	BU_LIST_DEQUEUE(&c->l);
 	bu_vls_free(&c->cl_name);
 	bu_vls_free(&c->cl_more_default);
+	bu_free(c, "mged_finish: cmd_list");
     }
+    bu_vls_free(&head_cmd_list.cl_name);
+    bu_vls_free(&head_cmd_list.cl_more_default);
 
     /* no longer send bu_log() output to Tcl */
     bu_log_delete_hook(gui_output, (void *)s);
+    mged_output_cleanup();
 
-#ifdef HAVE_PIPE
-    /* restore stdout/stderr just in case anyone tries to write before
-     * we finally exit (e.g., an atexit() callback).
+    /* Delete the in-memory Tcl database object while its C backing object is
+     * still valid.  Its delete callback closes a cloned database reference.
+     * The libged-backed db command is not a database object and remains valid
+     * until the interpreter itself is deleted.
      */
-    ret = dup2(stdfd[0], fileno(stdout));
-    if (ret == -1)
-	perror("dup2");
-    ret = dup2(stdfd[1], fileno(stderr));
-    if (ret == -1)
-	perror("dup2");
-#endif
-
-    /* Be certain to close the database cleanly before exiting */
     if (s->interp) {
 	Tcl_Preserve((ClientData)s->interp);
+	if (s->wdbp)
+	    bu_observer_free(&s->wdbp->wdb_observers);
 	/* Rename only commands that still exist, and log unexpected failures
 	 * instead of letting Tcl errors interrupt staged shutdown. */
-	mged_rename_tcl_cmd(s->interp, MGED_DB_NAME);
 	mged_rename_tcl_cmd(s->interp, ".inmem");
 	Tcl_Release((ClientData)s->interp);
     }
 
+    /* ged_close may invoke the application's Tcl file/channel deletion
+     * callbacks.  It must therefore run before Tcl_DeleteInterp. */
     if (s->gedp) {
 	struct tclcad_io_data *giod = (struct tclcad_io_data *)s->gedp->ged_io_data;
 	ged_close(s->gedp);
@@ -2160,12 +2258,34 @@ mged_finish(struct mged_state *s, int exitcode)
     s->wdbp = RT_WDB_NULL;
     s->dbip = DBI_NULL;
 
-    /* XXX should deallocate libbu semaphores */
+#ifdef HAVE_PIPE
+    /* Rebind Tcl's standard channels before restoring the CRT descriptors.
+     * This is the critical ordering that prevents Tcl finalization from
+     * touching handles already invalidated by dup2. */
+    mged_restore_stdio(s, 0);
+#endif
 
-    /* Remove structparse traces before unlinking Tcl_LinkVar variables so
-     * no MGED trace callback can run after backing C storage is released. */
-    mged_variable_teardown(s);
-    mged_global_variable_teardown(s);
+    if (s->interp) {
+	Tcl_DeleteInterp(s->interp);
+	s->interp = NULL;
+    }
+
+    /* This is the final Tcl/Tk operation.  Tcl normally reserves its
+     * process-wide allocations for fast exit; honor Tcl's documented opt-in
+     * environment variable only after all application callbacks and
+     * interpreters are gone.  MGED_STATE and its backing allocation remain
+     * valid until Tcl's process/thread exit handlers have completed. */
+    if (finalize_tcl)
+	Tcl_Finalize();
+
+#ifdef HAVE_PIPE
+    /* If a Tcl standard-channel rebind failed, it is safe to restore the raw
+     * descriptor after finalization.  Without finalization this is still the
+     * last action before process exit and no Tcl code will run again. */
+    mged_restore_stdio(NULL, 1);
+#endif
+
+    /* XXX should deallocate libbu semaphores */
 
     s->shutdown_state = MGED_SHUTDOWN_FINALIZED;
     /* Make sure anything trying to use this after free gets a magic failure. */
@@ -2176,11 +2296,9 @@ mged_finish(struct mged_state *s, int exitcode)
     bu_vls_free(&s-> mged_prompt);
     rt_edit_destroy(s->s_edit->e);
     BU_PUT(s->s_edit, struct mged_edit_state);
+    mged_state_destroy_internals(s);
     BU_PUT(s, struct mged_state);
     MGED_STATE = NULL;
-
-    /* 8.5 seems to have some bugs in their reference counting */
-    /* Tcl_DeleteInterp(INTERP); */
 
 #ifndef HAVE_WINDOWS_H
     if (cbreak_mode > 0) {
@@ -2188,9 +2306,7 @@ mged_finish(struct mged_state *s, int exitcode)
     }
 #endif
 
-    /* Avoid calling Tcl_Exit here as it may touch channels and OS handles
-     * that were already torn down, leading to crash-on-exit.
-     */
+    /* Tcl has been finalized in a controlled order when explicitly requested. */
     exit(exitcode);
 }
 
@@ -2430,7 +2546,15 @@ main(int argc, char *argv[])
     s->stdout_chan = NULL;
     s->stderr_chan = NULL;
     s->stdin_data = NULL;
+#ifdef HAVE_TK
+    s->tk_generic_handler_active = 0;
+#endif
     s->pipe_mode = 0;
+
+    /* Initialize s->i (MGED_Internal C++ callback map) and register all
+     * default callbacks.  This must happen before any solid/object editing
+     * is attempted so that mged_edit_clbk_sync() has valid maps to copy. */
+    mged_state_init_internals(s);
 
     /* Set up linked lists */
     s->vlfree = &rt_vlfree;
@@ -2451,7 +2575,9 @@ main(int argc, char *argv[])
     setmode(fileno(stdout), O_BINARY);
     setmode(fileno(stderr), O_BINARY);
 
+#if defined(HAVE_WINDOWS_H)
     (void)_set_invalid_parameter_handler(mgedInvalidParameterHandler);
+#endif
 
     bu_setprogname(argv[0]);
 
@@ -2830,7 +2956,7 @@ main(int argc, char *argv[])
     MAT_IDN(view_state->vs_ModelDelta);
 
     am_mode = AMM_IDLE;
-    owner = 1;
+    mged_dm_owner = 1;
     frametime = 1;
 
     MAT_IDN(MEDIT(s)->model_changes);
@@ -2839,7 +2965,7 @@ main(int argc, char *argv[])
     s->global_editing_state = ST_VIEW;
     MEDIT(s)->edit_flag = -1;
     s->s_edit->es_edclass = EDIT_CLASS_NULL;
-    MEDIT(s)->e_inpara = newedge = 0;
+    MEDIT(s)->e_inpara = 0;
 
     /* These values match old GED.  Use 'tol' command to change them. */
     s->tol.tol.magic = BN_TOL_MAGIC;
@@ -2864,7 +2990,7 @@ main(int argc, char *argv[])
     new_mats(s);
 
     mmenu_init(s);
-    btn_head_menu(s, 0, 0, 0);
+    btn_head_menu(MEDIT(s), 0, 0, 0, s);
     mged_link_vars(s->mged_curr_dm);
 
     bu_vls_printf(&s->input_str, "set version \"%s\"", brlcad_ident("Geometry Editor (MGED)"));
@@ -3077,6 +3203,11 @@ main(int argc, char *argv[])
 
     } /* interactive */
 
+    /* All entries point into argv and are non-owning; only the tables need
+     * releasing once the deferred overrides have been applied. */
+    bu_ptbl_free(&cl.set_pairs);
+    bu_ptbl_free(&cl.rset_pairs);
+
     /* XXX total hack that fixes a dm init issue on Mac OS X where the
      * dm first opens filled with garbage.
      */
@@ -3159,17 +3290,16 @@ main(int argc, char *argv[])
 	    mged_finish(s, 1);
 	}
 
-	/* Set non-blocking mode so that Tcl_Read/Tcl_Gets inside the channel
-	 * handler returns whatever bytes are immediately available rather than
-	 * looping until the full requested count is accumulated.  Without this,
-	 * Tcl_Read(chan, buf, BU_PAGE_SIZE) on a blocking channel calls read()
-	 * repeatedly in cbreak mode — each call returning just one character —
-	 * until 4096 characters have been accumulated, permanently stalling the
-	 * event loop. */
-	Tcl_SetChannelOption(NULL, sd->chan, "-blocking", "0");
-
 	s->stdin_chan = sd->chan;
 	s->stdin_data = sd;
+	/* Tcl_Gets needs a non-blocking channel in the non-cbreak path: a
+	 * readable pipe may contain only a partial line, and Tcl_Gets otherwise
+	 * waits for its newline from inside the event callback.  Cbreak input
+	 * instead reads one guaranteed-ready byte, so leave its terminal channel
+	 * blocking; changing terminal status flags here can also affect its
+	 * stdout/stderr descriptors. */
+	if (!cbreak_mode)
+	    Tcl_SetChannelOption(NULL, sd->chan, "-blocking", "0");
 	Tcl_CreateChannelHandler(sd->chan, TCL_READABLE, stdin_input, sd);
 
 #ifdef SIGINT
@@ -3213,20 +3343,14 @@ main(int argc, char *argv[])
 	 * _get_osfhandle), not the raw CRT fd — see the fix below. */
 #ifdef HAVE_PIPE
 	{
-	    (void)close(fileno(stdout));
-
-	    /* since we just closed stdout, fd 1 is what dup() should return */
-	    result = dup(pipe_out[1]);
+	    result = dup2(pipe_out[1], fileno(stdout));
 	    if (result == -1)
-		perror("dup");
+		perror("dup2");
 	    (void)close(pipe_out[1]); /* only a write pipe */
 
-	    (void)close(fileno(stderr));
-
-	    /* since we just closed stderr, fd 2 is what dup() should return */
-	    result = dup(pipe_err[1]);
+	    result = dup2(pipe_err[1], fileno(stderr));
 	    if (result == -1)
-		perror("dup");
+		perror("dup2");
 	    (void)close(pipe_err[1]); /* only a write pipe */
 
 #ifdef HAVE_WINDOWS_H
@@ -3236,7 +3360,7 @@ main(int argc, char *argv[])
 	     * any attempt by Tcl to write to them — including `puts test` — fails
 	     * with "error writing 'stdout': invalid argument".
 	     *
-	     * After the dup() calls above, CRT fd 1/fd 2 now point to the write
+	     * After the dup2() calls above, CRT fd 1/fd 2 now point to the write
 	     * ends of our pipes.  Create new Tcl writable channels from those
 	     * HANDLEs and install them as Tcl's stdout/stderr so that `puts`
 	     * writes into the pipe (and thus reaches std_out_or_err below).
@@ -3260,11 +3384,21 @@ main(int argc, char *argv[])
 	     * old channel begins tearing down, so no such sync is required.
 	     * The old channel was also backed by INVALID_HANDLE_VALUE (no
 	     * console), so no I/O threads were ever successfully dispatched on
-	     * it. */
+	     * it.
+	     *
+	     * Critically, the new channel must own its OWN duplicate of the
+	     * pipe-write handle rather than the native HANDLE already owned by
+	     * CRT fd 1/2.  If Tcl were handed the CRT's handle directly, both
+	     * Tcl (on channel teardown) and the CRT (when mged_restore_stdio's
+	     * dup2 replaces the descriptor at exit) would CloseHandle the same
+	     * handle — a double close that intermittently corrupts whatever
+	     * handle Windows has since recycled into that slot, trashing the
+	     * stdout stream on quit.  mged_dup_file_channel() performs the
+	     * DuplicateHandle so ownership stays separate, matching the
+	     * discipline mged_restore_stdio() relies on. */
 	    {
 		Tcl_Channel old_out = Tcl_GetStdChannel(TCL_STDOUT);
-		Tcl_Channel wout = Tcl_MakeFileChannel(
-		    (ClientData)_get_osfhandle(fileno(stdout)), TCL_WRITABLE);
+		Tcl_Channel wout = mged_dup_file_channel(fileno(stdout), TCL_WRITABLE);
 		if (wout) {
 		    Tcl_SetChannelOption(s->interp, wout, "-blocking", "false");
 		    Tcl_SetChannelOption(s->interp, wout, "-buffering", "line");
@@ -3277,8 +3411,7 @@ main(int argc, char *argv[])
 		}
 
 		Tcl_Channel old_err = Tcl_GetStdChannel(TCL_STDERR);
-		Tcl_Channel werr = Tcl_MakeFileChannel(
-		    (ClientData)_get_osfhandle(fileno(stderr)), TCL_WRITABLE);
+		Tcl_Channel werr = mged_dup_file_channel(fileno(stderr), TCL_WRITABLE);
 		if (werr) {
 		    Tcl_SetChannelOption(s->interp, werr, "-blocking", "false");
 		    Tcl_SetChannelOption(s->interp, werr, "-buffering", "line");

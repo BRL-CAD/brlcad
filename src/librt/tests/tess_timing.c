@@ -38,7 +38,7 @@
 #include <string.h>
 
 #include "bu.h"
-#include "bu/time.h"
+#include "bu/datetime.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"

@@ -6,28 +6,35 @@ brlcad_addexec(dm_test dm_test.c "libdm;libbu" TEST)
 brlcad_addexec(test_dm_dlist_sensor test_dlist_sensor.c "libdm;libbv;libbu" TEST)
 brlcad_add_test(NAME dm_dlist_sensor COMMAND test_dm_dlist_sensor)
 
-#TODO - these should be portable without X11, but we need to set up the Tk Xlib
-# and provide an appropriate include first...
-if(BRLCAD_ENABLE_TK AND BRLCAD_ENABLE_X11)
-  set(TCL_ENABLE_TK ON)
-  find_package_tcl()
+# Fontstash is a private libdm implementation detail.  Exercise it with a
+# renderer mock so atlas, ownership, and UTF-8 behavior do not require OpenGL.
+set_source_files_properties(fontstash_test.c PROPERTIES LANGUAGE CXX)
+brlcad_addexec(test_fontstash fontstash_test.c "libbu;${M_LIBRARY}" TEST)
+target_include_directories(
+  test_fontstash
+  PRIVATE
+    ${CMAKE_SOURCE_DIR}/src/libbu
+    ${CMAKE_SOURCE_DIR}/src/libdm/fontstash
+)
 
-  if(TCL_FOUND AND TK_FOUND)
-    include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${TCL_INCLUDE_PATH} ${TK_INCLUDE_PATH} ${X11_INCLUDE_DIR})
+brlcad_add_test(
+  NAME dm_fontstash
+  COMMAND test_fontstash ${CMAKE_SOURCE_DIR}/misc/osifont/osifont-lgpl3fe.ttf
+)
 
-    if(BUILD_TESTING)
-      brlcad_addexec(tcl_img tcl_img.cpp "libdm;libbu;${TCL_LIBRARY};${TK_LIBRARY}" TEST_USEDATA)
-      brlcad_addexec(tcl_tevent tcl_tevent.cpp "libdm;libbu;${TCL_LIBRARY};${TK_LIBRARY}" TEST_USEDATA)
-    endif(BUILD_TESTING)
-  endif(TCL_FOUND AND TK_FOUND)
-endif()
+brlcad_addexec(test_fb_standard_stream test_fb_standard_stream.c "libdm;libbu" TEST)
+brlcad_add_test(NAME dm_fb_standard_stream COMMAND test_fb_standard_stream)
+
+brlcad_addexec(test_fb_disk_fd test_fb_disk_fd.c "libdm;libbu" TEST)
+brlcad_add_test(NAME dm_fb_disk_fd COMMAND test_fb_disk_fd)
 
 cmakefiles(CMakeLists.txt)
 cmakefiles(
   dm_test.c
+  fontstash_test.c
   test_dlist_sensor.c
-  tcl_img.cpp
-  tcl_tevent.cpp
+  #test_fb_standard_stream.c
+  test_fb_disk_fd.c
 )
 
 # Local Variables:

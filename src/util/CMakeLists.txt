@@ -139,6 +139,8 @@ install(PROGRAMS morphedit.tcl DESTINATION bin)
 brlcad_addexec(roots_example roots_example.c "libbu;librt" NO_INSTALL)
 brlcad_adddata(roots_example.c sample_applications)
 
+add_subdirectory(tests)
+
 cmakefiles(bombardier.h morphedit.tcl)
 cmakefiles(CMakeLists.txt)
 

@@ -138,6 +138,7 @@ add_subdirectory(misc)
 
 set(
   tclscripts_TCLSCRIPTS
+  alias.tcl
   cad_clrpick.tcl
   cad_dialog.tcl
   chkexterns.tcl

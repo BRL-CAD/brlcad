@@ -11,7 +11,7 @@ metaball_move_pnt - Move a control point of a METABALL primitive.
 [source]
 ----
 metaball_move_pnt metaball pt_i {x y z}
-metaball_move_pnt -r metaball pt_i {dx dy dz}
+metaball_move_pnt -r metaball pt_i {dx dy dz} | -S metaball scale_factor
 ----
 
 

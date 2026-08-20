@@ -25,6 +25,8 @@
  */
 
 #include "STEPWrapper.h"
+#include "STEPGeneratedAPI.h"
+#include "ap_schema.h"
 #include "Factory.h"
 #include "Axis2Placement.h"
 
@@ -133,33 +135,33 @@ CharacterizedDefinition::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
 
     if (definition == NULL) {
-	SdaiCharacterized_definition *v = (SdaiCharacterized_definition *) sse;
+	SDAI_Select *v = reinterpret_cast<SDAI_Select *>(sse);
+	SDAI_Select *nested = v ? v->SelectValue() : NULL;
+	SDAI_Application_instance *selected = brlcad::step::SelectedEntity(v);
+	(void)selected;
 
-	if (v->IsCharacterized_product_definition()) {
-	    SdaiCharacterized_product_definition *cpd_select = *v;
+	if (nested && brlcad::step::SelectIs(v, "CHARACTERIZED_PRODUCT_DEFINITION")) {
 	    CharacterizedProductDefinition *aCPD = new CharacterizedProductDefinition();
 
 	    type = CharacterizedDefinition::CHARACTERIZED_PRODUCT_DEFINITION;
 	    definition = aCPD;
-	    if (!aCPD->Load(step, (SDAI_Application_instance *)cpd_select)) {
+	    if (!aCPD->Load(step, reinterpret_cast<SDAI_Application_instance *>(nested))) {
 		std::cout << CLASSNAME << ":Error loading select attribute 'definition' as CharacterizedProductDefinition from CharacterizedDefinition." << std::endl;
 		return false;
 	    }
-	} else if (v->IsShape_definition()) {
-	    SdaiShape_definition *sd_select = *v;
+	} else if (nested && brlcad::step::SelectIs(v, "SHAPE_DEFINITION")) {
 	    ShapeDefinition *aSD = new ShapeDefinition();
 
 	    type = CharacterizedDefinition::SHAPE_DEFINITION;
 	    definition = aSD;
-	    if (!aSD->Load(step, (SDAI_Application_instance *)sd_select)) {
+	    if (!aSD->Load(step, reinterpret_cast<SDAI_Application_instance *>(nested))) {
 		std::cout << CLASSNAME << ":Error loading select attribute 'definition' as CharacterizedProductDefinition from CharacterizedDefinition." << std::endl;
 		return false;
 	    }
 #ifdef AP203e
-	} else if (v->IsCharacterized_object()) {
-	    SdaiCharacterized_object *co = *v;
+	} else if (selected && sw->IsSchemaEntity(selected, "CHARACTERIZED_OBJECT")) {
 	    type = CharacterizedDefinition::CHARACTERIZED_OBJECT;
-	    definition = dynamic_cast<CharacterizedObject *>(Factory::CreateObject(sw, (SDAI_Application_instance *)pdr));
+	    definition = dynamic_cast<CharacterizedObject *>(Factory::CreateObject(sw, selected));
 #endif
 	} else {
 	    type = CharacterizedDefinition::CHARACTERIZED_DEFINITION_UNKNOWN;

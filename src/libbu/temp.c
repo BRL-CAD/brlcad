@@ -38,7 +38,7 @@
 #include "bu/file.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
-#include "bu/time.h"
+#include "bu/datetime.h"
 #include "bu/vls.h"
 #include "bu/str.h"
 #include "bu/parallel.h"

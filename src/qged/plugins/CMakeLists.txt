@@ -10,6 +10,9 @@ set_target_properties(qged_plugins_sentinel PROPERTIES FOLDER "BRL-CAD Plugins/q
 function(qged_plugin name)
   add_library(${name} ${ARGN})
   add_dependencies(qged_plugins_sentinel ${name})
+  # On some platforms distclean has additional cleanup to do
+  distclean("${CMAKE_BINARY_DIR}/${LIBEXEC_DIR}/qged/${name}.exp") 
+  distclean("${CMAKE_BINARY_DIR}/${LIBEXEC_DIR}/qged/${name}.pdb") 
 endfunction(qged_plugin name)
 
 # Convenience target to build all plugins

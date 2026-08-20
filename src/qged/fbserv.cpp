@@ -39,7 +39,9 @@
 #include "bu/vls.h"
 #include "dm.h"
 #include "./fbserv.h"
-#include "qtcad/QgGL.h"
+#ifdef BRLCAD_OPENGL
+#  include "qtcad/QgGL.h"
+#endif
 #include "qtcad/QgSW.h"
 
 void
@@ -259,28 +261,32 @@ QFBIPCSocket::ipc_handler()
     QTCAD_SLOT("QFBIPCSocket::ipc_handler", 1);
 
     struct fbserv_client *fbsc = &fbsp->fbs_clients[ind];
-    struct pkg_conn *pkc = fbsc->fbsc_pkg;
-    if (!pkc)
+    if (!fbsc->fbsc_pkg || !notifier)
 	return;
 
-    pkc->pkc_server_data = (void *)fbsc;
+    /* Handle readiness inline and keep the notifier disabled while libpkg
+     * drains the descriptor.  A queued connection leaves the descriptor
+     * readable until this slot eventually runs, allowing Qt to queue the
+     * slot more than once.  The first invocation drains the descriptor and
+     * a later invocation then blocks in pkg_suckin(), freezing the GUI event
+     * loop. */
+    notifier->setEnabled(false);
 
-    if (pkg_suckin(pkc) <= 0) {
-	/* EOF or error — request deferred drop */
-	fbsc->fbsc_pending_drop = 1;
-	return;
-    }
-
-    if (pkg_process(pkc) < 0)
-	bu_log("QFBIPCSocket::ipc_handler: pkg_process error\n");
+    /* Use libdm's client handler so EOF and deferred-drop requests close the
+     * pkg connection and unregister this notifier.  Merely setting
+     * fbsc_pending_drop here leaves an EOF descriptor permanently readable,
+     * producing an event storm and preventing other process cleanup events
+     * from running. */
+    fbs_existing_client_handler((void *)fbsc, 0);
 
     /* Notify the display widget that pixels may have changed */
     emit updated();
 
-    if (fbsp->fbs_callback != (void (*)(void *))FBS_CALLBACK_NULL) {
-	void (*cfp)(void *) = (void (*)(void *))fbsp->fbs_callback;
-	cfp(fbsp->fbs_clientData);
-    }
+    /* Processing may have dropped the client and scheduled this object for
+     * deletion.  Only resume notifications if this is still the live channel
+     * for the connection. */
+    if (fbsc->fbsc_pkg && fbsc->fbsc_chan == (void *)this)
+	notifier->setEnabled(true);
 }
 
 
@@ -298,7 +304,7 @@ qdm_open_ipc_client_handler(struct fbserv_obj *fbsp, int i, void *UNUSED(data))
     fbsp->fbs_clients[i].fbsc_chan = (void *)s;
 
     QObject::connect(s->notifier, &QSocketNotifier::activated,
-		     s, &QFBIPCSocket::ipc_handler, Qt::QueuedConnection);
+		     s, &QFBIPCSocket::ipc_handler, Qt::DirectConnection);
 
     QgGL *ctx = (QgGL *)dm_get_ctx(fb_get_dm(fbsp->fbs_fbp));
     if (ctx) {
@@ -321,7 +327,7 @@ qdm_open_ipc_sw_client_handler(struct fbserv_obj *fbsp, int i, void *UNUSED(data
     fbsp->fbs_clients[i].fbsc_chan = (void *)s;
 
     QObject::connect(s->notifier, &QSocketNotifier::activated,
-		     s, &QFBIPCSocket::ipc_handler, Qt::QueuedConnection);
+		     s, &QFBIPCSocket::ipc_handler, Qt::DirectConnection);
 
     QgSW *ctx = (QgSW *)dm_get_udata(fb_get_dm(fbsp->fbs_fbp));
     if (ctx) {
@@ -335,8 +341,16 @@ qdm_close_ipc_client_handler(struct fbserv_obj *fbsp, int i)
 {
     bu_log("close_ipc_client_handler\n");
     QFBIPCSocket *s = (QFBIPCSocket *)fbsp->fbs_clients[i].fbsc_chan;
-    delete s;
     fbsp->fbs_clients[i].fbsc_chan = NULL;
+    if (!s)
+	return;
+
+    /* drop_client may reach us from QFBIPCSocket::ipc_handler.  Disable the
+     * notifier immediately, but defer object destruction until that slot has
+     * returned. */
+    if (s->notifier)
+	s->notifier->setEnabled(false);
+    s->deleteLater();
 }
 
 
@@ -348,4 +362,3 @@ qdm_close_ipc_client_handler(struct fbserv_obj *fbsp, int i)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

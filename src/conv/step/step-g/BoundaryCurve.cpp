@@ -32,22 +32,22 @@
 #define CLASSNAME "BoundaryCurve"
 #define ENTITYNAME "Boundary_Curve"
 string BoundaryCurve::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)BoundaryCurve::Create);
-/* outer_boundary_curve is a subtype of boundary_curve with identical structure
- * (it only adds a WHERE rule identifying it as the outer boundary); reuse this
- * class so files that use it are dispatched instead of hitting an unmapped-
- * factory error. */
-static string outer_boundary_curve_reg = Factory::RegisterClass("Outer_Boundary_Curve", (FactoryMethod)BoundaryCurve::Create);
+/* OUTER_BOUNDARY_CURVE adds a semantic WHERE constraint, not new storage. */
+static string outer_boundary_curve_entityname = Factory::RegisterClass(
+    "Outer_Boundary_Curve", (FactoryMethod)BoundaryCurve::Create);
 
 BoundaryCurve::BoundaryCurve()
 {
     step = NULL;
     id = 0;
+    outer_boundary = false;
 }
 
 BoundaryCurve::BoundaryCurve(STEPWrapper *sw, int step_id)
 {
     step = sw;
     id = step_id;
+    outer_boundary = false;
 }
 
 BoundaryCurve::~BoundaryCurve()
@@ -59,6 +59,7 @@ BoundaryCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
     step = sw;
     id = sse->STEPfile_id;
+    outer_boundary = sw->IsSchemaEntity(sse, "OUTER_BOUNDARY_CURVE");
 
     if (!CompositeCurveOnSurface::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::CompositeCurve." << std::endl;
@@ -97,8 +98,7 @@ BoundaryCurve::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
 bool
 BoundaryCurve::LoadONBrep(ON_Brep *brep)
 {
-    std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec << ">) not implemented for " << entityname << std::endl;
-    return false;
+    return CompositeCurveOnSurface::LoadONBrep(brep);
 }
 
 // Local Variables:

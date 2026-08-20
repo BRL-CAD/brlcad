@@ -34,6 +34,7 @@
 
 #include "bu/app.h"
 #include "bu/process.h"
+#include "bu/str.h"
 
 
 #include "../ged_private.h"
@@ -90,6 +91,7 @@ ged_rtwizard_core(struct ged *gedp, int argc, const char *argv[])
     char **gd_rt_cmd = NULL;
     int gd_rt_cmd_len = 0;
     int ret = BRLCAD_OK;
+    int default_objs = 1;
 
     const char *bin;
     char rtscript[256] = {0};
@@ -102,12 +104,32 @@ ged_rtwizard_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
+    /* Unlike the standalone application, a libged invocation has a natural
+     * object default: the geometry in the active view.  Explicit role lists
+     * continue to take precedence. */
+    for (i = 1; i < argc; i++) {
+	if (BU_STR_EQUAL(argv[i], "-c") || BU_STR_EQUAL(argv[i], "--color-objects") ||
+	    BU_STR_EQUAL(argv[i], "-l") || BU_STR_EQUAL(argv[i], "--line-objects") ||
+	    BU_STR_EQUAL(argv[i], "-g") || BU_STR_EQUAL(argv[i], "--ghost-objects") ||
+	    bu_strncmp(argv[i], "--color-objects=", 16) == 0 ||
+	    bu_strncmp(argv[i], "--line-objects=", 15) == 0 ||
+	    bu_strncmp(argv[i], "--ghost-objects=", 16) == 0) {
+	    default_objs = 0;
+	    break;
+	}
+    }
+
+    if (default_objs && !ged_who_argc(gedp)) {
+	bu_vls_printf(gedp->ged_result_str, "no objects displayed\n");
+	return BRLCAD_ERROR;
+    }
+
     if (gedp->ged_gvp->gv_perspective > 0)
 	/* rtwizard --no_gui -perspective p -i db.g --viewsize size --orientation "A B C D" --eye_pt "X Y Z" */
-	args = argc + 1 + 1 + 1 + 2 + 2 + 2 + 2 + 2;
+	args = argc + 1 + 1 + 1 + 2 + 2 + 2 + 2 + 2 + (default_objs ? (int)ged_who_argc(gedp) : 0);
     else
 	/* rtwizard --no_gui -i db.g --viewsize size --orientation "A B C D" --eye_pt "X Y Z" */
-	args = argc + 1 + 1 + 1 + 2 + 2 + 2 + 2;
+	args = argc + 1 + 1 + 1 + 2 + 2 + 2 + 2 + (default_objs ? (int)ged_who_argc(gedp) : 0);
 
     gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
 
@@ -147,6 +169,11 @@ ged_rtwizard_core(struct ged *gedp, int argc, const char *argv[])
     /* Append all args */
     for (i = 1; i < argc; i++)
 	*vp++ = (char *)argv[i];
+
+    if (default_objs) {
+	int objcnt = ged_who_argv(gedp, vp, (const char **)&gd_rt_cmd[args]);
+	vp += objcnt;
+    }
     *vp = 0;
 
     /*

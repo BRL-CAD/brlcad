@@ -25,116 +25,37 @@
 
 #include "common.h"
 
+#include <vector>
+
 #include "raytrace.h"
 #include "rt/geom.h"
 #include "brep.h"
+#include "./sketch_brep.h"
 
-void FindLoops(ON_Brep **b) {
-    ON_3dPoint ptmatch, ptterminate, pstart, pend;
-    int *curvearray;
-    curvearray = static_cast<int*>(bu_malloc((*b)->m_C3.Count() * sizeof(int), "sketch edge list"));
-    for (int i = 0; i < (*b)->m_C3.Count(); i++) {
-	curvearray[i] = -1;
-    }
-    ON_SimpleArray<ON_Curve *> allsegments;
-    ON_SimpleArray<ON_Curve *> loopsegments;
-    int loop_complete;
-    for (int i = 0; i < (*b)->m_C3.Count(); i++) {
-	allsegments.Append((*b)->m_C3[i]);
+static bool
+FindLoops(ON_Brep **b, const struct bn_tol *tol)
+{
+    std::vector<ON_SimpleArray<ON_Curve *> > loops;
+    size_t outer_index = 0;
+    if (!rt_sketch_brep_order_loops(**b, tol, &loops, &outer_index)) {
+	bu_log("rt_sketch_brep: sketch segments do not form closed loops!\n");
+	return false;
     }
 
-    int allcurvesassigned = 0;
-    int assignedcount = 0;
-    int curvecount = 0;
-    int loopcount = 0;
-    while (allcurvesassigned != 1) {
-	int havefirstcurve = 0;
-	while ((havefirstcurve == 0) && (curvecount < allsegments.Count())) {
-	    if (curvearray[curvecount] == -1) {
-		havefirstcurve = 1;
-	    } else {
-		curvecount++;
-	    }
-	}
-	// First, sort through things to assign curves to loops.
-	loop_complete = 0;
-	while ((loop_complete != 1) && (allcurvesassigned != 1)) {
-	    curvearray[curvecount] = loopcount;
-	    ptmatch = (*b)->m_C3[curvecount]->PointAtEnd();
-	    ptterminate = (*b)->m_C3[curvecount]->PointAtStart();
-	    for (int i = 0; i < allsegments.Count(); i++) {
-		pstart = (*b)->m_C3[i]->PointAtStart();
-		pend = (*b)->m_C3[i]->PointAtEnd();
-		if (NEAR_ZERO(ptmatch.DistanceTo(pstart), ON_ZERO_TOLERANCE) && (curvearray[i] == -1)) {
-		    curvecount = i;
-		    ptmatch = pend;
-		    i = allsegments.Count();
-		    if (NEAR_ZERO(pend.DistanceTo(ptterminate), ON_ZERO_TOLERANCE)) {
-			loop_complete = 1;
-			loopcount++;
-		    }
-		} else {
-		    if (i == allsegments.Count() - 1) {
-			loop_complete = 1; //If we reach this pass, loop had better be complete
-			loopcount++;
-			assignedcount = 0;
-			for (int j = 0; j < allsegments.Count(); j++) {
-			    if (curvearray[j] != -1) assignedcount++;
-			}
-			if (allsegments.Count() == assignedcount) allcurvesassigned = 1;
-		    }
-		}
-	    }
-	}
+    if (!(*b)->NewPlanarFaceLoop(0, ON_BrepLoop::outer,
+	    loops[outer_index], true))
+	return false;
+    for (size_t i = 0; i < loops.size(); ++i) {
+	if (i != outer_index && !(*b)->NewPlanarFaceLoop(0,
+		ON_BrepLoop::inner, loops[i], true))
+	    return false;
     }
-
-    double maxdist = 0.0;
-    int largest_loop_index = 0;
-    for (int i = 0; i <= loopcount ; i++) {
-	ON_BoundingBox lbbox;
-	for (int j = 0; j < (*b)->m_C3.Count(); j++) {
-	    if (curvearray[j] == i) {
-		ON_Curve *currcurve = (*b)->m_C3[j];
-		currcurve->GetBoundingBox(lbbox, true);
-	    }
-	}
-	point_t minpt, maxpt;
-	double currdist;
-	VSET(minpt, lbbox.m_min[0], lbbox.m_min[1], lbbox.m_min[2]);
-	VSET(maxpt, lbbox.m_max[0], lbbox.m_max[1], lbbox.m_max[2]);
-	currdist = DIST_PNT_PNT(minpt, maxpt);
-	if (currdist > maxdist) {
-	    maxdist = currdist;
-	    largest_loop_index = i;
-	}
-    }
-
-
-    for (int i = 0; i < allsegments.Count(); i++) {
-	if (curvearray[i] == largest_loop_index) loopsegments.Append((*b)->m_C3[i]);
-    }
-
-    (*b)->NewPlanarFaceLoop(0, ON_BrepLoop::outer, loopsegments, true);
-
-    loopsegments.Empty();
-
-    // If there's anything left, make inner loops out of it
-    for (int i = 0; i <= loopcount; i++) {
-	if (i != largest_loop_index) {
-	    for (int j = 0; j < allsegments.Count(); j++) {
-		if (curvearray[j] == i) loopsegments.Append((*b)->m_C3[j]);
-	    }
-	    (*b)->NewPlanarFaceLoop(0, ON_BrepLoop::inner, loopsegments, true);
-	}
-	loopsegments.Empty();
-    }
-
-    bu_free(curvearray, "sketch edge list");
+    return true;
 }
 
 
 extern "C" void
-rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
+rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
 {
     struct rt_sketch_internal *eip;
 
@@ -151,67 +72,25 @@ rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol
     plane_x_dir = ON_3dVector(eip->u_vec);
     plane_y_dir = ON_3dVector(eip->v_vec);
     const ON_Plane sketch_plane = ON_Plane(plane_origin, plane_x_dir, plane_y_dir);
-
-    //  For the brep, need the list of 3D vertex points.  In sketch, they
-    //  are stored as 2D coordinates, so use the sketch_plane to define 3 space
-    //  points for the vertices.
-    for (size_t i = 0; i < eip->vert_count; i++) {
-	(*b)->NewVertex(sketch_plane.PointAt(eip->verts[i][0], eip->verts[i][1]), 0.0);
+    ON_Xform embedding;
+    if (!rt_sketch_brep_embedding(&embedding, plane_origin, plane_x_dir,
+	    plane_y_dir)) {
+	(*b)->Destroy();
+	return;
     }
 
-    // Create the brep elements corresponding to the sketch lines, curves
-    // and bezier segments. Create 2d, 3d and BrepEdge elements for each segment.
-    // Will need to use the bboxes of each element to
-    // build the overall bounding box for the face. Use bGrowBox to expand
-    // a single box.
-    struct line_seg *lsg;
-    struct carc_seg *csg;
-    struct bezier_seg *bsg;
-    uint32_t *lng;
-    for (size_t i = 0; i < (&eip->curve)->count; i++) {
-	lng = (uint32_t *)(&eip->curve)->segment[i];
-	switch (*lng) {
-	    case CURVE_LSEG_MAGIC:
-		{
-		    lsg = (struct line_seg *)lng;
-		    ON_Curve* lsg3d = new ON_LineCurve((*b)->m_V[lsg->start].Point(), (*b)->m_V[lsg->end].Point());
-		    lsg3d->SetDomain(0.0, 1.0);
-		    (*b)->m_C3.Append(lsg3d);
-		}
-		break;
-	    case CURVE_CARC_MAGIC:
-		csg = (struct carc_seg *)lng;
-		if (csg->radius < 0) {
-		    ON_3dPoint cntrpt = (*b)->m_V[csg->end].Point();
-		    ON_3dPoint edgept = (*b)->m_V[csg->start].Point();
-		    ON_Plane cplane = ON_Plane(cntrpt, plane_x_dir, plane_y_dir);
-		    ON_Circle c3dcirc = ON_Circle(cplane, cntrpt.DistanceTo(edgept));
-		    ON_Curve* c3d = new ON_ArcCurve((const ON_Circle)c3dcirc);
-		    c3d->SetDomain(0.0, 1.0);
-		    (*b)->m_C3.Append(c3d);
-		} else {
-		    // need to calculated 3rd point on arc - look to sketch.c around line 581 for
-		    // logic
-		}
-		break;
-	    case CURVE_BEZIER_MAGIC:
-		bsg = (struct bezier_seg *)lng;
-		{
-		    ON_3dPointArray bezpoints(bsg->degree + 1);
-		    for (int j = 0; j < bsg->degree + 1; j++) {
-			bezpoints.Append((*b)->m_V[bsg->ctl_points[j]].Point());
-		    }
-		    ON_BezierCurve bez3d = ON_BezierCurve(bezpoints);
-		    ON_NurbsCurve* beznurb3d = ON_NurbsCurve::New();
-		    bez3d.GetNurbForm(*beznurb3d);
-		    beznurb3d->SetDomain(0.0, 1.0);
-		    (*b)->m_C3.Append(beznurb3d);
-		}
-		break;
-	    default:
-		bu_log("Unhandled sketch object\n");
-		break;
+    for (size_t i = 0; i < eip->curve.count; ++i) {
+	enum rt_sketch_brep_curve_status status;
+	ON_Curve *curve = rt_sketch_brep_curve(eip, i, embedding, tol,
+	    &status);
+	if (status == RT_SKETCH_BREP_CURVE_DEGENERATE)
+	    continue;
+	if (!curve) {
+	    bu_log("rt_sketch_brep: segment %zu is invalid or unsupported\n", i);
+	    (*b)->Destroy();
+	    return;
 	}
+	(*b)->m_C3.Append(curve);
     }
 
     // Create the plane surface and brep face.
@@ -223,7 +102,10 @@ rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol
     // For the purposes of BREP creation, it is necessary to identify
     // loops created by sketch segments.  This information is not stored
     // in the sketch data structures themselves, and thus must be deduced
-    FindLoops(b);
+    if (!FindLoops(b, tol)) {
+	(*b)->Destroy();
+	return;
+    }
     const ON_BrepLoop* tloop = (*b)->m_L.First();
     sketch_surf->SetDomain(0, tloop->m_pbox.m_min.x, tloop->m_pbox.m_max.x);
     sketch_surf->SetDomain(1, tloop->m_pbox.m_min.y, tloop->m_pbox.m_max.y);

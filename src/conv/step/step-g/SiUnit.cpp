@@ -87,20 +87,72 @@ static const char *Si_unit_name_string[] = {
     "unset"
 };
 
+enum StepSiPrefixValue {
+    STEP_SI_EXA,
+    STEP_SI_PETA,
+    STEP_SI_TERA,
+    STEP_SI_GIGA,
+    STEP_SI_MEGA,
+    STEP_SI_KILO,
+    STEP_SI_HECTO,
+    STEP_SI_DECA,
+    STEP_SI_DECI,
+    STEP_SI_CENTI,
+    STEP_SI_MILLI,
+    STEP_SI_MICRO,
+    STEP_SI_NANO,
+    STEP_SI_PICO,
+    STEP_SI_FEMTO,
+    STEP_SI_ATTO,
+    STEP_SI_PREFIX_UNSET
+};
+
+enum StepSiUnitNameValue {
+    STEP_SI_METRE,
+    STEP_SI_GRAM,
+    STEP_SI_SECOND,
+    STEP_SI_AMPERE,
+    STEP_SI_KELVIN,
+    STEP_SI_MOLE,
+    STEP_SI_CANDELA,
+    STEP_SI_RADIAN,
+    STEP_SI_STERADIAN,
+    STEP_SI_HERTZ,
+    STEP_SI_NEWTON,
+    STEP_SI_PASCAL,
+    STEP_SI_JOULE,
+    STEP_SI_WATT,
+    STEP_SI_COULOMB,
+    STEP_SI_VOLT,
+    STEP_SI_FARAD,
+    STEP_SI_OHM,
+    STEP_SI_SIEMENS,
+    STEP_SI_WEBER,
+    STEP_SI_TESLA,
+    STEP_SI_HENRY,
+    STEP_SI_DEGREE_CELSIUS,
+    STEP_SI_LUMEN,
+    STEP_SI_LUX,
+    STEP_SI_BECQUEREL,
+    STEP_SI_GRAY,
+    STEP_SI_SIEVERT,
+    STEP_SI_UNIT_NAME_UNSET
+};
+
 SiUnit::SiUnit()
 {
     step = NULL;
     id = 0;
-    prefix = Si_prefix_unset;
-    name = Si_unit_name_unset;
+    prefix = STEP_SI_PREFIX_UNSET;
+    name = STEP_SI_UNIT_NAME_UNSET;
 }
 
 SiUnit::SiUnit(STEPWrapper *sw, int step_id)
 {
     step = sw;
     id = step_id;
-    prefix = Si_prefix_unset;
-    name = Si_unit_name_unset;
+    prefix = STEP_SI_PREFIX_UNSET;
+    name = STEP_SI_UNIT_NAME_UNSET;
 }
 
 SiUnit::~SiUnit()
@@ -110,7 +162,7 @@ SiUnit::~SiUnit()
 double
 SiUnit::GetLengthConversionFactor()
 {
-    if (name == Si_unit_name__metre) {
+    if (name == STEP_SI_METRE) {
 	double pf = GetPrefixFactor();
 	return 1000.0 * pf; // local units millimeters
     }
@@ -120,7 +172,7 @@ SiUnit::GetLengthConversionFactor()
 double
 SiUnit::GetPlaneAngleConversionFactor()
 {
-    if (name == Si_unit_name__radian) {
+    if (name == STEP_SI_RADIAN) {
 	double pf = GetPrefixFactor();
 	return pf; // local units radians
     }
@@ -130,7 +182,7 @@ SiUnit::GetPlaneAngleConversionFactor()
 double
 SiUnit::GetSolidAngleConversionFactor()
 {
-    if (name == Si_unit_name__steradian) {
+    if (name == STEP_SI_STERADIAN) {
 	double pf = GetPrefixFactor();
 	return pf; // local units radians
     }
@@ -141,37 +193,37 @@ double
 SiUnit::GetPrefixFactor()
 {
     switch (prefix) {
-	case Si_prefix__exa:
+	case STEP_SI_EXA:
 	    return 1.e18;
-	case Si_prefix__peta:
+	case STEP_SI_PETA:
 	    return 1.e15;
-	case Si_prefix__tera:
+	case STEP_SI_TERA:
 	    return 1.e12;
-	case Si_prefix__giga:
+	case STEP_SI_GIGA:
 	    return 1.e9;
-	case Si_prefix__mega:
+	case STEP_SI_MEGA:
 	    return 1.e6;
-	case Si_prefix__kilo:
+	case STEP_SI_KILO:
 	    return 1.e3;
-	case Si_prefix__hecto:
+	case STEP_SI_HECTO:
 	    return 1.e2;
-	case Si_prefix__deca:
+	case STEP_SI_DECA:
 	    return 1.e1;
-	case Si_prefix__deci:
+	case STEP_SI_DECI:
 	    return 1.e-1;
-	case Si_prefix__centi:
+	case STEP_SI_CENTI:
 	    return 1.e-2;
-	case Si_prefix__milli:
+	case STEP_SI_MILLI:
 	    return 1.e-3;
-	case Si_prefix__micro:
+	case STEP_SI_MICRO:
 	    return 1.e-6;
-	case Si_prefix__nano:
+	case STEP_SI_NANO:
 	    return 1.e-9;
-	case Si_prefix__pico:
+	case STEP_SI_PICO:
 	    return 1.e-12;
-	case Si_prefix__femto:
+	case STEP_SI_FEMTO:
 	    return 1.e-15;
-	case Si_prefix__atto:
+	case STEP_SI_ATTO:
 	    return 1.e-18;
 	default:
 	    return 1.e0; //assuming unknown is meters
@@ -196,11 +248,13 @@ SiUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     // the actual entity and not a complex/supertype parent
     sse = step->getEntity(sse, ENTITYNAME);
 
-    prefix = (Si_prefix)step->getEnumAttribute(sse, "prefix");
-    V_MIN(prefix, Si_prefix_unset);
+    prefix = step->getEnumAttributeIndex(sse, "prefix", Si_prefix_string,
+	sizeof(Si_prefix_string) / sizeof(Si_prefix_string[0]),
+	STEP_SI_PREFIX_UNSET);
 
-    name = (Si_unit_name)step->getEnumAttribute(sse, "name");
-    V_MIN(name, Si_unit_name_unset);
+    name = step->getEnumAttributeIndex(sse, "name", Si_unit_name_string,
+	sizeof(Si_unit_name_string) / sizeof(Si_unit_name_string[0]),
+	STEP_SI_UNIT_NAME_UNSET);
 
     sw->entity_status[id] = STEP_LOADED;
 

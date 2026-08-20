@@ -36,8 +36,12 @@ statusPrint(std::string msg, int verbosePrinting)
 void
 generateReport(Options opt)
 {
-    // create image frame
-    IFPainter img(opt.getLength(), opt.getWidth());
+    // Compose in one stable coordinate system.  Scaling the completed page
+    // keeps low- and high-PPI reports visually identical and avoids leaking
+    // output resolution into fixed-pixel drawing details.
+    const int layoutWidth = Options::CANONICAL_REPORT_WIDTH;
+    const int layoutLength = Options::CANONICAL_REPORT_LENGTH;
+    IFPainter img(layoutLength, layoutWidth);
 
     // create information gatherer
     InformationGatherer info(&opt);
@@ -61,16 +65,16 @@ generateReport(Options opt)
     info.checkScientificNotation();
 
     // Define commonly used ratio variables
-    int margin = opt.getWidth() / 150;
-    int header_footer_height = opt.getLength() / 25;
-    int padding = opt.getLength() / 250;
-    int vvHeight = (opt.getLength() - 2*header_footer_height - 2*margin) / 3;
+    int margin = layoutWidth / 150;
+    int header_footer_height = layoutLength / 25;
+    int padding = layoutLength / 250;
+    int vvHeight = (layoutLength - 2*header_footer_height - 2*margin) / 3;
 
     // Has same height and width as V&V Checks, offset X by V&V checks width
     // makeHeirarchySection(img, info, XY_margin + vvSectionWidth + (opt.getLength() / 250), vvOffsetY, vvSectionWidth, vvSectionHeight, opt);
 
     // define the position of all sections in the report
-    Position imagePosition(0, 0, opt.getWidth(), opt.getLength());
+    Position imagePosition(0, 0, layoutWidth, layoutLength);
     Position topSection(margin, margin, imagePosition.width() - 2*margin, header_footer_height);
     Position bottomSection(margin, imagePosition.bottom() - header_footer_height - margin, imagePosition.width() - 2*margin, header_footer_height);
     Position hierarchySection(imagePosition.right() - imagePosition.width()/3.5 - margin, imagePosition.height() - margin - header_footer_height - padding - vvHeight, imagePosition.width()/3.5, vvHeight);
@@ -101,7 +105,7 @@ generateReport(Options opt)
     statusPrint("    ...Finished logos", opt.verbosePrinting());
     statusPrint(opt.getOpenGUI() ? "...Finished report" : std::string("...Finished report: " + opt.getOutFile()), opt.verbosePrinting());
 
-    // paint renderings
+    img.scaleTo(opt.getWidth(), opt.getLength());
 
     // optionally, display the scene
     if (opt.getOpenGUI()) {

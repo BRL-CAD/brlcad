@@ -433,6 +433,21 @@ RT_EXPORT extern void _res_pieces_init(struct resource *resp,
 					 struct rt_i *rtip);
 
 
+/**
+ * Generic flat-array ft_vshot() built on a scalar ft_shot().
+ *
+ * For each ray, calls shotfn() into a temporary seg list and writes the
+ * OUTER SPAN (nearest in, farthest out) into segp[i], matching the
+ * single-seg vshot convention.  Provides a correct (parity) vshot for
+ * primitives whose intersection core is not (yet) vectorized; a
+ * primitive's rt_X_vshot() can be a one-line call to this with rt_X_shot.
+ */
+RT_EXPORT extern void rt_vshot_via_shot(
+    int (*shotfn)(struct soltab *, struct xray *, struct application *, struct seg *),
+    struct soltab **stp, struct xray **rp, struct seg *segp, int n,
+    struct application *ap);
+
+
 __END_DECLS
 
 #endif /* LIBRT_LIBRT_PRIVATE_H */

@@ -33,6 +33,7 @@
 #include "bg.h"
 #include "rt/geom.h"
 #include "rt/primitives/arb8.h"
+#include "bu/opt.h"
 #include "rt/db4.h"
 #include "rt/edit.h"
 #include "../edit_private.h"
@@ -2604,8 +2605,68 @@ arb_mirror_face_axis(struct rt_arb_internal *arb, fastf_t peqn[7][4], const int 
 
     /* copy to original */
     memcpy((char *)arb, (char *)&larb, sizeof(struct rt_arb_internal));
-
     return 0;
+}
+
+int
+rt_edit_arb_repair(struct bu_vls *log_str, struct rt_db_internal *ip, const struct bn_tol *tol, int argc, const char **argv)
+{
+    struct rt_arb_internal *arb;
+    struct rt_arb_internal repaired_arb;
+    int ret;
+    int options_json = 0;
+    int print_help = 0;
+    fastf_t ftol = -1.0;
+
+    struct bu_opt_desc d[4];
+    BU_OPT(d[0], "h", "help", "", NULL, &print_help, "Print help");
+    BU_OPT(d[1], "t", "tol", "<#>", bu_opt_fastf_t, &ftol, "Distance tolerance for snapping vertices");
+    BU_OPT(d[2], "", "options-json", "", NULL, &options_json, "Return JSON of supported options");
+    BU_OPT_NULL(d[3]);
+
+    if (argc > 0 && argv) {
+        bu_opt_parse(NULL, argc, argv, d);
+    }
+
+    if (options_json) {
+        if (log_str) {
+            bu_vls_printf(log_str, "{\"options\":[");
+            bu_vls_printf(log_str, "{\"name\":\"tol\",\"type\":\"float\",\"description\":\"Distance tolerance for snapping vertices\"}");
+            bu_vls_printf(log_str, "]}");
+        }
+        return 1;
+    }
+
+    if (print_help) {
+        if (log_str) {
+            char *option_help = bu_opt_describe(d, NULL);
+            bu_vls_printf(log_str, "{\"status\":\"help\",\"message\":\"Options:\\n%s\"}", option_help ? option_help : "");
+            if (option_help) bu_free(option_help, "help str");
+        }
+        return -1;
+    }
+
+    struct bn_tol default_tol = BN_TOL_INIT_TOL;
+    struct bn_tol user_tol = tol ? *tol : default_tol;
+    if (ftol > 0.0) {
+        user_tol.dist = ftol;
+        user_tol.dist_sq = ftol * ftol;
+    }
+
+    RT_CK_DB_INTERNAL(ip);
+    arb = (struct rt_arb_internal *)ip->idb_ptr;
+    RT_ARB_CK_MAGIC(arb);
+
+    ret = rt_arb_repair(&repaired_arb, arb, &user_tol, RT_ARB_REPAIR_SNAP_VERTICES);
+    if (ret >= 0) {
+        *arb = repaired_arb;
+        if (log_str) {
+            bu_vls_printf(log_str, "{\"status\":\"success\",\"message\":\"Successfully repaired ARB8\"}");
+        }
+        return 0; /* success */
+    }
+
+    return -1; /* failure */
 }
 
 /*

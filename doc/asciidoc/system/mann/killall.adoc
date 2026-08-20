@@ -42,7 +42,7 @@ Deletes _group1_, _region2_, and _shapeb_ and removes all references to these ob
 [[see_also]]
 == SEE ALSO
 
-*kill*(nged) *killtree*(nged)
+*kill*(nged), *killtree*(nged), *killrefs*(nged)
 
 
 [[author]]

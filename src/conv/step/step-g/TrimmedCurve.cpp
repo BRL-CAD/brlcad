@@ -41,6 +41,7 @@ static const char *Trimming_preference_string[] = {
     "unspecified",
     "unset"
 };
+static const int STEP_TRIMMING_PREFERENCE_UNSET = 3;
 
 TrimmedCurve::TrimmedCurve()
 {
@@ -48,7 +49,7 @@ TrimmedCurve::TrimmedCurve()
     id = 0;
     basis_curve = NULL;
     sense_agreement = BUnset;
-    master_representation = Trimming_preference_unset;
+    master_representation = STEP_TRIMMING_PREFERENCE_UNSET;
 }
 
 TrimmedCurve::TrimmedCurve(STEPWrapper *sw, int step_id)
@@ -57,7 +58,7 @@ TrimmedCurve::TrimmedCurve(STEPWrapper *sw, int step_id)
     id = step_id;
     basis_curve = NULL;
     sense_agreement = BUnset;
-    master_representation = Trimming_preference_unset;
+    master_representation = STEP_TRIMMING_PREFERENCE_UNSET;
 }
 
 TrimmedCurve::~TrimmedCurve()
@@ -147,7 +148,10 @@ TrimmedCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     }
 
     sense_agreement = step->getBooleanAttribute(sse, "sense_agreement");
-    master_representation = (Trimming_preference)step->getEnumAttribute(sse, "master_representation");
+    master_representation = step->getEnumAttributeIndex(sse,
+	"master_representation", Trimming_preference_string,
+	sizeof(Trimming_preference_string) / sizeof(Trimming_preference_string[0]),
+	STEP_TRIMMING_PREFERENCE_UNSET);
 
     sw->entity_status[id] = STEP_LOADED;
     return true;
@@ -212,7 +216,7 @@ TrimmedCurve::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
 bool
 TrimmedCurve::LoadONBrep(ON_Brep *brep)
 {
-    if (ON_id >= 0) {
+    if (GetONId() >= 0) {
 	return true;    // already loaded
     }
 
@@ -257,7 +261,7 @@ TrimmedCurve::LoadONBrep(ON_Brep *brep)
     }
     basis_curve->LoadONBrep(brep);
 
-    ON_id = basis_curve->GetONId();
+    SetONId(basis_curve->GetONId());
 
     return true;
 }

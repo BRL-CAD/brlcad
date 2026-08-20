@@ -43,7 +43,7 @@
 #include "bu/parallel.h"
 #include "bu/path.h"
 #include "bu/process.h"
-#include "bu/time.h"
+#include "bu/datetime.h"
 #include "bu/str.h"
 #include "bu/uuid.h"
 #include "rt/db_attr.h"
@@ -346,6 +346,7 @@ compress_external(const struct rt_cache *cache, struct bu_external *external)
 {
     int ret;
     int compressed = 0;
+    uint32_t network_size;
     uint8_t *buffer;
     int compressed_size;
 
@@ -357,7 +358,8 @@ compress_external(const struct rt_cache *cache, struct bu_external *external)
     /* buffer is uncompsize + maxcompsize + compressed_data */
     buffer = (uint8_t *)bu_malloc((size_t)compressed_size + SIZEOF_NETWORK_LONG, "buffer");
 
-    *(uint32_t *)buffer = htonl((uint32_t)external->ext_nbytes);
+    network_size = htonl((uint32_t)external->ext_nbytes);
+    memcpy(buffer, &network_size, sizeof(network_size));
 
     ret = brl_LZ4_compress_default((const char *)external->ext_buf, (char *)(buffer + SIZEOF_NETWORK_LONG), external->ext_nbytes, compressed_size);
     if (ret != 0)
@@ -367,8 +369,6 @@ compress_external(const struct rt_cache *cache, struct bu_external *external)
 	CACHE_DEBUG("++++++ [%lu.%lu] Compression failed (ret %d, %zu bytes @ %p to %d bytes max)\n", bu_pid(), bu_parallel_id(), ret, external->ext_nbytes, (void *) external->ext_buf, compressed_size);
 	return;
     }
-
-    *(uint32_t *)buffer = htonl((uint32_t)external->ext_nbytes);
 
     bu_free(external->ext_buf, "ext_buf");
     external->ext_nbytes = compressed_size + SIZEOF_NETWORK_LONG;
@@ -381,13 +381,15 @@ uncompress_external(const struct rt_cache *cache, const struct bu_external *exte
 {
     int ret;
     int uncompressed = 0;
+    uint32_t network_size;
     uint8_t *buffer;
 
     BU_CK_EXTERNAL(external);
 
     BU_EXTERNAL_INIT(dest);
 
-    dest->ext_nbytes = ntohl(*(uint32_t *)external->ext_buf);
+    memcpy(&network_size, external->ext_buf, sizeof(network_size));
+    dest->ext_nbytes = ntohl(network_size);
     buffer = (uint8_t *)bu_malloc(dest->ext_nbytes, "buffer");
 
     BU_ASSERT(dest->ext_nbytes < INT_MAX);

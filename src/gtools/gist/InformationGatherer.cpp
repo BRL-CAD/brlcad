@@ -503,9 +503,10 @@ InformationGatherer::gatherInformation(std::string UNUSED(name))
 
 
     //Gather DB Version
-    cmd[0] = "dbversion";
-    cmd[1] = NULL;
-    ged_exec_dbversion(g, 1, cmd);
+    cmd[0] = "db";
+    cmd[1] = "version";
+    cmd[2] = NULL;
+    ged_exec_db(g, 2, cmd);
     infoMap["version"] = bu_vls_addr(g->ged_result_str);
 
     // CHECK
@@ -628,27 +629,35 @@ InformationGatherer::gatherInformation(std::string UNUSED(name))
     double surfArea00 = 0;
     double surfArea090 = 0;
     double surfArea900 = 0;
-    getVerificationData(g, opt, infoMap, volume, mass, hasDensities, surfArea00, surfArea090, surfArea900, lUnit, mUnit);
-    std::string vol = formatDouble(volume);
+    if (opt->getPreviewMode()) {
+        // Preview reports preserve the standard gist sheet and render views,
+        // but avoid the potentially unbounded rtarea/gqa calculations.
+        hasDensities = false;
+    } else {
+        getVerificationData(g, opt, infoMap, volume, mass, hasDensities, surfArea00, surfArea090, surfArea900, lUnit, mUnit);
+    }
+    const bool previewMode = opt->getPreviewMode();
+    const std::string unavailable = "N/A";
+    std::string vol = previewMode ? unavailable : formatDouble(volume);
     std::string ma = formatDouble(mass);
-    std::string surf00 = formatDouble(surfArea00);
-    std::string surf090 = formatDouble(surfArea090);
-    std::string surf900 = formatDouble(surfArea900);
+    std::string surf00 = previewMode ? unavailable : formatDouble(surfArea00);
+    std::string surf090 = previewMode ? unavailable : formatDouble(surfArea090);
+    std::string surf900 = previewMode ? unavailable : formatDouble(surfArea900);
 
     infoMap.insert(std::pair<std::string, std::string>("volume", vol));
-    Unit u = {lUnit, 3};
+    Unit u = {lUnit, previewMode ? 0 : 3};
     unitsMap["volume"] = u;
 
     infoMap.insert(std::pair<std::string, std::string>("surfaceArea00", surf00));
     infoMap.insert(std::pair<std::string, std::string>("surfaceArea090", surf090));
     infoMap.insert(std::pair<std::string, std::string>("surfaceArea900", surf900));
-    u = {lUnit, 2};
+    u = {lUnit, previewMode ? 0 : 2};
     unitsMap["surfaceArea00"] = u;
     unitsMap["surfaceArea090"] = u;
     unitsMap["surfaceArea900"] = u;
 
     if (!hasDensities) {
-        infoMap.insert(std::pair<std::string, std::string>("mass", "Not Available"));
+	infoMap.insert(std::pair<std::string, std::string>("mass", unavailable));
         u = {mUnit, 0};
         unitsMap["mass"] = u;
     } else {
@@ -858,14 +867,16 @@ InformationGatherer::getFormattedInfo(std::string key)
 {
     // get number, insert commas if long enough
     std::string number = infoMap[key];
-    size_t decimal_pos = number.find_last_of(".");
-    // start from end of whole number
-    size_t start_pos = (decimal_pos != std::string::npos) ? decimal_pos : number.size();
-    // offset 3 for potential first comma
-    start_pos -= 3;
-    // valid start position, start adding commas
-    for (int i = start_pos; i > 0; i -= 3) {
-        number.insert(i, ",");
+    const bool fixedDecimal = number.find_first_not_of("+-0123456789.") == std::string::npos &&
+	std::count(number.begin(), number.end(), '.') <= 1;
+    if (fixedDecimal) {
+	const size_t signLength = (!number.empty() && (number[0] == '+' || number[0] == '-')) ? 1 : 0;
+	const size_t decimalPos = number.find('.');
+	size_t insertionPos = (decimalPos != std::string::npos) ? decimalPos : number.size();
+	while (insertionPos > signLength + 3) {
+	    insertionPos -= 3;
+	    number.insert(insertionPos, ",");
+	}
     }
 
     // add units to string
@@ -929,7 +940,7 @@ void InformationGatherer::correctDefaultUnitsLength()
         const std::string& key = pair.first;
         Unit& unit = pair.second;
 
-        if (key == "mass") {
+        if (key == "mass" || unit.power == 0) {
             continue;
         }
 

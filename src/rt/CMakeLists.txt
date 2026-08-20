@@ -80,6 +80,7 @@ set_property(TARGET rthide APPEND PROPERTY COMPILE_DEFINITIONS "RT_TXT_OUTPUT")
 
 brlcad_addexec(rtsil "${LIBRTUIF_SOURCES};viewsil.c" "${RT_STD_LIBS}" FOLDER Rt)
 target_include_directories(rtsil BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+set_property(TARGET rtsil APPEND PROPERTY COMPILE_DEFINITIONS "RT_RAW_OUTPUT")
 add_target_deps(rtxray dm_plugins)
 
 brlcad_addexec(rtsurf "rtsurf.c;rtsurf_hits.cpp" "libanalyze;librt;libdm;liboptical;libicv")
@@ -91,17 +92,21 @@ set_property(TARGET rtweight APPEND PROPERTY COMPILE_DEFINITIONS "RT_TXT_OUTPUT"
 
 brlcad_addexec(rtxray "${LIBRTUIF_SOURCES};viewxray.c" "${RT_STD_LIBS}" FOLDER Rt)
 target_include_directories(rtxray BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+set_property(TARGET rtxray APPEND PROPERTY COMPILE_DEFINITIONS "RT_RAW_OUTPUT")
 add_target_deps(rtxray dm_plugins)
 
 brlcad_addexec(rtdepth "${LIBRTUIF_SOURCES};viewdepth.c" "${RT_STD_LIBS}" FOLDER Rt)
 target_include_directories(rtdepth BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 add_target_deps(rtdepth dm_plugins)
 
+#brlcad_addexec(rtpath "${LIBRTUIF_SOURCES};viewpath.c" "${RT_STD_LIBS}" FOLDER Rt)
+#target_include_directories(rtpath BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+#add_target_deps(rtpath dm_plugins)
+
 set(
   rt_ignore_files
   CMakeLists.txt
   ext.h
-  libfb-dummy.c
   main.c
   rtuif.h
   rtsurf_hits.h

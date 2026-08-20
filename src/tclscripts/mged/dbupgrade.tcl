@@ -133,7 +133,7 @@ proc dbupgrade {args} {
 	    }
 	}
 
-	if {[dbversion] > 4} {
+	if {[db version] > 4} {
 	    error "[opendb] is already current!"
 	}
 

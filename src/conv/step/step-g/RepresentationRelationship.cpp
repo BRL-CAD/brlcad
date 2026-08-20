@@ -92,10 +92,12 @@ bool RepresentationRelationship::Load(STEPWrapper *sw, SDAI_Application_instance
 
     if (rep_1 == NULL) {
 	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "rep_1");
-	if (entity) { //this attribute is optional
+	if (entity)
 	    rep_1 = dynamic_cast<Representation *>(Factory::CreateObject(sw, entity));
-	} else {
-	    std::cout << CLASSNAME << ":Error loading attribute 'rep_1'." << std::endl;
+	if (!rep_1) {
+	    sw->RecordDiagnostic(brlcad::step::DiagnosticSeverity::Error, id,
+		"REPRESENTATION_RELATIONSHIP", "rep_1",
+		"required representation reference could not be loaded");
 	    sw->entity_status[id] = STEP_LOAD_ERROR;
 	    return false;
 	}
@@ -103,10 +105,12 @@ bool RepresentationRelationship::Load(STEPWrapper *sw, SDAI_Application_instance
 
     if (rep_2 == NULL) {
 	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "rep_2");
-	if (entity) { //this attribute is optional
+	if (entity)
 	    rep_2 = dynamic_cast<Representation *>(Factory::CreateObject(sw, entity));
-	} else {
-	    std::cout << CLASSNAME << ":Error loading attribute 'rep_2'." << std::endl;
+	if (!rep_2) {
+	    sw->RecordDiagnostic(brlcad::step::DiagnosticSeverity::Error, id,
+		"REPRESENTATION_RELATIONSHIP", "rep_2",
+		"required representation reference could not be loaded");
 	    sw->entity_status[id] = STEP_LOAD_ERROR;
 	    return false;
 	}

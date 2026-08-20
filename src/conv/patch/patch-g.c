@@ -85,6 +85,7 @@ usage(int status, const char *argv0)
     bu_log("	-6		process plate mode triangles as ARB6 solids (overrides '-p' for triangles)\n");
     bu_log("	-i group.file	specify group labels source file\n");
     bu_log("	-m mat.file	specify materials information source file\n");
+    bu_log("	-j jtype.file	specify plate-thickness override file (component_code thickness_in_inches per line)\n");
     bu_log("	-r		reverse normals for plate mode triangles\n");
     bu_log("	-d #		debug level\n");
     bu_log("	-x #		librt debug flag\n");
@@ -3370,6 +3371,7 @@ main(int argc, char **argv)
 
     FILE *gfp=NULL;
     FILE *mfp=NULL;
+    FILE *jfp=NULL;
     FILE *fp=NULL;
 
     int c;
@@ -3413,9 +3415,10 @@ main(int argc, char **argv)
     thicks = (fastf_t *)bu_calloc(MAX_INPUTS, sizeof(fastf_t), "thicks");
     RADIUS = (fastf_t *)bu_calloc(MAX_INPUTS, sizeof(fastf_t), "RADIUS");
     thk = (fastf_t *)bu_calloc(MAX_INPUTS, sizeof(fastf_t), "thk");
+    jtype = (fastf_t *)bu_calloc(MAX_INPUTS, sizeof(fastf_t), "jtype");
     mirror = (int *)bu_calloc(MAX_INPUTS, sizeof(int), "mirror");
 
-    if (!in || !nm || !list || !XVAL || !YVAL || !ZVAL || !thicks || !RADIUS || !thk || !mirror)
+    if (!in || !nm || !list || !XVAL || !YVAL || !ZVAL || !thicks || !RADIUS || !thk || !jtype || !mirror)
 	bu_exit(BRLCAD_ERROR, "Memory allocation failure\n");
 
     /* initialize tolerance structure */
@@ -3434,7 +3437,7 @@ main(int argc, char **argv)
      */
 
     /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "6A:T:x:X:pf:i:m:nu:t:o:rc:d:h?")) != -1) {
+    while ((c = bu_getopt(argc, argv, "6A:T:x:X:pf:i:m:j:nu:t:o:rc:d:h?")) != -1) {
 	switch (c) {
 	    case '6':  /* use arb6 solids for plate mode */
 		arb6 = 1;
@@ -3488,6 +3491,11 @@ main(int argc, char **argv)
 	    case 'm':  /* materials information file */
 
 		matfile = bu_optarg;
+		break;
+
+	    case 'j':  /* JTYPE plate-thickness override file */
+
+		jtypefile = bu_optarg;
 		break;
 
 	    case 'n':  /* process volume mode as plate mode ? */
@@ -3593,6 +3601,14 @@ main(int argc, char **argv)
 	}
     }
 
+    if (jtypefile != (char *)0) {
+	jfp = fopen(jtypefile, "rb");
+	if (jfp == NULL) {
+	    perror(jtypefile);
+	    bu_exit(1, "ERROR: unable to open JTYPE file (%s)\n", jtypefile);
+	}
+    }
+
     /* This is the primary processing section to input FASTGEN data
      * and manufacture related mged elements.  Previous editions of
      * patch-g failed to process the final element after hitting EOF
@@ -3662,6 +3678,36 @@ main(int argc, char **argv)
 	}
     }
 
+    /* Read the optional JTYPE plate-thickness override
+     * file.  Each line is "component_code thickness_in_inches"; blank and
+     * '#'-comment lines are skipped, and malformed lines are warned about
+     * and skipped rather than aborting the whole run.  Thicknesses are
+     * stored in mm (converted via mmtin, consistent with other inputs),
+     * keyed by absolute component code.
+     */
+    if (jfp) {
+	while (bu_fgets(buf, sizeof(buf), jfp) != NULL) {
+	    int cc;
+	    double th;
+
+	    if (buf[0] == '#' || buf[0] == '\n' || buf[0] == '\r')
+		continue;
+
+	    if (bu_sscanf(buf, "%d %lf", &cc, &th) != 2) {
+		bu_log("Warning: skipping malformed JTYPE line: %s", buf);
+		continue;
+	    }
+
+	    cc = abs(cc);
+	    if (cc <= 0 || cc >= MAX_INPUTS) {
+		bu_log("Warning: JTYPE component code %d out of range, skipping\n", cc);
+		continue;
+	    }
+
+	    jtype[cc] = mmtin * th;   /* inches -> mm */
+	}
+    }
+
     for (i = done = 0; !done; i++) {
 	char *bufp;
 
@@ -3698,6 +3744,17 @@ main(int argc, char **argv)
 
 	    in[i].cc = abs(in[i].cc);
 	    in[i].surf_type = abs(in[i].surf_type);
+
+	    /* if this record carries no FASTGEN thickness, apply the
+	     * external JTYPE thickness for its component code (if one
+	     * was supplied via -j).  Done here, before proc_* dispatch, so
+	     * every downstream consumer (proc_plate, the phantom-armor 1-inch
+	     * default, and the sub-tolerance clamp) sees the corrected value.
+	     */
+	    if (jtype && ZERO(in[i].rsurf_thick) && in[i].cc > 0
+		&& in[i].cc < MAX_INPUTS && jtype[in[i].cc] > 0.0) {
+		in[i].rsurf_thick = jtype[in[i].cc];
+	    }
 
 	    /* Regurgitate data just loaded for debugging */
 	    if (debug > 0) {

@@ -26,18 +26,9 @@ Adjusts the given parameter(s) of a solid to the new value(s).
 .Adjust the A Value of a Sphere
 [example]
 ====
+mged> ***adust solid.s A "100 0 0"***
+
 Use the *adjust* command to make the A value of a sphere to 100, 0, 0
-
-
-
-
-....
-
-mged> adust solid.s A "100 0 0"
-
-    
-....
-
 
 
 ====
@@ -45,18 +36,9 @@ mged> adust solid.s A "100 0 0"
 .Adjust the A, B, & C Values of a Sphere
 [example]
 ====
+mged> ***adust solid.s A "100 0 0" B "0 100 0" C "0 0 100"***
+
 Use the *adjust* command to make the A, B, and C values of a sphere.
-
-
-
-
-....
-
-mged> adust solid.s A "100 0 0" B "0 100 0" C "0 0 100"
-
-    
-....
-
 
 
 ====
@@ -65,7 +47,7 @@ mged> adust solid.s A "100 0 0" B "0 100 0" C "0 0 100"
 [[see_also]]
 == SEE ALSO
 
-*get*(n).
+*get*(nged)
 
 
 [[author]]

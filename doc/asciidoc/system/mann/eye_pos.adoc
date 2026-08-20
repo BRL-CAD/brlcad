@@ -51,7 +51,7 @@ Positions the camera eye point at (0, -500, 500) in model coordinates.
 [[see_also]]
 == SEE ALSO
 
-*eye*(nged), *center*(nged), *lookat*(nged)
+*view*(nged), *eye*(nged), *center*(nged), *lookat*(nged)
 
 
 [[author]]

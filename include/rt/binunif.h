@@ -27,8 +27,10 @@
 #include "common.h"
 #include "vmath.h"
 #include "bu/vls.h"
+#include "wdb.h"
 #include "rt/defines.h"
 #include "rt/directory.h"
+#include "rt/nongeom.h"
 
 __BEGIN_DECLS
 

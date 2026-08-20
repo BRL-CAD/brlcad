@@ -140,7 +140,9 @@ get_args(int argc, char **argv)
 int
 main(int argc, char **argv)
 {
-    size_t ydup;
+    size_t bottom_margin;
+    size_t interior_rows;
+    size_t top_margin;
     size_t i;
     size_t y;
 
@@ -154,40 +156,40 @@ main(int argc, char **argv)
 	bu_exit (1, NULL);
     }
 
-    if (xin <= 0 || yin <= 0 || xout <= 0 || yout <= 0) {
-	fprintf(stderr, "pixembed: sizes must be positive\n");
-	bu_exit (2, NULL);
-    }
     if (xout < xin || yout < yin) {
-	fprintf(stderr, "pixembed: output size must exceed input size\n");
+	fprintf(stderr, "pixembed: output size must be at least the input size\n");
 	bu_exit (3, NULL);
     }
 
-    if (border_inset >= xin) {
-	fprintf(stderr, "pixembed: border inset out of range\n");
+    if (border_inset > (xin - 1) / 2 || border_inset > (yin - 1) / 2) {
+	fprintf(stderr, "pixembed: border inset must leave at least one input row and column\n");
 	bu_exit (4, NULL);
     }
 
     inbase = (xout - xin) / 2;
+    bottom_margin = (yout - yin) / 2;
+    top_margin = yout - yin - bottom_margin;
+    interior_rows = yin - 2 * border_inset;
 
     /* Allocate storage for one output line */
     scanlen = 3*xout;
     obuf = (unsigned char *)bu_malloc(scanlen, "obuf");
 
-    /* Pre-fetch the first line (after skipping) */
-    for (i= 0; i<border_inset; i++) load_buffer();
+    /* Discard suspect border rows, then replicate the first usable row. */
+    for (i = 0; i < border_inset; i++)
+	load_buffer();
+    load_buffer();
 
-    /* Write out duplicates of 1st line */
-    ydup = (yout - yin) / 2 - border_inset;
-    for (y = 0; y < ydup; y++) write_buffer();
+    for (y = 0; y < bottom_margin + border_inset + 1; y++)
+	write_buffer();
 
-    for (y = 0; y < yin; y++) {
+    for (y = 1; y < interior_rows; y++) {
 	load_buffer();
 	write_buffer();
     }
 
-    /* For the remaining lines, Write out duplicates of last line read */
-    for (y = 0; y < ydup; y++)
+    /* Replicate the last usable row through the discarded edge and margin. */
+    for (y = 0; y < top_margin + border_inset; y++)
 	write_buffer();
 
     bu_free(obuf, "obuf");

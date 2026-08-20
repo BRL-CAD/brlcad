@@ -31,7 +31,7 @@
 #include <math.h>
 
 #include "bu/log.h"
-#include "bu/time.h"
+#include "bu/datetime.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
@@ -151,14 +151,24 @@ do_pixel(int cpu, int pat_num, int pixelnum)
     vect_t colorsum = {(fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0};
     int samplenum = 0;
     static const double one_over_255 = 1.0 / 255.0;
+    static const fastf_t usec_per_sec = 1000000.0;
+    static const fastf_t nsec_per_sec = 1000000000.0;
     const int pindex = (pixelnum * sizeof(RGBpixel));
     int64_t pixel_start = 0;
+    int pixel_timer_thread_cpu = 0;
+    fastf_t pixel_timer_scale = usec_per_sec;
 
     /* for stereo output */
     vect_t left_eye_delta = VINIT_ZERO;
 
     if (lightmodel == 8) {
-	pixel_start = bu_gettime();
+	pixel_start = bu_timer_cpu_thread();
+	if (pixel_start >= 0) {
+	    pixel_timer_thread_cpu = 1;
+	    pixel_timer_scale = nsec_per_sec;
+	} else {
+	    pixel_start = bu_gettime();
+	}
     }
 
     /* Obtain fresh copy of global application struct */
@@ -424,8 +434,16 @@ do_pixel(int cpu, int pat_num, int pixelnum)
     if (lightmodel == 8) {
 	fastf_t pixelTime;
 	fastf_t **timeTable;
+	int64_t pixel_end = 0;
 
-	pixelTime = (fastf_t)(bu_gettime() - pixel_start) / 1000000.0;
+	if (pixel_timer_thread_cpu)
+	    pixel_end = bu_timer_cpu_thread();
+	else
+	    pixel_end = bu_gettime();
+	if (pixel_end < pixel_start)
+	    pixel_end = pixel_start;
+
+	pixelTime = (fastf_t)(pixel_end - pixel_start) / pixel_timer_scale;
 	/* bu_log("PixelTime = %lf X:%d Y:%d\n", pixelTime, a.a_x, a.a_y); */
 	bu_semaphore_acquire(RT_SEM_RESULTS);
 	timeTable = timeTable_init(width, height);

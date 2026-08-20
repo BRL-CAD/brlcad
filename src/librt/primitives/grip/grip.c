@@ -133,6 +133,23 @@ rt_grp_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 
 
 /**
+ * Vectorized rt_grp_shot(): a grip carries no solid geometry, so every
+ * ray in the batch misses.  Provided so ID_GRIP dispatches through a
+ * real ft_vshot instead of the generic per-ray stub.
+ */
+C_DECL void
+rt_grp_vshot(struct soltab **stp, struct xray **UNUSED(rp), struct seg *segp, int n, struct application *ap)
+{
+    int i;
+    if (ap) RT_CK_APPLICATION(ap);
+    for (i = 0; i < n; i++) {
+	if (stp[i] == 0) continue;		/* skip this ray */
+	segp[i].seg_stp = (struct soltab *)0;	/* always MISS */
+    }
+}
+
+
+/**
  * Given ONE ray distance, return the normal and entry/exit point.
  * The normal is already filled in.
  */
@@ -509,6 +526,28 @@ rt_grp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
     /* XXX tess routine needed */
     return -1;
+}
+
+
+C_DECL int
+rt_grp_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char* UNUSED(variant), const point_t origin, double scale)
+{
+    struct rt_grip_internal *grp_ip;
+
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern->idb_type = ID_GRIP;
+    BU_ASSERT(&OBJ[intern->idb_type] == ftp);
+    intern->idb_meth = ftp;
+
+    BU_ALLOC(grp_ip, struct rt_grip_internal);
+    intern->idb_ptr = (void *)grp_ip;
+    grp_ip->magic = RT_GRIP_INTERNAL_MAGIC;
+
+    VSET(grp_ip->center, origin[X], origin[Y], origin[Z]);
+    VSET(grp_ip->normal, 1.0, 0.0, 0.0);
+    grp_ip->mag = 0.375 * scale;
+
+    return BRLCAD_OK;
 }
 
 

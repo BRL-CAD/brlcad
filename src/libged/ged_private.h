@@ -360,7 +360,8 @@ GED_EXPORT extern int _ged_do_tra(struct ged *gedp,
  * the real definition of the struct goes here.  The public
  * header has only the notion of a ged_results structure.*/
 struct ged_results {
-	struct bu_ptbl *results_tbl;
+    int ret;
+    struct bu_ptbl *results_tbl;
 };
 
 /* defined in ged_util.c */
@@ -457,6 +458,8 @@ _ged_sort_existing_objs(struct db_i *dbip, int argc, const char *argv[], struct 
 
 
 GED_EXPORT extern int ged_view_data_lines(struct ged *gedp, int argc, const char *argv[]);
+
+GED_EXPORT extern int ged_repair(struct ged *gedp, int argc, const char **argv);
 
 
 GED_EXPORT extern void ged_push_scene_obj(struct ged *gedp, struct bv_scene_obj *sp);

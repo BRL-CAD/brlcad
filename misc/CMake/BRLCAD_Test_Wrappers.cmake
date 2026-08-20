@@ -97,20 +97,57 @@ function(BRLCAD_ADD_TEST NAME test_name COMMAND test_prog)
     return()
   endif(NOT BUILD_TESTING)
 
-  # cmake_language based wrapper for add_test, replaces the previous workaround
-  # for default ARGN behavior that doesn't pass through empty strings.  See
+  # Assemble the evaluated add_test call directly from ARGVn.  Converting the
+  # arguments to an ordinary CMake list drops empty fields, which changes the
+  # position of later command arguments.  See
   # https://gitlab.kitware.com/cmake/cmake/-/issues/21414
-  cmake_parse_arguments(PARSE_ARGV 3 ARG "" "" "")
-  foreach(_av IN LISTS ARG_UNPARSED_ARGUMENTS)
-    string(APPEND test_args " [==[${_av}]==]")
+  set(_test_command "${test_prog}")
+  # Once a launcher precedes the test command, add_test no longer recognizes a
+  # bare target name as its executable and consequently does not replace it
+  # with the target's path.  Resolve target-backed commands explicitly while
+  # preserving literal commands and generator expressions.
+  if(BRLCAD_SANITIZER_TEST_LAUNCHER AND TARGET ${test_prog})
+    set(_test_command "$<TARGET_FILE:${test_prog}>")
+  endif()
+  string(APPEND test_args " [==[${_test_command}]==]")
+  if(ARGC GREATER 4)
+    math(EXPR _last_test_arg "${ARGC} - 1")
+    foreach(_arg_index RANGE 4 ${_last_test_arg})
+      string(APPEND test_args " [==[${ARGV${_arg_index}}]==]")
+    endforeach()
+  endif()
+  foreach(_launcher_arg IN LISTS BRLCAD_SANITIZER_TEST_LAUNCHER)
+    string(APPEND test_launcher_args " [==[${_launcher_arg}]==]")
   endforeach()
-  cmake_language(EVAL CODE "add_test(NAME ${test_name} COMMAND ${test_args})")
+  cmake_language(EVAL CODE
+    "add_test(NAME ${test_name} COMMAND ${test_launcher_args} ${test_args})"
+  )
 
-  # There are a variety of criteria that disqualify test_prog as a
-  # dependency - check and return if we hit any of them.
-  if(NOT TARGET ${test_prog})
+  # Collect both a directly invoked target and targets referenced by script
+  # arguments.  The latter commonly appear as -DTOOL=$<TARGET_FILE:tool>;
+  # without these dependencies Ninja may start check before those tools exist.
+  set(_test_dependencies)
+  if(TARGET ${test_prog})
+    list(APPEND _test_dependencies ${test_prog})
+  endif()
+  if(ARGC GREATER 4)
+    foreach(_arg_index RANGE 4 ${_last_test_arg})
+      set(_test_arg "${ARGV${_arg_index}}")
+      if(_test_arg MATCHES "\\$<TARGET_FILE:([^>]+)>")
+        set(_test_arg_target "${CMAKE_MATCH_1}")
+        if(TARGET ${_test_arg_target})
+          list(APPEND _test_dependencies ${_test_arg_target})
+        endif()
+      endif()
+    endforeach()
+  endif()
+  if(NOT _test_dependencies)
     return()
   endif()
+  list(REMOVE_DUPLICATES _test_dependencies)
+
+  # There are a variety of criteria that disqualify test programs as
+  # dependencies - check and return if we hit any of them.
   if("${test_name}" MATCHES ^regress-)
     return()
   endif()
@@ -127,9 +164,9 @@ function(BRLCAD_ADD_TEST NAME test_name COMMAND test_prog)
     return()
   endif()
 
-  # add program needed for test to unit and check target dependencies
-  add_dependencies(unit ${test_prog})
-  add_dependencies(check ${test_prog})
+  # Add programs needed for the test to unit and check target dependencies.
+  add_dependencies(unit ${_test_dependencies})
+  add_dependencies(check ${_test_dependencies})
 endfunction(BRLCAD_ADD_TEST)
 
 # Local Variables:

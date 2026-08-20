@@ -18,11 +18,6 @@
  * information.
  *
  */
-/** @file vrml/file_util.h
- *
- * Class definition for file utility
- *
- */
 
 #ifndef FILE_UTIL_H
 #define FILE_UTIL_H
@@ -61,5 +56,5 @@ public:
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:
- * ex: shiftwidth=4 tabstop=8
+ * ex: shiftwidth=4 tabstop=8 cino=N-s
  */

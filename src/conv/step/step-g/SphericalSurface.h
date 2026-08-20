@@ -46,9 +46,10 @@ public:
     const double *GetNormal();
     const double *GetXAxis();
     const double *GetYAxis();
-    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
-    virtual bool LoadONBrep(ON_Brep *brep);
-    virtual void Print(int level);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse) override;
+    bool RequiresFaceLocalONSurface() const override { return true; }
+    bool LoadONBrep(ON_Brep *brep) override;
+    void Print(int level) override;
 
     //static methods
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);

@@ -44,6 +44,7 @@
 #define DISK_DMA_PIXELS (DISK_DMA_BYTES/sizeof(RGBpixel))
 
 #define if_seekpos u5.l	/* stored seek position */
+#define if_is_stdstream u1.l
 
 
 static int
@@ -59,13 +60,17 @@ dsk_open(struct fb *ifp, const char *file, int width, int height)
     if (height == 0)
 	height = ifp->i->if_height;
 
-    if (BU_STR_EQUAL(file, "-")) {
+    if (BU_STR_EQUAL(file, "-")
+	|| BU_STR_EQUAL(file, "/dev/stdout")
+	|| BU_STR_EQUAL(file, "/dev/stderr")) {
 	/*
 	 * It is the applications job to write ascending scanlines.
 	 * If it does not, then this can be stacked with /dev/mem,
 	 * i.e.	/dev/mem -
 	 */
-	ifp->i->if_fd = 1;		/* fileno(stdout) */
+	ifp->i->if_fd = BU_STR_EQUAL(file, "/dev/stderr") ? fileno(stderr) : fileno(stdout);
+	ifp->i->if_is_stdstream = 1;
+	setmode(ifp->i->if_fd, O_BINARY);
 	ifp->i->if_width = width;
 	ifp->i->if_height = height;
 	ifp->i->if_seekpos = 0;
@@ -74,7 +79,7 @@ dsk_open(struct fb *ifp, const char *file, int width, int height)
 
     if ((ifp->i->if_fd = open(file, O_RDWR | O_BINARY, 0)) == -1
 	&& (ifp->i->if_fd = open(file, O_RDONLY | O_BINARY, 0)) == -1) {
-	if ((ifp->i->if_fd = open(file, O_RDWR | O_CREAT | O_BINARY, 0664)) > 0) {
+	if ((ifp->i->if_fd = open(file, O_RDWR | O_CREAT | O_BINARY, 0664)) >= 0) {
 	    /* New file, write byte at end */
 	    if (bu_lseek(ifp->i->if_fd, (height*width*sizeof(RGBpixel)-1), 0) == -1) {
 		fb_log("disk_device_open : can not seek to end of new file.\n");
@@ -140,6 +145,8 @@ dsk_refresh(struct fb *UNUSED(ifp), int UNUSED(x), int UNUSED(y), int UNUSED(w),
 static int
 dsk_close(struct fb *ifp)
 {
+    if (ifp->i->if_is_stdstream)
+	return 0;
     return close(ifp->i->if_fd);
 }
 
@@ -147,6 +154,8 @@ dsk_close(struct fb *ifp)
 static int
 dsk_free(struct fb *ifp)
 {
+    if (ifp->i->if_is_stdstream)
+	return 0;
     close(ifp->i->if_fd);
     if (bu_file_delete(ifp->i->if_name)) {
 	return 0;

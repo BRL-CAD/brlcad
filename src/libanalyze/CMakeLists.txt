@@ -15,7 +15,8 @@ endforeach(hdr ${NIRT_DBG_HDRS})
 
 add_custom_command(
   OUTPUT ${DEBUG_CMD_C}
-  COMMAND debug2c ${DEBUG_CMD_HDRS} ${DEBUG_CMD_C}
+  COMMAND ${BRLCAD_SANITIZER_BUILD_TOOL_LAUNCHER}
+    $<TARGET_FILE:debug2c> ${DEBUG_CMD_HDRS} ${DEBUG_CMD_C}
   DEPENDS debug2c
   COMMENT "[DEBUG2C] Scanning for NIRT debugging variables"
 )

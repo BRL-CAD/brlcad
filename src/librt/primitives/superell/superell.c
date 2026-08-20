@@ -595,6 +595,93 @@ rt_superell_shot(struct soltab *stp, struct xray *rp, struct application *ap, st
 
 
 /**
+ * Vectorized counterpart to rt_superell_shot().
+ *
+ * Batch-intersect n rays, one seg per ray into the flat segp[] array
+ * (no seg-list allocation).  As in the scalar shot, the intersection
+ * polynomial is degree 2 (the current superell shot approximates with
+ * the ellipsoid quadric), so at most one segment is produced.  The
+ * per-ray arithmetic mirrors rt_superell_shot() exactly so hit_dist
+ * values agree; the diagnostic root-count logging is omitted.
+ */
+void
+rt_superell_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
+/* An array of solid pointers */
+/* An array of ray pointers */
+/* array of segs (results returned) */
+/* Number of ray/object pairs */
+{
+    int idx;
+
+    if (ap) RT_CK_APPLICATION(ap);
+
+    for (idx = 0; idx < n; idx++) {
+	struct superell_specific *superell;
+	bn_poly_t equation;		/* equation of superell to be solved */
+	vect_t translated;		/* translated shot vector */
+	vect_t newShotPoint;		/* P' */
+	vect_t newShotDir;		/* D' */
+	bn_complex_t complexRoot[4];	/* roots returned from poly solver */
+	double realRoot[4];		/* real ray distance values */
+	int i, j;
+
+	if (stp[idx] == 0) continue;			/* skip this ray */
+	segp[idx].seg_stp = (struct soltab *)0;		/* assume MISS */
+
+	superell = (struct superell_specific *)stp[idx]->st_specific;
+
+	/* translate ray point */
+	translated[X] = rp[idx]->r_pt[X] - superell->superell_V[X];
+	translated[Y] = rp[idx]->r_pt[Y] - superell->superell_V[Y];
+	translated[Z] = rp[idx]->r_pt[Z] - superell->superell_V[Z];
+
+	/* scale and rotate point to get P' */
+	newShotPoint[X] = (superell->superell_SoR[0]*translated[X] + superell->superell_SoR[1]*translated[Y] + superell->superell_SoR[ 2]*translated[Z]) * 1.0/(superell->superell_SoR[15]);
+	newShotPoint[Y] = (superell->superell_SoR[4]*translated[X] + superell->superell_SoR[5]*translated[Y] + superell->superell_SoR[ 6]*translated[Z]) * 1.0/(superell->superell_SoR[15]);
+	newShotPoint[Z] = (superell->superell_SoR[8]*translated[X] + superell->superell_SoR[9]*translated[Y] + superell->superell_SoR[10]*translated[Z]) * 1.0/(superell->superell_SoR[15]);
+
+	/* translate ray direction vector */
+	MAT4X3VEC(newShotDir, superell->superell_SoR, rp[idx]->r_dir);
+	VUNITIZE(newShotDir);
+
+	/* Now generate the polynomial equation for passing to the root finder */
+	equation.dgr = 2;
+	equation.cf[0] = newShotPoint[X] * newShotPoint[X] * superell->superell_invmsAu + newShotPoint[Y] * newShotPoint[Y] * superell->superell_invmsBu + newShotPoint[Z] * newShotPoint[Z] * superell->superell_invmsCu - 1;
+	equation.cf[1] = 2 * newShotDir[X] * newShotPoint[X] * superell->superell_invmsAu + 2 * newShotDir[Y] * newShotPoint[Y] * superell->superell_invmsBu + 2 * newShotDir[Z] * newShotPoint[Z] * superell->superell_invmsCu;
+	equation.cf[2] = newShotDir[X] * newShotDir[X] * superell->superell_invmsAu + newShotDir[Y] * newShotDir[Y] * superell->superell_invmsBu + newShotDir[Z] * newShotDir[Z] * superell->superell_invmsCu;
+
+	if ((i = rt_poly_roots(&equation, complexRoot, stp[idx]->st_dp->d_namep)) != 2)
+	    continue;		/* MISS */
+
+	/* Only real roots indicate an intersection in real space. */
+	for (j = 0, i = 0; j < 2; j++) {
+	    if (NEAR_ZERO(complexRoot[j].im, 0.001))
+		realRoot[i++] = complexRoot[j].re;
+	}
+
+	if (i != 2)
+	    continue;		/* MISS */
+
+	/* Sort most distant to least distant. */
+	if (realRoot[0] < realRoot[1]) {
+	    fastf_t u = realRoot[0];
+	    realRoot[0] = realRoot[1];
+	    realRoot[1] = u;
+	}
+
+	/* realRoot[1] is entry point, realRoot[0] is exit point */
+	segp[idx].seg_stp = stp[idx];
+	segp[idx].seg_in.hit_magic = RT_HIT_MAGIC;
+	segp[idx].seg_in.hit_dist = realRoot[1];
+	segp[idx].seg_in.hit_surfno = 0;
+	segp[idx].seg_out.hit_magic = RT_HIT_MAGIC;
+	segp[idx].seg_out.hit_dist = realRoot[0];
+	segp[idx].seg_out.hit_surfno = 0;
+    }
+}
+
+
+/**
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 C_DECL void
@@ -1098,6 +1185,31 @@ static const fastf_t rt_superell_uvw[5*ELEMENTS_PER_VECT] = {
     0, 1, 0
 };
 */
+
+C_DECL int
+rt_superell_make(const struct rt_functab* ftp, struct rt_db_internal* intern, const char* UNUSED(variant), const point_t origin, double scale)
+{
+    struct rt_superell_internal *superell_ip;
+
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern->idb_type = ID_SUPERELL;
+    BU_ASSERT(&OBJ[intern->idb_type] == ftp);
+    intern->idb_meth = ftp;
+
+    BU_ALLOC(superell_ip, struct rt_superell_internal);
+    intern->idb_ptr = (void *)superell_ip;
+    superell_ip->magic = RT_SUPERELL_INTERNAL_MAGIC;
+
+    VSET(superell_ip->v, origin[X], origin[Y], origin[Z]);
+    VSET(superell_ip->a, 0.5*scale, 0.0, 0.0);	    /* A */
+    VSET(superell_ip->b, 0.0, 0.25*scale, 0.0);	    /* B */
+    VSET(superell_ip->c, 0.0, 0.0, 0.125*scale);    /* C */
+    superell_ip->n = 1.0;
+    superell_ip->e = 1.0;
+
+    return BRLCAD_OK;
+}
+
 
 C_DECL int
 rt_superell_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)

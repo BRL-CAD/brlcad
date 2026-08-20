@@ -365,6 +365,9 @@ function(BRLCAD_Summary)
   set(BRLCAD_ARCH_BITSETTING_LABEL "Build 32/64-bit release ")
   set(BRLCAD_OPTIMIZED_LABEL "Build with optimization ")
   set(BRLCAD_DEBUGGING_LABEL "Build with debugging symbols ")
+  set(BRLCAD_ENABLE_ADDRESS_SANITIZER_LABEL "AddressSanitizer instrumentation ")
+  set(BRLCAD_ENABLE_UNDEFINED_SANITIZER_LABEL "UndefinedBehaviorSanitizer instrumentation ")
+  set(BRLCAD_ENABLE_THREAD_SANITIZER_LABEL "ThreadSanitizer instrumentation ")
   set(BRLCAD_PROFILING_LABEL "Build with performance profiling ")
   set(BRLCAD_SMP_LABEL "Build SMP-capable release ")
   set(BUILD_STATIC_LIBS_LABEL "Build static libraries ")
@@ -393,6 +396,16 @@ function(BRLCAD_Summary)
     BRLCAD_INSTALL_EXAMPLE_GEOMETRY
     BRLCAD_EXTRADOCS_BUILD
   )
+
+  if(BRLCAD_ENABLE_ADDRESS_SANITIZER OR
+     BRLCAD_ENABLE_UNDEFINED_SANITIZER OR
+     BRLCAD_ENABLE_THREAD_SANITIZER)
+    list(APPEND OTHER_REPORT_ITEMS
+      BRLCAD_ENABLE_ADDRESS_SANITIZER
+      BRLCAD_ENABLE_UNDEFINED_SANITIZER
+      BRLCAD_ENABLE_THREAD_SANITIZER
+    )
+  endif()
 
   if(BRLCAD_SUMMARIZE_DEV_SETTINGS)
     set(

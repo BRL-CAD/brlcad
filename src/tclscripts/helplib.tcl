@@ -73,7 +73,7 @@ set helplib_data(wdb_bot_face_sort)     {{triangles_per_piece bot_solid1 [bot_so
 set helplib_data(wdb_bot_decimate)      {{-f feature_size -c maximum_chord_error -n maximum_normal_error -e minimum_edge_length new_bot_name current_bot_name} {Uses edge decimation to reduce the number of triangles in the specified BOT while keeping within the specified constraints}}
 set helplib_data(wdb_cat)		{{<objects>} {list attributes (brief)}}
 set helplib_data(wdb_color)		{{[-e] [low high r g b]} {text edit color table or make new color entry}}
-set helplib_data(wdb_comb)		{{comb_name [-c|-r] [-w|-f|-l] [-S] <operation solid>}	{create or extend combination w/booleans}}
+set helplib_data(wdb_comb)		{{[options] comb_name [operator member ...] | comb_name command [args] | command -C|--comb comb_name [args]}	{create or edit combination}}
 set helplib_data(wdb_comb_std)		{{[-cr] comb_name <boolean_expr>}	{create or extend a combination using standard notation}}
 set helplib_data(wdb_concat)		{{[-t] [-u] [-c] [-s|-p] [-O] file.g [suffix|prefix]} {import a database into the current database using an auto-incrementing or custom affix}}
 set helplib_data(wdb_copy)		{{from to} {copy a database object}}
@@ -116,7 +116,7 @@ set helplib_data(wdb_pull)             {{object(s)} {pull object(s) path transfo
 set helplib_data(wdb_push)		{{object(s)} {push object(s) path transformations to solids}}
 set helplib_data(wdb_put)		{{object type attrs} {create a database object}}
 set helplib_data(wdb_region)		{{object(s)} {create or append objects to a region}}
-set helplib_data(wdb_remove)		{{comb object(s)} {remove members from a combination}}
+set helplib_data(wdb_rm)		{{[options] <object-or-path>...} {delete database objects or remove a child path}}
 set helplib_data(wdb_reopen)		{{[filename]} {open a database}}
 set helplib_data(wdb_rt_gettrees)	{{procname [-i] [-u] treetops...} {create an rt instance object}}
 set helplib_data(wdb_search)		{{[path] [options]} {search database for objects matching parameters defined by options within the specified path}}

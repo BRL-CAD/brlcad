@@ -23,4 +23,8 @@ killtree killtree.c
 ls killtree*
 l killtree*
 
+in killtree_dup.s sph 0 0 0 1
+comb killtree_dup.c u killtree_dup.s u killtree_dup.s
+killtree killtree_dup.c killtree_dup.s
+
 puts "*** 'killtree' testing completed ***"

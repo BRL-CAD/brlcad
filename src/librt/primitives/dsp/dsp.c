@@ -63,6 +63,43 @@
 #include "rt/db4.h"
 #include "bv/plot3.h"
 
+#include "../../librt_private.h"
+
+static uint32_t
+dsp_get_uint32(const unsigned char *cp)
+{
+    uint32_t value;
+
+    memcpy(&value, cp, sizeof(value));
+    return ntohl(value);
+}
+
+
+static uint16_t
+dsp_get_uint16(const unsigned char *cp)
+{
+    uint16_t value;
+
+    memcpy(&value, cp, sizeof(value));
+    return ntohs(value);
+}
+
+
+static void
+dsp_put_uint32(unsigned char *cp, uint32_t value)
+{
+    value = htonl(value);
+    memcpy(cp, &value, sizeof(value));
+}
+
+
+static void
+dsp_put_uint16(unsigned char *cp, uint16_t value)
+{
+    value = htons(value);
+    memcpy(cp, &value, sizeof(value));
+}
+
 /* private header */
 #include "./dsp.h"
 
@@ -2767,6 +2804,16 @@ compute_normal_at_gridpoint(vect_t N,
 
 
 /**
+ * Baseline flat-array vshot: delegates to the scalar shot via rt_vshot_via_shot().
+ */
+C_DECL void
+rt_dsp_vshot(struct soltab *stp[], struct xray *rp[], struct seg *segp, int n, struct application *ap)
+{
+    rt_vshot_via_shot(rt_dsp_shot, stp, rp, segp, n, ap);
+}
+
+
+/**
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 C_DECL void
@@ -3787,7 +3834,7 @@ rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     /* get x, y counts */
     cp = (unsigned char *)ep->ext_buf;
 
-    dsp_ip->dsp_xcnt = ntohl(*(uint32_t *)cp);
+    dsp_ip->dsp_xcnt = dsp_get_uint32(cp);
     cp += SIZEOF_NETWORK_LONG;
     if (dsp_ip->dsp_xcnt < 1) {
 	bu_log("%s:%d DSP X dimension (%u) < 1 \n",
@@ -3795,7 +3842,7 @@ rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 	       dsp_ip->dsp_xcnt);
     }
 
-    dsp_ip->dsp_ycnt = ntohl(*(uint32_t *)cp);
+    dsp_ip->dsp_ycnt = dsp_get_uint32(cp);
     cp += SIZEOF_NETWORK_LONG;
     if (dsp_ip->dsp_ycnt < 1) {
 	bu_log("%s:%d DSP Y dimension (%u) < 1 \n",
@@ -3816,7 +3863,7 @@ rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     bn_mat_inv(dsp_ip->dsp_mtos, dsp_ip->dsp_stom);
 
     /* convert smooth flag */
-    dsp_ip->dsp_smooth = ntohs(*(uint16_t *)cp);
+    dsp_ip->dsp_smooth = dsp_get_uint16(cp);
     cp += SIZEOF_NETWORK_SHORT;
 
     dsp_ip->dsp_datasrc = *cp;
@@ -3906,11 +3953,11 @@ rt_dsp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
      * converted to Big-Endian IEEE
      */
 
-    *(uint32_t *)cp = htonl((uint32_t)dsp_ip->dsp_xcnt);
+    dsp_put_uint32(cp, (uint32_t)dsp_ip->dsp_xcnt);
     cp += SIZEOF_NETWORK_LONG;
     rem -= SIZEOF_NETWORK_LONG;
 
-    *(uint32_t *)cp = htonl((uint32_t)dsp_ip->dsp_ycnt);
+    dsp_put_uint32(cp, (uint32_t)dsp_ip->dsp_ycnt);
     cp += SIZEOF_NETWORK_LONG;
     rem -= SIZEOF_NETWORK_LONG;
 
@@ -3928,7 +3975,7 @@ rt_dsp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     cp += SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_MAT;
     rem -= SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_MAT;
 
-    *(uint16_t *)cp = htons((uint16_t)dsp_ip->dsp_smooth);
+    dsp_put_uint16(cp, (uint16_t)dsp_ip->dsp_smooth);
     cp += SIZEOF_NETWORK_SHORT;
     rem -= SIZEOF_NETWORK_SHORT;
 
@@ -4121,8 +4168,8 @@ rt_dsp_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 }
 
 
-C_DECL void
-rt_dsp_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
+C_DECL int
+rt_dsp_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char *UNUSED(variant), const point_t UNUSED(origin), double UNUSED(scale))
 {
     struct rt_dsp_internal *dsp;
 
@@ -4143,6 +4190,7 @@ rt_dsp_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
     MAT_IDN(dsp->dsp_stom);
     dsp->dsp_datasrc = RT_DSP_SRC_FILE;
 
+    return BRLCAD_OK;
 }
 
 

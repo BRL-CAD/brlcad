@@ -27,10 +27,6 @@ Recent Bugs
   problem area with -j but there are likely call sites..  Need to
   scrub all fb_write() and ideally make this a non-issue via icv API.
 
-* obj-g and gcv converters choke and crash on obj with unnamed g line.
-  spec wording on whether that's valid is unclear, but encountered in
-  wild.
-
 * recursive bu_parallel() failure, tbd whether cpp11 or pthread impl,
   likely because IDs are exceeding MAX_PSW, causing mayhem and chaos.
 
@@ -102,12 +98,6 @@ Recent Bugs
   > e -S -m1 boxes.r
   box1 is not drawn
 
-* When run inside mged, invalid syntax reported on "gqa -p prefix"
-  despite it being documented as the correct form (and working outside
-  mged).  specifying gqa -pprefix appears to be workaround, though
-  unintuitive.  specifying gqa -p"" annoyingly outputs ""exp_air.plot3
-  with quotes embedded in the name.
-
 * raytracing a revolved sketch seems to work fine, but rtarea and gqa
   seem to be crashing on that same revolve.  curiously, the brep
   revolve from the csgbrep proc-db has the same failure as well as the
@@ -123,11 +113,6 @@ Recent Bugs
   crashing.
 
 * killtree / crashes
-
-* killtree reports spurious db_lookup failures saying object does not
-  exist as it previously deleted it.  should keep track of what it
-  deletes to not output spuriously, or (better) delete transactionally
-  so it only attempts to lookup and delete once per object.
 
 * object names with a / or \ in them make ls or underlying directory
   parsing logic display them incorrectly.
@@ -174,12 +159,6 @@ Recent Bugs
 * creating an object with a slashes in the name (e.g., cp foo foo/R)
   results in an object that cannot be deleted/renamed.  bad behavior
   presumably extends to any name with path separators.
-
-* rtsil command works if do what usage says and redirect output to
-  file, but mentions .pix when data is actually .bw; and using the -o
-  option results in a black image.  it is also inconsistent, writing a
-  black silhouette on a white background, instead of black on white
-  and missing background color options.
 
 * If we draw any form, then trace it using rt, then change of database
   (by clicking file>open and selecting another database), badness
@@ -230,13 +209,6 @@ Recent Bugs
 * Recursive submodel predictably goes infinite, need stack-based
   db_walk_tree(): mged> in submodel submodel submodel grid test.g
 
-* running rt -s20 -F file.pix ... does not result in an 20x20 image
-  being written out.  it ends up being 512x512.
-
-* running rt -C255/0/0 -o file.pix ... does not result in the
-  background color getting used.  It does work with -F file.pix, going
-  through libfb instead of libicv.
-
 * ogl display manager and framebuffer are creating windows with
   transparent backgrounds (the glClear color is not being drawn) on
   Linux.  Presumably a driver-related issue, alpha channel, or expose
@@ -245,9 +217,6 @@ Recent Bugs
   private memory -- looks like private memory is not initialized
   (observed on Mac 10.6, Windows, and Ubuntu Linux using 7.26).
 
-* pixdiff on Windows is reporting no differences with a pair of files
-  that pixcmp can see differences in.
-
 * fblabel seems quite busted, at least talking to a /dev/X fbserv, in
   that it only draws the first character and eventually displays
   rem_read() failures when run in -d debug mode.
@@ -255,12 +224,6 @@ Recent Bugs
 * rtedge doesn't refresh a /dev/X fbserv (presumably double-buffered)
   after doing an overlay render.  it does draw, though, as confirmed
   by a forced fb-fb refresh.
-
-* pixborder doesn't account for an edge case where the right edge of
-  an image is expected to be colored (except for one pixel on the top
-  edge).  Example:
-
-  pixborder -b "255 0 0" -t "255 255 255" < pix/moss.pix | pix-fb
 
 * typing 'comb -f -r assembly_name' shuts down mged with the error:
   ERROR: bad pointer 0000000000B4CA50: s/b bu_external(x768dbbd0), was bu_vls(x89333bbb), file ..\..\..\brlcad_src\src\libbu\parse.c, line 2443"
@@ -329,9 +292,6 @@ Recent Bugs
 
 * src/librt/primitives/bot/g_bot_include.c:rt_bot_bbox() routine isn't
   calculating the bbox correctly
-
-* rtxray crashes if you specify a -o *.bw output file due to
-  assumptions in the rt front-end that all output files are .pix
 
 * encountered a crash during rtarea on a (default) facetized version
   of the hyp from the proc-db csgbrep tool.
@@ -609,13 +569,6 @@ Recent Bugs
 * dsp primitive is going into what seems to be an unbounded memory
   allocation loop during prep, inside dsp_layers().
 
-* libfb cannot utilize standard output/error "device" files without
-  path trickery.  it recognizes the /dev/ prefix and presumes it's a
-  libfb device instead of a filesystem device.
-
-   OK: rt -F/./dev/stdout
-  BAD: rt -F/dev/stdout
-
 * libfb cannot open a file descriptor when piping/redirecting output.
 
    OK: rt -F/./dev/stdout moss.g all.g
@@ -638,8 +591,6 @@ Recent Bugs
 * triangulation of some pipe in toyjeep.g fails (rather reliably) on
   some given bend.  fails in nmg_triangulate model().
 
-* fbhelp sends some of the output to stdout and some to stderr...
-
 * debugbu 2 immediately reports a bu_vls_free() error.. apparently
   been a problem since 4.5 days.  this occurs because
   bu_memdebug_add() is not called unless memory checking is enabled
@@ -655,9 +606,6 @@ Recent Bugs
   accounting bug visited a couple years ago.
 
 * Create menu.. create "part" boo hiss..
-
-* wavelet isn't working correctly on a simple image decomposition &
-  reconstruction.
 
 * fbed is looking for /usr/lib/vfont/nonie.r.12
 
@@ -729,27 +677,6 @@ Recent Bugs
 
 * bot-bldxf fails in db_walk_tree(), interface may have changed
 
-
-Older Bugs
-----------
-
-* X11 framebuffer often fails to display on certain middle bit depth
-  displays. (e.g. 15 or 16 bit depth)
-
-* mk_lcomb fails on large combinations due to mk_tree_pure() building
-  a left-heavy tree and wdb_put_internal() then recursively performing
-  lookup and put calls.
-
-
-Annoyances
-----------
-
-* matrix edits on objects in mged require you to select a primitive
-  for a coordinate system reference.  this can be counterintuitive and
-  confusing.
-
-* there are frequently modality errors when entering edit mode as
-  control and middle mouse rebind to model edit instead of view edit.
 
 ---
 Bugs should be reported to the bug tracker on the project website at

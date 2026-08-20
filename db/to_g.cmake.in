@@ -35,10 +35,12 @@ execute_process(
   ERROR_VARIABLE conv_log
 )
 
-if(conv_result)
+set(conv_success_codes "@CONV_SUCCESS_CODES@")
+list(FIND conv_success_codes "${conv_result}" conv_result_index)
+if(conv_result_index EQUAL -1 OR NOT EXISTS "@CONV_OUTPUT_PATH@")
   set(CARGS @CONV_ARGS@)
   message(FATAL_ERROR "[@in_model_root@] Failure: ${conv_result}\n${CONV_EXEC} ${CARGS}\"\n\n${conv_log}")
-endif(conv_result)
+endif()
 
 # Cleanup
 execute_process(

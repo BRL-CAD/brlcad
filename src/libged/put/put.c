@@ -84,7 +84,8 @@ ged_put_core(struct ged *gedp, int argc, const char *argv[])
     RT_CK_FUNCTAB(ftp);
 
     if (ftp->ft_make) {
-	ftp->ft_make(ftp, &intern);
+	point_t origin = {0.0, 0.0, 0.0};
+	ftp->ft_make(ftp, &intern, NULL, origin, 1.0);
     } else {
 	rt_generic_make(ftp, &intern);
     }

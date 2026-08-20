@@ -39,12 +39,6 @@
 #include "dm.h"
 #include "tclcad.h"
 
-/* We need to use different Tcl I/O mechanisms on different
- * platforms.  Make a define for that. */
-#if defined(_WIN32) && !defined(__CYGWIN__)
-#define USE_TCL_CHAN
-#endif
-
 /*
  * Communication error.  An error occurred on the PKG link.
  */

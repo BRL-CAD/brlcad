@@ -257,6 +257,288 @@ macro(CHECK_CXX_FLAG)
   check_flag(CXX ${ARGN})
 endmacro(CHECK_CXX_FLAG)
 
+###
+# Register a compiler flag for deferred parallel testing.  The cache variable
+# name is computed the same way CHECK_FLAG computes it, so normal CHECK_FLAG
+# calls will use the batched result without changing their application logic.
+###
+macro(_BRLCAD_REGISTER_FLAG_PROBE FLAG_LANG FLAG)
+  if(BRLCAD_ENABLE_PARALLEL_CONFIG_PROBES)
+    string(TOUPPER "${FLAG}" _brfp_upper)
+    string(REGEX REPLACE "[^a-zA-Z0-9]" "_" _brfp_upper "${_brfp_upper}")
+    set(_brfp_var "${_brfp_upper}_${FLAG_LANG}_FLAG_FOUND")
+
+    if(NOT DEFINED ${_brfp_var})
+      get_property(_brfp_list GLOBAL PROPERTY "BRLCAD_CFLAG_BATCH_${FLAG_LANG}")
+      list(FIND _brfp_list "${_brfp_var}" _brfp_idx)
+      if(_brfp_idx EQUAL -1)
+        list(APPEND _brfp_list "${_brfp_var}")
+        set_property(GLOBAL PROPERTY "BRLCAD_CFLAG_BATCH_${FLAG_LANG}" "${_brfp_list}")
+        set_property(GLOBAL PROPERTY "BRLCAD_CFLAG_${_brfp_var}_FLAG" "-${FLAG}")
+      endif()
+    endif()
+
+    unset(_brfp_idx)
+    unset(_brfp_list)
+    unset(_brfp_var)
+    unset(_brfp_upper)
+  endif()
+endmacro()
+
+###
+# Execute all pending compiler flag probes for a language as one generated
+# project.  Each flag is tested on its own target and the native build is asked
+# to keep going, allowing independent probes to finish in parallel even when
+# some flags fail.
+###
+function(_BRLCAD_RUN_FLAG_BATCH FLAG_LANG)
+  if(NOT BRLCAD_ENABLE_PARALLEL_CONFIG_PROBES)
+    return()
+  endif()
+
+  cmake_parse_arguments(_BRFB "" "WERROR" "" ${ARGN})
+
+  get_property(_brfb_vars GLOBAL PROPERTY "BRLCAD_CFLAG_BATCH_${FLAG_LANG}")
+  if(NOT _brfb_vars)
+    return()
+  endif()
+
+  set(_brfb_pending)
+  foreach(_brfb_var IN LISTS _brfb_vars)
+    if(NOT DEFINED ${_brfb_var})
+      list(APPEND _brfb_pending "${_brfb_var}")
+    endif()
+  endforeach()
+  if(NOT _brfb_pending)
+    return()
+  endif()
+
+  if("${FLAG_LANG}" STREQUAL "CXX")
+    set(_brfb_lang_kw "CXX")
+    set(_brfb_src_file "cflag_test.cpp")
+    set(_brfb_src_text "int main() { return 0; }\n")
+  elseif("${FLAG_LANG}" STREQUAL "C")
+    set(_brfb_lang_kw "C")
+    set(_brfb_src_file "cflag_test.c")
+    set(_brfb_src_text "int main(void) { return 0; }\n")
+  else()
+    message(FATAL_ERROR "Unsupported compiler flag test language: ${FLAG_LANG}")
+  endif()
+
+  set(_brfb_src_dir "${CMAKE_BINARY_DIR}/CMakeTmp/CFLAG_${FLAG_LANG}_sources")
+  set(_brfb_build_dir "${CMAKE_BINARY_DIR}/CMakeTmp/CFLAG_${FLAG_LANG}_build")
+  file(MAKE_DIRECTORY "${_brfb_src_dir}")
+  file(REMOVE_RECURSE "${_brfb_build_dir}")
+  file(WRITE "${_brfb_src_dir}/${_brfb_src_file}" "${_brfb_src_text}")
+
+  set(_brfb_cml "${_brfb_src_dir}/CMakeLists.txt")
+  file(WRITE "${_brfb_cml}"
+    "cmake_minimum_required(VERSION 3.22)\n"
+    "project(BRLCAD${FLAG_LANG}FlagBatch ${_brfb_lang_kw})\n"
+    "set(CMAKE_RUNTIME_OUTPUT_DIRECTORY \"\${CMAKE_BINARY_DIR}\")\n"
+    "set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG \"\${CMAKE_BINARY_DIR}\")\n"
+    "set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE \"\${CMAKE_BINARY_DIR}\")\n"
+  )
+  if(_BRFB_WERROR)
+    file(APPEND "${_brfb_cml}" "add_compile_options(${_BRFB_WERROR})\n")
+  endif()
+  foreach(_brfb_var IN LISTS _brfb_pending)
+    get_property(_brfb_flag GLOBAL PROPERTY "BRLCAD_CFLAG_${_brfb_var}_FLAG")
+    file(APPEND "${_brfb_cml}"
+      "add_executable(${_brfb_var} \"${_brfb_src_dir}/${_brfb_src_file}\")\n"
+      "target_compile_options(${_brfb_var} PRIVATE ${_brfb_flag})\n"
+    )
+  endforeach()
+
+  set(_brfb_cfg_cmd
+    "${CMAKE_COMMAND}"
+    "-S" "${_brfb_src_dir}"
+    "-B" "${_brfb_build_dir}"
+    "-G" "${CMAKE_GENERATOR}"
+    "-DCMAKE_${_brfb_lang_kw}_COMPILER=${CMAKE_${_brfb_lang_kw}_COMPILER}"
+  )
+  if(CMAKE_GENERATOR_PLATFORM)
+    list(APPEND _brfb_cfg_cmd "-A" "${CMAKE_GENERATOR_PLATFORM}")
+  endif()
+  if(CMAKE_GENERATOR_TOOLSET)
+    list(APPEND _brfb_cfg_cmd "-T" "${CMAKE_GENERATOR_TOOLSET}")
+  endif()
+  if(CMAKE_MAKE_PROGRAM)
+    list(APPEND _brfb_cfg_cmd "-DCMAKE_MAKE_PROGRAM=${CMAKE_MAKE_PROGRAM}")
+  endif()
+  if(CMAKE_BUILD_TYPE)
+    list(APPEND _brfb_cfg_cmd "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}")
+  endif()
+  if(CMAKE_${_brfb_lang_kw}_FLAGS)
+    list(APPEND _brfb_cfg_cmd "-DCMAKE_${_brfb_lang_kw}_FLAGS=${CMAKE_${_brfb_lang_kw}_FLAGS}")
+  endif()
+  if(BRLCAD_CONFIG_PROBE_DIAGNOSTICS)
+    string(JOIN ", " _brfb_pending_report ${_brfb_pending})
+    string(JOIN " " _brfb_cfg_cmd_report ${_brfb_cfg_cmd})
+    _brlcad_probe_diagnostic("CFLAG_${FLAG_LANG}"
+      "=== BATCH COMPILER FLAG SETUP: ${FLAG_LANG} ===\n"
+      "Parent generator: ${CMAKE_GENERATOR}\n"
+      "Parent generator platform: ${CMAKE_GENERATOR_PLATFORM}\n"
+      "Parent generator toolset: ${CMAKE_GENERATOR_TOOLSET}\n"
+      "Compiler: ${CMAKE_${_brfb_lang_kw}_COMPILER}\n"
+      "Pending flag probes: ${_brfb_pending_report}\n"
+      "Source directory: ${_brfb_src_dir}\n"
+      "Build directory: ${_brfb_build_dir}\n"
+      "Configure command: ${_brfb_cfg_cmd_report}\n"
+    )
+  endif()
+
+  execute_process(
+    COMMAND ${_brfb_cfg_cmd}
+    RESULT_VARIABLE _brfb_cfg_result
+    OUTPUT_VARIABLE _brfb_cfg_out
+    ERROR_VARIABLE _brfb_cfg_err
+  )
+  file(APPEND "${CMAKE_BINARY_DIR}/CMakeFiles/CMakeError.log" "=== BATCH COMPILER FLAG CONFIGURE LOG: ${FLAG_LANG} ===\n${_brfb_cfg_out}\n${_brfb_cfg_err}\n")
+  if(BRLCAD_CONFIG_PROBE_DIAGNOSTICS)
+    _brlcad_probe_diagnostic("CFLAG_${FLAG_LANG}"
+      "=== BATCH COMPILER FLAG CONFIGURE RESULT: ${FLAG_LANG} ===\n"
+      "Exit code: ${_brfb_cfg_result}\n"
+      "stdout:\n${_brfb_cfg_out}\n"
+      "stderr:\n${_brfb_cfg_err}\n"
+    )
+  endif()
+
+  if(_brfb_cfg_result EQUAL 0)
+    cmake_host_system_information(RESULT _brfb_ncpus QUERY NUMBER_OF_PHYSICAL_CORES)
+    if(NOT _brfb_ncpus OR _brfb_ncpus LESS 1)
+      set(_brfb_ncpus 1)
+    endif()
+
+    if(CMAKE_GENERATOR MATCHES "Ninja")
+      set(_brfb_keepgoing "--" "-k" "0")
+    elseif(CMAKE_GENERATOR MATCHES "Makefiles")
+      set(_brfb_keepgoing "--" "-k")
+    elseif(CMAKE_GENERATOR MATCHES "Xcode")
+      set(_brfb_keepgoing "--" "-PBXBuildsContinueAfterErrors=YES")
+    else()
+      set(_brfb_keepgoing "")
+    endif()
+
+    set(_brfb_build_cmd "${CMAKE_COMMAND}" "--build" "${_brfb_build_dir}" "-j" "${_brfb_ncpus}")
+    if(BRLCAD_CONFIG_PROBE_DIAGNOSTICS)
+      list(APPEND _brfb_build_cmd "--verbose")
+    endif()
+    list(APPEND _brfb_build_cmd ${_brfb_keepgoing})
+    if(CMAKE_BUILD_TYPE AND NOT _brfb_keepgoing)
+      list(APPEND _brfb_build_cmd "--config" "${CMAKE_BUILD_TYPE}")
+    endif()
+    if(BRLCAD_CONFIG_PROBE_DIAGNOSTICS)
+      string(JOIN " " _brfb_build_cmd_report ${_brfb_build_cmd})
+      string(JOIN " " _brfb_keepgoing_report ${_brfb_keepgoing})
+      _brlcad_probe_diagnostic("CFLAG_${FLAG_LANG}"
+        "=== BATCH COMPILER FLAG BUILD COMMAND: ${FLAG_LANG} ===\n"
+        "Command: ${_brfb_build_cmd_report}\n"
+        "Keep-going arguments: ${_brfb_keepgoing_report}\n"
+      )
+    endif()
+    execute_process(
+      COMMAND ${_brfb_build_cmd}
+      RESULT_VARIABLE _brfb_ignored_result
+      OUTPUT_VARIABLE _brfb_build_out
+      ERROR_VARIABLE _brfb_build_err
+    )
+    file(APPEND "${CMAKE_BINARY_DIR}/CMakeFiles/CMakeError.log" "=== BATCH COMPILER FLAG BUILD LOG: ${FLAG_LANG} ===\n${_brfb_build_out}\n${_brfb_build_err}\n")
+    if(BRLCAD_CONFIG_PROBE_DIAGNOSTICS)
+      _brlcad_probe_diagnostic("CFLAG_${FLAG_LANG}"
+        "=== BATCH COMPILER FLAG BUILD RESULT: ${FLAG_LANG} ===\n"
+        "Exit code: ${_brfb_ignored_result}\n"
+        "stdout:\n${_brfb_build_out}\n"
+        "stderr:\n${_brfb_build_err}\n"
+      )
+    endif()
+  endif()
+
+  # Determine pass/fail exactly the way CMake's check_<lang>_compiler_flag does:
+  # a probe passes only if it compiled AND the build output contains no
+  # diagnostic indicating the flag was unrecognized or ignored.  This is
+  # essential on MSVC, where an unknown flag still compiles successfully
+  # (exit 0, artifact produced) but emits command-line warning D9002 - so
+  # artifact existence alone would mark bogus flags as supported and add them
+  # to the real build's flags.  We reuse CMake's own fail-regex set so the
+  # verdict matches the reference try_compile path (verifiable with
+  # misc/CMake/probe_validation/).
+  include(CMakeCheckCompilerFlagCommonPatterns)
+  check_compiler_flag_common_patterns(_brfb_common_patterns)
+  set(_brfb_fail_regex)
+  set(_brfb_take_regex FALSE)
+  foreach(_brfb_tok IN LISTS _brfb_common_patterns)
+    if("${_brfb_tok}" STREQUAL "FAIL_REGEX")
+      set(_brfb_take_regex TRUE)
+    elseif(_brfb_take_regex)
+      list(APPEND _brfb_fail_regex "${_brfb_tok}")
+      set(_brfb_take_regex FALSE)
+    endif()
+  endforeach()
+  # Language-specific "valid for X but not for Y" patterns, matching CMake's
+  # Internal/CheckFlagCommonConfig.cmake.
+  if("${FLAG_LANG}" STREQUAL "CXX")
+    list(APPEND _brfb_fail_regex "command[ -]line option .* is valid for .* but not for C\\+\\+")
+  else()
+    list(APPEND _brfb_fail_regex "command[ -]line option .* is valid for .* but not for C")
+  endif()
+
+  # Split the combined build output into lines for per-probe attribution.
+  # Protect embedded semicolons so foreach() does not split on them; the tokens
+  # we attribute by (the target name and the flag text) contain none.
+  set(_brfb_log "${_brfb_build_out}\n${_brfb_build_err}")
+  string(REPLACE ";" "@@SEMI@@" _brfb_log "${_brfb_log}")
+  string(REPLACE "\n" ";" _brfb_lines "${_brfb_log}")
+
+  set(_brfb_report)
+  foreach(_brfb_var IN LISTS _brfb_pending)
+    if(NOT DEFINED ${_brfb_var})
+      # Did the probe compile at all?
+      set(_brfb_built FALSE)
+      if(_brfb_cfg_result EQUAL 0)
+        if(EXISTS "${_brfb_build_dir}/${_brfb_var}" OR EXISTS "${_brfb_build_dir}/${_brfb_var}.exe")
+          set(_brfb_built TRUE)
+        endif()
+      endif()
+
+      # A compiled probe still fails if its flag was reported unrecognized.
+      # Attribute a diagnostic line to this probe by the MSBuild project tag
+      # (<target>.vcxproj) or by the quoted flag the compiler echoes back.
+      set(_brfb_success ${_brfb_built})
+      if(_brfb_built)
+        get_property(_brfb_flag GLOBAL PROPERTY "BRLCAD_CFLAG_${_brfb_var}_FLAG")
+        foreach(_brfb_line IN LISTS _brfb_lines)
+          string(FIND "${_brfb_line}" "${_brfb_var}.vcxproj" _brfb_tag_pos)
+          string(FIND "${_brfb_line}" "'${_brfb_flag}'" _brfb_flag_pos)
+          if(NOT _brfb_tag_pos EQUAL -1 OR NOT _brfb_flag_pos EQUAL -1)
+            foreach(_brfb_re IN LISTS _brfb_fail_regex)
+              if("${_brfb_line}" MATCHES "${_brfb_re}")
+                set(_brfb_success FALSE)
+              endif()
+            endforeach()
+          endif()
+        endforeach()
+      endif()
+
+      if(_brfb_success)
+        set(${_brfb_var} 1 CACHE INTERNAL "Test ${_brfb_var}" FORCE)
+        set(_brfb_result_line "Performing Test ${_brfb_var} - Success")
+      else()
+        set(${_brfb_var} "" CACHE INTERNAL "Test ${_brfb_var}" FORCE)
+        set(_brfb_result_line "Performing Test ${_brfb_var} - Failed")
+      endif()
+      if(_brfb_report)
+        string(APPEND _brfb_report "\n-- ${_brfb_result_line}")
+      else()
+        string(APPEND _brfb_report "${_brfb_result_line}")
+      endif()
+    endif()
+  endforeach()
+  if(_brfb_report)
+    message(STATUS "${_brfb_report}")
+  endif()
+endfunction()
+
 # Disable any compilation warning flags currently set
 macro(DISABLE_WARNINGS)
   # borland-style

@@ -39,8 +39,8 @@ private:
 
 protected:
     BoundedSurface *parent_surface;
-    Transition_code u_transition;
-    Transition_code v_transition;
+    int u_transition;
+    int v_transition;
     Boolean u_sense;
     Boolean v_sense;
 

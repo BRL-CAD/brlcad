@@ -1766,6 +1766,21 @@ rt_pipe_shot(
 
 
 /**
+ * Baseline flat-array vshot: delegates to the scalar shot via rt_vshot_via_shot().
+ */
+C_DECL void
+rt_pipe_vshot(
+    struct soltab *stp[],
+    struct xray *rp[],
+    struct seg *segp,
+    int n,
+    struct application *ap)
+{
+    rt_vshot_via_shot(rt_pipe_shot, stp, rp, segp, n, ap);
+}
+
+
+/**
  * Return the curvature of the pipe.
  */
 C_DECL void
@@ -4968,8 +4983,8 @@ rt_pipe_adjust(
     return (rt_pipe_ck(&pip->pipe_segs_head) == 0) ? BRLCAD_OK : BRLCAD_ERROR;
 }
 
-C_DECL void
-rt_pipe_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
+C_DECL int
+rt_pipe_make(const struct rt_functab* ftp, struct rt_db_internal* intern, const char* UNUSED(variant), const point_t origin, double scale)
 {
     struct rt_pipe_internal* pipe_ip;
     struct wdb_pipe_pnt* pipe_pp;
@@ -4984,18 +4999,25 @@ rt_pipe_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
     intern->idb_ptr = (void *)pipe_ip;
 
     pipe_ip->pipe_magic = RT_PIPE_INTERNAL_MAGIC;
-
     BU_LIST_INIT(&pipe_ip->pipe_segs_head);
-    for (int i = 0; i < 2; i++) {
-	BU_ALLOC(pipe_pp, struct wdb_pipe_pnt);
-	pipe_pp->l.magic = WDB_PIPESEG_MAGIC;
-	VSETALL(pipe_pp->pp_coord, i);
 
-	pipe_pp->pp_od = 1;
-	pipe_pp->pp_id = 0.1 * pipe_pp->pp_od;
-	pipe_pp->pp_bendradius = pipe_pp->pp_od;
-	BU_LIST_INSERT(&pipe_ip->pipe_segs_head, &pipe_pp->l);
-    }
+    BU_ALLOC(pipe_pp, struct wdb_pipe_pnt);
+    pipe_pp->l.magic = WDB_PIPESEG_MAGIC;
+    VSET(pipe_pp->pp_coord, origin[X], origin[Y], origin[Z]-0.5*scale);
+    pipe_pp->pp_od = 0.25*scale;
+    pipe_pp->pp_id = 0.25*pipe_pp->pp_od;
+    pipe_pp->pp_bendradius = pipe_pp->pp_od;
+    BU_LIST_INSERT(&pipe_ip->pipe_segs_head, &pipe_pp->l);
+
+    BU_ALLOC(pipe_pp, struct wdb_pipe_pnt);
+    pipe_pp->l.magic = WDB_PIPESEG_MAGIC;
+    VSET(pipe_pp->pp_coord, origin[X], origin[Y], origin[Z]+0.5*scale);
+    pipe_pp->pp_od = 0.25*scale;
+    pipe_pp->pp_id = 0.25*pipe_pp->pp_od;
+    pipe_pp->pp_bendradius = pipe_pp->pp_od;
+    BU_LIST_INSERT(&pipe_ip->pipe_segs_head, &pipe_pp->l);
+
+    return BRLCAD_OK;
 }
 
 

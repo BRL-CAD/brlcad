@@ -234,6 +234,26 @@ if {![info exists make_primitives_list]} {
 
   puts "Regression testing definitions loaded.\n"
 
+  set oed_bbox_keypoint_failures {}
+
+  proc oed_bbox_keypoint_record {expected_x} {
+      global oed_bbox_keypoint_failures
+      set tolerance 1.0e-9
+      set result [keypoint]
+      if {[scan $result {bounding-box center (%f, %f, %f)} x y z] != 3 ||
+	  abs($x - $expected_x) > $tolerance || abs($y) > $tolerance || abs($z) > $tolerance} {
+	  lappend oed_bbox_keypoint_failures "expected X=$expected_x, got $result"
+      }
+  }
+
+  proc oed_bbox_keypoint_check {} {
+      global oed_bbox_keypoint_failures
+      if {[llength $oed_bbox_keypoint_failures]} {
+	  error "FAIL oed one-path keypoint: [join $oed_bbox_keypoint_failures {; }]"
+      }
+      puts "PASS oed one-path bounding-box keypoint"
+  }
+
   # Helper proc for primitive parameter editing regression tests (prim_edit.mged)
   # Tests that sed/press/p/accept correctly sets primitive parameters via rt_edit_process()
   # idx: component index for vector attributes (-1 for scalar, 0/1/2 for x/y/z)

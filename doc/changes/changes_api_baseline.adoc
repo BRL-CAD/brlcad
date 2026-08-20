@@ -1492,8 +1492,8 @@ include/bu/tc.h: BU_EXPORT extern int bu_cnd_wait(bu_cnd_t *cond, bu_mtx_t *mtx)
 include/bu/tc.h: BU_EXPORT extern int bu_cnd_broadcast(bu_cnd_t *cond);
 include/bu/tc.h: BU_EXPORT extern int bu_cnd_signal(bu_cnd_t *cond);
 include/bu/tc.h: BU_EXPORT extern int bu_mtx_trylock(bu_mtx_t *mtx);
-include/bu/time.h: BU_EXPORT extern int64_t bu_gettime(void);
-include/bu/time.h: BU_EXPORT void bu_utctime(struct bu_vls *utc_result, const int64_t time_val);
+include/bu/datetime.h: BU_EXPORT extern int64_t bu_gettime(void);
+include/bu/datetime.h: BU_EXPORT void bu_utctime(struct bu_vls *utc_result, const int64_t time_val);
 include/bu/units.h: BU_EXPORT extern double bu_units_conversion(const char *str);
 include/bu/units.h: BU_EXPORT extern const char *bu_units_string(const double mm);
 include/bu/units.h: BU_EXPORT extern struct bu_vls *bu_units_strings_vls(void);

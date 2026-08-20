@@ -4,85 +4,300 @@
 :manmanual: BRL-CAD
 
 == NAME
-step-g - convert a STEP (ISO 10303 AP203) file to a BRL-CAD geometry database
+
+step-g - import an ISO 10303 STEP file into a BRL-CAD geometry database
 
 == SYNOPSIS
 
 [source]
 ----
-step-g [-v] [-D] [-S _summary_file_] (-o _outfile.g_ | -O _outfile.g_) _infile.stp_
+step-g [options] input.step output.g
+step-g [options] (-o output.g | -O output.g) input.step
+step-g -D [options] input.step
 ----
-
 
 [[description]]
 == DESCRIPTION
 
-*step-g* reads an ISO 10303 STEP (Standard for the Exchange of Product
-model data) file, typically an AP203 _.stp_ or _.step_ file, and translates
-its boundary representation (B-rep) geometry and assembly hierarchy into a
-BRL-CAD _.g_ database.
+*step-g* reads an ISO 10303-21 exchange file, selects a schema plugin from
+its *FILE_SCHEMA* header, and converts supported products and geometry to a
+BRL-CAD database. Builds with all STEP schemas enabled recognize AP203,
+AP203 edition 2, AP214 edition 3, and AP242 editions 1 through 4.
 
-The translation maps STEP manifold solids and bounded surfaces into BRL-CAD
-*brep* objects and preserves the structure of assemblies and parts using
-BRL-CAD combinations. As input, _infile.stp_ may be a filename or *-* to read
-the STEP data from standard input.
+The default policy favors usable output from imperfect exchange files. It
+performs conservative repairs, may use bounded geometric inference after an
+ordinary conversion fails validation, and preserves a completed storage-safe
+invalid B-rep as a marked non-region when valid recovery is not possible.
+Usable partial output is published with status 1 and a diagnostic. Use the
+validation options below when repaired, inferred, invalid, or partial output
+is not acceptable.
 
-An output file must be named with either *-o* or *-O*. Load and convert times
-along with a brief translation summary are written to standard error.
+Solids, surfaces, wireframes, tessellations, product structure, and selected
+metadata are converted when supported by the chosen application protocol.
+Native CSG in AP203e2, AP214, and AP242 is imported automatically. AP242 PMI
+is retained in a structured graph; resolvable datum and graphical annotation
+content also becomes native BRL-CAD objects. See *STEP*(5) for detailed
+representation and metadata coverage.
+
+_input.step_ may be *-*; standard input is spooled while its header is
+inspected. An existing output database is replaced only with *-O* or
+*--force*. Diagnostics go to standard error. After indexing, an entity census
+is printed to standard output before geometry conversion begins.
 
 [[options]]
 == OPTIONS
 
-*-o* _outfile.g_::
-  Name the BRL-CAD geometry database to create. If the file already exists,
-  *step-g* refuses to overwrite it and exits with an error.
+=== General operation
 
-*-O* _outfile.g_::
-  Name the BRL-CAD geometry database to create, forcibly overwriting the file
-  if it already exists.
+*-h*, *--help*::
+  Print usage and option information.
 
-*-S* _summary_file_::
-  Write a detailed translation summary log to the named file.
+*-o*, *--output* _output.g_::
+  Create _output.g_ and refuse to overwrite an existing file.
 
-*-v*::
-  Enable verbose diagnostic output to standard error during parsing and
-  conversion.
+*-O*, *--output-overwrite* _output.g_::
+  Create _output.g_, replacing an existing file.
 
-*-D*::
-  Perform a dry run: load and parse the STEP file and exercise the conversion
-  steps, but do not write the output _.g_ database. Useful for validating a
-  STEP file or timing the parsing phase.
+*-f*, *--force*::
+  Permit the selected output file, including a positional output, to be
+  overwritten.
+
+*-D*, *--dry-run*::
+  Parse, index, validate, and exercise conversion without writing a database.
+  An output name is optional in this mode.
+
+*-v*, *--verbose*::
+  Report entity-level diagnostics.
+
+=== Schema and content selection
+
+*--schema* _AP_::
+  Override AP242 edition selection with *ap242e1*, *ap242e2*, *ap242e3*, or
+  *ap242e4*. The default *auto* mode tries compatible AP242 layouts from the
+  newest to the oldest. For other AP families, an explicit value must agree
+  with *FILE_SCHEMA*.
+
+*-e*, *--entity* _ID[,ID...]_::
+  Convert only the listed representation-item roots while retaining required
+  product and assembly context. IDs are positive Part 21 instance identifiers
+  with an optional *#* prefix. The option may be repeated.
+
+*--skip-open-shells*::
+  Exclude standalone *OPEN_SHELL* boundaries supplied by
+  *SHELL_BASED_SURFACE_MODEL* items. Closed surface-model boundaries and the
+  closed shells used by solid B-rep entities are unaffected.
+
+=== Validation and repair policy
+
+*--repair* _MODE_::
+  Select *safe* or *none*. The default *safe* mode permits conservative
+  topology and recognized data repairs. *none* also disables permissive
+  modeling inference.
+
+*--exact*::
+  Enforce the model's declared geometric tolerance instead of allowing the
+  normal verified tolerance relaxation. Modeling inference is disabled.
+
+*--strict*::
+  Treat skipped, invalid, malformed, unsupported, or otherwise partial
+  conversion as failure and do not publish a partial database. Invalid B-rep
+  preservation and modeling inference are disabled.
+
+*--reject-invalid-objs*::
+  Reject invalid B-reps instead of preserving completed storage-safe objects
+  as marked non-regions. This also disables modeling inference.
+
+*--abs-tol* _MM_::
+  Request an absolute output tolerance in millimetres. Zero uses the importer
+  policy derived from the file and BRL-CAD defaults.
+
+For AP242 tessellations, safe repair may reverse triangle winding to agree
+with supplied normals. *--exact* or *--repair none* rejects that mismatch.
+
+=== Work control
+
+*-j*, *--jobs* _N_::
+  Set the number of geometry workers. The default is the available processor
+  count, capped at eight.
+
+*--budget-scale* _FACTOR_::
+  Scale automatically calculated per-item conversion budgets.
+
+*--item-budget* _SECONDS_::
+  Set the per-item CPU-work budget explicitly.
+
+*--no-item-budget*::
+  Disable per-item CPU-work budgets.
+
+*--stall-timeout* _SECONDS_::
+  Set the no-progress timeout used to detect a stalled conversion.
+
+=== Reports
+
+*--report* _FILE_::
+  Write a `brlcad-step-import-report-v1` JSON report. It records schema and
+  representation coverage, diagnostics, timing, repairs and inference,
+  hierarchy semantics, material and product properties, retained
+  configuration and AP242 PMI graphs, and the disposition of every
+  product-bound representation item. The aggregate outcome is *complete*,
+  *partial*, *empty*, or *failed*.
+
+*-S*, *--summary* _FILE_::
+  Write a per-instance CSV with output name, source identifier, entity type,
+  and conversion status. The aggregate entity census is printed
+  automatically and does not require this option.
+
+[[policy]]
+== IMPORT POLICY
+
+The importer first builds source-faithful geometry and validates the complete
+result. Safe mode may then apply bounded repairs whose measured effect stays
+within the file and model tolerances. Repairs are recorded in diagnostics and
+the JSON report. *--repair none* disables them; *--exact* additionally
+prevents verified tolerance relaxation.
+
+If explicitly associated curves contradict each other beyond the safe-repair
+limit but within a scale-bounded inference limit, default mode may retry the
+whole item with an inferred curve or pcurve. The retry is transactional: its
+geometry is accepted only when the rebuilt complete B-rep passes the ordinary
+structural and solidness validation. Accepted inference is tagged on the
+object and reported separately from safe repair. *--exact*, *--strict*,
+*--repair none*, and *--reject-invalid-objs* disable this path.
+
+If no valid candidate can be built, default mode may retain a completed,
+storage-safe invalid B-rep for inspection rather than omit it. The object is
+not a region and carries `step:geometry_status=invalid_preserved` and
+`step:source_validity=unresolved`. These tags do not assert that the source
+file is wrong; the failure may still be an importer limitation. Missing or
+unsafe geometry is omitted as the final fallback.
+
+[[schemas]]
+== SCHEMA SELECTION
+
+The importer accepts one supported AP family in *FILE_SCHEMA*. A supported AP
+plus an unknown companion identifier is accepted with a warning; a sole
+unknown schema or multiple supported AP families is rejected. IFC headers are
+recognized and directed to the separate *ifc-g*(1) converter.
+
+The AP242 long-form identifier does not state an edition. Automatic mode
+tries edition 4, 3, 2, and 1 physical layouts in that order when an attempted
+layout cannot produce usable geometry. A common subset can remain ambiguous,
+so use *--schema ap242eN* when the authoring edition is known.
+
+The interim identifiers `CONFIGURATION_CONTROL_3D_DESIGN_MIM_LF`,
+`CCD_CLA_GVP_AST`, and `CCD_CLA_GVP_AST_ASD` select AP203e2. Verified
+multi-schema AP203 extension headers combining `CONFIG_CONTROL_DESIGN` with
+geometric-validation-property or shape-appearance-layer identifiers also use
+that binding. See *STEP*(5) for the compatibility and schema-source policy.
+
+[[coverage]]
+== CONVERSION COVERAGE
+
+The principal supported paths are:
+
+* advanced and faceted B-reps, B-reps with voids, open and closed surface
+  models, mapped items, replicas, and rigid transformations;
+* bounded wireframes and geometric sets, with curves stored as B-reps,
+  points as *pnts*, and reference planes as *datum* objects;
+* exact area and face extrusions and revolutions, plus supported linear and
+  circular swept disks in AP203e2, AP214, and AP242;
+* AP242 triangulated faces, strips, fans, surface sets, shells, and solids as
+  validated BOTs; and
+* supported native CSG expressions and primitives in AP203e2, AP214, and
+  AP242.
+
+Unsupported exact sweep subtypes and directrices are reported rather than
+approximated. A tessellated solid is marked solid only when its triangles form
+a closed, consistently oriented mesh; incomplete input remains a surface BOT.
+
+AP203 assembly import recognizes the referenced/CDSR, mapped-shape, and
+replicated NAUO styles described by Recommended Practice 8. Multi-level
+assemblies, repeated rigid occurrences, and secondary representations are
+retained without confusing representation placement with product occurrence.
+
+[[metadata]]
+== METADATA AND PMI
+
+Stable product, revision, presentation, layer, material, property, unit, and
+occurrence values are stored as `step:` attributes on their owning BRL-CAD
+objects. Configuration-management and other reference-linked records without
+a direct object equivalent are retained in the versioned `_STEP_METADATA`
+binary object. *_GLOBAL* carries a locator and, for modest graphs, an editable
+compatibility copy. Source identifiers are internal anchors only; *g-step*
+allocates new Part 21 identifiers when it can legally re-author the records.
+
+AP242 semantic and presentation PMI is retained in that graph and in the JSON
+report. Unambiguously resolved datum points, axes, and planes become native
+*datum* objects. Tessellated graphical curves reached through an annotation
+plane and draughting callout become model-space *annot* objects. Graphical
+outlines are not claimed to reconstruct semantic text, and unsupported PMI
+remains explicitly represented in the graph. PMI export is not yet supported.
+
+[[diagnostics]]
+== DIAGNOSTICS
+
+The pre-conversion census lists the total Part 21 instance count, every entity
+keyword used, and how many of those entity types are present in the selected
+schema. Complex instances contribute their explicit component types. The
+census describes file content, not conversion coverage.
+
+The JSON report classifies each product-bound item as *handled*,
+*preserved_invalid*, *filtered*, *intentionally_non_geometric*, *skipped*,
+*malformed*, or *unsupported*, with its source identifier and reason.
+Explicitly filtered geometry does not make an otherwise complete import
+partial.
+
+[[exit_status]]
+== EXIT STATUS
+
+Status 0 means complete validated geometry was published. Status 1 means
+usable partial geometry was published with all omissions and preserved
+invalid fallbacks reported. Status 6 means represented products contained
+only intentionally non-geometric items, or all geometry was explicitly
+filtered, and no database was published. Other nonzero statuses indicate
+input, conversion, strict-policy, or output failure; no partial database is
+published for those statuses.
 
 [[examples]]
 == EXAMPLES
 
-.Convert a STEP file and inspect the result
+.Import using automatic schema selection
 ====
 [source,bash]
 ----
-step-g -o widget.g widget.stp
+step-g -o widget.g widget.step
 mged widget.g 'tops'
 ----
-Translates _widget.stp_ into the new database _widget.g_ (refusing to clobber
-an existing _widget.g_), then lists the top-level objects of the resulting
-database with *mged*(1) so the imported assembly tree can be examined.
 ====
 
-.Validate a STEP file without writing output
+.Validate strictly and write a JSON report
 ====
 [source,bash]
 ----
-step-g -v -D -o /dev/null suspect.step
+step-g -D --strict --report suspect.json suspect.step
 ----
-Loads and parses _suspect.step_ with verbose diagnostics enabled to check the
-file's integrity and time the parse, while the *-D* dry run suppresses writing
-any geometry.
+====
+
+.Inspect selected representation items without repair
+====
+[source,bash]
+----
+step-g --repair none --entity '#410,#725' -o selected.g model.step
+----
+====
+
+.Import only the solid-oriented content of a mixed model
+====
+[source,bash]
+----
+step-g --skip-open-shells -o solids.g mixed.step
+----
 ====
 
 [[see_also]]
 == SEE ALSO
 
-*brlcad*(1), *g-step*(1), *mged*(1)
+*g-step*(1), *STEP*(5), *ifc-g*(1), *brlcad*(1), *mged*(1)
 
 [[author]]
 == AUTHOR

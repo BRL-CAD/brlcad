@@ -35,8 +35,9 @@ set(
   tools/tools_util.cpp
 )
 
-# Include directories needed by libbrep users
-set(BREP_INCLUDE_DIRS ${OPENNURBS_INCLUDE_DIRS})
+# OpenNURBS include paths and usage requirements are supplied by its imported
+# target below.
+set(BREP_INCLUDE_DIRS)
 
 # GTE headers (in-tree custom extensions + external base) are needed by
 # cdt/mesh.cpp for the LSCM patch parameterization path.
@@ -63,18 +64,6 @@ brlcad_addlib(libbrep "${LIBBREP_SOURCES}" "${BREP_INCLUDE_DIRS}" "${BREP_LOCAL_
   PRIVATE_LIBS ${BREP_PRIVATE_LIBS}
 )
 set_target_properties(libbrep PROPERTIES VERSION 20.0.1 SOVERSION 20)
-
-if(HIDE_INTERNAL_SYMBOLS)
-  set_property(TARGET libbrep APPEND PROPERTY COMPILE_DEFINITIONS "OPENNURBS_IMPORTS")
-  if(TARGET libbrep-obj)
-    set_property(TARGET libbrep-obj APPEND PROPERTY COMPILE_DEFINITIONS "OPENNURBS_IMPORTS")
-  endif(TARGET libbrep-obj)
-  if(TARGET libbrep-brlcad-obj)
-    set_property(TARGET libbrep-brlcad-obj APPEND PROPERTY COMPILE_DEFINITIONS "OPENNURBS_IMPORTS")
-  endif(TARGET libbrep-brlcad-obj)
-  # Anyone who needs to import libbrep will also need to import openNURBS
-  set_property(TARGET libbrep APPEND PROPERTY INTERFACE_COMPILE_DEFINITIONS "OPENNURBS_IMPORTS")
-endif(HIDE_INTERNAL_SYMBOLS)
 
 add_subdirectory(tests)
 

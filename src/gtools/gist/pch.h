@@ -42,6 +42,7 @@
 #endif
 
 // Necessary C++ header files
+#include <algorithm>
 #include <iostream>
 #include <cstdlib>
 #include <cstdio>
@@ -89,4 +90,3 @@
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

@@ -35,6 +35,11 @@ __BEGIN_DECLS
 
 RT_EXPORT extern struct rt_annot_internal *rt_copy_annot(const struct rt_annot_internal *annot_ip);
 
+/** Validate annotation topology, model-space placement, and optional segment
+ * presentation data.  Returns zero when valid. */
+RT_EXPORT extern int rt_annot_validate(const struct rt_annot_internal *annot_ip,
+	struct bu_vls *messages);
+
 __END_DECLS
 
 /** @} */

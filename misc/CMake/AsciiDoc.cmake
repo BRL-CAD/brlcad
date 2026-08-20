@@ -134,7 +134,8 @@ if(NOT COMMAND add_asciidoc)
 
 	  add_custom_command(
 	    OUTPUT "${_outfile}"
-	    COMMAND "$<TARGET_FILE:asciiquack>"
+	    COMMAND ${BRLCAD_SANITIZER_BUILD_TOOL_LAUNCHER}
+	    "$<TARGET_FILE:asciiquack>"
 	    -q
 	    -b "html5"
 	    -d "article"
@@ -167,7 +168,8 @@ if(NOT COMMAND add_asciidoc)
 
 	  add_custom_command(
 	    OUTPUT "${_outfile}"
-	    COMMAND "$<TARGET_FILE:asciiquack>"
+	    COMMAND ${BRLCAD_SANITIZER_BUILD_TOOL_LAUNCHER}
+	    "$<TARGET_FILE:asciiquack>"
 	    -q
 	    -b "manpage"
 	    -d "manpage"
@@ -186,7 +188,8 @@ if(NOT COMMAND add_asciidoc)
 
 	  add_custom_command(
 	    OUTPUT "${_outfile}"
-	    COMMAND "$<TARGET_FILE:asciiquack>"
+	    COMMAND ${BRLCAD_SANITIZER_BUILD_TOOL_LAUNCHER}
+	    "$<TARGET_FILE:asciiquack>"
 	    -q
 	    -b "html5"
 	    -d "manpage"

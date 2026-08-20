@@ -37,8 +37,8 @@ private:
     double GetPrefixFactor();
 
 protected:
-    Si_prefix prefix;
-    Si_unit_name name;
+    int prefix;
+    int name;
 
 public:
     SiUnit();

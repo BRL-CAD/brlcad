@@ -56,7 +56,10 @@ mged> **slew "0.2 -0.3 0"**
 
 Shifts the view center using a single quoted string input — convenient for scripting.
 ====
+[[see_also]]
+== SEE ALSO
 
+*view*(nged)
 [[author]]
 == AUTHOR
 

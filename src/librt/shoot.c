@@ -627,20 +627,40 @@ rt_shootray(register struct application *ap)
 	BU_CK_PTBL(regionbits);
     }
 
-    /* Verify that direction vector has unit length */
+    /* Verify that the direction vector is well-formed (always-on).
+     * A zero-length or non-finite (NaN/Inf) direction is a malformed
+     * ray that would otherwise fail opaquely downstream.
+     * Report the source pixel/level/pt/dir so the origin can be
+     * located, then bomb as the historical guard did.
+     */
     if (RT_G_DEBUG) {
-	fastf_t f, diff;
+	fastf_t f;
 
 	f = MAGSQ(ap->a_ray.r_dir);
-	if (NEAR_ZERO(f, ap->a_rt_i->rti_tol.dist)) {
-	    bu_bomb("rt_shootray:  zero length dir vector\n");
+	if (NEAR_ZERO(f, ap->a_rt_i->rti_tol.dist)
+	    || !isfinite(ap->a_ray.r_dir[X])
+	    || !isfinite(ap->a_ray.r_dir[Y])
+	    || !isfinite(ap->a_ray.r_dir[Z])
+	    || !isfinite(f))
+	{
+	    bu_log("rt_shootray(): bad ray (x%d y%d lvl%d) "
+		   "pt=(%g %g %g) dir=(%g %g %g)\n",
+		   ap->a_x, ap->a_y, ap->a_level,
+		   V3ARGS(ap->a_ray.r_pt), V3ARGS(ap->a_ray.r_dir));
+	    bu_bomb("rt_shootray(): bad ray\n");
 	}
-	diff = f - 1;
-	if (!NEAR_ZERO(diff, ap->a_rt_i->rti_tol.dist)) {
-	    bu_log("rt_shootray: non-unit dir vect (x%d y%d lvl%d)\n",
-		   ap->a_x, ap->a_y, ap->a_level);
-	    f = 1/f;
-	    VSCALE(ap->a_ray.r_dir, ap->a_ray.r_dir, f);
+
+	/* Auto-normalize non-unit (but valid) rays only under debug,
+	 * preserving the historical RT_G_DEBUG behavior.
+	 */
+	{
+	    fastf_t diff = f - 1;
+	    if (!NEAR_ZERO(diff, ap->a_rt_i->rti_tol.dist)) {
+		bu_log("rt_shootray: non-unit dir vect (x%d y%d lvl%d)\n",
+		       ap->a_x, ap->a_y, ap->a_level);
+		f = 1/f;
+		VSCALE(ap->a_ray.r_dir, ap->a_ray.r_dir, f);
+	    }
 	}
     }
 
@@ -1051,20 +1071,40 @@ rt_cell_n_on_ray(register struct application *ap, int n)
     /* Ensure that this CPU's resource structure is registered */
     BU_ASSERT(BU_PTBL_GET(&rtip->rti_resources, resp->re_cpu) != NULL);
 
-    /* Verify that direction vector has unit length */
+    /* Verify that the direction vector is well-formed (always-on).
+     * A zero-length or non-finite (NaN/Inf) direction is a malformed
+     * ray that would otherwise fail opaquely downstream.
+     * Report the source pixel/level/pt/dir so the origin can be
+     * located, then bomb as the historical guard did.
+     */
     if (RT_G_DEBUG) {
-	fastf_t f, diff;
+	fastf_t f;
 
 	f = MAGSQ(ap->a_ray.r_dir);
-	if (NEAR_ZERO(f, ap->a_rt_i->rti_tol.dist)) {
-	    bu_bomb("rt_cell_n_on_ray:  zero length dir vector\n");
+	if (NEAR_ZERO(f, ap->a_rt_i->rti_tol.dist)
+	    || !isfinite(ap->a_ray.r_dir[X])
+	    || !isfinite(ap->a_ray.r_dir[Y])
+	    || !isfinite(ap->a_ray.r_dir[Z])
+	    || !isfinite(f))
+	{
+	    bu_log("rt_cell_n_on_ray(): bad ray (x%d y%d lvl%d) "
+		   "pt=(%g %g %g) dir=(%g %g %g)\n",
+		   ap->a_x, ap->a_y, ap->a_level,
+		   V3ARGS(ap->a_ray.r_pt), V3ARGS(ap->a_ray.r_dir));
+	    bu_bomb("rt_cell_n_on_ray(): bad ray\n");
 	}
-	diff = f - 1;
-	if (!NEAR_ZERO(diff, ap->a_rt_i->rti_tol.dist)) {
-	    bu_log("rt_cell_n_on_ray: non-unit dir vect (x%d y%d lvl%d)\n",
-		   ap->a_x, ap->a_y, ap->a_level);
-	    f = 1/f;
-	    VSCALE(ap->a_ray.r_dir, ap->a_ray.r_dir, f);
+
+	/* Auto-normalize non-unit (but valid) rays only under debug,
+	 * preserving the historical RT_G_DEBUG behavior.
+	 */
+	{
+	    fastf_t diff = f - 1;
+	    if (!NEAR_ZERO(diff, ap->a_rt_i->rti_tol.dist)) {
+		bu_log("rt_cell_n_on_ray: non-unit dir vect (x%d y%d lvl%d)\n",
+		       ap->a_x, ap->a_y, ap->a_level);
+		f = 1/f;
+		VSCALE(ap->a_ray.r_dir, ap->a_ray.r_dir, f);
+	    }
 	}
     }
 

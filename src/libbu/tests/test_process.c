@@ -310,21 +310,28 @@ test_create_opts(const char* cmd)
 {
     struct bu_process* p;
     const char* run_av[3] = {cmd, "output", NULL};
-    char line[100] = {0};
+    char output[100] = {0};
+    size_t output_len = 0;
+    int read_count = 0;
 
     /*** out = stderr ***/
     bu_process_create(&p, (const char**)run_av, BU_PROCESS_OUT_EQ_ERR);
 
-    /* read from stdout, but should get text from stderr*/
-    if (bu_process_read_n(p, BU_PROCESS_STDOUT, 100, (char *)line) <= 0) {
-	fprintf(stderr, "bu_process_test[\"create_opts\"] stdin read failed\n");
+    /* Both child streams share the stdout read descriptor.  Drain the merged
+     * pipe before waiting so a buffered child write cannot receive SIGPIPE
+     * when bu_process_wait_n releases the descriptor. */
+    while (output_len < sizeof(output) - 1 &&
+	    (read_count = bu_process_read_n(p, BU_PROCESS_STDOUT,
+	    (int)(sizeof(output) - output_len - 1), output + output_len)) > 0)
+	output_len += (size_t)read_count;
+    if (!output_len || read_count < 0) {
+	fprintf(stderr, "bu_process_test[\"create_opts\"] stdout read failed\n");
 	return PROCESS_FAIL;
     }
-    char expected[19] = "Howdy from stderr!";   // intentionally ignore newline chars if any
-    if (bu_strncmp(line, expected, 18)) {
+    if (!strstr(output, "Howdy from stdout!") || !strstr(output, "Howdy from stderr!")) {
 	fprintf(stderr,
-		"bu_process_test[\"create_opts\"] - OUT_EQ_ERR fail\n  Expected: %s\n  Got: %s\n",
-		expected, line);
+		"bu_process_test[\"create_opts\"] - OUT_EQ_ERR fail\n"
+		"  Expected output from both merged streams\n  Got: %s\n", output);
 	return PROCESS_FAIL;
     }
 
@@ -351,6 +358,7 @@ test_create_timeout(const char* cmd)
     const char* run_av[3] = {cmd, "timeout", NULL};
 
     bu_process_create(&p, (const char**)run_av, BU_PROCESS_DEFAULT);
+    int child_pid = bu_process_pid(p);
 
     int64_t start_time = bu_gettime();
     if (bu_process_wait_n(&p, 1)) {
@@ -362,6 +370,11 @@ test_create_timeout(const char* cmd)
      * but bu_subprocess 'timeout' sleep time is 10000ms */
     if ((bu_gettime() - start_time) > BU_SEC2USEC(.2)) {
 	fprintf(stderr, "bu_process_test[\"create_timeout\"] - took too long\n");
+	return PROCESS_FAIL;
+    }
+
+    if (bu_pid_alive(child_pid)) {
+	fprintf(stderr, "bu_process_test[\"create_timeout\"] - timed-out subprocess is still alive\n");
 	return PROCESS_FAIL;
     }
 

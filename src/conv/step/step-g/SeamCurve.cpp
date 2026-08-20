@@ -93,7 +93,6 @@ SeamCurve::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
 bool
 SeamCurve::LoadONBrep(ON_Brep *brep)
 {
-    /* a seam_curve is a surface_curve; use its 3D curve for the edge geometry */
     return SurfaceCurve::LoadONBrep(brep);
 }
 

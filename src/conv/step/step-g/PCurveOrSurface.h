@@ -56,6 +56,8 @@ public:
     PCurveOrSurface(STEPWrapper *sw, int step_id);
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
     virtual void Print(int level);
+    PCurve *GetPCurve() const { return pcurve; }
+    Surface *GetSurface() const { return surface; }
 
     //static methods
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);

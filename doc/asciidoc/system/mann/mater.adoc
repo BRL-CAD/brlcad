@@ -71,7 +71,7 @@ mater {-d} {map} {--names-from-ids} [density_file]
 [[description]]
 == DESCRIPTION
 
-In its default mode, *mater* assigns shader parameters, RGB color, and inheritance to an existing combination. The information may be included on the command line; otherwise the user will be prompted for it. Some available shaders are:
+In its default mode, *mater* assigns shader parameters, RGB color, and inheritance to an existing combination. The color is set as the color attribute. If the combination has no color set, the *mater* command will set both the color and rgb attributes. If rgb is present it will not change rgb but will update the color attribute. The color attribute takes precedence over the rgb attribute. Likewise, the *mater* command will set both the shader and oshader attributes if neither are present. If the oshader attribute is present *mater* will not change it but will update just the shader attribute. The shader attribute takes precendence over the oshader attribute. The information may be included on the command line; otherwise the user will be prompted for it. Some available shaders are:
 
 
 * bump -- bump maps.

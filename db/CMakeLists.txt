@@ -1,6 +1,7 @@
 function(G_TARGET in_model folder)
   # Initialize
   set(MODEL_TYPE "UNKNOWN")
+  set(CONV_SUCCESS_CODES 0)
 
   # Regardless of what we decide, let CMake know about the file
   cmakefiles(${CMAKE_CURRENT_SOURCE_DIR}/${in_model})
@@ -25,6 +26,7 @@ function(G_TARGET in_model folder)
   # Find our output file and path
   string(REPLACE "${CMAKE_SOURCE_DIR}/" "" rel_dir "${CMAKE_CURRENT_SOURCE_DIR}")
   set(output_file ${DATA_DIR}/${rel_dir}/${in_model_root}.g)
+  set(CONV_OUTPUT_PATH "${CMAKE_BINARY_DIR}/${output_file}")
   set(log_file ${CMAKE_CURRENT_BINARY_DIR}/${in_model_root}.log)
 
   # Make sure the output db target directory is there
@@ -116,6 +118,10 @@ function(G_TARGET in_model folder)
       return()
     endif(NOT TARGET step-g)
     set(CONV_ARGS "-O \"${CMAKE_BINARY_DIR}/${output_file}\" \"${CMAKE_CURRENT_SOURCE_DIR}/${in_model}\"")
+    # step-g uses status 1 for useful, deliberately published partial output.
+    # Installed sample databases should retain that geometry; statuses 2 and
+    # above, or a missing output file, remain build failures.
+    set(CONV_SUCCESS_CODES "0;1")
     configure_file("${CMAKE_SOURCE_DIR}/db/to_g.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/${in_model_root}.cmake" @ONLY)
     distclean("${CMAKE_CURRENT_BINARY_DIR}/${in_model_root}.cmake")
     # Custom command to generate the output
@@ -203,6 +209,7 @@ set(
   demo.asc
   die.asc
   earth.asc
+  gaia.asc
   galileo.asc
   goliath.asc
   havoc.asc

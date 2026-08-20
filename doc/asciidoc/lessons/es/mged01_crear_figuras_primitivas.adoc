@@ -22,6 +22,7 @@ Este tutorial le ayudará a:
 * Crear una esfera usando el menú gráfico.
 * Usar el comando "l" para listar los parámetros o atributos de la figura.
 * Usar el comando "ls" para listar el contenido de la base de datos.
+* Usar el comando "tops" para identificar los objetos de nivel superior de la base de datos.
 * Eliminar una figura u objeto desde la base de datos usando el comando "kill" + comando.
 * Editar un comando.
 * Presionar "q" o usar el comando "exit" para salir del programa.
@@ -231,6 +232,18 @@ Use el comando l para listar sph1.s y sph2.s antes de continuar los ejemplos
 
 Además de ver los parámetros de una figura, también puede ser que desee ver la lista de los contenidos de la base de datos para ver qué artículos han sido creados. Para esto, escriba en la ventana de línea de comandos: *ls [ENTER].*
 
+El comando *ls* muestra todos los objetos, lo cual puede resultar abrumador
+en una base de datos existente. El comando *tops* suele ser el mejor punto de
+partida para explorar una base de datos desconocida: muestra únicamente los
+objetos que no son miembros de otra combinación. Estos objetos de nivel
+superior suelen ser los ensamblajes o modelos que conviene dibujar o examinar
+primero. En la ventana de línea de comandos, escriba: *tops [ENTER].*
+
+En la base de datos sencilla _sphere.g_, las figuras primitivas todavía son
+objetos de nivel superior. Cuando cree combinaciones en tutoriales posteriores,
+*tops* omitirá las figuras que sean miembros y mostrará los puntos de entrada
+de nivel superior.
+
 
 [[kill_object]]
 == Eliminar un objeto de la base de datos
@@ -282,6 +295,7 @@ En este tutorial usted:
 * Utilizó el entorno gráfico para crear una figura primitiva.
 * Utilizó el comando l para visualizar una lista de parámetros de la figura.
 * Utilizó el comando ls para listar los contenidos de una base de datos.
+* Utilizó el comando tops para identificar objetos de nivel superior.
 * Utilizó el comando kill para eliminar una figura de la base de datos.
 * Editó comandos en la ventana de comandos.
 * Utilizó los comandos q o exit para salir del programa.

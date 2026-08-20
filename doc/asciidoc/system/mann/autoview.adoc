@@ -67,7 +67,10 @@ mged> **autoview -s 0.5 engine.r**::
 The view is centered on engine.r and sized using a scale of 0.5.
 
 ====
+[[see_also]]
+== SEE ALSO
 
+*view*(nged)
 
 [[author]]
 == AUTHOR

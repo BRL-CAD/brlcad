@@ -1891,6 +1891,44 @@ rt_ell_params(struct pc_pc_set *UNUSED(pcs), const struct rt_db_internal *UNUSED
 }
 
 
+/**
+ * Create a default ellipsoid, at point 'origin', scaled by 'scale'
+ * 'variants' are stored as ID_ELL; variant switch selects which axis
+ *   are equal (ell: a,b,c | ell1: a,b=c | sph: a=b=c)
+ */
+C_DECL int
+rt_ell_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char *variant, const point_t origin, double scale)
+{
+    struct rt_ell_internal *ell_ip;
+
+    /* default ellipse */
+    fastf_t a = 0.5, b = 0.25, c = 0.125;
+    /* switch on variant (silently ignore NULL / (unknown) */
+    if (BU_STR_EQUAL(variant, "sph")) {
+	b = a;
+	c = a;
+    } else if (BU_STR_EQUAL(variant, "ell1")) {
+	c = b;
+    }
+
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern->idb_type = ID_ELL;
+    BU_ASSERT(&OBJ[intern->idb_type] == ftp);
+    intern->idb_meth = ftp;
+
+    BU_ALLOC(ell_ip, struct rt_ell_internal);
+    intern->idb_ptr = (void *)ell_ip;
+    ell_ip->magic = RT_ELL_INTERNAL_MAGIC;
+
+    VSET(ell_ip->v, origin[X], origin[Y], origin[Z]);
+    VSET(ell_ip->a, a * scale, 0.0, 0.0);	/* A */
+    VSET(ell_ip->b, 0.0, b * scale, 0.0);	/* B */
+    VSET(ell_ip->c, 0.0, 0.0, c * scale);	/* C */
+
+    return BRLCAD_OK;
+}
+
+
 /*
  * Used by EHY, EPA, HYP.  See librt_private.h for details.
  */
@@ -2195,6 +2233,77 @@ rt_ell_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip,
 
 
 /** @} */
+
+int
+rt_ell_functab_validate(struct bu_vls *error_msg, const struct rt_db_internal *ip, const struct bn_tol *tol)
+{
+    struct rt_ell_internal *eip;
+    fastf_t mag_a, mag_b, mag_c;
+    fastf_t f;
+    int issues = 0;
+    const char *comma = "";
+
+    RT_CK_DB_INTERNAL(ip);
+    eip = (struct rt_ell_internal *)ip->idb_ptr;
+    RT_ELL_CK_MAGIC(eip);
+
+    if (!tol) {
+        static const struct bn_tol default_tol = BN_TOL_INIT_TOL;
+        tol = &default_tol;
+    }
+
+    mag_a = MAGNITUDE(eip->a);
+    mag_b = MAGNITUDE(eip->b);
+    mag_c = MAGNITUDE(eip->c);
+
+    bu_vls_printf(error_msg, "[");
+
+    if (NEAR_ZERO(mag_a, tol->dist)) {
+        bu_vls_printf(error_msg, "%s{\"problem_type\":\"zero_length_a_vector\"}", comma);
+        comma = ",";
+        issues++;
+    }
+    if (NEAR_ZERO(mag_b, tol->dist)) {
+        bu_vls_printf(error_msg, "%s{\"problem_type\":\"zero_length_b_vector\"}", comma);
+        comma = ",";
+        issues++;
+    }
+    if (NEAR_ZERO(mag_c, tol->dist)) {
+        bu_vls_printf(error_msg, "%s{\"problem_type\":\"zero_length_c_vector\"}", comma);
+        comma = ",";
+        issues++;
+    }
+
+    if (mag_a > SQRT_SMALL_FASTF && mag_b > SQRT_SMALL_FASTF) {
+        f = VDOT(eip->a, eip->b) / (mag_a * mag_b);
+        if (!NEAR_ZERO(f, tol->perp)) {
+            bu_vls_printf(error_msg, "%s{\"problem_type\":\"a_not_perp_b\"}", comma);
+            comma = ",";
+            issues++;
+        }
+    }
+    if (mag_b > SQRT_SMALL_FASTF && mag_c > SQRT_SMALL_FASTF) {
+        f = VDOT(eip->b, eip->c) / (mag_b * mag_c);
+        if (!NEAR_ZERO(f, tol->perp)) {
+            bu_vls_printf(error_msg, "%s{\"problem_type\":\"b_not_perp_c\"}", comma);
+            comma = ",";
+            issues++;
+        }
+    }
+    if (mag_a > SQRT_SMALL_FASTF && mag_c > SQRT_SMALL_FASTF) {
+        f = VDOT(eip->a, eip->c) / (mag_a * mag_c);
+        if (!NEAR_ZERO(f, tol->perp)) {
+            bu_vls_printf(error_msg, "%s{\"problem_type\":\"a_not_perp_c\"}", comma);
+            comma = ",";
+            issues++;
+        }
+    }
+
+    bu_vls_printf(error_msg, "]");
+
+    return issues;
+}
+
 /*
  * Local Variables:
  * mode: C

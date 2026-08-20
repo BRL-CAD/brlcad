@@ -24,49 +24,132 @@
 
 #include "AP_Common.h"
 #include "Default_Geometric_Context.h"
+#include "STEPGeneratedAPI.h"
+
+#include <algorithm>
+#include <cctype>
+#include <cmath>
+#include <string>
+
+namespace {
+
+const char *
+si_length_prefix(double millimetres)
+{
+    struct Prefix {
+	double millimetres;
+	const char *name;
+    };
+    static const Prefix prefixes[] = {
+	{1.0e-15, "ATTO"}, {1.0e-12, "FEMTO"}, {1.0e-9, "PICO"},
+	{1.0e-6, "NANO"}, {1.0e-3, "MICRO"}, {1.0, "MILLI"},
+	{10.0, "CENTI"}, {100.0, "DECI"}, {1000.0, NULL},
+	{1.0e4, "DECA"}, {1.0e5, "HECTO"}, {1.0e6, "KILO"},
+	{1.0e9, "MEGA"}, {1.0e12, "GIGA"}, {1.0e15, "TERA"},
+	{1.0e18, "PETA"}, {1.0e21, "EXA"}
+    };
+    for (const Prefix &prefix : prefixes) {
+	const double scale = std::max(std::fabs(millimetres),
+	    std::fabs(prefix.millimetres));
+	if (std::fabs(millimetres - prefix.millimetres) <= scale * 1.0e-12)
+	    return prefix.name ? prefix.name : "";
+    }
+    return NULL;
+}
+
+STEPcomplex *
+si_length_unit(AP203_Contents *sc, const char *prefix, int &instance_count)
+{
+    const char *types[4] = {"length_unit", "named_unit", "si_unit", "*"};
+    STEPcomplex *unit = new STEPcomplex(sc->registry, types, instance_count);
+    sc->instance_list->Append(static_cast<STEPentity *>(unit), completeSE);
+    ++instance_count;
+    STEPcomplex *component = unit->head;
+    while (component) {
+	if (!bu_strcmp(component->EntityName(), "Si_Unit")) {
+	    if (prefix && prefix[0])
+		brlcad::step::SetEnum(component, "prefix", prefix);
+	    brlcad::step::SetEnum(component, "name", "METRE");
+	}
+	component = component->sc;
+    }
+    return unit;
+}
+
+STEPentity *
+length_dimensions(AP203_Contents *sc)
+{
+    STEPentity *dimensions = brlcad::step::CreateEntity(sc->registry,
+	sc->instance_list, "DIMENSIONAL_EXPONENTS");
+    brlcad::step::SetReal(dimensions, "length_exponent", 1.0);
+    brlcad::step::SetReal(dimensions, "mass_exponent", 0.0);
+    brlcad::step::SetReal(dimensions, "time_exponent", 0.0);
+    brlcad::step::SetReal(dimensions, "electric_current_exponent", 0.0);
+    brlcad::step::SetReal(dimensions, "thermodynamic_temperature_exponent", 0.0);
+    brlcad::step::SetReal(dimensions, "amount_of_substance_exponent", 0.0);
+    brlcad::step::SetReal(dimensions, "luminous_intensity_exponent", 0.0);
+    return dimensions;
+}
+
+STEPentity *
+conversion_length_unit(AP203_Contents *sc, int &instance_count)
+{
+    STEPcomplex *metre = si_length_unit(sc, "", instance_count);
+    STEPentity *factor = brlcad::step::CreateEntity(sc->registry,
+	sc->instance_list, "LENGTH_MEASURE_WITH_UNIT");
+    brlcad::step::SetSelectReal(factor, "value_component", "LENGTH_MEASURE",
+	sc->length_unit_mm / 1000.0);
+    brlcad::step::SetEntity(factor, "unit_component", metre);
+    ++instance_count;
+
+    STEPentity *dimensions = length_dimensions(sc);
+    ++instance_count;
+    const char *types[4] = {
+	"conversion_based_unit", "length_unit", "named_unit", "*"
+    };
+    STEPcomplex *unit = new STEPcomplex(sc->registry, types, instance_count);
+    std::string name = sc->length_unit;
+    std::transform(name.begin(), name.end(), name.begin(),
+	[](unsigned char c) { return static_cast<char>(std::toupper(c)); });
+    for (STEPcomplex *component = unit->head; component;
+	    component = component->sc) {
+	if (!bu_strcmp(component->EntityName(), "Conversion_Based_Unit")) {
+	    brlcad::step::SetString(component, "name", name.c_str());
+	    brlcad::step::SetEntity(component, "conversion_factor", factor);
+	}
+	if (!bu_strcmp(component->EntityName(), "Named_Unit"))
+	    brlcad::step::SetEntity(component, "dimensions", dimensions);
+    }
+    sc->instance_list->Append(static_cast<STEPentity *>(unit), completeSE);
+    ++instance_count;
+    return unit;
+}
+
+} // namespace
 
 STEPcomplex *
 Add_Default_Geometric_Context(AP203_Contents *sc)
 {
 
     int instance_cnt = 0;
-    STEPattribute *attr;
     STEPcomplex *stepcomplex;
 
     /* Uncertainty measure with unit */
-    SdaiUncertainty_measure_with_unit *uncertainty = (SdaiUncertainty_measure_with_unit *)sc->registry->ObjCreate("UNCERTAINTY_MEASURE_WITH_UNIT");
-    uncertainty->name_("'DISTANCE_ACCURACY_VALUE'");
-    uncertainty->description_("'Threshold below which geometry imperfections (such as overlaps) are not considered errors.'");
-    sc->instance_list->Append(uncertainty, completeSE);
+    STEPentity *uncertainty = brlcad::step::CreateEntity(sc->registry,
+	    sc->instance_list, "UNCERTAINTY_MEASURE_WITH_UNIT");
+    brlcad::step::SetString(uncertainty, "name", "DISTANCE_ACCURACY_VALUE");
+    brlcad::step::SetString(uncertainty, "description",
+	    "Threshold below which geometry imperfections (such as overlaps) are not considered errors.");
+    brlcad::step::SetSelectReal(uncertainty, "value_component",
+	    "LENGTH_MEASURE", sc->uncertainty);
     instance_cnt++;
 
     /** unit component of uncertainty measure with unit */
-    const char *unitNmArr[4] = {"length_unit", "named_unit", "si_unit", "*"};
-    STEPcomplex *unit_complex = new STEPcomplex(sc->registry, (const char **)unitNmArr, instance_cnt);
-    sc->instance_list->Append((STEPentity *)unit_complex, completeSE);
-    instance_cnt++;
-    stepcomplex = unit_complex->head;
-    while (stepcomplex) {
-	if (!bu_strcmp(stepcomplex->EntityName(), "Si_Unit")) {
-	    stepcomplex->ResetAttributes();
-	    while ((attr = stepcomplex->NextAttribute()) != NULL) {
-		if (!bu_strcmp(attr->Name(), "prefix")) attr->ptr.e = new SdaiSi_prefix_var(Si_prefix__milli);
-		if (!bu_strcmp(attr->Name(), "name")) attr->ptr.e = new SdaiSi_unit_name_var(Si_unit_name__metre);
-	    }
-	}
-	stepcomplex = stepcomplex->sc;
-    }
-
-    uncertainty->ResetAttributes();
-    {
-	while ((attr = uncertainty->NextAttribute()) != NULL) {
-	    if (!bu_strcmp(attr->Name(), "unit_component")) {
-		SdaiUnit *new_unit = new SdaiUnit((SdaiNamed_unit *)unit_complex);
-		attr->ptr.sh = new_unit;
-	    }
-	    if (!bu_strcmp(attr->Name(), "value_component")) attr->StrToVal("0.05");
-	}
-    }
+    const char *length_prefix = si_length_prefix(sc->length_unit_mm);
+    STEPentity *unit_complex = length_prefix ?
+	static_cast<STEPentity *>(si_length_unit(sc, length_prefix, instance_cnt)) :
+	conversion_length_unit(sc, instance_cnt);
+    brlcad::step::SetEntity(uncertainty, "unit_component", unit_complex);
 
     /* Global Unit Assigned Context */
     const char *ua_entry_1_types[4] = {"named_unit", "si_unit", "solid_angle_unit", "*"};
@@ -74,10 +157,7 @@ Add_Default_Geometric_Context(AP203_Contents *sc)
     stepcomplex = ua_entry_1->head;
     while (stepcomplex) {
 	if (!bu_strcmp(stepcomplex->EntityName(), "Si_Unit")) {
-	    stepcomplex->ResetAttributes();
-	    while ((attr = stepcomplex->NextAttribute()) != NULL) {
-		if (!bu_strcmp(attr->Name(), "name")) attr->ptr.e = new SdaiSi_unit_name_var(Si_unit_name__steradian);
-	    }
+	    brlcad::step::SetEnum(stepcomplex, "name", "STERADIAN");
 	}
 	stepcomplex = stepcomplex->sc;
     }
@@ -89,67 +169,48 @@ Add_Default_Geometric_Context(AP203_Contents *sc)
     stepcomplex = ua_entry_3->head;
     while (stepcomplex) {
 	if (!bu_strcmp(stepcomplex->EntityName(), "Si_Unit")) {
-	    stepcomplex->ResetAttributes();
-	    while ((attr = stepcomplex->NextAttribute()) != NULL) {
-		if (!bu_strcmp(attr->Name(), "name")) attr->ptr.e = new SdaiSi_unit_name_var(Si_unit_name__radian);
-	    }
+	    brlcad::step::SetEnum(stepcomplex, "name", "RADIAN");
 	}
 	stepcomplex = stepcomplex->sc;
     }
     sc->instance_list->Append((STEPentity *)ua_entry_3, completeSE);
     instance_cnt++;
 
-    /* Plane Angle Measure */
-    SdaiPlane_angle_measure_with_unit *p_ang_measure_with_unit = new SdaiPlane_angle_measure_with_unit();
-    SdaiMeasure_value * p_ang_measure_value = new SdaiMeasure_value(DEG2RAD, SCHEMA_NAMESPACE::t_measure_value);
-    p_ang_measure_value->SetUnderlyingType(SCHEMA_NAMESPACE::t_plane_angle_measure);
-    p_ang_measure_with_unit->value_component_(p_ang_measure_value);
-    SdaiUnit *p_ang_unit = new SdaiUnit((SdaiNamed_unit *)ua_entry_3);
-    p_ang_measure_with_unit->unit_component_(p_ang_unit);
-    sc->instance_list->Append((STEPentity *)p_ang_measure_with_unit, completeSE);
-    instance_cnt++;
+    STEPentity *plane_angle_unit = ua_entry_3;
+    if (sc->plane_angle_unit == "degree") {
+	STEPentity *p_ang_measure_with_unit = brlcad::step::CreateEntity(
+		sc->registry, sc->instance_list, "PLANE_ANGLE_MEASURE_WITH_UNIT");
+	brlcad::step::SetSelectReal(p_ang_measure_with_unit, "value_component",
+		"PLANE_ANGLE_MEASURE", 0.017453292519943295);
+	brlcad::step::SetEntity(p_ang_measure_with_unit, "unit_component", ua_entry_3);
+	instance_cnt++;
 
-    /* Conversion based unit */
-    const char *ua_entry_2_types[4] = {"conversion_based_unit", "named_unit", "plane_angle_unit", "*"};
-    STEPcomplex *ua_entry_2 = new STEPcomplex(sc->registry, (const char **)ua_entry_2_types, instance_cnt);
-
-    /** dimensional exponents **/
-    SdaiDimensional_exponents *dimensional_exp = new SdaiDimensional_exponents();
-    dimensional_exp->length_exponent_(0.0);
-    dimensional_exp->mass_exponent_(0.0);
-    dimensional_exp->time_exponent_(0.0);
-    dimensional_exp->electric_current_exponent_(0.0);
-    dimensional_exp->thermodynamic_temperature_exponent_(0.0);
-    dimensional_exp->amount_of_substance_exponent_(0.0);
-    dimensional_exp->luminous_intensity_exponent_(0.0);
-    sc->instance_list->Append((STEPentity *)dimensional_exp, completeSE);
-
-    stepcomplex = ua_entry_2->head;
-    while (stepcomplex) {
-	if (!bu_strcmp(stepcomplex->EntityName(), "Conversion_Based_Unit")) {
-	    stepcomplex->ResetAttributes();
-	    while ((attr = stepcomplex->NextAttribute()) != NULL) {
-		if (!bu_strcmp(attr->Name(), "name")) attr->StrToVal("'DEGREES'");
-		if (!bu_strcmp(attr->Name(), "conversion_factor")) {
-		    attr->ptr.c = new (STEPentity *);
-		    *(attr->ptr.c) = (STEPentity *)(p_ang_measure_with_unit);
-		}
+	const char *types[4] = {
+	    "conversion_based_unit", "named_unit", "plane_angle_unit", "*"
+	};
+	STEPcomplex *degrees = new STEPcomplex(sc->registry, types, instance_cnt);
+	STEPentity *dimensional_exp = brlcad::step::CreateEntity(sc->registry,
+	    sc->instance_list, "DIMENSIONAL_EXPONENTS");
+	brlcad::step::SetReal(dimensional_exp, "length_exponent", 0.0);
+	brlcad::step::SetReal(dimensional_exp, "mass_exponent", 0.0);
+	brlcad::step::SetReal(dimensional_exp, "time_exponent", 0.0);
+	brlcad::step::SetReal(dimensional_exp, "electric_current_exponent", 0.0);
+	brlcad::step::SetReal(dimensional_exp, "thermodynamic_temperature_exponent", 0.0);
+	brlcad::step::SetReal(dimensional_exp, "amount_of_substance_exponent", 0.0);
+	brlcad::step::SetReal(dimensional_exp, "luminous_intensity_exponent", 0.0);
+	for (stepcomplex = degrees->head; stepcomplex; stepcomplex = stepcomplex->sc) {
+	    if (!bu_strcmp(stepcomplex->EntityName(), "Conversion_Based_Unit")) {
+		brlcad::step::SetString(stepcomplex, "name", "DEGREES");
+		brlcad::step::SetEntity(stepcomplex, "conversion_factor",
+		    p_ang_measure_with_unit);
 	    }
+	    if (!bu_strcmp(stepcomplex->EntityName(), "Named_Unit"))
+		brlcad::step::SetEntity(stepcomplex, "dimensions", dimensional_exp);
 	}
-	if (!bu_strcmp(stepcomplex->EntityName(), "Named_Unit")) {
-	    stepcomplex->ResetAttributes();
-	    while ((attr = stepcomplex->NextAttribute()) != NULL) {
-		if (!bu_strcmp(attr->Name(), "dimensions")) {
-		    attr->ptr.c = new (STEPentity *);
-		    *(attr->ptr.c) = (STEPentity *)(dimensional_exp);
-		}
-	    }
-	}
-	stepcomplex = stepcomplex->sc;
+	sc->instance_list->Append(static_cast<STEPentity *>(degrees), completeSE);
+	instance_cnt++;
+	plane_angle_unit = degrees;
     }
-
-    sc->instance_list->Append((STEPentity *)ua_entry_2, completeSE);
-    instance_cnt++;
 
     /*
      * Now that we have the pieces, build the final complex type from four other types:
@@ -162,52 +223,28 @@ Add_Default_Geometric_Context(AP203_Contents *sc)
     while (stepcomplex) {
 
 	if (!bu_strcmp(stepcomplex->EntityName(), "Geometric_Representation_Context")) {
-	    stepcomplex->ResetAttributes();
-	    while ((attr = stepcomplex->NextAttribute()) != NULL) {
-		if (!bu_strcmp(attr->Name(), "coordinate_space_dimension")) attr->StrToVal("3");
-	    }
+	    brlcad::step::SetInteger(stepcomplex, "coordinate_space_dimension", 3);
 	}
 
 	if (!bu_strcmp(stepcomplex->EntityName(), "Global_Uncertainty_Assigned_Context")) {
-	    stepcomplex->ResetAttributes();
-	    while ((attr = stepcomplex->NextAttribute()) != NULL) {
-		if (!bu_strcmp(attr->Name(), "uncertainty")) {
-		    EntityAggregate *unc_agg = new EntityAggregate();
-		    unc_agg->AddNode(new EntityNode((SDAI_Application_instance *)uncertainty));
-		    attr->ptr.a = unc_agg;
-		}
-	    }
+	    brlcad::step::AddEntity(stepcomplex, "uncertainty", uncertainty);
 
 	}
 
 	if (!bu_strcmp(stepcomplex->EntityName(), "Global_Unit_Assigned_Context")) {
-	    stepcomplex->ResetAttributes();
-	    while ((attr = stepcomplex->NextAttribute()) != NULL) {
-		std::string attrval;
-		if (!bu_strcmp(attr->Name(), "units")) {
-		    EntityAggregate *unit_assigned_agg = new EntityAggregate();
-		    unit_assigned_agg->AddNode(new EntityNode((SDAI_Application_instance *)unit_complex));
-		    unit_assigned_agg->AddNode(new EntityNode((SDAI_Application_instance *)ua_entry_2));
-		    unit_assigned_agg->AddNode(new EntityNode((SDAI_Application_instance *)ua_entry_1));
-		    attr->ptr.a = unit_assigned_agg;
-		}
-	    }
+	    brlcad::step::AddEntity(stepcomplex, "units", unit_complex);
+	    brlcad::step::AddEntity(stepcomplex, "units", plane_angle_unit);
+	    brlcad::step::AddEntity(stepcomplex, "units", ua_entry_1);
 	}
 
 	if (!bu_strcmp(stepcomplex->EntityName(), "Representation_Context")) {
-	    stepcomplex->ResetAttributes();
-	    while ((attr = stepcomplex->NextAttribute()) != NULL) {
-		if (!bu_strcmp(attr->Name(), "context_identifier")) attr->StrToVal("'STANDARD'");
-		if (!bu_strcmp(attr->Name(), "context_type")) attr->StrToVal("'3D'");
-	    }
+	    brlcad::step::SetString(stepcomplex, "context_identifier", "STANDARD");
+	    brlcad::step::SetString(stepcomplex, "context_type", "3D");
 	}
 	stepcomplex = stepcomplex->sc;
     }
 
     sc->instance_list->Append((STEPentity *)complex_entity, completeSE);
-
-    delete p_ang_unit;
-    delete p_ang_measure_value;
 
     return complex_entity;
 }

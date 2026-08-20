@@ -4,7 +4,7 @@
 :manmanual: BRL-CAD User Commands
 
 == NAME
-fracture - Creates a new NMG shape for every face in the specified __NMG_shape__.
+fracture - Creates a new NMG shape for every "face" in the specified __NMG_shape__.
 
 == SYNOPSIS
 
@@ -17,7 +17,7 @@ fracture {NMG_shape} [prefix]
 [[description]]
 == DESCRIPTION
 
-Creates a new NMG shape for every face in the specified __NMG_shape__. The new shapes will be named by adding an underscore and a number to the _prefix_. If no _prefix_ is specified, then the __NMG_shape__ name provided is used in place of the _prefix_.
+Creates a new NMG shape for every "face" in the specified __NMG_shape__. The new shapes will be named by adding an underscore and a number to the _prefix_. If no _prefix_ is specified, then the __NMG_shape__ name provided is used in place of the _prefix_.
 
 
 [[examples]]
@@ -30,7 +30,7 @@ The example shows the use of the *fracture* command to create a new NMG shape wi
 ====
 
 mged> **fracture shape1.nmg f**::
-Creates a series of NMG shapes named f_#, one for each face in _shape1.nmg_ .
+Creates a series of NMG shapes named "f_#," one for each face in _shape1.nmg_ .
 
 
 

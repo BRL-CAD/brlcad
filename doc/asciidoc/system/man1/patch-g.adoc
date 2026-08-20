@@ -70,6 +70,9 @@ the verbosity, with higher levels producing more output.
 *-m* _mat.file_::
   Read material property information from the named file.
 
+*-j* _jtype.file_::
+  Read component JTYPE thickness from the named text file (units: in) for components that have no/zero thickness.
+
 *-r*::
   Reverse the surface normals for plate-mode triangles.
 

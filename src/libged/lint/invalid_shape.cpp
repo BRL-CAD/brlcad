@@ -147,6 +147,37 @@ _ged_invalid_prim_check(lint_data *ldata, struct directory *dp)
 	    // TODO - check for zero length dimension vectors.
 	    break;
 	default:
+	    if (OBJ[dp->d_minor_type].ft_validate) {
+		struct bu_vls generic_log = BU_VLS_INIT_ZERO;
+		struct bn_tol tol = BN_TOL_INIT_TOL;
+		if (ldata->ftol > 0.0) {
+		    tol.dist = ldata->ftol;
+		    tol.dist_sq = tol.dist * tol.dist;
+		}
+		int issues = OBJ[dp->d_minor_type].ft_validate(&generic_log, &intern, &tol);
+		if (issues > 0) {
+		    try {
+			nlohmann::json errs = nlohmann::json::parse(bu_vls_cstr(&generic_log));
+			if (errs.is_array()) {
+			    for (auto& err : errs) {
+				if (!err.contains("object_type"))
+				    err["object_type"] = OBJ[dp->d_minor_type].ft_name;
+				if (!err.contains("object_name"))
+				    err["object_name"] = dp->d_namep;
+				ldata->j.push_back(err);
+			    }
+			}
+		    } catch (...) {
+			nlohmann::json berr;
+			berr["problem_type"] = "invalid_shape";
+			berr["object_type"] = OBJ[dp->d_minor_type].ft_name;
+			berr["object_name"] = dp->d_namep;
+			berr["verbose_log"] = std::string(bu_vls_cstr(&generic_log));
+			ldata->j.push_back(berr);
+		    }
+		}
+		bu_vls_free(&generic_log);
+	    }
 	    break;
     }
 

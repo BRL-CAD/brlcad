@@ -61,14 +61,19 @@ mat_close(const mat_t a, const mat_t b, double tol)
 int
 vect_close(const vect_t a, const vect_t b, double tol)
 {
-    return VNEAR_EQUAL(a, b, tol);
+    return scalar_close(a[X], b[X], tol)
+	&& scalar_close(a[Y], b[Y], tol)
+	&& scalar_close(a[Z], b[Z], tol);
 }
 
 
 int
 hvect_close(const hvect_t a, const hvect_t b, double tol)
 {
-    return HNEAR_EQUAL(a, b, tol);
+    return scalar_close(a[X], b[X], tol)
+	&& scalar_close(a[Y], b[Y], tol)
+	&& scalar_close(a[Z], b[Z], tol)
+	&& scalar_close(a[W], b[W], tol);
 }
 
 

@@ -1,0 +1,91 @@
+ISO-10303-21;
+HEADER;
+FILE_DESCRIPTION(('BRL-CAD independent AP242 PMI datum fixture'),'2;1');
+FILE_NAME('ap242_pmi.stp','2026-08-03T00:00:00',('BRL-CAD'),('BRL-CAD'),'','','');
+FILE_SCHEMA(('AP242_MANAGED_MODEL_BASED_3D_ENGINEERING_MIM_LF'));
+ENDSEC;
+DATA;
+#1=CARTESIAN_POINT('',(0.,0.,0.));
+#2=CARTESIAN_POINT('',(20.,3.,4.));
+#3=DIRECTION('',(0.,0.,1.));
+#4=DIRECTION('',(1.,0.,0.));
+#5=AXIS2_PLACEMENT_3D('',#1,#3,#4);
+#6=AXIS2_PLACEMENT_3D('',#2,#3,#4);
+#10=RECTANGULAR_PYRAMID('exact pyramid',#5,12.,8.,10.);
+#11=ELLIPSOID('triaxial boss',#6,4.,6.,8.);
+#12=BOOLEAN_RESULT('pyramid and ellipsoid',.UNION.,#10,#11);
+#13=CSG_SOLID('AP242 native CSG',#12);
+#20=(LENGTH_UNIT() NAMED_UNIT(*) SI_UNIT(.MILLI.,.METRE.));
+#21=(NAMED_UNIT(*) PLANE_ANGLE_UNIT() SI_UNIT($,.RADIAN.));
+#22=(NAMED_UNIT(*) SI_UNIT($,.STERADIAN.) SOLID_ANGLE_UNIT());
+#23=UNCERTAINTY_MEASURE_WITH_UNIT(LENGTH_MEASURE(0.001),#20,'distance_accuracy_value','maximum gap value');
+#24=(GEOMETRIC_REPRESENTATION_CONTEXT(3) GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT((#23)) GLOBAL_UNIT_ASSIGNED_CONTEXT((#20,#21,#22)) REPRESENTATION_CONTEXT('fixture','3D'));
+#30=CSG_SHAPE_REPRESENTATION('',(#13),#24);
+#40=APPLICATION_CONTEXT('managed model based 3D engineering');
+#41=PRODUCT_CONTEXT('',#40,'mechanical');
+#42=PRODUCT_DEFINITION_CONTEXT('part definition',#40,'design');
+#43=PRODUCT('ap242_pmi_product','AP242 PMI Product','independent AP242 PMI fixture',(#41));
+#44=PRODUCT_DEFINITION_FORMATION('1','initial revision',#43);
+#45=PRODUCT_DEFINITION('design','fixture PMI definition',#44,#42);
+#46=PRODUCT_DEFINITION_SHAPE('','',#45);
+#47=PROPERTY_DEFINITION_REPRESENTATION(#46,#30);
+
+/* Exact plane datum. */
+#50=DATUM('primary plane','',#46,.F.,'A');
+#51=DATUM_FEATURE('primary plane feature','',#46,.T.);
+#52=SHAPE_ASPECT_RELATIONSHIP('','',#51,#50);
+#53=ITEM_IDENTIFIED_REPRESENTATION_USAGE('',$,#51,#30,SET_REPRESENTATION_ITEM((#70)));
+
+/* Exact line datum. */
+#54=DATUM('primary axis','',#46,.F.,'B');
+#55=DATUM_FEATURE('primary axis feature','',#46,.T.);
+#56=SHAPE_ASPECT_RELATIONSHIP('','',#55,#54);
+#57=ITEM_IDENTIFIED_REPRESENTATION_USAGE('',$,#55,#30,SET_REPRESENTATION_ITEM((#71)));
+
+/* Exact point datum. */
+#58=DATUM('datum point','',#46,.F.,'C');
+#59=DATUM_FEATURE('datum point feature','',#46,.T.);
+#60=SHAPE_ASPECT_RELATIONSHIP('','',#59,#58);
+#61=ITEM_IDENTIFIED_REPRESENTATION_USAGE('',$,#59,#30,SET_REPRESENTATION_ITEM((#2)));
+
+/* Distinct parallel planes are intentionally ambiguous. */
+#62=DATUM('ambiguous median plane','',#46,.F.,'D');
+#63=DATUM_FEATURE('ambiguous plane feature','',#46,.T.);
+#64=SHAPE_ASPECT_RELATIONSHIP('','',#63,#62);
+#65=ITEM_IDENTIFIED_REPRESENTATION_USAGE('',$,#63,#30,SET_REPRESENTATION_ITEM((#70,#76)));
+
+#70=PLANE('datum plane',#5);
+#71=LINE('datum axis',#1,#72);
+#72=VECTOR('',#3,1.);
+#73=CARTESIAN_POINT('',(0.,0.,5.));
+#74=AXIS2_PLACEMENT_3D('',#73,#3,#4);
+#76=PLANE('offset datum plane',#74);
+
+/* Tessellated graphical PMI projected onto an explicit annotation plane. */
+#80=DRAUGHTING_PRE_DEFINED_CURVE_FONT('continuous');
+#81=COLOUR_RGB('PMI black',0.,0.,0.);
+#82=CURVE_STYLE('',#80,POSITIVE_LENGTH_MEASURE(0.2),#81);
+#83=PRESENTATION_STYLE_ASSIGNMENT((#82));
+#84=FILL_AREA_STYLE_COLOUR('',#81);
+#85=FILL_AREA_STYLE('',(#84));
+#86=PRESENTATION_STYLE_ASSIGNMENT((#85));
+#90=TESSELLATED_ANNOTATION_OCCURRENCE('PMI outline',(#83),#91);
+#91=(GEOMETRIC_REPRESENTATION_ITEM() REPOSITIONED_TESSELLATED_ITEM(#74) REPRESENTATION_ITEM('PMI outline') TESSELLATED_GEOMETRIC_SET((#94,#99,#107)) TESSELLATED_ITEM());
+#92=ANNOTATION_PLANE('PMI plane',(#86),#70,(#93));
+#93=DRAUGHTING_CALLOUT('PMI callout',(#90,#105));
+#94=TESSELLATED_CURVE_SET('PMI outline',#95,((1,2,3,4,1)));
+#95=COORDINATES_LIST('PMI outline',4,((0.,0.,0.),(10.,0.,0.),(10.,5.,0.),(0.,5.,0.)));
+#96=DRAUGHTING_MODEL('PMI model',(#92,#93),#24);
+#97=MECHANICAL_DESIGN_AND_DRAUGHTING_RELATIONSHIP('','',#96,#30);
+#98=COORDINATES_LIST('filled glyph',4,((2.,1.,0.),(2.,4.,0.),(4.,1.,0.),(4.,4.,0.)));
+#99=COMPLEX_TRIANGULATED_SURFACE_SET('filled glyph',#98,4,((0.,0.,1.)),(),((1,2,3,4)),());
+#100=CARTESIAN_POINT('',(6.,1.,0.));
+#101=CARTESIAN_POINT('',(7.,4.,0.));
+#102=CARTESIAN_POINT('',(8.,1.,0.));
+#103=POLYLINE('analytic glyph stroke',(#100,#101,#102));
+#104=GEOMETRIC_CURVE_SET('analytic glyph',(#103,#106));
+#105=ANNOTATION_CURVE_OCCURRENCE('analytic glyph',(#83),#104);
+#106=CIRCLE('analytic circle',#5,0.5);
+#107=TRIANGULATED_SURFACE_SET('second filled glyph',#98,4,((0.,0.,1.)),(),((1,2,3),(3,2,4)));
+ENDSEC;
+END-ISO-10303-21;

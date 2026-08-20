@@ -160,12 +160,6 @@ havoc_parts_bbox.s:  ARB8
 ====
 
 
-[[see_also]]
-== SEE ALSO
-
-*make_bb*(nged).
-
-
 [[copyright]]
 == COPYRIGHT
 

@@ -308,12 +308,10 @@ bu_cv_ntohss(register short int *out, size_t size, register void *in, size_t cou
 	count = limit;
 
     for (i=0; i<count; i++) {
-	*out++ = ((signed char *)in)[0] << 8 | ((unsigned char *)in)[1];
-	/* XXX This needs sign extension here for the case of
-	 * XXX a negative 2-byte input on a 4 or 8 byte machine.
-	 * XXX The "signed char" trick isn't enough.
-	 * XXX Use your Cyber trick w/magic numbers or something.
-	 */
+	unsigned int value = ((unsigned int)((unsigned char *)in)[0] << 8) |
+	    (unsigned int)((unsigned char *)in)[1];
+	int signed_value = (value & 0x8000U) ? (int)value - 0x10000 : (int)value;
+	*out++ = (short int)signed_value;
 	in = ((char *)in) + 2;
     }
     return count;
@@ -350,11 +348,14 @@ bu_cv_ntohsl(register long int *out, size_t size, register void *in, size_t coun
 	count = limit;
 
     for (i=0; i<count; i++) {
-	*out++ = ((signed char *)in)[0] << 24 |
-	    ((unsigned char *)in)[1] << 16 |
-	    ((unsigned char *)in)[2] << 8  |
-	    ((unsigned char *)in)[3];
-	/* XXX Sign extension here */
+	unsigned long value =
+	    (unsigned long)((unsigned char *)in)[0] << 24 |
+	    (unsigned long)((unsigned char *)in)[1] << 16 |
+	    (unsigned long)((unsigned char *)in)[2] << 8  |
+	    (unsigned long)((unsigned char *)in)[3];
+	long int signed_value = (value & 0x80000000UL) ?
+	    -1L - (long int)(0xFFFFFFFFUL - value) : (long int)value;
+	*out++ = signed_value;
 	in = ((char *)in) + 4;
     }
 

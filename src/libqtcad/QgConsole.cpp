@@ -597,7 +597,9 @@ void QgConsole::listen(int fd, struct ged_subprocess *p, bu_process_io_t t, ged_
     QConsoleListener *l = new QConsoleListener(fd, p, t, c, d);
     bu_log("Start listening: %d\n", (int)t);
     QObject::connect(l, &QConsoleListener::newLine, this, &QgConsole::printStringBeforePrompt);
-    QObject::connect(l, &QConsoleListener::is_finished, this, &QgConsole::detach);
+    /* EOF may be reported from inside the notifier callback.  Queue detach
+     * so the listener is not deleted while that callback is still active. */
+    QObject::connect(l, &QConsoleListener::is_finished, this, &QgConsole::detach, Qt::QueuedConnection);
     listeners[std::make_pair(p, t)] = l;
 }
 void QgConsole::detach(struct ged_subprocess *p, int t)

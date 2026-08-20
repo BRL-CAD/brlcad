@@ -218,6 +218,7 @@ __BEGIN_DECLS
 #define CURVE_LSEG_MAGIC		0x6c736567 /**< lseg */
 #define CURVE_NURB_MAGIC		0x6e757262 /**< nurb */
 #define ANN_TSEG_MAGIC			0x74736567 /**< tseg */
+#define ANN_FSEG_MAGIC			0x66736567 /**< fseg */
 #define DB5_RAW_INTERNAL_MAGIC		0x64357269 /**< d5ri */
 #define DBI_MAGIC			0x57204381 /**< W C? */
 #define DB_FULL_PATH_MAGIC		0x64626670 /**< dbfp */

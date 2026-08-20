@@ -47,7 +47,7 @@
 #include "bu/malloc.h"
 #include "bu/process.h"
 #include "bu/str.h"
-#include "bu/time.h"
+#include "bu/datetime.h"
 #include "bu/vls.h"
 #include "./process.h"
 
@@ -152,27 +152,36 @@ bu_process_file_close(struct bu_process *pinfo, bu_process_io_t d)
     if (!pinfo)
 	return;
 
+    FILE *fp = NULL;
     if (d == BU_PROCESS_STDIN) {
-	if (!pinfo->fp_in)
-	    return;
-	(void)fclose(pinfo->fp_in);
-	pinfo->fp_in = NULL;
-	return;
+	fp = pinfo->fp_in;
     }
     if (d == BU_PROCESS_STDOUT) {
-	if (!pinfo->fp_out)
-	    return;
-	(void)fclose(pinfo->fp_out);
-	pinfo->fp_out = NULL;
-	return;
+	fp = pinfo->fp_out;
     }
     if (d == BU_PROCESS_STDERR) {
-	if (!pinfo->fp_err)
-	    return;
-	(void)fclose(pinfo->fp_err);
-	pinfo->fp_err = NULL;
-	return;
+	fp = pinfo->fp_err;
     }
+    if (!fp)
+	return;
+
+    int fd = fileno(fp);
+    if (pinfo->fp_in == fp)
+	pinfo->fp_in = NULL;
+    if (pinfo->fp_out == fp)
+	pinfo->fp_out = NULL;
+    if (pinfo->fp_err == fp)
+	pinfo->fp_err = NULL;
+    (void)fclose(fp);
+
+    /* OUT_EQ_ERR aliases stdout and stderr.  Invalidate every matching
+     * descriptor so neither wait nor another stream wrapper closes it twice. */
+    if (pinfo->fd_in == fd)
+	pinfo->fd_in = -1;
+    if (pinfo->fd_out == fd)
+	pinfo->fd_out = -1;
+    if (pinfo->fd_err == fd)
+	pinfo->fd_err = -1;
 }
 
 void
@@ -187,17 +196,29 @@ bu_process_file_open(struct bu_process *pinfo, bu_process_io_t d)
     if (!pinfo)
 	return NULL;
 
-    bu_process_file_close(pinfo, d);
-
     if (d == BU_PROCESS_STDIN) {
+	if (pinfo->fp_in)
+	    return pinfo->fp_in;
 	pinfo->fp_in = fdopen(pinfo->fd_in, "wb");
 	return pinfo->fp_in;
     }
     if (d == BU_PROCESS_STDOUT) {
+	if (pinfo->fp_out)
+	    return pinfo->fp_out;
+	if (pinfo->fd_out == pinfo->fd_err && pinfo->fp_err) {
+	    pinfo->fp_out = pinfo->fp_err;
+	    return pinfo->fp_out;
+	}
 	pinfo->fp_out = fdopen(pinfo->fd_out, "rb");
 	return pinfo->fp_out;
     }
     if (d == BU_PROCESS_STDERR) {
+	if (pinfo->fp_err)
+	    return pinfo->fp_err;
+	if (pinfo->fd_err == pinfo->fd_out && pinfo->fp_out) {
+	    pinfo->fp_err = pinfo->fp_out;
+	    return pinfo->fp_err;
+	}
 	pinfo->fp_err = fdopen(pinfo->fd_err, "rb");
 	return pinfo->fp_err;
     }
@@ -329,6 +350,7 @@ bu_process_create(struct bu_process **pinfo, const char **argv, int opts)
     }
     (*pinfo)->argv[argc] = (char *)NULL;	// sanity check
 
+    int merged_output = (opts & BU_PROCESS_OUT_EQ_ERR);
 #ifdef HAVE_UNISTD_H
     int pret;
     int pid;
@@ -341,9 +363,11 @@ bu_process_create(struct bu_process **pinfo, const char **argv, int opts)
 	perror("pipe");
     }
 
-    pret = pipe(pipe_out);
-    if (pret < 0) {
-	perror("pipe");
+    if (!merged_output) {
+	pret = pipe(pipe_out);
+	if (pret < 0) {
+	    perror("pipe");
+	}
     }
 
     pret = pipe(pipe_err);
@@ -364,7 +388,11 @@ bu_process_create(struct bu_process **pinfo, const char **argv, int opts)
 	    perror("dup");
 	}
 	(void)close(BU_PROCESS_STDOUT);
-	d2 = dup(pipe_out[1]);
+	if (merged_output) {
+	    d2 = dup(pipe_err[1]);
+	} else {
+	    d2 = dup(pipe_out[1]);
+	}
 	if (d2 < 0) {
 	    perror("dup");
 	}
@@ -377,8 +405,10 @@ bu_process_create(struct bu_process **pinfo, const char **argv, int opts)
 	/* close pipes */
 	(void)close(pipe_in[0]);
 	(void)close(pipe_in[1]);
-	(void)close(pipe_out[0]);
-	(void)close(pipe_out[1]);
+	if (!merged_output) {
+	    (void)close(pipe_out[0]);
+	    (void)close(pipe_out[1]);
+	}
 	(void)close(pipe_err[0]);
 	(void)close(pipe_err[1]);
 
@@ -401,13 +431,18 @@ bu_process_create(struct bu_process **pinfo, const char **argv, int opts)
 	_exit(16);
     }
 
+    /* Set the child's process group from both sides of fork so it is ready
+     * before an immediate timeout attempts group-directed termination. */
+    (void)setpgid((pid_t)pid, (pid_t)pid);
+
     (void)close(pipe_in[0]);
-    (void)close(pipe_out[1]);
+    if (!merged_output)
+	(void)close(pipe_out[1]);
     (void)close(pipe_err[1]);
 
     /* Save necessary information for parental process manipulation */
     (*pinfo)->fd_in = pipe_in[1];
-    if (opts & BU_PROCESS_OUT_EQ_ERR) {
+    if (merged_output) {
 	(*pinfo)->fd_out = pipe_err[0];
     } else {
 	(*pinfo)->fd_out = pipe_out[0];
@@ -428,15 +463,17 @@ bu_process_create(struct bu_process **pinfo, const char **argv, int opts)
     sa.bInheritHandle = TRUE;
     sa.lpSecurityDescriptor = NULL;
 
-    /* Create a pipe for the child process's STDOUT. */
-    CreatePipe(&pipe_out[0], &pipe_out[1], &sa, 0);
+    if (!merged_output) {
+	/* Create a pipe for the child process's STDOUT. */
+	CreatePipe(&pipe_out[0], &pipe_out[1], &sa, 0);
 
-    /* Create noninheritable read handle and close the inheritable read handle. */
-    DuplicateHandle(GetCurrentProcess(), pipe_out[0],
-		    GetCurrentProcess(),  &pipe_outDup ,
-		    0,  FALSE,
-		    DUPLICATE_SAME_ACCESS);
-    CloseHandle(pipe_out[0]);
+	/* Create noninheritable read handle and close the inheritable read handle. */
+	DuplicateHandle(GetCurrentProcess(), pipe_out[0],
+			GetCurrentProcess(),  &pipe_outDup ,
+			0,  FALSE,
+			DUPLICATE_SAME_ACCESS);
+	CloseHandle(pipe_out[0]);
+    }
 
     /* Create a pipe for the child process's STDERR. */
     CreatePipe(&pipe_err[0], &pipe_err[1], &sa, 0);
@@ -470,7 +507,7 @@ bu_process_create(struct bu_process **pinfo, const char **argv, int opts)
 	si.dwFlags = STARTF_USESTDHANDLES;
     }
     si.hStdInput   = pipe_in[0];
-    if (opts & BU_PROCESS_OUT_EQ_ERR) {
+    if (merged_output) {
 	si.hStdOutput  = pipe_err[1];
     } else {
 	si.hStdOutput  = pipe_out[1];
@@ -499,7 +536,8 @@ bu_process_create(struct bu_process **pinfo, const char **argv, int opts)
     bu_vls_free(&cp_cmd);
 
     CloseHandle(pipe_in[0]);
-    CloseHandle(pipe_out[1]);
+    if (!merged_output)
+	CloseHandle(pipe_out[1]);
     CloseHandle(pipe_err[1]);
 
     /* Save necessary information for parental process manipulation.
@@ -508,12 +546,14 @@ bu_process_create(struct bu_process **pinfo, const char **argv, int opts)
      * https://docs.microsoft.com/en-us/cpp/c-runtime-library/reference/open-osfhandle
      */
     (*pinfo)->fd_in = _open_osfhandle((intptr_t)pipe_inDup, 0);
-    if (opts & BU_PROCESS_OUT_EQ_ERR) {
-	(*pinfo)->fd_out = _open_osfhandle((intptr_t)pipe_errDup, 0);
+    int err_fd = _open_osfhandle((intptr_t)pipe_errDup, 0);
+    if (merged_output) {
+	(*pinfo)->fd_out = err_fd;
+	(*pinfo)->fd_err = err_fd;
     } else {
 	(*pinfo)->fd_out = _open_osfhandle((intptr_t)pipe_outDup, 0);
+	(*pinfo)->fd_err = err_fd;
     }
-    (*pinfo)->fd_err = _open_osfhandle((intptr_t)pipe_errDup, 0);
     (*pinfo)->hProcess = pi.hProcess;
     (*pinfo)->pid = pi.dwProcessId;
     (*pinfo)->aborted = 0;
@@ -636,6 +676,9 @@ bu_process_func(struct bu_process_func_info *info, bu_process_func_t func, void 
 	_exit(ret);
     }
 
+    /* Avoid racing the child's setpgid call if the timeout is very short. */
+    (void)setpgid((pid_t)pid, (pid_t)pid);
+
     if (capture_out) {
 	close(pipe_out[1]);
 	fd_out = pipe_out[0];
@@ -739,16 +782,31 @@ process_func_fail:
 int
 bu_process_wait_n(struct bu_process **pinfo, int wtime)
 {
-    if (!pinfo)
+    if (!pinfo || !*pinfo)
 	return -1;
 
+    struct bu_process *process = *pinfo;
     int rc = 0;
+
+    /* A FILE owns its descriptor, so close streams first.  Close any
+     * remaining raw descriptors exactly once and invalidate all aliases. */
+    bu_process_file_close(process, BU_PROCESS_STDIN);
+    bu_process_file_close(process, BU_PROCESS_STDOUT);
+    bu_process_file_close(process, BU_PROCESS_STDERR);
+    int *fds[3] = {&process->fd_in, &process->fd_out, &process->fd_err};
+    for (size_t i = 0; i < 3; i++) {
+	int fd = *fds[i];
+	if (fd < 0)
+	    continue;
+	(void)close(fd);
+	for (size_t j = i; j < 3; j++) {
+	    if (*fds[j] == fd)
+		*fds[j] = -1;
+	}
+    }
+
 #ifndef _WIN32
     int retcode = 0;
-
-    close((*pinfo)->fd_in);
-    close((*pinfo)->fd_out);
-    close((*pinfo)->fd_err);
 
     if (kill((pid_t)(*pinfo)->pid, 0) == 0) {      // make sure the process exists
 	/* wait for process to end, or timeout */
@@ -764,6 +822,9 @@ bu_process_wait_n(struct bu_process **pinfo, int wtime)
 	if (rpid == -1 || rpid == 0) {
 		/* timed-out */
 		bu_pid_terminate((*pinfo)->pid);
+		/* Reap the direct child before releasing its process record. */
+		while (waitpid((pid_t)(*pinfo)->pid, &retcode, 0) == -1 && errno == EINTR)
+		    ;
 		rc = 0;	// process concluded, albeit forcibly
 	} else {
 		if (WIFEXITED(retcode))		    // normal exit
@@ -793,8 +854,20 @@ bu_process_wait_n(struct bu_process **pinfo, int wtime)
 	    rc = ERROR_PROCESS_ABORTED;
 	} else if (retcode == STILL_ACTIVE) {
 	    /* timed out */
-	    bu_pid_terminate((*pinfo)->pid);
-	    rc = 0;
+	    /* Preserve process-tree cleanup, then wait for the original child to
+	     * signal before releasing its handle.  Otherwise descendants may
+	     * survive with inherited stdout/stderr handles and keep a test runner
+	     * waiting for EOF. */
+	    (void)bu_pid_terminate((*pinfo)->pid);
+	    if (WaitForSingleObject((*pinfo)->hProcess, 5000) == WAIT_OBJECT_0) {
+		rc = 0;
+	    } else if (TerminateProcess((*pinfo)->hProcess,
+		    BU_MSVC_ABORT_EXIT)) {
+		(void)WaitForSingleObject((*pinfo)->hProcess, INFINITE);
+		rc = 0;
+	    } else {
+		rc = -1;
+	    }
 	} else {
 	    rc = (int)retcode;
 	}
@@ -804,10 +877,6 @@ bu_process_wait_n(struct bu_process **pinfo, int wtime)
 
     CloseHandle((*pinfo)->hProcess);
 #endif
-    /* Clean up */
-    bu_process_file_close((*pinfo), BU_PROCESS_STDOUT);
-    bu_process_file_close((*pinfo), BU_PROCESS_STDERR);
-
     /* Free copy of exec args */
     bu_free((void *)(*pinfo)->cmd, "pinfo cmd copy");
 
@@ -818,6 +887,7 @@ bu_process_wait_n(struct bu_process **pinfo, int wtime)
 	bu_free((void *)(*pinfo)->argv, "pinfo argv array");
     }
     BU_PUT(*pinfo, struct bu_process);
+    *pinfo = NULL;
 
     return rc;
 }

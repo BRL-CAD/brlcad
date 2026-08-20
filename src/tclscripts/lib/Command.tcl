@@ -352,7 +352,7 @@
 	return
     }
 
-    if {[$slaveInterp eval info complete [list $cmd]]} {
+    if {[info complete [list $cmd]]} {
 	set result [catch {$slaveInterp eval uplevel \#0 [list $cmd]} msg]
 
 	if {$result != 0} {

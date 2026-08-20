@@ -30,16 +30,14 @@
 /** @} */
 
 #ifdef FB_USE_INTERNAL_API
-#  include "common.h"
+#include "common.h"
+#include "bio.h"
 
-#  include "bio.h"
+#include "../dm-gl.h"
 
 /* The wgl interface as currently implemented uses some
  * X11 types, supplied by Tk. */
 #  include <tk.h>
-#  ifdef HAVE_GL_GL_H
-#    include <GL/gl.h>
-#  endif
 
 struct wgl_fb_info {
     Display *dpy;

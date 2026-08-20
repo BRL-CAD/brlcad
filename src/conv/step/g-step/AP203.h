@@ -25,6 +25,7 @@
 #define AP203_H
 
 #include "common.h"
+#include "ap_schema.h"
 
 #include "raytrace.h"
 
@@ -39,26 +40,12 @@
 #include <map>
 #include <set>
 
-
-// Container structure that holds elements needed by multiple functions
-struct AP203_Contents {
-    Registry *registry;
-    InstMgr *instance_list;
-    STEPentity *default_context;
-    SdaiApplication_context *application_context;
-    SdaiDesign_context *design_context;
-    std::map<struct directory *, STEPentity *> *solid_to_step;
-    std::map<struct directory *, STEPentity *> *solid_to_step_shape;
-    std::map<struct directory *, STEPentity *> *solid_to_step_manifold;
-    std::map<struct directory *, STEPentity *> *comb_to_step;
-    std::map<struct directory *, STEPentity *> *comb_to_step_shape;
-    std::map<struct directory *, STEPentity *> *comb_to_step_manifold;
-};
+#include "STEPExportContext.h"
 
 
 
-void XYZ_to_Cartesian_point(double x, double y, double z, SdaiCartesian_point *step_pnt);
-void XYZ_to_Direction(double x, double y, double z, SdaiDirection *step_direction);
+void XYZ_to_Cartesian_point(double x, double y, double z, STEPentity *step_pnt);
+void XYZ_to_Direction(double x, double y, double z, STEPentity *step_direction);
 
 #endif /* AP203_H */
 

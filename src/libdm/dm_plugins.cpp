@@ -382,6 +382,33 @@ fb_totally_numeric(const char *s)
 }
 
 
+/**
+ * True if s starts with a Windows drive letter prefix.
+ */
+static int
+fb_windows_drive_path(const char *s)
+{
+#ifdef HAVE_WINDOWS_H
+    if (!s || s[0] == '\0')
+	return 0;
+
+    return std::isalpha(static_cast<unsigned char>(s[0])) && s[1] == ':';
+#else
+    (void)s;
+    return 0;
+#endif
+}
+
+
+static int
+fb_standard_stream_path(const char *path)
+{
+    return BU_STR_EQUAL(path, "-")
+	|| BU_STR_EQUAL(path, "/dev/stdout")
+	|| BU_STR_EQUAL(path, "/dev/stderr");
+}
+
+
 struct fb *
 fb_open(const char *file, int width, int height)
 {
@@ -462,13 +489,14 @@ fb_open(const char *file, int width, int height)
 
     /* Not in list, check special interfaces or disk files */
     /* "/dev/" protection! */
-    if (bu_strncmp(file, "/dev/", 5) == 0) {
+    if (bu_strncmp(file, "/dev/", 5) == 0 && !fb_standard_stream_path(file)) {
         fb_log("fb_open: no such device \"%s\".\n", file);
         free((void *) ifp);
         return FB_NULL;
     }
 
-    if (fb_totally_numeric(file) || strchr(file, ':') != NULL) {
+    if (fb_totally_numeric(file) ||
+	(!fb_windows_drive_path(file) && strchr(file, ':') != NULL)) {
         /* We have a remote file name of the form <host>:<file>
          * or a port number (which assumes localhost) */
         *ifp->i = *remote_interface.i;

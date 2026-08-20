@@ -47,8 +47,16 @@ public:
     Surface(STEPWrapper *sw, int step_id);
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
     virtual void Print(int level);
+    /** Estimate the number of tensor-product surface spans a global
+     * pullback search may need to index.  Analytic surfaces have one span. */
+    virtual size_t PullbackSpanEstimate() const { return 1; }
+    /** True when LoadONBrep() caches a finite evaluation domain derived from
+     * the current face's trim box and cannot extend that cached surface for a
+     * later face.  Exact bounded/shared parameterizations return false. */
+    virtual bool RequiresFaceLocalONSurface() const { return false; }
     void SetCurveBounds(const ON_BoundingBox *tcbb) {
-	trim_curve_3d_bbox = new ON_BoundingBox(*tcbb);
+	delete trim_curve_3d_bbox;
+	trim_curve_3d_bbox = tcbb ? new ON_BoundingBox(*tcbb) : NULL;
     };
 
     //static methods

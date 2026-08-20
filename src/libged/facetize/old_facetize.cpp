@@ -41,7 +41,7 @@
 #include "bu/hook.h"
 #include "bu/interrupt.h"
 #include "bu/cmd.h"
-#include "bu/time.h"
+#include "bu/datetime.h"
 #include "bn/tol.h"
 #include "bg/spsr.h"
 #include "bg/trimesh.h"
@@ -1229,14 +1229,15 @@ _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, con
     bot->faces = NULL;
     bot->vertices = NULL;
 
-    /* Run the polygonize routine.  Because it is quite simple to accidentally
-     * specify inputs that will take huge amounts of time to run, we will
-     * attempt a series of progressively courser polygonize runs until we
-     * either succeed, or reach a feature size that is greater than 2x the
-     * average thickness according to the raytracer without succeeding. If
-     * max_time has been explicitly set to 0 by the caller this will run
-     * unbounded, but the algorithm is n**2 and we're trying the finest level
-     * first so may run a *very* long time... */
+    /* Run the polygonize routine.  Because it is quite simple to
+     * accidentally specify inputs that will take huge amounts of time
+     * to run, we will attempt a series of progressively courser
+     * polygonize runs until we either succeed, or reach a feature
+     * size that is greater than 2x the average thickness according to
+     * the raytracer without succeeding. If max_time has been
+     * explicitly set to 0 by the caller this will run unbounded, but
+     * the algorithm is n**2 and we're trying the finest level first
+     * so may run a *very* long time... */
     pl = (struct pnt_normal *)pnts->point;
     pn = BU_LIST_PNEXT(pnt_normal, pl);
     if (opts->feature_size > 0) {

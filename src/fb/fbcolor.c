@@ -50,6 +50,7 @@
 #include "dm.h"
 
 #define COMMA ','
+#define COLOR_LEVELS 256
 
 
 int curchan = 0;	/* 0=r, 1=g, 2=b */
@@ -111,33 +112,33 @@ main(int argc, char **argv)
 
     /* Note that color 0, 0, 0 is special;  use 1, 1, 1 for black */
     /* Red */
-    for (i=0; i<255; i++) {
+    for (i = 0; i < COLOR_LEVELS; i++) {
 	buf[3*i+RED] = i;
 	buf[3*i+GRN] = 1;
 	buf[3*i+BLU] = 1;
     }
     for (i=0; i<99; i++)
-	fb_write(fbp, 0, i, buf, 256);
+	fb_write(fbp, 0, i, buf, COLOR_LEVELS);
 
     /* Green */
     memset((char *)buf, 0, sizeof(buf));
-    for (i=0; i<255; i++) {
+    for (i = 0; i < COLOR_LEVELS; i++) {
 	buf[3*i+RED] = 1;
 	buf[3*i+GRN] = i;
 	buf[3*i+BLU] = 1;
     }
     for (i=100; i<199; i++)
-	fb_write(fbp, 0, i, buf, 256);
+	fb_write(fbp, 0, i, buf, COLOR_LEVELS);
 
     /* Blue */
     memset((char *)buf, 0, sizeof(buf));
-    for (i=0; i<255; i++) {
+    for (i = 0; i < COLOR_LEVELS; i++) {
 	buf[3*i+RED] = 1;
 	buf[3*i+GRN] = 1;
 	buf[3*i+BLU] = i;
     }
     for (i=200; i<299; i++)
-	fb_write(fbp, 0, i, buf, 256);
+	fb_write(fbp, 0, i, buf, COLOR_LEVELS);
 
     /* Set RAW mode */
 #ifndef HAVE_CONIO_H
@@ -151,17 +152,17 @@ main(int argc, char **argv)
 	memset((char *)&cm, 0, sizeof(cm));
 	for (i=0; i<col[RED]; i++)
 	    cm.cm_red[i] = 0xFFFF;
-	for (; i<255; i++)
+	for (; i < COLOR_LEVELS; i++)
 	    cm.cm_red[i] = 0;
 
 	for (i=0; i<col[GRN]; i++)
 	    cm.cm_green[i] = 0xFFFF;
-	for (; i<255; i++)
+	for (; i < COLOR_LEVELS; i++)
 	    cm.cm_green[i] = 0;
 
 	for (i=0; i<col[BLU]; i++)
 	    cm.cm_blue[i] = 0xFFFF;
-	for (; i<255; i++)
+	for (; i < COLOR_LEVELS; i++)
 	    cm.cm_blue[i] = 0;
 
 	/* 0, 0, 0 is color chosen */

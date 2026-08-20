@@ -41,19 +41,20 @@ static const char *BSplineSurface_Knot_type_string[] = {
     "piecewise_bezier_knots",
     "unset"
 };
+static const int STEP_KNOT_TYPE_UNSET = 4;
 
 BSplineSurfaceWithKnots::BSplineSurfaceWithKnots()
 {
     step = NULL;
     id = 0;
-    knot_spec = Knot_type_unset;
+    knot_spec = STEP_KNOT_TYPE_UNSET;
 }
 
 BSplineSurfaceWithKnots::BSplineSurfaceWithKnots(STEPWrapper *sw, int step_id)
 {
     step = sw;
     id = step_id;
-    knot_spec = Knot_type_unset;
+    knot_spec = STEP_KNOT_TYPE_UNSET;
 }
 
 BSplineSurfaceWithKnots::~BSplineSurfaceWithKnots()
@@ -141,8 +142,10 @@ BSplineSurfaceWithKnots::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	}
     }
 
-    knot_spec = (Knot_type)step->getEnumAttribute(sse, "knot_spec");
-    V_MIN(knot_spec, Knot_type_unset);
+    knot_spec = step->getEnumAttributeIndex(sse, "knot_spec",
+	BSplineSurface_Knot_type_string,
+	sizeof(BSplineSurface_Knot_type_string) / sizeof(BSplineSurface_Knot_type_string[0]),
+	STEP_KNOT_TYPE_UNSET);
 
     sw->entity_status[id] = STEP_LOADED;
     return true;
@@ -195,6 +198,14 @@ BSplineSurfaceWithKnots::Print(int level)
     TAB(level);
     std::cout << "Inherited Attributes:" << std::endl;
     BSplineSurface::Print(level + 1);
+}
+
+size_t
+BSplineSurfaceWithKnots::PullbackSpanEstimate() const
+{
+    if (u_knots.size() < 2 || v_knots.size() < 2)
+	return BSplineSurface::PullbackSpanEstimate();
+    return (u_knots.size() - 1) * (v_knots.size() - 1);
 }
 
 STEPEntity *

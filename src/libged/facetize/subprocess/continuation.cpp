@@ -29,7 +29,7 @@
 #include <vector>
 
 #include "vmath.h"
-#include "bu/time.h"
+#include "bu/datetime.h"
 #include "bg/trimesh.h"
 #include "raytrace.h"
 #include "analyze/polygonize.h"
@@ -124,14 +124,15 @@ continuation_mesh(struct rt_bot_internal **obot, struct db_i *dbip, const char *
     struct analyze_polygonize_params params = ANALYZE_POLYGONIZE_PARAMS_DEFAULT;
     double feature_size = (s->cm_options.feature_size > 0) ? s->cm_options.feature_size : 2*s->cm_options.avg_thickness;
 
-    /* Run the polygonize routine.  Because it is quite simple to accidentally
-     * specify inputs that will take huge amounts of time to run, we will
-     * attempt a series of progressively courser polygonize runs until we
-     * either succeed, or reach a feature size that is greater than 2x the
-     * average thickness according to the raytracer without succeeding. If
-     * max_time has been explicitly set to 0 by the caller this will run
-     * unbounded, but the algorithm is n**2 and we're trying the finest level
-     * first so may run a *very* long time... */
+    /* Run the polygonize routine.  Because it is quite simple to
+     * accidentally specify inputs that will take huge amounts of time
+     * to run, we will attempt a series of progressively courser
+     * polygonize runs until we either succeed, or reach a feature
+     * size that is greater than 2x the average thickness according to
+     * the raytracer without succeeding. If max_time has been
+     * explicitly set to 0 by the caller this will run unbounded, but
+     * the algorithm is n**2 and we're trying the finest level first
+     * so may run a *very* long time... */
     params.max_time = s->cm_options.max_time;
     params.max_cycle_time = s->cm_options.max_cycle_time;
     params.verbosity = 1;

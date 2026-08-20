@@ -27,14 +27,12 @@
 #include "STEPWrapper.h"
 #include "Factory.h"
 
-#ifdef AP203e
-#include "RepresentedDefinition.h"
-#else
 #include "PropertyDefinition.h"
-#endif
 #include "ProductDefinition.h"
 #include "ProductDefinitionShape.h"
 #include "Representation.h"
+#include "AdvancedBrepShapeRepresentation.h"
+#include "ShapeRepresentation.h"
 #include "PropertyDefinitionRepresentation.h"
 
 #define CLASSNAME "PropertyDefinitionRepresentation"
@@ -59,14 +57,8 @@ PropertyDefinitionRepresentation::PropertyDefinitionRepresentation(STEPWrapper *
 
 PropertyDefinitionRepresentation::~PropertyDefinitionRepresentation()
 {
-#ifdef AP203e
-    // not created through factory must delete here.
-    if (definition)
-	delete definition;
-#else
     // created through factory will be deleted there.
     definition = NULL;
-#endif
     used_representation = NULL;
 }
 
@@ -99,6 +91,18 @@ PropertyDefinitionRepresentation::GetProductName()
     return name;
 }
 
+AdvancedBrepShapeRepresentation *
+PropertyDefinitionRepresentation::GetAdvancedBrepShapeRepresentation()
+{
+    return dynamic_cast<AdvancedBrepShapeRepresentation *>(used_representation);
+}
+
+ShapeRepresentation *
+PropertyDefinitionRepresentation::GetShapeRepresentation()
+{
+    return dynamic_cast<ShapeRepresentation *>(used_representation);
+}
+
 int
 PropertyDefinitionRepresentation::GetProductId()
 {
@@ -126,32 +130,21 @@ bool PropertyDefinitionRepresentation::Load(STEPWrapper *sw, SDAI_Application_in
     // the actual entity and not a complex/supertype parent
     sse = step->getEntity(sse, ENTITYNAME);
 
-#ifdef AP203e
     if (definition == NULL) {
-	SDAI_Select *select = step->getSelectAttribute(sse,"definition");
-	if (select) { //this attribute is optional
-	    RepresentedDefinition *aRD = new RepresentedDefinition();
-	    definition = aRD;
-	    if (!aRD->Load(step,select)) {
-		std::cout << CLASSNAME << ":Error loading select RepresentedDefinition from PropertyDefinitionRepresentation." << std::endl;
-		goto step_error;
-	    }
-	} else {
-	    std::cout << CLASSNAME << ":Error loading attribute 'definition'." << std::endl;
-	    goto step_error;
-	}
-    }
-#else
-    if (definition == NULL) {
+	/* getEntityAttribute resolves both a direct entity attribute and the
+	 * entity selected by represented_definition.  Checking the resolved
+	 * entity against the schema descriptor avoids depending on generated
+	 * SELECT helper layouts, which vary as schemas are regenerated. */
 	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "definition");
-	if (entity) { //this attribute is optional
+	if (step->IsSchemaEntity(entity, "PROPERTY_DEFINITION"))
 	    definition = dynamic_cast<PropertyDefinition *>(Factory::CreateObject(sw, entity));
-	} else {
-	    std::cout << CLASSNAME << ":Error loading attribute 'definition'." << std::endl;
+	if (!definition) {
+	    sw->RecordDiagnostic(brlcad::step::DiagnosticSeverity::Warning, id,
+		"PROPERTY_DEFINITION_REPRESENTATION", "definition",
+		"unsupported or invalid represented_definition select");
 	    goto step_error;
 	}
     }
-#endif
 
     if (used_representation == NULL) {
 	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "used_representation");

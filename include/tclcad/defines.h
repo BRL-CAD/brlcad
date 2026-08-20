@@ -31,6 +31,13 @@
 
 #include "common.h"
 
+/* Tcl_CreateFileHandler is not implemented by every Tcl notifier.  Keep the
+ * platform test here so libtclcad code can select the required event I/O
+ * mechanism by capability instead of scattering OS tests. */
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#  define USE_TCL_CHAN 1
+#endif
+
 __BEGIN_DECLS
 
 #ifndef TCLCAD_EXPORT

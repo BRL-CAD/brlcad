@@ -76,6 +76,7 @@ endforeach()
 set(GEOGRAM_SRCS ${GEOGRAM_SRCS} PARENT_SCOPE)
 set(GEOGRAM_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/.. PARENT_SCOPE)
 set(GEOGRAM_AMGCL_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/third_party/amgcl PARENT_SCOPE)
+set(GEOGRAM_LBFGSPP_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/third_party/LBFGSpp/include PARENT_SCOPE)
 set(GEOGRAM_AMGCL_SRC ${CMAKE_CURRENT_SOURCE_DIR}/NL/nl_amgcl.cpp PARENT_SCOPE)
 
 set(GEOGRAM_OTHER_SRCS
@@ -169,21 +170,21 @@ set(GEOGRAM_OTHER_SRCS
   third_party/amgcl/amgcl/solver/skyline_lu.hpp
   third_party/amgcl/amgcl/util.hpp
   third_party/amgcl/amgcl/value_type/interface.hpp
-  third_party/liblbfgs/AI_Discussion.txt
-  third_party/liblbfgs/CMakeLists.txt
-  third_party/liblbfgs/COPYING
-  third_party/liblbfgs/README
-  third_party/liblbfgs/fortran/Readme
-  third_party/liblbfgs/fortran/lbfgs.f
-  third_party/liblbfgs/fortran/makefile
-  third_party/liblbfgs/fortran/sdrive.f
-  third_party/liblbfgs/lbfgs.h
-  third_party/liblbfgs/lib/arithmetic_ansi.h
-  third_party/liblbfgs/lib/arithmetic_sse_double.h
-  third_party/liblbfgs/lib/arithmetic_sse_float.h
-  third_party/liblbfgs/lib/lbfgs.c
-  third_party/liblbfgs/sample/sample.c
-  third_party/liblbfgs/sample/sample.cpp
+  third_party/LBFGSpp/AUTHORS.md
+  third_party/LBFGSpp/BRLCAD_UPSTREAM.md
+  third_party/LBFGSpp/LICENSE.md
+  third_party/LBFGSpp/README.md
+  third_party/LBFGSpp/include/LBFGS.h
+  third_party/LBFGSpp/include/LBFGSB.h
+  third_party/LBFGSpp/include/LBFGSpp/BFGSMat.h
+  third_party/LBFGSpp/include/LBFGSpp/BKLDLT.h
+  third_party/LBFGSpp/include/LBFGSpp/Cauchy.h
+  third_party/LBFGSpp/include/LBFGSpp/LineSearchBacktracking.h
+  third_party/LBFGSpp/include/LBFGSpp/LineSearchBracketing.h
+  third_party/LBFGSpp/include/LBFGSpp/LineSearchMoreThuente.h
+  third_party/LBFGSpp/include/LBFGSpp/LineSearchNocedalWright.h
+  third_party/LBFGSpp/include/LBFGSpp/Param.h
+  third_party/LBFGSpp/include/LBFGSpp/SubspaceMin.h
   voronoi/CVT.h
   voronoi/RVD.h
   voronoi/RVD_callback.h

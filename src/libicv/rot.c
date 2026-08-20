@@ -49,9 +49,12 @@
 #include "bu/malloc.h"
 #include "bn.h"
 
-/* TODO: Yuck... why are we using globals for all this?? */
+/* interface header, needed to export properly */
+#include "icv/ops.h"
 
-ssize_t buflines, scanbytes;
+
+ssize_t buflines;
+ssize_t scanbytes;
 ssize_t firsty = -1;	/* first "y" scanline in buffer */
 ssize_t lasty = -1;	/* last "y" scanline in buffer */
 unsigned char *bp;

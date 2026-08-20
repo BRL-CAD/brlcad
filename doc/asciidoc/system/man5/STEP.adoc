@@ -4,104 +4,425 @@
 :manmanual: BRL-CAD Format Documentation
 
 == NAME
-STEP - ISO 10303 Standard for the Exchange of Product model data
 
-[[background]]
-== BACKGROUND
+STEP - ISO 10303 product-data exchange and BRL-CAD support
 
-In 1984, the International Organization for Standardization (ISO) began working to create a standard to allow for the electronic exchange of product data between computer-based product life-cycle systems. This scope was intentionally much broader than just geometry information, and the resulting standard (ISO 10303: Industrial automation systems and integration -- Product data representation and exchange) is extremely large. Consequently, the standard is subdivided into _parts_, which are referred to individually as ISO 10303-xxx where xxx is the part number. Because of the large scope, there is a numbering convention used to represent more focused sub-scopes in order to make locating specific types of information simpler:
+[[overview]]
+== OVERVIEW
 
-.ISO 10303 Part Numbering Scopes
-[cols="2*"]
+STEP is ISO 10303, _Industrial automation systems and integration -- Product
+data representation and exchange_. It is a family of standards rather than a
+single geometry format. Three layers are especially relevant to BRL-CAD:
+
+* ISO 10303-11 defines EXPRESS, the schema language.
+* ISO 10303-21 defines the clear-text exchange encoding commonly called a
+  STEP or Part 21 file.
+* An application protocol (AP) defines the permitted product, assembly,
+  geometry, presentation, and metadata entities.
+
+The *.step* or *.stp* suffix alone does not identify the data model. A Part 21
+file's *FILE_SCHEMA* header selects its schema. *step-g*(1) inspects that
+declaration and loads an import plugin; *g-step*(1) selects an export plugin
+explicitly.
+
+[[protocols]]
+== SUPPORTED APPLICATION PROTOCOLS
+
+When the corresponding schemas are enabled at build time, BRL-CAD provides
+one importer and exporter host for these mechanical APs:
+
+[cols="1,2,3"]
 |===
-|Series
-|Scope Of Series
+|Plugin key |Part 21 schema family |BRL-CAD coverage
 
-|00x
-|Overview, fundamental principles
-|01x
-|Definitional resources
-|02x
-|Implementation methods
-|03x
-|Validation of translators for standard conformance
-|04x
-|Integrated Generic Resources (basic building blocks)
-|1xx
-|Integrated Application Resources (higher level than 04x)
-|2xx
-|Application Protocols
-|5xx
-|Application Interpreted Constructs - reusable components of Application Protocols
-|===
+|*ap203*
+|`CONFIG_CONTROL_DESIGN` (ISO 10303-203 edition 1)
+|Mechanical shape, product structure, and selected administration; the default export schema
 
-The lowest level parts that define STEP in a practical sense are http://www.iso.org/iso/iso_catalogue/catalogue_tc/catalogue_detail.htm?csnumber=38047[ISO 10303-011], http://www.iso.org/iso/iso_catalogue/catalogue_tc/catalogue_detail.htm?csnumber=33713[ISO 10303-21], and http://www.iso.org/iso/iso_catalogue/catalogue_tc/catalogue_detail.htm?csnumber=25097[ISO 10303-022]. 10303-011 defines the EXPRESS language, which is in turn the language in which application protocol schemas are written. 10303-21 defines a clear text encoding of the STEP exchange structure - files using this schema are referred to as "STEP" or "Part 21" files. 10303-022 defines a Standard Data Access Interface (SDAI) which is used to automatically generate practical computer code from the EXPRESS schema protocol descriptions. Collectively, these define the "container" aspects of the STEP file format and a method to access the information from the file. (This is similar to using XML with a schema file to store information, and newer schemas are also available in an XML form in addition to EXPRESS.)
+|*ap203e2*
+|`AP203_CONFIGURATION_CONTROLLED_3D_DESIGN_OF_MECHANICAL_PARTS_AND_ASSEMBLIES_MIM_LF`
+|Edition-specific mechanical geometry, exact supported sweeps, presentation and metadata, and optional native CSG
 
-A number of https://en.wikipedia.org/wiki/List_of_STEP_%28ISO_10303%29_parts#AIC_-_Application_interpreted_constructs[other] low level parts and higher level Application Interpreted Constructs (AICs) form the foundation on which the more complete "high level" parts are defined. This separation is performed mainly to allow maximal sharing and compatibility between different high level parts that need the same lower level foundations.
+|*ap214*
+|`AUTOMOTIVE_DESIGN` (AP214 edition 3)
+|Mechanical geometry and assemblies, selected presentation and metadata, exact supported sweeps, and optional native CSG
 
-Within that context, the primary components of interest for practical data import and export are the Application Protocols (AP) that focus on shape models and assembly structure (among other things.) The first such protocol was AP203 - "Configuration-controlled design". As experience using the standard in real world applications accumulated, new revisions and new application protocols were developed. Today, the following protocols exist:
-
-.Application Protocols relating to Shape Modeling and Assembly Structure
-[cols="3*"]
-|===
-|Application Protocol
-|Title
-|Notes
-
-|AP203
-|https://www.iso.org/standard/20597.html[Configuration controlled 3D designs of mechanical parts and assemblies]
-|Most recent version is 10303-203:1994 with additions and corrections as follows: the original document was subsequently revised by one amendment https://www.iso.org/standard/34177.html[10303-203:1994/Amd 1:2000] and three corrections: https://www.iso.org/standard/26904.html[10303-203:1994/Cor 1:1996], https://www.iso.org/standard/30943.html[10303-203:1994/Cor 2:1998], and https://www.iso.org/standard/40190.html[10303-203:1994/Cor 3:2004]. https://www.iso.org/standard/39522.html[10303-203:2005] is considered a revision to this standard.
-|AP203e2
-|https://www.iso.org/standard/44305.html[Configuration controlled 3D designs of mechanical parts and assemblies]
-|Most recent version is 10303-203:2011. Revises https://www.iso.org/standard/39522.html[10303-203:2005], which is listed as a modular version that is harmonized with ISO 10303-214. https://www.iso.org/standard/57620.html[10303-242:2014] is considered a revision to this standard.
-|AP214
-|https://www.iso.org/standard/43669.html[Core data for automotive mechanical design processes]
-|Most recent version is 10303-214:2010 (a.k.a AP214e3). Two earlier versions exist: https://www.iso.org/standard/38727.html[10303-214:2003] and https://www.iso.org/standard/23643.html[10303-214:2001]. https://www.iso.org/standard/57620.html[10303-242:2014] is considered a revision to this standard.
-|AP242
-|https://www.iso.org/standard/57620.html[Managed model-based 3D engineering]
-|Most recent version is 10303-242:2014. This standard is intended to consolidate and replace AP203e2 and AP214. One correction has been published: https://www.iso.org/standard/72059.html[10303-242:2014/Cor 1:2016].
+|*ap242e1* through *ap242e4* (`ap242` aliases e4 on export)
+|`AP242_MANAGED_MODEL_BASED_3D_ENGINEERING_MIM_LF`
+|Edition-isolated bindings with shared mechanical conversion, tessellated import, selected PMI import, and optional native CSG
 |===
 
+BRL-CAD implements an interoperable subset of each AP, not every entity or
+conformance class in the standard. Unsupported and malformed represented
+content is reported explicitly.
 
+[[behavior]]
+== CONVERTER BEHAVIOR
 
-AP203e2 is sufficiently different from AP203 that practically speaking it merits being called out as its own distinct protocol, but in the nomenclature of the ISO standards it is still considered a revision to AP203.
+[cols="1,2,2"]
+|===
+|Converter |Default |Stricter use
 
-These protocols are the portion of ISO 10303 that address the problem domain previously handled by the Initial Graphics Exchange Specification (*IGES*(5)). In a computer aided design context where transfer of "STEP files" is being discussed, those files will most likely correspond to one of the previous protocols.
+|*step-g*
+|Safe repair, bounded valid inference, and storage-safe invalid B-rep preservation; useful partial geometry may be published
+|Use *--strict*, *--exact*, *--repair none*, or *--reject-invalid-objs* according to the required policy
 
-TODO - Determine what MIM, AIM and AAM are and document them...
+|*g-step*
+|B-rep-oriented export with native CSG disabled; useful partial output may be published with every omission diagnosed
+|Use *--strict* to require complete coverage of selected geometry and requested metadata
+|===
 
+The command pages define all options, reports, and exit statuses. The
+remaining sections describe the supported exchange semantics.
 
-[[schema_resources]]
-== SCHEMAS AND IMPLEMENTATION RESOURCES
+[[schema_selection]]
+== FILE_SCHEMA SELECTION
 
-To obtain the latest schema files (which, unlike the ISO standards themselves, are freely available) check the http://stepmod.sourceforge.net/[STEP Module Repository Project] - in particular, the http://stepmod.cvs.sourceforge.net/viewvc/stepmod/stepmod/data/modules/[modules] directory.
+A sole unknown schema or a header naming multiple supported AP families is
+rejected rather than guessed. One supported AP plus an unknown companion
+identifier is accepted with a warning. IFC identifiers are recognized, but
+the user is directed to the separate *ifc-g*(1) converter.
 
-The standards define the structure of the schemas, but in general when it comes to the nuts and bolts of implementing a practical importer and exporter more resources are needed. Below are links to some implementation resources:
+AP242 editions 1 through 4 share a long-form schema identifier but do not have
+identical entity sets or physical attribute layouts. Automatic import tries
+e4 through e1 when an attempted layout cannot produce usable geometry. A file
+using only a compatible common subset may remain ambiguous; specify
+*step-g --schema ap242eN* when the authoring edition is known.
 
-PDES, Inc. Industry consortium http://www.oasis-open.org/committees/download.php/11728/recprac8.pdf[Recommended Practices for AP203], April 1998
+Interim identifiers `CONFIGURATION_CONTROL_3D_DESIGN_MIM_LF`,
+`CCD_CLA_GVP_AST`, and `CCD_CLA_GVP_AST_ASD` select AP203e2. Verified headers
+combining `CONFIG_CONTROL_DESIGN` with geometric-validation-property or
+shape-appearance-layer MIM identifiers also use that binding. These are import
+compatibility paths, not additional export formats.
 
-PDM Implementer Forum, http://www.cax-if.org/documents/pdmug_release4_3.pdf[Usage Guide for the STEP PDM Schema V1.2 Release 4.3], January 2002.
+Part 21 Edition 1 *SCOPE* and *ENDSCOPE* groups are accepted by the active
+reader. Scoped instances and exported roots participate in the same schema
+selection, reference resolution, and conversion policy as ordinary DATA
+instances.
 
-CAx Implementer Forum Recommended Practices: https://www.cax-if.org/joint_testing_info.html#recpracs
+[[geometry]]
+== GEOMETRY COVERAGE
 
+=== B-reps, surfaces, and wireframes
+
+The importers cover advanced and faceted B-reps, B-reps with voids, manifold
+surface models, shell-based surface models, mapped items, solid replicas,
+geometric sets, and supported wireframe representations. Geometry normally
+becomes a BRL-CAD *brep* unless an exact native mapping is available. Units,
+representation uncertainty, and placements are applied during conversion.
+
+Open boundaries in a shell-based surface model may be intended sheet geometry
+or construction content. They are imported by default. The
+*step-g --skip-open-shells* option filters only *OPEN_SHELL* boundaries from
+those surface models; closed surface boundaries and solid B-rep topology
+remain enabled.
+
+Bounded geometric sets retain exact curves as B-reps and Cartesian points as
+*pnts* objects. Mixed sets become combinations. Product-owned constructive
+geometry planes become *datum* planes; placement axes remain coordinate
+frames rather than standalone geometry.
+
+STEP and OpenNURBS use different spline-knot storage conventions. The importer
+validates the expanded STEP knot vector and removes only the two extra
+endpoint knots OpenNURBS does not store. Closed unclamped surfaces are
+normalized only when a dense before-and-after audit remains within the source
+uncertainty.
+
+=== Swept solids
+
+AP203e2, AP214, and AP242 share exact conversion for supported
+*EXTRUDED_AREA_SOLID*, *REVOLVED_AREA_SOLID*, *EXTRUDED_FACE_SOLID*,
+*REVOLVED_FACE_SOLID*, and *SWEPT_DISK_SOLID* entities. Area and face sweeps
+become exact B-reps. Profiles may include inner void loops.
+
+A linear swept disk becomes a native cylinder or cylinder-difference region.
+A direct circular sweep becomes a full or partial toroidal B-rep, including
+an optional inner void. Other nonlinear directrices are reported rather than
+approximated. Trimmed and drafted face-sweep subtypes are not treated as their
+base sweeps because that would discard termination, offset, or draft
+semantics.
+
+=== AP242 tessellated geometry
+
+Triangulated faces, strips, fans, surface sets, shells, and solids use a direct
+BOT path. Coordinates, indices, degeneracy, normals, and winding are validated.
+Tessellated solid intent produces a volume BOT only when the triangles are
+closed and consistently oriented; incomplete input remains a diagnosed
+surface BOT. Tessellated point, curve, wire, and geometric sets do not yet
+have a direct mapping.
+
+[[assemblies]]
+== PRODUCT STRUCTURE AND ASSEMBLIES
+
+Product definitions become combinations and occurrences retain rigid
+placement matrices. AP203 import supports the three assembly-shape styles in
+Recommended Practice 8:
+
+* referenced shape using NAUO, CDSR, and a transforming representation
+  relationship;
+* mapped shape using *REPRESENTATION_MAP* and *MAPPED_ITEM*; and
+* replicated shape using product usage with an identity occurrence.
+
+Multi-level assemblies and repeated transformed instances are supported.
+Higher-usage paths, quantities, promissory usages, alternate products, and
+usage substitutes are retained in the structured report even when they do not
+create geometry. Transforming representation relationships become assembly
+edges only when product-usage context gives them occurrence semantics;
+otherwise they remain placed secondary geometry of the same product.
+
+On export, union-only combinations become assemblies. Nested product identity,
+repeated rigid occurrences, and imported representation layering are
+preserved. Scaling is reported because this product mapping cannot express it.
+A non-union Boolean tree is not recast as an assembly union; it requires the
+optional native CSG path or future evaluated B-rep export.
+
+[[csg]]
+== NATIVE CSG
+
+Native CSG import is automatic for supported AP203e2, AP214, and AP242
+entities. Export is opt-in with *g-step --native-csg* because many downstream
+systems interoperate more reliably with B-reps. The complete expression is
+validated before it is attached to a product.
+
+Union, intersection, and difference map directly; XOR is lowered to an
+equivalent expression. BRL-CAD NOT and guard/no-op nodes have no lossless
+finite STEP encoding and therefore fail instead of changing model meaning.
+
+AP203e2 and AP214 share sphere, block, right angular wedge, torus, circular
+cone, circular cylinder, and planar half-space mappings. AP242 also permits
+exact ellipsoid, eccentric cone, rectangular pyramid, tetrahedron, and convex
+hexahedron mappings. A finite unsupported primitive may use its B-rep as a
+leaf inside an otherwise preserved tree. Cyclide export remains unavailable
+because BRL-CAD does not provide the additional exact parameterization needed
+for a safe mapping.
+
+[[pmi]]
+== AP242 PMI AND MODEL-BASED DEFINITION
+
+AP242 import retains the connected semantic, presentation, association, and
+dependency PMI graph. Each record keeps its Part 21 value, complex-component
+order, references, product owner, category, and native-conversion disposition.
+
+Exactly resolved datum points, linear or cylindrical axes, and planar
+references become native BRL-CAD *datum* objects with source and feature
+links. Multiple candidates must agree within tolerance; distinct parallel
+planes are not replaced by an invented median plane. Tessellated graphical
+curves reached through an annotation plane and draughting callout become
+model-space *annot* objects using the authored basis and placement.
+
+Graphical outlines do not prove semantic text. Glyph strokes are retained as
+curves and are not claimed to reconstruct their original font, tolerance, or
+dimension. Unsupported datum targets, leaders, fills, symbols, and
+semantic-only content remain in the graph with explicit dispositions.
+Malformed presentation makes permissive import partial and strict import
+transactional. PMI export is not yet implemented.
+
+[[metadata]]
+== METADATA ROUND TRIP
+
+=== Storage and object attributes
+
+Stable values are stored as `step:` attributes on their owning products or
+occurrences. Product fields include original name and identifier,
+descriptions, revision, and definition identity. Presentation fields retain
+colour, transparency, style name, and layers. Source representation contexts
+record length and angle factors, normalized units, and uncertainty as
+provenance rather than automatic future export instructions.
+
+Reference-linked graphs without a direct object equivalent are encoded in the
+portable, versioned `_STEP_METADATA` binary object. Locator attributes are
+written on both that object and *_GLOBAL*. For compatibility, a modest graph
+is also mirrored as directly editable *_GLOBAL* attributes; large graphs use
+only the locator there to avoid poorly scaling attribute operations.
+*g-step* reads the binary object first and merges compatible global attributes.
+
+Source Part 21 identifiers are internal graph anchors only. The exporter
+allocates new instance numbers and remaps every supported reference after
+validating that its target still has one emitted counterpart.
+
+=== Presentation, materials, properties, and units
+
+AP203e2, AP214, and AP242 share colour, transparency, layer, material, and
+typed property round trips. A native BRL-CAD colour overrides retained STEP
+colour on export. Product properties and material properties remain distinct.
+Supported values include descriptive text, Cartesian coordinates, and typed
+numeric measures.
+
+Numeric properties retain measure type, seven dimensional exponents, a
+normalized label, and a recursive unit graph. SI, context-dependent,
+conversion-based, and derived units can be re-authored, including conversion
+units nested in derived units. The graph takes precedence over a convenient
+label and is validated instead of guessed.
+
+Constrained measure types must agree with their dimensions. Invalid pairs
+remain visible in the report but are not stored as exportable properties.
+Safe repair recognizes one narrowly defined producer defect: a positive
+density with exactly mass^1 and length^3 is normalized to mass^1 times
+length^-3 without changing its value. The repair requires the complete unit
+graph and is disabled by exact, no-repair, and strict import. No other
+dimension is inferred from a human-readable label.
+
+AP203 edition 1 does not author material, direct product-property, or
+presentation requests. Such retained data is reported as unsupported rather
+than silently discarded.
+
+=== Configuration and administration
+
+The retained graph covers supported approvals, people, organizations,
+addresses, dates and times, documents, security classifications, product
+categories, alternate products, usage substitutes, and effectivities. Import
+preserves exact values and references; export reconstructs only records that
+are legal in the selected target schema.
+
+AP203 uses narrower *CC_DESIGN_...* assignments, closed vocabularies, and a
+mandatory management closure. The exporter supplies documented deterministic
+neutral values only for required ordinary closure, never to claim that an
+unsupported source record was preserved. AP203 serial, dated, and lot
+effectivities require complex *CONFIGURATION_EFFECTIVITY* structures. Modern
+APs use broader *APPLIED_...* forms, but still differ: for example, AP214
+restricts several effectivity assignments and AP203e2 has no product-category
+relationship entity.
+
+Dependencies, cycles, ambiguous identities, or assignments that violate the
+target EXPRESS rules are omissions. Each retained node receives an *emitted*,
+*unsupported*, or *malformed* disposition and reason in the export report.
+
+Occurrence metadata is guarded by the current child name on its parent
+combination. If an edited tree no longer matches, the values are omitted
+instead of migrating to another member.
+
+[[validation]]
+== VALIDATION, REPAIR, AND REPORTING
+
+Before import, *step-g* prints an entity census containing the instance count,
+entity-keyword counts, and number of schema entity types used. Complex
+instances contribute their explicit component types. This is an inventory,
+not a promise of conversion support.
+
+The import JSON report classifies each represented item as *handled*,
+*preserved_invalid*, *filtered*, *intentionally_non_geometric*, *skipped*,
+*malformed*, or *unsupported*. It also records schema coverage, hierarchy,
+metadata graphs, repairs, inference, tolerances, budgets, timing, and reasons.
+
+Import recovery proceeds from source-faithful conversion to bounded safe
+repair. Only after the complete result fails validation may an eligible,
+scale-bounded curve inference trigger a transactional whole-item rebuild. The
+candidate is accepted only if the complete rebuilt B-rep passes normal
+structural and solidness validation. Otherwise a completed storage-safe
+invalid B-rep may be retained as a marked non-region before omission is used
+as the final fallback. Preserved invalid geometry is tagged as unresolved; it
+does not prove either an authoring error or an importer defect.
+
+The export report covers every selected and reachable BRL-CAD object and every
+requested metadata value. Normal export does not repair existing BRL-CAD
+B-reps. Missing native and B-rep mappings are explicit omissions, never empty
+STEP shapes. See *step-g*(1) and *g-step*(1) for policy controls and exit
+statuses.
+
+[[resources]]
+== RECOMMENDED PRACTICES AND SCHEMA SOURCES
+
+=== Interoperability references
+
+EXPRESS defines legal data structures, but recommended practices establish
+the entity patterns exchange systems use. Relevant references include:
+
+* PDES, Inc., _Recommended Practices for AP203_, Recommended Practice 8,
+  April 1998;
+* PDM Implementor Forum, _Usage Guide for the STEP PDM Schema_, release 4.3;
+* CAx Implementor Forum recommended practices and joint testing material at
+  https://www.cax-if.org/joint_testing_info.html#recpracs; and
+* ISO catalogue entries for
+  https://www.iso.org/standard/20597.html[AP203],
+  https://www.iso.org/standard/44305.html[AP203 edition 2],
+  https://www.iso.org/standard/43669.html[AP214], and
+  https://www.iso.org/standard/57620.html[AP242].
+
+=== EXPRESS schema provenance
+
+BRL-CAD treats an EXPRESS long form as generated-code input, not a generic
+run-time data file. Building every schema in the STEP module library would add
+substantial generation, compilation, link, and installation cost without
+providing application-protocol conversion semantics. A schema is enabled only
+when BRL-CAD has a selector, generated bindings with the correct physical
+layout, representative inputs or fixtures, and defined conversion policy.
+
+The authoritative source for current modular schemas is ISO's STEP Module and
+Resource Library (SMRL) at
+https://standards.iso.org/iso/10303/smrl/[standards.iso.org/iso/10303/smrl/].
+Numbered archives such as `vN/tech/smrlvN.zip` supply published long forms;
+SMRL v12 is the source used for the AP242 edition 4 binding and includes the
+published AP203 edition 2 long form. BRL-CAD does not copy the archive
+wholesale. Incorporated schema files must retain their applicable ISO
+permission and modification notices.
+
+The historical STEP Module Repository at
+https://sourceforge.net/projects/stepmod/[sourceforge.net/projects/stepmod]
+predates the ISO-hosted SMRL. Its reference area documents early CAx
+Implementor Forum profiles still encountered in commercial files.
+`ccd_cla_gvp_ast_asd.exp`, for example, identifies an interim AP203 extension
+profile with validation and presentation additions. It is used to verify the
+AP203e2 compatibility route rather than built as another exporter.
+
+The neighboring `ap203_smch_may3_lf.exp` is a broader experimental
+construction-history schema retained as a diagnostic reference. It is not a
+built-in converter without representative inputs and policies for its added
+feature and procedural-solid semantics. The repository's
+https://sourceforge.net/p/stepmod/repo-migration/general/thread/6562cc2e/[migration discussion]
+records the move to ISO-hosted archives. Historical provenance does not by
+itself establish redistribution permission; applicable terms must be reviewed
+before adding a schema to BRL-CAD.
+
+Compatibility names such as `CONFIGURATION_CONTROL_3D_DESIGN_MIM_LF`,
+`CCD_CLA_GVP_AST`, `CCD_CLA_GVP_AST_ASD`, and `AUTOMOTIVE_DESIGN_CC2` are
+mapped only after their entity definitions and physical layouts are verified.
+Otherwise the importer uses an edition-isolated binding or reports the schema
+as unsupported.
+
+=== Other application protocols
+
+AP209 analysis, AP210 electronic assembly, AP224 machining features, and
+AP238 STEP-NC share integrated resources with the supported mechanical APs,
+but their domain semantics are not interchangeable. AP232 technical-data
+packaging and AP239 product-life-cycle support are primarily metadata
+protocols. Their schemas may inform corpus classification and future plugins;
+they are not silently routed through AP203, AP214, or AP242.
+
+[[part_numbering]]
+== STEP PART NUMBERING
+
+[cols="1,3"]
+|===
+|Series |Purpose
+
+|00x |Overview and fundamental principles
+|01x |Description methods, including EXPRESS
+|02x |Implementation methods, including Part 21 and SDAI
+|03x |Conformance testing
+|04x |Integrated generic resources
+|1xx |Integrated application resources
+|2xx |Application protocols
+|5xx |Application interpreted constructs
+|===
+
+Application protocols reuse integrated resources. Similar entity names do not
+guarantee compatible semantics or physical layouts, which is why BRL-CAD keeps
+schema-only adapters separate from common conversion logic.
 
 [[see_also]]
 == SEE ALSO
 
-Pratt, Michael J.; http://www.mel.nist.gov/msidlibrary/doc/jcise1.pdf[Introduction to ISO 10303 - the STEP Standard for Product Data Exchange]; NIST; 2001.
-
+*step-g*(1), *g-step*(1), *ifc-g*(1), *IGES*(5)
 
 [[author]]
 == AUTHOR
 
-Clifford Yapp
-
+BRL-CAD Team
 
 [[copyright]]
 == COPYRIGHT
 
 Copyright (c) 2015-2026 by the United States Government as represented by U.S. Army Research Laboratory.
-
 
 [[bug_reports]]
 == BUG REPORTS

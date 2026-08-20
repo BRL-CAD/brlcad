@@ -61,8 +61,12 @@ OrientedEdge::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     step = sw;
     id = sse->STEPfile_id;
 
-    if (!Edge::Load(sw, sse)) {
-	std::cout << CLASSNAME << ":Error loading base class ::Curve." << std::endl;
+    /* ORIENTED_EDGE derives edge_start and edge_end from edge_element.  The
+     * generated base Edge slots are therefore intentionally null and must
+     * not be loaded as explicit attributes.  Load the last base with physical
+     * attributes, then obtain the endpoints from the referenced edge below. */
+    if (!TopologicalRepresentationItem::Load(sw, sse)) {
+	std::cout << CLASSNAME << ":Error loading base class ::TopologicalRepresentationItem." << std::endl;
 	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }

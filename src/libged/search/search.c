@@ -29,6 +29,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <time.h>
+#include <limits.h>
 
 #ifdef HAVE_SYS_PARAM_H
 #  include <sys/param.h>
@@ -57,35 +58,65 @@ dp_name_compare(const void *d1, const void *d2, void *arg)
     return alphanum_impl((const char *)dp2->d_namep, (const char *)dp1->d_namep, arg);
 }
 
-struct fp_cmp_vls {
-    struct bu_vls *left;
-    struct bu_vls *right;
-    struct db_i *dbip;
-    int print_verbose_info;
+struct fp_sort_entry {
+    struct db_full_path *path;
+    size_t name_offset;
 };
+
+struct fp_sort_data {
+    const char *names;
+};
+
+/* Estimate enough storage to keep the common path rendering case from
+ * repeatedly growing the shared VLS.  Type labels are allowed extra room;
+ * bu_vls will still grow normally if an unusual label exceeds the estimate. */
+static size_t
+fp_name_estimate(const struct db_full_path *fp, int fp_flags)
+{
+    size_t estimate = 1; /* record-separating NUL */
+    size_t i;
+
+    if (!fp || fp->fp_len == 0)
+	return estimate;
+    if (!fp->fp_names)
+	return estimate + strlen("**NULL**");
+
+    for (i = 0; i < fp->fp_len; i++) {
+	size_t component = strlen(fp->fp_names[i]->d_namep) + 1; /* slash */
+
+	if (fp_flags & DB_FP_PRINT_BOOL)
+	    component += 2;
+	if ((fp_flags & DB_FP_PRINT_COMB_INDEX) && fp->fp_cinst[i])
+	    component += 16;
+	if (fp_flags & DB_FP_PRINT_TYPE)
+	    component += 32;
+
+	if (estimate > SIZE_MAX - component)
+	    return 0;
+	estimate += component;
+    }
+
+    return estimate;
+}
+
 static int
 fp_name_compare(const void *d1, const void *d2, void *arg)
 {
-    struct db_full_path *fp1 = *(struct db_full_path **)d1;
-    struct db_full_path *fp2 = *(struct db_full_path **)d2;
-    struct fp_cmp_vls *data = (struct fp_cmp_vls *)arg;
+    const struct fp_sort_entry *e1 = (const struct fp_sort_entry *)d1;
+    const struct fp_sort_entry *e2 = (const struct fp_sort_entry *)d2;
+    const struct fp_sort_data *data = (const struct fp_sort_data *)arg;
 
     BU_ASSERT(data != NULL);
 
-    if (fp1 == fp2)
+    if (e1 == e2 || e1->path == e2->path)
 	return 0;
-    else if (!fp1)
+    else if (!e1->path)
 	return 1;
-    else if (!fp2)
+    else if (!e2->path)
 	return -1;
 
-    bu_vls_trunc(data->left, 0);
-    bu_vls_trunc(data->right, 0);
-
-    db_fullpath_to_vls(data->left, fp1, data->dbip, data->print_verbose_info);
-    db_fullpath_to_vls(data->right, fp2, data->dbip, data->print_verbose_info);
-
-    return alphanum_impl(bu_vls_cstr(data->right), bu_vls_cstr(data->left), arg);
+    return alphanum_impl(data->names + e2->name_offset,
+			 data->names + e1->name_offset, arg);
 }
 
 
@@ -352,6 +383,7 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
     int all_local = 1;
     int print_verbose_info = DB_FP_PRINT_COMB_INDEX;
     int search_cnt = 0; /* used to keep a running total of all items printed from search */
+    int search_error = 0;
     struct bu_vls prefix = BU_VLS_INIT_ZERO;
     struct bu_vls bname = BU_VLS_INIT_ZERO;
     struct bu_vls search_string = BU_VLS_INIT_ZERO;
@@ -533,27 +565,36 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
     /* re-assemble search plan into a string - the db search functions break it out themselves */
     bu_vls_trunc(&search_string, 0);
     while (argv[plan_argv]) {
-	// If any of the plans have spaces in them, we need to protect them for
-	// bu_argv_from_string processing
-	if (strchr(argv[plan_argv], ' ') != NULL) {
-	    bu_vls_printf(&search_string, " \"%s\"", argv[plan_argv]);
-	} else {
-	    bu_vls_printf(&search_string, " %s", argv[plan_argv]);
+	const char *cp = argv[plan_argv];
+	/* Preserve each original argv element through db_search's
+	 * bu_argv_from_string pass.  Its grammar recognizes only double
+	 * quotes and backslash escapes, so quote every argument and escape
+	 * precisely those two characters.  In particular, do not apply Tcl
+	 * escaping to braces: search -exec uses literal {} placeholders. */
+	if (bu_vls_strlen(&search_string))
+	    bu_vls_putc(&search_string, ' ');
+	bu_vls_putc(&search_string, '"');
+	for (; *cp; cp++) {
+	    if (*cp == '"' || *cp == '\\')
+		bu_vls_putc(&search_string, '\\');
+	    bu_vls_putc(&search_string, *cp);
 	}
+	bu_vls_putc(&search_string, '"');
 	plan_argv++;
     }
 
-    /* If we have the quiet flag set, check now whether we have a valid plan.  Search will handle
-     * an invalid plan string, but it will report why it is invalid.  So in quiet mode,
-     * we need to identify the bad string and return now. */
-    if (wflag && db_search(NULL, flags, bu_vls_addr(&search_string), 0, NULL, NULL, clbk, u1, u2) != -1) {
+    /* Validate once before running any roots.  A NULL dbip returns -2 for a
+     * valid plan and -1 for an invalid plan.  Quiet mode suppresses the
+     * diagnostic and treats only the invalid-plan case as a quiet success. */
+    if (db_search(NULL, flags, bu_vls_addr(&search_string), 0, NULL, NULL,
+		clbk, u1, u2) == -1) {
 	bu_vls_free(&bname);
 	bu_vls_free(&prefix);
 	bu_vls_free(&search_string);
 	bu_argv_free(argc, argv);
 	_ged_free_search_set(search_set);
 	bu_vls_trunc(gedp->ged_result_str, 0);
-	return (wflag) ? BRLCAD_OK : BRLCAD_ERROR;
+	return wflag ? BRLCAD_OK : BRLCAD_ERROR;
     }
 
     /* Check if all of our searches are local or not */
@@ -569,27 +610,45 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
      * each path is treated as its own search */
     if (all_local) {
 	struct bu_ptbl *uniq_db_objs;
+	struct directory **batch_paths = NULL;
+	size_t batch_cnt = 0;
+	size_t batch_i = 0;
 
 	BU_ALLOC(uniq_db_objs, struct bu_ptbl);
 	BU_PTBL_INIT(uniq_db_objs);
 
 	for (i = 0; i < BU_PTBL_LEN(search_set); i++) {
-	    size_t path_cnt = 0;
+	    struct ged_search *search = (struct ged_search *)BU_PTBL_GET(search_set, i);
+	    if (search && search->paths)
+		batch_cnt += search->path_cnt;
+	}
+	if (batch_cnt > INT_MAX) {
+	    bu_log("search: too many local paths to evaluate in one search\n");
+	    search_error = 1;
+	    batch_cnt = 0;
+	}
+	if (batch_cnt)
+	    batch_paths = (struct directory **)bu_malloc(
+		    batch_cnt * sizeof(struct directory *), "batched local search paths");
+
+	for (i = 0; i < BU_PTBL_LEN(search_set); i++) {
 	    struct ged_search *search;
-	    struct directory *curr_path;
 
 	    search = (struct ged_search *)BU_PTBL_GET(search_set, i);
-	    if (!search || !search->paths)
+	    if (!search || !search->paths || !batch_paths)
 		continue;
-	    curr_path = search->paths[path_cnt];
-
-	    while (path_cnt < search->path_cnt) {
-		flags |= DB_SEARCH_RETURN_UNIQ_DP;
-		(void)db_search(uniq_db_objs, flags, bu_vls_addr(&search_string), 1, &curr_path, gedp->dbip, clbk, u1, u2);
-		path_cnt++;
-		curr_path = search->paths[path_cnt];
-	    }
+	    for (size_t path_i = 0; path_i < search->path_cnt; path_i++)
+		batch_paths[batch_i++] = search->paths[path_i];
 	}
+
+	flags |= DB_SEARCH_RETURN_UNIQ_DP;
+	if (batch_cnt && db_search(uniq_db_objs, flags,
+		bu_vls_addr(&search_string), (int)batch_cnt, batch_paths,
+		gedp->dbip, clbk, u1, u2) < 0) {
+	    search_error = 1;
+	}
+	if (batch_paths)
+	    bu_free(batch_paths, "batched local search paths");
 
 	search_cnt += search_print_objs_to_vls(uniq_db_objs, gedp->ged_result_str);
 
@@ -600,16 +659,6 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 
 	/* Search types are either mixed or all full path, so use the standard calls and print
 	 * the full output of each search */
-
-	struct fp_cmp_vls *sdata;
-
-	BU_GET(sdata, struct fp_cmp_vls);
-	BU_GET(sdata->left, struct bu_vls);
-	BU_GET(sdata->right, struct bu_vls);
-	bu_vls_init(sdata->left);
-	bu_vls_init(sdata->right);
-	sdata->dbip = gedp->dbip;
-	sdata->print_verbose_info = print_verbose_info;
 
 	for (i = 0; i < BU_PTBL_LEN(search_set); i++) {
 	    size_t j;
@@ -625,14 +674,10 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 		    BU_ALLOC(search_results, struct bu_ptbl);
 		    bu_ptbl_init(search_results, 8, "initialize search result table");
 
-		    {
-	    struct directory *dp;
-	    FOR_ALL_DIRECTORY_START(dp, gedp->dbip)
-		    if (dp->d_addr != RT_DIR_PHONY_ADDR) {
-			(void)db_search(search_results, flags, bu_vls_addr(&search_string), 1, &dp, gedp->dbip, clbk, u1, u2);
-		    }
-	    FOR_ALL_DIRECTORY_END;
-	    }
+		    if (db_search(search_results, flags,
+			    bu_vls_addr(&search_string), 0, NULL, gedp->dbip,
+			    clbk, u1, u2) < 0)
+			search_error = 1;
 
 		    search_cnt += search_print_objs_to_vls(search_results, gedp->ged_result_str);
 
@@ -642,12 +687,11 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 		    /* Make sure to clear the flag in case of subsequent searches of different types */
 		    flags = flags & ~(DB_SEARCH_FLAT);
 
-		} else {
-		    struct directory *curr_path = search->paths[path_cnt];
+		} else if (search->path_cnt > 0) {
+		    struct directory *curr_path = search->paths[0];
 
 		    while (path_cnt < search->path_cnt) {
 			struct bu_ptbl *search_results;
-			struct bu_vls fullpath_string = BU_VLS_INIT_ZERO;
 
 			BU_ALLOC(search_results, struct bu_ptbl);
 			bu_ptbl_init(search_results, 8, "initialize search result table");
@@ -655,29 +699,70 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 			switch (search->search_type) {
 			    case 0:
 				flags &= ~DB_SEARCH_RETURN_UNIQ_DP;
-				(void)db_search(search_results, flags, bu_vls_addr(&search_string), 1, &curr_path, gedp->dbip, clbk, u1, u2);
+				if (db_search(search_results, flags, bu_vls_addr(&search_string),
+					1, &curr_path, gedp->dbip, clbk, u1, u2) < 0)
+				    search_error = 1;
 
-				sr_len = j = BU_PTBL_LEN(search_results);
+				sr_len = BU_PTBL_LEN(search_results);
 				if (sr_len > 0) {
-				    bu_sort((void *)BU_PTBL_BASEADDR(search_results), sr_len, sizeof(struct directory *), fp_name_compare, (void *)sdata);
+				    struct fp_sort_entry *sorted_results;
+				    struct fp_sort_data sdata;
+				    struct bu_vls sort_names = BU_VLS_INIT_ZERO;
+				    size_t sort_names_estimate = 1; /* final VLS terminator */
 
+				    sorted_results = (struct fp_sort_entry *)bu_calloc(
+					sr_len, sizeof(struct fp_sort_entry), "cached search sort records");
+
+				    for (j = 0; j < sr_len; j++) {
+					struct db_full_path *dfptr =
+					    (struct db_full_path *)BU_PTBL_GET(search_results, j);
+					size_t path_estimate = fp_name_estimate(dfptr, print_verbose_info);
+					if (!path_estimate || sort_names_estimate > SIZE_MAX - path_estimate) {
+					    sort_names_estimate = 0;
+					    break;
+					}
+					sort_names_estimate += path_estimate;
+				    }
+				    if (sort_names_estimate)
+					bu_vls_extend(&sort_names, sort_names_estimate);
+
+				    /* Render every path once.  Store all names in one VLS so
+				     * sorting needs no per-result allocations and the same
+				     * cached strings can be reused for final output. */
+				    for (j = 0; j < sr_len; j++) {
+					struct db_full_path *dfptr =
+					    (struct db_full_path *)BU_PTBL_GET(search_results, j);
+					sorted_results[j].path = dfptr;
+					sorted_results[j].name_offset = bu_vls_strlen(&sort_names);
+					db_fullpath_to_vls(&sort_names, dfptr, gedp->dbip, print_verbose_info);
+					bu_vls_putc(&sort_names, '\0');
+				    }
+
+				    sdata.names = bu_vls_cstr(&sort_names);
+				    bu_sort((void *)sorted_results, sr_len,
+					    sizeof(struct fp_sort_entry), fp_name_compare, (void *)&sdata);
+
+				    j = sr_len;
 				    while (j-- > 0) {
-					struct db_full_path *dfptr = (struct db_full_path *)BU_PTBL_GET(search_results, j);
-					bu_vls_trunc(&fullpath_string, 0);
-					db_fullpath_to_vls(&fullpath_string, dfptr, gedp->dbip, print_verbose_info);
+					const char *sorted_name = sdata.names + sorted_results[j].name_offset;
 					if (search->prefix && bu_vls_strlen(search->prefix)) {
-					    bu_vls_printf(gedp->ged_result_str, "%s%s\n", bu_vls_cstr(search->prefix), bu_vls_cstr(&fullpath_string));
+					    bu_vls_printf(gedp->ged_result_str, "%s%s\n",
+						    bu_vls_cstr(search->prefix), sorted_name);
 					} else {
-					    bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_cstr(&fullpath_string));
+					    bu_vls_printf(gedp->ged_result_str, "%s\n", sorted_name);
 					}
 				    }
 
 				    search_cnt += sr_len;
+				    bu_vls_free(&sort_names);
+				    bu_free(sorted_results, "cached search sort records");
 				}
 				break;
 			    case 1:
 				flags |= DB_SEARCH_RETURN_UNIQ_DP;
-				(void)db_search(search_results, flags, bu_vls_addr(&search_string), 1, &curr_path, gedp->dbip, clbk, u1, u2);
+				if (db_search(search_results, flags, bu_vls_addr(&search_string),
+					1, &curr_path, gedp->dbip, clbk, u1, u2) < 0)
+				    search_error = 1;
 
 				search_cnt += search_print_objs_to_vls(search_results, gedp->ged_result_str);
 
@@ -689,19 +774,14 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 
 			db_search_free(search_results);
 			bu_free(search_results, "free search container");
-			bu_vls_free(&fullpath_string);
 			path_cnt++;
-			curr_path = search->paths[path_cnt];
+			if (path_cnt < search->path_cnt)
+			    curr_path = search->paths[path_cnt];
 		    }
 		}
 	    }
 	}
 
-	bu_vls_free(sdata->left);
-	bu_vls_free(sdata->right);
-	BU_PUT(sdata->left, struct bu_vls);
-	BU_PUT(sdata->right, struct bu_vls);
-	BU_PUT(sdata, struct fp_cmp_vls);
     }
 
     if (flags & DB_SEARCH_PRINT_TOTAL)
@@ -713,7 +793,7 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
     bu_vls_free(&search_string);
     bu_argv_free(argc, argv);
     _ged_free_search_set(search_set);
-    return BRLCAD_OK;
+    return search_error ? BRLCAD_ERROR : BRLCAD_OK;
 }
 
 

@@ -43,6 +43,10 @@ Creates _sample.g_ file with objects _sample1_ and _sample2_ in it.
 
 ====
 
+[[see_also]]
+== SEE ALSO
+
+*dump*(nged)
 
 [[author]]
 == AUTHOR

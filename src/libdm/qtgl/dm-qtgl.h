@@ -33,9 +33,7 @@
 // OSX has deprecated OpenGL since version 10.14
 #define GL_SILENCE_DEPRECATION 1
 
-#ifdef HAVE_GL_GL_H
-#  include <GL/gl.h>
-#endif
+#include "../dm-gl.h"
 
 #ifdef __cplusplus
 #  include <QtGlobal>

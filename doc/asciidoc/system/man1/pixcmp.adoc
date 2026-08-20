@@ -20,9 +20,9 @@ pixcmp [-b] [-s] [-d] [-q] [-i _SKIP_|_SKIP1:SKIP2_] [-n _COUNT_] _FILE1_ [_FILE
 *pixcmp* compares two *pix*(5) format images on a pixel-by-pixel basis and
 summarizes the differences.  Because the comparison is per-pixel it is
 independent of image resolution.  Each pixel is classified as matching, off by
-one in a single channel, off by many (a larger or multi-channel difference), or
-missing when the files differ in size.  A one-line summary of these counts is
-printed to standard output.
+one when at least one channel differs and every channel is within +/-1, off by
+many when any channel differs by more than 1, or missing when the files differ
+in size.  A one-line summary of these counts is printed to standard output.
 
 With *-b* the files are instead compared byte by byte.  Initial pixels (or
 bytes) may be discarded from either input, and the number of pixels (or bytes)
@@ -73,10 +73,12 @@ either via *-i* or as the trailing positional _SKIP1_ and _SKIP2_ arguments.
   No differences were found.
 
 *1*::
-  Only single-channel off-by-one differences were found.
+  Every differing pixel is within +/-1 in each color channel. With *-b*, every
+  differing byte differs by exactly 1.
 
 *2*::
-  Off-by-many or missing-pixel differences were found.
+  At least one channel (or byte with *-b*) differs by more than 1, or an input
+  value is missing.
 
 
 [[examples]]

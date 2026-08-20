@@ -178,7 +178,7 @@ En la línea de comandos cree rcc1.c tipeando: *comb rcc1.c u rcc1.s - sph1.r - 
 
 
 
-Note que podríamos haber logrado los mismos resultados en la línea de comandos mediante el uso del comando rm (Remove) para quitar el espacio de rcc1.s de base1.r y a continuación, añadir rcc1.c: *rm base1.r rcc1.s[Enter]* *r base1.r u rcc1.c[Enter]*
+Note que podríamos haber logrado los mismos resultados en la línea de comandos mediante el uso del comando rm (remove) para quitar el espacio de rcc1.s de base1.r y a continuación, añadir rcc1.c: *rm base1.r/rcc1.s[Enter]* *r base1.r u rcc1.c[Enter]*
 
 El resultado de esto sería un árbol como el siguiente:
 

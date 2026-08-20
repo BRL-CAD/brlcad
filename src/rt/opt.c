@@ -129,7 +129,6 @@ char *string_pix_end = (char *)NULL;    /* string spec of ending pixel */
 int pix_start = -1;                     /* pixel to start at */
 int pix_end = 0;                        /* pixel to end at */
 int matflag = 0;                        /* read matrix from stdin */
-int orientflag = 0;                     /* 1 means orientation has been set */
 int desiredframe = 0;                   /* frame to start at */
 int finalframe = -1;                    /* frame to halt at */
 int curframe = 0;                       /* current frame number,

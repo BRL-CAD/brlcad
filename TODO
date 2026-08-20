@@ -18,22 +18,20 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* verify MGED exit behavior on Windows - reports of non-zero exit
-  being returned.
+* coordinate with bext to have it produce a manifest of what
+  files need strclear/plief processing of various types so
+  we don't need to redo the characterization pass every time
+  we configure.  We have strclear and plief in bext, so that
+  repo should be capable of doing the work for us as a post
+  build step whenever bext changes.
 
-* update change policy to 1) expand definition of minimally impacting
-  to allow an assuption of non-embedding in function calls (i.e., no
-  function or macro calls as function arguments), 2) migrate change
-  tracking to a doc subfolder, 3) split deprecation from minimally
-  impacting to separate docs, 4) invert minimally impacting list to be
-  a functional description of the change (e.g., "rename A -> B", "drop
-  arg 3 C", etc), 5) auto-generate and publish robust regular
-  expressions from the functional descriptions, 6) publish an
-  auto-update script that warns about deprecated use and/or applies
-  minimally impacting changes to a given file.
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
+
+* DEFERRED mouse sweep rect
+
+* DEFERRED apropos (view command
 
 * fix ARB8 promotion to BoT, so calls between prep and shot don't get
   inconsistent data (soltab needs to match).
@@ -47,6 +45,9 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* reconcile VCOMB2, VBLEND2, and VADD2SCALE along with corresponding
+  3d/4d api consistency in vmath.h
 
 * make sph sph
   clone -i 1 -t 1000 0 0 -n 100 sph
@@ -349,12 +350,6 @@ lookup check to ensure none are missing.
   or there should be some other indication that a file was specified
   and is open.
 
-* the mged tutorials apparently do not mention the tops command (even
-  once), but really should as it's the starting point for discovering
-  what is in databases that are opened or imported.
-
-* add metaball scaling feature (presently in a tclscript)
-
 * ability to visualize metaball centerpoints and with/without
   translucency.
 
@@ -364,6 +359,8 @@ lookup check to ensure none are missing.
   points, no interpolation.
 
 * add script/command for changing metaball weights in masse
+
+* add a proper 'metaball' command with subcommands
 
 * gdiff in mged appears to be broken?  get "no primitives found" on
   second comb when specifying two combs (gdiff comb1 comb2).  UPDATE -
@@ -500,8 +497,6 @@ lookup check to ensure none are missing.
     function in lots of places (e.g., the ged_arb() function).
 
 * add unit tests for primitive callback routines (e.g., bbox).
-
-* put bu_num_print() to use
 
 * use bu_gettime() in rt -l8 heatgraph visualization mode
 
@@ -641,8 +636,6 @@ lookup check to ensure none are missing.
 
 * closing the graphics window brings down X11 on Mac due to a bad
   context.  fix or revert recent close window behavior.
-
-* V&V bwcrop, pixembed are behaving correctly, as documented
 
 * implement unit tests for bu dirent / stat API
 
@@ -977,11 +970,6 @@ lookup check to ensure none are missing.
 
 * test tgf-g conversion with "ring-mode" geometry
 
-* fix metaball/adjust.. wipes out all metaball values with:
-  adjust metaball 1 1 1
-  just gives usage with:
-  adjust metaball 1 1
-
 * test for -msse3 requirement for __SSE.*__ definition
 
 * improve sse run-time detection so illegal instruction crashes are
@@ -999,11 +987,6 @@ lookup check to ensure none are missing.
   meshes.  ~72 files reference the faces/face_normals members.
   [FAN-OUT: yes -- per-file/per-converter sweep with a verification
   pass.]
-
-* pixdiff reports bytes, but reports incorrect (off-by-one) bytes for
-  .bw input files.  cause is due to tool assuming input is rgb
-  triplets (even though output is bytes, wtf?).  should probably
-  report pixels and/or have a -b option for handling byte/bw input.
 
 * investigate why epa primitive is so sensitive to coarse absolute
   value changes (run csgbrep, tol abs=1, facetize and get 321k poly)
@@ -1762,12 +1745,6 @@ ATTRIBUTES
 
 * implement an option to "attr upgrade" for reading upgrade/downgrade
   plugins/instructions from an external file for 3rd party use.
-
-* prevent nirt from outputting a trailing space after values when
-  there are no attributes to be displayed.  the problem is in the nirt
-  format strings where they use " %s" for displaying any attributes.
-  need to left-pad a space conditionally, perhaps by supporting %*s
-  and sizeof(var).
 
 * add additional support for user-specified sorting for the attr
   command when new attribute attributes are added (e.g., creation
@@ -2605,10 +2582,6 @@ DOCUMENTATION
   various image formats like png just by specifying an output file
   extension.
 
-* document gqa centroid and moments of inertia options
-
-* document the new NURBS/BREP primitive, capabilities and limitations
-
 
   Need to revisit utility of spherical mapping, used by sh_spm and
   sh_points, used for environment mapping (e.g., stars):
@@ -2647,13 +2620,6 @@ DOCUMENTATION
     step-g
     tgf-g
 
-
-* write up some documentation on other build tools besides make -
-  CMake supports other generators, wouldn't hurt to detail how to
-  trigger builds in them (MSVC is partially covered, make sure to
-  coverage is complete - others include Eclipse, XCode once we get the
-  kinks ironed out there, CodeBlocks.  Ninja build tool and its
-  CMake support are worth documenting too.
 
 * all of the rt* tracers share common code and common options, but do
   not share common documentation.  refactor documentation to use
@@ -2753,10 +2719,6 @@ DOCUMENTATION
 
 * BRL-CAD Manifesto
 	Vision & Scope
-
-* BRL-CAD Taxonomy
-	Description of the common terminology used throughout BRL-CAD,
-	conventions employed, and tool categorization.
 
 * Implementing a BRL-CAD Primitive
 	How-To for creating a new primitive in BRL-CAD that can be

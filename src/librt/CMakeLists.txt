@@ -47,25 +47,17 @@ set(
   primitives/vol/edvol.c
 )
 
+set(RT_ECMD_SCANNER_SRC "${CMAKE_CURRENT_SOURCE_DIR}/primitives/rt_ecmd_scanner.cpp")
+set(RT_ECMD_SCANNER_TARGET rt_ecmd_scanner)
+add_executable(${RT_ECMD_SCANNER_TARGET} EXCLUDE_FROM_ALL "${RT_ECMD_SCANNER_SRC}")
+set_target_properties(${RT_ECMD_SCANNER_TARGET} PROPERTIES FOLDER "BRL-CAD Build Utilities")
+set(RT_ECMD_SCANNER "$<TARGET_FILE:${RT_ECMD_SCANNER_TARGET}>")
+
 # NOTE - for now this is an internal, build-only header and
 # does not have install logic associated with it.  Eventually,
 # if this API proves out and becomes stable, we may end up
 # installing rt_ecmds.h.  Applications external to the main
 # BRL-CAD build may also want to exploit the callback API.
-set(RT_ECMD_SCANNER ${CMAKE_BINARY_DIR}/CMakeTmp/rt_ecmd_scanner${CMAKE_EXECUTABLE_SUFFIX})
-set(RT_ECMD_SCANNER_SRC "${CMAKE_CURRENT_SOURCE_DIR}/primitives/rt_ecmd_scanner.cpp")
-try_compile(
-  rt_ecmd_scanner
-  "${CMAKE_BINARY_DIR}/CMakeTmp"
-  SOURCES "${RT_ECMD_SCANNER_SRC}"
-  OUTPUT_VARIABLE RT_SCANNER_BLD_OUT
-  COPY_FILE "${RT_ECMD_SCANNER}"
-)
-if (NOT EXISTS ${RT_ECMD_SCANNER})
-  message(FATAL_ERROR "Unable to build edit command scanner: ${RT_SCANNER_BLD_OUT}")
-endif()
-distclean(${RT_ECMD_SCANNER})
-
 set(RT_PFILE_OUT "${CMAKE_BINARY_DIR}/CMakeTmp/rt_primitive_files.txt")
 set(RT_PFILE_IN)
 foreach(esf ${LIBRT_PRIMEDIT_SOURCES})
@@ -78,9 +70,10 @@ distclean(${RT_PFILE_OUT})
 set(RT_ECMD_HDR "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/brlcad/rt/rt_ecmds.h")
 add_custom_command(
   OUTPUT ${RT_ECMD_HDR}
-  COMMAND ${RT_ECMD_SCANNER} ${RT_PFILE_OUT} ${RT_ECMD_HDR}
+  COMMAND ${BRLCAD_SANITIZER_BUILD_TOOL_LAUNCHER}
+    ${RT_ECMD_SCANNER} ${RT_PFILE_OUT} ${RT_ECMD_HDR}
   COMMENT "[RT_ECMD_SCANNER] Scanning for RT editing mode flags"
-  DEPENDS "${RT_ECMD_SCANNER_SRC}" ${RT_PFILE_IN}
+  DEPENDS ${RT_ECMD_SCANNER_TARGET} ${RT_PFILE_OUT} ${RT_PFILE_IN}
 )
 distclean(${RT_ECMD_HDR})
 foreach(esf ${LIBRT_PRIMEDIT_SOURCES})
@@ -332,11 +325,14 @@ set(
   prcomb.c
   primitives/bot/bot_edge.h
   primitives/bot/bot_wireframe.cpp
+  primitives/bot/edbot.c
   primitives/bot/tie.c
   primitives/bot/tie_kdtree.c
   primitives/bot/tieprivate.h
   primitives/brep/brep_debug.h
   primitives/brep/brep_local.h
+  primitives/brep/primitive_brep.h
+  primitives/sketch/sketch_brep.h
   primitives/datum/datum.h
   primitives/dsp/dsp.h
   primitives/dsp/TerraScape.hpp
@@ -376,7 +372,6 @@ set(
   test_brepreport.cpp
   test_dbio.c
   test_nurbsfit.cpp
-  test_root3-subd.cpp
   uvpoints.cpp
 )
 cmakefiles(${librt_ignored_files})
@@ -441,14 +436,14 @@ set(
 # Include directories needed by librt users
 # ${GTE_INCLUDE_DIR} is still needed by primitives/bot/bot_oriented_bbox.cpp
 # which uses GTE's ContOrientedBox3.h.
-set(RT_INCLUDE_DIRS ${OPENNURBS_INCLUDE_DIRS} ${OPENCL_INCLUDE_DIRS}
-  ${GTE_INCLUDE_DIR})
+set(RT_INCLUDE_DIRS ${OPENCL_INCLUDE_DIRS} ${GTE_INCLUDE_DIR})
 
 # locally used but not needed by users of the library
 set(
   RT_LOCAL_INCLUDE_DIRS
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/vds
+  ${BRLCAD_SOURCE_DIR}/src/libbu
   ${REGEX_INCLUDE_DIRS}
 )
 # FIXME: needs materialX
@@ -477,6 +472,7 @@ brlcad_addlib(librt "${LIBRT_SOURCES}" "${RT_INCLUDE_DIRS}" "${RT_LOCAL_INCLUDE_
     rt_init.cpp
     search.cpp
     search_old.cpp
+    primitives/annot/annot.c
     primitives/vol/vol_brep.cpp
     primitives/dsp/dsp.c
     primitives/ebm/ebm.c
@@ -500,8 +496,6 @@ brlcad_addlib(librt "${LIBRT_SOURCES}" "${RT_INCLUDE_DIRS}" "${RT_LOCAL_INCLUDE_
 )
 
 # set(MATERIALX_LIBS ${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXCore.lib;${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXFormat.lib;${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXGenOsl.lib;${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXGenShader.lib)
-# BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${RT_INCLUDE_DIRS}" "${RT_LOCAL_INCLUDE_DIRS}" PUBLIC_LIBS libbrep libnmg libbg libbv libbn libbu PRIVATE_LIBS ${MATERIALX_LIBS} ${OPENCL_LIBS} ${OPENNURBS_LIBRARIES} ${REGEX_LIBRARIES} ${WINSOCK_LIB} ${RPCRT_LIB} ${STDCXX_LIBRARIES})
-
 set_target_properties(librt PROPERTIES VERSION 20.0.1 SOVERSION 20)
 if(HIDE_INTERNAL_SYMBOLS)
   set_property(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "TIE_DLL_EXPORTS")
@@ -560,13 +554,15 @@ endif(MUSL_LD)
 #BRLCAD_ADDEXEC(test_bot2nurbs test_bot2nurbs.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
 #BRLCAD_ADDEXEC(test_brepreport test_brepreport.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
 #BRLCAD_ADDEXEC(test_nurbsfit test_nurbsfit.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
-#BRLCAD_ADDEXEC(test_root3-subd test_root3-subd.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
 #BRLCAD_ADDEXEC(test_surfacetree test_surfacetree.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
 
 add_subdirectory(tests)
 
 cmakefiles(
   CMakeLists.txt
+  bot2nurbs.txt
+  brep_csg_boolean.txt
+  kigumi_todo.txt
   vds/README
   vds/COPYING
   vds/vds.h

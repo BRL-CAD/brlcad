@@ -30,7 +30,9 @@ row or column slightly inside the actual edge of the input.
 If no _in.pix_ is given, the image is read from standard input; the embedded
 result is always written to standard output. Both input and output dimensions
 default to 512x512. The output size must be greater than or equal to the input
-size, and the border inset must be smaller than the input width.
+size. The border inset must leave at least one row and one column between the
+discarded edges; equivalently, each input dimension must be greater than twice
+the inset.
 
 [[options]]
 == OPTIONS

@@ -43,7 +43,7 @@ private:
     static EntityInstanceFunc GetInstance;
 
 protected:
-    Source make_or_buy;
+    int make_or_buy;
 
 public:
     ProductDefinitionFormationWithSpecifiedSource();

@@ -12,7 +12,6 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
       UG_DIRS
       "${CMAKE_CURRENT_BINARY_DIR}/../../../include"
       "${CMAKE_CURRENT_SOURCE_DIR}/../../../include"
-      "${OPENNURBS_INCLUDE_DIRS}"
       ${ZLIB_INCLUDE_DIRS}
       ${REGEX_INCLUDE_DIRS}
       ${TCL_INCLUDE_PATH}
@@ -51,7 +50,6 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
       set_property(TARGET ug-g APPEND PROPERTY COMPILE_DEFINITIONS "DB5_DLL_IMPORTS")
       set_property(TARGET ug-g APPEND PROPERTY COMPILE_DEFINITIONS "WDB_DLL_IMPORTS")
       set_property(TARGET ug-g APPEND PROPERTY COMPILE_DEFINITIONS "TIE_DLL_IMPORTS")
-      set_property(TARGET ug-g APPEND PROPERTY COMPILE_DEFINITIONS "OPENNURBS_IMPORTS")
       set_property(TARGET ug-g APPEND PROPERTY COMPILE_DEFINITIONS "TINYCTHREAD_DLL_IMPORTS")
     endif(HIDE_INTERNAL_SYMBOLS)
   endif(BRLCAD_ENABLE_TCL)
@@ -59,6 +57,10 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   # Distcheck file list
   cmakefiles(${ug_g_srcs} conv.h log.h shim.h ug-g.1 ug_misc.h)
   cmakefiles(CMakeLists.txt)
+
+  # On some platforms distclean has additional cleanup to do
+  distclean("${CMAKE_BINARY_DIR}/${BIN_DIR}/ug-g.pdb")
+
 endif(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
 
 # Local Variables:

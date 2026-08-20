@@ -47,6 +47,7 @@ class Representation : virtual public STEPEntity
 {
 private:
     static std::string entityname;
+    static std::string constructive_entityname;
     static EntityInstanceFunc GetInstance;
 
 protected:
@@ -61,6 +62,7 @@ public:
     double GetLengthConversionFactor();
     double GetPlaneAngleConversionFactor();
     double GetSolidAngleConversionFactor();
+    double GetLengthUncertainty();
     string GetRepresentationContextName();
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
     virtual void Print(int level);

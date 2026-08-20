@@ -32,6 +32,10 @@
 #define CLASSNAME "ToroidalSurface"
 #define ENTITYNAME "Toroidal_Surface"
 string ToroidalSurface::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)ToroidalSurface::Create);
+/* A degenerate torus restricts the self-intersecting supertype surface to one
+ * of its two manifold sheets. */
+string ToroidalSurface::degenerate_entityname = Factory::RegisterClass(
+    "Degenerate_Toroidal_Surface", (FactoryMethod)ToroidalSurface::Create);
 
 ToroidalSurface::ToroidalSurface()
 {
@@ -39,6 +43,8 @@ ToroidalSurface::ToroidalSurface()
     id = 0;
     major_radius = 0.0;
     minor_radius = 0.0;
+    is_degenerate = false;
+    select_outer = true;
 }
 
 ToroidalSurface::ToroidalSurface(STEPWrapper *sw, int step_id)
@@ -47,6 +53,8 @@ ToroidalSurface::ToroidalSurface(STEPWrapper *sw, int step_id)
     id = step_id;
     major_radius = 0.0;
     minor_radius = 0.0;
+    is_degenerate = false;
+    select_outer = true;
 }
 
 ToroidalSurface::~ToroidalSurface()
@@ -81,12 +89,30 @@ bool
 ToroidalSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
     step = sw;
-    id = sse->STEPfile_id;
+    const int source_id = sse->STEPfile_id;
+    id = source_id;
+    const char *source_type = sse->EntityName();
+    is_degenerate = source_type &&
+	std::string(source_type) == "Degenerate_Toroidal_Surface";
+    select_outer = true;
 
     if (!ElementarySurface::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Surface." << std::endl;
 	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
+    }
+
+    if (is_degenerate) {
+	const Boolean selection = step->getBooleanAttribute(sse,
+	    "select_outer");
+	if (selection != BTrue && selection != BFalse) {
+	    step->RecordDiagnostic(brlcad::step::DiagnosticSeverity::Error,
+		id, "DEGENERATE_TOROIDAL_SURFACE", "select_outer",
+		"required sheet-selection attribute is unset or invalid");
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
+	    return false;
+	}
+	select_outer = selection == BTrue;
     }
 
     // need to do this for local attributes to makes sure we have
@@ -95,6 +121,11 @@ ToroidalSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     major_radius = step->getRealAttribute(sse, "major_radius");
     minor_radius = step->getRealAttribute(sse, "minor_radius");
+
+    /* Base-class loaders may inspect STEPcode supertype views whose synthetic
+     * instances do not carry the Part 21 identifier.  Diagnostics and repair
+     * records belong to the concrete TOROIDAL_SURFACE instance. */
+    id = source_id;
 
     sw->entity_status[id] = STEP_LOADED;
 
@@ -107,6 +138,11 @@ ToroidalSurface::Print(int level)
     TAB(level);
     std::cout << CLASSNAME << ":" << name << "(";
     std::cout << "ID:" << STEPid() << ")" << std::endl;
+    if (is_degenerate) {
+	TAB(level + 1);
+	std::cout << "select_outer:" << (select_outer ? ".T." : ".F.")
+	    << std::endl;
+    }
 
     TAB(level + 1);
     std::cout << "major_radius: " << major_radius << std::endl;

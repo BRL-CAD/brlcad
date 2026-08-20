@@ -30,6 +30,7 @@
 #include "FaceSurface.h"
 #include "QuasiUniformSurface.h"
 #include "FaceOuterBound.h"
+#include "Surface.h"
 
 #define CLASSNAME "FaceSurface"
 #define ENTITYNAME "Face_Surface"
@@ -79,6 +80,13 @@ FaceSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     // need to do this for local attributes to makes sure we have
     // the actual entity and not a complex/supertype parent
     sse = step->getEntity(sse, ENTITYNAME);
+    if (!sse) {
+	sw->RecordDiagnostic(brlcad::step::DiagnosticSeverity::Error, id,
+	    "FACE_SURFACE", "face_geometry",
+	    "could not materialize the required FACE_SURFACE component");
+	sw->entity_status[id] = STEP_LOAD_ERROR;
+	return false;
+    }
 
     if (face_geometry == NULL) {
 	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "face_geometry");
@@ -89,6 +97,11 @@ FaceSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 		sw->entity_status[id] = STEP_LOAD_ERROR;
 	    }
 	    //face_geometry->Print(0);
+	} else {
+	    sw->RecordDiagnostic(brlcad::step::DiagnosticSeverity::Error, id,
+		"FACE_SURFACE", "face_geometry",
+		"missing required face geometry");
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
 	}
     }
 
@@ -121,6 +134,12 @@ FaceSurface::Print(int level)
     std::cout << "Inherited Attributes:" << std::endl;
     Face::Print(level + 1);
     GeometricRepresentationItem::Print(level + 1);
+}
+
+size_t
+FaceSurface::PullbackSpanEstimate() const
+{
+    return face_geometry ? face_geometry->PullbackSpanEstimate() : 1;
 }
 
 STEPEntity *

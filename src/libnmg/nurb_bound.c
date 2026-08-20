@@ -74,7 +74,9 @@ nmg_nurb_s_bound(struct face_g_snurb *srf, point_t bmin, point_t bmax)
 		HPRINT("mesh point", p_ptr);
 		bu_log("nurb_s_bound:  H too small\n");
 	    } else {
-		HDIVIDE(tmp_pt, p_ptr);
+		hvect_t hpnt = HINIT_IDN;
+		HDIVIDE(hpnt, p_ptr);
+		VMOVE(tmp_pt, hpnt);
 		VMINMAX(bmin, bmax, tmp_pt);
 	    }
 	}
@@ -113,7 +115,9 @@ nmg_nurb_c_bound(struct edge_g_cnurb *crv, point_t bmin, point_t bmax)
 		HPRINT("mesh point", p_ptr);
 		bu_log("nurb_c_bound:  H too small\n");
 	    } else {
-		HDIVIDE(tmp_pt, p_ptr);
+		hvect_t hpnt = HINIT_IDN;
+		HDIVIDE(hpnt, p_ptr);
+		VMOVE(tmp_pt, hpnt);
 		VMINMAX(bmin, bmax, tmp_pt);
 	    }
 	}

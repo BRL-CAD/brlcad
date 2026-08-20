@@ -317,6 +317,9 @@ extern "C" {
 /** @brief number of fastf_t's per plane_t */
 #define ELEMENTS_PER_PLANE	4
 
+/** @brief number of fastf_t's per quat_t */
+#define ELEMENTS_PER_QUAT	4
+
 /** @brief number of fastf_t's per mat_t */
 #define ELEMENTS_PER_MAT	(ELEMENTS_PER_PLANE*ELEMENTS_PER_PLANE)
 
@@ -454,10 +457,10 @@ typedef enum vmath_matrix_component_ {
  * concerted effort to coordinate prior to a release.  first step is
  * to evaluate impact on performance and behavior of our tests.
  */
-#  define NEAR_ZERO(val, epsilon)	(!(((val) < -epsilon) || ((val) > epsilon)))
-#  define NEAR_ZERO(val, epsilon)	(!(((val) < -epsilon)) && !(((val) > epsilon)))
+#  define NEAR_ZERO(val, epsilon)	(!(((val) < -(epsilon)) || ((val) > (epsilon))))
+#  define NEAR_ZERO(val, epsilon)	(!(((val) < -(epsilon))) && !(((val) > (epsilon))))
 #else
-#  define NEAR_ZERO(val, epsilon)	(((val) > -epsilon) && ((val) < epsilon))
+#  define NEAR_ZERO(val, epsilon)	(((val) > -(epsilon)) && ((val) < (epsilon)))
 #endif
 
 /**
@@ -465,9 +468,9 @@ typedef enum vmath_matrix_component_ {
  * a specified epsilon distance from zero.
  */
 #define VNEAR_ZERO(v, tol) \
-	(NEAR_ZERO(v[X], tol) \
-	 && NEAR_ZERO(v[Y], tol) \
-	 && NEAR_ZERO(v[Z], tol))
+	(NEAR_ZERO(v[X], (tol)) \
+	 && NEAR_ZERO(v[Y], (tol)) \
+	 && NEAR_ZERO(v[Z], (tol)))
 
 /**
  * Test for all elements of `v' being smaller than `tol'.
@@ -477,13 +480,13 @@ typedef enum vmath_matrix_component_ {
 
 /**
  * Test for all elements of `v' being smaller than `tol'.
- * Version for degree 2 vectors.
+ * Version for homogeneous 4D vectors.
  */
 #define HNEAR_ZERO(v, tol) \
-    (NEAR_ZERO(v[X], tol) \
-     && NEAR_ZERO(v[Y], tol) \
-     && NEAR_ZERO(v[Z], tol) \
-     && NEAR_ZERO(h[W], tol))
+    (NEAR_ZERO(v[X], (tol)) \
+     && NEAR_ZERO(v[Y], (tol)) \
+     && NEAR_ZERO(v[Z], (tol)) \
+     && NEAR_ZERO(v[W], (tol)))
 
 
 /**
@@ -573,18 +576,23 @@ typedef enum vmath_matrix_component_ {
 /** @brief Compute distance from a point to a plane. */
 #define DIST_PNT_PLANE(_pt, _pl) (VDOT(_pt, _pl) - (_pl)[W])
 
-/** @brief Compute distance between two points. */
+/** @brief Compute squared distance between two 3D points. */
 #define DIST_PNT_PNT_SQ(_a, _b) \
-	((_a)[X]-(_b)[X])*((_a)[X]-(_b)[X]) + \
-	((_a)[Y]-(_b)[Y])*((_a)[Y]-(_b)[Y]) + \
-	((_a)[Z]-(_b)[Z])*((_a)[Z]-(_b)[Z])
+	(((_a)[X]-(_b)[X])*((_a)[X]-(_b)[X]) + \
+	 ((_a)[Y]-(_b)[Y])*((_a)[Y]-(_b)[Y]) + \
+	 ((_a)[Z]-(_b)[Z])*((_a)[Z]-(_b)[Z]))
+
+/** @brief Compute distance between two 3D points. */
 #define DIST_PNT_PNT(_a, _b) sqrt(DIST_PNT_PNT_SQ(_a, _b))
 
-/** @brief Compute distance between two 2D points. */
+/** @brief Compute squared distance between two 2D points. */
 #define DIST_PNT2_PNT2_SQ(_a, _b) \
-	((_a)[X]-(_b)[X])*((_a)[X]-(_b)[X]) + \
-	((_a)[Y]-(_b)[Y])*((_a)[Y]-(_b)[Y])
+	(((_a)[X]-(_b)[X])*((_a)[X]-(_b)[X]) + \
+	 ((_a)[Y]-(_b)[Y])*((_a)[Y]-(_b)[Y]))
+
+/** @brief Compute distance between two 2D poitns. */
 #define DIST_PNT2_PNT2(_a, _b) sqrt(DIST_PNT2_PNT2_SQ(_a, _b))
+
 
 /** @brief set translation values of 4x4 matrix with x, y, z values. */
 #define MAT_DELTAS(_m, _x, _y, _z) do { \
@@ -851,8 +859,8 @@ typedef enum vmath_matrix_component_ {
 
 /** @brief Set all elements of N-vector to same scalar value. */
 #define VSETALLN(v, s, n) do { \
-	size_t _j; \
-	for (_j=0; _j < (size_t)(n); _j++) v[_j]=(s); \
+	int _j; \
+	for (_j=0; _j < (int)(n); _j++) v[_j]=(s); \
     } while (0)
 
 
@@ -879,8 +887,8 @@ typedef enum vmath_matrix_component_ {
 
 /** @brief Transfer vector of length `n' at `v' to vector at `o'. */
 #define VMOVEN(o, v, n) do { \
-	size_t _vmove; \
-	for (_vmove = 0; _vmove < (size_t)(n); _vmove++) { \
+	int _vmove; \
+	for (_vmove = 0; _vmove < (int)(n); _vmove++) { \
 	    (o)[_vmove] = (v)[_vmove]; \
 	} \
     } while (0)
@@ -946,8 +954,8 @@ typedef enum vmath_matrix_component_ {
  * `o'.
  */
 #define VADD2N(o, a, b, n) do { \
-	size_t _vadd2; \
-	for (_vadd2 = 0; _vadd2 < (size_t)(n); _vadd2++) { \
+	int _vadd2; \
+	for (_vadd2 = 0; _vadd2 < (int)(n); _vadd2++) { \
 		(o)[_vadd2] = (a)[_vadd2] + (b)[_vadd2]; \
 	} \
     } while (0)
@@ -988,8 +996,8 @@ typedef enum vmath_matrix_component_ {
  * `a', store result at `o'.
  */
 #define VSUB2N(o, a, b, n) do { \
-	size_t _vsub2; \
-	for (_vsub2 = 0; _vsub2 < (size_t)(n); _vsub2++) { \
+	int _vsub2; \
+	for (_vsub2 = 0; _vsub2 < (int)(n); _vsub2++) { \
 		(o)[_vsub2] = (a)[_vsub2] - (b)[_vsub2]; \
 	} \
     } while (0)
@@ -1018,8 +1026,8 @@ typedef enum vmath_matrix_component_ {
 
 /** @brief Vectors:  O = A - B - C for vectors of length `n'. */
 #define VSUB3N(o, a, b, c, n) do { \
-	size_t _vsub3; \
-	for (_vsub3 = 0; _vsub3 < (size_t)(n); _vsub3++) { \
+	int _vsub3; \
+	for (_vsub3 = 0; _vsub3 < (int)(n); _vsub3++) { \
 		(o)[_vsub3] = (a)[_vsub3] - (b)[_vsub3] - (c)[_vsub3]; \
 	} \
     } while (0)
@@ -1051,8 +1059,8 @@ typedef enum vmath_matrix_component_ {
  * result at `o'.
  */
 #define VADD3N(o, a, b, c, n) do { \
-	size_t _vadd3; \
-	for (_vadd3 = 0; _vadd3 < (size_t)(n); _vadd3++) { \
+	int _vadd3; \
+	for (_vadd3 = 0; _vadd3 < (int)(n); _vadd3++) { \
 		(o)[_vadd3] = (a)[_vadd3] + (b)[_vadd3] + (c)[_vadd3]; \
 	} \
     } while (0)
@@ -1093,8 +1101,8 @@ typedef enum vmath_matrix_component_ {
  * result at `o'.
  */
 #define VADD4N(o, a, b, c, d, n) do { \
-	size_t _vadd4;		   \
-	for (_vadd4 = 0; _vadd4 < (size_t)(n); _vadd4++) { \
+	int _vadd4;		   \
+	for (_vadd4 = 0; _vadd4 < (int)(n); _vadd4++) { \
 		(o)[_vadd4] = (a)[_vadd4] + (b)[_vadd4] + (c)[_vadd4] + (d)[_vadd4]; \
 	} \
     } while (0)
@@ -1126,13 +1134,17 @@ typedef enum vmath_matrix_component_ {
  * result at `o'
  */
 #define VSCALEN(o, v, s, n) do { \
-	size_t _vscale; \
-	for (_vscale = 0; _vscale < (size_t)(n); _vscale++) { \
+	int _vscale; \
+	for (_vscale = 0; _vscale < (int)(n); _vscale++) { \
 		(o)[_vscale] = (v)[_vscale] * (s); \
 	} \
     } while (0)
 
-/** @brief Normalize vector `v' to be a unit vector. */
+/**
+ * @brief Normalize vector `v' to be a unit vector.
+ *
+ * If input is near a zero-vector, we clamp to zero for stability.
+ */
 #define VUNITIZE(v) do { \
 	double _f = MAGSQ(v); \
 	if (! NEAR_EQUAL(_f, 1.0, VUNITIZE_TOL)) { \
@@ -1146,7 +1158,11 @@ typedef enum vmath_matrix_component_ {
 	} \
     } while (0)
 
-/** @brief Normalize 2D vector `v' to be a unit vector. */
+/**
+ * @brief Normalize 2D vector `v' to be a unit vector.
+ *
+ * If input is near a zero-vector, we clamp to zero for stability.
+ */
 #define V2UNITIZE(v) do { \
 	double _f = MAG2SQ(v); \
 	if (! NEAR_EQUAL(_f, 1.0, VUNITIZE_TOL)) { \
@@ -1175,9 +1191,9 @@ typedef enum vmath_matrix_component_ {
  * result by `s'.  Often used to find the midpoint.
  */
 #define VADD2SCALEN(o, a, b, s, n) do { \
-	size_t _vadd2scale; \
+	int _vadd2scale; \
 	for (_vadd2scale = 0; \
-	     _vadd2scale < (size_t)(n); \
+	     _vadd2scale < (int)(n); \
 	     _vadd2scale++) { \
 	    (o)[_vadd2scale] = ((a)[_vadd2scale] + (b)[_vadd2scale]) * (s); \
 	} \
@@ -1198,9 +1214,9 @@ typedef enum vmath_matrix_component_ {
  * scale result by `s'.
  */
 #define VSUB2SCALEN(o, a, b, s, n) do { \
-	size_t _vsub2scale; \
+	int _vsub2scale; \
 	for (_vsub2scale = 0; \
-	     _vsub2scale < (size_t)(n); \
+	     _vsub2scale < (int)(n); \
 	     _vsub2scale++) { \
 	    (o)[_vsub2scale] = ((a)[_vsub2scale] - (b)[_vsub2scale]) * (s); \
 	} \
@@ -1219,94 +1235,62 @@ typedef enum vmath_matrix_component_ {
  * @brief Combine together 2 vectors of length `n', both scaled by
  * scalars.
  */
-#define VCOMB2N(o, sa, a, sb, b, n) do { \
-	size_t _vcomb2; \
+#define VCOMB2N(o, sa, va, sb, vb, n) do { \
+	int _vcomb2; \
 	for (_vcomb2 = 0; \
-	     _vcomb2 < (size_t)(n); \
+	     _vcomb2 < (int)(n); \
 	     _vcomb2++) { \
 	    (o)[_vcomb2] = (sa) * (va)[_vcomb2] + (sb) * (vb)[_vcomb2]; \
 	} \
     } while (0)
 
-/**
- * Join three scaled vectors to a base `a', storing the result in `o'.
- */
-#define VJOIN3(o, a, sb, b, sc, c, sd, d) do { \
-	(o)[X] = (a)[X] + (sb)*(b)[X] + (sc)*(c)[X] + (sd)*(d)[X]; \
-	(o)[Y] = (a)[Y] + (sb)*(b)[Y] + (sc)*(c)[Y] + (sd)*(d)[Y]; \
-	(o)[Z] = (a)[Z] + (sb)*(b)[Z] + (sc)*(c)[Z] + (sd)*(d)[Z]; \
-    } while (0)
-
 
 /**
- * @brief Compose 3D vector at `o' of:
- * Vector at `a' plus
- * scalar `sb' times vector at `b' plus
- * scalar `sc' times vector at `c'
+ * @brief Combine together 3 vectors, scaled by scalars.
  */
-#define VJOIN2(o, a, sb, b, sc, c) do { \
-	(o)[X] = (a)[X] + (sb) * (b)[X] + (sc) * (c)[X]; \
-	(o)[Y] = (a)[Y] + (sb) * (b)[Y] + (sc) * (c)[Y]; \
-	(o)[Z] = (a)[Z] + (sb) * (b)[Z] + (sc) * (c)[Z]; \
+#define VCOMB3(o, sa, va, sb, vb, sc, vc) do { \
+	(o)[X] = (sa) * (va)[X] + (sb) * (vb)[X] + (sc) * (vc)[X]; \
+	(o)[Y] = (sa) * (va)[Y] + (sb) * (vb)[Y] + (sc) * (vc)[Y]; \
+	(o)[Z] = (sa) * (va)[Z] + (sb) * (vb)[Z] + (sc) * (vc)[Z]; \
     } while (0)
 
 /**
- * @brief Compose 2D vector at `o' of:
- * Vector at `a' plus
- * scalar `sb' times vector at `b' plus
- * scalar `sc' times vector at `c'
+ * @brief Combine together 3 vectors of length `n', both scaled by
+ * scalars.
  */
-#define V2JOIN2(o, a, sb, b, sc, c) do { \
-	(o)[X] = (a)[X] + (sb) * (b)[X] + (sc) * (c)[X]; \
-	(o)[Y] = (a)[Y] + (sb) * (b)[Y] + (sc) * (c)[Y]; \
-    } while (0)
-
-/**
- * @brief Compose 4D vector at `o' of:
- * Vector at `a' plus
- * scalar `sb' times vector at `b' plus
- * scalar `sc' times vector at `c'
- */
-#define HJOIN2(o, a, sb, b, sc, c) do { \
-	(o)[X] = (a)[X] + (sb) * (b)[X] + (sc) * (c)[X]; \
-	(o)[Y] = (a)[Y] + (sb) * (b)[Y] + (sc) * (c)[Y]; \
-	(o)[Z] = (a)[Z] + (sb) * (b)[Z] + (sc) * (c)[Z]; \
-	(o)[W] = (a)[W] + (sb) * (b)[W] + (sc) * (c)[W]; \
-    } while (0)
-
-#define VJOIN2N(o, a, sb, b, sc, c, n) do { \
-	size_t _vjoin2; \
-	for (_vjoin2 = 0; \
-	     _vjoin2 < (size_t)(n); \
-	     _vjoin2++) { \
-	    (o)[_vjoin2] = (a)[_vjoin2] + (sb) * (b)[_vjoin2] + (sc) * (c)[_vjoin2]; \
+#define VCOMB3N(o, sa, va, sb, vb, sc, vc, n) do { \
+	int _vcomb3; \
+	for (_vcomb3 = 0; \
+	     _vcomb3 < (int)(n); \
+	     _vcomb3++) { \
+	    (o)[_vcomb3] = (sa) * (va)[_vcomb3] + (sb) * (vb)[_vcomb3] + (sc) * (vc)[_vcomb3]; \
 	} \
     } while (0)
 
 
 /**
  * Compose 3D vector at `o' of:
- * vector at `a' plus
- * scalar `sb' times vector at `b'
+ * vector at `va' plus
+ * scalar `sb' times vector at `vb'
  *
  * This is basically a shorthand for VSCALE();VADD2();.
  */
-#define VJOIN1(o, a, sb, b) do { \
-	(o)[X] = (a)[X] + (sb) * (b)[X]; \
-	(o)[Y] = (a)[Y] + (sb) * (b)[Y]; \
-	(o)[Z] = (a)[Z] + (sb) * (b)[Z]; \
+#define VJOIN1(o, va, sb, vb) do { \
+	(o)[X] = (va)[X] + (sb) * (vb)[X]; \
+	(o)[Y] = (va)[Y] + (sb) * (vb)[Y]; \
+	(o)[Z] = (va)[Z] + (sb) * (vb)[Z]; \
     } while (0)
 
 /**
  * Compose 2D vector at `o' of:
- * vector at `a' plus
- * scalar `sb' times vector at `b'
+ * vector at `va' plus
+ * scalar `sb' times vector at `vb'
  *
  * This is basically a shorthand for V2SCALE();V2ADD2();.
  */
-#define V2JOIN1(o, a, sb, b) do { \
-	(o)[X] = (a)[X] + (sb) * (b)[X]; \
-	(o)[Y] = (a)[Y] + (sb) * (b)[Y]; \
+#define V2JOIN1(o, va, sb, vb) do { \
+	(o)[X] = (va)[X] + (sb) * (vb)[X]; \
+	(o)[Y] = (va)[Y] + (sb) * (vb)[Y]; \
     } while (0)
 
 /**
@@ -1316,52 +1300,108 @@ typedef enum vmath_matrix_component_ {
  *
  * This is basically a shorthand for HSCALE();HADD2();.
  */
-#define HJOIN1(o, a, sb, b) do { \
-	(o)[X] = (a)[X] + (sb) * (b)[X]; \
-	(o)[Y] = (a)[Y] + (sb) * (b)[Y]; \
-	(o)[Z] = (a)[Z] + (sb) * (b)[Z]; \
-	(o)[W] = (a)[W] + (sb) * (b)[W]; \
+#define HJOIN1(o, va, sb, vb) do { \
+	(o)[X] = (va)[X] + (sb) * (vb)[X]; \
+	(o)[Y] = (va)[Y] + (sb) * (vb)[Y]; \
+	(o)[Z] = (va)[Z] + (sb) * (vb)[Z]; \
+	(o)[W] = (va)[W] + (sb) * (vb)[W]; \
     } while (0)
 
 /**
  * Compose `n'-D vector at `o' of:
- * vector at `a' plus
- * scalar `sb' times vector at `b'
+ * vector at `va' plus
+ * scalar `sb' times vector at `vb'
  *
  * This is basically a shorthand for VSCALEN();VADD2N();.
  */
-#define VJOIN1N(o, a, sb, b, n) do { \
-	size_t _vjoin1; \
+#define VJOIN1N(o, va, sb, vb, n) do { \
+	int _vjoin1; \
 	for (_vjoin1 = 0; \
-	     _vjoin1 < (size_t)(n); \
+	     _vjoin1 < (int)(n); \
 	     _vjoin1++) { \
-	    (o)[_vjoin1] = (a)[_vjoin1] + (sb) * (b)[_vjoin1]; \
+	    (o)[_vjoin1] = (va)[_vjoin1] + (sb) * (vb)[_vjoin1]; \
 	} \
     } while (0)
 
 
 /**
- * @brief Blend into vector `o'
- * scalar `sa' times vector at `a' plus
- * scalar `sb' times vector at `b'
+ * @brief Compose 3D vector at `o' of:
+ * Vector at `va' plus
+ * scalar `sb' times vector at `vb' plus
+ * scalar `sc' times vector at `vc'
  */
-#define VBLEND2(o, sa, a, sb, b) do { \
-	(o)[X] = (sa) * (a)[X] + (sb) * (b)[X]; \
-	(o)[Y] = (sa) * (a)[Y] + (sb) * (b)[Y]; \
-	(o)[Z] = (sa) * (a)[Z] + (sb) * (b)[Z]; \
+#define VJOIN2(o, va, sb, vb, sc, vc) do { \
+	(o)[X] = (va)[X] + (sb) * (vb)[X] + (sc) * (vc)[X]; \
+	(o)[Y] = (va)[Y] + (sb) * (vb)[Y] + (sc) * (vc)[Y]; \
+	(o)[Z] = (va)[Z] + (sb) * (vb)[Z] + (sc) * (vc)[Z]; \
     } while (0)
+
+/**
+ * @brief Compose 2D vector at `o' of:
+ * Vector at `va' plus
+ * scalar `sb' times vector at `vb' plus
+ * scalar `sc' times vector at `vc'
+ */
+#define V2JOIN2(o, va, sb, vb, sc, vc) do { \
+	(o)[X] = (va)[X] + (sb) * (vb)[X] + (sc) * (vc)[X]; \
+	(o)[Y] = (va)[Y] + (sb) * (vb)[Y] + (sc) * (vc)[Y]; \
+    } while (0)
+
+/**
+ * @brief Compose 4D vector at `o' of:
+ * Vector at `va' plus
+ * scalar `sb' times vector at `vb' plus
+ * scalar `sc' times vector at `vc'
+ */
+#define HJOIN2(o, a, sb, b, sc, c) do { \
+	(o)[X] = (a)[X] + (sb) * (b)[X] + (sc) * (c)[X]; \
+	(o)[Y] = (a)[Y] + (sb) * (b)[Y] + (sc) * (c)[Y]; \
+	(o)[Z] = (a)[Z] + (sb) * (b)[Z] + (sc) * (c)[Z]; \
+	(o)[W] = (a)[W] + (sb) * (b)[W] + (sc) * (c)[W]; \
+    } while (0)
+
+#define VJOIN2N(o, va, sb, vb, sc, vc, n) do { \
+	int _vjoin2; \
+	for (_vjoin2 = 0; \
+	     _vjoin2 < (int)(n); \
+	     _vjoin2++) { \
+	    (o)[_vjoin2] = (va)[_vjoin2] + (sb) * (vb)[_vjoin2] + (sc) * (vc)[_vjoin2]; \
+	} \
+    } while (0)
+
+
+/**
+ * Join three scaled vectors to a base `a', storing the result in `o'.
+ */
+#define VJOIN3(o, va, sb, vb, sc, vc, sd, vd) do { \
+	(o)[X] = (va)[X] + (sb)*(vb)[X] + (sc)*(vc)[X] + (sd)*(vd)[X]; \
+	(o)[Y] = (va)[Y] + (sb)*(vb)[Y] + (sc)*(vc)[Y] + (sd)*(vd)[Y]; \
+	(o)[Z] = (va)[Z] + (sb)*(vb)[Z] + (sc)*(vc)[Z] + (sd)*(vd)[Z]; \
+    } while (0)
+
 
 /**
  * @brief Blend into vector `o'
  * scalar `sa' times vector at `a' plus
  * scalar `sb' times vector at `b'
  */
-#define VBLEND2N(o, sa, a, sb, b, n) do { \
-	size_t _vblend2; \
+#define VBLEND2(o, sa, va, sb, vb) do { \
+	(o)[X] = (sa) * (va)[X] + (sb) * (vb)[X]; \
+	(o)[Y] = (sa) * (va)[Y] + (sb) * (vb)[Y]; \
+	(o)[Z] = (sa) * (va)[Z] + (sb) * (vb)[Z]; \
+    } while (0)
+
+/**
+ * @brief Blend into vector `o'
+ * scalar `sa' times vector at `va' plus
+ * scalar `sb' times vector at `vb'
+ */
+#define VBLEND2N(o, sa, va, sb, vb, n) do { \
+	int _vblend2; \
 	for (_vblend2 = 0; \
-	     _vblend2 < (size_t)(n); \
+	     _vblend2 < (int)(n); \
 	     _vblend2++) { \
-	    (b)[_vblend2] = (sa) * (a)[_vblend2] + (sb) * (b)[_vblend2]; \
+	    (o)[_vblend2] = (sa) * (va)[_vblend2] + (sb) * (vb)[_vblend2]; \
 	} \
     } while (0)
 
@@ -1374,8 +1414,13 @@ typedef enum vmath_matrix_component_ {
  * FIXME: consistency, the result should come first
  */
 #define VPROJECT(a, b, c, d) do { \
-    VSCALE(c, b, VDOT(a, b) / VDOT(b, b)); \
-    VSUB2(d, a, c); \
+	double _dot = VDOT((b), (b)); \
+	if (NEAR_ZERO(_dot, SQRT_SMALL_FASTF)) { \
+	    VSCALE((c), (b), 0.0); \
+	} else { \
+	    VSCALE((c), (b), VDOT((a), (b)) / _dot); \
+	} \
+	VSUB2((d), (a), (c)); \
     } while (0)
 
 /** @brief Return scalar magnitude squared of vector at `v' */
@@ -1424,9 +1469,25 @@ typedef enum vmath_matrix_component_ {
 #define V2CROSS(a, b) ((a)[X] * (b)[Y] - (a)[Y] * (b)[X])
 
 /**
- * TODO: implement me
+ * @brief Store the cross product of homogeneous 3D vectors at `a' and
+ * `b' at `o'.
+ *
+ * XYZ components contain cross product of the homogeneous numerators,
+ * while W contains product of the input homogeneous coordinates:
+ *
+ *     o[X,Y,Z] = a[X,Y,Z] x b[X,Y,Z]
+ *     o[W] = a[W] * b[W]
+ *
+ * Consequently, when a[W] and b[W] are non-zero, dividing out o[W]
+ * produces the cross product of the dehomogenized inputs. Zero-input
+ * W produces a zero-output W, representing a direction at infininty.
+ *
+ * Callers needing vect_t can use HDIVIDE().
  */
-#define HCROSS(a, b, c)
+#define HCROSS(o, a, b) do { \
+	VCROSS((o), (a), (b)); \
+	(o)[W] = (a)[W] * (b)[W]; \
+    } while (0)
 
 
 /** @brief Compute dot product of vectors at `a' and `b'. */
@@ -1540,11 +1601,11 @@ typedef enum vmath_matrix_component_ {
 
 /** @brief Print vector name and components on stderr. */
 #define V2PRINT(a, b)	\
-	fprintf(stderr, "%s (%.6f, %.6g)\n", a, V2ARGS(b));
+	fprintf(stderr, "%s (%.6f, %.6g)\n", a, V2ARGS(b))
 #define VPRINT(a, b)	\
-	fprintf(stderr, "%s (%.6f, %.6f, %.6f)\n", a, V3ARGS(b));
+	fprintf(stderr, "%s (%.6f, %.6f, %.6f)\n", a, V3ARGS(b))
 #define HPRINT(a, b)	\
-	fprintf(stderr, "%s (%.6f, %.6f, %.6f, %.6f)\n", a, V4ARGS(b));
+	fprintf(stderr, "%s (%.6f, %.6f, %.6f, %.6f)\n", a, V4ARGS(b))
 
 /**
  * @brief Included below are integer clamped versions of the previous
@@ -1552,11 +1613,11 @@ typedef enum vmath_matrix_component_ {
  */
 
 #define V2INTCLAMPPRINT(a, b)	\
-	fprintf(stderr, "%s (%g, %g)\n", a, V2INTCLAMPARGS(b));
+	fprintf(stderr, "%s (%g, %g)\n", a, V2INTCLAMPARGS(b))
 #define VINTCLAMPPRINT(a, b)	\
-	fprintf(stderr, "%s (%g, %g, %g)\n", a, V3INTCLAMPARGS(b));
+	fprintf(stderr, "%s (%g, %g, %g)\n", a, V3INTCLAMPARGS(b))
 #define HINTCLAMPPRINT(a, b)	\
-	fprintf(stderr, "%s (%g, %g, %g, %g)\n", a, V4INTCLAMPARGS(b));
+	fprintf(stderr, "%s (%g, %g, %g, %g)\n", a, V4INTCLAMPARGS(b))
 
 
 /** @brief Vector element multiplication.  Really: diagonal matrix X vect. */
@@ -1580,27 +1641,28 @@ typedef enum vmath_matrix_component_ {
     } while (0)
 
 /**
- * @brief Given a direction vector, compute the inverses of each element.
- * When division by zero would have occurred, mark inverse as INFINITY.
+ * @brief Given a direction vector, compute the inverses of each
+ * element.  When division by near-zero would have occurred, inverse
+ * is set to INFINITY and input direction vector is clamped to zero.
  */
 #define VINVDIR(_inv, _dir) do { \
-	if ((_dir)[X] < -SQRT_SMALL_FASTF || (_dir)[X] > SQRT_SMALL_FASTF) { \
-		(_inv)[X]=1.0/(_dir)[X]; \
-	} else { \
+	if (NEAR_ZERO((_dir)[X], SQRT_SMALL_FASTF)) { \
 		(_dir)[X] = 0.0; \
 		(_inv)[X] = INFINITY; \
-	} \
-	if ((_dir)[Y] < -SQRT_SMALL_FASTF || (_dir)[Y] > SQRT_SMALL_FASTF) { \
-		(_inv)[Y]=1.0/(_dir)[Y]; \
 	} else { \
+		(_inv)[X]=1.0/(_dir)[X]; \
+	} \
+	if (NEAR_ZERO((_dir)[Y], SQRT_SMALL_FASTF)) { \
 		(_dir)[Y] = 0.0; \
 		(_inv)[Y] = INFINITY; \
-	} \
-	if ((_dir)[Z] < -SQRT_SMALL_FASTF || (_dir)[Z] > SQRT_SMALL_FASTF) { \
-		(_inv)[Z]=1.0/(_dir)[Z]; \
 	} else { \
+		(_inv)[Y]=1.0/(_dir)[Y]; \
+	} \
+	if (NEAR_ZERO((_dir)[Z], SQRT_SMALL_FASTF)) { \
 		(_dir)[Z] = 0.0; \
 		(_inv)[Z] = INFINITY; \
+	} else { \
+		(_inv)[Z]=1.0/(_dir)[Z]; \
 	} \
     } while (0)
 
@@ -1683,7 +1745,7 @@ typedef enum vmath_matrix_component_ {
 	(o)[Z] = ((m)[8]*(i)[X] + (m)[9]*(i)[Y] + (m)[10]*(i)[Z]) * _f; \
     } while (0)
 
-#define MAT4XSCALOR(o, m, i) do { \
+#define MAT4XSCALAR(o, m, i) do { \
 	(o) = (i) / (m)[15]; \
     } while (0)
 
@@ -1755,10 +1817,40 @@ typedef enum vmath_matrix_component_ {
 	V2MIN((min), (pt)); V2MAX((max), (pt)); \
     } while (0)
 
+
 /**
- * clamp a value to a low/high number.
+ * @brief clamp a value to a low/high number.
  */
-#define CLAMP(_v, _l, _h) V_MAX((_v), (_l)); else V_MIN((_v), (_h))
+#define CLAMP(_v, _l, _h) do { \
+	V_MAX((_v), (_l)); else V_MIN((_v), (_h)); \
+    } while (0)
+
+/**
+ * @brief clamp a vector to a low/high number.
+ */
+#define VCLAMP(_v, _l, _h) do { \
+	CLAMP(_v[X], _l, _h); \
+	CLAMP(_v[Y], _l, _h); \
+	CLAMP(_v[Z], _l, _h); \
+    } while (0)
+
+/**
+ * @brief clamp a 2D vector to a low/high number.
+ */
+#define V2CLAMP(_v, _l, _h) do { \
+	CLAMP(_v[X], _l, _h); \
+	CLAMP(_v[Y], _l, _h); \
+    } while (0)
+
+/**
+ * @brief clamp a 4D vector to a low/high number.
+ */
+#define HCLAMP(_v, _l, _h) do { \
+	CLAMP(_v[X], _l, _h); \
+	CLAMP(_v[Y], _l, _h); \
+	CLAMP(_v[Z], _l, _h); \
+	CLAMP(_v[W], _l, _h); \
+    } while (0)
 
 
 /**
@@ -1766,9 +1858,14 @@ typedef enum vmath_matrix_component_ {
  * vect_t.
  */
 #define HDIVIDE(o, v) do { \
-	(o)[X] = (v)[X] / (v)[W]; \
-	(o)[Y] = (v)[Y] / (v)[W]; \
-	(o)[Z] = (v)[Z] / (v)[W]; \
+	if (NEAR_ZERO((v)[W], SMALL_FASTF)) { \
+	    HSETALL((o), 0.0); \
+	} else { \
+	    (o)[X] = (v)[X] / (v)[W]; \
+	    (o)[Y] = (v)[Y] / (v)[W]; \
+	    (o)[Z] = (v)[Z] / (v)[W]; \
+	    (o)[W] = 1.0; \
+	} \
     } while (0)
 
 /**
@@ -1857,8 +1954,7 @@ typedef enum vmath_matrix_component_ {
     } while (0)
 
 /**
- * @brief Scale quaternion at `b' by scalar `c', store result at
- * `a'.
+ * @brief Scale quaternion at `b' by scalar `c', result at `a'.
  */
 #define QSCALE(a, b, c) do { \
 	(a)[X] = (b)[X] * (c); \
@@ -1867,7 +1963,9 @@ typedef enum vmath_matrix_component_ {
 	(a)[W] = (b)[W] * (c); \
     } while (0)
 
-/** @brief Normalize quaternion 'a' to be a unit quaternion. */
+/**
+ * @brief Normalize quaternion 'a' to be a unit quaternion.
+ */
 #define QUNITIZE(a) do { \
 	double _f; \
 	_f = QMAGNITUDE(a); \
@@ -1910,7 +2008,9 @@ typedef enum vmath_matrix_component_ {
 	(a)[W] =  (b)[W]; \
     } while (0)
 
-/** @brief Multiplicative inverse quaternion */
+/**
+ * @brief Multiplicative inverse quaternion
+ */
 #define QINVERSE(a, b) do { \
 	double _f = QMAGSQ(b); \
 	if (_f < VDIVIDE_TOL) _f = 0.0; else _f = 1.0/_f; \
@@ -2083,7 +2183,7 @@ typedef enum vmath_matrix_component_ {
  * VSETALLN(hvect_t,val,2) but as an initializer array declaration
  * instead of as a statement.
  */
-#define V2INITALL(_v) {(_v), (_v), (_v)}
+#define V2INITALL(_v) {(_v), (_v)}
 
 /**
  * 4D homogeneous vector macro suitable for declaration statement
@@ -2118,11 +2218,11 @@ typedef enum vmath_matrix_component_ {
 #define HINIT_ZERO {0.0, 0.0, 0.0, 0.0}
 
 /**
- * matrix macro suitable for declaration statement initialization.
- * this sets up an identity matrix similar to calling MAT_IDN but as
- * an initializer array declaration instead of as a statement.
+ * 4D homogeneous vector macro suitable for identityt declaration
+ * statement initialization.  this sets all vector elements to zero
+ * except for W, set to 1.0, suitable for init declaration.
  */
-#define MAT_INIT_IDN {1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0}
+#define HINIT_IDN {0.0, 0.0, 0.0, 1.0}
 
 /**
  * matrix macro suitable for declaration statement initialization.
@@ -2130,6 +2230,13 @@ typedef enum vmath_matrix_component_ {
  * initializer array declaration instead of as a statement.
  */
 #define MAT_INIT_ZERO {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
+
+/**
+ * matrix macro suitable for declaration statement initialization.
+ * this sets up an identity matrix similar to calling MAT_IDN but as
+ * an initializer array declaration instead of as a statement.
+ */
+#define MAT_INIT_IDN {1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0}
 
 
 #ifdef __cplusplus

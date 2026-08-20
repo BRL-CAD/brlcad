@@ -55,7 +55,9 @@
 	bu_log("%s[line:%d]: Bad seg_p pointer\n", __FILE__, __LINE__); \
 	segs_error(ERR_MSG); }
 
-static jmp_buf nmg_longjump_env;
+/* Per-thread: rt_shootray() runs rt_nmg_shot() concurrently on N worker
+ * threads, each with its own nmg_ray_segs() setjmp/segs_error() longjmp pair */
+static THREADLOCAL jmp_buf nmg_longjump_env;
 
 /* EDGE-FACE correlation data
  * used in edge_hit() for 3manifold case
@@ -79,7 +81,6 @@ struct nmg_specific {
     uint32_t nmg_smagic;	/* STRUCT START magic number */
     struct model *nmg_model;
     char *manifolds;		/* structure 1-3manifold table */
-    vect_t nmg_invdir;
     uint32_t nmg_emagic;	/* STRUCT END magic number */
 };
 
@@ -1240,6 +1241,11 @@ nmg_ray_segs(struct ray_data *rd, struct bu_list *vlfree)
     static int last_miss=0;
 
     if (setjmp(nmg_longjump_env) != 0) {
+	/* segs_error() longjmp'd out of the state machine; the hitmiss
+	 * structs are still linked on rd_hit/rd_miss.  Return them to the
+	 * freelist (as the non-error exits below do) */
+	NMG_FREE_HITLIST(&rd->rd_hit);
+	NMG_FREE_HITLIST(&rd->rd_miss);
 	return 0;
     }
 
@@ -1335,30 +1341,31 @@ rt_nmg_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     if (nmg->nmg_emagic != NMG_SPEC_END_MAGIC)
 	bu_bomb("end of NMG st_specific structure corrupted\n");
 
-    /* Compute the inverse of the direction cosines */
+    /* Compute the inverse of the direction cosines.  This is per-ray scratch,
+     * so it must live in the per-thread ray_data (rd) -- NOT in the shared
+     * per-solid stp->st_specific, which every worker thread sees at once. */
     if (!ZERO(rp->r_dir[X])) {
-	nmg->nmg_invdir[X]=1.0/rp->r_dir[X];
+	rd.rd_invdir[X]=1.0/rp->r_dir[X];
     } else {
-	nmg->nmg_invdir[X] = INFINITY;
+	rd.rd_invdir[X] = INFINITY;
 	rp->r_dir[X] = 0.0;
     }
     if (!ZERO(rp->r_dir[Y])) {
-	nmg->nmg_invdir[Y]=1.0/rp->r_dir[Y];
+	rd.rd_invdir[Y]=1.0/rp->r_dir[Y];
     } else {
-	nmg->nmg_invdir[Y] = INFINITY;
+	rd.rd_invdir[Y] = INFINITY;
 	rp->r_dir[Y] = 0.0;
     }
     if (!ZERO(rp->r_dir[Z])) {
-	nmg->nmg_invdir[Z]=1.0/rp->r_dir[Z];
+	rd.rd_invdir[Z]=1.0/rp->r_dir[Z];
     } else {
-	nmg->nmg_invdir[Z] = INFINITY;
+	rd.rd_invdir[Z] = INFINITY;
 	rp->r_dir[Z] = 0.0;
     }
 
     /* build the NMG per-ray data structure */
     rd.rd_m = nmg->nmg_model;
     rd.manifolds = nmg->manifolds;
-    VMOVE(rd.rd_invdir, nmg->nmg_invdir);
     rd.rp = rp;
     rd.tol = &ap->a_rt_i->rti_tol;
     rd.ap = ap;
@@ -1389,6 +1396,21 @@ rt_nmg_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     bu_free((char *)rd.hitmiss, "free nmg geom hit list");
 
     return status;
+}
+
+
+/**
+ * Baseline flat-array vshot: delegates to the scalar shot via rt_vshot_via_shot().
+ */
+C_DECL void
+rt_nmg_vshot(struct soltab *stp[], struct xray *rp[], struct seg *segp, int n, struct application *ap)
+/* An array of solids */
+/* An array of rays */
+/* array of segs (results returned) */
+/* Number of ray/object pairs */
+
+{
+    rt_vshot_via_shot(rt_nmg_shot, stp, rp, segp, n, ap);
 }
 
 
@@ -2016,16 +2038,24 @@ rt_nmg_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 }
 
 
-C_DECL void
-rt_nmg_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
+C_DECL int
+rt_nmg_make(const struct rt_functab* ftp, struct rt_db_internal* intern, const char* UNUSED(variant), const point_t origin, double UNUSED(scale))
 {
     struct model *m;
+    struct nmgregion *r;
+    struct shell *s;
 
     m = nmg_mm();
-    intern->idb_ptr = (void *)m;
+    r = nmg_mrsv(m);
+    s = BU_LIST_FIRST(shell, &r->s_hd);
+    nmg_vertex_gv(s->vu_p->v_p, origin);
+    (void)nmg_meonvu(s->vu_p);
+    (void)nmg_ml(s);
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_NMG;
     intern->idb_meth = ftp;
+    intern->idb_ptr = (void *)m;
+    return BRLCAD_OK;
 }
 
 

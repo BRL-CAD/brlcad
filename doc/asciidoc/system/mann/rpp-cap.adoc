@@ -17,7 +17,7 @@ rpp-cap {rppname newname face height} [0] [1]
 [[description]]
 == DESCRIPTION
 
-Creates an ARB6 with the specified height at a particular face of the given RPP. The optional 0 and 1 refer to the orientation of the ARB6. If 0 is chosen, the peaks of the ARB6 are positioned at the midpoint between the first and second points and at the midpoint between the third and fourth points of the specified face. If 1 is chosen, the peaks of the ARB6 are positioned at the midpoint between the first and fourth points and at the midpoint between the second and third points of the specified face. The default is 0.
+Creates an ARB6 with the specified height at a particular face of the given RPP. The optional "0" and "1" refer to the orientation of the ARB6. If "0" is chosen, the peaks of the ARB6 are positioned at the midpoint between the first and second points and at the midpoint between the third and fourth points of the specified face. If "1" is chosen, the peaks of the ARB6 are positioned at the midpoint between the first and fourth points and at the midpoint between the second and third points of the specified face. The default is 0.
 
 
 [[examples]]

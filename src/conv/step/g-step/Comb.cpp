@@ -35,73 +35,17 @@
 #include "Assembly_Product.h"
 #include "Comb.h"
 #include "Default_Geometric_Context.h"
+#include "Shape_Definition_Representation.h"
 #include "Shape_Representation.h"
 
 void
-Comb_to_STEP(struct directory *dp, AP203_Contents *sc, STEPentity **shape, STEPentity **product) {
-    std::ostringstream ss;
-    ss << "'" << dp->d_namep << "'";
-    std::string str = ss.str();
-
+Comb_to_STEP(struct directory *dp, AP203_Contents *sc, STEPentity **shape,
+    STEPentity **product)
+{
     STEPcomplex *context = (STEPcomplex *)sc->default_context;
-
-    // MECHANICAL_CONTEXT
-    SdaiMechanical_context *mech_context = (SdaiMechanical_context *)sc->registry->ObjCreate("MECHANICAL_CONTEXT");
-    sc->instance_list->Append((STEPentity *)mech_context, completeSE);
-    mech_context->name_("''");
-    mech_context->discipline_type_("''");
-
-    // APPLICATION_CONTEXT
-    mech_context->frame_of_reference_(sc->application_context);
-
-    // PRODUCT_DEFINITION
-    SdaiProduct_definition *prod_def = (SdaiProduct_definition *)sc->registry->ObjCreate("PRODUCT_DEFINITION");
-    sc->instance_list->Append((STEPentity *)prod_def, completeSE);
-    prod_def->id_(str.c_str());
-    prod_def->description_("''");
-    prod_def->frame_of_reference_(sc->design_context);
-
-    // PRODUCT_DEFINITION_FORMATION
-    SdaiProduct_definition_formation *prod_def_form = (SdaiProduct_definition_formation *)sc->registry->ObjCreate("PRODUCT_DEFINITION_FORMATION");
-    sc->instance_list->Append((STEPentity *)prod_def_form, completeSE);
-    prod_def->formation_(prod_def_form);
-    prod_def_form->id_("''");
-    prod_def_form->description_("''");
-
-    // PRODUCT
-    SdaiProduct *prod = (SdaiProduct *)sc->registry->ObjCreate("PRODUCT");
-    sc->instance_list->Append((STEPentity *)prod, completeSE);
-    prod_def_form->of_product_(prod);
-    prod->id_(str.c_str());
-    prod->name_(str.c_str());
-    prod->description_(str.c_str());
-    prod->frame_of_reference_()->AddNode(new EntityNode((SDAI_Application_instance *)mech_context));
-
-    // PRODUCT_DEFINITION_SHAPE
-    SdaiProduct_definition_shape *pshape = (SdaiProduct_definition_shape *)sc->registry->ObjCreate("PRODUCT_DEFINITION_SHAPE");
-    sc->instance_list->Append((STEPentity *)pshape, completeSE);
-    pshape->name_("''");
-    pshape->description_("'Comb shape definition'");
-    SdaiCharacterized_product_definition *cpd = new SdaiCharacterized_product_definition(prod_def);
-    SdaiCharacterized_definition *cd = new SdaiCharacterized_definition(cpd);
-    pshape->definition_(cd);
-
-    // SHAPE_DEFINITION_REPRESENTATION
-    SdaiShape_definition_representation *shape_def_rep = (SdaiShape_definition_representation*)sc->registry->ObjCreate("SHAPE_DEFINITION_REPRESENTATION");
-    sc->instance_list->Append((STEPentity *)shape_def_rep, completeSE);
-    shape_def_rep->definition_(pshape);
-
-    // SHAPE_REPRESENTATION
-    SdaiShape_representation* shape_rep = (SdaiShape_representation *)Add_Shape_Representation(sc, (SdaiRepresentation_context *) context);
-    sc->instance_list->Append((STEPentity *)shape_rep, completeSE);
-    shape_def_rep->used_representation_(shape_rep);
-    shape_rep->name_("''");
-
-    (*product) = (STEPentity *)prod_def;
-    (*shape) = (STEPentity *)shape_rep;
-
-    delete cd;
-    delete cpd;
+    STEPentity *shape_rep = Add_Shape_Representation(sc, context);
+    *shape = shape_rep;
+    *product = Add_Shape_Definition_Representation(dp, sc, shape_rep);
 }
 
 static union tree *

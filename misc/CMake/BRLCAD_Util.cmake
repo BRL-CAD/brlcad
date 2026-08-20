@@ -159,7 +159,12 @@ function(message)
     OR MessageType STREQUAL SEND_ERROR
     OR MessageType STREQUAL WARNING
     OR MessageType STREQUAL AUTHOR_WARNING
+    OR MessageType STREQUAL DEPRECATION
+    OR MessageType STREQUAL NOTICE
     OR MessageType STREQUAL STATUS
+    OR MessageType STREQUAL VERBOSE
+    OR MessageType STREQUAL DEBUG
+    OR MessageType STREQUAL TRACE
     OR MessageType STREQUAL CHECK_START
     OR MessageType STREQUAL CHECK_PASS
     OR MessageType STREQUAL CHECK_FAIL
@@ -334,23 +339,25 @@ endfunction(NORMALIZE_FILE_LIST)
 function(BRLCAD_ADD_DIR_LIST_ENTRY list_name dir_in list_entry)
   string(REGEX REPLACE "/" "_" currdir_str ${dir_in})
   string(TOUPPER "${currdir_str}" currdir_str)
-  get_property(${list_name}_${currdir_str} GLOBAL PROPERTY DATA_TARGETS_${currdir_str})
-  if(NOT ${list_name}_${currdir_str})
+  set(_brlcad_dir_list_prop "${list_name}_${currdir_str}")
+  get_property(_brlcad_dir_list_set GLOBAL PROPERTY ${_brlcad_dir_list_prop} SET)
+  if(NOT _brlcad_dir_list_set)
     define_property(
       GLOBAL
-      PROPERTY CMAKE_LIBRARY_TARGET_LIST
+      PROPERTY ${_brlcad_dir_list_prop}
       BRIEF_DOCS "${list_name}"
       FULL_DOCS "${list_name} for directory ${dir_in}"
     )
-  endif(NOT ${list_name}_${currdir_str})
-  set_property(GLOBAL APPEND PROPERTY ${list_name}_${currdir_str} ${list_entry})
+  endif(NOT _brlcad_dir_list_set)
+  set_property(GLOBAL APPEND PROPERTY ${_brlcad_dir_list_prop} ${list_entry})
 endfunction(BRLCAD_ADD_DIR_LIST_ENTRY)
 
 function(BRLCAD_GET_DIR_LIST_CONTENTS list_name dir_in outvar)
   string(REGEX REPLACE "/" "_" currdir_str ${dir_in})
   string(TOUPPER "${currdir_str}" currdir_str)
-  get_property(${list_name}_${currdir_str} GLOBAL PROPERTY ${list_name}_${currdir_str})
-  set(${outvar} "${DATA_TARGETS_${currdir_str}}" PARENT_SCOPE)
+  set(_brlcad_dir_list_prop "${list_name}_${currdir_str}")
+  get_property(_brlcad_dir_list_contents GLOBAL PROPERTY ${_brlcad_dir_list_prop})
+  set(${outvar} "${_brlcad_dir_list_contents}" PARENT_SCOPE)
 endfunction(BRLCAD_GET_DIR_LIST_CONTENTS)
 
 #---------------------------------------------------------------------------

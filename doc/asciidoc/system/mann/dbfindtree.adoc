@@ -36,6 +36,10 @@ Lists the full path of all combinations that refer to _shapea_.
 
 ====
 
+[[see_also]]
+== SEE ALSO
+
+*search*(nged)
 
 [[author]]
 == AUTHOR

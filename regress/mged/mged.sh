@@ -132,6 +132,27 @@ if test ! -f mged.g ; then
     exit 1
 fi
 
+log "testing Tcl core commands..."
+tcl_core_output="`$MGED -c mged.g 2>&1 <<EOF
+set glob_compat_mode 0
+puts "TCL_LIST=[list alpha beta]"
+puts "TCL_CONCAT=[concat {alpha beta} gamma]"
+puts "TCL_GLOB=[glob mged.g]"
+quit
+EOF
+`"
+tcl_core_failed=0
+for expected in "TCL_LIST=alpha beta" "TCL_CONCAT=alpha beta gamma" "TCL_GLOB=mged.g" ; do
+    if ! echo "$tcl_core_output" | grep -F -x "$expected" > /dev/null 2>&1 ; then
+	log "ERROR: Tcl core command check failed: $expected"
+	tcl_core_failed=1
+    fi
+done
+if test $tcl_core_failed -ne 0 ; then
+    log "Output: $tcl_core_output"
+    exit $tcl_core_failed
+fi
+
 log "testing mged commands..."
 
 # collect all current commands

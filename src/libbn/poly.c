@@ -260,8 +260,18 @@ bn_poly_quadratic_roots(register struct bn_complex *roots, register const struct
 int
 bn_poly_cubic_roots(register struct bn_complex *roots, register const struct bn_poly *eqn)
 {
+    struct bn_poly monic;
     fastf_t a, b, c1, c1_3rd, delta;
     register int i;
+
+    if (ZERO(eqn->cf[0])) return 0;
+
+    /* Cardano's formula below is expressed for a monic polynomial. */
+    if (!NEAR_EQUAL(eqn->cf[0], 1.0, SMALL_FASTF)) {
+	monic = *eqn;
+	bn_poly_scale(&monic, 1.0 / monic.cf[0]);
+	eqn = &monic;
+    }
 
     c1 = eqn->cf[1];
     if (fabs(c1) > SQRT_MAX_FASTF) return 0;	/* FAIL */
@@ -338,6 +348,7 @@ bn_poly_cubic_roots(register struct bn_complex *roots, register const struct bn_
 int
 bn_poly_quartic_roots(register struct bn_complex *roots, register const struct bn_poly *eqn)
 {
+    struct bn_poly monic;
     struct bn_poly cube, quad1, quad2;
     bn_complex_t u[3];
     fastf_t U, p, q, q1, q2;
@@ -346,6 +357,15 @@ bn_poly_quartic_roots(register struct bn_complex *roots, register const struct b
     const fastf_t small = 1.0e-8;
 
 #define Max3(a, b, c) ((c)>((a)>(b)?(a):(b)) ? (c) : ((a)>(b)?(a):(b)))
+
+    if (ZERO(eqn->cf[0])) return 0;
+
+    /* Ferrari's formula below is expressed for a monic polynomial. */
+    if (!NEAR_EQUAL(eqn->cf[0], 1.0, SMALL_FASTF)) {
+	monic = *eqn;
+	bn_poly_scale(&monic, 1.0 / monic.cf[0]);
+	eqn = &monic;
+    }
 
     cube.dgr = 3;
     cube.cf[0] = 1.0;

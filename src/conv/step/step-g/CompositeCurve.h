@@ -47,8 +47,10 @@ public:
     virtual ~CompositeCurve();
     CompositeCurve(STEPWrapper *sw, int step_id);
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual bool LoadONBrep(ON_Brep *brep);
     virtual const double *PointAtEnd();
     virtual const double *PointAtStart();
+    const LIST_OF_SEGMENTS &Segments() const { return segments; }
     virtual void Print(int level);
 
     //static methods

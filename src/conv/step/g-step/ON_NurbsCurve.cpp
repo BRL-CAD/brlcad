@@ -25,15 +25,17 @@
 
 #include "AP_Common.h"
 #include "ON_Brep.h"
+#include "STEPGeneratedAPI.h"
 
 
 void
-ON_NurbsCurveCV_to_EntityAggregate(EntityAggregate *control_pnts, ON_NurbsCurve *incrv, ON_Brep_Info_AP203 *info) {
+ON_NurbsCurveCV_to_EntityAggregate(STEPaggregate *control_pnts, ON_NurbsCurve *incrv,
+    ON_Brep_Info_AP203 *info) {
     ON_3dPoint cv_pnt;
     for (int i = 0; i < incrv->CVCount(); i++) {
-	SdaiCartesian_point *step_cartesian = (SdaiCartesian_point *)info->registry->ObjCreate("CARTESIAN_POINT");
-	step_cartesian->name_("''");
-	info->cartesian_pnts.push_back((STEPentity *)step_cartesian);
+	STEPentity *step_cartesian = info->registry->ObjCreate("CARTESIAN_POINT");
+	brlcad::step::SetString(step_cartesian, "name", "");
+	info->cartesian_pnts.push_back(step_cartesian);
 	incrv->GetCV(i, cv_pnt);
 	ON_3dPoint_to_Cartesian_point(&(cv_pnt), step_cartesian);
 	control_pnts->AddNode(new EntityNode((SDAI_Application_instance *)step_cartesian));
@@ -70,7 +72,6 @@ ON_NurbsCurveKnots_to_Aggregates(IntAggregate *knot_multiplicities, RealAggregat
 
 STEPentity *
 Create_Rational_Curve_Aggregate(ON_NurbsCurve *ncurve, ON_Brep_Info_AP203 *info) {
-    STEPattribute *attr;
     STEPcomplex *stepcomplex;
     const char *entNmArr[8] = {"bounded_curve", "b_spline_curve", "b_spline_curve_with_knots",
 	"curve", "geometric_representation_item", "rational_b_spline_curve", "representation_item", "*"};
@@ -78,65 +79,41 @@ Create_Rational_Curve_Aggregate(ON_NurbsCurve *ncurve, ON_Brep_Info_AP203 *info)
 
     /* Set b_spline_curve data */
     stepcomplex = complex_entity->EntityPart("b_spline_curve");
-    stepcomplex->ResetAttributes();
-    while ((attr = stepcomplex->NextAttribute()) != NULL) {
-	if (!bu_strcmp(attr->Name(), "degree")) {
-	    attr->ptr.i = new SDAI_Integer(ncurve->Degree());
-	}
-	if (!bu_strcmp(attr->Name(), "control_points_list")) {
-	    EntityAggregate *control_pnts= new EntityAggregate();
-	    ON_NurbsCurveCV_to_EntityAggregate(control_pnts, ncurve, info);
-	    attr->ptr.a = control_pnts;
-	}
-	if (!bu_strcmp(attr->Name(), "curve_form")) attr->ptr.e = new SdaiB_spline_curve_form_var(B_spline_curve_form__unspecified);
-	if (!bu_strcmp(attr->Name(), "closed_curve")) attr->ptr.e = new SDAI_LOGICAL((Logical)(ncurve->IsClosed()));
-	if (!bu_strcmp(attr->Name(), "self_intersect")) attr->ptr.e = new SDAI_LOGICAL(LFalse);
-    }
+    brlcad::step::SetInteger(stepcomplex, "degree", ncurve->Degree());
+    ON_NurbsCurveCV_to_EntityAggregate(
+	brlcad::step::Aggregate(stepcomplex, "control_points_list"), ncurve, info);
+    brlcad::step::SetEnum(stepcomplex, "curve_form", "UNSPECIFIED");
+    brlcad::step::SetLogical(stepcomplex, "closed_curve",
+	ncurve->IsClosed() ? LTrue : LFalse);
+    brlcad::step::SetLogical(stepcomplex, "self_intersect", LFalse);
 
     /* Set knots */
     stepcomplex = complex_entity->EntityPart("b_spline_curve_with_knots");
-    stepcomplex->ResetAttributes();
-    bool used_km = false;
-    bool used_k = false;
-    IntAggregate *knot_multiplicities = new IntAggregate();
-    RealAggregate *knots = new RealAggregate();
-    ON_NurbsCurveKnots_to_Aggregates(knot_multiplicities, knots, ncurve);
-    while ((attr = stepcomplex->NextAttribute()) != NULL) {
-	if (!bu_strcmp(attr->Name(), "knot_multiplicities")) {
-	    attr->ptr.a = knot_multiplicities;
-	    used_km = true;
-	}
-	if (!bu_strcmp(attr->Name(), "knots")) {
-	    attr->ptr.a = knots;
-	    used_k = true;
-	}
-	if (!bu_strcmp(attr->Name(), "knot_spec")) attr->ptr.e = new SdaiKnot_type_var(Knot_type__unspecified);
+    IntAggregate *knot_multiplicities = dynamic_cast<IntAggregate *>(
+	brlcad::step::Aggregate(stepcomplex, "knot_multiplicities"));
+    RealAggregate *knots = dynamic_cast<RealAggregate *>(
+	brlcad::step::Aggregate(stepcomplex, "knots"));
+    if (!knot_multiplicities || !knots) {
+	delete complex_entity;
+	return NULL;
     }
-    if (!used_km)
-	delete knot_multiplicities;
-    if (!used_k)
-	delete knots;
+    ON_NurbsCurveKnots_to_Aggregates(knot_multiplicities, knots, ncurve);
+    brlcad::step::SetEnum(stepcomplex, "knot_spec", "UNSPECIFIED");
 
     /* Set weights */
     stepcomplex = complex_entity->EntityPart("rational_b_spline_curve");
-    stepcomplex->ResetAttributes();
-    while ((attr = stepcomplex->NextAttribute()) != NULL) {
-	//std::cout << "  " << attr->Name() << "," << attr->NonRefType() << "\n";
-	RealAggregate *weights = new RealAggregate();
-	for (int i = 0; i < ncurve->CVCount(); i++) {
-	    RealNode *wnode = new RealNode();
-	    wnode->value = ncurve->Weight(i);
-	    weights->AddNode(wnode);
-	}
-	attr->ptr.a = weights;
+    RealAggregate *weights = dynamic_cast<RealAggregate *>(
+	brlcad::step::Aggregate(stepcomplex, "weights_data"));
+    if (!weights) {
+	delete complex_entity;
+	return NULL;
     }
+    for (int i = 0; i < ncurve->CVCount(); i++)
+	weights->AddNode(new RealNode(ncurve->Weight(i)));
 
     /* Representation item */
     stepcomplex = complex_entity->EntityPart("representation_item");
-    stepcomplex->ResetAttributes();
-    while ((attr = stepcomplex->NextAttribute()) != NULL) {
-	if (!bu_strcmp(attr->Name(), "name")) attr->StrToVal("''");
-    }
+    brlcad::step::SetString(stepcomplex, "name", "");
 
     return (STEPentity *)complex_entity;
 }
@@ -148,18 +125,24 @@ ON_NurbsCurve_to_STEP(ON_NurbsCurve *n_curve, ON_Brep_Info_AP203 *info, int i)
     if (n_curve->IsRational()) {
 	info->three_dimensional_curves.at(i) = Create_Rational_Curve_Aggregate(n_curve, info);
     } else {
-	SdaiB_spline_curve_with_knots *curr_curve = (SdaiB_spline_curve_with_knots *)info->registry->ObjCreate("B_SPLINE_CURVE_WITH_KNOTS");
-	info->three_dimensional_curves.at(i) = (STEPentity *)curr_curve;
-	ON_NurbsCurveCV_to_EntityAggregate(curr_curve->control_points_list_(), n_curve, info);
-	ON_NurbsCurveKnots_to_Aggregates(curr_curve->knot_multiplicities_(), curr_curve->knots_(), n_curve);
-	curr_curve->name_("''");
-	curr_curve->degree_(n_curve->Degree());
-	curr_curve->knot_spec_(Knot_type__unspecified);
-	curr_curve->curve_form_(B_spline_curve_form__unspecified);
-	curr_curve->closed_curve_(SDAI_LOGICAL(n_curve->IsClosed()));
+	STEPentity *curr_curve = info->registry->ObjCreate("B_SPLINE_CURVE_WITH_KNOTS");
+	info->three_dimensional_curves.at(i) = curr_curve;
+	ON_NurbsCurveCV_to_EntityAggregate(
+	    brlcad::step::Aggregate(curr_curve, "control_points_list"), n_curve, info);
+	ON_NurbsCurveKnots_to_Aggregates(
+	    dynamic_cast<IntAggregate *>(brlcad::step::Aggregate(curr_curve,
+		"knot_multiplicities")),
+	    dynamic_cast<RealAggregate *>(brlcad::step::Aggregate(curr_curve, "knots")),
+	    n_curve);
+	brlcad::step::SetString(curr_curve, "name", "");
+	brlcad::step::SetInteger(curr_curve, "degree", n_curve->Degree());
+	brlcad::step::SetEnum(curr_curve, "knot_spec", "UNSPECIFIED");
+	brlcad::step::SetEnum(curr_curve, "curve_form", "UNSPECIFIED");
+	brlcad::step::SetLogical(curr_curve, "closed_curve",
+	    n_curve->IsClosed() ? LTrue : LFalse);
 	/* TODO: Assume we don't have self-intersecting curves for
 	 * now - need some way to test this...*/
-	curr_curve->self_intersect_(LFalse);
+	brlcad::step::SetLogical(curr_curve, "self_intersect", LFalse);
     }
 
     return true;

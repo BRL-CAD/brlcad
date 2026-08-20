@@ -777,6 +777,11 @@ namespace gte
             size_t nFacets = triangles.size();
             size_t nVerts  = vertices.size();
 
+            if (adj.size() < nFacets * 3)
+            {
+                return;
+            }
+
             // c_is_visited: one entry per (facet, local-corner) = triangle corner.
             // A "corner" (f, lv) corresponds to vertex triangles[f][lv].
             std::vector<bool> cVisited(nFacets * 3, false);
@@ -792,6 +797,11 @@ namespace gte
                     if (cVisited[c]) { continue; }
 
                     int32_t oldV = triangles[f][lv];
+                    if (oldV < 0 || static_cast<size_t>(oldV) >= nVerts)
+                    {
+                        cVisited[c] = true;
+                        continue;
+                    }
                     int32_t newV = oldV;
 
                     if (vUsed[static_cast<size_t>(oldV)])
@@ -821,6 +831,7 @@ namespace gte
 
                         int32_t nextFacet = adj[curF * 3 + static_cast<size_t>(curLv)];
                         if (nextFacet < 0) { fwdHitBoundary = true; break; }
+                        if (static_cast<size_t>(nextFacet) >= nFacets) { break; }
                         if (static_cast<size_t>(nextFacet) == f) { break; }
 
                         // Find the corner in nextFacet that has oldV
@@ -834,6 +845,12 @@ namespace gte
                             }
                         }
                         if (found < 0) { break; }  // oldV not in nextFacet (shouldn't happen)
+                        size_t nextCorner = static_cast<size_t>(nextFacet) * 3 +
+                            static_cast<size_t>(found);
+                        // Malformed/non-manifold adjacency may contain a cycle
+                        // that does not return to the starting facet.  Stop at
+                        // any corner already assigned to this or another fan.
+                        if (cVisited[nextCorner]) { break; }
                         curF  = static_cast<size_t>(nextFacet);
                         curLv = found;
                     }
@@ -857,6 +874,7 @@ namespace gte
                             int prevE = (curLv + 2) % 3;
                             int32_t prevFacet = adj[curF * 3 + static_cast<size_t>(prevE)];
                             if (prevFacet < 0) { break; }
+                            if (static_cast<size_t>(prevFacet) >= nFacets) { break; }
 
                             int found = -1;
                             for (int k = 0; k < 3; ++k)
@@ -868,6 +886,12 @@ namespace gte
                                 }
                             }
                             if (found < 0) { break; }
+                            size_t prevCorner = static_cast<size_t>(prevFacet) * 3 +
+                                static_cast<size_t>(found);
+                            // The backward walk previously had no cycle guard.
+                            // On a non-manifold fan it could circulate forever
+                            // without reaching a boundary or the starting face.
+                            if (cVisited[prevCorner]) { break; }
                             curF  = static_cast<size_t>(prevFacet);
                             curLv = found;
                             cVisited[curF * 3 + static_cast<size_t>(curLv)] = true;

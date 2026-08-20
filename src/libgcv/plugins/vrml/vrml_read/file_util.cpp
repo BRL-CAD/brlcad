@@ -18,11 +18,6 @@
  * information.
  *
  */
-/** @file vrml/file_util.cpp
- *
- * Contain routines for file utility
- *
- */
 
 #include "common.h"
 
@@ -127,4 +122,4 @@ FileUtil::freeFileInput()
 // indent-tabs-mode: t
 // c-file-style: "stroustrup"
 // End:
-// ex: shiftwidth=4 tabstop=8
+// ex: shiftwidth=4 tabstop=8 cino=N-s

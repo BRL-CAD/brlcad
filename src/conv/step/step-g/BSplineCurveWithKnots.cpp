@@ -41,19 +41,20 @@ static const char *BSplineCurve_Knot_type_string[] = {
     "piecewise_bezier_knots",
     "unset"
 };
+static const int STEP_KNOT_TYPE_UNSET = 4;
 
 BSplineCurveWithKnots::BSplineCurveWithKnots()
 {
     step = NULL;
     id = 0;
-    knot_spec = Knot_type_unset;
+    knot_spec = STEP_KNOT_TYPE_UNSET;
 }
 
 BSplineCurveWithKnots::BSplineCurveWithKnots(STEPWrapper *sw, int step_id)
 {
     step = sw;
     id = step_id;
-    knot_spec = Knot_type_unset;
+    knot_spec = STEP_KNOT_TYPE_UNSET;
 }
 
 BSplineCurveWithKnots::~BSplineCurveWithKnots()
@@ -113,8 +114,10 @@ BSplineCurveWithKnots::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	}
     }
 
-    knot_spec = (Knot_type)step->getEnumAttribute(sse, "knot_spec");
-    V_MIN(knot_spec, Knot_type_unset);
+    knot_spec = step->getEnumAttributeIndex(sse, "knot_spec",
+	BSplineCurve_Knot_type_string,
+	sizeof(BSplineCurve_Knot_type_string) / sizeof(BSplineCurve_Knot_type_string[0]),
+	STEP_KNOT_TYPE_UNSET);
 
     sw->entity_status[id] = STEP_LOADED;
     return true;

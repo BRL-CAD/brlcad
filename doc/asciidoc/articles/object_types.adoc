@@ -1,0 +1,1373 @@
+= The BRL-CAD Object Catalog: A Visual Reference to Every Object Type
+:doctype: article
+:toc: left
+:toclevels: 3
+:sectnums:
+:sectnumlevels: 2
+:icons: font
+:imagesdir: images
+
+[abstract]
+This article is a practical, illustrated reference to *every* type of object
+that a BRL-CAD geometry database (`.g`) can hold -- both the geometric
+*primitives* used to build shapes and the *non-geometric* objects used to
+organize, describe, and support them.  For each primitive you will find an
+overview of its features, a table describing all of its input parameters, a
+rendered diagram with the parameters labeled, a montage illustrating the range
+of shapes it can take, and the exact `in` command that produces the depicted
+object.  It is intended to be read at the keyboard: pick a shape, copy the
+recipe, and adjust.
+
+== Introduction
+
+Solid modeling systems differ chiefly in *how they represent shape*.  BRL-CAD
+is, at its core, a *Constructive Solid Geometry* (CSG) modeler: complex objects
+are built by combining simple, mathematically exact building blocks --
+*primitives* -- with Boolean operations (union, difference, intersection).
+Because the primitives are defined by closed-form equations rather than
+approximated by facets, BRL-CAD can answer questions about the geometry (does
+this ray hit it? what is its volume? how thick is it along this line?) exactly
+and efficiently, which is why the system has long been used for engineering
+analysis as much as for visualization.
+
+Over four decades BRL-CAD has accumulated a uniquely broad palette of object
+types.  Alongside the classic CSG solids (boxes, cones, ellipsoids, tori) it
+supports height fields and voxel volumes, triangle meshes and NURBS boundary
+representations, swept sketches, piped tubing, point clouds, implicit
+"metaball" surfaces, and construction aids such as datums and annotations.
+This document catalogs them all.
+
+=== The BRL-CAD object model
+
+Everything in a `.g` database is an *object* with a unique *name*.  There are
+three broad families:
+
+* *Primitives* (also called *solids* or *shapes*) -- self-contained geometric
+  entities such as an ellipsoid or a triangle mesh.  Each primitive stores a
+  fixed set of parameters and knows how to ray trace, plot, tessellate, and
+  report itself.
+* *Combinations* -- interior nodes of a Boolean tree that reference other
+  objects.  A *region* is a combination flagged as representing a single
+  homogeneous material (the unit of engineering analysis); a *group* is a
+  combination used purely for organization.
+* *Non-geometric objects* -- supporting data such as uniform binary arrays,
+  parametric constraints, and material definitions.
+
+Objects may also carry arbitrary *attributes* (name/value pairs), which is how
+modern BRL-CAD records region IDs, material assignments, authorship, and any
+user-defined metadata.
+
+=== Conventions used throughout
+
+[cols="1,4",frame=none,grid=rows]
+|===
+|*Coordinate system* |Right-handed Cartesian (X right, Y back/into the screen,
+Z up).  Vectors such as *H*, *A*, *B*, *C* are free vectors measured from the
+primitive's vertex *V* unless otherwise noted.
+
+|*Units* |Internally all geometry is stored in millimeters.  Coordinates you
+type are interpreted in the database's current *local units* (set with the
+`units` command -- `mm`, `cm`, `m`, `in`, `ft`, ...).  The recipes below use
+bare numbers; they are whatever units are in effect.
+
+|*Points vs. vectors* |A *point* (like *V*) is an absolute location.  A
+*vector* (like *H*) is a direction-and-length offset; the far end of vector *H*
+drawn from *V* is the point `V + H`.
+
+|*The `in` command* |Nearly every primitive can be typed in directly with
+`in _name_ _type_ _values..._`.  Run without enough arguments it prompts for
+each value in turn, so the recipes below double as the prompt order.
+|===
+
+.How to read the diagrams
+****
+Each primitive's *parameter diagram* is a real ray-traced (`rt`) rendering of
+the object described by its recipe, with its silhouette and crease *edges*
+drawn on top by `rtedge` so the form reads clearly, over-drawn with callouts:
+
+* a *red mark* locates a defining *point* (usually the vertex *V*);
+* an *orange arrow* marks a defining *vector* (drawn from its origin to its
+  tip) or, when double-headed, a *dimension* such as a radius;
+* labels name the parameter each callout corresponds to.
+
+A companion *parameterizations* montage shows several distinct shapes the same
+primitive can take, to convey its range -- for example, an `ell` rendered as a
+sphere, a flat disc, and a long spike.
+****
+
+== Planar-Faced Solids
+
+These primitives are bounded entirely by flat faces.  They are the workhorses
+of faceted, mechanical, and FASTGEN-style modeling.
+
+=== arb8 -- Arbitrary polyhedron (4 to 8 vertices)
+
+The *ARB* ("ARBitrary" polyhedron) is a convex solid defined by up to eight
+corner points.  The family members `arb4`, `arb5`, `arb6`, `arb7`, and `arb8`
+differ only in how many distinct vertices they use; internally all are stored
+as eight points (coincident points collapse faces).  ARBs are the most common
+way to model boxes, wedges, ramps, and tetrahedra.
+
+.Vertex ordering: points 1-4 form one face, points 5-8 the opposite face, paired 1-5, 2-6, 3-7, 4-8.
+image::objtype_arb8.png[arb8,align=center]
+
+image::objtype_arb8_variety.png[arb8 variety,align=center]
+
+[cols="1,1,4"]
+|===
+|Parameter |Count |Description
+
+|V1 ... V8 |8 points |Corner vertices.  For `arb4` supply 4 points, `arb6` six,
+etc.; the parser replicates points to fill the eight-point store.
+|===
+
+Recipe (an axis-aligned 6x4x3 box):
+
+[source]
+----
+in box arb8  0 0 0  6 0 0  6 4 0  0 4 0  0 0 3  6 0 3  6 4 3  0 4 3
+----
+
+Shortcuts exist for common cases: `arb4` (4 points, a tetrahedron), `arb5`
+(5 points, a pyramid), `arb6` (6 points, a triangular prism), `arb7` (7 points).
+The generic Boolean-friendly box shortcuts `rpp`, `box`, and `raw` are TGC-free
+ways to type boxes and are described with the TGC family below.
+
+=== arbn -- Convex polyhedron from N planes
+
+Where `arb8` is defined by its corners, `arbn` is defined by its *faces*: an
+arbitrary number of half-space planes whose common interior is the solid.  Each
+plane is given as an outward-pointing unit normal and a signed distance from
+the origin.  This is the natural way to model faceted shapes with more than
+eight faces -- prisms, cut gemstones, chamfered blocks.
+
+image::objtype_arbn.png[arbn,align=center]
+
+image::objtype_arbn_variety.png[arbn variety,align=center]
+
+[cols="1,1,4"]
+|===
+|Parameter |Type |Description
+
+|neqn |integer |Number of bounding planes that follow.
+|nx, ny, nz |vector |Outward unit normal of each plane.
+|d |scalar |Signed distance of the plane from the origin along its normal.
+|===
+
+Recipe (a hexagonal prism -- six side planes plus a top and bottom):
+
+[source]
+----
+in hex arbn 8 \
+   1 0 0 3   0.5 0.866 0 3   -0.5 0.866 0 3 \
+   -1 0 0 3  -0.5 -0.866 0 3  0.5 -0.866 0 3 \
+   0 0 1 2   0 0 -1 2
+----
+
+=== half -- Half-space
+
+A `half` is an *infinite* solid: all of space on one side of a single plane.
+By itself it is unbounded, so it is almost always used in a Boolean expression
+-- subtract a half-space to slice a flat face onto another solid, or intersect
+to keep only one side.
+
+.A half-space subtracted from a sphere, exposing the cutting plane whose orientation is the normal *N*.
+image::objtype_half.png[half,align=center]
+
+[cols="1,1,4"]
+|===
+|Parameter |Type |Description
+
+|Nx, Ny, Nz |vector |Outward-pointing normal of the bounding plane.  Solid
+material lies on the side the normal points *away* from.
+|d |scalar |Distance of the plane from the origin along *N*.
+|===
+
+Recipe (the plane `z = 0`, solid below it):
+
+[source]
+----
+in cut half  0 0 1  0
+----
+
+== Ellipsoids and Spheres
+
+=== ell -- General ellipsoid
+
+The general ellipsoid is defined by a center *V* and three mutually
+perpendicular semi-axis vectors *A*, *B*, and *C*.  Their lengths set the three
+radii and their directions orient the solid, so a single `ell` covers
+everything from a perfect sphere to a flattened disc or a slender spike.
+
+image::objtype_ell.png[ell,align=center]
+
+image::objtype_ell_variety.png[ell variety,align=center]
+
+[cols="1,1,4"]
+|===
+|Parameter |Type |Description
+
+|Vx, Vy, Vz |point |Center of the ellipsoid.
+|Ax, Ay, Az |vector |First semi-axis (length = radius along A).
+|Bx, By, Bz |vector |Second semi-axis, perpendicular to A.
+|Cx, Cy, Cz |vector |Third semi-axis, perpendicular to A and B.
+|===
+
+Recipe (a tri-axial ellipsoid, radii 5 x 3 x 2):
+
+[source]
+----
+in shape ell  0 0 0  5 0 0  0 3 0  0 0 2
+----
+
+Two convenient alternate forms create the same `ell` primitive:
+
+* `ell1 _V_ _A_ _r_` -- a vertex, one axis vector *A*, and a *radius of
+  revolution* (the other two axes are that radius, perpendicular to *A*).
+* `ellg _F1_ _F2_ _L_` -- the two focus points and the major-axis length *L*,
+  in the classic "string and two pins" definition.
+
+=== sph -- Sphere
+
+The sphere is the `ell` special case where all three axes are equal, exposed as
+its own type for convenience: just a center and a radius.
+
+image::objtype_sph.png[sph,align=center]
+
+[cols="1,1,4"]
+|===
+|Parameter |Type |Description
+|Vx, Vy, Vz |point |Center of the sphere.
+|r |scalar |Radius.
+|===
+
+Recipe:
+
+[source]
+----
+in ball sph  0 0 0  3
+----
+
+=== superell -- Superquadric ellipsoid
+
+The superellipsoid generalizes the ellipsoid with two shape exponents, *n*
+(north-south) and *e* (east-west).  With `n = e = 1` it is an ordinary
+ellipsoid; larger exponents square it off toward a rounded box, and smaller
+exponents pinch it toward an octahedral or star-like form.  It is invaluable
+for organic-yet-controllable shapes.
+
+image::objtype_superell.png[superell,align=center]
+
+image::objtype_superell_variety.png[superell variety,align=center]
+
+[cols="1,1,4"]
+|===
+|Parameter |Type |Description
+
+|Vx, Vy, Vz |point |Center.
+|A, B, C |vectors |Three semi-axes, as for `ell`.
+|n |scalar |North-south exponent (roundness along C).
+|e |scalar |East-west exponent (roundness in the A-B plane).
+|===
+
+Recipe (a rounded box):
+
+[source]
+----
+in blob superell  0 0 0  3 0 0  0 3 0  0 0 3  2.5 2.5
+----
+
+== Cylinders and Cones (the TGC family)
+
+=== tgc -- Truncated general cone
+
+The TGC is BRL-CAD's most versatile analytic solid.  It is a *generalized
+cone*: an elliptical base (axes *A*, *B*) at vertex *V*, connected by a ruled
+surface to a second, independently scaled ellipse (axes `c*A`, `d*B`) at the
+far end of the height vector *H*.  By choosing the top scale factors and axis
+directions you obtain cylinders, cones, frusta, and skewed or elliptical
+variants -- all as one primitive.
+
+image::objtype_tgc.png[tgc,align=center]
+
+image::objtype_tgc_variety.png[tgc variety,align=center]
+
+[cols="1,1,4"]
+|===
+|Parameter |Type |Description
+
+|Vx, Vy, Vz |point |Center of the base ellipse.
+|Hx, Hy, Hz |vector |Height/axis vector; the top ellipse sits at `V + H`.
+|Ax, Ay, Az |vector |Base semi-axis A.
+|Bx, By, Bz |vector |Base semi-axis B (perpendicular to A).
+|c |scalar |Scale applied to A at the top ellipse.
+|d |scalar |Scale applied to B at the top ellipse.
+|===
+
+Recipe (a cylinder skewed and tapered into a funnel):
+
+[source]
+----
+in horn tgc  0 0 0  1.5 0 6  2.4 0 0  0 2.4 0  0.4 0.9
+----
+
+The TGC has a rich set of shortcuts for common cases:
+
+[cols="1,3,4"]
+|===
+|Type |Arguments |Shape
+
+|`rcc` |`V H r` |Right circular cylinder.
+|`rec` |`V H A B` |Right elliptical cylinder (constant section).
+|`trc` |`V H r_base r_top` |Truncated right (circular) cone.
+|`tec` |`V H A B ratio` |Truncated elliptical cone (top = base/ratio).
+|`box` / `raw` |`V H W D` |Box/wedge from three edge vectors.
+|`rpp` |`Xmin Xmax Ymin Ymax Zmin Zmax` |Axis-aligned box from extents.
+|`orpp` |`Xmax Ymax Zmax` |Axis-aligned box with one corner at the origin.
+|===
+
+=== rcc -- Right circular cylinder
+
+The everyday cylinder: a circular base of radius *r* at *V*, extruded along
+*H*.  It is the `tgc` case `A ⟂ B ⟂ H, |A| = |B| = r, c = d = 1`.
+
+image::objtype_rcc.png[rcc,align=center]
+
+[cols="1,1,4"]
+|===
+|Parameter |Type |Description
+|Vx, Vy, Vz |point |Center of the base circle.
+|Hx, Hy, Hz |vector |Axis/height vector.
+|r |scalar |Base (and top) radius.
+|===
+
+Recipe:
+
+[source]
+----
+in pin rcc  0 0 0  0 0 6  2.5
+----
+
+=== trc -- Truncated right cone
+
+A circular cone frustum: base radius `r_base` at *V*, top radius `r_top` at
+`V + H`.  Set `r_top = 0` for a sharp cone.
+
+image::objtype_trc.png[trc,align=center]
+
+[cols="1,1,4"]
+|===
+|Parameter |Type |Description
+|Vx, Vy, Vz |point |Center of the base circle.
+|Hx, Hy, Hz |vector |Axis/height vector.
+|r_base |scalar |Base radius (at V).
+|r_top |scalar |Top radius (at V + H).
+|===
+
+Recipe:
+
+[source]
+----
+in cone trc  0 0 0  0 0 6  2.6  1.0
+----
+
+=== rec -- Right elliptical cylinder
+
+A cylinder with a constant *elliptical* cross-section, given by two base axes
+*A* and *B* extruded unchanged along *H*.
+
+image::objtype_rec.png[rec,align=center]
+
+[cols="1,1,4"]
+|===
+|Parameter |Type |Description
+|Vx, Vy, Vz |point |Center of the base ellipse.
+|Hx, Hy, Hz |vector |Axis/height vector.
+|A, B |vectors |Base semi-axes (perpendicular to each other and to H).
+|===
+
+Recipe:
+
+[source]
+----
+in tube rec  0 0 0  0 0 6  2.8 0 0  0 1.4 0
+----
+
+== Tori
+
+=== tor -- Torus
+
+A circular torus: a tube of radius `r2` whose center sweeps a circle of radius
+`r1` in the plane whose normal is *N*, centered at *V*.
+
+image::objtype_tor.png[tor,align=center]
+
+image::objtype_tor_variety.png[tor variety,align=center]
+
+[cols="1,1,4"]
+|===
+|Parameter |Type |Description
+|Vx, Vy, Vz |point |Center of the torus.
+|Nx, Ny, Nz |vector |Normal to the plane of revolution.
+|r1 |scalar |Radius of revolution (center of tube to center of torus).
+|r2 |scalar |Tube (cross-section) radius.
+|===
+
+Recipe:
+
+[source]
+----
+in ring tor  0 0 0  0 0 1  4  1.2
+----
+
+=== eto -- Elliptical torus
+
+Like `tor`, but the swept cross-section is an *ellipse* rather than a circle.
+The ellipse's semi-major axis is the vector *C* (which may tilt out of the
+plane) and its semi-minor axis has length *d*.
+
+image::objtype_eto.png[eto,align=center]
+
+image::objtype_eto_variety.png[eto variety,align=center]
+
+[cols="1,1,4"]
+|===
+|Parameter |Type |Description
+|Vx, Vy, Vz |point |Center of the torus.
+|Nx, Ny, Nz |vector |Normal to the plane of revolution.
+|r |scalar |Radius of revolution.
+|Cx, Cy, Cz |vector |Semi-major axis of the elliptical cross-section.
+|d |scalar |Length of the semi-minor axis of the cross-section.
+|===
+
+Recipe:
+
+[source]
+----
+in etorus eto  0 0 0  0 0 1  4  1.4 0 1.4  0.7
+----
+
+== Quadric and Conic Special Solids
+
+These closed-form solids capture shapes -- parabolic and hyperbolic walls,
+paraboloid dishes, rounded particles -- that recur in structural, fluid, and
+munitions modeling and would be awkward to approximate with cones.
+
+=== rpc -- Right parabolic cylinder
+
+A prism whose cross-section is a *parabola*.  The parabola opens along the
+breadth vector *B*, has half-width *r* at its mouth, and is extruded along the
+height vector *H*.
+
+image::objtype_rpc.png[rpc,align=center]
+
+image::objtype_rpc_variety.png[rpc variety,align=center]
+
+[cols="1,1,4"]
+|===
+|Parameter |Type |Description
+|Vx, Vy, Vz |point |Base vertex.
+|Hx, Hy, Hz |vector |Extrusion (length) vector.
+|Bx, By, Bz |vector |Breadth vector; the parabola rises along B.
+|r |scalar |Half-width of the rectangular mouth (perpendicular to B and H).
+|===
+
+Recipe:
+
+[source]
+----
+in trough rpc  0 0 0  0 0 6  0 3 0  1.5
+----
+
+=== rhc -- Right hyperbolic cylinder
+
+The hyperbolic analogue of `rpc`: the cross-section is one branch of a
+hyperbola.  The extra parameter *c* is the distance from the curve's vertex to
+the point where its asymptotes cross -- small *c* gives a sharp cusp, large *c*
+approaches a straight-walled trough.
+
+image::objtype_rhc.png[rhc,align=center]
+
+image::objtype_rhc_variety.png[rhc variety,align=center]
+
+[cols="1,1,4"]
+|===
+|Parameter |Type |Description
+|Vx, Vy, Vz |point |Base vertex.
+|Hx, Hy, Hz |vector |Extrusion (length) vector.
+|Bx, By, Bz |vector |Breadth vector; the hyperbola rises along B.
+|r |scalar |Half-width of the rectangular mouth.
+|c |scalar |Apex-to-asymptotes distance (curvature control).
+|===
+
+Recipe:
+
+[source]
+----
+in trough rhc  0 0 0  0 0 6  0 3 0  1.5  1.2
+----
+
+=== epa -- Elliptical paraboloid
+
+A solid paraboloid "dish" or "bullet": an elliptical base (semi-axes `r1 = |A|`
+and `r2 = |B|`) at *V* that closes to a single point at the tip `V + H`.
+
+image::objtype_epa.png[epa,align=center]
+
+image::objtype_epa_variety.png[epa variety,align=center]
+
+[cols="1,1,4"]
+|===
+|Parameter |Type |Description
+|Vx, Vy, Vz |point |Center of the base ellipse.
+|Hx, Hy, Hz |vector |Axis vector from base to tip.
+|Ax, Ay, Az |vector |Base semi-major axis (its length is r1).
+|B |scalar |Length of the base semi-minor axis r2 (perpendicular to A and H).
+|===
+
+Recipe:
+
+[source]
+----
+in dish epa  0 0 0  0 0 6  2.5 0 0  1.5
+----
+
+=== ehy -- Elliptical hyperboloid
+
+A flaring, horn-like solid: an elliptical base at *V* whose wall follows a
+hyperbola as it rises along *H*.  As with `rhc`, *c* controls how sharply the
+wall flares (small *c*) or straightens toward a cone (large *c*).
+
+image::objtype_ehy.png[ehy,align=center]
+
+image::objtype_ehy_variety.png[ehy variety,align=center]
+
+[cols="1,1,4"]
+|===
+|Parameter |Type |Description
+|Vx, Vy, Vz |point |Center of the base ellipse.
+|Hx, Hy, Hz |vector |Axis vector.
+|Ax, Ay, Az |vector |Base semi-major axis (length r1).
+|B |scalar |Length of the base semi-minor axis r2.
+|c |scalar |Apex-to-asymptotes distance (flare control).
+|===
+
+Recipe:
+
+[source]
+----
+in horn ehy  0 0 0  0 0 6  2.5 0 0  1.5  1.0
+----
+
+=== hyp -- Hyperboloid of one sheet
+
+The classic "cooling tower" shape: a surface of revolution (or elliptical
+generalization) that pinches to a narrow waist in the middle and flares at both
+ends.  The neck-to-base ratio *c* sets how pronounced the pinch is.
+
+image::objtype_hyp.png[hyp,align=center]
+
+image::objtype_hyp_variety.png[hyp variety,align=center]
+
+[cols="1,1,4"]
+|===
+|Parameter |Type |Description
+|Vx, Vy, Vz |point |Base vertex (one end).
+|Hx, Hy, Hz |vector |Full height vector (base to base).
+|Ax, Ay, Az |vector |Semi-major axis of the base ellipse.
+|B |scalar |Length of the base semi-minor axis.
+|c |scalar |Neck-to-base ratio, in (0, 1); smaller = tighter waist.
+|===
+
+Recipe:
+
+[source]
+----
+in tower hyp  0 0 0  0 0 6  3 0 0  1.6  0.4
+----
+
+=== part -- Particle
+
+A "particle" is a rounded body swept between two spheres: a sphere of radius
+`r_v` at *V* and a sphere of radius `r_h` at `V + H`, joined by a smooth
+conical skin.  Equal radii give a capsule (rounded cylinder); a zero height
+gives a sphere; unequal radii give a rounded, tear-drop cone.
+
+image::objtype_part.png[part,align=center]
+
+image::objtype_part_variety.png[part variety,align=center]
+
+[cols="1,1,4"]
+|===
+|Parameter |Type |Description
+|Vx, Vy, Vz |point |Center of the first end sphere.
+|Hx, Hy, Hz |vector |Axis vector to the second end sphere.
+|r_v |scalar |Radius at the V end.
+|r_h |scalar |Radius at the V + H end.
+|===
+
+Recipe:
+
+[source]
+----
+in pill part  0 0 0  0 0 6  1.0  2.0
+----
+
+=== hrt -- Heart
+
+A whimsical but fully analytic heart solid, handy for teaching and for
+ornamental modeling.  It is centered at *V*, oriented by three direction
+vectors (*xdir*, *ydir*, *zdir*), and shaped by a single distance-to-cusps
+parameter *d* that controls how pointed the bottom and how full the lobes are.
+
+image::objtype_hrt.png[hrt,align=center]
+
+image::objtype_hrt_variety.png[hrt variety,align=center]
+
+[cols="1,1,4"]
+|===
+|Parameter |Type |Description
+|Vx, Vy, Vz |point |Center of the heart.
+|xdir |vector |Orientation of the width (lobe-to-lobe) direction.
+|ydir |vector |Orientation of the depth direction.
+|zdir |vector |Orientation of the vertical (cusp-to-point) direction.
+|d |scalar |Distance to the cusps (overall roundness/pointedness).
+|===
+
+Recipe:
+
+[source]
+----
+in valentine hrt  0 0 0  3 0 0  0 3 0  0 0 3  3.0
+----
+
+== Implicit Surfaces
+
+=== metaball -- Blobby implicit surface
+
+A metaball is defined not by a fixed boundary but by a *field*: each control
+point emits a field that falls off with distance, and the surface is the
+iso-contour where the summed field equals a *threshold*.  Nearby points merge
+into smooth, organic blobs; distant points stay separate.  Metaballs excel at
+fluids, soft bodies, and fillet-like blends.
+
+image::objtype_metaball.png[metaball,align=center]
+
+image::objtype_metaball_variety.png[metaball variety,align=center]
+
+[cols="1,1,4"]
+|===
+|Parameter |Type |Description
+|method |integer |Field/blending method: 0 = Metaball, 1 = iso-potential, 2 = Blinn "blob".
+|threshold |scalar |Field value at which the surface is drawn.
+|npts |integer |Number of control points that follow.
+|x, y, z |point |Location of each control point.
+|field strength |scalar |Weight of each point's field contribution.
+|===
+
+Recipe (three points blended at a threshold of 1.0):
+
+[source]
+----
+in drops metaball  1  1.0  3  -2 0 0 2.5   2 0 0 2.5   0 2.2 0 2.5
+----
+
+== Meshes and Boundary Representations
+
+When a shape cannot be described by a tidy equation -- a scanned part, an
+imported CAD model, a sculpted surface -- BRL-CAD represents it explicitly, as
+a mesh or as trimmed NURBS surfaces.
+
+=== bot -- Bag of triangles
+
+The BoT ("Bag of Triangles") is BRL-CAD's triangle-mesh primitive and the most
+common target for imported and tessellated geometry.  It stores a list of
+vertices and a list of triangles (index triples).  A *mode* selects how the
+triangles are interpreted: a thin *surface*, the boundary of a *solid*, or a
+FASTGEN *plate* (each facet given a thickness).
+
+image::objtype_bot.png[bot,align=center]
+
+image::objtype_bot_variety.png[bot variety,align=center]
+
+[cols="1,1,4"]
+|===
+|Parameter |Type |Description
+|num_vertices |integer |Number of vertices.
+|num_faces |integer |Number of triangles.
+|mode |integer |1 = surface, 2 = solid, 3 = plate.
+|orientation |integer |1 = unoriented, 2 = counter-clockwise, 3 = clockwise.
+|x, y, z |point |Each vertex, in order.
+|v1, v2, v3 |indices |Each triangle, as three vertex indices (0-based).
+|thickness, face_mode |scalar, flag |(*plate* mode only) per-face thickness and
+whether it is centered on or appended to the facet.
+|===
+
+Recipe (an octahedron -- 6 vertices, 8 solid faces):
+
+[source]
+----
+in oct bot  6 8 2 2 \
+   1 0 0  -1 0 0  0 1 0  0 -1 0  0 0 1.4  0 0 -1.4 \
+   0 2 4  2 1 4  1 3 4  3 0 4  2 0 5  1 2 5  3 1 5  0 3 5
+----
+
+=== ars -- Arbitrary faceted solid (waterlines)
+
+The ARS builds a surface from a stack of *waterline* curves -- horizontal
+cross-sections, each with the *same number* of points -- much as a ship's hull
+is lofted from station lines.  The system connects consecutive waterlines into
+a closed triangulated surface.
+
+image::objtype_ars.png[ars,align=center]
+
+[cols="1,1,4"]
+|===
+|Parameter |Type |Description
+|pts_per_curve |integer |Number of points on each waterline (>= 3).
+|ncurves |integer |Number of waterlines (>= 3).
+|x, y, z |points |The points, waterline by waterline.
+|===
+
+Recipe form:
+
+[source]
+----
+in hull ars  _ptsPerCurve_ _nCurves_   _x y z_  _x y z_  ...
+----
+
+=== nmg -- N-Manifold Geometry
+
+The NMG is a full *boundary representation* built from an explicit topological
+hierarchy -- shells, faces, loops, edges, and vertices -- with rigorous
+adjacency information.  It supports both planar and (via the same framework)
+non-planar faces and is the substrate BRL-CAD uses for many Boolean and
+tessellation operations.  NMGs are typically produced by `facetize` or by
+import/conversion rather than typed by hand.
+
+image::objtype_nmg.png[nmg,align=center]
+
+[cols="1,4"]
+|===
+|Creation |`facetize -n _newname_ _oldobj_` converts any solid or combination
+into an NMG.  There are no scalar "input parameters" to type; the geometry *is*
+the topology.
+|===
+
+=== brep -- NURBS boundary representation
+
+The BREP stores a solid as a set of trimmed *NURBS* (Non-Uniform Rational
+B-Spline) surfaces, using the OpenNURBS toolkit.  This is the representation
+used for high-fidelity CAD interchange (e.g. STEP and IGES) where exact curved
+surfaces matter.
+
+image::objtype_brep.png[brep,align=center]
+
+[cols="1,4"]
+|===
+|Creation |`brep _oldobj_ brep _newname_` converts an existing primitive to a
+BREP.  BREPs are also produced directly by importers.
+|Structure |A BREP records vertices, 3D edge curves, trimming curves, loops,
+faces, and their topology. Each face references an underlying parametric
+surface and uses one or more trimming loops to define the portion belonging to
+the boundary.
+|Capabilities |BRL-CAD can ray trace BREP objects directly, draw their
+wireframes and shaded surfaces, inspect their topology and NURBS data, and
+convert supported CSG primitives to BREP form. The `brep` command also
+provides validity checks, plotting tools, experimental Boolean evaluation,
+mesh generation, and attempts to recover CSG representations.
+|Limitations |A closed, consistently oriented, topologically valid boundary is
+required for dependable solid ray tracing. Open or invalid models may still be
+useful as surfaces but do not define an unambiguous volume. General
+component-level editing, BREP Boolean evaluation, CSG recovery, and production
+mesh generation remain limited or experimental; difficult imported models may
+need repair in their source CAD system.
+|===
+
+=== poly and bspline -- Legacy surface types
+
+For backward compatibility BRL-CAD also recognizes two older explicit types:
+
+* *poly* (`pg`, ID_POLY) -- a polygonal (faceted) object of arbitrary polygons
+  with per-vertex normals.  New work should use `bot`; on import a `poly` is
+  generally converted.
+* *bspline* (`nurb`, ID_BSPLINE) -- a set of B-spline surfaces.  For most
+  purposes the richer `brep` type supersedes it.
+
+== Sketch-Based Solids
+
+A *sketch* is a 2D profile; two primitives turn a sketch into a 3D solid by
+sweeping it.
+
+=== sketch -- 2D profile curve
+
+A sketch defines a planar drawing: a set of 2D vertices connected by segments
+(lines, circular arcs, Bezier and NURB curves), embedded in 3D by an origin
+*V* and two in-plane axis vectors *A* and *B*.  A sketch is not itself a solid;
+it is the input to `extrude` and `revolve`.
+
+[cols="1,1,4"]
+|===
+|Parameter |Type |Description
+|V |point |Origin of the sketch plane in 3D.
+|A, B |vectors |Unit vectors defining the sketch's local X and Y axes.
+|verts |2D points |Vertices referenced by the segments.
+|segments |list |Line / arc / Bezier / NURB segments joining the vertices.
+|===
+
+Because sketches are structured, they are created with the `put` command (or
+interactively in the Sketch editor) rather than with `in`:
+
+[source]
+----
+put profile sketch V {0 0 0} A {1 0 0} B {0 1 0} \
+    VL { {0 0} {4 0} {4 2} {2 5} {0 2} } \
+    SL { {line S 0 E 1} {line S 1 E 2} {line S 2 E 3} \
+         {line S 3 E 4} {line S 4 E 0} }
+----
+
+=== extrude -- Extruded sketch
+
+`extrude` sweeps a sketch linearly along a vector *H* to produce a solid.  The
+sketch's local axes are re-mapped by the *A* and *B* vectors, allowing the
+extrusion to be scaled or sheared as well as translated.
+
+image::objtype_extrude.png[extrude,align=center]
+
+[cols="1,1,4"]
+|===
+|Parameter |Type |Description
+|V |point |Base point (the sketch's origin in 3D).
+|H |vector |Extrusion vector (direction and length of the sweep).
+|A, B |vectors |Vectors mapping the sketch's local u and v axes.
+|sketch |name |Name of the sketch object to extrude.
+|===
+
+Recipe:
+
+[source]
+----
+in wall extrude  0 0 0  0 0 4  1 0 0  0 1 0  profile
+----
+
+=== revolve -- Solid of revolution
+
+`revolve` sweeps a sketch about an axis through a given angle, producing turned
+shapes such as bottles, wheels, and lathe parts.  A full 360-degree angle
+yields a closed body of revolution; a smaller angle yields a partial wedge.
+
+image::objtype_revolve.png[revolve,align=center]
+
+[cols="1,1,4"]
+|===
+|Parameter |Type |Description
+|V |point |A point on the revolve axis.
+|axis |vector |Direction of the revolve axis.
+|r |vector |A vector in the sketch's start plane (locates the profile).
+|angle |scalar |Sweep angle in degrees.
+|sketch |name |Name of the sketch to revolve.
+|===
+
+Recipe (a 300-degree sweep of a profile):
+
+[source]
+----
+in vase revolve  0 0 0  0 0 1  1 0 0  300  profile
+----
+
+== Sampled and Data-Driven Solids
+
+These primitives get their shape from external arrays of samples -- images,
+elevation grids, or voxel volumes -- referenced from a file or an embedded
+binary object.
+
+=== dsp -- Displacement map (terrain)
+
+A DSP raises a rectangular grid of elevation samples over the XY plane, forming
+a height-field surface -- ideal for terrain.  Cell spacing and a vertical scale
+map the raw samples into model space; optional normal interpolation smooths the
+facets.
+
+image::objtype_dsp.png[dsp,align=center]
+
+[cols="1,1,4"]
+|===
+|Parameter |Type |Description
+|source |f or o |Take samples from a *f*ile or a database *o*bject.
+|name |string |File name or binary-object name holding the samples.
+|width, length |integers |Number of samples in X and Y.
+|smooth |0/1 |Interpolate surface normals for a smooth appearance.
+|cut direction |a/l/L |Triangulation style: adaptive, or a fixed diagonal.
+|cell size |scalar |Horizontal spacing between samples.
+|unit elevation |scalar |Vertical scale applied to each sample.
+|===
+
+Recipe:
+
+[source]
+----
+in terrain dsp f heights.data 48 48 1 a 1.0 0.00008
+----
+
+=== ebm -- Extruded bit-map
+
+An EBM turns a 2D black-and-white image into 3D: every "on" pixel becomes a
+unit cell extruded to a common height along +Z.  It is a fast way to build
+stencils, text, logos, and other complex outlines from an image.
+
+image::objtype_ebm.png[ebm,align=center]
+
+[cols="1,1,4"]
+|===
+|Parameter |Type |Description
+|source |f or o |Take the bit-map from a *f*ile or database *o*bject.
+|name |string |File/object name of the bit-map (`.bw`, one byte per cell).
+|width, height |integers |Bit-map dimensions in cells.
+|tallness |scalar |Extrusion height of the "on" cells.
+|===
+
+Recipe:
+
+[source]
+----
+in stamp ebm f mask.bw 40 40 14
+----
+
+=== vol -- Volumetric voxels
+
+A VOL is a full 3D grid of cells; cells whose stored value falls between a low
+and high threshold are solid.  This represents true volumetric data -- CT/MRI
+scans, simulation grids, 3D masks.
+
+image::objtype_vol.png[vol,align=center]
+
+[cols="1,1,4"]
+|===
+|Parameter |Type |Description
+|source |f or o |Take the voxels from a *f*ile or database *o*bject.
+|name |string |File/object name of the voxel array.
+|xdim, ydim, zdim |integers |Grid dimensions.
+|lo, hi |integers |Value range (inclusive) that counts as solid.
+|cell size |vector |Physical size of each cell in X, Y, Z.
+|===
+
+Recipe:
+
+[source]
+----
+in blob vol f voxels.data 24 24 24 128 255 0.5 0.5 0.5
+----
+
+=== hf -- Height field (legacy)
+
+The HF is an older height-field primitive superseded by `dsp`.  It reads
+heights from a data file with an optional control file and a `cv`-style format
+descriptor, then positions the field with an origin and two in-plane direction
+vectors.  New models should prefer `dsp`; `hf` remains for reading legacy data.
+
+[cols="1,4"]
+|===
+|Parameters |control file, data file, format, width, length, storage flag,
+file-to-mm scale, origin *V*, X and Y direction vectors, X and Y lengths, and a
+height scale.  See `dsp` for the modern equivalent.
+|===
+
+== Piped and Point Objects
+
+=== pipe -- Piped solid (tubing and wire)
+
+The pipe primitive sweeps a (possibly hollow) circular cross-section along a
+poly-line of control points, rounding the corners with per-point bend radii.
+Each point independently sets an inner and outer diameter, so a single pipe can
+taper or transition between solid rod and hollow tube along its length.
+
+image::objtype_pipe.png[pipe,align=center]
+
+image::objtype_pipe_variety.png[pipe variety,align=center]
+
+[cols="1,1,4"]
+|===
+|Parameter |Type |Description
+|npts |integer |Number of control points.
+|x, y, z |point |Location of each control point.
+|inner diameter |scalar |Bore diameter (0 for a solid rod/wire).
+|outer diameter |scalar |Outside diameter of the tube.
+|bend radius |scalar |Radius used to round the bend at this point.
+|===
+
+Recipe (an elbow):
+
+[source]
+----
+in elbow pipe  3 \
+   0 0 0  1.0 2.0 1.5 \
+   0 0 4  1.0 2.0 1.5 \
+   4 0 4  1.0 2.0 1.5
+----
+
+=== pnts -- Point cloud
+
+The PNTS primitive stores a set of points -- typically from a 3D scan.  Points
+may be bare, or carry per-point color, surface normal, and size, and can be
+rendered as small spheres for visualization.
+
+image::objtype_pnts.png[pnts,align=center]
+
+[cols="1,1,4"]
+|===
+|Parameter |Type |Description
+|in file? |yes/no |Whether points are read from a file.
+|count |integer |Number of points (-1 to auto-detect from a file).
+|oriented? |yes/no |Whether each point carries a normal vector.
+|colored? |yes/no |Whether each point carries an RGB color.
+|varying size? |yes/no |Whether each point carries its own size.
+|default size |scalar |Point size used when not varying.
+|x, y, z (+ optional n, rgb, s) |per point |The point data.
+|===
+
+Recipe (five plain points):
+
+[source]
+----
+in cloud pnts  no 5 no no no 0.3   0 0 0   2 0 0   0 2 0   0 0 2   1 1 1
+----
+
+== Construction and Reference Objects
+
+These "pseudo-solids" carry no material -- they do not contribute volume and
+are skipped by analysis -- but they provide indispensable scaffolding for
+building and documenting a model.
+
+=== datum -- Datum reference (point / line / plane)
+
+Datums provide geometric references -- a point, an infinite line, or an
+unoriented plane -- to which other geometry can be constrained or measured,
+following the ASME Y14.5 notion of datum reference frames.
+
+[cols="1,1,4"]
+|===
+|Parameter |Type |Description
+|type |point/line/plane |Which kind of datum to create.
+|pnt |point |The datum point (all types) / a point on the line or plane.
+|dir |vector |Direction of the line, or normal of the plane (line/plane types).
+|w |scalar |Plane offset (plane type only).
+|===
+
+Recipe (a datum plane through the origin with +Z normal):
+
+[source]
+----
+in ref datum  plane  0 0 0  0 0 1
+----
+
+=== grip -- Grip
+
+A grip is a pseudo-solid "handle": a center point, a direction, and a
+magnitude, used as a manipulation or reference marker.  It displays as a marker
+but has no ray-traceable surface.
+
+[cols="1,1,4"]
+|===
+|Parameter |Type |Description
+|center |point |Location of the grip.
+|normal |vector |Direction the grip points.
+|magnitude |scalar |Display length of the grip.
+|===
+
+Recipe:
+
+[source]
+----
+in handle grip  0 0 0  0 0 1  2.0
+----
+
+=== joint -- Joint
+
+A joint marks an articulation between two referenced paths in the model tree --
+the scaffolding for kinematics and assembly articulation.  It stores a
+location, two vectors defining the joint's motion frame, a joint value, and the
+two reference paths it connects.
+
+[cols="1,1,4"]
+|===
+|Parameter |Type |Description
+|location |point |Position of the joint.
+|vector1, vector2 |vectors |Define the joint's motion/reference frame.
+|value |scalar |Current joint parameter value.
+|reference path 1/2 |names |The two model paths the joint connects.
+|===
+
+=== annot -- Annotation
+
+Annotations place text labels in the scene, optionally tied to a point of
+interest by a leader.  They are used to dimension and document a model directly
+in 3D.  Legacy annotations keep their two-dimensional offsets in screen space.
+Model-space annotations instead store two basis vectors that embed their
+leaders, dimensions, symbols, and text in a plane in the model.
+
+Annotation text is UTF-8.  BRL-CAD loads scalable TrueType fonts at runtime and
+plots their glyph outlines, preserving the annotation plane and text rotation.
+OSIFont is the default because its technical lettering and engineering symbols
+are suited to dimensioning and PMI.  A segment style may select a font by an
+installed filename, by a name whose `.ttf` suffix is implied, or by a path.  If
+that font cannot be used, plotting tries OSIFont and then the built-in stroke
+font.  The font file remains an installed data file; it is not compiled into
+BRL-CAD.
+
+Enhanced annotations may also preserve a semantic role for each segment, such
+as text, leader, extension line, dimension line, arrowhead, or symbol.  Line
+pattern, width, color, font, and symbol metadata can accompany those roles.
+Importers can therefore retain PMI meaning separately from the plotted
+geometry even when a display backend does not implement every style property.
+
+[cols="1,1,4"]
+|===
+|Parameter |Type |Description
+|point |point |The 3D point being annotated (leader target).
+|label |string |The text of the annotation.
+|text placement |2D point |Where the label sits in the annotation plane.
+|horizontal / vertical |1/2/3 |Text justification (left/center/right, bottom/middle/top).
+|text size |scalar |Height of the text.
+|text angle |scalar |Rotation of the text.
+|placement |screen/model |Screen-space offsets or a model-space annotation plane.
+|segment role |enumeration |Optional text, leader, extension, dimension, arrowhead, symbol, or geometry meaning.
+|font |name/path |Optional runtime TrueType font selection; OSIFont is the default.
+|===
+
+Recipe:
+
+[source]
+----
+in note annot  5 0 5  "Ø25 bore"  6 6  2 2  1.5  0
+----
+
+== Combinations and Instancing
+
+=== comb, region, and group -- Boolean combinations
+
+A *combination* is an interior node of the model tree: a Boolean expression
+over other objects, built with union (`u`), difference (`-`), and intersection
+(`+`).  Combinations are what make BRL-CAD a CSG modeler -- you sculpt complex
+parts by adding, cutting, and intersecting primitives.
+
+image::objtype_comb_variety.png[comb boolean operations,align=center]
+
+* A *region* is a combination whose `region` flag is set, declaring that its
+  Boolean result represents *one homogeneous material*.  Regions are the unit of
+  engineering analysis (mass, volume, ray properties) and carry a region ID,
+  material, and color.
+* A *group* is an ordinary combination used only to organize other objects for
+  convenience; it makes no material claim.
+
+Combinations are built with dedicated commands rather than `in`:
+
+[source]
+----
+r  widget.r  u base  -  hole  +  clip     # a region: (base - hole) ∩ clip
+g  assembly  widget.r  bracket.r          # a group of two regions
+comb  scratch  u a  u b                   # a plain (non-region) combination
+----
+
+[cols="1,1,4"]
+|===
+|Field |Type |Description
+|tree |Boolean tree |The expression of member objects and operators.
+|region flag |flag |Set for a region; clear for a group/plain comb.
+|region id, air code, material, LOS |integers |GIFT/analysis attributes (regions).
+|rgb, shader, inherit |color/string/flag |Display and rendering properties.
+|===
+
+=== submodel -- Instanced submodel
+
+A submodel references a treetop in *another* `.g` file (or the current one) and
+instances it as a single primitive, with its own space-partitioning method.
+This allows very large assemblies to be composed from reusable, independently
+prepared model files.
+
+.A submodel instances a treetop from another database as a single primitive; the referenced assembly is what appears in the scene.
+image::objtype_submodel.png[submodel,align=center]
+
+[cols="1,1,4"]
+|===
+|Parameter |Type |Description
+|treetop |name |The object (treetop) to instance from the referenced file.
+|method |integer |Space-partitioning method to prep the submodel with.
+|file |name |The `.g` file to read (empty = the current database).
+|===
+
+Recipe:
+
+[source]
+----
+in wheel submodel  wheel_assembly  0  parts.g
+----
+
+=== cline -- FASTGEN CLINE
+
+The CLINE is a FASTGEN-compatibility primitive representing a "connected line"
+structural element -- a rod (or, with a wall thickness, a tube) of given radius
+along a segment.  It is normally created when importing FASTGEN models.
+
+.A cline: a radius-r element swept from V along H, here in volume mode.
+image::objtype_cline.png[cline,align=center]
+
+[cols="1,1,4"]
+|===
+|Parameter |Type |Description
+|V |point |Start point of the element.
+|H |vector |Segment vector (start to end).
+|R |scalar |Radius of the element.
+|T |scalar |Wall thickness (0 = solid volume mode).
+|===
+
+The `in` command does not build a cline; create one directly with `put`:
+
+[source]
+----
+put beam cline  V {0 0 0}  H {0 0 8}  R 1.5  T 0.4
+----
+
+== Non-Geometric Objects
+
+Not every object in a `.g` database is a shape.  These types store supporting
+data referenced by the geometry.
+
+=== binunif -- Uniform-array binary object
+
+A `binunif` stores a raw, uniformly typed array (floats, doubles, or signed and
+unsigned 8/16/32/64-bit integers) directly inside the database.  It is the
+in-database home for the sample data that `dsp`, `ebm`, and `vol` can reference
+by object name instead of by external file.
+
+[cols="1,1,4"]
+|===
+|Parameter |Type |Description
+|minor type |char |Element type: `f` d `c` s `i` L (signed) / `C` S `I` L (unsigned).
+|file |name |File to read the array from.
+|count |integer |Number of values to read (-1 for the whole file).
+|===
+
+Recipe:
+
+[source]
+----
+in heights binunif  s  heights.raw  -1
+----
+
+=== material -- Material definition
+
+A material object names a material and records its physical, mechanical,
+optical, and thermal properties as attribute sets, plus a parent material and a
+data source -- a reusable material library entry that regions can reference.
+
+[cols="1,1,4"]
+|===
+|Parameter |Type |Description
+|name |string |Material name.
+|parent |string |Parent material to inherit from.
+|source |string |Where the material data came from.
+|properties |key/value sets |Physical, mechanical, optical, and thermal properties.
+|===
+
+=== constraint -- Parametric constraint
+
+A constraint object stores a parametric expression (with an ID and a type) used
+by the parametric/constraint machinery to relate dimensions and enforce design
+intent.
+
+[cols="1,1,4"]
+|===
+|Parameter |Type |Description
+|id |integer |Constraint identifier.
+|type |integer |Constraint type.
+|expression |string |The constraint expression.
+|===
+
+=== script -- Script object
+
+A script object stores an embedded script (by type) that can be carried along
+with the geometry it relates to.
+
+[cols="1,1,4"]
+|===
+|Parameter |Type |Description
+|type |string |The script type/interpreter.
+|===
+
+[appendix]
+== Complete object-type table
+
+Every object type recognized by the current database format, with its internal
+ID name and functional group.
+
+[cols="2,3,2"]
+|===
+|`in` type(s) |Object |Group
+
+|`arb4`..`arb8` |Arbitrary polyhedron (ID_ARB8) |Planar-faced
+|`arbn` |N-plane polyhedron (ID_ARBN) |Planar-faced
+|`half` |Half-space (ID_HALF) |Planar-faced
+|`ell`, `ell1`, `ellg` |General ellipsoid (ID_ELL) |Ellipsoid
+|`sph` |Sphere (ID_SPH) |Ellipsoid
+|`superell` |Superquadric ellipsoid (ID_SUPERELL) |Ellipsoid
+|`tgc` |Truncated general cone (ID_TGC) |Cone/cylinder
+|`rcc`, `rec`, `trc`, `tec` |TGC shortcuts (ID_TGC / ID_REC) |Cone/cylinder
+|`box`, `raw`, `rpp`, `orpp` |Box shortcuts (ID_ARB8) |Cone/cylinder
+|`tor` |Torus (ID_TOR) |Torus
+|`eto` |Elliptical torus (ID_ETO) |Torus
+|`rpc` |Right parabolic cylinder (ID_RPC) |Quadric/conic
+|`rhc` |Right hyperbolic cylinder (ID_RHC) |Quadric/conic
+|`epa` |Elliptical paraboloid (ID_EPA) |Quadric/conic
+|`ehy` |Elliptical hyperboloid (ID_EHY) |Quadric/conic
+|`hyp` |Hyperboloid of one sheet (ID_HYP) |Quadric/conic
+|`part` |Particle (ID_PARTICLE) |Quadric/conic
+|`hrt` |Heart (ID_HRT) |Quadric/conic
+|`metaball` |Blobby implicit surface (ID_METABALL) |Implicit
+|`bot` |Bag of triangles (ID_BOT) |Mesh/BREP
+|`ars` |Arbitrary faceted solid (ID_ARS) |Mesh/BREP
+|`nmg` |N-manifold geometry (ID_NMG) |Mesh/BREP
+|`brep` |NURBS boundary rep (ID_BREP) |Mesh/BREP
+|`poly` (`pg`) |Polygonal object (ID_POLY) |Mesh/BREP
+|`bspline` (`nurb`) |B-spline surfaces (ID_BSPLINE) |Mesh/BREP
+|`sketch` |2D profile (ID_SKETCH) |Sketch-based
+|`extrude` |Extruded sketch (ID_EXTRUDE) |Sketch-based
+|`revolve` |Solid of revolution (ID_REVOLVE) |Sketch-based
+|`dsp` |Displacement map (ID_DSP) |Sampled
+|`ebm` |Extruded bit-map (ID_EBM) |Sampled
+|`vol` |Volumetric voxels (ID_VOL) |Sampled
+|`hf` |Height field (ID_HF) |Sampled
+|`pipe` |Piped solid (ID_PIPE) |Piped/points
+|`pnts` |Point cloud (ID_PNTS) |Piped/points
+|`datum` |Datum reference (ID_DATUM) |Reference
+|`grip` |Grip (ID_GRIP) |Reference
+|`joint` |Joint (ID_JOINT) |Reference
+|`annot` |Annotation (ID_ANNOT) |Reference
+|`comb` / region / group |Boolean combination (ID_COMBINATION) |Combination
+|`submodel` |Instanced submodel (ID_SUBMODEL) |Combination
+|`cline` |FASTGEN CLINE (ID_CLINE) |Combination
+|`binunif` |Uniform binary array (ID_BINUNIF) |Non-geometric
+|`material` |Material definition (ID_MATERIAL) |Non-geometric
+|`constraint` |Parametric constraint (ID_CONSTRAINT) |Non-geometric
+|`script` |Script object (ID_SCRIPT) |Non-geometric
+|===
+
+[appendix]
+== Regenerating the figures
+
+All figures in this article are generated programmatically from the installed
+BRL-CAD tools, so they stay in sync with the software.  Every pixel is produced
+by BRL-CAD: the generator drives `mged` (to create each object with the very
+recipes shown above), `rt` (to ray trace the shaded solid), `rtedge` (to overlay
+the silhouette and crease edges), and `fbline`/`fblabel` (to draw the parameter
+callouts onto the framebuffer), then grabs the result with `fb-png`.
+
+[source,bash]
+----
+cd doc/asciidoc/articles/images/objtype_src
+BRLCAD_BIN=/path/to/brlcad/bin python gen_object_types.py          # rebuild all
+BRLCAD_BIN=/path/to/brlcad/bin python gen_object_types.py ell tor  # rebuild some
+----
+
+The projection used to place callouts is reconstructed from the exact view `rt`
+reports, so labels land precisely on the rendered geometry.  See
+`objtype_src/README.adoc` for details.

@@ -25,6 +25,8 @@
  */
 
 #include "STEPWrapper.h"
+#include "STEPGeneratedAPI.h"
+#include "ap_schema.h"
 #include "Factory.h"
 
 #include "ShapeDefinition.h"
@@ -70,22 +72,20 @@ ShapeDefinition::Load(STEPWrapper *sw, SDAI_Application_instance *sse) {
     step=sw;
 
     if (definition == NULL) {
-	SdaiShape_definition *v = (SdaiShape_definition *) sse;
+	SDAI_Select *v = reinterpret_cast<SDAI_Select *>(sse);
+	SDAI_Application_instance *selected = brlcad::step::SelectedEntity(v);
 
-	if (v->IsProduct_definition_shape()) {
-	    SdaiProduct_definition_shape *pds = *v;
+	if (selected && sw->IsSchemaEntity(selected, "PRODUCT_DEFINITION_SHAPE")) {
 	    type = ShapeDefinition::PRODUCT_DEFINITION_SHAPE;
-	    definition = dynamic_cast<ProductDefinitionShape *>(Factory::CreateObject(sw, (SDAI_Application_instance *)pds));
+	    definition = dynamic_cast<ProductDefinitionShape *>(Factory::CreateObject(sw, selected));
 	    if (!definition) return false;
-	} else if (v->IsShape_aspect()) {
-	    SdaiShape_aspect *sa = *v;
+	} else if (selected && sw->IsSchemaEntity(selected, "SHAPE_ASPECT")) {
 	    type = ShapeDefinition::SHAPE_ASPECT;
-	    definition = dynamic_cast<ShapeAspect *>(Factory::CreateObject(sw, (SDAI_Application_instance *)sa));
+	    definition = dynamic_cast<ShapeAspect *>(Factory::CreateObject(sw, selected));
 	    if (!definition) return false;
-	} else if (v->IsShape_aspect_relationship()) {
-	    SdaiShape_aspect_relationship *sar = *v;
+	} else if (selected && sw->IsSchemaEntity(selected, "SHAPE_ASPECT_RELATIONSHIP")) {
 	    type = ShapeDefinition::SHAPE_ASPECT_RELATIONSHIP;
-	    definition = dynamic_cast<ShapeAspectRelationship *>(Factory::CreateObject(sw, (SDAI_Application_instance *)sar));
+	    definition = dynamic_cast<ShapeAspectRelationship *>(Factory::CreateObject(sw, selected));
 	    if (!definition) return false;
 	} else {
 	    type = ShapeDefinition::SHAPE_DEFINITION_UNKNOWN;

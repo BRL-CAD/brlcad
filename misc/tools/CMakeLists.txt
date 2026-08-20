@@ -10,6 +10,9 @@ endfunction(SetTargetFolder)
 # asciiquack - AsciiDoc processor used to build BRL-CAD documentation
 add_subdirectory(asciiquack)
 
+# On some platforms distclean has additional cleanup to do
+distclean("${CMAKE_BINARY_DIR}/${BIN_DIR}/asciiquack.pdb")
+
 # inactvhdrs - utility that tries to find local headers unused by other
 # source code in a file hierarchy
 if(BUILD_TESTING)

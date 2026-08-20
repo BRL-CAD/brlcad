@@ -40,7 +40,6 @@
 #include "bu/mime.h"
 #include "bu/path.h"
 #include "vmath.h"
-#include "icv.h"
 #include "raytrace.h"
 #include "dm.h"
 
@@ -54,7 +53,7 @@
 
 
 unsigned char *scanbuf;
-static int pixsize = 0;		/* bytes per pixel in scanbuf */
+static unsigned char *fb_scanbuf = NULL;
 static double	contrast_boost = 2.0;
 
 static int xrayhit(register struct application *ap, struct partition *PartHeadp, struct seg *segp);
@@ -90,11 +89,9 @@ view_init(struct application *UNUSED(ap), char *UNUSED(file), char *UNUSED(obj),
     }
 
     if (lightmodel == LGT_BW) {
-	pixsize = 3; /* use frame buffer size with icv */
-	scanbuf = (unsigned char *)bu_malloc( width*pixsize, "scanline buffer" );
+	scanbuf = (unsigned char *)bu_malloc(width * sizeof(*scanbuf), "scanline buffer");
     } else {
 	/* XXX - Floating output uses no buffer */
-	pixsize = 0;
 	/* force change of 'outputfile' to short circuit libicv for LGT_FLOAT outputs, adds '.los' extension */
 	if (outputfile) {
 	    struct bu_vls c = BU_VLS_INIT_ZERO;
@@ -155,15 +152,11 @@ view_eol(struct application *ap)
     size_t i;
 
     if ( lightmodel == LGT_BW ) {
-
-	if (bif != NULL) {
-	    /* TODO : Add double type data to maintain resolution */
-	    icv_writeline(bif, ap->a_y, scanbuf, ICV_DATA_UCHAR);
-	} else if ( outfp != NULL ) {
+	if ( outfp != NULL ) {
 	    if (rtg_parallel) {
 		bu_semaphore_acquire( BU_SEM_SYSCALL );
 	    }
-	    i = fwrite( scanbuf, pixsize, width, outfp );
+	    i = fwrite(scanbuf, sizeof(*scanbuf), width, outfp);
 	    if (i < width) {
 		perror("fwrite");
 	    }
@@ -172,16 +165,25 @@ view_eol(struct application *ap)
 	    }
 	}
 	if ( fbp != FB_NULL ) {
+	    size_t pixel;
+
+	    if (fb_scanbuf == NULL)
+		fb_scanbuf = (unsigned char *)bu_malloc(width * sizeof(RGBpixel), "framebuffer scanline");
+	    for (pixel = 0; pixel < width; pixel++) {
+		fb_scanbuf[pixel * sizeof(RGBpixel) + RED] = scanbuf[pixel];
+		fb_scanbuf[pixel * sizeof(RGBpixel) + GRN] = scanbuf[pixel];
+		fb_scanbuf[pixel * sizeof(RGBpixel) + BLU] = scanbuf[pixel];
+	    }
 	    if (rtg_parallel) {
 		bu_semaphore_acquire( BU_SEM_SYSCALL );
 	    }
-	    fb_write( fbp, 0, ap->a_y, scanbuf, width );
+	    fb_write( fbp, 0, ap->a_y, fb_scanbuf, width );
 	    if (rtg_parallel) {
 		bu_semaphore_release( BU_SEM_SYSCALL );
 	    }
 	}
 
-	if (bif == NULL && fbp == FB_NULL && outfp == NULL)
+	if (fbp == FB_NULL && outfp == NULL)
 	    bu_log("rtxray: strange, no end of line actions taken.\n");
     }
 }
@@ -259,13 +261,7 @@ xrayhit(register struct application *ap, struct partition *PartHeadp, struct seg
 	    else if ( fvalue <= 0.0 ) fvalue = 0.0;
 	    value = 1.0 + 254.99 * fvalue;
 	    bu_semaphore_acquire( RT_SEM_RESULTS );
-	    if ( pixsize == 1 ) {
-		scanbuf[ap->a_x] = value;
-	    } else {
-		scanbuf[ap->a_x*3+RED] = value;
-		scanbuf[ap->a_x*3+GRN] = value;
-		scanbuf[ap->a_x*3+BLU] = value;
-	    }
+	    scanbuf[ap->a_x] = value;
 	    bu_semaphore_release( RT_SEM_RESULTS );
 	    break;
     }
@@ -283,13 +279,7 @@ xraymiss(register struct application *ap)
     switch ( lightmodel ) {
 	case LGT_BW:
 	    bu_semaphore_acquire( RT_SEM_RESULTS );
-	    if ( pixsize == 1 ) {
-		scanbuf[ap->a_x] = 0;
-	    } else {
-		scanbuf[ap->a_x*3+RED] = 0;
-		scanbuf[ap->a_x*3+GRN] = 0;
-		scanbuf[ap->a_x*3+BLU] = 0;
-	    }
+	    scanbuf[ap->a_x] = 0;
 	    bu_semaphore_release( RT_SEM_RESULTS );
 	    break;
 	case LGT_FLOAT:
