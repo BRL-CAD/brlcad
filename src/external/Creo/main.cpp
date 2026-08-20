@@ -335,7 +335,7 @@ output_parts(struct creo_conv_info *cinfo)
                  */
                 struct directory **children = NULL;
                 struct rt_db_internal in;
-                if (rt_db_get_internal(&in, rdp, cinfo->wdbp->dbip, NULL, &rt_uniresource) >= 0) {
+                if (rt_db_get_internal(&in, rdp, cinfo->wdbp->dbip, NULL) >= 0) {
                     struct rt_comb_internal *comb = (struct rt_comb_internal *)in.idb_ptr;
                     int ccnt = db_comb_children(cinfo->wdbp->dbip, comb, &children, NULL, NULL);
                     if (ccnt > 0) {
@@ -349,7 +349,7 @@ output_parts(struct creo_conv_info *cinfo)
                 bu_free(children, "free child list");
                 db_delete(cinfo->wdbp->dbip, rdp);
                 db_dirdelete(cinfo->wdbp->dbip, rdp);
-                db_update_nref(cinfo->wdbp->dbip, &rt_uniresource);
+                db_update_nref(cinfo->wdbp->dbip);
             }
         }
 
@@ -419,7 +419,7 @@ output_assems(struct creo_conv_info *cinfo)
                 /* Kill the existing object - it's out of sync with Creo */
                 db_delete(cinfo->wdbp->dbip, adp);
                 db_dirdelete(cinfo->wdbp->dbip, adp);
-                db_update_nref(cinfo->wdbp->dbip, &rt_uniresource);
+                db_update_nref(cinfo->wdbp->dbip);
             }
         }
 

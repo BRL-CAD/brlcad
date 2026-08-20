@@ -1047,11 +1047,10 @@ load_profile(void)
         creo_log(NULL, MSG_STATUS, "Database title is \"%s\"", dbip->dbi_title);
 
     /* Locate first available directory */
-    for (int i = 0; i < RT_DBNHASH; i++) {
-        dp = dbip->dbi_Head[i];
+    FOR_ALL_DIRECTORY_START(dp, dbip) {
         if (global_dir(dp))
             break;
-    }
+    } FOR_ALL_DIRECTORY_END
 
     /* Extract the _GLOBAL attributes */
     if (db5_get_attributes(dbip, &avs, dp)) {
