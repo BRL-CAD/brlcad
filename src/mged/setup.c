@@ -101,6 +101,7 @@ static struct cmdtab mged_cmdtab[] = {
     {MGED_CMD_MAGIC, "art", cmd_rt, GED_FUNC_PTR_NULL, NULL},
     {MGED_CMD_MAGIC, "attach", f_attach, GED_FUNC_PTR_NULL, NULL},
     {MGED_CMD_MAGIC, "attr", cmd_ged_plain_wrapper, ged_exec_attr, NULL},
+    {MGED_CMD_MAGIC, "autodim", cmd_ged_plain_wrapper, ged_exec_autodim, NULL},
     {MGED_CMD_MAGIC, "autoview", cmd_autoview, GED_FUNC_PTR_NULL, NULL},
     {MGED_CMD_MAGIC, "bb", cmd_ged_plain_wrapper, ged_exec_bb, NULL},
     {MGED_CMD_MAGIC, "bev", cmd_ged_plain_wrapper, ged_exec_bev, NULL},
