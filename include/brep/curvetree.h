@@ -58,10 +58,22 @@ namespace brlcad {
      */
     class BREP_EXPORT CurveTree : public PooledObject<CurveTree> {
     public:
+	/**
+	 * Build a curve tree with an optional transient-memory limit.
+	 * A zero byte limit selects the library default.
+	 */
 	explicit CurveTree(const ON_BrepFace *face,
 	    std::size_t max_bytes = 0);
+	/**
+	 * Build a curve tree with a minimum feature-size sampling limit.
+	 * A zero feature size selects the library default.
+	 */
 	CurveTree(const ON_BrepFace *face, std::size_t max_bytes,
 	    double min_feature_size);
+	/**
+	 * Build a curve tree with feature-size and deadline limits.
+	 * The deadline is an absolute timestamp from bu_gettime(); zero disables it.
+	 */
 	CurveTree(const ON_BrepFace *face, std::size_t max_bytes,
 	    double min_feature_size, int64_t deadline);
 	~CurveTree();
@@ -72,9 +84,12 @@ namespace brlcad {
 	std::list<const BRNode *> serialize_get_leaves(const std::size_t *keys, std::size_t num_keys) const;
 	void serialize_cleanup() const;
 
-	/* A nonzero construction limit is used by best-effort display paths.
-	 * A limited tree must not be used for geometric queries. */
+	/**
+	 * Report whether construction stopped at the node/memory limit.
+	 * A limited tree must not be used for geometric queries.
+	 */
 	bool limit_reached() const { return m_limit_reached; }
+	/** Report whether construction stopped at its time deadline. */
 	bool time_limit_reached() const { return m_time_limit_reached; }
 
 	/**

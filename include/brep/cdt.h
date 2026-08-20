@@ -554,9 +554,44 @@ struct brep_cdt_fast_report {
 #define BREP_CDT_FAST_ERROR -1
 #define BREP_CDT_FAST_LIMIT -2
 
+/**
+ * Initialize display-quality CDT options with library defaults.
+ *
+ * A NULL options pointer is ignored.  Callers may override any nonzero
+ * resource limit or other option after initialization.
+ *
+ * @param options options structure to initialize
+ */
 extern BREP_EXPORT void
 brep_cdt_fast_options_default(struct brep_cdt_fast_options *options);
 
+/**
+ * Tessellate one B-Rep face, or all faces when @p index is -1, using the
+ * bounded display-quality CDT path.
+ *
+ * Output arrays are allocated with the BRL-CAD allocator and are owned by
+ * the caller.  They are initialized to NULL/zero before any validation or
+ * processing.  The optional report receives resource and per-face status
+ * information.  A partial result is returned only when the options permit
+ * partial output.
+ *
+ * @param faces receives triangle vertex indices
+ * @param face_cnt receives the number of triangles
+ * @param pnt_norms receives per-vertex normals
+ * @param pnts receives output vertices
+ * @param pntcnt receives the number of output vertices
+ * @param brep source B-Rep
+ * @param index face index, or -1 for all faces
+ * @param ttol tessellation tolerance
+ * @param tol geometric tolerance
+ * @param options optional resource and callback settings; NULL selects
+ *        defaults
+ * @param report optional diagnostic report
+ * @return BREP_CDT_FAST_OK for complete output, BREP_CDT_FAST_PARTIAL for
+ *         permitted partial output, BREP_CDT_FAST_LIMIT for a bounded
+ *         resource stop, or BREP_CDT_FAST_ERROR for invalid input or other
+ *         failure
+ */
 extern BREP_EXPORT int
 brep_cdt_fast_ex(int **faces, int *face_cnt, vect_t **pnt_norms,
 	point_t **pnts, int *pntcnt, const ON_Brep *brep, int index,
