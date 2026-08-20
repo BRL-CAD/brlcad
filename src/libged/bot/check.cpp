@@ -28,9 +28,9 @@
 
 #include <stdlib.h>
 #include <ctype.h>
+#include <limits.h>
 #include <string.h>
-
-#include "manifold/manifold.h"
+#include <vector>
 
 #include "bu/cmd.h"
 #include "bu/opt.h"
@@ -45,37 +45,23 @@
 static bool
 manifold_check(struct rt_bot_internal *bot)
 {
-    if (!bot)
+    if (!bot || bot->num_vertices > INT_MAX || bot->num_faces > INT_MAX)
 	return false;
 
-    manifold::MeshGL64 bot_mesh;
-    for (size_t j = 0; j < bot->num_vertices ; j++) {
-	bot_mesh.vertProperties.insert(bot_mesh.vertProperties.end(), bot->vertices[3*j+0]);
-	bot_mesh.vertProperties.insert(bot_mesh.vertProperties.end(), bot->vertices[3*j+1]);
-	bot_mesh.vertProperties.insert(bot_mesh.vertProperties.end(), bot->vertices[3*j+2]);
-    }
+    const int *faces = bot->faces;
+    std::vector<int> ccw_faces;
     if (bot->orientation == RT_BOT_CW) {
+	ccw_faces.resize(bot->num_faces * 3);
 	for (size_t j = 0; j < bot->num_faces; j++) {
-	    bot_mesh.triVerts.insert(bot_mesh.triVerts.end(), bot->faces[3*j+0]);
-	    bot_mesh.triVerts.insert(bot_mesh.triVerts.end(), bot->faces[3*j+2]);
-	    bot_mesh.triVerts.insert(bot_mesh.triVerts.end(), bot->faces[3*j+1]);
+	    ccw_faces[3 * j] = bot->faces[3 * j];
+	    ccw_faces[3 * j + 1] = bot->faces[3 * j + 2];
+	    ccw_faces[3 * j + 2] = bot->faces[3 * j + 1];
 	}
-    } else {
-	for (size_t j = 0; j < bot->num_faces; j++) {
-	    bot_mesh.triVerts.insert(bot_mesh.triVerts.end(), bot->faces[3*j+0]);
-	    bot_mesh.triVerts.insert(bot_mesh.triVerts.end(), bot->faces[3*j+1]);
-	    bot_mesh.triVerts.insert(bot_mesh.triVerts.end(), bot->faces[3*j+2]);
-	}
+	faces = ccw_faces.data();
     }
 
-    manifold::Manifold omanifold(bot_mesh);
-    if (omanifold.Status() == manifold::Manifold::Error::NoError) {
-	// BoT is manifold
-	return true;
-    }
-
-    // Not manifold
-    return false;
+    return bg_trimesh_manifold_accepted((int)bot->num_vertices,
+	(int)bot->num_faces, bot->vertices, faces) != 0;
 }
 
 struct _ged_bot_icheck {
