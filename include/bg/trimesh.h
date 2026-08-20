@@ -91,6 +91,9 @@ BG_EXPORT extern int bg_trimesh_oriented(int vcnt, int fcnt, fastf_t *v, int *f)
  * output or perform a Boolean union.
  *
  * @return 1 if accepted and independently validated, 0 otherwise.
+ *
+ * Invalid or resource-exhausted inputs also return 0; C++ exceptions are not
+ * propagated across this C API.
  */
 BG_EXPORT extern int bg_trimesh_manifold_accepted(int vcnt, int fcnt,
 	const fastf_t *v, const int *f);
@@ -642,7 +645,9 @@ struct bg_trimesh_repair_report {
  *
  * @return 1 if the input was already solid, 0 if repair produced an accepted
  * output, and -1 on invalid input or if the requested postconditions were not
- * satisfied.
+ * satisfied.  On return 1, the output pointers remain NULL and their counts
+ * remain zero unless topology normalization required an exported copy.
+ * Allocation and library exceptions are converted to return value -1.
  */
 BG_EXPORT extern int
 bg_trimesh_repair_ex(
