@@ -33,6 +33,7 @@
 #include <iterator>
 #include <map>
 #include <memory>
+#include <limits>
 #include <numeric>
 #include <queue>
 #include <set>
@@ -1179,8 +1180,17 @@ static bool
 do_triangulation(struct ON_Brep_CDT_State *s_cdt, int fi)
 {
     ON_BrepFace &face = s_cdt->brep->m_F[fi];
-    s_cdt->face_deadline = s_cdt->max_face_time_ms > 0 ?
-	bu_gettime() + (int64_t)s_cdt->max_face_time_ms * 1000 : 0;
+    if (s_cdt->max_face_time_ms > 0) {
+	const int64_t now = bu_gettime();
+	const int64_t max_delta =
+	    std::numeric_limits<int64_t>::max() - now;
+	const int64_t requested = (int64_t)s_cdt->max_face_time_ms;
+	const int64_t delta = requested > max_delta / 1000 ?
+	    max_delta : requested * 1000;
+	s_cdt->face_deadline = now + delta;
+    } else {
+	s_cdt->face_deadline = 0;
+    }
 
     // Document the min and max segment lengths - used to guide surface sampling
     int loop_cnt = face.LoopCount();
