@@ -45,10 +45,8 @@ removeImages(const std::filesystem::path &fullPath, const std::filesystem::path 
 {
     bool success = true;
     for (const std::filesystem::path &path : {fullPath, previewPath}) {
-	std::error_code removeError;
-	std::filesystem::remove(path, removeError);
-	if (removeError) {
-	    std::cerr << "Could not remove " << path << ": " << removeError.message() << "\n";
+	if (!bu_file_delete(path.string().c_str())) {
+	    std::cerr << "Could not remove " << path << "\n";
 	    success = false;
 	}
     }
