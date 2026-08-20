@@ -490,10 +490,12 @@ exercise_offset_full_cylinder_seam()
 	outline.push_back(outline.front());
 	int *faces = NULL;
 	int face_count = 0;
-	struct bg_triangulation_report report = {0, -1, {0}};
+	struct bg_triangulation_report report = {
+	    BG_TRIANGULATION_OK, -1, {0}
+	};
 	const int status = bg_nested_poly_triangulate_strict(&faces,
 	    &face_count, NULL, NULL, outline.data(), outline.size(), NULL,
-	    NULL, 0, NULL, 0, chart_points.data(), chart_points.size(),
+	    NULL, 0, NULL, 0, NULL, 0, chart_points.data(), chart_points.size(),
 	    &report);
 	bu_free(faces, "opened cylinder seam hole triangles");
 	failure = report.message + std::string(" (status ") +
@@ -715,10 +717,12 @@ exercise_offset_full_cylinder_seam()
     outline.push_back(chart.outer.front());
     int *faces = NULL;
     int face_count = 0;
-    struct bg_triangulation_report report = {0, -1, {0}};
+    struct bg_triangulation_report report = {
+	BG_TRIANGULATION_OK, -1, {0}
+    };
     const int status = bg_nested_poly_triangulate_strict(&faces,
 	&face_count, NULL, NULL, outline.data(), outline.size(), NULL, NULL,
-	0, NULL, 0, chart_points.data(), chart_points.size(), &report);
+	0, NULL, 0, NULL, 0, chart_points.data(), chart_points.size(), &report);
     bu_free(faces, "offset cylinder seam triangles");
     if (status != BRLCAD_OK || face_count <= 0) {
 	std::cerr << "offset cylinder seam triangulation failed: "
@@ -873,11 +877,13 @@ exercise_periodic_metric_chart()
     seam_hole_outline.push_back(seam_hole_outline.front());
     int *seam_hole_faces = NULL;
     int seam_hole_face_count = 0;
-    struct bg_triangulation_report seam_hole_report = {0, -1, {0}};
+    struct bg_triangulation_report seam_hole_report = {
+	BG_TRIANGULATION_OK, -1, {0}
+    };
     const int seam_hole_status = bg_nested_poly_triangulate_strict(
 	&seam_hole_faces, &seam_hole_face_count, NULL, NULL,
 	seam_hole_outline.data(), seam_hole_outline.size(), NULL, NULL, 0,
-	NULL, 0, seam_hole_chart_points.data(),
+	NULL, 0, NULL, 0, seam_hole_chart_points.data(),
 	seam_hole_chart_points.size(), &seam_hole_report);
     bu_free(seam_hole_faces, "periodic metric seam hole triangles");
     if (seam_hole_status != BRLCAD_OK || seam_hole_face_count <= 0) {
@@ -985,10 +991,12 @@ exercise_seamless_cylinder_lift()
     outline.push_back(chart.outer.front());
     int *faces = NULL;
     int face_count = 0;
-    struct bg_triangulation_report report = {0, -1, {0}};
+    struct bg_triangulation_report report = {
+	BG_TRIANGULATION_OK, -1, {0}
+    };
     const int status = bg_nested_poly_triangulate_strict(&faces,
 	&face_count, NULL, NULL, outline.data(), outline.size(), NULL, NULL,
-	0, NULL, 0, chart_points.data(), chart_points.size(), &report);
+	0, NULL, 0, NULL, 0, chart_points.data(), chart_points.size(), &report);
     bu_free(faces, "seamless cylinder lift triangles");
     if (status != BRLCAD_OK || face_count <= 0) {
 	std::cerr << "seamless cylinder lift triangulation failed: "
@@ -1075,10 +1083,12 @@ exercise_revolution_cut_lift()
     outline.push_back(chart.outer.front());
     int *faces = NULL;
     int face_count = 0;
-    struct bg_triangulation_report report = {0, -1, {0}};
+    struct bg_triangulation_report report = {
+	BG_TRIANGULATION_OK, -1, {0}
+    };
     const int status = bg_nested_poly_triangulate_strict(&faces,
 	&face_count, NULL, NULL, outline.data(), outline.size(), NULL, NULL,
-	0, NULL, 0, chart_points.data(), chart_points.size(), &report);
+	0, NULL, 0, NULL, 0, chart_points.data(), chart_points.size(), &report);
     bu_free(faces, "revolution cut lift triangles");
     if (status != BRLCAD_OK || face_count <= 0) {
 	std::cerr << "revolution cut lift did not triangulate: "
@@ -1183,10 +1193,12 @@ exercise_cylinder_nesting_repair()
     const size_t hole_counts[1] = {chart.holes[0].size()};
     int *faces = NULL;
     int face_count = 0;
-    struct bg_triangulation_report report = {0, -1, {0}};
+    struct bg_triangulation_report report = {
+	BG_TRIANGULATION_OK, -1, {0}
+    };
     const int status = bg_nested_poly_triangulate_strict(&faces,
 	&face_count, NULL, NULL, chart.outer.data(), chart.outer.size(),
-	hole_data, hole_counts, 1, NULL, 0, chart_points.data(),
+	hole_data, hole_counts, 1, NULL, 0, NULL, 0, chart_points.data(),
 	chart_points.size(), &report);
     bu_free(faces, "cylinder nesting repair triangles");
     if (status != BRLCAD_OK || face_count <= 0) {
@@ -1330,13 +1342,16 @@ exercise_metric_component_partition()
 	}
 	int *faces = NULL;
 	int face_count = 0;
-	struct bg_triangulation_report report = {0, -1, {0}};
+	struct bg_triangulation_report report = {
+	    BG_TRIANGULATION_OK, -1, {0}
+	};
 	const int status = bg_nested_poly_triangulate_strict(&faces,
 	    &face_count, NULL, NULL, outline.data(), outline.size(),
 	    hole_data.empty() ? NULL : hole_data.data(),
 	    hole_counts.empty() ? NULL : hole_counts.data(),
 	    hole_data.size(), component.steiner.empty() ? NULL :
 	    component.steiner.data(), component.steiner.size(),
+	    NULL, 0,
 	    chart_points.data(), chart_points.size(), &report);
 	bu_free(faces, "metric component partition triangles");
 	if (status != BRLCAD_OK || face_count <= 0) {
@@ -1435,10 +1450,12 @@ exercise_toleranced_endpoint_sample_repair()
     outline.push_back(chart.outer.front());
     int *faces = NULL;
     int face_count = 0;
-    struct bg_triangulation_report report = {0, -1, {0}};
+    struct bg_triangulation_report report = {
+	BG_TRIANGULATION_OK, -1, {0}
+    };
     const int status = bg_nested_poly_triangulate_strict(&faces,
 	&face_count, NULL, NULL, outline.data(), outline.size(), NULL, NULL,
-	0, NULL, 0, chart_points.data(), chart_points.size(), &report);
+	0, NULL, 0, NULL, 0, chart_points.data(), chart_points.size(), &report);
     bu_free(faces, "endpoint sample repair triangles");
     if (status != BRLCAD_OK || face_count != 3) {
 	std::cerr << "repaired endpoint sample did not triangulate: "
