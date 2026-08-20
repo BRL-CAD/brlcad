@@ -208,8 +208,10 @@ exercise_cone(const ON_3dPoint &origin, ON_3dVector axis, double height,
     }
     int *cut_faces = NULL;
     int cut_face_count = 0;
-    struct bg_triangulation_report cut_report = {0, -1, {0}};
-    const int cut_status = bg_nested_poly_triangulate_constraints_strict(
+    struct bg_triangulation_report cut_report = {
+	BG_TRIANGULATION_OK, -1, {0}
+    };
+    const int cut_status = bg_nested_poly_triangulate_strict(
 	&cut_faces, &cut_face_count, NULL, NULL, cut_outline.data(),
 	cut_outline.size(), NULL, NULL, 0, NULL, 0,
 	cut_constraints.empty() ? NULL : cut_constraints.data(),

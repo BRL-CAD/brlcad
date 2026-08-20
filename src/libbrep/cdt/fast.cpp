@@ -5228,6 +5228,7 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 	    hole_arrays.empty() ? NULL : hole_arrays.data(),
 	    hole_counts.empty() ? NULL : hole_counts.data(), holes.size(),
 	    steiner.empty() ? NULL : steiner.data(), steiner.size(),
+	    NULL, 0,
 	    (const point2d_t *)input_points.data(), tpnts.size());
 	if (clean_ret != BRLCAD_OK || !clean_faces || !clean_points ||
 		clean_face_count <= 0 || clean_point_count <= 0 ||

@@ -131,7 +131,7 @@ main(int argc, const char **argv)
 
 	ret = bg_nested_poly_triangulate_clean(&faces, &num_faces,
 		&out_points, &out_point_count, verts_ind, 44, NULL, NULL,
-		0, NULL, 0, (const point2d_t *)points, num_points);
+		0, NULL, 0, NULL, 0, (const point2d_t *)points, num_points);
 	if (ret) {
 	    bu_log("test 1 cleanup failure!\n");
 	    return 1;
@@ -188,7 +188,7 @@ main(int argc, const char **argv)
 	ret = bg_nested_poly_triangulate_clean(&faces, &num_faces, &opnts,
 		&noutpnts, (const int *)outer, 4,
 		(const int **)hole_array, (const size_t *)hcnts, hole_cnt,
-		NULL, 0, (const point2d_t *)points, num_points);
+		NULL, 0, NULL, 0, (const point2d_t *)points, num_points);
 	if (ret) {
 	    bu_log("multiple hole splitting failure!\n");
 	    return 1;

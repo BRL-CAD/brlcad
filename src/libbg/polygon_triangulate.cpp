@@ -451,7 +451,7 @@ deduplicated_detria(int **faces, int *num_faces, point2d_t **out_pts,
  * collapse duplicates, split intersections, merge overlapping holes, and
  * return an explicit outer/hole hierarchy. */
 int
-bg_nested_poly_triangulate_clean_constraints(int **faces, int *num_faces,
+bg_nested_poly_triangulate_clean(int **faces, int *num_faces,
 	point2d_t **out_pts,
 	int *num_outpts, const int *poly, const size_t poly_pnts,
 	const int **holes_array, const size_t *holes_npts,
@@ -1055,56 +1055,9 @@ bg_nested_poly_triangulate_clean_constraints(int **faces, int *num_faces,
     return BRLCAD_OK;
 }
 
-int
-bg_nested_poly_triangulate_clean(int **faces, int *num_faces,
-	point2d_t **out_pts, int *num_outpts,
-	const int *poly, const size_t poly_pnts,
-	const int **holes_array, const size_t *holes_npts,
-	const size_t nholes, const int *steiner, const size_t steiner_npts,
-	const point2d_t *pts, const size_t npts)
-{
-    return bg_nested_poly_triangulate_clean_constraints(faces, num_faces,
-	out_pts, num_outpts, poly, poly_pnts, holes_array, holes_npts,
-	nholes, steiner, steiner_npts, NULL, 0, pts, npts);
-}
-
-
-int
-bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts,
-	int *num_outpts, const int *poly, const size_t poly_pnts,
-	const int **holes_array, const size_t *holes_npts,
-	const size_t nholes, const int *steiner, const size_t steiner_npts,
-	const point2d_t *pts)
-{
-    if (!poly || !pts || (nholes && (!holes_array || !holes_npts)) ||
-	    (steiner_npts && !steiner))
-	return BRLCAD_ERROR;
-    size_t npts = 0;
-    for (size_t i = 0; i < poly_pnts; i++) {
-	if (poly[i] < 0)
-	    return BRLCAD_ERROR;
-	npts = std::max(npts, (size_t)poly[i] + 1);
-    }
-    for (size_t h = 0; h < nholes; h++) {
-	for (size_t i = 0; i < holes_npts[h]; i++) {
-	    if (holes_array[h][i] < 0)
-		return BRLCAD_ERROR;
-	    npts = std::max(npts, (size_t)holes_array[h][i] + 1);
-	}
-    }
-    for (size_t i = 0; i < steiner_npts; i++) {
-	if (steiner[i] < 0)
-	    return BRLCAD_ERROR;
-	npts = std::max(npts, (size_t)steiner[i] + 1);
-    }
-    return bg_nested_poly_triangulate_clean(faces, num_faces, out_pts,
-	num_outpts, poly, poly_pnts, holes_array, holes_npts, nholes,
-	steiner, steiner_npts, pts, npts);
-}
-
 static int
 bg_triangulation_report_set(struct bg_triangulation_report *report,
-	int reason, int input_index, const char *message)
+	enum bg_triangulation_reason reason, int input_index, const char *message)
 {
     if (report) {
 	report->reason = reason;
@@ -1551,20 +1504,6 @@ bg_detria(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
 
 extern "C" int
 bg_nested_poly_triangulate_strict(int **faces, int *num_faces,
-	point2d_t **out_pts, int *num_outpts,
-	const int *poly, const size_t poly_pnts,
-	const int **holes_array, const size_t *holes_npts, const size_t nholes,
-	const int *steiner, const size_t steiner_npts,
-	const point2d_t *pts, const size_t npts,
-	struct bg_triangulation_report *report)
-{
-    return bg_detria(faces, num_faces, out_pts, num_outpts, poly,
-	poly_pnts, holes_array, holes_npts, nholes, steiner, steiner_npts,
-	NULL, 0, pts, npts, report);
-}
-
-extern "C" int
-bg_nested_poly_triangulate_constraints_strict(int **faces, int *num_faces,
 	point2d_t **out_pts, int *num_outpts,
 	const int *poly, const size_t poly_pnts,
 	const int **holes_array, const size_t *holes_npts, const size_t nholes,
