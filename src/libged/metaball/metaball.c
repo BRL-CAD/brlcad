@@ -464,9 +464,10 @@ ged_metaball_move_pnt_core(struct ged *gedp, int argc, const char *argv[])
     /* whole-object uniform scale mode: "-S metaball scale_factor".
      * This is a self-contained branch that scales every control point about
      * the metaball centroid and scales each point's field_strength; it does
-     * not fall through to the point-move logic below.  Reusing this already
-     * statically-registered command (rather than adding a new command name)
-     * keeps the change reachable without re-running the plugin scanner.
+     * not fall through to the point-move logic below.
+     *
+     * TODO: this and the others need to be proper subcommands of a
+     * metaball command.
      */
     if (argc >= 2 && BU_STR_EQUAL(argv[1], "-S")) {
 	struct wdb_metaball_pnt *mbpp;

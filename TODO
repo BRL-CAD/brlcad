@@ -350,8 +350,6 @@ lookup check to ensure none are missing.
   or there should be some other indication that a file was specified
   and is open.
 
-* add metaball scaling feature (presently in a tclscript)
-
 * ability to visualize metaball centerpoints and with/without
   translucency.
 
@@ -361,6 +359,8 @@ lookup check to ensure none are missing.
   points, no interpolation.
 
 * add script/command for changing metaball weights in masse
+
+* add a proper 'metaball' command with subcommands
 
 * gdiff in mged appears to be broken?  get "no primitives found" on
   second comb when specifying two combs (gdiff comb1 comb2).  UPDATE -
