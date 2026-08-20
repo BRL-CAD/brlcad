@@ -5237,7 +5237,7 @@ repair_failed_face_from_rigorous_boundary(
 		}
 	    }
 	    const int clean_result =
-		bg_nested_poly_triangulate_clean_constraints(
+		bg_nested_poly_triangulate_clean(
 		&clean_faces, &clean_face_count, &clean_points,
 		&clean_point_count, contours[outline].data(),
 		contours[outline].size(), hole_arrays.data(),
