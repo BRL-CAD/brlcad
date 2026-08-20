@@ -31,6 +31,8 @@
 #ifdef __cplusplus
 extern "C++" {
 /* @cond */
+#include <cstddef>
+#include <cstdint>
 #include <list>
 #include <queue>
 /* @endcond */

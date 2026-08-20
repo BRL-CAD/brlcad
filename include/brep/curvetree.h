@@ -34,6 +34,8 @@
 #ifdef __cplusplus
 // @cond SKIP_C++_INCLUDE
 extern "C++" {
+#  include <cstddef>
+#  include <cstdint>
 #  include <map>
 }
 // @endcond

@@ -24,6 +24,8 @@
 #ifndef RT_PRIMITIVES_BREP_H
 #define RT_PRIMITIVES_BREP_H
 
+#include <stddef.h>
+
 #include "common.h"
 #include "vmath.h"
 #include "bu/list.h"
@@ -40,13 +42,12 @@ RT_EXPORT extern int rt_brep_plot(struct bu_list                *vhead,
 				  const struct bn_tol            *tol,
 				  const struct bview *info);
 
-/* item_status, when non-NULL, is called exactly once per requested edge and
- * surface cue during serial result assembly. */
+/** Options for bounded B-Rep wireframe and surface-cue drawing. */
 struct rt_brep_draw_options {
     size_t max_workers;
-    /* Retained output and temporary curve-tree storage are independent peak
-     * memory controls.  A zero user value selects the library default. */
+    /** Retained output memory; zero selects the library default. */
     size_t max_result_bytes;
+    /** Temporary edge and curve-tree working memory; zero selects default. */
     size_t max_working_bytes;
     size_t max_points;
     long max_time_ms;
@@ -69,8 +70,7 @@ struct rt_brep_draw_report {
     int failed_edges;
     int requested_surface_cues;
     int completed_surface_cues;
-    /* Cues drawn from the bounded untrimmed surface envelope after exact
-     * trim hierarchy construction exceeded its memory or time share. */
+    /** Cues drawn from the bounded untrimmed surface envelope. */
     int approximated_surface_cues;
     int memory_approximated_surface_cues;
     int time_approximated_surface_cues;
@@ -86,9 +86,11 @@ struct rt_brep_draw_report {
 #define RT_BREP_DRAW_ERROR -1
 #define RT_BREP_DRAW_LIMIT -2
 
+/** Initialize drawing options with safe bounded defaults. */
 RT_EXPORT extern void
 rt_brep_draw_options_default(struct rt_brep_draw_options *options);
 
+/** Draw bounded B-Rep wireframe edges and optional surface cues. */
 RT_EXPORT extern int
 rt_brep_plot_ex(struct bu_list *vhead, struct rt_db_internal *ip,
 	const struct bg_tess_tol *ttol, const struct bn_tol *tol,
