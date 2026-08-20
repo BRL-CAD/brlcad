@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 20XX-XX-XX  Release 7.46.0                                     ---
 ----------------------------------------------------------------------
 
+* added center command support for centering on an object - Cliff Yapp
 * added metaball point scaling (via metaball_move_pnt) - Sean Morrison
 * all raytracing apps now report object prep failures - Sean Morrison
 * added support for tick drawing on MGED model axis - Cliff Yapp

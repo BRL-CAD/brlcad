@@ -41,7 +41,7 @@ int
 ged_center_core(struct ged *gedp, int argc, const char *argv[])
 {
     point_t center;
-    static const char *usage = "[-v] | [x y z]";
+    static const char *usage = "[-v] | [x y z] | object";
 
     GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
@@ -117,6 +117,34 @@ ged_center_core(struct ged *gedp, int argc, const char *argv[])
 		success = 0;
 	    }
 	    VSET(center, xval, yval, zval);
+	}
+	if (!success && gedp->dbip) {
+	    /* Not a coordinate triple; try resolving argv[1] as an object
+	     * name and recenter on the midpoint of its bounding box.  This
+	     * mirrors the bounds machinery used by the ocenter command.
+	     */
+	    struct _ged_trace_data gtd;
+	    struct directory *dp;
+	    point_t rpp_min, rpp_max;
+
+	    if (_ged_get_obj_bounds2(gedp, 1, &argv[1], &gtd, rpp_min, rpp_max) & BRLCAD_ERROR)
+		return BRLCAD_ERROR;
+
+	    dp = gtd.gtd_obj[gtd.gtd_objpos-1];
+	    if (!(dp->d_flags & RT_DIR_SOLID)) {
+		if (rt_obj_bounds(gedp->ged_result_str, gedp->dbip, 1, &argv[1], 1, rpp_min, rpp_max) == BRLCAD_ERROR)
+		    return BRLCAD_ERROR;
+	    }
+
+	    /* midpoint of the RPP, in base (mm) units */
+	    VADD2(center, rpp_min, rpp_max);
+	    VSCALE(center, center, 0.5);
+
+	    /* the shared apply path below multiplies by dbi_local2base, so
+	     * convert to local units here to make that a no-op
+	     */
+	    VSCALE(center, center, gedp->dbip->dbi_base2local);
+	    success = 1;
 	}
 	if (!success) {
 	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
