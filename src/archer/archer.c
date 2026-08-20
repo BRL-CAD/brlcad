@@ -84,6 +84,25 @@ main(int argc, const char **argv)
 	}
     }
 
+    /* Handle -h/--help/-? before any Tcl/Tk initialization.  Archer is a
+     * GUI launcher, so without this a help request would forward "-h" into
+     * Tk and either halt with a Tk_Init error or try to load "-h" as a .g
+     * geometry file.  Short-circuit here so help works headlessly too. */
+    for (int i = 1; i < ac; i++) {
+	if (BU_STR_EQUAL(av[i], "-h") || BU_STR_EQUAL(av[i], "--help") || BU_STR_EQUAL(av[i], "-?")) {
+	    const char *pname = bu_getprogname();
+	    if (!pname || strlen(pname) == 0)
+		pname = "archer";
+	    printf("%s - BRL-CAD geometry editor\n", pname);
+	    printf("Usage: archer [options] [file.g]\n");
+	    printf("\n");
+	    printf("Options:\n");
+	    printf("  -h, --help    print this help and exit\n");
+	    bu_free((void *)av, "argv cpy");
+	    return 0;
+	}
+    }
+
     /* Change the working directory to BU_DIR_HOME if we are invoking
      * without any arguments. */
     if (ac == 1) {
