@@ -237,15 +237,13 @@ gqa -Am model.g object1 object2
 
 
 *-a* __azimuth_deg__::
-*Not Implemented*
+Sets the azimuth (in degrees) of a single oblique view direction. Supplying *-a* and/or *-e* replaces the default three axis-aligned (X, Y, Z) views with one view whose ray direction and sampling grid are derived from the given azimuth/elevation via an az/el rotation (azimuth about +Z, elevation from the XY plane). The default is 0. See also *-e* .
 +
-Sets a rotation (in degrees) of the coordinate system by a given amount about the Z axis. The default is 0. See also *-e* .
+NOTE: Area and mass figures reported for an oblique az/el view are approximate; overlap detection along the specified view direction is exact.
 
 
 *-e* __elevation_deg__::
-*Not Implemented*
-+
-Sets a rotation (in degrees) of the coordinate system by a given elevation from the XY plane (rotation about X axis?). The default is 0. See also *-a* .
+Sets the elevation (in degrees) of a single oblique view direction. Supplying *-a* and/or *-e* replaces the default three axis-aligned (X, Y, Z) views with one view whose ray direction and sampling grid are derived from the given azimuth/elevation via an az/el rotation (elevation from the XY plane). The default is 0. See also *-a* .
 
 
 *-d*::

@@ -30,6 +30,7 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 * need extensive testing of MGED CSG editing with the shift
   to librt based editing logic.
 
+* investigate gqa plotting display in MGED
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------

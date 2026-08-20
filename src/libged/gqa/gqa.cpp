@@ -44,6 +44,7 @@
 #include "bu/parallel.h"
 #include "bu/getopt.h"
 #include "vmath.h"
+#include "bn/mat.h"
 #include "raytrace.h"
 #include "bv/plot3.h"
 #include "analyze.h"
@@ -82,6 +83,7 @@ static int multiple_analyses;
 
 static double azimuth_deg;
 static double elevation_deg;
+static int azel_requested; /* set when -a and/or -e supplied */
 static char *densityFileName;
 static double gridSpacing;
 static double gridSpacingLimit;
@@ -156,6 +158,19 @@ struct cstate {
 
     vect_t u_dir;  /* direction of U vector for "current view" */
     vect_t v_dir;  /* direction of V vector for "current view" */
+
+    /* arbitrary azimuth/elevation view support.  When use_azel is nonzero (set
+     * only when -a and/or -e were supplied on the command line), gqa shoots a
+     * single oblique view whose ray direction (azel_dir) and grid basis
+     * (azel_u, azel_v) are derived from a bn_mat_ae() azimuth/elevation
+     * rotation instead of the default axis-aligned scheme.  All three are unit
+     * vectors.
+     */
+    int use_azel;
+    vect_t azel_dir; /* ray/invariant direction for the oblique view */
+    vect_t azel_u;   /* U (grid column) basis vector for the oblique view */
+    vect_t azel_v;   /* V (grid row) basis vector for the oblique view */
+
     struct rt_i *rtip;
     long steps[3]; /* this is per-dimension, not per-view */
     vect_t span;   /* How much space does the geometry span in each of X, Y, Z directions */
@@ -569,18 +584,20 @@ parse_args(struct ged *gedp, int ac, char *av[])
 		    break;
 		}
 	    case 'a':
-		bu_vls_printf(gedp->ged_result_str, "azimuth not implemented\n");
 		if (bn_decode_angle(&azimuth_deg,bu_optarg) == 0) {
 		    bu_vls_printf(gedp->ged_result_str, "error parsing azimuth \"%s\"\n", bu_optarg);
 		    return -1;
 		}
+		/* -a is honored; flag that an oblique az/el view was requested */
+		azel_requested = 1;
 		break;
 	    case 'e':
-		bu_vls_printf(gedp->ged_result_str, "elevation not implemented\n");
 		if (bn_decode_angle(&elevation_deg,bu_optarg) == 0) {
 		    bu_vls_printf(gedp->ged_result_str, "error parsing elevation \"%s\"\n", bu_optarg);
 		    return -1;
 		}
+		/* -e is honored; flag that an oblique az/el view was requested */
+		azel_requested = 1;
 		break;
 	    case 'd': debug = 1; break;
 
@@ -1285,6 +1302,7 @@ plane_worker(int cpu, void *ptr)
     struct cstate *state = (struct cstate *)ptr;
     unsigned long shot_cnt;
     struct ged *gedp = state->gedp;
+    point_t azel_origin = VINIT_ZERO; /* back-plane corner for oblique grid */
 
     if (aborted)
 	return;
@@ -1299,9 +1317,44 @@ plane_worker(int cpu, void *ptr)
     ap.A_LENDEN = 0.0; /* really the cumulative length*density for weight computation*/
     ap.A_LEN = 0.0;    /* really the cumulative length for volume computation */
 
-    /* gross hack */
-    ap.a_ray.r_dir[state->u_axis] = ap.a_ray.r_dir[state->v_axis] = 0.0;
-    ap.a_ray.r_dir[state->i_axis] = 1.0;
+    if (state->use_azel) {
+	/* fire along the oblique az/el direction */
+	VMOVE(ap.a_ray.r_dir, state->azel_dir);
+
+	/* Grid origin: start at the model bounding-box center and back
+	 * off along -azel_dir by the full bounding-box diagonal so the
+	 * ray start plane is guaranteed to be clear of the geometry.
+	 * The grid is then laid out from a corner (center minus half
+	 * the u/v extent) in the azel_u/azel_v plane.  Loop bounds reuse
+	 * steps[u_axis]/steps[v_axis], a conservative superset of the
+	 * oblique footprint; rays that miss are handled by _gqa_miss.
+	 */
+	{
+	    point_t bb_center;
+	    vect_t diag, backoff;
+	    fastf_t diag_len;
+	    fastf_t u_half, v_half;
+
+	    VADD2SCALE(bb_center, ap.a_rt_i->mdl_min, ap.a_rt_i->mdl_max, 0.5);
+	    VSUB2(diag, ap.a_rt_i->mdl_max, ap.a_rt_i->mdl_min);
+	    diag_len = MAGNITUDE(diag);
+
+	    VSCALE(backoff, state->azel_dir, -diag_len);
+
+	    u_half = 0.5 * (state->steps[state->u_axis]) * gridSpacing;
+	    v_half = 0.5 * (state->steps[state->v_axis]) * gridSpacing;
+
+	    VMOVE(azel_origin, bb_center);
+	    VADD2(azel_origin, azel_origin, backoff);
+	    VJOIN2(azel_origin, azel_origin,
+		   -u_half, state->azel_u,
+		   -v_half, state->azel_v);
+	}
+    } else {
+	/* gross hack */
+	ap.a_ray.r_dir[state->u_axis] = ap.a_ray.r_dir[state->v_axis] = 0.0;
+	ap.a_ray.r_dir[state->i_axis] = 1.0;
+    }
 
     ap.A_STATE = ptr; /* really copying the state ptr to the a_uptr */
 
@@ -1325,9 +1378,16 @@ plane_worker(int cpu, void *ptr)
 	     * numbered row in a grid refinement
 	     */
 	    for (u=1; u < state->steps[state->u_axis]; u++) {
-		ap.a_ray.r_pt[state->u_axis] = ap.a_rt_i->mdl_min[state->u_axis] + u*gridSpacing;
-		ap.a_ray.r_pt[state->v_axis] = ap.a_rt_i->mdl_min[state->v_axis] + v_coord;
-		ap.a_ray.r_pt[state->i_axis] = ap.a_rt_i->mdl_min[state->i_axis];
+		if (state->use_azel) {
+		    /* oblique grid point in the azel_u/azel_v plane */
+		    VJOIN2(ap.a_ray.r_pt, azel_origin,
+			   u*gridSpacing, state->azel_u,
+			   v_coord, state->azel_v);
+		} else {
+		    ap.a_ray.r_pt[state->u_axis] = ap.a_rt_i->mdl_min[state->u_axis] + u*gridSpacing;
+		    ap.a_ray.r_pt[state->v_axis] = ap.a_rt_i->mdl_min[state->v_axis] + v_coord;
+		    ap.a_ray.r_pt[state->i_axis] = ap.a_rt_i->mdl_min[state->i_axis];
+		}
 
 		if (debug) {
 		    bu_semaphore_acquire(state->sem_worker);
@@ -1348,9 +1408,16 @@ plane_worker(int cpu, void *ptr)
 	     * them have been computed in a previous iteration.
 	     */
 	    for (u=1; u < state->steps[state->u_axis]; u+=2) {
-		ap.a_ray.r_pt[state->u_axis] = ap.a_rt_i->mdl_min[state->u_axis] + u*gridSpacing;
-		ap.a_ray.r_pt[state->v_axis] = ap.a_rt_i->mdl_min[state->v_axis] + v_coord;
-		ap.a_ray.r_pt[state->i_axis] = ap.a_rt_i->mdl_min[state->i_axis];
+		if (state->use_azel) {
+		    /* oblique grid point in the azel_u/azel_v plane */
+		    VJOIN2(ap.a_ray.r_pt, azel_origin,
+			   u*gridSpacing, state->azel_u,
+			   v_coord, state->azel_v);
+		} else {
+		    ap.a_ray.r_pt[state->u_axis] = ap.a_rt_i->mdl_min[state->u_axis] + u*gridSpacing;
+		    ap.a_ray.r_pt[state->v_axis] = ap.a_rt_i->mdl_min[state->v_axis] + v_coord;
+		    ap.a_ray.r_pt[state->i_axis] = ap.a_rt_i->mdl_min[state->i_axis];
+		}
 
 		if (debug) {
 		    bu_semaphore_acquire(state->sem_worker);
@@ -2569,6 +2636,7 @@ ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
     multiple_analyses = 1;
     azimuth_deg = 0.0;
     elevation_deg = 0.0;
+    azel_requested = 0;
     densityFileName = (char *)0;
 
     /* FIXME: this is completely arbitrary, should probably be based
@@ -2595,6 +2663,7 @@ ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
     use_air = 1;
     num_objects = 0;
     num_views = 3;
+    state.use_azel = 0;
     verbose = 0;
     quiet_missed_report = 0;
     plot_prefix = NULL;
@@ -2612,6 +2681,38 @@ ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
     if (arg_count < 0 || (argc-arg_count) < 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s %s", argv[0], options_str, usage);
 	return BRLCAD_ERROR;
+    }
+
+    /* If the user supplied -a and/or -e, shoot a single oblique view whose
+     * direction and grid basis come from an azimuth/elevation rotation, rather
+     * than the default 3 axis-aligned views.  bn_mat_ae() builds a rotation
+     * where azimuth is about +Z and elevation lifts from the XY plane (azimuth
+     * +X, elevation +Z, degrees).  We view INTO the model, so the
+     * ray/invariant direction is the -X column of the ae matrix (the direction
+     * the viewer looks along); azel_u/azel_v are the +Y and +Z columns and
+     * span the grid plane.  All three are unitized.
+     */
+    if (azel_requested) {
+	mat_t ae_rot;
+	vect_t view_x, view_y, view_z;
+
+	bn_mat_ae(ae_rot, azimuth_deg, elevation_deg);
+
+	/* columns of the rotation: image of the world +X, +Y, +Z axes */
+	VSET(view_x, ae_rot[0], ae_rot[4], ae_rot[8]);
+	VSET(view_y, ae_rot[1], ae_rot[5], ae_rot[9]);
+	VSET(view_z, ae_rot[2], ae_rot[6], ae_rot[10]);
+
+	/* ray travels INTO the geometry along -view_x */
+	VREVERSE(state.azel_dir, view_x);
+	VMOVE(state.azel_u, view_y);
+	VMOVE(state.azel_v, view_z);
+	VUNITIZE(state.azel_dir);
+	VUNITIZE(state.azel_u);
+	VUNITIZE(state.azel_v);
+
+	state.use_azel = 1;
+	num_views = 1;
     }
 
     if (analysis_flags & ANALYSIS_PLOT_OVERLAPS) {
@@ -2730,22 +2831,42 @@ ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
 	    if (verbose)
 		bu_vls_printf(gedp->ged_result_str, "  view %d\n", view);
 
-	    /* gross hack.  By assuming we have <= 3 views, we can let
-	     * the view # indicate a coordinate axis.  Note this is
-	     * used as an index into state.area[]
-	     */
-	    state.i_axis = state.curr_view = view;
-	    state.u_axis = (state.curr_view+1) % 3;
-	    state.v_axis = (state.curr_view+2) % 3;
+	    if (state.use_azel) {
+		/* Single oblique az/el view.  The axis-index scheme is
+		 * retained only so the shared bookkeeping (state.area[],
+		 * state.steps[], and the _gqa_hit switch) still has valid
+		 * indices; the actual ray direction and grid layout come from
+		 * state.azel_* in plane_worker.  Use a fixed default basis
+		 * (invariant Z, U along X, V along Y).  Area/mass figures for
+		 * the oblique view are approximate in this release (documented
+		 * limitation).
+		 */
+		state.i_axis = 2;
+		state.curr_view = 0;
+		state.u_axis = 0;
+		state.v_axis = 1;
 
-	    state.u_dir[state.u_axis] = 1;
-	    state.u_dir[state.v_axis] = 0;
-	    state.u_dir[state.i_axis] = 0;
+		VMOVE(state.u_dir, state.azel_u);
+		VMOVE(state.v_dir, state.azel_v);
+		state.v = 1;
+	    } else {
+		/* gross hack.  By assuming we have <= 3 views, we can let
+		 * the view # indicate a coordinate axis.  Note this is
+		 * used as an index into state.area[]
+		 */
+		state.i_axis = state.curr_view = view;
+		state.u_axis = (state.curr_view+1) % 3;
+		state.v_axis = (state.curr_view+2) % 3;
 
-	    state.v_dir[state.u_axis] = 0;
-	    state.v_dir[state.v_axis] = 1;
-	    state.v_dir[state.i_axis] = 0;
-	    state.v = 1;
+		state.u_dir[state.u_axis] = 1;
+		state.u_dir[state.v_axis] = 0;
+		state.u_dir[state.i_axis] = 0;
+
+		state.v_dir[state.u_axis] = 0;
+		state.v_dir[state.v_axis] = 1;
+		state.v_dir[state.i_axis] = 0;
+		state.v = 1;
+	    }
 
 	    bu_parallel(plane_worker, ncpu, (void *)&state);
 
