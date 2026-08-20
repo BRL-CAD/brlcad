@@ -244,10 +244,8 @@ struct fb_impl {
         char *p;
         size_t l;
     } u1, u2, u3, u4, u5, u6;
-    /* Application-facing input event queue (see fb_set_interactive).  Placed
-     * at the end of the struct so the positional interface initializers in the
-     * fb backends (which stop at the union above) remain valid and leave these
-     * zero-initialized. */
+    /* Application-facing input event queue (see fb_set_interactive).  Keep
+     * this state together at the end of the per-instance data. */
     int if_interactive;        /**< @brief nonzero to report input events to the application */
 #define FB_EVENT_QUEUE_MAX 128
     struct fb_event if_equeue[FB_EVENT_QUEUE_MAX]; /**< @brief ring buffer of pending input events */

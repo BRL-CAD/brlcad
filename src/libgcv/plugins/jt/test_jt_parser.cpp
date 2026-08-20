@@ -1778,7 +1778,6 @@ bool test_jt_checksum_footer()
     /* Append the checksum footer element after the mesh element: [u32 length][16
      * GUID 0xEE][u8 base_type][u32 CRC].  Grow the two segment-length fields (at
      * offsets 129 and 157 for the JT 8 sample layout) to cover it. */
-    const size_t element_offset = 161;
     append_u32(data, 16 + 1 + 4, true);
     data.insert(data.end(), 16, 0xee);
     data.push_back(4);

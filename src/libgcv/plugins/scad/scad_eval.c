@@ -85,6 +85,14 @@ v_num(double n)
     return v;
 }
 
+/* OpenSCAD numeric equality is exact.  Ordered comparisons preserve IEEE
+ * equality semantics without enabling unsafe direct float-equality checks. */
+static int
+scad_num_equal(double a, double b)
+{
+    return a <= b && a >= b;
+}
+
 static struct scad_value
 v_bool(int b)
 {
@@ -397,7 +405,7 @@ builtin_lookup(struct scad_value *key, struct scad_value *tbl)
 	if (row->type != SCAD_VAL_VEC || row->vlen < 2) continue;
 	rk = v_asnum(&row->items[0]);
 	rv = v_asnum(&row->items[1]);
-	if (rk == k) return v_num(rv);
+	if (scad_num_equal(rk, k)) return v_num(rv);
 	if (rk < k && (!have_lo || rk > lo_k)) { lo_k = rk; lo_v = rv; have_lo = 1; }
 	if (rk > k && (!have_hi || rk < hi_k)) { hi_k = rk; hi_v = rv; have_hi = 1; }
     }
@@ -526,7 +534,11 @@ eval_builtin_func(struct scad_state *st, const char *name,
     }
     if (BU_STR_EQUAL(name, "len") && n >= 1) {
 	if (args[0].type == SCAD_VAL_VEC) { *out = v_num((double)args[0].vlen); return 1; }
-	if (args[0].type == SCAD_VAL_STR) { *out = v_num((double)strlen(args[0].str)); return 1; }
+	if (args[0].type == SCAD_VAL_STR) {
+	    const size_t length = strlen(args[0].str);
+	    *out = v_num((double)length);
+	    return 1;
+	}
 	*out = v_undef();
 	return 1;
     }
@@ -544,7 +556,8 @@ eval_builtin_func(struct scad_state *st, const char *name,
 	struct bu_vls s = BU_VLS_INIT_ZERO;
 	size_t i;
 	for (i = 0; i < n; i++) {
-	    int c = (int)v_asnum(&args[i]);
+	    const double code = v_asnum(&args[i]);
+	    int c = (int)code;
 	    if (c > 0 && c < 128) bu_vls_putc(&s, (char)c);
 	}
 	*out = v_str(bu_vls_cstr(&s));
@@ -573,7 +586,8 @@ eval_builtin_func(struct scad_state *st, const char *name,
     }
     if (BU_STR_EQUAL(name, "rands") && n >= 3) {
 	double lo = v_asnum(&args[0]), hi = v_asnum(&args[1]);
-	int cnt = (int)v_asnum(&args[2]);
+	const double count = v_asnum(&args[2]);
+	int cnt = (int)count;
 	int i;
 	struct scad_value r;
 	if (cnt < 0) cnt = 0;
@@ -682,7 +696,7 @@ eval_gen(struct scad_state *st, struct env *env, struct scad_expr *e, struct sca
 		inner.a = e->a;
 		if (iter.type == SCAD_VAL_RANGE) {
 		    double s = iter.range[0], step = iter.range[1], end = iter.range[2];
-		    if (step == 0) step = 1;
+		    if (scad_num_equal(step, 0.0)) step = 1;
 		    if (step > 0)
 			for (; s <= end + 1e-9; s += step) {
 			    env_set(le, as->name, v_num(s));
@@ -737,7 +751,7 @@ eval_gen(struct scad_state *st, struct env *env, struct scad_expr *e, struct sca
 		acc->vlen = base + v.vlen;
 	    } else if (v.type == SCAD_VAL_RANGE) {
 		double s = v.range[0], step = v.range[1], end = v.range[2];
-		if (step == 0) step = 1;
+		if (scad_num_equal(step, 0.0)) step = 1;
 		for (; (step > 0) ? (s <= end + 1e-9) : (s >= end - 1e-9); s += step) {
 		    acc->items = (struct scad_value *)bu_realloc(acc->items,
 				 (acc->vlen + 1) * sizeof(struct scad_value), "scad lc each range");
@@ -784,7 +798,7 @@ val_equal(const struct scad_value *a, const struct scad_value *b)
     switch (a->type) {
 	case SCAD_VAL_UNDEF: return 1;
 	case SCAD_VAL_NUM:
-	case SCAD_VAL_BOOL: return a->num == b->num;
+	case SCAD_VAL_BOOL: return scad_num_equal(a->num, b->num);
 	case SCAD_VAL_STR: return BU_STR_EQUAL(a->str, b->str);
 	case SCAD_VAL_VEC:
 	    if (a->vlen != b->vlen) return 0;
@@ -988,7 +1002,8 @@ eval_expr(struct scad_state *st, struct env *env, struct scad_expr *e)
 	    struct scad_value a = eval_expr(st, env, e->a);
 	    struct scad_value idx = eval_expr(st, env, e->b);
 	    struct scad_value r = v_undef();
-	    long k = (long)v_asnum(&idx);
+	    const double index = v_asnum(&idx);
+	    long k = (long)index;
 	    if (a.type == SCAD_VAL_VEC && k >= 0 && (size_t)k < a.vlen)
 		r = scad_value_copy(&a.items[k]);
 	    else if (a.type == SCAD_VAL_STR && k >= 0 && (size_t)k < strlen(a.str)) {
@@ -1241,8 +1256,10 @@ geom_load_faces(struct scad_geom *g, struct scad_value *pts, struct scad_value *
 	for (i = 0; i < g->nfaces; i++) {
 	    struct scad_value *f = &faces->items[i];
 	    if (f->type != SCAD_VAL_VEC) continue;
-	    for (j = 0; j < f->vlen; j++)
-		g->fidx[k++] = (int)v_asnum(&f->items[j]);
+	    for (j = 0; j < f->vlen; j++) {
+		const double index = v_asnum(&f->items[j]);
+		g->fidx[k++] = (int)index;
+	    }
 	}
     }
 }
@@ -1442,7 +1459,10 @@ exec_builtin(struct scad_state *st, struct env *env, const char *name,
 	    g->ext_center = ce ? v_true(ce) : 0;
 	}
 	g->ext_twist = v_asnum(arg_named(&as, "twist"));
-	g->ext_slices = (int)v_asnum(arg_named(&as, "slices"));
+	{
+	    const double slices = v_asnum(arg_named(&as, "slices"));
+	    g->ext_slices = (int)slices;
+	}
 	g->ext_scale[0] = g->ext_scale[1] = 1.0;
 	sc = arg_named(&as, "scale");
 	if (sc) {
@@ -1746,7 +1766,7 @@ exec_for(struct scad_state *st, struct env *env, struct scad_stmt *s,
     iter = eval_expr(st, env, as->value);
     if (iter.type == SCAD_VAL_RANGE) {
 	double x = iter.range[0], step = iter.range[1], end = iter.range[2];
-	if (step == 0) step = 1;
+	if (scad_num_equal(step, 0.0)) step = 1;
 	for (; (step > 0) ? (x <= end + 1e-9) : (x >= end - 1e-9); x += step) {
 	    env_set(le, as->name, v_num(x));
 	    exec_for(st, le, s, into, as->next, g);

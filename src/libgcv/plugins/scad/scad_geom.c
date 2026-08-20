@@ -362,9 +362,11 @@ build_linext(struct mesh *m, const struct scad_loop *lp, struct scad_geom *g)
     if (lp->n < 3 || g->ext_height <= 0) return;
 
     slices = g->ext_slices;
-    if (slices <= 0)
+    if (slices <= 0) {
+	const double twist_slices = ceil(fabs(g->ext_twist) / 12.0);
 	slices = (g->ext_twist != 0.0 || g->ext_scale[0] != 1.0 || g->ext_scale[1] != 1.0)
-		 ? (g->fn > 0 ? g->fn : (int)ceil(fabs(g->ext_twist) / 12.0) + 2) : 1;
+		 ? (g->fn > 0 ? g->fn : (int)twist_slices + 2) : 1;
+    }
     if (slices < 1) slices = 1;
 
     for (s = 0; s <= slices; s++) {
@@ -421,7 +423,7 @@ build_rotext(struct mesh *m, const struct scad_loop *lp, struct scad_geom *g)
 {
     size_t i;
     int j, nseg, nring;
-    double maxr = 0, ang = g->ext_angle == 0 ? 360.0 : g->ext_angle;
+    double maxr = 0, ang = !g->ext_angle ? 360.0 : g->ext_angle;
     int full = NEAR_EQUAL(fabs(ang), 360.0, 1e-6);
     int **rings;
 
@@ -430,7 +432,10 @@ build_rotext(struct mesh *m, const struct scad_loop *lp, struct scad_geom *g)
 	if (lp->xy[i * 2] > maxr) maxr = lp->xy[i * 2];
     nseg = scad_fragments(maxr, g->fn, g->fa, g->fs);
     if (nseg < 3) nseg = 3;
-    if (!full) nseg = (int)ceil(nseg * fabs(ang) / 360.0) + 1;
+    if (!full) {
+	const double partial_segments = ceil(nseg * fabs(ang) / 360.0);
+	nseg = (int)partial_segments + 1;
+    }
     nring = full ? nseg : nseg + 1;
 
     rings = (int **)bu_calloc(nring, sizeof(int *), "rot rings");

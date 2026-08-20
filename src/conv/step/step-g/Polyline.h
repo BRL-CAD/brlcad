@@ -50,7 +50,6 @@ public:
     virtual const double *PointAtEnd();
     virtual const double *PointAtStart();
     virtual void Print(int level);
-    virtual bool LoadONBrep(ON_Brep *brep);
 
     //static methods
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);

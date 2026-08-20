@@ -80,23 +80,6 @@ brep(size_t entityno, struct bu_list *vlfree)
 	void_shells = NULL;
     }
 
-    /* The NMG-based reconstruction of an IGES 186 manifold BREP is fragile
-     * for many real-world files (loop reconstruction can fail or bomb deep
-     * inside libnmg).  When producing the default rt_brep output we skip it
-     * and let main() import the entity's NURBS surfaces as an untrimmed brep,
-     * which is reliable and renders correctly.  The NMG reconstruction is
-     * retained for the explicit mesh (-m) and NMG (-p) output modes. */
-    if (do_brep && !do_bots) {
-	bu_log("Manifold BREP D%07d (%s): importing surfaces as an untrimmed brep\n",
-	       dir[entityno]->direct, dir[entityno]->name);
-	if (num_of_voids) {
-	    bu_free(void_shell_de, "BREP: void shell DE's");
-	    bu_free(void_orient, "BREP: void shell orients");
-	    bu_free(void_shells, "BREP: void shell pointers");
-	}
-	return 0;
-    }
-
     /* start building */
     m = nmg_mmr();
     r = BU_LIST_FIRST(nmgregion, &m->r_hd);

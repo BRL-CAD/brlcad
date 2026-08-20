@@ -844,13 +844,13 @@ class HuffHeap {
     int get_top()
     {
 	const int top = heap_[0];
-	remove();
+	remove_top();
 	return top;
     }
 
   private:
     uint32_t count_of(int idx) const { return nodes_[idx].count; }
-    void remove()
+    void remove_top()
     {
 	if (heap_.empty()) return;
 	const int y = heap_.back();
@@ -2029,13 +2029,13 @@ File::legacy_mesh(const Element &element, Mesh &mesh, std::string &error) const
 	{
 	    struct CachedRange { float minimum; float maximum; };
 	    static std::map<uint8_t, CachedRange> quantizer_range_cache;
-	    for (const Quantizer &q : quantizers) {
-		auto it = quantizer_range_cache.find(q.bits);
-		if (it == quantizer_range_cache.end())
-		    quantizer_range_cache.emplace(q.bits, CachedRange{q.minimum, q.maximum});
-		else if (it->second.minimum != q.minimum || it->second.maximum != q.maximum)
-		    it->second = CachedRange{q.minimum, q.maximum};
-	    }
+	for (const Quantizer &q : quantizers) {
+	    auto it = quantizer_range_cache.find(q.bits);
+	    if (it == quantizer_range_cache.end())
+		quantizer_range_cache.emplace(q.bits, CachedRange{q.minimum, q.maximum});
+	    else
+		it->second = CachedRange{q.minimum, q.maximum};
+	}
 	}
 	int32_t unique_count = 0;
 	if (!quantized_reader.i32(unique_count) || unique_count < 0) {
@@ -2503,22 +2503,22 @@ File::scene_graph(std::vector<SceneInstance> &instances, std::string &error) con
     }
 
     /* Read the segment header, then the whole-segment ZLIB wrapper and inflate. */
-    Reader seg(bytes_, header_.little_endian, static_cast<size_t>(lsg->offset));
+    Reader segment_reader(bytes_, header_.little_endian, static_cast<size_t>(lsg->offset));
     Guid seg_id{};
     uint32_t seg_type = 0, seg_len = 0;
-    if (!read_guid(seg, seg_id) || !seg.u32(seg_type) || !seg.u32(seg_len)) {
+    if (!read_guid(segment_reader, seg_id) || !segment_reader.u32(seg_type) || !segment_reader.u32(seg_len)) {
 	error = "truncated JT LSG segment header";
 	return false;
     }
     int32_t compress_flag = 0, compressed_length = 0;
     uint8_t algorithm = 0;
-    if (!seg.i32(compress_flag) || !seg.i32(compressed_length) || !seg.u8(algorithm) || compressed_length < 1) {
+    if (!segment_reader.i32(compress_flag) || !segment_reader.i32(compressed_length) || !segment_reader.u8(algorithm) || compressed_length < 1) {
 	error = "invalid JT LSG compression header";
 	return false;
     }
     ByteBuffer lsg_data;
     const size_t payload = static_cast<size_t>(compressed_length) - 1;
-    if (payload > bytes_.size() - seg.offset()) {
+    if (payload > bytes_.size() - segment_reader.offset()) {
 	error = "truncated JT LSG compressed payload";
 	return false;
     }
@@ -2533,7 +2533,7 @@ File::scene_graph(std::vector<SceneInstance> &instances, std::string &error) con
 	    }
 	    lsg_data.resize(out_size);
 	    uLongf produced = out_size;
-	    const int zr = uncompress(lsg_data.data(), &produced, bytes_.data() + seg.offset(),
+	    const int zr = uncompress(lsg_data.data(), &produced, bytes_.data() + segment_reader.offset(),
 		static_cast<uLong>(payload));
 	    if (zr == Z_OK) { lsg_data.resize(produced); break; }
 	    if (zr != Z_BUF_ERROR) { error = "cannot inflate JT LSG segment"; return false; }
@@ -2541,7 +2541,7 @@ File::scene_graph(std::vector<SceneInstance> &instances, std::string &error) con
 	    if (attempt == 5) { error = "JT LSG segment inflates too large"; return false; }
 	}
     } else {
-	lsg_data.assign(bytes_.data() + seg.offset(), bytes_.data() + seg.offset() + payload);
+	lsg_data.assign(bytes_.data() + segment_reader.offset(), bytes_.data() + segment_reader.offset() + payload);
     }
 
     /* Enumerate the logical elements in the inflated buffer.  The graph elements
@@ -2595,8 +2595,8 @@ File::scene_graph(std::vector<SceneInstance> &instances, std::string &error) con
 	    std::string value;
 	    if (lsg_read_string_atom(r, fv, value)) string_atoms[e.object_id] = value;
 	} else if (e.type == LsgType::LateLoadedAtom) {
-	    Guid seg{};
-	    if (lsg_read_late_atom(r, fv, seg)) late_atoms[e.object_id] = seg;
+	    Guid segment_id{};
+	    if (lsg_read_late_atom(r, fv, segment_id)) late_atoms[e.object_id] = segment_id;
 	} else if (e.type == LsgType::Material) {
 	    float rgba[4] = {0.5f, 0.5f, 0.5f, 1.0f};
 	    if (lsg_read_material(r, fv, rgba)) materials[e.object_id] = {rgba[0], rgba[1], rgba[2], rgba[3]};

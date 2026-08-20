@@ -89,7 +89,7 @@ ui_text_run(struct app_registry *r)
 
 	print_menu(r);
 
-	if (!fgets(line, sizeof(line), stdin)) {
+	if (!bu_fgets(line, sizeof(line), stdin)) {
 	    printf("\n");
 	    break;
 	}

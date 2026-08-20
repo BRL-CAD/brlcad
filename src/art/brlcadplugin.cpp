@@ -123,8 +123,9 @@ int
 brlcad_hit(struct application* UNUSED(ap), struct partition* PartHeadp, struct seg* UNUSED(segs))
 {
     struct partition* pp;
-    struct hit* hitp;
-    struct soltab* stp;
+    struct hit* hitp = NULL;
+    struct soltab* stp = NULL;
+    int flip = 0;
 
     // struct curvature cur = RT_CURVATURE_INIT_ZERO;
 
@@ -133,10 +134,26 @@ brlcad_hit(struct application* UNUSED(ap), struct partition* PartHeadp, struct s
 
     // vect_t onormal;
 
-    pp = PartHeadp->pt_forw;
-
-    /* entry hit point, so we type less */
-    hitp = pp->pt_inhit;
+    /* Secondary path-tracing rays may originate inside a region.  In that
+     * case the first partition entry is behind the ray origin, so use its exit
+     * boundary instead.  Appleseed requires every reported distance to be
+     * non-negative. */
+    for (pp = PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw) {
+	if (pp->pt_inhit && pp->pt_inhit->hit_dist >= 0.0) {
+	    hitp = pp->pt_inhit;
+	    stp = pp->pt_inseg->seg_stp;
+	    flip = pp->pt_inflip;
+	    break;
+	}
+	if (pp->pt_outhit && pp->pt_outhit->hit_dist >= 0.0) {
+	    hitp = pp->pt_outhit;
+	    stp = pp->pt_outseg->seg_stp;
+	    flip = pp->pt_outflip;
+	    break;
+	}
+    }
+    if (!hitp || !stp)
+	return 0;
 
     /* construct the actual (entry) hit-point from the ray and the
      * distance to the intersection point (i.e., the 't' value).
@@ -144,13 +161,8 @@ brlcad_hit(struct application* UNUSED(ap), struct partition* PartHeadp, struct s
     //VJOIN1(pt, ap->a_ray.r_pt, hitp->hit_dist, ap->a_ray.r_dir);
     brlcad_ray_info.distance = hitp->hit_dist;
 
-    /* primitive we encountered on entry */
-    stp = pp->pt_inseg->seg_stp;
-
-    /* compute the normal vector at the entry point, flipping the
-     * normal if necessary.
-     */
-    RT_HIT_NORMAL(inormal, hitp, stp, &(ap->a_ray), pp->pt_inflip);
+    /* Compute the normal at the selected entry or exit boundary. */
+    RT_HIT_NORMAL(inormal, hitp, stp, &(ap->a_ray), flip);
 
     brlcad_ray_info.normal[0] = inormal[0];
     brlcad_ray_info.normal[1] = inormal[1];

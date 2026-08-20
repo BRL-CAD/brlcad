@@ -75,7 +75,7 @@ adrt_init_attributes(struct adrt_mesh_attributes_s *attr, const char *shader)
     attr->ior = 1.0;
 
     if (shader && shader[0]) {
-	if (strncmp(shader, "light", 5) == 0 || strstr(shader, "emit")) {
+	if (bu_strncmp(shader, "light", 5) == 0 || strstr(shader, "emit")) {
 	    fastf_t power = 1.0;
 	    const char *p = strstr(shader, "power");
 	    if (p) {

@@ -1220,7 +1220,7 @@ add_triangle_from_nmg(const struct loopuse *lu, std::vector<double> &coords)
     if (vert_count != 3)
 	return false;
     for (int i = 0; i < 9; ++i)
-	if (!(corners[i] == corners[i]) || corners[i] > 1e300 || corners[i] < -1e300)
+	if (!std::isfinite(corners[i]))
 	    return false;
     for (int i = 0; i < 9; ++i) coords.push_back(corners[i]);
     return true;
@@ -1849,7 +1849,7 @@ jt_face_corner_normals(const std::vector<double> &coords)
 	const double e1[3] = {c[0] - a[0], c[1] - a[1], c[2] - a[2]};
 	const double n[3] = {e0[1] * e1[2] - e0[2] * e1[1], e0[2] * e1[0] - e0[0] * e1[2],
 	    e0[0] * e1[1] - e0[1] * e1[0]};   /* length == 2*area, so this area-weights */
-	if (!(n[0] == n[0]) || !(n[1] == n[1]) || !(n[2] == n[2]))
+	if (!std::isfinite(n[0]) || !std::isfinite(n[1]) || !std::isfinite(n[2]))
 	    continue;
 	for (int corner = 0; corner < 3; ++corner) {
 	    const size_t vi = corner_vertex[t / 3 + corner];

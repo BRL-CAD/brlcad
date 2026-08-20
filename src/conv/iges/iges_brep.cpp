@@ -280,7 +280,7 @@ brep_vertex(ON_Brep *brep, const struct vertex *v, long *vmap)
  * once per NMG edge), and their vertices. */
 bool
 add_trim(ON_Brep *brep, ON_Surface *surf, const ON_Plane *plane,
-	 ON_BrepFace &face, ON_BrepLoop &loop, const struct edgeuse *eu,
+	 ON_BrepLoop &loop, const struct edgeuse *eu,
 	 long *vmap, long *emap, const struct bn_tol *tol)
 {
     const struct vertex *v0 = eu->vu_p->v_p;
@@ -426,7 +426,7 @@ add_face(ON_Brep *brep, const struct faceuse *fu, long *vmap, long *emap,
 	    (lu->orientation == OT_SAME) ? ON_BrepLoop::outer : ON_BrepLoop::inner;
 	ON_BrepLoop &loop = brep->NewLoop(lt, face);
 	for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-	    if (!add_trim(brep, surf, plane_ptr, face, loop, eu, vmap, emap, tol))
+	    if (!add_trim(brep, surf, plane_ptr, loop, eu, vmap, emap, tol))
 		return false;
 	}
     }

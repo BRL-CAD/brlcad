@@ -121,7 +121,7 @@ registry_parse(struct app_registry *r, const char *path)
     memset(&tmp, 0, sizeof(tmp));
     tmp.order = 1000;
 
-    while (fgets(line, sizeof(line), fp)) {
+    while (bu_fgets(line, sizeof(line), fp)) {
 	char *key, *val, *eq;
 
 	/* strip comments */
@@ -202,7 +202,7 @@ registry_add_builtins(struct app_registry *r)
 
 
 static int
-registry_cmp(const void *a, const void *b)
+registry_cmp(const void *a, const void *b, void *UNUSED(context))
 {
     const struct app_entry *ea = (const struct app_entry *)a;
     const struct app_entry *eb = (const struct app_entry *)b;
@@ -256,7 +256,7 @@ app_registry_load(struct app_registry *r)
 	registry_add_builtins(r);
 
     if (r->count > 1)
-	qsort(r->apps, r->count, sizeof(struct app_entry), registry_cmp);
+	bu_sort(r->apps, r->count, sizeof(struct app_entry), registry_cmp, NULL);
 
     for (i2 = 0; i2 < r->count; i2++)
 	if (r->apps[i2].available)
