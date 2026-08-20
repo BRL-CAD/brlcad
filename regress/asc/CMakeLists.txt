@@ -2,6 +2,9 @@ if(SH_EXEC)
   if(TARGET asc2g)
     brlcad_add_test(NAME regress-asc COMMAND ${SH_EXEC} "${CMAKE_CURRENT_SOURCE_DIR}/asc.sh" ${CMAKE_SOURCE_DIR})
     BRLCAD_REGRESSION_TEST(regress-asc "asc2g;g2asc;gdiff;dbupgrade" TEST_DEFINED)
+
+    brlcad_add_test(NAME regress-asc-datum COMMAND ${SH_EXEC} "${CMAKE_CURRENT_SOURCE_DIR}/datum.sh" ${CMAKE_SOURCE_DIR})
+    BRLCAD_REGRESSION_TEST(regress-asc-datum "asc2g;g2asc;gdiff;mged" TEST_DEFINED)
   endif(TARGET asc2g)
 
   brlcad_add_test(NAME regress-asc2dsp COMMAND ${SH_EXEC} "${CMAKE_CURRENT_SOURCE_DIR}/asc2dsp.sh" ${CMAKE_SOURCE_DIR})
@@ -10,6 +13,7 @@ endif(SH_EXEC)
 
 cmakefiles(
   asc.sh
+  datum.sh
   v4.g
   asc2dsp.sh
 )
@@ -23,6 +27,10 @@ set(
   asc2dsp-old.bw
   asc2dsp-old.dsp
   asc2dsp-old.pix
+  datum.asc
+  datum.log
+  datum_rt.g
+  datum_src.g
   moss_v4.asc
   moss_v4.g
   moss_v4_asc_v4.g

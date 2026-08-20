@@ -84,10 +84,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   binary interface to analytic routines.  notable outliers include
   nirt_* (including CLI handling..), voxelize*, rt_gen*, rectangular*
 
-* ensure datum objects convert out via g2asc and back (currently
-  writes "a Tcl output routine for this type of object has not yet
-  been implemented")
-
 * fix recursive bu_parallel() to not have a hard-coded limit on the
   number of threads or to more aggressively abort when more that
   supported are dispatched.  currently supporting 64x64 threads and
