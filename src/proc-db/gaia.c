@@ -85,6 +85,7 @@
 #include "bu/env.h"
 #include "bu/log.h"
 #include "bu/str.h"
+#include "bu/path.h"
 #include "bn.h"
 #include "raytrace.h"
 #include "rt/geom.h"
@@ -470,6 +471,7 @@ main(int ac, char *av[])
 
     const char *input_path;
     const char *output_path;
+    char title[1024];
 
     struct wmember terr_hd, water_hd, all_hd;
     unsigned char land_rgb[3]  = { 110, 130, 80 };
@@ -558,7 +560,10 @@ main(int ac, char *av[])
 	GDALClose(src);
 	bu_exit(3, "gaia: cannot create '%s'\n", output_path);
     }
-    mk_id_units(wdbp, "Earth Terrain Model", "mm");
+    snprintf(title, sizeof(title),
+	     "GAIA: Earth Terrain Model, derived from %s to 6x%ux%u at %gx",
+	     bu_path_basename(input_path, NULL), dim, dim, exag);
+    mk_id_units(wdbp, title, "mm");
 
     /* ---- Process each cube face. ---- */
     for (i = 0; i < NFACES; i++) {
