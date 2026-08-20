@@ -5297,7 +5297,14 @@ rt_bot_smooth(struct rt_bot_internal *bot, const char *bot_name, struct db_i *db
 	    VINVDIR(inv_dir, ap.a_ray.r_dir);
 
 	    if (!rt_in_rpp(&ap.a_ray, inv_dir, rtip->mdl_min, rtip->mdl_max)) {
-		bu_log("ERROR: Ray missed target!!!\n");
+		/* The backout ray does not intersect the model bounding
+		 * box, so shooting it would be a guaranteed miss with a
+		 * stale r_min.  Emit a diagnostic that names the primitive
+		 * and the offending face, then skip this face cleanly
+		 * instead of shooting a known-miss ray.
+		 */
+		bu_log("rt_bot_smooth(%s): face %zu backout ray missed model RPP; skipping face\n", bot_name, i);
+		continue;
 	    }
 	    VJOIN1(ap.a_ray.r_pt, ap.a_ray.r_pt, ap.a_ray.r_min, ap.a_ray.r_dir);
 	    ap.a_user = i;
