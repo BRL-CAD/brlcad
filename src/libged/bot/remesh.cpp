@@ -31,8 +31,6 @@
 #  include <openvdb/tools/MeshToVolume.h>
 #endif /* OPENVDB_ABI_VERSION_NUMBER */
 
-#include "manifold/manifold.h"
-
 #include "vmath.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
@@ -384,4 +382,3 @@ _bot_cmd_remesh(void *bs, int argc, const char **argv)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-
