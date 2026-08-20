@@ -233,12 +233,16 @@ doKeyPad(void)
     int ch;
 
 #if defined(HAVE_CONIO_H)
-    if ((ch = getch()) == EOF)
-	return 0;		/* done */
+    if (isatty(fileno(stdin))) {
+	ch = getch();
+    } else {
+	ch = getchar();
+    }
 #else
-    if ((ch = getchar()) == EOF)
-	return 0;		/* done */
+    ch = getchar();
 #endif
+    if (ch == EOF)
+	return 0;		/* done */
 
     switch (ch) {
 	default :
