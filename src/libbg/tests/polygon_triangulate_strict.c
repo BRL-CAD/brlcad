@@ -25,10 +25,13 @@ run_case(const point2d_t *points, size_t point_count, const int *outer,
     int face_count = 0;
     point2d_t *out_points = NULL;
     int out_point_count = 0;
-    struct bg_triangulation_report report = {0, -1, {0}};
+    struct bg_triangulation_report report = {
+	BG_TRIANGULATION_OK, -1, {0}
+    };
     int ret = bg_nested_poly_triangulate_strict(&faces, &face_count,
 	&out_points, &out_point_count, outer, outer_count, holes, hole_counts,
-	hole_count, steiner, steiner_count, points, point_count, &report);
+	hole_count, steiner, steiner_count, NULL, 0, points, point_count,
+	&report);
     if (!expect_success) {
 	if (!ret || faces || face_count || out_points || out_point_count ||
 		report.reason == BG_TRIANGULATION_OK || !report.message[0]) {
@@ -202,8 +205,10 @@ main(int argc, const char **argv)
 	const int constraint[2] = {0, 2};
 	int *faces = NULL;
 	int face_count = 0;
-	struct bg_triangulation_report report = {0, -1, {0}};
-	if (bg_nested_poly_triangulate_constraints_strict(&faces,
+	struct bg_triangulation_report report = {
+	    BG_TRIANGULATION_OK, -1, {0}
+	};
+	if (bg_nested_poly_triangulate_strict(&faces,
 		&face_count, NULL, NULL, outer, 4, NULL, NULL, 0, NULL,
 		0, constraint, 1, (const point2d_t *)points, 4,
 		&report) || face_count != 2 ||
@@ -228,7 +233,7 @@ main(int argc, const char **argv)
 	const int crossing[4] = {0, 2, 1, 3};
 	faces = NULL;
 	face_count = 0;
-	if (!bg_nested_poly_triangulate_constraints_strict(&faces,
+	if (!bg_nested_poly_triangulate_strict(&faces,
 		&face_count, NULL, NULL, outer, 4, NULL, NULL, 0, NULL,
 		0, crossing, 2, (const point2d_t *)points, 4,
 		&report) || faces || face_count ||

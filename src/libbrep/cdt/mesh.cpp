@@ -4708,7 +4708,7 @@ topology_preserving_clean_triangulation(int **faces, int *face_count,
 	clean_constraints.push_back(constraint.first);
 	clean_constraints.push_back(constraint.second);
     }
-    const int clean_status = bg_nested_poly_triangulate_clean_constraints(
+    const int clean_status = bg_nested_poly_triangulate_clean(
 	&clean_faces, &clean_face_count, &clean_points, &clean_point_count,
 	outer, outer_count, holes, hole_counts, hole_count, steiner,
 	steiner_count, clean_constraints.empty() ? NULL :
@@ -5596,8 +5596,10 @@ triangulate_chart_component(cdt_mesh_t *mesh, const ON_BrepFace &face,
     }
     int *faces = NULL;
     int face_count = 0;
-    struct bg_triangulation_report report = {0, -1, {0}};
-    const int status = bg_nested_poly_triangulate_constraints_strict(&faces,
+    struct bg_triangulation_report report = {
+	BG_TRIANGULATION_OK, -1, {0}
+    };
+    const int status = bg_nested_poly_triangulate_strict(&faces,
 	&face_count, NULL, NULL, outline.data(), outline.size(),
 	hole_arrays.empty() ? NULL : hole_arrays.data(),
 	hole_counts.empty() ? NULL : hole_counts.data(), hole_arrays.size(),
@@ -6771,8 +6773,10 @@ cdt_mesh_t::cdt(bool allow_general_boundary_cleanup)
     std::set<std::pair<int, int>> normalized_boundary_edges;
     int *faces = NULL;
     int num_faces = 0;
-    struct bg_triangulation_report tri_report = {0, -1, {0}};
-    bool result = (bool)!bg_nested_poly_triangulate_constraints_strict(&faces,
+    struct bg_triangulation_report tri_report = {
+	BG_TRIANGULATION_OK, -1, {0}
+    };
+    bool result = (bool)!bg_nested_poly_triangulate_strict(&faces,
 	&num_faces, NULL, NULL, opoly, opoly_count,
 	(const int **)holes_array, holes_npts, holes_cnt, steiner, steiner_cnt,
 	constraint_vec.empty() ? NULL : constraint_vec.data(),
@@ -6968,7 +6972,7 @@ cdt_mesh_t::cdt(bool allow_general_boundary_cleanup)
 		}
 		fprintf(df, "    int *faces = NULL; int num_faces = 0;\n");
 		fprintf(df, "    int r = "
-			    "!bg_nested_poly_triangulate_constraints_strict(&"
+			    "!bg_nested_poly_triangulate_strict(&"
 			    "faces, &num_faces,\n");
 		fprintf(
 		    df,
