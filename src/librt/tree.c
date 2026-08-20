@@ -935,6 +935,34 @@ rt_gettrees_and_attrs(struct rt_i *rtip, const char **attrs, int argc, const cha
     if (argc <= 0)
 	return -1;	/* FAIL */
 
+    /* Pre-walk existence check: verify each requested object or path
+     * exists in the database before attempting to walk it.  Without
+     * this, a typo or wrong object path only surfaces as a vague "no
+     * primitives found" warning or other message downstream.  Emit a
+     * message naming missing object(s).
+     */
+    for (int i = 0; i < argc; i++) {
+	char *top;
+	char *slash;
+
+	if (!argv[i] || argv[i][0] == '\0')
+	    continue;	/* skip NULL/empty defensively */
+
+	top = bu_strdup(argv[i]);
+	slash = strchr(top, '/');
+	if (slash)
+	    *slash = '\0';	/* isolate leading top-level component */
+
+	if (top[0] != '\0'
+	    && db_lookup(rtip->rti_dbip, top, LOOKUP_QUIET) == RT_DIR_NULL) {
+	    bu_log("ERROR: specified object '%s' does not exist in the database; check the name\n", top);
+	    bu_free(top, "rt_gettrees top-level name");
+	    return -1;	/* FAIL */
+	}
+
+	bu_free(top, "rt_gettrees top-level name");
+    }
+
     prev_sol_count = rtip->stats.nsolids;
     data.cache = NULL;
     data.callback = rtip->rti_gettrees_clbk;
