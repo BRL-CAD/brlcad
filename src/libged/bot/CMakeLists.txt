@@ -1,8 +1,7 @@
 find_package_eigen(REQUIRED)
-brlcad_find_package(manifold REQUIRED)
 BRLCAD_Find_Package(TinyGLTF REQUIRED)
 
-set(BOT_LIBS libged libbg libbu manifold::manifold tinygltf::tinygltf ${WINSOCK_LIB})
+set(BOT_LIBS libged libbg libbu tinygltf::tinygltf ${WINSOCK_LIB})
 
 
 if(BRLCAD_ENABLE_OPENVDB)

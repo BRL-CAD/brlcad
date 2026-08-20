@@ -147,6 +147,15 @@ main(int ac, char *av[])
     if (!gedp)
 	bu_exit(EXIT_FAILURE, "Could not open %s", input_file);
 
+    s_av[0] = "bot";
+    s_av[1] = "check";
+    s_av[2] = "manifold";
+    s_av[3] = "arb4.bot";
+    if (ged_exec_bot(gedp, 4, s_av) != BRLCAD_OK ||
+	    std::string(bu_vls_cstr(gedp->ged_result_str)) != "1")
+	bu_exit(EXIT_FAILURE, "Manifold check rejected arb4.bot");
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
     // DXF
     bu_dir(output_file, MAXPATHLEN, BU_DIR_CURR, "arb4_out.dxf", NULL);
     s_av[0] = "bot";
