@@ -245,7 +245,7 @@ _bu_color_hsl_to_rgb(const double hsl[4], double rgb[4])
     double s = hsl[1];
     double l = hsl[2];
 
-    if (s == 0.0) {
+    if (ZERO(s)) {
 	rgb[0] = rgb[1] = rgb[2] = l;
     } else {
 	double q = (l < 0.5) ? l * (1.0 + s) : l + s - l * s;
@@ -308,7 +308,7 @@ _bu_color_rgb_to_hsl(const double rgb[4], double hsl[4])
     hsl[2] = (max + min) / 2.0;
     hsl[3] = rgb[3];
 
-    if (delta == 0.0)
+    if (ZERO(delta))
 	return;
 
     hsl[1] = (hsl[2] > 0.5) ? delta / (2.0 - max - min) : delta / (max + min);
@@ -330,11 +330,11 @@ _bu_color_rgb_to_hsv(const double rgb[4], double hsv[4])
     double delta = max - min;
 
     hsv[0] = 0.0;
-    hsv[1] = (max == 0.0) ? 0.0 : delta / max;
+    hsv[1] = ZERO(max) ? 0.0 : delta / max;
     hsv[2] = max;
     hsv[3] = rgb[3];
 
-    if (delta == 0.0)
+    if (ZERO(delta))
 	return;
 
     if (rgb[0] >= rgb[1] && rgb[0] >= rgb[2])

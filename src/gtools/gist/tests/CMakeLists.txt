@@ -7,6 +7,7 @@ if(OpenCV_FOUND)
   )
 
   if(TARGET test_gist_preview_resolution)
+    add_dependencies(test_gist_preview_resolution libged)
     target_include_directories(test_gist_preview_resolution BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/..)
     target_include_directories(test_gist_preview_resolution SYSTEM PRIVATE ${OpenCV_INCLUDE_DIRS})
     brlcad_add_test(
