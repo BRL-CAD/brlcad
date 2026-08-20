@@ -11,6 +11,7 @@
 #include "common.h"
 
 #include "brep/cdt.h"
+#include "cdt/test_api.h"
 
 int
 main(int argc, const char **UNUSED(argv))
@@ -56,3 +57,13 @@ main(int argc, const char **UNUSED(argv))
     result = cdt_test_repair_rigorous_boundary();
     return result ? result : cdt_test_repair_patch_boundary();
 }
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C++
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -23,6 +23,7 @@
 #include <iostream>
 #include "bu/app.h"
 #include "brep/cdt.h"
+#include "cdt/test_api.h"
 
 int
 main(int argc, const char **argv)
