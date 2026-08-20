@@ -23,6 +23,7 @@ brlcad_addexec(csgbrep csgbrep.cpp "${PROC_DB_WDB_NMG_LIBS}" NO_STRICT NO_INSTAL
 brlcad_addexec(donuts donuts.c "${PROC_DB_WDB_LIBS}" NO_STRICT NO_INSTALL)
 brlcad_addexec(gtimes gtimes.c "libged;librt;libbu" NO_INSTALL)
 brlcad_addexec(nmgmodel nmgmodel.c "${PROC_DB_WDB_NMG_LIBS}" NO_INSTALL)
+brlcad_addexec(parashot parashot.c "${PROC_DB_WDB_LIBS}" NO_INSTALL)
 brlcad_addexec(pipetest pipetest.c "${PROC_DB_WDB_LIBS}" NO_INSTALL)
 brlcad_addexec(spltest spltest.c "${PROC_DB_WDB_NMG_LIBS}" NO_INSTALL)
 brlcad_addexec(surfaceintersect "surfaceintersect.cpp;twistedcube.cpp" "${PROC_DB_WDB_OPENNURBS_LIBS}" NO_STRICT NO_INSTALL)
