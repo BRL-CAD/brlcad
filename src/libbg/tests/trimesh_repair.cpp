@@ -196,9 +196,19 @@ test_manifold_acceptance_check(void)
     int invalid_faces[36];
     memcpy(invalid_faces, closed_faces, sizeof(invalid_faces));
     invalid_faces[0] = closed_point_count;
+    std::vector<int> reversed_faces((size_t)closed_face_count * 3);
+    for (int face = 0; face < closed_face_count; ++face) {
+	reversed_faces[(size_t)face * 3] = closed_faces[(size_t)face * 3];
+	reversed_faces[(size_t)face * 3 + 1] =
+	    closed_faces[(size_t)face * 3 + 2];
+	reversed_faces[(size_t)face * 3 + 2] =
+	    closed_faces[(size_t)face * 3 + 1];
+    }
 
     const bool valid = bg_trimesh_manifold_accepted(closed_point_count,
 	closed_face_count, (fastf_t *)closed_points, closed_faces) == 1 &&
+	bg_trimesh_manifold_accepted(closed_point_count, closed_face_count,
+	    (fastf_t *)closed_points, reversed_faces.data()) == 1 &&
 	bg_trimesh_manifold_accepted(open_point_count, open_face_count,
 	    (fastf_t *)open_points, open_faces) == 0 &&
 	bg_trimesh_manifold_accepted(closed_point_count, closed_face_count,

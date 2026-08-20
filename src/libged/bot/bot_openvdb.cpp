@@ -42,9 +42,8 @@
 #  include <openvdb/tools/MeshToVolume.h>
 #  include <openvdb/tools/VolumeToMesh.h>
 
-#  include "manifold/manifold.h"
-
 #  include "vmath.h"
+#  include "bg/trimesh.h"
 #  include "bu/malloc.h"
 #  include "bu/log.h"
 #  include "rt/application.h"
@@ -255,22 +254,10 @@ bot_openvdb_repair(struct rt_bot_internal *bot, double voxel_size)
     }
 
     /* Validate: the result must be manifold. */
-    manifold::MeshGL64 vcheck;
-    vcheck.numProp = 3;
-    vcheck.vertProperties.resize(cand->num_vertices * 3);
-    for (size_t i = 0; i < cand->num_vertices; i++) {
-	vcheck.vertProperties[i * 3 + 0] = cand->vertices[i * 3 + X];
-	vcheck.vertProperties[i * 3 + 1] = cand->vertices[i * 3 + Y];
-	vcheck.vertProperties[i * 3 + 2] = cand->vertices[i * 3 + Z];
-    }
-    vcheck.triVerts.resize(cand->num_faces * 3);
-    for (size_t i = 0; i < cand->num_faces; i++) {
-	vcheck.triVerts[i * 3 + 0] = cand->faces[i * 3 + X];
-	vcheck.triVerts[i * 3 + 1] = cand->faces[i * 3 + Y];
-	vcheck.triVerts[i * 3 + 2] = cand->faces[i * 3 + Z];
-    }
-    manifold::Manifold mcheck(vcheck);
-    if (mcheck.Status() != manifold::Manifold::Error::NoError) {
+    if (cand->num_vertices > (size_t)std::numeric_limits<int>::max() ||
+	    cand->num_faces > (size_t)std::numeric_limits<int>::max() ||
+	    !bg_trimesh_manifold_accepted((int)cand->num_vertices,
+		(int)cand->num_faces, cand->vertices, cand->faces)) {
 	bu_log("bot_openvdb_repair: result is not manifold (unexpected)\n");
 	bu_free(cand->vertices, "verts"); bu_free(cand->faces, "faces");
 	BU_PUT(cand, struct rt_bot_internal);
