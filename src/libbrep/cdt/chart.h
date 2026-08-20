@@ -197,3 +197,13 @@ BREP_EXPORT int cdt_test_periodic_path_orientation(void);
 BREP_EXPORT int cdt_test_pole_wedge_seam_orientation(void);
 
 #endif /* LIBBREP_CDT_CHART_H */
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C++
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

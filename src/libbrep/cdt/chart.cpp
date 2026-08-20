@@ -10,6 +10,8 @@
 
 #include "common.h"
 
+#include "cdt/test_api.h"
+
 #include <algorithm>
 #include <cmath>
 #include <limits>
@@ -4525,7 +4527,7 @@ cdt_face_chart::build(const ON_BrepFace &face,
 	if (built)
 	    repair_nesting();
 	return built;
-    }
+}
 
     polar_chart_info polar_info;
     if (polar_chart_properties(face, &polar_info)) {
@@ -4545,7 +4547,8 @@ cdt_face_chart::build(const ON_BrepFace &face,
 	if (built)
 	    repair_nesting();
 	return built;
-    }
+}
+
     ON_Cylinder cylinder;
     if (cdt_face_uses_cylinder_chart(face) && face.SurfaceOf() &&
 	    face.SurfaceOf()->IsCylinder(&cylinder, CDT_CONIC_TOLERANCE)) {
@@ -4559,3 +4562,13 @@ cdt_face_chart::build(const ON_BrepFace &face,
 	repair_nesting();
     return built;
 }
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C++
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */
