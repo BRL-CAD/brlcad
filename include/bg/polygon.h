@@ -207,7 +207,10 @@ bg_nested_poly_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int
  * may merge points, split intersections, or reorder contours.  It first
  * removes duplicate and boundary-coincident unconstrained points.  If needed,
  * it then uses integer Clipper operations to reconstruct valid contour
- * nesting before constrained Delaunay triangulation.
+ * nesting before constrained Delaunay triangulation.  Optional noncrossing
+ * interior constraints contain two input point indices per edge.  Constraints
+ * removed with canceled contour regions are omitted; every surviving
+ * constraint is certified in its cleaned component.
  *
  * The caller must free both faces and out_pts with bu_free.
  *
@@ -220,31 +223,21 @@ bg_nested_poly_triangulate_clean(int **faces, int *num_faces,
 	const int *poly, const size_t poly_npts,
 	const int **holes_array, const size_t *holes_npts, const size_t nholes,
 	const int *steiner, const size_t steiner_npts,
-	const point2d_t *pts, const size_t npts);
-
-/** Sanitize and triangulate a polygon while retaining valid noncrossing
- * interior constraints.  constraints contains two input point indices per
- * edge.  Constraints removed with canceled contour regions are omitted; each
- * surviving constraint is certified in its cleaned component. */
-BG_EXPORT extern int
-bg_nested_poly_triangulate_clean_constraints(int **faces, int *num_faces,
-	point2d_t **out_pts, int *num_outpts,
-	const int *poly, const size_t poly_npts,
-	const int **holes_array, const size_t *holes_npts, const size_t nholes,
-	const int *steiner, const size_t steiner_npts,
 	const int *constraints, const size_t constraint_cnt,
 	const point2d_t *pts, const size_t npts);
 
-#define BG_TRIANGULATION_OK 0
-#define BG_TRIANGULATION_INVALID_INPUT 1
-#define BG_TRIANGULATION_INVALID_PSLG 2
-#define BG_TRIANGULATION_CROSSING_CONSTRAINTS 3
-#define BG_TRIANGULATION_INVALID_NESTING 4
-#define BG_TRIANGULATION_DETRIA_FAILED 5
-#define BG_TRIANGULATION_POSTCONDITION_FAILED 6
+enum bg_triangulation_reason {
+    BG_TRIANGULATION_OK = 0,
+    BG_TRIANGULATION_INVALID_INPUT = 1,
+    BG_TRIANGULATION_INVALID_PSLG = 2,
+    BG_TRIANGULATION_CROSSING_CONSTRAINTS = 3,
+    BG_TRIANGULATION_INVALID_NESTING = 4,
+    BG_TRIANGULATION_DETRIA_FAILED = 5,
+    BG_TRIANGULATION_POSTCONDITION_FAILED = 6
+};
 
 struct bg_triangulation_report {
-    int reason;
+    enum bg_triangulation_reason reason;
     int input_index;
     char message[128];
 };
@@ -257,17 +250,6 @@ struct bg_triangulation_report {
  */
 BG_EXPORT extern int
 bg_nested_poly_triangulate_strict(int **faces, int *num_faces,
-	point2d_t **out_pts, int *num_outpts,
-	const int *poly, const size_t poly_npts,
-	const int **holes_array, const size_t *holes_npts, const size_t nholes,
-	const int *steiner, const size_t steiner_npts,
-	const point2d_t *pts, const size_t npts,
-	struct bg_triangulation_report *report);
-
-/** Strict triangulation with additional noncrossing interior constraint
- * edges.  constraints contains two point indices per edge. */
-BG_EXPORT extern int
-bg_nested_poly_triangulate_constraints_strict(int **faces, int *num_faces,
 	point2d_t **out_pts, int *num_outpts,
 	const int *poly, const size_t poly_npts,
 	const int **holes_array, const size_t *holes_npts, const size_t nholes,
@@ -329,15 +311,6 @@ bg_poly_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *num_o
 BG_EXPORT extern int
 bg_polygon_triangulate(int **faces, int *num_faces, point_t **out_pts, int *num_outpts,
 		       struct bg_polygon *p, triangulation_t type);
-
-
-/* Legacy experimental entry point. */
-BG_EXPORT extern int
-bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
-	const int *poly, const size_t poly_pnts,
-	const int **holes_array, const size_t *holes_npts, const size_t nholes,
-	const int *steiner, const size_t steiner_npts,
-	const point2d_t *pts);
 
 /*********************************************************
   Operations on 3D point types - these are assumed to be

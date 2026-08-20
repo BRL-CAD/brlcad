@@ -30,7 +30,8 @@ check_clean_triangulation(const point2d_t *points, size_t point_count,
     int out_point_count = 0;
     int ret = bg_nested_poly_triangulate_clean(&faces, &face_count,
 	&out_points, &out_point_count, outer, outer_count, holes,
-	hole_counts, hole_count, steiner, steiner_count, points, point_count);
+	hole_counts, hole_count, steiner, steiner_count, NULL, 0, points,
+	point_count);
     if (ret || !faces || !out_points || face_count <= 0 ||
 	    out_point_count <= 0) {
 	bu_log("clean test %.17g failed: ret %d faces %d points %d\n",
@@ -84,7 +85,7 @@ check_clean_constraint(void)
     int face_count = 0;
     point2d_t *out_points = NULL;
     int out_point_count = 0;
-    int ret = bg_nested_poly_triangulate_clean_constraints(&faces,
+    int ret = bg_nested_poly_triangulate_clean(&faces,
 	&face_count, &out_points, &out_point_count, outer, 4, NULL, NULL, 0,
 	steiner, 2, constraints, 1, (const point2d_t *)points, 6);
     if (ret || !faces || !out_points || face_count <= 0 ||
