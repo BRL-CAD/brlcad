@@ -76,6 +76,7 @@ cmakefiles(
   cdt/chart.h
   cdt/cdt.h
   cdt/mesh.h
+  cdt/test_api.h
   debug_plot.h
   quality.cpp
   shape_recognition/shape_recognition.h
