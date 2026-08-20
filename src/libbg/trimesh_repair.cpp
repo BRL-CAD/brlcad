@@ -1500,7 +1500,7 @@ trimesh_repair_export(int **ofaces, int *n_ofaces,
  * -------------------------------------------------------------------------- */
 
 extern "C" int
-bg_trimesh_repair2(
+bg_trimesh_repair_ex(
 	int **ofaces, int *n_ofaces,
 	point_t **opnts, int *n_opnts,
 	const int *ifaces, int n_ifaces,
@@ -2215,7 +2215,7 @@ bg_trimesh_repair(
     settings.fill_holes = 1;
     settings.max_hole_area = opts->max_hole_area;
     settings.max_hole_area_percent = opts->max_hole_area_percent;
-    return bg_trimesh_repair2(ofaces, n_ofaces, opnts, n_opnts,
+    return bg_trimesh_repair_ex(ofaces, n_ofaces, opnts, n_opnts,
 	ifaces, n_ifaces, ipnts, n_ipnts, &settings, NULL);
 }
 
