@@ -1,0 +1,14 @@
+#!/bin/sh
+
+
+FILE="/etc/xdg/mimeapps.list"
+
+SECTION="Default Applications"
+
+MIME_1="application/brlcad-v4"
+MIME_2="application/brlcad-v5"
+
+
+# delete default app for specific mime type
+crudini --del "${FILE}" "${SECTION}" "${MIME_1}" || :
+crudini --del "${FILE}" "${SECTION}" "${MIME_2}" || :
