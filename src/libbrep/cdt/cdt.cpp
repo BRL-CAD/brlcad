@@ -13312,7 +13312,7 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    input_faces, input_face_count);
 	report->mesh.solid = 1;
     } else {
-	repair_result = bg_trimesh_repair2(&repaired_faces,
+	repair_result = bg_trimesh_repair_ex(&repaired_faces,
 	    &repaired_face_count, &repaired_points, &repaired_vertex_count,
 	    input_faces, input_face_count, (const point_t *)input_vertices,
 	    input_vertex_count, &mesh_settings, &report->mesh);
@@ -13324,7 +13324,7 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    mesh_settings.max_hole_edges = adaptive_hole_edges;
 	    bu_log("Retrying final mesh repair with a bounded %zu-edge hole "
 		"ceiling\n", adaptive_hole_edges);
-	    repair_result = bg_trimesh_repair2(&repaired_faces,
+	    repair_result = bg_trimesh_repair_ex(&repaired_faces,
 		&repaired_face_count, &repaired_points,
 		&repaired_vertex_count, input_faces, input_face_count,
 		(const point_t *)input_vertices, input_vertex_count,
@@ -13339,7 +13339,7 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    mesh_settings.max_hole_area_percent = adaptive_hole_area;
 	    bu_log("Retrying final mesh repair with a bounded %.6g%% hole "
 		"area ceiling\n", adaptive_hole_area);
-	    repair_result = bg_trimesh_repair2(&repaired_faces,
+	    repair_result = bg_trimesh_repair_ex(&repaired_faces,
 		&repaired_face_count, &repaired_points,
 		&repaired_vertex_count, input_faces, input_face_count,
 		(const point_t *)input_vertices, input_vertex_count,
@@ -13353,7 +13353,7 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	if (repair_result < 0 && settings->use_poisson_reconstruction &&
 		!mesh_settings.separate_touching_vertices) {
 	    mesh_settings.separate_touching_vertices = 1;
-	    repair_result = bg_trimesh_repair2(&repaired_faces,
+	    repair_result = bg_trimesh_repair_ex(&repaired_faces,
 		&repaired_face_count, &repaired_points,
 		&repaired_vertex_count, input_faces, input_face_count,
 		(const point_t *)input_vertices, input_vertex_count,
@@ -13494,7 +13494,7 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	int separated_vertex_count = 0;
 	struct bg_trimesh_repair_report separated_report =
 	    BG_TRIMESH_REPAIR_REPORT_INIT;
-	const int separated_result = bg_trimesh_repair2(&separated_faces,
+	const int separated_result = bg_trimesh_repair_ex(&separated_faces,
 	    &separated_face_count, &separated_points,
 	    &separated_vertex_count, repaired_faces, repaired_face_count,
 	    (const point_t *)repaired_vertices, repaired_vertex_count,

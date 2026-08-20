@@ -601,7 +601,7 @@ struct bg_trimesh_repair_settings {
 
 #define BG_TRIMESH_REPAIR_SETTINGS_INIT {0.0, 0, 0.0, 0.0, 0, 0.0, 0.0, 0, 10, 0, 0, 0, 0, 1}
 
-/** Summary of the operations performed by bg_trimesh_repair2. */
+/** Summary of the operations performed by bg_trimesh_repair_ex. */
 struct bg_trimesh_repair_report {
     int input_vertices;
     int input_faces;
@@ -645,7 +645,7 @@ struct bg_trimesh_repair_report {
  * satisfied.
  */
 BG_EXPORT extern int
-bg_trimesh_repair2(
+bg_trimesh_repair_ex(
 	int **ofaces, int *n_ofaces,
 	point_t **opnts, int *n_opnts,
 	const int *ifaces, int n_ifaces,
