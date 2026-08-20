@@ -36,6 +36,7 @@
 #include <list>
 #include <map>
 #include <mutex>
+#include <new>
 #include <stack>
 #include <iostream>
 #include <algorithm>
@@ -2037,6 +2038,7 @@ struct brep_wire_sample_control {
     double chord_tolerance;
     double cos_angle_tolerance;
     int64_t deadline;
+    size_t max_points;
     bool hit_time_limit = false;
     bool hit_point_limit = false;
 };
@@ -2053,7 +2055,7 @@ brep_wire_sample_segment(const ON_Curve *curve, double t0,
 	control.hit_time_limit = true;
 	return false;
     }
-    if (points.size() >= BREP_WIRE_MAX_EDGE_POINTS) {
+	if (points.size() >= control.max_points) {
 	control.hit_point_limit = true;
 	return false;
     }
@@ -2097,7 +2099,7 @@ brep_wire_sample_segment(const ON_Curve *curve, double t0,
 static bool
 brep_wire_sample_edge(const ON_BrepEdge &edge,
 	const struct bg_tess_tol *ttol, const struct bn_tol *tol,
-	int64_t deadline, std::vector<ON_3dPoint> &points,
+	int64_t deadline, size_t max_points, std::vector<ON_3dPoint> &points,
 	bool *hit_time_limit, bool *hit_point_limit)
 {
     const ON_Curve *curve = edge.EdgeCurveOf();
@@ -2121,15 +2123,18 @@ brep_wire_sample_edge(const ON_BrepEdge &edge,
     if (curve->GetTightBoundingBox(bbox) && bbox.IsValid())
 	scale = bbox.Diagonal().Length();
     double chord_tolerance = std::max(tol->dist, ttol->abs);
-    if (ttol->rel > 0.0)
+	if (ttol->rel > 0.0) {
 	chord_tolerance = std::max(chord_tolerance, ttol->rel * scale);
-    if (!(chord_tolerance > 0.0) || !std::isfinite(chord_tolerance))
+	}
+	if (!(chord_tolerance > 0.0) || !std::isfinite(chord_tolerance)) {
 	chord_tolerance = std::max(BN_TOL_DIST, scale * 0.01);
+	}
 
-    brep_wire_sample_control control = {
+	brep_wire_sample_control control = {
 	chord_tolerance,
 	(ttol->norm > 0.0) ? cos(ttol->norm) : -1.0,
-	deadline
+	deadline,
+	max_points
     };
     bool success = brep_wire_sample_segment(curve, domain.Min(), start,
 	domain.Max(), end, 0, points, control);
@@ -2152,6 +2157,8 @@ struct brep_wire_parallel_state {
     std::atomic<bool> hit_point_limit;
     size_t max_result_bytes;
     size_t max_points;
+    size_t max_edge_points;
+    bool edge_work_limited;
     int64_t deadline;
 };
 
@@ -2175,17 +2182,30 @@ brep_wire_edge_worker(int UNUSED(cpu), void *data)
 	brep_wire_edge_result &result = (*state->results)[(size_t)edge_index];
 	bool hit_time_limit = false;
 	bool hit_point_limit = false;
-	if (!brep_wire_sample_edge(state->brep->m_E[edge_index], state->ttol,
-		state->tol, state->deadline, result.points, &hit_time_limit,
-		&hit_point_limit)) {
+	bool sampled = false;
+	try {
+	    sampled = brep_wire_sample_edge(state->brep->m_E[edge_index],
+		state->ttol, state->tol, state->deadline,
+		state->max_edge_points, result.points, &hit_time_limit,
+		&hit_point_limit);
+	} catch (...) {
+	    state->hit_memory_limit = true;
+	    state->stop = true;
 	    result.failed = true;
-	    result.points.clear();
+	    std::vector<ON_3dPoint>().swap(result.points);
+	    return;
+	}
+	if (!sampled) {
+	    result.failed = true;
+	    std::vector<ON_3dPoint>().swap(result.points);
 	    if (hit_time_limit) {
 		state->hit_time_limit = true;
 		state->stop = true;
 	    }
 	    if (hit_point_limit)
 		state->hit_point_limit = true;
+	    if (hit_point_limit && state->edge_work_limited)
+		state->hit_memory_limit = true;
 	    continue;
 	}
 
@@ -2198,7 +2218,7 @@ brep_wire_edge_worker(int UNUSED(cpu), void *data)
 	    state->hit_memory_limit = true;
 	    state->stop = true;
 	    result.failed = true;
-	    result.points.clear();
+	    std::vector<ON_3dPoint>().swap(result.points);
 	    return;
 	}
 	if (state->result_points.fetch_add(point_count) + point_count >
@@ -2208,7 +2228,7 @@ brep_wire_edge_worker(int UNUSED(cpu), void *data)
 	    state->hit_point_limit = true;
 	    state->stop = true;
 	    result.failed = true;
-	    result.points.clear();
+	    std::vector<ON_3dPoint>().swap(result.points);
 	    return;
 	}
 	result.completed = true;
@@ -2354,8 +2374,31 @@ rt_brep_plot_ex(struct bu_list *vhead, struct rt_db_internal *ip,
     const int edge_count = brep->m_E.Count();
     options.max_workers = std::max((size_t)1,
 	std::min(options.max_workers, (size_t)std::max(1, edge_count)));
-    const int64_t deadline = options.max_time_ms > 0 ?
-	bu_gettime() + (int64_t)options.max_time_ms * 1000 : 0;
+    const size_t min_edge_working_bytes =
+	2 * sizeof(ON_3dPoint) * (size_t)2;
+    const size_t budget_workers = options.max_working_bytes /
+	min_edge_working_bytes;
+    if (budget_workers > 0)
+	options.max_workers = std::min(options.max_workers, budget_workers);
+    const size_t per_worker_bytes = options.max_working_bytes /
+	options.max_workers;
+    size_t max_edge_points = per_worker_bytes /
+	(2 * sizeof(ON_3dPoint));
+    max_edge_points = std::min(max_edge_points,
+	(size_t)BREP_WIRE_MAX_EDGE_POINTS);
+    if (max_edge_points < 2)
+	max_edge_points = 2;
+    const bool edge_work_limited = max_edge_points <
+	(size_t)BREP_WIRE_MAX_EDGE_POINTS;
+    int64_t deadline = 0;
+    if (options.max_time_ms > 0) {
+	const int64_t now = bu_gettime();
+	const int64_t max_delta = std::numeric_limits<int64_t>::max() - now;
+	const int64_t requested = (int64_t)options.max_time_ms;
+	const int64_t delta = requested > max_delta / 1000 ?
+	    max_delta : requested * 1000;
+	deadline = now + delta;
+    }
 
     std::vector<brep_wire_edge_result> edge_results((size_t)edge_count);
     bool hit_time_limit = false;
@@ -2364,9 +2407,9 @@ rt_brep_plot_ex(struct bu_list *vhead, struct rt_db_internal *ip,
     size_t result_bytes = 0;
     if (edge_count > 0) {
 	brep_wire_parallel_state state = {
-	    brep, ttol, tol, &edge_results, 0, 0, 0, false, false,
+	brep, ttol, tol, &edge_results, 0, 0, 0, false, false,
 	    false, false, options.max_result_bytes, options.max_points,
-	    deadline
+	    max_edge_points, edge_work_limited, deadline
 	};
 	bu_parallel(brep_wire_edge_worker, options.max_workers, &state);
 	hit_time_limit = state.hit_time_limit.load();
