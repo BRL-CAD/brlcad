@@ -236,7 +236,7 @@ test_closed_orientation_sync(void)
     settings.require_manifold = 1;
     struct bg_trimesh_repair_report report =
 	BG_TRIMESH_REPAIR_REPORT_INIT;
-    const int ret = bg_trimesh_repair2(&ofaces, &n_ofaces, &opnts,
+    const int ret = bg_trimesh_repair_ex(&ofaces, &n_ofaces, &opnts,
 	&n_opnts, faces, n_faces, pts, n_pts, &settings, &report);
     const bool valid = ret == 0 && ofaces && opnts &&
 	n_ofaces == n_faces && n_opnts == n_pts && report.solid &&
@@ -386,7 +386,7 @@ test_repair2_conservative_default(void)
 	BG_TRIMESH_REPAIR_SETTINGS_INIT;
     struct bg_trimesh_repair_report report =
 	BG_TRIMESH_REPAIR_REPORT_INIT;
-    int ret = bg_trimesh_repair2(&ofaces, &n_ofaces, &opnts, &n_opnts,
+    int ret = bg_trimesh_repair_ex(&ofaces, &n_ofaces, &opnts, &n_opnts,
 	faces, n_faces, pts, n_pts, &settings, &report);
     if (ret != -1 || ofaces || opnts || n_ofaces || n_opnts ||
 	    report.solid) {
@@ -423,7 +423,7 @@ test_repair2_report(void)
     settings.max_hole_edges = 8;
     struct bg_trimesh_repair_report report =
 	BG_TRIMESH_REPAIR_REPORT_INIT;
-    int ret = bg_trimesh_repair2(&ofaces, &n_ofaces, &opnts, &n_opnts,
+    int ret = bg_trimesh_repair_ex(&ofaces, &n_ofaces, &opnts, &n_opnts,
 	faces, n_faces, pts, n_pts, &settings, &report);
     const bool valid_report = ret == 0 && report.solid &&
 	report.input_vertices == n_pts && report.input_faces == n_faces &&
@@ -474,7 +474,7 @@ test_touching_triangular_holes(void)
     int output_point_count = 0;
     struct bg_trimesh_repair_report report =
 	BG_TRIMESH_REPAIR_REPORT_INIT;
-    const int result = bg_trimesh_repair2(&output_faces,
+    const int result = bg_trimesh_repair_ex(&output_faces,
 	&output_face_count, &output_points, &output_point_count, faces, 6,
 	points, 6, &settings, &report);
     const bool valid = result == 0 && report.solid &&
@@ -532,7 +532,7 @@ test_touching_quadrilateral_holes(void)
     int output_point_count = 0;
     struct bg_trimesh_repair_report report =
 	BG_TRIMESH_REPAIR_REPORT_INIT;
-    const int result = bg_trimesh_repair2(&output_faces,
+    const int result = bg_trimesh_repair_ex(&output_faces,
 	&output_face_count, &output_points, &output_point_count, faces, 20,
 	points, 15, &settings, &report);
     const bool valid = result == 0 && report.solid &&
@@ -575,7 +575,7 @@ test_manifold_rejection_report(void)
     int output_point_count = 0;
     struct bg_trimesh_repair_report report =
 	BG_TRIMESH_REPAIR_REPORT_INIT;
-    const int result = bg_trimesh_repair2(&output_faces,
+    const int result = bg_trimesh_repair_ex(&output_faces,
 	&output_face_count, &output_points, &output_point_count, faces, 3,
 	points, 4, &settings, &report);
     const bool valid = result == -1 && !output_faces && !output_points &&
@@ -625,7 +625,7 @@ test_manifold_preserves_point_contact(void)
     int output_point_count = 0;
     struct bg_trimesh_repair_report report =
 	BG_TRIMESH_REPAIR_REPORT_INIT;
-    const int result = bg_trimesh_repair2(&output_faces,
+    const int result = bg_trimesh_repair_ex(&output_faces,
 	&output_face_count, &output_points, &output_point_count, faces, 8,
 	points, 8, &settings, &report);
     const bool valid = result == 0 && output_faces && output_points &&
@@ -672,7 +672,7 @@ test_manifold_splits_pinched_vertex(void)
     int output_point_count = 0;
     struct bg_trimesh_repair_report report =
 	BG_TRIMESH_REPAIR_REPORT_INIT;
-    const int result = bg_trimesh_repair2(&output_faces,
+    const int result = bg_trimesh_repair_ex(&output_faces,
 	&output_face_count, &output_points, &output_point_count, faces, 8,
 	points, 7, &settings, &report);
     const bool valid = result == 0 && output_faces && output_points &&
@@ -722,7 +722,7 @@ test_pinched_vertex_before_flat_removal(void)
     int output_point_count = 0;
     struct bg_trimesh_repair_report report =
 	BG_TRIMESH_REPAIR_REPORT_INIT;
-    const int result = bg_trimesh_repair2(&output_faces,
+    const int result = bg_trimesh_repair_ex(&output_faces,
 	&output_face_count, &output_points, &output_point_count, faces, 10,
 	points, 10, &settings, &report);
     const bool valid = result == 0 && output_faces && output_points &&
@@ -780,7 +780,7 @@ test_intersecting_hole_patch_rejected(void)
     int n_opnts = 0;
     struct bg_trimesh_repair_report report =
 	BG_TRIMESH_REPAIR_REPORT_INIT;
-    const int ret = bg_trimesh_repair2(&ofaces, &n_ofaces, &opnts,
+    const int ret = bg_trimesh_repair_ex(&ofaces, &n_ofaces, &opnts,
 	&n_opnts, faces, 14, pts, 12, &settings, &report);
     const bool rejected = ret == -1 && !ofaces && !opnts &&
 	!n_ofaces && !n_opnts && !report.solid;
@@ -832,7 +832,7 @@ test_intersecting_hole_patch_manifold_accepted(void)
     int n_opnts = 0;
     struct bg_trimesh_repair_report report =
 	BG_TRIMESH_REPAIR_REPORT_INIT;
-    const int ret = bg_trimesh_repair2(&ofaces, &n_ofaces, &opnts,
+    const int ret = bg_trimesh_repair_ex(&ofaces, &n_ofaces, &opnts,
 	&n_opnts, faces, 14, pts, 12, &settings, &report);
     const bool accepted = ret == 0 && ofaces && opnts && report.solid &&
 	report.self_intersections_allowed && report.manifold_accepted &&
@@ -894,7 +894,7 @@ test_independent_safe_hole_patch_retained(void)
     int n_opnts = 0;
     struct bg_trimesh_repair_report report =
 	BG_TRIMESH_REPAIR_REPORT_INIT;
-    const int ret = bg_trimesh_repair2(&ofaces, &n_ofaces, &opnts,
+    const int ret = bg_trimesh_repair_ex(&ofaces, &n_ofaces, &opnts,
 	&n_opnts, faces, 24, pts, 20, &settings, &report);
     int safe_cap_faces = 0;
     int obstructed_cap_faces = 0;
@@ -962,7 +962,7 @@ test_collinear_hole_boundary(void)
     int n_opnts = 0;
     struct bg_trimesh_repair_report report =
 	BG_TRIMESH_REPAIR_REPORT_INIT;
-    int ret = bg_trimesh_repair2(&ofaces, &n_ofaces, &opnts, &n_opnts,
+    int ret = bg_trimesh_repair_ex(&ofaces, &n_ofaces, &opnts, &n_opnts,
 	faces, 14, pts, 12, &settings, &report);
     bool valid = ret == 0 && report.solid && report.added_faces >= 6 &&
 	!bg_trimesh_solid2(n_opnts, n_ofaces, (fastf_t *)opnts, ofaces,
@@ -1019,7 +1019,7 @@ test_concave_planar_hole(void)
     int output_point_count = 0;
     struct bg_trimesh_repair_report report =
 	BG_TRIMESH_REPAIR_REPORT_INIT;
-    const int result = bg_trimesh_repair2(&output_faces,
+    const int result = bg_trimesh_repair_ex(&output_faces,
 	&output_face_count, &output_points, &output_point_count, faces, 13,
 	points, 10, &settings, &report);
     const bool valid = result == 0 && report.solid &&
@@ -1243,7 +1243,7 @@ test_overlapping_component_union(void)
     int n_opnts = 0;
     struct bg_trimesh_repair_report report =
 	BG_TRIMESH_REPAIR_REPORT_INIT;
-    const int ret = bg_trimesh_repair2(&ofaces, &n_ofaces, &opnts,
+    const int ret = bg_trimesh_repair_ex(&ofaces, &n_ofaces, &opnts,
 	&n_opnts, faces, 2 * cube_face_count, points,
 	2 * cube_point_count, &settings, &report);
     bool valid = ret == 0 && report.solid &&
@@ -1321,7 +1321,7 @@ test_touching_component_separation(void)
     int n_opnts = 0;
     struct bg_trimesh_repair_report report =
 	BG_TRIMESH_REPAIR_REPORT_INIT;
-    const int ret = bg_trimesh_repair2(&ofaces, &n_ofaces, &opnts,
+    const int ret = bg_trimesh_repair_ex(&ofaces, &n_ofaces, &opnts,
 	&n_opnts, faces, 2 * cube_face_count, points,
 	2 * cube_point_count, &settings, &report);
     bool unique_vertices = ret == 0 && report.solid &&
@@ -1414,7 +1414,7 @@ test_hanging_boundary_edge_split(void)
     int n_opnts = 0;
     struct bg_trimesh_repair_report report =
 	BG_TRIMESH_REPAIR_REPORT_INIT;
-    const int ret = bg_trimesh_repair2(&ofaces, &n_ofaces, &opnts,
+    const int ret = bg_trimesh_repair_ex(&ofaces, &n_ofaces, &opnts,
 	&n_opnts, faces, 13, points, 9, &settings, &report);
     const bool valid = ret == 0 && report.solid &&
 	report.added_faces >= 1 && ofaces && opnts &&
