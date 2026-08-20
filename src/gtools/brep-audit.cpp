@@ -7,6 +7,15 @@
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
  * version 2.1 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
  */
 /** @file brep-audit.cpp
  *
@@ -31,6 +40,10 @@
 
 #ifdef __GLIBC__
 #  include <malloc.h>
+#endif
+
+#ifdef _WIN32
+#  include <windows.h>
 #endif
 
 #ifndef _WIN32
@@ -348,7 +361,28 @@ set_memory_limit(long memory_limit_mib)
     current.rlim_cur = limit;
     return setrlimit(RLIMIT_AS, &current) == 0;
 #else
-    return false;
+	const unsigned long long bytes =
+	    (unsigned long long)memory_limit_mib * 1024ULL * 1024ULL;
+	if (bytes > (unsigned long long)std::numeric_limits<SIZE_T>::max())
+	    return false;
+	static HANDLE memory_job = NULL;
+	if (memory_job)
+	    return true;
+	memory_job = CreateJobObject(NULL, NULL);
+	if (!memory_job)
+	    return false;
+	JOBOBJECT_EXTENDED_LIMIT_INFORMATION limits = {};
+	limits.BasicLimitInformation.LimitFlags =
+	    JOB_OBJECT_LIMIT_PROCESS_MEMORY;
+	limits.ProcessMemoryLimit = (SIZE_T)bytes;
+	if (!SetInformationJobObject(memory_job,
+		JobObjectExtendedLimitInformation, &limits, sizeof(limits)) ||
+		!AssignProcessToJobObject(memory_job, GetCurrentProcess())) {
+	    CloseHandle(memory_job);
+	    memory_job = NULL;
+	    return false;
+	}
+	return true;
 #endif
 }
 
@@ -2402,3 +2436,13 @@ main(int argc, const char **argv)
     db_close(dbip);
     return ret;
 }
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C++
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */
