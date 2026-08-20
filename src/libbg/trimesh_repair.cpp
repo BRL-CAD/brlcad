@@ -31,8 +31,10 @@
 #include <climits>
 #include <cstdint>
 #include <cstring>
+#include <exception>
 #include <limits>
 #include <map>
+#include <new>
 #include <queue>
 #include <set>
 #include <utility>
@@ -1350,31 +1352,41 @@ int
 bg_trimesh_manifold_accepted(int vertex_count, int face_count,
 	const fastf_t *vertices, const int *faces)
 {
-    if (vertex_count <= 0 || face_count <= 0 || !vertices || !faces)
+	if (vertex_count <= 0 || face_count <= 0 || !vertices || !faces) {
 	return 0;
-    std::vector<gte::Vector3<double>> manifold_vertices(
-	(size_t)vertex_count);
-    for (int vertex = 0; vertex < vertex_count; ++vertex) {
-	for (int axis = 0; axis < 3; ++axis) {
-	    const double coordinate = vertices[(size_t)vertex * 3 + axis];
-	    if (!std::isfinite(coordinate))
-		return 0;
-	    manifold_vertices[(size_t)vertex][axis] = coordinate;
 	}
-    }
-    std::vector<std::array<int32_t, 3>> manifold_faces(
-	(size_t)face_count);
-    for (int face = 0; face < face_count; ++face) {
-	for (int corner = 0; corner < 3; ++corner) {
-	    const int vertex = faces[(size_t)face * 3 + corner];
-	    if (vertex < 0 || vertex >= vertex_count)
-		return 0;
-	    manifold_faces[(size_t)face][corner] = vertex;
+	try {
+	    std::vector<gte::Vector3<double>> manifold_vertices(
+		(size_t)vertex_count);
+	    for (int vertex = 0; vertex < vertex_count; ++vertex) {
+		for (int axis = 0; axis < 3; ++axis) {
+		    const double coordinate =
+			vertices[(size_t)vertex * 3 + axis];
+		    if (!std::isfinite(coordinate))
+			return 0;
+		    manifold_vertices[(size_t)vertex][axis] = coordinate;
+		}
+	    }
+	    std::vector<std::array<int32_t, 3>> manifold_faces(
+		(size_t)face_count);
+	    for (int face = 0; face < face_count; ++face) {
+		for (int corner = 0; corner < 3; ++corner) {
+		    const int vertex = faces[(size_t)face * 3 + corner];
+		    if (vertex < 0 || vertex >= vertex_count)
+			return 0;
+		    manifold_faces[(size_t)face][corner] = vertex;
+		}
+	    }
+	    bool accepted = false;
+	    return trimesh_manifold_union(manifold_vertices, manifold_faces,
+		&accepted, false) && accepted ? 1 : 0;
+	} catch (const std::bad_alloc &) {
+	    return 0;
+	} catch (const std::exception &) {
+	    return 0;
+	} catch (...) {
+	    return 0;
 	}
-    }
-    bool accepted = false;
-    return trimesh_manifold_union(manifold_vertices, manifold_faces,
-	&accepted, false) && accepted ? 1 : 0;
 }
 
 static int
@@ -1499,8 +1511,8 @@ trimesh_repair_export(int **ofaces, int *n_ofaces,
  * Public API
  * -------------------------------------------------------------------------- */
 
-extern "C" int
-bg_trimesh_repair_ex(
+static int
+bg_trimesh_repair_ex_impl(
 	int **ofaces, int *n_ofaces,
 	point_t **opnts, int *n_opnts,
 	const int *ifaces, int n_ifaces,
@@ -2193,6 +2205,41 @@ bg_trimesh_repair_ex(
 
     return trimesh_repair_export(ofaces, n_ofaces, opnts, n_opnts,
 	verts, tris, settings, report);
+}
+
+extern "C" int
+bg_trimesh_repair_ex(
+	int **ofaces, int *n_ofaces,
+	point_t **opnts, int *n_opnts,
+	const int *ifaces, int n_ifaces,
+	const point_t *ipnts, int n_ipnts,
+	const struct bg_trimesh_repair_settings *settings,
+	struct bg_trimesh_repair_report *report)
+{
+    auto fail = [&]() {
+	if (ofaces && n_ofaces) *ofaces = NULL;
+	if (n_ofaces) *n_ofaces = 0;
+	if (opnts && n_opnts) *opnts = NULL;
+	if (n_opnts) *n_opnts = 0;
+	if (report) {
+	    struct bg_trimesh_repair_report reset_report =
+		BG_TRIMESH_REPAIR_REPORT_INIT;
+	    *report = reset_report;
+	    report->input_vertices = n_ipnts;
+	    report->input_faces = n_ifaces;
+	}
+	return -1;
+    };
+    try {
+	return bg_trimesh_repair_ex_impl(ofaces, n_ofaces, opnts, n_opnts,
+		ifaces, n_ifaces, ipnts, n_ipnts, settings, report);
+    } catch (const std::bad_alloc &) {
+	return fail();
+    } catch (const std::exception &) {
+	return fail();
+    } catch (...) {
+	return fail();
+    }
 }
 
 extern "C" int
