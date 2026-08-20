@@ -90,7 +90,7 @@ set(proc-db_ignore_files
   3NN4.pdb
   CMakeLists.txt
   caffeine.pdb
-  earthgen.c
+  gaia.c
   metaballs.pl
   mkbuilding.h
   mol-cube.dat
