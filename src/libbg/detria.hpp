@@ -3264,7 +3264,7 @@ namespace detria
 
             // Go through all triangles, and decide if they are inside or outside
             DETRIA_CHECK(classifyTriangles());
-            
+
             return true;
         }
 

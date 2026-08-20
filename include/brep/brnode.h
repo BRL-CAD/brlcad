@@ -33,6 +33,7 @@
 #ifdef __cplusplus
 extern "C++" {
 /* @cond */
+#  include <cstddef>
 #  include <vector>
 #  include <list>
 /* @endcond */
