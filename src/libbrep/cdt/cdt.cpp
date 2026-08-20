@@ -6150,6 +6150,35 @@ repair_degenerate_neighborhood_contract(void)
     if (!rigorous_valid)
 	return 3;
 
+    /* Removing a closed all-degenerate island must reject the transaction.
+     * Edge-only checks are vacuously true for an empty candidate, but an
+     * empty result is not a valid mesh and previously reached bu_malloc(0). */
+    const fastf_t empty_vertices[2][3] = {
+	{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}
+    };
+    const int empty_faces[2][3] = {{0, 1, 0}, {0, 1, 0}};
+    face_count = 2;
+    vertex_count = 2;
+    faces = (int *)bu_malloc(sizeof(empty_faces),
+	"empty degenerate neighborhood contract faces");
+    vertices = (fastf_t *)bu_malloc(sizeof(empty_vertices),
+	"empty degenerate neighborhood contract vertices");
+    memcpy(faces, empty_faces, sizeof(empty_faces));
+    memcpy(vertices, empty_vertices, sizeof(empty_vertices));
+    sources.assign(2, 0);
+    stats = repair_degenerate_neighborhood_stats();
+    const bool empty_rejected = !repair_degenerate_neighborhoods(
+	&faces, &face_count, &vertices, &vertex_count, 0, sources, 0.1,
+	16, &stats) && face_count == 2 && vertex_count == 2 &&
+	sources == std::vector<int>({0, 0}) &&
+	!memcmp(faces, empty_faces, sizeof(empty_faces)) &&
+	!memcmp(vertices, empty_vertices, sizeof(empty_vertices));
+    bu_free(faces, "empty degenerate neighborhood contract result faces");
+    bu_free(vertices,
+	"empty degenerate neighborhood contract result vertices");
+    if (!empty_rejected)
+	return 4;
+
     const int growth_faces[14][3] = {
 	{0, 2, 1}, {0, 3, 2},
 	{0, 1, 5}, {0, 5, 4},
@@ -6187,7 +6216,7 @@ repair_degenerate_neighborhood_contract(void)
 	!bg_trimesh_solid2(vertex_count, face_count, vertices, faces, NULL);
     bu_free(faces, "growing neighborhood contract result faces");
     bu_free(vertices, "growing neighborhood contract result vertices");
-    return grown_valid ? 0 : 4;
+    return grown_valid ? 0 : 5;
 }
 
 static int
@@ -7755,6 +7784,17 @@ repair_degenerate_neighborhoods(int **faces, int *face_count,
 	stats->added_faces += (int)(patch.faces.size() / 3);
 	stats->max_center_offset = std::max(stats->max_center_offset,
 	    patch.center_offset);
+    }
+
+    /* A closed degenerate island may account for every input triangle.  It
+     * is safe to discard only when a nonempty retained mesh remains: an empty
+     * face list vacuously passes edge checks, but is not a mesh repair result
+     * and must never reach zero-size allocation or mesh validation APIs. */
+    if (candidate_faces.empty()) {
+	if (debug_topology)
+	    bu_log("Degenerate neighborhood repair rejected: removing %d "
+		"triangles would leave an empty mesh\n", input_face_count);
+	return false;
     }
 
     std::vector<int> synchronized_faces(candidate_faces.size());
