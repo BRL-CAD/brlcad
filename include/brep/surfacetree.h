@@ -59,10 +59,22 @@ namespace brlcad {
      */
     class BREP_EXPORT SurfaceTree {
     public:
+	/**
+	 * Build a surface tree with optional curve-memory and depth limits.
+	 * A zero curve-memory limit selects the library default.
+	 */
 	explicit SurfaceTree(const ON_BrepFace *face, bool removeTrimmed = true, int depthLimit = BREP_MAX_FT_DEPTH, double within_distance_tol = BREP_EDGE_MISS_TOLERANCE, std::size_t max_curve_bytes = 0);
+	/**
+	 * Build a surface tree with a minimum curve feature-size limit.
+	 * A zero feature size selects the library default.
+	 */
 	SurfaceTree(const ON_BrepFace *face, bool removeTrimmed,
 	    int depthLimit, double within_distance_tol,
 	    std::size_t max_curve_bytes, double min_curve_feature_size);
+	/**
+	 * Build a surface tree with feature-size and curve deadline limits.
+	 * The deadline is an absolute timestamp from bu_gettime(); zero disables it.
+	 */
 	SurfaceTree(const ON_BrepFace *face, bool removeTrimmed,
 	    int depthLimit, double within_distance_tol,
 	    std::size_t max_curve_bytes, double min_curve_feature_size,
@@ -76,9 +88,11 @@ namespace brlcad {
 	    return true;
 	};
 
+	/** Report whether curve-tree construction hit its resource limit. */
 	bool CurveTreeLimitReached() const {
 	    return m_ctree && m_ctree->limit_reached();
 	};
+	/** Report whether curve-tree construction hit its time deadline. */
 	bool CurveTreeTimeLimitReached() const {
 	    return m_ctree && m_ctree->time_limit_reached();
 	};
