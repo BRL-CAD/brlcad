@@ -51,8 +51,9 @@ ged_bb_core(struct ged *gedp, int argc, const char *argv[])
     int print_vol = 0;
     int make_bb = 0;
     int oriented_bb = 0;
+    int tight_bb = 0;
     int i;
-    static const char *usage = "[options] object1 [object2 object3 ...]";
+    static const char *usage = "[-c name] [-d] [-m] [-e] [-q] [-u] [-v] [-o] [-t] object1 [object2 object3 ...]";
     const char *str;
     double xlen;
     double ylen;
@@ -75,7 +76,7 @@ ged_bb_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     bu_optind = 1;      /* re-init bu_getopt() */
-    while ((c = bu_getopt(argc, (char * const *)argv, "c:dmequvo")) != -1) {
+    while ((c = bu_getopt(argc, (char * const *)argv, "c:dmequvot")) != -1) {
 	switch (c) {
 	    case 'c':
 		make_bb = 1;
@@ -102,6 +103,9 @@ ged_bb_core(struct ged *gedp, int argc, const char *argv[])
 		break;
 	    case 'o':
 		oriented_bb = 1;
+		break;
+	    case 't':
+		tight_bb = 1;
 		break;
 	    default:
 		bu_vls_printf(gedp->ged_result_str, "Unrecognized option - %c", c);
@@ -130,8 +134,15 @@ ged_bb_core(struct ged *gedp, int argc, const char *argv[])
 	VSETALL(rpp_min, INFINITY);
 	VSETALL(rpp_max, -INFINITY);
 	for (i = 0; i < argc; i++) {
-	    if (rt_obj_bounds(gedp->ged_result_str, gedp->dbip, argc - i, (const char **)argv+i, use_air, obj_min, obj_max) & BRLCAD_ERROR)
-		return BRLCAD_ERROR;
+	    if (tight_bb) {
+		/* Tight (evaluated-geometry) bound that accounts for
+		 * subtracted material; see _ged_obj_tight_bounds(). */
+		if (_ged_obj_tight_bounds(gedp, 1, (const char **)argv+i, use_air, obj_min, obj_max) & BRLCAD_ERROR)
+		    return BRLCAD_ERROR;
+	    } else {
+		if (rt_obj_bounds(gedp->ged_result_str, gedp->dbip, argc - i, (const char **)argv+i, use_air, obj_min, obj_max) & BRLCAD_ERROR)
+		    return BRLCAD_ERROR;
+	    }
 	    VMINMAX(rpp_min, rpp_max, (double *)obj_min);
 	    VMINMAX(rpp_min, rpp_max, (double *)obj_max);
 	}

@@ -109,6 +109,12 @@ RT_EXPORT extern int rt_in_rpp(struct xray *rp,
  * * to return the BB properly without getting stuck during tree
  * traversal in rt_bound_tree()
  *
+ * NOTE: this computes a LOOSE axis-aligned RPP.  Subtracted (OP_SUBTRACT /
+ * negative) members are recursed into but their RPP is discarded, so the
+ * returned box IGNORES carved-away material and never shrinks to reflect it.
+ * For a bound that accounts for subtractions, evaluate the geometry (e.g. the
+ * ray-traced evaluated-geometry path exposed by the "bb -t" command).
+ *
  * Returns -
  *  0 success
  * -1 failure, the model bounds could not be got
@@ -135,7 +141,14 @@ rt_bound_instance(point_t *bmin, point_t *bmax,
 
 /**
  * Given an argc/argv list of objects, calculate their collective
- * bounding box */
+ * bounding box.
+ *
+ * NOTE: this returns a LOOSE axis-aligned RPP (it is built on rt_bound_tree()).
+ * Subtracted (OP_SUBTRACT / negative) members do NOT tighten the result -- the
+ * box reflects only the positive/union geometry and never shrinks to account
+ * for carved-away material.  Callers needing a subtraction-aware bound must
+ * evaluate the geometry (e.g. via the "bb -t" command, which bounds the
+ * ray-traced boolean-evaluated geometry). */
 RT_EXPORT extern int
 rt_obj_bounds(struct bu_vls *msgs,
                     struct db_i *dbip,

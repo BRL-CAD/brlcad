@@ -10,7 +10,7 @@ bb - Report dimensional information about objects using Bounding Boxes
 
 [source]
 ----
-bb [-c] [-q] [-v] object1 [object2 object3 ...]
+bb [-c bbox_object_name.s] [-d] [-e] [-m] [-o] [-q] [-t] [-u] [-v] object1 [object2 object3 ...]
 ----
 
 
@@ -44,6 +44,10 @@ Calculate an oriented bounding box instead of an axis aligned bounding box. This
 
 *-q*::
 Quiet mode - disable printing of the header, which is on by default. Useful when processing output from bb.
+
+
+*-t*::
+Calculate a _tight_ axis-aligned bounding box that accounts for subtracted (negative) geometry. The default AABB is a loose bound derived from the CSG tree: subtracted members are ignored, so the box never shrinks to reflect material that has been carved away by a subtraction. With *-t*, the box is instead derived from the geometry as actually evaluated by the ray tracer (which honors subtractions), so the reported bound contracts to fit the remaining material. This bound is approximate - it is limited to the ray sampling resolution - and is slower to compute than the default. It cannot be combined with *-o*.
 
 
 *-u*::

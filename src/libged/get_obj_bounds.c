@@ -32,8 +32,11 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #include "bu/str.h"
+#include "vmath.h"
+#include "raytrace.h"
 #include "ged.h"
 
 #include "./ged_private.h"
@@ -47,6 +50,185 @@ ged_get_obj_bounds(struct ged *gedp,
                    point_t rpp_max)
 {
     return rt_obj_bounds(gedp->ged_result_str, gedp->dbip, argc, argv, use_air, rpp_min, rpp_max);
+}
+
+
+/* Accumulator shared with the ray-trace hit callback used by the tight-bound
+ * path.  Every actual entry/exit point of solid material (as evaluated by the
+ * ray tracer, which honors OP_SUBTRACT) is folded into the running AABB. */
+struct _ged_tight_bounds_state {
+    point_t tmin;
+    point_t tmax;
+    int hit_count;
+};
+
+static int
+_ged_tight_bounds_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs))
+{
+    struct _ged_tight_bounds_state *st = (struct _ged_tight_bounds_state *)ap->a_uptr;
+    struct partition *pp;
+
+    for (pp = PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw) {
+	point_t in_pt, out_pt;
+
+	VJOIN1(in_pt, ap->a_ray.r_pt, pp->pt_inhit->hit_dist, ap->a_ray.r_dir);
+	VJOIN1(out_pt, ap->a_ray.r_pt, pp->pt_outhit->hit_dist, ap->a_ray.r_dir);
+
+	VMINMAX(st->tmin, st->tmax, in_pt);
+	VMINMAX(st->tmin, st->tmax, out_pt);
+	st->hit_count++;
+    }
+
+    return 1;
+}
+
+static int
+_ged_tight_bounds_miss(struct application *UNUSED(ap))
+{
+    return 0;
+}
+
+static int
+_ged_tight_bounds_overlap(struct application *UNUSED(ap),
+			  struct partition *UNUSED(pp),
+			  struct region *UNUSED(reg1),
+			  struct region *UNUSED(reg2),
+			  struct partition *UNUSED(hp))
+{
+    return 0;
+}
+
+/* Number of rays fired per axis (per side of the loose bounding box). */
+#define GED_TIGHT_GRID 128
+
+/*
+ * _ged_obj_tight_bounds()
+ *
+ * Compute a "tight" axis-aligned bounding box for the given object(s) that,
+ * unlike rt_obj_bounds()/rt_bound_tree(), DOES account for subtracted
+ * (OP_SUBTRACT / negative) material.  The default librt RPP bounding recurses
+ * into a subtraction's right-hand (negative) subtree but discards its RPP (see
+ * src/librt/bbox.c), so carved-away material never shrinks the reported box.
+ *
+ * This routine instead derives the box from the geometry as actually EVALUATED
+ * by the ray tracer: it first obtains the loose RPP, then fires a dense grid of
+ * rays across each face of that RPP (from all three axis directions).  The
+ * entry/exit points of every solid partition returned by rt_shootray() -- which
+ * fully evaluates the CSG boolean tree including subtractions -- are folded into
+ * the reported AABB.  The result therefore contracts to reflect subtracted
+ * material, to the resolution of the ray grid (i.e. it is approximate, matching
+ * the evaluated/facetized bound the caller would otherwise have to hand-roll).
+ *
+ * If the loose bound cannot be obtained, ray prep fails, or no material is hit,
+ * the loose bound is returned unchanged so the caller never hard-fails.
+ *
+ * Returns BRLCAD_OK on success (rpp_min/rpp_max always set to a usable box).
+ */
+int
+_ged_obj_tight_bounds(struct ged *gedp,
+		      int argc,
+		      const char *argv[],
+		      int use_air,
+		      point_t rpp_min,
+		      point_t rpp_max)
+{
+    struct rt_i *rtip = NULL;
+    struct _ged_tight_bounds_state st;
+    point_t loose_min, loose_max;
+    vect_t span;
+    int i, j, k;
+    int loaded = 0;
+
+    /* Start from the loose bound (this also validates the object list). */
+    if (rt_obj_bounds(gedp->ged_result_str, gedp->dbip, argc, argv, use_air, loose_min, loose_max) & BRLCAD_ERROR)
+	return BRLCAD_ERROR;
+
+    VMOVE(rpp_min, loose_min);
+    VMOVE(rpp_max, loose_max);
+
+    VSUB2(span, loose_max, loose_min);
+    if (span[X] <= 0.0 || span[Y] <= 0.0 || span[Z] <= 0.0)
+	return BRLCAD_OK; /* degenerate loose box; nothing to tighten */
+
+    rtip = rt_i_create(gedp->dbip);
+    if (rtip == RTI_NULL)
+	return BRLCAD_OK; /* fall back to loose */
+
+    rtip->useair = use_air;
+
+    for (i = 0; i < argc; i++) {
+	if (rt_gettree(rtip, argv[i]) < 0) {
+	    rt_i_destroy(rtip);
+	    return BRLCAD_OK; /* un-traceable input: keep loose bound */
+	}
+	loaded++;
+    }
+    if (!loaded) {
+	rt_i_destroy(rtip);
+	return BRLCAD_OK;
+    }
+
+    rt_prep(rtip);
+
+    VSETALL(st.tmin, INFINITY);
+    VSETALL(st.tmax, -INFINITY);
+    st.hit_count = 0;
+
+    /* Pad the grid extent slightly so rays graze the loose faces cleanly. */
+    {
+	vect_t pad;
+	VSCALE(pad, span, 1.0e-6);
+	VSUB2(loose_min, loose_min, pad);
+	VADD2(loose_max, loose_max, pad);
+	VSUB2(span, loose_max, loose_min);
+    }
+
+    /* Fire an NxN grid of rays along each of the 3 axes.  For axis a, rays run
+     * parallel to a, sampled over the other two axes' spans. */
+    for (int axis = 0; axis < 3; axis++) {
+	int u = (axis + 1) % 3;
+	int v = (axis + 2) % 3;
+	struct application ap;
+
+	RT_APPLICATION_INIT(&ap);
+	ap.a_rt_i = rtip;
+	ap.a_resource = &rt_uniresource;
+	ap.a_hit = _ged_tight_bounds_hit;
+	ap.a_miss = _ged_tight_bounds_miss;
+	ap.a_overlap = _ged_tight_bounds_overlap;
+	ap.a_onehit = 0;
+	ap.a_uptr = (void *)&st;
+
+	VSETALL(ap.a_ray.r_dir, 0.0);
+	ap.a_ray.r_dir[axis] = 1.0;
+
+	for (j = 0; j < GED_TIGHT_GRID; j++) {
+	    fastf_t fu = (GED_TIGHT_GRID > 1) ? ((fastf_t)j + 0.5) / (fastf_t)GED_TIGHT_GRID : 0.5;
+	    for (k = 0; k < GED_TIGHT_GRID; k++) {
+		fastf_t fv = (GED_TIGHT_GRID > 1) ? ((fastf_t)k + 0.5) / (fastf_t)GED_TIGHT_GRID : 0.5;
+
+		VSETALL(ap.a_ray.r_pt, 0.0);
+		ap.a_ray.r_pt[axis] = loose_min[axis] - span[axis]; /* start behind the box */
+		ap.a_ray.r_pt[u] = loose_min[u] + fu * span[u];
+		ap.a_ray.r_pt[v] = loose_min[v] + fv * span[v];
+
+		(void)rt_shootray(&ap);
+	    }
+	}
+    }
+
+    rt_i_destroy(rtip);
+
+    /* If we hit material, use the evaluated (tight) box; otherwise keep loose. */
+    if (st.hit_count > 0
+	&& st.tmin[X] <= st.tmax[X]
+	&& st.tmin[Y] <= st.tmax[Y]
+	&& st.tmin[Z] <= st.tmax[Z]) {
+	VMOVE(rpp_min, st.tmin);
+	VMOVE(rpp_max, st.tmax);
+    }
+
+    return BRLCAD_OK;
 }
 
 static int

@@ -96,7 +96,11 @@ rt_bound_tree(const union tree *tp, vect_t tree_min, vect_t tree_max)
 	    if (rt_bound_tree(tp->tr_b.tb_left, tree_min, tree_max) < 0 ||
 		rt_bound_tree(tp->tr_b.tb_right, r_min, r_max) < 0)
 		return -1;
-	    /* Discard right rpp */
+	    /* Discard right rpp: this yields a LOOSE axis-aligned bound that
+	     * IGNORES subtracted (negative) material -- the box never shrinks
+	     * to reflect carved-away geometry.  A tight bound that accounts for
+	     * subtractions must evaluate the boolean tree (e.g. the ray-traced
+	     * evaluated-geometry path exposed via the "bb -t" command). */
 	    break;
 	case OP_NOP:
 	    /* Implies that this tree has nothing in it */

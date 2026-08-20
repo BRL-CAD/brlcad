@@ -296,6 +296,19 @@ GED_EXPORT extern int _ged_get_obj_bounds2(struct ged *gedp,
 				point_t rpp_min,
 				point_t rpp_max);
 
+/* defined in get_obj_bounds.c: "tight" AABB that accounts for subtracted
+ * (OP_SUBTRACT) material by bounding the ray-traced, boolean-evaluated
+ * geometry.  Unlike rt_obj_bounds()/rt_bound_tree(), which discard the RPP of
+ * negative members and therefore never shrink to reflect carved-away material,
+ * this contracts the box to the evaluated geometry (approximate, to the ray
+ * sampling resolution).  Falls back to the loose bound on any failure. */
+GED_EXPORT extern int _ged_obj_tight_bounds(struct ged *gedp,
+				int argc,
+				const char *argv[],
+				int use_air,
+				point_t rpp_min,
+				point_t rpp_max);
+
 /*  defined in get_solid_kp.c */
 GED_EXPORT extern int _ged_get_solid_keypoint(struct ged *const gedp,
 				   fastf_t *const pt,
