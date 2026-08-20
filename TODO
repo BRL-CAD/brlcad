@@ -25,6 +25,11 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   repo should be capable of doing the work for us as a post
   build step whenever bext changes.
 
+* fix ARB5 move point 5 to actually move the point.
+
+* need extensive testing of MGED CSG editing with the shift
+  to librt based editing logic.
+
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------

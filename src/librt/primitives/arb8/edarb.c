@@ -318,7 +318,7 @@ arb7_edge(struct rt_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED
     if (arg == 11) {
 	/* move point 5 */
 	rt_edit_set_edflag(s, PTARB);
-	aint->edit_menu = 4;	/* location of point */
+	/* keep edit_menu = 11 (menu-arg) so rt_arb_edit dispatch fires */
     }
     if (arg == 12) {
 	rt_edit_set_edflag(s, ECMD_ARB_MAIN_MENU);
@@ -357,14 +357,14 @@ arb6_edge(struct rt_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED
     rt_edit_set_edflag(s, EARB);
     s->edit_mode = RT_PARAMS_EDIT_TRANS;
     if (arg == 8) {
-	/* move point 5, location = 4 */
+	/* move point 5 */
 	rt_edit_set_edflag(s, PTARB);
-	aint->edit_menu = 4;
+	/* keep edit_menu = 8 (menu-arg) so rt_arb_edit dispatch fires */
     }
     if (arg == 9) {
-	/* move point 6, location = 6 */
+	/* move point 6 */
 	rt_edit_set_edflag(s, PTARB);
-	aint->edit_menu = 6;
+	/* keep edit_menu = 9 (menu-arg) so rt_arb_edit dispatch fires */
     }
     if (arg == 10) {
 	rt_edit_set_edflag(s, ECMD_ARB_MAIN_MENU);
@@ -401,9 +401,9 @@ arb5_edge(struct rt_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED
     rt_edit_set_edflag(s, EARB);
     s->edit_mode = RT_PARAMS_EDIT_TRANS;
     if (arg == 8) {
-	/* move point 5 at location 4 */
+	/* move point 5 */
 	rt_edit_set_edflag(s, PTARB);
-	aint->edit_menu = 4;
+	/* keep edit_menu = 8 (menu-arg) so rt_arb_edit dispatch fires */
     }
     if (arg == 9) {
 	rt_edit_set_edflag(s, ECMD_ARB_MAIN_MENU);
@@ -872,7 +872,8 @@ rt_edit_arb_e_axes_pos(
 		    i = 4;	/* index for point 5 */
 		    break;
 		case ARB6:
-		    i = a->edit_menu;	/* index for point 5 or 6 */
+		    /* edit_menu holds the menu-arg (8=pt5, 9=pt6); map to location */
+		    i = (a->edit_menu == 9) ? 6 : 4;	/* index for point 5 or 6 */
 		    break;
 		default:
 		    i = 0;
