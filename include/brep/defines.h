@@ -210,7 +210,17 @@ struct BrepTrimPoint
     ON_2dPoint p2d = ON_2dPoint::UnsetPoint; /* 2d surface parameter space point */
     ON_3dVector normal = ON_3dVector::UnsetVector; /* normal as calculated by this trim */
 
-    const void *source_id = NULL; /* optional caller identity retained by copies */
+    /**
+     * Optional opaque caller identity retained when this point is copied.
+     *
+     * The pointer is non-owning: libbrep compares or reports its address but
+     * never dereferences it.  The caller must keep the pointed-to identity at
+     * a stable address until the operation retaining the point has returned.
+     * This field is part of the public C++ structure layout; adding or removing
+     * fields in BrepTrimPoint changes its ABI and aggregate-initialization
+     * compatibility.
+     */
+    const void *source_id = NULL;
 
     BrepTrimPoint *other_face_trim_pnt = NULL;
     int from_singular = -1;
