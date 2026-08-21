@@ -1738,6 +1738,7 @@ struct audit_config {
     double display_area_change;
     long face_index;
     bool valid_solids_only;
+    bool display_only;
     bool quality_repair;
     double repair_hole_area_percent;
     long repair_hole_edges;
@@ -1805,7 +1806,6 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
 	fast_options.area_change_tolerance =
 	    config.display_area_change;
 
-    std::cerr << "brep-audit: phase=reference" << std::endl;
     point_t ref_min = VINIT_ZERO;
     point_t ref_max = VINIT_ZERO;
     bool ref_valid = false;
@@ -1824,78 +1824,85 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
     bool input_solid = false;
     bool input_two_trim_edges = false;
     bool quality_eligible = false;
-    struct rt_db_internal intern;
-    if (load_brep(dbip, dp, &intern) == BRLCAD_OK) {
-	struct rt_brep_internal *bi = (struct rt_brep_internal *)intern.idb_ptr;
-	input_loaded = true;
-	ON_wString validity_log;
-	ON_TextLog validity_output(validity_log);
-	input_valid = bi->brep->IsValid(&validity_output);
-	input_manifold = bi->brep->IsManifold(&input_oriented,
-	    &input_has_boundary);
-	input_solid = bi->brep->IsSolid();
-	input_two_trim_edges = true;
-	for (int edge = 0; edge < bi->brep->m_E.Count(); ++edge) {
-	    if (bi->brep->m_E[edge].TrimCount() != 2) {
-		input_two_trim_edges = false;
-		break;
+    /* Visualization must not require the expensive source-validation and
+     * trimmed-bounding-box reference pass.  The display generators have
+     * their own bounded geometry/resource diagnostics. */
+    if (!config.display_only) {
+	std::cerr << "brep-audit: phase=reference" << std::endl;
+	struct rt_db_internal intern;
+	if (load_brep(dbip, dp, &intern) == BRLCAD_OK) {
+	    struct rt_brep_internal *bi =
+		(struct rt_brep_internal *)intern.idb_ptr;
+	    input_loaded = true;
+	    ON_wString validity_log;
+	    ON_TextLog validity_output(validity_log);
+	    input_valid = bi->brep->IsValid(&validity_output);
+	    input_manifold = bi->brep->IsManifold(&input_oriented,
+		&input_has_boundary);
+	    input_solid = bi->brep->IsSolid();
+	    input_two_trim_edges = true;
+	    for (int edge = 0; edge < bi->brep->m_E.Count(); ++edge) {
+		if (bi->brep->m_E[edge].TrimCount() != 2) {
+		    input_two_trim_edges = false;
+		    break;
+		}
 	    }
-	}
-	quality_eligible = input_valid && input_manifold && input_oriented &&
-	    !input_has_boundary && input_solid && input_two_trim_edges;
-	ON_BoundingBox bbox = ON_BoundingBox::EmptyBoundingBox;
-	ON_BoundingBox boundary_bbox = ON_BoundingBox::EmptyBoundingBox;
-	const int brep_faces = bi->brep->m_F.Count();
-	int first_ref_face = 0;
-	int end_ref_face = brep_faces;
-	if (config.face_index >= 0) {
-	    if (config.face_index >= brep_faces) {
-		top_issues.push_back("face_index_out_of_range");
-		end_ref_face = 0;
-	    } else {
-		first_ref_face = (int)config.face_index;
-		end_ref_face = first_ref_face + 1;
+	    quality_eligible = input_valid && input_manifold && input_oriented &&
+		!input_has_boundary && input_solid && input_two_trim_edges;
+	    ON_BoundingBox bbox = ON_BoundingBox::EmptyBoundingBox;
+	    ON_BoundingBox boundary_bbox = ON_BoundingBox::EmptyBoundingBox;
+	    const int brep_faces = bi->brep->m_F.Count();
+	    int first_ref_face = 0;
+	    int end_ref_face = brep_faces;
+	    if (config.face_index >= 0) {
+		if (config.face_index >= brep_faces) {
+		    top_issues.push_back("face_index_out_of_range");
+		    end_ref_face = 0;
+		} else {
+		    first_ref_face = (int)config.face_index;
+		    end_ref_face = first_ref_face + 1;
+		}
 	    }
-	}
-	ref_faces = end_ref_face - first_ref_face;
-	const bool excluded = config.valid_solids_only && !quality_eligible;
-	for (int i = first_ref_face; !excluded && i < end_ref_face; i++) {
-	    ON_BoundingBox face_bbox = ON_BoundingBox::EmptyBoundingBox;
-	    if (!face_GetBoundingBox(bi->brep->m_F[i], face_bbox, false) ||
-		    !face_bbox.IsValid()) {
-		ref_face_failures++;
-		ref_failed_faces.push_back(i);
-		continue;
-	    }
-	    if (bbox.IsValid())
-		bbox.Union(face_bbox);
-	    else
-		bbox = face_bbox;
-	    ON_BoundingBox face_boundary = ON_BoundingBox::EmptyBoundingBox;
-	    if (face_boundary_bbox(bi->brep->m_F[i], face_boundary)) {
-		if (boundary_bbox.IsValid())
-		    boundary_bbox.Union(face_boundary);
+	    ref_faces = end_ref_face - first_ref_face;
+	    const bool excluded = config.valid_solids_only && !quality_eligible;
+	    for (int i = first_ref_face; !excluded && i < end_ref_face; i++) {
+		ON_BoundingBox face_bbox = ON_BoundingBox::EmptyBoundingBox;
+		if (!face_GetBoundingBox(bi->brep->m_F[i], face_bbox, false) ||
+			!face_bbox.IsValid()) {
+		    ref_face_failures++;
+		    ref_failed_faces.push_back(i);
+		    continue;
+		}
+		if (bbox.IsValid())
+		    bbox.Union(face_bbox);
 		else
-		    boundary_bbox = face_boundary;
+		    bbox = face_bbox;
+		ON_BoundingBox face_boundary = ON_BoundingBox::EmptyBoundingBox;
+		if (face_boundary_bbox(bi->brep->m_F[i], face_boundary)) {
+		    if (boundary_bbox.IsValid())
+			boundary_bbox.Union(face_boundary);
+		    else
+			boundary_bbox = face_boundary;
+		}
 	    }
+	    if (bbox.IsValid()) {
+		VMOVE(ref_min, bbox.m_min);
+		VMOVE(ref_max, bbox.m_max);
+		ref_valid = true;
+	    } else if (!excluded) {
+		top_issues.push_back("trimmed_bbox_failed");
+	    }
+	    if (boundary_bbox.IsValid()) {
+		VMOVE(boundary_min, boundary_bbox.m_min);
+		VMOVE(boundary_max, boundary_bbox.m_max);
+		boundary_valid = true;
+	    }
+	    if (ref_face_failures)
+		top_issues.push_back("trimmed_bbox_face_failures");
+	    rt_db_free_internal(&intern);
+	} else {
+	    top_issues.push_back("database_internal_load_failed");
 	}
-	if (bbox.IsValid()) {
-	    VMOVE(ref_min, bbox.m_min);
-	    VMOVE(ref_max, bbox.m_max);
-	    ref_valid = true;
-	} else if (!excluded) {
-	    top_issues.push_back("trimmed_bbox_failed");
-	}
-	if (boundary_bbox.IsValid()) {
-	    VMOVE(boundary_min, boundary_bbox.m_min);
-	    VMOVE(boundary_max, boundary_bbox.m_max);
-	    boundary_valid = true;
-	}
-	if (ref_face_failures)
-	    top_issues.push_back("trimmed_bbox_face_failures");
-	rt_db_free_internal(&intern);
-    } else {
-	top_issues.push_back("database_internal_load_failed");
     }
 
     const bool run_wireframe = BU_STR_EQUAL(mode_name, "wireframe") ||
@@ -1964,12 +1971,33 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
 	repair_settings.max_fast_time_ms = config.max_time_ms;
     if (run_wireframe && !excluded) {
 	std::cerr << "brep-audit: phase=wireframe" << std::endl;
-	wire = wireframe_result(dbip, dp, &ttol, &tol, &draw_options);
+	try {
+	    wire = wireframe_result(dbip, dp, &ttol, &tol, &draw_options);
+	} catch (const std::bad_alloc &) {
+	    wire.ret = RT_BREP_DRAW_LIMIT;
+	    wire.hit_memory_limit = true;
+	    wire.issues.push_back("resource_limit");
+	}
     }
     if (run_shaded && !excluded) {
 	std::cerr << "brep-audit: phase=shaded" << std::endl;
-	shaded = shaded_result(dbip, dp, &ttol, &tol, &fast_options,
-	    (int)config.face_index);
+	try {
+	    shaded = shaded_result(dbip, dp, &ttol, &tol, &fast_options,
+		(int)config.face_index);
+	} catch (const std::bad_alloc &) {
+	    shaded.ret = BREP_CDT_FAST_LIMIT;
+	    shaded.hit_memory_limit = true;
+	    shaded.issues.push_back("resource_limit");
+	}
+    }
+    if (config.display_only) {
+	input_loaded = true;
+	if (run_wireframe && std::find(wire.issues.begin(), wire.issues.end(),
+		"database_internal_load_failed") != wire.issues.end())
+	    input_loaded = false;
+	if (run_shaded && std::find(shaded.issues.begin(), shaded.issues.end(),
+		"database_internal_load_failed") != shaded.issues.end())
+	    input_loaded = false;
     }
     if (run_quality && !excluded) {
 	std::cerr << "brep-audit: phase=quality" << std::endl;
@@ -2029,7 +2057,8 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
 	}
     }
 
-    bool okay = !excluded && ref_valid && top_issues.empty() &&
+    bool okay = !excluded && (config.display_only || ref_valid) &&
+	top_issues.empty() &&
 	(!run_wireframe || wire.issues.empty()) &&
 	(!run_shaded || shaded.issues.empty()) &&
 	(!run_quality || quality.issues.empty());
@@ -2152,6 +2181,7 @@ main(int argc, const char **argv)
     long batch_start = 0;
     long face_index = -1;
     int valid_solids_only = 0;
+    int display_only = 0;
     int quality_repair = 0;
     double repair_hole_area_percent = 1.0;
     long repair_hole_edges = 256;
@@ -2175,7 +2205,7 @@ main(int argc, const char **argv)
     double repair_relaxed_fidelity_factor = 0.0;
     const char *batch_object_file = NULL;
     const char *mode_name = "both";
-    struct bu_opt_desc d[45];
+    struct bu_opt_desc d[46];
     BU_OPT(d[0], "h", "help", "", NULL, &print_help, "Print help and exit");
     BU_OPT(d[1], "l", "list", "", NULL, &list_only, "List BRep primitive names");
     BU_OPT(d[2], "", "ratio-min", "#", &bu_opt_fastf_t, &ratio_min, "Minimum acceptable generated/reference dimension ratio");
@@ -2270,7 +2300,9 @@ main(int argc, const char **argv)
     BU_OPT(d[43], "", "display-area-change", "fraction",
 	&bu_opt_fastf_t, &display_area_change,
 	"Per-face unsigned area convergence threshold");
-    BU_OPT_NULL(d[44]);
+    BU_OPT(d[44], "", "display-only", "", NULL, &display_only,
+	"Run only bounded visualization generators; skip source reference checks");
+	BU_OPT_NULL(d[45]);
     int ac = bu_opt_parse(NULL, argc, argv, d);
     const char *usage =
 	"Usage: brep-audit [options] [--list|--batch] file.g [brep]\n";
@@ -2315,6 +2347,9 @@ main(int argc, const char **argv)
 	    (repair_try_invalid && (repair_full_fast || repair_poisson)) ||
 	    (batch_object_file && !batch) ||
 	    (batch && face_index != -1) ||
+	    (display_only && valid_solids_only) ||
+	    (display_only && (BU_STR_EQUAL(mode_name, "quality") ||
+	    BU_STR_EQUAL(mode_name, "all"))) ||
 	    (quality_repair && face_index != -1) ||
 	    (face_index != -1 && BU_STR_EQUAL(mode_name, "wireframe")) ||
 	    (!BU_STR_EQUAL(mode_name, "wireframe") &&
@@ -2346,7 +2381,8 @@ main(int argc, const char **argv)
 	memory_limit_mib, jobs, max_time_ms, quality_face_time_ms,
 	max_result_mib, max_working_mib, max_points, max_triangles,
 	display_coarse_rel, display_area_change,
-	face_index, valid_solids_only != 0, quality_repair != 0,
+	face_index, valid_solids_only != 0, display_only != 0,
+	quality_repair != 0,
 	repair_hole_area_percent, repair_hole_edges,
 	repair_adaptive_hole_edges,
 	repair_adaptive_hole_area_percent,
