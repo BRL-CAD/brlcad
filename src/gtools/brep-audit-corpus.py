@@ -344,7 +344,7 @@ def stream_reader(stream, stream_name, events):
 
 
 def audit_database(audit, args, run_dir, database, start_index, sink,
-                   object_file=None):
+                   object_file=None, expected_task_count=None):
     database_name = str(database.resolve())
     if len(args.modes) == 1:
         batch_mode = args.modes[0]
@@ -429,6 +429,9 @@ def audit_database(audit, args, run_dir, database, start_index, sink,
         deadline = time.monotonic() + args.database_timeout
         restart = False
         made_progress = False
+        batch_complete = False
+        batch_task_count = None
+        batch_count_error = False
 
         while len(closed_streams) < 2 or process.poll() is None:
             remaining = deadline - time.monotonic()
@@ -479,17 +482,68 @@ def audit_database(audit, args, run_dir, database, start_index, sink,
                 stderr_tail = text_tail(stderr_tail + line)
                 continue
             if record.get("format") == "brlcad-brep-audit-progress-v1":
+                task_index = record.get("task_index")
+                if current is not None or task_index != next_index:
+                    stderr_tail = text_tail(
+                        stderr_tail +
+                        "\nbrep-audit-corpus: noncontiguous batch progress "
+                        "at task {!r}; expected {}\n".format(
+                            task_index, next_index
+                        )
+                    )
+                    if current is None:
+                        current = {
+                            "object": record.get("object"),
+                            "mode": record.get("mode"),
+                            "task_index": next_index,
+                        }
+                    process.kill()
+                    process.wait()
+                    break
                 current = record
                 current_phase = None
                 deadline = time.monotonic() + args.object_timeout
                 continue
+            if record.get("format") == "brlcad-brep-audit-complete-v1":
+                batch_task_count = record.get("task_count")
+                count_valid = isinstance(batch_task_count, int) and \
+                    batch_task_count >= 0
+                expected_valid = expected_task_count is None or \
+                    batch_task_count == expected_task_count
+                batch_complete = count_valid and expected_valid
+                batch_count_error = not batch_complete
+                if not batch_complete:
+                    stderr_tail = text_tail(
+                        stderr_tail +
+                        "\nbrep-audit-corpus: invalid batch task count "
+                        "{!r}; expected {!r}\n".format(
+                            batch_task_count, expected_task_count
+                        )
+                    )
+                deadline = time.monotonic() + args.database_timeout
+                continue
             if record.get("format") != "brlcad-brep-realization-audit-v1":
                 continue
-            sink(record)
             task_index = record.get("task_index")
-            if isinstance(task_index, int) and task_index >= 0:
-                next_index = task_index + 1
-                process_retries.pop(task_index, None)
+            current_index = current.get("task_index") if current else None
+            if task_index != next_index or current_index != next_index:
+                stderr_tail = text_tail(
+                    stderr_tail +
+                    "\nbrep-audit-corpus: result for task {!r} while "
+                    "expecting {}\n".format(task_index, next_index)
+                )
+                if current is None:
+                    current = {
+                        "object": record.get("object"),
+                        "mode": record.get("mode"),
+                        "task_index": next_index,
+                    }
+                process.kill()
+                process.wait()
+                break
+            sink(record)
+            next_index = task_index + 1
+            process_retries.pop(task_index, None)
             peak_rss = (record.get(record.get("mode")) or {}).get(
                 "peak_rss_bytes", 0
             ) or 0
@@ -518,7 +572,23 @@ def audit_database(audit, args, run_dir, database, start_index, sink,
             continue
 
         return_code = process.wait()
-        if return_code == 0:
+        # A generator may terminate the process with exit(0) from inside an
+        # object or during its cleanup.  Only an explicit marker proves the
+        # batch exhausted its task list; otherwise resume at next_index.
+        if return_code == 0 and current is None and batch_complete and \
+                batch_task_count == next_index:
+            return
+        if return_code == 0 and current is None and batch_count_error:
+            sink(failure_record(
+                database_name,
+                None,
+                None,
+                "batch_protocol_error",
+                task_index=next_index,
+                task_count=batch_task_count,
+                expected_task_count=expected_task_count,
+                stderr=stderr_tail,
+            ))
             return
         if current is not None:
             task_index = current.get("task_index")
@@ -870,6 +940,8 @@ def main():
                     starts.get(database_name, 0),
                     sink,
                     object_file,
+                    (len(selection[database_name]) * len(args.modes)
+                     if selection else None),
                 )
                 pending_databases[future] = database
                 if len(pending_databases) >= args.processes * 2:
