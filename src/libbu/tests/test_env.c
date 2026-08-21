@@ -297,27 +297,29 @@ main(int ac, char *av[])
 	return -3;
     ssize_t process_mem = bu_mem(BU_MEM_PROCESS_AVAIL, NULL);
 
-    /* make sure passing works too */
+    /* Make sure the output pointer matches the return value from that call.
+     * The values reported by the operating system can change between calls. */
     size_t all_mem2 = 0;
     size_t avail_mem2 = 0;
     size_t page_mem2 = 0;
     size_t process_mem2 = 0;
 
-    (void)bu_mem(BU_MEM_ALL, &all_mem2);
-    if (all_mem2 != (size_t)all_mem)
+    const ssize_t all_mem_ret = bu_mem(BU_MEM_ALL, &all_mem2);
+    if (all_mem_ret < 0 || all_mem2 != (size_t)all_mem_ret)
 	return -4;
-    (void)bu_mem(BU_MEM_AVAIL, &avail_mem2);
-    if (avail_mem2 != (size_t)avail_mem)
+
+    const ssize_t avail_mem_ret = bu_mem(BU_MEM_AVAIL, &avail_mem2);
+    if (avail_mem_ret < 0 || avail_mem2 != (size_t)avail_mem_ret)
 	return -5;
-    (void)bu_mem(BU_MEM_PAGE_SIZE, &page_mem2);
-    if (page_mem2 != (size_t)page_mem)
+
+    const ssize_t page_mem_ret = bu_mem(BU_MEM_PAGE_SIZE, &page_mem2);
+    if (page_mem_ret < 0 || page_mem2 != (size_t)page_mem_ret)
 	return -6;
+
     const ssize_t process_mem_ret = bu_mem(BU_MEM_PROCESS_AVAIL,
 	&process_mem2);
-    if ((process_mem < 0) != (process_mem_ret < 0))
+    if (process_mem_ret >= 0 && process_mem2 != (size_t)process_mem_ret)
 	return -7;
-    if (process_mem >= 0 && process_mem2 != (size_t)process_mem)
-	return -8;
 
     char all_buf[6] = {'\0'};
     char avail_buf[6] = {'\0'};

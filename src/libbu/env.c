@@ -254,6 +254,32 @@ mem_host_info(int type, size_t *memsz)
 
 
 static int
+mem_size_from_uint64(uint64_t bytes, size_t *memsz)
+{
+    if (!memsz)
+	return -1;
+#if SIZE_MAX < UINT64_MAX
+    *memsz = bytes > (uint64_t)SIZE_MAX ? SIZE_MAX : (size_t)bytes;
+#else
+    *memsz = (size_t)bytes;
+#endif
+    return 0;
+}
+
+
+static ssize_t
+mem_result(size_t bytes, size_t *sz)
+{
+    const ssize_t result = (ssize_t)bytes;
+    if (result < 0 || (size_t)result != bytes)
+	return (ssize_t)-1;
+    if (sz)
+	*sz = bytes;
+    return result;
+}
+
+
+static int
 mem_status(int type, size_t *memsz)
 {
     if (!memsz)
@@ -273,33 +299,22 @@ mem_status(int type, size_t *memsz)
     }
 
     size_t sysmemory = 0;
-    MEMORYSTATUSEX mavail;
+    MEMORYSTATUSEX mavail = {0};
     mavail.dwLength = sizeof(mavail);
-    GlobalMemoryStatusEx(&mavail);
+    if (!GlobalMemoryStatusEx(&mavail))
+	return -1;
     if (type == BU_MEM_AVAIL) {
-	sysmemory = (size_t)mavail.ullAvailPhys;
+	if (mem_size_from_uint64(mavail.ullAvailPhys, &sysmemory) != 0)
+	    return -1;
     } else {
-	sysmemory = (size_t)mavail.ullTotalPhys;
+	if (mem_size_from_uint64(mavail.ullTotalPhys, &sysmemory) != 0)
+	    return -1;
     }
     (*memsz) = sysmemory;
     return 0;
 
 #endif
     return 1;
-}
-
-
-static int
-mem_size_from_uint64(uint64_t bytes, size_t *memsz)
-{
-    if (!memsz)
-	return -1;
-#if SIZE_MAX < UINT64_MAX
-    *memsz = bytes > (uint64_t)SIZE_MAX ? SIZE_MAX : (size_t)bytes;
-#else
-    *memsz = (size_t)bytes;
-#endif
-    return 0;
 }
 
 
@@ -466,9 +481,7 @@ bu_mem(int type, size_t *sz)
 	ret = mem_process_avail(&subsz);
 	if (ret != 0)
 	    return (ssize_t)-1;
-	if (sz)
-	    *sz = subsz;
-	return (ssize_t)subsz;
+	return mem_result(subsz, sz);
     }
 
     if (getenv("BU_MEM_NOCHECK")) {
@@ -479,37 +492,27 @@ bu_mem(int type, size_t *sz)
 
     ret = mem_sysctl(type, &subsz);
     if (ret == 0) {
-	if (sz)
-	    *sz = subsz;
-	return subsz;
+	return mem_result(subsz, sz);
     }
 
     ret = mem_host_info(type, &subsz);
     if (ret == 0) {
-	if (sz)
-	    *sz = subsz;
-	return subsz;
+	return mem_result(subsz, sz);
     }
 
     ret = mem_status(type, &subsz);
     if (ret == 0) {
-	if (sz)
-	    *sz = subsz;
-	return subsz;
+	return mem_result(subsz, sz);
     }
 
     ret = mem_sysconf(type, &subsz);
     if (ret == 0) {
-	if (sz)
-	    *sz = subsz;
-	return subsz;
+	return mem_result(subsz, sz);
     }
 
     ret = mem_sysinfo(type, &subsz);
     if (ret == 0) {
-	if (sz)
-	    *sz = subsz;
-	return subsz;
+	return mem_result(subsz, sz);
     }
 
     /* error if the above didn't work */
