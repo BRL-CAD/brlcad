@@ -146,6 +146,10 @@ brlcad_add_test(NAME rt_prim_tess COMMAND rt_prim_tess)
 brlcad_addexec(rt_primitive_brep primitive_brep.cpp "librt;libbrep;libbu;${M_LIBRARY}" TEST)
 brlcad_add_test(NAME rt_primitive_brep COMMAND rt_primitive_brep)
 
+# BREP archive I/O and concurrent import
+brlcad_addexec(rt_brep_io brep_io.cpp "librt;libbrep;libbu;Threads::Threads;${M_LIBRARY}" TEST)
+brlcad_add_test(NAME rt_brep_io COMMAND rt_brep_io)
+
 # stand-alone Crofton estimator tests
 brlcad_addexec(rt_crofton crofton.c "librt;libwdb;libbu;${M_LIBRARY}" TEST)
 brlcad_add_test(NAME rt_crofton COMMAND rt_crofton)
@@ -172,6 +176,7 @@ set(
   CMakeLists.txt
   arb_intersect.g
   binary_attribute.c
+  brep_io.cpp
   bound_internal.c
   crofton.c
   default_object.c
