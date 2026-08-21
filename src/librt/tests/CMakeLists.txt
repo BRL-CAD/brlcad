@@ -36,6 +36,9 @@ brlcad_addexec(rt_ssi ssi.cpp "${RT_TEST_LIBS}" TEST)
 # NURBS testing
 brlcad_addexec(rt_nurbs_tester nurbs_tests.cpp "librt;libbrep;libbu;${M_LIBRARY}" TEST)
 
+brlcad_addexec(rt_brep_import brep_import.c "${RT_TEST_LIBS}" TEST)
+brlcad_add_test(NAME rt_brep_import_invalid COMMAND rt_brep_import)
+
 # disabled prior to 7.22.2 release due to unresolved failures in the implementation
 #BRLCAD_ADD_TEST(NAME NURBS-get_closest_point-distinct_points nurbs_tester ${CMAKE_CURRENT_SOURCE_DIR}/nurbs_surfaces.g 1)
 
@@ -184,6 +187,7 @@ set(
   CMakeLists.txt
   arb_intersect.g
   binary_attribute.c
+  brep_import.c
   brep_io.cpp
   bound_internal.c
   crofton.c

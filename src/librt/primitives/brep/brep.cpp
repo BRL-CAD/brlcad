@@ -3144,8 +3144,13 @@ rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
     BU_CK_EXTERNAL(ep);
     RT_CK_DB_INTERNAL(ip);
 
-    ON_TextLog err(stderr);
-    ON_Brep *brep = brep_read_archive(ep->ext_buf, ep->ext_nbytes, &err);
+    ON_Brep *brep = NULL;
+    try {
+	ON_TextLog err(stderr);
+	brep = brep_read_archive(ep->ext_buf, ep->ext_nbytes, &err);
+    } catch (...) {
+	return -1;
+    }
     if (!brep)
 	return -1;
 
