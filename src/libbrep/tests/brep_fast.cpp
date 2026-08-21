@@ -32,6 +32,27 @@ struct wire_output {
     struct rt_brep_draw_report report = {};
 };
 
+static bool
+same_wire_report(const struct rt_brep_draw_report &first,
+	const struct rt_brep_draw_report &second)
+{
+    return first.requested_edges == second.requested_edges &&
+	first.completed_edges == second.completed_edges &&
+	first.failed_edges == second.failed_edges &&
+	first.requested_surface_cues == second.requested_surface_cues &&
+	first.completed_surface_cues == second.completed_surface_cues &&
+	first.approximated_surface_cues == second.approximated_surface_cues &&
+	first.memory_approximated_surface_cues ==
+	    second.memory_approximated_surface_cues &&
+	first.time_approximated_surface_cues ==
+	    second.time_approximated_surface_cues &&
+	first.output_points == second.output_points &&
+	first.result_bytes == second.result_bytes &&
+	first.hit_time_limit == second.hit_time_limit &&
+	first.hit_memory_limit == second.hit_memory_limit &&
+	first.hit_point_limit == second.hit_point_limit;
+}
+
 static int
 run_wire(wire_output *output, struct rt_db_internal *intern, size_t workers,
 	size_t max_points, size_t max_working_bytes = 0)
@@ -215,11 +236,37 @@ main(int argc, const char **argv)
 	wire_serial.points == wire_parallel.points &&
 	!wire_serial.commands.empty();
 
+    bool wire_repeatable = true;
+    for (int repeat = 0; repeat < 8; repeat++) {
+	wire_output wire_repeat;
+	const int wire_repeat_ret = run_wire(&wire_repeat, &intern, 4,
+	    4 * 1024 * 1024);
+	wire_repeatable = wire_repeatable &&
+	    wire_repeat_ret == wire_parallel_ret &&
+	    wire_repeat.commands == wire_parallel.commands &&
+	    wire_repeat.points == wire_parallel.points &&
+	    same_wire_report(wire_repeat.report, wire_parallel.report);
+    }
+
     wire_output wire_limited;
     int wire_limit_ret = run_wire(&wire_limited, &intern, 4, 1);
     bool wire_limited_cleanly = wire_limit_ret == RT_BREP_DRAW_LIMIT &&
 	wire_limited.report.hit_point_limit && wire_limited.commands.empty() &&
 	wire_limited.points.empty();
+
+    wire_output wire_admission_serial;
+    wire_output wire_admission_parallel;
+    const int wire_admission_serial_ret = run_wire(&wire_admission_serial,
+	&intern, 1, 7);
+    const int wire_admission_parallel_ret = run_wire(
+	&wire_admission_parallel, &intern, 4, 7);
+    const bool wire_admission_repeatable =
+	wire_admission_serial_ret == RT_BREP_DRAW_LIMIT &&
+	wire_admission_parallel_ret == wire_admission_serial_ret &&
+	wire_admission_parallel.commands == wire_admission_serial.commands &&
+	wire_admission_parallel.points == wire_admission_serial.points &&
+	same_wire_report(wire_admission_parallel.report,
+	    wire_admission_serial.report);
 
     wire_output wire_approximated;
     int wire_approximated_ret = run_wire(&wire_approximated, &intern, 1,
@@ -282,7 +329,8 @@ main(int argc, const char **argv)
     db_close(dbip);
     return (same && complete && working_bounded && adaptive_reported &&
 	unchanged && limited_cleanly && authoritative_boundaries_retained &&
-	wire_same && wire_limited_cleanly &&
+	wire_same && wire_repeatable && wire_limited_cleanly &&
+	wire_admission_repeatable &&
 	wire_approximated_cleanly &&
 	shaded_matches_fast) ? 0 : 1;
 }
