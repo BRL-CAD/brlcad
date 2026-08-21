@@ -2458,6 +2458,11 @@ main(int argc, const char **argv)
 		    active_index);
 	    }
 	}
+	std::cout
+	    << "{\"format\":\"brlcad-brep-audit-complete-v1\""
+	    << ",\"database\":" << json_quote(argv[0])
+	    << ",\"task_count\":" << task_index
+	    << "}" << std::endl;
 	db_close(dbip);
 	return 0;
     }
