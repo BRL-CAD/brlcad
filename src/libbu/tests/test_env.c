@@ -97,6 +97,21 @@ process_mem_tests(void)
 
 
 static int
+mem_test_failure(const char *query, ssize_t result, const size_t *output,
+                 int return_code)
+{
+    if (output) {
+	bu_log("bu_mem test failure (%d): %s returned %zd and wrote %zu\n",
+	       return_code, query, result, *output);
+    } else {
+	bu_log("bu_mem test failure (%d): %s returned %zd\n",
+	       return_code, query, result);
+    }
+    return return_code;
+}
+
+
+static int
 editor_tests(void)
 {
     const char *e = NULL;
@@ -288,13 +303,13 @@ main(int ac, char *av[])
 
     ssize_t all_mem = bu_mem(BU_MEM_ALL, NULL);
     if (all_mem < 0)
-	return -1;
+	return mem_test_failure("BU_MEM_ALL", all_mem, NULL, -1);
     ssize_t avail_mem = bu_mem(BU_MEM_AVAIL, NULL);
     if (avail_mem < 0)
-	return -2;
+	return mem_test_failure("BU_MEM_AVAIL", avail_mem, NULL, -2);
     ssize_t page_mem = bu_mem(BU_MEM_PAGE_SIZE, NULL);
     if (page_mem < 0)
-	return -3;
+	return mem_test_failure("BU_MEM_PAGE_SIZE", page_mem, NULL, -3);
     ssize_t process_mem = bu_mem(BU_MEM_PROCESS_AVAIL, NULL);
 
     /* Make sure the output pointer matches the return value from that call.
@@ -306,20 +321,24 @@ main(int ac, char *av[])
 
     const ssize_t all_mem_ret = bu_mem(BU_MEM_ALL, &all_mem2);
     if (all_mem_ret < 0 || all_mem2 != (size_t)all_mem_ret)
-	return -4;
+	return mem_test_failure("BU_MEM_ALL with output", all_mem_ret,
+	                       &all_mem2, -4);
 
     const ssize_t avail_mem_ret = bu_mem(BU_MEM_AVAIL, &avail_mem2);
     if (avail_mem_ret < 0 || avail_mem2 != (size_t)avail_mem_ret)
-	return -5;
+	return mem_test_failure("BU_MEM_AVAIL with output", avail_mem_ret,
+	                       &avail_mem2, -5);
 
     const ssize_t page_mem_ret = bu_mem(BU_MEM_PAGE_SIZE, &page_mem2);
     if (page_mem_ret < 0 || page_mem2 != (size_t)page_mem_ret)
-	return -6;
+	return mem_test_failure("BU_MEM_PAGE_SIZE with output", page_mem_ret,
+	                       &page_mem2, -6);
 
     const ssize_t process_mem_ret = bu_mem(BU_MEM_PROCESS_AVAIL,
 	&process_mem2);
     if (process_mem_ret >= 0 && process_mem2 != (size_t)process_mem_ret)
-	return -7;
+	return mem_test_failure("BU_MEM_PROCESS_AVAIL with output",
+	                       process_mem_ret, &process_mem2, -7);
 
     char all_buf[6] = {'\0'};
     char avail_buf[6] = {'\0'};
