@@ -38,6 +38,7 @@
 #include <string.h>
 
 #include "bio.h"
+#include "bresource.h"
 
 #include "bu.h"
 
@@ -60,6 +61,40 @@ shrink_path(struct bu_vls *tp, const char *lp)
     bu_log("%s\n", bu_vls_cstr(tp));
 #endif
 }
+
+static int
+process_mem_tests(void)
+{
+#if defined(HAVE_SYS_RESOURCE_H) && (defined(__linux__) || \
+    defined(__APPLE__) || defined(__FreeBSD__) || defined(__NetBSD__) || \
+    defined(__OpenBSD__) || defined(__DragonFly__))
+    struct rlimit original;
+    if (getrlimit(RLIMIT_AS, &original) != 0)
+	return -1;
+
+    struct rlimit limited = original;
+    const rlim_t test_limit = (rlim_t)512 * 1024 * 1024;
+    if (limited.rlim_max != RLIM_INFINITY &&
+	    limited.rlim_max < test_limit)
+	limited.rlim_cur = limited.rlim_max;
+    else
+	limited.rlim_cur = test_limit;
+    if (setrlimit(RLIMIT_AS, &limited) != 0)
+	return -2;
+
+    const ssize_t available = bu_mem(BU_MEM_PROCESS_AVAIL, NULL);
+    const int restore_result = setrlimit(RLIMIT_AS, &original);
+    if (restore_result != 0)
+	return -3;
+    if (available < 0 || (rlim_t)available > limited.rlim_cur)
+	return -4;
+#else
+    if (bu_mem(BU_MEM_PROCESS_AVAIL, NULL) >= 0)
+	bu_log("MEM process limit is available through a native API\n");
+#endif
+    return 0;
+}
+
 
 static int
 editor_tests(void)
@@ -248,6 +283,8 @@ main(int ac, char *av[])
 
     if (ac > 1 && BU_STR_EQUAL(av[1], "-e"))
 	return editor_tests();
+    if (ac > 1 && BU_STR_EQUAL(av[1], "-m"))
+	return process_mem_tests();
 
     ssize_t all_mem = bu_mem(BU_MEM_ALL, NULL);
     if (all_mem < 0)
@@ -258,11 +295,13 @@ main(int ac, char *av[])
     ssize_t page_mem = bu_mem(BU_MEM_PAGE_SIZE, NULL);
     if (page_mem < 0)
 	return -3;
+    ssize_t process_mem = bu_mem(BU_MEM_PROCESS_AVAIL, NULL);
 
     /* make sure passing works too */
     size_t all_mem2 = 0;
     size_t avail_mem2 = 0;
     size_t page_mem2 = 0;
+    size_t process_mem2 = 0;
 
     (void)bu_mem(BU_MEM_ALL, &all_mem2);
     if (all_mem2 != (size_t)all_mem)
@@ -273,6 +312,12 @@ main(int ac, char *av[])
     (void)bu_mem(BU_MEM_PAGE_SIZE, &page_mem2);
     if (page_mem2 != (size_t)page_mem)
 	return -6;
+    const ssize_t process_mem_ret = bu_mem(BU_MEM_PROCESS_AVAIL,
+	&process_mem2);
+    if ((process_mem < 0) != (process_mem_ret < 0))
+	return -7;
+    if (process_mem >= 0 && process_mem2 != (size_t)process_mem)
+	return -8;
 
     char all_buf[6] = {'\0'};
     char avail_buf[6] = {'\0'};
@@ -286,6 +331,10 @@ main(int ac, char *av[])
 	   all_buf, all_mem,
 	   avail_buf, avail_mem,
 	   p_buf, page_mem);
+    if (process_mem >= 0)
+	bu_log("MEM process address-space available: %zd\n", process_mem);
+    else
+	bu_log("MEM process address-space limit: unsupported or unlimited\n");
 
     return 0;
 }

@@ -23,7 +23,8 @@
  * declarations for standard system RESOURCE LIMIT routines.
  *
  * This header is commonly used in lieu of including the following:
- * sys/resource.h sys/time.h sys/wait.h
+ * sys/resource.h sys/time.h sys/wait.h sys/user.h sys/kinfo.h
+ * mach/mach.h
  *
  * This header does not belong to any BRL-CAD library but may used by
  * all of them.
@@ -32,6 +33,9 @@
  *   HAVE_SYS_TIME_H
  *   HAVE_SYS_RESOURCE_H
  *   HAVE_SYS_WAIT_H
+ *   HAVE_SYS_USER_H
+ *   HAVE_SYS_KINFO_H
+ *   HAVE_MACH_MACH_H
  */
 /** @{ */
 /** @file bresource.h */
@@ -68,6 +72,15 @@
 
 #ifdef HAVE_SYS_WAIT_H
 #  include <sys/wait.h>
+#endif
+#if defined(__FreeBSD__) && defined(HAVE_SYS_USER_H)
+#  include <sys/user.h>
+#endif
+#if defined(__DragonFly__) && defined(HAVE_SYS_KINFO_H)
+#  include <sys/kinfo.h>
+#endif
+#if defined(__APPLE__) && defined(HAVE_MACH_MACH_H)
+#  include <mach/mach.h>
 #endif
 
 #endif /* BRESOURCE_H */
