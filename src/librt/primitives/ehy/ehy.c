@@ -2436,94 +2436,53 @@ C_DECL void
 rt_ehy_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     struct rt_ehy_internal *eip;
-    fastf_t h, r, c, P, alpha, B, sqrtAlpha;
-    fastf_t u_top, u_bot, v_top, v_bot, F_top, F_bot;
-
-    if (!area || !ip)
-	return;
+    fastf_t c, h, scale, a, b, a2, b2, c2, v0, mc, sv, st;
+    int n;
 
     RT_CK_DB_INTERNAL(ip);
     eip = (struct rt_ehy_internal *)ip->idb_ptr;
     RT_EHY_CK_MAGIC(eip);
 
-    /* For the elliptical case (r1 != r2) the lateral surface area requires
-     * an elliptic integral with no elementary closed form -- use Crofton.
-     */
-    if (!NEAR_EQUAL(eip->ehy_r1, eip->ehy_r2, RT_LEN_TOL)) {
-	do { static const struct rt_crofton_params _p = {50000u, 0.0, 0.0}; rt_crofton_sample(area, NULL, ip, &_p); } while (0);
-	return;
-    }
-
-    /* Circular case (r1 == r2 == r): the EHY is a surface of revolution.
-     *
-     * The profile radius at height h_dist along H is:
-     *   y(h_dist) = r * sqrt(((H+c-h_dist)^2 - c^2) / (H*(H+2*c)))
-     *
-     * Substituting u = H+c-h_dist and letting P = H*(H+2*c), the lateral
-     * surface area integral becomes:
-     *   SA_lat = 2*pi*r/P * integral_c^{H+c} sqrt(alpha*u^2 - B) du
-     * where alpha = P + r^2 and B = c^2 * P.
-     *
-     * The integral has the standard antiderivative:
-     *   F(u) = u/2 * sqrt(alpha*u^2 - B)
-     *         - B/(2*sqrt(alpha)) * log(sqrt(alpha)*u + sqrt(alpha*u^2 - B))
-     *
-     * At the lower bound u = c: alpha*c^2 - B = c^2*(alpha-P) = c^2*r^2 > 0.
-     * At the upper bound u = H+c: alpha*(H+c)^2 - B > 0 for any valid EHY.
-     *
-     * The flat circular base contributes pi*r^2.
-     */
-    h = MAGNITUDE(eip->ehy_H);
-    r = eip->ehy_r1;
     c = eip->ehy_c;
+    h = MAGNITUDE(eip->ehy_H);
+    scale = c / sqrt(h * (2 * c + h));
+    a = eip->ehy_r1 * scale;
+    b = eip->ehy_r2 * scale;
 
-    P = h * (h + 2.0*c);		/* H*(H+2c) */
-    alpha = P + r*r;
-    B = c*c * P;
-    sqrtAlpha = sqrt(alpha);
+    v0 = acosh(1 + h / c);
+    a2 = a * a;
+    b2 = b * b;
+    c2 = c * c;
 
-    /* Antiderivative F(u) = u/2*sqrt(alpha*u^2-B)
-     *                       - B/(2*sqrt(alpha)) * log(sqrt(alpha)*u + sqrt(alpha*u^2-B))
-     * evaluated at the bounds of the substituted integral.
-     * At u=c: alpha*c^2-B = c^2*(alpha-P) = c^2*r^2, simplified below.
-     */
-    u_top = h + c;
-    u_bot = c;
-    v_top = alpha*u_top*u_top - B;
-    v_bot = c*c * r*r;  /* = alpha*c^2 - B = c^2*r^2 (exact, avoids cancellation) */
-
-    {
-	fastf_t half_B_over_sqrtAlpha = B / (2.0*sqrtAlpha);
-	F_top = u_top/2.0*sqrt(v_top) - half_B_over_sqrtAlpha*log(sqrtAlpha*u_top + sqrt(v_top));
-	F_bot = u_bot/2.0*sqrt(v_bot) - half_B_over_sqrtAlpha*log(sqrtAlpha*u_bot + sqrt(v_bot));
+    /* Monte Carlo integration */
+    for (mc = 0, n = 0; n < 1000000; ++n) {
+	sv = (((fastf_t) bn_randmt())) * v0;
+	st = ((fastf_t) bn_randmt()) * M_2PI;
+	mc += sqrt((b2 * c2 * cos(st) * cos(st) * pow(sinh(sv), 4))
+		    + (a2 * c2 * sin(st) * sin(st) * pow(sinh(sv), 4))
+		    + (a2 * b2 * cosh(sv) * cosh(sv) * sinh(sv) * sinh(sv)));
     }
+    mc *= M_2PI * v0 / n;
 
-    *area = 2.0*M_PI*r/P * (F_top - F_bot) + M_PI*r*r;
+    /* Hyperboloid surface + ellipse */
+    *area = mc + M_PI * eip->ehy_r1 * eip->ehy_r2;
 }
 
 
-C_DECL void
+void
 rt_ehy_volume(fastf_t *volume, const struct rt_db_internal *ip)
 {
     struct rt_ehy_internal *eip;
-    fastf_t h, c;
-
-    if (!volume || !ip)
-	return;
+    fastf_t c, h, scale;
 
     RT_CK_DB_INTERNAL(ip);
     eip = (struct rt_ehy_internal *)ip->idb_ptr;
     RT_EHY_CK_MAGIC(eip);
 
-    h = MAGNITUDE(eip->ehy_H);
     c = eip->ehy_c;
-
-    /* Each cross-section at height h_dist has elliptical area
-     *   A(h_dist) = pi*r1*r2 * ((H+c-h_dist)^2 - c^2) / (H*(H+2*c))
-     * Integrating from 0 to H yields:
-     *   Vol = pi * r1 * r2 * H * (H + 3*c) / (3 * (H + 2*c))
-     */
-    *volume = M_PI * eip->ehy_r1 * eip->ehy_r2 * h * (h + 3.0*c) / (3.0*(h + 2.0*c));
+    h = MAGNITUDE(eip->ehy_H);
+    scale = c / sqrt(h * (2 * c + h));
+    *volume = M_PI * eip->ehy_r1 * scale * eip->ehy_r2 * scale * h * h / (3 * c * c) * (3 * c + h);
 }
 
 
