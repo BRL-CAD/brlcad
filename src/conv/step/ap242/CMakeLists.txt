@@ -350,9 +350,11 @@ if(BRLCAD_ENABLE_STEP)
   step_record_schema_sources(AP242E3 EXPORT gap242_SOURCES)
   step_record_schema_sources(AP242E4 IMPORT ap242g_TARGET_SOURCES)
   step_record_schema_sources(AP242E4 EXPORT gap242_SOURCES)
-  brlcad_add_test(
-    NAME ap242_csg
-    COMMAND
+
+  if (TARGET mged)
+    brlcad_add_test(
+      NAME ap242_csg
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -360,10 +362,13 @@ if(BRLCAD_ENABLE_STEP)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap242_csg.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap242_csg.g
       -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap242_csg.cmake
-  )
-  brlcad_add_test(
-    NAME ap242_swept_solids
-    COMMAND
+    )
+  endif()
+
+  if (TARGET mged AND TARGET nirt)
+    brlcad_add_test(
+      NAME ap242_swept_solids
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -371,10 +376,13 @@ if(BRLCAD_ENABLE_STEP)
       -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap242_swept_solids.stp
       -DWORK_DIRECTORY=${CMAKE_CURRENT_BINARY_DIR}
       -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap242_swept_solids.cmake
-  )
-  brlcad_add_test(
-    NAME ap242_tessellated
-    COMMAND
+    )
+  endif()
+
+  if (TARGET mged)
+    brlcad_add_test(
+      NAME ap242_tessellated
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -384,10 +392,10 @@ if(BRLCAD_ENABLE_STEP)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap242_tessellated.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap242_tessellated.g
       -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap242_tessellated.cmake
-  )
-  brlcad_add_test(
-    NAME ap242_pmi
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap242_pmi
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -395,10 +403,10 @@ if(BRLCAD_ENABLE_STEP)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap242_pmi.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap242_pmi.g
       -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap242_pmi.cmake
-  )
-  brlcad_add_test(
-    NAME ap242_pmi_uncovered
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap242_pmi_uncovered
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -407,10 +415,10 @@ if(BRLCAD_ENABLE_STEP)
       -DRETAINED_INPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap242_pmi_retained_families.stp
       -DOUTPUT_DIR=${CMAKE_CURRENT_BINARY_DIR}
       -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap242_pmi_uncovered.cmake
-  )
-  brlcad_add_test(
-    NAME ap242_mapped_assembly
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap242_mapped_assembly
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -425,10 +433,10 @@ if(BRLCAD_ENABLE_STEP)
       -DTOLERANCE=0.002
       "-DTRANSFORM_MARKER={1 0 0 0  0 1 0 32  0 0 1 5"
       -P ${CMAKE_CURRENT_SOURCE_DIR}/../tests/step_mapped_assembly_baseline.cmake
-  )
-  brlcad_add_test(
-    NAME ap242_direct_advanced_brep
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap242_direct_advanced_brep
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -447,10 +455,10 @@ if(BRLCAD_ENABLE_STEP)
       -DASSOCIATION=PROPERTY_DEFINITION_REPRESENTATION
       -DTOP=AP242_Direct_Tetra
       -P ${CMAKE_CURRENT_SOURCE_DIR}/../tests/step_direct_advanced_brep.cmake
-  )
-  brlcad_add_test(
-    NAME ap242_invalid_brep_policy
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap242_invalid_brep_policy
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -466,7 +474,9 @@ if(BRLCAD_ENABLE_STEP)
       "-DPRODUCT_NAME=AP242 Invalid"
       -DASSOCIATION=PROPERTY_DEFINITION_REPRESENTATION
       -P ${CMAKE_CURRENT_SOURCE_DIR}/../tests/step_invalid_brep_policy.cmake
-  )
+    )
+  endif()
+
   brlcad_add_test(
     NAME ap242_policy_outcomes
     COMMAND
@@ -504,9 +514,11 @@ if(BRLCAD_ENABLE_STEP)
       -DASSOCIATION=PROPERTY_DEFINITION_REPRESENTATION
       -P ${CMAKE_CURRENT_SOURCE_DIR}/../tests/step_partial_policy_outcome.cmake
   )
-  brlcad_add_test(
-    NAME ap242_wireframe
-    COMMAND
+
+  if (TARGET mged)
+    brlcad_add_test(
+      NAME ap242_wireframe
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -524,10 +536,10 @@ if(BRLCAD_ENABLE_STEP)
       -DASSOCIATION=PROPERTY_DEFINITION_REPRESENTATION
       -DTOP=AP242_Wire_Product
       -P ${CMAKE_CURRENT_SOURCE_DIR}/../tests/step_wireframe_baseline.cmake
-  )
-  brlcad_add_test(
-    NAME ap242_surface_models
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap242_surface_models
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -546,10 +558,10 @@ if(BRLCAD_ENABLE_STEP)
       -DASSOCIATION=PROPERTY_DEFINITION_REPRESENTATION
       -DTOP=AP242_Surface_Models
       -P ${CMAKE_CURRENT_SOURCE_DIR}/../tests/step_surface_models_baseline.cmake
-  )
-  brlcad_add_test(
-    NAME ap242_brep_with_voids
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap242_brep_with_voids
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -566,7 +578,9 @@ if(BRLCAD_ENABLE_STEP)
       -DASSOCIATION=PROPERTY_DEFINITION_REPRESENTATION
       -DTOP=AP242_Void_Tetra
       -P ${CMAKE_CURRENT_SOURCE_DIR}/../tests/step_brep_with_voids_baseline.cmake
-  )
+    )
+  endif()
+
 endif(BRLCAD_ENABLE_STEP)
 
 cmakefiles(

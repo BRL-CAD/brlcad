@@ -306,9 +306,11 @@ if(BRLCAD_ENABLE_STEP)
   step_use_import_common_objects(ap203e2g_TARGET_SOURCES ap203e2g_SOURCES)
   step_record_schema_sources(AP203E2 IMPORT ap203e2g_TARGET_SOURCES)
   step_record_schema_sources(AP203E2 EXPORT gap203e2_SOURCES)
-  brlcad_add_test(
-    NAME ap203e2_csg
-    COMMAND
+
+  if (TARGET mged)
+    brlcad_add_test(
+      NAME ap203e2_csg
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -316,10 +318,10 @@ if(BRLCAD_ENABLE_STEP)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203e2_csg.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap203e2_csg.g
       -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203e2_csg.cmake
-  )
-  brlcad_add_test(
-    NAME ap203e2_swept_solids
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap203e2_swept_solids
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -327,10 +329,10 @@ if(BRLCAD_ENABLE_STEP)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203e2_swept_solids.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap203e2_swept_solids.g
       -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203e2_swept_solids.cmake
-  )
-  brlcad_add_test(
-    NAME ap203e2_mapped_assembly
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap203e2_mapped_assembly
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -345,10 +347,10 @@ if(BRLCAD_ENABLE_STEP)
       -DTOLERANCE=0.005
       "-DTRANSFORM_MARKER={1 0 0 35"
       -P ${CMAKE_CURRENT_SOURCE_DIR}/../tests/step_mapped_assembly_baseline.cmake
-  )
-  brlcad_add_test(
-    NAME ap203e2_direct_advanced_brep
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap203e2_direct_advanced_brep
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -367,10 +369,10 @@ if(BRLCAD_ENABLE_STEP)
       -DASSOCIATION=SHAPE_DEFINITION_REPRESENTATION
       -DTOP=AP203e2_Direct_Tetra
       -P ${CMAKE_CURRENT_SOURCE_DIR}/../tests/step_direct_advanced_brep.cmake
-  )
-  brlcad_add_test(
-    NAME ap203e2_invalid_brep_policy
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap203e2_invalid_brep_policy
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -386,10 +388,10 @@ if(BRLCAD_ENABLE_STEP)
       "-DPRODUCT_NAME=AP203e2 Invalid"
       -DASSOCIATION=SHAPE_DEFINITION_REPRESENTATION
       -P ${CMAKE_CURRENT_SOURCE_DIR}/../tests/step_invalid_brep_policy.cmake
-  )
-  brlcad_add_test(
-    NAME ap203e2_policy_outcomes
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap203e2_policy_outcomes
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DUNSUPPORTED_TEMPLATE=${CMAKE_CURRENT_SOURCE_DIR}/../tests/step_unsupported_product_geometry.stp.in
@@ -401,10 +403,10 @@ if(BRLCAD_ENABLE_STEP)
       "-DAPPLICATION=configuration controlled 3D designs of mechanical parts and assemblies"
       -DASSOCIATION=SHAPE_DEFINITION_REPRESENTATION
       -P ${CMAKE_CURRENT_SOURCE_DIR}/../tests/step_schema_policy_outcomes.cmake
-  )
-  brlcad_add_test(
-    NAME ap203e2_partial_policy
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap203e2_partial_policy
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DTEMPLATE=${CMAKE_CURRENT_SOURCE_DIR}/../tests/step_direct_advanced_brep.stp.in
@@ -423,10 +425,10 @@ if(BRLCAD_ENABLE_STEP)
       "-DPRODUCT_NAME=AP203e2 Partial"
       -DASSOCIATION=SHAPE_DEFINITION_REPRESENTATION
       -P ${CMAKE_CURRENT_SOURCE_DIR}/../tests/step_partial_policy_outcome.cmake
-  )
-  brlcad_add_test(
-    NAME ap203e2_wireframe
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap203e2_wireframe
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -444,10 +446,10 @@ if(BRLCAD_ENABLE_STEP)
       -DASSOCIATION=SHAPE_DEFINITION_REPRESENTATION
       -DTOP=AP203e2_Wire_Product
       -P ${CMAKE_CURRENT_SOURCE_DIR}/../tests/step_wireframe_baseline.cmake
-  )
-  brlcad_add_test(
-    NAME ap203e2_surface_models
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap203e2_surface_models
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -466,10 +468,10 @@ if(BRLCAD_ENABLE_STEP)
       -DASSOCIATION=SHAPE_DEFINITION_REPRESENTATION
       -DTOP=AP203e2_Surface_Models
       -P ${CMAKE_CURRENT_SOURCE_DIR}/../tests/step_surface_models_baseline.cmake
-  )
-  brlcad_add_test(
-    NAME ap203e2_brep_with_voids
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap203e2_brep_with_voids
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -486,7 +488,9 @@ if(BRLCAD_ENABLE_STEP)
       -DASSOCIATION=SHAPE_DEFINITION_REPRESENTATION
       -DTOP=AP203e2_Void_Tetra
       -P ${CMAKE_CURRENT_SOURCE_DIR}/../tests/step_brep_with_voids_baseline.cmake
-  )
+    )
+  endif()
+
 endif(BRLCAD_ENABLE_STEP)
 
 cmakefiles(

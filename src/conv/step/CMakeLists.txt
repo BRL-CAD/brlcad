@@ -735,15 +735,17 @@ if(BRLCAD_ENABLE_STEP)
         )
       endif()
     endforeach()
-    brlcad_add_test(
-      NAME step_enum_schemas
-      COMMAND ${CMAKE_COMMAND}
-        -DSTEP_G=$<TARGET_FILE:step-g>
-        -DMGED=$<TARGET_FILE:mged>
-        -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/step-g/tests/ap203_unclamped_closed_curve_knots.stp
-        -DWORK_DIRECTORY=${CMAKE_CURRENT_BINARY_DIR}
-        -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/step_enum_schemas.cmake
-    )
+    if (TARGET mged)
+      brlcad_add_test(
+	NAME step_enum_schemas
+	COMMAND ${CMAKE_COMMAND}
+	-DSTEP_G=$<TARGET_FILE:step-g>
+	-DMGED=$<TARGET_FILE:mged>
+	-DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/step-g/tests/ap203_unclamped_closed_curve_knots.stp
+	-DWORK_DIRECTORY=${CMAKE_CURRENT_BINARY_DIR}
+	-P ${CMAKE_CURRENT_SOURCE_DIR}/tests/step_enum_schemas.cmake
+      )
+    endif()
   endif()
 endif()
 

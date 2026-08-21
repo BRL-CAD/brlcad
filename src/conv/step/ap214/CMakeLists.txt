@@ -459,9 +459,11 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT_NONE=${CMAKE_CURRENT_BINARY_DIR}/ap214_missing_face_reference_none.json
       -P ${AP214_TEST_DIR}/ap214_missing_face_reference.cmake
   )
-  brlcad_add_test(
-    NAME ap214_parallel_failure
-    COMMAND
+
+  if (TARGET mged)
+    brlcad_add_test(
+      NAME ap214_parallel_failure
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -469,10 +471,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_parallel_failure.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_parallel_failure.g
       -P ${AP214_TEST_DIR}/ap214_parallel_failure.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_direct_manifold
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_direct_manifold
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -480,10 +482,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_direct_manifold.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_direct_manifold.g
       -P ${AP214_TEST_DIR}/ap214_direct_manifold.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_missing_planar_triangular_cap
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_missing_planar_triangular_cap
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -493,10 +495,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_missing_planar_triangular_cap.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_missing_planar_triangular_cap.g
       -P ${AP214_TEST_DIR}/ap214_missing_planar_triangular_cap.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_repeated_vertex_periodic_lobe
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_repeated_vertex_periodic_lobe
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -504,10 +506,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_repeated_vertex_periodic_lobe.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_repeated_vertex_periodic_lobe.g
       -P ${AP214_TEST_DIR}/ap214_repeated_vertex_periodic_lobe.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_surface_shells
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_surface_shells
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -515,10 +517,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_surface_shells.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_surface_shells.g
       -P ${AP214_TEST_DIR}/ap214_surface_shells.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_keyhole_loop
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_keyhole_loop
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -526,10 +528,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_keyhole_loop.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_keyhole_loop.g
       -P ${AP214_TEST_DIR}/ap214_keyhole_loop.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_periodic_torus
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_periodic_torus
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -537,10 +539,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_periodic_torus.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_periodic_torus.g
       -P ${AP214_TEST_DIR}/ap214_periodic_torus.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_vertex_loop_torus
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_vertex_loop_torus
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -548,10 +550,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_vertex_loop_torus.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_vertex_loop_torus.g
       -P ${AP214_TEST_DIR}/ap214_vertex_loop_torus.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_vertex_loop_sphere
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_vertex_loop_sphere
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -559,10 +561,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_vertex_loop_sphere.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_vertex_loop_sphere.g
       -P ${AP214_TEST_DIR}/ap214_vertex_loop_sphere.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_vertex_loop_conical_face
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_vertex_loop_conical_face
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -570,10 +572,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_vertex_loop_conical_face.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_vertex_loop_conical_face.g
       -P ${AP214_TEST_DIR}/ap214_vertex_loop_conical_face.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_vertex_loop_spline_pole
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_vertex_loop_spline_pole
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -581,10 +583,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_vertex_loop_spline_pole.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_vertex_loop_spline_pole.g
       -P ${AP214_TEST_DIR}/ap214_vertex_loop_spline_pole.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_sub_tolerance_torus_seam
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_sub_tolerance_torus_seam
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -592,10 +594,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_sub_tolerance_torus_seam.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_sub_tolerance_torus_seam.g
       -P ${AP214_TEST_DIR}/ap214_sub_tolerance_torus_seam.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_negative_spindle_torus
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_negative_spindle_torus
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -603,10 +605,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_negative_spindle_torus.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_negative_spindle_torus.g
       -P ${AP214_TEST_DIR}/ap214_negative_spindle_torus.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_collapsed_torus_seam
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_collapsed_torus_seam
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -614,10 +616,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_collapsed_torus_seam.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_collapsed_torus_seam.g
       -P ${AP214_TEST_DIR}/ap214_collapsed_torus_seam.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_degenerate_torus_endpoint
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_degenerate_torus_endpoint
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -625,10 +627,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_degenerate_torus_endpoint.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_degenerate_torus_endpoint.g
       -P ${AP214_TEST_DIR}/ap214_degenerate_torus_endpoint.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_horn_torus_keyhole
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_horn_torus_keyhole
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -636,10 +638,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_horn_torus_keyhole.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_horn_torus_keyhole.g
       -P ${AP214_TEST_DIR}/ap214_horn_torus_keyhole.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_degenerate_torus_sheet
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_degenerate_torus_sheet
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -647,10 +649,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_degenerate_torus_sheet.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_degenerate_torus_sheet.g
       -P ${AP214_TEST_DIR}/ap214_degenerate_torus_sheet.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_short_cylinder_seam
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_short_cylinder_seam
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -658,10 +660,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_short_cylinder_seam.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_short_cylinder_seam.g
       -P ${AP214_TEST_DIR}/ap214_short_cylinder_seam.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_single_winding_cylinder_boundary_invalid
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_single_winding_cylinder_boundary_invalid
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -669,20 +671,24 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_single_winding_cylinder_boundary_invalid.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_single_winding_cylinder_boundary_invalid.g
       -P ${AP214_TEST_DIR}/ap214_single_winding_cylinder_boundary_invalid.cmake
-  )
+    )
+  endif()
+
   brlcad_add_test(
     NAME ap214_distinct_edge_keyhole_rejoin
     COMMAND
-      ${CMAKE_COMMAND}
-      -DSTEP_G=$<TARGET_FILE:step-g>
-      -DINPUT=${AP214_TEST_DIR}/ap214_distinct_edge_keyhole_rejoin.stp
-      -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_distinct_edge_keyhole_rejoin.json
-      -DEXACT_REPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_distinct_edge_keyhole_rejoin_exact.json
-      -P ${AP214_TEST_DIR}/ap214_distinct_edge_keyhole_rejoin.cmake
+    ${CMAKE_COMMAND}
+    -DSTEP_G=$<TARGET_FILE:step-g>
+    -DINPUT=${AP214_TEST_DIR}/ap214_distinct_edge_keyhole_rejoin.stp
+    -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_distinct_edge_keyhole_rejoin.json
+    -DEXACT_REPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_distinct_edge_keyhole_rejoin_exact.json
+    -P ${AP214_TEST_DIR}/ap214_distinct_edge_keyhole_rejoin.cmake
   )
-  brlcad_add_test(
-    NAME ap214_face_wr2_off_surface_torus_invalid
-    COMMAND
+
+  if (TARGET mged)
+    brlcad_add_test(
+      NAME ap214_face_wr2_off_surface_torus_invalid
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -690,10 +696,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_face_wr2_off_surface_torus_invalid.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_face_wr2_off_surface_torus_invalid.g
       -P ${AP214_TEST_DIR}/ap214_face_wr2_off_surface_torus_invalid.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_duplicate_periodic_seam
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_duplicate_periodic_seam
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -701,10 +707,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_duplicate_periodic_seam.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_duplicate_periodic_seam.g
       -P ${AP214_TEST_DIR}/ap214_duplicate_periodic_seam.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_notched_periodic_band
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_notched_periodic_band
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -712,10 +718,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_notched_periodic_band.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_notched_periodic_band.g
       -P ${AP214_TEST_DIR}/ap214_notched_periodic_band.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_conical_closed_edge_band
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_conical_closed_edge_band
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -723,10 +729,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_conical_closed_edge_band.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_conical_closed_edge_band.g
       -P ${AP214_TEST_DIR}/ap214_conical_closed_edge_band.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_shared_conical_surface_bands
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_shared_conical_surface_bands
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -734,10 +740,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_shared_conical_surface_bands.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_shared_conical_surface_bands.g
       -P ${AP214_TEST_DIR}/ap214_shared_conical_surface_bands.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_multi_edge_conical_cap
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_multi_edge_conical_cap
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -745,10 +751,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_multi_edge_conical_cap.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_multi_edge_conical_cap.g
       -P ${AP214_TEST_DIR}/ap214_multi_edge_conical_cap.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_measured_full_period_chain
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_measured_full_period_chain
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -756,10 +762,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_measured_full_period_chain.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_measured_full_period_chain.g
       -P ${AP214_TEST_DIR}/ap214_measured_full_period_chain.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_four_face_keyhole
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_four_face_keyhole
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -767,63 +773,67 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_four_face_keyhole.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_four_face_keyhole.g
       -P ${AP214_TEST_DIR}/ap214_four_face_keyhole.cmake
-  )
+    )
+  endif()
+
   brlcad_add_test(
     NAME ap214_paired_singleton_keyhole
     COMMAND
-      ${CMAKE_COMMAND}
-      -DSTEP_G=$<TARGET_FILE:step-g>
-      -DINPUT=${AP214_TEST_DIR}/ap214_paired_singleton_keyhole.stp
-      -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_paired_singleton_keyhole.json
-      "-DEXPECTED_REPAIR=aligned a periodic NURBS surface seam with its closed edge"
-      -P ${AP214_TEST_DIR}/ap214_structural_repair_fixture.cmake
+    ${CMAKE_COMMAND}
+    -DSTEP_G=$<TARGET_FILE:step-g>
+    -DINPUT=${AP214_TEST_DIR}/ap214_paired_singleton_keyhole.stp
+    -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_paired_singleton_keyhole.json
+    "-DEXPECTED_REPAIR=aligned a periodic NURBS surface seam with its closed edge"
+    -P ${AP214_TEST_DIR}/ap214_structural_repair_fixture.cmake
   )
   brlcad_add_test(
     NAME ap214_neighbor_keyhole_seam
     COMMAND
-      ${CMAKE_COMMAND}
-      -DSTEP_G=$<TARGET_FILE:step-g>
-      -DINPUT=${AP214_TEST_DIR}/ap214_neighbor_keyhole_seam.stp
-      -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_neighbor_keyhole_seam.json
-      "-DEXPECTED_REPAIR=normalized a restored full-period seam pair within model tolerance"
-      -P ${AP214_TEST_DIR}/ap214_structural_repair_fixture.cmake
+    ${CMAKE_COMMAND}
+    -DSTEP_G=$<TARGET_FILE:step-g>
+    -DINPUT=${AP214_TEST_DIR}/ap214_neighbor_keyhole_seam.stp
+    -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_neighbor_keyhole_seam.json
+    "-DEXPECTED_REPAIR=normalized a restored full-period seam pair within model tolerance"
+    -P ${AP214_TEST_DIR}/ap214_structural_repair_fixture.cmake
   )
   # This is the smallest focused representative of a repeated two-use,
   # full-period singleton-keyhole topology.
   brlcad_add_test(
     NAME ap214_singleton_keyhole_solid
     COMMAND
-      ${CMAKE_COMMAND}
-      -DSTEP_G=$<TARGET_FILE:step-g>
-      -DINPUT=${AP214_TEST_DIR}/ap214_singleton_keyhole_solid.stp
-      -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_singleton_keyhole_solid.json
-      -DENTITY_IDS=3505
-      -DEXPECTED_ATTEMPTED=1
-      -P ${AP214_TEST_DIR}/ap214_selected_solid_regression.cmake
+    ${CMAKE_COMMAND}
+    -DSTEP_G=$<TARGET_FILE:step-g>
+    -DINPUT=${AP214_TEST_DIR}/ap214_singleton_keyhole_solid.stp
+    -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_singleton_keyhole_solid.json
+    -DENTITY_IDS=3505
+    -DEXPECTED_ATTEMPTED=1
+    -P ${AP214_TEST_DIR}/ap214_selected_solid_regression.cmake
   )
   brlcad_add_test(
     NAME ap214_spherical_antipodal_boundary
     COMMAND
-      ${CMAKE_COMMAND}
-      -DSTEP_G=$<TARGET_FILE:step-g>
-      -DINPUT=${AP214_TEST_DIR}/ap214_spherical_antipodal_boundary.stp
-      -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_spherical_antipodal_boundary.json
-      "-DEXPECTED_REPAIR=split an exact STEP edge at a surface parameter singularity"
-      -P ${AP214_TEST_DIR}/ap214_structural_repair_fixture.cmake
+    ${CMAKE_COMMAND}
+    -DSTEP_G=$<TARGET_FILE:step-g>
+    -DINPUT=${AP214_TEST_DIR}/ap214_spherical_antipodal_boundary.stp
+    -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_spherical_antipodal_boundary.json
+    "-DEXPECTED_REPAIR=split an exact STEP edge at a surface parameter singularity"
+    -P ${AP214_TEST_DIR}/ap214_structural_repair_fixture.cmake
   )
   brlcad_add_test(
     NAME ap214_spherical_antipodal_boundary_with_hole
     COMMAND
-      ${CMAKE_COMMAND}
-      -DSTEP_G=$<TARGET_FILE:step-g>
-      -DINPUT=${AP214_TEST_DIR}/ap214_spherical_antipodal_boundary_with_hole.stp
-      -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_spherical_antipodal_boundary_with_hole.json
-      "-DEXPECTED_REPAIR=resolved a contradictory analytic proxy tangent using directed exact-edge chords"
-      -P ${AP214_TEST_DIR}/ap214_structural_repair_fixture.cmake
+    ${CMAKE_COMMAND}
+    -DSTEP_G=$<TARGET_FILE:step-g>
+    -DINPUT=${AP214_TEST_DIR}/ap214_spherical_antipodal_boundary_with_hole.stp
+    -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_spherical_antipodal_boundary_with_hole.json
+    "-DEXPECTED_REPAIR=resolved a contradictory analytic proxy tangent using directed exact-edge chords"
+    -P ${AP214_TEST_DIR}/ap214_structural_repair_fixture.cmake
   )
-  brlcad_add_test(
-    NAME ap214_periodic_face_branch
-    COMMAND
+
+  if (TARGET mged)
+    brlcad_add_test(
+      NAME ap214_periodic_face_branch
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -831,10 +841,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_periodic_face_branch.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_periodic_face_branch.g
       -P ${AP214_TEST_DIR}/ap214_periodic_face_branch.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_doubly_periodic_chain
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_doubly_periodic_chain
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -843,10 +853,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DEXACT_REPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_doubly_periodic_chain_exact.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_doubly_periodic_chain.g
       -P ${AP214_TEST_DIR}/ap214_doubly_periodic_chain.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_shared_periodic_edge
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_shared_periodic_edge
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -854,10 +864,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_shared_periodic_edge.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_shared_periodic_edge.g
       -P ${AP214_TEST_DIR}/ap214_shared_periodic_edge.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_shared_revolution_edge
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_shared_revolution_edge
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -865,10 +875,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_shared_revolution_edge.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_shared_revolution_edge.g
       -P ${AP214_TEST_DIR}/ap214_shared_revolution_edge.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_contractible_periodic_neighbor
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_contractible_periodic_neighbor
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -876,10 +886,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_contractible_periodic_neighbor.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_contractible_periodic_neighbor.g
       -P ${AP214_TEST_DIR}/ap214_contractible_periodic_neighbor.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_periodic_band_with_hole
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_periodic_band_with_hole
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -887,10 +897,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_periodic_band_with_hole.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_periodic_band_with_hole.g
       -P ${AP214_TEST_DIR}/ap214_periodic_band_with_hole.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_measured_native_periodic_boundary
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_measured_native_periodic_boundary
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -899,10 +909,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DEXACT_REPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_measured_native_periodic_boundary_exact.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_measured_native_periodic_boundary.g
       -P ${AP214_TEST_DIR}/ap214_measured_native_periodic_boundary.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_measured_periodic_winding
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_measured_periodic_winding
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -911,7 +921,9 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DEXACT_REPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_measured_periodic_winding_exact.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_measured_periodic_winding.g
       -P ${AP214_TEST_DIR}/ap214_measured_periodic_winding.cmake
-  )
+    )
+  endif()
+
   brlcad_add_test(
     NAME ap214_nonmanifold_four_use_edge
     COMMAND
@@ -921,9 +933,11 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_nonmanifold_four_use_edge.json
       -P ${AP214_TEST_DIR}/ap214_nonmanifold_four_use_edge.cmake
   )
-  brlcad_add_test(
-    NAME ap214_periodic_endpoint_branch
-    COMMAND
+
+  if (TARGET mged)
+    brlcad_add_test(
+      NAME ap214_periodic_endpoint_branch
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -931,10 +945,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_periodic_endpoint_branch.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_periodic_endpoint_branch.g
       -P ${AP214_TEST_DIR}/ap214_periodic_endpoint_branch.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_segmented_cylinder_band
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_segmented_cylinder_band
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -942,10 +956,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_segmented_cylinder_band.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_segmented_cylinder_band.g
       -P ${AP214_TEST_DIR}/ap214_segmented_cylinder_band.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_wavy_periodic_band
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_wavy_periodic_band
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -953,10 +967,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_wavy_periodic_band.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_wavy_periodic_band.g
       -P ${AP214_TEST_DIR}/ap214_wavy_periodic_band.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_nurbs_native_seam
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_nurbs_native_seam
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -964,10 +978,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_nurbs_native_seam.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_nurbs_native_seam.g
       -P ${AP214_TEST_DIR}/ap214_nurbs_native_seam.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_collapsed_wavy_periodic_band
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_collapsed_wavy_periodic_band
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -975,10 +989,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_collapsed_wavy_periodic_band.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_collapsed_wavy_periodic_band.g
       -P ${AP214_TEST_DIR}/ap214_collapsed_wavy_periodic_band.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_offset_vertex_periodic_band
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_offset_vertex_periodic_band
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -986,10 +1000,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_offset_vertex_periodic_band.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_offset_vertex_periodic_band.g
       -P ${AP214_TEST_DIR}/ap214_offset_vertex_periodic_band.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_periodic_edge_propagation
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_periodic_edge_propagation
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -997,10 +1011,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_periodic_edge_propagation.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_periodic_edge_propagation.g
       -P ${AP214_TEST_DIR}/ap214_periodic_edge_propagation.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_measured_vertex_tolerance_band
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_measured_vertex_tolerance_band
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -1010,10 +1024,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DEXACT_REPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_measured_vertex_tolerance_band_exact.json
       -DEXACT_OUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_measured_vertex_tolerance_band_exact.g
       -P ${AP214_TEST_DIR}/ap214_measured_vertex_tolerance_band.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_open_spline_vertex_tolerance
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_open_spline_vertex_tolerance
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -1023,10 +1037,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DEXACT_REPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_open_spline_vertex_tolerance_exact.json
       -DEXACT_OUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_open_spline_vertex_tolerance_exact.g
       -P ${AP214_TEST_DIR}/ap214_open_spline_vertex_tolerance.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_permissive_inferred_curve
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_permissive_inferred_curve
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -1034,10 +1048,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_permissive_inferred_curve.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_permissive_inferred_curve.g
       -P ${AP214_TEST_DIR}/ap214_permissive_inferred_curve.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_offset_extrusion
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_offset_extrusion
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -1045,10 +1059,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_offset_extrusion.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_offset_extrusion.g
       -P ${AP214_TEST_DIR}/ap214_offset_extrusion.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_offset_revolution
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_offset_revolution
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -1056,10 +1070,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_offset_revolution.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_offset_revolution.g
       -P ${AP214_TEST_DIR}/ap214_offset_revolution.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_permissive_shared_dangling_spur
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_permissive_shared_dangling_spur
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -1067,10 +1081,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_permissive_shared_dangling_spur.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_permissive_shared_dangling_spur.g
       -P ${AP214_TEST_DIR}/ap214_permissive_shared_dangling_spur.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_permissive_same_vertex_spline_spur
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_permissive_same_vertex_spline_spur
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -1080,10 +1094,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DWIDE_INPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_permissive_same_vertex_spline_spur_wide.stp
       -DWIDE_REPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_permissive_same_vertex_spline_spur_wide.json
       -P ${AP214_TEST_DIR}/ap214_permissive_same_vertex_spline_spur.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_exact_distinct_edge_zero_area_face
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_exact_distinct_edge_zero_area_face
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -1091,10 +1105,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_exact_distinct_edge_zero_area_face.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_exact_distinct_edge_zero_area_face.g
       -P ${AP214_TEST_DIR}/ap214_exact_distinct_edge_zero_area_face.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_source_first_near_cylinder_line
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_source_first_near_cylinder_line
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -1102,10 +1116,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_source_first_near_cylinder_line.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_source_first_near_cylinder_line.g
       -P ${AP214_TEST_DIR}/ap214_source_first_near_cylinder_line.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_permissive_periodic_boundary_inference
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_permissive_periodic_boundary_inference
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -1113,10 +1127,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_permissive_periodic_boundary_inference.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_permissive_periodic_boundary_inference.g
       -P ${AP214_TEST_DIR}/ap214_permissive_periodic_boundary_inference.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_measured_periodic_closure_band
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_measured_periodic_closure_band
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -1126,10 +1140,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DEXACT_REPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_measured_periodic_closure_band_exact.json
       -DEXACT_OUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_measured_periodic_closure_band_exact.g
       -P ${AP214_TEST_DIR}/ap214_measured_periodic_closure_band.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_open_nurbs_measured_mismatch
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_open_nurbs_measured_mismatch
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -1138,10 +1152,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_open_nurbs_measured_mismatch.g
       -DEXACT_REPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_open_nurbs_measured_mismatch_exact.json
       -P ${AP214_TEST_DIR}/ap214_open_nurbs_measured_mismatch.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_repeated_distinct_surface_knots
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_repeated_distinct_surface_knots
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -1150,10 +1164,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_repeated_distinct_surface_knots.g
       -DEXACT_REPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_repeated_distinct_surface_knots_exact.json
       -P ${AP214_TEST_DIR}/ap214_repeated_distinct_surface_knots.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_proven_positive_rational_denominator
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_proven_positive_rational_denominator
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -1162,10 +1176,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_proven_positive_rational_denominator.g
       -DEXACT_REPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_proven_positive_rational_denominator_exact.json
       -P ${AP214_TEST_DIR}/ap214_proven_positive_rational_denominator.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_endpoint_anchored_surface_tolerance
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_endpoint_anchored_surface_tolerance
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -1175,7 +1189,9 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DEXACT_REPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_endpoint_anchored_surface_tolerance_exact.json
       -DEXACT_OUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_endpoint_anchored_surface_tolerance_exact.g
       -P ${AP214_TEST_DIR}/ap214_endpoint_anchored_surface_tolerance.cmake
-  )
+    )
+  endif()
+
   brlcad_add_test(
     NAME ap214_collapsed_topology_edge
     COMMAND
@@ -1241,9 +1257,11 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DEXACT_REPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_eccentric_ellipse_arc_exact.json
       -P ${AP214_TEST_DIR}/ap214_eccentric_ellipse_arc.cmake
   )
-  brlcad_add_test(
-    NAME ap214_nurbs_terminal_extension
-    COMMAND
+
+  if (TARGET mged)
+    brlcad_add_test(
+      NAME ap214_nurbs_terminal_extension
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -1254,10 +1272,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREJECT_INPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_nurbs_terminal_extension_reject.stp
       -DREJECT_REPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_nurbs_terminal_extension_reject.json
       -P ${AP214_TEST_DIR}/ap214_nurbs_terminal_extension.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_two_side_singular_corner
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_two_side_singular_corner
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -1267,10 +1285,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DEXACT_REPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_two_side_singular_corner_exact.json
       -DEXACT_OUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_two_side_singular_corner_exact.g
       -P ${AP214_TEST_DIR}/ap214_two_side_singular_corner.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_spherical_band_inner_first
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_spherical_band_inner_first
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -1278,10 +1296,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_spherical_band_inner_first.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_spherical_band_inner_first.g
       -P ${AP214_TEST_DIR}/ap214_spherical_band_inner_first.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_two_arc_sphere
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_two_arc_sphere
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -1289,10 +1307,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_two_arc_sphere.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_two_arc_sphere.g
       -P ${AP214_TEST_DIR}/ap214_two_arc_sphere.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_shifted_two_arc_sphere
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_shifted_two_arc_sphere
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -1300,10 +1318,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_shifted_two_arc_sphere.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_shifted_two_arc_sphere.g
       -P ${AP214_TEST_DIR}/ap214_shifted_two_arc_sphere.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_faceted_brep
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_faceted_brep
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -1311,10 +1329,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_faceted_brep.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_faceted_brep.g
       -P ${AP214_TEST_DIR}/ap214_faceted_brep.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_mapped_items
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_mapped_items
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -1322,10 +1340,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_mapped_items.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_mapped_items.g
       -P ${AP214_TEST_DIR}/ap214_mapped_items.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_brep_with_voids
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_brep_with_voids
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -1333,10 +1351,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_brep_with_voids.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_brep_with_voids.g
       -P ${AP214_TEST_DIR}/ap214_brep_with_voids.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_csg
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_csg
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -1344,10 +1362,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_csg.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_csg.g
       -P ${AP214_TEST_DIR}/ap214_csg.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_structured_units
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_structured_units
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DG_STEP=$<TARGET_FILE:g-step>
@@ -1358,10 +1376,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DEXPORT_REPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_structured_units_export.json
       -DEXPORT_OUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_structured_units_roundtrip.stp
       -P ${AP214_TEST_DIR}/ap214_structured_units.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_csg_invalid
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_csg_invalid
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -1371,10 +1389,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DSTRICT_REPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_csg_invalid_strict.json
       -DSTRICT_OUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_csg_invalid_strict.g
       -P ${AP214_TEST_DIR}/ap214_csg_invalid.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_wireframe
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_wireframe
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -1382,10 +1400,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_wireframe.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_wireframe.g
       -P ${AP214_TEST_DIR}/ap214_wireframe.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_geometric_surface_set
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_geometric_surface_set
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -1393,10 +1411,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_geometric_surface_set.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_geometric_surface_set.g
       -P ${AP214_TEST_DIR}/ap214_geometric_surface_set.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_composite_curve
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_composite_curve
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -1404,10 +1422,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_composite_curve.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_composite_curve.g
       -P ${AP214_TEST_DIR}/ap214_composite_curve.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_extruded_area
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_extruded_area
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -1415,10 +1433,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_extruded_area.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_extruded_area.g
       -P ${AP214_TEST_DIR}/ap214_extruded_area.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_extruded_face
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_extruded_face
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -1426,7 +1444,9 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_extruded_face.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_extruded_face.g
       -P ${AP214_TEST_DIR}/ap214_extruded_face.cmake
-  )
+    )
+  endif()
+
   brlcad_add_test(
     NAME ap214_repair_policy
     COMMAND
@@ -1460,9 +1480,11 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_representation_tolerance_periodic_cap.g
       -P ${AP214_TEST_DIR}/ap214_representation_tolerance_periodic_cap.cmake
   )
-  brlcad_add_test(
-    NAME ap214_revolved_area
-    COMMAND
+
+  if (TARGET mged AND TARGET nirt)
+    brlcad_add_test(
+      NAME ap214_revolved_area
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -1471,10 +1493,13 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_revolved_area.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_revolved_area.g
       -P ${AP214_TEST_DIR}/ap214_revolved_area.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_revolved_face
-    COMMAND
+    )
+  endif()
+
+  if(TARGET mged)
+    brlcad_add_test(
+      NAME ap214_revolved_face
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -1482,10 +1507,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_revolved_face.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_revolved_face.g
       -P ${AP214_TEST_DIR}/ap214_revolved_face.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_swept_disk
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_swept_disk
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -1494,10 +1519,10 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_swept_disk.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_swept_disk.g
       -P ${AP214_TEST_DIR}/ap214_swept_disk.cmake
-  )
-  brlcad_add_test(
-    NAME ap214_solid_replica
-    COMMAND
+    )
+    brlcad_add_test(
+      NAME ap214_solid_replica
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
@@ -1505,16 +1530,18 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
       -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_solid_replica.json
       -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_solid_replica.g
       -P ${AP214_TEST_DIR}/ap214_solid_replica.cmake
-  )
+    )
+  endif()
+
   brlcad_add_test(
     NAME ap214_solid_replica_cycle
     COMMAND
-      ${CMAKE_COMMAND}
-      -DSTEP_G=$<TARGET_FILE:step-g>
-      -DINPUT=${AP214_TEST_DIR}/ap214_solid_replica_cycle.stp
-      -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_solid_replica_cycle.json
-      -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_solid_replica_cycle.g
-      -P ${AP214_TEST_DIR}/ap214_solid_replica_cycle.cmake
+    ${CMAKE_COMMAND}
+    -DSTEP_G=$<TARGET_FILE:step-g>
+    -DINPUT=${AP214_TEST_DIR}/ap214_solid_replica_cycle.stp
+    -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap214_solid_replica_cycle.json
+    -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap214_solid_replica_cycle.g
+    -P ${AP214_TEST_DIR}/ap214_solid_replica_cycle.cmake
   )
 endif()
 
