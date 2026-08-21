@@ -98,13 +98,8 @@ BG_EXPORT extern int bg_3d_coplanar_obr(point_t *center,
 
 /**
  *@brief
- * Find the minimum oriented bounding rectangular cuboid
- * for a set of 3D points.  Returns 0 on success.
- *
- * TODO - the GeometricTools engine has an implementation
- * of the stack needed to do this:
- *
- * https://github.com/davideberly/GeometricTools/blob/master/GTE/Mathematics/MinimumVolumeBox3.h
+ * Find an oriented bounding rectangular cuboid for a set of 3D points using
+ * the point-set orientation and containment fit.  Returns 0 on success.
  *
  * The points in the output array are arranged as seen
  * in the figure below, with the integer number at each
@@ -132,11 +127,11 @@ BG_EXPORT extern int bg_3d_coplanar_obr(point_t *center,
  *
  *
  * @param[out] pnts     eight points of oriented bounding box
- * @param points_3d	array of coplanar 3D points
+ * @param points_3d	array of 3D points
  * @param pnt_cnt	number of points in pnts array
  */
 BG_EXPORT extern int bg_3d_obb(point_t **pnts,
-			       const point_t *points_3d,
+			       const fastf_t *points_3d,
 			       int pnt_cnt);
 
 
