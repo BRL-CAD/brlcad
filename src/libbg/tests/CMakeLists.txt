@@ -375,14 +375,18 @@ brlcad_addexec(bg_trimesh_area trimesh_area.c "${BG_TEST_LIBS}" TEST)
 #  ************ trimesh_repair tests ***********
 
 brlcad_addexec(bg_trimesh_repair trimesh_repair.cpp "${BG_TEST_LIBS}" TEST)
-target_include_directories(
-  bg_trimesh_repair SYSTEM PRIVATE
-  ${CMAKE_CURRENT_SOURCE_DIR}/../GTE
-  ${GTE_INCLUDE_DIR}
-)
+if(BUILD_TESTING AND TARGET bg_trimesh_repair)
+  target_include_directories(
+    bg_trimesh_repair SYSTEM PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/../GTE
+    ${GTE_INCLUDE_DIR}
+  )
+endif()
 
 brlcad_add_test(NAME bg_trimesh_repair  COMMAND bg_trimesh_repair)
-set_tests_properties(bg_trimesh_repair PROPERTIES TIMEOUT 30)
+if(BUILD_TESTING AND TARGET bg_trimesh_repair)
+  set_tests_properties(bg_trimesh_repair PROPERTIES TIMEOUT 30)
+endif()
 
 #  ************ trimesh_remesh tests ***********
 
@@ -393,7 +397,9 @@ brlcad_add_test(NAME bg_trimesh_remesh  COMMAND bg_trimesh_remesh)
 #  ************ embedded Geogram optimizer tests ***********
 
 brlcad_addexec(bg_geogram_optimizer geogram_optimizer.cpp "${BG_TEST_LIBS}" TEST)
-target_include_directories(bg_geogram_optimizer PRIVATE "${GEOGRAM_INCLUDE_DIR}")
+if(BUILD_TESTING AND TARGET bg_geogram_optimizer)
+  target_include_directories(bg_geogram_optimizer PRIVATE "${GEOGRAM_INCLUDE_DIR}")
+endif()
 
 brlcad_add_test(NAME bg_geogram_optimizer COMMAND bg_geogram_optimizer)
 

@@ -84,8 +84,10 @@ brlcad_add_test(
 )
 # Since the test is a CMake script, we need to ensure the target
 # dependencies ourselves
-add_dependencies(unit rtsil)
-add_dependencies(check rtsil)
+if(BUILD_TESTING AND TARGET rtsil)
+  add_dependencies(unit rtsil)
+  add_dependencies(check rtsil)
+endif()
 
 brlcad_add_test(
   NAME rtxray_bw_output
@@ -108,8 +110,10 @@ brlcad_add_test(
 )
 # Since the test is a CMake script, we need to ensure the target
 # dependencies ourselves
-add_dependencies(unit rt)
-add_dependencies(check rt)
+if(BUILD_TESTING AND TARGET rt)
+  add_dependencies(unit rt)
+  add_dependencies(check rt)
+endif()
 
 
 brlcad_add_test(

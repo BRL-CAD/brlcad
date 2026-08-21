@@ -16,7 +16,9 @@ brlcad_add_test(NAME brep_cdt_hole_face27 COMMAND test_brep_cdt_hole_face27)
 
 brlcad_addexec(test_brep_cdt_invalid brep_cdt_invalid.cpp "libbrep;libbu" TEST)
 brlcad_add_test(NAME brep_cdt_invalid COMMAND test_brep_cdt_invalid)
-set_tests_properties(brep_cdt_invalid PROPERTIES TIMEOUT 10)
+if(BUILD_TESTING AND TARGET test_brep_cdt_invalid)
+  set_tests_properties(brep_cdt_invalid PROPERTIES TIMEOUT 10)
+endif()
 
 brlcad_addexec(test_pullback_context pullback_context.cpp "libbrep;Threads::Threads" TEST)
 brlcad_add_test(NAME brep_pullback_context COMMAND test_pullback_context)

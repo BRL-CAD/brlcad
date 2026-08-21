@@ -86,7 +86,7 @@ distclean("${CMAKE_BINARY_DIR}/${LIB_DIR}/bu_test.exp")
 
 # Exercise client constructors linked ahead of the static libbu archive.  A
 # timeout converts any pre-main self-deadlock into a bounded test failure.
-if(TARGET libbu-static)
+if(BUILD_TESTING AND TARGET libbu-static)
   brlcad_addexec(bu_static_init test_static_init.cpp "libbu-static;Threads::Threads" TEST)
   brlcad_add_test(NAME bu_static_init COMMAND bu_static_init)
   set_tests_properties(bu_static_init PROPERTIES TIMEOUT 10)
@@ -97,7 +97,9 @@ brlcad_add_test(NAME bu_semaphore_registry COMMAND bu_semaphore_registry)
 
 brlcad_addexec(bu_parallel_concurrency test_parallel_concurrency.cpp "libbu;Threads::Threads" TEST)
 brlcad_add_test(NAME bu_parallel_concurrency COMMAND bu_parallel_concurrency)
-set_tests_properties(bu_parallel_concurrency PROPERTIES TIMEOUT 30)
+if(BUILD_TESTING AND TARGET bu_parallel_concurrency)
+  set_tests_properties(bu_parallel_concurrency PROPERTIES TIMEOUT 30)
+endif()
 
 # The uuid code doesn't mix with C++ compilers - make a separate
 # C-only executable for this case

@@ -305,7 +305,7 @@ set(
   ${CMAKE_SOURCE_DIR}/src/libbrep # for PullbackCurve.h
 )
 
-if(BRLCAD_ENABLE_STEP)
+if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
   step_use_import_common_objects(ap214g_TARGET_SOURCES ap214g_SOURCES)
   step_record_schema_sources(AP214 IMPORT ap214g_TARGET_SOURCES)
   step_record_schema_sources(AP214 EXPORT gap214_SOURCES)
