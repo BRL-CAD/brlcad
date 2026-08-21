@@ -2206,23 +2206,94 @@ brep_wire_sample_edge(const ON_BrepEdge &edge,
 }
 
 struct brep_wire_parallel_state {
-    const ON_Brep *brep;
-    const struct bg_tess_tol *ttol;
-    const struct bn_tol *tol;
-    std::vector<brep_wire_edge_result> *results;
-    std::atomic<int> next_edge;
-    std::atomic<size_t> result_bytes;
-    std::atomic<size_t> result_points;
-    std::atomic<bool> stop;
-    std::atomic<bool> hit_time_limit;
-    std::atomic<bool> hit_memory_limit;
-    std::atomic<bool> hit_point_limit;
-    size_t max_result_bytes;
-    size_t max_points;
-    size_t max_edge_points;
-    bool edge_work_limited;
-    int64_t deadline;
+    const ON_Brep *brep = NULL;
+    const struct bg_tess_tol *ttol = NULL;
+    const struct bn_tol *tol = NULL;
+    std::vector<brep_wire_edge_result> *results = NULL;
+    std::atomic<int> next_edge = 0;
+    std::atomic<bool> stop = false;
+    std::atomic<bool> hit_time_limit = false;
+    std::atomic<bool> hit_memory_limit = false;
+    std::atomic<bool> hit_point_limit = false;
+    size_t max_result_bytes = 0;
+    size_t max_points = 0;
+    size_t max_edge_points = 0;
+    bool edge_work_limited = false;
+    int64_t deadline = 0;
+    std::mutex commit_mutex;
+    std::condition_variable commit_ready;
+    int next_commit_edge = 0;
+    size_t result_bytes = 0;
+    size_t result_points = 0;
 };
+
+static bool
+brep_wire_commit_edge(brep_wire_parallel_state *state, int edge_index,
+	bool sampled, bool hit_time_limit, bool hit_point_limit)
+{
+    brep_wire_edge_result &result =
+	(*state->results)[(size_t)edge_index];
+    std::unique_lock<std::mutex> lock(state->commit_mutex);
+    state->commit_ready.wait(lock, [state, edge_index]() {
+	return state->stop.load() || state->next_commit_edge == edge_index;
+    });
+    if (state->stop.load()) {
+	std::vector<ON_3dPoint>().swap(result.points);
+	return false;
+    }
+
+    if (!sampled) {
+	result.failed = true;
+	std::vector<ON_3dPoint>().swap(result.points);
+	if (hit_time_limit) {
+	    state->hit_time_limit = true;
+	    state->stop = true;
+	}
+	if (hit_point_limit)
+	    state->hit_point_limit = true;
+	if (hit_point_limit && state->edge_work_limited)
+	    state->hit_memory_limit = true;
+	state->next_commit_edge++;
+	lock.unlock();
+	state->commit_ready.notify_all();
+	return !state->stop.load();
+    }
+
+    const size_t point_count = result.points.size();
+    const size_t point_bytes = sizeof(ON_3dPoint) + sizeof(point_t) +
+	sizeof(int);
+    const bool byte_overflow = point_count > SIZE_MAX / point_bytes;
+    const size_t bytes = byte_overflow ? SIZE_MAX :
+	point_count * point_bytes;
+    if (byte_overflow || state->result_bytes > state->max_result_bytes ||
+	    bytes > state->max_result_bytes - state->result_bytes) {
+	state->hit_memory_limit = true;
+	state->stop = true;
+	result.failed = true;
+	std::vector<ON_3dPoint>().swap(result.points);
+	lock.unlock();
+	state->commit_ready.notify_all();
+	return false;
+    }
+    if (state->result_points > state->max_points ||
+	    point_count > state->max_points - state->result_points) {
+	state->hit_point_limit = true;
+	state->stop = true;
+	result.failed = true;
+	std::vector<ON_3dPoint>().swap(result.points);
+	lock.unlock();
+	state->commit_ready.notify_all();
+	return false;
+    }
+
+    state->result_bytes += bytes;
+    state->result_points += point_count;
+    result.completed = true;
+    state->next_commit_edge++;
+    lock.unlock();
+    state->commit_ready.notify_all();
+    return true;
+}
 
 static void
 brep_wire_edge_worker(int UNUSED(cpu), void *data)
@@ -2235,65 +2306,28 @@ brep_wire_edge_worker(int UNUSED(cpu), void *data)
 	const int edge_index = state->next_edge.fetch_add(1);
 	if (edge_index >= edge_count)
 	    return;
-	if (state->deadline > 0 && bu_gettime() >= state->deadline) {
-	    state->hit_time_limit = true;
-	    state->stop = true;
-	    return;
-	}
-
 	brep_wire_edge_result &result = (*state->results)[(size_t)edge_index];
-	bool hit_time_limit = false;
+	bool hit_time_limit = state->deadline > 0 &&
+	    bu_gettime() >= state->deadline;
 	bool hit_point_limit = false;
 	bool sampled = false;
 	try {
-	    sampled = brep_wire_sample_edge(state->brep->m_E[edge_index],
-		state->ttol, state->tol, state->deadline,
-		state->max_edge_points, result.points, &hit_time_limit,
-		&hit_point_limit);
+	    if (!hit_time_limit)
+		sampled = brep_wire_sample_edge(state->brep->m_E[edge_index],
+		    state->ttol, state->tol, state->deadline,
+		    state->max_edge_points, result.points, &hit_time_limit,
+		    &hit_point_limit);
 	} catch (...) {
 	    state->hit_memory_limit = true;
 	    state->stop = true;
 	    result.failed = true;
 	    std::vector<ON_3dPoint>().swap(result.points);
+	    state->commit_ready.notify_all();
 	    return;
 	}
-	if (!sampled) {
-	    result.failed = true;
-	    std::vector<ON_3dPoint>().swap(result.points);
-	    if (hit_time_limit) {
-		state->hit_time_limit = true;
-		state->stop = true;
-	    }
-	    if (hit_point_limit)
-		state->hit_point_limit = true;
-	    if (hit_point_limit && state->edge_work_limited)
-		state->hit_memory_limit = true;
-	    continue;
-	}
-
-	const size_t point_count = result.points.size();
-	const size_t bytes = point_count *
-	    (sizeof(ON_3dPoint) + sizeof(point_t) + sizeof(int));
-	if (state->result_bytes.fetch_add(bytes) + bytes >
-		state->max_result_bytes) {
-	    state->result_bytes.fetch_sub(bytes);
-	    state->hit_memory_limit = true;
-	    state->stop = true;
-	    result.failed = true;
-	    std::vector<ON_3dPoint>().swap(result.points);
+	if (!brep_wire_commit_edge(state, edge_index, sampled,
+		hit_time_limit, hit_point_limit))
 	    return;
-	}
-	if (state->result_points.fetch_add(point_count) + point_count >
-		state->max_points) {
-	    state->result_points.fetch_sub(point_count);
-	    state->result_bytes.fetch_sub(bytes);
-	    state->hit_point_limit = true;
-	    state->stop = true;
-	    result.failed = true;
-	    std::vector<ON_3dPoint>().swap(result.points);
-	    return;
-	}
-	result.completed = true;
     }
 }
 
@@ -2500,16 +2534,26 @@ rt_brep_plot_ex(struct bu_list *vhead, struct rt_db_internal *ip,
     bool hit_point_limit = false;
     size_t result_bytes = 0;
     if (edge_count > 0) {
-	brep_wire_parallel_state state = {
-	brep, ttol, tol, &edge_results, 0, 0, 0, false, false,
-	    false, false, options.max_result_bytes, options.max_points,
-	    max_edge_points, edge_work_limited, deadline
-	};
+	brep_wire_parallel_state state;
+	state.brep = brep;
+	state.ttol = ttol;
+	state.tol = tol;
+	state.results = &edge_results;
+	state.max_result_bytes = options.max_result_bytes;
+	state.max_points = options.max_points;
+	state.max_edge_points = max_edge_points;
+	state.edge_work_limited = edge_work_limited;
+	state.deadline = deadline;
 	bu_parallel(brep_wire_edge_worker, options.max_workers, &state);
+	/* bu_parallel cannot report thread-creation failure.  Its workers use
+	 * self-dispatch, so the caller can safely finish any untouched work when
+	 * the platform could not launch even one worker. */
+	if (!state.stop.load() && state.next_edge.load() < edge_count)
+	    brep_wire_edge_worker(0, &state);
 	hit_time_limit = state.hit_time_limit.load();
 	hit_memory_limit = state.hit_memory_limit.load();
 	hit_point_limit = state.hit_point_limit.load();
-	result_bytes = state.result_bytes.load();
+	result_bytes = state.result_bytes;
     }
 
     int completed_edges = 0;
