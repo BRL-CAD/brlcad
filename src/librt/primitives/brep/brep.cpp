@@ -3070,7 +3070,6 @@ rt_brep_mirror(struct rt_db_internal *ip, const plane_t plane)
 int
 rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
-    ON::Begin();
     TRACE1("rt_brep_import5");
 
     struct rt_brep_internal* bi;
@@ -3084,24 +3083,40 @@ rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
 
     bi = (struct rt_brep_internal*)ip->idb_ptr;
     bi->magic = RT_BREP_INTERNAL_MAGIC;
+    bi->brep = NULL;
 
-    RT_MemoryArchive archive(ep->ext_buf, ep->ext_nbytes);
-    ONX_Model model;
-    ON_TextLog err(stderr);
-    unsigned int obj_filter = ON::brep_object;
-    model.Read(archive, 0, obj_filter, &err);
+    try {
+	ON::Begin();
+	RT_MemoryArchive archive(ep->ext_buf, ep->ext_nbytes);
+	ONX_Model model;
+	ON_TextLog err(stderr);
+	const unsigned int obj_filter = ON::brep_object;
+	if (!model.Read(archive, 0, obj_filter, &err))
+	    return -1;
 
-    /* grab the first geometry item from the manifest */
-    const ON_ComponentManifestItem* geom = model.Manifest().FirstItem(ON_ModelComponent::Type::ModelGeometry);
-    /* sanity check */
-    if (model.Manifest().NextItem(geom) != nullptr)
-	bu_log("WARNING: geometry may be getting lost\n");
+	/* Grab the first geometry item from the manifest. */
+	const ON_ComponentManifestItem *geom = model.Manifest().FirstItem(
+	    ON_ModelComponent::Type::ModelGeometry);
+	if (!geom)
+	    return -1;
+	if (model.Manifest().NextItem(geom) != nullptr)
+	    bu_log("WARNING: geometry may be getting lost\n");
 
-    /* do the necessary API calls to get a usable geometry component from the manifest item */
-    ON_ModelComponentReference geom_ref = model.ModelGeometryFromId(geom->Id());
-    const ON_ModelGeometryComponent* geom_comp = ON_ModelGeometryComponent::Cast(geom_ref.ModelComponent());
-
-    bi->brep = ON_Brep::New(*ON_Brep::Cast(geom_comp->Geometry(NULL)));
+	const ON_ModelComponentReference geom_ref =
+	    model.ModelGeometryFromId(geom->Id());
+	const ON_ModelGeometryComponent *geom_comp =
+	    ON_ModelGeometryComponent::Cast(geom_ref.ModelComponent());
+	const ON_Geometry *geometry = geom_comp ? geom_comp->Geometry(NULL) :
+	    NULL;
+	const ON_Brep *source_brep = ON_Brep::Cast(geometry);
+	if (!source_brep)
+	    return -1;
+	bi->brep = ON_Brep::New(*source_brep);
+    } catch (...) {
+	return -1;
+    }
+    if (!bi->brep)
+	return -1;
 
     /* Apply transform */
     return rt_brep_mat(ip, mat, NULL);
