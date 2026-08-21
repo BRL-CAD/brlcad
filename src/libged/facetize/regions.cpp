@@ -136,7 +136,8 @@ _crofton_on_obj(struct db_i *dbip, const char *obj_name, double &out_sa, double 
     crp.stability_mm = 0.05;
     crp.time_ms = 2000.0;
 
-    int cr = rt_crofton_shoot(&out_sa, &out_vol, rtip, &crp,
+    int cr = rt_crofton_shoot(&out_sa, &out_vol, NULL, NULL, NULL, NULL,
+	    NULL, rtip, &crp,
 	    have_focus ? focus_min : NULL,
 	    have_focus ? focus_max : NULL);
     rt_i_destroy(rtip);

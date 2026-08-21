@@ -265,7 +265,8 @@ csg_crofton_volume(struct db_i *dbip, const char *obj_name, double *out_vol)
     double sa = 0.0, vol = 0.0;
     struct rt_crofton_params crp = {};
     crp.n_rays = FACETIZE_EMPTY_CHECK_CROFTON_RAYS;
-    int rc = rt_crofton_shoot(&sa, &vol, rtip, &crp,
+    int rc = rt_crofton_shoot(&sa, &vol, NULL, NULL, NULL, NULL, NULL,
+	    rtip, &crp,
 	    have_focus ? focus_min : NULL,
 	    have_focus ? focus_max : NULL);
     rt_i_destroy(rtip);

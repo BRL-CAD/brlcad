@@ -235,6 +235,12 @@ struct rt_crofton_params {
  *
  * @param out_surf_area Receives the estimated surface area (mm^2).
  * @param out_volume    Receives the estimated volume (mm^3).
+ * @param out_aabb_min  Optional sampled AABB minimum; pair with out_aabb_max.
+ * @param out_aabb_max  Optional sampled AABB maximum; pair with out_aabb_min.
+ * @param out_obb       Optional sampled OBB in ARB8 point ordering.
+ * @param out_points    Optional sampled surface points allocated with
+ *                      bu_malloc; the caller must free the returned array.
+ * @param out_point_count Number of returned points; pair with out_points.
  * @param rtip          Prepared raytrace instance (rt_prep_parallel must
  *                      have been called first).
  * @param params        Stopping criteria.  NULL or all-zero -> 2 000-ray default.
@@ -242,8 +248,14 @@ struct rt_crofton_params {
  *                      derive the sampling sphere from prepared soltab extents.
  * @param bbox_max      Optional focused sampling bbox maximum.  Pass NULL to
  *                      derive the sampling sphere from prepared soltab extents.
+ * At least one output must be requested.  All output pointers are optional
+ * except that the AABB pair and point-array/count pair must be supplied
+ * together.  Bounds and points are derived from the same converged sample set
+ * used for the surface-area estimate.
+ *
  * @return  The total number of ray-surface crossings accumulated during
- *          sampling (>= 0) on success; -1 on bad arguments.  A return
+ *          sampling (>= 0) on success; -1 on bad arguments or a requested
+ *          bound fit failure.  A return
  *          value of 0 means no geometry was intersected by the sampler.
  *
  * @section crofton_near_tol Near-tolerance sliver geometry: CSG vs BoT divergence
@@ -323,7 +335,7 @@ struct rt_crofton_params {
  * (which is insensitive to sliver SA: sliver volume is ~14 mm³ out of
  * 147 200 mm³, or 0.01%) is a far more reliable cross-check metric.
  */
-RT_EXPORT extern int rt_crofton_shoot(double *out_surf_area, double *out_volume, struct rt_i *rtip, const struct rt_crofton_params *params, const fastf_t *bbox_min, const fastf_t *bbox_max);
+RT_EXPORT extern int rt_crofton_shoot(double *out_surf_area, double *out_volume, point_t *out_aabb_min, point_t *out_aabb_max, point_t out_obb[8], point_t **out_points, size_t *out_point_count, struct rt_i *rtip, const struct rt_crofton_params *params, const fastf_t *bbox_min, const fastf_t *bbox_max);
 
 
 /**

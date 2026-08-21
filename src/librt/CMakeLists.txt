@@ -434,9 +434,7 @@ set(
 )
 
 # Include directories needed by librt users
-# ${GTE_INCLUDE_DIR} is still needed by primitives/bot/bot_oriented_bbox.cpp
-# which uses GTE's ContOrientedBox3.h.
-set(RT_INCLUDE_DIRS ${OPENCL_INCLUDE_DIRS} ${GTE_INCLUDE_DIR})
+set(RT_INCLUDE_DIRS ${OPENCL_INCLUDE_DIRS})
 
 # locally used but not needed by users of the library
 set(

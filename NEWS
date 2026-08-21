@@ -13,12 +13,14 @@ changes made.  See document footer for additional details.
 --- 20XX-XX-XX  Release 7.46.0                                     ---
 ----------------------------------------------------------------------
 
+* added comb support to bb -o oriented bounding boxes - Cliff Yapp
+* added -t tight bounding box option to bb command - Cliff Yapp
 * added az (-a) and el (-e) option implementations to gqa - Cliff Yapp
 * added center command support for centering on an object - Cliff Yapp
 * added metaball point scaling (via metaball_move_pnt) - Sean Morrison
 * all raytracing apps now report object prep failures - Sean Morrison
 * added support for tick drawing on MGED model axis - Cliff Yapp
-* added patch-g -j option, specify object thicknesses - Sean Morrison 
+* added patch-g -j option, specify object thicknesses - Sean Morrison
 * fixed fbcolor color ramp bug drawing the last color - Sean Morrison
 * fixed gist -Q quick preview option - Sean Morrison
 * rt preserves eye_pt setting in command scripts - Sean Morrison

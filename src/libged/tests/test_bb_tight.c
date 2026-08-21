@@ -23,9 +23,10 @@
  *
  * The default AABB (rt_obj_bounds / rt_bound_tree) ignores subtracted
  * (OP_SUBTRACT) material, so the reported box never shrinks to reflect
- * geometry that has been carved away.  The opt-in "bb -t" path bounds the
- * ray-traced, boolean-evaluated geometry instead, so subtractions DO tighten
- * the box.
+ * geometry that has been carved away.  The opt-in "bb -t" path bounds a
+ * Cauchy-Crofton-converged point set from the ray-traced, boolean-evaluated
+ * geometry instead, so subtractions DO tighten the box.  The same evaluated
+ * path supports both AABBs and OBBs.
  *
  * The fixture is a region = big positive box MINUS a large negative box that
  * carves away most of the positive box's X extent.  The test asserts that the
@@ -135,7 +136,7 @@ int
 main(int argc, char *argv[])
 {
     struct ged *gedp;
-    double loose_vol, tight_vol;
+    double loose_vol, tight_vol, loose_obb_vol, tight_obb_vol;
 
     bu_setprogname(argv[0]);
     (void)argc;
@@ -154,13 +155,26 @@ main(int argc, char *argv[])
 	const char *av[] = {"bb", "-t", "-v", "carved.r", NULL};
 	tight_vol = run_bb_volume(gedp, 4, av);
     }
+    {
+	const char *av[] = {"bb", "-o", "-v", "carved.r", NULL};
+	loose_obb_vol = run_bb_volume(gedp, 4, av);
+    }
+    {
+	const char *av[] = {"bb", "-o", "-t", "-v", "carved.r", NULL};
+	tight_obb_vol = run_bb_volume(gedp, 5, av);
+    }
 
-    printf("ged_test_bb_tight: loose volume=%g tight volume=%g\n", loose_vol, tight_vol);
+    printf("ged_test_bb_tight: AABB loose=%g tight=%g; OBB loose=%g tight=%g\n",
+	loose_vol, tight_vol, loose_obb_vol, tight_obb_vol);
 
     CHECK(loose_vol > 0.0, "loose bounding volume should be positive");
     CHECK(tight_vol > 0.0, "tight bounding volume should be positive");
+    CHECK(loose_obb_vol > 0.0, "all-up combination OBB volume should be positive");
+    CHECK(tight_obb_vol > 0.0, "tight all-up combination OBB volume should be positive");
     CHECK(tight_vol < loose_vol,
 	    "tight (subtraction-aware) volume must be strictly smaller than the loose volume");
+    CHECK(tight_obb_vol < loose_obb_vol,
+	    "-o -t must produce a subtraction-aware OBB smaller than the loose OBB");
 
     /* The loose box is the full 100x40x40 positive box (subtraction ignored).
      * The tight box should reflect only the remaining X in [0,30] slab, i.e.

@@ -4271,7 +4271,8 @@ scan_input_g(const char *g_path, const char *g_root)
 		if (rt_gettree(cr_rtip, dp->d_namep) == 0) {
 		    rt_prep_parallel(cr_rtip, 1);
 		    struct rt_crofton_params crp = { 2000u, 0.0, 0.0 };
-		    cr = rt_crofton_shoot(&csa, &cv, cr_rtip, &crp, NULL, NULL);
+		    cr = rt_crofton_shoot(&csa, &cv, NULL, NULL, NULL, NULL,
+			NULL, cr_rtip, &crp, NULL, NULL);
 		}
 		rt_i_destroy(cr_rtip);
 	    }
