@@ -45,9 +45,12 @@ BU_EXPORT extern int bu_setenv(const char *name, const char *value, int overwrit
 #define BU_MEM_ALL 0
 #define BU_MEM_AVAIL 1
 #define BU_MEM_PAGE_SIZE 2
+#define BU_MEM_PROCESS_AVAIL 3
 
 /**
- * Report system memory sizes.
+ * Report system memory sizes.  BU_MEM_PROCESS_AVAIL reports the remaining
+ * virtual address space under a finite process limit.  It returns -1 when
+ * the platform does not expose that information or the process is unlimited.
  *
  * Returns -1 on error and the size of the requested memory type on
  * success.  Optionally if sz is non-NULL, the size of the requested
