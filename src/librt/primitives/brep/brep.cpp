@@ -34,18 +34,21 @@
 #include <list>
 #include <limits>
 #include <map>
+#include <mutex>
 #include <new>
 #include <stack>
 #include <iostream>
 #include <algorithm>
 #include <set>
 #include <utility>
+#include <condition_variable>
 
 #include "assert.h"
 
 #include "vmath.h"
 
 #include "bu/cv.h"
+#include "bu/env.h"
 #include "bu/opt.h"
 #include "bu/datetime.h"
 #include "bu/parallel.h"
@@ -2043,6 +2046,70 @@ struct brep_wire_sample_control {
 
 static const int BREP_WIRE_MAX_DEPTH = 32;
 static const size_t BREP_WIRE_MAX_EDGE_POINTS = 16384;
+static const int BREP_WIRE_SCALE_SAMPLES = 8;
+static const size_t BREP_WIRE_WORKER_STACK_BYTES =
+    (size_t)10 * 1024 * 1024;
+static const size_t BREP_WIRE_WORKER_ADDRESS_BYTES =
+    (size_t)16 * 1024 * 1024;
+#if defined(__GLIBC__)
+/* A glibc worker's first allocation may reserve a 128 MiB malloc arena in
+ * addition to its pthread stack.  It is sparse virtual space, but counts
+ * against RLIMIT_AS just like committed pages. */
+static const size_t BREP_WIRE_LIMITED_WORKER_ADDRESS_BYTES =
+    (size_t)160 * 1024 * 1024;
+#else
+static const size_t BREP_WIRE_LIMITED_WORKER_ADDRESS_BYTES =
+    (size_t)32 * 1024 * 1024;
+#endif
+static const size_t BREP_WIRE_ADDRESS_RESERVE_BYTES =
+    (size_t)32 * 1024 * 1024;
+
+static size_t
+brep_wire_address_headroom()
+{
+    const ssize_t available = bu_mem(BU_MEM_PROCESS_AVAIL, NULL);
+    return available >= 0 ? (size_t)available :
+	(std::numeric_limits<size_t>::max)();
+}
+
+static double
+brep_wire_curve_scale(const ON_Curve *curve, const ON_Interval &domain,
+	const ON_3dPoint &start, const ON_3dPoint &end)
+{
+    ON_3dPoint minimum = start;
+    ON_3dPoint maximum = start;
+    if (end.IsValid()) {
+	minimum.x = std::min(minimum.x, end.x);
+	minimum.y = std::min(minimum.y, end.y);
+	minimum.z = std::min(minimum.z, end.z);
+	maximum.x = std::max(maximum.x, end.x);
+	maximum.y = std::max(maximum.y, end.y);
+	maximum.z = std::max(maximum.z, end.z);
+    }
+
+    /* GetTightBoundingBox converts general curves to temporary NURBS and
+     * Bezier forms.  OpenNURBS does not reliably report allocation failure
+     * from that conversion, so address-space pressure can leave an invalid
+     * temporary knot array and crash.  A small fixed probe set is sufficient
+     * here: scale only selects a relative display tolerance, while recursive
+     * chord testing still finds curvature between probes. */
+    for (int sample = 1; sample < BREP_WIRE_SCALE_SAMPLES; sample++) {
+	const double fraction = (double)sample /
+	    (double)BREP_WIRE_SCALE_SAMPLES;
+	const ON_3dPoint point = curve->PointAt(domain.ParameterAt(fraction));
+	if (!point.IsValid())
+	    continue;
+	minimum.x = std::min(minimum.x, point.x);
+	minimum.y = std::min(minimum.y, point.y);
+	minimum.z = std::min(minimum.z, point.z);
+	maximum.x = std::max(maximum.x, point.x);
+	maximum.y = std::max(maximum.y, point.y);
+	maximum.z = std::max(maximum.z, point.z);
+    }
+
+    const double scale = minimum.DistanceTo(maximum);
+    return std::isfinite(scale) ? scale : start.DistanceTo(end);
+}
 
 static bool
 brep_wire_sample_segment(const ON_Curve *curve, double t0,
@@ -2116,10 +2183,7 @@ brep_wire_sample_edge(const ON_BrepEdge &edge,
 	return true;
     }
 
-    ON_BoundingBox bbox = ON_BoundingBox::EmptyBoundingBox;
-    double scale = start.DistanceTo(end);
-    if (curve->GetTightBoundingBox(bbox) && bbox.IsValid())
-	scale = bbox.Diagonal().Length();
+    const double scale = brep_wire_curve_scale(curve, domain, start, end);
     double chord_tolerance = std::max(tol->dist, ttol->abs);
 	if (ttol->rel > 0.0) {
 	chord_tolerance = std::max(chord_tolerance, ttol->rel * scale);
@@ -2372,13 +2436,45 @@ rt_brep_plot_ex(struct bu_list *vhead, struct rt_db_internal *ip,
     const int edge_count = brep->m_E.Count();
     options.max_workers = std::max((size_t)1,
 	std::min(options.max_workers, (size_t)std::max(1, edge_count)));
+
+    /* A pthread launched by bu_parallel currently reserves a 10 MiB stack.
+     * Curve evaluation also needs transient address space that is not
+     * represented by the sampled-point vectors.  Include both in the shared
+     * working policy, and honor a finite process address-space limit when the
+     * platform exposes one.  bu_parallel runs serially on the caller for one
+     * worker, but launches every worker as a child thread for larger counts. */
+    const size_t address_headroom = brep_wire_address_headroom();
+    const bool finite_address_headroom = address_headroom !=
+	(std::numeric_limits<size_t>::max)();
+    if (finite_address_headroom) {
+	const size_t safe_headroom = address_headroom >
+	    BREP_WIRE_ADDRESS_RESERVE_BYTES ?
+	    address_headroom - BREP_WIRE_ADDRESS_RESERVE_BYTES : 0;
+	options.max_working_bytes = std::min(options.max_working_bytes,
+	    safe_headroom);
+    }
+    const size_t worker_address_reservation = finite_address_headroom ?
+	BREP_WIRE_LIMITED_WORKER_ADDRESS_BYTES :
+	BREP_WIRE_WORKER_ADDRESS_BYTES;
+    const size_t worker_budget = options.max_working_bytes /
+	worker_address_reservation;
+    if (worker_budget < 2)
+	options.max_workers = 1;
+    else
+	options.max_workers = std::min(options.max_workers, worker_budget);
+
+    const size_t worker_address_bytes = options.max_workers > 1 ?
+	options.max_workers * BREP_WIRE_WORKER_STACK_BYTES : 0;
+    const size_t edge_working_bytes = options.max_working_bytes >
+	worker_address_bytes ?
+	options.max_working_bytes - worker_address_bytes : 0;
     const size_t min_edge_working_bytes =
 	2 * sizeof(ON_3dPoint) * (size_t)2;
-    const size_t budget_workers = options.max_working_bytes /
+    const size_t budget_workers = edge_working_bytes /
 	min_edge_working_bytes;
     if (budget_workers > 0)
 	options.max_workers = std::min(options.max_workers, budget_workers);
-    const size_t per_worker_bytes = options.max_working_bytes /
+    const size_t per_worker_bytes = edge_working_bytes /
 	options.max_workers;
     size_t max_edge_points = per_worker_bytes /
 	(2 * sizeof(ON_3dPoint));
