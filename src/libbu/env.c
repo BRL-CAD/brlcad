@@ -47,6 +47,15 @@
 #ifdef HAVE_SYS_SYSCTL_H
 #  include <sys/sysctl.h>
 #endif
+#if defined(__FreeBSD__) && defined(HAVE_SYS_SYSCTL_H)
+/* sys/user.h uses sig_t without including the signal header that defines it.
+ * The alias also handles unity builds where another source file has already
+ * included that header with its BSD-only declarations hidden. */
+typedef void (*bu_freebsd_sig_t)(int);
+#  define sig_t bu_freebsd_sig_t
+#  include <sys/user.h>
+#  undef sig_t
+#endif
 #ifdef HAVE_MACH_HOST_INFO_H
 #  include <mach/host_info.h>
 #endif
@@ -206,7 +215,7 @@ mem_host_info(int type, size_t *memsz)
     if (type < 0)
 	return -2;
 
-#if defined(HAVE_SYS_SYSTCL_H) && defined(HAVE_MACH_HOST_INFO_H)
+#if defined(HAVE_SYS_SYSCTL_H) && defined(HAVE_MACH_HOST_INFO_H)
 
     long int pagesize = 0;
     size_t osize = sizeof(pagesize);
@@ -295,6 +304,47 @@ mem_size_from_uint64(uint64_t bytes, size_t *memsz)
 
 
 static int
+mem_sysctl(int type, size_t *memsz)
+{
+    if (!memsz)
+	return -1;
+
+    if (type < 0)
+	return -2;
+
+#if defined(__FreeBSD__) && defined(HAVE_SYS_SYSCTL_H) && defined(HAVE_SYSCTL)
+    static const char *const page_size_name = "hw.pagesize";
+    static const char *const total_memory_name = "hw.physmem";
+    static const char *const free_pages_name = "vm.stats.vm.v_free_count";
+
+    uint64_t page_size = 0;
+    size_t value_size = sizeof(page_size);
+    if (sysctlbyname(page_size_name, &page_size, &value_size, NULL, 0) != 0 ||
+	    page_size == 0)
+	return -1;
+    if (type == BU_MEM_PAGE_SIZE)
+	return mem_size_from_uint64(page_size, memsz);
+
+    uint64_t memory = 0;
+    value_size = sizeof(memory);
+    const char *memory_name = total_memory_name;
+    if (type == BU_MEM_AVAIL) {
+	memory_name = free_pages_name;
+	if (sysctlbyname(memory_name, &memory, &value_size, NULL, 0) != 0 ||
+		memory > UINT64_MAX / page_size)
+	    return -1;
+	memory *= page_size;
+    } else if (sysctlbyname(memory_name, &memory, &value_size, NULL, 0) != 0) {
+	return -1;
+    }
+
+    return mem_size_from_uint64(memory, memsz);
+#endif
+    return 1;
+}
+
+
+static int
 mem_process_avail(size_t *memsz)
 {
     if (!memsz)
@@ -340,8 +390,7 @@ mem_process_avail(size_t *memsz)
     if (mem_size_from_uint64((uint64_t)task_memory.virtual_size,
 	    &address_bytes) != 0)
 	return -1;
-#  elif defined(__FreeBSD__) && defined(HAVE_SYS_SYSCTL_H) && \
-    defined(HAVE_SYS_USER_H)
+#  elif defined(__FreeBSD__) && defined(HAVE_SYS_SYSCTL_H)
     int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_PID, getpid()};
     struct kinfo_proc process_info;
     size_t process_info_size = sizeof(process_info);
@@ -426,6 +475,13 @@ bu_mem(int type, size_t *sz)
 	if (sz)
 	    *sz = 0;
 	return 0;
+    }
+
+    ret = mem_sysctl(type, &subsz);
+    if (ret == 0) {
+	if (sz)
+	    *sz = subsz;
+	return subsz;
     }
 
     ret = mem_host_info(type, &subsz);
