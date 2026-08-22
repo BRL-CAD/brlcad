@@ -35,6 +35,7 @@
 
 #include "common.h"
 
+#include <errno.h>
 #include <string.h>
 
 #include "bio.h"
@@ -69,8 +70,13 @@ process_mem_tests(void)
     defined(__APPLE__) || defined(__FreeBSD__) || defined(__NetBSD__) || \
     defined(__OpenBSD__) || defined(__DragonFly__))
     struct rlimit original;
-    if (getrlimit(RLIMIT_AS, &original) != 0)
+
+    if (getrlimit(RLIMIT_AS, &original) != 0) {
+	const int error = errno;
+	bu_log("bu_mem process-limit test: getrlimit(RLIMIT_AS) failed: %s (%d)\n",
+	       strerror(error), error);
 	return -1;
+    }
 
     struct rlimit limited = original;
     const rlim_t test_limit = (rlim_t)512 * 1024 * 1024;
@@ -79,15 +85,44 @@ process_mem_tests(void)
 	limited.rlim_cur = limited.rlim_max;
     else
 	limited.rlim_cur = test_limit;
-    if (setrlimit(RLIMIT_AS, &limited) != 0)
+
+    if (setrlimit(RLIMIT_AS, &limited) != 0) {
+	const int error = errno;
+	bu_log("bu_mem process-limit test: setrlimit(RLIMIT_AS) failed: %s (%d) "
+	       "(original cur=%llu max=%llu, requested cur=%llu max=%llu)\n",
+	       strerror(error), error,
+	       (unsigned long long)original.rlim_cur,
+	       (unsigned long long)original.rlim_max,
+	       (unsigned long long)limited.rlim_cur,
+	       (unsigned long long)limited.rlim_max);
 	return -2;
+    }
 
     const ssize_t available = bu_mem(BU_MEM_PROCESS_AVAIL, NULL);
     const int restore_result = setrlimit(RLIMIT_AS, &original);
-    if (restore_result != 0)
+    if (restore_result != 0) {
+	const int error = errno;
+	bu_log("bu_mem process-limit test: restoring RLIMIT_AS failed: %s (%d) "
+	       "(test cur=%llu max=%llu, original cur=%llu max=%llu)\n",
+	       strerror(error), error,
+	       (unsigned long long)limited.rlim_cur,
+	       (unsigned long long)limited.rlim_max,
+	       (unsigned long long)original.rlim_cur,
+	       (unsigned long long)original.rlim_max);
 	return -3;
-    if (available < 0 || (rlim_t)available > limited.rlim_cur)
+	}
+    if (available < 0 || (rlim_t)available > limited.rlim_cur) {
+	bu_log("bu_mem process-limit test: BU_MEM_PROCESS_AVAIL returned %zd; "
+	       "expected a non-negative value no greater than %llu "
+	       "(original cur=%llu max=%llu, test cur=%llu max=%llu)\n",
+	       available,
+	       (unsigned long long)limited.rlim_cur,
+	       (unsigned long long)original.rlim_cur,
+	       (unsigned long long)original.rlim_max,
+	       (unsigned long long)limited.rlim_cur,
+	       (unsigned long long)limited.rlim_max);
 	return -4;
+    }
 #else
     if (bu_mem(BU_MEM_PROCESS_AVAIL, NULL) >= 0)
 	bu_log("MEM process limit is available through a native API\n");
