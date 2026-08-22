@@ -4,66 +4,446 @@
 :manmanual: BRL-CAD User Commands
 
 == NAME
-annotate - attach annotation objects to geometry
+
+annotate - create, inspect, show, and hide persistent 3D annotations
 
 == SYNOPSIS
 
 [source]
 ----
-annotate [object(s)] [-n name] [-p x y z]
+annotate text [common-options] [--at x y z] [--plane xy|xz|yz]
+              [--frame] name text
+annotate leader [common-options] [--target x y z] [--at x y z]
+                [--screen-space [--dpi value]] name text
+annotate dimension linear [dimension-options] --from x y z --to x y z name
+annotate dimension angular [dimension-options] --vertex x y z
+                           --from x y z --to x y z name
+annotate dimension radius [dimension-options] --center x y z --to x y z name
+annotate dimension diameter [dimension-options] --center x y z --to x y z name
+annotate dimension ordinate [dimension-options] --origin x y z --to x y z
+                            --axis x|y|z name
+annotate autodim [autodim-options] name [object ...]
+annotate update [--view-only] name ...
+annotate show [--all] name|tree ...
+annotate hide [--all] name|tree ...
+annotate list [pattern ...]
+annotate info name
 ----
 
-
-[[description]]
 == DESCRIPTION
 
-The *annotate* command creates or manages annotation objects associated with the specified geometry `objects`. Annotations are non-geometry database objects that attach labels, notes, leaders, or dimension indicators to model elements.
+The *annotate* command creates persistent annotation database objects.  Text,
+leaders, extension lines, dimension lines, arrowheads, and their semantic roles
+are stored with the model rather than existing only as transient view graphics.
+Coordinates and explicit sizes use the database's current modeling units.
 
-If no objects are given, the command displays usage information.
+Creation commands draw the new annotation immediately.  Use *--no-draw* to
+create it without changing the display.  Names must not already exist.
 
-Annotation types supported include:
+The supported dimensions follow the general presentation conventions of ISO
+129-1.  Lettering defaults to OSIFont, an ISO 3098-style technical font shipped
+with BRL-CAD.  If a selected font cannot be loaded, plotting tries OSIFont and
+then BRL-CAD's built-in stroke font.  These annotations convey nominal
+measurements; they do not by themselves implement the complete tolerance and
+GD&T semantics of ISO GPS or ASME Y14.5.
 
-* *label* / *leader* — text label with optional leader line
-* *angular* / *radial* / *dimension* — dimensional annotations
-* *note* — free-form note
-* *box* — boxed text region
-* *axes* / *plane* — coordinate system or plane indicators
-* *table* — tabular annotation data
+== CREATION SUBCOMMANDS
 
-Annotations can be aligned to the view (always facing the screen) or to the model (fixed in 3D space).
+=== text
 
-=== Options
+Creates text anchored at *--at*, or at the model origin if *--at* is omitted.
+The text lies in the *xy* plane by default.  *--plane* selects another principal
+model plane and *--frame* draws a rectangular border around the text.
 
-*-n name*::
-Assign the specified `name` to the new annotation object instead of using an automatically generated name.
+=== leader
 
-*-p x y z*::
-Place the annotation at model coordinates `(x, y, z)`.
+Creates text connected to a target by a leader with an arrowhead at the target.
+With *--for object* and no explicit *--target*, the arrow ends where the ray
+from the label toward the center of the object's fast oriented bounding box
+first intersects that box.  This keeps the leader out of the object's interior
+and is the default form for labeling geometry.  *--target* overrides the
+calculated endpoint when a specific point is required.
 
-[[examples]]
+*--at* fixes the label position.  If it is omitted, the command places the
+label beyond the oriented box with a text-sized margin.  A leader must specify
+either *--for object* or *--target*.  In an active view, the text plane is
+oriented for front-facing readability: the baseline follows the projected
+leader in the readable direction and the lettering's up direction follows the
+view rather than a fixed model axis.
+
+*--screen-space* is the alternate presentation mode for callouts that should
+remain in the display plane.  It keeps the text horizontal and the leader's
+offset relative to its model target as the view changes.  This is useful for
+interactive view labels, but ordinary model-space leaders are preferred for
+drafting annotations that must retain a physical 3D plane.  Its default text
+height is 3 mm in the display plane; an explicit *--text-height* still uses
+the current database units.  *--dpi* sets the physical display density used to
+scale screen-space text; it defaults to 96 and is stored with the annotation
+so *annotate update* reproduces the same result.
+
+=== dimension
+
+Creates one of the following measurement annotations:
+
+* *linear* measures the distance from *--from* to *--to*.
+* *angular* measures the smaller angle between the rays from *--vertex* through
+  *--from* and *--to*.  The value is displayed in degrees.  For this type,
+  *--offset* is the arc radius.
+* *radius* measures from *--center* to the rim point *--to* and prefixes the
+  value with `R`.
+* *diameter* uses *--center* and one rim point *--to*, draws through the center,
+  and prefixes the full diameter with the diameter symbol.
+* *ordinate* reports the X, Y, or Z displacement from *--origin* to *--to*, as
+  selected by *--axis*.
+
+For linear and ordinate dimensions, *--offset* moves the dimension line away
+from the measured points.  A suitable offset is selected when it is omitted.
+
+=== autodim
+
+Creates overall X, Y, and Z dimensions on edges of the combined bounding box
+of the supplied objects.  The box may be axis-aligned or oriented.  This is
+deliberately a subcommand of
+*annotate*: its result is ordinary persistent annotation data, not a special
+view axis through the middle of the model.
+
+The command creates a combination named `name` and one annotation member per
+selected axis, named `name.x`, `name.y`, and `name.z`.  The combination records
+the source objects, so *annotate show* and *annotate hide* can toggle the
+annotations using either their own name or an associated geometry tree.
+
+If no objects are supplied, *autodim* uses the database objects currently drawn
+in the active view.  With the default *--corner auto*, each requested dimension
+is independently assigned to a projected box edge.  The layout favors readable
+text orientation, outward placement, clear separation, and uncrossed dimension
+lines.  Consequently, the dimensions need not meet at one corner.
+Collision checks use the projected selected bounding box as a fast,
+deterministic proxy for the object silhouette.  This avoids most avoidable
+label-box overlap, but does not yet perform exact rendered-silhouette collision
+testing.
+
+The default axis-aligned box uses model X, Y, and Z.  For an oriented box, the
+X, Y, and Z names refer to the box's local orthogonal basis.  Thus *--axes*,
+*--corner*, the member suffixes, and the optional `X:`, `Y:`, and `Z:` labels
+all describe box-local axes when *--bounds obb* is selected.
+
+== VISIBILITY AND INSPECTION
+
+=== show and hide
+
+*annotate show* draws annotations and *annotate hide* removes them from the
+display without deleting them.  Each operand may be an annotation name or a
+geometry tree.  For a geometry tree, the command finds annotations contained in
+the tree and annotation groups associated with any object below that root.
+This permits independently associated annotation layers to remain out of
+ordinary geometry drawing until explicitly requested, avoiding clutter in
+large assemblies.
+
+*--all* selects all top-level annotation objects.  It must be used by itself.
+
+=== update
+
+*annotate update* regenerates each named *autodim* group or *leader* from its
+recorded creation settings.  For an autodim group, it recomputes the selected
+AABB or OBB, dimension values, units, and labels from the current database
+geometry.  If the group records *--corner auto*, placement is optimized again
+for the active view.  An explicit corner remains fixed.  Styling, precision,
+air handling, and tight-bound policy are preserved.  For an automatically
+targeted leader, the endpoint is recomputed against the associated object's
+current fast OBB and its lettering is reoriented for the active view.
+
+*--view-only* skips the bounds query and reuses the box and measurements stored
+by the last full creation or update.  It recomputes view-dependent edge
+placement and text orientation, making it suitable for responsive interactive
+view changes.  It deliberately assumes the source geometry has not changed;
+use plain *annotate update* to verify the current geometry and refresh both the
+measurements and view presentation.  For a leader, it preserves the recorded
+target and label positions while updating only the view-facing lettering plane.
+
+The replacement geometry is built under temporary names first.  A bounds or
+annotation-generation failure therefore leaves the existing annotation in
+place.
+
+Ordinary annotations are model-space objects and therefore use the display
+manager's ordinary depth handling.  They may be occluded by model geometry;
+*annotate* deliberately does not silently draw them as foreground overlays.
+Screen-space leaders are the explicit exception: their geometry is in the
+display plane.  View-facing model-space labels can be refreshed with *update
+--view-only* when the active view changes.
+
+=== list
+
+Lists persistent annotations.  With no pattern, all are listed.  One or more
+shell-style patterns limit the result.  Quote patterns in command interpreters
+which would otherwise expand them.
+
+=== info
+
+Reports an annotation's kind and persisted placement.  Leaders report their
+target, label location, and display-plane settings.  For an *autodim* group it
+also reports the source objects, member annotations, bounds type, axes, and
+corner policy.
+
+== COMMON OPTIONS
+
+*-h*, *--help*::
+Print subcommand usage.
+
+*--text-height size*::
+Set the model-space character height in current units.  By default, the command
+chooses a size relative to the measurement or active view.
+
+*--font name*::
+Select a TrueType font by installed name, filename, or path.  The default is
+`osifont`.  A `.ttf` suffix may be omitted for installed fonts.
+
+*-C r/g/b*, *--color r/g/b*::
+Set the persistent annotation color using integer red, green, and blue values
+from 0 through 255.
+
+*--line-width width*::
+Set the display line width.
+
+*--line-style style*::
+Set semantic line-pattern metadata to *continuous*, *dashed*, *dotted*,
+*center*, or *phantom*.  Display backends which do not implement a stored
+pattern may render it as continuous.
+
+*--bold*::
+Use bold text.
+
+*--italic*::
+Use italic text.
+
+*--for object*::
+Associate the annotation with a geometry object.  *annotate show object* and
+*annotate hide object* will then include it.  This keeps annotations in a
+separate database layer instead of requiring them to be members of the
+geometry combination.
+
+*-D*, *--no-draw*::
+Create the annotation without drawing it.
+
+== DIMENSION OPTIONS
+
+Dimension subcommands accept all common options and the following options where
+applicable:
+
+*--from x y z*::
+Set the first measured point or first angular ray point.
+
+*--to x y z*::
+Set the second measured point, angular ray point, or circular rim point.
+
+*--vertex x y z*::
+Set the angular dimension vertex.
+
+*--center x y z*::
+Set the center of a radius or diameter dimension.
+
+*--origin x y z*::
+Set the zero point of an ordinate dimension.
+
+*--axis x|y|z*::
+Select the ordinate axis.
+
+*--offset distance*::
+Set the dimension-line offset or angular arc radius in current units.
+
+*--units unit*::
+Display a linear value in the named unit instead of the database's current
+unit.  Angular values are always displayed in degrees.
+
+*--precision digits*::
+Set the number of digits after the decimal point, from 0 through 15.  The
+default is 2.
+
+*--prefix text*::
+Add text before the measurement and its standard radius or diameter symbol.
+
+*--suffix text*::
+Add text after the measurement and unit.
+
+*--no-extension-lines*::
+Suppress extension lines.
+
+== AUTODIM OPTIONS
+
+*autodim* accepts all common options and these options:
+
+*--axes list*::
+Dimension any combination of `x`, `y`, and `z`.  The default is `x,y,z`.
+
+*--corner corner*::
+Use *auto* or an explicit comma-separated corner such as
+`xmin,ymax,zmin`.  The default is *auto*.  An explicit corner requests a
+common-corner triad; *auto* may distribute dimensions among edges to improve
+their presentation in the active view.
+
+*--bounds aabb|obb*::
+Select an axis-aligned bounding box (*aabb*) or oriented bounding box (*obb*).
+The default is *aabb*.  A fast OBB walks the complete supplied combination
+trees, transforms each positive leaf's local bounds into model space, and fits
+an oriented frame to the resulting points.  Subtraction uses only its left
+operand, while intersections use their conservative common AABB.
+
+*--offset distance*::
+Set the distance between bounding-box edges and dimension lines.  By default it
+is five percent of the bounding-box diagonal.
+
+*--units unit*::
+Display values in the named unit.
+
+*--precision digits*::
+Set digits after the decimal point.  The default is 2.
+
+*--no-axis-labels*::
+Omit the `X:`, `Y:`, and `Z:` prefixes.
+
+*-u*, *--no-air*::
+Ignore air regions while finding bounds.
+
+*-t*, *--tight*::
+Use Boolean-evaluated geometry bounds.  The shared Cauchy-Crofton sampler fires
+reproducible spherical rays until its surface-area estimate stabilizes, then
+derives the requested AABB or OBB from that converged surface-point set.  This
+accounts for subtraction and intersection more closely than tree bounds, but
+is approximate and slower.
+
 == EXAMPLES
 
-.Annotate an object with a label
+.Create plain and framed text
 [example]
 ====
-mged> **annotate hull.r -n hull_note -p 0 0 500**
-
-Creates a label annotation named `hull_note` associated with `hull.r`, positioned at model coordinate (0, 0, 500).
+[source]
+----
+mged> annotate text --at "0 0 50" part-note "INSPECT THIS FACE"
+mged> annotate text --at "0 0 60" --plane xz --frame \
+        --color 255/255/0 warning "KEEP CLEAR"
+----
 ====
 
-[[see_also]]
+.Create a styled leader
+[example]
+====
+[source]
+----
+mged> annotate leader --for bracket.r --at "30 20 12" \
+        --color 0/255/255 --font osifont --bold fastener-note \
+        "TORQUE TO 40 N m"
+mged> annotate leader --for bracket.r --target "12 8 4" --at "30 20 12" \
+        exact-fastener-note "EXPLICIT TARGET"
+mged> annotate leader --for bracket.r --at "30 20 12" --screen-space \
+        --dpi 144 interactive-note "VIEW-FACING CALLOUT"
+----
+====
+
+.Create linear, angular, radius, diameter, and ordinate dimensions
+[example]
+====
+[source]
+----
+mged> annotate dimension linear --from "0 0 0" --to "100 0 0" \
+        --offset 12 --units mm length-dim
+mged> annotate dimension angular --vertex "0 0 0" --from "40 0 0" \
+        --to "30 30 0" --offset 20 angle-dim
+mged> annotate dimension radius --center "0 0 0" --to "25 0 0" radius-dim
+mged> annotate dimension diameter --center "0 0 0" --to "25 0 0" \
+        diameter-dim
+mged> annotate dimension ordinate --origin "0 0 0" --to "42 18 7" \
+        --axis z z-ordinate
+----
+====
+
+.Create examples of the supported line and text styles
+[example]
+====
+[source]
+----
+mged> annotate leader --target "0 0 0" --at "20 10 0" \
+        --line-style dashed --line-width 2 dashed-note "DASHED LEADER"
+mged> annotate text --at "0 0 20" --bold bold-note "BOLD"
+mged> annotate text --at "0 0 30" --italic italic-note "ITALIC"
+mged> annotate text --at "0 0 40" --bold --italic \
+        --font Inconsolata bold-italic-note "BOLD ITALIC"
+----
+====
+
+.Dimension real geometry in m35.g with an AABB
+[example]
+====
+[source]
+----
+mged> draw component
+mged> annotate autodim --color 255/220/0 --precision 1 \
+        component-dim component
+----
+
+Creates `component-dim` with X, Y, and Z measurements placed on selected edges
+of `component`'s model-axis-aligned 3D bounding box.
+====
+
+.Dimension the same all-up combination with an OBB
+[example]
+====
+[source]
+----
+mged> draw component
+mged> annotate autodim --bounds obb --color 0/255/255 --precision 1 \
+        component-obb-dim component
+----
+
+The three dimensions follow the oriented box's local axes.  Add *--tight* to
+fit the box to a Cauchy-Crofton sample of the evaluated Boolean result instead
+of the faster conservative leaf-bound point set.
+====
+
+.Refresh dimensions after a view or geometry change
+[example]
+====
+[source]
+----
+mged> ae 125 25
+mged> annotate update component-obb-dim
+----
+
+The OBB, displayed values, and labels are regenerated from the current
+`component` tree.  Because `component-obb-dim` was created with the default
+*--corner auto*, its three dimensions are also redistributed for the new view.
+The same command should be run after editing any source object.
+====
+
+.Dimension only two axes at a selected corner
+[example]
+====
+[source]
+----
+mged> annotate autodim --axes x,z --corner xmin,ymax,zmin \
+        --offset 15 --units mm bracket-overall bracket.r
+----
+====
+
+.Toggle and inspect annotations
+[example]
+====
+[source]
+----
+mged> annotate hide component
+mged> annotate show component
+mged> annotate list "component-*"
+mged> annotate info component-dim
+----
+====
+
 == SEE ALSO
 
-*label*(nged)
+*draw*(nged), *erase*(nged), *label*(nged), *l*(nged)
 
-
-[[author]]
 == AUTHOR
 
 BRL-CAD Team
 
-
-[[bug_reports]]
 == BUG REPORTS
 
-Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org
+Reports of bugs or problems should be submitted via electronic mail to
+devs@brlcad.org

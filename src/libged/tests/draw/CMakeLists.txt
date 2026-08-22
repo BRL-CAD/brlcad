@@ -24,6 +24,25 @@ if(TARGET ged_test_draw)
 endif(TARGET ged_test_draw)
 brlcad_add_test(NAME ged_test_drawing_basic COMMAND ged_test_draw -c "${CMAKE_CURRENT_SOURCE_DIR}")
 
+set(annotate_test_ctrls annotate.apng)
+brlcad_addexec(ged_test_annotate "annotate.cpp;util.cpp" "libged;libdm;PNG::PNG;ZLIB::ZLIB;Threads::Threads" TEST)
+if (TARGET ged_test_annotate)
+  foreach(tdp ${test_deps})
+    if (TARGET ${tdp})
+      add_dependencies(ged_test_annotate ${tdp})
+    endif ()
+  endforeach()
+  if (TARGET m35.g)
+    add_dependencies(ged_test_annotate m35.g)
+  endif ()
+endif()
+brlcad_add_test(
+  NAME ged_test_drawing_annotate
+  COMMAND ged_test_annotate "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_BINARY_DIR}/${DATA_DIR}/db/m35.g"
+)
+distclean(${CMAKE_CURRENT_BINARY_DIR}/m35_annotate_tmp.g)
+distclean(${CMAKE_CURRENT_BINARY_DIR}/ged_annotate_test_cache)
+
 set(faceplate_test_ctrls faceplate.apng)
 brlcad_addexec(ged_test_faceplate "faceplate.cpp;util.cpp" "libged;libdm;PNG::PNG;ZLIB::ZLIB;Threads::Threads" TEST)
 if(TARGET ged_test_faceplate)
@@ -99,6 +118,7 @@ cmakefiles(
   rook.g
   util.cpp
   ${basic_view_test_ctrls}
+  ${annotate_test_ctrls}
   ${faceplate_test_ctrls}
   ${lod_test_ctrls}
   ${select_test_ctrls}
