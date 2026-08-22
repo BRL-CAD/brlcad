@@ -76,6 +76,7 @@ constexpr double AUTODIM_MIN_PROJECTED_AXIS_RATIO = 0.02;
 constexpr double AUTODIM_LABEL_OVERLAP_PENALTY = 30.0;
 constexpr double AUTODIM_LINE_CROSSING_PENALTY = 12.0;
 constexpr double AUTODIM_MAX_SEPARATION_REWARD = 1.0;
+constexpr double AUTODIM_SCORE_TOLERANCE = 1.0e-9;
 constexpr int DEFAULT_PRECISION = 2;
 constexpr int DEFAULT_ARC_SEGMENTS = 24;
 
@@ -1869,7 +1870,7 @@ select_autodim_placements(const struct autodim_box &box,
     std::vector<autodim_placement> current;
     const auto search = [&](const auto &self, size_t selected, double score) -> void {
 	if (selected == candidates.size()) {
-	    if (score > best_score) {
+	    if (score > best_score + AUTODIM_SCORE_TOLERANCE) {
 		best_score = score;
 		best = current;
 	    }
