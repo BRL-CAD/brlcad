@@ -248,6 +248,10 @@ def audit_one(audit, args, run_dir, database_name, object_name, mode):
     ]
     if args.valid_solids_only:
         command.append("--valid-solids-only")
+    if args.display_only:
+        command.append("--display-only")
+    if args.image_dir:
+        command.extend(("--image-dir", str(args.image_dir)))
     append_quality_options(command, args)
     append_repair_options(command, args)
     command.extend((database_name, object_name))
@@ -385,6 +389,10 @@ def audit_database(audit, args, run_dir, database, start_index, sink,
         ]
         if args.valid_solids_only:
             command.append("--valid-solids-only")
+        if args.display_only:
+            command.append("--display-only")
+        if args.image_dir:
+            command.extend(("--image-dir", str(args.image_dir)))
         append_quality_options(command, args)
         append_repair_options(command, args)
         if object_file is not None:
@@ -720,6 +728,16 @@ def parse_args():
             "Classify inputs first and exclude B-Reps outside the valid "
             "closed-solid quality contract"
         ),
+    )
+    parser.add_argument(
+        "--display-only",
+        action="store_true",
+        help="Skip source validity and reference checks for drawing modes",
+    )
+    parser.add_argument(
+        "--image-dir",
+        type=Path,
+        help="Write successful display renders as 1024px PPM images",
     )
     parser.add_argument(
         "--selection-jsonl",
