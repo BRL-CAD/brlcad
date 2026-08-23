@@ -26,6 +26,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstring>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -68,6 +69,20 @@ struct face_failure {
     int result = 0;
     int stage = 0;
     std::string message;
+};
+
+struct image_segment {
+    point_t a;
+    point_t b;
+};
+
+struct image_point {
+    double p[3];
+};
+
+struct image_mesh {
+    std::vector<image_point> points;
+    std::vector<int> faces;
 };
 
 struct geom_result {
@@ -532,7 +547,8 @@ load_brep(struct db_i *dbip, struct directory *dp, struct rt_db_internal *intern
 static geom_result
 wireframe_result(struct db_i *dbip, struct directory *dp,
 	const struct bg_tess_tol *ttol, const struct bn_tol *tol,
-	const struct rt_brep_draw_options *options)
+	const struct rt_brep_draw_options *options,
+	std::vector<image_segment> *segments)
 {
     geom_result result;
     struct rt_db_internal intern;
@@ -570,6 +586,8 @@ wireframe_result(struct db_i *dbip, struct directory *dp,
 
     struct bv_vlist *vp;
     for (BU_LIST_FOR(vp, bv_vlist, &vhead)) {
+	point_t previous = VINIT_ZERO;
+	bool have_previous = false;
 	for (size_t i = 0; i < vp->nused; i++) {
 	    result.commands++;
 	    int cmd = vp->cmd[i];
@@ -582,6 +600,16 @@ wireframe_result(struct db_i *dbip, struct directory *dp,
 	    }
 	    result.vertices++;
 	    bbox_add(result.bmin, result.bmax, &result.have_bbox, p);
+	    if (segments && cmd == BV_VLIST_LINE_MOVE) {
+		VMOVE(previous, p);
+		have_previous = true;
+	    } else if (segments && cmd == BV_VLIST_LINE_DRAW && have_previous) {
+		image_segment segment;
+		VMOVE(segment.a, previous);
+		VMOVE(segment.b, p);
+		segments->push_back(segment);
+		VMOVE(previous, p);
+	    }
 	    if (cmd == BV_VLIST_LINE_DRAW || cmd == BV_VLIST_POLY_DRAW ||
 		    cmd == BV_VLIST_POLY_END || cmd == BV_VLIST_TRI_DRAW ||
 		    cmd == BV_VLIST_TRI_END || cmd == BV_VLIST_POINT_DRAW)
@@ -612,7 +640,8 @@ wireframe_result(struct db_i *dbip, struct directory *dp,
 static geom_result
 shaded_result(struct db_i *dbip, struct directory *dp,
 	const struct bg_tess_tol *ttol, const struct bn_tol *tol,
-	const struct brep_cdt_fast_options *options, int face_index)
+	const struct brep_cdt_fast_options *options, int face_index,
+	image_mesh *mesh)
 {
     geom_result result;
     struct rt_db_internal intern;
@@ -661,6 +690,12 @@ shaded_result(struct db_i *dbip, struct directory *dp,
 	result.primitives = (size_t)face_cnt;
     if (point_cnt > 0)
 	result.vertices = (size_t)point_cnt;
+    if (mesh && point_cnt > 0 && face_cnt > 0) {
+	mesh->points.resize((size_t)point_cnt);
+	for (int i = 0; i < point_cnt; ++i)
+	    VMOVE(mesh->points[(size_t)i].p, points[i]);
+	mesh->faces.assign(faces, faces + (size_t)face_cnt * 3);
+    }
     for (int i = 0; points && i < point_cnt; i++) {
 	if (!std::isfinite(points[i][X]) || !std::isfinite(points[i][Y]) ||
 		!std::isfinite(points[i][Z])) {
@@ -1760,7 +1795,156 @@ struct audit_config {
     bool repair_require_manifold;
     bool repair_no_fast;
     double repair_relaxed_fidelity_factor;
+    const char *image_dir;
+    long image_size;
 };
+
+struct image_view {
+    vect_t right;
+    vect_t up;
+    vect_t view;
+    point_t center;
+    double scale;
+};
+
+static std::string
+image_name(const char *directory, const char *database, const char *object,
+	const char *mode)
+{
+    std::string name = directory ? directory : "";
+    if (!name.empty() && name.back() != '/') name += "/";
+    const char *base = database ? std::strrchr(database, '/') : NULL;
+    uint64_t path_hash = 1469598103934665603ULL;
+    for (const unsigned char *p = (const unsigned char *)database;
+	    p && *p; ++p) {
+	path_hash ^= *p;
+	path_hash *= 1099511628211ULL;
+    }
+    name += base ? base + 1 : (database ? database : "database");
+    name += "_";
+    std::ostringstream hash_text;
+    hash_text << std::hex << path_hash;
+    name += hash_text.str();
+    name += "_";
+    for (const char *p = object; p && *p; ++p)
+	name += (*p == '/' || *p == '\\') ? '_' : *p;
+    name += "_";
+    name += mode;
+    name += ".ppm";
+    return name;
+}
+
+static bool
+image_view_setup(const point_t minp, const point_t maxp, image_view *view)
+{
+    if (!view) return false;
+    point_t center;
+    VADD2(center, minp, maxp);
+    VSCALE(view->center, center, 0.5);
+    VSET(view->view, 1.0, 1.0, 1.0);
+    VUNITIZE(view->view);
+    vect_t up_reference = {0.0, 0.0, 1.0};
+    VCROSS(view->right, view->view, up_reference);
+    VUNITIZE(view->right);
+    VCROSS(view->up, view->right, view->view);
+    VUNITIZE(view->up);
+    vect_t dimensions;
+    VSUB2(dimensions, maxp, minp);
+    view->scale = std::max(MAGNITUDE(dimensions) * 0.58, SMALL_FASTF);
+    return true;
+}
+
+static void
+image_project(const image_view *view, const point_t p, long size,
+	double *x, double *y, double *depth)
+{
+    vect_t offset;
+    VSUB2(offset, p, view->center);
+    *x = 0.5 * size + VDOT(offset, view->right) * size / view->scale;
+    *y = 0.5 * size - VDOT(offset, view->up) * size / view->scale;
+    *depth = VDOT(offset, view->view);
+}
+
+static void
+image_pixel(std::vector<unsigned char> *pixels, long size, long x, long y,
+	unsigned char r, unsigned char g, unsigned char b)
+{
+    if (x < 0 || y < 0 || x >= size || y >= size) return;
+    size_t offset = ((size_t)y * (size_t)size + (size_t)x) * 3;
+    (*pixels)[offset] = r;
+    (*pixels)[offset + 1] = g;
+    (*pixels)[offset + 2] = b;
+}
+
+static void
+image_line(std::vector<unsigned char> *pixels, long size, long x0, long y0,
+	long x1, long y1)
+{
+    long dx = std::labs(x1 - x0), sx = x0 < x1 ? 1 : -1;
+    long dy = -std::labs(y1 - y0), sy = y0 < y1 ? 1 : -1;
+    long error = dx + dy;
+    for (;;) {
+	image_pixel(pixels, size, x0, y0, 245, 245, 245);
+	if (x0 == x1 && y0 == y1) break;
+	long e2 = 2 * error;
+	if (e2 >= dy) { error += dy; x0 += sx; }
+	if (e2 <= dx) { error += dx; y0 += sy; }
+    }
+}
+
+static bool
+write_image(const std::string &path, long size,
+	const std::vector<image_segment> *segments, const image_mesh *mesh,
+	const point_t minp, const point_t maxp)
+{
+    if (size <= 0 || (!segments && !mesh)) return false;
+    image_view view;
+    if (!image_view_setup(minp, maxp, &view)) return false;
+    std::vector<unsigned char> pixels((size_t)size * (size_t)size * 3, 18);
+    if (segments) {
+	for (const image_segment &segment : *segments) {
+	    double x0, y0, z0, x1, y1, z1;
+	    image_project(&view, segment.a, size, &x0, &y0, &z0);
+	    image_project(&view, segment.b, size, &x1, &y1, &z1);
+	    image_line(&pixels, size, (long)x0, (long)y0, (long)x1, (long)y1);
+	}
+    }
+    if (mesh && mesh->faces.size() >= 3) {
+	std::vector<double> depth((size_t)size * (size_t)size,
+	    -std::numeric_limits<double>::infinity());
+	for (size_t i = 0; i + 2 < mesh->faces.size(); i += 3) {
+	    int ia = mesh->faces[i], ib = mesh->faces[i + 1], ic = mesh->faces[i + 2];
+	    if (ia < 0 || ib < 0 || ic < 0 || (size_t)ia >= mesh->points.size() ||
+		(size_t)ib >= mesh->points.size() || (size_t)ic >= mesh->points.size()) continue;
+	    double ax, ay, az, bx, by, bz, cx, cy, cz;
+	    image_project(&view, mesh->points[(size_t)ia].p, size, &ax, &ay, &az);
+	    image_project(&view, mesh->points[(size_t)ib].p, size, &bx, &by, &bz);
+	    image_project(&view, mesh->points[(size_t)ic].p, size, &cx, &cy, &cz);
+	    long xmin = std::max(0L, (long)std::floor(std::min(ax, std::min(bx, cx))));
+	    long xmax = std::min(size - 1, (long)std::ceil(std::max(ax, std::max(bx, cx))));
+	    long ymin = std::max(0L, (long)std::floor(std::min(ay, std::min(by, cy))));
+	    long ymax = std::min(size - 1, (long)std::ceil(std::max(ay, std::max(by, cy))));
+	    double area = (bx - ax) * (cy - ay) - (by - ay) * (cx - ax);
+	    if (std::fabs(area) < SMALL_FASTF) continue;
+	    for (long y = ymin; y <= ymax; ++y) for (long x = xmin; x <= xmax; ++x) {
+		double w0 = ((bx - ax) * (y - ay) - (by - ay) * (x - ax)) / area;
+		double w1 = ((cx - bx) * (y - by) - (cy - by) * (x - bx)) / area;
+		double w2 = 1.0 - w0 - w1;
+		if (w0 < 0.0 || w1 < 0.0 || w2 < 0.0) continue;
+		double z = w0 * cz + w1 * az + w2 * bz;
+		size_t pi = (size_t)y * (size_t)size + (size_t)x;
+		if (z <= depth[pi]) continue;
+		depth[pi] = z;
+		image_pixel(&pixels, size, x, y, 190, 205, 225);
+	    }
+	}
+    }
+    std::ofstream output(path, std::ios::binary);
+    if (!output) return false;
+    output << "P6\n" << size << " " << size << "\n255\n";
+    output.write((const char *)pixels.data(), (std::streamsize)pixels.size());
+    return output.good();
+}
 
 static int
 audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
@@ -1915,6 +2099,8 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
 	!quality_eligible;
     geom_result wire;
     geom_result shaded;
+    std::vector<image_segment> wire_segments;
+    image_mesh shaded_mesh;
     geom_result quality;
     struct brep_cdt_repair_settings repair_settings =
 	BREP_CDT_REPAIR_SETTINGS_INIT;
@@ -1972,7 +2158,8 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
     if (run_wireframe && !excluded) {
 	std::cerr << "brep-audit: phase=wireframe" << std::endl;
 	try {
-	    wire = wireframe_result(dbip, dp, &ttol, &tol, &draw_options);
+	    wire = wireframe_result(dbip, dp, &ttol, &tol, &draw_options,
+		config.image_dir ? &wire_segments : NULL);
 	} catch (const std::bad_alloc &) {
 	    wire.ret = RT_BREP_DRAW_LIMIT;
 	    wire.hit_memory_limit = true;
@@ -1983,7 +2170,7 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
 	std::cerr << "brep-audit: phase=shaded" << std::endl;
 	try {
 	    shaded = shaded_result(dbip, dp, &ttol, &tol, &fast_options,
-		(int)config.face_index);
+		(int)config.face_index, config.image_dir ? &shaded_mesh : NULL);
 	} catch (const std::bad_alloc &) {
 	    shaded.ret = BREP_CDT_FAST_LIMIT;
 	    shaded.hit_memory_limit = true;
@@ -2063,6 +2250,26 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
 	(!run_shaded || shaded.issues.empty()) &&
 	(!run_quality || quality.issues.empty());
 
+    std::string wire_image;
+    std::string shaded_image;
+    if (config.image_dir && config.image_size > 0) {
+	bu_mkdir(config.image_dir);
+	if (run_wireframe && !excluded && wire.issues.empty() &&
+		wire.have_bbox && !wire_segments.empty()) {
+	    wire_image = image_name(config.image_dir, db_path, dp->d_namep,
+		"wireframe");
+	    if (!write_image(wire_image, config.image_size, &wire_segments, NULL,
+		wire.bmin, wire.bmax)) wire_image.clear();
+	}
+	if (run_shaded && !excluded && shaded.issues.empty() &&
+		shaded.have_bbox && !shaded_mesh.faces.empty()) {
+	    shaded_image = image_name(config.image_dir, db_path, dp->d_namep,
+		"shaded");
+	    if (!write_image(shaded_image, config.image_size, NULL, &shaded_mesh,
+		shaded.bmin, shaded.bmax)) shaded_image.clear();
+	}
+    }
+
     std::cerr << "brep-audit: phase=report" << std::endl;
     std::cout << "{\"format\":\"brlcad-brep-realization-audit-v1\",\"database\":"
 	<< json_quote(db_path) << ",\"object\":" << json_quote(dp->d_namep)
@@ -2141,9 +2348,13 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
     std::cout << ",\"shaded\":";
     if (run_shaded && !excluded) print_result(shaded, ref_dims);
     else std::cout << "null";
-    std::cout << ",\"quality\":";
+	std::cout << ",\"quality\":";
     if (run_quality && !excluded) print_result(quality, ref_dims);
     else std::cout << "null";
+    std::cout << ",\"images\":{\"wireframe\":"
+	<< (wire_image.empty() ? "null" : json_quote(wire_image.c_str()))
+	<< ",\"shaded\":"
+	<< (shaded_image.empty() ? "null" : json_quote(shaded_image.c_str())) << "}";
     std::cout << ",\"issues\":";
     print_issues(top_issues);
     std::cout << "}" << std::endl;
@@ -2203,9 +2414,11 @@ main(int argc, const char **argv)
     int repair_require_manifold = 0;
     int repair_no_fast = 0;
     double repair_relaxed_fidelity_factor = 0.0;
+    const char *image_dir = NULL;
+    long image_size = 1024;
     const char *batch_object_file = NULL;
     const char *mode_name = "both";
-    struct bu_opt_desc d[46];
+    struct bu_opt_desc d[48];
     BU_OPT(d[0], "h", "help", "", NULL, &print_help, "Print help and exit");
     BU_OPT(d[1], "l", "list", "", NULL, &list_only, "List BRep primitive names");
     BU_OPT(d[2], "", "ratio-min", "#", &bu_opt_fastf_t, &ratio_min, "Minimum acceptable generated/reference dimension ratio");
@@ -2302,7 +2515,11 @@ main(int argc, const char **argv)
 	"Per-face unsigned area convergence threshold");
     BU_OPT(d[44], "", "display-only", "", NULL, &display_only,
 	"Run only bounded visualization generators; skip source reference checks");
-	BU_OPT_NULL(d[45]);
+	BU_OPT(d[45], "", "image-dir", "directory", &bu_opt_str, &image_dir,
+	"Write successful display geometry images to this directory");
+	BU_OPT(d[46], "", "image-size", "pixels", &bu_opt_long, &image_size,
+	"Square output image size (default 1024)");
+	BU_OPT_NULL(d[47]);
     int ac = bu_opt_parse(NULL, argc, argv, d);
     const char *usage =
 	"Usage: brep-audit [options] [--list|--batch] file.g [brep]\n";
@@ -2318,6 +2535,7 @@ main(int argc, const char **argv)
 	    display_coarse_rel < 0.0 || display_coarse_rel > 0.5 ||
 	    !std::isfinite(display_area_change) ||
 	    display_area_change < 0.0 || display_area_change > 1.0 ||
+	    image_size <= 0 || image_size > 8192 ||
 	    batch_start < 0 || face_index < -1 ||
 	    repair_hole_area_percent <= 0.0 || repair_hole_edges < 3 ||
 	    repair_adaptive_hole_edges < 0 ||
@@ -2396,7 +2614,7 @@ main(int argc, const char **argv)
 	repair_allow_self_intersections != 0,
 	repair_require_manifold != 0,
 	repair_no_fast != 0,
-	repair_relaxed_fidelity_factor
+	repair_relaxed_fidelity_factor, image_dir, image_size
     };
 
     if (batch) {
