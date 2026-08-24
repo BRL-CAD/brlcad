@@ -18,7 +18,7 @@ set(CREO2BRL_SOURCES
 if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
 
   # Minimum required version of CMake
-  cmake_minimum_required(VERSION 3.18)
+  cmake_minimum_required(VERSION 3.22)
   message(STATUS "CMake version = ${CMAKE_VERSION}")
 
   # Produce console log of CMake variables
@@ -47,140 +47,84 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   # Allowed BRL-CAD configuration types
   set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "" FORCE)
 
-  #----------------------------------------------------------------------#
-  # CAUTION: Verify installation settings before running CMake           #
-  #----------------------------------------------------------------------#
-  #        |        |        |        |        |        |        |       #
-  #        v        v        v        v        v        v        v       #
+  find_package(BRLCAD CONFIG REQUIRED COMPONENTS bu bn bv bg nmg brep rt wdb)
+  set(CREO_BRLCAD_LIBS
+    BRLCAD::rt
+    BRLCAD::wdb
+    BRLCAD::brep
+    BRLCAD::bg
+    BRLCAD::nmg
+    BRLCAD::bv
+    BRLCAD::bn
+    BRLCAD::bu
+    )
 
-  set(BRLCAD_ROOT_DIR "C:/Workspace/BRL-CAD/Source_20240122" CACHE PATH "BRL-CAD root directory")
-  set(CREO_ROOT_DIR   "C:/Program Files/PTC/Creo 8.0.8.0"    CACHE PATH "Creo root directory")
-  set(DEVTOOLS_DIR    "C:/DevTools/Creo_to_BRL"              CACHE PATH "DevTools directory")
+  # Must supply CREO_ROOT_DIR (typically /c/Program Files/PTC/Creo <version>/)
+  set(CREO_ROOT_DIR "" CACHE PATH "Creo installation root")
+  if(NOT IS_DIRECTORY "${CREO_ROOT_DIR}")
+    message(FATAL_ERROR "CREO_ROOT_DIR must identify an existing Creo installation")
+  endif()
 
-  #        ^        ^        ^        ^        ^        ^        ^       #
-  #        |        |        |        |        |        |        |       #
-  #----------------------------------------------------------------------#
+  find_path(CREO_COMMON_DIR NAMES protoolkit PATHS "${CREO_ROOT_DIR}" PATH_SUFFIXES "Common Files" NO_DEFAULT_PATH REQUIRED)
+  set(CREO_DAT_DIR "${CREO_COMMON_DIR}/protoolkit")
+  file(GLOB CREO_PTK_OBJ_DIRS LIST_DIRECTORIES true "${CREO_DAT_DIR}/*/obj")
+  find_library(CREO_PTK_DLL_LIB NAMES protk_dll_NU protk_dll PATHS ${CREO_PTK_OBJ_DIRS} NO_DEFAULT_PATH REQUIRED)
 
-  # BRL-CAD directories
-  set(BRLCAD_BLD_DIR       "${BRLCAD_ROOT_DIR}/Build")
-  set(BRLCAD_BIN_DIR       "${BRLCAD_ROOT_DIR}/Build/Release/bin")
-  set(BRLCAD_INC_BRL_DIR   "${BRLCAD_ROOT_DIR}/Build/Release/include/brlcad")
-  set(BRLCAD_INC_DIR       "${BRLCAD_ROOT_DIR}/Build/Release/include")
-  set(BRLCAD_INC_NRB_DIR   "${BRLCAD_ROOT_DIR}/Build/Release/include/openNURBS")
-  set(BRLCAD_LIB_DIR       "${BRLCAD_ROOT_DIR}/Build/Release/lib")
-  set(BRLCAD_REL_DIR       "${BRLCAD_ROOT_DIR}/Build/Release")
+  get_filename_component(CREO_PTK_DIR "${CREO_PTK_DLL_LIB}" DIRECTORY)
+  get_filename_component(CREO_OS_DIR "${CREO_PTK_DIR}" DIRECTORY)
+  get_filename_component(CREO_OS_VERSION "${CREO_OS_DIR}" NAME)
+  set(CREO_PTK_INC_DIR     "${CREO_DAT_DIR}/includes")
+  set(CREO_PTK_APP_INC_DIR "${CREO_DAT_DIR}/protk_appls/includes")
 
-  # Creo platform version
-  set(CREO_OS_VERSION      x86e_win64)
-
-  # Creo relative paths
-  set(CREO_DAT_REL         "Common Files/protoolkit")
-  set(CREO_MSG_REL         "Common Files/text/usascii")
-  set(CREO_OBJ_REL         "Common Files/${CREO_OS_VERSION}/obj")
-  set(CREO_PTK_REL         "Common Files/protoolkit/${CREO_OS_VERSION}/obj")
-  set(CREO_RES_REL         "Common Files/text/resource")
-
-  # Creo directories
-  set(CREO_DAT_DIR         "${CREO_ROOT_DIR}/${CREO_DAT_REL}")
-  set(CREO_MSG_DIR         "${CREO_ROOT_DIR}/${CREO_MSG_REL}")
-  set(CREO_OBJ_DIR         "${CREO_ROOT_DIR}/${CREO_OBJ_REL}")
-  set(CREO_PTK_DIR         "${CREO_ROOT_DIR}/${CREO_PTK_REL}")
-  set(CREO_RES_DIR         "${CREO_ROOT_DIR}/${CREO_RES_REL}")
-
-  # Creo ProToolkit include directories
-  set(CREO_PTK_INC_DIR     "${CREO_ROOT_DIR}/Common Files/protoolkit/includes")
-  set(CREO_PTK_APP_INC_DIR "${CREO_ROOT_DIR}/Common Files/protoolkit/protk_appls/includes")
-
-  # Creo startup file
-  set(CREO_PSF_TXT         "${CREO_ROOT_DIR}/Parametric/bin/parametric.psf")
-
-  # Creo ProToolkit Unlocker script
-  set(CREO_PTK_UNLOCKER    "${CREO_ROOT_DIR}/Parametric/bin/protk_unlock.bat")
-
-  # Locate Creo libraries
-  find_file(CREO_PTK_DLL_LIBS NAMES "protk_dll_NU.lib"  PATHS "${CREO_PTK_DIR}")
-  find_file(CREO_PTK_EXE_LIBS NAMES "protoolkit_NU.lib" PATHS "${CREO_PTK_DIR}")
-  foreach(libname "ucore.lib" "udata.lib")
-    set(unicode_lib "${CREO_PTK_DIR}/${libname}")
-    if(EXISTS ${unicode_lib})
-      set(CREO_PTK_DLL_LIBS ${CREO_PTK_DLL_LIBS} ${unicode_lib})
+  find_library(CREO_PTK_EXE_LIBS NAMES protoolkit_NU protoolkit PATHS "${CREO_PTK_DIR}" NO_DEFAULT_PATH REQUIRED)
+  find_library(CREO_UCORE_LIB NAMES ucore PATHS "${CREO_PTK_DIR}" NO_DEFAULT_PATH)
+  find_library(CREO_UDATA_LIB NAMES udata PATHS "${CREO_PTK_DIR}" NO_DEFAULT_PATH)
+  set(CREO_PTK_DLL_LIBS "${CREO_PTK_DLL_LIB}")
+  foreach(lib "${CREO_UCORE_LIB}" "${CREO_UDATA_LIB}")
+    if(lib)
+      list(APPEND CREO_PTK_DLL_LIBS "${lib}")
     endif()
   endforeach()
 
-  # Verify PATH dependent items
-  set(path_dependent_items
-    BRLCAD_BLD_DIR
-    BRLCAD_BIN_DIR
-    BRLCAD_INC_BRL_DIR
-    BRLCAD_INC_DIR
-    BRLCAD_INC_NRB_DIR
-    BRLCAD_LIB_DIR
-    BRLCAD_REL_DIR
-    BRLCAD_ROOT_DIR
-    CREO_DAT_DIR
-    CREO_MSG_DIR
-    CREO_OBJ_DIR
-    CREO_PSF_TXT
-    CREO_PTK_APP_INC_DIR
-    CREO_PTK_DIR
-    CREO_PTK_DLL_LIBS
-    CREO_PTK_EXE_LIBS
-    CREO_PTK_INC_DIR
-    CREO_PTK_UNLOCKER
-    CREO_RES_DIR
-    )
+  find_file(CREO_PSF_TXT NAMES parametric.psf PATHS "${CREO_ROOT_DIR}" PATH_SUFFIXES Parametric/bin NO_DEFAULT_PATH REQUIRED)
+  get_filename_component(CREO_PARAMETRIC_BIN_DIR "${CREO_PSF_TXT}" DIRECTORY)
+  find_program(CREO_PTK_UNLOCKER NAMES protk_unlock.bat PATHS "${CREO_PARAMETRIC_BIN_DIR}" NO_DEFAULT_PATH REQUIRED)
 
-  # Identify missing PATH dependent items
-  set(path_fails 0)
-  foreach(items ${path_dependent_items})
-    foreach(item ${${items}})
-      if(NOT EXISTS ${item})
-        if(NOT path_fails)
-          message("--")
-          message("-- #----------------------------------------------------------------------#")
-          message("-- # ERROR: Unable to locate the following PATH dependent item(s):        #")
-          message("-- #----------------------------------------------------------------------#")
-        endif()
-        set(path_fails 1)
-        message("-- # Missing: ${item}")
-      endif()
-    endforeach()
+  # Verify the Creo directories derived from the discovered installation
+  foreach(dir CREO_DAT_DIR CREO_PTK_INC_DIR CREO_PTK_APP_INC_DIR)
+    if(NOT IS_DIRECTORY "${${dir}}")
+      message(FATAL_ERROR "Unable to locate required Creo directory: ${${dir}}")
+    endif()
   endforeach()
-  if(path_fails)
-    message("-- #----------------------------------------------------------------------#")
-    message("-- # ACTION: All PATH dependent items must be correct before continuing   #")
-    message("-- #----------------------------------------------------------------------#")
-    message("--")
-    message(FATAL_ERROR "This is a FATAL error, unable to continue.")
+
+  # Build a relocatable bundle in the build tree. CMAKE_INSTALL_PREFIX is
+  # the expected deployment location used by creo-brl.dat, not a Creo SDK path.
+  set(CREO_BUNDLE_ROOT "${CMAKE_BINARY_DIR}/Creo")
+  set(CREO_BUNDLE_DIR "${CREO_BUNDLE_ROOT}/$<CONFIG>")
+  set(CREO_BUNDLE_BIN_DIR "${CREO_BUNDLE_DIR}/bin")
+  if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+    set(CMAKE_INSTALL_PREFIX "${CREO_BUNDLE_DIR}" CACHE PATH "Creo-BRL deployment directory" FORCE)
   endif()
 
-  # Report the status of all PATH dependent items
-  message("--")
-  message("-- #----------------------------------------------------------------------#")
-  message("-- # STATUS: Summary of PATH dependent items:                             #")
-  message("-- #----------------------------------------------------------------------#")
-  foreach(items ${path_dependent_items})
-    foreach(item ${${items}})
-      if(EXISTS ${item})
-        message("-- # Found: ${item}")
-      else()
-        message("-- # Missing: ${item}")
-      endif()
-    endforeach()
-  endforeach()
-  message("-- #----------------------------------------------------------------------#")
-  message("--")
-
-  # Set install dir as a function of the Creo directory
-  set(CMAKE_INSTALL_PREFIX ${CREO_ROOT_DIR} CACHE PATH "Installation path" FORCE)
-  mark_as_advanced(CMAKE_INSTALL_PREFIX)
+  # Bundle-specific usage and relocation notes.
+  set(CREO_BUNDLE_README "${CMAKE_CURRENT_BINARY_DIR}/README.bundle.txt")
+  file(WRITE "${CREO_BUNDLE_README}"
+    "Creo-BRL plugin bundle\n\n"
+    "Default deployment location:\n  ${CMAKE_INSTALL_PREFIX}\n\n"
+    "To use this bundle, copy it to the deployment location and point Creo at\n"
+    "creo-brl.dat using protkdat, creotkdat, toolkit_registry_file, or the\n"
+    "Auxiliary Applications interface.\n\n"
+    "If the bundle is moved, update exec_file and text_dir in creo-brl.dat,\n"
+    "then update the Creo setting that points at creo-brl.dat.  No files need\n"
+    "to be copied into the Creo installation directory.\n"
+    )
 
   #----------------------------------------------------------------------#
   # Establish Creo Specific C++ Compiler Settings                        #
   #----------------------------------------------------------------------#
   # Notes:                                                               #
   #   1) Set these to match those found in Creo file "make_install_cxx"  #
-  #   2) Located here:  ..\Common Files\protoolkit\x86e_win64\obj\       #
+  #   2) Located here:  ..\Common Files\protoolkit\<platform>\obj\       #
   #   3) CMake handles include files separately (exclude the "-I" flag)  #
   #   4) Compiler options based upon MSVC runtime libraries:             #
   #      a) /MT  --> MultiThreaded                                       #
@@ -252,11 +196,9 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
 
   # Assign CMake include directories
   include_directories(
-    ${BRLCAD_INC_BRL_DIR}
-    ${BRLCAD_INC_DIR}
-    ${BRLCAD_INC_NRB_DIR}
-    ${CREO_PTK_INC_DIR}
-    ${CREO_PTK_APP_INC_DIR}
+    "${BRLCAD_INCLUDE_DIRS}"
+    "${CREO_PTK_INC_DIR}"
+    "${CREO_PTK_APP_INC_DIR}"
     )
 
   #----------------------------------------------------------------------#
@@ -273,9 +215,9 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   # but will not halt the configure process.                             #
   #----------------------------------------------------------------------#
 
-  file(STRINGS ${CREO_PSF_TXT} psf_strs)
+  file(STRINGS "${CREO_PSF_TXT}" psf_strs)
   foreach(pstr ${psf_strs})
-    if(${pstr} MATCHES ".*CREOPMA_FEATURE_NAME.*")
+    if("${pstr}" MATCHES ".*CREOPMA_FEATURE_NAME.*")
       set(CFN_STR ${pstr})
       string(REGEX REPLACE ".*CREOPMA_FEATURE_NAME.*[(]" "" CFN_STR "${CFN_STR}")
       string(REGEX REPLACE "[)].*" "" CFN_STR "${CFN_STR}")
@@ -302,95 +244,19 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   endforeach()
 
   #----------------------------------------------------------------------#
-  # We will need copies of the BRL-CAD DLLs along with the creo-brl.dll  #
-  # to make a stand-alone package, and we want the dlls in the same      #
-  # directories as our build target dirs for the .exe version to find.   #
-  # We will link against the .lib files so we will build that list at    #
-  # the same time.                                                       #
-  #----------------------------------------------------------------------#
-  set(BRLCAD_LIBS
-      librt
-      libwdb
-      libbrep
-      libbg
-      libnmg
-      libbv
-      libbn
-      libbu
-      lmdb
-      openNURBS
-      poly2tri
-      regex_brl
-      z_brl
-      )
-
-  set(BRLCAD_STATIC_LIBS)
-  set(brlcadlibs_notinstalled)
-  foreach(blib ${BRLCAD_LIBS})
-    foreach(ctype ${CMAKE_CONFIGURATION_TYPES})
-      configure_file("${BRLCAD_BIN_DIR}/${blib}.dll" "${CMAKE_CURRENT_BINARY_DIR}/${ctype}/${blib}.dll" COPYONLY)
-    endforeach()
-    configure_file("${BRLCAD_BIN_DIR}/${blib}.dll" "${CMAKE_CURRENT_BINARY_DIR}/${blib}.dll" COPYONLY)
-    set(BRLCAD_STATIC_LIBS ${BRLCAD_STATIC_LIBS} "${BRLCAD_LIB_DIR}/${blib}.lib")
-    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${blib}.dll" DESTINATION ${CREO_OBJ_REL})
-    if(NOT EXISTS "${CREO_OBJ_DIR}/${blib}.dll")
-      set(brlcadlibs_notinstalled ${brlcadlibs_notinstalled} "${blib}.dll")
-    endif()
-  endforeach()
-
-  if(brlcadlibs_notinstalled)
-    message("-- #----------------------------------------------------------------------#")
-    message("-- # WARNING: The following OBJECT librarie(s) are not installed:         #")
-    message("-- #----------------------------------------------------------------------#")
-    message("-- #"                                                                       )
-    message("-- # Location  = ${CREO_OBJ_DIR}"                                           )
-    message("-- #"                                                                       )
-    foreach(item ${brlcadlibs_notinstalled})
-      message("-- # ${item}")
-    endforeach()
-    message("-- #"                                                                       )
-    message("-- #----------------------------------------------------------------------#")
-    message("-- # Attempting to load the DLL version of the plugin without these files #")
-    message("-- # in place will cause the loading process to silently fail.  Therefore #")
-    message("-- # *NO* messages indicating why the loading failed will be generated.   #")
-    message("-- # Be sure to run the INSTALL command after building but before testing #")
-    message("-- # this CREO2BRL API plugin with Creo.                                  #")
-    message("-- #                                                                      #")
-    message("-- # For additional information see:                                      #")
-    message("-- #                                                                      #")
-    message("-- #           https://apps.dtic.mil/sti/pdfs/AD1036571.pdf               #")
-    message("-- #                                                                      #")
-    message("-- #----------------------------------------------------------------------#")
-    message("--")
-  endif()
-
-  #----------------------------------------------------------------------#
   # Primary (DLL) version of plugin                                      #
   #----------------------------------------------------------------------#
+  # The build produces a self-contained bundle under:                    #
   #                                                                      #
-  # To run the DLL version of this plugin successfully, the files shown  #
-  # below must be pre-installed within the Creo installation:            #
+  #   ${CMAKE_BINARY_DIR}/Creo/<config>/                                 #
+  #     bin/        plugin and BRL-CAD runtime DLLs                      #
+  #     text/       Creo messages and resources                          #
+  #     config/     default user profile                                 #
+  #     creo-brl.dat                                                     #
+  #     README.txt                                                       #
   #                                                                      #
-  #     -->  C:/Program Files/PTC/Creo ${CREO_VERSION_NUMBER}  <--       #
-  #                                                                      #
-  #     Files                  Creo Installation Sub-Directory           #
-  #  ------------------------------------------------------------------  #
-  #  BRL-CAD dlls     --> Common Files/protoolkit/${CREO_OS_VERSION}/obj #
-  #  creo_brl.dat     --> Common Files/protoolkit                        #
-  #  creo_brl.res     --> Common Files/text/resource                     #
-  #  creo-brl-msg.txt --> Common Files/text/usascii                      #
-  #  ------------------------------------------------------------------  #
-  #                                                                      #
-  # The simplest thing to do is build a package and install it in the    #
-  # Creo root directory.                                                 #
-  #                                                                      #
-  # WARNING: Any attempt run this plugin without the correct DLL files   #
-  #          in place will result in silent failure at the loading step. #
-  #                                                                      #
-  #          For additional information see:                             #
-  #                                                                      #
-  #              https://apps.dtic.mil/sti/pdfs/AD1036571.pdf            #
-  #                                                                      #
+  # CMAKE_INSTALL_PREFIX defines the expected deployment location        #
+  # embedded in creo-brl.dat.                                            #
   #----------------------------------------------------------------------#
 
   # Win32 libraries (excludes libcmt.lib)
@@ -414,13 +280,57 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
 
   add_library(creo-brl SHARED ${CREO2BRL_SOURCES})
   set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-  target_link_libraries(creo-brl ${WIN_LIBS} ${CREO_PTK_DLL_LIBS} ${BRLCAD_STATIC_LIBS})
-  install(TARGETS creo-brl RUNTIME DESTINATION ${CREO_OBJ_REL})
+  target_link_libraries(creo-brl REGEX::REGEX ${WIN_LIBS} ${CREO_PTK_DLL_LIBS} ${CREO_BRLCAD_LIBS})
+  set_target_properties(creo-brl PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CREO_BUNDLE_BIN_DIR}")
+
   set(DAT_STARTUP "dll")
-  set(DAT_EXEC_FILE "${CREO_OBJ_DIR}/creo-brl.dll")
-  set(DAT_TEXT_DIR  ${CREO_MSG_DIR})
+  set(DAT_EXEC_FILE "${CMAKE_INSTALL_PREFIX}/bin/creo-brl.dll")
+  set(DAT_TEXT_DIR "${CMAKE_INSTALL_PREFIX}")
   configure_file(creo-brl.dat.in "${CMAKE_CURRENT_BINARY_DIR}/creo-brl.dat" @ONLY)
-  install(FILES "${CMAKE_CURRENT_BINARY_DIR}/creo-brl.dat" DESTINATION ${CREO_DAT_REL})
+
+  file(GLOB RESOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/resources/*.res")
+  add_custom_command(TARGET creo-brl POST_BUILD
+    COMMAND "${CMAKE_COMMAND}" -E make_directory
+      "${CREO_BUNDLE_BIN_DIR}"
+      "${CREO_BUNDLE_DIR}/text/usascii"
+      "${CREO_BUNDLE_DIR}/text/resource"
+      "${CREO_BUNDLE_DIR}/config"
+    COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+      "${CMAKE_CURRENT_BINARY_DIR}/creo-brl.dat" "${CREO_BUNDLE_DIR}/creo-brl.dat"
+    COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+      "${CREO_BUNDLE_README}" "${CREO_BUNDLE_DIR}/README.txt"
+    COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+      "${CMAKE_CURRENT_SOURCE_DIR}/resources/creo-brl-msg.txt" "${CREO_BUNDLE_DIR}/text/usascii/creo-brl-msg.txt"
+    COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+      "${CMAKE_CURRENT_SOURCE_DIR}/resources/ptc_materials.mtl" "${CREO_BUNDLE_DIR}/text/usascii/ptc_materials.mtl"
+    COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+      ${RESOURCE_FILES} "${CREO_BUNDLE_DIR}/text/resource"
+    COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+      "${CMAKE_CURRENT_SOURCE_DIR}/resources/Creo_to_BRL.g" "${CREO_BUNDLE_DIR}/config/Creo_to_BRL.g"
+    COMMAND_EXPAND_LISTS
+    COMMENT "Assembling Creo-BRL bundle in ${CREO_BUNDLE_ROOT}/$<CONFIG>"
+    )
+
+  # Collect transitive BRL-CAD DLLs when consuming the shared Windows package.
+  get_target_property(BRLCAD_RT_TYPE BRLCAD::rt TYPE)
+  if(WIN32 AND BRLCAD_RT_TYPE STREQUAL "SHARED_LIBRARY")
+    add_custom_command(TARGET creo-brl POST_BUILD
+      COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+        $<TARGET_RUNTIME_DLLS:creo-brl> "${CREO_BUNDLE_BIN_DIR}"
+      COMMAND_EXPAND_LISTS
+      )
+  endif()
+
+  # Keep install/CPack output identical to the build-tree bundle layout.
+  install(TARGETS creo-brl RUNTIME DESTINATION bin)
+  if(WIN32 AND BRLCAD_RT_TYPE STREQUAL "SHARED_LIBRARY")
+    install(FILES $<TARGET_RUNTIME_DLLS:creo-brl> DESTINATION bin)
+  endif()
+  install(FILES "${CMAKE_CURRENT_BINARY_DIR}/creo-brl.dat" DESTINATION .)
+  install(FILES "${CREO_BUNDLE_README}" DESTINATION . RENAME README.txt)
+  install(FILES resources/creo-brl-msg.txt resources/ptc_materials.mtl DESTINATION text/usascii)
+  install(FILES ${RESOURCE_FILES} DESTINATION text/resource)
+  install(FILES resources/Creo_to_BRL.g DESTINATION config)
 
   #----------------------------------------------------------------------#
   # Debugging executable version of plugin - only use this if necessary. #
@@ -431,56 +341,27 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   #----------------------------------------------------------------------#
   if(DEFINED CREO_EXEC_PLUGIN)
     add_executable(creo-brl-exe ${CREO2BRL_SOURCES})
-    target_link_libraries(creo-brl-exe ${WIN_LIBS} ${CREO_PTK_EXE_LIBS} ${BRLCAD_STATIC_LIBS})
-    foreach(ctype ${CMAKE_CONFIGURATION_TYPES})
-      set(DAT_STARTUP "spawn")
-      set(DAT_EXEC_FILE "${CMAKE_CURRENT_BINARY_DIR}/${ctype}/creo-brl-exe.exe")
-      set(DAT_TEXT_DIR ${CREO_MSG_DIR})
-      configure_file(creo-brl.dat.in "${CMAKE_CURRENT_BINARY_DIR}/${ctype}/creo-brl-debug.dat" @ONLY)
-    endforeach()
+    target_link_libraries(creo-brl-exe REGEX::REGEX ${WIN_LIBS} ${CREO_PTK_EXE_LIBS} ${CREO_BRLCAD_LIBS})
+    set_target_properties(creo-brl-exe PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CREO_BUNDLE_BIN_DIR}")
     set_property(TARGET creo-brl-exe APPEND PROPERTY COMPILE_DEFINITIONS "TINYCTHREAD_DLL_IMPORTS")
-  endif()
 
-  # Install the resource files
-  file(GLOB RESOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/resources/*.res")
-  set(rfiles_installed 1)
-  foreach(rfile ${RESOURCE_FILES})
-    install(FILES ${rfile} DESTINATION ${CREO_RES_REL})
-    get_filename_component(rfilename ${rfile} NAME)
-    if(NOT EXISTS "${CREO_RES_DIR}/${rfilename}")
-      set(rfiles_installed 0)
-    endif()
-  endforeach()
-
-  # Install the messages file
-  install(FILES resources/creo-brl-msg.txt DESTINATION ${CREO_MSG_REL})
-
-  # Install the material translation file
-  install(FILES resources/ptc_materials.mtl DESTINATION ${CREO_MSG_REL})
-
-  # Install the default user profile
-  install(FILES resources/Creo_to_BRL.g DESTINATION ${DEVTOOLS_DIR})
-
-  if(NOT EXISTS "${CREO_MSG_DIR}/creo-brl-msg.txt" OR NOT rfiles_installed)
-    message("-- #----------------------------------------------------------------------#")
-    message("-- # WARNING: CREO2BRL resource files are not installed...                #")
-    message("-- #----------------------------------------------------------------------#")
-    message("-- # Note that even with the EXE version of the plugin, the resource      #")
-    message("-- # files must be present in the correct locations within the CREO       #")
-    message("-- # installation in order to successfully run the plugin.  Be sure to    #")
-    message("-- # run the INSTALL target before starting a testing session.            #")
-    message("-- #----------------------------------------------------------------------#")
-    message("--")
+    set(DAT_STARTUP "spawn")
+    set(DAT_EXEC_FILE "${CMAKE_INSTALL_PREFIX}/bin/creo-brl-exe.exe")
+    set(DAT_TEXT_DIR "${CMAKE_INSTALL_PREFIX}")
+    configure_file(creo-brl.dat.in "${CMAKE_CURRENT_BINARY_DIR}/creo-brl-debug.dat" @ONLY)
+    add_custom_command(TARGET creo-brl-exe POST_BUILD
+      COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+        "${CMAKE_CURRENT_BINARY_DIR}/creo-brl-debug.dat" "${CREO_BUNDLE_DIR}/creo-brl-debug.dat"
+      )
   endif()
 
   message("--")
   message("-- #----------------------------------------------------------------------#")
-  message("-- # NOTICE: For installation follow this BUILD sequence                  #")
+  message("-- # NOTICE: Creo-BRL bundle                                              #")
   message("-- #----------------------------------------------------------------------#")
-  message("-- # BUILD:                                                               #")
-  message("-- #   1) creo-brl                                                        #")
-  message("-- #   2) unlock                                                          #")
-  message("-- #   3) install                                                         #")
+  message("-- # Build output : ${CREO_BUNDLE_ROOT}/<config>")
+  message("-- # Deploy target: ${CMAKE_INSTALL_PREFIX}")
+  message("-- # Run UNLOCK after building and before distributing the bundle.       #")
   message("-- #----------------------------------------------------------------------#")
   message("--")
 
@@ -488,14 +369,14 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   # Create the UNLOCK target                                             #
   #----------------------------------------------------------------------#
   add_custom_target(UNLOCK
-    COMMAND "${CREO_PTK_UNLOCKER}" ${CMAKE_CURRENT_BINARY_DIR}/$(configuration)/creo-brl.dll
+    COMMAND "${CREO_PTK_UNLOCKER}" "$<TARGET_FILE:creo-brl>"
     DEPENDS creo-brl
     COMMENT "Unlocking Creo-BRL dll"
   )
 
   #----------------------------------------------------------------------#
-  # Since we need to run "INSTALL" as part of normal development, it is  #
-  # worthwhile to provide an "UNINSTALL" target to automate the cleanup. #
+  # Provide an UNINSTALL target for users who deploy the bundle with the #
+  # CMake install target rather than copying the staged directory.       #
   #----------------------------------------------------------------------#
   configure_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/cmake_uninstall.cmake.in"
@@ -506,7 +387,7 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     COMMENT "Removing installed CREO2BRL components..."
     )
 
-  set(CPACK_GENERATOR NSIS ZIP)
+  set(CPACK_GENERATOR ZIP)
   set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Creo to BRL-CAD exporter for PTC's Creo Parametric")
   set(CPACK_PACKAGE_VENDOR "BRL-CAD Development Team")
   #TODO CPACK_RESOURCE_FILE_README and CPACK_RESOURCE_FILE_LICENSE)
@@ -521,10 +402,11 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   #----------------------------------------------------------------------#
   # Start building the EXTERNALS in Creo, Cubit, Unigraphics             #
   #----------------------------------------------------------------------#
+  brlcad_find_package(REGEX REQUIRED)
 
   set(CREO_DIRS
-    "${CMAKE_CURRENT_BINARY_DIR}/../../../include"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../../include"
+    "${BRLCAD_BINARY_DIR}/${INCLUDE_DIR}"
+    "${BRLCAD_SOURCE_DIR}/${INCLUDE_DIR}"
     "${OPENNURBS_INCLUDE_DIRS}"
      )
   BRLCAD_INCLUDE_DIRS(creo-brl "${CREO_DIRS}" PUBLIC)
@@ -538,7 +420,7 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   set(CREO2BRL_SOURCES ${CREO2BRL_SOURCES} shim.cpp)
   add_library(creo-brl ${CREO2BRL_SOURCES})
   set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS TEST_BUILD BRLCADBUILD HAVE_CONFIG_H)
-  target_link_libraries(creo-brl librt libwdb libbrep libbg libnmg libbv libbn libbu)
+  target_link_libraries(creo-brl librt libwdb libbrep libbg libnmg libbv libbn libbu REGEX::REGEX)
   set_target_properties(creo-brl PROPERTIES FOLDER "BRL-CAD Executables/Build Only")
   if(HIDE_INTERNAL_SYMBOLS)
     set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS "BU_DLL_IMPORTS")
