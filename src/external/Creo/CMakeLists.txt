@@ -290,7 +290,7 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
 
   set(DAT_STARTUP "dll")
   set(DAT_EXEC_FILE "${CMAKE_INSTALL_PREFIX}/bin/creo-brl.dll")
-  set(DAT_TEXT_DIR "${CMAKE_INSTALL_PREFIX}")
+  set(DAT_TEXT_DIR "${CMAKE_INSTALL_PREFIX}/text")
   configure_file(creo-brl.dat.in "${CMAKE_CURRENT_BINARY_DIR}/creo-brl.dat" @ONLY)
 
   file(GLOB RESOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/resources/*.res")
@@ -352,7 +352,7 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
 
     set(DAT_STARTUP "spawn")
     set(DAT_EXEC_FILE "${CMAKE_INSTALL_PREFIX}/bin/creo-brl-exe.exe")
-    set(DAT_TEXT_DIR "${CMAKE_INSTALL_PREFIX}")
+    set(DAT_TEXT_DIR "${CMAKE_INSTALL_PREFIX}/text")
     configure_file(creo-brl.dat.in "${CMAKE_CURRENT_BINARY_DIR}/creo-brl-debug.dat" @ONLY)
     add_custom_command(TARGET creo-brl-exe POST_BUILD
       COMMAND "${CMAKE_COMMAND}" -E copy_if_different
