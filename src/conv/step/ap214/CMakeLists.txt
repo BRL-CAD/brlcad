@@ -1822,6 +1822,7 @@ foreach(_test_name IN ITEMS direct_parallel_eight parallel_eight)
 endforeach()
 distclean("${CMAKE_CURRENT_BINARY_DIR}/ap214_lazy_diagnostics.json.verbose")
 distclean("${CMAKE_CURRENT_BINARY_DIR}/ap214_same_vertex_line_edge_reject.json.strict.json")
+distclean("${CMAKE_CURRENT_BINARY_DIR}/ap214_same_vertex_line_edge_zero_exact.json")
 
 # Local Variables:
 # tab-width: 8
