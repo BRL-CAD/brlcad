@@ -4,7 +4,7 @@ endif()
 
 set(plot_prefix "${TEST_DIR}/gqa-prefix")
 execute_process(
-  COMMAND "${MGED}" -c "${DB}" "gqa -Ab -p ${plot_prefix} -g 10000 all.g"
+  COMMAND "${MGED}" -c "${DB}" "gqa -Ab -p {${plot_prefix}} -g 10000 all.g"
   OUTPUT_VARIABLE gqa_output
   ERROR_VARIABLE gqa_error
   RESULT_VARIABLE gqa_result
@@ -16,7 +16,9 @@ if(NOT gqa_result EQUAL 0)
 endif()
 
 set(gqa_log "${gqa_output}\n${gqa_error}")
-if(gqa_log MATCHES "rt_gettree\\(${plot_prefix}\\) FAILED|invalid syntax|Usage: gqa")
+set(gqa_tree_error "rt_gettree(${plot_prefix}) FAILED")
+string(FIND "${gqa_log}" "${gqa_tree_error}" gqa_tree_error_offset)
+if(gqa_tree_error_offset GREATER_EQUAL 0 OR gqa_log MATCHES "invalid syntax|Usage: gqa")
   message(FATAL_ERROR "MGED treated the -p value as geometry:\n${gqa_log}")
 endif()
 if(NOT gqa_log MATCHES "bounding box:")
