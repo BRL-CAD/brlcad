@@ -1935,7 +1935,22 @@ write_image(const std::string &path, long size,
 		size_t pi = (size_t)y * (size_t)size + (size_t)x;
 		if (z <= depth[pi]) continue;
 		depth[pi] = z;
-		image_pixel(&pixels, size, x, y, 190, 205, 225);
+		vect_t ab, ac, normal;
+		VSUB2(ab, mesh->points[(size_t)ib].p,
+		    mesh->points[(size_t)ia].p);
+		VSUB2(ac, mesh->points[(size_t)ic].p,
+		    mesh->points[(size_t)ia].p);
+		VCROSS(normal, ab, ac);
+		if (MAGNITUDE(normal) > SMALL_FASTF) VUNITIZE(normal);
+		vect_t light = {0.35, -0.45, 0.82};
+		VUNITIZE(light);
+		double diffuse = std::max(0.0, VDOT(normal, light));
+		double fill = 0.22;
+		double intensity = std::min(1.0, fill + 0.78 * diffuse);
+		image_pixel(&pixels, size, x, y,
+		    (unsigned char)(145.0 * intensity),
+		    (unsigned char)(175.0 * intensity),
+		    (unsigned char)(220.0 * intensity));
 	    }
 	}
     }
