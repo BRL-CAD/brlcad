@@ -173,9 +173,9 @@ jobs:
       - name: Directory setup
         run: cmake -E make_directory build_distcheck-debug
       - name: Configure
-        run: cmake -S brlcad -B build_distcheck-debug -G Ninja -DCMAKE_BUILD_TYPE=Release -DBRLCAD_EXT_DIR=${{ github.workspace }}/bext_output
+        run: cmake -S brlcad -B build_distcheck-debug -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBRLCAD_EXT_DIR=${{ github.workspace }}/bext_output
       - name: Build
-        run: cmake --build build_distcheck-debug --config Release --target distcheck-debug
+        run: cmake --build build_distcheck-debug --config Debug --target distcheck-debug
       - name: Log
         if: always()
         run: cat build_distcheck-debug/distcheck-debug.log
@@ -236,8 +236,8 @@ jobs:
         if: failure()
         uses: mxschmitt/action-tmate@v3
 
-  distcheck-enableall_debug:
-    name: distcheck-enableall_debug
+  distcheck-no_unity_debug:
+    name: distcheck-no_unity_debug
     runs-on: ubuntu-latest
     needs: [distcheck-release]
     env:
@@ -277,11 +277,117 @@ jobs:
         with:
           path: brlcad
       - name: Directory setup
+        run: cmake -E make_directory build_distcheck-no_unity_debug
+      - name: Configure
+        run: cmake -S brlcad -B build_distcheck-no_unity_debug -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBRLCAD_EXT_DIR=${{ github.workspace }}/bext_output -DBRLCAD_ENABLE_UNITY_BUILD=OFF
+      - name: Build
+        run: cmake --build build_distcheck-no_unity_debug --config Debug --target distcheck-no_unity_debug
+      - name: Log
+        if: always()
+        run: cat build_distcheck-no_unity_debug/distcheck-no_unity_debug.log
+      - name: Debug if failure
+        if: failure()
+        uses: mxschmitt/action-tmate@v3
+
+  distcheck-no_unity_release:
+    name: distcheck-no_unity_release
+    runs-on: ubuntu-latest
+    needs: [distcheck-no_unity_debug]
+    env:
+      DEBIAN_FRONTEND: noninteractive
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Setup - CMake
+        uses: lukka/get-cmake@latest
+      - name: Cache apt packages
+        uses: actions/cache@v6
+        with:
+          path: |
+            /var/cache/apt/archives
+          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/check.yml') }}
+      - name: Install apt dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install xserver-xorg-dev libx11-dev libxi-dev libxext-dev libglu1-mesa-dev libfontconfig-dev
+          sudo apt-get install astyle re2c
+          sudo apt-get install zlib1g-dev libpng-dev libjpeg-dev libtiff-dev libeigen3-dev libgdal-dev libassimp-dev libopencv-dev tcl-dev tk-dev libgl-dev libinput-dev
+
+      - name: Setup - bext
+        run: |
+          git clone https://github.com/BRL-CAD/bext.git
+          cd bext
+          echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+          cd ..
+
+      - name: Cache bext build outputs
+        id: cache-bext
+        uses: actions/cache@v6
+        with:
+          path: ${{ github.workspace }}/bext_output
+          key: ${{ runner.os }}-bext-${{ steps.bext-sha.outputs.sha }}
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          path: brlcad
+      - name: Directory setup
+        run: cmake -E make_directory build_distcheck-no_unity_release
+      - name: Configure
+        run: cmake -S brlcad -B build_distcheck-no_unity_release -G Ninja -DCMAKE_BUILD_TYPE=Release -DBRLCAD_EXT_DIR=${{ github.workspace }}/bext_output -DBRLCAD_ENABLE_UNITY_BUILD=OFF
+      - name: Build
+        run: cmake --build build_distcheck-no_unity_release --config Release --target distcheck-no_unity_release
+      - name: Log
+        if: always()
+        run: cat build_distcheck-no_unity_release/distcheck-no_unity_release.log
+      - name: Debug if failure
+        if: failure()
+        uses: mxschmitt/action-tmate@v3
+
+  distcheck-enableall_debug:
+    name: distcheck-enableall_debug
+    runs-on: ubuntu-latest
+    needs: [distcheck-no_unity_release]
+    env:
+      DEBIAN_FRONTEND: noninteractive
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Setup - CMake
+        uses: lukka/get-cmake@latest
+      - name: Cache apt packages
+        uses: actions/cache@v6
+        with:
+          path: |
+            /var/cache/apt/archives
+          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/check.yml') }}
+      - name: Install apt dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install xserver-xorg-dev libx11-dev libxi-dev libxext-dev libglu1-mesa-dev libfontconfig-dev
+          sudo apt-get install astyle re2c
+          sudo apt-get install zlib1g-dev libpng-dev libjpeg-dev libtiff-dev libeigen3-dev libgdal-dev libassimp-dev libopencv-dev tcl-dev tk-dev libgl-dev libinput-dev
+
+      - name: Setup - bext
+        run: |
+          git clone https://github.com/BRL-CAD/bext.git
+          cd bext
+          echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+          cd ..
+
+      - name: Cache bext build outputs
+        id: cache-bext
+        uses: actions/cache@v6
+        with:
+          path: ${{ github.workspace }}/bext_output
+          key: ${{ runner.os }}-bext-${{ steps.bext-sha.outputs.sha }}
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          path: brlcad
+      - name: Directory setup
         run: cmake -E make_directory build_distcheck-enableall_debug
       - name: Configure
-        run: cmake -S brlcad -B build_distcheck-enableall_debug -G Ninja -DCMAKE_BUILD_TYPE=Release -DBRLCAD_EXT_DIR=${{ github.workspace }}/bext_output
+        run: cmake -S brlcad -B build_distcheck-enableall_debug -G Ninja -DCMAKE_BUILD_TYPE=Debug -DENABLE_ALL=ON -DBRLCAD_EXT_DIR=${{ github.workspace }}/bext_output
       - name: Build
-        run: cmake --build build_distcheck-enableall_debug --config Release --target distcheck-enableall_debug
+        run: cmake --build build_distcheck-enableall_debug --config Debug --target distcheck-enableall_debug
       - name: Log
         if: always()
         run: cat build_distcheck-enableall_debug/distcheck-enableall_debug.log
@@ -332,7 +438,7 @@ jobs:
       - name: Directory setup
         run: cmake -E make_directory build_distcheck-enableall_release
       - name: Configure
-        run: cmake -S brlcad -B build_distcheck-enableall_release -G Ninja -DCMAKE_BUILD_TYPE=Release -DBRLCAD_EXT_DIR=${{ github.workspace }}/bext_output
+        run: cmake -S brlcad -B build_distcheck-enableall_release -G Ninja -DCMAKE_BUILD_TYPE=Release -DENABLE_ALL=ON -DBRLCAD_EXT_DIR=${{ github.workspace }}/bext_output
       - name: Build
         run: cmake --build build_distcheck-enableall_release --config Release --target distcheck-enableall_release
       - name: Log
@@ -385,9 +491,9 @@ jobs:
       - name: Directory setup
         run: cmake -E make_directory build_distcheck-prepared_debug
       - name: Configure
-        run: cmake -S brlcad -B build_distcheck-prepared_debug -G Ninja -DCMAKE_BUILD_TYPE=Release -DBRLCAD_EXT_DIR=${{ github.workspace }}/bext_output
+        run: cmake -S brlcad -B build_distcheck-prepared_debug -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBRLCAD_EXT_DIR=${{ github.workspace }}/bext_output
       - name: Build
-        run: cmake --build build_distcheck-prepared_debug --config Release --target distcheck-prepared_debug
+        run: cmake --build build_distcheck-prepared_debug --config Debug --target distcheck-prepared_debug
       - name: Log
         if: always()
         run: cat build_distcheck-prepared_debug/distcheck-prepared_debug.log
@@ -491,9 +597,9 @@ jobs:
       - name: Directory setup
         run: cmake -E make_directory build_distcheck-no_tcl
       - name: Configure
-        run: cmake -S brlcad -B build_distcheck-no_tcl -G Ninja -DCMAKE_BUILD_TYPE=Release -DBRLCAD_EXT_DIR=${{ github.workspace }}/bext_output
+        run: cmake -S brlcad -B build_distcheck-no_tcl -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBRLCAD_EXT_DIR=${{ github.workspace }}/bext_output -DBRLCAD_ENABLE_TCL=OFF
       - name: Build
-        run: cmake --build build_distcheck-no_tcl --config Release --target distcheck-no_tcl
+        run: cmake --build build_distcheck-no_tcl --config Debug --target distcheck-no_tcl
       - name: Log
         if: always()
         run: cat build_distcheck-no_tcl/distcheck-no_tcl.log
@@ -544,9 +650,9 @@ jobs:
       - name: Directory setup
         run: cmake -E make_directory build_distcheck-no_tk
       - name: Configure
-        run: cmake -S brlcad -B build_distcheck-no_tk -G Ninja -DCMAKE_BUILD_TYPE=Release -DBRLCAD_EXT_DIR=${{ github.workspace }}/bext_output
+        run: cmake -S brlcad -B build_distcheck-no_tk -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBRLCAD_EXT_DIR=${{ github.workspace }}/bext_output -DBRLCAD_ENABLE_TK=OFF
       - name: Build
-        run: cmake --build build_distcheck-no_tk --config Release --target distcheck-no_tk
+        run: cmake --build build_distcheck-no_tk --config Debug --target distcheck-no_tk
       - name: Log
         if: always()
         run: cat build_distcheck-no_tk/distcheck-no_tk.log
@@ -597,9 +703,9 @@ jobs:
       - name: Directory setup
         run: cmake -E make_directory build_distcheck-no_strict
       - name: Configure
-        run: cmake -S brlcad -B build_distcheck-no_strict -G Ninja -DCMAKE_BUILD_TYPE=Release -DBRLCAD_EXT_DIR=${{ github.workspace }}/bext_output
+        run: cmake -S brlcad -B build_distcheck-no_strict -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBRLCAD_EXT_DIR=${{ github.workspace }}/bext_output -DBRLCAD_ENABLE_STRICT=OFF
       - name: Build
-        run: cmake --build build_distcheck-no_strict --config Release --target distcheck-no_strict
+        run: cmake --build build_distcheck-no_strict --config Debug --target distcheck-no_strict
       - name: Log
         if: always()
         run: cat build_distcheck-no_strict/distcheck-no_strict.log
@@ -650,9 +756,9 @@ jobs:
       - name: Directory setup
         run: cmake -E make_directory build_distcheck-no_object
       - name: Configure
-        run: cmake -S brlcad -B build_distcheck-no_object -G Ninja -DCMAKE_BUILD_TYPE=Release -DBRLCAD_EXT_DIR=${{ github.workspace }}/bext_output
+        run: cmake -S brlcad -B build_distcheck-no_object -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBRLCAD_EXT_DIR=${{ github.workspace }}/bext_output -DUSE_OBJECT_LIBS=OFF
       - name: Build
-        run: cmake --build build_distcheck-no_object --config Release --target distcheck-no_object
+        run: cmake --build build_distcheck-no_object --config Debug --target distcheck-no_object
       - name: Log
         if: always()
         run: cat build_distcheck-no_object/distcheck-no_object.log
@@ -703,9 +809,9 @@ jobs:
       - name: Directory setup
         run: cmake -E make_directory build_distcheck-odd_pathnames
       - name: Configure
-        run: cmake -S brlcad -B build_distcheck-odd_pathnames -G Ninja -DCMAKE_BUILD_TYPE=Release -DBRLCAD_EXT_DIR=${{ github.workspace }}/bext_output
+        run: cmake -S brlcad -B build_distcheck-odd_pathnames -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBRLCAD_EXT_DIR=${{ github.workspace }}/bext_output
       - name: Build
-        run: cmake --build build_distcheck-odd_pathnames --config Release --target distcheck-odd_pathnames
+        run: cmake --build build_distcheck-odd_pathnames --config Debug --target distcheck-odd_pathnames
       - name: Log
         if: always()
         run: cat build_distcheck-odd_pathnames/distcheck-odd_pathnames.log
@@ -756,13 +862,12 @@ jobs:
       - name: Directory setup
         run: cmake -E make_directory build_distcheck-in_src_dir
       - name: Configure
-        run: cmake -S brlcad -B build_distcheck-in_src_dir -G Ninja -DCMAKE_BUILD_TYPE=Release -DBRLCAD_EXT_DIR=${{ github.workspace }}/bext_output
+        run: cmake -S brlcad -B build_distcheck-in_src_dir -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBRLCAD_EXT_DIR=${{ github.workspace }}/bext_output
       - name: Build
-        run: cmake --build build_distcheck-in_src_dir --config Release --target distcheck-in_src_dir
+        run: cmake --build build_distcheck-in_src_dir --config Debug --target distcheck-in_src_dir
       - name: Log
         if: always()
         run: cat build_distcheck-in_src_dir/distcheck-in_src_dir.log
       - name: Debug if failure
         if: failure()
         uses: mxschmitt/action-tmate@v3
-

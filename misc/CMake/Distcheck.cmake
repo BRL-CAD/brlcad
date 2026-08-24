@@ -113,6 +113,11 @@ macro(
 
   # If we've already got a particular distcheck target, don't try to create it again.
   if(NOT TARGET distcheck-${TARGET_SUFFIX})
+    # Keep the original options for the generated CI job.  The target itself
+    # may add generator-specific arguments below, but those should not be
+    # duplicated in the workflow command.
+    set(distcheck_cmake_options_distcheck-${TARGET_SUFFIX} "${CMAKE_OPTS_IN}")
+
     # Need to set these locally so configure_file will pick them up...
     set(TARGET_SUFFIX ${TARGET_SUFFIX})
     set(CMAKE_OPTS ${CMAKE_OPTS_IN})
@@ -235,11 +240,44 @@ distclean("${distcheck_yml_out}")
 # here what we do for the more exotic build types - we want distcheck.yml
 # to be comprehensive, so the truncated Windows set won't do.
 if(NOT HAVE_WINDOWS_H)
-  function(emit_job JOBNAME PREVJOB)
+  function(distcheck_workflow_options OUTVAR OPTIONS)
+    set(workflow_options "${OPTIONS}")
+    set(workflow_ext_dir "\${{ github.workspace }}/bext_output")
+    if(DEFINED BRLCAD_EXT_DIR AND NOT "${BRLCAD_EXT_DIR}" STREQUAL "")
+      string(
+        REPLACE "-DBRLCAD_EXT_DIR=${BRLCAD_EXT_DIR}"
+        "-DBRLCAD_EXT_DIR=${workflow_ext_dir}"
+        workflow_options
+        "${workflow_options}"
+      )
+    else()
+      string(
+        REPLACE "-DBRLCAD_EXT_DIR="
+        "-DBRLCAD_EXT_DIR=${workflow_ext_dir}"
+        workflow_options
+        "${workflow_options}"
+      )
+    endif()
+    set(${OUTVAR} "${workflow_options}" PARENT_SCOPE)
+  endfunction()
+
+  function(distcheck_workflow_build_config OUTVAR OPTIONS)
+    # Keep --config explicit even for single-config generators.  Some CI
+    # environments constrain a multi-config generator to one configuration,
+    # and CMake does not reliably infer the intended configuration there.
+    set(workflow_config "${CMAKE_BUILD_TYPE}")
+    string(REGEX MATCH "-DCMAKE_BUILD_TYPE=([^ ]+)" build_type_option "${OPTIONS}")
+    if(build_type_option)
+      string(REGEX REPLACE "^-DCMAKE_BUILD_TYPE=" "" workflow_config "${build_type_option}")
+    endif()
+    set(${OUTVAR} "${workflow_config}" PARENT_SCOPE)
+  endfunction()
+
+  function(emit_job JOBNAME PREVJOB CMAKE_OPTIONS BUILD_CONFIG JOB_SEPARATOR)
     file(APPEND ${distcheck_yml_out} "  ${JOBNAME}:\n")
     file(APPEND ${distcheck_yml_out} "    name: ${JOBNAME}\n")
     file(APPEND ${distcheck_yml_out} "    runs-on: ubuntu-latest\n")
-    if(NOT \"${PREVJOB}\" STREQUAL \"\")
+    if(PREVJOB)
       file(APPEND ${distcheck_yml_out} "    needs: [${PREVJOB}]\n")
     endif()
     file(APPEND ${distcheck_yml_out} "    env:\n")
@@ -285,22 +323,35 @@ if(NOT HAVE_WINDOWS_H)
     file(APPEND ${distcheck_yml_out} "      - name: Directory setup\n")
     file(APPEND ${distcheck_yml_out} "        run: cmake -E make_directory build_${JOBNAME}\n")
     file(APPEND ${distcheck_yml_out} "      - name: Configure\n")
-    file(APPEND ${distcheck_yml_out} "        run: cmake -S brlcad -B build_${JOBNAME} -G Ninja -DCMAKE_BUILD_TYPE=Release -DBRLCAD_EXT_DIR=\${{ github.workspace }}/bext_output\n")
+    file(APPEND ${distcheck_yml_out} "        run: cmake -S brlcad -B build_${JOBNAME} -G Ninja ${CMAKE_OPTIONS}\n")
     file(APPEND ${distcheck_yml_out} "      - name: Build\n")
-    file(APPEND ${distcheck_yml_out} "        run: cmake --build build_${JOBNAME} --config Release --target ${JOBNAME}\n")
+    file(APPEND ${distcheck_yml_out} "        run: cmake --build build_${JOBNAME} --config ${BUILD_CONFIG} --target ${JOBNAME}\n")
     file(APPEND ${distcheck_yml_out} "      - name: Log\n")
     file(APPEND ${distcheck_yml_out} "        if: always()\n")
     file(APPEND ${distcheck_yml_out} "        run: cat build_${JOBNAME}/${JOBNAME}.log\n")
     file(APPEND ${distcheck_yml_out} "      - name: Debug if failure\n")
     file(APPEND ${distcheck_yml_out} "        if: failure()\n")
-    file(APPEND ${distcheck_yml_out} "        uses: mxschmitt/action-tmate@v3\n\n")
+    file(APPEND ${distcheck_yml_out} "        uses: mxschmitt/action-tmate@v3\n${JOB_SEPARATOR}")
   endfunction()
 
   execute_process(COMMAND ${CMAKE_COMMAND} -E copy "${PROJECT_SOURCE_DIR}/misc/CMake/distcheck_hdr.yml" "${distcheck_yml_out}")
   set(PREV_JOB "bext")
+  list(LENGTH distcheck_targets DISTCHECK_TARGET_COUNT)
+  math(EXPR DISTCHECK_LAST_INDEX "${DISTCHECK_TARGET_COUNT} - 1")
+  set(DISTCHECK_INDEX 0)
   foreach(JOB ${distcheck_targets})
-    emit_job("${JOB}" "${PREV_JOB}")
+    set(JOB_OPTIONS_VARIABLE "distcheck_cmake_options_${JOB}")
+    set(JOB_CMAKE_OPTIONS "${${JOB_OPTIONS_VARIABLE}}")
+    distcheck_workflow_options(JOB_WORKFLOW_OPTIONS "${JOB_CMAKE_OPTIONS}")
+    distcheck_workflow_build_config(JOB_BUILD_CONFIG "${JOB_CMAKE_OPTIONS}")
+    if(DISTCHECK_INDEX EQUAL DISTCHECK_LAST_INDEX)
+      set(JOB_SEPARATOR "")
+    else()
+      set(JOB_SEPARATOR "\n")
+    endif()
+    emit_job("${JOB}" "${PREV_JOB}" "${JOB_WORKFLOW_OPTIONS}" "${JOB_BUILD_CONFIG}" "${JOB_SEPARATOR}")
     set(PREV_JOB "${JOB}")
+    math(EXPR DISTCHECK_INDEX "${DISTCHECK_INDEX} + 1")
   endforeach()
 
   # Now compare to .github/workflows/distcheck.yml
