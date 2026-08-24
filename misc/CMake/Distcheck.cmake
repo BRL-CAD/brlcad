@@ -197,6 +197,8 @@ if(NOT HAVE_WINDOWS_H)
   # independently rebuilding the same external dependency set.
   create_distcheck(debug   "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_EXT_DIR=${BRLCAD_EXT_DIR}" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
   create_distcheck(release "-DCMAKE_BUILD_TYPE=Release -DBRLCAD_EXT_DIR=${BRLCAD_EXT_DIR}" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
+  create_distcheck(no_unity_debug "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_EXT_DIR=${BRLCAD_EXT_DIR} -DBRLCAD_ENABLE_UNITY_BUILD=OFF" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
+  create_distcheck(no_unity_release "-DCMAKE_BUILD_TYPE=Release -DBRLCAD_EXT_DIR=${BRLCAD_EXT_DIR} -DBRLCAD_ENABLE_UNITY_BUILD=OFF" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
   create_distcheck(enableall_debug   "-DCMAKE_BUILD_TYPE=Debug -DENABLE_ALL=ON -DBRLCAD_EXT_DIR=${BRLCAD_EXT_DIR}" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
   create_distcheck(enableall_release "-DCMAKE_BUILD_TYPE=Release -DENABLE_ALL=ON -DBRLCAD_EXT_DIR=${BRLCAD_EXT_DIR}" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
   create_distcheck(prepared_debug   "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_EXT_DIR=${BRLCAD_EXT_DIR}" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
