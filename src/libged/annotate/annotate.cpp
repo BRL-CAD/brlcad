@@ -110,8 +110,8 @@ const char *ATTR_LEADER_AT_AUTO = "annotate:leader-at-auto";
 const char *ATTR_LEADER_SCREEN_SPACE = "annotate:leader-screen-space";
 const char *ATTR_LEADER_DPI = "annotate:leader-dpi";
 
-#define ANNOT_OPT(_descs, _index, ...) do { \
-    BU_OPT((_descs)[(_index)], __VA_ARGS__); \
+#define ANNOT_OPT(_descs, _index, _so, _lo, _ahelp, _aprocess, _var, _help) do { \
+    BU_OPT((_descs)[(_index)], _so, _lo, _ahelp, _aprocess, _var, _help); \
     (_index)++; \
 } while (0)
 
