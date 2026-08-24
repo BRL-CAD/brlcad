@@ -124,6 +124,30 @@ arb8_reset(struct rt_edit *s, struct rt_arb_internal *arb, struct rt_arb8_edit *
     s->mv_context = 1;
 }
 
+static void
+arb5_reset(struct rt_edit *s, struct rt_arb_internal *arb, struct rt_arb8_edit *a)
+{
+    VSET(arb->pt[0], 0, 0, 0);
+    VSET(arb->pt[1], 1, 0, 0);
+    VSET(arb->pt[2], 1, 1, 0);
+    VSET(arb->pt[3], 0, 1, 0);
+    VSET(arb->pt[4], 0.5, 0.5, 1);
+    VMOVE(arb->pt[5], arb->pt[4]);
+    VMOVE(arb->pt[6], arb->pt[4]);
+    VMOVE(arb->pt[7], arb->pt[4]);
+
+    a->newedge = 0;
+    a->edit_menu = 0;
+
+    VSETALL(s->e_keypoint, 0.0);
+    MAT_IDN(s->acc_rot_sol);
+    MAT_IDN(s->incr_change);
+    s->acc_sc_sol = 1.0;
+    s->e_inpara = 0;
+    s->es_scale   = 0.0;
+    s->mv_context = 1;
+}
+
 
 int
 main(int argc, char *argv[])
@@ -284,6 +308,52 @@ main(int argc, char *argv[])
     if (rot_xy_ret != BRLCAD_OK)
 	bu_exit(1, "ERROR: RT_PARAMS_EDIT_ROT(xy) failed\n");
     bu_log("RT_PARAMS_EDIT_ROT(xy) SUCCESS: rotation applied via knob path\n");
+
+    /* ================================================================
+     * PTARB ARB5 point 5: both direct parameters and knob translation must
+     * retain the primitive-specific edit flag.  Point 5 is stored at pt[4]
+     * and duplicated in pt[5..7].
+     * ================================================================*/
+    arb5_reset(s, arb, a);
+    a->edit_menu = 8;  /* symbolic ARB5 point-5 menu argument */
+    rt_edit_set_edflag(s, PTARB);
+    s->edit_mode = RT_PARAMS_EDIT_TRANS;
+    s->e_inpara = 3;
+    VSET(s->e_para, 0.75, 0.75, 1.25);
+    s->mv_context = 0;
+    rt_edit_process(s);
+    {
+	point_t expected = {0.75, 0.75, 1.25};
+	point_t expected_base = {0, 0, 0};
+	if (!VNEAR_EQUAL(arb->pt[4], expected, VUNITIZE_TOL) ||
+	    !VNEAR_EQUAL(arb->pt[5], expected, VUNITIZE_TOL) ||
+	    !VNEAR_EQUAL(arb->pt[6], expected, VUNITIZE_TOL) ||
+	    !VNEAR_EQUAL(arb->pt[7], expected, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: PTARB ARB5 point 5 parameter edit failed\n");
+	if (!VNEAR_EQUAL(arb->pt[0], expected_base, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: PTARB ARB5 point 5 moved the base\n");
+	bu_log("PTARB ARB5 point 5 parameter edit SUCCESS\n");
+    }
+
+    arb5_reset(s, arb, a);
+    a->edit_menu = 8;
+    rt_edit_set_edflag(s, PTARB);
+    s->edit_mode = RT_PARAMS_EDIT_TRANS;
+    s->mv_context = 0;
+    VMOVE(s->curr_e_axes_pos, arb->pt[4]);
+    vect_t point_delta = {0.1, 0.2, 0.3};
+    rt_knob_edit_tran(s, 'm', 0, point_delta);
+    {
+	point_t expected = {0.6, 0.7, 1.3};
+	point_t expected_base = {0, 0, 0};
+	if (!VNEAR_EQUAL(arb->pt[4], expected, VUNITIZE_TOL) ||
+	    !VNEAR_EQUAL(arb->pt[5], expected, VUNITIZE_TOL) ||
+	    !VNEAR_EQUAL(arb->pt[6], expected, VUNITIZE_TOL) ||
+	    !VNEAR_EQUAL(arb->pt[7], expected, VUNITIZE_TOL) ||
+	    !VNEAR_EQUAL(arb->pt[0], expected_base, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: PTARB ARB5 point 5 knob edit failed\n");
+	bu_log("PTARB ARB5 point 5 knob edit SUCCESS\n");
+    }
 
 
     /* ================================================================
@@ -464,6 +534,25 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
     bu_log("ECMD_ARB_ROTATE_FACE SUCCESS: normal=(%.3f,%.3f,%.3f) D=%.3f\n",
 	   a->es_peqn[a->edit_menu][0], a->es_peqn[a->edit_menu][1],
 	   a->es_peqn[a->edit_menu][2], a->es_peqn[a->edit_menu][W]);
+
+    /* The same face operation must survive the interactive rotation knob
+     * adapter, which supplies an incremental matrix rather than parameters.
+     */
+    arb8_reset(s, arb, a);
+    a->edit_menu = 4;
+    s->e_inpara = 1;
+    s->e_para[0] = 1.0;
+    rt_edit_set_edflag(s, ECMD_ARB_SETUP_ROTFACE);
+    rt_edit_process(s);
+    plane_t knob_orig_peqn;
+    HMOVE(knob_orig_peqn, a->es_peqn[a->edit_menu]);
+    mat_t knob_rot;
+    MAT_IDN(knob_rot);
+    bn_mat_angles(knob_rot, 45.0, 0.0, 0.0);
+    rt_knob_edit_rot(s, 'm', 'm', 0, knob_rot);
+    if (VEQUAL(a->es_peqn[a->edit_menu], knob_orig_peqn))
+	bu_exit(1, "ERROR: ECMD_ARB_ROTATE_FACE knob edit did not rotate face\n");
+    bu_log("ECMD_ARB_ROTATE_FACE knob edit SUCCESS\n");
 
     rt_edit_destroy(s);
     db_close(dbip);
