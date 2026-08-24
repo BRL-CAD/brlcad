@@ -808,6 +808,66 @@ endfunction(rpath_build_dir_process)
 # bext repository management
 include(BRLCAD_EXT_Setup)
 
+function(brlcad_load_bext_manifest manifest install_root valid_var reason_var)
+  set(${valid_var} FALSE PARENT_SCOPE)
+  set(${reason_var} "unknown manifest error" PARENT_SCOPE)
+
+  if(NOT EXISTS "${manifest}")
+    set(${reason_var} "manifest is absent" PARENT_SCOPE)
+    return()
+  endif()
+
+  file(READ "${manifest}" _brlcad_manifest_json)
+  string(JSON _brlcad_schema ERROR_VARIABLE _brlcad_schema_error GET "${_brlcad_manifest_json}" schema)
+  if(NOT "${_brlcad_schema_error}" STREQUAL "NOTFOUND" OR NOT "${_brlcad_schema}" STREQUAL "1")
+    set(${reason_var} "unsupported or invalid schema" PARENT_SCOPE)
+    return()
+  endif()
+
+  string(JSON _brlcad_platform ERROR_VARIABLE _brlcad_platform_error GET "${_brlcad_manifest_json}" platform)
+  if(NOT "${_brlcad_platform_error}" STREQUAL "NOTFOUND" OR
+     NOT "${_brlcad_platform}" STREQUAL "${CMAKE_SYSTEM_NAME}")
+    set(${reason_var} "platform does not match the BRL-CAD build" PARENT_SCOPE)
+    return()
+  endif()
+
+  foreach(_brlcad_manifest_category RPATH BINARY CMAKE TEXT)
+    string(TOLOWER "${_brlcad_manifest_category}" _brlcad_manifest_key)
+    string(JSON _brlcad_count ERROR_VARIABLE _brlcad_count_error LENGTH
+      "${_brlcad_manifest_json}" "${_brlcad_manifest_key}")
+    if(NOT "${_brlcad_count_error}" STREQUAL "NOTFOUND")
+      set(${reason_var} "manifest is missing the ${_brlcad_manifest_key} category" PARENT_SCOPE)
+      return()
+    endif()
+
+    set(_brlcad_category_files)
+    if(_brlcad_count GREATER 0)
+      math(EXPR _brlcad_last "${_brlcad_count} - 1")
+      foreach(_brlcad_index RANGE 0 ${_brlcad_last})
+        string(JSON _brlcad_relative ERROR_VARIABLE _brlcad_path_error GET
+          "${_brlcad_manifest_json}" "${_brlcad_manifest_key}" ${_brlcad_index})
+        if(NOT "${_brlcad_path_error}" STREQUAL "NOTFOUND" OR
+           IS_ABSOLUTE "${_brlcad_relative}" OR
+           "${_brlcad_relative}" MATCHES "(^|/)\\.\\.(/|$)")
+          set(${reason_var} "invalid path in the ${_brlcad_manifest_key} category" PARENT_SCOPE)
+          return()
+        endif()
+        if(NOT EXISTS "${install_root}/${_brlcad_relative}")
+          set(${reason_var} "manifest references a missing file: ${_brlcad_relative}" PARENT_SCOPE)
+          return()
+        endif()
+        list(APPEND _brlcad_category_files "${_brlcad_relative}")
+      endforeach()
+    endif()
+    list(REMOVE_DUPLICATES _brlcad_category_files)
+    set(BEXT_MANIFEST_${_brlcad_manifest_category}_FILES
+      "${_brlcad_category_files}" PARENT_SCOPE)
+  endforeach()
+
+  set(${valid_var} TRUE PARENT_SCOPE)
+  set(${reason_var} "" PARENT_SCOPE)
+endfunction(brlcad_load_bext_manifest)
+
 #####################################################################
 # Processing for BRLCAD_EXT_INSTALL_DIR contents. We need to
 # keep the build directory copies of ${BRLCAD_EXT_DIR}/install files
@@ -860,6 +920,22 @@ function(brlcad_bext_process)
       "  install: ${BRLCAD_EXT_INSTALL_DIR}\n"
       "  noinstall: ${BRLCAD_EXT_NOINSTALL_DIR}"
     )
+  endif()
+
+  set(BEXT_MANIFEST_PATH "${BRLCAD_EXT_DIR}/bext-install-manifest.json")
+  brlcad_load_bext_manifest(
+    "${BEXT_MANIFEST_PATH}"
+    "${BRLCAD_EXT_INSTALL_DIR}"
+    BEXT_MANIFEST_VALID
+    BEXT_MANIFEST_ERROR
+  )
+  if(BEXT_MANIFEST_VALID)
+    message("Using bext install manifest: ${BEXT_MANIFEST_PATH}")
+  else()
+    message("Bext install manifest unavailable (${BEXT_MANIFEST_ERROR}); using compatibility characterization")
+  endif()
+  if(EXISTS "${BEXT_MANIFEST_PATH}")
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${BEXT_MANIFEST_PATH}")
   endif()
 
   # If we have a bext directories in the build directory, we need to clear them for distcheck
@@ -1287,7 +1363,16 @@ endfunction()
   set(BINARY_FILES)
   set(TEXT_FILES)
   set(NOEXEC_FILES)
-  if(EXISTS ${TP_INVENTORY_BINARIES})
+  if(BEXT_MANIFEST_VALID)
+    set(BINARY_FILES ${BEXT_MANIFEST_RPATH_FILES})
+    set(NOEXEC_FILES ${BEXT_MANIFEST_BINARY_FILES})
+    set(TEXT_FILES ${BEXT_MANIFEST_TEXT_FILES} ${BEXT_MANIFEST_CMAKE_FILES})
+    foreach(_brlcad_manifest_stale ${TP_STALE})
+      list(REMOVE_ITEM BINARY_FILES ${_brlcad_manifest_stale})
+      list(REMOVE_ITEM NOEXEC_FILES ${_brlcad_manifest_stale})
+      list(REMOVE_ITEM TEXT_FILES ${_brlcad_manifest_stale})
+    endforeach()
+  elseif(EXISTS ${TP_INVENTORY_BINARIES})
     file(READ "${TP_INVENTORY_BINARIES}" TP_B)
     string(REPLACE "\n" ";" BINARY_FILES "${TP_B}")
     if(TP_STALE)
@@ -1299,46 +1384,62 @@ endfunction()
     if(TP_CHANGED)
       list(REMOVE_ITEM BINARY_FILES ${TP_CHANGED})
     endif(TP_CHANGED)
-  endif(EXISTS ${TP_INVENTORY_BINARIES})
+  endif()
 
   # Use various tools to sort out which files are exec/lib files,
   # targeting only the files we've determined need processing (for an
   # initialization this is everything, but for subsequent passes there
   # is likely to be much less work to do.)
-  message("Characterizing new or changed bundled third party files...")
-  set_property(GLOBAL PROPERTY BRLCAD_EXT_NBINARY_FILES "")
-  set_property(GLOBAL PROPERTY BRLCAD_EXT_NTEXT_FILES "")
-  set_property(GLOBAL PROPERTY BRLCAD_EXT_NNOEXEC_FILES "")
-  set_property(GLOBAL PROPERTY BRLCAD_EXT_NBINARY_COUNT 0)
-  set_property(GLOBAL PROPERTY BRLCAD_EXT_NTEXT_COUNT 0)
-  set_property(GLOBAL PROPERTY BRLCAD_EXT_NNOEXEC_COUNT 0)
-  set_property(GLOBAL PROPERTY BRLCAD_EXT_PROCESSED_FILE_COUNT 0)
-  list(LENGTH TP_PROCESS ALL_PCNT)
-  # Batch classification only requires strclear's --classify support to split
-  # text vs. binary.  The RPATH sub-classification (plief) is optional:
-  #
-  #   * If an RPATH tool can batch-classify (P_RPATH_SUPPORTS_CLASSIFY), the
-  #     binaries are further split inside brlcad_ext_batch_file_type.
-  #   * If no RPATH tool exists at all (NOT P_RPATH_EXECUTABLE, the normal
-  #     Windows case - PE files have no RPATH), there is nothing to
-  #     sub-classify and every binary is a non-exec binary.
-  #
-  # Only when an RPATH tool is present but cannot batch-classify (e.g. a
-  # patchelf without --classify) do we still need the per-file path, so that
-  # the tool is invoked per binary to set RPATH correctly.  This lets Windows
-  # avoid the per-file execute_process() storm, which is the dominant
-  # configure cost, without regressing that edge case.
-  if(STRCLEAR_SUPPORTS_CLASSIFY AND NOT APPLE AND (P_RPATH_SUPPORTS_CLASSIFY OR NOT P_RPATH_EXECUTABLE))
-    brlcad_ext_batch_file_type(${ALL_PCNT} ${TP_PROCESS})
-  else()
+  if(BEXT_MANIFEST_VALID)
+    set(NBINARY_FILES)
+    set(NNOEXEC_FILES)
+    set(NTEXT_FILES)
     foreach(lf ${TP_PROCESS})
-      file_type("${lf}" ${ALL_PCNT})
-    endforeach(lf ${TP_PROCESS})
+      if(lf IN_LIST BEXT_MANIFEST_RPATH_FILES)
+        list(APPEND NBINARY_FILES "${lf}")
+      elseif(lf IN_LIST BEXT_MANIFEST_BINARY_FILES)
+        list(APPEND NNOEXEC_FILES "${lf}")
+      elseif(lf IN_LIST BEXT_MANIFEST_TEXT_FILES OR lf IN_LIST BEXT_MANIFEST_CMAKE_FILES)
+        list(APPEND NTEXT_FILES "${lf}")
+      endif()
+  endforeach()
+  message("Using bext manifest classifications for new or changed bundled third party files")
+  else()
+    message("Characterizing new or changed bundled third party files...")
+    set_property(GLOBAL PROPERTY BRLCAD_EXT_NBINARY_FILES "")
+    set_property(GLOBAL PROPERTY BRLCAD_EXT_NTEXT_FILES "")
+    set_property(GLOBAL PROPERTY BRLCAD_EXT_NNOEXEC_FILES "")
+    set_property(GLOBAL PROPERTY BRLCAD_EXT_NBINARY_COUNT 0)
+    set_property(GLOBAL PROPERTY BRLCAD_EXT_NTEXT_COUNT 0)
+    set_property(GLOBAL PROPERTY BRLCAD_EXT_NNOEXEC_COUNT 0)
+    set_property(GLOBAL PROPERTY BRLCAD_EXT_PROCESSED_FILE_COUNT 0)
+    list(LENGTH TP_PROCESS ALL_PCNT)
+    # Batch classification only requires strclear's --classify support to split
+    # text vs. binary.  The RPATH sub-classification (plief) is optional:
+    #
+    #   * If an RPATH tool can batch-classify (P_RPATH_SUPPORTS_CLASSIFY), the
+    #     binaries are further split inside brlcad_ext_batch_file_type.
+    #   * If no RPATH tool exists at all (NOT P_RPATH_EXECUTABLE, the normal
+    #     Windows case - PE files have no RPATH), there is nothing to
+    #     sub-classify and every binary is a non-exec binary.
+    #
+    # Only when an RPATH tool is present but cannot batch-classify (e.g. a
+    # patchelf without --classify) do we still need the per-file path, so that
+    # the tool is invoked per binary to set RPATH correctly.  This lets Windows
+    # avoid the per-file execute_process() storm, which is the dominant
+    # configure cost, without regressing that edge case.
+    if(STRCLEAR_SUPPORTS_CLASSIFY AND NOT APPLE AND (P_RPATH_SUPPORTS_CLASSIFY OR NOT P_RPATH_EXECUTABLE))
+      brlcad_ext_batch_file_type(${ALL_PCNT} ${TP_PROCESS})
+    else()
+      foreach(lf ${TP_PROCESS})
+        file_type("${lf}" ${ALL_PCNT})
+      endforeach(lf ${TP_PROCESS})
+    endif()
+    get_property(NBINARY_FILES GLOBAL PROPERTY BRLCAD_EXT_NBINARY_FILES)
+    get_property(NTEXT_FILES GLOBAL PROPERTY BRLCAD_EXT_NTEXT_FILES)
+    get_property(NNOEXEC_FILES GLOBAL PROPERTY BRLCAD_EXT_NNOEXEC_FILES)
+    message("Characterizing new or changed bundled third party files... done.")
   endif()
-  get_property(NBINARY_FILES GLOBAL PROPERTY BRLCAD_EXT_NBINARY_FILES)
-  get_property(NTEXT_FILES GLOBAL PROPERTY BRLCAD_EXT_NTEXT_FILES)
-  get_property(NNOEXEC_FILES GLOBAL PROPERTY BRLCAD_EXT_NNOEXEC_FILES)
-  message("Characterizing new or changed bundled third party files... done.")
 
   # Combine the previous lists and the new determinations, writing the
   # final lists back out to files
