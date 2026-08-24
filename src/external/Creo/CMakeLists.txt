@@ -7,7 +7,7 @@
 
 # Establish the list of Source files - this is needed
 # both for the plugin build and the main BRL-CAD build
-set(CREO2BRL_SOURCES
+set(CREO2BRL_CORE_SOURCES
   assembly.cpp
   csg.cpp
   main.cpp
@@ -278,10 +278,15 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     wsock32.lib
     )
 
-  add_library(creo-brl SHARED ${CREO2BRL_SOURCES})
-  set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-  target_link_libraries(creo-brl REGEX::REGEX ${WIN_LIBS} ${CREO_PTK_DLL_LIBS} ${CREO_BRLCAD_LIBS})
+  add_library(creo-brl-core SHARED ${CREO2BRL_CORE_SOURCES})
+  set_property(TARGET creo-brl-core APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
+  target_link_libraries(creo-brl-core REGEX::REGEX ${WIN_LIBS} ${CREO_PTK_DLL_LIBS} ${CREO_BRLCAD_LIBS})
+  set_target_properties(creo-brl-core PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CREO_BUNDLE_BIN_DIR}")
+
+  add_library(creo-brl SHARED loader.c)
+  target_link_libraries(creo-brl ${WIN_LIBS} ${CREO_PTK_DLL_LIBS})
   set_target_properties(creo-brl PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CREO_BUNDLE_BIN_DIR}")
+  add_dependencies(creo-brl creo-brl-core)
 
   set(DAT_STARTUP "dll")
   set(DAT_EXEC_FILE "${CMAKE_INSTALL_PREFIX}/bin/creo-brl.dll")
@@ -314,17 +319,17 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   # Collect transitive BRL-CAD DLLs when consuming the shared Windows package.
   get_target_property(BRLCAD_RT_TYPE BRLCAD::rt TYPE)
   if(WIN32 AND BRLCAD_RT_TYPE STREQUAL "SHARED_LIBRARY")
-    add_custom_command(TARGET creo-brl POST_BUILD
+    add_custom_command(TARGET creo-brl-core POST_BUILD
       COMMAND "${CMAKE_COMMAND}" -E copy_if_different
-        $<TARGET_RUNTIME_DLLS:creo-brl> "${CREO_BUNDLE_BIN_DIR}"
+        $<TARGET_RUNTIME_DLLS:creo-brl-core> "${CREO_BUNDLE_BIN_DIR}"
       COMMAND_EXPAND_LISTS
       )
   endif()
 
   # Keep install/CPack output identical to the build-tree bundle layout.
-  install(TARGETS creo-brl RUNTIME DESTINATION bin)
+  install(TARGETS creo-brl creo-brl-core RUNTIME DESTINATION bin)
   if(WIN32 AND BRLCAD_RT_TYPE STREQUAL "SHARED_LIBRARY")
-    install(FILES $<TARGET_RUNTIME_DLLS:creo-brl> DESTINATION bin)
+    install(FILES $<TARGET_RUNTIME_DLLS:creo-brl-core> DESTINATION bin)
   endif()
   install(FILES "${CMAKE_CURRENT_BINARY_DIR}/creo-brl.dat" DESTINATION .)
   install(FILES "${CREO_BUNDLE_README}" DESTINATION . RENAME README.txt)
@@ -340,7 +345,7 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   # possible issue in the Creo dev documentation.                        #
   #----------------------------------------------------------------------#
   if(DEFINED CREO_EXEC_PLUGIN)
-    add_executable(creo-brl-exe ${CREO2BRL_SOURCES})
+    add_executable(creo-brl-exe ${CREO2BRL_CORE_SOURCES})
     target_link_libraries(creo-brl-exe REGEX::REGEX ${WIN_LIBS} ${CREO_PTK_EXE_LIBS} ${CREO_BRLCAD_LIBS})
     set_target_properties(creo-brl-exe PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CREO_BUNDLE_BIN_DIR}")
     set_property(TARGET creo-brl-exe APPEND PROPERTY COMPILE_DEFINITIONS "TINYCTHREAD_DLL_IMPORTS")
@@ -370,7 +375,8 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   #----------------------------------------------------------------------#
   add_custom_target(UNLOCK
     COMMAND "${CREO_PTK_UNLOCKER}" "$<TARGET_FILE:creo-brl>"
-    DEPENDS creo-brl
+    COMMAND "${CREO_PTK_UNLOCKER}" "$<TARGET_FILE:creo-brl-core>"
+    DEPENDS creo-brl creo-brl-core
     COMMENT "Unlocking Creo-BRL dll"
   )
 
@@ -417,7 +423,7 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   #----------------------------------------------------------------------#
   CHECK_CXX_FLAG("Wno-maybe-uninitialized")
 
-  set(CREO2BRL_SOURCES ${CREO2BRL_SOURCES} shim.cpp)
+  set(CREO2BRL_SOURCES ${CREO2BRL_CORE_SOURCES} shim.cpp)
   add_library(creo-brl ${CREO2BRL_SOURCES})
   set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS TEST_BUILD BRLCADBUILD HAVE_CONFIG_H)
   target_link_libraries(creo-brl librt libwdb libbrep libbg libnmg libbv libbn libbu REGEX::REGEX)
@@ -439,6 +445,7 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   # Distcheck file list
   set(creo_dist_files
     ${CREO2BRL_SOURCES}
+    loader.c
     README.txt
     cmake_uninstall.cmake.in
     creo-brl.dat.in

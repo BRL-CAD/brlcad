@@ -38,8 +38,8 @@
 /* output_parts              Output all the parts                               */
 /* output_settings           Output converter settings to the current (.g) file */
 /* output_top_level_object   Output the top-level object                        */
-/* user_initialize           Required by Creo API                               */
-/* user_terminate            Required by Creo API                               */
+/* creo_brl_core_initialize  Runtime-loaded Creo core initialization            */
+/* creo_brl_core_terminate   Runtime-loaded Creo core termination               */
 /*                                                                              */
 
 #include "common.h"
@@ -1755,14 +1755,12 @@ creo_brl_access(uiCmdAccessMode UNUSED(access_mode))
 
 
 /*
- * IMPORTANT - the names of the next two functions - user_initialize
- * and user_terminate - are dictated by the Creo API.  These are the
- * hooks that tie the rest of the code into the Creo system.  Both
- * are *required* to be present, even if the user_terminate function
- * doesn't do any actual work.
+ * The real Creo-facing lifecycle lives in loader.c.  This runtime-loaded
+ * backend exports an explicit core ABI and keeps private user_* stubs only
+ * because protk_dll_NU.lib references those names in every Toolkit-linked DLL.
  */
 
-extern "C" int user_initialize()
+extern "C" __declspec(dllexport) int creo_brl_core_initialize()
 {
     ProError err = PRO_TK_GENERAL_ERROR;
 
@@ -1803,9 +1801,26 @@ extern "C" int user_initialize()
 }
 
 
-extern "C" void user_terminate()
+extern "C" __declspec(dllexport) void creo_brl_core_terminate()
 {
     ProMessageClear();
+}
+
+ /*
+  * IMPORTANT - the names of the next two functions - user_initialize
+  * and user_terminate - are dictated by the Creo API. Both are 
+  * *required* to be present, but we just use them as stubs for
+  * the runtime facade. The "real" logic is runtime-loaded from
+  * loader.c
+  */
+extern "C" int user_initialize()
+{
+    return 0;
+}
+
+
+extern "C" void user_terminate()
+{
 }
 
 // Local Variables:
