@@ -35,7 +35,7 @@ jobs:
 
       # Cache apt package downloads (not installed pkgs)
       - name: Cache apt packages
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             /var/cache/apt/archives
@@ -77,7 +77,7 @@ jobs:
 
       - name: Cache bext build outputs
         id: cache-bext
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ${{ github.workspace }}/bext_output
           key: ${{ runner.os }}-bext-${{ steps.cachekey.outputs.hash }}
@@ -138,7 +138,7 @@ jobs:
         uses: lukka/get-cmake@latest
 
       - name: Cache apt packages
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             /var/cache/apt/archives
@@ -183,7 +183,7 @@ jobs:
 
       - name: Cache bext build outputs
         id: cache-bext
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ${{ github.workspace }}/bext_output
           key: ${{ runner.os }}-bext-${{ steps.cachekey.outputs.hash }}
@@ -226,7 +226,7 @@ jobs:
         uses: lukka/get-cmake@latest
 
       - name: Cache apt packages
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             /var/cache/apt/archives
@@ -319,7 +319,7 @@ jobs:
 
       - name: Cache bext build outputs
         id: cache-bext
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ${{ github.workspace }}\bext_output
           key: windows-bext-${{ steps.cachekey.outputs.hash }}
@@ -428,7 +428,7 @@ jobs:
 
       - name: Cache bext build outputs
         id: cache-bext
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ${{ github.workspace }}\bext_output
           key: windows-bext-${{ steps.cachekey.outputs.hash }}
@@ -573,7 +573,7 @@ jobs:
 
       - name: Cache bext build outputs
         id: cache-bext
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ${{ github.workspace }}/bext_output
           key: macos-bext-${{ steps.cachekey.outputs.hash }}
