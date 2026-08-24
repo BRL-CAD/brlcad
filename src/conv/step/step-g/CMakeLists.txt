@@ -1073,6 +1073,35 @@ cmakefiles(
   tests/ap203_unclamped_closed_curve_knots.stp
 )
 
+set(_ap203_generated_tests
+  budget_controls
+  closed_curve_seam_interval
+  closed_nurbs_interval
+  closed_nurbs_interval_exact
+  direct_manifold
+  doubly_periodic_native_remap_transaction
+  lazy_relationships
+  malformed_representation
+  multi_schema_header
+  non_geometric_representation
+  partial_coverage
+  partial_coverage_strict
+  periodic_budget_solid_a
+  periodic_budget_solid_b
+  periodic_pole_solid
+  periodic_zero_split
+  scaled_periodic_pole_solids
+  toroidal_band
+  unsupported_geometry
+  unsupported_geometry_strict
+)
+foreach(_test_name IN LISTS _ap203_generated_tests)
+  foreach(_extension IN ITEMS json g stp csv)
+    distclean("${CMAKE_CURRENT_BINARY_DIR}/ap203_${_test_name}.${_extension}")
+  endforeach()
+endforeach()
+distclean("${CMAKE_CURRENT_BINARY_DIR}/ap203_toroidal_band.json.repair-none")
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

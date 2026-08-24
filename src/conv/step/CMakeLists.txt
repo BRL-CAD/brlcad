@@ -657,6 +657,7 @@ if(BRLCAD_ENABLE_STEP)
     set(STEP_PLUGIN_HAVE_AP242E4 1)
   endif()
   configure_file(StepPluginConfig.h.in StepPluginConfig.h @ONLY)
+  distclean("${CMAKE_CURRENT_BINARY_DIR}/StepPluginConfig.h")
 endif()
 
 # FIXME: the IFC converter is incomplete

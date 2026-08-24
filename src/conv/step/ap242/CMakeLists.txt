@@ -621,6 +621,18 @@ cmakefiles(
   tests/ap242_tessellated_open_solid.stp
 )
 
+foreach(_test_name IN ITEMS malformed_representation non_geometric_representation unsupported_geometry unsupported_geometry_strict)
+  foreach(_extension IN ITEMS json stp)
+    distclean("${CMAKE_CURRENT_BINARY_DIR}/AP242_${_test_name}.${_extension}")
+  endforeach()
+endforeach()
+foreach(_test_name IN ITEMS partial_policy partial_policy_strict)
+  foreach(_extension IN ITEMS json g stp)
+    distclean("${CMAKE_CURRENT_BINARY_DIR}/ap242_${_test_name}.${_extension}")
+  endforeach()
+endforeach()
+distclean("${CMAKE_CURRENT_BINARY_DIR}/ap242_partial_policy.stp.base")
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

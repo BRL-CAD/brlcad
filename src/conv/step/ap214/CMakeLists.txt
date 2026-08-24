@@ -1759,6 +1759,70 @@ cmakefiles(
   tests/ap214_geometric_surface_set.stp
 )
 
+# Regression tests write reports and converted databases beside this file.
+# Repeated and strict runs add suffixes at test time, so construct every
+# supported output name explicitly without scanning the directory.
+set(_ap214_generated_tests
+  budget_controls
+  closed_curve_endpoint_interval
+  closed_curve_endpoint_interval_exact
+  closed_curve_interior_seam
+  closed_curve_interior_seam_exact
+  closed_curve_near_native_seam
+  closed_curve_near_native_seam_exact
+  collapsed_topology_edge
+  collapsed_topology_edge_exact
+  deterministic_a
+  deterministic_b
+  direct_parallel_eight
+  direct_parallel_serial
+  distinct_edge_keyhole_rejoin
+  distinct_edge_keyhole_rejoin_exact
+  dry_run
+  eccentric_ellipse_arc
+  eccentric_ellipse_arc_exact
+  entity_selection
+  lazy_diagnostics
+  lazy_many_solids
+  missing_face_reference
+  missing_face_reference_none
+  missing_face_reference_safe
+  neighbor_keyhole_seam
+  nonmanifold_four_use_edge
+  paired_singleton_keyhole
+  parallel_eight
+  parallel_serial
+  per_representation_tolerance
+  per_representation_tolerance_override
+  repair_none
+  repair_safe
+  representation_tolerance_periodic_cap
+  representation_tolerance_periodic_cap_override
+  same_vertex_line_edge
+  same_vertex_line_edge_exact
+  same_vertex_line_edge_reject
+  same_vertex_line_edge_zero
+  singleton_keyhole_solid
+  solid_replica_cycle
+  spherical_antipodal_boundary
+  spherical_antipodal_boundary_with_hole
+  style_layer
+)
+foreach(_test_name IN LISTS _ap214_generated_tests)
+  foreach(_extension IN ITEMS json g stp csv)
+    distclean("${CMAKE_CURRENT_BINARY_DIR}/ap214_${_test_name}.${_extension}")
+  endforeach()
+endforeach()
+foreach(_test_name IN ITEMS direct_parallel_eight parallel_eight)
+  foreach(_extension IN ITEMS g json)
+    foreach(_repeat IN ITEMS repeat2 repeat3 repeat4)
+      distclean("${CMAKE_CURRENT_BINARY_DIR}/ap214_${_test_name}.${_extension}.${_repeat}")
+    endforeach()
+  endforeach()
+endforeach()
+distclean("${CMAKE_CURRENT_BINARY_DIR}/ap214_lazy_diagnostics.json.verbose")
+distclean("${CMAKE_CURRENT_BINARY_DIR}/ap214_same_vertex_line_edge_reject.json.strict.json")
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake
