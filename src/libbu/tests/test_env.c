@@ -79,7 +79,24 @@ process_mem_tests(void)
     }
 
     struct rlimit limited = original;
-    const rlim_t test_limit = (rlim_t)512 * 1024 * 1024;
+    const rlim_t test_headroom = (rlim_t)512 * 1024 * 1024;
+    rlim_t test_limit = test_headroom;
+#if defined(__APPLE__) && defined(HAVE_MACH_MACH_H)
+    struct task_basic_info task_memory;
+    mach_msg_type_number_t task_count = TASK_BASIC_INFO_COUNT;
+    if (task_info(mach_task_self(), TASK_BASIC_INFO,
+	    (task_info_t)&task_memory, &task_count) != KERN_SUCCESS) {
+	bu_log("bu_mem process-limit test: task_info(TASK_BASIC_INFO) failed\n");
+	return -2;
+    }
+    if ((rlim_t)task_memory.virtual_size > RLIM_INFINITY - test_headroom) {
+	bu_log("bu_mem process-limit test: current virtual size is too large "
+	       "to add test headroom\n");
+	return -2;
+    }
+    /* XNU rejects an address-space limit below the process's current map. */
+    test_limit = (rlim_t)task_memory.virtual_size + test_headroom;
+#endif
     if (limited.rlim_max != RLIM_INFINITY &&
 	    limited.rlim_max < test_limit)
 	limited.rlim_cur = limited.rlim_max;
@@ -95,7 +112,7 @@ process_mem_tests(void)
 	       (unsigned long long)original.rlim_max,
 	       (unsigned long long)limited.rlim_cur,
 	       (unsigned long long)limited.rlim_max);
-	return -2;
+	return -3;
     }
 
     const ssize_t available = bu_mem(BU_MEM_PROCESS_AVAIL, NULL);
@@ -109,7 +126,7 @@ process_mem_tests(void)
 	       (unsigned long long)limited.rlim_max,
 	       (unsigned long long)original.rlim_cur,
 	       (unsigned long long)original.rlim_max);
-	return -3;
+	return -4;
 	}
     if (available < 0 || (rlim_t)available > limited.rlim_cur) {
 	bu_log("bu_mem process-limit test: BU_MEM_PROCESS_AVAIL returned %zd; "
@@ -121,7 +138,7 @@ process_mem_tests(void)
 	       (unsigned long long)original.rlim_max,
 	       (unsigned long long)limited.rlim_cur,
 	       (unsigned long long)limited.rlim_max);
-	return -4;
+	return -5;
     }
 #else
     if (bu_mem(BU_MEM_PROCESS_AVAIL, NULL) >= 0)
