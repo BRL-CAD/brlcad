@@ -120,9 +120,9 @@ jobs:
       - name: Directory setup
         run: cmake -E make_directory build_distcheck-default_build_type
       - name: Configure
-        run: cmake -S brlcad -B build_distcheck-default_build_type -G Ninja -DCMAKE_BUILD_TYPE=Release -DBRLCAD_EXT_DIR=${{ github.workspace }}/bext_output
+        run: cmake -S brlcad -B build_distcheck-default_build_type -G Ninja -DBRLCAD_EXT_DIR=${{ github.workspace }}/bext_output
       - name: Build
-        run: cmake --build build_distcheck-default_build_type --config Release --target distcheck-default_build_type
+        run: cmake --build build_distcheck-default_build_type --target distcheck-default_build_type
       - name: Log
         if: always()
         run: cat build_distcheck-default_build_type/distcheck-default_build_type.log

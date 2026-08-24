@@ -191,10 +191,9 @@ endmacro(create_distcheck)
 # this makes the default configuration consistent with the prepared variants.
 # The automatic bext path is still exercised by ordinary configurations that do
 # not specify BRLCAD_EXT_DIR.
-# Preserve the parent build type.  This is particularly important on Windows,
-# where the archive build reuses the parent bext tree and Debug and Release
-# binaries cannot be mixed.
-create_distcheck(default_build_type "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DBRLCAD_EXT_DIR=${BRLCAD_EXT_DIR}" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
+# Leave the default archive build type unspecified so it can use the project's
+# normal default independently of the parent configure.
+create_distcheck(default_build_type "-DBRLCAD_EXT_DIR=${BRLCAD_EXT_DIR}" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
 
 if(NOT HAVE_WINDOWS_H)
   # Reuse the bext outputs produced by the parent configure.  This is a massive
@@ -262,10 +261,9 @@ if(NOT HAVE_WINDOWS_H)
   endfunction()
 
   function(distcheck_workflow_build_config OUTVAR OPTIONS)
-    # Keep --config explicit even for single-config generators.  Some CI
-    # environments constrain a multi-config generator to one configuration,
-    # and CMake does not reliably infer the intended configuration there.
-    set(workflow_config "${CMAKE_BUILD_TYPE}")
+    # Only set --config when the target explicitly selects a build type.  The
+    # default target deliberately leaves that choice to its sub-build.
+    set(workflow_config "")
     string(REGEX MATCH "-DCMAKE_BUILD_TYPE=([^ ]+)" build_type_option "${OPTIONS}")
     if(build_type_option)
       string(REGEX REPLACE "^-DCMAKE_BUILD_TYPE=" "" workflow_config "${build_type_option}")
@@ -325,7 +323,11 @@ if(NOT HAVE_WINDOWS_H)
     file(APPEND ${distcheck_yml_out} "      - name: Configure\n")
     file(APPEND ${distcheck_yml_out} "        run: cmake -S brlcad -B build_${JOBNAME} -G Ninja ${CMAKE_OPTIONS}\n")
     file(APPEND ${distcheck_yml_out} "      - name: Build\n")
-    file(APPEND ${distcheck_yml_out} "        run: cmake --build build_${JOBNAME} --config ${BUILD_CONFIG} --target ${JOBNAME}\n")
+    file(APPEND ${distcheck_yml_out} "        run: cmake --build build_${JOBNAME}")
+    if(NOT "${BUILD_CONFIG}" STREQUAL "")
+      file(APPEND ${distcheck_yml_out} " --config ${BUILD_CONFIG}")
+    endif()
+    file(APPEND ${distcheck_yml_out} " --target ${JOBNAME}\n")
     file(APPEND ${distcheck_yml_out} "      - name: Log\n")
     file(APPEND ${distcheck_yml_out} "        if: always()\n")
     file(APPEND ${distcheck_yml_out} "        run: cat build_${JOBNAME}/${JOBNAME}.log\n")
