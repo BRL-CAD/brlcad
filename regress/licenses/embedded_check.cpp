@@ -60,7 +60,6 @@ process_file(std::string f, std::map<std::string, std::string> &file_to_license)
     std::regex copyright_regex(".*[Cc]opyright.*[1-2][0-9][0-9][0-9].*");
     std::regex gov_regex(".*United[ ]States[ ]Government.*");
     std::regex pd_regex(".*[Pp]ublic[ ][Dd]omain.*");
-    std::regex pd_data_regex(".*([Dd]ata.*[Pp]ublic[ ]+[Dd]omain|[Pp]ublic[ ]+[Dd]omain.*[Dd]ata).*");
     std::string sline;
     std::ifstream fs;
     fs.open(f);
@@ -73,7 +72,6 @@ process_file(std::string f, std::map<std::string, std::string> &file_to_license)
     bool gov_copyright = false;
     bool other_copyright = false;
     bool public_domain = false;
-    bool public_domain_license = false;
 
     // Check the first 50 lines of the file for copyright statements
     while (std::getline(fs, sline) && lcnt < MAX_LINES_CHECK) {
@@ -89,12 +87,6 @@ process_file(std::string f, std::map<std::string, std::string> &file_to_license)
 	} else {
 	    if (std::regex_match(sline, pd_regex)) {
 		public_domain = true;
-		// Data and dataset references describe input material, not embedded
-		// code licensing, so they should not require an embedded license
-		// document.
-		if (!std::regex_match(sline, pd_data_regex)) {
-		    public_domain_license = true;
-		}
 	    }
 	}
 	lcnt++;
@@ -102,7 +94,7 @@ process_file(std::string f, std::map<std::string, std::string> &file_to_license)
     fs.close();
 
 
-    if (gov_copyright && public_domain_license) {
+    if (gov_copyright && public_domain) {
 	if (file_to_license.find(f) == file_to_license.end()) {
 	    std::cerr << "FILE " << f << " has no associated reference in a license file! (gov copyright + public domain references)\n";
 	    return 1;
@@ -263,3 +255,4 @@ main(int argc, const char *argv[])
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
+
