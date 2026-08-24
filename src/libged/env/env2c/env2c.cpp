@@ -204,8 +204,7 @@ main(int argc, const char *argv[])
 	/*************************************************************/
 	/*     Filter files down to the set we want to process       */
 	/*************************************************************/
-	std::regex skip_regex(".*/(tests|tools|docbook)/.*");
-	//std::regex skip_regex(".*/(other|tests|tools|docbook)/.*");
+	std::regex skip_regex(".*/(asciidoc|regress|tests|tools)/.*");
 	std::string sfile;
 	std::ifstream fs;
 	fs.open(argv[1]);
