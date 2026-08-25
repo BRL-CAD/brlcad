@@ -59,6 +59,34 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     BRLCAD::bu
     )
 
+  # TARGET_RUNTIME_DLLS does not capture the full BRL-CAD runtime set for this
+  # plugin build, so stage the required DLLs from the BRL-CAD package bin/.
+  set(CREO_BRLCAD_RUNTIME_DLL_NAMES
+    Clipper2
+    libbg
+    libbn
+    libbrep
+    libbu
+    libbv
+    libnmg
+    librt
+    libwdb
+    lmdb
+    manifold
+    mmesh
+    OpenNURBS
+    regex_brl
+    z_brl
+    )
+  set(CREO_BRLCAD_RUNTIME_DLLS)
+  foreach(dll_name ${CREO_BRLCAD_RUNTIME_DLL_NAMES})
+    set(dll_path "${BRLCAD_DIR}/bin/${dll_name}.dll")
+    if(NOT EXISTS "${dll_path}")
+      message(FATAL_ERROR "Missing BRL-CAD runtime DLL: ${dll_path}")
+    endif()
+    list(APPEND CREO_BRLCAD_RUNTIME_DLLS "${dll_path}")
+  endforeach()
+
   # Must supply CREO_ROOT_DIR (typically /c/Program Files/PTC/Creo <version>/)
   set(CREO_ROOT_DIR "" CACHE PATH "Creo installation root")
   if(NOT IS_DIRECTORY "${CREO_ROOT_DIR}")
@@ -199,6 +227,7 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     "${BRLCAD_INCLUDE_DIRS}"
     "${CREO_PTK_INC_DIR}"
     "${CREO_PTK_APP_INC_DIR}"
+    "${OPENNURBS_INCLUDE_DIRS}"
     )
 
   #----------------------------------------------------------------------#
@@ -283,7 +312,9 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   target_link_libraries(creo-brl-core REGEX::REGEX ${WIN_LIBS} ${CREO_PTK_DLL_LIBS} ${CREO_BRLCAD_LIBS})
   set_target_properties(creo-brl-core PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CREO_BUNDLE_BIN_DIR}")
 
-  add_library(creo-brl SHARED loader.c)
+  add_library(creo-brl SHARED
+    loader.c
+    frontend.cpp)
   target_link_libraries(creo-brl ${WIN_LIBS} ${CREO_PTK_DLL_LIBS})
   set_target_properties(creo-brl PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CREO_BUNDLE_BIN_DIR}")
   add_dependencies(creo-brl creo-brl-core)
@@ -316,21 +347,16 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     COMMENT "Assembling Creo-BRL bundle in ${CREO_BUNDLE_ROOT}/$<CONFIG>"
     )
 
-  # Collect transitive BRL-CAD DLLs when consuming the shared Windows package.
-  get_target_property(BRLCAD_RT_TYPE BRLCAD::rt TYPE)
-  if(WIN32 AND BRLCAD_RT_TYPE STREQUAL "SHARED_LIBRARY")
-    add_custom_command(TARGET creo-brl-core POST_BUILD
-      COMMAND "${CMAKE_COMMAND}" -E copy_if_different
-        $<TARGET_RUNTIME_DLLS:creo-brl-core> "${CREO_BUNDLE_BIN_DIR}"
-      COMMAND_EXPAND_LISTS
-      )
-  endif()
+  # Stage the BRL-CAD runtime DLL set alongside the facade and core.
+  add_custom_command(TARGET creo-brl-core POST_BUILD
+    COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+      ${CREO_BRLCAD_RUNTIME_DLLS} "${CREO_BUNDLE_BIN_DIR}"
+    COMMAND_EXPAND_LISTS
+    )
 
   # Keep install/CPack output identical to the build-tree bundle layout.
   install(TARGETS creo-brl creo-brl-core RUNTIME DESTINATION bin)
-  if(WIN32 AND BRLCAD_RT_TYPE STREQUAL "SHARED_LIBRARY")
-    install(FILES $<TARGET_RUNTIME_DLLS:creo-brl-core> DESTINATION bin)
-  endif()
+  install(FILES ${CREO_BRLCAD_RUNTIME_DLLS} DESTINATION bin)
   install(FILES "${CMAKE_CURRENT_BINARY_DIR}/creo-brl.dat" DESTINATION .)
   install(FILES "${CREO_BUNDLE_README}" DESTINATION . RENAME README.txt)
   install(FILES resources/creo-brl-msg.txt resources/ptc_materials.mtl DESTINATION text/usascii)

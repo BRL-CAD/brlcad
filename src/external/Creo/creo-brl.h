@@ -384,7 +384,7 @@ extern "C" char * get_unit_sys(int);                                            
 extern "C" char * get_username(void);                                                       /* get_username          */
 extern "C" int global_dir(struct directory *);                                              /* global_dir            */
 extern "C" void load_defaults(void);                                                        /* load_defaults         */
-extern "C" void load_profile(void);                                                         /* load_profile          */
+extern "C" __declspec(dllexport) void load_profile(void);                                                         /* load_profile          */
 extern "C" void load_resource(const char *, const char *, const char *, const char *);      /* load_resource         */
 extern "C" void lower_case(char *);                                                         /* lower_case            */
 extern "C" ProError param_append(void *, ProError, ProAppData);                             /* param_append          */
