@@ -778,7 +778,7 @@ private:
 	const std::string region_name = base + ".r";
 	const std::array<unsigned char, 3> rgb = rgb_bytes(color_at(state.material, material_index));
 	if (mk_lrcomb(writer_, region_name.c_str(), &members, 1, nullptr, nullptr,
-		const_cast<unsigned char *>(rgb.data()), next_id_++, 0, 1, 100, 0) != 0) {
+		const_cast<unsigned char *>(rgb.data()), next_id_++, 0, 0, 100, 0) != 0) {
 	    bu_log("ERROR: failed to write VRML 1.0 region %s\n", region_name.c_str());
 	    return false;
 	}

@@ -483,7 +483,7 @@ Part_import(int id_start)
 	if (mk_addmember(part->brlcad_solid, &reg_head.l, NULL, WMOP_UNION) == WMEMBER_NULL)
 	    bu_exit(1, "%s: ERROR: Failed to add solid (%s), to region (%s)\n", progname, part->brlcad_solid, part->brlcad_comb);
 	if (mk_comb(fd_out, part->brlcad_comb, &reg_head.l, 1, NULL, NULL, rgb, ident++,
-		    0, 1, 100, 0, 0, 0))
+		    0, 0, 100, 0, 0, 0))
 	    bu_exit(1, "%s: Failed to write region %s (%s) to database\n", progname, part->brlcad_comb, part->obj_name);
 	if (verbose) {
 	    DO_INDENT;

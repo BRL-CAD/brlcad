@@ -265,13 +265,13 @@ convert_input(struct conversion_state* pstate)
         if (pstate->ply_read_options->verbose || pstate->gcv_options->verbosity_level) {
             bu_log("No color information specified\n");
         }
-        if (mk_comb(pstate->fd_out, bu_vls_addr(&region_name), &pstate->wm.l, 1, NULL, NULL, NULL, 1000, 0, 1, 100, 0, 0, 0)) {
+        if (mk_comb(pstate->fd_out, bu_vls_addr(&region_name), &pstate->wm.l, 1, NULL, NULL, NULL, 1000, 0, 0, 100, 0, 0, 0)) {
             bu_log("ERROR: Failed to write region(%s) to database\n", bu_vls_addr(&region_name));
             goto free_bot;
         }
     } else if (irgb[3]) {
         bu_log("All triangles are not the same color. No color information written!\n");
-        if (mk_comb(pstate->fd_out, bu_vls_addr(&region_name), &pstate->wm.l, 1, NULL, NULL, NULL, 1000, 0, 1, 100, 0, 0, 0)) {
+        if (mk_comb(pstate->fd_out, bu_vls_addr(&region_name), &pstate->wm.l, 1, NULL, NULL, NULL, 1000, 0, 0, 100, 0, 0, 0)) {
             bu_log("ERROR: Failed to write region(%s) to database\n", bu_vls_addr(&region_name));
             goto free_bot;
         }
@@ -279,7 +279,7 @@ convert_input(struct conversion_state* pstate)
         for (int i = 0; i < 3; i++) {
             rgb[i] = (unsigned char) irgb[i];
         }
-        if (mk_comb(pstate->fd_out, bu_vls_addr(&region_name), &pstate->wm.l, 1, NULL, NULL, rgb, 1000, 0, 1, 100, 0, 0, 0)) {
+        if (mk_comb(pstate->fd_out, bu_vls_addr(&region_name), &pstate->wm.l, 1, NULL, NULL, rgb, 1000, 0, 0, 100, 0, 0, 0)) {
             bu_log("ERROR: Failed to write region(%s) to database\n", bu_vls_addr(&region_name));
             goto free_bot;
         }

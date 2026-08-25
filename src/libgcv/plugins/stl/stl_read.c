@@ -532,7 +532,7 @@ stl_read_create_opts(struct bu_opt_desc **options_desc, void **dest_options_data
     options_data->binary = 0;
     options_data->starting_id = 1000;
     options_data->const_id = 0;
-    options_data->mat_code = 1;
+    options_data->mat_code = 0;
 
     BU_OPT((*options_desc)[0], NULL, "binary", NULL,
 	    NULL, &options_data->binary,

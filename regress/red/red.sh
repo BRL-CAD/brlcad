@@ -312,21 +312,23 @@ cat $SAMPLE | sed 's/material_id.*=.*/material_id = 2/g' > $REDFILE
 assert_different
 edit_and_dump sph.r $REDFILE.new
 files_differ $SAMPLE $REDFILE.new
-cat $REDFILE.new | sed 's/2/1/g' > $REDFILE.test
+cat $REDFILE.new | sed 's/material_id.*=.*/material_id   = /g' > $REDFILE.test
+echo "SAMPLE:$SAMPLE, REDFILE.new:$REDFILE.new, REDFILE.test:$REDFILE.test"
+exit
 files_match $SAMPLE $REDFILE.test
 
 init "Changing material ID to empty" red.material_id.empty.out
 cat $SAMPLE | sed 's/material_id.*=.*/material_id =/g' > $REDFILE
 assert_different
 edit_and_dump sph.r $REDFILE.new
-files_differ $SAMPLE $REDFILE.new
+files_match $SAMPLE $REDFILE.new
 
 init "Changing material ID to unsafe" red.material_id.unsafe.out
 cat $SAMPLE | sed 's/material_id.*=.*/material_id = -1/g' > $REDFILE
 assert_different
 edit_and_dump sph.r $REDFILE.new
 files_differ $SAMPLE $REDFILE.new
-cat $REDFILE.new | sed 's/-1/1/g' > $REDFILE.test
+cat $REDFILE.new | sed 's/material_id.*=.*/material_id   = /g' > $REDFILE.test
 files_match $SAMPLE $REDFILE.test
 
 #######

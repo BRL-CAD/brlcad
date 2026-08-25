@@ -57,11 +57,11 @@
 	if (s->mode == 1) {\
 	    if (!s->quiet)\
 		bu_log("Making region: %s (PLATE)\n", name); \
-	    mk_comb(fp, name, &((headp)->l), 'P', (char *)NULL, (char *)NULL, rgb, r_id, 0, 1, 100, 0, 0, 0); \
+	    mk_comb(fp, name, &((headp)->l), 'P', (char *)NULL, (char *)NULL, rgb, r_id, 0, 0, 100, 0, 0, 0); \
 	} else if (s->mode == 2) {\
 	    if (!s->quiet) \
 		bu_log("Making region: %s (VOLUME)\n", name); \
-	    mk_comb(fp, name, &((headp)->l), 'V', (char *)NULL, (char *)NULL, rgb, r_id, 0, 1, 100, 0, 0, 0); \
+	    mk_comb(fp, name, &((headp)->l), 'V', (char *)NULL, (char *)NULL, rgb, r_id, 0, 0, 100, 0, 0, 0); \
 	} else {\
 	    bu_log("Illegal mode (%d), while trying to make region (%s)\n", s->mode, name);\
 	    bu_log("\tRegion not made!\n");\
