@@ -759,7 +759,7 @@ function(rpath_build_dir_process ROOT_DIR lf logfile history_log updated_var)
     endif(NOT "${_brlcad_ext_rpath_result}" STREQUAL "0")
   elseif(APPLE)
     execute_process(
-      COMMAND install_name_tool -delete_rpath "${BRLCAD_EXT_DIR}/${BRLCAD_EXT_DIR}/install/${LIB_DIR}" ${lf}
+      COMMAND install_name_tool -delete_rpath "${BRLCAD_EXT_INSTALL_DIR}/${LIB_DIR}" ${lf}
       WORKING_DIRECTORY ${ROOT_DIR}
       OUTPUT_VARIABLE OOUT
       RESULT_VARIABLE ORESULT
