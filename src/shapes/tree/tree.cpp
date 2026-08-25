@@ -1184,8 +1184,8 @@ generate_model(const tree_options &opts)
 	std::vector<size_t> next;
 	const int branch_count = opts.branching[std::min(static_cast<size_t>(level - 1), opts.branching.size() - 1)];
 	for (size_t parent_idx : current) {
-	    tree_segment &parent = model.segments[parent_idx];
-	    parent.terminal = false;
+	    model.segments[parent_idx].terminal = false;
+	    const tree_segment parent = model.segments[parent_idx];
 	    const vec3 pdir = normalize(parent.tip - parent.base);
 	    vec3 pu, pv;
 	    basis_from_dir(pdir, pu, pv);
