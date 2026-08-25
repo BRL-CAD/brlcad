@@ -57,7 +57,7 @@ static int solid_count=0;	/* count of solids converted */
 static struct bn_tol tol;	/* Tolerance structure */
 static int id_no=1000;		/* Ident numbers */
 static int const_id=-1;		/* Constant ident number (assigned to all regions if non-negative) */
-static int mat_code=1;		/* default material code */
+static int mat_code=0;		/* default material code */
 static int debug=0;		/* Debug flag */
 static int binary=0;		/* flag indicating input is binary format */
 static FILE *fd_in;		/* input file */
@@ -85,7 +85,7 @@ usage(const char *argv0)
     bu_log("	The -N option specifies a name to use for the object.\n");
     bu_log("	The -i option sets the initial region ident number (default is 1000).\n");
     bu_log("	The -I option sets the ident number that will be assigned to all regions (conflicts with -i).\n");
-    bu_log("	The -m option sets the integer material code for all the parts (default is 1).\n");
+    bu_log("	The -m option sets the integer material code for all the parts (default is 0).\n");
     bu_log("	The -c option specifies the units used in the STL file (units_str may be \"in\", \"ft\", ... default is \"mm\"\n");
     bu_log("	The -x option specifies an RT debug flags (see raytrace.h).\n");
 }

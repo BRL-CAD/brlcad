@@ -60,7 +60,7 @@ static int objnumb = -1;
 static struct rt_wdb *fd_out = NULL;
 PARSER parse;
 static int id_no=1000;		/* Ident numbers */
-static int mat_code=1;		/* default material code */
+static int mat_code=0;		/* default material code */
 unsigned char color[3]={ 128, 128, 128 };
 
 #define BOT_FBLOCK 128
