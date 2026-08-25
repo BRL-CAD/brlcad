@@ -122,7 +122,7 @@ mged> mater -d import filename
 
 If existing density values need to be corrected in the .g file, the *mater -d set* command may be used to alter them. For more about density information manipulation, see the *mater*(nged) manual page.
 
-The geometry editor MGED automatically assigns an index value of `1` to a newly created region. While this default can be handy when a vast majority of objects are made from the same material, it can lead to surprising errors when objects which are supposed to have a certain weight are computed to have different weight because one or two regions were not set to the correct, nondefault index value. As a result, it is advised that the index value `1` never be used. If this practice is followed, then an error message will be generated for any regions which have not had their material index set to something other than the default.
+The geometry editor MGED automatically assigns an index value of `0` to a newly created region. While this default can make unset material codes easier to spot, it can still lead to surprising errors when objects which are supposed to have a certain weight are computed to have different weight because one or two regions were not set to the correct, nondefault index value. As a result, it is advised that the index value `0` never be used for a real material. If this practice is followed, then an error message will be generated for any regions which have not had their material index set to something other than the default.
 
 
 [[geometry_error_detection]]
