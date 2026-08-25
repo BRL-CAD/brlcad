@@ -314,12 +314,12 @@ arb7_edge(struct rt_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED
     struct rt_arb8_edit *aint = (struct rt_arb8_edit *)s->ipe_ptr;
     aint->edit_menu = arg;
     rt_edit_set_edflag(s, EARB);
-    s->edit_mode = RT_PARAMS_EDIT_TRANS;
     if (arg == 11) {
 	/* move point 5 */
 	rt_edit_set_edflag(s, PTARB);
 	/* keep edit_menu = 11 (menu-arg) so rt_arb_edit dispatch fires */
     }
+    s->edit_mode = RT_PARAMS_EDIT_TRANS;
     if (arg == 12) {
 	rt_edit_set_edflag(s, ECMD_ARB_MAIN_MENU);
 	rt_edit_process(s);
@@ -355,7 +355,6 @@ arb6_edge(struct rt_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED
     struct rt_arb8_edit *aint = (struct rt_arb8_edit *)s->ipe_ptr;
     aint->edit_menu = arg;
     rt_edit_set_edflag(s, EARB);
-    s->edit_mode = RT_PARAMS_EDIT_TRANS;
     if (arg == 8) {
 	/* move point 5 */
 	rt_edit_set_edflag(s, PTARB);
@@ -366,6 +365,7 @@ arb6_edge(struct rt_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED
 	rt_edit_set_edflag(s, PTARB);
 	/* keep edit_menu = 9 (menu-arg) so rt_arb_edit dispatch fires */
     }
+    s->edit_mode = RT_PARAMS_EDIT_TRANS;
     if (arg == 10) {
 	rt_edit_set_edflag(s, ECMD_ARB_MAIN_MENU);
 	rt_edit_process(s);
@@ -399,12 +399,12 @@ arb5_edge(struct rt_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED
     struct rt_arb8_edit *aint = (struct rt_arb8_edit *)s->ipe_ptr;
     aint->edit_menu = arg;
     rt_edit_set_edflag(s, EARB);
-    s->edit_mode = RT_PARAMS_EDIT_TRANS;
     if (arg == 8) {
 	/* move point 5 */
 	rt_edit_set_edflag(s, PTARB);
 	/* keep edit_menu = 8 (menu-arg) so rt_arb_edit dispatch fires */
     }
+    s->edit_mode = RT_PARAMS_EDIT_TRANS;
     if (arg == 9) {
 	rt_edit_set_edflag(s, ECMD_ARB_MAIN_MENU);
 	rt_edit_process(s);

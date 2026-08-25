@@ -18,8 +18,6 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* fix ARB5 move point 5 to actually move the point.
-
 * need extensive testing of MGED CSG editing with the shift
   to librt based editing logic.
 

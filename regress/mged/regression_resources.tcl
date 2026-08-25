@@ -326,6 +326,48 @@ if {![info exists make_primitives_list]} {
       }
   }
 
+  # ARB point editing uses a nested menu and translates a vertex rather than
+  # scaling a scalar parameter.  Sending M through MGED catches failures where
+  # the point edit flag is correct but its interaction mode causes usepen.c to
+  # route the event to view manipulation instead of sedit_mouse().
+  proc arb_point_mouse_check {prim point_menu vertex} {
+      set tolerance 0.001
+      set mouse_x 1000
+      set mouse_y 1000
+      set before [db get $prim $vertex]
+
+      e $prim
+      sed $prim
+      press "Move Edges"
+      press $point_menu
+      M 1 $mouse_x $mouse_y
+      press accept
+      d $prim
+
+      set after [db get $prim $vertex]
+      if {[llength $before] != 3 || [llength $after] != 3} {
+          puts "  FAIL: \[$prim\] $point_menu mouse  ($vertex is not a point)"
+          return
+      }
+
+      foreach value [concat $before $after] {
+          if {![string is double -strict $value]} {
+              puts "  FAIL: \[$prim\] $point_menu mouse  ($vertex is non-numeric)"
+              return
+          }
+      }
+
+      set dx [expr {[lindex $after 0] - [lindex $before 0]}]
+      set dy [expr {[lindex $after 1] - [lindex $before 1]}]
+      set dz [expr {[lindex $after 2] - [lindex $before 2]}]
+      set distance [expr {sqrt($dx*$dx + $dy*$dy + $dz*$dz)}]
+      if {$distance > $tolerance} {
+          puts "  PASS: \[$prim\] $point_menu mouse moved $vertex"
+      } else {
+          puts "  FAIL: \[$prim\] $point_menu mouse did not move $vertex"
+      }
+  }
+
   # NMG-specific edit check for prim_edit.mged
   # NMG uses topological editing (Pick Edge + Move Edge) rather than scalar parameter
   # scaling, so it requires a dedicated proc.  The vertex list returned by
