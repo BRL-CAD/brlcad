@@ -72,6 +72,21 @@
 #include <algorithm>
 #include <regex.h>
 #include "creo-brl.h"
+#include "frontend_api.h"
+
+static struct creo_brl_frontend_api frontend_api = {0};
+
+extern "C" __declspec(dllexport) void
+creo_brl_core_set_frontend_api(const struct creo_brl_frontend_api *api)
+{
+    if (api) {
+        frontend_api = *api;
+        return;
+    }
+
+    frontend_api.show_status = NULL;
+    frontend_api.show_popup = NULL;
+}
 
 
 /*---------------------------------------------------------------------*/
@@ -313,6 +328,11 @@ creo_log(struct creo_conv_info *cinfo, int msg_type, const char *fmt, ...) {
     va_end(ap);
 
     if (msg_type == MSG_STATUS) {
+        if (frontend_api.show_status) {
+            frontend_api.show_status(msg);
+            return;
+        }
+
         ProMessageClear();
         ProMessageDisplay(msgfil, "USER_INFO", msg);
         return;
@@ -997,7 +1017,7 @@ load_defaults(void)
 
 
 /* Process input from user profile settings (.g) file */
-extern "C" void
+extern "C" __declspec(dllexport) void
 load_profile(void)
 {
     struct bu_attribute_value_set avs;
@@ -1352,6 +1372,11 @@ parent_dir(char *dir)
 extern "C" ProError
 PopupMsg(const char *title, const char *msg)
 {
+    if (frontend_api.show_popup) {
+        frontend_api.show_popup(title, msg);
+        return PRO_TK_NO_ERROR;
+    }
+
     wchar_t wtitle[CREO_NAME_MAX];
     wchar_t wmsg[CREO_MSG_MAX];
     ProUIMessageButton* button = NULL;

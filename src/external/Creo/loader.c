@@ -28,14 +28,31 @@
 #include <stdio.h>
 #include <wchar.h>
 
+#include <ProArray.h>
+#include <ProMenuBar.h>
+#include <ProMessage.h>
+#include <ProUICmd.h>
+#include <ProUIMessage.h>
 #include <ProUtil.h>
+
+#include "frontend_api.h"
+
+#define FRONTEND_MSG_FILE "creo-brl-msg.txt"
+#define FRONTEND_TITLE_MAX 512
+#define FRONTEND_MESSAGE_MAX 4096
 
 typedef int (__cdecl *creo_brl_core_initialize_fn_t)(void);
 typedef void (__cdecl *creo_brl_core_terminate_fn_t)(void);
+typedef void (__cdecl *creo_brl_core_doit_fn_t)(char *, char *, ProAppData);
+typedef void (__cdecl *creo_brl_core_load_profile_fn_t)(void);
+typedef void (__cdecl *creo_brl_core_set_frontend_api_fn_t)(const struct creo_brl_frontend_api *);
 
 static HMODULE core_module = NULL;
 static creo_brl_core_initialize_fn_t core_initialize_fn = NULL;
 static creo_brl_core_terminate_fn_t core_terminate_fn = NULL;
+static creo_brl_core_doit_fn_t core_doit_fn = NULL;
+static creo_brl_core_load_profile_fn_t core_load_profile_fn = NULL;
+static creo_brl_core_set_frontend_api_fn_t core_set_frontend_api_fn = NULL;
 
 /*
  * GetModuleHandleExW(...FROM_ADDRESS...) needs any address that belongs
@@ -74,6 +91,56 @@ show_bootstrap_error(const wchar_t *context)
         MB_OK | MB_ICONERROR | MB_TOPMOST);
 }
 
+static void
+show_toolkit_error(const wchar_t *context, int tk_err)
+{
+    wchar_t message[1024] = {0};
+
+    swprintf_s(
+        message,
+        _countof(message),
+        L"%ls\n\nCreo Toolkit error %d.",
+        context,
+        tk_err);
+
+    MessageBoxW(
+        NULL,
+        message,
+        L"creo-brl bootstrap failure",
+        MB_OK | MB_ICONERROR | MB_TOPMOST);
+}
+
+static void __cdecl
+show_status_message(const char *message)
+{
+    ProFileName msgfil = {'\0'};
+
+    ProStringToWstring(msgfil, (char *)FRONTEND_MSG_FILE);
+    ProMessageClear();
+    ProMessageDisplay(msgfil, "USER_INFO", (char *)message);
+}
+
+static void __cdecl
+show_popup_message(const char *title, const char *message)
+{
+    wchar_t wtitle[FRONTEND_TITLE_MAX];
+    wchar_t wmsg[FRONTEND_MESSAGE_MAX];
+    ProUIMessageButton *button = NULL;
+    ProUIMessageButton bresult;
+
+    (void)ProArrayAlloc(1, sizeof(ProUIMessageButton), 1, (ProArray *)&button);
+    button[0] = PRO_UI_MESSAGE_OK;
+    ProStringToWstring(wtitle, (char *)title);
+    ProStringToWstring(wmsg, (char *)message);
+    ProUIMessageDialogDisplay(PROUIMESSAGE_INFO, wtitle, wmsg, button, PRO_UI_MESSAGE_OK, &bresult);
+    (void)ProArrayFree((ProArray *)&button);
+}
+
+static const struct creo_brl_frontend_api frontend_api = {
+    show_status_message,
+    show_popup_message
+};
+
 static int
 self_bin_dir(wchar_t *dir, size_t dir_len)
 {
@@ -109,7 +176,48 @@ clear_core_state(void)
 {
     core_initialize_fn = NULL;
     core_terminate_fn = NULL;
+    core_doit_fn = NULL;
+    core_load_profile_fn = NULL;
+    core_set_frontend_api_fn = NULL;
     core_module = NULL;
+}
+
+static void
+unload_core(void)
+{
+    HMODULE module_to_free = core_module;
+    creo_brl_core_terminate_fn_t terminate_to_call = core_terminate_fn;
+
+    clear_core_state();
+
+    if (terminate_to_call)
+        terminate_to_call();
+
+    if (module_to_free)
+        FreeLibrary(module_to_free);
+}
+
+extern int creo_brl_frontend_command(uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data);
+extern uiCmdAccessState creo_brl_frontend_access(uiCmdAccessMode access_mode);
+
+void
+creo_brl_show_status(const char *message)
+{
+    show_status_message(message);
+}
+
+void
+creo_brl_core_load_profile_shim(void)
+{
+    if (core_load_profile_fn)
+        core_load_profile_fn();
+}
+
+void
+creo_brl_core_doit_shim(char *dialog, char *component, ProAppData appdata)
+{
+    if (core_doit_fn)
+        core_doit_fn(dialog, component, appdata);
 }
 
 __declspec(dllexport) int
@@ -121,6 +229,9 @@ user_initialize(void)
     wchar_t core_path[32768] = {0};
     FARPROC proc = NULL;
     int core_result = -1;
+    uiCmdCmdId cmd_id = 0;
+    ProError err = PRO_TK_GENERAL_ERROR;
+    ProFileName msgfil = {'\0'};
 
     if (core_module) {
         MessageBoxW(
@@ -188,8 +299,7 @@ user_initialize(void)
     proc = GetProcAddress(core_module, "creo_brl_core_initialize");
     if (!proc) {
         show_bootstrap_error(L"GetProcAddress(creo_brl_core_initialize) failed.");
-        FreeLibrary(core_module);
-        clear_core_state();
+        unload_core();
         return -1;
     }
     core_initialize_fn = (creo_brl_core_initialize_fn_t)proc;
@@ -197,17 +307,74 @@ user_initialize(void)
     proc = GetProcAddress(core_module, "creo_brl_core_terminate");
     if (!proc) {
         show_bootstrap_error(L"GetProcAddress(creo_brl_core_terminate) failed.");
-        FreeLibrary(core_module);
-        clear_core_state();
+        unload_core();
         return -1;
     }
     core_terminate_fn = (creo_brl_core_terminate_fn_t)proc;
 
+    proc = GetProcAddress(core_module, "creo_brl_core_set_frontend_api");
+    if (!proc) {
+        show_bootstrap_error(L"GetProcAddress(creo_brl_core_set_frontend_api) failed.");
+        unload_core();
+        return -1;
+    }
+    core_set_frontend_api_fn = (creo_brl_core_set_frontend_api_fn_t)proc;
+
+    proc = GetProcAddress(core_module, "load_profile");
+    if (!proc) {
+        show_bootstrap_error(L"GetProcAddress(load_profile) failed.");
+        unload_core();
+        return -1;
+    }
+    core_load_profile_fn = (creo_brl_core_load_profile_fn_t)proc;
+
+    proc = GetProcAddress(core_module, "doit");
+    if (!proc) {
+        show_bootstrap_error(L"GetProcAddress(doit) failed.");
+        unload_core();
+        return -1;
+    }
+    core_doit_fn = (creo_brl_core_doit_fn_t)proc;
+
+    core_set_frontend_api_fn(&frontend_api);
+
     core_result = core_initialize_fn();
     if (core_result != 0) {
-        FreeLibrary(core_module);
-        clear_core_state();
+        unload_core();
         return core_result;
+    }
+
+    err = ProCmdActionAdd(
+        "CREO-BRL",
+        creo_brl_frontend_command,
+        uiProe2ndImmediate,
+        creo_brl_frontend_access,
+        PRO_B_FALSE,
+        PRO_B_FALSE,
+        &cmd_id);
+    if (err != PRO_TK_NO_ERROR) {
+        show_toolkit_error(L"ProCmdActionAdd failed.", err);
+        unload_core();
+        return -1;
+    }
+
+    ProStringToWstring(msgfil, "creo-brl-msg.txt");
+    err = ProMenubarmenuPushbuttonAdd(
+        "Tools",
+        "CREO-BRL",
+        "CREO-BRL",
+        "CREO-BRL-HELP",
+        NULL,
+        PRO_B_TRUE,
+        cmd_id,
+        msgfil);
+    if (err != PRO_TK_NO_ERROR) {
+        /*
+         * The command may already be registered with Creo at this point.
+         * Keep the core loaded so any surviving facade shim remains valid.
+         */
+        show_toolkit_error(L"ProMenubarmenuPushbuttonAdd failed.", err);
+        return -1;
     }
 
     return 0;
@@ -216,18 +383,7 @@ user_initialize(void)
 __declspec(dllexport) void
 user_terminate(void)
 {
-    HMODULE module_to_free = core_module;
-    creo_brl_core_terminate_fn_t terminate_to_call = core_terminate_fn;
-
-    /*
-     * Clear callable state before unloading so no stale function pointer
-     * survives a successful FreeLibrary.
-     */
-    clear_core_state();
-
-    if (terminate_to_call)
-        terminate_to_call();
-
-    if (module_to_free)
-        FreeLibrary(module_to_free);
+    ProMessageClear();
+    unload_core();
 }
+

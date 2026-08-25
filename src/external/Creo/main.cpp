@@ -785,7 +785,7 @@ output_top_level_object(struct creo_conv_info *cinfo, ProMdl model, ProMdlType m
 
 
 /* Collect user-specified conversion settings */
-extern "C" void
+extern "C" __declspec(dllexport) void
 doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
 {
     ProError   err = PRO_TK_GENERAL_ERROR;
@@ -1575,243 +1575,43 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
 }
 
 
-/* Activates small feature settings */
-extern "C" void
-activate_small_feats(char *dialog_name, char *button_name, ProAppData UNUSED(data))
-{
-    ProBoolean state;
-
-    if (ProUICheckbuttonGetState(dialog_name, button_name, &state) != PRO_TK_NO_ERROR) {
-        creo_log(NULL, MSG_STATUS, "FAILURE: Unable to obtain check button state: \"Ignore minimum sizes\"");
-        return;
-    }
-
-    if (state) {
-        if (ProUIInputpanelEditable(dialog_name, "min_hole") != PRO_TK_NO_ERROR) {
-            creo_log(NULL, MSG_STATUS, "FAILURE: Unable to activate: \"Hole diameter\"");
-            return;
-        }
-        if (ProUIInputpanelEditable(dialog_name, "min_chamfer") != PRO_TK_NO_ERROR) {
-            creo_log(NULL, MSG_STATUS, "FAILURE: Unable to activate: \"Chamfer dimension\"");
-            return;
-        }
-        if (ProUIInputpanelEditable(dialog_name, "min_round") != PRO_TK_NO_ERROR) {
-            creo_log(NULL, MSG_STATUS, "FAILURE: Unable to activate: \"Blend radius\"" );
-            return;
-        }
-    } else {
-        if (ProUIInputpanelReadOnly(dialog_name, "min_hole") != PRO_TK_NO_ERROR) {
-            creo_log(NULL, MSG_STATUS, "FAILURE: Unable to de-activate: \"Hole diameter\"");
-            return;
-        }
-        if (ProUIInputpanelReadOnly(dialog_name, "min_chamfer") != PRO_TK_NO_ERROR) {
-            creo_log(NULL, MSG_STATUS, "FAILURE: Unable to de-activate: \"Chamfer dimension\"");
-            return;
-        }
-        if (ProUIInputpanelReadOnly(dialog_name, "min_round") != PRO_TK_NO_ERROR) {
-            creo_log(NULL, MSG_STATUS, "FAILURE: Unable to de-activate: \"Blend radius\"");
-            return;
-        }
-    }
-}
-
-
-/* Activates export STL setting */
-extern "C" void
-activate_export_stl(char *dialog_name, char *button_name, ProAppData UNUSED(data))
-{
-    ProBoolean state;
-
-    if (ProUICheckbuttonGetState(dialog_name, button_name, &state) != PRO_TK_NO_ERROR) {
-        creo_log(NULL, MSG_STATUS, "FAILURE: Unable to obtain check button state: \"Facetize everything, (no CSG)\"");
-        return;
-    }
-
-    if (state) {
-        if (ProUICheckbuttonEnable(dialog_name, "export_stl") != PRO_TK_NO_ERROR) {
-            creo_log(NULL, MSG_STATUS, "FAILURE: Unable to activate: \"Export facets to STL file\"");
-            return;
-        }
-    } else {
-        if (ProUICheckbuttonDisable(dialog_name, "export_stl") != PRO_TK_NO_ERROR) {
-            creo_log(NULL, MSG_STATUS, "FAILURE: Unable to de-activate: \"Export facets to STL file\"");
-            return;
-        }
-    }
-}
-
-
-/* Exit the converter dialog */
-extern "C" void
-do_quit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
-{
-    ProUIDialogDestroy(CREO_UI_NAME);
-}
-
-
-/* Driver routine for converting Creo to BRL-CAD */
-extern "C" int
-creo_brl(uiCmdCmdId UNUSED(command), uiCmdValue *UNUSED(p_value), void *UNUSED(p_push_cmd_data))
-{
-    struct bu_vls str = BU_VLS_INIT_ZERO;
-    int destroy_dialog = 0;
-    int err;
-
-    creo_log(NULL, MSG_STATUS, "Launching Creo to BRL-CAD converter...");
-
-    /* Use UI dialog */
-    if (ProUIDialogCreate(CREO_UI_NAME, CREO_UI_NAME) != PRO_TK_NO_ERROR) {
-        bu_vls_printf(&str, "FAILURE: Unable to create dialog box for creo-brl\n");
-        goto print_msg;
-    }
-
-    /* Load the user profile */
-    load_profile();
-
-    if (ProUICheckbuttonActivateActionSet(CREO_UI_NAME, "elim_small", activate_small_feats, NULL) != PRO_TK_NO_ERROR) {
-        bu_vls_printf(&str, "FAILURE: Unable to set action for \"Ignore minimum sizes\" checkbutton\n");
-        goto print_msg;
-    }
-
-    if (ProUICheckbuttonActivateActionSet(CREO_UI_NAME, "facets_only", activate_export_stl, NULL) != PRO_TK_NO_ERROR) {
-        bu_vls_printf(&str, "FAILURE: Unable to set action for \"Facetize everything, (no CSG)\" checkbutton\n");
-        goto print_msg;
-    }
-
-    if (ProUIPushbuttonActivateActionSet(CREO_UI_NAME, "doit", doit, NULL) != PRO_TK_NO_ERROR) {
-        bu_vls_printf(&str, "FAILURE: Unable to set action for \"Convert\" button\n");
-        destroy_dialog = 1;
-        goto print_msg;
-    }
-
-    if (ProUIPushbuttonActivateActionSet(CREO_UI_NAME, "quit", do_quit, NULL) != PRO_TK_NO_ERROR) {
-        bu_vls_printf(&str, "FAILURE: Unable to set action for \"Quit\" button\n");
-        destroy_dialog = 1;
-        goto print_msg;
-    }
-
-    /* File names may not get longer than the default... */
-    ProUIInputpanelMaxlenSet(CREO_UI_NAME, "out_fname",    MAXPATHLEN - 1);
-    ProUIInputpanelMaxlenSet(CREO_UI_NAME, "log_fname",    MAXPATHLEN - 1);
-    ProUIInputpanelMaxlenSet(CREO_UI_NAME, "mtl_fname",    MAXPATHLEN - 1);
-
-    /* Parameter lists may not get longer than the default... */
-    ProUIInputpanelMaxlenSet(CREO_UI_NAME, "param_rename", MAXPATHLEN - 1);
-    ProUIInputpanelMaxlenSet(CREO_UI_NAME, "param_save",   MAXPATHLEN - 1);
-
-    ProMdl model;
-    if (ProMdlCurrentGet(&model) != PRO_TK_BAD_CONTEXT) {
-        wchar_t wname[CREO_NAME_MAX];
-        if (ProMdlMdlnameGet(model, wname) == PRO_TK_NO_ERROR) {
-            struct bu_vls groot = BU_VLS_INIT_ZERO;
-            struct bu_vls lroot = BU_VLS_INIT_ZERO;
-            char name[CREO_NAME_MAX];
-            ProWstringToString(name, wname);
-            lower_case(name);
-            /* Supply a sensible (lowercase) default for the .g file... */
-            if (bu_path_component(&groot, name, BU_PATH_BASENAME_EXTLESS)) {
-                wchar_t wgout[CREO_NAME_MAX];
-                bu_vls_printf(&groot, ".g");
-                ProStringToWstring(wgout, bu_vls_addr(&groot));
-                ProUIInputpanelValueSet(CREO_UI_NAME, "out_fname", wgout);
-                bu_vls_free(&groot);
-            }
-            /* Suggest a default log file... */
-            if (bu_path_component(&lroot, name, BU_PATH_BASENAME_EXTLESS)) {
-                /* Supply a sensible default for the .g file... */
-                wchar_t wgout[CREO_NAME_MAX];
-                bu_vls_printf(&lroot, "_log.txt");
-                ProStringToWstring(wgout, bu_vls_addr(&lroot));
-                ProUIInputpanelValueSet(CREO_UI_NAME, "log_fname", wgout);
-                bu_vls_free(&lroot);
-            }
-        }
-    }
-
-    if (ProUIDialogActivate(CREO_UI_NAME, &err) != PRO_TK_NO_ERROR)
-        bu_vls_printf(&str, "FAILURE: Unexpected error in creo-brl dialog returned %d\n", err);
-
-    print_msg:
-    if (bu_vls_strlen(&str) > 0)
-        creo_log(NULL, MSG_PLAIN, bu_vls_addr(&str));
-    if (destroy_dialog)
-        ProUIDialogDestroy(CREO_UI_NAME);
-
-    bu_vls_free(&str);
-    return 0;
-}
-
-
-/**
- * This routine determines whether the "creo-brl" menu item in Creo
- * should be displayed as available or greyed out
- */
-extern "C" uiCmdAccessState
-creo_brl_access(uiCmdAccessMode UNUSED(access_mode))
-{
-    /* Doing the correct checks appears to be unreliable */
-    return ACCESS_AVAILABLE;
-}
-
-
 /*
- * The real Creo-facing lifecycle lives in loader.c.  This runtime-loaded
- * backend exports an explicit core ABI and keeps private user_* stubs only
- * because protk_dll_NU.lib references those names in every Toolkit-linked DLL.
+ * The real Creo-facing lifecycle lives in the facade.  The runtime-loaded
+ * backend only exposes the dialog actions and conversion routines that the
+ * facade invokes once Creo has established the Toolkit state.
  */
-
-extern "C" __declspec(dllexport) int creo_brl_core_initialize()
+extern "C" __declspec(dllexport) int
+creo_brl_core_initialize()
 {
     ProError err = PRO_TK_GENERAL_ERROR;
+    int i = 0;
 
-    int i;
-    uiCmdCmdId cmd_id;
-
-    /* Creo says always check the size of w_char */
-    err = ProWcharSizeVerify (sizeof (wchar_t), &i);
-    if (err != PRO_TK_NO_ERROR || (i != sizeof (wchar_t))) {
+    /*
+     * Keep initialization limited to a simple direct Toolkit smoke test.
+     * The facade owns command/menu registration because those APIs rely on
+     * the registered Toolkit DLL wrapper state set up by Creo.
+     */
+    err = ProWcharSizeVerify(sizeof(wchar_t), &i);
+    if (err != PRO_TK_NO_ERROR || (i != sizeof(wchar_t))) {
         creo_log(NULL, MSG_STATUS, "\"wchar_t\" is the incorrect size (%d), size should be %d", (int)sizeof(wchar_t), i);
         return -1;
     }
 
-    /* Add a command that calls our creo-brl routine */
-    err = ProCmdActionAdd("CREO-BRL", (uiCmdCmdActFn)creo_brl, uiProe2ndImmediate, creo_brl_access, PRO_B_FALSE, PRO_B_FALSE, &cmd_id);
-    if (err != PRO_TK_NO_ERROR) {
-        creo_log(NULL, MSG_STATUS, "Failed to add creo-brl action");
-        return -1;
-    }
-
-    /* Add a menu item that runs the new command */
-    ProFileName msgfil = {'\0'};
-    ProStringToWstring(msgfil, CREO_BRL_MSG_FNAME);
-    err = ProMenubarmenuPushbuttonAdd("Tools", "CREO-BRL", "CREO-BRL", "CREO-BRL-HELP", NULL, PRO_B_TRUE, cmd_id, msgfil);
-    if (err != PRO_TK_NO_ERROR) {
-        creo_log(NULL, MSG_STATUS, "Failed to add creo-brl menu bar push button");
-        return -1;
-    }
-
-    /*
-     * Let user know we are here?
-     *
-     *  PopupMsg("Plugin Successfully Loaded", "The Creo to BRL-CAD converter plugin Version 0.2 was successfully loaded.");
-     *
-     */
-
     return 0;
 }
 
 
-extern "C" __declspec(dllexport) void creo_brl_core_terminate()
+extern "C" __declspec(dllexport) void
+creo_brl_core_terminate()
 {
-    ProMessageClear();
 }
 
  /*
   * IMPORTANT - the names of the next two functions - user_initialize
-  * and user_terminate - are dictated by the Creo API. Both are 
+  * and user_terminate - are dictated by the Creo API. Both are
   * *required* to be present, but we just use them as stubs for
   * the runtime facade. The "real" logic is runtime-loaded from
-  * loader.c
+  * loader.c.
   */
 extern "C" int user_initialize()
 {
