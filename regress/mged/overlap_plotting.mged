@@ -1,0 +1,51 @@
+puts "*** Testing gqa and rtcheck overlap plotting ***"
+
+# MGED's legacy glob pass escapes Tcl command substitutions intended for the
+# assertions below.  The geometry names in this test do not need globbing.
+set glob_compat_mode 0
+
+set baseline_plot "mged_overlap_baseline.plot3"
+set gqa_plot "mged_gqa_overlaps.plot3"
+set cleared_plot "mged_gqa_cleared.plot3"
+set rtcheck_plot "mged_rtcheck_overlaps.plot3"
+
+proc read_binary_file {path} {
+    set channel [open $path "rb"]
+    set contents [read $channel]
+    close $channel
+    return $contents
+}
+
+foreach plot_file [list $baseline_plot $gqa_plot $cleared_plot $rtcheck_plot] {
+    file delete -force $plot_file
+}
+
+draw ovlp
+autoview
+plot $baseline_plot
+
+gqa -Aop -g 800 ovlp
+plot $gqa_plot
+if {[file size $gqa_plot] <= [file size $baseline_plot]} {
+    error "FAIL gqa did not add overlap lines to the MGED display"
+}
+
+gqa -Aop -g 800 r1
+plot $cleared_plot
+if {[read_binary_file $cleared_plot] ne [read_binary_file $baseline_plot]} {
+    error "FAIL gqa left stale overlap lines in the MGED display"
+}
+
+rtcheck -s 16
+after 3000 {set ::rtcheck_plotting_wait_done 1}
+vwait ::rtcheck_plotting_wait_done
+plot $rtcheck_plot
+if {[file size $rtcheck_plot] <= [file size $baseline_plot]} {
+    error "FAIL rtcheck did not add overlap lines to the MGED display"
+}
+
+puts "PASS overlap plotting"
+
+foreach plot_file [list $baseline_plot $gqa_plot $cleared_plot $rtcheck_plot] {
+    file delete -force $plot_file
+}

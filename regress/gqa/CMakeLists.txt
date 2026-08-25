@@ -1,8 +1,8 @@
 set(GQA_GFILE "${CMAKE_SOURCE_DIR}/src/libged/tests/ged_tests.g")
 set(TSCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/regress-gqa_plot.cmake.in")
-if(TARGET gqa AND TARGET bview_plot3)
-  brlcad_regression_test(regress-gqa_plot "bview_plot3;gqa" TEST_SCRIPT "${TSCRIPT}" EXEC gqa VEXEC bview_plot3)
-endif(TARGET gqa AND TARGET bview_plot3)
+if(TARGET gqa AND TARGET bview_plot3 AND TARGET plot3stat)
+  brlcad_regression_test(regress-gqa_plot "bview_plot3;gqa;plot3stat" TEST_SCRIPT "${TSCRIPT}" EXEC gqa VEXEC bview_plot3)
+endif(TARGET gqa AND TARGET bview_plot3 AND TARGET plot3stat)
 
 if(SH_EXEC AND TARGET mged AND TARGET gqa)
   brlcad_add_test(NAME regress-gqa COMMAND ${SH_EXEC} "${CMAKE_CURRENT_SOURCE_DIR}/gqa.sh" ${CMAKE_SOURCE_DIR})

@@ -948,7 +948,9 @@ cmd_ged_gqa(ClientData clientData, Tcl_Interp *interpreter, int argc, const char
     static const char *gqa_options = "A:a:de:f:g:Gn:N:p:P:qrS:t:U:u:vV:W:h?";
     char **vp;
     int i;
+    int option;
     int ret;
+    bool plot_in_view = false;
     struct cmdtab *ctp = (struct cmdtab *)clientData;
     MGED_CK_CMD(ctp);
     struct mged_state *s = ctp->s;
@@ -972,8 +974,10 @@ cmd_ged_gqa(ClientData clientData, Tcl_Interp *interpreter, int argc, const char
     int saved_optind = bu_optind;
     bu_opterr = 0;
     bu_optind = 1;
-    while (bu_getopt(argc, (char * const *)argv, gqa_options) != -1)
-	;
+    while ((option = bu_getopt(argc, (char * const *)argv, gqa_options)) != -1) {
+	if (option == 'A' && bu_optarg && strchr(bu_optarg, 'p'))
+	    plot_in_view = true;
+    }
     i = bu_optind;
     bu_optarg = saved_optarg;
     bu_opterr = saved_opterr;
@@ -1004,7 +1008,13 @@ cmd_ged_gqa(ClientData clientData, Tcl_Interp *interpreter, int argc, const char
 	gd_rt_cmd_len += ged_who_argv(s->gedp, vp, (const char **)&gd_rt_cmd[args]);
     }
 
-    ret = run_ged_async(s, [&]() -> int { return (*ctp->ged_func)(s->gedp, gd_rt_cmd_len, (const char **)gd_rt_cmd); });
+    /* In-view plotting creates display objects and invokes MGED's display
+     * manager callbacks.  Keep that work on the GUI thread while preserving
+     * asynchronous execution for analyses that only produce reports/files. */
+    if (plot_in_view)
+	ret = (*ctp->ged_func)(s->gedp, gd_rt_cmd_len, (const char **)gd_rt_cmd);
+    else
+	ret = run_ged_async(s, [&]() -> int { return (*ctp->ged_func)(s->gedp, gd_rt_cmd_len, (const char **)gd_rt_cmd); });
     GED_OUTPUT;
 
     bu_free(gd_rt_cmd, "free gd_rt_cmd");

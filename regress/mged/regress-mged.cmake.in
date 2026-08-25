@@ -6,6 +6,7 @@ set(LOGFILE "@LOG_FILE@")
 set(TEST_DB "@TEST_DB@")
 set(TEST_EXPECT "@TEST_EXPECT@")
 set(TEST_REJECT "@TEST_REJECT@")
+set(TEST_SOURCE "@TEST_SOURCE@")
 
 set(BU_DIR_CACHE ${CBDIR}/cache_${TNAME})
 set(LIBRT_CACHE ${CBDIR}/rtcache_${TNAME})
@@ -55,14 +56,24 @@ if(mged_result)
   message(FATAL_ERROR "[mged ${TNAME}] Failure: ${mged_result}. See ${LOGFILE} for more info.\n${LOG}")
 endif(mged_result)
 
-# Run the core test
-execute_process(
-  COMMAND "${MGED_EXEC}" -c "${GFILE}"
-  INPUT_FILE "${CBDIR}/regress_${TNAME}.mged"
-  RESULT_VARIABLE mged_result
-  OUTPUT_VARIABLE mged_log
-  ERROR_VARIABLE mged_log
-)
+# Run the core test.  Tests that service asynchronous events must be sourced
+# as one Tcl command so MGED's stdin handler cannot re-enter the input script.
+if(TEST_SOURCE)
+  execute_process(
+    COMMAND "${MGED_EXEC}" -c "${GFILE}" "source {${TEST_SOURCE}}"
+    RESULT_VARIABLE mged_result
+    OUTPUT_VARIABLE mged_log
+    ERROR_VARIABLE mged_log
+  )
+else()
+  execute_process(
+    COMMAND "${MGED_EXEC}" -c "${GFILE}"
+    INPUT_FILE "${CBDIR}/regress_${TNAME}.mged"
+    RESULT_VARIABLE mged_result
+    OUTPUT_VARIABLE mged_log
+    ERROR_VARIABLE mged_log
+  )
+endif()
 file(APPEND "${LOGFILE}" "${mged_log}")
 if(mged_result)
   file(READ "${LOGFILE}" LOG)

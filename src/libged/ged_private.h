@@ -273,6 +273,7 @@ GED_EXPORT extern int _ged_combadd2(struct ged *gedp,
 /* defined in display_list.c */
 GED_EXPORT extern void _dl_eraseAllNamesFromDisplay(struct ged *gedp, const char *name, const int skip_first);
 GED_EXPORT extern void _dl_eraseAllPathsFromDisplay(struct ged *gedp, const char *path, const int skip_first);
+GED_EXPORT extern void _ged_erase_legacy_overlap_plot(struct ged *gedp);
 extern void _dl_freeDisplayListItem(struct ged *gedp, struct display_list *gdlp);
 GED_EXPORT extern int dl_bounding_sph(struct bu_list *hdlp, vect_t *min, vect_t *max, int pflag);
 

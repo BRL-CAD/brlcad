@@ -30,11 +30,26 @@
 #include <bv.h>
 #include <ged.h>
 
+static struct bv_scene_obj *
+find_overlap_plot(struct ged *gedp)
+{
+    const char *overlap_plot = "OVERLAPSffff00";
+    struct display_list *gdlp;
+
+    for (BU_LIST_FOR(gdlp, display_list, (struct bu_list *)ged_dl(gedp))) {
+	if (BU_STR_EQUAL(bu_vls_cstr(&gdlp->dl_path), overlap_plot))
+	    return BU_LIST_NEXT(bv_scene_obj, &gdlp->dl_head_scene_obj);
+    }
+
+    return NULL;
+}
+
 int
 main(int ac, char *av[]) {
     struct ged *gedp;
     const char *gqa_plot_fname = "gqa_ovlps.plot3";
-    const char *gqa[4] = {"gqa", "-Aop", "ovlp", NULL};
+    const char *gqa[6] = {"gqa", "-Aop", "-g", "800", "ovlp", NULL};
+    const char *gqa_clear[6] = {"gqa", "-Aop", "-g", "800", "r1", NULL};
 
     bu_setprogname(av[0]);
 
@@ -48,7 +63,8 @@ main(int ac, char *av[]) {
     }
 
     gedp = ged_open("db", av[1], 1);
-    ged_exec_gqa(gedp, 3, gqa);
+    if (ged_exec_gqa(gedp, 5, gqa) != BRLCAD_OK)
+	bu_exit(EXIT_FAILURE, "GQA overlap analysis failed: %s\n", bu_vls_cstr(gedp->ged_result_str));
     printf("%s\n", bu_vls_cstr(gedp->ged_result_str));
 
     // Example of programmatically extracting the resulting plot data (assuming
@@ -59,15 +75,7 @@ main(int ac, char *av[]) {
     // with the gqa overlap view object's name (gqa:overlaps) to find the
     // bv_scene_obj, and then iterate over that object's child objects to get
     // the different colored vlists...)
-    struct display_list *gdlp;
-    struct bv_scene_obj *vdata = NULL;
-    for (BU_LIST_FOR(gdlp, display_list, (struct bu_list *)ged_dl(gedp))) {
-	if (!BU_STR_EQUAL(bu_vls_cstr(&gdlp->dl_path), "OVERLAPSffff00"))
-	    continue;
-	printf("found %s;\n", bu_vls_cstr(&gdlp->dl_path));
-	vdata = BU_LIST_NEXT(bv_scene_obj, &gdlp->dl_head_scene_obj);
-	break;
-    }
+    struct bv_scene_obj *vdata = find_overlap_plot(gedp);
 
     if (vdata) {
 	FILE *fp;
@@ -80,6 +88,11 @@ main(int ac, char *av[]) {
     } else {
 	bu_exit(EXIT_FAILURE, "No GQA plotting data found.\n");
     }
+
+    if (ged_exec_gqa(gedp, 5, gqa_clear) != BRLCAD_OK)
+	bu_exit(EXIT_FAILURE, "GQA no-overlap analysis failed: %s\n", bu_vls_cstr(gedp->ged_result_str));
+    if (find_overlap_plot(gedp))
+	bu_exit(EXIT_FAILURE, "GQA left stale overlap plotting data in the display list.\n");
 
     ged_close(gedp);
 

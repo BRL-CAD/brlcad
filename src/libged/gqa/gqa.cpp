@@ -816,13 +816,6 @@ _gqa_overlap(struct application *ap,
     VJOIN1(ihit, rp->r_pt, ihitp->hit_dist, rp->r_dir);
     VJOIN1(ohit, rp->r_pt, ohitp->hit_dist, rp->r_dir);
 
-    if (plot_overlaps) {
-	bu_semaphore_acquire(state->sem_plot);
-	pl_color(plot_overlaps, V3ARGS(overlap_color));
-	pdv_3line(plot_overlaps, ihit, ohit);
-	bu_semaphore_release(state->sem_plot);
-    }
-
     if (analysis_flags & ANALYSIS_PLOT_OVERLAPS) {
 	bu_semaphore_acquire(state->sem_worker);
 	BV_ADD_VLIST(ged_gqa_plot.vbp->free_vlist_hd, ged_gqa_plot.vhead, ihit, BV_VLIST_LINE_MOVE);
@@ -2901,6 +2894,10 @@ aborted:
 		struct bview *view = gedp->ged_gvp;
 		bv_vlblock_obj(ged_gqa_plot.vbp, view, "gqa::overlaps");
 	    } else {
+		/* The legacy converter only replaces colors present in the new
+		 * vlblock.  Remove the previous yellow plot explicitly so an empty
+		 * result clears stale overlap lines as well. */
+		_ged_erase_legacy_overlap_plot(gedp);
 		_ged_cvt_vlblock_to_solids(gedp, ged_gqa_plot.vbp, "OVERLAPS", 0);
 	    }
 	}
