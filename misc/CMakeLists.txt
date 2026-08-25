@@ -47,14 +47,16 @@ if(TARGET mged)
   ExternalProject_Add(BrlcadBugs
     SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/bugs
     BINARY_DIR ${BUGS_DIR}
-    CMAKE_ARGS -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DBUGS_DIR=${BUGS_DIR} -DCMAKE_INSTALL_PREFIX=${BUGS_DIR}
+    CMAKE_ARGS -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DCMAKE_INSTALL_PREFIX=${BUGS_DIR}
     INSTALL_COMMAND ""
+    LOG_CONFIGURE 1
+    LOG_BUILD 1
   )
 
   # Add a custom target to run the bug tests manually
   add_custom_target(bugs
     COMMAND ${CMAKE_CTEST_COMMAND} --test-dir ${BUGS_DIR}
-    DEPENDS BUGS
+    DEPENDS BrlcadBugs
   )
   set_target_properties(bugs PROPERTIES FOLDER "BRL-CAD Tests")
 
