@@ -1,0 +1,66 @@
+# Values set at CMake configure time
+set(CBDIR "@CMAKE_CURRENT_BINARY_DIR@")
+set(LOGFILE "@LOG_FILE@")
+set(INPUT_FILE "@INPUT_FILE@")
+set(OUTPUT_G "@OUTPUT_G@")
+set(INPUT_FORMAT "@INPUT_FORMAT@")
+set(EXPECTED_MATERIAL "@EXPECTED_MATERIAL@")
+set(MIN_REGION_COUNT "@MIN_REGION_COUNT@")
+
+file(WRITE "${LOGFILE}" "Starting @TARGET_NAME@\n")
+
+string(REPLACE "\\" "" GCV_EXEC "${EXEC}")
+if(NOT EXISTS "${GCV_EXEC}")
+  file(WRITE "${LOGFILE}" "gcv not found at location \"${GCV_EXEC}\" - aborting\n")
+  file(READ "${LOGFILE}" LOG)
+  message(FATAL_ERROR "Unable to find gcv, aborting.\nSee ${LOGFILE} for more details.\n${LOG}")
+endif()
+
+string(REPLACE "\\" "" VERIFY_EXEC "${VEXEC}")
+if(NOT EXISTS "${VERIFY_EXEC}")
+  file(WRITE "${LOGFILE}" "assert_region_materials not found at location \"${VERIFY_EXEC}\" - aborting\n")
+  file(READ "${LOGFILE}" LOG)
+  message(FATAL_ERROR "Unable to find assert_region_materials, aborting.\nSee ${LOGFILE} for more details.\n${LOG}")
+endif()
+
+if(NOT EXISTS "${INPUT_FILE}")
+  file(WRITE "${LOGFILE}" "input file \"${INPUT_FILE}\" not found - aborting\n")
+  file(READ "${LOGFILE}" LOG)
+  message(FATAL_ERROR "Unable to find input file ${INPUT_FILE}, aborting.\nSee ${LOGFILE} for more details.\n${LOG}")
+endif()
+
+file(REMOVE "${OUTPUT_G}")
+
+execute_process(
+  COMMAND "${GCV_EXEC}" "--input-format=${INPUT_FORMAT}" "--output-format=brlcad" "${INPUT_FILE}" "${OUTPUT_G}"
+  RESULT_VARIABLE gcv_result
+  OUTPUT_VARIABLE gcv_log
+  ERROR_VARIABLE gcv_log
+  WORKING_DIRECTORY "${CBDIR}"
+)
+file(APPEND "${LOGFILE}" "${gcv_log}\n")
+if(gcv_result)
+  file(READ "${LOGFILE}" LOG)
+  message(FATAL_ERROR "[@TARGET_NAME@] gcv conversion failed: ${gcv_result}.\nSee ${LOGFILE} for more info.\n${LOG}")
+endif()
+
+if(NOT EXISTS "${OUTPUT_G}")
+  file(APPEND "${LOGFILE}" "Expected output ${OUTPUT_G} was not created\n")
+  file(READ "${LOGFILE}" LOG)
+  message(FATAL_ERROR "[@TARGET_NAME@] gcv conversion reported success but produced no output.\nSee ${LOGFILE} for more info.\n${LOG}")
+endif()
+
+execute_process(
+  COMMAND "${VERIFY_EXEC}" "${OUTPUT_G}" "${EXPECTED_MATERIAL}" "${MIN_REGION_COUNT}"
+  RESULT_VARIABLE verify_result
+  OUTPUT_VARIABLE verify_log
+  ERROR_VARIABLE verify_log
+  WORKING_DIRECTORY "${CBDIR}"
+)
+file(APPEND "${LOGFILE}" "${verify_log}\n")
+if(verify_result)
+  file(READ "${LOGFILE}" LOG)
+  message(FATAL_ERROR "[@TARGET_NAME@] material verification failed: ${verify_result}.\nSee ${LOGFILE} for more info.\n${LOG}")
+endif()
+
+file(REMOVE "${OUTPUT_G}")

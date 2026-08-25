@@ -2,6 +2,14 @@
 
 if(TARGET libged)
   brlcad_addexec(regress_mater mater.c libged TEST_USESDATA)
+  brlcad_addexec(regress_regdef regdef.c libged TEST_USESDATA)
+  if(TARGET regress_regdef)
+    add_dependencies(regress_regdef ged_plugins)
+  endif(TARGET regress_regdef)
+  # Static-core libged builds do not create a standalone ged-regdef target.
+  brlcad_regression_test(regress-ged_regdef "regress_regdef" TEST_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/regress-ged_regdef.cmake.in" EXEC regress_regdef)
+  distclean("${CMAKE_CURRENT_BINARY_DIR}/regress-ged_regdef.log")
+  distclean("${CMAKE_CURRENT_BINARY_DIR}/ged_regdef_test.g")
   brlcad_regression_test(regress-ged_mater "regress_mater;ged-mater;density_DATAFILES_cp" EXEC regress_mater)
   distclean("${CMAKE_CURRENT_BINARY_DIR}/regress-ged_mater.log")
   distclean("${CMAKE_CURRENT_BINARY_DIR}/ged_mater_test.g")
@@ -34,6 +42,7 @@ endif(TARGET libged)
 cmakefiles(
   CMakeLists.txt
   mater.c
+  regdef.c
   push.cpp
   regress_facetize.cpp
   regress_lint_raytrace.cpp
@@ -43,6 +52,7 @@ cmakefiles(
   ppush_tests.g
   push_tests.g
   regress-ged_mater.cmake.in
+  regress-ged_regdef.cmake.in
   regress-ged_push.cmake.in
   regress-ged_facetize.cmake.in
   regress-ged_lint_raytrace.cmake.in

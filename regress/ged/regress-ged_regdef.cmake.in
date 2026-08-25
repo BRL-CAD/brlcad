@@ -1,0 +1,48 @@
+# Values set at CMake configure time
+set(CBDIR "@CMAKE_CURRENT_BINARY_DIR@")
+set(CSDIR "@CMAKE_CURRENT_SOURCE_DIR@")
+set(LOGFILE "${CBDIR}/regress-ged_regdef.log")
+
+set(BU_DIR_CACHE ${CBDIR}/cache)
+set(LIBRT_CACHE ${CBDIR}/rtcache)
+set(ENV{BU_DIR_CACHE} ${BU_DIR_CACHE})
+set(ENV{LIBRT_CACHE} ${LIBRT_CACHE})
+file(REMOVE_RECURSE "${BU_DIR_CACHE}")
+file(REMOVE_RECURSE "${LIBRT_CACHE}")
+file(MAKE_DIRECTORY "${BU_DIR_CACHE}")
+file(MAKE_DIRECTORY "${LIBRT_CACHE}")
+
+set(OUTPUT_FILES "${CBDIR}/ged_regdef_test.g")
+
+file(WRITE "${LOGFILE}" "Starting regdef default-material test run\n")
+
+string(REPLACE "\\" "" REGDEF_EXEC "${EXEC}")
+if(NOT EXISTS "${REGDEF_EXEC}")
+  file(WRITE "${LOGFILE}" "regdef test program not found at location \"${REGDEF_EXEC}\" - aborting\n")
+  file(READ "${LOGFILE}" LOG)
+  message(FATAL_ERROR "Unable to find regdef test program, aborting.\nSee ${LOGFILE} for more details.\n${LOG}")
+endif()
+
+foreach(of ${OUTPUT_FILES})
+  execute_process(COMMAND "@CMAKE_COMMAND@" -E remove -f "${of}")
+endforeach()
+
+file(APPEND "${LOGFILE}" "Running ${REGDEF_EXEC}\n")
+execute_process(
+  COMMAND "${REGDEF_EXEC}"
+  RESULT_VARIABLE regdef_result
+  OUTPUT_VARIABLE regdef_log
+  ERROR_VARIABLE regdef_log
+  WORKING_DIRECTORY ${CBDIR}
+)
+file(APPEND "${LOGFILE}" "${regdef_log}")
+if(regdef_result)
+  file(READ "${LOGFILE}" LOG)
+  message(FATAL_ERROR "[regress-ged_regdef] Failure: ${regdef_result}. See ${LOGFILE} for more info.\n${LOG}")
+endif()
+
+foreach(of ${OUTPUT_FILES})
+  execute_process(COMMAND "@CMAKE_COMMAND@" -E remove -f "${of}")
+endforeach()
+execute_process(COMMAND "@CMAKE_COMMAND@" -E rm -rf ${BU_DIR_CACHE})
+execute_process(COMMAND "@CMAKE_COMMAND@" -E rm -rf ${LIBRT_CACHE})
