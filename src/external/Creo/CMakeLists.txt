@@ -17,6 +17,7 @@ set(CREO2BRL_LEGACY_SOURCES
 
 set(CREO2BRL_CORE_SOURCES
   core.cpp
+  conversion.cpp
   profile.cpp
   )
 
@@ -495,6 +496,7 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     cmake_uninstall.cmake.in
     creo-brl.dat.in
     creo-brl.h
+    conversion_snapshot.h
     profile_controls.h
     resources/creo-brl-msg.txt
     resources/creo_brl.res
