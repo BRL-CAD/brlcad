@@ -35,6 +35,8 @@ extern "C" void creo_brl_show_status(const char *message);
 extern "C" void creo_brl_core_load_profile_shim(void);
 extern "C" void creo_brl_core_doit_shim(char *dialog, char *component, ProAppData appdata);
 
+static const bool FRONTEND_LOAD_PROFILE_ON_OPEN = false;
+
 static void
 frontend_status(const char *fmt, ...)
 {
@@ -138,7 +140,8 @@ creo_brl_frontend_command(uiCmdCmdId UNUSED(command), uiCmdValue *UNUSED(p_value
         goto print_msg;
     }
 
-    creo_brl_core_load_profile_shim();
+    if (FRONTEND_LOAD_PROFILE_ON_OPEN)
+        creo_brl_core_load_profile_shim();
 
     if (ProUICheckbuttonActivateActionSet(CREO_UI_NAME, "elim_small", activate_small_feats, NULL) != PRO_TK_NO_ERROR) {
         sprintf_s(status, sizeof(status), "FAILURE: Unable to set action for \"Ignore minimum sizes\" checkbutton");

@@ -242,6 +242,12 @@ user_initialize(void)
         return -1;
     }
 
+    err = ProUITranslationFilesEnable();
+    if (err != PRO_TK_NO_ERROR) {
+        show_toolkit_error(L"ProUITranslationFilesEnable failed.", err);
+        return -1;
+    }
+
     /* Keep one direct Toolkit call in the Creo-facing entry point. */
     tk_err = ProWcharSizeVerify((int)sizeof(wchar_t), &expected_wchar_size);
     if (tk_err != 0 || expected_wchar_size != (int)sizeof(wchar_t)) {
