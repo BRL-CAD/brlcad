@@ -1044,7 +1044,7 @@ rt_knob_edit_sca(struct rt_edit *s, int matrix_edit)
        /* switch depending on scaling option selected */
        switch (s->edit_flag) {
 
-	   case RT_PARAMS_EDIT_SCALE:
+	   case RT_MATRIX_EDIT_SCALE:
 	       /* global scaling */
 	       incr_mat[15] = s->acc_sc_obj / scale;
 	       s->acc_sc_obj = scale;

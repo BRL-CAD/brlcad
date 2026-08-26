@@ -325,7 +325,10 @@ f_matpick(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 	chg_l2menu(s, ST_O_EDIT);
 
 	/* begin object editing - initialize */
-	init_oedit(s);
+	if (init_oedit(s) != BRLCAD_OK) {
+	    button(s, BE_REJECT);
+	    return TCL_ERROR;
+	}
     }
 
     s->update_views = 1;
@@ -532,9 +535,8 @@ f_mouse(
 		av[0] = "matpick";
 		av[1] = num;
 		av[2] = (char *)NULL;
-		(void)f_matpick(clientData, interp, 2, av);
 		/* How to record this in the journal file? */
-		return TCL_OK;
+		return f_matpick(clientData, interp, 2, av);
 	    }
 
 	/* ST_S_VPICK was a separate state in vanilla MGED for NURBS vertex

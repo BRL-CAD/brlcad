@@ -500,7 +500,7 @@ struct dm_impl dm_null_impl = {
     0,/* bits per channel */
     0,
     0,
-    0,
+    1.0,                        /* aspect ratio */
     0,
     {0, 0},
     NULL,

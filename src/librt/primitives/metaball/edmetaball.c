@@ -132,6 +132,7 @@ rt_edit_metaball_set_edit_mode(struct rt_edit *s, int mode)
 		rt_edit_set_edflag(s, RT_EDIT_IDLE);
 		return;
 	    }
+	    s->edit_mode = RT_PARAMS_EDIT_TRANS;
 	    break;
 	case ECMD_METABALL_PT_FLDSTR:
 	    s->edit_mode = RT_PARAMS_EDIT_SCALE;
@@ -217,8 +218,7 @@ metaball_ed(struct rt_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUS
 		rt_edit_set_edflag(s, RT_EDIT_IDLE);
 		return;
 	    }
-	    /* Mode is set; update axes to selected point before waiting for mouse. */
-	    rt_edit_process(s);
+	    s->edit_mode = RT_PARAMS_EDIT_TRANS;
 	    break;
 	case ECMD_METABALL_PT_FLDSTR:
 	    s->edit_mode = RT_PARAMS_EDIT_SCALE;
@@ -874,9 +874,20 @@ ecmd_metaball_pt_mov(struct rt_edit *s)
 {
     struct rt_metaball_edit *m = (struct rt_metaball_edit *)s->ipe_ptr;
     if (!m->es_metaball_pnt) {
-	bu_log("Must select a point to move"); return; }
+	bu_log("Must select a point to move");
+	return;
+    }
+    if (s->e_mvalid) {
+	VMOVE(m->es_metaball_pnt->coord, s->e_mparam);
+	s->e_mvalid = 0;
+	return;
+    }
+    if (!s->e_inpara)
+	return;
     if (s->e_inpara != 3) {
-	bu_log("Must provide dx dy dz"); return; }
+	bu_log("Must provide dx dy dz");
+	return;
+    }
     /* must convert to base units */
     s->e_para[0] *= s->local2base;
     s->e_para[1] *= s->local2base;

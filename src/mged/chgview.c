@@ -200,6 +200,23 @@ token_should_edit(const struct knob_token_entry *e,
     }
 }
 
+static int
+matrix_scale_edit_flag(void)
+{
+    switch (edobj) {
+	case BE_O_SCALE:
+	    return RT_MATRIX_EDIT_SCALE;
+	case BE_O_XSCALE:
+	    return RT_MATRIX_EDIT_SCALE_X;
+	case BE_O_YSCALE:
+	    return RT_MATRIX_EDIT_SCALE_Y;
+	case BE_O_ZSCALE:
+	    return RT_MATRIX_EDIT_SCALE_Z;
+	default:
+	    return RT_EDIT_DEFAULT;
+    }
+}
+
 /* Apply accumulated edit operations using the librt rt_edit APIs */
 static int
 mged_librt_knob_edit_apply(struct mged_state *s,
@@ -229,7 +246,19 @@ mged_librt_knob_edit_apply(struct mged_state *s,
 
     /* Scale */
     if (did_sca) {
+	int saved_edit_flag = re->edit_flag;
+	int saved_edit_mode = re->edit_mode;
+	if (matrix_edit) {
+	    int scale_flag = matrix_scale_edit_flag();
+	    if (scale_flag == RT_EDIT_DEFAULT)
+		return BRLCAD_ERROR;
+	    rt_edit_set_edflag(re, scale_flag);
+	}
 	rt_knob_edit_sca(re, matrix_edit);
+	if (matrix_edit) {
+	    re->edit_flag = saved_edit_flag;
+	    re->edit_mode = saved_edit_mode;
+	}
     }
 
     /* For parameter edits (solid editing) finalize primitive parameter updates */

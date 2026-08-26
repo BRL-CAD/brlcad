@@ -16,6 +16,7 @@ set(
   copymat.mged
   cpi.mged
   cp.mged
+  csg_edit.mged
   draw_e_erase_d_who.mged
   draw.mged
   erase.mged
@@ -123,7 +124,12 @@ if(TARGET mged)
       set(TEST_REJECT "db_lookup(killtree_dup.s) failed")
     elseif(TNAME STREQUAL "oed")
       set(TEST_EXPECT "PASS oed one-path bounding-box keypoint")
+    elseif(TNAME STREQUAL "csg_edit")
+      set(TEST_EXPECT "PASS: broad MGED CSG edit coverage completed")
+      set(TEST_REJECT "FAIL:;rt_arb_edit:;rt_edit_knobs_tra:;Incorrect edit flag")
+      set(TEST_SOURCE "${CMAKE_CURRENT_BINARY_DIR}/regress_${testfile}")
     elseif(TNAME STREQUAL "prim_edit")
+      set(TEST_EXPECT "Primitive parameter editing testing completed")
       set(TEST_REJECT "FAIL:")
     elseif(TNAME STREQUAL "overlap_plotting")
       set(TEST_DB "${CMAKE_SOURCE_DIR}/src/libged/tests/ged_tests.g")
@@ -164,6 +170,8 @@ set(
   mged.log
   mged_plot_test.plot3
   mged_rtcheck_overlaps.plot3
+  csg_edit_data.bin
+  csg_edit_dsp.bin
   mged_saveview_test.rt
 )
 

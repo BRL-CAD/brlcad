@@ -320,24 +320,8 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	return TCL_ERROR;
     }
 
-    /* Set up solid edit state */
-    struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
-    MEDIT(s) = rt_edit_create(&bdata->s_fullpath, s->dbip, &s->tol.tol, view_state->vs_gvp);
-    if (!MEDIT(s)) {
-	db_free_full_path(&lhs);
-	db_free_full_path(&rhs);
-	db_free_full_path(&both);
-	Tcl_AppendResult(interp, "Unable to initialize object edit", (char *)NULL);
-	illum_gdlp = GED_DISPLAY_LIST_NULL;
-	illump = 0;
-	return TCL_ERROR;
-    }
-    Tcl_LinkVar(s->interp, "edit_solid_flag", (char *)&MEDIT(s)->edit_flag, TCL_LINK_INT);
-    MEDIT(s)->mv_context = mged_variables->mv_context;
-    MEDIT(s)->vlfree = &rt_vlfree;
-    mged_edit_clbk_sync(MEDIT(s), s);
-
-    /* Patterned after ill_common() ... */
+    /* Patterned after ill_common().  matpick/init_oedit reloads the selected
+     * leaf into MGED's persistent rt_edit state once the arc is known. */
     edobj = 0;		/* sanity */
     movedir = 0;		/* No edit modes set */
     MAT_IDN(MEDIT(s)->model_changes);	/* No changes yet */

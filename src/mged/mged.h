@@ -619,7 +619,7 @@ void oedit_accept(struct mged_state *s);
 void oedit_reject(struct mged_state *s);
 void objedit_mouse(struct mged_state *s, const vect_t mousevec);
 void label_edited_solid(struct mged_state *s, int *num_lines, point_t *lines, struct rt_point_labels pl[], int max_pl, const mat_t xform, struct rt_db_internal *ip);
-void init_oedit(struct mged_state *s);
+int init_oedit(struct mged_state *s);
 void init_sedit(struct mged_state *s);
 int set_oedit_bbox_keypoint(struct mged_state *s);
 
