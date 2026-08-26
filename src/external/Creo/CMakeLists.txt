@@ -47,6 +47,8 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   # Allowed BRL-CAD configuration types
   set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "" FORCE)
 
+  option(CREO_EXEC_PLUGIN "Build the spawned executable diagnostic fallback" OFF)
+
   find_package(BRLCAD CONFIG REQUIRED COMPONENTS bu bn bv bg nmg brep rt wdb)
   set(CREO_BRLCAD_LIBS
     BRLCAD::rt
@@ -370,11 +372,11 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   # but the DLL does not.  Note that this is also identified as a        #
   # possible issue in the Creo dev documentation.                        #
   #----------------------------------------------------------------------#
-  if(DEFINED CREO_EXEC_PLUGIN)
-    add_executable(creo-brl-exe ${CREO2BRL_CORE_SOURCES})
-    target_link_libraries(creo-brl-exe REGEX::REGEX ${WIN_LIBS} ${CREO_PTK_EXE_LIBS} ${CREO_BRLCAD_LIBS})
+  if(CREO_EXEC_PLUGIN)
+    add_executable(creo-brl-exe ${CREO2BRL_CORE_SOURCES} frontend.cpp)
+    target_link_libraries(creo-brl-exe REGEX::REGEX ${WIN_LIBS} ${CREO_PTK_EXE_LIBS} ${CREO_UCORE_LIB} ${CREO_UDATA_LIB} ${CREO_BRLCAD_LIBS})
     set_target_properties(creo-brl-exe PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CREO_BUNDLE_BIN_DIR}")
-    set_property(TARGET creo-brl-exe APPEND PROPERTY COMPILE_DEFINITIONS "TINYCTHREAD_DLL_IMPORTS")
+    set_property(TARGET creo-brl-exe APPEND PROPERTY COMPILE_DEFINITIONS TINYCTHREAD_DLL_IMPORTS CREO_EXEC_PLUGIN)
 
     set(DAT_STARTUP "spawn")
     set(DAT_EXEC_FILE "${CMAKE_INSTALL_PREFIX}/bin/creo-brl-exe.exe")
@@ -384,6 +386,8 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
       COMMAND "${CMAKE_COMMAND}" -E copy_if_different
         "${CMAKE_CURRENT_BINARY_DIR}/creo-brl-debug.dat" "${CREO_BUNDLE_DIR}/creo-brl-debug.dat"
       )
+    install(TARGETS creo-brl-exe RUNTIME DESTINATION bin)
+    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/creo-brl-debug.dat" DESTINATION .)
   endif()
 
   message("--")
@@ -399,10 +403,20 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   #----------------------------------------------------------------------#
   # Create the UNLOCK target                                             #
   #----------------------------------------------------------------------#
+  if(CREO_EXEC_PLUGIN)
+    set(CREO_PTK_UNLOCK_EXE_COMMAND
+      COMMAND "${CMAKE_COMMAND}" -E env "PROCESSOR_ARCHITECTURE=AMD64"
+        "${CREO_PTK_UNLOCKER}" "$<TARGET_FILE:creo-brl-exe>")
+    set(CREO_PTK_UNLOCK_EXE_DEPENDENCY creo-brl-exe)
+  endif()
+
   add_custom_target(UNLOCK
-    COMMAND "${CREO_PTK_UNLOCKER}" "$<TARGET_FILE:creo-brl>"
-    COMMAND "${CREO_PTK_UNLOCKER}" "$<TARGET_FILE:creo-brl-core>"
-    DEPENDS creo-brl creo-brl-core
+    COMMAND "${CMAKE_COMMAND}" -E env "PROCESSOR_ARCHITECTURE=AMD64"
+      "${CREO_PTK_UNLOCKER}" "$<TARGET_FILE:creo-brl>"
+    COMMAND "${CMAKE_COMMAND}" -E env "PROCESSOR_ARCHITECTURE=AMD64"
+      "${CREO_PTK_UNLOCKER}" "$<TARGET_FILE:creo-brl-core>"
+    ${CREO_PTK_UNLOCK_EXE_COMMAND}
+    DEPENDS creo-brl creo-brl-core ${CREO_PTK_UNLOCK_EXE_DEPENDENCY}
     COMMENT "Unlocking Creo-BRL dll"
   )
 

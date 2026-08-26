@@ -1575,6 +1575,87 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
 }
 
 
+#if defined(CREO_EXEC_PLUGIN)
+extern "C" int creo_brl_frontend_command(uiCmdCmdId, uiCmdValue *, void *);
+extern "C" uiCmdAccessState creo_brl_frontend_access(uiCmdAccessMode);
+extern "C" void doit(char *, char *, ProAppData);
+
+extern "C" void
+creo_brl_show_status(const char *message)
+{
+    creo_log(NULL, MSG_STATUS, "%s", message);
+}
+
+extern "C" void
+creo_brl_core_load_profile_shim(void)
+{
+    load_profile();
+}
+
+extern "C" void
+creo_brl_core_doit_shim(char *dialog, char *component, ProAppData appdata)
+{
+    doit(dialog, component, appdata);
+}
+
+extern "C" int
+user_initialize()
+{
+    ProError err = PRO_TK_GENERAL_ERROR;
+    ProFileName msgfil = {'\0'};
+    int expected_wchar_size = 0;
+    uiCmdCmdId cmd_id = 0;
+
+    err = ProUITranslationFilesEnable();
+    if (err != PRO_TK_NO_ERROR) {
+        creo_log(NULL, MSG_STATUS, "ProUITranslationFilesEnable failed (%d)", err);
+        return -1;
+    }
+
+    err = ProWcharSizeVerify((int)sizeof(wchar_t), &expected_wchar_size);
+    if (err != PRO_TK_NO_ERROR || expected_wchar_size != (int)sizeof(wchar_t)) {
+        creo_log(NULL, MSG_STATUS, "wchar_t size verification failed (%d)", err);
+        return -1;
+    }
+
+    err = ProCmdActionAdd(
+        "CREO-BRL",
+        creo_brl_frontend_command,
+        uiProe2ndImmediate,
+        creo_brl_frontend_access,
+        PRO_B_FALSE,
+        PRO_B_FALSE,
+        &cmd_id);
+    if (err != PRO_TK_NO_ERROR) {
+        creo_log(NULL, MSG_STATUS, "Failed to add creo-brl action (%d)", err);
+        return -1;
+    }
+
+    ProStringToWstring(msgfil, CREO_BRL_MSG_FNAME);
+    err = ProMenubarmenuPushbuttonAdd(
+        "Tools",
+        "CREO-BRL",
+        "CREO-BRL",
+        "CREO-BRL-HELP",
+        NULL,
+        PRO_B_TRUE,
+        cmd_id,
+        msgfil);
+    if (err != PRO_TK_NO_ERROR) {
+        creo_log(NULL, MSG_STATUS, "Failed to add creo-brl menu bar push button (%d)", err);
+        return -1;
+    }
+
+    return 0;
+}
+
+
+extern "C" void
+user_terminate()
+{
+    ProMessageClear();
+}
+#else
 /*
  * The real Creo-facing lifecycle lives in the facade.  The runtime-loaded
  * backend only exposes the dialog actions and conversion routines that the
@@ -1622,6 +1703,7 @@ extern "C" int user_initialize()
 extern "C" void user_terminate()
 {
 }
+#endif
 
 // Local Variables:
 // tab-width: 8

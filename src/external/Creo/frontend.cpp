@@ -35,7 +35,13 @@ extern "C" void creo_brl_show_status(const char *message);
 extern "C" void creo_brl_core_load_profile_shim(void);
 extern "C" void creo_brl_core_doit_shim(char *dialog, char *component, ProAppData appdata);
 
+#if defined(CREO_EXEC_PLUGIN)
+static const bool FRONTEND_LOAD_PROFILE_ON_OPEN = true;
+static const bool FRONTEND_CONVERSION_ENABLED = true;
+#else
 static const bool FRONTEND_LOAD_PROFILE_ON_OPEN = false;
+static const bool FRONTEND_CONVERSION_ENABLED = false;
+#endif
 
 static void
 frontend_status(const char *fmt, ...)
@@ -125,6 +131,18 @@ do_quit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata)
 }
 
 
+static void
+frontend_convert(char *dialog, char *component, ProAppData appdata)
+{
+    if (!FRONTEND_CONVERSION_ENABLED) {
+        frontend_status("Conversion is unavailable while the runtime core Toolkit boundary is being refactored.");
+        return;
+    }
+
+    creo_brl_core_doit_shim(dialog, component, appdata);
+}
+
+
 /* Driver routine for converting Creo to BRL-CAD */
 extern "C" int
 creo_brl_frontend_command(uiCmdCmdId UNUSED(command), uiCmdValue *UNUSED(p_value), void *UNUSED(p_push_cmd_data))
@@ -153,7 +171,7 @@ creo_brl_frontend_command(uiCmdCmdId UNUSED(command), uiCmdValue *UNUSED(p_value
         goto print_msg;
     }
 
-    if (ProUIPushbuttonActivateActionSet(CREO_UI_NAME, "doit", creo_brl_core_doit_shim, NULL) != PRO_TK_NO_ERROR) {
+    if (ProUIPushbuttonActivateActionSet(CREO_UI_NAME, "doit", frontend_convert, NULL) != PRO_TK_NO_ERROR) {
         sprintf_s(status, sizeof(status), "FAILURE: Unable to set action for \"Convert\" button");
         destroy_dialog = 1;
         goto print_msg;
