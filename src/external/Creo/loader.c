@@ -40,17 +40,20 @@
 #define FRONTEND_MSG_FILE "creo-brl-msg.txt"
 #define FRONTEND_TITLE_MAX 512
 #define FRONTEND_MESSAGE_MAX 4096
+#define FACADE_PATH_MAX 32768
+#define BUNDLE_CONFIG_PATH L"config"
+#define BUNDLE_MATERIAL_PATH L"text\\usascii"
 
 typedef int (__cdecl *creo_brl_core_initialize_fn_t)(void);
 typedef void (__cdecl *creo_brl_core_terminate_fn_t)(void);
-typedef void (__cdecl *creo_brl_core_doit_fn_t)(char *, char *, ProAppData);
-typedef void (__cdecl *creo_brl_core_load_profile_fn_t)(void);
+typedef void (__cdecl *creo_brl_core_load_profile_fn_t)(
+    const char *profile_directory,
+    const char *material_directory);
 typedef void (__cdecl *creo_brl_core_set_frontend_api_fn_t)(const struct creo_brl_frontend_api *);
 
 static HMODULE core_module = NULL;
 static creo_brl_core_initialize_fn_t core_initialize_fn = NULL;
 static creo_brl_core_terminate_fn_t core_terminate_fn = NULL;
-static creo_brl_core_doit_fn_t core_doit_fn = NULL;
 static creo_brl_core_load_profile_fn_t core_load_profile_fn = NULL;
 static creo_brl_core_set_frontend_api_fn_t core_set_frontend_api_fn = NULL;
 
@@ -136,9 +139,16 @@ show_popup_message(const char *title, const char *message)
     (void)ProArrayFree((ProArray *)&button);
 }
 
+extern void __cdecl creo_brl_frontend_apply_control(
+    const char *resource,
+    const char *type,
+    const char *value,
+    const char *default_value);
+
 static const struct creo_brl_frontend_api frontend_api = {
     show_status_message,
-    show_popup_message
+    show_popup_message,
+    creo_brl_frontend_apply_control
 };
 
 static int
@@ -171,12 +181,55 @@ self_bin_dir(wchar_t *dir, size_t dir_len)
     return 1;
 }
 
+static int
+bundle_subdirectory(wchar_t *path, size_t path_len, const wchar_t *relative_path)
+{
+    wchar_t *last_slash = NULL;
+    size_t bundle_length = 0;
+
+    if (!path || path_len == 0 || !relative_path)
+        return 0;
+
+    if (!self_bin_dir(path, path_len))
+        return 0;
+
+    last_slash = wcsrchr(path, L'\\');
+    if (!last_slash)
+        return 0;
+
+    *last_slash = L'\0';
+    bundle_length = wcslen(path);
+    return swprintf_s(
+        path + bundle_length,
+        path_len - bundle_length,
+        L"\\%ls",
+        relative_path) >= 0;
+}
+
+
+static int
+wide_path_to_string(const wchar_t *wide_path, char *path, size_t path_len)
+{
+    if (!wide_path || !path || path_len == 0)
+        return 0;
+
+    return WideCharToMultiByte(
+        CP_ACP,
+        WC_NO_BEST_FIT_CHARS,
+        wide_path,
+        -1,
+        path,
+        (int)path_len,
+        NULL,
+        NULL) != 0;
+}
+
+
 static void
 clear_core_state(void)
 {
     core_initialize_fn = NULL;
     core_terminate_fn = NULL;
-    core_doit_fn = NULL;
     core_load_profile_fn = NULL;
     core_set_frontend_api_fn = NULL;
     core_module = NULL;
@@ -209,15 +262,36 @@ creo_brl_show_status(const char *message)
 void
 creo_brl_core_load_profile_shim(void)
 {
-    if (core_load_profile_fn)
-        core_load_profile_fn();
-}
+    wchar_t profile_directory_wide[FACADE_PATH_MAX] = {0};
+    wchar_t material_directory_wide[FACADE_PATH_MAX] = {0};
+    char profile_directory[FACADE_PATH_MAX] = {0};
+    char material_directory[FACADE_PATH_MAX] = {0};
 
-void
-creo_brl_core_doit_shim(char *dialog, char *component, ProAppData appdata)
-{
-    if (core_doit_fn)
-        core_doit_fn(dialog, component, appdata);
+    if (!core_load_profile_fn)
+        return;
+
+    if (!bundle_subdirectory(
+            profile_directory_wide,
+            _countof(profile_directory_wide),
+            BUNDLE_CONFIG_PATH) ||
+        !bundle_subdirectory(
+            material_directory_wide,
+            _countof(material_directory_wide),
+            BUNDLE_MATERIAL_PATH) ||
+        !wide_path_to_string(
+            profile_directory_wide,
+            profile_directory,
+            sizeof(profile_directory)) ||
+        !wide_path_to_string(
+            material_directory_wide,
+            material_directory,
+            sizeof(material_directory))) {
+        show_status_message("Unable to determine the Creo-BRL bundle configuration paths.");
+        core_load_profile_fn(NULL, NULL);
+        return;
+    }
+
+    core_load_profile_fn(profile_directory, material_directory);
 }
 
 __declspec(dllexport) int
@@ -225,8 +299,8 @@ user_initialize(void)
 {
     int expected_wchar_size = 0;
     int tk_err = 0;
-    wchar_t bin_dir[32768] = {0};
-    wchar_t core_path[32768] = {0};
+    wchar_t bin_dir[FACADE_PATH_MAX] = {0};
+    wchar_t core_path[FACADE_PATH_MAX] = {0};
     FARPROC proc = NULL;
     int core_result = -1;
     uiCmdCmdId cmd_id = 0;
@@ -326,21 +400,13 @@ user_initialize(void)
     }
     core_set_frontend_api_fn = (creo_brl_core_set_frontend_api_fn_t)proc;
 
-    proc = GetProcAddress(core_module, "load_profile");
+    proc = GetProcAddress(core_module, "creo_brl_core_load_profile");
     if (!proc) {
-        show_bootstrap_error(L"GetProcAddress(load_profile) failed.");
+        show_bootstrap_error(L"GetProcAddress(creo_brl_core_load_profile) failed.");
         unload_core();
         return -1;
     }
     core_load_profile_fn = (creo_brl_core_load_profile_fn_t)proc;
-
-    proc = GetProcAddress(core_module, "doit");
-    if (!proc) {
-        show_bootstrap_error(L"GetProcAddress(doit) failed.");
-        unload_core();
-        return -1;
-    }
-    core_doit_fn = (creo_brl_core_doit_fn_t)proc;
 
     core_set_frontend_api_fn(&frontend_api);
 

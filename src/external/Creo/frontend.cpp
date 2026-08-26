@@ -33,14 +33,14 @@
 
 extern "C" void creo_brl_show_status(const char *message);
 extern "C" void creo_brl_core_load_profile_shim(void);
+#if defined(CREO_EXEC_PLUGIN)
 extern "C" void creo_brl_core_doit_shim(char *dialog, char *component, ProAppData appdata);
+#endif
 
 #if defined(CREO_EXEC_PLUGIN)
 static const bool FRONTEND_LOAD_PROFILE_ON_OPEN = true;
-static const bool FRONTEND_CONVERSION_ENABLED = true;
 #else
-static const bool FRONTEND_LOAD_PROFILE_ON_OPEN = false;
-static const bool FRONTEND_CONVERSION_ENABLED = false;
+static const bool FRONTEND_LOAD_PROFILE_ON_OPEN = true;
 #endif
 
 static void
@@ -50,10 +50,55 @@ frontend_status(const char *fmt, ...)
     char msg[CREO_MSG_MAX] = {'\0'};
 
     va_start(ap, fmt);
-    vsprintf(msg, fmt, ap);
+    vsprintf_s(msg, sizeof(msg), fmt, ap);
     va_end(ap);
 
     creo_brl_show_status(msg);
+}
+
+
+extern "C" void __cdecl
+creo_brl_frontend_apply_control(
+    const char *resource,
+    const char *type,
+    const char *value,
+    const char *UNUSED(default_value))
+{
+    ProError err = PRO_TK_GENERAL_ERROR;
+
+    if (!resource || !type || !value) {
+        frontend_status("FAILURE: Unable to apply an invalid profile control value");
+        return;
+    }
+
+    if (strcmp(type, "STR") == 0) {
+        wchar_t text[CREO_NAME_MAX];
+
+        ProStringToWstring(text, (char *)value);
+        err = ProUIInputpanelValueSet(CREO_UI_NAME, (char *)resource, text);
+    } else if (strcmp(type, "BOX") == 0) {
+        if (strcmp(value, "on") == 0)
+            err = ProUICheckbuttonSet(CREO_UI_NAME, (char *)resource);
+        else
+            err = ProUICheckbuttonUnset(CREO_UI_NAME, (char *)resource);
+    } else if (strcmp(type, "RAD") == 0) {
+        char *selected_name = (char *)value;
+
+        err = ProUIRadiogroupSelectednamesSet(CREO_UI_NAME, (char *)resource, 1, &selected_name);
+    } else {
+        frontend_status("Unknown control type: %s", type);
+        return;
+    }
+
+    if (err != PRO_TK_NO_ERROR)
+        frontend_status("FAILURE: Unable to apply profile value for %s (%d)", resource, err);
+}
+
+
+static void
+frontend_load_profile(void)
+{
+    creo_brl_core_load_profile_shim();
 }
 
 
@@ -134,12 +179,14 @@ do_quit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata)
 static void
 frontend_convert(char *dialog, char *component, ProAppData appdata)
 {
-    if (!FRONTEND_CONVERSION_ENABLED) {
-        frontend_status("Conversion is unavailable while the runtime core Toolkit boundary is being refactored.");
-        return;
-    }
-
+#if defined(CREO_EXEC_PLUGIN)
     creo_brl_core_doit_shim(dialog, component, appdata);
+#else
+    (void)dialog;
+    (void)component;
+    (void)appdata;
+    frontend_status("Conversion is unavailable while the runtime core Toolkit boundary is being refactored.");
+#endif
 }
 
 
@@ -159,7 +206,7 @@ creo_brl_frontend_command(uiCmdCmdId UNUSED(command), uiCmdValue *UNUSED(p_value
     }
 
     if (FRONTEND_LOAD_PROFILE_ON_OPEN)
-        creo_brl_core_load_profile_shim();
+        frontend_load_profile();
 
     if (ProUICheckbuttonActivateActionSet(CREO_UI_NAME, "elim_small", activate_small_feats, NULL) != PRO_TK_NO_ERROR) {
         sprintf_s(status, sizeof(status), "FAILURE: Unable to set action for \"Ignore minimum sizes\" checkbutton");

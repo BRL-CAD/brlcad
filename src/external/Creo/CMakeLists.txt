@@ -7,12 +7,17 @@
 
 # Establish the list of Source files - this is needed
 # both for the plugin build and the main BRL-CAD build
-set(CREO2BRL_CORE_SOURCES
+set(CREO2BRL_LEGACY_SOURCES
   assembly.cpp
   csg.cpp
   main.cpp
   part.cpp
   util.cpp
+  )
+
+set(CREO2BRL_CORE_SOURCES
+  core.cpp
+  profile.cpp
   )
 
 if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
@@ -311,7 +316,7 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
 
   add_library(creo-brl-core SHARED ${CREO2BRL_CORE_SOURCES})
   set_property(TARGET creo-brl-core APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-  target_link_libraries(creo-brl-core REGEX::REGEX ${WIN_LIBS} ${CREO_PTK_DLL_LIBS} ${CREO_BRLCAD_LIBS})
+  target_link_libraries(creo-brl-core REGEX::REGEX ${WIN_LIBS} ${CREO_BRLCAD_LIBS})
   set_target_properties(creo-brl-core PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CREO_BUNDLE_BIN_DIR}")
 
   add_library(creo-brl SHARED
@@ -373,7 +378,7 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   # possible issue in the Creo dev documentation.                        #
   #----------------------------------------------------------------------#
   if(CREO_EXEC_PLUGIN)
-    add_executable(creo-brl-exe ${CREO2BRL_CORE_SOURCES} frontend.cpp)
+    add_executable(creo-brl-exe ${CREO2BRL_LEGACY_SOURCES} frontend.cpp)
     target_link_libraries(creo-brl-exe REGEX::REGEX ${WIN_LIBS} ${CREO_PTK_EXE_LIBS} ${CREO_UCORE_LIB} ${CREO_UDATA_LIB} ${CREO_BRLCAD_LIBS})
     set_target_properties(creo-brl-exe PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CREO_BUNDLE_BIN_DIR}")
     set_property(TARGET creo-brl-exe APPEND PROPERTY COMPILE_DEFINITIONS TINYCTHREAD_DLL_IMPORTS CREO_EXEC_PLUGIN)
@@ -413,8 +418,6 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   add_custom_target(UNLOCK
     COMMAND "${CMAKE_COMMAND}" -E env "PROCESSOR_ARCHITECTURE=AMD64"
       "${CREO_PTK_UNLOCKER}" "$<TARGET_FILE:creo-brl>"
-    COMMAND "${CMAKE_COMMAND}" -E env "PROCESSOR_ARCHITECTURE=AMD64"
-      "${CREO_PTK_UNLOCKER}" "$<TARGET_FILE:creo-brl-core>"
     ${CREO_PTK_UNLOCK_EXE_COMMAND}
     DEPENDS creo-brl creo-brl-core ${CREO_PTK_UNLOCK_EXE_DEPENDENCY}
     COMMENT "Unlocking Creo-BRL dll"
@@ -463,7 +466,7 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   #----------------------------------------------------------------------#
   CHECK_CXX_FLAG("Wno-maybe-uninitialized")
 
-  set(CREO2BRL_SOURCES ${CREO2BRL_CORE_SOURCES} shim.cpp)
+  set(CREO2BRL_SOURCES ${CREO2BRL_LEGACY_SOURCES} shim.cpp)
   add_library(creo-brl ${CREO2BRL_SOURCES})
   set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS TEST_BUILD BRLCADBUILD HAVE_CONFIG_H)
   target_link_libraries(creo-brl librt libwdb libbrep libbg libnmg libbv libbn libbu REGEX::REGEX)
@@ -485,11 +488,14 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   # Distcheck file list
   set(creo_dist_files
     ${CREO2BRL_SOURCES}
+    ${CREO2BRL_CORE_SOURCES}
     loader.c
+    frontend.cpp
     README.txt
     cmake_uninstall.cmake.in
     creo-brl.dat.in
     creo-brl.h
+    profile_controls.h
     resources/creo-brl-msg.txt
     resources/creo_brl.res
     resources/ptc_materials.mtl

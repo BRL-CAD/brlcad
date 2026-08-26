@@ -73,6 +73,7 @@
 #include <regex.h>
 #include "creo-brl.h"
 #include "frontend_api.h"
+#include "profile_controls.h"
 
 static struct creo_brl_frontend_api frontend_api = {0};
 
@@ -86,11 +87,19 @@ creo_brl_core_set_frontend_api(const struct creo_brl_frontend_api *api)
 
     frontend_api.show_status = NULL;
     frontend_api.show_popup = NULL;
+    frontend_api.apply_control = NULL;
 }
 
 
+static void load_resource(const char *res, const char *typ, const char *val, const char *def);
+#if defined(CREO_EXEC_PLUGIN)
+extern "C" int set_radio_btn(char *group, char *name);
+#endif
+
+
+#if defined(CREO_EXEC_PLUGIN)
 /*---------------------------------------------------------------------*/
-/*      Data structure to support Creo-BRL profile path lookups        */
+/*      Data structure to support legacy spawned profile lookups        */
 /*---------------------------------------------------------------------*/
 
 struct path_table
@@ -111,80 +120,7 @@ static path_table paths[] = {
     {"HOMEDRIVE"  , "DevTools\\Creo_to_BRL" ,  4},
     { NULL        , NULL                    , -1}
 };
-
-/*---------------------------------------------------------------------*/
-/*      Data structure to support Creo-BRL input panel processing      */
-/*---------------------------------------------------------------------*/
-
-struct inputs_table
-{
-    char *istr;
-    int   indx;
-}; 
-
-/* Reference table for default input strings */
-static inputs_table inputs[] = {
-    /*--------------------------------------------------*/
-    /*              input string                  index */
-    /*--------------------------------------------------*/
-    {"./ptc_materials.mtl"                       ,  1},
-    {"0.0"                                       ,  2},
-    {"0.3"                                       ,  3},
-    {"0.5"                                       ,  4},
-    {"1.0"                                       ,  5},
-    {"1000"                                      ,  6},
-    {"30"                                        ,  7},
-    {"all/(debug)"                               ,  8},
-    {"failure"                                   ,  9},
-    {"failure/success"                           , 10},
-    {"millimeter"                                , 11},
-    {"nomenclature"                              , 12},
-    {"nomenclature,part_number,ptc_material_name", 13},
-    {"none"                                      , 14},
-    {"off"                                       , 15},
-    {"on"                                        , 16},
-    {"percent"                                   , 17},
-    {"success"                                   , 18},
-    {"x_to_z"                                    , 19},
-    {"y_to_z"                                    , 20},
-    { NULL                                       , -1}
-};
-
-struct controls_table
-{
-    char *catr;
-    char *cres;
-    char *ctyp;
-    int   cinp[MAX_RADIO_BTNS];
-    int   indx;
-};
-
-/* Reference table for input panel controls */
-static controls_table controls[] = {
-    /*--------------------------------------------------------------------------*/
-    /*        attribute               resource       type      inputs     index */
-    /*--------------------------------------------------------------------------*/
-    {"process_log_criteria"     , "log_file_type" , "RAD",  8,  9, 18, 10,  1},
-    {"material_file_name"       , "mtl_fname"     , "STR",  1, -1, -1, -1,  2},
-    {"create_object_names"      , "param_rename"  , "STR", 12, -1, -1, -1,  3},
-    {"preserved_attributes"     , "param_save"    , "STR", 13, -1, -1, -1,  4},
-    {"coordinate_transformation", "transform"     , "RAD", 14, 19, 20, -1,  5},
-    {"initial_region_counter"   , "region_counter", "STR",  6, -1, -1, -1,  6},
-    {"minimum_luminance"        , "min_luminance" , "STR",  7, -1, -1, -1,  7},
-    {"chord_mode"               , "chord_mode"    , "RAD", 17, 11, -1, -1,  8},
-    {"maximum_chord_height"     , "max_chord"     , "STR",  3, -1, -1, -1,  9},
-    {"minimum_angle_control"    , "min_angle"     , "STR",  4, -1, -1, -1, 10},
-    {"eliminate_small_features" , "elim_small"    , "BOX", 15, -1, -1, -1, 11},
-    {"minimum_hole_diameter"    , "min_hole"      , "STR",  2, -1, -1, -1, 12},
-    {"minimum_chamfer_dimension", "min_chamfer"   , "STR",  2, -1, -1, -1, 13},
-    {"minimum_blend_radius"     , "min_round"     , "STR",  2, -1, -1, -1, 14},
-    {"facetize_everything"      , "facets_only"   , "BOX", 16, -1, -1, -1, 15},
-    {"export_facets_to_stl"     , "export_stl"    , "BOX", 15, -1, -1, -1, 16},
-    {"reject_failed_bots"       , "check_solidity", "BOX", 15, -1, -1, -1, 17},
-    {"box_replaces_failed_part" , "create_boxes"  , "BOX", 15, -1, -1, -1, 18},
-    {"write_surface_normals"    , "write_normals" , "BOX", 15, -1, -1, -1, 19},
-    { NULL                      ,  NULL           ,  NULL, -1, -1, -1, -1, -1}
-};
+#endif
 
 
 /*----------------------------------------------------------------------*/
@@ -638,10 +574,10 @@ find_btn_name(const char *res, const char *val)
     int* p;
 
     if (val) {
-        for (controls_table *p = controls; p->cres != NULL; p++)
-            if (bu_strcmp(res, p->cres) == 0) {
-                for (unsigned int n = 0; n < MAX_RADIO_BTNS; n++)
-                    if (bu_strcmp(get_input_str(p->cinp[n]), val) == 0)
+        for (const struct creo_profile_control *p = creo_profile_controls; p->resource != NULL; p++)
+            if (bu_strcmp(res, p->resource) == 0) {
+                for (unsigned int n = 0; n < CREO_PROFILE_RADIO_BUTTON_MAX; n++)
+                    if (bu_strcmp(get_input_str(p->input_indices[n]), val) == 0)
                         return n;
                 }
         }
@@ -656,9 +592,9 @@ find_control_attr(const char *attr)
 {
     int* p;
 
-    for (controls_table *p = controls; p->catr != NULL; p++)
-        if (bu_strcmp(attr, p->catr) == 0)
-            return p->indx;
+    for (const struct creo_profile_control *p = creo_profile_controls; p->attribute != NULL; p++)
+        if (bu_strcmp(attr, p->attribute) == 0)
+            return p->index;
 
     return -1;
 }
@@ -687,23 +623,26 @@ find_matl(struct creo_conv_info *cinfo)
 
 
 /* Returns path of profile settings (.g) file */
-extern "C" struct bu_vls *
-find_profile(void)
+static struct bu_vls *
+find_profile(const char *profile_directory)
 {
     static const char gfile[] = CREO_PROFILE_FNAME;
     struct bu_vls str = BU_VLS_INIT_ZERO;
     struct bu_vls *fname;
 
+#if defined(CREO_EXEC_PLUGIN)
     char    dir[MAXPATHLEN];
     char   *path;
-    ProPath cwd;
-
-    if (ProDirectoryCurrentGet(cwd) != PRO_TK_NO_ERROR) {
+    if (!profile_directory || !profile_directory[0]) {
         creo_log(NULL, MSG_STATUS, "Failed to find current working directory...");
         bu_vls_free(&str);
         return NULL;
     } else {
-        ProWstringToString(dir, cwd);
+        if (bu_strlcpy(dir, profile_directory, sizeof(dir)) >= sizeof(dir)) {
+            creo_log(NULL, MSG_STATUS, "Current working directory is too long");
+            bu_vls_free(&str);
+            return NULL;
+        }
         creo_log(NULL, MSG_STATUS, "Current directory is \"%s\"", dir);
     }
 
@@ -723,6 +662,22 @@ find_profile(void)
             return NULL;
         }
     }
+#else
+    if (!profile_directory || !profile_directory[0]) {
+        creo_log(NULL, MSG_STATUS, "Unable to determine the bundle profile directory");
+        bu_vls_free(&str);
+        return NULL;
+    }
+
+    bu_vls_sprintf(&str, "%s\\%s", profile_directory, gfile);
+    if (!bu_file_exists(bu_vls_cstr(&str), NULL)) {
+        creo_log(NULL, MSG_STATUS, "Unable to locate bundle profile \"%s\"", bu_vls_addr(&str));
+        bu_vls_free(&str);
+        return NULL;
+    }
+
+    creo_log(NULL, MSG_STATUS, "Bundle profile is \"%s\"", bu_vls_addr(&str));
+#endif
 
     /* Prepare filename */
     BU_GET(fname, struct bu_vls);
@@ -873,9 +828,9 @@ get_input_str(int indx)
 {
     int* p;
 
-    for (inputs_table *p = inputs; p->istr != NULL; p++) {
-        if (p->indx == indx)
-            return p->istr;
+    for (const struct creo_profile_input *p = creo_profile_inputs; p->value != NULL; p++) {
+        if (p->index == indx)
+            return (char *)p->value;
     }
 
     return NULL;
@@ -985,56 +940,64 @@ get_username(void)
 }
 
 
-/* Determines if database directory meets _GLOBAL criteria */
-extern "C" int
-global_dir(struct directory *dp)
+static int
+is_material_file_control(const struct creo_profile_control *control)
 {
-    int major, minor;
+    return bu_strcmp(control->resource, creo_profile_material_resource) == 0;
+}
 
-    if (!dp)
-        return 0;
 
-    major = (dp->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY);
-    minor = (dp->d_minor_type == 0);
+static const char *
+control_default_value(
+    const struct creo_profile_control *control,
+    const char *material_directory,
+    struct bu_vls *material_path)
+{
+    const char *default_value = get_input_str(control->input_indices[0]);
 
-    return (major && minor);
+    if (!is_material_file_control(control) || !material_directory || !material_directory[0])
+        return default_value;
+
+    bu_vls_sprintf(material_path, "%s\\%s", material_directory, creo_profile_bundle_material_file_name);
+    return bu_vls_cstr(material_path);
 }
 
 
 /* Load default control settings into input panel */
-extern "C" void
-load_defaults(void)
+static void
+load_defaults(const char *material_directory)
 {
-    int*  p;
+    struct bu_vls material_path = BU_VLS_INIT_ZERO;
 
-    for (controls_table *p = controls; p->cres != NULL; p++) {
-        char* def = get_input_str(p->cinp[0]);
-        load_resource(p->cres, p->ctyp, def, def);
+    for (const struct creo_profile_control *p = creo_profile_controls; p->resource != NULL; p++) {
+        const char *def = control_default_value(p, material_directory, &material_path);
+        load_resource(p->resource, p->type, def, def);
     }
 
-    return;
+    bu_vls_free(&material_path);
 }
 
 
 /* Process input from user profile settings (.g) file */
-extern "C" __declspec(dllexport) void
-load_profile(void)
+static void
+load_profile_from_directory(
+    const char *profile_directory,
+    const char *material_directory)
 {
     struct bu_attribute_value_set avs;
     struct bu_vls    *profile = NULL;
+    struct bu_vls material_path = BU_VLS_INIT_ZERO;
     struct db_i      *dbip    = NULL;
-    struct directory *dp      = NULL;
-    struct rt_wdb    *wdbp    = NULL;
-
+    struct directory *global_dp = NULL;
     FILE *fp = NULL;
 
     /* Locate the user profile */
-    profile = find_profile();
+    profile = find_profile(profile_directory);
     if (!profile) {
         creo_log(NULL, MSG_STATUS, "Unable to locate user profile");
-        load_defaults();
-        return;
-        }
+        load_defaults(material_directory);
+        goto cleanup;
+    }
 
     creo_log(NULL, MSG_STATUS, "User profile is \"%s\"", bu_vls_addr(profile));
 
@@ -1042,23 +1005,23 @@ load_profile(void)
     fp = fopen(bu_vls_cstr(profile), "rb");
     if (!fp) {
         creo_log(NULL, MSG_STATUS, "Unable to open \"%s\"", bu_vls_addr(profile));
-        load_defaults();
-        return;
-        }
+        load_defaults(material_directory);
+        goto cleanup;
+    }
 
     /* Open the database */
     dbip = db_open(bu_vls_cstr(profile), DB_OPEN_READONLY);
     if (dbip == DBI_NULL) {
         creo_log(NULL, MSG_STATUS, "\"db_open\" failed to open the user profile");
-        load_defaults();
-        return;
-        }
+        load_defaults(material_directory);
+        goto cleanup;
+    }
 
     /* Build the database */
     RT_CK_DBI(dbip);
     if (db_dirbuild(dbip) < 0) {
         creo_log(NULL, MSG_STATUS, "\"db_dirbuild\" failed to build \"%s\"", bu_vls_addr(profile));
-        load_defaults();
+        load_defaults(material_directory);
         goto cleanup;
     }
 
@@ -1066,17 +1029,18 @@ load_profile(void)
     if (dbip->dbi_title[0])
         creo_log(NULL, MSG_STATUS, "Database title is \"%s\"", dbip->dbi_title);
 
-    /* Locate first available directory */
-    FOR_ALL_DIRECTORY_START(dp, dbip) {
-        if (global_dir(dp))
-            break;
-    } FOR_ALL_DIRECTORY_END
-
     /* Extract the _GLOBAL attributes */
-    if (db5_get_attributes(dbip, &avs, dp)) {
+    global_dp = db_lookup(dbip, DB5_GLOBAL_OBJECT_NAME, LOOKUP_QUIET);
+    if (global_dp == RT_DIR_NULL) {
+        creo_log(NULL, MSG_STATUS, "Failed to find the _GLOBAL profile record");
+        load_defaults(material_directory);
+        goto cleanup;
+    }
+
+    if (db5_get_attributes(dbip, &avs, global_dp)) {
         creo_log(NULL, MSG_STATUS, "Failed to find any _GLOBAL attributes");
         bu_avs_free(&avs);
-        load_defaults();
+        load_defaults(material_directory);
         goto cleanup;
         }
 
@@ -1095,14 +1059,16 @@ load_profile(void)
         creo_log(NULL, MSG_STATUS, "---------------------------------------------------------");
 
         /* Load attributes by panel resource name */
-        int*  p;
-        for (controls_table *p = controls; p->catr != NULL; p++) {
-            const char* def = get_input_str(p->cinp[0]);
-            const char* val = bu_avs_get(&avs, p->catr);
+        for (const struct creo_profile_control *p = creo_profile_controls; p->attribute != NULL; p++) {
+            const char* def = control_default_value(p, material_directory, &material_path);
+            const char* val = bu_avs_get(&avs, p->attribute);
+            if (val && is_material_file_control(p) && material_directory && material_directory[0] &&
+                bu_strcmp(val, creo_profile_legacy_material_file_path) == 0)
+                val = def;
             if (val)
-                load_resource(p->cres, p->ctyp, val, def);
+                load_resource(p->resource, p->type, val, def);
             else
-                load_resource(p->cres, p->ctyp, def, def);
+                load_resource(p->resource, p->type, def, def);
         }
     bu_avs_free(&avs);
     }
@@ -1113,15 +1079,21 @@ cleanup:
         fclose(fp);
     if (dbip)
         db_close(dbip);
+    if (profile) {
+        bu_vls_free(profile);
+        BU_PUT(profile, struct bu_vls);
+    }
+    bu_vls_free(&material_path);
 
     return;
 }
 
 
 /* Load user-supplied resource setting into input panel */
-extern "C" void
+static void
 load_resource(const char *res, const char *typ, const char *val, const char *def)
 {
+#if defined(CREO_EXEC_PLUGIN)
     wchar_t wstr[CREO_NAME_MAX];
 
     if (bu_strcmp(typ, "STR") == 0) {
@@ -1140,8 +1112,53 @@ load_resource(const char *res, const char *typ, const char *val, const char *def
     } else
         creo_log(NULL, MSG_STATUS, "Unknown control type: \"%s\"", typ);
 
+#else
+    const char *value_to_apply = val;
+
+    if (bu_strcmp(typ, "RAD") == 0) {
+        if (find_btn_name(res, val) <= 0)
+            value_to_apply = def;
+    } else if (bu_strcmp(typ, "STR") != 0 && bu_strcmp(typ, "BOX") != 0) {
+        creo_log(NULL, MSG_STATUS, "Unknown control type: %s", typ);
+        return;
+    }
+
+    if (!frontend_api.apply_control) {
+        creo_log(NULL, MSG_STATUS, "Unable to apply profile value for %s: no frontend is available", res);
+        return;
+    }
+
+    frontend_api.apply_control(res, typ, value_to_apply, def);
+#endif
+
     return;
 }
+
+
+#if defined(CREO_EXEC_PLUGIN)
+extern "C" void
+load_profile(void)
+{
+    ProPath cwd = {'\0'};
+    char working_directory[MAXPATHLEN] = {'\0'};
+
+    if (ProDirectoryCurrentGet(cwd) != PRO_TK_NO_ERROR) {
+        load_profile_from_directory(NULL, NULL);
+        return;
+    }
+
+    ProWstringToString(working_directory, cwd);
+    load_profile_from_directory(working_directory, NULL);
+}
+#else
+extern "C" __declspec(dllexport) void
+creo_brl_core_load_profile(
+    const char *profile_directory,
+    const char *material_directory)
+{
+    load_profile_from_directory(profile_directory, material_directory);
+}
+#endif
 
 
 /* Converts string to lower case */
@@ -1564,6 +1581,7 @@ scrub_vls(struct bu_vls *vls)
 }
 
 
+#if defined(CREO_EXEC_PLUGIN)
 /* Set radio button value in Creo UI panel */
 extern "C" int
 set_radio_btn(char *group, char *name)
@@ -1576,6 +1594,7 @@ set_radio_btn(char *group, char *name)
 
     return (err == PRO_TK_NO_ERROR) ? 1 : 0;
 }
+#endif
 
 
 /* Map a string to the "stable" version found in parts/assems */

@@ -372,7 +372,6 @@ extern "C" char * creo_param_name(struct creo_conv_info *, wchar_t *, int);     
 extern "C" ProError creo_param_val(char **, const char *, ProMdl);                          /* creo_param_val        */
 extern "C" int find_btn_name(const char *, const char *);                                   /* find_btn_name         */
 extern "C" int find_matl(struct creo_conv_info *);                                          /* find_matl             */
-extern "C" struct bu_vls * find_profile(void);                                              /* find_profile          */
 extern "C" int find_control_attr(const char *);                                             /* find_control_attr     */
 extern "C" int find_btn_label(const char *, const char *);                                  /* find_btn_label        */
 extern "C" int find_unit_str(const char *);                                                 /* find_unit_str         */
@@ -382,10 +381,9 @@ extern "C" double get_length_conv(const char *);                                
 extern "C" char * get_unit_abbr(int);                                                       /* get_unit_abbr         */
 extern "C" char * get_unit_sys(int);                                                        /* get_unit_sys          */
 extern "C" char * get_username(void);                                                       /* get_username          */
-extern "C" int global_dir(struct directory *);                                              /* global_dir            */
-extern "C" void load_defaults(void);                                                        /* load_defaults         */
-extern "C" __declspec(dllexport) void load_profile(void);                                                         /* load_profile          */
-extern "C" void load_resource(const char *, const char *, const char *, const char *);      /* load_resource         */
+#if defined(CREO_EXEC_PLUGIN)
+extern "C" void load_profile(void);                                                         /* load_profile          */
+#endif
 extern "C" void lower_case(char *);                                                         /* lower_case            */
 extern "C" ProError param_append(void *, ProError, ProAppData);                             /* param_append          */
 extern "C" ProError param_collect(ProModelitem *, ProParameter **);                         /* param_collect         */
@@ -399,7 +397,6 @@ extern "C" ProError regex_key(ProParameter *, ProError, ProAppData );           
 extern "C" void report_xform(struct creo_conv_info *, const char *);                        /* report_xform          */
 extern "C" int rgb4lmin(double *, int);                                                     /* rgb4lmin              */
 extern "C" void scrub_vls(struct bu_vls *);                                                 /* scrub_vls             */
-extern "C" int set_radio_btn(char *, char *);                                               /* set_radio_btn         */
 extern "C" wchar_t * stable_wchar(struct creo_conv_info *, wchar_t *);                      /* stable_wchar          */
 extern "C" void trim(char *);                                                               /* trim                  */
 extern "C" char * util_fgets(char *, int, FILE *);                                          /* util_fgets            */
