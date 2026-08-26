@@ -376,6 +376,36 @@ else(CMAKE_BUILD_TYPE)
 endif(CMAKE_BUILD_TYPE)
 mark_as_advanced(BRLCAD_OPTIMIZED)
 
+# Link-time optimization is part of optimized builds, but keep its selection
+# independent so release builds can trade link time against runtime
+# optimization.  AUTO uses ThinLTO with Clang and parallel full LTO with GCC.
+brlcad_option(BRLCAD_LTO_MODE AUTO
+  TYPE STRING
+)
+set(
+  _brlcad_lto_help
+  "Link-time optimization mode for optimized builds: AUTO, FULL, THIN, or OFF (NONE is an alias for OFF)"
+)
+set_property(CACHE BRLCAD_LTO_MODE PROPERTY STRINGS AUTO FULL THIN OFF NONE)
+if(BRLCAD_LTO_MODE MATCHES "^NONE$")
+  set(BRLCAD_LTO_MODE "OFF")
+  set(BRLCAD_LTO_MODE "OFF" CACHE STRING "${_brlcad_lto_help}" FORCE)
+  set_property(CACHE BRLCAD_LTO_MODE PROPERTY STRINGS AUTO FULL THIN OFF NONE)
+endif()
+set_property(CACHE BRLCAD_LTO_MODE PROPERTY HELPSTRING "${_brlcad_lto_help}")
+set(_brlcad_lto_modes AUTO FULL THIN OFF)
+list(FIND _brlcad_lto_modes "${BRLCAD_LTO_MODE}" _brlcad_lto_mode_index)
+if(_brlcad_lto_mode_index EQUAL -1)
+  message(
+    FATAL_ERROR
+    "Unknown BRLCAD_LTO_MODE value '${BRLCAD_LTO_MODE}'. Valid modes are AUTO, FULL, THIN, OFF, and NONE."
+  )
+endif()
+unset(_brlcad_lto_mode_index)
+unset(_brlcad_lto_modes)
+unset(_brlcad_lto_help)
+mark_as_advanced(BRLCAD_LTO_MODE)
+
 # Build with full compiler lines visible by default (won't need make VERBOSE=1)
 # on command line
 option(BRLCAD_VERBOSE "verbose output" OFF)

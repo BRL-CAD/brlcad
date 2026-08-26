@@ -930,6 +930,78 @@ _brlcad_srccompile_probe(HAVE_FLATTEN_ATTRIBUTE
 # serially).
 _brlcad_run_probe_batch(SRCCOMPILE)
 
+# Return compiler flags to try, in preference order, for the selected LTO
+# mode.  GCC's "auto" controls parallel LTRANS jobs and still performs its
+# full-program LTO pipeline; Clang's identically named mode means Full LTO, so
+# AUTO deliberately selects ThinLTO for Clang-family compilers.
+macro(_BRLCAD_LTO_FLAG_CANDIDATES _language _output)
+  set(${_output})
+  set(_brlcad_lto_compiler_id "${CMAKE_${_language}_COMPILER_ID}")
+  set(_brlcad_lto_compiler_version "${CMAKE_${_language}_COMPILER_VERSION}")
+
+  if(BRLCAD_LTO_MODE MATCHES "^OFF$")
+    # No LTO compiler flag requested.
+  elseif(_brlcad_lto_compiler_id STREQUAL "GNU")
+    if(_brlcad_lto_compiler_version VERSION_LESS 4.9)
+      if(NOT BRLCAD_LTO_MODE MATCHES "^AUTO$")
+        message(
+          FATAL_ERROR
+          "BRLCAD_LTO_MODE=${BRLCAD_LTO_MODE} is not supported by GCC ${_brlcad_lto_compiler_version}; GCC versions before 4.9 have known BRL-CAD LTO failures."
+        )
+      endif()
+    elseif(BRLCAD_LTO_MODE MATCHES "^THIN$")
+      message(FATAL_ERROR "BRLCAD_LTO_MODE=THIN requires a Clang-family compiler; GCC does not implement LLVM ThinLTO.")
+    else()
+      # GCC LTO is full-program LTO.  Prefer automatic jobserver/CPU-count
+      # parallelism, retaining plain -flto as a compatibility fallback.
+      set(${_output} flto=auto flto)
+    endif()
+  elseif(_brlcad_lto_compiler_id MATCHES "Clang")
+    if(BRLCAD_LTO_MODE MATCHES "^(AUTO|THIN)$")
+      set(${_output} flto=thin)
+    else()
+      set(${_output} flto=full flto)
+    endif()
+  elseif(BRLCAD_LTO_MODE MATCHES "^THIN$")
+    set(${_output} flto=thin)
+  elseif(BRLCAD_LTO_MODE MATCHES "^FULL$")
+    set(${_output} flto=full flto)
+  else()
+    set(${_output} flto=auto flto)
+  endif()
+
+  unset(_brlcad_lto_compiler_id)
+  unset(_brlcad_lto_compiler_version)
+endmacro()
+
+# Select the first supported flag and append only that flag to the requested
+# optimization group.  Explicit modes fail rather than silently producing a
+# non-LTO build when the compiler/linker cannot honor the request.
+macro(_BRLCAD_ENABLE_LTO_FLAG _language _flag_group)
+  _brlcad_lto_flag_candidates(${_language} _brlcad_lto_candidates)
+  if(_brlcad_lto_candidates)
+    set(_brlcad_lto_flag_found "")
+    foreach(_brlcad_lto_candidate IN LISTS _brlcad_lto_candidates)
+      if(NOT _brlcad_lto_flag_found)
+        check_flag(
+          ${_language} "${_brlcad_lto_candidate}"
+          GROUPS ${_flag_group}
+          VARS _brlcad_lto_flag_found
+        )
+      endif()
+    endforeach()
+    if(NOT _brlcad_lto_flag_found)
+      message(
+        FATAL_ERROR
+        "BRLCAD_LTO_MODE=${BRLCAD_LTO_MODE} is unsupported by the ${_language} compiler/linker. Tried: ${_brlcad_lto_candidates}"
+      )
+    endif()
+  endif()
+  unset(_brlcad_lto_candidate)
+  unset(_brlcad_lto_candidates)
+  unset(_brlcad_lto_flag_found)
+endmacro()
+
 # Second flag-batch pre-warm (optimization and warning flags).
 # Unlike the first batch, every consumer of these flags lives under the
 # "if(NOT MSVC)" optimization/warning blocks below, so on MSVC the reference
@@ -952,14 +1024,17 @@ if(BRLCAD_ENABLE_PARALLEL_CONFIG_PROBES AND NOT MSVC)
       _brlcad_register_flag_probe(CXX "${_brlcad_opt_flag}")
     endforeach()
 
-    if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" AND CMAKE_C_COMPILER_VERSION VERSION_LESS 4.9)
-      # GCC versions before 4.9 have known LTO problems in this build.
-    else()
-      foreach(_brlcad_lto_flag IN ITEMS "flto=auto" flto)
-        _brlcad_register_flag_probe(C "${_brlcad_lto_flag}")
-        _brlcad_register_flag_probe(CXX "${_brlcad_lto_flag}")
-      endforeach()
-    endif()
+    _brlcad_lto_flag_candidates(C _brlcad_c_lto_candidates)
+    foreach(_brlcad_lto_flag IN LISTS _brlcad_c_lto_candidates)
+      _brlcad_register_flag_probe(C "${_brlcad_lto_flag}")
+    endforeach()
+    _brlcad_lto_flag_candidates(CXX _brlcad_cxx_lto_candidates)
+    foreach(_brlcad_lto_flag IN LISTS _brlcad_cxx_lto_candidates)
+      _brlcad_register_flag_probe(CXX "${_brlcad_lto_flag}")
+    endforeach()
+    unset(_brlcad_c_lto_candidates)
+    unset(_brlcad_cxx_lto_candidates)
+    unset(_brlcad_lto_flag)
 
     if(NOT BRLCAD_PROFILING AND NOT BRLCAD_DEBUGGING)
       _brlcad_register_flag_probe(C fomit-frame-pointer)
@@ -1251,22 +1326,12 @@ if(NOT MSVC)
   # CHECK_C_FLAG("finline-limit=10000 --param inline-unit-growth=300 --param large-function-growth=300" GROUPS OPTIMIZE_C_FLAGS)
   # CHECK_CXX_FLAG("finline-limit=10000 --param inline-unit-growth=300 --param large-function-growth=300" GROUPS OPTIMIZE_CXX_FLAGS)
 
-  # link-time optimization (LTO) results in slower linking, more
-  # warnings, and better optimization, but requires newer versions of
-  # compilers to avoid common bugs.
-  if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" AND CMAKE_C_COMPILER_VERSION VERSION_LESS 4.9)
-    # LTO bug in GCC 4.8.5 (__fread_chk_warn)
-  else()
-    # Try flto=auto first to avoid lto-wrapper serial compilation warnings
-    # https://stackoverflow.com/questions/72218980/gcc-v12-1-warning-about-serial-compilation
-    check_c_flag("flto=auto" GROUPS OPTIMIZE_C_FLAGS VARS flto_auto_c_flag_found)
-    if (NOT flto_auto_c_flag_found)
-      check_c_flag(flto GROUPS OPTIMIZE_C_FLAGS)
-    endif()
-    check_cxx_flag("flto=auto" GROUPS OPTIMIZE_CXX_FLAGS VARS flto_auto_cxx_flag_found)
-    if (NOT flto_auto_cxx_flag_found)
-      check_cxx_flag(flto GROUPS OPTIMIZE_CXX_FLAGS)
-    endif()
+  # Link-time optimization is selected independently from the other release
+  # flags, permitting optimized builds without LTO.  Probe it only when the
+  # optimization flag group will actually be used.
+  if(BRLCAD_OPTIMIZED)
+    _brlcad_enable_lto_flag(C OPTIMIZE_C_FLAGS)
+    _brlcad_enable_lto_flag(CXX OPTIMIZE_CXX_FLAGS)
 
     # When compiling with O3 + flto, GCC 6.3 (e.g. on Debian x64, and maybe
     # others, but I haven't tested) fails to link executables using libbrep.
@@ -1289,7 +1354,7 @@ if(NOT MSVC)
     # which switched to C++98 from C++11.
     #
     # CHECK_CXX_FLAG(fno-inline-small-functions GROUPS OPTIMIZE_CXX_FLAGS)
-  endif("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" AND CMAKE_C_COMPILER_VERSION VERSION_LESS 4.9)
+  endif()
 
   # GCC 4.9+ introduced "thin" LTO object files that require special
   # ar/ranlib handling via wrappers or plugin specification.  These
