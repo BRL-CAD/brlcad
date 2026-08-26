@@ -3,7 +3,7 @@
 /.build*
 /*_build*
 /*-build*
-/out
+out/
 
 # Temporary files
 *~
@@ -27,9 +27,9 @@
 # CMakeSettings.json for Visual Studio going forward)
 # https://learn.microsoft.com/en-us/cpp/build/cmake-presets-vs
 # https://learn.microsoft.com/en-us/cpp/build/customize-cmake-settings
-/.vs
+.vs/
 .vscode
-/CMakeSettings.json
+CMakeSettings.json
 
 #Qt Creator
 CMakeLists.txt.user
