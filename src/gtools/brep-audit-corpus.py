@@ -34,6 +34,10 @@ import threading
 import time
 
 
+BATCH_MODE_ORDER = ("wireframe", "shaded", "quality")
+MAX_NO_PROGRESS_RESTARTS = 3
+
+
 def databases(corpus):
     for root, dirs, files in os.walk(corpus):
         dirs.sort()
@@ -339,6 +343,37 @@ def resume_batch_starts(path):
     return starts
 
 
+def batch_tasks(object_names, modes):
+    """Return the flattened task order used by brep-audit --batch."""
+    selected_modes = set(modes)
+    return [
+        (object_name, mode)
+        for object_name in sorted(object_names)
+        for mode in BATCH_MODE_ORDER
+        if mode in selected_modes
+    ]
+
+
+def audit_remaining_individually(audit, args, run_dir, database_name,
+                                 tasks, start_index, sink, reason):
+    """Isolate a batch tail so every selected task gets a result."""
+    if tasks is None:
+        return
+    for task_index in range(start_index, len(tasks)):
+        object_name, mode = tasks[task_index]
+        record = audit_one(
+            audit,
+            args,
+            run_dir,
+            database_name,
+            object_name,
+            mode,
+        )
+        record["task_index"] = task_index
+        record["batch_fallback_reason"] = reason
+        sink(record)
+
+
 def stream_reader(stream, stream_name, events):
     try:
         for line in stream:
@@ -348,8 +383,9 @@ def stream_reader(stream, stream_name, events):
 
 
 def audit_database(audit, args, run_dir, database, start_index, sink,
-                   object_file=None, expected_task_count=None):
+                   object_file=None, tasks=None):
     database_name = str(database.resolve())
+    expected_task_count = len(tasks) if tasks is not None else None
     if len(args.modes) == 1:
         batch_mode = args.modes[0]
     elif set(args.modes) == {"wireframe", "shaded"}:
@@ -412,6 +448,10 @@ def audit_database(audit, args, run_dir, database, start_index, sink,
             sink(failure_record(
                 database_name, None, None, "launch_error", error=str(error)
             ))
+            audit_remaining_individually(
+                audit, args, run_dir, database_name, tasks, next_index,
+                sink, "batch_launch_error",
+            )
             return
 
         events = queue.Queue()
@@ -455,6 +495,10 @@ def audit_database(audit, args, run_dir, database, start_index, sink,
                         task_index=next_index,
                         stderr=stderr_tail,
                     ))
+                    audit_remaining_individually(
+                        audit, args, run_dir, database_name, tasks,
+                        next_index, sink, "batch_timeout",
+                    )
                     return
                 sink(failure_record(
                     database_name,
@@ -597,6 +641,10 @@ def audit_database(audit, args, run_dir, database, start_index, sink,
                 expected_task_count=expected_task_count,
                 stderr=stderr_tail,
             ))
+            audit_remaining_individually(
+                audit, args, run_dir, database_name, tasks, next_index,
+                sink, "batch_protocol_error",
+            )
             return
         if current is not None:
             task_index = current.get("task_index")
@@ -644,7 +692,11 @@ def audit_database(audit, args, run_dir, database, start_index, sink,
             return_code=return_code,
             stderr=stderr_tail,
         ))
-        if no_progress_restarts >= 3:
+        if no_progress_restarts >= MAX_NO_PROGRESS_RESTARTS:
+            audit_remaining_individually(
+                audit, args, run_dir, database_name, tasks, next_index,
+                sink, "batch_no_progress",
+            )
             return
 
 
@@ -942,12 +994,15 @@ def main():
             for database_index, database in enumerate(database_list):
                 database_name = str(database.resolve())
                 object_file = None
+                tasks = None
                 if selection:
+                    object_names = sorted(selection[database_name])
+                    tasks = batch_tasks(object_names, args.modes)
                     object_file = Path(run_dir) / (
                         "batch-objects-{}.txt".format(database_index)
                     )
                     with object_file.open("w", encoding="utf-8") as names:
-                        for object_name in sorted(selection[database_name]):
+                        for object_name in object_names:
                             names.write(object_name + "\n")
                 future = executor.submit(
                     audit_database,
@@ -958,8 +1013,7 @@ def main():
                     starts.get(database_name, 0),
                     sink,
                     object_file,
-                    (len(selection[database_name]) * len(args.modes)
-                     if selection else None),
+                    tasks,
                 )
                 pending_databases[future] = database
                 if len(pending_databases) >= args.processes * 2:
