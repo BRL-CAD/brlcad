@@ -20,6 +20,7 @@
 
 #include "common.h"
 
+#include <ctype.h>
 #include <limits.h> /* for INT_MAX */
 #include <math.h>
 #include <string.h>
@@ -570,8 +571,16 @@ bu_open_mapped_file_with_path(char *const *path, const char *name, const char *a
     BU_ASSERT(name != NULL);
     BU_ASSERT(pathp != NULL);
 
-    /* Do not resort to path for a rooted filename */
-    if (name[0] == '/')
+    /* Do not resort to path for a rooted filename.  Tcl and other portable
+     * callers commonly use forward slashes in Windows drive paths, so accept
+     * both native and portable separators there. */
+    if (name[0] == '/'
+#if defined(HAVE_WINDOWS_H)
+	|| name[0] == '\\'
+	|| (isalpha((unsigned char)name[0]) && name[1] == ':'
+	    && (name[2] == '/' || name[2] == '\\'))
+#endif
+	)
 	return bu_open_mapped_file(name, appl);
 
     /* Try each path prefix in sequence */

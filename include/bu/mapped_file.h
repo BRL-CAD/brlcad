@@ -149,8 +149,8 @@ BU_EXPORT extern void bu_free_mapped_files(int verbose);
  * locate the file.
  *
  * The search path is specified as a normal C argv array, terminated
- * by a null string pointer.  If the file name begins with a slash
- * ('/') the path is not used.
+ * by a null string pointer.  If the file name is rooted (including a rooted
+ * drive-letter or UNC path on Windows), the search path is not used.
  */
 BU_EXPORT extern struct bu_mapped_file *bu_open_mapped_file_with_path(char * const *path,
 								      const char *name,

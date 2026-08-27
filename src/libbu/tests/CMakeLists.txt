@@ -837,6 +837,7 @@ brlcad_add_test(NAME bu_mappedfile_serial_16384 COMMAND bu_test test_mappedfile 
 brlcad_add_test(NAME bu_mappedfile_parallel_16384 COMMAND bu_test test_mappedfile 2 16384)
 brlcad_add_test(NAME bu_mappedfile_repeat_serial_10 COMMAND bu_test test_mappedfile 3 10)
 brlcad_add_test(NAME bu_mappedfile_repeat_parallel_10 COMMAND bu_test test_mappedfile 4 10)
+brlcad_add_test(NAME bu_mappedfile_rooted_path COMMAND bu_test test_mappedfile 6 1)
 #BRLCAD_ADD_TEST(NAME bu_mappedfile_parallel_free COMMAND bu_test test_mappedfile 5)
 
 # The 16k mapping tests may take a large amount of time in some situations -
