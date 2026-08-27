@@ -7,18 +7,24 @@
 
 # Establish the list of Source files - this is needed
 # both for the plugin build and the main BRL-CAD build
+set(CREO2BRL_SHARED_SOURCES
+  part_writer.cpp
+  )
+
 set(CREO2BRL_LEGACY_SOURCES
   assembly.cpp
   csg.cpp
   main.cpp
   part.cpp
   util.cpp
+  ${CREO2BRL_SHARED_SOURCES}
   )
 
 set(CREO2BRL_CORE_SOURCES
   core.cpp
   conversion.cpp
   profile.cpp
+  ${CREO2BRL_SHARED_SOURCES}
   )
 
 if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
@@ -497,6 +503,7 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     creo-brl.dat.in
     creo-brl.h
     conversion_snapshot.h
+    part_writer.h
     profile_controls.h
     resources/creo-brl-msg.txt
     resources/creo_brl.res

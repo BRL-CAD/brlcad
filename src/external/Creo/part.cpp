@@ -57,6 +57,7 @@
 #include "common.h"
 #include <algorithm>
 #include "creo-brl.h"
+#include "part_writer.h"
 
 
 /* Filter for Creo feature dimensions */
@@ -1349,17 +1350,12 @@ tessellate_part(struct creo_conv_info *cinfo, struct bu_vls **sname)
 
     /* Output the solid - TODO - what is the correct ordering??? does CCW always work? */
     *sname = get_brlcad_name(cinfo, wname, "s", N_SOLID);
-    if (cinfo->write_normals) {
-        mk_bot_w_normals(cinfo->wdbp, bu_vls_addr(*sname), RT_BOT_SOLID, RT_BOT_CCW, 0,
-                            (size_t) vert_tree->curr_vert, (size_t) (faces.size()/3),
-                         (fastf_t *) vert_tree->the_array,  (int *) &faces[0],
-                          NULL, NULL, (size_t) (face_normals.size()/3),
-                         norm_tree->the_array, &face_normals[0]);
-    } else {
-        mk_bot(cinfo->wdbp, bu_vls_addr(*sname),  RT_BOT_SOLID, RT_BOT_CCW, 0,
-                  (size_t) vert_tree->curr_vert, (size_t) (faces.size()/3),
-               (fastf_t *) vert_tree->the_array,  (int *) &faces[0], NULL, NULL);
-    }
+    creo_brl_write_bot(cinfo->wdbp, bu_vls_addr(*sname), cinfo->write_normals,
+                       (size_t)vert_tree->curr_vert, (size_t)(faces.size() / 3),
+                       (fastf_t *)vert_tree->the_array, &faces[0],
+                       cinfo->write_normals ? (size_t)(face_normals.size() / 3) : 0,
+                       cinfo->write_normals ? norm_tree->the_array : NULL,
+                       cinfo->write_normals ? &face_normals[0] : NULL);
 
 tess_cleanup:
 
