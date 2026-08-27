@@ -97,16 +97,22 @@ double rint(double x);
 #   endif
 # endif
 
-/* Make sure THREADLOCAL is defined, only usable on C "POD" types */
+/* Make sure THREADLOCAL is defined, only usable on C "POD" types.
+ *
+ * Apparently MSVC doesn't set the __cplusplus version correctly unless a
+ * compiler flag is passed.   Check the _MSVC_LANG variable as well to
+ * correctly use thread_local in that context.  Since THREADLOCAL is defined as
+ * usable only with POD the declspec form will also work, but we want to use
+ * the standardized version when available.*/
 #ifndef THREADLOCAL
-#  if defined(__cplusplus) && __cplusplus >= 201103L
+#  if (defined(__cplusplus) && __cplusplus >= 201103L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 201103L)
 #    define THREADLOCAL thread_local // C++11 or newer: thread_local is standard
 #  elif !defined(__cplusplus) && defined(__STDC_VERSION__) && __STDC_VERSION__ >= 202311L
 #    define THREADLOCAL thread_local // C23: thread_local is standard
 #  elif !defined(__cplusplus) && defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
 #    define THREADLOCAL _Thread_local // C11: _Thread_local is standard
 #  elif defined(HAVE_WINDOWS_H)
-#    define THREADLOCAL __declspec(thread)
+#    define THREADLOCAL __declspec(thread) // NOTE:  POD only. thread_local is more capable
 #  elif defined(__GNUC__) || defined(__clang__)
 #    define THREADLOCAL __thread
 #  else
