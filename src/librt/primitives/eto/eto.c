@@ -493,7 +493,7 @@ rt_eto_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 	    bn_pr_roots(stp->st_name, val, i);
 	} else if (i < 0) {
 	    static int reported = 0;
-	    bu_log("The root solver failed to converge on a solution for %s\n", stp->st_dp->d_namep);
+	    bu_log("LIBRT: The root solver failed to converge on a solution for %s\n", stp->st_dp->d_namep);
 	    if (!reported) {
 		VPRINT("while shooting from:\t", rp->r_pt);
 		VPRINT("while shooting at:\t", rp->r_dir);

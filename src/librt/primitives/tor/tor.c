@@ -491,7 +491,7 @@ rt_tor_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	    bn_pr_roots(stp->st_name, val, i);
 	} else if (i < 0) {
 	    static int reported=0;
-	    bu_log("The root solver failed to converge on a solution for %s\n", stp->st_dp->d_namep);
+	    bu_log("LIBRT: The root solver failed to converge on a solution for %s\n", stp->st_dp->d_namep);
 	    if (!reported) {
 		VPRINT("while shooting from:\t", rp->r_pt);
 		VPRINT("while shooting at:\t", rp->r_dir);
@@ -737,7 +737,7 @@ rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 		bn_pr_roots("tor", val[i], num_roots);
 	    } else if (num_roots < 0) {
 		static int reported=0;
-		bu_log("The root solver failed to converge on a solution for %s\n", stp[i]->st_dp->d_namep);
+		bu_log("LIBRT: The root solver failed to converge on a solution for %s\n", stp[i]->st_dp->d_namep);
 		if (!reported) {
 		    VPRINT("while shooting from:\t", rp[i]->r_pt);
 		    VPRINT("while shooting at:\t", rp[i]->r_dir);
