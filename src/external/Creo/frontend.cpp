@@ -28,13 +28,18 @@
 #include "common.h"
 #include <stdarg.h>
 #include <string.h>
+#include <windows.h>
 
 #include "creo-brl.h"
+#include "conversion_snapshot.h"
+#include "snapshot_writer.h"
 
 extern "C" void creo_brl_show_status(const char *message);
 extern "C" void creo_brl_core_load_profile_shim(void);
 #if defined(CREO_EXEC_PLUGIN)
 extern "C" void creo_brl_core_doit_shim(char *dialog, char *component, ProAppData appdata);
+#else
+extern "C" int creo_brl_core_convert_shim(const char *snapshot_path);
 #endif
 
 #if defined(CREO_EXEC_PLUGIN)
@@ -42,6 +47,9 @@ static const bool FRONTEND_LOAD_PROFILE_ON_OPEN = true;
 #else
 static const bool FRONTEND_LOAD_PROFILE_ON_OPEN = true;
 #endif
+
+static const wchar_t FRONTEND_SNAPSHOT_PREFIX[] = L"cbr";
+static const size_t FRONTEND_SNAPSHOT_UTF8_PATH_SIZE = MAX_PATH * 4;
 
 static void
 frontend_status(const char *fmt, ...)
@@ -100,6 +108,78 @@ frontend_load_profile(void)
 {
     creo_brl_core_load_profile_shim();
 }
+
+
+#if !defined(CREO_EXEC_PLUGIN)
+static int
+frontend_snapshot_path(wchar_t *wide_path, size_t wide_path_size,
+                       char *utf8_path, size_t utf8_path_size)
+{
+    wchar_t temporary_directory[MAX_PATH] = {L'\0'};
+    const DWORD directory_length = GetTempPathW(_countof(temporary_directory), temporary_directory);
+    DWORD file_number = 0;
+    int utf8_length = 0;
+
+    if (!wide_path || !utf8_path || wide_path_size < MAX_PATH || utf8_path_size == 0 ||
+        directory_length == 0 || directory_length >= _countof(temporary_directory))
+        return 0;
+
+    file_number = GetTempFileNameW(temporary_directory, FRONTEND_SNAPSHOT_PREFIX, 0, wide_path);
+    if (file_number == 0)
+        return 0;
+
+    utf8_length = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, wide_path, -1,
+                                      utf8_path, (int)utf8_path_size, NULL, NULL);
+    if (utf8_length <= 0) {
+        (void)DeleteFileW(wide_path);
+        return 0;
+    }
+
+    return 1;
+}
+
+
+static const char *
+frontend_capture_failure_message(int result)
+{
+    switch (result) {
+        case CREO_BRL_SNAPSHOT_CAPTURE_DIALOG_FAILURE:
+            return "FAILURE: Unable to read the current Creo-BRL dialog settings.";
+        case CREO_BRL_SNAPSHOT_CAPTURE_NO_ACTIVE_MODEL:
+            return "FAILURE: No active Creo model is available for conversion.";
+        case CREO_BRL_SNAPSHOT_CAPTURE_UNSUPPORTED_MODEL:
+            return "FAILURE: Only an active Creo part can be converted; assemblies and drawings are not supported yet.";
+        case CREO_BRL_SNAPSHOT_CAPTURE_MODEL_FAILURE:
+            return "FAILURE: Unable to read the active part name or supported length units.";
+        case CREO_BRL_SNAPSHOT_CAPTURE_TESSELLATION_FAILURE:
+            return "FAILURE: Unable to tessellate the active part; enable bounding-box fallback or adjust tessellation controls.";
+        case CREO_BRL_SNAPSHOT_CAPTURE_WRITE_FAILURE:
+            return "FAILURE: Unable to create the temporary conversion request.";
+        default:
+            return "FAILURE: Unable to capture the current conversion request.";
+    }
+}
+
+
+static const char *
+frontend_core_failure_message(int result)
+{
+    switch (result) {
+        case CREO_BRL_CORE_CONVERT_OPEN_FAILED:
+            return "FAILURE: The Creo-BRL runtime core is unavailable.";
+        case CREO_BRL_CORE_CONVERT_INVALID_SNAPSHOT:
+            return "FAILURE: The captured conversion request was invalid.";
+        case CREO_BRL_CORE_CONVERT_UNSUPPORTED_SNAPSHOT:
+            return "FAILURE: The captured conversion request is unsupported.";
+        case CREO_BRL_CORE_CONVERT_NOT_IMPLEMENTED:
+            return "FAILURE: The requested conversion path is not implemented.";
+        case CREO_BRL_CORE_CONVERT_OUTPUT_FAILED:
+            return "FAILURE: The BRL-CAD output file could not be written.";
+        default:
+            return "FAILURE: The runtime core failed to convert the active part.";
+    }
+}
+#endif
 
 
 /* Activates small feature settings */
@@ -182,10 +262,38 @@ frontend_convert(char *dialog, char *component, ProAppData appdata)
 #if defined(CREO_EXEC_PLUGIN)
     creo_brl_core_doit_shim(dialog, component, appdata);
 #else
+    wchar_t snapshot_path_wide[MAX_PATH] = {L'\0'};
+    char snapshot_path[FRONTEND_SNAPSHOT_UTF8_PATH_SIZE] = {'\0'};
+    int capture_result = CREO_BRL_SNAPSHOT_CAPTURE_INVALID_REQUEST;
+    int core_result = CREO_BRL_CORE_CONVERT_INVALID_REQUEST;
+
     (void)dialog;
     (void)component;
     (void)appdata;
-    frontend_status("Conversion is unavailable while the runtime core Toolkit boundary is being refactored.");
+
+    if (!frontend_snapshot_path(snapshot_path_wide, _countof(snapshot_path_wide),
+                                snapshot_path, sizeof(snapshot_path))) {
+        frontend_status("FAILURE: Unable to create a temporary conversion request path.");
+        return;
+    }
+
+    frontend_status("Capturing active Creo part for BRL-CAD conversion...");
+    capture_result = creo_brl_frontend_capture_single_part_snapshot(snapshot_path);
+    if (capture_result != CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS) {
+        (void)DeleteFileW(snapshot_path_wide);
+        frontend_status(frontend_capture_failure_message(capture_result));
+        return;
+    }
+
+    frontend_status("Writing BRL-CAD geometry...");
+    core_result = creo_brl_core_convert_shim(snapshot_path);
+    (void)DeleteFileW(snapshot_path_wide);
+    if (core_result != CREO_BRL_CORE_CONVERT_SUCCESS) {
+        frontend_status(frontend_core_failure_message(core_result));
+        return;
+    }
+
+    frontend_status("Creo part conversion completed.");
 #endif
 }
 

@@ -29,15 +29,24 @@
 #endif
 
 #include "bu/file.h"
+#include "bu/avs.h"
 #include "conversion_snapshot.h"
 #include "part_writer.h"
 #include "wdb.h"
 
 
 static const char CREO_BRL_CORE_SOLID_SUFFIX[] = ".s";
+static const char CREO_BRL_CORE_RPP_SUFFIX[] = ".rpp";
 static const char CREO_BRL_CORE_REGION_SUFFIX[] = ".r";
 static const char CREO_BRL_CORE_UNKNOWN_NAME[] = "unknown";
 static const char CREO_BRL_CORE_NAME_KEEP_CHARACTERS[] = "+-.=_";
+static const char CREO_BRL_CORE_IMPORTER_ATTRIBUTE[] = "importer";
+static const char CREO_BRL_CORE_IMPORTER_VALUE[] = "creo-g";
+static const char CREO_BRL_CORE_MODEL_NAME_ATTRIBUTE[] = "ptc_name";
+static const char CREO_BRL_CORE_MODEL_VERSION_ATTRIBUTE[] = "ptc_version_stamp";
+static const char CREO_BRL_CORE_MATERIAL_ATTRIBUTE[] = "ptc_material_name";
+static const char CREO_BRL_CORE_FALLBACK_ATTRIBUTE[] = "tess_fail";
+static const char CREO_BRL_CORE_UNDEFINED_MATERIAL[] = "undefined";
 
 
 static_assert(sizeof(struct creo_brl_snapshot_header) == CREO_BRL_SNAPSHOT_HEADER_V1_SIZE,
@@ -613,6 +622,7 @@ snapshot_name_root(const std::string& model_name)
 static int
 snapshot_object_names(struct db_i *database,
                       const std::string& name_root,
+                      const char *solid_suffix,
                       std::string *solid_name,
                       std::string *region_name)
 {
@@ -624,7 +634,7 @@ snapshot_object_names(struct db_i *database,
         if (suffix > 0)
             object_root += "_" + std::to_string(suffix);
 
-        *solid_name = object_root + CREO_BRL_CORE_SOLID_SUFFIX;
+        *solid_name = object_root + solid_suffix;
         *region_name = object_root + CREO_BRL_CORE_REGION_SUFFIX;
         if (db_lookup(database, solid_name->c_str(), LOOKUP_QUIET) == RT_DIR_NULL &&
             db_lookup(database, region_name->c_str(), LOOKUP_QUIET) == RT_DIR_NULL)
@@ -650,13 +660,58 @@ snapshot_open_output(const char *output_path, struct db_i **database)
 
 
 static int
-snapshot_write_mesh(FILE *snapshot_file,
+snapshot_write_attributes(struct db_i *database,
+                          const char *solid_name,
+                          const char *region_name,
+                          const std::string& model_name,
+                          const std::string& model_version,
+                          const std::string& material_name,
+                          int has_mesh)
+{
+    struct bu_attribute_value_set attributes = BU_AVS_INIT_ZERO;
+    struct directory *solid = db_lookup(database, solid_name, LOOKUP_QUIET);
+    struct directory *region = db_lookup(database, region_name, LOOKUP_QUIET);
+    int result = 0;
+
+    if (solid == RT_DIR_NULL || region == RT_DIR_NULL ||
+        db5_get_attributes(database, &attributes, solid) != 0)
+        goto cleanup;
+
+    bu_avs_add(&attributes, CREO_BRL_CORE_IMPORTER_ATTRIBUTE, CREO_BRL_CORE_IMPORTER_VALUE);
+    bu_avs_add(&attributes, CREO_BRL_CORE_MODEL_NAME_ATTRIBUTE, model_name.c_str());
+    if (!has_mesh)
+        bu_avs_add(&attributes, CREO_BRL_CORE_FALLBACK_ATTRIBUTE, model_name.c_str());
+    if (db5_update_attributes(solid, &attributes, database) != 0)
+        goto cleanup;
+
+    bu_avs_free(&attributes);
+    if (db5_get_attributes(database, &attributes, region) != 0)
+        goto cleanup;
+
+    bu_avs_add(&attributes, CREO_BRL_CORE_MODEL_NAME_ATTRIBUTE, model_name.c_str());
+    if (!model_version.empty())
+        bu_avs_add(&attributes, CREO_BRL_CORE_MODEL_VERSION_ATTRIBUTE, model_version.c_str());
+    bu_avs_add(&attributes, CREO_BRL_CORE_MATERIAL_ATTRIBUTE,
+               material_name.empty() ? CREO_BRL_CORE_UNDEFINED_MATERIAL : material_name.c_str());
+    result = db5_update_attributes(region, &attributes, database) == 0;
+
+cleanup:
+    bu_avs_free(&attributes);
+    return result;
+}
+
+
+static int
+snapshot_write_part(FILE *snapshot_file,
                     const struct creo_brl_snapshot_single_part *single_part)
 {
     const struct creo_brl_snapshot_part *part = &single_part->part;
+    const int has_mesh = (part->flags & CREO_BRL_SNAPSHOT_PART_HAS_MESH) != 0;
     const int has_normals = (part->flags & CREO_BRL_SNAPSHOT_PART_HAS_NORMALS) != 0;
     std::string output_path;
     std::string model_name;
+    std::string model_version;
+    std::string material_name;
     std::string solid_name;
     std::string region_name;
     std::vector<fastf_t> vertices;
@@ -671,32 +726,42 @@ snapshot_write_mesh(FILE *snapshot_file,
     try {
         if (!snapshot_read_text(snapshot_file, &single_part->settings.output_path, &output_path) ||
             !snapshot_read_text(snapshot_file, &part->model_name, &model_name) ||
-            !snapshot_read_vectors(snapshot_file, &part->vertices, part->vertex_count, &vertices) ||
-            !snapshot_read_triangles(snapshot_file, &part->triangles, part->triangle_count,
-                                     part->vertex_count, &triangles) ||
-            (has_normals &&
+            !snapshot_read_text(snapshot_file, &part->model_version, &model_version) ||
+            !snapshot_read_text(snapshot_file, &part->material_name, &material_name) ||
+            (has_mesh &&
+             (!snapshot_read_vectors(snapshot_file, &part->vertices, part->vertex_count, &vertices) ||
+              !snapshot_read_triangles(snapshot_file, &part->triangles, part->triangle_count,
+                                       part->vertex_count, &triangles) ||
+              (has_normals &&
              (!snapshot_read_vectors(snapshot_file, &part->normals, part->normal_count, &normals) ||
               !snapshot_read_indices(snapshot_file, &part->normal_indices,
                                      part->normal_index_count, part->normal_count,
-                                     &normal_indices)))) {
+                                     &normal_indices)))))) {
             result = CREO_BRL_CORE_CONVERT_INVALID_SNAPSHOT;
         } else if (!snapshot_open_output(output_path.c_str(), &database) ||
                    !(writer = wdb_dbopen(database, RT_WDB_TYPE_DB_DISK)) ||
                    !snapshot_object_names(database, snapshot_name_root(model_name),
+                                          has_mesh ? CREO_BRL_CORE_SOLID_SUFFIX : CREO_BRL_CORE_RPP_SUFFIX,
                                           &solid_name, &region_name) ||
-                   creo_brl_write_bot(writer, solid_name.c_str(), has_normals,
-                                      (size_t)part->vertex_count, (size_t)part->triangle_count,
-                                      vertices.data(), triangles.data(),
-                                      has_normals ? (size_t)part->normal_count : 0,
-                                      has_normals ? normals.data() : NULL,
-                                      has_normals ? normal_indices.data() : NULL) != 0) {
+                   (has_mesh ?
+                    creo_brl_write_bot(writer, solid_name.c_str(), has_normals,
+                                       (size_t)part->vertex_count, (size_t)part->triangle_count,
+                                       vertices.data(), triangles.data(),
+                                       has_normals ? (size_t)part->normal_count : 0,
+                                       has_normals ? normals.data() : NULL,
+                                       has_normals ? normal_indices.data() : NULL) :
+                    mk_rpp(writer, solid_name.c_str(), part->bbox_min.coordinates,
+                           part->bbox_max.coordinates)) != 0) {
             result = CREO_BRL_CORE_CONVERT_OUTPUT_FAILED;
         } else {
             BU_LIST_INIT(&members);
             if (mk_addmember(solid_name.c_str(), &members, NULL, WMOP_UNION) == WMEMBER_NULL) {
                 mk_freemembers(&members);
-            } else if (mk_comb(writer, region_name.c_str(), &members, 1, NULL, NULL, NULL,
-                               (int)part->region_id, 0, 0, 0, 0, 0, 0) == 0) {
+            } else if (mk_comb(writer, region_name.c_str(), &members, 1, NULL, NULL,
+                               part->color_is_set ? part->color : NULL,
+                               (int)part->region_id, 0, 0, 0, 0, 0, 0) == 0 &&
+                       snapshot_write_attributes(database, solid_name.c_str(), region_name.c_str(),
+                                                 model_name, model_version, material_name, has_mesh)) {
                 result = CREO_BRL_CORE_CONVERT_SUCCESS;
             }
         }
@@ -728,10 +793,7 @@ creo_brl_core_convert(const char *snapshot_path)
 
     result = snapshot_is_valid(snapshot_file, &single_part);
     if (result == CREO_BRL_CORE_CONVERT_SUCCESS) {
-        if ((single_part.part.flags & CREO_BRL_SNAPSHOT_PART_HAS_MESH) == 0)
-            result = CREO_BRL_CORE_CONVERT_NOT_IMPLEMENTED;
-        else
-            result = snapshot_write_mesh(snapshot_file, &single_part);
+        result = snapshot_write_part(snapshot_file, &single_part);
     }
     fclose(snapshot_file);
 
