@@ -1191,8 +1191,8 @@ do_frame(int framenumber)
     else
 #endif
     if (incr_mode) {
-	for (incr_level = 1; incr_level <= incr_nlevel; incr_level++) {
-	    if (incr_level > 1)
+	for (incr_level = 0; incr_level <= incr_nlevel; incr_level++) {
+	    if (incr_level > 0)
 		view_2init(&APP, framename);
 
 	    do_run(0, (1<<incr_level)*(1<<incr_level)-1);

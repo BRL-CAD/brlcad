@@ -125,6 +125,7 @@ extern int cur_pixel;			/* current pixel number, 0..last_pixel */
 extern int fullfloat_mode;
 extern int hypersample;			/* number of extra rays to fire */
 extern int incr_mode;			/* !0 for incremental resolution */
+extern int deterministic_jitter;	/* seed cell jitter by pixel instead of worker */
 extern int last_pixel;			/* last pixel number */
 extern int per_processor_chunk;		/* work chunk size */
 extern int full_incr_mode;              /* !0 for fully incremental resolution */

@@ -86,6 +86,7 @@ int query_debug = 0;
 int stereo = 0;                         /* stereo viewing */
 int hypersample = 0;                    /* number of extra rays to fire */
 unsigned int jitter = 0;                /* ray jitter control variable */
+int deterministic_jitter = 0;           /* seed cell jitter by pixel instead of worker */
 fastf_t rt_perspective = (fastf_t)0.0;  /* presp (degrees X) 0 => ortho */
 fastf_t aspect = (fastf_t)1.0;          /* view aspect ratio X/Y (needs to be 1.0 for g/G options) */
 vect_t dx_model;                        /* view delta-X as model-space vect */
