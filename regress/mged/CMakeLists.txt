@@ -160,7 +160,9 @@ if(TARGET mged)
   # Xmin supplies a deterministic X11/XTEST session for testing the Tk and
   # display-manager event paths that command-driven MGED regressions cannot
   # reach.  This test is intentionally enabled only for an Xmin provider build.
-  if(BRLCAD_X11_PROVIDER_RESOLVED STREQUAL "XMIN" AND TARGET dm-tkswrast AND SH_EXEC)
+  if(BRLCAD_X11_PROVIDER_RESOLVED STREQUAL "XMIN"
+     AND TARGET dm-tkswrast AND TARGET dm-X AND TARGET dm-ogl
+     AND TARGET icv AND TARGET pixcrop AND TARGET rt AND SH_EXEC)
     get_target_property(XMIN_SERVER_EXECUTABLE Xmin::server IMPORTED_LOCATION)
     if(NOT XMIN_SERVER_EXECUTABLE)
       get_target_property(XMIN_SERVER_EXECUTABLE Xmin::server IMPORTED_LOCATION_NOCONFIG)
@@ -184,10 +186,11 @@ if(TARGET mged)
       )
       set_tests_properties(regress-mged-xmin-gui-edit PROPERTIES
         ENVIRONMENT
-          "MGED_BIN=$<TARGET_FILE:mged>;XMIN_RUN=${XMIN_RUN_EXECUTABLE};XMIN_CTL=${XMIN_CTL_EXECUTABLE};XMIN_SERVER=${XMIN_SERVER_EXECUTABLE};MGED_XMIN_RC=${CMAKE_CURRENT_SOURCE_DIR}/xmin_gui_edit.tcl;CMAKE_COMMAND=${CMAKE_COMMAND};LD_LIBRARY_PATH=${CMAKE_BINARY_DIR}/${LIB_DIR}"
-        TIMEOUT 90
+          "MGED_BIN=$<TARGET_FILE:mged>;XMIN_RUN=${XMIN_RUN_EXECUTABLE};XMIN_CTL=${XMIN_CTL_EXECUTABLE};XMIN_SERVER=${XMIN_SERVER_EXECUTABLE};MGED_XMIN_RC=${CMAKE_CURRENT_SOURCE_DIR}/xmin_gui_edit.tcl;MGED_GUI_MANIFEST=${CMAKE_CURRENT_SOURCE_DIR}/mged_gui_menu_manifest.txt;MGED_DM_TYPES=tkswrast X ogl;MGED_GUI_APNG_DIR=${CMAKE_CURRENT_BINARY_DIR};ICV_BIN=$<TARGET_FILE:icv>;PIXCROP_BIN=$<TARGET_FILE:pixcrop>;MGED_RT_BIN=$<TARGET_FILE:rt>;CMAKE_COMMAND=${CMAKE_COMMAND};LD_LIBRARY_PATH=${CMAKE_BINARY_DIR}/${LIB_DIR}"
+        TIMEOUT 600
       )
-      brlcad_regression_test(regress-mged-xmin-gui-edit "mged;dm-tkswrast" STAND_ALONE TEST_DEFINED)
+      brlcad_regression_test(regress-mged-xmin-gui-edit
+        "mged;dm-tkswrast;dm-X;dm-ogl;icv;pixcrop;rt" STAND_ALONE TEST_DEFINED)
       distclean("${CMAKE_CURRENT_BINARY_DIR}/mged_xmin_gui.sh")
     else()
       message(WARNING "Xmin provider enabled, but xmin-run/xminctl were not found; MGED GUI editing test disabled")
@@ -220,11 +223,14 @@ distclean(${mged_outfiles})
 
 cmakefiles(
   CMakeLists.txt
+  MGED_GUI_TEST_COVERAGE.md
   mged.tcl
   mged_xmin_gui.sh
+  mged_gui_menu_manifest.txt
   regression_resources.tcl
   search_exec_procs.tcl
   xmin_gui_edit.tcl
+  xmin_gui_pipe_oracle.tcl
   regress-mged.cmake.in
   ${MGED_TESTS}
 )

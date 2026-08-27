@@ -1,12 +1,22 @@
 set(OGL_SRCS dm-ogl.c if_ogl.c)
 set(OGL_PROBE_SRCS dm_ogl_probe.c)
 
-if(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK AND BRLCAD_X11_PROVIDER_RESOLVED STREQUAL "SYSTEM"
-   AND BRLCAD_ENABLE_OPENGL AND OPENGL_TARGETS)
+set(OGL_PROVIDER_TARGETS ${OPENGL_TARGETS})
+set(OGL_X11_LIBRARIES ${BRLCAD_X11_LIBRARIES})
+if(BRLCAD_X11_PROVIDER_RESOLVED STREQUAL "XMIN" AND TARGET Xmin::GL)
+  set(OGL_PROVIDER_TARGETS Xmin::GL)
+endif()
+
+if(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK AND BRLCAD_ENABLE_OPENGL AND OGL_PROVIDER_TARGETS)
 
   set(TCL_ENABLE_TK ON)
   find_package_tcl(TCL)
-  find_package(X11)
+  if(BRLCAD_X11_PROVIDER_RESOLVED STREQUAL "SYSTEM")
+    find_package(X11)
+    if(X11_Xrender_LIB)
+      list(APPEND OGL_X11_LIBRARIES ${X11_Xrender_LIB})
+    endif()
+  endif()
 
   if(TCL_FOUND AND TK_FOUND)
 
@@ -23,7 +33,7 @@ if(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK AND BRLCAD_X11_PROVIDER_RESOLVED STREQ
       ${BU_INCLUDE_DIRS}
       SYSTEM
       ${PNG_INCLUDE_DIRS}
-      ${X11_INCLUDE_DIR}
+      ${BRLCAD_X11_INCLUDE_DIRS}
       ${TCL_INCLUDE_PATH}
       ${TK_INCLUDE_PATH}
     )
@@ -33,29 +43,22 @@ if(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK AND BRLCAD_X11_PROVIDER_RESOLVED STREQ
 
     add_definitions(-DDM_PLUGIN)
 
-    if(X11_Xrender_LIB)
-      list(APPEND X11_LIBRARIES ${X11_Xrender_LIB})
-    endif(X11_Xrender_LIB)
-    if(X11_Xi_LIB)
-      list(APPEND X11_LIBRARIES ${X11_Xi_LIB})
-    endif(X11_Xi_LIB)
-
     dm_plugin_library(dm-ogl SHARED ${OGL_SRCS})
     target_link_libraries(
       dm-ogl
       libdm
       libbu
-      ${X11_LIBRARIES}
+      ${OGL_X11_LIBRARIES}
       ${TCL_LIBRARY}
       ${TK_LIBRARY}
       PNG::PNG
-      ${OPENGL_TARGETS}
+      ${OGL_PROVIDER_TARGETS}
     )
     set_property(TARGET dm-ogl APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
     set_property(TARGET dm-ogl APPEND PROPERTY COMPILE_DEFINITIONS HAVE_GL_GLX_H)
     validate_style(dm-ogl "${OGL_SRCS}")
 
-    brlcad_addexec(dm_ogl_probe "${OGL_PROBE_SRCS}" "libbu;${X11_LIBRARIES};${OPENGL_TARGETS}")
+    brlcad_addexec(dm_ogl_probe "${OGL_PROBE_SRCS}" "libbu;${OGL_X11_LIBRARIES};${OGL_PROVIDER_TARGETS}")
     set_property(TARGET dm_ogl_probe APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H HAVE_GL_GLX_H)
     validate_style(dm_ogl_probe "${OGL_PROBE_SRCS}")
 

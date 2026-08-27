@@ -928,6 +928,130 @@ main(int argc, char *argv[])
 	}
     }
 
+    /* ================================================================
+     * Remaining contextual sketch-menu operations
+     * ================================================================*/
+    {
+	struct rt_sketch_internal *skt_menu =
+	    (struct rt_sketch_internal *)s->es_int.idb_ptr;
+
+	const size_t vertex_count = skt_menu->vert_count;
+	EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_SKETCH_ADD_VERTEX);
+	s->e_inpara = 2;
+	s->e_para[0] = 33.0;
+	s->e_para[1] = -7.0;
+	bu_vls_trunc(s->log_str, 0);
+	rt_edit_process(s);
+	point2d_t expected_vertex = {33.0, -7.0};
+	if (skt_menu->vert_count != vertex_count + 1 ||
+	    !V2NEAR_EQUAL(skt_menu->verts[vertex_count], expected_vertex,
+		VUNITIZE_TOL) || se->curr_vert != (int)vertex_count) {
+	    bu_exit(1, "ERROR: ECMD_SKETCH_ADD_VERTEX failed\n");
+	}
+	bu_log("ECMD_SKETCH_ADD_VERTEX SUCCESS\n");
+
+	EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_SKETCH_SET_PLANE);
+	s->e_inpara = 9;
+	VSET(&s->e_para[0], 1.0, 2.0, 3.0);
+	VSET(&s->e_para[3], 2.0, 0.0, 0.0);
+	VSET(&s->e_para[6], 1.0, 3.0, 0.0);
+	bu_vls_trunc(s->log_str, 0);
+	rt_edit_process(s);
+	point_t expected_origin = {1.0, 2.0, 3.0};
+	vect_t expected_u = {1.0, 0.0, 0.0};
+	vect_t expected_v = {0.0, 1.0, 0.0};
+	if (!VNEAR_EQUAL(skt_menu->V, expected_origin, VUNITIZE_TOL) ||
+	    !VNEAR_EQUAL(skt_menu->u_vec, expected_u, VUNITIZE_TOL) ||
+	    !VNEAR_EQUAL(skt_menu->v_vec, expected_v, VUNITIZE_TOL)) {
+	    bu_exit(1, "ERROR: ECMD_SKETCH_SET_PLANE failed\n");
+	}
+	bu_log("ECMD_SKETCH_SET_PLANE SUCCESS\n");
+
+	const int reverse_before = skt_menu->curve.reverse[0];
+	EDOBJ[dp->d_minor_type].ft_set_edit_mode(
+	    s, ECMD_SKETCH_TOGGLE_SEGMENT_REVERSE);
+	se->curr_seg = 0;
+	bu_vls_trunc(s->log_str, 0);
+	rt_edit_process(s);
+	if (skt_menu->curve.reverse[0] == reverse_before)
+	    bu_exit(1, "ERROR: ECMD_SKETCH_TOGGLE_SEGMENT_REVERSE failed\n");
+	bu_log("ECMD_SKETCH_TOGGLE_SEGMENT_REVERSE SUCCESS\n");
+
+	int arc_index = -1;
+	for (size_t i = 0; i < skt_menu->curve.count; ++i) {
+	    void *segment = skt_menu->curve.segment[i];
+	    if (segment && *(uint32_t *)segment == CURVE_CARC_MAGIC) {
+		arc_index = (int)i;
+		break;
+	    }
+	}
+	if (arc_index < 0)
+	    bu_exit(1, "ERROR: no arc available for contextual menu tests\n");
+
+	struct carc_seg *arc =
+	    (struct carc_seg *)skt_menu->curve.segment[arc_index];
+	const int center_side = arc->center_is_left;
+	EDOBJ[dp->d_minor_type].ft_set_edit_mode(
+	    s, ECMD_SKETCH_TOGGLE_ARC_ORIENT);
+	se->curr_seg = arc_index;
+	bu_vls_trunc(s->log_str, 0);
+	rt_edit_process(s);
+	if (arc->center_is_left == center_side)
+	    bu_exit(1, "ERROR: ECMD_SKETCH_TOGGLE_ARC_ORIENT failed\n");
+	bu_log("ECMD_SKETCH_TOGGLE_ARC_ORIENT SUCCESS\n");
+
+	EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_SKETCH_SET_ARC_RADIUS);
+	se->curr_seg = arc_index;
+	s->e_inpara = 1;
+	s->e_para[0] = 12.0;
+	bu_vls_trunc(s->log_str, 0);
+	rt_edit_process(s);
+	if (!NEAR_EQUAL(arc->radius, 12.0, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: ECMD_SKETCH_SET_ARC_RADIUS failed\n");
+	bu_log("ECMD_SKETCH_SET_ARC_RADIUS SUCCESS\n");
+
+	int adjacent_index = -1;
+	for (size_t i = 0; i < skt_menu->curve.count; ++i) {
+	    void *segment = skt_menu->curve.segment[i];
+	    if (!segment || *(uint32_t *)segment != CURVE_LSEG_MAGIC)
+		continue;
+	    struct line_seg *line = (struct line_seg *)segment;
+	    if (line->start == arc->start || line->start == arc->end ||
+		line->end == arc->start || line->end == arc->end) {
+		adjacent_index = (int)i;
+		break;
+	    }
+	}
+	if (adjacent_index < 0)
+	    bu_exit(1, "ERROR: no adjacent line for arc tangency test\n");
+	EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_SKETCH_SET_TANGENCY);
+	se->curr_seg = arc_index;
+	s->e_inpara = 2;
+	s->e_para[0] = (fastf_t)adjacent_index;
+	s->e_para[1] = 0.0;
+	bu_vls_trunc(s->log_str, 0);
+	rt_edit_process(s);
+	if (bu_vls_strlen(s->log_str) || arc->radius <= 0.0)
+	    bu_exit(1, "ERROR: ECMD_SKETCH_SET_TANGENCY: %s\n",
+		bu_vls_cstr(s->log_str));
+	bu_log("ECMD_SKETCH_SET_TANGENCY SUCCESS\n");
+
+	point_t plane_before;
+	VMOVE(plane_before, skt_menu->V);
+	EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_SKETCH_SET_PLANE);
+	s->e_inpara = 9;
+	VSET(&s->e_para[0], 9.0, 9.0, 9.0);
+	VSET(&s->e_para[3], 1.0, 0.0, 0.0);
+	VSET(&s->e_para[6], 2.0, 0.0, 0.0);
+	bu_vls_trunc(s->log_str, 0);
+	rt_edit_process(s);
+	if (!VNEAR_EQUAL(skt_menu->V, plane_before, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: ECMD_SKETCH_SET_PLANE changed origin from "
+		"(%g,%g,%g) to (%g,%g,%g) after rejecting a parallel basis\n",
+		V3ARGS(plane_before), V3ARGS(skt_menu->V));
+	bu_log("ECMD_SKETCH_SET_PLANE invalid basis correctly rejected\n");
+    }
+
     rt_edit_destroy(s);
     db_close(dbip);
     return 0;

@@ -500,6 +500,22 @@ if(TCL_ENABLE_TK)
     endforeach()
     unset(_tk_lib_dir)
     unset(_tkconfig)
+
+    # Staged dependency trees do not necessarily retain tkConfig.sh.  The ELF
+    # dependency name remains embedded in the Tk shared library and is enough
+    # to distinguish the intentionally incompatible X11 providers.
+    if(TK_X11_PROVIDER STREQUAL "UNKNOWN" AND EXISTS "${TK_LIBRARY}")
+      file(STRINGS "${TK_LIBRARY}" _tk_x11_dependencies
+        REGEX "lib(XminClient|X11)[^/]*" LIMIT_COUNT 1)
+      if("${_tk_x11_dependencies}" MATCHES "libXminClient")
+        set(TK_X11_PROVIDER "XMIN")
+        set(_tk_config_windowing_system "x11")
+      elseif("${_tk_x11_dependencies}" MATCHES "libX11")
+        set(TK_X11_PROVIDER "SYSTEM")
+        set(_tk_config_windowing_system "x11")
+      endif()
+      unset(_tk_x11_dependencies)
+    endif()
   endif()
 
   set(TK_WINDOWING_SYSTEM "")

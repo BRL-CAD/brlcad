@@ -1835,6 +1835,10 @@ X24_blit(struct fb *ifp, int x_1, int y_1, int w, int h, int flags /* BLIT_xxx f
     if (flags & BLIT_DISP) {
 	XPutImage(xi->xi_dpy, drawable, xi->xi_gc, xi->xi_image,
 		  ox, oy - xht + 1, ox, oy - xht + 1, xwd, xht);
+	if (xi->xi_cwinp != xi->xi_win) {
+	    XCopyArea(xi->xi_dpy, xi->xi_win, xi->xi_cwinp, xi->xi_gc,
+		      ox, oy - xht + 1, xwd, xht, ox, oy - xht + 1);
+	}
     }
 
     /* If we changed the valid region, make a new one. */

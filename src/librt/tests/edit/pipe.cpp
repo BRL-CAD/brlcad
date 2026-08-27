@@ -57,6 +57,8 @@ struct rt_pipe_edit_local {
 };
 
 /* ECMD constants from edpipe.c */
+#define ECMD_PIPE_NEXT_PT	15062
+#define ECMD_PIPE_PREV_PT	15063
 #define ECMD_PIPE_SPLIT		15029	/* Split a pipe segment into two */
 #define ECMD_PIPE_PT_ADD	15030
 #define ECMD_PIPE_PT_INS	15031	/* Prepend a pipe point at start */
@@ -222,6 +224,34 @@ main(int argc, char *argv[])
 	(struct rt_pipe_edit_local *)s->ipe_ptr;
 
     vect_t mousevec;
+
+    /* Point navigation is immediate and one-shot.  Exercise missing
+     * selection, both directions, both endpoint boundaries, and keypoint
+     * refresh through the same set-edit-mode path used by MGED menus. */
+    pipe_reset(s, pe);
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_PIPE_NEXT_PT);
+    if (pe->es_pipe_pnt != NULL || s->edit_flag != RT_EDIT_IDLE)
+	bu_exit(1, "ERROR: ECMD_PIPE_NEXT_PT mishandled an empty selection\n");
+
+    pe->es_pipe_pnt = pipe_first(s);
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_PIPE_NEXT_PT);
+    if (pe->es_pipe_pnt != pipe_second(s) || s->edit_flag != RT_EDIT_IDLE ||
+	!VNEAR_EQUAL(s->e_keypoint, pipe_second(s)->pp_coord, VUNITIZE_TOL)) {
+	bu_exit(1, "ERROR: ECMD_PIPE_NEXT_PT did not navigate cleanly\n");
+    }
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_PIPE_NEXT_PT);
+    if (pe->es_pipe_pnt != pipe_second(s) || s->edit_flag != RT_EDIT_IDLE)
+	bu_exit(1, "ERROR: ECMD_PIPE_NEXT_PT moved past the last point\n");
+
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_PIPE_PREV_PT);
+    if (pe->es_pipe_pnt != pipe_first(s) || s->edit_flag != RT_EDIT_IDLE ||
+	!VNEAR_EQUAL(s->e_keypoint, pipe_first(s)->pp_coord, VUNITIZE_TOL)) {
+	bu_exit(1, "ERROR: ECMD_PIPE_PREV_PT did not navigate cleanly\n");
+    }
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_PIPE_PREV_PT);
+    if (pe->es_pipe_pnt != pipe_first(s) || s->edit_flag != RT_EDIT_IDLE)
+	bu_exit(1, "ERROR: ECMD_PIPE_PREV_PT moved before the first point\n");
+    bu_log("ECMD_PIPE_NEXT_PT/ECMD_PIPE_PREV_PT SUCCESS\n");
 
     /* ================================================================
      * RT_PARAMS_EDIT_SCALE (scale=2 about keypoint (0,0,0))
@@ -696,7 +726,9 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
      * ================================================================*/
     pipe_full_reset(s, pe);
     pe->es_pipe_pnt = pipe_first(s);
-    rt_edit_set_edflag(s, ECMD_PIPE_SPLIT);
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_PIPE_SPLIT);
+    if (s->edit_mode != RT_PARAMS_EDIT_TRANS)
+	bu_exit(1, "ERROR: ECMD_PIPE_SPLIT did not enter interactive point mode\n");
     s->e_inpara = 3;
     VSET(s->e_para, 0, 0, 5);
     s->local2base = 1.0;
