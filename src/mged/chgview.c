@@ -201,8 +201,11 @@ token_should_edit(const struct knob_token_entry *e,
 }
 
 static int
-matrix_scale_edit_flag(void)
+matrix_scale_edit_flag(struct mged_state *s)
 {
+    if (SEDIT_MATRIX_SCALE)
+	return MEDIT(s)->edit_flag;
+
     switch (edobj) {
 	case BE_O_SCALE:
 	    return RT_MATRIX_EDIT_SCALE;
@@ -229,7 +232,7 @@ mged_librt_knob_edit_apply(struct mged_state *s,
 	return BRLCAD_ERROR;
 
     struct rt_edit *re = MEDIT(s);
-    int matrix_edit = (s->global_editing_state == ST_O_EDIT);
+    int matrix_edit = (s->global_editing_state == ST_O_EDIT || SEDIT_MATRIX_SCALE);
 
     /* Rotation */
     if (did_rot) {
@@ -248,8 +251,8 @@ mged_librt_knob_edit_apply(struct mged_state *s,
     if (did_sca) {
 	int saved_edit_flag = re->edit_flag;
 	int saved_edit_mode = re->edit_mode;
-	if (matrix_edit) {
-	    int scale_flag = matrix_scale_edit_flag();
+	if (s->global_editing_state == ST_O_EDIT) {
+	    int scale_flag = matrix_scale_edit_flag(s);
 	    if (scale_flag == RT_EDIT_DEFAULT)
 		return BRLCAD_ERROR;
 	    rt_edit_set_edflag(re, scale_flag);
@@ -2680,12 +2683,13 @@ int
 mged_escale(struct mged_state *s, fastf_t sfactor)
 {
     fastf_t old_scale;
+    int matrix_edit = (s->global_editing_state == ST_O_EDIT || SEDIT_MATRIX_SCALE);
 
     if (-SMALL_FASTF < sfactor && sfactor < SMALL_FASTF) {
 	return TCL_OK;
     }
 
-    if (s->global_editing_state == ST_S_EDIT) {
+    if (!matrix_edit) {
 	int save_edflag;
 
 	save_edflag = MEDIT(s)->edit_flag;
@@ -2724,8 +2728,8 @@ mged_escale(struct mged_state *s, fastf_t sfactor)
 	inv_sfactor = 1.0 / sfactor;
 	MAT_IDN(smat);
 
-	switch (edobj) {
-	    case BE_O_XSCALE:			    /* local scaling ... X-axis */
+	switch (matrix_scale_edit_flag(s)) {
+	    case RT_MATRIX_EDIT_SCALE_X:		    /* local scaling ... X-axis */
 		smat[0] = sfactor;
 		old_scale = MEDIT(s)->acc_sc[X];
 		MEDIT(s)->acc_sc[X] *= sfactor;
@@ -2736,7 +2740,7 @@ mged_escale(struct mged_state *s, fastf_t sfactor)
 		}
 
 		break;
-	    case BE_O_YSCALE:			    /* local scaling ... Y-axis */
+	    case RT_MATRIX_EDIT_SCALE_Y:		    /* local scaling ... Y-axis */
 		smat[5] = sfactor;
 		old_scale = MEDIT(s)->acc_sc[Y];
 		MEDIT(s)->acc_sc[Y] *= sfactor;
@@ -2747,7 +2751,7 @@ mged_escale(struct mged_state *s, fastf_t sfactor)
 		}
 
 		break;
-	    case BE_O_ZSCALE:			    /* local scaling ... Z-axis */
+	    case RT_MATRIX_EDIT_SCALE_Z:		    /* local scaling ... Z-axis */
 		smat[10] = sfactor;
 		old_scale = MEDIT(s)->acc_sc[Z];
 		MEDIT(s)->acc_sc[Z] *= sfactor;
@@ -2758,8 +2762,7 @@ mged_escale(struct mged_state *s, fastf_t sfactor)
 		}
 
 		break;
-	    case BE_O_SCALE:			     /* global scaling */
-	    default:
+	    case RT_MATRIX_EDIT_SCALE:		     /* global scaling */
 		smat[15] = inv_sfactor;
 		old_scale = MEDIT(s)->acc_sc_sol;
 		MEDIT(s)->acc_sc_sol *= inv_sfactor;
@@ -2770,6 +2773,8 @@ mged_escale(struct mged_state *s, fastf_t sfactor)
 		}
 
 		break;
+	    default:
+		return TCL_ERROR;
 	}
 
 	/* Have scaling take place with respect to keypoint,
@@ -2892,8 +2897,8 @@ cmd_sca(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 		edobj = save_edobj;
 		return ret;
 	    } else {
-		/* argc was 4 but state was ST_S_EDIT so do nothing */
-		bu_log("ERROR: Can only scale primitives uniformly (one scale factor).\n");
+		/* The three-factor form remains an object-matrix operation. */
+		bu_log("ERROR: sca accepts one factor in primitive edit mode.\n");
 		return TCL_OK;
 	    }
 	}

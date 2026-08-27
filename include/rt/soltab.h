@@ -70,6 +70,14 @@ struct soltab {
     long                        st_bit;         /**< @brief solids bit vector index (const) */
     struct bu_ptbl              st_regions;     /**< @brief ptrs to regions using this solid (const) */
     matp_t                      st_matp;        /**< @brief solid coords to model space, NULL=identity */
+    matp_t                      st_nu_matp;     /**< @brief attr body coords to model space, NULL=identity */
+    matp_t                      st_nu_inv_matp; /**< @brief model coords to attr body space, NULL=identity */
+    matp_t                      st_nu_norm_matp;/**< @brief normal transform for attr body normals */
+    point_t                     st_nu_body_center; /**< @brief body-space centroid before nonuniform bounds transform */
+    point_t                     st_nu_body_min;    /**< @brief body-space min before nonuniform bounds transform */
+    point_t                     st_nu_body_max;    /**< @brief body-space max before nonuniform bounds transform */
+    fastf_t                     st_nu_body_aradius;/**< @brief body-space approximate radius before nonuniform bounds transform */
+    fastf_t                     st_nu_body_bradius;/**< @brief body-space bounding radius before nonuniform bounds transform */
     struct db_full_path         st_path;        /**< @brief path from region to leaf */
     /* Experimental stuff for accelerating "pieces" of solids */
     long                        st_npieces;     /**< @brief #  pieces used by this solid */
@@ -77,7 +85,7 @@ struct soltab {
     struct bound_rpp *          st_piece_rpps;  /**< @brief bounding RPP of each piece of this solid */
 };
 
-#define RT_SOLTAB_INIT_ZERO {BU_LIST_INIT_ZERO, BU_LIST_INIT_ZERO, NULL, NULL, 0, 0, VINIT_ZERO, 0.0, 0.0, NULL, NULL, VINIT_ZERO, VINIT_ZERO, 0, BU_PTBL_INIT_ZERO, NULL, DB_FULL_PATH_INIT_ZERO, 0, 0, NULL}
+#define RT_SOLTAB_INIT_ZERO {BU_LIST_INIT_ZERO, BU_LIST_INIT_ZERO, NULL, NULL, 0, 0, VINIT_ZERO, 0.0, 0.0, NULL, NULL, VINIT_ZERO, VINIT_ZERO, 0, BU_PTBL_INIT_ZERO, NULL, NULL, NULL, NULL, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, 0.0, 0.0, DB_FULL_PATH_INIT_ZERO, 0, 0, NULL}
 
 #define st_name         st_dp->d_namep
 #define RT_SOLTAB_NULL  ((struct soltab *)0)

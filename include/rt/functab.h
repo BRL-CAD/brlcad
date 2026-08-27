@@ -332,6 +332,20 @@ struct rt_functab {
     int (*ft_validate)(struct bu_vls *error_msg, const struct rt_db_internal *ip, const struct bn_tol *tol);
 #define RTFUNCTAB_FUNC_VALIDATE_CAST(_func) ((int (*)(struct bu_vls *, const struct rt_db_internal *, const struct bn_tol *))((void (*)(void))_func))
 
+    /**
+     * Optional exact curvature support for primitives prepared with an affine
+     * matrix:nonuniform transform.  Implementations should evaluate curvature
+     * for @p hitp on @p stp in model space using the supplied body-to-model and
+     * model-to-body affine maps.  A NULL callback means transformed curvature
+     * is unavailable for the primitive.
+     */
+    int (*ft_curve_affine)(struct curvature * /*cvp*/,
+			   struct hit * /*hitp*/,
+			   struct soltab * /*stp*/,
+			   const mat_t /*body_to_model*/,
+			   const mat_t /*model_to_body*/);
+#define RTFUNCTAB_FUNC_CURVE_AFFINE_CAST(_func) ((int (*)(struct curvature *, struct hit *, struct soltab *, const mat_t, const mat_t))((void (*)(void))_func))
+
 };
 
 /**

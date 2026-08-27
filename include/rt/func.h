@@ -107,9 +107,28 @@ DEPRECATED RT_EXPORT extern int rt_obj_class(void);
 RT_EXPORT extern int rt_obj_free(struct soltab *stp);
 
 /**
- * obtain a vlist wireframe representation of an object for plotting purposes
+ * Obtain a vlist wireframe representation of an object, including any stored
+ * matrix:nonuniform transform.
  */
 RT_EXPORT extern int rt_obj_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol);
+
+/**
+ * Obtain a view-aware vlist wireframe representation of an object, including
+ * any stored matrix:nonuniform transform.
+ */
+RT_EXPORT extern int rt_obj_plot_view(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol, const struct bview *v);
+
+/**
+ * Obtain an adaptive vlist wireframe representation of an object, including
+ * any stored matrix:nonuniform transform.
+ */
+RT_EXPORT extern int rt_obj_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *tol, const struct bview *v, fastf_t scale);
+
+/**
+ * Calculate an object's axis-aligned bounding box, including any stored
+ * matrix:nonuniform transform.
+ */
+RT_EXPORT extern int rt_obj_bbox(struct rt_db_internal *ip, point_t *bmin, point_t *bmax, const struct bn_tol *tol);
 
 /**
  * shoot an array of rays at a set of homogeneous objects.
@@ -120,6 +139,21 @@ RT_EXPORT extern int rt_obj_vshot(struct soltab *stp[], struct xray *rp[], struc
  * tessellate an object (into NMG form)
  */
 RT_EXPORT extern int rt_obj_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol);
+
+/**
+ * calculate object volume
+ */
+RT_EXPORT extern int rt_obj_volume(fastf_t *volume, const struct rt_db_internal *ip);
+
+/**
+ * calculate object surface area
+ */
+RT_EXPORT extern int rt_obj_surf_area(fastf_t *area, const struct rt_db_internal *ip);
+
+/**
+ * calculate object centroid
+ */
+RT_EXPORT extern int rt_obj_centroid(point_t *cent, const struct rt_db_internal *ip);
 
 /**
  * tessellate an object (into NURBS NMG form)

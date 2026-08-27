@@ -23,12 +23,17 @@
 #include "raytrace.h"
 #include "rt/func.h"
 
+#include "../librt_private.h"
+
 
 int
 rt_obj_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     int id;
     const struct rt_functab *ft;
+    mat_t nonuniform_mat;
+    int have_nonuniform = 0;
+    int ret;
 
     if (!stp)
 	return -1;
@@ -49,7 +54,20 @@ rt_obj_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     if (!ft->ft_prep)
 	return -4;
 
-    return ft->ft_prep(stp, ip, rtip);
+    have_nonuniform = _rt_nonuniform_attr_get(nonuniform_mat, ip);
+    if (have_nonuniform < 0)
+	return -5;
+
+    ret = ft->ft_prep(stp, ip, rtip);
+    if (ret)
+	return ret;
+
+    if (have_nonuniform > 0) {
+	if (_rt_nonuniform_soltab_setup(stp, nonuniform_mat, rtip ? &rtip->rti_tol : NULL) < 0)
+	    return -6;
+    }
+
+    return 0;
 }
 
 

@@ -336,7 +336,7 @@ rt_shootray_bundle(struct application *ap, struct xray *rays, int nrays)
 
 		ret = -1;
 		if (OBJ[stp->st_id].ft_shot) {
-		    ret = OBJ[stp->st_id].ft_shot(stp, &ss2_newray, ap, &new_segs);
+		    ret = _rt_nonuniform_shot(stp, &ss2_newray, ap, &new_segs);
 		}
 		if (ret <= 0) {
 		    resp->re_shot_miss++;

@@ -416,6 +416,40 @@ rt_traverse_tree(struct rt_i *rtip, const union tree *tp, fastf_t *tree_min, fas
 
 
 int
+rt_obj_bbox(struct rt_db_internal *ip, point_t *bmin, point_t *bmax, const struct bn_tol *tol)
+{
+    mat_t nonuniform_mat;
+    int have_nonuniform;
+    int ret;
+
+    if (!ip || !bmin || !bmax)
+	return -1;
+
+    RT_CK_DB_INTERNAL(ip);
+    if (tol) BN_CK_TOL(tol);
+    if (!ip->idb_meth || !ip->idb_meth->ft_bbox)
+	return -1;
+
+    ret = ip->idb_meth->ft_bbox(ip, bmin, bmax, tol);
+    if (ret < 0)
+	return ret;
+
+    have_nonuniform = _rt_nonuniform_attr_get(nonuniform_mat, ip);
+    if (have_nonuniform < 0)
+	return -1;
+    if (have_nonuniform > 0) {
+	point_t transformed_min, transformed_max;
+	_rt_nonuniform_transform_bbox(&transformed_min, &transformed_max,
+		nonuniform_mat, *bmin, *bmax);
+	VMOVE(*bmin, transformed_min);
+	VMOVE(*bmax, transformed_max);
+    }
+
+    return ret;
+}
+
+
+int
 rt_bound_instance(point_t *bmin, point_t *bmax,
 		  struct directory *dp,
 		  struct db_i *dbip,
@@ -439,7 +473,7 @@ rt_bound_instance(point_t *bmin, point_t *bmax,
 
     int bbret = -1;
     if (ip->idb_meth->ft_bbox)
-	bbret = ip->idb_meth->ft_bbox(ip, bmin, bmax, tol);
+	bbret = rt_obj_bbox(ip, bmin, bmax, tol);
 
     if (bbret < 0 && ip->idb_meth->ft_plot) {
 	/* As a fallback for primitives that don't have a bbox
@@ -450,12 +484,16 @@ rt_bound_instance(point_t *bmin, point_t *bmax,
 	 */
 	struct bu_list vhead;
 	BU_LIST_INIT(&(vhead));
-	if (ip->idb_meth->ft_plot(&vhead, ip, ttol, tol, NULL) >= 0) {
-	    if (bv_vlist_bbox(&vhead, bmin, bmax, NULL, NULL)) {
+	if (rt_obj_plot(&vhead, ip, ttol, tol) >= 0) {
+	    int bbox_ret = bv_vlist_bbox(&vhead, bmin, bmax, NULL, NULL);
+	    BV_FREE_VLIST(&rt_vlfree, &vhead);
+	    if (bbox_ret) {
 		rt_db_free_internal(&dbintern);
 		return -1;
 	    }
 	    bbret = 0;
+	} else {
+	    BV_FREE_VLIST(&rt_vlfree, &vhead);
 	}
     }
 

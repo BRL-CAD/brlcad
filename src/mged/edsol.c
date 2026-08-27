@@ -96,7 +96,7 @@ set_e_axes_pos_clbk(int UNUSED(ac), const char **UNUSED(av), void *d, void *id)
 	} else if (EDIT_SCALE) {
 	    s->s_edit->es_edclass = EDIT_CLASS_SCALE;
 
-	    if (SEDIT_SCALE) {
+	    if (SEDIT_PARAM_SCALE) {
 		MEDIT(s)->k.sca_abs = 0.0;
 		MEDIT(s)->acc_sc_sol = 1.0;
 	    }
@@ -632,6 +632,8 @@ init_sedit_vars(struct mged_state *s)
     VSETALL(MEDIT(s)->k.tra_v_abs_last, 0.0);
     MEDIT(s)->k.sca_abs = 0.0;
     MEDIT(s)->acc_sc_sol = 1.0;
+    MEDIT(s)->acc_sc_obj = 1.0;
+    VSETALL(MEDIT(s)->acc_sc, 1.0);
 
     VSETALL(MEDIT(s)->k.rot_m, 0.0);
     VSETALL(MEDIT(s)->k.rot_o, 0.0);
@@ -683,6 +685,34 @@ replot_editing_solid(int UNUSED(ac), const char **UNUSED(av), void *d, void *UNU
     }
 
     return BRLCAD_OK;
+}
+
+
+/* Rebuild every displayed path that ends in the edited primitive. */
+static void
+replot_original_solid_instances(struct mged_state *s, struct directory *edited_dp)
+{
+    struct display_list *gdlp;
+    struct display_list *next_gdlp;
+    struct bv_scene_obj *sp;
+
+    if (!edited_dp)
+	return;
+
+    gdlp = BU_LIST_NEXT(display_list, (struct bu_list *)ged_dl(s->gedp));
+    while (BU_LIST_NOT_HEAD(gdlp, (struct bu_list *)ged_dl(s->gedp))) {
+	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
+
+	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
+	    if (!sp->s_u_data)
+		continue;
+	    struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
+	    if (LAST_SOLID(bdata) == edited_dp)
+		(void)replot_original_solid(s, sp);
+	}
+
+	gdlp = next_gdlp;
+    }
 }
 
 
@@ -782,6 +812,8 @@ sedit_mouse(struct mged_state *s, const vect_t mousevec)
 	return;
 
     rt_edit_process(MEDIT(s));
+    if (SEDIT_MATRIX_SCALE)
+	new_edit_mats(s);
 }
 
 /*
@@ -1178,6 +1210,41 @@ f_eqn(ClientData clientData, Tcl_Interp *UNUSED(interp), int argc, const char *a
 /* Hooks from buttons.c */
 
 /*
+ * Matrix scaling is accumulated in model coordinates for display.  Primitive
+ * editing writes the underlying solid, so conjugate the pending change through
+ * the selected path before applying it to the primitive's local parameters.
+ */
+static int
+sedit_apply_model_changes(struct mged_state *s)
+{
+    if (bn_mat_is_identity(MEDIT(s)->model_changes))
+	return TCL_OK;
+
+    mat_t inv_path;
+    mat_t local_changes;
+    mat_t model_path;
+    bn_mat_inv(inv_path, MEDIT(s)->e_mat);
+    bn_mat_mul(model_path, MEDIT(s)->model_changes, MEDIT(s)->e_mat);
+    bn_mat_mul(local_changes, inv_path, model_path);
+
+    struct rt_db_internal transformed;
+    RT_DB_INTERNAL_INIT(&transformed);
+    if (rt_matrix_transform(&transformed, local_changes, &MEDIT(s)->es_int, 0,
+	    s->dbip) < 0) {
+	Tcl_AppendResult(s->interp, "Primitive scale cannot be represented by ",
+		EDOBJ[MEDIT(s)->es_int.idb_type].ft_label, "\n", (char *)NULL);
+	rt_db_free_internal(&transformed);
+	return TCL_ERROR;
+    }
+
+    rt_db_free_internal(&MEDIT(s)->es_int);
+    MEDIT(s)->es_int = transformed;
+    MAT_IDN(MEDIT(s)->model_changes);
+    new_edit_mats(s);
+    return TCL_OK;
+}
+
+/*
  * Copied from sedit_accept - modified to optionally leave
  * solid edit state.
  */
@@ -1214,6 +1281,9 @@ sedit_apply(struct mged_state *s, int accept_flag)
 	mmenu_set(s, MENU_L2, NULL);
 	return TCL_ERROR;
     }
+
+    if (sedit_apply_model_changes(s) != TCL_OK)
+	return TCL_ERROR;
 
     /* make sure that any BOT solid is minimally legal */
     if (MEDIT(s)->es_int.idb_type == ID_BOT) {
@@ -1253,6 +1323,12 @@ sedit_apply(struct mged_state *s, int accept_flag)
 	return TCL_ERROR;				/* FAIL */
     }
 
+    /* Parameter edits regenerate their vlists as they happen, but matrix
+     * scales only distort the existing vlist for interactive display.  Once
+     * model_changes is reset, rebuild from the persisted primitive so its
+     * non-uniform transform remains visible. */
+    replot_original_solid_instances(s, dp);
+
     if (accept_flag) {
 	menu_state->ms_flag = 0;
 	movedir = 0;
@@ -1268,10 +1344,9 @@ sedit_apply(struct mged_state *s, int accept_flag)
 	 * Since we are in "apply but stay editing" mode (sed_apply command),
 	 * we need es_int to remain valid so the user can keep editing.
 	 * Re-read the solid from disk to restore a clean internal state. */
-	if (rt_db_get_internal(&MEDIT(s)->es_int, LAST_SOLID(bdata),
-			       s->dbip, NULL) < 0) {
+	if (rt_db_get_internal(&MEDIT(s)->es_int, dp, s->dbip, NULL) < 0) {
 	    Tcl_AppendResult(s->interp, "sedit_apply(",
-			     LAST_SOLID(bdata)->d_namep,
+			     dp->d_namep,
 			     "):  solid reimport failure\n", (char *)NULL);
 	    rt_db_free_internal(&MEDIT(s)->es_int);
 	    return TCL_ERROR;
@@ -1284,23 +1359,23 @@ sedit_apply(struct mged_state *s, int accept_flag)
 }
 
 
-void
+int
 sedit_accept(struct mged_state *s)
 {
     if (s->dbip == DBI_NULL)
-	return;
+	return TCL_ERROR;
 
     if (not_state(s, ST_S_EDIT, "Solid edit accept"))
-	return;
+	return TCL_ERROR;
 
     if (s->dbip->dbi_read_only) {
 	sedit_reject(s);
 	bu_log("Sorry, this database is READ-ONLY\n");
 	pr_prompt(s);
-	return;
+	return TCL_OK;
     }
 
-    (void)sedit_apply(s, 1);
+    return sedit_apply(s, 1);
 }
 
 
@@ -1312,34 +1387,15 @@ sedit_reject(struct mged_state *s)
     }
 
     /* Restore the original solid everywhere */
-    {
-	struct display_list *gdlp;
-	struct display_list *next_gdlp;
-	struct bv_scene_obj *sp;
-	if (!illump->s_u_data) {
-	    /* No solid data to replot; just reset to idle and clean up menus. */
-	    rt_edit_reset(MEDIT(s));
-	    mmenu_set(s, MENU_L1, NULL);
-	    mmenu_set(s, MENU_L2, NULL);
-	    return;
-	}
-	struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
-
-	gdlp = BU_LIST_NEXT(display_list, (struct bu_list *)ged_dl(s->gedp));
-	while (BU_LIST_NOT_HEAD(gdlp, (struct bu_list *)ged_dl(s->gedp))) {
-	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
-
-	    for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
-		if (!sp->s_u_data)
-		    continue;
-		struct ged_bv_data *bdatas = (struct ged_bv_data *)sp->s_u_data;
-		if (LAST_SOLID(bdatas) == LAST_SOLID(bdata))
-		    (void)replot_original_solid(s, sp);
-	    }
-
-	    gdlp = next_gdlp;
-	}
+    if (!illump->s_u_data) {
+	/* No solid data to replot; just reset to idle and clean up menus. */
+	rt_edit_reset(MEDIT(s));
+	mmenu_set(s, MENU_L1, NULL);
+	mmenu_set(s, MENU_L2, NULL);
+	return;
     }
+    struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
+    replot_original_solid_instances(s, LAST_SOLID(bdata));
 
     menu_state->ms_flag = 0;
     movedir = 0;
@@ -1383,11 +1439,13 @@ mged_param(struct mged_state *s, Tcl_Interp *interp, int argc, fastf_t *argvect)
 	VMOVE(MEDIT(s)->k.tra_m_abs_last, MEDIT(s)->k.tra_m_abs);
     } else if (SEDIT_ROTATE) {
 	VMOVE(MEDIT(s)->k.rot_m_abs, MEDIT(s)->e_para);
-    } else if (SEDIT_SCALE) {
+    } else if (SEDIT_PARAM_SCALE) {
 	MEDIT(s)->k.sca_abs = MEDIT(s)->acc_sc_sol - 1.0;
 	if (MEDIT(s)->k.sca_abs > 0)
 	    MEDIT(s)->k.sca_abs /= 3.0;
     }
+    if (SEDIT_MATRIX_SCALE)
+	new_edit_mats(s);
     return TCL_OK;
 }
 

@@ -192,7 +192,7 @@ pull_leaf(struct db_i *dbip, struct directory *dp, void *mp)
      * it then passes the minimum and maximum point to translate()
      * which then extracts the translation.
      */
-    (intern.idb_meth)->ft_bbox(&intern, &min, &max, &tol);
+    rt_obj_bbox(&intern, &min, &max, &tol);
 
     /* pulls primitive translation matrix copying inverse
      * transformation to restore primitive and bbox

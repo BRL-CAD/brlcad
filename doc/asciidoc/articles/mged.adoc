@@ -4538,6 +4538,9 @@ The “press” command simulates the pressing of a button. All of these button 
 * sedit – (deprecated) Enter primitive edit mode.
 * srot – Enter solid (i.e., primitive) rotate mode (must be in primitive edit mode).
 * sscale – Enter solid (i.e., primitive) scale mode (must be in primitive edit mode).
+* sxscale – Enter solid scale (x-direction only) mode (must be in primitive edit mode).
+* syscale – Enter solid scale (y-direction only) mode (must be in primitive edit mode).
+* szscale – Enter solid scale (z-direction only) mode (must be in primitive edit mode).
 * sxy – Enter solid (i.e., primitive) translate mode (must be in primitive edit mode).
 * zoomin – Zoom in, synonym for zoom 2.
 * zoomout – Zoom out, synonym for zoom 0.5.

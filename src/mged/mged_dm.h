@@ -514,6 +514,9 @@ __END_DECLS
 #define BV_EDIT_TOGGLE  2+32
 #define BV_EYEROT_TOGGLE 3+32
 #define BE_S_CONTEXT    4+32
+#define BE_S_XSCALE     5+32
+#define BE_S_YSCALE     6+32
+#define BE_S_ZSCALE     7+32
 
 #define BV_MAXFUNC	64	/* largest code used */
 

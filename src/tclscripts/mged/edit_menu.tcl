@@ -77,6 +77,18 @@ proc init_solid_edit_menus { stype menu } {
 		set mged_gui($id,transform) e; set_transform $id"
 	incr i
 	.$id.menubar.edit insert $i radiobutton -variable edit_type \
+	    -label "Scale X" -underline 6 -command "press sxscale; \
+		set mged_gui($id,transform) e; set_transform $id"
+	incr i
+	.$id.menubar.edit insert $i radiobutton -variable edit_type \
+	    -label "Scale Y" -underline 6 -command "press syscale; \
+		set mged_gui($id,transform) e; set_transform $id"
+	incr i
+	.$id.menubar.edit insert $i radiobutton -variable edit_type \
+	    -label "Scale Z" -underline 6 -command "press szscale; \
+		set mged_gui($id,transform) e; set_transform $id"
+	incr i
+	.$id.menubar.edit insert $i radiobutton -variable edit_type \
 	    -label "None Of Above" -underline 0 -command "set edit_solid_flag 0; \
 		set mged_gui($id,transform) e; set_transform $id"
 	incr i
@@ -347,6 +359,15 @@ proc init_solid_edit_menu_hoc { stype } {
     hoc_register_menu_data "Edit" "Scale" \
 	"Primitive Edit - Scale" \
 	{{summary "Scale"}}
+    hoc_register_menu_data "Edit" "Scale X" \
+	"Primitive Edit - Scale X" \
+	{{summary "Scale X"}}
+    hoc_register_menu_data "Edit" "Scale Y" \
+	"Primitive Edit - Scale Y" \
+	{{summary "Scale Y"}}
+    hoc_register_menu_data "Edit" "Scale Z" \
+	"Primitive Edit - Scale Z" \
+	{{summary "Scale Z"}}
     hoc_register_menu_data "Edit" "none of above" \
 	"Primitive Edit - none of above" \
 	{{summary "none of above"}}

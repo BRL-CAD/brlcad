@@ -104,6 +104,8 @@ tor_reset(struct rt_edit *s, struct rt_tor_internal *edit_tor,
     MAT_IDN(s->incr_change);
     MAT_IDN(s->model_changes);
     s->acc_sc_sol = 1.0;
+    s->acc_sc_obj = 1.0;
+    VSETALL(s->acc_sc, 1.0);
     s->e_inpara   = 0;
     s->es_scale   = 0.0;
     s->mv_context = 1;
@@ -551,6 +553,43 @@ main(int argc, char *argv[])
     bu_log("RT_PARAMS_EDIT_ROT(xy) SUCCESS: original v value %g,%g,%g modified to %g,%g,%g\n", V3ARGS(orig_tor->v), V3ARGS(edit_tor->v));
     bu_log("RT_PARAMS_EDIT_ROT(xy) SUCCESS: original h value %g,%g,%g modified to %g,%g,%g\n", V3ARGS(orig_tor->h), V3ARGS(edit_tor->h));
 
+    /* The MGED matrix-edit faceplate routes its Scale X/Y/Z buttons through
+     * ft_edit_xy.  TOR must allow those generic affine edit modes. */
+    const int scale_modes[3] = {
+	RT_MATRIX_EDIT_SCALE_X,
+	RT_MATRIX_EDIT_SCALE_Y,
+	RT_MATRIX_EDIT_SCALE_Z
+    };
+    const char *scale_labels[3] = {"X", "Y", "Z"};
+    const fastf_t mouse_scale = 0.5;
+    const fastf_t expected_scale = 1.0 + mouse_scale;
+
+    for (int axis = X; axis <= Z; axis++) {
+	tor_reset(s, edit_tor, cmp_tor, orig_tor);
+	EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, scale_modes[axis]);
+
+	vect_t scale_mouse = VINIT_ZERO;
+	scale_mouse[Y] = mouse_scale;
+	bu_vls_trunc(s->log_str, 0);
+	if ((*EDOBJ[dp->d_minor_type].ft_edit_xy)(s, scale_mouse) != BRLCAD_OK)
+	    bu_exit(1, "ERROR: RT_MATRIX_EDIT_SCALE_%s failed ft_edit_xy call: %s\n",
+		scale_labels[axis], bu_vls_cstr(s->log_str));
+
+	vect_t factors;
+	VSETALL(factors, 1.0);
+	factors[axis] = expected_scale;
+	mat_t diagonal, expected;
+	MAT_IDN(diagonal);
+	MAT_SCALE(diagonal, factors[X], factors[Y], factors[Z]);
+	bn_mat_xform_about_pnt(expected, diagonal, s->e_keypoint);
+	if (!bn_mat_is_equal(s->model_changes, expected, &tol))
+	    bu_exit(1, "ERROR: RT_MATRIX_EDIT_SCALE_%s produced an unexpected edit matrix\n",
+		scale_labels[axis]);
+
+	bu_log("RT_MATRIX_EDIT_SCALE_%s SUCCESS: faceplate XY edit produced scale %g\n",
+	    scale_labels[axis], expected_scale);
+    }
+
 
 
     /* ================================================================
@@ -625,4 +664,3 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

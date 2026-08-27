@@ -385,6 +385,44 @@ puts "*** Testing broad MGED CSG edit integration ***"
       }
   }
 
+  # Read the actual vlist coordinates retained by MGED after an edit.  Database
+  # bounds alone cannot detect a stale wireframe whose temporary edit matrix
+  # was reset by Accept.
+  proc csg_edit_display_bbox_at {expected} {
+      set point_pattern {^[[:space:]]+[^=]+\(([-+0-9.eE]+), ([-+0-9.eE]+), ([-+0-9.eE]+)\)$}
+      set found 0
+      set actual_min {Inf Inf Inf}
+      set actual_max {-Inf -Inf -Inf}
+
+      foreach line [split [who solids 3] "\n"] {
+          if {![regexp $point_pattern $line -> x y z]} {
+              continue
+          }
+          set point [list $x $y $z]
+          for {set axis 0} {$axis < 3} {incr axis} {
+              set value [lindex $point $axis]
+              if {$value < [lindex $actual_min $axis]} {
+                  lset actual_min $axis $value
+              }
+              if {$value > [lindex $actual_max $axis]} {
+                  lset actual_max $axis $value
+              }
+          }
+          set found 1
+      }
+
+      if {!$found} {
+          error "display contains no vlist points"
+      }
+      set actual [concat $actual_min $actual_max]
+      set tolerance 1.0e-5
+      for {set i 0} {$i < 6} {incr i} {
+          if {abs([lindex $actual $i] - [lindex $expected $i]) > $tolerance} {
+              error "display bounding box component $i expected [lindex $expected $i], got [lindex $actual $i]"
+          }
+      }
+  }
+
   proc csg_edit_bbox_translated {source delta prim} {
       set tolerance 1.0e-5
       set before [csg_edit_bbox $source]
@@ -459,17 +497,24 @@ puts "*** Testing broad MGED CSG edit integration ***"
       return [lindex $tree 2]
   }
 
-  proc csg_edit_comb_leaf_matrix_at {comb member expected} {
+  proc csg_edit_matrix_at {actual expected context} {
       set tolerance 1.0e-9
+      if {[llength $actual] != 16} {
+          error "$context matrix is not 4x4: $actual"
+      }
       if {[llength $expected] != 16} {
           error "expected matrix is not 4x4: $expected"
       }
-      set actual [csg_edit_comb_leaf_matrix $comb $member]
       for {set i 0} {$i < 16} {incr i} {
           if {abs([lindex $actual $i] - [lindex $expected $i]) > $tolerance} {
-              error "matrix component $i expected [lindex $expected $i], got [lindex $actual $i]"
+              error "$context matrix component $i expected [lindex $expected $i], got [lindex $actual $i]"
           }
       }
+  }
+
+  proc csg_edit_comb_leaf_matrix_at {comb member expected} {
+      csg_edit_matrix_at [csg_edit_comb_leaf_matrix $comb $member] $expected \
+          "$comb leaf $member"
   }
 
   # Center, size, and quaternion together identify every view mutation that a
@@ -846,6 +891,119 @@ proc csg_matrix_mouse_check {label menu_item activate_menu commands expected_mat
     }
 }
 
+proc csg_tor_matrix_scale_check {axis menu_item factor expected_bbox} {
+    global csg_matrix_mouse_case_id orig_gui transform
+    global csg_mouse_dm_pixels csg_mouse_view_size
+    incr csg_matrix_mouse_case_id
+
+    set prim [format "csg_matrix_tor_%02d.s" $csg_matrix_mouse_case_id]
+    set saved_orig_gui $orig_gui
+
+    set failed [catch {
+        Z
+        in $prim tor 0 0 0  0 0 1  10 2
+        e $prim
+        center 0 0 0
+        size $csg_mouse_view_size
+        setview 0 0 0
+        dm size $csg_mouse_dm_pixels $csg_mouse_dm_pixels
+        set orig_gui 0
+
+        _mged_press oill
+        _mged_ill -e -i 1 /$prim
+        _mged_matpick 0
+        if {[status state] ne "OBJ EDIT"} {
+            error "matrix selection entered [status state], not OBJ EDIT"
+        }
+        if {$transform ne "e"} {
+            error "matrix pick left mouse transform set to '$transform', not edit"
+        }
+        if {[lsearch -exact [mmenu_get 1] $menu_item] < 0} {
+            error "matrix edit menu does not contain '$menu_item'"
+        }
+
+        set view_before [csg_edit_view_state]
+        press $menu_item
+        p 1024
+        press accept
+        if {[status state] ne "VIEWING"} {
+            error "accept entered [status state], not VIEWING"
+        }
+
+        set expected_matrix [csg_matrix_scale $axis $factor]
+        csg_edit_matrix_at [attr get $prim matrix:nonuniform] $expected_matrix \
+            "$prim matrix:nonuniform"
+        csg_edit_bbox_at $expected_bbox $prim
+        csg_edit_display_bbox_at $expected_bbox
+        csg_edit_view_state_at $view_before
+        d $prim
+    } failure]
+
+    set orig_gui $saved_orig_gui
+    catch {press reject}
+    catch {Z}
+    catch {kill $prim}
+
+    if {$failed} {
+        puts "  FAIL: top-level TOR Scale [string toupper $axis] ($failure)"
+    } else {
+        puts "  PASS: top-level TOR Scale [string toupper $axis]"
+    }
+}
+
+set csg_primitive_scale_case_id 0
+proc csg_tor_primitive_scale_check {axis menu_item command factor expected_bbox} {
+    global csg_primitive_scale_case_id orig_gui transform
+    incr csg_primitive_scale_case_id
+
+    set prim [format "csg_primitive_tor_%02d.s" $csg_primitive_scale_case_id]
+    set saved_orig_gui $orig_gui
+
+    set failed [catch {
+        Z
+        in $prim tor 0 0 0  0 0 1  10 2
+        e $prim
+        set orig_gui 0
+        sed $prim
+        if {[status state] ne "SOL EDIT"} {
+            error "primitive selection entered [status state], not SOL EDIT"
+        }
+        if {$transform ne "e"} {
+            error "primitive pick left mouse transform set to '$transform', not edit"
+        }
+        if {[lsearch -exact [mmenu_get 1] $menu_item] < 0} {
+            error "primitive edit menu does not contain '$menu_item'"
+        }
+
+        set view_before [csg_edit_view_state]
+        press $menu_item
+        uplevel #0 $command
+        press accept
+        if {[status state] ne "VIEWING"} {
+            error "accept entered [status state], not VIEWING"
+        }
+
+        set expected_matrix [csg_matrix_scale $axis $factor]
+        csg_edit_matrix_at [attr get $prim matrix:nonuniform] $expected_matrix \
+            "$prim matrix:nonuniform"
+        csg_edit_bbox_at $expected_bbox $prim
+        csg_edit_display_bbox_at $expected_bbox
+        csg_edit_view_state_at $view_before
+        d $prim
+    } failure]
+
+    set orig_gui $saved_orig_gui
+    catch {press reject}
+    catch {Z}
+    catch {kill $prim}
+
+    if {$failed} {
+        puts "  FAIL: primitive TOR Scale [string toupper $axis] ($failure)"
+    } else {
+        puts "  PASS: primitive TOR Scale [string toupper $axis]"
+    }
+}
+
 proc csg_primitive_pick_mouse_check {} {
     global orig_gui transform
     global csg_bv_coord_half_range csg_mouse_view_size
@@ -907,6 +1065,14 @@ set csg_direct_scale [expr {1.0 + 1024.0 / $csg_bv_coord_half_range}]
 set csg_direct_rotation [csg_matrix_multiply \
     [csg_matrix_axis_rotation x 10] \
     [csg_matrix_axis_rotation y 5]]
+
+foreach test [list \
+    [list x {Scale X} {p 1024} $csg_direct_scale {-18 -12 -2 18 12 2}] \
+    [list y {Scale Y} {M 1 0 1024} $csg_direct_scale {-12 -18 -2 12 18 2}] \
+    [list z {Scale Z} {M 1 0 1024} $csg_direct_scale {-12 -12 -3 12 12 3}]] {
+    csg_tor_primitive_scale_check {*}$test
+}
+
 # Matrix move and scale interpret p values in the same normalized BV coordinate
 # range used by M.  Running both inputs proves the menu callback initializes
 # librt before either input path gets an opportunity to repair the edit flag.
@@ -927,6 +1093,13 @@ foreach test [list \
     [list {Scale Z / p} {Scale Z} 1 {{p 1024}} [csg_matrix_scale z $csg_direct_scale]] \
     [list {Rotate / p} Rotate 1 {{p 10 5 0}} $csg_direct_rotation]] {
     csg_matrix_mouse_check {*}$test
+}
+
+foreach test [list \
+    [list x {Scale X} $csg_direct_scale {-18 -12 -2 18 12 2}] \
+    [list y {Scale Y} $csg_direct_scale {-12 -18 -2 12 18 2}] \
+    [list z {Scale Z} $csg_direct_scale {-12 -12 -3 12 12 3}]] {
+    csg_tor_matrix_scale_check {*}$test
 }
 
 # Tk's default modifier-drag bindings use a 512-pixel display here.  A

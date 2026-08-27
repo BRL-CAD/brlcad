@@ -363,7 +363,7 @@ extern void mged_view_callback(struct bview *gvp, void *clientData);
 extern void button(struct mged_state *s, int bnum);
 extern void press(char *str);
 extern char *label_button(struct mged_state *s, int bnum);
-extern int not_state(struct mged_state *s, int desired, char *str);
+extern int not_state(struct mged_state *s, int desired, const char *str);
 extern int chg_state(struct mged_state *s, int from, int to, char *str);
 extern void state_err(struct mged_state *s, char *str);
 
@@ -606,7 +606,7 @@ void transform_editing_solid(
     struct rt_db_internal *is,		/* input solid */
     int freedbi);
 int replot_editing_solid(int, const char **, void *, void *);
-void sedit_accept(struct mged_state *s);
+int sedit_accept(struct mged_state *s);
 void sedit_mouse(struct mged_state *s, const vect_t mousevec);
 void sedit_reject(struct mged_state *s);
 void oedit_accept(struct mged_state *s);
