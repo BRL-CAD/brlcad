@@ -152,6 +152,10 @@ struct thread_data {
     int cpu_id;
     int affinity;
     struct parallel_info *parent;
+#if defined(_WIN32)
+    HANDLE thread_handle;
+    volatile LONG completed;
+#endif
 };
 
 
@@ -521,6 +525,7 @@ static DWORD
 parallel_interface_arg_stub(struct thread_data *user_thread_data)
 {
     parallel_interface_arg(user_thread_data);
+    InterlockedExchange(&user_thread_data->completed, TRUE);
     ExitThread(0);
     return 0; /* Extraneous */
 }
@@ -561,7 +566,9 @@ bu_parallel(void (*func)(int, void *), size_t ncpu, void *arg)
 #else
 
     struct thread_data *thread_context;
+#ifndef _WIN32
     rt_thread_t thread_tbl[MAX_PSW];
+#endif
     size_t x;
     size_t i;
 
@@ -817,6 +824,9 @@ bu_parallel(void (*func)(int, void *), size_t ncpu, void *arg)
 
 
 #  ifdef _WIN32
+    /* Avoid a busy loop without materially delaying error-path cleanup. */
+    const DWORD completion_poll_msec = 1;
+
     /* Create the Win32 threads */
     nthreadc = 0;
     for (i = 0; i < ncpu; i++) {
@@ -829,13 +839,13 @@ bu_parallel(void (*func)(int, void *), size_t ncpu, void *arg)
 	    &thread_context[i],
 	    0,
 	    NULL);
+	thread_context[i].thread_handle = thread;
 
 	if (thread == NULL) {
 	    bu_log("bu_parallel(): Error in CreateThread, Win32 error code %d.\n", GetLastError());
 	    parallel_mapping(PARALLEL_PUT, thread_context[i].cpu_id, 0);
 	} else {
-	    /* Keep successfully created handles contiguous for joining. */
-	    thread_tbl[nthreadc++] = thread;
+	    nthreadc++;
 	}
     }
 
@@ -844,21 +854,48 @@ bu_parallel(void (*func)(int, void *), size_t ncpu, void *arg)
      * limited to MAXIMUM_WAIT_OBJECTS handles, which is smaller than the
      * public MAX_PSW limit on Windows.
      */
-    for (x = 0; x < nthreadc; x++) {
-	if (WaitForSingleObject(thread_tbl[x], INFINITE) == WAIT_FAILED)
-	    bu_log("bu_parallel(): Error in WaitForSingleObject, Win32 error code %d.\n", GetLastError());
+    for (i = 0; i < ncpu; i++) {
+	struct thread_data *worker = &thread_context[i];
+	DWORD wait_result;
+
+	if (worker->thread_handle == NULL)
+	    continue;
+
+	wait_result = WaitForSingleObject(worker->thread_handle, INFINITE);
+
+	if (wait_result == WAIT_OBJECT_0)
+	    continue;
+
+	if (wait_result == WAIT_FAILED) {
+	    DWORD error_code = GetLastError();
+	    bu_log("bu_parallel(): Error in WaitForSingleObject, Win32 error code %lu.\n", (unsigned long)error_code);
+	} else {
+	    bu_log("bu_parallel(): Unexpected WaitForSingleObject result %lu.\n", (unsigned long)wait_result);
+	}
+
+	/* The native wait did not establish that this worker is finished.  The
+	 * completion flag is independent of the thread handle and is published
+	 * only after the callback and all libbu worker bookkeeping are done.
+	 */
+	while (InterlockedCompareExchange(&worker->completed, FALSE, FALSE) == FALSE)
+	    Sleep(completion_poll_msec);
     }
 
     nthreade = 0;
-    for (x = 0; x < nthreadc; x++) {
+    for (i = 0; i < ncpu; i++) {
+	struct thread_data *worker = &thread_context[i];
 	int ret;
-	if ((ret = CloseHandle(thread_tbl[x]) == 0)) {
+
+	if (worker->thread_handle == NULL)
+	    continue;
+
+	if ((ret = CloseHandle(worker->thread_handle) == 0)) {
 	    /* Thread didn't close properly if return value is zero; don't retry and potentially loop forever.  */
-	    bu_log("bu_parallel(): Error closing thread %zu of %zu, Win32 error code %d.\n", x, nthreadc, GetLastError());
+	    bu_log("bu_parallel(): Error closing thread %zu of %zu, Win32 error code %d.\n", nthreade, nthreadc, GetLastError());
 	}
 
 	nthreade++;
-	thread_tbl[x] = (rt_thread_t)-1;
+	worker->thread_handle = NULL;
     }
 #  endif /* end if Win32 threads */
 
