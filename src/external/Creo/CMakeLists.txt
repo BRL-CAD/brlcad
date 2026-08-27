@@ -328,7 +328,8 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
 
   add_library(creo-brl SHARED
     loader.c
-    frontend.cpp)
+    frontend.cpp
+    snapshot_writer.cpp)
   target_link_libraries(creo-brl ${WIN_LIBS} ${CREO_PTK_DLL_LIBS})
   set_target_properties(creo-brl PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CREO_BUNDLE_BIN_DIR}")
   add_dependencies(creo-brl creo-brl-core)
@@ -505,6 +506,8 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     conversion_snapshot.h
     part_writer.h
     profile_controls.h
+    snapshot_writer.cpp
+    snapshot_writer.h
     resources/creo-brl-msg.txt
     resources/creo_brl.res
     resources/ptc_materials.mtl

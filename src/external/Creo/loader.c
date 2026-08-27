@@ -35,6 +35,7 @@
 #include <ProUIMessage.h>
 #include <ProUtil.h>
 
+#include "conversion_snapshot.h"
 #include "frontend_api.h"
 
 #define FRONTEND_MSG_FILE "creo-brl-msg.txt"
@@ -45,6 +46,7 @@
 #define BUNDLE_MATERIAL_PATH L"text\\usascii"
 
 typedef int (__cdecl *creo_brl_core_initialize_fn_t)(void);
+typedef int (__cdecl *creo_brl_core_convert_fn_t)(const char *snapshot_path);
 typedef void (__cdecl *creo_brl_core_terminate_fn_t)(void);
 typedef void (__cdecl *creo_brl_core_load_profile_fn_t)(
     const char *profile_directory,
@@ -53,6 +55,7 @@ typedef void (__cdecl *creo_brl_core_set_frontend_api_fn_t)(const struct creo_br
 
 static HMODULE core_module = NULL;
 static creo_brl_core_initialize_fn_t core_initialize_fn = NULL;
+static creo_brl_core_convert_fn_t core_convert_fn = NULL;
 static creo_brl_core_terminate_fn_t core_terminate_fn = NULL;
 static creo_brl_core_load_profile_fn_t core_load_profile_fn = NULL;
 static creo_brl_core_set_frontend_api_fn_t core_set_frontend_api_fn = NULL;
@@ -229,6 +232,7 @@ static void
 clear_core_state(void)
 {
     core_initialize_fn = NULL;
+    core_convert_fn = NULL;
     core_terminate_fn = NULL;
     core_load_profile_fn = NULL;
     core_set_frontend_api_fn = NULL;
@@ -292,6 +296,16 @@ creo_brl_core_load_profile_shim(void)
     }
 
     core_load_profile_fn(profile_directory, material_directory);
+}
+
+
+int
+creo_brl_core_convert_shim(const char *snapshot_path)
+{
+    if (!core_convert_fn)
+        return CREO_BRL_CORE_CONVERT_OPEN_FAILED;
+
+    return core_convert_fn(snapshot_path);
 }
 
 __declspec(dllexport) int
@@ -383,6 +397,14 @@ user_initialize(void)
         return -1;
     }
     core_initialize_fn = (creo_brl_core_initialize_fn_t)proc;
+
+    proc = GetProcAddress(core_module, "creo_brl_core_convert");
+    if (!proc) {
+        show_bootstrap_error(L"GetProcAddress(creo_brl_core_convert) failed.");
+        unload_core();
+        return -1;
+    }
+    core_convert_fn = (creo_brl_core_convert_fn_t)proc;
 
     proc = GetProcAddress(core_module, "creo_brl_core_terminate");
     if (!proc) {
