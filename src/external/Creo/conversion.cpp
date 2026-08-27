@@ -21,13 +21,23 @@
 #include <limits.h>
 #include <stdio.h>
 #include <string.h>
+#include <string>
+#include <vector>
 
 #ifdef _WIN32
 #  include <windows.h>
-#  include <vector>
 #endif
 
+#include "bu/file.h"
 #include "conversion_snapshot.h"
+#include "part_writer.h"
+#include "wdb.h"
+
+
+static const char CREO_BRL_CORE_SOLID_SUFFIX[] = ".s";
+static const char CREO_BRL_CORE_REGION_SUFFIX[] = ".r";
+static const char CREO_BRL_CORE_UNKNOWN_NAME[] = "unknown";
+static const char CREO_BRL_CORE_NAME_KEEP_CHARACTERS[] = "+-.=_";
 
 
 static_assert(sizeof(struct creo_brl_snapshot_header) == CREO_BRL_SNAPSHOT_HEADER_V1_SIZE,
@@ -411,7 +421,8 @@ snapshot_part_is_valid(FILE *snapshot_file,
 
 
 static int
-snapshot_is_valid(FILE *snapshot_file)
+snapshot_is_valid(FILE *snapshot_file,
+                  struct creo_brl_snapshot_single_part *single_part_out)
 {
     struct creo_brl_snapshot_header header = {};
     struct creo_brl_snapshot_single_part single_part = {};
@@ -440,7 +451,264 @@ snapshot_is_valid(FILE *snapshot_file)
         !snapshot_part_is_valid(snapshot_file, &single_part.part, file_size, data_offset))
         return CREO_BRL_CORE_CONVERT_INVALID_SNAPSHOT;
 
+    if (single_part_out)
+        *single_part_out = single_part;
+
     return CREO_BRL_CORE_CONVERT_SUCCESS;
+}
+
+
+static int
+snapshot_count_as_size(uint64_t count, size_t multiplier, size_t *size)
+{
+    if (multiplier == 0 || count > SIZE_MAX / multiplier)
+        return 0;
+
+    *size = (size_t)count * multiplier;
+    return 1;
+}
+
+
+static int
+snapshot_read_text(FILE *snapshot_file,
+                   const struct creo_brl_snapshot_range *range,
+                   std::string *text)
+{
+    if (range->size > SIZE_MAX)
+        return 0;
+
+    text->resize((size_t)range->size);
+    return (range->size == 0 ||
+            snapshot_read_at(snapshot_file, range->offset, &(*text)[0], text->size())) &&
+           text->find('\0') == std::string::npos;
+}
+
+
+static int
+snapshot_read_vectors(FILE *snapshot_file,
+                      const struct creo_brl_snapshot_range *range,
+                      uint64_t count,
+                      std::vector<fastf_t> *vectors)
+{
+    size_t coordinate_count = 0;
+    uint64_t index = 0;
+
+    if (!snapshot_count_as_size(count, CREO_BRL_SNAPSHOT_COORDINATE_COUNT, &coordinate_count) ||
+        coordinate_count > vectors->max_size() ||
+        !snapshot_seek(snapshot_file, range->offset))
+        return 0;
+
+    vectors->resize(coordinate_count);
+    for (index = 0; index < count; ++index) {
+        struct creo_brl_snapshot_vector vector = {};
+        size_t coordinate = 0;
+
+        if (!snapshot_read(snapshot_file, &vector, sizeof(vector)) ||
+            !snapshot_vector_is_finite(&vector))
+            return 0;
+
+        for (coordinate = 0; coordinate < CREO_BRL_SNAPSHOT_COORDINATE_COUNT; ++coordinate)
+            (*vectors)[(size_t)index * CREO_BRL_SNAPSHOT_COORDINATE_COUNT + coordinate] =
+                (fastf_t)vector.coordinates[coordinate];
+    }
+
+    return 1;
+}
+
+
+static int
+snapshot_read_triangles(FILE *snapshot_file,
+                        const struct creo_brl_snapshot_range *range,
+                        uint64_t count,
+                        uint64_t vertex_count,
+                        std::vector<int> *triangles)
+{
+    size_t index_count = 0;
+    uint64_t index = 0;
+
+    if (!snapshot_count_as_size(count, CREO_BRL_SNAPSHOT_TRIANGLE_VERTEX_COUNT, &index_count) ||
+        index_count > triangles->max_size() ||
+        !snapshot_seek(snapshot_file, range->offset))
+        return 0;
+
+    triangles->resize(index_count);
+    for (index = 0; index < count; ++index) {
+        struct creo_brl_snapshot_triangle triangle = {};
+        size_t vertex = 0;
+
+        if (!snapshot_read(snapshot_file, &triangle, sizeof(triangle)))
+            return 0;
+
+        for (vertex = 0; vertex < CREO_BRL_SNAPSHOT_TRIANGLE_VERTEX_COUNT; ++vertex) {
+            if ((uint64_t)triangle.vertices[vertex] >= vertex_count ||
+                triangle.vertices[vertex] > INT_MAX)
+                return 0;
+            (*triangles)[(size_t)index * CREO_BRL_SNAPSHOT_TRIANGLE_VERTEX_COUNT + vertex] =
+                (int)triangle.vertices[vertex];
+        }
+    }
+
+    return 1;
+}
+
+
+static int
+snapshot_read_indices(FILE *snapshot_file,
+                      const struct creo_brl_snapshot_range *range,
+                      uint64_t count,
+                      uint64_t maximum,
+                      std::vector<int> *indices)
+{
+    size_t index_count = 0;
+    uint64_t index = 0;
+
+    if (!snapshot_count_as_size(count, 1, &index_count) ||
+        index_count > indices->max_size() ||
+        !snapshot_seek(snapshot_file, range->offset))
+        return 0;
+
+    indices->resize(index_count);
+    for (index = 0; index < count; ++index) {
+        uint32_t value = 0;
+
+        if (!snapshot_read(snapshot_file, &value, sizeof(value)) ||
+            (uint64_t)value >= maximum || value > INT_MAX)
+            return 0;
+        (*indices)[(size_t)index] = (int)value;
+    }
+
+    return 1;
+}
+
+
+static std::string
+snapshot_name_root(const std::string& model_name)
+{
+    std::string name;
+    size_t index = 0;
+
+    name.reserve(model_name.size());
+    for (index = 0; index < model_name.size(); ++index) {
+        const unsigned char character = (unsigned char)model_name[index];
+        const int is_uppercase = character >= 'A' && character <= 'Z';
+        const int is_lowercase = character >= 'a' && character <= 'z';
+        const int is_digit = character >= '0' && character <= '9';
+
+        if (is_uppercase)
+            name.push_back((char)(character - 'A' + 'a'));
+        else if (is_lowercase || is_digit ||
+                 strchr(CREO_BRL_CORE_NAME_KEEP_CHARACTERS, character))
+            name.push_back((char)character);
+        else if (name.empty() || name[name.size() - 1] != '_')
+            name.push_back('_');
+    }
+
+    if (name.empty())
+        name.assign(CREO_BRL_CORE_UNKNOWN_NAME);
+
+    return name;
+}
+
+
+static int
+snapshot_object_names(struct db_i *database,
+                      const std::string& name_root,
+                      std::string *solid_name,
+                      std::string *region_name)
+{
+    uint32_t suffix = 0;
+
+    for (;;) {
+        std::string object_root = name_root;
+
+        if (suffix > 0)
+            object_root += "_" + std::to_string(suffix);
+
+        *solid_name = object_root + CREO_BRL_CORE_SOLID_SUFFIX;
+        *region_name = object_root + CREO_BRL_CORE_REGION_SUFFIX;
+        if (db_lookup(database, solid_name->c_str(), LOOKUP_QUIET) == RT_DIR_NULL &&
+            db_lookup(database, region_name->c_str(), LOOKUP_QUIET) == RT_DIR_NULL)
+            return 1;
+
+        if (suffix == UINT32_MAX)
+            return 0;
+        ++suffix;
+    }
+}
+
+
+static int
+snapshot_open_output(const char *output_path, struct db_i **database)
+{
+    if (bu_file_exists(output_path, NULL))
+        *database = db_open(output_path, DB_OPEN_READWRITE);
+    else
+        *database = db_create(output_path, BRLCAD_DB_FORMAT_LATEST);
+
+    return *database != DBI_NULL;
+}
+
+
+static int
+snapshot_write_mesh(FILE *snapshot_file,
+                    const struct creo_brl_snapshot_single_part *single_part)
+{
+    const struct creo_brl_snapshot_part *part = &single_part->part;
+    const int has_normals = (part->flags & CREO_BRL_SNAPSHOT_PART_HAS_NORMALS) != 0;
+    std::string output_path;
+    std::string model_name;
+    std::string solid_name;
+    std::string region_name;
+    std::vector<fastf_t> vertices;
+    std::vector<int> triangles;
+    std::vector<fastf_t> normals;
+    std::vector<int> normal_indices;
+    struct db_i *database = DBI_NULL;
+    struct rt_wdb *writer = RT_WDB_NULL;
+    struct bu_list members;
+    int result = CREO_BRL_CORE_CONVERT_OUTPUT_FAILED;
+
+    try {
+        if (!snapshot_read_text(snapshot_file, &single_part->settings.output_path, &output_path) ||
+            !snapshot_read_text(snapshot_file, &part->model_name, &model_name) ||
+            !snapshot_read_vectors(snapshot_file, &part->vertices, part->vertex_count, &vertices) ||
+            !snapshot_read_triangles(snapshot_file, &part->triangles, part->triangle_count,
+                                     part->vertex_count, &triangles) ||
+            (has_normals &&
+             (!snapshot_read_vectors(snapshot_file, &part->normals, part->normal_count, &normals) ||
+              !snapshot_read_indices(snapshot_file, &part->normal_indices,
+                                     part->normal_index_count, part->normal_count,
+                                     &normal_indices)))) {
+            result = CREO_BRL_CORE_CONVERT_INVALID_SNAPSHOT;
+        } else if (!snapshot_open_output(output_path.c_str(), &database) ||
+                   !(writer = wdb_dbopen(database, RT_WDB_TYPE_DB_DISK)) ||
+                   !snapshot_object_names(database, snapshot_name_root(model_name),
+                                          &solid_name, &region_name) ||
+                   creo_brl_write_bot(writer, solid_name.c_str(), has_normals,
+                                      (size_t)part->vertex_count, (size_t)part->triangle_count,
+                                      vertices.data(), triangles.data(),
+                                      has_normals ? (size_t)part->normal_count : 0,
+                                      has_normals ? normals.data() : NULL,
+                                      has_normals ? normal_indices.data() : NULL) != 0) {
+            result = CREO_BRL_CORE_CONVERT_OUTPUT_FAILED;
+        } else {
+            BU_LIST_INIT(&members);
+            if (mk_addmember(solid_name.c_str(), &members, NULL, WMOP_UNION) == WMEMBER_NULL) {
+                mk_freemembers(&members);
+            } else if (mk_comb(writer, region_name.c_str(), &members, 1, NULL, NULL, NULL,
+                               (int)part->region_id, 0, 0, 0, 0, 0, 0) == 0) {
+                result = CREO_BRL_CORE_CONVERT_SUCCESS;
+            }
+        }
+    } catch (...) {
+        /* The exported C ABI cannot propagate C++ exceptions across the DLL boundary. */
+        result = CREO_BRL_CORE_CONVERT_OUTPUT_FAILED;
+    }
+
+    if (database != DBI_NULL)
+        db_close(database);
+
+    return result;
 }
 
 
@@ -448,6 +716,7 @@ extern "C" __declspec(dllexport) int
 creo_brl_core_convert(const char *snapshot_path)
 {
     FILE *snapshot_file = NULL;
+    struct creo_brl_snapshot_single_part single_part = {};
     int result = CREO_BRL_CORE_CONVERT_INVALID_SNAPSHOT;
 
     if (!snapshot_path || !snapshot_path[0])
@@ -457,9 +726,14 @@ creo_brl_core_convert(const char *snapshot_path)
     if (!snapshot_file)
         return CREO_BRL_CORE_CONVERT_OPEN_FAILED;
 
-    result = snapshot_is_valid(snapshot_file);
+    result = snapshot_is_valid(snapshot_file, &single_part);
+    if (result == CREO_BRL_CORE_CONVERT_SUCCESS) {
+        if ((single_part.part.flags & CREO_BRL_SNAPSHOT_PART_HAS_MESH) == 0)
+            result = CREO_BRL_CORE_CONVERT_NOT_IMPLEMENTED;
+        else
+            result = snapshot_write_mesh(snapshot_file, &single_part);
+    }
     fclose(snapshot_file);
 
-    return result == CREO_BRL_CORE_CONVERT_SUCCESS ?
-        CREO_BRL_CORE_CONVERT_NOT_IMPLEMENTED : result;
+    return result;
 }
