@@ -31,6 +31,7 @@ TK_WISH                = full path to the wish executable
 TCL_STUB_LIBRARY       = path to Tcl stub library
 TK_STUB_LIBRARY        = path to Tk stub library
 TTK_STUB_LIBRARY       = path to ttk stub library
+TK_X11_PROVIDER        = SYSTEM, XMIN, or UNKNOWN for an X11 Tk
 
 #]=======================================================================]
 
@@ -465,6 +466,42 @@ if(TCL_ENABLE_TK)
     )
   endif()
 
+  # tkConfig.sh is the authoritative record of the platform libraries used to
+  # build Tk.  In addition to helping with headless window-system detection,
+  # retain the concrete X11 provider so callers cannot accidentally combine a
+  # Tk built for Xmin with host Xlib (or vice versa).
+  set(TK_X11_PROVIDER "UNKNOWN")
+  set(_tk_config_windowing_system "")
+  if(TK_LIBRARY)
+    get_filename_component(_tk_lib_dir "${TK_LIBRARY}" DIRECTORY)
+    foreach(_tkconfig IN ITEMS
+        "${_tk_lib_dir}/tkConfig.sh"
+        "${_tk_lib_dir}/../lib/tkConfig.sh")
+      if(NOT EXISTS "${_tkconfig}")
+        continue()
+      endif()
+      file(STRINGS "${_tkconfig}" _tkconfig_lines REGEX "^TK_XLIBSW=|^TK_LIBS=")
+      foreach(_tkline IN LISTS _tkconfig_lines)
+        if("${_tkline}" MATCHES "-lXminClient")
+          set(TK_X11_PROVIDER "XMIN")
+          set(_tk_config_windowing_system "x11")
+        elseif("${_tkline}" MATCHES "-lX11")
+          if(TK_X11_PROVIDER STREQUAL "UNKNOWN")
+            set(TK_X11_PROVIDER "SYSTEM")
+          endif()
+          set(_tk_config_windowing_system "x11")
+        elseif("${_tkline}" MATCHES "-framework Cocoa|-framework AppKit")
+          set(_tk_config_windowing_system "aqua")
+        endif()
+      endforeach()
+      unset(_tkconfig_lines)
+      unset(_tkline)
+      break()
+    endforeach()
+    unset(_tk_lib_dir)
+    unset(_tkconfig)
+  endif()
+
   set(TK_WINDOWING_SYSTEM "")
   set(TK_WINDOWING_SYSTEM_NOTFOUND "wm-NOTFOUND")
   if(TK_WISH AND NOT TARGET "${TK_WISH}")
@@ -503,36 +540,10 @@ if(TCL_ENABLE_TK)
      AND ("${TK_WINDOWING_SYSTEM}" STREQUAL "${TK_WINDOWING_SYSTEM_NOTFOUND}"
           OR "${TK_WINDOWING_SYSTEM}" STREQUAL ""))
 
-    # Fallback 1: parse tkConfig.sh - Tk always installs this alongside the library.
-    # TK_XLIBSW and TK_LIBS record the X/platform libraries the build was linked against.
-    get_filename_component(_tk_lib_dir "${TK_LIBRARY}" DIRECTORY)
-    foreach(_tkconfig IN ITEMS
-        "${_tk_lib_dir}/tkConfig.sh"
-        "${_tk_lib_dir}/../lib/tkConfig.sh")
-      if(NOT EXISTS "${_tkconfig}")
-        continue()
-      endif()
-      file(STRINGS "${_tkconfig}" _tkconfig_lines REGEX "^TK_XLIBSW=|^TK_LIBS=")
-      foreach(_tkline IN LISTS _tkconfig_lines)
-        if("${_tkline}" MATCHES "-lX11")
-          set(TK_WINDOWING_SYSTEM "x11")
-        elseif("${_tkline}" MATCHES "-framework Cocoa|-framework AppKit")
-          set(TK_WINDOWING_SYSTEM "aqua")
-        endif()
-        if(NOT "${TK_WINDOWING_SYSTEM}" STREQUAL "${TK_WINDOWING_SYSTEM_NOTFOUND}"
-           AND NOT "${TK_WINDOWING_SYSTEM}" STREQUAL "")
-          break()
-        endif()
-      endforeach()
-      unset(_tkconfig_lines)
-      unset(_tkline)
-      if(NOT "${TK_WINDOWING_SYSTEM}" STREQUAL "${TK_WINDOWING_SYSTEM_NOTFOUND}"
-         AND NOT "${TK_WINDOWING_SYSTEM}" STREQUAL "")
-        break()
-      endif()
-    endforeach()
-    unset(_tk_lib_dir)
-    unset(_tkconfig)
+    # Fallback 1: use the platform libraries recorded by tkConfig.sh.
+    if(NOT "${_tk_config_windowing_system}" STREQUAL "")
+      set(TK_WINDOWING_SYSTEM "${_tk_config_windowing_system}")
+    endif()
 
     # Fallback 2: inspect the Tk shared library binary to determine the windowing
     # system.  The tool and technique must vary by platform because the binary
@@ -603,6 +614,19 @@ if(TCL_ENABLE_TK)
       endif()
     endif()
 
+  endif()
+
+  unset(_tk_config_windowing_system)
+
+  if(TK_LIBRARY AND "${TK_WINDOWING_SYSTEM}" STREQUAL "x11"
+     AND DEFINED BRLCAD_X11_PROVIDER_RESOLVED)
+    if(BRLCAD_X11_PROVIDER_RESOLVED STREQUAL "XMIN"
+       AND NOT TK_X11_PROVIDER STREQUAL "XMIN")
+      message(FATAL_ERROR "BRLCAD_X11_PROVIDER=XMIN requires a Tk built with --with-xmin; detected Tk provider: ${TK_X11_PROVIDER}")
+    elseif(BRLCAD_X11_PROVIDER_RESOLVED STREQUAL "SYSTEM"
+           AND TK_X11_PROVIDER STREQUAL "XMIN")
+      message(FATAL_ERROR "System X11 was selected, but the detected Tk library was built for Xmin")
+    endif()
   endif()
 
   # IFF we have TCL_TK_SYSTEM_GRAPHICS set and have a system TK_WISH, check that the

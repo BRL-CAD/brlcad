@@ -469,6 +469,19 @@ function(brlcad_ext_setup)
     -DUSE_APPLESEED=${BEXT_USE_APPLESEED} -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
     -DCMAKE_INSTALL_PREFIX=${BRLCAD_EXT_INSTALL_DIR}
     )
+
+  # Preserve optional Tk patch/configure lists when BRL-CAD is managing bext.
+  # Escaping list separators keeps each -D assignment a single child-CMake
+  # argument while still reconstructing the original list in bext's cache.
+  foreach(_bext_tk_var TK_EXTRA_PATCHES TK_CONFIGURE_ARGS)
+    if(DEFINED ${_bext_tk_var} AND NOT "${${_bext_tk_var}}" STREQUAL "")
+      string(REPLACE ";" "\\;" _bext_tk_value "${${_bext_tk_var}}")
+      list(APPEND CMAKE_CMD_ARGS "-D${_bext_tk_var}:STRING=${_bext_tk_value}")
+    endif()
+  endforeach()
+  unset(_bext_tk_value)
+  unset(_bext_tk_var)
+
   if(BEXT_ENABLE_ALL)
     # Some bext projects cache empty ENABLE_<pkg> entries, which prevents
     # bext's ENABLE_ALL checks from forcing these dependencies on.

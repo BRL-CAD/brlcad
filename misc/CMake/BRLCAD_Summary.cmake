@@ -359,6 +359,7 @@ function(BRLCAD_Summary)
 
   # Build options
   set(BRLCAD_ENABLE_X11_LABEL "X11 support (optional) ")
+  set(BRLCAD_X11_PROVIDER_RESOLVED_LABEL "X11 provider ")
   set(BRLCAD_ENABLE_OPENGL_LABEL "OpenGL support (optional) ")
   set(BRLCAD_ENABLE_QT_LABEL "Qt support (optional) ")
   set(BRLCAD_ENABLE_RUNTIME_DEBUG_LABEL "Run-time debuggability (optional) ")
@@ -398,6 +399,10 @@ function(BRLCAD_Summary)
     BRLCAD_INSTALL_EXAMPLE_GEOMETRY
     BRLCAD_EXTRADOCS_BUILD
   )
+
+  if(BRLCAD_ENABLE_X11)
+    list(APPEND OTHER_REPORT_ITEMS BRLCAD_X11_PROVIDER_RESOLVED)
+  endif()
 
   if(BRLCAD_ENABLE_ADDRESS_SANITIZER OR
      BRLCAD_ENABLE_UNDEFINED_SANITIZER OR

@@ -108,13 +108,34 @@ mark_as_advanced(BRLCAD_ENABLE_AQUA)
 # Install example BRL-CAD Geometry Files
 option(BRLCAD_INSTALL_EXAMPLE_GEOMETRY "Install the example BRL-CAD geometry files." ON)
 
+# Select the implementation supplying X11 services.  AUTO intentionally
+# retains the historical system-X11 behavior; Xmin must be requested
+# explicitly so merely installing its SDK cannot change an existing build.
+set(BRLCAD_X11_PROVIDER "AUTO" CACHE STRING "X11 provider (AUTO, SYSTEM, or XMIN)")
+set_property(CACHE BRLCAD_X11_PROVIDER PROPERTY STRINGS AUTO SYSTEM XMIN)
+string(TOUPPER "${BRLCAD_X11_PROVIDER}" BRLCAD_X11_PROVIDER)
+set(BRLCAD_X11_PROVIDER "${BRLCAD_X11_PROVIDER}" CACHE STRING "X11 provider (AUTO, SYSTEM, or XMIN)" FORCE)
+if(NOT BRLCAD_X11_PROVIDER MATCHES "^(AUTO|SYSTEM|XMIN)$")
+  message(FATAL_ERROR "BRLCAD_X11_PROVIDER must be AUTO, SYSTEM, or XMIN")
+endif()
+
+if(BRLCAD_X11_PROVIDER STREQUAL "XMIN")
+  set(BRLCAD_X11_PROVIDER_RESOLVED "XMIN")
+else()
+  set(BRLCAD_X11_PROVIDER_RESOLVED "SYSTEM")
+endif()
+
 # test for X11 on all platforms since we don't know when/where we'll find it, unless
 # we've indicated we *don't* want an X11 build
 if(NOT BRLCAD_ENABLE_AQUA AND NOT BRLCAD_ENABLE_MINIMAL)
-  find_package(X11)
-  if(X11_Xrender_FOUND)
-    config_h_append(BRLCAD "#define HAVE_XRENDER 1\n")
-  endif(X11_Xrender_FOUND)
+  if(BRLCAD_X11_PROVIDER_RESOLVED STREQUAL "XMIN")
+    find_package(Xmin CONFIG QUIET)
+  else()
+    find_package(X11)
+    if(X11_Xrender_FOUND)
+      config_h_append(BRLCAD "#define HAVE_XRENDER 1\n")
+    endif(X11_Xrender_FOUND)
+  endif()
 endif(NOT BRLCAD_ENABLE_AQUA AND NOT BRLCAD_ENABLE_MINIMAL)
 
 # make sure Xi is included in the list of X11 libs
@@ -131,15 +152,38 @@ elseif(BRLCAD_ENABLE_AQUA)
   # aqua implies no X11
   option(BRLCAD_ENABLE_X11 "Use X11." OFF)
 else(WIN32)
-  # make everywhere else depend on whether we found a suitable X11
-  # X11_Xext_LIB AND X11_Xi_LIB AND
-  if(X11_FOUND AND NOT BRLCAD_ENABLE_MINIMAL)
+  # Make everywhere else depend on whether the selected provider is available.
+  if(BRLCAD_X11_PROVIDER_RESOLVED STREQUAL "XMIN")
+    set(BRLCAD_X11_AVAILABLE FALSE)
+    if(TARGET Xmin::ToolkitX11)
+      set(BRLCAD_X11_AVAILABLE TRUE)
+    endif()
+  else()
+    set(BRLCAD_X11_AVAILABLE ${X11_FOUND})
+  endif()
+  if(BRLCAD_X11_AVAILABLE AND NOT BRLCAD_ENABLE_MINIMAL)
     option(BRLCAD_ENABLE_X11 "Use X11." ON)
-  else(X11_FOUND AND NOT BRLCAD_ENABLE_MINIMAL)
+  else()
     option(BRLCAD_ENABLE_X11 "Use X11." OFF)
-  endif(X11_FOUND AND NOT BRLCAD_ENABLE_MINIMAL)
+  endif()
 endif(WIN32)
 mark_as_advanced(BRLCAD_ENABLE_X11)
+
+if(BRLCAD_ENABLE_X11)
+  if(BRLCAD_X11_PROVIDER_RESOLVED STREQUAL "XMIN")
+    if(NOT TARGET Xmin::ToolkitX11)
+      message(FATAL_ERROR "BRLCAD_X11_PROVIDER=XMIN requires an installed Xmin SDK; set Xmin_ROOT to its prefix")
+    endif()
+    get_target_property(BRLCAD_X11_INCLUDE_DIRS Xmin::ToolkitX11 INTERFACE_INCLUDE_DIRECTORIES)
+    set(BRLCAD_X11_LIBRARIES Xmin::ToolkitX11)
+  else()
+    if(NOT X11_FOUND)
+      message(FATAL_ERROR "BRLCAD_X11_PROVIDER=${BRLCAD_X11_PROVIDER} requires system X11")
+    endif()
+    set(BRLCAD_X11_INCLUDE_DIRS ${X11_INCLUDE_DIR})
+    set(BRLCAD_X11_LIBRARIES ${X11_LIBRARIES})
+  endif()
+endif()
 
 # if X11 is enabled, make sure aqua is off
 if(BRLCAD_ENABLE_X11)

@@ -1,6 +1,6 @@
 set(X_SRCS dm-X.c color.c if_X24.c)
 
-if(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK)
+if(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK AND BRLCAD_X11_PROVIDER_RESOLVED STREQUAL "SYSTEM")
 
   find_package(X11)
 
@@ -46,7 +46,7 @@ if(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK)
 
     plugin_setup(dm-X dm)
   endif(TCL_FOUND AND TK_FOUND)
-endif(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK)
+endif()
 
 cmakefiles(
   CMakeLists.txt
