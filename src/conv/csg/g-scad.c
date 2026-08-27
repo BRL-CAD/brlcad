@@ -469,7 +469,7 @@ emit_tessellated(const char *name, struct rt_db_internal *UNUSED(ip))
 	bu_log("WARNING: cannot re-read %s for tessellation\n", name);
 	return;
     }
-    if (rt_db_get_internal(&tess_intern, dp, dbip, NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&tess_intern, dp, dbip, NULL) < 0) {
 	bu_log("WARNING: cannot re-read %s for tessellation\n", name);
 	return;
     }
@@ -588,7 +588,7 @@ emit_object(const char *name)
 	return;
     }
 
-    if (rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dp, dbip, NULL) < 0) {
 	bu_log("WARNING: failed to read '%s'\n", name);
 	return;
     }
@@ -814,7 +814,7 @@ emit_object(const char *name)
 			emit_tessellated(name, &intern);
 			break;
 		    }
-		    if (rt_db_get_internal(&skt_intern, skt_dp, dbip, NULL, &rt_uniresource) < 0) {
+		    if (rt_db_get_internal(&skt_intern, skt_dp, dbip, NULL) < 0) {
 			bu_log("WARNING: failed to read sketch '%s'\n",
 			       bu_vls_cstr(&rev->sketch_name));
 			emit_tessellated(name, &intern);
@@ -993,7 +993,7 @@ emit_object(const char *name)
 			emit_tessellated(name, &intern);
 			break;
 		    }
-		    if (rt_db_get_internal(&skt_intern, skt_dp, dbip, NULL, &rt_uniresource) < 0) {
+		    if (rt_db_get_internal(&skt_intern, skt_dp, dbip, NULL) < 0) {
 			bu_log("WARNING: failed to read sketch '%s'\n", extr->sketch_name);
 			emit_tessellated(name, &intern);
 			break;
