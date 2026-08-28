@@ -1074,15 +1074,20 @@ BG_EXPORT extern int bg_between(double left,
 				const struct bn_tol *tol);
 
 /**
+ * @deprecated Use bg_isect_tri_line.
+ *
+ * Test whether the infinite line pt + t * dir intersects a triangle.  The
+ * output point is the final argument for historical compatibility.
+ *
  * @return 0	No intersection
  * @return 1	Intersection, 'inter' has intersect point.
  */
-BG_EXPORT extern int bg_does_ray_isect_tri(const point_t pt,
-					   const vect_t dir,
-					   const point_t V,
-					   const point_t A,
-					   const point_t B,
-					   point_t inter);
+DEPRECATED BG_EXPORT extern int bg_does_ray_isect_tri(const point_t pt,
+							 const vect_t dir,
+							 const point_t V,
+							 const point_t A,
+							 const point_t B,
+							 point_t inter);
 
 /**
  *@brief

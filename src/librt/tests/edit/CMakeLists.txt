@@ -25,6 +25,7 @@ brlcad_addexec(rt_edit_test_ebm ebm.cpp "librt" TEST)
 brlcad_addexec(rt_edit_test_sph sph.cpp "librt" TEST)
 brlcad_addexec(rt_edit_test_arb8 arb8.cpp "librt" TEST)
 brlcad_addexec(rt_edit_test_bot bot.cpp "librt" TEST)
+brlcad_add_test(NAME rt_edit_test_bot COMMAND rt_edit_test_bot)
 
 brlcad_addexec(rt_edit_test_sketch sketch.cpp "librt" TEST)
 brlcad_addexec(rt_edit_test_bspline bspline.cpp "librt" TEST)

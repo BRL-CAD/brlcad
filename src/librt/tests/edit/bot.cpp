@@ -56,6 +56,7 @@
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
+#include "bu/vls.h"
 #include "raytrace.h"
 #include "rt/rt_ecmds.h"
 #include "rt/primitives/bot.h"
@@ -79,6 +80,27 @@
 #define ECMD_BOT_FSPLIT		30075
 #define ECMD_BOT_VERTEX_FUSE	30076
 #define ECMD_BOT_FACE_FUSE	30077
+
+
+struct bot_pick_capture {
+    int calls;
+    struct bu_vls candidates;
+};
+
+
+static int
+capture_bot_pick(int UNUSED(argc), const char **UNUSED(argv), void *data, void *context)
+{
+    struct bot_pick_capture *capture = (struct bot_pick_capture *)data;
+    struct rt_edit *edit = (struct rt_edit *)context;
+
+    if (!capture || !edit || !edit->u_ptr)
+	return BRLCAD_ERROR;
+
+    capture->calls++;
+    bu_vls_strcpy(&capture->candidates, bu_vls_cstr((struct bu_vls *)edit->u_ptr));
+    return BRLCAD_OK;
+}
 
 
 struct directory *
@@ -646,7 +668,52 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
 	bu_log("get_params(MODE) SUCCESS: mode=%g\n", vals[0]);
     }
 
-    bu_log("All BOT descriptor tests PASSED\n");
+    /* ================================================================
+     * ECMD_BOT_PICKT (mouse path): list triangles on both line halves
+     * ================================================================*/
+    {
+	struct bot_pick_capture capture = {0, BU_VLS_INIT_ZERO};
+	bot_reset(s, bot, b);
+
+	bot->num_vertices = 6;
+	bot->vertices = (fastf_t *)bu_realloc(bot->vertices,
+		6 * 3 * sizeof(fastf_t), "bot mouse picker vertices");
+	VSET(&bot->vertices[0], 0, 0, -1);
+	VSET(&bot->vertices[3], 1, 0, -1);
+	VSET(&bot->vertices[6], 0, 1, -1);
+	VSET(&bot->vertices[9], 0, 0, 1);
+	VSET(&bot->vertices[12], 1, 0, 1);
+	VSET(&bot->vertices[15], 0, 1, 1);
+
+	bot->num_faces = 2;
+	bot->faces = (int *)bu_realloc(bot->faces,
+		2 * 3 * sizeof(int), "bot mouse picker faces");
+	bot->faces[0] = 0; bot->faces[1] = 1; bot->faces[2] = 2;
+	bot->faces[3] = 3; bot->faces[4] = 4; bot->faces[5] = 5;
+
+	MAT_IDN(v->gv_view2model);
+	MAT_IDN(v->gv_model2view);
+	if (rt_edit_map_clbk_set(s->m, ECMD_BOT_PICKT, BU_CLBK_DURING,
+			 capture_bot_pick, &capture) != BRLCAD_OK)
+	    bu_exit(1, "ERROR: Unable to register BOT pick callback\n");
+
+	EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_BOT_PICKT);
+	VSET(mousevec, 0.25, 0.25, 0.0);
+	if ((*EDOBJ[dp->d_minor_type].ft_edit_xy)(s, mousevec) != BRLCAD_OK)
+	    bu_exit(1, "ERROR: ECMD_BOT_PICKT(mouse): edit failed\n");
+
+	if (capture.calls != 1 ||
+	    !strstr(bu_vls_cstr(&capture.candidates), "0 1 2") ||
+	    !strstr(bu_vls_cstr(&capture.candidates), "3 4 5")) {
+	    bu_exit(1, "ERROR: ECMD_BOT_PICKT(mouse): expected both triangles, got '%s'\n",
+		    bu_vls_cstr(&capture.candidates));
+	}
+	bu_log("ECMD_BOT_PICKT(mouse) SUCCESS: %s\n",
+	       bu_vls_cstr(&capture.candidates));
+	bu_vls_free(&capture.candidates);
+    }
+
+    bu_log("All BOT tests PASSED\n");
 
     rt_edit_destroy(s);
     db_close(dbip);

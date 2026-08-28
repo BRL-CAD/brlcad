@@ -1048,7 +1048,7 @@ ecmd_bot_pickt(struct rt_edit *s, const vect_t mousevec)
 	VMOVE(pt2, &bot->vertices[v2*3]);
 	VMOVE(pt3, &bot->vertices[v3*3]);
 
-	if (bg_does_ray_isect_tri(start_pt, dir, pt1, pt2, pt3, tmp)) {
+	if (bg_isect_tri_line(&tmp, start_pt, dir, pt1, pt2, pt3)) {
 	    hits++;
 	    bu_vls_printf(&vls, " { %d %d %d }", v1, v2, v3);
 	}

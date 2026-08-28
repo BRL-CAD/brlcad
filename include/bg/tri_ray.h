@@ -23,16 +23,7 @@
 /** @addtogroup bg_tri_ray */
 /** @{ */
 
-/**
- * @brief
- * Möller & Trumbore's triangle/ray intersection test
- *
- * From the article
- *
- * "Fast, Minimal Storage Ray-Triangle Intersection",
- * Journal of Graphics Tools, 2(1):21-28, 1997
- *
- */
+/** @brief Triangle ray and line intersection tests. */
 
 #ifndef BG_TRI_RAY_H
 #define BG_TRI_RAY_H
@@ -43,6 +34,25 @@
 
 __BEGIN_DECLS
 
+/**
+ * @brief Test whether an infinite line intersects a triangle.
+ *
+ * The line is orig + t * dir for all real t.  The direction must be nonzero.
+ * If isect is non-NULL, it is written only when an intersection is found.
+ */
+BG_EXPORT extern int bg_isect_tri_line(point_t *isect,
+				       const point_t orig,
+				       const vect_t dir,
+				       const point_t vert0,
+				       const point_t vert1,
+				       const point_t vert2);
+
+/**
+ * @brief Test whether a forward ray intersects a triangle.
+ *
+ * The ray is orig + t * dir for t >= 0.  The direction must be nonzero.
+ * If isect is non-NULL, it is written only when an intersection is found.
+ */
 BG_EXPORT extern int bg_isect_tri_ray(const point_t orig,
 				      const point_t dir,
 				      const point_t vert0,

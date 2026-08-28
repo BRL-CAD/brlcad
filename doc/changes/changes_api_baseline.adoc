@@ -195,7 +195,7 @@ include/bg/plane.h: BG_EXPORT extern double bg_angle_measure(vect_t vec,
 include/bg/plane.h: BG_EXPORT extern double bg_dist_pnt3_along_line3(const point_t p,
 include/bg/plane.h: BG_EXPORT extern double bg_dist_pnt2_along_line2(const point_t p,
 include/bg/plane.h: BG_EXPORT extern int bg_between(double left,
-include/bg/plane.h: BG_EXPORT extern int bg_does_ray_isect_tri(const point_t pt,
+include/bg/plane.h: DEPRECATED BG_EXPORT extern int bg_does_ray_isect_tri(const point_t pt,
 include/bg/plane.h: BG_EXPORT extern int bg_hlf_class(const plane_t half_eqn,
 include/bg/plane.h: #define BG_CLASSIFY_UNIMPLEMENTED 0x0000
 include/bg/plane.h: #define BG_CLASSIFY_INSIDE        0x0001
@@ -260,6 +260,7 @@ include/bg/spsr.h: #define BG_3D_SPSR_DEFAULT_LINEARFIT         0
 include/bg/spsr.h: #define BG_3D_SPSR_DEFAULT_EXACT             1
 include/bg/spsr.h: #define BG_3D_SPSR_OPTS_DEFAULT  { ;BG_EXPORT int bg_3d_spsr(int **faces, int *num_faces, point_t **vertices, int *num_vertices,
 include/bg/tri_pt.h: BG_EXPORT extern double bg_tri_closest_pt(
+include/bg/tri_ray.h: BG_EXPORT extern int bg_isect_tri_line(point_t *isect,
 include/bg/tri_ray.h: BG_EXPORT extern int bg_isect_tri_ray(const point_t orig,
 include/bg/tri_tri.h: BG_EXPORT extern int bg_tri_tri_isect_coplanar(const point_t V0,
 include/bg/tri_tri.h: BG_EXPORT extern int bg_tri_tri_isect_coplanar2(const point_t V0,

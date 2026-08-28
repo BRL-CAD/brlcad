@@ -283,6 +283,7 @@ brlcad_add_test(NAME bg_lseg_pt_dist_case5  COMMAND bg_lseg_pt_dist  -5,-5,-5 5,
 #  ************ tri_ray.c tests ***********
 
 brlcad_addexec(bg_tri_ray_isect tri_ray_isect.cpp "${BG_TEST_LIBS}" TEST)
+brlcad_add_test(NAME bg_tri_ray_isect COMMAND bg_tri_ray_isect)
 
 #  ************ tri_tri.c tests ***********
 

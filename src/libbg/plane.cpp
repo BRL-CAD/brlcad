@@ -2379,56 +2379,6 @@ fail:
 
 
 int
-bg_does_ray_isect_tri(
-    const point_t pt,
-    const vect_t dir,
-    const point_t V,
-    const point_t A,
-    const point_t B,
-    point_t inter)			/* output variable */
-{
-    vect_t VP, VA, VB, AB, AP, N;
-    fastf_t NdotDir;
-    plane_t pl;
-    fastf_t dist;
-
-    /* intersect with plane */
-
-    VSUB2(VA, A, V);
-    VSUB2(VB, B, V);
-    VCROSS(pl, VA, VB);
-    VUNITIZE(pl);
-
-    NdotDir = VDOT(pl, dir);
-    if (ZERO(NdotDir))
-	return 0;
-
-    pl[W] = VDOT(pl, V);
-
-    dist = (pl[W] - VDOT(pl, pt))/NdotDir;
-    VJOIN1(inter, pt, dist, dir);
-
-    /* determine if point is within triangle */
-    VSUB2(VP, inter, V);
-    VCROSS(N, VA, VP);
-    if (VDOT(N, pl) < 0.0)
-	return 0;
-
-    VCROSS(N, VP, VB);
-    if (VDOT(N, pl) < 0.0)
-	return 0;
-
-    VSUB2(AB, B, A);
-    VSUB2(AP, inter, A);
-    VCROSS(N, AB, AP);
-    if (VDOT(N, pl) < 0.0)
-	return 0;
-
-    return 1;
-}
-
-
-int
 bg_hlf_class(const fastf_t *half_eqn, const fastf_t *min, const fastf_t *max, const struct bn_tol *tol)
 {
     int current_classification;
