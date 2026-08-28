@@ -16,7 +16,6 @@ set(
   copymat.mged
   cpi.mged
   cp.mged
-  csg_edit.mged
   draw_e_erase_d_who.mged
   draw.mged
   erase.mged
@@ -84,6 +83,10 @@ set(
   Z.mged
   zoom.mged
 )
+
+if (BRLCAD_ENABLE_TK)
+  list(APPEND MGED_TESTS csg_edit.mged)
+endif()
 
 set(TSCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/regress-mged.cmake.in")
 
