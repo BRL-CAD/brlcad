@@ -116,8 +116,6 @@ C_DECL void
 rt_edit_pipe_set_edit_mode(struct rt_edit *s, int mode)
 {
     struct rt_pipe_edit *p = (struct rt_pipe_edit *)s->ipe_ptr;
-    struct wdb_pipe_pnt *next;
-    struct wdb_pipe_pnt *prev;
     rt_edit_set_edflag(s, mode);
 
     switch (mode) {
@@ -125,37 +123,9 @@ rt_edit_pipe_set_edit_mode(struct rt_edit *s, int mode)
 	    s->edit_mode = RT_PARAMS_EDIT_PICK;
 	    break;
 	case ECMD_PIPE_NEXT_PT:
-	    if (!p->es_pipe_pnt) {
-		bu_vls_printf(s->log_str, "No Pipe Segment selected\n");
-		return;
-	    }
-	    next = BU_LIST_NEXT(wdb_pipe_pnt, &p->es_pipe_pnt->l);
-	    if (next->l.magic == BU_LIST_HEAD_MAGIC) {
-		bu_vls_printf(s->log_str, "Current segment is the last\n");
-		return;
-	    }
-	    p->es_pipe_pnt = next;
-	    rt_pipe_pnt_print(p->es_pipe_pnt, s->base2local);
-	    rt_edit_set_edflag(s, RT_EDIT_IDLE);
-	    /* Advance to the next pipe point; trigger immediate display update. */
-	    rt_edit_process(s);
-	    break;
 	case ECMD_PIPE_PREV_PT:
-	    if (!p->es_pipe_pnt) {
-		bu_vls_printf(s->log_str, "No Pipe Segment selected\n");
-		return;
-	    }
-	    prev = BU_LIST_PREV(wdb_pipe_pnt, &p->es_pipe_pnt->l);
-	    if (prev->l.magic == BU_LIST_HEAD_MAGIC) {
-		bu_vls_printf(s->log_str, "Current segment is the first\n");
-		return;
-	    }
-	    p->es_pipe_pnt = prev;
-	    rt_pipe_pnt_print(p->es_pipe_pnt, s->base2local);
-	    rt_edit_set_edflag(s, RT_EDIT_IDLE);
-	    /* Step to the previous pipe point; trigger immediate display update. */
 	    rt_edit_process(s);
-	    break;
+	    return;
 	case ECMD_PIPE_PT_MOVE:
 	    if (!p->es_pipe_pnt) {
 		bu_vls_printf(s->log_str, "No Pipe Segment selected\n");
@@ -183,6 +153,7 @@ rt_edit_pipe_set_edit_mode(struct rt_edit *s, int mode)
 	    s->edit_mode = RT_PARAMS_EDIT_TRANS;
 	    break;
 	case ECMD_PIPE_PT_INS:
+	case ECMD_PIPE_SPLIT:
 	    s->edit_mode = RT_PARAMS_EDIT_TRANS;
 	    break;
 	case ECMD_PIPE_PT_DEL:
@@ -214,6 +185,7 @@ struct rt_edit_menu_item pipe_menu[] = {
     { "Delete Point", pipe_ed, ECMD_PIPE_PT_DEL},
     { "Append Point", pipe_ed, ECMD_PIPE_PT_ADD},
     { "Prepend Point", pipe_ed, ECMD_PIPE_PT_INS},
+    { "Split Segment", pipe_ed, ECMD_PIPE_SPLIT},
     { "Set Point OD", pipe_ed, ECMD_PIPE_PT_OD },
     { "Set Point ID", pipe_ed, ECMD_PIPE_PT_ID },
     { "Set Point Bend", pipe_ed, ECMD_PIPE_PT_RADIUS },
@@ -1497,6 +1469,7 @@ rt_edit_pipe_edit(struct rt_edit *s)
 		bu_vls_printf(s->log_str, "No Pipe Segment selected\n");
 		rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 		if (f) (*f)(0, NULL, d, NULL);
+		rt_edit_set_edflag(s, RT_EDIT_IDLE);
 		return BRLCAD_ERROR;
 	    }
 	    {
@@ -1505,10 +1478,13 @@ rt_edit_pipe_edit(struct rt_edit *s)
 		    bu_vls_printf(s->log_str, "Current segment is the last\n");
 		    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 		    if (f) (*f)(0, NULL, d, NULL);
+		    rt_edit_set_edflag(s, RT_EDIT_IDLE);
 		    return BRLCAD_ERROR;
 		}
 		p->es_pipe_pnt = next;
 	    }
+	    rt_pipe_pnt_print(p->es_pipe_pnt, s->base2local);
+	    rt_edit_set_edflag(s, RT_EDIT_IDLE);
 	    break;
 	}
 	case ECMD_PIPE_PREV_PT:
@@ -1519,6 +1495,7 @@ rt_edit_pipe_edit(struct rt_edit *s)
 		bu_vls_printf(s->log_str, "No Pipe Segment selected\n");
 		rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 		if (f) (*f)(0, NULL, d, NULL);
+		rt_edit_set_edflag(s, RT_EDIT_IDLE);
 		return BRLCAD_ERROR;
 	    }
 	    {
@@ -1527,10 +1504,13 @@ rt_edit_pipe_edit(struct rt_edit *s)
 		    bu_vls_printf(s->log_str, "Current segment is the first\n");
 		    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 		    if (f) (*f)(0, NULL, d, NULL);
+		    rt_edit_set_edflag(s, RT_EDIT_IDLE);
 		    return BRLCAD_ERROR;
 		}
 		p->es_pipe_pnt = prev;
 	    }
+	    rt_pipe_pnt_print(p->es_pipe_pnt, s->base2local);
+	    rt_edit_set_edflag(s, RT_EDIT_IDLE);
 	    break;
 	}
 	case ECMD_PIPE_SPLIT:

@@ -1935,9 +1935,9 @@ ecmd_sketch_set_plane(struct rt_edit *s)
 	return BRLCAD_ERROR;
     }
 
-    VSET(skt->V, s->e_para[0], s->e_para[1], s->e_para[2]);
-
+    point_t origin;
     vect_t a, b;
+    VSET(origin, s->e_para[0], s->e_para[1], s->e_para[2]);
     VSET(a, s->e_para[3], s->e_para[4], s->e_para[5]);
     VSET(b, s->e_para[6], s->e_para[7], s->e_para[8]);
 
@@ -1962,6 +1962,7 @@ ecmd_sketch_set_plane(struct rt_edit *s)
     }
     VSCALE(b, b, 1.0 / b_len);
 
+    VMOVE(skt->V, origin);
     VMOVE(skt->u_vec, a);
     VMOVE(skt->v_vec, b);
 
