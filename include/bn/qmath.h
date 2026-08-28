@@ -100,8 +100,8 @@ BN_EXPORT extern void quat_double(quat_t qout,
 /**
  *@brief Gives the bisector of quaternions q1 and q2.
  *
- * (Could be done with quat_slerp and factor 0.5)
- * [I believe they must be unit quaternions this to work]
+ * Inputs must be unit quaternions.  Antipodal inputs use a valid
+ * great-circle midpoint.
  */
 BN_EXPORT extern void quat_bisect(quat_t qout,
 				  const quat_t q1,
@@ -161,7 +161,8 @@ BN_EXPORT extern void quat_exp(quat_t out,
 
 /**
  *@brief
- *  Take the natural logarithm of a unit quaternion.
+ *  Take the natural logarithm of a unit quaternion.  The identity
+ *  quaternion maps to the zero quaternion.
  *  Code by Ken Shoemake.
  */
 BN_EXPORT extern void quat_log(quat_t out,

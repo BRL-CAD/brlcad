@@ -662,87 +662,6 @@ bn_vec_perp(vect_t new_vec, const vect_t old_vec)
     VCROSS(new_vec, another_vec, old_vec);
 }
 
-static int
-bn_lseg3_lseg3_parallel(const point_t sg1pt1, const point_t sg1pt2,
-	const point_t sg2pt1, const point_t sg2pt2,
-	const struct bn_tol *tol)
-{
-    vect_t e_dif[2]    = {{0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}};
-    vect_t e_dif_a[2]  = {{0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}};
-    fastf_t e_rr[2][3] = {{0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}};
-    char e_sc[2][3] = {{0, 0, 0}, {0, 0, 0}};
-    fastf_t dist = tol->dist;
-    fastf_t tmp;
-    int i, j;
-
-    VSUB2(e_dif[0], sg1pt2, sg1pt1);
-    VSUB2(e_dif[1], sg2pt2, sg2pt1);
-
-    for ( i = 0 ; i < 2 ; i++ ) {
-	for ( j = 0 ; j < 3 ; j++ ) {
-	    e_dif_a[i][j] = fabs(e_dif[i][j]);
-	}
-    }
-
-    for ( i = 0 ; i < 2 ; i++ ) {
-	if ((e_dif_a[i][X] < dist) && (e_dif_a[i][Y] > dist)) {
-	    e_sc[i][0] = 1;
-	} else if ((e_dif_a[i][X] > dist) && (e_dif_a[i][Y] < dist)) {
-	    e_sc[i][0] = 2;
-	} else if ((e_dif_a[i][X] < dist) && (e_dif_a[i][Y] < dist)) {
-	    e_sc[i][0] = 3;
-	} else {
-	    e_rr[i][0] = e_dif[i][Y] / e_dif[i][X];
-	    e_sc[i][0] = 0;
-	}
-	if ((e_dif_a[i][X] < dist) && (e_dif_a[i][Z] > dist)) {
-	    e_sc[i][1] = 1;
-	} else if ((e_dif_a[i][X] > dist) && (e_dif_a[i][Z] < dist)) {
-	    e_sc[i][1] = 2;
-	} else if ((e_dif_a[i][X] < dist) && (e_dif_a[i][Z] < dist)) {
-	    e_sc[i][1] = 3;
-	} else {
-	    e_rr[i][1] = e_dif[i][Z] / e_dif[i][X];
-	    e_sc[i][1] = 0;
-	}
-	if ((e_dif_a[i][X] < dist) && (e_dif_a[i][Z] > dist)) {
-	    e_sc[i][1] = 1;
-	} else if ((e_dif_a[i][X] > dist) && (e_dif_a[i][Z] < dist)) {
-	    e_sc[i][1] = 2;
-	} else if ((e_dif_a[i][X] < dist) && (e_dif_a[i][Z] < dist)) {
-	    e_sc[i][1] = 3;
-	} else {
-	    e_rr[i][1] = e_dif[i][Z] / e_dif[i][X];
-	    e_sc[i][1] = 0;
-	}
-	if ((e_dif_a[i][Y] < dist) && (e_dif_a[i][Z] > dist)) {
-	    e_sc[i][2] = 1;
-	} else if ((e_dif_a[i][Y] > dist) && (e_dif_a[i][Z] < dist)) {
-	    e_sc[i][2] = 2;
-	} else if ((e_dif_a[i][Y] < dist) && (e_dif_a[i][Z] < dist)) {
-	    e_sc[i][2] = 3;
-	} else {
-	    e_rr[i][2] = e_dif[i][Z] / e_dif[i][Y];
-	    e_sc[i][2] = 0;
-	}
-    }
-
-    /* loop thru (rise/run) ratios from xy, xz and yz planes */
-    for ( i = 0 ; i < 3 ; i++ ) {
-	if (e_sc[0][i] != e_sc[1][i]) {
-	    return 0;
-	}
-	if (e_sc[0][i] == 0) {
-	    tmp = e_rr[0][i] - e_rr[1][i];
-	    if (fabs(tmp) > dist) {
-		return 0;
-	    }
-	}
-    }
-
-    return 1;
-}
-
 void
 bn_mat_fromto(
     mat_t m,
@@ -753,7 +672,6 @@ bn_mat_fromto(
     vect_t test_to;
     vect_t unit_from, unit_to;
     fastf_t dot;
-    point_t origin = VINIT_ZERO;
 
     /**
      * The method used here is from Graphics Gems, A. Glassner, ed.
@@ -767,18 +685,24 @@ bn_mat_fromto(
     vect_t N, M;
     vect_t w_prime;		/* image of "to" ("w") in Qt */
 
+    BN_CK_TOL(tol);
+
     VMOVE(unit_from, from);
     VUNITIZE(unit_from);		/* aka "v" */
     VMOVE(unit_to, to);
     VUNITIZE(unit_to);		/* aka "w" */
 
-    /* If from and to are the same or opposite, special handling is
-     * needed, because the cross product isn't defined.  asin(0.00001)
-     * = 0.0005729 degrees (1/2000 degree)
+    if (VZERO(unit_from) || VZERO(unit_to)) {
+	MAT_IDN(m);
+	return;
+    }
+
+    /* Same and opposite directions need special handling because their
+     * cross product does not define a rotation axis.
      */
-    if (bn_lseg3_lseg3_parallel(origin, from, origin, to, tol)) {
-	dot = VDOT(from, to);
-	if (dot > SMALL_FASTF) {
+    dot = VDOT(unit_from, unit_to);
+    if (BN_VECT_ARE_PARALLEL(dot, tol)) {
+	if (dot > 0.0) {
 	    MAT_IDN(m);
 	    return;
 	} else {
@@ -812,7 +736,7 @@ bn_mat_fromto(
 
     /* Verify that it worked */
     MAT4X3VEC(test_to, m, unit_from);
-    if (UNLIKELY(!bn_lseg3_lseg3_parallel(origin, unit_to, origin, test_to, tol))) {
+    if (UNLIKELY(!BN_VECT_ARE_PARALLEL(VDOT(unit_to, test_to), tol))) {
 	dot = VDOT(unit_to, test_to);
 	bu_log("bn_mat_fromto() ERROR!  from (%g, %g, %g) to (%g, %g, %g) went to (%g, %g, %g), dot=%g?\n",
 	       V3ARGS(from), V3ARGS(to), V3ARGS(test_to), dot);
@@ -899,16 +823,32 @@ bn_mat_lookat(mat_t rot, const vect_t dir, int yflip)
     vect_t x;
     vect_t z;
     vect_t t1;
+    vect_t unit_dir;
     fastf_t hypot_xy;
     vect_t xproj;
     vect_t zproj;
 
+    VMOVE(unit_dir, dir);
+    VUNITIZE(unit_dir);
+    if (VZERO(unit_dir)) {
+	MAT_IDN(rot);
+	return;
+    }
+
     /* First, rotate D around Z axis to match +X axis (azimuth) */
-    hypot_xy = hypot(dir[X], dir[Y]);
-    bn_mat_zrot(first, -dir[Y] / hypot_xy, dir[X] / hypot_xy);
+    hypot_xy = hypot(unit_dir[X], unit_dir[Y]);
+    if (hypot_xy < VDIVIDE_TOL) {
+	if (unit_dir[Z] < 0.0) {
+	    MAT_IDN(rot);
+	} else {
+	    bn_mat_yrot(rot, 0.0, -1.0);
+	}
+	return;
+	}
+    bn_mat_zrot(first, -unit_dir[Y] / hypot_xy, unit_dir[X] / hypot_xy);
 
     /* Next, rotate D around Y axis to match -Z axis (elevation) */
-    bn_mat_yrot(second, -hypot_xy, -dir[Z]);
+    bn_mat_yrot(second, -hypot_xy, -unit_dir[Z]);
     bn_mat_mul(prod12, second, first);
 
     /* Produce twist correction, by re-orienting projection of X axis */
@@ -937,7 +877,7 @@ bn_mat_lookat(mat_t rot, const vect_t dir, int yflip)
     }
 
     /* Check the final results */
-    MAT4X3VEC(t1, rot, dir);
+    MAT4X3VEC(t1, rot, unit_dir);
     if (t1[Z] > -0.98) {
 	bu_log("Error:  bn_mat_lookat final= (%g, %g, %g)\n", V3ARGS(t1));
     }
@@ -1277,10 +1217,10 @@ bn_mat_is_non_unif(const mat_t m)
 void
 bn_wrt_point_direc(mat_t out, const mat_t change, const mat_t in, const point_t point, const vect_t direc, const struct bn_tol *tol)
 {
-    static mat_t t1;
-    static mat_t pt_to_origin, origin_to_pt;
-    static mat_t d_to_zaxis, zaxis_to_d;
-    static vect_t zaxis;
+    mat_t t1;
+    mat_t pt_to_origin, origin_to_pt;
+    mat_t d_to_zaxis, zaxis_to_d;
+    vect_t zaxis;
 
     /* build "point to origin" matrix */
     MAT_IDN(pt_to_origin);
@@ -1288,7 +1228,7 @@ bn_wrt_point_direc(mat_t out, const mat_t change, const mat_t in, const point_t 
 
     /* build "origin to point" matrix */
     MAT_IDN(origin_to_pt);
-    MAT_DELTAS_VEC_NEG(origin_to_pt, point);
+    MAT_DELTAS_VEC(origin_to_pt, point);
 
     /* build "direc to zaxis" matrix */
     VSET(zaxis, 0.0, 0.0, 1.0);

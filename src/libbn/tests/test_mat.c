@@ -34,6 +34,22 @@ vect_close_or_neg(const vect_t a, const vect_t b, double tol)
 
 
 static int
+lookat_is_valid(const vect_t direction)
+{
+    vect_t expected = {0.0, 0.0, -1.0};
+    vect_t output = VINIT_ZERO;
+    mat_t matrix = MAT_INIT_ZERO;
+
+    bn_mat_lookat(matrix, direction, 0);
+    MAT4X3VEC(output, matrix, direction);
+    VUNITIZE(output);
+
+    return finite_vec(output) && vect_close(output, expected, 1.0e-12)
+	&& orthonormal_rotation(matrix, 1.0e-12);
+}
+
+
+static int
 test_mat_basic(void)
 {
     int failures = 0;
@@ -799,6 +815,13 @@ test_mat_orientation(void)
     int failures = 0;
     const char *test = "mat_orientation";
     struct bn_tol tol = BN_TOL_INIT_TOL;
+    struct bn_tol angular_tol = BN_TOL_INIT_TOL;
+    static const vect_t lookat_directions[] = {
+	{0.0, 0.0, -1.0},
+	{0.0, 0.0, 1.0},
+	{0.0, 0.0, -5.0},
+	{0.0, 0.0, 5.0}
+    };
     vect_t input = {1.0, 2.0, 3.0};
     vect_t perp = VINIT_ZERO;
     vect_t expected_perp = {0.0, 0.0, 1.0};
@@ -806,9 +829,14 @@ test_mat_orientation(void)
     vect_t to = {0.0, 1.0, 0.0};
     vect_t opposite = {-1.0, 0.0, 0.0};
     vect_t dir = {1.0, 1.0, -2.0};
+    vect_t near_from = {1.0, 0.0, 0.0};
+    vect_t near_to = {1.0, 0.1, 0.0};
+    vect_t near_to_unit = VINIT_ZERO;
+    vect_t zero_dir = VINIT_ZERO;
     vect_t out = VINIT_ZERO;
     hvect_t homogeneous = HINIT_ZERO;
     mat_t m = MAT_INIT_ZERO;
+    size_t i;
 
     if (!HZERO(homogeneous)) {
 	report_failure(test, "HZERO failed for a zero homogeneous vector");
@@ -844,6 +872,18 @@ test_mat_orientation(void)
 	failures++;
     }
 
+    angular_tol.dist = 1.0;
+    angular_tol.dist_sq = 1.0;
+    bn_mat_fromto(m, near_from, near_to, &angular_tol);
+    MAT4X3VEC(out, m, near_from);
+    VUNITIZE(out);
+    VMOVE(near_to_unit, near_to);
+    VUNITIZE(near_to_unit);
+    if (VDOT(out, near_to_unit) < 1.0 - 1.0e-12 || !orthonormal_rotation(m, 1.0e-12)) {
+	report_failure(test, "bn_mat_fromto used distance tolerance for angular classification");
+	failures++;
+    }
+
     VUNITIZE(dir);
     bn_mat_lookat(m, dir, 0);
     MAT4X3VEC(out, m, dir);
@@ -851,6 +891,19 @@ test_mat_orientation(void)
     if (fabs(out[X]) > 1.0e-9 || fabs(out[Y]) > 1.0e-9 || out[Z] > -0.999 ||
 	!orthonormal_rotation(m, 1.0e-12)) {
 	report_failure(test, "bn_mat_lookat failed to align the direction vector with -Z");
+	failures++;
+    }
+
+    for (i = 0; i < sizeof(lookat_directions) / sizeof(lookat_directions[0]); i++) {
+	if (!lookat_is_valid(lookat_directions[i])) {
+	    report_failure(test, "bn_mat_lookat failed for an axial direction");
+	    failures++;
+	}
+    }
+
+    bn_mat_lookat(m, zero_dir, 0);
+    if (!mat_close(m, bn_mat_identity, 0.0)) {
+	report_failure(test, "bn_mat_lookat did not return identity for a zero direction");
 	failures++;
     }
 
@@ -864,6 +917,7 @@ test_mat_transform(void)
     int failures = 0;
     const char *test = "mat_transform";
     const double legacy_tol = BN_TOL_DIST;
+    struct bn_tol tol = BN_TOL_INIT_TOL;
     static const struct {
 	double sinv;
 	double cosv;
@@ -919,8 +973,14 @@ test_mat_transform(void)
     point_t p = {2.0, 2.0, 3.0};
     point_t axis_point = {1.0, 2.0, 10.0};
     point_t expected = {1.0, 3.0, 3.0};
+    point_t pivot = {1.0, 2.0, 3.0};
+    point_t pivot_offset = {2.0, 2.0, 3.0};
+    point_t pivot_expected = {1.0, 3.0, 3.0};
     point_t out = VINIT_ZERO;
+    vect_t pivot_direction = {0.0, 0.0, 1.0};
     mat_t m = MAT_INIT_ZERO;
+    mat_t change = MAT_INIT_ZERO;
+    mat_t input = MAT_INIT_ZERO;
     int i;
 
     bn_mat_arb_rot(m, anchor, axis, M_PI_2);
@@ -933,6 +993,20 @@ test_mat_transform(void)
     MAT4X3PNT(out, m, axis_point);
     if (!vect_close(out, axis_point, 1.0e-12)) {
 	report_failure(test, "bn_mat_arb_rot moved a point lying on the rotation axis");
+	failures++;
+    }
+
+    bn_mat_zrot(change, 1.0, 0.0);
+    MAT_IDN(input);
+    bn_wrt_point_direc(m, change, input, pivot, pivot_direction, &tol);
+    MAT4X3PNT(out, m, pivot);
+    if (!vect_close(out, pivot, 1.0e-12)) {
+	report_failure(test, "bn_wrt_point_direc moved its pivot point");
+	failures++;
+    }
+    MAT4X3PNT(out, m, pivot_offset);
+    if (!vect_close(out, pivot_expected, 1.0e-12)) {
+	report_failure(test, "bn_wrt_point_direc did not rotate around its pivot point");
 	failures++;
     }
 

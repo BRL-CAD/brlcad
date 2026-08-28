@@ -244,6 +244,12 @@ test_qmath_interp(void)
 	failures++;
     }
 
+    quat_bisect(out, qid, qanti);
+    if (!quat_is_unit_finite(out, 1.0e-12)) {
+	report_failure(test, "quat_bisect antipodal branch failed to return a finite unit quaternion");
+	failures++;
+    }
+
     quat_double(exact, qdouble_same_in, qdouble_same_in);
     if (!hvect_close(exact, qdouble_same_expected, 1.0e-3)) {
 	report_failure(test, "quat_double legacy same-input case failed");
@@ -326,6 +332,8 @@ test_qmath_logexp(void)
     quat_t v = {0.2, -0.1, 0.3, 0.0};
     quat_t q = HINIT_ZERO;
     quat_t out = HINIT_ZERO;
+    quat_t qidentity = {0.0, 0.0, 0.0, 1.0};
+    quat_t qzero = HINIT_ZERO;
     quat_t qin = {0.3, 0.4, 0.1, 0.85};
     int i;
 
@@ -344,6 +352,12 @@ test_qmath_logexp(void)
     quat_exp(q, out);
     if (!quat_close_or_neg(q, qin, 1.0e-12)) {
 	report_failure(test, "quat_exp(quat_log(q)) did not recover the original unit quaternion");
+	failures++;
+    }
+
+    quat_log(out, qidentity);
+    if (!hvect_close(out, qzero, 0.0)) {
+	report_failure(test, "quat_log did not map identity to the zero quaternion");
 	failures++;
     }
 

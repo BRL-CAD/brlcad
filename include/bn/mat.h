@@ -214,8 +214,8 @@ BN_EXPORT extern void bn_mat_ae(mat_t m,
 				double elev);
 
 /**
- * Find the azimuth and elevation angles that correspond to the
- * direction (not including twist) given by a direction vector.
+ * Find the azimuth and elevation angles, in degrees, that correspond
+ * to the direction (not including twist) given by a direction vector.
  */
 BN_EXPORT extern void bn_ae_vec(fastf_t *azp,
 				fastf_t *elp,
@@ -236,14 +236,16 @@ BN_EXPORT extern void bn_aet_vec(fastf_t *az,
 				 fastf_t accuracy);
 
 /**
- * Find a unit vector from the origin given azimuth and elevation.
+ * Find a unit vector from the origin given azimuth and elevation in
+ * radians.
  */
 BN_EXPORT extern void bn_vec_ae(vect_t vec,
 				fastf_t az,
 				fastf_t el);
 
 /**
- * Find a vector from the origin given azimuth, elevation, and distance.
+ * Find a vector from the origin given azimuth and elevation in radians,
+ * and distance.
  */
 BN_EXPORT extern void bn_vec_aed(vect_t vec,
 				 fastf_t az,
@@ -310,8 +312,10 @@ BN_EXPORT extern void bn_vec_perp(vect_t new_vec,
  * space by the angle between the two.  There are many candidate
  * matrices.
  *
- * The input 'from' and 'to' vectors need not be unit length.
- * MAT4X3VEC(to, m, from) is the identity that is created.
+ * The input 'from' and 'to' vectors need not be unit length.  They are
+ * normalized internally.  Near-parallel inputs are handled using the
+ * angular tolerance in 'tol'.  If either input cannot be normalized,
+ * the result is the identity matrix.
  *
  */
 BN_EXPORT extern void bn_mat_fromto(mat_t m,
@@ -344,12 +348,11 @@ BN_EXPORT extern void bn_mat_zrot(mat_t m,
 				  double cosz);
 
 /**
- * Given a direction vector D of unit length, product a matrix which
- * rotates that vector D onto the -Z axis.  This matrix will be
- * suitable for use as a "model2view" matrix.
- *
- * XXX This routine will fail if the vector is already more or less
- * aligned with the Z axis.
+ * Given a nonzero direction vector D, produce a matrix which
+ * rotates D onto the -Z axis.  D is normalized internally.  Z-axis
+ * directions use a deterministic roll, and a zero direction produces
+ * the identity matrix.  This matrix will be suitable for use as a
+ * model2view matrix.
  *
  * This is done in several steps.
  *

@@ -174,7 +174,14 @@ quat_double(quat_t qout, const quat_t q1, const quat_t q2)
 void
 quat_bisect(quat_t qout, const quat_t q1, const quat_t q2)
 {
-    QADD2( qout, q1, q2 );
+    quat_t qsum;
+
+    QADD2(qsum, q1, q2);
+    if (QMAGSQ(qsum) < VDIVIDE_TOL * VDIVIDE_TOL) {
+	quat_slerp(qout, q1, q2, 0.5);
+	return;
+    }
+    QMOVE(qout, qsum);
     QUNITIZE( qout );
 }
 
@@ -302,9 +309,12 @@ quat_log(quat_t out, const quat_t in)
     fastf_t	theta;
     fastf_t	scale;
 
-    if ( (scale = MAGNITUDE(in)) > VDIVIDE_TOL )  {
+    scale = MAGNITUDE(in);
+    if (scale > VDIVIDE_TOL) {
 	theta = atan2( scale, in[W] );
 	scale = theta/scale;
+    } else {
+	scale = 0.0;
     }
 
     VSCALE( out, in, scale );
