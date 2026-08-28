@@ -151,6 +151,7 @@ set(
   null/dm-Null.h
   include/private.h
   include/calltable.h
+  include/x11_font.h
   fontstash/LICENSE.fontstash
   fontstash/README.md
   fontstash/fontstash.h

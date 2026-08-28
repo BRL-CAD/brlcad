@@ -102,6 +102,7 @@ struct xinfo {
     int xi_usereg;	/* Flag determining whether or not to use regions */
     Colormap xi_cmap;	/* Colormap */
     XImage *xi_image;	/* XImage (size of screen) */
+    const Drawable *xi_drawable; /* Indirection follows display-manager pixmap replacement. */
     Window xi_cwinp;	/* Cursor's Parent Window ID */
     Window xi_cwin;	/* Cursor Window ID */
     unsigned long xi_wp;	/* White pixel */
@@ -170,6 +171,13 @@ struct xinfo {
     int xi_xtp;		/* Y-coord of topmost pixels */
     int xi_xbt;		/* Y-coord of bottommost pixels */
 };
+
+
+static Drawable
+X24_drawable(const struct xinfo *xi)
+{
+    return xi->xi_drawable ? *xi->xi_drawable : xi->xi_win;
+}
 #define XI(ptr) ((struct xinfo *)((ptr)->i->u1.p))
 #define XI_SET(ptr, val) ((ptr)->i->u1.p) = (char *) val;
 
@@ -1015,6 +1023,7 @@ static void
 X24_blit(struct fb *ifp, int x_1, int y_1, int w, int h, int flags /* BLIT_xxx flags */)
 {
     struct xinfo *xi = XI(ifp);
+    Drawable drawable = X24_drawable(xi);
 
     int x2 = x_1 + w - 1;	/* Convert to rectangle corners */
     int y2 = y_1 + h - 1;
@@ -1824,7 +1833,7 @@ X24_blit(struct fb *ifp, int x_1, int y_1, int w, int h, int flags /* BLIT_xxx f
     /* Blit out changed image */
 
     if (flags & BLIT_DISP) {
-	XPutImage(xi->xi_dpy, xi->xi_win, xi->xi_gc, xi->xi_image,
+	XPutImage(xi->xi_dpy, drawable, xi->xi_gc, xi->xi_image,
 		  ox, oy - xht + 1, ox, oy - xht + 1, xwd, xht);
     }
 
@@ -1850,7 +1859,7 @@ X24_blit(struct fb *ifp, int x_1, int y_1, int w, int h, int flags /* BLIT_xxx f
 	    if (!XEmptyRegion(Creg)) {
 		XSetRegion(xi->xi_dpy, xi->xi_cgc, Creg);
 
-		XFillRectangle(xi->xi_dpy, xi->xi_win,
+		XFillRectangle(xi->xi_dpy, drawable,
 			       xi->xi_cgc, 0, 0, xi->xi_xwidth,
 			       xi->xi_xheight);
 	    }
@@ -2672,7 +2681,7 @@ X24_configureWindow(struct fb *ifp, int width, int height)
 
 
 int
-_X24_open_existing(struct fb *ifp, Display *dpy, Window win, Window cwinp, Colormap cmap, XVisualInfo *vip, int width, int height, GC gc)
+_X24_open_existing(struct fb *ifp, Display *dpy, const Drawable *drawable, Window cwinp, Colormap cmap, XVisualInfo *vip, int width, int height, GC gc)
 {
     struct xinfo *xi;
     int getmem_stat;
@@ -2703,7 +2712,7 @@ _X24_open_existing(struct fb *ifp, Display *dpy, Window win, Window cwinp, Color
     xi->xi_visual = vip->visual;
     xi->xi_depth = vip->depth;
     xi->xi_cmap = cmap;
-    xi->xi_win = win;
+    xi->xi_drawable = drawable;
     xi->xi_cwinp = cwinp;
 
     /*XXX For now use same GC for both */
@@ -2864,7 +2873,7 @@ X24_open_existing(struct fb *ifp, int width, int height, struct fb_platform_spec
 {
     struct X24_fb_info *x24_internal = (struct X24_fb_info *)fb_p->data;
     BU_CKMAG(fb_p, FB_X24_MAGIC, "X24 framebuffer");
-    return _X24_open_existing(ifp, x24_internal->dpy, x24_internal->win,
+    return _X24_open_existing(ifp, x24_internal->dpy, x24_internal->drawable,
 	    x24_internal->cwinp, x24_internal->cmap, x24_internal->vip,
 	    width, height, x24_internal->gc);
 }
@@ -2900,7 +2909,7 @@ X24_handle_event(struct fb *ifp, XEvent *event)
 		    ey2 = xi->xi_xbt;
 
 		if (ex2 >= ex_1 && ey2 >= ey_1)
-		    XPutImage(xi->xi_dpy, xi->xi_win, xi->xi_gc,
+		    XPutImage(xi->xi_dpy, X24_drawable(xi), xi->xi_gc,
 			      xi->xi_image, ex_1, ey_1, ex_1,
 			      ey_1, ex2 - ex_1 + 1, ey2 - ey_1 + 1);
 		break;

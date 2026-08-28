@@ -77,6 +77,7 @@
 #include "bv/defines.h"
 
 #include "../include/private.h"
+#include "../include/x11_font.h"
 
 #define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */
 
@@ -245,7 +246,7 @@ X_configureWin_guts(struct dm *dmp, int force)
      */
 
     if (dmp->i->dm_width < 582) {
-	if (pubvars->fontstruct->per_char->width != 5) {
+	if (dm_x11_font_width(pubvars->fontstruct) != 5) {
 	    if ((newfontstruct = XLoadQueryFont(pubvars->dpy,
 						FONT5)) != NULL) {
 		XFreeFont(pubvars->dpy,
@@ -257,7 +258,7 @@ X_configureWin_guts(struct dm *dmp, int force)
 	    }
 	}
     } else if (dmp->i->dm_width < 679) {
-	if (pubvars->fontstruct->per_char->width != 6) {
+	if (dm_x11_font_width(pubvars->fontstruct) != 6) {
 	    if ((newfontstruct = XLoadQueryFont(pubvars->dpy,
 						FONT6)) != NULL) {
 		XFreeFont(pubvars->dpy,
@@ -269,7 +270,7 @@ X_configureWin_guts(struct dm *dmp, int force)
 	    }
 	}
     } else if (dmp->i->dm_width < 776) {
-	if (pubvars->fontstruct->per_char->width != 7) {
+	if (dm_x11_font_width(pubvars->fontstruct) != 7) {
 	    if ((newfontstruct = XLoadQueryFont(pubvars->dpy,
 						FONT7)) != NULL) {
 		XFreeFont(pubvars->dpy,
@@ -281,7 +282,7 @@ X_configureWin_guts(struct dm *dmp, int force)
 	    }
 	}
     } else if (dmp->i->dm_width < 873) {
-	if (pubvars->fontstruct->per_char->width != 8) {
+	if (dm_x11_font_width(pubvars->fontstruct) != 8) {
 	    if ((newfontstruct = XLoadQueryFont(pubvars->dpy,
 						FONT8)) != NULL) {
 		XFreeFont(pubvars->dpy,
@@ -293,7 +294,7 @@ X_configureWin_guts(struct dm *dmp, int force)
 	    }
 	}
     } else {
-	if (pubvars->fontstruct->per_char->width != 9) {
+	if (dm_x11_font_width(pubvars->fontstruct) != 9) {
 	    if ((newfontstruct = XLoadQueryFont(pubvars->dpy,
 						FONT9)) != NULL) {
 		XFreeFont(pubvars->dpy,
@@ -1799,7 +1800,7 @@ X_openFb(struct dm *dmp)
     fb_ps = fb_get_platform_specific(FB_X24_MAGIC);
     xfb_ps = (struct X24_fb_info *)fb_ps->data;
     xfb_ps->dpy = pubvars->dpy;
-    xfb_ps->win = privars->pix;
+    xfb_ps->drawable = &privars->pix;
     xfb_ps->cwinp = pubvars->win;
     xfb_ps->cmap = pubvars->cmap;
     xfb_ps->vip = pubvars->vip;

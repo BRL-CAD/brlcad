@@ -43,7 +43,7 @@
 
 struct X24_fb_info {
     Display *dpy;
-    Window win;
+    const Drawable *drawable; /* Indirection follows display-manager pixmap replacement. */
     Window cwinp;
     Colormap cmap;
     XVisualInfo *vip;

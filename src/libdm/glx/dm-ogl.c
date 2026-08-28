@@ -69,6 +69,7 @@
 #include "tk.h"
 
 #include "../include/private.h"
+#include "../include/x11_font.h"
 
 #define ENABLE_POINT_SMOOTH 1
 
@@ -170,7 +171,7 @@ ogl_configureWin_guts(struct dm *dmp, int force)
     }
 
     if (DM_VALID_FONT_SIZE(dmp->i->dm_fontsize)) {
-	if (pubvars->fontstruct->per_char->width != dmp->i->dm_fontsize) {
+	if (dm_x11_font_width(pubvars->fontstruct) != dmp->i->dm_fontsize) {
 	    if ((newfontstruct = XLoadQueryFont(pubvars->dpy,
 						DM_FONT_SIZE_TO_NAME(dmp->i->dm_fontsize))) != NULL) {
 		XFreeFont(pubvars->dpy,
@@ -185,7 +186,7 @@ ogl_configureWin_guts(struct dm *dmp, int force)
 	 */
 
 	if (dmp->i->dm_width < 582) {
-	    if (pubvars->fontstruct->per_char->width != 5) {
+	    if (dm_x11_font_width(pubvars->fontstruct) != 5) {
 		if ((newfontstruct = XLoadQueryFont(pubvars->dpy,
 						    FONT5)) != NULL) {
 		    XFreeFont(pubvars->dpy,
@@ -196,7 +197,7 @@ ogl_configureWin_guts(struct dm *dmp, int force)
 		}
 	    }
 	} else if (dmp->i->dm_width < 679) {
-	    if (pubvars->fontstruct->per_char->width != 6) {
+	    if (dm_x11_font_width(pubvars->fontstruct) != 6) {
 		if ((newfontstruct = XLoadQueryFont(pubvars->dpy,
 						    FONT6)) != NULL) {
 		    XFreeFont(pubvars->dpy,
@@ -207,7 +208,7 @@ ogl_configureWin_guts(struct dm *dmp, int force)
 		}
 	    }
 	} else if (dmp->i->dm_width < 776) {
-	    if (pubvars->fontstruct->per_char->width != 7) {
+	    if (dm_x11_font_width(pubvars->fontstruct) != 7) {
 		if ((newfontstruct = XLoadQueryFont(pubvars->dpy,
 						    FONT7)) != NULL) {
 		    XFreeFont(pubvars->dpy,
@@ -218,7 +219,7 @@ ogl_configureWin_guts(struct dm *dmp, int force)
 		}
 	    }
 	} else if (dmp->i->dm_width < 873) {
-	    if (pubvars->fontstruct->per_char->width != 8) {
+	    if (dm_x11_font_width(pubvars->fontstruct) != 8) {
 		if ((newfontstruct = XLoadQueryFont(pubvars->dpy,
 						    FONT8)) != NULL) {
 		    XFreeFont(pubvars->dpy,
@@ -229,7 +230,7 @@ ogl_configureWin_guts(struct dm *dmp, int force)
 		}
 	    }
 	} else if (dmp->i->dm_width < 1455) {
-	    if (pubvars->fontstruct->per_char->width != 9) {
+	    if (dm_x11_font_width(pubvars->fontstruct) != 9) {
 		if ((newfontstruct = XLoadQueryFont(pubvars->dpy,
 						    FONT9)) != NULL) {
 		    XFreeFont(pubvars->dpy,
@@ -240,7 +241,7 @@ ogl_configureWin_guts(struct dm *dmp, int force)
 		}
 	    }
 	} else if (dmp->i->dm_width < 2037) {
-	    if (pubvars->fontstruct->per_char->width != 10) {
+	    if (dm_x11_font_width(pubvars->fontstruct) != 10) {
 		if ((newfontstruct = XLoadQueryFont(pubvars->dpy,
 						    FONT10)) != NULL) {
 		    XFreeFont(pubvars->dpy,
@@ -251,7 +252,7 @@ ogl_configureWin_guts(struct dm *dmp, int force)
 		}
 	    }
 	} else {
-	    if (pubvars->fontstruct->per_char->width != 12) {
+	    if (dm_x11_font_width(pubvars->fontstruct) != 12) {
 		if ((newfontstruct = XLoadQueryFont(pubvars->dpy,
 						    FONT12)) != NULL) {
 		    XFreeFont(pubvars->dpy,
