@@ -28,7 +28,6 @@
 
 #include "common.h"
 
-#include <stdlib.h>  /* for abs */
 #include <stdio.h>
 #include <math.h>
 
@@ -49,7 +48,24 @@ static const struct bn_poly bn_Zero_poly = { BN_POLY_MAGIC, 0, {0.0} };
 struct bn_poly *
 bn_poly_mul(register struct bn_poly *product, register const struct bn_poly *m1, register const struct bn_poly *m2)
 {
+    if (m1->dgr > BN_MAX_POLY_DEGREE ||
+	m2->dgr > BN_MAX_POLY_DEGREE ||
+	m1->dgr > BN_MAX_POLY_DEGREE - m2->dgr) {
+	return BN_POLY_NULL;
+    }
+
+    if (product == m1 || product == m2) {
+	struct bn_poly result;
+
+	if (!bn_poly_mul(&result, m1, m2)) {
+	    return BN_POLY_NULL;
+	}
+	*product = result;
+	return product;
+    }
+
     if (m1->dgr == 1 && m2->dgr == 1) {
+	product->magic = BN_POLY_MAGIC;
 	product->dgr = 2;
 	product->cf[0] = m1->cf[0] * m2->cf[0];
 	product->cf[1] = m1->cf[0] * m2->cf[1] +
@@ -58,6 +74,7 @@ bn_poly_mul(register struct bn_poly *product, register const struct bn_poly *m1,
 	return product;
     }
     if (m1->dgr == 2 && m2->dgr == 2) {
+	product->magic = BN_POLY_MAGIC;
 	product->dgr = 4;
 	product->cf[0] = m1->cf[0] * m2->cf[0];
 	product->cf[1] = m1->cf[0] * m2->cf[1] +
@@ -77,12 +94,7 @@ bn_poly_mul(register struct bn_poly *product, register const struct bn_poly *m1,
 
 	*product = bn_Zero_poly;
 
-	/* If the degree of the product will be larger than the
-	 * maximum size allowed in "polyno.h", then return a null
-	 * pointer to indicate failure.
-	 */
-	if ((product->dgr = m1->dgr + m2->dgr) > BN_MAX_POLY_DEGREE)
-	    return BN_POLY_NULL;
+	product->dgr = m1->dgr + m2->dgr;
 
 	for (ct1=0; ct1 <= m1->dgr; ++ct1) {
 	    for (ct2=0; ct2 <= m2->dgr; ++ct2) {
@@ -110,28 +122,26 @@ bn_poly_scale(register struct bn_poly *eqn, double factor)
 struct bn_poly *
 bn_poly_add(register struct bn_poly *sum, register const struct bn_poly *poly1, register const struct bn_poly *poly2)
 {
-    struct bn_poly tmp;
+    struct bn_poly result;
     register size_t i, offset;
 
-    offset = labs((long)poly1->dgr - (long)poly2->dgr);
-
-    tmp = bn_Zero_poly;
+    offset = (poly1->dgr >= poly2->dgr) ?
+	poly1->dgr - poly2->dgr : poly2->dgr - poly1->dgr;
 
     if (poly1->dgr >= poly2->dgr) {
-	*sum = *poly1;
+	result = *poly1;
 	for (i=0; i <= poly2->dgr; ++i) {
-	    tmp.cf[i+offset] = poly2->cf[i];
+	    result.cf[i+offset] += poly2->cf[i];
 	}
     } else {
-	*sum = *poly2;
+	result = *poly2;
 	for (i=0; i <= poly1->dgr; ++i) {
-	    tmp.cf[i+offset] = poly1->cf[i];
+	    result.cf[i+offset] += poly1->cf[i];
 	}
     }
 
-    for (i=0; i <= sum->dgr; ++i) {
-	sum->cf[i] += tmp.cf[i];
-    }
+    result.magic = BN_POLY_MAGIC;
+    *sum = result;
     return sum;
 }
 
@@ -139,30 +149,30 @@ bn_poly_add(register struct bn_poly *sum, register const struct bn_poly *poly1, 
 struct bn_poly *
 bn_poly_sub(register struct bn_poly *diff, register const struct bn_poly *poly1, register const struct bn_poly *poly2)
 {
-    struct bn_poly tmp;
+    struct bn_poly result;
     register size_t i, offset;
 
-    offset = labs((long)poly1->dgr - (long)poly2->dgr);
-
-    *diff = bn_Zero_poly;
-    tmp = bn_Zero_poly;
+    offset = (poly1->dgr >= poly2->dgr) ?
+	poly1->dgr - poly2->dgr : poly2->dgr - poly1->dgr;
 
     if (poly1->dgr >= poly2->dgr) {
-	*diff = *poly1;
+	result = *poly1;
 	for (i=0; i <= poly2->dgr; ++i) {
-	    tmp.cf[i+offset] = poly2->cf[i];
+	    result.cf[i+offset] -= poly2->cf[i];
 	}
     } else {
-	diff->dgr = poly2->dgr;
+	result = bn_Zero_poly;
+	result.dgr = poly2->dgr;
 	for (i=0; i <= poly1->dgr; ++i) {
-	    diff->cf[i+offset] = poly1->cf[i];
+	    result.cf[i+offset] = poly1->cf[i];
 	}
-	tmp = *poly2;
+	for (i=0; i <= poly2->dgr; ++i) {
+	    result.cf[i] -= poly2->cf[i];
+	}
     }
 
-    for (i=0; i <= diff->dgr; ++i) {
-	diff->cf[i] -= tmp.cf[i];
-    }
+    result.magic = BN_POLY_MAGIC;
+    *diff = result;
     return diff;
 }
 
@@ -177,12 +187,20 @@ bn_poly_synthetic_division(struct bn_poly *quo, struct bn_poly *rem, const struc
     *rem = bn_Zero_poly; /* struct copy */
 
     if (dvsor->dgr > dvdend->dgr) {
-	quo->dgr = -1;
-    } else {
-	quo->dgr = dvdend->dgr - dvsor->dgr;
+	*rem = *dvdend;
+	*quo = bn_Zero_poly;
+	return;
     }
-    if ((rem->dgr = dvsor->dgr - 1) > dvdend->dgr)
-	rem->dgr = dvdend->dgr;
+
+    if (dvsor->dgr == 0) {
+	for (n=0; n <= quo->dgr; ++n) {
+	    quo->cf[n] /= dvsor->cf[0];
+	}
+	return;
+    }
+
+    quo->dgr = dvdend->dgr - dvsor->dgr;
+    rem->dgr = dvsor->dgr - 1;
 
     for (n=0; n <= quo->dgr; ++n) {
 	quo->cf[n] /= dvsor->cf[0];
@@ -200,10 +218,11 @@ bn_poly_synthetic_division(struct bn_poly *quo, struct bn_poly *rem, const struc
 int
 bn_poly_quadratic_roots(register struct bn_complex *roots, register const struct bn_poly *quadrat)
 {
+    struct bn_poly monic;
     fastf_t discrim, denom, rad;
     const fastf_t small = SMALL_FASTF;
 
-    if (NEAR_ZERO(quadrat->cf[0], small)) {
+    if (ZERO(quadrat->cf[0]) && fpclassify(quadrat->cf[0]) == FP_ZERO) {
 	/* root = -cf[2] / cf[1] */
 	if (NEAR_ZERO(quadrat->cf[1], small)) {
 	    /* No solution.  Now what? */
@@ -215,6 +234,12 @@ bn_poly_quadratic_roots(register struct bn_complex *roots, register const struct
 	roots[0].im = roots[1].im = 0.0;
 	return 1;	/* OK - repeated root */
     }
+
+    if (!NEAR_EQUAL(quadrat->cf[0], 1.0, small)) {
+	monic = *quadrat;
+	bn_poly_scale(&monic, 1.0 / monic.cf[0]);
+	quadrat = &monic;
+	}
 
     discrim = quadrat->cf[1]*quadrat->cf[1] - 4.0* quadrat->cf[0]*quadrat->cf[2];
     denom = 0.5 / quadrat->cf[0];
@@ -264,7 +289,7 @@ bn_poly_cubic_roots(register struct bn_complex *roots, register const struct bn_
     fastf_t a, b, c1, c1_3rd, delta;
     register int i;
 
-    if (ZERO(eqn->cf[0])) return 0;
+    if (ZERO(eqn->cf[0]) && fpclassify(eqn->cf[0]) == FP_ZERO) return 0;
 
     /* Cardano's formula below is expressed for a monic polynomial. */
     if (!NEAR_EQUAL(eqn->cf[0], 1.0, SMALL_FASTF)) {
@@ -358,7 +383,7 @@ bn_poly_quartic_roots(register struct bn_complex *roots, register const struct b
 
 #define Max3(a, b, c) ((c)>((a)>(b)?(a):(b)) ? (c) : ((a)>(b)?(a):(b)))
 
-    if (ZERO(eqn->cf[0])) return 0;
+    if (ZERO(eqn->cf[0]) && fpclassify(eqn->cf[0]) == FP_ZERO) return 0;
 
     /* Ferrari's formula below is expressed for a monic polynomial. */
     if (!NEAR_EQUAL(eqn->cf[0], 1.0, SMALL_FASTF)) {

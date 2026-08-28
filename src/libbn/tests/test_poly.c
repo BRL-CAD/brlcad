@@ -200,6 +200,153 @@ test_poly_ops(void)
 
 
 static int
+test_poly_edge_cases(void)
+{
+    int failures = 0;
+    const char *test = "poly_edge_cases";
+    const double linear_coeffs[] = {1.0, -1.0};
+    const double quadratic_coeffs[] = {1.0, 0.0, -4.0};
+    const double aliased_sum_coeffs[] = {1.0, 1.0, -5.0};
+    const double aliased_difference_coeffs[] = {-1.0, 1.0, 3.0};
+    const double aliased_product_coeffs[] = {1.0, -1.0, -4.0, 4.0};
+    const double dividend_coeffs[] = {1.0, -3.0, 2.0};
+    const double constant_divisor_coeffs[] = {2.0};
+    const double constant_quotient_coeffs[] = {0.5, -1.5, 1.0};
+    const double higher_divisor_coeffs[] = {1.0, 0.0, 1.0};
+    const double degree_six_coeffs[] = {1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+    const double untouched_product_coeffs[] = {42.0};
+    const double zero_coeffs[] = {0.0};
+    const double scaled_quadratic_coeffs[] = {1.0e-12, -5.0e-12, 6.0e-12};
+    const double scaled_cubic_coeffs[] = {1.0e-12, -6.0e-12, 11.0e-12, -6.0e-12};
+    const double scaled_quartic_coeffs[] = {1.0e-12, 0.0, -10.0e-12, 0.0, 9.0e-12};
+    bn_poly_t linear = poly_from_coeffs(1, linear_coeffs);
+    bn_poly_t quadratic = poly_from_coeffs(2, quadratic_coeffs);
+    bn_poly_t dividend = poly_from_coeffs(2, dividend_coeffs);
+    bn_poly_t constant_divisor = poly_from_coeffs(0, constant_divisor_coeffs);
+    bn_poly_t higher_divisor = poly_from_coeffs(2, higher_divisor_coeffs);
+    bn_poly_t degree_six = poly_from_coeffs(6, degree_six_coeffs);
+    bn_poly_t rejected_product = poly_from_coeffs(0, untouched_product_coeffs);
+    bn_poly_t quotient = BN_POLY_INIT_ZERO;
+    bn_poly_t remainder = BN_POLY_INIT_ZERO;
+    bn_poly_t scaled_quadratic = poly_from_coeffs(2, scaled_quadratic_coeffs);
+    bn_poly_t scaled_cubic = poly_from_coeffs(3, scaled_cubic_coeffs);
+    bn_poly_t scaled_quartic = poly_from_coeffs(4, scaled_quartic_coeffs);
+    bn_complex_t roots[4];
+
+    if (!bn_poly_add(&linear, &linear, &quadratic) ||
+	!poly_close(&linear, 2, aliased_sum_coeffs, 0.0)) {
+	report_failure(test, "bn_poly_add did not support output aliasing a lower-degree input");
+	failures++;
+    }
+
+    linear = poly_from_coeffs(1, linear_coeffs);
+    if (!bn_poly_sub(&linear, &linear, &quadratic) ||
+	!poly_close(&linear, 2, aliased_difference_coeffs, 0.0)) {
+	report_failure(test, "bn_poly_sub did not support output aliasing a lower-degree input");
+	failures++;
+    }
+
+    linear = poly_from_coeffs(1, linear_coeffs);
+    if (!bn_poly_mul(&linear, &linear, &quadratic) ||
+	!poly_close(&linear, 3, aliased_product_coeffs, 0.0)) {
+	report_failure(test, "bn_poly_mul did not support output aliasing an input");
+	failures++;
+    }
+
+    if (bn_poly_mul(&rejected_product, &degree_six, &quadratic) ||
+	!poly_close(&rejected_product, 0, untouched_product_coeffs, 0.0)) {
+	report_failure(test, "bn_poly_mul modified its output after a degree-limit failure");
+	failures++;
+    }
+
+    linear = poly_from_coeffs(1, linear_coeffs);
+    bn_poly_synthetic_division(&quotient, &remainder, &dividend, &constant_divisor);
+    if (!poly_close(&quotient, 2, constant_quotient_coeffs, 0.0) ||
+	!poly_close(&remainder, 0, zero_coeffs, 0.0)) {
+	report_failure(test, "bn_poly_synthetic_division failed for a constant divisor");
+	failures++;
+    }
+
+    bn_poly_synthetic_division(&quotient, &remainder, &linear, &higher_divisor);
+    if (!poly_close(&quotient, 0, zero_coeffs, 0.0) ||
+	!poly_close(&remainder, 1, linear_coeffs, 0.0)) {
+	report_failure(test, "bn_poly_synthetic_division mishandled a higher-degree divisor");
+	failures++;
+    }
+
+    if (!bn_poly_quadratic_roots(roots, &scaled_quadratic) ||
+	!has_real_root(roots, 2, 2.0, 1.0e-10) ||
+	!has_real_root(roots, 2, 3.0, 1.0e-10)) {
+	report_failure(test, "bn_poly_quadratic_roots rejected a scaled quadratic");
+	failures++;
+    }
+
+    if (!bn_poly_cubic_roots(roots, &scaled_cubic) ||
+	!has_real_root(roots, 3, 1.0, 1.0e-10) ||
+	!has_real_root(roots, 3, 2.0, 1.0e-10) ||
+	!has_real_root(roots, 3, 3.0, 1.0e-10)) {
+	report_failure(test, "bn_poly_cubic_roots rejected a scaled cubic");
+	failures++;
+    }
+
+    if (!bn_poly_quartic_roots(roots, &scaled_quartic) ||
+	!has_real_root(roots, 4, -3.0, 1.0e-8) ||
+	!has_real_root(roots, 4, -1.0, 1.0e-8) ||
+	!has_real_root(roots, 4, 1.0, 1.0e-8) ||
+	!has_real_root(roots, 4, 3.0, 1.0e-8)) {
+	report_failure(test, "bn_poly_quartic_roots rejected a scaled quartic");
+	failures++;
+    }
+
+    return failures;
+}
+
+
+static int
+test_multipoly_ops(void)
+{
+    int failures = 0;
+    const char *test = "multipoly_ops";
+    struct bn_multipoly *p1 = bn_multipoly_new(1, 1);
+    struct bn_multipoly *p2 = bn_multipoly_new(3, 2);
+    struct bn_multipoly *sum;
+    struct bn_multipoly *product;
+
+    if (!p1 || !p2 || !bn_multipoly_set(p1, 1, 2, 3.0) ||
+	!bn_multipoly_set(p2, 0, 0, 2.0) ||
+	!bn_multipoly_set(p2, 2, 1, 5.0)) {
+	report_failure(test, "could not construct bivariate polynomial operands");
+	bn_multipoly_free(p1);
+	bn_multipoly_free(p2);
+	return failures + 1;
+    }
+
+    sum = bn_multipoly_add(p1, p2);
+    product = bn_multipoly_mul(p1, p2);
+    if (!sum || sum->dgrs != 3 || sum->dgrt != 3 ||
+	!scalar_close(sum->cf[0][0], 2.0, 0.0) ||
+	!scalar_close(sum->cf[1][2], 3.0, 0.0) ||
+	!scalar_close(sum->cf[2][1], 5.0, 0.0)) {
+	report_failure(test, "bn_multipoly_add did not preserve differently sized operands");
+	failures++;
+    }
+
+    if (!product || product->dgrs != 4 || product->dgrt != 4 ||
+	!scalar_close(product->cf[1][2], 6.0, 0.0) ||
+	!scalar_close(product->cf[3][3], 15.0, 0.0)) {
+	report_failure(test, "bn_multipoly_mul did not accumulate coefficient products");
+	failures++;
+    }
+
+    bn_multipoly_free(product);
+    bn_multipoly_free(sum);
+    bn_multipoly_free(p2);
+    bn_multipoly_free(p1);
+    return failures;
+}
+
+
+static int
 test_poly_legacy(void)
 {
     int failures = 0;
@@ -553,6 +700,8 @@ test_poly_roots(void)
 
 static const struct bn_api_case poly_cases[] = {
     {"ops", test_poly_ops},
+    {"edge", test_poly_edge_cases},
+    {"multipoly", test_multipoly_ops},
     {"legacy", test_poly_legacy},
     {"roots", test_poly_roots},
     {NULL, NULL}

@@ -45,7 +45,10 @@ __BEGIN_DECLS
 
 /**
  * Polynomial data type
- * bn_poly->cf[n] corresponds to X^n
+ *
+ * Coefficients are stored from the highest to the lowest degree:
+ * `cf[0]` is the coefficient of `X^dgr` and `cf[dgr]` is the
+ * constant coefficient.
  */
 typedef struct bn_poly {
     uint32_t magic;
@@ -63,6 +66,9 @@ typedef struct bn_poly {
  *
  * @brief
  * multiply two polynomials
+ *
+ * The output may alias either input.  If the result exceeds
+ * BN_MAX_POLY_DEGREE, returns BN_POLY_NULL without modifying product.
  */
 BN_EXPORT extern struct bn_poly *bn_poly_mul(struct bn_poly *product,
 					     const struct bn_poly *m1,
@@ -81,6 +87,8 @@ BN_EXPORT extern struct bn_poly *bn_poly_scale(struct bn_poly *eqn,
  * bn_poly_add
  * @brief
  * add two polynomials
+ *
+ * The output may alias either input.
  */
 BN_EXPORT extern struct bn_poly *bn_poly_add(struct bn_poly *sum,
 					     const struct bn_poly *poly1,
@@ -90,6 +98,8 @@ BN_EXPORT extern struct bn_poly *bn_poly_add(struct bn_poly *sum,
  * bn_poly_sub
  * @brief
  * subtract two polynomials
+ *
+ * The output may alias either input.
  */
 BN_EXPORT extern struct bn_poly *bn_poly_sub(struct bn_poly *diff,
 					     const struct bn_poly *poly1,
@@ -98,7 +108,10 @@ BN_EXPORT extern struct bn_poly *bn_poly_sub(struct bn_poly *diff,
 /**
  * @brief
  * Divides any polynomial into any other polynomial using synthetic
- * division.  Both polynomials must have real coefficients.
+ * division.  Both polynomials must have real coefficients and the
+ * divisor's leading coefficient must be nonzero.  The quotient and
+ * remainder outputs must be distinct; the quotient may alias the
+ * dividend.  All other output/input pairs must be distinct.
  */
 BN_EXPORT extern void bn_poly_synthetic_division(struct bn_poly *quo,
 						 struct bn_poly *rem,
@@ -108,7 +121,8 @@ BN_EXPORT extern void bn_poly_synthetic_division(struct bn_poly *quo,
 /**
  *@brief
  * Uses the quadratic formula to find the roots (in `complex' form) of
- * any quadratic equation with real coefficients.
+ * any quadratic equation with real coefficients.  A nonzero leading
+ * coefficient need not be one.
  *
  *	@return 1 for success
  *	@return 0 for fail.
@@ -144,6 +158,7 @@ BN_EXPORT extern int bn_poly_quadratic_roots(struct bn_complex roots[],
  * If D < 0, there will be three unequal real roots.
  *
  * Returns 1 for success, 0 for fail.
+ * A nonzero leading coefficient need not be one.
  */
 BN_EXPORT extern int bn_poly_cubic_roots(struct bn_complex roots[],
 					 const struct bn_poly *eqn);
@@ -151,7 +166,8 @@ BN_EXPORT extern int bn_poly_cubic_roots(struct bn_complex roots[],
 /**
  *@brief
  * Uses the quartic formula to find the roots (in `complex' form)
- * of any quartic equation with real coefficients.
+ * of any quartic equation with real coefficients.  A nonzero leading
+ * coefficient need not be one.
  *
  *	@return 1 for success
  *	@return 0 for fail.
