@@ -29,7 +29,7 @@
 #include "bg/aabb_ray.h"
 
 void
-bg_ray_invdir(vect_t *invdir, vect_t dir)
+bg_ray_invdir(vect_t *invdir, const vect_t dir)
 {
     if (UNLIKELY(!invdir))
 	return;
@@ -40,7 +40,6 @@ bg_ray_invdir(vect_t *invdir, vect_t dir)
     } else if (dir[X] > SQRT_SMALL_FASTF) {
 	(*invdir)[X]=1.0/dir[X];
     } else {
-	dir[X] = 0.0;
 	(*invdir)[X] = INFINITY;
     }
     if (dir[Y] < -SQRT_SMALL_FASTF) {

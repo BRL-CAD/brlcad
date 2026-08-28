@@ -200,7 +200,7 @@ _bot_cmd_vertex_pick(void *bs, int argc, const char **argv)
 
 	    fastf_t vdist;
 	    point_t pca;
-	    bg_dist_pnt3_line3(&vdist, pca, origin, vp, dir, &tol);
+	    bg_dist_pnt3_line3(&vdist, pca, origin, dir, vp, &tol);
 	    if (vdist < dmin) {
 		dmin = vdist;
 		cvert = (int)i;
@@ -215,7 +215,7 @@ _bot_cmd_vertex_pick(void *bs, int argc, const char **argv)
 
 	    fastf_t vdist;
 	    point_t pca;
-	    bg_dist_pnt3_line3(&vdist, pca, origin, vp, dir, &tol);
+	    bg_dist_pnt3_line3(&vdist, pca, origin, dir, vp, &tol);
 	    if (vdist < dmin)
 		dmin = vdist;
 	}
@@ -229,7 +229,7 @@ _bot_cmd_vertex_pick(void *bs, int argc, const char **argv)
 
 	    fastf_t vdist;
 	    point_t pca;
-	    bg_dist_pnt3_line3(&vdist, pca, origin, vp, dir, &tol);
+	    bg_dist_pnt3_line3(&vdist, pca, origin, dir, vp, &tol);
 	    if (vdist <= near_thresh) {
 		vect_t diff;
 		VSUB2(diff, vp, origin);
@@ -380,41 +380,27 @@ _bot_cmd_edge_pick(void *bs, int argc, const char **argv)
 	VMOVE(vb, &bot->vertices[3*edges[ei].second]);
 
 	fastf_t dist[2];
-	int ret = bg_dist_line3_lseg3(dist, origin, dir, va, vb, &tol);
+	bg_dist_line3_lseg3(dist, origin, dir, va, vb, &tol);
 
-	if (ret < -1) {
-	    /* Parallel and collinear: distance is zero along the line.
-	     * Use distance from segment endpoint to the ray as a proxy.
-	     * For depth, project the midpoint of the segment onto the ray. */
-	    fastf_t d0;
-	    point_t pca;
-	    bg_dist_pnt3_line3(&d0, pca, origin, va, dir, &tol);
-	    edge_dist = (double)d0;
-	    vect_t mid, diff;
-	    VADD2SCALE(mid, va, vb, 0.5);
-	    VSUB2(diff, mid, origin);
-	    ray_t = VDOT(diff, dir);
-	} else {
-	    /* Compute actual 3D distance between closest points on ray and
-	     * segment.  dist[0] is the parametric distance along the ray;
-	     * dist[1] is the parametric ratio along the segment [0,1]. */
-	    point_t closest_ray;
-	    VJOIN1(closest_ray, origin, dist[0], dir);
+	/* Compute actual 3D distance between closest points on ray and
+	 * segment.  dist[0] is the parametric distance along the ray;
+	 * dist[1] is the parametric ratio along the segment [0,1]. */
+	point_t closest_ray;
+	VJOIN1(closest_ray, origin, dist[0], dir);
 
-	    double seg_t = (double)dist[1];
-	    if (seg_t < 0.0) seg_t = 0.0;
-	    if (seg_t > 1.0) seg_t = 1.0;
+	double seg_t = (double)dist[1];
+	if (seg_t < 0.0) seg_t = 0.0;
+	if (seg_t > 1.0) seg_t = 1.0;
 
-	    vect_t edge_vec;
-	    VSUB2(edge_vec, vb, va);
-	    point_t closest_seg;
-	    VJOIN1(closest_seg, va, seg_t, edge_vec);
+	vect_t edge_vec;
+	VSUB2(edge_vec, vb, va);
+	point_t closest_seg;
+	VJOIN1(closest_seg, va, seg_t, edge_vec);
 
-	    vect_t diff;
-	    VSUB2(diff, closest_ray, closest_seg);
-	    edge_dist = MAGNITUDE(diff);
-	    ray_t = (double)dist[0];
-	}
+	vect_t diff;
+	VSUB2(diff, closest_ray, closest_seg);
+	edge_dist = MAGNITUDE(diff);
+	ray_t = (double)dist[0];
     };
 
     if (!use_first) {
@@ -590,7 +576,7 @@ _bot_cmd_face_pick(void *bs, int argc, const char **argv)
 
 	    fastf_t cdist;
 	    point_t pca;
-	    bg_dist_pnt3_line3(&cdist, pca, origin, centroid, dir, &tol);
+	    bg_dist_pnt3_line3(&cdist, pca, origin, dir, centroid, &tol);
 	    if ((double)cdist < dmin) {
 		dmin = (double)cdist;
 		cface = fi;

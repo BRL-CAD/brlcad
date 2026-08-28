@@ -282,7 +282,6 @@ BG_EXPORT extern int bg_trimesh_optimize(
  * of points active in the mesh.
  *
  * @param[out] ofaces faces array for the new output mesh
- * @param[out] n_ofaces length of ofaces array
  * @param[out] opnts points array for the new output mesh
  * @param[out] n_opnts length of opnts array
  * @param[in] ifaces array of input trimesh
@@ -292,7 +291,7 @@ BG_EXPORT extern int bg_trimesh_optimize(
  * @return -1 if error, number of faces in new trimesh if successful (should
  * match the original face count)
  */
-BG_EXPORT extern int bg_trimesh_2d_gc(int **ofaces, int *n_ofaces, point2d_t **opnts, int *n_opnts,
+BG_EXPORT extern int bg_trimesh_2d_gc(int **ofaces, point2d_t **opnts, int *n_opnts,
 	const int *ifaces, int n_ifaces, const point2d_t *ipnts);
 
 /**

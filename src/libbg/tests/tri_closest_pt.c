@@ -29,42 +29,36 @@
 int
 main(int argc, char **argv)
 {
-    int expected_result = 0;
-    int actual_result = 0;
-    float f1, f2, f3 = 0.0;
+    double expected_dist = 0.0;
+    double actual_dist = 0.0;
     point_t V0 = VINIT_ZERO;
     point_t V1 = VINIT_ZERO;
     point_t V2 = VINIT_ZERO;
     point_t TP = VINIT_ZERO;
+    point_t expected_closest = VINIT_ZERO;
+    point_t actual_closest = VINIT_ZERO;
 
     bu_setprogname(argv[0]);
 
-    if (argc != 6)
-	bu_exit(1, "ERROR: [%s] input format is TPx,TPy,TPz V0x,V0y,V0z V1x,V1y,V1z V2x,V2y,V2z expected_result\n", argv[0]);
+    if (argc != 7)
+	bu_exit(1, "ERROR: [%s] input format is TPx,TPy,TPz V0x,V0y,V0z V1x,V1y,V1z V2x,V2y,V2z expected_dist closest_x,closest_y,closest_z\n", argv[0]);
 
-    sscanf(argv[1], "%f,%f,%f", &f1, &f2, &f3);
-    VSET(TP, f1, f2, f3);
+    sscanf(argv[1], "%lf,%lf,%lf", &TP[X], &TP[Y], &TP[Z]);
+    sscanf(argv[2], "%lf,%lf,%lf", &V0[X], &V0[Y], &V0[Z]);
+    sscanf(argv[3], "%lf,%lf,%lf", &V1[X], &V1[Y], &V1[Z]);
+    sscanf(argv[4], "%lf,%lf,%lf", &V2[X], &V2[Y], &V2[Z]);
+    sscanf(argv[5], "%lf", &expected_dist);
+    sscanf(argv[6], "%lf,%lf,%lf", &expected_closest[X], &expected_closest[Y], &expected_closest[Z]);
 
-    sscanf(argv[2], "%f,%f,%f", &f1, &f2, &f3);
-    VSET(V0, f1, f2, f3);
+    actual_dist = bg_tri_closest_pt(&actual_closest, TP, V0, V1, V2);
 
-    sscanf(argv[3], "%f,%f,%f", &f1, &f2, &f3);
-    VSET(V1, f1, f2, f3);
+    bu_log("distance: %g\n", actual_dist);
+    bu_log("closest point: %g,%g,%g\n", V3ARGS(actual_closest));
 
-    sscanf(argv[4], "%f,%f,%f", &f1, &f2, &f3);
-    VSET(V2, f1, f2, f3);
-
-    sscanf(argv[5], "%d", &expected_result);
-
-    actual_result = bg_tri_closest_pt(NULL, TP, V0, V1, V2);
-
-    bu_log("result: %d\n", actual_result);
-
-    if (NEAR_EQUAL(expected_result, actual_result, SMALL_FASTF)) {
-	return 0;
-    }
-
-    return -1;
+    return (!NEAR_EQUAL(expected_dist, actual_dist, BN_TOL_DIST)
+	    || !NEAR_EQUAL(expected_closest[X], actual_closest[X], BN_TOL_DIST)
+	    || !NEAR_EQUAL(expected_closest[Y], actual_closest[Y], BN_TOL_DIST)
+	    || !NEAR_EQUAL(expected_closest[Z], actual_closest[Z], BN_TOL_DIST));
 }
 
 
