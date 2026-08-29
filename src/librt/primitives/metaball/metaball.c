@@ -231,7 +231,7 @@ rt_metaball_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
      * XXX this can be optimized greatly to reduce the BSP presence... */
     if (rt_metaball_bbox(ip, &(stp->st_min), &(stp->st_max), &rtip->rti_tol)) return 1;
     stp->st_specific = (void *)nmb;
-    return 0;
+    return _rt_nonuniform_prep_finalize(stp, ip, &rtip->rti_tol);
 }
 
 
@@ -662,6 +662,7 @@ rt_metaball_plot_sph(struct bu_list *vlfree, struct bu_list *vhead, point_t *cen
 C_DECL int
 rt_metaball_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
+    struct rt_nonuniform_vlist_state nonuniform_state;
     struct rt_metaball_internal *mb;
     struct wdb_metaball_pnt *mbpt;
     point_t bsc;
@@ -669,19 +670,20 @@ rt_metaball_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    _rt_nonuniform_vlist_state_init(&nonuniform_state, vhead);
     struct bu_list *vlfree = &rt_vlfree;
     mb = (struct rt_metaball_internal *)ip->idb_ptr;
     RT_METABALL_CK_MAGIC(mb);
     rad = rt_metaball_get_bounding_sphere(&bsc, mb->threshold, mb);
     /* cope with the case where 0 points are defined. */
     if (rad<0)
-	return 0;
+	return _rt_nonuniform_plot_finalize(vhead, &nonuniform_state, ip);
 #if PLOT_THE_BIG_BOUNDING_SPHERE
     rt_metaball_plot_sph(vlfree, vhead, &bsc, rad);
 #endif
     for (BU_LIST_FOR(mbpt, wdb_metaball_pnt, &mb->metaball_ctrl_head))
 	rt_metaball_plot_sph(vlfree, vhead, &mbpt->coord, mbpt->field_strength / mb->threshold);
-    return 0;
+    return _rt_nonuniform_plot_finalize(vhead, &nonuniform_state, ip);
 }
 
 C_DECL int

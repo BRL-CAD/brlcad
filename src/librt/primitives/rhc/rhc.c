@@ -379,7 +379,7 @@ rt_rhc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	return 1;
     }
 
-    return 0;			/* OK */
+    return _rt_nonuniform_prep_finalize(stp, ip, &rtip->rti_tol);
 }
 
 
@@ -1144,6 +1144,7 @@ rhc_curve_points(
 C_DECL int
 rt_rhc_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *tol, const struct bview *v, fastf_t s_size)
 {
+    struct rt_nonuniform_vlist_state nonuniform_state;
     point_t p;
     vect_t rhc_R;
     int num_curve_points, num_connections;
@@ -1152,6 +1153,7 @@ rt_rhc_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    _rt_nonuniform_vlist_state_init(&nonuniform_state, vhead);
 
     struct bu_list *vlfree = &rt_vlfree;
     rhc = (struct rt_rhc_internal *)ip->idb_ptr;
@@ -1206,13 +1208,14 @@ rt_rhc_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
     VJOIN1(p, p, 2.0, rhc_R);
     BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_DRAW);
 
-    return 0;
+    return _rt_nonuniform_plot_finalize(vhead, &nonuniform_state, ip);
 }
 
 
 C_DECL int
 rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
+    struct rt_nonuniform_vlist_state nonuniform_state;
     int i, n;
     fastf_t b, c, *back, *front, rh;
     fastf_t dtol, ntol, min_abs;
@@ -1224,6 +1227,7 @@ rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    _rt_nonuniform_vlist_state_init(&nonuniform_state, vhead);
 
     struct bu_list *vlfree = &rt_vlfree;
     xip = (struct rt_rhc_internal *)ip->idb_ptr;
@@ -1328,7 +1332,7 @@ rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     bu_free((char *)front, "fastf_t");
     bu_free((char *)back, "fastf_t");
 
-    return 0;
+    return _rt_nonuniform_plot_finalize(vhead, &nonuniform_state, ip);
 }
 
 
@@ -1781,7 +1785,7 @@ fail:
     bu_free((char *)norms, "rt_rhc_tess: norms");
     bu_free((char *)outfaceuses, "faceuse *");
 
-    return failure;
+    return failure ? failure : _rt_nonuniform_tess_finalize(*r, ip, tol);
 }
 
 

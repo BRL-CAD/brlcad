@@ -179,9 +179,9 @@ draw_solid_wireframe(struct bv_scene_obj *sp, struct bview *gvp, struct db_i *db
     }
 
     if (gvp && gvp->gv_s->adaptive_plot_csg && ip->idb_meth->ft_adaptive_plot) {
-	ret = rt_obj_adaptive_plot(&vhead, ip, tol, gvp, sp->s_size);
+	ret = ip->idb_meth->ft_adaptive_plot(&vhead, ip, tol, gvp, sp->s_size);
     } else if (ip->idb_meth->ft_plot) {
-	ret = rt_obj_plot_view(&vhead, ip, ttol, tol, gvp);
+	ret = ip->idb_meth->ft_plot(&vhead, ip, ttol, tol, gvp);
     }
 
     rt_db_free_internal(ip);
@@ -311,7 +311,8 @@ append_solid_to_display_list(
 
         BU_LIST_INIT(&vhead);
 
-	plot_status = rt_obj_plot(&vhead, ip, tsp->ts_ttol, tsp->ts_tol);
+        plot_status = ip->idb_meth->ft_plot(&vhead, ip, tsp->ts_ttol,
+					    tsp->ts_tol, NULL);
 
         if (plot_status < 0) {
 	    if (pathp && DB_FULL_PATH_CUR_DIR(pathp)) {

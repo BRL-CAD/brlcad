@@ -228,7 +228,6 @@ replot_modified_solid(
 {
     struct rt_db_internal intern;
     struct bu_list vhead;
-    int plot_ret;
 
     RT_DB_INTERNAL_INIT(&intern);
 
@@ -251,10 +250,8 @@ replot_modified_solid(
     s->tol.ttol.norm = s->tol.nrm_tol;
 
     transform_editing_solid(s, &intern, mat, ip, 0);
-    plot_ret = rt_obj_plot(&vhead, &intern, &s->tol.ttol, &s->tol.tol);
-    rt_db_free_internal(&intern);
-    if (plot_ret < 0) {
-	BV_FREE_VLIST(s->vlfree, &vhead);
+
+    if (OBJ[ip->idb_type].ft_plot(&vhead, &intern, &s->tol.ttol, &s->tol.tol, NULL) < 0) {
 	if (!sp->s_u_data)
 	    return -1;
 	struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
@@ -263,6 +260,7 @@ replot_modified_solid(
 		    ": re-plot failure\n", (char *)NULL);
 	return -1;
     }
+    rt_db_free_internal(&intern);
 
     /* Write new displaylist */
     drawH_part2(s, sp->s_soldash, &vhead,

@@ -320,7 +320,7 @@ rt_eto_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     if (rt_eto_bbox(ip, &(stp->st_min), &(stp->st_max), &rtip->rti_tol)) return 1;
 
-    return 0;			/* OK */
+    return _rt_nonuniform_prep_finalize(stp, ip, &rtip->rti_tol);
 }
 
 
@@ -1097,6 +1097,7 @@ eto_ellipse_points(
 C_DECL int
 rt_eto_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *tol, const struct bview *v, fastf_t s_size)
 {
+    struct rt_nonuniform_vlist_state nonuniform_state;
     struct rt_eto_internal *eto;
     fastf_t radian, radian_step;
     vect_t ellipse_A, ellipse_B, contour_A, contour_B, I, J;
@@ -1106,6 +1107,7 @@ rt_eto_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    _rt_nonuniform_vlist_state_init(&nonuniform_state, vhead);
 
     struct bu_list *vlfree = &rt_vlfree;
     eto = (struct rt_eto_internal *)ip->idb_ptr;
@@ -1224,7 +1226,7 @@ rt_eto_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 	radian += radian_step;
     }
 
-    return 0;
+    return _rt_nonuniform_plot_finalize(vhead, &nonuniform_state, ip);
 }
 
 /**
@@ -1239,6 +1241,7 @@ rt_eto_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 C_DECL int
 rt_eto_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
+    struct rt_nonuniform_vlist_state nonuniform_state;
     fastf_t a, b;	/* axis lengths of ellipse */
     fastf_t ang, ch, cv, dh, dv, ntol, dtol, phi, theta;
     fastf_t *eto_ells;
@@ -1250,6 +1253,7 @@ rt_eto_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    _rt_nonuniform_vlist_state_init(&nonuniform_state, vhead);
 
     struct bu_list *vlfree = &rt_vlfree;
     tip = (struct rt_eto_internal *)ip->idb_ptr;
@@ -1362,7 +1366,7 @@ rt_eto_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     }
 
     bu_free((char *)eto_ells, "ells[]");
-    return 0;
+    return _rt_nonuniform_plot_finalize(vhead, &nonuniform_state, ip);
 }
 
 
@@ -1794,7 +1798,7 @@ rt_eto_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     bu_free((char *)faces, "rt_eto_tess *faces[]");
     bu_free((char *)norms, "rt_eto_tess: norms[]");
 
-    return fail;
+    return fail ? fail : _rt_nonuniform_tess_finalize(*r, ip, tol);
 }
 
 

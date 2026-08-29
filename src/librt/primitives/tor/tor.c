@@ -328,7 +328,7 @@ rt_tor_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	return 1;
     }
 
-    return 0;			/* OK */
+    return _rt_nonuniform_prep_finalize(stp, ip, &rtip->rti_tol);
 }
 
 
@@ -1061,6 +1061,7 @@ tor_ellipse_points(
 C_DECL int
 rt_tor_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *tol, const struct bview *v, fastf_t s_size)
 {
+    struct rt_nonuniform_vlist_state nonuniform_state;
     vect_t a, b, tor_a, tor_b, tor_h, center;
     fastf_t mag_a, mag_b, mag_h;
     struct rt_tor_internal *tor;
@@ -1069,6 +1070,7 @@ rt_tor_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    _rt_nonuniform_vlist_state_init(&nonuniform_state, vhead);
     struct bu_list *vlfree = &rt_vlfree;
     tor = (struct rt_tor_internal *)ip->idb_ptr;
     RT_TOR_CK_MAGIC(tor);
@@ -1144,7 +1146,7 @@ rt_tor_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 	radian += radian_step;
     }
 
-    return 0;
+    return _rt_nonuniform_plot_finalize(vhead, &nonuniform_state, ip);
 }
 
 /**
@@ -1156,6 +1158,7 @@ rt_tor_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 C_DECL int
 rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
+    struct rt_nonuniform_vlist_state nonuniform_state;
     fastf_t alpha;
     fastf_t beta;
     fastf_t cos_alpha, sin_alpha;
@@ -1174,6 +1177,7 @@ rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    _rt_nonuniform_vlist_state_init(&nonuniform_state, vhead);
     struct bu_list *vlfree = &rt_vlfree;
     tip = (struct rt_tor_internal *)ip->idb_ptr;
     RT_TOR_CK_MAGIC(tip);
@@ -1247,7 +1251,7 @@ rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     }
 
     bu_free((char *)pts, "rt_tor_plot pts[]");
-    return 0;
+    return _rt_nonuniform_plot_finalize(vhead, &nonuniform_state, ip);
 }
 
 
@@ -1478,7 +1482,7 @@ rt_tor_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	bu_log("rt_tor_tess: tube radius (%g) smaller than calculational tolerance (%g); returning empty mesh\n",
 	       r_h_eff, tol->dist);
 	*r = nmg_mrsv(m);
-	return 0;
+	return _rt_nonuniform_tess_finalize(*r, ip, tol);
     }
 
     /* Compute segment counts for the major circle (nlen, radius r_a) and the
@@ -1514,7 +1518,8 @@ rt_tor_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
      * axis.  Produce the OUTER surface as a closed manifold (sphere topology)
      * rather than the self-intersecting full tube. */
     if (r_h_eff > tip->r_a) {
-	return rt_tor_spindle_tess(r, m, tip, r_h_eff, nw, nlen, tol);
+	int ret = rt_tor_spindle_tess(r, m, tip, r_h_eff, nw, nlen, tol);
+	return ret ? ret : _rt_nonuniform_tess_finalize(*r, ip, tol);
     }
 
     /* Compute the points on the surface of the torus */
@@ -1615,7 +1620,7 @@ rt_tor_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     bu_free((char *)verts, "rt_tor_tess *verts[]");
     bu_free((char *)faces, "rt_tor_tess *faces[]");
     bu_free((char *)norms, "rt_tor_tess norms[]");
-    return 0;
+    return _rt_nonuniform_tess_finalize(*r, ip, tol);
 }
 
 

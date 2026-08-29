@@ -250,7 +250,7 @@ rt_hyp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     /* calculate bounding RPP */
     if (rt_hyp_bbox(ip, &(stp->st_min), &(stp->st_max), &rtip->rti_tol)) return 1;
-    return 0;			/* OK */
+    return _rt_nonuniform_prep_finalize(stp, ip, &rtip->rti_tol);
 }
 
 
@@ -784,6 +784,7 @@ rt_hyp_free(struct soltab *stp)
 C_DECL int
 rt_hyp_plot(struct bu_list *vhead, struct rt_db_internal *incoming, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
+    struct rt_nonuniform_vlist_state nonuniform_state;
     int i, j;		/* loop indices */
     struct rt_hyp_internal *hyp_in;
     struct hyp_specific *hyp;
@@ -799,6 +800,7 @@ rt_hyp_plot(struct bu_list *vhead, struct rt_db_internal *incoming, const struct
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(incoming);
+    _rt_nonuniform_vlist_state_init(&nonuniform_state, vhead);
     struct bu_list *vlfree = &rt_vlfree;
     hyp_in = (struct rt_hyp_internal *)incoming->idb_ptr;
     RT_HYP_CK_MAGIC(hyp_in);
@@ -880,7 +882,7 @@ rt_hyp_plot(struct bu_list *vhead, struct rt_db_internal *incoming, const struct
 
     BU_PUT(hyp, struct hyp_specific);
 
-    return 0;
+    return _rt_nonuniform_plot_finalize(vhead, &nonuniform_state, incoming);
 }
 
 
@@ -1435,7 +1437,7 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
     bu_ptbl_free(&vert_tab);
     BU_PUT(xip, struct hyp_specific);
-    return 0;
+    return _rt_nonuniform_tess_finalize(*r, ip, tol);
 
  fail:
     /* free mem */

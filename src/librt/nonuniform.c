@@ -842,18 +842,47 @@ _rt_nonuniform_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp
 
 
 void
-_rt_nonuniform_transform_vlist(struct bu_list *vhead, const mat_t mat)
+_rt_nonuniform_vlist_state_init(struct rt_nonuniform_vlist_state *state, struct bu_list *vhead)
+{
+    if (!state)
+	return;
+
+    state->last = NULL;
+    state->nused = 0;
+    if (!vhead || BU_LIST_IS_EMPTY(vhead))
+	return;
+
+    state->last = BU_LIST_LAST(bv_vlist, vhead);
+    state->nused = state->last->nused;
+}
+
+
+static void
+nonuniform_transform_vlist(struct bu_list *vhead, const struct rt_nonuniform_vlist_state *state, const mat_t mat)
 {
     struct bv_vlist *vp;
+    struct bu_list *entry;
+    mat_t inv = MAT_INIT_ZERO;
+    mat_t norm_mat = MAT_INIT_ZERO;
+    int have_norm_mat;
 
     if (!vhead || !mat)
 	return;
 
-    for (BU_LIST_FOR(vp, bv_vlist, vhead)) {
+    have_norm_mat = bn_mat_inverse(inv, mat);
+    if (have_norm_mat)
+	MAT_TRANSPOSE(norm_mat, inv);
+
+    entry = state && state->last ? &state->last->l : vhead->forw;
+    while (entry != vhead) {
 	size_t i;
+	size_t first = state && state->last == (struct bv_vlist *)entry ? state->nused : 0;
+
+	vp = (struct bv_vlist *)entry;
+	entry = entry->forw;
 
 	BV_CK_VLIST(vp);
-	for (i = 0; i < vp->nused; i++) {
+	for (i = first; i < vp->nused; i++) {
 	    switch (vp->cmd[i]) {
 		case BV_VLIST_LINE_MOVE:
 		case BV_VLIST_LINE_DRAW:
@@ -870,14 +899,14 @@ _rt_nonuniform_transform_vlist(struct bu_list *vhead, const mat_t mat)
 			VMOVE(vp->pt[i], p);
 		    }
 		    break;
+		case BV_VLIST_POLY_START:
 		case BV_VLIST_POLY_VERTNORM:
+		case BV_VLIST_TRI_START:
 		case BV_VLIST_TRI_VERTNORM:
 		    {
 			vect_t n;
-			mat_t inv, norm_mat;
 
-			if (bn_mat_inverse(inv, mat)) {
-			    MAT_TRANSPOSE(norm_mat, inv);
+			if (have_norm_mat) {
 			    MAT3X3VEC(n, norm_mat, vp->pt[i]);
 			    VUNITIZE(n);
 			    VMOVE(vp->pt[i], n);
@@ -889,6 +918,56 @@ _rt_nonuniform_transform_vlist(struct bu_list *vhead, const mat_t mat)
 	    }
 	}
     }
+}
+
+
+int
+_rt_nonuniform_prep_finalize(struct soltab *stp, const struct rt_db_internal *ip, const struct bn_tol *tol)
+{
+    mat_t mat;
+    int have_nonuniform;
+
+    have_nonuniform = _rt_nonuniform_attr_get(mat, ip);
+    if (have_nonuniform <= 0)
+	return have_nonuniform;
+
+    return _rt_nonuniform_soltab_setup(stp, mat, tol);
+}
+
+
+int
+_rt_nonuniform_tess_finalize(struct nmgregion *r, const struct rt_db_internal *ip, const struct bn_tol *tol)
+{
+    mat_t mat;
+    int have_nonuniform;
+
+    have_nonuniform = _rt_nonuniform_attr_get(mat, ip);
+    if (have_nonuniform <= 0)
+	return have_nonuniform;
+
+    if (!r)
+	return 0;
+
+    _rt_nonuniform_transform_nmgregion(r, mat, tol);
+    return 0;
+}
+
+
+int
+_rt_nonuniform_plot_finalize(struct bu_list *vhead, const struct rt_nonuniform_vlist_state *state, const struct rt_db_internal *ip)
+{
+    mat_t mat;
+    int have_nonuniform;
+
+    have_nonuniform = _rt_nonuniform_attr_get(mat, ip);
+    if (have_nonuniform <= 0)
+	return have_nonuniform;
+
+    if (!vhead || !state)
+	return -1;
+
+    nonuniform_transform_vlist(vhead, state, mat);
+    return 0;
 }
 
 /*

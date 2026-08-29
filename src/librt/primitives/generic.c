@@ -254,7 +254,7 @@ rt_wireframe_plot(struct bv_scene_obj *s, struct rt_db_internal *ip, const struc
     // If we meet the conditions for an adaptive wireframe, do that
     if (v && s->adaptive_wireframe && ip->idb_meth->ft_adaptive_plot) {
 
-	rt_obj_adaptive_plot(&s->s_vlist, ip, tol, v, s->s_size);
+        ip->idb_meth->ft_adaptive_plot(&s->s_vlist, ip, tol, v, s->s_size);
         s->s_type_flags |= BV_CSG_LOD;
 
 	return BRLCAD_OK;
@@ -262,7 +262,7 @@ rt_wireframe_plot(struct bv_scene_obj *s, struct rt_db_internal *ip, const struc
 
     // Can only plot if we have an ft_plot method
     if (ip->idb_meth->ft_plot)
-	rt_obj_plot_view(&s->s_vlist, ip, ttol, tol, s->s_v);
+	ip->idb_meth->ft_plot(&s->s_vlist, ip, ttol, tol, s->s_v);
 
     // If we didn't have a plotting method, we have an empty bv_scene_obj,
     // which is fine.  Otherwise, we're good to go - either way, return
@@ -280,7 +280,7 @@ rt_shaded_plot(struct bv_scene_obj *s, struct rt_db_internal *ip, const struct b
 
     struct model *m = nmg_mm();
     struct nmgregion *r = (struct nmgregion *)NULL;
-    if (rt_obj_tess(&r, m, ip, ttol, tol) < 0) {
+    if (ip->idb_meth->ft_tessellate(&r, m, ip, ttol, tol) < 0) {
         bu_log("ERROR: tessellation failure\n");
         return BRLCAD_ERROR;
     }

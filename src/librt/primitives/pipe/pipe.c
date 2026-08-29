@@ -749,7 +749,7 @@ rt_pipe_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     stp->st_aradius = f;
     stp->st_bradius = sqrt(dx * dx + dy * dy + dz * dz);
 
-    return 0;
+    return _rt_nonuniform_prep_finalize(stp, ip, rtip ? &rtip->rti_tol : NULL);
 }
 
 
@@ -2325,18 +2325,20 @@ draw_pipe_end_adaptive(
 C_DECL int
 rt_pipe_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol), const struct bview *v, fastf_t s_size)
 {
+    struct rt_nonuniform_vlist_state nonuniform_state;
     struct rt_pipe_internal *pipeobj;
     struct pipe_segment *cur_seg;
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    _rt_nonuniform_vlist_state_init(&nonuniform_state, vhead);
     struct bu_list *vlfree = &rt_vlfree;
     pipeobj = (struct rt_pipe_internal *)ip->idb_ptr;
     RT_PIPE_CK_MAGIC(pipeobj);
 
     cur_seg = pipe_seg_first(pipeobj);
     if (cur_seg == NULL) {
-	return 0;
+	return _rt_nonuniform_plot_finalize(vhead, &nonuniform_state, ip);
     }
 
     fastf_t point_spacing = solid_point_spacing(v, s_size);
@@ -2361,7 +2363,7 @@ rt_pipe_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const st
 
     BU_PUT(cur_seg, struct pipe_segment);
 
-    return 0;
+    return _rt_nonuniform_plot_finalize(vhead, &nonuniform_state, ip);
 }
 
 
@@ -2373,18 +2375,20 @@ rt_pipe_plot(
     const struct bn_tol *UNUSED(tol),
     const struct bview *UNUSED(info))
 {
+    struct rt_nonuniform_vlist_state nonuniform_state;
     struct rt_pipe_internal *pip;
     struct pipe_segment *cur_seg;
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    _rt_nonuniform_vlist_state_init(&nonuniform_state, vhead);
     struct bu_list *vlfree = &rt_vlfree;
     pip = (struct rt_pipe_internal *)ip->idb_ptr;
     RT_PIPE_CK_MAGIC(pip);
 
     cur_seg = pipe_seg_first(pip);
     if (cur_seg == NULL) {
-	return 0;
+	return _rt_nonuniform_plot_finalize(vhead, &nonuniform_state, ip);
     }
 
     cur_seg->connecting_arcs = PIPE_CONNECTING_ARCS;
@@ -2407,7 +2411,7 @@ rt_pipe_plot(
 
     BU_PUT(cur_seg, struct pipe_segment);
 
-    return 0;
+    return _rt_nonuniform_plot_finalize(vhead, &nonuniform_state, ip);
 }
 
 
@@ -3803,7 +3807,7 @@ rt_pipe_tess(
     *r = (struct nmgregion *)NULL;
 
     if (BU_LIST_IS_EMPTY(&pip->pipe_segs_head)) {
-	return 0;    /* nothing to tessellate */
+	return _rt_nonuniform_tess_finalize(*r, ip, tol);    /* nothing to tessellate */
     }
 
     /* find max diameter */
@@ -3814,7 +3818,7 @@ rt_pipe_tess(
     }
 
     if (max_diam <= tol->dist) {
-	return 0;    /* nothing to tessellate */
+	return _rt_nonuniform_tess_finalize(*r, ip, tol);    /* nothing to tessellate */
     }
 
     /* calculate number of segments for circles */
@@ -3866,7 +3870,7 @@ rt_pipe_tess(
 
     pp2 = BU_LIST_NEXT(wdb_pipe_pnt, &pp1->l);
     if (BU_LIST_IS_HEAD(&pp2->l, &(pip->pipe_segs_head))) {
-	return 0;
+	return _rt_nonuniform_tess_finalize(*r, ip, tol);
     }
     pp3 = BU_LIST_NEXT(wdb_pipe_pnt, &pp2->l);
     if (BU_LIST_IS_HEAD(&pp3->l, &(pip->pipe_segs_head))) {
@@ -3951,7 +3955,7 @@ rt_pipe_tess(
     nmg_rebound(m, tol);
     nmg_edge_fuse(&s->l.magic, vlfree, tol);
 
-    return 0;
+    return _rt_nonuniform_tess_finalize(*r, ip, tol);
 }
 
 

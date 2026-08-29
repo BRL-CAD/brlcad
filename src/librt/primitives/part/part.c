@@ -350,7 +350,7 @@ rt_part_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	/* Compute bounding sphere*/
 	VMOVE(stp->st_center, pip->part_V);
 	stp->st_aradius = stp->st_bradius = pip->part_vrad;
-	return 0;		/* OK */
+	return _rt_nonuniform_prep_finalize(stp, ip, &rtip->rti_tol);
     }
 
     /* Compute some essential terms */
@@ -447,7 +447,7 @@ rt_part_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	stp->st_aradius = f;
 	stp->st_bradius = MAGNITUDE(work);
     }
-    return 0;			/* OK */
+    return _rt_nonuniform_prep_finalize(stp, ip, &rtip->rti_tol);
 }
 
 
@@ -1278,6 +1278,7 @@ rt_part_hemisphere(register point_t (*ov), register fastf_t *v, fastf_t *a, fast
 C_DECL int
 rt_part_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
+    struct rt_nonuniform_vlist_state nonuniform_state;
     struct rt_part_internal *pip;
     point_t tail;
     point_t sphere_rim[16];
@@ -1290,6 +1291,7 @@ rt_part_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_t
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    _rt_nonuniform_vlist_state_init(&nonuniform_state, vhead);
     struct bu_list *vlfree = &rt_vlfree;
     pip = (struct rt_part_internal *)ip->idb_ptr;
     RT_PART_CK_MAGIC(pip);
@@ -1317,7 +1319,7 @@ rt_part_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_t
 	for (i=0; i<16; i++) {
 	    BV_ADD_VLIST(vlfree, vhead, sphere_rim[i], BV_VLIST_LINE_DRAW);
 	}
-	return 0;		/* OK */
+	return _rt_nonuniform_plot_finalize(vhead, &nonuniform_state, ip);
     }
 
     VMOVE(Hunit, pip->part_H);
@@ -1378,7 +1380,7 @@ rt_part_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_t
     BV_ADD_VLIST(vlfree, vhead, vhemi[6], BV_VLIST_LINE_MOVE);
     BV_ADD_VLIST(vlfree, vhead, hhemi[6], BV_VLIST_LINE_DRAW);
 
-    return 0;
+    return _rt_nonuniform_plot_finalize(vhead, &nonuniform_state, ip);
 }
 
 
@@ -1770,7 +1772,7 @@ rt_part_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 	bu_free((char *)strips[i].fu, "strip faceuse[]");
     }
     bu_free((char *)strips, "strips[]");
-    return 0;
+    return _rt_nonuniform_tess_finalize(*r, ip, tol);
  fail:
     /* Release memory */
     /* All strips have vertices and normals */

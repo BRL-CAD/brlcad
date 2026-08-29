@@ -39,8 +39,6 @@
 #include "raytrace.h"
 #include "rt/geom.h"
 
-#include "../librt_private.h"
-
 extern "C" {
 
 #define RT_DECLARE_INTERFACE(name) \
@@ -248,8 +246,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
-	NULL /* validate */,
-	NULL /* curve_affine */
+	NULL /* validate */
     },
 
     {
@@ -301,8 +298,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_MAT_CAST(rt_tor_mat),
 	RTFUNCTAB_FUNC_PERTURB_CAST(rt_tor_perturb), /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
-	NULL /* validate */,
-	RTFUNCTAB_FUNC_CURVE_AFFINE_CAST(_rt_nonuniform_curve)
+	NULL /* validate */
     },
 
     {
@@ -354,8 +350,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_MAT_CAST(rt_tgc_mat),
 	RTFUNCTAB_FUNC_PERTURB_CAST(rt_tgc_perturb), /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
-	RTFUNCTAB_FUNC_VALIDATE_CAST(rt_tgc_functab_validate) /* validate */,
-	NULL /* curve_affine */
+	RTFUNCTAB_FUNC_VALIDATE_CAST(rt_tgc_functab_validate) /* validate */
     },
 
     {
@@ -407,8 +402,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_MAT_CAST(rt_ell_mat),
 	RTFUNCTAB_FUNC_PERTURB_CAST(rt_ell_perturb), /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
-	RTFUNCTAB_FUNC_VALIDATE_CAST(rt_ell_functab_validate) /* validate */,
-	NULL /* curve_affine */
+	RTFUNCTAB_FUNC_VALIDATE_CAST(rt_ell_functab_validate) /* validate */
     },
 
     {
@@ -460,8 +454,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_MAT_CAST(rt_arb_mat),
 	RTFUNCTAB_FUNC_PERTURB_CAST(rt_arb_perturb), /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
-	RTFUNCTAB_FUNC_VALIDATE_CAST(rt_arb_functab_validate) /* validate */,
-	NULL /* curve_affine */
+	RTFUNCTAB_FUNC_VALIDATE_CAST(rt_arb_functab_validate) /* validate */
     },
 
     {
@@ -513,8 +506,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_MAT_CAST(rt_ars_mat),
 	NULL, /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
-	NULL /* validate */,
-	NULL /* curve_affine */
+	NULL /* validate */
     },
 
     {
@@ -566,8 +558,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_MAT_CAST(rt_hlf_mat),
 	RTFUNCTAB_FUNC_PERTURB_CAST(rt_hlf_perturb), /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
-	NULL /* validate */,
-	NULL /* curve_affine */
+	NULL /* validate */
     },
 
     {
@@ -619,8 +610,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_MAT_CAST(rt_tgc_mat),
 	RTFUNCTAB_FUNC_PERTURB_CAST(rt_tgc_perturb), /* perturb - REC shares rt_tgc_internal */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
-	NULL /* validate */,
-	NULL /* curve_affine */
+	NULL /* validate */
     },
 
     {
@@ -672,8 +662,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* mat */
 	NULL, /* perturb */
 	NULL  /* scene_obj */,
-	NULL /* validate */,
-	NULL /* curve_affine */
+	NULL /* validate */
     },
 
     {
@@ -725,8 +714,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_MAT_CAST(rt_nurb_mat),
 	NULL, /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
-	NULL /* validate */,
-	NULL /* curve_affine */
+	NULL /* validate */
     },
 
     {
@@ -778,8 +766,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_MAT_CAST(rt_ell_mat),
 	RTFUNCTAB_FUNC_PERTURB_CAST(rt_ell_perturb), /* perturb - SPH shares rt_ell_internal */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
-	NULL /* validate */,
-	NULL /* curve_affine */
+	NULL /* validate */
     },
 
     {
@@ -831,8 +818,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_MAT_CAST(rt_nmg_mat),
 	NULL, /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
-	NULL /* validate */,
-	NULL /* curve_affine */
+	NULL /* validate */
     },
 
     {
@@ -884,8 +870,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_MAT_CAST(rt_ebm_mat),
 	NULL, /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
-	NULL /* validate */,
-	NULL /* curve_affine */
+	NULL /* validate */
     },
 
     {
@@ -937,8 +922,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_MAT_CAST(rt_vol_mat),
 	NULL, /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
-	NULL /* validate */,
-	NULL /* curve_affine */
+	NULL /* validate */
     },
 
     {
@@ -990,8 +974,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_MAT_CAST(rt_arbn_mat),
 	RTFUNCTAB_FUNC_PERTURB_CAST(rt_arbn_perturb), /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
-	NULL /* validate */,
-	NULL /* curve_affine */
+	NULL /* validate */
     },
 
     {
@@ -1043,8 +1026,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_MAT_CAST(rt_pipe_mat),
 	NULL, /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
-	NULL /* validate */,
-	NULL /* curve_affine */
+	NULL /* validate */
     },
 
     {
@@ -1096,8 +1078,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_MAT_CAST(rt_part_mat),
 	RTFUNCTAB_FUNC_PERTURB_CAST(rt_part_perturb), /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
-	NULL /* validate */,
-	RTFUNCTAB_FUNC_CURVE_AFFINE_CAST(_rt_nonuniform_curve)
+	NULL /* validate */
     },
 
     {
@@ -1149,8 +1130,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_MAT_CAST(rt_rpc_mat),
 	RTFUNCTAB_FUNC_PERTURB_CAST(rt_rpc_perturb), /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
-	RTFUNCTAB_FUNC_VALIDATE_CAST(rt_rpc_functab_validate) /* validate */,
-	RTFUNCTAB_FUNC_CURVE_AFFINE_CAST(_rt_nonuniform_curve)
+	RTFUNCTAB_FUNC_VALIDATE_CAST(rt_rpc_functab_validate) /* validate */
     },
 
     {
@@ -1202,8 +1182,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_MAT_CAST(rt_rhc_mat),
 	RTFUNCTAB_FUNC_PERTURB_CAST(rt_rhc_perturb), /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
-	RTFUNCTAB_FUNC_VALIDATE_CAST(rt_rhc_functab_validate) /* validate */,
-	RTFUNCTAB_FUNC_CURVE_AFFINE_CAST(_rt_nonuniform_curve)
+	RTFUNCTAB_FUNC_VALIDATE_CAST(rt_rhc_functab_validate) /* validate */
     },
 
     {
@@ -1255,8 +1234,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_MAT_CAST(rt_epa_mat),
 	RTFUNCTAB_FUNC_PERTURB_CAST(rt_epa_perturb), /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
-	RTFUNCTAB_FUNC_VALIDATE_CAST(rt_epa_functab_validate) /* validate */,
-	RTFUNCTAB_FUNC_CURVE_AFFINE_CAST(_rt_nonuniform_curve)
+	RTFUNCTAB_FUNC_VALIDATE_CAST(rt_epa_functab_validate) /* validate */
     },
 
     {
@@ -1308,8 +1286,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_MAT_CAST(rt_ehy_mat),
 	RTFUNCTAB_FUNC_PERTURB_CAST(rt_ehy_perturb), /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
-	RTFUNCTAB_FUNC_VALIDATE_CAST(rt_ehy_functab_validate) /* validate */,
-	RTFUNCTAB_FUNC_CURVE_AFFINE_CAST(_rt_nonuniform_curve)
+	RTFUNCTAB_FUNC_VALIDATE_CAST(rt_ehy_functab_validate) /* validate */
     },
 
     {
@@ -1361,8 +1338,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_MAT_CAST(rt_eto_mat),
 	RTFUNCTAB_FUNC_PERTURB_CAST(rt_eto_perturb), /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
-	RTFUNCTAB_FUNC_VALIDATE_CAST(rt_eto_functab_validate) /* validate */,
-	RTFUNCTAB_FUNC_CURVE_AFFINE_CAST(_rt_nonuniform_curve)
+	RTFUNCTAB_FUNC_VALIDATE_CAST(rt_eto_functab_validate) /* validate */
     },
 
     {
@@ -1414,8 +1390,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_MAT_CAST(rt_grp_mat),
 	NULL, /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
-	NULL /* validate */,
-	NULL /* curve_affine */
+	NULL /* validate */
     },
 
     {
@@ -1467,8 +1442,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_MAT_CAST(rt_joint_mat),
 	NULL, /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
-	NULL /* validate */,
-	NULL /* curve_affine */
+	NULL /* validate */
     },
 
     {
@@ -1520,8 +1494,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* mat */
 	NULL, /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
-	NULL /* validate */,
-	NULL /* curve_affine */
+	NULL /* validate */
     },
 
     {
@@ -1573,8 +1546,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_MAT_CAST(rt_dsp_mat),
 	NULL, /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
-	NULL /* validate */,
-	NULL /* curve_affine */
+	NULL /* validate */
     },
 
     {
@@ -1626,8 +1598,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_MAT_CAST(rt_sketch_mat),
 	NULL, /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
-	NULL /* validate */,
-	NULL /* curve_affine */
+	NULL /* validate */
     },
 
     {
@@ -1679,8 +1650,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_MAT_CAST(rt_extrude_mat),
 	NULL, /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
-	NULL /* validate */,
-	NULL /* curve_affine */
+	NULL /* validate */
     },
 
     {
@@ -1732,8 +1702,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_MAT_CAST(rt_submodel_mat),
 	NULL, /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
-	NULL /* validate */,
-	NULL /* curve_affine */
+	NULL /* validate */
     },
 
     {
@@ -1785,8 +1754,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_MAT_CAST(rt_cline_mat),
 	NULL, /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
-	NULL /* validate */,
-	NULL /* curve_affine */
+	NULL /* validate */
     },
 
     {
@@ -1838,8 +1806,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_MAT_CAST(rt_bot_mat),
 	NULL, /* perturb */
 	NULL   /* scene_obj */,
-	RTFUNCTAB_FUNC_VALIDATE_CAST(rt_bot_functab_validate) /* validate */,
-	NULL /* curve_affine */
+	RTFUNCTAB_FUNC_VALIDATE_CAST(rt_bot_functab_validate) /* validate */
     },
 
     {
@@ -1891,8 +1858,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_MAT_CAST(rt_comb_mat),
 	NULL, /* perturb */
 	NULL   /* scene_obj */,
-	NULL /* validate */,
-	NULL /* curve_affine */
+	NULL /* validate */
     },
 
     {
@@ -1946,8 +1912,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* mat */
 	NULL, /* perturb */
 	NULL  /* scene_obj */,
-	NULL /* validate */,
-	NULL /* curve_affine */
+	NULL /* validate */
     },
 
     {
@@ -1999,8 +1964,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* mat */
 	NULL, /* perturb */
 	NULL  /* scene_obj */,
-	NULL /* validate */,
-	NULL /* curve_affine */
+	NULL /* validate */
     },
 
     {
@@ -2054,8 +2018,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* mat */
 	NULL, /* perturb */
 	NULL  /* scene_obj */,
-	NULL /* validate */,
-	NULL /* curve_affine */
+	NULL /* validate */
     },
 
     {
@@ -2107,8 +2070,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_MAT_CAST(rt_superell_mat),
 	RTFUNCTAB_FUNC_PERTURB_CAST(rt_superell_perturb), /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
-	NULL /* validate */,
-	NULL /* curve_affine */
+	NULL /* validate */
     },
 
     {
@@ -2160,8 +2122,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_MAT_CAST(rt_metaball_mat),
 	NULL, /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
-	NULL /* validate */,
-	NULL /* curve_affine */
+	NULL /* validate */
     },
 
     {
@@ -2213,8 +2174,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_MAT_CAST(rt_brep_mat),
 	NULL, /* perturb */
 	NULL   /* scene_obj */,
-	NULL /* validate */,
-	NULL /* curve_affine */
+	NULL /* validate */
     },
 
     {
@@ -2266,8 +2226,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_MAT_CAST(rt_hyp_mat),
 	RTFUNCTAB_FUNC_PERTURB_CAST(rt_hyp_perturb), /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
-	NULL /* validate */,
-	RTFUNCTAB_FUNC_CURVE_AFFINE_CAST(_rt_nonuniform_curve)
+	NULL /* validate */
     },
 
     {
@@ -2319,8 +2278,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* mat */
 	NULL, /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
-	NULL /* validate */,
-	NULL /* curve_affine */
+	NULL /* validate */
     },
 
     {
@@ -2372,8 +2330,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_MAT_CAST(rt_revolve_mat),
 	NULL, /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
-	NULL /* validate */,
-	NULL /* curve_affine */
+	NULL /* validate */
     },
 
     {
@@ -2425,8 +2382,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_MAT_CAST(rt_pnts_mat),
 	NULL, /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
-	NULL /* validate */,
-	NULL /* curve_affine */
+	NULL /* validate */
     },
 
     {
@@ -2478,8 +2434,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_MAT_CAST(rt_annot_mat),
 	NULL, /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
-	NULL /* validate */,
-	NULL /* curve_affine */
+	NULL /* validate */
     },
 
     {
@@ -2531,8 +2486,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_MAT_CAST(rt_hrt_mat),
 	RTFUNCTAB_FUNC_PERTURB_CAST(rt_hrt_perturb), /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
-	NULL /* validate */,
-	NULL /* curve_affine */
+	NULL /* validate */
     },
 
 
@@ -2585,8 +2539,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_MAT_CAST(rt_datum_mat),
 	NULL, /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
-	NULL /* validate */,
-	NULL /* curve_affine */
+	NULL /* validate */
     },
 
 
@@ -2639,8 +2592,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* mat */
 	NULL, /* perturb */
 	NULL  /* scene_obj */,
-	NULL /* validate */,
-	NULL /* curve_affine */
+	NULL /* validate */
     },
 
     {
@@ -2692,8 +2644,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* mat */
 	NULL, /* perturb */
 	NULL  /* scene_obj */,
-	NULL /* validate */,
-	NULL /* curve_affine */
+	NULL /* validate */
     },
 
     {
@@ -2745,8 +2696,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* mat */
 	NULL, /* perturb */
 	NULL  /* scene_obj */,
-	NULL /* validate */,
-	NULL /* curve_affine */
+	NULL /* validate */
     }
 };
 

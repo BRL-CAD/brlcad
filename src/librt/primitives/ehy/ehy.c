@@ -356,7 +356,7 @@ rt_ehy_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     if (rt_ehy_bbox(ip, &(stp->st_min), &(stp->st_max), &rtip->rti_tol)) return 1;
 
-    return 0;			/* OK */
+    return _rt_nonuniform_prep_finalize(stp, ip, &rtip->rti_tol);
 }
 
 
@@ -1004,6 +1004,7 @@ ehy_ellipse_points(
 C_DECL int
 rt_ehy_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol), const struct bview *v, fastf_t s_size)
 {
+    struct rt_nonuniform_vlist_state nonuniform_state;
     vect_t ehy_H, Hu, Au, Bu;
     fastf_t mag_H, z, z_step, c, r1, r2;
     int i, num_curve_points, num_ellipse_points, num_curves;
@@ -1015,6 +1016,7 @@ rt_ehy_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    _rt_nonuniform_vlist_state_init(&nonuniform_state, vhead);
     ehy = (struct rt_ehy_internal *)ip->idb_ptr;
     RT_EHY_CK_MAGIC(ehy);
 
@@ -1080,13 +1082,14 @@ rt_ehy_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 	bu_free(node, "rt_pnt_node");
     }
 
-    return 0;
+    return _rt_nonuniform_plot_finalize(vhead, &nonuniform_state, ip);
 }
 
 
 C_DECL int
 rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
+    struct rt_nonuniform_vlist_state nonuniform_state;
     struct bu_list *vlfree = &rt_vlfree;
     fastf_t c, dtol, mag_h, ntol, r1, r2;
     fastf_t min_abs;
@@ -1101,6 +1104,7 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    _rt_nonuniform_vlist_state_init(&nonuniform_state, vhead);
     xip = (struct rt_ehy_internal *)ip->idb_ptr;
 
     if (!ehy_is_valid(xip)) {
@@ -1353,7 +1357,7 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     bu_free((char *)pts_dbl, "dbl ints");
     bu_free((char *)segs_per_ell, "segs_per_ell");
 
-    return 0;
+    return _rt_nonuniform_plot_finalize(vhead, &nonuniform_state, ip);
 }
 
 
@@ -1932,7 +1936,7 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
     bu_ptbl_free(&vert_tab);
     bu_free((char *)segs_per_ell, "segs_per_ell");
-    return 0;
+    return _rt_nonuniform_tess_finalize(*r, ip, tol);
 
 fail:
     /* free mem */

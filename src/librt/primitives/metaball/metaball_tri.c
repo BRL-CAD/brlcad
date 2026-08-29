@@ -57,6 +57,8 @@
 
 #include "metaball.h"
 
+#include "../../librt_private.h"
+
 /**
  * Tessellate a metaball.
  */
@@ -171,7 +173,7 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
     rt_get_timer(&times, NULL);
     bu_log("metaball tessellate (%d triangles): %s\n", numtri, bu_vls_addr(&times));
 
-    return 0;
+    return _rt_nonuniform_tess_finalize(*r, ip, tol);
 }
 
 /*

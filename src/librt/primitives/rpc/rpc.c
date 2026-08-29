@@ -367,7 +367,7 @@ rt_rpc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     stp->st_aradius = stp->st_bradius;
     /* bounding RPP */
     if (rt_rpc_bbox(ip, &(stp->st_min), &(stp->st_max), &rtip->rti_tol)) return 1;
-    return 0;			/* OK */
+    return _rt_nonuniform_prep_finalize(stp, ip, &rtip->rti_tol);
 }
 
 
@@ -1026,6 +1026,7 @@ rpc_curve_points(
 C_DECL int
 rt_rpc_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *tol, const struct bview *v, fastf_t s_size)
 {
+    struct rt_nonuniform_vlist_state nonuniform_state;
     point_t p;
     vect_t rpc_R;
     int num_curve_points, num_connections;
@@ -1035,6 +1036,7 @@ rt_rpc_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    _rt_nonuniform_vlist_state_init(&nonuniform_state, vhead);
 
     rpc = (struct rt_rpc_internal *)ip->idb_ptr;
     if (!rpc_is_valid(rpc)) {
@@ -1087,12 +1089,13 @@ rt_rpc_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
     VJOIN1(p, p, 2.0, rpc_R);
     BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_DRAW);
 
-    return 0;
+    return _rt_nonuniform_plot_finalize(vhead, &nonuniform_state, ip);
 }
 
 C_DECL int
 rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
+    struct rt_nonuniform_vlist_state nonuniform_state;
     struct rt_rpc_internal *xip;
     fastf_t *front;
     fastf_t *back;
@@ -1105,6 +1108,7 @@ rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    _rt_nonuniform_vlist_state_init(&nonuniform_state, vhead);
 
     xip = (struct rt_rpc_internal *)ip->idb_ptr;
     if (!rpc_is_valid(xip)) {
@@ -1202,7 +1206,7 @@ rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     bu_free((char *)front, "fastf_t");
     bu_free((char *)back,  "fastf_t");
 
-    return 0;
+    return _rt_nonuniform_plot_finalize(vhead, &nonuniform_state, ip);
 }
 
 
@@ -1571,7 +1575,7 @@ rt_rpc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     bu_free((char*)vtemp, "vertex *");
     bu_free((char*)outfaceuses, "faceuse *");
 
-    return 0;
+    return _rt_nonuniform_tess_finalize(*r, ip, tol);
 }
 
 
