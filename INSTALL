@@ -72,6 +72,20 @@ specific to a particular platform such as Debian, Mac OS X, FreeBSD,
 and Windows etc.
 
 
+Binary Downloads
+----------------
+
+Pre-built BRL-CAD binaries are available via the official GitHub Releases page:
+
+  https://github.com/BRL-CAD/brlcad/releases
+
+Select the latest release and download the installer appropriate for your
+operating system (for example, Windows .msi installers, macOS packages, or
+Linux archives).
+
+Users who do not wish to build BRL-CAD from source should use these binaries.
+
+
 Generic Binary Distributions:
 
 For binary distributions that are simply compressed tarballs of the
