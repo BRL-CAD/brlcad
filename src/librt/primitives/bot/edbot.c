@@ -26,6 +26,7 @@
 #include <math.h>
 #include <string.h>
 
+#include "bg/tri_ray.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"

@@ -1,3 +1,26 @@
+/*                    T R I M E S H _ G C . C
+ * BRL-CAD
+ *
+ * Copyright (c) 2026 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @file trimesh_gc.c
+ *
+ */
+
 #include "common.h"
 
 #include "bu.h"
@@ -7,8 +30,13 @@
 int
 main(int argc, char **argv)
 {
-    int ifaces[] = {2, 0, 3};
-    point2d_t ipnts[4] = {{0.0}};
+    const int ifaces[] = {2, 0, 3};
+    const point2d_t ipnts[] = {
+	{1.0, 1.0},
+	{99.0, 99.0},
+	{2.0, 3.0},
+	{-1.0, 4.0}
+    };
     int *ofaces = NULL;
     point2d_t *opnts = NULL;
     int n_opnts = 0;
@@ -19,11 +47,6 @@ main(int argc, char **argv)
 
     if (argc != 1)
 	bu_exit(1, "ERROR: [%s] takes no arguments\n", argv[0]);
-
-    V2SET(ipnts[0], 1.0, 1.0);
-    V2SET(ipnts[1], 99.0, 99.0);
-    V2SET(ipnts[2], 2.0, 3.0);
-    V2SET(ipnts[3], -1.0, 4.0);
 
     ret = bg_trimesh_2d_gc(&ofaces, &opnts, &n_opnts, ifaces, 1, ipnts);
     if (ret != 1 || n_opnts != 3 || !ofaces || !opnts) {
@@ -49,3 +72,13 @@ cleanup:
 
     return failed;
 }
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8 cino=N-s
+ */

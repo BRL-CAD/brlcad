@@ -65,7 +65,8 @@ intersect_triangle(const point_t origin, const vect_t direction,
 		   fastf_t *intersection)
 {
     Vec3 gte_direction = vec3_from_array(direction);
-    if (gte::Normalize(gte_direction, true) == (GTF)0)
+    const GTF direction_length = gte::Normalize(gte_direction, true);
+    if (direction_length <= (GTF)0)
 	return 0;
 
     Primitive primitive(vec3_from_array(origin), gte_direction);

@@ -141,7 +141,7 @@ main(int argc, char **argv)
     if (bg_isect_lseg2_lseg2(segment_dist, first_segment_pt,
 	    first_segment_dir, second_segment_pt, second_segment_dir, &tol) != 1
 	|| !NEAR_EQUAL(segment_dist[0], 0.5, BN_TOL_DIST)
-	|| segment_dist[1] != 0.0) {
+	|| !NEAR_ZERO(segment_dist[1], BN_TOL_DIST)) {
 	bu_log("2D unequal-segment endpoint tolerance: expected 0.5,0, got %g,%g\n",
 	       segment_dist[0], segment_dist[1]);
 	failures++;
