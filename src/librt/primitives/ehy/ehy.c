@@ -223,7 +223,11 @@ clt_ehy_pack(struct bu_pool *pool, struct soltab *stp)
  * Create a bounding RPP for an ehy
  */
 C_DECL int
-rt_ehy_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
+rt_ehy_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *tol) {
+    int nu_bbox = _rt_nonuniform_bbox(ip, min, max, tol);
+    if (nu_bbox)
+	return (nu_bbox > 0) ? 0 : -1;
+
     struct rt_ehy_internal *xip;
     vect_t ehy_A, ehy_B, ehy_An, ehy_Bn, ehy_H;
     vect_t pt1, pt2, pt3, pt4, pt5, pt6, pt7, pt8;
@@ -2478,6 +2482,9 @@ ehy_is_valid(struct rt_ehy_internal *ehy)
 C_DECL void
 rt_ehy_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
+    if (_rt_nonuniform_surf_area(area, ip))
+	return;
+
     struct rt_ehy_internal *eip;
     fastf_t h, r, c, P, alpha, B, sqrtAlpha;
     fastf_t u_top, u_bot, v_top, v_bot, F_top, F_bot;
@@ -2548,6 +2555,9 @@ rt_ehy_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 C_DECL void
 rt_ehy_volume(fastf_t *volume, const struct rt_db_internal *ip)
 {
+    if (_rt_nonuniform_volume(volume, ip))
+	return;
+
     struct rt_ehy_internal *eip;
     fastf_t h, c;
 
@@ -2586,6 +2596,9 @@ rt_ehy_volume(fastf_t *volume, const struct rt_db_internal *ip)
 C_DECL void
 rt_ehy_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
+    if (_rt_nonuniform_centroid(cent, ip))
+	return;
+
     struct rt_ehy_internal *eip;
     fastf_t h, c, z_c;
     vect_t Hu;

@@ -218,7 +218,11 @@ clt_epa_pack(struct bu_pool *pool, struct soltab *stp)
  * Create a bounding RPP for an epa
  */
 C_DECL int
-rt_epa_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
+rt_epa_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *tol) {
+    int nu_bbox = _rt_nonuniform_bbox(ip, min, max, tol);
+    if (nu_bbox)
+	return (nu_bbox > 0) ? 0 : -1;
+
     struct rt_epa_internal *xip;
     vect_t epa_A, epa_B, epa_An, epa_Bn, epa_H;
     vect_t pt1, pt2, pt3, pt4, pt5, pt6, pt7, pt8;
@@ -2294,6 +2298,9 @@ rt_epa_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 C_DECL void
 rt_epa_volume(fastf_t *vol, const struct rt_db_internal *ip)
 {
+    if (_rt_nonuniform_volume(vol, ip))
+	return;
+
     fastf_t mag_h;
     struct rt_epa_internal *xip = (struct rt_epa_internal *)ip->idb_ptr;
     RT_EPA_CK_MAGIC(xip);
@@ -2306,6 +2313,9 @@ rt_epa_volume(fastf_t *vol, const struct rt_db_internal *ip)
 C_DECL void
 rt_epa_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
+    if (_rt_nonuniform_centroid(cent, ip))
+	return;
+
     struct rt_epa_internal *xip = (struct rt_epa_internal *)ip->idb_ptr;
     RT_EPA_CK_MAGIC(xip);
     VJOIN1(*cent, xip->epa_V, 1.0/3.0, xip->epa_H);
@@ -2315,6 +2325,9 @@ rt_epa_centroid(point_t *cent, const struct rt_db_internal *ip)
 C_DECL void
 rt_epa_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
+    if (_rt_nonuniform_surf_area(area, ip))
+	return;
+
     fastf_t magsq_h, m;
     struct rt_epa_internal *xip = (struct rt_epa_internal *)ip->idb_ptr;
     RT_EPA_CK_MAGIC(xip);

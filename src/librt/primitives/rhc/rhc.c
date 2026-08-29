@@ -239,8 +239,11 @@ EXTERNCPP const struct bu_structparse rt_rhc_parse[] = {
  * Calculate the bounding RPP for an RHC
  */
 C_DECL int
-rt_rhc_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol))
+rt_rhc_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *tol)
 {
+    int nu_bbox = _rt_nonuniform_bbox(ip, min, max, tol);
+    if (nu_bbox)
+	return (nu_bbox > 0) ? 0 : -1;
 
     struct rt_rhc_internal *xip;
     vect_t rinv, rvect, rv2, working;
@@ -2209,6 +2212,9 @@ rhc_is_valid(struct rt_rhc_internal *rhc)
 C_DECL void
 rt_rhc_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
+    if (_rt_nonuniform_surf_area(area, ip))
+	return;
+
     struct rt_rhc_internal *rip;
     fastf_t A, arclen, integralArea, a, b, magB, sqrt_ra, height;
 
@@ -2271,6 +2277,9 @@ rt_rhc_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 C_DECL void
 rt_rhc_volume(fastf_t *volume, const struct rt_db_internal *ip)
 {
+    if (_rt_nonuniform_volume(volume, ip))
+	return;
+
     struct rt_rhc_internal *rip;
     fastf_t A, integralArea, a, b, magB, sqrt_ra, height;
     if (volume == NULL || ip == NULL) {
@@ -2299,6 +2308,9 @@ rt_rhc_volume(fastf_t *volume, const struct rt_db_internal *ip)
 C_DECL void
 rt_rhc_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
+    if (_rt_nonuniform_centroid(cent, ip))
+	return;
+
     if (cent != NULL && ip != NULL) {
 	struct rt_rhc_internal *rip;
 	fastf_t totalArea, guessArea, a, b, magB, sqrt_xa, sqrt_ga, xf, epsilon, high, low, scale_factor;

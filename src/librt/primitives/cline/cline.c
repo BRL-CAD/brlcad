@@ -66,7 +66,11 @@ EXTERNCPP const struct bu_structparse rt_cline_parse[] = {
  * Calculate bounding RPP for cline
  */
 C_DECL int
-rt_cline_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
+rt_cline_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *tol) {
+    int nu_bbox = _rt_nonuniform_bbox(ip, min, max, tol);
+    if (nu_bbox)
+	return (nu_bbox > 0) ? 0 : -1;
+
     struct rt_cline_internal *cline_ip;
     vect_t rad, work;
     point_t top;
@@ -89,6 +93,26 @@ rt_cline_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struc
     VSUB2(work, top, rad);
     VMINMAX((*min), (*max), work);
     return 0;
+}
+
+
+C_DECL void
+rt_cline_volume(fastf_t *volume, const struct rt_db_internal *ip)
+{
+    if (_rt_nonuniform_volume(volume, ip))
+	return;
+
+    rt_crofton_volume_implicit(volume, ip);
+}
+
+
+C_DECL void
+rt_cline_surf_area(fastf_t *area, const struct rt_db_internal *ip)
+{
+    if (_rt_nonuniform_surf_area(area, ip))
+	return;
+
+    rt_crofton_surf_area_implicit(area, ip);
 }
 
 /**
@@ -132,9 +156,13 @@ rt_cline_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	max_tr = 0.0;
     tmp = MAGNITUDE(cline_ip->h) * 0.5;
     stp->st_aradius = sqrt(tmp*tmp + cline_ip->radius*cline_ip->radius);
-    stp->st_bradius = stp->st_aradius + max_tr;
+    stp->st_bradius = stp->st_aradius;
 
     if (rt_cline_bbox(ip, &(stp->st_min), &(stp->st_max), &rtip->rti_tol)) return 1;
+
+    int ret = _rt_nonuniform_prep_finalize(stp, ip, &rtip->rti_tol);
+    if (ret)
+	return ret;
 
     /* expand the bounding box to include the additional beam radius */
     if (max_tr > 0.0) {
@@ -142,6 +170,7 @@ rt_cline_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	VSETALL(extra, max_tr);
 	VSUB2(stp->st_min, stp->st_min, extra);
 	VADD2(stp->st_max, stp->st_max, extra);
+	stp->st_bradius += max_tr;
     }
 
     return _rt_nonuniform_prep_finalize(stp, ip, &rtip->rti_tol);

@@ -164,8 +164,12 @@ rt_metaball_get_bounding_sphere(point_t *center, fastf_t threshold, struct rt_me
  * Calculate a bounding RPP around a metaball
  */
 C_DECL int
-rt_metaball_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol))
+rt_metaball_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *tol)
 {
+    int nu_bbox = _rt_nonuniform_bbox(ip, min, max, tol);
+    if (nu_bbox)
+	return (nu_bbox > 0) ? 0 : -1;
+
     struct rt_metaball_internal *mb;
     point_t center;
     fastf_t radius;
@@ -178,6 +182,26 @@ rt_metaball_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const st
     VSET((*min), center[X] - radius, center[Y] - radius, center[Z] - radius);
     VSET((*max), center[X] + radius, center[Y] + radius, center[Z] + radius);
     return 0;
+}
+
+
+C_DECL void
+rt_metaball_volume(fastf_t *volume, const struct rt_db_internal *ip)
+{
+    if (_rt_nonuniform_volume(volume, ip))
+	return;
+
+    rt_crofton_volume_implicit(volume, ip);
+}
+
+
+C_DECL void
+rt_metaball_surf_area(fastf_t *area, const struct rt_db_internal *ip)
+{
+    if (_rt_nonuniform_surf_area(area, ip))
+	return;
+
+    rt_crofton_surf_area_implicit(area, ip);
 }
 
 

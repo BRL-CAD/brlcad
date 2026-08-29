@@ -694,8 +694,12 @@ rt_pipe_bbox(
     struct rt_db_internal *ip,
     point_t *min,
     point_t *max,
-    const struct bn_tol *UNUSED(tol))
+    const struct bn_tol *tol)
 {
+    int nu_bbox = _rt_nonuniform_bbox(ip, min, max, tol);
+    if (nu_bbox)
+	return (nu_bbox > 0) ? 0 : -1;
+
     pipe_elements_calculate(NULL, ip, min, max);
     return 0;
 }
@@ -5078,6 +5082,9 @@ rt_pipe_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 C_DECL void
 rt_pipe_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
+    if (_rt_nonuniform_surf_area(area, ip))
+	return;
+
     struct bu_list head;
     point_t min, max;
     struct id_pipe *p;
@@ -5281,6 +5288,9 @@ pipe_elem_volume_and_centroid(struct id_pipe *p, fastf_t *vol, point_t *cent)
 C_DECL void
 rt_pipe_volume(fastf_t *vol, const struct rt_db_internal *ip)
 {
+    if (_rt_nonuniform_volume(vol, ip))
+	return;
+
     struct bu_list head;
     point_t min, max;
     struct id_pipe *p;
@@ -5301,6 +5311,9 @@ rt_pipe_volume(fastf_t *vol, const struct rt_db_internal *ip)
 C_DECL void
 rt_pipe_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
+    if (_rt_nonuniform_centroid(cent, ip))
+	return;
+
     struct bu_list head;
     point_t min, max;
     struct id_pipe *p;

@@ -98,7 +98,8 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
 	bu_log("Attempting to tessellate metaball with no control points");
 	return -1;
     }
-    rt_metaball_bbox(ip, &min, &max, tol);
+    if (_rt_nonuniform_body_bbox(ip, &min, &max, tol) != 0)
+	return -1;
 
     /* TODO: get better sampling tolerance, unless this is "good enough" */
     mtol = ttol->abs;

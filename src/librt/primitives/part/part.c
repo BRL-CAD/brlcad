@@ -271,7 +271,11 @@ clt_part_pack(struct bu_pool *pool, struct soltab *stp)
  * Compute the bounding RPP for a particle
  */
 C_DECL int
-rt_part_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
+rt_part_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *tol) {
+    int nu_bbox = _rt_nonuniform_bbox(ip, min, max, tol);
+    if (nu_bbox)
+	return (nu_bbox > 0) ? 0 : -1;
+
     struct rt_part_internal *pip;
     vect_t tip_pt, tmp_min, tmp_max;
     RT_CK_DB_INTERNAL(ip);
@@ -2244,6 +2248,9 @@ rt_part_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 C_DECL void
 rt_part_volume(fastf_t *vol, const struct rt_db_internal *ip)
 {
+    if (_rt_nonuniform_volume(vol, ip))
+	return;
+
     fastf_t vrad, hrad, mag_h;
     struct rt_part_internal *pip = (struct rt_part_internal *)ip->idb_ptr;
     RT_PART_CK_MAGIC(pip);
@@ -2267,6 +2274,9 @@ rt_part_volume(fastf_t *vol, const struct rt_db_internal *ip)
 C_DECL void
 rt_part_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
+    if (_rt_nonuniform_surf_area(area, ip))
+	return;
+
     fastf_t vrad, hrad, mag_h;
     struct rt_part_internal *pip = (struct rt_part_internal *)ip->idb_ptr;
     RT_PART_CK_MAGIC(pip);
@@ -2288,6 +2298,9 @@ rt_part_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 C_DECL void
 rt_part_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
+    if (_rt_nonuniform_centroid(cent, ip))
+	return;
+
     fastf_t vrad, hrad, mag_h, nm, dm, c_frst, cv_hem, ch_hem;
     vect_t hvec, hvec_n;
     point_t vpt, fcent, hhcent, cvcent;

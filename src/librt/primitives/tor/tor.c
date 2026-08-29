@@ -188,7 +188,11 @@ clt_tor_pack(struct bu_pool *pool, struct soltab *stp)
  * Compute the bounding RPP for a circular torus.
  */
 C_DECL int
-rt_tor_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
+rt_tor_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *tol) {
+    int nu_bbox = _rt_nonuniform_bbox(ip, min, max, tol);
+    if (nu_bbox)
+	return (nu_bbox > 0) ? 0 : -1;
+
     vect_t P, w1;	/* for RPP calculation */
     fastf_t f;
     struct rt_tor_internal *tip = (struct rt_tor_internal *)ip->idb_ptr;
@@ -2051,6 +2055,9 @@ rt_tor_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 C_DECL void
 rt_tor_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
+    if (_rt_nonuniform_surf_area(area, ip))
+	return;
+
     struct rt_tor_internal *tip = (struct rt_tor_internal *)ip->idb_ptr;
     RT_TOR_CK_MAGIC(tip);
 
@@ -2076,6 +2083,9 @@ rt_tor_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 C_DECL void
 rt_tor_volume(fastf_t *vol, const struct rt_db_internal *ip)
 {
+    if (_rt_nonuniform_volume(vol, ip))
+	return;
+
     struct rt_tor_internal *tip = (struct rt_tor_internal *)ip->idb_ptr;
     RT_TOR_CK_MAGIC(tip);
 
@@ -2094,6 +2104,9 @@ rt_tor_volume(fastf_t *vol, const struct rt_db_internal *ip)
 C_DECL void
 rt_tor_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
+    if (_rt_nonuniform_centroid(cent, ip))
+	return;
+
     struct rt_tor_internal *tip = (struct rt_tor_internal *)ip->idb_ptr;
     RT_TOR_CK_MAGIC(tip);
     VMOVE(*cent,tip->v);

@@ -161,7 +161,11 @@ clt_hyp_pack(struct bu_pool *pool, struct soltab *stp)
  * Create a bounding RPP for an hyp
  */
 C_DECL int
-rt_hyp_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
+rt_hyp_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *tol) {
+    int nu_bbox = _rt_nonuniform_bbox(ip, min, max, tol);
+    if (nu_bbox)
+	return (nu_bbox > 0) ? 0 : -1;
+
     struct rt_hyp_internal *xip;
     vect_t hyp_Au, hyp_B, hyp_An, hyp_Bn, hyp_H;
     vect_t pt1, pt2, pt3, pt4, pt5, pt6, pt7, pt8;
@@ -1718,6 +1722,9 @@ rt_hyp_params(struct pc_pc_set * UNUSED(ps), const struct rt_db_internal *ip)
 C_DECL void
 rt_hyp_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
+    if (_rt_nonuniform_centroid(cent, ip))
+	return;
+
     if (cent != NULL && ip != NULL) {
 	struct rt_hyp_internal *hip;
 
@@ -1739,6 +1746,9 @@ rt_hyp_centroid(point_t *cent, const struct rt_db_internal *ip)
 C_DECL void
 rt_hyp_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
+    if (_rt_nonuniform_surf_area(area, ip))
+	return;
+
     if (!area || !ip)
 	return;
     do { static const struct rt_crofton_params _p = {50000u, 0.0, 0.0}; rt_crofton_sample(area, NULL, ip, &_p); } while (0);
@@ -1748,6 +1758,9 @@ rt_hyp_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 C_DECL void
 rt_hyp_volume(fastf_t *volume, const struct rt_db_internal *ip)
 {
+    if (_rt_nonuniform_volume(volume, ip))
+	return;
+
     if (volume != NULL && ip != NULL) {
 	struct rt_hyp_internal *hip;
 	struct hyp_specific *hyp;

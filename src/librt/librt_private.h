@@ -160,6 +160,7 @@ struct rt_i_internal {
     /* Per-type solid tables (filled during prep) */
     struct soltab **    rti_sol_by_type[ID_MAX_SOLID+1];
     size_t              rti_nsol_by_type[ID_MAX_SOLID+1];
+    unsigned char       rti_has_nonuniform_by_type[ID_MAX_SOLID+1];
     size_t              rti_maxsol_by_type;
     struct soltab **    rti_Solids;     	/**< @brief  ptrs to soltab [st_bit] */
 

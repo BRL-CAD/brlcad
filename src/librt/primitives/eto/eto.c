@@ -193,8 +193,12 @@ clt_eto_pack(struct bu_pool *pool, struct soltab *stp)
  * Calculate bounding RPP of elliptical torus
  */
 C_DECL int
-rt_eto_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol))
+rt_eto_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *tol)
 {
+    int nu_bbox = _rt_nonuniform_bbox(ip, min, max, tol);
+    if (nu_bbox)
+	return (nu_bbox > 0) ? 0 : -1;
+
     vect_t P, Nu, w1;	/* for RPP calculation */
     fastf_t f, eto_rc;
     struct rt_eto_internal *tip;
@@ -2192,6 +2196,9 @@ eto_is_self_intersecting(const struct rt_eto_internal *tip)
 C_DECL void
 rt_eto_volume(fastf_t *vol, const struct rt_db_internal *ip)
 {
+    if (_rt_nonuniform_volume(vol, ip))
+	return;
+
     fastf_t mag_c;
     struct rt_eto_internal *tip = (struct rt_eto_internal *)ip->idb_ptr;
     RT_ETO_CK_MAGIC(tip);
@@ -2214,6 +2221,9 @@ rt_eto_volume(fastf_t *vol, const struct rt_db_internal *ip)
 C_DECL void
 rt_eto_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
+    if (_rt_nonuniform_centroid(cent, ip))
+	return;
+
     struct rt_eto_internal *tip = (struct rt_eto_internal *)ip->idb_ptr;
     RT_ETO_CK_MAGIC(tip);
     VMOVE(*cent, tip->eto_V);
@@ -2223,6 +2233,9 @@ rt_eto_centroid(point_t *cent, const struct rt_db_internal *ip)
 C_DECL void
 rt_eto_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
+    if (_rt_nonuniform_surf_area(area, ip))
+	return;
+
     fastf_t circum, mag_c;
     struct rt_eto_internal *tip = (struct rt_eto_internal *)ip->idb_ptr;
     RT_ETO_CK_MAGIC(tip);
