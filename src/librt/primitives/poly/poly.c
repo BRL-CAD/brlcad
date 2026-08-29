@@ -912,13 +912,15 @@ rt_pg_ifree(struct rt_db_internal *ip)
  * anchored at its first vertex, and the signed tetrahedral contribution
  * a · (b × c) / 6 is accumulated.
  */
-C_DECL void
+C_DECL int
 rt_pg_volume(fastf_t *volume, const struct rt_db_internal *ip)
 {
     struct rt_pg_internal *pgp;
     size_t i, j;
     double vol = 0.0;
 
+    if (!volume || !ip || !ip->idb_ptr)
+	return BRLCAD_ERROR;
     RT_CK_DB_INTERNAL(ip);
     pgp = (struct rt_pg_internal *)ip->idb_ptr;
     RT_PG_CK_MAGIC(pgp);
@@ -942,6 +944,7 @@ rt_pg_volume(fastf_t *volume, const struct rt_db_internal *ip)
     }
 
     *volume = fabs(vol) / 6.0;
+    return BRLCAD_OK;
 }
 
 
@@ -951,12 +954,14 @@ rt_pg_volume(fastf_t *volume, const struct rt_db_internal *ip)
  * triangulation, and each triangle's area is half the magnitude of the
  * cross product of its two edge vectors.
  */
-C_DECL void
+C_DECL int
 rt_pg_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     struct rt_pg_internal *pgp;
     size_t i, j;
 
+    if (!area || !ip || !ip->idb_ptr)
+	return BRLCAD_ERROR;
     RT_CK_DB_INTERNAL(ip);
     pgp = (struct rt_pg_internal *)ip->idb_ptr;
     RT_PG_CK_MAGIC(pgp);
@@ -976,6 +981,7 @@ rt_pg_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 	    *area += 0.5 * MAGNITUDE(cross);
 	}
     }
+    return BRLCAD_OK;
 }
 
 

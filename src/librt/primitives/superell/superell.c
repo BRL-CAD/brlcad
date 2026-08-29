@@ -1226,11 +1226,11 @@ rt_superell_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip
  * Volume equation from http://lrv.fri.uni-lj.si/~franc/SRSbook/geometry.pdf
  * which also includes a derivation on page 32.
  */
-C_DECL void
+C_DECL int
 rt_superell_volume(fastf_t *volume, const struct rt_db_internal *ip)
 {
-    if (volume == NULL || ip == NULL) {
-	return;
+    if (volume == NULL || ip == NULL || ip->idb_ptr == NULL) {
+	return BRLCAD_ERROR;
     }
 
 #ifdef HAVE_TGAMMA
@@ -1243,9 +1243,11 @@ rt_superell_volume(fastf_t *volume, const struct rt_db_internal *ip)
     double mag_c = MAGNITUDE(sip->c);
 
     *volume = 2.0 * mag_a * mag_b * mag_c * sip->e * sip->n * (tgamma(sip->n/2.0 + 1.0) * tgamma(sip->n) / tgamma(3.0 * sip->n/2.0 + 1.0)) * (tgamma(sip->e / 2.0) * tgamma(sip->e / 2.0) / tgamma(sip->e));
+    return isfinite(*volume) ? BRLCAD_OK : BRLCAD_ERROR;
 #else
     /* tgamma unavailable: fall back to Cauchy-Crofton estimation */
-    do { static const struct rt_crofton_params _p = {50000u, 0.0, 0.0}; rt_crofton_sample(NULL, volume, ip, &_p); } while (0);
+    static const struct rt_crofton_params p = {RT_CROFTON_HIGH_ACCURACY_SAMPLES, 0.0, 0.0};
+    return rt_crofton_sample(NULL, volume, ip, &p);
 #endif
 }
 
@@ -1378,11 +1380,14 @@ superell_surf_area_general(const struct rt_superell_internal *sip, vect_t mags, 
 }
 
 
-C_DECL void
+C_DECL int
 rt_superell_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     struct rt_superell_internal *sip;
     vect_t mags;
+
+    if (!area || !ip || !ip->idb_ptr)
+	return BRLCAD_ERROR;
 
     RT_CK_DB_INTERNAL(ip);
     sip = (struct rt_superell_internal *)ip->idb_ptr;
@@ -1428,6 +1433,7 @@ rt_superell_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 	}
 	*area = current_area;
     }
+    return isfinite(*area) ? BRLCAD_OK : BRLCAD_ERROR;
 }
 
 C_DECL int

@@ -2263,31 +2263,39 @@ rt_epa_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 }
 
 
-C_DECL void
+C_DECL int
 rt_epa_volume(fastf_t *vol, const struct rt_db_internal *ip)
 {
     fastf_t mag_h;
+    if (!vol || !ip || !ip->idb_ptr)
+	return BRLCAD_ERROR;
     struct rt_epa_internal *xip = (struct rt_epa_internal *)ip->idb_ptr;
     RT_EPA_CK_MAGIC(xip);
 
     mag_h = MAGNITUDE(xip->epa_H);
     *vol = M_PI_2 * xip->epa_r1 * xip->epa_r2 * mag_h;
+    return BRLCAD_OK;
 }
 
 
-C_DECL void
+C_DECL int
 rt_epa_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
+    if (!cent || !ip || !ip->idb_ptr)
+	return BRLCAD_ERROR;
     struct rt_epa_internal *xip = (struct rt_epa_internal *)ip->idb_ptr;
     RT_EPA_CK_MAGIC(xip);
     VJOIN1(*cent, xip->epa_V, 1.0/3.0, xip->epa_H);
+    return BRLCAD_OK;
 }
 
 
-C_DECL void
+C_DECL int
 rt_epa_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     fastf_t magsq_h, m;
+    if (!area || !ip || !ip->idb_ptr)
+	return BRLCAD_ERROR;
     struct rt_epa_internal *xip = (struct rt_epa_internal *)ip->idb_ptr;
     RT_EPA_CK_MAGIC(xip);
 
@@ -2296,6 +2304,7 @@ rt_epa_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     /* Lateral paraboloid surface + elliptical base cap */
     *area = 2.0/3.0 * M_PI * xip->epa_r1 * xip->epa_r2 * (m + (1.0 / (m + 1.0)))
 	+ M_PI * xip->epa_r1 * xip->epa_r2;
+    return BRLCAD_OK;
 }
 
 static int

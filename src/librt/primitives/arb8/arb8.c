@@ -358,7 +358,7 @@ rt_arb_std_type(const struct rt_db_internal *ip, const struct bn_tol *tol)
 }
 
 
-void
+int
 rt_arb_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
 
@@ -368,8 +368,8 @@ rt_arb_centroid(point_t *cent, const struct rt_db_internal *ip)
     int i;
     fastf_t x_avg, y_avg, z_avg;
 
-    if (!cent || !ip)
-	return;
+    if (!cent || !ip || !ip->idb_ptr)
+	return BRLCAD_ERROR;
     aip = (struct rt_arb_internal *)ip->idb_ptr;
     RT_ARB_CK_MAGIC(aip);
 
@@ -383,6 +383,8 @@ rt_arb_centroid(point_t *cent, const struct rt_db_internal *ip)
 
     /* get number of vertices in arb_type */
     arb_type = rt_arb_std_type(ip, &tmp_tol);
+    if (arb_type == 0)
+	return BRLCAD_ERROR;
 
     /* centroid is the average for each axis of all coordinates of vertices */
     for (i = 0; i < arb_type; i++) {
@@ -398,7 +400,7 @@ rt_arb_centroid(point_t *cent, const struct rt_db_internal *ip)
     (*cent)[0] = x_avg;
     (*cent)[1] = y_avg;
     (*cent)[2] = z_avg;
-
+    return BRLCAD_OK;
 }
 
 
@@ -3494,9 +3496,11 @@ rt_arb_params(struct pc_pc_set * UNUSED(ps), const struct rt_db_internal *ip)
  * compute surface area of an arb8 by dividing it into
  * it's component faces and summing the face areas.
  */
-C_DECL void
+C_DECL int
 rt_arb_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
+    if (!area || !ip || !ip->idb_ptr)
+	return BRLCAD_ERROR;
     struct rt_arb_internal *arb = (struct rt_arb_internal *)ip->idb_ptr;
     RT_ARB_CK_MAGIC(arb);
 
@@ -3532,17 +3536,17 @@ rt_arb_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 	    *area += tot;
 	    bu_free(hull_faces, "arb chull faces");
 	    bu_free(hull_verts, "arb chull verts");
-	    return;
+	    return BRLCAD_OK;
 	}
 	bu_free(hull_faces, "arb chull faces");
 	bu_free(hull_verts, "arb chull verts");
-	/* fall through to standard path on failure */
+	return BRLCAD_ERROR;
     }
 
     int cgtype, type;
     /* find the specific arb type, in GIFT order. */
     if ((cgtype = rt_arb_std_type(ip, &tol)) == 0)
-	return;
+	return BRLCAD_ERROR;
 
     type = cgtype - 4;
 
@@ -3637,6 +3641,7 @@ rt_arb_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     }
 
     *area += fabs(tot_area);
+    return BRLCAD_OK;
 }
 
 
@@ -3644,7 +3649,7 @@ rt_arb_surf_area(fastf_t *area, const struct rt_db_internal *ip)
  * compute volume of an arb8 by dividing it into
  * 6 arb4 and summing the volumes.
  */
-C_DECL void
+C_DECL int
 rt_arb_volume(fastf_t *vol, const struct rt_db_internal *ip)
 {
     int i, a, b, c, d;
@@ -3652,6 +3657,8 @@ rt_arb_volume(fastf_t *vol, const struct rt_db_internal *ip)
     fastf_t arb4_height;
     plane_t plane;
     struct bn_tol tmp_tol;
+    if (!vol || !ip || !ip->idb_ptr)
+	return BRLCAD_ERROR;
     struct rt_arb_internal *aip = (struct rt_arb_internal *)ip->idb_ptr;
     RT_ARB_CK_MAGIC(aip);
 
@@ -3687,12 +3694,15 @@ rt_arb_volume(fastf_t *vol, const struct rt_db_internal *ip)
 	    *vol = fabs(signed_vol) / 6.0;
 	    bu_free(hull_faces, "arb chull faces");
 	    bu_free(hull_verts, "arb chull verts");
-	    return;
+	    return BRLCAD_OK;
 	}
 	bu_free(hull_faces, "arb chull faces");
 	bu_free(hull_verts, "arb chull verts");
-	/* fall through to standard path on failure */
+	return BRLCAD_ERROR;
     }
+
+    if (rt_arb_std_type(ip, &tmp_tol) == 0)
+	return BRLCAD_ERROR;
 
     *vol = 0.0;
     for (i = 0; i < 6; i++) {
@@ -3720,6 +3730,7 @@ rt_arb_volume(fastf_t *vol, const struct rt_db_internal *ip)
 	*vol += MAGNITUDE(area) * arb4_height;
     }
     *vol /= 6.0;
+    return BRLCAD_OK;
 }
 
 int
@@ -3999,7 +4010,8 @@ rt_arb_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int
     // 4.  Use the new point and original plane vector to define a new
     //     plane
     point_t arb_center;
-    rt_arb_centroid(&arb_center, ip);
+    if (rt_arb_centroid(&arb_center, ip) != BRLCAD_OK)
+	return BRLCAD_ERROR;
     int afaces = 0;
     for (int i = 0; i < 6; i++) {
 	if (arb_faces[type][i*4] == -1)

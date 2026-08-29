@@ -230,14 +230,21 @@ struct rt_functab {
 		   const struct bn_tol *);
 #define RTFUNCTAB_FUNC_BBOX_CAST(_func) ((int (*)(struct rt_db_internal *, point_t *, point_t *, const struct bn_tol *))((void (*)(void))_func))
 
-    void (*ft_volume)(fastf_t * /*vol*/, const struct rt_db_internal * /*ip*/);
-#define RTFUNCTAB_FUNC_VOLUME_CAST(_func) ((void (*)(fastf_t *, const struct rt_db_internal *))((void (*)(void))_func))
+    /**
+     * Calculate a primitive's volume, surface area, or centroid.
+     *
+     * Each callback returns BRLCAD_OK on success and BRLCAD_ERROR if it
+     * cannot produce a valid result.  The output value is valid only on
+     * success.
+     */
+    int (*ft_volume)(fastf_t * /*vol*/, const struct rt_db_internal * /*ip*/);
+#define RTFUNCTAB_FUNC_VOLUME_CAST(_func) ((int (*)(fastf_t *, const struct rt_db_internal *))((void (*)(void))_func))
 
-    void (*ft_surf_area)(fastf_t * /*area*/, const struct rt_db_internal * /*ip*/);
-#define RTFUNCTAB_FUNC_SURF_AREA_CAST(_func) ((void (*)(fastf_t *, const struct rt_db_internal *))((void (*)(void))_func))
+    int (*ft_surf_area)(fastf_t * /*area*/, const struct rt_db_internal * /*ip*/);
+#define RTFUNCTAB_FUNC_SURF_AREA_CAST(_func) ((int (*)(fastf_t *, const struct rt_db_internal *))((void (*)(void))_func))
 
-    void (*ft_centroid)(point_t * /*cent*/, const struct rt_db_internal * /*ip*/);
-#define RTFUNCTAB_FUNC_CENTROID_CAST(_func) ((void (*)(point_t *, const struct rt_db_internal *))((void (*)(void))_func))
+    int (*ft_centroid)(point_t * /*cent*/, const struct rt_db_internal * /*ip*/);
+#define RTFUNCTAB_FUNC_CENTROID_CAST(_func) ((int (*)(point_t *, const struct rt_db_internal *))((void (*)(void))_func))
 
     int (*ft_oriented_bbox)(struct rt_arb_internal * /* bounding arb8 */,
 			    struct rt_db_internal * /*ip*/,

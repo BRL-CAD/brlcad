@@ -44,6 +44,64 @@ rel_err(double estimated, double exact)
 
 
 static int
+verify_error_reporting(void)
+{
+    int failures = 0;
+    fastf_t value = 0.0;
+
+    printf("\n--- Metric error reporting ---\n");
+
+    if (rt_crofton_sample(NULL, NULL, NULL, NULL) != BRLCAD_ERROR) {
+	printf("  FAIL: rt_crofton_sample accepted no outputs and no primitive\n");
+	failures++;
+    }
+    if (rt_crofton_sample(&value, NULL, NULL, NULL) != BRLCAD_ERROR) {
+	printf("  FAIL: rt_crofton_sample accepted a NULL primitive\n");
+	failures++;
+    }
+
+    struct rt_tgc_internal tgc;
+    memset(&tgc, 0, sizeof(tgc));
+    tgc.magic = RT_TGC_INTERNAL_MAGIC;
+    VSET(tgc.h, 0, 0, 10);
+    VSET(tgc.a, 2, 0, 0);
+    VSET(tgc.b, 0, 1, 0);
+    VSET(tgc.c, 1, 0, 0);
+    VSET(tgc.d, 0, 0.75, 0);
+
+    struct rt_db_internal ip;
+    RT_DB_INTERNAL_INIT(&ip);
+    ip.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    ip.idb_minor_type = ID_TGC;
+    ip.idb_type = ID_TGC;
+    ip.idb_ptr = &tgc;
+    ip.idb_meth = &OBJ[ID_TGC];
+
+    point_t centroid = VINIT_ZERO;
+    if (ip.idb_meth->ft_centroid(&centroid, &ip) != BRLCAD_ERROR) {
+	printf("  FAIL: general TEC centroid did not report unsupported geometry\n");
+	failures++;
+    }
+
+    struct rt_bot_internal bot;
+    memset(&bot, 0, sizeof(bot));
+    bot.magic = RT_BOT_INTERNAL_MAGIC;
+    bot.mode = RT_BOT_SURFACE;
+    ip.idb_minor_type = ID_BOT;
+    ip.idb_type = ID_BOT;
+    ip.idb_ptr = &bot;
+    ip.idb_meth = &OBJ[ID_BOT];
+    if (ip.idb_meth->ft_volume(&value, &ip) != BRLCAD_ERROR) {
+	printf("  FAIL: surface-mode BoT reported a volume\n");
+	failures++;
+    }
+
+    printf("  Metric error reporting: %d failure(s)\n", failures);
+    return failures;
+}
+
+
+static int
 verify_crofton_estimates(void)
 {
     int failures = 0;
@@ -57,7 +115,11 @@ verify_crofton_estimates(void)
     do { \
 	struct rt_db_internal *_ip = (ip_ptr); \
 	fastf_t _csa = 0.0, _cvol = 0.0; \
-	rt_crofton_sample(&_csa, &_cvol, _ip, &cparams); \
+	if (rt_crofton_sample(&_csa, &_cvol, _ip, &cparams) != BRLCAD_OK) { \
+	    printf("  %-42s  estimator failed\n", (label)); \
+	    failures++; \
+	    break; \
+	} \
 	double _sa_err  = fabs(_csa  - (analytic_sa))  / ((analytic_sa)  > 0 ? (analytic_sa)  : 1.0) * 100.0; \
 	double _vol_err = fabs(_cvol - (analytic_vol)) / ((analytic_vol) > 0 ? (analytic_vol) : 1.0) * 100.0; \
 	const char *_sa_tag  = (_sa_err  <= tol_pct) ? "SA-OK"  : "SA-FAIL"; \
@@ -115,13 +177,17 @@ verify_crofton_estimates(void)
 	CROFTON_CHECK("RCC r=5 h=20", &ip, analytic_sa, analytic_vol);
 
 	fastf_t tgc_vol = 0.0;
-	ip.idb_meth->ft_volume(&tgc_vol, &ip);
-	double tgc_vol_err = fabs(tgc_vol - analytic_vol) / analytic_vol * 100.0;
-	printf("  %-42s  analytic_formula_err=%.2f%%  [%s]\n",
-	       "RCC r=5 h=20 (rt_tgc_volume)",
-	       tgc_vol_err,
-	       (tgc_vol_err <= 0.01) ? "OK" : "FORMULA-FAIL");
-	if (tgc_vol_err > 0.01) failures++;
+	if (ip.idb_meth->ft_volume(&tgc_vol, &ip) != BRLCAD_OK) {
+	    printf("  %-42s  analytic formula failed\n", "RCC r=5 h=20 (rt_tgc_volume)");
+	    failures++;
+	} else {
+	    double tgc_vol_err = fabs(tgc_vol - analytic_vol) / analytic_vol * 100.0;
+	    printf("  %-42s  analytic_formula_err=%.2f%%  [%s]\n",
+		   "RCC r=5 h=20 (rt_tgc_volume)",
+		   tgc_vol_err,
+		   (tgc_vol_err <= 0.01) ? "OK" : "FORMULA-FAIL");
+	    if (tgc_vol_err > 0.01) failures++;
+	}
     }
 
     {
@@ -167,16 +233,20 @@ verify_crofton_estimates(void)
 	}
 
 	fastf_t tgc_vol = 0.0;
-	ip.idb_meth->ft_volume(&tgc_vol, &ip);
-	double tgc_vol_err = fabs(tgc_vol - analytic_vol) / analytic_vol * 100.0;
-	double old_vol     = M_PI * r_cyl * r_cyl * h_len;
-	double old_err     = fabs(old_vol - analytic_vol) / analytic_vol * 100.0;
-	printf("  %-42s  analytic_formula_err=%.2f%%  [%s]  (old_err=%.1f%%)\n",
-	       "oblique RCC 30deg (rt_tgc_volume)",
-	       tgc_vol_err,
-	       (tgc_vol_err <= 0.1) ? "OK" : "FORMULA-FAIL",
-	       old_err);
-	if (tgc_vol_err > 0.1) failures++;
+	if (ip.idb_meth->ft_volume(&tgc_vol, &ip) != BRLCAD_OK) {
+	    printf("  %-42s  analytic formula failed\n", "oblique RCC 30deg (rt_tgc_volume)");
+	    failures++;
+	} else {
+	    double tgc_vol_err = fabs(tgc_vol - analytic_vol) / analytic_vol * 100.0;
+	    double old_vol     = M_PI * r_cyl * r_cyl * h_len;
+	    double old_err     = fabs(old_vol - analytic_vol) / analytic_vol * 100.0;
+	    printf("  %-42s  analytic_formula_err=%.2f%%  [%s]  (old_err=%.1f%%)\n",
+		   "oblique RCC 30deg (rt_tgc_volume)",
+		   tgc_vol_err,
+		   (tgc_vol_err <= 0.1) ? "OK" : "FORMULA-FAIL",
+		   old_err);
+	    if (tgc_vol_err > 0.1) failures++;
+	}
     }
 
     /* Sub-mm TRC: reproduces the xyzringtrc.s class of geometry that
@@ -387,6 +457,7 @@ main(int argc, char *argv[])
 	bu_exit(1, "Usage: %s\n", argv[0]);
 
     int failures = 0;
+    failures += verify_error_reporting();
     failures += verify_crofton_estimates();
     failures += test_crofton_convergence_timing();
 

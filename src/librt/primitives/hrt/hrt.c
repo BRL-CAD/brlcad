@@ -1729,10 +1729,12 @@ rt_hrt_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 }
 
 
-C_DECL void
+C_DECL int
 rt_hrt_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     fastf_t area_hrt_YZ_plane;
+    if (!area || !ip || !ip->idb_ptr)
+	return BRLCAD_ERROR;
     struct rt_hrt_internal *hip = (struct rt_hrt_internal *)ip->idb_ptr;
     RT_HRT_CK_MAGIC(hip);
 
@@ -1743,18 +1745,22 @@ rt_hrt_surf_area(fastf_t *area, const struct rt_db_internal *ip)
      * The 180 * M_PI scalar comes from http://mathworld.wolfram.com/HeartCurve.html
      */
     *area = 180 * M_PI * area_hrt_YZ_plane;
+    return BRLCAD_OK;
 }
 
 
 /**
  * Computes centroid of a heart
  */
-C_DECL void
+C_DECL int
 rt_hrt_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
+    if (!cent || !ip || !ip->idb_ptr)
+	return BRLCAD_ERROR;
     struct rt_hrt_internal *hip = (struct rt_hrt_internal *)ip->idb_ptr;
     RT_HRT_CK_MAGIC(hip);
     VSET(*cent, hip->xdir[X], hip->ydir[Y], hip->zdir[Z] * 0.125);
+    return BRLCAD_OK;
 }
 
 

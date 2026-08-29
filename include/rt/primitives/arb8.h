@@ -530,8 +530,8 @@ RT_EXPORT extern int rt_arb_std_type(const struct rt_db_internal *ip,
  * Find the center point for the arb in the rt_db_internal structure,
  * and return it as a point_t.
  */
-RT_EXPORT extern void rt_arb_centroid(point_t                       *cent,
-				      const struct rt_db_internal   *ip);
+RT_EXPORT extern int rt_arb_centroid(point_t                       *cent,
+				     const struct rt_db_internal   *ip);
 
 
 /**

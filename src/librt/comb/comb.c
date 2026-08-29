@@ -1316,23 +1316,23 @@ rt_comb_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
  * are used to build a temporary raytracing instance without copying the
  * tree or its children into a new database.
  *
- * Returns 0 on success, -1 on failure.
+ * Returns BRLCAD_OK on success, BRLCAD_ERROR on failure.
  */
 static int
 comb_crofton_sample(const struct rt_db_internal *ip, double *out_sa, double *out_vol)
 {
-    if (!ip || (!out_sa && !out_vol))
-	return -1;
+    if (!ip || !ip->idb_ptr || (!out_sa && !out_vol))
+	return BRLCAD_ERROR;
 
     if (ip->idb_type != ID_COMBINATION)
-	return -1;
+	return BRLCAD_ERROR;
 
     struct rt_comb_internal *comb = (struct rt_comb_internal *)ip->idb_ptr;
     RT_CK_COMB(comb);
 
     if (!comb->src_dbip || !comb->src_objname) {
 	bu_log("rt_comb_volume/surf_area: src_dbip or src_objname not set, cannot raytrace combination\n");
-	return -1;
+	return BRLCAD_ERROR;
     }
 
     RT_CK_DBI(comb->src_dbip);
@@ -1340,13 +1340,13 @@ comb_crofton_sample(const struct rt_db_internal *ip, double *out_sa, double *out
     struct rt_i *rtip = rt_i_create((struct db_i *)comb->src_dbip);
     if (!rtip) {
 	bu_log("rt_comb_volume/surf_area: rt_i_create() failed\n");
-	return -1;
+	return BRLCAD_ERROR;
     }
 
     if (rt_gettree(rtip, comb->src_objname) < 0) {
 	bu_log("rt_comb_volume/surf_area: rt_gettree() failed for '%s'\n", comb->src_objname);
 	rt_i_destroy(rtip);
-	return -1;
+	return BRLCAD_ERROR;
     }
 
     rt_prep_parallel(rtip, 1);
@@ -1354,36 +1354,43 @@ comb_crofton_sample(const struct rt_db_internal *ip, double *out_sa, double *out
     double sa  = 0.0;
     double vol = 0.0;
     /* Use default params (NULL → 2 000-ray convergence loop) */
-    (void)rt_crofton_shoot(&sa, &vol, NULL, NULL, NULL, NULL, NULL,
-	rtip, NULL, NULL, NULL);
+    if (rt_crofton_shoot(&sa, &vol, NULL, NULL, NULL, NULL, NULL,
+	    rtip, NULL, NULL, NULL) < 0) {
+	rt_i_destroy(rtip);
+	return BRLCAD_ERROR;
+    }
 
     if (out_sa)  *out_sa  = sa;
     if (out_vol) *out_vol = vol;
 
     rt_i_destroy(rtip);
-    return 0;
+    return BRLCAD_OK;
 }
 
 
-C_DECL void
+C_DECL int
 rt_comb_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     if (!area || !ip)
-	return;
+	return BRLCAD_ERROR;
     double sa = 0.0;
-    if (comb_crofton_sample(ip, &sa, NULL) == 0)
-	*area = (fastf_t)sa;
+    if (comb_crofton_sample(ip, &sa, NULL) != BRLCAD_OK)
+	return BRLCAD_ERROR;
+    *area = (fastf_t)sa;
+    return BRLCAD_OK;
 }
 
 
-C_DECL void
+C_DECL int
 rt_comb_volume(fastf_t *vol, const struct rt_db_internal *ip)
 {
     if (!vol || !ip)
-	return;
+	return BRLCAD_ERROR;
     double v = 0.0;
-    if (comb_crofton_sample(ip, NULL, &v) == 0)
-	*vol = (fastf_t)v;
+    if (comb_crofton_sample(ip, NULL, &v) != BRLCAD_OK)
+	return BRLCAD_ERROR;
+    *vol = (fastf_t)v;
+    return BRLCAD_OK;
 }
 
 

@@ -1914,10 +1914,12 @@ rt_rpc_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 }
 
 
-C_DECL void
+C_DECL int
 rt_rpc_volume(fastf_t *vol, const struct rt_db_internal *ip)
 {
     fastf_t mag_h, mag_b, mag_r;
+    if (!vol || !ip || !ip->idb_ptr)
+	return BRLCAD_ERROR;
     struct rt_rpc_internal *xip = (struct rt_rpc_internal *)ip->idb_ptr;
     RT_RPC_CK_MAGIC(xip);
 
@@ -1926,12 +1928,15 @@ rt_rpc_volume(fastf_t *vol, const struct rt_db_internal *ip)
     mag_r = xip->rpc_r;
 
     *vol = 4.0/3.0 * mag_b * mag_r * mag_h;
+    return BRLCAD_OK;
 }
 
 
-C_DECL void
+C_DECL int
 rt_rpc_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
+    if (!cent || !ip || !ip->idb_ptr)
+	return BRLCAD_ERROR;
     struct rt_rpc_internal *xip = (struct rt_rpc_internal *)ip->idb_ptr;
     RT_RPC_CK_MAGIC(xip);
 
@@ -1944,15 +1949,18 @@ rt_rpc_centroid(point_t *cent, const struct rt_db_internal *ip)
      * parabolic section representing the base
      * of the rpc */
     VJOIN1(*cent, *cent, 0.5, xip->rpc_H);
+    return BRLCAD_OK;
 }
 
 
-C_DECL void
+C_DECL int
 rt_rpc_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     fastf_t area_base, area_shell, area_rect;
     fastf_t mag_b, mag_r, mag_h;
     fastf_t magsq_b, magsq_r;
+    if (!area || !ip || !ip->idb_ptr)
+	return BRLCAD_ERROR;
     struct rt_rpc_internal *xip = (struct rt_rpc_internal *)ip->idb_ptr;
     RT_RPC_CK_MAGIC(xip);
 
@@ -1971,6 +1979,7 @@ rt_rpc_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     area_rect = 2.0 * mag_r * mag_h;
 
     *area = 2.0 * area_base + area_rect + area_shell;
+    return BRLCAD_OK;
 }
 
 static int

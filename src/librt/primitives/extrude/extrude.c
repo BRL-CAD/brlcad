@@ -64,8 +64,8 @@ __BEGIN_DECLS
 extern int seg_to_vlist(struct bu_list *vlfree, struct bu_list *vhead, const struct bg_tess_tol *ttol, point_t V,
 			vect_t u_vec, vect_t v_vec, struct rt_sketch_internal *sketch_ip, void *seg);
 
-extern void rt_sketch_surf_area(fastf_t *area, const struct rt_db_internal *ip);
-extern void rt_sketch_centroid(point_t *cent, const struct rt_db_internal *ip);
+extern int rt_sketch_surf_area(fastf_t *area, const struct rt_db_internal *ip);
+extern int rt_sketch_centroid(point_t *cent, const struct rt_db_internal *ip);
 __END_DECLS
 
 struct extrude_specific {
@@ -347,7 +347,7 @@ rt_extrude_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const str
 /**
  * Calculate the volume of an extruded object
  */
-C_DECL void
+C_DECL int
 rt_extrude_volume(fastf_t *vol, const struct rt_db_internal *ip)
 {
     struct rt_extrude_internal *eip;
@@ -357,6 +357,8 @@ rt_extrude_volume(fastf_t *vol, const struct rt_db_internal *ip)
     fastf_t h_norm;
     fastf_t u_norm;
     fastf_t v_norm;
+    if (!vol || !ip || !ip->idb_ptr)
+	return BRLCAD_ERROR;
     eip = (struct rt_extrude_internal *)ip->idb_ptr;
     RT_EXTRUDE_CK_MAGIC(eip);
     skt = eip->skt;
@@ -365,13 +367,15 @@ rt_extrude_volume(fastf_t *vol, const struct rt_db_internal *ip)
     RT_DB_INTERNAL_INIT(&db_skt);
     db_skt.idb_ptr = (void *)skt;
 
-    rt_sketch_surf_area(&area, &db_skt);
+    if (rt_sketch_surf_area(&area, &db_skt) != BRLCAD_OK)
+	return BRLCAD_ERROR;
 
     h_norm = MAGNITUDE(eip->h);
     u_norm = MAGNITUDE(eip->u_vec);
     v_norm = MAGNITUDE(eip->v_vec);
 
     *vol = area * h_norm * u_norm * v_norm;
+    return BRLCAD_OK;
 }
 
 
@@ -1501,7 +1505,7 @@ rt_extrude_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct b
     return 0;
 }
 
-C_DECL void
+C_DECL int
 rt_extrude_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
     struct rt_extrude_internal *eip;
@@ -1509,6 +1513,8 @@ rt_extrude_centroid(point_t *cent, const struct rt_db_internal *ip)
     struct rt_db_internal db_skt;
     point_t skt_cent;
     point_t middle_h;
+    if (!cent || !ip || !ip->idb_ptr)
+	return BRLCAD_ERROR;
     eip = (struct rt_extrude_internal *)ip->idb_ptr;
     RT_EXTRUDE_CK_MAGIC(eip);
     skt = eip->skt;
@@ -1517,10 +1523,12 @@ rt_extrude_centroid(point_t *cent, const struct rt_db_internal *ip)
     RT_DB_INTERNAL_INIT(&db_skt);
     db_skt.idb_ptr = (void *)skt;
 
-    rt_sketch_centroid(&skt_cent, &db_skt);
+    if (rt_sketch_centroid(&skt_cent, &db_skt) != BRLCAD_OK)
+	return BRLCAD_ERROR;
 
     VSCALE(middle_h, eip->h, 0.5);
     VADD2(*cent, skt_cent, middle_h);
+    return BRLCAD_OK;
 }
 
 

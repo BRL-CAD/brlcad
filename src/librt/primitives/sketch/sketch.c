@@ -1050,11 +1050,12 @@ sketch_centroid_with_precision(point_t *cent,
 	    }
 	}
     }
-    VSCALE(*cent, *cent, 1.0 / (fastf_t)n);
+    if (n > 0)
+	VSCALE(*cent, *cent, 1.0 / (fastf_t)n);
     return n;
 }
 
-C_DECL void
+C_DECL int
 rt_sketch_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
     /* With BN_TOL_DIST instead, even relatively simple sketches can
@@ -1076,6 +1077,8 @@ rt_sketch_centroid(point_t *cent, const struct rt_db_internal *ip)
      */
     fastf_t precision = 1024;
     fastf_t bounds[4];
+    if (!cent || !ip || !ip->idb_ptr)
+	return BRLCAD_ERROR;
     struct rt_sketch_internal *sketch_ip = (struct rt_sketch_internal *)ip->idb_ptr;
     point_t current_cents[2];
     point_t difference = {INFINITY, INFINITY, INFINITY};
@@ -1094,12 +1097,15 @@ rt_sketch_centroid(point_t *cent, const struct rt_db_internal *ip)
 
     while (!NEAR_ZERO(MAGNITUDE(difference), TOLERANCE)) {
 	n[i] = sketch_centroid_with_precision(&current_cents[i], sketch_ip, precision, n[i], bounds);
+	if (n[i] == 0)
+	    return BRLCAD_ERROR;
 	precision *= M_SQRT2;
 	VSUB2(difference, current_cents[i], current_cents[!i]);
 	i = !i;
     }
 
     VMOVE(*cent, current_cents[!i]);
+    return BRLCAD_OK;
 }
 
 

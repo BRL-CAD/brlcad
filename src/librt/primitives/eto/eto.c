@@ -2145,10 +2145,12 @@ eto_is_self_intersecting(const struct rt_eto_internal *tip)
 }
 
 
-C_DECL void
+C_DECL int
 rt_eto_volume(fastf_t *vol, const struct rt_db_internal *ip)
 {
     fastf_t mag_c;
+    if (!vol || !ip || !ip->idb_ptr)
+	return BRLCAD_ERROR;
     struct rt_eto_internal *tip = (struct rt_eto_internal *)ip->idb_ptr;
     RT_ETO_CK_MAGIC(tip);
 
@@ -2158,28 +2160,34 @@ rt_eto_volume(fastf_t *vol, const struct rt_db_internal *ip)
     if (eto_is_self_intersecting(tip)) {
 	struct rt_db_internal ip_meth = *ip;
 	ip_meth.idb_meth = &OBJ[ID_ETO];
-	do { static const struct rt_crofton_params _p = {50000u, 0.0, 0.0}; rt_crofton_sample(NULL, vol, &ip_meth, &_p); } while (0);
-	return;
+	static const struct rt_crofton_params p = {RT_CROFTON_HIGH_ACCURACY_SAMPLES, 0.0, 0.0};
+	return rt_crofton_sample(NULL, vol, &ip_meth, &p);
     }
 
     mag_c = MAGNITUDE(tip->eto_C);
     *vol = 2.0 * M_PI * M_PI * tip->eto_r * tip->eto_rd * mag_c;
+    return BRLCAD_OK;
 }
 
 
-C_DECL void
+C_DECL int
 rt_eto_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
+    if (!cent || !ip || !ip->idb_ptr)
+	return BRLCAD_ERROR;
     struct rt_eto_internal *tip = (struct rt_eto_internal *)ip->idb_ptr;
     RT_ETO_CK_MAGIC(tip);
     VMOVE(*cent, tip->eto_V);
+    return BRLCAD_OK;
 }
 
 
-C_DECL void
+C_DECL int
 rt_eto_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     fastf_t circum, mag_c;
+    if (!area || !ip || !ip->idb_ptr)
+	return BRLCAD_ERROR;
     struct rt_eto_internal *tip = (struct rt_eto_internal *)ip->idb_ptr;
     RT_ETO_CK_MAGIC(tip);
 
@@ -2189,14 +2197,15 @@ rt_eto_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     if (eto_is_self_intersecting(tip)) {
 	struct rt_db_internal ip_meth = *ip;
 	ip_meth.idb_meth = &OBJ[ID_ETO];
-	do { static const struct rt_crofton_params _p = {50000u, 0.0, 0.0}; rt_crofton_sample(area, NULL, &ip_meth, &_p); } while (0);
-	return;
+	static const struct rt_crofton_params p = {RT_CROFTON_HIGH_ACCURACY_SAMPLES, 0.0, 0.0};
+	return rt_crofton_sample(area, NULL, &ip_meth, &p);
     }
 
     mag_c = MAGNITUDE(tip->eto_C);
     /* approximation */
     circum = ELL_CIRCUMFERENCE(mag_c, tip->eto_rd);
     *area = M_2PI * tip->eto_r * circum;
+    return BRLCAD_OK;
 }
 
 static int

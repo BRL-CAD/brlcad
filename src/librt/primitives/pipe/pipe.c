@@ -5032,7 +5032,7 @@ rt_pipe_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 }
 
 
-C_DECL void
+C_DECL int
 rt_pipe_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     struct bu_list head;
@@ -5047,9 +5047,14 @@ rt_pipe_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     int connected;
     char overlap;
 
+    if (!area || !ip || !ip->idb_ptr)
+	return BRLCAD_ERROR;
+
     BU_LIST_INIT(&head);
 
     pipe_elements_calculate(&head, ip, &min, &max);
+    if (BU_LIST_IS_EMPTY(&head))
+	return BRLCAD_ERROR;
 
     /* The following calculation establishes if the last pipe segment
      * is in fact connected to the first one. The last end point is
@@ -5157,7 +5162,8 @@ rt_pipe_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 		    break;
 		default:
 		    bu_log("rt_pipe_surf_area: Unexpected cross-section overlap code: (%d)\n", overlap);
-		    break;
+		    pipe_elements_free(&head);
+		    return BRLCAD_ERROR;
 	    }
 	} else {
 	    /* not connected, both areas are added regardless of overlaps */
@@ -5179,7 +5185,7 @@ rt_pipe_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     }
 
     pipe_elements_free(&head);
-
+    return BRLCAD_OK;
 }
 
 
@@ -5235,16 +5241,21 @@ pipe_elem_volume_and_centroid(struct id_pipe *p, fastf_t *vol, point_t *cent)
 }
 
 
-C_DECL void
+C_DECL int
 rt_pipe_volume(fastf_t *vol, const struct rt_db_internal *ip)
 {
     struct bu_list head;
     point_t min, max;
     struct id_pipe *p;
 
+    if (!vol || !ip || !ip->idb_ptr)
+	return BRLCAD_ERROR;
+
     BU_LIST_INIT(&head);
 
     pipe_elements_calculate(&head, ip, &min, &max);
+    if (BU_LIST_IS_EMPTY(&head))
+	return BRLCAD_ERROR;
 
     *vol = 0;
     for (BU_LIST_FOR(p, id_pipe, &head)) {
@@ -5252,10 +5263,11 @@ rt_pipe_volume(fastf_t *vol, const struct rt_db_internal *ip)
     }
 
     pipe_elements_free(&head);
+    return BRLCAD_OK;
 }
 
 
-C_DECL void
+C_DECL int
 rt_pipe_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
     struct bu_list head;
@@ -5263,9 +5275,14 @@ rt_pipe_centroid(point_t *cent, const struct rt_db_internal *ip)
     struct id_pipe *p;
     fastf_t vol;
 
+    if (!cent || !ip || !ip->idb_ptr)
+	return BRLCAD_ERROR;
+
     BU_LIST_INIT(&head);
 
     pipe_elements_calculate(&head, ip, &min, &max);
+    if (BU_LIST_IS_EMPTY(&head))
+	return BRLCAD_ERROR;
 
     VSETALL(*cent, 0);
     vol = 0;
@@ -5273,8 +5290,13 @@ rt_pipe_centroid(point_t *cent, const struct rt_db_internal *ip)
     for (BU_LIST_FOR(p, id_pipe, &head)) {
 	pipe_elem_volume_and_centroid(p, &vol, cent);
     }
+    if (NEAR_ZERO(vol, SMALL_FASTF)) {
+	pipe_elements_free(&head);
+	return BRLCAD_ERROR;
+    }
     VSCALE(*cent, *cent, 1/vol);
     pipe_elements_free(&head);
+    return BRLCAD_OK;
 }
 
 /*

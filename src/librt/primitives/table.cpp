@@ -72,9 +72,9 @@ extern "C" {
     extern int rt_##name##_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *tol); \
     extern int rt_##name##_mirror(struct rt_db_internal *ip, const plane_t *plane); \
     extern const struct bu_structparse rt_##name##_parse[]; \
-    extern void rt_##name##_volume(fastf_t *vol, const struct rt_db_internal *ip); \
-    extern void rt_##name##_surf_area(fastf_t *area, const struct rt_db_internal *ip); \
-    extern void rt_##name##_centroid(point_t *cent, const struct rt_db_internal *ip); \
+    extern int rt_##name##_volume(fastf_t *vol, const struct rt_db_internal *ip); \
+    extern int rt_##name##_surf_area(fastf_t *area, const struct rt_db_internal *ip); \
+    extern int rt_##name##_centroid(point_t *cent, const struct rt_db_internal *ip); \
     extern int rt_##name##_oriented_bbox(struct rt_arb_internal *bbox, struct rt_db_internal *ip, const fastf_t tol); \
     extern struct rt_selection_set *rt_##name##_find_selections(const struct rt_db_internal *ip, const struct rt_selection_query *query); \
     extern struct rt_selection *rt_##name##_evaluate_selection(const struct rt_db_internal *ip, int op, const struct rt_selection *a, const struct rt_selection *b); \
@@ -142,14 +142,14 @@ extern int rt_generic_scene_obj(struct bv_scene_obj *s, struct directory *dp, st
 
 /* from primitives/crofton.cpp - Cauchy-Crofton SA/volume functab callbacks
  * (internal to librt; not exported via the public header)              */
-extern void rt_crofton_surf_area(fastf_t *area, const struct rt_db_internal *ip);
-extern void rt_crofton_volume(fastf_t *vol, const struct rt_db_internal *ip);
-extern void rt_crofton_surf_area_implicit(fastf_t *area, const struct rt_db_internal *ip);
-extern void rt_crofton_volume_implicit(fastf_t *vol, const struct rt_db_internal *ip);
+extern int rt_crofton_surf_area(fastf_t *area, const struct rt_db_internal *ip);
+extern int rt_crofton_volume(fastf_t *vol, const struct rt_db_internal *ip);
+extern int rt_crofton_surf_area_implicit(fastf_t *area, const struct rt_db_internal *ip);
+extern int rt_crofton_volume_implicit(fastf_t *vol, const struct rt_db_internal *ip);
 
 /* from primitives/poly/poly.c - analytic polysolid measure functions */
-extern void rt_pg_volume(fastf_t *volume, const struct rt_db_internal *ip);
-extern void rt_pg_surf_area(fastf_t *area, const struct rt_db_internal *ip);
+extern int rt_pg_volume(fastf_t *volume, const struct rt_db_internal *ip);
+extern int rt_pg_surf_area(fastf_t *area, const struct rt_db_internal *ip);
 
 /* from db5_bin.c */
 extern int rt_binunif_import5(struct rt_db_internal * ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip);
@@ -170,8 +170,8 @@ extern int rt_comb_make(const struct rt_functab *ftp, struct rt_db_internal *int
 extern void rt_comb_ifree(struct rt_db_internal *ip);
 extern int rt_comb_mat(struct rt_db_internal *op, const mat_t mat, const struct rt_db_internal *ip);
 extern int rt_comb_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol);
-extern void rt_comb_surf_area(fastf_t *area, const struct rt_db_internal *ip);
-extern void rt_comb_volume(fastf_t *vol, const struct rt_db_internal *ip);
+extern int rt_comb_surf_area(fastf_t *area, const struct rt_db_internal *ip);
+extern int rt_comb_volume(fastf_t *vol, const struct rt_db_internal *ip);
 
 extern int rt_annot_form(struct bu_vls *logstr, const struct rt_functab *ftp);
 extern int rt_bot_form(struct bu_vls *logstr, const struct rt_functab *ftp);

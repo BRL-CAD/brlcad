@@ -2001,19 +2001,24 @@ rt_bot_makesegs(hit_da *hits, struct soltab *stp, struct xray *rp, struct applic
     return rt_bot_oriented_segs(hits, stp, ap, seghead, psp);
 }
 
-C_DECL void
+C_DECL int
 rt_bot_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
     size_t i;
+    if (!cent || !ip || !ip->idb_ptr)
+	return BRLCAD_ERROR;
     struct rt_bot_internal *bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
     RT_BOT_CK_MAGIC(bot_ip);
 
     rt_bot_condense(bot_ip);
+    if (bot_ip->num_vertices == 0)
+	return BRLCAD_ERROR;
     VSETALL(*cent, 0.0);
     for (i = 0; i < bot_ip->num_vertices; i++) {
 	VADD2(*cent, *cent, &bot_ip->vertices[i*3]);
     }
     VSCALE(*cent, *cent, 1.0 / (fastf_t)bot_ip->num_vertices);
+    return BRLCAD_OK;
 }
 
 
@@ -2040,7 +2045,8 @@ rt_bot_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	plane_t planes[RT_BOT_TESS_MAX_FACES];
 	point_t center;
 
-	rt_bot_centroid(&center, ip);
+	if (rt_bot_centroid(&center, ip) != BRLCAD_OK)
+	    return -1;
 	bu_log("center pt = (%f %f %f)\n", V3ARGS(center));
 
 	/* get the faces that use each vertex */
@@ -6051,7 +6057,7 @@ rt_bot_list_free(struct rt_bot_list *headRblp, int fbflag)
 }
 
 
-C_DECL void
+C_DECL int
 rt_bot_volume(fastf_t *volume, const struct rt_db_internal *ip)
 {
     /* contains information used to analyze a polygonal face */
@@ -6065,13 +6071,17 @@ rt_bot_volume(fastf_t *volume, const struct rt_db_internal *ip)
     };
     size_t i;
     struct poly_face face = { { 0, 0, 0, 0, 0 }, 0, NULL, HINIT_ZERO, 0.0 };
+    if (!volume || !ip || !ip->idb_ptr)
+	return BRLCAD_ERROR;
     struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
     struct bn_tol tol;
     RT_BOT_CK_MAGIC(bot);
 
     *volume = 0.0;
-    if (bot->mode == RT_BOT_SURFACE)
-	return;
+    if (bot->mode != RT_BOT_SOLID)
+	return BRLCAD_ERROR;
+    if (bot->num_faces == 0)
+	return BRLCAD_OK;
 
     /* allocate pts array, 3 vertices per bot face */
     face.pts = (point_t *)bu_calloc(3, sizeof(point_t), "rt_bot_volume: pts");
@@ -6117,14 +6127,21 @@ rt_bot_volume(fastf_t *volume, const struct rt_db_internal *ip)
     }
     *volume = fabs(*volume)/3.0;
     bu_free((char *)face.pts, "rt_bot_volume: pts");
+    return BRLCAD_OK;
 }
 
-C_DECL void
+C_DECL int
 rt_bot_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     typedef point_t triangle[3];
+    if (!area || !ip || !ip->idb_ptr)
+	return BRLCAD_ERROR;
     struct rt_bot_internal *bot_ip =
 	(struct rt_bot_internal *)ip->idb_ptr;
+    RT_BOT_CK_MAGIC(bot_ip);
+    *area = 0.0;
+    if (bot_ip->num_faces == 0)
+	return BRLCAD_OK;
     size_t a, b, j;
     triangle *whole_bot_vertices = (triangle *)bu_calloc(bot_ip->num_faces, sizeof(triangle), "rt_bot_surf_area: whole_bot_vertices"); /* [face][corner][x,y,z] */
     fastf_t whole_bot_overall_area;
@@ -6230,7 +6247,7 @@ rt_bot_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     }
     *area = whole_bot_overall_area;
     bu_free((char *)whole_bot_vertices, "rt_bot_surf_area: whole_bot_vertices");
-    return;
+    return BRLCAD_OK;
 }
 
 

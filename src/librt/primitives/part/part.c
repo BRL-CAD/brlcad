@@ -2200,10 +2200,12 @@ rt_part_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 }
 
 
-C_DECL void
+C_DECL int
 rt_part_volume(fastf_t *vol, const struct rt_db_internal *ip)
 {
     fastf_t vrad, hrad, mag_h;
+    if (!vol || !ip || !ip->idb_ptr)
+	return BRLCAD_ERROR;
     struct rt_part_internal *pip = (struct rt_part_internal *)ip->idb_ptr;
     RT_PART_CK_MAGIC(pip);
 
@@ -2220,13 +2222,16 @@ rt_part_volume(fastf_t *vol, const struct rt_db_internal *ip)
 	mid_section = M_PI * mag_h * (hrad * hrad + vrad * vrad + hrad * vrad) / 3.0;
 	*vol = 2.0/3.0 * M_PI * (vrad3 + hrad3) + mid_section;
     }
+    return BRLCAD_OK;
 }
 
 
-C_DECL void
+C_DECL int
 rt_part_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     fastf_t vrad, hrad, mag_h;
+    if (!area || !ip || !ip->idb_ptr)
+	return BRLCAD_ERROR;
     struct rt_part_internal *pip = (struct rt_part_internal *)ip->idb_ptr;
     RT_PART_CK_MAGIC(pip);
 
@@ -2241,15 +2246,18 @@ rt_part_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 	mid_section = M_PI * ((vrad + hrad) * sqrt((vrad - hrad) * (vrad - hrad) + mag_h * mag_h));
 	*area = M_2PI * (vrad * vrad + hrad * hrad) + mid_section;
     }
+    return BRLCAD_OK;
 }
 
 
-C_DECL void
+C_DECL int
 rt_part_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
     fastf_t vrad, hrad, mag_h, nm, dm, c_frst, cv_hem, ch_hem;
     vect_t hvec, hvec_n;
     point_t vpt, fcent, hhcent, cvcent;
+    if (!cent || !ip || !ip->idb_ptr)
+	return BRLCAD_ERROR;
     struct rt_part_internal *pip = (struct rt_part_internal *)ip->idb_ptr;
     int idx;
     RT_PART_CK_MAGIC(pip);
@@ -2279,6 +2287,7 @@ rt_part_centroid(point_t *cent, const struct rt_db_internal *ip)
     }
 
     VADD3(*cent, fcent, hhcent, cvcent);
+    return BRLCAD_OK;
 }
 
 C_DECL int

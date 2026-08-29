@@ -280,7 +280,10 @@ compare_with_crofton(const char *label,
 	return 0;
     }
 
-    rt_crofton_sample(&crofton_area, &crofton_volume, intern, NULL);
+    if (rt_crofton_sample(&crofton_area, &crofton_volume, intern, NULL) != BRLCAD_OK) {
+	bu_log("CROFTON: %s estimator failed\n", label);
+	return 1;
+    }
 
     print_crofton_compare(label,
 			  direct_area,
@@ -321,13 +324,21 @@ eval_case(const char *label,
     {
 	char buf[256];
 
-	rt_dsp_volume(&volume, &intern);
-	snprintf(buf, sizeof(buf), "%s volume", label);
-	failures += check_near(buf, volume, expected_volume);
+	if (rt_dsp_volume(&volume, &intern) != BRLCAD_OK) {
+	    bu_log("FAIL: %s volume calculation failed\n", label);
+	    failures++;
+	} else {
+	    snprintf(buf, sizeof(buf), "%s volume", label);
+	    failures += check_near(buf, volume, expected_volume);
+	}
 
-	rt_dsp_surf_area(&area, &intern);
-	snprintf(buf, sizeof(buf), "%s surface area", label);
-	failures += check_near(buf, area, expected_area);
+	if (rt_dsp_surf_area(&area, &intern) != BRLCAD_OK) {
+	    bu_log("FAIL: %s surface area calculation failed\n", label);
+	    failures++;
+	} else {
+	    snprintf(buf, sizeof(buf), "%s surface area", label);
+	    failures += check_near(buf, area, expected_area);
+	}
     }
 
     if (!failures)
@@ -661,8 +672,11 @@ run_sample_object(const char *gfile,
 	return 1;
     }
 
-    rt_dsp_volume(&volume, &intern);
-    rt_dsp_surf_area(&area, &intern);
+    if (rt_dsp_volume(&volume, &intern) != BRLCAD_OK ||
+	rt_dsp_surf_area(&area, &intern) != BRLCAD_OK) {
+	bu_log("ERROR: unable to calculate DSP metrics for %s\n", object);
+	ret = 1;
+    }
 
     if (!ret) {
 	bu_log("%s/%s\n", gfile, object);

@@ -2007,9 +2007,11 @@ rt_tor_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 }
 
 
-C_DECL void
+C_DECL int
 rt_tor_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
+    if (!area || !ip || !ip->idb_ptr)
+	return BRLCAD_ERROR;
     struct rt_tor_internal *tip = (struct rt_tor_internal *)ip->idb_ptr;
     RT_TOR_CK_MAGIC(tip);
 
@@ -2021,20 +2023,23 @@ rt_tor_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     if (tip->r_h > tip->r_a) {
 	struct rt_db_internal ip_meth = *ip;
 	ip_meth.idb_meth = &OBJ[ID_TOR];
-	do { static const struct rt_crofton_params _p = {50000u, 0.0, 0.0}; rt_crofton_sample(area, NULL, &ip_meth, &_p); } while (0);
-	return;
+	static const struct rt_crofton_params p = {RT_CROFTON_HIGH_ACCURACY_SAMPLES, 0.0, 0.0};
+	return rt_crofton_sample(area, NULL, &ip_meth, &p);
     }
 
     /* r_h: radius of torus tube
      * r_a: radius from axis of rotation to center of tube
      */
     *area = 4.0 * M_PI * M_PI * tip->r_h * tip->r_a;
+    return BRLCAD_OK;
 }
 
 
-C_DECL void
+C_DECL int
 rt_tor_volume(fastf_t *vol, const struct rt_db_internal *ip)
 {
+    if (!vol || !ip || !ip->idb_ptr)
+	return BRLCAD_ERROR;
     struct rt_tor_internal *tip = (struct rt_tor_internal *)ip->idb_ptr;
     RT_TOR_CK_MAGIC(tip);
 
@@ -2042,20 +2047,24 @@ rt_tor_volume(fastf_t *vol, const struct rt_db_internal *ip)
     if (tip->r_h > tip->r_a) {
 	struct rt_db_internal ip_meth = *ip;
 	ip_meth.idb_meth = &OBJ[ID_TOR];
-	do { static const struct rt_crofton_params _p = {50000u, 0.0, 0.0}; rt_crofton_sample(NULL, vol, &ip_meth, &_p); } while (0);
-	return;
+	static const struct rt_crofton_params p = {RT_CROFTON_HIGH_ACCURACY_SAMPLES, 0.0, 0.0};
+	return rt_crofton_sample(NULL, vol, &ip_meth, &p);
     }
 
     *vol = 2.0 * M_PI * M_PI * (tip->r_h * tip->r_h) * tip->r_a;
+    return BRLCAD_OK;
 }
 
 
-C_DECL void
+C_DECL int
 rt_tor_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
+    if (!cent || !ip || !ip->idb_ptr)
+	return BRLCAD_ERROR;
     struct rt_tor_internal *tip = (struct rt_tor_internal *)ip->idb_ptr;
     RT_TOR_CK_MAGIC(tip);
     VMOVE(*cent,tip->v);
+    return BRLCAD_OK;
 }
 
 C_DECL int

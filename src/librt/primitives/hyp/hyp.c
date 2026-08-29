@@ -1676,19 +1676,20 @@ rt_hyp_params(struct pc_pc_set * UNUSED(ps), const struct rt_db_internal *ip)
 }
 
 
-C_DECL void
+C_DECL int
 rt_hyp_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
-    if (cent != NULL && ip != NULL) {
-	struct rt_hyp_internal *hip;
+    struct rt_hyp_internal *hip;
+    if (!cent || !ip || !ip->idb_ptr)
+	return BRLCAD_ERROR;
 
-	RT_CK_DB_INTERNAL(ip);
-	hip = (struct rt_hyp_internal *)ip->idb_ptr;
-	RT_HYP_CK_MAGIC(hip);
+    RT_CK_DB_INTERNAL(ip);
+    hip = (struct rt_hyp_internal *)ip->idb_ptr;
+    RT_HYP_CK_MAGIC(hip);
 
-	VSCALE(*cent, hip->hyp_Hi, 0.5);
-	VADD2(*cent, hip->hyp_Vi, *cent);
-    }
+    VSCALE(*cent, hip->hyp_Hi, 0.5);
+    VADD2(*cent, hip->hyp_Vi, *cent);
+    return BRLCAD_OK;
 }
 
 
@@ -1697,31 +1698,35 @@ rt_hyp_centroid(point_t *cent, const struct rt_db_internal *ip)
  * There is no known closed-form solution for the general case.
  * Use the Cauchy-Crofton ray-sampling estimator as a fallback.
  */
-C_DECL void
+C_DECL int
 rt_hyp_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     if (!area || !ip)
-	return;
-    do { static const struct rt_crofton_params _p = {50000u, 0.0, 0.0}; rt_crofton_sample(area, NULL, ip, &_p); } while (0);
+	return BRLCAD_ERROR;
+    static const struct rt_crofton_params p = {RT_CROFTON_HIGH_ACCURACY_SAMPLES, 0.0, 0.0};
+    return rt_crofton_sample(area, NULL, ip, &p);
 }
 
 
-C_DECL void
+C_DECL int
 rt_hyp_volume(fastf_t *volume, const struct rt_db_internal *ip)
 {
-    if (volume != NULL && ip != NULL) {
-	struct rt_hyp_internal *hip;
-	struct hyp_specific *hyp;
+    struct rt_hyp_internal *hip;
+    struct hyp_specific *hyp;
+    if (!volume || !ip || !ip->idb_ptr)
+	return BRLCAD_ERROR;
 
-	RT_CK_DB_INTERNAL(ip);
-	hip = (struct rt_hyp_internal *)ip->idb_ptr;
-	RT_HYP_CK_MAGIC(hip);
+    RT_CK_DB_INTERNAL(ip);
+    hip = (struct rt_hyp_internal *)ip->idb_ptr;
+    RT_HYP_CK_MAGIC(hip);
 
-	hyp = hyp_internal_to_specific(hip);
-	*volume = M_2PI * hyp->hyp_r1 * hyp->hyp_r2 * hyp->hyp_Hmag *
-	    (1 + hyp->hyp_Hmag * hyp->hyp_Hmag * hyp->hyp_c * hyp->hyp_c / (12 * hyp->hyp_r1 * hyp->hyp_r1));
-	bu_free(hyp, "hyp volume");
-    }
+    hyp = hyp_internal_to_specific(hip);
+    if (!hyp)
+	return BRLCAD_ERROR;
+    *volume = M_2PI * hyp->hyp_r1 * hyp->hyp_r2 * hyp->hyp_Hmag *
+	(1 + hyp->hyp_Hmag * hyp->hyp_Hmag * hyp->hyp_c * hyp->hyp_c / (12 * hyp->hyp_r1 * hyp->hyp_r1));
+    bu_free(hyp, "hyp volume");
+    return BRLCAD_OK;
 }
 
 C_DECL int

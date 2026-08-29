@@ -3843,13 +3843,15 @@ rt_tgc_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 }
 
 
-C_DECL void
+C_DECL int
 rt_tgc_volume(fastf_t *vol, const struct rt_db_internal *ip)
 {
     int tgc_type = 0;
     fastf_t mag_a, mag_b, mag_c, mag_d;
     fastf_t h_perp;  /* perpendicular distance between the two end planes */
     vect_t axb;
+    if (!vol || !ip || !ip->idb_ptr)
+	return BRLCAD_ERROR;
     struct rt_tgc_internal *tip = (struct rt_tgc_internal *)ip->idb_ptr;
     RT_TGC_CK_MAGIC(tip);
 
@@ -3932,13 +3934,14 @@ rt_tgc_volume(fastf_t *vol, const struct rt_db_internal *ip)
 		/ 6.0;
 	    break;
 	default:
-	    /* never reached */
 	    bu_log("rt_tgc_volume(): cannot find volume\n");
+	    return BRLCAD_ERROR;
     }
+    return BRLCAD_OK;
 }
 
 
-C_DECL void
+C_DECL int
 rt_tgc_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     int tgc_type = 0;
@@ -3946,6 +3949,8 @@ rt_tgc_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     fastf_t magsq_a, magsq_c, magsq_h;
     fastf_t c;
     fastf_t area_base;
+    if (!area || !ip || !ip->idb_ptr)
+	return BRLCAD_ERROR;
     struct rt_tgc_internal *tip = (struct rt_tgc_internal *)ip->idb_ptr;
     RT_TGC_CK_MAGIC(tip);
 
@@ -4010,19 +4015,24 @@ rt_tgc_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 	    /* No closed-form formula exists for the general truncated
 	     * elliptic cone.  Fall back to the Cauchy-Crofton ray-sampling
 	     * estimator, which handles any TGC shape correctly. */
-	    do { static const struct rt_crofton_params _p = {50000u, 0.0, 0.0}; rt_crofton_sample(area, NULL, ip, &_p); } while (0);
-	    break;
+	    {
+		static const struct rt_crofton_params p = {RT_CROFTON_HIGH_ACCURACY_SAMPLES, 0.0, 0.0};
+		return rt_crofton_sample(area, NULL, ip, &p);
+	    }
     }
+    return BRLCAD_OK;
 }
 
 
-C_DECL void
+C_DECL int
 rt_tgc_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
     int tgc_type = 0;
     fastf_t mag_a, mag_b, mag_c, mag_d;
     fastf_t magsq_a, magsq_c;
     fastf_t scalar;
+    if (!cent || !ip || !ip->idb_ptr)
+	return BRLCAD_ERROR;
     struct rt_tgc_internal *tip = (struct rt_tgc_internal *)ip->idb_ptr;
     RT_TGC_CK_MAGIC(tip);
 
@@ -4051,7 +4061,9 @@ rt_tgc_centroid(point_t *cent, const struct rt_db_internal *ip)
 	    /* need to confirm formula */
 	default:
 	    bu_log("rt_tgc_centroid(): cannot find centroid\n");
+	    return BRLCAD_ERROR;
     }
+    return BRLCAD_OK;
 }
 
 C_DECL int

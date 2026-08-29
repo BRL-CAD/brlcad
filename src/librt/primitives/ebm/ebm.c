@@ -193,7 +193,7 @@ clt_ebm_pack(struct bu_pool *pool, struct soltab *stp)
 /**
  * Computes centroid of an extruded bitmap
  */
-C_DECL void
+C_DECL int
 rt_ebm_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
     struct rt_ebm_internal *eip;
@@ -202,6 +202,8 @@ rt_ebm_centroid(point_t *cent, const struct rt_db_internal *ip)
     fastf_t avgx, avgy, avgz;
     point_t bmcentroid;
 
+    if (!cent || !ip || !ip->idb_ptr)
+	return BRLCAD_ERROR;
     RT_CK_DB_INTERNAL(ip);
     eip = (struct rt_ebm_internal *)ip->idb_ptr;
     RT_EBM_CK_MAGIC(eip);
@@ -220,11 +222,14 @@ rt_ebm_centroid(point_t *cent, const struct rt_db_internal *ip)
 	    }
 	}
     }
+    if (totalcells == 0)
+	return BRLCAD_ERROR;
     avgx = (fastf_t)xsum / totalcells + 0.5;
     avgy = (fastf_t)ysum / totalcells + 0.5;
     avgz = eip->tallness / 2;
     VSET(bmcentroid, avgx, avgy, avgz);
     MAT4X3VEC(*cent, eip->mat, bmcentroid);
+    return BRLCAD_OK;
 }
 
 
@@ -1971,7 +1976,7 @@ rt_ebm_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
  * then calculates the area of the top and bottom faces, then any other
  * necessary faces.
  */
-C_DECL void
+C_DECL int
 rt_ebm_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     struct rt_ebm_internal *eip;
@@ -1982,8 +1987,8 @@ rt_ebm_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     vect_t d6_0, d4_2, d4_1, d5_0, d5_3, d7_1, d7_2, d6_3, _cross;
     fastf_t _x, _y, det, _area = 0.0;
 
-    if (area == NULL || ip == NULL) {
-	return;
+    if (area == NULL || ip == NULL || ip->idb_ptr == NULL) {
+	return BRLCAD_ERROR;
     }
     RT_CK_DB_INTERNAL(ip);
     eip = (struct rt_ebm_internal *)ip->idb_ptr;
@@ -1991,8 +1996,7 @@ rt_ebm_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 
     det = fabs(bn_mat_determinant(eip->mat));
     if (EQUAL(det, 0.0)) {
-	*area = -1.0;
-	return;
+	return BRLCAD_ERROR;
     }
 
     for (y = 0; y < eip->ydim; y++) {
@@ -2055,6 +2059,7 @@ rt_ebm_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 	}
     }
     *area = _area;
+    return BRLCAD_OK;
 }
 
 

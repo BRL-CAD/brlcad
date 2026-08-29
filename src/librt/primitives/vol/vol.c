@@ -1607,7 +1607,7 @@ rt_vol_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 }
 
 
-C_DECL void
+C_DECL int
 rt_vol_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
     register struct rt_vol_internal *vip;
@@ -1616,6 +1616,8 @@ rt_vol_centroid(point_t *cent, const struct rt_db_internal *ip)
     fastf_t x_tot, y_tot, z_tot;
     point_t p;
 
+    if (!cent || !ip || !ip->idb_ptr)
+	return BRLCAD_ERROR;
     RT_CK_DB_INTERNAL(ip);
     vip = (struct rt_vol_internal *)ip->idb_ptr;
     RT_VOL_CK_MAGIC(vip);
@@ -1636,11 +1638,15 @@ rt_vol_centroid(point_t *cent, const struct rt_db_internal *ip)
 	}
     }
 
+    if (cnt == 0)
+	return BRLCAD_ERROR;
+
     p[X]=x_tot/cnt;
     p[Y]=y_tot/cnt;
     p[Z]=z_tot/cnt;
 
     MAT4X3PNT(*cent, vip->mat, p);
+    return BRLCAD_OK;
 }
 
 
@@ -1649,7 +1655,7 @@ rt_vol_centroid(point_t *cent, const struct rt_db_internal *ip)
  * the matrix and then summing the area of the faces of each cell necessary.
  * The vertices are numbered from left to right, front to back, bottom to top.
  */
-C_DECL void
+C_DECL int
 rt_vol_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     struct rt_vol_internal *vip;
@@ -1659,15 +1665,15 @@ rt_vol_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     vect_t d3_0, d2_1, d7_4, d6_5, d6_0, d4_2, d4_1, d5_0, d5_3, d7_1, d7_2, d6_3, _cross;
     fastf_t _x, _y, _z, det, _area = 0.0;
 
-    if (area == NULL || ip == NULL) return;
+    if (area == NULL || ip == NULL || ip->idb_ptr == NULL)
+	return BRLCAD_ERROR;
     RT_CK_DB_INTERNAL(ip);
     vip = (struct rt_vol_internal *)ip->idb_ptr;
     RT_VOL_CK_MAGIC(vip);
 
     det = fabs(bn_mat_determinant(vip->mat));
     if (EQUAL(det, 0.0)) {
-	*area = -1.0;
-	return;
+	return BRLCAD_ERROR;
     }
 
     for (x = 0; x < vip->xdim; x++) {
@@ -1739,6 +1745,7 @@ rt_vol_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 	}
     }
     *area = _area;
+    return BRLCAD_OK;
 }
 
 
@@ -1749,7 +1756,7 @@ rt_vol_surf_area(fastf_t *area, const struct rt_db_internal *ip)
  * The eight vertices are calculated, then transformed by the matrix and the
  * volume calculated from that.
  */
-C_DECL void
+C_DECL int
 rt_vol_volume(fastf_t *volume, const struct rt_db_internal *ip)
 {
     struct rt_vol_internal *vip;
@@ -1759,15 +1766,15 @@ rt_vol_volume(fastf_t *volume, const struct rt_db_internal *ip)
     vect_t d7_0, d1_0, d3_5, d4_0, d5_6, d2_0, d6_3, cross1, cross2, cross3;
     fastf_t _x, _y, _z, det, _vol = 0.0;
 
-    if (volume == NULL || ip == NULL) return;
+    if (volume == NULL || ip == NULL || ip->idb_ptr == NULL)
+	return BRLCAD_ERROR;
     RT_CK_DB_INTERNAL(ip);
     vip = (struct rt_vol_internal *)ip->idb_ptr;
     RT_VOL_CK_MAGIC(vip);
 
     det = fabs(bn_mat_determinant(vip->mat));
     if (EQUAL(det, 0.0)) {
-	*volume = -1.0;
-	return;
+	return BRLCAD_ERROR;
     }
 
     for (x = 0; x < vip->xdim; x++) {
@@ -1815,6 +1822,7 @@ rt_vol_volume(fastf_t *volume, const struct rt_db_internal *ip)
 	}
     }
     *volume = fabs(_vol);
+    return BRLCAD_OK;
 }
 
 C_DECL const char *

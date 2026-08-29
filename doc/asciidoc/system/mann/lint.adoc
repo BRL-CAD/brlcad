@@ -98,7 +98,7 @@ Raytrace validation mode (*--raytrace*) cross-checks surface area and volume est
    * **Crofton SA/volume** – Cauchy-Crofton estimate obtained by firing random chord rays against the CSG raytracer.
    * **Analytic SA/volume** – Closed-form result from the primitive's function table (ft_surf_area / ft_volume), when available.
    +
-   If analytic values are not available (e.g. BoT, BREP) the Crofton result is recorded informatively without a pass/fail verdict.
+   If a primitive does not implement an analytic value, the Crofton result is recorded informatively without a pass/fail verdict.  If an implemented analytic callback reports an error, the object fails with *raytrace_analytic_failed*; a calculation failure is not treated as an unavailable reference.
 
 5. **Comb validation.**  For each comb whose direct children all passed, two independent estimates are compared:
    * **CSG Crofton SA/volume** – ray-sampled against the original CSG boolean tree.
@@ -115,7 +115,7 @@ Raytrace validation mode (*--raytrace*) cross-checks surface area and volume est
 Results are reported in three categories:
 
 * *Passed* – Both estimates agree within *--raytrace-tol*.
-* *Failed* (raytrace_mismatch) – The two estimates disagree beyond *--raytrace-tol*.  The output includes SA and volume error percentages and the reason for failure.
+* *Failed* – Either the two estimates disagree beyond *--raytrace-tol* (*raytrace_mismatch*) or an implemented analytic metric could not be calculated (*raytrace_analytic_failed*).  Mismatch output includes SA and volume error percentages; analytic failures identify the failed query.
 * *Skipped* – The object could not be validated.  Reasons include:
   - *contains_unbounded_primitive* – a halfspace is present in the subtree.
   - *child_validation_failed* – a child object failed or was skipped.
@@ -131,6 +131,8 @@ Raytrace validation uses 2 000 Crofton rays per object by default.  For a databa
 === Interpretation of Results
 
 A *raytrace_mismatch* on a **leaf primitive** suggests a bug in the raytrace shot routine for that primitive type (the Crofton ray count is sufficient for basic primitives at 10% tolerance).
+
+A *raytrace_analytic_failed* result means the primitive supplies an analytic metric callback, but the callback rejected the specific object or encountered an internal error.  Fix that failure before interpreting comparisons for the object or any parent combination.
 
 A *raytrace_mismatch* on a **comb** when all children passed suggests either:
   * A coplanar-face artifact (see *COPLANAR INTERFACE PATTERNS* below).

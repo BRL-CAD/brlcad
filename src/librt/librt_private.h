@@ -38,6 +38,10 @@
 #include "rt/db4.h"
 #include "raytrace.h"
 
+/* Ray count used when Crofton is the accuracy-oriented fallback for a
+ * primitive metric without a suitable analytic formula. */
+#define RT_CROFTON_HIGH_ACCURACY_SAMPLES 50000u
+
 /* Ramanujan approximation for the circumference of an ellipse with semi-axes a, b.
  * Formula: pi*(a+b) * [1 + 3*h / (10 + sqrt(4 - 3*h))]  where h = ((a-b)/(a+b))^2
  * Note: only the 3*h term is divided by (10+sqrt(...)), NOT the whole (1+3*h). */

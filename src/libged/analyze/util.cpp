@@ -648,27 +648,38 @@ analyze_poly_face(struct ged *gedp, struct poly_face *face, row_t *row)
  * - part
  * - rhc
  */
-void
+int
 analyze_general(struct ged *gedp, const struct rt_db_internal *ip)
 {
     fastf_t vol, area;
     point_t centroid;
+    int status = BRLCAD_OK;
 
     vol = area = -1.0;
 
     if (OBJ[ip->idb_minor_type].ft_volume) {
-	OBJ[ip->idb_minor_type].ft_volume(&vol, ip);
+	if (OBJ[ip->idb_minor_type].ft_volume(&vol, ip) != BRLCAD_OK) {
+	    vol = -1.0;
+	    status = BRLCAD_ERROR;
+	}
     }
     if (OBJ[ip->idb_minor_type].ft_surf_area) {
-	OBJ[ip->idb_minor_type].ft_surf_area(&area, ip);
+	if (OBJ[ip->idb_minor_type].ft_surf_area(&area, ip) != BRLCAD_OK) {
+	    area = -1.0;
+	    status = BRLCAD_ERROR;
+	}
     }
 
     if (OBJ[ip->idb_minor_type].ft_centroid) {
-	OBJ[ip->idb_minor_type].ft_centroid(&centroid, ip);
-	bu_vls_printf(gedp->ged_result_str, "\n    Centroid: (%g, %g, %g)\n",
-		      centroid[X] * gedp->dbip->dbi_base2local,
-		      centroid[Y] * gedp->dbip->dbi_base2local,
-		      centroid[Z] * gedp->dbip->dbi_base2local);
+	if (OBJ[ip->idb_minor_type].ft_centroid(&centroid, ip) == BRLCAD_OK) {
+	    bu_vls_printf(gedp->ged_result_str, "\n    Centroid: (%g, %g, %g)\n",
+			  centroid[X] * gedp->dbip->dbi_base2local,
+			  centroid[Y] * gedp->dbip->dbi_base2local,
+			  centroid[Z] * gedp->dbip->dbi_base2local);
+	} else {
+	    bu_vls_printf(gedp->ged_result_str, "\n    Centroid: COULD NOT DETERMINE\n");
+	    status = BRLCAD_ERROR;
+	}
     }
 
     print_volume_table(gedp,
@@ -681,6 +692,7 @@ analyze_general(struct ged *gedp, const struct rt_db_internal *ip)
 		      * gedp->dbip->dbi_base2local,
 		       vol/GALLONS_TO_MM3
 		      );
+    return status;
 }
 
 
@@ -694,4 +706,3 @@ analyze_general(struct ged *gedp, const struct rt_db_internal *ip)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

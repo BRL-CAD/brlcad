@@ -139,6 +139,14 @@ static double g_scan_rel  = 0.0;
 static double g_scan_abs  = 0.0;
 static double g_scan_norm = 0.0;
 
+static double
+prim_tess_metric_relative_error(double measured, double reference)
+{
+    if (fabs(reference) <= SMALL_FASTF)
+	return (fabs(measured) <= SMALL_FASTF) ? 0.0 : 1.0;
+    return fabs(measured - reference) / fabs(reference);
+}
+
 /* Optional primitive filter: when non-NULL, only the named prim family runs */
 static const char *g_prim_filter = NULL;
 
@@ -496,6 +504,9 @@ check_nmg_mesh(const char *label, struct model *m,
     double err_v  = -1.0;
     int res_limited = 0;
     int metrics_ok = -1; /* -1 = not checked */
+    int have_analytic_sa = 0;
+    int have_analytic_v = 0;
+    int analytic_query_failed = 0;
 
     if (passed && ip &&
 	ip->idb_minor_type >= 0 && ip->idb_minor_type < ID_MAXIMUM) {
@@ -503,16 +514,33 @@ check_nmg_mesh(const char *label, struct model *m,
 	const struct rt_functab *ft = &OBJ[ip->idb_minor_type];
 
 	if (!BU_SETJUMP) {
-	    if (ft->ft_surf_area)
-		ft->ft_surf_area(&analytic_sa, ip);
-	    if (ft->ft_volume)
-		ft->ft_volume(&analytic_v, ip);
+	    if (ft->ft_surf_area) {
+		if (ft->ft_surf_area(&analytic_sa, ip) == BRLCAD_OK) {
+		    have_analytic_sa = 1;
+		} else {
+		    analytic_query_failed = 1;
+		    if (!quiet)
+			fprintf(stderr, "  METRICS: %-44s  surface-area query failed\n", label);
+		}
+	    }
+	    if (ft->ft_volume) {
+		if (ft->ft_volume(&analytic_v, ip) == BRLCAD_OK) {
+		    have_analytic_v = 1;
+		} else {
+		    analytic_query_failed = 1;
+		    if (!quiet)
+			fprintf(stderr, "  METRICS: %-44s  volume query failed\n", label);
+		}
+	    }
 	} else {
 	    BU_UNSETJUMP;
 	    analytic_sa = -1.0;
 	    analytic_v = -1.0;
+	    have_analytic_sa = 0;
+	    have_analytic_v = 0;
+	    analytic_query_failed = 1;
 	    if (!quiet)
-		fprintf(stderr, "  METRICS: %-44s  analytic query bombed, using NA/fallback\n", label);
+		fprintf(stderr, "  METRICS: %-44s  analytic query bombed\n", label);
 	} BU_UNSETJUMP;
 
 	/* crofton_from_ip() requires ip->idb_meth to export the primitive to
@@ -520,36 +548,38 @@ check_nmg_mesh(const char *label, struct model *m,
 	 * uninitialised (garbage, not NULL), so always set it from the OBJ
 	 * function table when the minor type is known.  For IPs returned by
 	 * rt_db_get_internal the assignment is a no-op (same pointer).    */
-	if (g_validate_metrics && !quiet && (analytic_sa <= 0.0 || analytic_v <= 0.0)) {
+	if (g_validate_metrics && !quiet && (!ft->ft_surf_area || !ft->ft_volume)) {
 	    struct rt_db_internal ip_meth = *ip;
 	    if (ip_meth.idb_minor_type >= 0 && ip_meth.idb_minor_type < (int)ID_MAXIMUM)
 		ip_meth.idb_meth = &OBJ[ip_meth.idb_minor_type];
-	    if (analytic_sa <= 0.0) {
+	    if (!ft->ft_surf_area) {
 		fastf_t croft_sa = 0.0;
 		if (!BU_SETJUMP) {
-		    rt_crofton_sample(&croft_sa, NULL, &ip_meth, NULL);
+		    if (rt_crofton_sample(&croft_sa, NULL, &ip_meth, NULL) == BRLCAD_OK) {
+			analytic_sa = croft_sa;
+			have_analytic_sa = 1;
+		    }
 		} else {
 		    BU_UNSETJUMP;
-		    croft_sa = 0.0;
 		} BU_UNSETJUMP;
-		if (croft_sa > 0.0) analytic_sa = croft_sa;
 	    }
-	    if (analytic_v <= 0.0) {
+	    if (!ft->ft_volume) {
 		fastf_t croft_v = 0.0;
 		if (!BU_SETJUMP) {
-		    rt_crofton_sample(NULL, &croft_v, &ip_meth, NULL);
+		    if (rt_crofton_sample(NULL, &croft_v, &ip_meth, NULL) == BRLCAD_OK) {
+			analytic_v = croft_v;
+			have_analytic_v = 1;
+		    }
 		} else {
 		    BU_UNSETJUMP;
-		    croft_v = 0.0;
 		} BU_UNSETJUMP;
-		if (croft_v > 0.0) analytic_v = croft_v;
 	    }
 	}
 
-	if (analytic_sa > 0.0)
-	    err_sa = fabs((double)(area - analytic_sa)) / (double)analytic_sa;
-	if (analytic_v > 0.0)
-	    err_v = fabs((double)(vol - analytic_v)) / (double)analytic_v;
+	if (have_analytic_sa)
+	    err_sa = prim_tess_metric_relative_error((double)area, (double)analytic_sa);
+	if (have_analytic_v)
+	    err_v = prim_tess_metric_relative_error((double)vol, (double)analytic_v);
     }
 
     /* ----------------------------------------------------------------
@@ -558,12 +588,14 @@ check_nmg_mesh(const char *label, struct model *m,
     if (g_validate_metrics && passed && ip &&
 	ip->idb_minor_type >= 0 && ip->idb_minor_type < ID_MAXIMUM) {
 
-	int enforce_metrics = (analytic_sa > 0.0 && analytic_v > 0.0);
+	int enforce_metrics = have_analytic_sa && have_analytic_v;
 	int fail_sa = 0;
 	int fail_v = 0;
-	metrics_ok = enforce_metrics ? 1 : -1;
+	metrics_ok = analytic_query_failed ? 0 : (enforce_metrics ? 1 : -1);
+	if (analytic_query_failed)
+	    passed = 0;
 
-	if (analytic_sa > 0.0) {
+	if (have_analytic_sa) {
 	    const char *tag = (err_sa <= g_metrics_tol) ? "SA-OK" : (enforce_metrics ? "SA-FAIL" : "SA-INFO");
 	    if (!quiet)
 		fprintf(stderr,
@@ -575,7 +607,7 @@ check_nmg_mesh(const char *label, struct model *m,
 		fprintf(stderr, "  METRICS: %-44s  SA-analytic=NA\n", label);
 	}
 
-	if (analytic_v > 0.0) {
+	if (have_analytic_v) {
 	    const char *tag_v;
 
 	    if (err_v <= g_metrics_tol) {
@@ -698,8 +730,8 @@ check_nmg_mesh(const char *label, struct model *m,
 	res->n_tris     = (long)bot->num_faces;
 	res->area       = (double)area;
 	res->vol        = (double)(open_cnt == 0 ? vol : 0.0);
-	res->err_sa     = (analytic_sa > 0.0) ? err_sa  : -1.0;
-	res->err_vol    = (analytic_v  > 0.0) ? err_v   : -1.0;
+	res->err_sa     = have_analytic_sa ? err_sa : -1.0;
+	res->err_vol    = have_analytic_v  ? err_v  : -1.0;
 	res->metrics_ok = metrics_ok;
 	res->res_limited = res_limited;
     }

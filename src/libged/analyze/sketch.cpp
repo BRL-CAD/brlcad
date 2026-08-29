@@ -32,30 +32,38 @@
 #include "../ged_private.h"
 #include "./ged_analyze.h"
 
-void
+int
 analyze_sketch(struct ged *gedp, const struct rt_db_internal *ip)
 {
     fastf_t area = -1;
     point_t centroid;
+    int status = BRLCAD_OK;
 
-    if (OBJ[ID_SKETCH].ft_surf_area)
-	OBJ[ID_SKETCH].ft_surf_area(&area, ip);
-
-    if (area > 0.0) {
-	bu_vls_printf(gedp->ged_result_str, "\nTotal Area: %10.8f",
-		      area
-		     * gedp->dbip->dbi_local2base
-		     * gedp->dbip->dbi_local2base
-		     );
+    if (OBJ[ID_SKETCH].ft_surf_area) {
+	if (OBJ[ID_SKETCH].ft_surf_area(&area, ip) != BRLCAD_OK) {
+	    bu_vls_printf(gedp->ged_result_str, "\nTotal Area: COULD NOT DETERMINE");
+	    status = BRLCAD_ERROR;
+	} else {
+	    bu_vls_printf(gedp->ged_result_str, "\nTotal Area: %10.8f",
+			  area
+			 * gedp->dbip->dbi_local2base
+			 * gedp->dbip->dbi_local2base
+			 );
+	}
     }
 
     if (OBJ[ID_SKETCH].ft_centroid) {
-	OBJ[ID_SKETCH].ft_centroid(&centroid, ip);
-	bu_vls_printf(gedp->ged_result_str, "\n    Centroid: (%g, %g, %g)\n",
-		      centroid[X] * gedp->dbip->dbi_base2local,
-		      centroid[Y] * gedp->dbip->dbi_base2local,
-		      centroid[Z] * gedp->dbip->dbi_base2local);
+	if (OBJ[ID_SKETCH].ft_centroid(&centroid, ip) == BRLCAD_OK) {
+	    bu_vls_printf(gedp->ged_result_str, "\n    Centroid: (%g, %g, %g)\n",
+			  centroid[X] * gedp->dbip->dbi_base2local,
+			  centroid[Y] * gedp->dbip->dbi_base2local,
+			  centroid[Z] * gedp->dbip->dbi_base2local);
+	} else {
+	    bu_vls_printf(gedp->ged_result_str, "\n    Centroid: COULD NOT DETERMINE\n");
+	    status = BRLCAD_ERROR;
+	}
     }
+    return status;
 }
 
 // Local Variables:

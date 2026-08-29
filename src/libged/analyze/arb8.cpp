@@ -72,7 +72,7 @@ analyze_edge(struct ged *gedp, const int edge, const struct rt_arb_internal *arb
 
 
 
-void
+int
 analyze_arb8(struct ged *gedp, const struct rt_db_internal *ip)
 {
     int i, type;
@@ -90,7 +90,7 @@ analyze_arb8(struct ged *gedp, const struct rt_db_internal *ip)
     /* find the specific arb type, in GIFT order. */
     if ((cgtype = rt_arb_std_type(ip, &wdbp->wdb_tol)) == 0) {
 	bu_vls_printf(gedp->ged_result_str, "analyze_arb: bad ARB\n");
-	return;
+	return BRLCAD_ERROR;
     }
 
     type = cgtype - 4;
@@ -101,7 +101,10 @@ analyze_arb8(struct ged *gedp, const struct rt_db_internal *ip)
 
     /* TABLE 1 =========================================== */
     /* analyze each face, use center point of arb for reference */
-    rt_arb_centroid(&center_pt, ip);
+    if (rt_arb_centroid(&center_pt, ip) != BRLCAD_OK) {
+	bu_vls_printf(gedp->ged_result_str, "analyze_arb: unable to calculate centroid\n");
+	return BRLCAD_ERROR;
+    }
 
     /* allocate pts array, maximum 4 verts per arb8 face */
     face.pts = (point_t *)bu_calloc(4, sizeof(point_t), "analyze_arb8: pts");
@@ -183,8 +186,13 @@ analyze_arb8(struct ged *gedp, const struct rt_db_internal *ip)
     /* TABLE 3 =========================================== */
     /* find the volume - break arb8 into 6 arb4s */
 
-    if (OBJ[ID_ARB8].ft_volume)
-	OBJ[ID_ARB8].ft_volume(&tot_vol, ip);
+    if (OBJ[ID_ARB8].ft_volume &&
+	OBJ[ID_ARB8].ft_volume(&tot_vol, ip) != BRLCAD_OK) {
+	bu_vls_printf(gedp->ged_result_str, "analyze_arb: unable to calculate volume\n");
+	bu_free((char *)face.pts, "analyze_arb8: pts");
+	bu_free((char *)table.rows, "analyze_arb8: rows");
+	return BRLCAD_ERROR;
+    }
 
     print_volume_table(gedp,
 		       tot_vol
@@ -199,6 +207,7 @@ analyze_arb8(struct ged *gedp, const struct rt_db_internal *ip)
 
     bu_free((char *)face.pts, "analyze_arb8: pts");
     bu_free((char *)table.rows, "analyze_arb8: rows");
+    return BRLCAD_OK;
 }
 // Local Variables:
 // tab-width: 8

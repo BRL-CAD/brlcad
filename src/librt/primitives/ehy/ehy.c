@@ -2432,15 +2432,15 @@ ehy_is_valid(struct rt_ehy_internal *ehy)
 }
 
 
-C_DECL void
+C_DECL int
 rt_ehy_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     struct rt_ehy_internal *eip;
     fastf_t h, r, c, P, alpha, B, sqrtAlpha;
     fastf_t u_top, u_bot, v_top, v_bot, F_top, F_bot;
 
-    if (!area || !ip)
-	return;
+    if (!area || !ip || !ip->idb_ptr)
+	return BRLCAD_ERROR;
 
     RT_CK_DB_INTERNAL(ip);
     eip = (struct rt_ehy_internal *)ip->idb_ptr;
@@ -2450,8 +2450,8 @@ rt_ehy_surf_area(fastf_t *area, const struct rt_db_internal *ip)
      * an elliptic integral with no elementary closed form -- use Crofton.
      */
     if (!NEAR_EQUAL(eip->ehy_r1, eip->ehy_r2, RT_LEN_TOL)) {
-	do { static const struct rt_crofton_params _p = {50000u, 0.0, 0.0}; rt_crofton_sample(area, NULL, ip, &_p); } while (0);
-	return;
+	static const struct rt_crofton_params p = {RT_CROFTON_HIGH_ACCURACY_SAMPLES, 0.0, 0.0};
+	return rt_crofton_sample(area, NULL, ip, &p);
     }
 
     /* Circular case (r1 == r2 == r): the EHY is a surface of revolution.
@@ -2499,17 +2499,18 @@ rt_ehy_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     }
 
     *area = 2.0*M_PI*r/P * (F_top - F_bot) + M_PI*r*r;
+    return BRLCAD_OK;
 }
 
 
-C_DECL void
+C_DECL int
 rt_ehy_volume(fastf_t *volume, const struct rt_db_internal *ip)
 {
     struct rt_ehy_internal *eip;
     fastf_t h, c;
 
-    if (!volume || !ip)
-	return;
+    if (!volume || !ip || !ip->idb_ptr)
+	return BRLCAD_ERROR;
 
     RT_CK_DB_INTERNAL(ip);
     eip = (struct rt_ehy_internal *)ip->idb_ptr;
@@ -2524,6 +2525,7 @@ rt_ehy_volume(fastf_t *volume, const struct rt_db_internal *ip)
      *   Vol = pi * r1 * r2 * H * (H + 3*c) / (3 * (H + 2*c))
      */
     *volume = M_PI * eip->ehy_r1 * eip->ehy_r2 * h * (h + 3.0*c) / (3.0*(h + 2.0*c));
+    return BRLCAD_OK;
 }
 
 
@@ -2540,15 +2542,15 @@ rt_ehy_volume(fastf_t *volume, const struct rt_db_internal *ip)
  *
  * This is independent of r1 and r2, so it applies to all valid EHY shapes.
  */
-C_DECL void
+C_DECL int
 rt_ehy_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
     struct rt_ehy_internal *eip;
     fastf_t h, c, z_c;
     vect_t Hu;
 
-    if (!cent || !ip)
-	return;
+    if (!cent || !ip || !ip->idb_ptr)
+	return BRLCAD_ERROR;
 
     RT_CK_DB_INTERNAL(ip);
     eip = (struct rt_ehy_internal *)ip->idb_ptr;
@@ -2562,6 +2564,7 @@ rt_ehy_centroid(point_t *cent, const struct rt_db_internal *ip)
 
     VSCALE(Hu, eip->ehy_H, 1.0/h);
     VJOIN1(*cent, eip->ehy_V, z_c, Hu);
+    return BRLCAD_OK;
 }
 
 C_DECL int

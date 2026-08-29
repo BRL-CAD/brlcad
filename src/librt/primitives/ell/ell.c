@@ -1986,10 +1986,12 @@ ell_angle(fastf_t *p1, fastf_t a, fastf_t b, fastf_t dtol, fastf_t ntol)
 /**
  * Computes volume of a ellipsoid.
  */
-C_DECL void
+C_DECL int
 rt_ell_volume(fastf_t *volume, const struct rt_db_internal *ip)
 {
     fastf_t mag_a, mag_b, mag_c;
+    if (!volume || !ip || !ip->idb_ptr)
+	return BRLCAD_ERROR;
     struct rt_ell_internal *eip = (struct rt_ell_internal *)ip->idb_ptr;
     RT_ELL_CK_MAGIC(eip);
 
@@ -1997,18 +1999,22 @@ rt_ell_volume(fastf_t *volume, const struct rt_db_internal *ip)
     mag_b = MAGNITUDE(eip->b);
     mag_c = MAGNITUDE(eip->c);
     *volume = 4.0/3.0 * M_PI * mag_a * mag_b * mag_c;
+    return BRLCAD_OK;
 }
 
 
 /**
  * Computes centroid of an ellipsoid
  */
-C_DECL void
+C_DECL int
 rt_ell_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
+    if (!cent || !ip || !ip->idb_ptr)
+	return BRLCAD_ERROR;
     struct rt_ell_internal *eip = (struct rt_ell_internal *)ip->idb_ptr;
     RT_ELL_CK_MAGIC(eip);
     VMOVE(*cent,eip->v);
+    return BRLCAD_OK;
 }
 
 
@@ -2018,7 +2024,7 @@ rt_ell_centroid(point_t *cent, const struct rt_db_internal *ip)
  */
 #define PROLATE 1
 #define OBLATE 2
-C_DECL void
+C_DECL int
 rt_ell_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     fastf_t mag_a, mag_b, mag_c;
@@ -2033,6 +2039,8 @@ rt_ell_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     fastf_t ecc;
     int ell_type = 0;
 
+    if (!area || !ip || !ip->idb_ptr)
+	return BRLCAD_ERROR;
     struct rt_ell_internal *eip = (struct rt_ell_internal *)ip->idb_ptr;
     RT_ELL_CK_MAGIC(eip);
 
@@ -2043,7 +2051,7 @@ rt_ell_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     if (EQUAL(mag_a, mag_b) && EQUAL(mag_b, mag_c)) {
 	/* case: sphere */
 	*area = 4.0 * M_PI * mag_a * mag_a;
-	return;
+	return BRLCAD_OK;
     }
 
     if (EQUAL(mag_a, mag_b)) {
@@ -2098,9 +2106,12 @@ rt_ell_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     default:
 	/* General triaxial ellipsoid: no closed-form solution exists.
 	 * Fall back to the Cauchy-Crofton ray-sampling estimator. */
-	do { static const struct rt_crofton_params _p = {50000u, 0.0, 0.0}; rt_crofton_sample(area, NULL, ip, &_p); } while (0);
-	break;
+	{
+	    static const struct rt_crofton_params p = {RT_CROFTON_HIGH_ACCURACY_SAMPLES, 0.0, 0.0};
+	    return rt_crofton_sample(area, NULL, ip, &p);
+	}
     }
+    return BRLCAD_OK;
 }
 
 C_DECL int

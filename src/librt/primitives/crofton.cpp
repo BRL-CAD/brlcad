@@ -73,6 +73,8 @@
 #include "raytrace.h"
 #include "rt/geom.h"
 
+#include "../librt_private.h"
+
 
 /* ------------------------------------------------------------------ */
 /* Default parameters for the functab fallbacks                        */
@@ -89,8 +91,6 @@
  *  do not implement their own analytic SA/volume formulas so they
  *  rely entirely on Crofton; 50 000 rays are still very fast for a
  *  single primitive and keep typical error well under 2 %.          */
-#define RT_CROFTON_IMPLICIT_SAMPLES  50000u
-
 /** Convergence threshold (%) for the functab fallback.               */
 #define RT_CROFTON_DEFAULT_THRESHOLD 1.0
 
@@ -820,8 +820,12 @@ crofton_from_ip_n(const struct rt_db_internal    *ip,
     /* ---- Run Crofton estimator ---- */
     double sa  = 0.0;
     double vol = 0.0;
-    (void)rt_crofton_shoot(&sa, &vol, NULL, NULL, NULL, NULL, NULL,
-	rtip, params, NULL, NULL);
+    if (rt_crofton_shoot(&sa, &vol, NULL, NULL, NULL, NULL, NULL,
+	    rtip, params, NULL, NULL) < 0) {
+	rt_i_destroy(rtip);
+	db_close(dbip);
+	return BRLCAD_ERROR;
+    }
 
     if (out_sa)  *out_sa  = sa;
     if (out_vol) *out_vol = vol;
@@ -832,7 +836,7 @@ crofton_from_ip_n(const struct rt_db_internal    *ip,
      * do NOT call wdb_close() here, as that would double-free dbip. */
     db_close(dbip);
 
-    return 0;
+    return BRLCAD_OK;
 }
 
 
@@ -844,22 +848,21 @@ crofton_from_ip_n(const struct rt_db_internal    *ip,
  * Cauchy-Crofton estimator with configurable stopping criteria.
  * See struct rt_crofton_params in func.h for full documentation.
  */
-void
+int
 rt_crofton_sample(fastf_t *area, fastf_t *vol,
 		  const struct rt_db_internal *ip,
 		  const struct rt_crofton_params *params)
 {
-    if ((!area && !vol) || !ip)
-	return;
+    if ((!area && !vol) || !ip || !ip->idb_ptr)
+	return BRLCAD_ERROR;
 
     double sa = 0.0, v = 0.0;
-    if (crofton_from_ip_n(ip, area ? &sa : NULL, vol ? &v : NULL, params) < 0) {
-	sa = 0.0;
-	v  = 0.0;
-    }
+    if (crofton_from_ip_n(ip, area ? &sa : NULL, vol ? &v : NULL, params) != BRLCAD_OK)
+	return BRLCAD_ERROR;
 
     if (area) *area = (fastf_t)sa;
     if (vol)  *vol  = (fastf_t)v;
+    return BRLCAD_OK;
 }
 
 
@@ -878,32 +881,32 @@ rt_crofton_sample(fastf_t *area, fastf_t *vol,
 /* ------------------------------------------------------------------ */
 
 static const struct rt_crofton_params s_default_params  = { 0u,                        0.0, 0.0 };
-static const struct rt_crofton_params s_implicit_params = { RT_CROFTON_IMPLICIT_SAMPLES, 0.0, 0.0 };
+static const struct rt_crofton_params s_implicit_params = { RT_CROFTON_HIGH_ACCURACY_SAMPLES, 0.0, 0.0 };
 
 extern "C" {
 
-RT_EXPORT void
+RT_EXPORT int
 rt_crofton_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
-    rt_crofton_sample(area, NULL, ip, &s_default_params);
+    return rt_crofton_sample(area, NULL, ip, &s_default_params);
 }
 
-RT_EXPORT void
+RT_EXPORT int
 rt_crofton_volume(fastf_t *vol, const struct rt_db_internal *ip)
 {
-    rt_crofton_sample(NULL, vol, ip, &s_default_params);
+    return rt_crofton_sample(NULL, vol, ip, &s_default_params);
 }
 
-RT_EXPORT void
+RT_EXPORT int
 rt_crofton_surf_area_implicit(fastf_t *area, const struct rt_db_internal *ip)
 {
-    rt_crofton_sample(area, NULL, ip, &s_implicit_params);
+    return rt_crofton_sample(area, NULL, ip, &s_implicit_params);
 }
 
-RT_EXPORT void
+RT_EXPORT int
 rt_crofton_volume_implicit(fastf_t *vol, const struct rt_db_internal *ip)
 {
-    rt_crofton_sample(NULL, vol, ip, &s_implicit_params);
+    return rt_crofton_sample(NULL, vol, ip, &s_implicit_params);
 }
 
 } /* extern "C" */

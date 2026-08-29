@@ -97,7 +97,7 @@ stom_volume_scale(const mat_t stom)
  * Sums, over every cell, the prism volume of the height above z=0,
  * then scales by |det| of the solid-to-model transform
  */
-RT_EXPORT void
+RT_EXPORT int
 rt_dsp_volume(fastf_t *vol, const struct rt_db_internal *ip)
 {
     struct rt_dsp_internal *dsp;
@@ -105,12 +105,12 @@ rt_dsp_volume(fastf_t *vol, const struct rt_db_internal *ip)
     fastf_t solid_vol = 0.0;
 
     if (!vol)
-	return;
+	return BRLCAD_ERROR;
     *vol = 0.0;
 
     dsp = rt_dsp_internal_from_ip(ip);
     if (!dsp)
-	return;
+	return BRLCAD_ERROR;
 
     xsiz = (size_t)dsp->dsp_xcnt - 1;
     ysiz = (size_t)dsp->dsp_ycnt - 1;
@@ -135,6 +135,7 @@ rt_dsp_volume(fastf_t *vol, const struct rt_db_internal *ip)
     }
 
     *vol = solid_vol * stom_volume_scale(dsp->dsp_stom);
+    return isfinite(*vol) ? BRLCAD_OK : BRLCAD_ERROR;
 }
 
 
@@ -146,7 +147,7 @@ rt_dsp_volume(fastf_t *vol, const struct rt_db_internal *ip)
  * outer perimeter.  There are no interior walls: the top surface is
  * continuous across shared cell edges.
  */
-RT_EXPORT void
+RT_EXPORT int
 rt_dsp_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     struct rt_dsp_internal *dsp;
@@ -155,12 +156,12 @@ rt_dsp_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     fastf_t total = 0.0;
 
     if (!area)
-	return;
+	return BRLCAD_ERROR;
     *area = 0.0;
 
     dsp = rt_dsp_internal_from_ip(ip);
     if (!dsp)
-	return;
+	return BRLCAD_ERROR;
 
     stom = dsp->dsp_stom;
     xsiz = (size_t)dsp->dsp_xcnt - 1;
@@ -237,6 +238,7 @@ rt_dsp_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     }
 
     *area = total;
+    return isfinite(*area) ? BRLCAD_OK : BRLCAD_ERROR;
 }
 
 

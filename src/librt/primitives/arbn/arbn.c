@@ -1516,7 +1516,7 @@ rt_arbn_faces_area(struct poly_face* faces, struct rt_arbn_internal* aip)
 }
 
 
-C_DECL void
+C_DECL int
 rt_arbn_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     struct bg_tess_tol ttol = BG_TESS_TOL_INIT_ZERO;
@@ -1526,6 +1526,9 @@ rt_arbn_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     struct rt_bot_internal *bot;
     struct bu_list vlfree;
 
+    if (!area || !ip || !ip->idb_ptr)
+	return BRLCAD_ERROR;
+
     /* Tessellate the ARBN (all faces are planar, so the BOT is exact) */
     ttol.rel   = 0.01;
     BN_TOL_INIT(&tol);
@@ -1534,7 +1537,7 @@ rt_arbn_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     m = nmg_mm();
     if (rt_arbn_tess(&r, m, (struct rt_db_internal *)(uintptr_t)ip, &ttol, &tol) != 0 || !r) {
 	nmg_km(m);
-	return;
+	return BRLCAD_ERROR;
     }
 
     bot = nmg_mdl_to_bot(m, &vlfree, &tol);
@@ -1545,7 +1548,7 @@ rt_arbn_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 	    bu_free(bot->vertices, "arbn bot verts");
 	    bu_free(bot, "arbn bot");
 	}
-	return;
+	return BRLCAD_ERROR;
     }
 
     *area = bg_trimesh_area(
@@ -1555,10 +1558,11 @@ rt_arbn_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     bu_free(bot->faces, "arbn bot faces");
     bu_free(bot->vertices, "arbn bot verts");
     bu_free(bot, "arbn bot");
+    return BRLCAD_OK;
 }
 
 
-C_DECL void
+C_DECL int
 rt_arbn_volume(fastf_t *volume, const struct rt_db_internal *ip)
 {
     struct bg_tess_tol ttol = BG_TESS_TOL_INIT_ZERO;
@@ -1567,6 +1571,9 @@ rt_arbn_volume(fastf_t *volume, const struct rt_db_internal *ip)
     struct nmgregion *r = NULL;
     struct rt_bot_internal *bot;
     struct bu_list vlfree;
+
+    if (!volume || !ip || !ip->idb_ptr)
+	return BRLCAD_ERROR;
 
     /* Tessellate the ARBN (all faces are planar, so the BOT is exact) */
     ttol.rel   = 0.01;
@@ -1578,7 +1585,7 @@ rt_arbn_volume(fastf_t *volume, const struct rt_db_internal *ip)
     m = nmg_mm();
     if (rt_arbn_tess(&r, m, (struct rt_db_internal *)(uintptr_t)ip, &ttol, &tol) != 0 || !r) {
 	nmg_km(m);
-	return;
+	return BRLCAD_ERROR;
     }
 
     bot = nmg_mdl_to_bot(m, &vlfree, &tol);
@@ -1589,7 +1596,7 @@ rt_arbn_volume(fastf_t *volume, const struct rt_db_internal *ip)
 	    bu_free(bot->vertices, "arbn bot verts");
 	    bu_free(bot, "arbn bot");
 	}
-	return;
+	return BRLCAD_ERROR;
     }
 
     *volume = bg_trimesh_volume(
@@ -1599,10 +1606,11 @@ rt_arbn_volume(fastf_t *volume, const struct rt_db_internal *ip)
     bu_free(bot->faces, "arbn bot faces");
     bu_free(bot->vertices, "arbn bot verts");
     bu_free(bot, "arbn bot");
+    return BRLCAD_OK;
 }
 
 
-C_DECL void
+C_DECL int
 rt_arbn_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
     struct poly_face *faces;
@@ -1611,10 +1619,12 @@ rt_arbn_centroid(point_t *cent, const struct rt_db_internal *ip)
     point_t arbit_point = VINIT_ZERO;
     fastf_t volume = 0.0;
 
-    if (!cent || !ip || !ip->idb_ptr) return;
+    if (!cent || !ip || !ip->idb_ptr)
+	return BRLCAD_ERROR;
 
     aip = (struct rt_arbn_internal *)ip->idb_ptr;
-    if (!aip->neqn) return;
+    if (!aip->neqn)
+	return BRLCAD_ERROR;
 
     *cent[0] = 0.0;
     *cent[1] = 0.0;
@@ -1628,6 +1638,8 @@ rt_arbn_centroid(point_t *cent, const struct rt_db_internal *ip)
     }
     rt_arbn_faces_area(faces, aip);
     for (i = 0; i < aip->neqn; i++) {
+	if (faces[i].npts < 3)
+	    goto fail;
 	bg_3d_polygon_centroid(&faces[i].cent, faces[i].npts, (const point_t *) faces[i].pts);
 	VADD2(arbit_point, arbit_point, faces[i].cent);
 
@@ -1651,12 +1663,21 @@ rt_arbn_centroid(point_t *cent, const struct rt_db_internal *ip)
 	/* add cent_pyramid to the centroid of the polyhedron */
 	VADD2(*cent, *cent, faces[i].cent_pyramid);
     }
+    if (NEAR_ZERO(volume, SMALL_FASTF))
+	goto fail;
     /* reverse the weighting */
     VSCALE(*cent, *cent, (1/volume));
     for (i = 0; i < aip->neqn; i++) {
 	bu_free((char *)faces[i].pts, "rt_arbn_centroid: pts");
     }
     bu_free((char *)faces, "rt_arbn_centroid: faces");
+    return BRLCAD_OK;
+
+fail:
+    for (i = 0; i < aip->neqn; i++)
+	bu_free((char *)faces[i].pts, "rt_arbn_centroid: pts");
+    bu_free((char *)faces, "rt_arbn_centroid: faces");
+    return BRLCAD_ERROR;
 }
 
 

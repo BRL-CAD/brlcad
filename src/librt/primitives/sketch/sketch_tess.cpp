@@ -39,6 +39,7 @@
 
 #include "common.h"
 
+#include <cmath>
 #include <vector>
 
 #include "raytrace.h"
@@ -265,12 +266,15 @@ bezier_to_carcs(const ON_BezierCurve& bezier, const struct bn_tol *tol, std::vec
  *      each carc_seg, calculate the area for the polygon edges Start->End and
  *      the area of the circular segment
  */
-extern "C" void
+extern "C" int
 rt_sketch_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     int j;
     size_t i;
     fastf_t poly_area = 0, carc_area = 0;
+
+    if (!area || !ip || !ip->idb_ptr)
+	return BRLCAD_ERROR;
 
     struct bn_tol tol;
     struct rt_sketch_internal *sketch_ip = (struct rt_sketch_internal *)ip->idb_ptr;
@@ -279,7 +283,8 @@ rt_sketch_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 
     // a sketch with no curves has no area
     if (UNLIKELY(crv.count == 0)) {
-	return;
+	*area = 0.0;
+	return BRLCAD_OK;
     }
 
     tol.magic = BN_TOL_MAGIC;
@@ -336,10 +341,11 @@ rt_sketch_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 	    break;
 	case CURVE_NURB_MAGIC:
 	default:
-	    break;
+	    return BRLCAD_ERROR;
 	}
     }
     *area = 0.5 * fabs(poly_area) + carc_area;
+    return std::isfinite(*area) ? BRLCAD_OK : BRLCAD_ERROR;
 }
 
 

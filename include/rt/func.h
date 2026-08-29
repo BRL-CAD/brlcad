@@ -352,10 +352,13 @@ RT_EXPORT extern int rt_crofton_shoot(double *out_surf_area, double *out_volume,
  * superell, ETO/TOR spindle) should call this function directly with
  * appropriate params.  Callers that already have a prepared rt_i should
  * call rt_crofton_shoot() instead.
+ *
+ * Returns BRLCAD_OK on success and BRLCAD_ERROR if the estimate could not
+ * be produced.  Output values are valid only on success.
  */
-RT_EXPORT extern void rt_crofton_sample(fastf_t *area, fastf_t *vol,
-					const struct rt_db_internal *ip,
-					const struct rt_crofton_params *params);
+RT_EXPORT extern int rt_crofton_sample(fastf_t *area, fastf_t *vol,
+				       const struct rt_db_internal *ip,
+				       const struct rt_crofton_params *params);
 
 __END_DECLS
 
