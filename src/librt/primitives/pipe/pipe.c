@@ -1585,6 +1585,11 @@ rt_pipe_elim_dups(
 C_DECL void
 rt_pipe_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
+    if (stp && stp->st_nu_inv_matp) {
+	(void)_rt_nonuniform_norm(hitp, stp, rp);
+	return;
+    }
+
     struct bu_list *head = (struct bu_list *)stp->st_specific;
     struct id_pipe *pipe_id;
     struct lin_pipe *pipe_lin;
@@ -1679,6 +1684,9 @@ rt_pipe_shot(
     struct application *ap,
     struct seg *seghead)
 {
+    if (stp && stp->st_nu_inv_matp)
+	return _rt_nonuniform_shot(stp, rp, ap, seghead);
+
     struct bu_list *head = (struct bu_list *)stp->st_specific;
     struct id_pipe *pipe_id;
     struct seg *segp;
@@ -1786,6 +1794,12 @@ rt_pipe_vshot(
 C_DECL void
 rt_pipe_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
+    if (stp && stp->st_nu_inv_matp) {
+	if (cvp)
+	    *cvp = (struct curvature)RT_CURVATURE_INIT_ZERO;
+	return;
+    }
+
     if (!cvp || !hitp) {
 	return;
     }
@@ -1813,6 +1827,11 @@ rt_pipe_uv(
     struct hit *hitp,
     struct uvcoord *uvp)
 {
+    if (stp && stp->st_nu_inv_matp) {
+	(void)_rt_nonuniform_uv(ap, stp, hitp, uvp);
+	return;
+    }
+
     if (!ap || !stp || !hitp || !uvp) {
 	return;
     }

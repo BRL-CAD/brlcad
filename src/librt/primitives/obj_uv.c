@@ -22,8 +22,6 @@
 
 #include "raytrace.h"
 
-#include "../librt_private.h"
-
 
 int
 rt_obj_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
@@ -48,7 +46,8 @@ rt_obj_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
     if (!ft->ft_uv)
 	return -4;
 
-    return _rt_nonuniform_uv(ap, stp, hitp, uvp);
+    ft->ft_uv(ap, stp, hitp, uvp);
+    return 0;
 }
 
 

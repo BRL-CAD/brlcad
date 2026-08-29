@@ -285,6 +285,9 @@ rt_hyp_print(const struct soltab *stp)
 C_DECL int
 rt_hyp_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
+    if (stp && stp->st_nu_inv_matp)
+	return _rt_nonuniform_shot(stp, rp, ap, seghead);
+
     struct hyp_specific *hyp =	(struct hyp_specific *)stp->st_specific;
     struct seg *segp;
 
@@ -605,6 +608,11 @@ rt_hyp_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 C_DECL void
 rt_hyp_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
+    if (stp && stp->st_nu_inv_matp) {
+	(void)_rt_nonuniform_norm(hitp, stp, rp);
+	return;
+    }
+
     struct hyp_specific *hyp =
 	(struct hyp_specific *)stp->st_specific;
 
@@ -652,6 +660,11 @@ rt_hyp_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 C_DECL void
 rt_hyp_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
+    if (stp && stp->st_nu_inv_matp) {
+	(void)_rt_nonuniform_curve(cvp, hitp, stp);
+	return;
+    }
+
     struct hyp_specific *hyp =
 	(struct hyp_specific *)stp->st_specific;
     vect_t vert, horiz;
@@ -728,6 +741,11 @@ rt_hyp_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 C_DECL void
 rt_hyp_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
+    if (stp && stp->st_nu_inv_matp) {
+	(void)_rt_nonuniform_uv(ap, stp, hitp, uvp);
+	return;
+    }
+
     struct hyp_specific *hyp =	(struct hyp_specific *)stp->st_specific;
 
     if (ap) RT_CK_APPLICATION(ap);

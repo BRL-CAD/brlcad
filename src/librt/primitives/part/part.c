@@ -495,6 +495,9 @@ rt_part_print(register const struct soltab *stp)
 C_DECL int
 rt_part_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
+    if (stp && stp->st_nu_inv_matp)
+	return _rt_nonuniform_shot(stp, rp, ap, seghead);
+
     register struct part_specific *part =
 	(struct part_specific *)stp->st_specific;
     struct seg *segp;
@@ -1097,6 +1100,11 @@ rt_part_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, st
 C_DECL void
 rt_part_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
 {
+    if (stp && stp->st_nu_inv_matp) {
+	(void)_rt_nonuniform_norm(hitp, stp, rp);
+	return;
+    }
+
     register struct part_specific *part =
 	(struct part_specific *)stp->st_specific;
 
@@ -1146,6 +1154,11 @@ rt_part_norm(register struct hit *hitp, struct soltab *stp, register struct xray
 C_DECL void
 rt_part_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
 {
+    if (stp && stp->st_nu_inv_matp) {
+	(void)_rt_nonuniform_curve(cvp, hitp, stp);
+	return;
+    }
+
     register struct part_specific *part =
 	(struct part_specific *)stp->st_specific;
     point_t hit_local;	/* hit_point, with V as origin */
@@ -1192,6 +1205,11 @@ rt_part_curve(register struct curvature *cvp, register struct hit *hitp, struct 
 C_DECL void
 rt_part_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
 {
+    if (stp && stp->st_nu_inv_matp) {
+	(void)_rt_nonuniform_uv(ap, stp, hitp, uvp);
+	return;
+    }
+
     register const struct part_specific *part =
 	(struct part_specific *)stp->st_specific;
     point_t hit_local;	/* hit_point, with V as origin */

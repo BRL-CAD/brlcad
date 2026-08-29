@@ -416,6 +416,9 @@ rt_rhc_print(const struct soltab *stp)
 C_DECL int
 rt_rhc_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
+    if (stp && stp->st_nu_inv_matp)
+	return _rt_nonuniform_shot(stp, rp, ap, seghead);
+
     struct rhc_specific *rhc =
 	(struct rhc_specific *)stp->st_specific;
     vect_t dprime;		/* D' */
@@ -792,6 +795,11 @@ rt_rhc_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 C_DECL void
 rt_rhc_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
+    if (stp && stp->st_nu_inv_matp) {
+	(void)_rt_nonuniform_norm(hitp, stp, rp);
+	return;
+    }
+
     fastf_t c;
     vect_t can_normal;	/* normal to canonical rhc */
     struct rhc_specific *rhc =
@@ -835,6 +843,11 @@ rt_rhc_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 C_DECL void
 rt_rhc_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
+    if (stp && stp->st_nu_inv_matp) {
+	(void)_rt_nonuniform_curve(cvp, hitp, stp);
+	return;
+    }
+
     fastf_t b, c, rsq, y;
     fastf_t zp1_sq, zp2;	/* 1st deriv sqr, 2nd deriv */
     struct rhc_specific *rhc =
@@ -876,6 +889,11 @@ rt_rhc_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 C_DECL void
 rt_rhc_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
+    if (stp && stp->st_nu_inv_matp) {
+	(void)_rt_nonuniform_uv(ap, stp, hitp, uvp);
+	return;
+    }
+
     struct rhc_specific *rhc = (struct rhc_specific *)stp->st_specific;
 
     vect_t work;

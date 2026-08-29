@@ -401,6 +401,9 @@ inside_overlapping_region(struct tor_specific *tor, point_t hp)
 C_DECL int
 rt_tor_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
+    if (stp && stp->st_nu_inv_matp)
+	return _rt_nonuniform_shot(stp, rp, ap, seghead);
+
     register struct tor_specific *tor =
 	(struct tor_specific *)stp->st_specific;
     register struct seg *segp;
@@ -877,6 +880,11 @@ rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 C_DECL void
 rt_tor_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
 {
+    if (stp && stp->st_nu_inv_matp) {
+	(void)_rt_nonuniform_norm(hitp, stp, rp);
+	return;
+    }
+
     register struct tor_specific *tor =
 	(struct tor_specific *)stp->st_specific;
 
@@ -904,6 +912,11 @@ rt_tor_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 C_DECL void
 rt_tor_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
 {
+    if (stp && stp->st_nu_inv_matp) {
+	(void)_rt_nonuniform_curve(cvp, hitp, stp);
+	return;
+    }
+
     register struct tor_specific *tor =
 	(struct tor_specific *)stp->st_specific;
     vect_t w4, w5;
@@ -947,6 +960,11 @@ rt_tor_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 C_DECL void
 rt_tor_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
+    if (stp && stp->st_nu_inv_matp) {
+	(void)_rt_nonuniform_uv(ap, stp, hitp, uvp);
+	return;
+    }
+
     struct tor_specific *tor = (struct tor_specific *) stp->st_specific;
     vect_t work;
     vect_t pprime;

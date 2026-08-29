@@ -22,27 +22,6 @@
 
 #include "raytrace.h"
 
-#include "../librt_private.h"
-
-
-static int
-obj_curve_supports_nonuniform(int id)
-{
-    switch (id) {
-	case ID_TOR:
-	case ID_PARTICLE:
-	case ID_RPC:
-	case ID_RHC:
-	case ID_EPA:
-	case ID_EHY:
-	case ID_ETO:
-	case ID_HYP:
-	    return 1;
-	default:
-	    return 0;
-    }
-}
-
 
 int
 rt_obj_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
@@ -65,16 +44,6 @@ rt_obj_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 	return -3;
     if (!ft->ft_curve)
 	return -4;
-
-    if (stp->st_nu_inv_matp) {
-	if (obj_curve_supports_nonuniform(id))
-	    return _rt_nonuniform_curve(cvp, hitp, stp, stp->st_nu_matp, stp->st_nu_inv_matp);
-
-	VSETALL(cvp->crv_pdir, 0.0);
-	cvp->crv_c1 = 0.0;
-	cvp->crv_c2 = 0.0;
-	return -5;
-    }
 
     ft->ft_curve(cvp, hitp, stp);
     return 0;

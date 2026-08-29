@@ -392,6 +392,9 @@ rt_ehy_print(const struct soltab *stp)
 C_DECL int
 rt_ehy_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
+    if (stp && stp->st_nu_inv_matp)
+	return _rt_nonuniform_shot(stp, rp, ap, seghead);
+
     struct ehy_specific *ehy =
 	(struct ehy_specific *)stp->st_specific;
     vect_t dp;		/* D' */
@@ -654,6 +657,11 @@ rt_ehy_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 C_DECL void
 rt_ehy_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
+    if (stp && stp->st_nu_inv_matp) {
+	(void)_rt_nonuniform_norm(hitp, stp, rp);
+	return;
+    }
+
     vect_t can_normal;	/* normal to canonical ehy */
     fastf_t cp, scale;
     struct ehy_specific *ehy =
@@ -690,6 +698,11 @@ rt_ehy_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 C_DECL void
 rt_ehy_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
+    if (stp && stp->st_nu_inv_matp) {
+	(void)_rt_nonuniform_curve(cvp, hitp, stp);
+	return;
+    }
+
     fastf_t a, b, c, scale;
     mat_t M1, M2;
     struct ehy_specific *ehy =
@@ -749,6 +762,11 @@ rt_ehy_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 C_DECL void
 rt_ehy_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
+    if (stp && stp->st_nu_inv_matp) {
+	(void)_rt_nonuniform_uv(ap, stp, hitp, uvp);
+	return;
+    }
+
     struct ehy_specific *ehy =
 	(struct ehy_specific *)stp->st_specific;
     vect_t work;

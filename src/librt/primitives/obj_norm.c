@@ -22,8 +22,6 @@
 
 #include "raytrace.h"
 
-#include "../librt_private.h"
-
 
 int
 rt_obj_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
@@ -48,7 +46,8 @@ rt_obj_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
     if (!ft->ft_norm)
 	return -4;
 
-    return _rt_nonuniform_norm(hitp, stp, rp);
+    ft->ft_norm(hitp, stp, rp);
+    return 0;
 }
 
 

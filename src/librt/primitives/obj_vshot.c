@@ -22,8 +22,6 @@
 
 #include "raytrace.h"
 
-#include "../librt_private.h"
-
 
 int
 rt_obj_vshot(struct soltab *stp[], struct xray *rp[], struct seg *segp, int n, struct application *ap)
@@ -58,17 +56,19 @@ rt_obj_vshot(struct soltab *stp[], struct xray *rp[], struct seg *segp, int n, s
     ft = &OBJ[id];
     if (!ft)
 	return -3;
+    if (use_scalar && !ft->ft_shot)
+	return -4;
     if (!use_scalar && !ft->ft_vshot)
 	return -4;
 
-    if (use_scalar || !ft->ft_vshot) {
+    if (use_scalar) {
 	for (i = 0; i < n; i++) {
 	    struct seg seghead;
 	    struct seg *tmp_seg;
 	    int ret;
 
 	    BU_LIST_INIT(&seghead.l);
-	    ret = _rt_nonuniform_shot(stp[i], rp[i], ap, &seghead);
+	    ret = ft->ft_shot(stp[i], rp[i], ap, &seghead);
 	    if (ret <= 0) {
 		segp[i].seg_stp = (struct soltab *)0;
 		continue;

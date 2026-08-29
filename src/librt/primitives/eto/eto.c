@@ -374,6 +374,9 @@ rt_eto_print(const struct soltab *stp)
 C_DECL int
 rt_eto_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
+    if (stp && stp->st_nu_inv_matp)
+	return _rt_nonuniform_shot(stp, rp, ap, seghead);
+
     struct eto_specific *eto =
 	(struct eto_specific *)stp->st_specific;
     struct seg *segp;
@@ -733,6 +736,11 @@ rt_eto_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 C_DECL void
 rt_eto_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
+    if (stp && stp->st_nu_inv_matp) {
+	(void)_rt_nonuniform_norm(hitp, stp, rp);
+	return;
+    }
+
     struct eto_specific *eto =
 	(struct eto_specific *)stp->st_specific;
     fastf_t sqrt_x2y2, efact, ffact, xcomp, ycomp, zcomp;
@@ -767,6 +775,11 @@ rt_eto_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 C_DECL void
 rt_eto_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
+    if (stp && stp->st_nu_inv_matp) {
+	(void)_rt_nonuniform_curve(cvp, hitp, stp);
+	return;
+    }
+
     fastf_t a, b, ch, cv, dh, dv, k_circ, k_ell, phi, rad, xp,
 	yp1, yp2, work;
     struct eto_specific *eto =
@@ -830,6 +843,11 @@ rt_eto_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 C_DECL void
 rt_eto_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
+    if (stp && stp->st_nu_inv_matp) {
+	(void)_rt_nonuniform_uv(ap, stp, hitp, uvp);
+	return;
+    }
+
     fastf_t horz, theta_u, theta_v, vert;
     vect_t Hit_Ell, Nu, Radius, Ru;
 

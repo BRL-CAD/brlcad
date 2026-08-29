@@ -176,6 +176,9 @@ rt_cline_print(register const struct soltab *stp)
 C_DECL int
 rt_cline_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
+    if (stp && stp->st_nu_inv_matp)
+	return _rt_nonuniform_shot(stp, rp, ap, seghead);
+
     register struct cline_specific *cline =
 	(struct cline_specific *)stp->st_specific;
     register struct seg *segp;
@@ -446,6 +449,11 @@ rt_cline_vshot(struct soltab *stp[], struct xray *rp[], struct seg *segp, int n,
 C_DECL void
 rt_cline_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
+    if (stp && stp->st_nu_inv_matp) {
+	(void)_rt_nonuniform_norm(hitp, stp, rp);
+	return;
+    }
+
     vect_t tmp;
     fastf_t dot;
 
@@ -486,6 +494,12 @@ rt_cline_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 C_DECL void
 rt_cline_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
+    if (stp && stp->st_nu_inv_matp) {
+	if (cvp)
+	    *cvp = (struct curvature)RT_CURVATURE_INIT_ZERO;
+	return;
+    }
+
     if (stp) RT_CK_SOLTAB(stp);
     if (hitp) RT_CK_HIT(hitp);
 
@@ -504,6 +518,11 @@ rt_cline_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 C_DECL void
 rt_cline_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
+    if (stp && stp->st_nu_inv_matp) {
+	(void)_rt_nonuniform_uv(ap, stp, hitp, uvp);
+	return;
+    }
+
     if (ap) RT_CK_APPLICATION(ap);
     if (stp) RT_CK_SOLTAB(stp);
     if (hitp) RT_CK_HIT(hitp);

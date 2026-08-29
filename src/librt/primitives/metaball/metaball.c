@@ -366,6 +366,9 @@ rt_metaball_find_intersection(point_t *intersect, const struct rt_metaball_inter
 C_DECL int
 rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
+    if (stp && stp->st_nu_inv_matp)
+	return _rt_nonuniform_shot(stp, rp, ap, seghead);
+
     struct rt_metaball_internal *mb = (struct rt_metaball_internal *)stp->st_specific;
     struct seg *segp = NULL;
     int retval = 0;
@@ -558,6 +561,11 @@ rt_metaball_norm_internal(vect_t *n, point_t *p, struct rt_metaball_internal *mb
 C_DECL void
 rt_metaball_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
 {
+    if (stp && stp->st_nu_inv_matp) {
+	(void)_rt_nonuniform_norm(hitp, stp, rp);
+	return;
+    }
+
     if (rp) RT_CK_RAY(rp);	/* unused. */
     rt_metaball_norm_internal(&(hitp->hit_normal), &(hitp->hit_point), (struct rt_metaball_internal *)(stp->st_specific));
     return;
@@ -570,6 +578,12 @@ rt_metaball_norm(register struct hit *hitp, struct soltab *stp, register struct 
 C_DECL void
 rt_metaball_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
+    if (stp && stp->st_nu_inv_matp) {
+	if (cvp)
+	    *cvp = (struct curvature)RT_CURVATURE_INIT_ZERO;
+	return;
+    }
+
     struct rt_metaball_internal *metaball = (struct rt_metaball_internal *)stp->st_specific;
 
     if (!metaball || !cvp) return;
@@ -590,6 +604,11 @@ rt_metaball_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 C_DECL void
 rt_metaball_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
+    if (stp && stp->st_nu_inv_matp) {
+	(void)_rt_nonuniform_uv(ap, stp, hitp, uvp);
+	return;
+    }
+
     struct rt_metaball_internal *metaball = (struct rt_metaball_internal *)stp->st_specific;
     vect_t work, pprime;
     fastf_t r;

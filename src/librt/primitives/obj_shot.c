@@ -22,8 +22,6 @@
 
 #include "raytrace.h"
 
-#include "../librt_private.h"
-
 
 int
 rt_obj_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
@@ -48,7 +46,7 @@ rt_obj_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     if (!ft->ft_shot)
 	return -4;
 
-    return _rt_nonuniform_shot(stp, rp, ap, seghead);
+    return ft->ft_shot(stp, rp, ap, seghead);
 }
 
 

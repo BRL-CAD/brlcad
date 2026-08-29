@@ -105,7 +105,7 @@ vshot_stub(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struc
 	    /* do scalar call, place results in segp array */
 	    ret = -1;
 	    if (OBJ[stp[i]->st_id].ft_shot) {
-		ret = _rt_nonuniform_shot(stp[i], rp[i], ap, &seghead);
+		ret = OBJ[stp[i]->st_id].ft_shot(stp[i], rp[i], ap, &seghead);
 	    }
 	    if (ret <= 0) {
 		segp[i].seg_stp=(struct soltab *) 0;

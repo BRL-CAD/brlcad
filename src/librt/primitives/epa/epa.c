@@ -390,6 +390,9 @@ rt_epa_print(const struct soltab *stp)
 C_DECL int
 rt_epa_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
+    if (stp && stp->st_nu_inv_matp)
+	return _rt_nonuniform_shot(stp, rp, ap, seghead);
+
     struct epa_specific *epa =
 	(struct epa_specific *)stp->st_specific;
     vect_t dprime;		/* D' */
@@ -631,6 +634,11 @@ rt_epa_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 C_DECL void
 rt_epa_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
+    if (stp && stp->st_nu_inv_matp) {
+	(void)_rt_nonuniform_norm(hitp, stp, rp);
+	return;
+    }
+
     fastf_t scale;
     vect_t can_normal;	/* normal to canonical epa */
     struct epa_specific *epa =
@@ -666,6 +674,11 @@ rt_epa_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 C_DECL void
 rt_epa_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
+    if (stp && stp->st_nu_inv_matp) {
+	(void)_rt_nonuniform_curve(cvp, hitp, stp);
+	return;
+    }
+
     fastf_t a, b, c, scale;
     mat_t M1, M2;
     struct epa_specific *epa =
@@ -721,6 +734,11 @@ rt_epa_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 C_DECL void
 rt_epa_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
+    if (stp && stp->st_nu_inv_matp) {
+	(void)_rt_nonuniform_uv(ap, stp, hitp, uvp);
+	return;
+    }
+
     struct epa_specific *epa =
 	(struct epa_specific *)stp->st_specific;
 

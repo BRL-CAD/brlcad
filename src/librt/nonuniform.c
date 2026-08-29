@@ -418,6 +418,10 @@ static void
 nonuniform_body_soltab(struct soltab *body_stp, const struct soltab *stp)
 {
     *body_stp = *stp;
+    /* Body-space callbacks must not re-enter the affine adapters. */
+    body_stp->st_nu_matp = (matp_t)0;
+    body_stp->st_nu_inv_matp = (matp_t)0;
+    body_stp->st_nu_norm_matp = (matp_t)0;
     VMOVE(body_stp->st_center, stp->st_nu_body_center);
     VMOVE(body_stp->st_min, stp->st_nu_body_min);
     VMOVE(body_stp->st_max, stp->st_nu_body_max);
@@ -609,6 +613,8 @@ _rt_nonuniform_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 	return 0;
     }
 
+    VSETALL(hitp->hit_normal, 0.0);
+
     if (!rp)
 	return -1;
 
@@ -648,6 +654,11 @@ _rt_nonuniform_uv(struct application *ap, struct soltab *stp, struct hit *hitp, 
 	OBJ[stp->st_id].ft_uv(ap, stp, hitp, uvp);
 	return 0;
     }
+
+    uvp->uv_u = 0.0;
+    uvp->uv_v = 0.0;
+    uvp->uv_du = 0.0;
+    uvp->uv_dv = 0.0;
 
     model_ray = hitp->hit_rayp ? hitp->hit_rayp : (ap ? &ap->a_ray : NULL);
     if (!model_ray)
@@ -796,7 +807,7 @@ nonuniform_transform_curve(struct curvature *cvp, const struct curvature *body_c
 
 
 int
-_rt_nonuniform_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp, const mat_t body_to_model, const mat_t model_to_body)
+_rt_nonuniform_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
     struct curvature body_curve = RT_CURVATURE_INIT_ZERO;
     struct curvature model_curve = RT_CURVATURE_INIT_ZERO;
@@ -806,7 +817,7 @@ _rt_nonuniform_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp
     const struct rt_functab *ft;
     fastf_t dir_scale = 1.0;
 
-    if (!cvp || !hitp || !stp || !body_to_model || !model_to_body)
+    if (!cvp || !hitp || !stp)
 	return -1;
 
     RT_CK_HIT(hitp);
@@ -821,7 +832,10 @@ _rt_nonuniform_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp
     if (!ft->ft_norm || !ft->ft_curve)
 	return -1;
 
-    if (nonuniform_body_ray_mat(&body_ray, &dir_scale, model_to_body, hitp->hit_rayp) < 0)
+    if (!stp->st_nu_matp || !stp->st_nu_inv_matp)
+	return -1;
+
+    if (nonuniform_body_ray_mat(&body_ray, &dir_scale, stp->st_nu_inv_matp, hitp->hit_rayp) < 0)
 	return -1;
 
     body_hit = *hitp;
@@ -833,7 +847,7 @@ _rt_nonuniform_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp
     ft->ft_norm(&body_hit, &body_stp, &body_ray);
     ft->ft_curve(&body_curve, &body_hit, &body_stp);
 
-    if (nonuniform_transform_curve(&model_curve, &body_curve, body_hit.hit_normal, body_to_model, model_to_body) < 0)
+    if (nonuniform_transform_curve(&model_curve, &body_curve, body_hit.hit_normal, stp->st_nu_matp, stp->st_nu_inv_matp) < 0)
 	return -1;
 
     *cvp = model_curve;

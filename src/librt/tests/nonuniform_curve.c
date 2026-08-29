@@ -57,7 +57,6 @@ struct body_ray {
 
 struct curve_sample {
     int hit;
-    int curve_ret;
     struct curvature curve;
     vect_t normal;
 };
@@ -297,7 +296,7 @@ valid_affine_sample(const struct curve_sample *sample)
 {
     fastf_t pdir_mag = MAGNITUDE(sample->curve.crv_pdir);
 
-    if (sample->curve_ret != 0 || !curve_finite(&sample->curve))
+    if (!curve_finite(&sample->curve))
 	return 0;
     if (fabs(sample->curve.crv_c1) > fabs(sample->curve.crv_c2) + CURVE_TOL)
 	return 0;
@@ -420,11 +419,7 @@ curve_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSE
 	return 0;
 
     RT_HIT_NORMAL(sample->normal, pp->pt_inhit, pp->pt_inseg->seg_stp, NULL, pp->pt_inflip);
-    sample->curve_ret = rt_obj_curve(&sample->curve, pp->pt_inhit, pp->pt_inseg->seg_stp);
-    if (pp->pt_inflip) {
-	sample->curve.crv_c1 = -sample->curve.crv_c1;
-	sample->curve.crv_c2 = -sample->curve.crv_c2;
-    }
+    RT_CURVATURE(&sample->curve, pp->pt_inhit, pp->pt_inflip, pp->pt_inseg->seg_stp);
     sample->hit = 1;
     return 1;
 }
@@ -444,7 +439,6 @@ shoot_curve(struct db_i *dbip, const char *objname, const struct xray *ray, stru
     struct application ap;
 
     memset(sample, 0, sizeof(struct curve_sample));
-    sample->curve_ret = -999;
 
     rtip = rt_i_create(dbip);
     if (!rtip)
@@ -491,7 +485,6 @@ test_enabled_primitive(struct db_i *dbip, const char *name)
 
 	transform_ray(&base_ray, &rays[i], identity);
 	if (shoot_curve(dbip, base, &base_ray, &base_sample) < 0 ||
-	    base_sample.curve_ret != 0 ||
 	    !curve_finite(&base_sample.curve) ||
 	    !significant_curve(&base_sample.curve))
 	    continue;
@@ -563,7 +556,9 @@ test_disabled_primitive(struct db_i *dbip, const char *name)
 	    if (shoot_curve(dbip, nonu, &ray, &sample) < 0)
 		continue;
 
-	    if (sample.curve_ret < 0) {
+	    if (curve_finite(&sample.curve) &&
+		!significant_curve(&sample.curve) &&
+		NEAR_ZERO(MAGSQ(sample.curve.crv_pdir), VDIVIDE_TOL)) {
 		unavailable_ok = 1;
 		break;
 	    }

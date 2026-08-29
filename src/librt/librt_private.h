@@ -136,7 +136,7 @@ void _rt_nonuniform_soltab_free(struct soltab *stp);
 int _rt_nonuniform_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead);
 int _rt_nonuniform_norm(struct hit *hitp, struct soltab *stp, struct xray *rp);
 int _rt_nonuniform_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp);
-int _rt_nonuniform_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp, const mat_t body_to_model, const mat_t model_to_body);
+int _rt_nonuniform_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp);
 void _rt_nonuniform_transform_bbox(point_t *omin, point_t *omax, const mat_t mat, const point_t imin, const point_t imax);
 void _rt_nonuniform_transform_nmgregion(struct nmgregion *r, const mat_t mat, const struct bn_tol *tol);
 
