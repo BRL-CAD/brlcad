@@ -1,5 +1,4 @@
 #include <algorithm>
-#include <cerrno>
 #include <cctype>
 #include <filesystem>
 #include <fstream>
@@ -14,11 +13,6 @@
 #include <thread>
 #include <utility>
 #include <vector>
-
-#ifndef _WIN32
-#  include <sys/types.h>
-#  include <sys/wait.h>
-#endif
 
 #include "bu/process.h"
 
@@ -667,26 +661,8 @@ static int run_command(const std::vector<std::string> &cmd)
         }
     }
 
-    int rc = 1;
-#ifdef _WIN32
-    rc = bu_process_wait_n(&proc, 0);
-#else
-    int status = 0;
-    pid_t pid = bu_process_pid(proc);
-    while (waitpid(pid, &status, 0) < 0 && errno == EINTR) {
-    }
-    if (WIFEXITED(status)) {
-        rc = WEXITSTATUS(status);
-    } else if (WIFSIGNALED(status)) {
-        rc = 128 + WTERMSIG(status);
-    }
-#endif
-
-    if (proc) {
-        (void)bu_process_wait_n(&proc, 0);
-    }
-
-    return rc;
+    /* bu_process_alive() preserves a completed child's status for wait_n(). */
+    return bu_process_wait_n(&proc, 0);
 }
 
 static std::vector<std::string> strip_generator(const std::vector<std::string> &args)

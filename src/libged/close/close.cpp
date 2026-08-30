@@ -50,6 +50,10 @@ ged_close_core(struct ged *gedp, int UNUSED(argc), const char **UNUSED(argv))
     const char *av[1] = {"zap"};
     ged_exec_zap(gedp, 1, (const char **)av);
 
+    /* Stop callbacks and children before dismantling database state they may
+     * still reference. */
+    ged_subprocesses_terminate(gedp);
+
     /* close current database */
     if (gedp->dbip)
 	db_close(gedp->dbip);
@@ -62,23 +66,6 @@ ged_close_core(struct ged *gedp, int UNUSED(argc), const char **UNUSED(argv))
     if (gedp->ged_lod)
 	bv_mesh_lod_context_destroy(gedp->ged_lod);
     gedp->ged_lod = NULL;
-
-    /* Terminate any ged subprocesses */
-    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_subp); i++) {
-	struct ged_subprocess *rrp = (struct ged_subprocess *)BU_PTBL_GET(&gedp->ged_subp, i);
-	if (gedp->ged_delete_io_handler) {
-	    (*gedp->ged_delete_io_handler)(rrp, BU_PROCESS_STDIN);
-	    (*gedp->ged_delete_io_handler)(rrp, BU_PROCESS_STDOUT);
-	    (*gedp->ged_delete_io_handler)(rrp, BU_PROCESS_STDERR);
-	}
-	if (!rrp->aborted) {
-	    bu_pid_terminate(bu_process_pid(rrp->p));
-	    rrp->aborted = 1;
-	}
-	bu_ptbl_rm(&gedp->ged_subp, (long *)rrp);
-	    BU_PUT(rrp, struct ged_subprocess);
-    }
-    bu_ptbl_reset(&gedp->ged_subp);
 
     return BRLCAD_OK;
 }

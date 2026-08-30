@@ -351,10 +351,10 @@ subprocess_launcher(int id, void *data)
     sd->result = 0;
 
     struct bu_process *p = NULL;
-    bu_process_create(&p, (const char **)av, BU_PROCESS_DEFAULT);
+    bu_process_create(&p, (const char **)av, BU_PROCESS_OUT_EQ_ERR);
     bu_vls_printf(sd->sd_result, "Test %ld(process %ld): running...\n", sd->test_num, sd->process_num);
 
-    while (bu_process_read_n(p, BU_PROCESS_STDERR, MAXPATHLEN+501, (char *)line) > 0) {
+    while (bu_process_read_n(p, BU_PROCESS_STDOUT, MAXPATHLEN+501, (char *)line) > 0) {
 	bu_vls_printf(sd->sd_result, "%s\n", line);
 	memset(line, 0, MAXPATHLEN+501);
     }
@@ -633,4 +633,3 @@ main(int ac, char *av[])
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

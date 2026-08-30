@@ -427,11 +427,27 @@ run_ipc_subtest(const TestOptions &opts,
 		    label, remrt_stderr_log.c_str());
     }
 
-    /* Wait for remrt to complete the render and exit. */
-    int remrt_status = bu_process_wait_n(&remrt_proc,
-					 REMRT_WAIT_SEC * 1000000 /* us */);
+    /* Keep the process record and its descriptors alive while the reader
+     * threads drain both pipes. */
+    int remrt_status = ERROR_PROCESS_ABORTED;
+    const auto render_deadline = std::chrono::steady_clock::now() +
+	std::chrono::seconds(REMRT_WAIT_SEC);
+    int poll_status = 0;
+    int poll_ret = 0;
+    while ((poll_ret = bu_process_poll(remrt_proc, &poll_status)) == 0 &&
+	    std::chrono::steady_clock::now() < render_deadline) {
+	std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+    if (poll_ret == 0) {
+	(void)bu_process_terminate(remrt_proc);
+	while (bu_process_poll(remrt_proc, &poll_status) == 0)
+	    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
     stdout_drain_thr.join();
     stderr_read_thr.join();
+    if (poll_ret == 1)
+	remrt_status = poll_status;
+    (void)bu_process_wait_n(&remrt_proc, 0);
     if (remrt_log)
 	*remrt_log = remrt_stderr_log;
 

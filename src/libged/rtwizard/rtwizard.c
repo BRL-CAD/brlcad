@@ -45,7 +45,9 @@ _ged_run_rtwizard(struct ged *gedp, int cmd_len, const char **gd_rt_cmd)
     struct ged_subprocess *run_rtp;
     struct bu_process *p;
 
-    bu_process_create(&p, (const char **)gd_rt_cmd, BU_PROCESS_DEFAULT);
+    /* rtwizard reports progress on stderr, but merging also prevents an
+     * unobserved stdout pipe from filling while the event loop watches it. */
+    bu_process_create(&p, (const char **)gd_rt_cmd, BU_PROCESS_OUT_EQ_ERR);
 
     if (bu_process_pid(p) == -1) {
 	bu_vls_printf(gedp->ged_result_str, "\nunable to successfully launch subprocess: ");

@@ -80,60 +80,97 @@ struct nirt_info {
     struct nirt_opt_vals *nv;
     struct bu_process *p;
     FILE *fp_in;
-    FILE *fp_out;
-    FILE *fp_err;
 };
+
+
+static void
+nirt_append_output(struct ged *gedp, std::string &pending, const char *data,
+	size_t data_len, bool display, bool flush)
+{
+    if (data_len)
+	pending.append(data, data_len);
+    size_t line_end = std::string::npos;
+    while ((line_end = pending.find('\n')) != std::string::npos) {
+	std::string line = pending.substr(0, line_end);
+	pending.erase(0, line_end + 1);
+	if (display) {
+	    struct bu_vls trimmed = BU_VLS_INIT_ZERO;
+	    bu_vls_strncpy(&trimmed, line.c_str(), line.size());
+	    bu_vls_trimspace(&trimmed);
+	    bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_cstr(&trimmed));
+	    bu_vls_free(&trimmed);
+	}
+    }
+
+    if (flush && !pending.empty()) {
+	if (display) {
+	    struct bu_vls trimmed = BU_VLS_INIT_ZERO;
+	    bu_vls_strncpy(&trimmed, pending.c_str(), pending.size());
+	    bu_vls_trimspace(&trimmed);
+	    bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_cstr(&trimmed));
+	    bu_vls_free(&trimmed);
+	}
+	pending.clear();
+    }
+}
 
 
 static int
 nirt_cmd_print(struct ged *gedp, struct nirt_info *np)
 {
-    int ret = BRLCAD_OK;
-    char line[RT_MAXLINE] = {0};
-    // for bu_fgets space trimming
-    struct bu_vls vbuf = BU_VLS_INIT_ZERO;
-
-    if (!gedp || !np)
+    if (!gedp || !np || !np->p)
 	return BRLCAD_ERROR;
 
-    // ensure nirt has started and has something to read from - with 5 second timeout
-    int64_t start = bu_gettime();
+    const int out_fd = bu_process_fileno(np->p, BU_PROCESS_STDOUT);
+    const int err_fd = bu_process_fileno(np->p, BU_PROCESS_STDERR);
+    bool out_open = (out_fd >= 0);
+    bool err_open = (err_fd >= 0);
+    bool complete = false;
+    std::string out_pending;
+    std::string err_pending;
+    char buffer[RT_MAXLINE];
 
-    while (!bu_process_pending(fileno(np->fp_err)) && !bu_process_pending(fileno(np->fp_out))) {
-	if ((bu_gettime() - start) > BU_SEC2USEC(5))
-	    break;
-    }
-
-    // check if nirt wrote anything to error on load
-    if (bu_process_pending(fileno(np->fp_err))) {
-	while (bu_fgets(line, RT_MAXLINE, np->fp_err) != (char *)NULL) {
-	    bu_vls_strcpy(&vbuf, line);
-	    bu_vls_trimspace(&vbuf);
-	    bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_cstr(&vbuf));
+    while (!complete || out_open || err_open) {
+	bool progressed = false;
+	if (out_open && bu_process_pending(out_fd)) {
+	    int count = bu_process_read_n(np->p, BU_PROCESS_STDOUT,
+		    (int)sizeof(buffer), buffer);
+	    if (count > 0)
+		nirt_append_output(gedp, out_pending, buffer, (size_t)count,
+			DG_QRAY_TEXT(gedp->i->ged_gdp), false);
+	    else
+		out_open = false;
+	    progressed = true;
 	}
-    }
-
-    // If we're outputting text, handle that
-    if (DG_QRAY_TEXT(gedp->i->ged_gdp)) {
-	while (bu_fgets(line, RT_MAXLINE, np->fp_out) != (char *)NULL) {
-	    bu_vls_strcpy(&vbuf, line);
-	    bu_vls_trimspace(&vbuf);
-	    bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_cstr(&vbuf));
+	if (err_open && bu_process_pending(err_fd)) {
+	    int count = bu_process_read_n(np->p, BU_PROCESS_STDERR,
+		    (int)sizeof(buffer), buffer);
+	    if (count > 0)
+		nirt_append_output(gedp, err_pending, buffer, (size_t)count,
+			true, false);
+	    else
+		err_open = false;
+	    progressed = true;
 	}
-    }
 
-    // check if nirt wrote any errors from shots
-    if (bu_process_pending(fileno(np->fp_err))) {
-	while (bu_fgets(line, RT_MAXLINE, np->fp_err) != (char *)NULL) {
-	    bu_vls_strcpy(&vbuf, line);
-	    bu_vls_trimspace(&vbuf);
-	    bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_cstr(&vbuf));
+	int poll_ret = bu_process_poll(np->p, NULL);
+	if (poll_ret < 0)
+	    return BRLCAD_ERROR;
+	complete = (poll_ret == 1);
+	if (complete) {
+	    if (out_open && !bu_process_pending(out_fd))
+		out_open = false;
+	    if (err_open && !bu_process_pending(err_fd))
+		err_open = false;
 	}
+	if (!progressed && (!complete || out_open || err_open))
+	    (void)bu_snooze(1000);
     }
 
-    bu_vls_free(&vbuf);
-
-   return ret;
+    nirt_append_output(gedp, out_pending, NULL, 0,
+	    DG_QRAY_TEXT(gedp->i->ged_gdp), true);
+    nirt_append_output(gedp, err_pending, NULL, 0, true, true);
+    return BRLCAD_OK;
 }
 
 
@@ -145,7 +182,7 @@ int
 ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
 {
     // Container holding info common to both setup and printing stages
-    struct nirt_info np = {NULL, NULL, NULL, NULL, NULL};
+    struct nirt_info np = {NULL, NULL, NULL};
 
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
@@ -193,15 +230,13 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
 	av[4] = NULL;
 
 	bu_process_create(&np.p, (const char **)av, BU_PROCESS_HIDE_WINDOW);
+	if (!np.p) {
+	    bu_free(nirt, "nirt exec");
+	    return BRLCAD_ERROR;
+	}
 
 	// open pipes
 	np.fp_in = bu_process_file_open(np.p, BU_PROCESS_STDIN);
-
-	/* use fp_out to read back the result */
-	np.fp_out = bu_process_file_open(np.p, BU_PROCESS_STDOUT);
-
-	/* use fp_err to read any error messages */
-	np.fp_err = bu_process_file_open(np.p, BU_PROCESS_STDERR);
 
 	/* send quit command to nirt */
 	fprintf(np.fp_in, "q\n");
@@ -212,9 +247,6 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
 	bu_free(nirt, "nirt exec");
 
 	nirt_cmd_print(gedp, &np);
-
-	bu_process_file_close(np.p, BU_PROCESS_STDOUT);
-	bu_process_file_close(np.p, BU_PROCESS_STDERR);
 
 	int retcode = bu_process_wait_n(&np.p, 0);
 	if (retcode != 0)
@@ -460,13 +492,6 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
     /* Set up the pipes.  fp_in is for sending commands.   */
     np.fp_in = bu_process_file_open(np.p, BU_PROCESS_STDIN);
 
-    /* use fp_out to read back the result */
-    np.fp_out = bu_process_file_open(np.p, BU_PROCESS_STDOUT);
-
-    /* use fp_err to read any error messages */
-    np.fp_err = bu_process_file_open(np.p, BU_PROCESS_STDERR);
-
-
     // NOTE: user specified -f, if present, will come later in option
     // processing and override these settings.
     if (DG_QRAY_TEXT(gedp->i->ged_gdp)) {
@@ -577,10 +602,6 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
 
     /* Export output */
     nirt_cmd_print(gedp, &np);
-
-    /* Shut down the subprocess */
-    bu_process_file_close(np.p, BU_PROCESS_STDOUT);
-    bu_process_file_close(np.p, BU_PROCESS_STDERR);
 
     int retcode = bu_process_wait_n(&np.p, 0);
     if (retcode != 0)

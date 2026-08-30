@@ -231,9 +231,9 @@ stop_worker(struct bu_process **fbserv_proc)
     if (!fbserv_proc || !*fbserv_proc)
         return;
 
-    int fbserv_pid = bu_process_pid(*fbserv_proc);
-    if (fbserv_pid > 0 && bu_process_alive(*fbserv_proc))
-        (void)bu_pid_terminate(fbserv_pid);
+    /* Descendants may outlive the direct child, so termination must not be
+     * conditional on the leader still being active. */
+    (void)bu_process_terminate(*fbserv_proc);
     (void)bu_process_wait_n(fbserv_proc, 0);
 }
 
