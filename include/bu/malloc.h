@@ -159,9 +159,8 @@ BU_EXPORT extern void *bu_heap_get(size_t sz);
  * counterpart to bu_heap_get() for releasing fast heap-based memory
  * allocations.
  *
- * the implementation may do nothing, relying on free-on-exit, or may
- * mark deallocations for reuse.  pass a NULL pointer and zero size to
- * force compaction of any unused memory.
+ * Small allocations are retained for reuse by subsequent requests of the
+ * same size.  A NULL pointer is ignored.
  */
 BU_EXPORT extern void bu_heap_put(void *ptr, size_t sz);
 
