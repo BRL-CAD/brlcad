@@ -205,23 +205,30 @@ BU_EXPORT extern int bu_sscanf(const char *src, const char *fmt, ...) _BU_ATTR_S
 /** Routines for scanning certain kinds of data. */
 
 /**
- * Scans a sequence of fastf_t numbers from a string or stdin
+ * Scans a sequence of fastf_t numbers from a string or stdin.
  *
  * Scanning fastf_t numbers with bu_sscanf() is difficult, because
  * doing so requires scanning to some intermediate type like double
  * and then assigning to the fastf_t variable to convert the value to
  * whatever type fastf_t really is.  This function makes it possible
- * to scan a series of fastf_t numbers separated by some character(s)
- * easily, by doing the required conversion internally to the
- * functions.  As series of delimiter characters will be skipped,
- * empty scan fields are not supported (e.g., "0.0,,0.0,1.0" will scan
- * as 3 fields, not 4 with the 2nd skipped).
+ * to scan a series of fastf_t numbers easily, by doing the required
+ * conversion internally.  Delimiters form a non-empty character set:
+ * one or more delimiter characters must separate values, and repeated
+ * delimiters are skipped.  Empty scan fields are therefore not
+ * supported (e.g., "0.0,,0.0,1.0" scans as 3 fields, not 4 with the
+ * second skipped).  A trailing delimiter is not consumed after the
+ * final requested value.
  *
- * @param[out] c Returns number of characters scanned by the function
+ * @param[out] c Optional destination for the number of input characters
+ *     consumed.  It is set to zero before scanning and remains zero for
+ *     invalid arguments or when no value is scanned.
  * @param[in] src A source string to scan from, or NULL to read from stdin
- * @param[in] delim Any delimiter character(s) to skip between scan values
+ * @param[in] delim Non-empty set of delimiter characters to skip between
+ *     scan values
  * @param[in] n Number of fastf_t values to scan from the src input string
- * @param[out] ... Pointers to fastf_t for storing scanned values (optional)
+ * @param[out] ... Exactly n fastf_t pointers for storing scanned values;
+ *     individual pointers may be NULL
+ * @return Number of values scanned
  *
  */
 BU_EXPORT extern int bu_scan_fastf_t(int *c, const char *src, const char *delim, size_t n, ...);

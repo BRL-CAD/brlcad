@@ -22,59 +22,54 @@
 
 #include <stdio.h>
 #include <stdarg.h>
+#include <stdlib.h>
 #include <string.h>
 #include "vmath.h"
 
 #include "bu/log.h"
-#include "bu/malloc.h"
-#include "bu/str.h"
 
 int
 bu_scan_fastf_t(int *c, const char *src, const char *delim, size_t n, ...)
 {
     va_list ap;
     int offset = 0;
-    int current_n = 0, part_n = 0;
-    int len, delim_len;
+    int current_n = 0;
     size_t i;
-    char *delim_fmt;
 
-    if (UNLIKELY(!delim || n < 1)) {
+    if (c) {
+	*c = 0;
+    }
+
+
+    if (UNLIKELY(!delim || !*delim || n < 1)) {
 	return 0;
     }
 
     va_start(ap, n);
 
-    /* TODO: we should just simply skip all occurrences of delim chars
-     * after reading a fastf_t, avoid dynamic memory allocation and
-     * avoid scanf/sscanf (we don't need to scan the delimiter, just
-     * skip chars in a loop until none are found.
-     */
-
-    delim_len = (int)strlen(delim);
-    /* + 3 here to make room for the two characters '%' and 'n' as
-     * well as the terminating '\0'
-     */
-    delim_fmt = (char *)bu_malloc(delim_len + 3, "bu_scan_fastf_t");
-    bu_strlcpy(delim_fmt, delim, delim_len + 1);
-    bu_strlcat(delim_fmt, "%n", delim_len + 3);
-
     for (i = 0; i < n; i++) {
-	/* Read in the next fastf_t */
-	double scan = 0;
+	double scan = 0.0;
 	fastf_t *arg;
 
-	if (src)
-	    part_n = sscanf(src + offset, "%lf%n", &scan, &len);
-	else
-	    part_n = scanf("%lf%n", &scan, &len);
+	if (src) {
+	    const char *input = src + offset;
+	    char *end;
 
-	current_n += part_n;
-	offset += len;
-	if (part_n != 1) {
-	    break;
+	    scan = strtod(input, &end);
+	    if (end == input) {
+		break;
+	    }
+	    offset += (int)(end - input);
+	} else {
+	    int len = 0;
+
+	    if (scanf("%lf%n", &scan, &len) != 1) {
+		break;
+	    }
+	    offset += len;
 	}
 
+	current_n++;
 	arg = va_arg(ap, fastf_t *);
 	if (arg) {
 	    *arg = scan;
@@ -84,25 +79,35 @@ bu_scan_fastf_t(int *c, const char *src, const char *delim, size_t n, ...)
 	    break;
 	}
 
-	/* Make sure that a delimiter is present */
-	if (src)
-	    part_n = sscanf(src + offset, delim_fmt, &len);
-	else
-	    part_n = scanf(delim_fmt, &len);
+	if (src) {
+	    const char *input = src + offset;
 
-	offset += len;
+	    while (*input && strchr(delim, *input)) {
+		input++;
+	    }
+	    if (input == src + offset) {
+		break;
+	    }
+	    offset += (int)(input - (src + offset));
+	} else {
+	    int character;
+	    int delimiter_count = 0;
 
-	/* as delim_fmt should only have a %n and that doesn't get
-	 * counted in the scanf return, make sure the return is 0 as
-	 * no values should be scanned.
-	 */
-	if (part_n != 0 || len != delim_len) {
-	    break;
+	    while ((character = fgetc(stdin)) != EOF) {
+		if (!strchr(delim, character)) {
+		    (void)ungetc(character, stdin);
+		    break;
+		}
+		delimiter_count++;
+		offset++;
+	    }
+	    if (!delimiter_count) {
+		break;
+	    }
 	}
     }
 
     va_end(ap);
-    bu_free(delim_fmt, "bu_scan_fastf_t");
 
     if (c) {
 	*c = offset;
