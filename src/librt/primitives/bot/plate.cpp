@@ -217,10 +217,13 @@ collapse_faces(struct rt_bot_internal *bot, fastf_t working_tol)
 
     // Do the initial decimation
     int *ofaces = NULL;
+    int *face_sources = NULL;
     int n_ofaces = 0;
     struct bg_trimesh_decimation_settings s = BG_TRIMESH_DECIMATION_SETTINGS_INIT;
     s.feature_size = working_tol;
-    int ret = bg_trimesh_decimate(&ofaces, &n_ofaces, bot->faces, (int)bot->num_faces, (point_t *)bot->vertices, (int)bot->num_vertices, &s);
+    int ret = bg_trimesh_run_decimater(&ofaces, &face_sources,
+	&n_ofaces, bot->faces, (int)bot->num_faces,
+	(point_t *)bot->vertices, (int)bot->num_vertices, &s);
     if (bu_vls_strlen(&s.msgs)) {
 	//bu_log("%s", bu_vls_cstr(&s.msgs));
     }
@@ -229,51 +232,15 @@ collapse_faces(struct rt_bot_internal *bot, fastf_t working_tol)
     // If didn't work, we're done
     if (ret != BRLCAD_OK) {
 	bu_free(ofaces, "ofaces");
+	bu_free(face_sources, "decimated face sources");
 	return bot;
     }
 
-    // bg_trimesh_decimate will filter out degenerate faces, but we still need
-    // to trim out any unused points.
-    int *gcfaces = NULL;
-    point_t *opnts = NULL;
-    int n_opnts;
-    int n_gcfaces = bg_trimesh_3d_gc(&gcfaces, &opnts, &n_opnts, ofaces, n_ofaces, (point_t *)bot->vertices);
-
-    // If garbage collection didn't work, we're done
-    if (n_gcfaces != n_ofaces) {
-	bu_free(gcfaces, "gcfaces");
-	bu_free(opnts , "opnts");
-	bu_free(ofaces, "ofaces");
-	return bot;
-    }
-
-    // We have our new input bot
-    //bu_log("New input BoT has %d vertices and %d faces, merge_tol = %f\n", n_opnts, n_gcfaces, s.feature_size);
-
-    // Indices may be updated after gc, so the old array is obsolete
+    struct rt_bot_internal *input_bot = rt_bot_gc(bot, ofaces, face_sources,
+	(size_t)n_ofaces);
     bu_free(ofaces, "ofaces");
-
-    // New input bot
-    struct rt_bot_internal *input_bot;
-    BU_ALLOC(input_bot, struct rt_bot_internal);
-    input_bot->magic = RT_BOT_INTERNAL_MAGIC;
-    input_bot->mode = input_bot->mode;
-    // We're not mapping plate mode thickness info at the moment, so we
-    // can't persist a plate mode type
-    if (input_bot->mode == RT_BOT_PLATE || input_bot->mode == RT_BOT_PLATE_NOCOS)
-	input_bot->mode = RT_BOT_SURFACE;
-    input_bot->orientation = input_bot->orientation;
-    // We changed the faces, but we still need to set their thicknesses
-    input_bot->thickness = (fastf_t *)bu_calloc(n_ofaces, sizeof(fastf_t), "thickness array");
-    for (int i = 0; i < n_ofaces; i++)
-	input_bot->thickness[i] = bot->thickness[0];
-    input_bot->face_mode = NULL; // Face mode doesn't matter here - we can only extrude using one method
-    input_bot->num_faces = n_ofaces;
-    input_bot->num_vertices = n_opnts;
-    input_bot->faces = gcfaces;
-    input_bot->vertices = (fastf_t *)opnts;
-
-    return input_bot;
+    bu_free(face_sources, "decimated face sources");
+    return input_bot ? input_bot : bot;
 }
 
 int

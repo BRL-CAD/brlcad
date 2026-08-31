@@ -122,6 +122,14 @@ brlcad_addexec(rt_tess_timing tess_timing.c "librt;libnmg;libwdb;libbu;${M_LIBRA
 
 brlcad_addexec(bot_match bot_match.cpp "librt;libbg;${M_LIBRARY}" TEST)
 
+brlcad_addexec(rt_bot_split
+  "bot_split.cpp;../primitives/bot/decimate_validate.cpp"
+  "librt;libbg;${M_LIBRARY}"
+  TEST
+)
+target_include_directories(rt_bot_split PRIVATE ${BRLCAD_SOURCE_DIR}/src/libbg)
+brlcad_add_test(NAME rt_bot_split COMMAND rt_bot_split)
+
 # boolweave testing
 brlcad_addexec(rt_boolweave rt_boolweave.c "${RT_TEST_LIBS}" TEST)
 brlcad_add_test(NAME rt_boolweave COMMAND rt_boolweave)

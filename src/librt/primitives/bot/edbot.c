@@ -1525,7 +1525,19 @@ rt_edit_bot_repair(struct bu_vls *log_str, struct rt_db_internal *ip, const stru
     ip->idb_meth->ft_ifree(ip);
     ip->idb_ptr = (void *)obot;
 
-    if (log_str) bu_vls_printf(log_str, "{\"status\":\"success\",\"message\":\"Successfully repaired BoT\"}");
+    if (log_str) {
+	if (settings.output_data_loss) {
+	    bu_vls_printf(log_str, "{\"status\":\"success\",\"message\":\"Successfully repaired BoT; ");
+	    if (settings.output_data_loss & RT_BOT_REPAIR_LOST_NORMALS)
+		bu_vls_printf(log_str, "surface normals%s",
+		    (settings.output_data_loss & RT_BOT_REPAIR_LOST_UVS) ? " and " : "");
+	    if (settings.output_data_loss & RT_BOT_REPAIR_LOST_UVS)
+		bu_vls_printf(log_str, "texture UVs");
+	    bu_vls_printf(log_str, " were removed because repair changed the mesh topology\"}");
+	} else {
+	    bu_vls_printf(log_str, "{\"status\":\"success\",\"message\":\"Successfully repaired BoT\"}");
+	}
+    }
 
     return 0;
 }
