@@ -19,141 +19,176 @@
  */
 /** @file trimesh_split.cpp
  *
- * Given an array of faces, identify the topologically connected subsets
- * and return them.
- *
+ * Identify edge-connected components in a triangle mesh.
  */
 
 #include "common.h"
 
-#include <deque>
+#include <algorithm>
 #include <map>
 #include <vector>
 
 #include "bu/malloc.h"
 #include "bg/trimesh.h"
 
+namespace {
+
 class tm_split_uedge {
-    public:
-	tm_split_uedge(int vert1, int vert2) {
-	    v1 = (vert1 < vert2) ? vert1 : vert2;
-	    v2 = (vert2 < vert1) ? vert1 : vert2;
-	}
-	~tm_split_uedge() {};
-	int v1;
-	int v2;
+  public:
+    tm_split_uedge(int vert1, int vert2) :
+	v1(std::min(vert1, vert2)), v2(std::max(vert1, vert2))
+    {
+    }
 
-	bool operator==(tm_split_uedge other) const
-	{
-	    bool c1 = (v1 == other.v1);
-	    bool c2 = (v2 == other.v2);
-	    return (c1 && c2);
-	}
+    bool operator<(const tm_split_uedge &other) const
+    {
+	return v1 < other.v1 || (v1 == other.v1 && v2 < other.v2);
+    }
 
-	bool operator<(tm_split_uedge other) const
-	{
-	    bool c1 = (v1 < other.v1);
-	    bool c1e = (v1 == other.v1);
-	    bool c2 = (v2 < other.v2);
-	    return (c1 || (c1e && c2));
-	}
-
+  private:
+    int v1;
+    int v2;
 };
 
-class tm_split_sface {
-    public:
-	int v1;
-	int v2;
-	int v3;
+class tm_split_disjoint_sets {
+  public:
+    explicit tm_split_disjoint_sets(size_t count) : parents(count), ranks(count, 0)
+    {
+	for (size_t i = 0; i < count; ++i)
+	    parents[i] = i;
+    }
+
+    size_t root(size_t entry)
+    {
+	if (parents[entry] != entry)
+	    parents[entry] = root(parents[entry]);
+	return parents[entry];
+    }
+
+    void join(size_t first, size_t second)
+    {
+	first = root(first);
+	second = root(second);
+	if (first == second)
+	    return;
+
+	if (ranks[first] < ranks[second])
+	    std::swap(first, second);
+	parents[second] = first;
+	if (ranks[first] == ranks[second])
+	    ++ranks[first];
+    }
+
+  private:
+    std::vector<size_t> parents;
+    std::vector<unsigned char> ranks;
 };
+
+} // namespace
+
 
 extern "C" int
-bg_trimesh_split(int ***of, int **oc, int *f, int fcnt)
+bg_trimesh_separate(int **face_indices, int **component_offsets,
+	const int *faces, int face_count)
 {
-    if (!of || !oc || !f || fcnt < 0)
+    if (!face_indices || !component_offsets || face_count < 0 ||
+	(face_count > 0 && !faces))
 	return -1;
 
-    std::map<tm_split_uedge, std::vector<size_t>> ue_fmap;
-    std::vector<tm_split_sface> afaces;
-
-    for (int i = 0; i < fcnt; ++i) {
-	tm_split_sface nface;
-	nface.v1 = f[i*3+0];
-	nface.v2 = f[i*3+1];
-	nface.v3 = f[i*3+2];
-	afaces.push_back(nface);
-	ue_fmap[tm_split_uedge(nface.v1,nface.v2)].push_back(i);
-	ue_fmap[tm_split_uedge(nface.v2,nface.v3)].push_back(i);
-	ue_fmap[tm_split_uedge(nface.v3,nface.v1)].push_back(i);
-    }
-
-    // Traverse face adjacency explicitly.  A mesh edge may be non-manifold
-    // and have more than two incident faces, so every face in ue_fmap[edge]
-    // must be visited.  The former edge-wavefront implementation marked an
-    // edge complete after following its first neighbor.  Which of three or
-    // more incident faces was left behind then depended on hash iteration
-    // order, and a connected mesh could be reported as multiple components.
-    std::vector<bool> visited((size_t)fcnt, false);
-    std::vector<int *> fsets;
-    std::vector<int> fset_cnts;
-    for (size_t seed = 0; seed < afaces.size(); seed++) {
-	if (visited[seed])
-	    continue;
-
-	std::deque<size_t> pending;
-	std::vector<size_t> component;
-	visited[seed] = true;
-	pending.push_back(seed);
-
-	while (!pending.empty()) {
-	    size_t f_ind = pending.front();
-	    pending.pop_front();
-	    component.push_back(f_ind);
-
-	    const tm_split_sface &face = afaces[f_ind];
-	    tm_split_uedge edges[3] = {
-		tm_split_uedge(face.v1, face.v2),
-		tm_split_uedge(face.v2, face.v3),
-		tm_split_uedge(face.v3, face.v1)
-	    };
-	    for (size_t edge_ind = 0; edge_ind < 3; edge_ind++) {
-		const std::vector<size_t> &neighbors = ue_fmap[edges[edge_ind]];
-		for (size_t neighbor : neighbors) {
-		    if (!visited[neighbor]) {
-			visited[neighbor] = true;
-			pending.push_back(neighbor);
-		    }
-		}
-	    }
-	}
-
-	int *fset = (int *)bu_calloc(component.size(), 3*sizeof(int), "face set");
-	for (size_t i = 0; i < component.size(); i++) {
-	    const tm_split_sface &face = afaces[component[i]];
-	    fset[i*3+0] = face.v1;
-	    fset[i*3+1] = face.v2;
-	    fset[i*3+2] = face.v3;
-	}
-	fsets.push_back(fset);
-	fset_cnts.push_back((int)component.size());
-    }
-
-    if (!fsets.size())
+    *face_indices = NULL;
+    *component_offsets = NULL;
+    if (face_count == 0)
 	return 0;
 
-    int **ofs = (int **)bu_calloc(fsets.size(), sizeof(int *), "final set of sets");
-    for (size_t i = 0; i < fsets.size(); i++) {
-	ofs[i] = fsets[i];
-    }
-    int *ofs_cnt = (int *)bu_calloc(fset_cnts.size(), sizeof(int), "final set of cnts");
-    for (size_t i = 0; i < fset_cnts.size(); i++) {
-	ofs_cnt[i] = fset_cnts[i];
+    tm_split_disjoint_sets components((size_t)face_count);
+    std::map<tm_split_uedge, size_t> edge_owner;
+    for (int face = 0; face < face_count; ++face) {
+	const int *vertices = &faces[face * 3];
+	tm_split_uedge edges[] = {
+	    tm_split_uedge(vertices[0], vertices[1]),
+	    tm_split_uedge(vertices[1], vertices[2]),
+	    tm_split_uedge(vertices[2], vertices[0])
+	};
+
+	for (const tm_split_uedge &edge : edges) {
+	    auto insertion = edge_owner.emplace(edge, (size_t)face);
+	    if (!insertion.second)
+		components.join((size_t)face, insertion.first->second);
+	}
     }
 
-    (*of) = ofs;
-    (*oc) = ofs_cnt;
+    // Assign compact component numbers in first-input-face order.  This also
+    // makes both component and intra-component ordering deterministic.
+    std::vector<int> root_component((size_t)face_count, -1);
+    std::vector<int> face_component((size_t)face_count, -1);
+    std::vector<int> component_counts;
+    for (int face = 0; face < face_count; ++face) {
+	size_t root = components.root((size_t)face);
+	if (root_component[root] < 0) {
+	    root_component[root] = (int)component_counts.size();
+	    component_counts.push_back(0);
+	}
+	int component = root_component[root];
+	face_component[(size_t)face] = component;
+	++component_counts[(size_t)component];
+    }
 
-    return (int)fsets.size();
+    int *offsets = (int *)bu_calloc(component_counts.size() + 1,
+	sizeof(int), "trimesh component offsets");
+    for (size_t component = 0; component < component_counts.size(); ++component)
+	offsets[component + 1] = offsets[component] + component_counts[component];
+
+    int *indices = (int *)bu_calloc((size_t)face_count, sizeof(int),
+	"trimesh component face indices");
+    std::vector<int> positions(offsets, offsets + component_counts.size());
+    for (int face = 0; face < face_count; ++face) {
+	int component = face_component[(size_t)face];
+	indices[(size_t)positions[(size_t)component]++] = face;
+    }
+
+    *face_indices = indices;
+    *component_offsets = offsets;
+    return (int)component_counts.size();
+}
+
+
+extern "C" int
+bg_trimesh_split(int ***output_sets, int **output_counts, int *faces, int face_count)
+{
+    // Preserve the historical validation behavior of this compatibility API.
+    if (!output_sets || !output_counts || !faces || face_count < 0)
+	return -1;
+
+    *output_sets = NULL;
+    *output_counts = NULL;
+
+    int *face_indices = NULL;
+    int *component_offsets = NULL;
+    int component_count = bg_trimesh_separate(&face_indices,
+	&component_offsets, faces, face_count);
+    if (component_count <= 0)
+	return component_count;
+
+    int **sets = (int **)bu_calloc((size_t)component_count, sizeof(int *),
+	"trimesh face sets");
+    int *counts = (int *)bu_calloc((size_t)component_count, sizeof(int),
+	"trimesh face counts");
+    for (int component = 0; component < component_count; ++component) {
+	int count = component_offsets[component + 1] - component_offsets[component];
+	counts[component] = count;
+	sets[component] = (int *)bu_calloc((size_t)count, 3 * sizeof(int),
+	    "trimesh face set");
+	for (int position = 0; position < count; ++position) {
+	    int face = face_indices[component_offsets[component] + position];
+	    std::copy_n(&faces[face * 3], 3, &sets[component][position * 3]);
+	}
+    }
+
+    bu_free(face_indices, "trimesh component face indices");
+    bu_free(component_offsets, "trimesh component offsets");
+    *output_sets = sets;
+    *output_counts = counts;
+    return component_count;
 }
 
 // Local Variables:
