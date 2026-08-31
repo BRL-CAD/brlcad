@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 ----------------------------------------------------------------------
 
 * fixed MGED X embedded framebuffer display manager crash - Cliff Yapp
+* added annotate command for managing annotation objects - Cliff Yapp
 * changed default new-region material code from 1 to 0 - Keith Bowman
 * added comb support to bb -o oriented bounding boxes - Cliff Yapp
 * added -t tight bounding box option to bb command - Cliff Yapp
@@ -21,6 +22,8 @@ changes made.  See document footer for additional details.
 * added center command support for centering on an object - Cliff Yapp
 * added metaball point scaling (via metaball_move_pnt) - Sean Morrison
 * all raytracing apps now report object prep failures - Sean Morrison
+* improved fast4-g robustness and error reporting - Cliff Yapp
+* improved robustness of g-vrml plate mode handling - Cliff Yapp
 * added support for tick drawing on MGED model axis - Cliff Yapp
 * added patch-g -j option, specify object thicknesses - Sean Morrison
 * fixed fbcolor color ramp bug drawing the last color - Sean Morrison
