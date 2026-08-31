@@ -26,7 +26,6 @@
 
 #include <stdlib.h> /* exit */
 #include <sys/types.h>
-#include <string.h>
 #include <errno.h>
 #include <time.h>
 #ifdef HAVE_POLL_H
@@ -41,7 +40,6 @@
 #include "bio.h"
 #include "bnetwork.h"
 #include "bu/debug.h"
-#include "bu/file.h"
 #include "bu/interrupt.h"
 #include "bu/list.h"
 #include "bu/malloc.h"
@@ -139,6 +137,45 @@ process_wait_status(int status)
 	return ERROR_PROCESS_ABORTED;
 
     return -1;
+}
+#else
+static void
+process_windows_append_backslashes(struct bu_vls *command, size_t count)
+{
+    for (size_t i = 0; i < count; i++)
+	bu_vls_putc(command, '\\');
+}
+
+
+/* Quote one argument according to the Microsoft C runtime argv rules. */
+static void
+process_windows_append_arg(struct bu_vls *command, const char *argument)
+{
+    size_t backslashes = 0;
+
+    bu_vls_putc(command, '"');
+    for (const char *current = argument; ; current++) {
+	if (*current == '\\') {
+	    backslashes++;
+	    continue;
+	}
+	if (*current == '"') {
+	    process_windows_append_backslashes(command, backslashes);
+	    process_windows_append_backslashes(command, backslashes + 1);
+	    bu_vls_putc(command, '"');
+	    backslashes = 0;
+	    continue;
+	}
+	if (*current == '\0') {
+	    process_windows_append_backslashes(command, backslashes);
+	    process_windows_append_backslashes(command, backslashes);
+	    break;
+	}
+	process_windows_append_backslashes(command, backslashes);
+	backslashes = 0;
+	bu_vls_putc(command, *current);
+    }
+    bu_vls_strcat(command, "\" ");
 }
 #endif
 
@@ -574,18 +611,11 @@ process_create_fail:
     }
     si.hStdError   = pipe_err[1];
 
-    /* Create_Process uses a string, not a char array */
-    for (int i = 0; i < argc; i++) {
-	/* Quote all path names or arguments with spaces for CreateProcess
-	 * unless supplier has already supplied quotes
-	 */
-	if (!strstr(argv[i], "\"") &&
-	    (strstr(argv[i], " ") || bu_file_exists(argv[i], NULL))) {
-	    bu_vls_printf(&cp_cmd, "\"%s\" ", argv[i]);
-	} else {
-	    bu_vls_printf(&cp_cmd, "%s ", argv[i]);
-	}
-    }
+    /* CreateProcess uses one command-line string.  Quote every argument so
+     * whitespace, empty strings, embedded quotes, and trailing backslashes
+     * survive the child's C runtime parsing unchanged. */
+    for (int i = 0; i < argc; i++)
+	process_windows_append_arg(&cp_cmd, argv[i]);
 
     if (!CreateProcess(NULL, bu_vls_addr(&cp_cmd), NULL, NULL, TRUE,
 		       DETACHED_PROCESS, NULL, NULL,

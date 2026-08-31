@@ -49,6 +49,7 @@
 #include <iostream>
 #include <time.h>
 
+#include "bio.h"
 #include "bu.h"
 
 
@@ -58,12 +59,24 @@ const char* lorem_25 = "sagittis id consectetur purus ut faucibus pulvinar eleme
 int
 main(int argc, const char *argv[])
 {
-    if (argc > 2) {
+    if (argc < 2) {
 	fprintf(stderr, "Usage: %s\n", argv[0]);
 	return 1;
     }
 
     bu_setprogname(argv[0]);
+
+    if (BU_STR_EQUAL(argv[1], "arguments")) {
+	(void)setmode(fileno(stdout), O_BINARY);
+	for (int i = 2; i < argc; i++)
+	    fprintf(stdout, "%s\n", argv[i]);
+	return 0;
+    }
+
+    if (argc > 2) {
+	fprintf(stderr, "Usage: %s\n", argv[0]);
+	return 1;
+    }
 
     if (BU_STR_EQUAL(argv[1], "basic")) {
 	// just return

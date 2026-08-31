@@ -608,6 +608,58 @@ test_all_args(const char* cmd)
 }
 
 
+static int
+test_argument_roundtrip(const char *cmd)
+{
+    const char *run_av[] = {
+	cmd,
+	"arguments",
+	"plain",
+	"two words",
+	" leading and trailing ",
+	"tab\tinside",
+	"quote\"inside",
+	"trailing\\",
+	"slashes" "\\\\" "\"" "before quote", /* two backslashes before quote */
+	"",
+	NULL
+    };
+    struct bu_vls expected = BU_VLS_INIT_ZERO;
+    struct bu_vls actual = BU_VLS_INIT_ZERO;
+    for (size_t i = 2; run_av[i]; i++)
+	bu_vls_printf(&expected, "%s\n", run_av[i]);
+
+    struct bu_process *p = NULL;
+    bu_process_create(&p, run_av, BU_PROCESS_DEFAULT);
+    if (!p) {
+	bu_vls_free(&expected);
+	bu_vls_free(&actual);
+	return PROCESS_FAIL;
+    }
+
+    char buffer[BUFSIZ];
+    int count = 0;
+    while ((count = bu_process_read_n(p, BU_PROCESS_STDOUT,
+		    (int)sizeof(buffer), buffer)) > 0)
+	bu_vls_strncat(&actual, buffer, (size_t)count);
+
+    int status = bu_process_wait_n(&p, 0);
+    int result = PROCESS_PASS;
+    if (status != 0 || !BU_STR_EQUAL(bu_vls_cstr(&actual),
+		    bu_vls_cstr(&expected))) {
+	fprintf(stderr,
+		"bu_process_test[\"argument_roundtrip\"] - argument mismatch\n"
+		"  Expected: [%s]\n  Got: [%s]\n",
+		bu_vls_cstr(&expected), bu_vls_cstr(&actual));
+	result = PROCESS_FAIL;
+    }
+
+    bu_vls_free(&expected);
+    bu_vls_free(&actual);
+    return result;
+}
+
+
 /* tests:   process reports alive
  *  bu_process_alive()
  *  bu_pid_alive()
@@ -926,6 +978,7 @@ ProcessTest tests[] = {
     {"streams", test_streams},
     {"abort", test_abort},
     {"args", test_all_args},
+    {"argument_roundtrip", test_argument_roundtrip},
     {"alive", test_alive},
     {"poll_status", test_poll_status},
     {"wait_status", test_wait_status},
