@@ -994,23 +994,33 @@ bu_process_wait(int *aborted, struct bu_process *pinfo, int wtime)
 int
 bu_process_pending(int fd)
 {
+    if (fd < 0)
+	return 0;
+
     int result;
 
 #if defined(_WIN32)
-    HANDLE out_fd = (HANDLE)_get_osfhandle(fd);
-    DWORD bytesAvailable = 0;
-    /* returns 1 on success, 0 on error */
-    if (PeekNamedPipe(out_fd, NULL, 0, NULL, &bytesAvailable, NULL)) {
-	result = bytesAvailable;
+    intptr_t os_handle = _get_osfhandle(fd);
+    if (os_handle == -1)
+	return 0;
+
+    HANDLE out_fd = (HANDLE)os_handle;
+    DWORD bytes_available = 0;
+    if (PeekNamedPipe(out_fd, NULL, 0, NULL, &bytes_available, NULL)) {
+	result = (int)bytes_available;
     } else {
 	result = -1;
     }
 #else
+    if (fd >= FD_SETSIZE)
+	return 0;
+
     fd_set read_set;
+    struct timeval timeout = {0, 0};
     FD_ZERO(&read_set);
     FD_SET(fd, &read_set);
     /* returns 1 on success, 0 on timeout, -1 on error */
-    result = select(fd+1, &read_set, NULL, NULL, 0);
+    result = select(fd+1, &read_set, NULL, NULL, &timeout);
 #endif
 
     /* collapse return to ignore amount to read or errors */

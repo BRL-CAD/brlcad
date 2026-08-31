@@ -58,6 +58,7 @@
 
 static const int64_t PROCESS_POLL_INTERVAL_USEC = 1000;
 static const int64_t PROCESS_COMPLETION_TIMEOUT_USEC = 5000000;
+static const int64_t PROCESS_NONBLOCKING_CALL_LIMIT_USEC = 1000000;
 
 
 static int
@@ -457,9 +458,21 @@ test_streams(const char* cmd)
     struct bu_process* p = NULL;
     const char* run_av[3] = {cmd, "echo", NULL};
 
+    if (bu_process_pending(-1)) {
+	fprintf(stderr, "bu_process_test[\"streams\"] - invalid descriptor reported pending\n");
+	return PROCESS_FAIL;
+    }
+
     bu_process_create(&p, (const char**)run_av, BU_PROCESS_DEFAULT);
 
     FILE* f_in = bu_process_file_open(p, BU_PROCESS_STDIN);
+    int fd_out = bu_process_fileno(p, BU_PROCESS_STDOUT);
+    int64_t pending_start = bu_gettime();
+    (void)bu_process_pending(fd_out);
+    if ((bu_gettime() - pending_start) > PROCESS_NONBLOCKING_CALL_LIMIT_USEC) {
+	fprintf(stderr, "bu_process_test[\"streams\"] - process_pending blocked\n");
+	return PROCESS_FAIL;
+    }
 
     // send a test line through stdin
     char line[10] = "echo_test";
@@ -472,16 +485,16 @@ test_streams(const char* cmd)
     char out_read[10], err_read[10];
     FILE* f_out = bu_process_file_open(p, BU_PROCESS_STDOUT);
     FILE* f_err = bu_process_file_open(p, BU_PROCESS_STDERR);
-    int fd_out = bu_process_fileno(p, BU_PROCESS_STDOUT);
     int fd_err = bu_process_fileno(p, BU_PROCESS_STDERR);
 
     // give up to 5 seconds for process_pending to get the echo
     int64_t start = bu_gettime();
-    while (!bu_process_pending(fd_out) && !bu_process_pending(fd_err)) {
-	if ((bu_gettime() - start) > BU_SEC2USEC(5)) {
+    while (!bu_process_pending(fd_out) || !bu_process_pending(fd_err)) {
+	if ((bu_gettime() - start) > PROCESS_COMPLETION_TIMEOUT_USEC) {
 	    fprintf(stderr, "bu_process_test[\"streams\"] - process_pending check failed\n");
 	    return PROCESS_FAIL;
 	}
+	(void)bu_snooze(PROCESS_POLL_INTERVAL_USEC);
     }
 
     if (!bu_process_pending(fd_out) || (bu_fgets(out_read, 10, f_out) == NULL)) {

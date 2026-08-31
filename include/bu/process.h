@@ -189,12 +189,17 @@ BU_EXPORT extern int bu_process_terminate(struct bu_process *pinfo);
 
 
 /**
- * @brief determine whether there is data pending on fd
+ * @brief Check a process descriptor for readable data without blocking.
+ *
+ * This is a readiness hint.  A zero result does not distinguish between no
+ * data, EOF, and an invalid descriptor or other error.  Use
+ * bu_process_poll() to detect completion, perform any final reads, and then
+ * call bu_process_wait_n() to release the process.
  *
  * @param[in] fd - file descriptor of interest
  *
  * @return
- * 1 if there is data on fd, else 0
+ * 1 if a read can be attempted without blocking; otherwise 0
  */
 BU_EXPORT extern int bu_process_pending(int fd);
 
