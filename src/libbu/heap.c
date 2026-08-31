@@ -21,6 +21,7 @@
 #include "common.h"
 
 #include <stdlib.h> /* for getenv, atoi, and atexit */
+#include <string.h> /* for memcpy */
 
 #include "bu/debug.h"
 #include "bu/log.h"
@@ -76,6 +77,9 @@ struct heap {
      * allocated to callers.  not a counter to avoid a multiply.
      */
     size_t given;
+
+    /** Blocks returned by bu_heap_put(), linked through their storage. */
+    void *available;
 };
 
 struct cpus {
@@ -90,7 +94,7 @@ struct cpus {
  * store data in a cpu-specific structure so we can avoid the need for
  * mutex locking entirely.  relies on static zero-initialization.
  */
-static struct cpus per_cpu[MAX_PSW] = {{{{0, 0, 0}}, 0}};
+static struct cpus per_cpu[MAX_PSW] = {0};
 
 /* Need a function signature that matches bu_heap_func_t, so wrap bu_log in
  * order to allow it to act as the default bu_heap_log function. */
@@ -187,7 +191,6 @@ void *
 bu_heap_get(size_t sz)
 {
     char *ret;
-    register size_t smo = sz-1;
     static int registered = 0;
     int oncpu;
     struct heap *heap;
@@ -195,8 +198,9 @@ bu_heap_get(size_t sz)
     /* what thread are we? */
     oncpu = bu_parallel_id();
 
-#ifdef DEBUG
     if (sz > HEAP_BINS || sz == 0) {
+
+#ifdef DEBUG
 	per_cpu[oncpu].misses++;
 
 	if (bu_debug) {
@@ -206,11 +210,20 @@ bu_heap_get(size_t sz)
 		bu_bomb("Intentionally bombing due to BU_DEBUG_COREDUMP\n");
 	    }
 	}
+#endif
 	return bu_calloc(1, sz, "heap calloc");
     }
-#endif
 
+    const size_t smo = sz - 1;
     heap = &per_cpu[oncpu].heap[smo];
+
+    /* Copy the link value because supported block sizes need not provide
+     * pointer alignment. */
+    if (heap->available) {
+	ret = (char *)heap->available;
+	memcpy(&heap->available, ret, sizeof(heap->available));
+	return (void *)ret;
+    }
 
     /* init */
     if (heap->count == 0) {
@@ -247,12 +260,23 @@ bu_heap_get(size_t sz)
 void
 bu_heap_put(void *ptr, size_t sz)
 {
+    if (!ptr)
+	return;
+
     if (sz > HEAP_BINS || sz == 0) {
 	bu_free(ptr, "heap free");
 	return;
     }
 
-    /* TODO: actually do something useful :) */
+    /* Blocks smaller than a pointer cannot carry a free-list link.  Keep
+     * their page storage for process-lifetime use as before. */
+    if (sz < sizeof(void *))
+	return;
+
+    const int oncpu = bu_parallel_id();
+    struct heap *heap = &per_cpu[oncpu].heap[sz-1];
+    memcpy(ptr, &heap->available, sizeof(heap->available));
+    heap->available = ptr;
 
     return;
 }
