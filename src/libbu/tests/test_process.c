@@ -56,6 +56,24 @@
 #define PROCESS_FAIL  1
 #define PROCESS_PASS  0
 
+static const int64_t PROCESS_POLL_INTERVAL_USEC = 1000;
+static const int64_t PROCESS_COMPLETION_TIMEOUT_USEC = 5000000;
+
+
+static int
+process_poll_until_complete(struct bu_process *process, int *exit_status)
+{
+    int64_t deadline = bu_gettime() + PROCESS_COMPLETION_TIMEOUT_USEC;
+    int poll_result = 0;
+
+    while ((poll_result = bu_process_poll(process, exit_status)) == 0 &&
+	    bu_gettime() < deadline)
+	(void)bu_snooze(PROCESS_POLL_INTERVAL_USEC);
+
+    return poll_result;
+}
+
+
 #ifndef _WIN32
 struct process_func_test_data {
     const char *out;
@@ -657,6 +675,127 @@ test_alive(const char* cmd)
 }
 
 
+static int
+test_poll_status(const char *cmd)
+{
+    struct bu_process *p = NULL;
+    const char *run_av[3] = {cmd, "exit7", NULL};
+    int exit_status = -1;
+
+    bu_process_create(&p, run_av, BU_PROCESS_DEFAULT);
+    int poll_status = process_poll_until_complete(p, &exit_status);
+    if (poll_status != 1 || exit_status != 7) {
+	fprintf(stderr, "bu_process_test[\"poll_status\"] - expected exit status 7, got poll=%d status=%d\n",
+		poll_status, exit_status);
+	if (p)
+	    (void)bu_process_terminate(p);
+	if (p)
+	    (void)bu_process_wait_n(&p, 0);
+	return PROCESS_FAIL;
+    }
+
+    exit_status = -1;
+    if (bu_process_poll(p, &exit_status) != 1 || exit_status != 7) {
+	fprintf(stderr, "bu_process_test[\"poll_status\"] - repeated poll did not preserve exit status\n");
+	(void)bu_process_wait_n(&p, 0);
+	return PROCESS_FAIL;
+    }
+
+    if (bu_process_wait_n(&p, 0) != 7) {
+	fprintf(stderr, "bu_process_test[\"poll_status\"] - wait did not preserve exit status\n");
+	return PROCESS_FAIL;
+    }
+
+    return PROCESS_PASS;
+}
+
+
+static int
+test_wait_status(const char *cmd)
+{
+    struct bu_process *p = NULL;
+    const char *run_av[3] = {cmd, "exit7", NULL};
+
+    bu_process_create(&p, run_av, BU_PROCESS_DEFAULT);
+    if (bu_process_wait_n(&p, 0) != 7) {
+	fprintf(stderr, "bu_process_test[\"wait_status\"] - wait did not report exit status 7\n");
+	return PROCESS_FAIL;
+    }
+
+    return PROCESS_PASS;
+}
+
+
+static int
+test_poll_preserves_output(const char *cmd)
+{
+    struct bu_process *p = NULL;
+    const char *run_av[3] = {cmd, "output", NULL};
+    char output[100] = {0};
+
+    bu_process_create(&p, run_av, BU_PROCESS_DEFAULT);
+    if (process_poll_until_complete(p, NULL) != 1) {
+	fprintf(stderr, "bu_process_test[\"poll_output\"] - process did not complete\n");
+	if (p)
+	    (void)bu_process_terminate(p);
+	if (p)
+	    (void)bu_process_wait_n(&p, 0);
+	return PROCESS_FAIL;
+    }
+
+    int count = bu_process_read_n(p, BU_PROCESS_STDOUT,
+	    (int)sizeof(output) - 1, output);
+    if (count <= 0 || !strstr(output, "Howdy from stdout!")) {
+	fprintf(stderr, "bu_process_test[\"poll_output\"] - output was not readable after completion\n");
+	(void)bu_process_wait_n(&p, 0);
+	return PROCESS_FAIL;
+    }
+
+    if (bu_process_wait_n(&p, 0) != 0) {
+	fprintf(stderr, "bu_process_test[\"poll_output\"] - wait failed\n");
+	return PROCESS_FAIL;
+    }
+
+    return PROCESS_PASS;
+}
+
+
+static int
+test_process_terminate(const char *cmd)
+{
+    struct bu_process *p = NULL;
+    const char *run_av[3] = {cmd, "timeout", NULL};
+
+    bu_process_create(&p, run_av, BU_PROCESS_DEFAULT);
+    if (!bu_process_terminate(p)) {
+	fprintf(stderr, "bu_process_test[\"process_terminate\"] - termination failed\n");
+	(void)bu_process_wait_n(&p, 0);
+	return PROCESS_FAIL;
+    }
+
+    if (bu_process_wait_n(&p, 0) != ERROR_PROCESS_ABORTED) {
+	fprintf(stderr, "bu_process_test[\"process_terminate\"] - wait should have reported abort code\n");
+	return PROCESS_FAIL;
+    }
+
+    const char *completed_av[3] = {cmd, "basic", NULL};
+    bu_process_create(&p, completed_av, BU_PROCESS_DEFAULT);
+    if (process_poll_until_complete(p, NULL) != 1 ||
+	    !bu_process_terminate(p)) {
+	fprintf(stderr, "bu_process_test[\"process_terminate\"] - completed process was not handled\n");
+	if (p)
+	    (void)bu_process_wait_n(&p, 0);
+	return PROCESS_FAIL;
+    }
+    if (bu_process_wait_n(&p, 0) != 0) {
+	fprintf(stderr, "bu_process_test[\"process_terminate\"] - completed process status changed\n");
+	return PROCESS_FAIL;
+    }
+
+    return PROCESS_PASS;
+}
+
+
 #if BU_PROCESS_ASYNC
 /* tests:   reads with lots of output; equal stdout and stderr distribution - ASYNC READS
  *  bu_process_create() ['async' option]
@@ -775,6 +914,10 @@ ProcessTest tests[] = {
     {"abort", test_abort},
     {"args", test_all_args},
     {"alive", test_alive},
+    {"poll_status", test_poll_status},
+    {"wait_status", test_wait_status},
+    {"poll_output", test_poll_preserves_output},
+    {"process_terminate", test_process_terminate},
 #if BU_PROCESS_ASYNC
     {"async_bal", test_async_balanced},
     {"async_unbal", test_async_unbalanced},

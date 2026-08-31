@@ -93,6 +93,8 @@ struct bu_process {
     int fd_in;
     int fd_out;
     int fd_err;
+    int exited;
+    int exit_status;
 #if defined(_WIN32) && !defined(__CYGWIN__)
     HANDLE hProcess;
     DWORD pid;
@@ -340,6 +342,8 @@ bu_process_create(struct bu_process **pinfo, const char **argv, int opts)
     (*pinfo)->fd_in = -1;
     (*pinfo)->fd_out = -1;
     (*pinfo)->fd_err = -1;
+    (*pinfo)->exited = 0;
+    (*pinfo)->exit_status = -1;
 
     /* Make a copy of the final execvp args */
     (*pinfo)->cmd = bu_strdup(cmd);
@@ -808,7 +812,9 @@ bu_process_wait_n(struct bu_process **pinfo, int wtime)
 #ifndef _WIN32
     int retcode = 0;
 
-    if (kill((pid_t)(*pinfo)->pid, 0) == 0) {      // make sure the process exists
+    if (process->exited) {
+	rc = process->exit_status;
+    } else if (kill((pid_t)(*pinfo)->pid, 0) == 0) {      // make sure the process exists
 	/* wait for process to end, or timeout */
 	int64_t start_time = bu_gettime();
 	int rpid = waitpid((pid_t)-(*pinfo)->pid, &retcode, WNOHANG);
@@ -828,7 +834,7 @@ bu_process_wait_n(struct bu_process **pinfo, int wtime)
 		rc = 0;	// process concluded, albeit forcibly
 	} else {
 		if (WIFEXITED(retcode))		    // normal exit
-		rc = 0;
+		rc = WEXITSTATUS(retcode);
 		else if (WIFSIGNALED(retcode))	    // terminated
 		rc = ERROR_PROCESS_ABORTED;
 		else
@@ -841,38 +847,42 @@ bu_process_wait_n(struct bu_process **pinfo, int wtime)
 #else
     DWORD retcode = 0;
 
-    /* wait for the forked process */
-    if (wtime > 0) {
-	WaitForSingleObject((*pinfo)->hProcess, wtime);
+    if (process->exited) {
+	rc = process->exit_status;
     } else {
-	WaitForSingleObject((*pinfo)->hProcess, INFINITE);
-    }
+	/* wait for the forked process */
+	if (wtime > 0) {
+	    WaitForSingleObject((*pinfo)->hProcess, wtime);
+	} else {
+	    WaitForSingleObject((*pinfo)->hProcess, INFINITE);
+	}
 
-    if (GetExitCodeProcess((*pinfo)->hProcess, &retcode)) {    // make sure function succeeds
-	if (GetLastError() == ERROR_PROCESS_ABORTED || retcode == BU_MSVC_ABORT_EXIT) {
-	    // collapse abort into our abort code
-	    rc = ERROR_PROCESS_ABORTED;
-	} else if (retcode == STILL_ACTIVE) {
-	    /* timed out */
-	    /* Preserve process-tree cleanup, then wait for the original child to
-	     * signal before releasing its handle.  Otherwise descendants may
-	     * survive with inherited stdout/stderr handles and keep a test runner
-	     * waiting for EOF. */
-	    (void)bu_pid_terminate((*pinfo)->pid);
-	    if (WaitForSingleObject((*pinfo)->hProcess, 5000) == WAIT_OBJECT_0) {
-		rc = 0;
-	    } else if (TerminateProcess((*pinfo)->hProcess,
-		    BU_MSVC_ABORT_EXIT)) {
-		(void)WaitForSingleObject((*pinfo)->hProcess, INFINITE);
-		rc = 0;
+	if (GetExitCodeProcess((*pinfo)->hProcess, &retcode)) {    // make sure function succeeds
+	    if (retcode == BU_MSVC_ABORT_EXIT) {
+		// collapse abort into our abort code
+		rc = ERROR_PROCESS_ABORTED;
+	    } else if (retcode == STILL_ACTIVE) {
+		/* timed out */
+		/* Preserve process-tree cleanup, then wait for the original child to
+		 * signal before releasing its handle.  Otherwise descendants may
+		 * survive with inherited stdout/stderr handles and keep a test runner
+		 * waiting for EOF. */
+		(void)bu_pid_terminate((*pinfo)->pid);
+		if (WaitForSingleObject((*pinfo)->hProcess, 5000) == WAIT_OBJECT_0) {
+		    rc = 0;
+		} else if (TerminateProcess((*pinfo)->hProcess,
+			BU_MSVC_ABORT_EXIT)) {
+		    (void)WaitForSingleObject((*pinfo)->hProcess, INFINITE);
+		    rc = 0;
+		} else {
+		    rc = -1;
+		}
 	    } else {
-		rc = -1;
+		rc = (int)retcode;
 	    }
 	} else {
-	    rc = (int)retcode;
+	    rc = -1;
 	}
-    } else {
-	rc = -1;
     }
 
     CloseHandle((*pinfo)->hProcess);
@@ -930,19 +940,76 @@ bu_process_pending(int fd)
 }
 
 int
-bu_process_alive(struct bu_process* pinfo)
+bu_process_alive(struct bu_process *pinfo)
+{
+    return bu_process_poll(pinfo, NULL) == 0;
+}
+
+int
+bu_process_poll(struct bu_process *pinfo, int *exit_status)
+{
+    if (!pinfo)
+	return -1;
+
+    if (pinfo->exited) {
+	if (exit_status)
+	    *exit_status = pinfo->exit_status;
+	return 1;
+    }
+
+#if defined(_WIN32)
+    DWORD status = 0;
+    if (!GetExitCodeProcess(pinfo->hProcess, &status))
+	return -1;
+    if (status == STILL_ACTIVE)
+	return 0;
+
+    pinfo->exit_status = (status == BU_MSVC_ABORT_EXIT) ?
+	ERROR_PROCESS_ABORTED : (int)status;
+#else
+    int status = 0;
+    int wait_result = 0;
+    do {
+	wait_result = waitpid((pid_t)pinfo->pid, &status, WNOHANG);
+    } while (wait_result < 0 && errno == EINTR);
+    if (wait_result == 0)
+	return 0;
+    if (wait_result < 0)
+	return -1;
+
+    if (WIFEXITED(status))
+	pinfo->exit_status = WEXITSTATUS(status);
+    else if (WIFSIGNALED(status))
+	pinfo->exit_status = ERROR_PROCESS_ABORTED;
+    else
+	return -1;
+#endif
+
+    pinfo->exited = 1;
+    if (exit_status)
+	*exit_status = pinfo->exit_status;
+    return 1;
+}
+
+int
+bu_process_terminate(struct bu_process *pinfo)
 {
     if (!pinfo)
 	return 0;
 
-#if defined(_WIN32)
-    const unsigned long win_wait_timeout = 0x00000102L;
+    int poll_result = bu_process_poll(pinfo, NULL);
+    /* The process group may outlive its leader, so always attempt group/tree
+     * termination even when the direct child has already completed. */
+    if (bu_pid_terminate((int)pinfo->pid))
+	return 1;
 
-    // if process is alive, timeout should immediately come back
-    return WaitForSingleObject(pinfo->hProcess, 0) == win_wait_timeout;
-#else
-    return bu_pid_alive(pinfo->pid);
-#endif
+    if (poll_result == 1)
+	return 1;
+    if (poll_result < 0)
+	return 0;
+
+    /* The child may have exited between polling and termination. */
+    return bu_process_poll(pinfo, NULL) == 1;
 }
 
 int

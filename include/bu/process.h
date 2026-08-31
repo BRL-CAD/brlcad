@@ -152,7 +152,40 @@ BU_EXPORT extern int bu_process_wait_n(struct bu_process **pinfo, int wtime);
  * @return
  * 1 if alive, else 0
  */
-BU_EXPORT extern int bu_process_alive(struct bu_process* pinfo);
+BU_EXPORT extern int bu_process_alive(struct bu_process *pinfo);
+
+
+/**
+ * @brief Poll a subprocess without blocking or releasing its resources.
+ *
+ * Unlike bu_process_alive(), this routine also reports and preserves the
+ * subprocess exit status for a later bu_process_wait_n() call.  Completion
+ * does not imply that all subprocess output has been read; callers may continue
+ * reading the process channels before releasing the process with
+ * bu_process_wait_n().
+ *
+ * @param[in] pinfo - bu_process structure of interest
+ * @param[out] exit_status - subprocess exit status when complete; may be NULL
+ *
+ * @return
+ * 1 if the subprocess has completed; 0 if it is still running; -1 on error
+ */
+BU_EXPORT extern int bu_process_poll(struct bu_process *pinfo, int *exit_status);
+
+
+/**
+ * @brief Forcefully terminate a subprocess and its descendants.
+ *
+ * The subprocess remains available to bu_process_poll() and
+ * bu_process_wait_n() so callers can drain output and reap resources.
+ *
+ * @param[in] pinfo - bu_process structure of interest
+ *
+ * @return
+ * non-zero if the process was already complete or termination was requested
+ * successfully; zero on error
+ */
+BU_EXPORT extern int bu_process_terminate(struct bu_process *pinfo);
 
 
 /**
