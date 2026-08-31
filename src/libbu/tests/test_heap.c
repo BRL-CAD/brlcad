@@ -43,8 +43,36 @@
 #include "bu.h"
 
 
-/* this should match what is in heap.c */
-#define HEAP_BINS 512
+/* This should match what is in heap.c. */
+#define HEAP_BINS 256
+
+static int
+test_reuse(void)
+{
+    const size_t allocation_size = 64;
+    void *first = bu_heap_get(allocation_size);
+
+    bu_heap_put(first, allocation_size);
+    void *second = bu_heap_get(allocation_size);
+    if (first != second) {
+	bu_log("bu_heap_get did not reuse the most recently returned block\n");
+	return 1;
+    }
+
+    bu_heap_put(second, allocation_size);
+    return 0;
+}
+
+static int
+test_large_allocation(void)
+{
+    const size_t allocation_size = HEAP_BINS + 1;
+    void *allocation = bu_heap_get(allocation_size);
+
+    memset(allocation, 0xa5, allocation_size);
+    bu_heap_put(allocation, allocation_size);
+    return 0;
+}
 
 #define CNTCALLS
 
@@ -74,6 +102,11 @@ main(int ac, char *av[])
     }
 
     srand(time(0));
+
+    if (test_reuse())
+	return 1;
+    if (test_large_allocation())
+	return 1;
 
     for (i=0; i<1024*1024*10; i++) {
 	size_t sz = ((rand() / (double)(RAND_MAX-1)) * (double)HEAP_BINS) + 1;
