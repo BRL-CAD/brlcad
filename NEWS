@@ -42,6 +42,7 @@ changes made.  See document footer for additional details.
 * improved raytracing performance of CSG-heavy regions - Sean Morrison
 * fixed OBJ conversion bug importing unnamed groups - Sean Morrison
 * new doc guide, a visual overview of BRL-CAD objects - Sean Morrison
+* improved triangle quality produced by bot remesh - Cliff Yapp
 * fixed submodel paths relative to parent databases - Sean Morrison
 * improved performance making huge combinations - Sean Morrison
 * added gcv import conversion support for vrml/wrl 1.0 - Sean Morrison
