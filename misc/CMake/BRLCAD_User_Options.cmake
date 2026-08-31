@@ -378,7 +378,8 @@ mark_as_advanced(BRLCAD_OPTIMIZED)
 
 # Link-time optimization is part of optimized builds, but keep its selection
 # independent so release builds can trade link time against runtime
-# optimization.  AUTO uses ThinLTO with Clang and parallel full LTO with GCC.
+# optimization.  AUTO prefers ThinLTO with Clang, falls back to Full LTO, and
+# uses parallel full LTO with GCC.
 brlcad_option(BRLCAD_LTO_MODE AUTO
   TYPE STRING
 )
