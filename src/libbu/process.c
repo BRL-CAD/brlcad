@@ -46,6 +46,7 @@
 #include "bu/list.h"
 #include "bu/malloc.h"
 #include "bu/process.h"
+#include "bu/snooze.h"
 #include "bu/str.h"
 #include "bu/datetime.h"
 #include "bu/vls.h"
@@ -103,6 +104,43 @@ struct bu_process {
 #endif
     int aborted;
 };
+
+
+enum {
+    PROCESS_EXEC_ERROR = 16,
+    PROCESS_WAIT_POLL_USEC = 1000,
+    PROCESS_TERMINATE_GRACE_MS = 5000
+};
+
+
+static void
+process_record_free(struct bu_process *process)
+{
+    if (!process)
+	return;
+
+    bu_free((void *)process->cmd, "pinfo cmd copy");
+    if (process->argv) {
+	for (int i = 0; i < process->argc; i++)
+	    bu_free((void *)process->argv[i], "pinfo argv member");
+	bu_free((void *)process->argv, "pinfo argv array");
+    }
+    BU_PUT(process, struct bu_process);
+}
+
+
+#ifndef _WIN32
+static int
+process_wait_status(int status)
+{
+    if (WIFEXITED(status))
+	return WEXITSTATUS(status);
+    if (WIFSIGNALED(status))
+	return ERROR_PROCESS_ABORTED;
+
+    return -1;
+}
+#endif
 
 
 static void
@@ -324,7 +362,10 @@ bu_process_read(char *buff, int *count, struct bu_process *pinfo, bu_process_io_
 void
 bu_process_create(struct bu_process **pinfo, const char **argv, int opts)
 {
-    if (!pinfo || !argv)
+    if (!pinfo)
+	return;
+    *pinfo = NULL;
+    if (!argv || !argv[0])
 	return;
 
     /* get argc count */
@@ -358,53 +399,52 @@ bu_process_create(struct bu_process **pinfo, const char **argv, int opts)
 #ifdef HAVE_UNISTD_H
     int pret;
     int pid;
-    int pipe_in[2];
-    int pipe_out[2];
-    int pipe_err[2];
+    int pipe_in[2] = {-1, -1};
+    int pipe_out[2] = {-1, -1};
+    int pipe_err[2] = {-1, -1};
 
     pret = pipe(pipe_in);
     if (pret < 0) {
 	perror("pipe");
+	goto process_create_fail;
     }
 
     if (!merged_output) {
 	pret = pipe(pipe_out);
 	if (pret < 0) {
 	    perror("pipe");
+	    goto process_create_fail;
 	}
     }
 
     pret = pipe(pipe_err);
     if (pret < 0) {
 	perror("pipe");
+	goto process_create_fail;
     }
 
     /* fork + exec */
-    if ((pid = fork()) == 0) {
-	int d1, d2, d3;
+    pid = fork();
+    if (pid < 0) {
+	perror("fork");
+	goto process_create_fail;
+    }
+    if (pid == 0) {
 	/* make this a process group leader */
 	setpgid(0, 0);
 
 	/* Redirect stdin and stderr */
-	(void)close(BU_PROCESS_STDIN);
-	d1 = dup(pipe_in[0]);
-	if (d1 < 0) {
-	    perror("dup");
-	}
-	(void)close(BU_PROCESS_STDOUT);
+	if (dup2(pipe_in[0], BU_PROCESS_STDIN) < 0)
+	    _exit(PROCESS_EXEC_ERROR);
 	if (merged_output) {
-	    d2 = dup(pipe_err[1]);
+	    if (dup2(pipe_err[1], BU_PROCESS_STDOUT) < 0)
+		_exit(PROCESS_EXEC_ERROR);
 	} else {
-	    d2 = dup(pipe_out[1]);
+	    if (dup2(pipe_out[1], BU_PROCESS_STDOUT) < 0)
+		_exit(PROCESS_EXEC_ERROR);
 	}
-	if (d2 < 0) {
-	    perror("dup");
-	}
-	(void)close(BU_PROCESS_STDERR);
-	d3 = dup(pipe_err[1]);
-	if (d3 < 0) {
-	    perror("dup");
-	}
+	if (dup2(pipe_err[1], BU_PROCESS_STDERR) < 0)
+	    _exit(PROCESS_EXEC_ERROR);
 
 	/* close pipes */
 	(void)close(pipe_in[0]);
@@ -426,13 +466,7 @@ bu_process_create(struct bu_process **pinfo, const char **argv, int opts)
 	(void)execvp(cmd, (char * const*)(*pinfo)->argv);
 	perror(cmd);
 
-	// close unnecessary fd's
-	fflush(NULL);
-	close(d1);
-	close(d2);
-	close(d3);
-
-	_exit(16);
+	_exit(PROCESS_EXEC_ERROR);
     }
 
     /* Set the child's process group from both sides of fork so it is ready
@@ -453,12 +487,25 @@ bu_process_create(struct bu_process **pinfo, const char **argv, int opts)
     }
     (*pinfo)->fd_err = pipe_err[0];
     (*pinfo)->pid = pid;
+    return;
+
+process_create_fail:
+    for (size_t i = 0; i < 2; i++) {
+	if (pipe_in[i] >= 0)
+	    (void)close(pipe_in[i]);
+	if (pipe_out[i] >= 0)
+	    (void)close(pipe_out[i]);
+	if (pipe_err[i] >= 0)
+	    (void)close(pipe_err[i]);
+    }
+    process_record_free(*pinfo);
+    *pinfo = NULL;
 
 #else
     struct bu_vls cp_cmd = BU_VLS_INIT_ZERO;
-    HANDLE pipe_in[2], pipe_inDup;
-    HANDLE pipe_out[2], pipe_outDup;
-    HANDLE pipe_err[2], pipe_errDup;
+    HANDLE pipe_in[2] = {NULL, NULL}, pipe_inDup = NULL;
+    HANDLE pipe_out[2] = {NULL, NULL}, pipe_outDup = NULL;
+    HANDLE pipe_err[2] = {NULL, NULL}, pipe_errDup = NULL;
     STARTUPINFO si = {0};
     PROCESS_INFORMATION pi = {0};
     SECURITY_ATTRIBUTES sa = {0};
@@ -469,35 +516,44 @@ bu_process_create(struct bu_process **pinfo, const char **argv, int opts)
 
     if (!merged_output) {
 	/* Create a pipe for the child process's STDOUT. */
-	CreatePipe(&pipe_out[0], &pipe_out[1], &sa, 0);
+	if (!CreatePipe(&pipe_out[0], &pipe_out[1], &sa, 0))
+	    goto process_create_fail;
 
 	/* Create noninheritable read handle and close the inheritable read handle. */
-	DuplicateHandle(GetCurrentProcess(), pipe_out[0],
+	if (!DuplicateHandle(GetCurrentProcess(), pipe_out[0],
 			GetCurrentProcess(),  &pipe_outDup ,
 			0,  FALSE,
-			DUPLICATE_SAME_ACCESS);
+			DUPLICATE_SAME_ACCESS))
+	    goto process_create_fail;
 	CloseHandle(pipe_out[0]);
+	pipe_out[0] = NULL;
     }
 
     /* Create a pipe for the child process's STDERR. */
-    CreatePipe(&pipe_err[0], &pipe_err[1], &sa, 0);
+    if (!CreatePipe(&pipe_err[0], &pipe_err[1], &sa, 0))
+	goto process_create_fail;
 
     /* Create noninheritable read handle and close the inheritable read handle. */
-    DuplicateHandle(GetCurrentProcess(), pipe_err[0],
+    if (!DuplicateHandle(GetCurrentProcess(), pipe_err[0],
 		    GetCurrentProcess(),  &pipe_errDup ,
 		    0,  FALSE,
-		    DUPLICATE_SAME_ACCESS);
+		    DUPLICATE_SAME_ACCESS))
+	goto process_create_fail;
     CloseHandle(pipe_err[0]);
+    pipe_err[0] = NULL;
 
     /* Create a pipe for the child process's STDIN. */
-    CreatePipe(&pipe_in[0], &pipe_in[1], &sa, 0);
+    if (!CreatePipe(&pipe_in[0], &pipe_in[1], &sa, 0))
+	goto process_create_fail;
 
     /* Duplicate the write handle to the pipe so it is not inherited. */
-    DuplicateHandle(GetCurrentProcess(), pipe_in[1],
+    if (!DuplicateHandle(GetCurrentProcess(), pipe_in[1],
 		    GetCurrentProcess(), &pipe_inDup,
 		    0, FALSE,                  /* not inherited */
-		    DUPLICATE_SAME_ACCESS);
+		    DUPLICATE_SAME_ACCESS))
+	goto process_create_fail;
     CloseHandle(pipe_in[1]);
+    pipe_in[1] = NULL;
 
     si.cb = sizeof(STARTUPINFO);
     si.lpReserved = NULL;
@@ -531,18 +587,20 @@ bu_process_create(struct bu_process **pinfo, const char **argv, int opts)
 	}
     }
 
-    int create_err = 0;
     if (!CreateProcess(NULL, bu_vls_addr(&cp_cmd), NULL, NULL, TRUE,
 		       DETACHED_PROCESS, NULL, NULL,
-		       &si, &pi)) {
-	create_err = GetLastError();
-    }
+		       &si, &pi))
+	goto process_create_fail;
     bu_vls_free(&cp_cmd);
 
     CloseHandle(pipe_in[0]);
-    if (!merged_output)
+    pipe_in[0] = NULL;
+    if (!merged_output) {
 	CloseHandle(pipe_out[1]);
+	pipe_out[1] = NULL;
+    }
     CloseHandle(pipe_err[1]);
+    pipe_err[1] = NULL;
 
     /* Save necessary information for parental process manipulation.
      * Switching from HANDLE to file descriptor so the rest of the code can be
@@ -550,17 +608,50 @@ bu_process_create(struct bu_process **pinfo, const char **argv, int opts)
      * https://docs.microsoft.com/en-us/cpp/c-runtime-library/reference/open-osfhandle
      */
     (*pinfo)->fd_in = _open_osfhandle((intptr_t)pipe_inDup, 0);
+    if ((*pinfo)->fd_in < 0)
+	goto process_create_fail;
+    pipe_inDup = NULL;
     int err_fd = _open_osfhandle((intptr_t)pipe_errDup, 0);
+    if (err_fd < 0)
+	goto process_create_fail;
+    pipe_errDup = NULL;
+    (*pinfo)->fd_err = err_fd;
     if (merged_output) {
 	(*pinfo)->fd_out = err_fd;
-	(*pinfo)->fd_err = err_fd;
     } else {
 	(*pinfo)->fd_out = _open_osfhandle((intptr_t)pipe_outDup, 0);
-	(*pinfo)->fd_err = err_fd;
+	if ((*pinfo)->fd_out < 0)
+	    goto process_create_fail;
+	pipe_outDup = NULL;
     }
     (*pinfo)->hProcess = pi.hProcess;
     (*pinfo)->pid = pi.dwProcessId;
     (*pinfo)->aborted = 0;
+    CloseHandle(pi.hThread);
+    return;
+
+process_create_fail:
+    bu_vls_free(&cp_cmd);
+    if (pi.hProcess) {
+	(void)TerminateProcess(pi.hProcess, BU_MSVC_ABORT_EXIT);
+	CloseHandle(pi.hProcess);
+    }
+    if (pi.hThread)
+	CloseHandle(pi.hThread);
+    for (size_t i = 0; i < 2; i++) {
+	if (pipe_in[i]) CloseHandle(pipe_in[i]);
+	if (pipe_out[i]) CloseHandle(pipe_out[i]);
+	if (pipe_err[i]) CloseHandle(pipe_err[i]);
+    }
+    if (pipe_inDup) CloseHandle(pipe_inDup);
+    if (pipe_outDup) CloseHandle(pipe_outDup);
+    if (pipe_errDup) CloseHandle(pipe_errDup);
+    if ((*pinfo)->fd_in >= 0) (void)close((*pinfo)->fd_in);
+    if ((*pinfo)->fd_out >= 0) (void)close((*pinfo)->fd_out);
+    if ((*pinfo)->fd_err >= 0 && (*pinfo)->fd_err != (*pinfo)->fd_out)
+	(void)close((*pinfo)->fd_err);
+    process_record_free(*pinfo);
+    *pinfo = NULL;
 
 #endif
 }
@@ -810,39 +901,46 @@ bu_process_wait_n(struct bu_process **pinfo, int wtime)
     }
 
 #ifndef _WIN32
-    int retcode = 0;
-
     if (process->exited) {
 	rc = process->exit_status;
-    } else if (kill((pid_t)(*pinfo)->pid, 0) == 0) {      // make sure the process exists
-	/* wait for process to end, or timeout */
+    } else {
+	int wait_status = 0;
 	int64_t start_time = bu_gettime();
-	int rpid = waitpid((pid_t)-(*pinfo)->pid, &retcode, WNOHANG);
-	while (rpid != (*pinfo)->pid) {
-		if (wtime && ((bu_gettime() - start_time) > wtime))	// poll wait() up to wtime if requested
+	int64_t timeout_usec = (wtime > 0) ? (int64_t)wtime * 1000 : 0;
+	int wait_result = 0;
+	int timed_out = 0;
+
+	while (1) {
+	    do {
+		wait_result = waitpid((pid_t)process->pid, &wait_status, WNOHANG);
+	    } while (wait_result < 0 && errno == EINTR);
+
+	    if (wait_result == process->pid) {
+		rc = process_wait_status(wait_status);
 		break;
-		rpid = waitpid((pid_t)-(*pinfo)->pid, &retcode, WNOHANG);
+	    }
+	    if (wait_result < 0) {
+		rc = -1;
+		break;
+	    }
+	    if (timeout_usec && bu_gettime() - start_time >= timeout_usec) {
+		timed_out = 1;
+		break;
+	    }
+
+	    (void)bu_snooze(PROCESS_WAIT_POLL_USEC);
 	}
 
-	/* check wait() status and filter retcode */
-	if (rpid == -1 || rpid == 0) {
-		/* timed-out */
-		bu_pid_terminate((*pinfo)->pid);
-		/* Reap the direct child before releasing its process record. */
-		while (waitpid((pid_t)(*pinfo)->pid, &retcode, 0) == -1 && errno == EINTR)
-		    ;
-		rc = 0;	// process concluded, albeit forcibly
-	} else {
-		if (WIFEXITED(retcode))		    // normal exit
-		rc = WEXITSTATUS(retcode);
-		else if (WIFSIGNALED(retcode))	    // terminated
-		rc = ERROR_PROCESS_ABORTED;
-		else
-		rc = retcode;
+	if (timed_out) {
+	    int terminated = bu_pid_terminate(process->pid);
+	    int wait_options = terminated ? 0 : WNOHANG;
+
+	    do {
+		wait_result = waitpid((pid_t)process->pid, &wait_status, wait_options);
+	    } while (wait_result < 0 && errno == EINTR);
+
+	    rc = (wait_result == process->pid) ? process_wait_status(wait_status) : -1;
 	}
-    } else {
-	/* process doesn't exist or has already been waited on */
-	rc = 0;
     }
 #else
     DWORD retcode = 0;
@@ -850,53 +948,33 @@ bu_process_wait_n(struct bu_process **pinfo, int wtime)
     if (process->exited) {
 	rc = process->exit_status;
     } else {
-	/* wait for the forked process */
-	if (wtime > 0) {
-	    WaitForSingleObject((*pinfo)->hProcess, wtime);
-	} else {
-	    WaitForSingleObject((*pinfo)->hProcess, INFINITE);
-	}
+	DWORD timeout = (wtime > 0) ? (DWORD)wtime : INFINITE;
+	DWORD wait_result = WaitForSingleObject(process->hProcess, timeout);
 
-	if (GetExitCodeProcess((*pinfo)->hProcess, &retcode)) {    // make sure function succeeds
+	if (wait_result == WAIT_OBJECT_0 && GetExitCodeProcess(process->hProcess, &retcode)) {
 	    if (retcode == BU_MSVC_ABORT_EXIT) {
-		// collapse abort into our abort code
 		rc = ERROR_PROCESS_ABORTED;
-	    } else if (retcode == STILL_ACTIVE) {
-		/* timed out */
-		/* Preserve process-tree cleanup, then wait for the original child to
-		 * signal before releasing its handle.  Otherwise descendants may
-		 * survive with inherited stdout/stderr handles and keep a test runner
-		 * waiting for EOF. */
-		(void)bu_pid_terminate((*pinfo)->pid);
-		if (WaitForSingleObject((*pinfo)->hProcess, 5000) == WAIT_OBJECT_0) {
-		    rc = 0;
-		} else if (TerminateProcess((*pinfo)->hProcess,
-			BU_MSVC_ABORT_EXIT)) {
-		    (void)WaitForSingleObject((*pinfo)->hProcess, INFINITE);
-		    rc = 0;
-		} else {
-		    rc = -1;
-		}
 	    } else {
 		rc = (int)retcode;
 	    }
+	} else if (wait_result == WAIT_TIMEOUT) {
+	    /* Descendants may hold inherited pipes open, so stop the process tree
+	     * before falling back to terminating only the direct child. */
+	    (void)bu_pid_terminate(process->pid);
+	    wait_result = WaitForSingleObject(process->hProcess, PROCESS_TERMINATE_GRACE_MS);
+	    if (wait_result != WAIT_OBJECT_0 &&
+		TerminateProcess(process->hProcess, BU_MSVC_ABORT_EXIT)) {
+		wait_result = WaitForSingleObject(process->hProcess, INFINITE);
+	    }
+	    rc = (wait_result == WAIT_OBJECT_0) ? ERROR_PROCESS_ABORTED : -1;
 	} else {
 	    rc = -1;
 	}
     }
 
-    CloseHandle((*pinfo)->hProcess);
+    CloseHandle(process->hProcess);
 #endif
-    /* Free copy of exec args */
-    bu_free((void *)(*pinfo)->cmd, "pinfo cmd copy");
-
-    if ((*pinfo)->argv) {
-	for (int i = 0; i < (*pinfo)->argc; i++) {
-	    bu_free((void *)(*pinfo)->argv[i], "(*pinfo) argv member");
-	}
-	bu_free((void *)(*pinfo)->argv, "pinfo argv array");
-    }
-    BU_PUT(*pinfo, struct bu_process);
+    process_record_free(*pinfo);
     *pinfo = NULL;
 
     return rc;
@@ -977,11 +1055,8 @@ bu_process_poll(struct bu_process *pinfo, int *exit_status)
     if (wait_result < 0)
 	return -1;
 
-    if (WIFEXITED(status))
-	pinfo->exit_status = WEXITSTATUS(status);
-    else if (WIFSIGNALED(status))
-	pinfo->exit_status = ERROR_PROCESS_ABORTED;
-    else
+    pinfo->exit_status = process_wait_status(status);
+    if (pinfo->exit_status < 0)
 	return -1;
 #endif
 
@@ -1015,7 +1090,7 @@ bu_process_terminate(struct bu_process *pinfo)
 int
 bu_pid_alive(int pid)
 {
-    if (!pid)
+    if (pid <= 0)
 	return 0;
 
 #if defined(_WIN32)
@@ -1042,11 +1117,16 @@ int
 bu_pid_terminate(int process)
 {
     int successful = 0;
+    if (process <= 0)
+	return successful;
+
 #ifdef HAVE_KILL
     /* kill process and all children (negative pid, sysv extension) */
     successful = kill((pid_t)-process, SIGKILL);
-    /* kill() returns 0 for success */
-    successful = !successful;
+    if (successful != 0)
+	successful = kill((pid_t)process, SIGKILL);
+    /* kill() returns zero for success. */
+    successful = (successful == 0);
 #else /* !HAVE_KILL */
     HANDLE hProcessSnap;
     HANDLE hProcess;

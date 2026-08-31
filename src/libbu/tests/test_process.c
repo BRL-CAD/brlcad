@@ -379,8 +379,8 @@ test_create_timeout(const char* cmd)
     int child_pid = bu_process_pid(p);
 
     int64_t start_time = bu_gettime();
-    if (bu_process_wait_n(&p, 1)) {
-	fprintf(stderr, "bu_process_test[\"create_timeout\"] - wait failed\n");
+    if (bu_process_wait_n(&p, 25) != ERROR_PROCESS_ABORTED) {
+	fprintf(stderr, "bu_process_test[\"create_timeout\"] - timeout was not reported\n");
 	return PROCESS_FAIL;
     }
 
@@ -477,7 +477,7 @@ test_streams(const char* cmd)
 
     // give up to 5 seconds for process_pending to get the echo
     int64_t start = bu_gettime();
-    while (!bu_process_pending(fd_out) && !bu_process_pending(fd_out)) {
+    while (!bu_process_pending(fd_out) && !bu_process_pending(fd_err)) {
 	if ((bu_gettime() - start) > BU_SEC2USEC(5)) {
 	    fprintf(stderr, "bu_process_test[\"streams\"] - process_pending check failed\n");
 	    return PROCESS_FAIL;

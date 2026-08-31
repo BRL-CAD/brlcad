@@ -90,7 +90,7 @@ struct bu_process_func_info {
 /**
  * @brief Wrapper for creating a sub-process. Allocates bu_process and starts process
  *
- * @param[out] pinfo - bu_process struct to be created
+ * @param[out] pinfo - newly allocated process handle, or NULL if setup fails
  * @param[in] argv - array of command line arguments to executed. Last element MUST be NULL
  * @param[in] process_creation_opts - bit field for bu_process_opts
  *
