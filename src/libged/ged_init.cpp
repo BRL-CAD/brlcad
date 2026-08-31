@@ -247,6 +247,18 @@ ged_cmd_same(const char *cmd1, const char *cmd2)
     return (c1 == c2) ? 1 : 0;
 }
 
+
+extern "C" int
+ged_cmd_valid(const char *cmd, const char *func)
+{
+    if (!cmd || !ged_cmd_exists(cmd)) return 1;
+    if (!func) return 0;
+    if (!ged_cmd_exists(func)) return 1;
+
+    return ged_cmd_same(cmd, func) ? 0 : 2;
+}
+
+
 /* Edit distance lookup retained for help suggestions */
 extern "C" int
 ged_cmd_lookup(const char **ncmd, const char *cmd)
