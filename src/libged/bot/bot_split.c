@@ -1,4 +1,4 @@
-/*                         B O T _ S P L I T . C
+/*                       B O T _ S P L I T . C
  * BRL-CAD
  *
  * Copyright (c) 2008-2026 United States Government as represented by
@@ -10,28 +10,165 @@
  *
  * This library is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this file; see the file named COPYING for more
- * information.
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 /** @file libged/bot_split.c
  *
- * The bot_split command.
- *
+ * Shared implementation for the bot split subcommand and the deprecated
+ * bot_split command.
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <ctype.h>
-#include <string.h>
 
+#include "bu/malloc.h"
 #include "bu/path.h"
-#include "rt/geom.h"	/* for rt_bot_split (in raytrace.h) */
+#include "rt/geom.h"
+#include "rt/primitives/bot.h"
 #include "../ged_private.h"
+
+
+static void
+free_generated_names(struct bu_vls *names, size_t count)
+{
+    if (!names)
+	return;
+    for (size_t i = 0; i < count; ++i)
+	bu_vls_free(&names[i]);
+    bu_free(names, "BOT split output names");
+}
+
+
+static void
+rollback_created_bots(struct ged *gedp, struct bu_vls *names, size_t count,
+	struct bu_vls *errors)
+{
+    for (size_t i = 0; i < count; ++i) {
+	struct directory *dp = db_lookup(gedp->dbip, bu_vls_cstr(&names[i]),
+	    LOOKUP_QUIET);
+	if (dp == RT_DIR_NULL)
+	    continue;
+	int delete_result = db_delete(gedp->dbip, dp);
+	int directory_result = db_dirdelete(gedp->dbip, dp);
+	if (delete_result != 0 || directory_result != 0)
+	    bu_vls_printf(errors, "Failed to roll back %s\n",
+		bu_vls_cstr(&names[i]));
+    }
+}
+
+
+int
+_ged_bot_split_object(struct ged *gedp, const char *object_name,
+	struct bu_vls *output_names, struct bu_vls *errors)
+{
+    struct directory *source_dp = db_lookup(gedp->dbip, object_name,
+	LOOKUP_QUIET);
+    if (source_dp == RT_DIR_NULL) {
+	bu_vls_printf(errors, "Cannot find %s\n", object_name);
+	return -1;
+    }
+
+    struct rt_db_internal source_internal;
+    if (rt_db_get_internal(&source_internal, source_dp, gedp->dbip,
+	    bn_mat_identity) < 0) {
+	bu_vls_printf(errors, "Cannot read %s\n", object_name);
+	return -1;
+    }
+    if (source_internal.idb_major_type != DB5_MAJORTYPE_BRLCAD ||
+	    source_internal.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
+	bu_vls_printf(errors, "%s is not a BOT solid\n", object_name);
+	rt_db_free_internal(&source_internal);
+	return -1;
+    }
+
+    struct rt_bot_internal *source_bot =
+	(struct rt_bot_internal *)source_internal.idb_ptr;
+    struct rt_bot_list *components = rt_bot_split(source_bot);
+    if (!components) {
+	bu_vls_printf(errors, "Failed to split %s\n", object_name);
+	rt_db_free_internal(&source_internal);
+	return -1;
+    }
+
+    size_t component_count = 0;
+    struct rt_bot_list *entry;
+    for (BU_LIST_FOR(entry, rt_bot_list, &components->l))
+	++component_count;
+    if (!component_count) {
+	rt_bot_list_free(components, 1);
+	rt_db_free_internal(&source_internal);
+	return 0;
+    }
+
+    struct bu_vls *names = (struct bu_vls *)bu_calloc(component_count,
+	sizeof(struct bu_vls), "BOT split output names");
+    size_t suffix = 0;
+    for (size_t i = 0; i < component_count; ++i) {
+	bu_vls_init(&names[i]);
+	do {
+	    bu_vls_sprintf(&names[i], "%s.%zu", object_name, suffix++);
+	} while (db_lookup(gedp->dbip, bu_vls_cstr(&names[i]),
+		LOOKUP_QUIET) != RT_DIR_NULL);
+    }
+
+    size_t written_count = 0;
+    size_t component = 0;
+    int failed = 0;
+    for (BU_LIST_FOR(entry, rt_bot_list, &components->l)) {
+	struct rt_db_internal output_internal;
+	RT_DB_INTERNAL_INIT(&output_internal);
+	output_internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	output_internal.idb_type = ID_BOT;
+	output_internal.idb_meth = &OBJ[ID_BOT];
+	output_internal.idb_ptr = (void *)entry->bot;
+	bu_avs_merge(&output_internal.idb_avs, &source_internal.idb_avs);
+
+	struct directory *output_dp = db_diradd(gedp->dbip,
+	    bu_vls_cstr(&names[component]), RT_DIR_PHONY_ADDR, 0,
+	    RT_DIR_SOLID, (void *)&output_internal.idb_type);
+	if (output_dp == RT_DIR_NULL) {
+	    bu_vls_printf(errors, "Cannot add %s to the database\n",
+		bu_vls_cstr(&names[component]));
+	    bu_avs_free(&output_internal.idb_avs);
+	    failed = 1;
+	    break;
+	}
+
+	int write_result = rt_db_put_internal(output_dp, gedp->dbip,
+	    &output_internal);
+	// rt_db_put_internal clears idb_ptr when it releases the BOT.  Retain any
+	// pointer it leaves behind so the common cleanup path owns it.
+	entry->bot = (struct rt_bot_internal *)output_internal.idb_ptr;
+	if (write_result < 0) {
+	    bu_vls_printf(errors, "Failed to write %s\n",
+		bu_vls_cstr(&names[component]));
+	    (void)db_delete(gedp->dbip, output_dp);
+	    (void)db_dirdelete(gedp->dbip, output_dp);
+	    failed = 1;
+	    break;
+	}
+
+	++written_count;
+	++component;
+    }
+
+    if (failed) {
+	rollback_created_bots(gedp, names, written_count, errors);
+	rt_bot_list_free(components, 1);
+	free_generated_names(names, component_count);
+	rt_db_free_internal(&source_internal);
+	return -1;
+    }
+
+    for (size_t i = 0; i < component_count; ++i)
+	bu_vls_printf(output_names, "%s%s", i ? " " : "",
+	    bu_vls_cstr(&names[i]));
+    rt_bot_list_free(components, 1);
+    free_generated_names(names, component_count);
+    rt_db_free_internal(&source_internal);
+    return (int)component_count;
+}
 
 
 int
@@ -39,117 +176,42 @@ ged_bot_split_core(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "bot [bot2 bot3 ...]";
 
-    int i;
-    struct bu_vls bot_result_list = BU_VLS_INIT_ZERO;
-    struct bu_vls error_str = BU_VLS_INIT_ZERO;
-    struct bu_vls new_bots = BU_VLS_INIT_ZERO;
-    struct directory *dp;
-    struct rt_bot_internal *bot;
-    struct rt_db_internal intern;
-
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
-
-    /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
-    for (i = 1; i < argc; ++i) {
-	struct rt_bot_list *headRblp = NULL;
-	/* Skip past any path elements */
-	char *obj = bu_path_basename(argv[i], NULL);
-
-	if (BU_STR_EQUAL(obj, ".")) {
-	    /* malformed path, lookup using exactly what was provided */
-	    bu_free(obj, "free bu_path_basename");
-	    obj = bu_strdup(argv[i]);
+    struct bu_vls results = BU_VLS_INIT_ZERO;
+    struct bu_vls errors = BU_VLS_INIT_ZERO;
+    int ret = BRLCAD_OK;
+    for (int i = 1; i < argc; ++i) {
+	char *object_name = bu_path_basename(argv[i], NULL);
+	if (BU_STR_EQUAL(object_name, ".")) {
+	    bu_free(object_name, "BOT split basename");
+	    object_name = bu_strdup(argv[i]);
 	}
 
-	if ((dp = db_lookup(gedp->dbip, obj, LOOKUP_QUIET)) == RT_DIR_NULL) {
-	    bu_vls_printf(&error_str, "%s: db_lookup(%s) error\n", argv[0], obj);
-	    bu_free(obj, "free obj");
-	    continue;
-	}
-
-	GED_DB_GET_INTERN(gedp, &intern, dp, bn_mat_identity, BRLCAD_ERROR);
-
-	if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
-	    rt_db_free_internal(&intern);
-	    bu_vls_printf(&error_str, "%s: %s is not a BOT solid!\n", argv[0], obj);
-	    bu_free(obj, "free obj");
-	    continue;
-	}
-
-	bot = (struct rt_bot_internal *)intern.idb_ptr;
-	headRblp = rt_bot_split(bot);
-
-	{
-	    int ac = 3;
-	    struct rt_db_internal bot_intern;
-	    struct rt_bot_list *rblp;
-
-	    /* Set make_name's count to 0 */
-	    const char *av[4] = {"make_name", "-s", "0", NULL};
-	    ged_exec_make_name(gedp, ac, av);
-
-	    ac = 2;
-	    av[2] = NULL;
-
-	    for (BU_LIST_FOR(rblp, rt_bot_list, &headRblp->l)) {
-		/* Get a unique name based on the original name */
-		av[1] = obj;
-		ged_exec_make_name(gedp, ac, av);
-
-		/* Create the bot */
-		RT_DB_INTERNAL_INIT(&bot_intern);
-		bot_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-		bot_intern.idb_type = ID_BOT;
-		bot_intern.idb_meth = &OBJ[ID_BOT];
-		bot_intern.idb_ptr = (void *)rblp->bot;
-
-		/* Save new bot name for later use */
-		bu_vls_printf(&new_bots, "%s ", bu_vls_addr(gedp->ged_result_str));
-
-		dp = db_diradd(gedp->dbip, bu_vls_addr(gedp->ged_result_str), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&bot_intern.idb_type);
-		if (dp == RT_DIR_NULL) {
-		    bu_vls_printf(&error_str, " failed to be added to the database.\n");
-		    rt_bot_list_free(headRblp, 0);
-		    rt_db_free_internal(&intern);
-		} else {
-		  if (rt_db_put_internal(dp, gedp->dbip, &bot_intern) < 0) {
-		    bu_vls_printf(&error_str, " failed to be added to the database.\n");
-		    rt_bot_list_free(headRblp, 0);
-		    rt_db_free_internal(&intern);
-		  }
-		}
-	    }
-
-	    /* Save the name of the original bot and the new bots as a sublist */
-	    bu_vls_printf(&bot_result_list, "{%s {%s}} ", obj, bu_vls_addr(&new_bots));
-
-	    bu_vls_trunc(gedp->ged_result_str, 0);
-	    bu_vls_trunc(&new_bots, 0);
-	}
-
-	rt_bot_list_free(headRblp, 0);
-	rt_db_free_internal(&intern);
-	bu_free(obj, "free obj");
+	struct bu_vls names = BU_VLS_INIT_ZERO;
+	int split_count = _ged_bot_split_object(gedp, object_name, &names,
+	    &errors);
+	if (split_count < 0)
+	    ret = BRLCAD_ERROR;
+	bu_vls_printf(&results, "{%s {%s}} ", object_name,
+	    bu_vls_cstr(&names));
+	bu_vls_free(&names);
+	bu_free(object_name, "BOT split basename");
     }
 
-    bu_vls_trunc(gedp->ged_result_str, 0);
-    bu_vls_printf(gedp->ged_result_str, "%s {%s}", bu_vls_addr(&bot_result_list), bu_vls_addr(&error_str));
-
-    bu_vls_free(&bot_result_list);
-    bu_vls_free(&new_bots);
-    bu_vls_free(&error_str);
-
-    return BRLCAD_OK;
+    bu_vls_printf(gedp->ged_result_str, "%s{%s}", bu_vls_cstr(&results),
+	bu_vls_cstr(&errors));
+    bu_vls_free(&results);
+    bu_vls_free(&errors);
+    return ret;
 }
 
 /*

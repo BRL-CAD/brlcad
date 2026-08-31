@@ -213,7 +213,10 @@ Specifies the iterations for smoothing.
 
 
 *split*::
-Splits the provided BoT into separate BoTs made of disjointed sections.
+Splits the provided BoT into separate BoTs for each edge-connected triangle
+component. The outputs preserve the source mode, orientation, flags, plate
+data, normals, texture UV data, and object attributes. Existing output-name
+suffixes are skipped.
 
 
 *stat*::
