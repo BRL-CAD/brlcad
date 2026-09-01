@@ -585,18 +585,6 @@ _dl_freeDisplayListItem (struct ged *gedp, struct display_list *gdlp)
 }
 
 
-static int
-scene_obj_is_annotation(const struct bv_scene_obj *sp)
-{
-    if (!sp || !sp->s_u_data)
-	return 0;
-
-    const struct ged_bv_data *bdata = (const struct ged_bv_data *)sp->s_u_data;
-    const struct directory *dp = DB_FULL_PATH_CUR_DIR(&bdata->s_fullpath);
-    return dp && dp->d_minor_type == DB5_MINORTYPE_BRLCAD_ANNOT;
-}
-
-
 void
 color_soltab(struct db_i *dbip, struct bv_scene_obj *sp)
 {
@@ -613,20 +601,7 @@ color_soltab(struct db_i *dbip, struct bv_scene_obj *sp)
 	return;
     }
 
-    const int is_annotation = scene_obj_is_annotation(sp);
-
-    /* Annotations are not regions.  Their default region ID is zero, which
-     * must not make an uncolored annotation inherit a region color-table
-     * entry.  Use the ray renderer's white default instead of the legacy red
-     * placeholder when no color was supplied or inherited. */
-    if (is_annotation && sp->s_old.s_dflag) {
-	static const unsigned char default_annotation_color[3] = {255, 255, 255};
-	sp->s_old.s_cflag = 0;
-	memcpy(sp->s_color, default_annotation_color, sizeof(default_annotation_color));
-	return;
-    }
-
-    if (dbip && !is_annotation) {
+    if (dbip) {
 	for (mp = db_mater_head(dbip); mp != MATER_NULL; mp = mp->mt_forw) {
 	    if (sp->s_old.s_regionid <= mp->mt_high &&
 		sp->s_old.s_regionid >= mp->mt_low) {
