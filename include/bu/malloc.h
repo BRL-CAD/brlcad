@@ -146,10 +146,10 @@ BU_EXPORT extern size_t bu_malloc_len_roundup(size_t nbytes);
  * really fast heap-based memory allocation intended for "small"
  * allocation sizes (e.g., single structs).
  *
- * the implementation allocates chunks of memory ('pages') in order to
- * substantially reduce calls to system malloc.  it has a nice
- * property of having O(1) constant time complexity and profiles
- * significantly faster than system malloc().
+ * Allocations may be obtained and released by different threads.  Small
+ * released allocations may be retained in bounded thread-affine caches.
+ * The requested size must be nonzero.  Returned storage is suitably aligned,
+ * but its contents are unspecified.
  *
  * release memory with bu_heap_put() only.
  */
@@ -159,8 +159,9 @@ BU_EXPORT extern void *bu_heap_get(size_t sz);
  * counterpart to bu_heap_get() for releasing fast heap-based memory
  * allocations.
  *
- * Small allocations are retained for reuse by subsequent requests of the
- * same size.  A NULL pointer is ignored.
+ * The allocation size must match the size passed to bu_heap_get().  A NULL
+ * pointer is ignored; passing NULL with a zero size requests compaction of
+ * any unused implementation storage.
  */
 BU_EXPORT extern void bu_heap_put(void *ptr, size_t sz);
 
