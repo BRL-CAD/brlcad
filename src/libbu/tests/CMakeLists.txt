@@ -26,7 +26,7 @@ set(
   test_fchmod.cpp
   test_file.c
   test_file_mime.c
-  test_heap.c
+  test_heap.cpp
   test_hook.c
   test_humanize_number.c
   test_list.c
