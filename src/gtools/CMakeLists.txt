@@ -22,6 +22,7 @@ add_subdirectory(tests)
 
 cmakefiles(
   brep-audit-corpus.py
+  brep-audit-compare.py
   brep-audit.cpp
   CMakeLists.txt
 )
