@@ -47,6 +47,7 @@ static const char CREO_BRL_CORE_MODEL_VERSION_ATTRIBUTE[] = "ptc_version_stamp";
 static const char CREO_BRL_CORE_MATERIAL_ATTRIBUTE[] = "ptc_material_name";
 static const char CREO_BRL_CORE_FALLBACK_ATTRIBUTE[] = "tess_fail";
 static const char CREO_BRL_CORE_UNDEFINED_MATERIAL[] = "undefined";
+static const char CREO_BRL_CORE_TOP_LEVEL_NAME[] = "all";
 
 
 static_assert(sizeof(struct creo_brl_snapshot_header) == CREO_BRL_SNAPSHOT_HEADER_V1_SIZE,
@@ -65,6 +66,15 @@ static_assert(sizeof(struct creo_brl_snapshot_part) == CREO_BRL_SNAPSHOT_PART_V1
               "Snapshot part layout changed");
 static_assert(sizeof(struct creo_brl_snapshot_single_part) == CREO_BRL_SNAPSHOT_SINGLE_PART_V1_SIZE,
               "Snapshot payload layout changed");
+static_assert(sizeof(struct creo_brl_snapshot_matrix) == CREO_BRL_SNAPSHOT_MATRIX_SIZE,
+              "Snapshot matrix layout changed");
+static_assert(sizeof(struct creo_brl_snapshot_assembly_member) ==
+                  CREO_BRL_SNAPSHOT_ASSEMBLY_MEMBER_V2_SIZE,
+              "Snapshot assembly member layout changed");
+static_assert(sizeof(struct creo_brl_snapshot_assembly) == CREO_BRL_SNAPSHOT_ASSEMBLY_V2_SIZE,
+              "Snapshot assembly layout changed");
+static_assert(sizeof(struct creo_brl_snapshot_scene) == CREO_BRL_SNAPSHOT_SCENE_V2_SIZE,
+              "Snapshot scene layout changed");
 
 
 static FILE *
@@ -214,6 +224,20 @@ snapshot_vector_is_finite(const struct creo_brl_snapshot_vector *vector)
 
     for (coordinate = 0; coordinate < CREO_BRL_SNAPSHOT_COORDINATE_COUNT; ++coordinate) {
         if (!std::isfinite(vector->coordinates[coordinate]))
+            return 0;
+    }
+
+    return 1;
+}
+
+
+static int
+snapshot_matrix_is_finite(const struct creo_brl_snapshot_matrix *matrix)
+{
+    unsigned int element = 0;
+
+    for (element = 0; element < CREO_BRL_SNAPSHOT_MATRIX_ELEMENT_COUNT; ++element) {
+        if (!std::isfinite(matrix->elements[element]))
             return 0;
     }
 
@@ -422,10 +446,146 @@ snapshot_part_is_valid(FILE *snapshot_file,
         return 0;
 
     return snapshot_vectors_are_valid(snapshot_file, &part->normals, part->normal_count,
-                                      snapshot_size, data_offset) &&
+                                       snapshot_size, data_offset) &&
            snapshot_indices_are_valid(snapshot_file, &part->normal_indices,
-                                      part->normal_index_count, part->normal_count,
-                                      snapshot_size, data_offset);
+                                       part->normal_index_count, part->normal_count,
+                                       snapshot_size, data_offset);
+}
+
+
+static int
+snapshot_assembly_is_valid(FILE *snapshot_file,
+                           const struct creo_brl_snapshot_assembly *assembly,
+                           uint64_t part_count,
+                           uint64_t assembly_count,
+                           uint64_t snapshot_size,
+                           uint64_t data_offset)
+{
+    uint64_t member_index = 0;
+
+    if (assembly->structure_size != CREO_BRL_SNAPSHOT_ASSEMBLY_V2_SIZE ||
+        assembly->reserved != 0 ||
+        !snapshot_range_is_valid(&assembly->model_name, snapshot_size, data_offset) ||
+        !snapshot_range_is_valid(&assembly->model_version, snapshot_size, data_offset) ||
+        !snapshot_range_has_records(&assembly->members, assembly->member_count,
+                                    sizeof(struct creo_brl_snapshot_assembly_member),
+                                    snapshot_size, data_offset) ||
+        !snapshot_text_is_valid(snapshot_file, &assembly->model_name, 1) ||
+        !snapshot_text_is_valid(snapshot_file, &assembly->model_version, 0) ||
+        !snapshot_seek(snapshot_file, assembly->members.offset))
+        return 0;
+
+    for (member_index = 0; member_index < assembly->member_count; ++member_index) {
+        struct creo_brl_snapshot_assembly_member member = {};
+
+        if (!snapshot_read(snapshot_file, &member, sizeof(member)) ||
+            !snapshot_matrix_is_finite(&member.matrix))
+            return 0;
+
+        if (member.target_type == CREO_BRL_SNAPSHOT_SCENE_NODE_PART) {
+            if ((uint64_t)member.target_index >= part_count)
+                return 0;
+        } else if (member.target_type == CREO_BRL_SNAPSHOT_SCENE_NODE_ASSEMBLY) {
+            if ((uint64_t)member.target_index >= assembly_count)
+                return 0;
+        } else {
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
+
+static int
+snapshot_scene_is_valid(FILE *snapshot_file,
+                        struct creo_brl_snapshot_scene *scene_out)
+{
+    struct creo_brl_snapshot_header header = {};
+    struct creo_brl_snapshot_scene scene = {};
+    uint64_t file_size = 0;
+    uint64_t part_records_offset = 0;
+    uint64_t assembly_records_offset = 0;
+    uint64_t data_offset = 0;
+    uint64_t index = 0;
+
+    if (!snapshot_file_size(snapshot_file, &file_size) ||
+        !snapshot_read_at(snapshot_file, 0, &header, sizeof(header)) ||
+        memcmp(header.magic, creo_brl_snapshot_magic, sizeof(header.magic)) != 0)
+        return CREO_BRL_CORE_CONVERT_INVALID_SNAPSHOT;
+
+    if (header.format_version != CREO_BRL_SNAPSHOT_FORMAT_VERSION_V2 ||
+        header.header_size != CREO_BRL_SNAPSHOT_HEADER_V1_SIZE ||
+        header.payload_type != CREO_BRL_SNAPSHOT_PAYLOAD_SCENE)
+        return CREO_BRL_CORE_CONVERT_UNSUPPORTED_SNAPSHOT;
+
+    if (header.reserved != 0 || header.snapshot_size != file_size ||
+        header.snapshot_size < header.header_size + CREO_BRL_SNAPSHOT_SCENE_V2_SIZE ||
+        header.payload_size != header.snapshot_size - header.header_size ||
+        header.payload_size < CREO_BRL_SNAPSHOT_SCENE_V2_SIZE ||
+        !snapshot_read_at(snapshot_file, header.header_size, &scene, sizeof(scene)) ||
+        scene.structure_size != CREO_BRL_SNAPSHOT_SCENE_V2_SIZE || scene.reserved != 0)
+        return CREO_BRL_CORE_CONVERT_INVALID_SNAPSHOT;
+
+    part_records_offset = header.header_size + CREO_BRL_SNAPSHOT_SCENE_V2_SIZE;
+    if (scene.part_count > UINT64_MAX / sizeof(struct creo_brl_snapshot_part) ||
+        scene.part_count > (UINT64_MAX - part_records_offset) /
+                           sizeof(struct creo_brl_snapshot_part) ||
+        (scene.part_count == 0 ? !snapshot_range_is_empty(&scene.parts) :
+         (scene.parts.offset != part_records_offset ||
+          scene.parts.size != scene.part_count * sizeof(struct creo_brl_snapshot_part))))
+        return CREO_BRL_CORE_CONVERT_INVALID_SNAPSHOT;
+
+    assembly_records_offset = part_records_offset +
+                              scene.part_count * sizeof(struct creo_brl_snapshot_part);
+    if (assembly_records_offset > file_size ||
+        scene.assembly_count > UINT64_MAX / sizeof(struct creo_brl_snapshot_assembly) ||
+        scene.assembly_count > (UINT64_MAX - assembly_records_offset) /
+                               sizeof(struct creo_brl_snapshot_assembly) ||
+        (scene.assembly_count == 0 ? !snapshot_range_is_empty(&scene.assemblies) :
+         (scene.assemblies.offset != assembly_records_offset ||
+          scene.assemblies.size != scene.assembly_count * sizeof(struct creo_brl_snapshot_assembly))))
+        return CREO_BRL_CORE_CONVERT_INVALID_SNAPSHOT;
+
+    data_offset = assembly_records_offset +
+                  scene.assembly_count * sizeof(struct creo_brl_snapshot_assembly);
+    if (data_offset > file_size ||
+        !snapshot_settings_are_valid(snapshot_file, &scene.settings, file_size, data_offset))
+        return CREO_BRL_CORE_CONVERT_INVALID_SNAPSHOT;
+
+    if ((scene.root_type == CREO_BRL_SNAPSHOT_SCENE_NODE_PART &&
+         (uint64_t)scene.root_index >= scene.part_count) ||
+        (scene.root_type == CREO_BRL_SNAPSHOT_SCENE_NODE_ASSEMBLY &&
+         (uint64_t)scene.root_index >= scene.assembly_count) ||
+        (scene.root_type != CREO_BRL_SNAPSHOT_SCENE_NODE_PART &&
+         scene.root_type != CREO_BRL_SNAPSHOT_SCENE_NODE_ASSEMBLY))
+        return CREO_BRL_CORE_CONVERT_INVALID_SNAPSHOT;
+
+    for (index = 0; index < scene.part_count; ++index) {
+        struct creo_brl_snapshot_part part = {};
+        const uint64_t offset = scene.parts.offset +
+                                index * sizeof(struct creo_brl_snapshot_part);
+
+        if (!snapshot_read_at(snapshot_file, offset, &part, sizeof(part)) ||
+            !snapshot_part_is_valid(snapshot_file, &part, file_size, data_offset))
+            return CREO_BRL_CORE_CONVERT_INVALID_SNAPSHOT;
+    }
+
+    for (index = 0; index < scene.assembly_count; ++index) {
+        struct creo_brl_snapshot_assembly assembly = {};
+        const uint64_t offset = scene.assemblies.offset +
+                                index * sizeof(struct creo_brl_snapshot_assembly);
+
+        if (!snapshot_read_at(snapshot_file, offset, &assembly, sizeof(assembly)) ||
+            !snapshot_assembly_is_valid(snapshot_file, &assembly, scene.part_count,
+                                        scene.assembly_count, file_size, data_offset))
+            return CREO_BRL_CORE_CONVERT_INVALID_SNAPSHOT;
+    }
+
+    if (scene_out)
+        *scene_out = scene;
+
+    return CREO_BRL_CORE_CONVERT_SUCCESS;
 }
 
 
@@ -701,14 +861,20 @@ cleanup:
 }
 
 
+struct snapshot_part_output {
+    std::string region_name;
+};
+
+
 static int
-snapshot_write_part(FILE *snapshot_file,
-                    const struct creo_brl_snapshot_single_part *single_part)
+snapshot_write_part_definition(FILE *snapshot_file,
+                               const struct creo_brl_snapshot_part *part,
+                               struct db_i *database,
+                               struct rt_wdb *writer,
+                               struct snapshot_part_output *output)
 {
-    const struct creo_brl_snapshot_part *part = &single_part->part;
     const int has_mesh = (part->flags & CREO_BRL_SNAPSHOT_PART_HAS_MESH) != 0;
     const int has_normals = (part->flags & CREO_BRL_SNAPSHOT_PART_HAS_NORMALS) != 0;
-    std::string output_path;
     std::string model_name;
     std::string model_version;
     std::string material_name;
@@ -718,61 +884,366 @@ snapshot_write_part(FILE *snapshot_file,
     std::vector<int> triangles;
     std::vector<fastf_t> normals;
     std::vector<int> normal_indices;
+    struct bu_list members;
+
+    if (!snapshot_read_text(snapshot_file, &part->model_name, &model_name) ||
+        !snapshot_read_text(snapshot_file, &part->model_version, &model_version) ||
+        !snapshot_read_text(snapshot_file, &part->material_name, &material_name) ||
+        (has_mesh &&
+         (!snapshot_read_vectors(snapshot_file, &part->vertices, part->vertex_count, &vertices) ||
+          !snapshot_read_triangles(snapshot_file, &part->triangles, part->triangle_count,
+                                   part->vertex_count, &triangles) ||
+          (has_normals &&
+           (!snapshot_read_vectors(snapshot_file, &part->normals, part->normal_count, &normals) ||
+            !snapshot_read_indices(snapshot_file, &part->normal_indices,
+                                   part->normal_index_count, part->normal_count,
+                                   &normal_indices))))))
+        return CREO_BRL_CORE_CONVERT_INVALID_SNAPSHOT;
+
+    if (!snapshot_object_names(database, snapshot_name_root(model_name),
+                               has_mesh ? CREO_BRL_CORE_SOLID_SUFFIX : CREO_BRL_CORE_RPP_SUFFIX,
+                               &solid_name, &region_name) ||
+        (has_mesh ?
+         creo_brl_write_bot(writer, solid_name.c_str(), has_normals,
+                            (size_t)part->vertex_count, (size_t)part->triangle_count,
+                            vertices.data(), triangles.data(),
+                            has_normals ? (size_t)part->normal_count : 0,
+                            has_normals ? normals.data() : NULL,
+                            has_normals ? normal_indices.data() : NULL) :
+         mk_rpp(writer, solid_name.c_str(), part->bbox_min.coordinates,
+                part->bbox_max.coordinates)) != 0)
+        return CREO_BRL_CORE_CONVERT_OUTPUT_FAILED;
+
+    BU_LIST_INIT(&members);
+    if (mk_addmember(solid_name.c_str(), &members, NULL, WMOP_UNION) == WMEMBER_NULL) {
+        mk_freemembers(&members);
+        return CREO_BRL_CORE_CONVERT_OUTPUT_FAILED;
+    }
+
+    if (mk_comb(writer, region_name.c_str(), &members, 1, NULL, NULL,
+                part->color_is_set ? part->color : NULL,
+                (int)part->region_id, 0, 0, 0, 0, 0, 0) != 0 ||
+        !snapshot_write_attributes(database, solid_name.c_str(), region_name.c_str(),
+                                   model_name, model_version, material_name, has_mesh))
+        return CREO_BRL_CORE_CONVERT_OUTPUT_FAILED;
+
+    output->region_name = region_name;
+    return CREO_BRL_CORE_CONVERT_SUCCESS;
+}
+
+
+static int
+snapshot_unique_name(struct db_i *database,
+                     const std::string& name_root,
+                     const std::vector<std::string>& reserved_names,
+                     std::string *name)
+{
+    uint32_t suffix = 0;
+
+    for (;;) {
+        std::string candidate = name_root;
+        size_t index = 0;
+
+        if (suffix > 0)
+            candidate += "_" + std::to_string(suffix);
+
+        if (db_lookup(database, candidate.c_str(), LOOKUP_QUIET) == RT_DIR_NULL) {
+            for (index = 0; index < reserved_names.size(); ++index) {
+                if (candidate == reserved_names[index])
+                    break;
+            }
+            if (index == reserved_names.size()) {
+                *name = candidate;
+                return 1;
+            }
+        }
+
+        if (suffix == UINT32_MAX)
+            return 0;
+        ++suffix;
+    }
+}
+
+
+static int
+snapshot_write_assembly_attributes(struct db_i *database,
+                                   const char *assembly_name,
+                                   const std::string& model_name,
+                                   const std::string& model_version)
+{
+    struct bu_attribute_value_set attributes = BU_AVS_INIT_ZERO;
+    struct directory *assembly = db_lookup(database, assembly_name, LOOKUP_QUIET);
+    int result = 0;
+
+    if (assembly == RT_DIR_NULL || db5_get_attributes(database, &attributes, assembly) != 0)
+        goto cleanup;
+
+    bu_avs_add(&attributes, CREO_BRL_CORE_IMPORTER_ATTRIBUTE, CREO_BRL_CORE_IMPORTER_VALUE);
+    bu_avs_add(&attributes, CREO_BRL_CORE_MODEL_NAME_ATTRIBUTE, model_name.c_str());
+    if (!model_version.empty())
+        bu_avs_add(&attributes, CREO_BRL_CORE_MODEL_VERSION_ATTRIBUTE, model_version.c_str());
+    result = db5_update_attributes(assembly, &attributes, database) == 0;
+
+cleanup:
+    bu_avs_free(&attributes);
+    return result;
+}
+
+
+static int
+snapshot_write_assembly(FILE *snapshot_file,
+                        const struct creo_brl_snapshot_assembly *assembly,
+                        const std::vector<struct snapshot_part_output>& part_outputs,
+                        const std::vector<std::string>& assembly_names,
+                        const std::vector<int>& assembly_written,
+                        struct db_i *database,
+                        struct rt_wdb *writer,
+                        const std::string& assembly_name)
+{
+    std::string model_name;
+    std::string model_version;
+    struct wmember members;
+    uint64_t member_index = 0;
+
+    if (!snapshot_read_text(snapshot_file, &assembly->model_name, &model_name) ||
+        !snapshot_read_text(snapshot_file, &assembly->model_version, &model_version))
+        return CREO_BRL_CORE_CONVERT_INVALID_SNAPSHOT;
+
+    BU_LIST_INIT(&members.l);
+    for (member_index = 0; member_index < assembly->member_count; ++member_index) {
+        struct creo_brl_snapshot_assembly_member member = {};
+        const uint64_t offset = assembly->members.offset +
+                                member_index * sizeof(struct creo_brl_snapshot_assembly_member);
+        const char *target_name = NULL;
+        mat_t matrix = {};
+
+        if (!snapshot_read_at(snapshot_file, offset, &member, sizeof(member))) {
+            mk_freemembers(&members.l);
+            return CREO_BRL_CORE_CONVERT_INVALID_SNAPSHOT;
+        }
+
+        if (member.target_type == CREO_BRL_SNAPSHOT_SCENE_NODE_PART) {
+            target_name = part_outputs[member.target_index].region_name.c_str();
+        } else {
+            if (!assembly_written[member.target_index]) {
+                mk_freemembers(&members.l);
+                return CREO_BRL_CORE_CONVERT_OUTPUT_FAILED;
+            }
+            target_name = assembly_names[member.target_index].c_str();
+        }
+
+        for (unsigned int element = 0; element < CREO_BRL_SNAPSHOT_MATRIX_ELEMENT_COUNT; ++element)
+            matrix[element] = (fastf_t)member.matrix.elements[element];
+        if (mk_addmember(target_name, &members.l, matrix, WMOP_UNION) == WMEMBER_NULL) {
+            mk_freemembers(&members.l);
+            return CREO_BRL_CORE_CONVERT_OUTPUT_FAILED;
+        }
+    }
+
+    if (mk_lcomb(writer, assembly_name.c_str(), &members, 0, NULL, NULL, NULL, 0) != 0 ||
+        !snapshot_write_assembly_attributes(database, assembly_name.c_str(), model_name, model_version))
+        return CREO_BRL_CORE_CONVERT_OUTPUT_FAILED;
+
+    return CREO_BRL_CORE_CONVERT_SUCCESS;
+}
+
+
+static void
+snapshot_orientation_matrix(int32_t xform_mode, mat_t matrix)
+{
+    static const fastf_t identity[CREO_BRL_SNAPSHOT_MATRIX_ELEMENT_COUNT] = {
+        1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0,
+        0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0
+    };
+    static const fastf_t x_to_z[CREO_BRL_SNAPSHOT_MATRIX_ELEMENT_COUNT] = {
+        0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0,
+        1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0
+    };
+    static const fastf_t y_to_z[CREO_BRL_SNAPSHOT_MATRIX_ELEMENT_COUNT] = {
+        0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0,
+        0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0
+    };
+    const fastf_t *source = identity;
+
+    if (xform_mode == CREO_BRL_SNAPSHOT_XFORM_X_TO_Z)
+        source = x_to_z;
+    else if (xform_mode == CREO_BRL_SNAPSHOT_XFORM_Y_TO_Z)
+        source = y_to_z;
+
+    memcpy(matrix, source, sizeof(identity));
+}
+
+
+static int
+snapshot_write_scene(FILE *snapshot_file,
+                     const struct creo_brl_snapshot_scene *scene)
+{
+    std::string output_path;
+    std::vector<struct snapshot_part_output> part_outputs;
+    std::vector<struct creo_brl_snapshot_assembly> assemblies;
+    std::vector<std::string> assembly_names;
+    std::vector<int> assembly_written;
+    std::vector<std::string> reserved_names;
     struct db_i *database = DBI_NULL;
     struct rt_wdb *writer = RT_WDB_NULL;
-    struct bu_list members;
     int result = CREO_BRL_CORE_CONVERT_OUTPUT_FAILED;
 
     try {
-        if (!snapshot_read_text(snapshot_file, &single_part->settings.output_path, &output_path) ||
-            !snapshot_read_text(snapshot_file, &part->model_name, &model_name) ||
-            !snapshot_read_text(snapshot_file, &part->model_version, &model_version) ||
-            !snapshot_read_text(snapshot_file, &part->material_name, &material_name) ||
-            (has_mesh &&
-             (!snapshot_read_vectors(snapshot_file, &part->vertices, part->vertex_count, &vertices) ||
-              !snapshot_read_triangles(snapshot_file, &part->triangles, part->triangle_count,
-                                       part->vertex_count, &triangles) ||
-              (has_normals &&
-             (!snapshot_read_vectors(snapshot_file, &part->normals, part->normal_count, &normals) ||
-              !snapshot_read_indices(snapshot_file, &part->normal_indices,
-                                     part->normal_index_count, part->normal_count,
-                                     &normal_indices)))))) {
+        if (!snapshot_read_text(snapshot_file, &scene->settings.output_path, &output_path)) {
             result = CREO_BRL_CORE_CONVERT_INVALID_SNAPSHOT;
-        } else if (!snapshot_open_output(output_path.c_str(), &database) ||
-                   !(writer = wdb_dbopen(database, RT_WDB_TYPE_DB_DISK)) ||
-                   !snapshot_object_names(database, snapshot_name_root(model_name),
-                                          has_mesh ? CREO_BRL_CORE_SOLID_SUFFIX : CREO_BRL_CORE_RPP_SUFFIX,
-                                          &solid_name, &region_name) ||
-                   (has_mesh ?
-                    creo_brl_write_bot(writer, solid_name.c_str(), has_normals,
-                                       (size_t)part->vertex_count, (size_t)part->triangle_count,
-                                       vertices.data(), triangles.data(),
-                                       has_normals ? (size_t)part->normal_count : 0,
-                                       has_normals ? normals.data() : NULL,
-                                       has_normals ? normal_indices.data() : NULL) :
-                    mk_rpp(writer, solid_name.c_str(), part->bbox_min.coordinates,
-                           part->bbox_max.coordinates)) != 0) {
+            goto cleanup;
+        }
+        if (!snapshot_open_output(output_path.c_str(), &database) ||
+            !(writer = wdb_dbopen(database, RT_WDB_TYPE_DB_DISK))) {
             result = CREO_BRL_CORE_CONVERT_OUTPUT_FAILED;
-        } else {
-            BU_LIST_INIT(&members);
-            if (mk_addmember(solid_name.c_str(), &members, NULL, WMOP_UNION) == WMEMBER_NULL) {
-                mk_freemembers(&members);
-            } else if (mk_comb(writer, region_name.c_str(), &members, 1, NULL, NULL,
-                               part->color_is_set ? part->color : NULL,
-                               (int)part->region_id, 0, 0, 0, 0, 0, 0) == 0 &&
-                       snapshot_write_attributes(database, solid_name.c_str(), region_name.c_str(),
-                                                 model_name, model_version, material_name, has_mesh)) {
-                result = CREO_BRL_CORE_CONVERT_SUCCESS;
+            goto cleanup;
+        }
+
+        part_outputs.resize((size_t)scene->part_count);
+        for (uint64_t index = 0; index < scene->part_count; ++index) {
+            struct creo_brl_snapshot_part part = {};
+            const uint64_t offset = scene->parts.offset +
+                                    index * sizeof(struct creo_brl_snapshot_part);
+
+            if (!snapshot_read_at(snapshot_file, offset, &part, sizeof(part))) {
+                result = CREO_BRL_CORE_CONVERT_INVALID_SNAPSHOT;
+                goto cleanup;
+            }
+            result = snapshot_write_part_definition(snapshot_file, &part, database, writer,
+                                                    &part_outputs[(size_t)index]);
+            if (result != CREO_BRL_CORE_CONVERT_SUCCESS)
+                goto cleanup;
+        }
+
+        assemblies.resize((size_t)scene->assembly_count);
+        assembly_names.resize((size_t)scene->assembly_count);
+        assembly_written.assign((size_t)scene->assembly_count, 0);
+        for (uint64_t index = 0; index < scene->assembly_count; ++index) {
+            std::string model_name;
+            const uint64_t offset = scene->assemblies.offset +
+                                    index * sizeof(struct creo_brl_snapshot_assembly);
+
+            if (!snapshot_read_at(snapshot_file, offset, &assemblies[(size_t)index],
+                                  sizeof(assemblies[(size_t)index])) ||
+                !snapshot_read_text(snapshot_file, &assemblies[(size_t)index].model_name, &model_name) ||
+                !snapshot_unique_name(database, snapshot_name_root(model_name), reserved_names,
+                                      &assembly_names[(size_t)index])) {
+                result = CREO_BRL_CORE_CONVERT_INVALID_SNAPSHOT;
+                goto cleanup;
+            }
+            reserved_names.push_back(assembly_names[(size_t)index]);
+        }
+
+        for (uint64_t remaining = scene->assembly_count; remaining > 0;) {
+            int wrote_assembly = 0;
+
+            for (uint64_t index = 0; index < scene->assembly_count; ++index) {
+                const struct creo_brl_snapshot_assembly *assembly = &assemblies[(size_t)index];
+                int dependencies_written = 1;
+
+                if (assembly_written[(size_t)index])
+                    continue;
+                for (uint64_t member_index = 0; member_index < assembly->member_count; ++member_index) {
+                    struct creo_brl_snapshot_assembly_member member = {};
+                    const uint64_t offset = assembly->members.offset +
+                                            member_index * sizeof(member);
+
+                    if (!snapshot_read_at(snapshot_file, offset, &member, sizeof(member))) {
+                        result = CREO_BRL_CORE_CONVERT_INVALID_SNAPSHOT;
+                        goto cleanup;
+                    }
+                    if (member.target_type == CREO_BRL_SNAPSHOT_SCENE_NODE_ASSEMBLY &&
+                        !assembly_written[member.target_index]) {
+                        dependencies_written = 0;
+                        break;
+                    }
+                }
+                if (!dependencies_written)
+                    continue;
+
+                result = snapshot_write_assembly(snapshot_file, assembly, part_outputs,
+                                                 assembly_names, assembly_written, database, writer,
+                                                 assembly_names[(size_t)index]);
+                if (result != CREO_BRL_CORE_CONVERT_SUCCESS)
+                    goto cleanup;
+                assembly_written[(size_t)index] = 1;
+                --remaining;
+                wrote_assembly = 1;
+            }
+
+            if (!wrote_assembly) {
+                result = CREO_BRL_CORE_CONVERT_INVALID_SNAPSHOT;
+                goto cleanup;
             }
         }
+
+        {
+            const char *root_name = scene->root_type == CREO_BRL_SNAPSHOT_SCENE_NODE_PART ?
+                                        part_outputs[scene->root_index].region_name.c_str() :
+                                        assembly_names[scene->root_index].c_str();
+            std::string top_level_name;
+            struct wmember members;
+            mat_t orientation;
+
+            if (!snapshot_unique_name(database, CREO_BRL_CORE_TOP_LEVEL_NAME, reserved_names,
+                                      &top_level_name)) {
+                result = CREO_BRL_CORE_CONVERT_OUTPUT_FAILED;
+                goto cleanup;
+            }
+            snapshot_orientation_matrix(scene->settings.xform_mode, orientation);
+            BU_LIST_INIT(&members.l);
+            if (mk_addmember(root_name, &members.l, orientation, WMOP_UNION) == WMEMBER_NULL ||
+                mk_lcomb(writer, top_level_name.c_str(), &members, 0, NULL, NULL, NULL, 0) != 0) {
+                mk_freemembers(&members.l);
+                result = CREO_BRL_CORE_CONVERT_OUTPUT_FAILED;
+                goto cleanup;
+            }
+        }
+
+        result = CREO_BRL_CORE_CONVERT_SUCCESS;
     } catch (...) {
         /* The exported C ABI cannot propagate C++ exceptions across the DLL boundary. */
         result = CREO_BRL_CORE_CONVERT_OUTPUT_FAILED;
     }
 
+cleanup:
     if (database != DBI_NULL)
         db_close(database);
+    return result;
+}
 
+
+static int
+snapshot_write_part(FILE *snapshot_file,
+                    const struct creo_brl_snapshot_single_part *single_part)
+{
+    std::string output_path;
+    struct snapshot_part_output output = {};
+    struct db_i *database = DBI_NULL;
+    struct rt_wdb *writer = RT_WDB_NULL;
+    int result = CREO_BRL_CORE_CONVERT_OUTPUT_FAILED;
+
+    try {
+        if (!snapshot_read_text(snapshot_file, &single_part->settings.output_path, &output_path)) {
+            result = CREO_BRL_CORE_CONVERT_INVALID_SNAPSHOT;
+            goto cleanup;
+        }
+        if (!snapshot_open_output(output_path.c_str(), &database) ||
+            !(writer = wdb_dbopen(database, RT_WDB_TYPE_DB_DISK))) {
+            result = CREO_BRL_CORE_CONVERT_OUTPUT_FAILED;
+            goto cleanup;
+        }
+
+        result = snapshot_write_part_definition(snapshot_file, &single_part->part, database, writer,
+                                                &output);
+    } catch (...) {
+        /* The exported C ABI cannot propagate C++ exceptions across the DLL boundary. */
+        result = CREO_BRL_CORE_CONVERT_OUTPUT_FAILED;
+    }
+
+cleanup:
+    if (database != DBI_NULL)
+        db_close(database);
     return result;
 }
 
@@ -781,7 +1252,9 @@ extern "C" __declspec(dllexport) int
 creo_brl_core_convert(const char *snapshot_path)
 {
     FILE *snapshot_file = NULL;
+    struct creo_brl_snapshot_header header = {};
     struct creo_brl_snapshot_single_part single_part = {};
+    struct creo_brl_snapshot_scene scene = {};
     int result = CREO_BRL_CORE_CONVERT_INVALID_SNAPSHOT;
 
     if (!snapshot_path || !snapshot_path[0])
@@ -791,9 +1264,20 @@ creo_brl_core_convert(const char *snapshot_path)
     if (!snapshot_file)
         return CREO_BRL_CORE_CONVERT_OPEN_FAILED;
 
-    result = snapshot_is_valid(snapshot_file, &single_part);
-    if (result == CREO_BRL_CORE_CONVERT_SUCCESS) {
-        result = snapshot_write_part(snapshot_file, &single_part);
+    if (!snapshot_read_at(snapshot_file, 0, &header, sizeof(header))) {
+        result = CREO_BRL_CORE_CONVERT_INVALID_SNAPSHOT;
+    } else if (header.format_version == CREO_BRL_SNAPSHOT_FORMAT_VERSION_V1 &&
+               header.payload_type == CREO_BRL_SNAPSHOT_PAYLOAD_SINGLE_PART) {
+        result = snapshot_is_valid(snapshot_file, &single_part);
+        if (result == CREO_BRL_CORE_CONVERT_SUCCESS)
+            result = snapshot_write_part(snapshot_file, &single_part);
+    } else if (header.format_version == CREO_BRL_SNAPSHOT_FORMAT_VERSION_V2 &&
+               header.payload_type == CREO_BRL_SNAPSHOT_PAYLOAD_SCENE) {
+        result = snapshot_scene_is_valid(snapshot_file, &scene);
+        if (result == CREO_BRL_CORE_CONVERT_SUCCESS)
+            result = snapshot_write_scene(snapshot_file, &scene);
+    } else {
+        result = CREO_BRL_CORE_CONVERT_UNSUPPORTED_SNAPSHOT;
     }
     fclose(snapshot_file);
 
