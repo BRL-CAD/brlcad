@@ -19,6 +19,7 @@
 #include <cstdlib>
 #include <vector>
 
+#include "bu/app.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bg/trimesh.h"
@@ -114,8 +115,9 @@ test_component_gc()
 
 
 int
-main()
+main(int UNUSED(argc), char **argv)
 {
+    bu_setprogname(argv[0]);
     std::vector<separate_case> cases = {
 	{
 	    "non-manifold edge",

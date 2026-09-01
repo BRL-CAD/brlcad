@@ -17,6 +17,7 @@
 
 #include <cstdlib>
 
+#include "bu/app.h"
 #include "bu/bitv.h"
 #include "bu/log.h"
 #include "rt/geom.h"
@@ -376,8 +377,9 @@ test_decimation_surface_validation()
 
 
 int
-main()
+main(int UNUSED(argc), char **argv)
 {
+    bu_setprogname(argv[0]);
     test_mode(RT_BOT_SURFACE);
     test_mode(RT_BOT_SOLID);
     test_mode(RT_BOT_PLATE);
