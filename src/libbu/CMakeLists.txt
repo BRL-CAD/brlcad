@@ -69,7 +69,7 @@ set(
   glob.c
   globals.c
   hash.c
-  heap.c
+  heap.cpp
   hist.c
   hook.c
   htond.c
