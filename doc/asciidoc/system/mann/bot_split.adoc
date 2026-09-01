@@ -18,7 +18,9 @@ bot_split {bot} [bot2 bot3]...
 == DESCRIPTION
 
 The *bot_split* command is deprecated; use *bot split* for new scripts and
-interactive workflows.
+interactive workflows. The modern command groups its results under a new
+combination by default and supports *--grp* to name that combination; this
+deprecated command retains its original top-level output behavior.
 
 Split a BOT primitive containing edge-disconnected groups of facets into
 multiple BOT primitives, one BOT per group. Facets that meet only at a vertex
