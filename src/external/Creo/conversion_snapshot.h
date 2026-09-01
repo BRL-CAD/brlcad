@@ -14,9 +14,9 @@
  *
  * Toolkit-free on-disk request contract between the Creo facade and core.
  *
- * Version 1 stores little-endian IEEE 754 values.  Every variable-size range
- * is an absolute byte range in the snapshot and is length-bounded; no record
- * relies on process pointers or null-terminated text.
+ * Snapshot versions store little-endian IEEE 754 values.  Every variable-size
+ * range is an absolute byte range in the snapshot and is length-bounded; no
+ * record relies on process pointers or null-terminated text.
  */
 
 #ifndef CREO_CONVERSION_SNAPSHOT_H
@@ -25,7 +25,9 @@
 #include <stdint.h>
 
 #define CREO_BRL_SNAPSHOT_MAGIC_SIZE 8u
-#define CREO_BRL_SNAPSHOT_FORMAT_VERSION 1u
+#define CREO_BRL_SNAPSHOT_FORMAT_VERSION_V1 1u
+#define CREO_BRL_SNAPSHOT_FORMAT_VERSION_V2 2u
+#define CREO_BRL_SNAPSHOT_FORMAT_VERSION CREO_BRL_SNAPSHOT_FORMAT_VERSION_V1
 
 #define CREO_BRL_SNAPSHOT_HEADER_V1_SIZE 40u
 #define CREO_BRL_SNAPSHOT_RANGE_SIZE 16u
@@ -35,10 +37,15 @@
 #define CREO_BRL_SNAPSHOT_SETTINGS_V1_SIZE 200u
 #define CREO_BRL_SNAPSHOT_PART_V1_SIZE 316u
 #define CREO_BRL_SNAPSHOT_SINGLE_PART_V1_SIZE 524u
+#define CREO_BRL_SNAPSHOT_MATRIX_SIZE 128u
+#define CREO_BRL_SNAPSHOT_ASSEMBLY_MEMBER_V2_SIZE 136u
+#define CREO_BRL_SNAPSHOT_ASSEMBLY_V2_SIZE 64u
+#define CREO_BRL_SNAPSHOT_SCENE_V2_SIZE 264u
 
 #define CREO_BRL_SNAPSHOT_COORDINATE_COUNT 3u
 #define CREO_BRL_SNAPSHOT_TRIANGLE_VERTEX_COUNT 3u
 #define CREO_BRL_SNAPSHOT_COLOR_COMPONENT_COUNT 3u
+#define CREO_BRL_SNAPSHOT_MATRIX_ELEMENT_COUNT 16u
 #define CREO_BRL_SNAPSHOT_MIN_VERTEX_COUNT 3u
 #define CREO_BRL_SNAPSHOT_MIN_TRIANGLE_COUNT 1u
 
@@ -47,7 +54,13 @@ static const unsigned char creo_brl_snapshot_magic[CREO_BRL_SNAPSHOT_MAGIC_SIZE]
 };
 
 enum creo_brl_snapshot_payload_type {
-    CREO_BRL_SNAPSHOT_PAYLOAD_SINGLE_PART = 1u
+    CREO_BRL_SNAPSHOT_PAYLOAD_SINGLE_PART = 1u,
+    CREO_BRL_SNAPSHOT_PAYLOAD_SCENE = 2u
+};
+
+enum creo_brl_snapshot_scene_node_type {
+    CREO_BRL_SNAPSHOT_SCENE_NODE_PART = 1u,
+    CREO_BRL_SNAPSHOT_SCENE_NODE_ASSEMBLY = 2u
 };
 
 enum creo_brl_snapshot_log_type {
@@ -116,6 +129,10 @@ struct creo_brl_snapshot_vector {
 
 struct creo_brl_snapshot_triangle {
     uint32_t vertices[CREO_BRL_SNAPSHOT_TRIANGLE_VERTEX_COUNT];
+};
+
+struct creo_brl_snapshot_matrix {
+    double elements[CREO_BRL_SNAPSHOT_MATRIX_ELEMENT_COUNT];
 };
 
 struct creo_brl_snapshot_named_value {
@@ -198,6 +215,38 @@ struct creo_brl_snapshot_single_part {
     uint32_t reserved;
     struct creo_brl_snapshot_settings settings;
     struct creo_brl_snapshot_part part;
+};
+
+/*
+ * V2 scenes reuse the V1 part record for each unique part definition.  The
+ * member matrix is serialized in BRL-CAD mat_t order, with translation
+ * already converted to millimeters by the facade.
+ */
+struct creo_brl_snapshot_assembly_member {
+    uint32_t target_type;
+    uint32_t target_index;
+    struct creo_brl_snapshot_matrix matrix;
+};
+
+struct creo_brl_snapshot_assembly {
+    uint32_t structure_size;
+    uint32_t reserved;
+    struct creo_brl_snapshot_range model_name;
+    struct creo_brl_snapshot_range model_version;
+    struct creo_brl_snapshot_range members;
+    uint64_t member_count;
+};
+
+struct creo_brl_snapshot_scene {
+    uint32_t structure_size;
+    uint32_t reserved;
+    struct creo_brl_snapshot_settings settings;
+    struct creo_brl_snapshot_range parts;
+    uint64_t part_count;
+    struct creo_brl_snapshot_range assemblies;
+    uint64_t assembly_count;
+    uint32_t root_type;
+    uint32_t root_index;
 };
 
 #pragma pack(pop)

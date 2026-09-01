@@ -17,6 +17,6 @@ enum creo_brl_snapshot_capture_result {
     CREO_BRL_SNAPSHOT_CAPTURE_TESSELLATION_FAILURE = -7
 };
 
-extern "C" int creo_brl_frontend_capture_single_part_snapshot(const char *snapshot_path);
+extern "C" int creo_brl_frontend_capture_snapshot(const char *snapshot_path);
 
 #endif /* CREO_SNAPSHOT_WRITER_H */

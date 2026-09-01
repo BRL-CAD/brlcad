@@ -148,11 +148,11 @@ frontend_capture_failure_message(int result)
         case CREO_BRL_SNAPSHOT_CAPTURE_NO_ACTIVE_MODEL:
             return "FAILURE: No active Creo model is available for conversion.";
         case CREO_BRL_SNAPSHOT_CAPTURE_UNSUPPORTED_MODEL:
-            return "FAILURE: Only an active Creo part can be converted; assemblies and drawings are not supported yet.";
+            return "FAILURE: Only active Creo parts and assemblies can be converted.";
         case CREO_BRL_SNAPSHOT_CAPTURE_MODEL_FAILURE:
-            return "FAILURE: Unable to read the active part name or supported length units.";
+            return "FAILURE: Unable to read active model metadata or supported length units.";
         case CREO_BRL_SNAPSHOT_CAPTURE_TESSELLATION_FAILURE:
-            return "FAILURE: Unable to tessellate the active part; enable bounding-box fallback or adjust tessellation controls.";
+            return "FAILURE: Unable to tessellate a model part; enable bounding-box fallback or adjust tessellation controls.";
         case CREO_BRL_SNAPSHOT_CAPTURE_WRITE_FAILURE:
             return "FAILURE: Unable to create the temporary conversion request.";
         default:
@@ -176,7 +176,7 @@ frontend_core_failure_message(int result)
         case CREO_BRL_CORE_CONVERT_OUTPUT_FAILED:
             return "FAILURE: The BRL-CAD output file could not be written.";
         default:
-            return "FAILURE: The runtime core failed to convert the active part.";
+            return "FAILURE: The runtime core failed to convert the active model.";
     }
 }
 #endif
@@ -277,8 +277,8 @@ frontend_convert(char *dialog, char *component, ProAppData appdata)
         return;
     }
 
-    frontend_status("Capturing active Creo part for BRL-CAD conversion...");
-    capture_result = creo_brl_frontend_capture_single_part_snapshot(snapshot_path);
+    frontend_status("Capturing active Creo model for BRL-CAD conversion...");
+    capture_result = creo_brl_frontend_capture_snapshot(snapshot_path);
     if (capture_result != CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS) {
         (void)DeleteFileW(snapshot_path_wide);
         frontend_status(frontend_capture_failure_message(capture_result));

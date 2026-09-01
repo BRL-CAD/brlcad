@@ -12,7 +12,7 @@
 /**
  * @file snapshot_writer.cpp
  *
- * Creo Toolkit capture for the first neutral, single-part request.
+ * Creo Toolkit capture for neutral conversion requests.
  */
 
 #include "common.h"
@@ -28,16 +28,64 @@
 #include "snapshot_writer.h"
 
 
-struct snapshot_strings {
+struct snapshot_settings_strings {
     std::string output_path;
     std::string log_path;
     std::string material_path;
     std::string rename_parameters;
     std::string preserve_parameters;
+};
+
+
+struct snapshot_part_strings {
     std::string model_name;
     std::string model_version;
     std::string material_name;
 };
+
+
+struct snapshot_part_capture {
+    struct creo_brl_snapshot_part part;
+    struct snapshot_part_strings strings;
+    std::vector<struct creo_brl_snapshot_vector> vertices;
+    std::vector<struct creo_brl_snapshot_triangle> triangles;
+    std::vector<struct creo_brl_snapshot_vector> normals;
+    std::vector<uint32_t> normal_indices;
+};
+
+
+struct snapshot_assembly_capture {
+    struct creo_brl_snapshot_assembly assembly;
+    std::string model_name;
+    std::string model_version;
+    std::vector<struct creo_brl_snapshot_assembly_member> members;
+};
+
+
+struct snapshot_scene_capture {
+    struct creo_brl_snapshot_settings settings;
+    struct snapshot_settings_strings settings_strings;
+    std::vector<struct snapshot_part_capture> parts;
+    std::vector<struct snapshot_assembly_capture> assemblies;
+};
+
+/* The legacy converter keeps this tolerance internal; the dialog has no min_edge control. */
+static const double CREO_BRL_DEFAULT_MIN_EDGE_MM = 0.000254;
+
+
+static_assert(sizeof(struct creo_brl_snapshot_header) == CREO_BRL_SNAPSHOT_HEADER_V1_SIZE,
+              "Snapshot header layout changed");
+static_assert(sizeof(struct creo_brl_snapshot_settings) == CREO_BRL_SNAPSHOT_SETTINGS_V1_SIZE,
+              "Snapshot settings layout changed");
+static_assert(sizeof(struct creo_brl_snapshot_part) == CREO_BRL_SNAPSHOT_PART_V1_SIZE,
+              "Snapshot part layout changed");
+static_assert(sizeof(struct creo_brl_snapshot_assembly_member) ==
+                  CREO_BRL_SNAPSHOT_ASSEMBLY_MEMBER_V2_SIZE,
+              "Snapshot assembly member layout changed");
+static_assert(sizeof(struct creo_brl_snapshot_assembly) == CREO_BRL_SNAPSHOT_ASSEMBLY_V2_SIZE,
+              "Snapshot assembly layout changed");
+static_assert(sizeof(struct creo_brl_snapshot_scene) == CREO_BRL_SNAPSHOT_SCENE_V2_SIZE,
+              "Snapshot scene layout changed");
 
 
 static int
@@ -140,7 +188,7 @@ dialog_radio(const char *name, std::string *selection)
 
 
 static int
-capture_settings(struct creo_brl_snapshot_settings *settings, snapshot_strings *strings)
+capture_settings(struct creo_brl_snapshot_settings *settings, snapshot_settings_strings *strings)
 {
     std::string selection;
 
@@ -153,14 +201,10 @@ capture_settings(struct creo_brl_snapshot_settings *settings, snapshot_strings *
         !dialog_text("param_rename", &strings->rename_parameters) ||
         !dialog_text("param_save", &strings->preserve_parameters) ||
         !dialog_integer("region_counter", &settings->region_id) ||
-        !dialog_integer("min_luminance", &settings->min_luminance) ||
-        !dialog_number("max_chord", &settings->max_chord) ||
-        !dialog_number("min_angle", &settings->min_angle) ||
-        !dialog_number("min_edge", &settings->min_edge) ||
-        !dialog_number("min_hole", &settings->min_hole) ||
-        !dialog_number("min_chamfer", &settings->min_chamfer) ||
-        !dialog_number("min_round", &settings->min_round) ||
-        !dialog_radio("transform", &selection))
+         !dialog_integer("min_luminance", &settings->min_luminance) ||
+         !dialog_number("max_chord", &settings->max_chord) ||
+         !dialog_number("min_angle", &settings->min_angle) ||
+         !dialog_radio("transform", &selection))
         return 0;
 
     settings->xform_mode = selection == "x_to_z" ? CREO_BRL_SNAPSHOT_XFORM_X_TO_Z :
@@ -174,9 +218,18 @@ capture_settings(struct creo_brl_snapshot_settings *settings, snapshot_strings *
     settings->max_facets = 0;
     settings->max_steps = 1;
     settings->log_type = CREO_BRL_SNAPSHOT_LOG_FAILURE;
+    settings->min_edge = CREO_BRL_DEFAULT_MIN_EDGE_MM;
 
-    return dialog_check("elim_small", CREO_BRL_SNAPSHOT_SETTING_ELIMINATE_SMALL_FEATURES, &settings->flags) &&
-           dialog_check("facets_only", CREO_BRL_SNAPSHOT_SETTING_FACETS_ONLY, &settings->flags) &&
+    if (!dialog_check("elim_small", CREO_BRL_SNAPSHOT_SETTING_ELIMINATE_SMALL_FEATURES,
+                      &settings->flags))
+        return 0;
+    if ((settings->flags & CREO_BRL_SNAPSHOT_SETTING_ELIMINATE_SMALL_FEATURES) != 0 &&
+        (!dialog_number("min_hole", &settings->min_hole) ||
+         !dialog_number("min_chamfer", &settings->min_chamfer) ||
+         !dialog_number("min_round", &settings->min_round)))
+        return 0;
+
+    return dialog_check("facets_only", CREO_BRL_SNAPSHOT_SETTING_FACETS_ONLY, &settings->flags) &&
            dialog_check("export_stl", CREO_BRL_SNAPSHOT_SETTING_EXPORT_STL, &settings->flags) &&
            dialog_check("check_solidity", CREO_BRL_SNAPSHOT_SETTING_CHECK_SOLIDITY, &settings->flags) &&
            dialog_check("create_boxes", CREO_BRL_SNAPSHOT_SETTING_CREATE_BOXES, &settings->flags) &&
@@ -396,126 +449,519 @@ write_text(FILE *snapshot_file, const std::string& text, struct creo_brl_snapsho
 }
 
 
-extern "C" int
-creo_brl_frontend_capture_single_part_snapshot(const char *snapshot_path)
+static int
+capture_model_name(ProMdl model, std::string *model_name)
 {
-    struct creo_brl_snapshot_header header = {};
-    struct creo_brl_snapshot_single_part request = {};
-    snapshot_strings strings;
-    std::vector<struct creo_brl_snapshot_vector> vertices;
-    std::vector<struct creo_brl_snapshot_triangle> triangles;
-    std::vector<struct creo_brl_snapshot_vector> normals;
-    std::vector<uint32_t> normal_indices;
-    ProMdl model = NULL;
-    ProMdlType model_type;
-    ProName model_name;
+    ProName name;
+
+    return ProMdlMdlnameGet(model, name) == PRO_TK_NO_ERROR &&
+           wide_to_utf8(name, model_name) && !model_name->empty();
+}
+
+
+static int
+capture_part_definition(ProMdl model,
+                        const struct creo_brl_snapshot_settings *settings,
+                        struct snapshot_part_capture *capture)
+{
     ProName material_name;
     Pro3dPnt bbox[2];
     double scale = 0.0;
     int have_bbox = 0;
-    FILE *snapshot_file = NULL;
 
-    if (!snapshot_path || !snapshot_path[0])
-        return CREO_BRL_SNAPSHOT_CAPTURE_INVALID_REQUEST;
+    memset(&capture->part, 0, sizeof(capture->part));
+    capture->vertices.clear();
+    capture->triangles.clear();
+    capture->normals.clear();
+    capture->normal_indices.clear();
+    capture->strings = snapshot_part_strings();
 
-    if (!capture_settings(&request.settings, &strings))
-        return CREO_BRL_SNAPSHOT_CAPTURE_DIALOG_FAILURE;
-
-    if (ProMdlCurrentGet(&model) != PRO_TK_NO_ERROR)
-        return CREO_BRL_SNAPSHOT_CAPTURE_NO_ACTIVE_MODEL;
-    if (ProMdlTypeGet(model, &model_type) != PRO_TK_NO_ERROR)
-        return CREO_BRL_SNAPSHOT_CAPTURE_MODEL_FAILURE;
-    if (model_type != PRO_MDL_PART)
-        return CREO_BRL_SNAPSHOT_CAPTURE_UNSUPPORTED_MODEL;
-
-    if (
-        ProMdlMdlnameGet(model, model_name) != PRO_TK_NO_ERROR ||
-        !wide_to_utf8(model_name, &strings.model_name) ||
-        strings.model_name.empty() ||
+    if (!capture_model_name(model, &capture->strings.model_name) ||
         !model_scale_to_mm(model, &scale))
         return CREO_BRL_SNAPSHOT_CAPTURE_MODEL_FAILURE;
 
-    request.structure_size = CREO_BRL_SNAPSHOT_SINGLE_PART_V1_SIZE;
-    request.settings.structure_size = CREO_BRL_SNAPSHOT_SETTINGS_V1_SIZE;
-    request.part.structure_size = CREO_BRL_SNAPSHOT_PART_V1_SIZE;
-    request.part.region_id = request.settings.region_id;
-    request.part.model_to_mm = scale;
-
-    capture_model_version(model, &strings.model_version);
-    capture_part_appearance(model, &request.part);
-    capture_mass_properties(model, &request.part);
+    capture->part.structure_size = CREO_BRL_SNAPSHOT_PART_V1_SIZE;
+    capture->part.region_id = settings->region_id;
+    capture->part.model_to_mm = scale;
+    capture_model_version(model, &capture->strings.model_version);
+    capture_part_appearance(model, &capture->part);
+    capture_mass_properties(model, &capture->part);
 
     if (ProPartMaterialNameGet(ProMdlToPart(model), material_name) == PRO_TK_NO_ERROR &&
-        wide_to_utf8(material_name, &strings.material_name) && !strings.material_name.empty())
-        request.part.flags |= CREO_BRL_SNAPSHOT_PART_HAS_MATERIAL;
-    if ((request.part.flags & CREO_BRL_SNAPSHOT_PART_HAS_MASS_PROPERTIES) == 0 &&
-        ProPartDensityGet(ProMdlToPart(model), &request.part.density) != PRO_TK_NO_ERROR)
-        request.part.density = 0.0;
+        wide_to_utf8(material_name, &capture->strings.material_name) &&
+        !capture->strings.material_name.empty())
+        capture->part.flags |= CREO_BRL_SNAPSHOT_PART_HAS_MATERIAL;
+    if ((capture->part.flags & CREO_BRL_SNAPSHOT_PART_HAS_MASS_PROPERTIES) == 0 &&
+        ProPartDensityGet(ProMdlToPart(model), &capture->part.density) != PRO_TK_NO_ERROR)
+        capture->part.density = 0.0;
 
     have_bbox = ProSolidOutlineGet(ProMdlToSolid(model), bbox) == PRO_TK_NO_ERROR;
     if (have_bbox) {
         for (unsigned int coordinate = 0; coordinate < CREO_BRL_SNAPSHOT_COORDINATE_COUNT; ++coordinate) {
-            request.part.bbox_min.coordinates[coordinate] = bbox[0][coordinate] * scale;
-            request.part.bbox_max.coordinates[coordinate] = bbox[1][coordinate] * scale;
+            capture->part.bbox_min.coordinates[coordinate] = bbox[0][coordinate] * scale;
+            capture->part.bbox_max.coordinates[coordinate] = bbox[1][coordinate] * scale;
         }
-        const double dx = request.part.bbox_max.coordinates[0] - request.part.bbox_min.coordinates[0];
-        const double dy = request.part.bbox_max.coordinates[1] - request.part.bbox_min.coordinates[1];
-        const double dz = request.part.bbox_max.coordinates[2] - request.part.bbox_min.coordinates[2];
+        const double dx = capture->part.bbox_max.coordinates[0] - capture->part.bbox_min.coordinates[0];
+        const double dy = capture->part.bbox_max.coordinates[1] - capture->part.bbox_min.coordinates[1];
+        const double dz = capture->part.bbox_max.coordinates[2] - capture->part.bbox_min.coordinates[2];
 
-        request.part.bbox_area = 2.0 * (dx * dy + dx * dz + dy * dz);
-        request.part.bbox_diagonal = sqrt(dx * dx + dy * dy + dz * dz);
-        request.part.bbox_volume = dx * dy * dz;
+        capture->part.bbox_area = 2.0 * (dx * dy + dx * dz + dy * dz);
+        capture->part.bbox_diagonal = sqrt(dx * dx + dy * dy + dz * dz);
+        capture->part.bbox_volume = dx * dy * dz;
     }
 
-    if (capture_tessellation(model, scale, &request.settings, &vertices, &triangles,
-                             &normals, &normal_indices)) {
-        request.part.flags |= CREO_BRL_SNAPSHOT_PART_HAS_MESH;
-        if (!normals.empty())
-            request.part.flags |= CREO_BRL_SNAPSHOT_PART_HAS_NORMALS;
-    } else if (have_bbox && (request.settings.flags & CREO_BRL_SNAPSHOT_SETTING_CREATE_BOXES)) {
-        request.part.flags |= CREO_BRL_SNAPSHOT_PART_HAS_BBOX_FALLBACK;
+    if (capture_tessellation(model, scale, settings, &capture->vertices, &capture->triangles,
+                             &capture->normals, &capture->normal_indices)) {
+        capture->part.flags |= CREO_BRL_SNAPSHOT_PART_HAS_MESH;
+        if (!capture->normals.empty())
+            capture->part.flags |= CREO_BRL_SNAPSHOT_PART_HAS_NORMALS;
+        return CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS;
+    }
+    if (have_bbox && (settings->flags & CREO_BRL_SNAPSHOT_SETTING_CREATE_BOXES)) {
+        capture->part.flags |= CREO_BRL_SNAPSHOT_PART_HAS_BBOX_FALLBACK;
+        return CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS;
+    }
+
+    return CREO_BRL_SNAPSHOT_CAPTURE_TESSELLATION_FAILURE;
+}
+
+
+static int
+scene_part_index(const struct snapshot_scene_capture *scene,
+                 const std::string& model_name,
+                 uint32_t *index_out)
+{
+    for (size_t index = 0; index < scene->parts.size(); ++index) {
+        if (scene->parts[index].strings.model_name == model_name) {
+            *index_out = (uint32_t)index;
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+
+static int
+scene_assembly_index(const struct snapshot_scene_capture *scene,
+                     const std::string& model_name,
+                     uint32_t *index_out)
+{
+    for (size_t index = 0; index < scene->assemblies.size(); ++index) {
+        if (scene->assemblies[index].model_name == model_name) {
+            *index_out = (uint32_t)index;
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+
+static int
+capture_scene_part(ProMdl model, struct snapshot_scene_capture *scene, uint32_t *index_out)
+{
+    std::string model_name;
+    struct snapshot_part_capture capture;
+    int result = CREO_BRL_SNAPSHOT_CAPTURE_MODEL_FAILURE;
+
+    if (!capture_model_name(model, &model_name))
+        return CREO_BRL_SNAPSHOT_CAPTURE_MODEL_FAILURE;
+    if (scene_part_index(scene, model_name, index_out))
+        return CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS;
+    if (scene->parts.size() >= UINT32_MAX)
+        return CREO_BRL_SNAPSHOT_CAPTURE_MODEL_FAILURE;
+
+    result = capture_part_definition(model, &scene->settings, &capture);
+    if (result != CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS)
+        return result;
+
+    *index_out = (uint32_t)scene->parts.size();
+    scene->parts.push_back(capture);
+    return CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS;
+}
+
+
+static void
+snapshot_identity_matrix(struct creo_brl_snapshot_matrix *matrix)
+{
+    memset(matrix, 0, sizeof(*matrix));
+    matrix->elements[0] = 1.0;
+    matrix->elements[5] = 1.0;
+    matrix->elements[10] = 1.0;
+    matrix->elements[15] = 1.0;
+}
+
+
+static int
+capture_component_matrix(ProMdl parent,
+                         ProFeature *feature,
+                         struct creo_brl_snapshot_matrix *matrix)
+{
+    ProAsmcomppath component_path;
+    ProIdTable component_ids;
+    ProMatrix creo_matrix;
+    double scale = 0.0;
+
+    snapshot_identity_matrix(matrix);
+    if (!model_scale_to_mm(parent, &scale))
+        return 0;
+
+    component_ids[0] = feature->id;
+    if (ProAsmcomppathInit(ProMdlToSolid(parent), component_ids, 1, &component_path) !=
+            PRO_TK_NO_ERROR ||
+        ProAsmcomppathTrfGet(&component_path, PRO_B_TRUE, creo_matrix) != PRO_TK_NO_ERROR)
+        return 1;
+
+    for (unsigned int column = 0; column < 4; ++column) {
+        for (unsigned int row = 0; row < 4; ++row) {
+            double value = creo_matrix[row][column];
+
+            if (row == 3 && column < CREO_BRL_SNAPSHOT_COORDINATE_COUNT)
+                value *= scale;
+            matrix->elements[column * 4 + row] = value;
+        }
+    }
+
+    return 1;
+}
+
+
+static int capture_scene_assembly(ProMdl model,
+                                  struct snapshot_scene_capture *scene,
+                                  uint32_t *index_out);
+
+
+struct snapshot_component_context {
+    struct snapshot_scene_capture *scene;
+    ProMdl parent;
+    uint32_t assembly_index;
+    int result;
+};
+
+
+static ProError
+snapshot_component_filter(ProFeature *feature, ProAppData *UNUSED(data))
+{
+    ProFeattype feature_type;
+    ProFeatStatus feature_status;
+
+    if (ProFeatureTypeGet(feature, &feature_type) != PRO_TK_NO_ERROR ||
+        feature_type != PRO_FEAT_COMPONENT ||
+        ProFeatureStatusGet(feature, &feature_status) != PRO_TK_NO_ERROR ||
+        feature_status != PRO_FEAT_ACTIVE)
+        return PRO_TK_CONTINUE;
+
+    return PRO_TK_NO_ERROR;
+}
+
+
+static ProError
+capture_scene_component(ProFeature *feature, ProError UNUSED(status), ProAppData app_data)
+{
+    struct snapshot_component_context *context =
+        (struct snapshot_component_context *)app_data;
+    ProMdl model = NULL;
+    ProMdlType model_type;
+    ProBoolean is_skeleton = PRO_B_FALSE;
+    struct creo_brl_snapshot_assembly_member member = {};
+    int result = CREO_BRL_SNAPSHOT_CAPTURE_MODEL_FAILURE;
+
+    if (context->result != CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS)
+        return PRO_TK_NO_ERROR;
+    if (ProAsmcompMdlGet(feature, &model) != PRO_TK_NO_ERROR ||
+        ProMdlTypeGet(model, &model_type) != PRO_TK_NO_ERROR) {
+        context->result = CREO_BRL_SNAPSHOT_CAPTURE_MODEL_FAILURE;
+        return PRO_TK_NO_ERROR;
+    }
+
+    ProMdlIsSkeleton(model, &is_skeleton);
+    if (is_skeleton)
+        return PRO_TK_NO_ERROR;
+    if (!capture_component_matrix(context->parent, feature, &member.matrix)) {
+        context->result = CREO_BRL_SNAPSHOT_CAPTURE_MODEL_FAILURE;
+        return PRO_TK_NO_ERROR;
+    }
+
+    if (model_type == PRO_MDL_PART) {
+        member.target_type = CREO_BRL_SNAPSHOT_SCENE_NODE_PART;
+        result = capture_scene_part(model, context->scene, &member.target_index);
+    } else if (model_type == PRO_MDL_ASSEMBLY) {
+        member.target_type = CREO_BRL_SNAPSHOT_SCENE_NODE_ASSEMBLY;
+        result = capture_scene_assembly(model, context->scene, &member.target_index);
     } else {
-        return CREO_BRL_SNAPSHOT_CAPTURE_TESSELLATION_FAILURE;
+        return PRO_TK_NO_ERROR;
     }
+
+    if (result != CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS) {
+        context->result = result;
+        return PRO_TK_NO_ERROR;
+    }
+
+    context->scene->assemblies[context->assembly_index].members.push_back(member);
+    return PRO_TK_NO_ERROR;
+}
+
+
+static int
+capture_scene_assembly(ProMdl model,
+                       struct snapshot_scene_capture *scene,
+                       uint32_t *index_out)
+{
+    struct snapshot_assembly_capture capture = {};
+    struct snapshot_component_context context = {};
+
+    if (!capture_model_name(model, &capture.model_name))
+        return CREO_BRL_SNAPSHOT_CAPTURE_MODEL_FAILURE;
+    if (scene_assembly_index(scene, capture.model_name, index_out))
+        return CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS;
+    if (scene->assemblies.size() >= UINT32_MAX)
+        return CREO_BRL_SNAPSHOT_CAPTURE_MODEL_FAILURE;
+
+    capture.assembly.structure_size = CREO_BRL_SNAPSHOT_ASSEMBLY_V2_SIZE;
+    capture_model_version(model, &capture.model_version);
+    *index_out = (uint32_t)scene->assemblies.size();
+    scene->assemblies.push_back(capture);
+
+    context.scene = scene;
+    context.parent = model;
+    context.assembly_index = *index_out;
+    context.result = CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS;
+    if (ProSolidFeatVisit(ProMdlToPart(model), capture_scene_component,
+                          (ProFeatureFilterAction)snapshot_component_filter,
+                          (ProAppData)&context) != PRO_TK_NO_ERROR ||
+        context.result != CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS)
+        return context.result == CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS ?
+                   CREO_BRL_SNAPSHOT_CAPTURE_MODEL_FAILURE : context.result;
+
+    return CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS;
+}
+
+
+static int
+write_settings_strings(FILE *snapshot_file,
+                       struct creo_brl_snapshot_settings *settings,
+                       const struct snapshot_settings_strings& strings)
+{
+    return write_text(snapshot_file, strings.output_path, &settings->output_path) &&
+           write_text(snapshot_file, strings.log_path, &settings->log_path) &&
+           write_text(snapshot_file, strings.material_path, &settings->material_path) &&
+           write_text(snapshot_file, strings.rename_parameters, &settings->rename_parameters) &&
+           write_text(snapshot_file, strings.preserve_parameters, &settings->preserve_parameters);
+}
+
+
+static int
+write_part_capture(FILE *snapshot_file, struct snapshot_part_capture *capture)
+{
+    capture->part.vertex_count = capture->vertices.size();
+    capture->part.triangle_count = capture->triangles.size();
+    capture->part.normal_count = capture->normals.size();
+    capture->part.normal_index_count = capture->normal_indices.size();
+
+    return write_text(snapshot_file, capture->strings.model_name, &capture->part.model_name) &&
+           write_text(snapshot_file, capture->strings.model_version, &capture->part.model_version) &&
+           write_text(snapshot_file, capture->strings.material_name, &capture->part.material_name) &&
+           write_range(snapshot_file, capture->vertices.data(),
+                       capture->vertices.size() * sizeof(capture->vertices[0]),
+                       &capture->part.vertices) &&
+           write_range(snapshot_file, capture->triangles.data(),
+                       capture->triangles.size() * sizeof(capture->triangles[0]),
+                       &capture->part.triangles) &&
+           write_range(snapshot_file, capture->normals.data(),
+                       capture->normals.size() * sizeof(capture->normals[0]),
+                       &capture->part.normals) &&
+           write_range(snapshot_file, capture->normal_indices.data(),
+                       capture->normal_indices.size() * sizeof(capture->normal_indices[0]),
+                       &capture->part.normal_indices);
+}
+
+
+static int
+finish_snapshot(FILE *snapshot_file, struct creo_brl_snapshot_header *header)
+{
+    const __int64 end_offset = _ftelli64(snapshot_file);
+
+    if (end_offset < 0)
+        return 0;
+    header->snapshot_size = (uint64_t)end_offset;
+    header->payload_size = header->snapshot_size - header->header_size;
+    return header->snapshot_size >= header->header_size;
+}
+
+
+static int
+write_single_part_snapshot(const char *snapshot_path,
+                           const struct creo_brl_snapshot_settings *settings,
+                           const struct snapshot_settings_strings& settings_strings,
+                           struct snapshot_part_capture *capture)
+{
+    struct creo_brl_snapshot_header header = {};
+    struct creo_brl_snapshot_single_part request = {};
+    FILE *snapshot_file = NULL;
+    int result = CREO_BRL_SNAPSHOT_CAPTURE_WRITE_FAILURE;
 
     if (!snapshot_open_for_write(snapshot_path, &snapshot_file))
-        return CREO_BRL_SNAPSHOT_CAPTURE_WRITE_FAILURE;
+        return result;
 
     memcpy(header.magic, creo_brl_snapshot_magic, sizeof(header.magic));
-    header.format_version = CREO_BRL_SNAPSHOT_FORMAT_VERSION;
+    header.format_version = CREO_BRL_SNAPSHOT_FORMAT_VERSION_V1;
     header.header_size = CREO_BRL_SNAPSHOT_HEADER_V1_SIZE;
     header.payload_type = CREO_BRL_SNAPSHOT_PAYLOAD_SINGLE_PART;
+    request.structure_size = CREO_BRL_SNAPSHOT_SINGLE_PART_V1_SIZE;
+    request.settings = *settings;
+    request.part = capture->part;
+
     if (fwrite(&header, 1, sizeof(header), snapshot_file) != sizeof(header) ||
         fwrite(&request, 1, sizeof(request), snapshot_file) != sizeof(request) ||
-        !write_text(snapshot_file, strings.output_path, &request.settings.output_path) ||
-        !write_text(snapshot_file, strings.log_path, &request.settings.log_path) ||
-        !write_text(snapshot_file, strings.material_path, &request.settings.material_path) ||
-        !write_text(snapshot_file, strings.rename_parameters, &request.settings.rename_parameters) ||
-        !write_text(snapshot_file, strings.preserve_parameters, &request.settings.preserve_parameters) ||
-        !write_text(snapshot_file, strings.model_name, &request.part.model_name) ||
-        !write_text(snapshot_file, strings.model_version, &request.part.model_version) ||
-        !write_text(snapshot_file, strings.material_name, &request.part.material_name) ||
-        !write_range(snapshot_file, vertices.data(), vertices.size() * sizeof(vertices[0]), &request.part.vertices) ||
-        !write_range(snapshot_file, triangles.data(), triangles.size() * sizeof(triangles[0]), &request.part.triangles) ||
-        !write_range(snapshot_file, normals.data(), normals.size() * sizeof(normals[0]), &request.part.normals) ||
-        !write_range(snapshot_file, normal_indices.data(), normal_indices.size() * sizeof(normal_indices[0]), &request.part.normal_indices)) {
-        fclose(snapshot_file);
-        return CREO_BRL_SNAPSHOT_CAPTURE_WRITE_FAILURE;
-    }
+        !write_settings_strings(snapshot_file, &request.settings, settings_strings) ||
+        !write_part_capture(snapshot_file, capture) ||
+        !finish_snapshot(snapshot_file, &header))
+        goto cleanup;
 
-    request.part.vertex_count = vertices.size();
-    request.part.triangle_count = triangles.size();
-    request.part.normal_count = normals.size();
-    request.part.normal_index_count = normal_indices.size();
-    header.snapshot_size = (uint64_t)_ftelli64(snapshot_file);
-    header.payload_size = header.snapshot_size - header.header_size;
-    if (header.snapshot_size < header.header_size || _fseeki64(snapshot_file, 0, SEEK_SET) != 0 ||
+    request.part = capture->part;
+    if (_fseeki64(snapshot_file, 0, SEEK_SET) != 0 ||
         fwrite(&header, 1, sizeof(header), snapshot_file) != sizeof(header) ||
-        fwrite(&request, 1, sizeof(request), snapshot_file) != sizeof(request)) {
-        fclose(snapshot_file);
-        return CREO_BRL_SNAPSHOT_CAPTURE_WRITE_FAILURE;
+        fwrite(&request, 1, sizeof(request), snapshot_file) != sizeof(request))
+        goto cleanup;
+
+    result = CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS;
+
+cleanup:
+    fclose(snapshot_file);
+    return result;
+}
+
+
+static int
+write_scene_snapshot(const char *snapshot_path, struct snapshot_scene_capture *capture,
+                     uint32_t root_type, uint32_t root_index)
+{
+    struct creo_brl_snapshot_header header = {};
+    struct creo_brl_snapshot_scene scene = {};
+    FILE *snapshot_file = NULL;
+    int result = CREO_BRL_SNAPSHOT_CAPTURE_WRITE_FAILURE;
+
+    if (!snapshot_open_for_write(snapshot_path, &snapshot_file))
+        return result;
+
+    memcpy(header.magic, creo_brl_snapshot_magic, sizeof(header.magic));
+    header.format_version = CREO_BRL_SNAPSHOT_FORMAT_VERSION_V2;
+    header.header_size = CREO_BRL_SNAPSHOT_HEADER_V1_SIZE;
+    header.payload_type = CREO_BRL_SNAPSHOT_PAYLOAD_SCENE;
+    scene.structure_size = CREO_BRL_SNAPSHOT_SCENE_V2_SIZE;
+    scene.settings = capture->settings;
+    scene.part_count = capture->parts.size();
+    scene.assembly_count = capture->assemblies.size();
+    scene.root_type = root_type;
+    scene.root_index = root_index;
+    if (scene.part_count > 0) {
+        scene.parts.offset = header.header_size + sizeof(scene);
+        scene.parts.size = scene.part_count * sizeof(struct creo_brl_snapshot_part);
+    }
+    if (scene.assembly_count > 0) {
+        scene.assemblies.offset = header.header_size + sizeof(scene) + scene.parts.size;
+        scene.assemblies.size = scene.assembly_count * sizeof(struct creo_brl_snapshot_assembly);
     }
 
+    if (fwrite(&header, 1, sizeof(header), snapshot_file) != sizeof(header) ||
+        fwrite(&scene, 1, sizeof(scene), snapshot_file) != sizeof(scene))
+        goto cleanup;
+    for (size_t index = 0; index < capture->parts.size(); ++index) {
+        if (fwrite(&capture->parts[index].part, 1, sizeof(capture->parts[index].part), snapshot_file) !=
+            sizeof(capture->parts[index].part))
+            goto cleanup;
+    }
+    for (size_t index = 0; index < capture->assemblies.size(); ++index) {
+        if (fwrite(&capture->assemblies[index].assembly, 1,
+                   sizeof(capture->assemblies[index].assembly), snapshot_file) !=
+            sizeof(capture->assemblies[index].assembly))
+            goto cleanup;
+    }
+    if (!write_settings_strings(snapshot_file, &scene.settings, capture->settings_strings))
+        goto cleanup;
+    for (size_t index = 0; index < capture->parts.size(); ++index) {
+        if (!write_part_capture(snapshot_file, &capture->parts[index]))
+            goto cleanup;
+    }
+    for (size_t index = 0; index < capture->assemblies.size(); ++index) {
+        struct snapshot_assembly_capture *assembly = &capture->assemblies[index];
+
+        assembly->assembly.member_count = assembly->members.size();
+        if (!write_text(snapshot_file, assembly->model_name, &assembly->assembly.model_name) ||
+            !write_text(snapshot_file, assembly->model_version, &assembly->assembly.model_version) ||
+            !write_range(snapshot_file, assembly->members.data(),
+                         assembly->members.size() * sizeof(assembly->members[0]),
+                         &assembly->assembly.members))
+            goto cleanup;
+    }
+    if (!finish_snapshot(snapshot_file, &header) ||
+        _fseeki64(snapshot_file, 0, SEEK_SET) != 0 ||
+        fwrite(&header, 1, sizeof(header), snapshot_file) != sizeof(header) ||
+        fwrite(&scene, 1, sizeof(scene), snapshot_file) != sizeof(scene))
+        goto cleanup;
+    if (scene.part_count > 0 &&
+        _fseeki64(snapshot_file, (__int64)scene.parts.offset, SEEK_SET) != 0)
+        goto cleanup;
+    for (size_t index = 0; index < capture->parts.size(); ++index) {
+        if (fwrite(&capture->parts[index].part, 1, sizeof(capture->parts[index].part), snapshot_file) !=
+            sizeof(capture->parts[index].part))
+            goto cleanup;
+    }
+    if (scene.assembly_count > 0 &&
+        _fseeki64(snapshot_file, (__int64)scene.assemblies.offset, SEEK_SET) != 0)
+        goto cleanup;
+    for (size_t index = 0; index < capture->assemblies.size(); ++index) {
+        if (fwrite(&capture->assemblies[index].assembly, 1,
+                   sizeof(capture->assemblies[index].assembly), snapshot_file) !=
+            sizeof(capture->assemblies[index].assembly))
+            goto cleanup;
+    }
+
+    result = CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS;
+
+cleanup:
     fclose(snapshot_file);
-    return CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS;
+    return result;
+}
+
+
+extern "C" int
+creo_brl_frontend_capture_snapshot(const char *snapshot_path)
+{
+    struct creo_brl_snapshot_settings settings = {};
+    struct snapshot_settings_strings settings_strings;
+    ProMdl model = NULL;
+    ProMdlType model_type;
+
+    if (!snapshot_path || !snapshot_path[0])
+        return CREO_BRL_SNAPSHOT_CAPTURE_INVALID_REQUEST;
+    if (!capture_settings(&settings, &settings_strings))
+        return CREO_BRL_SNAPSHOT_CAPTURE_DIALOG_FAILURE;
+    if (ProMdlCurrentGet(&model) != PRO_TK_NO_ERROR)
+        return CREO_BRL_SNAPSHOT_CAPTURE_NO_ACTIVE_MODEL;
+    if (ProMdlTypeGet(model, &model_type) != PRO_TK_NO_ERROR)
+        return CREO_BRL_SNAPSHOT_CAPTURE_MODEL_FAILURE;
+
+    if (model_type == PRO_MDL_PART) {
+        struct snapshot_part_capture capture;
+        const int result = capture_part_definition(model, &settings, &capture);
+
+        return result == CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS ?
+                   write_single_part_snapshot(snapshot_path, &settings, settings_strings, &capture) : result;
+    }
+    if (model_type == PRO_MDL_ASSEMBLY) {
+        struct snapshot_scene_capture capture = {};
+        uint32_t root_index = 0;
+        int result = CREO_BRL_SNAPSHOT_CAPTURE_MODEL_FAILURE;
+
+        capture.settings = settings;
+        capture.settings_strings = settings_strings;
+        result = capture_scene_assembly(model, &capture, &root_index);
+        return result == CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS ?
+                   write_scene_snapshot(snapshot_path, &capture,
+                                        CREO_BRL_SNAPSHOT_SCENE_NODE_ASSEMBLY, root_index) : result;
+    }
+
+    return CREO_BRL_SNAPSHOT_CAPTURE_UNSUPPORTED_MODEL;
 }
