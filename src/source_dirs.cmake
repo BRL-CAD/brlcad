@@ -95,7 +95,7 @@ set_deps(adrt       "libtclcad")
 set_deps(isst       "libtclcad;libqtcad")
 set_deps(rtwizard   "libtclcad")
 set_deps(archer     "libtclcad")
-set_deps(mged       "libtclcad;libmcpcad")
+set_deps(mged       "libtclcad;libmcpcad;libpkg")
 
 # Local Variables:
 # tab-width: 8
