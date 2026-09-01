@@ -30,7 +30,13 @@
  * Loopback only, by policy.  One client at a time.
  *
  * Usage:
- *   mcpcad_test_server [port] [db.g]
+ *   mcpcad_test_server [port | /path/to.sock] [db.g]
+ *
+ * A first argument beginning with '/' is taken as a Unix-domain socket
+ * path and served over local IPC instead of a loopback port; a port
+ * number never starts with '/', so the two cannot be confused.  IPC is
+ * the transport for environments where opening a TCP port is restricted,
+ * and it is the same choice 'mcp_listen ipc' offers inside MGED.
  *
  * defaults: port 5959, scratch db in the system temp directory.
  * The protocol is length-prefixed (see mcpcad.h) - poke it with the
@@ -45,16 +51,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
 
+#include "bio.h"
+#include "bnetwork.h"
 #include "bu/app.h"
 #include "bu/file.h"
 #include "bu/log.h"
+#include "bu/str.h"
 #include "ged.h"
 #include "mcpcad.h"
+#include "pkg.h"
 
 
 static void
@@ -69,6 +75,75 @@ sock_write(const char *data, size_t len, void *ctx)
 	data += n;
 	len -= (size_t)n;
     }
+}
+
+
+/* Serve one client on *cfd* until it hangs up or breaks the protocol. */
+static void
+serve_client(struct ged *gedp, int cfd)
+{
+    struct mcpcad_session *s = mcpcad_session_create(gedp, sock_write, &cfd);
+    char chunk[4096];
+    ssize_t n;
+
+    while ((n = read(cfd, chunk, sizeof(chunk))) > 0) {
+	if (mcpcad_session_input(s, chunk, (size_t)n) == MCPCAD_ERR_PROTO)
+	    break;  /* not our protocol; hang up */
+    }
+    mcpcad_session_destroy(s);
+}
+
+
+/* Accept loop over a local IPC socket, one client at a time.
+ *
+ * libpkg owns the address format and the listener, as it does for
+ * 'mcp_listen ipc' in MGED, so this file holds no AF_UNIX specifics. */
+static int
+serve_ipc(struct ged *gedp, const char *path)
+{
+    struct bu_vls addr = BU_VLS_INIT_ZERO;
+    pkg_listener_t *lp;
+
+    bu_vls_printf(&addr, "unix:%s", path);
+
+    /* A socket left behind by a killed run blocks bind().  Removing one
+     * blind would silence a live server instead, so connect first. */
+    if (bu_file_exists(path, NULL)) {
+	struct pkg_conn *probe = pkg_connect_addr(bu_vls_cstr(&addr), NULL, NULL);
+	if (probe && probe != PKC_ERROR) {
+	    pkg_close(probe);
+	    bu_log("ERROR: something is already listening on %s\n", path);
+	    bu_vls_free(&addr);
+	    return 1;
+	}
+	bu_file_delete(path);
+    }
+
+    lp = pkg_listen(bu_vls_cstr(&addr), NULL, 4, NULL);
+    bu_vls_free(&addr);
+    if (!lp) {
+	bu_log("ERROR: cannot create an IPC socket at %s\n", path);
+	return 1;
+    }
+
+    printf("mcpcad scaffold listening on %s\n", path);
+    fflush(stdout);
+
+    for (;;) {
+	struct pkg_conn *pc = pkg_accept(lp, NULL, NULL, 0);
+	if (!pc || pc == PKC_ERROR)
+	    continue;
+
+	printf("client connected\n");
+	fflush(stdout);
+
+	serve_client(gedp, pkg_get_read_fd(pc));
+
+	pkg_close(pc);          /* owns and closes the descriptor */
+	printf("client disconnected\n");
+	fflush(stdout);
+    }
+    /* not reached; Ctrl-C terminates */
 }
 
 
@@ -96,6 +171,13 @@ main(int argc, char *argv[])
     if (!gedp) {
 	bu_log("ERROR: cannot open or create %s\n", dbpath);
 	return 1;
+    }
+
+    /* A path rather than a port means local IPC.  A port number cannot
+     * begin with '/', so the forms are unambiguous. */
+    if (argc > 1 && argv[1][0] == '/') {
+	printf("database: %s\n", dbpath);
+	return serve_ipc(gedp, argv[1]);
     }
 
     lfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -135,9 +217,6 @@ main(int argc, char *argv[])
 
     for (;;) {
 	int cfd = accept(lfd, NULL, NULL);
-	struct mcpcad_session *s;
-	char chunk[4096];
-	ssize_t n;
 
 	if (cfd < 0)
 	    continue;
@@ -145,13 +224,8 @@ main(int argc, char *argv[])
 	printf("client connected\n");
 	fflush(stdout);
 
-	s = mcpcad_session_create(gedp, sock_write, &cfd);
-	while ((n = read(cfd, chunk, sizeof(chunk))) > 0) {
-	    if (mcpcad_session_input(s, chunk, (size_t)n) == MCPCAD_ERR_PROTO)
-		break;  /* not our protocol; hang up */
-	}
+	serve_client(gedp, cfd);
 
-	mcpcad_session_destroy(s);
 	close(cfd);
 	printf("client disconnected\n");
 	fflush(stdout);
