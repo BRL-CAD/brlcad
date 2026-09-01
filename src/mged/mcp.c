@@ -206,6 +206,8 @@ static const struct mcp_transport mcp_ipc = {
     mcp_ipc_recv, mcp_ipc_send, mcp_ipc_detach
 };
 
+#endif /* USE_TCL_CHAN */
+
 
 /**********************************************************************
  * Client: one connection's session, transport-agnostic.
@@ -324,6 +326,39 @@ mcp_tcp_accept(ClientData UNUSED(clientData), Tcl_Channel chan,
 }
 
 
+static int
+mcp_tcp_start(Tcl_Interp *interp, int want_port)
+{
+    int i;
+
+    /* loopback only - NULL host would bind all interfaces */
+    for (i = 0; i < MCP_PORT_TRIES; i++) {
+	mcp_tcp_listener = Tcl_OpenTcpServer(interp, want_port + i,
+					     "127.0.0.1", mcp_tcp_accept, NULL);
+	if (mcp_tcp_listener) {
+	    mcp_tcp_port = want_port + i;
+	    break;
+	}
+    }
+
+    if (!mcp_tcp_listener) {
+	Tcl_AppendResult(interp, "mcp_listen: could not bind a loopback "
+			 "port", NULL);
+	return TCL_ERROR;
+    }
+    return TCL_OK;
+}
+
+
+/* Local IPC needs Tcl_CreateFileHandler, which tclDecls.h declares for UNIX
+ * and macOS but not for Windows.  MGED already keys that distinction off
+ * USE_TCL_CHAN (see mged.h, the same key fbserv.c uses to choose its I/O
+ * mechanism), so the transport is built only where descriptors are usable and
+ * the command reports its absence elsewhere.  IPC is demonstrated on Linux;
+ * Windows would want a named pipe implementation, tested separately.
+ */
+#ifndef USE_TCL_CHAN
+
 static void
 mcp_ipc_accept(ClientData UNUSED(clientData), int UNUSED(mask))
 {
@@ -349,30 +384,6 @@ mcp_ipc_accept(ClientData UNUSED(clientData), int UNUSED(mask))
     c = mcp_client_new(&mcp_ipc, (void *)conn);
     Tcl_CreateFileHandler(fd, TCL_READABLE, mcp_client_readable,
 			  (ClientData)c);
-}
-
-
-static int
-mcp_tcp_start(Tcl_Interp *interp, int want_port)
-{
-    int i;
-
-    /* loopback only - NULL host would bind all interfaces */
-    for (i = 0; i < MCP_PORT_TRIES; i++) {
-	mcp_tcp_listener = Tcl_OpenTcpServer(interp, want_port + i,
-					     "127.0.0.1", mcp_tcp_accept, NULL);
-	if (mcp_tcp_listener) {
-	    mcp_tcp_port = want_port + i;
-	    break;
-	}
-    }
-
-    if (!mcp_tcp_listener) {
-	Tcl_AppendResult(interp, "mcp_listen: could not bind a loopback "
-			 "port", NULL);
-	return TCL_ERROR;
-    }
-    return TCL_OK;
 }
 
 
