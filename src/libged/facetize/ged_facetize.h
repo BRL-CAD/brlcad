@@ -59,6 +59,7 @@ struct _ged_facetize_state {
     int tolerated_failures;
     int tolerated_failure_details;
     int tolerated_failure_omitted;
+    size_t inspection_regions;
 
     /* Perturb validation thresholds (percentage, 0–100).
      * Trigger the perturb retry when the CSG–BoT difference exceeds these
@@ -70,9 +71,13 @@ struct _ged_facetize_state {
     struct bu_vls *wfile;
     struct bu_vls *bname;
     struct bu_vls *log_file;
+    int log_file_is_temporary;
     FILE *lfile;
     struct bu_vls *failure_msg;
     struct bu_vls *tolerated_failure_log;
+    struct bu_vls *region_summary;
+    struct bu_vls *primitive_summary;
+    struct bu_vls *inspection_log;
 
     // Processing
     int regions;
@@ -99,6 +104,11 @@ struct _ged_facetize_state {
     void *method_opts;
     void *log_s;
 
+    /* Cache-local write measurements seed and refine worker write deadlines. */
+    int write_profiled;
+    double write_profile_bytes;
+    double write_profile_usec;
+
     /* Instance-aware variant plan (FacetizeVariantPlan *, NULL until planning) */
     void *variant_plan;
 };
@@ -116,7 +126,7 @@ extern void
 facetize_tolerated_failure(struct _ged_facetize_state *, const char *, ...) _BU_ATTR_PRINTF23;
 
 extern void
-facetize_tolerated_summary(struct _ged_facetize_state *);
+facetize_summary(struct _ged_facetize_state *);
 
 extern int
 _db_uniq_test(struct bu_vls *n, void *data);
@@ -154,7 +164,7 @@ extern struct rt_bot_internal *
 bot_fixup(struct _ged_facetize_state *s, struct db_i *wdbip, struct directory *bot_dp, const char *bname);
 
 extern void
-facetize_primitives_summary(struct _ged_facetize_state *s);
+facetize_collect_primitive_summary(struct _ged_facetize_state *s);
 
 __END_DECLS
 
@@ -236,14 +246,6 @@ _ged_facetize_build_variant_plan(struct _ged_facetize_state *s,
 extern int
 _ged_facetize_tessellate_variant_names(struct _ged_facetize_state *s,
                                        FacetizeVariantPlan *plan);
-
-/** Forward declaration for use by plan.cpp */
-extern int
-tess_run(struct _ged_facetize_state *s,
-         const char **tess_cmd,
-         int tess_cmd_cnt,
-         fastf_t max_time,
-         int ocnt);
 
 #endif /* LIBGED_FACETIZE_GED_PRIVATE_H */
 

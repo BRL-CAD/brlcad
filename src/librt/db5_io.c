@@ -976,6 +976,17 @@ rt_db_external5_to_internal5(
     ip->idb_minor_type = raw.minor_type;
     ip->idb_meth = &OBJ[id];
 
+    /* Zero-vertex, zero-face BoTs are valid empty geometry.  Report only
+     * incomplete BoTs, here where the database object name is available. */
+    if (id == ID_BOT) {
+	const struct rt_bot_internal *bot =
+	    (const struct rt_bot_internal *)ip->idb_ptr;
+	if ((bot->vertices == NULL || bot->faces == NULL) &&
+		(bot->num_vertices > 0 || bot->num_faces > 0))
+	    bu_log("WARNING: BoT '%s' contains %zu vertices, %zu faces\n",
+		    name, bot->num_vertices, bot->num_faces);
+    }
+
     /* Some comb methods need to know about the name of the original database
      * object.  ft_import5 doesn't have that info and so can't record it - do
      * so here.  */

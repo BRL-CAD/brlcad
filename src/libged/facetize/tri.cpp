@@ -41,16 +41,53 @@
 #include "bg/trimesh.h"
 #include "bu/app.h"
 #include "bu/path.h"
+#include "bu/process.h"
 #include "bu/snooze.h"
 #include "bu/datetime.h"
 #include "../ged_private.h"
 #include "./ged_facetize.h"
 #include "./tess_opts.h"
-#include "./subprocess.h"
+#include "./worker.h"
 
 static const size_t FACETIZE_EMPTY_CHECK_CROFTON_RAYS = 800u;
 static const double FACETIZE_EMPTY_CHECK_REL_VOL_TOL = 1.0e-9;
 static const double FACETIZE_EMPTY_CHECK_ABS_VOL_TOL = 1.0e-12;
+static const int FACETIZE_METHOD_COMMAND_INDEX = 5;
+static const double FACETIZE_USEC_TO_SEC_DIVISOR = 1.0e6;
+static const double FACETIZE_WRITE_TIMEOUT_FACTOR = 10.0;
+static const double FACETIZE_WRITE_TIMEOUT_MIN_SEC = 5.0;
+static const double FACETIZE_WRITE_TIMEOUT_MAX_SEC = 300.0;
+static const double FACETIZE_IO_PROBE_DURATION_SEC = 1.0;
+static const size_t FACETIZE_MIB_BYTES = 1024u * 1024u;
+static const size_t FACETIZE_IO_PROBE_CHUNK_BYTES = FACETIZE_MIB_BYTES;
+static const size_t FACETIZE_IO_PROBE_MAX_BYTES = 128u * FACETIZE_MIB_BYTES;
+static const size_t FACETIZE_WRITE_RATE_MIN_SAMPLE_BYTES = FACETIZE_MIB_BYTES;
+static const size_t FACETIZE_IO_BUFFER_SIZE = 4096u;
+static const int FACETIZE_POLL_INTERVAL_USEC = 1000;
+static const int FACETIZE_PROGRESS_BATCH_MIN = 100;
+static const int FACETIZE_PROGRESS_INTERVAL_SEC = 5;
+static const int FACETIZE_SHUTDOWN_TIMEOUT_SEC = 5;
+
+enum tess_work_type {
+    TESS_WORK_ORIGINAL_PRIMITIVE,
+    TESS_WORK_PERTURBATION_VARIANT,
+    TESS_WORK_PLATE_MODE_PRIMITIVE
+};
+
+static const char *
+tess_work_description(enum tess_work_type work_type, int count)
+{
+    switch (work_type) {
+	case TESS_WORK_ORIGINAL_PRIMITIVE:
+	    return (count == 1) ? "original primitive" : "original primitives";
+	case TESS_WORK_PERTURBATION_VARIANT:
+	    return (count == 1) ? "perturbation variant" : "perturbation variants";
+	case TESS_WORK_PLATE_MODE_PRIMITIVE:
+	    return (count == 1) ? "plate-mode primitive" : "plate-mode primitives";
+    }
+
+    return (count == 1) ? "input" : "inputs";
+}
 
 static const char *
 bool_op_name(int op)
@@ -650,31 +687,37 @@ manifold_do_bool(
 std::vector<std::string>
 tess_avail_methods()
 {
-
     // Build up the path to the ged_exec executable
     char tess_exec[MAXPATHLEN];
     bu_dir(tess_exec, MAXPATHLEN, BU_DIR_BIN, "ged_exec", BU_DIR_EXT, NULL);
 
-    const char *tess_cmd[MAXPATHLEN] = {NULL};
+    const char *tess_cmd[4] = {NULL};
     tess_cmd[ 0] = tess_exec;
     tess_cmd[ 1] = "facetize_process";
     tess_cmd[ 2] = "--list-methods";
     tess_cmd[ 3] = NULL;
 
-    struct bu_process* p;
-    bu_process_create(&p, tess_cmd, BU_PROCESS_HIDE_WINDOW);
-
-    char mraw[MAXPATHLEN] = {'\0'};
-    int read_res = bu_process_read_n(p, BU_PROCESS_STDOUT, MAXPATHLEN, mraw);
-
-    if (bu_process_wait_n(&p, 0) || (read_res <= 0)) {
-	// wait error or read error
-	bu_log("%s %s - wait or read error\n", tess_cmd[0], tess_cmd[1]);
-	std::vector<std::string> empty;
-	return empty;
+    struct bu_process *p = NULL;
+    bu_process_create(&p, tess_cmd,
+	    BU_PROCESS_HIDE_WINDOW | BU_PROCESS_OUT_EQ_ERR);
+    if (!p) {
+	bu_log("Unable to start %s %s\n", tess_cmd[0], tess_cmd[1]);
+	return std::vector<std::string>();
     }
 
-    std::string mstr = std::string((const char *)mraw);
+    char buffer[FACETIZE_IO_BUFFER_SIZE];
+    std::string mstr;
+    int read_res = 0;
+    while ((read_res = bu_process_read_n(p, BU_PROCESS_STDOUT,
+		    (int)sizeof(buffer), buffer)) > 0)
+	mstr.append(buffer, (size_t)read_res);
+
+    if (bu_process_wait_n(&p, 0) || mstr.empty()) {
+	// wait error or read error
+	bu_log("%s %s - wait or read error\n", tess_cmd[0], tess_cmd[1]);
+	return std::vector<std::string>();
+    }
+
     std::stringstream mstream(mstr);
     std::string m;
     std::vector<std::string> methods;
@@ -685,185 +728,448 @@ tess_avail_methods()
     return methods;
 }
 
-static const char *
-tess_cmd_method(const char **tess_cmd)
+static void
+tess_drain_stdout(struct _ged_facetize_state *s, struct bu_process *p,
+	FacetizeWorkerClient &worker_channel, FacetizeWorkerStatus *status)
 {
-    if (!tess_cmd)
-	return "unknown";
-
-    return tess_cmd[5] ? tess_cmd[5] : "unknown";
+    char buffer[FACETIZE_IO_BUFFER_SIZE];
+    int fd = bu_process_fileno(p, BU_PROCESS_STDOUT);
+    FacetizeWorkerStatus ignored_status;
+    FacetizeWorkerStatus *output_status = status ? status : &ignored_status;
+    std::vector<std::string> diagnostics;
+    while (fd >= 0 && bu_process_pending(fd)) {
+	int count = bu_process_read_n(p, BU_PROCESS_STDOUT,
+		(int)sizeof(buffer), buffer);
+	if (count <= 0)
+	    break;
+	worker_channel.consume_output(buffer, (size_t)count, *output_status,
+		diagnostics);
+    }
+    for (const std::string &diagnostic : diagnostics)
+	facetize_log(s, 1, "%s\n", diagnostic.c_str());
 }
 
 static void
-tess_cmd_work_label(struct bu_vls *label, const char **tess_cmd, int tess_cmd_cnt, int ocnt)
+tess_drain_stderr(struct _ged_facetize_state *s, struct bu_process *p)
 {
-    if (!label)
-	return;
-
-    if (!tess_cmd || tess_cmd_cnt <= 0 || ocnt <= 0 || ocnt > tess_cmd_cnt) {
-	bu_vls_printf(label, "unknown input(s) with method %s", tess_cmd_method(tess_cmd));
-	return;
+    char buffer[FACETIZE_IO_BUFFER_SIZE];
+    int fd = bu_process_fileno(p, BU_PROCESS_STDERR);
+    while (fd >= 0 && bu_process_pending(fd)) {
+	int count = bu_process_read_n(p, BU_PROCESS_STDERR,
+		(int)sizeof(buffer), buffer);
+	if (count <= 0)
+	    break;
+	facetize_log(s, 1, "%.*s", count, buffer);
     }
-
-    if (ocnt == 1) {
-	const char *obj = tess_cmd[tess_cmd_cnt - 1];
-	bu_vls_printf(label, "%s with method %s", obj ? obj : "unknown input", tess_cmd_method(tess_cmd));
-	return;
-    }
-
-    bu_vls_printf(label, "%d solids with method %s", ocnt, tess_cmd_method(tess_cmd));
 }
 
-int
-tess_run(struct _ged_facetize_state *s, const char **tess_cmd, int tess_cmd_cnt, fastf_t max_time, int ocnt)
+static double
+tess_write_timeout_seconds(size_t payload_size, double profiled_write_bytes,
+	double profiled_write_usec)
 {
-    if (!s || !tess_cmd || !tess_cmd[3])
+    if (profiled_write_bytes <= 0.0 || profiled_write_usec <= 0.0)
+	return FACETIZE_WRITE_TIMEOUT_MAX_SEC;
+
+    double bytes_per_second = profiled_write_bytes *
+	FACETIZE_USEC_TO_SEC_DIVISOR / profiled_write_usec;
+    double projected_seconds = (double)payload_size / bytes_per_second;
+    double timeout_seconds = projected_seconds * FACETIZE_WRITE_TIMEOUT_FACTOR;
+    return std::min(FACETIZE_WRITE_TIMEOUT_MAX_SEC,
+	    std::max(FACETIZE_WRITE_TIMEOUT_MIN_SEC, timeout_seconds));
+}
+
+static int
+tess_write_probe(const char *work_file, double *written_bytes,
+	double *write_usec)
+{
+    if (!work_file || !written_bytes || !write_usec)
 	return BRLCAD_ERROR;
 
-    std::string wfile(tess_cmd[3]);
-    std::string wfilebak = wfile + std::string(".bak");
-    {
-	// Before the run, prepare a backup file
-	std::ifstream workfile(wfile, std::ios::binary);
-	std::ofstream bakfile(wfilebak, std::ios::binary);
-	if (!workfile.is_open() || !bakfile.is_open()) {
-	    facetize_log(s, 0, "FACETIZE: unable to prepare tessellation backup %s for working file %s\n", wfilebak.c_str(), wfile.c_str());
-	    return BRLCAD_ERROR;
-	}
-	bakfile << workfile.rdbuf();
-	workfile.close();
-	bakfile.close();
-    }
+    *written_bytes = 0.0;
+    *write_usec = 0.0;
+    std::string probe_file = std::string(work_file) + ".io_probe";
+    (void)bu_file_delete(probe_file.c_str());
 
-    // Record the actual command being use to trigger the subprocess
-    struct bu_vls cmd = BU_VLS_INIT_ZERO;
-    for (int i = 0; i < tess_cmd_cnt ; i++)
-	bu_vls_printf(&cmd, "%s ", tess_cmd[i]);
-    facetize_log(s, 2, "%s\n", bu_vls_cstr(&cmd));
-    bu_vls_free(&cmd);
+    std::vector<char> probe_data(FACETIZE_IO_PROBE_CHUNK_BYTES, 0);
+    std::ofstream output(probe_file.c_str(),
+	    std::ios::binary | std::ios::trunc);
+    if (!output.is_open())
+	return BRLCAD_ERROR;
 
-    // Verbose progress line showing how many objects we're working on
-    if (ocnt == 1)
-	facetize_log(s, 1, "Attempting to triangulate %s...", tess_cmd[tess_cmd_cnt-ocnt]);
-    if (ocnt > 1)
-	facetize_log(s, 1, "Attempting to triangulate %d solids...", ocnt);
-
+    size_t total_written = 0;
     int64_t start = bu_gettime();
-    int64_t elapsed = 0;
-    fastf_t seconds = 0.0;
-    tess_cmd[tess_cmd_cnt] = NULL; // Make sure we're NULL terminated
-    struct subprocess_s p;
-    if (subprocess_create(tess_cmd, subprocess_option_no_window|subprocess_option_enable_async|subprocess_option_inherit_environment, &p)) {
-	// Unable to create subprocess??
-	struct bu_vls label = BU_VLS_INIT_ZERO;
-	tess_cmd_work_label(&label, tess_cmd, tess_cmd_cnt, ocnt);
-	facetize_log(s, 0, "FACETIZE: tessellation failed: unable to start facetize_process subprocess for %s\n", bu_vls_cstr(&label));
-	bu_vls_free(&label);
-
-	return BRLCAD_ERROR;
+    while (total_written < FACETIZE_IO_PROBE_MAX_BYTES) {
+	size_t write_size = std::min(FACETIZE_IO_PROBE_CHUNK_BYTES,
+		FACETIZE_IO_PROBE_MAX_BYTES - total_written);
+	output.write(probe_data.data(), (std::streamsize)write_size);
+	if (!output.good())
+	    break;
+	total_written += write_size;
+	if (bu_gettime() - start >=
+		BU_SEC2USEC(FACETIZE_IO_PROBE_DURATION_SEC))
+	    break;
     }
-    while (subprocess_alive(&p)) {
-	std::this_thread::sleep_for(std::chrono::milliseconds(100));
-	elapsed = bu_gettime() - start;
-	seconds = elapsed / 1000000.0;
+    output.flush();
+    output.close();
+    bool write_ok = output.good();
+    int64_t elapsed = bu_gettime() - start;
+    bool deleted = bu_file_delete(probe_file.c_str());
+    if (!write_ok || !deleted || !total_written || elapsed <= 0)
+	return BRLCAD_ERROR;
 
-	// Check for and pass along intermediate output
-	char curr_out[MAXPATHLEN*10] = {'\0'};
-	subprocess_read_stdout(&p, curr_out, MAXPATHLEN*10);
-	if (strlen(curr_out))
-	    facetize_log(s, 1, "%s", curr_out);
-	char curr_err[MAXPATHLEN*10] = {'\0'};
-	subprocess_read_stderr(&p, curr_err, MAXPATHLEN*10);
-	if (strlen(curr_err))
-	    facetize_log(s, 1, "%s", curr_err);
+    *written_bytes = (double)total_written;
+    *write_usec = (double)elapsed;
+    return BRLCAD_OK;
+}
 
-	if (seconds > max_time) {
-	    // if we timeout, cleanup and return error
-	    subprocess_terminate(&p);
+static int
+tess_file_copy(const char *source, const char *destination)
+{
+    std::ifstream input(source, std::ios::binary);
+    std::ofstream output(destination, std::ios::binary | std::ios::trunc);
+    if (!input.is_open() || !output.is_open())
+	return BRLCAD_ERROR;
 
-	    struct bu_vls label = BU_VLS_INIT_ZERO;
-	    tess_cmd_work_label(&label, tess_cmd, tess_cmd_cnt, ocnt);
+    output << input.rdbuf();
+    output.flush();
+    return (!input.bad() && output.good()) ? BRLCAD_OK : BRLCAD_ERROR;
+}
+
+static int
+tess_process_reap(struct _ged_facetize_state *s, struct bu_process **p,
+	FacetizeWorkerClient &worker_channel, bool terminate)
+{
+    if (!p || !*p)
+	return BRLCAD_ERROR;
+    if (terminate)
+	(void)bu_process_terminate(*p);
+
+    int64_t deadline = bu_gettime() +
+	BU_SEC2USEC(FACETIZE_SHUTDOWN_TIMEOUT_SEC);
+    int poll_result = bu_process_poll(*p, NULL);
+    while (poll_result == 0 && bu_gettime() < deadline) {
+	tess_drain_stdout(s, *p, worker_channel, NULL);
+	tess_drain_stderr(s, *p);
+	(void)bu_snooze(FACETIZE_POLL_INTERVAL_USEC);
+	poll_result = bu_process_poll(*p, NULL);
+    }
+    tess_drain_stdout(s, *p, worker_channel, NULL);
+    tess_drain_stderr(s, *p);
+    if (poll_result != 1)
+	(void)bu_process_terminate(*p);
+    return bu_process_wait_n(p, 0);
+}
+
+static int
+tess_process_stop(struct _ged_facetize_state *s, struct bu_process **p,
+	FILE *&worker_input, FacetizeWorkerClient &worker_channel, bool terminate)
+{
+    int status = tess_process_reap(s, p, worker_channel, terminate);
+    worker_input = NULL;
+    worker_channel.reset(NULL);
+    return status;
+}
+
+static int
+tess_process_start(struct bu_process **p, FILE **worker_input,
+	FacetizeWorkerClient &worker_channel,
+	std::vector<const char *> &worker_cmd)
+{
+    if (!p || !worker_input)
+	return BRLCAD_ERROR;
+
+    *p = NULL;
+    *worker_input = NULL;
+    worker_channel.reset(NULL);
+    bu_process_create(p, worker_cmd.data(), BU_PROCESS_HIDE_WINDOW);
+    if (*p) {
+	*worker_input = bu_process_file_open(*p, BU_PROCESS_STDIN);
+	worker_channel.reset(*worker_input);
+    }
+    return (*p && *worker_input) ? BRLCAD_OK : BRLCAD_ERROR;
+}
+
+static int
+tess_run(struct _ged_facetize_state *s, const char **tess_cmd,
+	int tess_cmd_cnt, fastf_t max_time, int ocnt,
+	std::vector<std::string> *failed_names, enum tess_work_type work_type,
+	bool replay)
+{
+    if (!s || !tess_cmd || !tess_cmd[3] || ocnt <= 0 ||
+	    ocnt > tess_cmd_cnt || !failed_names)
+	return BRLCAD_ERROR;
+    failed_names->clear();
+
+    const int fixed_cnt = tess_cmd_cnt - ocnt;
+    const char *work_file = tess_cmd[3];
+    if (!s->write_profiled) {
+	if (tess_write_probe(work_file, &s->write_profile_bytes,
+		&s->write_profile_usec) != BRLCAD_OK) {
 	    facetize_log(s, 0,
-		    "FACETIZE: tessellation timed out after %.1f seconds (limit %.1f) for %s. Increase --max-time or the method max_time option if this conversion is expected to be slow.\n",
-		    seconds, max_time, bu_vls_cstr(&label));
-	    bu_vls_free(&label);
-	    if (s->verbosity >= 0) {
-		char mraw[MAXPATHLEN*10] = {'\0'};
-		subprocess_read_stdout(&p, mraw, MAXPATHLEN*10);
-		if (strlen(mraw))
-		    facetize_log(s, 0, "%s\n", mraw);
-		char mraw2[MAXPATHLEN*10] = {'\0'};
-		subprocess_read_stderr(&p, mraw2, MAXPATHLEN*10);
-		if (strlen(mraw2))
-		    facetize_log(s, 0, "%s\n", mraw2);
-	    }
-	    subprocess_destroy(&p);
-
-	    // Because we had to kill the process, there's no way of knowing
-	    // whether we interrupted I/O in a state that could result in a
-	    // corrupted .g file.  Restore the pre-run state of the .g file -
-	    // we may have to redo some work, but this at least ensures we
-	    // won't have strange garbage corrupting subsequent processing.
-	    std::ifstream bakfile(wfilebak, std::ios::binary);
-	    std::ofstream workfile(wfile, std::ios::binary);
-	    if (!workfile.is_open() || !bakfile.is_open()) {
-		facetize_log(s, 0, "FACETIZE: failed to restore working file %s from backup %s after tessellation timeout\n", wfile.c_str(), wfilebak.c_str());
-		return BRLCAD_ERROR;
-	    }
-	    workfile << bakfile.rdbuf();
-	    workfile.close();
-	    bakfile.close();
-
-
+		    "FACETIZE: unable to profile database writes in the working cache\n");
 	    return BRLCAD_ERROR;
 	}
+	s->write_profiled = 1;
+	double bytes_per_second = s->write_profile_bytes *
+	    FACETIZE_USEC_TO_SEC_DIVISOR / s->write_profile_usec;
+	facetize_log(s, 1,
+		"FACETIZE: measured working-cache write speed: %.1f MiB/s using %.1f MiB\n",
+		bytes_per_second / FACETIZE_MIB_BYTES,
+		s->write_profile_bytes / FACETIZE_MIB_BYTES);
     }
-    int w_rc;
-    if (subprocess_join(&p, &w_rc)) {
-	// Unable to join??
-	struct bu_vls label = BU_VLS_INIT_ZERO;
-	tess_cmd_work_label(&label, tess_cmd, tess_cmd_cnt, ocnt);
-	facetize_log(s, 0, "FACETIZE: tessellation failed: unable to collect subprocess status for %s\n", bu_vls_cstr(&label));
-	bu_vls_free(&label);
-	if (s->verbosity >= 0) {
-	    char mraw[MAXPATHLEN*10] = {'\0'};
-	    subprocess_read_stdout(&p, mraw, MAXPATHLEN*10);
-	    if (strlen(mraw))
-		facetize_log(s, 0, "%s\n", mraw);
-	    char mraw2[MAXPATHLEN*10] = {'\0'};
-	    subprocess_read_stderr(&p, mraw2, MAXPATHLEN*10);
-	    if (strlen(mraw2))
-		facetize_log(s, 0, "%s\n", mraw2);
-	}
+
+    std::string backup_file = std::string(work_file) + ".bak";
+    if (tess_file_copy(work_file, backup_file.c_str()) != BRLCAD_OK) {
+	bu_file_delete(backup_file.c_str());
+	facetize_log(s, 0, "FACETIZE: unable to back up working database %s\n",
+		work_file);
 	return BRLCAD_ERROR;
     }
 
-    bu_file_delete(wfilebak.c_str());
+    std::vector<const char *> worker_cmd;
+    for (int i = 0; i < fixed_cnt; i++)
+	worker_cmd.push_back(tess_cmd[i]);
+    worker_cmd.push_back("--server");
+    worker_cmd.push_back(NULL);
 
-    if (s->verbosity >= 0) {
-	char mraw[MAXPATHLEN*10] = {'\0'};
-	subprocess_read_stdout(&p, mraw, MAXPATHLEN*10);
-	if (strlen(mraw))
-	    facetize_log(s, 0, "%s\n", mraw);
-	char mraw2[MAXPATHLEN*10] = {'\0'};
-	subprocess_read_stderr(&p, mraw2, MAXPATHLEN*10);
-	if (strlen(mraw2))
-	    facetize_log(s, 0, "%s\n", mraw2);
-    }
-
-    // Needed to clean up file handles
-    subprocess_destroy(&p);
-
-    if (w_rc == BRLCAD_OK) {
-	facetize_log(s, 1, " Success.\n");
+    struct bu_process *p = NULL;
+    FILE *worker_input = NULL;
+    const char *method = (tess_cmd_cnt > FACETIZE_METHOD_COMMAND_INDEX &&
+	    tess_cmd[FACETIZE_METHOD_COMMAND_INDEX]) ?
+	tess_cmd[FACETIZE_METHOD_COMMAND_INDEX] : "unknown";
+    int64_t run_start = bu_gettime();
+    int64_t next_progress = run_start +
+	BU_SEC2USEC(FACETIZE_PROGRESS_INTERVAL_SEC);
+    int start_msg_level = (ocnt >= FACETIZE_PROGRESS_BATCH_MIN) ? 0 : 1;
+    const char *work_description = tess_work_description(work_type, ocnt);
+    if (replay) {
+	facetize_log(s, start_msg_level,
+		"FACETIZE: retrying tessellation of %d %s after restoring the working database, using method %s...\n",
+		ocnt, work_description, method);
     } else {
-	struct bu_vls label = BU_VLS_INIT_ZERO;
-	tess_cmd_work_label(&label, tess_cmd, tess_cmd_cnt, ocnt);
-	facetize_log(s, 0, "FACETIZE: tessellation failed: facetize_process exited with code %d for %s\n", w_rc, bu_vls_cstr(&label));
-	bu_vls_free(&label);
+	facetize_log(s, start_msg_level,
+		"FACETIZE: tessellating %d %s with method %s...\n",
+		ocnt, work_description, method);
     }
 
-    return (w_rc ? BRLCAD_ERROR : BRLCAD_OK);
+    bool unsafe_failure = false;
+    FacetizeWorkerClient worker_channel;
+    for (int obj_ind = fixed_cnt; obj_ind < tess_cmd_cnt; obj_ind++) {
+	const char *object_name = tess_cmd[obj_ind];
+	if (p && bu_process_poll(p, NULL) != 0) {
+	    (void)tess_process_stop(s, &p, worker_input, worker_channel,
+		    false);
+	}
+	if (!p && tess_process_start(&p, &worker_input, worker_channel,
+		worker_cmd) !=
+		BRLCAD_OK) {
+	    for (int failed_ind = obj_ind; failed_ind < tess_cmd_cnt;
+		    failed_ind++)
+		failed_names->push_back(tess_cmd[failed_ind]);
+	    (void)tess_process_stop(s, &p, worker_input, worker_channel,
+		    true);
+	    facetize_log(s, 0,
+		    "FACETIZE: unable to start tessellation worker\n");
+	    break;
+	}
+
+	if (!worker_channel.send_request(object_name)) {
+	    facetize_log(s, 0,
+		    "FACETIZE: unable to submit %s to tessellation worker\n",
+		    object_name);
+	    failed_names->push_back(object_name);
+	    (void)tess_process_stop(s, &p, worker_input, worker_channel,
+		    true);
+	    continue;
+	}
+
+	FacetizeWorkerStatus worker_status;
+	bool write_started = false;
+	bool request_interrupted = false;
+	bool tessellation_timed_out = false;
+	bool write_timed_out = false;
+	int64_t request_start = bu_gettime();
+	int64_t write_start = 0;
+	int64_t write_deadline = 0;
+	double write_timeout = 0.0;
+	while (!worker_status.result_received) {
+	    tess_drain_stdout(s, p, worker_channel, &worker_status);
+	    tess_drain_stderr(s, p);
+
+	    int64_t now = bu_gettime();
+	    if (worker_status.write_ready && !write_started) {
+		if (max_time > 0 &&
+			now - request_start >= BU_SEC2USEC(max_time)) {
+		    request_interrupted = true;
+		    tessellation_timed_out = true;
+		    break;
+		}
+		// Sending the acknowledgment may let the worker begin modifying the
+		// database, even if the pipe reports a write error to the parent.
+		write_started = true;
+		write_timeout = tess_write_timeout_seconds(
+			worker_status.payload_size, s->write_profile_bytes,
+			s->write_profile_usec);
+		facetize_log(s, 1,
+			"FACETIZE: worker ready to write %zu bytes for %s (%.1f second limit)\n",
+			worker_status.payload_size, object_name, write_timeout);
+		write_start = now;
+		write_deadline = write_start + BU_SEC2USEC(write_timeout);
+		if (!worker_channel.send_write_proceed()) {
+		    request_interrupted = true;
+		    break;
+		}
+		continue;
+	    }
+	    if (worker_status.result_received) {
+		if (write_started && !worker_status.write_done) {
+		    request_interrupted = true;
+		    break;
+		}
+		if (worker_status.write_done &&
+			worker_status.result == BRLCAD_OK && now > write_start &&
+			worker_status.payload_size >=
+			FACETIZE_WRITE_RATE_MIN_SAMPLE_BYTES) {
+		    s->write_profile_bytes += worker_status.payload_size;
+		    s->write_profile_usec += now - write_start;
+		}
+		break;
+	    }
+	    if (bu_process_poll(p, NULL) != 0) {
+		request_interrupted = true;
+		break;
+	    }
+
+	    if (!write_started && max_time > 0 &&
+		    now - request_start >= BU_SEC2USEC(max_time)) {
+		request_interrupted = true;
+		tessellation_timed_out = true;
+		break;
+	    }
+	    if (write_started && now >= write_deadline) {
+		request_interrupted = true;
+		write_timed_out = true;
+		break;
+	    }
+	    if (now >= next_progress) {
+		if (write_started) {
+		    facetize_log(s, 0,
+			    "FACETIZE: writing tessellation for %s with method %s (%d of %d complete, %.1f seconds elapsed; %.1f second write limit)\n",
+			    object_name, method, obj_ind - fixed_cnt, ocnt,
+			    (now - run_start) / FACETIZE_USEC_TO_SEC_DIVISOR,
+			    write_timeout);
+		} else {
+		    facetize_log(s, 0,
+			    "FACETIZE: tessellating %s with method %s (%d of %d complete, %.1f seconds elapsed)\n",
+			    object_name, method, obj_ind - fixed_cnt, ocnt,
+			    (now - run_start) / FACETIZE_USEC_TO_SEC_DIVISOR);
+		}
+		next_progress = now +
+		    BU_SEC2USEC(FACETIZE_PROGRESS_INTERVAL_SEC);
+	    }
+	    (void)bu_snooze(FACETIZE_POLL_INTERVAL_USEC);
+	}
+
+	if (request_interrupted) {
+	    if (write_timed_out) {
+		facetize_log(s, 0,
+			"FACETIZE: database write timed out after %.1f seconds for %s with method %s\n",
+			write_timeout, object_name, method);
+	    } else if (tessellation_timed_out) {
+		facetize_log(s, 0,
+			"FACETIZE: tessellation timed out after %.1f seconds for %s with method %s\n",
+			max_time, object_name, method);
+	    } else if (write_started) {
+		facetize_log(s, 0,
+			"FACETIZE: tessellation worker failed while writing %s with method %s\n",
+			object_name, method);
+	    } else {
+		facetize_log(s, 0,
+			"FACETIZE: tessellation worker failed while processing %s with method %s\n",
+			object_name, method);
+	    }
+	    failed_names->push_back(object_name);
+	    (void)tess_process_stop(s, &p, worker_input, worker_channel,
+		    true);
+	    if (write_started) {
+		unsafe_failure = true;
+		break;
+	    }
+	    continue;
+	}
+
+	if (worker_status.result != BRLCAD_OK) {
+	    failed_names->push_back(object_name);
+	    if (write_started) {
+		facetize_log(s, 0,
+			"FACETIZE: failed to write tessellation for %s with method %s\n",
+			object_name, method);
+		unsafe_failure = true;
+		break;
+	    }
+
+	    // The worker identified this object precisely; no search or retry is needed.
+	    facetize_log(s, 0,
+		    "FACETIZE: tessellation failed for %s with method %s\n",
+		    object_name, method);
+	}
+    }
+
+    if (p && !unsafe_failure)
+	bu_process_file_close(p, BU_PROCESS_STDIN);
+    int process_status = p ? tess_process_reap(s, &p, worker_channel,
+	    unsafe_failure) :
+	BRLCAD_OK;
+    worker_channel.reset(NULL);
+    if (!unsafe_failure) {
+	if (process_status != BRLCAD_OK)
+	    facetize_log(s, 0,
+		    "FACETIZE: tessellation worker exited abnormally after reporting all object results\n");
+	double elapsed_seconds = (bu_gettime() - run_start) /
+	    FACETIZE_USEC_TO_SEC_DIVISOR;
+	int completion_msg_level = (start_msg_level == 0 ||
+		elapsed_seconds >= FACETIZE_PROGRESS_INTERVAL_SEC) ? 0 : 1;
+	facetize_log(s, completion_msg_level,
+		"FACETIZE: tessellation complete: %d of %d %s succeeded with method %s (%.1f seconds)\n",
+		ocnt - (int)failed_names->size(), ocnt, work_description, method,
+		elapsed_seconds);
+	bu_file_delete(backup_file.c_str());
+	return failed_names->empty() ? BRLCAD_OK : BRLCAD_ERROR;
+    }
+
+    if (tess_file_copy(backup_file.c_str(), work_file) != BRLCAD_OK) {
+	facetize_log(s, 0,
+		"FACETIZE: unable to restore working database %s after tessellation failure\n",
+		work_file);
+	return BRLCAD_ERROR;
+    }
+    bu_file_delete(backup_file.c_str());
+
+    // A killed worker may have interrupted a database write.  Restore the
+    // checkpoint, then replay only names not already tied to a known failure.
+    std::set<std::string> failed_set(failed_names->begin(),
+	    failed_names->end());
+    const char *retry_cmd[MAXPATHLEN] = {NULL};
+    for (int i = 0; i < fixed_cnt; i++)
+	retry_cmd[i] = tess_cmd[i];
+    int retry_cnt = fixed_cnt;
+    for (int obj_ind = fixed_cnt; obj_ind < tess_cmd_cnt; obj_ind++) {
+	if (failed_set.find(tess_cmd[obj_ind]) == failed_set.end())
+	    retry_cmd[retry_cnt++] = tess_cmd[obj_ind];
+    }
+
+    if (retry_cnt > fixed_cnt) {
+	std::vector<std::string> retry_failures;
+	(void)tess_run(s, retry_cmd, retry_cnt, max_time,
+		retry_cnt - fixed_cnt, &retry_failures, work_type, true);
+	failed_names->insert(failed_names->end(), retry_failures.begin(),
+		retry_failures.end());
+    }
+
+    std::sort(failed_names->begin(), failed_names->end());
+    failed_names->erase(std::unique(failed_names->begin(),
+	    failed_names->end()), failed_names->end());
+    return failed_names->empty() ? BRLCAD_OK : BRLCAD_ERROR;
 }
 
 /*
@@ -911,25 +1217,16 @@ _ged_facetize_tessellate_variant_names(struct _ged_facetize_state *s,
     tess_cmd[9] = lcache;
     int cmd_fixed_cnt = 10;
 
-    /* Process variants in 8000-char-bounded batches */
+    /* Names travel over stdin, so only the local pointer array bounds a batch. */
     int fail_cnt = 0;
     size_t vi = 0;
     while (vi < plan->variant_names.size()) {
 	std::vector<const char *> batch_names;
-	struct bu_vls cmd_check = BU_VLS_INIT_ZERO;
-	for (int i = 0; i < cmd_fixed_cnt; i++)
-	    bu_vls_printf(&cmd_check, "%s ", tess_cmd[i]);
-
 	while (vi < plan->variant_names.size() &&
 	       cmd_fixed_cnt + (int)batch_names.size() < MAXPATHLEN) {
-	    const char *nm = plan->variant_names[vi].c_str();
-	    if ((bu_vls_strlen(&cmd_check) + strlen(nm)) > 8000)
-		break;
-	    bu_vls_printf(&cmd_check, "%s ", nm);
-	    batch_names.push_back(nm);
+	    batch_names.push_back(plan->variant_names[vi].c_str());
 	    vi++;
 	}
-	bu_vls_free(&cmd_check);
 
 	if (batch_names.empty())
 	    break;
@@ -938,14 +1235,15 @@ _ged_facetize_tessellate_variant_names(struct _ged_facetize_state *s,
 	    tess_cmd[cmd_fixed_cnt + i] = batch_names[i];
 	int total_cnt = cmd_fixed_cnt + (int)batch_names.size();
 
-	int ret = tess_run(s, tess_cmd, total_cnt,
-			   l_max_time * (fastf_t)batch_names.size(),
-			   (int)batch_names.size());
+	std::vector<std::string> batch_failures;
+	int ret = tess_run(s, tess_cmd, total_cnt, l_max_time,
+		(int)batch_names.size(), &batch_failures,
+		TESS_WORK_PERTURBATION_VARIANT, false);
 	if (ret != BRLCAD_OK) {
 	    facetize_log(s, 0,
 			"FACETIZE: variant tessellation failed for %d object(s)\n",
-			(int)batch_names.size());
-	    fail_cnt += (int)batch_names.size();
+			(int)batch_failures.size());
+	    fail_cnt += (int)batch_failures.size();
 	}
 
 	/* Clear per-batch name slots */
@@ -958,47 +1256,33 @@ _ged_facetize_tessellate_variant_names(struct _ged_facetize_state *s,
     return (fail_cnt == 0) ? BRLCAD_OK : BRLCAD_ERROR;
 }
 
-int
-bisect_run(struct _ged_facetize_state *s, std::vector<struct directory *> &bad_dps, std::vector<struct directory *> &inputs, const char **orig_cmd, int cmd_cnt, fastf_t max_time, int ocnt);
-
-int
-bisect_failing_inputs(struct _ged_facetize_state *s, std::vector<struct directory *> &bad_dps, std::vector<struct directory *> &inputs, const char **orig_cmd, int cmd_cnt, fastf_t max_time)
+static int
+tess_run_inputs(struct _ged_facetize_state *s,
+	std::vector<struct directory *> &bad_dps,
+	const std::vector<struct directory *> &inputs, const char **orig_cmd,
+	int cmd_cnt, fastf_t max_time, enum tess_work_type work_type)
 {
-    std::vector<struct directory *> left_inputs;
-    std::vector<struct directory *> right_inputs;
-    for (size_t i = 0; i < inputs.size()/2; i++)
-	left_inputs.push_back(inputs[i]);
-    for (size_t i =  inputs.size()/2; i < inputs.size(); i++)
-	right_inputs.push_back(inputs[i]);
+    bad_dps.clear();
+    if (inputs.empty())
+	return 0;
 
-    int lret = bisect_run(s, bad_dps, left_inputs, orig_cmd, cmd_cnt, max_time, left_inputs.size());
-    int rret = bisect_run(s, bad_dps, right_inputs, orig_cmd, cmd_cnt, max_time, right_inputs.size());
-    return lret + rret;
-}
-
-int
-bisect_run(struct _ged_facetize_state *s, std::vector<struct directory *> &bad_dps, std::vector<struct directory *> &inputs, const char **orig_cmd, int cmd_cnt, fastf_t max_time, int ocnt)
-{
     const char *tess_cmd[MAXPATHLEN] = {NULL};
-    // The initial part of the re-run is the same.
-    for (int i = 0; i < cmd_cnt; i++) {
+    for (int i = 0; i < cmd_cnt; i++)
 	tess_cmd[i] = orig_cmd[i];
-    }
-    for (size_t i = 0; i < inputs.size(); i++) {
+    for (size_t i = 0; i < inputs.size(); i++)
 	tess_cmd[cmd_cnt+i] = inputs[i]->d_namep;
-    }
 
-    int ret = tess_run(s, tess_cmd, cmd_cnt+inputs.size(), max_time, ocnt);
-    if (ret) {
-	if (inputs.size() > 1) {
-	    return bisect_failing_inputs(s, bad_dps, inputs, tess_cmd, cmd_cnt, max_time);
-	}
-	bad_dps.push_back(inputs[0]);
-	return 1;
+    std::vector<std::string> failed_names;
+    (void)tess_run(s, tess_cmd, cmd_cnt+inputs.size(), max_time,
+	    (int)inputs.size(), &failed_names, work_type, false);
+    std::set<std::string> failed_set(failed_names.begin(),
+	    failed_names.end());
+    for (size_t i = 0; i < inputs.size(); i++) {
+	if (failed_set.find(inputs[i]->d_namep) != failed_set.end())
+	    bad_dps.push_back(inputs[i]);
     }
-    return 0;
+    return (int)bad_dps.size();
 }
-
 
 
 class DpCompare
@@ -1041,14 +1325,11 @@ mark_failed_tessellations(struct _ged_facetize_state *s, const std::vector<std::
     }
 }
 
-#define CMD_LEN_MAX 8000
-
 int
 _ged_facetize_leaves_tri(struct _ged_facetize_state *s, struct db_i *dbip, struct bu_ptbl *leaf_dps)
 {
     // Sort dp objects by d_len using a priority queue
     std::priority_queue<struct directory *, std::vector<struct directory *>, DpCompare> pq;
-    std::queue<struct directory *> q_dsp;
     std::priority_queue<struct directory *, std::vector<struct directory *>, DpCompare> q_pbot;
     for (size_t i = 0; i < BU_PTBL_LEN(leaf_dps); i++) {
 	struct directory *ldp = (struct directory *)BU_PTBL_GET(leaf_dps, i);
@@ -1071,8 +1352,11 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, struct db_i *dbip, struc
 	    }
 	    struct rt_bot_internal *bot = (struct rt_bot_internal *)(intern.idb_ptr);
 	    int propVal = (int)rt_bot_propget(bot, "type");
+	    bool is_plate = (propVal == RT_BOT_PLATE ||
+		    propVal == RT_BOT_PLATE_NOCOS);
+	    rt_db_free_internal(&intern);
 	    // Plate mode BoTs need an explicit volume representation
-	    if (propVal == RT_BOT_PLATE || propVal == RT_BOT_PLATE_NOCOS) {
+	    if (is_plate) {
 		q_pbot.push(ldp);
 		continue;
 	    }
@@ -1082,7 +1366,7 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, struct db_i *dbip, struc
 	pq.push(ldp);
     }
 
-    if (pq.empty() && q_dsp.empty() && q_pbot.empty()) {
+    if (pq.empty() && q_pbot.empty()) {
 	bu_log("Note: no viable objects for tessellation found.\n");
 	return BRLCAD_OK;
     }
@@ -1153,8 +1437,6 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, struct db_i *dbip, struc
     tess_cmd[ 9] = lcache;
     int cmd_fixed_cnt = 10;
     while (!pq.empty()) {
-	int obj_cnt = 0;
-
 	// Starting a new round of object processing - reset method flags
 	method_flags = method_flags_bak;
 
@@ -1172,44 +1454,19 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, struct db_i *dbip, struc
 
 	std::vector<struct directory *> dps;
 	std::vector<struct directory *> bad_dps;
-	struct bu_vls cmd = BU_VLS_INIT_ZERO;
-	for (int i = 0; i < cmd_fixed_cnt; i++)
-	    bu_vls_printf(&cmd, "%s ", tess_cmd[i]);
-	while (bu_vls_strlen(&cmd) < CMD_LEN_MAX) {
-	    if (pq.empty() || cmd_fixed_cnt+dps.size() == MAXPATHLEN)
-		break;
+	while (!pq.empty() && cmd_fixed_cnt + dps.size() < MAXPATHLEN) {
 	    struct directory *ldp = pq.top();
-	    if ((bu_vls_strlen(&cmd) + strlen(ldp->d_namep)) > CMD_LEN_MAX) {
-		// This would be too long -  we've listed all we can
-		break;
-	    }
-	    obj_cnt++;
 	    pq.pop();
 	    dps.push_back(ldp);
-	    bu_vls_printf(&cmd, "%s ", ldp->d_namep);
 	}
-	bu_vls_free(&cmd);
 
 	// We have the list of objects to feed the process - now, trigger
 	// the runs with as many methods as it takes to facetize all the
 	// primitives
 	int err_cnt = 0;
 	while (bu_vls_strlen(&method_str)) {
-	    if (BU_STR_EQUAL(bu_vls_cstr(&method_str), "NMG")) {
-		err_cnt = bisect_run(s, bad_dps, dps, tess_cmd, cmd_fixed_cnt, l_max_time, obj_cnt);
-	    } else {
-		// If we're in fallback territory, process individually rather
-		// than doing the bisect - at least for now, those methods are
-		// much more expensive and likely to fail as compared to NMG.
-		for (size_t i = 0; i < dps.size(); i++) {
-		    tess_cmd[cmd_fixed_cnt] = dps[i]->d_namep;
-		    int tess_ret = tess_run(s, tess_cmd, cmd_fixed_cnt + 1, l_max_time, 1);
-		    if (tess_ret != BRLCAD_OK) {
-			bad_dps.push_back(dps[i]);
-			err_cnt++;
-		    }
-		}
-	    }
+	    err_cnt = tess_run_inputs(s, bad_dps, dps, tess_cmd,
+		    cmd_fixed_cnt, l_max_time, TESS_WORK_ORIGINAL_PRIMITIVE);
 
 	    // If we dealt successfully with everything, we're done
 	    if (!err_cnt)
@@ -1225,7 +1482,7 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, struct db_i *dbip, struc
 		// Each method has its own default (or possibly user set) time limit
 		l_max_time = mo->max_time[mstrpp];
 		// Get defined options for this particular method
-		bu_vls_sprintf(&method_opts_str, "\"%s\"", mo->method_optstr(mstrpp, dbip).c_str());
+		bu_vls_sprintf(&method_opts_str, "%s", mo->method_optstr(mstrpp, dbip).c_str());
 		tess_cmd[method_opt_ind] = bu_vls_cstr(&method_opts_str);
 		dps = bad_dps;
 		bad_dps.clear();
@@ -1246,74 +1503,26 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, struct db_i *dbip, struc
 	}
     }
 
-    while (!q_dsp.empty()) {
-	bu_vls_sprintf(&method_str, "CM");
-	tess_cmd[method_ind] = bu_vls_cstr(&method_str);
-	mstrpp = std::string("CM");
-	l_max_time = mo->max_time[mstrpp];
-	bu_vls_sprintf(&method_opts_str, "\"%s\"", mo->method_optstr(mstrpp, dbip).c_str());
-	tess_cmd[method_opt_ind] = bu_vls_cstr(&method_opts_str);
-	std::vector<struct directory *> dps;
-	struct bu_vls cmd = BU_VLS_INIT_ZERO;
-	for (int i = 0; i < cmd_fixed_cnt; i++)
-	    bu_vls_printf(&cmd, "%s ", tess_cmd[i]);
-	while (bu_vls_strlen(&cmd) < CMD_LEN_MAX) {
-	    if (q_dsp.empty() || cmd_fixed_cnt+dps.size() == MAXPATHLEN)
-		break;
-	    struct directory *ldp = q_dsp.front();
-	    if ((bu_vls_strlen(&cmd) + strlen(ldp->d_namep)) > CMD_LEN_MAX) {
-		// This would be too long -  we've listed all we can
-		break;
-	    }
-	    q_dsp.pop();
-	    dps.push_back(ldp);
-	    bu_vls_printf(&cmd, "%s ", ldp->d_namep);
-	}
-	bu_vls_free(&cmd);
-
-	// We have the list of objects to feed the process - now, trigger
-	// the runs with as many methods as it takes to facetize all the
-	// primitives
-	for (size_t i = 0; i < dps.size(); i++) {
-	    tess_cmd[cmd_fixed_cnt] = dps[i]->d_namep;
-	    int err_cnt = tess_run(s, tess_cmd, cmd_fixed_cnt + 1, l_max_time, 1);
-	    if (err_cnt)
-		failed_dps.push_back(std::string(dps[i]->d_namep));
-	}
-    }
-
     while (!q_pbot.empty()) {
 	bu_vls_sprintf(&method_str, "NMG");
 	tess_cmd[method_ind] = bu_vls_cstr(&method_str);
 	mstrpp = std::string("NMG");
 	l_max_time = mo->plate_max_time;
-	bu_vls_sprintf(&method_opts_str, "\"%s\"", mo->method_optstr(mstrpp, dbip).c_str());
+	bu_vls_sprintf(&method_opts_str, "%s", mo->method_optstr(mstrpp, dbip).c_str());
 	tess_cmd[method_opt_ind] = bu_vls_cstr(&method_opts_str);
 
 
 	std::vector<struct directory *> dps;
 	std::vector<struct directory *> bad_dps;
-	struct bu_vls cmd = BU_VLS_INIT_ZERO;
-	for (int i = 0; i < cmd_fixed_cnt; i++)
-	    bu_vls_printf(&cmd, "%s ", tess_cmd[i]);
-	int obj_cnt = 0;
-	while (bu_vls_strlen(&cmd) < CMD_LEN_MAX) {
-	    if (q_pbot.empty() || cmd_fixed_cnt+dps.size() == MAXPATHLEN)
-		break;
+	while (!q_pbot.empty() && cmd_fixed_cnt + dps.size() < MAXPATHLEN) {
 	    struct directory *ldp = q_pbot.top();
-	    if ((bu_vls_strlen(&cmd) + strlen(ldp->d_namep)) > CMD_LEN_MAX) {
-		// This would be too long -  we've listed all we can
-		break;
-	    }
-	    obj_cnt++;
 	    q_pbot.pop();
 	    dps.push_back(ldp);
-	    bu_vls_printf(&cmd, "%s ", ldp->d_namep);
 	}
-	bu_vls_free(&cmd);
 
 
-	int err_cnt = bisect_run(s, bad_dps, dps, tess_cmd, cmd_fixed_cnt, l_max_time * dps.size(), obj_cnt);
+	int err_cnt = tess_run_inputs(s, bad_dps, dps, tess_cmd,
+		cmd_fixed_cnt, l_max_time, TESS_WORK_PLATE_MODE_PRIMITIVE);
 	if (err_cnt) {
 	    for (size_t i = 0; i < bad_dps.size(); i++)
 		failed_dps.push_back(std::string(bad_dps[i]->d_namep));
@@ -1643,8 +1852,8 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
     }
 
     if (_ged_facetize_leaves_tri(s, dbip, &leaf_dps)) {
-	facetize_log(s, 0, "FACETIZE: primitive tessellation failed; BoT boolean evaluation cannot proceed. Check the failed object list in the primitive tessellation summary.\n");
-	facetize_primitives_summary(s);
+	facetize_log(s, 0, "FACETIZE: primitive tessellation failed; BoT boolean evaluation cannot proceed. Check the Primitive tessellation section in the final FACETIZE summary.\n");
+	facetize_collect_primitive_summary(s);
 	bu_ptbl_free(&leaf_dps);
 	return BRLCAD_ERROR;
     }

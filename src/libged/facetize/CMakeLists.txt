@@ -13,6 +13,7 @@ set(
   regions.cpp
   tri.cpp
   util.cpp
+  worker.cpp
 )
 
 ged_plugin_library(ged-facetize
@@ -42,7 +43,7 @@ cmakefiles(
   tess_opts.h
   ged_facetize.h
   old_facetize.h
-  subprocess.h
+  worker.h
   TODO
 )
 

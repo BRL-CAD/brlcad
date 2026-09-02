@@ -606,7 +606,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	}
 
 	// Report on the primitive processing
-	facetize_primitives_summary(s);
+	facetize_collect_primitive_summary(s);
 
 	// After collecting info for summary, we can now clean up working files
 	bu_dirclear(s->wdir);
@@ -726,6 +726,9 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     nmg_wstate.nonovlp_threshold = s->nonovlp_threshold;
     nmg_wstate.solid_suffix = s->solid_suffix;
     nmg_wstate.dbip = NULL;
+    nmg_wstate.write_profiled = s->write_profiled;
+    nmg_wstate.write_profile_bytes = s->write_profile_bytes;
+    nmg_wstate.write_profile_usec = s->write_profile_usec;
 
     // If we have any solids in the hierarchies with only combs above them,
     // they are "implicit" regions and must be facetized individually.
@@ -1092,32 +1095,40 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     bu_free(ir, "ir table");
     s->use_variant_plan = 1;
 
-    /* Print a concise validation summary when any regions went through the check. */
-    if ((vcnt_total > 0 || vcnt_skip > 0) && !s->make_nmg && !s->nmg_booleval) {
+    /* Collect validation results for the unified end-of-command summary. */
+    if ((vcnt_total > 0 || vcnt_skip > 0) && !s->make_nmg && !s->nmg_booleval &&
+	    s->region_summary && s->inspection_log) {
 	double elapsed_s = (bu_gettime() - region_start) / FACETIZE_USEC_TO_SEC_DIVISOR;
-	facetize_log(s, 0, "\nFACETIZE summary:\n");
-	facetize_log(s, 0, "  %-45s %8zu\n", "Total roots evaluated", eval_total);
-	facetize_log(s, 0, "  %-45s %8.2f\n", "Runtime (sec)", elapsed_s);
-	facetize_log(s, 0, "  %-45s %8d\n", "Validation skipped (no perturbable leaves)", vcnt_skip);
-	facetize_log(s, 0, "  %-45s %8d\n", "Validation pass (P1)", vcnt_p1_pass);
-	facetize_log(s, 0, "  %-45s %8d\n", "Naturally empty BoTs (Boolean eval)", vcnt_naturally_empty);
-	facetize_log(s, 0, "  %-45s %8d\n", "Perturb retries triggered", vcnt_p1_trigger);
-	facetize_log(s, 0, "  %-45s %8d\n", "Perturb retries passed (P2)", vcnt_p2_pass);
-	facetize_log(s, 0, "  %-45s %8d\n", "Few-hit notes (pre-perturb)", vcnt_few_hit);
-	facetize_log(s, 0, "  %-45s %8d\n", "Few-hit notes (post-perturb)", vcnt_p2_topoflip);
-	facetize_log(s, 0, "  %-45s %8d\n", "No-ray-hit BoTs replaced with empty BoTs", vcnt_zero_hit);
-	facetize_log(s, 0, "  %-45s %8d\n", "Persistent mismatches", vcnt_p2_warn);
-	facetize_log(s, 0, "  %-45s %8d\n", "Validation unavailable", vcnt_unavail);
-	if (!inspect_regions.empty()) {
-	    facetize_log(s, 0, "\n  Regions to inspect manually:\n");
-	    for (const auto &iname : inspect_regions)
-		facetize_log(s, 0, "    %s\n", iname.c_str());
+	bu_vls_trunc(s->region_summary, 0);
+	bu_vls_trunc(s->inspection_log, 0);
+	s->inspection_regions = inspect_regions.size();
+	bu_vls_printf(s->region_summary, "\n  Region validation:\n");
+	bu_vls_printf(s->region_summary, "    %-43s %8zu\n", "Total roots evaluated", eval_total);
+	bu_vls_printf(s->region_summary, "    %-43s %8.2f\n", "Runtime (sec)", elapsed_s);
+	bu_vls_printf(s->region_summary, "    %-43s %8d\n", "Validation skipped (no perturbable leaves)", vcnt_skip);
+	bu_vls_printf(s->region_summary, "    %-43s %8d\n", "Validation pass (P1)", vcnt_p1_pass);
+	bu_vls_printf(s->region_summary, "    %-43s %8d\n", "Naturally empty BoTs (Boolean eval)", vcnt_naturally_empty);
+	bu_vls_printf(s->region_summary, "    %-43s %8d\n", "Perturb retries triggered", vcnt_p1_trigger);
+	bu_vls_printf(s->region_summary, "    %-43s %8d\n", "Perturb retries passed (P2)", vcnt_p2_pass);
+	bu_vls_printf(s->region_summary, "    %-43s %8d\n", "Few-hit notes (pre-perturb)", vcnt_few_hit);
+	bu_vls_printf(s->region_summary, "    %-43s %8d\n", "Few-hit notes (post-perturb)", vcnt_p2_topoflip);
+	bu_vls_printf(s->region_summary, "    %-43s %8d\n", "No-ray-hit BoTs replaced with empty BoTs", vcnt_zero_hit);
+	bu_vls_printf(s->region_summary, "    %-43s %8d\n", "Persistent mismatches", vcnt_p2_warn);
+	bu_vls_printf(s->region_summary, "    %-43s %8d\n", "Validation unavailable", vcnt_unavail);
+	bu_vls_printf(s->region_summary, "    %-43s %8zu\n", "Regions needing manual inspection", s->inspection_regions);
+	if (vcnt_adjusted_instances > 0) {
+	    bu_vls_printf(s->region_summary, "    %-43s %8d\n", "Adjusted primitive instances", vcnt_adjusted_instances);
+	    bu_vls_printf(s->region_summary, "    %-43s %8d\n", "Subtractive adjusted instances", vcnt_sub_variants);
+	    bu_vls_printf(s->region_summary, "    %-43s %8d\n", "Variant fallbacks", vcnt_perturb_fallbacks);
+	    bu_vls_printf(s->region_summary, "    %-43s %8d\n", "Variant tessellation failures", vcnt_tess_failures);
 	}
+	for (const auto &iname : inspect_regions)
+	    bu_vls_printf(s->inspection_log, "      - %s\n", iname.c_str());
     }
 
     // Report on the primitive processing
     if (!s->make_nmg && !s->nmg_booleval)
-	facetize_primitives_summary(s);
+	facetize_collect_primitive_summary(s);
 
     // keep active regions into .g copy
     struct ged *wgedp = ged_open("db", bu_vls_cstr(s->wfile), 1);
@@ -1248,16 +1259,6 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 
     /* Done importing stuff - update nref. */
     db_update_nref(dbip);
-
-    /* Print aggregate variant-plan summary and clean up (Manifold path only). */
-    if (vcnt_adjusted_instances > 0) {
-	facetize_log(s, 0, "FACETIZE: variant summary: %d adjusted instance(s) "
-		"(%d subtractive), %d fallback(s), %d tess failure(s)\n",
-		vcnt_adjusted_instances,
-		vcnt_sub_variants,
-		vcnt_perturb_fallbacks,
-		vcnt_tess_failures);
-    }
 
     bu_ptbl_free(ar);
     bu_free(ar, "ar table");

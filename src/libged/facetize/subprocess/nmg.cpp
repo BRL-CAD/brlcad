@@ -39,6 +39,7 @@ int
 _nmg_tessellate(struct rt_bot_internal **nbot, struct rt_db_internal *intern, tess_opts *s)
 {
     int status = -1;
+    int ret = BRLCAD_ERROR;
     struct bu_list *vlfree = &rt_vlfree;
 
     if (!nbot || !intern || !intern->idb_meth || !s)
@@ -66,7 +67,7 @@ _nmg_tessellate(struct rt_bot_internal **nbot, struct rt_db_internal *intern, te
     } BU_UNSETJUMP;
 
     if (status <= -1)
-	return BRLCAD_ERROR;
+	goto nmg_tessellate_cleanup;
 
     // NMG reports success, now get a BoT
     if (!BU_SETJUMP) {
@@ -77,30 +78,32 @@ _nmg_tessellate(struct rt_bot_internal **nbot, struct rt_db_internal *intern, te
     } BU_UNSETJUMP;
 
     if (!(*nbot))
-	return BRLCAD_ERROR;
+	goto nmg_tessellate_cleanup;
 
     // An empty BoT (zero faces) means the primitive is a zero-volume degenerate
     // (e.g. a torus whose tube radius is below calculational tolerance).  Return
     // success with a NULL BoT so the caller treats this as a no-op.
     if ((*nbot)->num_faces == 0) {
 	bu_log("rt tessellation produced an empty mesh (zero-volume primitive); treating as no-op\n");
-	BU_FREE((*nbot), struct rt_bot_internal);
+	_tess_facetize_free_bot(*nbot);
 	(*nbot) = NULL;
-	return BRLCAD_OK;
+	ret = BRLCAD_OK;
+	goto nmg_tessellate_cleanup;
     }
 
     if (!bot_is_manifold(*nbot)) {
 	bu_log("We got an NMG mesh, but it's no good for a Manifold(!?)\n");
-	if ((*nbot)->vertices)
-	    bu_free((*nbot)->vertices, "verts");
-	if ((*nbot)->faces)
-	    bu_free((*nbot)->faces, "faces");
-	BU_FREE((*nbot), struct rt_bot_internal);
+	_tess_facetize_free_bot(*nbot);
 	(*nbot) = NULL;
-	return BRLCAD_ERROR;
+	goto nmg_tessellate_cleanup;
     }
 
-    return BRLCAD_OK;
+    ret = BRLCAD_OK;
+
+nmg_tessellate_cleanup:
+    if (m && m->magic == NMG_MODEL_MAGIC)
+	nmg_km(m);
+    return ret;
 }
 
 // Local Variables:
@@ -111,4 +114,3 @@ _nmg_tessellate(struct rt_bot_internal **nbot, struct rt_db_internal *intern, te
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

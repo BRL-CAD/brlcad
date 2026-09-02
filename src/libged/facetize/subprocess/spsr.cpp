@@ -34,25 +34,19 @@
 #include "../../ged_private.h"
 #include "./tessellate.h"
 
-static int
-_db_uniq_test(struct bu_vls *n, void *data)
-{
-    struct db_i *dbip = (struct db_i *)data;
-    if (db_lookup(dbip, bu_vls_addr(n), LOOKUP_QUIET) == RT_DIR_NULL) return 1;
-    return 0;
-}
+static const char *FACETIZE_RESULT_OBJECT = "facetize_worker_result";
 
 int
 spsr_mesh(struct rt_bot_internal **obot, struct db_i *dbip, struct rt_pnts_internal *pnts, tess_opts *s)
 {
     if (!obot || !dbip || !pnts || !s)
 	return BRLCAD_ERROR;
+    *obot = NULL;
 
     int ret = BRLCAD_OK;
-    struct directory *dp;
     int decimation_succeeded = 0;
     struct bn_tol btol = BN_TOL_INIT_TOL;
-    double avg_thickness = 0.0;
+    double avg_thickness = s->spsr_options.avg_thickness;
     int flags = 0;
     int i = 0;
     struct bg_3d_spsr_opts *s_opts = &s->spsr_options.s_opts;
@@ -98,28 +92,26 @@ spsr_mesh(struct rt_bot_internal **obot, struct db_i *dbip, struct rt_pnts_inter
 	double feature_size = (s->spsr_options.feature_size > 0) ? s->spsr_options.feature_size : 0.01*DIST_PNT_PNT(rpp_min, rpp_max);
 	double d_feature_size = (s->spsr_options.d_feature_size > 0) ? s->spsr_options.d_feature_size : 1.5 * feature_size;
 
-	*obot = bot;
+	struct rt_bot_internal *input_bot = bot;
 	bu_log("SPSR: decimating with feature size: %g\n", d_feature_size);
 
 	bot = _tess_facetize_decimate(bot, d_feature_size);
 
-	if (bot == *obot) {
-	    if (bot->vertices) bu_free(bot->vertices, "verts");
-	    if (bot->faces) bu_free(bot->faces, "verts");
+	if (bot == input_bot) {
+	    _tess_facetize_free_bot(bot);
+	    bot = NULL;
 	    ret = BRLCAD_ERROR;
 	    goto ged_facetize_spsr_memfree;
 	}
-	if (bot != *obot) {
-	    decimation_succeeded = 1;
-	}
+	decimation_succeeded = 1;
     }
 
     /* Check validity - do not return an invalid BoT */
     {
 	int not_solid = bg_trimesh_solid2(bot->num_vertices, bot->num_faces, (fastf_t *)bot->vertices, (int *)bot->faces, NULL);
 	if (not_solid) {
-	    if (bot->vertices) bu_free(bot->vertices, "verts");
-	    if (bot->faces) bu_free(bot->faces, "verts");
+	    _tess_facetize_free_bot(bot);
+	    bot = NULL;
 	    ret = BRLCAD_ERROR;
 	    bu_log("SPSR: facetization failed, final BoT was not solid\n");
 	    goto ged_facetize_spsr_memfree;
@@ -132,7 +124,6 @@ spsr_mesh(struct rt_bot_internal **obot, struct db_i *dbip, struct rt_pnts_inter
     if (avg_thickness > 0) {
 	//int max_pnts = s->max_pnts; // old value 200000;
 	double navg_thickness = 0.0;
-	struct bu_vls tmpname = BU_VLS_INIT_ZERO;
 	struct rt_bot_internal *tbot = NULL;
 	BU_ALLOC(tbot, struct rt_bot_internal);
 	tbot->magic = RT_BOT_INTERNAL_MAGIC;
@@ -149,40 +140,39 @@ spsr_mesh(struct rt_bot_internal **obot, struct db_i *dbip, struct rt_pnts_inter
 	memcpy(tbot->faces, bot->faces, sizeof(int) * tbot->num_faces *3);
 
 	flags = RT_GEN_OBJ_PNTS_RAND;
-	bu_vls_sprintf(&tmpname, "spsr_bot.tmp");
-	if (db_lookup(dbip, bu_vls_addr(&tmpname), LOOKUP_QUIET) != RT_DIR_NULL) {
-	    bu_vls_printf(&tmpname, "-0");
-	    bu_vls_incr(&tmpname, NULL, NULL, &_db_uniq_test, (void *)dbip);
+	struct db_i *test_dbip = db_create_inmem();
+	if (!test_dbip) {
+	    _tess_facetize_free_bot(tbot);
+	    bu_log("SPSR: could not create temporary database\n");
+	    ret = BRLCAD_ERROR;
+	    goto ged_facetize_spsr_memfree;
 	}
-	if (_tess_facetize_write_bot(dbip, tbot, bu_vls_addr(&tmpname), "SPSR") & BRLCAD_ERROR) {
-	    bu_log("SPSR: could not write BoT to temporary name %s\n", bu_vls_addr(&tmpname));
-	    bu_vls_free(&tmpname);
+	if (_tess_facetize_write_bot(test_dbip, tbot,
+		FACETIZE_RESULT_OBJECT, "SPSR") != BRLCAD_OK) {
+	    bu_log("SPSR: could not prepare temporary BoT\n");
+	    db_close(test_dbip);
 	    ret = BRLCAD_ERROR;
 	    goto ged_facetize_spsr_memfree;
 	}
 
-	if (rt_gen_obj_pnts(NULL, &navg_thickness, dbip, bu_vls_cstr(&tmpname), &btol, flags, s->spsr_options.max_pnts, s->spsr_options.max_time, 1)) {
-	    bu_log("SPSR: could not raytrace temporary BoT %s\n", bu_vls_cstr(&tmpname));
+	int sample_result = rt_gen_obj_pnts(NULL, &navg_thickness, test_dbip,
+		FACETIZE_RESULT_OBJECT, &btol, flags, s->spsr_options.max_pnts,
+		s->spsr_options.max_time, 1);
+	if (sample_result) {
+	    bu_log("SPSR: could not raytrace temporary BoT\n");
 	    ret = BRLCAD_ERROR;
 	}
-
-	/* Remove the temporary BoT object, succeed or fail. */
-	dp = db_lookup(dbip, bu_vls_cstr(&tmpname), LOOKUP_QUIET);
-	if (!dp || db_delete(dbip, dp) != 0 || db_dirdelete(dbip, dp) != 0) {
-	    bu_vls_free(&tmpname);
-	    ret = BRLCAD_ERROR;
+	db_close(test_dbip);
+	if (sample_result)
 	    goto ged_facetize_spsr_memfree;
-	}
 
 	if (fabs(avg_thickness - navg_thickness) > avg_thickness * 0.5) {
 	    bu_log("SPSR: BoT average sampled thickness %f is widely different from original sampled thickness %f\n", navg_thickness, avg_thickness);
 	    ret = BRLCAD_ERROR;
-	    bu_vls_free(&tmpname);
 	    goto ged_facetize_spsr_memfree;
 	}
 
 	/* Passed test, continue */
-	bu_vls_free(&tmpname);
     }
 
     if (decimation_succeeded) {
@@ -193,7 +183,11 @@ ged_facetize_spsr_memfree:
     if (input_points_3d) bu_free(input_points_3d, "3d pnts");
     if (input_normals_3d) bu_free(input_normals_3d, "3d pnts");
 
-    *obot = bot;
+    if (ret == BRLCAD_OK) {
+	*obot = bot;
+    } else if (bot) {
+	_tess_facetize_free_bot(bot);
+    }
 
     return ret;
 }
@@ -206,4 +200,3 @@ ged_facetize_spsr_memfree:
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-
