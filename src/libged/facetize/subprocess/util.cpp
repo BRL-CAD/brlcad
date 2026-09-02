@@ -110,16 +110,31 @@ _tess_facetize_write_bot(struct db_i *dbip, struct rt_bot_internal *bot, const c
     struct directory *dp = db_diradd(dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
     if (dp == RT_DIR_NULL) {
 	bu_log("Cannot add %s to directory\n", name);
+	rt_db_free_internal(&intern);
 	return BRLCAD_ERROR;
     }
 
     if (rt_db_put_internal(dp, dbip, &intern) < 0) {
 	bu_log("Failed to write %s to database\n", name);
-	rt_db_free_internal(&intern);
 	return BRLCAD_ERROR;
     }
 
     return BRLCAD_OK;
+}
+
+void
+_tess_facetize_free_bot(struct rt_bot_internal *bot)
+{
+    if (!bot)
+	return;
+
+    struct rt_db_internal intern;
+    RT_DB_INTERNAL_INIT(&intern);
+    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern.idb_minor_type = ID_BOT;
+    intern.idb_meth = &OBJ[ID_BOT];
+    intern.idb_ptr = (void *)bot;
+    rt_db_free_internal(&intern);
 }
 
 bool
@@ -150,4 +165,3 @@ bot_is_manifold(struct rt_bot_internal *bot)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

@@ -54,11 +54,15 @@ _tess_facetize_decimate(struct rt_bot_internal *bot, fastf_t feature_size);
 extern int
 _tess_facetize_write_bot(struct db_i *dbip, struct rt_bot_internal *bot, const char *name, const char *method);
 
+extern void
+_tess_facetize_free_bot(struct rt_bot_internal *bot);
+
 extern struct rt_pnts_internal *
 _tess_pnts_sample(const char *oname, struct db_i *dbip, tess_opts *s);
 
 extern int
-_brep_csg_tessellate(struct ged *gedp, struct directory *dp, tess_opts *s);
+_brep_csg_tessellate(struct rt_bot_internal **obot, struct ged *gedp,
+	struct directory *dp, tess_opts *s);
 
 extern int
 _nmg_tessellate(struct rt_bot_internal **nbot, struct rt_db_internal *intern, tess_opts *s);

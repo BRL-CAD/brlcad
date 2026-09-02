@@ -42,40 +42,60 @@
 #include "./tess_opts.h"
 #include "./ged_facetize.h"
 
+static int
+facetize_process_output(struct bu_vls *output, const char **command)
+{
+    if (!output || !command || !command[0])
+	return BRLCAD_ERROR;
+
+    bu_vls_trunc(output, 0);
+    struct bu_process *process = NULL;
+    bu_process_create(&process, command,
+	    BU_PROCESS_HIDE_WINDOW | BU_PROCESS_OUT_EQ_ERR);
+    if (!process)
+	return BRLCAD_ERROR;
+
+    char buffer[BUFSIZ];
+    int count = 0;
+    while ((count = bu_process_read_n(process, BU_PROCESS_STDOUT,
+		    (int)sizeof(buffer), buffer)) > 0)
+	bu_vls_strncat(output, buffer, (size_t)count);
+
+    int status = bu_process_wait_n(&process, 0);
+    return (status == 0 && bu_vls_strlen(output)) ?
+	BRLCAD_OK : BRLCAD_ERROR;
+}
+
 void
 _facetize_methods_help(struct ged *gedp)
 {
-        // Build up the path to the ged_exec executable
-      char tess_exec[MAXPATHLEN];
-      bu_dir(tess_exec, MAXPATHLEN, BU_DIR_BIN, "ged_exec", BU_DIR_EXT, NULL);
+    // Build up the path to the ged_exec executable
+    char tess_exec[MAXPATHLEN];
+    bu_dir(tess_exec, MAXPATHLEN, BU_DIR_BIN, "ged_exec", BU_DIR_EXT, NULL);
 
-      const char *tess_cmd[MAXPATHLEN] = {NULL};
-      tess_cmd[ 0] = tess_exec;
-      tess_cmd[ 1] = "facetize_process";
-      tess_cmd[ 2] = "--list-methods";
-      tess_cmd[ 3] = NULL;
+    const char *tess_cmd[5] = {NULL};
+    tess_cmd[0] = tess_exec;
+    tess_cmd[1] = "facetize_process";
+    tess_cmd[2] = "--list-methods";
+    tess_cmd[3] = NULL;
 
-      struct bu_process* mp;
-      bu_process_create(&mp, tess_cmd, BU_PROCESS_HIDE_WINDOW);
-      char mraw[MAXPATHLEN] = {'\0'};
-      int read_res = bu_process_read_n(mp, BU_PROCESS_STDOUT, MAXPATHLEN, mraw);
-      if (bu_process_wait_n(&mp, 0) || (read_res <= 0))
-	  return;   // wait error or read error
-      std::string method_list(mraw);
-      bu_vls_printf(gedp->ged_result_str, "Available BoT tessellation methods: %s\n", method_list.c_str());
+    struct bu_vls method_output = BU_VLS_INIT_ZERO;
+    if (facetize_process_output(&method_output, tess_cmd) != BRLCAD_OK) {
+	bu_vls_free(&method_output);
+	return;
+    }
+    bu_vls_printf(gedp->ged_result_str,
+	    "Available BoT tessellation methods: %s\n",
+	    bu_vls_cstr(&method_output));
 
-      tess_cmd[ 3] = "-h";
-      tess_cmd[ 4] = NULL;
+    tess_cmd[3] = "-h";
+    tess_cmd[4] = NULL;
 
-      struct bu_process* mop;
-      bu_process_create(&mop, tess_cmd, BU_PROCESS_HIDE_WINDOW);
-      char moraw[MAXPATHLEN*10] = {'\0'};
-      read_res = bu_process_read_n(mop, BU_PROCESS_STDOUT, MAXPATHLEN*10, moraw);
-      if (bu_process_wait_n(&mop, 0) || (read_res <= 0))
-	  return;   // wait error
-      std::string method_options(moraw);
-
-      bu_vls_printf(gedp->ged_result_str, "\nMethod specific options:\n\n%s\n", method_options.c_str());
+    if (facetize_process_output(&method_output, tess_cmd) == BRLCAD_OK)
+	bu_vls_printf(gedp->ged_result_str,
+		"\nMethod specific options:\n\n%s\n",
+		bu_vls_cstr(&method_output));
+    bu_vls_free(&method_output);
 }
 
 struct _ged_facetize_state *
@@ -94,6 +114,7 @@ _ged_facetize_state_create()
     s->tolerated_failures = 0;
     s->tolerated_failure_details = 0;
     s->tolerated_failure_omitted = 0;
+    s->inspection_regions = 0;
     s->perturb_sa_tol  = 10.0;
     s->perturb_vol_tol = 10.0;
 
@@ -101,6 +122,7 @@ _ged_facetize_state_create()
 
     BU_GET(s->log_file, struct bu_vls);
     bu_vls_init(s->log_file);
+    s->log_file_is_temporary = 0;
 
     s->lfile = NULL;
 
@@ -109,6 +131,15 @@ _ged_facetize_state_create()
 
     BU_GET(s->tolerated_failure_log, struct bu_vls);
     bu_vls_init(s->tolerated_failure_log);
+
+    BU_GET(s->region_summary, struct bu_vls);
+    bu_vls_init(s->region_summary);
+
+    BU_GET(s->primitive_summary, struct bu_vls);
+    bu_vls_init(s->primitive_summary);
+
+    BU_GET(s->inspection_log, struct bu_vls);
+    bu_vls_init(s->inspection_log);
 
     BU_GET(s->wfile, struct bu_vls);
     bu_vls_init(s->wfile);
@@ -137,6 +168,9 @@ _ged_facetize_state_create()
     s->nonovlp_threshold = 0;
 
     s->gedp = NULL;
+    s->write_profiled = 0;
+    s->write_profile_bytes = 0.0;
+    s->write_profile_usec = 0.0;
 
     s->variant_plan = NULL;
 
@@ -173,6 +207,21 @@ void _ged_facetize_state_destroy(struct _ged_facetize_state *s)
     if (s->tolerated_failure_log) {
 	bu_vls_free(s->tolerated_failure_log);
 	BU_PUT(s->tolerated_failure_log, struct bu_vls);
+    }
+
+    if (s->region_summary) {
+	bu_vls_free(s->region_summary);
+	BU_PUT(s->region_summary, struct bu_vls);
+    }
+
+    if (s->primitive_summary) {
+	bu_vls_free(s->primitive_summary);
+	BU_PUT(s->primitive_summary, struct bu_vls);
+    }
+
+    if (s->inspection_log) {
+	bu_vls_free(s->inspection_log);
+	BU_PUT(s->inspection_log, struct bu_vls);
     }
 
     if (s->wfile) {
@@ -277,7 +326,7 @@ _ged_facetize_objs(struct _ged_facetize_state *s, int argc, const char **argv)
     }
 
     // Report on the primitive processing
-    facetize_primitives_summary(s);
+    facetize_collect_primitive_summary(s);
 
     // After collecting info for summary, we can now clean up working files
     bu_dirclear(s->wdir);
@@ -300,7 +349,6 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     int force_perturb = 0;
     int disable_perturb = 0;
     method_options_t *method_options = new method_options_t;
-    std::map<std::string, std::map<std::string,std::string>>::iterator o_it;
     struct _ged_facetize_state *s = _ged_facetize_state_create();
     s->gedp = gedp;
     s->dbip = gedp->dbip;
@@ -376,12 +424,15 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     // If we got a max-time top level arg, override any times that aren't specifically set
     // by method options
     if (s->max_time) {
-	for (o_it = method_options->options_map.begin(); o_it != method_options->options_map.end(); o_it++) {
-	    std::map<std::string,std::string>::iterator m_it = o_it->second.find(std::string("max_time"));
-	    if (m_it == o_it->second.end()) {
+	for (auto &method_time : method_options->max_time) {
+	    auto options_it = method_options->options_map.find(method_time.first);
+	    bool explicitly_set = options_it != method_options->options_map.end() &&
+		options_it->second.find("max_time") != options_it->second.end();
+	    if (!explicitly_set) {
 		// max-time wasn't explicitly set by a method, and we have an option - override
-		method_options->max_time[o_it->first] = s->max_time;
-		o_it->second[std::string("max_time")] = std::to_string(s->max_time);
+		method_time.second = s->max_time;
+		method_options->options_map[method_time.first]["max_time"] =
+		    std::to_string(s->max_time);
 	    }
 	}
     }
@@ -435,6 +486,7 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
 
 	if (!bu_vls_strlen(s->log_file)) {
 	    char tmplfile[MAXPATHLEN];
+	    s->log_file_is_temporary = 1;
 	    bu_vls_sprintf(&dname, "facetize_%s.log", bu_vls_cstr(s->bname));
 	    bu_dir(tmplfile, MAXPATHLEN, s->wdir, bu_vls_cstr(&dname), NULL);
 	    bu_vls_sprintf(s->log_file, "%s", tmplfile);
@@ -468,7 +520,7 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     }
 
 ged_facetize_memfree:
-    facetize_tolerated_summary(s);
+    facetize_summary(s);
     _ged_facetize_state_destroy(s);
     delete method_options;
 

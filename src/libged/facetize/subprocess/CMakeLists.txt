@@ -10,6 +10,7 @@ set(
   main.cpp
   nmg.cpp
   util.cpp
+  ../worker.cpp
 )
 
 ged_subprocess_library(facetize_process

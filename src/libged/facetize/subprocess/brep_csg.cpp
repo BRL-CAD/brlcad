@@ -38,10 +38,12 @@
 #include "./tessellate.h"
 
 int
-_brep_csg_tessellate(struct ged *gedp, struct directory *dp, tess_opts *s)
+_brep_csg_tessellate(struct rt_bot_internal **obot, struct ged *gedp,
+	struct directory *dp, tess_opts *s)
 {
-    if (!gedp || !dp || !s)
+    if (!obot || !gedp || !dp || !s)
 	return BRLCAD_ERROR;
+    *obot = NULL;
 
     char tmpfil[MAXPATHLEN];
     bu_dir(tmpfil, MAXPATHLEN, BU_DIR_TEMP, bu_temp_file_name(NULL, 0), NULL);
@@ -51,7 +53,10 @@ _brep_csg_tessellate(struct ged *gedp, struct directory *dp, tess_opts *s)
     av[1] = tmpfil;
     av[2] = dp->d_namep;
     av[3] = NULL;
-    ged_exec_keep(gedp, 3, av);
+    if (ged_exec_keep(gedp, 3, av) != BRLCAD_OK) {
+	bu_file_delete(tmpfil);
+	return BRLCAD_ERROR;
+    }
 
     // Work on the brep
     struct ged *wgedp = ged_open("db", tmpfil, 1);
@@ -65,6 +70,7 @@ _brep_csg_tessellate(struct ged *gedp, struct directory *dp, tess_opts *s)
     av[2] = "csg";
     av[3] = NULL;
     if (ged_exec_brep(wgedp, 3, av) != BRLCAD_OK) {
+	ged_close(wgedp);
 	bu_file_delete(tmpfil);
 	return BRLCAD_ERROR;
     }
@@ -73,6 +79,7 @@ _brep_csg_tessellate(struct ged *gedp, struct directory *dp, tess_opts *s)
     av[2] = dp->d_namep;
     av[3] = NULL;
     if (ged_exec_kill(wgedp, 2, av) != BRLCAD_OK) {
+	ged_close(wgedp);
 	bu_file_delete(tmpfil);
 	return BRLCAD_ERROR;
     }
@@ -93,6 +100,7 @@ _brep_csg_tessellate(struct ged *gedp, struct directory *dp, tess_opts *s)
     av[6] = NULL;
     if (ged_exec_facetize(wgedp, 6, av) != BRLCAD_OK) {
 	bu_vls_free(&comb_name);
+	ged_close(wgedp);
 	bu_file_delete(tmpfil);
 	return BRLCAD_ERROR;
     }
@@ -103,19 +111,30 @@ _brep_csg_tessellate(struct ged *gedp, struct directory *dp, tess_opts *s)
     av[3] = NULL;
     if (ged_exec_killtree(wgedp, 3, av) != BRLCAD_OK) {
 	bu_vls_free(&comb_name);
+	ged_close(wgedp);
 	bu_file_delete(tmpfil);
 	return BRLCAD_ERROR;
     }
     bu_vls_free(&comb_name);
+
+    struct directory *result_dp = db_lookup(wgedp->dbip, dp->d_namep,
+	    LOOKUP_QUIET);
+    struct rt_db_internal result_internal;
+    RT_DB_INTERNAL_INIT(&result_internal);
+    int get_result = result_dp ? rt_db_get_internal(&result_internal,
+	    result_dp, wgedp->dbip, NULL) : -1;
+    if (get_result < 0 || result_internal.idb_minor_type != ID_BOT) {
+	if (get_result >= 0)
+	    rt_db_free_internal(&result_internal);
+	ged_close(wgedp);
+	bu_file_delete(tmpfil);
+	return BRLCAD_ERROR;
+    }
+    *obot = rt_bot_dup((struct rt_bot_internal *)result_internal.idb_ptr);
+    rt_db_free_internal(&result_internal);
     ged_close(wgedp);
-
-    std::string oname(dp->d_namep);
-
-    av[0] = "dbconcat";
-    av[1] = "-O";
-    av[2] = tmpfil;
-    av[3] = NULL;
-    if (ged_exec_dbconcat(gedp, 3, av) != BRLCAD_OK) {
+    if (!*obot) {
+	bu_file_delete(tmpfil);
 	return BRLCAD_ERROR;
     }
 
@@ -132,4 +151,3 @@ _brep_csg_tessellate(struct ged *gedp, struct directory *dp, tess_opts *s)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

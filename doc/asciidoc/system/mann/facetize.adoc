@@ -56,6 +56,20 @@ _Persistent validation mismatch_: When both the P1 and P2 Crofton comparisons ex
 Different tolerance settings will create finer or coarser meshes. See the *tol* man page for more details.
 
 
+[[long_running_tessellation]]
+== Long-Running Tessellation and Recovery
+
+Primitive tessellation is performed in a child process against a private working copy of the database in the BRL-CAD cache.  The original database is not modified as individual primitive meshes are generated.  Only after the conversion succeeds are the requested results transferred from the working database.  This separation also permits an interrupted conversion to retain its intermediate state for use with *--resume*.
+
+The parent command sends primitive names to a persistent tessellation process one at a time.  The child reports a result for each name, so a timeout, conversion failure, or child-process crash that occurs before a database write can be associated directly with the affected primitive.  The child is restarted when necessary and processing continues with the next name; the parent does not subdivide and retry the whole group to discover which object failed.  Unless output is suppressed with *--quiet*, long tessellation batches also report their current object and completed-object count at approximately five-second intervals.
+
+Database updates use a separate write handshake.  After preparing a mesh in memory, the child announces that it is ready to write and reports the approximate mesh size, then waits.  The parent acknowledges that it is waiting for the write before the child may update the working database.  The child explicitly reports when the update is complete.  Consequently, the normal per-object tessellation limit, including *--max-time* and method-specific limits, applies to mesh preparation and does not interrupt an acknowledged database write.
+
+Before the first primitive conversion, the parent measures write throughput on the same cache filesystem as the working database.  It writes a temporary file in 1 MiB chunks until approximately one second has elapsed or 128 MiB has been written, then removes the file immediately.  Successful mesh writes of at least 1 MiB subsequently refine this profile.  For each database update, the parent allows ten times the projected write time, with a minimum of five seconds and a maximum of five minutes.  This measured allowance protects legitimate long writes on slow storage while still detecting a genuinely stalled update.
+
+If a child fails before write permission is granted, the working database is known to be unchanged and no rollback is needed.  A failure, crash, or write-deadline expiration after permission is granted but before completion is ambiguous: the working database may contain a partial update.  In that case *facetize* restores its cache-local checkpoint and replays only the primitive conversions already known to have succeeded.  The original database remains untouched during this recovery.
+
+
 [[facetize_options]]
 == Options
 

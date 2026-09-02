@@ -28,6 +28,8 @@
 #include "common.h"
 
 #include <algorithm>
+#include <climits>
+#include <limits>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -40,7 +42,59 @@
 #include "ged.h"
 #define TESS_OPTS_IMPLEMENTATION
 #include "../tess_opts.h"
+#include "../worker.h"
 #include "./tessellate.h"
+
+static void
+facetize_payload_add(size_t *payload_size, size_t count, size_t item_size)
+{
+    if (!payload_size || !item_size)
+	return;
+
+    const size_t max_size = std::numeric_limits<size_t>::max();
+    if (*payload_size == max_size)
+	return;
+    if (count > (max_size - *payload_size) / item_size) {
+	*payload_size = max_size;
+	return;
+    }
+    *payload_size += count * item_size;
+}
+
+static size_t
+facetize_bot_payload_size(const struct rt_bot_internal *bot)
+{
+    if (!bot)
+	return 0;
+
+    size_t payload_size = sizeof(struct rt_bot_internal);
+    facetize_payload_add(&payload_size, bot->num_faces,
+	    3 * sizeof(*bot->faces));
+    facetize_payload_add(&payload_size, bot->num_vertices,
+	    3 * sizeof(*bot->vertices));
+    if (bot->thickness)
+	facetize_payload_add(&payload_size, bot->num_faces,
+		sizeof(*bot->thickness));
+    if (bot->face_mode) {
+	size_t face_mode_bytes = bot->num_faces / CHAR_BIT;
+	if (bot->num_faces % CHAR_BIT)
+	    face_mode_bytes++;
+	facetize_payload_add(&payload_size, face_mode_bytes, 1);
+    }
+    if (bot->normals)
+	facetize_payload_add(&payload_size, bot->num_normals,
+		3 * sizeof(*bot->normals));
+    if (bot->face_normals)
+	facetize_payload_add(&payload_size, bot->num_face_normals,
+		3 * sizeof(*bot->face_normals));
+    if (bot->uvs)
+	facetize_payload_add(&payload_size, bot->num_uvs,
+		3 * sizeof(*bot->uvs));
+    if (bot->face_uvs)
+	facetize_payload_add(&payload_size, bot->num_face_uvs,
+		3 * sizeof(*bot->face_uvs));
+    return payload_size;
+}
 
 static void
 rt_pnts_free(struct rt_pnts_internal *pnts)
@@ -81,6 +135,7 @@ method_setup(tess_opts *s)
     bool sample_sync = false;
     if (std::find(methods->begin(), methods->end(), std::string("CM")) != methods->end()) {
 	s->pnt_options.sync(s->cm_options);
+	sample_sync = true;
     }
     if (!sample_sync && std::find(methods->begin(), methods->end(), std::string("SPSR")) != methods->end()) {
 	s->pnt_options.sync(s->spsr_options);
@@ -108,6 +163,7 @@ dp_tessellate(struct rt_bot_internal **obot, struct bu_vls *method_flag, struct 
     }
 
     struct rt_pnts_internal *pnts = NULL;
+    bool free_pnts = false;
     struct rt_bot_internal *bot = NULL;
     int propVal;
     int ret = BRLCAD_OK;
@@ -124,7 +180,8 @@ dp_tessellate(struct rt_bot_internal **obot, struct bu_vls *method_flag, struct 
 	case ID_MATERIAL:
 	case ID_SCRIPT:
 	case ID_SKETCH:
-	    return BRLCAD_OK;
+	    ret = BRLCAD_OK;
+	    goto dp_tessellate_cleanup;
 	case ID_PNTS:
 	    // At this low level, allow point processing methods to have a
 	    // crack at a point primitive to wrap it in a mesh.  If we don't
@@ -134,8 +191,10 @@ dp_tessellate(struct rt_bot_internal **obot, struct bu_vls *method_flag, struct 
 	    // into meshes (which we probably don't), that is a capability we
 	    // will most likely want to expose through the pnts command - which
 	    // will make this executable useful to more than just facetize.
-	    if (mset.find(std::string("SPSR")) == mset.end())
-		return BRLCAD_OK;
+	    if (mset.find(std::string("SPSR")) == mset.end()) {
+		ret = BRLCAD_OK;
+		goto dp_tessellate_cleanup;
+	    }
 
 	    // If we are going to try a pnts wrapping, there are only a few
 	    // candidates in the fallback methods list that we can use.
@@ -148,18 +207,22 @@ dp_tessellate(struct rt_bot_internal **obot, struct bu_vls *method_flag, struct 
 	    goto pnt_sampling_methods;
 	case ID_HALF:
 	    // Halfspace objects are handled specially by BRL-CAD.
-	    return BRLCAD_OK;
+	    ret = BRLCAD_OK;
+	    goto dp_tessellate_cleanup;
 	case ID_BOT:
 	    bot = (struct rt_bot_internal *)(intern.idb_ptr);
 	    propVal = (int)rt_bot_propget(bot, "type");
 	    // Surface meshes are zero volume, and thus no-op
-	    if (propVal == RT_BOT_SURFACE)
-		return BRLCAD_OK;
+	    if (propVal == RT_BOT_SURFACE) {
+		ret = BRLCAD_OK;
+		goto dp_tessellate_cleanup;
+	    }
 	    // Plate mode BoTs need an explicit volume representation
 	    if (propVal == RT_BOT_PLATE || propVal == RT_BOT_PLATE_NOCOS) {
 		bu_vls_sprintf(method_flag, "PLATE");
 		fastf_t bot_area = bg_trimesh_area(bot->faces, bot->num_faces, (const point_t *)bot->vertices, bot->num_vertices);
-		return rt_bot_plate_to_vol(obot, bot, 0, 1, 0.1*bot_area, 0.2);
+		ret = rt_bot_plate_to_vol(obot, bot, 0, 1, 0.1*bot_area, 0.2);
+		goto dp_tessellate_cleanup;
 	    }
 	    // Volumetric bot - if it can be manifold we're good, but if
 	    // not we need to try and repair it.
@@ -174,7 +237,8 @@ dp_tessellate(struct rt_bot_internal **obot, struct bu_vls *method_flag, struct 
 	    } else {
 		// Already a valid BoT - tessellate is a no-op.
 		*obot = NULL;
-		return BRLCAD_OK;
+		ret = BRLCAD_OK;
+		goto dp_tessellate_cleanup;
 	    }
 	case ID_BREP:
 	    // TODO - need to handle plate mode NURBS the way we handle plate mode BoTs
@@ -184,16 +248,16 @@ dp_tessellate(struct rt_bot_internal **obot, struct bu_vls *method_flag, struct 
 
     if (ret == BRLCAD_OK && *obot) {
 	// If we already have the output bot, return
-	return BRLCAD_OK;
+	goto dp_tessellate_cleanup;
     }
 
     // For brep in particular, we have a cheat we can try.  Do a brep->csg
     // conversion and see if the resulting CSG tree can be facetized.
     if (intern.idb_minor_type == ID_BREP) {
-	ret = _brep_csg_tessellate(gedp, dp, s);
-    	if (ret == BRLCAD_OK) {
+	ret = _brep_csg_tessellate(obot, gedp, dp, s);
+	if (ret == BRLCAD_OK) {
 	    bu_vls_sprintf(method_flag, "NMG_BREP_CSG");
-	    return BRLCAD_OK;
+	    goto dp_tessellate_cleanup;
 	}
     }
 
@@ -205,7 +269,7 @@ dp_tessellate(struct rt_bot_internal **obot, struct bu_vls *method_flag, struct 
 	ret = _nmg_tessellate(obot, &intern, s);
 	if (ret == BRLCAD_OK) {
 	    bu_vls_sprintf(method_flag, "NMG");
-	    return BRLCAD_OK;
+	    goto dp_tessellate_cleanup;
 	}
     }
 
@@ -221,13 +285,16 @@ dp_tessellate(struct rt_bot_internal **obot, struct bu_vls *method_flag, struct 
 	// sampling process.
 	if (!pnts) {
 	    pnts = _tess_pnts_sample(dp->d_namep, dbip, s);
+	    free_pnts = (pnts != NULL);
 	}
-	s->cm_options.sync(s->pnt_options);
-	struct pnt_normal *seed = BU_LIST_PNEXT(pnt_normal, (struct pnt_normal *)pnts->point);
-	ret = continuation_mesh(obot, dbip, dp->d_namep, s, seed->v);
-	if (ret == BRLCAD_OK) {
-	    bu_vls_sprintf(method_flag, "CM");
-	    return BRLCAD_OK;
+	if (pnts) {
+	    s->cm_options.sync(s->pnt_options);
+	    struct pnt_normal *seed = BU_LIST_PNEXT(pnt_normal, (struct pnt_normal *)pnts->point);
+	    ret = continuation_mesh(obot, dbip, dp->d_namep, s, seed->v);
+	    if (ret == BRLCAD_OK) {
+		bu_vls_sprintf(method_flag, "CM");
+		goto dp_tessellate_cleanup;
+	    }
 	}
     }
 
@@ -236,39 +303,52 @@ pnt_sampling_methods:
     if (mset.find(std::string("SPSR")) != mset.end()) {
 	if (!pnts) {
 	    pnts = _tess_pnts_sample(dp->d_namep, dbip, s);
+	    free_pnts = (pnts != NULL);
 	} else {
 	    if (!s->spsr_options.equals(s->pnt_options)) {
 		s->pnt_options.sync(s->spsr_options);
-		rt_pnts_free(pnts);
+		if (free_pnts)
+		    rt_pnts_free(pnts);
 		pnts = _tess_pnts_sample(dp->d_namep, dbip, s);
+		free_pnts = (pnts != NULL);
 	    }
 	}
-	s->spsr_options.sync(s->pnt_options);
-	ret = spsr_mesh(obot, dbip, pnts, s);
-	if (ret == BRLCAD_OK) {
-	    bu_vls_sprintf(method_flag, "SPSR");
-	    return ret;
+	if (pnts) {
+	    s->spsr_options.sync(s->pnt_options);
+	    ret = spsr_mesh(obot, dbip, pnts, s);
+	    if (ret == BRLCAD_OK) {
+		bu_vls_sprintf(method_flag, "SPSR");
+		goto dp_tessellate_cleanup;
+	    }
 	}
     }
 
     bu_vls_sprintf(method_flag, "FAIL");
 
-    std::ostringstream methods;
-    for (std::set<std::string>::iterator it = mset.begin(); it != mset.end(); ++it) {
-	if (it != mset.begin())
-	    methods << ", ";
-	methods << *it;
+    {
+	std::ostringstream methods;
+	for (std::set<std::string>::iterator it = mset.begin(); it != mset.end(); ++it) {
+	    if (it != mset.begin())
+		methods << ", ";
+	    methods << *it;
+	}
+	std::string method_list = methods.str();
+	bu_log("FACETIZE_PROCESS: failed to tessellate %s (%s) with active method(s): %s. Try a different --methods list, increase the method max_time, or inspect the primitive with 'lint'.\n",
+		dp->d_namep,
+		intern.idb_meth ? intern.idb_meth->ft_label : "unknown",
+		method_list.empty() ? "none" : method_list.c_str());
     }
-    std::string method_list = methods.str();
-    bu_log("FACETIZE_PROCESS: failed to tessellate %s (%s) with active method(s): %s. Try a different --methods list, increase the method max_time, or inspect the primitive with 'lint'.\n",
-	    dp->d_namep,
-	    intern.idb_meth ? intern.idb_meth->ft_label : "unknown",
-	    method_list.empty() ? "none" : method_list.c_str());
+    ret = BRLCAD_ERROR;
 
-    if (pnts)
+dp_tessellate_cleanup:
+    if (free_pnts && pnts)
 	rt_pnts_free(pnts);
-
-    return BRLCAD_ERROR;
+    if (ret != BRLCAD_OK && *obot) {
+	_tess_facetize_free_bot(*obot);
+	*obot = NULL;
+    }
+    rt_db_free_internal(&intern);
+    return ret;
 }
 
 void
@@ -293,6 +373,80 @@ print_tess_methods()
     fprintf(stdout, "NMG CM SPSR");
 }
 
+static int
+facetize_server_request(struct ged *gedp, const char *object_name,
+	tess_opts *s, FacetizeWorkerServer &worker_channel, bool *result_sent)
+{
+    if (!gedp || !object_name || !s || !result_sent)
+	return BRLCAD_ERROR;
+    *result_sent = false;
+
+    struct directory *dp = db_lookup(gedp->dbip, object_name, LOOKUP_QUIET);
+    if (!dp || dp->d_major_type != DB5_MAJORTYPE_BRLCAD)
+	return BRLCAD_ERROR;
+
+    struct rt_bot_internal *obot = NULL;
+    struct bu_vls method = BU_VLS_INIT_ZERO;
+    int ret = dp_tessellate(&obot, &method, gedp, dp, s);
+    if (ret == BRLCAD_OK && obot) {
+	// Waiting here lets the parent stop an over-time tessellation without
+	// risking a partially replaced object in the working database.
+	size_t payload_size = facetize_bot_payload_size(obot);
+	if (!worker_channel.send_write_ready(payload_size) ||
+		!worker_channel.receive_write_proceed()) {
+	    _tess_facetize_free_bot(obot);
+	    ret = BRLCAD_ERROR;
+	} else {
+	    ret = _tess_facetize_write_bot(gedp->dbip, obot, object_name,
+		    bu_vls_cstr(&method));
+	    if (!worker_channel.send_write_result(ret)) {
+		ret = BRLCAD_ERROR;
+	    } else {
+		*result_sent = true;
+	    }
+	}
+    } else if (obot) {
+	_tess_facetize_free_bot(obot);
+    }
+    bu_vls_free(&method);
+    return ret;
+}
+
+static int
+facetize_server(const char *work_file, tess_opts *s)
+{
+    int server_status = BRLCAD_OK;
+    setvbuf(stdout, NULL, _IONBF, 0);
+
+    struct ged *gedp = ged_open("db", work_file, 1);
+    if (!gedp)
+	return BRLCAD_ERROR;
+
+    FacetizeWorkerServer worker_channel(stdin, stdout);
+    while (true) {
+	std::string object_name;
+	FacetizeWorkerReadResult read_result =
+	    worker_channel.receive_request(object_name);
+	if (read_result == FacetizeWorkerReadResult::End)
+	    break;
+	if (read_result == FacetizeWorkerReadResult::Error) {
+	    server_status = BRLCAD_ERROR;
+	    break;
+	}
+
+	bool result_sent = false;
+	int ret = facetize_server_request(gedp, object_name.c_str(), s,
+		worker_channel, &result_sent);
+	if (!result_sent && !worker_channel.send_tessellation_result(ret)) {
+	    server_status = BRLCAD_ERROR;
+	    break;
+	}
+    }
+
+    ged_close(gedp);
+    return server_status;
+}
+
 extern "C" int
 facetize_process(int argc, const char **argv)
 {
@@ -310,10 +464,11 @@ facetize_process(int argc, const char **argv)
     tess_opts s;
 
     int list_methods = 0;
+    int server_mode = 0;
     int max_time = 0;
     int max_pnts = 0;
 
-    struct bu_opt_desc d[ 9];
+    struct bu_opt_desc d[10];
     BU_OPT(d[ 0],  "h",         "help",                         "",                  NULL,           &print_help, "Print help and exit");
     BU_OPT(d[ 1],   "", "list-methods",                         "",                  NULL,         &list_methods, "List available tessellation methods.  When used with -h, print an informational summary of each method.");
     BU_OPT(d[ 2],  "O",    "overwrite",                         "",                  NULL,    &(s.overwrite_obj), "Replace original object with BoT");
@@ -322,7 +477,8 @@ facetize_process(int argc, const char **argv)
     BU_OPT(d[ 5],   "",     "max-time",                        "#",           &bu_opt_int,             &max_time, "Maximum number of seconds to allow for runtime (not supported by all methods).");
     BU_OPT(d[ 6],   "",     "max-pnts",                        "#",           &bu_opt_int,             &max_pnts, "Maximum number of pnts to use when applying ray sampling methods.");
     BU_OPT(d[ 7],   "",     "cache-dir",                     "dir",           &bu_opt_vls,            &cache_dir, "Directory to use for cached outputs (default is libbu cache directory).");
-    BU_OPT_NULL(d[ 8]);
+    BU_OPT(d[ 8],   "",          "server",                        "",                  NULL,          &server_mode, "Run as a persistent worker, overwriting requested objects in the working database.");
+    BU_OPT_NULL(d[ 9]);
 
     /* parse options */
     struct bu_vls omsg = BU_VLS_INIT_ZERO;
@@ -371,6 +527,19 @@ facetize_process(int argc, const char **argv)
     // Do the setup for the various methods
     method_setup(&s);
 
+    if (server_mode) {
+	int ret = (argc == 1 && s.overwrite_obj) ?
+	    facetize_server(argv[0], &s) : BRLCAD_ERROR;
+	bu_vls_free(&cache_dir);
+	return ret;
+    }
+
+    if (argc < 2) {
+	bu_log("%s", usage);
+	bu_vls_free(&cache_dir);
+	return BRLCAD_ERROR;
+    }
+
     // Open the database
     struct ged *gedp = ged_open("db", argv[0], 1);
     if (!gedp) {
@@ -383,6 +552,8 @@ facetize_process(int argc, const char **argv)
     for (int i = 1; i < argc; i++) {
 	struct directory *dp = db_lookup(gedp->dbip, argv[i], LOOKUP_NOISY);
 	if (!dp) {
+	    bu_ptbl_free(&dps);
+	    ged_close(gedp);
 	    bu_vls_free(&cache_dir);
 	    return BRLCAD_ERROR;
 	}
@@ -392,6 +563,7 @@ facetize_process(int argc, const char **argv)
     // Tessellate each object.  Note that we're doing this in series rather
     // than parallel because of the risks of high memory consumption and/or
     // CPU utilization for individual object operations.
+    int process_ret = BRLCAD_OK;
     for (size_t i = 0; i < BU_PTBL_LEN(&dps); i++) {
 
 	// If this isn't a proper BRL-CAD object, tessellation is a no-op
@@ -404,13 +576,8 @@ facetize_process(int argc, const char **argv)
 	struct bu_vls method_flag = BU_VLS_INIT_ZERO;
 	if (dp_tessellate(&obot, &method_flag, gedp, dp, &s) != BRLCAD_OK) {
 	    bu_vls_free(&method_flag);
-	    return BRLCAD_ERROR;
-	}
-
-	// If we used a BRep CSG tree, we're already done
-	if (BU_STR_EQUAL(bu_vls_cstr(&method_flag), "NMG_BREP_CSG")) {
-	    bu_vls_free(&method_flag);
-	    continue;
+	    process_ret = BRLCAD_ERROR;
+	    break;
 	}
 
 	// If we didn't get anything and we had an OK code, just keep going
@@ -431,15 +598,17 @@ facetize_process(int argc, const char **argv)
 	bu_vls_free(&method_flag);
 	bu_vls_free(&obot_name);
 	if (ret != BRLCAD_OK) {
-	    bu_vls_free(&cache_dir);
-	    return BRLCAD_ERROR;
+	    process_ret = BRLCAD_ERROR;
+	    break;
 	}
 
     }
 
+    bu_ptbl_free(&dps);
+    ged_close(gedp);
     bu_vls_free(&cache_dir);
 
-    return BRLCAD_OK;
+    return process_ret;
 }
 
 #include "../../include/plugin.h"
