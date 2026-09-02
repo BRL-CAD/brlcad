@@ -87,7 +87,7 @@ smooth [-c [0|1|2]] [-d [0|1|2]] [-e #] [-E #] [-I #] {input_bot} {output_bot}
 
 [source]
 ----
-split {objname}
+split [-h] [--grp {name}] {objname}
 ----
 
 
@@ -216,7 +216,19 @@ Specifies the iterations for smoothing.
 Splits the provided BoT into separate BoTs for each edge-connected triangle
 component. The outputs preserve the source mode, orientation, flags, plate
 data, normals, texture UV data, and object attributes. Existing output-name
-suffixes are skipped.
+suffixes are skipped. The output BoTs are members of a new non-region
+combination named _objname_bots_. If that name already exists, it is
+incremented until an available name is found.
++
+
+*-h*, *--help*::
+Print the options available to the *split* subcommand.
+
+*--grp* _name_::
+Use _name_ for the combination containing the output BoTs. Unlike the
+automatically generated name, an explicitly specified name is not incremented;
+the command reports an error without writing any output if the name already
+exists.
 
 
 *stat*::

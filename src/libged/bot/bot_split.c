@@ -26,6 +26,7 @@
 #include "bu/path.h"
 #include "rt/geom.h"
 #include "rt/primitives/bot.h"
+#include "wdb.h"
 #include "../ged_private.h"
 
 
@@ -58,10 +59,48 @@ rollback_created_bots(struct ged *gedp, struct bu_vls *names, size_t count,
 }
 
 
+static int
+create_bot_group(struct ged *gedp, const char *group_name,
+	struct bu_vls *names, size_t count, struct bu_vls *errors)
+{
+    struct wmember members;
+    BU_LIST_INIT(&members.l);
+    for (size_t i = 0; i < count; ++i) {
+	if (!mk_addmember(bu_vls_cstr(&names[i]), &members.l, NULL,
+		DB_OP_UNION)) {
+	    bu_vls_printf(errors, "Cannot add %s to group %s\n",
+		bu_vls_cstr(&names[i]), group_name);
+	    mk_freemembers(&members.l);
+	    return BRLCAD_ERROR;
+	}
+    }
+
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip,
+	RT_WDB_TYPE_DB_DEFAULT_APPEND_ONLY);
+    if (!wdbp || mk_lcomb(wdbp, group_name, &members, 0, NULL, NULL, NULL,
+	    0) != 0) {
+	bu_vls_printf(errors, "Cannot create BOT split group %s\n", group_name);
+	if (!BU_LIST_IS_EMPTY(&members.l))
+	    mk_freemembers(&members.l);
+	return BRLCAD_ERROR;
+    }
+
+    db_update_nref(gedp->dbip);
+    return BRLCAD_OK;
+}
+
+
 int
 _ged_bot_split_object(struct ged *gedp, const char *object_name,
-	struct bu_vls *output_names, struct bu_vls *errors)
+	const char *group_name, struct bu_vls *output_names,
+	struct bu_vls *errors)
 {
+    if (group_name && db_lookup(gedp->dbip, group_name,
+	    LOOKUP_QUIET) != RT_DIR_NULL) {
+	bu_vls_printf(errors, "Object %s already exists\n", group_name);
+	return -1;
+    }
+
     struct directory *source_dp = db_lookup(gedp->dbip, object_name,
 	LOOKUP_QUIET);
     if (source_dp == RT_DIR_NULL) {
@@ -108,7 +147,8 @@ _ged_bot_split_object(struct ged *gedp, const char *object_name,
 	bu_vls_init(&names[i]);
 	do {
 	    bu_vls_sprintf(&names[i], "%s.%zu", object_name, suffix++);
-	} while (db_lookup(gedp->dbip, bu_vls_cstr(&names[i]),
+	} while ((group_name && BU_STR_EQUAL(bu_vls_cstr(&names[i]),
+		group_name)) || db_lookup(gedp->dbip, bu_vls_cstr(&names[i]),
 		LOOKUP_QUIET) != RT_DIR_NULL);
     }
 
@@ -161,6 +201,15 @@ _ged_bot_split_object(struct ged *gedp, const char *object_name,
 	return -1;
     }
 
+    if (group_name && create_bot_group(gedp, group_name, names,
+	    component_count, errors) != BRLCAD_OK) {
+	rollback_created_bots(gedp, names, written_count, errors);
+	rt_bot_list_free(components, 1);
+	free_generated_names(names, component_count);
+	rt_db_free_internal(&source_internal);
+	return -1;
+    }
+
     for (size_t i = 0; i < component_count; ++i)
 	bu_vls_printf(output_names, "%s%s", i ? " " : "",
 	    bu_vls_cstr(&names[i]));
@@ -197,8 +246,8 @@ ged_bot_split_core(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	struct bu_vls names = BU_VLS_INIT_ZERO;
-	int split_count = _ged_bot_split_object(gedp, object_name, &names,
-	    &errors);
+	int split_count = _ged_bot_split_object(gedp, object_name, NULL,
+	    &names, &errors);
 	if (split_count < 0)
 	    ret = BRLCAD_ERROR;
 	bu_vls_printf(&results, "{%s {%s}} ", object_name,

@@ -16,6 +16,7 @@
 #include "common.h"
 
 #include <cstdlib>
+#include <cstring>
 
 #include "bu.h"
 #include "ged.h"
@@ -78,6 +79,45 @@ check_output_attributes(struct ged *gedp, struct directory *dp)
     CHECK(attribute && BU_STR_EQUAL(attribute, "preserved"),
 	"output BOT object attributes were not preserved");
     bu_avs_free(&attributes);
+}
+
+
+static void
+check_output_group(struct ged *gedp, const char *group_name,
+	const char *first_member, const char *second_member)
+{
+    struct directory *dp = db_lookup(gedp->dbip, group_name, LOOKUP_QUIET);
+    CHECK(dp != RT_DIR_NULL, "expected BOT split group does not exist");
+    if (dp == RT_DIR_NULL)
+	return;
+    CHECK(dp->d_flags & RT_DIR_COMB,
+	"BOT split group is not a combination");
+
+    struct rt_db_internal internal;
+    RT_DB_INTERNAL_INIT(&internal);
+    CHECK(rt_db_get_internal(&internal, dp, gedp->dbip, NULL) >= 0,
+	"cannot read BOT split group");
+    if (!internal.idb_ptr)
+	return;
+    struct rt_comb_internal *comb =
+	(struct rt_comb_internal *)internal.idb_ptr;
+    CHECK(!comb->region_flag, "BOT split group is unexpectedly a region");
+    CHECK(db_tree_nleaves(comb->tree) == 2,
+	"BOT split group has the wrong member count");
+    CHECK(db_find_named_leaf(comb->tree, first_member) != TREE_NULL,
+	"BOT split group is missing its first member");
+    CHECK(db_find_named_leaf(comb->tree, second_member) != TREE_NULL,
+	"BOT split group is missing its second member");
+    rt_db_free_internal(&internal);
+
+    struct directory *first_dp = db_lookup(gedp->dbip, first_member,
+	LOOKUP_QUIET);
+    struct directory *second_dp = db_lookup(gedp->dbip, second_member,
+	LOOKUP_QUIET);
+    CHECK(first_dp != RT_DIR_NULL && first_dp->d_nref > 0,
+	"first split BOT is still a top-level object");
+    CHECK(second_dp != RT_DIR_NULL && second_dp->d_nref > 0,
+	"second split BOT is still a top-level object");
 }
 
 
@@ -189,11 +229,23 @@ main(int argc, char **argv)
 	bu_exit(EXIT_FAILURE, "Cannot create %s\n", argv[1]);
     CHECK(write_source_bot(wdbp, "plate.bot", RT_BOT_PLATE_NOCOS) == 0,
 	"failed to create bot split source");
+    CHECK(write_source_bot(wdbp, "default.bot", RT_BOT_PLATE_NOCOS) == 0,
+	"failed to create default-group bot split source");
+    CHECK(write_source_bot(wdbp, "explicit.bot", RT_BOT_PLATE_NOCOS) == 0,
+	"failed to create explicit-group bot split source");
+    CHECK(write_source_bot(wdbp, "conflict.bot", RT_BOT_PLATE_NOCOS) == 0,
+	"failed to create conflicting-group bot split source");
     CHECK(write_source_bot(wdbp, "legacy.bot", RT_BOT_PLATE) == 0,
 	"failed to create bot_split source");
     point_t center = VINIT_ZERO;
     CHECK(mk_sph(wdbp, "plate.bot.0", center, 1.0) == 0,
 	"failed to create output-name collision");
+    CHECK(mk_sph(wdbp, "plate.bot_bots", center, 1.0) == 0,
+	"failed to create default group-name collision");
+    CHECK(mk_sph(wdbp, "plate.bot_bots1", center, 1.0) == 0,
+	"failed to create incremented group-name collision");
+    CHECK(mk_sph(wdbp, "taken.group", center, 1.0) == 0,
+	"failed to create explicit group-name collision");
     wdb_close(wdbp);
 
     struct ged *gedp = ged_open("db", argv[1], 1);
@@ -203,9 +255,29 @@ main(int argc, char **argv)
     CHECK(db5_update_attribute("plate.bot", "split_test", "preserved",
 	    gedp->dbip) == 0,
 	"failed to set bot split source attribute");
+    CHECK(db5_update_attribute("default.bot", "split_test", "preserved",
+	    gedp->dbip) == 0,
+	"failed to set default-group source attribute");
+    CHECK(db5_update_attribute("explicit.bot", "split_test", "preserved",
+	    gedp->dbip) == 0,
+	"failed to set explicit-group source attribute");
     CHECK(db5_update_attribute("legacy.bot", "split_test", "preserved",
 	    gedp->dbip) == 0,
 	"failed to set bot_split source attribute");
+
+    const char *help_argv[] = {"bot", "split", "-h"};
+    CHECK(ged_exec_bot(gedp, 3, help_argv) == GED_HELP,
+	"bot split -h did not report help");
+    CHECK(strstr(bu_vls_cstr(gedp->ged_result_str), "--grp") != NULL,
+	"bot split help does not describe --grp");
+
+    const char *default_argv[] = {"bot", "split", "default.bot"};
+    CHECK(ged_exec_bot(gedp, 3, default_argv) == BRLCAD_OK,
+	"bot split default grouping failed");
+    check_output_bot(gedp, "default.bot.0", RT_BOT_PLATE_NOCOS, 0);
+    check_output_bot(gedp, "default.bot.1", RT_BOT_PLATE_NOCOS, 1);
+    check_output_group(gedp, "default.bot_bots", "default.bot.0",
+	"default.bot.1");
 
     const char *subcommand_argv[] = {"bot", "split", "plate.bot"};
     CHECK(ged_exec_bot(gedp, 3, subcommand_argv) == BRLCAD_OK,
@@ -214,6 +286,27 @@ main(int argc, char **argv)
 	"existing colliding object was overwritten");
     check_output_bot(gedp, "plate.bot.1", RT_BOT_PLATE_NOCOS, 0);
     check_output_bot(gedp, "plate.bot.2", RT_BOT_PLATE_NOCOS, 1);
+    check_output_group(gedp, "plate.bot_bots2", "plate.bot.1",
+	"plate.bot.2");
+
+    const char *explicit_argv[] = {
+	"bot", "split", "--grp", "explicit.bot.0", "explicit.bot"
+    };
+    CHECK(ged_exec_bot(gedp, 5, explicit_argv) == BRLCAD_OK,
+	"bot split explicit grouping failed");
+    check_output_bot(gedp, "explicit.bot.1", RT_BOT_PLATE_NOCOS, 0);
+    check_output_bot(gedp, "explicit.bot.2", RT_BOT_PLATE_NOCOS, 1);
+    check_output_group(gedp, "explicit.bot.0", "explicit.bot.1",
+	"explicit.bot.2");
+
+    const char *conflict_argv[] = {
+	"bot", "split", "--grp", "taken.group", "conflict.bot"
+    };
+    CHECK(ged_exec_bot(gedp, 5, conflict_argv) == BRLCAD_ERROR,
+	"bot split accepted a conflicting explicit group name");
+    CHECK(db_lookup(gedp->dbip, "conflict.bot.0",
+	    LOOKUP_QUIET) == RT_DIR_NULL,
+	"bot split wrote output despite an explicit group conflict");
 
     const char *decimate_argv[] = {
 	"bot", "decimate", "-t", "0.01", "plate.bot", "plate.decimated"
@@ -241,6 +334,9 @@ main(int argc, char **argv)
 	"bot_split compatibility command failed");
     check_output_bot(gedp, "legacy.bot.0", RT_BOT_PLATE, 0);
     check_output_bot(gedp, "legacy.bot.1", RT_BOT_PLATE, 1);
+    CHECK(db_lookup(gedp->dbip, "legacy.bot_bots",
+	    LOOKUP_QUIET) == RT_DIR_NULL,
+	"deprecated bot_split unexpectedly changed its output hierarchy");
 
     ged_close(gedp);
     return failures ? EXIT_FAILURE : EXIT_SUCCESS;
