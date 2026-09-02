@@ -19,6 +19,7 @@
 #include "bu/malloc.h"
 #include "bu/str.h"
 #include "bv/vlist.h"
+#include "nmg.h"
 #include "raytrace.h"
 #include "rt/geom.h"
 #include "rt/primitives/annot.h"
@@ -42,6 +43,82 @@ lookup(struct db_i *dbip, const char *name)
     if (dp == RT_DIR_NULL)
 	bu_exit(1, "unable to find %s\n", name);
     return dp;
+}
+
+
+struct annot_ray_result {
+    fastf_t in_dist;
+    fastf_t out_dist;
+    fastf_t color[3];
+    int color_valid;
+    int partitions;
+};
+
+
+static int
+annot_ray_hit(struct application *ap, struct partition *part_head,
+	struct seg *UNUSED(finished_segs))
+{
+    struct annot_ray_result *result = (struct annot_ray_result *)ap->a_uptr;
+    struct partition *part;
+
+    for (part = part_head->pt_forw; part != part_head;
+	    part = part->pt_forw) {
+	if (!result->partitions) {
+	    result->in_dist = part->pt_inhit->hit_dist;
+	    result->out_dist = part->pt_outhit->hit_dist;
+	    result->color_valid = part->pt_regionp->reg_mater.ma_color_valid;
+	    VMOVE(result->color, part->pt_regionp->reg_mater.ma_color);
+	}
+	result->partitions++;
+    }
+    return result->partitions > 0;
+}
+
+
+static int
+annot_ray_miss(struct application *UNUSED(ap))
+{
+    return 0;
+}
+
+
+static void
+check_annot_ray(struct db_i *dbip, const char *object,
+	const fastf_t *expected_color)
+{
+    struct rt_i *rtip = rt_i_create(dbip);
+    struct resource resource = RT_RESOURCE_INIT_ZERO;
+    struct application ap;
+    struct annot_ray_result result = {0};
+    const fastf_t expected_thickness = 0.2;
+    int shot_result;
+
+    if (!rtip || rt_gettree(rtip, object))
+	bu_exit(1, "unable to prepare annotation raytrace object %s\n", object);
+    rt_prep(rtip);
+    rt_init_resource(&resource, 0, rtip);
+    RT_APPLICATION_INIT(&ap);
+    ap.a_rt_i = rtip;
+    ap.a_resource = &resource;
+    ap.a_hit = annot_ray_hit;
+    ap.a_miss = annot_ray_miss;
+    ap.a_uptr = &result;
+    VSET(ap.a_ray.r_pt, 0.0, -2.0, 0.03);
+    VSET(ap.a_ray.r_dir, 1.0, 0.0, 0.0);
+    shot_result = rt_shootray(&ap);
+    if (shot_result != 1 || result.partitions != 1 ||
+	    !result.color_valid ||
+	    !NEAR_EQUAL(result.out_dist - result.in_dist,
+		expected_thickness, rtip->rti_tol.dist) ||
+	    !VNEAR_EQUAL(result.color, expected_color, VUNITIZE_TOL)) {
+	bu_log("%s: shot=%d partitions=%d LOS=%g color-valid=%d color=%g/%g/%g\n",
+	    object, shot_result, result.partitions,
+	    result.out_dist - result.in_dist, result.color_valid,
+	    V3ARGS(result.color));
+	bu_exit(1, "annotation did not produce the expected colored partition\n");
+    }
+    rt_i_destroy(rtip);
 }
 
 
@@ -183,6 +260,46 @@ main(int argc, char **argv)
     if (rt_annot_validate(&annot, NULL) ||
 	    mk_annot(wdbp, "leader.annot", &annot) < 0)
 	bu_exit(1, "unable to write enhanced annotation\n");
+
+    {
+	struct rt_annot_internal ray_annot = {0};
+	point2d_t ray_vertices[2];
+	struct line_seg ray_line = {0};
+	void *ray_segments[1];
+	int ray_reverse[1] = {0};
+	struct rt_annot_seg_style ray_style[1] = {{0}};
+	struct wmember member;
+	unsigned char region_color[3] = {90, 80, 70};
+
+	ray_annot.magic = RT_ANNOT_INTERNAL_MAGIC;
+	VSET(ray_annot.V, 10.0, 0.0, 0.0);
+	ray_annot.flags = RT_ANNOT_MODEL_SPACE;
+	VSET(ray_annot.u_vec, 0.0, 1.0, 0.0);
+	VSET(ray_annot.v_vec, 0.0, 0.0, 1.0);
+	ray_annot.vert_count = 2;
+	ray_annot.verts = ray_vertices;
+	V2SET(ray_vertices[0], -5.0, 0.0);
+	V2SET(ray_vertices[1], 5.0, 0.0);
+	ray_line.magic = CURVE_LSEG_MAGIC;
+	ray_line.start = 0;
+	ray_line.end = 1;
+	ray_segments[0] = &ray_line;
+	ray_annot.ant.count = 1;
+	ray_annot.ant.reverse = ray_reverse;
+	ray_annot.ant.segments = ray_segments;
+	ray_style[0].flags = RT_ANNOT_STYLE_WIDTH;
+	ray_style[0].line_pattern = RT_ANNOT_LINE_CONTINUOUS;
+	ray_style[0].line_width = 2.0;
+	ray_annot.styles = ray_style;
+	if (rt_annot_validate(&ray_annot, NULL) ||
+		mk_annot(wdbp, "ray.annot", &ray_annot) < 0)
+	    bu_exit(1, "unable to write raytrace annotation\n");
+	BU_LIST_INIT(&member.l);
+	if (!mk_addmember("ray.annot", &member.l, NULL, WMOP_UNION) ||
+		mk_lcomb(wdbp, "ray.r", &member, 1, NULL, NULL,
+		region_color, 0))
+	    bu_exit(1, "unable to write raytrace annotation region\n");
+    }
 
     /* ANP2 is deliberately appended after the main-branch ANT2 body.  A
      * reader which knows only ANT2 must still get usable fill outlines,
@@ -352,9 +469,36 @@ main(int argc, char **argv)
 	}
 	check_vector("annotation plot anchor", loaded->V, original_anchor);
 	BV_FREE_VLIST(&rt_vlfree, &vhead);
+	{
+	    struct model *model = nmg_mm();
+	    struct nmgregion *region = NULL;
+	    if (rt_obj_tess(&region, model, &intern, &ttol, &tol) || !region)
+		bu_exit(1, "unable to tessellate model-space annotation\n");
+	    nmg_km(model);
+	}
     }
     rt_db_free_internal(&intern);
 
+    {
+	const fastf_t default_color[3] = {1.0, 1.0, 1.0};
+	const fastf_t annotation_color[3] = {
+	    12.0 / 255.0, 34.0 / 255.0, 56.0 / 255.0
+	};
+	const fastf_t region_color[3] = {
+	    90.0 / 255.0, 80.0 / 255.0, 70.0 / 255.0
+	};
+
+	/* m35.g has this broad table entry, which includes the synthetic ID 0
+	 * assigned to bare solids.  It must not replace annotation colors. */
+	db_mater_add(dbip, 0, 15000, 210, 146, 1, MATER_NO_ADDR);
+	check_annot_ray(dbip, "ray.annot", default_color);
+	if (db5_update_attribute("ray.annot", "rgb", "12/34/56", dbip))
+	    bu_exit(1, "unable to set annotation raytrace color\n");
+	check_annot_ray(dbip, "ray.annot", annotation_color);
+	check_annot_ray(dbip, "ray.r", region_color);
+    }
+
+    dp = lookup(dbip, "leader.annot");
     MAT_DELTAS(transform, -5.0, 6.0, 7.0);
     RT_DB_INTERNAL_INIT(&intern);
     if (rt_db_get_internal(&intern, dp, dbip, transform) != ID_ANNOT)

@@ -2402,7 +2402,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_annot_plot),
 	NULL, /* adaptive_plot */
 	RTFUNCTAB_FUNC_VSHOT_CAST(rt_annot_vshot),
-	NULL, /* tess */
+	RTFUNCTAB_FUNC_TESS_CAST(rt_annot_tess),
 	NULL, /* tnurb */
 	NULL, /* brep */
 	RTFUNCTAB_FUNC_IMPORT5_CAST(rt_annot_import5),

@@ -49,6 +49,7 @@
 #include "nmg.h"
 #include "rt/geom.h"
 #include "rt/primitives/annot.h"
+#include "rt/primitives/bot.h"
 #include "raytrace.h"
 
 #if defined(__GNUC__) && !defined(__clang__)
@@ -76,7 +77,45 @@
 #define ANNOT_PRES_MAGIC 0x414e5032u /* "ANP2" */
 #define ANNOT_PRES_VERSION 1u
 
+/* Stored line widths are display-scale multipliers, not model distances.
+ * Primitive prep has no view pixel scale, so infer a stable model-space base
+ * width from the annotation content before applying that multiplier. */
+#define ANNOT_TEXT_STROKE_RATIO (1.0 / 14.0)
+#define ANNOT_GEOMETRY_STROKE_RATIO 0.01
+#define ANNOT_MIN_WIDTH_TOL_FACTOR 4.0
+
+struct annot_mesh {
+    point_t *vertices;
+    size_t vertex_count;
+    size_t vertex_capacity;
+    int *faces;
+    fastf_t *thickness;
+    size_t face_count;
+    size_t face_capacity;
+};
+
 C_DECL void rt_annot_ifree(struct rt_db_internal *ip);
+
+/* Annotation prep uses BOT as a transient raytrace representation, as ARS
+ * does.  These callbacks are internal to librt rather than public BOT APIs. */
+C_DECL int rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip,
+	struct rt_i *rtip);
+C_DECL int rt_bot_shot(struct soltab *stp, struct xray *rp,
+	struct application *ap, struct seg *seghead);
+C_DECL void rt_bot_print(const struct soltab *stp);
+C_DECL void rt_bot_norm(struct hit *hitp, struct soltab *stp,
+	struct xray *rp);
+C_DECL void rt_bot_curve(struct curvature *cvp, struct hit *hitp,
+	struct soltab *stp);
+C_DECL void rt_bot_uv(struct application *ap, struct soltab *stp,
+	struct hit *hitp, struct uvcoord *uvp);
+C_DECL void rt_bot_free(struct soltab *stp);
+C_DECL void rt_bot_ifree(struct rt_db_internal *ip);
+
+static int annot_to_bot(struct rt_bot_internal **result,
+	const struct rt_annot_internal *annot_ip,
+	const struct bg_tess_tol *ttol, const struct bn_tol *tol,
+	unsigned char bot_mode);
 
 static uint32_t
 annot_get_uint32(const unsigned char *cp)
@@ -502,25 +541,59 @@ rt_annot_validate(const struct rt_annot_internal *annot_ip,
 C_DECL int
 rt_annot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
+    struct bg_tess_tol default_ttol = BG_TESS_TOL_INIT_TOL;
+    struct bn_tol default_tol = BN_TOL_INIT_TOL;
+    const struct rt_annot_internal *annot_ip;
+    struct rt_bot_internal *bot = NULL;
+    struct rt_db_internal bot_intern;
+    const struct bg_tess_tol *ttol = &default_ttol;
+    const struct bn_tol *tol = &default_tol;
+    int ret;
+
     if (!stp)
 	return -1;
     RT_CK_SOLTAB(stp);
-    if (ip) RT_CK_DB_INTERNAL(ip);
-    if (rtip) RT_CK_RTI(rtip);
+    if (!ip)
+	return -1;
+    RT_CK_DB_INTERNAL(ip);
+    if (rtip) {
+	RT_CK_RTI(rtip);
+	ttol = &rtip->rti_ttol;
+	tol = &rtip->rti_tol;
+    }
 
-    if (ip && rt_annot_validate(
-	    (const struct rt_annot_internal *)ip->idb_ptr, NULL))
+    annot_ip = (const struct rt_annot_internal *)ip->idb_ptr;
+    if (rt_annot_validate(annot_ip, NULL))
 	return -1;
 
+    /* View-space annotations need camera state, which primitive prep does not
+     * have.  Leave them non-intersecting until a view-aware prep API exists. */
     stp->st_specific = (void *)NULL;
-    return 0;
+    if (!(annot_ip->flags & RT_ANNOT_MODEL_SPACE))
+	return 0;
+
+    if (annot_to_bot(&bot, annot_ip, ttol, tol, RT_BOT_PLATE) || !bot)
+	return -1;
+
+    RT_DB_INTERNAL_INIT(&bot_intern);
+    bot_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    bot_intern.idb_type = ID_BOT;
+    bot_intern.idb_meth = &OBJ[ID_BOT];
+    bot_intern.idb_ptr = bot;
+    ret = rt_bot_prep(stp, &bot_intern, rtip);
+    rt_bot_ifree(&bot_intern);
+    return ret;
 }
 
 
 C_DECL void
 rt_annot_print(const struct soltab *stp)
 {
-    if (stp) RT_CK_SOLTAB(stp);
+    if (!stp)
+	return;
+    RT_CK_SOLTAB(stp);
+    if (stp->st_specific)
+	rt_bot_print(stp);
 }
 
 
@@ -542,26 +615,18 @@ rt_annot_shot(struct soltab *stp, struct xray *rp, struct application *ap, struc
     RT_CK_RAY(rp);
     RT_CK_APPLICATION(ap);
 
-    /* annotations cannot be ray traced.
-     */
-
-    return 0;			/* MISS */
+    return stp->st_specific ? rt_bot_shot(stp, rp, ap, seghead) : 0;
 }
 
 
 /**
- * Vectorized rt_annot_shot(): annotations cannot be ray traced, so every
- * ray in the batch misses.
+ * Vectorized annotation shooting uses the scalar wrapper so view-space
+ * annotations without prepared geometry continue to miss safely.
  */
 C_DECL void
-rt_annot_vshot(struct soltab **stp, struct xray **UNUSED(rp), struct seg *segp, int n, struct application *ap)
+rt_annot_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
 {
-    int i;
-    if (ap) RT_CK_APPLICATION(ap);
-    for (i = 0; i < n; i++) {
-	if (stp[i] == 0) continue;		/* skip this ray */
-	segp[i].seg_stp = (struct soltab *)0;	/* always MISS */
-    }
+    rt_vshot_via_shot(rt_annot_shot, stp, rp, segp, n, ap);
 }
 
 
@@ -578,6 +643,10 @@ rt_annot_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
     if (stp) RT_CK_SOLTAB(stp);
     RT_CK_RAY(rp);
 
+    if (stp && stp->st_specific) {
+	rt_bot_norm(hitp, stp, rp);
+	return;
+    }
     VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir);
 }
 
@@ -594,6 +663,10 @@ rt_annot_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
     RT_CK_HIT(hitp);
     if (stp) RT_CK_SOLTAB(stp);
 
+    if (stp && stp->st_specific) {
+	rt_bot_curve(cvp, hitp, stp);
+	return;
+    }
     cvp->crv_c1 = cvp->crv_c2 = 0;
 
     bn_vec_ortho(cvp->crv_pdir, hitp->hit_normal);
@@ -608,13 +681,19 @@ rt_annot_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct
     if (hitp) RT_CK_HIT(hitp);
     if (!uvp)
 	return;
+    if (stp && stp->st_specific)
+	rt_bot_uv(ap, stp, hitp, uvp);
 }
 
 
 C_DECL void
 rt_annot_free(struct soltab *stp)
 {
-    if (stp) RT_CK_SOLTAB(stp);
+    if (!stp)
+	return;
+    RT_CK_SOLTAB(stp);
+    if (stp->st_specific)
+	rt_bot_free(stp);
 }
 
 
@@ -1608,6 +1687,487 @@ ant_to_vlist(struct bu_list *vlfree, struct bu_list *vhead, const struct bg_tess
 
     (void)V;
 
+    return ret;
+}
+
+
+static void
+annot_mesh_free(struct annot_mesh *mesh)
+{
+    if (!mesh)
+	return;
+    if (mesh->vertices)
+	bu_free(mesh->vertices, "annotation mesh vertices");
+    if (mesh->faces)
+	bu_free(mesh->faces, "annotation mesh faces");
+    if (mesh->thickness)
+	bu_free(mesh->thickness, "annotation mesh thickness");
+    memset(mesh, 0, sizeof(*mesh));
+}
+
+
+static int
+annot_mesh_reserve_vertices(struct annot_mesh *mesh, size_t additional)
+{
+    size_t capacity;
+    size_t required;
+
+    if (additional > SIZE_MAX - mesh->vertex_count)
+	return 1;
+    required = mesh->vertex_count + additional;
+    if (required <= mesh->vertex_capacity)
+	return 0;
+    capacity = mesh->vertex_capacity ? mesh->vertex_capacity : 64;
+    while (capacity < required) {
+	if (capacity > SIZE_MAX / 2) {
+	    capacity = required;
+	    break;
+	}
+	capacity *= 2;
+    }
+    if (capacity > SIZE_MAX / sizeof(point_t))
+	return 1;
+    mesh->vertices = (point_t *)bu_realloc(mesh->vertices,
+	capacity * sizeof(point_t), "annotation mesh vertices");
+    mesh->vertex_capacity = capacity;
+    return 0;
+}
+
+
+static int
+annot_mesh_reserve_faces(struct annot_mesh *mesh, size_t additional)
+{
+    size_t capacity;
+    size_t required;
+
+    if (additional > SIZE_MAX - mesh->face_count)
+	return 1;
+    required = mesh->face_count + additional;
+    if (required <= mesh->face_capacity)
+	return 0;
+    capacity = mesh->face_capacity ? mesh->face_capacity : 96;
+    while (capacity < required) {
+	if (capacity > SIZE_MAX / 2) {
+	    capacity = required;
+	    break;
+	}
+	capacity *= 2;
+    }
+    if (capacity > SIZE_MAX / (3 * sizeof(int)) ||
+	capacity > SIZE_MAX / sizeof(fastf_t))
+	return 1;
+    mesh->faces = (int *)bu_realloc(mesh->faces,
+	capacity * 3 * sizeof(int), "annotation mesh faces");
+    mesh->thickness = (fastf_t *)bu_realloc(mesh->thickness,
+	capacity * sizeof(fastf_t), "annotation mesh thickness");
+    mesh->face_capacity = capacity;
+    return 0;
+}
+
+
+static int
+annot_mesh_add_triangle(struct annot_mesh *mesh, const point_t a,
+	const point_t b, const point_t c, const vect_t normal, fastf_t thickness,
+	const struct bn_tol *tol)
+{
+    point_t ordered[3];
+    vect_t ab, ac, bc, face_normal;
+    size_t base;
+
+    if (VINVALID(a) || VINVALID(b) || VINVALID(c)) {
+	bu_log("annotation mesh contains a non-finite triangle\n");
+	return 1;
+    }
+    VSUB2(ab, b, a);
+    VSUB2(ac, c, a);
+    VSUB2(bc, c, b);
+    VCROSS(face_normal, ab, ac);
+    if (INVALID(MAGSQ(ab)) || INVALID(MAGSQ(ac)) || INVALID(MAGSQ(bc)) ||
+	INVALID(MAGSQ(face_normal))) {
+	bu_log("annotation mesh triangle exceeds the numeric range\n");
+	return 1;
+    }
+    if (MAGNITUDE(face_normal) <= tol->dist_sq)
+	return 0;
+    VMOVE(ordered[0], a);
+    if (VDOT(face_normal, normal) >= 0.0) {
+	VMOVE(ordered[1], b);
+	VMOVE(ordered[2], c);
+    } else {
+	VMOVE(ordered[1], c);
+	VMOVE(ordered[2], b);
+    }
+
+    if (!mesh || mesh->vertex_count > (size_t)INT_MAX - 3 ||
+	annot_mesh_reserve_vertices(mesh, 3) ||
+	annot_mesh_reserve_faces(mesh, 1))
+	return 1;
+    base = mesh->vertex_count;
+    VMOVE(mesh->vertices[base], ordered[0]);
+    VMOVE(mesh->vertices[base + 1], ordered[1]);
+    VMOVE(mesh->vertices[base + 2], ordered[2]);
+    mesh->vertex_count += 3;
+    mesh->faces[3 * mesh->face_count] = (int)base;
+    mesh->faces[3 * mesh->face_count + 1] = (int)base + 1;
+    mesh->faces[3 * mesh->face_count + 2] = (int)base + 2;
+    mesh->thickness[mesh->face_count++] = thickness;
+    return 0;
+}
+
+
+static int
+annot_mesh_add_stroke_span(struct annot_mesh *mesh, const point_t start,
+	const point_t end, const vect_t normal, fastf_t width,
+	const struct bn_tol *tol)
+{
+    point_t corners[4];
+    point_t first, last;
+    vect_t direction, side;
+    fastf_t half_width;
+    fastf_t length;
+
+    VSUB2(direction, end, start);
+    length = MAGNITUDE(direction);
+    if (INVALID(length))
+	return 1;
+    if (length <= tol->dist)
+	return 0;
+    VSCALE(direction, direction, 1.0 / length);
+    VCROSS(side, normal, direction);
+    if (VINVALID(side))
+	return 1;
+    if (MAGNITUDE(side) <= SMALL_FASTF)
+	return 0;
+    VUNITIZE(side);
+
+    half_width = 0.5 * width;
+    VJOIN1(first, start, -half_width, direction);
+    VJOIN1(last, end, half_width, direction);
+
+    VJOIN1(corners[0], first, -half_width, side);
+    VJOIN1(corners[1], last, -half_width, side);
+    VJOIN1(corners[2], last, half_width, side);
+    VJOIN1(corners[3], first, half_width, side);
+
+    if (annot_mesh_add_triangle(mesh, corners[0], corners[1], corners[2],
+	    normal, width, tol))
+	return 1;
+    return annot_mesh_add_triangle(mesh, corners[0], corners[2], corners[3],
+	normal, width, tol);
+}
+
+
+static void
+annot_line_pattern(uint32_t pattern, const fastf_t **intervals,
+	size_t *interval_count)
+{
+    /* Entries alternate mark and gap lengths in stroke-width units. */
+    static const fastf_t dashed[] = {8.0, 4.0};
+    static const fastf_t dotted[] = {1.0, 3.0};
+    static const fastf_t center[] = {8.0, 3.0, 2.0, 3.0};
+    static const fastf_t phantom[] = {8.0, 3.0, 2.0, 3.0, 2.0, 3.0};
+
+    *intervals = NULL;
+    *interval_count = 0;
+    switch (pattern) {
+	case RT_ANNOT_LINE_DASHED:
+	    *intervals = dashed;
+	    *interval_count = sizeof(dashed) / sizeof(dashed[0]);
+	    break;
+	case RT_ANNOT_LINE_DOTTED:
+	    *intervals = dotted;
+	    *interval_count = sizeof(dotted) / sizeof(dotted[0]);
+	    break;
+	case RT_ANNOT_LINE_CENTER:
+	    *intervals = center;
+	    *interval_count = sizeof(center) / sizeof(center[0]);
+	    break;
+	case RT_ANNOT_LINE_PHANTOM:
+	    *intervals = phantom;
+	    *interval_count = sizeof(phantom) / sizeof(phantom[0]);
+	    break;
+	default:
+	    break;
+    }
+}
+
+
+static int
+annot_mesh_add_stroke(struct annot_mesh *mesh, const point_t start,
+	const point_t end, const vect_t normal, fastf_t width, uint32_t pattern,
+	fastf_t *path_distance, const struct bn_tol *tol)
+{
+    const fastf_t *intervals;
+    size_t interval_count;
+    vect_t delta;
+    fastf_t length;
+    fastf_t period = 0.0;
+    fastf_t position = 0.0;
+    fastf_t phase;
+    size_t interval = 0;
+    size_t i;
+
+    VSUB2(delta, end, start);
+    length = MAGNITUDE(delta);
+    if (INVALID(length))
+	return 1;
+    if (length <= tol->dist)
+	return 0;
+    annot_line_pattern(pattern, &intervals, &interval_count);
+    if (!interval_count) {
+	*path_distance += length;
+	return annot_mesh_add_stroke_span(mesh, start, end, normal, width, tol);
+    }
+
+    for (i = 0; i < interval_count; ++i)
+	period += intervals[i] * width;
+    phase = fmod(*path_distance, period);
+    while (phase >= intervals[interval] * width) {
+	phase -= intervals[interval] * width;
+	interval = (interval + 1) % interval_count;
+    }
+
+    while (position < length) {
+	fastf_t available = intervals[interval] * width - phase;
+	fastf_t run = available < length - position ? available : length - position;
+	if (!(interval & 1) && run > tol->dist) {
+	    point_t run_start, run_end;
+	    VJOIN1(run_start, start, position / length, delta);
+	    VJOIN1(run_end, start, (position + run) / length, delta);
+	    if (annot_mesh_add_stroke_span(mesh, run_start, run_end, normal,
+		    width, tol))
+		return 1;
+	}
+	position += run;
+	phase = 0.0;
+	interval = (interval + 1) % interval_count;
+    }
+    *path_distance += length;
+    return 0;
+}
+
+
+static fastf_t
+annot_default_width(const struct rt_annot_internal *annot_ip,
+	const struct bn_tol *tol)
+{
+    fastf_t largest_text = 0.0;
+    fastf_t local_width = 0.0;
+    fastf_t plane_scale;
+    point2d_t minimum, maximum;
+    vect_t normal;
+    size_t i;
+
+    for (i = 0; i < annot_ip->ant.count; ++i) {
+	if (annot_ip->ant.segments[i] &&
+		*(uint32_t *)annot_ip->ant.segments[i] == ANN_TSEG_MAGIC) {
+	    const struct txt_seg *text =
+		(const struct txt_seg *)annot_ip->ant.segments[i];
+	    if (text->txt_size > largest_text)
+		largest_text = text->txt_size;
+	}
+    }
+    if (largest_text > 0.0) {
+	local_width = largest_text * ANNOT_TEXT_STROKE_RATIO;
+    } else if (annot_ip->vert_count) {
+	V2MOVE(minimum, annot_ip->verts[0]);
+	V2MOVE(maximum, annot_ip->verts[0]);
+	for (i = 1; i < annot_ip->vert_count; ++i) {
+	    V_MIN(minimum[X], annot_ip->verts[i][X]);
+	    V_MIN(minimum[Y], annot_ip->verts[i][Y]);
+	    V_MAX(maximum[X], annot_ip->verts[i][X]);
+	    V_MAX(maximum[Y], annot_ip->verts[i][Y]);
+	}
+	local_width = hypot(maximum[X] - minimum[X],
+	    maximum[Y] - minimum[Y]) * ANNOT_GEOMETRY_STROKE_RATIO;
+    }
+
+    VCROSS(normal, annot_ip->u_vec, annot_ip->v_vec);
+    plane_scale = sqrt(MAGNITUDE(normal));
+    local_width *= plane_scale;
+    if (local_width < ANNOT_MIN_WIDTH_TOL_FACTOR * tol->dist)
+	local_width = ANNOT_MIN_WIDTH_TOL_FACTOR * tol->dist;
+    return local_width;
+}
+
+
+static int
+annot_segment_mesh(struct annot_mesh *mesh,
+	const struct rt_annot_internal *annot_ip, size_t segment,
+	const struct bg_tess_tol *ttol, const struct bn_tol *tol,
+	const vect_t normal, fastf_t base_width)
+{
+    struct bu_list vhead;
+    struct bu_list vlfree;
+    struct bv_vlist *vp;
+    const struct rt_annot_seg_style *style = annot_ip->styles ?
+	&annot_ip->styles[segment] : NULL;
+    uint32_t magic = *(uint32_t *)annot_ip->ant.segments[segment];
+    uint32_t pattern = style ? style->line_pattern : RT_ANNOT_LINE_CONTINUOUS;
+    fastf_t width = base_width;
+    point_t line_start = VINIT_ZERO;
+    point_t polygon[3];
+    fastf_t path_distance = 0.0;
+    size_t polygon_count = 0;
+    int have_line_start = 0;
+    int ret = 0;
+
+    if (style && (style->flags & RT_ANNOT_STYLE_WIDTH))
+	width *= style->line_width;
+    else if (style && magic == ANN_TSEG_MAGIC &&
+	    (style->flags & RT_ANNOT_STYLE_BOLD))
+	width *= 2.0;
+    if (!isfinite(width) || width <= 0.0)
+	return 1;
+
+    BU_LIST_INIT(&vhead);
+    BU_LIST_INIT(&vlfree);
+    ret = seg_to_vlist(&vlfree, &vhead, ttol,
+	(fastf_t *)annot_ip->V, (struct rt_annot_internal *)annot_ip,
+	annot_ip->ant.segments[segment], style);
+    if (ret)
+	goto cleanup;
+
+    for (BU_LIST_FOR(vp, bv_vlist, &vhead)) {
+	size_t i;
+	for (i = 0; i < vp->nused; ++i) {
+	    switch (vp->cmd[i]) {
+		case BV_VLIST_LINE_MOVE:
+		    VMOVE(line_start, vp->pt[i]);
+		    have_line_start = 1;
+		    path_distance = 0.0;
+		    break;
+		case BV_VLIST_LINE_DRAW:
+		    if (have_line_start && annot_mesh_add_stroke(mesh,
+			    line_start, vp->pt[i], normal, width, pattern,
+			    &path_distance, tol)) {
+			ret = 1;
+			goto cleanup;
+		    }
+		    VMOVE(line_start, vp->pt[i]);
+		    have_line_start = 1;
+		    break;
+		case BV_VLIST_POLY_MOVE:
+		case BV_VLIST_TRI_MOVE:
+		    VMOVE(polygon[0], vp->pt[i]);
+		    polygon_count = 1;
+		    break;
+		case BV_VLIST_POLY_DRAW:
+		case BV_VLIST_TRI_DRAW:
+		    if (polygon_count < 3)
+			VMOVE(polygon[polygon_count++], vp->pt[i]);
+		    break;
+		case BV_VLIST_POLY_END:
+		case BV_VLIST_TRI_END:
+		    if (polygon_count == 3 && annot_mesh_add_triangle(mesh,
+			    polygon[0], polygon[1], polygon[2], normal,
+			    base_width, tol)) {
+			ret = 1;
+			goto cleanup;
+		    }
+		    polygon_count = 0;
+		    break;
+		default:
+		    break;
+	    }
+	}
+    }
+
+cleanup:
+    BV_FREE_VLIST(&vlfree, &vhead);
+    bv_vlist_cleanup(&vlfree);
+    return ret;
+}
+
+
+static int
+annot_to_bot(struct rt_bot_internal **result,
+	const struct rt_annot_internal *annot_ip,
+	const struct bg_tess_tol *ttol, const struct bn_tol *tol,
+	unsigned char bot_mode)
+{
+    struct annot_mesh mesh = {0};
+    struct rt_bot_internal *bot;
+    vect_t normal;
+    fastf_t base_width;
+    size_t i;
+
+    if (!result)
+	return 1;
+    *result = NULL;
+
+    if (!annot_ip || !ttol || !tol ||
+	(bot_mode != RT_BOT_PLATE && bot_mode != RT_BOT_SURFACE) ||
+	!(annot_ip->flags & RT_ANNOT_MODEL_SPACE))
+	return 1;
+    VCROSS(normal, annot_ip->u_vec, annot_ip->v_vec);
+    if (VINVALID(normal) || MAGNITUDE(normal) <= SMALL_FASTF)
+	return 1;
+    VUNITIZE(normal);
+    base_width = annot_default_width(annot_ip, tol);
+    if (!isfinite(base_width) || base_width <= 0.0)
+	return 1;
+
+    for (i = 0; i < annot_ip->ant.count; ++i) {
+	if (!annot_ip->ant.segments[i] ||
+		annot_is_fill_compatibility_outline(&annot_ip->ant, i))
+	    continue;
+	if (annot_segment_mesh(&mesh, annot_ip, i, ttol, tol, normal,
+		base_width)) {
+	    annot_mesh_free(&mesh);
+	    return 1;
+	}
+    }
+    if (!mesh.vertex_count || !mesh.face_count) {
+	annot_mesh_free(&mesh);
+	return 1;
+    }
+
+    BU_ALLOC(bot, struct rt_bot_internal);
+    bot->magic = RT_BOT_INTERNAL_MAGIC;
+    bot->mode = bot_mode;
+    bot->orientation = RT_BOT_UNORIENTED;
+    bot->num_vertices = mesh.vertex_count;
+    bot->vertices = (fastf_t *)mesh.vertices;
+    bot->num_faces = mesh.face_count;
+    bot->faces = mesh.faces;
+    if (bot_mode == RT_BOT_PLATE)
+	bot->thickness = mesh.thickness;
+    else
+	bu_free(mesh.thickness, "annotation mesh thickness");
+    mesh.vertices = NULL;
+    mesh.faces = NULL;
+    mesh.thickness = NULL;
+    *result = bot;
+    return 0;
+}
+
+
+C_DECL int
+rt_annot_tess(struct nmgregion **r, struct model *m,
+	struct rt_db_internal *ip, const struct bg_tess_tol *ttol,
+	const struct bn_tol *tol)
+{
+    struct rt_bot_internal *bot = NULL;
+    struct rt_db_internal bot_intern;
+    const struct rt_annot_internal *annot_ip;
+    int ret;
+
+    if (!r || !m || !ip || !ttol || !tol)
+	return -1;
+    RT_CK_DB_INTERNAL(ip);
+    annot_ip = (const struct rt_annot_internal *)ip->idb_ptr;
+    if (rt_annot_validate(annot_ip, NULL) ||
+	annot_to_bot(&bot, annot_ip, ttol, tol, RT_BOT_SURFACE))
+	return -1;
+
+    RT_DB_INTERNAL_INIT(&bot_intern);
+    bot_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    bot_intern.idb_type = ID_BOT;
+    bot_intern.idb_meth = &OBJ[ID_BOT];
+    bot_intern.idb_ptr = bot;
+    ret = rt_bot_tess(r, m, &bot_intern, ttol, tol);
+    rt_bot_ifree(&bot_intern);
     return ret;
 }
 

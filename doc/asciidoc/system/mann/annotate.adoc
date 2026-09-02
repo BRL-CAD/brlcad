@@ -40,6 +40,13 @@ Coordinates and explicit sizes use the database's current modeling units.
 Creation commands draw the new annotation immediately.  Use *--no-draw* to
 create it without changing the display.  Names must not already exist.
 
+Model-space annotations also participate in raytracing.  Librt expands their
+strokes and filled areas into transient mesh geometry during preparation; the
+generated geometry is not written to the database.  It uses the normal region
+material and color resolved from the containing combination tree.  Screen-space
+annotations remain display-only because primitive preparation has no render
+view or image dimensions with which to place them.
+
 The supported dimensions follow the general presentation conventions of ISO
 129-1.  Lettering defaults to OSIFont, an ISO 3098-style technical font shipped
 with BRL-CAD.  If a selected font cannot be loaded, plotting tries OSIFont and
@@ -202,7 +209,9 @@ Set the persistent annotation color using integer red, green, and blue values
 from 0 through 255.
 
 *--line-width width*::
-Set the display line width.
+Set the display line width.  For a model-space raytrace, this value scales the
+physical stroke width inferred from the annotation's text height or overall
+extent.
 
 *--line-style style*::
 Set semantic line-pattern metadata to *continuous*, *dashed*, *dotted*,

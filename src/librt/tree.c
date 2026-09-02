@@ -26,9 +26,11 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/color.h"
 #include "bu/parallel.h"
 #include "vmath.h"
 #include "bn.h"
+#include "rt/db_attr.h"
 #include "rt/db4.h"
 #include "raytrace.h"
 
@@ -138,6 +140,33 @@ struct gettree_callback_data
 };
 
 
+static int
+_rt_annotation_region_color(struct mater_info *material,
+	const struct directory *dp, const struct bu_attribute_value_set *avs)
+{
+    struct bu_color color = BU_COLOR_INIT_ZERO;
+    const char *value;
+
+    if (dp->d_minor_type != ID_ANNOT)
+	return 0;
+
+    value = bu_avs_get(avs, db5_standard_attribute(ATTR_COLOR));
+    if (!value)
+	value = bu_avs_get(avs, "rgb");
+
+    /* A bare annotation is promoted to a synthetic region whose ID is zero.
+     * Region-ID colors describe modeled regions, not annotation appearance. */
+    VSETALL(material->ma_color, 1.0);
+    if (value && bu_color_from_str(&color, value)) {
+	material->ma_color[0] = color.buc_rgb[0];
+	material->ma_color[1] = color.buc_rgb[1];
+	material->ma_color[2] = color.buc_rgb[2];
+    }
+    material->ma_color_valid = 1;
+    return 1;
+}
+
+
 /**
  * This routine will be called by db_walk_tree() once all the solids
  * in this region have been visited.
@@ -191,8 +220,6 @@ _rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
 	    bu_avs_add(&(rp->attr_values), avpp->name, bu_avs_get(&avs, avpp->name));
 	}
     }
-    bu_avs_free(&avs);
-
     rp->reg_mater = tsp->ts_mater; /* struct copy */
     if (tsp->ts_mater.ma_shader)
 	shader_len = strlen(tsp->ts_mater.ma_shader);
@@ -214,8 +241,10 @@ _rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
     /* Determine material properties */
     rp->reg_mfuncs = (char *)0;
     rp->reg_udata = (char *)0;
-    if (rp->reg_mater.ma_color_valid == 0)
+    if (rp->reg_mater.ma_color_valid == 0 &&
+	    !_rt_annotation_region_color(&rp->reg_mater, dp, &avs))
 	db_mater_color_region(tsp->ts_dbip, rp);
+    bu_avs_free(&avs);
 
     /* enter critical section */
     bu_semaphore_acquire(RT_SEM_RESULTS);

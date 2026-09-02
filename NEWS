@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 20XX-XX-XX  Release 7.46.0                                     ---
 ----------------------------------------------------------------------
 
+* added raytracing support for annotation objects - Cliff Yapp
 * fixed MGED X embedded framebuffer display manager crash - Cliff Yapp
 * added annotate command for managing annotation objects - Cliff Yapp
 * changed default new-region material code from 1 to 0 - Keith Bowman
