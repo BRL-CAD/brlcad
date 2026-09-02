@@ -620,6 +620,9 @@ int main(int argc, char *argv[])
 	    }
 	}
 
+#ifdef RT_ANNOT_OVERLAY
+	rtuif_prepare_annotations(APP.a_rt_i);
+#endif
 	do_view_finalize(azimuth, elevation);
 
 	if (need_fb != 0 && !fbp) {
@@ -739,6 +742,9 @@ int main(int argc, char *argv[])
     }
 
 rt_cleanup:
+#ifdef RT_ANNOT_OVERLAY
+    rtuif_clear_annotations();
+#endif
     /* Clean up objv memory, if necessary */
     if (objs_free_argv) {
 	for (i = 0; i < objc; i++) {

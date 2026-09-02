@@ -40,12 +40,11 @@ Coordinates and explicit sizes use the database's current modeling units.
 Creation commands draw the new annotation immediately.  Use *--no-draw* to
 create it without changing the display.  Names must not already exist.
 
-Model-space annotations also participate in raytracing.  Librt expands their
-strokes and filled areas into transient mesh geometry during preparation; the
-generated geometry is not written to the database.  It uses the normal region
-material and color resolved from the containing combination tree.  Screen-space
-annotations remain display-only because primitive preparation has no render
-view or image dimensions with which to place them.
+Ray-traced annotations are zero-thickness informational coverage rather than
+solid regions.  Model-space annotations are depth-tested against ordinary
+geometry.  Screen-space annotations are generated for the current camera and
+composited in the foreground; they do not participate in shadows, reflections,
+line-of-sight thickness, or Boolean evaluation.
 
 The supported dimensions follow the general presentation conventions of ISO
 129-1.  Lettering defaults to OSIFont, an ISO 3098-style technical font shipped
@@ -209,9 +208,9 @@ Set the persistent annotation color using integer red, green, and blue values
 from 0 through 255.
 
 *--line-width width*::
-Set the display line width.  For a model-space raytrace, this value scales the
-physical stroke width inferred from the annotation's text height or overall
-extent.
+Set the presentation line width.  Display and screen-space ray rendering use
+the value as a pixel width.  Model-space ray rendering uses it to scale the
+automatic stroke width derived from the annotation's text height or extent.
 
 *--line-style style*::
 Set semantic line-pattern metadata to *continuous*, *dashed*, *dotted*,

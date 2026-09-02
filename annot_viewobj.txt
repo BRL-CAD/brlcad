@@ -1,0 +1,246 @@
+Annotation and view-object rendering notes
+==========================================
+
+Scope
+-----
+
+BRL-CAD has two related, but deliberately distinct, ways to represent visual
+markup:
+
+* An annotation is an ID_ANNOT database primitive.  It is persistent model
+  content with enough semantic and presentation information to be reproduced
+  outside the application that created it.
+* A view object is application-owned scene state.  It is useful for interactive
+  construction and manipulation, but is intentionally not backed by a database
+  object.
+
+They share portions of the interactive display infrastructure, but they do not
+currently have interchangeable ownership, lifetime, or rendering semantics.
+
+
+Annotation capabilities
+-----------------------
+
+An rt_annot_internal stores a model-space anchor, a set of 2D vertices, and
+either a model plane basis or screen-space placement.  Its segment types cover
+lines, circular arcs, NURBS, Beziers, text, and filled polygons.  Segment style
+records include a semantic role, line pattern and width, RGBA color, font or
+symbol, text scaling, and decorative flags.
+
+The libged annotate command can create styled text, leaders, linear/angular/
+radius/diameter/ordinate dimensions, and bounding-box autodim groups.  It can
+regenerate derived annotations from saved attributes and associate them with
+source model objects without making them part of those objects' CSG trees.
+
+Annotations therefore have the properties needed for persistent markup:
+
+* database naming, paths, transforms, and instances;
+* survival across save/reopen and transfer to another application;
+* semantic segment roles and per-segment presentation data;
+* model-space and view-dependent screen-space placement; and
+* high-level generation metadata and source-object associations.
+
+An annotation is informational coverage, not a CSG solid.  The raytracing
+implementation preserves that distinction.  It prepares annotation coverage
+from active database paths and composites it on primary samples after ordinary
+geometry has established color and depth.  Model-space annotation coverage is
+occluded by nearer solid geometry.  Screen-space annotation coverage uses the
+render view and image dimensions.  Annotations do not acquire artificial
+volume, alter model bounds, cast shadows, or participate in reflection and
+refraction rays.
+
+Visible coverage is returned in back-to-front layers.  Model-space layers are
+ordered by ray distance, followed by view-space layers ordered by projected
+anchor depth; segment draw order breaks ties within an annotation.  This lets
+the image renderers apply source-over alpha consistently while retaining the
+single-frontmost-hit query for compatibility.  NIRT continues to report one
+frontmost segment per model-space annotation rather than exposing these
+presentation layers as solid partitions.
+
+Color follows normal database tree state.  An annotation segment with an
+explicit RGBA style wins; otherwise it inherits the resolved combination-path
+color; otherwise it is white.  The legacy region-ID color table is not applied
+to annotation display or coverage, since annotations are informational leaves
+rather than regions.
+
+Prepared coverage uses the existing libbg RTree implementation.  A 3D RTree
+culls model-space annotation instances and a 2D local RTree culls segments
+inside every annotation.  Screen-space instance extents cannot be placed in a
+static world-space index because they change with the view, so those instances
+remain in a compact list while still using their local segment RTree.  This
+avoids a new spatial data structure and keeps prepared scenes immutable and
+safe for concurrent sample queries.
+
+The rt, ART, and ADRT/ISST integrations follow this overlay model.  ERT invokes
+rt with the database, displayed database paths, and view, so database-backed
+annotations can follow that route as well.  ERT does not currently serialize
+or pass application-owned view objects to its subprocess.
+
+NIRT keeps annotation diagnostics opt-in.  `useannot 1` enables model-space
+annotation intersections, and the `fmt a` action reports them.  Default NIRT
+output is unchanged.  Screen-space annotations are deliberately omitted
+because a NIRT ray does not define an image size, pixel footprint, or complete
+model-to-view mapping.
+
+
+View-object capabilities
+------------------------
+
+The core representation is bv_scene_obj.  A view set owns shared view objects,
+and a particular bview can also own local objects.  Independent views force
+local ownership.  bv_obj_put recycles objects when their application lifetime
+ends; the objects are not written to the .g database.
+
+The `view obj` command exposes the principal markup types:
+
+* Lines are model-coordinate polylines represented by vlists.  Generic scene
+  rendering can add arrowheads to segment ends.
+* Labels have a model anchor and optional model-space target/leader.  Their text
+  is projected and drawn as screen-facing HUD text.  If the command omits Z,
+  screen X/Y coordinates are projected onto the current view plane at creation
+  time.
+* Polygons include general polygons, circles, ellipses, rectangles, and
+  squares.  Creation and editing operate on a saved view plane with a view-Z
+  offset.  Selection, movement, open/close, area, overlap, and 2D boolean
+  operations are supported.  A "fill" is currently a set of hatch lines, not
+  an opaque surface.  Polygons can be explicitly imported from or exported to
+  persistent sketch primitives.
+
+Scene objects also provide object color, transparency, pixel line width, dash
+style, and arrow dimensions.  Not all of these properties have a uniform
+command interface for every object type.
+
+There are other visual layers that should not be conflated with these objects.
+Legacy gv_tcl data/sdata arrows, axes, lines, labels, and polygons have a
+separate representation.  Faceplate/HUD elements are screen UI.  Database
+objects temporarily cloned for editing are also transient, but retain database
+primitive semantics and live in the database-object scene containers.
+
+
+Comparison
+----------
+
+Both annotations and view objects eventually produce display-manager pixels,
+often through bv_scene_obj and vlists.  That common final path does not make
+their source representations equivalent.
+
+Annotations are the canonical choice when markup must be saved, named in a
+database, instanced, shared, raytraced from a .g file, or understood by another
+program.  View objects are the right choice for application/session state that
+must be created and manipulated without changing the database.
+
+Some view objects have a direct annotation analogue, but conversion is not
+lossless without type-aware logic:
+
+* A view polyline maps naturally to line segments, including arrowhead style.
+* A polygon outline and its hatch lines can map to annotation coverage, but the
+  existing view "fill" must not silently become an opaque filled polygon.
+* A label is hybrid.  Its target and leader are model-space geometry while its
+  glyphs remain screen-facing at a projected model anchor.
+* Arbitrary vlist extraction is insufficient because display-matrix commands,
+  point and line sizes, child objects, glyph behavior, and semantic roles are
+  otherwise lost or ambiguous.
+
+View-object line width and annotation line width also need an explicit unit
+policy.  View-object widths are display pixels.  Screen-space annotation widths
+are view-dependent coverage widths.  A model-space annotation's line_width is
+used as a scale on the automatically selected model-space stroke width.  In
+other words, removing a separate raytracer "stroke-width" setting does not
+remove width control: the annotation's existing line_width/`--line-width`
+style remains the single user-facing control.  The renderer interprets it in
+the appropriate coordinate system rather than exposing a second competing
+knob.
+
+
+Recommended transient rendering design
+--------------------------------------
+
+Do not make librt or the raytracers depend on bv_scene_obj, libbv application
+containers, or libged.  Do not manufacture tubes, TGCs, meshes, or geometry
+just in front of the view plane.  Artificial geometry would affect bounds,
+depth, shadows, and secondary rays, and would make antialiasing and perspective
+behavior depend on a fabricated distance from the eye.
+
+If transient view objects need to appear in raytraced output, use an explicit
+application-to-renderer snapshot boundary:
+
+1. The GED/application layer snapshots selected live view objects when a render
+   is launched.  This is the only layer that owns their lifetime and semantics.
+2. A type-aware adapter in libged or libbv translates supported objects into a
+   renderer-neutral overlay/coverage description.  It should reuse annotation
+   coverage preparation through an in-memory annotation-instance interface,
+   rather than duplicate line, glyph, and arrow intersection algorithms.
+3. The snapshot travels with the exact view state: model-to-view transform,
+   perspective, image width and height, and sampling convention.  In-process
+   renderers can receive it directly; subprocess rt/ERT needs an explicit
+   serialized side channel.
+4. Raytracers composite this coverage only on primary image samples, after
+   geometry color and depth are known.  It remains outside CSG, model bounds,
+   shadows, reflections, and refractions.
+5. Initial support should be deliberately finite: polyline strokes and
+   arrowheads, label glyphs and leaders, polygon outlines, and polygon hatches.
+   Faceplate elements and legacy gv_tcl overlays should be separately specified
+   opt-in layers rather than being included accidentally.
+6. Snapshot records should preserve object name and type, RGBA, visibility,
+   local/shared ownership, presentation units, and source identity.  Unsupported
+   object types should produce a deliberate diagnostic or documented omission.
+
+Application-side compositing of the interactive display-manager layer over an
+ERT framebuffer is a viable smaller feature if only ERT screen captures need
+view objects.  It would closely reproduce the interactive view, but it would
+not make the objects available to standalone rt, ART, or ISST output and should
+not be presented as the general renderer solution.
+
+Conversion between the two systems should remain explicit.  Automatically
+turning view objects into database annotations would violate their deliberately
+transient contract.  A user command to promote selected view markup to a
+persistent annotation would be reasonable; polygon-to-sketch export is an
+existing precedent.  Conversely, a view-object editor may be used as a front
+end for constructing an annotation, provided the persistence action is clear.
+
+
+Maintenance findings before implementing the adapter
+----------------------------------------------------
+
+Several representation issues should be corrected before type-driven snapshot
+conversion is relied upon:
+
+* Container-selection flags (BV_DB_OBJS, BV_VIEW_OBJS, BV_LOCAL_OBJS, and
+  BV_CHILD_OBJS) reuse numeric bits also used for semantic s_type_flags
+  (BV_DBOBJ_BASED, BV_VIEWONLY, BV_LINES, and others).  bv_obj_create currently
+  assigns its type argument to s_type_flags.  A local view object consequently
+  acquires BV_LINES incidentally, while the line command does not explicitly
+  tag lines.  The namespaces should be separated and every object explicitly
+  typed.
+* Lines, labels, and polygons should have unambiguous type tags and per-type
+  lifecycle/extraction callbacks.  Snapshot conversion must inspect typed data,
+  not infer semantics from a rendered vlist.
+* Label construction should initialize every bv_label field deliberately,
+  including size, line_flag, anchor, arrow, and target.  Current construction
+  does not establish all of those values on every path.
+* The status of legacy gv_tcl overlay data should be decided explicitly:
+  migrate it, support it through a separate adapter, or document its exclusion.
+* Screen-space annotation display and raytrace units need a parity test.  The
+  legacy display-matrix vlist path and the ray coverage path currently express
+  screen offsets through different mechanisms; their apparent agreement must
+  be verified rather than assumed.
+* Per-segment annotation colors exceed the legacy interactive vlist object's
+  single-color model.  Uniform annotate-command colors work today, but true
+  multicolor interactive parity may require split scene objects or a richer
+  display representation.
+
+Tests for a future adapter should cover shared and local ownership, cleanup,
+label anchors and leaders, polygon holes/hatches/view-Z, perspective, pixel
+width, model-space occlusion, screen-space overlay, and serialization across
+the ERT subprocess boundary.
+
+
+Conclusion
+----------
+
+Persistent annotations and transient view objects should continue to coexist.
+The annotation coverage scene is the correct renderer-side abstraction for
+both saved annotations and a future snapshot of transient markup.  The
+application should perform the semantic conversion and transfer a view-complete
+snapshot; the renderer should treat it as primary-ray coverage, never as
+invented scene geometry.

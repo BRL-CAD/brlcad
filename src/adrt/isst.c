@@ -59,6 +59,7 @@ struct isst_s {
     struct render_camera_s camera;
     struct camera_tile_s tile;
     struct adrt_mesh_s *meshes;
+    struct rt_annot_scene *annotations;
     tienet_buffer_t buffer_image;
     int ogl, sflags, w, h, gs, ui;
     double dt, fps, uic;
@@ -67,6 +68,7 @@ struct isst_s {
     void *texdata;
     vect_t camera_pos_init;
     vect_t camera_focus_init;
+    fastf_t scene_radius;
     int64_t t1;
     int64_t t2;
     int dirty;
@@ -119,13 +121,7 @@ resize_isst(struct isst_s *isstp)
     glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-    {
-	/* realloc through a temporary so a failure does not leak (and null out)
-	 * the existing buffer. */
-	void *tmp = realloc(isstp->texdata, isstp->camera.w * isstp->camera.h * 3);
-	if (tmp)
-	    isstp->texdata = tmp;
-    }
+    isstp->texdata = realloc(isstp->texdata, isstp->camera.w * isstp->camera.h * 3);
     glTexImage2D (GL_TEXTURE_2D, 0, GL_RGB, isstp->camera.w, isstp->camera.h, 0, GL_RGB, GL_UNSIGNED_BYTE, isstp->texdata);
     glDisable(GL_LIGHTING);
 
@@ -158,11 +154,14 @@ isst_load_g(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc,
     argv = (char **)malloc(sizeof(char *) * (strlen(Tcl_GetString(objv[3])) + 1));	/* allocate way too much. */
     argc = (int)bu_argv_from_string(argv, strlen(Tcl_GetString(objv[3])), Tcl_GetString(objv[3]));
 
-    load_g(isst->tie, Tcl_GetString(objv[2]), argc, (const char **)argv, &(isst->meshes));
+    rt_annot_scene_destroy(isst->annotations);
+    isst->annotations = NULL;
+    load_g_annotations(isst->tie, Tcl_GetString(objv[2]), argc,
+	(const char **)argv, &(isst->meshes), &isst->annotations);
     free(argv);
 
-    VSETALL(isst->camera.pos, isst->tie->radius);
-    VMOVE(isst->camera.focus, isst->tie->mid);
+    isst->scene_radius = render_camera_fit_scene(&isst->camera, isst->tie,
+	isst->annotations, ADRT_MODEL_UNITS_PER_TIE_UNIT);
     VMOVE(isst->camera_pos_init, isst->camera.pos);
     VMOVE(isst->camera_focus_init, isst->camera.focus);
 
@@ -239,7 +238,9 @@ paint_window(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Ob
 	isst->buffer_image.ind = 0;
 
 	render_camera_prep(&isst->camera);
-	render_camera_render(&isst->camera, isst->tie, &isst->tile, &isst->buffer_image);
+	render_camera_render_annotations(&isst->camera, isst->tie, &isst->tile,
+	    &isst->buffer_image, isst->annotations,
+	    ADRT_MODEL_UNITS_PER_TIE_UNIT);
 
 	isst->t1 = bu_gettime();
 
@@ -282,7 +283,6 @@ set_resolution(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_
     }
 
     CLAMP(resolution, 1, 20);
-    /* gs is the render grid size; 0 means render at full window resolution */
     if (resolution == 20)
 	isst->gs = 0;
     else
@@ -326,13 +326,10 @@ isst_zap(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj *c
 	return TCL_ERROR;
     }
 
-    /* Release the buffers owned directly by the workspace before the struct
-     * itself.  (The tie and mesh list have a more involved lifecycle and are
-     * left for a dedicated teardown.) */
     TIENET_BUFFER_FREE(isst->buffer_image);
     if (isst->texdata)
 	free(isst->texdata);
-
+    rt_annot_scene_destroy(isst->annotations);
     bu_free(isst, "isst free");
     isst = NULL;
 
@@ -354,7 +351,7 @@ render_mode(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj
     if (objc == 4)
 	buf = Tcl_GetString(objv[3]);
 
-    /* pack the 'rest' into buf - probably should use a vls for this */
+    /* pack the 'rest' into buf - probably should use a vls for this*/
     if ( strlen(mode) == 3 && bu_strncmp("cut", mode, 3) == 0 ) {
 	struct adrt_mesh_s *mesh;
 
@@ -391,26 +388,22 @@ zero_view(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(
 
 
 static int
-move_walk(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj *const *objv)
+move_walk(ClientData UNUSED(clientData), Tcl_Interp *interp, int UNUSED(objc), Tcl_Obj *const *objv)
 {
     vect_t vec;
     int flag;
 
-    if (objc < 3) {
-	Tcl_WrongNumArgs(interp, 1, objv, "pathName flag");
-	return TCL_ERROR;
-    }
     if (Tcl_GetIntFromObj(interp, objv[2], &flag) != TCL_OK)
 	return TCL_ERROR;
 
     if (flag >= 0) {
 	VSUB2(vec, isst->camera.focus, isst->camera.pos);
-	VSCALE(vec, vec, 0.1 * isst->tie->radius);
+	VSCALE(vec, vec, 0.1 * isst->scene_radius);
 	VADD2(isst->camera.pos, isst->camera.pos, vec);
 	VADD2(isst->camera.focus, isst->camera.focus, vec);
     } else {
 	VSUB2(vec, isst->camera.pos, isst->camera.focus);
-	VSCALE(vec, vec, 0.1 * isst->tie->radius);
+	VSCALE(vec, vec, 0.1 * isst->scene_radius);
 	VADD2(isst->camera.pos, isst->camera.pos, vec);
 	VADD2(isst->camera.focus, isst->camera.focus, vec);
     }
@@ -419,16 +412,12 @@ move_walk(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj *
 }
 
 static int
-move_strafe(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj *const *objv)
+move_strafe(ClientData UNUSED(clientData), Tcl_Interp *interp, int UNUSED(objc), Tcl_Obj *const *objv)
 {
     vect_t vec, dir, up;
 
     int flag;
 
-    if (objc < 3) {
-	Tcl_WrongNumArgs(interp, 1, objv, "pathName flag");
-	return TCL_ERROR;
-    }
     if (Tcl_GetIntFromObj(interp, objv[2], &flag) != TCL_OK)
 	return TCL_ERROR;
 
@@ -437,13 +426,13 @@ move_strafe(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj
     if (flag >= 0) {
 	VSUB2(dir, isst->camera.focus, isst->camera.pos);
 	VCROSS(vec, dir, up);
-	VSCALE(vec, vec, 0.1 * isst->tie->radius);
+	VSCALE(vec, vec, 0.1 * isst->scene_radius);
 	VADD2(isst->camera.pos, isst->camera.pos, vec);
 	VADD2(isst->camera.focus, isst->camera.pos, dir);
     } else {
 	VSUB2(dir, isst->camera.focus, isst->camera.pos);
 	VCROSS(vec, dir, up);
-	VSCALE(vec, vec, -0.1 * isst->tie->radius);
+	VSCALE(vec, vec, -0.1 * isst->scene_radius);
 	VADD2(isst->camera.pos, isst->camera.pos, vec);
 	VADD2(isst->camera.focus, isst->camera.pos, dir);
     }
@@ -551,14 +540,10 @@ aerotate(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj *c
 	VSCALE(vecdfoc, vecdfoc, mag_focus);
 	VADD2(isst->camera.focus, isst->camera_focus_init, vecdfoc);
     }
-    /* Update the tcl copies of the az/el vars.  Store them in the same units
-     * as isst_load_g (radians via -DEG2RAD); previously aerotate wrote the raw
-     * degrees from bn_ae_vec, leaving the Tcl vars inconsistent after a drag. */
+    /* Update the tcl copies of the az/el vars */
     VSUB2(vec, isst->camera.focus, isst->camera.pos);
     VUNITIZE(vec);
     bn_ae_vec(&az, &el, vec);
-    az = az * -DEG2RAD;
-    el = el * -DEG2RAD;
     bu_vls_sprintf(&tclstr, "%f", az);
     Tcl_SetVar(interp, "az", bu_vls_addr(&tclstr), 0);
     bu_vls_sprintf(&tclstr, "%f", el);
@@ -576,7 +561,7 @@ open_dm(ClientData UNUSED(cdata), Tcl_Interp *interp, int UNUSED(objc), Tcl_Obj 
     dmp = dm_open(NULL, (void *)interp, dm_default_type(), sizeof(av)/sizeof(void*)-1, (const char **)av);
 
     if (dmp == DM_NULL) {
-	printf("Failed to open display manager\n");
+	printf("dm failed?\n");
 	return TCL_ERROR;
     }
 
@@ -654,7 +639,7 @@ const char *fullname;
     argv = __argv;
 #endif
 
-    /* initialize progname for run-time resource finding */
+    /* initialize progname for run-tim resource finding */
     bu_setprogname(argv[0]);
 
 #ifdef HAVE_WINDOWS_H

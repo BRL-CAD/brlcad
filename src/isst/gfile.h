@@ -32,6 +32,7 @@
 extern "C" {
 #include "bn/tol.h"
 #include "raytrace.h"
+#include "rt/primitives/annot.h"
 
 #include "rt/tie.h"
 #include "adrt.h"
@@ -43,13 +44,16 @@ class GFile : public QObject
     Q_OBJECT
 
     public:
+	~GFile() override;
+
 	int load_g(const char *filename, int argc, const char **argv);
 	void closedb();
 
-	struct tie_s *tie;
-	struct adrt_mesh_s *meshes;
-	struct db_i *dbip;
-	TIE_3 **tribuf;
+	struct tie_s *tie = NULL;
+	struct adrt_mesh_s *meshes = NULL;
+	struct db_i *dbip = NULL;
+	struct rt_annot_scene *annotations = NULL;
+	TIE_3 **tribuf = NULL;
 
 	QString current_file;
 };
@@ -66,4 +70,3 @@ class GFile : public QObject
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

@@ -480,6 +480,22 @@ _nirt_get_resource(struct nirt_state *nss)
 }
 
 
+static void
+_nirt_annotation_result_clear(struct nirt_state *nss)
+{
+    delete nss->i->vals->annotation;
+    nss->i->vals->annotation = NULL;
+}
+
+
+static void
+_nirt_annotation_scene_clear(struct nirt_state *nss)
+{
+    rt_annot_scene_destroy(nss->i->annotation_scene);
+    nss->i->annotation_scene = NULL;
+}
+
+
 int
 _nirt_raytrace_prep(struct nirt_state *nss)
 {
@@ -517,11 +533,17 @@ _nirt_raytrace_prep(struct nirt_state *nss)
 	bu_free(attrs, "objs");
 	return -1;
     }
-    bu_free(objs, "objs");
     bu_free(attrs, "objs");
 
     nmsg(nss, "Prepping the geometry...\n");
     rt_prep(nss->i->ap->a_rt_i);
+    _nirt_annotation_scene_clear(nss);
+    if (nss->i->use_annotations) {
+	nss->i->annotation_scene = rt_annot_scene_create(nss->i->dbip,
+	    ocnt, objs, &nss->i->ap->a_rt_i->rti_ttol,
+	    &nss->i->ap->a_rt_i->rti_tol);
+    }
+    bu_free(objs, "objs");
     nmsg(nss, "%s ", (nss->i->active_paths.size() == 1) ? "Object" : "Objects");
     for (size_t i = 0; i < nss->i->active_paths.size(); i++) {
 	if (i == 0) {
@@ -960,6 +982,17 @@ _nirt_print_fmt_substr(struct nirt_state *nss, struct bu_vls *ostr, const char *
     nirt_print_key("a", r->a);
     nirt_print_key("e", r->e);
 
+    if (r->annotation) {
+	nirt_print_key("annot_path", r->annotation->path.c_str());
+	nirt_print_key("annot_segment", r->annotation->segment);
+	nirt_print_key("annot_role", r->annotation->role.c_str());
+	nirt_print_key("annot_x", r->annotation->point[X] * base2local);
+	nirt_print_key("annot_y", r->annotation->point[Y] * base2local);
+	nirt_print_key("annot_z", r->annotation->point[Z] * base2local);
+	nirt_print_key("annot_d", r->annotation->d * base2local);
+	nirt_print_key("annot_visible", r->annotation->visible);
+    }
+
     if (!r->seg || r->seg->type == 0) return;
 
     if (r->seg->type == NIRT_PARTITION_SEG || r->seg->type == NIRT_ALL_SEG) {
@@ -1056,6 +1089,9 @@ _nirt_report(struct nirt_state *nss, char type, struct nirt_output_record *r)
     std::vector<std::pair<std::string,std::string> >::iterator f_it;
 
     switch (type) {
+	case 'a':
+	    fmt_vect = &nss->i->fmt.annotation;
+	    break;
 	case 'r':
 	    fmt_vect = &nss->i->fmt.ray;
 	    break;
@@ -1088,6 +1124,75 @@ _nirt_report(struct nirt_state *nss, char type, struct nirt_output_record *r)
     }
     nout(nss, "%s", bu_vls_cstr(&rstr));
     bu_vls_free(&rstr);
+}
+
+
+static const char *
+_nirt_annotation_role(uint32_t role)
+{
+    switch (role) {
+	case RT_ANNOT_ROLE_UNSPECIFIED:
+	    return "unspecified";
+	case RT_ANNOT_ROLE_GEOMETRY:
+	    return "geometry";
+	case RT_ANNOT_ROLE_TEXT:
+	    return "text";
+	case RT_ANNOT_ROLE_LEADER:
+	    return "leader";
+	case RT_ANNOT_ROLE_EXTENSION:
+	    return "extension";
+	case RT_ANNOT_ROLE_DIMENSION:
+	    return "dimension";
+	case RT_ANNOT_ROLE_ARROWHEAD:
+	    return "arrowhead";
+	case RT_ANNOT_ROLE_SYMBOL:
+	    return "symbol";
+	case RT_ANNOT_ROLE_MASK:
+	    return "mask";
+	case RT_ANNOT_ROLE_CENTERMARK:
+	    return "centermark";
+	case RT_ANNOT_ROLE_PLACEHOLDER:
+	    return "placeholder";
+	case RT_ANNOT_ROLE_TEXT_DECORATION:
+	    return "text-decoration";
+	default:
+	    return "unknown";
+    }
+}
+
+
+static void
+_nirt_report_annotations(struct nirt_state *nss)
+{
+    const size_t count = rt_annot_scene_query_model(nss->i->annotation_scene,
+	&nss->i->ap->a_ray, nss->i->first_solid_distance, NULL, 0);
+    if (!count)
+	return;
+
+    std::vector<struct rt_annot_hit> hits(count);
+    const size_t found = rt_annot_scene_query_model(nss->i->annotation_scene,
+	&nss->i->ap->a_ray, nss->i->first_solid_distance, hits.data(),
+	hits.size());
+    nirt_seg *saved_segment = nss->i->vals->seg;
+    nss->i->vals->seg = NULL;
+    for (size_t i = 0; i < std::min(found, hits.size()); ++i) {
+	const struct rt_annot_hit &hit = hits[i];
+	if (hit.segment > (size_t)std::numeric_limits<int>::max()) {
+	    nerr(nss, "Annotation segment index is too large for NIRT reporting\n");
+	    continue;
+	}
+	if (!nss->i->vals->annotation)
+	    nss->i->vals->annotation = new nirt_annotation_record;
+	nirt_annotation_record *record = nss->i->vals->annotation;
+	record->path = hit.path ? hit.path : "";
+	record->segment = (int)hit.segment;
+	record->role = _nirt_annotation_role(hit.role);
+	VMOVE(record->point, hit.point);
+	record->d = d_calc(nss, record->point);
+	record->visible = hit.visible;
+	_nirt_report(nss, 'a', nss->i->vals);
+    }
+    nss->i->vals->seg = saved_segment;
 }
 
 
@@ -1213,6 +1318,21 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
     int ev_odd = 1; /* first partition is colored as "odd" */
     point_t out_old = VINIT_ZERO;
     double d_out_old = 0.0;
+
+    nss->i->first_solid_distance = INFINITY;
+    for (part = part_head->pt_forw; part != part_head; part = part->pt_forw) {
+	if (part->pt_regionp->reg_aircode)
+	    continue;
+	if (part->pt_inhit->hit_dist >= 0.0) {
+	    nss->i->first_solid_distance = part->pt_inhit->hit_dist;
+	    break;
+	}
+	if (part->pt_outhit->hit_dist >= 0.0) {
+	    nss->i->first_solid_distance = part->pt_outhit->hit_dist;
+	    break;
+	}
+    }
+
     nirt_seg *s = new nirt_seg;
     if (vals->seg) {
 	delete vals->seg;
@@ -1549,9 +1669,10 @@ static const struct nirt_cmd_desc nirt_descs[] = {
     { "s",              "shoot a ray at the target",                     NULL },
     { "backout",        "back out of model",                             NULL },
     { "useair",         "set/query use of air",                          "<0|1|2|...>" },
+    { "useannot",       "set/query annotation reporting",                "<0|1>" },
     { "units",          "set/query local units",                         "<mm|cm|m|in|ft>" },
     { "overlap_claims", "set/query overlap rebuilding/retention",        "<0|1|2|3>" },
-    { "fmt",            "set/query output formats",                      "{rhpfmog} format item item ..." },
+    { "fmt",            "set/query output formats",                      "{arhpfmog} format item item ..." },
     { "plotfile",       "designate an output file to hold plot data",    "file" },
     { "print",          "query an output item",                          "item" },
     { "debug",          "set/query nirt debug flags",                    "[-h] [-l [lib]] [-C [lib]] [-V [lib] [val]] [lib [flag]]" },
@@ -1828,6 +1949,9 @@ _nirt_cmd_shoot(void *ns, int argc, const char **UNUSED(argv))
 	return -1;
     }
 
+    _nirt_annotation_result_clear(nss);
+    nss->i->first_solid_distance = INFINITY;
+
     /* If we have no active rtip, we don't need to prep or shoot */
     if (!_nirt_get_rtip(nss)) {
 	return 0;
@@ -1860,9 +1984,10 @@ _nirt_cmd_shoot(void *ns, int argc, const char **UNUSED(argv))
 	    nss->i->ap->a_ray.r_pt[2] * nss->i->base2local,
 	    V3ARGS(nss->i->ap->a_ray.r_dir));
 
-    // TODO - any necessary initialization for data collection by callbacks
     _nirt_init_ovlp(nss);
     (void)rt_shootray(nss->i->ap);
+    if (nss->i->use_annotations)
+	_nirt_report_annotations(nss);
 
     // Undo backout
     for (i = 0; i < 3; ++i) {
@@ -1960,6 +2085,45 @@ _nirt_cmd_use_air(void *ns, int argc, const char *argv[])
     if (bu_opt_int(&optparse_msg, 1, (const char **)&(argv[1]), (void *)&nss->i->use_air) == -1) {
 	nerr(nss, "Error: bu_opt value read failure: %s\n\nUsage:  useair %s\n", bu_vls_cstr(&optparse_msg), _nirt_get_desc_args("useair"));
 	return -1;
+    }
+    return 0;
+}
+
+
+extern "C" int
+_nirt_cmd_use_annotations(void *ns, int argc, const char *argv[])
+{
+    struct nirt_state *nss = (struct nirt_state *)ns;
+    struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
+    int enabled = 0;
+
+    if (!ns) return -1;
+    if (argc == 1) {
+	nout(nss, "use_annotations = %d\n", nss->i->use_annotations);
+	return 0;
+    }
+    if (argc > 2) {
+	nerr(nss, "Usage:  useannot %s\n", _nirt_get_desc_args("useannot"));
+	return -1;
+    }
+    if (bu_opt_int(&optparse_msg, 1, (const char **)&argv[1],
+	    (void *)&enabled) == -1) {
+	nerr(nss, "Error: bu_opt value read failure: %s\n\nUsage:  useannot %s\n",
+	    bu_vls_cstr(&optparse_msg), _nirt_get_desc_args("useannot"));
+	bu_vls_free(&optparse_msg);
+	return -1;
+    }
+    bu_vls_free(&optparse_msg);
+    if (enabled != 0 && enabled != 1) {
+	nerr(nss, "useannot must be set to 0 (off) or 1 (on)\n");
+	return -1;
+    }
+    if (enabled != nss->i->use_annotations) {
+	nss->i->use_annotations = enabled;
+	_nirt_annotation_scene_clear(nss);
+	_nirt_annotation_result_clear(nss);
+	if (enabled)
+	    nss->i->need_reprep = 1;
     }
     return 0;
 }
@@ -2085,6 +2249,9 @@ _nirt_cmd_format_output(void *ns, int argc, const char **argv)
 	// print out current fmt str for the specified type
 	struct bu_vls ostr = BU_VLS_INIT_ZERO;
 	switch (type) {
+	    case 'a':
+		_nirt_print_fmt_str(&ostr, nss->i->fmt.annotation);
+		break;
 	    case 'r':
 		_nirt_print_fmt_str(&ostr, nss->i->fmt.ray);
 		break;
@@ -2191,6 +2358,10 @@ _nirt_cmd_format_output(void *ns, int argc, const char **argv)
 	 * formatting instructions with the new. */
 set_fmt:
 	switch (type) {
+	    case 'a':
+		nss->i->fmt.annotation.clear();
+		nss->i->fmt.annotation = fmt_tmp;
+		break;
 	    case 'r':
 		nss->i->fmt.ray.clear();
 		nss->i->fmt.ray = fmt_tmp;
@@ -2543,6 +2714,7 @@ _nirt_cmd_state(void *ns, int argc, const char *argv[])
 	bu_vls_printf(&dumpstr, "xyz %g %g %g\n", V3ARGS(nss->i->vals->orig));
 	bu_vls_printf(&dumpstr, "dir %g %g %g\n", V3ARGS(nss->i->vals->dir));
 	bu_vls_printf(&dumpstr, "useair %d\n", nss->i->use_air);
+	bu_vls_printf(&dumpstr, "useannot %d\n", nss->i->use_annotations);
 	bu_vls_printf(&dumpstr, "units %s\n", bu_units_string(nss->i->local2base));
 	bu_vls_printf(&dumpstr, "overlap_claims ");
 	switch (nss->i->overlap_claims) {
@@ -2563,6 +2735,8 @@ _nirt_cmd_state(void *ns, int argc, const char *argv[])
 		break;
 	}
 	struct bu_vls ostr = BU_VLS_INIT_ZERO;
+	_nirt_print_fmt_cmd(&ostr, 'a', nss->i->fmt.annotation);
+	bu_vls_printf(&dumpstr, "%s", bu_vls_cstr(&ostr));
 	_nirt_print_fmt_cmd(&ostr, 'r', nss->i->fmt.ray);
 	bu_vls_printf(&dumpstr, "%s", bu_vls_cstr(&ostr));
 	_nirt_print_fmt_cmd(&ostr, 'h', nss->i->fmt.head);
@@ -2617,6 +2791,7 @@ const struct bu_cmdtab _libanalyze_nirt_cmds[] = {
     { "state",          _nirt_cmd_state},
     { "units",          _nirt_cmd_units},
     { "useair",         _nirt_cmd_use_air},
+    { "useannot",       _nirt_cmd_use_annotations},
     { "xyz",            _nirt_cmd_target_coor},
     { (char *)NULL,     NULL}
 };
@@ -2783,6 +2958,14 @@ static const char *nirt_cmd_tbl_defs =
 "z_dir,          FNOUNIT,       Ray direction unit vector z component,"
 "a,              FNOUNIT,       Azimuth,"
 "e,              FNOUNIT,       Elevation,"
+"annot_path,     STRING,        Annotation database path,"
+"annot_segment,  INT,           Annotation segment index,"
+"annot_role,     STRING,        Annotation segment role,"
+"annot_x,        FLOAT,         Annotation hit X coordinate,"
+"annot_y,        FLOAT,         Annotation hit Y coordinate,"
+"annot_z,        FLOAT,         Annotation hit Z coordinate,"
+"annot_d,        FLOAT,         Annotation hit gridplane distance,"
+"annot_visible,  INT,           Annotation hit visibility,"
 "x_in,           FLOAT,         ,"
 "y_in,           FLOAT,         ,"
 "z_in,           FLOAT,         ,"
@@ -2895,6 +3078,7 @@ nirt_init(struct nirt_state *ns)
     n->base2local = 0.0;
     n->local2base = 0.0;
     n->use_air = 0;
+    n->use_annotations = 0;
     n->backout = 1;
 
     n->b_state = false;
@@ -2909,6 +3093,8 @@ nirt_init(struct nirt_state *ns)
     BU_GET(n->res_air, struct resource);
     n->rtip = RTI_NULL;
     n->rtip_air = RTI_NULL;
+    n->annotation_scene = NULL;
+    n->first_solid_distance = INFINITY;
     n->need_reprep = 1;
 
     BU_GET(n->val_types, struct bu_attribute_value_set);
@@ -2922,6 +3108,7 @@ nirt_init(struct nirt_state *ns)
     n->vals->h = 0.0;
     n->vals->v = 0.0;
     n->vals->d_orig = 0.0;
+    n->vals->annotation = NULL;
     n->vals->seg = NULL;
 
     _nirt_diff_create(ns);
@@ -3025,6 +3212,8 @@ nirt_clear_dbip(struct nirt_state *ns)
 {
     if (!ns) return -1;
 
+    _nirt_annotation_scene_clear(ns);
+    _nirt_annotation_result_clear(ns);
     db_close(ns->i->dbip);
     ns->i->dbip = NULL;
 
@@ -3045,6 +3234,9 @@ void
 nirt_destroy(struct nirt_state *ns)
 {
     if (!ns) return;
+
+    _nirt_annotation_scene_clear(ns);
+    _nirt_annotation_result_clear(ns);
     bu_vls_free(&ns->nirt_cmd);
     bu_vls_free(ns->i->err);
     bu_vls_free(ns->i->msg);
@@ -3057,6 +3249,7 @@ nirt_destroy(struct nirt_state *ns)
 
     db_close(ns->i->dbip);
 
+    delete ns->i->vals->seg;
     BU_PUT(ns->i->vals, struct nirt_output_record);
 
     BU_PUT(ns->i->res, struct resource);

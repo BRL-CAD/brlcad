@@ -19,12 +19,13 @@
 #include "bu/malloc.h"
 #include "bu/str.h"
 #include "bv/vlist.h"
-#include "nmg.h"
 #include "raytrace.h"
 #include "rt/geom.h"
 #include "rt/primitives/annot.h"
 #include "rt/primitives/datum.h"
 #include "wdb.h"
+
+enum { LAYER_TEST_MAX_SEGMENTS = 2 };
 
 
 static void
@@ -46,79 +47,46 @@ lookup(struct db_i *dbip, const char *name)
 }
 
 
-struct annot_ray_result {
-    fastf_t in_dist;
-    fastf_t out_dist;
-    fastf_t color[3];
-    int color_valid;
-    int partitions;
-};
-
-
-static int
-annot_ray_hit(struct application *ap, struct partition *part_head,
-	struct seg *UNUSED(finished_segs))
-{
-    struct annot_ray_result *result = (struct annot_ray_result *)ap->a_uptr;
-    struct partition *part;
-
-    for (part = part_head->pt_forw; part != part_head;
-	    part = part->pt_forw) {
-	if (!result->partitions) {
-	    result->in_dist = part->pt_inhit->hit_dist;
-	    result->out_dist = part->pt_outhit->hit_dist;
-	    result->color_valid = part->pt_regionp->reg_mater.ma_color_valid;
-	    VMOVE(result->color, part->pt_regionp->reg_mater.ma_color);
-	}
-	result->partitions++;
-    }
-    return result->partitions > 0;
-}
-
-
-static int
-annot_ray_miss(struct application *UNUSED(ap))
-{
-    return 0;
-}
-
-
 static void
-check_annot_ray(struct db_i *dbip, const char *object,
-	const fastf_t *expected_color)
+write_layer_annotation(struct rt_wdb *wdbp, const char *name,
+    fastf_t anchor_x, uint32_t space, size_t segment_count,
+    const unsigned char colors[][4])
 {
-    struct rt_i *rtip = rt_i_create(dbip);
-    struct resource resource = RT_RESOURCE_INIT_ZERO;
-    struct application ap;
-    struct annot_ray_result result = {0};
-    const fastf_t expected_thickness = 0.2;
-    int shot_result;
+    struct rt_annot_internal annot = {0};
+    point2d_t vertices[2];
+    struct line_seg lines[LAYER_TEST_MAX_SEGMENTS] = {{0}};
+    void *segments[LAYER_TEST_MAX_SEGMENTS] = {NULL, NULL};
+    int reverse[LAYER_TEST_MAX_SEGMENTS] = {0, 0};
+    struct rt_annot_seg_style styles[LAYER_TEST_MAX_SEGMENTS] = {{0}};
+    size_t i;
 
-    if (!rtip || rt_gettree(rtip, object))
-	bu_exit(1, "unable to prepare annotation raytrace object %s\n", object);
-    rt_prep(rtip);
-    rt_init_resource(&resource, 0, rtip);
-    RT_APPLICATION_INIT(&ap);
-    ap.a_rt_i = rtip;
-    ap.a_resource = &resource;
-    ap.a_hit = annot_ray_hit;
-    ap.a_miss = annot_ray_miss;
-    ap.a_uptr = &result;
-    VSET(ap.a_ray.r_pt, 0.0, -2.0, 0.03);
-    VSET(ap.a_ray.r_dir, 1.0, 0.0, 0.0);
-    shot_result = rt_shootray(&ap);
-    if (shot_result != 1 || result.partitions != 1 ||
-	    !result.color_valid ||
-	    !NEAR_EQUAL(result.out_dist - result.in_dist,
-		expected_thickness, rtip->rti_tol.dist) ||
-	    !VNEAR_EQUAL(result.color, expected_color, VUNITIZE_TOL)) {
-	bu_log("%s: shot=%d partitions=%d LOS=%g color-valid=%d color=%g/%g/%g\n",
-	    object, shot_result, result.partitions,
-	    result.out_dist - result.in_dist, result.color_valid,
-	    V3ARGS(result.color));
-	bu_exit(1, "annotation did not produce the expected colored partition\n");
+    if (!wdbp || !name || !colors || segment_count < 1 ||
+	    segment_count > LAYER_TEST_MAX_SEGMENTS)
+	bu_exit(1, "invalid ordered-layer test annotation\n");
+    annot.magic = RT_ANNOT_INTERNAL_MAGIC;
+    VSET(annot.V, anchor_x, 0.0, 0.0);
+    annot.flags = space;
+    VSET(annot.u_vec, 0.0, 1.0, 0.0);
+    VSET(annot.v_vec, 0.0, 0.0, 1.0);
+    annot.vert_count = 2;
+    annot.verts = vertices;
+    V2SET(vertices[0], -1.0, 0.0);
+    V2SET(vertices[1], 1.0, 0.0);
+    annot.ant.count = segment_count;
+    annot.ant.reverse = reverse;
+    annot.ant.segments = segments;
+    annot.styles = styles;
+    for (i = 0; i < segment_count; ++i) {
+	lines[i].magic = CURVE_LSEG_MAGIC;
+	lines[i].start = 0;
+	lines[i].end = 1;
+	segments[i] = &lines[i];
+	styles[i].flags = RT_ANNOT_STYLE_COLOR;
+	styles[i].line_pattern = RT_ANNOT_LINE_CONTINUOUS;
+	memcpy(styles[i].color, colors[i], sizeof(styles[i].color));
     }
-    rt_i_destroy(rtip);
+    if (rt_annot_validate(&annot, NULL) || mk_annot(wdbp, name, &annot) < 0)
+	bu_exit(1, "unable to write ordered-layer test annotation\n");
 }
 
 
@@ -257,48 +225,78 @@ main(int argc, char **argv)
     annot.styles[10].role = RT_ANNOT_ROLE_MASK;
     annot.styles[10].flags = RT_ANNOT_STYLE_FILLED;
     annot.styles[10].symbol = (char *)"owned fill with hole";
+    {
+	const size_t segment_count = annot.ant.count;
+	annot.ant.count = 1;
+	annot.styles[0].line_pattern = RT_ANNOT_LINE_CONTINUOUS;
+	annot.styles[0].line_width = 1.0;
+	if (rt_annot_validate(&annot, NULL) ||
+		mk_annot(wdbp, "thin.annot", &annot) < 0)
+	    bu_exit(1, "unable to write default-width annotation\n");
+	annot.styles[0].line_width = 2.5;
+	if (rt_annot_validate(&annot, NULL) ||
+		mk_annot(wdbp, "wide.annot", &annot) < 0)
+	    bu_exit(1, "unable to write wide annotation\n");
+	annot.ant.count = segment_count;
+	annot.styles[0].line_pattern = RT_ANNOT_LINE_DASHED;
+    }
     if (rt_annot_validate(&annot, NULL) ||
 	    mk_annot(wdbp, "leader.annot", &annot) < 0)
 	bu_exit(1, "unable to write enhanced annotation\n");
-
     {
-	struct rt_annot_internal ray_annot = {0};
-	point2d_t ray_vertices[2];
-	struct line_seg ray_line = {0};
-	void *ray_segments[1];
-	int ray_reverse[1] = {0};
-	struct rt_annot_seg_style ray_style[1] = {{0}};
-	struct wmember member;
-	unsigned char region_color[3] = {90, 80, 70};
-
-	ray_annot.magic = RT_ANNOT_INTERNAL_MAGIC;
-	VSET(ray_annot.V, 10.0, 0.0, 0.0);
-	ray_annot.flags = RT_ANNOT_MODEL_SPACE;
-	VSET(ray_annot.u_vec, 0.0, 1.0, 0.0);
-	VSET(ray_annot.v_vec, 0.0, 0.0, 1.0);
-	ray_annot.vert_count = 2;
-	ray_annot.verts = ray_vertices;
-	V2SET(ray_vertices[0], -5.0, 0.0);
-	V2SET(ray_vertices[1], 5.0, 0.0);
-	ray_line.magic = CURVE_LSEG_MAGIC;
-	ray_line.start = 0;
-	ray_line.end = 1;
-	ray_segments[0] = &ray_line;
-	ray_annot.ant.count = 1;
-	ray_annot.ant.reverse = ray_reverse;
-	ray_annot.ant.segments = ray_segments;
-	ray_style[0].flags = RT_ANNOT_STYLE_WIDTH;
-	ray_style[0].line_pattern = RT_ANNOT_LINE_CONTINUOUS;
-	ray_style[0].line_width = 2.0;
-	ray_annot.styles = ray_style;
-	if (rt_annot_validate(&ray_annot, NULL) ||
-		mk_annot(wdbp, "ray.annot", &ray_annot) < 0)
-	    bu_exit(1, "unable to write raytrace annotation\n");
-	BU_LIST_INIT(&member.l);
-	if (!mk_addmember("ray.annot", &member.l, NULL, WMOP_UNION) ||
-		mk_lcomb(wdbp, "ray.r", &member, 1, NULL, NULL,
-		region_color, 0))
-	    bu_exit(1, "unable to write raytrace annotation region\n");
+	struct wmember members;
+	mat_t member_transform = MAT_INIT_IDN;
+	unsigned char inherited_color[3] = {90, 80, 70};
+	BU_LIST_INIT(&members.l);
+	MAT_DELTAS(member_transform, 100.0, 0.0, 0.0);
+	if (!mk_addmember("leader.annot", &members.l, member_transform,
+		WMOP_UNION) ||
+		mk_lcomb(wdbp, "annotation-group", &members, 0, NULL, NULL,
+		    inherited_color, 0))
+	    bu_exit(1, "unable to write annotation instance combination\n");
+    }
+    {
+	struct wmember members;
+	unsigned char inherited_color[3] = {21, 31, 41};
+	BU_LIST_INIT(&members.l);
+	if (!mk_addmember("annotation-group", &members.l, NULL, WMOP_UNION) ||
+		mk_lcomb(wdbp, "inherited-annotation-group", &members, 0,
+		    NULL, NULL, inherited_color, 1))
+	    bu_exit(1, "unable to write inherited annotation combination\n");
+    }
+    {
+	struct wmember members;
+	mat_t member_transform = MAT_INIT_IDN;
+	BU_LIST_INIT(&members.l);
+	MAT_SCALE_ALL(member_transform, 1000.0);
+	if (!mk_addmember("leader.annot", &members.l, member_transform,
+		WMOP_UNION) ||
+		mk_lcomb(wdbp, "scaled-annotation-group", &members, 0, NULL,
+		    NULL, NULL, 0))
+	    bu_exit(1, "unable to write scaled annotation instance combination\n");
+    }
+    {
+	point_t saved_anchor;
+	VMOVE(saved_anchor, annot.V);
+	VSETALL(annot.V, 0.0);
+	annot.flags = RT_ANNOT_SCREEN_SPACE;
+	if (mk_annot(wdbp, "screen.annot", &annot) < 0)
+	    bu_exit(1, "unable to write screen annotation\n");
+	VMOVE(annot.V, saved_anchor);
+	annot.flags = RT_ANNOT_MODEL_SPACE;
+    }
+    {
+	const unsigned char far_color[][4] = {{0, 0, 255, 128}};
+	const unsigned char near_colors[][4] = {
+	    {255, 0, 0, 128}, {0, 255, 0, 128}
+	};
+	const unsigned char screen_color[][4] = {{255, 255, 255, 128}};
+	write_layer_annotation(wdbp, "alpha-far.annot", 20.0,
+	    RT_ANNOT_MODEL_SPACE, 1, far_color);
+	write_layer_annotation(wdbp, "alpha-near.annot", 10.0,
+	    RT_ANNOT_MODEL_SPACE, 2, near_colors);
+	write_layer_annotation(wdbp, "alpha-screen.annot", 0.0,
+	    RT_ANNOT_SCREEN_SPACE, 1, screen_color);
     }
 
     /* ANP2 is deliberately appended after the main-branch ANT2 body.  A
@@ -398,12 +396,7 @@ main(int argc, char **argv)
 	struct bu_list vhead;
 	struct bg_tess_tol ttol = BG_TESS_TOL_INIT_TOL;
 	struct bn_tol tol = BN_TOL_INIT_TOL;
-	if (!loaded || !loaded->styles || !loaded->ant.segments ||
-		loaded->ant.count != 11 || !loaded->ant.segments[10])
-	    bu_exit(1,
-		"enhanced annotation structure did not round trip\n");
-
-	if (!(loaded->flags & RT_ANNOT_MODEL_SPACE) ||
+	if (!(loaded->flags & RT_ANNOT_MODEL_SPACE) || !loaded->styles ||
 		loaded->styles[0].role != RT_ANNOT_ROLE_CENTERMARK ||
 		loaded->styles[0].line_pattern != RT_ANNOT_LINE_DASHED ||
 		!loaded->styles[0].font ||
@@ -422,6 +415,7 @@ main(int argc, char **argv)
 		!NEAR_EQUAL(loaded->styles[1].xy_scale, 0.25, SMALL_FASTF) ||
 		!NEAR_EQUAL(loaded->styles[1].yx_scale, 0.1, SMALL_FASTF) ||
 		!NEAR_EQUAL(loaded->styles[1].y_scale, 0.75, SMALL_FASTF) ||
+		loaded->ant.count != 11 ||
 		*(uint32_t *)loaded->ant.segments[10] != ANN_FSEG_MAGIC ||
 		loaded->styles[10].role != RT_ANNOT_ROLE_MASK ||
 		!loaded->styles[10].symbol ||
@@ -473,36 +467,222 @@ main(int argc, char **argv)
 	}
 	check_vector("annotation plot anchor", loaded->V, original_anchor);
 	BV_FREE_VLIST(&rt_vlfree, &vhead);
-	{
-	    struct model *model = nmg_mm();
-	    struct nmgregion *region = NULL;
-	    if (rt_obj_tess(&region, model, &intern, &ttol, &tol) || !region)
-		bu_exit(1, "unable to tessellate model-space annotation\n");
-	    nmg_km(model);
-	}
     }
     rt_db_free_internal(&intern);
 
     {
-	const fastf_t default_color[3] = {1.0, 1.0, 1.0};
-	const fastf_t annotation_color[3] = {
-	    12.0 / 255.0, 34.0 / 255.0, 56.0 / 255.0
-	};
-	const fastf_t region_color[3] = {
-	    90.0 / 255.0, 80.0 / 255.0, 70.0 / 255.0
-	};
-
-	/* m35.g has this broad table entry, which includes the synthetic ID 0
-	 * assigned to bare solids.  It must not replace annotation colors. */
-	db_mater_add(dbip, 0, 15000, 210, 146, 1, MATER_NO_ADDR);
-	check_annot_ray(dbip, "ray.annot", default_color);
-	if (db5_update_attribute("ray.annot", "rgb", "12/34/56", dbip))
-	    bu_exit(1, "unable to set annotation raytrace color\n");
-	check_annot_ray(dbip, "ray.annot", annotation_color);
-	check_annot_ray(dbip, "ray.r", region_color);
+	const char *paths[] = {"leader.annot"};
+	struct bg_tess_tol ttol = BG_TESS_TOL_INIT_TOL;
+	struct bn_tol tol = BN_TOL_INIT_TOL;
+	struct rt_annot_scene *scene = rt_annot_scene_create(dbip, 1, paths,
+	    &ttol, &tol);
+	struct xray ray;
+	struct rt_annot_hit hit = {0};
+	struct rt_annot_hit all_hit = {0};
+	point_t render_min, render_max, width_sample;
+	const fastf_t line_offset = 0.12;
+	const fastf_t inverse_line_length = 1.0 / sqrt(41.0);
+	const fastf_t offset_x = 2.0 - 5.0 * line_offset * inverse_line_length;
+	const fastf_t offset_y = 2.5 + 4.0 * line_offset * inverse_line_length;
+	VSET(ray.r_pt, 0.0, 24.0, 37.5);
+	VSET(ray.r_dir, 1.0, 0.0, 0.0);
+	if (!scene || rt_annot_scene_count(scene) != 1)
+	    bu_exit(1, "annotation render scene did not collect its leaf\n");
+	if (!rt_annot_scene_bounds(scene, render_min, render_max) ||
+		!NEAR_EQUAL(render_min[X], 10.0, SMALL_FASTF) ||
+		!NEAR_EQUAL(render_max[X], 10.0, SMALL_FASTF) ||
+		render_min[Y] >= render_max[Y] ||
+		render_min[Z] >= render_max[Z])
+	    bu_exit(1, "annotation render scene bounds are invalid\n");
+	if (!rt_annot_scene_query(scene, NULL, &ray, 0.0, 0.0,
+		INFINITY, &hit) || hit.screen_space || !hit.visible ||
+		!NEAR_EQUAL(hit.distance, 10.0, SMALL_FASTF) ||
+		hit.color[0] != 12 || hit.color[1] != 34 || hit.color[2] != 56)
+	    bu_exit(1, "model annotation coverage query failed\n");
+	if (rt_annot_scene_query(scene, NULL, &ray, 0.0, 0.0, 5.0, &hit))
+	    bu_exit(1, "occluded annotation was returned as visible\n");
+	if (!rt_annot_scene_query(scene, NULL, &ray, 0.0, 0.0,
+		9.99975, &hit))
+	    bu_exit(1, "annotation visibility ignored model tolerance\n");
+	if (rt_annot_scene_query(scene, NULL, &ray, 0.0, 0.0,
+		9.999, &hit))
+	    bu_exit(1, "annotation visibility exceeded model tolerance\n");
+	if (rt_annot_scene_query_model(scene, &ray, 5.0, &all_hit, 1) != 1 ||
+		all_hit.visible)
+	    bu_exit(1, "annotation diagnostic query lost occluded coverage\n");
+	VSET(ray.r_pt, 0.0, 12.0, 18.0);
+	if (!rt_annot_scene_query(scene, NULL, &ray, 0.0, 0.0,
+		INFINITY, &hit) || hit.segment != 10)
+	    bu_exit(1, "filled annotation coverage was not returned\n");
+	VSET(ray.r_pt, 0.0, 17.0, 25.5);
+	if (rt_annot_scene_query(scene, NULL, &ray, 0.0, 0.0,
+		INFINITY, &hit))
+	    bu_exit(1, "annotation fill hole unexpectedly reported coverage\n");
+	rt_annot_scene_destroy(scene);
+	VSET(width_sample, 0.0, 20.0 + 2.0 * offset_x,
+	    30.0 + 3.0 * offset_y);
+	paths[0] = "wide.annot";
+	scene = rt_annot_scene_create(dbip, 1, paths, &ttol, &tol);
+	VMOVE(ray.r_pt, width_sample);
+	if (!scene || !rt_annot_scene_query(scene, NULL, &ray, 0.0, 0.0,
+		INFINITY, &hit) || hit.segment != 0)
+	    bu_exit(1, "annotation line width did not expand ray coverage\n");
+	rt_annot_scene_destroy(scene);
+	paths[0] = "thin.annot";
+	scene = rt_annot_scene_create(dbip, 1, paths, &ttol, &tol);
+	VMOVE(ray.r_pt, width_sample);
+	if (!scene || rt_annot_scene_query(scene, NULL, &ray, 0.0, 0.0,
+		INFINITY, &hit))
+	    bu_exit(1, "default line width unexpectedly covered wide sample\n");
+	rt_annot_scene_destroy(scene);
     }
 
-    dp = lookup(dbip, "leader.annot");
+    {
+	const char *paths[] = {"scaled-annotation-group"};
+	struct bg_tess_tol ttol = BG_TESS_TOL_INIT_TOL;
+	struct bn_tol tol = BN_TOL_INIT_TOL;
+	struct rt_annot_scene *scene = rt_annot_scene_create(dbip, 1, paths,
+	    &ttol, &tol);
+	struct xray ray;
+	struct rt_annot_hit hit = {0};
+	VSET(ray.r_pt, 0.0, 0.028, 0.045);
+	VSET(ray.r_dir, 1.0, 0.0, 0.0);
+	if (!scene || rt_annot_scene_count(scene) != 1 ||
+		!rt_annot_scene_query(scene, NULL, &ray, 0.0, 0.0,
+		    INFINITY, &hit) ||
+		!NEAR_EQUAL(hit.distance, 0.01, SMALL_FASTF))
+	    bu_exit(1, "scaled annotation instance coverage failed\n");
+	rt_annot_scene_destroy(scene);
+    }
+
+    {
+	const char *paths[] = {"annotation-group"};
+	struct bg_tess_tol ttol = BG_TESS_TOL_INIT_TOL;
+	struct bn_tol tol = BN_TOL_INIT_TOL;
+	struct rt_annot_scene *scene = rt_annot_scene_create(dbip, 1, paths,
+	    &ttol, &tol);
+	struct xray ray;
+	struct rt_annot_hit hit = {0};
+	VSET(ray.r_pt, 0.0, 28.0, 45.0);
+	VSET(ray.r_dir, 1.0, 0.0, 0.0);
+	if (!scene || rt_annot_scene_count(scene) != 1 ||
+		!rt_annot_scene_query(scene, NULL, &ray, 0.0, 0.0,
+		    INFINITY, &hit) ||
+		!NEAR_EQUAL(hit.distance, 110.0, SMALL_FASTF) ||
+		hit.segment != 10 || hit.color[0] != 90 ||
+		hit.color[1] != 80 || hit.color[2] != 70)
+	    bu_exit(1, "annotation instance transform was not applied\n");
+	VSET(ray.r_pt, 0.0, 24.0, 37.5);
+	if (!rt_annot_scene_query(scene, NULL, &ray, 0.0, 0.0,
+		INFINITY, &hit) || hit.segment != 0 || hit.color[0] != 12 ||
+		hit.color[1] != 34 || hit.color[2] != 56)
+	    bu_exit(1, "annotation segment color did not override inherited color\n");
+	rt_annot_scene_destroy(scene);
+    }
+
+    {
+	const char *paths[] = {"inherited-annotation-group"};
+	struct bg_tess_tol ttol = BG_TESS_TOL_INIT_TOL;
+	struct bn_tol tol = BN_TOL_INIT_TOL;
+	struct rt_annot_scene *scene = rt_annot_scene_create(dbip, 1, paths,
+	    &ttol, &tol);
+	struct xray ray;
+	struct rt_annot_hit hit = {0};
+	VSET(ray.r_pt, 0.0, 28.0, 45.0);
+	VSET(ray.r_dir, 1.0, 0.0, 0.0);
+	if (!scene || !rt_annot_scene_query(scene, NULL, &ray, 0.0, 0.0,
+		INFINITY, &hit) || hit.segment != 10 || hit.color[0] != 21 ||
+		hit.color[1] != 31 || hit.color[2] != 41)
+	    bu_exit(1, "annotation color did not follow tree inheritance\n");
+	rt_annot_scene_destroy(scene);
+    }
+
+    {
+	const char *paths[] = {"screen.annot"};
+	struct bg_tess_tol ttol = BG_TESS_TOL_INIT_TOL;
+	struct bn_tol tol = BN_TOL_INIT_TOL;
+	struct rt_annot_scene *scene = rt_annot_scene_create(dbip, 1, paths,
+	    &ttol, &tol);
+	struct rt_annot_view view = {MAT_INIT_IDN, 100, 100, 0.0};
+	struct xray ray;
+	struct rt_annot_hit hit = {0};
+	VSET(ray.r_pt, 0.0, 0.0, 10.0);
+	VSET(ray.r_dir, 0.0, 0.0, -1.0);
+	if (!scene || !rt_annot_scene_query(scene, &view, &ray, 50.0, 50.0,
+		0.0, &hit) || !hit.screen_space || !hit.visible)
+	    bu_exit(1, "screen annotation coverage query failed\n");
+	rt_annot_scene_destroy(scene);
+    }
+
+    {
+	const char *paths[] = {
+	    "alpha-far.annot", "alpha-near.annot", "alpha-screen.annot"
+	};
+	struct bg_tess_tol ttol = BG_TESS_TOL_INIT_TOL;
+	struct bn_tol tol = BN_TOL_INIT_TOL;
+	struct rt_annot_scene *scene = rt_annot_scene_create(dbip, 3, paths,
+	    &ttol, &tol);
+	struct rt_annot_view view = {MAT_INIT_IDN, 100, 100, 0.0};
+	struct rt_annot_hit layers[4] = {{0}};
+	struct rt_annot_hit diagnostic_hits[2] = {{0}};
+	struct rt_annot_hit top = {0};
+	struct xray ray;
+	size_t layer_count;
+	fastf_t color[3] = {0.0, 0.0, 0.0};
+	const fastf_t alpha = 128.0 / 255.0;
+	const fastf_t remainder = 1.0 - alpha;
+	const fastf_t expected_color[3] = {
+	    alpha + remainder * remainder * alpha,
+	    alpha + remainder * alpha,
+	    alpha + remainder * remainder * remainder * alpha
+	};
+	VSET(ray.r_pt, 0.0, 0.0, 0.0);
+	VSET(ray.r_dir, 1.0, 0.0, 0.0);
+	layer_count = rt_annot_scene_query_layers(scene, &view, &ray,
+	    50.0, 50.0, INFINITY, layers, 2);
+	if (!scene || layer_count != 4 ||
+		bu_strcmp(layers[0].path, "/alpha-far.annot") ||
+		bu_strcmp(layers[1].path, "/alpha-near.annot") ||
+		layers[1].segment != 0)
+	    bu_exit(1, "annotation layer count or capacity handling failed: "
+		"count=%zu first=%s second=%s/%zu\n", layer_count,
+		layers[0].path ? layers[0].path : "(null)",
+		layers[1].path ? layers[1].path : "(null)", layers[1].segment);
+	if (rt_annot_scene_query_layers(scene, &view, &ray, 50.0, 50.0,
+		INFINITY, layers, 4) != 4 ||
+		!NEAR_EQUAL(layers[0].distance, 20.0, SMALL_FASTF) ||
+		!NEAR_EQUAL(layers[1].distance, 10.0, SMALL_FASTF) ||
+		layers[1].segment != 0 ||
+		layers[2].segment != 1 || !layers[3].screen_space)
+	    bu_exit(1, "annotation layers are not back-to-front\n");
+	if (!rt_annot_scene_query(scene, &view, &ray, 50.0, 50.0,
+		INFINITY, &top) || !top.screen_space ||
+		bu_strcmp(top.path, "/alpha-screen.annot"))
+	    bu_exit(1, "annotation top-layer compatibility query changed\n");
+	if (rt_annot_scene_query_layers(scene, &view, &ray, 50.0, 50.0,
+		15.0, NULL, 0) != 3)
+	    bu_exit(1, "annotation layer visibility filtering failed\n");
+	if (rt_annot_scene_query_model(scene, &ray, INFINITY,
+		diagnostic_hits, 2) != 2 ||
+		bu_strcmp(diagnostic_hits[0].path, "/alpha-near.annot") ||
+		diagnostic_hits[0].segment != 1 ||
+		bu_strcmp(diagnostic_hits[1].path, "/alpha-far.annot"))
+	    bu_exit(1, "annotation diagnostic hits changed layer semantics\n");
+	if (!rt_annot_scene_composite(scene, &view, &ray, 50.0, 50.0,
+		INFINITY, color, &top) ||
+		!VNEAR_EQUAL(color, expected_color, SMALL_FASTF) ||
+		!top.screen_space)
+	    bu_exit(1, "annotation alpha compositing order failed\n");
+	MAT_DELTAS(view.model2view, 0.0, 0.0, -2.0);
+	view.width = 160;
+	view.height = 90;
+	view.perspective = 60.0;
+	if (rt_annot_scene_query_layers(scene, &view, &ray, 80.0, 45.0,
+		INFINITY, NULL, 0) != 4)
+	    bu_exit(1, "perspective screen annotation coverage failed\n");
+	rt_annot_scene_destroy(scene);
+    }
+
     MAT_DELTAS(transform, -5.0, 6.0, 7.0);
     RT_DB_INTERNAL_INIT(&intern);
     if (rt_db_get_internal(&intern, dp, dbip, transform) != ID_ANNOT)

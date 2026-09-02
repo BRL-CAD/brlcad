@@ -267,6 +267,14 @@ view_pixel(struct application *ap)
 		    fp->ff_frame = -1;		/* Don't cache misses */
 		    return;
 		}
+#ifdef RT_ANNOT_OVERLAY
+		if (ap->a_flag == RTUIF_ANNOTATION_ONLY) {
+		    /* Annotation coverage has no region or reusable model hit. */
+		    fp->ff_dist = -INFINITY;
+		    fp->ff_regp = NULL;
+		    return;
+		}
+#endif
 		/* XXX a_dist is negative and misleading when eye is in air */
 		fp->ff_dist = (float)ap->a_dist;
 		VJOIN1(fp->ff_hitpt, ap->a_ray.r_pt,
@@ -1230,6 +1238,7 @@ viewit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(s
     }
 
     hitp = pp->pt_inhit;
+    ap->a_dist = hitp->hit_dist;
     RT_HIT_NORMAL(normal, hitp, pp->pt_inseg->seg_stp, &(ap->a_ray), pp->pt_inflip);
 
     /*

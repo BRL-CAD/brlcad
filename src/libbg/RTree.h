@@ -419,7 +419,7 @@ protected:
     ListNode* AllocListNode();
     void FreeListNode(ListNode* a_listNode);
     bool Overlap(Rect* a_rectA, Rect* a_rectB) const;
-    bool Intersect(Rect* a_rect, Ray* a_ray) const;
+    bool Intersect(const Rect* a_rect, const Ray* a_ray) const;
     void ReInsert(Node* a_node, ListNode** a_listNode);
     bool Search(Node* a_node, Rect* a_rect, int& a_foundCount, std::function<bool(const DataType&, void *)> callback, void *a_context) const;
     void RemoveAllRec(Node* a_node);
@@ -433,14 +433,15 @@ protected:
     size_t CheckNodes(Node *a_nodeA, Node *a_nodeB, std::set<DataType> *a_result, std::set<DataType> *b_result);
     size_t CheckNodes(Node *a_nodeA, Node *a_nodeB, std::set<std::pair<DataType, DataType>> *result);
 
-    size_t IsectNode(Node *a_node, Ray *a_ray, std::set<DataType> *result);
+    size_t IsectNode(const Node *a_node, const Ray *a_ray,
+	    std::set<DataType> *result) const;
 
     Node* m_root = nullptr;                                         ///< Root of tree
     ElementTypeReal m_unitSphereVolume = kElementTypeRealZero;      ///< Unit sphere constant for required number of dimensions
 
 public:
     // Find the leaves intersected by a ray, returning the data from the leaves in a set.
-    size_t Intersects(Ray *a_ray, std::set<DataType> *result);
+    size_t Intersects(const Ray *a_ray, std::set<DataType> *result) const;
 
     void plot(const char *fname);
     void plot2d(const char *fname);
@@ -1551,7 +1552,7 @@ bool RTREE_QUAL::Overlap(Rect* a_rectA, Rect* a_rectB) const
 
 // Decide whether a ray intersect a Rect.
 RTREE_TEMPLATE
-bool RTREE_QUAL::Intersect(Rect* a_rect, Ray* a_ray) const
+bool RTREE_QUAL::Intersect(const Rect* a_rect, const Ray* a_ray) const
 {
     RTreeAssert(a_rect);
     if (kNumDimensions != 3) return false;
@@ -1685,7 +1686,8 @@ size_t RTREE_QUAL::Overlaps(RTree &other, std::set<std::pair<DataType, DataType>
 
 
 RTREE_TEMPLATE
-size_t RTREE_QUAL::IsectNode(Node *a_node, Ray *a_ray, std::set<DataType> *result)
+size_t RTREE_QUAL::IsectNode(const Node *a_node, const Ray *a_ray,
+	std::set<DataType> *result) const
 {
     size_t ocnt = 0;
     for (int index = 0; index < a_node->m_count; ++index) {
@@ -1703,7 +1705,8 @@ size_t RTREE_QUAL::IsectNode(Node *a_node, Ray *a_ray, std::set<DataType> *resul
 
 // Loosely based on the idea from the openNURBS code to search two R-trees for all pairs elements whose bounding boxes overlap.
 RTREE_TEMPLATE
-size_t RTREE_QUAL::Intersects(Ray *a_ray, std::set<DataType> *result)
+size_t RTREE_QUAL::Intersects(const Ray *a_ray,
+	std::set<DataType> *result) const
 {
     if (!m_root) return 0;
     size_t ovlp_cnt = IsectNode(m_root, a_ray, result);
@@ -1800,6 +1803,9 @@ void RTREE_QUAL::plot2d(const char *fname)
 }
 
 
+#undef BB_PLOT2D
+#undef BB_PLOT
+#undef TREE_LEAF_FACE_3D
 #undef RTREE_TEMPLATE
 #undef RTREE_QUAL
 
