@@ -21,6 +21,12 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
+/* Read an IGES Boolean Tree entity (type 180) from the current parameter
+ * record and build the corresponding BRL-CAD "union tree".  The postfix
+ * operand/operator list is evaluated using the Push/Pop stack; operand leaf
+ * matrices are premultiplied by "matp" when supplied.  Returns the tree root,
+ * or NULL on error.
+ */
 union tree *
 Readtree(mat_t *matp)
 {

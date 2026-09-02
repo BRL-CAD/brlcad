@@ -19,6 +19,9 @@
  */
 /** @file librender/phong.c
  *
+ * Renderer that shades hit surfaces using the mesh color and any
+ * texture, scaled by the surface-to-eye angle.
+ *
  */
 
 #include "common.h"

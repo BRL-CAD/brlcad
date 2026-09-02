@@ -39,6 +39,11 @@ static const char *default_drawing_name = "iges_drawing";
 
 struct bu_list free_hd;
 
+/**
+ * Read a Hollerith-encoded string ("<length>H<chars>") from the current
+ * parameter field into a newly allocated buffer (*str), advancing to the
+ * next field.  If id is non-empty it is echoed along with the string.
+ */
 void
 Getstrg(char **str, const char *id)
 {
@@ -52,7 +57,7 @@ Getstrg(char **str, const char *id)
     } else if (card[counter] == eord) /* Up against the end of record */
 	return;
 
-    if (card[72] == 'P')
+    if (card[IGES_SECTION_COL] == 'P')
 	lencard = PARAMLEN;
     else
 	lencard = CARDLEN;
@@ -106,6 +111,11 @@ Getstrg(char **str, const char *id)
 }
 
 
+/**
+ * Convert an IGES General Note entity (type 212) into vlist text segments,
+ * applying the entity transform, scaling each string to fit its box, and
+ * handling vertical (internally rotated) text one character at a time.
+ */
 static void
 Note_to_vlist(size_t entno, struct bu_list *vhead)
 {
@@ -186,12 +196,12 @@ Note_to_vlist(size_t entno, struct bu_list *vhead)
 		tmp_y -= ydel;
 		one_char[0] = str[j];
 
-		bv_vlist_2string(vhead, &free_hd, one_char ,
+		bv_vlist_2string(vhead, &free_hd, one_char,
 				 tmp_x, tmp_y, local_scale,
 				 (double)(rot_ang*RAD2DEG));
 	    }
 	} else
-	    bv_vlist_2string(vhead, &free_hd, str ,
+	    bv_vlist_2string(vhead, &free_hd, str,
 			     (double)loc[X], (double)loc[Y], local_scale,
 			     (double)(rot_ang*RAD2DEG));
 
@@ -200,6 +210,10 @@ Note_to_vlist(size_t entno, struct bu_list *vhead)
 }
 
 
+/**
+ * Read the four plane coefficients of an IGES Plane entity (type 108)
+ * into pl.
+ */
 void
 Get_plane(plane_t pl, size_t entno)
 {
@@ -218,6 +232,10 @@ Get_plane(plane_t pl, size_t entno)
 }
 
 
+/**
+ * Append a polyline for the given list of points to vhead: a move to the
+ * first point followed by draws to each subsequent point.
+ */
 void
 Curve_to_vlist(struct bu_list *vhead, struct ptlist *ptlist, struct bu_list *vlfree)
 {
@@ -241,6 +259,11 @@ Curve_to_vlist(struct bu_list *vhead, struct ptlist *ptlist, struct bu_list *vlf
 }
 
 
+/**
+ * Convert an IGES Leader (Arrow) entity (type 214) into a vlist,
+ * drawing the leader line and the arrowhead style selected by the
+ * entity's form number.
+ */
 void
 Leader_to_vlist(size_t entno, struct bu_list *vhead, struct bu_list *vlfree)
 {
@@ -392,6 +415,13 @@ Leader_to_vlist(size_t entno, struct bu_list *vhead, struct bu_list *vlfree)
 }
 
 
+/**
+ * Draw all independent entities belonging to the views in de_list into
+ * a wire-edge shell of model m.  Each entity is converted to a vlist,
+ * transformed by xform, optionally projected to the XY plane, then
+ * scaled, rotated by ang, and translated by (x, y) before being turned
+ * into NMG wire edges.
+ */
 void
 Draw_entities(struct model *m, int de_list[], size_t no_of_des, fastf_t x, fastf_t y, fastf_t local_scale, fastf_t ang, mat_t *xform, struct bu_list *vlfree)
 {
@@ -458,7 +488,7 @@ Draw_entities(struct model *m, int de_list[], size_t no_of_des, fastf_t x, fastf
 		    struct ptlist *tmp_ptr;
 
 		    tmp_ptr = ptr->next;
-		    bu_free((char *)ptr, "Draw_entities: ptr");
+		    bu_free(ptr, "Draw_entities: ptr");
 		    ptr = tmp_ptr;
 		}
 		break;
@@ -478,7 +508,7 @@ Draw_entities(struct model *m, int de_list[], size_t no_of_des, fastf_t x, fastf
 		    VMOVE(tmp_pt, vp->pt[i]);
 		}
 
-		/* FIXEM: should do clipping here */
+		/* FIXME: should do clipping here */
 
 		/* project to XY plane */
 		if (do_projection)
@@ -506,6 +536,11 @@ Draw_entities(struct model *m, int de_list[], size_t no_of_des, fastf_t x, fastf
 }
 
 
+/**
+ * Read an IGES Views Visible Associativity entity (type 402, form 3 or 4)
+ * and return an allocated views_visible holding its list of referenced view
+ * directory entries.  Returns NULL on wrong form or entity type.
+ */
 struct views_visible *
 Get_views_visible(size_t entno)
 {
@@ -549,6 +584,12 @@ Get_views_visible(size_t entno)
 }
 
 
+/**
+ * Process an IGES View entity (type 410): read its scale and clipping
+ * planes, build the list of directory entries visible in this view (the
+ * view itself plus any that reference it via Views Visible entities), and
+ * draw those entities into model m.
+ */
 void
 Do_view(struct model *m, struct bu_ptbl *view_vis_list, size_t entno,
 	fastf_t x, fastf_t y, fastf_t ang, struct bu_list *vlfree)
@@ -581,7 +622,7 @@ Do_view(struct model *m, struct bu_ptbl *view_vis_list, size_t entno,
     for (i = 0; i < 6; i++) {
 	clip_de[i] = 0;
 	Readint(&clip_de[i], "");
-	clip_de[i] = (clip_de[i] - 1)/2;
+	clip_de[i] = IGES_DE2INDEX(clip_de[i]);
     }
 
     xform = dir[entno]->rot;
@@ -630,7 +671,7 @@ Do_view(struct model *m, struct bu_ptbl *view_vis_list, size_t entno,
     }
 
     no_of_des = vv_count + 1;
-    de_list = (int *)bu_calloc(no_of_des, sizeof(int), "Do_view: de_list");
+    de_list = (int *)bu_calloc(no_of_des, sizeof(*de_list), "Do_view: de_list");
     de_list[0] = view_de;
     vv_count = 0;
     for (i = 0; i < BU_PTBL_LEN(view_vis_list); i++) {
@@ -646,10 +687,15 @@ Do_view(struct model *m, struct bu_ptbl *view_vis_list, size_t entno,
 
     Draw_entities(m, de_list, no_of_des, x, y, ang, (fastf_t)local_scale, xform, vlfree);
 
-    bu_free((char *)de_list, "Do_view: de_list");
+    bu_free(de_list, "Do_view: de_list");
 }
 
 
+/**
+ * Process an IGES Drawing entity (type 404): for each referenced view,
+ * build an NMG model, draw the view at its placement, write non-empty
+ * views to the output database, and combine them under the drawing's name.
+ */
 static void
 Get_drawing(size_t entno, struct bu_ptbl *view_vis_list, struct bu_list *vlfree)
 {
@@ -669,13 +715,13 @@ Get_drawing(size_t entno, struct bu_ptbl *view_vis_list, struct bu_list *vlfree)
 	return;
     }
     Readint(&no_of_views, "");
-    view_entno = (int *)bu_calloc(no_of_views, sizeof(int), "Get_drawing: view_entno");
-    x = (fastf_t *)bu_calloc(no_of_views, sizeof(fastf_t), "Get_drawing: x");
-    y = (fastf_t *)bu_calloc(no_of_views, sizeof(fastf_t), "Get_drawing: y");
-    ang = (fastf_t *)bu_calloc(no_of_views, sizeof(fastf_t), "Get_drawing: ang");
+    view_entno = (int *)bu_calloc(no_of_views, sizeof(*view_entno), "Get_drawing: view_entno");
+    x = (fastf_t *)bu_calloc(no_of_views, sizeof(*x), "Get_drawing: x");
+    y = (fastf_t *)bu_calloc(no_of_views, sizeof(*y), "Get_drawing: y");
+    ang = (fastf_t *)bu_calloc(no_of_views, sizeof(*ang), "Get_drawing: ang");
     for (i = 0; i < no_of_views; i++) {
 	Readint(&view_entno[i], "");
-	view_entno[i] = (view_entno[i] - 1)/2;
+	view_entno[i] = IGES_DE2INDEX(view_entno[i]);
 	Readflt(&x[i], "");
 	Readflt(&y[i], "");
 	if (dir[i]->form == 1)
@@ -712,14 +758,20 @@ Get_drawing(size_t entno, struct bu_ptbl *view_vis_list, struct bu_list *vlfree)
     (void)mk_lfcomb(fdout, dir[entno]->name, &headp, 0)
 
 /*	if (no_of_views) {
-	bu_free((char *)view_entno, "Get_drawing: view_entno");
-	bu_free((char *)x, "Get_drawing: x");
-	bu_free((char *)y, "Get_drawing: y");
-	bu_free((char *)ang, "Get_drawing: ang");
+	bu_free(view_entno, "Get_drawing: view_entno");
+	bu_free(x, "Get_drawing: x");
+	bu_free(y, "Get_drawing: y");
+	bu_free(ang, "Get_drawing: ang");
 	}
 */
 	}
 
+/**
+ * Top-level entry point for converting a file's drawing/view entities.
+ * Collects Views Visible associativities, then converts Drawing entities
+ * if present, otherwise View entities, otherwise falls back to drawing all
+ * independent geometry directly.
+ */
 void
 Conv_drawings(struct bu_list *vlfree)
 {
@@ -764,8 +816,8 @@ Conv_drawings(struct bu_list *vlfree)
 	/* free views visible list */
 	for (i = 0; i < BU_PTBL_LEN(&view_vis_list); i++) {
 	    vv = (struct views_visible *)BU_PTBL_GET(&view_vis_list, i);
-	    bu_free((char *)vv->view_de, "Conv_drawings: vv->view_de");
-	    bu_free((char *)vv, "Conv_drawings: vv");
+	    bu_free(vv->view_de, "Conv_drawings: vv->view_de");
+	    bu_free(vv, "Conv_drawings: vv");
 	}
 	bu_ptbl_free(&view_vis_list);
 	return;
@@ -809,8 +861,8 @@ Conv_drawings(struct bu_list *vlfree)
 	    /* free views visible list */
 	    for (i = 0; i < BU_PTBL_LEN(&view_vis_list); i++) {
 		vv = (struct views_visible *)BU_PTBL_GET(&view_vis_list, i);
-		bu_free((char *)vv->view_de, "Conv_drawings: vv->view_de");
-		bu_free((char *)vv, "Conv_drawings: vv");
+		bu_free(vv->view_de, "Conv_drawings: vv->view_de");
+		bu_free(vv, "Conv_drawings: vv");
 	    }
 	bu_ptbl_free(&view_vis_list);
 
@@ -839,8 +891,8 @@ Conv_drawings(struct bu_list *vlfree)
     /* free views visible list */
     for (i = 0; i < BU_PTBL_LEN(&view_vis_list); i++) {
 	vv = (struct views_visible *)BU_PTBL_GET(&view_vis_list, i);
-	bu_free((char *)vv->view_de, "Conv_drawings: vv->view_de");
-	bu_free((char *)vv, "Conv_drawings: vv");
+	bu_free(vv->view_de, "Conv_drawings: vv->view_de");
+	bu_free(vv, "Conv_drawings: vv");
     }
     bu_ptbl_free(&view_vis_list);
 }

@@ -123,8 +123,9 @@ int
 brlcad_hit(struct application* UNUSED(ap), struct partition* PartHeadp, struct seg* UNUSED(segs))
 {
     struct partition* pp;
-    struct hit* hitp;
-    struct soltab* stp;
+    struct hit* hitp = NULL;
+    struct soltab* stp = NULL;
+    int flip = 0;
 
     // struct curvature cur = RT_CURVATURE_INIT_ZERO;
 
@@ -133,10 +134,26 @@ brlcad_hit(struct application* UNUSED(ap), struct partition* PartHeadp, struct s
 
     // vect_t onormal;
 
-    pp = PartHeadp->pt_forw;
-
-    /* entry hit point, so we type less */
-    hitp = pp->pt_inhit;
+    /* Secondary path-tracing rays may originate inside a region.  In that
+     * case the first partition entry is behind the ray origin, so use its exit
+     * boundary instead.  Appleseed requires every reported distance to be
+     * non-negative. */
+    for (pp = PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw) {
+	if (pp->pt_inhit && pp->pt_inhit->hit_dist >= 0.0) {
+	    hitp = pp->pt_inhit;
+	    stp = pp->pt_inseg->seg_stp;
+	    flip = pp->pt_inflip;
+	    break;
+	}
+	if (pp->pt_outhit && pp->pt_outhit->hit_dist >= 0.0) {
+	    hitp = pp->pt_outhit;
+	    stp = pp->pt_outseg->seg_stp;
+	    flip = pp->pt_outflip;
+	    break;
+	}
+    }
+    if (!hitp || !stp)
+	return 0;
 
     /* construct the actual (entry) hit-point from the ray and the
      * distance to the intersection point (i.e., the 't' value).
@@ -144,13 +161,8 @@ brlcad_hit(struct application* UNUSED(ap), struct partition* PartHeadp, struct s
     //VJOIN1(pt, ap->a_ray.r_pt, hitp->hit_dist, ap->a_ray.r_dir);
     brlcad_ray_info.distance = hitp->hit_dist;
 
-    /* primitive we encountered on entry */
-    stp = pp->pt_inseg->seg_stp;
-
-    /* compute the normal vector at the entry point, flipping the
-     * normal if necessary.
-     */
-    RT_HIT_NORMAL(inormal, hitp, stp, &(ap->a_ray), pp->pt_inflip);
+    /* Compute the normal at the selected entry or exit boundary. */
+    RT_HIT_NORMAL(inormal, hitp, stp, &(ap->a_ray), flip);
 
     brlcad_ray_info.normal[0] = inormal[0];
     brlcad_ray_info.normal[1] = inormal[1];
@@ -310,32 +322,42 @@ BrlcadObject::intersect(
     int cpu = get_id();
     app.a_resource = &resources[cpu];
 
-    const asf::Vector3d dir = asf::normalize(ray.m_dir);
-    VSET(app.a_ray.r_dir, dir[0], dir[1], dir[2]);
-    VSET(app.a_ray.r_pt, ray.m_org[0], ray.m_org[1], ray.m_org[2]);
+    /* Honor the shading ray's valid interval [m_tmin, m_tmax).  m_dir is NOT
+     * guaranteed unit-length and m_tmin/m_tmax are in ray-parameter units
+     * (hit = m_org + t*m_dir).  librt needs a unit direction and reports a
+     * world-space distance, so we start the ray at t=m_tmin (which skips the
+     * surface a secondary ray was spawned from -- otherwise it self-intersects
+     * at t~=0 and every surface reads as occluded and renders black) and
+     * convert the returned distance back to a ray parameter. */
+    const double dlen = std::sqrt(ray.m_dir[0]*ray.m_dir[0] + ray.m_dir[1]*ray.m_dir[1] + ray.m_dir[2]*ray.m_dir[2]);
+    if (dlen <= 0.0) { result.m_hit = false; return; }
+    VSET(app.a_ray.r_dir, ray.m_dir[0]/dlen, ray.m_dir[1]/dlen, ray.m_dir[2]/dlen);
+    VSET(app.a_ray.r_pt,
+	 ray.m_org[0] + ray.m_tmin * ray.m_dir[0],
+	 ray.m_org[1] + ray.m_tmin * ray.m_dir[1],
+	 ray.m_org[2] + ray.m_tmin * ray.m_dir[2]);
 
     app.a_uptr = (void*)this->name->c_str();
 
     if (rt_shootray(&app) == 0) {
 	result.m_hit = false;
 	return;
-    } else {
+    }
+
+    const double t = ray.m_tmin + brlcad_ray_info.distance / dlen;
+    if (t >= ray.m_tmax) {
+	result.m_hit = false;
+	return;
+    }
+
+    {
 	result.m_hit = true;
-	result.m_distance = brlcad_ray_info.distance;
+	result.m_distance = t;
 
 	const asf::Vector3d n = asf::normalize(brlcad_ray_info.normal);
 	result.m_geometric_normal = n;
-
-	// const asf::Vector3d n_flip (n[0], n[2], n[1]);
-	// double temp;
-	// temp = n_flip[2];
-	// n_flip.set(2) = n_flip[1];
-	// n_flip.set(1) = temp;
 	result.m_shading_normal = n;
 
-	// const asf::Vector3f p(brlcad_ray_info.normal * m_rcp_radius);
-	// result.m_uv[0] = std::acos(p.y) * asf::RcpPi<float>();
-	// result.m_uv[1] = std::atan2(-p.z, p.x) * asf::RcpTwoPi<float>();
 	result.m_uv[0] = 1.0;
 	result.m_uv[1] = 1.0;
 
@@ -354,11 +376,23 @@ BrlcadObject::intersect(const asr::ShadingRay& ray) const
     int cpu = get_id();
     app.a_resource = &resources[cpu];
 
-    const asf::Vector3d dir = asf::normalize(ray.m_dir);
-    VSET(app.a_ray.r_dir, dir[0], dir[1], dir[2]);
-    VSET(app.a_ray.r_pt, ray.m_org[0], ray.m_org[1], ray.m_org[2]);
+    /* Occlusion test over the ray's [m_tmin, m_tmax) interval (see the detailed
+     * overload).  Start at t=m_tmin so shadow rays don't self-intersect the
+     * surface they were spawned from, and only count an occluder that lies
+     * before m_tmax (e.g. before the light for a shadow ray). */
+    const double dlen = std::sqrt(ray.m_dir[0]*ray.m_dir[0] + ray.m_dir[1]*ray.m_dir[1] + ray.m_dir[2]*ray.m_dir[2]);
+    if (dlen <= 0.0) return false;
+    VSET(app.a_ray.r_dir, ray.m_dir[0]/dlen, ray.m_dir[1]/dlen, ray.m_dir[2]/dlen);
+    VSET(app.a_ray.r_pt,
+	 ray.m_org[0] + ray.m_tmin * ray.m_dir[0],
+	 ray.m_org[1] + ray.m_tmin * ray.m_dir[1],
+	 ray.m_org[2] + ray.m_tmin * ray.m_dir[2]);
 
-    return (rt_shootray(&app) == 1);
+    if (rt_shootray(&app) == 0)
+	return false;
+
+    const double t = ray.m_tmin + brlcad_ray_info.distance / dlen;
+    return t < ray.m_tmax;
 }
 
 
@@ -371,9 +405,24 @@ BrlcadObject::refine_and_offset(
     asf::Vector3d& obj_inst_back_point,
     asf::Vector3d& obj_inst_geo_normal) const
 {
-    obj_inst_front_point = obj_inst_ray.m_org;
-    obj_inst_back_point = obj_inst_ray.m_org;
-    obj_inst_geo_normal = -obj_inst_ray.m_dir;
+    /* Offset the spawned-ray origins off the surface so the next path segment
+     * does not immediately self-intersect.  We offset along the incoming ray
+     * direction (front = the side the ray came from), which needs neither the
+     * surface normal nor an extra ray shot. */
+    const double dlen = std::sqrt(obj_inst_ray.m_dir[0]*obj_inst_ray.m_dir[0]
+			       + obj_inst_ray.m_dir[1]*obj_inst_ray.m_dir[1]
+			       + obj_inst_ray.m_dir[2]*obj_inst_ray.m_dir[2]);
+    const double mag = std::sqrt(obj_inst_ray.m_org[0]*obj_inst_ray.m_org[0]
+			       + obj_inst_ray.m_org[1]*obj_inst_ray.m_org[1]
+			       + obj_inst_ray.m_org[2]*obj_inst_ray.m_org[2]);
+    const double eps = 1.0e-4 * (mag > 1.0 ? mag : 1.0);
+    asf::Vector3d d = (dlen > 0.0)
+	? asf::Vector3d(obj_inst_ray.m_dir[0]/dlen, obj_inst_ray.m_dir[1]/dlen, obj_inst_ray.m_dir[2]/dlen)
+	: asf::Vector3d(0.0, 0.0, 1.0);
+
+    obj_inst_geo_normal = -d;
+    obj_inst_front_point = obj_inst_ray.m_org - eps * d;   // reflection side (toward viewer)
+    obj_inst_back_point  = obj_inst_ray.m_org + eps * d;   // transmission side
 }
 
 

@@ -31,6 +31,11 @@
 
 #include "./iges_struct.h"
 
+/* Rewrite the boolean tree so that no intersection or subtraction operator
+ * sits above a union, applying the distributive identities BRL-CAD requires.
+ * Traverses in LRN order and returns 1 if the tree was left unchanged, 0 if
+ * any rewrite was performed.
+ */
 Bubbleup(root)
     struct node *root;
 {

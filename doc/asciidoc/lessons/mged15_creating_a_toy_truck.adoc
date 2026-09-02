@@ -64,7 +64,7 @@ image::../lessons/images/mged15_truck_cab1s.png[]
 
 To make the hood of the cab, you will need to make another rpp shape, this time using the inside command. This special command was originally created to hollow out objects such as gas tanks and boxes; however, it can be used to create any new shape that has some relationship to a pre-existing shape. In this lesson, it is used to cut away material above the hood and in front of the cab.
 
-If you are using _BRL-CAD_ version 6.0 or later, at the Command Window prompt, type: *inside cab1.s caboff1.s -.1 .7 -.1 -.1 .5 -.1[Enter]* The inside command tells _MGED_ to:
+At the Command Window prompt, type: *inside cab1.s caboff1.s -.1 .7 -.1 -.1 .5 -.1[Enter]* The inside command tells _MGED_ to:
 
 [cols="9*"]
 [%noheader]
@@ -376,13 +376,6 @@ The camo shader involves applying pigments, in a random pattern, to the surface 
 To use the stacker option, open the Combination Editor and select truck1.r. Click on the button to the right of the Shader entry box and then select stack from the drop-down menu. A button with the words Add Shader will appear under the text box. Click on the button and then select camouflage. Set the Background Color to black (0 0 0), Color #1 to green (0 134 0), and Color #2 to rust brown (164 96 38). Make the Noise Size .25. Click on Add Shader once again and select plastic.
 
 At this point, your Combination Editor window may have gone off the bottom of the screen. If this happens, reduce the size of the window as much as you can and then drag it up to the top of the screen. The buttons at the bottom of the box should now appear, and you can Apply your selections.
-
-
-[CAUTION]
-====
-When using the stacker option, you need to keep track of the number of characters and spaces in the shader text box. _MGED_ versions prior to release 6.0 will only recognize 64 characters/spaces, so be careful stacking shaders with complex attributes.
-
-====
 
 
 [[truck_combine_regions]]

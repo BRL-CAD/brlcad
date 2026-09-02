@@ -116,7 +116,7 @@ here in the oldenglish.14 font.
 [[see_also]]
 == SEE ALSO
 
-*brlcad*(1), *fbpoint*(1), *fbline*(1), *fbclear*(1), *pix-fb*(1), *libfb*(3)
+*brlcad*(1), *fbpoint*(1), *fbline*(1), *fbclear*(1), *pix-fb*(1)
 
 
 [[author]]

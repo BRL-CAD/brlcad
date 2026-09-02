@@ -1,0 +1,11 @@
+= Command Reference
+:doctype: article
+:toc: left
+:toclevels: 2
+
+Reference documentation for BRL-CAD commands.
+
+* link:man1_index.html[Command-Line Tools (man1)]
+* link:mann_index.html[MGED / GED Commands (mann)]
+
+See also the link:mann/Introduction.html[Introduction to MGED commands].

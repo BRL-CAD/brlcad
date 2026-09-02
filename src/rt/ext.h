@@ -174,6 +174,7 @@ extern int curframe;			/* current frame number */
 extern int desiredframe;		/* frame to start at */
 extern int finalframe;			/* frame to halt at */
 extern int matflag;			/* read matrix from stdin */
+extern int orientflag;			/* 1 means orientation has been set */
 extern int pix_end;			/* pixel to end at */
 extern int pix_start;			/* pixel to start at */
 /***** end variables shared with do.c *****/

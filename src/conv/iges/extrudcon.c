@@ -19,13 +19,18 @@
  */
 /** @file iges/extrudcon.c
  *
- * Create a TGC from a ellipse extrusion.
+ * Create a TGC from an ellipse extrusion.
  *
  */
 
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
+/*
+ * Extrudcon() is a helper for extrude() (IGES 164 Solid of Linear
+ * Extrusion) for the case where the extruded base curve is an IGES 104
+ * Conic Arc that is an ellipse.  It produces a BRL-CAD TGC.
+ */
 int
 Extrudcon(size_t entityno, int curve, vect_t evect)
     /* extrusion entity number */
@@ -49,18 +54,19 @@ Extrudcon(size_t entityno, int curve, vect_t evect)
 
     if (dir[curve]->form > 1) {
 	bu_log("Conic arc for extrusion is not closed:\n");
-	bu_log("\textrusion entity D%07d (%s)\n", dir[entityno]->direct ,
+	bu_log("\textrusion entity D%07d (%s)\n", dir[entityno]->direct,
 	       dir[entityno]->name);
 	bu_log("\tarc entity D%07d (%s)\n", dir[curve]->direct, dir[curve]->name);
 	return 0;
     }
 
     if (dir[curve]->param <= pstart) {
-	bu_log("Illegal parameter pointer for entity D%07d (%s)\n" ,
+	bu_log("Illegal parameter pointer for entity D%07d (%s)\n",
 	       dir[curve]->direct, dir[curve]->name);
 	return 0;
     }
     Readrec(dir[curve]->param);
+    /* IGES entity type number; read only to advance past the field, otherwise unused */
     Readint(&sol_num, "");
     Readflt(&a, "");
     Readflt(&b, "");
@@ -102,7 +108,7 @@ Extrudcon(size_t entityno, int curve, vect_t evect)
 
     if (!ZERO(start[X] - stop[X]) || !ZERO(start[Y] - stop[Y])) {
 	bu_log("Conic arc for extrusion is not closed:\n");
-	bu_log("\textrusion entity D%07d (%s)\n", dir[entityno]->direct ,
+	bu_log("\textrusion entity D%07d (%s)\n", dir[entityno]->direct,
 	       dir[entityno]->name);
 	bu_log("\tarc entity D%07d (%s)\n", dir[curve]->direct, dir[curve]->name);
 	return 0;
@@ -127,7 +133,7 @@ Extrudcon(size_t entityno, int curve, vect_t evect)
 
     if (!ellipse) {
 	bu_log("Conic arc for extrusion is not an ellipse:\n");
-	bu_log("\textrusion entity D%07d (%s)\n", dir[entityno]->direct ,
+	bu_log("\textrusion entity D%07d (%s)\n", dir[entityno]->direct,
 	       dir[entityno]->name);
 	bu_log("\tarc entity D%07d (%s)\n", dir[curve]->direct, dir[curve]->name);
 	return 0;

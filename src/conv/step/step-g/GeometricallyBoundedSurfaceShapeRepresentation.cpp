@@ -32,6 +32,7 @@
 #include "Factory.h"
 #include "ManifoldSolidBrep.h"
 #include "GeometricRepresentationContext.h"
+#include "Axis2Placement3D.h"
 
 
 #define BUFSIZE 255 // used for buffer size that stringifies step ID
@@ -57,6 +58,20 @@ GeometricallyBoundedSurfaceShapeRepresentation::GeometricallyBoundedSurfaceShape
 
 GeometricallyBoundedSurfaceShapeRepresentation::~GeometricallyBoundedSurfaceShapeRepresentation()
 {
+}
+
+
+Axis2Placement3D *
+GeometricallyBoundedSurfaceShapeRepresentation::GetAxis2Placement3d()
+{
+    std::list<RepresentationItem *>::iterator iter;
+    Axis2Placement3D *axis = NULL;
+    for (iter = items.begin(); iter != items.end(); iter++) {
+	axis = dynamic_cast<Axis2Placement3D *>(*iter);
+	if (axis != NULL)
+	    break;
+    }
+    return axis;
 }
 
 

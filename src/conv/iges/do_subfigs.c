@@ -22,6 +22,12 @@
 #include "./iges_extern.h"
 
 
+/* Process IGES Singular Subfigure Instance entities (type 408).  Each
+ * instance references a Subfigure Definition (type 308); its members (which
+ * may include external file references, type 416) are gathered into a BRL-CAD
+ * combination, and every instance is placed under the top-level object for
+ * the current file.
+ */
 void
 Do_subfigs(void)
 {
@@ -47,7 +53,7 @@ Do_subfigs(void)
 	    continue;
 
 	if (dir[i]->param <= pstart) {
-	    bu_log("Illegal parameter pointer for entity D%07d (%s)\n" ,
+	    bu_log("Illegal parameter pointer for entity D%07d (%s)\n",
 		   dir[i]->direct, dir[i]->name);
 	    continue;
 	}
@@ -61,7 +67,7 @@ Do_subfigs(void)
 	}
 
 	Readint(&subfigdef_de, "");
-	subfigdef_index = (subfigdef_de - 1)/2;
+	subfigdef_index = IGES_DE2INDEX(subfigdef_de);
 	if (subfigdef_index >= totentities) {
 	    bu_log("Singular Subfigure Instance Entity gives Subfigure Definition");
 	    bu_log("\tEntity DE of %d, largest DE in file is %zu\n",
@@ -75,7 +81,7 @@ Do_subfigs(void)
 	}
 
 	if (dir[subfigdef_index]->param <= pstart) {
-	    bu_log("Illegal parameter pointer for entity D%07d (%s)\n" ,
+	    bu_log("Illegal parameter pointer for entity D%07d (%s)\n",
 		   dir[subfigdef_index]->direct, dir[subfigdef_index]->name);
 	    continue;
 	}
@@ -122,7 +128,7 @@ Do_subfigs(void)
 	memcpy(wmem->wm_mat, *dir[i]->rot, sizeof(mat_t));
 
 	Readint(&no_of_members, "");	/* get number of members */
-	members = (int *)bu_calloc(no_of_members, sizeof(int), "Do_subfigs: members");
+	members = (int *)bu_calloc(no_of_members, sizeof(*members), "Do_subfigs: members");
 	for (j = 0; j < no_of_members; j++)
 	    Readint(&members[j], "");
 
@@ -130,7 +136,8 @@ Do_subfigs(void)
 	for (j = 0; j < no_of_members; j++) {
 	    size_t idx;
 
-	    idx = (members[j] - 1)/2;
+	    /* convert the member's IGES directory entry number to a dir[] index */
+	    idx = IGES_DE2INDEX(members[j]);
 
 	    if (idx >= totentities) {
 		bu_log("Subfigure Definition Entity gives Member Entity");
@@ -139,7 +146,7 @@ Do_subfigs(void)
 		continue;
 	    }
 	    if (dir[idx]->param <= pstart) {
-		bu_log("Illegal parameter pointer for entity D%07d (%s)\n" ,
+		bu_log("Illegal parameter pointer for entity D%07d (%s)\n",
 		       dir[idx]->direct, dir[idx]->name);
 		continue;
 	    }
@@ -195,7 +202,7 @@ Do_subfigs(void)
 
 		    name = list_ptr->obj_name;
 		} else {
-		    bu_free((char *)file_name, "Do_subfigs: file_name");
+		    bu_free(file_name, "Do_subfigs: file_name");
 		}
 
 	    } else {

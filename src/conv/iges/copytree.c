@@ -19,14 +19,17 @@
  */
 /** @file iges/copytree.c
  *
- * This routine copies a tree rooted at "root" by recursion the
- * "parent" field of the root of the new tree is filed by the "parent"
+ * This routine copies a tree rooted at "root" by recursion.  The
+ * "parent" field of the root of the new tree is filled by the "parent"
  * argument.
  *
  */
 
 #include "./iges_struct.h"
 
+/* Recursively deep-copy the boolean-tree "node" structure rooted at "root",
+ * setting the copied root's parent link to "parent".  Returns the new tree.
+ */
 struct node *Copytree(struct node *root, struct node *parent)
 {
 

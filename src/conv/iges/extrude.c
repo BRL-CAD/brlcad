@@ -22,6 +22,12 @@
 #include "./iges_extern.h"
 
 
+/*
+ * extrude() converts an IGES 164 Solid of Linear Extrusion entity into a
+ * BRL-CAD primitive.  The result depends on the extruded base curve: a
+ * circular arc yields an RCC (via Extrudcirc), a conic arc an TGC (via
+ * Extrudcon), and other supported curve types a BOT from an extruded NMG face.
+ */
 int
 extrude(size_t entityno, struct bu_list *vlfree)
 {
@@ -41,11 +47,12 @@ extrude(size_t entityno, struct bu_list *vlfree)
     /* Acquiring Data */
 
     if (dir[entityno]->param <= pstart) {
-	bu_log("Illegal parameter pointer for entity D%07d (%s)\n" ,
+	bu_log("Illegal parameter pointer for entity D%07d (%s)\n",
 	       dir[entityno]->direct, dir[entityno]->name);
 	return 0;
     }
     Readrec(dir[entityno]->param);
+    /* IGES entity type number; read only to advance past the field, otherwise unused */
     Readint(&sol_num, "");
 
     /* Read pointer to directory entry for curve to be extruded */
@@ -54,7 +61,7 @@ extrude(size_t entityno, struct bu_list *vlfree)
 
     /* Convert this to a "dir" index */
 
-    curve = (curve-1)/2;
+    curve = IGES_DE2INDEX(curve);
 
     Readcnv(&length, "");
     Readflt(&edir[X], "");
@@ -62,7 +69,7 @@ extrude(size_t entityno, struct bu_list *vlfree)
     Readflt(&edir[Z], "");
 
     if (length <= 0.0) {
-	bu_log("Illegal parameters for entity D%07d (%s)\n" ,
+	bu_log("Illegal parameters for entity D%07d (%s)\n",
 	       dir[entityno]->direct, dir[entityno]->name);
 	return 0;
     }
@@ -121,20 +128,20 @@ extrude(size_t entityno, struct bu_list *vlfree)
 	    if (nmg_calc_face_g(fu, vlfree)) {
 		bu_log("Extrude: Failed to calculate face geometry\n");
 		nmg_km(m);
-		bu_free((char *)curv_pts, "curve_pts");
+		bu_free(curv_pts, "curve_pts");
 		return 0;
 	    }
 
 	    if (nmg_extrude_face(fu, evect, vlfree, &tol)) {
 		bu_log("Extrude: extrusion failed\n");
 		nmg_km(m);
-		bu_free((char *)curv_pts, "curve_pts");
+		bu_free(curv_pts, "curve_pts");
 		return 0;
 	    }
 
 	    mk_bot_from_nmg(fdout, dir[entityno]->name, s);
 	    nmg_km(m);
-	    bu_free((char *)curv_pts, "curve_pts");
+	    bu_free(curv_pts, "curve_pts");
 
 	    return 1;
 	}

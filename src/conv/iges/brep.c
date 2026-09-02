@@ -20,7 +20,17 @@
 
 #include "./iges_struct.h"
 #include "./iges_extern.h"
+#include "./iges_brep.h"
 
+/*
+ * Convert an IGES 186 Manifold Solid BREP entity into an NMG model.
+ *
+ * The outer shell and any inner void shells are read and assembled into
+ * an NMG region, loop orientations and shell normals are fixed up, and
+ * the result is written out.  The preferred output is a faithful
+ * rt_brep (OpenNURBS); if that is not requested or fails, a polygonal
+ * NMG or a mesh (BoT) is written depending on the do_bots/do_brep flags.
+ */
 int
 brep(size_t entityno, struct bu_list *vlfree)
 {
@@ -45,7 +55,7 @@ brep(size_t entityno, struct bu_list *vlfree)
     /* Acquiring Data */
 
     if (dir[entityno]->param <= pstart) {
-	bu_log("Illegal parameter pointer for entity D%07d (%s)\n" ,
+	bu_log("Illegal parameter pointer for entity D%07d (%s)\n",
 	       dir[entityno]->direct, dir[entityno]->name);
 	return 0;
     }
@@ -57,9 +67,9 @@ brep(size_t entityno, struct bu_list *vlfree)
     Readint(&num_of_voids, "");
 
     if (num_of_voids) {
-	void_shell_de = (int *)bu_calloc(num_of_voids, sizeof(int), "BREP: void shell DE's");
-	void_orient = (int *)bu_calloc(num_of_voids, sizeof(int), "BREP: void shell orients");
-	void_shells = (struct shell **)bu_calloc(num_of_voids, sizeof(struct shell *), "BREP: void shell pointers");
+	void_shell_de = (int *)bu_calloc(num_of_voids, sizeof(*void_shell_de), "BREP: void shell DE's");
+	void_orient = (int *)bu_calloc(num_of_voids, sizeof(*void_orient), "BREP: void shell orients");
+	void_shells = (struct shell **)bu_calloc(num_of_voids, sizeof(*void_shells), "BREP: void shell pointers");
 	for (i = 0; i < num_of_voids; i++) {
 	    Readint(&void_shell_de[i], "");
 	    Readint(&void_orient[i], "");
@@ -75,14 +85,22 @@ brep(size_t entityno, struct bu_list *vlfree)
     r = BU_LIST_FIRST(nmgregion, &m->r_hd);
 
     /* Put outer shell in region */
-    if ((s_outer = Get_outer_shell(r, (shell_de - 1)/2, vlfree)) == (struct shell *)NULL)
+    if ((s_outer = Get_outer_shell(r, IGES_DE2INDEX(shell_de), vlfree)) == (struct shell *)NULL)
 	goto err;
 
     /* Put voids in */
     for (i = 0; i < num_of_voids; i++) {
-	if ((void_shells[i] = Add_inner_shell(r, (void_shell_de[i] - 1)/2, vlfree))
+	if ((void_shells[i] = Add_inner_shell(r, IGES_DE2INDEX(void_shell_de[i]), vlfree))
 	    == (struct shell *)NULL)
 	    goto err;
+    }
+
+    /* if every face was dropped (e.g. unreconstructable loops), there is
+     * nothing to build here; defer to the untrimmed-surface fallback */
+    if (BU_LIST_IS_EMPTY(&s_outer->fu_hd)) {
+	bu_log("Faithful brep construction produced no usable faces for %s; "
+	       "deferring to untrimmed-surface import\n", dir[entityno]->name);
+	goto err;
     }
 
     /* orient loops */
@@ -95,7 +113,17 @@ brep(size_t entityno, struct bu_list *vlfree)
 	nmg_invert_shell(void_shells[i]);
     }
 
-    if (do_bots) {
+    /* Preferred output is a faithful rt_brep (OpenNURBS) built directly
+     * from the NMG's analytic surfaces and trim curves.  Fall back to a
+     * polygonal (NMG) or mesh (BoT) representation only if brep
+     * construction fails or the user requested a mesh/NMG explicitly.
+     */
+    if (do_brep && iges_nmg_to_brep(fdout, dir[entityno]->name, m, &tol)) {
+	/* faithful brep written; nothing else to do */
+    } else if (do_bots) {
+	if (do_brep)
+	    bu_log("Falling back to BoT (mesh) for %s\n", dir[entityno]->name);
+
 	/* Merge all shells into one */
 	for (i = 0; i < num_of_voids; i++)
 	    nmg_js(s_outer, void_shells[i], vlfree, &tol);
@@ -103,7 +131,9 @@ brep(size_t entityno, struct bu_list *vlfree)
 	/* write out BOT */
 	if (mk_bot_from_nmg(fdout, dir[entityno]->name, s_outer))
 	    goto err;
-    } else {
+    } else if (!do_brep) {
+	/* user explicitly asked for an NMG solid (-p) */
+
 	/* Compute "geometry" for region and shell */
 	nmg_region_a(r, &tol);
 
@@ -111,19 +141,26 @@ brep(size_t entityno, struct bu_list *vlfree)
 	mk_nmg_executed_flag = 1;
 	if (mk_nmg(fdout, dir[entityno]->name, m))
 	    goto err;
+    } else {
+	/* brep output was requested but faithful construction failed; do not
+	 * write a (likely unrenderable) NMG solid.  Leaving nothing behind
+	 * lets main() import the raw surfaces as an untrimmed brep instead. */
+	bu_log("Faithful brep construction failed for %s; "
+	       "deferring to untrimmed-surface import\n", dir[entityno]->name);
+	goto err;
     }
 
     if (num_of_voids) {
-	bu_free((char *)void_shell_de, "BREP: void shell DE's");
-	bu_free((char *)void_orient, "BREP: void shell orients");
-	bu_free((char *)void_shells, "brep: void shell list");
+	bu_free(void_shell_de, "BREP: void shell DE's");
+	bu_free(void_orient, "BREP: void shell orients");
+	bu_free(void_shells, "brep: void shell list");
     }
 
     v_list = vertex_root;
     while (v_list != NULL) {
 	v_list_tmp = v_list->next;
-	bu_free((char *)v_list->i_verts, "brep: iges_vertex");
-	bu_free((char *)v_list, "brep: vertex list");
+	bu_free(v_list->i_verts, "brep: iges_vertex");
+	bu_free(v_list, "brep: vertex list");
 	v_list = v_list_tmp;
     }
     vertex_root = NULL;
@@ -131,8 +168,8 @@ brep(size_t entityno, struct bu_list *vlfree)
     e_list = edge_root;
     while (e_list != NULL) {
 	e_list_tmp = e_list->next;
-	bu_free((char *)e_list->i_edge, "brep:iges_edge");
-	bu_free((char *)e_list, "brep: edge list");
+	bu_free(e_list->i_edge, "brep:iges_edge");
+	bu_free(e_list, "brep: edge list");
 	e_list = e_list_tmp;
     }
     edge_root = NULL;
@@ -148,9 +185,9 @@ brep(size_t entityno, struct bu_list *vlfree)
 
     err :
 	if (num_of_voids) {
-	    bu_free((char *)void_shell_de, "BREP: void shell DE's");
-	    bu_free((char *)void_orient, "BREP: void shell orients");
-	    bu_free((char *)void_shells, "brep: void shell list");
+	    bu_free(void_shell_de, "BREP: void shell DE's");
+	    bu_free(void_orient, "BREP: void shell orients");
+	    bu_free(void_shells, "brep: void shell list");
 	}
 
     /* perform nmg kill model if make nmg was not executed since

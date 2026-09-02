@@ -140,7 +140,8 @@ void tienet_master_init(int port, void fcb_result(tienet_buffer_t *result), char
     tienet_master_verbose = verbose;
     tienet_master_buffer_size = buffer_size;
 
-    BU_ALLOC(tienet_master_buffer, tienet_master_data_t);
+    tienet_master_buffer = (tienet_master_data_t *)bu_calloc(
+	(size_t)buffer_size, sizeof(tienet_master_data_t), "master work buffer");
 
     tienet_master_fcb_result = fcb_result;
     tienet_master_active_slaves = 0;
@@ -190,7 +191,7 @@ void tienet_master_init(int port, void fcb_result(tienet_buffer_t *result), char
 void tienet_master_free(void)
 {
     int i;
-    tienet_master_socket_t *sock;
+    tienet_master_socket_t *sock, *next;
 
     tienet_sem_free(&tienet_master_sem_fill);
     tienet_sem_free(&tienet_master_sem_read);
@@ -205,8 +206,13 @@ void tienet_master_free(void)
 
     bu_free(tienet_master_buffer, "tienet master buffer");
 
-    for (sock = tienet_master_socket_list->next; sock; sock = sock->next)
-	bu_free(sock->prev, "master socket");
+    /* Free every node exactly once.  The previous loop freed each node's
+     * ->prev, which leaked the tail node and left the list head dangling. */
+    for (sock = tienet_master_socket_list; sock; sock = next) {
+	next = sock->next;
+	bu_free(sock, "master socket");
+    }
+    tienet_master_socket_list = NULL;
 }
 
 
@@ -235,7 +241,7 @@ void tienet_master_push(const void *data, size_t size)
     tienet_master_pos_fill = (tienet_master_pos_fill + 1) % tienet_master_buffer_size;
     tienet_sem_post(&tienet_master_sem_read);
 
-    /* Process items in tienet_master_DeadSocketList */
+    /* Process items in tienet_master_dead_socket_list */
     for (tsocket = tienet_master_dead_socket_list; tsocket;) {
 	tienet_sem_wait(&tienet_master_sem_fill);
 	TCOPY(int, &(tsocket->work.size), 0, &size, 0);
@@ -421,7 +427,7 @@ int tienet_master_listener(void *UNUSED(ptr))
 
 
     if ((master_socket = socket(AF_INET, SOCK_STREAM, 0)) <= 0) {
-	fprintf(stderr, "cannot creating socket, exiting.\n");
+	fprintf(stderr, "cannot create socket, exiting.\n");
 	exit(1);
     }
 
@@ -456,7 +462,7 @@ int tienet_master_listener(void *UNUSED(ptr))
 
     /* Execute script - used for spawning slaves */
     if (system(tienet_master_exec) == -1) {
-   	fprintf(stderr, "system call failed, exiting.\n");
+	fprintf(stderr, "system call failed, exiting.\n");
 	exit(1);
     }
 
@@ -542,7 +548,7 @@ int tienet_master_listener(void *UNUSED(ptr))
 			    tienet_master_socket_list = sock->next;
 			sock = sock->prev ? sock->prev : sock->next;
 
-			/* Put the socket into the tienet_master_DeadSocketList */
+			/* Put the socket into the tienet_master_dead_socket_list */
 			if (tienet_master_dead_socket_list) {
 			    tmp2 = tienet_master_dead_socket_list;
 			    tienet_master_dead_socket_list = tmp;
@@ -763,7 +769,7 @@ void tienet_master_shutdown(void)
 	     * triggered.  At this point we know for sure the slave
 	     * has disconnected.  This prevents the master socket from
 	     * being closed before the slave socket, thus pushing the
-	     * socket into an evil wait state
+	     * socket into a hung wait state
 	     */
 
 	    tienet_recv(tsocket->num, &op, sizeof(short));

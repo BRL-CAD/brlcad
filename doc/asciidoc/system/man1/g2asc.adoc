@@ -37,6 +37,18 @@ single dash (*-*) to use standard input or standard output, but a dash is
 rejected for "v5" databases: those must be named regular files. The input and
 output may not refer to the same file.
 
+[[deprecation]]
+== DEPRECATION
+
+*g2asc* is *not* deprecated and remains a supported part of BRL-CAD.
+However, its original purpose -- producing an architecture-independent
+ASCII form of a geometry database for transfer between machines -- has
+been obsoleted by the machine-independent "v5" binary ".g" format, which
+can be moved between systems directly. For that reason, *g2asc* is no
+longer needed for portability. It is still applicable for inspecting,
+editing, or diff'ing geometry as text, after which *asc2g*(1) can convert
+the result back to binary form.
+
 [[options]]
 == OPTIONS
 

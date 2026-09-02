@@ -30,6 +30,16 @@ binary doubles, is performed by *a-d*(1).
 This command is *deprecated* and is scheduled for removal; it prints a
 deprecation warning on startup.
 
+[[deprecation]]
+== DEPRECATION
+
+*d-a* is one of the legacy signal-analysis conversion filters that are
+being folded into the general-purpose data-conversion tool *cv*(1). New
+work should use *cv*(1), which performs the same binary-to-ASCII numeric
+conversions (and many others) through a single interface. *d-a* is
+retained for backward compatibility with existing scripts and still
+prints a deprecation warning when run.
+
 [[options]]
 == OPTIONS
 

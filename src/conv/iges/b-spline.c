@@ -48,9 +48,9 @@ Knot(int n /* number of values in knot sequence */, fastf_t values[] /* knot val
     }
 
     if (numknots)
-	bu_free((char *)knots, "Knot: knots");
+	bu_free(knots, "Knot: knots");
 
-    knots = (fastf_t *)bu_calloc(n, sizeof(fastf_t), "Knot: knots");
+    knots = (fastf_t *)bu_calloc(n, sizeof(*knots), "Knot: knots");
 
     numknots = n;
 
@@ -63,12 +63,16 @@ Knot(int n /* number of values in knot sequence */, fastf_t values[] /* knot val
 void
 Freeknots(void)
 {
-    bu_free((char *)knots, "Freeknots: knots");
+    bu_free(knots, "Freeknots: knots");
     numknots = 0;
 }
 
 
-/* Evaluate the Basis functions */
+/*
+ * Evaluate the i-th B-spline basis function of order k at parameter t,
+ * using the recursive Cox-de-Boor formula against the current knot
+ * vector.
+ */
 fastf_t
 Basis(int i /* interval number (0 through k) */, int k /* degree of basis function */, fastf_t t /* parameter value */)
 {
@@ -81,11 +85,15 @@ Basis(int i /* interval number (0 through k) */, int k /* degree of basis functi
     }
 
     if (k == 1) {
+	/* base case: order-1 basis is 1 inside its knot span, else 0 */
 	if (t >= knots[i] && t < knots[i+1])
 	    return 1.0;
 	else
 	    return 0.0;
     } else {
+	/* recursive case: blend the two lower-order basis functions.
+	 * Denominators that are zero (repeated knots) contribute nothing.
+	 */
 	denom1 = knots[i+k-1] - knots[i];
 	denom2 = knots[i+k] - knots[i+1];
 

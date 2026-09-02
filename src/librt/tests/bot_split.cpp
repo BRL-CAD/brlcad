@@ -380,6 +380,7 @@ int
 main(int UNUSED(argc), char **argv)
 {
     bu_setprogname(argv[0]);
+
     test_mode(RT_BOT_SURFACE);
     test_mode(RT_BOT_SOLID);
     test_mode(RT_BOT_PLATE);

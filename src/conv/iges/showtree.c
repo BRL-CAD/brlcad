@@ -42,7 +42,7 @@ Initastack(void)
 
     jtop = (-1);
     stklen = STKBLK;
-    stk = (char **)bu_malloc(stklen*sizeof(char *), "Initastack: stk");
+    stk = (char **)bu_malloc(stklen*sizeof(*stk), "Initastack: stk");
     if (stk == NULL) {
 	bu_log("Cannot allocate stack space\n");
 	perror("Initastack");
@@ -102,7 +102,7 @@ Afreestack(void)
 
     jtop = (-1);
     stklen = 0;
-    bu_free((char *)stk, "Afreestack: stk");
+    bu_free(stk, "Afreestack: stk");
     return;
 }
 
@@ -114,7 +114,7 @@ Initsstack(void) /* initialize the stack */
 
     sjtop = (-1);
     sstklen = STKBLK;
-    sstk_p = (struct node **)bu_malloc(sstklen*sizeof(struct node *), "Initsstack: sstk_p");
+    sstk_p = (struct node **)bu_malloc(sstklen*sizeof(*sstk_p), "Initsstack: sstk_p");
     if (sstk_p == NULL) {
 	bu_log("Cannot allocate stack space\n");
 	perror("Initsstack");
@@ -167,10 +167,15 @@ static void
 Sfreestack(void)
 {
     sjtop = (-1);
-    bu_free((char *)sstk_p, "Sfreestack: sstk_p");
+    bu_free(sstk_p, "Sfreestack: sstk_p");
     return;
 }
 
+/* Print a human-readable, fully-parenthesized infix representation of the
+ * boolean tree rooted at "root" (e.g. "((a+b)-c)").  Uses this file's private
+ * node and string stacks to traverse the tree in LRN order and build up the
+ * result string.
+ */
 void
 Showtree(struct node *root)
 {

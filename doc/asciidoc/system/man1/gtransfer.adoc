@@ -1,0 +1,97 @@
+= GTRANSFER(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+gtransfer - example client/server transfer of BRL-CAD geometry over a network
+
+== SYNOPSIS
+
+[source]
+----
+gtransfer [-t] [-p#] host gfile [geometry ...]
+----
+
+[source]
+----
+gtransfer -r [-p#]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*gtransfer* is a sample application that demonstrates how to open a
+geometry database, extract a serialized ("external") representation of
+selected objects, transfer those objects to a remote host over a network
+connection, and operate on the received geometry entirely in memory using
+standard *librt*(3) routines. The network transport is built on
+BRL-CAD's *libpkg* message-passing library, using a simple protocol
+patterned after *ttcp*(1): a connection begins with a greeting, carries a
+variable number of geometry and argument messages, and ends with a
+farewell.
+
+*gtransfer* operates as either a client (the sender, the default) or a
+server (the receiver, selected with *-r*).
+
+As a client, it connects to _host_, reads the database _gfile_, and sends
+geometry to the server. If one or more _geometry_ object names are given,
+only those objects and the combinations and primitives beneath them are
+sent; otherwise the entire contents of the database are sent.
+
+As a server, it listens for a single client connection, receives the
+transmitted geometry into an in-memory database, and (when the client
+requested particular objects) fires a demonstration ray at each named
+object to show that the received geometry can be ray traced.
+
+*gtransfer* is provided as a worked example of the *libpkg* and *librt*
+interfaces rather than as a general-purpose production utility.
+
+
+[[options]]
+== OPTIONS
+
+*-t*::
+  Run as a client (sender). This is the default behavior.
+
+*-r*::
+  Run as a server (receiver), listening for a single client connection.
+
+*-p #*::
+  Port number to send to (client) or listen on (server). The default is
+  2000.
+
+*host*::
+  Hostname or IP address of the receiving server (client mode).
+
+*gfile*::
+  BRL-CAD ".g" geometry database file to read from (client mode).
+
+*geometry*::
+  Optional name or names of geometry objects to send. When omitted, the
+  entire database is sent.
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *fbserv*(1), *rt*(1), *librt*(3)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 2006-2026 United States Government as represented by the U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

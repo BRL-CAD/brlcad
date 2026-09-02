@@ -47,7 +47,7 @@ texture_image_work(struct texture_s *texture, void *mesh, struct tie_ray_s *UNUS
     struct texture_image_s *td;
     vect_t pt;
     fastf_t u, v;
-    int ind;
+    int ind, ix, iy;
 
 
     td = (struct texture_image_s *)texture->data;
@@ -58,11 +58,17 @@ texture_image_work(struct texture_s *texture, void *mesh, struct tie_ray_s *UNUS
     u = ADRT_MESH(mesh)->max[0] - ADRT_MESH(mesh)->min[0] > TIE_PREC ? (pt[0] - ADRT_MESH(mesh)->min[0]) / (ADRT_MESH(mesh)->max[0] - ADRT_MESH(mesh)->min[0]) : 0.0;
     v = ADRT_MESH(mesh)->max[1] - ADRT_MESH(mesh)->min[1] > TIE_PREC ? (pt[1] - ADRT_MESH(mesh)->min[1]) / (ADRT_MESH(mesh)->max[1] - ADRT_MESH(mesh)->min[1]) : 0.0;
 
-    ind = 3*((int)((1.0 - v)*td->h)*td->w + (int)(u*td->w));
+    /* Clamp to the image so a point on the max edge (u or v == 1), or outside
+     * the mesh box, cannot index past the pixel data. */
+    ix = (int)(u * td->w);
+    iy = (int)((1.0 - v) * td->h);
+    CLAMP(ix, 0, (int)td->w - 1);
+    CLAMP(iy, 0, (int)td->h - 1);
+    ind = 3*(iy*td->w + ix);
 
-    *pixel[0] = td->image[ind+2] / 255.0;
-    *pixel[1] = td->image[ind+1] / 255.0;
-    *pixel[2] = td->image[ind+0] / 255.0;
+    (*pixel)[0] = td->image[ind+2] / 255.0;
+    (*pixel)[1] = td->image[ind+1] / 255.0;
+    (*pixel)[2] = td->image[ind+0] / 255.0;
 }
 
 

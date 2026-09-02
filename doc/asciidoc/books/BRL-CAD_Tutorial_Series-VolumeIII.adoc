@@ -29,7 +29,7 @@ Finally, the authors would especially like to acknowledge Mr. Michael Muuss, the
 
 Since 1979, the U.S. Army Research Laboratory (ARL) has been developing and distributing the U.S. Army Ballistic Research Laboratory - Computer-Aided Design (BRL-CAD) constructive solid geometry (CSG) modeling package for a wide range of military and industrial applications. The package includes a large collection of tools and utilities including an interactive geometry editor, raytracing and generic framebuffer libraries, network-distributed image-processing/signal-processing capabilities, and an embedded scripting language.
 
-As part of this effort, a multivolume tutorial series is under development to assist users with the many features of the BRL-CAD package. Volume I provides an overview of the package contents and installation (Butler and Edwards, 2002). Volume II addresses the basic features and functionality of the package's Multi-Device Geometry Editor (MGED) and offers a comprehensive list of the user commands available (Butler et al., 2001). These documents are available for download at http://ftp.arl.army.mil/brlcad/ (U.S. ARL, 2003).
+As part of this effort, a multivolume tutorial series is under development to assist users with the many features of the BRL-CAD package. Volume I provides an overview of the package contents and installation (Butler and Edwards, 2002). Volume II addresses the basic features and functionality of the package's Multi-Device Geometry Editor (MGED) and offers a comprehensive list of the user commands available (Butler et al., 2001). These documents are available for download at https://ftp.arl.army.mil/brlcad/ (U.S. ARL, 2003).
 
 The purpose of Volume III is to discuss the components of the modeling process and suggest principles for maximizing the effectiveness of BRL-CAD's capabilities. Because of the large diversity in modeling projects, these principles have largely been kept to a general nature so that they have the widest applicability possible. In addition, several appendices have been included to offer detailed discussions on several BRL-CAD tools and features, including the pipe primitive (Appendix A), the projection shader (Appendix B), the extruded bitmap primitive (Appendix C), the .mgedrc file (Appendix D), the Build Pattern tool (Appendix E), and the build_region command (Appendix F).
 
@@ -293,7 +293,7 @@ The following are some general tips regarding the efficient development of geome
 
 [NOTE]
 ====
-For a list of all the primary primitives and their shapes, see Appendix C of BRL-CAD Tutorial Volume II (Butler et al., 2001) or consult http://ftp.arl.army.mil/brlcad/ (U.S. ARL, 2003). For detailed guidance on using the pipe and the extruded bitmap (ebm) primitives, see Appendices A and C of this volume.
+For a list of all the primary primitives and their shapes, see Appendix C of BRL-CAD Tutorial Volume II (Butler et al., 2001) or consult https://ftp.arl.army.mil/brlcad/ (U.S. ARL, 2003). For detailed guidance on using the pipe and the extruded bitmap (ebm) primitives, see Appendices A and C of this volume.
 
 ====
 
@@ -1374,213 +1374,20 @@ image::../articles/images/mgedrc_fig03.png[]
 [appendix]
 == Using the Build Pattern Tool
 
-[[build_pattern_generalinfo]]
-=== General Pattern Information
-
-As mentioned previously, the Build Pattern tool automates the process of making copies of existing geometry in rectangular, spherical, or cylindrical patterns. The user can choose to pattern at any of three depths of duplication: top, regions, and primitives.
-
-The Build Pattern tool is run from the graphical user interface (GUI) (under the Tools menu); it currently has no command-line equivalent. The bottom of the pattern control GUI is a usage dialog box that lists pertinent information about each item on the GUI as the user mouses over the text.
-
-There are many input fields. Some stand alone, and others belong to series that work together to provide the needed information for a specific option. Each series is denoted by a diamond-shaped check box. If the diamond is highlighted red, then all fields in that series are required. All required fields must be filled in for the pattern tool to work properly. It is also important to note that all dimensions must be in millimeters and that no commas should be used in number strings.
-
-The Build Pattern tool is designed to work from a prototype geometry object. That is to say, the object that is patterned is not included in the resultant pattern.
-
-
-[[build_pattern_names]]
-=== Pattern Names
-
-As shown in Figure E-1, the tool appends three numbers to all patterned objects (unless you are using the increment option for primitives, in which case, the numbers for regions and primitives are incremented by the increment amount). For rectangular patterns, the first number is the X axis offset, the second is the Y axis offset, and the third is the Z axis offset. For spherical patterns, the first number references the azimuth, the second references the elevation, and the third references the radii. For cylindrical patterns, the first number references the radii, the second number references the height, and the third number references the azimuth.
-
-
-[[build_pattern_fields]]
-=== Common Fields for all Patterns:
-
-There are several fields in the pattern tool GUI that are common to all types of patterns.
-
-The Group Name field is for the name of the combination to be created (or appended to) by a pattern call.
-
-The Source String and Replacement String fields must be used together. The source string is the set of characters in each element of the patterned object to be changed. The replacement string is the set of characters that will replace the source string.
-
-.Example of pattern-generated assembly names.
-image::../articles/images/build_pattern_fig01.png[]
-
-The Increment field is only for use when duplicating to the primitive level. It is added to the leftmost number field of each primitive. To determine the increment, examine the primitives of the object(s) you wish to pattern and find the largest span. For example, to create a pattern to the primitive level with the following primitives (which may or may not be in regions or assemblies):
-
-
-....
-
-part.s22 part.s22-1 part.s23 part.s24 part.s24+1 part.s24-1 part.s25,
-      
-....
-
-one needs to determine the span. Note that the leftmost numbers in these primitives range from 22–25.Thus, as shown in the following expression, the span is four (inclusively). *******NEED FIGURE HERE***** If we use an increment of four, we will get the following set of primitives.
-
-
-....
-
-part.s26 part.s26-1 part.s27 part.s28 part.s28+1 part.s28-1 part.s29
-      
-....
-
-Although it is acceptable to use a greater increment, gaps in numbers may be troublesome if one is using this capability extensively.
-
-Finally, the Objects field is used for the names of all the items to be patterned.
-
-
-[[build_pattern_stringsub]]
-=== String Substitution
-
-It is also possible to create a pattern in which a string of characters in each element in the object is changed (e.g., "l_" -> "r_"). This is useful for symmetry applications (e.g., left - right) or series (e.g., 1 - n). Each element of the object must have the source string so the user must be thorough and name each primitive, region, and assembly properly. Consider the following example: image:../articles/images/build_pattern_fig07.png[]
-
-Top-level duplications copy the patterned object and reference its entire structure with matrices, as follows:
-
-
-....
-
-/pattern group
-       /COPIED assemblies [MATRICES]
-	    /assemblies
-		  /regions
-			/primitives
-      
-....
-
-Region-level duplications copy all assembly and regions and reference from the region level down with matrices.
-
-
-....
-
-/pattern group
-       /COPIED assemblies
-	    /COPIED regions [MATRICES]
-/primitives
-      
-....
-
-Primitive-level duplications copy the entire tree structure to the primitive level without matrices using an increment on all primitives.
-
-
-....
-
-/pattern group
-       /COPIED assemblies       NO MATRICES
-	    /COPIED regions
-		 /COPIED primitives
-      
-....
-
-
-
-
-[[build_pattern_recpatterns]]
-=== Rectangular Patterns
-
-The rectangular pattern GUI (shown in Figure E-2) is designed to facilitate one-, two-, or three-dimensional rectangular patterns. The default X, Y, and Z directions are positive along each axis. In order to create a rectangle that is not axis aligned, these vectors may be changed with the condition that each must remain precisely perpendicular to the other two. If the Use Directions series is checked, the user specifies the number of copies and the Delta between copies for each axis. If the Use Lists series is checked, the user can specify a list of deltas along each axis.
-
-.The user interface for building rectangular patterns.
-image::../articles/images/build_pattern_fig02.png[]
-
-
-[[build_pattern_spherical]]
-=== Spherical Patterns
-
-The spherical pattern GUI (shown in Figure E-3) facilitates sphere-shaped patterns rotated around a center vertex using user-specified radii with azimuth and elevation angles. As shown in Figure E-4, the patterned objects--in this case, a series of arrows--may be oriented as built around the sphere or rotated by azimuth and/or elevation such that they are oriented toward the pattern center using the Rotate Azimuth and Rotate Elevation check boxes.
-
-As shown in Figure E-4, the Pattern Center field is the coordinate at the center of the pattern. The Object Center field is a user-defined coordinate used to locate the object(s) relative to the pattern center. It acts as the key point for any transformations to the pattern object(s).
-
-The Starting Azimuth and Starting Elevation fields follow the same right-hand-rule Cartesian coordinate conventions as Multi-Device Geometry Editor (MGED) viewing. The Starting Radius is the distance from the Pattern Center to the object center at the user-specified azimuths and elevations.
-
-If the Create Az/El series is checked, the user defines the number of azimuths and elevations and the deltas between each. If the Use Lists series is checked, the user must specify a list of azimuths and/or elevations.
-
-The Create Radii and Use Radii List series define offsets from the Starting Radius, allowing the user to create a pattern of concentric spheres. If Create Radii is checked, the user specifies the Number of Radii and the Radius Delta in order to construct a number of equally offset sphere patterns. If the Use Radii List is checked, the user specifies a list of radius offsets.
-
-.The user interface for building spherical patterns.
-image::../articles/images/build_pattern_fig03.png[]
-
-Without the Rotate Azimuth or Rotate Elevation boxes checked, the patterned objects are oriented as built without any rotations. Notice, for example, that every arrow in Figure E-5 points to the left. Notice also that for each patterned arrow, the Object Center (here specified as the tip of the arrow) is located on the circle outline at a distance of one Starting Radius from the Pattern Center. If we set the Object Center to the coordinate at the base of the arrow, the base would then lie on the circular outline. Wherever the Object Center is set is the point at which MGED works with the Object Center coordinate to place and rotate patterned objects.
-
-.Examples of different spherical pattern orientations.
-image::../articles/images/build_pattern_fig04.png[]
-
-.Implementation of spherical patterns.
-image::../articles/images/build_pattern_fig05.png[]
-
-
-[[build_pattern_cylind]]
-=== Cylindrical Patterns
-
-The cylindrical pattern GUI (shown in Figure E-6) facilitates the creation of cylinder-shaped patterns with user-defined center, direction, height, azimuth, and radii inputs. The Base Center is the vertex of the cylinder shape. The Object Center is a user-defined coordinate used to locate the object(s) relative to the Base Center and Height Direction. It acts as the key point for any transformations to the pattern object(s). The Height Direction is the vector along which the cylinder runs. The Starting Height is the offset from the Base Center along the Height Direction that the pattern will place the Object Center.
-
-.The user interface for building cylindrical patterns.
-image::../articles/images/build_pattern_fig06.png[]
+// The body of this appendix is maintained as the standalone article
+// doc/asciidoc/articles/build_pattern.adoc and included here so there is a
+// single source of truth.  The article's own title, author, and attribute
+// header (its first six lines) are skipped; leveloffset=+1 nests the article's
+// top-level sections beneath this appendix heading.
+include::../articles/build_pattern.adoc[lines=7..,leveloffset=+1]
 
 
 [appendix]
 == Using the build_region Command
 
-Just as the Build Pattern tool can help automate the process of building multiple occurrences of objects, the build_region command can help automate the process of creating regions. The command (which currently has no graphical user interface equivalent) uses meaning assigned by the user in the primitive name based on the intended use of the primitive.
-
-The user includes the Boolean operation and relational information in the name of the primitive using a simple naming convention. The naming convention is designed around the following two assumptions:
-
-
-* The same text "tag" is used for all primitives in a region.
-* A sequential numbering pattern is used.
-
-For example, let's say we want to build the four rounded corners of a "tub" region for a toy metal wagon assembly (see Figure F-1). We could choose something such as "wgn"--an abbreviated form of "wagon"--as the tag. This tag is short, easy to type, and representative of the final assembly name. Our primitives would therefore be of the form wgn.s#.
-
-[[build_region5]]
-.The rounded corners of a toy wagon.
-image::../articles/images/build_region_fig01.png[]
-
-Next, we create an arb8 for one long side of the wagon tub. It is named wgn.s1. After that, we create an rcc for one corner of the tub. It is named wgn.s2. To get a hollow quarter cylinder, we need to subtract a cylinder and intersect a bounding box (see Figure F-2). In order to relate the subtraction and intersecting primitives with wgn.s2, they will each share the same root name, wgn.s2. The subtraction primitive will be named wgn.s2-1, and the intersecting primitive will be named wgn.s2+1.
-
-[[build_region7]]
-.Arb8, cylinder, and two Boolean primitives.
-image::../articles/images/build_region_fig02.png[]
-
-Now we have created the following four primitives:
-
-
-....
-
-wgn.s1 wgn.s2 wgn.s2+1 wgn.s2-1
-    
-....
-
-If we separate the primitives sequentially as follows,
-
-
-....
-
-wgn.s1
-
-wgn.s2 wgn.s2+1 wgn.s2-1,
-    
-....
-
-we can begin to see the Boolean structure falling out of the naming convention
-
-
-....
-
-u wgn.s1
-
-u wgn.s2 + wgn.s2+1 - wgn.s2-1
-    
-....
-
-If we wanted to make a second subtraction from wgn.s2--say, for a drain hole in the corner of the wagon--we would name that primitive wgn.s2-2 (see Figure F-3). We can break this name down as follows: *****NEED IMAGE HERE*****
-
-[[build_region9]]
-.The region and the subtraction primitives.
-image::../articles/images/build_region_fig03.png[]
-
-Note that the root name stays the same so we can maintain the relationship, and the second number (associated with the Boolean operation) is incremented sequentially.
-
-[[build_region11]]
-.Raytraced image with hole.
-image::../articles/images/build_region_fig04.png[]
-
-Obviously, the overall success or failure of the build_region command depends on primitives being named properly. But if they are, the command can organize them in one automated step, creating complex regions in just a few keystrokes.
-
-Another modeling benefit of the build_region tool is that it allows the user to quickly organize primitives. Assume, for example, that we have used the aforementioned naming convention to construct a complicated region. If there was a subsection of the region that we needed to, say, keep out for another assembly, delete from our database, move slightly, or copy, it would be a simple matter to create a new region with just those primitives that we needed.
+// The body of this appendix is maintained as the standalone article
+// doc/asciidoc/articles/build_region.adoc and included here so there is a
+// single source of truth.  The article's own title, author, and attribute
+// header (its first six lines) are skipped; leveloffset=+1 keeps any article
+// sections nested beneath this appendix heading.
+include::../articles/build_region.adoc[lines=7..,leveloffset=+1]

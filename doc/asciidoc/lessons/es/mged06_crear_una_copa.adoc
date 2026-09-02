@@ -193,7 +193,7 @@ Para graficar la copa usando las propiedades del material por defecto de plásti
 
 Cuando haya finalizado de ver la copa desde la vista frontal, seleccione del menú View (Vista) un acimut de 35 y una elevación de 25 de la forma: az35. el25 y luego grafica. Si quieres ver la copa sin la estructura de alambres, seleccione la opción Framebuffer del panel de control de Raytrace y cliquee en Overlay (Cubrir). La copa lucirá similar a la de la siguiente ilustración:
 
-image::../../lessons/es/images/mged06_rtgobletaz_35el_25.png[]
+image::../../lessons/es/images/mged06_rtgobletaz_35_el_25.png[]
 
 
 

@@ -46,6 +46,7 @@
 #include "bu/file.h"
 #include "bu/malloc.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/exit.h"
 
 
@@ -80,21 +81,6 @@ unsigned char ibuf[BUFLEN];	/* input buffer */
 #define MAPBUFLEN 256
 int mapbuf[MAPBUFLEN];		/* translation buffer/lookup table */
 int char_arith = 0;
-
-static int
-parse_double_arg(const char *arg, double *out_value, const char *label)
-{
-    char *end = NULL;
-
-    errno = 0;
-    *out_value = strtod(arg, &end);
-    if (errno != 0 || end == arg || *end != '\0') {
-	fprintf(stderr, "bwmod: invalid %s '%s'\n", label, arg);
-	return 0;
-    }
-
-    return 1;
-}
 
 void
 checkpow(double x , double exponent)
@@ -133,25 +119,25 @@ get_args(int argc, char **argv)
 	switch (c) {
 	case 'a':
 	    op[numop] = ADD;
-	    if (!parse_double_arg(bu_optarg, &val[numop], "add value"))
+	    if (!bu_opt_scan_double(bu_optarg, &val[numop], "add value"))
 		return 0;
 	    numop++;
 	    break;
 	case 's':
 	    op[numop] = ADD;
-	    if (!parse_double_arg(bu_optarg, &val[numop], "subtract value"))
+	    if (!bu_opt_scan_double(bu_optarg, &val[numop], "subtract value"))
 		return 0;
 	    val[numop] = -val[numop];
 	    numop++;
 	    break;
 	case 'm':
 	    op[numop] = MULT;
-	    if (!parse_double_arg(bu_optarg, &val[numop], "multiply value"))
+	    if (!bu_opt_scan_double(bu_optarg, &val[numop], "multiply value"))
 		return 0;
 	    numop++;
 	    break;
 	case 'd':
-	    if (!parse_double_arg(bu_optarg, &d, "divide value"))
+	    if (!bu_opt_scan_double(bu_optarg, &d, "divide value"))
 		return 0;
 	    if (ZERO(d)) {
 		bu_exit(2, "bwmod: cannot divide by zero!\n");
@@ -170,12 +156,12 @@ get_args(int argc, char **argv)
 	    break;
 	case 'e':
 	    op[numop] = POW;
-	    if (!parse_double_arg(bu_optarg, &val[numop], "exponent"))
+	    if (!bu_opt_scan_double(bu_optarg, &val[numop], "exponent"))
 		return 0;
 	    numop++;
 	    break;
 	case 'r':
-	    if (!parse_double_arg(bu_optarg, &d, "root"))
+	    if (!bu_opt_scan_double(bu_optarg, &d, "root"))
 		return 0;
 	    if (ZERO(d)) {
 		bu_exit(2, "bwmod: zero root!\n");
@@ -188,25 +174,25 @@ get_args(int argc, char **argv)
 	    break;
 	case 'S':
 	    op[numop] = SHIFT;
-	    if (!parse_double_arg(bu_optarg, &val[numop], "shift value"))
+	    if (!bu_opt_scan_double(bu_optarg, &val[numop], "shift value"))
 		return 0;
 	    numop++;
 	    break;
 	case 'M':
 	    op[numop] = AND;
-	    if (!parse_double_arg(bu_optarg, &val[numop], "and value"))
+	    if (!bu_opt_scan_double(bu_optarg, &val[numop], "and value"))
 		return 0;
 	    numop++;
 	    break;
 	case 'O':
 	    op[numop] = OR;
-	    if (!parse_double_arg(bu_optarg, &val[numop], "or value"))
+	    if (!bu_opt_scan_double(bu_optarg, &val[numop], "or value"))
 		return 0;
 	    numop++;
 	    break;
 	case 'X':
 	    op[numop] = XOR;
-	    if (!parse_double_arg(bu_optarg, &val[numop], "xor value"))
+	    if (!bu_opt_scan_double(bu_optarg, &val[numop], "xor value"))
 		return 0;
 	    numop++;
 	    break;

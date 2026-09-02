@@ -52,7 +52,7 @@ texture_checker_work(struct texture_s *texture, void *mesh, struct tie_ray_s *UN
     u = ADRT_MESH(mesh)->max[0] - ADRT_MESH(mesh)->min[0] > 0 ? (int)((pt[0] - ADRT_MESH(mesh)->min[0]) / ((ADRT_MESH(mesh)->max[0] - ADRT_MESH(mesh)->min[0])/td->tile))%2 : 0;
     v = ADRT_MESH(mesh)->max[1] - ADRT_MESH(mesh)->min[1] > 0 ? (int)((pt[1] - ADRT_MESH(mesh)->min[1]) / ((ADRT_MESH(mesh)->max[1] - ADRT_MESH(mesh)->min[1])/td->tile))%2 : 0;
 
-    *pixel[0] = *pixel[1] = *pixel[2] = u ^ v ? 1.0 : 0.0;
+    (*pixel)[0] = (*pixel)[1] = (*pixel)[2] = u ^ v ? 1.0 : 0.0;
 }
 
 

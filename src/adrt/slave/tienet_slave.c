@@ -155,7 +155,7 @@ void tienet_slave_worker(int port, char *host) {
 	exit(1);
     }
 
-    /* receive endian of master (going away) */
+    /* receive endian of master (currently unused, kept for protocol compatibility) */
     {
 	short tienet_endian;
 	tienet_recv(slave_socket, &tienet_endian, sizeof(short));
@@ -168,12 +168,6 @@ void tienet_slave_worker(int port, char *host) {
     tienet_recv(slave_socket, &op, sizeof(short));
     if (op == TN_OP_COMPLETE)
 	return;
-
-    /* Request Work Unit */
-    /*
-    op = TN_OP_REQWORK;
-    tienet_send(slave_socket, &op, sizeof(short));
-    */
 
     while (1) {
 	tienet_recv(slave_socket, &op, sizeof(short));
@@ -213,6 +207,11 @@ void tienet_slave_worker(int port, char *host) {
 	    dest_len = buffer_comp.size+32;
 	    compress(buffer_comp.data, &dest_len, result.data, result.ind);
 	    size = (uint32_t)dest_len;
+
+	    /* buffer was only sized for the uncompressed result; compression can
+	     * expand incompressible data past result.ind, so grow it to hold the
+	     * compressed length + data before packing them. */
+	    TIENET_BUFFER_SIZE(buffer, buffer.ind + sizeof(uint32_t) + size);
 
 	    /* Pack Compressed Result Length */
 	    TCOPY(uint32_t, &size, 0, buffer.data, buffer.ind);

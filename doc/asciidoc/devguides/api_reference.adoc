@@ -1,0 +1,119 @@
+= The BRL-CAD API Reference
+:doctype: article
+:toc: left
+:toclevels: 3
+:sectlinks:
+:sectanchors:
+
+BRL-CAD ships a comprehensive C/C++ API reference generated directly from the
+documentation comments in its public headers and sources.  The reference is
+produced with https://www.doxygen.nl[Doxygen], and this page explains what it
+covers and how to build it.
+
+The narrative developer guides on this site (for example,
+link:raytracing_pipeline.html[The librt Ray Tracing Pipeline] and
+link:libged_command_authoring.html[Authoring a New libged Command]) describe
+architecture and intent.  The Doxygen reference complements them by documenting
+the exact functions, structures, and macros at the level of individual symbols.
+
+== What the API reference covers
+
+The reference documents BRL-CAD's public programming interfaces at the symbol
+level: functions and their parameters, data structures and their fields,
+typedefs, enumerations, and macros, together with the relationships between
+them (call graphs, include graphs, and module groupings) that Doxygen derives
+from the source.
+
+It is organized around BRL-CAD's core libraries.  The Doxygen configuration
+groups the libraries as modules, including the portability layer `libbu`, the
+numerics libraries `libbn`, `libbg`, and `libbv`, the geometry and modeling
+libraries `libnmg`, `libbrep`, `librt`, `libwdb`, and `libgcv`, the analysis
+library `libanalyze`, the optical/shading library `liboptical`, the geometry
+editing library `libged`, the display and networking libraries `libdm` and
+`libpkg`, and shared foundational headers such as `common.h` and `vmath.h`.
+The library APIs are also summarized in the
+link:../man3_index.html[Library APIs] index.
+
+Because the content is generated from in-source comments, it always reflects
+the state of the tree you build from, which makes it the authoritative source
+for exact signatures and structure layouts.
+
+== Prerequisites
+
+To build the API reference you need a working Doxygen installation.  BRL-CAD's
+build detects Doxygen with CMake's `find_package(Doxygen)`; when Doxygen is
+found, the documentation build targets described below are defined
+automatically.  If Doxygen is not installed, those targets are simply not
+created, and configuring will still succeed for the rest of the build.
+
+The Doxygen setup itself lives in `misc/doxygen/`: the template configuration
+`misc/doxygen/Doxyfile.in` is expanded by CMake (via the logic in
+`misc/CMake/Doxygen.cmake` and `misc/doxygen/CMakeLists.txt`) into the
+per-library and whole-tree Doxygen configuration files that drive the run.
+
+== Building the reference
+
+Configure the project as usual, then build one of the Doxygen targets from your
+build directory.  Two granularities are available.
+
+To build the complete API reference across all documented libraries, build the
+`doxygen` target (equivalently, the `dox` target):
+
+[source,sh]
+----
+cmake -S . -B build
+cmake --build build --target doxygen
+----
+
+To build the reference for a single library, build its `dox-<library>` target.
+For example, to document only `librt`:
+
+[source,sh]
+----
+cmake --build build --target dox-librt
+----
+
+Per-library targets are defined for each library in the Doxygen module list,
+which is convenient when you are iterating on the comments in one library and do
+not want to regenerate everything.
+
+== Where the output is written
+
+The generated HTML is written under your build directory's `doc/` tree.  The
+whole-tree build populates `doc/doxygen_output/html/`, and each per-library
+build populates `doc/doxygen_<library>/html/` (for instance,
+`doc/doxygen_librt/html/`).  Open the `index.html` in the corresponding
+directory to browse the result.
+
+== Optional configuration
+
+A couple of optional CMake variables adjust the Doxygen run:
+
+* `BRLCAD_DOXYGEN_ADD_SRCS` — when defined, adds the libraries' `src/`
+  directories to the Doxygen inputs so that implementation files, not just
+  public headers, are documented.
+* `BRLCAD_DOXYGEN_ONLY` — when set, configures the project purely to produce
+  Doxygen output, skipping the rest of the normal configure-and-build process.
+  This is useful for documentation-only builds.
+
+These are optional; the default build produces the header-level reference
+without them.
+
+== Writing documentation that appears in the reference
+
+Because the reference is generated from source comments, the way to improve it
+is to improve the Doxygen comments in the headers and sources.  When you add or
+change a public function, structure, or macro, document it with a Doxygen
+comment block so it is captured in the generated output.  Building the relevant
+`dox-<library>` target and reviewing the result is a good final check when
+contributing API changes.
+
+== Relationship to the AsciiDoc documentation
+
+The Doxygen API reference and this AsciiDoc documentation set are produced by
+separate mechanisms.  The AsciiDoc guides and man pages are built when CMake is
+configured with `BRLCAD_EXTRADOCS=ON`, whereas the Doxygen reference is built
+through the `doxygen`/`dox-<library>` targets described above whenever Doxygen
+is available.  Use the AsciiDoc guides for tutorials, walkthroughs, and
+architectural overviews, and use the Doxygen reference for precise, symbol-level
+API detail.

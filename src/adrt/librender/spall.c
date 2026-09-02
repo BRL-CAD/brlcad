@@ -19,6 +19,9 @@
  */
 /** @file librender/spall.c
  *
+ * Spall cone rendering: intersects each ray with a splitting plane and
+ * shades the geometry behind it, drawing a tessellated spall cone.
+ *
  */
 
 #include "render_util.h"
@@ -29,6 +32,7 @@
 
 #include "bu/log.h"
 #include "bu/malloc.h"
+#include "adrt.h"
 #include "adrt_struct.h"
 #include "render.h"
 
@@ -95,9 +99,9 @@ render_spall_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, ve
 
     /* Draw spall Cone */
     if (TIE_WORK(&rd->tie, ray, &id, render_arrow_hit, NULL)) {
-	*pixel[0] = (TFLOAT)0.4;
-	*pixel[1] = (TFLOAT)0.4;
-	*pixel[2] = (TFLOAT)0.4;
+	(*pixel)[0] = (TFLOAT)0.4;
+	(*pixel)[1] = (TFLOAT)0.4;
+	(*pixel)[2] = (TFLOAT)0.4;
     }
 
     /*
@@ -144,11 +148,11 @@ render_spall_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, ve
      */
 
     dot = VDOT(ray->dir,  hit.id.norm);
-    /* flip normal */
+    /* use magnitude so the normal is treated as facing the ray */
     dot = fabs(dot);
 
 
-    if (hit.mesh->flags == 1) {
+    if (hit.mesh->flags & ADRT_MESH_HIT) {
 	VSET(color, 0.9, 0.2, 0.2);
     } else {
 	/* Mix actual color with white 4:1, shade 50% darker */
@@ -158,25 +162,13 @@ render_spall_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, ve
 	VSCALE(color,  color,  0.125);
     }
 
-#if 0
-    if (dot < 0) {
-#endif
-	/* Shade using inhit */
-	VSCALE(color,  color,  (dot*0.50));
-	VADD2(*pixel,  *pixel,  color);
-#if 0
-    } else {
-	/* shade solid */
-	VSUB2(vec,  ray->pos,  hit.id.pos);
-	VUNITIZE(vec);
-	angle = vec[0]*hit.mod*-hit.plane[0] + vec[1]*-hit.mod*hit.plane[1] + vec[2]*-hit.mod*hit.plane[2];
-	VSCALE((*pixel),  color,  (angle*0.50));
-    }
-#endif
+    /* Shade using inhit */
+    VSCALE(color,  color,  (dot*0.50));
+    VADD2(*pixel,  *pixel,  color);
 
-    *pixel[0] += (TFLOAT)0.1;
-    *pixel[1] += (TFLOAT)0.1;
-    *pixel[2] += (TFLOAT)0.1;
+    (*pixel)[0] += (TFLOAT)0.1;
+    (*pixel)[1] += (TFLOAT)0.1;
+    (*pixel)[2] += (TFLOAT)0.1;
 }
 
 
@@ -184,7 +176,8 @@ int
 render_spall_init(render_t *render, const char *buf)
 {
     struct render_spall_s *d;
-    vect_t *tri_list, *vec_list, normal, up;
+    vect_t *vec_list, normal, up;
+    TIE_3 *tri_list, **tlist;
     fastf_t plane[4], angle;
     int i;
 
@@ -231,30 +224,40 @@ render_spall_init(render_t *render, const char *buf)
     /* The spall Cone */
     /******************/
     vec_list = (vect_t *)bu_malloc(sizeof(vect_t) * TESSELLATION, "vec_list");
-    tri_list = (vect_t *)bu_malloc(sizeof(vect_t) * TESSELLATION * 3, "tri_list");
+    tri_list = (TIE_3 *)bu_malloc(sizeof(TIE_3) * TESSELLATION * 3, "tri_list");
+    tlist = (TIE_3 **)bu_malloc(sizeof(TIE_3 *) * TESSELLATION * 3, "tlist");
 
     render_util_spall_vec(d->ray_dir, angle, TESSELLATION, vec_list);
 
-    /* triangles to approximate */
+    /* triangles approximating the cone: apex at ray_pos, base ring at
+     * ray_pos + SPALL_LEN * vec_list[] */
     for (i = 0; i < TESSELLATION; i++) {
-	VMOVE(tri_list[3*i+0], ray_pos);
+	VMOVE(tri_list[3*i+0].v, ray_pos);
 
-	VSCALE(tri_list[3*i+1],  vec_list[i],  SPALL_LEN);
-	VADD2(tri_list[3*i+1],  tri_list[3*i+1],  ray_pos);
+	VSCALE(tri_list[3*i+1].v,  vec_list[i],  SPALL_LEN);
+	VADD2(tri_list[3*i+1].v,  tri_list[3*i+1].v,  ray_pos);
 
 	if (i == TESSELLATION - 1) {
-	    VSCALE(tri_list[3*i+2],  vec_list[0],  SPALL_LEN);
-	    VADD2(tri_list[3*i+2],  tri_list[3*i+2],  ray_pos);
+	    VSCALE(tri_list[3*i+2].v,  vec_list[0],  SPALL_LEN);
+	    VADD2(tri_list[3*i+2].v,  tri_list[3*i+2].v,  ray_pos);
 	} else {
-	    VSCALE(tri_list[3*i+2],  vec_list[i+1],  SPALL_LEN);
-	    VADD2(tri_list[3*i+2],  tri_list[3*i+2],  ray_pos);
+	    VSCALE(tri_list[3*i+2].v,  vec_list[i+1],  SPALL_LEN);
+	    VADD2(tri_list[3*i+2].v,  tri_list[3*i+2].v,  ray_pos);
 	}
     }
+
+    /* Push the cone triangles into the tie before prepping it; previously the
+     * geometry was built but never pushed, so render_arrow_hit could never fire
+     * and the spall cone was invisible. */
+    for (i = 0; i < TESSELLATION * 3; i++)
+	tlist[i] = &tri_list[i];
+    TIE_PUSH(&d->tie, tlist, TESSELLATION, NULL, 0);
 
     TIE_PREP(&d->tie);
 
     bu_free(vec_list, "vec_list");
     bu_free(tri_list, "tri_list");
+    bu_free(tlist, "tlist");
     return 0;
 }
 

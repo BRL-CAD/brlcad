@@ -1,5 +1,10 @@
-The libbu and libdm files here are docbook conversions of files
-from elsewhere in the documentation.  They aren't yet proper
-man pages, and they need to be reviewed to see if the information
-they contain is still accurate.  Until then, they are present
-but not built.
+The libbu and libdm man pages were originally DocBook conversions of
+files from elsewhere in the documentation.  They have since been
+rewritten as proper man3 overview pages and are now built alongside the
+other man3 pages.
+
+libpc and libtermio have man3 overview pages here but are not currently
+built as standalone libraries with their own CMake targets (libtermio is
+header-only; libpc has no addlib target unless GECODE support is
+enabled).  Their pages are therefore tracked but only built once an
+associated library target exists.

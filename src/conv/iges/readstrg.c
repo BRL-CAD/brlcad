@@ -34,9 +34,14 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
-#define MAX_NUM 4096
 
-
+/*
+ * Read the next field from the shared global "card" buffer, expecting a
+ * Hollerith string of the form "nHstring".  If "id" is non-empty the
+ * string is echoed; the field is otherwise just skipped.  Advances the
+ * field "counter" and auto-advances to the next record when the field
+ * spans a record boundary.
+ */
 void
 Readstrg(const char *id)
 {
@@ -52,7 +57,7 @@ Readstrg(const char *id)
 	return;
     }
 
-    if (card[72] == 'P')
+    if (card[IGES_SECTION_COL] == 'P')
 	lencard = PARAMLEN;
     else
 	lencard = CARDLEN;

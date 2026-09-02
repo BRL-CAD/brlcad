@@ -45,7 +45,7 @@ Como pudo apreciar en el tutorial #1, este comando le dice a _MGED_ que:
 
 
 
-image::../../lessons/mged/using_insert_command_images/wireframesphere.png[]
+image::../../lessons/es/images/mged03_wireframe_sph.png[]
 
 
 
@@ -55,7 +55,7 @@ Para crear el rcc desde la ventana de comandos tipee en el prompt: *make rcc1.s 
 
 Su ventana gráfica deberá mostrar un rcc grande, con la vista por defecto de az35, el25, viéndose como si entersectara con la esfera previamente creada.
 
-image::../../lessons/es/images/mged03_wireframespherecylinder.png[]
+image::../../lessons/es/images/mged03_wireframe_sph_rcc.png[]
 
 
 

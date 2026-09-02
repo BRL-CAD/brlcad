@@ -21,6 +21,9 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
+/*
+ * cone() converts an IGES 156 Right Circular Cone Frustum entity into a BRL-CAD TGC.
+ */
 int
 cone(size_t entityno)
 {
@@ -48,11 +51,12 @@ cone(size_t entityno)
 
     /* Acquiring Data */
     if (dir[entityno]->param <= pstart) {
-	bu_log("Illegal parameter pointer for entity D%07d (%s)\n" ,
+	bu_log("Illegal parameter pointer for entity D%07d (%s)\n",
 	       dir[entityno]->direct, dir[entityno]->name);
 	return 0;
     }
     Readrec(dir[entityno]->param);
+    /* IGES entity type number; read only to advance past the field, otherwise unused */
     Readint(&sol_num, "");
     Readcnv(&scale_height, "");
     Readcnv(&rad1, "");
@@ -65,7 +69,7 @@ cone(size_t entityno)
     Readcnv(&z_2, "");
 
     if (scale_height <= 0.0 || rad1 < rad2 || rad2 < 0.0) {
-	bu_log("Illegal parameters for entity D%07d (%s)\n" ,
+	bu_log("Illegal parameters for entity D%07d (%s)\n",
 	       dir[entityno]->direct, dir[entityno]->name);
 	if (ZERO(scale_height)) {
 	    bu_log("\tCone height is zero!!\n");

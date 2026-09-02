@@ -296,10 +296,10 @@ Example geometry
 Project documentation
 
 
-`doc/docbook`::
-User documentation in XML format
+`doc/asciidoc/`::
+User and developer documentation in AsciiDoc format
 +
-See doc/docbook/README for more details
+See doc/asciidoc/README.adoc for more details
 
 
 `include/`::
@@ -382,11 +382,11 @@ API Unit tests
 
 ==== Code Conventions
 
-BRL-CAD has a STABLE branch in Git that should always compile and run on all supported platforms. The primary development branch trunk, unlike STABLE, is generally expected to compile but may occasionally fail to do so during active development.
+BRL-CAD has a STABLE branch in Git that should always compile and run on all supported platforms. The primary development branch, main, unlike STABLE, is generally expected to compile but may occasionally fail to do so during active development.
 
 ===== Languages
 
-The majority of BRL-CAD is written in ANSI/POSIX C with the intent of strictly conforming with the C standard. The core libraries are all C API, though several--such as the LIBBU and LIBRT libraries--use C++ for implementation details. Our C libraries can use C++ for implementation detail, but they cannot expose C++ in the public API.
+The majority of BRL-CAD is written in portable C with the intent of strictly conforming with the C11 standard (ISO/IEC 9899:2011). C++ code targets the C++17 standard (ISO/IEC 14882:2017). The core libraries all expose a C API, though several--such as the LIBBU and LIBRT libraries--use C++ for implementation details. Our C libraries can use C++ for implementation detail, but they cannot expose C++ in the public API.
 
 Major components of the system are written in the following languages:
 
@@ -411,7 +411,7 @@ Source code files use the following extensions:
 
 
 
-With release 7.0, BRL-CAD has moved forward and worked toward making all of the software's C code conform strictly with the ANSI/ISO standard for C language compilation (ISO/IEC 9899:1990, or c89). Support for older compilers and older K&R-based system facilities is being migrated to build system declarations or preprocessor defines, or is being removed outright. You can, however, make modifications that assume compiler conformance with the ANSI C standard (c89).
+BRL-CAD requires that all of the software's C code conform strictly with the ISO C11 standard (ISO/IEC 9899:2011), and that all C++ code conform with the ISO C++17 standard (ISO/IEC 14882:2017). Support for older compilers and older K&R-based system facilities has been migrated to build system declarations or preprocessor defines, or removed outright. You may make modifications that assume compiler conformance with the C11 and C++17 standards.
 
 
 ===== Coding Style
@@ -569,11 +569,9 @@ Check out our list of available mini tasks that we call http://brlcad.org/wiki/D
 
 ==== Two-Week Tasks
 
-If you have few hours to spare each day, check our http://brlcad.org/xref/source/TODO[TODO list] (http://brlcad.org/xref/source/TODO). These tasks can help potential developers do modifications and submit patches to gain commit access to our code repository. You should be able to complete the tasks on this list within 14 days. Before starting on a task, however, you should discuss it with other developers on our mailing list brlcad-devel@lists.sourceforge.net.
+If you have few hours to spare each day, check the TODO file included in each source distribution. These tasks can help potential developers make modifications and submit pull requests to gain familiarity with our code repository. You should be able to complete the tasks on this list within 14 days. Before starting on a task, however, you should discuss it with other developers on https://brlcad.zulipchat.com[Zulip chat] or in our https://github.com/BRL-CAD/brlcad/discussions[GitHub Discussions].
 
-We also have a http://sourceforge.net/p/brlcad/code/HEAD/tree/brlcad/trunk/BUGS[BUGS] file, included in each binary and source distribution, which lists the application bugs that developers are invited to fix. If you plan to tackle a bug, remember to report it in our http://sourceforge.net/p/brlcad/bugs/[bug tracker].
-
-Students participating in Google Code-in can view tasks on the http://brlcad.org/wiki/GCI_Tasks[BRL-CAD website] (http://brlcad.org/wiki/GCI_Tasks). Each task is described in a little detail, and students are directed to relevant BRL-CAD source code or websites to help them complete these tasks.
+We also have a https://github.com/BRL-CAD/brlcad/blob/main/BUGS[BUGS] file, included in each binary and source distribution, which lists the application bugs that developers are invited to fix. If you plan to tackle a bug, remember to report it in our https://github.com/BRL-CAD/brlcad/issues[issue tracker].
 
 
 ==== Two-Month Tasks
@@ -591,7 +589,7 @@ You can get the development code for BRL-CAD from our Git code repository using 
 
 *git clone https://github.com/BRL-CAD/brlcad*
 
-The code will be saved in your `/home` directory, and you can compile it by following the instructions `HACKING` file located in top-level code directory. That said, the following are a few useful tips to help get you going.
+The code will be saved into a `brlcad` directory, and you can compile it by following the instructions in the `HACKING` file located in the top-level source directory. That said, the following are a few useful tips to help get you going.
 
 ===== Obtaining the Development Tools
 
@@ -644,11 +642,11 @@ That's it! If you have a Release compile, you can submit your benchmark results 
 
 ==== Discussing Code
 
-After obtaining the source code, you should to join the BRL-CAD developer mailing list (http://lists.sourceforge.net/lists/listinfo/brlcad-devel) and the #brlcad IRC channel at irc.freenode.net.
+After obtaining the source code, you should join the BRL-CAD community on https://brlcad.zulipchat.com[Zulip chat], our primary discussion venue. For longer-form questions and answers, use https://github.com/BRL-CAD/brlcad/discussions[GitHub Discussions]. A secondary, legacy IRC channel named #brlcad is also available on irc.libera.chat.
 
-Joining both lists helps introduce yourself to the BRL-CAD community and gives you the opportunity to regularly communicate with other experienced contributors. You can also ask questions on the mailing list or the IRC channel.
+Joining the discussion helps introduce yourself to the BRL-CAD community and gives you the opportunity to regularly communicate with other experienced contributors. You can ask questions on Zulip, in GitHub Discussions, or on IRC.
 
-Note that BRL-CAD contributors have a set of rules that they try to respect and follow to enable collaboration and communication. We strongly encourage new contributors to be creative and to be specific when asking questions on the mailing list or on the IRC channel. We also strongly advise you to use interleaved posting when replying on any communication channels. And _never be afraid to ask questions_.
+Note that BRL-CAD contributors have a set of rules that they try to respect and follow to enable collaboration and communication. We strongly encourage new contributors to be creative and to be specific when asking questions. We also strongly advise you to use interleaved posting when replying on any communication channel. And _never be afraid to ask questions_.
 
 Finally, when modifying code, it's advisable to regularly consult with experienced developers and to follow these rules of thumb when adding changes:
 
@@ -656,7 +654,7 @@ Finally, when modifying code, it's advisable to regularly consult with experienc
 * Test your code to ensure that the change is correct.
 * Document your changes clearly and succinctly to ensure that others understand the change.
 * Write tests for your change so others can use them when testing subsequent changes.
-* Make a handful of patches and submit them to SourceForge for review.
+* Open a pull request against the https://github.com/BRL-CAD/brlcad[BRL-CAD repository] on GitHub so your changes can be reviewed.
 * Obtain commit access.
 
 
@@ -673,136 +671,123 @@ BRL-CAD provides documentation in the following formats:
 
 Our challenge is to maintain BRL-CAD's documentation in multiple formats. It is difficult enough to keep software documentation up to date without needing to update multiple documents using different formats that contain the same information. As well, it is not possible to supply documentation in a single format that works optimally on all platforms. For example, while UNIX man pages are standard across all UNIX and UNIX-like systems, most Windows systems will not understand that format and will require HTML versions of those documents.
 
-Instead of using a mix of formats and tools, BRL-CAD uses the DocBook documentation format and toolchain to produce documentation in the range of required formats.
+Instead of using a mix of formats and tools, BRL-CAD writes its documentation in AsciiDoc and uses a single toolchain to produce documentation in the range of required formats.
 
-==== What is DocBook?
+==== What is AsciiDoc?
 
-DocBook is a schema (a structured approach to organization of information) that uses the eXtensible Markup Language standard (XML) as its fundamental framework and builds atop that framework a vocabulary for describing the content and structure of technical documentation. BRL-CAD uses the DocBook 5.0 documentation format to describe its documentation. For detailed documentation for DocBook 5.0, see http://www.docbook.org/tdg5/en/html/docbook.html.
-
-
-==== Tools for Working with DocBook
-
-While you can write documentation in DocBook using WYSIWYG (What You See Is What You Get) editors, we require that a document saved to DocBook from an editing tool should be inspected for human readability and, if necessary, reformatted for simplicity.
-
-If you are comfortable with working with DocBook XML directly, we recommend that you use the Emacs editor and its nXML module. nXML can automatically recognize and highlight mistakes in the structure of a document while you are editing. The following image illustrates nXML identifying an incorrect closing tag for an informal figure object:
-
-image::../books/images/hacking_brlcad_emacs-nxml.png[width=100%]
-
-Aside from error checking tools like nXML, the ability to pinpoint errors in a document's formatting is built into the BRL-CAD compilation process. That process uses a tool called xmllint to report incorrect formatting. When, for example, the error illustrated in the image above is encountered during BRL-CAD's build, xmllint produces the following error:
+AsciiDoc is a lightweight, human-readable plain-text markup language for writing structured technical documentation. Unlike markup that relies on verbose tags, AsciiDoc source is easy to read and edit directly in any text editor, yet it is expressive enough to describe the content and structure of complex documents such as articles, books, and manual pages. BRL-CAD's AsciiDoc sources use the conventional `.adoc` file extension. For a concise introduction to the syntax, see the https://asciidoc.org[AsciiDoc project site] and the https://docs.asciidoctor.org/asciidoc/latest/[AsciiDoc language documentation].
 
 
-....
+==== Tools for Working with AsciiDoc
 
-[40%] Validating DocBook source with xmllint:
-/home/user/brlcad/doc/docbook/articles/en/tire.xml:65: parser error : Opening and ending tag mismatch: informalfigure line 54 and informafigure
-</informafigure>
-^
-CMake Error at tire_validate.cmake:39 (message):
-xmllint failure: 1
-....
+Because AsciiDoc source is plain text, you can author and edit it with any text editor. No specialized editing tool is required, though many editors offer AsciiDoc syntax highlighting and live preview.
 
-In this case, the error is reasonably informative. However, xmllint is not the only tool available for this sort of error checking. You can specify the following validation tools when you configure your environment:
+The ability to render documentation and report formatting problems is built into the BRL-CAD compilation process. BRL-CAD ships with a self-contained AsciiDoc processor named *asciiquack* (in `misc/tools/asciiquack`), so no external documentation tools need to be installed to build the documentation. Documentation is built only when CMake is configured with `BRLCAD_EXTRADOCS=ON`. When that option is enabled, asciiquack renders each `.adoc` source to HTML (and, for man-page sources, to nroff man pages) as part of the normal build.
+
+The AsciiDoc sources live under `doc/asciidoc/`, organized by document type into the following subdirectories:
 
 
-* Oracle Multi-Schema XML Validator (https://msv.java.net) - specified as *msv* on the command line.
-* oNVDL (http://sourceforge.net/projects/onvdl) - specified as *nvld* on the command line.
-* Relax NG Validator (rnv) (http://sourceforge.net/projects/rnv) - specified as *rsv* on the command line.
+* `articles/` - general articles.
+* `books/` - long-form books (including this guide).
+* `lessons/` - step-by-step tutorial lessons.
+* `devguides/` - developer guides.
+* `presentations/` - presentation slides.
+* `specifications/` - format and protocol specifications.
+* `system/` - manual pages, further divided into `man1/`, `man3/`, `man5/`, and `mann/`.
 
-Note that these alternative validation tools must be installed on the system on which you are working; they are not provided with BRL-CAD. To specify an alternative tool, use the VALIDATE_EXECUTABLE option. For example, run the following command to use the Oracle Multi-Schema XML Validator:
+For more information, see the file `doc/asciidoc/README.adoc` in the BRL-CAD source code archive.
 
-*cmake -DVALIDATE_EXECUTABLE=msv ...*
 
-While BRL-CAD provides enough DocBook support to guarantee that HTML files and UNIX man pages are generated, you can only generate PDF documents if the http://xmlgraphics.apache.org/fop[Apache Formatting Objects Processor (FOP)] (http://xmlgraphics.apache.org/fop") is installed on your system. When FOP is available, BRL-CAD can automatically produce PDF outputs.
+==== AsciiDoc Syntax Essentials
 
-For more information, including how to use alternative tools for other DocBook processing steps besides validation, see the file `doc/docbook/README` in the BRL-CAD source code archive.
+A few constructs cover the majority of everyday documentation editing:
+
+
+* *Section headings* use leading equals signs, one per nesting level. A single `=` is the document title; `==`, `===`, and `====` are progressively deeper section levels.
++
+----
+== A Top-Level Section
+=== A Subsection
+----
+
+* *Images* are embedded with the `image::` block macro, optionally with attributes such as a width. Image files are kept alongside the sources (for example, in an `images/` subdirectory) and are listed in the directory's `CMakeLists.txt` so they are copied to the build:
++
+----
+image::images/example.png[width=100%]
+----
+
+* *External links* use the `link:` macro or a bare URL followed by the display text in brackets:
++
+----
+link:https://brlcad.org[the BRL-CAD website]
+https://brlcad.org[the BRL-CAD website]
+----
+
+* *Cross-references* within a document use an anchor and a reference to it. Define an anchor with `[[anchor]]` (or the block form `[#anchor]`) and refer to it with `<<anchor,link text>>`:
++
+----
+[[ray_example]]
+=== Code Example: Shooting Rays
+
+See <<ray_example,the ray-shooting example>> for details.
+----
+
+* *Verbatim/code blocks* are delimited by lines of four or more hyphens (`----`), and admonitions such as notes use the `[NOTE]` block style.
 
 
 ==== Adding a New Document to BRL-CAD
 
-Because creating and editing DocBook documentation is greatly simplified by BRL-CAD's management of the conversion process, it is usually a good idea to add a new document to the build system at the beginning of the document creation and editing process. To do this, copy a template file from the source directories to the file name to be used for the new document.
+Adding a new document is straightforward: create the AsciiDoc source, then register it with the build system so BRL-CAD renders it.
 
-For example, if you are writing a new DocBook article in English about the ellipsoid, use the following command to copy the article template to the filename `ellipsoid.xml` in the English articles directory:
+For example, if you are writing a new article about the ellipsoid, start by copying the article template to the filename `ellipsoid.adoc` in the articles directory:
 
-~/brlcad$ *cp doc/docbook/articles/en/TEMPLATE.xml doc/docbook/articles/en/ellipsoid.xml*
+~/brlcad$ *cp doc/asciidoc/articles/TEMPLATE.adoc doc/asciidoc/articles/ellipsoid.adoc*
 
-Next, open the file `doc/docbook/articles/en/CMakeLists.txt` in a text editor. Then, add the name of the new document to the file to alert the build system of its existence:
-
-image::../books/images/hacking_brlcad_docbook_CMakeLists.png[width=100%]
-
-BRL-CAD now knows about the new file and can generate output for it.
-
-You will generally only want to rebuild a specific output (say, HTML) to confirm that output renders properly. To set up the specific targets for the new file, run the command below to refresh the build targets (in this example, the build output directory is called `build`):
-
-~/brlcad/build$ *cmake ..*
-
-This creates a new build target, ellipsoid_article_html, which will build only the HTML output of the document and its dependencies:
+Next, open the file `doc/asciidoc/articles/CMakeLists.txt` in a text editor and add the name of the new document to the list of article sources so the build system knows about it:
 
 
-....
+----
+set(
+  articles_EN
+  TEMPLATE.adoc
+  about.adoc
+  ...
+  ellipsoid.adoc
+)
+----
 
-~/brlcad/build $ make ellipsoid_article_html
+Reconfigure and build with documentation enabled (in this example, the build output directory is called `build`):
 
-[  0%] Built target printtimestamp
-[  0%] Built target buildtimestart
+~/brlcad/build$ *cmake .. -DBRLCAD_EXTRADOCS=ON*
 
-Build Time: Tue Oct 15 19:14:42 2013
+~/brlcad/build$ *cmake --build . --target doc*
 
-[  0%] Built target timestamp
-[  0%] Built target zlib
-[100%] Built target xml
-[100%] Built target xslt
-[100%] Built target exslt
-[100%] Built target xmllint
-[100%] Built target xsltproc
-[100%] Built target schema-expand
-[100%] Built target fonts-dejavu-expand
-[100%] Built target fonts-stix-expand
-[100%] Built target offo-2-expand
-[100%] Built target svg-dtd-expand
-[100%] Built target xsl-expand
-[100%] Built target docbook_articles_EN_IMAGES_cp
-Scanning dependencies of target ellipsoid_article_html
-[100%] Validating DocBook source with xmllint:
-/home/user/brlcad/doc/docbook/articles/en/ellipsoid.xml validates
-[100%] Generating ../../../../share/doc/html/articles/en/ellipsoid.html
-[100%] Built target ellipsoid_article_html
-~/brlcad/build $
-....
+The asciiquack processor renders the article to:
 
-This generates a file named `brlcad/build/share/doc/html/articles/en/ellipsoid.html.` Open this document in a web browser to view the HTML output:
+`build/share/doc/html/articles/ellipsoid.html`
 
-image::../books/images/hacking_brlcad_example_docbook_default_output.png[width=100%]
+Open this file in a web browser to view the HTML output.
 
 Now that all the pieces are in place, you can begin the documentation cycle:
 
 
-. Modify the DocBook XML sources.
-. Build the HTML output. As long as the DocBook file is the only file being changed, you can use the target ellipsoid_article_html/fast to avoid checking the target's dependencies and to speed up the compilation process.
-. Once you have generated the updated HTML file, refresh the page in your web browser to view the changes.
-
-In the following example, all of the previous elements are combined into a DocBook editing workflow. The title of the article was changed from the default (Article Title) to the article's actual title (A Guide to Modeling with the Ellipsoid Primitive), the build target was remade, and the results are seen in a web browser.
-
-image::../books/images/hacking_brlcad_docbook_working_session.png[width=100%]
+. Modify the AsciiDoc source (`doc/asciidoc/articles/ellipsoid.adoc`).
+. Rebuild the documentation so the corresponding HTML under `share/doc/html/` is regenerated.
+. Refresh the page in your web browser to view the changes.
 
 
-==== Adding a Translated Document to BRL-CAD
+==== Working with Translated Documents
 
-By and large, adding translations of BRL-CAD documents follows the same process as adding English documents. However, you must select the correct subdirectory for the language of the translation.
-
-BRL-CAD uses the http://www-01.sil.org/iso639-3/codes.asp[ISO 639-1 language codes] (http://www-01.sil.org/iso639-3/codes.asp) as language-specific subdirectories within the higher-level categories. These are two-letter codes that represent the names of languages (for example, `pt` for Portuguese). If a language is not listed in ISO 639-1, use that's language's three-letter code from ISO 639-2 or (if necessary) ISO 639-3 instead.
-
-Currently, all translations are manually created and manually maintained. If you are working with translated documents, you are not limited to the ASCII character set; you can use Unicode characters in a document. The following example is the Armenian translation of the BRL-CAD introduction documentation:
-
-image::../books/images/hacking_brlcad_brlcad_intro_hy.png[width=100%]
+Some BRL-CAD documents have been translated into languages other than English. Because AsciiDoc source is Unicode-aware, you are not limited to the ASCII character set; you can write freely in the target language. When maintaining translations, follow the naming and organization conventions already used by the existing translated sources in the relevant subdirectory, and register each translated `.adoc` file in that directory's `CMakeLists.txt` just as you would an English document.
 
 
 ==== Selecting Output Formats
 
-Although you can produce HTML, UNIX man pages, and PDF files from the DocBook sources, you don't have to produce all of them. By default, PDF output is not produced because it takes longer to generate than other formats. UNIX man pages are not generated by default for Windows (where they generally are of little use) to avoid wasting configuration and compilation time.
+BRL-CAD produces HTML documentation and, for manual-page sources, UNIX man pages. All documentation output is gated on a single CMake option; man pages are additionally skipped on platforms where they are of little use.
 
-You can use the following configuration options to turn the compilation of various formats on and off:
+You can use the following configuration options to turn documentation compilation on and off:
 
-.BRL-CAD DocBook Configuration Options
+.BRL-CAD Documentation Configuration Options
 [cols="3*"]
 |===
 |Option
@@ -810,64 +795,42 @@ You can use the following configuration options to turn the compilation of vario
 |Setting
 
 |BRLCAD_EXTRADOCS
-|Enable DocBook documentation
-|ON
+|Enable AsciiDoc documentation
+|ON for a full build (OFF for reduced target sets)
 |BRLCAD_EXTRADOCS_HTML
 |Enable HTML output
 |ON
 |BRLCAD_EXTRADOCS_MAN
 |Enable UNIX man page output
 |ON (OFF on Windows)
-|BRLCAD_EXTRADOCS_PDF
-|Enable PDF output (needs FOP)
-|OFF
-|BRLCAD_EXTRADOCS_PDF_MAN
-|Enable PDF man page output
-|Defaults to setting of BRLCAD_EXTRADOCS_PDF
 |===
 
-The option to disable the PDF man page output exists to support situations where someone wants the article and tutorial PDFs, without the overhead of generating hundreds of PDFs for the various manual pages. If you do not specifically want PDF versions of the individual manual pages, set the BRLCAD_EXTRADOCS_PDF_MAN option to OFF.
+The documentation is only built when `BRLCAD_EXTRADOCS` is enabled, because rendering the full documentation set adds noticeably to configuration and compilation time. It defaults to ON for a standard full build and to OFF when a reduced set of build targets is selected. If your build has documentation disabled, enable it explicitly with `-DBRLCAD_EXTRADOCS=ON` whenever you are editing or verifying documentation.
 
 
 ==== Sharing Content Between Documents
 
-Just as different documentation formats are needed to display the same content in different software environments, different documents that serve different needs will often need to share common content. DocBook provides a mechanism, called XInclude, which allows one document to directly reference content from another document.
+Different documents that serve different needs will often need to share common content. AsciiDoc supports this with the `include::` directive, which pulls the contents of one source file into another at render time:
 
-For example, volume II of the BRL-CAD Tutorial Series makes extensive use of the XInclude mechanism. The majority of the original content in that tutorial was split up into individual lessons, each which exist as separate documents. To provide those individual documents and at the same time preserve the original Volume II, without duplicating content, the file `BRL-CAD_Tutorial_Series-VolumeII.xml` pulls in the content of the lessons using XInclude:
 
-`<xi:include href="/lessons/en/mged01_creating_primitive_shapes.xml" xpointer="creating_primitive_shapes_overviewlist"/>`
+----
+include::../lessons/mged01_creating_primitive_shapes.adoc[]
+----
 
-For this reference to work, the lesson `mged01_creating_primitive_shapes.xml` must provide matching identifying labels. The matching label for the reference above is:
+You can include an entire file or, by tagging regions of the source, a specific portion of it. Tag a region in the included file with `// tag::name[]` and `// end::name[]` comment markers, then reference that region from the including document:
 
-`<para xml:id="creating_primitive_shapes_overviewlist">`
+
+----
+include::shared_snippet.adoc[tag=overview]
+----
 
 The drawbacks to this mechanism are that:
 
 
-* You can't read a source document as a single, coherent whole. Most of the time, content pulled into a document using XInclude should be a fairly small subset of that document unless the specific purpose of the document is to aggregate other documents.
-* Content changed in one document introduces changes in other documents the author is not currently editing. Only share content with XInclude when the content is not expected to change based on the context.
+* You can't read the aggregating source document as a single, coherent whole without also consulting the included files. Keep shared fragments small unless the specific purpose of the document is to aggregate other documents.
+* Content changed in one document introduces changes in every document that includes it, even ones the author is not currently editing. Only share content this way when it is not expected to change based on context.
 
-
-==== Customizing DocBook Output
-
-DocBook does not allow you to specify the formatting details of a document. This is a deliberate design decision, since avoiding the encoding of formatting information in the original document offers greater consistency and uniformity across documents.
-
-However, some documents have unique formatting requirements. DocBook's toolchain allows you to do this type of customization, but it is the most complex aspect of working with DocBook. You should only customize the output when there is a compelling need to do so.
-
-One of the best examples of DocBook output customization in BRL-CAD is work done by Tom Browder to format the PDF covers of the BRL-CAD Tutorial Series volumes, as shown below:
-
-image::../books/images/hacking_brlcad_tutorial_1_pdf.png[width=100%]
-
-A number of elements are needed to achieve this result:
-
-
-* A custom XML Stylesheet Language (XSL) file (named `doc/docbook/resources/brlcad/tutorial-template.xsl.in`) that defines the layout of the document.
-* A custom CMake build logic file (named `doc/docbook/books/en/CMakeLists.txt`) that further customizes the template file for each individual book.
-* The Deja-Vu and STIX fonts (located in `doc/docbook/resources/other/fonts`) to ensure uniform, high-quality text rendering.
-
-Although each case of special formatting is likely to be unique, the preceding example can serve as a starting point. Another useful resource for information about customizing DocBook output is the book http://www.sagehill.net/docbookxsl[DocBook XSL: The Complete Guide] (http://www.sagehill.net/docbookxsl).
-
-Now that you have an idea about how to format documentation for the BRL-CAD project, let's take a look at the types of documentation that the project maintains.
+Now that you have an idea about how documentation is written and built for the BRL-CAD project, let's take a look at the types of documentation that the project maintains.
 
 
 === Types of Documentation We Maintain
@@ -890,7 +853,7 @@ image::../books/images/hacking_brlcad_man_page_search.png[width=100%]
 
 ==== API Documentation
 
-Most of the project's documentation is maintained in the BRL-CAD source code repository as DocBook files (see the chapter Working with Our Documentation for more information about DocBook). API documentation, on the other hand, is automatically generated from the headers in the application's source code. Specially formatted source code comments in the headers are converted to HTML documentation by http://www.doxygen.org/[Doxygen] (http://www.doxygen.org), a tool for generating source code documentation.
+Most of the project's documentation is maintained in the BRL-CAD source code repository as AsciiDoc files (see the chapter Working with Our Documentation for more information about AsciiDoc). API documentation, on the other hand, is automatically generated from the headers in the application's source code. Specially formatted source code comments in the headers are converted to HTML documentation by http://www.doxygen.org/[Doxygen] (http://www.doxygen.org), a tool for generating source code documentation.
 
 API documentation is the lowest level, most authoritative documentation of BRL-CAD's programming interfaces. However, it does not address user-level programs or commands.
 
@@ -972,29 +935,26 @@ The documentation and the toolchain required to generate the documentation is pa
 
 *git clone https://github.com/BRL-CAD/brlcad*
 
-The directory `brlcad` should be within your `/home` directory so that BRL-CAD's build directory commands don't interfere with your system's commands.
+The `brlcad` directory should be kept separate from your build directory so that BRL-CAD's build outputs don't clutter the source tree.
 
-===== Obtaining FOP
-
-While BRL-CAD comes with the tools for generating HTML files and UNIX man pages, you will need additional software to generate PDF files. That software is called Apache FOP, and you can download it from the http://xmlgraphics.apache.org/fop/[FOP project's website] (http://xmlgraphics.apache.org/fop/). The FOP website also has instructions for installing and configuring FOP to run on your system.
+BRL-CAD's AsciiDoc documentation is rendered by the bundled *asciiquack* processor, so no additional documentation software needs to be installed. You only need a compiler, CMake, and a build environment.
 
 
 ===== Configure
 
-Next, you must set up the build directory and configure the compilation. This will also set up the tools that you need to generate the documentation. Do that by running the following command.
+Next, you must set up the build directory and configure the compilation with documentation enabled. Run the following command from an empty build directory:
 
-*cmake ../brlcad_build -DBRLCAD_BUILD_TYPE=Debug*
+*cmake ../brlcad -DBRLCAD_EXTRADOCS=ON*
 
 
 ===== Generate the Documentation
 
-Once you've configured the compilation, you'll need to run the following build targets to generate the documentation:
+Once you've configured the compilation, you can run the following build targets to generate the documentation:
 
 
-* doc (to generate the HTML version of the documentation and the UNIX man pages)
+* doc (to generate both the HTML documentation and the UNIX man pages)
 * html (to generate the HTML version of the documentation)
 * man (to generate the UNIX man pages)
-* pdf (to generate PDF versions of the documentation. Running this target is optional, and you must have FOP installed on the system on which you're working).
 
 
 
@@ -1007,10 +967,10 @@ You can find the source files for the documentation in the following directories
 Project documentation
 
 
-`doc/docbook`::
-User documentation in XML format
+`doc/asciidoc/`::
+User and developer documentation in AsciiDoc format
 +
-See the file `doc/docbook/README` for more details
+See the file `doc/asciidoc/README.adoc` for more details
 
 
 
@@ -1025,11 +985,11 @@ Remember to:
 
 ==== Discussing the Documentation
 
-Before undertaking a documentation task, you should join the BRL-CAD http://lists.sourceforge.net/lists/listinfo/brlcad-devel[developer mailing list] (http://lists.sourceforge.net/lists/listinfo/brlcad-devel) and the #brlcad IRC channel irc.freenode.net.
+Before undertaking a documentation task, you should join the BRL-CAD community on https://brlcad.zulipchat.com[Zulip chat] and, for longer discussions, our https://github.com/BRL-CAD/brlcad/discussions[GitHub Discussions]. A secondary, legacy IRC channel named #brlcad is also available on irc.libera.chat.
 
-Joining both lists helps introduce you the the BRL-CAD community and gives you the opportunity to regularly communicate with other experienced contributors. You can also ask questions on the mailing list or the IRC channel.
+Joining the discussion helps introduce you to the BRL-CAD community and gives you the opportunity to regularly communicate with other experienced contributors. You can ask questions on Zulip, in GitHub Discussions, or on IRC.
 
-BRL-CAD contributors have a set of rules that they try to respect and follow to enable collaboration and communication. We strongly encourage new contributors to be creative and to be specific when asking questions on the mailing list or on the IRC channel. We also strongly advise you to use interleaved posting when replying on any communication channels. And once again, _don't be afraid to ask questions_.
+BRL-CAD contributors have a set of rules that they try to respect and follow to enable collaboration and communication. We strongly encourage new contributors to be creative and to be specific when asking questions. We also strongly advise you to use interleaved posting when replying on any communication channel. And once again, _don't be afraid to ask questions_.
 
 
 == Other Contributors
@@ -1052,9 +1012,9 @@ Let's take a look at a few other ways that you can contribute to the BRL-CAD pro
 
 ==== Bug Reporting and Feature Requests
 
-Finding bugs in software is often a challenging task for developers. If you find a problem with the software, file a bug report on BRL-CAD's official https://github.com/BRL-CAD/brlcad/issues[issue tracking page] on SourceForge (http://sourceforge.net/p/brlcad/bugs/). Please remember to provide enough detail so that we can reproduce the problem. You can also post to our developer mailing list at brlcad-devel@lists.sourceforge.net.
+Finding bugs in software is often a challenging task for developers. If you find a problem with the software, file a bug report on BRL-CAD's official https://github.com/BRL-CAD/brlcad/issues[issue tracker] (https://github.com/BRL-CAD/brlcad/issues). Please remember to provide enough detail so that we can reproduce the problem. You can also raise the issue on https://brlcad.zulipchat.com[Zulip chat] or in our https://github.com/BRL-CAD/brlcad/discussions[GitHub Discussions].
 
-In addition, if you have a suggestion for new feature, feel free to submit a request on BRL-CAD's official http://sourceforge.net/p/brlcad/feature-requests/[feature request page] (http://sourceforge.net/p/brlcad/feature-requests/) on SourceForge. You can also post to our developer mailing list at brlcad-devel@lists.sourceforge.net.
+In addition, if you have a suggestion for a new feature, feel free to submit a request on the same https://github.com/BRL-CAD/brlcad/issues[issue tracker] (https://github.com/BRL-CAD/brlcad/issues). You can also share the idea on https://brlcad.zulipchat.com[Zulip chat] or in our https://github.com/BRL-CAD/brlcad/discussions[GitHub Discussions].
 
 
 ==== Outreach and Artwork
@@ -1127,91 +1087,56 @@ In addition to the resources provided previously in this book, the following res
 [appendix]
 === Doc Template: New MGED Command
 
-The following DocBook XML template illustrates the general structure that is used when defining a man page for MGED commands, along with examples of how elements such as paragraphs, lists, and examples are included. If you haven't worked with DocBook before, refer to the section What is DocBook? in the chapter Working with our Documentation.
+The following AsciiDoc template illustrates the general structure that is used when defining a man page for MGED commands, along with examples of how elements such as paragraphs, lists, and examples are included. Save the source as `commandname.adoc` in `doc/asciidoc/system/mann/` and register it in that directory's `CMakeLists.txt`. When rendered by asciiquack, the `:doctype: manpage` attribute produces a section-n manual page in addition to HTML. If you haven't worked with AsciiDoc before, refer to the section What is AsciiDoc? in the chapter Working with our Documentation.
 
 
+....
+= COMMANDNAME(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD MGED Commands
+
+== NAME
+commandname - A one-line summary of what the command does.
+
+== SYNOPSIS
+
+[source]
+----
+commandname [options] arguments
 ----
 
-<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="">
+[[description]]
+== DESCRIPTION
 
-<refmeta>
-  <refentrytitle> <refentrytitle/>
-  <manvolnum>nged</manvolnum>
-  <refmiscinfo class="source">BRL-CAD</refmiscinfo>
-  <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
-</refmeta>
+A full description of the command goes here, in one or more paragraphs.
 
-<refnamediv xml:id="name">
-  <refname><refname/>
-  <refpurpose>
+The following options are supported:
 
-  </refpurpose>
-</refnamediv>
+* *-a* - Description of the -a option.
+* *-b* - Description of the -b option.
 
-<!-- body begins here -->
-<refsynopsisdiv xml:id="synopsis">
-  <cmdsynopsis sepchar=" ">
-    <command/>
-    <arg choice="opt" rep="norepeat"/>
-  </cmdsynopsis>
-</refsynopsisdiv>
+[[examples]]
+== EXAMPLES
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
-  <para>
+.A short caption describing the first example.
+[example]
+====
+mged>**commandname arg**
 
-  </para>
-</refsection>
+An explanation of what this invocation does and what output to expect.
+====
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+== AUTHOR
 
-  <para>
+BRL-CAD Team
 
-  </para>
-  <example><info><title/></info>
+== BUG REPORTS
 
-    <variablelist>
-      <varlistentry>
-           <term><prompt/> <userinput/></term>
-           <listitem>
-             <para>
-
-             </para>
-           </listitem>
-      </varlistentry>
-      <varlistentry>
-           <term><prompt/> <userinput/></term>
-           <listitem>
-             <para>
-
-             </para>
-           </listitem>
-      </varlistentry>
-    </variablelist>
-  </example>
-
-  <example><info><title/></info>
-
-    <para>
-      <prompt/><userinput/>
-    </para>
-    <para>
-
-    </para>
-  </example>
-
-</refsection>
-
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
-
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
-
-  <para>
-    Reports of bugs or problems should be submitted via electronic
-    mail to <email>devs@brlcad.org</email>
-  </para>
-</refsection>
-</refentry>
-----
+Reports of bugs or problems should be submitted via the issue tracker at
+https://github.com/BRL-CAD/brlcad/issues, or raised on Zulip chat at
+https://brlcad.zulipchat.com.
+....
 
 [appendix]
 === Code Example: Shooting Rays

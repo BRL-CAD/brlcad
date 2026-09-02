@@ -33,6 +33,7 @@
 #include "bu/app.h"
 #include "bu/color.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/exit.h"
 #include "dm.h"
 
@@ -55,23 +56,6 @@ void grid(struct fb *fbiop, unsigned char *line, int spacing), oldflavor(void);
 static char usage[] = "\
 Usage: fbgrid [-c] [-b | -d | -o] [-F framebuffer]\n\
 	[-S squaresize] [-W width] [-N height]\n";
-
-static int
-parse_positive_int_arg(const char *label, const char *value, int *result)
-{
-    long parsed;
-    char *endptr = NULL;
-
-    errno = 0;
-    parsed = strtol(value, &endptr, 10);
-    if (errno != 0 || endptr == value || *endptr != '\0' || parsed <= 0 || parsed > INT_MAX) {
-	fprintf(stderr, "fbgrid: invalid %s '%s'\n", label, value);
-	return 0;
-    }
-
-    *result = (int)parsed;
-    return 1;
-}
 
 int
 get_args(int argc, char **argv)
@@ -99,18 +83,18 @@ get_args(int argc, char **argv)
 	    case 'S':
 	    case 's':
 		/* square size */
-		if (!parse_positive_int_arg("size", bu_optarg, &fbwidth))
+		if (!bu_opt_scan_int_range(bu_optarg, &fbwidth, 1, INT_MAX, "size"))
 		    return 0;
 		fbheight = fbwidth;
 		break;
 	    case 'W':
 	    case 'w':
-		if (!parse_positive_int_arg("width", bu_optarg, &fbwidth))
+		if (!bu_opt_scan_int_range(bu_optarg, &fbwidth, 1, INT_MAX, "width"))
 		    return 0;
 		break;
 	    case 'N':
 	    case 'n':
-		if (!parse_positive_int_arg("height", bu_optarg, &fbheight))
+		if (!bu_opt_scan_int_range(bu_optarg, &fbheight, 1, INT_MAX, "height"))
 		    return 0;
 		break;
 

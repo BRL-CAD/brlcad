@@ -55,7 +55,7 @@ u wgn.s2 + wgn.s2+1 - wgn.s2-1
     
 ....
 
-If we wanted to make a second subtraction from wgn.s2--say, for a drain hole in the corner of the wagon--we would name that primitive wgn.s2-2 (see Figure F-3). We can break this name down as follows: *****NEED IMAGE HERE*****
+If we wanted to make a second subtraction from wgn.s2--say, for a drain hole in the corner of the wagon--we would name that primitive wgn.s2-2, as shown in <<build_region9>>. We can break this name down as follows: the root name `wgn` identifies the region; `.s2` is the base solid the operation applies to; and the trailing `-2` marks this as the second subtraction from that solid (the first having been `wgn.s2-1`).
 
 [[build_region9]]
 .The region and the subtraction primitives.

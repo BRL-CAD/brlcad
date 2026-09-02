@@ -27,7 +27,7 @@ The authors would like to thank Messrs. Lee Butler, Edwin Davisson, William Land
 
 Since 1979, the U.S. Army Research Laboratoryfootnote:[On 30 September 1992, the U.S. Army Ballistic Research Laboratory (BRL) was deactivated and subsequently became part of the U.S. Army Research Laboratory (ARL) on 1 October 1992.] has been developing and distributing the Ballistic Research Laboratory - Computer-Aided Design (BRL-CAD) three-dimensional (3-D) solid modeling package to support combat vehicle vulnerability studies and various other military and industrial applications. The software, which is now in its third generation, includes a large collection of tools and utilities, including an interactive geometry editor, raytracing and generic framebuffer libraries, network-distributed image-processing/signal-processing capabilities, and an embedded scripting language.
 
-In support of the package, a multivolume tutorial series is being written to assist users with the many features and functionality of BRL-CAD. Three volumes have been published thus far. Volume I provides an overview of the package contents and installation (Butler and Edwards, 2002). Volume II addresses the basic functionality of the package's Multi-Device Geometry Editor (MGED) and offers a comprehensive list of the user commands available (Butler et al., 2001). Volume III discusses the modeling process as well as principles and techniques to help maximize BRL-CAD's effectiveness (Butler et al., 2003). All of these documents are available for download at http://ftp.arl.army.mil/brlcad/[http://ftp.arl.army.mil/brlcad/] (U.S. Army Research Laboratory, 2003).
+In support of the package, a multivolume tutorial series is being written to assist users with the many features and functionality of BRL-CAD. Three volumes have been published thus far. Volume I provides an overview of the package contents and installation (Butler and Edwards, 2002). Volume II addresses the basic functionality of the package's Multi-Device Geometry Editor (MGED) and offers a comprehensive list of the user commands available (Butler et al., 2001). Volume III discusses the modeling process as well as principles and techniques to help maximize BRL-CAD's effectiveness (Butler et al., 2003). All of these documents are available for download at https://ftp.arl.army.mil/brlcad/[https://ftp.arl.army.mil/brlcad/] (U.S. Army Research Laboratory, 2003).
 
 The purpose of Volume IV is to discuss issues of compatibility and conversion between the BRL-CAD geometry file format and the formats of various other computer-aided design (CAD), computer-aided manufacturing (CAM), and computer-aided engineering (CAE) packages. Conversion is increasingly important for BRL-CAD users who must interact with a growing number of Government and commercial organizations involved in the research, development, testing, and evaluation of today's combat systems.
 
@@ -299,7 +299,7 @@ The options for the command are as follows:
 * *-t* - sets tolerance distance (in millimeters) (default is 0.005) (takes an argument).
 * *-v* - verbose; prints out progress information.
 
-For more information on the DXF file format and import possibilities, see the on-line documentation on the Autodesk web site at http://adeskftp.autodesk.com/ prodsupp/downloads/dxf.pdf[http://adeskftp.autodesk.com/ prodsupp/downloads/dxf.pdf] (Autodesk, 2003).
+For more information on the DXF file format and import possibilities, see the on-line documentation on the Autodesk web site at https://adeskftp.autodesk.com/ prodsupp/downloads/dxf.pdf[https://adeskftp.autodesk.com/ prodsupp/downloads/dxf.pdf] (Autodesk, 2003).
 
 
 [[Converting_From_Elysium_Neutral_Facetted_Format]]
@@ -336,7 +336,7 @@ The options for the command are as follows:
 * *-n part_name_mapping* - sets the mapping from input names to output names.
 * *-t tolerance_distance* - sets distance calculation tolerance (in millimeters) (default is 0.005).
 
-For more information on the Elysium file format and import possibilities, see the Elysium web site at http://www.elysiuminc.com[http://www.elysiuminc.com] (Elysium, 2003).
+For more information on the Elysium file format and import possibilities, see the Elysium web site at https://www.elysiuminc.com[https://www.elysiuminc.com] (Elysium, 2003).
 
 
 [[Converting_From_EUCLID_Format]]
@@ -365,7 +365,7 @@ The options for the command are as follows:
 * *-x lvl* - sets librt debug flag (see _raytrace.h_ in the binary distribution for definitions of DEBUG_xxx).
 * *-X lvl* - sets NMG library debug flag (see _nmg.h_ in the binary distribution for definitions of DEBUG_xxx).
 
-For more information about the EUCLID file format and import possibilities, see the MDTVISION web site at http://support.mdtvision.com[http://support.mdtvision.com] (MDTVISION, 2003).
+For more information about the EUCLID file format and import possibilities, see the MDTVISION web site at https://support.mdtvision.com[https://support.mdtvision.com] (MDTVISION, 2003).
 
 .Header file note
 [cols="2*"]
@@ -435,7 +435,7 @@ The options for the command are as follows:
 * *-T tolerance_distance* - sets distance tolerance (in inches).
 * *-A parallel_tolerance* - sets parallel tolerance (sine).
 
-For more information about the FASTGEN file formats and import possibilities, see the SURVIAC web site at http://www.bahdayton.com/surviac/fastgen.htm[http://www.bahdayton.com/surviac/fastgen.htm] (SURVIAC, 2003).
+For more information about the FASTGEN file formats and import possibilities, see the SURVIAC web site at https://www.bahdayton.com/surviac/fastgen.htm[https://www.bahdayton.com/surviac/fastgen.htm] (SURVIAC, 2003).
 
 
 
@@ -464,7 +464,7 @@ The options available for this command are as follows:
 
 The *-n*, *-d*, *-t*, and *-3* options are mutually exclusive. If none of these four options is provided, the default action is to convert only IGES solid model entities (CSG and planar face BREP) to BRL-CAD.
 
-For more information about the IGES file format and import possibilities, see the National Institute of Standards and Technology (NIST) web site at http://www.nist.gov/iges[http://www.nist.gov/iges] (NIST, 2003).
+For more information about the IGES file format and import possibilities, see the National Institute of Standards and Technology (NIST) web site at https://www.nist.gov/iges[https://www.nist.gov/iges] (NIST, 2003).
 
 
 [[Converting_From_Jack]]
@@ -482,7 +482,7 @@ The options for this command are:
 * *-r region_name* - specifies a name for the BRL-CAD region created. If this option is not specified, the input file name will be used to construct a region name.
 * *-g group_name* - specifies the name of a combination to create to hold the BRL-CAD region created. If this option is not specified, the combination will not be created.
 
-For more information on the Jack file format and import possibilities, see the EDS web page at http://www.eds.com/products/plm/efactory/jack/[http://www.eds.com/products/plm/efactory/jack/] (EDS, 2003a).
+For more information on the Jack file format and import possibilities, see the EDS web page at https://www.eds.com/products/plm/efactory/jack/[https://www.eds.com/products/plm/efactory/jack/] (EDS, 2003a).
 
 
 [[Converting_From_NASTRAN_Format]]
@@ -513,7 +513,7 @@ The options for the command are as follows:
 * *-t tolerance_distance* - sets distance calculation tolerance (in millimeters) (default is 0.005).
 * *-m* - sets input units to millimeters (default is inches).
 
-For more on the NASTRAN file format and import possibilities, see the MSC web site at http://www.mscsoftware.com[http://www.mscsoftware.com] (MSC.Software Corporation, 2003) and the EDS web site at http://www.eds.com/products/plm/nastran/[http://www.eds.com/products/plm/nastran/] (EDS, 2003b).
+For more on the NASTRAN file format and import possibilities, see the MSC web site at https://www.mscsoftware.com[https://www.mscsoftware.com] (MSC.Software Corporation, 2003) and the EDS web site at https://www.eds.com/products/plm/nastran/[https://www.eds.com/products/plm/nastran/] (EDS, 2003b).
 
 
 [[Converting_From_Pro_E_Format]]
@@ -559,7 +559,7 @@ The following list provides a description of the use and functionality of the pr
 * *Max Tessellation Error* - This value (expressed in millimeters) is used to control the coarseness of the tessellation. It is the maximum distance between the actual surface and its tessellated approximation. Smaller values here will result in finer tessellations and more triangles. The default value is reasonable for ballistic vulnerability analysis purposes.
 * *Angle Control Value* - This is a number between 0 and 1 that provides additional control over the coarseness of the tessellation. The exact relationship between the tessellation and this value is not specified in the Pro/E documentation, but the default value of 0.5 seems to work well.
 
-For more information about the Pro/E file format and import possibilities, see the Parametric Technology Corporation (PTC) web site at http://www.ptc.com[http://www.ptc.com] (PTC, 2003).
+For more information about the Pro/E file format and import possibilities, see the Parametric Technology Corporation (PTC) web site at https://www.ptc.com[https://www.ptc.com] (PTC, 2003).
 
 
 [[sec_converting_from_stl]]
@@ -594,7 +594,7 @@ The options for this command are as follows:
 * *-t tolerance_distance* - specifies the minimum distance (in millimeters) allowed between distinct vertices. Vertices closer than this minimum will be considered to be the same vertex (the default value is 0.005 mm).
 * *-x librt_debug_flag* - specifies a flag for the raytracing library that will result in additional debug log messages (see `librt/debug.h` in the binary distribution for details).
 
-For more information on the STL file format and import possibilities, see the 3D Systems web site at http://www.3dsystems.com[http://www.3dsystems.com] (3D Systems, 2003).
+For more information on the STL file format and import possibilities, see the 3D Systems web site at https://www.3dsystems.com[https://www.3dsystems.com] (3D Systems, 2003).
 
 
 [[Converting_From_TANKILL_Format]]
@@ -617,7 +617,7 @@ The options for the command are as follows:
 * *-x lvl* - sets librt debug flag (see `raytrace.h` in the binary distribution for definitions of DEBUG_xxx).
 * *-X lvl* - sets NMG library debug flag (see `nmg.h` in the binary distribution for definitions of DEBUG_xxx).
 
-For more information on the TANKILL file format and import possibilities, contact the Advantage Business Group at the Barbician, East Street, Farnham, Surrey, GU9 7TB or visit the web site at http://www.advantage-business.co.uk[http://www.advantage-business.co.uk] (Advantage Business Group, 2003).
+For more information on the TANKILL file format and import possibilities, contact the Advantage Business Group at the Barbician, East Street, Farnham, Surrey, GU9 7TB or visit the web site at https://www.advantage-business.co.uk[https://www.advantage-business.co.uk] (Advantage Business Group, 2003).
 
 
 [[Converting_From_Unigraphics_Format]]
@@ -655,7 +655,7 @@ The available options are as follows:
 * *-c min_chamfer* - specifies that any chamfer with dimensions less than the provided minimum (in millimeters) will be ignored. By default, no features are ignored.
 * *-r min_round* - specifies that any round (or fillet) with a radius less than the specified minimum (in millimeters) will be ignored. By default, no features are ignored.
 
-For more information on the Unigraphics file format and conversion potential, see the EDS web site at http://www.eds.com/products/plm/unigraphics_nx/[http://www.eds.com/products/plm/unigraphics_nx/] (EDS, 2003c).
+For more information on the Unigraphics file format and conversion potential, see the EDS web site at https://www.eds.com/products/plm/unigraphics_nx/[https://www.eds.com/products/plm/unigraphics_nx/] (EDS, 2003c).
 
 
 [[Converting_From_Viewpoint_Datalabs_Format]]
@@ -754,7 +754,7 @@ The options for the g-acad command are as follows:
 * *-a abs_tess_tol* - sets absolute tessellation tolerance to specified value (in millimeters) (overrides *-r* option).
 * *-n norm_tess_tol* - sets surface normal tessellation tolerance (angle in radians) (overrides *-r* option).
 
-For more information on the ACAD file format and conversion potential, contact Lockheed Martin Tactical Aircraft Systems at http://www.lockheedmartin.com[http://www.lockheedmartin.com] (Lockheed Martin, 2003).
+For more information on the ACAD file format and conversion potential, contact Lockheed Martin Tactical Aircraft Systems at https://www.lockheedmartin.com[https://www.lockheedmartin.com] (Lockheed Martin, 2003).
 
 
 [[Converting_to_AutoCAD_DXF_Format]]
@@ -773,7 +773,7 @@ The options for the g-dxf command are as follows:
 
 The command also accepts the *-v*, *-r*, *-a*, *-n*, *-x*, and *-X* options, which have been discussed in the import converters portion of this document (<<sec_convert_to_brlcad>>).
 
-For more information on the DXF file format and export possibilities, see the on-line documentation on the Autodesk web site at http://www.autodesk.com[http://www.autodesk.com] (Autodesk, Inc., 2003).
+For more information on the DXF file format and export possibilities, see the on-line documentation on the Autodesk web site at https://www.autodesk.com[https://www.autodesk.com] (Autodesk, Inc., 2003).
 
 
 [[Converting_to_EUCLID_Format]]
@@ -789,7 +789,7 @@ The options for the *g-euclid* command are as follows:
 * *-u units* - sets the output units (the default is millimeters).
 * *-o _output_file_name_* - sets the output file name (the default is `stdout`).
 
-For more information about the EUCLID file format and export possibilities, see the MDTVISION web site at http://support.mdtvision.com[http://support.mdtvision.com] (MDTVISION, 2003).
+For more information about the EUCLID file format and export possibilities, see the MDTVISION web site at https://support.mdtvision.com[https://support.mdtvision.com] (MDTVISION, 2003).
 
 
 [[Converting_to_IGES_Format]]
@@ -818,7 +818,7 @@ With the *-t* and *-f* options, the converter will employ Boolean evaluation of 
 |Note that different CAD packages seem to ``prefer'' certain options for the IGES converter. In particular, Pro/E works well with IGES files that use the *-m* option, and Unigraphics works well with IGES files that use the *-s* option.
 |===
 
-For more information about the IGES file format and export possibilities, see the NIST web site at http://www.nist.gov/iges[http://www.nist.gov/iges] (NIST, 2003).
+For more information about the IGES file format and export possibilities, see the NIST web site at https://www.nist.gov/iges[https://www.nist.gov/iges] (NIST, 2003).
 
 
 [[Converting_to_Jack]]
@@ -834,7 +834,7 @@ The options for the jack-g command are as follows:
 * *-r region_name* - specifies the name of the region to create in the BRL-CAD output (by default, this name is constructed from the input filename).
 * *-g combination_name* - specifies the name of a combination to be created to hold the region produced. If not specified, no combination will be created.
 
-For more information about the Jack file format and export possibilities, see the EDS web page at http://www.eds.com/products/plm/efactory/jack[http://www.eds.com/products/plm/efactory/jack/] (EDS, 2003a).
+For more information about the Jack file format and export possibilities, see the EDS web page at https://www.eds.com/products/plm/efactory/jack[https://www.eds.com/products/plm/efactory/jack/] (EDS, 2003a).
 
 
 [[Converting_to_STL_Format]]
@@ -855,7 +855,7 @@ The options for the *g-stl* command are as follows:
 
 The command also accepts the previously mentioned *-v*, *-r*, *-a*, *-n*, *-x*, and *-X* options.
 
-For more information on the STL file format and export possibilities, see the 3D Systems web site at http://www.3dsystems.com[http://www.3dsystems.com] (3D Systems, 2003).
+For more information on the STL file format and export possibilities, see the 3D Systems web site at https://www.3dsystems.com[https://www.3dsystems.com] (3D Systems, 2003).
 
 
 [[Converting_to_TANKILL_Format]]
@@ -876,7 +876,7 @@ The options for the *g-tankill* command are as follows:
 
 The command also accepts the previously mentioned *-v*, *-r*, *-a*, *-n*, *-x*, and *-X* options.
 
-For more information on the TANKILL file format and export possibilities, contact the Advantage Business Group at the Barbician, East Street, Farnham, Surrey GU9 7TB or visit the web site at http://www.advantage-business.co.uk[http://www.advantage-business.co.uk] (Advantage Business Group, 2003)
+For more information on the TANKILL file format and export possibilities, contact the Advantage Business Group at the Barbician, East Street, Farnham, Surrey GU9 7TB or visit the web site at https://www.advantage-business.co.uk[https://www.advantage-business.co.uk] (Advantage Business Group, 2003)
 
 
 [[Converting_to_VRML_Format]]
@@ -897,7 +897,7 @@ The options for the command are as follows:
 
 The command also accepts the previously mentioned *-v*, *-r*, *-a*, *-n*, *-x*, and *-X* options.
 
-For more information on VRML, see the Web3D Consortium web site at http://www.web3d.org /fs_technicalinfo.htm[http://www.web3d.org /fs_technicalinfo.htm] (Web3D Consortium, 2003b).
+For more information on VRML, see the Web3D Consortium web site at https://www.web3d.org /fs_technicalinfo.htm[https://www.web3d.org /fs_technicalinfo.htm] (Web3D Consortium, 2003b).
 
 .The Web3D Consortium
 [cols="2*"]
@@ -928,7 +928,7 @@ The options for the command are as follows:
 
 The command also accepts the previously mentioned *-v*, *-r*, *-a*, *-n*, *-x*, and *-X* options.
 
-For more information on the Wavefront file format and export possibilities, see the Alias web site at http://www.alias.com/eng/index.shtml[http://www.alias.com/eng/index.shtml] (Alias, 2003).
+For more information on the Wavefront file format and export possibilities, see the Alias web site at https://www.alias.com/eng/index.shtml[https://www.alias.com/eng/index.shtml] (Alias, 2003).
 
 
 [[Converting_to_X3D_Format]]
@@ -949,7 +949,7 @@ The options for the command are as follows:
 
 The command also accepts the previously mentioned *-v*, *-r*, *-a*, *-n*, *-x*, and *-X* options.
 
-For more information on the X3D file format and export possibilities, see the Web3D Consortium web site at http://www.web3d.org/technicalinfo/specifications/ISO_IEC_19775[http://www.web3d.org/technicalinfo/specifications/ISO_IEC_19775] (Web3D Consortium, 2003a).
+For more information on the X3D file format and export possibilities, see the Web3D Consortium web site at https://www.web3d.org/technicalinfo/specifications/ISO_IEC_19775[https://www.web3d.org/technicalinfo/specifications/ISO_IEC_19775] (Web3D Consortium, 2003a).
 
 
 [[sec_build_new_converter]]

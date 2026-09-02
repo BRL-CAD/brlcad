@@ -1,0 +1,57 @@
+= LIBGCV(3)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+libgcv - geometry conversion library for BRL-CAD
+
+== SYNOPSIS
+
+[source,c]
+----
+#include <gcv.h>
+----
+
+Link with *-lgcv*.
+
+The public interface is organized across the headers included by
+_gcv.h_, namely _gcv/defines.h_, _gcv/util.h_, and _gcv/api.h_.
+
+== DESCRIPTION
+
+LIBGCV is BRL-CAD's geometry conversion library. It provides a common
+framework for importing geometry into, and exporting geometry from, the
+BRL-CAD geometry database (_.g_) format. Conversion is handled by a set
+of plugins, each of which registers support for one or more external
+file formats; the library discovers and dispatches to the appropriate
+plugin based on the requested conversion.
+
+The API defines a filter and context model that lets applications
+enumerate available converters, set per-format options, and drive
+import, export, and in-memory conversion operations in a uniform way.
+This is the machinery underlying command-line converters and the
+general-purpose *gcv* geometry conversion tool.
+
+The complete API, including data structures and function signatures, is
+documented in the headers noted above and in the Doxygen-generated
+reference for the LIBGCV module.
+
+== SEE ALSO
+
+*brlcad*(1), *librt*(3), *libwdb*(3), *libnmg*(3), *libbrep*(3)
+
+The BRL-CAD Doxygen API reference provides the authoritative,
+up-to-date description of all public LIBGCV routines.
+
+== AUTHOR
+
+BRL-CAD Team
+
+== COPYRIGHT
+
+This software is Copyright (c) 2008-2026 United States Government as represented by the U.S. Army Research Laboratory.
+
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

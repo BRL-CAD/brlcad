@@ -131,4 +131,3 @@ rt_bot_decimation_is_within_distance(size_t *offending_vertex,
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

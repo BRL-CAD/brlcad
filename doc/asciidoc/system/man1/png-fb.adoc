@@ -122,7 +122,7 @@ them as shell variables for further processing.
 [[see_also]]
 == SEE ALSO
 
-*brlcad*(1), *fb-png*(1), *rt*(1), *pix-fb*(1), *libfb*(3), *pix*(5)
+*brlcad*(1), *fb-png*(1), *rt*(1), *pix-fb*(1), *pix*(5)
 
 
 [[author]]

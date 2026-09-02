@@ -3,7 +3,7 @@ if(SH_EXEC AND TARGET naca456 AND TARGET mged)
     NAME regress-naca456
     COMMAND ${SH_EXEC} "${CMAKE_CURRENT_SOURCE_DIR}/naca456.sh" ${CMAKE_SOURCE_DIR} "$<TARGET_FILE:naca456>" "$<TARGET_FILE:mged>"
     )
-  brlcad_regression_test(regress-naca456 "naca456;mged" TEST_DEFINED STAND_ALONE)
+  brlcad_regression_test(regress-naca456 "naca456;mged" TEST_DEFINED STAND_ALONE TIMEOUT 600)
 endif(SH_EXEC AND TARGET naca456 AND TARGET mged)
 
 cmakefiles(

@@ -43,7 +43,7 @@ part.s22 part.s22-1 part.s23 part.s24 part.s24+1 part.s24-1 part.s25,
       
 ....
 
-one needs to determine the span. Note that the leftmost numbers in these primitives range from 22–25.Thus, as shown in the following expression, the span is four (inclusively). *******NEED FIGURE HERE***** If we use an increment of four, we will get the following set of primitives.
+one needs to determine the span. Note that the leftmost numbers in these primitives range from 22 to 25. The span is the count of distinct leftmost numbers taken inclusively, from the lowest through the highest: 22, 23, 24, and 25 -- four values in all. It is computed as (highest - lowest) + 1, that is, (25 - 22) + 1 = 4. If we use an increment of four, each leftmost number is shifted up by four (22 becomes 26, 23 becomes 27, and so on), and we will get the following set of primitives.
 
 
 ....

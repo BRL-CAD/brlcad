@@ -19,6 +19,9 @@
  */
 /** @file librender/render_internal.h
  *
+ * Internal render definitions shared by the ADRT renderer: export
+ * macros, render method identifiers, and the render_t work structure.
+ *
  */
 
 #ifndef ADRT_LIBRENDER_RENDER_INTERNAL_H
@@ -57,6 +60,8 @@
 
 
 #define RENDER_MAX_DEPTH	24
+#define RENDER_PATH_DEFAULT_SAMPLES	12
+#define RENDER_PATH_MAX_SAMPLES	4096
 
 
 struct render_s;

@@ -41,10 +41,10 @@ texture_blend_work(struct texture_s *texture, void *UNUSED(mesh), struct tie_ray
 
     sd = (struct texture_blend_s *)texture->data;
 
-    coef = *pixel[0];
-    *pixel[0] = (1.0 - coef)*sd->color1[0] + coef*sd->color2[0];
-    *pixel[1] = (1.0 - coef)*sd->color1[1] + coef*sd->color2[1];
-    *pixel[2] = (1.0 - coef)*sd->color1[2] + coef*sd->color2[2];
+    coef = (*pixel)[0];
+    (*pixel)[0] = (1.0 - coef)*sd->color1[0] + coef*sd->color2[0];
+    (*pixel)[1] = (1.0 - coef)*sd->color1[1] + coef*sd->color2[1];
+    (*pixel)[2] = (1.0 - coef)*sd->color1[2] + coef*sd->color2[2];
 }
 
 

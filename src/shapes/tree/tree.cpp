@@ -1185,6 +1185,8 @@ generate_model(const tree_options &opts)
 	const int branch_count = opts.branching[std::min(static_cast<size_t>(level - 1), opts.branching.size() - 1)];
 	for (size_t parent_idx : current) {
 	    model.segments[parent_idx].terminal = false;
+	    /* Adding children may reallocate model.segments.  Keep a value copy so
+	     * subsequent siblings never read through an invalidated reference. */
 	    const tree_segment parent = model.segments[parent_idx];
 	    const vec3 pdir = normalize(parent.tip - parent.base);
 	    vec3 pu, pv;

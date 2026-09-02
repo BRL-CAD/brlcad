@@ -1,0 +1,52 @@
+= LIBFFT(3)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+libfft - Fast Fourier Transform library for BRL-CAD
+
+== SYNOPSIS
+
+[source,c]
+----
+#include <fft.h>
+----
+
+Link with *-lfft*.
+
+== DESCRIPTION
+
+LIBFFT is a signal-processing library for performing Fast Fourier
+Transforms (FFTs) and inverse FFTs efficiently. It provides forward and
+inverse one- and two-dimensional transforms, including routines
+specialized for particular fixed transform sizes, operating on real and
+complex data.
+
+The library defines a simple _COMPLEX_ type consisting of real and
+imaginary double-precision components, and intentionally avoids a
+dependency on _vmath.h_ so that it may be used as a standalone signal
+processing component.
+
+The complete API, including data structures and function signatures, is
+documented in _fft.h_ and in the Doxygen-generated reference for the
+LIBFFT module.
+
+== SEE ALSO
+
+*brlcad*(1), *libbn*(3), *libicv*(3)
+
+The BRL-CAD Doxygen API reference provides the authoritative,
+up-to-date description of all public LIBFFT routines.
+
+== AUTHOR
+
+BRL-CAD Team
+
+== COPYRIGHT
+
+This software is Copyright (c) 2004-2026 United States Government as represented by the U.S. Army Research Laboratory.
+
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

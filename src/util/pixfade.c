@@ -50,11 +50,13 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <limits.h>
+#include <float.h>
 
 #include "bio.h"
 
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/log.h"
 #include "bu/mime.h"
 
@@ -72,59 +74,6 @@ Usage: pixfade [-p percentage] [-f fraction] [-m max] [-s squaresize] [-w width]
 double multiplier = 0.5;
 int max = -1;
 
-static int
-parse_nonnegative_double_arg(const char *arg, double *out_value, const char *label)
-{
-    char *end = NULL;
-
-    errno = 0;
-    *out_value = strtod(arg, &end);
-    if (errno != 0 || end == arg || *end != '\0') {
-	bu_log("pixfade: invalid %s '%s'\n", label, arg);
-	return 0;
-    }
-    if (*out_value < 0.0) {
-	bu_log("pixfade: %s must be non-negative, got '%s'\n", label, arg);
-	return 0;
-    }
-
-    return 1;
-}
-
-static int
-parse_positive_int_arg(const char *arg, int *out_value, const char *label)
-{
-    char *end = NULL;
-    long int value;
-
-    errno = 0;
-    value = strtol(arg, &end, 10);
-    if (errno != 0 || end == arg || *end != '\0' || value <= 0 || value > INT_MAX) {
-	bu_log("pixfade: invalid %s '%s'\n", label, arg);
-	return 0;
-    }
-
-    *out_value = (int)value;
-    return 1;
-}
-
-static int
-parse_int_arg(const char *arg, int *out_value, const char *label)
-{
-    char *end = NULL;
-    long int value;
-
-    errno = 0;
-    value = strtol(arg, &end, 10);
-    if (errno != 0 || end == arg || *end != '\0' || value < INT_MIN || value > INT_MAX) {
-	bu_log("pixfade: invalid %s '%s'\n", label, arg);
-	return 0;
-    }
-
-    *out_value = (int)value;
-    return 1;
-}
-
 int
 get_args(int argc, char **argv)
 {
@@ -133,29 +82,29 @@ get_args(int argc, char **argv)
     while ((c = bu_getopt(argc, argv, "p:f:s:w:n:o:m:h?")) != -1) {
 	switch (c) {
             case 'p':
-		if (!parse_nonnegative_double_arg(bu_optarg, &multiplier, "percentage")) {
+		if (!bu_opt_scan_double_range(bu_optarg, &multiplier, 0.0, DBL_MAX, "percentage")) {
 		    bu_exit(1, NULL);
 		}
 		multiplier /= 100.0;
 		break;
 	    case 'f':
-		if (!parse_nonnegative_double_arg(bu_optarg, &multiplier, "fraction")) {
+		if (!bu_opt_scan_double_range(bu_optarg, &multiplier, 0.0, DBL_MAX, "fraction")) {
 		    bu_exit(1, NULL);
 		}
 		break;
     	    case 's':
-		if (!parse_positive_int_arg(bu_optarg, &inx, "input size")) {
+		if (!bu_opt_scan_int_range(bu_optarg, &inx, 1, INT_MAX, "input size")) {
 		    bu_exit(1, NULL);
 		}
 		iny = inx;
 		break;
 	    case 'w':
-		if (!parse_positive_int_arg(bu_optarg, &inx, "input width")) {
+		if (!bu_opt_scan_int_range(bu_optarg, &inx, 1, INT_MAX, "input width")) {
 		    bu_exit(1, NULL);
 		}
 		break;
 	    case 'n':
-		if (!parse_positive_int_arg(bu_optarg, &iny, "input height")) {
+		if (!bu_opt_scan_int_range(bu_optarg, &iny, 1, INT_MAX, "input height")) {
 		    bu_exit(1, NULL);
 		}
 		break;
@@ -163,7 +112,7 @@ get_args(int argc, char **argv)
 		out_file = bu_optarg;
 		break;
 	    case 'm':
-		if (!parse_int_arg(bu_optarg, &max, "max value")) {
+		if (!bu_opt_scan_int(bu_optarg, &max, "max value")) {
 		    bu_exit(1, NULL);
 		}
 		if (max < 0 )

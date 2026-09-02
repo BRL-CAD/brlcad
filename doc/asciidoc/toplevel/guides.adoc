@@ -1,0 +1,25 @@
+= Guides & How-To
+:doctype: article
+:toc: left
+:toclevels: 2
+
+Task-focused guides and how-to articles.
+
+* link:articles/about.html[About BRL-CAD]
+* link:articles/adrt_pathtrace.html[Path Tracing with ADRT]
+* link:articles/build_pattern.html[Using the Build Pattern Tool]
+* link:articles/build_region.html[Using the build_region Command]
+* link:articles/camo_shader.html[Camouflage Shader]
+* link:articles/ebm_primitive.html[Using the Extruded Bitmap Primitive]
+* link:articles/gcv.html[The Geometry Conversion Library]
+* link:articles/ged.html[GED: An Interactive Solid Modeling System]
+* link:articles/mged.html[MGED Tutorial]
+* link:articles/mgedrc.html[Setting Up a .mgedrc File]
+* link:articles/nirt.html[Interactive Raytracing: The nirt Command]
+* link:articles/oed.html[Object Editing - the oed Command]
+* link:articles/overlap_tool.html[The Overlap Tool]
+* link:articles/pipes.html[Using the Pipe Primitive]
+* link:articles/procedural_geometry.html[BRL-CAD Procedural Geometry Gallery]
+* link:articles/projection_shader.html[Using the Projection Shader]
+* link:articles/renderer_showcase.html[BRL-CAD Renderer Showcase]
+* link:articles/tire.html[Vehicle Tire and Wheel Creation in BRL-CAD]

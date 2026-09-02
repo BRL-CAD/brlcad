@@ -19,6 +19,9 @@
  */
 /** @file master.c
  *
+ * ADRT master: coordinates rendering by dispatching work units to
+ * connected slaves and relaying assembled results to observers.
+ *
  */
 
 #include "common.h"
@@ -102,6 +105,17 @@ void master_result(tienet_buffer_t *result);
 
 master_t master;
 
+
+static size_t
+master_pixel_size(uint16_t format)
+{
+    if (format == RENDER_CAMERA_BIT_DEPTH_128)
+	return 4 * sizeof(TFLOAT);
+
+    return 3;
+}
+
+
 static void
 master_setup(void)
 {
@@ -116,7 +130,7 @@ master_setup(void)
     TIENET_BUFFER_INIT(master.buf);
     TIENET_BUFFER_INIT(master.buf_comp);
 
-    /* -1 indicates this slot is not used and thus does not contain an open project. */
+    /* 0 indicates this slot is not used and thus does not contain an open project. */
     for (i = 0; i < ADRT_MAX_WORKSPACE_NUM; i++)
 	master.wid_list[i] = 0;
 }
@@ -174,6 +188,7 @@ master_result(tienet_buffer_t *result)
     uint8_t *rgb_data, op;
     uint16_t wid;
     uint32_t i, ind, ind2, update;
+    size_t pixel_size;
 
     static int lastop;
 
@@ -199,14 +214,15 @@ master_result(tienet_buffer_t *result)
 
 	    /* Pointer to RGB Data */
 	    rgb_data = &result->data[ind];
+	    pixel_size = master_pixel_size(tile.format);
 
 	    /* Copy the tile into the image */
 	    ind = 0;
 	    ind2 = tile.orig_x + tile.orig_y * master.image_w;
 
-	    /* Only does 24-bit right now */
 	    for (i = 0; i < tile.size_y; i++) {
-		memcpy(&master.buf.data[3*ind2], &rgb_data[3*ind], 3*tile.size_x);
+		memcpy(&master.buf.data[pixel_size*ind2],
+		       &rgb_data[pixel_size*ind], pixel_size*tile.size_x);
 		ind += tile.size_x;
 		ind2 += master.image_w;
 	    }
@@ -217,7 +233,7 @@ master_result(tienet_buffer_t *result)
 	    if (master.frame_ind == master.tile_num) {
 		update = 1;
 		master.frame_ind = 0;
-		master.buf.ind = 3 * master.image_w * master.image_h;
+		master.buf.ind = pixel_size * master.image_w * master.image_h;
 	    }
 	    break;
 
@@ -486,8 +502,11 @@ master_networking(void *ptr)
 			while (i < ADRT_MAX_WORKSPACE_NUM && master.wid_list[i])
 			    i++;
 
-			/* Mark this ID as being in use. */
-			master.wid_list[i] = 1;
+			/* Mark this ID as being in use.  Guard against the
+			 * table being full, which would otherwise index one
+			 * past wid_list[]. */
+			if (i < ADRT_MAX_WORKSPACE_NUM)
+			    master.wid_list[i] = 1;
 
 			/* Send this WID to the client application. */
 			tienet_send(sock->num, &i, 2);
@@ -511,8 +530,12 @@ master_networking(void *ptr)
 		    {
 			uint16_t wid;
 
-			/* Size */
+			/* Size.  Clamp to the fixed slave_data[] buffer so a
+			 * bogus or oversized length off the network cannot
+			 * overrun it. */
 			tienet_recv(sock->num, &master.slave_data_len, 4);
+			if (master.slave_data_len > sizeof(master.slave_data))
+			    master.slave_data_len = sizeof(master.slave_data);
 			tienet_recv(sock->num, master.slave_data, master.slave_data_len);
 
 			op = master.slave_data[0];
@@ -523,7 +546,9 @@ master_networking(void *ptr)
 				TCOPY(uint16_t, master.slave_data, 3, &master.image_w, 0);
 				TCOPY(uint16_t, master.slave_data, 5, &master.image_h, 0);
 				TCOPY(uint16_t, master.slave_data, 7, &master.image_format, 0);
-				TIENET_BUFFER_SIZE(master.buf, 3 * master.image_w * master.image_h);
+				TIENET_BUFFER_SIZE(master.buf,
+					master_pixel_size(master.image_format) *
+					master.image_w * master.image_h);
 				tienet_master_broadcast(master.slave_data, master.slave_data_len);
 				tienet_sem_post(&(sock->frame_sem));
 				break;
@@ -686,6 +711,11 @@ int main(int argc, char **argv) {
 #endif
 	       )!= -1)
     {
+#ifdef HAVE_GETOPT_LONG
+	bu_optarg = optarg;
+	bu_optind = optind;
+	bu_optopt = optopt;
+#endif
 	if (bu_optopt == '?') c='h';
 	switch (c) {
 	    case 'c':

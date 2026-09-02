@@ -21,6 +21,9 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
+/*
+ * torus() converts an IGES 160 Torus entity into a BRL-CAD TOR.
+ */
 int
 torus(size_t entityno)
 {
@@ -47,11 +50,12 @@ torus(size_t entityno)
     /* Acquiring Data */
 
     if (dir[entityno]->param <= pstart) {
-	bu_log("Illegal parameter pointer for entity D%07d (%s)\n" ,
+	bu_log("Illegal parameter pointer for entity D%07d (%s)\n",
 	       dir[entityno]->direct, dir[entityno]->name);
 	return 0;
     }
     Readrec(dir[entityno]->param);
+    /* IGES entity type number; read only to advance past the field, otherwise unused */
     Readint(&sol_num, "");
     Readcnv(&rad, "");
     Readcnv(&rad2, "");
@@ -63,7 +67,7 @@ torus(size_t entityno)
     Readcnv(&z_2, "");
 
     if (rad <= 0.0 || rad2 <= 0.0) {
-	bu_log("Illegal parameters for entity D%07d (%s)\n" ,
+	bu_log("Illegal parameters for entity D%07d (%s)\n",
 	       dir[entityno]->direct, dir[entityno]->name);
 	return 0;
     }

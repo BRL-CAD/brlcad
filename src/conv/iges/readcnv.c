@@ -34,9 +34,13 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
-#define MAX_NUM 4096
 
-
+/*
+ * Read the next field from the shared global "card" buffer, parse it as a
+ * floating-point value, multiply by "conv_factor" (units + scale to mm),
+ * and store the result in "inum".  Advances the field "counter" and
+ * auto-advances to the next record when the field spans a record boundary.
+ */
 void
 Readcnv(fastf_t *inum, const char *id)
 {
@@ -50,7 +54,7 @@ Readcnv(fastf_t *inum, const char *id)
     } else if (card[counter] == eord) /* Up against the end of record */
 	return;
 
-    if (card[72] == 'P')
+    if (card[IGES_SECTION_COL] == 'P')
 	lencard = PARAMLEN;
     else
 	lencard = CARDLEN;
@@ -63,6 +67,9 @@ Readcnv(fastf_t *inum, const char *id)
 	       (num[i] = card[counter++]) != eofd &&
 	       num[i] != eord && counter <= lencard)
 	{
+	    /* IGES writes exponents in Fortran style (e.g. 1.0D+00);
+	     * translate the 'D' exponent marker to 'e' so atof() parses it
+	     */
 	    if (num[i] == 'D') {
 		num[i] = 'e';
 	    }

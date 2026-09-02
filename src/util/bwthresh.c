@@ -39,6 +39,7 @@
 #include "bu/app.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
+#include "bu/opt.h"
 #include "bu/str.h"
 
 
@@ -47,17 +48,7 @@
 static int
 parse_threshold_arg(const char *arg, int *out_value)
 {
-    char *end = NULL;
-    long int value;
-
-    errno = 0;
-    value = strtol(arg, &end, 10);
-    if (errno != 0 || end == arg || *end != '\0' || value < 0 || value > 255) {
-	return 0;
-    }
-
-    *out_value = (int)value;
-    return 1;
+    return bu_opt_scan_int_range(arg, out_value, 0, 255, "threshold");
 }
 
 

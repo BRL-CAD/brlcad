@@ -1,6 +1,7 @@
 set(
   specifications_EN
   BRL_CAD_g_format_V6.adoc
+  BRL_CAD_g_format_V5.adoc
 )
 
 if(TARGET librt)
@@ -11,7 +12,6 @@ endif(TARGET librt)
 
 cmakefiles(
   ${specifications_EN}
-  BRL_CAD_g_format_V5.adoc
   CMakeLists.txt
 )
 

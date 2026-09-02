@@ -19,6 +19,9 @@
  */
 /** @file librender/hit.c
  *
+ * Shared ray-hit callback that returns the intersected mesh and flips
+ * the surface normal to face the incoming ray.
+ *
  */
 
 #include "adrt_struct.h"

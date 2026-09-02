@@ -52,6 +52,8 @@ FILE *fd = NULL;
 struct rt_wdb *fdout = NULL;
 char brlcad_file[256] = {0};
 int reclen = 0;
+b_off_t *rec_offset = NULL;
+size_t nrecords = 0;
 int currec = 0;
 size_t ntypes = 0;
 int brlcad_att_de = 0;
@@ -77,7 +79,8 @@ mat_t *identity = NULL;
 static int do_splines = 0;
 static int do_drawings = 0;
 static int trimmed_surf = 0;
-int do_bots = 1;
+int do_bots = 0;	/* -m: write boundary-rep as a BoT (triangle mesh) */
+int do_brep = 1;	/* default: write boundary-rep as rt_brep (OpenNURBS) */
 
 static char *iges_file = NULL;
 
@@ -147,6 +150,29 @@ Suggestions(void)
 }
 
 
+/*
+ * Return 1 if the output database already holds at least one user-visible
+ * geometry object (anything not named with a leading underscore, which
+ * marks the internal _GLOBAL bookkeeping object), else 0.  Used to decide
+ * whether a conversion produced anything renderable.
+ */
+static int
+Have_geometry(void)
+{
+    struct directory *dp;
+
+    if (!fdout || !fdout->dbip)
+	return 0;
+
+    FOR_ALL_DIRECTORY_START(dp, fdout->dbip) {
+	if (dp->d_namep && dp->d_namep[0] != '_')
+	    return 1;
+    } FOR_ALL_DIRECTORY_END;
+
+    return 0;
+}
+
+
 int
 main(int argc, char *argv [])
 {
@@ -158,7 +184,7 @@ main(int argc, char *argv [])
 
     bu_setprogname(argv[0]);
 
-    while ((c = bu_getopt(argc, argv, "3dntpo:x:X:N:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "3dmntpo:x:X:N:")) != -1) {
 	switch (c) {
 	    case '3':
 		do_drawings = 1;
@@ -166,6 +192,11 @@ main(int argc, char *argv [])
 		break;
 	    case 'd':
 		do_drawings = 1;
+		break;
+	    case 'm':
+		/* mesh: write boundary-rep as a BoT (triangle mesh) */
+		do_brep = 0;
+		do_bots = 1;
 		break;
 	    case 'n':
 		do_splines = 1;
@@ -177,16 +208,25 @@ main(int argc, char *argv [])
 		trimmed_surf = 1;
 		break;
 	    case 'p':
+		/* polygonal: write boundary-rep as an NMG solid */
+		do_brep = 0;
 		do_bots = 0;
 		break;
 	    case 'N':
 		solid_name = bu_optarg;
 		break;
 	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_debug);
+		/* rt_debug is an unsigned int; read it directly */
+		sscanf(bu_optarg, "%x", &rt_debug);
 		break;
 	    case 'X':
-		sscanf(bu_optarg, "%x", (unsigned int *)&nmg_debug);
+		{
+		    /* nmg_debug is a uint32_t; read into an unsigned int first
+		     * rather than type-punning &nmg_debug to unsigned int * */
+		    unsigned int dbg = 0;
+		    sscanf(bu_optarg, "%x", &dbg);
+		    nmg_debug = dbg;
+		}
 		break;
 	    default:
 		usage(argv[0]);
@@ -275,6 +315,8 @@ main(int argc, char *argv [])
 	if (reclen == 0)
 	    bu_exit(1, "File (%s) not in IGES ASCII format\n", iges_file);
 
+	Build_rec_index();	/* Index the byte offset of every record */
+
 	Freestack();	/* Set node stack to empty */
 
 	Zero_counts();	/* Set summary information to all zeros */
@@ -313,13 +355,49 @@ main(int argc, char *argv [])
 	    Convtree();	/* Convert Boolean Trees */
 
 	    Convassem();	/* Convert solid assemblies */
+
+	    /* Also import any Trimmed Parametric Surfaces (IGES 144) present.
+	     * These are how faithful boundary-rep geometry (e.g. g-iges brep
+	     * output) is expressed, so importing them here lets such files
+	     * round-trip without requiring the -t option. */
+	    for (i = 0; (size_t)i < totentities; i++) {
+		if (dir[i]->type == 144) {
+		    Do_subfigs();	/* Look for Singular Subfigure Instances */
+		    Convtrimsurfs(vlfree);
+		    break;
+		}
+	    }
+	}
+
+	/* Fallback: if brep output was requested but the faithful conversion
+	 * produced nothing renderable (common for trimmed-surface or
+	 * manifold-BREP files whose face loops we cannot yet fully
+	 * reconstruct), import the raw NURBS/analytic surfaces as an
+	 * untrimmed brep so the geometry is still usable.  (The -n path has
+	 * already done this, so skip it there.) */
+	if (do_brep && !do_drawings && !do_splines && !Have_geometry()) {
+	    int have_surf = 0;
+	    for (i = 0; (size_t)i < totentities; i++) {
+		int t = dir[i]->type;
+		if (t == 128 || t == 114 || t == 118 ||
+		    t == 120 || t == 122 || t == 140) {
+		    have_surf = 1;
+		    break;
+		}
+	    }
+	    if (have_surf) {
+		bu_log("\nNo faithful solids were produced; "
+		       "importing raw surfaces as an untrimmed brep\n");
+		Convsurfs();
+	    }
 	}
 
 	Free_dir();
+	Free_rec_index();
 
 	BU_LIST_DEQUEUE(&curr_file->l);
-	bu_free((char *)curr_file->file_name, "iges-g: curr_file->file_name");
-	bu_free((char *)curr_file, "iges-g: curr_file");
+	bu_free(curr_file->file_name, "iges-g: curr_file->file_name");
+	bu_free(curr_file, "iges-g: curr_file");
 	file_count++;
     }
 

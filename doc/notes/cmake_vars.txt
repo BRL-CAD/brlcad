@@ -70,14 +70,13 @@ BRLCAD_ENABLE_OPENCL "Enable features requiring OpenCL" OFF
 BRLCAD_EXTRADOCS
  ENABLE_DOCS
  ENABLE_EXTRA_DOCS
- ENABLE_DOCBOOK
-BRLCAD_EXTRADOCS_VALIDATE "Perform validation for DocBook documentation" ON
-BRLCAD_EXTRADOCS_HTML "Build MAN page output from DocBook documentation" ON
-BRLCAD_EXTRADOCS_PHP "Build MAN page output from DocBook documentation" OFF
-BRLCAD_EXTRADOCS_PPT "Build MAN page output from DocBook documentation" ON
-BRLCAD_EXTRADOCS_MAN "Build MAN page output from DocBook documentation" ON
-BRLCAD_EXTRADOCS_PDF "Build PDF output from DocBook documentation" OFF
-BRLCAD_ENABLE_TARGETS "controls all DocBook based documentation.  Keys off what target level is enabled."
+BRLCAD_EXTRADOCS_VALIDATE "Perform validation for AsciiDoc documentation" ON
+BRLCAD_EXTRADOCS_HTML "Build HTML output from AsciiDoc documentation" ON
+BRLCAD_EXTRADOCS_PHP "Build PHP output from AsciiDoc documentation" OFF
+BRLCAD_EXTRADOCS_PPT "Build presentation output from AsciiDoc documentation" ON
+BRLCAD_EXTRADOCS_MAN "Build MAN page output from AsciiDoc documentation" ON
+BRLCAD_EXTRADOCS_PDF "Build PDF output from AsciiDoc documentation" OFF
+BRLCAD_ENABLE_TARGETS "controls all AsciiDoc based documentation.  Keys off what target level is enabled."
   EXTRADOCS_DEFAULT is ON when <= 2 ; OFF when > 2
 
 

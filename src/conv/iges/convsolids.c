@@ -38,6 +38,11 @@ Convsolids(struct bu_list *vlfree)
     bu_log("\n\nConverting solid entities:\n");
 
     for (i = 0; i < totentities; i++) {
+	/*
+	 * Dispatch on the IGES entity type number to the matching
+	 * converter.  Solid types that have no case here fall through
+	 * silently (they are neither counted nor reported).
+	 */
 	switch (dir[i]->type) {
 	    case 150:
 		totsolids++;

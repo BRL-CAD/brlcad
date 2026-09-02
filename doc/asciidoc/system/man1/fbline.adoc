@@ -86,7 +86,7 @@ successive invocations accumulate on the same framebuffer.
 [[see_also]]
 == SEE ALSO
 
-*brlcad*(1), *fblabel*(1), *fbpoint*(1), *pix-fb*(1), *plot3-fb*(1), *libfb*(3), *pix*(5)
+*brlcad*(1), *fblabel*(1), *fbpoint*(1), *pix-fb*(1), *plot3-fb*(1), *pix*(5)
 
 
 [[author]]

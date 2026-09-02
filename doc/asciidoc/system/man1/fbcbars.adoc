@@ -80,7 +80,7 @@ device.
 [[see_also]]
 == SEE ALSO
 
-*brlcad*(1), *fbclear*(1), *fbgrid*(1), *fbframe*(1), *pix-fb*(1), *pixbackgnd*(1), *libfb*(3)
+*brlcad*(1), *fbclear*(1), *fbgrid*(1), *fbframe*(1), *pix-fb*(1), *pixbackgnd*(1)
 
 
 [[inspirations]]

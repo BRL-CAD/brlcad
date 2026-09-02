@@ -18,8 +18,19 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* coordinate with bext to have it produce a manifest of what
+  files need strclear/plief processing of various types so
+  we don't need to redo the characterization pass every time
+  we configure.  We have strclear and plief in bext, so that
+  repo should be capable of doing the work for us as a post
+  build step whenever bext changes.
+
+* fix ARB5 move point 5 to actually move the point.
+
 * need extensive testing of MGED CSG editing with the shift
   to librt based editing logic.
+
+* investigate gqa plotting display in MGED
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------

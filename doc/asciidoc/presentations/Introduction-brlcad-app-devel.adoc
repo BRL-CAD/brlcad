@@ -1,11 +1,9 @@
-= Untitled
+= Application Development with BRL-CAD (Overview)
 :doctype: article
 :toc:
 :toclevels: 3
 
 == Application Development with BRL-CAD
-
-../presentations/en/brlcad-app-devel_2.html
 
 A suite of utilities capable of interactively displaying, editing, and interrogating geometric models is known as BRL-CAD. BRL-CAD has become a powerful constructive solid geometry (CSG) modeling package. The package includes a large collection of tools and utilities including an interactive geometry editor, ray tracing and generic framebuffer libraries, a network-distributed image-processing and signal-processing capability, and an embedded scripting language.
 

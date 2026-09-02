@@ -118,6 +118,7 @@ int
 main(int UNUSED(argc), char **argv)
 {
     bu_setprogname(argv[0]);
+
     std::vector<separate_case> cases = {
 	{
 	    "non-manifold edge",

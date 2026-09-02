@@ -258,6 +258,52 @@ long fb_poll_rate(struct fb *ifp)
     return ifp->i->if_poll_refresh_rate;
 }
 
+void fb_set_interactive(struct fb *ifp, int on)
+{
+    if (!ifp)
+	return;
+    ifp->i->if_interactive = (on) ? 1 : 0;
+}
+
+int fb_get_interactive(const struct fb *ifp)
+{
+    if (!ifp)
+	return 0;
+    return ifp->i->if_interactive;
+}
+
+void fb_enqueue_event(struct fb *ifp, const struct fb_event *e)
+{
+    int next;
+    if (!ifp || !e)
+	return;
+    if (!ifp->i->if_interactive)
+	return;
+    next = (ifp->i->if_ehead + 1) % FB_EVENT_QUEUE_MAX;
+    if (next == ifp->i->if_etail) {
+	/* queue full - drop the oldest event to make room for the newest */
+	ifp->i->if_etail = (ifp->i->if_etail + 1) % FB_EVENT_QUEUE_MAX;
+    }
+    ifp->i->if_equeue[ifp->i->if_ehead] = *e;
+    ifp->i->if_ehead = next;
+}
+
+int fb_next_event(struct fb *ifp, struct fb_event *e)
+{
+    if (!ifp || !e)
+	return 0;
+    if (!ifp->i->if_interactive)
+	return 0;
+    /* Pump the backend's OS event loop so newly-arrived events are queued. */
+    if (ifp->i->if_poll)
+	(void)(*ifp->i->if_poll)(ifp);
+    if (ifp->i->if_ehead == ifp->i->if_etail)
+	return 0;
+    *e = ifp->i->if_equeue[ifp->i->if_etail];
+    ifp->i->if_etail = (ifp->i->if_etail + 1) % FB_EVENT_QUEUE_MAX;
+    return 1;
+}
+
 int fb_help(struct fb *ifp)
 {
     if (!ifp)

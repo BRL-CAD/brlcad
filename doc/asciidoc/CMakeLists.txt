@@ -1,5 +1,6 @@
 include(${BRLCAD_CMAKE_DIR}/AsciiDoc.cmake)
 
+verbose_add_subdirectory(asciidoc toplevel)
 verbose_add_subdirectory(asciidoc system)
 verbose_add_subdirectory(asciidoc articles)
 verbose_add_subdirectory(asciidoc books)

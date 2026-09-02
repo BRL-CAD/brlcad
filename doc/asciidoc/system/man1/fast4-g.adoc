@@ -45,7 +45,7 @@ For FASTGEN2 or FASTGEN3 files, convert them using *rpatch*(1) and then
   Quiet mode; suppress progress output, emitting only error messages.
 
 *-o* _plot_file_::
-  Write all processed CTRI and CQUAD elements to _plot_file_ in libplot3
+  Write all processed CTRI and CQUAD elements to _plot_file_ in *plot3*(5)
   format. The result can be viewed in *mged*(1) with the _overlay_ command.
 
 *-m* _muves_file_::

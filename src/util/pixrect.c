@@ -32,6 +32,7 @@
 
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/log.h"
 #include "bu/mime.h"
 
@@ -49,37 +50,6 @@ Usage:  pixrect [-s squaresize] [-w width] [-n height] [-S out_squaresize] [-W o
 			[-x xorig] [-y yorig] [-o out_file.pix] [file.pix] [> out_file.pix]\n";
 
 static int
-parse_nonnegative_int_arg(const char *arg, int *value, const char *label)
-{
-    char *end = NULL;
-    long parsed = 0;
-
-    errno = 0;
-    parsed = strtol(arg, &end, 10);
-    if (arg[0] == '\0' || end == arg || *end != '\0' || errno != 0 || parsed < 0 || parsed > INT_MAX) {
-	bu_log("pixrect: invalid %s '%s'\n", label, arg);
-	return 0;
-    }
-
-    *value = (int)parsed;
-    return 1;
-}
-
-static int
-parse_positive_int_arg(const char *arg, int *value, const char *label)
-{
-    if (!parse_nonnegative_int_arg(arg, value, label))
-	return 0;
-    if (*value == 0) {
-	bu_log("pixrect: %s must be greater than zero, got '%s'\n", label, arg);
-	return 0;
-    }
-
-    return 1;
-}
-
-
-static int
 get_args(int argc, char **argv)
 {
     int c;
@@ -88,37 +58,37 @@ get_args(int argc, char **argv)
     while ((c = bu_getopt(argc, argv, "s:w:n:S:W:N:x:y:o:h?")) != -1) {
 	switch (c) {
 	    case 's':
-		if (!parse_positive_int_arg(bu_optarg, &inx, "input size"))
+		if (!bu_opt_scan_int_range(bu_optarg, &inx, 1, INT_MAX, "input size"))
 		    return 0;
 		iny = inx;
 		break;
 	    case 'w':
-		if (!parse_positive_int_arg(bu_optarg, &inx, "input width"))
+		if (!bu_opt_scan_int_range(bu_optarg, &inx, 1, INT_MAX, "input width"))
 		    return 0;
 		break;
 	    case 'n':
-		if (!parse_positive_int_arg(bu_optarg, &iny, "input height"))
+		if (!bu_opt_scan_int_range(bu_optarg, &iny, 1, INT_MAX, "input height"))
 		    return 0;
 		break;
 	    case 'S':
-		if (!parse_positive_int_arg(bu_optarg, &outx, "output size"))
+		if (!bu_opt_scan_int_range(bu_optarg, &outx, 1, INT_MAX, "output size"))
 		    return 0;
 		outy = outx;
 		break;
 	    case 'W':
-		if (!parse_positive_int_arg(bu_optarg, &outx, "output width"))
+		if (!bu_opt_scan_int_range(bu_optarg, &outx, 1, INT_MAX, "output width"))
 		    return 0;
 		break;
 	    case 'N':
-		if (!parse_positive_int_arg(bu_optarg, &outy, "output height"))
+		if (!bu_opt_scan_int_range(bu_optarg, &outy, 1, INT_MAX, "output height"))
 		    return 0;
 		break;
 	    case 'x':
-		if (!parse_nonnegative_int_arg(bu_optarg, &xorig, "x origin"))
+		if (!bu_opt_scan_int_range(bu_optarg, &xorig, 0, INT_MAX, "x origin"))
 		    return 0;
 		break;
 	    case 'y':
-		if (!parse_nonnegative_int_arg(bu_optarg, &yorig, "y origin"))
+		if (!bu_opt_scan_int_range(bu_optarg, &yorig, 0, INT_MAX, "y origin"))
 		    return 0;
 		break;
 	    case 'o':

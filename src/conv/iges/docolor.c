@@ -38,6 +38,11 @@ unsigned char colortab[9][4] = {
     { 7, 0, 255, 255 },
     { 8, 255, 255, 255 }};
 
+/* Assign an RGB color to every region, group, or solid instance based on its
+ * directory-entry color field: a positive value indexes the standard IGES
+ * color table above, while a negative value points at a color definition
+ * (type 314) entity whose values are read and scaled to 0-255.
+ */
 void
 Docolor(void)
 {

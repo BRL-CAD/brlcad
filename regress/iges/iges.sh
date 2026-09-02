@@ -250,6 +250,76 @@ fi
 #     export STATUS
 # fi
 
+# BREP CONVERSION
+
+# The default IGES import now preserves boundary representations as rt_brep
+# (OpenNURBS) solids.  Verify the box (a type 186 Manifold BREP in
+# iges.export.iges) imports as a valid brep, that -m/-p still yield mesh/NMG,
+# and that a brep round-trips back out to IGES and in again.
+
+output="iges.brep.g"
+rm -f "$output"
+run $IGESG -o "$output" iges.export.iges
+if [ ! -f "$output" ] ; then
+    log "ERROR: iges-g (brep) failed to create $output"
+    STATUS="`expr $STATUS + 1`"
+    export STATUS
+fi
+
+btype=`$MGED -c "$output" "db get box.nmg" 2>&1 | tr -d '\r' | grep -oE '^(brep|bot|nmg)' | head -1`
+log "... default import type for box.nmg: [$btype]"
+if test "x$btype" != "xbrep" ; then
+    log "ERROR: default IGES import did not produce a brep (got '$btype')"
+    STATUS="`expr $STATUS + 1`"
+    export STATUS
+fi
+
+valid=`$MGED -c "$output" "brep box.nmg valid" 2>&1 | tr -d '\r'`
+log "... brep validity: $valid"
+case "x$valid" in
+    *valid*) : ;;
+    *) log "ERROR: imported brep is not valid" ; STATUS="`expr $STATUS + 1`" ; export STATUS ;;
+esac
+
+# -m should produce a BoT (mesh)
+$IGESG -m -o iges.brep.mesh.g iges.export.iges >> "$LOGFILE" 2>&1
+mtype=`$MGED -c iges.brep.mesh.g "db get box.nmg" 2>&1 | tr -d '\r' | grep -oE '^(brep|bot|nmg)' | head -1`
+if test "x$mtype" != "xbot" ; then
+    log "ERROR: -m did not produce a BoT (got '$mtype')"
+    STATUS="`expr $STATUS + 1`"
+    export STATUS
+fi
+
+# -p should produce an NMG
+$IGESG -p -o iges.brep.nmg.g iges.export.iges >> "$LOGFILE" 2>&1
+ptype=`$MGED -c iges.brep.nmg.g "db get box.nmg" 2>&1 | tr -d '\r' | grep -oE '^(brep|bot|nmg)' | head -1`
+if test "x$ptype" != "xnmg" ; then
+    log "ERROR: -p did not produce an NMG (got '$ptype')"
+    STATUS="`expr $STATUS + 1`"
+    export STATUS
+fi
+
+# Round-trip the brep back out to IGES and in again; the NURBS geometry
+# should survive.  g-iges exports a brep as faithful trimmed NURBS surfaces
+# (IGES 144), which iges-g reads back with the -t option.
+run $GIGES -o iges.brep.export.iges iges.brep.g box.nmg
+run $IGESG -t -o iges.brep.roundtrip.g iges.brep.export.iges
+if [ ! -f iges.brep.roundtrip.g ] ; then
+    log "ERROR: brep round-trip failed to produce iges.brep.roundtrip.g"
+    STATUS="`expr $STATUS + 1`"
+    export STATUS
+fi
+
+# the round-tripped object should again be a valid brep
+rtobj=`$MGED -c iges.brep.roundtrip.g "ls" 2>&1 | tr -d '\r' | awk '{print $1}' | head -1`
+rttype=`$MGED -c iges.brep.roundtrip.g "db get $rtobj" 2>&1 | tr -d '\r' | grep -oE '^(brep|bot|nmg)' | head -1`
+log "... brep round-trip produced object [$rtobj] of type [$rttype]"
+if test "x$rttype" != "xbrep" ; then
+    log "ERROR: brep round-trip did not reproduce a brep (got '$rttype')"
+    STATUS="`expr $STATUS + 1`"
+    export STATUS
+fi
+
 # COMPLEX TEST
 
 # check another TGM known to have a conversion failure which should be graceful

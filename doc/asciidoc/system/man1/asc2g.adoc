@@ -24,6 +24,21 @@ Both _input.asc_ and _output.g_ are required, and they must name different files
 Historically, the binary representation of a geometry database was architecture-dependent. *asc2g* and *g2asc*(1) were used to export databases to a portable ASCII form for transfer between systems. While this is no longer necessary for the architecture-independent "v5" binary format, the tools remain useful for migrating legacy "v4" databases, inspecting database contents in a human-readable form, or procedurally generating models via scripts.
 
 
+[[deprecation]]
+== DEPRECATION
+
+*asc2g* is *not* deprecated and remains a supported part of BRL-CAD.
+However, its original purpose -- producing an architecture-independent
+form of a geometry database for transfer between machines -- has been
+obsoleted by the machine-independent "v5" binary ".g" format, which can
+be moved between systems directly. For that reason, *asc2g* is no longer
+needed for portability. It is still applicable for importing databases
+saved with *g2asc*(1), for building databases from hand-written or
+generated ASCII scripts, and for round-tripping geometry through a text
+editor or revision-control system. For upgrading an older database to
+the current binary version, use *dbupgrade*(1) instead.
+
+
 [[options]]
 == OPTIONS
 

@@ -21,7 +21,7 @@
  *
  * This routine reads the next field in "card" buffer
  *	It expects the field to contain a string of the form:
- *		13HYYMMDD.HHNNSS or 15YYYYMMDD.HHNNSS
+ *		13HYYMMDD.HHNNSS or 15HYYYYMMDD.HHNNSS
  *		where:
  *			YY is the year (last 2 digits) or YYYY is the year (all 4 digits)
  *			MM is the month (01 - 12)
@@ -40,9 +40,14 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
-#define MAX_NUM 4096
 
-
+/*
+ * Read the next field from the shared global "card" buffer, expecting a
+ * Hollerith date/time stamp (13H... or 15H... form), and print it in a
+ * human-readable "MM/DD/YYYY at HH:NN:SS" format.  Advances the field
+ * "counter" and auto-advances to the next record when the field spans a
+ * record boundary.
+ */
 void
 Readtime(const char *id)
 {
@@ -62,7 +67,7 @@ Readtime(const char *id)
     if (*id != '\0')
 	bu_log("%s", id);
 
-    if (card[72] == 'P')
+    if (card[IGES_SECTION_COL] == 'P')
 	lencard = PARAMLEN;
     else
 	lencard = CARDLEN;

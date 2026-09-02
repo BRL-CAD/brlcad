@@ -40,6 +40,7 @@
 
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
 #include "bu/exit.h"
@@ -76,23 +77,6 @@ static char usage[] = "\
 Usage: pixmerge [-g -l -e -n] [-w bytes_wide] [-C r/g/b]\n\
 	foreground.pix [background.pix] > out.pix\n\
 	(stdout must go to a file or pipe)\n";
-
-static int
-parse_positive_int_arg(const char *arg, int *out_value, const char *label)
-{
-    char *end = NULL;
-    long int value;
-
-    errno = 0;
-    value = strtol(arg, &end, 10);
-    if (errno != 0 || end == arg || *end != '\0' || value <= 0 || value > INT_MAX) {
-	fprintf(stderr, "pixmerge: invalid %s '%s'\n", label, arg);
-	return 0;
-    }
-
-    *out_value = (int)value;
-    return 1;
-}
 
 static int
 parse_const_arg(const char *arg, int component_count, unsigned char *out_values)
@@ -159,7 +143,7 @@ get_args(int argc, char **argv)
 		seen_formula = 1;
 		break;
 	    case 'w':
-		if (!parse_positive_int_arg(bu_optarg, &width, "element width")) {
+		if (!bu_opt_scan_int_range(bu_optarg, &width, 1, INT_MAX, "element width")) {
 		    (void)fputs(usage, stderr);
 		    bu_exit(1, NULL);
 		}

@@ -21,6 +21,14 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
+/*
+ * Read an IGES 504 Edge List entity from the file into a newly allocated
+ * iges_edge_list.
+ *
+ * The edge use's edge_de is converted to a dir[] index, the entity is
+ * verified to be type 504, and each edge's curve DE plus start/end
+ * vertex DE and index are read in.  Returns NULL on any error.
+ */
 struct iges_edge_list *
 Read_edge_list(struct iges_edge_use *edge)
 {
@@ -29,12 +37,17 @@ Read_edge_list(struct iges_edge_use *edge)
     int sol_num = 0;
     int i;
 
-    entityno = (edge->edge_de - 1)/2;
+    entityno = IGES_DE2INDEX(edge->edge_de);
+
+    if (entityno >= dirarraylen) {
+	bu_log("Read_edge_list: DE=%d is too large, dirarraylen = %zu\n", edge->edge_de, dirarraylen);
+	return (struct iges_edge_list *)NULL;
+    }
 
     /* Acquiring Data */
 
     if (dir[entityno]->param <= pstart) {
-	bu_log("Illegal parameter pointer for entity D%07d (%s)\n" ,
+	bu_log("Illegal parameter pointer for entity D%07d (%s)\n",
 	       dir[entityno]->direct, dir[entityno]->name);
 	return (struct iges_edge_list *)NULL;
     }
@@ -52,7 +65,13 @@ Read_edge_list(struct iges_edge_use *edge)
     edge_list->edge_de = edge->edge_de;
     edge_list->next = NULL;
     Readint(&edge_list->no_of_edges, "");
-    edge_list->i_edge = (struct iges_edge *)bu_calloc(edge_list->no_of_edges, sizeof(struct iges_edge) ,
+    if (edge_list->no_of_edges <= 0 || edge_list->no_of_edges > 10000000) {
+	bu_log("Read_edge_list: illegal number of edges (%d) for entity D%07d\n",
+	       edge_list->no_of_edges, dir[entityno]->direct);
+	bu_free(edge_list, "Read_edge_list: iges_edge_list");
+	return (struct iges_edge_list *)NULL;
+    }
+    edge_list->i_edge = (struct iges_edge *)bu_calloc(edge_list->no_of_edges, sizeof(*edge_list->i_edge),
 						      "Read_edge_list: iges_edge");
 
     for (i = 0; i < edge_list->no_of_edges; i++) {

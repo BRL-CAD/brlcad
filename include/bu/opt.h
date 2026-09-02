@@ -446,6 +446,63 @@ BU_EXPORT extern int bu_opt_lang(struct bu_vls *msg, size_t argc, const char **a
 #define BRLCAD_MAN_SECTIONS {'1', '3', '5', 'n', '\0'}
 BU_EXPORT extern int bu_opt_man_section(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
 
+
+/** @addtogroup bu_opt_scan
+ *
+ * Convenience scanners for validating a single option argument string.
+ *
+ * These are intended for use inside classic getopt-style parsing loops
+ * (see @link bu_getopt @endlink), where each option's argument arrives
+ * as a lone string (e.g. bu_optarg) that must be converted to a typed
+ * value and range checked.  They complement the @link
+ * bu_opt_arg_process @endlink validators, which operate on argc/argv
+ * for the declarative @link bu_opt_parse @endlink system.
+ *
+ * Each scanner converts the whole string @p str (integer conversions
+ * use base 10 and the entire string must be consumed), stores the
+ * result in @p val, and returns 1 on success.  On any failure --
+ * malformed input, trailing garbage, overflow, or a value outside the
+ * inclusive [@p vmin, @p vmax] range -- 0 is returned and the output
+ * variable is left untouched.  When @p label is non-NULL a diagnostic
+ * naming the program (via @link bu_getprogname @endlink) and the human
+ * readable @p label is written with @link bu_log @endlink; passing a
+ * NULL @p label suppresses the message, which is convenient when
+ * probing whether a string is a valid value of a given type.
+ *
+ * The unbounded forms accept any representable value of the type; the
+ * _range forms additionally enforce an inclusive bound, which cleanly
+ * expresses the common cases (a positive integer is [1, INT_MAX], a
+ * non-negative integer is [0, INT_MAX], an 8-bit color component is
+ * [0, 255], a unit interval is [0.0, 1.0], and so on).
+ */
+/** @{ */
+
+/** Scan one base-10 string into an int. */
+BU_EXPORT extern int bu_opt_scan_int(const char *str, int *val, const char *label);
+/** Scan one base-10 string into an int, requiring vmin <= val <= vmax. */
+BU_EXPORT extern int bu_opt_scan_int_range(const char *str, int *val, int vmin, int vmax, const char *label);
+
+/** Scan one base-10 string into a long. */
+BU_EXPORT extern int bu_opt_scan_long(const char *str, long *val, const char *label);
+/** Scan one base-10 string into a long, requiring vmin <= val <= vmax. */
+BU_EXPORT extern int bu_opt_scan_long_range(const char *str, long *val, long vmin, long vmax, const char *label);
+
+/** Scan one base-10 string into an unsigned char (0 to UCHAR_MAX),
+ * the common case for a color component or byte value. */
+BU_EXPORT extern int bu_opt_scan_uchar(const char *str, unsigned char *val, const char *label);
+
+/** Scan one base-10 string into a size_t (negative input is rejected). */
+BU_EXPORT extern int bu_opt_scan_size_t(const char *str, size_t *val, const char *label);
+/** Scan one base-10 string into a size_t, requiring vmin <= val <= vmax. */
+BU_EXPORT extern int bu_opt_scan_size_t_range(const char *str, size_t *val, size_t vmin, size_t vmax, const char *label);
+
+/** Scan one string into a double. */
+BU_EXPORT extern int bu_opt_scan_double(const char *str, double *val, const char *label);
+/** Scan one string into a double, requiring vmin <= val <= vmax. */
+BU_EXPORT extern int bu_opt_scan_double_range(const char *str, double *val, double vmin, double vmax, const char *label);
+
+/** @} */
+
 __END_DECLS
 
 #endif  /* BU_OPT_H */

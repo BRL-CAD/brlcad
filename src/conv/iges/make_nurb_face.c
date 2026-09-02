@@ -21,6 +21,14 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
+/**
+ * Add the boundary described by an IGES Loop entity (type 508) to the NMG
+ * faceuse fu of a NURBS face.  Reads the loop's edge uses, builds the loop,
+ * merges shared vertices, assigns 3D vertex geometry evaluated on the
+ * surface, and attaches each edge's parameter-space (cnurb) geometry,
+ * splitting edges as needed to match the parameter curves.  Returns 1 on
+ * success.
+ */
 int
 Add_nurb_loop_to_face(struct shell *s, struct faceuse *fu, int loop_entityno)
 {
@@ -45,25 +53,28 @@ Add_nurb_loop_to_face(struct shell *s, struct faceuse *fu, int loop_entityno)
     NMG_CK_FACE_G_SNURB(srf);
 
     if (dir[loop_entityno]->param <= pstart) {
-	bu_log("Illegal parameter pointer for entity D%07d (%s), loop ignored\n" ,
+	bu_log("Illegal parameter pointer for entity D%07d (%s), loop ignored\n",
 	       dir[loop_entityno]->direct, dir[loop_entityno]->name);
 	return 0;
     }
 
     if (dir[loop_entityno]->type != 508) {
-	bu_exit(1, "ERROR: Entity #%d is not a loop (it's a %s)\n", loop_entityno, iges_type(dir[loop_entityno]->type));
+	bu_log("Add_nurb_loop_to_face: entity #%d is not a loop (it's a %s), loop skipped\n",
+	       loop_entityno, iges_type(dir[loop_entityno]->type));
+	return 0;
     }
 
     Readrec(dir[loop_entityno]->param);
     Readint(&entity_type, "");
     if (entity_type != 508) {
-	bu_exit(1, "Add_nurb_loop_to_face ERROR: Entity #%d is not a loop (it's a %s)\n",
-		loop_entityno, iges_type(entity_type));
+	bu_log("Add_nurb_loop_to_face: entity #%d is not a loop (it's a %s), loop skipped\n",
+	       loop_entityno, iges_type(entity_type));
+	return 0;
     }
 
     Readint(&no_of_edges, "");
 
-    edge_uses = (struct iges_edge_use *)bu_calloc(no_of_edges, sizeof(struct iges_edge_use) ,
+    edge_uses = (struct iges_edge_use *)bu_calloc(no_of_edges, sizeof(*edge_uses),
 						  "Add_nurb_loop_to_face (edge_uses)");
     for (i = 0; i < no_of_edges; i++) {
 	Readint(&edge_uses[i].edge_is_vertex, "");
@@ -92,7 +103,7 @@ Add_nurb_loop_to_face(struct shell *s, struct faceuse *fu, int loop_entityno)
 	}
     }
 
-    verts = (struct vertex **)bu_calloc(no_of_edges, sizeof(struct vertex *) ,
+    verts = (struct vertex **)bu_calloc(no_of_edges, sizeof(*verts),
 					"Add_nurb_loop_to_face: vertex_list **");
 
     for (i = 0; i < no_of_edges; i++) {
@@ -112,7 +123,10 @@ Add_nurb_loop_to_face(struct shell *s, struct faceuse *fu, int loop_entityno)
 	v = Get_vertex(&edge_uses[i]);
 	if (!(*v)) {
 	    if (!Put_vertex(verts[i], &edge_uses[i])) {
-		bu_exit(1, "Cannot put vertex %p\n", (void *)verts[i]);
+		bu_log("Add_nurb_loop_to_face: cannot put vertex %p, loop skipped\n", (void *)verts[i]);
+		bu_free(edge_uses, "Add_nurb_loop_to_face (edge_uses)");
+		bu_free(verts, "Add_nurb_loop_to_face: vertex_list **");
+		return 0;
 	    }
 	}
     }
@@ -140,7 +154,11 @@ Add_nurb_loop_to_face(struct shell *s, struct faceuse *fu, int loop_entityno)
 
 	ivert = Get_iges_vertex(verts[vert_no]);
 	if (!ivert) {
-	    bu_exit(1, "ERROR: Can't get geometry, vertex %p not in vertex list\n", (void *)verts[vert_no]);
+	    bu_log("Add_nurb_loop_to_face: cannot get geometry, vertex %p not in vertex list, loop skipped\n",
+		   (void *)verts[vert_no]);
+	    bu_free(edge_uses, "Add_nurb_loop_to_face (edge_uses)");
+	    bu_free(verts, "Add_nurb_loop_to_face: vertex_list **");
+	    return 0;
 	}
 	nmg_vertex_gv(ivert->v, ivert->pt);
     }
@@ -157,16 +175,19 @@ Add_nurb_loop_to_face(struct shell *s, struct faceuse *fu, int loop_entityno)
 	    next_edge_no = 0;
 
 	ivert = (*Get_vertex(&edge_uses[i]));
-	if (!ivert)
-	    bu_exit(1, "Cannot get vertex for edge_use!\n");
 	jvert = (*Get_vertex(&edge_uses[next_edge_no]));
-	if (!jvert)
-	    bu_exit(1, "Cannot get vertex for edge_use!\n");
+	if (!ivert || !jvert) {
+	    bu_log("Add_nurb_loop_to_face: cannot get vertex for edge_use, loop skipped\n");
+	    bu_free(edge_uses, "Add_nurb_loop_to_face (edge_uses)");
+	    bu_free(verts, "Add_nurb_loop_to_face: vertex_list **");
+	    return 0;
+	}
 
 	if (ivert != eu->vu_p->v_p || jvert != eu->eumate_p->vu_p->v_p) {
-	    bu_log("ivert=%p, jvert=%p, eu->vu_p->v_p=%p, eu->eumate_p->vu_p->v_p=%p\n",
-		   (void *)ivert, (void *)jvert, (void *)eu->vu_p->v_p, (void *)eu->eumate_p->vu_p->v_p);
-	    bu_exit(1, "Add_nurb_loop_to_face: Edgeuse/vertex mixup!\n");
+	    bu_log("Add_nurb_loop_to_face: edgeuse/vertex mixup, loop skipped\n");
+	    bu_free(edge_uses, "Add_nurb_loop_to_face (edge_uses)");
+	    bu_free(verts, "Add_nurb_loop_to_face: vertex_list **");
+	    return 0;
 	}
 
 	param = edge_uses[i].root;
@@ -189,6 +210,12 @@ Add_nurb_loop_to_face(struct shell *s, struct faceuse *fu, int loop_entityno)
 
 	    /* Get NURB curve in parameter space for This edgeuse */
 	    crv = Get_cnurb_curve(param->curve_de, &linear);
+	    if (!crv) {
+		bu_log("Add_nurb_loop_to_face: could not get parameter curve (DE=%d), skipping\n",
+		       param->curve_de);
+		param = param->next;
+		continue;
+	    }
 
 	    coords = RT_NURB_EXTRACT_COORDS(crv->pt_type);
 	    VMOVE(end_uv, &crv->ctl_points[(crv->c_size-1)*coords]);
@@ -304,7 +331,7 @@ Add_nurb_loop_to_face(struct shell *s, struct faceuse *fu, int loop_entityno)
 
 		    tmp_crv = BU_LIST_FIRST(edge_g_cnurb, &split_hd);
 		    BU_LIST_DEQUEUE(&tmp_crv->l);
-		    bu_free((char *)tmp_crv, "Add_nurb_loop_to_face: tmp_crv");
+		    bu_free(tmp_crv, "Add_nurb_loop_to_face: tmp_crv");
 		}
 	    } else {
 		nmg_vertexuse_a_cnurb(eu->vu_p, start_uv);
@@ -316,9 +343,9 @@ Add_nurb_loop_to_face(struct shell *s, struct faceuse *fu, int loop_entityno)
 		    Assign_cnurb_to_eu(eu, crv);
 	    }
 
-	    bu_free((char *)crv->k.knots, "Add_nurb_loop_to_face: crv->k.knots");
-	    bu_free((char *)crv->ctl_points, "Add_nurb_loop_to_face: crv->ctl_points");
-	    bu_free((char *)crv, "Add_nurb_loop_to_face: crv");
+	    bu_free(crv->k.knots, "Add_nurb_loop_to_face: crv->k.knots");
+	    bu_free(crv->ctl_points, "Add_nurb_loop_to_face: crv->ctl_points");
+	    bu_free(crv, "Add_nurb_loop_to_face: crv");
 
 	    if (new_eu)
 		eu = new_eu;
@@ -334,6 +361,12 @@ Add_nurb_loop_to_face(struct shell *s, struct faceuse *fu, int loop_entityno)
 }
 
 
+/**
+ * Create an NMG faceuse in shell s for an IGES NURBS surface entity
+ * (type 128).  Builds the surface geometry, makes a trivial face, assigns
+ * the surface to it, and discards the placeholder loop so boundary loops
+ * can later be added.  Returns the faceuse, or NULL on error.
+ */
 struct faceuse *
 Make_nurb_face(struct shell *s, int surf_entityno)
 {

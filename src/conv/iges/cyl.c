@@ -21,6 +21,9 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
+/*
+ * cyl() converts an IGES 154 Right Circular Cylinder entity into a BRL-CAD RCC.
+ */
 int
 cyl(size_t entityno)
 {
@@ -47,11 +50,12 @@ cyl(size_t entityno)
 
     /* Acquiring Data */
     if (dir[entityno]->param <= pstart) {
-	bu_log("Illegal parameter pointer for entity D%07d (%s)\n" ,
+	bu_log("Illegal parameter pointer for entity D%07d (%s)\n",
 	       dir[entityno]->direct, dir[entityno]->name);
 	return 0;
     }
     Readrec(dir[entityno]->param);
+    /* IGES entity type number; read only to advance past the field, otherwise unused */
     Readint(&sol_num, "");
     Readcnv(&scale_height, "");
     Readcnv(&radius, "");
@@ -63,7 +67,7 @@ cyl(size_t entityno)
     Readcnv(&z_2, "");
 
     if (radius < SMALL_FASTF || scale_height < SMALL_FASTF) {
-	bu_log("Illegal parameters for entity D%07d (%s)\n" ,
+	bu_log("Illegal parameters for entity D%07d (%s)\n",
 	       dir[entityno]->direct, dir[entityno]->name);
 	if (ZERO(radius)) {
 	    bu_log("\tradius of cylinder is zero!!!\n");
@@ -106,7 +110,7 @@ cyl(size_t entityno)
     VSCALE(height, hdir, scale_height);
 
     if (mk_rcc(fdout, dir[entityno]->name, base, height, radius) < 0) {
-	bu_log("Unable to write entity D%07d (%s)\n" ,
+	bu_log("Unable to write entity D%07d (%s)\n",
 	       dir[entityno]->direct, dir[entityno]->name);
 	return 0;
     }

@@ -49,7 +49,66 @@ The following code illustrates a basic use of GCV from within an application. No
 .gcv_app.c
 [example]
 ====
-TODO: embedded code
+
+[source,c]
+----
+#include "common.h"
+
+#include "bu/log.h"
+#include "bu/mime.h"
+#include "gcv.h"
+
+/* Convert the file at 'in_path' to the file at 'out_path', selecting the
+ * first registered reader and writer filter that match the file types
+ * inferred from the two path extensions.  Returns 0 on success. */
+int
+convert(const char *in_path, const char *out_path)
+{
+    struct gcv_context context;
+    const struct gcv_filter *in_filter, *out_filter;
+    bu_mime_model_t in_type, out_type;
+
+    /* Infer the model file types from the filename extensions. */
+    in_type = (bu_mime_model_t)bu_file_mime(in_path, BU_MIME_MODEL);
+    out_type = (bu_mime_model_t)bu_file_mime(out_path, BU_MIME_MODEL);
+
+    /* A context holds the conversion state, including an in-memory
+     * database used for the intermediate representation. */
+    gcv_context_init(&context);
+
+    /* Look up a reader for the input type and a writer for the output
+     * type.  find_filter() returns the first matching registered filter,
+     * or NULL if none is available. */
+    in_filter = find_filter(GCV_FILTER_READ, in_type, in_path, &context);
+    out_filter = find_filter(GCV_FILTER_WRITE, out_type, NULL, &context);
+
+    if (!in_filter || !out_filter) {
+	bu_log("No filter available for the requested conversion\n");
+	gcv_context_destroy(&context);
+	return 1;
+    }
+
+    /* Read the input into the context's in-memory database.  Passing NULL
+     * for the options selects the defaults from gcv_opts_default().  The
+     * argc/argv pair would carry any filter-specific option strings.
+     * gcv_execute() returns 1 on success and 0 on failure. */
+    if (!gcv_execute(&context, in_filter, NULL, 0, NULL, in_path)) {
+	bu_log("Read filter '%s' failed for '%s'\n", in_filter->name, in_path);
+	gcv_context_destroy(&context);
+	return 1;
+    }
+
+    /* Write the in-memory database out through the selected writer. */
+    if (!gcv_execute(&context, out_filter, NULL, 0, NULL, out_path)) {
+	bu_log("Write filter '%s' failed for '%s'\n", out_filter->name, out_path);
+	gcv_context_destroy(&context);
+	return 1;
+    }
+
+    gcv_context_destroy(&context);
+    return 0;
+}
+----
 
 ====
 
@@ -165,7 +224,57 @@ LIBGCV_ADD_PLUGIN(foo "foo_read.c" "librt;libbu")
 .foo_read.c
 [example]
 ====
-TODO: embedded code
+
+[source,c]
+----
+#include "common.h"
+
+#include "bu/log.h"
+#include "bu/mime.h"
+#include "gcv/api.h"
+#include "wdb.h"
+
+/* The reader callback.  For a GCV_FILTER_READ filter, 'target' is the
+ * path of the input file, and geometry should be written into the
+ * in-memory database reachable through context->dbip.  Return 1 on
+ * success and 0 on failure. */
+static int
+foo_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
+	 const void *UNUSED(options_data), const char *target)
+{
+    struct rt_wdb *wdbp;
+
+    if (gcv_options->verbosity_level)
+	bu_log("Reading foo file: %s\n", target);
+
+    /* Open the context's in-memory database for writing. */
+    wdbp = wdb_dbopen(context->dbip, RT_WDB_TYPE_DB_INMEM);
+    mk_id_units(wdbp, "Converted from foo format", "mm");
+
+    /* ... parse 'target' and create objects with the wdb (mk_*) API,
+     * e.g. mk_sph(), mk_bot(), mk_lcomb() ... */
+
+    return 1;
+}
+
+/* Describe the filter: a unique name, its type, the model type it
+ * handles, and the callbacks.  This reader defines no filter-specific
+ * options, so the create/free option hooks and data_supported are NULL. */
+static const struct gcv_filter gcv_conv_foo_read = {
+    "FOO Reader", GCV_FILTER_READ, BU_MIME_MODEL_FOO, NULL,
+    NULL, NULL, foo_read
+};
+
+/* A plugin exports a NULL-terminated array of its filters ... */
+static const struct gcv_filter * const filters[] = {&gcv_conv_foo_read, NULL};
+
+/* ... referenced by a struct gcv_plugin ... */
+static const struct gcv_plugin gcv_plugin_info_s = { filters };
+
+/* ... which libgcv discovers by dlsym()-ing this exported entry point. */
+COMPILER_DLLEXPORT const struct gcv_plugin *
+gcv_plugin_info(void) { return &gcv_plugin_info_s; }
+----
 
 ====
 
@@ -192,7 +301,89 @@ The following example implements a filter that tessellates all geometry into BoT
 .tessellation_statistics.c
 [example]
 ====
-TODO: embedded code
+
+[source,c]
+----
+#include "common.h"
+
+#include "bu/log.h"
+#include "bu/mime.h"
+#include "nmg.h"
+#include "rt/geom.h"
+#include "raytrace.h"
+#include "gcv/api.h"
+#include "gcv/util.h"
+
+/* State shared with the region-end callback. */
+struct tess_stats {
+    size_t face_count;
+};
+
+/* Invoked once per region by gcv_region_end() after the region's leaf
+ * meshes have been Boolean-evaluated into a single NMG region 'r'.  Here
+ * we simply tally the outward-facing (OT_SAME) faces.  This routine must
+ * be prepared to run in parallel. */
+static void
+count_region_faces(struct nmgregion *r, const struct db_full_path *UNUSED(pathp),
+		   struct db_tree_state *UNUSED(tsp), void *client_data)
+{
+    struct tess_stats *stats = (struct tess_stats *)client_data;
+    struct shell *s;
+
+    NMG_CK_REGION(r);
+
+    for (BU_LIST_FOR(s, shell, &r->s_hd)) {
+	struct faceuse *fu;
+	for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
+	    if (fu->orientation != OT_SAME)
+		continue;
+	    bu_semaphore_acquire(BU_SEM_GENERAL);
+	    stats->face_count++;
+	    bu_semaphore_release(BU_SEM_GENERAL);
+	}
+    }
+}
+
+/* A GCV_FILTER_FILTER receives a NULL target and operates on the geometry
+ * already present in context->dbip.  Return 1 on success, 0 on failure. */
+static int
+tessellation_statistics(struct gcv_context *context, const struct gcv_opts *gcv_options,
+			const void *UNUSED(options_data), const char *UNUSED(target))
+{
+    struct tess_stats stats = {0};
+    struct gcv_region_end_data end_data;
+    struct db_tree_state tree_state;
+    struct model *the_model = nmg_mm();
+
+    /* Configure the tree-walk state: tolerances come from the conversion
+     * options, and ts_m provides the NMG model used during tessellation. */
+    RT_DBTS_INIT(&tree_state);
+    tree_state.ts_tol = &gcv_options->calculational_tolerance;
+    tree_state.ts_ttol = &gcv_options->tessellation_tolerance;
+    tree_state.ts_m = &the_model;
+
+    /* gcv_region_end() expects its client_data to point at this struct. */
+    end_data.write_region = count_region_faces;
+    end_data.vlfree = &rt_vlfree;
+    end_data.client_data = &stats;
+
+    /* Walk every top-level object.  Leaves are tessellated to BoTs by
+     * rt_booltree_leaf_tess(); gcv_region_end() then Boolean-evaluates
+     * each region and invokes our callback with the result. */
+    (void)db_walk_tree(context->dbip, (int)gcv_options->num_objects,
+		       (const char **)gcv_options->object_names, 1, &tree_state,
+		       NULL, gcv_region_end, rt_booltree_leaf_tess, &end_data);
+
+    bu_log("Total faces after tessellation: %zu\n", stats.face_count);
+
+    return 1;
+}
+
+static const struct gcv_filter gcv_conv_tess_stats = {
+    "Tessellation Statistics", GCV_FILTER_FILTER, BU_MIME_MODEL_AUTO, NULL,
+    NULL, NULL, tessellation_statistics
+};
+----
 
 ====
 
@@ -250,7 +441,51 @@ The following example will leverage the filter in the above plugin example, `tes
 .gcv_embedded.c
 [example]
 ====
-TODO: embedded code
+
+[source,c]
+----
+#include "common.h"
+
+#include "bu/log.h"
+#include "bu/mime.h"
+#include "gcv.h"
+
+/* Defined in tessellation_statistics.c, above. */
+extern const struct gcv_filter gcv_conv_tess_stats;
+
+/* Load the geometry file at 'in_path' into a fresh context, then run the
+ * tessellation-statistics filter over it.  A GCV_FILTER_FILTER operates
+ * on the geometry already in the context, so its target is NULL.
+ * Returns 0 on success. */
+int
+report_tessellation_stats(const char *in_path)
+{
+    struct gcv_context context;
+    const struct gcv_filter *in_filter;
+    bu_mime_model_t in_type;
+
+    gcv_context_init(&context);
+
+    /* Import the input model into the context's in-memory database. */
+    in_type = (bu_mime_model_t)bu_file_mime(in_path, BU_MIME_MODEL);
+    in_filter = find_filter(GCV_FILTER_READ, in_type, in_path, &context);
+    if (!in_filter || !gcv_execute(&context, in_filter, NULL, 0, NULL, in_path)) {
+	bu_log("Failed to read '%s'\n", in_path);
+	gcv_context_destroy(&context);
+	return 1;
+    }
+
+    /* Run the filter; it tallies the faces and reports via bu_log(). */
+    if (!gcv_execute(&context, &gcv_conv_tess_stats, NULL, 0, NULL, NULL)) {
+	bu_log("Tessellation-statistics filter failed\n");
+	gcv_context_destroy(&context);
+	return 1;
+    }
+
+    gcv_context_destroy(&context);
+    return 0;
+}
+----
 
 ====
 

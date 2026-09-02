@@ -20,6 +20,16 @@ changes made.  See document footer for additional details.
 * added -t tight bounding box option to bb command - Cliff Yapp
 * added az (-a) and el (-e) option implementations to gqa - Cliff Yapp
 * added center command support for centering on an object - Cliff Yapp
+* greatly expanded JT import and added basic JT export - Sean Morrison
+* improved art Appleseed lights, colors, output, and region handling - Sean Morrison
+* added preliminary OpenSCAD import support - Sean Morrison
+* expanded IGES BREP/NURBS import and export support - Sean Morrison
+* expanded STEP AP203 import support, including faceted BREP - Sean Morrison
+* new adrt CLI utility with path, spall, and cut modes - Sean Morrison
+* new CLI+GUI prototype BRL-CAD application launcher - Sean Morrison
+* added option validation to image & framebuffer tools - Sean Morrison
+* added contributor, API, command, & raytracing guides - Sean Morrison
+* added and updated command and library manual pages - Sean Morrison
 * added metaball point scaling (via metaball_move_pnt) - Sean Morrison
 * all raytracing apps now report object prep failures - Sean Morrison
 * improved fast4-g robustness and error reporting - Cliff Yapp

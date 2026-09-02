@@ -35,12 +35,13 @@
 #
 ###
 #
-# Exercise the ASCII export/import round-trip for datum reference objects
-# (g2asc -> asc2g).  Datum objects carry munition position/orientation
-# reference geometry (point/line/plane sub-objects); this test verifies that
-# such geometry survives a lossless g -> asc -> g conversion, and that a comb
-# carrying a datum with an attribute (the attr->datum->data lookup path)
-# round-trips unchanged.
+# Exercise the ASCII export/import round-trip for datum reference
+# objects (g2asc -> asc2g).  Datum objects can carry app-specific
+# position/orientation reference geometry (point/line/plane
+# sub-objects); this test verifies that such geometry survives a
+# lossless g -> asc -> g conversion, and that a comb carrying a datum
+# with an attribute (the attr->datum->data lookup path) round-trips
+# unchanged.
 
 # Ensure /bin/sh
 export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)

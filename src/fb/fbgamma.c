@@ -34,6 +34,7 @@
 #include "bu/app.h"
 #include "bu/malloc.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/exit.h"
 #include "dm.h"
 #include "pkg.h"
@@ -63,14 +64,8 @@ checkgamma(double g)
 static int
 parse_gamma(const char *arg, double *g, const char *label)
 {
-    char *end = NULL;
-
-    errno = 0;
-    *g = strtod(arg, &end);
-    if (arg[0] == '\0' || end == arg || *end != '\0' || errno != 0) {
-	fprintf(stderr, "fbgamma: invalid %s '%s'\n", label, arg);
+    if (!bu_opt_scan_double(arg, g, label))
 	return 0;
-    }
 
     checkgamma(*g);
     return 1;

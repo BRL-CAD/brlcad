@@ -38,11 +38,13 @@
 
 #include <errno.h>
 #include <stdlib.h>
+#include <stdint.h> /* for SIZE_MAX */
 #include <limits.h> /* for INT_MAX */
 
 #include "bu/app.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
+#include "bu/opt.h"
 
 static char usage[] = "\
 Usage: decimate nbytes/pixel width height [outwidth outheight]\n\
@@ -59,23 +61,6 @@ unsigned char *oline;
 
 size_t discard;
 size_t wpad;
-
-static int
-parse_positive_size_arg(const char *arg, size_t *out_value, const char *label)
-{
-    char *end = NULL;
-    unsigned long long value;
-
-    errno = 0;
-    value = strtoull(arg, &end, 10);
-    if (errno != 0 || end == arg || *end != '\0' || value == 0 || value > (unsigned long long)((size_t)-1)) {
-	bu_log("decimate: invalid %s '%s'\n", label, arg);
-	return 0;
-    }
-
-    *out_value = (size_t)value;
-    return 1;
-}
 
 int
 main(int argc, char **argv)
@@ -98,15 +83,15 @@ main(int argc, char **argv)
 	bu_exit (1, "%s", usage);
     }
 
-    if (!parse_positive_size_arg(argv[1], &nbytes, "bytes per pixel") ||
-	!parse_positive_size_arg(argv[2], &iwidth, "input width") ||
-	!parse_positive_size_arg(argv[3], &iheight, "input height")) {
+    if (!bu_opt_scan_size_t_range(argv[1], &nbytes, 1, SIZE_MAX, "bytes per pixel") ||
+	!bu_opt_scan_size_t_range(argv[2], &iwidth, 1, SIZE_MAX, "input width") ||
+	!bu_opt_scan_size_t_range(argv[3], &iheight, 1, SIZE_MAX, "input height")) {
 	bu_exit(EXIT_FAILURE, "%s", usage);
     }
 
     if (argc >= 6) {
-	if (!parse_positive_size_arg(argv[4], &owidth, "output width") ||
-	    !parse_positive_size_arg(argv[5], &oheight, "output height")) {
+	if (!bu_opt_scan_size_t_range(argv[4], &owidth, 1, SIZE_MAX, "output width") ||
+	    !bu_opt_scan_size_t_range(argv[5], &oheight, 1, SIZE_MAX, "output height")) {
 	    bu_exit(EXIT_FAILURE, "%s", usage);
 	}
     }

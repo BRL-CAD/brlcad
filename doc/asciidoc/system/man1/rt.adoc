@@ -189,7 +189,7 @@ sets the distance from the eye point to the center of the model RPP; default is 
 
 
 *-F framebuffer*, *--framebuffer*::
-indicates that the output should be sent to the indicated framebuffer. For remote framebuffer access, this may be a TCP-style specification (for example, _host:port_ or _port_) or an IPC address using the form *ipc:*_addr_. See *libfb*(3) for more details on framebuffer naming.
+indicates that the output should be sent to the indicated framebuffer. For remote framebuffer access, this may be a TCP-style specification (for example, _host:port_ or _port_) or an IPC address using the form *ipc:*_addr_. See *brlcad*(1) for more details on framebuffer naming.
 
 When using *fbserv* authentication, set *FBSERV_TOKEN* in the *rt* environment to the same token value used by the server. To request TLS for remote framebuffer connections (OpenSSL builds), set *FBSERV_TLS* to a non-empty value.
 

@@ -35,6 +35,7 @@
 
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/str.h"
 #include "bu/exit.h"
 
@@ -52,40 +53,6 @@ Usage: pixuntile [-s squareinsize] [-w in_width] [-n in_height]\n\
 	[-S squareoutsize] [-W out_width] [-N out_height]\n\
 	[-o startframe] basename [file2 ... fileN] <file.pix\n";
 
-static int
-parse_positive_size_arg(const char *arg, size_t *out_value, const char *label)
-{
-    char *end = NULL;
-    unsigned long long value;
-
-    errno = 0;
-    value = strtoull(arg, &end, 10);
-    if (errno != 0 || end == arg || *end != '\0' || value == 0 || value > (unsigned long long)((size_t)-1)) {
-	fprintf(stderr, "pixuntile: invalid %s '%s'\n", label, arg);
-	return 0;
-    }
-
-    *out_value = (size_t)value;
-    return 1;
-}
-
-static int
-parse_nonnegative_int_arg(const char *arg, int *out_value, const char *label)
-{
-    char *end = NULL;
-    long int value;
-
-    errno = 0;
-    value = strtol(arg, &end, 10);
-    if (errno != 0 || end == arg || *end != '\0' || value < 0 || value > INT_MAX) {
-	fprintf(stderr, "pixuntile: invalid %s '%s'\n", label, arg);
-	return 0;
-    }
-
-    *out_value = (int)value;
-    return 1;
-}
-
 int
 get_args(int argc, char **argv)
 {
@@ -95,33 +62,33 @@ get_args(int argc, char **argv)
 	switch (c) {
 	    case 's':
 		/* square input file size */
-		if (!parse_positive_size_arg(bu_optarg, &in_width, "input size"))
+		if (!bu_opt_scan_size_t_range(bu_optarg, &in_width, 1, SIZE_MAX, "input size"))
 		    return 0;
 		in_height = in_width;
 		break;
 	    case 'w':
-		if (!parse_positive_size_arg(bu_optarg, &in_width, "input width"))
+		if (!bu_opt_scan_size_t_range(bu_optarg, &in_width, 1, SIZE_MAX, "input width"))
 		    return 0;
 		break;
 	    case 'n':
-		if (!parse_positive_size_arg(bu_optarg, &in_height, "input height"))
+		if (!bu_opt_scan_size_t_range(bu_optarg, &in_height, 1, SIZE_MAX, "input height"))
 		    return 0;
 		break;
 	    case 'S':
-		if (!parse_positive_size_arg(bu_optarg, &out_width, "output size"))
+		if (!bu_opt_scan_size_t_range(bu_optarg, &out_width, 1, SIZE_MAX, "output size"))
 		    return 0;
 		out_height = out_width;
 		break;
 	    case 'W':
-		if (!parse_positive_size_arg(bu_optarg, &out_width, "output width"))
+		if (!bu_opt_scan_size_t_range(bu_optarg, &out_width, 1, SIZE_MAX, "output width"))
 		    return 0;
 		break;
 	    case 'N':
-		if (!parse_positive_size_arg(bu_optarg, &out_height, "output height"))
+		if (!bu_opt_scan_size_t_range(bu_optarg, &out_height, 1, SIZE_MAX, "output height"))
 		    return 0;
 		break;
 	    case 'o':
-		if (!parse_nonnegative_int_arg(bu_optarg, &framenumber, "start frame"))
+		if (!bu_opt_scan_int_range(bu_optarg, &framenumber, 0, INT_MAX, "start frame"))
 		    return 0;
 		break;
 	    default:		/* '?''h' */

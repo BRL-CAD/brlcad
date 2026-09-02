@@ -51,6 +51,11 @@ struct trclist
 void Addsub(struct trclist *, struct trclist *);
 
 
+/*
+ * revolve() converts an IGES 162 Solid of Revolution entity into a BRL-CAD
+ * combination of TRC primitives (approximating the revolved curve), optionally
+ * intersected/subtracted with an ARB8 cutting solid for partial revolutions.
+ */
 int
 revolve(size_t entityno)
 {
@@ -85,11 +90,12 @@ revolve(size_t entityno)
     /* Acquire data */
 
     if (dir[entityno]->param <= pstart) {
-	bu_log("Illegal parameter pointer for entity D%07d (%s)\n" ,
+	bu_log("Illegal parameter pointer for entity D%07d (%s)\n",
 	       dir[entityno]->direct, dir[entityno]->name);
 	return 0;
     }
     Readrec(dir[entityno]->param);
+    /* IGES entity type number; read only to advance past the field, otherwise unused */
     Readint(&sol_num, "");
 
     /* Read pointer to directory entry for curve to be extruded */
@@ -98,7 +104,7 @@ revolve(size_t entityno)
 
     /* Convert this to a "dir" index */
 
-    curve = (curve-1)/2;
+    curve = IGES_DE2INDEX(curve);
 
     Readflt(&fract, "");
     Readflt(&pt[X], "");
@@ -112,7 +118,7 @@ revolve(size_t entityno)
     VUNITIZE(adir);
 
     if (fract <= 0.0 || fract > 1.0) {
-	bu_log("Illegal parameters for entity D%07d (%s)\n" ,
+	bu_log("Illegal parameters for entity D%07d (%s)\n",
 	       dir[entityno]->direct, dir[entityno]->name);
 	return 0;
     }
@@ -124,7 +130,7 @@ revolve(size_t entityno)
     npts = Getcurve(curve, &curv_pts);
     if (npts == 0) {
 	bu_log("Could not get points along curve for revolving\n");
-	bu_log("Illegal parameters for entity D%07d (%s)\n" ,
+	bu_log("Illegal parameters for entity D%07d (%s)\n",
 	       dir[entityno]->direct, dir[entityno]->name);
 	return 0;
     }
@@ -202,7 +208,7 @@ revolve(size_t entityno)
 	/* Make the TRC */
 	if (mk_trc_top(fdout, bu_vls_cstr(&trcptr->name), trcptr->base,
 		       trcptr->top, trcptr->r1, trcptr->r2) < 0) {
-	    bu_log("Unable to write TRC for entity D%07d (%s)\n" ,
+	    bu_log("Unable to write TRC for entity D%07d (%s)\n",
 		   dir[entityno]->direct, dir[entityno]->name);
 	    return 0;
 	}
@@ -215,7 +221,7 @@ revolve(size_t entityno)
     /* Eliminate last struct if not used */
     if (trcptr && bu_vls_cstr(&trcptr->name)[0] == '\0') {
       if (trcptr->prev) trcptr->prev->next = NULL;
-      bu_free((char *)trcptr, "Revolve: trcptr");
+      bu_free(trcptr, "Revolve: trcptr");
     }
 
     if (dir[entityno]->form == 1) {
@@ -364,7 +370,7 @@ revolve(size_t entityno)
 
 	/* Make the BRL-CAD solid */
 	if (mk_arb8(fdout, bu_vls_cstr(&cutname), &pts[0][X]) < 0) {
-	    bu_log("Unable to write ARB8 for entity D%07d (%s)\n" ,
+	    bu_log("Unable to write ARB8 for entity D%07d (%s)\n",
 		   dir[entityno]->direct, dir[entityno]->name);
 	    bu_vls_free(&cutname);
 	    return 0;
@@ -394,9 +400,9 @@ revolve(size_t entityno)
     }
 
     /* Make the object */
-    if (mk_lcomb(fdout, dir[entityno]->name, &head, 0 ,
+    if (mk_lcomb(fdout, dir[entityno]->name, &head, 0,
 		 (char *)0, (char *)0, (unsigned char *)0, 0) < 0) {
-	bu_log("Unable to make combination for entity D%07d (%s)\n" ,
+	bu_log("Unable to make combination for entity D%07d (%s)\n",
 	       dir[entityno]->direct, dir[entityno]->name);
 	bu_vls_free(&cutname);
 	return 0;
@@ -408,7 +414,7 @@ revolve(size_t entityno)
     while (trcptr != NULL) {
 	trcptr_tmp = trcptr->next;
 	bu_vls_free(&trcptr->name);
-	bu_free((char *)trcptr, "Revolve: trcptr");
+	bu_free(trcptr, "Revolve: trcptr");
 	trcptr = trcptr_tmp;
     }
     bu_vls_free(&cutname);

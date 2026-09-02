@@ -28,6 +28,7 @@
 #include "common.h"
 
 #include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 
 #include "bio.h"
@@ -35,6 +36,7 @@
 #include "vmath.h"
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bn.h"
@@ -51,36 +53,16 @@ static FILE *outfp = (FILE *)NULL;
 static int pixbytes = 3;
 
 static int
-parse_positive_long_arg(const char *arg, long *value, const char *label)
-{
-    char *end = NULL;
-    long parsed = 0;
-
-    errno = 0;
-    parsed = strtol(arg, &end, 10);
-    if (arg[0] == '\0' || end == arg || *end != '\0' || errno != 0 || parsed <= 0) {
-	bu_log("%s: invalid %s '%s'\n", bu_getprogname(), label, arg);
-	return 0;
-    }
-
-    *value = parsed;
-    return 1;
-}
-
-static int
 parse_pixbytes_arg(const char *arg, int *value)
 {
-    long parsed = 0;
-
-    if (!parse_positive_long_arg(arg, &parsed, "bytes-per-pixel"))
+    if (!bu_opt_scan_int_range(arg, value, 1, INT_MAX, "bytes per pixel"))
 	return 0;
 
-    if (parsed != 1 && parsed != 3) {
+    if (*value != 1 && *value != 3) {
 	bu_log("%s: bytes-per-pixel must be 1 or 3, got '%s'\n", bu_getprogname(), arg);
 	return 0;
     }
 
-    *value = (int)parsed;
     return 1;
 }
 
@@ -101,18 +83,18 @@ get_args(int argc, char *argv[], long *width, long *height)
 		break;
 	    case 's':
 		/* square file size */
-		if (!parse_positive_long_arg(bu_optarg, width, "input size"))
+		if (!bu_opt_scan_long_range(bu_optarg, width, 1, LONG_MAX, "input size"))
 		    return 0;
 		*height = *width;
 		autosize = 0;
 		break;
 	    case 'w':
-		if (!parse_positive_long_arg(bu_optarg, width, "input width"))
+		if (!bu_opt_scan_long_range(bu_optarg, width, 1, LONG_MAX, "input width"))
 		    return 0;
 		autosize = 0;
 		break;
 	    case 'n':
-		if (!parse_positive_long_arg(bu_optarg, height, "input height"))
+		if (!bu_opt_scan_long_range(bu_optarg, height, 1, LONG_MAX, "input height"))
 		    return 0;
 		autosize = 0;
 		break;

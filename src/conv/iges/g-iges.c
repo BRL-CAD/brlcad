@@ -135,6 +135,8 @@ extern int tor_to_iges(struct rt_db_internal *, char *, FILE *, FILE *, struct b
 extern int tgc_to_iges(struct rt_db_internal *, char *, FILE *, FILE *, struct bu_list *);
 extern int nmg_to_iges(struct rt_db_internal *, char *, FILE *, FILE *, struct bu_list *);
 extern int sketch_to_iges(struct rt_db_internal *, char *, FILE *, FILE *, struct bu_list *);
+extern int brep_to_iges(struct rt_db_internal *, char *, FILE *, FILE *, struct bu_list *);
+extern int primitive_brep_to_iges(struct rt_db_internal *, char *, FILE *, FILE *, struct bu_list *);
 extern void iges_init(struct bn_tol *, struct bg_tess_tol *, int, struct db_i *);
 extern void Print_stats(FILE *);
 
@@ -161,12 +163,12 @@ struct iges_functab iges_write[ID_MAXIMUM+1] = {
     {null_to_iges},	/* ID_VOL */
     {nmg_to_iges},	/* ID_ARBN */
     {nmg_to_iges},	/* ID_PIPE */
-    {null_to_iges},	/* ID_PARTICLE */
-    {null_to_iges},	/* ID_RPC */
-    {null_to_iges},	/* ID_RHC */
-    {null_to_iges},	/* ID_EPA */
-    {null_to_iges},	/* ID_EHY */
-    {null_to_iges},	/* ID_ETO */
+    {primitive_brep_to_iges},	/* ID_PARTICLE - faithful NURBS via ft_brep */
+    {primitive_brep_to_iges},	/* ID_RPC - faithful NURBS via ft_brep */
+    {primitive_brep_to_iges},	/* ID_RHC - faithful NURBS via ft_brep */
+    {primitive_brep_to_iges},	/* ID_EPA - faithful NURBS via ft_brep */
+    {primitive_brep_to_iges},	/* ID_EHY - faithful NURBS via ft_brep */
+    {primitive_brep_to_iges},	/* ID_ETO - faithful NURBS via ft_brep */
     {null_to_iges},	/* ID_GRIP */
     {null_to_iges},	/* ID_JOINT */
     {nmg_to_iges},	/* ID_HF */
@@ -175,7 +177,24 @@ struct iges_functab iges_write[ID_MAXIMUM+1] = {
     {nmg_to_iges},	/* ID_EXTRUDE */
     {null_to_iges},	/* ID_SUBMODEL */
     {nmg_to_iges},	/* ID_CLINE */
-    {nmg_to_iges}	/* ID_BOT */
+    {nmg_to_iges},	/* ID_BOT */
+    {null_to_iges},	/* ID_COMBINATION (31) */
+    {null_to_iges},	/* ID_UNUSED1 (32) */
+    {null_to_iges},	/* ID_BINUNIF (33) */
+    {null_to_iges},	/* ID_UNUSED2 (34) */
+    {primitive_brep_to_iges},	/* ID_SUPERELL (35) - faithful NURBS via ft_brep */
+    {nmg_to_iges},	/* ID_METABALL (36) - faceted (no ft_brep) */
+    {brep_to_iges},	/* ID_BREP (37) - faithful NURBS (128/144); trims preserved */
+    {primitive_brep_to_iges},	/* ID_HYP (38) - faithful NURBS via ft_brep */
+    {null_to_iges},	/* ID_CONSTRAINT (39) */
+    {primitive_brep_to_iges},	/* ID_REVOLVE (40) - faithful NURBS via ft_brep */
+    {null_to_iges},	/* ID_PNTS (41) */
+    {null_to_iges},	/* ID_ANNOT (42) */
+    {nmg_to_iges},	/* ID_HRT (43) - faceted */
+    {null_to_iges},	/* ID_DATUM (44) */
+    {null_to_iges},	/* ID_SCRIPT (45) */
+    {null_to_iges},	/* ID_MATERIAL (46) */
+    {null_to_iges}	/* ID_MAXIMUM (47) - sentinel */
 };
 
 
@@ -262,10 +281,17 @@ main(int argc, char *argv[])
 		tol.dist_sq = tol.dist * tol.dist;
 		break;
 	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_debug);
+		/* rt_debug is an unsigned int; read it directly */
+		sscanf(bu_optarg, "%x", &rt_debug);
 		break;
 	    case 'X':
-		sscanf(bu_optarg, "%x", (unsigned int *)&nmg_debug);
+		{
+		    /* nmg_debug is a uint32_t; read into an unsigned int first
+		     * rather than type-punning &nmg_debug to unsigned int * */
+		    unsigned int dbg = 0;
+		    sscanf(bu_optarg, "%x", &dbg);
+		    nmg_debug = dbg;
+		}
 		NMG_debug = nmg_debug;
 		break;
 	    case 'o':		/* Output file name. */
@@ -444,6 +470,15 @@ main(int argc, char *argv[])
 }
 
 
+/*
+ * Fuse the NMG model and evaluate the boolean tree for one region,
+ * under BU_SETJUMP bomb protection.
+ *
+ * On success returns the resulting evaluated tree.  On failure (a
+ * caught NMG bomb) the offending tree and model are freed, a fresh
+ * model is installed in *tsp->ts_m for the next pass, and the stale
+ * static result pointer is returned.
+ */
 static union tree *
 process_boolean(struct db_tree_state *tsp, union tree *curtree, const struct db_full_path *pathp, struct bu_list *vlfree)
 {
@@ -657,6 +692,16 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 
 static int de_pointer_number;
 
+/*
+ * Recursively walk a combination's boolean tree, collecting the IGES
+ * directory-entry (DE) pointers of its leaf members into de_pointers[].
+ *
+ * The running index is kept in the file-static de_pointer_number.  For
+ * a leaf carrying a non-identity matrix a solid instance entity is
+ * written and its DE recorded; otherwise the member's own DE is used.
+ * Returns non-zero on error (unwritten member, missing member, or an
+ * unrecognized operator).
+ */
 int
 get_de_pointers(union tree *tp, struct directory *dp, int de_len,
 		int *de_pointers)
@@ -710,6 +755,15 @@ get_de_pointers(union tree *tp, struct directory *dp, int de_len,
 }
 
 
+/*
+ * Tree-walk callback (db_treewalk_basic) that writes a combination as
+ * an IGES CSG Boolean-tree entity.
+ *
+ * Skips regions when in facet mode and combinations already written.
+ * Gathers member DE pointers via get_de_pointers(), fills in the
+ * combination's IGES properties, and emits the entity, recording the
+ * negated DE in dp->d_uses.
+ */
 void
 csg_comb_func(struct db_i *dbip, struct directory *dp, void *UNUSED(ptr))
 {
@@ -757,14 +811,14 @@ csg_comb_func(struct db_i *dbip, struct directory *dp, void *UNUSED(ptr))
 	return;
     }
     comb_len = db_tree_nleaves(comb->tree);
-    de_pointers = (int *)bu_calloc(comb_len, sizeof(int), "csg_comb_func");
+    de_pointers = (int *)bu_calloc(comb_len, sizeof(*de_pointers), "csg_comb_func");
 
     comb_form = 0;
 
     de_pointer_number = 0;
     if (get_de_pointers(comb->tree, dp, (int)comb_len, de_pointers)) {
 	bu_log("Error in combination %s\n", dp->d_namep);
-	bu_free((char *)de_pointers, "csg_comb_func de_pointers");
+	bu_free(de_pointers, "csg_comb_func de_pointers");
 	rt_db_free_internal(&intern);
 	return;
     }
@@ -790,11 +844,20 @@ csg_comb_func(struct db_i *dbip, struct directory *dp, void *UNUSED(ptr))
     }
 
     rt_db_free_internal(&intern);
-    bu_free((char *)de_pointers, "csg_comb_func de_pointers");
+    bu_free(de_pointers, "csg_comb_func de_pointers");
 
 }
 
 
+/*
+ * Tree-walk callback (db_treewalk_basic) that writes a single solid as
+ * an IGES entity.
+ *
+ * Skips solids already written.  Imports the solid, dispatches through
+ * the iges_write[] function table by primitive type (tessellating to a
+ * BREP when there is no direct CSG equivalent), and records the negated
+ * DE in dp->d_uses and the BREP flag in dp->d_nref.
+ */
 void
 csg_leaf_func(struct db_i *dbip, struct directory *dp, void *UNUSED(ptr))
 {
@@ -808,10 +871,21 @@ csg_leaf_func(struct db_i *dbip, struct directory *dp, void *UNUSED(ptr))
     if (verbose)
 	bu_log("solid - %s\n", dp->d_namep);
 
-    if (rt_db_get_internal(&ip, dp, dbip, (fastf_t *)NULL) < 0)
-	bu_log("Error in import");
+    if (rt_db_get_internal(&ip, dp, dbip, (fastf_t *)NULL) < 0) {
+	bu_log("g-iges: error importing %s, skipping\n", dp->d_namep);
+	solid_error++;
+	return;
+    }
 
     solid_is_brep = 0;
+    if (ip.idb_type < 0 || ip.idb_type > ID_MAXIMUM ||
+	!iges_write[ip.idb_type].do_iges_write) {
+	bu_log("g-iges: no IGES writer for %s (type %d), skipping\n",
+	       dp->d_namep, ip.idb_type);
+	solid_error++;
+	rt_db_free_internal(&ip);
+	return;
+    }
     dp->d_uses = (-iges_write[ip.idb_type].do_iges_write(&ip, dp->d_namep, fp_dir, fp_param, vlfree));
 
     if (!dp->d_uses) {
@@ -828,6 +902,10 @@ csg_leaf_func(struct db_i *dbip, struct directory *dp, void *UNUSED(ptr))
 }
 
 
+/*
+ * Per-leaf callback (db_tree_funcleaf) that increments the reference
+ * count (d_nref) of the directory entry named by a combination member.
+ */
 void
 incr_refs(struct db_i *dbip, struct rt_comb_internal *comb, union tree *tp, void *UNUSED(user_ptr1), void *UNUSED(user_ptr2), void *UNUSED(user_ptr3), void *UNUSED(user_ptr4))
 {
@@ -844,6 +922,14 @@ incr_refs(struct db_i *dbip, struct rt_comb_internal *comb, union tree *tp, void
 }
 
 
+/*
+ * Tree-walk callback (db_treewalk_basic) that tallies how many times
+ * each object is referenced.
+ *
+ * For every combination it walks the member leaves via incr_refs(),
+ * bumping each referenced directory entry's d_nref.  Non-combinations
+ * are ignored.
+ */
 void
 count_refs(struct db_i *dbip, struct directory *dp, void *UNUSED(ptr))
 {

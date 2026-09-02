@@ -29,4 +29,3 @@ int rt_bot_decimation_is_within_distance(
 __END_DECLS
 
 #endif /* LIBRT_PRIMITIVES_BOT_DECIMATE_PRIVATE_H */
-

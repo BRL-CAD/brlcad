@@ -33,9 +33,13 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
-#define MAX_NUM 4096
 
-
+/*
+ * Read the next field from the shared global "card" buffer, parse it as an
+ * integer, and store the result in "inum".  Advances the field "counter"
+ * and auto-advances to the next record when the field spans a record
+ * boundary.
+ */
 void
 Readint(int *inum, const char *id)
 {
@@ -51,7 +55,7 @@ Readint(int *inum, const char *id)
 	return;
     }
 
-    if (card[72] == 'P')
+    if (card[IGES_SECTION_COL] == 'P')
 	lencard = PARAMLEN;
     else
 	lencard = CARDLEN;

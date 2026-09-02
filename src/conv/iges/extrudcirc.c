@@ -22,6 +22,11 @@
 #include "./iges_extern.h"
 
 
+/*
+ * Extrudcirc() is a helper for extrude() (IGES 164 Solid of Linear
+ * Extrusion) for the case where the extruded base curve is an IGES 100
+ * Circular Arc.  It produces a BRL-CAD RCC.
+ */
 int
 Extrudcirc(size_t entityno, int curve, vect_t evect)
     /* extrusion entity number */
@@ -39,11 +44,12 @@ Extrudcirc(size_t entityno, int curve, vect_t evect)
     /* Acquiring Data */
 
     if (dir[curve]->param <= pstart) {
-	bu_log("Illegal parameter pointer for entity D%07d (%s)\n" ,
+	bu_log("Illegal parameter pointer for entity D%07d (%s)\n",
 	       dir[curve]->direct, dir[curve]->name);
 	return 0;
     }
     Readrec(dir[curve]->param);
+    /* IGES entity type number; read only to advance past the field, otherwise unused */
     Readint(&sol_num, "");
     Readcnv(&base[Z], "");
     Readcnv(&base[X], "");
@@ -57,7 +63,7 @@ Extrudcirc(size_t entityno, int curve, vect_t evect)
 
     if (!ZERO(x_1 - x_2) || !ZERO(y_1 - y_2)) {
 	bu_log("Circular arc for extrusion is not closed:\n");
-	bu_log("\textrusion entity D%07d (%s)\n", dir[entityno]->direct ,
+	bu_log("\textrusion entity D%07d (%s)\n", dir[entityno]->direct,
 	       dir[entityno]->name);
 	bu_log("\tarc entity D%07d (%s)\n", dir[curve]->direct, dir[curve]->name);
 	return 0;

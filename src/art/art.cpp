@@ -80,6 +80,7 @@
 #include <cstddef>
 #include <memory>
 #include <string>
+#include <vector>
 
 #if defined(__GNUC__) && !defined(__clang__)
 #  pragma GCC diagnostic push
@@ -155,6 +156,10 @@
 #include "rt/db_fullpath.h"
 #include "rt/calc.h"
 #include "optical/defines.h"
+#include "icv.h"		/* image save/convert */
+#include "bu/file.h"	/* bu_file_delete */
+#include "bu/mime.h"	/* BU_MIME_IMAGE_AUTO */
+#include "bu/str.h"	/* BU_STR_EQUIV */
 
 #include "brlcad_ident.h"
 
@@ -168,6 +173,29 @@
 struct resource* resources;
 size_t samples = 25;
 size_t light_intensity = 200; // make ambient light match rt
+
+/* Light-source regions discovered while walking the .g database in
+ * register_region().  build_project() turns each into an Appleseed light at
+ * its model-space centroid; if none are found it falls back to a single
+ * default light.  Replaces the previous single hardcoded PointLight. */
+struct ArtLight {
+    std::string name;
+    double pos[3];
+    float color[3];
+    double bright;	/* raw "bright"/lt_intensity from shader (default 1.0) */
+    double fract;	/* "fract"/lt_fraction; <0 => derive from bright */
+};
+static std::vector<ArtLight> art_lights;
+
+/* Region names already registered this frame.  db_walk_tree() invokes
+ * register_region() once per PATH to a region, so a region shared/referenced
+ * from multiple combs is visited multiple times -- re-registering it would
+ * insert duplicate-named Appleseed entities (assembly/object/material), which
+ * asserts in appleseed's EntityMap (entitymap.cpp) / corrupts state in release.
+ * We register each unique region once. */
+#include <set>
+static std::set<std::string> art_seen_regions;
+
 //size_t light_intensity = 30.0;
 const char* global_title_file;
 asf::auto_release_ptr<asr::Project> project_ptr;
@@ -196,6 +224,37 @@ extern "C" {
     extern mat_t model2view;
     extern mat_t view2model;
     extern point_t viewbase_model;
+
+    /* Options parsed by the shared rt/opt.c but NOT honored by art's
+     * Appleseed backend.  Declared here so art_validate_options() can
+     * detect when a user set one and warn instead of silently ignoring
+     * it.  All are defined in rt/opt.c (which art links); worker.c-only
+     * globals (fullfloat_mode, reproject_mode) are deliberately omitted
+     * since art does not link worker.c.
+     */
+    extern int lightmodel;		/* -l  (art is always a path tracer) */
+    extern int hypersample;		/* -H */
+    extern unsigned int jitter;		/* -J */
+    extern int stereo;			/* -S */
+    extern int use_air;			/* -U */
+    extern double airdensity;		/* -m */
+    extern const char *densityfile;	/* -d */
+    extern int do_kut_plane;		/* -k */
+    extern int sub_grid_mode;		/* -j */
+    extern int cell_newsize;		/* -g / -G */
+    extern int benchmark;		/* -B */
+    extern int incr_mode;		/* -i */
+    extern int full_incr_mode;		/* -i (fully incremental) */
+    extern int top_down;		/* -t */
+    extern int random_mode;		/* random-order rendering */
+    extern int opencl_mode;		/* -z */
+    extern int doubles_out;		/* -O */
+    extern int output_is_binary;	/* +t  (default 1; 0 => text output) */
+    extern int Query_one_pixel;		/* -Q */
+    extern char *string_pix_start;	/* -b */
+    extern int desiredframe;		/* -D */
+    extern int finalframe;		/* -K (default -1) */
+
     size_t n_free;
     size_t n_malloc;		/* Totals at last check */
     size_t n_realloc;
@@ -262,12 +321,16 @@ init_defaults(void)
     // default output file name
     outputfile = (char*)"art.png";
 
-    // blue background of scene
-    background[0] = 0.75;
-    background[1] = 0.80;
+    /* Neutral (white) sky/environment by default.  The environment is art's
+     * dominant light (a ConstantEnvironmentEDF built from `background`), so a
+     * blue sky tinted every surface cool and desaturated hues away from what rt
+     * produces under its white default light.  A neutral dome keeps region
+     * colors true; -C/-W still override this at runtime. */
+    background[0] = 1.0;
+    background[1] = 1.0;
     background[2] = 1.0;
 
-    // option("", "-o filename", "Render to specified image file (e.g., image.png or image.pix)", 0);
+    option("", "-o filename", "Render to specified image file (e.g., image.png or image.pix)", 0);
     option("", "-F framebuffer", "Render to a framebuffer (defaults to a window)", 100);
     // option("", "-s #", "Square image size (default: 512 - implies 512x512 image)", 100);
     // option("", "-w # -n #", "Image pixel dimensions as width and height", 100);
@@ -308,9 +371,147 @@ init_defaults(void)
 }
 
 
+/* Warn about options that the shared rt/opt.c parses but that art's
+ * Appleseed backend does not act on.  Because art links the same opt.c as
+ * rt, every rt flag parses successfully; without this pass those flags
+ * would be silently dropped and an rt user copying a command line would
+ * get a plausible-but-wrong image with no indication anything was ignored.
+ *
+ * Each check compares a global against its rt/opt.c default; a mismatch
+ * means the user actually passed the flag.  These are warnings (not fatal)
+ * so existing scripts still render -- but nothing is dropped silently.
+ * Returns the number of ignored options detected.
+ */
+static int
+art_validate_options(void)
+{
+    int n = 0;
+
+#define ART_WARN(msg) do { bu_log("art: warning: %s\n", (msg)); n++; } while (0)
+
+    /* Fundamental model differences: no path-tracer equivalent. */
+    if (lightmodel != 0)
+	ART_WARN("-l lighting-model selection is ignored; art always renders "
+		 "with the Appleseed global-illumination path tracer "
+		 "(this includes -l7 photon mapping and -l8 heat-graph)");
+
+    if (hypersample != 0 || jitter != 0)
+	ART_WARN("-H hypersample / -J jitter are ignored; control art's "
+		 "path-tracer quality with -c \"set samples=<N>\" instead "
+		 "(current default is 25)");
+
+    if (use_air != 0 || airdensity != 0.0 || densityfile != NULL)
+	ART_WARN("-U air-region handling, -m atmospheric haze, and -d density "
+		 "file are ignored; art has no participating-media model");
+
+    if (stereo != 0)
+	ART_WARN("-S stereo rendering is not supported and is ignored");
+
+    /* Not-yet-implemented plumbing (mappable onto Appleseed in future). */
+    if (do_kut_plane != 0)
+	ART_WARN("-k cutting plane is not yet supported and is ignored");
+
+    if (sub_grid_mode != 0)
+	ART_WARN("-j sub-rectangle rendering is not yet supported and is ignored");
+
+    if (cell_newsize != 0)
+	ART_WARN("-g / -G grid cell sizing is ignored; art derives resolution "
+		 "from -s / -w / -n only");
+
+    if (incr_mode != 0 || full_incr_mode != 0)
+	ART_WARN("-i incremental/progressive rendering is not supported and is ignored");
+
+    if (benchmark != 0)
+	ART_WARN("-B benchmark mode is ignored; art output is not guaranteed "
+		 "bit-reproducible");
+
+    if (top_down != 0)
+	ART_WARN("-t top-down scan order is ignored (art renders in tiles)");
+
+    if (random_mode != 0)
+	ART_WARN("random-order rendering is ignored (art uses Appleseed's sampler)");
+
+    if (opencl_mode != 0)
+	ART_WARN("-z OpenCL acceleration is ignored by art");
+
+    /* Output-format divergences: art writes 8-bit images via Appleseed. */
+    if (doubles_out != 0)
+	ART_WARN("-O double-precision (.dpix) output is not supported; "
+		 "art writes 8-bit images only");
+
+    if (output_is_binary == 0)
+	ART_WARN("+t text output is not supported and is ignored");
+
+    /* Diagnostics with no path-tracer analogue. */
+    if (Query_one_pixel != 0 || string_pix_start != NULL)
+	ART_WARN("-b / -Q single-pixel debugging is not supported and is ignored");
+
+    /* Animation: art only loops frames when driven by an -M/stdin script
+     * (rt_do_tab's "end" command is remapped to art_cm_end).  In plain flag
+     * mode the -D/-K frame range has no effect. */
+    if (!matflag && (desiredframe != 0 || finalframe != -1))
+	ART_WARN("-D / -K frame ranges are ignored in flag mode; multi-frame "
+		 "animation requires an -M stdin script");
+
+#undef ART_WARN
+
+    if (n)
+	bu_log("art: %d rt option(s) above were parsed but not applied; "
+	       "the rendered image may differ from rt's.\n", n);
+
+    return n;
+}
+
+
 // Define shorter namespaces for convenience.
 namespace asf = foundation;
 namespace asr = renderer;
+
+/* Extract the BRL-CAD "light" shader's intensity controls from a region's
+ * shader string.  We cannot use bu_struct_parse() here: liboptical's
+ * light_parse table is static, and bu_struct_parse() aborts on the first key
+ * it doesn't know (angle, target, visible, ...), so it would fail on real
+ * light specs.  Instead tokenize manually, which is robust to unknown keys.
+ *
+ * Recognizes bright|b|inten -> bright, and fract|f -> fract, matching the
+ * aliases in liboptical/sh_light.c.  Defaults mirror that shader: bright=1.0,
+ * fract=-1.0 (meaning "derive it later").
+ */
+static void
+art_parse_light_intensity(const struct bu_vls* shader, double* bright, double* fract)
+{
+    *bright = 1.0;
+    *fract = -1.0;
+
+    const char* s = bu_vls_cstr(shader);
+    if (bu_strncmp(s, "light", 5) == 0)
+	s += 5;		/* skip the shader name */
+
+    struct bu_vls norm = BU_VLS_INIT_ZERO;
+    bu_vls_strcpy(&norm, s);
+
+    /* turn key/value separators into spaces so one whitespace tokenizer
+     * handles both "key=value" and list "{key value}" forms */
+    for (char* cp = bu_vls_addr(&norm); *cp; cp++) {
+	if (*cp == '=' || *cp == '{' || *cp == '}' || *cp == ';' || *cp == ',')
+	    *cp = ' ';
+    }
+
+    size_t maxtok = bu_vls_strlen(&norm) / 2 + 2;
+    char** av = (char**)bu_calloc(maxtok + 1, sizeof(char*), "art light argv");
+    size_t ac = bu_argv_from_string(av, maxtok, bu_vls_addr(&norm));
+
+    for (size_t i = 0; i + 1 < ac; i++) {
+	if (BU_STR_EQUAL(av[i], "bright") || BU_STR_EQUAL(av[i], "b") || BU_STR_EQUAL(av[i], "inten"))
+	    *bright = atof(av[i + 1]);
+	else if (BU_STR_EQUAL(av[i], "fract") || BU_STR_EQUAL(av[i], "f"))
+	    *fract = atof(av[i + 1]);
+    }
+
+    bu_free(av, "art light argv");
+    bu_vls_free(&norm);
+}
+
 
 /* db_walk_tree() callback to register all regions within the scene
  * using either a disney shader with rgb color set on combination regions
@@ -332,6 +533,12 @@ register_region(struct db_tree_state* tsp,
     const char* name;
     name = dp->d_namep;
 
+    // Register each unique region only once: db_walk_tree() revisits a region
+    // once per path to it, and re-registering inserts duplicate-named Appleseed
+    // entities (assert in EntityMap for multi-region models like toyjeep).
+    if (!art_seen_regions.insert(std::string(name)).second)
+	return 0;
+
     // Strip the objects name to get correct bounding box
     struct bu_vls path = BU_VLS_INIT_ZERO;
     db_path_to_vls(&path, pathp);
@@ -349,6 +556,38 @@ register_region(struct db_tree_state* tsp,
     int ret = rt_obj_bounds(gedp->ged_result_str, gedp->dbip, 1, (const char**)&name_full, 1, min, max);
 
     bu_log("ged: %i | min: %f %f %f | max: %f %f %f\n", ret, V3ARGS(min), V3ARGS(max));
+
+    /* If this region uses the BRL-CAD "light" shader, treat it as a light
+     * source rather than renderable geometry: record its centroid and color
+     * for build_project() to turn into an Appleseed light.  We intentionally
+     * do NOT emit geometry for it -- otherwise the light solid would be an
+     * opaque blob shadowing its own light.
+     *
+     * NOTE: position (region centroid) and color (region rgb) are honored;
+     * per-light "bright"/"fract" intensity from the shader string is not yet
+     * mapped -- all discovered lights share the light_intensity multiplier.
+     */
+    if (bu_vls_strlen(&combp->shader) >= 5 &&
+	bu_strncmp(bu_vls_cstr(&combp->shader), "light", 5) == 0) {
+	ArtLight L;
+	L.name = std::string(name) + "_light";
+	L.pos[0] = (min[X] + max[X]) * 0.5;
+	L.pos[1] = (min[Y] + max[Y]) * 0.5;
+	L.pos[2] = (min[Z] + max[Z]) * 0.5;
+	if (combp->rgb_valid) {
+	    L.color[0] = (float)(combp->rgb[0] / 255.0);
+	    L.color[1] = (float)(combp->rgb[1] / 255.0);
+	    L.color[2] = (float)(combp->rgb[2] / 255.0);
+	} else {
+	    L.color[0] = L.color[1] = L.color[2] = 1.0f;
+	}
+	art_parse_light_intensity(&combp->shader, &L.bright, &L.fract);
+	art_lights.push_back(L);
+	bu_log("art: light source '%s' at %g %g %g (bright=%g)\n",
+	       name, L.pos[0], L.pos[1], L.pos[2], L.bright);
+	ged_close(gedp);
+	return 0;
+    }
 
     /*
       create object paramArray to pass to constructor
@@ -383,138 +622,70 @@ register_region(struct db_tree_state* tsp,
 	    asr::ParamArray()));
 
 
-    // create a shader group
-    std::string shader_name = std::string(name) + "_shader";
-    asf::auto_release_ptr<asr::ShaderGroup> shader_grp(
-	asr::ShaderGroupFactory().create(
-	    shader_name.c_str(),
-	    asr::ParamArray()));
+    /* Build a native Appleseed plastic BSDF for this region.
+     *
+     * NOTE: we deliberately do NOT use an OSL shader group here.  Appleseed's
+     * OSL BSDFs evaluate to zero on ProceduralObject hits in this build (the
+     * OSL closure is never populated for procedural surfaces), so an OSL
+     * material renders every surface as an unlit black silhouette.  Native
+     * BSDFs (Lambertian, plastic, Disney, ...) shade procedural surfaces
+     * correctly, so we map the region's optical properties onto a plastic_brdf
+     * -- which matches BRL-CAD's default "plastic" shader closely (diffuse base
+     * color plus a glossy specular coat). */
+    std::string base_name = std::string(name) + "_mat";
 
-    // choose input shader
-    // change to plastic to look more like rt
-    const char* shader = (char*)"as_plastic";
-    asr::ParamArray shader_params = asr::ParamArray();
-
-    // check if shader was set new way
-    // extract material if set and check for shader in optical properties
-    struct directory* dp1;
-    char* mat_name = bu_vls_strdup(&combp->material);
-    dp1 = db_lookup(tsp->ts_dbip, mat_name, LOOKUP_QUIET);
-    struct bu_vls m = BU_VLS_INIT_ZERO;
-    struct rt_db_internal intern;
-    struct rt_material_internal* material_ip;
-    if (dp1 != RT_DIR_NULL) {
-	if (rt_db_get_internal(&intern, dp1, tsp->ts_dbip, NULL) >= 0) {
-	    if (intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_MATERIAL) {
-		material_ip = (struct rt_material_internal*)intern.idb_ptr;
-		bu_vls_printf(&m, "%s", bu_avs_get(&material_ip->opticalProperties, "OSL"));
-		if (!BU_STR_EQUAL(bu_vls_cstr(&m), "(null)")) {
-		    shader = bu_vls_cstr(&m);
-		    bu_log("material->optical->OSL: %s\n", shader);
-		}
-	    }
-	}
+    /* Diffuse base color.  Prefer the tree-state's resolved material color
+     * (tsp->ts_mater.ma_color): db_walk_tree accumulates BRL-CAD's color
+     * INHERITANCE into it as it descends, so a region that inherits its color
+     * from a parent combination (e.g. every region under havoc) gets the right
+     * color here -- exactly what rt/liboptical uses (region reg_mater.ma_color).
+     * combp->rgb is only the region comb's OWN color and is empty for inherited
+     * colors, which is why art used to render such models as flat grey.  Fall
+     * back to the comb's own rgb, then to white (rt's default for no color). */
+    float diffuse_rgb[3];
+    if (tsp && tsp->ts_mater.ma_color_valid) {
+	diffuse_rgb[0] = (float)tsp->ts_mater.ma_color[0];
+	diffuse_rgb[1] = (float)tsp->ts_mater.ma_color[1];
+	diffuse_rgb[2] = (float)tsp->ts_mater.ma_color[2];
+    } else if (combp->rgb_valid) {
+	diffuse_rgb[0] = (float)(combp->rgb[0] / 255.0);
+	diffuse_rgb[1] = (float)(combp->rgb[1] / 255.0);
+	diffuse_rgb[2] = (float)(combp->rgb[2] / 255.0);
+    } else {
+	diffuse_rgb[0] = diffuse_rgb[1] = diffuse_rgb[2] = 1.0f;
     }
+    std::string diffuse_col = base_name + "_diffuse";
+    assembly->colors().insert(
+	asr::ColorEntityFactory::create(
+	    diffuse_col.c_str(),
+	    asr::ParamArray().insert("color_space", "srgb"),
+	    asr::ColorValueArray(3, diffuse_rgb)));
 
-    // check for color assignment, if set add to param array
-    struct bu_vls v=BU_VLS_INIT_ZERO;
-    if (combp->rgb_valid) {
-	bu_vls_printf(&v, "color %f %f %f\n", combp->rgb[0]/255.0, combp->rgb[1]/255.0, combp->rgb[2]/255.0);
-	const char* color = bu_vls_cstr(&v);
-	shader_params.insert("in_color", color);
-    }
+    static const float WhiteSpec[3] = { 1.0f, 1.0f, 1.0f };
+    std::string spec_col = base_name + "_specular";
+    assembly->colors().insert(
+	asr::ColorEntityFactory::create(
+	    spec_col.c_str(),
+	    asr::ParamArray().insert("color_space", "linear_rgb"),
+	    asr::ColorValueArray(3, WhiteSpec)));
 
-    // check if shader was set old way
-    // send this to mapping function -> disney params
-    /* values acceptable with phong implementation:
-     * specular reflectance sp
-     * diffuse reflectance di
-     * roughness rms
-     * transparency tr
-     * transmission re
-     * refraction index ri
-     * extinction ex
-     */
-    // char* ptr;
-    // char* temp_in = (char*)"   ";
-    // if (bu_vls_strlen(&combp->shader) > 0) {
-    //   if ((ptr=strstr(bu_vls_addr(&combp->shader), "plastic")) != NULL) {
-    //     // bu_log("shader: %s\n", bu_vls_addr(&combp->shader));
-    //     shader = "as_plastic";
-    //   }
-    //   if ((ptr=strstr(bu_vls_addr(&combp->shader), "glass")) != NULL) {
-    //     // bu_log("shader: %s\n", bu_vls_addr(&combp->shader));
-    //     shader = "as_glass";
-    //   }
-    //   // check for override parameters
-    //   if (((ptr=strstr(bu_vls_addr(&combp->shader), "{")) != NULL)) {
-    //     if (((ptr=strstr(bu_vls_addr(&combp->shader), "tr")) != NULL)) {
-    //       int i = 3;
-    // 	    while (ptr != NULL && ptr[i] != ' ') {
-    //         temp_in[i-3] = ptr[i];
-    //         i++;
-    //       }
-    //       struct bu_vls t=BU_VLS_INIT_ZERO;
-    //       bu_vls_printf(&t, "tr %s\n", temp_in);
-    //       const char* tr = bu_vls_cstr(&t);
-    //       shader_params.insert("in_tr", tr);
-    //     }
-    //   }
-    // }
-
-    /* This uses an already compiled .oso shader in the form of
-       type
-       shader name
-       layer
-       paramArray
-    */
-    shader_grp->add_shader(
-	"shader",
-	shader,
-	"shader_in",
-	shader_params
-	);
-    bu_vls_free(&v);
-
-    /* import non compiled .osl shader in the form of
-       type
-       name
-       layer
-       source
-       paramArray
-       note: this relies on appleseed triggering on osl compiler
-    */
-    // shader_grp->add_source_shader(
-    //   "shader",
-    //   shader_name.c_str(),
-    //   "shader_in",
-    //   "shader_in",
-    //   asr::ParamArray()
-    //);
-
-    // add material2surface so we can map input shader to object surface
-    shader_grp->add_shader(
-	"surface",
-	"as_closure2surface",
-	"close",
-	asr::ParamArray()
-	);
-
-    // connect the two shader nodes within the group
-    shader_grp->add_connection(
-	"shader_in",
-	"out_outColor",
-	"close",
-	"in_input"
-	);
-
-    // add the shader group to the assembly
-    assembly->shader_groups().insert(
-	shader_grp
-	);
+    std::string brdf_name = base_name + "_brdf";
+    assembly->bsdfs().insert(
+	asr::PlasticBRDFFactory().create(
+	    brdf_name.c_str(),
+	    asr::ParamArray()
+	    .insert("diffuse_reflectance", diffuse_col.c_str())
+	    .insert("diffuse_reflectance_multiplier", "1.0")
+	    /* Keep the specular coat small and tight: a broad, bright white coat
+	     * reflects the (uniform) environment across the whole surface and
+	     * desaturates the diffuse color.  A small multiplier + low roughness
+	     * gives only a subtle glint, preserving the true region color. */
+	    .insert("specular_reflectance", spec_col.c_str())
+	    .insert("specular_reflectance_multiplier", "0.06")
+	    .insert("roughness", "0.08")
+	    .insert("ior", "1.5")));
 
     // Create a physical surface shader and insert it into the assembly.
-    // This is technically not needed with the current shader implementation
     assembly->surface_shaders().insert(
 	asr::PhysicalSurfaceShaderFactory().create(
 	    "Material_mat_surface_shader",
@@ -523,13 +694,13 @@ register_region(struct db_tree_state* tsp,
 	    )
 	);
 
-    // create a material with our shader_group
-    std::string material_mat = shader_name + "_mat";
+    // Create the material that binds the BSDF to the surface.
+    std::string material_mat = base_name;
     assembly->materials().insert(
-	asr::OSLMaterialFactory().create(
+	asr::GenericMaterialFactory().create(
 	    material_mat.c_str(),
 	    asr::ParamArray()
-	    .insert("osl_surface", shader_name.c_str())
+	    .insert("bsdf", brdf_name.c_str())
 	    .insert("surface_shader", "Material_mat_surface_shader")
 	    )
 	);
@@ -547,7 +718,6 @@ register_region(struct db_tree_state* tsp,
 	    asf::Transformd::identity(),
 	    asf::StringDictionary()
 	    .insert("default", material_mat.c_str())
-	    .insert("default2", material_mat.c_str())
 	    ));
 
     // add assembly to assemblies array in scene
@@ -662,10 +832,14 @@ build_project(const char* file, const char* UNUSED(objects))
     project->search_paths().push_back_explicit_path("build/Debug");
     // add precompiled shaders from appleseed
     char root[MAXPATHLEN];
-    project->search_paths().push_back_explicit_path(bu_dir(root, MAXPATHLEN, APPLESEED_ROOT, "shaders/appleseed", NULL));
-    project->search_paths().push_back_explicit_path(bu_dir(root, MAXPATHLEN, APPLESEED_ROOT, "shaders/max", NULL));
+    const char* sp;
+    sp = bu_dir(root, MAXPATHLEN, APPLESEED_ROOT, "shaders/appleseed", NULL);
+    if (sp) project->search_paths().push_back_explicit_path(sp);
+    sp = bu_dir(root, MAXPATHLEN, APPLESEED_ROOT, "shaders/max", NULL);
+    if (sp) project->search_paths().push_back_explicit_path(sp);
     // add path for materialX converted shaders
-    project->search_paths().push_back_explicit_path(bu_dir(root, MAXPATHLEN, BU_DIR_INIT, "output/shaders", NULL));
+    sp = bu_dir(root, MAXPATHLEN, BU_DIR_INIT, "output/shaders", NULL);
+    if (sp) project->search_paths().push_back_explicit_path(sp);
 
     // Add default configurations to the project.
     project->add_default_configurations();
@@ -701,6 +875,10 @@ build_project(const char* file, const char* UNUSED(objects))
     struct db_i* dbip = db_open(file, DB_OPEN_READONLY);
     state.ts_dbip = dbip;
 
+    /* discovered lights are collected by register_region() during the walk */
+    art_lights.clear();
+    art_seen_regions.clear();
+
     if (objc) {
 	db_walk_tree(APP.a_rt_i->rti_dbip, objc, (const char**)objv, 1, &state, register_region, NULL, NULL, reinterpret_cast<void*>(scene.get()));
     }
@@ -717,28 +895,74 @@ build_project(const char* file, const char* UNUSED(objects))
     // Light
     //------------------------------------------------------------------------
 
-    // Create a color called "light_intensity" and insert it into the assembly.
-    static const float LightRadiance[] = { 1.0f, 1.0f, 1.0f };
-    light_intensity *= AmbientIntensity; // multiplying by factor
-    // FIXME
-    assembly->colors().insert(
-	asr::ColorEntityFactory::create(
-	    "light_intensity",
-	    asr::ParamArray()
-	    .insert("color_space", "srgb")
-	    .insert("multiplier", light_intensity),
-	    asr::ColorValueArray(3, LightRadiance)));
+    if (art_lights.empty()) {
+	// No light-source regions found in the .g database: fall back to a
+	// single default point light so the scene is still lit (this preserves
+	// the previous behavior for scenes without explicit lights).
+	static const float LightRadiance[] = { 1.0f, 1.0f, 1.0f };
+	light_intensity *= AmbientIntensity; // multiplying by factor
+	// FIXME
+	assembly->colors().insert(
+	    asr::ColorEntityFactory::create(
+		"light_intensity",
+		asr::ParamArray()
+		.insert("color_space", "srgb")
+		.insert("multiplier", light_intensity),
+		asr::ColorValueArray(3, LightRadiance)));
 
-    // Create a point light called "light" and insert it into the assembly.
-    asf::auto_release_ptr<asr::Light> light(
-	asr::PointLightFactory().create(
-	    "light",
-	    asr::ParamArray()
-	    .insert("intensity", "light_intensity")));
-    light->set_transform(
-	asf::Transformd::from_local_to_parent(
-	    asf::Matrix4d::make_translation(asf::Vector3d(0.6, 2.0, 1.0))));
-    assembly->lights().insert(light);
+	// Create a point light called "light" and insert it into the assembly.
+	asf::auto_release_ptr<asr::Light> light(
+	    asr::PointLightFactory().create(
+		"light",
+		asr::ParamArray()
+		.insert("intensity", "light_intensity")));
+	light->set_transform(
+	    asf::Transformd::from_local_to_parent(
+		asf::Matrix4d::make_translation(asf::Vector3d(0.6, 2.0, 1.0))));
+	assembly->lights().insert(light);
+    } else {
+	// Normalize intensities the way liboptical/sh_light.c does: a light's
+	// fraction is bright/max_bright unless it explicitly set "fract", so the
+	// brightest light gets the full light_intensity and dimmer lights scale
+	// down proportionally.
+	double max_bright = 0.0;
+	for (size_t i = 0; i < art_lights.size(); i++) {
+	    if (art_lights[i].bright > max_bright)
+		max_bright = art_lights[i].bright;
+	}
+	if (max_bright <= 0.0)
+	    max_bright = 1.0;
+
+	// Create one Appleseed point light per BRL-CAD light-source region,
+	// positioned at the region's model-space centroid with its color.
+	for (size_t i = 0; i < art_lights.size(); i++) {
+	    const ArtLight& L = art_lights[i];
+	    double fract = (L.fract > 0.0) ? L.fract : (L.bright / max_bright);
+	    double multiplier = (double)light_intensity * fract;
+
+	    std::string color_name = L.name + "_color";
+	    assembly->colors().insert(
+		asr::ColorEntityFactory::create(
+		    color_name.c_str(),
+		    asr::ParamArray()
+		    .insert("color_space", "srgb")
+		    .insert("multiplier", multiplier),
+		    asr::ColorValueArray(3, L.color)));
+
+	    asf::auto_release_ptr<asr::Light> light(
+		asr::PointLightFactory().create(
+		    L.name.c_str(),
+		    asr::ParamArray()
+		    .insert("intensity", color_name.c_str())));
+	    light->set_transform(
+		asf::Transformd::from_local_to_parent(
+		    asf::Matrix4d::make_translation(
+			asf::Vector3d(L.pos[0], L.pos[1], L.pos[2]))));
+	    assembly->lights().insert(light);
+	}
+	bu_log("art: created %zu light(s) from .g light-source region(s)\n",
+	       art_lights.size());
+    }
 
     //------------------------------------------------------------------------
     // Assembly instance
@@ -1025,6 +1249,49 @@ def_tree(struct rt_i* rtip)
 }
 
 
+/* Write the rendered Appleseed frame to 'filename', honoring the file
+ * extension the same way rt does -- via libicv -- so BRL-CAD-native formats
+ * (.pix, .bw, .ppm, ...) work in addition to the formats Appleseed writes
+ * natively.  Output goes to exactly the requested path; unlike the older
+ * code there is no forced "output/" prefix, matching rt's -o semantics.
+ *
+ * Appleseed can only emit formats its image writer understands (png, exr,
+ * ...).  For anything else we let Appleseed produce a temporary PNG -- its
+ * color pipeline is trustworthy -- and convert that to the requested format
+ * with libicv (icv reads the sRGB 8-bit PNG and writes by extension).
+ */
+static void
+art_save_image(asr::Project& project, const char* filename)
+{
+    const char* dot = strrchr(filename, '.');
+
+    /* Formats Appleseed writes directly: skip the round-trip. */
+    if (dot && (BU_STR_EQUIV(dot, ".png") || BU_STR_EQUIV(dot, ".exr"))) {
+	project.get_frame()->write_main_image(filename);
+	return;
+    }
+
+    /* Otherwise render to a temporary PNG and convert via libicv. */
+    struct bu_vls tmpname = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&tmpname, "%s.tmp.png", filename);
+    project.get_frame()->write_main_image(bu_vls_cstr(&tmpname));
+
+    icv_image_t* img = icv_read(bu_vls_cstr(&tmpname), BU_MIME_IMAGE_AUTO, 0, 0);
+    if (img) {
+	if (icv_write(img, filename, BU_MIME_IMAGE_AUTO) != 0)
+	    bu_log("art: warning: could not write '%s'; PNG left at '%s'\n",
+		   filename, bu_vls_cstr(&tmpname));
+	else
+	    (void)bu_file_delete(bu_vls_cstr(&tmpname));
+	icv_destroy(img);
+    } else {
+	bu_log("art: warning: could not read temporary render '%s'; "
+	       "leaving it in place\n", bu_vls_cstr(&tmpname));
+    }
+    bu_vls_free(&tmpname);
+}
+
+
 static int
 art_cm_end(const int UNUSED(argc), const char** UNUSED(argv))
 {
@@ -1076,13 +1343,16 @@ art_cm_end(const int UNUSED(argc), const char** UNUSED(argv))
     // Render the frame.
     renderer->render(renderer_controller);
 
-    // Save the frame to disk using outputfile name
-    // we append output/ directory to it for sorting
-    std::string add_base = "output/" + std::string(outputfile);
-    project->get_frame()->write_main_image(add_base.c_str());
+    // Save the frame to disk to the requested output path, honoring its
+    // extension via libicv.
+    art_save_image(project.ref(), outputfile);
 
     // Save the project to disk.
-    asr::ProjectFileWriter::write(project.ref(), "output/objects.appleseed");
+    /* Intentionally not writing the .appleseed project file: ProjectFileWriter
+	 * serializes every scene entity, but BrlcadObject (a ProceduralObject) has
+	 * no serializable geometry, so the writer aborts the process (0xC0000409)
+	 * at the end of an otherwise-successful render.  The project file is only a
+	 * debugging convenience and is not needed to produce the output image. */
 
     // Make sure to delete the master renderer before the project and the logger / log target.
     renderer.reset();
@@ -1140,6 +1410,10 @@ main(int argc, char **argv)
 	usage(argv[0], 99);
 	return 0;
     }
+
+    /* Warn about any rt options that parsed but that art will not honor,
+     * so nothing is silently dropped. */
+    art_validate_options();
 
     if (bu_optind >= argc) {
 	RENDERER_LOG_INFO("%s: BRL-CAD geometry database not specified\n", argv[0]);
@@ -1254,15 +1528,19 @@ main(int argc, char **argv)
 		&artcallback));
 
         // Render the frame.
+        // Render the frame.
         renderer->render(renderer_controller);
 
-        // Save the frame to disk using outputfile name
-        // we append output/ directory to it for sorting
-        std::string add_base = "output/" + std::string(outputfile);
-        project->get_frame()->write_main_image(add_base.c_str());
+        // Save the frame to disk to the requested output path, honoring its
+        // extension via libicv.
+        art_save_image(project.ref(), outputfile);
 
         // Save the project to disk.
-        asr::ProjectFileWriter::write(project.ref(), "output/objects.appleseed");
+        /* Intentionally not writing the .appleseed project file: ProjectFileWriter
+	 * serializes every scene entity, but BrlcadObject (a ProceduralObject) has
+	 * no serializable geometry, so the writer aborts the process (0xC0000409)
+	 * at the end of an otherwise-successful render.  The project file is only a
+	 * debugging convenience and is not needed to produce the output image. */
 
         if (fbp != FB_NULL) {
 	    fb_close(fbp);
@@ -1278,15 +1556,19 @@ main(int argc, char **argv)
 		resource_search_paths));
 
         // Render the frame.
+        // Render the frame.
         renderer->render(renderer_controller);
 
-        // Save the frame to disk using outputfile name
-        // we append output/ directory to it for sorting
-        std::string add_base = "output/" + std::string(outputfile);
-        project->get_frame()->write_main_image(add_base.c_str());
+        // Save the frame to disk to the requested output path, honoring its
+        // extension via libicv.
+        art_save_image(project.ref(), outputfile);
 
         // Save the project to disk.
-        asr::ProjectFileWriter::write(project.ref(), "output/objects.appleseed");
+        /* Intentionally not writing the .appleseed project file: ProjectFileWriter
+	 * serializes every scene entity, but BrlcadObject (a ProceduralObject) has
+	 * no serializable geometry, so the writer aborts the process (0xC0000409)
+	 * at the end of an otherwise-successful render.  The project file is only a
+	 * debugging convenience and is not needed to produce the output image. */
 
         if (fbp != FB_NULL) {
 	    fb_close(fbp);

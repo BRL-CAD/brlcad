@@ -23,6 +23,16 @@
 
 #define PATCH_COUNT 1
 
+/*
+ * Read an IGES 128 Rational B-Spline Surface entity into an NMG
+ * face_g_snurb.
+ *
+ * Reads the surface's orders and control-point counts, allocates the
+ * snurb, fills in the U and V knot vectors (shifting negative knots to
+ * be non-negative), the weights (for rational surfaces), and the control
+ * points, and finally premultiplies each rational control point by its
+ * weight.  Returns 1 on success, 0 on error.
+ */
 int
 iges_spline(size_t entityno, struct face_g_snurb **b_patch)
 {
@@ -47,7 +57,7 @@ iges_spline(size_t entityno, struct face_g_snurb **b_patch)
     /* Acquiring Data */
 
     if (dir[entityno]->param <= pstart) {
-	bu_log("Illegal parameter pointer for entity D%07d (%s)\n" ,
+	bu_log("Illegal parameter pointer for entity D%07d (%s)\n",
 	       dir[entityno]->direct, dir[entityno]->name);
 	return 0;
     }

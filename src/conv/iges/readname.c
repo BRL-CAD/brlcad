@@ -33,9 +33,14 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
-#define MAX_NUM 4096
 
-
+/*
+ * Read the next field from the shared global "card" buffer, expecting a
+ * Hollerith string of the form "nHstring", and return a newly allocated
+ * copy (with room for one extra character) via "ptr" (NULL for an empty
+ * field).  Advances the field "counter" and auto-advances to the next
+ * record when the field spans a record boundary.
+ */
 void
 Readname(char **ptr, const char *id)
 {
@@ -54,7 +59,7 @@ Readname(char **ptr, const char *id)
 	return;
     }
 
-    if (card[72] == 'P')
+    if (card[IGES_SECTION_COL] == 'P')
 	lencard = PARAMLEN;
     else
 	lencard = CARDLEN;
@@ -83,6 +88,15 @@ Readname(char **ptr, const char *id)
     }
 
     length = atoi(num);
+
+    /* guard against a malformed Hollerith length that would cause a
+     * huge (or negative) allocation and copy
+     */
+    if (length < 0 || length > 1000000) {
+	bu_log("Readname: illegal name length (%d), ignoring name\n", length);
+	*ptr = bu_strdup("");
+	return;
+    }
 
     /* we may tack on a letter to the name */
     *ptr = (char *)bu_malloc((length + 2)*sizeof(char), "Readname: name");

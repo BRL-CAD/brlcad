@@ -1,0 +1,233 @@
+= The librt Ray Tracing Pipeline
+:doctype: article
+:toc: left
+:toclevels: 3
+:sectlinks:
+:sectanchors:
+
+This guide explains, at an architectural level, how ray tracing works in
+`librt`, BRL-CAD's solid ray tracing library.  It follows a single ray from
+application setup through geometry preparation, ray shooting, and the callbacks
+that deliver results back to your code.
+
+This page intentionally does not reproduce full function prototypes.  For exact
+signatures, argument details, and structure fields, consult the headers under
+`include/rt/` and the Doxygen-generated
+link:api_reference.html[API Reference].  The most relevant headers are called
+out throughout.
+
+== What librt does
+
+`librt` computes ray/geometry intersections against BRL-CAD's constructive
+solid geometry (CSG) models.  Unlike a surface-only renderer, it reports
+*in/out pairs* of hits so that closed volumes can be characterized correctly,
+and it evaluates the Boolean combination trees (union, intersection,
+subtraction) that define regions.  The result of shooting a ray is a set of
+*partitions*, each describing a span of the ray that lies inside one region.
+
+== The overall flow
+
+A typical ray tracing session follows four phases:
+
+. *Open the database* and build its directory with `rt_dirbuild()`.
+. *Load geometry* into the ray tracing instance with `rt_gettree()` (or a
+  related variant).
+. *Prepare* the acceleration structures with `rt_prep()` /
+  `rt_prep_parallel()`.
+. *Shoot rays* with `rt_shootray()`, receiving results in your `a_hit()` and
+  `a_miss()` callbacks.
+
+The following sections walk through each phase.  The central data structures
+are `struct rt_i` (the ray tracing instance, declared in
+`include/rt/rt_instance.h`) and `struct application` (the per-ray request,
+declared in `include/rt/application.h`).
+
+== Phase 1: Building the directory (rt_dirbuild)
+
+`rt_dirbuild()` (declared in `include/rt/db_io.h`) opens a `.g` geometry
+database and reads its object directory, returning a pointer to a newly
+allocated `struct rt_i`.  This `rt_i` instance is the handle you pass to the
+rest of the pipeline; the pointer it returns becomes the `a_rt_i` field of your
+application structure.
+
+If the database cannot be opened, `rt_dirbuild()` returns `RTI_NULL`.  A
+companion entry point, `rt_dirbuild_inmem()`, builds an instance from an
+in-memory database image rather than a file.
+
+== Phase 2: Loading geometry (rt_gettree)
+
+Opening the database makes its objects available but does not yet load any
+geometry for ray tracing.  To select which objects participate, call
+`rt_gettree()` (declared in `include/rt/rt_instance.h`) once per top-level
+object you want to trace against.  It walks the named object's combination
+tree, imports the referenced primitives, and associates them with the `rt_i`
+instance.
+
+Related entry points give you more control:
+
+* `rt_gettrees()` loads several named objects in a single call.
+* `rt_gettrees_and_attrs()` additionally captures a specified list of object
+  attributes, which is how per-region attribute data is made available during
+  shooting.
+
+These functions determine the set of *solids* (primitives) and *regions* that
+subsequent rays will intersect.
+
+== Phase 3: Preparation (rt_prep)
+
+Before any ray can be shot, the loaded geometry must be *prepped*.  Preparation
+computes each primitive's bounding information and builds the spatial
+acceleration structure (the space partitioning used to quickly reject geometry
+a ray cannot possibly hit).
+
+* `rt_prep()` prepares the instance for single-threaded use.
+* `rt_prep_parallel()` prepares the instance for use by a specified number of
+  parallel CPUs.
+
+The `rt_i` instance tracks whether preparation is required via its `needprep`
+field.  In practice, `rt_shootray()` will trigger preparation automatically if
+it has not yet been done, but calling `rt_prep()` (or `rt_prep_parallel()`)
+explicitly lets you control when this potentially expensive step happens, and
+is required when tracing in parallel so that the acceleration structures are
+ready before multiple threads begin shooting.
+
+== The application structure
+
+`struct application` is the single parameter to `rt_shootray()`.  It carries
+the ray to shoot, the callbacks to invoke, the instance to trace against, and a
+number of application-specific fields.  Always initialize it with the
+`RT_APPLICATION_INIT()` macro before setting fields, so that reserved sanity
+fields are zeroed.
+
+The mandatory fields are:
+
+[cols="1,3",options="header"]
+|===
+| Field
+| Meaning
+
+| `a_ray.r_pt`
+| Starting point of the ray.
+
+| `a_ray.r_dir`
+| Ray direction, given as a unit vector of direction cosines.
+
+| `a_hit`
+| Callback invoked when the ray intersects geometry.
+
+| `a_miss`
+| Callback invoked when the ray intersects nothing.
+
+| `a_rt_i`
+| The `struct rt_i *` returned by `rt_dirbuild()`.
+|===
+
+Other commonly used fields include `a_resource` (per-CPU resources, required
+for multithreaded tracing), `a_onehit` (stop after the first hit), `a_level`
+and `a_x`/`a_y` (bookkeeping used in logging), and the application-specific
+`a_uptr`, `a_color`, and `a_user` fields, which the library never touches and
+which you can use to carry your own state into the callbacks.  See
+`include/rt/application.h` for the complete, authoritative field list.
+
+== Phase 4: Shooting a ray (rt_shootray)
+
+`rt_shootray()` (declared in `include/rt/shoot.h`) takes a fully populated
+`struct application *` and intersects `a_ray` against the prepped geometry.
+Internally it traverses the space partitioning acceleration structure,
+intersects candidate primitives to produce *segments* (`struct seg`, in
+`include/rt/seg.h`), and evaluates the region Boolean trees to produce
+*partitions* (`struct partition`, in `include/rt/ray_partition.h`).
+
+`rt_shootray()` then dispatches to exactly one of your callbacks and returns
+the value that callback placed in `a_return`.
+
+The library also provides related shooting entry points, including
+`rt_shootrays()` for ray bundles (see `struct application_bundle`) and
+`rt_shootray_simple()`, but `rt_shootray()` is the fundamental operation.
+
+=== The hit callback
+
+Your `a_hit()` function is called when the ray produces at least one partition.
+It receives the application pointer, the head of the partition list, and the
+segment list.  Each `struct partition` describes one in/out span of the ray
+inside a single region and references:
+
+* `pt_inhit` and `pt_outhit` — the entry and exit `struct hit` records (from
+  `include/rt/hit.h`), whose `hit_dist` gives the signed distance along the ray
+  from `a_ray.r_pt`.
+* `pt_regionp` — the `struct region` the span belongs to.
+
+The intersection point is reconstructed from the ray origin, direction, and
+`hit_dist` (conventionally with `VJOIN1`).  Surface normals are obtained with
+the `RT_HIT_NORMAL()` macro rather than by reading raw fields directly.  Walk
+the partition list to examine every region span the ray passed through.
+
+=== The miss callback
+
+Your `a_miss()` function is called when the ray intersects no geometry.  It
+receives only the application pointer.  This is where a renderer would, for
+example, assign a background color.
+
+=== Return values
+
+The `int` you return from `a_hit()` or `a_miss()` is stored in `a_return` and
+becomes the return value of `rt_shootray()`.  By convention, applications use
+this to signal a hit versus a miss (for example, returning 1 from `a_hit()` and
+0 from `a_miss()`), but the exact meaning is defined by your application.
+
+== Overlaps
+
+When two regions claim the same span of a ray, the geometry *overlaps*.
+`librt` resolves overlaps through the `a_multioverlap` callback and reports them
+through `a_logoverlap`; a default implementation is provided if you do not
+supply your own.  Overlaps usually indicate a modeling error, and the reporting
+hooks let tools surface them to the user.
+
+== Parallel ray tracing and resources
+
+For multithreaded tracing, each CPU needs its own `struct resource` (declared
+in `include/rt/resource.h`), assigned to `a_resource`, so that per-ray scratch
+memory is not shared across threads.  Prepare the instance with
+`rt_prep_parallel()` before launching worker threads, give each thread its own
+application structure and resource, and let each call `rt_shootray()`
+independently.
+
+== Cleanup
+
+When you are finished, release the resources associated with the instance.
+`rt_clean()` returns an `rt_i` to a pre-`gettree` state so it can be reused,
+and the resource-cleanup entry points (for example,
+`rt_clean_resource_basic()`) release per-CPU resources.  See
+`include/rt/rt_instance.h` for the current, non-deprecated cleanup functions.
+
+== Where to look next
+
+[cols="1,2",options="header"]
+|===
+| Header
+| Contents
+
+| `include/rt/rt_instance.h`
+| `struct rt_i`, `rt_gettree()`, `rt_prep()`, cleanup functions.
+
+| `include/rt/application.h`
+| `struct application`, `RT_APPLICATION_INIT()`.
+
+| `include/rt/shoot.h`
+| `rt_shootray()` and related shooting entry points.
+
+| `include/rt/ray_partition.h`
+| `struct partition` and the partition list.
+
+| `include/rt/seg.h`
+| `struct seg` (ray/primitive segments).
+
+| `include/rt/hit.h`
+| `struct hit` and `RT_HIT_NORMAL()`.
+
+| `include/rt/db_io.h`
+| `rt_dirbuild()` and database I/O.
+|===
+
+For generated API documentation covering these headers, build and consult the
+link:api_reference.html[API Reference].

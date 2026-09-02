@@ -36,6 +36,7 @@
 
 
 class ON_Brep;
+class Axis2Placement3D;
 
 class GeometricallyBoundedSurfaceShapeRepresentation : public ShapeRepresentation
 {
@@ -49,6 +50,7 @@ public:
     GeometricallyBoundedSurfaceShapeRepresentation();
     GeometricallyBoundedSurfaceShapeRepresentation(STEPWrapper *sw, int step_id);
     virtual ~GeometricallyBoundedSurfaceShapeRepresentation();
+    Axis2Placement3D *GetAxis2Placement3d();
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
     virtual void Print(int level);
 

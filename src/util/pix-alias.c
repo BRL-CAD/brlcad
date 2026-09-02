@@ -46,6 +46,7 @@
 
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/malloc.h"
 #include "bu/exit.h"
 
@@ -64,24 +65,6 @@ struct aliashead {
     short xoff, yoff;	/* offsets of pixels */
     short bitplanes;	/* the number of bits per pixel */
 };
-
-static int
-parse_positive_int_arg(const char *arg, int *out_value, const char *label)
-{
-    char *end = NULL;
-    long int value;
-
-    errno = 0;
-    value = strtol(arg, &end, 10);
-    if (errno != 0 || end == arg || *end != '\0' || value <= 0 || value > INT_MAX) {
-	fprintf(stderr, "%s: invalid %s '%s'\n", progname, label, arg);
-	return 0;
-    }
-
-    *out_value = (int)value;
-    return 1;
-}
-
 
 /*
  * Main function of program
@@ -184,15 +167,15 @@ main(int ac, char **av)
     while ((c=bu_getopt(ac, av, options)) != -1)
 	switch (c) {
 	    case 'w' :
-		if (!parse_positive_int_arg(bu_optarg, &x, "input width"))
+		if (!bu_opt_scan_int_range(bu_optarg, &x, 1, INT_MAX, "input width"))
 		    usage();
 		break;
 	    case 'n' :
-		if (!parse_positive_int_arg(bu_optarg, &y, "input height"))
+		if (!bu_opt_scan_int_range(bu_optarg, &y, 1, INT_MAX, "input height"))
 		    usage();
 		break;
 	    case 's' :
-		if (!parse_positive_int_arg(bu_optarg, &x, "input size"))
+		if (!bu_opt_scan_int_range(bu_optarg, &x, 1, INT_MAX, "input size"))
 		    usage();
 		y = x;
 		break;

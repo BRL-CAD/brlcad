@@ -20,11 +20,12 @@
 
 /** @file load_g.c
  *
- * Attempt to load a single top-level comb from a named .g file. The file must
- * exist on the machine the 'slave' program is running, with the correct path
- * passed to it. Only one combination is used, intended to be the top of the
- * tree of concern. It's assumed that only BOT's are to be loaded, non-bots will
- * be silently ignored for now. No KD-TREE caching is assumed. I like tacos.
+ * Attempt to load top-level objects from a named .g file. The file must exist
+ * on the machine the 'slave' program is running, with the correct path passed
+ * to it. The named objects are walked as the tops of the trees of concern.
+ * BoT and NMG solids are consumed directly as triangle soup; other solids are
+ * tessellated into an NMG and triangulated before being handed to the tie
+ * engine. No KD-TREE caching is assumed.
  */
 
 #include "common.h"
@@ -51,7 +52,50 @@ static struct tie_s *cur_tie;
 static struct db_i *dbip;
 TIE_3 **tribuf;
 
+#define ADRT_DEFAULT_PLASTIC_GLOSS 0.2
+
 static void load_nmg_to_adrt_gcvwrite(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree_state *tsp, void *client_data);
+
+
+/*
+ * Initialize a mesh's material attributes to physically-sane defaults so the
+ * path tracer treats the surface as an opaque diffuse dielectric.  Without
+ * this the attributes are zeroed, leaving ior == 0 which the path tracer
+ * (mis)reads as a refractive surface, producing black renders.
+ *
+ * Regions whose material shader is a light source -- either the classic
+ * "light" shader or an OSL "emitter" -- are marked emissive so the path
+ * tracer has scene lighting to work with.  Any leading emitter "power" value
+ * is honored, normalized so a typical value renders at unit radiance.
+ */
+static void
+adrt_init_attributes(struct adrt_mesh_attributes_s *attr, const char *shader)
+{
+    attr->density = 1.0;
+    attr->gloss = 0.0;
+    attr->emission = 0.0;
+    attr->ior = 1.0;
+
+    if (shader && shader[0]) {
+	if (bu_strncmp(shader, "plastic", 7) == 0)
+	    attr->gloss = ADRT_DEFAULT_PLASTIC_GLOSS;
+
+	if (bu_strncmp(shader, "light", 5) == 0 || strstr(shader, "emit")) {
+	    fastf_t power = 1.0;
+	    const char *p = strstr(shader, "power");
+	    if (p) {
+		/* OSL form, e.g. "emitter#power#float#75.0" */
+		while (*p && (*p < '0' || *p > '9') && *p != '.')
+		    p++;
+		if (*p)
+		    power = atof(p) / 75.0;
+	    }
+	    if (power <= 0.0)
+		power = 1.0;
+	    attr->emission = power;
+	}
+    }
+}
 
 struct gcv_data {
     struct gcv_region_end_data region_end_data;
@@ -133,8 +177,9 @@ int
 load_nmg_to_adrt_regstart(struct db_tree_state *ts, const struct db_full_path *path, const struct rt_comb_internal *rci, void *UNUSED(client_data))
 {
     /*
-     * if it's a simple single bot region, just eat the bots and return -1.
-     * Omnomnom. Return 0 to do nmg eval.
+     * If it's a simple single BoT (or NMG) region, consume it directly and
+     * return -1 to skip the boolean/NMG evaluation.  Return 0 to fall back to
+     * NMG evaluation for anything more complex.
      */
     struct directory *dir;
     struct rt_db_internal intern;
@@ -174,8 +219,21 @@ load_nmg_to_adrt_regstart(struct db_tree_state *ts, const struct db_full_path *p
     BU_ALLOC(mesh->attributes, struct adrt_mesh_attributes_s);
     mesh->matid = ts->ts_gmater;
 
-    rt_comb_get_color(dbip, rgb, rci);
-    VSCALE(mesh->attributes->color.v, rgb, 1.0/256.0);
+    /*
+     * Prefer the color inherited down the tree state (which honors colors set
+     * on parent combinations), matching the NMG path in
+     * load_nmg_to_adrt_gcvwrite().  Fall back to the region's own color only
+     * when no color has been inherited.  Without this, BoT regions -- including
+     * everything produced by facetizing a colored hierarchy -- would lose any
+     * color set above the region and render in the default gray.
+     */
+    if (ts->ts_mater.ma_color_valid) {
+	VMOVE(mesh->attributes->color.v, ts->ts_mater.ma_color);
+    } else {
+	rt_comb_get_color(dbip, rgb, rci);
+	VSCALE(mesh->attributes->color.v, rgb, 1.0/256.0);
+    }
+    adrt_init_attributes(mesh->attributes, bu_vls_cstr(&rci->shader));
 
     bu_strlcpy(mesh->name, db_path_to_string(path), sizeof(mesh->name));
 
@@ -232,6 +290,7 @@ load_nmg_to_adrt_gcvwrite(struct nmgregion *r, const struct db_full_path *pathp,
     mesh->matid = tsp->ts_gmater;
 
     VMOVE(mesh->attributes->color.v, tsp->ts_mater.ma_color);
+    adrt_init_attributes(mesh->attributes, tsp->ts_mater.ma_shader);
     bu_strlcpy(mesh->name, db_path_to_string(pathp), sizeof(mesh->name));
 
     load_nmg_to_adrt_internal(mesh, r);
@@ -245,7 +304,8 @@ load_g(struct tie_s *tie, const char *db, int argc, const char **argv, struct ad
     struct bg_tess_tol ttol;		/* tessellation tolerance in mm */
     struct db_tree_state tree_state;	/* includes tol & model */
 
-    cur_tie = tie;	/* blehhh, global... need locking. */
+    cur_tie = tie;	/* NOTE: cur_tie is a file-scope global; this is not
+			 * reentrant and would need locking to be thread-safe. */
 
     RT_DBTS_INIT(&tree_state);
     tree_state.ts_tol = &tol;

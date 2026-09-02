@@ -26,7 +26,7 @@ image::../lessons/images/mged08_goblet_combeditor.png[]
 
 [NOTE]
 ====
-Note that in _BRL-CAD_ versions prior to 5.2, the default values are used, but they are not displayed in the shader attribute boxes.
+Historical note: in _BRL-CAD_ releases prior to 5.2, the default values were applied but were not shown in the shader attribute boxes. Current releases display the default values.
 
 ====
 

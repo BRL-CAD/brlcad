@@ -2597,7 +2597,7 @@ proc title_node_handler {node} {
 
 
     if {[file exists [file join [bu_dir doc] html books BRL-CAD_Tutorial_Series-VolumeI.html]] &&
-	[file exists [file join [bu_dir doc] html toc.html]] } {
+	[file exists [file join [bu_dir doc] html main_menu.html]] } {
 
 	# Table of Contents
 	itk_component add archerHelpToC {
@@ -2610,7 +2610,7 @@ proc title_node_handler {node} {
 	set docstoclist [::hv3::hv3 $docstoc.htmlview -width 250 -requestcmd Archer::html_help_display]
 	set docstochtml [$docstoclist html]
 	$docstochtml configure -parsemode html
-	set help_fd [lindex [list [file join [bu_dir doc] html toc.html]] 0]
+	set help_fd [lindex [list [file join [bu_dir doc] html main_menu.html]] 0]
 	get_html_data $help_fd
 	$docstochtml parse $archer_help_data
 

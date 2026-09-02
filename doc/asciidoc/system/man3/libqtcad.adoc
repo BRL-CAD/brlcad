@@ -1,0 +1,59 @@
+= LIBQTCAD(3)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+libqtcad - Qt widget library for BRL-CAD
+
+== SYNOPSIS
+
+[source,cpp]
+----
+#include <qtcad/QgView.h>
+----
+
+Link with *-lqtcad*.
+
+The public interface is provided by the individual _qtcad/Qg*.h_
+headers, such as _qtcad/QgView.h_, _qtcad/QgModel.h_,
+_qtcad/QgTreeView.h_, _qtcad/QgConsole.h_, and _qtcad/QgSelectFilter.h_,
+together with _qtcad/defines.h_.
+
+== DESCRIPTION
+
+LIBQTCAD is a C++ library of Qt widgets and supporting classes for
+building BRL-CAD graphical user interfaces. It provides the reusable
+components used by the Qt-based front ends, including view and quad-view
+widgets, a geometry tree view and selection model, an attribute editor,
+an interactive command console, geometry import dialogs, and assorted
+tool palettes and helper widgets.
+
+The widgets bridge Qt's model/view and event system to BRL-CAD's
+geometry libraries, wrapping libged commands and libdm display managers
+so that models can be displayed, navigated, selected, and edited within
+a Qt application.
+
+Because it depends on Qt, LIBQTCAD is built only when Qt support is
+enabled in the BRL-CAD configuration. The complete API is documented in
+the headers noted above and in the Doxygen-generated reference for the
+LIBQTCAD module.
+
+== SEE ALSO
+
+*brlcad*(1), *libged*(3), *libdm*(3), *libbv*(3), *libtclcad*(3)
+
+The BRL-CAD Doxygen API reference provides the authoritative,
+up-to-date description of all public LIBQTCAD classes.
+
+== AUTHOR
+
+BRL-CAD Team
+
+== COPYRIGHT
+
+This software is Copyright (c) 2004-2026 United States Government as represented by the U.S. Army Research Laboratory.
+
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

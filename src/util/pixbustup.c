@@ -36,6 +36,7 @@
 #include "bu/malloc.h"
 #include "bu/log.h"
 #include "bu/file.h"
+#include "bu/opt.h"
 
 int infd;
 unsigned char *in1;
@@ -51,53 +52,12 @@ printUsage(void)
 }
 
 static int
-parse_positive_size_arg(const char *arg, size_t *out_value, const char *label)
-{
-    char *end = NULL;
-    unsigned long long value;
-
-    errno = 0;
-    value = strtoull(arg, &end, 10);
-    if (errno != 0 || end == arg || *end != '\0' || value == 0 || value > (unsigned long long)((size_t)-1)) {
-	bu_log("pixbustup: invalid %s '%s'\n", label, arg);
-	return 0;
-    }
-
-    *out_value = (size_t)value;
-    return 1;
-}
-
-static int
-parse_nonnegative_size_arg(const char *arg, size_t *out_value, const char *label)
-{
-    char *end = NULL;
-    unsigned long long value;
-
-    errno = 0;
-    value = strtoull(arg, &end, 10);
-    if (errno != 0 || end == arg || *end != '\0' || value > (unsigned long long)((size_t)-1)) {
-	bu_log("pixbustup: invalid %s '%s'\n", label, arg);
-	return 0;
-    }
-
-    *out_value = (size_t)value;
-    return 1;
-}
-
-static int
 parse_nonnegative_offset_arg(const char *arg, b_off_t *out_value, const char *label)
 {
-    char *end = NULL;
-    long long value;
-
-    errno = 0;
-    value = strtoll(arg, &end, 10);
-    if (errno != 0 || end == arg || *end != '\0' || value < 0) {
-	bu_log("pixbustup: invalid %s '%s'\n", label, arg);
+    size_t _s;
+    if (!bu_opt_scan_size_t(arg, &_s, label))
 	return 0;
-    }
-
-    *out_value = (b_off_t)value;
+    *out_value = (b_off_t)_s;
     return 1;
 }
 
@@ -118,7 +78,7 @@ main(int argc, char **argv)
     }
 
     base_name = argv[1];
-    if (!parse_positive_size_arg(argv[2], &nlines, "width")) {
+    if (!bu_opt_scan_size_t_range(argv[2], &nlines, 1, SIZE_MAX, "width")) {
 	printUsage();
 	return 1;
     }
@@ -146,7 +106,7 @@ main(int argc, char **argv)
 	bu_lseek(0, image_offset*scanbytes, 0);
     }
     if (argc == 5) {
-	if (!parse_nonnegative_size_arg(argv[4], &framenumber, "first frame number")) {
+	if (!bu_opt_scan_size_t_range(argv[4], &framenumber, 0, SIZE_MAX, "first frame number")) {
 	    printUsage();
 	    return 1;
 	}

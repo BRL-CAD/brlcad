@@ -38,6 +38,11 @@ struct solid_list
 };
 
 
+/* Convert every IGES Solid Assembly entity (type 184) into a BRL-CAD
+ * combination.  Each member's stored transformation is combined with any
+ * per-member matrix from the assembly, BRL-CAD attributes and color are
+ * applied, and the group is written to the output database.
+ */
 void
 Convassem(void)
 {
@@ -71,7 +76,7 @@ Convassem(void)
 	totass++;
 
 	if (dir[i]->param <= pstart) {
-	    bu_log("Illegal parameter pointer for entity D%07d (%s)\n" ,
+	    bu_log("Illegal parameter pointer for entity D%07d (%s)\n",
 		   dir[i]->direct, dir[i]->name);
 	    continue;
 	}
@@ -88,11 +93,11 @@ Convassem(void)
 	/* Read pointers to group members */
 	for (j = 0; j < comblen; j++) {
 	    if (ptr == NULL) {
-		root = (struct solid_list *)bu_malloc(sizeof(struct solid_list),
+		root = (struct solid_list *)bu_malloc(sizeof(*root),
 						      "Convassem: root");
 		ptr = root;
 	    } else {
-		ptr->next = (struct solid_list *)bu_malloc(sizeof(struct solid_list),
+		ptr->next = (struct solid_list *)bu_malloc(sizeof(*ptr->next),
 							   "Convassem: ptr->next");
 		ptr = ptr->next;
 	    }
@@ -104,7 +109,7 @@ Convassem(void)
 		ptr->item = (-ptr->item);
 
 	    /* Convert pointer to a "dir" index */
-	    ptr->item = (ptr->item-1)/2;
+	    ptr->item = IGES_DE2INDEX(ptr->item);
 
 	    /* Save name of object */
 	    ptr->name = dir[ptr->item]->name;
@@ -126,7 +131,7 @@ Convassem(void)
 
 	    /* Convert to a "dir" index */
 	    if (ptr->matrix)
-		ptr->matrix = (ptr->matrix-1)/2;
+		ptr->matrix = IGES_DE2INDEX(ptr->matrix);
 	    else
 		ptr->matrix = (-1); /* flag to indicate "none" */
 
@@ -142,8 +147,8 @@ Convassem(void)
 	Readint(&no_of_props, "");
 	for (k = 0; k < no_of_props; k++) {
 	    Readint(&j, "");
-	    if (dir[(j-1)/2]->type == 422 &&
-		dir[(j-1)/2]->referenced == brlcad_att_de) {
+	    if (dir[IGES_DE2INDEX(j)]->type == 422 &&
+		dir[IGES_DE2INDEX(j)]->referenced == brlcad_att_de) {
 		/* this is one of our attribute instances */
 		att_de = j;
 	    }
@@ -184,7 +189,7 @@ Convassem(void)
 	else
 	    rgb = (unsigned char *)0;
 
-	mk_lrcomb(fdout ,
+	mk_lrcomb(fdout,
 		  dir[i]->name,		/* name */
 		  &head,			/* members */
 		  brl_att.region_flag,	/* region flag */
@@ -205,7 +210,7 @@ Convassem(void)
 	ptr = root;
 	while (ptr != NULL) {
 	    ptr_tmp = ptr->next;
-	    bu_free((char *)ptr, "convassem: ptr");
+	    bu_free(ptr, "convassem: ptr");
 	    ptr = ptr_tmp;
 	}
     }

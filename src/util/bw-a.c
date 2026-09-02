@@ -37,6 +37,7 @@
 #include "common.h"
 
 #include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 
 #include "bio.h"
@@ -44,6 +45,7 @@
 #include "vmath.h"
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/exit.h"
 #include "bn.h"
 #include "dm.h"
@@ -61,23 +63,6 @@ static char usage[] = "\
 Usage: bw-a [-a] [-s squarefilesize] [-w file_width] [-n file_height]\n\
 	[file.bw]\n";
 
-static int
-parse_positive_long_arg(const char *arg, long int *value, const char *label)
-{
-    char *end = NULL;
-    long int parsed = 0;
-
-    errno = 0;
-    parsed = strtol(arg, &end, 10);
-    if (arg[0] == '\0' || end == arg || *end != '\0' || errno != 0 || parsed <= 0) {
-	fprintf(stderr, "bw-a: invalid %s '%s'\n", label, arg);
-	return 0;
-    }
-
-    *value = parsed;
-    return 1;
-}
-
 int
 get_args(int argc, char **argv)
 {
@@ -89,17 +74,17 @@ get_args(int argc, char **argv)
 		autosize = 1;
 		break;
 	    case 's':
-		if (!parse_positive_long_arg(bu_optarg, &squarefilesize, "square size"))
+		if (!bu_opt_scan_long_range(bu_optarg, &squarefilesize, 1, LONG_MAX, "square size"))
 		    return 0;
 		autosize = 0;
 		break;
 	    case 'n':
-		if (!parse_positive_long_arg(bu_optarg, &file_height, "input height"))
+		if (!bu_opt_scan_long_range(bu_optarg, &file_height, 1, LONG_MAX, "input height"))
 		    return 0;
 		autosize = 0;
 		break;
 	    case 'w':
-		if (!parse_positive_long_arg(bu_optarg, &file_width, "input width"))
+		if (!bu_opt_scan_long_range(bu_optarg, &file_width, 1, LONG_MAX, "input width"))
 		    return 0;
 		autosize = 0;
 		break;

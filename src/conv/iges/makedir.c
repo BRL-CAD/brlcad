@@ -31,6 +31,14 @@
 
 #define CR '\015'
 
+/*
+ * Read the IGES Directory Section, one entity at a time, into the shared
+ * global "card" buffer and populate the "dir" array of directory-entry
+ * structures (type, parameter pointer, transformation, color, form, etc.),
+ * tallying per-type counts.  Directory-entry sequence numbers are converted
+ * to "dir" indices, and transformation entities (types 124/700) have their
+ * matrices read via Readmatrix.
+ */
 void
 Makedir(void)
 {
@@ -48,8 +56,16 @@ Makedir(void)
     Readrec(dstart+1);	/* read first record in directory section */
 
     while (1) {
-	if (card[72] != 'D')	/* We are not in the directory section */
+	if (card[IGES_SECTION_COL] != 'D')	/* We are not in the directory section */
 	    break;
+
+	/* guard against a malformed file with more directory entries
+	 * than the "dir" array can hold (sized to "totentities")
+	 */
+	if ((size_t)(entcount + 1) >= totentities) {
+	    bu_log("More directory entries than expected (%zu), ignoring the rest\n", totentities);
+	    break;
+	}
 
 	entcount++;	/* increment count of entities */
 
@@ -58,7 +74,7 @@ Makedir(void)
 	}
 
 	/* save the directory record number for this entity */
-	dir[entcount]->direct = atoi(&card[73]);
+	dir[entcount]->direct = atoi(&card[IGES_SEQNUM_COL]);
 
 	/* set reference count to 0 */
 	dir[entcount]->referenced = 0;
@@ -66,10 +82,10 @@ Makedir(void)
 	/* set record number to read for next entity */
 	saverec = currec + 2;
 
-	Readcols(str, 8);	/* read entity type */
+	Readcols(str, IGES_DE_FIELD_WIDTH);	/* read entity type */
 	dir[entcount]->type = atoi(str);
 
-	Readcols(str, 8);	/* read pointer to parameter entry */
+	Readcols(str, IGES_DE_FIELD_WIDTH);	/* read pointer to parameter entry */
 
 	/* convert it to a file record number */
 	paramptr = atoi(str);
@@ -84,17 +100,17 @@ Makedir(void)
 
 	if (dir[entcount]->type == 422) {
 	    /* This is an attribute instance, so get the definition */
-	    Readcols(str, 8);
+	    Readcols(str, IGES_DE_FIELD_WIDTH);
 	    dir[entcount]->referenced = (-atoi(str));
 	} else
 	    counter += 8;
 
 	counter += 16;	/* skip 16 columns */
 
-	Readcols(str, 8);    /* read pointer to view entity */
+	Readcols(str, IGES_DE_FIELD_WIDTH);    /* read pointer to view entity */
 	dir[entcount]->view = atoi(str);
 
-	Readcols(str, 8);	/* read pointer to transformation entity */
+	Readcols(str, IGES_DE_FIELD_WIDTH);	/* read pointer to transformation entity */
 
 	/* convert it to a "dir" index
 	 * Use (DE + 1)/2 - 1 rather than (DE-1)/2 to get
@@ -105,23 +121,23 @@ Makedir(void)
 	/* skip next field */
 	counter += 8;
 
-	Readcols(str, 8);	/* read status entry */
+	Readcols(str, IGES_DE_FIELD_WIDTH);	/* read status entry */
 	dir[entcount]->status = atoi(str);
 
 	Readrec(currec + 1);	/* read next record into buffer */
 	counter += 16;		/* skip first two fields */
 
-	Readcols(str, 8);	/* read pointer to color entity */
+	Readcols(str, IGES_DE_FIELD_WIDTH);	/* read pointer to color entity */
 	/* if pointer is negative, convert to a 'dir' index */
 	dir[entcount]->colorp = atoi(str);
 	if (dir[entcount]->colorp < 0)
 	    dir[entcount]->colorp = (dir[entcount]->colorp + 1)/2;
 
-	Readcols(str, 8);	/* read parameter line count */
+	Readcols(str, IGES_DE_FIELD_WIDTH);	/* read parameter line count */
 	dir[entcount]->paramlines = atoi(str);
 	if (dir[entcount]->paramlines == 0)
 	    dir[entcount]->paramlines = 1;
-	Readcols(str, 8);	/* read form number */
+	Readcols(str, IGES_DE_FIELD_WIDTH);	/* read form number */
 	dir[entcount]->form = atoi(str);
 
 	/* Look for entity type in list and increment that count */
@@ -144,7 +160,7 @@ Makedir(void)
 	if (dir[entcount]->type == 124 || dir[entcount]->type == 700) {
 	    /* Read and store the matrix */
 	    if (dir[entcount]->param <= pstart) {
-		bu_log("Illegal parameter pointer for entity D%07d (%s)\n" ,
+		bu_log("Illegal parameter pointer for entity D%07d (%s)\n",
 		       dir[entcount]->direct, dir[entcount]->name);
 		dir[entcount]->rot = NULL;
 	    } else {

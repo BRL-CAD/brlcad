@@ -59,9 +59,11 @@ texture_clouds_work(struct texture_s *texture, void *mesh, struct tie_ray_s *UNU
 	p[2] = (ADRT_MESH(mesh)->max[2] - ADRT_MESH(mesh)->min[2] > TIE_PREC ? (pt[2] - ADRT_MESH(mesh)->min[2]) / (ADRT_MESH(mesh)->max[2] - ADRT_MESH(mesh)->min[2]) : 0.0) * td->scale[2] + td->translate[2];
     }
 
-    *pixel[0] = fabs(0.5*texture_perlin_noise3(&td->perlin, p, td->size*1.0, td->octaves) + 0.5);
-    *pixel[1] = fabs(0.5*texture_perlin_noise3(&td->perlin, p, td->size*1.0, td->octaves) + 0.5);
-    *pixel[2] = fabs(0.5*texture_perlin_noise3(&td->perlin, p, td->size*1.0, td->octaves) + 0.5);
+    /* Evaluate the noise once: texture_perlin_noise3 scales its point argument
+     * in place, so calling it three times with the same 'p' would sample three
+     * different coordinates and tint the (intended neutral gray) cloud value. */
+    (*pixel)[0] = (*pixel)[1] = (*pixel)[2] =
+	fabs(0.5*texture_perlin_noise3(&td->perlin, p, td->size*1.0, td->octaves) + 0.5);
 }
 
 

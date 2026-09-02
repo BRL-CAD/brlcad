@@ -50,6 +50,7 @@
 #include "bu/app.h"
 #include "bu/color.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/malloc.h"
 #include "bu/exit.h"
 #include "bn.h"
@@ -349,45 +350,6 @@ lines_headerinfo(FILE *fp, double *ap, double *bp, double *pp, long int *np)
     }
 }
 
-static int
-parse_positive_size_arg(const char *arg, size_t *out_value, const char *label)
-{
-    char *end = NULL;
-    unsigned long long int value;
-
-    errno = 0;
-    value = strtoull(arg, &end, 10);
-    if (errno != 0 || end == arg || *end != '\0' || value == 0) {
-	fprintf(stderr, "pixmorph: invalid %s '%s'\n", label, arg);
-	return 0;
-    }
-
-    *out_value = (size_t)value;
-    return 1;
-}
-
-static int
-parse_unit_interval_arg(const char *arg, double *out_value, const char *label)
-{
-    char *end = NULL;
-    double value;
-
-    errno = 0;
-    value = strtod(arg, &end);
-    if (errno != 0 || end == arg || *end != '\0') {
-	fprintf(stderr, "pixmorph: invalid %s '%s'\n", label, arg);
-	return 0;
-    }
-    if (value < 0.0 || value > 1.0) {
-	fprintf(stderr, "pixmorph: %s must be between 0 and 1\n", label);
-	return 0;
-    }
-
-    *out_value = value;
-    return 1;
-}
-
-
 int
 get_args(int argc, char **argv, char **picAnamep, char **picBnamep, char **linesfilenamep,
 	 double *warpfracp, int *dissolvefracp, long int *autosizep,
@@ -402,12 +364,12 @@ get_args(int argc, char **argv, char **picAnamep, char **picBnamep, char **lines
     while ((c = bu_getopt(argc, argv, "w:n:h?")) != -1) {
 	switch (c) {
 	    case 'w':
-		if (!parse_positive_size_arg(bu_optarg, widthp, "width"))
+		if (!bu_opt_scan_size_t_range(bu_optarg, widthp, 1, SIZE_MAX, "width"))
 		    return 0;
 		*autosizep = 0;
 		break;
 	    case 'n':
-		if (!parse_positive_size_arg(bu_optarg, heightp, "height"))
+		if (!bu_opt_scan_size_t_range(bu_optarg, heightp, 1, SIZE_MAX, "height"))
 		    return 0;
 		*autosizep = 0;
 		break;
@@ -422,9 +384,9 @@ get_args(int argc, char **argv, char **picAnamep, char **picBnamep, char **lines
     *picAnamep = argv[bu_optind];
     *picBnamep = argv[bu_optind+1];
     *linesfilenamep = argv[bu_optind+2];
-    if (!parse_unit_interval_arg(argv[bu_optind+3], warpfracp, "warpfrac"))
+    if (!bu_opt_scan_double_range(argv[bu_optind+3], warpfracp, 0.0, 1.0, "warpfrac"))
 	return 0;
-    if (!parse_unit_interval_arg(argv[bu_optind+4], &dissolvefrac, "dissolvefrac"))
+    if (!bu_opt_scan_double_range(argv[bu_optind+4], &dissolvefrac, 0.0, 1.0, "dissolvefrac"))
 	return 0;
     *dissolvefracp = (int)(255.0*dissolvefrac + 0.5);
 

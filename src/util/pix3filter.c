@@ -35,6 +35,7 @@
 
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
 #include "bu/exit.h"
@@ -93,37 +94,6 @@ Usage: pix3filter [-f type] [-v] [-d #] [-o #]\n\
 	[-s squaresize] [-w width] [-n height]\n\
 	file.pix.n | file.pix1 file.pix2 file.pix3 > file.pix\n";
 
-static int
-parse_int_arg(const char *arg, int *out_value, const char *label)
-{
-    char *end = NULL;
-    long int value;
-
-    errno = 0;
-    value = strtol(arg, &end, 10);
-    if (errno != 0 || end == arg || *end != '\0' || value < INT_MIN || value > INT_MAX) {
-	fprintf(stderr, "pix3filter: invalid %s '%s'\n", label, arg);
-	return 0;
-    }
-
-    *out_value = (int)value;
-    return 1;
-}
-
-static int
-parse_positive_int_arg(const char *arg, int *out_value, const char *label)
-{
-    if (!parse_int_arg(arg, out_value, label))
-	return 0;
-
-    if (*out_value <= 0) {
-	fprintf(stderr, "pix3filter: invalid %s '%s'\n", label, arg);
-	return 0;
-    }
-
-    return 1;
-}
-
 int
 get_args(int argc, char **argv)
 {
@@ -139,24 +109,24 @@ get_args(int argc, char **argv)
 		break;
 	    case 'd':
 		dflag++;
-		if (!parse_int_arg(bu_optarg, &kerndiv, "divisor") || kerndiv == 0)
+		if (!bu_opt_scan_int(bu_optarg, &kerndiv, "divisor") || kerndiv == 0)
 		    return 0;
 		break;
 	    case 'o':
 		oflag++;
-		if (!parse_int_arg(bu_optarg, &kernoffset, "offset"))
+		if (!bu_opt_scan_int(bu_optarg, &kernoffset, "offset"))
 		    return 0;
 		break;
 	    case 'w':
-		if (!parse_positive_int_arg(bu_optarg, &width, "width"))
+		if (!bu_opt_scan_int_range(bu_optarg, &width, 1, INT_MAX, "width"))
 		    return 0;
 		break;
 	    case 'n':
-		if (!parse_positive_int_arg(bu_optarg, &height, "height"))
+		if (!bu_opt_scan_int_range(bu_optarg, &height, 1, INT_MAX, "height"))
 		    return 0;
 		break;
 	    case 's':
-		if (!parse_positive_int_arg(bu_optarg, &width, "size"))
+		if (!bu_opt_scan_int_range(bu_optarg, &width, 1, INT_MAX, "size"))
 		    return 0;
 		height = width;
 		break;
@@ -214,7 +184,7 @@ get_args(int argc, char **argv)
 	if (idx >= file_name) {
 	    *idx = '\0';
 	    ++idx;
-	    if (!parse_int_arg(idx, &frameNumber, "frame number")) {
+	    if (!bu_opt_scan_int(idx, &frameNumber, "frame number")) {
 		bu_free(working_name, "free working_name");
 		return 0;
 	    }

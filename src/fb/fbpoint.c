@@ -38,6 +38,7 @@
 #include "bu/str.h"
 #include "bu/exit.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "vmath.h"
 #include "dm.h"
 #define LIBTERMIO_IMPLEMENTATION
@@ -55,40 +56,6 @@ int oldX, oldY;		/* previous position */
 int Run = 1;		/* Tells when to stop the main loop */
 
 void SimpleInput(void);
-
-static int
-parse_int_arg(const char *arg, int *value, const char *label)
-{
-    char *end = NULL;
-    long parsed = 0;
-
-    errno = 0;
-    parsed = strtol(arg, &end, 10);
-    if (arg[0] == '\0' || end == arg || *end != '\0' || errno != 0) {
-	fprintf(stderr, "%s: invalid %s '%s'\n", bu_getprogname(), label, arg);
-	return 0;
-    }
-    if (parsed < INT_MIN || parsed > INT_MAX) {
-	fprintf(stderr, "%s: %s out of range '%s'\n", bu_getprogname(), label, arg);
-	return 0;
-    }
-
-    *value = (int)parsed;
-    return 1;
-}
-
-static int
-parse_positive_int_arg(const char *arg, int *value, const char *label)
-{
-    if (!parse_int_arg(arg, value, label))
-	return 0;
-    if (*value <= 0) {
-	fprintf(stderr, "%s: %s must be greater than zero, got '%s'\n", bu_getprogname(), label, arg);
-	return 0;
-    }
-
-    return 1;
-}
 
 const char usage[] = "\
 Usage: fbpoint [-F framebuffer] [-s squaresize] [-w width] [-n height] [-x[prefix]] [-y[prefix]] [initialx initially]\n";
@@ -200,7 +167,7 @@ main(int argc, char **argv)
 		break;
 	    case 's':
 	    case 'S':
-		if (!parse_positive_int_arg(bu_optarg, &width, "screen size")) {
+		if (!bu_opt_scan_int_range(bu_optarg, &width, 1, INT_MAX, "screen size")) {
 		    fprintf(stderr, "%s", usage);
 		    return 1;
 		}
@@ -208,14 +175,14 @@ main(int argc, char **argv)
 		break;
 	    case 'w':
 	    case 'W':
-		if (!parse_positive_int_arg(bu_optarg, &width, "screen width")) {
+		if (!bu_opt_scan_int_range(bu_optarg, &width, 1, INT_MAX, "screen width")) {
 		    fprintf(stderr, "%s", usage);
 		    return 1;
 		}
 		break;
 	    case 'n':
 	    case 'N':
-		if (!parse_positive_int_arg(bu_optarg, &height, "screen height")) {
+		if (!bu_opt_scan_int_range(bu_optarg, &height, 1, INT_MAX, "screen height")) {
 		    fprintf(stderr, "%s", usage);
 		    return 1;
 		}
@@ -251,13 +218,13 @@ main(int argc, char **argv)
 	bu_exit(1, "%s", usage);
     }
     if (argc > 0) {
-	if (!parse_int_arg(argv[0], &curX, "initial x")) {
+	if (!bu_opt_scan_int(argv[0], &curX, "initial x")) {
 	    fprintf(stderr, "%s", usage);
 	    return 1;
 	}
     }
     if (argc > 1) {
-	if (!parse_int_arg(argv[1], &curY, "initial y")) {
+	if (!bu_opt_scan_int(argv[1], &curY, "initial y")) {
 	    fprintf(stderr, "%s", usage);
 	    return 1;
 	}

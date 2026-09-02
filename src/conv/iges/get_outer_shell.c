@@ -21,6 +21,13 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
+/*
+ * Convert an IGES 514 Shell entity (the outer shell) into an NMG shell.
+ *
+ * Reads the list of face DEs and orientations, builds a face for each
+ * via Add_face_to_shell(), glues the coincident faces together, and
+ * returns the resulting NMG shell.
+ */
 struct shell *
 Get_outer_shell(struct nmgregion *r, size_t entityno, struct bu_list *vlfree)
 {
@@ -37,7 +44,7 @@ Get_outer_shell(struct nmgregion *r, size_t entityno, struct bu_list *vlfree)
     /* Acquiring Data */
 
     if (dir[entityno]->param <= pstart) {
-	bu_log("Illegal parameter pointer for entity D%07d (%s)\n" ,
+	bu_log("Illegal parameter pointer for entity D%07d (%s)\n",
 	       dir[entityno]->direct, dir[entityno]->name);
 	return 0;
     }
@@ -46,9 +53,15 @@ Get_outer_shell(struct nmgregion *r, size_t entityno, struct bu_list *vlfree)
     Readint(&sol_num, "");
     Readint(&no_of_faces, "");
 
-    face_de = (int *)bu_calloc(no_of_faces, sizeof(int), "Get_outer_shell face DE's");
-    face_orient = (int *)bu_calloc(no_of_faces, sizeof(int), "Get_outer_shell orients");
-    fu = (struct faceuse **)bu_calloc(no_of_faces, sizeof(struct faceuse *), "Get_outer_shell faceuses ");
+    if (no_of_faces <= 0 || no_of_faces > 10000000) {
+	bu_log("Get_outer_shell: illegal number of faces (%d) for entity D%07d\n",
+	       no_of_faces, dir[entityno]->direct);
+	return 0;
+    }
+
+    face_de = (int *)bu_calloc(no_of_faces, sizeof(*face_de), "Get_outer_shell face DE's");
+    face_orient = (int *)bu_calloc(no_of_faces, sizeof(*face_orient), "Get_outer_shell orients");
+    fu = (struct faceuse **)bu_calloc(no_of_faces, sizeof(*fu), "Get_outer_shell faceuses ");
 
     for (face = 0; face < no_of_faces; face++) {
 	Readint(&face_de[face], "");
@@ -58,16 +71,16 @@ Get_outer_shell(struct nmgregion *r, size_t entityno, struct bu_list *vlfree)
     s = nmg_msv(r);
 
     for (face = 0; face < no_of_faces; face++) {
-	fu[face_count] = Add_face_to_shell(s, (face_de[face]-1)/2, face_orient[face], vlfree);
+	fu[face_count] = Add_face_to_shell(s, IGES_DE2INDEX(face_de[face]), face_orient[face], vlfree);
 	if (fu[face_count] != (struct faceuse *)NULL)
 	    face_count++;
     }
 
     nmg_gluefaces(fu, face_count, vlfree, &tol);
 
-    bu_free((char *)fu, "Get_outer_shell: faceuse list");
-    bu_free((char *)face_de, "Get_outer_shell: face DE's");
-    bu_free((char *)face_orient, "Get_outer_shell: face orients");
+    bu_free(fu, "Get_outer_shell: faceuse list");
+    bu_free(face_de, "Get_outer_shell: face DE's");
+    bu_free(face_orient, "Get_outer_shell: face orients");
     return s;
 }
 

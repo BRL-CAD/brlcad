@@ -19,6 +19,8 @@
  */
 /** @file adrt_struct.h
  *
+ * Core ADRT data structures: per-mesh material attributes, the mesh record, and
+ * the load-info message wrapper.
  *
  */
 

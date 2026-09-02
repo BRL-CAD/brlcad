@@ -35,6 +35,7 @@
 
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/exit.h"
 #include "bu/malloc.h"
 #include "vmath.h"
@@ -55,32 +56,6 @@ int screen_width;			/* input width */
 /* in cmap-crunch.c */
 extern void cmap_crunch(RGBpixel (*scan_buf), int pixel_ct, ColorMap *colormap);
 
-static int
-parse_positive_int_arg(const char *arg, int *value, const char *label)
-{
-    char *end = NULL;
-    long parsed = 0;
-
-    errno = 0;
-    parsed = strtol(arg, &end, 10);
-    if (arg[0] == '\0' || end == arg || *end != '\0' || errno != 0) {
-	fprintf(stderr, "%s: invalid %s '%s'\n", bu_getprogname(), label, arg);
-	return 0;
-    }
-    if (parsed <= 0) {
-	fprintf(stderr, "%s: %s must be greater than zero, got '%s'\n", bu_getprogname(), label, arg);
-	return 0;
-    }
-    if (parsed > INT_MAX) {
-	fprintf(stderr, "%s: %s out of range '%s'\n", bu_getprogname(), label, arg);
-	return 0;
-    }
-
-    *value = (int)parsed;
-    return 1;
-}
-
-
 int
 get_args(int argc, char **argv)
 {
@@ -99,16 +74,16 @@ get_args(int argc, char **argv)
 		break;
 	    case 's':
 		/* square size */
-		if (!parse_positive_int_arg(bu_optarg, &screen_width, "screen size"))
+		if (!bu_opt_scan_int_range(bu_optarg, &screen_width, 1, INT_MAX, "screen size"))
 		    return 0;
 		screen_height = screen_width;
 		break;
 	    case 'w':
-		if (!parse_positive_int_arg(bu_optarg, &screen_width, "screen width"))
+		if (!bu_opt_scan_int_range(bu_optarg, &screen_width, 1, INT_MAX, "screen width"))
 		    return 0;
 		break;
 	    case 'n':
-		if (!parse_positive_int_arg(bu_optarg, &screen_height, "screen height"))
+		if (!bu_opt_scan_int_range(bu_optarg, &screen_height, 1, INT_MAX, "screen height"))
 		    return 0;
 		break;
 

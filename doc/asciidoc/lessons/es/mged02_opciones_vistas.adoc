@@ -119,8 +119,8 @@ El tamaño de la vista es la cantidad de espacio modelo que se muestra en la ven
 [cols="2*"]
 [%noheader]
 |===
-|image:../../lessons/es/images/mged02_flower_zoomin.jpg[]
-|image:../../lessons/es/images/mged02_flower_zoomout.jpg[]
+|image:../../lessons/es/images/mged02_flower_zoomin.png[]
+|image:../../lessons/es/images/mged02_flower_zoomout.png[]
 |Zoom de acercamiento para ver detalles (vista a pequeña escala)
 |Zoom distante para ver el objeto en relación con su entorno (vista a gran escala)
 |===

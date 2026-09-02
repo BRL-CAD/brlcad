@@ -27,6 +27,11 @@
 
 #include "./iges_struct.h"
 
+/* Reshape the boolean tree toward BRL-CAD's preferred left-leaning form,
+ * e.g. (((a+b)-c)+d) rather than (a+(b-(c-d))), using the distributive and
+ * commutative identities.  Traverses in LRN order and returns 1 if the tree
+ * was left unchanged, 0 if any rewrite was performed.
+ */
 Arrange(root)
     struct node *root;
 {

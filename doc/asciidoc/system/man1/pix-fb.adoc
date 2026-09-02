@@ -36,7 +36,7 @@ To go the other direction (save a framebuffer image to a *pix*(5) file), use *fb
   Clear the framebuffer before displaying. By default the new image overwrites whatever is already on screen without clearing.
 
 *-z*::
-  Zoom and center the image to fill the display, using integer zoom factors via the libfb fb_view() routine.
+  Zoom and center the image to fill the display, using integer zoom factors via the framebuffer library's fb_view() routine.
 
 *-1*::
   Force one scanline per write using *fb_write*(3). This is the default and overrides *-m*.
@@ -105,7 +105,7 @@ Displays a 512x512 image and keeps the framebuffer open for 5 seconds before clo
 [[see_also]]
 == SEE ALSO
 
-*brlcad*(1), *fb-pix*(1), *png-fb*(1), *rt*(1), *libfb*(3), *pix*(5)
+*brlcad*(1), *fb-pix*(1), *png-fb*(1), *rt*(1), *pix*(5)
 
 [[author]]
 == AUTHOR

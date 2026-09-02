@@ -31,12 +31,19 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
+/*
+ * Read the terminate (last) record of the IGES file into the shared global
+ * "card" buffer to learn how many records each section contains, then
+ * compute the starting record numbers of the directory ("dstart") and
+ * parameter ("pstart") sections and allocate the "dir" array of directory
+ * entries.  Restores the previously current record before returning
+ * "pstart".
+ */
 int
 Findp(void)
 {
     int saverec, rec2;
     size_t i;
-    b_off_t offset;
     char str[8];
 
     str[7] = '\0';
@@ -44,14 +51,7 @@ Findp(void)
 
     saverec = currec;	/* save current record number */
 
-    if (bu_fseek(fd, 0, 2)) {
-	/* go to end of file */
-	bu_log("Cannot seek to end of file\n");
-	perror("Findp");
-	bu_exit(1, NULL);
-    }
-    offset = bu_ftell(fd);	/* get file length */
-    rec2 = offset/reclen;	/* calculate record number for last record */
+    rec2 = (int)nrecords;	/* the terminate record is the last one indexed */
     Readrec(rec2);	/* read last record into "card" buffer */
     dstart = 0;
     pstart = 0;
@@ -91,6 +91,10 @@ Findp(void)
 }
 
 
+/*
+ * Free the "dir" array of directory entries (and any per-entry
+ * transformation matrices) allocated by Findp.
+ */
 void
 Free_dir(void)
 {
@@ -98,12 +102,12 @@ Free_dir(void)
 
     for (i = 0; i < totentities; i++) {
 	if (dir[i]->type == 124 || dir[i]->type == 700)
-	    bu_free((char *)dir[i]->rot, "Free_dir: dir[i]->rot");
-	bu_free((char *)dir[i], "Free_dir: dir[i]");
+	    bu_free(dir[i]->rot, "Free_dir: dir[i]->rot");
+	bu_free(dir[i], "Free_dir: dir[i]");
     }
 
     if (totentities > 0)
-	bu_free((char *)dir, "Free_dir: dir");
+	bu_free(dir, "Free_dir: dir");
 }
 
 

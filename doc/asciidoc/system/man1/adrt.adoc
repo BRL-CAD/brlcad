@@ -1,0 +1,136 @@
+= ADRT(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+
+adrt - render BRL-CAD geometry with the ADRT triangle ray tracer
+
+== SYNOPSIS
+
+[source]
+----
+adrt [options] model.g object [object ...]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+The *adrt* command is a standalone front end to BRL-CAD's ADRT renderer. It
+loads the named _objects_ from _model.g_, converts their evaluated geometry to
+triangles, frames the model, and writes a rendered image. It provides a compact
+command-line interface for ADRT's path, shaded, diagnostic, spall-cone, and cut
+visualization modes without requiring the distributed ADRT master/slave tools.
+
+The default view uses azimuth 35 degrees, elevation 25 degrees, and a
+perspective camera. Explicit eye and look-at points may be supplied instead.
+The output format is selected from the extension of the file named by *-o*.
+
+
+[[options]]
+== OPTIONS
+
+*-o* _file_::
+  Write the rendered image to _file_. Default is _adrt.png_.
+
+*-s* _N_::
+  Set both image dimensions to _N_ pixels. Default is 512.
+
+*-w* _N_::
+  Set the image width, overriding the width selected by *-s*.
+
+*-n* _N_::
+  Set the image height, overriding the height selected by *-s*.
+
+*-m* _mode_::
+  Select *path*, *phong*, *normal*, *depth*, *flat*, *spall*, or *cut*.
+  Default is *path*.
+
+*-H* _N_::
+  Use _N_ samples per pixel in path mode. Default is 32.
+
+*-b* _buffer_::
+  Pass a raw initialization string to a mode that accepts one, such as
+  *cut* or *spall*. This is an advanced renderer-specific option.
+
+*-A* _angle_::
+  Set the full spall-cone angle in degrees. Default is 30.
+
+*-a* _azimuth_::
+  Set the view azimuth in degrees. Default is 35.
+
+*-e* _elevation_::
+  Set the view elevation in degrees. Default is 25.
+
+*-E* _x,y,z_::
+  Set an explicit eye point in model units, overriding *-a* and *-e*.
+
+*-L* _x,y,z_::
+  Set an explicit look-at point in model units. Default is the model center.
+
+*-p* _angle_::
+  Set the perspective half-angle in degrees. Default is 25.
+
+*-C* _r/g/b_::
+  Set the environment/sky color with 0-255 components. Default is
+  230/237/255.
+
+*-P* _N_::
+  Use _N_ render threads. By default all available processors are used.
+
+
+[[examples]]
+== EXAMPLES
+
+.Render with the path tracer
+====
+[source,bash]
+----
+adrt -s 1024 -H 64 -o model.png model.g all.g
+----
+Renders _all.g_ into a 1024x1024 PNG with 64 samples per pixel.
+====
+
+.Inspect surface normals
+====
+[source,bash]
+----
+adrt -m normal -a 45 -e 30 -o normals.png model.g part.r
+----
+Renders a diagnostic normal image of _part.r_ from the specified view.
+====
+
+.Visualize a spall cone
+====
+[source,bash]
+----
+adrt -m spall -A 40 -o spall.png model.g target.r
+----
+Uses the spall visualization mode with a 40-degree full cone angle.
+====
+
+
+[[see_also]]
+== SEE ALSO
+
+*adrt_master*(1), *adrt_slave*(1), *art*(1), *rt*(1)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -33,7 +33,7 @@ toc::[]
 
 === Prerequisites
 To build BRL-CAD from source, you will need:
-* **CMake** (3.14+)
+* **CMake** (3.26+)
 * **C/C++ Compiler** (GCC, Clang, or MSVC)
 * **Build Tools** (Make, Ninja, or Visual Studio)
 
@@ -53,7 +53,7 @@ For detailed installation instructions across different platforms, please refer 
 
 == Documentation
 
-We are currently transitioning our extensive documentation (Docbook/XML + MediaWiki + troff + text + ...) to an **Antora-powered ecosystem**.
+We have consolidated our extensive documentation (formerly a mix of DocBook/XML, MediaWiki, troff, plain text, and more) onto **AsciiDoc**, with the authoritative sources under `doc/asciidoc/`.
 
 * **Tutorials:** link:{docs-url}/tutorials[Browse the Manuals]
 * **Developer Guides:** link:{docs-url}/hacking and link:{repo-url}/blob/main/HACKING

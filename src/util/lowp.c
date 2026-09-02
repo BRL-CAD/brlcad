@@ -36,6 +36,7 @@
 #include "bu/malloc.h"
 #include "bu/exit.h"
 #include "bu/log.h"
+#include "bu/opt.h"
 
 
 #define MAX_LINE 10000		/* Max pixels/line */
@@ -53,23 +54,6 @@ int readval = 0;
 char usage[] = "Usage: lowp file1.pix file2.pix file3.pix [width] > out.pix\n";
 
 int infd1, infd2, infd3;		/* input fd's */
-
-static int
-parse_positive_int_arg(const char *arg, int *out_value, const char *label)
-{
-    char *end = NULL;
-    long int value;
-
-    errno = 0;
-    value = strtol(arg, &end, 10);
-    if (errno != 0 || end == arg || *end != '\0' || value <= 0 || value > INT_MAX) {
-	fprintf(stderr, "lowp: invalid %s '%s'\n", label, arg);
-	return 0;
-    }
-
-    *out_value = (int)value;
-    return 1;
-}
 
 static void
 check_readval(unsigned char *in, int infd)
@@ -127,7 +111,7 @@ main(int argc, char **argv)
     bu_free(ifname, "ifname alloc from bu_file_realpath");
 
     if (argc == 5) {
-	if (!parse_positive_int_arg(argv[4], &nlines, "width"))
+	if (!bu_opt_scan_int_range(argv[4], &nlines, 1, INT_MAX, "width"))
 	    bu_exit(1, "%s", usage);
     }
 

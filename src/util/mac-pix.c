@@ -47,6 +47,7 @@
 
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/exit.h"
 
 
@@ -87,37 +88,6 @@ Usage: mac-pix [-c -l -b]\n\
 	[-S squareoutpsize] [-W outp_width] [-N outp_height]\n\
 	[-C r/g/b] [file.mac]\n\
        (standard output must be redirected)\n";
-
-static int
-parse_int_arg(const char *arg, int *out_value, const char *label)
-{
-    char *end = NULL;
-    long int value;
-
-    errno = 0;
-    value = strtol(arg, &end, 10);
-    if (errno != 0 || end == arg || *end != '\0' || value < INT_MIN || value > INT_MAX) {
-	fprintf(stderr, "mac-pix: invalid %s '%s'\n", label, arg);
-	return 0;
-    }
-
-    *out_value = (int)value;
-    return 1;
-}
-
-static int
-parse_positive_int_arg(const char *arg, int *out_value, const char *label)
-{
-    if (!parse_int_arg(arg, out_value, label))
-	return 0;
-
-    if (*out_value <= 0) {
-	fprintf(stderr, "mac-pix: invalid %s '%s'\n", label, arg);
-	return 0;
-    }
-
-    return 1;
-}
 
 static int
 parse_color_arg(const char *arg, unsigned char *out_color)
@@ -168,53 +138,53 @@ get_args(int argc, char **argv)
 		break;
 	    case 's':
 		/* square file size */
-		if (!parse_positive_int_arg(bu_optarg, &file_width, "Mac size"))
+		if (!bu_opt_scan_int_range(bu_optarg, &file_width, 1, INT_MAX, "Mac size"))
 		    return 0;
 		file_height = file_width;
 		break;
 	    case 'w':
-		if (!parse_positive_int_arg(bu_optarg, &file_width, "Mac width"))
+		if (!bu_opt_scan_int_range(bu_optarg, &file_width, 1, INT_MAX, "Mac width"))
 		    return 0;
 		break;
 	    case 'n':
-		if (!parse_positive_int_arg(bu_optarg, &file_height, "Mac height"))
+		if (!bu_opt_scan_int_range(bu_optarg, &file_height, 1, INT_MAX, "Mac height"))
 		    return 0;
 		break;
 	    case 'N':
-		if (!parse_positive_int_arg(bu_optarg, &scr_height, "output height"))
+		if (!bu_opt_scan_int_range(bu_optarg, &scr_height, 1, INT_MAX, "output height"))
 		    return 0;
 		break;
 	    case 'x':
-		if (!parse_int_arg(bu_optarg, &file_xoff, "Mac x offset"))
+		if (!bu_opt_scan_int(bu_optarg, &file_xoff, "Mac x offset"))
 		    return 0;
 		break;
 	    case 'X':
 		{
 		    int xoff = 0;
-		    if (!parse_int_arg(bu_optarg, &xoff, "output x offset"))
+		    if (!bu_opt_scan_int(bu_optarg, &xoff, "output x offset"))
 			return 0;
 		    scr_xoff += xoff;
 		}
 		break;
 	    case 'y':
-		if (!parse_int_arg(bu_optarg, &file_yoff, "Mac y offset"))
+		if (!bu_opt_scan_int(bu_optarg, &file_yoff, "Mac y offset"))
 		    return 0;
 		break;
 	    case 'Y':
 		{
 		    int yoff = 0;
-		    if (!parse_int_arg(bu_optarg, &yoff, "output y offset"))
+		    if (!bu_opt_scan_int(bu_optarg, &yoff, "output y offset"))
 			return 0;
 		    scr_yoff += yoff;
 		}
 		break;
 	    case 'S':
-		if (!parse_positive_int_arg(bu_optarg, &scr_width, "output size"))
+		if (!bu_opt_scan_int_range(bu_optarg, &scr_width, 1, INT_MAX, "output size"))
 		    return 0;
 		scr_height = scr_width;
 		break;
 	    case 'W':
-		if (!parse_positive_int_arg(bu_optarg, &scr_width, "output width"))
+		if (!bu_opt_scan_int_range(bu_optarg, &scr_width, 1, INT_MAX, "output width"))
 		    return 0;
 		break;
 	    case 'C':

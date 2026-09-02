@@ -44,6 +44,7 @@
 #include "bu/app.h"
 #include "bu/color.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/malloc.h"
 #include "bu/file.h"
 #include "bu/exit.h"
@@ -86,52 +87,6 @@ Usage: bw-fb [-a -i -c -z -R -G -B] [-F framebuffer]\n\
 	[-x file_xoff] [-y file_yoff] [-X scr_xoff] [-Y scr_yoff]\n\
 	[-S squarescrsize] [-W scr_width] [-N scr_height] [file.bw]\n";
 
-static int
-parse_int_arg(const char *arg, int *value, const char *label)
-{
-    char *end = NULL;
-    long parsed = 0;
-
-    errno = 0;
-    parsed = strtol(arg, &end, 10);
-    if (arg[0] == '\0' || end == arg || *end != '\0' || errno != 0 || parsed < INT_MIN || parsed > INT_MAX) {
-	fprintf(stderr, "%s: invalid %s '%s'\n", bu_getprogname(), label, arg);
-	return 0;
-    }
-
-    *value = (int)parsed;
-    return 1;
-}
-
-static int
-parse_positive_size_arg(const char *arg, size_t *value, const char *label)
-{
-    int parsed = 0;
-
-    if (!parse_int_arg(arg, &parsed, label))
-	return 0;
-    if (parsed <= 0) {
-	fprintf(stderr, "%s: %s must be greater than zero, got '%s'\n", bu_getprogname(), label, arg);
-	return 0;
-    }
-
-    *value = (size_t)parsed;
-    return 1;
-}
-
-static int
-parse_nonnegative_int_arg(const char *arg, int *value, const char *label)
-{
-    if (!parse_int_arg(arg, value, label))
-	return 0;
-    if (*value < 0) {
-	fprintf(stderr, "%s: %s must be zero or greater, got '%s'\n", bu_getprogname(), label, arg);
-	return 0;
-    }
-
-    return 1;
-}
-
 int
 get_args(int argc, char **argv)
 {
@@ -165,48 +120,48 @@ get_args(int argc, char **argv)
 		break;
 	    case 's':
 		/* square file size */
-		if (!parse_positive_size_arg(bu_optarg, &file_width, "file size"))
+		if (!bu_opt_scan_size_t_range(bu_optarg, &file_width, 1, SIZE_MAX, "file size"))
 		    return 0;
 		file_height = file_width;
 		autosize = 0;
 		break;
 	    case 'w':
-		if (!parse_positive_size_arg(bu_optarg, &file_width, "file width"))
+		if (!bu_opt_scan_size_t_range(bu_optarg, &file_width, 1, SIZE_MAX, "file width"))
 		    return 0;
 		autosize = 0;
 		break;
 	    case 'n':
-		if (!parse_positive_size_arg(bu_optarg, &file_height, "file height"))
+		if (!bu_opt_scan_size_t_range(bu_optarg, &file_height, 1, SIZE_MAX, "file height"))
 		    return 0;
 		autosize = 0;
 		break;
 	    case 'x':
-		if (!parse_nonnegative_int_arg(bu_optarg, &file_xoff, "file x offset"))
+		if (!bu_opt_scan_int_range(bu_optarg, &file_xoff, 0, INT_MAX, "file x offset"))
 		    return 0;
 		break;
 	    case 'y':
-		if (!parse_nonnegative_int_arg(bu_optarg, &file_yoff, "file y offset"))
+		if (!bu_opt_scan_int_range(bu_optarg, &file_yoff, 0, INT_MAX, "file y offset"))
 		    return 0;
 		break;
 	    case 'X':
-		if (!parse_int_arg(bu_optarg, &scr_xoff, "screen x offset"))
+		if (!bu_opt_scan_int(bu_optarg, &scr_xoff, "screen x offset"))
 		    return 0;
 		break;
 	    case 'Y':
-		if (!parse_int_arg(bu_optarg, &scr_yoff, "screen y offset"))
+		if (!bu_opt_scan_int(bu_optarg, &scr_yoff, "screen y offset"))
 		    return 0;
 		break;
 	    case 'S':
-		if (!parse_nonnegative_int_arg(bu_optarg, &scr_width, "screen size"))
+		if (!bu_opt_scan_int_range(bu_optarg, &scr_width, 0, INT_MAX, "screen size"))
 		    return 0;
 		scr_height = scr_width;
 		break;
 	    case 'W':
-		if (!parse_nonnegative_int_arg(bu_optarg, &scr_width, "screen width"))
+		if (!bu_opt_scan_int_range(bu_optarg, &scr_width, 0, INT_MAX, "screen width"))
 		    return 0;
 		break;
 	    case 'N':
-		if (!parse_nonnegative_int_arg(bu_optarg, &scr_height, "screen height"))
+		if (!bu_opt_scan_int_range(bu_optarg, &scr_height, 0, INT_MAX, "screen height"))
 		    return 0;
 		break;
 

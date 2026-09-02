@@ -34,43 +34,12 @@
 #include "bu/app.h"
 #include "bu/exit.h"
 #include "bu/log.h"
+#include "bu/opt.h"
 #include "vmath.h"
 #include "bv/plot3.h"
 
 
 static const char usage[] = "Usage: plot3line2 x1 y1 x2 y2 [r g b]\n";
-
-static int
-parse_double_arg(const char *arg, double *out_value, const char *label)
-{
-    char *end = NULL;
-
-    errno = 0;
-    *out_value = strtod(arg, &end);
-    if (errno != 0 || end == arg || *end != '\0') {
-	bu_log("plot3line2: invalid %s '%s'\n", label, arg);
-	return 0;
-    }
-
-    return 1;
-}
-
-static int
-parse_color_component(const char *arg, int *out_value, const char *label)
-{
-    char *end = NULL;
-    long int value;
-
-    errno = 0;
-    value = strtol(arg, &end, 10);
-    if (errno != 0 || end == arg || *end != '\0' || value < 0 || value > 255) {
-	bu_log("plot3line2: invalid %s '%s'\n", label, arg);
-	return 0;
-    }
-
-    *out_value = (int)value;
-    return 1;
-}
 
 int
 main(int argc, char **argv)
@@ -96,21 +65,21 @@ main(int argc, char **argv)
 	    putchar(c);
     }
 
-    if (!parse_double_arg(argv[1], &x_1, "x1") ||
-	!parse_double_arg(argv[2], &y_1, "y1") ||
-	!parse_double_arg(argv[3], &x_2, "x2") ||
-	!parse_double_arg(argv[4], &y_2, "y2")) {
+    if (!bu_opt_scan_double(argv[1], &x_1, "x1") ||
+	!bu_opt_scan_double(argv[2], &y_1, "y1") ||
+	!bu_opt_scan_double(argv[3], &x_2, "x2") ||
+	!bu_opt_scan_double(argv[4], &y_2, "y2")) {
 	return 1;
     }
 
     if (argc > 5)
-	if (!parse_color_component(argv[5], &r, "red component"))
+	if (!bu_opt_scan_int_range(argv[5], &r, 0, 255, "red component"))
 	    return 1;
     if (argc > 6)
-	if (!parse_color_component(argv[6], &g, "green component"))
+	if (!bu_opt_scan_int_range(argv[6], &g, 0, 255, "green component"))
 	    return 1;
     if (argc > 7)
-	if (!parse_color_component(argv[7], &b, "blue component"))
+	if (!bu_opt_scan_int_range(argv[7], &b, 0, 255, "blue component"))
 	    return 1;
 
     if (argc > 5)

@@ -19,6 +19,8 @@
  */
 /** @file dispatcher.h
  *
+ * Interface to the ADRT work dispatcher.
+ *
  */
 
 #ifndef ADRT_MASTER_DISPATCHER_H

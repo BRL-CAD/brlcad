@@ -24,6 +24,16 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
+/*
+ * Look up the NMG vertex pointer for one end of an IGES edge use.
+ *
+ * The IGES 504 edge list and IGES 502 vertex list entities are cached
+ * globally in the edge_root and vertex_root linked lists (each node
+ * keyed by its directory-entry sequence number, populated lazily by
+ * Get_edge_list()/Get_vertex_list()).  This resolves the edge use to its
+ * edge, then to the start or end vertex (depending on orientation), and
+ * returns the address of that vertex's cached NMG vertex slot.
+ */
 struct vertex **
 Get_vertex(struct iges_edge_use *edge_use)
 {
@@ -37,6 +47,11 @@ Get_vertex(struct iges_edge_use *edge_use)
 	return (struct vertex **)NULL;
 
     edge_index = edge_use->index-1;
+    if (edge_index < 0 || edge_index >= e_list->no_of_edges) {
+	bu_log("Get_vertex: illegal edge index (%d), edge list has %d edges\n",
+	       edge_index, e_list->no_of_edges);
+	return (struct vertex **)NULL;
+    }
     if (edge_use->orient) {
 	vert_de = e_list->i_edge[edge_index].start_vert_de;
 	vert_index = e_list->i_edge[edge_index].start_vert_index - 1;
@@ -48,10 +63,20 @@ Get_vertex(struct iges_edge_use *edge_use)
     if ((v_list = Get_vertex_list(vert_de)) == NULL)
 	return (struct vertex **)NULL;
 
+    if (vert_index < 0 || vert_index >= v_list->no_of_verts) {
+	bu_log("Get_vertex: illegal vertex index (%d), vertex list has %d vertices\n",
+	       vert_index, v_list->no_of_verts);
+	return (struct vertex **)NULL;
+    }
+
     return &v_list->i_verts[vert_index].v;
 }
 
 
+/*
+ * Store an NMG vertex pointer into the cached IGES vertex slot that
+ * corresponds to one end of an IGES edge use.
+ */
 int
 Put_vertex(struct vertex *v, struct iges_edge_use *edge)
 {
@@ -96,6 +121,9 @@ Put_vertex(struct vertex *v, struct iges_edge_use *edge)
 }
 
 
+/*
+ * Return the cached IGES edge referenced by an IGES edge use.
+ */
 struct iges_edge *
 Get_edge(struct iges_edge_use *e_use)
 {
@@ -104,10 +132,19 @@ Get_edge(struct iges_edge_use *e_use)
     if ((e_list = Get_edge_list(e_use)) == NULL)
 	return (struct iges_edge *)NULL;
 
+    if (e_use->index-1 < 0 || e_use->index-1 >= e_list->no_of_edges) {
+	bu_log("Get_edge: illegal edge index (%d), edge list has %d edges\n",
+	       e_use->index-1, e_list->no_of_edges);
+	return (struct iges_edge *)NULL;
+    }
+
     return &e_list->i_edge[e_use->index-1];
 }
 
 
+/*
+ * Return the cached NMG vertex at the start of an IGES edge.
+ */
 struct vertex *
 Get_edge_start_vertex(struct iges_edge *edge)
 {
@@ -120,6 +157,9 @@ Get_edge_start_vertex(struct iges_edge *edge)
 }
 
 
+/*
+ * Return the cached NMG vertex at the end of an IGES edge.
+ */
 struct vertex *
 Get_edge_end_vertex(struct iges_edge *edge)
 {

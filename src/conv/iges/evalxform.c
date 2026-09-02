@@ -23,7 +23,10 @@
 
 
 /* This routine evaluates the transformation matrix list for each
- * transformation matrix entity.
+ * transformation matrix entity.  Each entity may reference another
+ * transformation entity (via its "trans" field), so the chain is walked and
+ * the individual matrices are accumulated (multiplied together) to yield the
+ * net transformation, which is then stored back on each entity.
  */
 
 struct list /* simple linked list for remembering a matrix sequence */
@@ -97,7 +100,7 @@ Evalxform(void)
 	    while (ptr) {
 		ptr1 = ptr;
 		ptr = ptr->prev;
-		bu_free((char *)ptr1, "Evalxform: ptr1");
+		bu_free(ptr1, "Evalxform: ptr1");
 	    }
 	}
     }

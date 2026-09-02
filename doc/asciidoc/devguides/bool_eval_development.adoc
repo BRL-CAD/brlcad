@@ -647,7 +647,7 @@ In order to inspect the surfaces and indices for a particular stage of the overa
 
 The *dplot* command is used to visualize the results of different stages of the NURBS Boolean evaluation algorithm. This makes it easier to isolate the source of a problem in an evaluation.
 
-Unlike the *brep* command, the *dplot* command is purely a development tool. Its implementation does not honor library boundaries and does not conform to the typical conventions for editor commands, and for this reason is only available as an Archer command in the NURBS Boolean evaluation development branch (https://sourceforge.net/p/brlcad/code/HEAD/tree/brlcad/branches/brep-debug/).
+Unlike the *brep* command, the *dplot* command is purely a development tool. Its implementation does not honor library boundaries and does not conform to the typical conventions for editor commands, and for this reason is only available as an Archer command in the historical NURBS Boolean evaluation development branch of the source repository.
 
 In the development branch, the NURBS Boolean evaluation source code contains additional calls to `DebugPlot` functions (implemented in `debug_plot.cpp`) that create wireframe visualizations of data produced during the evaluations.
 
@@ -883,7 +883,7 @@ For a multi-part evaluation, you'll need to first skip to the correct invocation
 
 What follows is a step-by-step debugging of a real issue affecting the `X` combination from the BRL-CAD sample database `axis.g`.
 
-This issue was fixed in revision 65179 in the NURBS Boolean evaluation development branch of the source repository (https://sourceforge.net/p/brlcad/code/HEAD/tree/brlcad/branches/brep-debug/).
+This issue was fixed in the historical NURBS Boolean evaluation development branch of the source repository.
 
 If you want to follow along, you can reinstate the error in a checkout of the development branch:
 

@@ -43,6 +43,25 @@
 #define Intersect 2
 #define Subtract 3
 
+/* IGES directory entries are assigned odd sequence numbers (1, 3, 5, ...);
+ * the index of an entry in the global "dir" array is (DE - 1) / 2.  Use this
+ * macro instead of open-coding the conversion. */
+#define IGES_DE2INDEX(de) (((de) - 1) / 2)
+
+/* Maximum number of characters buffered while parsing a single numeric or
+ * string field out of a parameter record. */
+#define MAX_NUM 4096
+
+/* Fixed 0-based columns in an 80-character IGES record: the section-ID
+ * character (one of S, G, D, P, T) sits in column IGES_SECTION_COL, and in
+ * the Directory section the record sequence-number field begins at
+ * IGES_SEQNUM_COL. */
+#define IGES_SECTION_COL 72
+#define IGES_SEQNUM_COL 73
+
+/* Each field of an IGES Directory Entry record is 8 columns wide. */
+#define IGES_DE_FIELD_WIDTH 8
+
 /* Circularly linked list of files and names for external references */
 struct file_list
 {
@@ -259,6 +278,8 @@ extern void Push(union tree *ptr);
 extern union tree *Pop(void);
 extern void Freestack(void);
 extern int Recsize(void);
+extern void Build_rec_index(void);
+extern void Free_rec_index(void);
 extern void Zero_counts(void);
 extern void Summary(void);
 extern void Readstart(void);
