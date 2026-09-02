@@ -25,6 +25,7 @@
 #include "common.h"
 
 #include <cstdlib>
+#include <cstring>
 #include <fstream>
 #include <string>
 
@@ -37,6 +38,7 @@
 #include <wdb.h>
 
 #include "../../dbi.h"
+#include "../../ged_private.h"
 
 #define ADIFF_THRESHOLD 0.99
 
@@ -54,6 +56,73 @@ extern "C" void dm_refresh(struct ged *);
 extern "C" int img_cmp(int, struct ged *, const char *, bool, bool, int, fastf_t,
 	const char *, const char *);
 extern "C" int unpack_apng(const char *, const char *, const char *, const char *);
+
+
+static void
+verify_legacy_annotation_coloring(struct ged *gedp)
+{
+    const unsigned char default_annotation_color[3] = {255, 255, 255};
+    const char *create_argv[] = {
+	"annotate", "text", "--no-draw", "--at", "0 0 0",
+	"legacy-color-annotation", "test", NULL
+    };
+    if (ged_exec_annotate(gedp, 7, create_argv) != BRLCAD_OK)
+	bu_exit(EXIT_FAILURE, "Unable to create legacy color test annotation: %s\n",
+	    bu_vls_cstr(gedp->ged_result_str));
+
+    struct directory *annotation_dp = db_lookup(gedp->dbip,
+	"legacy-color-annotation", LOOKUP_QUIET);
+    struct directory *component_dp = db_lookup(gedp->dbip,
+	"component", LOOKUP_QUIET);
+    if (annotation_dp == RT_DIR_NULL || component_dp == RT_DIR_NULL)
+	bu_exit(EXIT_FAILURE, "Unable to find legacy color test objects\n");
+
+    struct ged_bv_data bdata = {};
+    db_full_path_init(&bdata.s_fullpath);
+    db_add_node_to_full_path(&bdata.s_fullpath, annotation_dp);
+
+    struct bv_scene_obj scene_obj = {};
+    scene_obj.s_u_data = &bdata;
+    scene_obj.s_old.s_dflag = 1;
+    scene_obj.s_old.s_regionid = 0;
+    color_soltab(gedp->dbip, &scene_obj);
+
+    if (scene_obj.s_old.s_cflag ||
+	std::memcmp(scene_obj.s_color, default_annotation_color,
+	    sizeof(default_annotation_color)))
+	bu_exit(EXIT_FAILURE,
+	    "Legacy annotation inherited the region color table\n");
+
+    const unsigned char inherited_color[3] = {200, 50, 25};
+    scene_obj.s_old.s_dflag = 0;
+    std::memcpy(scene_obj.s_old.s_basecolor, inherited_color,
+	sizeof(inherited_color));
+    color_soltab(gedp->dbip, &scene_obj);
+    if (scene_obj.s_old.s_cflag ||
+	std::memcmp(scene_obj.s_color, inherited_color,
+	    sizeof(inherited_color)))
+	bu_exit(EXIT_FAILURE, "Legacy annotation lost its inherited color\n");
+
+    db_free_full_path(&bdata.s_fullpath);
+    db_full_path_init(&bdata.s_fullpath);
+    db_add_node_to_full_path(&bdata.s_fullpath, component_dp);
+    color_soltab(gedp->dbip, &scene_obj);
+
+    const struct mater *material = db_mater_head(gedp->dbip);
+    while (material != MATER_NULL &&
+	(scene_obj.s_old.s_regionid < material->mt_low ||
+	 scene_obj.s_old.s_regionid > material->mt_high))
+	material = material->mt_forw;
+    if (material == MATER_NULL || scene_obj.s_color[0] != material->mt_r ||
+	scene_obj.s_color[1] != material->mt_g ||
+	scene_obj.s_color[2] != material->mt_b)
+	bu_exit(EXIT_FAILURE, "Legacy region color-table behavior changed\n");
+
+    db_free_full_path(&bdata.s_fullpath);
+    if (db_delete(gedp->dbip, annotation_dp) ||
+	db_dirdelete(gedp->dbip, annotation_dp))
+	bu_exit(EXIT_FAILURE, "Unable to remove legacy color test annotation\n");
+}
 
 
 static void
@@ -360,6 +429,7 @@ main(int argc, const char **argv)
     struct ged *gedp = ged_open("db", working_db, 1);
     if (!gedp)
 	bu_exit(EXIT_FAILURE, "Unable to open annotation test database\n");
+    verify_legacy_annotation_coloring(gedp);
     gedp->dbi_state = new DbiState(gedp);
     gedp->new_cmd_forms = 1;
     db_add_changed_clbk(gedp->dbip, &ged_changed_callback, gedp);
