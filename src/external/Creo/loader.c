@@ -37,6 +37,7 @@
 
 #include "conversion_snapshot.h"
 #include "frontend_api.h"
+#include "shared/core_api.h"
 
 #define FRONTEND_MSG_FILE "creo-brl-msg.txt"
 #define FRONTEND_TITLE_MAX 512
@@ -44,14 +45,6 @@
 #define FACADE_PATH_MAX 32768
 #define BUNDLE_CONFIG_PATH L"config"
 #define BUNDLE_MATERIAL_PATH L"text\\usascii"
-
-typedef int (__cdecl *creo_brl_core_initialize_fn_t)(void);
-typedef int (__cdecl *creo_brl_core_convert_fn_t)(const char *snapshot_path);
-typedef void (__cdecl *creo_brl_core_terminate_fn_t)(void);
-typedef void (__cdecl *creo_brl_core_load_profile_fn_t)(
-    const char *profile_directory,
-    const char *material_directory);
-typedef void (__cdecl *creo_brl_core_set_frontend_api_fn_t)(const struct creo_brl_frontend_api *);
 
 static HMODULE core_module = NULL;
 static creo_brl_core_initialize_fn_t core_initialize_fn = NULL;
@@ -390,41 +383,41 @@ user_initialize(void)
         return -1;
     }
 
-    proc = GetProcAddress(core_module, "creo_brl_core_initialize");
+    proc = GetProcAddress(core_module, CREO_BRL_CORE_INITIALIZE_EXPORT);
     if (!proc) {
-        show_bootstrap_error(L"GetProcAddress(creo_brl_core_initialize) failed.");
+        show_bootstrap_error(L"Unable to resolve the required core initialize export.");
         unload_core();
         return -1;
     }
     core_initialize_fn = (creo_brl_core_initialize_fn_t)proc;
 
-    proc = GetProcAddress(core_module, "creo_brl_core_convert");
+    proc = GetProcAddress(core_module, CREO_BRL_CORE_CONVERT_EXPORT);
     if (!proc) {
-        show_bootstrap_error(L"GetProcAddress(creo_brl_core_convert) failed.");
+        show_bootstrap_error(L"Unable to resolve the required core convert export.");
         unload_core();
         return -1;
     }
     core_convert_fn = (creo_brl_core_convert_fn_t)proc;
 
-    proc = GetProcAddress(core_module, "creo_brl_core_terminate");
+    proc = GetProcAddress(core_module, CREO_BRL_CORE_TERMINATE_EXPORT);
     if (!proc) {
-        show_bootstrap_error(L"GetProcAddress(creo_brl_core_terminate) failed.");
+        show_bootstrap_error(L"Unable to resolve the required core terminate export.");
         unload_core();
         return -1;
     }
     core_terminate_fn = (creo_brl_core_terminate_fn_t)proc;
 
-    proc = GetProcAddress(core_module, "creo_brl_core_set_frontend_api");
+    proc = GetProcAddress(core_module, CREO_BRL_CORE_SET_FRONTEND_API_EXPORT);
     if (!proc) {
-        show_bootstrap_error(L"GetProcAddress(creo_brl_core_set_frontend_api) failed.");
+        show_bootstrap_error(L"Unable to resolve the required core frontend API export.");
         unload_core();
         return -1;
     }
     core_set_frontend_api_fn = (creo_brl_core_set_frontend_api_fn_t)proc;
 
-    proc = GetProcAddress(core_module, "creo_brl_core_load_profile");
+    proc = GetProcAddress(core_module, CREO_BRL_CORE_LOAD_PROFILE_EXPORT);
     if (!proc) {
-        show_bootstrap_error(L"GetProcAddress(creo_brl_core_load_profile) failed.");
+        show_bootstrap_error(L"Unable to resolve the required core profile export.");
         unload_core();
         return -1;
     }

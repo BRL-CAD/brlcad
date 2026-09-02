@@ -32,6 +32,7 @@
 #include "bu/avs.h"
 #include "conversion_snapshot.h"
 #include "part_writer.h"
+#include "shared/core_api.h"
 #include "wdb.h"
 
 
@@ -1248,7 +1249,7 @@ cleanup:
 }
 
 
-extern "C" __declspec(dllexport) int
+extern "C" CREO_BRL_CORE_EXPORT int CREO_BRL_CORE_CALL
 creo_brl_core_convert(const char *snapshot_path)
 {
     FILE *snapshot_file = NULL;

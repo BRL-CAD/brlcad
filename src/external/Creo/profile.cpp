@@ -28,6 +28,7 @@ extern "C" {
 
 #include "frontend_api.h"
 #include "profile_controls.h"
+#include "shared/core_api.h"
 
 #define PROFILE_MESSAGE_MAX 4096
 
@@ -40,7 +41,7 @@ static void apply_profile_value(const char *resource, const char *type, const ch
 static void load_profile_defaults(const char *material_directory);
 
 
-extern "C" __declspec(dllexport) void
+extern "C" CREO_BRL_CORE_EXPORT void CREO_BRL_CORE_CALL
 creo_brl_core_set_frontend_api(const struct creo_brl_frontend_api *api)
 {
     if (api) {
@@ -253,7 +254,7 @@ cleanup:
 }
 
 
-extern "C" __declspec(dllexport) void
+extern "C" CREO_BRL_CORE_EXPORT void CREO_BRL_CORE_CALL
 creo_brl_core_load_profile(const char *profile_directory, const char *material_directory)
 {
     load_profile_from_directory(profile_directory, material_directory);

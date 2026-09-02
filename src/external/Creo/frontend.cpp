@@ -32,6 +32,7 @@
 
 #include "creo-brl.h"
 #include "conversion_snapshot.h"
+#include "shared/core_api.h"
 #include "snapshot_writer.h"
 
 extern "C" void creo_brl_show_status(const char *message);

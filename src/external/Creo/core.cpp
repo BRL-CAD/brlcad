@@ -4,13 +4,15 @@
 
 #include "common.h"
 
-extern "C" __declspec(dllexport) int
+#include "shared/core_api.h"
+
+extern "C" CREO_BRL_CORE_EXPORT int CREO_BRL_CORE_CALL
 creo_brl_core_initialize()
 {
     return 0;
 }
 
-extern "C" __declspec(dllexport) void
+extern "C" CREO_BRL_CORE_EXPORT void CREO_BRL_CORE_CALL
 creo_brl_core_terminate()
 {
 }

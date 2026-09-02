@@ -322,7 +322,7 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     )
 
   add_library(creo-brl-core SHARED ${CREO2BRL_CORE_SOURCES})
-  set_property(TARGET creo-brl-core APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
+  set_property(TARGET creo-brl-core APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H CREO_BRL_CORE_BUILD)
   target_link_libraries(creo-brl-core REGEX::REGEX ${WIN_LIBS} ${CREO_BRLCAD_LIBS})
   set_target_properties(creo-brl-core PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CREO_BUNDLE_BIN_DIR}")
 
@@ -506,6 +506,7 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     conversion_snapshot.h
     part_writer.h
     profile_controls.h
+    shared/core_api.h
     snapshot_writer.cpp
     snapshot_writer.h
     resources/creo-brl-msg.txt
