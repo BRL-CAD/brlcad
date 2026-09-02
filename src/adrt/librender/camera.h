@@ -96,7 +96,18 @@ __BEGIN_DECLS
 RENDER_EXPORT extern void render_camera_init(render_camera_t *camera, size_t threads);
 RENDER_EXPORT extern void render_camera_free(render_camera_t *camera);
 RENDER_EXPORT extern void render_camera_prep(render_camera_t *camera);
+/** Center a camera on TIE geometry and any prepared annotations.  Returns the
+ * effective scene radius in TIE coordinates. */
+RENDER_EXPORT extern fastf_t render_camera_fit_scene(render_camera_t *camera,
+	const struct tie_s *tie, const struct rt_annot_scene *annotations,
+	fastf_t model_units_per_tie_unit);
 RENDER_EXPORT extern void render_camera_render(render_camera_t *camera, struct tie_s *tie, camera_tile_t *tile, tienet_buffer_t *result);
+/** Render with an externally owned annotation scene.  The coordinate scale
+ * converts TIE coordinates to database model coordinates. */
+RENDER_EXPORT extern void render_camera_render_annotations(render_camera_t *camera,
+	struct tie_s *tie, camera_tile_t *tile, tienet_buffer_t *result,
+	const struct rt_annot_scene *annotations,
+	fastf_t model_units_per_tie_unit);
 
 RENDER_EXPORT extern int render_shader_init(render_t *, const char *name, const char *buf);
 RENDER_EXPORT extern const char *render_shader_load_plugin(const char *filename);

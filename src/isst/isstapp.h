@@ -36,16 +36,14 @@
 
 class ISSTApp : public QApplication
 {
-    Q_OBJECT
-
     public:
 	ISSTApp(int &argc, char *argv[]) :QApplication(argc, argv) {};
 	~ISSTApp() {};
 
 	int load_g(const char *filename, int argc, const char **argv);
 
-	ISST_MainWindow w;
 	GFile g;
+	ISST_MainWindow w;
 };
 
 #endif // ISSTAPP_H
@@ -60,4 +58,3 @@ class ISSTApp : public QApplication
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

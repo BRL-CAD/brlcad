@@ -59,6 +59,7 @@ struct isst_s {
     struct render_camera_s camera;
     struct camera_tile_s tile;
     struct adrt_mesh_s *meshes;
+    struct rt_annot_scene *annotations;
     tienet_buffer_t buffer_image;
     int ogl, sflags, w, h, gs, ui;
     double dt, fps, uic;
@@ -67,6 +68,7 @@ struct isst_s {
     void *texdata;
     vect_t camera_pos_init;
     vect_t camera_focus_init;
+    fastf_t scene_radius;
     int64_t t1;
     int64_t t2;
     int dirty;
@@ -152,11 +154,14 @@ isst_load_g(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc,
     argv = (char **)malloc(sizeof(char *) * (strlen(Tcl_GetString(objv[3])) + 1));	/* allocate way too much. */
     argc = (int)bu_argv_from_string(argv, strlen(Tcl_GetString(objv[3])), Tcl_GetString(objv[3]));
 
-    load_g(isst->tie, Tcl_GetString(objv[2]), argc, (const char **)argv, &(isst->meshes));
+    rt_annot_scene_destroy(isst->annotations);
+    isst->annotations = NULL;
+    load_g_annotations(isst->tie, Tcl_GetString(objv[2]), argc,
+	(const char **)argv, &(isst->meshes), &isst->annotations);
     free(argv);
 
-    VSETALL(isst->camera.pos, isst->tie->radius);
-    VMOVE(isst->camera.focus, isst->tie->mid);
+    isst->scene_radius = render_camera_fit_scene(&isst->camera, isst->tie,
+	isst->annotations, ADRT_MODEL_UNITS_PER_TIE_UNIT);
     VMOVE(isst->camera_pos_init, isst->camera.pos);
     VMOVE(isst->camera_focus_init, isst->camera.focus);
 
@@ -233,7 +238,9 @@ paint_window(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Ob
 	isst->buffer_image.ind = 0;
 
 	render_camera_prep(&isst->camera);
-	render_camera_render(&isst->camera, isst->tie, &isst->tile, &isst->buffer_image);
+	render_camera_render_annotations(&isst->camera, isst->tie, &isst->tile,
+	    &isst->buffer_image, isst->annotations,
+	    ADRT_MODEL_UNITS_PER_TIE_UNIT);
 
 	isst->t1 = bu_gettime();
 
@@ -319,6 +326,7 @@ isst_zap(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj *c
 	return TCL_ERROR;
     }
 
+    rt_annot_scene_destroy(isst->annotations);
     bu_free(isst, "isst free");
     isst = NULL;
 
@@ -387,12 +395,12 @@ move_walk(ClientData UNUSED(clientData), Tcl_Interp *interp, int UNUSED(objc), T
 
     if (flag >= 0) {
 	VSUB2(vec, isst->camera.focus, isst->camera.pos);
-	VSCALE(vec, vec, 0.1 * isst->tie->radius);
+	VSCALE(vec, vec, 0.1 * isst->scene_radius);
 	VADD2(isst->camera.pos, isst->camera.pos, vec);
 	VADD2(isst->camera.focus, isst->camera.focus, vec);
     } else {
 	VSUB2(vec, isst->camera.pos, isst->camera.focus);
-	VSCALE(vec, vec, 0.1 * isst->tie->radius);
+	VSCALE(vec, vec, 0.1 * isst->scene_radius);
 	VADD2(isst->camera.pos, isst->camera.pos, vec);
 	VADD2(isst->camera.focus, isst->camera.focus, vec);
     }
@@ -415,13 +423,13 @@ move_strafe(ClientData UNUSED(clientData), Tcl_Interp *interp, int UNUSED(objc),
     if (flag >= 0) {
 	VSUB2(dir, isst->camera.focus, isst->camera.pos);
 	VCROSS(vec, dir, up);
-	VSCALE(vec, vec, 0.1 * isst->tie->radius);
+	VSCALE(vec, vec, 0.1 * isst->scene_radius);
 	VADD2(isst->camera.pos, isst->camera.pos, vec);
 	VADD2(isst->camera.focus, isst->camera.pos, dir);
     } else {
 	VSUB2(dir, isst->camera.focus, isst->camera.pos);
 	VCROSS(vec, dir, up);
-	VSCALE(vec, vec, -0.1 * isst->tie->radius);
+	VSCALE(vec, vec, -0.1 * isst->scene_radius);
 	VADD2(isst->camera.pos, isst->camera.pos, vec);
 	VADD2(isst->camera.focus, isst->camera.pos, dir);
     }

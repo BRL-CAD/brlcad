@@ -149,6 +149,7 @@ set(
   prep.cpp
   ${LIBRT_PRIMEDIT_SOURCES}
   primitives/annot/annot.c
+  primitives/annot/annot_render.cpp
   primitives/arb8/arb8.c
   primitives/arb8/arb8_brep.cpp
   primitives/arb8/arb8_mirror.c

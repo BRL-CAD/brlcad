@@ -132,6 +132,10 @@ Command to set the backout flag. With no option, prints the current value. When 
 Sets the _useair_ member of the __rt_i__ structure to the integer _n_. If _n_ is 0, then *nirt* ignores any air in the geometry. If this command is invoked with no arguments, *nirt* prints the current value of _useair_. Default is 0.
 
 
+*useannot [* _n_*]*::
+Enables (_n_=1) or disables (_n_=0) diagnostic annotation intersections. When enabled, *nirt* evaluates all model-space annotations below the active database paths and invokes the *a* output action for each crossing. Screen-space annotations are not evaluated because an individual NIRT ray does not supply a pixel size or model-to-view transform. If this command is invoked with no arguments, *nirt* prints the current value. Default is 0.
+
+
 *overlap_claims [* _n_*]*::
 Specifies how to handle multiple regions' claims to segments of a ray. If _n_ is 0 or "resolve", then all overlaps are resolved in favor of a single region and any other claimants are ignored. If _n_ is 2 or "rebuild_all", then all overlaps are rebuilt, so any overlapping regions along the ray create individual (geometrically intersecting) partitions. If _n_ is 3 or "retain", then all overlaps are retained. In this case, the resulting partitions are always geometrically disjoint, each one is owned by a single region according to the current overlap resolution strategy, but every claimant is recorded. If _n_ is 1 or "rebuild_fastgen", then *nirt* takes on _FASTGEN_ behavior, so overlaps of plate-mode primitives are rebuilt, but other overlaps are retained. This command is useful with the __claimant_count__, __claimant_list__, and __claimant_listn__ output items. Default is "resolve".
 
@@ -197,7 +201,11 @@ Quits *nirt*.
 [[output_statements]]
 == OUTPUT STATEMENTS
 
-*nirt* allows the user a high degree of control, via the _fmt_ command, over what information gets printed out for each ray and in what format. There are six types of output statements, each of which is executed under appropriate circumstances. The types and their use are:
+*nirt* allows the user a high degree of control, via the _fmt_ command, over what information gets printed out for each ray and in what format. There are eight types of output statements, each of which is executed under appropriate circumstances. The types and their use are:
+
+
+*a*::
+Annotation. Executed once for each model-space annotation crossing when *useannot* is enabled. Crossings are reported in ray-distance order after the ordinary solid shotline output. The default format is empty.
 
 
 *r*::
@@ -276,6 +284,41 @@ azimuth of view (i.e., of ray direction).
 
 *e*::
 elevation of view (i.e., of ray direction).
+
+
+Annotation Information
+
+
+*annot_path*::
+full database path of the annotation primitive.
+
+
+*annot_segment*::
+zero-based annotation segment index.
+
+
+*annot_role*::
+semantic role of the annotation segment, such as `text`, `leader`, `dimension`, or `arrowhead`.
+
+
+*annot_x*::
+_x_ coordinate of the annotation hit point.
+
+
+*annot_y*::
+_y_ coordinate of the annotation hit point.
+
+
+*annot_z*::
+_z_ coordinate of the annotation hit point.
+
+
+*annot_d*::
+_d_ grid-plane coordinate of the annotation hit point.
+
+
+*annot_visible*::
+1 if no non-air solid surface is closer to the ray origin, otherwise 0. Occluded annotation crossings are still reported so they can be inspected during debugging.
 
 
 
@@ -519,6 +562,15 @@ Because standard input is a pipe, *nirt* runs silently. The script positions the
 nirt -A material_id -A los_density model.g all
 ----
 Each region the ray passes through is reported together with its _material_id_ and _los_density_ attribute values via the *attributes* output item, which is useful for vulnerability and mass-properties analyses.
+====
+
+.Reporting annotation crossings for debugging
+====
+[source,bash]
+----
+nirt -s -e 'useannot 1;fmt a "%s %d (%g %g %g) visible=%d\n" annot_path annot_segment annot_x annot_y annot_z annot_visible;s' model.g component dimensions
+----
+This opt-in format reports every model-space annotation crossing and whether it is in front of the first solid surface. Ordinary NIRT output is unchanged unless *useannot* is enabled and an *a* format is supplied.
 ====
 
 

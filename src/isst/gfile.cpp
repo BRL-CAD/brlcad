@@ -26,6 +26,7 @@
 #include <QFile>
 #include <QPlainTextEdit>
 #include <QTextStream>
+#include <vector>
 #include "gfile.h"
 
 #include "bu/malloc.h"
@@ -33,6 +34,7 @@
 #include "gcv.h"
 #include "nmg.h"
 #include "rt/geom.h"
+#include "load_g.h"
 
 /* Replace the load_g globals from adrt with a struct that is
  * passed through the callers. */
@@ -102,7 +104,8 @@ nmg_to_adrt_internal(TIE_3 **tribuf, struct tie_s *cur_tie, struct adrt_mesh_s *
 		    NMG_CK_VERTEX(v);
 
 		    /* convert mm to m */
-		    VSCALE((*tribuf[vert_count]).v, v->vg_p->coord, 1.0/1000.0);
+		    VSCALE((*tribuf[vert_count]).v, v->vg_p->coord,
+			1.0 / ADRT_MODEL_UNITS_PER_TIE_UNIT);
 		    vert_count++;
 		}
 		if (vert_count > 3)
@@ -185,9 +188,12 @@ nmg_to_adrt_regstart(struct db_tree_state *ts, const struct db_full_path *path, 
 
 	for (i=0;i<bot->num_faces;i++)
 	{
-	    VSCALE((*d->tribuf[0]).v, (bot->vertices+3*bot->faces[3*i+0]), 1.0/1000.0);
-	    VSCALE((*d->tribuf[1]).v, (bot->vertices+3*bot->faces[3*i+1]), 1.0/1000.0);
-	    VSCALE((*d->tribuf[2]).v, (bot->vertices+3*bot->faces[3*i+2]), 1.0/1000.0);
+	    VSCALE((*d->tribuf[0]).v, (bot->vertices+3*bot->faces[3*i+0]),
+		1.0 / ADRT_MODEL_UNITS_PER_TIE_UNIT);
+	    VSCALE((*d->tribuf[1]).v, (bot->vertices+3*bot->faces[3*i+1]),
+		1.0 / ADRT_MODEL_UNITS_PER_TIE_UNIT);
+	    VSCALE((*d->tribuf[2]).v, (bot->vertices+3*bot->faces[3*i+2]),
+		1.0 / ADRT_MODEL_UNITS_PER_TIE_UNIT);
 
 	    TIE_VAL(tie_push)(d->cur_tie, d->tribuf, 1, mesh, 0);
 	}
@@ -233,6 +239,13 @@ nmg_to_adrt_gcvwrite(struct nmgregion *r, const struct db_full_path *pathp, stru
     nmg_to_adrt_internal(d->tribuf, d->cur_tie, mesh, r);
 }
 
+
+GFile::~GFile()
+{
+    closedb();
+}
+
+
 int
 GFile::load_g(const char *filename, int argc, const char *argv[])
 {
@@ -241,6 +254,9 @@ GFile::load_g(const char *filename, int argc, const char *argv[])
     struct bg_tess_tol ttol;		/* tessellation tolerance in mm */
     struct db_tree_state tree_state;	/* includes tol & model */
     struct isst_nmg_data d;
+    std::vector<const char *> geometry_paths;
+
+    closedb();
 
     RT_DBTS_INIT(&tree_state);
     tree_state.ts_tol = &tol;
@@ -278,6 +294,8 @@ GFile::load_g(const char *filename, int argc, const char *argv[])
     }
     if (db_dirbuild(dbip)) {
 	bu_log("ERROR: db_dirbuild failed\n");
+	db_close(dbip);
+	dbip = NULL;
 	return -1;
     }
     d.dbip = dbip;
@@ -304,20 +322,30 @@ GFile::load_g(const char *filename, int argc, const char *argv[])
     tribuf[2] = (TIE_3 *)bu_malloc(sizeof(TIE_3) * 3, "triangle tribuffer");
     d.tribuf = this->tribuf;
 
-    (void) db_walk_tree(dbip,
-			argc,			/* number of toplevel regions */
-			argv,			/* region names */
-			1,			/* ncpu */
-			&tree_state,		/* initial tree state */
-			nmg_to_adrt_regstart,	/* region start function */
-			gcv_region_end,		/* region end function */
-			rt_booltree_leaf_tess,	/* leaf func */
-			(void *)&gcvwriter);	/* client data */
+    annotations = rt_annot_scene_create(dbip, argc, argv, &ttol, &tol);
+
+    for (int i = 0; i < argc; ++i) {
+	if (adrt_path_has_geometry(dbip, argv[i]))
+	    geometry_paths.push_back(argv[i]);
+    }
+
+    if (!geometry_paths.empty()) {
+	(void) db_walk_tree(dbip,
+		(int)geometry_paths.size(), /* number of toplevel regions */
+		geometry_paths.data(),	/* region names */
+		1,			/* ncpu */
+		&tree_state,		/* initial tree state */
+		nmg_to_adrt_regstart,	/* region start function */
+		gcv_region_end,		/* region end function */
+		adrt_leaf_tess,		/* leaf func */
+		(void *)&gcvwriter);	/* client data */
+    }
 
     /* Release dynamic storage */
     nmg_km(the_model);
     rt_vlist_cleanup();
     db_close(dbip);
+    dbip = NULL;
     bu_free(tribuf[0], "vert");
     bu_free(tribuf[1], "vert");
     bu_free(tribuf[2], "vert");
@@ -331,7 +359,17 @@ GFile::load_g(const char *filename, int argc, const char *argv[])
 void
 GFile::closedb()
 {
-    bu_free(tie, "free tie");
+    rt_annot_scene_destroy(annotations);
+    annotations = NULL;
+    if (tie) {
+	TIE_FREE(tie);
+	bu_free(tie, "free tie");
+	tie = NULL;
+    }
+    if (dbip) {
+	db_close(dbip);
+	dbip = NULL;
+    }
     current_file.clear();
 }
 
@@ -345,4 +383,3 @@ GFile::closedb()
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

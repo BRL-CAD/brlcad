@@ -42,7 +42,6 @@ if(BRLCAD_ENABLE_QT AND OPENGL_TARGETS)
       Qt6::Widgets
       Qt6::OpenGL
       Qt6::OpenGLWidgets
-      ${OPENGL_TARGETS}
     )
   else(Qt6Widgets_FOUND)
     qt5_wrap_cpp(moc_srcs ${isst_headers})

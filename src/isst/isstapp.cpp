@@ -28,6 +28,9 @@
 int
 ISSTApp::load_g(const char *filename, int argc, const char *argv[])
 {
+    /* Synchronize with the render thread before GFile releases the old
+     * annotation scene and TIE data. */
+    w.canvas->clear_tie();
     if (g.load_g(filename, argc, argv)) {
 	w.statusBar()->showMessage("open failed");
 	return -1;
@@ -35,7 +38,7 @@ ISSTApp::load_g(const char *filename, int argc, const char *argv[])
 
     // The OpenGL widget manages the rendering, so let it know about the
     // TIE data structure associated with the current model
-    w.canvas->set_tie(g.tie);
+    w.canvas->set_tie(g.tie, g.annotations);
 
     return 0;
 }
@@ -51,4 +54,3 @@ ISSTApp::load_g(const char *filename, int argc, const char *argv[])
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

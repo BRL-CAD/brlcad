@@ -80,6 +80,7 @@
 #include <cstddef>
 #include <memory>
 #include <string>
+#include <vector>
 
 #if defined(__GNUC__) && !defined(__clang__)
 #  pragma GCC diagnostic push
@@ -129,6 +130,8 @@
 #include "foundation/log/consolelogtarget.h"
 #include "foundation/memory/autoreleaseptr.h"
 #include "foundation/utility/searchpaths.h"
+#include "foundation/image/image.h"
+#include "foundation/image/tile.h"
 
 // appleseed header for ITileCallback - needs to be organized somewhere
 #include "renderer/kernel/rendering/itilecallback.h"
@@ -154,6 +157,7 @@
 #include "ged/defines.h"
 #include "rt/db_fullpath.h"
 #include "rt/calc.h"
+#include "rt/primitives/annot.h"
 #include "optical/defines.h"
 
 #include "brlcad_ident.h"
@@ -196,6 +200,8 @@ extern "C" {
     extern mat_t model2view;
     extern mat_t view2model;
     extern point_t viewbase_model;
+    extern vect_t dx_model;
+    extern vect_t dy_model;
     size_t n_free;
     size_t n_malloc;		/* Totals at last check */
     size_t n_realloc;
@@ -205,7 +211,10 @@ extern "C" {
     void option(const char *cat, const char *opt, const char *des, int verbose);
     void usage(const char* argv0, int verbose);
     int get_args(int argc, const char* argv[]);
+    int grid_setup(struct bu_vls *err);
 }
+
+static struct rt_annot_scene *art_annotations = NULL;
 
 
 static void
@@ -578,53 +587,55 @@ do_ae(double azim, double elev)
     vect_t temp;
     vect_t diag;
     mat_t toEye;
+    point_t view_min;
+    point_t view_max;
     struct rt_i* rtip = APP.a_rt_i;
+    const bool have_annotations = art_annotations &&
+	rt_annot_scene_count(art_annotations);
 
     if (rtip == NULL)
 	return;
 
-    if (rtip->stats.nsolids <= 0)
+    if (rtip->stats.nsolids <= 0 && !have_annotations)
 	bu_exit(EXIT_FAILURE, "ERROR: no primitives active\n");
 
-    if (rtip->stats.nregions <= 0)
+    if (rtip->stats.nregions <= 0 && !have_annotations)
 	bu_exit(EXIT_FAILURE, "ERROR: no regions active\n");
 
-    if (rtip->mdl_max[X] >= INFINITY) {
-	bu_log("do_ae: infinite model bounds? setting a unit minimum\n");
-	VSETALL(rtip->mdl_min, -1);
+    if (rtip->mdl_min[X] < INFINITY && rtip->mdl_max[X] > -INFINITY) {
+	VMOVE(view_min, rtip->mdl_min);
+	VMOVE(view_max, rtip->mdl_max);
+    } else if (!rt_annot_scene_bounds(art_annotations, view_min, view_max)) {
+	bu_log("do_ae: infinite model bounds? setting unit bounds\n");
+	VSETALL(view_min, -1);
+	VSETALL(view_max, 1);
     }
-    if (rtip->mdl_max[X] <= -INFINITY) {
-	bu_log("do_ae: infinite model bounds? setting a unit maximum\n");
-	VSETALL(rtip->mdl_max, 1);
+    point_t annotation_min;
+    point_t annotation_max;
+    if (rt_annot_scene_bounds(art_annotations, annotation_min,
+	    annotation_max)) {
+	VMINMAX(view_min, view_max, annotation_min);
+	VMINMAX(view_min, view_max, annotation_max);
     }
-
-    /*
-     * Enlarge the model RPP just slightly, to avoid nasty effects
-     * with a solid's face being exactly on the edge NOTE: This code
-     * is duplicated out of librt/tree.c/rt_prep(), and has to appear
-     * here to enable the viewsize calculation to match the final RPP.
-     */
-    rtip->mdl_min[X] = floor(rtip->mdl_min[X]);
-    rtip->mdl_min[Y] = floor(rtip->mdl_min[Y]);
-    rtip->mdl_min[Z] = floor(rtip->mdl_min[Z]);
-    rtip->mdl_max[X] = ceil(rtip->mdl_max[X]);
-    rtip->mdl_max[Y] = ceil(rtip->mdl_max[Y]);
-    rtip->mdl_max[Z] = ceil(rtip->mdl_max[Z]);
+    for (size_t i = 0; i < 3; ++i) {
+	view_min[i] = floor(view_min[i]);
+	view_max[i] = ceil(view_max[i]);
+    }
 
     MAT_IDN(Viewrotscale);
     bn_mat_angles(Viewrotscale, 270.0 + elev, 0.0, 270.0 - azim);
 
     /* Look at the center of the model */
     MAT_IDN(toEye);
-    toEye[MDX] = -((rtip->mdl_max[X] + rtip->mdl_min[X]) / 2.0);
-    toEye[MDY] = -((rtip->mdl_max[Y] + rtip->mdl_min[Y]) / 2.0);
-    toEye[MDZ] = -((rtip->mdl_max[Z] + rtip->mdl_min[Z]) / 2.0);
+    toEye[MDX] = -((view_max[X] + view_min[X]) / 2.0);
+    toEye[MDY] = -((view_max[Y] + view_min[Y]) / 2.0);
+    toEye[MDZ] = -((view_max[Z] + view_min[Z]) / 2.0);
 
     /* Fit a sphere to the model RPP, diameter is viewsize, unless
      * viewsize command used to override.
      */
     if (viewsize <= 0) {
-	VSUB2(diag, rtip->mdl_max, rtip->mdl_min);
+	VSUB2(diag, view_max, view_min);
 	viewsize = MAGNITUDE(diag);
 	if (aspect > 1) {
 	    /* don't clip any of the image when autoscaling */
@@ -644,6 +655,156 @@ do_ae(double azim, double elev)
     bn_mat_inv(view2model, model2view);
     VSET(temp, 0, 0, eye_backoff);
     MAT4X3PNT(eye_model, view2model, temp);
+}
+
+
+static int
+art_depth_hit(struct application *ap, struct partition *part_head,
+	struct seg *UNUSED(finished_segs))
+{
+    ap->a_dist = part_head->pt_forw->pt_inhit->hit_dist;
+    return 1;
+}
+
+
+static int
+art_depth_miss(struct application *ap)
+{
+    ap->a_dist = INFINITY;
+    return 0;
+}
+
+
+static bool
+art_prepare_grid()
+{
+    struct bu_vls error = BU_VLS_INIT_ZERO;
+    if (!width)
+	width = 512;
+    if (!height)
+	height = 512;
+    const int failed = grid_setup(&error);
+    if (failed)
+	bu_log("art: view setup failed: %s\n", bu_vls_cstr(&error));
+    bu_vls_free(&error);
+    return !failed;
+}
+
+
+static std::vector<const char *>
+art_selected_paths()
+{
+    std::vector<const char *> paths;
+    if (cmd_objs && BU_PTBL_LEN(cmd_objs)) {
+	for (size_t i = 0; i < BU_PTBL_LEN(cmd_objs); ++i)
+	    paths.push_back((const char *)BU_PTBL_GET(cmd_objs, i));
+	return paths;
+    }
+    for (int i = 0; i < objc; ++i)
+	paths.push_back(objv[i]);
+    return paths;
+}
+
+
+static size_t
+art_prepare_annotations()
+{
+    rt_annot_scene_destroy(art_annotations);
+    art_annotations = NULL;
+    if (!APP.a_rt_i)
+	return 0;
+    const std::vector<const char *> paths = art_selected_paths();
+    if (paths.empty())
+	return 0;
+    art_annotations = rt_annot_scene_create(APP.a_rt_i->rti_dbip,
+	(int)paths.size(), paths.data(), &APP.a_rt_i->rti_ttol,
+	&APP.a_rt_i->rti_tol);
+    return rt_annot_scene_count(art_annotations);
+}
+
+
+static bool
+art_composite_annotations(asr::Frame *frame)
+{
+    if (!frame || !APP.a_rt_i || !art_annotations ||
+	    !rt_annot_scene_count(art_annotations))
+	return false;
+
+    foundation::Image &image = frame->image();
+    const foundation::CanvasProperties &properties = image.properties();
+    struct rt_annot_view annotation_view;
+    MAT_COPY(annotation_view.model2view, model2view);
+    annotation_view.width = properties.m_canvas_width;
+    annotation_view.height = properties.m_canvas_height;
+    annotation_view.perspective = rt_perspective;
+
+    struct application depth_application = APP;
+    depth_application.a_hit = art_depth_hit;
+    depth_application.a_miss = art_depth_miss;
+    depth_application.a_onehit = 1;
+    depth_application.a_resource = &resources[0];
+    depth_application.a_purpose = "ART annotation depth ray";
+
+    for (size_t image_y = 0; image_y < properties.m_canvas_height; ++image_y) {
+	const fastf_t sample_y = (fastf_t)properties.m_canvas_height -
+	    (fastf_t)image_y - 0.5;
+	for (size_t image_x = 0; image_x < properties.m_canvas_width; ++image_x) {
+	    const fastf_t sample_x = (fastf_t)image_x + 0.5;
+	    point_t viewplane_point;
+	    VJOIN2(viewplane_point, viewbase_model, sample_x, dx_model,
+		sample_y, dy_model);
+	    if (rt_perspective > 0.0) {
+		VMOVE(depth_application.a_ray.r_pt, eye_model);
+		VSUB2(depth_application.a_ray.r_dir, viewplane_point, eye_model);
+		VUNITIZE(depth_application.a_ray.r_dir);
+	    } else {
+		VMOVE(depth_application.a_ray.r_pt, viewplane_point);
+		VMOVE(depth_application.a_ray.r_dir, APP.a_ray.r_dir);
+	    }
+
+	    struct rt_annot_hit back_layer = {0};
+	    fastf_t scene_distance = INFINITY;
+	    if (!rt_annot_scene_query_layers(art_annotations, &annotation_view,
+		    &depth_application.a_ray, sample_x, sample_y, INFINITY,
+		    &back_layer, 1))
+		continue;
+	    if (!back_layer.screen_space) {
+		depth_application.a_dist = scene_distance;
+		(void)rt_shootray(&depth_application);
+		scene_distance = depth_application.a_dist;
+	    }
+
+	    const size_t tile_x = image_x / properties.m_tile_width;
+	    const size_t tile_y = image_y / properties.m_tile_height;
+	    foundation::Tile &tile = image.tile(tile_x, tile_y);
+	    float components[3] = {0.0f, 0.0f, 0.0f};
+	    tile.get_pixel(image_x % properties.m_tile_width,
+		image_y % properties.m_tile_height, components, 3);
+	    fastf_t color[3] = {components[0], components[1], components[2]};
+	    (void)rt_annot_scene_composite(art_annotations, &annotation_view,
+		&depth_application.a_ray, sample_x, sample_y,
+		scene_distance, color, NULL);
+	    components[0] = (float)color[0];
+	    components[1] = (float)color[1];
+	    components[2] = (float)color[2];
+	    tile.set_pixel(image_x % properties.m_tile_width,
+		image_y % properties.m_tile_height, components, 3);
+	}
+    }
+    return true;
+}
+
+
+static void
+art_finish_frame(asr::Frame *frame)
+{
+    if (!art_composite_annotations(frame) || !fbp)
+	return;
+    const foundation::CanvasProperties &properties = frame->image().properties();
+    ArtTileCallback callback;
+    for (size_t tile_y = 0; tile_y < properties.m_tile_count_y; ++tile_y)
+	for (size_t tile_x = 0; tile_x < properties.m_tile_count_x; ++tile_x)
+	    callback.on_tile_end(frame, tile_x, tile_y);
 }
 
 
@@ -1029,6 +1190,7 @@ static int
 art_cm_end(const int UNUSED(argc), const char** UNUSED(argv))
 {
     struct bu_vls str = BU_VLS_INIT_ZERO;
+    size_t annotation_count;
 
     if (APP.a_rt_i && BU_LIST_IS_EMPTY(&APP.a_rt_i->HeadRegion)) {
 	def_tree(APP.a_rt_i);		/* Load the default trees */
@@ -1060,7 +1222,10 @@ art_cm_end(const int UNUSED(argc), const char** UNUSED(argv))
     //if (Viewrotscale[15] <= 0.0) {
     //RENDERER_LOG_INFO("CALLING DO AEEEEEEEEEE\n");
 
+    annotation_count = art_prepare_annotations();
     do_ae(azimuth, elevation);
+    if (annotation_count && !art_prepare_grid())
+	return -1;
     // }
     asf::auto_release_ptr<asr::Project> project(build_project(global_title_file, bu_vls_cstr(&str)));
 
@@ -1075,6 +1240,7 @@ art_cm_end(const int UNUSED(argc), const char** UNUSED(argv))
 
     // Render the frame.
     renderer->render(renderer_controller);
+    art_finish_frame(project->get_frame());
 
     // Save the frame to disk using outputfile name
     // we append output/ directory to it for sorting
@@ -1224,12 +1390,21 @@ main(int argc, char **argv)
 	    if (nret < 0)
 		break;
 	}
+	rt_annot_scene_destroy(art_annotations);
+	art_annotations = NULL;
 	bu_free(resources, "appleseed");
 	return 0;
     }
 
 
+    const size_t annotation_count = art_prepare_annotations();
     do_ae(azimuth, elevation);
+    if (annotation_count && !art_prepare_grid()) {
+	rt_annot_scene_destroy(art_annotations);
+	art_annotations = NULL;
+	bu_free(resources, "appleseed");
+	return 1;
+    }
     // RENDERER_LOG_INFO("View model: (%f, %f, %f)", eye_model[0], eye_model[2], -eye_model[1]);
 
     bu_vls_from_argv(&str, objc, (const char**)objv);
@@ -1255,6 +1430,7 @@ main(int argc, char **argv)
 
         // Render the frame.
         renderer->render(renderer_controller);
+        art_finish_frame(project->get_frame());
 
         // Save the frame to disk using outputfile name
         // we append output/ directory to it for sorting
@@ -1279,6 +1455,7 @@ main(int argc, char **argv)
 
         // Render the frame.
         renderer->render(renderer_controller);
+        art_finish_frame(project->get_frame());
 
         // Save the frame to disk using outputfile name
         // we append output/ directory to it for sorting
@@ -1296,6 +1473,8 @@ main(int argc, char **argv)
         renderer.reset();
     }
     // clean up resources
+    rt_annot_scene_destroy(art_annotations);
+    art_annotations = NULL;
     bu_free(resources, "appleseed");
 
     return 0;

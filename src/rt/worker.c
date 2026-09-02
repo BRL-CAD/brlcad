@@ -151,6 +151,46 @@ jitter_start_pnt(vect_t point, struct application *a, int samplenum, int pat_num
 }
 
 
+#ifdef RT_ANNOT_OVERLAY
+static int
+annotation_overlay_active(void)
+{
+    const struct rt_annot_scene *scene = rtuif_annotations();
+
+    return scene && rt_annot_scene_count(scene);
+}
+
+
+static void
+annotate_primary_sample(struct application *ap, const point_t viewplane_point)
+{
+    point_t view_point;
+    struct rt_annot_hit hit = {0};
+    fastf_t sample_x;
+    fastf_t sample_y;
+    fastf_t scene_distance;
+    const struct rt_annot_scene *scene = rtuif_annotations();
+    const struct rt_annot_view *view = rtuif_annotation_view();
+
+    if (!scene || !rt_annot_scene_count(scene))
+	return;
+    MAT4X3PNT(view_point, model2view, viewplane_point);
+    sample_x = (view_point[X] + 1.0) * (fastf_t)width * 0.5;
+    sample_y = view_point[Y] * (fastf_t)width * 0.5 +
+	(fastf_t)height * 0.5;
+    scene_distance = ap->a_user ? ap->a_dist : INFINITY;
+    if (rt_annot_scene_composite(scene, view, &ap->a_ray,
+	    sample_x, sample_y, scene_distance, ap->a_color, &hit)) {
+	if (!ap->a_user) {
+	    ap->a_user = 1;
+	    ap->a_flag = RTUIF_ANNOTATION_ONLY;
+	    ap->a_dist = hit.screen_space ? INFINITY : hit.distance;
+	}
+    }
+}
+#endif
+
+
 void
 do_pixel(int cpu, int pat_num, int pixelnum)
 {
@@ -239,7 +279,11 @@ do_pixel(int cpu, int pat_num, int pixelnum)
     if (fullfloat_mode) {
 	register struct floatpixel *fp;
 	fp = &curr_float_frame[a.a_y*width + a.a_x];
-	if (fp->ff_frame >= 0) {
+	if (fp->ff_frame >= 0
+#ifdef RT_ANNOT_OVERLAY
+		&& !annotation_overlay_active()
+#endif
+		) {
 	    return;	/* pixel was reprojected */
 	}
     }
@@ -247,7 +291,11 @@ do_pixel(int cpu, int pat_num, int pixelnum)
     /* Check the pixel map to determine if this image should be
      * rendered or not.
      */
-    if (pixmap) {
+    if (pixmap
+#ifdef RT_ANNOT_OVERLAY
+	    && !annotation_overlay_active()
+#endif
+	    ) {
 	a.a_user= 1;	/* Force Shot Hit */
 
 	if (pixmap[pindex + RED] + pixmap[pindex + GRN] + pixmap[pindex + BLU]) {
@@ -328,7 +376,12 @@ do_pixel(int cpu, int pat_num, int pixelnum)
 
 	a.a_level = 0;		/* recursion level */
 	a.a_purpose = "main ray";
+	a.a_flag = 0;
+	a.a_dist = INFINITY;
 	(void)rt_shootray(&a);
+#ifdef RT_ANNOT_OVERLAY
+	annotate_primary_sample(&a, point);
+#endif
 
 	if (stereo) {
 	    fastf_t right, left;
@@ -350,7 +403,12 @@ do_pixel(int cpu, int pat_num, int pixelnum)
 	    }
 	    a.a_level = 0;		/* recursion level */
 	    a.a_purpose = "left eye ray";
+	    a.a_flag = 0;
+	    a.a_dist = INFINITY;
 	    (void)rt_shootray(&a);
+#ifdef RT_ANNOT_OVERLAY
+	    annotate_primary_sample(&a, point);
+#endif
 
 	    left = CRT_BLEND(a.a_color);
 	    VSET(a.a_color, left, 0, right);
@@ -413,7 +471,12 @@ do_pixel(int cpu, int pat_num, int pixelnum)
 
 	    a.a_level = 0;		/* recursion level */
 	    a.a_purpose = "main ray";
+	    a.a_flag = 0;
+	    a.a_dist = INFINITY;
 	    (void)rt_shootray(&a);
+#ifdef RT_ANNOT_OVERLAY
+	    annotate_primary_sample(&a, point);
+#endif
 
 	    if (stereo) {
 		fastf_t right, left;
@@ -435,7 +498,12 @@ do_pixel(int cpu, int pat_num, int pixelnum)
 		}
 		a.a_level = 0;		/* recursion level */
 		a.a_purpose = "left eye ray";
+		a.a_flag = 0;
+		a.a_dist = INFINITY;
 		(void)rt_shootray(&a);
+#ifdef RT_ANNOT_OVERLAY
+		annotate_primary_sample(&a, point);
+#endif
 
 		left = CRT_BLEND(a.a_color);
 		VSET(a.a_color, left, 0, right);

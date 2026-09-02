@@ -62,9 +62,8 @@ constexpr fastf_t DEFAULT_LEADER_MARGIN_SCALE = 2.0;
 constexpr fastf_t DEFAULT_SCREEN_TEXT_HEIGHT_MM = 3.0;
 /* The display-plane renderer uses this nominal density.  --dpi makes the
  * physical size explicit for displays whose effective density differs. */
-constexpr fastf_t DEFAULT_SCREEN_DPI = 96.0;
-constexpr fastf_t MILLIMETERS_PER_INCH = 25.4;
-constexpr fastf_t DISPLAY_PIXELS_PER_MM = DEFAULT_SCREEN_DPI / MILLIMETERS_PER_INCH;
+constexpr fastf_t DEFAULT_SCREEN_DPI = RT_ANNOT_SCREEN_DPI;
+constexpr fastf_t DISPLAY_PIXELS_PER_MM = RT_ANNOT_SCREEN_PIXELS_PER_MM;
 constexpr double AUTODIM_TEXT_WIDTH_SCALE = 0.65;
 /* Layout penalties deliberately dominate the smaller rewards so avoiding
  * collisions and crossings wins over merely moving a label farther out. */
@@ -473,10 +472,12 @@ parse_options(struct ged *gedp, int argc, const char **argv,
 	bu_vls_printf(gedp->ged_result_str, "Precision must be between 0 and 15");
 	return -1;
     }
-    if (opts.text_height < 0.0 || opts.line_width < 0.0 ||
+    if (!std::isfinite(opts.text_height) || !std::isfinite(opts.line_width) ||
+	opts.text_height < 0.0 || opts.line_width < 0.0 ||
+	std::isinf(opts.offset) ||
 	(std::isfinite(opts.offset) && opts.offset < 0.0)) {
 	bu_vls_printf(gedp->ged_result_str,
-	    "Text height, line width, and offset must not be negative");
+	    "Text height and line width must be finite and non-negative; offset must be finite and non-negative when specified");
 	return -1;
     }
     if (!std::isfinite(opts.dpi) || opts.dpi <= 0.0) {
@@ -2904,7 +2905,8 @@ cmd_info(void *data, int argc, const char **argv)
 	if (rt_db_get_internal(&intern, dp, gedp->dbip, NULL) == ID_ANNOT) {
 	    struct rt_annot_internal *annotation =
 		static_cast<struct rt_annot_internal *>(intern.idb_ptr);
-	    bu_vls_printf(gedp->ged_result_str, "\nspace: %s\nsegments: %zu",
+	    bu_vls_printf(gedp->ged_result_str,
+		"\nspace: %s\nsegments: %zu",
 		(annotation->flags & RT_ANNOT_MODEL_SPACE) ? "model" : "view",
 		annotation->ant.count);
 	    rt_db_free_internal(&intern);

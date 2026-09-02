@@ -39,11 +39,13 @@
 #include "vmath.h"
 #include "nmg.h"
 #include "rt/geom.h"
+#include "rt/search.h"
 #include "raytrace.h"
 
 #include "rt/tie.h"
 #include "adrt.h"
 #include "adrt_struct.h"
+#include "load_g.h"
 
 
 static struct bn_tol tol;		/* calculation tolerance */
@@ -58,6 +60,42 @@ struct gcv_data {
     struct adrt_mesh_s **meshes;
 };
 static struct gcv_data gcvwriter = {{load_nmg_to_adrt_gcvwrite, NULL, NULL}, NULL};
+
+
+int
+adrt_path_has_geometry(struct db_i *database, const char *path)
+{
+    static const char *geometry_search = "! -type comb ! -type annot";
+    struct directory *root;
+
+    if (!database || !path)
+	return 0;
+    root = db_lookup(database, path, LOOKUP_QUIET);
+
+    /* Let db_walk_tree report a missing path rather than hiding the error. */
+    if (!root)
+	return 1;
+
+    return db_search(NULL, DB_SEARCH_QUIET, geometry_search, 1, &root,
+	database, NULL, NULL, NULL) != 0;
+}
+
+
+union tree *
+adrt_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pathp,
+	struct rt_db_internal *ip, void *client_data)
+{
+    union tree *result;
+
+    if (!ip || ip->idb_type != ID_ANNOT)
+	return rt_booltree_leaf_tess(tsp, pathp, ip, client_data);
+
+    /* Annotations are rendered directly and have no NMG representation. */
+    BU_GET(result, union tree);
+    RT_TREE_INIT(result);
+    result->tr_op = OP_NOP;
+    return result;
+}
 
 
 /* load the region into the tie image */
@@ -109,7 +147,8 @@ load_nmg_to_adrt_internal(struct adrt_mesh_s *mesh, struct nmgregion *r)
 		    NMG_CK_VERTEX(v);
 
 		    /* convert mm to m */
-		    VSCALE((*tribuf[vert_count]).v, v->vg_p->coord, 1.0/1000.0);
+		    VSCALE((*tribuf[vert_count]).v, v->vg_p->coord,
+			1.0 / ADRT_MODEL_UNITS_PER_TIE_UNIT);
 		    vert_count++;
 		}
 		if (vert_count > 3)
@@ -190,9 +229,12 @@ load_nmg_to_adrt_regstart(struct db_tree_state *ts, const struct db_full_path *p
 
 	for (i=0;i<bot->num_faces;i++)
 	{
-	    VSCALE((*tribuf[0]).v, (bot->vertices+3*bot->faces[3*i+0]), 1.0/1000.0);
-	    VSCALE((*tribuf[1]).v, (bot->vertices+3*bot->faces[3*i+1]), 1.0/1000.0);
-	    VSCALE((*tribuf[2]).v, (bot->vertices+3*bot->faces[3*i+2]), 1.0/1000.0);
+	    VSCALE((*tribuf[0]).v, (bot->vertices+3*bot->faces[3*i+0]),
+		1.0 / ADRT_MODEL_UNITS_PER_TIE_UNIT);
+	    VSCALE((*tribuf[1]).v, (bot->vertices+3*bot->faces[3*i+1]),
+		1.0 / ADRT_MODEL_UNITS_PER_TIE_UNIT);
+	    VSCALE((*tribuf[2]).v, (bot->vertices+3*bot->faces[3*i+2]),
+		1.0 / ADRT_MODEL_UNITS_PER_TIE_UNIT);
 
 	    TIE_VAL(tie_push)(cur_tie, tribuf, 1, mesh, 0);
 	}
@@ -239,11 +281,16 @@ load_nmg_to_adrt_gcvwrite(struct nmgregion *r, const struct db_full_path *pathp,
 
 
 int
-load_g(struct tie_s *tie, const char *db, int argc, const char **argv, struct adrt_mesh_s **meshes)
+load_g_annotations(struct tie_s *tie, const char *db, int argc,
+	const char **argv, struct adrt_mesh_s **meshes,
+	struct rt_annot_scene **annotations)
 {
     struct model *the_model;
     struct bg_tess_tol ttol;		/* tessellation tolerance in mm */
     struct db_tree_state tree_state;	/* includes tol & model */
+    const char **geometry_paths = NULL;
+    int geometry_count = 0;
+    int walk_result = 0;
 
     cur_tie = tie;	/* blehhh, global... need locking. */
 
@@ -278,11 +325,19 @@ load_g(struct tie_s *tie, const char *db, int argc, const char **argv, struct ad
     if ((dbip = db_open(db, DB_OPEN_READONLY)) == DBI_NULL) {
 	perror(db);
 	bu_log("Unable to open geometry database file (%s)\n", db);
+	nmg_km(the_model);
 	return -1;
     }
     if (db_dirbuild(dbip)) {
 	bu_log("ERROR: db_dirbuild failed\n");
+	db_close(dbip);
+	dbip = DBI_NULL;
+	nmg_km(the_model);
 	return -1;
+    }
+
+    if (annotations) {
+	*annotations = rt_annot_scene_create(dbip, argc, argv, &ttol, &tol);
     }
 
     BN_CK_TOL(tree_state.ts_tol);
@@ -302,15 +357,26 @@ load_g(struct tie_s *tie, const char *db, int argc, const char **argv, struct ad
     tribuf[1] = (TIE_3 *)bu_malloc(sizeof(TIE_3) * 3, "triangle tribuffer");
     tribuf[2] = (TIE_3 *)bu_malloc(sizeof(TIE_3) * 3, "triangle tribuffer");
 
-    (void) db_walk_tree(dbip,
-			argc,			/* number of toplevel regions */
-			argv,			/* region names */
+    if (argc > 0) {
+	geometry_paths = (const char **)bu_calloc((size_t)argc,
+	    sizeof(const char *), "ADRT geometry paths");
+	for (int i = 0; i < argc; ++i) {
+	    if (adrt_path_has_geometry(dbip, argv[i]))
+		geometry_paths[geometry_count++] = argv[i];
+	}
+    }
+
+    if (geometry_count) {
+	walk_result = db_walk_tree(dbip,
+			geometry_count,		/* number of toplevel regions */
+			geometry_paths,		/* region names */
 			1,			/* ncpu */
 			&tree_state,		/* initial tree state */
 			load_nmg_to_adrt_regstart,	/* region start function */
 			gcv_region_end,		/* region end function */
-			rt_booltree_leaf_tess,	/* leaf func */
+			adrt_leaf_tess,		/* leaf func */
 			(void *)&gcvwriter);	/* client data */
+    }
 
     /* Release dynamic storage */
     nmg_km(the_model);
@@ -320,10 +386,20 @@ load_g(struct tie_s *tie, const char *db, int argc, const char **argv, struct ad
     bu_free(tribuf[1], "vert");
     bu_free(tribuf[2], "vert");
     bu_free(tribuf, "tri");
+    if (geometry_paths)
+	bu_free(geometry_paths, "ADRT geometry paths");
 
     TIE_VAL(tie_prep)(cur_tie);
 
-    return 0;
+    return walk_result;
+}
+
+
+int
+load_g(struct tie_s *tie, const char *db, int argc, const char **argv,
+	struct adrt_mesh_s **meshes)
+{
+    return load_g_annotations(tie, db, argc, argv, meshes, NULL);
 }
 
 /*

@@ -83,7 +83,7 @@ extern "C" b_off_t ftello(FILE *);
 #define NIRT_OVLP_RETAIN             3
 
 #define NIRT_PRINTF_SPECIFIERS "difeEgGs"
-#define NIRT_OUTPUT_TYPE_SPECIFIERS "rhpfmog"
+#define NIRT_OUTPUT_TYPE_SPECIFIERS "arhpfmog"
 
 #define HELPFLAG "--print-help"
 #define PURPOSEFLAG "--print-purpose"
@@ -274,6 +274,16 @@ class nirt_seg {
 	}
 };
 
+class nirt_annotation_record {
+    public:
+	std::string path;
+	int segment;
+	std::string role;
+	point_t point;
+	fastf_t d;
+	int visible;
+};
+
 /* This record structure doesn't have to correspond exactly to the above list
  * of available values, but it needs to retain sufficient information to
  * support the ability to generate all of them upon request. */
@@ -286,6 +296,7 @@ struct nirt_output_record {
     fastf_t a;
     fastf_t e;
     struct nirt_overlap ovlp_list;
+    nirt_annotation_record *annotation;
     nirt_seg *seg;
 };
 
@@ -294,6 +305,7 @@ struct nirt_diff_state;
 
 class nirt_fmt_state {
     public:
+	std::vector<std::pair<std::string,std::string> > annotation;
 	std::vector<std::pair<std::string,std::string> > ray;
 	std::vector<std::pair<std::string,std::string> > head;
 	std::vector<std::pair<std::string,std::string> > part;
@@ -303,6 +315,7 @@ class nirt_fmt_state {
 	std::vector<std::pair<std::string,std::string> > gap;
 
 	void clear() {
+	    annotation.clear();
 	    ray.clear();
 	    head.clear();
 	    part.clear();
@@ -347,6 +360,7 @@ struct nirt_state_impl {
     int backout;
     int overlap_claims;
     int use_air;
+    int use_annotations;
     std::set<std::string> attrs;        // active attributes
     std::vector<std::string> active_paths; // active paths for raytracer
     struct nirt_output_record *vals;
@@ -368,6 +382,8 @@ struct nirt_state_impl {
     struct resource *res;
     struct rt_i *rtip_air;
     struct resource *res_air;
+    struct rt_annot_scene *annotation_scene;
+    fastf_t first_solid_distance;
     int need_reprep;
 
     /* internal format specifier arrays */

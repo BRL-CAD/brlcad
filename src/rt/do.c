@@ -80,6 +80,15 @@ extern void worker(int cpu, void *arg);
 
 extern struct icv_image *bif;
 unsigned char *pixmap = NULL; /**< Pixel Map for rerendering of black pixels */
+#ifdef RT_ANNOT_OVERLAY
+static struct rt_annot_scene *annotation_scene = NULL;
+static struct rt_annot_view annotation_view = {MAT_INIT_IDN, 0, 0, 0.0};
+static struct db_i *annotation_dbip = DBI_NULL;
+static struct bu_ptbl annotation_paths = BU_PTBL_INIT_ZERO;
+static struct bg_tess_tol annotation_ttol = BG_TESS_TOL_INIT_ZERO;
+static struct bn_tol annotation_tol = BN_TOL_INIT_ZERO;
+static int annotation_cache_valid = 0;
+#endif
 
 enum view_command_flag {
     VIEW_COMMAND_EYE_SET = 1u << 0,
@@ -320,6 +329,9 @@ int cm_end(const int UNUSED(argc), const char **UNUSED(argv))
 	return -1;
     }
 
+#ifdef RT_ANNOT_OVERLAY
+    rtuif_prepare_annotations(rtip);
+#endif
     do_view_finalize(azimuth, elevation);
 
     if (do_frame(curframe) < 0)
@@ -472,6 +484,9 @@ int cm_multiview(const int UNUSED(argc), const char **UNUSED(argv))
     if (rtip && BU_LIST_IS_EMPTY(&rtip->HeadRegion) && !def_tree(rtip, NULL)) {
 	return -1;
     }
+#ifdef RT_ANNOT_OVERLAY
+    rtuif_prepare_annotations(rtip);
+#endif
     for (i = 0; i < (sizeof(a)/sizeof(a[0])); i++) {
 	do_ae((double)a[i], (double)e[i]);
 	(void)do_frame(curframe++);
@@ -492,6 +507,9 @@ int cm_anim(const int argc, const char **argv)
 	bu_log("cm_anim:  %s %s failed\n", argv[1], argv[2]);
 	return -1;		/* BAD */
     }
+#ifdef RT_ANNOT_OVERLAY
+    rtuif_clear_annotations();
+#endif
     return 0;
 }
 
@@ -887,17 +905,171 @@ validate_raytrace(struct rt_i *rtip)
 	bu_log("ERROR: No raytracing instance.\n");
 	return 1;
     }
-    if (rtip->stats.nsolids <= 0) {
+    if (rtip->stats.nsolids <= 0
+#ifdef RT_ANNOT_OVERLAY
+	    && (!annotation_scene || !rt_annot_scene_count(annotation_scene))
+#endif
+	    ) {
 	bu_log("ERROR: No primitives remaining.\n");
 	return 2;
     }
-    if (rtip->stats.nregions <= 0) {
+    if (rtip->stats.nregions <= 0
+#ifdef RT_ANNOT_OVERLAY
+	    && (!annotation_scene || !rt_annot_scene_count(annotation_scene))
+#endif
+	    ) {
 	bu_log("ERROR: No regions remaining.\n");
 	return 3;
     }
 
     return 0;
 }
+
+
+#ifdef RT_ANNOT_OVERLAY
+static void
+annotation_cache_clear(void)
+{
+    size_t i;
+
+    rt_annot_scene_destroy(annotation_scene);
+    annotation_scene = NULL;
+    if (BU_PTBL_TEST(&annotation_paths)) {
+	for (i = 0; i < BU_PTBL_LEN(&annotation_paths); ++i)
+	    bu_free((char *)BU_PTBL_GET(&annotation_paths, i),
+		"cached annotation path");
+	bu_ptbl_free(&annotation_paths);
+    }
+    annotation_dbip = DBI_NULL;
+    annotation_cache_valid = 0;
+}
+
+
+static int
+annotation_scalar_equal(double a, double b)
+{
+    return a <= b && a >= b;
+}
+
+
+static int
+annotation_tolerances_match(const struct rt_i *rtip)
+{
+    const struct bg_tess_tol *ttol = &rtip->rti_ttol;
+    const struct bn_tol *tol = &rtip->rti_tol;
+
+    return annotation_ttol.magic == ttol->magic &&
+	annotation_scalar_equal(annotation_ttol.abs, ttol->abs) &&
+	annotation_scalar_equal(annotation_ttol.rel, ttol->rel) &&
+	annotation_scalar_equal(annotation_ttol.norm, ttol->norm) &&
+	annotation_scalar_equal(annotation_ttol.absmax, ttol->absmax) &&
+	annotation_scalar_equal(annotation_ttol.absmin, ttol->absmin) &&
+	annotation_scalar_equal(annotation_ttol.relmax, ttol->relmax) &&
+	annotation_scalar_equal(annotation_ttol.relmin, ttol->relmin) &&
+	annotation_scalar_equal(annotation_ttol.rel_lmax, ttol->rel_lmax) &&
+	annotation_scalar_equal(annotation_ttol.rel_lmin, ttol->rel_lmin) &&
+	annotation_tol.magic == tol->magic &&
+	annotation_scalar_equal(annotation_tol.dist, tol->dist) &&
+	annotation_scalar_equal(annotation_tol.dist_sq, tol->dist_sq) &&
+	annotation_scalar_equal(annotation_tol.perp, tol->perp) &&
+	annotation_scalar_equal(annotation_tol.para, tol->para);
+}
+
+
+static int
+annotation_cache_matches(const struct rt_i *rtip, int path_count,
+	const char * const *paths)
+{
+    int i;
+
+    if (!annotation_cache_valid || annotation_dbip != rtip->rti_dbip ||
+	    path_count < 0 ||
+	    (size_t)path_count != BU_PTBL_LEN(&annotation_paths) ||
+	    !annotation_tolerances_match(rtip))
+	return 0;
+    for (i = 0; i < path_count; ++i)
+	if (!BU_STR_EQUAL((const char *)BU_PTBL_GET(&annotation_paths, i),
+		paths[i]))
+	    return 0;
+    return 1;
+}
+
+
+static void
+annotation_cache_store(const struct rt_i *rtip, int path_count,
+	const char * const *paths)
+{
+    int i;
+
+    bu_ptbl_init(&annotation_paths, (size_t)path_count,
+	"cached annotation paths");
+    for (i = 0; i < path_count; ++i)
+	bu_ptbl_ins(&annotation_paths, (long *)bu_strdup(paths[i]));
+    annotation_dbip = rtip->rti_dbip;
+    annotation_ttol = rtip->rti_ttol;
+    annotation_tol = rtip->rti_tol;
+    annotation_cache_valid = 1;
+}
+
+
+const struct rt_annot_scene *
+rtuif_annotations(void)
+{
+    return annotation_scene;
+}
+
+
+const struct rt_annot_view *
+rtuif_annotation_view(void)
+{
+    return &annotation_view;
+}
+
+
+void
+rtuif_clear_annotations(void)
+{
+    annotation_cache_clear();
+    MAT_IDN(annotation_view.model2view);
+    annotation_view.width = 0;
+    annotation_view.height = 0;
+    annotation_view.perspective = 0.0;
+}
+
+
+size_t
+rtuif_prepare_annotations(struct rt_i *rtip)
+{
+    const char **treev = NULL;
+    int treec = 0;
+    size_t count;
+
+    if (!rtip) {
+	rtuif_clear_annotations();
+	return 0;
+    }
+
+    if (cmd_objs && BU_PTBL_LEN(cmd_objs)) {
+	treec = (int)BU_PTBL_LEN(cmd_objs);
+	treev = (const char **)cmd_objs->buffer;
+    } else if (!rtuif_tree_list(rtip, &treec, &treev, NULL)) {
+	rtuif_clear_annotations();
+	return 0;
+    }
+    if (!annotation_cache_matches(rtip, treec, treev)) {
+	annotation_cache_clear();
+	annotation_scene = rt_annot_scene_create(rtip->rti_dbip, treec, treev,
+	    &rtip->rti_ttol, &rtip->rti_tol);
+	annotation_cache_store(rtip, treec, treev);
+    }
+    count = rt_annot_scene_count(annotation_scene);
+    if (opencl_mode && count) {
+	bu_log("rt: annotations require primary-sample compositing; using the CPU renderer\n");
+	opencl_mode = 0;
+    }
+    return count;
+}
+#endif
 
 
 /**
@@ -923,6 +1095,10 @@ do_frame(int framenumber)
 
     /* Compute model RPP, etc. */
     do_prep(rtip);
+
+#ifdef RT_ANNOT_OVERLAY
+    rtuif_prepare_annotations(rtip);
+#endif
 
     if (rt_verbosity & VERBOSE_VIEWDETAIL)
 	bu_log("Tree: %zu solids in %zu regions\n", rtip->stats.nsolids, rtip->stats.nregions);
@@ -957,6 +1133,13 @@ do_frame(int framenumber)
 
 	bu_vls_free(&msg);
     }
+
+#ifdef RT_ANNOT_OVERLAY
+    MAT_COPY(annotation_view.model2view, model2view);
+    annotation_view.width = width;
+    annotation_view.height = height;
+    annotation_view.perspective = rt_perspective;
+#endif
 
     /* az/el 0, 0 is when screen +Z is model +X */
     VSET(work, 0, 0, 1);
@@ -1401,22 +1584,32 @@ do_ae_internal(double azim, double elev, int center_eye)
 {
     struct rt_i *rtip = APP.a_rt_i;
     point_t view_min, view_max;
+#ifdef RT_ANNOT_OVERLAY
+    point_t annotation_min, annotation_max;
+    int have_annotation_bounds;
+#endif
 
     if (rtip == NULL)
 	return;
 
-    if (rtip->mdl_max[X] >= INFINITY) {
-	bu_log("do_ae: infinite model bounds? setting a unit minimum\n");
-	VSETALL(rtip->mdl_min, -1);
-    }
-    if (rtip->mdl_max[X] <= -INFINITY) {
+    if (rtip->mdl_min[X] >= INFINITY || rtip->mdl_max[X] <= -INFINITY) {
 	/* Model not yet loaded (librt initial state: mdl_min=+INF, mdl_max=-INF).
 	 * Reset both bounds to a unit box so that autoviewsize() does not
 	 * propagate +INFINITY through mdl_min into cell_width (which causes a
 	 * bu_bomb("bad cell size") crash when work is dispatched). */
-	bu_log("do_ae: infinite model bounds? setting unit bounds\n");
-	VSETALL(rtip->mdl_min, -1);
-	VSETALL(rtip->mdl_max, 1);
+#ifdef RT_ANNOT_OVERLAY
+	have_annotation_bounds = rt_annot_scene_bounds(annotation_scene,
+	    annotation_min, annotation_max);
+	if (have_annotation_bounds) {
+	    VMOVE(rtip->mdl_min, annotation_min);
+	    VMOVE(rtip->mdl_max, annotation_max);
+	} else
+#endif
+	{
+	    bu_log("do_ae: infinite model bounds? setting unit bounds\n");
+	    VSETALL(rtip->mdl_min, -1);
+	    VSETALL(rtip->mdl_max, 1);
+	}
     }
 
     /*
@@ -1438,6 +1631,14 @@ do_ae_internal(double azim, double elev, int center_eye)
      */
     VMOVE(view_min, rtip->mdl_min);
     VMOVE(view_max, rtip->mdl_max);
+#ifdef RT_ANNOT_OVERLAY
+    have_annotation_bounds = rt_annot_scene_bounds(annotation_scene,
+	annotation_min, annotation_max);
+    if (have_annotation_bounds) {
+	VMINMAX(view_min, view_max, annotation_min);
+	VMINMAX(view_min, view_max, annotation_max);
+    }
+#endif
     if (autoview_argc > 0) {
 	point_t sub_min, sub_max;
 	if (rt_obj_bounds(NULL, rtip->rti_dbip, autoview_argc,

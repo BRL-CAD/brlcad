@@ -53,7 +53,7 @@ set(
 )
 
 brlcad_addlib(librender "${LIBRENDER_SRCS}" "" "${ADRT_LOCAL_INCLUDE_DIRS}"
-  PRIVATE_LIBS libgcv ZLIB::ZLIB ${M_LIBRARY}
+  PRIVATE_LIBS libgcv librt ZLIB::ZLIB ${M_LIBRARY}
 )
 set_target_properties(librender PROPERTIES VERSION 20.0.1 SOVERSION 20)
 add_dependencies(librender gcv_plugins)
@@ -104,8 +104,9 @@ cmakefiles(isst.c)
 
 add_subdirectory(master)
 add_subdirectory(slave)
+add_subdirectory(tests)
 
-set(adrt_ignore_files load.h tienet.h)
+set(adrt_ignore_files load.h load_g.h tienet.h)
 cmakefiles(${adrt_ignore_files})
 cmakefiles(CMakeLists.txt)
 

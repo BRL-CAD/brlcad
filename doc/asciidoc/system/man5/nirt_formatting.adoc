@@ -25,7 +25,7 @@ where the "char" argument is replaced by a single character identifying the cate
 [[nirt_format_categories]]
 == Output Categories
 
-NIRT offers seven categories of output reporting:
+NIRT offers eight categories of output reporting:
 
 [cols="3*"]
 [%noheader]
@@ -33,6 +33,9 @@ NIRT offers seven categories of output reporting:
 |*Category Name*
 |*Char*
 |*Description*
+|*Annotation*
+|*a*
+|Output for each model-space annotation crossing when annotation reporting is enabled with *useannot 1*. The default annotation format is empty.
 |*Ray*
 |*r*
 |Report of ray information. The formatting associated with r will print once per ray, regardless of whether a region is encountered.
@@ -62,7 +65,7 @@ NIRT offers seven categories of output reporting:
 [[nirt_format_str]]
 == Format Strings
 
-NIRT's format specifications are a subset of those found in printf implementations. Specifically, the d, i, and f types are supported, as well as width and precision specifiers.
+NIRT's format specifications are a subset of those found in printf implementations. The d, i, f, e, E, g, G, and s types are supported, as well as width and precision specifiers.
 
 
 [[nirt_format_keys]]
@@ -99,6 +102,33 @@ Unlike the full C/C++ printf, NIRT accepts only pre-defined string keys that ide
 |===
 
 Footnote and Miss categories have no particular keys unique to them, although they (like all categories) can use the Ray keys if desired. Partition, Overlap, and Gap, on the other hand, have keys that are unique to their contexts and valid only within those contexts:
+
+.Annotation Variables
+[cols="2*"]
+[%noheader]
+|===
+|annot_path
+|Full database path of the annotation primitive.
+|annot_segment
+|Zero-based annotation segment index.
+|annot_role
+|Semantic role of the annotation segment, such as `text`, `leader`, `dimension`, or `arrowhead`.
+|annot_x
+|x coordinate of the annotation hit point.
+|annot_y
+|y coordinate of the annotation hit point.
+|annot_z
+|z coordinate of the annotation hit point.
+|annot_d
+|d grid-plane coordinate of the annotation hit point.
+|annot_visible
+|1 if no non-air solid surface is closer to the ray origin, otherwise 0.
+|===
+
+Annotation reporting is diagnostic and opt-in. It returns all model-space
+annotation crossings in ray-distance order, including occluded crossings.
+Screen-space annotations are not reported because a NIRT shot does not define
+the pixel dimensions and model-to-view transform needed to evaluate them.
 
 .Partition Variables
 [cols="2*"]

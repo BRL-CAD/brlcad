@@ -40,6 +40,12 @@ Coordinates and explicit sizes use the database's current modeling units.
 Creation commands draw the new annotation immediately.  Use *--no-draw* to
 create it without changing the display.  Names must not already exist.
 
+Ray-traced annotations are zero-thickness informational coverage rather than
+solid regions.  Model-space annotations are depth-tested against ordinary
+geometry.  Screen-space annotations are generated for the current camera and
+composited in the foreground; they do not participate in shadows, reflections,
+line-of-sight thickness, or Boolean evaluation.
+
 The supported dimensions follow the general presentation conventions of ISO
 129-1.  Lettering defaults to OSIFont, an ISO 3098-style technical font shipped
 with BRL-CAD.  If a selected font cannot be loaded, plotting tries OSIFont and
@@ -202,7 +208,9 @@ Set the persistent annotation color using integer red, green, and blue values
 from 0 through 255.
 
 *--line-width width*::
-Set the display line width.
+Set the presentation line width.  Display and screen-space ray rendering use
+the value as a pixel width.  Model-space ray rendering uses it to scale the
+automatic stroke width derived from the annotation's text height or extent.
 
 *--line-style style*::
 Set semantic line-pattern metadata to *continuous*, *dashed*, *dotted*,

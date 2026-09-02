@@ -151,6 +151,9 @@ extern vect_t dx_model;			/* view delta-X as model-space vect (width of pixel as
 extern vect_t dx_unit;			/* unit-len dir vector of pixel side-to-side */
 extern vect_t dy_model;			/* view delta-Y as model-space vect (height of pixel as vector) */
 extern vect_t dy_unit;			/* unit-len dir vector of pixel top-to-bottom */
+#ifdef RT_ANNOT_OVERLAY
+#  define RTUIF_ANNOTATION_ONLY 2
+#endif
 /** 'jitter' variable values **/
 #define JITTER_CELL 0x1			/* jitter position of ray in each cell */
 #define JITTER_FRAME 0x2		/* jitter position of entire frame */
@@ -196,6 +199,12 @@ extern void do_ae(double azim, double elev);
 extern void do_view_finalize(double azim, double elev);
 extern int old_way(FILE *fp);
 extern int do_frame(int framenumber);
+#ifdef RT_ANNOT_OVERLAY
+extern size_t rtuif_prepare_annotations(struct rt_i *rtip);
+extern const struct rt_annot_scene *rtuif_annotations(void);
+extern const struct rt_annot_view *rtuif_annotation_view(void);
+extern void rtuif_clear_annotations(void);
+#endif
 
 #ifdef USE_OPENCL
 enum {

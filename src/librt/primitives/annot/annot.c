@@ -434,8 +434,9 @@ rt_annot_validate(const struct rt_annot_internal *annot_ip,
 		    annot_validation_message(messages, i, "fill has no compatible outline segments");
 		    ret++;
 		} else {
-		    for (j = (size_t)fsg->legacy_start;
-			    j < (size_t)(fsg->legacy_start + fsg->legacy_count); ++j)
+		    size_t legacy_end = (size_t)fsg->legacy_start +
+			(size_t)fsg->legacy_count;
+		    for (j = (size_t)fsg->legacy_start; j < legacy_end; ++j)
 			if (!ant->segments[j] ||
 				*(uint32_t *)ant->segments[j] != CURVE_LSEG_MAGIC) {
 			    annot_validation_message(messages, i,
@@ -542,16 +543,15 @@ rt_annot_shot(struct soltab *stp, struct xray *rp, struct application *ap, struc
     RT_CK_RAY(rp);
     RT_CK_APPLICATION(ap);
 
-    /* annotations cannot be ray traced.
-     */
+    /* Annotation coverage is evaluated separately from solid partitions. */
 
     return 0;			/* MISS */
 }
 
 
 /**
- * Vectorized rt_annot_shot(): annotations cannot be ray traced, so every
- * ray in the batch misses.
+ * Vectorized rt_annot_shot(): annotations do not create solid partitions, so
+ * every ray in the batch misses.
  */
 C_DECL void
 rt_annot_vshot(struct soltab **stp, struct xray **UNUSED(rp), struct seg *segp, int n, struct application *ap)
@@ -1523,6 +1523,29 @@ seg_to_vlist(struct bu_list *vlfree, struct bu_list *vhead, const struct bg_tess
     }
 
     return ret;
+}
+
+
+int
+rt_annot_segment_vlist(struct bu_list *vlfree, struct bu_list *vhead,
+	const struct bg_tess_tol *ttol,
+	const struct rt_annot_internal *annot_ip, size_t segment)
+{
+    struct rt_annot_internal local;
+    point_t base = VINIT_ZERO;
+
+    if (!vlfree || !vhead || !ttol || !annot_ip ||
+	    segment >= annot_ip->ant.count || !annot_ip->ant.segments ||
+	    !annot_ip->ant.segments[segment])
+	return 1;
+
+    RT_ANNOT_CK_MAGIC(annot_ip);
+    local = *annot_ip;
+    local.flags = RT_ANNOT_SCREEN_SPACE;
+    VSETALL(local.V, 0.0);
+    return seg_to_vlist(vlfree, vhead, ttol, base, &local,
+	annot_ip->ant.segments[segment], annot_ip->styles ?
+	&annot_ip->styles[segment] : NULL);
 }
 
 
@@ -3504,11 +3527,11 @@ rt_annot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, 
 	    fastf_t *new_vert;
 
 	    vert_no = atol(argv[0] + 1);
-	    new_vert = annot_ip->verts[vert_no];
-	    if (vert_no < 0 || (size_t)vert_no > annot_ip->vert_count) {
+	    if (vert_no < 0 || (size_t)vert_no >= annot_ip->vert_count) {
 		bu_vls_printf(logstr, "ERROR: Illegal vertex number\n");
 		return BRLCAD_ERROR;
 	    }
+	    new_vert = annot_ip->verts[vert_no];
 	    array_len = 2;
 	    if (_rt_tcl_list_to_fastf_array(argv[1], &new_vert, &array_len) != array_len) {
 		bu_vls_printf(logstr, "ERROR: Incorrect number of coordinates for vertex\n");

@@ -56,6 +56,7 @@ add_target_deps(rtscale dm_plugins)
 
 brlcad_addexec(rt "${LIBRTUIF_SOURCES};view.c" "${OPENCL_LIBS};${RT_STD_LIBS}" FOLDER Rt)
 target_include_directories(rt BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+set_property(TARGET rt APPEND PROPERTY COMPILE_DEFINITIONS "RT_ANNOT_OVERLAY")
 add_target_deps(rt dm_plugins dm-txt)
 
 brlcad_addexec(rtarea "${LIBRTUIF_SOURCES};viewarea.c" "${RT_STD_LIBS}" FOLDER Rt)

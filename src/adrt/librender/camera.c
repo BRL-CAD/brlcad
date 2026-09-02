@@ -27,9 +27,9 @@
 
 #include "bu/parallel.h"
 #include "bu/dylib.h"
-#include "bu/parallel.h"
 #include "bu/log.h"
 #include "bu/str.h"
+#include "rt/primitives/annot.h"
 
 #include "./camera.h"
 
@@ -44,10 +44,27 @@ struct render_shader_s {
 
 static struct render_shader_s *shaders = NULL;
 
+struct render_camera_annotation_data {
+    const struct rt_annot_scene *scene;
+    fastf_t model_units_per_tie_unit;
+    struct rt_annot_view view;
+};
+
+
+struct render_camera_parallel_data {
+    render_camera_thread_data_t thread;
+    struct render_camera_annotation_data annotation;
+};
+
+static const fastf_t render_camera_default_scene_radius = 1.0;
+
+
 void render_camera_render_thread(int cpu, void *ptr);	/* for bu_parallel */
 static void render_camera_prep_ortho(render_camera_t *camera);
 static void render_camera_prep_persp(render_camera_t *camera);
 static void render_camera_prep_persp_dof(render_camera_t *camera);
+static void render_camera_annotation_view(const render_camera_t *camera,
+	fastf_t model_units_per_tie_unit, struct rt_annot_view *view);
 
 static struct render_shader_s *render_shader_register (const char *name, int (*init)(render_t *, const char *));
 
@@ -391,20 +408,147 @@ render_camera_prep(render_camera_t *camera)
 }
 
 
-void
-render_camera_render_thread(int UNUSED(cpu), void *ptr)
+fastf_t
+render_camera_fit_scene(render_camera_t *camera, const struct tie_s *tie,
+	const struct rt_annot_scene *annotations,
+	fastf_t model_units_per_tie_unit)
 {
-    render_camera_thread_data_t *td;
+    point_t annotation_min, annotation_max;
+    point_t scene_min, scene_max;
+    vect_t offset;
+    fastf_t scene_radius;
+
+    if (!camera || !tie)
+	return 0.0;
+
+    if (!annotations || !rt_annot_scene_bounds(annotations,
+	    annotation_min, annotation_max)) {
+	VSETALL(camera->pos, tie->radius);
+	VMOVE(camera->focus, tie->mid);
+	return tie->radius;
+    }
+
+    if (!isfinite(model_units_per_tie_unit) ||
+	    model_units_per_tie_unit <= 0.0)
+	model_units_per_tie_unit = 1.0;
+    VSCALE(annotation_min, annotation_min,
+	1.0 / model_units_per_tie_unit);
+    VSCALE(annotation_max, annotation_max,
+	1.0 / model_units_per_tie_unit);
+    VMOVE(scene_min, annotation_min);
+    VMOVE(scene_max, annotation_max);
+    if (tie->tri_num) {
+	VMINMAX(scene_min, scene_max, tie->amin);
+	VMINMAX(scene_min, scene_max, tie->amax);
+    }
+
+    VADD2SCALE(camera->focus, scene_min, scene_max, 0.5);
+    VSUB2(offset, scene_max, scene_min);
+    scene_radius = 0.5 * MAGNITUDE(offset);
+    if (!isfinite(scene_radius) || scene_radius <= SMALL_FASTF)
+	scene_radius = render_camera_default_scene_radius;
+
+    /* Keep the established isometric initial direction while positioning it
+     * relative to the combined scene center. */
+    VSETALL(offset, scene_radius);
+    VADD2(camera->pos, camera->focus, offset);
+    return scene_radius;
+}
+
+
+static void
+render_camera_annotation_view(const render_camera_t *camera,
+	fastf_t model_units_per_tie_unit, struct rt_annot_view *view)
+{
+    vect_t look, up, side, temp, right;
+    point_t model_position;
+    fastf_t angle, sine, cosine, xy_scale = 1.0;
+    mat_t *matrix = &view->model2view;
+
+    VSUB2(look, camera->focus, camera->pos);
+    VUNITIZE(look);
+    VSET(up, 0.0, 0.0, 1.0);
+    VMOVE(temp, look);
+    angle = VDOT(up, temp);
+    VSCALE(temp, temp, angle);
+    VSUB2(up, up, temp);
+    VUNITIZE(up);
+    VCROSS(side, up, look);
+    sine = sin(-camera->tilt * DEG2RAD);
+    cosine = cos(-camera->tilt * DEG2RAD);
+    VSCALE(up, up, cosine);
+    VSCALE(side, side, sine);
+    VADD2(up, up, side);
+    VCROSS(side, up, look);
+    VREVERSE(right, side);
+
+    MAT_IDN(*matrix);
+    if (camera->type == RENDER_CAMERA_ORTHOGRAPHIC &&
+	    camera->aspect > 0.0 && camera->gridsize > 0.0) {
+	xy_scale = 2.0 / (camera->aspect * camera->gridsize *
+		model_units_per_tie_unit);
+    } else if (camera->aspect > 0.0) {
+	xy_scale = 1.0 / camera->aspect;
+    }
+    for (size_t axis = 0; axis < 3; ++axis) {
+	(*matrix)[axis] = right[axis] * xy_scale;
+	(*matrix)[4 + axis] = up[axis] * xy_scale;
+	(*matrix)[8 + axis] = -look[axis];
+    }
+    VSCALE(model_position, camera->pos, model_units_per_tie_unit);
+    (*matrix)[3] = -VDOT(&(*matrix)[0], model_position);
+    (*matrix)[7] = -VDOT(&(*matrix)[4], model_position);
+    (*matrix)[11] = -VDOT(&(*matrix)[8], model_position);
+    view->width = camera->w;
+    view->height = camera->h;
+    view->perspective =
+	camera->type == RENDER_CAMERA_PERSPECTIVE ? 2.0 * camera->fov : 0.0;
+}
+
+
+static void
+render_camera_composite_annotation(render_camera_thread_data_t *td,
+	const struct render_camera_annotation_data *annotation,
+	const struct tie_ray_s *tie_ray, fastf_t sample_x, fastf_t sample_y,
+	vect_t *pixel)
+{
+    struct rt_annot_hit back_layer = {0};
+    struct xray ray;
+    fastf_t scene_distance = INFINITY;
+
+    if (!annotation || !annotation->scene)
+	return;
+    VSCALE(ray.r_pt, tie_ray->pos, annotation->model_units_per_tie_unit);
+    VMOVE(ray.r_dir, tie_ray->dir);
+    if (!rt_annot_scene_query_layers(annotation->scene, &annotation->view,
+	    &ray, sample_x, sample_y, INFINITY, &back_layer, 1))
+	return;
+
+    if (!back_layer.screen_space) {
+	struct tie_id_s id;
+	struct tie_ray_s depth_ray = *tie_ray;
+	if (TIE_WORK(td->tie, &depth_ray, &id, render_hit, NULL))
+	    scene_distance = id.dist * annotation->model_units_per_tie_unit;
+    }
+    (void)rt_annot_scene_composite(annotation->scene, &annotation->view,
+	&ray, sample_x, sample_y, scene_distance, *pixel, NULL);
+}
+
+
+static void
+render_camera_render_thread_impl(int UNUSED(cpu), render_camera_thread_data_t *td,
+	const struct render_camera_annotation_data *annotation)
+{
     int d, n, res_ind, scanline, v_scanline;
     vect_t pixel, accum;
     vect_t v1 = VINIT_ZERO;
     vect_t v2 = VINIT_ZERO;
     struct tie_ray_s ray;
+    struct tie_ray_s annotation_ray;
     fastf_t view_inv;
 
     VSETALL(v1, 0);
 
-    td = (render_camera_thread_data_t *)ptr;
     view_inv = 1.0 / td->camera->view_num;
 
     td->camera->render.tie = td->tie;
@@ -455,9 +599,15 @@ render_camera_render_thread(int UNUSED(cpu), void *ptr)
 		    VMOVE(ray.pos, td->camera->view_list[d].pos);
 		    ray.depth = 0;
 		    VUNITIZE(ray.dir);
+		    annotation_ray = ray;
 
 		    /* Compute pixel value using this ray */
 		    td->camera->render.work(&td->camera->render, td->tie, &ray, &pixel);
+		    render_camera_composite_annotation(td, annotation,
+			&annotation_ray,
+			(fastf_t)n + 0.5,
+			(fastf_t)td->camera->h - (fastf_t)v_scanline - 0.5,
+			&pixel);
 
 		    VADD2(accum, accum, pixel);
 		}
@@ -474,6 +624,7 @@ render_camera_render_thread(int UNUSED(cpu), void *ptr)
 		    VMOVE(ray.pos, td->camera->view_list[0].pos);
 		    ray.depth = 0;
 		    VUNITIZE(ray.dir);
+		    annotation_ray = ray;
 
 		    /* Compute pixel value using this ray */
 		    td->camera->render.work(&td->camera->render, td->tie, &ray, &pixel);
@@ -488,11 +639,18 @@ render_camera_render_thread(int UNUSED(cpu), void *ptr)
 
 		    VSET(pixel, (TFLOAT)RENDER_CAMERA_BGR, (TFLOAT)RENDER_CAMERA_BGG, (TFLOAT)RENDER_CAMERA_BGB);
 		    ray.depth = 0;
+		    annotation_ray = ray;
 
 		    /* Compute pixel value using this ray */
 		    td->camera->render.work(&td->camera->render, td->tie, &ray, &pixel);
 		}
 	    }
+
+	    if (td->camera->view_num == 1)
+		render_camera_composite_annotation(td, annotation,
+		    &annotation_ray, (fastf_t)n + 0.5,
+		    (fastf_t)td->camera->h - (fastf_t)v_scanline - 0.5,
+		    &pixel);
 
 
 	    if (td->tile->format == RENDER_CAMERA_BIT_DEPTH_24) {
@@ -521,9 +679,30 @@ render_camera_render_thread(int UNUSED(cpu), void *ptr)
 
 
 void
-render_camera_render(render_camera_t *camera, struct tie_s *tie, camera_tile_t *tile, tienet_buffer_t *result)
+render_camera_render_thread(int cpu, void *ptr)
 {
-    render_camera_thread_data_t td;
+    render_camera_render_thread_impl(cpu, (render_camera_thread_data_t *)ptr,
+	NULL);
+}
+
+
+static void
+render_camera_render_annotations_thread(int cpu, void *ptr)
+{
+    struct render_camera_parallel_data *data =
+	(struct render_camera_parallel_data *)ptr;
+
+    render_camera_render_thread_impl(cpu, &data->thread, &data->annotation);
+}
+
+
+static void
+render_camera_render_internal(render_camera_t *camera, struct tie_s *tie,
+	camera_tile_t *tile, tienet_buffer_t *result,
+	const struct rt_annot_scene *annotations,
+	fastf_t model_units_per_tie_unit)
+{
+    struct render_camera_parallel_data data = {0};
     unsigned int scanline;
     uint32_t ind;
 
@@ -541,19 +720,47 @@ render_camera_render(render_camera_t *camera, struct tie_s *tie, camera_tile_t *
     TCOPY(camera_tile_t, tile, 0, result->data, result->ind);
     result->ind += sizeof(camera_tile_t);
 
-    td.tie = tie;
-    td.camera = camera;
-    td.tile = tile;
-    td.res_buf = &((char *)result->data)[result->ind];
+    data.thread.tie = tie;
+    data.thread.camera = camera;
+    data.thread.tile = tile;
+    data.thread.res_buf = &((char *)result->data)[result->ind];
     scanline = 0;
-    td.scanline = &scanline;
-    td.sem_tie_worker = bu_semaphore_register("sem_tie_worker");
+    data.thread.scanline = &scanline;
+    data.thread.sem_tie_worker = bu_semaphore_register("sem_tie_worker");
+    data.annotation.scene = annotations;
+    data.annotation.model_units_per_tie_unit =
+	model_units_per_tie_unit > 0.0 ? model_units_per_tie_unit : 1.0;
+    if (annotations)
+	render_camera_annotation_view(camera,
+	    data.annotation.model_units_per_tie_unit, &data.annotation.view);
 
-    bu_parallel(render_camera_render_thread, camera->thread_num, &td);
+    if (annotations)
+	bu_parallel(render_camera_render_annotations_thread,
+	    camera->thread_num, &data);
+    else
+	bu_parallel(render_camera_render_thread, camera->thread_num,
+	    &data.thread);
 
     result->ind = ind;
+}
 
-    return;
+
+void
+render_camera_render(render_camera_t *camera, struct tie_s *tie,
+	camera_tile_t *tile, tienet_buffer_t *result)
+{
+    render_camera_render_internal(camera, tie, tile, result, NULL, 1.0);
+}
+
+
+void
+render_camera_render_annotations(render_camera_t *camera, struct tie_s *tie,
+	camera_tile_t *tile, tienet_buffer_t *result,
+	const struct rt_annot_scene *annotations,
+	fastf_t model_units_per_tie_unit)
+{
+    render_camera_render_internal(camera, tie, tile, result, annotations,
+	model_units_per_tie_unit);
 }
 
 

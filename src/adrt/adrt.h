@@ -88,11 +88,19 @@ enum
 
 #define ADRT_NAME_SIZE 256
 
+/* TIE geometry is normalized from millimeters to meters while loading. */
+#define ADRT_MODEL_UNITS_PER_TIE_UNIT 1000.0
+
 #define ADRT_LOAD_FORMAT_G 42
 #define ADRT_LOAD_FORMAT_REG 43
 #define ADRT_LOAD_FORMAT_KDTREE 44
 
+struct rt_annot_scene;
+
 RENDER_EXPORT extern int load_g(struct tie_s *tie, const char *db, int argc, const char **argv, struct adrt_mesh_s **);
+RENDER_EXPORT extern int load_g_annotations(struct tie_s *tie, const char *db,
+	int argc, const char **argv, struct adrt_mesh_s **,
+	struct rt_annot_scene **annotations);
 
 #endif
 

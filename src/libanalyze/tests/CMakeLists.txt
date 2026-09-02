@@ -1,6 +1,9 @@
 brlcad_addexec(analyze_raydiff raydiff.c "libanalyze;librt;libbu" TEST)
 brlcad_addexec(analyze_sp solid_partitions.c "libanalyze;librt;libbu" TEST)
 brlcad_addexec(analyze_nhit nhit.cpp "libanalyze;librt;libbu" TEST_USESDATA)
+brlcad_addexec(analyze_nirt_annotations nirt_annotations.cpp
+  "libanalyze;libwdb;librt;libbu" TEST_USESDATA)
+brlcad_add_test(NAME analyze_nirt_annotations COMMAND analyze_nirt_annotations)
 
 #####################################
 #      analyze_densities testing    #

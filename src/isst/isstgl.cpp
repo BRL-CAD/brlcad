@@ -159,8 +159,13 @@ void TIERenderer::render()
     m_grabCond.wait(&m_grabMutex);
     QMutexLocker lock(&m_renderMutex);
     m_grabMutex.unlock();
-    if (m_exiting)
+
+    /* The GUI may clear a scene while a queued render is waiting for the
+     * context.  Return the context before leaving that stale request. */
+    if (m_exiting || !tie) {
+	ctx->moveToThread(qGuiApp->thread());
 	return;
+    }
     Q_ASSERT(ctx->thread() == QThread::currentThread());
 
 
@@ -183,7 +188,8 @@ void TIERenderer::render()
 
     // Core TIE render
     render_camera_prep(&camera);
-    render_camera_render(&camera, tie, &tile, &buffer_image);
+    render_camera_render_annotations(&camera, tie, &tile, &buffer_image,
+	annotations, ADRT_MODEL_UNITS_PER_TIE_UNIT);
 
     glDisable(GL_LIGHTING);
 
@@ -297,17 +303,31 @@ void isstGL::grabContext()
 }
 
 void
-isstGL::set_tie(struct tie_s *in_tie)
+isstGL::clear_tie()
 {
-    m_renderer->tie = in_tie;
+    m_renderer->lockRenderer();
+    m_renderer->tie = NULL;
+    m_renderer->annotations = NULL;
+    m_renderer->changed = false;
+    m_renderer->unlockRenderer();
+}
 
-    // Initialize the camera position
-    VSETALL(m_renderer->camera.pos, m_renderer->tie->radius);
-    VMOVE(m_renderer->camera.focus, m_renderer->tie->mid);
+
+void
+isstGL::set_tie(struct tie_s *in_tie, struct rt_annot_scene *annotations)
+{
+    m_renderer->lockRenderer();
+    m_renderer->tie = in_tie;
+    m_renderer->annotations = annotations;
+
+    render_camera_fit_scene(&m_renderer->camera, m_renderer->tie, annotations,
+	ADRT_MODEL_UNITS_PER_TIE_UNIT);
 
     // Record the initial settings for use in subsequent calculations
-    VSETALL(m_renderer->camera_pos_init, m_renderer->tie->radius);
-    VMOVE(m_renderer->camera_focus_init, m_renderer->tie->mid);
+    VMOVE(m_renderer->camera_pos_init, m_renderer->camera.pos);
+    VMOVE(m_renderer->camera_focus_init, m_renderer->camera.focus);
+    m_renderer->changed = true;
+    m_renderer->unlockRenderer();
 
     // Having just loaded a new TIE scene,
     // we need a new image
@@ -369,4 +389,3 @@ void isstGL::save_image() {
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

@@ -64,16 +64,17 @@ ArtTileCallback::on_tile_end(const renderer::Frame* frame, const size_t tile_x, 
 {
     foundation::Tile& t = frame->image().tile(tile_x, tile_y);
     const foundation::Tile rgb(t, PixelFormatUInt8);
+    const foundation::CanvasProperties& properties = frame->image().properties();
     // fb_write(fbp, tile_x, tile_y, rgb.get_storage(), rgb.get_size());
     // printf("yay!\n");
     // printf("%lu %lu \n", tile_x, tile_y);
     // printf("%lu %lu \n", rgb.get_width(), rgb.get_height());
     for (size_t y = 0; y < rgb.get_height(); y++) {
 	for (size_t x = 0; x < rgb.get_width(); x++) {
-	    size_t x_coord = tile_x * rgb.get_width() + x;
-	    size_t y_coord = tile_y * rgb.get_height() + y;
-	    size_t img_h = frame->image().properties().m_canvas_height;
-	    fb_write(fbp, (int)x_coord, (int)(img_h - y_coord), rgb.get_storage()+((y * rgb.get_width() * 4) + (x * 4)), 1);
+	    size_t x_coord = tile_x * properties.m_tile_width + x;
+	    size_t y_coord = tile_y * properties.m_tile_height + y;
+	    size_t img_h = properties.m_canvas_height;
+	    fb_write(fbp, (int)x_coord, (int)(img_h - y_coord - 1), rgb.get_storage()+((y * rgb.get_width() * 4) + (x * 4)), 1);
 	}
     }
 }

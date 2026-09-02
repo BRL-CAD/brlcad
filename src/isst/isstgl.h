@@ -77,6 +77,7 @@ class TIERenderer : public QObject, protected QOpenGLFunctions
 
     public:
 	struct tie_s *tie = NULL; // From parent app
+	struct rt_annot_scene *annotations = NULL; // Owned by the parent app
 	struct render_camera_s camera;
 	vect_t camera_pos_init;
 	vect_t camera_focus_init;
@@ -113,7 +114,8 @@ class isstGL : public QOpenGLWidget
 	explicit isstGL(QWidget *parent = nullptr);
 	~isstGL();
 
-	void set_tie(struct tie_s *in_tie);
+	void clear_tie();
+	void set_tie(struct tie_s *in_tie, struct rt_annot_scene *annotations);
 
 	void save_image();
 
@@ -153,4 +155,3 @@ class isstGL : public QOpenGLWidget
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-
