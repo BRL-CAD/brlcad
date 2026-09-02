@@ -21,10 +21,10 @@ changes made.  See document footer for additional details.
 * added az (-a) and el (-e) option implementations to gqa - Cliff Yapp
 * added center command support for centering on an object - Cliff Yapp
 * greatly expanded JT import and added basic JT export - Sean Morrison
-* improved art Appleseed lights, colors, output, and region handling - Sean Morrison
+* improved art light, color, output, & region handling - Sean Morrison
 * added preliminary OpenSCAD import support - Sean Morrison
 * expanded IGES BREP/NURBS import and export support - Sean Morrison
-* expanded STEP AP203 import support, including faceted BREP - Sean Morrison
+* expanded STEP AP203 import support with faceted BREP - Sean Morrison
 * new adrt CLI utility with path, spall, and cut modes - Sean Morrison
 * new CLI+GUI prototype BRL-CAD application launcher - Sean Morrison
 * added option validation to image & framebuffer tools - Sean Morrison
