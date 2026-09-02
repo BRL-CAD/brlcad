@@ -370,6 +370,7 @@ rt_arb_centroid(point_t *cent, const struct rt_db_internal *ip)
 
     if (!cent || !ip)
 	return;
+    VSETALL(*cent, -1.0);
     aip = (struct rt_arb_internal *)ip->idb_ptr;
     RT_ARB_CK_MAGIC(aip);
 
@@ -383,6 +384,8 @@ rt_arb_centroid(point_t *cent, const struct rt_db_internal *ip)
 
     /* get number of vertices in arb_type */
     arb_type = rt_arb_std_type(ip, &tmp_tol);
+    if (arb_type == 0)
+	return;
 
     /* centroid is the average for each axis of all coordinates of vertices */
     for (i = 0; i < arb_type; i++) {
@@ -3500,7 +3503,7 @@ rt_arb_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     struct rt_arb_internal *arb = (struct rt_arb_internal *)ip->idb_ptr;
     RT_ARB_CK_MAGIC(arb);
 
-    *area = 0.0;
+    *area = -1.0;
 
     /* set up tolerance */
     struct bn_tol tol;
@@ -3529,14 +3532,14 @@ rt_arb_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 		VCROSS(cross, e1, e2);
 		tot += 0.5 * MAGNITUDE(cross);
 	    }
-	    *area += tot;
+	    *area = tot;
 	    bu_free(hull_faces, "arb chull faces");
 	    bu_free(hull_verts, "arb chull verts");
 	    return;
 	}
 	bu_free(hull_faces, "arb chull faces");
 	bu_free(hull_verts, "arb chull verts");
-	/* fall through to standard path on failure */
+	return;
     }
 
     int cgtype, type;
@@ -3545,6 +3548,7 @@ rt_arb_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 	return;
 
     type = cgtype - 4;
+    *area = 0.0;
 
     /* Build equiv_pts[] so that coincident vertices are mapped to the
      * lowest-numbered equivalent vertex.  This handles non-canonical ARB
@@ -3636,7 +3640,7 @@ rt_arb_surf_area(fastf_t *area, const struct rt_db_internal *ip)
         tot_area += face_area;
     }
 
-    *area += fabs(tot_area);
+    *area = fabs(tot_area);
 }
 
 
@@ -3654,6 +3658,7 @@ rt_arb_volume(fastf_t *vol, const struct rt_db_internal *ip)
     struct bn_tol tmp_tol;
     struct rt_arb_internal *aip = (struct rt_arb_internal *)ip->idb_ptr;
     RT_ARB_CK_MAGIC(aip);
+    *vol = -1.0;
 
     /* tol struct needed for bg_make_plane_3pnts,
      * can't be passed to the function since it
@@ -3691,8 +3696,11 @@ rt_arb_volume(fastf_t *vol, const struct rt_db_internal *ip)
 	}
 	bu_free(hull_faces, "arb chull faces");
 	bu_free(hull_verts, "arb chull verts");
-	/* fall through to standard path on failure */
+	return;
     }
+
+    if (rt_arb_std_type(ip, &tmp_tol) == 0)
+	return;
 
     *vol = 0.0;
     for (i = 0; i < 6; i++) {

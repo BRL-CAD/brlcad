@@ -119,7 +119,8 @@ _ged_tree_oriented_points(struct rt_i *rtip,
 	    RT_DB_INTERNAL_INIT(&intern);
 	    if (rt_db_get_internal(&intern, solid->st_dp, rtip->rti_dbip, NULL) >= 0) {
 		if (intern.idb_meth->ft_bbox)
-		    bounds_ret = rt_obj_bbox(&intern, &local_min, &local_max, &rtip->rti_tol);
+		    bounds_ret = intern.idb_meth->ft_bbox(&intern, &local_min, &local_max,
+			&rtip->rti_tol);
 		rt_db_free_internal(&intern);
 	    }
 	    if (bounds_ret < 0) {

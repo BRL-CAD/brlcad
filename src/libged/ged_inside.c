@@ -155,7 +155,18 @@ arbin(struct ged *gedp,
     RT_ARB_CK_MAGIC(arb);
 
     /* find reference point (center_pt[3]) to find direction of normals */
+    VSETALL(center_pt, -1.0);
     rt_arb_centroid(&center_pt, ip);
+    {
+	point_t error_centroid;
+	VSETALL(error_centroid, -1.0);
+	if (!isfinite(center_pt[X]) || !isfinite(center_pt[Y]) ||
+	    !isfinite(center_pt[Z]) ||
+	    VNEAR_EQUAL(center_pt, error_centroid, SMALL_FASTF)) {
+	    bu_vls_printf(gedp->ged_result_str, "cannot determine ARB centroid\n");
+	    return BRLCAD_ERROR;
+	}
+    }
 
     /* move new face planes for the desired thicknesses
      * don't do this yet for an arb7 */

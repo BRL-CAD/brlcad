@@ -46,6 +46,10 @@ generation capabilities. The classic behavior (and the behavior users
 will see if calling without specifying a subcommand) is a report
 summarizing geometric information about the specified solid(s). This
 behavior may also be explicitly invoked by the *summarize* subcommand.
+If a primitive advertises a metric but cannot calculate it, the summary
+reports *COULD NOT DETERMINE* for that value and the command returns an
+error. Other available metrics and summaries for subsequent objects are
+still reported.
 
 The *inside* subcommand will take an object and the x y z coordinates
 of a point, and report whether the point is inside or outside the

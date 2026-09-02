@@ -69,6 +69,7 @@ lint_data::summary()
 	double vol_err_pct = -1.0;
     };
     std::vector<rt_entry> rt_mismatches;
+    std::vector<rt_entry> rt_analytic_failed;
     std::vector<rt_entry> rt_facetize_failed;
     std::vector<rt_entry> rt_skips;
     std::vector<rt_entry> rt_ok;
@@ -99,6 +100,8 @@ lint_data::summary()
 		rt_ok.push_back(e);
 	    } else if (ptype == std::string("raytrace_mismatch")) {
 		rt_mismatches.push_back(e);
+	    } else if (ptype == std::string("raytrace_analytic_failed")) {
+		rt_analytic_failed.push_back(e);
 	    } else if (ptype == std::string("raytrace_facetize_failed")) {
 		rt_facetize_failed.push_back(e);
 	    } else if (ptype == std::string("raytrace_skip")) {
@@ -151,7 +154,7 @@ lint_data::summary()
 
     /* ---- Raytrace results section ---- */
     size_t rt_n_ok   = rt_ok.size();
-    size_t rt_n_fail = rt_mismatches.size();
+    size_t rt_n_fail = rt_mismatches.size() + rt_analytic_failed.size();
     size_t rt_n_skip = rt_skips.size() + rt_facetize_failed.size();
     if (rt_n_ok + rt_n_fail + rt_n_skip > 0) {
 	ostr.append(std::string("Raytrace validation: "));
@@ -182,6 +185,17 @@ lint_data::summary()
 			ostr.append(std::string("N/A"));
 		    }
 		}
+		if (!e.reason.empty())
+		    ostr.append(std::string("  (") + e.reason + std::string(")"));
+		ostr.append(std::string("\n"));
+	    }
+	}
+
+	if (!rt_analytic_failed.empty()) {
+	    ostr.append(std::string("Analytic metric failures:\n"));
+	    for (const auto &e : rt_analytic_failed) {
+		ostr.append(std::string("\t") + e.name);
+		ostr.append(std::string(" [") + e.type + std::string("]"));
 		if (!e.reason.empty())
 		    ostr.append(std::string("  (") + e.reason + std::string(")"));
 		ostr.append(std::string("\n"));
@@ -517,6 +531,7 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
 	    /* Only include raytrace failures, not passing or skipped objects */
 	    if (!ptype.compare(0, 9, std::string("raytrace_"))) {
 		if (ptype != std::string("raytrace_mismatch") &&
+		    ptype != std::string("raytrace_analytic_failed") &&
 		    ptype != std::string("raytrace_facetize_failed"))
 		    continue;
 	    }

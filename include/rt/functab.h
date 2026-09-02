@@ -230,6 +230,11 @@ struct rt_functab {
 		   const struct bn_tol *);
 #define RTFUNCTAB_FUNC_BBOX_CAST(_func) ((int (*)(struct rt_db_internal *, point_t *, point_t *, const struct bn_tol *))((void (*)(void))_func))
 
+    /**
+     * Calculate primitive metrics.  These callbacks predate status return
+     * values; callers initialize each scalar, or every centroid coordinate,
+     * to -1 and use NEAR_EQUAL or VNEAR_EQUAL to detect a failure.
+     */
     void (*ft_volume)(fastf_t * /*vol*/, const struct rt_db_internal * /*ip*/);
 #define RTFUNCTAB_FUNC_VOLUME_CAST(_func) ((void (*)(fastf_t *, const struct rt_db_internal *))((void (*)(void))_func))
 

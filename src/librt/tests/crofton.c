@@ -44,6 +44,91 @@ rel_err(double estimated, double exact)
 
 
 static int
+verify_metric_error_reporting(void)
+{
+    const fastf_t error_value = -1.0;
+    int failures = 0;
+
+    printf("\n--- Functab metric error reporting ---\n");
+
+    {
+	struct rt_comb_internal comb;
+	struct rt_db_internal ip;
+	fastf_t area = error_value;
+
+	RT_COMB_INTERNAL_INIT(&comb);
+	RT_DB_INTERNAL_INIT(&ip);
+	ip.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	ip.idb_minor_type = ID_COMBINATION;
+	ip.idb_type = ID_COMBINATION;
+	ip.idb_ptr = &comb;
+	ip.idb_meth = &OBJ[ID_COMBINATION];
+	ip.idb_meth->ft_surf_area(&area, &ip);
+	if (!NEAR_EQUAL(area, error_value, SMALL_FASTF)) {
+	    printf("  FAIL: combination surface-area error was not preserved\n");
+	    failures++;
+	}
+	RT_FREE_COMB_INTERNAL(&comb);
+	bu_avs_free(&ip.idb_avs);
+    }
+
+    {
+	struct rt_bot_internal bot;
+	struct rt_db_internal ip;
+	fastf_t volume = error_value;
+
+	memset(&bot, 0, sizeof(bot));
+	bot.magic = RT_BOT_INTERNAL_MAGIC;
+	bot.mode = RT_BOT_SURFACE;
+	RT_DB_INTERNAL_INIT(&ip);
+	ip.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	ip.idb_minor_type = ID_BOT;
+	ip.idb_type = ID_BOT;
+	ip.idb_ptr = &bot;
+	ip.idb_meth = &OBJ[ID_BOT];
+	ip.idb_meth->ft_volume(&volume, &ip);
+	if (!NEAR_EQUAL(volume, error_value, SMALL_FASTF)) {
+	    printf("  FAIL: surface-mode BoT reported a volume\n");
+	    failures++;
+	}
+	bu_avs_free(&ip.idb_avs);
+    }
+
+    {
+	struct rt_tgc_internal tgc;
+	struct rt_db_internal ip;
+	point_t centroid;
+	point_t error_centroid;
+
+	memset(&tgc, 0, sizeof(tgc));
+	tgc.magic = RT_TGC_INTERNAL_MAGIC;
+	VSET(tgc.h, 0, 0, 10);
+	VSET(tgc.a, 2, 0, 0);
+	VSET(tgc.b, 0, 1, 0);
+	VSET(tgc.c, 1, 0, 0);
+	VSET(tgc.d, 0, 0.75, 0);
+	RT_DB_INTERNAL_INIT(&ip);
+	ip.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	ip.idb_minor_type = ID_TGC;
+	ip.idb_type = ID_TGC;
+	ip.idb_ptr = &tgc;
+	ip.idb_meth = &OBJ[ID_TGC];
+	VSETALL(centroid, error_value);
+	VSETALL(error_centroid, error_value);
+	ip.idb_meth->ft_centroid(&centroid, &ip);
+	if (!VNEAR_EQUAL(centroid, error_centroid, SMALL_FASTF)) {
+	    printf("  FAIL: unsupported TGC centroid did not preserve the error value\n");
+	    failures++;
+	}
+	bu_avs_free(&ip.idb_avs);
+    }
+
+    printf("  Functab metric error reporting: %d failure(s)\n", failures);
+    return failures;
+}
+
+
+static int
 verify_crofton_estimates(void)
 {
     int failures = 0;
@@ -387,6 +472,7 @@ main(int argc, char *argv[])
 	bu_exit(1, "Usage: %s\n", argv[0]);
 
     int failures = 0;
+    failures += verify_metric_error_reporting();
     failures += verify_crofton_estimates();
     failures += test_crofton_convergence_timing();
 

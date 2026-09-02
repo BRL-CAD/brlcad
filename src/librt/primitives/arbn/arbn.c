@@ -1573,7 +1573,7 @@ rt_arbn_volume(fastf_t *volume, const struct rt_db_internal *ip)
     BN_TOL_INIT(&tol);
     BU_LIST_INIT(&vlfree);
 
-    *volume = 0.0;
+    *volume = -1.0;
 
     m = nmg_mm();
     if (rt_arbn_tess(&r, m, (struct rt_db_internal *)(uintptr_t)ip, &ttol, &tol) != 0 || !r) {
@@ -1612,13 +1612,12 @@ rt_arbn_centroid(point_t *cent, const struct rt_db_internal *ip)
     fastf_t volume = 0.0;
 
     if (!cent || !ip || !ip->idb_ptr) return;
+    VSETALL(*cent, -1.0);
 
     aip = (struct rt_arbn_internal *)ip->idb_ptr;
     if (!aip->neqn) return;
 
-    *cent[0] = 0.0;
-    *cent[1] = 0.0;
-    *cent[2] = 0.0;
+    VSETALL(*cent, 0.0);
 
     /* allocate array of face structs */
     faces = (struct poly_face *)bu_calloc(aip->neqn, sizeof(struct poly_face), "rt_arbn_centroid: faces");
@@ -1628,6 +1627,8 @@ rt_arbn_centroid(point_t *cent, const struct rt_db_internal *ip)
     }
     rt_arbn_faces_area(faces, aip);
     for (i = 0; i < aip->neqn; i++) {
+	if (faces[i].npts < 3)
+	    goto fail;
 	bg_3d_polygon_centroid(&faces[i].cent, faces[i].npts, (const point_t *) faces[i].pts);
 	VADD2(arbit_point, arbit_point, faces[i].cent);
 
@@ -1651,12 +1652,22 @@ rt_arbn_centroid(point_t *cent, const struct rt_db_internal *ip)
 	/* add cent_pyramid to the centroid of the polyhedron */
 	VADD2(*cent, *cent, faces[i].cent_pyramid);
     }
+    if (NEAR_ZERO(volume, SMALL_FASTF))
+	goto fail;
     /* reverse the weighting */
     VSCALE(*cent, *cent, (1/volume));
     for (i = 0; i < aip->neqn; i++) {
 	bu_free((char *)faces[i].pts, "rt_arbn_centroid: pts");
     }
     bu_free((char *)faces, "rt_arbn_centroid: faces");
+    return;
+
+fail:
+    for (i = 0; i < aip->neqn; i++) {
+	bu_free((char *)faces[i].pts, "rt_arbn_centroid: pts");
+    }
+    bu_free((char *)faces, "rt_arbn_centroid: faces");
+    VSETALL(*cent, -1.0);
 }
 
 

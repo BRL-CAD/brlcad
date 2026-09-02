@@ -39,6 +39,7 @@
 
 #include "common.h"
 
+#include <cmath>
 #include <vector>
 
 #include "raytrace.h"
@@ -276,9 +277,11 @@ rt_sketch_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     struct rt_sketch_internal *sketch_ip = (struct rt_sketch_internal *)ip->idb_ptr;
     RT_SKETCH_CK_MAGIC(sketch_ip);
     struct rt_curve crv = sketch_ip->curve;
+    *area = -1.0;
 
     // a sketch with no curves has no area
     if (UNLIKELY(crv.count == 0)) {
+	*area = 0.0;
 	return;
     }
 
@@ -336,10 +339,12 @@ rt_sketch_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 	    break;
 	case CURVE_NURB_MAGIC:
 	default:
-	    break;
+	    return;
 	}
     }
     *area = 0.5 * fabs(poly_area) + carc_area;
+    if (!std::isfinite(*area))
+	*area = -1.0;
 }
 
 

@@ -2009,6 +2009,9 @@ rt_bot_centroid(point_t *cent, const struct rt_db_internal *ip)
     RT_BOT_CK_MAGIC(bot_ip);
 
     rt_bot_condense(bot_ip);
+    VSETALL(*cent, -1.0);
+    if (bot_ip->num_vertices == 0)
+	return;
     VSETALL(*cent, 0.0);
     for (i = 0; i < bot_ip->num_vertices; i++) {
 	VADD2(*cent, *cent, &bot_ip->vertices[i*3]);
@@ -2039,8 +2042,12 @@ rt_bot_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	size_t faces[RT_BOT_TESS_MAX_FACES];
 	plane_t planes[RT_BOT_TESS_MAX_FACES];
 	point_t center;
+	point_t error_center;
 
+	VSETALL(error_center, -1.0);
 	rt_bot_centroid(&center, ip);
+	if (VNEAR_EQUAL(center, error_center, SMALL_FASTF))
+	    return -1;
 	bu_log("center pt = (%f %f %f)\n", V3ARGS(center));
 
 	/* get the faces that use each vertex */
@@ -6069,9 +6076,10 @@ rt_bot_volume(fastf_t *volume, const struct rt_db_internal *ip)
     struct bn_tol tol;
     RT_BOT_CK_MAGIC(bot);
 
-    *volume = 0.0;
-    if (bot->mode == RT_BOT_SURFACE)
+    *volume = -1.0;
+    if (bot->mode != RT_BOT_SOLID)
 	return;
+    *volume = 0.0;
 
     /* allocate pts array, 3 vertices per bot face */
     face.pts = (point_t *)bu_calloc(3, sizeof(point_t), "rt_bot_volume: pts");

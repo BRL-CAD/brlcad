@@ -283,7 +283,7 @@ append_solid_to_display_list(
     VSETALL(sp->s_center, 0.0);
 
     if (ip->idb_meth->ft_bbox) {
-	if (rt_obj_bbox(ip, &min, &max, tsp->ts_tol) < 0) {
+	if (ip->idb_meth->ft_bbox(ip, &min, &max, tsp->ts_tol) < 0) {
 	    if (pathp && DB_FULL_PATH_CUR_DIR(pathp)) {
 		bu_log("%s: plot failure\n", DB_FULL_PATH_CUR_DIR(pathp)->d_namep);
 	    } else {

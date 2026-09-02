@@ -280,6 +280,197 @@ _rt_nonuniform_volume_scale(const mat_t mat)
 }
 
 
+static int
+nonuniform_body_internal_init(struct rt_db_internal *body, const struct rt_db_internal *ip)
+{
+    if (!body || !ip)
+	return -1;
+
+    RT_CK_DB_INTERNAL(ip);
+    RT_DB_INTERNAL_INIT(body);
+    body->idb_major_type = ip->idb_major_type;
+    body->idb_minor_type = ip->idb_minor_type;
+    body->idb_meth = ip->idb_meth;
+    body->idb_ptr = ip->idb_ptr;
+
+    if (_rt_nonuniform_attr_copy(body, ip) < 0 ||
+	_rt_nonuniform_attr_remove(body) < 0) {
+	bu_avs_free(&body->idb_avs);
+	return -1;
+    }
+
+    return 0;
+}
+
+
+static int
+nonuniform_metric_is_error(fastf_t value)
+{
+    const fastf_t error_value = -1.0;
+
+    return !isfinite(value) || NEAR_EQUAL(value, error_value, SMALL_FASTF);
+}
+
+
+static int
+nonuniform_centroid_is_error(const point_t cent)
+{
+    point_t error_centroid;
+
+    VSETALL(error_centroid, -1.0);
+    return !isfinite(cent[X]) || !isfinite(cent[Y]) || !isfinite(cent[Z]) ||
+	VNEAR_EQUAL(cent, error_centroid, SMALL_FASTF);
+}
+
+
+int
+_rt_nonuniform_body_bbox(const struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *tol)
+{
+    struct rt_db_internal body;
+    mat_t mat;
+    int have_nonuniform;
+    int ret;
+
+    if (!ip || !min || !max || !ip->idb_meth || !ip->idb_meth->ft_bbox)
+	return -1;
+
+    have_nonuniform = _rt_nonuniform_attr_get(mat, ip);
+    if (have_nonuniform <= 0)
+	return (have_nonuniform < 0) ? -1 :
+	    ip->idb_meth->ft_bbox((struct rt_db_internal *)ip, min, max, tol);
+
+    if (nonuniform_body_internal_init(&body, ip) < 0)
+	return -1;
+
+    ret = body.idb_meth->ft_bbox(&body, min, max, tol);
+    bu_avs_free(&body.idb_avs);
+    return ret;
+}
+
+
+int
+_rt_nonuniform_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *tol)
+{
+    point_t body_min, body_max;
+    mat_t mat;
+    int have_nonuniform;
+
+    if (!ip || !min || !max)
+	return -1;
+
+    have_nonuniform = _rt_nonuniform_attr_get(mat, ip);
+    if (have_nonuniform <= 0)
+	return have_nonuniform;
+
+    if (_rt_nonuniform_body_bbox(ip, &body_min, &body_max, tol) < 0)
+	return -1;
+
+    _rt_nonuniform_transform_bbox(min, max, mat, body_min, body_max);
+    return 1;
+}
+
+
+int
+_rt_nonuniform_volume(fastf_t *volume, const struct rt_db_internal *ip)
+{
+    struct rt_db_internal body;
+    fastf_t body_volume = -1.0;
+    mat_t mat;
+    int have_nonuniform;
+
+    if (!volume || !ip)
+	return -1;
+
+    have_nonuniform = _rt_nonuniform_attr_get(mat, ip);
+    if (have_nonuniform == 0)
+	return 0;
+
+    *volume = -1.0;
+    if (have_nonuniform < 0 || !ip->idb_meth || !ip->idb_meth->ft_volume)
+	return -1;
+    if (nonuniform_body_internal_init(&body, ip) < 0)
+	return -1;
+
+    body.idb_meth->ft_volume(&body_volume, &body);
+    bu_avs_free(&body.idb_avs);
+    if (nonuniform_metric_is_error(body_volume))
+	return -1;
+
+    *volume = body_volume * _rt_nonuniform_volume_scale(mat);
+    if (!isfinite(*volume)) {
+	*volume = -1.0;
+	return -1;
+    }
+
+    return 1;
+}
+
+
+int
+_rt_nonuniform_surf_area(fastf_t *area, const struct rt_db_internal *ip)
+{
+    mat_t mat;
+    int have_nonuniform;
+
+    if (!area || !ip)
+	return -1;
+
+    have_nonuniform = _rt_nonuniform_attr_get(mat, ip);
+    if (have_nonuniform == 0)
+	return 0;
+
+    *area = -1.0;
+    if (have_nonuniform < 0)
+	return -1;
+
+    rt_crofton_surf_area_implicit(area, ip);
+    if (nonuniform_metric_is_error(*area)) {
+	*area = -1.0;
+	return -1;
+    }
+
+    return 1;
+}
+
+
+int
+_rt_nonuniform_centroid(point_t *cent, const struct rt_db_internal *ip)
+{
+    struct rt_db_internal body;
+    point_t body_centroid;
+    mat_t mat;
+    int have_nonuniform;
+
+    if (!cent || !ip)
+	return -1;
+
+    have_nonuniform = _rt_nonuniform_attr_get(mat, ip);
+    if (have_nonuniform == 0)
+	return 0;
+
+    VSETALL(*cent, -1.0);
+    if (have_nonuniform < 0 || !ip->idb_meth || !ip->idb_meth->ft_centroid)
+	return -1;
+    if (nonuniform_body_internal_init(&body, ip) < 0)
+	return -1;
+
+    VSETALL(body_centroid, -1.0);
+    body.idb_meth->ft_centroid(&body_centroid, &body);
+    bu_avs_free(&body.idb_avs);
+    if (nonuniform_centroid_is_error(body_centroid))
+	return -1;
+
+    MAT4X3PNT(*cent, mat, body_centroid);
+    if (!isfinite((*cent)[X]) || !isfinite((*cent)[Y]) ||
+	!isfinite((*cent)[Z])) {
+	VSETALL(*cent, -1.0);
+	return -1;
+    }
+
+    return 1;
+}
+
+
 int
 _rt_nonuniform_transform_needed(const struct rt_db_internal *ip, const mat_t mat)
 {
@@ -938,12 +1129,21 @@ nonuniform_transform_vlist(struct bu_list *vhead, const struct rt_nonuniform_vli
 int
 _rt_nonuniform_prep_finalize(struct soltab *stp, const struct rt_db_internal *ip, const struct bn_tol *tol)
 {
+    point_t body_min, body_max;
     mat_t mat;
     int have_nonuniform;
 
     have_nonuniform = _rt_nonuniform_attr_get(mat, ip);
     if (have_nonuniform <= 0)
 	return have_nonuniform;
+
+    /* Primitive bbox callbacks report the transformed bounds to their
+     * external callers.  The soltab adapter needs the untransformed bounds
+     * so it can retain a body-space copy before applying the matrix once. */
+    if (_rt_nonuniform_body_bbox(ip, &body_min, &body_max, tol) < 0)
+	return -1;
+    VMOVE(stp->st_min, body_min);
+    VMOVE(stp->st_max, body_max);
 
     return _rt_nonuniform_soltab_setup(stp, mat, tol);
 }

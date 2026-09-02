@@ -276,9 +276,13 @@ object_volume(struct db_i *dbip, const char *name, fastf_t *vol)
     if (rt_db_get_internal(&intern, dp, dbip, NULL) < 0)
 	return BRLCAD_ERROR;
 
-    int ret = rt_obj_volume(vol, &intern);
+    const struct rt_functab *ft = intern.idb_meth;
+    *vol = -1.0;
+    if (ft && ft->ft_volume)
+	ft->ft_volume(vol, &intern);
     rt_db_free_internal(&intern);
-    if (ret < 0 || !std::isfinite(*vol) || *vol <= 0.0)
+    if (!std::isfinite(*vol) || *vol <= 0.0 ||
+	NEAR_EQUAL(*vol, -1.0, SMALL_FASTF))
 	return BRLCAD_ERROR;
 
     return BRLCAD_OK;
@@ -296,9 +300,41 @@ object_surface_area(struct db_i *dbip, const char *name, fastf_t *area)
     if (rt_db_get_internal(&intern, dp, dbip, NULL) < 0)
 	return BRLCAD_ERROR;
 
-    int ret = rt_obj_surf_area(area, &intern);
+    const struct rt_functab *ft = intern.idb_meth;
+    *area = -1.0;
+    if (ft && ft->ft_surf_area)
+	ft->ft_surf_area(area, &intern);
     rt_db_free_internal(&intern);
-    if (ret < 0 || !std::isfinite(*area) || *area <= 0.0)
+    if (!std::isfinite(*area) || *area <= 0.0 ||
+	NEAR_EQUAL(*area, -1.0, SMALL_FASTF))
+	return BRLCAD_ERROR;
+
+    return BRLCAD_OK;
+}
+
+static int
+object_centroid(struct db_i *dbip, const char *name, point_t *centroid, bool *available)
+{
+    struct directory *dp = db_lookup(dbip, name, LOOKUP_QUIET);
+    if (!dp)
+	return BRLCAD_ERROR;
+
+    struct rt_db_internal intern;
+    RT_DB_INTERNAL_INIT(&intern);
+    if (rt_db_get_internal(&intern, dp, dbip, NULL) < 0)
+	return BRLCAD_ERROR;
+
+    point_t error_centroid;
+    VSETALL(*centroid, -1.0);
+    VSETALL(error_centroid, -1.0);
+    *available = intern.idb_meth && intern.idb_meth->ft_centroid;
+    if (*available)
+	intern.idb_meth->ft_centroid(centroid, &intern);
+    rt_db_free_internal(&intern);
+
+    if (*available && (!std::isfinite((*centroid)[X]) ||
+	!std::isfinite((*centroid)[Y]) || !std::isfinite((*centroid)[Z]) ||
+	VNEAR_EQUAL(*centroid, error_centroid, SMALL_FASTF)))
 	return BRLCAD_ERROR;
 
     return BRLCAD_OK;
@@ -689,6 +725,22 @@ run_scaled_case(struct ged *gedp, const char *base_csg, const char *base_bot,
     if (check_ratio(label, base_csg_vol, base_bot_vol, csg_vol, bot_vol, ratio_tol) != BRLCAD_OK)
 	return BRLCAD_ERROR;
 
+    point_t base_centroid, csg_centroid, expected_centroid;
+    bool have_base_centroid = false;
+    bool have_csg_centroid = false;
+    if (object_centroid(gedp->dbip, base_csg, &base_centroid, &have_base_centroid) != BRLCAD_OK ||
+	object_centroid(gedp->dbip, csg_leaf, &csg_centroid, &have_csg_centroid) != BRLCAD_OK ||
+	have_base_centroid != have_csg_centroid)
+	return BRLCAD_ERROR;
+    if (have_csg_centroid) {
+	MAT4X3PNT(expected_centroid, mat, base_centroid);
+	if (!VNEAR_EQUAL(csg_centroid, expected_centroid, BN_TOL_DIST)) {
+	    bu_log("[nonuniform] %s centroid mismatch: got (%g %g %g), expected (%g %g %g)\n",
+		label, V3ARGS(csg_centroid), V3ARGS(expected_centroid));
+	    return BRLCAD_ERROR;
+	}
+    }
+
     fastf_t csg_area = -1.0;
     fastf_t csg_tess_area = -1.0;
     fastf_t bot_area = -1.0;
@@ -830,7 +882,7 @@ main(int argc, const char **argv)
 	return 1;
     }
 
-    bu_log("[nonuniform] all primitive non-uniform volume checks passed\n");
+    bu_log("[nonuniform] all primitive non-uniform metric checks passed\n");
     return 0;
 }
 

@@ -112,12 +112,6 @@ RT_EXPORT extern int rt_obj_free(struct soltab *stp);
 RT_EXPORT extern int rt_obj_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol);
 
 /**
- * Calculate an object's axis-aligned bounding box, including any stored
- * matrix:nonuniform transform.
- */
-RT_EXPORT extern int rt_obj_bbox(struct rt_db_internal *ip, point_t *bmin, point_t *bmax, const struct bn_tol *tol);
-
-/**
  * shoot an array of rays at a set of homogeneous objects.
  */
 RT_EXPORT extern int rt_obj_vshot(struct soltab *stp[], struct xray *rp[], struct seg *segp, int n, struct application *ap);
@@ -126,21 +120,6 @@ RT_EXPORT extern int rt_obj_vshot(struct soltab *stp[], struct xray *rp[], struc
  * tessellate an object (into NMG form)
  */
 RT_EXPORT extern int rt_obj_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol);
-
-/**
- * calculate object volume
- */
-RT_EXPORT extern int rt_obj_volume(fastf_t *volume, const struct rt_db_internal *ip);
-
-/**
- * calculate object surface area
- */
-RT_EXPORT extern int rt_obj_surf_area(fastf_t *area, const struct rt_db_internal *ip);
-
-/**
- * calculate object centroid
- */
-RT_EXPORT extern int rt_obj_centroid(point_t *cent, const struct rt_db_internal *ip);
 
 /**
  * tessellate an object (into NURBS NMG form)
@@ -373,6 +352,9 @@ RT_EXPORT extern int rt_crofton_shoot(double *out_surf_area, double *out_volume,
  * superell, ETO/TOR spindle) should call this function directly with
  * appropriate params.  Callers that already have a prepared rt_i should
  * call rt_crofton_shoot() instead.
+ *
+ * On failure, each requested output is set to -1, following the metric
+ * functab convention.
  */
 RT_EXPORT extern void rt_crofton_sample(fastf_t *area, fastf_t *vol,
 					const struct rt_db_internal *ip,

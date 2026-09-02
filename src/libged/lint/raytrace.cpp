@@ -82,6 +82,7 @@ enum rt_result_t {
     RT_RESULT_UNKNOWN = 0,
     RT_RESULT_OK,
     RT_RESULT_MISMATCH,
+    RT_RESULT_ANALYTIC_FAILED,
     RT_RESULT_FACETIZE_FAILED,
     RT_RESULT_SKIP_HALFSPACE,
     RT_RESULT_SKIP_CHILD_FAIL,
@@ -105,6 +106,22 @@ struct obj_rt_info {
 };
 
 static const double EMPTY_METRIC_TOL = 1.0e-9;
+static const double ANALYTIC_METRIC_ERROR = -1.0;
+
+static bool
+analytic_metric_failed(double value)
+{
+    return !std::isfinite(value) ||
+	NEAR_EQUAL(value, ANALYTIC_METRIC_ERROR, SMALL_FASTF);
+}
+
+static double
+metric_relative_error(double measured, double reference)
+{
+    if (std::fabs(reference) <= EMPTY_METRIC_TOL)
+	return (std::fabs(measured) <= EMPTY_METRIC_TOL) ? 0.0 : 1.0;
+    return std::fabs(measured - reference) / std::fabs(reference);
+}
 
 /* ---------------------------------------------------------------------- */
 /* Tree-walk helpers                                                       */
@@ -445,18 +462,37 @@ check_primitive(lint_data *ldata, struct directory *dp,
     const char *name = dp->d_namep;
 
     /* Query the primitive's analytic SA and volume when available */
-    double analytic_sa = -1.0, analytic_vol = -1.0;
+    double analytic_sa = ANALYTIC_METRIC_ERROR;
+    double analytic_vol = ANALYTIC_METRIC_ERROR;
+    bool have_analytic_sa = false;
+    bool have_analytic_vol = false;
+    bool analytic_sa_failed = false;
+    bool analytic_vol_failed = false;
+    bool analytic_query_bombed = false;
     {
 	struct rt_db_internal intern;
 	RT_DB_INTERNAL_INIT(&intern);
 	if (rt_db_get_internal(&intern, dp, gedp->dbip, NULL) >= 0) {
 	    if (intern.idb_minor_type >= 0 && intern.idb_minor_type < ID_MAXIMUM) {
+		const struct rt_functab *ft = &OBJ[intern.idb_minor_type];
+
 		if (!BU_SETJUMP) {
-		    rt_obj_surf_area(&analytic_sa, &intern);
-		    rt_obj_volume(&analytic_vol, &intern);
+		    if (ft->ft_surf_area) {
+			ft->ft_surf_area(&analytic_sa, &intern);
+			analytic_sa_failed = analytic_metric_failed(analytic_sa);
+			have_analytic_sa = !analytic_sa_failed;
+		    }
+		    if (ft->ft_volume) {
+			ft->ft_volume(&analytic_vol, &intern);
+			analytic_vol_failed = analytic_metric_failed(analytic_vol);
+			have_analytic_vol = !analytic_vol_failed;
+		    }
 		} else {
 		    BU_UNSETJUMP;
-		    analytic_sa = analytic_vol = -1.0;
+		    analytic_sa = analytic_vol = ANALYTIC_METRIC_ERROR;
+		    have_analytic_sa = have_analytic_vol = false;
+		    analytic_sa_failed = analytic_vol_failed = false;
+		    analytic_query_bombed = true;
 		}
 		BU_UNSETJUMP;
 	    }
@@ -464,18 +500,38 @@ check_primitive(lint_data *ldata, struct directory *dp,
 	}
     }
 
-    /* Run Crofton on the CSG primitive */
-    double csa = -1.0, cvol = -1.0;
-    int cret = crofton_on_obj(gedp->dbip, name, ldata->rt_crofton_rays, csa, cvol);
-
     info.analytic_sa  = analytic_sa;
     info.analytic_vol = analytic_vol;
-    info.crofton_sa   = csa;
-    info.crofton_vol  = cvol;
 
     nlohmann::json jentry;
     jentry["object_name"] = name;
     jentry["object_type"] = "primitive";
+
+    if (analytic_query_bombed || analytic_sa_failed || analytic_vol_failed) {
+	info.result = RT_RESULT_ANALYTIC_FAILED;
+	jentry["problem_type"] = "raytrace_analytic_failed";
+	if (analytic_query_bombed)
+	    jentry["reason"] = "analytic_metric_query_bombed";
+	else if (analytic_sa_failed && analytic_vol_failed)
+	    jentry["reason"] = "analytic_surface_area_and_volume_failed";
+	else if (analytic_sa_failed)
+	    jentry["reason"] = "analytic_surface_area_failed";
+	else
+	    jentry["reason"] = "analytic_volume_failed";
+	if (have_analytic_sa)
+	    jentry["analytic_sa"] = analytic_sa;
+	if (have_analytic_vol)
+	    jentry["analytic_vol"] = analytic_vol;
+	ldata->j.push_back(jentry);
+	return;
+    }
+
+    /* A callback failure is definitive and must not be hidden by a later
+     * raytrace preparation failure. */
+    double csa = -1.0, cvol = -1.0;
+    int cret = crofton_on_obj(gedp->dbip, name, ldata->rt_crofton_rays, csa, cvol);
+    info.crofton_sa  = csa;
+    info.crofton_vol = cvol;
 
     if (cret != 0) {
 	info.result = RT_RESULT_SKIP_PREP_FAIL;
@@ -488,10 +544,10 @@ check_primitive(lint_data *ldata, struct directory *dp,
     jentry["crofton_sa"]  = csa;
     jentry["crofton_vol"] = cvol;
 
-    bool has_analytic = (analytic_sa > 0.0 && analytic_vol > 0.0);
+    bool has_analytic = have_analytic_sa && have_analytic_vol;
     if (has_analytic) {
-	double sa_err  = std::fabs(csa  - analytic_sa)  / analytic_sa;
-	double vol_err = std::fabs(cvol - analytic_vol) / analytic_vol;
+	double sa_err  = metric_relative_error(csa, analytic_sa);
+	double vol_err = metric_relative_error(cvol, analytic_vol);
 
 	info.ref_sa      = analytic_sa;
 	info.ref_vol     = analytic_vol;
@@ -524,6 +580,10 @@ check_primitive(lint_data *ldata, struct directory *dp,
 	info.result         = RT_RESULT_OK;
 	jentry["problem_type"] = "raytrace_ok";
 	jentry["reason"]       = "no_analytic_reference";
+	if (have_analytic_sa)
+	    jentry["analytic_sa"] = analytic_sa;
+	if (have_analytic_vol)
+	    jentry["analytic_vol"] = analytic_vol;
     }
 
     ldata->j.push_back(jentry);
@@ -602,8 +662,8 @@ check_comb(lint_data *ldata, struct directory *dp,
 
     /* Relative error uses the BoT (exact mesh) as the reference denominator,
      * consistent with how primitives use the analytic formula as denominator. */
-    double sa_err  = (bsa  > 0.0) ? std::fabs(csa  - bsa)  / bsa  : 1.0;
-    double vol_err = (bvol > 0.0) ? std::fabs(cvol - bvol) / bvol : 1.0;
+    double sa_err  = metric_relative_error(csa, bsa);
+    double vol_err = metric_relative_error(cvol, bvol);
     info.sa_err_pct  = sa_err  * 100.0;
     info.vol_err_pct = vol_err * 100.0;
     jentry["sa_err_pct"]  = info.sa_err_pct;
@@ -748,6 +808,7 @@ _ged_raytrace_check(lint_data *ldata)
 	    if (!universe.count(cname)) continue;
 	    rt_result_t cr = universe[cname].result;
 	    if (cr == RT_RESULT_MISMATCH ||
+		cr == RT_RESULT_ANALYTIC_FAILED ||
 		cr == RT_RESULT_FACETIZE_FAILED ||
 		cr == RT_RESULT_SKIP_PREP_FAIL ||
 		cr == RT_RESULT_SKIP_CHILD_FAIL) {
@@ -775,6 +836,7 @@ _ged_raytrace_check(lint_data *ldata)
 	switch (info.result) {
 	    case RT_RESULT_OK:              n_pass++; break;
 	    case RT_RESULT_MISMATCH:        n_fail++; break;
+	    case RT_RESULT_ANALYTIC_FAILED: n_fail++; break;
 	    default:                        n_skip++; break;
 	}
     }

@@ -5097,9 +5097,12 @@ rt_pipe_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     int connected;
     char overlap;
 
+    *area = -1.0;
     BU_LIST_INIT(&head);
 
     pipe_elements_calculate(&head, ip, &min, &max);
+    if (BU_LIST_IS_EMPTY(&head))
+	return;
 
     /* The following calculation establishes if the last pipe segment
      * is in fact connected to the first one. The last end point is
@@ -5207,7 +5210,9 @@ rt_pipe_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 		    break;
 		default:
 		    bu_log("rt_pipe_surf_area: Unexpected cross-section overlap code: (%d)\n", overlap);
-		    break;
+		    *area = -1.0;
+		    pipe_elements_free(&head);
+		    return;
 	    }
 	} else {
 	    /* not connected, both areas are added regardless of overlaps */
@@ -5295,9 +5300,12 @@ rt_pipe_volume(fastf_t *vol, const struct rt_db_internal *ip)
     point_t min, max;
     struct id_pipe *p;
 
+    *vol = -1.0;
     BU_LIST_INIT(&head);
 
     pipe_elements_calculate(&head, ip, &min, &max);
+    if (BU_LIST_IS_EMPTY(&head))
+	return;
 
     *vol = 0;
     for (BU_LIST_FOR(p, id_pipe, &head)) {
@@ -5319,15 +5327,23 @@ rt_pipe_centroid(point_t *cent, const struct rt_db_internal *ip)
     struct id_pipe *p;
     fastf_t vol;
 
+    VSETALL(*cent, -1.0);
     BU_LIST_INIT(&head);
 
     pipe_elements_calculate(&head, ip, &min, &max);
+    if (BU_LIST_IS_EMPTY(&head))
+	return;
 
     VSETALL(*cent, 0);
     vol = 0;
 
     for (BU_LIST_FOR(p, id_pipe, &head)) {
 	pipe_elem_volume_and_centroid(p, &vol, cent);
+    }
+    if (NEAR_ZERO(vol, SMALL_FASTF)) {
+	VSETALL(*cent, -1.0);
+	pipe_elements_free(&head);
+	return;
     }
     VSCALE(*cent, *cent, 1/vol);
     pipe_elements_free(&head);

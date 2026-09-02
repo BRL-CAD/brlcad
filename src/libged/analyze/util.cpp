@@ -32,6 +32,7 @@ extern "C" {
 }
 
 #include <cassert>
+#include <cmath>
 #include <limits>
 
 extern "C" {
@@ -40,6 +41,28 @@ extern "C" {
 }
 #include "./ged_analyze.h"
 #include "../ged_private.h"
+
+static const fastf_t analyze_metric_error = -1.0;
+
+
+static bool
+analyze_metric_failed(fastf_t value)
+{
+    return !std::isfinite(value) || NEAR_EQUAL(value, analyze_metric_error, SMALL_FASTF);
+}
+
+
+static bool
+analyze_centroid_failed(const point_t centroid)
+{
+    point_t error_centroid;
+
+    VSETALL(error_centroid, analyze_metric_error);
+    return !std::isfinite(centroid[X]) || !std::isfinite(centroid[Y]) ||
+	!std::isfinite(centroid[Z]) ||
+	VNEAR_EQUAL(centroid, error_centroid, SMALL_FASTF);
+}
+
 
 void get_dashes(field_t *f, const int ndashes)
 {
@@ -648,22 +671,38 @@ analyze_poly_face(struct ged *gedp, struct poly_face *face, row_t *row)
  * - part
  * - rhc
  */
-void
+int
 analyze_general(struct ged *gedp, const struct rt_db_internal *ip)
 {
     fastf_t vol, area;
     point_t centroid;
+    int status = BRLCAD_OK;
 
-    vol = area = -1.0;
+    vol = area = analyze_metric_error;
+    VSETALL(centroid, analyze_metric_error);
 
-    rt_obj_volume(&vol, ip);
-    rt_obj_surf_area(&area, ip);
+    if (OBJ[ip->idb_minor_type].ft_volume) {
+	OBJ[ip->idb_minor_type].ft_volume(&vol, ip);
+	if (analyze_metric_failed(vol))
+	    status = BRLCAD_ERROR;
+    }
+    if (OBJ[ip->idb_minor_type].ft_surf_area) {
+	OBJ[ip->idb_minor_type].ft_surf_area(&area, ip);
+	if (analyze_metric_failed(area))
+	    status = BRLCAD_ERROR;
+    }
 
-    if (rt_obj_centroid(&centroid, ip) == 0) {
-	bu_vls_printf(gedp->ged_result_str, "\n    Centroid: (%g, %g, %g)\n",
-		      centroid[X] * gedp->dbip->dbi_base2local,
-		      centroid[Y] * gedp->dbip->dbi_base2local,
-		      centroid[Z] * gedp->dbip->dbi_base2local);
+    if (OBJ[ip->idb_minor_type].ft_centroid) {
+	OBJ[ip->idb_minor_type].ft_centroid(&centroid, ip);
+	if (!analyze_centroid_failed(centroid)) {
+	    bu_vls_printf(gedp->ged_result_str, "\n    Centroid: (%g, %g, %g)\n",
+			  centroid[X] * gedp->dbip->dbi_base2local,
+			  centroid[Y] * gedp->dbip->dbi_base2local,
+			  centroid[Z] * gedp->dbip->dbi_base2local);
+	} else {
+	    bu_vls_printf(gedp->ged_result_str, "\n    Centroid: COULD NOT DETERMINE\n");
+	    status = BRLCAD_ERROR;
+	}
     }
 
     print_volume_table(gedp,
@@ -676,6 +715,7 @@ analyze_general(struct ged *gedp, const struct rt_db_internal *ip)
 		      * gedp->dbip->dbi_base2local,
 		       vol/GALLONS_TO_MM3
 		      );
+    return status;
 }
 
 

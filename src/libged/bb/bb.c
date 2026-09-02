@@ -27,6 +27,7 @@
 
 #include "common.h"
 
+#include <math.h>
 #include <string.h>
 
 #include "bu/cmd.h"
@@ -271,7 +272,13 @@ ged_bb_core(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	if (print_vol == 1) {
+	    vol = -1.0;
 	    new_intern.idb_meth->ft_volume(&vol, &new_intern);
+	    if (!isfinite(vol) || NEAR_EQUAL(vol, -1.0, SMALL_FASTF)) {
+		bu_vls_printf(gedp->ged_result_str, "Unable to calculate bounding box volume.\n");
+		rt_db_free_internal(&new_intern);
+		return BRLCAD_ERROR;
+	    }
 	    /* convert to local units */
 	    vol *= pow(gedp->dbip->dbi_base2local,3.0);
 	    bu_vls_printf(gedp->ged_result_str, "Bounding Box Volume: %g %s^3\n", vol, str);

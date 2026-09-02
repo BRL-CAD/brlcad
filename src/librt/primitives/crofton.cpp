@@ -829,8 +829,12 @@ crofton_from_ip_n(const struct rt_db_internal    *ip,
     /* ---- Run Crofton estimator ---- */
     double sa  = 0.0;
     double vol = 0.0;
-    (void)rt_crofton_shoot(&sa, &vol, NULL, NULL, NULL, NULL, NULL,
-	rtip, params, NULL, NULL);
+    if (rt_crofton_shoot(&sa, &vol, NULL, NULL, NULL, NULL, NULL,
+	    rtip, params, NULL, NULL) < 0) {
+	rt_i_destroy(rtip);
+	db_close(dbip);
+	return -1;
+    }
 
     if (out_sa)  *out_sa  = sa;
     if (out_vol) *out_vol = vol;
@@ -858,14 +862,16 @@ rt_crofton_sample(fastf_t *area, fastf_t *vol,
 		  const struct rt_db_internal *ip,
 		  const struct rt_crofton_params *params)
 {
+    if (area)
+	*area = -1.0;
+    if (vol)
+	*vol = -1.0;
     if ((!area && !vol) || !ip)
 	return;
 
     double sa = 0.0, v = 0.0;
-    if (crofton_from_ip_n(ip, area ? &sa : NULL, vol ? &v : NULL, params) < 0) {
-	sa = 0.0;
-	v  = 0.0;
-    }
+    if (crofton_from_ip_n(ip, area ? &sa : NULL, vol ? &v : NULL, params) < 0)
+	return;
 
     if (area) *area = (fastf_t)sa;
     if (vol)  *vol  = (fastf_t)v;
