@@ -364,7 +364,7 @@ build_linext(struct mesh *m, const struct scad_loop *lp, struct scad_geom *g)
     slices = g->ext_slices;
     if (slices <= 0) {
 	const double twist_slices = ceil(fabs(g->ext_twist) / 12.0);
-	slices = (g->ext_twist != 0.0 || g->ext_scale[0] != 1.0 || g->ext_scale[1] != 1.0)
+	slices = (!ZERO(g->ext_twist) || !EQUAL(g->ext_scale[0], 1.0) || !EQUAL(g->ext_scale[1], 1.0))
 		 ? (g->fn > 0 ? g->fn : (int)twist_slices + 2) : 1;
     }
     if (slices < 1) slices = 1;
@@ -423,7 +423,7 @@ build_rotext(struct mesh *m, const struct scad_loop *lp, struct scad_geom *g)
 {
     size_t i;
     int j, nseg, nring;
-    double maxr = 0, ang = !g->ext_angle ? 360.0 : g->ext_angle;
+    double maxr = 0, ang = ZERO(g->ext_angle) ? 360.0 : g->ext_angle;
     int full = NEAR_EQUAL(fabs(ang), 360.0, 1e-6);
     int **rings;
 

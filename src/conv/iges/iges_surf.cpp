@@ -367,7 +367,7 @@ read_arc_on(size_t curve)
     for (int i = 0; i < nc->CVCount(); i++) {
 	ON_4dPoint h;
 	nc->GetCV(i, h);
-	const double w = (h.w != 0.0) ? h.w : 1.0;
+	const double w = (!ZERO(h.w)) ? h.w : 1.0;
 	point_t ep = { h.x / w, h.y / w, h.z / w };
 	point_t xp = VINIT_ZERO;
 	MAT4X3PNT(xp, *dir[curve]->rot, ep);

@@ -64,15 +64,15 @@ struct button {
 static void
 fill_rect(struct fb *fbp, int x, int yb, int w, int h, const RGBpixel c)
 {
-    int W = fb_getwidth(fbp);
-    int H = fb_getheight(fbp);
+    int rW = fb_getwidth(fbp);
+    int rH = fb_getheight(fbp);
     unsigned char *row;
     int i, yy;
 
     if (x < 0) { w += x; x = 0; }
     if (yb < 0) { h += yb; yb = 0; }
-    if (x + w > W) w = W - x;
-    if (yb + h > H) h = H - yb;
+    if (x + w > rW) w = rW - x;
+    if (yb + h > rH) h = rH - yb;
     if (w <= 0 || h <= 0)
 	return;
 
@@ -110,7 +110,7 @@ blit_icv(struct fb *fbp, icv_image_t *img, int sx, int sy)
 {
     unsigned char *rgb;
     int iw, ih, i;
-    int H = fb_getheight(fbp);
+    int rH = fb_getheight(fbp);
 
     if (!img)
 	return;
@@ -121,7 +121,7 @@ blit_icv(struct fb *fbp, icv_image_t *img, int sx, int sy)
     ih = (int)img->height;
     for (i = 0; i < ih; i++) {
 	int fy = sy + i;
-	if (fy < 0 || fy >= H)
+	if (fy < 0 || fy >= rH)
 	    continue;
 	(void)fb_write(fbp, sx, fy, rgb + (size_t)i * iw * 3, iw);
     }
@@ -174,24 +174,24 @@ static void
 redraw(struct fb *fbp, struct fbtext *ft, struct app_registry *r,
        icv_image_t *splash, struct button *btns, int nbtns, int hover)
 {
-    int W = fb_getwidth(fbp);
-    int H = fb_getheight(fbp);
+    int rW = fb_getwidth(fbp);
+    int rH = fb_getheight(fbp);
     int i;
     int lh = fbtext_line_height(ft);
 
-    fill_rect(fbp, 0, 0, W, H, col_bg);
+    fill_rect(fbp, 0, 0, rW, rH, col_bg);
 
     /* Splash across the top, centered. */
     if (splash) {
 	int iw = (int)splash->width;
 	int ih = (int)splash->height;
-	int sx = (W - iw) / 2;
-	int sy = H - 24 - ih;		/* 24px top margin, image top-aligned */
+	int sx = (rW - iw) / 2;
+	int sy = rH - 24 - ih;		/* 24px top margin, image top-aligned */
 	if (sx < 0) sx = 0;
 	if (sy < 0) sy = 0;
 	blit_icv(fbp, splash, sx, sy);
 	/* Accent rule under the splash. */
-	fill_rect(fbp, 40, sy - 12, W - 80, 2, col_accent);
+	fill_rect(fbp, 40, sy - 12, rW - 80, 2, col_accent);
     }
 
     /* Menu buttons. */
@@ -279,7 +279,7 @@ ui_fb_run(struct app_registry *r)
     icv_image_t *splash;
     struct button *btns;
     int nbtns;
-    int W, H;
+    int rW, rH;
     int i;
     int running = 1;
     int hover = -1;
@@ -308,8 +308,8 @@ ui_fb_run(struct app_registry *r)
 	}
     }
 
-    W = fb_getwidth(fbp);
-    H = fb_getheight(fbp);
+    rW = fb_getwidth(fbp);
+    rH = fb_getheight(fbp);
 
     if (fbtext_open(&ft, NULL) != 0) {
 	/* No font available -- not usable as a graphical menu. */
@@ -319,22 +319,22 @@ ui_fb_run(struct app_registry *r)
 
     fb_set_interactive(fbp, 1);
 
-    splash = load_splash(W - 40, 300);
+    splash = load_splash(rW - 40, 300);
 
     /* Build the button list: one per registry entry, plus Quit. */
-    bw = W - 60;
+    bw = rW - 60;
     nbtns = r->count + 1;
     btns = (struct button *)bu_calloc(nbtns, sizeof(struct button), "buttons");
     {
 	int splash_h = splash ? (int)splash->height : 0;
 	int menu_top = 24 + splash_h + 28;	/* top-down y of first button */
-	int bx = (W - bw) / 2;
+	int bx = (rW - bw) / 2;
 	for (i = 0; i < nbtns; i++) {
 	    int ty = menu_top + i * (bh + gap);
 	    btns[i].x = bx;
 	    btns[i].w = bw;
 	    btns[i].h = bh;
-	    btns[i].yb = H - (ty + bh);	/* convert top-down to fb bottom */
+	    btns[i].yb = rH - (ty + bh);	/* convert top-down to fb bottom */
 	    btns[i].action = (i < r->count) ? i : QUIT_ACTION;
 	}
     }

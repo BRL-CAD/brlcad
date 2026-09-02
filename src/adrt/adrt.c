@@ -182,7 +182,7 @@ main(int argc, char **argv)
     }
 
     /* Configure the camera. */
-    render_camera_init(&camera, (size_t)(threads > 0 ? threads : bu_avail_cpus()));
+    render_camera_init(&camera, (size_t)(threads > 0 ? (size_t)threads : bu_avail_cpus()));
     camera.type = RENDER_CAMERA_PERSPECTIVE;
     camera.fov = fov;
     camera.w = (uint16_t)width;

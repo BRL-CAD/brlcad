@@ -175,7 +175,7 @@ v_true(const struct scad_value *v)
     switch (v->type) {
 	case SCAD_VAL_UNDEF: return 0;
 	case SCAD_VAL_BOOL:
-	case SCAD_VAL_NUM: return v->num != 0.0;
+	case SCAD_VAL_NUM: return !ZERO(v->num);
 	case SCAD_VAL_STR: return v->str && v->str[0] != '\0';
 	case SCAD_VAL_VEC: return v->vlen != 0;
 	case SCAD_VAL_RANGE: return 1;
@@ -426,7 +426,7 @@ value_to_str(struct bu_vls *out, const struct scad_value *v)
     if (!v) { bu_vls_strcat(out, "undef"); return; }
     switch (v->type) {
 	case SCAD_VAL_UNDEF: bu_vls_strcat(out, "undef"); break;
-	case SCAD_VAL_BOOL: bu_vls_strcat(out, v->num ? "true" : "false"); break;
+	case SCAD_VAL_BOOL: bu_vls_strcat(out, !ZERO(v->num) ? "true" : "false"); break;
 	case SCAD_VAL_NUM: bu_vls_printf(out, "%g", v->num); break;
 	case SCAD_VAL_STR: bu_vls_strcat(out, v->str ? v->str : ""); break;
 	case SCAD_VAL_RANGE: bu_vls_printf(out, "[%g:%g:%g]", v->range[0], v->range[1], v->range[2]); break;

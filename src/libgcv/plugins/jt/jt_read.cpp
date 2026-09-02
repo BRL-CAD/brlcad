@@ -529,7 +529,7 @@ jt_read(struct gcv_context *context, const struct gcv_opts *options,
 	}
     }
     mk_id_units(wdb, "Conversion from JT format", unit_name);
-    if (verbose && mm_per_unit != 1.0)
+    if (verbose && !EQUAL(mm_per_unit, 1.0))
 	bu_log("JT import: model units are %s (x%g to mm)\n", unit_name, mm_per_unit);
 
     /* Decode the first renderable mesh from a shape segment (referenced by GUID
@@ -1307,7 +1307,7 @@ nmg_to_jt(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree_
 	bool finite = true;
 	for (int i = 0; i < 16 && finite; ++i) {
 	    const double m = tsp->ts_mat[i];
-	    if (!(m == m) || m > 1e300 || m < -1e300)
+	    if (m > 1e300 || m < -1e300)
 		finite = false;
 	    const double id = ((i % 5) == 0) ? 1.0 : 0.0;   /* diagonal elements are 1 */
 	    if (std::fabs(m - id) > 1e-12)
@@ -2363,7 +2363,7 @@ jt_write(struct gcv_context *context, const struct gcv_opts *gcv_options,
     }
     if (!(base2local > 0.0))
 	base2local = 1.0;
-    if (base2local != 1.0)
+    if (!EQUAL(base2local, 1.0))
 	for (double &coord : state.coords)
 	    coord *= base2local;
 
