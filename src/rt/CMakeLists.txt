@@ -141,11 +141,13 @@ set(
 brlcad_addexec(test_rt_opt "${RT_OPT_TEST_SRCS}" "${RT_STD_LIBS}" TEST
   UNITY_BUILD_SKIP tests/test_rt_opt.c
 )
-target_include_directories(test_rt_opt BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-set_property(
-  TARGET test_rt_opt
-  APPEND PROPERTY COMPILE_DEFINITIONS "RT_TXT_OUTPUT"
-)
+if(BUILD_TESTING AND TARGET test_rt_opt)
+  target_include_directories(test_rt_opt BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+  set_property(
+    TARGET test_rt_opt
+    APPEND PROPERTY COMPILE_DEFINITIONS "RT_TXT_OUTPUT"
+  )
+endif()
 
 add_subdirectory(tests)
 

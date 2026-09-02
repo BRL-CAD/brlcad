@@ -129,9 +129,52 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
   endif()
 endif()
 
+function(STEP_LOAD_SCHEMA_OUTPUTS manifest output_dir generated_headers source_var missing_var)
+  set(_schema_sources)
+  set(_missing_output)
+  if(EXISTS "${manifest}")
+    unset(STEPCODE_GENERATED_SCHEMA_SOURCES)
+    include("${manifest}")
+    if(STEPCODE_GENERATED_SCHEMA_SOURCES)
+      foreach(_generated_source IN LISTS STEPCODE_GENERATED_SCHEMA_SOURCES)
+        if(IS_ABSOLUTE "${_generated_source}" OR "${_generated_source}" MATCHES "(^|/)\\.\\.(/|$)")
+          message(FATAL_ERROR "Unsafe generated STEPcode source path: ${_generated_source}")
+        endif()
+        set(_generated_source_path "${output_dir}/${_generated_source}")
+        list(APPEND _schema_sources "${_generated_source_path}")
+        if(NOT EXISTS "${_generated_source_path}" AND "${_missing_output}" STREQUAL "")
+          set(_missing_output "${_generated_source_path}")
+        endif()
+      endforeach()
+    else()
+      set(_missing_output "${manifest} did not list generated schema sources")
+    endif()
+  else()
+    set(_missing_output "${manifest}")
+  endif()
+
+  foreach(_generated_header IN LISTS generated_headers)
+    if(NOT EXISTS "${_generated_header}" AND "${_missing_output}" STREQUAL "")
+      set(_missing_output "${_generated_header}")
+    endif()
+  endforeach()
+
+  set(${source_var} "${_schema_sources}" PARENT_SCOPE)
+  set(${missing_var} "${_missing_output}" PARENT_SCOPE)
+endfunction()
+
 function(GENERATE_SCHEMA_INPUTS SCHEMA_FILE TARGET_SUFFIX)
   if(BRLCAD_ENABLE_STEP)
     get_filename_component(SCHEMA_FILE "${SCHEMA_FILE}" REALPATH)
+    # BRL-CAD's external dependency setup makes exp2cxx available before this
+    # project is configured.  Treat both it and the EXPRESS schema as configure
+    # inputs so CMake can regenerate the bindings and discover their source list
+    # in a single configure pass.
+    set_property(
+      DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+      "${SCHEMA_FILE}"
+      "${EXP2CXX_EXECUTABLE}"
+    )
     # The optional third argument is the stable schema key used for the
     # generated binding target.  Multiple consumers may call this function,
     # but generation and compilation are intentionally performed only once
@@ -168,77 +211,8 @@ function(GENERATE_SCHEMA_INPUTS SCHEMA_FILE TARGET_SUFFIX)
 
     set(_schema_manifest ${_schema_out_dir}/Sdai${_schema_name}.sources.cmake)
     set(_schema_chunk_stamp ${_schema_out_dir}/.brlcad_exp2cxx_settings)
-    set(_bootstrap_schema FALSE)
-    if(NOT EXISTS "${_schema_manifest}")
-      set(_bootstrap_schema TRUE)
-    elseif("${SCHEMA_FILE}" IS_NEWER_THAN "${_schema_manifest}")
-      set(_bootstrap_schema TRUE)
-    elseif("${EXP2CXX_EXECUTABLE}" IS_NEWER_THAN "${_schema_manifest}")
-      set(_bootstrap_schema TRUE)
-    endif()
-    if(EXISTS "${_schema_chunk_stamp}")
-      file(READ "${_schema_chunk_stamp}" _generated_chunk_size)
-      string(STRIP "${_generated_chunk_size}" _generated_chunk_size)
-    else()
-      set(_generated_chunk_size "")
-    endif()
-    if(NOT "${_generated_chunk_size}" STREQUAL "${_step_generator_signature}")
-      set(_bootstrap_schema TRUE)
-    endif()
 
-    # CMake needs the generated source list while configuring.  Generating one
-    # schema takes only a few seconds even for AP242e4 and avoids either a
-    # hard-coded maximum chunk count or compiling the compatibility aggregate
-    # that includes every chunk back into one enormous translation unit.
-    if(_bootstrap_schema)
-      file(MAKE_DIRECTORY "${_schema_out_dir}")
-      execute_process(
-        COMMAND "${EXP2CXX_EXECUTABLE}" ${_step_exp2cxx_args} "${SCHEMA_FILE}"
-        WORKING_DIRECTORY "${_schema_out_dir}"
-        RESULT_VARIABLE _bootstrap_result
-        OUTPUT_VARIABLE _bootstrap_output
-        ERROR_VARIABLE _bootstrap_error
-      )
-      if(NOT _bootstrap_result EQUAL 0 OR NOT EXISTS "${_schema_manifest}")
-        message(FATAL_ERROR
-          "Unable to generate the ${_schema_name} STEPcode source manifest "
-          "(${_bootstrap_result}):\n${_bootstrap_output}${_bootstrap_error}"
-        )
-      endif()
-      file(WRITE "${_schema_chunk_stamp}" "${_step_generator_signature}\n")
-    endif()
-    if(NOT EXISTS "${_schema_out_dir}/step_express_${_schema_name}.done")
-      file(TOUCH "${_schema_out_dir}/step_express_${_schema_name}.done")
-    endif()
-
-    unset(STEPCODE_GENERATED_SCHEMA_SOURCES)
-    include("${_schema_manifest}")
-    if(NOT STEPCODE_GENERATED_SCHEMA_SOURCES)
-      message(FATAL_ERROR "${_schema_manifest} did not list generated schema sources")
-    endif()
-    set(_express_srcs)
-    foreach(_generated_source IN LISTS STEPCODE_GENERATED_SCHEMA_SOURCES)
-      if(IS_ABSOLUTE "${_generated_source}" OR "${_generated_source}" MATCHES "(^|/)\\.\\.(/|$)")
-        message(FATAL_ERROR "Unsafe generated STEPcode source path: ${_generated_source}")
-      endif()
-      list(APPEND _express_srcs "${_schema_out_dir}/${_generated_source}")
-    endforeach()
-    unset(STEPCODE_GENERATED_SCHEMA_SOURCES)
-
-    set(_express_compat_srcs)
-    if(NOT BRLCAD_STEP_LATE_BOUND)
-      # The aggregate implementation files remain compatibility outputs for
-      # consumers that cannot use the manifest.  BRL-CAD deliberately does not
-      # compile them, since each one includes all bounded chunks into a single
-      # translation unit.
-      set(
-        _express_compat_srcs
-        ${_schema_out_dir}/Sdai${_schema_name}_unity_entities.cc
-        ${_schema_out_dir}/Sdai${_schema_name}_unity_types.cc
-      )
-    endif()
-    # For the subdirectory add_custom_command definitions, need the generated
-    # headers as well.
+    # Consumers and precompiled headers need these generated declarations.
     set(
       _express_hdrs
       ${_schema_out_dir}/Sdai${_schema_name}.h
@@ -253,6 +227,78 @@ function(GENERATE_SCHEMA_INPUTS SCHEMA_FILE TARGET_SUFFIX)
       )
     endif()
 
+    set(_generate_schema FALSE)
+    if(NOT EXISTS "${_schema_manifest}")
+      set(_generate_schema TRUE)
+    elseif("${SCHEMA_FILE}" IS_NEWER_THAN "${_schema_manifest}")
+      set(_generate_schema TRUE)
+    elseif("${EXP2CXX_EXECUTABLE}" IS_NEWER_THAN "${_schema_manifest}")
+      set(_generate_schema TRUE)
+    endif()
+    if(EXISTS "${_schema_chunk_stamp}")
+      file(READ "${_schema_chunk_stamp}" _generated_signature)
+      string(STRIP "${_generated_signature}" _generated_signature)
+    else()
+      set(_generated_signature "")
+    endif()
+    if(NOT "${_generated_signature}" STREQUAL "${_step_generator_signature}")
+      set(_generate_schema TRUE)
+    endif()
+
+    # A previously interrupted generator run may leave a current manifest but
+    # an incomplete set of outputs.  Detect that state before deciding the
+    # configure-time bindings can be reused.
+    set(_express_srcs)
+    set(_missing_schema_output)
+    if(NOT _generate_schema)
+      STEP_LOAD_SCHEMA_OUTPUTS(
+        "${_schema_manifest}"
+        "${_schema_out_dir}"
+        "${_express_hdrs}"
+        _express_srcs
+        _missing_schema_output
+      )
+      if(NOT "${_missing_schema_output}" STREQUAL "")
+        set(_generate_schema TRUE)
+      endif()
+    endif()
+
+    # CMake needs the generated source list while configuring.  Generating one
+    # schema takes only a few seconds even for AP242e4 and avoids either a
+    # hard-coded maximum chunk count or compiling the compatibility aggregate
+    # that includes every chunk back into one enormous translation unit.
+    if(_generate_schema)
+      file(MAKE_DIRECTORY "${_schema_out_dir}")
+      # The settings file is also the successful-generation stamp.  Removing
+      # it first ensures a failed run cannot make incomplete output look valid
+      # during the next configure.
+      file(REMOVE "${_schema_chunk_stamp}")
+      execute_process(
+        COMMAND "${EXP2CXX_EXECUTABLE}" ${_step_exp2cxx_args} "${SCHEMA_FILE}"
+        WORKING_DIRECTORY "${_schema_out_dir}"
+        RESULT_VARIABLE _bootstrap_result
+        OUTPUT_VARIABLE _bootstrap_output
+        ERROR_VARIABLE _bootstrap_error
+      )
+      if(NOT _bootstrap_result EQUAL 0 OR NOT EXISTS "${_schema_manifest}")
+        message(FATAL_ERROR
+          "Unable to generate the ${_schema_name} STEPcode source manifest "
+          "(${_bootstrap_result}):\n${_bootstrap_output}${_bootstrap_error}"
+        )
+      endif()
+      file(WRITE "${_schema_chunk_stamp}" "${_step_generator_signature}\n")
+      STEP_LOAD_SCHEMA_OUTPUTS(
+        "${_schema_manifest}"
+        "${_schema_out_dir}"
+        "${_express_hdrs}"
+        _express_srcs
+        _missing_schema_output
+      )
+    endif()
+    if(NOT "${_missing_schema_output}" STREQUAL "")
+      message(FATAL_ERROR "Incomplete generated STEPcode output: ${_missing_schema_output}")
+    endif()
+
     # We want to precompile the generated headers, since they will be reused a
     # great deal in the build.  However, for CMake's target_precompile_headers
     # function we need a file that exists at configure time to act as the
@@ -260,15 +306,6 @@ function(GENERATE_SCHEMA_INPUTS SCHEMA_FILE TARGET_SUFFIX)
     # generator can clear or overwrite files in SCHEMA_OUT_DIR, which leaves
     # the later PCH compile trying to include a header that no longer exists.
     set(_precompile_header ${STEP_SCHEMA_BINARY_DIR}/precompile_${_schema_output_name}.h)
-
-    set(
-      _express_output
-      ${_express_srcs}
-      ${_express_compat_srcs}
-      ${_express_hdrs}
-      ${_schema_manifest}
-      ${_schema_chunk_stamp}
-    )
 
     if(NOT TARGET ${_bindings_target})
       file(MAKE_DIRECTORY ${_schema_out_dir})
@@ -284,30 +321,10 @@ function(GENERATE_SCHEMA_INPUTS SCHEMA_FILE TARGET_SUFFIX)
       # Reconfiguring must not force all generated binding objects to rebuild.
       file(CONFIGURE OUTPUT "${_precompile_header}" CONTENT "${_precompile_contents}" @ONLY)
 
-      add_custom_command(
-        OUTPUT ${_express_output} ${_schema_out_dir}/step_express_${_schema_name}.done
-        COMMAND ${EXP2CXX_EXECUTABLE}
-        ARGS ${_step_exp2cxx_args} ${SCHEMA_FILE} > ${_schema_out_dir}/step_express_${_schema_name}.log 2>&1
-        COMMAND ${CMAKE_COMMAND} -E echo ${_step_generator_signature} > ${_schema_chunk_stamp}
-        COMMAND ${CMAKE_COMMAND} -E touch ${_schema_out_dir}/step_express_${_schema_name}.done
-        DEPENDS ${SCHEMA_FILE} ${EXP2CXX_EXECUTABLE} ${EXP2CXX_EXECUTABLE_TARGET}
-        WORKING_DIRECTORY ${_schema_out_dir}
-        COMMENT "Generating C++ code to express ${_schema_name}..."
-        VERBATIM
-      )
-      set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${_schema_manifest}")
-
-      add_custom_target(
-        step-express-${_schema_key}
-        DEPENDS ${_schema_out_dir}/step_express_${_schema_name}.done
-      )
-      set_target_properties(step-express-${_schema_key} PROPERTIES FOLDER "Compilation Utilities")
-
       # Generated bindings are a schema resource, not converter sources.  A
       # static PIC target lets importers, exporters and modules all reuse the
       # exact same objects.
       add_library(${_bindings_target} STATIC ${_express_srcs})
-      add_dependencies(${_bindings_target} step-express-${_schema_key})
       target_include_directories(
         ${_bindings_target} BEFORE PRIVATE
         ${_schema_out_dir}
@@ -334,15 +351,6 @@ function(GENERATE_SCHEMA_INPUTS SCHEMA_FILE TARGET_SUFFIX)
       if(MSVC)
         target_compile_options(${_bindings_target} PRIVATE /bigobj)
       endif()
-
-      set(
-        clean_files
-        ${_express_output}
-        ${_precompile_header}
-        ${_schema_out_dir}/step_express_${_schema_name}.done
-        ${_schema_out_dir}/step_express_${_schema_name}.log
-      )
-      set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${clean_files}")
 
       set_property(GLOBAL PROPERTY STEP_SCHEMA_${_schema_key}_FILE "${SCHEMA_FILE}")
     else()
@@ -376,7 +384,6 @@ function(GENERATE_SCHEMA_INPUTS SCHEMA_FILE TARGET_SUFFIX)
     # Generated translation units belong exclusively to the binding library.
     set(${TARGET_SUFFIX}_express_srcs "" PARENT_SCOPE)
     set(${TARGET_SUFFIX}_express_hdrs "${_express_hdrs}" PARENT_SCOPE)
-    set(${TARGET_SUFFIX}_EXPRESS_OUTPUT "${_express_output}" PARENT_SCOPE)
     set(${TARGET_SUFFIX}_PRECOMPILE_HEADER "${_consumer_precompile_header}" PARENT_SCOPE)
     set(${TARGET_SUFFIX}_SCHEMA_NAME "${_schema_name}" PARENT_SCOPE)
     set(${TARGET_SUFFIX}_SCHEMA_OUT_DIR "${_schema_out_dir}" PARENT_SCOPE)
@@ -657,6 +664,7 @@ if(BRLCAD_ENABLE_STEP)
     set(STEP_PLUGIN_HAVE_AP242E4 1)
   endif()
   configure_file(StepPluginConfig.h.in StepPluginConfig.h @ONLY)
+  distclean("${CMAKE_CURRENT_BINARY_DIR}/StepPluginConfig.h")
 endif()
 
 # FIXME: the IFC converter is incomplete
@@ -735,15 +743,17 @@ if(BRLCAD_ENABLE_STEP)
         )
       endif()
     endforeach()
-    brlcad_add_test(
-      NAME step_enum_schemas
-      COMMAND ${CMAKE_COMMAND}
-        -DSTEP_G=$<TARGET_FILE:step-g>
-        -DMGED=$<TARGET_FILE:mged>
-        -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/step-g/tests/ap203_unclamped_closed_curve_knots.stp
-        -DWORK_DIRECTORY=${CMAKE_CURRENT_BINARY_DIR}
-        -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/step_enum_schemas.cmake
-    )
+    if (TARGET mged)
+      brlcad_add_test(
+	NAME step_enum_schemas
+	COMMAND ${CMAKE_COMMAND}
+	-DSTEP_G=$<TARGET_FILE:step-g>
+	-DMGED=$<TARGET_FILE:mged>
+	-DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/step-g/tests/ap203_unclamped_closed_curve_knots.stp
+	-DWORK_DIRECTORY=${CMAKE_CURRENT_BINARY_DIR}
+	-P ${CMAKE_CURRENT_SOURCE_DIR}/tests/step_enum_schemas.cmake
+      )
+    endif()
   endif()
 endif()
 

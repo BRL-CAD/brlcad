@@ -12,6 +12,8 @@
 
 set(RT_TEST_DB "${CMAKE_SOURCE_DIR}/src/libged/tests/draw/moss.g")
 
+brlcad_addexec(test_rtarea_db test_rtarea_db.c "libwdb;librt;libbu" TEST)
+
 set(
   RT_OPT_TESTS
   size
@@ -84,8 +86,10 @@ brlcad_add_test(
 )
 # Since the test is a CMake script, we need to ensure the target
 # dependencies ourselves
-add_dependencies(unit rtsil)
-add_dependencies(check rtsil)
+if(BUILD_TESTING AND TARGET rtsil)
+  add_dependencies(unit rtsil)
+  add_dependencies(check rtsil)
+endif()
 
 brlcad_add_test(
   NAME rtxray_bw_output
@@ -108,8 +112,10 @@ brlcad_add_test(
 )
 # Since the test is a CMake script, we need to ensure the target
 # dependencies ourselves
-add_dependencies(unit rt)
-add_dependencies(check rt)
+if(BUILD_TESTING AND TARGET rt)
+  add_dependencies(unit rt)
+  add_dependencies(check rt)
+endif()
 
 
 brlcad_add_test(
@@ -121,6 +127,30 @@ brlcad_add_test(
     "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}"
     -P "${CMAKE_CURRENT_SOURCE_DIR}/test_rt_unbuffered_background.cmake"
 )
+
+brlcad_add_test(
+  NAME rtarea_modes
+  COMMAND
+    "${CMAKE_COMMAND}"
+    "-DRTAREA=$<TARGET_FILE:rtarea>"
+    "-DDB=${RT_TEST_DB}"
+    "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}"
+    -P "${CMAKE_CURRENT_SOURCE_DIR}/test_rtarea_modes.cmake"
+)
+brlcad_add_test(
+  NAME rtarea_analytic
+  COMMAND
+    "${CMAKE_COMMAND}"
+    "-DRTAREA=$<TARGET_FILE:rtarea>"
+    "-DDBGEN=$<TARGET_FILE:test_rtarea_db>"
+    "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}"
+    -P "${CMAKE_CURRENT_SOURCE_DIR}/test_rtarea_analytic.cmake"
+)
+if(BUILD_TESTING AND TARGET rtarea AND TARGET test_rtarea_db)
+  add_dependencies(unit rtarea test_rtarea_db)
+  add_dependencies(check rtarea test_rtarea_db)
+endif()
+distclean("${CMAKE_CURRENT_BINARY_DIR}/rtarea-analytic.g")
 
 brlcad_add_test(
   NAME rt_command_view
@@ -138,6 +168,9 @@ cmakefiles(
   test_rt_command_view.cmake
   test_rt_disk_framebuffer_size.cmake
   test_rt_unbuffered_background.cmake
+  test_rtarea_analytic.cmake
+  test_rtarea_db.c
+  test_rtarea_modes.cmake
   test_rt_opt.c
   test_rtsil_output.cmake
   test_rtxray_bw_output.cmake

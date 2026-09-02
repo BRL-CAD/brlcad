@@ -62,7 +62,7 @@ The inverse conversion (BRL-CAD to STL) is performed by *g-stl*(1).
 
 *-m* _material_code_::
   Set the integer material code (GIFT material code) assigned to all
-  regions. The default is 1.
+  regions. The default is 0.
 
 *-c* _units_::
   Specify the units used in the STL file so coordinates can be converted to

@@ -199,6 +199,54 @@ test_mapped_file_parallel_repeat(long int file_cnt, long int test_num)
 }
 
 
+static int
+test_mapped_file_rooted_path(long int file_cnt, long int test_num)
+{
+    const char expected[] = "0\n";
+    char rooted_path[MAXPATHLEN] = {0};
+    char *search_path[] = {(char *)"bu_mapped_file_missing_directory", NULL};
+    struct bu_mapped_file *mfp = NULL;
+    struct bu_vls relative_path = BU_VLS_INIT_ZERO;
+    int ret = 1;
+
+    bu_vls_sprintf(&relative_path, "%s-%ld-%ld-0", FILE_PREFIX, test_num, file_cnt);
+    if (!bu_file_realpath(bu_vls_cstr(&relative_path), rooted_path)) {
+	bu_log("Unable to resolve %s [FAIL]\n", bu_vls_cstr(&relative_path));
+	goto cleanup;
+    }
+#if defined(HAVE_WINDOWS_H)
+    /* Tcl normalizes Windows paths to forward slashes.  Reproduce the exact
+     * form used by the MGED regression that exposed this bug. */
+    for (char *character = rooted_path; *character != '\0'; character++) {
+	if (*character == '\\')
+	    *character = '/';
+    }
+#endif
+
+    mfp = bu_open_mapped_file_with_path(search_path, rooted_path, NULL);
+    if (!mfp || !mfp->buf) {
+	bu_log("%s -> [FAIL]  (unable to open rooted mapped-file path)\n",
+	    rooted_path);
+	goto cleanup;
+    }
+    if (mfp->buflen != sizeof(expected) - 1 ||
+	memcmp(mfp->buf, expected, sizeof(expected) - 1) != 0) {
+	bu_log("%s -> [FAIL]  (rooted mapped-file contents differ)\n",
+	    rooted_path);
+	goto cleanup;
+    }
+
+    bu_log("Test %ld: mapped file rooted-path test: [PASS]\n", test_num);
+    ret = 0;
+
+cleanup:
+    if (mfp)
+	bu_close_mapped_file(mfp);
+    bu_vls_free(&relative_path);
+    return ret;
+}
+
+
 static void
 mapped_file_worker_with_free(int cpu, void *data)
 {
@@ -327,6 +375,9 @@ main(int ac, char *av[])
 	    break;
 	case 5:
 	    ret = test_mapped_file_parallel_with_free(file_cnt, test_num);
+	    break;
+	case 6:
+	    ret = test_mapped_file_rooted_path(file_cnt, test_num);
 	    break;
     }
 

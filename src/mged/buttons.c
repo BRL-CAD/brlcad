@@ -582,6 +582,7 @@ be_o_scale(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), 
 
     edobj = BE_O_SCALE;
     movedir = SARROW;
+    rt_edit_set_edflag(MEDIT(s), RT_MATRIX_EDIT_SCALE);
     s->update_views = 1;
     dm_set_dirty(DMP, 1);
     set_e_axes_pos(s, 1);
@@ -605,6 +606,7 @@ be_o_xscale(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc),
 
     edobj = BE_O_XSCALE;
     movedir = SARROW;
+    rt_edit_set_edflag(MEDIT(s), RT_MATRIX_EDIT_SCALE_X);
     s->update_views = 1;
     dm_set_dirty(DMP, 1);
     set_e_axes_pos(s, 1);
@@ -628,6 +630,7 @@ be_o_yscale(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc),
 
     edobj = BE_O_YSCALE;
     movedir = SARROW;
+    rt_edit_set_edflag(MEDIT(s), RT_MATRIX_EDIT_SCALE_Y);
     s->update_views = 1;
     dm_set_dirty(DMP, 1);
     set_e_axes_pos(s, 1);
@@ -651,6 +654,7 @@ be_o_zscale(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc),
 
     edobj = BE_O_ZSCALE;
     movedir = SARROW;
+    rt_edit_set_edflag(MEDIT(s), RT_MATRIX_EDIT_SCALE_Z);
     s->update_views = 1;
     dm_set_dirty(DMP, 1);
     set_e_axes_pos(s, 1);
@@ -674,6 +678,7 @@ be_o_x(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char
 
     edobj = BE_O_X;
     movedir = RARROW;
+    rt_edit_set_edflag(MEDIT(s), RT_MATRIX_EDIT_TRANS_VIEW_X);
     s->update_views = 1;
     dm_set_dirty(DMP, 1);
     set_e_axes_pos(s, 1);
@@ -693,6 +698,7 @@ be_o_y(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char
 
     edobj = BE_O_Y;
     movedir = UARROW;
+    rt_edit_set_edflag(MEDIT(s), RT_MATRIX_EDIT_TRANS_VIEW_Y);
     s->update_views = 1;
     dm_set_dirty(DMP, 1);
     set_e_axes_pos(s, 1);
@@ -712,6 +718,7 @@ be_o_xy(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), cha
 
     edobj = BE_O_XY;
     movedir = UARROW | RARROW;
+    rt_edit_set_edflag(MEDIT(s), RT_MATRIX_EDIT_TRANS_VIEW_XY);
     s->update_views = 1;
     dm_set_dirty(DMP, 1);
     set_e_axes_pos(s, 1);
@@ -731,6 +738,7 @@ be_o_rotate(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc),
 
     edobj = BE_O_ROTATE;
     movedir = ROTARROW;
+    rt_edit_set_edflag(MEDIT(s), RT_MATRIX_EDIT_ROT);
     s->update_views = 1;
     dm_set_dirty(DMP, 1);
     set_e_axes_pos(s, 1);
@@ -893,7 +901,7 @@ be_s_rotate(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc),
     if (not_state(s, ST_S_EDIT, "Primitive Rotate"))
 	return TCL_ERROR;
 
-    MEDIT(s)->edit_flag = RT_PARAMS_EDIT_ROT;
+    rt_edit_set_edflag(MEDIT(s), RT_PARAMS_EDIT_ROT);
     edsol = BE_S_ROTATE;
     mmenu_set(s, MENU_L1, NULL);
 
@@ -914,7 +922,7 @@ be_s_trans(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), 
 	return TCL_ERROR;
 
     edsol = BE_S_TRANS;
-    MEDIT(s)->edit_flag = RT_PARAMS_EDIT_TRANS;
+    rt_edit_set_edflag(MEDIT(s), RT_PARAMS_EDIT_TRANS);
     movedir = UARROW | RARROW;
     mmenu_set(s, MENU_L1, NULL);
 
@@ -935,7 +943,7 @@ be_s_scale(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), 
 	return TCL_ERROR;
 
     edsol = BE_S_SCALE;
-    MEDIT(s)->edit_flag = RT_PARAMS_EDIT_SCALE;
+    rt_edit_set_edflag(MEDIT(s), RT_PARAMS_EDIT_SCALE);
     mmenu_set(s, MENU_L1, NULL);
     MEDIT(s)->acc_sc_sol = 1.0;
 

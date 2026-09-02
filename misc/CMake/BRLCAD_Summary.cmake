@@ -364,6 +364,7 @@ function(BRLCAD_Summary)
   set(BRLCAD_ENABLE_RUNTIME_DEBUG_LABEL "Run-time debuggability (optional) ")
   set(BRLCAD_ARCH_BITSETTING_LABEL "Build 32/64-bit release ")
   set(BRLCAD_OPTIMIZED_LABEL "Build with optimization ")
+  set(BRLCAD_LTO_MODE_LABEL "Link-time optimization mode ")
   set(BRLCAD_DEBUGGING_LABEL "Build with debugging symbols ")
   set(BRLCAD_ENABLE_ADDRESS_SANITIZER_LABEL "AddressSanitizer instrumentation ")
   set(BRLCAD_ENABLE_UNDEFINED_SANITIZER_LABEL "UndefinedBehaviorSanitizer instrumentation ")
@@ -390,6 +391,7 @@ function(BRLCAD_Summary)
     OTHER_REPORT_ITEMS
     BRLCAD_ARCH_BITSETTING
     BRLCAD_OPTIMIZED
+    BRLCAD_LTO_MODE
     BUILD_STATIC_LIBS
     BUILD_SHARED_LIBS
     BRLCAD_ENABLE_BRLCAD_LIBRARY

@@ -62,32 +62,89 @@ slave_load_kdtree(struct tie_s *UNUSED(tie), char *UNUSED(data))
     return -1;
 }
 
-int
-slave_load(struct tie_s *tie, void *data)
+static const char *
+load_string(const char **cursor, const char *end)
 {
-    char *meh = (char *)data;
+    const char *start = *cursor;
+    const char *terminator;
+
+    if (start >= end)
+	return NULL;
+
+    terminator = (const char *)memchr(start, '\0', (size_t)(end - start));
+    if (!terminator)
+	return NULL;
+
+    *cursor = terminator + 1;
+    return start;
+}
+
+int
+slave_load(struct tie_s *tie, void *data, size_t data_len)
+{
+    const size_t header_size = 3;
+    const char *cursor = (const char *)data;
+    const char *end = cursor + data_len;
+    uint8_t format;
 
     tie_check_degenerate = 0;
 
-    meh += 3;	/* advance to the opcode */
+    if (data_len < header_size + 1) {
+	fprintf(stderr, "ADRT load message is truncated\n");
+	return 1;
+    }
 
-    switch ( *meh ) {
+    cursor += header_size;
+    format = (uint8_t)*cursor++;
+
+    switch (format) {
 	case ADRT_LOAD_FORMAT_G:	/* given a filename and 1 toplevel region, recursively load from a .g file */
 	    {
-		/* FIXME: the .g filename should be extracted from the message
-		 * payload; passing NULL here will make load_g fail to open a
-		 * database.
-		 */
-		const char *db = NULL;
-		const char *ugh[2];
-		ugh[0] = (char *)(meh + 1 + sizeof(int));
-		ugh[1] = NULL;
-		return load_g ( tie, db, *(int *)(meh + 1), ugh, NULL);
+		const char **objects;
+		const char *db;
+		int argc;
+		int i;
+		int ret;
+
+		if ((size_t)(end - cursor) < sizeof(argc)) {
+		    fprintf(stderr, "ADRT .g load message has no object count\n");
+		    return 1;
+		}
+		memcpy(&argc, cursor, sizeof(argc));
+		cursor += sizeof(argc);
+		if (argc < 1 || (size_t)argc > (size_t)(end - cursor)) {
+		    fprintf(stderr, "ADRT .g load message has an invalid object count\n");
+		    return 1;
+		}
+
+		db = load_string(&cursor, end);
+		if (!db) {
+		    fprintf(stderr, "ADRT .g load message has no database path\n");
+		    return 1;
+		}
+
+		objects = (const char **)calloc((size_t)argc + 1, sizeof(char *));
+		if (!objects) {
+		    perror("ADRT .g object list");
+		    return 1;
+		}
+		for (i = 0; i < argc; i++) {
+		    objects[i] = load_string(&cursor, end);
+		    if (!objects[i]) {
+			fprintf(stderr, "ADRT .g load message has a truncated object list\n");
+			free(objects);
+			return 1;
+		    }
+		}
+
+		ret = load_g(tie, db, argc, objects, &slave_load_mesh_list);
+		free(objects);
+		return ret;
 	    }
 	case ADRT_LOAD_FORMAT_REG:	/* special magic for catching data on the pipe */
-	    return slave_load_region (tie, meh + 1);
+	    return slave_load_region(tie, (char *)cursor);
 	case ADRT_LOAD_FORMAT_KDTREE:	/* more special magic */
-	    return slave_load_kdtree (tie, meh + 1);
+	    return slave_load_kdtree(tie, (char *)cursor);
 	default:
 	    fprintf(stderr, "Unknown load format\n");
 	    return 1;

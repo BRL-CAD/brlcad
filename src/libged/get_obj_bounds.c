@@ -32,8 +32,12 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #include "bu/str.h"
+#include "bg/obr.h"
+#include "vmath.h"
+#include "raytrace.h"
 #include "ged.h"
 
 #include "./ged_private.h"
@@ -47,6 +51,276 @@ ged_get_obj_bounds(struct ged *gedp,
                    point_t rpp_max)
 {
     return rt_obj_bounds(gedp->ged_result_str, gedp->dbip, argc, argv, use_air, rpp_min, rpp_max);
+}
+
+
+/* Point accumulator shared by evaluated and tree-derived bound paths. */
+struct _ged_tight_bounds_state {
+    point_t tmin;
+    point_t tmax;
+    point_t *points;
+    size_t point_count;
+    size_t point_capacity;
+    int collect_points;
+};
+
+static void
+_ged_tight_bounds_add_point(struct _ged_tight_bounds_state *st, const point_t point)
+{
+    VMINMAX(st->tmin, st->tmax, point);
+    if (!st->collect_points)
+	return;
+
+    if (st->point_count == st->point_capacity) {
+	const size_t initial_capacity = 4096;
+	const size_t new_capacity = st->point_capacity ? 2 * st->point_capacity : initial_capacity;
+	st->points = (point_t *)bu_realloc(st->points, new_capacity * sizeof(point_t),
+		"evaluated bounding points");
+	st->point_capacity = new_capacity;
+    }
+    VMOVE(st->points[st->point_count], point);
+    st->point_count++;
+}
+
+static void
+_ged_add_box_corners(struct _ged_tight_bounds_state *st,
+		     const point_t bmin,
+		     const point_t bmax,
+		     const matp_t matrix)
+{
+    for (int corner = 0; corner < 8; ++corner) {
+	point_t local_point, model_point;
+	VSET(local_point,
+	    (corner & 1) ? bmax[X] : bmin[X],
+	    (corner & 2) ? bmax[Y] : bmin[Y],
+	    (corner & 4) ? bmax[Z] : bmin[Z]);
+	if (matrix)
+	    MAT4X3PNT(model_point, matrix, local_point);
+	else
+	    VMOVE(model_point, local_point);
+	_ged_tight_bounds_add_point(st, model_point);
+    }
+}
+
+static int
+_ged_tree_oriented_points(struct rt_i *rtip,
+			  const union tree *tree,
+			  struct _ged_tight_bounds_state *st)
+{
+    RT_CK_TREE(tree);
+    switch (tree->tr_op) {
+	case OP_SOLID: {
+	    const struct soltab *solid = tree->tr_a.tu_stp;
+	    struct rt_db_internal intern;
+	    point_t local_min, local_max;
+	    int bounds_ret = -1;
+
+	    RT_CK_SOLTAB(solid);
+	    RT_DB_INTERNAL_INIT(&intern);
+	    if (rt_db_get_internal(&intern, solid->st_dp, rtip->rti_dbip, NULL) >= 0) {
+		if (intern.idb_meth->ft_bbox)
+		    bounds_ret = intern.idb_meth->ft_bbox(&intern, &local_min, &local_max,
+			&rtip->rti_tol);
+		rt_db_free_internal(&intern);
+	    }
+	    if (bounds_ret < 0) {
+		_ged_add_box_corners(st, solid->st_min, solid->st_max, NULL);
+		return BRLCAD_OK;
+	    }
+	    _ged_add_box_corners(st, local_min, local_max, solid->st_matp);
+	    return BRLCAD_OK;
+	}
+	case OP_UNION:
+	case OP_XOR:
+	    if (_ged_tree_oriented_points(rtip, tree->tr_b.tb_left, st) != BRLCAD_OK)
+		return BRLCAD_ERROR;
+	    return _ged_tree_oriented_points(rtip, tree->tr_b.tb_right, st);
+	case OP_INTERSECT: {
+	    point_t intersection_min, intersection_max;
+	    if (rt_bound_tree(tree, intersection_min, intersection_max) < 0)
+		return BRLCAD_ERROR;
+	    _ged_add_box_corners(st, intersection_min, intersection_max, NULL);
+	    return BRLCAD_OK;
+	}
+	case OP_SUBTRACT:
+	    return _ged_tree_oriented_points(rtip, tree->tr_b.tb_left, st);
+	case OP_NOP:
+	    return BRLCAD_OK;
+	default:
+	    return BRLCAD_ERROR;
+    }
+}
+
+static int
+_ged_tree_oriented_bounds(struct ged *gedp,
+			  int argc,
+			  const char *argv[],
+			  int use_air,
+			  struct _ged_tight_bounds_state *st)
+{
+    struct rt_i *rtip = rt_i_create(gedp->dbip);
+    struct region *region;
+
+    if (rtip == RTI_NULL)
+	return BRLCAD_ERROR;
+    rtip->useair = use_air;
+    for (int i = 0; i < argc; ++i) {
+	if (rt_gettree(rtip, argv[i]) < 0) {
+	    rt_i_destroy(rtip);
+	    return BRLCAD_ERROR;
+	}
+    }
+    rt_prep(rtip);
+    for (BU_LIST_FOR(region, region, &rtip->HeadRegion)) {
+	if (_ged_tree_oriented_points(rtip, region->reg_treetop, st) != BRLCAD_OK) {
+	    rt_i_destroy(rtip);
+	    return BRLCAD_ERROR;
+	}
+    }
+    rt_i_destroy(rtip);
+    return st->point_count ? BRLCAD_OK : BRLCAD_ERROR;
+}
+
+static int
+_ged_sample_evaluated_bounds(struct ged *gedp,
+			     int argc,
+			     const char *argv[],
+			     int use_air,
+			     const point_t bounds_min,
+			     const point_t bounds_max,
+			     struct _ged_tight_bounds_state *st,
+			     point_t oriented_corners[8])
+{
+    struct rt_i *rtip = rt_i_create(gedp->dbip);
+    double surface_area = 0.0;
+    int loaded = 0;
+
+    if (rtip == RTI_NULL)
+	return BRLCAD_ERROR;
+    rtip->useair = use_air;
+    for (int i = 0; i < argc; ++i) {
+	if (rt_gettree(rtip, argv[i]) < 0) {
+	    rt_i_destroy(rtip);
+	    return BRLCAD_ERROR;
+	}
+	loaded++;
+    }
+    if (!loaded) {
+	rt_i_destroy(rtip);
+	return BRLCAD_ERROR;
+    }
+    rt_prep_parallel(rtip, 1);
+    const int crossings = rt_crofton_shoot(&surface_area, NULL, &st->tmin,
+	&st->tmax, oriented_corners, NULL, NULL, rtip, NULL, bounds_min, bounds_max);
+    rt_i_destroy(rtip);
+    return crossings > 0 ? BRLCAD_OK : BRLCAD_ERROR;
+}
+
+/*
+ * _ged_obj_tight_bounds()
+ *
+ * Compute a "tight" axis-aligned bounding box for the given object(s) that,
+ * unlike rt_obj_bounds()/rt_bound_tree(), DOES account for subtracted
+ * (OP_SUBTRACT / negative) material.  The default librt RPP bounding recurses
+ * into a subtraction's right-hand (negative) subtree but discards its RPP (see
+ * src/librt/bbox.c), so carved-away material never shrinks the reported box.
+ *
+ * This routine instead derives the box from geometry evaluated by the ray
+ * tracer.  It uses the shared Cauchy-Crofton sampler until its surface-area
+ * estimate stabilizes, then folds the converged entry/exit point set into the
+ * reported AABB.  The result contracts to reflect subtracted material and is
+ * approximate to the converged sampling resolution.
+ *
+ * If the loose bound cannot be obtained, ray prep fails, or no material is hit,
+ * the loose bound is returned unchanged so the caller never hard-fails.
+ *
+ * Returns BRLCAD_OK on success (rpp_min/rpp_max always set to a usable box).
+ */
+int
+_ged_obj_tight_bounds(struct ged *gedp,
+		      int argc,
+		      const char *argv[],
+		      int use_air,
+		      point_t rpp_min,
+		      point_t rpp_max)
+{
+    struct _ged_tight_bounds_state st;
+    point_t loose_min, loose_max;
+    vect_t span;
+
+    /* Start from the loose bound (this also validates the object list). */
+    if (rt_obj_bounds(gedp->ged_result_str, gedp->dbip, argc, argv, use_air, loose_min, loose_max) & BRLCAD_ERROR)
+	return BRLCAD_ERROR;
+
+    VMOVE(rpp_min, loose_min);
+    VMOVE(rpp_max, loose_max);
+
+    VSUB2(span, loose_max, loose_min);
+    if (span[X] <= 0.0 || span[Y] <= 0.0 || span[Z] <= 0.0)
+	return BRLCAD_OK; /* degenerate loose box; nothing to tighten */
+
+    VSETALL(st.tmin, INFINITY);
+    VSETALL(st.tmax, -INFINITY);
+    st.points = NULL;
+    st.point_count = 0;
+    st.point_capacity = 0;
+    st.collect_points = 0;
+    const int sample_ret = _ged_sample_evaluated_bounds(gedp, argc, argv,
+	use_air, loose_min, loose_max, &st, NULL);
+
+    /* If we hit material, use the evaluated (tight) box; otherwise keep loose. */
+    if (sample_ret == BRLCAD_OK
+	&& st.tmin[X] <= st.tmax[X]
+	&& st.tmin[Y] <= st.tmax[Y]
+	&& st.tmin[Z] <= st.tmax[Z]) {
+	VMOVE(rpp_min, st.tmin);
+	VMOVE(rpp_max, st.tmax);
+    }
+
+    return BRLCAD_OK;
+}
+
+int
+_ged_obj_oriented_bounds(struct ged *gedp,
+			 int argc,
+			 const char *argv[],
+			 int use_air,
+			 int evaluated,
+			 point_t corners[8])
+{
+    struct _ged_tight_bounds_state st;
+    point_t loose_min, loose_max;
+    point_t *corner_ptrs[8];
+
+    if (!corners || rt_obj_bounds(gedp->ged_result_str, gedp->dbip, argc, argv,
+		use_air, loose_min, loose_max) & BRLCAD_ERROR)
+	return BRLCAD_ERROR;
+
+    VSETALL(st.tmin, INFINITY);
+    VSETALL(st.tmax, -INFINITY);
+    st.points = NULL;
+    st.point_count = 0;
+    st.point_capacity = 0;
+    st.collect_points = 1;
+    const int points_ret = evaluated ?
+	_ged_sample_evaluated_bounds(gedp, argc, argv, use_air,
+	    loose_min, loose_max, &st, corners) :
+	_ged_tree_oriented_bounds(gedp, argc, argv, use_air, &st);
+    if (points_ret != BRLCAD_OK) {
+	if (st.points)
+	    bu_free(st.points, "evaluated bounding points");
+	return BRLCAD_ERROR;
+    }
+
+    if (evaluated)
+	return BRLCAD_OK;
+
+    for (int i = 0; i < 8; ++i)
+	corner_ptrs[i] = &corners[i];
+    const int fit_ret = bg_3d_obb(corner_ptrs, &st.points[0][0],
+	(int)st.point_count);
+    bu_free(st.points, "evaluated bounding points");
+    return fit_ret ? BRLCAD_ERROR : BRLCAD_OK;
 }
 
 static int

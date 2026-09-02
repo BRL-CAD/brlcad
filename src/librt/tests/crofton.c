@@ -296,8 +296,13 @@ run_convergence_case(struct db_i *dbip,
 	    p.time_ms = 1500.0;
 	if (target_pct <= 5.0)
 	    p.time_ms = 2000.0;
+	point_t aabb_min, aabb_max, obb[8];
+	point_t *sample_points = NULL;
+	size_t sample_count = 0;
 	int64_t t0 = bu_gettime();
-	cr = rt_crofton_shoot(&sa, &vol, rtip, &p, NULL, NULL);
+	cr = rt_crofton_shoot(&sa, &vol, &aabb_min, &aabb_max, obb,
+	    &sample_points, &sample_count,
+	    rtip, &p, NULL, NULL);
 	run_sec = (double)(bu_gettime() - t0) / 1000000.0;
 	rt_i_destroy(rtip);
 
@@ -308,8 +313,17 @@ run_convergence_case(struct db_i *dbip,
 	    printf("  %-24s  target=%.1f%%  crofton-fail (ret=%d)\n",
 		   label, target_pct, cr);
 	    failures++;
+	    if (sample_points)
+		bu_free(sample_points, "Crofton test points");
 	    continue;
 	}
+	if (!sample_points || sample_count != (size_t)cr ||
+	    aabb_min[X] > aabb_max[X] || !isfinite(obb[0][X])) {
+	    printf("  %-24s  invalid optional bounds/point outputs\n", label);
+	    failures++;
+	}
+	if (sample_points)
+	    bu_free(sample_points, "Crofton test points");
 
 	double sa_err_pct = rel_err(sa, sa_exact) * 100.0;
 	double v_err_pct = rel_err(vol, v_exact) * 100.0;

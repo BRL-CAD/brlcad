@@ -134,13 +134,13 @@ doEvent(ClientData clientData, XEvent *eventPtr)
 	/* no further processing of this event */
 	status = TCL_RETURN;
     } else if (eventPtr->type == MapNotify) {
-	mapped = 1;
+	curr_dm_mapped = 1;
 	dm_set_dirty(DMP, 1);
 
 	/* no further processing of this event */
 	status = TCL_RETURN;
     } else if (eventPtr->type == UnmapNotify) {
-	mapped = 0;
+	curr_dm_mapped = 0;
 	dm_set_dirty(DMP, 1);
 
 	/* no further processing of this event */

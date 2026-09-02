@@ -195,7 +195,7 @@ include/bg/plane.h: BG_EXPORT extern double bg_angle_measure(vect_t vec,
 include/bg/plane.h: BG_EXPORT extern double bg_dist_pnt3_along_line3(const point_t p,
 include/bg/plane.h: BG_EXPORT extern double bg_dist_pnt2_along_line2(const point_t p,
 include/bg/plane.h: BG_EXPORT extern int bg_between(double left,
-include/bg/plane.h: BG_EXPORT extern int bg_does_ray_isect_tri(const point_t pt,
+include/bg/plane.h: DEPRECATED BG_EXPORT extern int bg_does_ray_isect_tri(const point_t pt,
 include/bg/plane.h: BG_EXPORT extern int bg_hlf_class(const plane_t half_eqn,
 include/bg/plane.h: #define BG_CLASSIFY_UNIMPLEMENTED 0x0000
 include/bg/plane.h: #define BG_CLASSIFY_INSIDE        0x0001
@@ -260,6 +260,7 @@ include/bg/spsr.h: #define BG_3D_SPSR_DEFAULT_LINEARFIT         0
 include/bg/spsr.h: #define BG_3D_SPSR_DEFAULT_EXACT             1
 include/bg/spsr.h: #define BG_3D_SPSR_OPTS_DEFAULT  { ;BG_EXPORT int bg_3d_spsr(int **faces, int *num_faces, point_t **vertices, int *num_vertices,
 include/bg/tri_pt.h: BG_EXPORT extern double bg_tri_closest_pt(
+include/bg/tri_ray.h: BG_EXPORT extern int bg_isect_tri_line(point_t *isect,
 include/bg/tri_ray.h: BG_EXPORT extern int bg_isect_tri_ray(const point_t orig,
 include/bg/tri_tri.h: BG_EXPORT extern int bg_tri_tri_isect_coplanar(const point_t V0,
 include/bg/tri_tri.h: BG_EXPORT extern int bg_tri_tri_isect_coplanar2(const point_t V0,
@@ -292,7 +293,8 @@ include/bg/trimesh.h: BG_EXPORT extern fastf_t
 include/bg/trimesh.h: BG_EXPORT extern fastf_t
 include/bg/trimesh.h: #define BG_TRIMESH_DECIMATION_METHOD_DEFAULT 0
 include/bg/trimesh.h: #define BG_TRIMESH_DECIMATION_SETTINGS_INIT {BG_TRIMESH_DECIMATION_METHOD_DEFAULT, 0.0, 0.0, 0, BU_VLS_INIT_ZERO}
-include/bg/trimesh.h: BG_EXPORT extern int bg_trimesh_decimate(int **ofaces, int *n_ofaces,
+include/bg/trimesh.h: DEPRECATED BG_EXPORT extern int bg_trimesh_decimate(int **ofaces, int *n_ofaces,
+include/bg/trimesh.h: BG_EXPORT extern int bg_trimesh_run_decimater(int **ofaces,
 include/bg/trimesh.h: BG_EXPORT extern int
 include/bg/trimesh.h: BG_EXPORT extern int bg_trimesh_normals(vect_t **onorms, int *ifaces, int n_ifaces, point_t *p, int n_p);
 include/bg/trimesh.h: #define BG_TRIMESH_OPTIMIZATION_SETTINGS_INIT {0, 0.0, 0.0, 0}
@@ -301,6 +303,7 @@ include/bg/trimesh.h: BG_EXPORT extern int bg_trimesh_2d_gc(int **ofaces, int *n
 include/bg/trimesh.h: BG_EXPORT extern int bg_trimesh_3d_gc(int **ofaces, point_t **opnts, int *n_opnts,
 include/bg/trimesh.h: BG_EXPORT extern int
 include/bg/trimesh.h: BG_EXPORT extern int
+include/bg/trimesh.h: DEPRECATED BG_EXPORT extern int
 include/bg/trimesh.h: BG_EXPORT extern int
 include/bg/trimesh.h: BG_EXPORT extern int
 include/bg/trimesh.h: BG_EXPORT extern unsigned long long
@@ -4738,6 +4741,8 @@ include/rt/primitives/bot.h: RT_EXPORT extern int rt_bot_condense(struct rt_bot_
 include/rt/primitives/bot.h: RT_EXPORT extern int rt_bot_smooth(struct rt_bot_internal *bot,
 include/rt/primitives/bot.h: RT_EXPORT extern int rt_bot_flip(struct rt_bot_internal *bot);
 include/rt/primitives/bot.h: RT_EXPORT extern int rt_bot_sync(struct rt_bot_internal *bot);
+include/rt/primitives/bot.h: RT_EXPORT extern struct rt_bot_internal *rt_bot_gc(
+include/rt/primitives/bot.h: RT_EXPORT extern struct rt_bot_internal *rt_bot_subset(
 include/rt/primitives/bot.h: RT_EXPORT extern struct rt_bot_list * rt_bot_split(struct rt_bot_internal *bot);
 include/rt/primitives/bot.h: RT_EXPORT extern struct rt_bot_list * rt_bot_patches(struct rt_bot_internal *bot);
 include/rt/primitives/bot.h: RT_EXPORT extern void rt_bot_list_free(struct rt_bot_list *headRblp,
@@ -4749,7 +4754,9 @@ include/rt/primitives/bot.h: RT_EXPORT extern int rt_bot_sort_faces(struct rt_bo
 include/rt/primitives/bot.h: RT_EXPORT extern int rt_bot_decimate(struct rt_bot_internal *bot,
 include/rt/primitives/bot.h: RT_EXPORT extern size_t rt_bot_decimate_gct(struct rt_bot_internal *bot, fastf_t feature_size);
 include/rt/primitives/bot.h: RT_EXPORT extern int rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, int round_outer_edges, int quiet_mode, fastf_t max_area_delta, fastf_t min_tri_threshold);
-include/rt/primitives/bot.h: #define RT_BOT_REPAIR_INFO_INIT {0.0, 5.0, 1, 0, 0, 0.0};
+include/rt/primitives/bot.h: #define RT_BOT_REPAIR_LOST_NORMALS 0x01
+include/rt/primitives/bot.h: #define RT_BOT_REPAIR_LOST_UVS     0x02
+include/rt/primitives/bot.h: #define RT_BOT_REPAIR_INFO_INIT {0.0, 5.0, 1, 0, 0, 0.0, 0};
 include/rt/primitives/bot.h: RT_EXPORT extern int rt_bot_repair(struct rt_bot_internal **obot, struct rt_bot_internal *ibot, struct rt_bot_repair_info *i);
 include/rt/primitives/bot.h: RT_EXPORT extern int rt_bot_inside_out(struct rt_bot_internal *bot);
 include/rt/primitives/bot.h: RT_EXPORT extern int rt_bot_thin_check(struct bu_ptbl *ofaces, struct rt_bot_internal *bot, struct rt_i *rtip, fastf_t tol, int verbose);

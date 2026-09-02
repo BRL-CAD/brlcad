@@ -105,7 +105,7 @@ set(
   sat.cpp
   spsr.cpp
   tri_pt.cpp
-  tri_ray.c
+  tri_ray.cpp
   tri_tri.c
   trimesh.cpp
   trimesh_diff.cpp

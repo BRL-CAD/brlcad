@@ -1301,7 +1301,7 @@ assetimport_read_create_opts(struct bu_opt_desc **options_desc, void **dest_opti
 
     options_data->starting_id = 1000;
     options_data->const_id = 0;
-    options_data->mat_code = 1;
+    options_data->mat_code = 0;
     options_data->verbose = 0;
     options_data->format = NULL;
 

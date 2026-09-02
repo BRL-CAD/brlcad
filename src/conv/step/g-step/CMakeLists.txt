@@ -60,20 +60,23 @@ if(BRLCAD_ENABLE_STEP)
   brlcad_addexec(g-step "../StepExportHost.cpp" "libbu" NO_STRICT FOLDER Conv)
   target_include_directories(g-step BEFORE PRIVATE ${gstep_INCLUDE_DIRS})
 
-  brlcad_add_test(
-    NAME g_step_valid_output
-    COMMAND
+  if (TARGET mged)
+    brlcad_add_test(
+      NAME g_step_valid_output
+      COMMAND
       ${CMAKE_COMMAND}
       -DG_STEP=$<TARGET_FILE:g-step>
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
       -DOUTPUT_DIR=${CMAKE_CURRENT_BINARY_DIR}
       -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/g_step_valid_output.cmake
-  )
+    )
+  endif()
 
-  brlcad_add_test(
-    NAME g_step_native_csg
-    COMMAND
+  if (TARGET mged AND TARGET asc2g)
+    brlcad_add_test(
+      NAME g_step_native_csg
+      COMMAND
       ${CMAKE_COMMAND}
       -DG_STEP=$<TARGET_FILE:g-step>
       -DSTEP_G=$<TARGET_FILE:step-g>
@@ -82,21 +85,26 @@ if(BRLCAD_ENABLE_STEP)
       -DSOURCE_DB_DIR=${CMAKE_SOURCE_DIR}/db
       -DOUTPUT_DIR=${CMAKE_CURRENT_BINARY_DIR}
       -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/g_step_native_csg.cmake
-  )
+    )
+  endif()
 
-  brlcad_add_test(
-    NAME g_step_coverage
-    COMMAND
+  if (TARGET mged)
+    brlcad_add_test(
+      NAME g_step_coverage
+      COMMAND
       ${CMAKE_COMMAND}
       -DG_STEP=$<TARGET_FILE:g-step>
       -DMGED=$<TARGET_FILE:mged>
       -DOUTPUT_DIR=${CMAKE_CURRENT_BINARY_DIR}
       -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/g_step_coverage.cmake
-  )
+    )
+  endif()
 
-  brlcad_add_test(
-    NAME g_step_brep_matrix
-    COMMAND
+  if (TARGET mged AND TARGET nirt AND TARGET brep_trimmed
+      AND TARGET brep_invalid AND TARGET brep_cobb)
+    brlcad_add_test(
+      NAME g_step_brep_matrix
+      COMMAND
       ${CMAKE_COMMAND}
       -DG_STEP=$<TARGET_FILE:g-step>
       -DSTEP_G=$<TARGET_FILE:step-g>
@@ -108,33 +116,35 @@ if(BRLCAD_ENABLE_STEP)
       -DVOID_INPUT=${CMAKE_CURRENT_SOURCE_DIR}/../ap214/tests/ap214_brep_with_voids.stp
       -DOUTPUT_DIR=${CMAKE_CURRENT_BINARY_DIR}
       -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/g_step_brep_matrix.cmake
-  )
+    )
+  endif()
 
-  brlcad_add_test(
-    NAME g_step_units
-    COMMAND
+  if (TARGET mged)
+    brlcad_add_test(
+      NAME g_step_units
+      COMMAND
       ${CMAKE_COMMAND}
       -DG_STEP=$<TARGET_FILE:g-step>
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
       -DOUTPUT_DIR=${CMAKE_CURRENT_BINARY_DIR}
       -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/g_step_units.cmake
-  )
+    )
 
-  brlcad_add_test(
-    NAME g_step_metadata_roundtrip
-    COMMAND
+    brlcad_add_test(
+      NAME g_step_metadata_roundtrip
+      COMMAND
       ${CMAKE_COMMAND}
       -DG_STEP=$<TARGET_FILE:g-step>
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
       -DOUTPUT_DIR=${CMAKE_CURRENT_BINARY_DIR}
       -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/g_step_metadata_roundtrip.cmake
-  )
+    )
 
-  brlcad_add_test(
-    NAME g_step_imported_product_layering
-    COMMAND
+    brlcad_add_test(
+      NAME g_step_imported_product_layering
+      COMMAND
       ${CMAKE_COMMAND}
       -DG_STEP=$<TARGET_FILE:g-step>
       -DSTEP_G=$<TARGET_FILE:step-g>
@@ -142,72 +152,73 @@ if(BRLCAD_ENABLE_STEP)
       -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/../ap214/tests/ap214_extruded_face.stp
       -DOUTPUT_DIR=${CMAKE_CURRENT_BINARY_DIR}
       -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/g_step_imported_product_layering.cmake
-  )
+    )
 
-  brlcad_add_test(
-    NAME g_step_ap203_complex_retention
-    COMMAND
+    brlcad_add_test(
+      NAME g_step_ap203_complex_retention
+      COMMAND
       ${CMAKE_COMMAND}
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_complex_effectivity.stp
       -DOUTPUT_DIR=${CMAKE_CURRENT_BINARY_DIR}
       -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/g_step_ap203_complex_retention.cmake
-  )
+    )
 
-  brlcad_add_test(
-    NAME g_step_ap203_complex_export
-    COMMAND
+    brlcad_add_test(
+      NAME g_step_ap203_complex_export
+      COMMAND
       ${CMAKE_COMMAND}
       -DG_STEP=$<TARGET_FILE:g-step>
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
       -DOUTPUT_DIR=${CMAKE_CURRENT_BINARY_DIR}
       -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/g_step_ap203_complex_export.cmake
-  )
+    )
 
-  brlcad_add_test(
-    NAME g_step_configuration_identities
-    COMMAND
+    brlcad_add_test(
+      NAME g_step_configuration_identities
+      COMMAND
       ${CMAKE_COMMAND}
       -DG_STEP=$<TARGET_FILE:g-step>
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
       -DOUTPUT_DIR=${CMAKE_CURRENT_BINARY_DIR}
       -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/g_step_configuration_identities.cmake
-  )
+    )
 
-  brlcad_add_test(
-    NAME g_step_configuration_provenance
-    COMMAND
+    brlcad_add_test(
+      NAME g_step_configuration_provenance
+      COMMAND
       ${CMAKE_COMMAND}
       -DG_STEP=$<TARGET_FILE:g-step>
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
       -DOUTPUT_DIR=${CMAKE_CURRENT_BINARY_DIR}
       -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/g_step_configuration_provenance.cmake
-  )
+    )
 
-  brlcad_add_test(
-    NAME g_step_configuration_categories
-    COMMAND
+    brlcad_add_test(
+      NAME g_step_configuration_categories
+      COMMAND
       ${CMAKE_COMMAND}
       -DG_STEP=$<TARGET_FILE:g-step>
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
       -DOUTPUT_DIR=${CMAKE_CURRENT_BINARY_DIR}
       -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/g_step_configuration_categories.cmake
-  )
+    )
 
-  brlcad_add_test(
-    NAME g_step_configuration_addresses
-    COMMAND
+    brlcad_add_test(
+      NAME g_step_configuration_addresses
+      COMMAND
       ${CMAKE_COMMAND}
       -DG_STEP=$<TARGET_FILE:g-step>
       -DSTEP_G=$<TARGET_FILE:step-g>
       -DMGED=$<TARGET_FILE:mged>
       -DOUTPUT_DIR=${CMAKE_CURRENT_BINARY_DIR}
       -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/g_step_configuration_addresses.cmake
-  )
+    )
+  endif()
 
   if(HIDE_INTERNAL_SYMBOLS)
     set(

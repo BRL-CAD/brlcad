@@ -69,6 +69,7 @@
 #include "bu/malloc.h"
 #include "bu/parallel.h"
 #include "bu/datetime.h"
+#include "bg/obr.h"
 #include "raytrace.h"
 #include "rt/geom.h"
 
@@ -116,6 +117,10 @@ struct crofton_shared {
     size_t  total_crossings; /* in+out hit events */
     double  total_chord;     /* solid segment length sum (mm) */
     size_t  total_rays;      /* rays fired (hits + misses) */
+    point_t *points;
+    size_t point_count;
+    size_t point_capacity;
+    bool collect_points;
 };
 
 struct crofton_worker_data {
@@ -127,6 +132,9 @@ struct crofton_worker_data {
     size_t                 local_crossings;
     double                 local_chord;
     size_t                 local_rays;
+    point_t               *local_points;
+    size_t                 local_point_count;
+    size_t                 local_point_capacity;
 };
 
 
@@ -147,6 +155,24 @@ crofton_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNU
 	/* Each partition contributes an in-hit and an out-hit */
 	crossings += 2;
 	chord += pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;
+	if (wd->shared->collect_points) {
+	    if (wd->local_point_count + 2 > wd->local_point_capacity) {
+		const size_t initial_capacity = 1024;
+		size_t new_capacity = wd->local_point_capacity ?
+		    2 * wd->local_point_capacity : initial_capacity;
+		while (new_capacity < wd->local_point_count + 2)
+		    new_capacity *= 2;
+		wd->local_points = (point_t *)bu_realloc(wd->local_points,
+		    new_capacity * sizeof(point_t), "Crofton worker hit points");
+		wd->local_point_capacity = new_capacity;
+	    }
+	    VJOIN1(wd->local_points[wd->local_point_count], ap->a_ray.r_pt,
+		pp->pt_inhit->hit_dist, ap->a_ray.r_dir);
+	    wd->local_point_count++;
+	    VJOIN1(wd->local_points[wd->local_point_count], ap->a_ray.r_pt,
+		pp->pt_outhit->hit_dist, ap->a_ray.r_dir);
+	    wd->local_point_count++;
+	}
     }
 
     wd->local_crossings += crossings;
@@ -293,10 +319,28 @@ do_one_iteration(struct application *ap_template,
 	shared->total_crossings += wdata[i].local_crossings;
 	shared->total_chord     += wdata[i].local_chord;
 	shared->total_rays      += wdata[i].local_rays;
+	if (wdata[i].local_point_count) {
+	    const size_t needed = shared->point_count + wdata[i].local_point_count;
+	    if (needed > shared->point_capacity) {
+		size_t new_capacity = shared->point_capacity ?
+		    2 * shared->point_capacity : needed;
+		if (new_capacity < needed)
+		    new_capacity = needed;
+		shared->points = (point_t *)bu_realloc(shared->points,
+		    new_capacity * sizeof(point_t), "Crofton hit points");
+		shared->point_capacity = new_capacity;
+	    }
+	    memcpy(&shared->points[shared->point_count], wdata[i].local_points,
+		wdata[i].local_point_count * sizeof(point_t));
+	    shared->point_count = needed;
+	}
     }
 
-    for (size_t i = 0; i < ncpus; i++)
+    for (size_t i = 0; i < ncpus; i++) {
+	if (wdata[i].local_points)
+	    bu_free(wdata[i].local_points, "Crofton worker hit points");
 	bu_free(wdata[i].ap, "crofton app");
+    }
     bu_free(wdata, "crofton wdata");
     bu_free(rays,  "crofton rays");
 }
@@ -316,6 +360,11 @@ do_one_iteration(struct application *ap_template,
  *
  * @param out_surf_area Receives the estimated surface area (mm^2).
  * @param out_volume    Receives the estimated volume (mm^3).
+ * @param out_aabb_min  Optional sampled AABB minimum; must be paired with max.
+ * @param out_aabb_max  Optional sampled AABB maximum; must be paired with min.
+ * @param out_obb       Optional sampled OBB in ARB8 point ordering.
+ * @param out_points    Optional caller-owned sampled surface-point array.
+ * @param out_point_count Number of returned points; must accompany out_points.
  * @param rtip         Prepared raytrace instance (rt_prep_parallel must
  *                     have been called before this function).
  * @param params       Stopping criteria (see struct rt_crofton_params).
@@ -325,16 +374,35 @@ do_one_iteration(struct application *ap_template,
  * @return  The total number of ray-surface crossings accumulated during
  *          sampling (>= 0) on success; -1 on bad arguments.
  */
-int
-rt_crofton_shoot(double                         *out_surf_area,
-		 double                         *out_volume,
+static int
+crofton_shoot_impl(point_t                        **out_points,
+		   size_t                          *out_point_count,
+		   double                          *out_surf_area,
+		   double                          *out_volume,
+		   point_t                         *out_aabb_min,
+		   point_t                         *out_aabb_max,
+		   point_t                          out_obb[8],
 		 struct rt_i                    *rtip,
 		 const struct rt_crofton_params *params,
 		 const fastf_t                  *bbox_min,
 		 const fastf_t                  *bbox_max)
 {
-    if (!rtip || (!out_surf_area && !out_volume))
+    if (!rtip || (!out_surf_area && !out_volume && !out_aabb_min && !out_obb && !out_points) ||
+	((out_points == NULL) != (out_point_count == NULL)) ||
+	((out_aabb_min == NULL) != (out_aabb_max == NULL)))
 	return -1;
+    if (out_points) {
+	*out_points = NULL;
+	*out_point_count = 0;
+    }
+    if (out_aabb_min) {
+	VSETALL(*out_aabb_min, INFINITY);
+	VSETALL(*out_aabb_max, -INFINITY);
+    }
+    if (out_obb) {
+	for (int i = 0; i < 8; ++i)
+	    VSETALL(out_obb[i], 0.0);
+    }
 
     /* ---- Compute a tight bounding sphere from actual soltab extents ----
      *
@@ -426,6 +494,8 @@ rt_crofton_shoot(double                         *out_surf_area,
     /* ---- Shared accumulator ---- */
     struct crofton_shared shared;
     memset(&shared, 0, sizeof(shared));
+    shared.collect_points = out_points != NULL || out_aabb_min != NULL || out_obb != NULL;
+    const bool stabilize_surface = out_surf_area != NULL || shared.collect_points;
 
     std::mt19937_64 rng(RT_CROFTON_RNG_SEED);
 
@@ -476,8 +546,11 @@ rt_crofton_shoot(double                         *out_surf_area,
 		double d_v_prev  = (prev2_est_v  > 0.0)
 		    ? fabs(prev1_est_v  - prev2_est_v)  / prev2_est_v  * 100.0 : 999.0;
 
-		if (d_sa_cur <= thr && d_sa_prev <= thr &&
-		    d_v_cur  <= thr && d_v_prev  <= thr)
+		const bool sa_stable = !stabilize_surface ||
+		    (d_sa_cur <= thr && d_sa_prev <= thr);
+		const bool volume_stable = !out_volume ||
+		    (d_v_cur <= thr && d_v_prev <= thr);
+		if (sa_stable && volume_stable)
 		    break;
 	    }
 
@@ -528,7 +601,7 @@ rt_crofton_shoot(double                         *out_surf_area,
 		double r_v  = (curr_est_v  > 0.0) ? cbrt(curr_est_v  * INV_4PI3) : 0.0;
 
 		if (prev_r_sa >= 0.0) {
-		    int sa_ok = (!out_surf_area) ||
+		    int sa_ok = (!stabilize_surface) ||
 			fabs(r_sa - prev_r_sa) < stability_mm;
 		    int v_ok  = (!out_volume) ||
 			fabs(r_v  - prev_r_v)  < stability_mm;
@@ -553,6 +626,26 @@ rt_crofton_shoot(double                         *out_surf_area,
 
     if (out_surf_area) *out_surf_area = curr_est_sa;
     if (out_volume)    *out_volume    = curr_est_v;
+    if (out_aabb_min) {
+	for (size_t i = 0; i < shared.point_count; ++i)
+	    VMINMAX(*out_aabb_min, *out_aabb_max, shared.points[i]);
+    }
+    int bounds_ret = 0;
+    if (out_obb) {
+	point_t *corner_ptrs[8];
+	for (int i = 0; i < 8; ++i)
+	    corner_ptrs[i] = &out_obb[i];
+	if (!shared.point_count ||
+	    bg_3d_obb(corner_ptrs, &shared.points[0][0],
+		static_cast<int>(shared.point_count)))
+	    bounds_ret = -1;
+    }
+    if (out_points && !bounds_ret) {
+	*out_points = shared.points;
+	*out_point_count = shared.point_count;
+    } else if (shared.points) {
+	bu_free(shared.points, "Crofton hit points");
+    }
 
     /* Clean each resource and NULL out its slot in rtip->rti_resources.
      * This is necessary because crofton_from_ip calls rt_i_destroy(rtip)
@@ -575,8 +668,22 @@ rt_crofton_shoot(double                         *out_surf_area,
     /* Return the total crossing count so callers can distinguish
      * "zero hits" (return == 0) from "some hits" (return > 0).
      * Clamp to INT_MAX to avoid signed-overflow on pathological inputs. */
+    if (bounds_ret)
+	return -1;
     return (shared.total_crossings <= INT_MAX)
 	? (int)shared.total_crossings : INT_MAX;
+}
+
+int
+rt_crofton_shoot(double *out_surf_area, double *out_volume,
+		 point_t *out_aabb_min, point_t *out_aabb_max, point_t out_obb[8],
+		 point_t **out_points, size_t *out_point_count, struct rt_i *rtip,
+		 const struct rt_crofton_params *params,
+		 const fastf_t *bbox_min, const fastf_t *bbox_max)
+{
+    return crofton_shoot_impl(out_points, out_point_count, out_surf_area,
+	out_volume, out_aabb_min, out_aabb_max, out_obb, rtip, params,
+	bbox_min, bbox_max);
 }
 
 
@@ -713,7 +820,8 @@ crofton_from_ip_n(const struct rt_db_internal    *ip,
     /* ---- Run Crofton estimator ---- */
     double sa  = 0.0;
     double vol = 0.0;
-    (void)rt_crofton_shoot(&sa, &vol, rtip, params, NULL, NULL);
+    (void)rt_crofton_shoot(&sa, &vol, NULL, NULL, NULL, NULL, NULL,
+	rtip, params, NULL, NULL);
 
     if (out_sa)  *out_sa  = sa;
     if (out_vol) *out_vol = vol;

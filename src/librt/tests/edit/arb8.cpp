@@ -71,6 +71,87 @@
 #define ECMD_ARB_SETUP_ROTFACE	4014
 #define ECMD_ARB_ROTATE_FACE	4015
 
+static const char move_edges_menu_label[] = "Move Edges";
+
+
+struct menu_capture {
+    struct rt_edit_menu_item *items;
+};
+
+
+static int
+capture_menu(int UNUSED(argc), const char **UNUSED(argv), void *data, void *menu)
+{
+    struct menu_capture *capture = (struct menu_capture *)data;
+
+    if (!capture)
+	return BRLCAD_ERROR;
+
+    capture->items = (struct rt_edit_menu_item *)menu;
+    return BRLCAD_OK;
+}
+
+
+static struct rt_edit_menu_item *
+find_menu_item(struct rt_edit_menu_item *menu, const char *label)
+{
+    if (!menu || !label)
+	return NULL;
+
+    for (struct rt_edit_menu_item *item = menu;
+	 item->menu_string && item->menu_string[0] != '\0'; item++) {
+	if (BU_STR_EQUAL(item->menu_string, label))
+	    return item;
+    }
+
+    return NULL;
+}
+
+
+static void
+select_arb_point_edit(struct rt_edit *s, struct rt_arb8_edit *a,
+	struct menu_capture *capture, const char *point_label)
+{
+    struct rt_edit_menu_item *control_menu =
+	(*EDOBJ[s->es_int.idb_type].ft_menu_item)(s->tol);
+    struct rt_edit_menu_item *move_edges =
+	find_menu_item(control_menu, move_edges_menu_label);
+    if (!move_edges || !move_edges->menu_func)
+	bu_exit(1, "ERROR: ARB control menu has no '%s' entry\n",
+		move_edges_menu_label);
+
+    capture->items = NULL;
+    (*move_edges->menu_func)(s, move_edges->menu_arg, 0, 0, NULL);
+
+    struct rt_edit_menu_item *move_point =
+	find_menu_item(capture->items, point_label);
+    if (!move_point || !move_point->menu_func)
+	bu_exit(1, "ERROR: ARB point menu has no '%s' entry\n", point_label);
+
+    (*move_point->menu_func)(s, move_point->menu_arg, 0, 0, NULL);
+    if (s->edit_flag != PTARB || s->edit_mode != RT_PARAMS_EDIT_TRANS ||
+	a->edit_menu != move_point->menu_arg)
+	bu_exit(1, "ERROR: %s menu selection produced flag=%d mode=%d menu=%d\n",
+		point_label, s->edit_flag, s->edit_mode, a->edit_menu);
+}
+
+
+static void
+arb_edit_reset(struct rt_edit *s, struct rt_arb8_edit *a)
+{
+    a->newedge = 0;
+    a->edit_menu = 0;
+
+    VSETALL(s->e_keypoint, 0.0);
+    MAT_IDN(s->acc_rot_sol);
+    MAT_IDN(s->incr_change);
+    s->acc_sc_sol = 1.0;
+    s->e_inpara = 0;
+    s->es_scale = 0.0;
+    s->mv_context = 1;
+    rt_edit_set_edflag(s, RT_EDIT_IDLE);
+}
+
 
 struct directory *
 make_arb8(struct rt_wdb *wdbp)
@@ -112,16 +193,85 @@ arb8_reset(struct rt_edit *s, struct rt_arb_internal *arb, struct rt_arb8_edit *
     VSET(arb->pt[6], 1, 1, 1);
     VSET(arb->pt[7], 0, 1, 1);
 
-    a->newedge = 0;
-    a->edit_menu = 0;
+    arb_edit_reset(s, a);
+}
 
-    VSETALL(s->e_keypoint, 0.0);
-    MAT_IDN(s->acc_rot_sol);
-    MAT_IDN(s->incr_change);
-    s->acc_sc_sol = 1.0;
-    s->e_inpara   = 0;
-    s->es_scale   = 0.0;
-    s->mv_context = 1;
+static void
+arb5_reset(struct rt_edit *s, struct rt_arb_internal *arb, struct rt_arb8_edit *a)
+{
+    VSET(arb->pt[0], 0, 0, 0);
+    VSET(arb->pt[1], 1, 0, 0);
+    VSET(arb->pt[2], 1, 1, 0);
+    VSET(arb->pt[3], 0, 1, 0);
+    VSET(arb->pt[4], 0.5, 0.5, 1);
+    VMOVE(arb->pt[5], arb->pt[4]);
+    VMOVE(arb->pt[6], arb->pt[4]);
+    VMOVE(arb->pt[7], arb->pt[4]);
+
+    arb_edit_reset(s, a);
+}
+
+
+static void
+arb6_reset(struct rt_edit *s, struct rt_arb_internal *arb, struct rt_arb8_edit *a)
+{
+    VSET(arb->pt[0], 0, 0, 0);
+    VSET(arb->pt[1], 0, 1, 0);
+    VSET(arb->pt[2], 0, 1, 1);
+    VSET(arb->pt[3], 0, 0, 0.5);
+    VSET(arb->pt[4], 1, 0.5, 0);
+    VMOVE(arb->pt[5], arb->pt[4]);
+    VSET(arb->pt[6], 1, 0.5, 1);
+    VMOVE(arb->pt[7], arb->pt[6]);
+
+    arb_edit_reset(s, a);
+}
+
+
+static void
+arb7_reset(struct rt_edit *s, struct rt_arb_internal *arb, struct rt_arb8_edit *a)
+{
+    VSET(arb->pt[0], 0, 0, 0);
+    VSET(arb->pt[1], 0, 1, 0);
+    VSET(arb->pt[2], 0, 1, 1);
+    VSET(arb->pt[3], 0, 0, 0.5);
+    VSET(arb->pt[4], 1, 0, 0);
+    VSET(arb->pt[5], 1, 1, 0);
+    VSET(arb->pt[6], 1, 1, 0.5);
+    VMOVE(arb->pt[7], arb->pt[4]);
+
+    arb_edit_reset(s, a);
+}
+
+
+static void
+test_arb_point_knob(struct rt_edit *s, struct rt_arb_internal *arb,
+	struct rt_arb8_edit *a, struct menu_capture *capture,
+	const char *test_name, const char *point_label, int point_index,
+	const int *like_points, size_t like_point_count)
+{
+    select_arb_point_edit(s, a, capture, point_label);
+
+    (*EDOBJ[s->es_int.idb_type].ft_e_axes_pos)(s, &s->es_int, s->tol);
+    point_t expected;
+    vect_t point_delta = {0.05, 0.0, 0.0};
+    VADD2(expected, arb->pt[point_index], point_delta);
+    point_t fixed_point;
+    VMOVE(fixed_point, arb->pt[0]);
+
+    s->mv_context = 0;
+    rt_knob_edit_tran(s, 'm', 0, point_delta);
+
+    for (size_t i = 0; i < like_point_count; i++) {
+	int index = like_points[i];
+	if (!VNEAR_EQUAL(arb->pt[index], expected, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: %s knob edit did not move pt[%d]\n",
+		    test_name, index);
+    }
+    if (!VNEAR_EQUAL(arb->pt[0], fixed_point, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: %s knob edit moved the base\n", test_name);
+
+    bu_log("%s menu and knob edit SUCCESS\n", test_name);
 }
 
 
@@ -164,6 +314,10 @@ main(int argc, char *argv[])
     struct rt_arb_internal *arb =
 	(struct rt_arb_internal *)s->es_int.idb_ptr;
     struct rt_arb8_edit *a = (struct rt_arb8_edit *)s->ipe_ptr;
+    struct menu_capture captured_menu = {NULL};
+    if (rt_edit_map_clbk_set(s->m, ECMD_MENU_SET, BU_CLBK_DURING,
+		capture_menu, &captured_menu) != BRLCAD_OK)
+	bu_exit(1, "ERROR: Unable to register ARB menu capture callback\n");
 
     vect_t mousevec;
 
@@ -284,6 +438,50 @@ main(int argc, char *argv[])
     if (rot_xy_ret != BRLCAD_OK)
 	bu_exit(1, "ERROR: RT_PARAMS_EDIT_ROT(xy) failed\n");
     bu_log("RT_PARAMS_EDIT_ROT(xy) SUCCESS: rotation applied via knob path\n");
+
+    /* ================================================================
+     * PTARB ARB5 point 5: both direct parameters and knob translation must
+     * retain the primitive-specific edit flag.  Point 5 is stored at pt[4]
+     * and duplicated in pt[5..7].
+     * ================================================================*/
+    arb5_reset(s, arb, a);
+    select_arb_point_edit(s, a, &captured_menu, "Move Point 5");
+    s->e_inpara = 3;
+    VSET(s->e_para, 0.75, 0.75, 1.25);
+    s->mv_context = 0;
+    rt_edit_process(s);
+    {
+	point_t expected = {0.75, 0.75, 1.25};
+	point_t expected_base = {0, 0, 0};
+	if (!VNEAR_EQUAL(arb->pt[4], expected, VUNITIZE_TOL) ||
+	    !VNEAR_EQUAL(arb->pt[5], expected, VUNITIZE_TOL) ||
+	    !VNEAR_EQUAL(arb->pt[6], expected, VUNITIZE_TOL) ||
+	    !VNEAR_EQUAL(arb->pt[7], expected, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: PTARB ARB5 point 5 parameter edit failed\n");
+	if (!VNEAR_EQUAL(arb->pt[0], expected_base, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: PTARB ARB5 point 5 moved the base\n");
+	bu_log("PTARB ARB5 point 5 parameter edit SUCCESS\n");
+    }
+
+    const int arb5_point5[] = {4, 5, 6, 7};
+    arb5_reset(s, arb, a);
+    test_arb_point_knob(s, arb, a, &captured_menu, "PTARB ARB5 point 5",
+	    "Move Point 5", 4, arb5_point5, sizeof(arb5_point5) / sizeof(arb5_point5[0]));
+
+    const int arb6_point5[] = {4, 5};
+    arb6_reset(s, arb, a);
+    test_arb_point_knob(s, arb, a, &captured_menu, "PTARB ARB6 point 5",
+	    "Move Point 5", 4, arb6_point5, sizeof(arb6_point5) / sizeof(arb6_point5[0]));
+
+    const int arb6_point6[] = {6, 7};
+    arb6_reset(s, arb, a);
+    test_arb_point_knob(s, arb, a, &captured_menu, "PTARB ARB6 point 6",
+	    "Move Point 6", 6, arb6_point6, sizeof(arb6_point6) / sizeof(arb6_point6[0]));
+
+    const int arb7_point5[] = {4, 7};
+    arb7_reset(s, arb, a);
+    test_arb_point_knob(s, arb, a, &captured_menu, "PTARB ARB7 point 5",
+	    "Move Point 5", 4, arb7_point5, sizeof(arb7_point5) / sizeof(arb7_point5[0]));
 
 
     /* ================================================================
@@ -464,6 +662,25 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
     bu_log("ECMD_ARB_ROTATE_FACE SUCCESS: normal=(%.3f,%.3f,%.3f) D=%.3f\n",
 	   a->es_peqn[a->edit_menu][0], a->es_peqn[a->edit_menu][1],
 	   a->es_peqn[a->edit_menu][2], a->es_peqn[a->edit_menu][W]);
+
+    /* The same face operation must survive the interactive rotation knob
+     * adapter, which supplies an incremental matrix rather than parameters.
+     */
+    arb8_reset(s, arb, a);
+    a->edit_menu = 4;
+    s->e_inpara = 1;
+    s->e_para[0] = 1.0;
+    rt_edit_set_edflag(s, ECMD_ARB_SETUP_ROTFACE);
+    rt_edit_process(s);
+    plane_t knob_orig_peqn;
+    HMOVE(knob_orig_peqn, a->es_peqn[a->edit_menu]);
+    mat_t knob_rot;
+    MAT_IDN(knob_rot);
+    bn_mat_angles(knob_rot, 45.0, 0.0, 0.0);
+    rt_knob_edit_rot(s, 'm', 'm', 0, knob_rot);
+    if (VEQUAL(a->es_peqn[a->edit_menu], knob_orig_peqn))
+	bu_exit(1, "ERROR: ECMD_ARB_ROTATE_FACE knob edit did not rotate face\n");
+    bu_log("ECMD_ARB_ROTATE_FACE knob edit SUCCESS\n");
 
     rt_edit_destroy(s);
     db_close(dbip);

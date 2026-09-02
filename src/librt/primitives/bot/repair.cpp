@@ -28,6 +28,9 @@
 #include <string.h>
 
 #include <algorithm>
+#include <array>
+#include <climits>
+#include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
@@ -89,9 +92,13 @@ bot_face_normal(vect_t *n, struct rt_bot_internal *bot, int i)
     vect_t a,b;
 
     /* sanity */
-    if (!n || !bot || i < 0 || (size_t)i > bot->num_faces ||
-            bot->faces[i*3+2] < 0 || (size_t)bot->faces[i*3+2] > bot->num_vertices) {
-        return false;
+    if (!n || !bot || !bot->faces || !bot->vertices || i < 0 ||
+	(size_t)i >= bot->num_faces)
+	return false;
+    for (size_t corner = 0; corner < 3; ++corner) {
+	int vertex = bot->faces[(size_t)i * 3 + corner];
+	if (vertex < 0 || (size_t)vertex >= bot->num_vertices)
+	    return false;
     }
 
     VSUB2(a, &bot->vertices[bot->faces[i*3+1]*3], &bot->vertices[bot->faces[i*3]*3]);
@@ -398,28 +405,92 @@ bot_lint_cleanup:
     return ret;
 }
 
-// Helper: convert bg_trimesh_repair / manifold arrays to rt_bot_internal
+// Helper: convert topology-changing manifold output to a plain solid BOT.
 static struct rt_bot_internal *
-manifold_to_bot(manifold::MeshGL *omesh)
+manifold_to_bot(const manifold::MeshGL64 &mesh)
 {
+    if (mesh.vertProperties.size() % 3 || mesh.triVerts.size() % 3 ||
+	mesh.NumVert() > INT_MAX || mesh.NumTri() > INT_MAX)
+	return NULL;
+
     struct rt_bot_internal *nbot;
-    BU_GET(nbot, struct rt_bot_internal);
+    BU_ALLOC(nbot, struct rt_bot_internal);
     nbot->magic = RT_BOT_INTERNAL_MAGIC;
     nbot->mode = RT_BOT_SOLID;
     nbot->orientation = RT_BOT_CCW;
-    nbot->thickness = NULL;
-    nbot->face_mode = (struct bu_bitv *)NULL;
-    nbot->bot_flags = 0;
-    nbot->num_vertices = (int)omesh->vertProperties.size()/3;
-    nbot->num_faces = (int)omesh->triVerts.size()/3;
-    nbot->vertices = (double *)calloc(omesh->vertProperties.size(), sizeof(double));
-    nbot->faces = (int *)calloc(omesh->triVerts.size(), sizeof(int));
-    for (size_t j = 0; j < omesh->vertProperties.size(); j++)
-	nbot->vertices[j] = omesh->vertProperties[j];
-    for (size_t j = 0; j < omesh->triVerts.size(); j++)
-	nbot->faces[j] = omesh->triVerts[j];
+    nbot->num_vertices = mesh.NumVert();
+    nbot->num_faces = mesh.NumTri();
+    nbot->vertices = (fastf_t *)bu_calloc(mesh.vertProperties.size(),
+	sizeof(fastf_t), "repaired BOT vertices");
+    nbot->faces = (int *)bu_calloc(mesh.triVerts.size(), sizeof(int),
+	"repaired BOT faces");
+    std::copy(mesh.vertProperties.begin(), mesh.vertProperties.end(),
+	nbot->vertices);
+    std::copy(mesh.triVerts.begin(), mesh.triVerts.end(), nbot->faces);
 
     return nbot;
+}
+
+
+// A merge-only Manifold repair retains a source face ID for every triangle.
+// Reorder each output triangle back to its source corner order so indexed
+// normals and UVs remain attached to the correct corners as well as faces.
+static struct rt_bot_internal *
+manifold_to_preserved_bot(const manifold::MeshGL64 &mesh,
+	const struct rt_bot_internal *source)
+{
+    if (!source || mesh.vertProperties.size() % 3 ||
+	mesh.triVerts.size() % 3 || mesh.NumVert() > INT_MAX ||
+	mesh.NumTri() > INT_MAX || mesh.faceID.size() != mesh.NumTri())
+	return NULL;
+
+    std::vector<fastf_t> vertices(mesh.vertProperties.begin(),
+	mesh.vertProperties.end());
+    std::vector<int> faces(mesh.triVerts.size());
+    std::vector<int> face_sources(mesh.NumTri());
+    constexpr std::array<std::array<size_t, 3>, 6> corner_permutations = {{
+	{{0, 1, 2}}, {{0, 2, 1}}, {{1, 0, 2}},
+	{{1, 2, 0}}, {{2, 0, 1}}, {{2, 1, 0}}
+    }};
+
+    for (size_t face = 0; face < mesh.NumTri(); ++face) {
+	size_t source_face = mesh.faceID[face];
+	if (source_face >= source->num_faces)
+	    return NULL;
+	face_sources[face] = (int)source_face;
+
+	double best_distance = INFINITY;
+	const std::array<size_t, 3> *best_permutation = NULL;
+	for (const auto &permutation : corner_permutations) {
+	    double distance = 0.0;
+	    for (size_t source_corner = 0; source_corner < 3; ++source_corner) {
+		size_t output_corner = permutation[source_corner];
+		size_t output_vertex = mesh.triVerts[face * 3 + output_corner];
+		if (output_vertex >= mesh.NumVert())
+		    return NULL;
+		int source_vertex = source->faces[source_face * 3 + source_corner];
+		distance += DIST_PNT_PNT_SQ(&vertices[output_vertex * 3],
+		    &source->vertices[(size_t)source_vertex * 3]);
+	    }
+	    if (distance < best_distance) {
+		best_distance = distance;
+		best_permutation = &permutation;
+	    }
+	}
+	if (!best_permutation)
+	    return NULL;
+	for (size_t source_corner = 0; source_corner < 3; ++source_corner) {
+	    size_t output_corner = (*best_permutation)[source_corner];
+	    faces[face * 3 + source_corner] =
+		(int)mesh.triVerts[face * 3 + output_corner];
+	}
+    }
+
+    struct rt_bot_internal geometry = *source;
+    geometry.num_vertices = mesh.NumVert();
+    geometry.vertices = vertices.data();
+    return rt_bot_gc(&geometry, faces.data(), face_sources.data(),
+	mesh.NumTri());
 }
 
 int
@@ -431,6 +502,28 @@ rt_bot_repair(struct rt_bot_internal **obot, struct rt_bot_internal *bot, struct
     // Unless we produce something, obot will be NULL
     *obot = NULL;
 
+    rinfo->output_nonmanifold = 0;
+    rinfo->output_lint_fail = 0;
+    rinfo->output_volume = 0.0;
+    rinfo->output_data_loss = 0;
+    if (bot->mode != RT_BOT_SOLID || bot->num_vertices > INT_MAX ||
+	bot->num_faces > INT_MAX || !bot->vertices || !bot->faces)
+	return -1;
+    for (size_t face_corner = 0; face_corner < bot->num_faces * 3;
+	++face_corner) {
+	int vertex = bot->faces[face_corner];
+	if (vertex < 0 || (size_t)vertex >= bot->num_vertices)
+	    return -1;
+    }
+
+    unsigned int data_loss = 0;
+    if ((bot->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) || bot->normals ||
+	bot->num_normals || bot->face_normals || bot->num_face_normals)
+	data_loss |= RT_BOT_REPAIR_LOST_NORMALS;
+    if ((bot->bot_flags & RT_BOT_HAS_TEXTURE_UVS) || bot->uvs ||
+	bot->num_uvs || bot->face_uvs || bot->num_face_uvs)
+	data_loss |= RT_BOT_REPAIR_LOST_UVS;
+
     int num_vertices = (int)bot->num_vertices;
     int num_faces = (int)bot->num_faces;
 
@@ -441,14 +534,13 @@ rt_bot_repair(struct rt_bot_internal **obot, struct rt_bot_internal *bot, struct
 	bot_mesh.vertProperties.push_back(bot->vertices[3*j+1]);
 	bot_mesh.vertProperties.push_back(bot->vertices[3*j+2]);
     }
-    if (bot->orientation == RT_BOT_CW) {
-	for (size_t j = 0; j < bot->num_faces; j++) {
+    for (size_t j = 0; j < bot->num_faces; ++j) {
+	bot_mesh.faceID.push_back((uint32_t)j);
+	if (bot->orientation == RT_BOT_CW) {
 	    bot_mesh.triVerts.push_back(bot->faces[3*j]);
 	    bot_mesh.triVerts.push_back(bot->faces[3*j+2]);
 	    bot_mesh.triVerts.push_back(bot->faces[3*j+1]);
-	}
-    } else {
-	for (size_t j = 0; j < bot->num_faces; j++) {
+	} else {
 	    bot_mesh.triVerts.push_back(bot->faces[3*j]);
 	    bot_mesh.triVerts.push_back(bot->faces[3*j+1]);
 	    bot_mesh.triVerts.push_back(bot->faces[3*j+2]);
@@ -465,9 +557,15 @@ rt_bot_repair(struct rt_bot_internal **obot, struct rt_bot_internal *bot, struct
     manifold::Manifold omanifold(bot_mesh);
     if (omanifold.Status() == manifold::Manifold::Error::NoError) {
 	// MeshGL.Merge() produced a manifold mesh.  Minimal changes needed.
-	manifold::MeshGL omesh = omanifold.GetMeshGL();
-	struct rt_bot_internal *nbot = manifold_to_bot(&omesh);
+	manifold::MeshGL64 omesh = omanifold.GetMeshGL64();
+	struct rt_bot_internal *nbot = manifold_to_preserved_bot(omesh, bot);
+	bool data_preserved = nbot != NULL;
+	if (!nbot)
+	    nbot = manifold_to_bot(omesh);
+	if (!nbot)
+	    return -1;
 	*obot = nbot;
+	rinfo->output_data_loss = data_preserved ? 0 : data_loss;
 	return 0;
     }
 
@@ -501,11 +599,11 @@ rt_bot_repair(struct rt_bot_internal **obot, struct rt_bot_internal *bot, struct
     }
 
     // Validate the repaired mesh with Manifold.
-    manifold::MeshGL gmm;
+    manifold::MeshGL64 gmm;
     for (int i = 0; i < n_rpnts; i++) {
-	gmm.vertProperties.push_back((float)rpnts[i][X]);
-	gmm.vertProperties.push_back((float)rpnts[i][Y]);
-	gmm.vertProperties.push_back((float)rpnts[i][Z]);
+	gmm.vertProperties.push_back(rpnts[i][X]);
+	gmm.vertProperties.push_back(rpnts[i][Y]);
+	gmm.vertProperties.push_back(rpnts[i][Z]);
     }
     for (int i = 0; i < n_rfaces; i++) {
 	gmm.triVerts.push_back((uint32_t)rfaces[3*i+0]);
@@ -524,20 +622,247 @@ rt_bot_repair(struct rt_bot_internal **obot, struct rt_bot_internal *bot, struct
     if (rinfo->output_volume < 0)
 	return -1;
 
-    manifold::MeshGL omesh = gmanifold.GetMeshGL();
-    struct rt_bot_internal *nbot = manifold_to_bot(&omesh);
+    manifold::MeshGL64 omesh = gmanifold.GetMeshGL64();
+    struct rt_bot_internal *nbot = manifold_to_bot(omesh);
+    if (!nbot)
+	return -1;
     if (rinfo->strict)
 	rinfo->output_lint_fail = bot_repair_lint(nbot);
 
     *obot = nbot;
+    rinfo->output_data_loss = data_loss;
     return 0;
+}
+
+
+static bool
+copy_indexed_face_data(fastf_t **output_values, size_t *output_value_count,
+	int **output_face_values, size_t *output_face_count,
+	const fastf_t *input_values, size_t input_value_count,
+	const int *input_face_values, size_t input_face_count,
+	const int *selected_faces, size_t selected_face_count)
+{
+    *output_values = NULL;
+    *output_value_count = 0;
+    *output_face_values = NULL;
+    *output_face_count = 0;
+    if (!selected_face_count)
+	return true;
+    if (!input_values || !input_face_values || !input_value_count ||
+	input_value_count > INT_MAX)
+	return false;
+
+    int *face_values = (int *)bu_calloc(selected_face_count, 3 * sizeof(int),
+	"BOT subset face-indexed data");
+    std::unordered_map<int, int> old_to_new;
+    old_to_new.reserve(selected_face_count * 3);
+    std::vector<int> active_values;
+    active_values.reserve(selected_face_count * 3);
+
+    for (size_t output_face = 0; output_face < selected_face_count; ++output_face) {
+	int input_face = selected_faces ? selected_faces[output_face] :
+	    (int)output_face;
+	if (input_face < 0 || (size_t)input_face >= input_face_count) {
+	    bu_free(face_values, "BOT subset face-indexed data");
+	    return false;
+	}
+
+	for (size_t corner = 0; corner < 3; ++corner) {
+	    int old_index = input_face_values[(size_t)input_face * 3 + corner];
+	    if (old_index < 0 || (size_t)old_index >= input_value_count) {
+		bu_free(face_values, "BOT subset face-indexed data");
+		return false;
+	    }
+
+	    auto insertion = old_to_new.emplace(old_index, (int)active_values.size());
+	    if (insertion.second)
+		active_values.push_back(old_index);
+	    face_values[output_face * 3 + corner] = insertion.first->second;
+	}
+    }
+
+    fastf_t *values = (fastf_t *)bu_calloc(active_values.size(),
+	3 * sizeof(fastf_t), "BOT subset indexed data");
+    for (size_t output_index = 0; output_index < active_values.size(); ++output_index) {
+	size_t input_index = (size_t)active_values[output_index];
+	VMOVE(&values[output_index * 3], &input_values[input_index * 3]);
+    }
+
+    *output_values = values;
+    *output_value_count = active_values.size();
+    *output_face_values = face_values;
+    *output_face_count = selected_face_count;
+    return true;
+}
+
+
+static struct rt_bot_internal *
+bot_from_faces(const struct rt_bot_internal *original,
+	const int *replacement_faces, const int *source_faces, size_t face_count)
+{
+    if (!original || original->magic != RT_BOT_INTERNAL_MAGIC ||
+	original->num_faces > INT_MAX ||
+	original->num_vertices > INT_MAX || face_count > INT_MAX ||
+	(face_count && !source_faces))
+	return NULL;
+    for (size_t face = 0; face < face_count; ++face) {
+	if (source_faces[face] < 0 ||
+		(size_t)source_faces[face] >= original->num_faces)
+	    return NULL;
+    }
+
+    struct rt_bot_internal *result;
+    BU_ALLOC(result, struct rt_bot_internal);
+    result->magic = RT_BOT_INTERNAL_MAGIC;
+    result->mode = original->mode;
+    result->orientation = original->orientation;
+    result->bot_flags = original->bot_flags;
+    bool has_normal_data = false;
+    bool has_uv_data = false;
+
+    const int *geometry_faces = replacement_faces ? replacement_faces :
+	original->faces;
+    size_t geometry_face_count = replacement_faces ? face_count :
+	original->num_faces;
+    const int *geometry_face_selection = replacement_faces ? NULL :
+	source_faces;
+    if (!copy_indexed_face_data(&result->vertices, &result->num_vertices,
+	    &result->faces, &result->num_faces,
+	    original->vertices, original->num_vertices,
+	    geometry_faces, geometry_face_count,
+	    geometry_face_selection, face_count))
+	goto fail;
+
+    if (original->mode == RT_BOT_PLATE || original->mode == RT_BOT_PLATE_NOCOS) {
+	if (face_count && (!original->thickness ||
+		(original->face_mode &&
+		 bu_bitv_length(original->face_mode) < original->num_faces)))
+	    goto fail;
+	if (face_count) {
+	    result->thickness = (fastf_t *)bu_calloc(face_count,
+		sizeof(fastf_t), "BOT subset thickness");
+	    result->face_mode = bu_bitv_new(face_count);
+	}
+	for (size_t output_face = 0; output_face < face_count; ++output_face) {
+	    int input_face = source_faces[output_face];
+	    if (input_face < 0 || (size_t)input_face >= original->num_faces)
+		goto fail;
+	    result->thickness[output_face] = original->thickness[input_face];
+	    if (original->face_mode && BU_BITTEST(original->face_mode, input_face))
+		BU_BITSET(result->face_mode, output_face);
+	}
+    }
+
+    has_normal_data = original->normals || original->num_normals ||
+	original->face_normals || original->num_face_normals;
+    if (face_count &&
+	(original->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) && !has_normal_data)
+	goto fail;
+    if (has_normal_data &&
+	!copy_indexed_face_data(&result->normals, &result->num_normals,
+	    &result->face_normals, &result->num_face_normals,
+	    original->normals, original->num_normals,
+	    original->face_normals, original->num_face_normals,
+	    source_faces, face_count))
+	goto fail;
+
+    has_uv_data = original->uvs || original->num_uvs ||
+	original->face_uvs || original->num_face_uvs;
+    if (face_count &&
+	(original->bot_flags & RT_BOT_HAS_TEXTURE_UVS) && !has_uv_data)
+	goto fail;
+    if (has_uv_data &&
+	!copy_indexed_face_data(&result->uvs, &result->num_uvs,
+	    &result->face_uvs, &result->num_face_uvs,
+	    original->uvs, original->num_uvs,
+	    original->face_uvs, original->num_face_uvs,
+	    source_faces, face_count))
+	goto fail;
+
+    return result;
+
+fail:
+    rt_bot_internal_free(result);
+    BU_PUT(result, struct rt_bot_internal);
+    return NULL;
+}
+
+
+struct rt_bot_internal *
+rt_bot_gc(const struct rt_bot_internal *original, const int *faces,
+	const int *face_sources, size_t face_count)
+{
+    if (face_count && !faces)
+	return NULL;
+    return bot_from_faces(original, faces, face_sources, face_count);
+}
+
+
+struct rt_bot_internal *
+rt_bot_subset(const struct rt_bot_internal *original, const int *face_indices,
+	size_t face_count)
+{
+    return bot_from_faces(original, NULL, face_indices, face_count);
+}
+
+
+struct rt_bot_list *
+rt_bot_split(struct rt_bot_internal *bot)
+{
+    RT_BOT_CK_MAGIC(bot);
+
+    if (bot->num_faces > INT_MAX)
+	return NULL;
+
+    struct rt_bot_list *result;
+    BU_ALLOC(result, struct rt_bot_list);
+    BU_LIST_INIT(&result->l);
+    if (bot->num_faces < 2)
+	return result;
+
+    int *face_indices = NULL;
+    int *component_offsets = NULL;
+    int component_count = bg_trimesh_separate(&face_indices,
+	&component_offsets, bot->faces, (int)bot->num_faces);
+    if (component_count < 0) {
+	bu_free(result, "rt_bot_split result");
+	return NULL;
+    }
+    if (component_count < 2) {
+	bu_free(face_indices, "trimesh component face indices");
+	bu_free(component_offsets, "trimesh component offsets");
+	return result;
+    }
+
+    for (int component = 0; component < component_count; ++component) {
+	int offset = component_offsets[component];
+	size_t face_count = (size_t)(component_offsets[component + 1] - offset);
+	struct rt_bot_internal *component_bot = rt_bot_subset(bot,
+	    &face_indices[offset], face_count);
+	if (!component_bot) {
+	    bu_free(face_indices, "trimesh component face indices");
+	    bu_free(component_offsets, "trimesh component offsets");
+	    rt_bot_list_free(result, 1);
+	    return NULL;
+	}
+
+	struct rt_bot_list *entry;
+	BU_ALLOC(entry, struct rt_bot_list);
+	entry->bot = component_bot;
+	BU_LIST_INSERT(&result->l, &entry->l);
+    }
+
+    bu_free(face_indices, "trimesh component face indices");
+    bu_free(component_offsets, "trimesh component offsets");
+    return result;
 }
 
 
 struct rt_bot_internal *
 rt_bot_remove_faces(struct bu_ptbl *rm_face_indices, const struct rt_bot_internal *orig_bot)
 {
-    if (!rm_face_indices || !BU_PTBL_LEN(rm_face_indices))
+    if (!rm_face_indices || !BU_PTBL_LEN(rm_face_indices) || !orig_bot ||
+	orig_bot->num_faces > INT_MAX)
 	return NULL;
 
 
@@ -546,61 +871,19 @@ rt_bot_remove_faces(struct bu_ptbl *rm_face_indices, const struct rt_bot_interna
 	size_t ind = (size_t)(uintptr_t)BU_PTBL_GET(rm_face_indices, i);
 	rm_indices.insert(ind);
     }
-
-    int *nfaces = (int *)bu_calloc(orig_bot->num_faces * 3, sizeof(int), "new faces array");
-    size_t nfaces_ind = 0;
+    std::vector<int> selected_faces;
+    selected_faces.reserve(orig_bot->num_faces);
     for (size_t i = 0; i < orig_bot->num_faces; i++) {
 	if (rm_indices.find(i) != rm_indices.end())
 	    continue;
-	nfaces[3*nfaces_ind + 0] = orig_bot->faces[3*i+0];
-	nfaces[3*nfaces_ind + 1] = orig_bot->faces[3*i+1];
-	nfaces[3*nfaces_ind + 2] = orig_bot->faces[3*i+2];
-	nfaces_ind++;
+	selected_faces.push_back((int)i);
     }
 
-    // Having built a faces array with the specified triangles removed, we now
-    // garbage collect to produce re-indexed face and point arrays with just the
-    // active data (vertices may be no longer active in the BoT depending on
-    // which faces were removed.
-    int *nfacesarray = NULL;
-    point_t *npointsarray = NULL;
-    int npntcnt = 0;
-    int new_num_faces = bg_trimesh_3d_gc(&nfacesarray, &npointsarray, &npntcnt, nfaces, nfaces_ind, (const point_t *)orig_bot->vertices);
-
-    if (new_num_faces < 3) {
-	new_num_faces = 0;
-	npntcnt = 0;
-	bu_free(nfacesarray, "nfacesarray");
-	nfacesarray = NULL;
-	bu_free(npointsarray, "npointsarray");
-	npointsarray = NULL;
-    }
-
-    // Done with the nfaces array
-    bu_free(nfaces, "free unmapped new faces array");
-
-    // Make the new rt_bot_internal
-    struct rt_bot_internal *bot = NULL;
-    BU_GET(bot, struct rt_bot_internal);
-    bot->magic = RT_BOT_INTERNAL_MAGIC;
-    bot->mode = orig_bot->mode;
-    bot->orientation = orig_bot->orientation;
-    bot->bot_flags = orig_bot->bot_flags;
-    bot->num_vertices = npntcnt;
-    bot->num_faces = new_num_faces;
-    bot->vertices = (fastf_t *)npointsarray;
-    bot->faces = nfacesarray;
-
-    // TODO - need to properly rebuild these arrays as well, if orig_bot has them - bg_trimesh_3d_gc only
-    // handles the vertices themselves
-    bot->thickness = NULL;
-    bot->face_mode = NULL;
-    bot->normals = NULL;
-    bot->face_normals = NULL;
-    bot->uvs = NULL;
-    bot->face_uvs = NULL;
-
-    return bot;
+    // Preserve the established behavior of returning an empty BOT when fewer
+    // than three faces survive the removal.
+    if (selected_faces.size() < 3)
+	selected_faces.clear();
+    return rt_bot_subset(orig_bot, selected_faces.data(), selected_faces.size());
 }
 
 struct rt_bot_internal *
@@ -630,8 +913,7 @@ rt_bot_dup(const struct rt_bot_internal *obot)
     }
 
     if (obot->face_mode) {
-	bot->face_mode = (struct bu_bitv *)bu_malloc(obot->num_faces * sizeof(struct bu_bitv), "bot face_mode");
-	memcpy(bot->face_mode, obot->face_mode, obot->num_faces * sizeof(struct bu_bitv));
+	bot->face_mode = bu_bitv_dup(obot->face_mode);
     }
 
     if (obot->normals && obot->num_normals) {

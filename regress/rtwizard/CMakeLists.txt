@@ -1,5 +1,5 @@
 # Tests for image generation via rtwizard
-if(TARGET rtwizard)
+if(BUILD_TESTING AND TARGET rtwizard)
   # rtwizard tests were historically run STAND_ALONE and forced sequential
   # because simultaneous instances would accidentally connect to each
   # other's fbserv (wrong images, cleared framebuffers).

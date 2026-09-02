@@ -703,7 +703,7 @@ At this time, the FASTGEN4 writer plugin does not make use of any filter-specifi
 |`--constant-ident`
 |Specify that the starting ident should remain constant.
 |`--material=_code_`
-|Specify the material code that will be assigned to all created regions (the default is `1`).
+|Specify the material code that will be assigned to all created regions (the default is `0`).
 |===
 
 
@@ -814,7 +814,7 @@ The Open Asset Import Library (assimp) is an open source library integrated into
 |`--constant-ident`
 |Specify that the starting ident should remain constant.
 |`--material=_code_`
-|Specify the material code that will be assigned to all created regions (the default is `1`).
+|Specify the material code that will be assigned to all created regions (the default is `0`).
 |`--format=_file_fmt_`
 |Specify the file format for conversion. By default, this is inferred from the file extension.
 |===

@@ -60,6 +60,8 @@
 
 
 #define RENDER_MAX_DEPTH	24
+#define RENDER_PATH_DEFAULT_SAMPLES	12
+#define RENDER_PATH_MAX_SAMPLES	4096
 
 
 struct render_s;

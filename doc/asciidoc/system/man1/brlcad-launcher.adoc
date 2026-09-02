@@ -1,0 +1,99 @@
+= BRLCAD-LAUNCHER(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+
+brlcad-launcher - discover and start BRL-CAD applications
+
+== SYNOPSIS
+
+[source]
+----
+brlcad-launcher [options]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+The *brlcad-launcher* command presents the installed BRL-CAD applications in a
+small graphical or text menu. It is intended as a portable front door to tools
+such as *mged*(1), Archer, and RtWizard, particularly on systems where users
+expect a single application entry point.
+
+Menu entries are discovered at run time from installed launcher manifests.
+The launcher reports unavailable applications, starts a selected application
+as an independent process, and remains available for additional selections.
+It also provides an entry for a command shell configured to use the installed
+BRL-CAD tools.
+
+The graphical interface uses BRL-CAD's framebuffer library and does not depend
+on Qt or Tcl/Tk. If no graphical framebuffer is available, the launcher falls
+back to the console menu. The text interface is also suitable for headless
+sessions.
+
+
+[[options]]
+== OPTIONS
+
+*-t*, *--text*::
+  Force the console menu.
+
+*-g*, *--gui*::
+  Request the graphical menu. If it cannot be opened, report the problem and
+  use the console menu.
+
+*-l*, *--list*::
+  List discovered applications and their availability, then exit.
+
+*-h*, *--help*::
+  Print command usage and exit.
+
+
+[[examples]]
+== EXAMPLES
+
+.List the discovered applications
+====
+[source,bash]
+----
+brlcad-launcher --list
+----
+Prints the manifest entries, executable names, descriptions, and whether each
+application is installed.
+====
+
+.Use the text menu
+====
+[source,bash]
+----
+brlcad-launcher --text
+----
+Starts the console interface even when a graphical framebuffer is available.
+====
+
+
+[[see_also]]
+== SEE ALSO
+
+*archer*(1), *mged*(1), *rtwizard*(1)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

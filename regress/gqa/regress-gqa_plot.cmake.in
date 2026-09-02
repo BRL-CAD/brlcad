@@ -3,6 +3,7 @@ set(CBDIR "@CMAKE_CURRENT_BINARY_DIR@")
 set(CSDIR "@CMAKE_CURRENT_SOURCE_DIR@")
 set(BIN_DIR "@BIN_DIR@")
 set(LOGFILE "${CBDIR}/regress-gqa_plot.log")
+set(PLOT3STAT_EXEC "@CMAKE_RUNTIME_OUTPUT_DIRECTORY@/plot3stat@CMAKE_EXECUTABLE_SUFFIX@")
 
 set(BU_DIR_CACHE ${CBDIR}/cache)
 set(LIBRT_CACHE ${CBDIR}/rtcache)
@@ -26,26 +27,62 @@ string(REPLACE "\\" "" BVIEW_PLOT3_EXEC "${VEXEC}")
 if(NOT EXISTS "${BVIEW_PLOT3_EXEC}")
   message(FATAL_ERROR "bview_plot3 not found at location \"${BVIEW_PLOT3_EXEC}\" - aborting\n")
 endif(NOT EXISTS "${BVIEW_PLOT3_EXEC}")
+if(NOT EXISTS "${PLOT3STAT_EXEC}")
+  message(FATAL_ERROR "plot3stat not found at location \"${PLOT3STAT_EXEC}\" - aborting\n")
+endif(NOT EXISTS "${PLOT3STAT_EXEC}")
+
+function(check_overlap_plot_count plot_file analysis_log test_name)
+  string(REGEX MATCH "count:[ ]*([0-9]+)" report_match "${analysis_log}")
+  if(NOT report_match)
+    message(FATAL_ERROR "[${test_name}] No overlap count found in gqa output:\n${analysis_log}")
+  endif()
+  set(expected_count "${CMAKE_MATCH_1}")
+
+  execute_process(
+    COMMAND "${PLOT3STAT_EXEC}" "${plot_file}"
+    RESULT_VARIABLE stat_result
+    OUTPUT_VARIABLE stat_output
+    ERROR_VARIABLE stat_error
+  )
+  if(stat_result)
+    message(FATAL_ERROR "[${test_name}] plot3stat failed:\n${stat_output}${stat_error}")
+  endif()
+  set(stat_log "${stat_output}${stat_error}")
+
+  string(REGEX MATCH "d_3line[ \t]+([0-9]+)" line_match "${stat_log}")
+  if(NOT line_match)
+    message(FATAL_ERROR "[${test_name}] No double-precision line count found:\n${stat_log}")
+  endif()
+  set(actual_count "${CMAKE_MATCH_1}")
+  if(NOT actual_count EQUAL expected_count)
+    message(
+      FATAL_ERROR
+      "[${test_name}] Expected ${expected_count} plotted overlap lines, found ${actual_count}.\n${stat_log}"
+    )
+  endif()
+endfunction()
 
 # Input geometry
 set(GQA_GEOM_FILE "@GQA_GFILE@")
 
 # Single threaded
 execute_process(
-  COMMAND "${GQA_EXEC}" -P 1 -Ao -p ovlp_ "${GQA_GEOM_FILE}" ovlp
+  COMMAND "${GQA_EXEC}" -P 1 -Ao -p ovlp_ -g 800 "${GQA_GEOM_FILE}" ovlp
   RESULT_VARIABLE gqa_plot_result
-  OUTPUT_VARIABLE gqa_plot_log
-  ERROR_VARIABLE gqa_plot_log
+  OUTPUT_VARIABLE gqa_plot_stdout
+  ERROR_VARIABLE gqa_plot_stderr
   WORKING_DIRECTORY ${CBDIR}
 )
+set(gqa_plot_log "${gqa_plot_stdout}${gqa_plot_stderr}")
 if(gqa_plot_result)
   message(
     FATAL_ERROR
-    "[gqa_plot] Failure, unexpected result running ${GQA_EXEC} -P 1 -Ao -p ovlp_ ${GQA_GEOM_FILE} ovlp\n${gqa_plot_log}"
+    "[gqa_plot] Failure, unexpected result running ${GQA_EXEC} -P 1 -Ao -p ovlp_ -g 800 ${GQA_GEOM_FILE} ovlp\n${gqa_plot_log}"
   )
 endif(gqa_plot_result)
 
 set(GQA_PLOT_FILE "${CBDIR}/ovlp_overlaps.plot3")
+check_overlap_plot_count("${GQA_PLOT_FILE}" "${gqa_plot_log}" "gqa_plot")
 execute_process(
   COMMAND "${BVIEW_PLOT3_EXEC}" -b "${GQA_PLOT_FILE}"
   RESULT_VARIABLE gqa_plot_result
@@ -59,20 +96,22 @@ endif(gqa_plot_result)
 
 # Multithreaded
 execute_process(
-  COMMAND "${GQA_EXEC}" -Ao -p ovlpmulti_ "${GQA_GEOM_FILE}" ovlp
+  COMMAND "${GQA_EXEC}" -Ao -p ovlpmulti_ -g 800 "${GQA_GEOM_FILE}" ovlp
   RESULT_VARIABLE gqa_plot_result
-  OUTPUT_VARIABLE gqa_plot_log
-  ERROR_VARIABLE gqa_plot_log
+  OUTPUT_VARIABLE gqa_plot_stdout
+  ERROR_VARIABLE gqa_plot_stderr
   WORKING_DIRECTORY ${CBDIR}
 )
+set(gqa_plot_log "${gqa_plot_stdout}${gqa_plot_stderr}")
 if(gqa_plot_result)
   message(
     FATAL_ERROR
-    "[gqa_plot_multithreaded] Failure, unexpected result running ${GQA_EXEC} -Ao -p ovlpmulti_ ${GQA_GEOM_FILE} ovlp\n ${gqa_plot_log}"
+    "[gqa_plot_multithreaded] Failure, unexpected result running ${GQA_EXEC} -Ao -p ovlpmulti_ -g 800 ${GQA_GEOM_FILE} ovlp\n ${gqa_plot_log}"
   )
 endif(gqa_plot_result)
 
 set(GQA_MULTIPLOT_FILE "${CBDIR}/ovlpmulti_overlaps.plot3")
+check_overlap_plot_count("${GQA_MULTIPLOT_FILE}" "${gqa_plot_log}" "gqa_plot_multithreaded")
 execute_process(
   COMMAND "${BVIEW_PLOT3_EXEC}" -b "${GQA_MULTIPLOT_FILE}"
   RESULT_VARIABLE gqa_plot_result

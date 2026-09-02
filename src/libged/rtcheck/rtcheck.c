@@ -90,6 +90,8 @@ rtcheck_handler_cleanup(struct ged_rtcheck *rtcp)
 
     bu_ptbl_rm(&gedp->ged_subp, (long *)rrtp);
     BU_PUT(rrtp, struct ged_subprocess);
+    if (rtcp->vbp)
+	bv_vlblock_free(rtcp->vbp);
     BU_PUT(rtcp, struct ged_rtcheck);
 }
 
@@ -109,6 +111,10 @@ rtcheck_vector_handler(void *clientData, int UNUSED(mask))
 	const char *sname = "OVERLAPS";
 
 	rtcp->draw_read_failed = 1;
+	if (gedp->ged_delete_io_handler)
+	    (*gedp->ged_delete_io_handler)(rrtp, BU_PROCESS_STDOUT);
+	else
+	    rrtp->stdout_active = 0;
 
 	dl_set_flag(gedp->i->ged_gdp->gd_headDisplay, DOWN);
 
@@ -122,20 +128,12 @@ rtcheck_vector_handler(void *clientData, int UNUSED(mask))
 	    }
 	}
 
-	if (have_visual) {
+	/* Replace the previous result even when the new vlblock is empty. */
+	_ged_erase_legacy_overlap_plot(gedp);
+	if (have_visual)
 	    _ged_cvt_vlblock_to_solids(gedp, rtcp->vbp, sname, 0);
+	if (rtcp->vbp) {
 	    bv_vlblock_free(rtcp->vbp);
-	} else {
-	    /* TODO - yuck.  This name is a product of the internals of the
-	     * "_ged_cvt_vlblock_to_solids" routine.  We should have a way to kill
-	     * command-specific display related objects cleanly...  hard-coding
-	     * this name ties proper stale drawing cleanup to the internals of the
-	     * current phony object drawing system.*/
-	    const char *sname_obj = "OVERLAPSffff00";
-	    struct directory *dp = db_lookup(gedp->dbip, sname_obj, LOOKUP_QUIET);
-	    if (dp != RT_DIR_NULL) {
-		dl_erasePathFromDisplay(gedp, sname_obj, 0);
-	    }
 	}
 
 	rtcp->vbp = NULL;
@@ -160,7 +158,7 @@ static void
 rtcheck_output_handler(void *clientData, int UNUSED(mask))
 {
     int count;
-    char line[RT_MAXLINE] = {0};
+    char line[RT_MAXLINE + 1] = {0};
     struct ged_rtcheck *rtcp = (struct ged_rtcheck *)clientData;
     struct ged_subprocess *rrtp = rtcp->rrtp;
     BU_CKMAG(rrtp, GED_CMD_MAGIC, "ged subprocess");
@@ -169,13 +167,15 @@ rtcheck_output_handler(void *clientData, int UNUSED(mask))
     /* Get textual output from rtcheck */
     if ((count = bu_process_read_n(rrtp->p, BU_PROCESS_STDERR, RT_MAXLINE, (char *)line)) <= 0) {
 	rtcp->read_failed = 1;
+	if (gedp->ged_delete_io_handler)
+	    (*gedp->ged_delete_io_handler)(rrtp, BU_PROCESS_STDERR);
+	else
+	    rrtp->stderr_active = 0;
 	if (gedp->i->ged_gdp->gd_rtCmdNotify != (void (*)(int))0)
 	    gedp->i->ged_gdp->gd_rtCmdNotify(0);
-    }
 
-
-    if (rtcp->read_failed && rtcp->draw_read_failed) {
-	rtcheck_handler_cleanup(rtcp);
+	if (rtcp->draw_read_failed)
+	    rtcheck_handler_cleanup(rtcp);
 	return;
     }
 

@@ -1054,19 +1054,22 @@ _ged_pnts_cmd_write(void *bs, int argc, const char **argv)
     struct bu_vls pnt_str = BU_VLS_INIT_ZERO;
     const char *pnt_prim = NULL;
     const char *filename = NULL;
-    const char *usage = "Usage: pnts write [options] <pnts_obj> <output_file>\n\nWrites out data based on the point type, one row per point, using a format of x y z [i j k] [scale] [R G B] (bracketed groups may or may not be present depending on point type.)\n\n";
-    struct bu_opt_desc d[4];
+    const char *usage = "Usage: pnts write [options] <pnts_obj> <output_file>\n\nWrites out data based on the point type, one row per point, using a format of x y z [i j k] [scale] [R G B] (bracketed groups may or may not be present depending on point type.)  Use -f/--format to restrict the output fields (currently \"xyz\" is supported for XYZ-only output).\n\n";
+    struct bu_vls fmt = BU_VLS_INIT_ZERO;
+    struct bu_opt_desc d[5];
     int precis = 0;
-    BU_OPT(d[0], "h", "help",      "",   NULL,         &print_help,   "Print help and exit");
-    BU_OPT(d[1], "p", "precision", "#",  &bu_opt_int,  &precis,       "Number of digits after decimal to use when printing out numbers (default 17)");
-    BU_OPT(d[2], "",  "ply",       "",   NULL,         &ply_out,      "Write output using PLY format instead of x y z [i j k] [scale] [R G B] text file");
-    BU_OPT_NULL(d[3]);
+    BU_OPT(d[0], "h", "help",      "",     NULL,         &print_help,   "Print help and exit");
+    BU_OPT(d[1], "p", "precision", "#",    &bu_opt_int,  &precis,       "Number of digits after decimal to use when printing out numbers (default 17)");
+    BU_OPT(d[2], "",  "ply",       "",     NULL,         &ply_out,      "Write output using PLY format instead of x y z [i j k] [scale] [R G B] text file");
+    BU_OPT(d[3], "f", "format",    "[xyz]", &bu_opt_vls, &fmt,          "Format of output data (currently supports xyz for XYZ-only output)");
+    BU_OPT_NULL(d[4]);
 
     argc-=(argc>0); argv+=(argc>0); /* skip command name argv[0] */
 
     /* must be wanting help */
     if (argc < 1) {
 	_ged_cmd_help(gedp, usage, d);
+	bu_vls_free(&fmt);
 	return BRLCAD_OK;
     }
 
@@ -1075,6 +1078,7 @@ _ged_pnts_cmd_write(void *bs, int argc, const char **argv)
 
     if (print_help) {
 	_ged_cmd_help(gedp, usage, d);
+	bu_vls_free(&fmt);
 	return BRLCAD_OK;
     }
 
@@ -1083,6 +1087,7 @@ _ged_pnts_cmd_write(void *bs, int argc, const char **argv)
 
     if (argc != 2) {
 	_ged_cmd_help(gedp, usage, d);
+	bu_vls_free(&fmt);
 	return BRLCAD_ERROR;
     }
 
@@ -1091,6 +1096,7 @@ _ged_pnts_cmd_write(void *bs, int argc, const char **argv)
 
     if (bu_file_exists(filename, NULL)) {
 	bu_vls_sprintf(gedp->ged_result_str, "Error: file %s already exists\n", filename);
+	bu_vls_free(&fmt);
 	return BRLCAD_ERROR;
     }
 
@@ -1101,6 +1107,7 @@ _ged_pnts_cmd_write(void *bs, int argc, const char **argv)
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_PNTS) {
 	bu_vls_printf(gedp->ged_result_str, "pnts write: %s is not a pnts object!", pnt_prim);
 	rt_db_free_internal(&intern);
+	bu_vls_free(&fmt);
 	return BRLCAD_ERROR;
     }
 
@@ -1110,8 +1117,83 @@ _ged_pnts_cmd_write(void *bs, int argc, const char **argv)
     if (pnts->type == RT_PNT_UNKNOWN) {
 	bu_vls_sprintf(gedp->ged_result_str, "Error: unknown pnts type\n");
 	rt_db_free_internal(&intern);
+	bu_vls_free(&fmt);
 	return BRLCAD_ERROR;
     }
+
+    /* If an output format was requested, validate it against the object's
+     * available fields and, for the XYZ-only case, short-circuit the per-type
+     * branches below.  This keeps the default (no -f) path byte-for-byte
+     * identical to the historical behavior. */
+    if (bu_vls_strlen(&fmt)) {
+	const char *fc = bu_vls_addr(&fmt);
+	int req_pnt = (strchr(fc, 'x') || strchr(fc, 'y') || strchr(fc, 'z'));
+	int req_nrm = (strchr(fc, 'i') || strchr(fc, 'j') || strchr(fc, 'k'));
+	int req_sca = (strchr(fc, 's') != NULL);
+	int req_col = (strchr(fc, 'r') || strchr(fc, 'g') || strchr(fc, 'b'));
+	int obj_has_nrm = (pnts->type == RT_PNT_TYPE_NRM || pnts->type == RT_PNT_TYPE_SCA_NRM
+			   || pnts->type == RT_PNT_TYPE_COL_NRM || pnts->type == RT_PNT_TYPE_COL_SCA_NRM);
+	int obj_has_sca = (pnts->type == RT_PNT_TYPE_SCA || pnts->type == RT_PNT_TYPE_SCA_NRM
+			   || pnts->type == RT_PNT_TYPE_COL_SCA || pnts->type == RT_PNT_TYPE_COL_SCA_NRM);
+	int obj_has_col = (pnts->type == RT_PNT_TYPE_COL || pnts->type == RT_PNT_TYPE_COL_SCA
+			   || pnts->type == RT_PNT_TYPE_COL_NRM || pnts->type == RT_PNT_TYPE_COL_SCA_NRM);
+
+	if (ply_out) {
+	    bu_vls_sprintf(gedp->ged_result_str, "Error: -f/--format cannot be combined with --ply\n");
+	    rt_db_free_internal(&intern);
+	    bu_vls_free(&fmt);
+	    return BRLCAD_ERROR;
+	}
+
+	/* Reject requests for fields the object does not carry. */
+	if ((req_nrm && !obj_has_nrm) || (req_sca && !obj_has_sca) || (req_col && !obj_has_col)) {
+	    bu_vls_sprintf(gedp->ged_result_str, "Error: requested format \"%s\" includes fields not present in pnts object %s\n", fc, pnt_prim);
+	    rt_db_free_internal(&intern);
+	    bu_vls_free(&fmt);
+	    return BRLCAD_ERROR;
+	}
+
+	/* Currently only XYZ-only output is supported (i/j/k, scale and rgb
+	 * selective output is deferred).  Anything beyond xyz is unsupported. */
+	if (!req_pnt || req_nrm || req_sca || req_col) {
+	    bu_vls_sprintf(gedp->ged_result_str, "Error: unsupported format \"%s\" (currently only \"xyz\" is supported for output)\n", fc);
+	    rt_db_free_internal(&intern);
+	    bu_vls_free(&fmt);
+	    return BRLCAD_ERROR;
+	}
+
+	/* XYZ-only: all pnt structs share (struct bu_list l; point_t v;) as
+	 * their leading members, so we can treat any point type as a plain
+	 * struct pnt for the purpose of emitting v[0..2]. */
+	fp = fopen(filename, "wb+");
+	if (fp == NULL) {
+	    bu_vls_sprintf(gedp->ged_result_str, "Error: cannot open file %s for writing\n", filename);
+	    rt_db_free_internal(&intern);
+	    bu_vls_free(&fmt);
+	    return BRLCAD_ERROR;
+	}
+	{
+	    struct pnt *pn = NULL;
+	    struct pnt *pl = (struct pnt *)pnts->point;
+	    for (BU_LIST_FOR(pn, pnt, &(pl->l))) {
+		int i = 0;
+		for (i = 0; i < 3; i++) {
+		    _pnts_fastf_t_to_vls(&pnt_str, pn->v[i], precis);
+		    if (i != 2) {
+			fprintf(fp, "%s ", bu_vls_addr(&pnt_str));
+		    } else {
+			fprintf(fp, "%s\n", bu_vls_addr(&pnt_str));
+		    }
+		}
+	    }
+	}
+	rt_db_free_internal(&intern);
+	fclose(fp);
+	bu_vls_free(&fmt);
+	return BRLCAD_OK;
+    }
+
+    bu_vls_free(&fmt);
 
     /* Write points */
     fp = fopen(filename, "wb+");

@@ -176,7 +176,6 @@ bg_trimesh_area(const int *faces, size_t num_faces, const point_t *p, size_t num
 BG_EXPORT extern fastf_t
 bg_trimesh_volume(const int *faces, size_t num_faces, const point_t *p, size_t num_pnts);
 
-
 /* Structure holding user-adjustable decimation settings */
 struct bg_trimesh_decimation_settings {
     int method;            // Select decimation method to use
@@ -205,8 +204,23 @@ struct bg_trimesh_decimation_settings {
  * bg_trimesh_3d_gc routine with the ofaces set produced by this function.
  *
  * @return -1 if error, 0 if successful */
-BG_EXPORT extern int bg_trimesh_decimate(int **ofaces, int *n_ofaces,
+DEPRECATED BG_EXPORT extern int bg_trimesh_decimate(int **ofaces, int *n_ofaces,
     int *ifaces, int n_ifaces, point_t *p, int n_p, struct bg_trimesh_decimation_settings *s);
+
+/**
+ * Decimate a mesh, returning both its output faces and their input face
+ * provenance.  The caller must free both output arrays with bu_free.
+ * face_sources[i] is the input face index associated with output face i;
+ * callers should use it to carry face-indexed application data through the
+ * operation.
+ *
+ * Like bg_trimesh_decimate, this routine retains the input point indices.  Use
+ * bg_trimesh_3d_gc to produce a compact point array after handling any
+ * application data that uses those indices.
+ */
+BG_EXPORT extern int bg_trimesh_run_decimater(int **ofaces,
+    int **face_sources, int *n_ofaces, int *ifaces, int n_ifaces, point_t *p,
+    int n_p, struct bg_trimesh_decimation_settings *s);
 
 
 /* Make an attempt at a trimesh intersection calculator that returns the sets
@@ -282,7 +296,6 @@ BG_EXPORT extern int bg_trimesh_optimize(
  * of points active in the mesh.
  *
  * @param[out] ofaces faces array for the new output mesh
- * @param[out] n_ofaces length of ofaces array
  * @param[out] opnts points array for the new output mesh
  * @param[out] n_opnts length of opnts array
  * @param[in] ifaces array of input trimesh
@@ -292,7 +305,7 @@ BG_EXPORT extern int bg_trimesh_optimize(
  * @return -1 if error, number of faces in new trimesh if successful (should
  * match the original face count)
  */
-BG_EXPORT extern int bg_trimesh_2d_gc(int **ofaces, int *n_ofaces, point2d_t **opnts, int *n_opnts,
+BG_EXPORT extern int bg_trimesh_2d_gc(int **ofaces, point2d_t **opnts, int *n_opnts,
 	const int *ifaces, int n_ifaces, const point2d_t *ipnts);
 
 /**
@@ -330,8 +343,39 @@ bg_trimesh_sync(int *of, int *f, int fcnt);
 
 /**
  * @brief
- * Return a set of face sets where all topologically connected faces are
- * grouped into common sets.
+ * Group edge-connected triangle components while retaining input face
+ * identity.
+ *
+ * The output uses a compact grouped-index representation.  The original face
+ * indices for component i are stored in the half-open range
+ * [component_offsets[i], component_offsets[i+1]) of face_indices.  Components
+ * and their faces are ordered by their first occurrence in the input.
+ *
+ * To build a self-contained face/point mesh for one component, copy the three
+ * entries from f for each returned face index into a temporary faces array,
+ * then pass that array and the original points to bg_trimesh_3d_gc.
+ *
+ * The caller must free both output arrays with bu_free.
+ *
+ * @param[out] face_indices      input face indices grouped by component
+ * @param[out] component_offsets offsets into face_indices, with one terminal
+ *                               offset; length is the return value plus one
+ * @param[in]  f                 input set of faces
+ * @param[in]  fcnt              input face count
+ *
+ * @return -1 on error, otherwise the number of connected components
+ */
+BG_EXPORT extern int
+bg_trimesh_separate(int **face_indices, int **component_offsets,
+	const int *f, int fcnt);
+
+/**
+ * @brief
+ * Return copied triangle arrays grouped into edge-connected components.
+ *
+ * This interface does not retain the original face indices, so callers cannot
+ * reliably associate face-indexed data with its output.  New code should use
+ * bg_trimesh_separate.
  *
  * @param[out] ofs  array of faces arrays containing the new output face sets.
  * @param[out] ofc  array of face counts for the new output face sets.
@@ -340,7 +384,7 @@ bg_trimesh_sync(int *of, int *f, int fcnt);
  *
  * @return -1 if error, otherwise return the number of face sets created
  */
-BG_EXPORT extern int
+DEPRECATED BG_EXPORT extern int
 bg_trimesh_split(int ***ofs, int **ofc, int *f, int fcnt);
 
 /**

@@ -43,6 +43,7 @@
 #endif
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "bu/exit.h"
@@ -188,6 +189,13 @@ test_bomb_capture_child(const char *self_path)
 	    close(pipe_fds[0]);
 	    (void)dup2(pipe_fds[1], STDERR_FILENO);
 	    close(pipe_fds[1]);
+#ifdef HAVE_SETSID
+	    /* Prevent bu_bomb's /dev/tty fallback from bypassing stderr capture. */
+	    if (setsid() == (pid_t)-1) {
+		perror("setsid");
+		_exit(EXIT_FAILURE);
+	    }
+#endif
 	    execvp(self_path, (char * const *)child_argv);
 	    perror("execvp");
 	    _exit(127);

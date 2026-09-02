@@ -14,6 +14,47 @@ generally listed for reference.
 Items marked with a "'" (single quote) are undocumented and may be
 removed at any time.
 
+== 7.46
+
+include/bg/trimesh.h
+
+	bg_trimesh_decimate -> bg_trimesh_run_decimater
+
+	bg_trimesh_decimate returns only a new face array and therefore loses
+	the original face indices needed to preserve face-indexed data.  The
+	replacement also returns the source face index for every output face.
+	The old function remains as a compatibility wrapper during the
+	deprecation window; bg_trimesh_run_decimater is intended to take the
+	bg_trimesh_decimate name after that window.
+	[deprecated 7.46]
+
+	bg_trimesh_split -> bg_trimesh_separate
+
+	bg_trimesh_split returns copied face arrays and therefore loses the
+	original face indices needed to preserve face-indexed data.  The
+	replacement returns compact groups of original face indices.  The old
+	function remains as a compatibility wrapper during the deprecation
+	window; bg_trimesh_separate is intended to take the bg_trimesh_split
+	name after that window.
+	[deprecated 7.46]
+
+libged commands
+
+	bot_split -> bot split
+
+	Both forms use the same implementation and preserve all BOT data and
+	object attributes.  New scripts and interactive workflows should use the
+	bot subcommand form.
+	[deprecated 7.46]
+
+include/bg/plane.h
+
+	bg_does_ray_isect_tri -> bg_isect_tri_line
+
+	The legacy function keeps its final, decayed `point_t` output parameter.
+	The replacement uses an optional, output-first `point_t *` parameter.
+	[deprecated 7.46]
+
 == 7.44
 
 libged commands

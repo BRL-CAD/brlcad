@@ -725,7 +725,7 @@ dm_var_init(struct mged_state *s, struct mged_dm *target_dm)
     if (target_dm->dm_dmp) {
 	dm_set_dirty(target_dm->dm_dmp, 1);
     }
-    mapped = 1;
+    curr_dm_mapped = 1;
     s->mged_curr_dm->dm_netfd = -1;
     mged_dm_owner = 1;
     am_mode = AMM_IDLE;

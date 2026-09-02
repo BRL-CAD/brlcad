@@ -86,7 +86,7 @@ distclean("${CMAKE_BINARY_DIR}/${LIB_DIR}/bu_test.exp")
 
 # Exercise client constructors linked ahead of the static libbu archive.  A
 # timeout converts any pre-main self-deadlock into a bounded test failure.
-if(TARGET libbu-static)
+if(BUILD_TESTING AND TARGET libbu-static)
   brlcad_addexec(bu_static_init test_static_init.cpp "libbu-static;Threads::Threads" TEST)
   brlcad_add_test(NAME bu_static_init COMMAND bu_static_init)
   set_tests_properties(bu_static_init PROPERTIES TIMEOUT 10)
@@ -97,7 +97,9 @@ brlcad_add_test(NAME bu_semaphore_registry COMMAND bu_semaphore_registry)
 
 brlcad_addexec(bu_parallel_concurrency test_parallel_concurrency.cpp "libbu;Threads::Threads" TEST)
 brlcad_add_test(NAME bu_parallel_concurrency COMMAND bu_parallel_concurrency)
-set_tests_properties(bu_parallel_concurrency PROPERTIES TIMEOUT 30)
+if(BUILD_TESTING AND TARGET bu_parallel_concurrency)
+  set_tests_properties(bu_parallel_concurrency PROPERTIES TIMEOUT 30)
+endif()
 
 # The uuid code doesn't mix with C++ compilers - make a separate
 # C-only executable for this case
@@ -283,6 +285,8 @@ brlcad_add_test(NAME bu_path_dirname_null COMMAND bu_test test_dirname)
 
 #  ************ test_env.c tests *************
 
+brlcad_add_test(NAME bu_mem COMMAND bu_test test_env)
+brlcad_add_test(NAME bu_mem_process_limit COMMAND bu_test test_env -m)
 brlcad_add_test(NAME bu_editor COMMAND bu_test test_env -e)
 
 
@@ -833,6 +837,7 @@ brlcad_add_test(NAME bu_mappedfile_serial_16384 COMMAND bu_test test_mappedfile 
 brlcad_add_test(NAME bu_mappedfile_parallel_16384 COMMAND bu_test test_mappedfile 2 16384)
 brlcad_add_test(NAME bu_mappedfile_repeat_serial_10 COMMAND bu_test test_mappedfile 3 10)
 brlcad_add_test(NAME bu_mappedfile_repeat_parallel_10 COMMAND bu_test test_mappedfile 4 10)
+brlcad_add_test(NAME bu_mappedfile_rooted_path COMMAND bu_test test_mappedfile 6 1)
 #BRLCAD_ADD_TEST(NAME bu_mappedfile_parallel_free COMMAND bu_test test_mappedfile 5)
 
 # The 16k mapping tests may take a large amount of time in some situations -

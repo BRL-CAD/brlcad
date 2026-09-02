@@ -39,28 +39,93 @@
  * information is included.
  */
 
-#include <cstdio>
 #include <fstream>
-#include <iomanip>
 #include <iostream>
 #include <regex>
 #include <set>
 #include <map>
-#include <sstream>
 #include <string>
+#include <utility>
+#include <vector>
 
 /* For performance, we don't read the entire file looking for
  * the copyright/license information. */
 #define MAX_LINES_CHECK 100
 
+struct RegexExemption {
+    std::string pattern;
+    std::regex expression;
+    bool matched;
+
+    explicit RegexExemption(std::string p)
+	: pattern(std::move(p)), expression(pattern), matched(false) {}
+};
+
+struct EmbeddedCheckConfig {
+    std::vector<RegexExemption> file_exemptions;
+    std::vector<RegexExemption> public_domain_exemptions;
+};
+
+static bool
+match_exemptions(std::vector<RegexExemption> &exemptions, const std::string &path)
+{
+    bool matched = false;
+    for (auto &exemption : exemptions) {
+	if (std::regex_match(path, exemption.expression)) {
+	    exemption.matched = true;
+	    matched = true;
+	}
+    }
+    return matched;
+}
+
+static int
+report_unmatched_exemptions(const char *kind,
+			    const std::vector<RegexExemption> &exemptions)
+{
+    int unmatched = 0;
+    for (const auto &exemption : exemptions) {
+	if (!exemption.matched) {
+	    std::cerr << "Unmatched " << kind << " exemption pattern: "
+		      << exemption.pattern << "\n";
+	    ++unmatched;
+	}
+    }
+    return unmatched;
+}
+
+static void
+init_embedded_check_config(EmbeddedCheckConfig &cfg)
+{
+    /* These files are outside the scope of the embedded license check or
+     * carry their own third-party licensing information. */
+    const char *file_exempt[] = {
+	"misc/tools/.*",
+	"misc/CMake/.*",
+	"misc/opencl-raytracer-tests/version1/other/OpenCL/cl[.]hpp$",
+	"doc/.*",
+	"regress/licenses/embedded_check[.]cpp$",
+	nullptr
+    };
+    for (int i = 0; file_exempt[i]; ++i) {
+	cfg.file_exemptions.emplace_back(std::string(".*[\\\\/]") +
+					 file_exempt[i]);
+    }
+
+    /* Public-domain input data mentioned by gaia.c is not the license for
+     * the BRL-CAD source file itself. */
+    cfg.public_domain_exemptions.emplace_back(".*/src/proc-db/gaia[.]c$");
+}
+
 int
-process_file(std::string f, std::map<std::string, std::string> &file_to_license)
+process_file(const std::string &f,
+	     EmbeddedCheckConfig &cfg,
+	     std::map<std::string, std::string> &file_to_license)
 {
     std::regex cad_regex(".*BRL-CAD.*");
     std::regex copyright_regex(".*[Cc]opyright.*[1-2][0-9][0-9][0-9].*");
     std::regex gov_regex(".*United[ ]States[ ]Government.*");
     std::regex pd_regex(".*[Pp]ublic[ ][Dd]omain.*");
-    std::regex pd_data_regex(".*([Dd]ata.*[Pp]ublic[ ]+[Dd]omain|[Pp]ublic[ ]+[Dd]omain.*[Dd]ata).*");
     std::string sline;
     std::ifstream fs;
     fs.open(f);
@@ -73,9 +138,8 @@ process_file(std::string f, std::map<std::string, std::string> &file_to_license)
     bool gov_copyright = false;
     bool other_copyright = false;
     bool public_domain = false;
-    bool public_domain_license = false;
 
-    // Check the first 50 lines of the file for copyright statements
+    // Check the first MAX_LINES_CHECK lines for copyright statements.
     while (std::getline(fs, sline) && lcnt < MAX_LINES_CHECK) {
 	if (std::regex_match(sline, cad_regex)) {
 	    brlcad_file = true;
@@ -89,20 +153,17 @@ process_file(std::string f, std::map<std::string, std::string> &file_to_license)
 	} else {
 	    if (std::regex_match(sline, pd_regex)) {
 		public_domain = true;
-		// Data and dataset references describe input material, not embedded
-		// code licensing, so they should not require an embedded license
-		// document.
-		if (!std::regex_match(sline, pd_data_regex)) {
-		    public_domain_license = true;
-		}
 	    }
 	}
 	lcnt++;
     }
     fs.close();
 
+    bool public_domain_exempt =
+	match_exemptions(cfg.public_domain_exemptions, f);
+    bool public_domain_check = public_domain && !public_domain_exempt;
 
-    if (gov_copyright && public_domain_license) {
+    if (gov_copyright && public_domain_check) {
 	if (file_to_license.find(f) == file_to_license.end()) {
 	    std::cerr << "FILE " << f << " has no associated reference in a license file! (gov copyright + public domain references)\n";
 	    return 1;
@@ -123,7 +184,8 @@ process_file(std::string f, std::map<std::string, std::string> &file_to_license)
 	}
 	return 0;
     }
-    if (public_domain) {
+
+    if (public_domain_check) {
 	if (!brlcad_file) {
 	    if (file_to_license.find(f) == file_to_license.end()) {
 		std::cout << f << " references the public domain, is not a BRL-CAD file, but has no documenting file in doc/legal/embedded\n";
@@ -155,17 +217,12 @@ main(int argc, const char *argv[])
 	}
 
 	std::regex f_regex("file:/(.*)");
-	std::regex o_regex(".*[\\/]other[\\/].*");
-	std::regex t_regex(".*[\\/]misc/tools[\\/].*");
-	std::regex c_regex(".*[\\/]misc/CMake[\\/].*");
-	std::regex r_regex(".*[\\/]misc/repoconv[\\/].*");
-	std::regex rw_regex(".*[\\/]misc/repowork[\\/].*");
-	std::regex d_regex(".*[\\/]doc[\\/].*");
-	std::regex l_regex(".*[\\/]embedded_check.cpp");
-	std::regex gltf_regex(".*[\\/]tinygltf[\\/].*");
-	std::regex srcfile_regex(".*[.](c|cpp|cxx|h|hpp|hxx|tcl)*$");
+	std::regex srcfile_regex(".*[.](c|cpp|cxx|h|hpp|hxx|tcl)$");
 	std::regex svn_regex(".*[\\/][.]svn[\\/].*");
 	std::string root_path(argv[3]);
+
+	EmbeddedCheckConfig cfg;
+	init_embedded_check_config(cfg);
 
 	std::map<std::string, std::string> file_to_license;
 	std::set<std::string> unused_licenses;
@@ -207,7 +264,6 @@ main(int argc, const char *argv[])
 		    continue;
 		}
 		lfile_s.close();
-		//std::cout << "License file reference: " << lfile_id << "\n";
 		file_to_license[lfile_id] = lfile;
 		valid_ref_cnt++;
 	    }
@@ -227,21 +283,23 @@ main(int argc, const char *argv[])
 	    std::cerr << "Unable to open source file list " << argv[2] << "\n";
 	}
 	while (std::getline(src_file_stream, sfile)) {
-	    if (std::regex_match(sfile, o_regex) || std::regex_match(sfile, t_regex)
-		    || std::regex_match(sfile, r_regex) || std::regex_match(sfile, c_regex)
-		    || std::regex_match(sfile, d_regex) ||  std::regex_match(sfile, l_regex)
-		    || std::regex_match(sfile, rw_regex) || std::regex_match(sfile, gltf_regex)) {
+	    if (match_exemptions(cfg.file_exemptions, sfile)) {
 		continue;
 	    }
 	    if (!std::regex_match(std::string(sfile), srcfile_regex)) {
 		continue;
 	    }
-	    //std::cout << "Checking " << sfile << "\n";
-	    process_fail_cnt += process_file(sfile, file_to_license);
+	    process_fail_cnt += process_file(sfile, cfg, file_to_license);
 	}
 	src_file_stream.close();
 
-	if (unused_licenses.size() || bad_ref_cnt || process_fail_cnt) {
+	int unmatched_exemption_cnt =
+	    report_unmatched_exemptions("file", cfg.file_exemptions);
+	unmatched_exemption_cnt += report_unmatched_exemptions(
+		"public-domain", cfg.public_domain_exemptions);
+
+	if (unused_licenses.size() || bad_ref_cnt || process_fail_cnt ||
+		unmatched_exemption_cnt) {
 	    return -1;
 	}
 

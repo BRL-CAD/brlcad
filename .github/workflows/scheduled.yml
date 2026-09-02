@@ -32,7 +32,7 @@ jobs:
 
       # Cache apt package downloads (not installed pkgs)
       - name: Cache apt packages
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             /var/cache/apt/archives
@@ -89,7 +89,7 @@ jobs:
         uses: lukka/get-cmake@latest
 
       - name: Add msbuild to PATH
-        uses: microsoft/setup-msbuild@v2
+        uses: microsoft/setup-msbuild@v3
 
       - name: Add cl.exe to PATH
         uses: ilammy/msvc-dev-cmd@v1
@@ -141,7 +141,7 @@ jobs:
         uses: lukka/get-cmake@latest
 
       - name: Add msbuild to PATH
-        uses: microsoft/setup-msbuild@v2
+        uses: microsoft/setup-msbuild@v3
 
       - name: Add cl.exe to PATH
         uses: ilammy/msvc-dev-cmd@v1
@@ -245,7 +245,7 @@ jobs:
         uses: lukka/get-cmake@latest
 
       - name: Cache apt packages
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             /var/cache/apt/archives
@@ -287,7 +287,7 @@ jobs:
 
       - name: Cache bext build outputs
         id: cache-bext
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ${{ github.workspace }}/bext_output
           key: ${{ runner.os }}-bext-${{ steps.cachekey.outputs.hash }}
@@ -343,7 +343,7 @@ jobs:
         uses: lukka/get-cmake@latest
 
       - name: Cache apt packages
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             /var/cache/apt/archives
@@ -385,7 +385,7 @@ jobs:
 
       - name: Cache bext build outputs
         id: cache-bext
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ${{ github.workspace }}/bext_output
           key: ${{ runner.os }}-bext-${{ steps.cachekey.outputs.hash }}

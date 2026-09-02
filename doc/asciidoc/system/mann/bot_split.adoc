@@ -17,7 +17,19 @@ bot_split {bot} [bot2 bot3]...
 [[description]]
 == DESCRIPTION
 
-Split a single BOT primitive, containing disjoint groups of facets, into multiple BOT primitives, one BOT per disjoint group. For example, if a model contains a single BOT with separate geometry for each of four tires, and you need each tire split into a separate BOT, you could use 'bot_split'. Note that this works only if each tire does not share edges or vertices with any of the other tires (i.e. they are disjoint). The resulting BOTs will have the same name as the original BOT except a sequential number will be appended to the name of each new BOT. The names of the new BOTs will be listed when 'bot_split' completes. It is recommended to run commands 'bot_vertex_fuse' then 'bot_face_fuse' before running 'bot_split'.
+The *bot_split* command is deprecated; use *bot split* for new scripts and
+interactive workflows.
+
+Split a BOT primitive containing edge-disconnected groups of facets into
+multiple BOT primitives, one BOT per group. Facets that meet only at a vertex
+remain separate; facets sharing an edge belong to the same output, including
+when more than two facets share that edge. For example, if a model contains a
+single BOT with separate geometry for each of four tires, the command produces
+one BOT for each tire. The resulting BOTs retain the source mode, orientation,
+flags, plate thickness and face mode, normals, and texture UV data. Their names
+are based on the original BOT name with an available sequential suffix. Object
+attributes are copied to every result, and the result names are listed when
+the command completes.
 
 [[examples]]
 == EXAMPLES

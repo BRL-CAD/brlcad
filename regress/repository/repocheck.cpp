@@ -70,6 +70,7 @@
 #include <string>
 #include <string_view>
 #include <thread>
+#include <utility>
 #include <vector>
 
 #include "bu/app.h"
@@ -309,16 +310,26 @@ function_call_present(std::string_view line, std::string_view name)
 
 /* -------- Configuration structures (grouped with test filters) -------- */
 
+struct RegexExemption {
+    std::string pattern;
+    std::regex expression;
+    bool check_liveness; // function-specific exemptions intentionally opt out
+    bool matched = false;
+
+    explicit RegexExemption(std::string p, bool check = false)
+	: pattern(std::move(p)), expression(pattern), check_liveness(check) {}
+};
+
 /* Redundant header include test: files using primary should not include disallowed headers */
 struct HeaderRedundancyCheck {
     std::string primary;
     std::set<std::string> disallowed_headers;
-    std::vector<std::regex> exemptions; // skip this redundancy check for matching files
+    std::vector<RegexExemption> exemptions; // skip this redundancy check for matching files
 };
 
 /* Common.h ordering test */
 struct CommonIncludeCheck {
-    std::vector<std::regex> exemptions; // skip ordering check for matching files
+    std::vector<RegexExemption> exemptions; // skip ordering check for matching files
 };
 
 /* API usage test:
@@ -329,25 +340,25 @@ struct CommonIncludeCheck {
  */
 struct ApiCheck {
     std::vector<std::string> names;
-    std::vector<std::pair<std::regex, std::string>> exemptions;
+    std::vector<std::pair<RegexExemption, std::string>> exemptions;
 };
 
 /* DNU usage test (similar to API) */
 struct DnuCheck {
     std::vector<std::string> names;
-    std::vector<std::pair<std::regex, std::string>> exemptions; // "" => skip all DNU for file
+    std::vector<std::pair<RegexExemption, std::string>> exemptions; // "" => skip all DNU for file
 };
 
 /* setprogname test */
 struct SetPrognameCheck {
-    std::vector<std::regex> exemptions; // skip setprogname test for matching files
+    std::vector<RegexExemption> exemptions; // skip setprogname test for matching files
 };
 
 /* Platform symbol test */
 struct PlatformSymbolCheck {
     std::vector<std::string> upper;
     std::vector<std::string> lower;
-    std::vector<std::regex> exemptions; // skip platform test for matching files
+    std::vector<RegexExemption> exemptions; // skip platform test for matching files
 };
 
 struct RepoConfig {
@@ -361,10 +372,11 @@ struct RepoConfig {
 
 /* -------- Helpers for exemptions -------- */
 static bool
-any_regex_match(const std::vector<std::regex> &rs, const std::string &path)
+any_regex_match(const std::vector<RegexExemption> &exemptions,
+		const std::string &path)
 {
-    for (const auto &r : rs)
-	if (std::regex_match(path, r))
+	for (const auto &exemption : exemptions)
+	if (std::regex_match(path, exemption.expression))
 	    return true;
     return false;
 }
@@ -372,8 +384,8 @@ any_regex_match(const std::vector<std::regex> &rs, const std::string &path)
 static bool
 api_is_exempt(const ApiCheck &api, const std::string &path, const std::string &fname)
 {
-    for (const auto &p : api.exemptions) {
-	if (std::regex_match(path, p.first)) {
+	for (const auto &p : api.exemptions) {
+	if (std::regex_match(path, p.first.expression)) {
 	    if (p.second.empty() || p.second == fname)
 		return true;
 	}
@@ -384,8 +396,8 @@ api_is_exempt(const ApiCheck &api, const std::string &path, const std::string &f
 static bool
 dnu_is_exempt(const DnuCheck &dnu, const std::string &path, const std::string &fname)
 {
-    for (const auto &p : dnu.exemptions) {
-	if (std::regex_match(path, p.first)) {
+	for (const auto &p : dnu.exemptions) {
+	if (std::regex_match(path, p.first.expression)) {
 	    if (p.second.empty() || p.second == fname)
 		return true;
 	}
@@ -403,8 +415,7 @@ init_repo_config(RepoConfig &cfg)
 	bio.primary = "bio.h";
 	const char *others[] = {"fcntl.h","io.h","stdio.h","unistd.h","windows.h",nullptr};
 	for (int i=0; others[i]; ++i) bio.disallowed_headers.insert(others[i]);
-	// Add file exemptions for bio redundancy here if needed:
-	// bio.exemptions.emplace_back(std::regex(".*/some_bio_test.c$"));
+	// Add a file exemption for bio redundancy here if needed.
 	cfg.redundancy.push_back(std::move(bio));
     }
     {
@@ -412,7 +423,7 @@ init_repo_config(RepoConfig &cfg)
 	net.primary = "bnetwork.h";
 	const char *others[] = {"winsock2.h","netinet/in.h","netinet/tcp.h","arpa/inet.h",nullptr};
 	for (int i=0; others[i]; ++i) net.disallowed_headers.insert(others[i]);
-	// net.exemptions.emplace_back(std::regex(".*/some_net_test.c$"));
+	// Add a file exemption for bnetwork redundancy here if needed.
 	cfg.redundancy.push_back(std::move(net));
     }
 
@@ -442,7 +453,8 @@ init_repo_config(RepoConfig &cfg)
 	    nullptr
 	};
 	for (int i=0; common_exempt_files[i]; ++i)
-	    cfg.common.exemptions.emplace_back(std::regex(std::string(".*/") + common_exempt_files[i] + "$"));
+	    cfg.common.exemptions.emplace_back(
+		std::string(".*/") + common_exempt_files[i] + "$");
     }
 
     /* API usage test */
@@ -476,11 +488,9 @@ init_repo_config(RepoConfig &cfg)
 	// Per-function and whole-file exemptions. If second == "", exempt all API checks for the file.
 	// Whole-file API exemptions (legacy api_file_exempt):
 	const char *api_file_exempt[] = {
-	    "CONFIG_CONTROL_DESIGN.*",
 	    "bu/log[.]h$",
 	    "bu/path[.]h$",
 	    "bu/str[.]h$",
-	    "cursor[.]c$",
 	    "file[.]cpp$",
 	    "linenoise[.]hpp$",
 	    "misc/CMake/compat/.*",
@@ -490,12 +500,14 @@ init_repo_config(RepoConfig &cfg)
 	    nullptr
 	};
 	for (int i=0; api_file_exempt[i]; ++i) {
-	    cfg.api.exemptions.emplace_back(std::make_pair(std::regex(std::string(".*/") + api_file_exempt[i]), std::string("")));
+	    cfg.api.exemptions.emplace_back(std::make_pair(
+		RegexExemption(std::string(".*/") + api_file_exempt[i], true), std::string("")));
 	}
 
 	// Function-specific exemptions (migrated from per-function lists):
 	auto add_func_ex = [&](const char *pattern, const char *fname) {
-	    cfg.api.exemptions.emplace_back(std::make_pair(std::regex(pattern), std::string(fname)));
+	    cfg.api.exemptions.emplace_back(std::make_pair(
+		RegexExemption(pattern), std::string(fname)));
 	};
 	add_func_ex(".*/bomb[.]c$", "abort");
 	add_func_ex(".*/test_process[.]c$", "abort");
@@ -531,9 +543,7 @@ init_repo_config(RepoConfig &cfg)
 	// Functions to flag
 	cfg.dnu.names.push_back("std::system");
 	// Whole-file DNU exemptions ("" means skip this test entirely for matching file)
-	// cfg.dnu.exemptions.emplace_back(std::make_pair(std::regex(".*/legacy_tool.c$"), std::string("")));
-	// Function-specific (rare for DNU, but supported):
-	// cfg.dnu.exemptions.emplace_back(std::make_pair(std::regex(".*/ok_wrapper.c$"), std::string("std::system")));
+	// and function-specific DNU exemptions (rare, but supported) can be added here.
     }
 
     /* setprogname test */
@@ -551,8 +561,6 @@ init_repo_config(RepoConfig &cfg)
 	    "ifftc.c",
 	    "misc/",
 	    "mt19937ar.c",
-	    "other_check.cpp",
-	    "test_perm.cpp",
 	    "rt_ecmd_scanner.cpp",
 	    "sha1.c",
 	    "struetype.h",
@@ -560,7 +568,8 @@ init_repo_config(RepoConfig &cfg)
 	    nullptr
 	};
 	for (int i=0; sp_exempt[i]; ++i)
-	    cfg.setprog.exemptions.emplace_back(std::regex(std::string(".*/") + sp_exempt[i] + ".*"));
+	    cfg.setprog.exemptions.emplace_back(
+		std::string(".*/") + sp_exempt[i] + ".*", true);
 	// Add additional specific exemptions here as needed.
     }
 
@@ -616,12 +625,53 @@ init_repo_config(RepoConfig &cfg)
 	    nullptr
 	};
 	for (int i=0; platform_exempt[i]; ++i)
-	    cfg.platform.exemptions.emplace_back(std::regex(platform_exempt[i]));
+	    cfg.platform.exemptions.emplace_back(platform_exempt[i], true);
     }
 }
 
 /* -------- Result aggregation -------- */
 enum class FileClass { Code, HeaderIncl, Build };
+
+using SourceFileList = std::vector<std::string>;
+
+static RegexExemption &
+file_exemption_pattern(RegexExemption &exemption)
+{
+    return exemption;
+}
+
+static RegexExemption &
+file_exemption_pattern(std::pair<RegexExemption, std::string> &exemption)
+{
+    return exemption.first;
+}
+
+/* Exemption liveness is based on the file path only.  A function-specific
+ * exemption remains useful even when that function is not currently used. */
+template <typename Exemption>
+static int
+report_unmatched_file_exemptions(const char *kind,
+				  std::vector<Exemption> &exemptions,
+				  const SourceFileList &files)
+{
+    int unmatched = 0;
+    for (auto &exemption : exemptions) {
+	RegexExemption &pattern = file_exemption_pattern(exemption);
+	if (!pattern.check_liveness) continue;
+	for (const auto &file : files) {
+	    if (std::regex_match(file, pattern.expression)) {
+		pattern.matched = true;
+		break;
+	    }
+	}
+	if (!pattern.matched) {
+	    std::cerr << "Unmatched " << kind << " file exemption pattern: "
+		      << pattern.pattern << "\n";
+	    ++unmatched;
+	}
+    }
+    return unmatched;
+}
 
 struct FileScanResult {
     std::vector<std::string> bio_log;
@@ -959,10 +1009,12 @@ main(int argc, const char *argv[])
 	std::regex buildfile_regex(".*([.]cmake([.]in)?|CMakeLists.txt)$");
 
 	std::vector<std::pair<std::string, FileClass>> all_files;
+	SourceFileList listed_files;
 	std::string line;
 
 	while (std::getline(fls, line)) {
 	    if (line.empty()) continue;
+	    listed_files.push_back(line);
 	    bool reject = false;
 	    for (int i=0; reject_filters[i]; ++i) {
 		if (std::strstr(line.c_str(), reject_filters[i])) {
@@ -983,6 +1035,22 @@ main(int argc, const char *argv[])
 		    all_files.emplace_back(line, FileClass::Code);
 	    }
 	}
+
+	int unmatched_exemption_cnt = 0;
+	for (auto &rc : cfg.redundancy) {
+	    unmatched_exemption_cnt += report_unmatched_file_exemptions(
+		"redundancy", rc.exemptions, listed_files);
+	}
+	unmatched_exemption_cnt += report_unmatched_file_exemptions(
+	    "common-ordering", cfg.common.exemptions, listed_files);
+	unmatched_exemption_cnt += report_unmatched_file_exemptions(
+	    "API", cfg.api.exemptions, listed_files);
+	unmatched_exemption_cnt += report_unmatched_file_exemptions(
+	    "DNU", cfg.dnu.exemptions, listed_files);
+	unmatched_exemption_cnt += report_unmatched_file_exemptions(
+	    "setprogname", cfg.setprog.exemptions, listed_files);
+	unmatched_exemption_cnt += report_unmatched_file_exemptions(
+	    "platform", cfg.platform.exemptions, listed_files);
 
 	size_t line_limit = get_line_scan_limit();
 	unsigned jobs = get_job_count();
@@ -1027,6 +1095,7 @@ main(int argc, const char *argv[])
 	if (!logs.dnu_log.empty()) failed = true;
 	if (!logs.setprogname_log.empty()) failed = true;
 	if (psym_cnt > expected_psym_cnt) failed = true;
+	if (unmatched_exemption_cnt) failed = true;
 
 	if (psym_cnt < expected_psym_cnt) {
 	    std::cout << "\n\nNote: need to update EXPECTED_PLATFORM_SYMBOLS - looking for "

@@ -9,6 +9,23 @@ puts "*** Testing primitive parameter editing via rt_edit_process() callbacks **
 # Uses prim_edit_check / prim_edit_mouse_check from regression_resources.tcl
 # Note: mouse init_val must match the current parameter value at time of mouse test.
 
+puts "--- ARB point movement ---"
+in_arb5 prim_edit_point5
+arb_point_mouse_check prim_edit_point5_arb5.s "Move Point 5" V5
+kill prim_edit_point5_arb5.s
+
+in_arb6 prim_edit_point5
+arb_point_mouse_check prim_edit_point5_arb6.s "Move Point 5" V5
+kill prim_edit_point5_arb6.s
+
+in_arb6 prim_edit_point6
+arb_point_mouse_check prim_edit_point6_arb6.s "Move Point 6" V6
+kill prim_edit_point6_arb6.s
+
+in_arb7 prim_edit_point5
+arb_point_mouse_check prim_edit_point5_arb7.s "Move Point 5" V5
+kill prim_edit_point5_arb7.s
+
 puts "--- TOR (torus: r1, r2) ---"
 in tor_pe.s tor 0 0 0  0 0 1  20 2
 prim_edit_check      tor_pe.s "Set Radius 1" 30 r_a 30 -1

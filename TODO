@@ -25,6 +25,12 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   repo should be capable of doing the work for us as a post
   build step whenever bext changes.
 
+* fix ARB5 move point 5 to actually move the point.
+
+* need extensive testing of MGED CSG editing with the shift
+  to librt based editing logic.
+
+* investigate gqa plotting display in MGED
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
@@ -37,11 +43,6 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
   inconsistent data (soltab needs to match).
 
 * verify arb6 editing in cheese wedge tutorial
-
-* rtarea is sometimes missing regions on summary reporting, at least
-  on Windows, possibly a threading issue setting up the results
-  container.
-
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
@@ -77,10 +78,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   extensive violations from the prevailing analyze_* naming prefix and
   binary interface to analytic routines.  notable outliers include
   nirt_* (including CLI handling..), voxelize*, rt_gen*, rectangular*
-
-* ensure datum objects convert out via g2asc and back (currently
-  writes "a Tcl output routine for this type of object has not yet
-  been implemented")
 
 * fix recursive bu_parallel() to not have a hard-coded limit on the
   number of threads or to more aggressively abort when more that

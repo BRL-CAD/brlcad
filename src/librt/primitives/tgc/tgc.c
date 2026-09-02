@@ -787,7 +787,7 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	    static size_t reported = 0;
 
 	    if (reported < 10) {
-		bu_log("Root solver failed to converge on a solution for %s\n", stp->st_dp->d_namep);
+		bu_log("LIBRT: Root solver failed to converge on a solution for %s\n", stp->st_dp->d_namep);
 		/* these are printed in 'mm' regardless of local units */
 		VPRINT("\tshooting point (units mm): ", rp->r_pt);
 		VPRINT("\tshooting direction:        ", rp->r_dir);
@@ -976,7 +976,7 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	    } else {
 		static size_t tgc_msgs = 0;
 		if (tgc_msgs < 10) {
-		    bu_log("Root solver reported %d intersections != {0, 2, 4} on %s\n", npts, stp->st_name);
+		    bu_log("LIBRT: Root solver reported %d intersections != {0, 2, 4} on %s\n", npts, stp->st_name);
 		    /* these are printed in 'mm' regardless of local units */
 		    VPRINT("\tshooting point (units mm): ", rp->r_pt);
 		    VPRINT("\tshooting direction:        ", rp->r_dir);
@@ -1261,7 +1261,7 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 		static size_t reported = 0;
 
 		if (reported < 10) {
-		    bu_log("Root solver failed to converge on a solution for %s\n", stp[ix]->st_dp->d_namep);
+		    bu_log("LIBRT: Root solver failed to converge on a solution for %s\n", stp[ix]->st_dp->d_namep);
 		    /* these are printed in 'mm' regardless of local units */
 		    VPRINT("\tshooting point (units mm): ", rp[ix]->r_pt);
 		    VPRINT("\tshooting direction:        ", rp[ix]->r_dir);

@@ -1,26 +1,24 @@
 #!/bin/sh
 
-file="/usr/share/applications/mimeapps.list"
-section="Added Associations"
-app="archer.desktop;mged.desktop;rtwizard.desktop;"
-key_v4="application/brlcad-v4=$app"
-key_v5="application/brlcad-v5=$app"
 
-if [ ! -e $file ]
-then
-	touch $file || :
-fi
+FILE="/etc/xdg/mimeapps.list"
 
-if [ -f $file ]
-then
-	sed --follow-symlinks -i "/application\/brlcad-v[45]/d" $file || :
-	line=$(sed -n "/^\[$section\]/=" $file | tail -1) || :
-	if [ -z "$line" ]
-	then
-		echo "[$section]\n$key_v4\n$key_v5" >> $file || :
-	else
-		sed --follow-symlinks -i "$line a$key_v4\n$key_v5" $file || :
-	fi
-fi
+SECTION="Default Applications"
+
+MIME_1="application/brlcad-v4"
+MIME_2="application/brlcad-v5"
+
+APP="archer.desktop"
+
+
+# create dir if missing
+mkdir -p $(dirname ${FILE}) || :
+
+
+# add/update default app for specific mime type
+crudini --set "${FILE}" "${SECTION}" "${MIME_1}" "${APP}" || :
+crudini --set "${FILE}" "${SECTION}" "${MIME_2}" "${APP}" || :
+
 
 update-mime-database /usr/share/mime || :
+update-desktop-database /usr/share/applications || :

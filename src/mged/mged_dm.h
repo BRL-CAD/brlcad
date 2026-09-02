@@ -425,7 +425,7 @@ __END_DECLS
 #define DMP_dirty s->mged_curr_dm->dm_dirty
 #define fbp s->mged_curr_dm->dm_fbp
 #define clients s->mged_curr_dm->dm_clients
-#define mapped s->mged_curr_dm->dm_mapped
+#define curr_dm_mapped s->mged_curr_dm->dm_mapped
 #define mged_dm_owner s->mged_curr_dm->dm_owner
 #define am_mode s->mged_curr_dm->dm_am_mode
 #define perspective_angle s->mged_curr_dm->dm_perspective_angle

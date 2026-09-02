@@ -52,6 +52,8 @@ static struct tie_s *cur_tie;
 static struct db_i *dbip;
 TIE_3 **tribuf;
 
+#define ADRT_DEFAULT_PLASTIC_GLOSS 0.2
+
 static void load_nmg_to_adrt_gcvwrite(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree_state *tsp, void *client_data);
 
 
@@ -75,6 +77,9 @@ adrt_init_attributes(struct adrt_mesh_attributes_s *attr, const char *shader)
     attr->ior = 1.0;
 
     if (shader && shader[0]) {
+	if (bu_strncmp(shader, "plastic", 7) == 0)
+	    attr->gloss = ADRT_DEFAULT_PLASTIC_GLOSS;
+
 	if (bu_strncmp(shader, "light", 5) == 0 || strstr(shader, "emit")) {
 	    fastf_t power = 1.0;
 	    const char *p = strstr(shader, "power");

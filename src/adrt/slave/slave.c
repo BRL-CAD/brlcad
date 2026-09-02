@@ -98,10 +98,8 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 	case ADRT_WORK_INIT:
 	{
 	    render_camera_init (&adrt_workspace_list[wid].camera, (size_t)adrt_slave_threads);
-	    if ( slave_load (&adrt_workspace_list[wid].tie, (void *)work->data) != 0 )
+	    if (slave_load(&adrt_workspace_list[wid].tie, (void *)work->data, work->ind) != 0)
 		bu_exit (1, "Failed to load geometry. Going into a flaming tailspin\n");
-	    TIE_PREP(&adrt_workspace_list[wid].tie);
-	    render_camera_prep (&adrt_workspace_list[wid].camera);
 	    printf ("ready.\n");
 	    result->ind = 0;
 
@@ -257,6 +255,7 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 	{
 	    camera_tile_t tile;
 	    uint8_t type;
+	    uint16_t path_samples = RENDER_PATH_DEFAULT_SAMPLES;
 	    TFLOAT fov;
 
 	    /* Camera type */
@@ -278,6 +277,18 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 	    /* Update Rendering Method if it has Changed */
 	    rm = work->data[ind];
 	    ind += 1;
+
+	    /* Newer frame messages may append a path sample count before the
+	     * dispatcher-owned tile.  Retain the historical default for older
+	     * clients. */
+	    if (ind + sizeof(path_samples) <= work->ind - sizeof(tile)) {
+		TCOPY(uint16_t, work->data, ind, &path_samples, 0);
+		if (path_samples == 0)
+		    path_samples = RENDER_PATH_DEFAULT_SAMPLES;
+		if (path_samples > RENDER_PATH_MAX_SAMPLES)
+		    path_samples = RENDER_PATH_MAX_SAMPLES;
+		ind += sizeof(path_samples);
+	    }
 
 	    if (rm != adrt_workspace_list[wid].camera.rm || ADRT_MESSAGE_MODE_CHANGEP(rm)) {
 		rm = ADRT_MESSAGE_MODE(rm);
@@ -314,7 +325,12 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 			break;
 
 		    case RENDER_METHOD_PATH:
-			render_path_init(&adrt_workspace_list[wid].camera.render, "12");
+		    {
+			char path_args[BUFSIZ];
+
+			snprintf(path_args, sizeof(path_args), "%u", path_samples);
+			render_path_init(&adrt_workspace_list[wid].camera.render, path_args);
+		    }
 			break;
 
 		    case RENDER_METHOD_PHONG:
@@ -362,8 +378,8 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 		adrt_workspace_list[wid].camera.type = type;
 		adrt_workspace_list[wid].camera.fov = fov;
 
-		TCOPY(TIE_3, adrt_workspace_list[wid].camera.pos, 0, &pos, 0);
-		TCOPY(TIE_3, adrt_workspace_list[wid].camera.focus, 0, &foc, 0);
+		TCOPY(TIE_3, &pos, 0, adrt_workspace_list[wid].camera.pos, 0);
+		TCOPY(TIE_3, &foc, 0, adrt_workspace_list[wid].camera.focus, 0);
 
 		render_camera_prep (&adrt_workspace_list[wid].camera);
 	    }
@@ -490,6 +506,11 @@ main(int argc, char **argv)
 	    bu_getopt(argc, argv, shortopts)
 #endif
 	       )!= -1) {
+#ifdef HAVE_GETOPT_LONG
+	bu_optarg = optarg;
+	bu_optind = optind;
+	bu_optopt = optopt;
+#endif
 	if (bu_optopt == '?') c='h';
 	switch (c) {
 	    case 'h':

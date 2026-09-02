@@ -30,7 +30,7 @@
 #include "adrt.h"
 #include "adrt_struct.h"
 
-RENDER_EXPORT extern int slave_load(struct tie_s *tie, void *);
+RENDER_EXPORT extern int slave_load(struct tie_s *tie, void *, size_t);
 
 RENDER_EXPORT extern uint32_t slave_load_mesh_num;
 RENDER_EXPORT extern adrt_mesh_t *slave_load_mesh_list;

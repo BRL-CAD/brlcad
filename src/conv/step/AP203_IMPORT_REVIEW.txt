@@ -444,13 +444,13 @@
   FULL     inherited Y     closed_shell                               ClosedShell.cpp:98-101 defers entirely to ConnectedFaceSet::LoadONBrep (which builds all faces). Reached as the outer shell of manifold_solid_brep.
   FULL     real      Y     conical_surface                            OpenNurbsInterfaces.cpp:1873 builds ON_Cone.RevSurfaceForm from radius/semi_angle. Reached via faces.
   FULL     real      Y     connected_face_set                         ConnectedFaceSet.cpp:149 LoadONBrep iterates cfs_faces and calls each face's LoadONBrep - the core face-building loop. Base of closed_shell/open_shell
-  FULL     na        Y     conversion_based_unit                      ConversionBasedUnit.cpp:38 registers; loads name + MeasureWithUnit conversion_factor and forwards conversion factors (ConversionBasedUnit.cpp:58-74), 
+  FULL     na        Y     conversion_based_unit                      ConversionBasedUnit.cpp:38 registers; loads name + MeasureWithUnit conversion_factor and forwards conversion factors (ConversionBasedUnit.cpp:58-74),
   FULL     real      Y     cylindrical_surface                        OpenNurbsInterfaces.cpp:1821 builds ON_Cylinder.RevSurfaceForm sized to bbox. Reached via faces.
-  FULL     real      Y     edge_curve                                 EdgeCurve::LoadONBrep at OpenNurbsInterfaces.cpp:1252 sets start/end vertices per same_sense, loads the 3D curve geometry, and creates an ON_BrepEdge 
+  FULL     real      Y     edge_curve                                 EdgeCurve::LoadONBrep at OpenNurbsInterfaces.cpp:1252 sets start/end vertices per same_sense, loads the 3D curve geometry, and creates an ON_BrepEdge
   FULL     inherited Y     edge_loop                                  EdgeLoop.cpp:101-106 defers to Path::LoadONBrep (multiple-inheritance from Loop+Path). Path builds all oriented edges + trimming curves. This is the s
   FULL     real      Y     ellipse                                    Ellipse::LoadONBrep OpenNurbsInterfaces.cpp:2245 builds an ON ellipse/NURBS curve; registered at Ellipse.cpp:35.
   FULL     real      Y     face                                       Face.cpp:35 registers; Face::LoadONBrep at OpenNurbsInterfaces.cpp:1163 iterates face bounds building ON loops. Abstract-ish base but does real bound-
-  FULL     real      Y     face_bound                                 FaceBound::LoadONBrep at OpenNurbsInterfaces.cpp:1206 creates ON_BrepLoop (inner/outer), sets loop index, loads the bound (path/edge_loop), and flips 
+  FULL     real      Y     face_bound                                 FaceBound::LoadONBrep at OpenNurbsInterfaces.cpp:1206 creates ON_BrepLoop (inner/outer), sets loop index, loads the bound (path/edge_loop), and flips
   FULL     real      Y     face_outer_bound                           FaceOuterBound::LoadONBrep at OpenNurbsInterfaces.cpp:1181 calls SetOuter() then FaceBound::LoadONBrep, marking the loop as the outer boundary.
   FULL     real      Y     face_surface                               FaceSurface::LoadONBrep at OpenNurbsInterfaces.cpp:1015 computes edge bounds, loads the surface geometry, calls AddFace, loads bounds, and applies rev
   FULL     real      Y     geometric_set                              GeometricSet.cpp:134 LoadONBrep iterates its geometric_set_select elements, loading each. Explicitly consumed as a top-level at STEPWrapper.cpp:327.
@@ -464,7 +464,7 @@
   FULL     real      Y     oriented_closed_shell                      OrientedClosedShell.cpp:126 loads its closed_shell_element and copies its ON id; used for brep_with_voids void shells, hence consumed transitively.
   FULL     real      Y     oriented_edge                              OrientedEdge::LoadONBrep at OpenNurbsInterfaces.cpp:1295 loads start/end vertices and the underlying edge_element, inheriting its ON id. Held in every
   FULL     real      Y     parabola                                   Parabola::LoadONBrep OpenNurbsInterfaces.cpp:2635 builds a rational Bezier/NURBS parabola from focus and endpoints; SetParameterTrim at 2586.
-  FULL     real      Y     path                                       Path::LoadONBrep at OpenNurbsInterfaces.cpp:1359 iterates oriented_edges building edges then calls LoadONTrimmingCurves (pullback trim construction). 
+  FULL     real      Y     path                                       Path::LoadONBrep at OpenNurbsInterfaces.cpp:1359 iterates oriented_edges building edges then calls LoadONTrimmingCurves (pullback trim construction).
   FULL     real      Y     plane                                      OpenNurbsInterfaces.cpp:1762 builds an ON_PlaneSurface sized to the trim bbox. Reached transitively via FaceSurface/AdvancedFace.
   FULL     inherited Y     quasi_uniform_curve                        QuasiUniformCurve::LoadONBrep OpenNurbsInterfaces.cpp:324 delegates to BSplineCurve::LoadONBrep (real).
   FULL     inherited Y     quasi_uniform_surface                      OpenNurbsInterfaces.cpp:777 simply defers to BSplineSurface::LoadONBrep (which synthesizes knots).
@@ -513,15 +513,15 @@
   STUB     stub      Y     curve_replica                              CONFIRMED. CurveReplica.cpp exists and is in stepg_SOURCES (CMakeLists.txt:61). Registers via Factory::RegisterClass("Curve_Replica", ...) at line 37.
   STUB     stub      Y     edge                                       CONFIRMED (with a correction to the original note). Edge.cpp:35 registers via Factory::RegisterClass; Edge.cpp is in CMakeLists stepg_SOURCES (line 69
   STUB     stub      Y     loop                                       CONFIRMED. Loop is an abstract topological base. Loop.cpp:34 registers via Factory::RegisterClass. Loop::LoadONBrep (Loop.cpp:103-107) prints 'not imp
-  STUB     stub      Y     offset_curve_3d                            CONFIRMED. OffsetCurve3D (OffsetCurve3D.h:36, subtype of Curve) is compiled in (CMakeLists.txt:119,340) and self-registers via Factory::RegisterClass 
+  STUB     stub      Y     offset_curve_3d                            CONFIRMED. OffsetCurve3D (OffsetCurve3D.h:36, subtype of Curve) is compiled in (CMakeLists.txt:119,340) and self-registers via Factory::RegisterClass
   STUB     stub      Y     offset_surface                             CONFIRMED. OffsetSurface.cpp:34 registers via Factory::RegisterClass("Offset_Surface"); present in CMakeLists stepg_SOURCES (lines 120/341). Load() (O
-  STUB     stub      Y     pcurve                                     CONFIRMED. PCurve.cpp exists and is in CMakeLists stepg_SOURCES (line 126); it self-registers via Factory::RegisterClass("Pcurve", PCurve::Create) at 
+  STUB     stub      Y     pcurve                                     CONFIRMED. PCurve.cpp exists and is in CMakeLists stepg_SOURCES (line 126); it self-registers via Factory::RegisterClass("Pcurve", PCurve::Create) at
   STUB     stub      Y     polyline                                   CONFIRMED. Polyline (Polyline.h:35) derives from BoundedCurve and declares no LoadONBrep/LoadONCurve/AddPolyLine override; grep of OpenNurbsInterfaces
   STUB     stub      Y     rectangular_composite_surface              CONFIRMED. RectangularCompositeSurface.cpp:130-135 LoadONBrep() unconditionally prints 'not implemented for ...' to std::cerr and returns false; no ov
   STUB     stub      Y     rectangular_trimmed_surface                CONFIRMED as STUB. RectangularTrimmedSurface.cpp:150-155 LoadONBrep unconditionally prints 'not implemented for <entityname>' and returns false; it is
   STUB     stub      Y     seam_curve                                 CONFIRMED. SeamCurve.cpp:34 registers 'Seam_Curve' via Factory::RegisterClass; SeamCurve.cpp/.h are in CMakeLists stepg_SOURCES (lines 181/401). SeamC
   STUB     inherited Y     solid_model                                CORRECTION to prior audit: the prior notes cite 'SolidModel.cpp:90-93 LoadONBrep prints not implemented', but that code (lines 88-95) is entirely COMM
-  STUB     stub      Y     surface_curve                              CONFIRMED verdict=STUB/loadStatus=stub/classPresent=true, but the auditor's rationale is CORRECTED. SurfaceCurve.cpp is compiled (CMakeLists.txt:197) 
+  STUB     stub      Y     surface_curve                              CONFIRMED verdict=STUB/loadStatus=stub/classPresent=true, but the auditor's rationale is CORRECTED. SurfaceCurve.cpp is compiled (CMakeLists.txt:197)
   STUB     stub      Y     surface_patch                              CONFIRMED. SurfacePatch.cpp exists and is in CMakeLists (stepg_SOURCES line 200, header line 420). Registers via Factory::RegisterClass (SurfacePatch.
   STUB     stub      Y     surface_replica                            CONFIRMED. SurfaceReplica.cpp:135-140 LoadONBrep only prints 'not implemented for <entityname>' and returns false; header (SurfaceReplica.h:49) declar
   STUB     stub      Y     topological_representation_item            CONFIRMED. TopologicalRepresentationItem.cpp:93-97 LoadONBrep prints 'not implemented for <entityname>' and returns false; this is the sole definition
@@ -583,7 +583,7 @@
   MISSING  na        N     document_usage_constraint                  No class file; not in stepg_SOURCES; document usage constraint admin entity, non-geometric.
   MISSING  na        N     document_with_class                        No class file; not compiled; document subtype PDM entity, no geometry; unreached.
   MISSING  na        N     edge_based_wireframe_model                 No EdgeBasedWireframeModel.cpp; unreferenced anywhere. Wireframe models are not imported.
-  MISSING  na        N     edge_based_wireframe_shape_representation  Schema entity present (ap203.exp:1301) but no class and not in stepg_SOURCES; unregistered so Factory returns NULL and it is never walked. Edge-based 
+  MISSING  na        N     edge_based_wireframe_shape_representation  Schema entity present (ap203.exp:1301) but no class and not in stepg_SOURCES; unregistered so Factory returns NULL and it is never walked. Edge-based
   MISSING  na        N     effectivity                                No Effectivity.cpp; not in stepg_SOURCES; abstract effectivity supertype, non-geometric config-mgmt data.
   MISSING  na        N     evaluated_degenerate_pcurve                Defined in schema (ap203.exp:1396, subtype of degenerate_pcurve) but no class file, absent from CMakeLists; unmapped in Factory.
   MISSING  na        N     executed_action                            No class file; not compiled; action subtype PDM entity, no geometry; unreached by convert().
@@ -613,7 +613,7 @@
   MISSING  na        N     point_replica                              No PointReplica.cpp/.h; not in CMakeLists; no references. Unmapped in Factory (Factory.cpp:137).
   MISSING  na        N     poly_loop                                  No PolyLoop.cpp; unreferenced. poly_loop (subtype of loop, holds polygon of points) is used by faceted_brep faces, which is also unsupported - so face
   MISSING  na        N     promissory_usage_occurrence                No class file, no registration, not in CMakeLists. Subtype of assembly_component_usage; not handled.
-  MISSING  na        N     quantified_assembly_component_usage        No class file, no registration; subtype of assembly_component_usage that carries a quantity. If present in a file its subtype instance would still be 
+  MISSING  na        N     quantified_assembly_component_usage        No class file, no registration; subtype of assembly_component_usage that carries a quantity. If present in a file its subtype instance would still be
   MISSING  na        N     reparametrised_composite_curve_segment     In schema at ap203.exp:2388 (subtype of composite_curve_segment) but no class file exists and it is absent from CMakeLists; CreateObject would log 'Fa
   MISSING  na        N     representation_map                         No RepresentationMap.cpp/.h; not in CMakeLists; no references. Needed as the mapping_source for mapped_item; without it mapped/instanced geometry is s
   MISSING  na        N     security_classification                    No class file; not in CMakeLists; security classification PDM entity, no geometry; unreached by convert().
@@ -621,7 +621,7 @@
   MISSING  na        N     security_classification_level              No class file; not in stepg_SOURCES; level/label admin entity, no geometry.
   MISSING  na        N     serial_numbered_effectivity                No class file; not compiled; effectivity subtype, non-geometric config data.
   MISSING  na        N     shell_based_wireframe_model                No ShellBasedWireframeModel.cpp; unreferenced. Wireframe models not supported.
-  MISSING  na        N     shell_based_wireframe_shape_representation Schema entity present (ap203.exp:2525) but no class and not in stepg_SOURCES; unregistered, never consumed by convert(). Shell-based wireframe models 
+  MISSING  na        N     shell_based_wireframe_shape_representation Schema entity present (ap203.exp:2525) but no class and not in stepg_SOURCES; unregistered, never consumed by convert(). Shell-based wireframe models
   MISSING  na        N     solid_angle_measure_with_unit              No SolidAngleMeasureWithUnit.cpp; no Solid_Angle_Measure_With_Unit registration, though MeasureValue.cpp:105 does implement GetSolidAngleMeasure and M
   MISSING  na        N     specified_higher_usage_occurrence          No class file, no registration; a subtype of assembly_component_usage used for deep assembly occurrence paths. Absent so such occurrences are not walk
   MISSING  na        N     start_request                              No class file; not in CMakeLists; action_request assignment PDM entity, no geometry; unreached.
@@ -647,8 +647,8 @@
   METADATA inherited Y     definitional_representation                Registers at line 34; Load() (line 53) defers to Representation::Load. Referenced by PCurve/BoundedPCurve/PCurveOrSurface/SurfaceCurve (grep) so reach
   METADATA na        Y     design_context                             DesignContext.cpp:33 registers; subclass of ProductDefinitionContext; LoadONBrep :93-95 not implemented. Life-cycle stage context, no geometry.
   METADATA na        N     design_make_from_relationship              No class file, no registration. Make-from PDM relationship (subtype of product_definition_relationship), no geometry.
-  METADATA na        Y     dimensional_exponents                      DimensionalExponents.cpp:34 registers; loads all 7 exponent reals (lines 76-82). Non-geometric; referenced by NamedUnit.dimensions. Values parsed but 
-  METADATA na        Y     elementary_surface                         Abstract base (ElementarySurface.cpp:34). Its LoadONBrep at line 111 prints not-implemented but is never called directly; concrete plane/cylinder/etc 
+  METADATA na        Y     dimensional_exponents                      DimensionalExponents.cpp:34 registers; loads all 7 exponent reals (lines 76-82). Non-geometric; referenced by NamedUnit.dimensions. Values parsed but
+  METADATA na        Y     elementary_surface                         Abstract base (ElementarySurface.cpp:34). Its LoadONBrep at line 111 prints not-implemented but is never called directly; concrete plane/cylinder/etc
   METADATA na        Y     founded_item                               FoundedItem.cpp:34 registers; FoundedItem.h:32 derives from STEPEntity with only Print/Load (no LoadONBrep) - a non-geometric abstract base. Not a con
   METADATA na        Y     functionally_defined_transformation        FunctionallyDefinedTransformation.cpp:34 registers; derives from Transformation (FunctionallyDefinedTransformation.h:34), loads name/description only.
   METADATA na        Y     geometric_representation_context           Registers at line 34; Load() (line 55) parses coordinate_space_dimension. Loaded as a context of every shape rep (Representation.cpp:199). Supplies di
@@ -677,7 +677,7 @@
   METADATA na        N     product_definition_effectivity             No class file, no registration, not in CMakeLists. Effectivity/validity admin data, no geometry.
   METADATA na        Y     product_definition_formation               ProductDefinitionFormation.cpp:35 registers; LoadONBrep :148-150 not implemented. Version node in the shape_definition_representation chain (STEPWrapp
   METADATA na        Y     product_definition_formation_with_specified_source ProductDefinitionFormationWithSpecifiedSource.cpp:34 registers; subclass of ProductDefinitionFormation; LoadONBrep :131-133 not implemented. Appears i
-  METADATA na        Y     product_definition_relationship            ProductDefinitionRelationship.cpp:35 registers; LoadONBrep :173-175 not implemented. Base for assembly usage occurrences that feed the comb hierarchy 
+  METADATA na        Y     product_definition_relationship            ProductDefinitionRelationship.cpp:35 registers; LoadONBrep :173-175 not implemented. Base for assembly usage occurrences that feed the comb hierarchy
   METADATA na        Y     product_definition_shape                   ProductDefinitionShape.cpp:36 registers; subclass of PropertyDefinition; LoadONBrep :121-123 not implemented. Links product_definition to its shape re
   METADATA na        Y     product_definition_usage                   ProductDefinitionUsage.cpp:34 registers; subclass of ProductDefinitionRelationship; LoadONBrep :93-95 not implemented. Abstract assembly-usage base re
   METADATA inherited Y     product_definition_with_associated_documents ProductDefinitionWithAssociatedDocuments.cpp:37 registers; subclass of ProductDefinition with no LoadONBrep override, so it inherits ProductDefinition
@@ -692,7 +692,7 @@
   METADATA stub      Y     shape_aspect                               Registers at line 35; Load() (line 90) parses name/description/of_shape/product_definitional. LoadONBrep stub (line 152). Reached transitively via sha
   METADATA stub      Y     shape_aspect_relationship                  Registers at line 35; Load() (line 91) parses relating/related shape_aspect. LoadONBrep stub (line 166). Admin relationship between shape aspects; par
   METADATA na        Y     shape_definition_representation            Registers at line 36; Load() (line 71) chains PropertyDefinitionRepresentation::Load. Top-level driver entity: convert() (STEPWrapper.cpp:250,687) ite
-  METADATA inherited Y     shape_representation                       ShapeRepresentation.cpp:41 registers; Load() (line 64) defers to Representation::Load. It is the container the walk instantiates (STEPWrapper.cpp:300 
+  METADATA inherited Y     shape_representation                       ShapeRepresentation.cpp:41 registers; Load() (line 64) defers to Representation::Load. It is the container the walk instantiates (STEPWrapper.cpp:300
   METADATA na        Y     shape_representation_relationship          Registers at line 34; Load() (line 57) chains RepresentationRelationship::Load. convert() keys on it (STEPWrapper.cpp:371,511,727) to attach an Advanc
   METADATA na        Y     solid_angle_unit                           SolidAngleUnit.cpp:34 registers; marker NamedUnit subclass. Solid-angle factor handled by paired SiUnit (steradian).
   METADATA na        N     supplied_part_relationship                 No class file, no registration. Supplier PDM relationship, no geometry.

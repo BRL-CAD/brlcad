@@ -27,6 +27,12 @@ brlcad_addexec(bg_test "${CMAKE_CURRENT_BINARY_DIR}/bg_test.c" "${BG_TEST_LIBS}"
 # TODO - convert this into the scheme used by other tests below
 brlcad_addexec(bgtester bgtester.c "${BG_TEST_LIBS}" TEST)
 
+#  ************ aabb_ray.c tests *************
+
+brlcad_addexec(bg_aabb_ray aabb_ray.c "${BG_TEST_LIBS}" TEST)
+
+brlcad_add_test(NAME bg_aabb_ray COMMAND bg_aabb_ray)
+
 # Temporary testing program
 brlcad_addexec(bgpoly2tri poly2tri.c "${BG_TEST_LIBS}" TEST)
 
@@ -96,6 +102,7 @@ brlcad_add_test(NAME bg_plane_distsq_line3_pt3_1            COMMAND bg_test plan
 brlcad_add_test(NAME bg_plane_distsq_line3_pt3_2            COMMAND bg_test plane_pt 3 -1,-1,-1 1,1,1 0,0,0 0)
 brlcad_add_test(NAME bg_plane_distsq_line3_pt3_3            COMMAND bg_test plane_pt 3 0,0,0 1,1,1 0,5,0 16.666666)
 brlcad_add_test(NAME bg_plane_distsq_line3_pt3_4            COMMAND bg_test plane_pt 3 5,6,4 9,3,8 -5,2,4 48.441558)
+brlcad_add_test(NAME bg_plane_distsq_line3_pt3_5            COMMAND bg_test plane_pt 3 0,0,0 0,0,2 0.5,0.25,3 0.3125)
 
 # For function #4 (bg_distsq_pt3_lseg3_v2), the <args> format is as follows:
 #
@@ -110,6 +117,7 @@ brlcad_add_test(NAME bg_plane_distsq_pt3_lseg3_v2_case2_1   COMMAND bg_test plan
 brlcad_add_test(NAME bg_plane_distsq_pt3_lseg3_v2_case3_1   COMMAND bg_test plane_pt 4 -5,-5,-5 5,5,5 -10,-5,-10 3 50)
 brlcad_add_test(NAME bg_plane_distsq_pt3_lseg3_v2_case4_1   COMMAND bg_test plane_pt 4 -5,-5,-5 5,5,5 5,10,10 4 50)
 brlcad_add_test(NAME bg_plane_distsq_pt3_lseg3_v2_case5_1   COMMAND bg_test plane_pt 4 -5,-5,-5 5,5,5 0,-5,-5 5 16.666666)
+brlcad_add_test(NAME bg_plane_distsq_pt3_lseg3_v2_degenerate COMMAND bg_test plane_pt 4 0,0,0 0,0,0 3,4,0 3 25)
 
 # For function #5 (bg_mk_plane_3pts), the <args> format is as follows:
 #
@@ -172,13 +180,47 @@ brlcad_add_test(NAME bg_plane_make_pnt_3planes COMMAND bg_test plane_pt 8)
 #
 # Ax,Ay,Az DIRx,DIRy,DIRz Px,Py,Pz expected_return expected_dist PCAx,PCAy,PCAz
 #
-# where A and DIR define the line segment, and P is the point in
+# where A and DIR define the line, and P is the point in
 # question. An individual point is three integer or floating point
 # numbers separated by commas.
 
-brlcad_add_test(NAME bg_plane_dist_pt3_line3_case0_1   COMMAND bg_test plane_dist 2 -5,-5,-5 1,1,1 -5,-5,-5 0 0 -5,-5,-5)
-brlcad_add_test(NAME bg_plane_dist_pt3_line3_case1_1   COMMAND bg_test plane_dist 2 -5,-5,-5 1,1,1 0,0,0 1 0.5 0,0,0)
-brlcad_add_test(NAME bg_plane_dist_pt3_line3_case2_1   COMMAND bg_test plane_dist 2 -5,-5,-5 5,5,5 0,-5,-5 2 4.08248 -3.33333,-3.33333,-3.33333)
+brlcad_add_test(NAME bg_plane_dist_pt3_line3_case0_1   COMMAND bg_test plane_dist 1 -5,-5,-5 1,1,1 -5,-5,-5 0 0 -5,-5,-5)
+brlcad_add_test(NAME bg_plane_dist_pt3_line3_case1_1   COMMAND bg_test plane_dist 1 -5,-5,-5 1,1,1 0,0,0 1 0 0,0,0)
+brlcad_add_test(NAME bg_plane_dist_pt3_line3_case2_1   COMMAND bg_test plane_dist 1 -5,-5,-5 5,5,5 0,-5,-5 2 4.08248 -3.33333,-3.33333,-3.33333)
+brlcad_add_test(NAME bg_plane_dist_pt3_line3_case3_1   COMMAND bg_test plane_dist 1 0,0,0 0,0,2 3,4,5 2 5 0,0,5)
+
+# For function #4 (bg_dist_line3_line3), the <args> format is as follows:
+#
+# P1x,P1y,P1z D1x,D1y,D1z P2x,P2y,P2z D2x,D2y,D2z expected_return expected_dist_0 expected_dist_1
+#
+# D1 and D2 must be unit vectors.  Distances are ignored for negative return
+# values because the API does not define them in that case.
+
+brlcad_add_test(NAME bg_plane_dist_line3_line3_intersect COMMAND bg_test plane_dist 4 0,0,0 1,0,0 0,1,0 0,-1,0 0 0 1)
+brlcad_add_test(NAME bg_plane_dist_line3_line3_skew      COMMAND bg_test plane_dist 4 0,0,0 1,0,0 0,3,4 0,1,0 1 0 -3)
+brlcad_add_test(NAME bg_plane_dist_line3_line3_parallel  COMMAND bg_test plane_dist 4 0,0,0 1,0,0 0,1,0 1,0,0 -2 0 0)
+brlcad_add_test(NAME bg_plane_dist_line3_line3_collinear COMMAND bg_test plane_dist 4 0,0,0 1,0,0 5,0,0 1,0,0 -1 0 0)
+
+# For function #5 (bg_dist_line3_lseg3), the <args> format is as follows:
+#
+# Px,Py,Pz Dx,Dy,Dz Ax,Ay,Az Bx,By,Bz expected_return expected_dist_0 expected_dist_1
+
+brlcad_add_test(NAME bg_plane_dist_line3_lseg3_intersect COMMAND bg_test plane_dist 5 0,0,0 1,0,0 3,-1,0 3,1,0 0 3 0.5)
+brlcad_add_test(NAME bg_plane_dist_line3_lseg3_skew      COMMAND bg_test plane_dist 5 0,0,0 1,0,0 3,-1,1 3,1,1 2 3 0.5)
+brlcad_add_test(NAME bg_plane_dist_line3_lseg3_outside   COMMAND bg_test plane_dist 5 0,0,0 1,0,0 3,2,1 3,4,1 3 3 -1)
+brlcad_add_test(NAME bg_plane_dist_line3_lseg3_parallel  COMMAND bg_test plane_dist 5 0,0,0 1,0,0 3,1,0 5,1,0 -2 3 0)
+brlcad_add_test(NAME bg_plane_dist_line3_lseg3_collinear COMMAND bg_test plane_dist 5 0,0,0 1,0,0 3,0,0 5,0,0 -1 3 0)
+brlcad_add_test(NAME bg_plane_dist_line3_lseg3_parallel_behind COMMAND bg_test plane_dist 5 0,0,0 1,0,0 -5,1,0 -3,1,0 -2 -3 1)
+brlcad_add_test(NAME bg_plane_dist_line3_lseg3_parallel_spanning_origin COMMAND bg_test plane_dist 5 0,0,0 1,0,0 -5,1,0 5,1,0 -2 0 0.5)
+brlcad_add_test(NAME bg_plane_dist_line3_lseg3_degenerate_off_line COMMAND bg_test plane_dist 5 0,0,0 1,0,0 3,4,0 3,4,0 3 3 0)
+brlcad_add_test(NAME bg_plane_dist_line3_lseg3_degenerate_on_line  COMMAND bg_test plane_dist 5 0,0,0 1,0,0 3,0,0 3,0,0 0 3 0)
+
+# For function #6 (bg_distsq_line3_line3), the <args> format is as follows:
+#
+# Px,Py,Pz Dx,Dy,Dz Qx,Qy,Qz Ex,Ey,Ez expected_return expected_dist_0 expected_dist_1 expected_dist_2 PT1x,PT1y,PT1z PT2x,PT2y,PT2z
+
+brlcad_add_test(NAME bg_plane_distsq_line3_line3_skew     COMMAND bg_test plane_dist 6 0,0,0 2,0,0 0,3,4 0,0,5 0 0 -0.8 9 0,0,0 0,3,0)
+brlcad_add_test(NAME bg_plane_distsq_line3_line3_parallel COMMAND bg_test plane_dist 6 0,0,0 2,0,0 4,3,0 3,0,0 1 0 -1.333333333333 9 0,0,0 0,3,0)
 
 # For function #2 (bg_dist_pt3_lseg3), the <args> format is as follows:
 #
@@ -194,6 +236,13 @@ brlcad_add_test(NAME bg_plane_dist_pt3_lseg3_case2_1   COMMAND bg_test plane_dis
 brlcad_add_test(NAME bg_plane_dist_pt3_lseg3_case3_1   COMMAND bg_test plane_dist 2 -5,-5,-5 5,5,5 -10,-5,-10 3 7.07107 -5,-5,-5)
 brlcad_add_test(NAME bg_plane_dist_pt3_lseg3_case4_1   COMMAND bg_test plane_dist 2 -5,-5,-5 5,5,5 5,10,10 4 7.07107 5,5,5)
 brlcad_add_test(NAME bg_plane_dist_pt3_lseg3_case5_1   COMMAND bg_test plane_dist 2 -5,-5,-5 5,5,5 0,-5,-5 5 4.08248 -3.33333,-3.33333,-3.33333)
+brlcad_add_test(NAME bg_plane_dist_pt3_lseg3_degenerate COMMAND bg_test plane_dist 2 0,0,0 0,0,0 3,4,0 3 5 0,0,0)
+
+# For function #7 (bg_dist_pnt2_lseg2), the <args> format is as follows:
+#
+# Ax,Ay Bx,By Px,Py expected_return expected_dist_sq PCAx,PCAy
+
+brlcad_add_test(NAME bg_plane_dist_pt2_lseg2_degenerate COMMAND bg_test plane_dist 7 0,0 0,0 3,4 3 25 0,0)
 
 # For function #3 (bg_dist_pt3_pt3), the <args> format is as follows:
 #
@@ -245,6 +294,14 @@ brlcad_add_test(NAME bg_plane_isect_lseg3_lseg3_case0_2    COMMAND bg_test plane
 brlcad_add_test(NAME bg_plane_isect_lseg3_lseg3_case0_3    COMMAND bg_test plane_isect 2 -5,-5,-5 5,5,5 -4,-4,-4 2,2,2 0 0.2 0.6)
 brlcad_add_test(NAME bg_plane_isect_lseg3_lseg3_case1_1    COMMAND bg_test plane_isect 2 0,0,0 0,1,1 0,1,0 0,-1,1 1 0.5 0.5)
 
+brlcad_add_test(NAME bg_plane_isect_line_lseg_backward_ray COMMAND bg_test plane_isect 1 0,0,0 2,0,0 -1,-1,0 -1,1,0 -1 0)
+
+#  ************ line_distance.c tests ***********
+
+brlcad_addexec(bg_line_distance line_distance.c "${BG_TEST_LIBS}" TEST)
+
+brlcad_add_test(NAME bg_line_distance COMMAND bg_line_distance)
+
 #  ************ polygon.c tests ***********
 brlcad_addexec(bg_polygon_triangulate polygon_triangulate.c "${BG_TEST_LIBS}" TEST)
 
@@ -268,7 +325,10 @@ brlcad_addexec(bg_ballpivot ballpivot.c "${BG_TEST_LIBS}" TEST)
 
 brlcad_addexec(bg_lseg_lseg_dist lseg_lseg.c "${BG_TEST_LIBS}" TEST)
 
-brlcad_add_test(NAME bg_lseg_lseg_1   COMMAND bg_lseg_lseg_dist 1)
+brlcad_add_test(NAME bg_lseg_lseg_crossing   COMMAND bg_lseg_lseg_dist 1)
+brlcad_add_test(NAME bg_lseg_lseg_skew       COMMAND bg_lseg_lseg_dist 2)
+brlcad_add_test(NAME bg_lseg_lseg_disjoint   COMMAND bg_lseg_lseg_dist 3)
+brlcad_add_test(NAME bg_lseg_lseg_degenerate COMMAND bg_lseg_lseg_dist 4)
 
 #  ************ lseg_lseg.c tests ***********
 
@@ -283,6 +343,7 @@ brlcad_add_test(NAME bg_lseg_pt_dist_case5  COMMAND bg_lseg_pt_dist  -5,-5,-5 5,
 #  ************ tri_ray.c tests ***********
 
 brlcad_addexec(bg_tri_ray_isect tri_ray_isect.cpp "${BG_TEST_LIBS}" TEST)
+brlcad_add_test(NAME bg_tri_ray_isect COMMAND bg_tri_ray_isect)
 
 #  ************ tri_tri.c tests ***********
 
@@ -334,8 +395,9 @@ brlcad_add_test(NAME bg_tri_tri_isect_null   COMMAND bg_tri_tri_isect  0,0,0 1,0
 
 brlcad_addexec(bg_tri_closest_pt tri_closest_pt.c "${BG_TEST_LIBS}" TEST)
 
-brlcad_add_test(NAME bg_tri_pt_dist_coplanar_center   COMMAND bg_tri_closest_pt  0,0,0 -1,-1,0 1,-1,0 0,1,0 0)
-brlcad_add_test(NAME bg_tri_pt_dist_coplanar_vert_closest   COMMAND bg_tri_closest_pt -2,-1,0 -1,-1,0 1,-1,0 0,1,0 1)
+brlcad_add_test(NAME bg_tri_pt_dist_coplanar_center COMMAND bg_tri_closest_pt 0,0,0 -1,-1,0 1,-1,0 0,1,0 0 0,0,0)
+brlcad_add_test(NAME bg_tri_pt_dist_coplanar_vert_closest COMMAND bg_tri_closest_pt -2,-1,0 -1,-1,0 1,-1,0 0,1,0 1 -1,-1,0)
+brlcad_add_test(NAME bg_tri_pt_dist_offplane_interior COMMAND bg_tri_closest_pt 0.5,0.5,2.5 0,0,0 2,0,0 0,2,0 2.5 0.5,0.5,0)
 
 #  ************ polygon_op.cpp tests ***********
 
@@ -351,6 +413,10 @@ brlcad_add_test(NAME bg_sat_basic   COMMAND bg_sat)
 
 #  ************ trimesh_sync.cpp tests ***********
 
+brlcad_addexec(bg_trimesh_gc trimesh_gc.c "${BG_TEST_LIBS}" TEST)
+
+brlcad_add_test(NAME bg_trimesh_gc COMMAND bg_trimesh_gc)
+
 brlcad_addexec(bg_trimesh_sync trimesh_sync.c "${BG_TEST_LIBS}" TEST)
 
 brlcad_add_test(NAME bg_trimesh_sync  COMMAND bg_trimesh_sync)
@@ -360,6 +426,12 @@ brlcad_add_test(NAME bg_trimesh_sync  COMMAND bg_trimesh_sync)
 brlcad_addexec(bg_trimesh_split_test trimesh_split.cpp "${BG_TEST_LIBS}" TEST)
 
 brlcad_add_test(NAME bg_trimesh_split COMMAND bg_trimesh_split_test)
+
+#  ************ trimesh_decimate.cpp tests ***********
+
+brlcad_addexec(bg_trimesh_decimate_test trimesh_decimate.cpp "${BG_TEST_LIBS}" TEST)
+
+brlcad_add_test(NAME bg_trimesh_decimate COMMAND bg_trimesh_decimate_test)
 
 #  ************ triangle area tests ***********
 
@@ -375,14 +447,18 @@ brlcad_addexec(bg_trimesh_area trimesh_area.c "${BG_TEST_LIBS}" TEST)
 #  ************ trimesh_repair tests ***********
 
 brlcad_addexec(bg_trimesh_repair trimesh_repair.cpp "${BG_TEST_LIBS}" TEST)
-target_include_directories(
-  bg_trimesh_repair SYSTEM PRIVATE
-  ${CMAKE_CURRENT_SOURCE_DIR}/../GTE
-  ${GTE_INCLUDE_DIR}
-)
+if(BUILD_TESTING AND TARGET bg_trimesh_repair)
+  target_include_directories(
+    bg_trimesh_repair SYSTEM PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/../GTE
+    ${GTE_INCLUDE_DIR}
+  )
+endif()
 
 brlcad_add_test(NAME bg_trimesh_repair  COMMAND bg_trimesh_repair)
-set_tests_properties(bg_trimesh_repair PROPERTIES TIMEOUT 30)
+if(BUILD_TESTING AND TARGET bg_trimesh_repair)
+  set_tests_properties(bg_trimesh_repair PROPERTIES TIMEOUT 30)
+endif()
 
 #  ************ trimesh_remesh tests ***********
 
@@ -393,7 +469,9 @@ brlcad_add_test(NAME bg_trimesh_remesh  COMMAND bg_trimesh_remesh)
 #  ************ embedded Geogram optimizer tests ***********
 
 brlcad_addexec(bg_geogram_optimizer geogram_optimizer.cpp "${BG_TEST_LIBS}" TEST)
-target_include_directories(bg_geogram_optimizer PRIVATE "${GEOGRAM_INCLUDE_DIR}")
+if(BUILD_TESTING AND TARGET bg_geogram_optimizer)
+  target_include_directories(bg_geogram_optimizer PRIVATE "${GEOGRAM_INCLUDE_DIR}")
+endif()
 
 brlcad_add_test(NAME bg_geogram_optimizer COMMAND bg_geogram_optimizer)
 

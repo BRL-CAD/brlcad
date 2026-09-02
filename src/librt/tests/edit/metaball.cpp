@@ -280,6 +280,25 @@ main(int argc, char *argv[])
 	       V3ARGS(pt1->coord));
     }
 
+    /* Mouse movement supplies an absolute model-space point. */
+    mb_reset(s, edit_mb);
+    m->es_metaball_pnt = mb_first_pt(s);
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_METABALL_PT_MOV);
+    if (s->edit_mode != RT_PARAMS_EDIT_TRANS)
+	bu_exit(1, "ERROR: ECMD_METABALL_PT_MOV did not select translate mode\n");
+    s->e_mvalid = 1;
+    VSET(s->e_mparam, 5, 6, 7);
+    rt_edit_process(s);
+    {
+	struct wdb_metaball_pnt *pt1 = mb_first_pt(s);
+	point_t exp = {5, 6, 7};
+	if (!VNEAR_EQUAL(pt1->coord, exp, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: ECMD_METABALL_PT_MOV mouse path failed: got %g,%g,%g\n",
+		    V3ARGS(pt1->coord));
+	bu_log("ECMD_METABALL_PT_MOV mouse SUCCESS: pt1.coord=%g,%g,%g\n",
+	       V3ARGS(pt1->coord));
+    }
+
     /* ================================================================
      * ECMD_METABALL_PT_ADD  (add a new point at e_para coords)
      *

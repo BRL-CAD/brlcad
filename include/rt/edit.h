@@ -473,6 +473,12 @@ rt_edit_knob_cmd_process(
         char origin, int incr_flag, void *u_data
 	);
 
+/* Knob operations preserve a primitive-specific edit_flag when edit_mode
+ * already matches the requested interaction class.  This allows interactive
+ * drags to continue operations such as moving an ARB vertex or rotating an
+ * ARB face; generic RT_PARAMS_EDIT_* flags are selected only when the current
+ * edit is not in the corresponding class. */
+
 RT_EXPORT extern void
 rt_knob_edit_rot(struct rt_edit *s,
         char coords,

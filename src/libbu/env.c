@@ -39,12 +39,22 @@
 #include <string.h>
 #include <errno.h>
 #include "bio.h"
+#include "bresource.h"
 
 #ifdef HAVE_SYS_SYSINFO_H
 #  include <sys/sysinfo.h>
 #endif
 #ifdef HAVE_SYS_SYSCTL_H
 #  include <sys/sysctl.h>
+#endif
+#if defined(__FreeBSD__) && defined(HAVE_SYS_SYSCTL_H)
+/* sys/user.h uses sig_t without including the signal header that defines it.
+ * The alias also handles unity builds where another source file has already
+ * included that header with its BSD-only declarations hidden. */
+typedef void (*bu_freebsd_sig_t)(int);
+#  define sig_t bu_freebsd_sig_t
+#  include <sys/user.h>
+#  undef sig_t
 #endif
 #ifdef HAVE_MACH_HOST_INFO_H
 #  include <mach/host_info.h>
@@ -205,7 +215,7 @@ mem_host_info(int type, size_t *memsz)
     if (type < 0)
 	return -2;
 
-#if defined(HAVE_SYS_SYSTCL_H) && defined(HAVE_MACH_HOST_INFO_H)
+#if defined(HAVE_SYS_SYSCTL_H) && defined(HAVE_MACH_HOST_INFO_H)
 
     long int pagesize = 0;
     size_t osize = sizeof(pagesize);
@@ -244,6 +254,32 @@ mem_host_info(int type, size_t *memsz)
 
 
 static int
+mem_size_from_uint64(uint64_t bytes, size_t *memsz)
+{
+    if (!memsz)
+	return -1;
+#if SIZE_MAX < UINT64_MAX
+    *memsz = bytes > (uint64_t)SIZE_MAX ? SIZE_MAX : (size_t)bytes;
+#else
+    *memsz = (size_t)bytes;
+#endif
+    return 0;
+}
+
+
+static ssize_t
+mem_result(size_t bytes, size_t *sz)
+{
+    const ssize_t result = (ssize_t)bytes;
+    if (result < 0 || (size_t)result != bytes)
+	return (ssize_t)-1;
+    if (sz)
+	*sz = bytes;
+    return result;
+}
+
+
+static int
 mem_status(int type, size_t *memsz)
 {
     if (!memsz)
@@ -263,17 +299,170 @@ mem_status(int type, size_t *memsz)
     }
 
     size_t sysmemory = 0;
-    MEMORYSTATUSEX mavail;
+    MEMORYSTATUSEX mavail = {0};
     mavail.dwLength = sizeof(mavail);
-    GlobalMemoryStatusEx(&mavail);
+    if (!GlobalMemoryStatusEx(&mavail))
+	return -1;
     if (type == BU_MEM_AVAIL) {
-	sysmemory = (size_t)mavail.ullAvailPhys;
+	if (mem_size_from_uint64(mavail.ullAvailPhys, &sysmemory) != 0)
+	    return -1;
     } else {
-	sysmemory = (size_t)mavail.ullTotalPhys;
+	if (mem_size_from_uint64(mavail.ullTotalPhys, &sysmemory) != 0)
+	    return -1;
     }
     (*memsz) = sysmemory;
     return 0;
 
+#endif
+    return 1;
+}
+
+
+static int
+mem_sysctl(int type, size_t *memsz)
+{
+    if (!memsz)
+	return -1;
+
+    if (type < 0)
+	return -2;
+
+#if defined(__FreeBSD__) && defined(HAVE_SYS_SYSCTL_H) && defined(HAVE_SYSCTL)
+    static const char *const page_size_name = "hw.pagesize";
+    static const char *const total_memory_name = "hw.physmem";
+    static const char *const free_pages_name = "vm.stats.vm.v_free_count";
+
+    uint64_t page_size = 0;
+    size_t value_size = sizeof(page_size);
+    if (sysctlbyname(page_size_name, &page_size, &value_size, NULL, 0) != 0 ||
+	    page_size == 0)
+	return -1;
+    if (type == BU_MEM_PAGE_SIZE)
+	return mem_size_from_uint64(page_size, memsz);
+
+    uint64_t memory = 0;
+    value_size = sizeof(memory);
+    const char *memory_name = total_memory_name;
+    if (type == BU_MEM_AVAIL) {
+	memory_name = free_pages_name;
+	if (sysctlbyname(memory_name, &memory, &value_size, NULL, 0) != 0 ||
+		memory > UINT64_MAX / page_size)
+	    return -1;
+	memory *= page_size;
+    } else if (sysctlbyname(memory_name, &memory, &value_size, NULL, 0) != 0) {
+	return -1;
+    }
+
+    return mem_size_from_uint64(memory, memsz);
+#endif
+    return 1;
+}
+
+
+static int
+mem_process_avail(size_t *memsz)
+{
+    if (!memsz)
+	return -1;
+
+#if defined(HAVE_WINDOWS_H)
+    MEMORYSTATUSEX memory_status;
+    memory_status.dwLength = sizeof(memory_status);
+    if (!GlobalMemoryStatusEx(&memory_status))
+	return -1;
+    return mem_size_from_uint64(memory_status.ullAvailVirtual, memsz);
+#elif defined(HAVE_SYS_RESOURCE_H) && (defined(__linux__) || \
+    defined(__APPLE__) || defined(__FreeBSD__) || defined(__NetBSD__) || \
+    defined(__OpenBSD__) || defined(__DragonFly__))
+    struct rlimit address_limit;
+    if (getrlimit(RLIMIT_AS, &address_limit) != 0 ||
+	address_limit.rlim_cur == RLIM_INFINITY)
+	return 1;
+
+    size_t address_bytes = 0;
+#  if defined(__linux__)
+    FILE *statm = fopen("/proc/self/statm", "r");
+    unsigned long long virtual_pages = 0;
+    const int have_pages = statm &&
+	fscanf(statm, "%llu", &virtual_pages) == 1;
+    if (statm)
+	fclose(statm);
+    const long page_size = sysconf(_SC_PAGESIZE);
+    if (!have_pages || page_size <= 0)
+	return -1;
+    if (virtual_pages > SIZE_MAX / (size_t)page_size) {
+	*memsz = 0;
+	return 0;
+    }
+
+    address_bytes = (size_t)virtual_pages * (size_t)page_size;
+#  elif defined(__APPLE__) && defined(HAVE_MACH_MACH_H)
+    struct task_basic_info task_memory;
+    mach_msg_type_number_t task_count = TASK_BASIC_INFO_COUNT;
+    if (task_info(mach_task_self(), TASK_BASIC_INFO,
+	    (task_info_t)&task_memory, &task_count) != KERN_SUCCESS)
+	return -1;
+    if (mem_size_from_uint64((uint64_t)task_memory.virtual_size,
+	    &address_bytes) != 0)
+	return -1;
+#  elif defined(__FreeBSD__) && defined(HAVE_SYS_SYSCTL_H)
+    int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_PID, getpid()};
+    struct kinfo_proc process_info;
+    size_t process_info_size = sizeof(process_info);
+    if (sysctl(mib, 4, &process_info, &process_info_size, NULL, 0) != 0 ||
+	    process_info_size < sizeof(process_info))
+	return -1;
+    if (mem_size_from_uint64((uint64_t)process_info.ki_size,
+	    &address_bytes) != 0)
+	return -1;
+#  elif defined(__NetBSD__) && defined(HAVE_SYS_SYSCTL_H)
+    int mib[6] = {CTL_KERN, KERN_PROC2, KERN_PROC_PID, getpid(),
+	sizeof(struct kinfo_proc2), 1};
+    struct kinfo_proc2 process_info;
+    size_t process_info_size = sizeof(process_info);
+    if (sysctl(mib, 6, &process_info, &process_info_size, NULL, 0) != 0 ||
+	    process_info_size < sizeof(process_info))
+	return -1;
+    const long page_size = sysconf(_SC_PAGESIZE);
+    if (page_size <= 0 || process_info.p_vm_msize < 0 ||
+	    (uint64_t)process_info.p_vm_msize >
+	    SIZE_MAX / (size_t)page_size) {
+	*memsz = 0;
+	return 0;
+    }
+    address_bytes = (size_t)process_info.p_vm_msize * (size_t)page_size;
+#  elif defined(__OpenBSD__) && defined(HAVE_SYS_SYSCTL_H)
+    int mib[6] = {CTL_KERN, KERN_PROC, KERN_PROC_PID, getpid(),
+	sizeof(struct kinfo_proc), 1};
+    struct kinfo_proc process_info;
+    size_t process_info_size = sizeof(process_info);
+    if (sysctl(mib, 6, &process_info, &process_info_size, NULL, 0) != 0 ||
+	    process_info_size < sizeof(process_info))
+	return -1;
+    if (mem_size_from_uint64((uint64_t)process_info.p_vm_map_size,
+	    &address_bytes) != 0)
+	return -1;
+#  elif defined(__DragonFly__) && defined(HAVE_SYS_SYSCTL_H) && \
+    defined(HAVE_SYS_KINFO_H)
+    int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_PID, getpid()};
+    struct kinfo_proc process_info;
+    size_t process_info_size = sizeof(process_info);
+    if (sysctl(mib, 4, &process_info, &process_info_size, NULL, 0) != 0 ||
+	    process_info_size < sizeof(process_info))
+	return -1;
+    if (mem_size_from_uint64((uint64_t)process_info.kp_vm_map_size,
+	    &address_bytes) != 0)
+	return -1;
+#  else
+    return 1;
+#  endif
+
+    size_t limit_bytes = 0;
+    if (mem_size_from_uint64((uint64_t)address_limit.rlim_cur,
+	    &limit_bytes) != 0)
+	return -1;
+    *memsz = address_bytes < limit_bytes ? limit_bytes - address_bytes : 0;
+    return 0;
 #endif
     return 1;
 }
@@ -288,38 +477,42 @@ bu_mem(int type, size_t *sz)
     size_t subsz = 0;
     unsigned long long ret = 0;
 
+    if (type == BU_MEM_PROCESS_AVAIL) {
+	ret = mem_process_avail(&subsz);
+	if (ret != 0)
+	    return (ssize_t)-1;
+	return mem_result(subsz, sz);
+    }
+
     if (getenv("BU_MEM_NOCHECK")) {
 	if (sz)
 	    *sz = 0;
 	return 0;
     }
 
+    ret = mem_sysctl(type, &subsz);
+    if (ret == 0) {
+	return mem_result(subsz, sz);
+    }
+
     ret = mem_host_info(type, &subsz);
     if (ret == 0) {
-	if (sz)
-	    *sz = subsz;
-	return subsz;
+	return mem_result(subsz, sz);
     }
 
     ret = mem_status(type, &subsz);
     if (ret == 0) {
-	if (sz)
-	    *sz = subsz;
-	return subsz;
+	return mem_result(subsz, sz);
     }
 
     ret = mem_sysconf(type, &subsz);
     if (ret == 0) {
-	if (sz)
-	    *sz = subsz;
-	return subsz;
+	return mem_result(subsz, sz);
     }
 
     ret = mem_sysinfo(type, &subsz);
     if (ret == 0) {
-	if (sz)
-	    *sz = subsz;
-	return subsz;
+	return mem_result(subsz, sz);
     }
 
     /* error if the above didn't work */

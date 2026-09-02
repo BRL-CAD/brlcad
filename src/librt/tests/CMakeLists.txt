@@ -3,7 +3,9 @@ set(RT_TEST_LIBS "librt;${M_LIBRARY}")
 if(TARGET librt-static)
   brlcad_addexec(rt_static_init static_init.cpp "librt-static;${M_LIBRARY}" TEST)
   brlcad_add_test(NAME rt_static_init COMMAND rt_static_init)
-  set_tests_properties(rt_static_init PROPERTIES TIMEOUT 10)
+  if(BUILD_TESTING AND TARGET rt_static_init)
+    set_tests_properties(rt_static_init PROPERTIES TIMEOUT 10)
+  endif()
 endif()
 
 brlcad_addexec(bundle bundle.c "${RT_TEST_LIBS}" TEST)
@@ -120,6 +122,14 @@ brlcad_addexec(rt_tess_timing tess_timing.c "librt;libnmg;libwdb;libbu;${M_LIBRA
 
 brlcad_addexec(bot_match bot_match.cpp "librt;libbg;${M_LIBRARY}" TEST)
 
+brlcad_addexec(rt_bot_split
+  "bot_split.cpp;../primitives/bot/decimate_validate.cpp"
+  "librt;libbg;${M_LIBRARY}"
+  TEST
+)
+target_include_directories(rt_bot_split PRIVATE ${BRLCAD_SOURCE_DIR}/src/libbg)
+brlcad_add_test(NAME rt_bot_split COMMAND rt_bot_split)
+
 # boolweave testing
 brlcad_addexec(rt_boolweave rt_boolweave.c "${RT_TEST_LIBS}" TEST)
 brlcad_add_test(NAME rt_boolweave COMMAND rt_boolweave)
@@ -143,6 +153,10 @@ brlcad_add_test(NAME rt_prim_tess COMMAND rt_prim_tess)
 # Solid primitive-to-BRep topology
 brlcad_addexec(rt_primitive_brep primitive_brep.cpp "librt;libbrep;libbu;${M_LIBRARY}" TEST)
 brlcad_add_test(NAME rt_primitive_brep COMMAND rt_primitive_brep)
+
+# BREP archive I/O and concurrent import
+brlcad_addexec(rt_brep_io brep_io.cpp "librt;libbrep;libbu;Threads::Threads;${M_LIBRARY}" TEST)
+brlcad_add_test(NAME rt_brep_io COMMAND rt_brep_io)
 
 # stand-alone Crofton estimator tests
 brlcad_addexec(rt_crofton crofton.c "librt;libwdb;libbu;${M_LIBRARY}" TEST)
@@ -170,6 +184,7 @@ set(
   CMakeLists.txt
   arb_intersect.g
   binary_attribute.c
+  brep_io.cpp
   bound_internal.c
   crofton.c
   default_object.c

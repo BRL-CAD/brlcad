@@ -108,8 +108,11 @@ static LONG bu_init_lock = 0;
 #endif
 
 #define SEMAPHORE_MAGIC 0x62757365
+
+
 #if defined(PARALLEL) || defined(DEFINED_BU_SEMAPHORES)
-static struct bu_semaphores bu_semaphores[BU_SEMAPHORE_MAX] = {{0, SEMAPHORE_INIT}};
+
+static struct bu_semaphores bu_semaphores[BU_SEMAPHORE_MAX] = {0}; /* zero-init, not yet ready for use */
 
 /*
  * bu_semaphore_acquire() calls bu_semaphore_init() on every operation.  Keep
@@ -191,11 +194,11 @@ bu_semaphore_init(unsigned int nsemaphores)
     initialized = semaphore_count();
     for (i=initialized; i < nsemaphores; i++) {
 	memset(&bu_semaphores[i], 0, sizeof(struct bu_semaphores));
-	bu_semaphores[i].magic = SEMAPHORE_MAGIC;
 	if (mutex_init(&bu_semaphores[i].mu, USYNC_THREAD, NULL)) {
 	    fprintf(stderr, "bu_semaphore_init(): mutex_init() failed on [%d] of [%d]\n", i+1, nsemaphores - initialized);
 	    bu_bomb("fatal semaphore acquisition failure");
 	}
+	bu_semaphores[i].magic = SEMAPHORE_MAGIC;
     }
     if (nsemaphores > initialized)
 	semaphore_count_set(nsemaphores);
@@ -213,12 +216,12 @@ bu_semaphore_init(unsigned int nsemaphores)
     initialized = semaphore_count();
     for (i=initialized; i < nsemaphores; i++) {
 	memset(&bu_semaphores[i], 0, sizeof(struct bu_semaphores));
-	bu_semaphores[i].magic = SEMAPHORE_MAGIC;
 	ret = pthread_mutex_init(&bu_semaphores[i].mu,  NULL);
 	if (ret) {
 	    fprintf(stderr, "bu_semaphore_init(): pthread_mutex_init() failed on [%d] of [%d]\n", i+1, nsemaphores - initialized);
 	    sem_bomb(ret);
 	}
+	bu_semaphores[i].magic = SEMAPHORE_MAGIC;
     }
     if (nsemaphores > initialized)
 	semaphore_count_set(nsemaphores);
@@ -236,8 +239,8 @@ bu_semaphore_init(unsigned int nsemaphores)
     initialized = semaphore_count();
     for (i=initialized; i < nsemaphores; i++) {
 	memset(&bu_semaphores[i], 0, sizeof(struct bu_semaphores));
-	bu_semaphores[i].magic = SEMAPHORE_MAGIC;
 	InitializeCriticalSection(&bu_semaphores[i].mu);
+	bu_semaphores[i].magic = SEMAPHORE_MAGIC;
     }
     if (nsemaphores > initialized)
 	semaphore_count_set(nsemaphores);

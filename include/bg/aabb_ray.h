@@ -26,7 +26,7 @@
 /**
  * @brief
  *
- * Intersection between a ray and an axis-aligned box.
+ * Intersection between an infinite line and an axis-aligned box.
  *
  */
 
@@ -39,18 +39,32 @@
 
 __BEGIN_DECLS
 
-/* Compute the inverse of the direction cosines */
+/**
+ * Compute the inverse direction components for use with
+ * bg_isect_aabb_ray().  Components within SQRT_SMALL_FASTF of zero are
+ * represented by INFINITY.  The input direction is not modified.
+ */
 BG_EXPORT extern void
-bg_ray_invdir(vect_t *invdir, vect_t dir);
+bg_ray_invdir(vect_t *invdir, const vect_t dir);
 
+/**
+ * Test the infinite line defined by opt and the reciprocal direction vector
+ * invdir against an axis-aligned bounding box.  Despite its historical name,
+ * this function does not reject intersections behind opt: a successful result
+ * can have both output parameters negative.  Callers that require a forward
+ * ray must additionally require *r_max >= 0.0.
+ *
+ * On success, r_min and r_max are the entry and exit line parameters.  They
+ * are valid only when the function returns 1.
+ */
 BG_EXPORT extern int
 bg_isect_aabb_ray(
-	fastf_t *r_min, // first hit point
-	fastf_t *r_max, // second hit point
-	const point_t opt,    // ray origin
-	const fastf_t *invdir, // inverses of dir[]
-	const fastf_t *aabb_min, // AABB first point
-	const fastf_t *aabb_max  // AABB second point
+	fastf_t *r_min,
+	fastf_t *r_max,
+	const point_t opt,
+	const fastf_t *invdir,
+	const fastf_t *aabb_min,
+	const fastf_t *aabb_max
 	);
 
 __END_DECLS

@@ -2,6 +2,7 @@ set(
   man1_EN
   3dm-g.adoc
   a-d.adoc
+  adrt.adoc
   adrt_master.adoc
   adrt_slave.adoc
   alias-pix.adoc
@@ -18,6 +19,7 @@ set(
   bot_dump.adoc
   brep_simple.adoc
   brledit.adoc
+  brlcad-launcher.adoc
   brlman.adoc
   btclsh.adoc
   bw-a.adoc
@@ -45,6 +47,7 @@ set(
   coil.adoc
   comgeom-g.adoc
   conv-vg2g.adoc
+  csg-g.adoc
   cv.adoc
   d-a.adoc
   d-bw.adoc
@@ -105,6 +108,7 @@ set(
   g-off.adoc
   g-ply.adoc
   g-raw.adoc
+  g-scad.adoc
   g-shell-rect.adoc
   g-step.adoc
   g-stl.adoc

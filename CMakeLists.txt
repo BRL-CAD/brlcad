@@ -231,7 +231,7 @@ set(CMAKE_FIND_USE_PACKAGE_REGISTRY FALSE)
 # Prepare to manage and build BRL-CAD's external dependencies. Specifies a
 # specific commit hash to use in the 'bext' repository.
 include(BRLCAD_ExternalDeps)
-brlcad_bext_init(0f1eac972cd81b0e47c1a05acb00eb35da9fe336)
+brlcad_bext_init(2db06652996a5f37875de3ef9fcdadb57f89c8b3)
 
 #---------------------------------------------------------------------
 # Define various utilities.
@@ -930,6 +930,227 @@ _brlcad_srccompile_probe(HAVE_FLATTEN_ATTRIBUTE
 # serially).
 _brlcad_run_probe_batch(SRCCOMPILE)
 
+# Return compiler flags to try, in preference order, for the selected LTO
+# mode.  GCC's "auto" controls parallel LTRANS jobs and still performs its
+# full-program LTO pipeline; Clang's identically named mode means Full LTO, so
+# AUTO prefers ThinLTO before falling back to Full LTO.
+macro(_BRLCAD_LTO_FLAG_CANDIDATES _language _output)
+  set(${_output})
+  set(_brlcad_lto_compiler_id "${CMAKE_${_language}_COMPILER_ID}")
+  set(_brlcad_lto_compiler_version "${CMAKE_${_language}_COMPILER_VERSION}")
+
+  if(BRLCAD_LTO_MODE MATCHES "^OFF$")
+    # No LTO compiler flag requested.
+  elseif(_brlcad_lto_compiler_id STREQUAL "GNU")
+    if(_brlcad_lto_compiler_version VERSION_LESS 4.9)
+      if(NOT BRLCAD_LTO_MODE MATCHES "^AUTO$")
+        message(
+          FATAL_ERROR
+          "BRLCAD_LTO_MODE=${BRLCAD_LTO_MODE} is not supported by GCC ${_brlcad_lto_compiler_version}; GCC versions before 4.9 have known BRL-CAD LTO failures."
+        )
+      endif()
+    elseif(BRLCAD_LTO_MODE MATCHES "^THIN$")
+      message(FATAL_ERROR "BRLCAD_LTO_MODE=THIN requires a Clang-family compiler; GCC does not implement LLVM ThinLTO.")
+    else()
+      # GCC LTO is full-program LTO.  Prefer automatic jobserver/CPU-count
+      # parallelism, retaining plain -flto as a compatibility fallback.
+      set(${_output} flto=auto flto)
+    endif()
+  elseif(_brlcad_lto_compiler_id MATCHES "Clang")
+    if(BRLCAD_LTO_MODE MATCHES "^AUTO$")
+      set(${_output} flto=thin flto=full flto)
+    elseif(BRLCAD_LTO_MODE MATCHES "^THIN$")
+      set(${_output} flto=thin)
+    else()
+      set(${_output} flto=full flto)
+    endif()
+  elseif(BRLCAD_LTO_MODE MATCHES "^THIN$")
+    set(${_output} flto=thin)
+  elseif(BRLCAD_LTO_MODE MATCHES "^FULL$")
+    set(${_output} flto=full flto)
+  else()
+    set(${_output} flto=auto flto)
+  endif()
+
+  unset(_brlcad_lto_compiler_id)
+  unset(_brlcad_lto_compiler_version)
+endmacro()
+
+# Test the complete LTO pipeline used by BRL-CAD: compile an archive member,
+# create and index a static library with the configured archiver tools, and
+# link a consumer that must extract that member.  A compile-only flag check or
+# a single-object executable does not detect incompatible ar/ranlib tooling.
+function(_BRLCAD_CHECK_LTO_FLAG _language _candidate _output)
+  string(TOUPPER "${_candidate}" _brlcad_lto_probe_name)
+  string(REGEX REPLACE "[^a-zA-Z0-9]" "_" _brlcad_lto_probe_name "${_brlcad_lto_probe_name}")
+  set(_brlcad_lto_probe_var "BRLCAD_LTO_${_brlcad_lto_probe_name}_${_language}_PIPELINE_WORKS")
+
+  if(NOT DEFINED ${_brlcad_lto_probe_var})
+    if("${_language}" STREQUAL "C")
+      set(_brlcad_lto_source_extension "c")
+    elseif("${_language}" STREQUAL "CXX")
+      set(_brlcad_lto_source_extension "cpp")
+    else()
+      message(FATAL_ERROR "Unsupported LTO probe language: ${_language}")
+    endif()
+
+    set(_brlcad_lto_source_dir "${CMAKE_BINARY_DIR}/CMakeTmp/LTO_${_language}_${_brlcad_lto_probe_name}_sources")
+    set(_brlcad_lto_build_dir "${CMAKE_BINARY_DIR}/CMakeTmp/LTO_${_language}_${_brlcad_lto_probe_name}_build")
+    file(MAKE_DIRECTORY "${_brlcad_lto_source_dir}")
+    file(REMOVE_RECURSE "${_brlcad_lto_build_dir}")
+    file(WRITE "${_brlcad_lto_source_dir}/archive.${_brlcad_lto_source_extension}"
+      "int brlcad_lto_archive_value(void) { return 0; }\n"
+    )
+    file(WRITE "${_brlcad_lto_source_dir}/main.${_brlcad_lto_source_extension}"
+      "int brlcad_lto_archive_value(void);\n"
+      "int main(void) { return brlcad_lto_archive_value(); }\n"
+    )
+    file(WRITE "${_brlcad_lto_source_dir}/CMakeLists.txt"
+      "cmake_minimum_required(VERSION ${CMAKE_MINIMUM_REQUIRED_VERSION})\n"
+      "if(BRLCAD_LTO_AR)\n"
+      "  set(CMAKE_AR \"\${BRLCAD_LTO_AR}\" CACHE FILEPATH \"Archiver used by the LTO probe\" FORCE)\n"
+      "endif()\n"
+      "if(BRLCAD_LTO_RANLIB)\n"
+      "  set(CMAKE_RANLIB \"\${BRLCAD_LTO_RANLIB}\" CACHE FILEPATH \"Ranlib used by the LTO probe\" FORCE)\n"
+      "endif()\n"
+      "project(BRLCADLTOProbe LANGUAGES ${_language})\n"
+      "if(BRLCAD_LTO_AR)\n"
+      "  set(CMAKE_AR \"\${BRLCAD_LTO_AR}\")\n"
+      "endif()\n"
+      "if(BRLCAD_LTO_RANLIB)\n"
+      "  set(CMAKE_RANLIB \"\${BRLCAD_LTO_RANLIB}\")\n"
+      "endif()\n"
+      "set(CMAKE_VERBOSE_MAKEFILE ON)\n"
+      "add_library(brlcad_lto_archive STATIC archive.${_brlcad_lto_source_extension})\n"
+      "target_compile_options(brlcad_lto_archive PRIVATE -${_candidate})\n"
+      "add_executable(brlcad_lto_executable main.${_brlcad_lto_source_extension})\n"
+      "target_compile_options(brlcad_lto_executable PRIVATE -${_candidate})\n"
+      "target_link_options(brlcad_lto_executable PRIVATE -${_candidate})\n"
+      "target_link_libraries(brlcad_lto_executable PRIVATE brlcad_lto_archive)\n"
+    )
+
+    set(
+      _brlcad_lto_forward_vars
+      CMAKE_${_language}_COMPILER
+      CMAKE_${_language}_COMPILER_AR
+      CMAKE_${_language}_COMPILER_RANLIB
+      CMAKE_${_language}_COMPILER_EXTERNAL_TOOLCHAIN
+      CMAKE_${_language}_COMPILER_TARGET
+      CMAKE_${_language}_FLAGS
+      CMAKE_BUILD_TYPE
+      CMAKE_EXE_LINKER_FLAGS
+      CMAKE_FIND_ROOT_PATH
+      CMAKE_OSX_ARCHITECTURES
+      CMAKE_OSX_DEPLOYMENT_TARGET
+      CMAKE_OSX_SYSROOT
+      CMAKE_POSITION_INDEPENDENT_CODE
+      CMAKE_STATIC_LINKER_FLAGS
+      CMAKE_SYSROOT
+      CMAKE_SYSROOT_COMPILE
+      CMAKE_SYSROOT_LINK
+      CMAKE_SYSTEM_NAME
+      CMAKE_SYSTEM_PROCESSOR
+      CMAKE_TOOLCHAIN_FILE
+    )
+    if(CMAKE_BUILD_TYPE)
+      string(TOUPPER "${CMAKE_BUILD_TYPE}" _brlcad_lto_build_type)
+      list(APPEND _brlcad_lto_forward_vars
+        CMAKE_${_language}_FLAGS_${_brlcad_lto_build_type}
+        CMAKE_EXE_LINKER_FLAGS_${_brlcad_lto_build_type}
+        CMAKE_STATIC_LINKER_FLAGS_${_brlcad_lto_build_type}
+      )
+    endif()
+
+    set(_brlcad_lto_cmake_flags)
+    foreach(_brlcad_lto_forward_var IN LISTS _brlcad_lto_forward_vars)
+      if(DEFINED ${_brlcad_lto_forward_var})
+        string(REPLACE ";" "\\;" _brlcad_lto_forward_value "${${_brlcad_lto_forward_var}}")
+        list(APPEND _brlcad_lto_cmake_flags "-D${_brlcad_lto_forward_var}:STRING=${_brlcad_lto_forward_value}")
+      endif()
+    endforeach()
+    foreach(_brlcad_lto_tool IN ITEMS AR RANLIB)
+      if(CMAKE_${_brlcad_lto_tool})
+        string(REPLACE ";" "\\;" _brlcad_lto_tool_value "${CMAKE_${_brlcad_lto_tool}}")
+        list(APPEND _brlcad_lto_cmake_flags "-DBRLCAD_LTO_${_brlcad_lto_tool}:FILEPATH=${_brlcad_lto_tool_value}")
+      endif()
+    endforeach()
+
+    message(STATUS "Performing Test ${_brlcad_lto_probe_var}")
+    try_compile(
+      ${_brlcad_lto_probe_var}
+      "${_brlcad_lto_build_dir}"
+      "${_brlcad_lto_source_dir}"
+      BRLCADLTOProbe
+      brlcad_lto_executable
+      CMAKE_FLAGS ${_brlcad_lto_cmake_flags}
+      OUTPUT_VARIABLE _brlcad_lto_probe_output
+    )
+    set(
+      ${_brlcad_lto_probe_var} "${${_brlcad_lto_probe_var}}"
+      CACHE INTERNAL "LTO archive pipeline test for -${_candidate} with ${_language}" FORCE
+    )
+    if(${_brlcad_lto_probe_var})
+      message(STATUS "Performing Test ${_brlcad_lto_probe_var} - Success")
+    else()
+      message(STATUS "Performing Test ${_brlcad_lto_probe_var} - Failed")
+      file(APPEND "${CMAKE_BINARY_DIR}/CMakeFiles/CMakeError.log"
+        "=== LTO ARCHIVE PIPELINE TEST: ${_language} -${_candidate} ===\n${_brlcad_lto_probe_output}\n"
+      )
+    endif()
+    _brlcad_probe_diagnostic(
+      "LTO_${_language}_${_brlcad_lto_probe_name}"
+      "=== LTO ARCHIVE PIPELINE TEST: ${_language} -${_candidate} ===\n${_brlcad_lto_probe_output}\n"
+    )
+  endif()
+
+  set(${_output} "${${_brlcad_lto_probe_var}}" PARENT_SCOPE)
+endfunction()
+
+# Select the first supported flag and append only that flag to the requested
+# optimization group.  Explicit modes fail rather than silently producing a
+# non-LTO build when the compiler, archiver, and linker cannot honor the
+# request.
+macro(_BRLCAD_ENABLE_LTO_FLAG _language _flag_group)
+  _brlcad_lto_flag_candidates(${_language} _brlcad_lto_candidates)
+  if(_brlcad_lto_candidates)
+    string(JOIN ", " _brlcad_lto_candidates_report ${_brlcad_lto_candidates})
+    set(_brlcad_lto_flag_found FALSE)
+    foreach(_brlcad_lto_candidate IN LISTS _brlcad_lto_candidates)
+      if(NOT _brlcad_lto_flag_found)
+        set(_brlcad_lto_flag "-${_brlcad_lto_candidate}")
+        _brlcad_check_lto_flag(${_language} "${_brlcad_lto_candidate}" _brlcad_lto_candidate_works)
+        if(_brlcad_lto_candidate_works)
+          if(${_flag_group})
+            set(${_flag_group} "${${_flag_group}} ${_brlcad_lto_flag}")
+          else()
+            set(${_flag_group} "${_brlcad_lto_flag}")
+          endif()
+          set(_brlcad_lto_flag_found TRUE)
+        endif()
+      endif()
+    endforeach()
+    if(NOT _brlcad_lto_flag_found)
+      if(BRLCAD_LTO_MODE MATCHES "^AUTO$")
+        message(
+          STATUS
+          "LTO is unsupported by the ${_language} toolchain; continuing without it. Tried: ${_brlcad_lto_candidates_report}"
+        )
+      else()
+        message(
+          FATAL_ERROR
+          "BRLCAD_LTO_MODE=${BRLCAD_LTO_MODE} is unsupported by the ${_language} toolchain. Tried: ${_brlcad_lto_candidates_report}"
+        )
+      endif()
+    endif()
+  endif()
+  unset(_brlcad_lto_flag)
+  unset(_brlcad_lto_candidate)
+  unset(_brlcad_lto_candidate_works)
+  unset(_brlcad_lto_candidates)
+  unset(_brlcad_lto_candidates_report)
+  unset(_brlcad_lto_flag_found)
+endmacro()
+
 # Second flag-batch pre-warm (optimization and warning flags).
 # Unlike the first batch, every consumer of these flags lives under the
 # "if(NOT MSVC)" optimization/warning blocks below, so on MSVC the reference
@@ -952,15 +1173,8 @@ if(BRLCAD_ENABLE_PARALLEL_CONFIG_PROBES AND NOT MSVC)
       _brlcad_register_flag_probe(CXX "${_brlcad_opt_flag}")
     endforeach()
 
-    if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" AND CMAKE_C_COMPILER_VERSION VERSION_LESS 4.9)
-      # GCC versions before 4.9 have known LTO problems in this build.
-    else()
-      foreach(_brlcad_lto_flag IN ITEMS "flto=auto" flto)
-        _brlcad_register_flag_probe(C "${_brlcad_lto_flag}")
-        _brlcad_register_flag_probe(CXX "${_brlcad_lto_flag}")
-      endforeach()
-    endif()
-
+    # LTO candidates are intentionally checked separately because the batch
+    # compiler-flag probes do not apply their options during linking.
     if(NOT BRLCAD_PROFILING AND NOT BRLCAD_DEBUGGING)
       _brlcad_register_flag_probe(C fomit-frame-pointer)
       _brlcad_register_flag_probe(CXX fomit-frame-pointer)
@@ -1251,22 +1465,30 @@ if(NOT MSVC)
   # CHECK_C_FLAG("finline-limit=10000 --param inline-unit-growth=300 --param large-function-growth=300" GROUPS OPTIMIZE_C_FLAGS)
   # CHECK_CXX_FLAG("finline-limit=10000 --param inline-unit-growth=300 --param large-function-growth=300" GROUPS OPTIMIZE_CXX_FLAGS)
 
-  # link-time optimization (LTO) results in slower linking, more
-  # warnings, and better optimization, but requires newer versions of
-  # compilers to avoid common bugs.
-  if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" AND CMAKE_C_COMPILER_VERSION VERSION_LESS 4.9)
-    # LTO bug in GCC 4.8.5 (__fread_chk_warn)
-  else()
-    # Try flto=auto first to avoid lto-wrapper serial compilation warnings
-    # https://stackoverflow.com/questions/72218980/gcc-v12-1-warning-about-serial-compilation
-    check_c_flag("flto=auto" GROUPS OPTIMIZE_C_FLAGS VARS flto_auto_c_flag_found)
-    if (NOT flto_auto_c_flag_found)
-      check_c_flag(flto GROUPS OPTIMIZE_C_FLAGS)
-    endif()
-    check_cxx_flag("flto=auto" GROUPS OPTIMIZE_CXX_FLAGS VARS flto_auto_cxx_flag_found)
-    if (NOT flto_auto_cxx_flag_found)
-      check_cxx_flag(flto GROUPS OPTIMIZE_CXX_FLAGS)
-    endif()
+  # GCC LTO objects require ar/ranlib wrappers or explicit plugin support.
+  # Select the wrappers before probing LTO so the archive pipeline test uses
+  # the same tools as the real build.
+  if(CMAKE_C_COMPILER_ID MATCHES "GNU" AND CMAKE_C_COMPILER_VERSION VERSION_GREATER 4.8)
+    find_program(GCC_AR_LTO ${CMAKE_C_COMPILER}-ar NAMES gcc-ar DOC "GNU ARchiver wrapper with LTO support")
+    if(GCC_AR_LTO)
+      set(CMAKE_AR "${GCC_AR_LTO}")
+      set(CMAKE_AR "${GCC_AR_LTO}" CACHE FILEPATH "Archiver" FORCE)
+    endif(GCC_AR_LTO)
+    find_program(GCC_RANLIB_LTO ${CMAKE_C_COMPILER}-ranlib NAMES gcc-ranlib DOC "GNU Ranlib wrapper with LTO support")
+    if(GCC_RANLIB_LTO)
+      set(CMAKE_RANLIB "${GCC_RANLIB_LTO}")
+      set(CMAKE_RANLIB "${GCC_RANLIB_LTO}" CACHE FILEPATH "Ranlib" FORCE)
+    endif(GCC_RANLIB_LTO)
+  endif(CMAKE_C_COMPILER_ID MATCHES "GNU" AND CMAKE_C_COMPILER_VERSION VERSION_GREATER 4.8)
+  mark_as_advanced(GCC_AR_LTO)
+  mark_as_advanced(GCC_RANLIB_LTO)
+
+  # Link-time optimization is selected independently from the other release
+  # flags, permitting optimized builds without LTO.  Probe it only when the
+  # optimization flag group will actually be used.
+  if(BRLCAD_OPTIMIZED)
+    _brlcad_enable_lto_flag(C OPTIMIZE_C_FLAGS)
+    _brlcad_enable_lto_flag(CXX OPTIMIZE_CXX_FLAGS)
 
     # When compiling with O3 + flto, GCC 6.3 (e.g. on Debian x64, and maybe
     # others, but I haven't tested) fails to link executables using libbrep.
@@ -1289,24 +1511,7 @@ if(NOT MSVC)
     # which switched to C++98 from C++11.
     #
     # CHECK_CXX_FLAG(fno-inline-small-functions GROUPS OPTIMIZE_CXX_FLAGS)
-  endif("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" AND CMAKE_C_COMPILER_VERSION VERSION_LESS 4.9)
-
-  # GCC 4.9+ introduced "thin" LTO object files that require special
-  # ar/ranlib handling via wrappers or plugin specification.  These
-  # wrappers work fine even if we're not using LTO, so just use them
-  # if found.
-  if(CMAKE_C_COMPILER_ID MATCHES "GNU" AND CMAKE_C_COMPILER_VERSION VERSION_GREATER 4.8)
-    find_program(GCC_AR_LTO ${CMAKE_C_COMPILER}-ar NAMES gcc-ar DOC "GNU ARchiver wrapper with LTO support")
-    if(GCC_AR_LTO)
-      set(CMAKE_AR "${GCC_AR_LTO}" CACHE FILEPATH "Archiver" FORCE)
-    endif(GCC_AR_LTO)
-    find_program(GCC_RANLIB_LTO ${CMAKE_C_COMPILER}-ranlib NAMES gcc-ranlib DOC "GNU Ranlib wrapper with LTO support")
-    if(GCC_RANLIB_LTO)
-      set(CMAKE_RANLIB "${GCC_RANLIB_LTO}" CACHE FILEPATH "Ranlib" FORCE)
-    endif(GCC_RANLIB_LTO)
-  endif(CMAKE_C_COMPILER_ID MATCHES "GNU" AND CMAKE_C_COMPILER_VERSION VERSION_GREATER 4.8)
-  mark_as_advanced(GCC_AR_LTO)
-  mark_as_advanced(GCC_RANLIB_LTO)
+  endif()
 
   # only omit the frame pointer if we have no interest in profiling or
   # debugging.
@@ -1747,6 +1952,7 @@ _brlcad_include_probe(sys/file.h HAVE_SYS_FILE_H)
 _brlcad_include_probe(sys/ioctl.h HAVE_SYS_IOCTL_H)
 _brlcad_include_probe(sys/ioctl_compat.h HAVE_SYS_IOCTL_COMPAT_H)
 _brlcad_include_probe(sys/ipc.h HAVE_SYS_IPC_H)
+_brlcad_include_probe(sys/kinfo.h HAVE_SYS_KINFO_H)
 _brlcad_include_probe(sys/machd.h HAVE_SYS_MACHD_H)
 _brlcad_include_probe(sys/mman.h HAVE_SYS_MMAN_H)
 _brlcad_include_probe(sys/mount.h HAVE_SYS_MOUNT_H)
@@ -1767,6 +1973,7 @@ _brlcad_include_probe(sys/times.h HAVE_SYS_TIMES_H)
 _brlcad_include_probe(sys/types.h HAVE_SYS_TYPES_H)
 _brlcad_include_probe(sys/uio.h HAVE_SYS_UIO_H)
 _brlcad_include_probe(sys/un.h HAVE_SYS_UN_H)
+_brlcad_include_probe(sys/user.h HAVE_SYS_USER_H)
 _brlcad_include_probe(sys/utsname.h HAVE_SYS_UTSNAME_H)
 _brlcad_include_probe(sys/wait.h HAVE_SYS_WAIT_H)
 _brlcad_include_probe(syslog.h HAVE_SYSLOG_H)

@@ -2010,7 +2010,7 @@ refresh(struct mged_state *s)
 	 */
 	set_curr_dm(s, p);
 	(void)dm_configure_win(DMP, 0);
-	if (mapped && DMP_dirty) {
+	if (curr_dm_mapped && DMP_dirty) {
 	    int restore_zbuffer = 0;
 
 	    if (mged_variables->mv_fb &&

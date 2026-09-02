@@ -1087,7 +1087,7 @@ proc_region(char *name1)
     if (nm[cc].matcode != 0) {
 	mk_lrcomb(outfp, cname, &head, 1, 0, 0, 0, cc, 0, nm[cc].matcode, nm[cc].eqlos, 0);
     } else {
-	mk_lrcomb(outfp, cname, &head, 1, 0, 0, 0, cc, 0, 2, 100, 0);
+	mk_lrcomb(outfp, cname, &head, 1, 0, 0, 0, cc, 0, 0, 100, 0);
     }
 
     if (cc == in[0].cc) {

@@ -28,9 +28,12 @@
 
 #include "common.h"
 
+#include <cstdint>
+#include <limits>
 #include <vector>
 #include <list>
 #include <map>
+#include <mutex>
 #include <stack>
 #include <iostream>
 #include <algorithm>
@@ -2152,13 +2155,7 @@ rt_brep_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 }
 
 
-/**
- * XXX In order to facilitate exporting the ON_Brep object without a
- * whole lot of effort, we're going to (for now) extend the
- * ON_BinaryArchive to support an "in-memory" representation of a
- * binary archive. Currently, the openNURBS library only supports
- * file-based archiving operations.
- */
+/* Serialize BREP database objects without temporary files. */
 class RT_MemoryArchive : public ON_BinaryArchive
 {
 public:
@@ -2231,9 +2228,21 @@ RT_MemoryArchive::Internal_CurrentPositionOverride() const
 bool
 RT_MemoryArchive::SeekFromCurrentPosition(int seek_to)
 {
-    if (pos + seek_to > m_buffer.size())
+    if (pos > m_buffer.size())
 	return false;
-    pos += seek_to;
+
+    if (seek_to < 0) {
+	const size_t distance = (size_t)(-(int64_t)seek_to);
+	if (distance > pos)
+	    return false;
+	pos -= distance;
+	return true;
+    }
+
+    const size_t distance = (size_t)seek_to;
+    if (distance > m_buffer.size() - pos)
+	return false;
+    pos += distance;
     return true;
 }
 
@@ -2297,7 +2306,13 @@ RT_MemoryArchive::CreateCopy() const
 size_t
 RT_MemoryArchive::Read(size_t amount, void* buf)
 {
-    const size_t read_amount = (pos + amount > m_buffer.size()) ? m_buffer.size() - pos : amount;
+    if (!amount)
+	return 0;
+    if (!buf || pos > m_buffer.size())
+	return 0;
+
+    const size_t available = m_buffer.size() - pos;
+    const size_t read_amount = std::min(amount, available);
     std::copy(m_buffer.begin() + pos, m_buffer.begin() + pos + read_amount, (char *)buf);
     pos += read_amount;
     return read_amount;
@@ -2307,15 +2322,17 @@ RT_MemoryArchive::Read(size_t amount, void* buf)
 size_t
 RT_MemoryArchive::Write(const size_t amount, const void* buf)
 {
-    // the write can come in at any position!
-    const size_t start = pos;
-    // resize if needed to support new data
-    if (m_buffer.size() < (start + amount)) {
-	m_buffer.resize(start + amount);
-    }
+    if (!amount)
+	return 0;
+    if (!buf || amount > std::numeric_limits<size_t>::max() - pos)
+	return 0;
 
-    std::copy((char *)buf, (char *)buf + amount, m_buffer.begin() + pos);
-    pos += amount;
+    const size_t end = pos + amount;
+    if (m_buffer.size() < end)
+	m_buffer.resize(end);
+
+    std::copy((const char *)buf, (const char *)buf + amount, m_buffer.begin() + pos);
+    pos = end;
     return amount;
 }
 
@@ -2324,6 +2341,52 @@ bool
 RT_MemoryArchive::Flush()
 {
     return true;
+}
+
+
+/* ONX_Model deserialization is not reentrant.  In addition to ON::Begin()
+ * modifying process-wide state, model settings construction reaches
+ * openNURBS code that uses the C runtime's process-wide local-time state.
+ * Keep all BREP archive reads behind one narrow serialization point. */
+static std::mutex &
+rt_brep_archive_read_mutex()
+{
+    static std::mutex mutex;
+    return mutex;
+}
+
+
+static ON_Brep *
+brep_read_archive(const void *buffer, size_t buffer_size, ON_TextLog *log)
+{
+    if (!buffer || !buffer_size)
+	return NULL;
+
+    std::lock_guard<std::mutex> archive_guard(rt_brep_archive_read_mutex());
+    ON::Begin();
+
+    RT_MemoryArchive archive(buffer, buffer_size);
+    ONX_Model model;
+    const unsigned int object_filter = ON::brep_object;
+    if (!model.Read(archive, 0, object_filter, log))
+	return NULL;
+
+    const ON_ComponentManifestItem *geometry =
+	model.Manifest().FirstItem(ON_ModelComponent::Type::ModelGeometry);
+    if (!geometry)
+	return NULL;
+
+    if (model.Manifest().NextItem(geometry))
+	bu_log("WARNING: geometry may be getting lost\n");
+
+    ON_ModelComponentReference geometry_ref = model.ModelGeometryFromId(geometry->Id());
+    const ON_ModelGeometryComponent *geometry_component =
+	ON_ModelGeometryComponent::Cast(geometry_ref.ModelComponent());
+    if (!geometry_component)
+	return NULL;
+
+    const ON_Brep *brep = ON_Brep::Cast(geometry_component->Geometry(NULL));
+    return brep ? ON_Brep::New(*brep) : NULL;
 }
 
 #define ON_opennurbs4_id { 0x17b3ecda, 0x17ba, 0x4e45,{ 0x9e, 0x67, 0xa2, 0xb8, 0xd9, 0xbe, 0x52, 0xd } }
@@ -2421,23 +2484,29 @@ extern "C" int
 rt_brep_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)
 {
     struct rt_brep_internal *bi = (struct rt_brep_internal *)intern->idb_ptr;
-    signed char *decoded;
-    ONX_Model model;
-    if (argc == 1 && argv[0]) {
-	int decoded_size = bu_b64_decode(&decoded, (const signed char *)argv[0]);
-	RT_MemoryArchive archive(decoded, decoded_size);
-	ON_wString wonstr;
-	ON_TextLog log(wonstr);
+    if (argc != 1 || !argv[0])
+	return BRLCAD_ERROR;
 
-	RT_BREP_CK_MAGIC(bi);
-	model.Read(archive, &log);
-	bu_vls_printf(logstr, "%s", ON_String(wonstr).Array());
+    RT_BREP_CK_MAGIC(bi);
 
-	ONX_ModelComponentIterator it(model, ON_ModelComponent::Type::ModelGeometry);
-	ON_ModelComponentReference cr = it.FirstComponentReference();
-	const ON_ModelGeometryComponent *mo = ON_ModelGeometryComponent::Cast(cr.ModelComponent());
-	bi->brep = ON_Brep::New(*ON_Brep::Cast(mo->ExclusiveGeometry()));
+    signed char *decoded = NULL;
+    int decoded_size = bu_b64_decode(&decoded, (const signed char *)argv[0]);
+    if (decoded_size <= 0) {
+	if (decoded)
+	    bu_free(decoded, "decoded BREP archive");
+	return BRLCAD_ERROR;
     }
+
+    ON_wString messages;
+    ON_TextLog log(messages);
+    ON_Brep *brep = brep_read_archive(decoded, (size_t)decoded_size, &log);
+    bu_free(decoded, "decoded BREP archive");
+    bu_vls_printf(logstr, "%s", ON_String(messages).Array());
+    if (!brep)
+	return BRLCAD_ERROR;
+
+    delete bi->brep;
+    bi->brep = brep;
     return BRLCAD_OK;
 }
 
@@ -2538,38 +2607,25 @@ rt_brep_mirror(struct rt_db_internal *ip, const plane_t plane)
 int
 rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
-    ON::Begin();
     TRACE1("rt_brep_import5");
 
-    struct rt_brep_internal* bi;
     if (dbip) RT_CK_DBI(dbip);
     BU_CK_EXTERNAL(ep);
     RT_CK_DB_INTERNAL(ip);
+
+    ON_TextLog err(stderr);
+    ON_Brep *brep = brep_read_archive(ep->ext_buf, ep->ext_nbytes, &err);
+    if (!brep)
+	return -1;
+
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_BREP;
     ip->idb_meth = &OBJ[ID_BREP];
     BU_ALLOC(ip->idb_ptr, struct rt_brep_internal);
 
-    bi = (struct rt_brep_internal*)ip->idb_ptr;
+    struct rt_brep_internal *bi = (struct rt_brep_internal *)ip->idb_ptr;
     bi->magic = RT_BREP_INTERNAL_MAGIC;
-
-    RT_MemoryArchive archive(ep->ext_buf, ep->ext_nbytes);
-    ONX_Model model;
-    ON_TextLog err(stderr);
-    unsigned int obj_filter = ON::brep_object;
-    model.Read(archive, 0, obj_filter, &err);
-
-    /* grab the first geometry item from the manifest */
-    const ON_ComponentManifestItem* geom = model.Manifest().FirstItem(ON_ModelComponent::Type::ModelGeometry);
-    /* sanity check */
-    if (model.Manifest().NextItem(geom) != nullptr)
-	bu_log("WARNING: geometry may be getting lost\n");
-
-    /* do the necessary API calls to get a usable geometry component from the manifest item */
-    ON_ModelComponentReference geom_ref = model.ModelGeometryFromId(geom->Id());
-    const ON_ModelGeometryComponent* geom_comp = ON_ModelGeometryComponent::Cast(geom_ref.ModelComponent());
-
-    bi->brep = ON_Brep::New(*ON_Brep::Cast(geom_comp->Geometry(NULL)));
+    bi->brep = brep;
 
     /* Apply transform */
     return rt_brep_mat(ip, mat, NULL);

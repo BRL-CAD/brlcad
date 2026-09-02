@@ -10,12 +10,14 @@ brlcad_add_test(NAME dm_dlist_sensor COMMAND test_dm_dlist_sensor)
 # renderer mock so atlas, ownership, and UTF-8 behavior do not require OpenGL.
 set_source_files_properties(fontstash_test.c PROPERTIES LANGUAGE CXX)
 brlcad_addexec(test_fontstash fontstash_test.c "libbu;${M_LIBRARY}" TEST)
-target_include_directories(
-  test_fontstash
-  PRIVATE
-    ${CMAKE_SOURCE_DIR}/src/libbu
-    ${CMAKE_SOURCE_DIR}/src/libdm/fontstash
-)
+if(BUILD_TESTING AND TARGET test_fontstash)
+  target_include_directories(
+    test_fontstash
+    PRIVATE
+      ${CMAKE_SOURCE_DIR}/src/libbu
+      ${CMAKE_SOURCE_DIR}/src/libdm/fontstash
+  )
+endif()
 
 brlcad_add_test(
   NAME dm_fontstash

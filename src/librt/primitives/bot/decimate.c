@@ -32,15 +32,15 @@
 #include <string.h>
 #include <math.h>
 #include <ctype.h>
+#include <limits.h>
 
 #include "bu.h"
 #include "rt/geom.h"
 #include "rt/primitives/bot.h"
 
 #include "mmesh/meshdecimation.h"
-#include "mmesh/meshoptimizer.h"
-
 #include "./bot_edge.h"
+#include "./decimate_private.h"
 
 
 /* for simplicity, only consider vertices that are shared with less
@@ -475,13 +475,72 @@ edge_can_be_decimated(struct rt_bot_internal *bot,
  * `feature_size` is the smallest feature size to keep undecimated.
  * returns the number of edges removed.
  */
+struct bot_decimate_collapse_limits {
+    fastf_t max_distance_sq;
+};
+
+
+static int
+bot_decimate_adjust_collapse(void *context, double *collapse_point,
+	double *vertex0, double *vertex1)
+{
+    /* Selecting mmesh's callback-aware solver avoids a coordinate defect in
+     * its no-callback midpoint path.  Keeping each proposal near the edge
+     * being collapsed also prevents an ill-conditioned quadric from creating
+     * the long, narrow spikes observed in large mixed-scale meshes. */
+    if (!isfinite(collapse_point[X]) || !isfinite(collapse_point[Y]) ||
+	!isfinite(collapse_point[Z]))
+	return 0;
+
+    struct bot_decimate_collapse_limits *limits =
+	(struct bot_decimate_collapse_limits *)context;
+    vect_t edge;
+    vect_t offset;
+    VSUB2(edge, vertex1, vertex0);
+    VSUB2(offset, collapse_point, vertex0);
+    fastf_t edge_length_sq = MAGSQ(edge);
+    fastf_t position = edge_length_sq > SMALL_FASTF ?
+	VDOT(offset, edge) / edge_length_sq : 0.0;
+    if (position < 0.0)
+	position = 0.0;
+    if (position > 1.0)
+	position = 1.0;
+    point_t closest;
+    VJOIN1(closest, vertex0, position, edge);
+    return DIST_PNT_PNT_SQ(collapse_point, closest) <=
+	limits->max_distance_sq;
+}
+
+
 size_t
 rt_bot_decimate_gct(struct rt_bot_internal *bot, fastf_t feature_size) {
     RT_BOT_CK_MAGIC(bot);
 
-    if (feature_size < 0.0) {
-	bu_log("invalid feature_size");
+    if (feature_size <= 0.0 || feature_size > SQRT_MAX_FASTF ||
+	!isfinite(feature_size) || !bot->num_faces || !bot->num_vertices ||
+	bot->num_faces > INT_MAX ||
+	bot->num_vertices > INT_MAX ||
+	(bot->num_vertices && !bot->vertices) ||
+	(bot->num_faces && !bot->faces)) {
+	bu_log("rt_bot_decimate_gct: invalid input\n");
 	return 0;
+    }
+    for (size_t vertex = 0; vertex < bot->num_vertices; ++vertex) {
+	const fastf_t *point = &bot->vertices[vertex * 3];
+	if (!isfinite(point[X]) || !isfinite(point[Y]) ||
+	    !isfinite(point[Z])) {
+	    bu_log("rt_bot_decimate_gct: invalid vertex %zu\n", vertex);
+	    return 0;
+	}
+    }
+    for (size_t face_vertex = 0; face_vertex < bot->num_faces * 3;
+	++face_vertex) {
+	int vertex = bot->faces[face_vertex];
+	if (vertex < 0 || (size_t)vertex >= bot->num_vertices) {
+	    bu_log("rt_bot_decimate_gct: invalid vertex index %d in face %zu\n",
+		vertex, face_vertex / 3);
+	    return 0;
+	}
     }
 
     /* NOTE:  The original gct code used a feature_size -> cost threshold
@@ -498,24 +557,69 @@ rt_bot_decimate_gct(struct rt_bot_internal *bot, fastf_t feature_size) {
      * Doing the adjustment here solely for consistency. */
     fastf_t fsize = pow(feature_size, 2.0 / 3.0) * pow(2.0, 4.0 / 3.0);
 
+    size_t vertex_bytes = bot->num_vertices * 3 * sizeof(fastf_t);
+    fastf_t *working_vertices = (fastf_t *)bu_malloc(vertex_bytes,
+	"GCT working vertices");
+    memcpy(working_vertices, bot->vertices, vertex_bytes);
+    size_t face_bytes = bot->num_faces * 3 * sizeof(int);
+    int *working_faces = (int *)bu_malloc(face_bytes, "GCT working faces");
+    memcpy(working_faces, bot->faces, face_bytes);
+    int *face_sources = (int *)bu_calloc(bot->num_faces, sizeof(int),
+	"GCT face sources");
+    for (size_t face = 0; face < bot->num_faces; ++face)
+	face_sources[face] = (int)face;
     mdOperation mdop;
     mdOperationInit(&mdop);
-    mdOperationData(&mdop, bot->num_vertices, bot->vertices,
-		    MD_FORMAT_DOUBLE, 3*sizeof(double), bot->num_faces,
-		    bot->faces, MD_FORMAT_INT, 3*sizeof(int));
+    mdOperationData(&mdop, bot->num_vertices, working_vertices,
+	MD_FORMAT_DOUBLE, 3*sizeof(double), bot->num_faces,
+	working_faces, MD_FORMAT_INT, 3*sizeof(int));
+    mdOperationTriData(&mdop, face_sources, sizeof(int), NULL, NULL, NULL);
+    struct bot_decimate_collapse_limits collapse_limits = {
+	feature_size * feature_size
+    };
+    mdOperationAdjustCollapse(&mdop, NULL, bot_decimate_adjust_collapse,
+	&collapse_limits);
     mdOperationStrength(&mdop, fsize);
-    mdOperationComputeNormals(&mdop, bot->face_normals, MD_FORMAT_DOUBLE, 3*sizeof(double));
-    mdMeshDecimation(&mdop, (int)bu_avail_cpus(), MD_FLAGS_NORMAL_VERTEX_SPLITTING | MD_FLAGS_TRIANGLE_WINDING_CCW);
+    int decimation_result = mdMeshDecimation(&mdop, (int)bu_avail_cpus(),
+	MD_FLAGS_TRIANGLE_WINDING_CCW);
+    if (!decimation_result) {
+	bu_free(face_sources, "GCT face sources");
+	bu_free(working_faces, "GCT working faces");
+	bu_free(working_vertices, "GCT working vertices");
+	return 0;
+    }
 
-    bot->num_vertices = mdop.vertexcount;
-    bot->num_faces = mdop.tricount;
+    struct rt_bot_internal geometry = *bot;
+    geometry.num_vertices = mdop.vertexcount;
+    geometry.vertices = working_vertices;
+    struct rt_bot_internal *decimated = rt_bot_gc(&geometry, working_faces,
+	face_sources, mdop.tricount);
+    bu_free(face_sources, "GCT face sources");
+    bu_free(working_faces, "GCT working faces");
+    bu_free(working_vertices, "GCT working vertices");
+    if (!decimated)
+	return 0;
 
-    moOptimizeMesh(
-	    bot->num_vertices, bot->num_faces, bot->faces,
-	    sizeof(int), 3*sizeof(int),
-	    NULL, NULL,
-	    0, (int)bu_avail_cpus(), 0
-	    );
+    size_t offending_vertex = 0;
+    int validation_result = rt_bot_decimation_is_within_distance(
+	&offending_vertex, bot, decimated, feature_size);
+    if (validation_result != 1) {
+	if (validation_result == 0) {
+	    const fastf_t *vertex = &decimated->vertices[offending_vertex * 3];
+	    bu_log("rt_bot_decimate_gct: rejected output vertex %zu "
+		"(%g, %g, %g): farther than %g mm from the input surface\n",
+		offending_vertex, vertex[X], vertex[Y], vertex[Z], feature_size);
+	} else {
+	    bu_log("rt_bot_decimate_gct: unable to validate the output mesh\n");
+	}
+	rt_bot_internal_free(decimated);
+	BU_PUT(decimated, struct rt_bot_internal);
+	return 0;
+    }
+
+    rt_bot_internal_free(bot);
+    *bot = *decimated;
+    BU_PUT(decimated, struct rt_bot_internal);
 
     return mdop.decimationcount;
 }
@@ -552,6 +656,7 @@ rt_bot_decimate(struct rt_bot_internal *bot,	/* BOT to be decimated */
     size_t deleted = 0;
     size_t i = 0;
     int done;
+    int *face_sources = NULL;
 
     RT_BOT_CK_MAGIC(bot);
 
@@ -640,6 +745,20 @@ rt_bot_decimate(struct rt_bot_internal *bot,	/* BOT to be decimated */
     edges = NULL;
 
     /* condense the face list */
+    face_sources = (int *)bu_calloc(face_count, sizeof(int),
+	"decimated face sources");
+    actual_count = 0;
+    for (i = 0; i < bot->num_faces; ++i) {
+	if (faces[i * 3] != -1)
+	    face_sources[actual_count++] = (int)i;
+    }
+    if (actual_count != face_count) {
+	bu_log("rt_bot_decimate: source face count is confused!!\n");
+	bu_free(face_sources, "decimated face sources");
+	bu_free(faces, "faces");
+	return -2;
+    }
+
     actual_count = 0;
     deleted = 0;
     for (i = 0; i < bot->num_faces * 3; i++) {
@@ -655,6 +774,7 @@ rt_bot_decimate(struct rt_bot_internal *bot,	/* BOT to be decimated */
 
     if (actual_count % 3) {
 	bu_log("rt_bot_decimate: face vertices count is not a multiple of 3!!\n");
+	bu_free(face_sources, "decimated face sources");
 	bu_free(faces, "faces");
 	return -1;
     }
@@ -667,17 +787,21 @@ rt_bot_decimate(struct rt_bot_internal *bot,	/* BOT to be decimated */
 
     if (face_count != actual_count) {
 	bu_log("rt_bot_decimate: Face count is confused!!\n");
+	bu_free(face_sources, "decimated face sources");
 	bu_free(faces, "faces");
 	return -2;
     }
 
-    if (bot->faces)
-	bu_free(bot->faces, "bot->faces");
-    bot->faces = (int *)bu_realloc(faces, sizeof(int) * face_count * 3, "bot->faces");
-    bot->num_faces = face_count;
+    struct rt_bot_internal *decimated = rt_bot_gc(bot, faces, face_sources,
+	face_count);
+    bu_free(face_sources, "decimated face sources");
+    bu_free(faces, "faces");
+    if (!decimated)
+	return -3;
 
-    /* removed unused vertices */
-    (void)rt_bot_condense(bot);
+    rt_bot_internal_free(bot);
+    *bot = *decimated;
+    BU_PUT(decimated, struct rt_bot_internal);
 
     return edges_deleted;
 }

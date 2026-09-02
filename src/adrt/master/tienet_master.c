@@ -140,7 +140,8 @@ void tienet_master_init(int port, void fcb_result(tienet_buffer_t *result), char
     tienet_master_verbose = verbose;
     tienet_master_buffer_size = buffer_size;
 
-    BU_ALLOC(tienet_master_buffer, tienet_master_data_t);
+    tienet_master_buffer = (tienet_master_data_t *)bu_calloc(
+	(size_t)buffer_size, sizeof(tienet_master_data_t), "master work buffer");
 
     tienet_master_fcb_result = fcb_result;
     tienet_master_active_slaves = 0;

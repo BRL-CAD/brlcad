@@ -583,50 +583,52 @@ if(BRLCAD_ENABLE_STEP)
         -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_periodic_zero_split.json
         -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_periodic_zero_split.cmake
     )
-    brlcad_add_test(
-      NAME ap203_near_integer_spherical_winding
-      COMMAND
-        ${CMAKE_COMMAND}
-        -DSTEP_G=$<TARGET_FILE:step-g>
-        -DMGED=$<TARGET_FILE:mged>
-        -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_near_integer_spherical_winding.stp
-        -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_near_integer_spherical_winding.json
-        -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap203_near_integer_spherical_winding.g
-        -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_near_integer_spherical_winding.cmake
-    )
-    brlcad_add_test(
-      NAME ap203_shifted_four_arc_spherical_cap
-      COMMAND
-        ${CMAKE_COMMAND}
-        -DSTEP_G=$<TARGET_FILE:step-g>
-        -DMGED=$<TARGET_FILE:mged>
-        -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_shifted_four_arc_spherical_cap.stp
-        -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_shifted_four_arc_spherical_cap.json
-        -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap203_shifted_four_arc_spherical_cap.g
-        -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_shifted_four_arc_spherical_cap.cmake
-    )
-    brlcad_add_test(
-      NAME ap203_single_singular_periodic_branch
-      COMMAND
-        ${CMAKE_COMMAND}
-        -DSTEP_G=$<TARGET_FILE:step-g>
-        -DMGED=$<TARGET_FILE:mged>
-        -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_single_singular_periodic_branch.stp
-        -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_single_singular_periodic_branch.json
-        -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap203_single_singular_periodic_branch.g
-        -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_single_singular_periodic_branch.cmake
-    )
-    brlcad_add_test(
-      NAME ap203_false_face_closed_edge_use
-      COMMAND
-        ${CMAKE_COMMAND}
-        -DSTEP_G=$<TARGET_FILE:step-g>
-        -DMGED=$<TARGET_FILE:mged>
-        -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_false_face_closed_edge_use.stp
-        -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_false_face_closed_edge_use.json
-        -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap203_false_face_closed_edge_use.g
-        -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_false_face_closed_edge_use.cmake
-    )
+    if (TARGET mged)
+      brlcad_add_test(
+	NAME ap203_near_integer_spherical_winding
+	COMMAND
+	${CMAKE_COMMAND}
+	-DSTEP_G=$<TARGET_FILE:step-g>
+	-DMGED=$<TARGET_FILE:mged>
+	-DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_near_integer_spherical_winding.stp
+	-DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_near_integer_spherical_winding.json
+	-DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap203_near_integer_spherical_winding.g
+	-P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_near_integer_spherical_winding.cmake
+      )
+      brlcad_add_test(
+	NAME ap203_shifted_four_arc_spherical_cap
+	COMMAND
+	${CMAKE_COMMAND}
+	-DSTEP_G=$<TARGET_FILE:step-g>
+	-DMGED=$<TARGET_FILE:mged>
+	-DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_shifted_four_arc_spherical_cap.stp
+	-DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_shifted_four_arc_spherical_cap.json
+	-DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap203_shifted_four_arc_spherical_cap.g
+	-P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_shifted_four_arc_spherical_cap.cmake
+      )
+      brlcad_add_test(
+	NAME ap203_single_singular_periodic_branch
+	COMMAND
+	${CMAKE_COMMAND}
+	-DSTEP_G=$<TARGET_FILE:step-g>
+	-DMGED=$<TARGET_FILE:mged>
+	-DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_single_singular_periodic_branch.stp
+	-DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_single_singular_periodic_branch.json
+	-DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap203_single_singular_periodic_branch.g
+	-P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_single_singular_periodic_branch.cmake
+      )
+      brlcad_add_test(
+	NAME ap203_false_face_closed_edge_use
+	COMMAND
+	${CMAKE_COMMAND}
+	-DSTEP_G=$<TARGET_FILE:step-g>
+	-DMGED=$<TARGET_FILE:mged>
+	-DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_false_face_closed_edge_use.stp
+	-DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_false_face_closed_edge_use.json
+	-DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap203_false_face_closed_edge_use.g
+	-P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_false_face_closed_edge_use.cmake
+      )
+    endif()
     brlcad_add_test(
       NAME ap203_doubly_periodic_native_remap_transaction
       COMMAND
@@ -646,73 +648,75 @@ if(BRLCAD_ENABLE_STEP)
         -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_toroidal_band.json
         -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_toroidal_band.cmake
     )
-    brlcad_add_test(
-      NAME ap203_toroidal_band_profile_seam
-      COMMAND
-        ${CMAKE_COMMAND}
-        -DSTEP_G=$<TARGET_FILE:step-g>
-        -DMGED=$<TARGET_FILE:mged>
-        -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_toroidal_band_profile_seam.stp
-        -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_toroidal_band_profile_seam.json
-        -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap203_toroidal_band_profile_seam.g
-        -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_toroidal_band_profile_seam.cmake
-    )
-    brlcad_add_test(
-      NAME ap203_toroidal_band_topology_seam
-      COMMAND
-        ${CMAKE_COMMAND}
-        -DSTEP_G=$<TARGET_FILE:step-g>
-        -DMGED=$<TARGET_FILE:mged>
-        -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_toroidal_band_topology_seam.stp
-        -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_toroidal_band_topology_seam.json
-        -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap203_toroidal_band_topology_seam.g
-        -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_toroidal_band_topology_seam.cmake
-    )
-    brlcad_add_test(
-      NAME ap203_measured_periodic_band_seam
-      COMMAND
-        ${CMAKE_COMMAND}
-        -DSTEP_G=$<TARGET_FILE:step-g>
-        -DMGED=$<TARGET_FILE:mged>
-        -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_measured_periodic_band_seam.stp
-        -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_measured_periodic_band_seam.json
-        -DEXACT_REPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_measured_periodic_band_seam_exact.json
-        -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap203_measured_periodic_band_seam.g
-        -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_measured_periodic_band_seam.cmake
-    )
-    brlcad_add_test(
-      NAME ap203_doubly_periodic_segmented_band
-      COMMAND
-        ${CMAKE_COMMAND}
-        -DSTEP_G=$<TARGET_FILE:step-g>
-        -DMGED=$<TARGET_FILE:mged>
-        -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_doubly_periodic_segmented_band.stp
-        -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_doubly_periodic_segmented_band.json
-        -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap203_doubly_periodic_segmented_band.g
-        -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_doubly_periodic_segmented_band.cmake
-    )
-    brlcad_add_test(
-      NAME ap203_shared_periodic_boundary_split
-      COMMAND
-        ${CMAKE_COMMAND}
-        -DSTEP_G=$<TARGET_FILE:step-g>
-        -DMGED=$<TARGET_FILE:mged>
-        -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_shared_periodic_boundary_split.stp
-        -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_shared_periodic_boundary_split.json
-        -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap203_shared_periodic_boundary_split.g
-        -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_shared_periodic_boundary_split.cmake
-    )
-    brlcad_add_test(
-      NAME ap203_singly_periodic_isocurve_order
-      COMMAND
-        ${CMAKE_COMMAND}
-        -DSTEP_G=$<TARGET_FILE:step-g>
-        -DMGED=$<TARGET_FILE:mged>
-        -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_singly_periodic_isocurve_order.stp
-        -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_singly_periodic_isocurve_order.json
-        -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap203_singly_periodic_isocurve_order.g
-        -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_singly_periodic_isocurve_order.cmake
-    )
+    if (TARGET mged)
+      brlcad_add_test(
+	NAME ap203_toroidal_band_profile_seam
+	COMMAND
+	${CMAKE_COMMAND}
+	-DSTEP_G=$<TARGET_FILE:step-g>
+	-DMGED=$<TARGET_FILE:mged>
+	-DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_toroidal_band_profile_seam.stp
+	-DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_toroidal_band_profile_seam.json
+	-DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap203_toroidal_band_profile_seam.g
+	-P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_toroidal_band_profile_seam.cmake
+      )
+      brlcad_add_test(
+	NAME ap203_toroidal_band_topology_seam
+	COMMAND
+	${CMAKE_COMMAND}
+	-DSTEP_G=$<TARGET_FILE:step-g>
+	-DMGED=$<TARGET_FILE:mged>
+	-DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_toroidal_band_topology_seam.stp
+	-DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_toroidal_band_topology_seam.json
+	-DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap203_toroidal_band_topology_seam.g
+	-P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_toroidal_band_topology_seam.cmake
+      )
+      brlcad_add_test(
+	NAME ap203_measured_periodic_band_seam
+	COMMAND
+	${CMAKE_COMMAND}
+	-DSTEP_G=$<TARGET_FILE:step-g>
+	-DMGED=$<TARGET_FILE:mged>
+	-DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_measured_periodic_band_seam.stp
+	-DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_measured_periodic_band_seam.json
+	-DEXACT_REPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_measured_periodic_band_seam_exact.json
+	-DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap203_measured_periodic_band_seam.g
+	-P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_measured_periodic_band_seam.cmake
+      )
+      brlcad_add_test(
+	NAME ap203_doubly_periodic_segmented_band
+	COMMAND
+	${CMAKE_COMMAND}
+	-DSTEP_G=$<TARGET_FILE:step-g>
+	-DMGED=$<TARGET_FILE:mged>
+	-DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_doubly_periodic_segmented_band.stp
+	-DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_doubly_periodic_segmented_band.json
+	-DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap203_doubly_periodic_segmented_band.g
+	-P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_doubly_periodic_segmented_band.cmake
+      )
+      brlcad_add_test(
+	NAME ap203_shared_periodic_boundary_split
+	COMMAND
+	${CMAKE_COMMAND}
+	-DSTEP_G=$<TARGET_FILE:step-g>
+	-DMGED=$<TARGET_FILE:mged>
+	-DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_shared_periodic_boundary_split.stp
+	-DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_shared_periodic_boundary_split.json
+	-DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap203_shared_periodic_boundary_split.g
+	-P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_shared_periodic_boundary_split.cmake
+      )
+      brlcad_add_test(
+	NAME ap203_singly_periodic_isocurve_order
+	COMMAND
+	${CMAKE_COMMAND}
+	-DSTEP_G=$<TARGET_FILE:step-g>
+	-DMGED=$<TARGET_FILE:mged>
+	-DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_singly_periodic_isocurve_order.stp
+	-DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_singly_periodic_isocurve_order.json
+	-DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap203_singly_periodic_isocurve_order.g
+	-P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_singly_periodic_isocurve_order.cmake
+      )
+    endif()
     # These roots are distinct scale/tolerance instances of the same
     # periodic-pole branch join.
     brlcad_add_test(
@@ -765,60 +769,62 @@ if(BRLCAD_ENABLE_STEP)
         -DTEST_TIMEOUT=30
         -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_selected_solid_regression.cmake
     )
-    brlcad_add_test(
-      NAME ap203_torus_seam_relocation
-      COMMAND
-        ${CMAKE_COMMAND}
-        -DSTEP_G=$<TARGET_FILE:step-g>
-        -DMGED=$<TARGET_FILE:mged>
-        -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_torus_seam_relocation.stp
-        -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_torus_seam_relocation.json
-        -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap203_torus_seam_relocation.g
-        -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_torus_seam_relocation.cmake
-    )
-    brlcad_add_test(
-      NAME ap203_extruded_closed_profile_seam
-      COMMAND
-        ${CMAKE_COMMAND}
-        -DSTEP_G=$<TARGET_FILE:step-g>
-        -DMGED=$<TARGET_FILE:mged>
-        -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_extruded_closed_profile_seam.stp
-        -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_extruded_closed_profile_seam.json
-        -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap203_extruded_closed_profile_seam.g
-        -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_extruded_closed_profile_seam.cmake
-    )
-    brlcad_add_test(
-      NAME ap203_near_degenerate_nurbs_pole
-      COMMAND
-        ${CMAKE_COMMAND}
-        -DSTEP_G=$<TARGET_FILE:step-g>
-        -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_near_degenerate_nurbs_pole.stp
-        -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_near_degenerate_nurbs_pole.json
-        -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_near_degenerate_nurbs_pole.cmake
-    )
-    brlcad_add_test(
-      NAME ap203_periodic_bspline_triangular_cap
-      COMMAND
-        ${CMAKE_COMMAND}
-        -DSTEP_G=$<TARGET_FILE:step-g>
-        -DMGED=$<TARGET_FILE:mged>
-        -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_periodic_bspline_triangular_cap.stp
-        -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_periodic_bspline_triangular_cap.json
-        -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap203_periodic_bspline_triangular_cap.g
-        -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_periodic_bspline_triangular_cap.cmake
-    )
-    brlcad_add_test(
-      NAME ap203_conical_multi_edge_periodic_cap
-      COMMAND
-        ${CMAKE_COMMAND}
-        -DSTEP_G=$<TARGET_FILE:step-g>
-        -DMGED=$<TARGET_FILE:mged>
-        -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_conical_multi_edge_periodic_cap.stp
-        -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_conical_multi_edge_periodic_cap.json
-        -DEXACT_REPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_conical_multi_edge_periodic_cap_exact.json
-        -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap203_conical_multi_edge_periodic_cap.g
-        -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_conical_multi_edge_periodic_cap.cmake
-    )
+    if (TARGET mged)
+      brlcad_add_test(
+	NAME ap203_torus_seam_relocation
+	COMMAND
+	${CMAKE_COMMAND}
+	-DSTEP_G=$<TARGET_FILE:step-g>
+	-DMGED=$<TARGET_FILE:mged>
+	-DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_torus_seam_relocation.stp
+	-DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_torus_seam_relocation.json
+	-DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap203_torus_seam_relocation.g
+	-P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_torus_seam_relocation.cmake
+      )
+      brlcad_add_test(
+	NAME ap203_extruded_closed_profile_seam
+	COMMAND
+	${CMAKE_COMMAND}
+	-DSTEP_G=$<TARGET_FILE:step-g>
+	-DMGED=$<TARGET_FILE:mged>
+	-DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_extruded_closed_profile_seam.stp
+	-DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_extruded_closed_profile_seam.json
+	-DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap203_extruded_closed_profile_seam.g
+	-P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_extruded_closed_profile_seam.cmake
+      )
+      brlcad_add_test(
+	NAME ap203_near_degenerate_nurbs_pole
+	COMMAND
+	${CMAKE_COMMAND}
+	-DSTEP_G=$<TARGET_FILE:step-g>
+	-DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_near_degenerate_nurbs_pole.stp
+	-DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_near_degenerate_nurbs_pole.json
+	-P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_near_degenerate_nurbs_pole.cmake
+      )
+      brlcad_add_test(
+	NAME ap203_periodic_bspline_triangular_cap
+	COMMAND
+	${CMAKE_COMMAND}
+	-DSTEP_G=$<TARGET_FILE:step-g>
+	-DMGED=$<TARGET_FILE:mged>
+	-DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_periodic_bspline_triangular_cap.stp
+	-DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_periodic_bspline_triangular_cap.json
+	-DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap203_periodic_bspline_triangular_cap.g
+	-P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_periodic_bspline_triangular_cap.cmake
+      )
+      brlcad_add_test(
+	NAME ap203_conical_multi_edge_periodic_cap
+	COMMAND
+	${CMAKE_COMMAND}
+	-DSTEP_G=$<TARGET_FILE:step-g>
+	-DMGED=$<TARGET_FILE:mged>
+	-DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_conical_multi_edge_periodic_cap.stp
+	-DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_conical_multi_edge_periodic_cap.json
+	-DEXACT_REPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_conical_multi_edge_periodic_cap_exact.json
+	-DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap203_conical_multi_edge_periodic_cap.g
+	-P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_conical_multi_edge_periodic_cap.cmake
+      )
+    endif()
     brlcad_add_test(
       NAME ap203_closed_nurbs_interval
       COMMAND
@@ -838,126 +844,128 @@ if(BRLCAD_ENABLE_STEP)
         -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_closed_curve_seam_interval.json
         -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_closed_curve_seam_interval.cmake
     )
-    brlcad_add_test(
-      NAME ap203_unclamped_closed_curve_knots
-      COMMAND
-        ${CMAKE_COMMAND}
-        -DSTEP_G=$<TARGET_FILE:step-g>
-        -DMGED=$<TARGET_FILE:mged>
-        -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_unclamped_closed_curve_knots.stp
-        -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_unclamped_closed_curve_knots.json
-        -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap203_unclamped_closed_curve_knots.g
-        -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_unclamped_closed_curve_knots.cmake
-    )
-    brlcad_add_test(
-      NAME ap203_bounded_parent_curve
-      COMMAND
-        ${CMAKE_COMMAND}
-        -DSTEP_G=$<TARGET_FILE:step-g>
-        -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_bounded_parent_curve.stp
-        -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_bounded_parent_curve.json
-        -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_bounded_parent_curve.cmake
-    )
-    brlcad_add_test(
-      NAME ap203_wip_compat
-      COMMAND
-        ${CMAKE_COMMAND}
-        -DSTEP_G=$<TARGET_FILE:step-g>
-        -DMGED=$<TARGET_FILE:mged>
-        -DFACETED_INPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_faceted_tetra.stp
-        -DMAPPED_INPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_mapped_assembly.stp
-        -DOUTPUT_DIR=${CMAKE_CURRENT_BINARY_DIR}
-        -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_wip_compat.cmake
-    )
-    brlcad_add_test(
-      NAME ap203_invalid_brep
-      COMMAND
-        ${CMAKE_COMMAND}
-        -DSTEP_G=$<TARGET_FILE:step-g>
-        -DMGED=$<TARGET_FILE:mged>
-        -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_invalid_brep.stp
-        -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_invalid_brep.json
-        -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap203_invalid_brep.g
-        -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_invalid_brep.cmake
-    )
-    brlcad_add_test(
-      NAME ap203_bezier_offset_wireframe
-      COMMAND
-        ${CMAKE_COMMAND}
-        -DSTEP_G=$<TARGET_FILE:step-g>
-        -DMGED=$<TARGET_FILE:mged>
-        -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_bezier_offset_wireframe.stp
-        -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_bezier_offset_wireframe.json
-        -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap203_bezier_offset_wireframe.g
-        -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_bezier_offset_wireframe.cmake
-    )
-    brlcad_add_test(
-      NAME ap203_part21_scope
-      COMMAND
-        ${CMAKE_COMMAND}
-        -DSTEP_G=$<TARGET_FILE:step-g>
-        -DMGED=$<TARGET_FILE:mged>
-        -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_part21_scope.stp
-        -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_part21_scope.json
-        -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap203_part21_scope.g
-        -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_part21_scope.cmake
-    )
-    brlcad_add_test(
-      NAME ap203_recommended_hierarchy
-      COMMAND
-        ${CMAKE_COMMAND}
-        -DSTEP_G=$<TARGET_FILE:step-g>
-        -DMGED=$<TARGET_FILE:mged>
-        -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_referenced_two_level.stp
-        -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_recommended_hierarchy.json
-        -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap203_recommended_hierarchy.g
-        -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_recommended_hierarchy.cmake
-    )
-    brlcad_add_test(
-      NAME ap203_usage_semantics
-      COMMAND
-        ${CMAKE_COMMAND}
-        -DSTEP_G=$<TARGET_FILE:step-g>
-        -DG_STEP=$<TARGET_FILE:g-step>
-        -DMGED=$<TARGET_FILE:mged>
-        -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_usage_semantics.stp
-        -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_usage_semantics.json
-        -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap203_usage_semantics.g
-        -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_usage_semantics.cmake
-    )
-    brlcad_add_test(
-      NAME ap203_topology_wireframes
-      COMMAND
-        ${CMAKE_COMMAND}
-        -DSTEP_G=$<TARGET_FILE:step-g>
-        -DMGED=$<TARGET_FILE:mged>
-        -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_topology_wireframes.stp
-        -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_topology_wireframes.json
-        -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap203_topology_wireframes.g
-        -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_topology_wireframes.cmake
-    )
-    brlcad_add_test(
-      NAME ap203_appendix_j_multiple_sdr
-      COMMAND
-        ${CMAKE_COMMAND}
-        -DSTEP_G=$<TARGET_FILE:step-g>
-        -DMGED=$<TARGET_FILE:mged>
-        -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_appendix_j_multiple_sdr.stp
-        -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_appendix_j_multiple_sdr.json
-        -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap203_appendix_j_multiple_sdr.g
-        -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_appendix_j_multiple_sdr.cmake
-    )
-    brlcad_add_test(
-      NAME ap203_bounded_surface_curves
-      COMMAND
-        ${CMAKE_COMMAND}
-        -DSTEP_G=$<TARGET_FILE:step-g>
-        -DMGED=$<TARGET_FILE:mged>
-        -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_bounded_surface_curves.stp
-        -DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_bounded_surface_curves.json
-        -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap203_bounded_surface_curves.g
-        -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_bounded_surface_curves.cmake
-    )
+    if (TARGET mged)
+      brlcad_add_test(
+	NAME ap203_unclamped_closed_curve_knots
+	COMMAND
+	${CMAKE_COMMAND}
+	-DSTEP_G=$<TARGET_FILE:step-g>
+	-DMGED=$<TARGET_FILE:mged>
+	-DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_unclamped_closed_curve_knots.stp
+	-DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_unclamped_closed_curve_knots.json
+	-DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap203_unclamped_closed_curve_knots.g
+	-P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_unclamped_closed_curve_knots.cmake
+      )
+      brlcad_add_test(
+	NAME ap203_bounded_parent_curve
+	COMMAND
+	${CMAKE_COMMAND}
+	-DSTEP_G=$<TARGET_FILE:step-g>
+	-DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_bounded_parent_curve.stp
+	-DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_bounded_parent_curve.json
+	-P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_bounded_parent_curve.cmake
+      )
+      brlcad_add_test(
+	NAME ap203_wip_compat
+	COMMAND
+	${CMAKE_COMMAND}
+	-DSTEP_G=$<TARGET_FILE:step-g>
+	-DMGED=$<TARGET_FILE:mged>
+	-DFACETED_INPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_faceted_tetra.stp
+	-DMAPPED_INPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_mapped_assembly.stp
+	-DOUTPUT_DIR=${CMAKE_CURRENT_BINARY_DIR}
+	-P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_wip_compat.cmake
+      )
+      brlcad_add_test(
+	NAME ap203_invalid_brep
+	COMMAND
+	${CMAKE_COMMAND}
+	-DSTEP_G=$<TARGET_FILE:step-g>
+	-DMGED=$<TARGET_FILE:mged>
+	-DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_invalid_brep.stp
+	-DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_invalid_brep.json
+	-DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap203_invalid_brep.g
+	-P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_invalid_brep.cmake
+      )
+      brlcad_add_test(
+	NAME ap203_bezier_offset_wireframe
+	COMMAND
+	${CMAKE_COMMAND}
+	-DSTEP_G=$<TARGET_FILE:step-g>
+	-DMGED=$<TARGET_FILE:mged>
+	-DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_bezier_offset_wireframe.stp
+	-DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_bezier_offset_wireframe.json
+	-DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap203_bezier_offset_wireframe.g
+	-P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_bezier_offset_wireframe.cmake
+      )
+      brlcad_add_test(
+	NAME ap203_part21_scope
+	COMMAND
+	${CMAKE_COMMAND}
+	-DSTEP_G=$<TARGET_FILE:step-g>
+	-DMGED=$<TARGET_FILE:mged>
+	-DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_part21_scope.stp
+	-DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_part21_scope.json
+	-DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap203_part21_scope.g
+	-P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_part21_scope.cmake
+      )
+      brlcad_add_test(
+	NAME ap203_recommended_hierarchy
+	COMMAND
+	${CMAKE_COMMAND}
+	-DSTEP_G=$<TARGET_FILE:step-g>
+	-DMGED=$<TARGET_FILE:mged>
+	-DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_referenced_two_level.stp
+	-DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_recommended_hierarchy.json
+	-DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap203_recommended_hierarchy.g
+	-P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_recommended_hierarchy.cmake
+      )
+      brlcad_add_test(
+	NAME ap203_usage_semantics
+	COMMAND
+	${CMAKE_COMMAND}
+	-DSTEP_G=$<TARGET_FILE:step-g>
+	-DG_STEP=$<TARGET_FILE:g-step>
+	-DMGED=$<TARGET_FILE:mged>
+	-DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_usage_semantics.stp
+	-DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_usage_semantics.json
+	-DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap203_usage_semantics.g
+	-P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_usage_semantics.cmake
+      )
+      brlcad_add_test(
+	NAME ap203_topology_wireframes
+	COMMAND
+	${CMAKE_COMMAND}
+	-DSTEP_G=$<TARGET_FILE:step-g>
+	-DMGED=$<TARGET_FILE:mged>
+	-DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_topology_wireframes.stp
+	-DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_topology_wireframes.json
+	-DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap203_topology_wireframes.g
+	-P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_topology_wireframes.cmake
+      )
+      brlcad_add_test(
+	NAME ap203_appendix_j_multiple_sdr
+	COMMAND
+	${CMAKE_COMMAND}
+	-DSTEP_G=$<TARGET_FILE:step-g>
+	-DMGED=$<TARGET_FILE:mged>
+	-DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_appendix_j_multiple_sdr.stp
+	-DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_appendix_j_multiple_sdr.json
+	-DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap203_appendix_j_multiple_sdr.g
+	-P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_appendix_j_multiple_sdr.cmake
+      )
+      brlcad_add_test(
+	NAME ap203_bounded_surface_curves
+	COMMAND
+	${CMAKE_COMMAND}
+	-DSTEP_G=$<TARGET_FILE:step-g>
+	-DMGED=$<TARGET_FILE:mged>
+	-DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_bounded_surface_curves.stp
+	-DREPORT=${CMAKE_CURRENT_BINARY_DIR}/ap203_bounded_surface_curves.json
+	-DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ap203_bounded_surface_curves.g
+	-P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ap203_bounded_surface_curves.cmake
+      )
+    endif()
   endif()
 
   if(HIDE_INTERNAL_SYMBOLS)
@@ -1064,6 +1072,35 @@ cmakefiles(
   tests/ap203_unclamped_closed_curve_knots.cmake
   tests/ap203_unclamped_closed_curve_knots.stp
 )
+
+set(_ap203_generated_tests
+  budget_controls
+  closed_curve_seam_interval
+  closed_nurbs_interval
+  closed_nurbs_interval_exact
+  direct_manifold
+  doubly_periodic_native_remap_transaction
+  lazy_relationships
+  malformed_representation
+  multi_schema_header
+  non_geometric_representation
+  partial_coverage
+  partial_coverage_strict
+  periodic_budget_solid_a
+  periodic_budget_solid_b
+  periodic_pole_solid
+  periodic_zero_split
+  scaled_periodic_pole_solids
+  toroidal_band
+  unsupported_geometry
+  unsupported_geometry_strict
+)
+foreach(_test_name IN LISTS _ap203_generated_tests)
+  foreach(_extension IN ITEMS json g stp csv)
+    distclean("${CMAKE_CURRENT_BINARY_DIR}/ap203_${_test_name}.${_extension}")
+  endforeach()
+endforeach()
+distclean("${CMAKE_CURRENT_BINARY_DIR}/ap203_toroidal_band.json.repair-none")
 
 # Local Variables:
 # tab-width: 8

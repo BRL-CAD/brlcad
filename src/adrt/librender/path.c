@@ -64,12 +64,9 @@ render_path_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, vec
     struct tie_id_s new_id;
     vect_t new_pix, accum, T, ref, bax, bay;
     adrt_mesh_t *new_mesh;
-    TFLOAT sin_theta, cos_theta, sin_phi, cos_phi;
+    TFLOAT sample, sin_theta, cos_theta, sin_phi, cos_phi;
     int i, n, propagate;
     render_path_t *rd;
-
-    VSETALL(new_pix, 0);
-    VSETALL(T, 0);
 
     rd = (render_path_t *)render->data;
 
@@ -78,6 +75,8 @@ render_path_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, vec
     for (i = 0; i < rd->samples; i++) {
 	/* Prime variables */
 	new_ray = *ray;
+	VSETALL(new_pix, 0);
+	VSETALL(T, 0);
 	propagate = 1;
 
 	/* Terminate if depth is too great. */
@@ -119,20 +118,22 @@ render_path_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, vec
 		T[2] = new_id.norm[2] - new_mesh->attributes->gloss*ref[2];
 		VUNITIZE(T);
 
-		/* Form Basis X */
-		bax[0] = ZERO(T[0]) || ZERO(T[1]) ? -T[1] : 1.0;
-		bax[1] = T[0];
-		bax[2] = 0;
+		/* Build a stable orthonormal basis around the surface normal.
+		 * The former formulation collapsed to a zero vector on horizontal
+		 * surfaces, turning all ground-plane samples into vertical rays. */
+		if (fabs(T[0]) > fabs(T[2])) {
+		    VSET(bax, -T[1], T[0], 0.0);
+		} else {
+		    VSET(bax, 0.0, -T[2], T[1]);
+		}
 		VUNITIZE(bax);
 
-		/* Form Basis Y, Simplified Cross Product of two unit vectors is a unit vector */
-		bay[0] = -T[2]*bax[1];
-		bay[1] = T[2]*bax[0];
-		bay[2] = T[0]*bax[1] - T[1]*bax[0];
+		VCROSS(bay, T, bax);
 
-		cos_theta = bn_randmt();
-		sin_theta = sqrt(cos_theta);
-		cos_theta = 1-cos_theta;
+		sample = bn_randmt();
+		sample = sample < 0.0 ? 0.0 : (sample > 1.0 ? 1.0 : sample);
+		sin_theta = sqrt(sample);
+		cos_theta = sqrt(1.0 - sample);
 
 		cos_phi = bn_randmt() * M_2PI;
 		sin_phi = sin(cos_phi);
@@ -192,7 +193,7 @@ render_path_init(render_t *render, const char *buf)
     d = (render_path_t *)render->data;
 
     /* Defaults: a modest sample count and a neutral daylight sky. */
-    d->samples = 12;
+    d->samples = RENDER_PATH_DEFAULT_SAMPLES;
     VSET(d->sky, 0.9, 0.93, 1.0);
 
     /*
@@ -204,7 +205,7 @@ render_path_init(render_t *render, const char *buf)
 	int n = atoi(buf);
 	const char *p;
 	if (n > 0)
-	    d->samples = n;
+	    d->samples = n > RENDER_PATH_MAX_SAMPLES ? RENDER_PATH_MAX_SAMPLES : n;
 	p = strchr(buf, ',');
 	if (p) {
 	    double r = 0.0, g = 0.0, b = 0.0;

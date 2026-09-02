@@ -5,7 +5,9 @@ brlcad_regression_test(regress-fastgen "fast4-g;gdiff" EXEC fast4-g)
 brlcad_regression_test(regress-fastgen-faa "fast4-g" EXEC fast4-g)
 
 # Make sure we depend on the input target
-add_dependencies(regress-fastgen-faa Business_Jet.g)
+if(BUILD_TESTING AND TARGET regress-fastgen-faa AND TARGET Business_Jet.g)
+  add_dependencies(regress-fastgen-faa Business_Jet.g)
+endif()
 
 distclean(
   "${CMAKE_CURRENT_BINARY_DIR}/fastgen.log"

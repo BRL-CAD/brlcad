@@ -273,6 +273,7 @@ GED_EXPORT extern int _ged_combadd2(struct ged *gedp,
 /* defined in display_list.c */
 GED_EXPORT extern void _dl_eraseAllNamesFromDisplay(struct ged *gedp, const char *name, const int skip_first);
 GED_EXPORT extern void _dl_eraseAllPathsFromDisplay(struct ged *gedp, const char *path, const int skip_first);
+GED_EXPORT extern void _ged_erase_legacy_overlap_plot(struct ged *gedp);
 extern void _dl_freeDisplayListItem(struct ged *gedp, struct display_list *gdlp);
 GED_EXPORT extern int dl_bounding_sph(struct bu_list *hdlp, vect_t *min, vect_t *max, int pflag);
 
@@ -295,6 +296,28 @@ GED_EXPORT extern int _ged_get_obj_bounds2(struct ged *gedp,
 				struct _ged_trace_data *gtdp,
 				point_t rpp_min,
 				point_t rpp_max);
+
+/* defined in get_obj_bounds.c: "tight" AABB that accounts for subtracted
+ * (OP_SUBTRACT) material by bounding a Cauchy-Crofton-converged point set from
+ * the ray-traced, boolean-evaluated geometry.  Unlike
+ * rt_obj_bounds()/rt_bound_tree(), which discard the RPP of
+ * negative members and therefore never shrink to reflect carved-away material,
+ * this contracts the box to the evaluated geometry (approximate, to the ray
+ * sampling resolution).  Falls back to the loose bound on any failure. */
+GED_EXPORT extern int _ged_obj_tight_bounds(struct ged *gedp,
+				int argc,
+				const char *argv[],
+				int use_air,
+				point_t rpp_min,
+				point_t rpp_max);
+
+/* Boolean-evaluated oriented bounding box.  Corners use ARB8 ordering. */
+GED_EXPORT extern int _ged_obj_oriented_bounds(struct ged *gedp,
+				int argc,
+				const char *argv[],
+				int use_air,
+				int evaluated,
+				point_t corners[8]);
 
 /*  defined in get_solid_kp.c */
 GED_EXPORT extern int _ged_get_solid_keypoint(struct ged *const gedp,

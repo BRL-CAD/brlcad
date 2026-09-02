@@ -53,35 +53,15 @@ struct ged_rtcheck {
 };
 
 static void
-rtcheck_handler_cleanup(struct ged_rtcheck *rtcp, int type)
+rtcheck_handler_cleanup(struct ged_rtcheck *rtcp)
 {
     struct ged_subprocess *p = rtcp->rrtp;
     struct ged *gedp = p->gedp;
-    bu_log("handler cleanup: %d\n", type);
 
-    /* Done watching for output, undo subprocess I/O hooks. */
-    if (type != -1 && gedp->ged_delete_io_handler) {
-
-	if (p->stdin_active || p->stdout_active || p->stderr_active) {
-	    // If anyone else is still listening, we're not done yet.
-	    if (p->stdin_active) {
-		(*gedp->ged_delete_io_handler)(p, BU_PROCESS_STDIN);
-		return;
-	    }
-	    if (p->stdout_active) {
-		(*gedp->ged_delete_io_handler)(p, BU_PROCESS_STDOUT);
-		return;
-	    }
-	    if (p->stderr_active) {
-		(*gedp->ged_delete_io_handler)(p, BU_PROCESS_STDERR);
-		return;
-	    }
-	}
-
-	return;
+    if (gedp->ged_delete_io_handler) {
+	(*gedp->ged_delete_io_handler)(p, BU_PROCESS_STDOUT);
+	(*gedp->ged_delete_io_handler)(p, BU_PROCESS_STDERR);
     }
-
-    bu_log("doing cleanup: %d\n", type);
 
     bu_process_file_close(p->p, BU_PROCESS_STDOUT);
     /* wait for the forked process */
@@ -91,12 +71,13 @@ rtcheck_handler_cleanup(struct ged_rtcheck *rtcp, int type)
     }
     bu_ptbl_rm(&gedp->ged_subp, (long *)p);
     BU_PUT(p, struct ged_subprocess);
-    bv_vlblock_free(rtcp->vbp);
+    if (rtcp->vbp)
+	bv_vlblock_free(rtcp->vbp);
     BU_PUT(rtcp, struct ged_rtcheck);
 }
 
 static void
-rtcheck_vector_handler(void *clientData, int type)
+rtcheck_vector_handler(void *clientData, int UNUSED(mask))
 {
     int value = 0;
     struct ged_rtcheck *rtcp = (struct ged_rtcheck *)clientData;
@@ -108,6 +89,10 @@ rtcheck_vector_handler(void *clientData, int type)
     if (!rtcp->draw_read_failed && (feof(rtcp->fp) || (value = getc(rtcp->fp)) == EOF)) {
 	size_t i;
 	rtcp->draw_read_failed = 1;
+	if (gedp->ged_delete_io_handler)
+	    (*gedp->ged_delete_io_handler)(rrtp, BU_PROCESS_STDOUT);
+	else
+	    rrtp->stdout_active = 0;
 
 	// Clear any prior rtcheck outputs - whether or not we have new
 	// overlaps to draw, we're eliminating all the old objects
@@ -140,14 +125,18 @@ rtcheck_vector_handler(void *clientData, int type)
 	    }
 
 	    if (have_visual) {
-		bu_log("final nused: %zu\n", rtcp->vbp->nused);
 		bv_vlblock_obj(rtcp->vbp, gedp->ged_gvp, sname);
 	    }
+	    bv_vlblock_free(rtcp->vbp);
+	    rtcp->vbp = NULL;
 	}
+
+	if (gedp->ged_refresh_handler)
+	    (*gedp->ged_refresh_handler)(gedp->ged_refresh_clientdata);
     }
 
     if (rtcp->read_failed && rtcp->draw_read_failed) {
-	rtcheck_handler_cleanup(rtcp, type);
+	rtcheck_handler_cleanup(rtcp);
 	return;
     }
 
@@ -162,10 +151,10 @@ rtcheck_vector_handler(void *clientData, int type)
 }
 
 static void
-rtcheck_output_handler(void *clientData, int type)
+rtcheck_output_handler(void *clientData, int UNUSED(mask))
 {
     int count;
-    char line[RT_MAXLINE] = {0};
+    char line[RT_MAXLINE + 1] = {0};
     struct ged_rtcheck *rtcp = (struct ged_rtcheck *)clientData;
     struct ged_subprocess *rrtp = rtcp->rrtp;
     BU_CKMAG(rrtp, GED_CMD_MAGIC, "ged subprocess");
@@ -174,13 +163,15 @@ rtcheck_output_handler(void *clientData, int type)
     /* Get textual output from rtcheck */
     if ((count = bu_process_read_n(rrtp->p, BU_PROCESS_STDERR, RT_MAXLINE, (char *)line)) <= 0) {
 	rtcp->read_failed = 1;
+	if (gedp->ged_delete_io_handler)
+	    (*gedp->ged_delete_io_handler)(rrtp, BU_PROCESS_STDERR);
+	else
+	    rrtp->stderr_active = 0;
 	if (gedp->i->ged_gdp->gd_rtCmdNotify != (void (*)(int))0)
 	    gedp->i->ged_gdp->gd_rtCmdNotify(0);
-    }
 
-
-    if (rtcp->read_failed && rtcp->draw_read_failed) {
-	rtcheck_handler_cleanup(rtcp, type);
+	if (rtcp->draw_read_failed)
+	    rtcheck_handler_cleanup(rtcp);
 	return;
     }
 
@@ -331,4 +322,3 @@ ged_rtcheck2_core(struct ged *gedp, int argc, const char *argv[])
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

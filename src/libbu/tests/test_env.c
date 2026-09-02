@@ -35,9 +35,11 @@
 
 #include "common.h"
 
+#include <errno.h>
 #include <string.h>
 
 #include "bio.h"
+#include "bresource.h"
 
 #include "bu.h"
 
@@ -60,6 +62,106 @@ shrink_path(struct bu_vls *tp, const char *lp)
     bu_log("%s\n", bu_vls_cstr(tp));
 #endif
 }
+
+static int
+process_mem_tests(void)
+{
+#if defined(HAVE_SYS_RESOURCE_H) && (defined(__linux__) || \
+    defined(__APPLE__) || defined(__FreeBSD__) || defined(__NetBSD__) || \
+    defined(__OpenBSD__) || defined(__DragonFly__))
+    struct rlimit original;
+
+    if (getrlimit(RLIMIT_AS, &original) != 0) {
+	const int error = errno;
+	bu_log("bu_mem process-limit test: getrlimit(RLIMIT_AS) failed: %s (%d)\n",
+	       strerror(error), error);
+	return -1;
+    }
+
+    struct rlimit limited = original;
+    const rlim_t test_headroom = (rlim_t)512 * 1024 * 1024;
+    rlim_t test_limit = test_headroom;
+#if defined(__APPLE__) && defined(HAVE_MACH_MACH_H)
+    struct task_basic_info task_memory;
+    mach_msg_type_number_t task_count = TASK_BASIC_INFO_COUNT;
+    if (task_info(mach_task_self(), TASK_BASIC_INFO,
+	    (task_info_t)&task_memory, &task_count) != KERN_SUCCESS) {
+	bu_log("bu_mem process-limit test: task_info(TASK_BASIC_INFO) failed\n");
+	return -2;
+    }
+    if ((rlim_t)task_memory.virtual_size > RLIM_INFINITY - test_headroom) {
+	bu_log("bu_mem process-limit test: current virtual size is too large "
+	       "to add test headroom\n");
+	return -2;
+    }
+    /* XNU rejects an address-space limit below the process's current map. */
+    test_limit = (rlim_t)task_memory.virtual_size + test_headroom;
+#endif
+    if (limited.rlim_max != RLIM_INFINITY &&
+	    limited.rlim_max < test_limit)
+	limited.rlim_cur = limited.rlim_max;
+    else
+	limited.rlim_cur = test_limit;
+
+    if (setrlimit(RLIMIT_AS, &limited) != 0) {
+	const int error = errno;
+	bu_log("bu_mem process-limit test: setrlimit(RLIMIT_AS) failed: %s (%d) "
+	       "(original cur=%llu max=%llu, requested cur=%llu max=%llu)\n",
+	       strerror(error), error,
+	       (unsigned long long)original.rlim_cur,
+	       (unsigned long long)original.rlim_max,
+	       (unsigned long long)limited.rlim_cur,
+	       (unsigned long long)limited.rlim_max);
+	return -3;
+    }
+
+    const ssize_t available = bu_mem(BU_MEM_PROCESS_AVAIL, NULL);
+    const int restore_result = setrlimit(RLIMIT_AS, &original);
+    if (restore_result != 0) {
+	const int error = errno;
+	bu_log("bu_mem process-limit test: restoring RLIMIT_AS failed: %s (%d) "
+	       "(test cur=%llu max=%llu, original cur=%llu max=%llu)\n",
+	       strerror(error), error,
+	       (unsigned long long)limited.rlim_cur,
+	       (unsigned long long)limited.rlim_max,
+	       (unsigned long long)original.rlim_cur,
+	       (unsigned long long)original.rlim_max);
+	return -4;
+	}
+    if (available < 0 || (rlim_t)available > limited.rlim_cur) {
+	bu_log("bu_mem process-limit test: BU_MEM_PROCESS_AVAIL returned %zd; "
+	       "expected a non-negative value no greater than %llu "
+	       "(original cur=%llu max=%llu, test cur=%llu max=%llu)\n",
+	       available,
+	       (unsigned long long)limited.rlim_cur,
+	       (unsigned long long)original.rlim_cur,
+	       (unsigned long long)original.rlim_max,
+	       (unsigned long long)limited.rlim_cur,
+	       (unsigned long long)limited.rlim_max);
+	return -5;
+    }
+#else
+    if (bu_mem(BU_MEM_PROCESS_AVAIL, NULL) >= 0)
+	bu_log("MEM process limit is available through a native API\n");
+#endif
+    return 0;
+}
+
+
+static int
+mem_test_failure(const char *query, ssize_t result, const size_t *output,
+                 int return_code)
+{
+    if (output) {
+	bu_log("bu_mem test failure (%d): %s returned %zd and wrote %zu\n",
+	       return_code, query, result, *output);
+    } else {
+	bu_log("bu_mem test failure (%d): %s returned %zd\n",
+	       return_code, query, result);
+    }
+    return return_code;
+}
+
 
 static int
 editor_tests(void)
@@ -248,31 +350,47 @@ main(int ac, char *av[])
 
     if (ac > 1 && BU_STR_EQUAL(av[1], "-e"))
 	return editor_tests();
+    if (ac > 1 && BU_STR_EQUAL(av[1], "-m"))
+	return process_mem_tests();
 
     ssize_t all_mem = bu_mem(BU_MEM_ALL, NULL);
     if (all_mem < 0)
-	return -1;
+	return mem_test_failure("BU_MEM_ALL", all_mem, NULL, -1);
     ssize_t avail_mem = bu_mem(BU_MEM_AVAIL, NULL);
     if (avail_mem < 0)
-	return -2;
+	return mem_test_failure("BU_MEM_AVAIL", avail_mem, NULL, -2);
     ssize_t page_mem = bu_mem(BU_MEM_PAGE_SIZE, NULL);
     if (page_mem < 0)
-	return -3;
+	return mem_test_failure("BU_MEM_PAGE_SIZE", page_mem, NULL, -3);
+    ssize_t process_mem = bu_mem(BU_MEM_PROCESS_AVAIL, NULL);
 
-    /* make sure passing works too */
+    /* Make sure the output pointer matches the return value from that call.
+     * The values reported by the operating system can change between calls. */
     size_t all_mem2 = 0;
     size_t avail_mem2 = 0;
     size_t page_mem2 = 0;
+    size_t process_mem2 = 0;
 
-    (void)bu_mem(BU_MEM_ALL, &all_mem2);
-    if (all_mem2 != (size_t)all_mem)
-	return -4;
-    (void)bu_mem(BU_MEM_AVAIL, &avail_mem2);
-    if (avail_mem2 != (size_t)avail_mem)
-	return -5;
-    (void)bu_mem(BU_MEM_PAGE_SIZE, &page_mem2);
-    if (page_mem2 != (size_t)page_mem)
-	return -6;
+    const ssize_t all_mem_ret = bu_mem(BU_MEM_ALL, &all_mem2);
+    if (all_mem_ret < 0 || all_mem2 != (size_t)all_mem_ret)
+	return mem_test_failure("BU_MEM_ALL with output", all_mem_ret,
+	                       &all_mem2, -4);
+
+    const ssize_t avail_mem_ret = bu_mem(BU_MEM_AVAIL, &avail_mem2);
+    if (avail_mem_ret < 0 || avail_mem2 != (size_t)avail_mem_ret)
+	return mem_test_failure("BU_MEM_AVAIL with output", avail_mem_ret,
+	                       &avail_mem2, -5);
+
+    const ssize_t page_mem_ret = bu_mem(BU_MEM_PAGE_SIZE, &page_mem2);
+    if (page_mem_ret < 0 || page_mem2 != (size_t)page_mem_ret)
+	return mem_test_failure("BU_MEM_PAGE_SIZE with output", page_mem_ret,
+	                       &page_mem2, -6);
+
+    const ssize_t process_mem_ret = bu_mem(BU_MEM_PROCESS_AVAIL,
+	&process_mem2);
+    if (process_mem_ret >= 0 && process_mem2 != (size_t)process_mem_ret)
+	return mem_test_failure("BU_MEM_PROCESS_AVAIL with output",
+	                       process_mem_ret, &process_mem2, -7);
 
     char all_buf[6] = {'\0'};
     char avail_buf[6] = {'\0'};
@@ -286,6 +404,10 @@ main(int ac, char *av[])
 	   all_buf, all_mem,
 	   avail_buf, avail_mem,
 	   p_buf, page_mem);
+    if (process_mem >= 0)
+	bu_log("MEM process address-space available: %zd\n", process_mem);
+    else
+	bu_log("MEM process address-space limit: unsupported or unlimited\n");
 
     return 0;
 }

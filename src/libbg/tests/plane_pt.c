@@ -86,8 +86,8 @@ test_bg_3pnts_distinct(int argc, char **argv)
 static int
 test_bg_distsq_line3_pnt3(int argc, char **argv)
 {
-    float expected_result = 0;
-    float actual_result = 0;
+    fastf_t expected_result = 0;
+    fastf_t actual_result = 0;
     point_t pt = VINIT_ZERO;
     vect_t dir = VINIT_ZERO;
     point_t a = VINIT_ZERO;
@@ -99,13 +99,13 @@ test_bg_distsq_line3_pnt3(int argc, char **argv)
     sscanf(argv[2], "%lf,%lf,%lf", &pt[X], &pt[Y], &pt[Z]);
     sscanf(argv[3], "%lf,%lf,%lf", &dir[X], &dir[Y], &dir[Z]);
     sscanf(argv[4], "%lf,%lf,%lf", &a[X], &a[Y], &a[Z]);
-    sscanf(argv[5], "%f", &expected_result);
+    sscanf(argv[5], "%lf", &expected_result);
 
     actual_result = bg_distsq_line3_pnt3(pt, dir, a);
 
-    bu_log("result: %f\n", actual_result);
+    bu_log("result: %g\n", actual_result);
 
-    return !EQUAL(expected_result, actual_result);
+    return !NEAR_EQUAL(expected_result, actual_result, BN_TOL_DIST);
 }
 
 

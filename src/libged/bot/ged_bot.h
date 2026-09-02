@@ -78,6 +78,8 @@ extern int ged_bot_fuse_core(struct ged *gedp, int argc, const char **argv);
 extern int ged_bot_merge_core(struct ged *gedp, int argc, const char **argv);
 extern int ged_bot_smooth_core(struct ged *gedp, int argc, const char **argv);
 extern int ged_bot_split_core(struct ged *gedp, int argc, const char **argv);
+extern int _ged_bot_split_object(struct ged *gedp, const char *object_name,
+	struct bu_vls *output_names, struct bu_vls *errors);
 extern int ged_bot_sync_core(struct ged *gedp, int argc, const char **argv);
 extern int ged_bot_vertex_fuse_core(struct ged *gedp, int argc, const char **argv);
 extern int ged_find_bot_pnt_nearest_pnt_core(struct ged *gedp, int argc, const char *argv[]);

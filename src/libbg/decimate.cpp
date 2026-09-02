@@ -33,7 +33,9 @@
 #include <inttypes.h>
 
 #include <algorithm>
+#include <cmath>
 #include <cstring>
+#include <limits>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -43,20 +45,40 @@
 #include "bn/tol.h"
 #include "bg/trimesh.h"
 
+namespace {
+
+constexpr fastf_t default_feature_fraction = 0.01;
+constexpr fastf_t bins_per_feature = 10.0;
+
+}
+
+
 int trimesh_decimate_simple(
-	int **ofaces, int *n_ofaces,
+	int **ofaces, int **face_sources, int *n_ofaces,
 	int *ifaces, int n_ifaces, point_t *p, int n_p, struct bg_trimesh_decimation_settings *s)
 {
-    if (!ofaces || !n_ofaces || !ifaces || !n_ifaces || !p || !n_p || !s)
+    if (!ofaces || !n_ofaces || !ifaces || n_ifaces <= 0 || !p ||
+	n_p <= 0 || !s)
 	return BRLCAD_ERROR;
 
-    if (s->method != BG_TRIMESH_DECIMATION_METHOD_DEFAULT)
+    *ofaces = NULL;
+    *n_ofaces = 0;
+    if (face_sources)
+	*face_sources = NULL;
+    if (s->method != BG_TRIMESH_DECIMATION_METHOD_DEFAULT ||
+	!std::isfinite(s->feature_size))
 	return BRLCAD_ERROR;
 
     // Find the active points in the mesh - don't assume all points in p are active
     std::unordered_set<int> active_pnts;
-    for (int i = 0; i < n_ifaces*3; i++)
-	active_pnts.insert(ifaces[i]);
+    for (int face = 0; face < n_ifaces; ++face) {
+	for (size_t corner = 0; corner < 3; ++corner) {
+	    int vertex = ifaces[(size_t)face * 3 + corner];
+	    if (vertex < 0 || vertex >= n_p)
+		return BRLCAD_ERROR;
+	    active_pnts.insert(vertex);
+	}
+    }
 
     // Bound the active points
     point_t bbmin, bbmax;
@@ -64,6 +86,9 @@ int trimesh_decimate_simple(
     VSETALL(bbmax, -INFINITY);
     std::unordered_set<int>::iterator p_it;
     for (p_it = active_pnts.begin(); p_it != active_pnts.end(); p_it++) {
+	if (!std::isfinite(p[*p_it][X]) || !std::isfinite(p[*p_it][Y]) ||
+	    !std::isfinite(p[*p_it][Z]))
+	    return BRLCAD_ERROR;
 	VMINMAX(bbmin, bbmax, p[*p_it]);
     }
     // Find the largest numerical value
@@ -76,22 +101,24 @@ int trimesh_decimate_simple(
 
     // Calculate a default size to try if we don't have a sane input - default
     // to 1/100 of the bbox diagonal
-    double dfeature_size = DIST_PNT_PNT(bbmax, bbmin) * 0.01;
+    double dfeature_size = DIST_PNT_PNT(bbmax, bbmin) *
+	default_feature_fraction;
 
     // Too small and this won't work - don't go below VUNITIZE
     // TODO - is this right?  Not sure I've got the scaling behaving the way it
     // really should...
     fastf_t feature_size = (s->feature_size < VUNITIZE_TOL) ? dfeature_size: s->feature_size;
+    if (feature_size <= 0.0 || !std::isfinite(feature_size))
+	return BRLCAD_ERROR;
     s->feature_size = feature_size;
-    double scale = 1/feature_size * 10;
+    double scale = bins_per_feature / feature_size;
 
     // Make sure we can handle the maximum value at the current feature size -
     // if not, we can't bin the numbers
-    // TODO - is this right?
-    int64_t log10max = log10(std::numeric_limits<int64_t>::max()) - 1;
-    int64_t log10maxval = log10(fabs(maxval));
-    int64_t log10scale = log10(fabs(scale));
-    if ((log10maxval + log10scale) > log10max) {
+    long double scaled_max = (long double)maxval * (long double)scale;
+    if (!std::isfinite(scale) || scale <= 0.0 ||
+	!std::isfinite(scaled_max) ||
+	scaled_max > (long double)std::numeric_limits<int64_t>::max()) {
 	return BRLCAD_ERROR;
     }
 
@@ -158,6 +185,7 @@ int trimesh_decimate_simple(
 
     // Iterate over faces, assigning any that are not degenerate with the new mapping to a new face array.
     std::vector<int> nfaces;
+    std::vector<int> source_faces;
     for (int i = 0; i < n_ifaces; i++) {
 	int f_ind[3];
 	f_ind[0] = old_to_new[ifaces[3*i+0]];
@@ -175,6 +203,7 @@ int trimesh_decimate_simple(
 	nfaces.push_back(f_ind[0]);
 	nfaces.push_back(f_ind[1]);
 	nfaces.push_back(f_ind[2]);
+	source_faces.push_back(i);
     }
 
     if (old_merged)
@@ -189,6 +218,11 @@ int trimesh_decimate_simple(
     for (size_t i = 0; i < nfaces.size(); i++)
 	(*ofaces)[i] = nfaces[i];
     *n_ofaces = (int)(nfaces.size()/3);
+    if (face_sources) {
+	*face_sources = (int *)bu_calloc(source_faces.size(), sizeof(int),
+	    "decimated face sources");
+	std::copy(source_faces.begin(), source_faces.end(), *face_sources);
+    }
 
     return BRLCAD_OK;
 }
@@ -197,13 +231,20 @@ int bg_trimesh_decimate(
 	int **ofaces, int *n_ofaces,
 	int *ifaces, int n_ifaces, point_t *p, int n_p, struct bg_trimesh_decimation_settings *s)
 {
-    if (!ofaces || !n_ofaces || !ifaces || !n_ifaces || !p || !n_p || !s)
-	return BRLCAD_ERROR;
+    return trimesh_decimate_simple(ofaces, NULL, n_ofaces, ifaces, n_ifaces,
+	p, n_p, s);
+}
 
-    if (s->method != BG_TRIMESH_DECIMATION_METHOD_DEFAULT)
-	return BRLCAD_ERROR;
 
-    return trimesh_decimate_simple(ofaces, n_ofaces, ifaces, n_ifaces, p, n_p, s);
+int bg_trimesh_run_decimater(
+	int **ofaces, int **face_sources, int *n_ofaces,
+	int *ifaces, int n_ifaces, point_t *p, int n_p,
+	struct bg_trimesh_decimation_settings *s)
+{
+    if (!face_sources)
+	return BRLCAD_ERROR;
+    return trimesh_decimate_simple(ofaces, face_sources, n_ofaces, ifaces,
+	n_ifaces, p, n_p, s);
 }
 
 

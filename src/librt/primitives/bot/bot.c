@@ -5297,7 +5297,14 @@ rt_bot_smooth(struct rt_bot_internal *bot, const char *bot_name, struct db_i *db
 	    VINVDIR(inv_dir, ap.a_ray.r_dir);
 
 	    if (!rt_in_rpp(&ap.a_ray, inv_dir, rtip->mdl_min, rtip->mdl_max)) {
-		bu_log("ERROR: Ray missed target!!!\n");
+		/* The backout ray does not intersect the model bounding
+		 * box, so shooting it would be a guaranteed miss with a
+		 * stale r_min.  Emit a diagnostic that names the primitive
+		 * and the offending face, then skip this face cleanly
+		 * instead of shooting a known-miss ray.
+		 */
+		bu_log("rt_bot_smooth(%s): face %zu backout ray missed model RPP; skipping face\n", bot_name, i);
+		continue;
 	    }
 	    VJOIN1(ap.a_ray.r_pt, ap.a_ray.r_pt, ap.a_ray.r_min, ap.a_ray.r_dir);
 	    ap.a_user = i;
@@ -5662,203 +5669,43 @@ rt_bot_sync(struct rt_bot_internal *bot)
 }
 
 
-void
-rt_bot_split_func(struct rt_bot_internal *bot,
-		  struct tri_pts *tpp,
-		  struct tri_pts *headTpp,
-		  struct tri_pts *usedTpp)
-{
-    struct tri_pts *neighbor_tpp;
-    struct tri_pts **stack = (struct tri_pts **)bu_calloc(bot->num_faces, sizeof(struct tri_pts *), "rt_bot_split_func: stack");
-    register size_t si = 0;
-    register int not_done = 1;
-
-    while (not_done) {
-    begin:
-	for (BU_LIST_FOR(neighbor_tpp, tri_pts, &headTpp->l)) {
-	    if ((tpp->a == neighbor_tpp->a && tpp->b == neighbor_tpp->b) ||
-		(tpp->a == neighbor_tpp->b && tpp->b == neighbor_tpp->a) ||
-		(tpp->a == neighbor_tpp->b && tpp->b == neighbor_tpp->c) ||
-		(tpp->a == neighbor_tpp->c && tpp->b == neighbor_tpp->b) ||
-		(tpp->a == neighbor_tpp->a && tpp->b == neighbor_tpp->c) ||
-		(tpp->a == neighbor_tpp->c && tpp->b == neighbor_tpp->a) ||
-		(tpp->a == neighbor_tpp->a && tpp->c == neighbor_tpp->b) ||
-		(tpp->a == neighbor_tpp->b && tpp->c == neighbor_tpp->a) ||
-		(tpp->a == neighbor_tpp->b && tpp->c == neighbor_tpp->c) ||
-		(tpp->a == neighbor_tpp->c && tpp->c == neighbor_tpp->b) ||
-		(tpp->a == neighbor_tpp->a && tpp->c == neighbor_tpp->c) ||
-		(tpp->a == neighbor_tpp->c && tpp->c == neighbor_tpp->a) ||
-		(tpp->b == neighbor_tpp->a && tpp->c == neighbor_tpp->b) ||
-		(tpp->b == neighbor_tpp->b && tpp->c == neighbor_tpp->a) ||
-		(tpp->b == neighbor_tpp->b && tpp->c == neighbor_tpp->c) ||
-		(tpp->b == neighbor_tpp->c && tpp->c == neighbor_tpp->b) ||
-		(tpp->b == neighbor_tpp->a && tpp->c == neighbor_tpp->c) ||
-		(tpp->b == neighbor_tpp->c && tpp->c == neighbor_tpp->a)) {
-		/* Found a shared edge of a neighboring triangle */
-
-		BU_LIST_DEQUEUE(&neighbor_tpp->l);
-		BU_LIST_APPEND(&usedTpp->l, &neighbor_tpp->l);
-
-		stack[++si] = tpp;
-		tpp = neighbor_tpp;
-		goto begin;
-	    }
-	}
-
-	if (si < 1)
-	    not_done = 0;
-	else
-	    tpp = stack[si--];
-    }
-
-    bu_free((void *)stack, "rt_bot_split_func: stack");
-}
-
-
-#define REMAP_BOT_VERTS(_oldbot, _newbot, _vmap, _vcount, _ovi, _i) { \
-	size_t vmi; \
-	\
-	for (vmi = 0; vmi < _vcount; vmi++) { \
-	    if (_ovi == _vmap[vmi]) { \
-		_newbot->faces[_i] = vmi; \
-		break; \
-	    } \
-	} \
-	\
-	if (vmi == _vcount) { \
-	    _vmap[_vcount] = _ovi; \
-	    _newbot->faces[_i] = _vcount; \
-	    VMOVE(&_newbot->vertices[_vcount*3], &_oldbot->vertices[_ovi*3]); \
-	    ++_vcount; \
-	} \
-    }
-
-
-struct rt_bot_internal *
+static struct rt_bot_internal *
 rt_bot_create(struct rt_bot_internal *bot, struct tri_pts *newTpp)
 {
-    size_t i;
+    size_t face_count = 0;
     struct tri_pts *tpp;
-    struct rt_bot_internal *newbot;
+    for (BU_LIST_FOR(tpp, tri_pts, &newTpp->l))
+	++face_count;
 
-    BU_ALLOC(newbot, struct rt_bot_internal);
+    int *face_indices = (int *)bu_calloc(face_count, sizeof(int),
+	"BOT patch face indices");
+    size_t face = 0;
+    for (BU_LIST_FOR(tpp, tri_pts, &newTpp->l))
+	face_indices[face++] = tpp->tri;
 
-    newbot->num_faces = 0;
-    for (BU_LIST_FOR(tpp, tri_pts, &newTpp->l)) {
-	++newbot->num_faces;
-    }
-
-    newbot->magic = bot->magic;
-    newbot->mode = bot->mode;
-    newbot->orientation = bot->orientation;
-    newbot->bot_flags = bot->bot_flags;
-
-    {
-	size_t vcount;
-	int *vmap = (int *)bu_calloc(bot->num_vertices * 3, sizeof(int), "Bot vertices");
-
-	newbot->vertices = (fastf_t *)bu_calloc(bot->num_vertices * 3, sizeof(fastf_t), "Bot vertices");
-	newbot->faces = (int *)bu_calloc(newbot->num_faces * 3, sizeof(int), "Bot faces");
-	if (bot->mode == RT_BOT_PLATE) {
-	    newbot->thickness = (fastf_t *)bu_calloc(bot->num_faces, sizeof(fastf_t), "Bot thickness");
-	    newbot->face_mode = bu_bitv_new(newbot->num_faces);
-	}
-
-	i = 0;
-	vcount = 0;
-	for (BU_LIST_FOR(tpp, tri_pts, &newTpp->l)) {
-
-	    REMAP_BOT_VERTS(bot, newbot, vmap, vcount, tpp->a, i*3);
-	    REMAP_BOT_VERTS(bot, newbot, vmap, vcount, tpp->b, i*3+1);
-	    REMAP_BOT_VERTS(bot, newbot, vmap, vcount, tpp->c, i*3+2);
-
-	    if (bot->mode == RT_BOT_PLATE) {
-		newbot->thickness[i] = bot->thickness[tpp->tri];
-
-		if (BU_BITTEST(bot->face_mode, tpp->tri))
-		    BU_BITSET(newbot->face_mode, i);
-		/* else already cleared via bu_bitv_new() */
-	    }
-
-	    ++i;
-	}
-
-	newbot->num_vertices = vcount;
-	bu_free(vmap, "rt_bot_create: vmap");
-    }
-
+    struct rt_bot_internal *newbot = rt_bot_subset(bot, face_indices,
+	face_count);
+    bu_free(face_indices, "BOT patch face indices");
     return newbot;
 }
 
 
-struct rt_bot_list *
-rt_bot_split(struct rt_bot_internal *bot)
+static int
+rt_bot_append_patch(struct rt_bot_list *patches, struct rt_bot_internal *bot,
+	struct tri_pts *faces)
 {
-    size_t i;
-    size_t first;
-    struct tri_pts headTp;
-    struct tri_pts usedTp;
-    struct tri_pts *tpp;
-    struct tri_pts *alltpp;
-    struct rt_bot_list *headRblp = (struct rt_bot_list *)0;
-    struct rt_bot_list *rblp;
+    if (BU_LIST_IS_EMPTY(&faces->l))
+	return 0;
 
-    RT_BOT_CK_MAGIC(bot);
+    struct rt_bot_internal *patch = rt_bot_create(bot, faces);
+    if (!patch)
+	return -1;
 
-    BU_ALLOC(headRblp, struct rt_bot_list);
-    BU_LIST_INIT(&headRblp->l);
-
-    /* Nothing to do */
-    if (bot->num_faces < 2)
-	return headRblp;
-
-    BU_LIST_INIT(&headTp.l);
-    BU_LIST_INIT(&usedTp.l);
-
-    alltpp = (struct tri_pts *)bu_calloc(bot->num_faces, sizeof(struct tri_pts), "rt_bot_split: alltpp");
-
-    /* Initialize tpp list */
-    for (i = 0; i < bot->num_faces; ++i) {
-	tpp = &alltpp[i];
-	BU_LIST_APPEND(&headTp.l, &tpp->l);
-
-	tpp->tri = i;
-	tpp->a = bot->faces[i*3+0];
-	tpp->b = bot->faces[i*3+1];
-	tpp->c = bot->faces[i*3+2];
-    }
-
-    first = 1;
-    while (BU_LIST_WHILE(tpp, tri_pts, &headTp.l)) {
-	BU_LIST_DEQUEUE(&tpp->l);
-	BU_LIST_APPEND(&usedTp.l, &tpp->l);
-
-	rt_bot_split_func(bot, tpp, &headTp, &usedTp);
-
-	if (first) {
-	    first = 0;
-
-	    if (BU_LIST_NON_EMPTY(&headTp.l)) {
-		/* Create a new bot */
-		BU_ALLOC(rblp, struct rt_bot_list);
-		rblp->bot = rt_bot_create(bot, &usedTp);
-		BU_LIST_APPEND(&headRblp->l, &rblp->l);
-	    }
-	} else {
-	    /* Create a new bot */
-	    BU_ALLOC(rblp, struct rt_bot_list);
-	    rblp->bot = rt_bot_create(bot, &usedTp);
-	    BU_LIST_APPEND(&headRblp->l, &rblp->l);
-	}
-
-	while (BU_LIST_WHILE(tpp, tri_pts, &usedTp.l)) {
-	    BU_LIST_DEQUEUE(&tpp->l);
-	}
-    }
-
-    bu_free((void *)alltpp, "rt_bot_split: alltpp");
-
-    return headRblp;
+    struct rt_bot_list *entry;
+    BU_ALLOC(entry, struct rt_bot_list);
+    entry->bot = patch;
+    BU_LIST_APPEND(&patches->l, &entry->l);
+    return 0;
 }
 
 
@@ -5866,7 +5713,6 @@ struct rt_bot_list *
 rt_bot_patches(struct rt_bot_internal *bot)
 {
     size_t i, j;
-    struct tri_pts headTp;
     struct tri_pts xplus;
     struct tri_pts xminus;
     struct tri_pts yplus;
@@ -5876,7 +5722,6 @@ rt_bot_patches(struct rt_bot_internal *bot)
     struct tri_pts *tpp;
     struct tri_pts *alltpp;
     struct rt_bot_list *headRblp = (struct rt_bot_list *)0;
-    struct rt_bot_list *rblp;
 
     vect_t from_xplus = {-1, 0, 0};
     vect_t from_xminus = {1, 0, 0};
@@ -5892,9 +5737,8 @@ rt_bot_patches(struct rt_bot_internal *bot)
 
     /* Nothing to do */
     if (bot->num_faces < 2)
-	return NULL;
+	return headRblp;
 
-    BU_LIST_INIT(&headTp.l);
     BU_LIST_INIT(&xplus.l);
     BU_LIST_INIT(&xminus.l);
     BU_LIST_INIT(&yplus.l);
@@ -5956,42 +5800,12 @@ rt_bot_patches(struct rt_bot_internal *bot)
 	}
 
     }
-    if (BU_LIST_NON_EMPTY(&xplus.l)) {
-	/* Create a new bot */
-	BU_ALLOC(rblp, struct rt_bot_list);
-	rblp->bot = rt_bot_create(bot, &xplus);
-	BU_LIST_APPEND(&headRblp->l, &rblp->l);
-    }
-    if (BU_LIST_NON_EMPTY(&xminus.l)) {
-	/* Create a new bot */
-	BU_ALLOC(rblp, struct rt_bot_list);
-	rblp->bot = rt_bot_create(bot, &xminus);
-	BU_LIST_APPEND(&headRblp->l, &rblp->l);
-    }
-    if (BU_LIST_NON_EMPTY(&yplus.l)) {
-	/* Create a new bot */
-	BU_ALLOC(rblp, struct rt_bot_list);
-	rblp->bot = rt_bot_create(bot, &yplus);
-	BU_LIST_APPEND(&headRblp->l, &rblp->l);
-    }
-    if (BU_LIST_NON_EMPTY(&yminus.l)) {
-	/* Create a new bot */
-	BU_ALLOC(rblp, struct rt_bot_list);
-	rblp->bot = rt_bot_create(bot, &yminus);
-	BU_LIST_APPEND(&headRblp->l, &rblp->l);
-    }
-    if (BU_LIST_NON_EMPTY(&zplus.l)) {
-	/* Create a new bot */
-	BU_ALLOC(rblp, struct rt_bot_list);
-	rblp->bot = rt_bot_create(bot, &zplus);
-	BU_LIST_APPEND(&headRblp->l, &rblp->l);
-    }
-    if (BU_LIST_NON_EMPTY(&zminus.l)) {
-	/* Create a new bot */
-	BU_ALLOC(rblp, struct rt_bot_list);
-	rblp->bot = rt_bot_create(bot, &zminus);
-	BU_LIST_APPEND(&headRblp->l, &rblp->l);
-    }
+    int patch_failed = rt_bot_append_patch(headRblp, bot, &xplus) ||
+	rt_bot_append_patch(headRblp, bot, &xminus) ||
+	rt_bot_append_patch(headRblp, bot, &yplus) ||
+	rt_bot_append_patch(headRblp, bot, &yminus) ||
+	rt_bot_append_patch(headRblp, bot, &zplus) ||
+	rt_bot_append_patch(headRblp, bot, &zminus);
 
     while (BU_LIST_WHILE(tpp, tri_pts, &xplus.l)) {
 	BU_LIST_DEQUEUE(&tpp->l);
@@ -6021,6 +5835,11 @@ rt_bot_patches(struct rt_bot_internal *bot)
 
     bu_free((void *)alltpp, "rt_bot_patches: alltpp");
 
+    if (patch_failed) {
+	rt_bot_list_free(headRblp, 1);
+	return NULL;
+    }
+
     return headRblp;
 }
 
@@ -6030,12 +5849,17 @@ rt_bot_list_free(struct rt_bot_list *headRblp, int fbflag)
 {
     struct rt_bot_list *rblp;
 
+    if (!headRblp)
+	return;
+
     while (BU_LIST_WHILE(rblp, rt_bot_list, &headRblp->l)) {
 	/* Remove from list and free */
 	BU_LIST_DEQUEUE(&rblp->l);
 
-	if (fbflag)
+	if (fbflag && rblp->bot) {
 	    rt_bot_internal_free(rblp->bot);
+	    BU_PUT(rblp->bot, struct rt_bot_internal);
+	}
 
 	bu_free(rblp, "rt_bot_list_free: rblp");
     }

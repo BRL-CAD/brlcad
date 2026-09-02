@@ -327,6 +327,26 @@ dl_erasePathFromDisplay(struct ged *gedp, const char *path, int allow_split)
 }
 
 
+void
+_ged_erase_legacy_overlap_plot(struct ged *gedp)
+{
+    /* _ged_cvt_vlblock_to_solids appends the yellow RGB value to its root
+     * name.  Check for its phony directory entry so identically named user
+     * geometry is not erased. */
+    const char *overlap_plot = "OVERLAPSffff00";
+    struct directory *dp;
+
+    if (!gedp || !gedp->dbip)
+	return;
+
+    dp = db_lookup(gedp->dbip, overlap_plot, LOOKUP_QUIET);
+    if (dp == RT_DIR_NULL || dp->d_addr != RT_DIR_PHONY_ADDR)
+	return;
+
+    dl_erasePathFromDisplay(gedp, overlap_plot, 0);
+}
+
+
 static void
 eraseAllSubpathsFromSolidList(struct ged *gedp, struct display_list *gdlp,
 			      struct db_full_path *subpath,

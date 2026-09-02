@@ -324,11 +324,11 @@ make_region(const struct conversion_state *pstate, struct rt_wdb *fp, struct wme
 	if (pstate->mode == MODE_PLATE) {
 	    if (pstate->gcv_options->verbosity_level)
 		bu_log("Making region: %s (PLATE)\n", name);
-	    mk_comb(fp, name, &((headp)->l), 'P', (char *)NULL, (char *)NULL, rgb, r_id, 0, 1, 100, 0, 0, 0);
+	    mk_comb(fp, name, &((headp)->l), 'P', (char *)NULL, (char *)NULL, rgb, r_id, 0, 0, 100, 0, 0, 0);
 	} else if (pstate->mode == MODE_VOLUME) {
 	    if (pstate->gcv_options->verbosity_level)
 		bu_log("Making region: %s (VOLUME)\n", name);
-	    mk_comb(fp, name, &((headp)->l), 'V', (char *)NULL, (char *)NULL, rgb, r_id, 0, 1, 100, 0, 0, 0);
+	    mk_comb(fp, name, &((headp)->l), 'V', (char *)NULL, (char *)NULL, rgb, r_id, 0, 0, 100, 0, 0, 0);
 	} else {
 	    bu_bomb("invalid mode");
 	}

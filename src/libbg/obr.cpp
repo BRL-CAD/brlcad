@@ -25,10 +25,12 @@
 
 #include "common.h"
 
-#include <vector>
+#include <array>
 #include <cmath>
+#include <vector>
 
 #include "Mathematics/ContOrientedBox2.h"
+#include "Mathematics/ContOrientedBox3.h"
 
 #include "bu/malloc.h"
 #include "bn/tol.h"
@@ -39,6 +41,7 @@
 
 using GTF = fastf_t;
 using Vec2 = gte::Vector<2, GTF>;
+using Vec3 = gte::Vector<3, GTF>;
 
 static inline void pad_extent_if_degenerate(GTF &e)
 {
@@ -145,6 +148,64 @@ bg_3d_coplanar_obr(point_t *center, vect_t *v1, vect_t *v2, const point_t *pnts,
 
     bu_free(proj2d, "proj2d");
     bu_free(obr_pts3d, "obr_pts3d");
+
+    return 0;
+}
+
+extern "C" int
+bg_3d_obb(point_t **pnts, const fastf_t *points_3d, int pnt_cnt)
+{
+    if (!pnts || !points_3d || pnt_cnt <= 0)
+	return -1;
+    for (int i = 0; i < 8; ++i) {
+	if (!pnts[i])
+	    return -1;
+    }
+
+    std::vector<Vec3> gpoints;
+    gpoints.reserve(pnt_cnt);
+    for (int i = 0; i < pnt_cnt; ++i) {
+	const fastf_t *point = &points_3d[i * ELEMENTS_PER_POINT];
+	gpoints.emplace_back();
+	gpoints.back()[0] = point[0];
+	gpoints.back()[1] = point[1];
+	gpoints.back()[2] = point[2];
+    }
+
+    gte::OrientedBox3<GTF> obox;
+    if (!gte::GetContainer(static_cast<int>(gpoints.size()), gpoints.data(), obox))
+	return -1;
+
+    std::array<Vec3, 8> vertices;
+    obox.GetVertices(vertices);
+
+    /* ARB8 ordering makes the three edges from point 0 be 0->4, 0->1,
+     * and 0->3.  Preserve that convention for callers consuming an OBB. */
+    const int arb_order[8] = {0, 1, 3, 2, 4, 5, 7, 6};
+    for (int i = 0; i < 8; ++i) {
+	const Vec3 &vertex = vertices[arb_order[i]];
+	VSET(*pnts[i], vertex[0], vertex[1], vertex[2]);
+    }
+
+    const fastf_t obb_volume = DIST_PNT_PNT(*pnts[0], *pnts[4]) *
+	DIST_PNT_PNT(*pnts[0], *pnts[1]) * DIST_PNT_PNT(*pnts[0], *pnts[3]);
+    point_t aabb_min, aabb_max;
+    VSETALL(aabb_min, INFINITY);
+    VSETALL(aabb_max, -INFINITY);
+    for (int i = 0; i < pnt_cnt; ++i)
+	VMINMAX(aabb_min, aabb_max, &points_3d[i * ELEMENTS_PER_POINT]);
+    const fastf_t aabb_volume = (aabb_max[X] - aabb_min[X]) *
+	(aabb_max[Y] - aabb_min[Y]) * (aabb_max[Z] - aabb_min[Z]);
+    if (aabb_volume < obb_volume) {
+	VSET(*pnts[0], aabb_min[X], aabb_min[Y], aabb_min[Z]);
+	VSET(*pnts[1], aabb_min[X], aabb_max[Y], aabb_min[Z]);
+	VSET(*pnts[2], aabb_min[X], aabb_max[Y], aabb_max[Z]);
+	VSET(*pnts[3], aabb_min[X], aabb_min[Y], aabb_max[Z]);
+	VSET(*pnts[4], aabb_max[X], aabb_min[Y], aabb_min[Z]);
+	VSET(*pnts[5], aabb_max[X], aabb_max[Y], aabb_min[Z]);
+	VSET(*pnts[6], aabb_max[X], aabb_max[Y], aabb_max[Z]);
+	VSET(*pnts[7], aabb_max[X], aabb_min[Y], aabb_max[Z]);
+    }
 
     return 0;
 }

@@ -90,12 +90,6 @@ __END_DECLS
 
 #include "rt/edit.h"
 
-// We have to use different I/O mechanisms based on which
-// platform we're on.  Make a define to key off of.
-#if defined(_WIN32) && !defined(__CYGWIN__)
-#  define USE_TCL_CHAN
-#endif
-
 #define MGED_DB_NAME "db"
 #define MGED_INMEM_NAME ".inmem"
 
@@ -619,7 +613,7 @@ void oedit_accept(struct mged_state *s);
 void oedit_reject(struct mged_state *s);
 void objedit_mouse(struct mged_state *s, const vect_t mousevec);
 void label_edited_solid(struct mged_state *s, int *num_lines, point_t *lines, struct rt_point_labels pl[], int max_pl, const mat_t xform, struct rt_db_internal *ip);
-void init_oedit(struct mged_state *s);
+int init_oedit(struct mged_state *s);
 void init_sedit(struct mged_state *s);
 int set_oedit_bbox_keypoint(struct mged_state *s);
 

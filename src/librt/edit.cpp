@@ -808,6 +808,19 @@ rt_edit_knob_cmd_process(
     return BRLCAD_ERROR;
 }
 
+/*
+ * Knob input describes an interaction class, but the active edit flag may
+ * identify a primitive-specific operation in that class.  Keep that exact
+ * operation selected when the caller has already supplied a matching
+ * edit_mode; otherwise fall back to the generic operation.
+ */
+static void
+rt_edit_set_knob_edflag(struct rt_edit *s, int edit_mode)
+{
+    if (s->edit_mode != edit_mode)
+	rt_edit_set_edflag(s, edit_mode);
+}
+
 void
 rt_knob_edit_rot(struct rt_edit *s,
 	char coords,
@@ -853,7 +866,7 @@ rt_knob_edit_rot(struct rt_edit *s,
 	int save_edflag = s->edit_flag;
 	int save_mode = s->edit_mode;
 
-	rt_edit_set_edflag(s, RT_PARAMS_EDIT_ROT);
+	rt_edit_set_knob_edflag(s, RT_PARAMS_EDIT_ROT);
 
 	rt_edit_process(s);
 
@@ -952,7 +965,7 @@ rt_knob_edit_tran(struct rt_edit *s,
 	int save_edflag = s->edit_flag;
 	int save_mode = s->edit_mode;
 
-	rt_edit_set_edflag(s, RT_PARAMS_EDIT_TRANS);
+	rt_edit_set_knob_edflag(s, RT_PARAMS_EDIT_TRANS);
 
 	VADD2(s->e_para, delta, s->curr_e_axes_pos);
 	s->e_inpara = 3;
@@ -996,7 +1009,7 @@ rt_knob_edit_sca(struct rt_edit *s, int matrix_edit)
 	int save_edflag = s->edit_flag;
 	int save_mode = s->edit_mode;
 
-	rt_edit_set_edflag(s, RT_PARAMS_EDIT_SCALE);
+	rt_edit_set_knob_edflag(s, RT_PARAMS_EDIT_SCALE);
 
 	rt_edit_process(s);
 
@@ -1031,7 +1044,7 @@ rt_knob_edit_sca(struct rt_edit *s, int matrix_edit)
        /* switch depending on scaling option selected */
        switch (s->edit_flag) {
 
-	   case RT_PARAMS_EDIT_SCALE:
+	   case RT_MATRIX_EDIT_SCALE:
 	       /* global scaling */
 	       incr_mat[15] = s->acc_sc_obj / scale;
 	       s->acc_sc_obj = scale;

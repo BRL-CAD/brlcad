@@ -13,14 +13,29 @@ changes made.  See document footer for additional details.
 --- 20XX-XX-XX  Release 7.46.0                                     ---
 ----------------------------------------------------------------------
 
+* fixed MGED X embedded framebuffer display manager crash - Cliff Yapp
+* added annotate command for managing annotation objects - Cliff Yapp
+* changed default new-region material code from 1 to 0 - Keith Bowman
+* added comb support to bb -o oriented bounding boxes - Cliff Yapp
+* added -t tight bounding box option to bb command - Cliff Yapp
+* added az (-a) and el (-e) option implementations to gqa - Cliff Yapp
+* added center command support for centering on an object - Cliff Yapp
 * greatly expanded JT import and added basic JT export - Sean Morrison
 * improved art Appleseed lights, colors, output, and region handling - Sean Morrison
 * added preliminary OpenSCAD import support - Sean Morrison
 * expanded IGES BREP/NURBS import and export support - Sean Morrison
+* expanded STEP AP203 import support, including faceted BREP - Sean Morrison
+* new adrt CLI utility with path, spall, and cut modes - Sean Morrison
+* new CLI+GUI prototype BRL-CAD application launcher - Sean Morrison
+* added option validation to image & framebuffer tools - Sean Morrison
+* added contributor, API, command, & raytracing guides - Sean Morrison
+* added and updated command and library manual pages - Sean Morrison
 * added metaball point scaling (via metaball_move_pnt) - Sean Morrison
 * all raytracing apps now report object prep failures - Sean Morrison
+* improved fast4-g robustness and error reporting - Cliff Yapp
+* improved robustness of g-vrml plate mode handling - Cliff Yapp
 * added support for tick drawing on MGED model axis - Cliff Yapp
-* added patch-g -j option, specify object thicknesses - Sean Morrison 
+* added patch-g -j option, specify object thicknesses - Sean Morrison
 * fixed fbcolor color ramp bug drawing the last color - Sean Morrison
 * fixed gist -Q quick preview option - Sean Morrison
 * rt preserves eye_pt setting in command scripts - Sean Morrison
@@ -32,6 +47,7 @@ changes made.  See document footer for additional details.
 * fixed mged rt -C + -o background color to file bug - Sean Morrison
 * fixed rt -C255/0/0 -o file.pix background color bug - Sean Morrison
 * added rtsil foreground & background -c set options - Sean Morrison
+* added cutting plane animation generation to rtwizard - Cliff Yapp
 * fixed pixdiff bug on Windows - Sean Morrison
 * fixed pixborder utilitiy right-side edge bug - Sean Morrison
 * fixed 'wavelet' image processing tool on Windows - Sean Morrison
@@ -40,6 +56,8 @@ changes made.  See document footer for additional details.
 * improved raytracing performance of CSG-heavy regions - Sean Morrison
 * fixed OBJ conversion bug importing unnamed groups - Sean Morrison
 * new doc guide, a visual overview of BRL-CAD objects - Sean Morrison
+* improved triangle quality produced by bot remesh - Cliff Yapp
+* updated numerous manpage command references - Josh Baker
 * fixed submodel paths relative to parent databases - Sean Morrison
 * improved performance making huge combinations - Sean Morrison
 * added gcv import conversion support for vrml/wrl 1.0 - Sean Morrison

@@ -331,7 +331,7 @@ wdb_init(struct rt_wdb *wdbp, struct db_i *dbip, int mode)
     /* default region ident codes */
     wdbp->wdb_item_default = 1000;
     wdbp->wdb_air_default = 0;
-    wdbp->wdb_mat_default = 1;
+    wdbp->wdb_mat_default = 0;
     wdbp->wdb_los_default = 100;
 }
 

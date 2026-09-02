@@ -100,8 +100,8 @@ typedef struct tri_float_specific tri_specific_float;
  * lines.
  *
  * The lines are specified as a point and a vector each.  The vectors
- * need not be unit length.  P and d define one line; Q and e define
- * the other.
+ * need not be unit length, but must be nonzero.  P and d define one line;
+ * Q and e define the other.
  *
  * @return 0 - normal return
  * @return 1 - lines are parallel, dist[0] is set to 0.0
@@ -109,7 +109,7 @@ typedef struct tri_float_specific tri_specific_float;
  * Output values:
  * dist[0] is the parametric distance along the first line P + dist[0] * d of the PCA
  * dist[1] is the parametric distance along the second line Q + dist[1] * e of the PCA
- * dist[3] is the square of the distance between the points of closest approach
+ * dist[2] is the square of the distance between the points of closest approach
  * pt1 is the point of closest approach on the first line
  * pt2 is the point of closest approach on the second line
  *
@@ -130,6 +130,9 @@ BG_EXPORT extern int bg_distsq_line3_line3(fastf_t dist[3],
  * Find the distance from a point P to a line described by the
  * endpoint A and direction dir, and the point of closest approach
  * (PCA).
+ * The line arguments are A followed by dir; P is the query point.
+ * dir need not be unit length.  A zero direction is treated as a degenerate
+ * line located at A.
  *
  @code
  //         P
@@ -154,8 +157,8 @@ BG_EXPORT extern int bg_distsq_line3_line3(fastf_t dist[3],
 BG_EXPORT extern int bg_dist_pnt3_line3(fastf_t *dist,
 					point_t pca,
 					const point_t a,
-					const point_t p,
 					const vect_t dir,
+					const point_t p,
 					const struct bn_tol *tol);
 
 /**
@@ -163,8 +166,8 @@ BG_EXPORT extern int bg_dist_pnt3_line3(fastf_t *dist,
  * segment.
  *
  * returns:
- *	-2 -> line and line segment are parallel and collinear.
- *	-1 -> line and line segment are parallel, not collinear.
+ *	-2 -> line and line segment are parallel, not collinear.
+ *	-1 -> line and line segment are parallel and collinear.
  *	 0 -> intersection between points a and b.
  *	 1 -> intersection outside a and b.
  *	 2 -> closest approach is between a and b.
@@ -174,8 +177,12 @@ BG_EXPORT extern int bg_dist_pnt3_line3(fastf_t *dist,
  * closest portion of segment.
  * dist[1] is ratio of distance from a to b (0.0 at a, and 1.0 at b),
  * dist[1] may be less than 0 or greater than 1.
- * For return values less than 0, closest approach is defined as
- * closest to point p.
+ * For return values less than 0, closest approach is defined as the point
+ * pair whose point on the input line is closest to p; dist[0] is therefore
+ * closest to zero.
+ * A degenerate segment is treated as point a: the function returns 0 when
+ * that point is within tolerance of the line, otherwise it returns 3, with
+ * dist[1] set to 0.0.
  * Direction vector, d, must be unit length.
  *
  */
@@ -198,7 +205,8 @@ BG_EXPORT extern int bg_dist_line3_lseg3(fastf_t *dist,
  * For return values less than zero, dist is not set.  For return
  * values of 0 or 1, dist[0] is the distance from p1 in the d1
  * direction to the point of closest approach for that line.  Similar
- * for the second line.  d1 and d2 must be unit direction vectors.
+ * for the second line.  The lines are supplied as (p1, d1) and
+ * (p2, d2); d1 and d2 must be unit direction vectors.
  *
  * XXX How is this different from bg_isect_line3_line3() ?
  * XXX Why are the calling sequences just slightly different?
@@ -207,8 +215,8 @@ BG_EXPORT extern int bg_dist_line3_lseg3(fastf_t *dist,
  */
 BG_EXPORT extern int bg_dist_line3_line3(fastf_t dist[2],
 					 const point_t p1,
-					 const point_t p2,
 					 const vect_t d1,
+					 const point_t p2,
 					 const vect_t d2,
 					 const struct bn_tol *tol);
 
@@ -237,6 +245,9 @@ BG_EXPORT extern int bg_dist_line3_line3(fastf_t dist[2],
  * @return 3	P is to the "left" of point A.  *dist=|P-A|, pca=A.
  * @return 4	P is to the "right" of point B.  *dist=|P-B|, pca=B.
  * @return 5	P is "above/below" lseg AB.  *dist=|PCA-P|, pca=computed.
+ *
+ * If A and B coincide, the segment is treated as point A: P within tolerance
+ * of A returns 1, and all other points return 3.
  *
  * This routine was formerly called bn_dist_pnt_lseg().
  *
@@ -282,6 +293,9 @@ BG_EXPORT extern int bg_dist_pnt3_lseg3(fastf_t *dist,
  *
  *	3	PCA is to the left of A.  *dist = |P-A|**2.
  *	4	PCA is to the right of B. *dist = |P-B|**2.
+ *
+ * If A and B coincide, the segment is treated as point A: P within tolerance
+ * of A returns 1, and all other points return 3.
  *
  * This function is a test version of "bn_distsq_pnt3_lseg3".
  *
@@ -340,6 +354,9 @@ BG_EXPORT extern int bg_pnt3_pnt3_equal(const point_t a,
  * @return 4	P is to the "right" of point B.  *dist=|P-B|**2, pca=B.
  * @return 5	P is "above/below" lseg AB.  *dist=|PCA-P|**2, pca=computed.
  *
+ * If A and B coincide, the segment is treated as point A: P within tolerance
+ * of A returns 1, and all other points return 3.
+ *
  *
  * Patterned after bg_dist_pnt3_lseg3().
  */
@@ -352,8 +369,8 @@ BG_EXPORT extern int bg_dist_pnt2_lseg2(fastf_t *dist_sq,
 
 /**
  *@brief
- * Intersect two 3D line segments, defined by two points and two
- * vectors.  The vectors are unlikely to be unit length.
+ * Intersect two 3D line segments, defined by two points and two nonzero
+ * vectors.  The vector magnitudes define the segment lengths.
  *
  *
  * @return -3	missed
@@ -369,7 +386,7 @@ BG_EXPORT extern int bg_dist_pnt2_lseg2(fastf_t *dist_sq,
  *	intercept.  If within distance tolerance of the endpoints,
  *	these will be exactly 0.0 or 1.0, to ease the job of caller.
  *
- *      CLARIFICATION: This function 'bn_isect_lseg3_lseg3'
+ *      CLARIFICATION: This function 'bg_isect_lseg3_lseg3'
  *      returns distance values scaled where an intersect at the start
  *      point of the line segment (within tol->dist) results in 0.0
  *      and when the intersect is at the end point of the line
@@ -405,9 +422,9 @@ BG_EXPORT extern int bg_lseg3_lseg3_parallel(const point_t sg1pt1, const point_t
  * and
  * X = q0 + qdist * qdir_i   (i.e. line q0->q1)
  *
- * The input vectors 'pdir_i' and 'qdir_i' must NOT be unit vectors
- * for this function to work correctly. The magnitude of the direction
- * vectors indicates line segment length.
+ * The input vectors 'pdir_i' and 'qdir_i' must be nonzero, but need not be
+ * unit length.  The returned distances are Euclidean distances along the
+ * respective lines.
  *
  * The 'pdist' and 'qdist' values returned from this function are the
  * actual distance to the intersect (i.e. not scaled). Distances may
@@ -454,7 +471,7 @@ BG_EXPORT extern int bg_isect_line3_line3(fastf_t *s, fastf_t *t,
  * Range should be at least one model diameter for most applications.
  * 1e5 might be OK for a default for "vehicle sized" models.
  *
- * The direction vectors do not need to be unit length.
+ * The direction vectors do not need to be unit length, but must be nonzero.
  */
 BG_EXPORT extern int bg_2line3_colinear(const point_t p1,
 					const vect_t d1,
@@ -469,11 +486,11 @@ BG_EXPORT extern int bg_2line3_colinear(const point_t p1,
  * points A and B.
  *
  * @return -2	P on line AB but outside range of AB,
- *			dist = distance from A to P on line.
+ *			dist = parameter from A to P on line AB.
  * @return -1	P not on line of AB within tolerance
  * @return 1	P is at A
  * @return 2	P is at B
- * @return 3	P is on AB, dist = distance from A to P on line.
+ * @return 3	P is on AB, dist = parameter from A to P on line AB.
  @verbatim
  B *
  |
@@ -486,7 +503,7 @@ BG_EXPORT extern int bg_2line3_colinear(const point_t p1,
  A *   /
 
  tol = distance limit from line to pt P;
- dist = distance from A to P'
+ dist = parametric distance from A to P' (in terms of A to B)
  @endverbatim
 */
 BG_EXPORT extern int bg_isect_pnt2_lseg2(fastf_t *dist,
@@ -497,13 +514,14 @@ BG_EXPORT extern int bg_isect_pnt2_lseg2(fastf_t *dist,
 
 /**
  *@brief
- * Intersect a line in parametric form:
+ * Intersect an infinite line in parametric form:
  *
- * X = P + t * D
+ * X = P + s * D
  *
  * with a line segment defined by two distinct points A and B=(A+C).
  *
  * XXX probably should take point B, not vector C.  Sigh.
+ * D must be nonzero and C must define a segment longer than tol->dist.
  *
  * @return -4	A and B are not distinct points
  * @return -3	Lines do not intersect
@@ -515,13 +533,14 @@ BG_EXPORT extern int bg_isect_pnt2_lseg2(fastf_t *dist,
  * @return 3	Intersection between A and B
  *
  * Implicit Returns -
- * @param dist	When explicit return >= 0, t is the parameter that describes
+ * @param dist	When explicit return >= 0, s is the parameter that describes
  *		the intersection of the line and the line segment.
+ *		It may be negative because the full line is considered.
  *		The actual intersection coordinates can be found by
- *		solving P + t * D.  However, note that for return codes
+ *		solving P + s * D.  However, note that for return codes
  *		1 and 2 (intersection exactly at a vertex), it is
  *		strongly recommended that the original values passed in
- *		A or B are used instead of solving P + t * D, to prevent
+ *		A or B are used instead of solving P + s * D, to prevent
  *		numeric error from creeping into the position of
  *		the endpoints.
  *
@@ -540,8 +559,8 @@ BG_EXPORT extern int bg_isect_line2_lseg2(fastf_t *dist,
 
 /**
  *@brief
- * Intersect two 2D line segments, defined by two points and two
- * vectors.  The vectors are unlikely to be unit length.
+ * Intersect two 2D line segments, defined by two points and two nonzero
+ * vectors.  The vector magnitudes define the segment lengths.
  *
  * @return -2	missed (line segments are parallel)
  * @return -1	missed (collinear and non-overlapping)
@@ -589,20 +608,21 @@ BG_EXPORT extern int bg_isect_lseg2_lseg2(fastf_t *dist,
  * positive values of the parameter only), in this case the full line
  * is considered.
  *
- * The direction vectors C and D need not have unit length.
+ * The direction vectors C and D need not have unit length, but must be
+ * nonzero.
  *
  * @return -1	no intersection, lines are parallel.
  * @return 0	lines are co-linear
- *@n			dist[0] gives distance from P to A,
- *@n			dist[1] gives distance from P to (A+C) [not same as below]
+ *@n			dist[0] gives the parameter from P to A,
+ *@n			dist[1] gives the parameter from P to (A+C) [not same as below]
  * @return 1	intersection found (t and u returned)
- *@n			dist[0] gives distance from P to isect,
- *@n			dist[1] gives distance from A to isect.
+ *@n			dist[0] gives the parameter from P to isect,
+ *@n			dist[1] gives the parameter from A to isect.
  *
  * @param dist When explicit return > 0, dist[0] and dist[1] are the
- * line parameters of the intersection point on the 2 rays.  The
+ * line parameters of the intersection point on the two lines.  The
  * actual intersection coordinates can be found by substituting either
- * of these into the original ray equations.
+ * of these into the original line equations.
  *
  * @param p	point of first line
  * @param d	direction of first line
@@ -816,12 +836,12 @@ BG_EXPORT extern int bg_isect_2lines(fastf_t *t,
  *
  * Implicit Returns -
  *
- * t When explicit return >= 0, t is the parameter that describes the
- * intersection of the line and the line segment.  The actual
- * intersection coordinates can be found by solving P + t * D.
+ * When explicit return >= 0, t is the Euclidean distance along the ray,
+ * not the coefficient s in P + s * D.  The actual intersection coordinates
+ * can be found by adding t times the unitized D to P.  D must be nonzero.
  * However, note that for return codes 1 and 2 (intersection exactly
  * at a vertex), it is strongly recommended that the original values
- * passed in A or B are used instead of solving P + t * D, to prevent
+ * passed in A or B are used instead of computing P + t * unit(D), to prevent
  * numeric error from creeping into the position of the endpoints.
  *
  * XXX should probably be called bg_isect_line3_lseg3()
@@ -837,7 +857,8 @@ BG_EXPORT extern int bg_isect_line_lseg(fastf_t *t, const point_t p,
  * Given a parametric line defined by PT + t * DIR and a point A,
  * return the closest distance between the line and the point.
  *
- *  'dir' need not have unit length.
+ * 'dir' need not have unit length.  A zero direction is treated as a
+ * degenerate line located at PT.
  *
  * Find parameter for PCA along line with unitized DIR:
  * d = VDOT(f, dir) / MAGNITUDE(dir);
@@ -856,7 +877,8 @@ BG_EXPORT extern double bg_dist_line3_pnt3(const point_t pt,
  * return the square of the closest distance between the line and the
  * point.
  *
- * 'dir' need not have unit length.
+ * 'dir' need not have unit length.  A zero direction is treated as a
+ * degenerate line located at PT.
  *
  * Return -
  * Distance squared
@@ -870,7 +892,8 @@ BG_EXPORT extern double bg_distsq_line3_pnt3(const point_t pt,
  * Given a parametric line defined by PT + t * DIR, return the closest
  * distance between the line and the origin.
  *
- * 'dir' need not have unit length.
+ * 'dir' need not have unit length.  A zero direction is treated as a
+ * degenerate line located at PT.
  *
  * @return Distance
  */
@@ -882,7 +905,8 @@ BG_EXPORT extern double bg_dist_line_origin(const point_t pt,
  * Given a parametric line defined by PT + t * DIR and a point A,
  * return the closest distance between the line and the point.
  *
- * 'dir' need not have unit length.
+ * 'dir' need not have unit length.  A zero direction is treated as a
+ * degenerate line located at PT.
  *
  * @return Distance
  */
@@ -896,7 +920,8 @@ BG_EXPORT extern double bg_dist_line2_point2(const point_t pt,
  * return the closest distance between the line and the point,
  * squared.
  *
- * 'dir' need not have unit length.
+ * 'dir' need not have unit length.  A zero direction is treated as a
+ * degenerate line located at PT.
  *
  * @return
  * Distance squared
@@ -919,11 +944,11 @@ BG_EXPORT extern double bg_area_of_triangle(const point_t a,
  * points A and B.
  *
  * @return -2	P on line AB but outside range of AB,
- * 			dist = distance from A to P on line.
+ * 			dist = parameter from A to P on line AB.
  * @return -1	P not on line of AB within tolerance
  * @return 1	P is at A
  * @return 2	P is at B
- * @return 3	P is on AB, dist = distance from A to P on line.
+ * @return 3	P is on AB, dist = parameter from A to P on line AB.
  @verbatim
  B *
  |
@@ -1046,7 +1071,8 @@ BG_EXPORT extern double bg_angle_measure(vect_t vec,
  * Return the parametric distance t of a point X along a line defined
  * as a ray, i.e. solve X = P + t * D.  If the point X does not lie on
  * the line, then t is the distance of the perpendicular projection of
- * point X onto the line.
+ * point X onto the line.  D need not have unit length.  A zero D returns
+ * 0.0 because the degenerate line has no unique parameter.
  */
 BG_EXPORT extern double bg_dist_pnt3_along_line3(const point_t p,
 						 const vect_t d,
@@ -1057,7 +1083,8 @@ BG_EXPORT extern double bg_dist_pnt3_along_line3(const point_t p,
  * Return the parametric distance t of a point X along a line defined
  * as a ray, i.e. solve X = P + t * D.  If the point X does not lie on
  * the line, then t is the distance of the perpendicular projection of
- * point X onto the line.
+ * point X onto the line.  D need not have unit length.  A zero D returns
+ * 0.0 because the degenerate line has no unique parameter.
  */
 BG_EXPORT extern double bg_dist_pnt2_along_line2(const point_t p,
 						 const vect_t d,
@@ -1074,15 +1101,20 @@ BG_EXPORT extern int bg_between(double left,
 				const struct bn_tol *tol);
 
 /**
+ * @deprecated Use bg_isect_tri_line.
+ *
+ * Test whether the infinite line pt + t * dir intersects a triangle.  The
+ * output point is the final argument for historical compatibility.
+ *
  * @return 0	No intersection
  * @return 1	Intersection, 'inter' has intersect point.
  */
-BG_EXPORT extern int bg_does_ray_isect_tri(const point_t pt,
-					   const vect_t dir,
-					   const point_t V,
-					   const point_t A,
-					   const point_t B,
-					   point_t inter);
+DEPRECATED BG_EXPORT extern int bg_does_ray_isect_tri(const point_t pt,
+							 const vect_t dir,
+							 const point_t V,
+							 const point_t A,
+							 const point_t B,
+							 point_t inter);
 
 /**
  *@brief

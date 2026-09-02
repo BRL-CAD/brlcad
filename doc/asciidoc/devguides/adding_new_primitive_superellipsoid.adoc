@@ -854,9 +854,50 @@ and the fact that `n` and `e` are unchanged by `rt_superell_mat`.
 |MGED primitive-edit menu behavior for `Set A`, `Set B`, `Set C`, and mouse
 scaling.
 
+|`regress/mged/csg_edit.mged`
+|The MGED-to-librt integration boundary: edit lifecycle and persistence across
+the practical CSG types, menu dispatch, numeric and mouse input, knob rotation,
+selection-driven edits, file-backed primitives, and accept/reject behavior.
+
 |`src/librt/tests/prim_tess.c`
 |Documents that `rt_superell_tess` is a stub returning `-1`.
 |===
+
+The MGED regression is intentionally complementary to the librt edit tests.
+It verifies that MGED reaches the requested librt state, persists the result,
+and produces a known geometric outcome where MGED has a stable observable:
+rigid translations preserve and offset bounds, parameter edits produce the
+requested value or endpoint, and rotations produce the requested vector.  The
+lifecycle runner requires an operation-specific result validator, preventing a
+new test from checking only that serialization changed.  The librt tests remain
+responsible for exhaustive numerical validation of the editing algorithms.
+Mouse input is meaningful for translate, scale, and pick states; interactive
+rotation is delivered through the knob path.
+Selection-heavy editors such as ARS, BoT, metaball, NMG, pipe, and sketch
+receive representative end-to-end workflows in MGED and detailed topology
+coverage in librt.  ARB4 through ARB8 are the exception to representative menu
+sampling: every point, edge, move-face, and rotate-face entry is exercised and
+checked against its selected point, line, face plane, or fixed rotation vertex
+because their menus have type-specific operation mappings.
+
+The same regression also exercises the GUI command boundary without requiring
+a window system.  It runs the command sequence issued by the Tk matrix picker,
+invokes all eight matrix-edit menu callbacks, and sends the unconstrained and
+X/Y/Z-constrained translate, rotate, and scale drags installed by the default
+Tk bindings.  Each case checks the exact stored combination matrix and confirms
+that the view center, size, and orientation did not change.  A graphical
+primitive pick similarly verifies the resulting primitive bounds and unchanged
+view.  This catches event-routing failures and stale MGED-to-librt edit state in
+ordinary headless regression runs.
+
+Headless testing cannot verify rendered classic-faceplate hit regions, Tk
+widget construction and bindings, or the separate Tk Primitive Editor form.
+Those require a display-backed test (normally Xvfb) which generates events on
+the real widgets.  Such a test should verify the selected matrix path, invoke
+each faceplate operation, and exercise Primitive Editor Apply, Reset, create,
+and type-change actions with exact database assertions.  Keep those widget
+tests separate from `csg_edit.mged`: the latter remains the portable behavioral
+test for the commands the widgets dispatch.
 
 At minimum, a new primitive should have tests for database round trip, `make`
 or `in` creation, ray hits and misses, normals, bounding boxes, text

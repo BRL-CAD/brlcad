@@ -48,7 +48,8 @@
 #include "./mged_dm.h"
 #include "./menu.h"
 
-static void init_sedit_vars(struct mged_state *), init_oedit_vars(struct mged_state *), init_oedit_guts(struct mged_state *);
+static void init_sedit_vars(struct mged_state *), init_oedit_vars(struct mged_state *);
+static int init_oedit_guts(struct mged_state *);
 
 /* if (!both) then set only MEDIT(s)->curr_e_axes_pos, otherwise
    set e_axes_pos and MEDIT(s)->curr_e_axes_pos */
@@ -130,29 +131,30 @@ arb_setup_rotface_clbk(int UNUSED(ac), const char **UNUSED(av), void *d, void *U
     int vertex = -1;
     struct bu_vls str = BU_VLS_INIT_ZERO;
     struct bu_vls cmd = BU_VLS_INIT_ZERO;
+    const int vertices_per_face = 4;
     int arb_type = rt_arb_std_type(&s->es_int, s->tol);
-    int type = arb_type - 4;
-    int loc = aint->edit_menu*4;
+    int type = arb_type - ARB4;
+    int loc = aint->edit_menu * vertices_per_face;
     int valid = 0;
 
     /* check if point 5 is in the face */
-    static int pnt5 = 0;
-    for (int i=0; i<4; i++) {
-	if (rt_arb_vertices[arb_type-4][aint->edit_menu*4+i]==5)
-	    pnt5=1;
+    int face_has_point_five = 0;
+    for (int i = 0; i < vertices_per_face; i++) {
+	if (rt_arb_vertices[type][loc + i] == 5)
+	    face_has_point_five = 1;
     }
 
     /* special case for arb7 */
-    if (arb_type == ARB7  && pnt5) {
+    if (arb_type == ARB7 && face_has_point_five) {
 	bu_vls_printf(s->log_str, "\nFixed vertex is point 5.\n");
 	pr_prompt(ms);
 	return 5;
     }
 
     bu_vls_printf(&str, "Enter fixed vertex number(");
-    for (int i=0; i<4; i++) {
-	if (rt_arb_vertices[type][loc+i])
-	    bu_vls_printf(&str, "%d ", rt_arb_vertices[type][loc+i]);
+    for (int i = 0; i < vertices_per_face; i++) {
+	if (rt_arb_vertices[type][loc + i])
+	    bu_vls_printf(&str, "%d ", rt_arb_vertices[type][loc + i]);
     }
     bu_vls_printf(&str, ") [%d]: ", rt_arb_vertices[type][loc]);
 
@@ -166,13 +168,15 @@ arb_setup_rotface_clbk(int UNUSED(ac), const char **UNUSED(av), void *d, void *U
 	if (Tcl_Eval(ms->interp, bu_vls_addr(&cmd)) != TCL_OK) {
 	    bu_vls_printf(s->log_str, "get_rotation_vertex: Error reading vertex\n");
 	    /* Using default */
+	    bu_vls_free(&cmd);
+	    bu_vls_free(&str);
 	    pr_prompt(ms);
 	    return rt_arb_vertices[type][loc];
 	}
 
 	vertex = atoi(Tcl_GetVar(ms->interp, "vertex_num", TCL_GLOBAL_ONLY));
-	for (int j=0; j<4; j++) {
-	    if (vertex==rt_arb_vertices[type][loc+j])
+	for (int j = 0; j < vertices_per_face; j++) {
+	    if (vertex == rt_arb_vertices[type][loc + j])
 		valid = 1;
 	}
     }
@@ -537,6 +541,28 @@ f_get_solid_keypoint(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUS
 }
 
 
+static int
+reinit_edit_state(struct mged_state *s, struct ged_bv_data *bdata)
+{
+    if (!s || !MEDIT(s) || !bdata)
+	return BRLCAD_ERROR;
+
+    /* MEDIT is persistent so Tcl links into it remain safe between edits. */
+    Tcl_UnlinkVar(s->interp, "edit_solid_flag");
+    int ret = rt_edit_reinit(MEDIT(s), &bdata->s_fullpath, s->dbip,
+	    &s->tol.tol, view_state->vs_gvp);
+    if (Tcl_LinkVar(s->interp, "edit_solid_flag",
+		(char *)&MEDIT(s)->edit_flag, TCL_LINK_INT) != TCL_OK)
+	return BRLCAD_ERROR;
+    if (ret != BRLCAD_OK)
+	return BRLCAD_ERROR;
+
+    MEDIT(s)->mv_context = mged_variables->mv_context;
+    MEDIT(s)->vlfree = &rt_vlfree;
+    return mged_edit_clbk_sync(MEDIT(s), s);
+}
+
+
 /*
  * First time in for this solid, set things up.
  * If all goes well, change state to ST_S_EDIT.
@@ -562,25 +588,12 @@ init_sedit(struct mged_state *s)
 
     struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
 
-    /* Reinitialise the single persistent rt_edit struct with the new solid.
-     * rt_edit_reinit() frees any prior primitive data (ipe_ptr, es_int) and
-     * reloads from the database, keeping the same allocated struct so that
-     * MEDIT(s) is never NULL and pointers into it (such as the Tcl
-     * "edit_solid_flag" link) remain valid across editing sessions. */
-    Tcl_UnlinkVar(s->interp, "edit_solid_flag");   /* Tcl_UnlinkVar is void; no-op if not currently linked */
-    if (rt_edit_reinit(MEDIT(s), &bdata->s_fullpath, s->dbip, &s->tol.tol, view_state->vs_gvp) != BRLCAD_OK) {
+    if (reinit_edit_state(s, bdata) != BRLCAD_OK) {
 	Tcl_AppendResult(s->interp, "init_sedit(",
 			 LAST_SOLID(bdata)->d_namep,
 			 "):  solid import failure\n", (char *)NULL);
 	return;
     }
-    /* Re-establish the Tcl link.  The address &MEDIT(s)->edit_flag is stable
-     * (same struct, never reallocated), but we unlink+relink to ensure a clean
-     * binding after every new editing session. */
-    Tcl_LinkVar(s->interp, "edit_solid_flag", (char *)&MEDIT(s)->edit_flag, TCL_LINK_INT);
-    MEDIT(s)->mv_context = mged_variables->mv_context;
-    MEDIT(s)->vlfree = &rt_vlfree;
-    mged_edit_clbk_sync(MEDIT(s), s);
 
     /* Finally, enter solid edit state */
     (void)chg_state(s, ST_S_PICK, ST_S_EDIT, "Keyboard illuminate");
@@ -788,27 +801,27 @@ objedit_mouse(struct mged_state *s, const vect_t mousevec)
     if (movedir & SARROW) {
 	switch (edobj) {
 	    case BE_O_SCALE:
-		MEDIT(s)->edit_flag = RT_MATRIX_EDIT_SCALE;
+		rt_edit_set_edflag(MEDIT(s), RT_MATRIX_EDIT_SCALE);
 		break;
 	    case BE_O_XSCALE:
-		MEDIT(s)->edit_flag = RT_MATRIX_EDIT_SCALE_X;
+		rt_edit_set_edflag(MEDIT(s), RT_MATRIX_EDIT_SCALE_X);
 		break;
 	    case BE_O_YSCALE:
-		MEDIT(s)->edit_flag = RT_MATRIX_EDIT_SCALE_Y;
+		rt_edit_set_edflag(MEDIT(s), RT_MATRIX_EDIT_SCALE_Y);
 		break;
 	    case BE_O_ZSCALE:
-		MEDIT(s)->edit_flag = RT_MATRIX_EDIT_SCALE_Z;
+		rt_edit_set_edflag(MEDIT(s), RT_MATRIX_EDIT_SCALE_Z);
 		break;
 	}
     } else if (movedir & (RARROW|UARROW)) {
 	int use_x = (movedir & RARROW) ? 1 : 0;
 	int use_y = (movedir & UARROW) ? 1 : 0;
 	if (use_x && !use_y)
-	    MEDIT(s)->edit_flag = RT_MATRIX_EDIT_TRANS_VIEW_X;
+	    rt_edit_set_edflag(MEDIT(s), RT_MATRIX_EDIT_TRANS_VIEW_X);
 	if (!use_x && use_y)
-	    MEDIT(s)->edit_flag = RT_MATRIX_EDIT_TRANS_VIEW_Y;
+	    rt_edit_set_edflag(MEDIT(s), RT_MATRIX_EDIT_TRANS_VIEW_Y);
 	if (use_x && use_y)
-	    MEDIT(s)->edit_flag = RT_MATRIX_EDIT_TRANS_VIEW_XY;
+	    rt_edit_set_edflag(MEDIT(s), RT_MATRIX_EDIT_TRANS_VIEW_XY);
 	MAT_COPY(MEDIT(s)->model2objview, view_state->vs_model2objview);
     } else {
 	Tcl_AppendResult(s->interp, "No object edit mode selected;  mouse press ignored\n", (char *)NULL);
@@ -880,18 +893,21 @@ vls_solid(struct mged_state *ms, struct bu_vls *vp, struct rt_edit *s, const mat
 }
 
 
-static void
+static int
 init_oedit_guts(struct mged_state *s)
 {
-    const char *strp="";
+    if (s->dbip == DBI_NULL || !illump || !illump->s_u_data)
+	return BRLCAD_ERROR;
 
-    /* for safety sake */
-    rt_edit_set_edflag(MEDIT(s), RT_EDIT_DEFAULT);
-    MAT_IDN(MEDIT(s)->e_mat);
-
-    if (s->dbip == DBI_NULL || !illump) {
-	return;
+    struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
+    if (reinit_edit_state(s, bdata) != BRLCAD_OK) {
+	Tcl_AppendResult(s->interp, "init_oedit(",
+		LAST_SOLID(bdata)->d_namep,
+		"): solid import failure\n", (char *)NULL);
+	return BRLCAD_ERROR;
     }
+
+    rt_edit_set_edflag(MEDIT(s), RT_EDIT_DEFAULT);
 
     /*
      * Check for a processed region
@@ -904,37 +920,8 @@ init_oedit_guts(struct mged_state *s)
 
 	/* The s_center takes the MEDIT(s)->e_mat into account already */
     }
-
-    /* Not an evaluated region - just a regular path ending in a solid */
-    if (!illump->s_u_data)
-	return;
-    struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
-    if (rt_db_get_internal(&MEDIT(s)->es_int, LAST_SOLID(bdata),
-			   s->dbip, NULL) < 0) {
-	if (bdata->s_fullpath.fp_len > 0) {
-	    Tcl_AppendResult(s->interp, "init_oedit(",
-		    LAST_SOLID(bdata)->d_namep,
-		    "):  solid import failure\n", (char *)NULL);
-	} else {
-	    Tcl_AppendResult(s->interp, "sedit_reset(NULL):  solid import failure\n", (char *)NULL);
-	}
-	rt_db_free_internal(&MEDIT(s)->es_int);
-	button(s, BE_REJECT);
-	return;				/* FAIL */
-    }
-    RT_CK_DB_INTERNAL(&MEDIT(s)->es_int);
-
-    if (EDOBJ[MEDIT(s)->es_int.idb_type].ft_prim_edit_create)
-	MEDIT(s)->ipe_ptr = (*EDOBJ[MEDIT(s)->es_int.idb_type].ft_prim_edit_create)(MEDIT(s));
-
-    /* Save aggregate path matrix */
-    (void)db_path_to_mat(s->dbip, &bdata->s_fullpath, MEDIT(s)->e_mat, bdata->s_fullpath.fp_len-1);
-
-    /* get the inverse matrix */
-    bn_mat_inv(MEDIT(s)->e_invmat, MEDIT(s)->e_mat);
-
-    rt_get_solid_keypoint(MEDIT(s), &MEDIT(s)->e_keypoint, &strp, MEDIT(s)->e_mat);
     init_oedit_vars(s);
+    return BRLCAD_OK;
 }
 
 
@@ -1006,13 +993,13 @@ set_oedit_bbox_keypoint(struct mged_state *s)
 }
 
 
-void
+int
 init_oedit(struct mged_state *s)
 {
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-    /* do real initialization work */
-    init_oedit_guts(s);
+    if (init_oedit_guts(s) != BRLCAD_OK)
+	return BRLCAD_ERROR;
 
     s->s_edit->es_edclass = EDIT_CLASS_NULL;
 
@@ -1020,6 +1007,7 @@ init_oedit(struct mged_state *s)
     bu_vls_strcpy(&vls, "begin_edit_callback {}");
     (void)Tcl_Eval(s->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
+    return BRLCAD_OK;
 }
 
 
@@ -1141,14 +1129,8 @@ oedit_accept(struct mged_state *s)
 void
 oedit_reject(struct mged_state *s)
 {
-    if (MEDIT(s)->ipe_ptr) {
-	if (MEDIT(s)->es_int.idb_type > 0 &&
-		EDOBJ[MEDIT(s)->es_int.idb_type].ft_prim_edit_destroy)
-	    (*EDOBJ[MEDIT(s)->es_int.idb_type].ft_prim_edit_destroy)(MEDIT(s)->ipe_ptr);
-	MEDIT(s)->ipe_ptr = NULL;
-    }
-
-    rt_db_free_internal(&MEDIT(s)->es_int);
+    rt_edit_reset(MEDIT(s));
+    MEDIT(s)->edit_flag = -1;
 }
 
 
@@ -1877,7 +1859,8 @@ f_oedit_reset(ClientData clientData, Tcl_Interp *interp, int argc, const char *U
     int bbox_keypoint = BU_STR_EQUAL(MEDIT(s)->e_keytag, "bounding-box center");
 
     oedit_reject(s);
-    init_oedit_guts(s);
+    if (init_oedit_guts(s) != BRLCAD_OK)
+	return TCL_ERROR;
 
     if (bbox_keypoint)
 	(void)set_oedit_bbox_keypoint(s);

@@ -10,7 +10,7 @@ bb - Report dimensional information about objects using Bounding Boxes
 
 [source]
 ----
-bb [-c] [-q] [-v] object1 [object2 object3 ...]
+bb [-c bbox_object_name.s] [-d] [-e] [-m] [-o] [-q] [-t] [-u] [-v] object1 [object2 object3 ...]
 ----
 
 
@@ -39,11 +39,26 @@ Report the midpoint / center (x y z) of the bounding box.
 
 
 *-o*::
-Calculate an oriented bounding box instead of an axis aligned bounding box. This will produce tighter bounding volumes if the geometry is not symmetric to the XYZ grid. Uses the algorithms and code from Barequet and Har-Peled - see the papers http://valis.cs.uiuc.edu/~sariel/papers/98/bbox.html[Efficiently Approximating the Minimum-Volume Bounding Box of a Point Set in Three Dimensions](SODA 99) and http://valis.cs.uiuc.edu/~sariel/research/papers/00/diam.html[A Practical Approach for Computing the Diameter of a Point-Set] for details.
+Calculate an oriented bounding box instead of an axis-aligned bounding box.
+This works for primitives, regions, all-up combinations, and multiple input
+objects.  The default fast calculation transforms positive leaf bounds into
+model space and fits an oriented box to their corners.  Subtraction uses its
+left operand and intersection uses a conservative common AABB.  This generally
+produces a smaller box when geometry is not aligned with the model XYZ axes.
 
 
 *-q*::
 Quiet mode - disable printing of the header, which is on by default. Useful when processing output from bb.
+
+
+*-t*::
+Calculate a _tight_ bounding box that accounts for subtracted (negative)
+geometry. The default bound is conservative and derived from the CSG tree.
+With *-t*, the box is instead derived from geometry evaluated by the ray
+tracer. A Cauchy-Crofton sampler fires reproducible spherical rays until its
+surface-area estimate stabilizes, then bounds the converged surface-point set.
+This bound is approximate and slower to compute than the default. Combine
+*-t* with *-o* for an evaluated oriented bounding box.
 
 
 *-u*::

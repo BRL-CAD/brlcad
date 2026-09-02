@@ -147,14 +147,28 @@ function(ged_plugin_library name)
       endif()
     endif()
     if (EXISTS ${wsf})
-      string(FIND "${wsf}" "${PROJECT_BINARY_DIR}/" _wsf_in_binary_dir)
+      # The GENERATED property is authoritative for in-source builds, where
+      # source and binary paths are necessarily the same.  Retain the path
+      # check as a fallback for out-of-source generated inputs that do not
+      # carry the property.
+      set(_wsf_is_generated FALSE)
+      get_source_file_property(_wsf_source_generated "${wsf}" GENERATED)
+      if(_wsf_source_generated)
+	set(_wsf_is_generated TRUE)
+      elseif(NOT "${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
+	string(FIND "${wsf}" "${PROJECT_BINARY_DIR}/" _wsf_in_binary_dir)
+	if(NOT _wsf_in_binary_dir EQUAL -1)
+	  set(_wsf_is_generated TRUE)
+	endif()
+      endif()
       # Only files that exist at configure time can define libged commands for
       # the purposes of static inclusion or API definition.  Anything
       # dynamically generated will be limited to dynamic loading.
-      if(DO_STATIC AND _wsf_in_binary_dir EQUAL -1)
+
+      if(NOT _wsf_is_generated AND DO_STATIC)
 	_libged_accumulate_global(GED_COMMAND_STATIC_SRCS "${wsf}")
       endif()
-      if(_wsf_in_binary_dir EQUAL -1)
+      if(NOT _wsf_is_generated)
 	_libged_accumulate_global(GED_COMMAND_ALL_SRCS "${wsf}")
       endif()
 
