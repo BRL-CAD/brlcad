@@ -77,7 +77,7 @@ ged_subprocesses_terminate(struct ged *gedp)
 	    (*gedp->ged_delete_io_handler)(rrp, BU_PROCESS_STDERR);
 	}
 	if (!rrp->aborted) {
-	    bu_pid_terminate(bu_process_pid(rrp->p));
+	    (void)bu_process_terminate(rrp->p);
 	    rrp->aborted = 1;
 	}
 	(void)bu_process_wait_n(&rrp->p, 0);

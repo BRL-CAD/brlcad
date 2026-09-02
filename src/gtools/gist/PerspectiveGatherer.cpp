@@ -272,12 +272,12 @@ renderPerspective(RenderingFace face, Options& opt, std::string component, std::
     }
 
     struct bu_process* p;
-    bu_process_create(&p, av, BU_PROCESS_HIDE_WINDOW);
+    bu_process_create(&p, av, BU_PROCESS_HIDE_WINDOW | BU_PROCESS_OUT_EQ_ERR);
 
     char buff[128];
     std::string result = "";
     int read_cnt = 0;
-    while ((read_cnt = bu_process_read_n(p, BU_PROCESS_STDERR, 128-1, buff)) > 0) {
+    while ((read_cnt = bu_process_read_n(p, BU_PROCESS_STDOUT, 128-1, buff)) > 0) {
         /* NOTE: read does not ensure null-termination, thus buffersize-1 */
         buff[read_cnt] = '\0';
         result += buff;

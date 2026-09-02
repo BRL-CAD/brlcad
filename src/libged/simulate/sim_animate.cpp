@@ -47,10 +47,12 @@
 #include "bio.h"
 
 #include "bu/app.h"
+#include "bu/datetime.h"
 #include "bu/file.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/process.h"
+#include "bu/snooze.h"
 #include "bu/str.h"
 #include "bu/vls.h"
 #include "icv.h"
@@ -74,6 +76,7 @@ static const double CHASE_DIST_MM = 35000.0; /**< Camera-to-subject distance in 
 
 /* rt process timeout in seconds (5 minutes per frame). */
 static const int RT_TIMEOUT_SECONDS = 300;
+static const int RT_POLL_INTERVAL_MS = 10;
 
 
 /* ------------------------------------------------------------------ */
@@ -471,13 +474,40 @@ SimAnimState::renderFrame(int frame_num)
     rt_args.push_back(NULL);
 
     struct bu_process *proc = NULL;
-    bu_process_create(&proc, rt_args.data(), BU_PROCESS_DEFAULT);
+    bu_process_create(&proc, rt_args.data(), BU_PROCESS_OUT_EQ_ERR);
     if (!proc) {
 	bu_log("simulate: failed to launch rt for frame %d\n", frame_num);
 	return BRLCAD_ERROR;
     }
 
-    int rc = bu_process_wait_n(&proc, RT_TIMEOUT_SECONDS);
+    const int64_t deadline = bu_gettime() + BU_SEC2USEC(RT_TIMEOUT_SECONDS);
+    int process_status = 0;
+    int poll_status = 0;
+    char output[4096];
+    while ((poll_status = bu_process_poll(proc, &process_status)) == 0) {
+	while (bu_process_pending(bu_process_fileno(proc, BU_PROCESS_STDOUT))) {
+	    int count = bu_process_read_n(proc, BU_PROCESS_STDOUT,
+		    (int)sizeof(output), output);
+	    if (count <= 0)
+		break;
+	    bu_log("%.*s", count, output);
+	}
+	if (bu_gettime() >= deadline) {
+	    (void)bu_process_terminate(proc);
+	    process_status = ERROR_PROCESS_ABORTED;
+	    break;
+	}
+	(void)bu_snooze((int64_t)RT_POLL_INTERVAL_MS * 1000);
+    }
+    while (bu_process_pending(bu_process_fileno(proc, BU_PROCESS_STDOUT))) {
+	int count = bu_process_read_n(proc, BU_PROCESS_STDOUT,
+		(int)sizeof(output), output);
+	if (count <= 0)
+	    break;
+	bu_log("%.*s", count, output);
+    }
+    int rc = (poll_status < 0) ? BRLCAD_ERROR : process_status;
+    (void)bu_process_wait_n(&proc, 0);
     if (rc != 0) {
 	bu_log("simulate: rt exited with code %d for frame %d\n",
 	       rc, frame_num);
