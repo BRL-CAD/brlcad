@@ -326,6 +326,9 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   target_link_libraries(creo-brl-core REGEX::REGEX ${WIN_LIBS} ${CREO_BRLCAD_LIBS})
   set_target_properties(creo-brl-core PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CREO_BUNDLE_BIN_DIR}")
 
+  include(CTest)
+  add_subdirectory(tests)
+
   add_library(creo-brl SHARED
     loader.c
     frontend.cpp
