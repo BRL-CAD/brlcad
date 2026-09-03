@@ -6878,17 +6878,15 @@ brep_cdt_fast_ex(int **faces, int *face_cnt, vect_t **pnt_norms,
 	    return !refinement_time_limited;
 	};
 
-	/* A coarse face attempt can fail transiently on difficult inputs even
-	 * when neighboring faces complete.  Retry only those missing faces before
-	 * spending time refining accepted geometry. */
+	/* Tessellation success is not monotonic with tolerance: coarse sampling
+	 * can collapse a narrow boundary which is resolved at the requested
+	 * tolerance.  Recover missing faces there directly rather than spending
+	 * several passes walking toward the only known sufficient setting. */
 	bool have_incomplete_face = false;
 	for (const fast_cdt_face_result &result : face_results)
 	    have_incomplete_face = have_incomplete_face || !result.completed;
-	if (have_incomplete_face) {
-	    const double recovery_relative = std::max(requested_relative,
-		coarse_relative * 0.5);
-	    run_refinement_pass(recovery_relative, false, true);
-	}
+	if (have_incomplete_face)
+	    run_refinement_pass(requested_relative, false, true);
 
 	/* A topology-derived share is a target, not permission to discard
 	 * a valid boundary.  First try progressively coarser surface samples
@@ -6922,11 +6920,14 @@ brep_cdt_fast_ex(int **faces, int *face_cnt, vect_t **pnt_norms,
 		    face_results[(size_t)face_index];
 		const fast_face_refinement &quality =
 		    refinement[(size_t)face_index];
-		have_refinable_face = have_refinable_face ||
-		    (!result.skipped_degenerate &&
-		    (!result.completed || (!quality.area_converged &&
+		const bool needs_refinement = !result.completed ||
+		    (quality.accepted_relative_tolerance >
+		    requested_relative * (1.0 + 1.0e-12) &&
+		    !quality.area_converged &&
 		    (!quality.budget_limited ||
-		    !quality.boundary_covered))));
+		    !quality.boundary_covered));
+		have_refinable_face = have_refinable_face ||
+		    (!result.skipped_degenerate && needs_refinement);
 	    }
 	    if (!have_refinable_face)
 		break;
