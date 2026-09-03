@@ -220,6 +220,7 @@ struct geom_result {
     int approximated_items = 0;
     int failed_items = 0;
     int skipped_items = 0;
+    int tolerance_skipped_items = 0;
     bool hit_time_limit = false;
     bool hit_memory_limit = false;
     bool hit_point_limit = false;
@@ -241,6 +242,7 @@ struct geom_result {
     std::vector<int> failed_faces;
     std::vector<face_failure> face_failures;
     std::vector<int> skipped_faces;
+    std::vector<int> tolerance_skipped_faces;
     std::vector<int> approximated_faces;
     std::vector<int> unprocessed_faces;
     std::vector<int> failed_edges;
@@ -250,6 +252,7 @@ struct geom_result {
     std::vector<int> unprocessed_surface_cues;
     size_t omitted_failed_faces = 0;
     size_t omitted_skipped_faces = 0;
+    size_t omitted_tolerance_skipped_faces = 0;
     size_t omitted_approximated_faces = 0;
     size_t omitted_unprocessed_faces = 0;
     size_t omitted_failed_edges = 0;
@@ -327,6 +330,10 @@ shaded_face_status(int face_index, int status, void *data)
 	case BREP_CDT_FAST_FACE_SKIPPED_DEGENERATE:
 	    capture_index(&result->skipped_faces,
 		&result->omitted_skipped_faces, face_index);
+	    break;
+	case BREP_CDT_FAST_FACE_SKIPPED_TOLERANCE:
+	    capture_index(&result->tolerance_skipped_faces,
+		&result->omitted_tolerance_skipped_faces, face_index);
 	    break;
 	case BREP_CDT_FAST_FACE_APPROXIMATED:
 	    capture_index(&result->approximated_faces,
@@ -672,6 +679,7 @@ shaded_result(struct db_i *dbip, struct directory *dp,
     result.approximated_items = report.approximated_faces;
     result.failed_items = report.failed_faces;
     result.skipped_items = report.skipped_degenerate_faces;
+    result.tolerance_skipped_items = report.skipped_tolerance_faces;
     result.hit_time_limit = report.hit_time_limit;
     result.hit_memory_limit = report.hit_memory_limit;
     result.hit_point_limit = report.hit_point_limit;
@@ -720,13 +728,17 @@ shaded_result(struct db_i *dbip, struct directory *dp,
 	result.issues.push_back("resource_limit");
     else if (result.ret != BREP_CDT_FAST_OK)
 	result.issues.push_back("generation_failed");
-    if (!result.vertices || !result.primitives)
+    const bool expected_empty = result.ret == BREP_CDT_FAST_OK &&
+	result.failed_items == 0 && result.completed_items > 0 &&
+	result.completed_items == result.skipped_items +
+	result.tolerance_skipped_items;
+    if ((!result.vertices || !result.primitives) && !expected_empty)
 	result.issues.push_back("empty_geometry");
     if (result.invalid_indices)
 	result.issues.push_back("invalid_face_indices");
     if (!result.finite)
 	result.issues.push_back("non_finite_coordinates_or_normals");
-    if (!result.have_bbox)
+    if (!result.have_bbox && !expected_empty)
 	result.issues.push_back("missing_bbox");
 
     bu_free(faces, "brep audit faces");
@@ -1654,6 +1666,8 @@ print_result(const geom_result &result, const vect_t ref_dims)
 	<< ",\"approximated_items\":" << result.approximated_items
 	<< ",\"failed_items\":" << result.failed_items
 	<< ",\"skipped_items\":" << result.skipped_items
+	<< ",\"tolerance_skipped_items\":"
+	<< result.tolerance_skipped_items
 	<< ",\"adaptive_quality\":{\"triangle_budget\":"
 	<< result.triangle_budget
 	<< ",\"area_converged_faces\":"
@@ -1686,7 +1700,12 @@ print_result(const geom_result &result, const vect_t ref_dims)
     std::cout << "],\"skipped_faces\":";
     print_indices(result.skipped_faces);
     std::cout << ",\"skipped_faces_omitted\":"
-	<< result.omitted_skipped_faces << ",\"approximated_faces\":";
+	<< result.omitted_skipped_faces
+	<< ",\"tolerance_skipped_faces\":";
+    print_indices(result.tolerance_skipped_faces);
+    std::cout << ",\"tolerance_skipped_faces_omitted\":"
+	<< result.omitted_tolerance_skipped_faces
+	<< ",\"approximated_faces\":";
     print_indices(result.approximated_faces);
     std::cout << ",\"approximated_faces_omitted\":"
 	<< result.omitted_approximated_faces << ",\"unprocessed_faces\":";
