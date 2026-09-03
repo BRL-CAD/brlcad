@@ -41,12 +41,21 @@
 #include <cmath>
 #include <cstdio>
 
+#include "bu/log.h"
 #include "raytrace.h"
 #include "wdb.h"
 
 #include "../validation.h"
 
 static int failures = 0;
+
+static int
+count_log(void *data, void *UNUSED(message))
+{
+    if (data)
+	(*static_cast<int *>(data))++;
+    return 0;
+}
 
 static void
 expect(bool condition, const char *message)
@@ -91,10 +100,24 @@ main()
 
     double surface_area = -1.0;
     double volume = -1.0;
+    int log_count = 0;
+    struct bu_hook_list saved_hooks = BU_HOOK_LIST_INIT_ZERO;
+    bu_log_hook_save_all(&saved_hooks);
+    bu_log_hook_delete_all();
+    bu_log_add_hook(count_log, &log_count);
     long crossings = facetize_csg_metrics(dbip, "half.s", &surface_area,
 	    &volume);
+    int bound_log_count = log_count;
+    bu_log("facetize validation hook restoration probe\n");
+    bu_log_hook_delete_all();
+    bu_log_hook_restore_all(&saved_hooks);
+    bu_hook_delete_all(&saved_hooks);
     expect(crossings < 0,
 	    "unbounded halfspace is not assigned Crofton metrics");
+    expect(bound_log_count == 0,
+	    "expected bounding failure diagnostics are suppressed");
+    expect(log_count == 1,
+	    "bounding failure log suppression restores existing hooks");
 
     crossings = facetize_csg_metrics(dbip, "clipped.r", &surface_area,
 	    &volume);

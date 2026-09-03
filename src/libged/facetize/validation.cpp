@@ -17,11 +17,36 @@
 
 #include <cmath>
 
+#include "bu/log.h"
 #include "rt/calc.h"
 #include "raytrace.h"
 
 #include "./ged_facetize.h"
 #include "./validation.h"
+
+static int
+facetize_discard_log(void *UNUSED(data), void *UNUSED(message))
+{
+    return 0;
+}
+
+static int
+facetize_bound_internal(struct db_i *dbip, struct directory *dp,
+	point_t bounds_min, point_t bounds_max)
+{
+    /* A failed bound is an expected validation outcome for unbounded or
+     * otherwise unsampleable CSG.  rt_bound_internal logs every failure,
+     * which floods large runs before facetize can report the aggregate. */
+    struct bu_hook_list saved_hooks = BU_HOOK_LIST_INIT_ZERO;
+    bu_log_hook_save_all(&saved_hooks);
+    bu_log_hook_delete_all();
+    bu_log_add_hook(facetize_discard_log, NULL);
+    int ret = rt_bound_internal(dbip, dp, bounds_min, bounds_max);
+    bu_log_hook_delete_all();
+    bu_log_hook_restore_all(&saved_hooks);
+    bu_hook_delete_all(&saved_hooks);
+    return ret;
+}
 
 int
 _ged_facetize_csg_bbox(struct db_i *dbip, const char *object_name,
@@ -32,7 +57,7 @@ _ged_facetize_csg_bbox(struct db_i *dbip, const char *object_name,
 
     struct directory *dp = db_lookup(dbip, object_name, LOOKUP_QUIET);
     if (dp == RT_DIR_NULL ||
-	rt_bound_internal(dbip, dp, bounds_min, bounds_max) != 0)
+	facetize_bound_internal(dbip, dp, bounds_min, bounds_max) != 0)
 	return BRLCAD_ERROR;
 
     vect_t dimensions;
