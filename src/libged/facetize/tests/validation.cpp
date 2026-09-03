@@ -98,6 +98,11 @@ main()
     expect(mk_comb(wdbp, "clipped.r", &members, 1, NULL, NULL, NULL,
 	    0, 0, 0, 0, 0, 0, 0) == 0, "create clipped test region");
 
+    struct bu_list empty_members;
+    BU_LIST_INIT(&empty_members);
+    expect(mk_comb(wdbp, "empty.c", &empty_members, 0, NULL, NULL, NULL,
+	    0, 0, 0, 0, 0, 0, 0) == 0, "create empty test combination");
+
     double surface_area = -1.0;
     double volume = -1.0;
     int log_count = 0;
@@ -107,13 +112,17 @@ main()
     bu_log_add_hook(count_log, &log_count);
     long crossings = facetize_csg_metrics(dbip, "half.s", &surface_area,
 	    &volume);
+    expect(crossings < 0,
+	    "unbounded halfspace is not assigned Crofton metrics");
+    crossings = facetize_csg_metrics(dbip, "empty.c", &surface_area,
+	    &volume);
     int bound_log_count = log_count;
     bu_log("facetize validation hook restoration probe\n");
     bu_log_hook_delete_all();
     bu_log_hook_restore_all(&saved_hooks);
     bu_hook_delete_all(&saved_hooks);
     expect(crossings < 0,
-	    "unbounded halfspace is not assigned Crofton metrics");
+	    "empty combination is not assigned Crofton metrics");
     expect(bound_log_count == 0,
 	    "expected bounding failure diagnostics are suppressed");
     expect(log_count == 1,

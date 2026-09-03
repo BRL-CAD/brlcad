@@ -41,7 +41,19 @@ facetize_bound_internal(struct db_i *dbip, struct directory *dp,
     bu_log_hook_save_all(&saved_hooks);
     bu_log_hook_delete_all();
     bu_log_add_hook(facetize_discard_log, NULL);
-    int ret = rt_bound_internal(dbip, dp, bounds_min, bounds_max);
+
+    int ret = BRLCAD_ERROR;
+    if (!BU_SETJUMP) {
+	ret = rt_bound_internal(dbip, dp, bounds_min, bounds_max);
+    } else {
+	BU_UNSETJUMP;
+	bu_log_hook_delete_all();
+	bu_log_hook_restore_all(&saved_hooks);
+	bu_hook_delete_all(&saved_hooks);
+	return BRLCAD_ERROR;
+    }
+    BU_UNSETJUMP;
+
     bu_log_hook_delete_all();
     bu_log_hook_restore_all(&saved_hooks);
     bu_hook_delete_all(&saved_hooks);
