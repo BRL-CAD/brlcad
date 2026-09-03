@@ -288,18 +288,37 @@ detria_postconditions(const std::vector<detria::PointD> &points,
 
 
 static int
+bg_triangulation_report_set(struct bg_triangulation_report *report,
+	enum bg_triangulation_reason reason, int input_index, const char *message)
+{
+    if (report) {
+	report->reason = reason;
+	report->input_index = input_index;
+	bu_strlcpy(report->message, message ? message : "",
+	    sizeof(report->message));
+    }
+    return reason == BG_TRIANGULATION_OK ? BRLCAD_OK : BRLCAD_ERROR;
+}
+
+
+static int
 detria_result(int **faces, int *num_faces, point2d_t **out_pts,
 	int *num_outpts, const std::vector<detria::PointD> &points,
 	const std::vector<std::vector<int>> &outlines,
 	const std::vector<std::vector<int>> &holes,
-	const std::vector<std::pair<int, int>> &interior_constraints = {})
+	const std::vector<std::pair<int, int>> &interior_constraints,
+	struct bg_triangulation_report *report)
 {
     if (points.size() < 3 || outlines.empty())
-	return BRLCAD_ERROR;
+	return bg_triangulation_report_set(report,
+	    BG_TRIANGULATION_INVALID_INPUT, -1,
+	    "fewer than three usable chart points");
 
     std::vector<detria::PointD> conditioned;
     if (!detria_condition_points(points, conditioned))
-	return BRLCAD_ERROR;
+	return bg_triangulation_report_set(report,
+	    BG_TRIANGULATION_INVALID_INPUT, -1,
+	    "chart coordinates cannot be conditioned safely");
 
     detria::Triangulation<detria::PointD, int> tri;
     tri.setPoints(conditioned);
@@ -314,10 +333,14 @@ detria_result(int **faces, int *num_faces, point2d_t **out_pts,
     try {
 	success = tri.triangulate(true);
     } catch (...) {
-	return BRLCAD_ERROR;
+	return bg_triangulation_report_set(report,
+	    BG_TRIANGULATION_DETRIA_FAILED, -1,
+	    "detria threw while triangulating the cleaned chart");
     }
     if (!success)
-	return BRLCAD_ERROR;
+	return bg_triangulation_report_set(report,
+	    BG_TRIANGULATION_DETRIA_FAILED, -1,
+	    tri.getErrorMessage().c_str());
 
     std::vector<int> triangles;
     tri.forEachTriangle([&](const detria::Triangle<int> triangle) {
@@ -326,11 +349,15 @@ detria_result(int **faces, int *num_faces, point2d_t **out_pts,
 	triangles.push_back(triangle.z);
     }, true);
     if (triangles.empty())
-	return BRLCAD_ERROR;
+	return bg_triangulation_report_set(report,
+	    BG_TRIANGULATION_DETRIA_FAILED, -1,
+	    "detria returned no triangles for the cleaned chart");
 
     if (!detria_postconditions(conditioned, outlines, holes,
 	    interior_constraints, triangles))
-	return BRLCAD_ERROR;
+	return bg_triangulation_report_set(report,
+	    BG_TRIANGULATION_POSTCONDITION_FAILED, -1,
+	    "cleaned triangulation failed chart certification");
 
     int *new_faces = (int *)bu_calloc(triangles.size(), sizeof(int),
 	"sanitized detria faces");
@@ -344,7 +371,8 @@ detria_result(int **faces, int *num_faces, point2d_t **out_pts,
     *num_faces = (int)(triangles.size() / 3);
     *out_pts = new_points;
     *num_outpts = (int)points.size();
-    return BRLCAD_OK;
+    return bg_triangulation_report_set(report, BG_TRIANGULATION_OK, -1,
+	"cleaned constrained triangulation");
 }
 
 
@@ -353,7 +381,7 @@ deduplicated_detria(int **faces, int *num_faces, point2d_t **out_pts,
 	int *num_outpts, const int *poly, size_t poly_pnts,
 	const int **holes_array, const size_t *holes_npts, size_t nholes,
 	const int *steiner, size_t steiner_npts, const point2d_t *pts,
-	double boundary_tol)
+	double boundary_tol, struct bg_triangulation_report *report)
 {
     std::vector<detria::PointD> points;
     std::map<std::pair<double, double>, int> point_indices;
@@ -460,7 +488,7 @@ deduplicated_detria(int **faces, int *num_faces, point2d_t **out_pts,
     }
 
     return detria_result(faces, num_faces, out_pts, num_outpts, points,
-	outlines, holes);
+	outlines, holes, {}, report);
 }
 
 
@@ -475,10 +503,18 @@ bg_nested_poly_triangulate_clean(int **faces, int *num_faces,
 	const int **holes_array, const size_t *holes_npts,
 	const size_t nholes, const int *steiner, const size_t steiner_npts,
 	const int *constraints, const size_t constraint_cnt,
-	const point2d_t *pts, const size_t npts)
+	const point2d_t *pts, const size_t npts,
+	struct bg_triangulation_report *report)
 {
-    if (!faces || !num_faces || !out_pts || !num_outpts || !poly ||
-	    poly_pnts < 3 || !pts || npts < 3)
+    bg_triangulation_report_set(report, BG_TRIANGULATION_INVALID_INPUT, -1,
+	"invalid cleaned triangulation input");
+    if (!faces || !num_faces || !out_pts || !num_outpts)
+	return BRLCAD_ERROR;
+    *faces = NULL;
+    *num_faces = 0;
+    *out_pts = NULL;
+    *num_outpts = 0;
+    if (!poly || poly_pnts < 3 || !pts || npts < 3)
 	return BRLCAD_ERROR;
     if (nholes && (!holes_npts || !holes_array))
 	return BRLCAD_ERROR;
@@ -486,11 +522,6 @@ bg_nested_poly_triangulate_clean(int **faces, int *num_faces,
 	return BRLCAD_ERROR;
     if (constraint_cnt && !constraints)
 	return BRLCAD_ERROR;
-
-    *faces = NULL;
-    *num_faces = 0;
-    *out_pts = NULL;
-    *num_outpts = 0;
 
     std::set<int> active;
     for (size_t i = 0; i < poly_pnts; i++)
@@ -513,8 +544,13 @@ bg_nested_poly_triangulate_clean(int **faces, int *num_faces,
     for (int index : active) {
 	if (index < 0 || (size_t)index >= npts ||
 		!std::isfinite(pts[index][X]) ||
-		!std::isfinite(pts[index][Y]))
-	    return BRLCAD_ERROR;
+		!std::isfinite(pts[index][Y])) {
+	    char message[128];
+	    std::snprintf(message, sizeof(message),
+		"chart point %d is invalid", index);
+	    return bg_triangulation_report_set(report,
+		BG_TRIANGULATION_INVALID_INPUT, index, message);
+	}
 	min_x = std::min(min_x, pts[index][X]);
 	min_y = std::min(min_y, pts[index][Y]);
 	max_x = std::max(max_x, pts[index][X]);
@@ -523,12 +559,16 @@ bg_nested_poly_triangulate_clean(int **faces, int *num_faces,
 
     const double span = std::max(max_x - min_x, max_y - min_y);
     if (!(span > SMALL_FASTF) || !std::isfinite(span))
-	return BRLCAD_ERROR;
+	return bg_triangulation_report_set(report,
+	    BG_TRIANGULATION_INVALID_PSLG, -1,
+	    "chart boundary has no resolvable two-dimensional extent");
     const double origin_x = 0.5 * (min_x + max_x);
     const double origin_y = 0.5 * (min_y + max_y);
     const double scale = (double)CLIPPER_MAX / span;
     if (!(scale > 0.0) || !std::isfinite(scale))
-	return BRLCAD_ERROR;
+	return bg_triangulation_report_set(report,
+	    BG_TRIANGULATION_INVALID_INPUT, -1,
+	    "chart coordinates cannot be scaled safely");
 
     /* Most failures need no topological change: detria rejects duplicate
      * coordinates and unconstrained samples lying on constrained edges.  Try
@@ -538,7 +578,7 @@ bg_nested_poly_triangulate_clean(int **faces, int *num_faces,
 
     if (!constraint_cnt && deduplicated_detria(faces, num_faces, out_pts, num_outpts,
 	    poly, poly_pnts, holes_array, holes_npts, nholes, steiner,
-	    steiner_npts, pts, boundary_tol) == BRLCAD_OK)
+	    steiner_npts, pts, boundary_tol, report) == BRLCAD_OK)
 	return BRLCAD_OK;
 
     ClipperLib::Clipper clipper(ClipperLib::ioStrictlySimple |
@@ -546,12 +586,16 @@ bg_nested_poly_triangulate_clean(int **faces, int *num_faces,
     ClipperLib::Path outer;
     if (!clipper_input_path(outer, poly, poly_pnts, pts, origin_x,
 	    origin_y, scale))
-	return BRLCAD_ERROR;
+	return bg_triangulation_report_set(report,
+	    BG_TRIANGULATION_INVALID_PSLG, -1,
+	    "outer contour collapsed during integer conditioning");
     ClipperLib::Paths hole_paths;
 
     try {
 	if (!clipper.AddPath(outer, ClipperLib::ptSubject, true))
-	    return BRLCAD_ERROR;
+	    return bg_triangulation_report_set(report,
+		BG_TRIANGULATION_INVALID_PSLG, -1,
+		"Clipper rejected the conditioned outer contour");
 	for (size_t h = 0; h < nholes; h++) {
 	    ClipperLib::Path hole;
 	    if (!clipper_input_path(hole, holes_array[h], holes_npts[h],
@@ -564,16 +608,22 @@ bg_nested_poly_triangulate_clean(int **faces, int *num_faces,
 		hole_paths.push_back(hole);
 	}
     } catch (...) {
-	return BRLCAD_ERROR;
+	return bg_triangulation_report_set(report,
+	    BG_TRIANGULATION_INVALID_PSLG, -1,
+	    "Clipper threw while loading chart contours");
     }
 
     ClipperLib::PolyTree clipped;
     try {
 	if (!clipper.Execute(ClipperLib::ctDifference, clipped,
 		ClipperLib::pftNonZero, ClipperLib::pftNonZero))
-	    return BRLCAD_ERROR;
+	    return bg_triangulation_report_set(report,
+		BG_TRIANGULATION_INVALID_NESTING, -1,
+		"Clipper could not resolve outer and hole contours");
     } catch (...) {
-	return BRLCAD_ERROR;
+	return bg_triangulation_report_set(report,
+	    BG_TRIANGULATION_INVALID_NESTING, -1,
+	    "Clipper threw while resolving chart contours");
     }
     if (!clipped.Total()) {
 	/* Some imported B-Reps carry geometrically inverted outer/hole loop
@@ -584,19 +634,29 @@ bg_nested_poly_triangulate_clean(int **faces, int *num_faces,
 	    ClipperLib::ioPreserveCollinear);
 	try {
 	    if (!parity.AddPath(outer, ClipperLib::ptSubject, true))
-		return BRLCAD_ERROR;
+		return bg_triangulation_report_set(report,
+		    BG_TRIANGULATION_INVALID_PSLG, -1,
+		    "Clipper rejected the parity outer contour");
 	    for (const ClipperLib::Path &hole : hole_paths) {
 		if (!parity.AddPath(hole, ClipperLib::ptSubject, true))
-		    return BRLCAD_ERROR;
+		    return bg_triangulation_report_set(report,
+			BG_TRIANGULATION_INVALID_PSLG, -1,
+			"Clipper rejected a parity hole contour");
 	    }
 	    if (!parity.Execute(ClipperLib::ctUnion, clipped,
 		    ClipperLib::pftEvenOdd, ClipperLib::pftEvenOdd))
-		return BRLCAD_ERROR;
+		return bg_triangulation_report_set(report,
+		    BG_TRIANGULATION_INVALID_NESTING, -1,
+		    "Clipper could not reconstruct contour parity");
 	} catch (...) {
-	    return BRLCAD_ERROR;
+	    return bg_triangulation_report_set(report,
+		BG_TRIANGULATION_INVALID_NESTING, -1,
+		"Clipper threw while reconstructing contour parity");
 	}
 	if (!clipped.Total())
-	    return BRLCAD_ERROR;
+	    return bg_triangulation_report_set(report,
+		BG_TRIANGULATION_INVALID_NESTING, -1,
+		"chart contours enclose no filled region");
     }
 
     std::vector<detria::PointD> tri_points;
@@ -757,7 +817,9 @@ bg_nested_poly_triangulate_clean(int **faces, int *num_faces,
 	}
     }
     if (!have_outline)
-	return BRLCAD_ERROR;
+	return bg_triangulation_report_set(report,
+	    BG_TRIANGULATION_INVALID_NESTING, -1,
+	    "cleaned contours contain no usable outline");
 
     for (size_t i = 0; i < steiner_npts; i++) {
 	const int input_index = steiner[i];
@@ -819,7 +881,9 @@ bg_nested_poly_triangulate_clean(int **faces, int *num_faces,
 	if (first_input < 0 || second_input < 0 ||
 		(size_t)first_input >= npts ||
 		(size_t)second_input >= npts)
-	    return BRLCAD_ERROR;
+	    return bg_triangulation_report_set(report,
+		BG_TRIANGULATION_INVALID_INPUT, (int)i,
+		"interior constraint endpoint is invalid");
 	const std::pair<ClipperLib::cInt, ClipperLib::cInt> first_key(
 	    (ClipperLib::cInt)std::llround(
 		(pts[first_input][X] - origin_x) * scale),
@@ -1045,7 +1109,7 @@ bg_nested_poly_triangulate_clean(int **faces, int *num_faces,
 	    local_outline);
 	const int status = detria_result(&local_faces, &local_face_count,
 	    &local_output_points, &local_output_point_count, local_points,
-	    local_outlines, local_holes, local_constraints);
+	    local_outlines, local_holes, local_constraints, report);
 	if (status != BRLCAD_OK || !local_faces || local_face_count <= 0 ||
 		!local_output_points || local_output_point_count !=
 		(int)local_to_global.size()) {
@@ -1053,6 +1117,10 @@ bg_nested_poly_triangulate_clean(int **faces, int *num_faces,
 		bu_free(local_faces, "component detria faces");
 	    if (local_output_points)
 		bu_free(local_output_points, "component detria points");
+	    if (status == BRLCAD_OK)
+		bg_triangulation_report_set(report,
+		    BG_TRIANGULATION_POSTCONDITION_FAILED, -1,
+		    "cleaned component output counts are inconsistent");
 	    return BRLCAD_ERROR;
 	}
 	for (int i = 0; i < 3 * local_face_count; ++i) {
@@ -1061,7 +1129,9 @@ bg_nested_poly_triangulate_clean(int **faces, int *num_faces,
 		    (size_t)local_index >= local_to_global.size()) {
 		bu_free(local_faces, "component detria faces");
 		bu_free(local_output_points, "component detria points");
-		return BRLCAD_ERROR;
+		return bg_triangulation_report_set(report,
+		    BG_TRIANGULATION_POSTCONDITION_FAILED, local_index,
+		    "cleaned component returned an invalid point index");
 	    }
 	    combined_faces.push_back(local_to_global[(size_t)local_index]);
 	}
@@ -1072,7 +1142,9 @@ bg_nested_poly_triangulate_clean(int **faces, int *num_faces,
 	    combined_faces.size() >
 	    (size_t)std::numeric_limits<int>::max() * 3 ||
 	    tri_points.size() > (size_t)std::numeric_limits<int>::max())
-	return BRLCAD_ERROR;
+	return bg_triangulation_report_set(report,
+	    BG_TRIANGULATION_POSTCONDITION_FAILED, -1,
+	    "cleaned components produced no valid bounded triangulation");
 
     *faces = (int *)bu_calloc(combined_faces.size(), sizeof(int),
 	"sanitized component detria faces");
@@ -1083,20 +1155,8 @@ bg_nested_poly_triangulate_clean(int **faces, int *num_faces,
     for (size_t i = 0; i < tri_points.size(); ++i)
 	V2SET((*out_pts)[i], tri_points[i].x, tri_points[i].y);
     *num_outpts = (int)tri_points.size();
-    return BRLCAD_OK;
-}
-
-static int
-bg_triangulation_report_set(struct bg_triangulation_report *report,
-	enum bg_triangulation_reason reason, int input_index, const char *message)
-{
-    if (report) {
-	report->reason = reason;
-	report->input_index = input_index;
-	bu_strlcpy(report->message, message ? message : "",
-	    sizeof(report->message));
-    }
-    return reason == BG_TRIANGULATION_OK ? BRLCAD_OK : BRLCAD_ERROR;
+    return bg_triangulation_report_set(report, BG_TRIANGULATION_OK, -1,
+	"sanitized constrained triangulation");
 }
 
 static int

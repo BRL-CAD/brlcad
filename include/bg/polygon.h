@@ -199,33 +199,6 @@ bg_nested_poly_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int
 			   const int *steiner, const size_t steiner_npts,
 			   const point2d_t *pts, const size_t npts, triangulation_t type);
 
-/**
- * @brief
- * Sanitize and triangulate a 2D polygon with holes.
- *
- * This variant returns a newly allocated point array because topology repair
- * may merge points, split intersections, or reorder contours.  It first
- * removes duplicate and boundary-coincident unconstrained points.  If needed,
- * it then uses integer Clipper operations to reconstruct valid contour
- * nesting before constrained Delaunay triangulation.  Optional noncrossing
- * interior constraints contain two input point indices per edge.  Constraints
- * removed with canceled contour regions are omitted; every surviving
- * constraint is certified in its cleaned component.
- *
- * The caller must free both faces and out_pts with bu_free.
- *
- * @return 0 if triangulation is successful
- * @return 1 if triangulation is unsuccessful
- */
-BG_EXPORT extern int
-bg_nested_poly_triangulate_clean(int **faces, int *num_faces,
-	point2d_t **out_pts, int *num_outpts,
-	const int *poly, const size_t poly_npts,
-	const int **holes_array, const size_t *holes_npts, const size_t nholes,
-	const int *steiner, const size_t steiner_npts,
-	const int *constraints, const size_t constraint_cnt,
-	const point2d_t *pts, const size_t npts);
-
 enum bg_triangulation_reason {
     BG_TRIANGULATION_OK = 0,
     BG_TRIANGULATION_INVALID_INPUT = 1,
@@ -241,6 +214,36 @@ struct bg_triangulation_report {
     int input_index;
     char message[128];
 };
+
+/**
+ * @brief
+ * Sanitize and triangulate a 2D polygon with holes.
+ *
+ * This variant returns a newly allocated point array because topology repair
+ * may merge points, split intersections, or reorder contours.  It first
+ * removes duplicate and boundary-coincident unconstrained points.  If needed,
+ * it then uses integer Clipper operations to reconstruct valid contour
+ * nesting before constrained Delaunay triangulation.  Optional noncrossing
+ * interior constraints contain two input point indices per edge.  Constraints
+ * removed with canceled contour regions are omitted; every surviving
+ * constraint is certified in its cleaned component.
+ *
+ * The caller must free both faces and out_pts with bu_free.
+ *
+ * @param[out] report optional structured success or failure detail
+ *
+ * @return 0 if triangulation is successful
+ * @return 1 if triangulation is unsuccessful
+ */
+BG_EXPORT extern int
+bg_nested_poly_triangulate_clean(int **faces, int *num_faces,
+	point2d_t **out_pts, int *num_outpts,
+	const int *poly, const size_t poly_npts,
+	const int **holes_array, const size_t *holes_npts, const size_t nholes,
+	const int *steiner, const size_t steiner_npts,
+	const int *constraints, const size_t constraint_cnt,
+	const point2d_t *pts, const size_t npts,
+	struct bg_triangulation_report *report);
 
 /**
  * Strict constrained-Delaunay entry point.  In addition to the validation

@@ -478,7 +478,9 @@ brep_cdt_fast(int **faces, int *face_cnt, vect_t **pnt_norms, point_t **pnts, in
  * supplied samples, or NULL for generated points.  Its point_index is in the
  * final, concatenated output point array.  The identity is never dereferenced
  * by libbrep and need remain valid only until brep_cdt_fast_ex returns.
- * Callbacks may be invoked concurrently when max_workers exceeds one. */
+ * Callbacks may be invoked concurrently when max_workers exceeds one, except
+ * face_status, face_diagnostic, and face_output, which run during serial
+ * result assembly. */
 struct brep_cdt_fast_options {
     size_t max_workers;
     size_t max_result_bytes;
@@ -487,6 +489,9 @@ struct brep_cdt_fast_options {
     int allow_partial;
     void (*face_status)(int face_index, int status, void *data);
     void *face_status_data;
+    void (*face_diagnostic)(int face_index, int result, int stage,
+	const char *message, void *data);
+    void *face_diagnostic_data;
     void (*face_output)(int face_index, size_t first_face,
 	size_t face_count, size_t first_point, size_t point_count, void *data);
     void *face_output_data;

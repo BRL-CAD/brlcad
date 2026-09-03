@@ -33,6 +33,7 @@
 #include <chrono>
 #include <cmath>
 #include <condition_variable>
+#include <cstdio>
 #include <list>
 #include <limits>
 #include <map>
@@ -5178,6 +5179,20 @@ fast_loop_is_provably_degenerate(const ON_Surface *surface,
 	const ON_BrepLoop *loop, const struct bn_tol *tol);
 
 static bool
+fast_face_report_set(struct bg_triangulation_report *report,
+	enum bg_triangulation_reason reason, const char *message)
+{
+    if (report) {
+	report->reason = reason;
+	report->input_index = -1;
+	std::snprintf(report->message, sizeof(report->message), "%s",
+	    message ? message : "");
+    }
+    return reason == BG_TRIANGULATION_OK;
+}
+
+
+static bool
 bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 	std::vector<fastf_t> &pnts, std::vector<const void *> &point_sources,
 	const ON_BrepFace &face,
@@ -5186,8 +5201,11 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 	double model_diagonal,
 	bool repair_pcurves,
 	const struct brep_cdt_fast_options *options,
-	bool *skipped_tolerance)
+	bool *skipped_tolerance,
+	struct bg_triangulation_report *diagnostic)
 {
+    fast_face_report_set(diagnostic, BG_TRIANGULATION_INVALID_INPUT,
+	"face triangulation did not reach constraint cleanup");
     *skipped_tolerance = false;
     fast_face_scratch scratch;
     fast_line_store line_store;
@@ -5195,7 +5213,8 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
     ON_2dPointArray on_surf_points;
     const ON_Surface *s = &face;
     if (!s)
-	return false;
+	return fast_face_report_set(diagnostic, BG_TRIANGULATION_INVALID_INPUT,
+	    "face has no evaluable surface");
     fast_surface_metrics metrics;
     int fi = face.m_face_index;
     const bool track_point_sources = options && options->point_source;
@@ -5246,7 +5265,9 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 	    *brep_loop_points[0],
 	    scratch);
     if (scratch.hit_sample_limit || scratch.invalid_constraints) {
-	return false;
+	return fast_face_report_set(diagnostic, BG_TRIANGULATION_INVALID_PSLG,
+	    scratch.hit_sample_limit ? "trim sampling exceeded its point limit" :
+	    "trim sampling produced invalid constraints");
     }
     if (s->IsClosed(0) || s->IsClosed(1)) {
 	for (int li = 0; li < loop_cnt; ++li) {
@@ -5407,31 +5428,40 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 	    (singular_cap_face && li == 0) || li == implicit_outer_index ||
 	    li == full_periodic_outer_index;
 	if (!append_boundary(*brep_loop_points[li], uv_closed, is_outer))
-	    return false;
+	    return fast_face_report_set(diagnostic,
+		BG_TRIANGULATION_INVALID_PSLG,
+		"a sampled trim boundary could not be assembled");
     }
     if (split_touching_loop) {
 	const bool hole_uv_closed = V2NEAR_EQUAL(reconstructed_hole[0].p2d,
 	    reconstructed_hole[reconstructed_hole.Count() - 1].p2d,
 	    BREP_SAME_POINT_TOLERANCE);
 	if (!append_boundary(reconstructed_hole, hole_uv_closed, false))
-	    return false;
+	    return fast_face_report_set(diagnostic,
+		BG_TRIANGULATION_INVALID_PSLG,
+		"a reconstructed hole boundary could not be assembled");
     }
     for (ON_SimpleArray<BrepTrimPoint> &hole : bridged_inner_holes) {
 	const bool uv_closed = V2NEAR_EQUAL(hole[0].p2d,
 	    hole[hole.Count() - 1].p2d, BREP_SAME_POINT_TOLERANCE);
 	if (!append_boundary(hole, uv_closed, false))
-	    return false;
+	    return fast_face_report_set(diagnostic,
+		BG_TRIANGULATION_INVALID_PSLG,
+		"a split inner boundary could not be assembled");
     }
     for (ON_SimpleArray<BrepTrimPoint> &hole : reconstructed_inner_holes) {
 	const bool uv_closed = V2NEAR_EQUAL(hole[0].p2d,
 	    hole[hole.Count() - 1].p2d, BREP_SAME_POINT_TOLERANCE);
 	if (!append_boundary(hole, uv_closed, false))
-	    return false;
+	    return fast_face_report_set(diagnostic,
+		BG_TRIANGULATION_INVALID_PSLG,
+		"an implicit inner boundary could not be assembled");
     }
 
     if (!have_outer) {
 	std::cerr << "Error: Face(" << fi << ") cannot evaluate its outer loop and will not be facetized." << std::endl;
-	return false;
+	return fast_face_report_set(diagnostic, BG_TRIANGULATION_INVALID_NESTING,
+	    "face has no usable outer trim boundary");
     }
     if (outer_polyline.size() < 3) {
 	/* The trim sampler closed a real outer loop with fewer than three
@@ -5452,7 +5482,8 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 	    model_diagonal, full_periodic_closed_dir, on_surf_points);
     }
     if (on_surf_points.Count() >= FAST_CDT_MAX_SURFACE_SAMPLES) {
-	return false;
+	return fast_face_report_set(diagnostic, BG_TRIANGULATION_INVALID_INPUT,
+	    "surface sampling exceeded its point limit");
     }
 
     // Not all surface point samples may end up being used in the triangulation,
@@ -5547,7 +5578,7 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 	    hole_counts.empty() ? NULL : hole_counts.data(), holes.size(),
 	    steiner.empty() ? NULL : steiner.data(), steiner.size(),
 	    NULL, 0,
-	    (const point2d_t *)input_points.data(), tpnts.size());
+	    (const point2d_t *)input_points.data(), tpnts.size(), diagnostic);
 	if (clean_ret != BRLCAD_OK || !clean_faces || !clean_points ||
 		clean_face_count <= 0 || clean_point_count <= 0 ||
 		clean_point_count >= FAST_CDT_MAX_SURFACE_SAMPLES) {
@@ -5555,6 +5586,10 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 		bu_free(clean_faces, "clipped detria faces");
 	    if (clean_points)
 		bu_free(clean_points, "clipped detria points");
+	    if (clean_ret == BRLCAD_OK)
+		fast_face_report_set(diagnostic,
+		    BG_TRIANGULATION_POSTCONDITION_FAILED,
+		    "cleaned chart returned incomplete output arrays");
 	    return false;
 	}
 
@@ -5774,9 +5809,16 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 		cleaned_triangles[i + 2]);
     }
 
-    return !faces.empty() && faces.size() % 3 == 0 &&
+    const bool valid_output = !faces.empty() && faces.size() % 3 == 0 &&
 	pnts.size() % 3 == 0 && pnt_norms.size() == faces.size() * 3 &&
 	(!track_point_sources || point_sources.size() == pnts.size() / 3);
+    if (!valid_output)
+	return fast_face_report_set(diagnostic,
+	    BG_TRIANGULATION_POSTCONDITION_FAILED,
+	    "surface realization produced no valid drawable triangles");
+    fast_face_report_set(diagnostic, BG_TRIANGULATION_OK,
+	"face triangulation completed");
+    return true;
 }
 
 enum fast_face_outcome {
@@ -5971,10 +6013,14 @@ bg_CDT(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 	const ON_BrepFace &face,
 	const struct bg_tess_tol *ttol, const struct bn_tol *tol,
 	double model_diagonal,
-	const struct brep_cdt_fast_options *options)
+	const struct brep_cdt_fast_options *options,
+	struct bg_triangulation_report *diagnostic)
 {
-    if (fast_face_is_provably_degenerate(face, tol))
+    if (fast_face_is_provably_degenerate(face, tol)) {
+	fast_face_report_set(diagnostic, BG_TRIANGULATION_OK,
+	    "face is provably degenerate");
 	return FAST_FACE_SKIPPED_DEGENERATE;
+    }
 
     bool repair_first = false;
     for (int li = 0; !repair_first && li < face.LoopCount(); ++li) {
@@ -5992,10 +6038,14 @@ bg_CDT(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
     }
 
     bool first_skipped_tolerance = false;
+    struct bg_triangulation_report first_diagnostic = {};
     if (bg_CDT_attempt(faces, pnt_norms, pnts, point_sources, face, ttol, tol,
 	    model_diagonal, repair_first, options,
-	    &first_skipped_tolerance))
+	    &first_skipped_tolerance, &first_diagnostic)) {
+	if (diagnostic)
+	    *diagnostic = first_diagnostic;
 	return FAST_FACE_COMPLETED;
+    }
 
     faces.clear();
     pnt_norms.clear();
@@ -6003,14 +6053,39 @@ bg_CDT(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 
     point_sources.clear();
     bool second_skipped_tolerance = false;
+    struct bg_triangulation_report second_diagnostic = {};
     if (bg_CDT_attempt(faces, pnt_norms, pnts, point_sources, face,
 	    ttol, tol, model_diagonal, !repair_first, options,
-	    &second_skipped_tolerance))
+	    &second_skipped_tolerance, &second_diagnostic)) {
+	if (diagnostic)
+	    *diagnostic = second_diagnostic;
 	return FAST_FACE_COMPLETED;
+    }
     faces.clear();
     pnt_norms.clear();
     pnts.clear();
     point_sources.clear();
+    const auto diagnostic_priority = [](enum bg_triangulation_reason reason) {
+	switch (reason) {
+	    case BG_TRIANGULATION_POSTCONDITION_FAILED:
+		return 5;
+	    case BG_TRIANGULATION_DETRIA_FAILED:
+		return 4;
+	    case BG_TRIANGULATION_CROSSING_CONSTRAINTS:
+	    case BG_TRIANGULATION_INVALID_NESTING:
+	    case BG_TRIANGULATION_INVALID_PSLG:
+		return 3;
+	    case BG_TRIANGULATION_INVALID_INPUT:
+		return 2;
+	    default:
+		return 1;
+	}
+    };
+    if (diagnostic) {
+	*diagnostic = diagnostic_priority(first_diagnostic.reason) >
+	    diagnostic_priority(second_diagnostic.reason) ? first_diagnostic :
+	    second_diagnostic;
+    }
     return first_skipped_tolerance || second_skipped_tolerance ?
 	FAST_FACE_SKIPPED_TOLERANCE : FAST_FACE_FAILED;
 }
@@ -6025,7 +6100,42 @@ struct fast_cdt_face_result {
     bool failed = false;
     bool skipped_degenerate = false;
     bool skipped_tolerance = false;
+    int diagnostic_result = BREP_CDT_RESULT_UNATTEMPTED;
+    int diagnostic_stage = BREP_CDT_STAGE_NONE;
+    std::string diagnostic_message;
 };
+
+
+static void
+fast_face_result_diagnostic(fast_cdt_face_result &result,
+	const struct bg_triangulation_report &diagnostic)
+{
+    result.diagnostic_message = diagnostic.message;
+    switch (diagnostic.reason) {
+	case BG_TRIANGULATION_INVALID_PSLG:
+	case BG_TRIANGULATION_CROSSING_CONSTRAINTS:
+	case BG_TRIANGULATION_INVALID_NESTING:
+	    result.diagnostic_result = BREP_CDT_RESULT_INVALID_PSLG;
+	    result.diagnostic_stage = BREP_CDT_STAGE_PSLG_VALIDATION;
+	    break;
+	case BG_TRIANGULATION_DETRIA_FAILED:
+	    result.diagnostic_result = BREP_CDT_RESULT_DETRIA_FAILED;
+	    result.diagnostic_stage = BREP_CDT_STAGE_DETRIA;
+	    break;
+	case BG_TRIANGULATION_POSTCONDITION_FAILED:
+	    result.diagnostic_result = BREP_CDT_RESULT_CERTIFICATION_FAILED;
+	    result.diagnostic_stage = BREP_CDT_STAGE_FACE_TRIANGULATION;
+	    break;
+	case BG_TRIANGULATION_INVALID_INPUT:
+	    result.diagnostic_result = BREP_CDT_RESULT_FACE_FAILED;
+	    result.diagnostic_stage = BREP_CDT_STAGE_FACE_TRIANGULATION;
+	    break;
+	default:
+	    result.diagnostic_result = BREP_CDT_RESULT_SUCCESS;
+	    result.diagnostic_stage = BREP_CDT_STAGE_NONE;
+	    break;
+    }
+}
 
 static const size_t FAST_CDT_DEFAULT_WORKING_BYTES =
     (size_t)1024 * 1024 * 1024;
@@ -6265,17 +6375,23 @@ fast_cdt_face_worker(int UNUSED(cpu), void *data)
 	    working_estimate);
 	fast_cdt_face_result &result = (*state->results)[face_index];
 	fast_face_outcome outcome = FAST_FACE_FAILED;
+	struct bg_triangulation_report diagnostic = {};
 	try {
 	    outcome = bg_CDT(result.faces, result.norms, result.pnts,
 		result.point_sources, face,
 		face_ttol, state->tol, state->model_diagonal,
-		state->options);
+		state->options, &diagnostic);
 	} catch (const std::bad_alloc &) {
 	    state->hit_memory_limit = true;
 	    state->stop = true;
+	    fast_face_report_set(&diagnostic, BG_TRIANGULATION_INVALID_INPUT,
+		"face triangulation exhausted its memory allowance");
 	} catch (...) {
 	    outcome = FAST_FACE_FAILED;
+	    fast_face_report_set(&diagnostic, BG_TRIANGULATION_INVALID_INPUT,
+		"face triangulation threw an unexpected exception");
 	}
+	fast_face_result_diagnostic(result, diagnostic);
 	if (outcome == FAST_FACE_FAILED) {
 	    result.failed = true;
 	    result.faces.clear();
@@ -6702,13 +6818,18 @@ fast_cdt_refine_worker(int UNUSED(cpu), void *data)
 
 	fast_cdt_face_result candidate;
 	fast_face_outcome outcome = FAST_FACE_FAILED;
+	struct bg_triangulation_report diagnostic = {};
 	try {
 	    outcome = bg_CDT(candidate.faces, candidate.norms,
 		candidate.pnts, candidate.point_sources, face, state->ttol,
-		state->tol, state->model_diagonal, state->options);
+		state->tol, state->model_diagonal, state->options,
+		&diagnostic);
 	} catch (...) {
 	    outcome = FAST_FACE_FAILED;
+	    fast_face_report_set(&diagnostic, BG_TRIANGULATION_INVALID_INPUT,
+		"adaptive face triangulation threw an unexpected exception");
 	}
+	fast_face_result_diagnostic(candidate, diagnostic);
 	if (outcome == FAST_FACE_SKIPPED_DEGENERATE) {
 	    if (!current.completed) {
 		current = std::move(candidate);
@@ -6818,6 +6939,8 @@ brep_cdt_fast_options_default(struct brep_cdt_fast_options *options)
     options->allow_partial = 1;
     options->face_status = NULL;
     options->face_status_data = NULL;
+    options->face_diagnostic = NULL;
+    options->face_diagnostic_data = NULL;
     options->face_output = NULL;
     options->face_output_data = NULL;
     options->trim_sample_count = NULL;
@@ -6873,6 +6996,8 @@ brep_cdt_fast_ex(int **faces, int *face_cnt, vect_t **pnt_norms,
 	options.allow_partial = user_options->allow_partial;
 	options.face_status = user_options->face_status;
 	options.face_status_data = user_options->face_status_data;
+	options.face_diagnostic = user_options->face_diagnostic;
+	options.face_diagnostic_data = user_options->face_diagnostic_data;
 	options.face_output = user_options->face_output;
 	options.face_output_data = user_options->face_output_data;
 	options.trim_sample_count = user_options->trim_sample_count;
@@ -6992,15 +7117,23 @@ brep_cdt_fast_ex(int **faces, int *face_cnt, vect_t **pnt_norms,
 	    result.failed = true;
 	} else {
 	    fast_face_outcome outcome = FAST_FACE_FAILED;
+	    struct bg_triangulation_report diagnostic = {};
 	    try {
 		outcome = bg_CDT(result.faces, result.norms, result.pnts,
 		    result.point_sources, brep->m_F[index], ttol, tol,
-		    model_diagonal, &options);
+		    model_diagonal, &options, &diagnostic);
 	    } catch (const std::bad_alloc &) {
 		hit_memory_limit = true;
+		fast_face_report_set(&diagnostic,
+		    BG_TRIANGULATION_INVALID_INPUT,
+		    "face triangulation exhausted its memory allowance");
 	    } catch (...) {
 		outcome = FAST_FACE_FAILED;
+		fast_face_report_set(&diagnostic,
+		    BG_TRIANGULATION_INVALID_INPUT,
+		    "face triangulation threw an unexpected exception");
 	    }
+	    fast_face_result_diagnostic(result, diagnostic);
 	    if (outcome == FAST_FACE_FAILED) {
 		result.failed = true;
 	    } else if (outcome == FAST_FACE_SKIPPED_DEGENERATE) {
@@ -7189,6 +7322,11 @@ brep_cdt_fast_ex(int **faces, int *face_cnt, vect_t **pnt_norms,
 	fast_cdt_face_result &result = face_results[(size_t)fi];
 	if (!result.completed) {
 	    failed_faces++;
+	    if (result.failed && options.face_diagnostic)
+		options.face_diagnostic(fi, result.diagnostic_result,
+		    result.diagnostic_stage,
+		    result.diagnostic_message.c_str(),
+		    options.face_diagnostic_data);
 	    if (options.face_status)
 		options.face_status(fi, result.failed ?
 		    BREP_CDT_FAST_FACE_FAILED :
