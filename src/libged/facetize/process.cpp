@@ -26,6 +26,7 @@
 #include "./process.h"
 
 static const size_t FACETIZE_PROCESS_IO_BUFFER_SIZE = 4096u;
+static const size_t FACETIZE_FILE_COPY_BUFFER_SIZE = 1024u * 1024u;
 static const int FACETIZE_PROCESS_POLL_USEC = 1000;
 static const int FACETIZE_PROCESS_SHUTDOWN_TIMEOUT_SEC = 5;
 static const double FACETIZE_USEC_TO_SEC_DIVISOR = 1.0e6;
@@ -154,19 +155,46 @@ facetize_write_timeout_seconds(size_t payload_size,
 }
 
 int
-facetize_file_copy(const char *source, const char *destination)
+facetize_file_copy(const char *source, const char *destination,
+	FacetizeFileCopyProgress progress, void *progress_data)
 {
     if (!source || !destination)
 	return BRLCAD_ERROR;
 
     std::ifstream input(source, std::ios::binary);
+    if (!input.is_open())
+	return BRLCAD_ERROR;
     std::ofstream output(destination, std::ios::binary | std::ios::trunc);
-    if (!input.is_open() || !output.is_open())
+    if (!output.is_open())
 	return BRLCAD_ERROR;
 
-    output << input.rdbuf();
-    output.flush();
-    return (!input.bad() && output.good()) ? BRLCAD_OK : BRLCAD_ERROR;
+    std::vector<char> buffer(FACETIZE_FILE_COPY_BUFFER_SIZE);
+    uint64_t bytes_copied = 0;
+    bool copy_succeeded = true;
+    while (input) {
+	input.read(buffer.data(), (std::streamsize)buffer.size());
+	std::streamsize count = input.gcount();
+	if (count <= 0)
+	    break;
+	output.write(buffer.data(), count);
+	if (!output.good()) {
+	    copy_succeeded = false;
+	    break;
+	}
+	bytes_copied += (uint64_t)count;
+	if (progress)
+	    progress(bytes_copied, progress_data);
+    }
+    copy_succeeded = copy_succeeded && input.eof() && !input.bad();
+    if (copy_succeeded) {
+	output.flush();
+	copy_succeeded = output.good();
+    }
+    input.close();
+    output.close();
+    if (!copy_succeeded)
+	(void)std::remove(destination);
+    return copy_succeeded ? BRLCAD_OK : BRLCAD_ERROR;
 }
 
 // Local Variables:

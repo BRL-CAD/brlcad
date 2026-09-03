@@ -13,6 +13,7 @@
 #define LIBGED_FACETIZE_PROCESS_H
 
 #include <cstdio>
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -24,6 +25,8 @@ struct bu_process;
 struct _ged_facetize_state;
 
 extern const size_t FACETIZE_WRITE_PROFILE_MIN_BYTES;
+
+typedef void (*FacetizeFileCopyProgress)(uint64_t bytes_copied, void *data);
 
 void
 facetize_process_drain_stdout(struct _ged_facetize_state *state,
@@ -55,6 +58,7 @@ facetize_write_timeout_seconds(size_t payload_size,
 	double profiled_write_bytes, double profiled_write_usec);
 
 int
-facetize_file_copy(const char *source, const char *destination);
+facetize_file_copy(const char *source, const char *destination,
+	FacetizeFileCopyProgress progress = NULL, void *progress_data = NULL);
 
 #endif /* LIBGED_FACETIZE_PROCESS_H */

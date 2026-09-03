@@ -62,6 +62,7 @@ static const int FACETIZE_REGION_PROGRESS_INTERVAL_SEC = 5;
 static const int FACETIZE_REGION_WORKER_POLL_USEC = 1000;
 static const int FACETIZE_REGION_WRITER_READY_TIMEOUT_SEC = 5;
 static const size_t FACETIZE_REGION_PROGRESS_MIN = 100u;
+static const double FACETIZE_GIB_BYTES = 1024.0 * 1024.0 * 1024.0;
 
 /* Minimum Crofton crossing count for a statistically meaningful SA
  * comparison.  Below this threshold (~1/sqrt(N) noise > 14 %) the
@@ -160,12 +161,36 @@ struct RegionBoolevalWorker {
     int64_t write_start = 0;
     int64_t write_deadline = 0;
     double write_timeout = 0.0;
-    std::string database_file;
     std::string result_file;
     bool enabled = true;
     bool write_permitted = false;
     bool awaiting_commit = false;
 };
+
+struct RegionSnapshotProgress {
+    struct _ged_facetize_state *state = NULL;
+    int64_t start = 0;
+    int64_t next_report = 0;
+};
+
+static void
+_region_snapshot_progress(uint64_t bytes_copied, void *data)
+{
+    RegionSnapshotProgress *progress =
+	static_cast<RegionSnapshotProgress *>(data);
+    if (!progress || !progress->state)
+	return;
+
+    int64_t now = bu_gettime();
+    if (now < progress->next_report)
+	return;
+    facetize_log(progress->state, 0,
+	    "FACETIZE: prepared %.2f GiB of the shared region snapshot (%.1f seconds elapsed)\n",
+	    bytes_copied / FACETIZE_GIB_BYTES,
+	    (now - progress->start) / FACETIZE_USEC_TO_SEC_DIVISOR);
+    progress->next_report = now +
+	BU_SEC2USEC(FACETIZE_REGION_PROGRESS_INTERVAL_SEC);
+}
 
 struct RegionBoolevalWriter {
     struct bu_process *process = NULL;
@@ -462,11 +487,23 @@ _evaluate_regions_parallel(struct _ged_facetize_state *s,
     const char *work_file = bu_vls_cstr(s->wfile);
     std::string backup_file = std::string(work_file) + ".region_eval.bak";
     (void)bu_file_delete(backup_file.c_str());
-    if (facetize_file_copy(work_file, backup_file.c_str()) != BRLCAD_OK) {
+    RegionSnapshotProgress snapshot_progress;
+    snapshot_progress.state = s;
+    snapshot_progress.start = bu_gettime();
+    snapshot_progress.next_report = snapshot_progress.start +
+	BU_SEC2USEC(FACETIZE_REGION_PROGRESS_INTERVAL_SEC);
+    if (facetize_file_copy(work_file, backup_file.c_str(),
+	    _region_snapshot_progress, &snapshot_progress) != BRLCAD_OK) {
 	facetize_log(s, 0,
 		"FACETIZE: unable to checkpoint the working database before parallel region evaluation\n");
 	return BRLCAD_OK;
     }
+    double snapshot_seconds = (bu_gettime() - snapshot_progress.start) /
+	FACETIZE_USEC_TO_SEC_DIVISOR;
+    if (snapshot_seconds >= FACETIZE_REGION_PROGRESS_INTERVAL_SEC)
+	facetize_log(s, 0,
+		"FACETIZE: shared region snapshot ready (%.1f seconds)\n",
+		snapshot_seconds);
 
     char process_executable[MAXPATHLEN];
     bu_dir(process_executable, MAXPATHLEN, BU_DIR_BIN, "ged_exec",
@@ -492,18 +529,9 @@ _evaluate_regions_parallel(struct _ged_facetize_state *s,
     std::string no_result_file;
     std::vector<RegionBoolevalWorker> workers(policy.worker_count());
     for (size_t i = 0; i < workers.size(); i++) {
-	workers[i].database_file = std::string(work_file) +
-	    ".region_worker_" + std::to_string(i) + ".g";
-	workers[i].result_file = workers[i].database_file + ".result.g";
-	(void)bu_file_delete(workers[i].database_file.c_str());
+	workers[i].result_file = std::string(work_file) +
+	    ".region_worker_" + std::to_string(i) + ".result.g";
 	(void)bu_file_delete(workers[i].result_file.c_str());
-	if (facetize_file_copy(work_file,
-		workers[i].database_file.c_str()) != BRLCAD_OK) {
-	    workers[i].enabled = false;
-	    facetize_log(s, 0,
-		    "FACETIZE: unable to create private database for region worker %zu\n",
-		    i + 1);
-	}
     }
 
     if (facetize_process_start(&writer.process, &writer.input,
@@ -511,7 +539,6 @@ _evaluate_regions_parallel(struct _ged_facetize_state *s,
 	    "--writer") != BRLCAD_OK) {
 	_region_booleval_writer_stop(s, writer, true);
 	for (RegionBoolevalWorker &worker : workers) {
-	    (void)bu_file_delete(worker.database_file.c_str());
 	    (void)bu_file_delete(worker.result_file.c_str());
 	}
 	(void)bu_file_delete(backup_file.c_str());
@@ -587,7 +614,7 @@ _evaluate_regions_parallel(struct _ged_facetize_state *s,
 		_region_booleval_worker_stop(s, worker, false);
 	    if (!worker.process) {
 		std::vector<std::string> worker_command = command_prefix;
-		worker_command.push_back(worker.database_file);
+		worker_command.push_back(backup_file);
 		worker_command.push_back(s->dbip->dbi_filename);
 		if (facetize_process_start(&worker.process, &worker.input,
 			worker.channel, worker_command, worker.result_file,
@@ -824,7 +851,6 @@ _evaluate_regions_parallel(struct _ged_facetize_state *s,
 		    unsafe_write);
 	    worker.channel.reset(NULL);
 	}
-	(void)bu_file_delete(worker.database_file.c_str());
 	(void)bu_file_delete(worker.result_file.c_str());
     }
 
