@@ -3189,7 +3189,7 @@ fast_reconstruct_periodic_singular_face(const ON_Surface *surface,
 
     int seam_trims = 0;
     int singular_trims = 0;
-    int closed_boundary_trims = 0;
+    std::vector<const ON_BrepTrim *> closed_boundary_trims;
     for (int ti = 0; ti < loop->TrimCount(); ++ti) {
 	const ON_BrepTrim *trim = loop->Trim(ti);
 	if (!trim)
@@ -3199,12 +3199,12 @@ fast_reconstruct_periodic_singular_face(const ON_Surface *surface,
 	else if (trim->m_type == ON_BrepTrim::singular)
 	    singular_trims++;
 	else if (trim->Edge() && trim->m_vi[0] == trim->m_vi[1])
-	    closed_boundary_trims++;
+	    closed_boundary_trims.push_back(trim);
 	else
 	    return false;
     }
     if (seam_trims < 2 || singular_trims < 1 ||
-	    closed_boundary_trims != 1)
+	    closed_boundary_trims.empty())
 	return false;
 
     ON_SimpleArray<BrepTrimPoint> &points = *brep_loop_points[0];
@@ -3237,12 +3237,38 @@ fast_reconstruct_periodic_singular_face(const ON_Surface *surface,
 	    open_min = std::min(open_min, points[pi].p2d[open_dir]);
 	    open_max = std::max(open_max, points[pi].p2d[open_dir]);
 	}
-	if (closed_max - closed_min < 0.90 * period ||
-		open_max - open_min < 0.90 * open_length)
-	    continue;
-
 	const double parameter_tolerance = std::max(tolerance,
 	    std::max(period, open_length) * 1.0e-4);
+	if (closed_max - closed_min < 0.90 * period ||
+		open_max - open_min <= parameter_tolerance)
+	    continue;
+	const double singular_boundary = low_singular ? open_domain.Min() :
+	    open_domain.Max();
+	const double sampled_singular_boundary = low_singular ? open_min :
+	    open_max;
+	if (fabs(sampled_singular_boundary - singular_boundary) >
+		parameter_tolerance)
+	    continue;
+	/* Some invalid imports repeat the same seam, singular, and closed-edge
+	 * circuit.  Accept repeated closed trims only when every copy lies on the
+	 * same nonsingular boundary selected by the sampled circuit. */
+	const double nonsingular_boundary = low_singular ? open_max : open_min;
+	bool boundary_group_valid = true;
+	for (const ON_BrepTrim *trim : closed_boundary_trims) {
+	    const ON_Interval trim_domain = trim->Domain();
+	    const ON_2dPoint trim_start = trim->PointAt(trim_domain.Min());
+	    const ON_2dPoint trim_end = trim->PointAt(trim_domain.Max());
+	    if (!trim_start.IsValid() || !trim_end.IsValid() ||
+		    fabs(trim_start[open_dir] - nonsingular_boundary) >
+			parameter_tolerance ||
+		    fabs(trim_end[open_dir] - nonsingular_boundary) >
+			parameter_tolerance) {
+		boundary_group_valid = false;
+		break;
+	    }
+	}
+	if (!boundary_group_valid)
+	    continue;
 	if (closed_min < closed_domain.Min() - parameter_tolerance ||
 		closed_max > closed_domain.Max() + parameter_tolerance ||
 		open_min < open_domain.Min() - parameter_tolerance ||
@@ -3250,10 +3276,8 @@ fast_reconstruct_periodic_singular_face(const ON_Surface *surface,
 	    continue;
 
 	const int singular_side = low_singular ? low_side : high_side;
-	const double open_start = low_singular ? open_domain.Max() :
-	    open_domain.Min();
-	const double open_end = low_singular ? open_domain.Min() :
-	    open_domain.Max();
+	const double open_start = nonsingular_boundary;
+	const double open_end = singular_boundary;
 	ON_2dPoint corners[5];
 	for (int ci = 0; ci < 5; ++ci)
 	    corners[ci] = points[0].p2d;
@@ -3541,7 +3565,7 @@ fast_seed_full_periodic_face(const ON_Surface *surface,
 }
 
 static bool
-fast_reconstruct_singular_cap(const ON_Surface *surface,
+fast_reconstruct_periodic_cap(const ON_Surface *surface,
 	const ON_BrepFace &face,
 	ON_SimpleArray<BrepTrimPoint> **brep_loop_points,
 	double tolerance, double model_diagonal,
@@ -3618,23 +3642,25 @@ fast_reconstruct_singular_cap(const ON_Surface *surface,
 	else if (singular_side == 3)
 	    singular_side = 1;
     }
-    if (!surface->IsSingular(singular_side))
-	return false;
-
     const ON_Interval open_domain = surface->Domain(open_dir);
-    const double pole_coordinate =
+    const double boundary_coordinate =
 	(singular_side == 0 || singular_side == 3) ?
 	open_domain.Min() : open_domain.Max();
-    ON_2dPoint end_pole = end;
-    ON_2dPoint start_pole = start;
-    end_pole[open_dir] = pole_coordinate;
-    start_pole[open_dir] = pole_coordinate;
+    ON_2dPoint end_boundary = end;
+    ON_2dPoint start_boundary = start;
+    end_boundary[open_dir] = boundary_coordinate;
+    start_boundary[open_dir] = boundary_coordinate;
 
     const int old_count = points.Count();
-    if (!fast_append_synthetic_uv(points, surface, end_pole,
-	    singular_side, scratch) ||
-	    !fast_append_synthetic_uv(points, surface, start_pole,
-	    singular_side, scratch)) {
+    /* Imported periodic patches often trim a narrow band against a natural
+     * nonsingular surface boundary.  The winding still selects that boundary
+     * unambiguously; only mark its vertices singular when the surface agrees. */
+    const int collapsed_side = surface->IsSingular(singular_side) ?
+	singular_side : -1;
+    if (!fast_append_synthetic_uv(points, surface, end_boundary,
+	    collapsed_side, scratch) ||
+	    !fast_append_synthetic_uv(points, surface, start_boundary,
+	    collapsed_side, scratch)) {
 	points.SetCount(old_count);
 	return false;
     }
@@ -5298,7 +5324,7 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 	full_periodic_face = fast_reconstruct_paired_periodic_strip(s, face,
 	    brep_loop_points, BREP_SAME_POINT_TOLERANCE, scratch,
 	    &full_periodic_closed_dir, &full_periodic_outer_index);
-    const bool singular_cap_face = fast_reconstruct_singular_cap(s, face,
+    const bool periodic_cap_face = fast_reconstruct_periodic_cap(s, face,
 	brep_loop_points,
 	BREP_SAME_POINT_TOLERANCE, model_diagonal, scratch);
     if (!full_periodic_face)
@@ -5425,7 +5451,7 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 	const bool uv_closed = fast_loop_uv_closed(s, face_loop,
 	    *brep_loop_points[li], tol);
 	const bool is_outer = face_loop->m_type == ON_BrepLoop::outer ||
-	    (singular_cap_face && li == 0) || li == implicit_outer_index ||
+	    (periodic_cap_face && li == 0) || li == implicit_outer_index ||
 	    li == full_periodic_outer_index;
 	if (!append_boundary(*brep_loop_points[li], uv_closed, is_outer))
 	    return fast_face_report_set(diagnostic,
