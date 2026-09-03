@@ -186,7 +186,7 @@ FacetizeWorkerServer::receive_write_proceed()
 	return false;
 
     char response[FACETIZE_PROTOCOL_HEADER_SIZE];
-    if (!fgets(response, sizeof(response), request_stream))
+    if (!bu_fgets(response, sizeof(response), request_stream))
 	return false;
 
     std::string expected_response = std::string(FACETIZE_WRITE_PROCEED_MAGIC) + "\n";
