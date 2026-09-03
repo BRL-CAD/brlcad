@@ -28,12 +28,13 @@ check_clean_triangulation(const point2d_t *points, size_t point_count,
     int face_count = 0;
     point2d_t *out_points = NULL;
     int out_point_count = 0;
+    struct bg_triangulation_report report = {BG_TRIANGULATION_OK, -1, ""};
     int ret = bg_nested_poly_triangulate_clean(&faces, &face_count,
 	&out_points, &out_point_count, outer, outer_count, holes,
 	hole_counts, hole_count, steiner, steiner_count, NULL, 0, points,
-	point_count);
+	point_count, &report);
     if (ret || !faces || !out_points || face_count <= 0 ||
-	    out_point_count <= 0) {
+	    out_point_count <= 0 || report.reason != BG_TRIANGULATION_OK) {
 	bu_log("clean test %.17g failed: ret %d faces %d points %d\n",
 	    expected_area, ret, face_count, out_point_count);
 	return 1;
@@ -71,6 +72,34 @@ check_clean_triangulation(const point2d_t *points, size_t point_count,
     return ret;
 }
 
+
+static int
+check_clean_failure_report(void)
+{
+    point2d_t points[4] = {
+	{0.0, 0.0}, {1.0, 0.0}, {2.0, 0.0}, {3.0, 0.0}
+    };
+    const int outer[4] = {0, 1, 2, 3};
+    int *faces = NULL;
+    int face_count = 0;
+    point2d_t *out_points = NULL;
+    int out_point_count = 0;
+    struct bg_triangulation_report report = {BG_TRIANGULATION_OK, -1, ""};
+    const int ret = bg_nested_poly_triangulate_clean(&faces, &face_count,
+	&out_points, &out_point_count, outer, 4, NULL, NULL, 0, NULL, 0,
+	NULL, 0, (const point2d_t *)points, 4, &report);
+    if (faces)
+	bu_free(faces, "unexpected clean failure faces");
+    if (out_points)
+	bu_free(out_points, "unexpected clean failure points");
+    if (ret == BRLCAD_OK || report.reason == BG_TRIANGULATION_OK ||
+	    report.message[0] == '\0') {
+	bu_log("clean failure did not return a structured diagnostic\n");
+	return 1;
+    }
+    return 0;
+}
+
 static int
 check_clean_constraint(void)
 {
@@ -87,7 +116,7 @@ check_clean_constraint(void)
     int out_point_count = 0;
     int ret = bg_nested_poly_triangulate_clean(&faces,
 	&face_count, &out_points, &out_point_count, outer, 4, NULL, NULL, 0,
-	steiner, 2, constraints, 1, (const point2d_t *)points, 6);
+	steiner, 2, constraints, 1, (const point2d_t *)points, 6, NULL);
     if (ret || !faces || !out_points || face_count <= 0 ||
 	    out_point_count <= 0) {
 	bu_log("constrained clean failed: ret %d faces %d points %d\n",
@@ -249,6 +278,8 @@ main(int argc, const char **argv)
     }
 
     if (check_clean_constraint())
+	return 1;
+    if (check_clean_failure_report())
 	return 1;
 
     return 0;
