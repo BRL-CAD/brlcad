@@ -159,6 +159,15 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, struct db_i *dbip, struc
 extern int
 _ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, struct rt_wdb *wdbp, int argc, const char **argv, const char *newname, struct bu_list *vlfree, bool output_to_working, int curr_cnt, int total_cnt);
 
+/**
+ * Evaluate a tessellated CSG tree and write the resulting BoT to an explicit
+ * database.  The input database is never modified unless it is also supplied
+ * as @p output_dbip.  This form lets isolated workers evaluate into an
+ * in-memory database before entering the staged-write protocol.
+ */
+extern int
+_ged_facetize_booleval_tri_to_db(struct _ged_facetize_state *s, struct db_i *dbip, struct rt_wdb *wdbp, int argc, const char **argv, const char *newname, struct bu_list *vlfree, struct db_i *output_dbip, int curr_cnt, int total_cnt);
+
 extern int _nonovlp_brep_facetize(struct _ged_facetize_state *s, int argc, const char **argv);
 
 extern struct rt_bot_internal *

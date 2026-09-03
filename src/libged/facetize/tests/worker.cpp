@@ -39,6 +39,7 @@
 #include "common.h"
 
 #include <algorithm>
+#include <cmath>
 #include <cstdio>
 #include <string>
 #include <vector>
@@ -47,6 +48,7 @@
 
 
 static int failures = 0;
+static const double METRIC_COMPARISON_TOLERANCE = 1.0e-12;
 
 
 static void
@@ -260,6 +262,10 @@ test_write_handshake()
     const size_t announced_resident_size = 456789;
     expect(server.send_write_ready(announced_payload_size,
 	    announced_resident_size), "server sends write size");
+    const int tolerated_failures = 3;
+    expect(server.send_region_write_ready(announced_payload_size,
+	    announced_resident_size, tolerated_failures),
+	"server sends region write size and tolerated-failure count");
     expect(server.send_write_started(), "server acknowledges write start");
     expect(server.send_write_result(BRLCAD_OK, announced_resident_size),
 	    "server sends write completion");
@@ -278,6 +284,8 @@ test_write_handshake()
 	"client preserves announced write size");
     expect(status.resident_size == announced_resident_size,
 	"client preserves worker resident memory");
+    expect(status.tolerated_failures == tolerated_failures,
+	"client preserves the region's tolerated-failure count");
     expect(status.write_started,
 	"client recognizes fragmented write-start acknowledgement");
     expect(status.write_done, "client recognizes fragmented write completion");
@@ -322,6 +330,57 @@ test_write_handshake()
 
 
 static void
+test_csg_result()
+{
+    FILE *responses = tmpfile();
+    expect(responses != NULL, "create CSG result stream");
+    if (!responses)
+	return;
+
+    const long crossings = 12345;
+    const double surface_area = 12.25;
+    const double volume = 42.5;
+    const size_t resident_size = 456789;
+    FacetizeWorkerServer server(NULL, responses);
+    expect(server.send_csg_result(BRLCAD_OK, crossings, surface_area, volume,
+	    resident_size), "server sends CSG validation metrics");
+
+    std::string output = read_stream(responses);
+    FacetizeWorkerClient client;
+    FacetizeWorkerStatus status;
+    std::vector<std::string> diagnostics;
+    const size_t fragment_size = 3;
+    for (size_t offset = 0; offset < output.size();) {
+	const size_t chunk_size = std::min(fragment_size, output.size() - offset);
+	client.consume_output(output.data() + offset, chunk_size, status,
+		diagnostics);
+	offset += chunk_size;
+    }
+    expect(status.result_received && status.result == BRLCAD_OK,
+	    "client recognizes a fragmented CSG result");
+    expect(status.csg_crossings == crossings,
+	    "client preserves the CSG crossing count");
+    expect(std::fabs(status.csg_surface_area - surface_area) <
+	    METRIC_COMPARISON_TOLERANCE,
+	    "client preserves CSG surface area");
+    expect(std::fabs(status.csg_volume - volume) < METRIC_COMPARISON_TOLERANCE,
+	    "client preserves CSG volume");
+    expect(status.resident_size == resident_size,
+	    "CSG result reports worker resident memory");
+    expect(!status.write_ready && !status.write_started && !status.write_done,
+	    "CSG result does not alter writer state");
+    expect(diagnostics.empty(), "valid CSG result emits no diagnostics");
+
+    fclose(responses);
+
+    FacetizeWorkerServer null_server(NULL, NULL);
+    expect(!null_server.send_csg_result(BRLCAD_OK, crossings, surface_area,
+	    volume, resident_size),
+	    "server cannot send CSG metrics without a response stream");
+}
+
+
+static void
 test_client_diagnostics_and_reset()
 {
     FacetizeWorkerClient client;
@@ -330,11 +389,12 @@ test_client_diagnostics_and_reset()
 
     const char malformed_output[] =
 	"ordinary diagnostic\nFACETIZE_RESULT 0 trailing\n"
-	"FACETIZE_WRITE_STARTED trailing\n";
+	"FACETIZE_WRITE_STARTED trailing\n"
+	"FACETIZE_CSG_RESULT 0 10 1.0\n";
     client.consume_output(malformed_output, sizeof(malformed_output) - 1,
 	status, diagnostics);
     expect(!status.result_received, "malformed result is not accepted as protocol");
-    expect(diagnostics.size() == 3, "ordinary and malformed lines remain diagnostics");
+    expect(diagnostics.size() == 4, "ordinary and malformed lines remain diagnostics");
 
     diagnostics.clear();
     const char partial_frame[] = "FACETIZE_WRITE_RE";
@@ -420,6 +480,7 @@ main()
     test_malformed_requests();
     test_commit_round_trip();
     test_write_handshake();
+    test_csg_result();
     test_client_diagnostics_and_reset();
     test_worker_policy();
 

@@ -10,7 +10,12 @@ set(
   main.cpp
   nmg.cpp
   util.cpp
+  ../plan.cpp
+  ../process.cpp
+  ../tri.cpp
   ../transfer.cpp
+  ../util.cpp
+  ../validation.cpp
   ../worker.cpp
 )
 

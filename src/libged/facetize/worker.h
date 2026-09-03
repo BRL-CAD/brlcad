@@ -29,6 +29,10 @@ struct FacetizeWorkerStatus {
     int result = BRLCAD_ERROR;
     size_t payload_size = 0;
     size_t resident_size = 0;
+    long csg_crossings = -1;
+    double csg_surface_area = -1.0;
+    double csg_volume = -1.0;
+    int tolerated_failures = 0;
 };
 
 struct FacetizeCommitRequest {
@@ -38,7 +42,7 @@ struct FacetizeCommitRequest {
 };
 
 /**
- * Resource limits for a primitive tessellation worker pool.
+ * Resource limits for a pool of independent facetize workers.
  *
  * A zero requested_workers selects the conservative automatic limit.  Memory
  * values are current system-wide byte counts; zero means the platform could
@@ -109,10 +113,14 @@ class FacetizeWorkerServer
 	FacetizeWorkerReadResult receive_request(std::string &object_name);
 	FacetizeWorkerReadResult receive_commit(FacetizeCommitRequest &request);
 	bool send_write_ready(size_t payload_size, size_t resident_size);
+	bool send_region_write_ready(size_t payload_size, size_t resident_size,
+		int tolerated_failures);
 	bool receive_write_proceed();
 	bool send_write_started();
 	bool send_tessellation_result(int result, size_t resident_size);
 	bool send_write_result(int result, size_t resident_size);
+	bool send_csg_result(int result, long crossings, double surface_area,
+		double volume, size_t resident_size);
 
     private:
 	FILE *request_stream = NULL;

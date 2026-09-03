@@ -48,6 +48,7 @@
 #include "bu/datetime.h"
 #include "../ged_private.h"
 #include "./ged_facetize.h"
+#include "./process.h"
 #include "./tess_opts.h"
 #include "./worker.h"
 
@@ -56,19 +57,14 @@ static const double FACETIZE_EMPTY_CHECK_REL_VOL_TOL = 1.0e-9;
 static const double FACETIZE_EMPTY_CHECK_ABS_VOL_TOL = 1.0e-12;
 static const int FACETIZE_METHOD_COMMAND_INDEX = 5;
 static const double FACETIZE_USEC_TO_SEC_DIVISOR = 1.0e6;
-static const double FACETIZE_WRITE_TIMEOUT_FACTOR = 10.0;
-static const double FACETIZE_WRITE_TIMEOUT_MIN_SEC = 5.0;
-static const double FACETIZE_WRITE_TIMEOUT_MAX_SEC = 300.0;
 static const double FACETIZE_IO_PROBE_DURATION_SEC = 1.0;
 static const size_t FACETIZE_MIB_BYTES = 1024u * 1024u;
 static const size_t FACETIZE_IO_PROBE_CHUNK_BYTES = FACETIZE_MIB_BYTES;
 static const size_t FACETIZE_IO_PROBE_MAX_BYTES = 128u * FACETIZE_MIB_BYTES;
-static const size_t FACETIZE_WRITE_RATE_MIN_SAMPLE_BYTES = FACETIZE_MIB_BYTES;
 static const size_t FACETIZE_IO_BUFFER_SIZE = 4096u;
 static const int FACETIZE_POLL_INTERVAL_USEC = 1000;
 static const int FACETIZE_PROGRESS_BATCH_MIN = 100;
 static const int FACETIZE_PROGRESS_INTERVAL_SEC = 5;
-static const int FACETIZE_SHUTDOWN_TIMEOUT_SEC = 5;
 static const int FACETIZE_WRITER_RESTART_LIMIT = 1;
 static const char FACETIZE_WORKER_FILE_SUFFIX[] = ".facetize_worker_";
 
@@ -732,56 +728,6 @@ tess_avail_methods()
     return methods;
 }
 
-static void
-tess_drain_stdout(struct _ged_facetize_state *s, struct bu_process *p,
-	FacetizeWorkerClient &worker_channel, FacetizeWorkerStatus *status)
-{
-    char buffer[FACETIZE_IO_BUFFER_SIZE];
-    int fd = bu_process_fileno(p, BU_PROCESS_STDOUT);
-    FacetizeWorkerStatus ignored_status;
-    FacetizeWorkerStatus *output_status = status ? status : &ignored_status;
-    std::vector<std::string> diagnostics;
-    while (fd >= 0 && bu_process_pending(fd)) {
-	int count = bu_process_read_n(p, BU_PROCESS_STDOUT,
-		(int)sizeof(buffer), buffer);
-	if (count <= 0)
-	    break;
-	worker_channel.consume_output(buffer, (size_t)count, *output_status,
-		diagnostics);
-    }
-    for (const std::string &diagnostic : diagnostics)
-	facetize_log(s, 1, "%s\n", diagnostic.c_str());
-}
-
-static void
-tess_drain_stderr(struct _ged_facetize_state *s, struct bu_process *p)
-{
-    char buffer[FACETIZE_IO_BUFFER_SIZE];
-    int fd = bu_process_fileno(p, BU_PROCESS_STDERR);
-    while (fd >= 0 && bu_process_pending(fd)) {
-	int count = bu_process_read_n(p, BU_PROCESS_STDERR,
-		(int)sizeof(buffer), buffer);
-	if (count <= 0)
-	    break;
-	facetize_log(s, 1, "%.*s", count, buffer);
-    }
-}
-
-static double
-tess_write_timeout_seconds(size_t payload_size, double profiled_write_bytes,
-	double profiled_write_usec)
-{
-    if (profiled_write_bytes <= 0.0 || profiled_write_usec <= 0.0)
-	return FACETIZE_WRITE_TIMEOUT_MAX_SEC;
-
-    double bytes_per_second = profiled_write_bytes *
-	FACETIZE_USEC_TO_SEC_DIVISOR / profiled_write_usec;
-    double projected_seconds = (double)payload_size / bytes_per_second;
-    double timeout_seconds = projected_seconds * FACETIZE_WRITE_TIMEOUT_FACTOR;
-    return std::min(FACETIZE_WRITE_TIMEOUT_MAX_SEC,
-	    std::max(FACETIZE_WRITE_TIMEOUT_MIN_SEC, timeout_seconds));
-}
-
 static int
 tess_write_probe(const char *work_file, double *written_bytes,
 	double *write_usec)
@@ -824,84 +770,6 @@ tess_write_probe(const char *work_file, double *written_bytes,
     *written_bytes = (double)total_written;
     *write_usec = (double)elapsed;
     return BRLCAD_OK;
-}
-
-static int
-tess_file_copy(const char *source, const char *destination)
-{
-    std::ifstream input(source, std::ios::binary);
-    std::ofstream output(destination, std::ios::binary | std::ios::trunc);
-    if (!input.is_open() || !output.is_open())
-	return BRLCAD_ERROR;
-
-    output << input.rdbuf();
-    output.flush();
-    return (!input.bad() && output.good()) ? BRLCAD_OK : BRLCAD_ERROR;
-}
-
-static int
-tess_process_reap(struct _ged_facetize_state *s, struct bu_process **p,
-	FacetizeWorkerClient &worker_channel, bool terminate)
-{
-    if (!p || !*p)
-	return BRLCAD_ERROR;
-    if (terminate)
-	(void)bu_process_terminate(*p);
-
-    int64_t deadline = bu_gettime() +
-	BU_SEC2USEC(FACETIZE_SHUTDOWN_TIMEOUT_SEC);
-    int poll_result = bu_process_poll(*p, NULL);
-    while (poll_result == 0 && bu_gettime() < deadline) {
-	tess_drain_stdout(s, *p, worker_channel, NULL);
-	tess_drain_stderr(s, *p);
-	(void)bu_snooze(FACETIZE_POLL_INTERVAL_USEC);
-	poll_result = bu_process_poll(*p, NULL);
-    }
-    tess_drain_stdout(s, *p, worker_channel, NULL);
-    tess_drain_stderr(s, *p);
-    if (poll_result != 1)
-	(void)bu_process_terminate(*p);
-    return bu_process_wait_n(p, 0);
-}
-
-static int
-tess_process_stop(struct _ged_facetize_state *s, struct bu_process **p,
-	FILE *&worker_input, FacetizeWorkerClient &worker_channel, bool terminate)
-{
-    int status = tess_process_reap(s, p, worker_channel, terminate);
-    worker_input = NULL;
-    worker_channel.reset(NULL);
-    return status;
-}
-
-static int
-tess_process_start(struct bu_process **p, FILE **worker_input,
-	FacetizeWorkerClient &worker_channel,
-	const std::vector<std::string> &worker_cmd,
-	const std::string &result_file, const char *mode)
-{
-    if (!p || !worker_input || !mode)
-	return BRLCAD_ERROR;
-
-    std::vector<const char *> process_cmd;
-    for (const std::string &arg : worker_cmd)
-	process_cmd.push_back(arg.c_str());
-    if (!result_file.empty()) {
-	process_cmd.push_back("--result-file");
-	process_cmd.push_back(result_file.c_str());
-    }
-    process_cmd.push_back(mode);
-    process_cmd.push_back(NULL);
-
-    *p = NULL;
-    *worker_input = NULL;
-    worker_channel.reset(NULL);
-    bu_process_create(p, process_cmd.data(), BU_PROCESS_HIDE_WINDOW);
-    if (*p) {
-	*worker_input = bu_process_file_open(*p, BU_PROCESS_STDIN);
-	worker_channel.reset(*worker_input);
-    }
-    return (*p && *worker_input) ? BRLCAD_OK : BRLCAD_ERROR;
 }
 
 struct tess_worker_state {
@@ -952,7 +820,7 @@ tess_worker_stop(struct _ged_facetize_state *s, struct tess_worker_state &worker
 	bool terminate)
 {
     if (worker.process)
-	(void)tess_process_stop(s, &worker.process, worker.input,
+	(void)facetize_process_stop(s, &worker.process, worker.input,
 		worker.channel, terminate);
     worker.input = NULL;
     worker.channel.reset(NULL);
@@ -975,7 +843,7 @@ tess_writer_stop(struct _ged_facetize_state *s, struct tess_writer_state &writer
 	bool terminate)
 {
     if (writer.process)
-	(void)tess_process_stop(s, &writer.process, writer.input,
+	(void)facetize_process_stop(s, &writer.process, writer.input,
 		writer.channel, terminate);
     writer.input = NULL;
     writer.channel.reset(NULL);
@@ -1012,7 +880,7 @@ tess_run(struct _ged_facetize_state *s, const char **tess_cmd,
     }
 
     std::string backup_file = std::string(work_file) + ".bak";
-    if (tess_file_copy(work_file, backup_file.c_str()) != BRLCAD_OK) {
+    if (facetize_file_copy(work_file, backup_file.c_str()) != BRLCAD_OK) {
 	bu_file_delete(backup_file.c_str());
 	facetize_log(s, 0, "FACETIZE: unable to back up working database %s\n",
 		work_file);
@@ -1074,7 +942,7 @@ tess_run(struct _ged_facetize_state *s, const char **tess_cmd,
     tess_writer_state writer;
     std::string no_result_file;
     if (staged_writes) {
-	if (tess_process_start(&writer.process, &writer.input,
+	if (facetize_process_start(&writer.process, &writer.input,
 		writer.channel, writer_cmd, no_result_file,
 		"--writer") != BRLCAD_OK) {
 	    tess_writer_stop(s, writer, true);
@@ -1099,7 +967,7 @@ tess_run(struct _ged_facetize_state *s, const char **tess_cmd,
 	if (worker_index >= workers.size())
 	    return false;
 	tess_worker_state &worker = workers[worker_index];
-	if (!writer.process && tess_process_start(&writer.process,
+	if (!writer.process && facetize_process_start(&writer.process,
 		&writer.input, writer.channel, writer_cmd, no_result_file,
 		"--writer") != BRLCAD_OK) {
 	    tess_writer_stop(s, writer, true);
@@ -1137,7 +1005,7 @@ tess_run(struct _ged_facetize_state *s, const char **tess_cmd,
 
 	    if (worker.process && bu_process_poll(worker.process, NULL) != 0)
 		tess_worker_stop(s, worker, false);
-	    if (!worker.process && tess_process_start(&worker.process,
+	    if (!worker.process && facetize_process_start(&worker.process,
 		    &worker.input, worker.channel, worker_cmd,
 		    worker.result_file, "--server") != BRLCAD_OK) {
 		tess_worker_stop(s, worker, true);
@@ -1189,9 +1057,9 @@ tess_run(struct _ged_facetize_state *s, const char **tess_cmd,
 		continue;
 
 	    const char *object_name = tess_cmd[worker.object_index];
-	    tess_drain_stdout(s, worker.process, worker.channel,
+	    facetize_process_drain_stdout(s, worker.process, worker.channel,
 		    &worker.status);
-	    tess_drain_stderr(s, worker.process);
+	    facetize_process_drain_stderr(s, worker.process);
 	    observed_worker_resident = std::max(observed_worker_resident,
 		    worker.status.resident_size);
 
@@ -1209,7 +1077,7 @@ tess_run(struct _ged_facetize_state *s, const char **tess_cmd,
 			    worker.status.result == BRLCAD_OK &&
 			    now > worker.write_start &&
 			    worker.status.payload_size >=
-			    FACETIZE_WRITE_RATE_MIN_SAMPLE_BYTES) {
+			    FACETIZE_WRITE_PROFILE_MIN_BYTES) {
 			s->write_profile_bytes += worker.status.payload_size;
 			s->write_profile_usec += now - worker.write_start;
 		    }
@@ -1280,7 +1148,7 @@ tess_run(struct _ged_facetize_state *s, const char **tess_cmd,
 		     * and performs the update. */
 		    worker.write_permitted = true;
 		    write_owner = worker_index;
-		    worker.write_timeout = tess_write_timeout_seconds(
+	worker.write_timeout = facetize_write_timeout_seconds(
 			    worker.status.payload_size, s->write_profile_bytes,
 			    s->write_profile_usec);
 		    facetize_log(s, 1,
@@ -1358,9 +1226,9 @@ tess_run(struct _ged_facetize_state *s, const char **tess_cmd,
 		workers[writer.worker_index];
 	    const char *object_name =
 		tess_cmd[committing_worker.object_index];
-	    tess_drain_stdout(s, writer.process, writer.channel,
+	    facetize_process_drain_stdout(s, writer.process, writer.channel,
 		    &writer.status);
-	    tess_drain_stderr(s, writer.process);
+	    facetize_process_drain_stderr(s, writer.process);
 	    observed_worker_resident = std::max(observed_worker_resident,
 		    writer.status.resident_size);
 
@@ -1375,7 +1243,7 @@ tess_run(struct _ged_facetize_state *s, const char **tess_cmd,
 			    writer.status.result == BRLCAD_OK &&
 			    now > writer.write_start &&
 			    committing_worker.status.payload_size >=
-			    FACETIZE_WRITE_RATE_MIN_SAMPLE_BYTES) {
+			    FACETIZE_WRITE_PROFILE_MIN_BYTES) {
 			s->write_profile_bytes +=
 			    committing_worker.status.payload_size;
 			s->write_profile_usec += now - writer.write_start;
@@ -1401,7 +1269,7 @@ tess_run(struct _ged_facetize_state *s, const char **tess_cmd,
 	    if (!writer_interrupted && writer.worker_index < workers.size() &&
 		    writer.status.write_ready && !writer.write_permitted) {
 		writer.write_permitted = true;
-		writer.write_timeout = tess_write_timeout_seconds(
+		writer.write_timeout = facetize_write_timeout_seconds(
 			committing_worker.status.payload_size,
 			s->write_profile_bytes, s->write_profile_usec);
 		writer.write_start = now;
@@ -1516,7 +1384,7 @@ tess_run(struct _ged_facetize_state *s, const char **tess_cmd,
 	    bu_process_file_close(writer.process, BU_PROCESS_STDIN);
 	    writer.input = NULL;
 	}
-	int writer_status = tess_process_reap(s, &writer.process,
+	int writer_status = facetize_process_reap(s, &writer.process,
 		writer.channel, unsafe_failure);
 	writer.channel.reset(NULL);
 	if (writer_status != BRLCAD_OK)
@@ -1528,7 +1396,7 @@ tess_run(struct _ged_facetize_state *s, const char **tess_cmd,
 		bu_process_file_close(worker.process, BU_PROCESS_STDIN);
 		worker.input = NULL;
 	    }
-	    int process_status = tess_process_reap(s, &worker.process,
+	    int process_status = facetize_process_reap(s, &worker.process,
 		    worker.channel, unsafe_failure);
 	    worker.channel.reset(NULL);
 	    if (process_status != BRLCAD_OK)
@@ -1554,7 +1422,7 @@ tess_run(struct _ged_facetize_state *s, const char **tess_cmd,
 	return failed_names->empty() ? BRLCAD_OK : BRLCAD_ERROR;
     }
 
-    if (tess_file_copy(backup_file.c_str(), work_file) != BRLCAD_OK) {
+    if (facetize_file_copy(backup_file.c_str(), work_file) != BRLCAD_OK) {
 	facetize_log(s, 0,
 		"FACETIZE: unable to restore working database %s after tessellation failure\n",
 		work_file);
@@ -1981,10 +1849,10 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, struct db_i *dbip, struc
 }
 
 int
-_ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, struct rt_wdb *wdbp, int argc, const char **argv, const char *oname, struct bu_list *vlfree, bool output_to_working, int curr_cnt, int total_cnt)
+_ged_facetize_booleval_tri_to_db(struct _ged_facetize_state *s, struct db_i *dbip, struct rt_wdb *wdbp, int argc, const char **argv, const char *oname, struct bu_list *vlfree, struct db_i *odbip, int curr_cnt, int total_cnt)
 {
     union tree *ftree;
-    if (!dbip || !wdbp || !argv || !oname)
+    if (!dbip || !wdbp || !argv || !oname || !odbip)
 	return BRLCAD_ERROR;
 
     if (total_cnt < 0) {
@@ -2071,8 +1939,6 @@ _ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, str
 	}
     }
     bu_free(av, "av");
-
-    struct db_i *odbip = (output_to_working) ? dbip : s->dbip;
 
     // We don't have a tree - unless we've been told not to, prepare an empty BoT
     if (!s->facetize_tree && !s->no_empty) {
@@ -2234,6 +2100,14 @@ _ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, str
 
     facetize_log(s, 0, " Success.\n");
     return BRLCAD_OK;
+}
+
+int
+_ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, struct rt_wdb *wdbp, int argc, const char **argv, const char *oname, struct bu_list *vlfree, bool output_to_working, int curr_cnt, int total_cnt)
+{
+    struct db_i *output_dbip = output_to_working ? dbip : (s ? s->dbip : NULL);
+    return _ged_facetize_booleval_tri_to_db(s, dbip, wdbp, argc, argv,
+	    oname, vlfree, output_dbip, curr_cnt, total_cnt);
 }
 
 int

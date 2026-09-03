@@ -38,9 +38,12 @@ static const char FACETIZE_REQUEST_MAGIC[] = "FACETIZE_REQUEST";
 static const char FACETIZE_COMMIT_MAGIC[] = "FACETIZE_COMMIT";
 static const char FACETIZE_RESULT_MAGIC[] = "FACETIZE_RESULT";
 static const char FACETIZE_WRITE_READY_MAGIC[] = "FACETIZE_WRITE_READY";
+static const char FACETIZE_REGION_WRITE_READY_MAGIC[] =
+    "FACETIZE_REGION_WRITE_READY";
 static const char FACETIZE_WRITE_PROCEED_MAGIC[] = "FACETIZE_WRITE_PROCEED";
 static const char FACETIZE_WRITE_STARTED_MAGIC[] = "FACETIZE_WRITE_STARTED";
 static const char FACETIZE_WRITE_DONE_MAGIC[] = "FACETIZE_WRITE_DONE";
+static const char FACETIZE_CSG_RESULT_MAGIC[] = "FACETIZE_CSG_RESULT";
 static const size_t FACETIZE_PROTOCOL_FIELD_MAX = 1024u * 1024u;
 static const size_t FACETIZE_PROTOCOL_HEADER_SIZE = 128u;
 static const size_t FACETIZE_MIB = 1024u * 1024u;
@@ -225,6 +228,10 @@ FacetizeWorkerClient::consume_output(const char *data, size_t data_size,
 	int parsed_result = BRLCAD_ERROR;
 	size_t parsed_payload_size = 0;
 	size_t parsed_resident_size = 0;
+	long parsed_crossings = -1;
+	int parsed_tolerated_failures = 0;
+	double parsed_surface_area = -1.0;
+	double parsed_volume = -1.0;
 	line_stream >> message_type;
 	if (message_type == FACETIZE_WRITE_READY_MAGIC &&
 		(line_stream >> parsed_payload_size >> parsed_resident_size) &&
@@ -232,6 +239,17 @@ FacetizeWorkerClient::consume_output(const char *data, size_t data_size,
 	    status.write_ready = true;
 	    status.payload_size = parsed_payload_size;
 	    status.resident_size = parsed_resident_size;
+	    continue;
+	}
+	if (message_type == FACETIZE_REGION_WRITE_READY_MAGIC &&
+		(line_stream >> parsed_payload_size >> parsed_resident_size >>
+		 parsed_tolerated_failures) &&
+		(line_stream >> std::ws).eof() &&
+		parsed_tolerated_failures >= 0) {
+	    status.write_ready = true;
+	    status.payload_size = parsed_payload_size;
+	    status.resident_size = parsed_resident_size;
+	    status.tolerated_failures = parsed_tolerated_failures;
 	    continue;
 	}
 	if (message_type == FACETIZE_WRITE_STARTED_MAGIC &&
@@ -252,6 +270,18 @@ FacetizeWorkerClient::consume_output(const char *data, size_t data_size,
 		(line_stream >> parsed_result >> parsed_resident_size) &&
 		(line_stream >> std::ws).eof()) {
 	    status.result = parsed_result;
+	    status.resident_size = parsed_resident_size;
+	    status.result_received = true;
+	    continue;
+	}
+	if (message_type == FACETIZE_CSG_RESULT_MAGIC &&
+		(line_stream >> parsed_result >> parsed_crossings >>
+		 parsed_surface_area >> parsed_volume >> parsed_resident_size) &&
+		(line_stream >> std::ws).eof()) {
+	    status.result = parsed_result;
+	    status.csg_crossings = parsed_crossings;
+	    status.csg_surface_area = parsed_surface_area;
+	    status.csg_volume = parsed_volume;
 	    status.resident_size = parsed_resident_size;
 	    status.result_received = true;
 	    continue;
@@ -344,6 +374,18 @@ FacetizeWorkerServer::send_write_ready(size_t payload_size,
 }
 
 bool
+FacetizeWorkerServer::send_region_write_ready(size_t payload_size,
+	size_t resident_size, int tolerated_failures)
+{
+    if (!response_stream || tolerated_failures < 0)
+	return false;
+
+    return fprintf(response_stream, "%s %zu %zu %d\n",
+	    FACETIZE_REGION_WRITE_READY_MAGIC, payload_size, resident_size,
+	    tolerated_failures) >= 0 && fflush(response_stream) == 0;
+}
+
+bool
 FacetizeWorkerServer::receive_write_proceed()
 {
     if (!request_stream)
@@ -380,6 +422,18 @@ FacetizeWorkerServer::send_write_result(int result, size_t resident_size)
 {
     return facetize_send_result(response_stream, FACETIZE_WRITE_DONE_MAGIC,
 	    result, resident_size);
+}
+
+bool
+FacetizeWorkerServer::send_csg_result(int result, long crossings,
+	double surface_area, double volume, size_t resident_size)
+{
+    if (!response_stream)
+	return false;
+
+    return fprintf(response_stream, "%s %d %ld %.17g %.17g %zu\n",
+	    FACETIZE_CSG_RESULT_MAGIC, result, crossings, surface_area, volume,
+	    resident_size) >= 0 && fflush(response_stream) == 0;
 }
 
 // Local Variables:

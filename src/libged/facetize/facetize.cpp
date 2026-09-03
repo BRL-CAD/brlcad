@@ -381,7 +381,7 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[21],  "", "perturb-sa-tol",                           "#",       &bu_opt_fastf_t,   &s->perturb_sa_tol,  "Surface-area percentage threshold (0-100) that triggers the coplanarity-avoidance perturb retry when the CSG Crofton SA differs from the BoT SA by more than this amount. Default is 10.");
     BU_OPT(d[22],  "", "perturb-vol-tol",                          "#",       &bu_opt_fastf_t,   &s->perturb_vol_tol, "Volume percentage threshold (0-100) that triggers the coplanarity-avoidance perturb retry when the CSG Crofton volume differs from the BoT volume by more than this amount. Default is 10.");
     BU_OPT(d[23],  "", "tolerate-failures",                         "",                  NULL, &s->tolerate_failures, "Continue after failed primitive or subtree evaluations and generate a partial result.  The output will not be a complete representation of the input if any failures are tolerated.");
-    BU_OPT(d[24], "j", "jobs",                                     "#",           &bu_opt_int,     &s->max_workers, "Maximum number of primitive tessellation worker processes.  The default is selected conservatively from CPU and memory availability.");
+    BU_OPT(d[24], "j", "jobs",                                     "#",           &bu_opt_int,     &s->max_workers, "Maximum number of facetize worker processes.  The default is selected conservatively from CPU and memory availability.");
     BU_OPT_NULL(d[25]);
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
