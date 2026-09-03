@@ -426,6 +426,7 @@ endif(BRLCAD_ENABLE_SPR)
 set(LIBRT_PUBLIC_LIBS ${librt_deps} OPENNURBS::OPENNURBS)
 set(
   LIBRT_PRIVATE_LIBS
+  Threads::Threads
   ${OPENCL_LIBS}
   mmesh::mmesh
   REGEX::REGEX
