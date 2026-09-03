@@ -16,6 +16,10 @@ link:libged_command_authoring.html[Authoring a New libged Command]) describe
 architecture and intent.  The Doxygen reference complements them by documenting
 the exact functions, structures, and macros at the level of individual symbols.
 
+You can find an online version of the Doxygen generated pages at the
+https://brl-cad.github.io/doxygen[BRL-CAD Doxygen] github.io website. Usually
+this page is automatically regenerated on a nightly basis.
+
 == What the API reference covers
 
 The reference documents BRL-CAD's public programming interfaces at the symbol

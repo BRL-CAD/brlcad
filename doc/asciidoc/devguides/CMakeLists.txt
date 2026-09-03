@@ -1,8 +1,12 @@
 set(
   devguides_EN
   adding_new_primitive_superellipsoid.adoc
+  api_reference.adoc
   bool_eval_development.adoc
+  getting_started_as_contributor.adoc
   iterate_geometry.adoc
+  libged_command_authoring.adoc
+  raytracing_pipeline.adoc
 )
 
 set(
@@ -32,10 +36,6 @@ endif(TARGET mged OR TARGET qged OR TARGET archer)
 
 cmakefiles(
   CMakeLists.txt
-  api_reference.adoc
-  getting_started_as_contributor.adoc
-  libged_command_authoring.adoc
-  raytracing_pipeline.adoc
   ${devguides_EN}
   ${devguides_EN_IMAGES}
 )
