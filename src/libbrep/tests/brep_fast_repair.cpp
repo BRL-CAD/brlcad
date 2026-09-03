@@ -126,6 +126,54 @@ thin_lens_test()
 }
 
 static bool
+tolerance_narrow_surface_test()
+{
+    ON_Brep brep;
+    ON_PlaneSurface *surface = new ON_PlaneSurface(ON_xy_plane);
+    const double surface_width = 0.25 * BN_TOL_DIST;
+    surface->SetDomain(0, 0.0, surface_width);
+    surface->SetDomain(1, 0.0, 1.0);
+    surface->SetExtents(0, surface->Domain(0));
+    surface->SetExtents(1, surface->Domain(1));
+    const int si = brep.AddSurface(surface);
+    ON_BrepFace &face = brep.NewFace(si);
+    ON_BrepLoop &loop = brep.NewLoop(ON_BrepLoop::outer, face);
+    const ON_3dPoint corners[4] = {
+	ON_3dPoint(0.0, 0.0, 0.0),
+	ON_3dPoint(surface_width, 0.0, 0.0),
+	ON_3dPoint(surface_width, 1.0, 0.0),
+	ON_3dPoint(0.0, 1.0, 0.0)
+    };
+    int vertices[4];
+    for (int i = 0; i < 4; ++i)
+	vertices[i] = brep.NewVertex(corners[i]).m_vertex_index;
+    for (int i = 0; i < 4; ++i) {
+	const int next = (i + 1) % 4;
+	add_nurbs_trim(brep, loop, vertices[i], vertices[next], {
+	    corners[i], corners[next]
+	}, 1.0e-6);
+    }
+
+    fast_result *result = run_fast(brep);
+    const bool valid = result->ret == BREP_CDT_FAST_OK &&
+	result->report.completed_faces == 1 &&
+	result->report.failed_faces == 0 &&
+	result->report.skipped_degenerate_faces == 0 &&
+	result->report.skipped_tolerance_faces == 1 &&
+	result->face_count == 0 && result->point_count == 0;
+    if (!valid)
+	bu_log("tolerance-narrow surface: ret=%d completed=%d failed=%d "
+	    "degenerate=%d tolerance=%d faces=%d points=%d\n",
+	    result->ret, result->report.completed_faces,
+	    result->report.failed_faces,
+	    result->report.skipped_degenerate_faces,
+	    result->report.skipped_tolerance_faces, result->face_count,
+	    result->point_count);
+    delete result;
+    return valid;
+}
+
+static bool
 degenerate_line_test()
 {
     ON_Brep brep;
@@ -2008,6 +2056,7 @@ main(int argc, const char **argv)
 	} \
     } while (0)
     RUN_FAST_TEST(thin_lens_test);
+    RUN_FAST_TEST(tolerance_narrow_surface_test);
     RUN_FAST_TEST(degenerate_line_test);
     RUN_FAST_TEST(degenerate_collinear_loop_test);
     RUN_FAST_TEST(singular_cap_test);

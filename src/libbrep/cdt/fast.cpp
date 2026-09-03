@@ -5013,8 +5013,10 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 	const struct bn_tol *tol,
 	double model_diagonal,
 	bool repair_pcurves,
-	const struct brep_cdt_fast_options *options)
+	const struct brep_cdt_fast_options *options,
+	bool *skipped_tolerance)
 {
+    *skipped_tolerance = false;
     fast_face_scratch scratch;
     fast_line_store line_store;
     ON_RTree rt_trims;
@@ -5047,8 +5049,10 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
     fastf_t max_dist = 0.0;
     fast_surface_metrics_get(s, &metrics);
     if (metrics.size_valid) {
-	if (metrics.width < tol->dist || metrics.height < tol->dist)
+	if (metrics.width < tol->dist || metrics.height < tol->dist) {
+	    *skipped_tolerance = true;
 	    return false;
+	}
 	max_dist = sqrt(metrics.width * metrics.width +
 	    metrics.height * metrics.height) / 10.0;
     }
@@ -5242,6 +5246,13 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 
     if (!have_outer) {
 	std::cerr << "Error: Face(" << fi << ") cannot evaluate its outer loop and will not be facetized." << std::endl;
+	return false;
+    }
+    if (outer_polyline.size() < 3) {
+	/* The trim sampler closed a real outer loop with fewer than three
+	 * distinct vertices.  This is a successful empty display result at the
+	 * requested tolerance, not proof that the analytic face has zero area. */
+	*skipped_tolerance = true;
 	return false;
     }
 
@@ -5586,7 +5597,8 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 enum fast_face_outcome {
     FAST_FACE_FAILED = 0,
     FAST_FACE_COMPLETED,
-    FAST_FACE_SKIPPED_DEGENERATE
+    FAST_FACE_SKIPPED_DEGENERATE,
+    FAST_FACE_SKIPPED_TOLERANCE
 };
 
 static bool
@@ -5794,8 +5806,10 @@ bg_CDT(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 	}
     }
 
+    bool first_skipped_tolerance = false;
     if (bg_CDT_attempt(faces, pnt_norms, pnts, point_sources, face, ttol, tol,
-	    model_diagonal, repair_first, options))
+	    model_diagonal, repair_first, options,
+	    &first_skipped_tolerance))
 	return FAST_FACE_COMPLETED;
 
     faces.clear();
@@ -5803,10 +5817,17 @@ bg_CDT(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
     pnts.clear();
 
     point_sources.clear();
-    return bg_CDT_attempt(faces, pnt_norms, pnts, point_sources, face,
-	    ttol, tol,
-	    model_diagonal, !repair_first, options) ? FAST_FACE_COMPLETED :
-	FAST_FACE_FAILED;
+    bool second_skipped_tolerance = false;
+    if (bg_CDT_attempt(faces, pnt_norms, pnts, point_sources, face,
+	    ttol, tol, model_diagonal, !repair_first, options,
+	    &second_skipped_tolerance))
+	return FAST_FACE_COMPLETED;
+    faces.clear();
+    pnt_norms.clear();
+    pnts.clear();
+    point_sources.clear();
+    return first_skipped_tolerance || second_skipped_tolerance ?
+	FAST_FACE_SKIPPED_TOLERANCE : FAST_FACE_FAILED;
 }
 
 
@@ -5818,6 +5839,7 @@ struct fast_cdt_face_result {
     bool completed = false;
     bool failed = false;
     bool skipped_degenerate = false;
+    bool skipped_tolerance = false;
 };
 
 static const size_t FAST_CDT_DEFAULT_WORKING_BYTES =
@@ -6046,6 +6068,8 @@ fast_cdt_face_worker(int UNUSED(cpu), void *data)
 	if (state->planar_ttol && surface &&
 		surface->IsPlanar(NULL, state->tol->dist))
 	    face_ttol = state->planar_ttol;
+	const bool requested_tolerance = !state->planar_ttol ||
+	    face_ttol == state->planar_ttol;
 	const size_t working_estimate = state->working_estimates ?
 	    (*state->working_estimates)[(size_t)face_index] :
 	    fast_face_working_estimate(face, state->work_budget->limit);
@@ -6080,6 +6104,17 @@ fast_cdt_face_worker(int UNUSED(cpu), void *data)
 	if (outcome == FAST_FACE_SKIPPED_DEGENERATE) {
 	    result.completed = true;
 	    result.skipped_degenerate = true;
+	    continue;
+	}
+	if (outcome == FAST_FACE_SKIPPED_TOLERANCE) {
+	    if (requested_tolerance) {
+		result.completed = true;
+		result.skipped_tolerance = true;
+	    } else {
+		/* A coarse display pass can collapse a face which the requested
+		 * tolerance resolves.  Leave it incomplete for the recovery pass. */
+		result.failed = true;
+	    }
 	    continue;
 	}
 
@@ -6455,7 +6490,7 @@ fast_cdt_refine_worker(int UNUSED(cpu), void *data)
 	    (*state->results)[(size_t)face_index];
 	if (state->incomplete_only && current.completed)
 	    continue;
-	if (current.skipped_degenerate ||
+	if (current.skipped_degenerate || current.skipped_tolerance ||
 		(state->coarsening && (!quality.budget_limited ||
 		quality.area_converged || !quality.boundary_covered)) ||
 		(!state->coarsening &&
@@ -6495,6 +6530,15 @@ fast_cdt_refine_worker(int UNUSED(cpu), void *data)
 		current.completed = true;
 		current.failed = false;
 		current.skipped_degenerate = true;
+	    }
+	    continue;
+	}
+	if (outcome == FAST_FACE_SKIPPED_TOLERANCE) {
+	    if (state->incomplete_only && !current.completed) {
+		current = std::move(candidate);
+		current.completed = true;
+		current.failed = false;
+		current.skipped_tolerance = true;
 	    }
 	    continue;
 	}
@@ -6777,6 +6821,9 @@ brep_cdt_fast_ex(int **faces, int *face_cnt, vect_t **pnt_norms,
 	    } else if (outcome == FAST_FACE_SKIPPED_DEGENERATE) {
 		result.completed = true;
 		result.skipped_degenerate = true;
+	    } else if (outcome == FAST_FACE_SKIPPED_TOLERANCE) {
+		result.completed = true;
+		result.skipped_tolerance = true;
 	    } else {
 		const size_t bytes = result.faces.size() * sizeof(int) +
 		    (result.norms.size() + result.pnts.size()) * sizeof(fastf_t) +
@@ -6810,7 +6857,8 @@ brep_cdt_fast_ex(int **faces, int *face_cnt, vect_t **pnt_norms,
 		face_index++) {
 	    fast_cdt_face_result &result =
 		face_results[(size_t)face_index];
-	    if (!result.completed || result.skipped_degenerate)
+	    if (!result.completed || result.skipped_degenerate ||
+		    result.skipped_tolerance)
 		continue;
 	    retained_byte_count = fast_saturating_add(retained_byte_count,
 		fast_face_result_bytes(result), options.max_result_bytes);
@@ -6927,7 +6975,8 @@ brep_cdt_fast_ex(int **faces, int *face_cnt, vect_t **pnt_norms,
 		    (!quality.budget_limited ||
 		    !quality.boundary_covered));
 		have_refinable_face = have_refinable_face ||
-		    (!result.skipped_degenerate && needs_refinement);
+		    (!result.skipped_degenerate &&
+		    !result.skipped_tolerance && needs_refinement);
 	    }
 	    if (!have_refinable_face)
 		break;
@@ -6945,6 +6994,7 @@ brep_cdt_fast_ex(int **faces, int *face_cnt, vect_t **pnt_norms,
     int completed_faces = 0;
     int failed_faces = 0;
     int skipped_degenerate_faces = 0;
+    int skipped_tolerance_faces = 0;
     int approximated_faces = 0;
     int area_converged_faces = 0;
     int triangle_budget_limited_faces = 0;
@@ -6967,6 +7017,14 @@ brep_cdt_fast_ex(int **faces, int *face_cnt, vect_t **pnt_norms,
 	    if (options.face_status)
 		options.face_status(fi,
 		    BREP_CDT_FAST_FACE_SKIPPED_DEGENERATE,
+		    options.face_status_data);
+	    continue;
+	}
+	if (result.skipped_tolerance) {
+	    skipped_tolerance_faces++;
+	    if (options.face_status)
+		options.face_status(fi,
+		    BREP_CDT_FAST_FACE_SKIPPED_TOLERANCE,
 		    options.face_status_data);
 	    continue;
 	}
@@ -7014,6 +7072,7 @@ brep_cdt_fast_ex(int **faces, int *face_cnt, vect_t **pnt_norms,
 	report->completed_faces = completed_faces;
 	report->failed_faces = failed_faces;
 	report->skipped_degenerate_faces = skipped_degenerate_faces;
+	report->skipped_tolerance_faces = skipped_tolerance_faces;
 	report->result_bytes = all_faces.size() * sizeof(int) +
 	    (all_norms.size() + all_pnts.size()) * sizeof(fastf_t);
 	report->hit_time_limit = hit_time_limit;
@@ -7036,10 +7095,11 @@ brep_cdt_fast_ex(int **faces, int *face_cnt, vect_t **pnt_norms,
     if (failed_faces && (!options.allow_partial || !completed_faces))
 	return hit_limit ? BREP_CDT_FAST_LIMIT : BREP_CDT_FAST_ERROR;
 
-    /* A BRep containing only proven zero-area faces has no drawable output,
-     * but the request was still handled completely. */
+    /* A BRep containing only exact or tolerance-level empty faces has no
+     * drawable output, but the request was still handled completely. */
     if (!all_faces.size() || !all_pnts.size() || !all_norms.size())
-	return (!failed_faces && completed_faces == skipped_degenerate_faces) ?
+	return (!failed_faces && completed_faces == skipped_degenerate_faces +
+	    skipped_tolerance_faces) ?
 	    BREP_CDT_FAST_OK : BREP_CDT_FAST_ERROR;
 
     if (all_faces.size() / 3 > INT_MAX || all_pnts.size() / 3 > INT_MAX)
