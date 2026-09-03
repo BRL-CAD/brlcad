@@ -1725,6 +1725,39 @@ skinny_planar_strip_test()
 }
 
 static bool
+tolerant_narrow_planar_strip_test()
+{
+    ON_Brep brep;
+    ON_PlaneSurface *surface = large_plane();
+    const int si = brep.AddSurface(surface);
+    ON_BrepFace &face = brep.NewFace(si);
+    ON_BrepLoop &loop = brep.NewLoop(ON_BrepLoop::outer, face);
+    const double width = 1.0e-3;
+    const double trim_tolerance = 1.0e-2;
+    const ON_3dPoint corners[4] = {
+	ON_3dPoint(0.0, 0.0, 0.0), ON_3dPoint(2.0, 0.0, 0.0),
+	ON_3dPoint(2.0, width, 0.0), ON_3dPoint(0.0, width, 0.0)
+    };
+    int vertices[4];
+    for (int i = 0; i < 4; ++i)
+	vertices[i] = brep.NewVertex(corners[i]).m_vertex_index;
+    for (int i = 0; i < 4; ++i) {
+	const int next = (i + 1) % 4;
+	add_nurbs_trim(brep, loop, vertices[i], vertices[next], {
+	    corners[i], corners[next]
+	}, trim_tolerance);
+    }
+
+    fast_result *result = run_fast(brep);
+    const bool valid = result->ret == BREP_CDT_FAST_OK &&
+	result->report.failed_faces == 0 &&
+	result->report.skipped_degenerate_faces == 0 &&
+	result->face_count > 0 && result->point_count > 0;
+    delete result;
+    return valid;
+}
+
+static bool
 near_closed_planar_loop_test()
 {
     ON_Brep brep;
@@ -1983,6 +2016,7 @@ main(int argc, const char **argv)
     RUN_FAST_TEST(untrimmed_planar_face_test);
     RUN_FAST_TEST(untrimmed_curved_surface_test);
     RUN_FAST_TEST(skinny_planar_strip_test);
+    RUN_FAST_TEST(tolerant_narrow_planar_strip_test);
     RUN_FAST_TEST(near_closed_planar_loop_test);
     RUN_FAST_TEST(malformed_pcurve_test);
     RUN_FAST_TEST(constrained_source_identity_test);
