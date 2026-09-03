@@ -618,6 +618,124 @@ fast_pullback_candidate(const ON_BrepLoop *loop, const ON_BrepTrim &trim,
     return trim.m_tolerance[0] > 8.0 * baseline;
 }
 
+template <typename Point>
+static double
+fast_point_segment_distance(const Point &point, const Point &start,
+	const Point &end)
+{
+    const auto segment = end - start;
+    const double length_squared = segment * segment;
+    if (!(length_squared > 0.0) || !std::isfinite(length_squared))
+	return point.DistanceTo(start);
+    const double fraction = std::max(0.0, std::min(1.0,
+	((point - start) * segment) / length_squared));
+    return point.DistanceTo(start + fraction * segment);
+}
+
+static double
+fast_scaled_uv_segment_distance(const ON_2dPoint &point,
+	const ON_2dPoint &start, const ON_2dPoint &end,
+	double u_scale, double v_scale)
+{
+    const ON_2dPoint scaled_point(point.x * u_scale, point.y * v_scale);
+    const ON_2dPoint scaled_start(start.x * u_scale, start.y * v_scale);
+    const ON_2dPoint scaled_end(end.x * u_scale, end.y * v_scale);
+    return fast_point_segment_distance(scaled_point, scaled_start,
+	scaled_end);
+}
+
+/* Pullback repair can expose every knot of an already approximated edge even
+ * when most are redundant at its declared tolerance.  A model-space chord
+ * bound protects geometric fidelity, while a surface-scaled UV bound avoids
+ * introducing a topologically distant constraint on distorted surfaces. */
+static void
+fast_simplify_pullback_samples(const ON_Surface *surface,
+	std::vector<ON_2dPoint> &samples,
+	const std::vector<ON_3dPoint> &model_points, double tolerance)
+{
+    if (!surface || samples.size() < 3 ||
+	    samples.size() != model_points.size() ||
+	    !(tolerance > 0.0) || !std::isfinite(tolerance))
+	return;
+
+    fast_surface_metrics metrics;
+    fast_surface_metrics_get(surface, &metrics);
+    if (!metrics.sampling_valid || !std::isfinite(metrics.u_scale) ||
+	    !std::isfinite(metrics.v_scale) || !(metrics.u_scale > 0.0) ||
+	    !(metrics.v_scale > 0.0))
+	return;
+
+    const size_t last = samples.size() - 1;
+    const bool closed = samples.size() >= 4 &&
+	samples.front().DistanceTo(samples.back()) <=
+	    BREP_SAME_POINT_TOLERANCE &&
+	model_points.front().DistanceTo(model_points.back()) <= tolerance;
+    std::vector<bool> keep(samples.size(), false);
+    keep[0] = true;
+    keep[last] = true;
+
+    std::vector<std::pair<size_t, size_t>> ranges;
+    if (closed) {
+	size_t opposite = 0;
+	double greatest_distance = 0.0;
+	for (size_t i = 1; i < last; ++i) {
+	    const double distance = std::max(
+		model_points[i].DistanceTo(model_points[0]),
+		fast_scaled_uv_segment_distance(samples[i], samples[0],
+		    samples[0], metrics.u_scale, metrics.v_scale));
+	    if (distance > greatest_distance) {
+		greatest_distance = distance;
+		opposite = i;
+	    }
+	}
+	if (!opposite)
+	    return;
+	keep[opposite] = true;
+	ranges.push_back(std::make_pair((size_t)0, opposite));
+	ranges.push_back(std::make_pair(opposite, last));
+    } else {
+	ranges.push_back(std::make_pair((size_t)0, last));
+    }
+
+    while (!ranges.empty()) {
+	const std::pair<size_t, size_t> range = ranges.back();
+	ranges.pop_back();
+	if (range.second <= range.first + 1)
+	    continue;
+	size_t split = range.first;
+	double greatest_error = 0.0;
+	for (size_t i = range.first + 1; i < range.second; ++i) {
+	    const double error = std::max(
+		fast_point_segment_distance(model_points[i],
+		    model_points[range.first], model_points[range.second]),
+		fast_scaled_uv_segment_distance(samples[i],
+		    samples[range.first], samples[range.second],
+		    metrics.u_scale, metrics.v_scale));
+	    if (error > greatest_error) {
+		greatest_error = error;
+		split = i;
+	    }
+	}
+	if (greatest_error <= tolerance || split == range.first)
+	    continue;
+	keep[split] = true;
+	ranges.push_back(std::make_pair(range.first, split));
+	ranges.push_back(std::make_pair(split, range.second));
+    }
+
+    std::vector<ON_2dPoint> simplified_samples;
+    simplified_samples.reserve(samples.size());
+    for (size_t i = 0; i < samples.size(); ++i) {
+	if (!keep[i])
+	    continue;
+	simplified_samples.push_back(samples[i]);
+    }
+    const size_t minimum_count = closed ? 4 : 2;
+    if (simplified_samples.size() < minimum_count)
+	return;
+    samples.swap(simplified_samples);
+}
+
 static bool
 fast_append_pullback_samples(ON_SimpleArray<BrepTrimPoint> *points,
 	const ON_BrepTrim &trim, bool omit_last, const struct bn_tol *tol,
@@ -696,28 +814,32 @@ fast_append_pullback_samples(ON_SimpleArray<BrepTrimPoint> *points,
 	    2.0 * repair_tolerance)
 	return false;
 
-    const size_t append_count = samples.size() - (omit_last ? 1 : 0);
     std::vector<ON_3dPoint> lifted_points;
-    std::vector<ON_3dVector> lifted_normals;
-    lifted_points.reserve(append_count);
-    lifted_normals.reserve(append_count);
+    lifted_points.reserve(samples.size());
+    for (size_t i = 0; i < samples.size(); ++i) {
+	const ON_2dPoint uv = UnwrapUVPoint(surface, samples[i],
+	    BREP_SAME_POINT_TOLERANCE);
+	const ON_3dPoint point = surface->PointAt(uv.x, uv.y);
+	if (!point.IsValid())
+	    return false;
+	lifted_points.push_back(point);
+    }
+    fast_simplify_pullback_samples(surface, samples, lifted_points,
+	repair_tolerance);
+
+    const size_t append_count = samples.size() - (omit_last ? 1 : 0);
     for (size_t i = 0; i < append_count; ++i) {
 	const ON_2dPoint uv = UnwrapUVPoint(surface, samples[i],
 	    BREP_SAME_POINT_TOLERANCE);
 	ON_3dPoint point = ON_3dPoint::UnsetPoint;
 	ON_3dVector normal = ON_3dVector::UnsetVector;
-	if (!surface_EvNormal(surface, uv.x, uv.y, point,
-		normal))
+	if (!surface_EvNormal(surface, uv.x, uv.y, point, normal))
 	    return false;
-	lifted_points.push_back(point);
-	lifted_normals.push_back(normal);
-    }
-    for (size_t i = 0; i < append_count; ++i) {
 	BrepTrimPoint sample = {};
-	sample.p3d = scratch.make_point(lifted_points[i]);
+	sample.p3d = scratch.make_point(point);
 	sample.n3d = NULL;
 	sample.p2d = samples[i];
-	sample.normal = lifted_normals[i];
+	sample.normal = normal;
 	sample.tangent = ON_3dVector::UnsetVector;
 	sample.t = ON_UNSET_VALUE;
 	sample.e = ON_UNSET_VALUE;
