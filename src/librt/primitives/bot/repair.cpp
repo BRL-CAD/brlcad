@@ -409,7 +409,8 @@ bot_lint_cleanup:
 static struct rt_bot_internal *
 manifold_to_bot(const manifold::MeshGL64 &mesh)
 {
-    if (mesh.vertProperties.size() % 3 || mesh.triVerts.size() % 3 ||
+    if (!mesh.NumVert() || !mesh.NumTri() ||
+	mesh.vertProperties.size() % 3 || mesh.triVerts.size() % 3 ||
 	mesh.NumVert() > INT_MAX || mesh.NumTri() > INT_MAX)
 	return NULL;
 
@@ -439,7 +440,8 @@ static struct rt_bot_internal *
 manifold_to_preserved_bot(const manifold::MeshGL64 &mesh,
 	const struct rt_bot_internal *source)
 {
-    if (!source || mesh.vertProperties.size() % 3 ||
+    if (!source || !mesh.NumVert() || !mesh.NumTri() ||
+	mesh.vertProperties.size() % 3 ||
 	mesh.triVerts.size() % 3 || mesh.NumVert() > INT_MAX ||
 	mesh.NumTri() > INT_MAX || mesh.faceID.size() != mesh.NumTri())
 	return NULL;
@@ -506,7 +508,8 @@ rt_bot_repair(struct rt_bot_internal **obot, struct rt_bot_internal *bot, struct
     rinfo->output_lint_fail = 0;
     rinfo->output_volume = 0.0;
     rinfo->output_data_loss = 0;
-    if (bot->mode != RT_BOT_SOLID || bot->num_vertices > INT_MAX ||
+    if (bot->mode != RT_BOT_SOLID || !bot->num_vertices ||
+	!bot->num_faces || bot->num_vertices > INT_MAX ||
 	bot->num_faces > INT_MAX || !bot->vertices || !bot->faces)
 	return -1;
     for (size_t face_corner = 0; face_corner < bot->num_faces * 3;
