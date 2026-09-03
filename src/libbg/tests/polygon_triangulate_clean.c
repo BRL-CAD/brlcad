@@ -215,6 +215,39 @@ main(int argc, const char **argv)
 	    return 1;
     }
 
+    {
+	/* Clipper rejects a wholly collinear closed path.  As a hole it
+	 * removes no area and must not invalidate the containing polygon. */
+	point2d_t points[11] = {
+	    {0.0, 0.0}, {10.0, 0.0}, {10.0, 10.0}, {0.0, 10.0},
+	    {2.0, 5.0}, {3.0, 5.0}, {4.0, 5.0}, {5.0, 5.0},
+	    {6.0, 5.0}, {7.0, 5.0}, {8.0, 5.0}
+	};
+	const int outer[4] = {0, 1, 2, 3};
+	const int hole[7] = {4, 5, 6, 7, 8, 9, 10};
+	const int *holes[1] = {hole};
+	const size_t hole_counts[1] = {7};
+	if (check_clean_triangulation((const point2d_t *)points, 11, outer,
+		4, holes, hole_counts, 1, NULL, 0, 100.0))
+	    return 1;
+    }
+
+    {
+	/* A hole touching the middle of an outline edge is a notch.  Clipper
+	 * must split the T-junction before detria sees the constraint ring. */
+	point2d_t points[7] = {
+	    {0.0, 0.0}, {10.0, 0.0}, {10.0, 10.0}, {0.0, 10.0},
+	    {5.0, 0.0}, {4.0, 2.0}, {6.0, 2.0}
+	};
+	const int outer[4] = {0, 1, 2, 3};
+	const int hole[3] = {4, 5, 6};
+	const int *holes[1] = {hole};
+	const size_t hole_counts[1] = {3};
+	if (check_clean_triangulation((const point2d_t *)points, 7, outer,
+		4, holes, hole_counts, 1, NULL, 0, 98.0))
+	    return 1;
+    }
+
     if (check_clean_constraint())
 	return 1;
 
