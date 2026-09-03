@@ -3544,12 +3544,23 @@ fast_seed_full_periodic_face(const ON_Surface *surface,
 	std::min((size_t)256, closed_steps));
     const size_t open_steps = std::max((size_t)8, closed_steps / 2);
 
-    const double closed_start = boundary[0].p2d[closed_dir];
-    const double closed_delta = boundary[2].p2d[closed_dir] -
-	boundary[1].p2d[closed_dir];
-    const double open_start = boundary[0].p2d[open_dir];
-    const double open_delta = boundary[1].p2d[open_dir] -
-	boundary[0].p2d[open_dir];
+    double parameter_min[2] = {INFINITY, INFINITY};
+    double parameter_max[2] = {-INFINITY, -INFINITY};
+    for (int i = 0; i < boundary.Count(); ++i) {
+	for (int dir = 0; dir < 2; ++dir) {
+	    parameter_min[dir] = std::min(parameter_min[dir],
+		boundary[i].p2d[dir]);
+	    parameter_max[dir] = std::max(parameter_max[dir],
+		boundary[i].p2d[dir]);
+	}
+    }
+    const double closed_start = parameter_min[closed_dir];
+    const double closed_delta = parameter_max[closed_dir] - closed_start;
+    const double open_start = parameter_min[open_dir];
+    const double open_delta = parameter_max[open_dir] - open_start;
+    if (!(closed_delta > ON_ZERO_TOLERANCE) ||
+	    !(open_delta > ON_ZERO_TOLERANCE))
+	return;
     for (size_t i = 1; i < closed_steps; ++i) {
 	for (size_t j = 1; j < open_steps; ++j) {
 	    if (surface_points.Count() >= FAST_CDT_MAX_SURFACE_SAMPLES)
@@ -5011,6 +5022,51 @@ fast_implicit_outer_loop(const ON_BrepFace &face,
     return largest_index;
 }
 
+
+static long double
+fast_boundary_signed_area(const ON_SimpleArray<BrepTrimPoint> &points)
+{
+    if (points.Count() < 3)
+	return 0.0L;
+    const ON_2dPoint &origin = points[0].p2d;
+    long double twice_area = 0.0L;
+    for (int i = 1; i + 1 < points.Count(); ++i) {
+	const long double first_x = points[i].p2d.x - origin.x;
+	const long double first_y = points[i].p2d.y - origin.y;
+	const long double second_x = points[i + 1].p2d.x - origin.x;
+	const long double second_y = points[i + 1].p2d.y - origin.y;
+	twice_area += first_x * second_y - second_x * first_y;
+    }
+    return 0.5L * twice_area;
+}
+
+
+static bool
+fast_boundary_has_resolvable_area(
+	const ON_SimpleArray<BrepTrimPoint> &points)
+{
+    if (points.Count() < 3)
+	return false;
+    const ON_2dPoint &origin = points[0].p2d;
+    long double twice_area = 0.0L;
+    long double term_magnitude = 0.0L;
+    for (int i = 1; i + 1 < points.Count(); ++i) {
+	const long double first_x = points[i].p2d.x - origin.x;
+	const long double first_y = points[i].p2d.y - origin.y;
+	const long double second_x = points[i + 1].p2d.x - origin.x;
+	const long double second_y = points[i + 1].p2d.y - origin.y;
+	const long double cross = first_x * second_y - second_x * first_y;
+	twice_area += cross;
+	term_magnitude += std::abs(cross);
+    }
+    if (!std::isfinite(twice_area) || term_magnitude <= 0.0L)
+	return false;
+    const long double roundoff = 64.0L *
+	std::numeric_limits<long double>::epsilon() * term_magnitude;
+    return std::abs(twice_area) > roundoff;
+}
+
+
 static bool
 fast_split_touching_periodic_loop(const ON_Surface *surface,
 	const ON_BrepFace &face, ON_SimpleArray<BrepTrimPoint> &points,
@@ -5070,32 +5126,22 @@ fast_split_touching_periodic_loop(const ON_Surface *surface,
     for (int pi = split_point_index; pi < points.Count(); ++pi)
 	second_cycle.Append(points[pi]);
 
-    auto signed_area = [](const ON_SimpleArray<BrepTrimPoint> &cycle) {
-	double twice_area = 0.0;
-	for (int pi = 0; pi < cycle.Count(); ++pi) {
-	    const ON_2dPoint &first = cycle[pi].p2d;
-	    const ON_2dPoint &second =
-		cycle[(pi + 1) % cycle.Count()].p2d;
-	    twice_area += first.x * second.y - second.x * first.y;
-	}
-	return 0.5 * twice_area;
-    };
-    const double first_area = signed_area(first_cycle);
-    const double second_area = signed_area(second_cycle);
+    const long double first_area = fast_boundary_signed_area(first_cycle);
+    const long double second_area = fast_boundary_signed_area(second_cycle);
     const double parameter_scale = std::max(1.0,
 	std::max(surface->Domain(0).Length(),
 	    surface->Domain(1).Length()));
     const double minimum_cycle_area =
 	BREP_SAME_POINT_TOLERANCE * parameter_scale;
     if (!std::isfinite(first_area) || !std::isfinite(second_area) ||
-	    fabs(first_area) <= minimum_cycle_area ||
-	    fabs(second_area) <= minimum_cycle_area ||
+	    std::abs(first_area) <= minimum_cycle_area ||
+	    std::abs(second_area) <= minimum_cycle_area ||
 	    first_area * second_area >= 0.0)
 	return false;
 
     ON_SimpleArray<BrepTrimPoint> *outer = &first_cycle;
     ON_SimpleArray<BrepTrimPoint> *inner = &second_cycle;
-    if (fabs(second_area) > fabs(first_area)) {
+    if (std::abs(second_area) > std::abs(first_area)) {
 	outer = &second_cycle;
 	inner = &first_cycle;
     }
@@ -5286,16 +5332,15 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 		ttol, tol, scratch, model_diagonal, repair_pcurves, options);
     }
     log_provenance("sampling", brep_loop_points, loop_cnt);
-    if (loop_cnt == 1)
+    const bool untrimmed_domain_face = loop_cnt == 1 &&
 	fast_reconstruct_untrimmed_domain_loop(s, face,
-	    *brep_loop_points[0],
-	    scratch);
+	    *brep_loop_points[0], scratch);
     if (scratch.hit_sample_limit || scratch.invalid_constraints) {
 	return fast_face_report_set(diagnostic, BG_TRIANGULATION_INVALID_PSLG,
 	    scratch.hit_sample_limit ? "trim sampling exceeded its point limit" :
 	    "trim sampling produced invalid constraints");
     }
-    if (s->IsClosed(0) || s->IsClosed(1)) {
+    if (!untrimmed_domain_face && (s->IsClosed(0) || s->IsClosed(1))) {
 	for (int li = 0; li < loop_cnt; ++li) {
 	    fast_reconstruct_periodic_trim_boundary(s, face.Loop(li),
 		*brep_loop_points[li], BREP_SAME_POINT_TOLERANCE, scratch);
@@ -5306,49 +5351,56 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
     log_provenance("periodic normalization", brep_loop_points, loop_cnt);
 
     fast_bridge_store bridgePoints;
-    if (s->IsClosed(0) || s->IsClosed(1))
+    if (!untrimmed_domain_face && (s->IsClosed(0) || s->IsClosed(1)))
 	PerformClosedSurfaceChecks(s, face, ttol, tol, brep_loop_points,
 	    BREP_SAME_POINT_TOLERANCE, bridgePoints);
     log_provenance("closed surface checks", brep_loop_points, loop_cnt);
     int full_periodic_closed_dir = -1;
     int full_periodic_outer_index = -1;
     std::vector<ON_SimpleArray<BrepTrimPoint>> reconstructed_inner_holes;
-    bool full_periodic_face = fast_reconstruct_full_periodic_face(s,
-	face, brep_loop_points, BREP_SAME_POINT_TOLERANCE, scratch,
-	&full_periodic_closed_dir, &full_periodic_outer_index);
-    if (!full_periodic_face)
+    bool full_periodic_face = false;
+    if (untrimmed_domain_face && (s->IsClosed(0) || s->IsClosed(1))) {
+	full_periodic_face = true;
+	full_periodic_closed_dir = s->IsClosed(0) ? 0 : 1;
+	full_periodic_outer_index = 0;
+    } else if (!untrimmed_domain_face) {
+	full_periodic_face = fast_reconstruct_full_periodic_face(s, face,
+	    brep_loop_points, BREP_SAME_POINT_TOLERANCE, scratch,
+	    &full_periodic_closed_dir, &full_periodic_outer_index);
+    }
+    if (!untrimmed_domain_face && !full_periodic_face)
 	full_periodic_face = fast_reconstruct_periodic_singular_face(s, face,
 	    brep_loop_points, BREP_SAME_POINT_TOLERANCE, scratch,
 	    &full_periodic_closed_dir, &full_periodic_outer_index);
-    if (!full_periodic_face)
+    if (!untrimmed_domain_face && !full_periodic_face)
 	full_periodic_face = fast_reconstruct_paired_periodic_strip(s, face,
 	    brep_loop_points, BREP_SAME_POINT_TOLERANCE, scratch,
 	    &full_periodic_closed_dir, &full_periodic_outer_index);
-    const bool periodic_cap_face = fast_reconstruct_periodic_cap(s, face,
-	brep_loop_points,
-	BREP_SAME_POINT_TOLERANCE, model_diagonal, scratch);
-    if (!full_periodic_face)
+    const bool periodic_cap_face = !untrimmed_domain_face &&
+	fast_reconstruct_periodic_cap(s, face, brep_loop_points,
+	    BREP_SAME_POINT_TOLERANCE, model_diagonal, scratch);
+    if (!untrimmed_domain_face && !full_periodic_face)
 	full_periodic_face = fast_reconstruct_periodic_strip_domain(s, face,
 	    brep_loop_points, BREP_SAME_POINT_TOLERANCE, scratch,
 	    &full_periodic_closed_dir, &full_periodic_outer_index);
-    if (!full_periodic_face)
+    if (!untrimmed_domain_face && !full_periodic_face)
 	full_periodic_face = fast_reconstruct_periodic_boundary_loops(s, face,
 	    brep_loop_points, BREP_SAME_POINT_TOLERANCE, scratch,
 	    &full_periodic_closed_dir, &full_periodic_outer_index);
-    if (!full_periodic_face)
+    if (!untrimmed_domain_face && !full_periodic_face)
 	full_periodic_face = fast_reconstruct_winding_periodic_strip(s, face,
 	    brep_loop_points, BREP_SAME_POINT_TOLERANCE, scratch,
 	    &full_periodic_closed_dir, &full_periodic_outer_index);
-    if (!full_periodic_face)
+    if (!untrimmed_domain_face && !full_periodic_face)
 	full_periodic_face = fast_reconstruct_implicit_periodic_domain(s,
 	    face, brep_loop_points, BREP_SAME_POINT_TOLERANCE, scratch,
 	    &full_periodic_closed_dir, &full_periodic_outer_index,
 	    reconstructed_inner_holes);
-    if (!full_periodic_face)
+    if (!untrimmed_domain_face && !full_periodic_face)
 	full_periodic_face = fast_reconstruct_periodic_empty_boundary(s, face,
 	    brep_loop_points, BREP_SAME_POINT_TOLERANCE, scratch,
 	    &full_periodic_closed_dir, &full_periodic_outer_index);
-    if (!full_periodic_face)
+    if (!untrimmed_domain_face && !full_periodic_face)
 	fast_reconstruct_periodic_strip(s, face, brep_loop_points,
 	    model_diagonal, scratch, &full_periodic_outer_index);
     log_provenance("periodic reconstruction", brep_loop_points, loop_cnt);
@@ -5374,6 +5426,18 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
     std::unordered_map<int, BrepTrimPoint *> pointmap;
     std::unordered_map<int, size_t> pind_map;
     bool have_outer = false;
+
+    int sampled_outer_count = 0;
+    int sampled_outer_index = -1;
+    for (int li = 0; li < loop_cnt; ++li) {
+	const ON_BrepLoop *face_loop = face.Loop(li);
+	if (!face_loop || face_loop->m_type != ON_BrepLoop::outer ||
+		fast_loop_is_provably_degenerate(s, face_loop, tol) ||
+		!fast_boundary_has_resolvable_area(*brep_loop_points[li]))
+	    continue;
+	sampled_outer_count++;
+	sampled_outer_index = li;
+    }
 
     auto append_boundary = [&](ON_SimpleArray<BrepTrimPoint> &boundary_points,
 	    bool uv_closed, bool is_outer) {
@@ -5444,6 +5508,12 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
     for (int li = 0; li < loop_cnt; li++) {
 	const ON_BrepLoop *face_loop = face.Loop(li);
 	if (!face_loop)
+	    continue;
+	/* Invalid imports sometimes retain a seam retrace as a second outer
+	 * loop.  It bounds no chart area and must not displace the one usable
+	 * outer boundary. */
+	if (face_loop->m_type == ON_BrepLoop::outer &&
+		sampled_outer_count == 1 && li != sampled_outer_index)
 	    continue;
 	if (face_loop->m_type != ON_BrepLoop::outer &&
 		fast_loop_is_provably_degenerate(s, face_loop, tol))
@@ -5682,6 +5752,9 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 	bool valid = false;
     };
     std::vector<fast_realized_vertex> realized_vertices(tpnts.size());
+    size_t attempted_triangles = 0;
+    size_t surface_evaluation_failures = 0;
+    size_t degenerate_triangles = 0;
     const bool surface_closed[2] = {s->IsClosed(0), s->IsClosed(1)};
     const ON_Interval surface_domains[2] = {s->Domain(0), s->Domain(1)};
     const double surface_periods[2] = {
@@ -5723,6 +5796,7 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 	return false;
     };
     auto emit_triangle = [&](int t0, int t1, int t2) {
+	attempted_triangles++;
 	const int tris[3] = {t0, t1, t2};
 	ON_3dPoint triangle_points[3];
 	ON_3dVector triangle_normals[3];
@@ -5738,8 +5812,10 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 			realized.point, realized.normal)) {
 		    if (bt_it == pointmap.end() || !bt_it->second->p3d ||
 			    bt_it->second->from_singular < 0 ||
-			    !bt_it->second->normal.IsValid())
+			    !bt_it->second->normal.IsValid()) {
+			surface_evaluation_failures++;
 			return;
+		    }
 		    realized.point = *bt_it->second->p3d;
 		    realized.normal = bt_it->second->normal;
 		}
@@ -5748,8 +5824,10 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 		realized.seam_point = point_is_on_seam(realized.uv);
 		realized.valid = true;
 	    }
-	    if (!realized.valid)
+	    if (!realized.valid) {
+		surface_evaluation_failures++;
 		return;
+	    }
 	    triangle_points[j] = realized.point;
 	    triangle_normals[j] = realized.normal;
 	}
@@ -5758,8 +5836,10 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 	    triangle_points[2] - triangle_points[0]);
 	const double cross_length = cross.Length();
 	if (!std::isfinite(cross_length) ||
-		cross_length <= std::numeric_limits<double>::min())
+		cross_length <= std::numeric_limits<double>::min()) {
+	    degenerate_triangles++;
 	    return;
+	}
 
 	for (size_t j = 0; j < 3; j++) {
 	    const fast_realized_vertex &realized = realized_vertices[tris[j]];
@@ -5838,10 +5918,17 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
     const bool valid_output = !faces.empty() && faces.size() % 3 == 0 &&
 	pnts.size() % 3 == 0 && pnt_norms.size() == faces.size() * 3 &&
 	(!track_point_sources || point_sources.size() == pnts.size() / 3);
-    if (!valid_output)
+    if (!valid_output) {
+	char message[256];
+	std::snprintf(message, sizeof(message),
+	    "surface realization rejected %zu of %zu triangles "
+	    "(%zu surface evaluations, %zu degenerate triangles)",
+	    surface_evaluation_failures + degenerate_triangles,
+	    attempted_triangles, surface_evaluation_failures,
+	    degenerate_triangles);
 	return fast_face_report_set(diagnostic,
-	    BG_TRIANGULATION_POSTCONDITION_FAILED,
-	    "surface realization produced no valid drawable triangles");
+	    BG_TRIANGULATION_POSTCONDITION_FAILED, message);
+    }
     fast_face_report_set(diagnostic, BG_TRIANGULATION_OK,
 	"face triangulation completed");
     return true;
