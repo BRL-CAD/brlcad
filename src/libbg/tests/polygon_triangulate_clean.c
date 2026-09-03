@@ -245,6 +245,32 @@ main(int argc, const char **argv)
     }
 
     {
+	/* Preserve a collinear boundary point while removing the excursion
+	 * beyond it.  The filled region is still the ten-by-ten square. */
+	point2d_t points[5] = {
+	    {0.0, 0.0}, {-2.0, 0.0}, {10.0, 0.0},
+	    {10.0, 10.0}, {0.0, 10.0}
+	};
+	const int outer[5] = {0, 1, 2, 3, 4};
+	if (check_clean_triangulation((const point2d_t *)points, 5, outer,
+		5, NULL, NULL, 0, NULL, 0, 100.0))
+	    return 1;
+    }
+
+    {
+	/* A vertex on a nonadjacent edge splits this touching outline into two
+	 * exact filled cycles.  Their combined area is eight square units. */
+	point2d_t points[6] = {
+	    {2.0, 1.0}, {-4.0, 1.0}, {-3.0, -1.0},
+	    {3.0, 1.0}, {4.0, -1.0}, {4.0, 1.0}
+	};
+	const int outer[6] = {0, 1, 2, 3, 4, 5};
+	if (check_clean_triangulation((const point2d_t *)points, 6, outer,
+		6, NULL, NULL, 0, NULL, 0, 8.0))
+	    return 1;
+    }
+
+    {
 	/* Clipper rejects a wholly collinear closed path.  As a hole it
 	 * removes no area and must not invalidate the containing polygon. */
 	point2d_t points[11] = {
