@@ -262,6 +262,18 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
 	ret = BRLCAD_ERROR;
 	goto ged_facetize_done;
     }
+    if (s->max_time < 0) {
+	bu_vls_printf(gedp->ged_result_str,
+		"--max-time must be greater than or equal to 0\n");
+	ret = BRLCAD_ERROR;
+	goto ged_facetize_done;
+    }
+    if (s->max_pnts < 0) {
+	bu_vls_printf(gedp->ged_result_str,
+		"--max-pnts must be greater than or equal to 0\n");
+	ret = BRLCAD_ERROR;
+	goto ged_facetize_done;
+    }
 
     if (region_mode && nonoverlap_brep) {
 	bu_vls_printf(gedp->ged_result_str,

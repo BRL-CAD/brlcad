@@ -375,8 +375,11 @@ _collect_region_csg_metrics(struct _ged_facetize_state *s,
 	    }
 
 	    size_t metrics_index = work[next_work];
-	    if (!worker.channel.send_request(
-		    metrics[metrics_index].object_name.c_str())) {
+	    FacetizeWorkerRequest request;
+	    request.operation = FacetizeWorkerOperation::ValidateCsg;
+	    request.input_names.push_back(
+		    metrics[metrics_index].object_name);
+	    if (!worker.channel.send_request(request)) {
 		_region_csg_worker_stop(s, worker, true);
 		worker.enabled = false;
 		continue;
@@ -540,12 +543,6 @@ _evaluate_regions_parallel(struct _ged_facetize_state *s,
     command_prefix.push_back("facetize_process");
     command_prefix.push_back("--threads");
     command_prefix.push_back(std::to_string(policy.threads_per_worker()));
-    if (s->no_empty)
-	command_prefix.push_back("--no-empty");
-    if (s->no_fixup)
-	command_prefix.push_back("--no-fixup");
-    if (s->tolerate_failures)
-	command_prefix.push_back("--tolerate-failures");
 
     std::vector<std::string> writer_command;
     writer_command.push_back(process_executable);
@@ -652,8 +649,13 @@ _evaluate_regions_parallel(struct _ged_facetize_state *s,
 		}
 	    }
 
-	    if (!worker.channel.send_request(
-		    results[next_result].object_name.c_str())) {
+	    FacetizeWorkerRequest request;
+	    request.operation = FacetizeWorkerOperation::EvaluateRegion;
+	    request.input_names.push_back(results[next_result].object_name);
+	    request.region.no_empty = s->no_empty != 0;
+	    request.region.no_fixup = s->no_fixup != 0;
+	    request.region.tolerate_failures = s->tolerate_failures != 0;
+	    if (!worker.channel.send_request(request)) {
 		_region_booleval_worker_stop(s, worker, true);
 		worker.enabled = false;
 		continue;

@@ -41,6 +41,40 @@ struct FacetizeCommitRequest {
     size_t payload_size = 0;
 };
 
+enum class FacetizeWorkerOperation {
+    TessellatePrimitive = 1,
+    ValidateCsg = 2,
+    EvaluateRegion = 3
+};
+
+struct FacetizePrimitiveSettings {
+    std::vector<std::string> methods;
+    std::vector<std::string> method_options;
+    std::string cache_directory;
+    int point_limit = 0;
+
+    bool empty() const;
+};
+
+struct FacetizeRegionSettings {
+    bool no_empty = false;
+    bool no_fixup = false;
+    bool tolerate_failures = false;
+
+    bool empty() const;
+};
+
+struct FacetizeWorkerRequest {
+    FacetizeWorkerOperation operation =
+	FacetizeWorkerOperation::TessellatePrimitive;
+    std::vector<std::string> input_names;
+    FacetizePrimitiveSettings primitive;
+    FacetizeRegionSettings region;
+
+    bool valid() const;
+    std::string label() const;
+};
+
 /**
  * Resource limits for a pool of independent facetize workers.
  *
@@ -80,7 +114,7 @@ class FacetizeWorkerClient
 	FacetizeWorkerClient() = default;
 
 	void reset(FILE *request_stream);
-	bool send_request(const char *object_name);
+	bool send_request(const FacetizeWorkerRequest &request);
 	bool send_commit(const char *result_file, const char *object_name,
 		size_t payload_size);
 	bool send_write_proceed();
@@ -110,7 +144,7 @@ class FacetizeWorkerServer
     public:
 	FacetizeWorkerServer(FILE *request_stream, FILE *response_stream);
 
-	FacetizeWorkerReadResult receive_request(std::string &object_name);
+	FacetizeWorkerReadResult receive_request(FacetizeWorkerRequest &request);
 	FacetizeWorkerReadResult receive_commit(FacetizeCommitRequest &request);
 	bool send_write_ready(size_t payload_size, size_t resident_size);
 	bool send_region_write_ready(size_t payload_size, size_t resident_size,

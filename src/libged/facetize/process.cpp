@@ -132,11 +132,20 @@ facetize_process_start(struct bu_process **process, FILE **process_input,
     *process_input = NULL;
     channel.reset(NULL);
     bu_process_create(process, process_command.data(), BU_PROCESS_HIDE_WINDOW);
-    if (*process) {
+    if (*process)
 	*process_input = bu_process_file_open(*process, BU_PROCESS_STDIN);
+    if (*process && *process_input &&
+	    setvbuf(*process_input, NULL, _IONBF, 0) == 0) {
 	channel.reset(*process_input);
+	return BRLCAD_OK;
     }
-    return (*process && *process_input) ? BRLCAD_OK : BRLCAD_ERROR;
+
+    if (*process) {
+	(void)bu_process_terminate(*process);
+	(void)bu_process_wait_n(process, 0);
+    }
+    *process_input = NULL;
+    return BRLCAD_ERROR;
 }
 
 double
