@@ -125,11 +125,17 @@ facetize_csg_metrics(struct db_i *dbip, const char *object_name,
     if (!rtip)
 	return -1L;
 
-    if (rt_gettree(rtip, object_name) != 0) {
+    struct bu_hook_list saved_hooks = BU_HOOK_LIST_INIT_ZERO;
+    facetize_log_hooks_silence(&saved_hooks);
+    int prep_status = rt_gettree(rtip, object_name);
+    if (prep_status == 0)
+	rt_prep_parallel(rtip, 1);
+    facetize_log_hooks_restore(&saved_hooks);
+
+    if (prep_status != 0 || !rtip->stats.nsolids || !rtip->stats.nregions) {
 	rt_i_destroy(rtip);
 	return -1L;
     }
-    rt_prep_parallel(rtip, 1);
 
     struct rt_crofton_params parameters = {};
     parameters.n_rays = 0;
