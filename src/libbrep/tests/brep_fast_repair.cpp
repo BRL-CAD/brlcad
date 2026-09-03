@@ -1191,13 +1191,28 @@ collapsed_closed_pcurve_test()
 
     ON_BrepLoop &hole = brep.NewLoop(ON_BrepLoop::inner, face);
     ON_Circle circle(ON_xy_plane, 1.0);
-    ON_ArcCurve *edge_curve = new ON_ArcCurve(circle);
+    ON_ArcCurve arc(circle);
+    ON_NurbsCurve *edge_curve = new ON_NurbsCurve;
+    if (!arc.GetNurbForm(*edge_curve)) {
+	delete edge_curve;
+	return false;
+    }
+    const int dense_span_count = 512;
+    const ON_Interval edge_domain = edge_curve->Domain();
+    for (int span = 1; span < dense_span_count; ++span) {
+	if (!edge_curve->InsertKnot(edge_domain.ParameterAt(
+		(double)span / dense_span_count), 1)) {
+	    delete edge_curve;
+	    return false;
+	}
+    }
     const ON_3dPoint edge_start = edge_curve->PointAtStart();
     const int vertex = brep.NewVertex(edge_start).m_vertex_index;
     const int c3i = brep.AddEdgeCurve(edge_curve);
     ON_BrepEdge &edge = brep.NewEdge(brep.m_V[vertex],
 	brep.m_V[vertex], c3i);
-    edge.m_tolerance = 1.0e-6;
+    const double repair_tolerance = 1.0e-3;
+    edge.m_tolerance = repair_tolerance;
     ON_LineCurve *collapsed = new ON_LineCurve(ON_2dPoint(1.0, 0.0),
 	ON_2dPoint(1.0 + 1.0e-9, 0.0));
     collapsed->SetDomain(0.0, 1.0);
@@ -1205,7 +1220,7 @@ collapsed_closed_pcurve_test()
 	brep.AddTrimCurve(collapsed));
     trim.m_type = ON_BrepTrim::boundary;
     trim.m_iso = ON_Surface::not_iso;
-    trim.m_tolerance[0] = trim.m_tolerance[1] = 1.0e-6;
+    trim.m_tolerance[0] = trim.m_tolerance[1] = repair_tolerance;
 
     fast_result *result = run_fast(brep);
     bool center_covered = false;
@@ -1233,9 +1248,14 @@ collapsed_closed_pcurve_test()
 	if (center_covered)
 	    break;
     }
+    const int maximum_output_points = dense_span_count / 2;
     const bool valid = result->ret == BREP_CDT_FAST_OK &&
 	result->report.failed_faces == 0 && result->face_count > 0 &&
-	!center_covered;
+	result->point_count < maximum_output_points && !center_covered;
+    if (!valid)
+	bu_log("collapsed pcurve: ret=%d failed=%d faces=%d points=%d "
+	    "center=%d\n", result->ret, result->report.failed_faces,
+	    result->face_count, result->point_count, (int)center_covered);
     delete result;
     return valid;
 }
