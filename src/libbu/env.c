@@ -229,7 +229,7 @@ mem_sysconf(int type, size_t *memsz)
 static int
 mem_proc_meminfo(int type, size_t *memsz)
 {
-    if (!memsz)
+    if (!memsz || type < 0)
 	return -1;
 
 #if defined(__linux__)
