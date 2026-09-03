@@ -1789,6 +1789,31 @@ untrimmed_curved_surface_test()
     return valid;
 }
 
+
+static bool
+untrimmed_periodic_surface_test()
+{
+    ON_Brep brep;
+    ON_Circle base(ON_xy_plane, 1.0);
+    ON_Cylinder cylinder(base, 2.0);
+    ON_NurbsSurface *surface = new ON_NurbsSurface;
+    if (2 != cylinder.GetNurbForm(*surface)) {
+	delete surface;
+	return false;
+    }
+    const int si = brep.AddSurface(surface);
+    ON_BrepFace &face = brep.NewFace(si);
+    brep.NewLoop(ON_BrepLoop::outer, face);
+
+    fast_result *result = run_fast(brep);
+    const bool valid = result->ret == BREP_CDT_FAST_OK &&
+	result->report.failed_faces == 0 && result->face_count > 2 &&
+	result->point_count > 4;
+    delete result;
+    return valid;
+}
+
+
 static bool
 skinny_planar_strip_test()
 {
@@ -2129,6 +2154,7 @@ main(int argc, const char **argv)
     RUN_FAST_TEST(full_periodic_face_test);
     RUN_FAST_TEST(untrimmed_planar_face_test);
     RUN_FAST_TEST(untrimmed_curved_surface_test);
+    RUN_FAST_TEST(untrimmed_periodic_surface_test);
     RUN_FAST_TEST(skinny_planar_strip_test);
     RUN_FAST_TEST(tolerant_narrow_planar_strip_test);
     RUN_FAST_TEST(near_closed_planar_loop_test);
