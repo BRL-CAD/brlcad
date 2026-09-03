@@ -175,11 +175,8 @@ method_setup(tess_opts *s)
 	return;
 
     std::vector<std::string> *methods = &s->method_opts.methods;
-    if (!methods->size()) {
-	methods->push_back(std::string("NMG"));
-	methods->push_back(std::string("CM"));
-	methods->push_back(std::string("SPSR"));
-    }
+    if (!methods->size())
+	*methods = tess_default_methods();
 
     // Now that we've set any default overrides for multiple types, get the
     // method specific options for each method set up

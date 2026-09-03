@@ -133,7 +133,7 @@ Resume an incomplete facetization process (will utilize cached data from a previ
 
 
 *--methods*::
-Accepts a comma separated list of one or more facetization methods to use. The default is to try all algorithms available as needed, but if a user knows they want to try a specific methodology they can call it out using this option.
+Accepts a comma separated list of one or more facetization methods to use. The default tries the standard NMG and SPSR sequence as needed. Other listed methods may be selected explicitly if a user wants to try a specific methodology.
 
 
 *--method-opts*::

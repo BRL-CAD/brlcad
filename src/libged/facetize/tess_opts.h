@@ -63,6 +63,13 @@ class method_options_t {
 	std::string method_optstr(std::string &method, struct db_i *dbip);
 };
 
+inline const std::vector<std::string> &
+tess_default_methods()
+{
+    static const std::vector<std::string> methods = {"NMG", "SPSR"};
+    return methods;
+}
+
 
 int _tess_active_methods(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
 int _tess_method_opts(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);

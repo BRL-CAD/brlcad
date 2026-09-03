@@ -1668,9 +1668,10 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, struct db_i *dbip, struc
     }
 
     if (!method_flags.size() && avail_methods.size()) {
-	for (size_t i = 0; i < avail_methods.size(); i++) {
-	    method_flags.push(avail_methods[i]);
-	}
+	for (const std::string &method : tess_default_methods())
+	    if (std::find(avail_methods.begin(), avail_methods.end(), method) !=
+		    avail_methods.end())
+		method_flags.push(method);
     }
 
     /* Workers use the same cache directory as the parent. */
