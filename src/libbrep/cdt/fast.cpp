@@ -3001,26 +3001,31 @@ fast_reconstruct_full_periodic_face(const ON_Surface *surface,
 }
 
 static bool
+fast_boundary_has_resolvable_area(
+	const ON_SimpleArray<BrepTrimPoint> &points);
+
+static long double
+fast_boundary_signed_area(const ON_SimpleArray<BrepTrimPoint> &points);
+
+static bool
+fast_loop_is_provably_degenerate(const ON_Surface *surface,
+	const ON_BrepLoop *loop, const struct bn_tol *tol);
+
+static bool
 fast_reconstruct_implicit_periodic_domain(const ON_Surface *surface,
 	const ON_BrepFace &face,
 	ON_SimpleArray<BrepTrimPoint> **brep_loop_points,
-	double tolerance, fast_face_scratch &scratch, int *closed_direction,
-	int *outer_loop_index,
+	const struct bn_tol *tol, double tolerance, fast_face_scratch &scratch,
+	int *closed_direction, int *outer_loop_index,
 	std::vector<ON_SimpleArray<BrepTrimPoint>> &reconstructed_holes)
 {
     if (!surface || !brep_loop_points || face.LoopCount() < 1)
 	return false;
-    for (int li = 0; li < face.LoopCount(); ++li) {
-	const ON_BrepLoop *loop = face.Loop(li);
-	if (!loop || loop->m_type != ON_BrepLoop::inner ||
-		!brep_loop_points[li] || brep_loop_points[li]->Count() < 3)
-	    return false;
-    }
 
-    /* On a quotient surface, an all-inner face has a useful unambiguous
-     * interpretation when every loop is contractible: the full surface
-     * domain with those loops removed.  Choose artificial seams which do
-     * not cut any hole, then retain every supplied loop as a constraint. */
+    /* Some invalid exchanges omit the outer-loop designation and store only
+     * exclusions on an otherwise closed support surface.  Recover that
+     * interpretation only when every nondegenerate loop is an ordinary closed
+     * hole in one continuous image of the periodic domain. */
     const double maximum_contractible_span_fraction = 0.90;
     const double parameter_tolerance_fraction = 1.0e-4;
     struct hole_record {
@@ -3045,6 +3050,21 @@ fast_reconstruct_implicit_periodic_domain(const ON_Surface *surface,
 	parameter_scale * parameter_tolerance_fraction);
 
     for (int li = 0; li < face.LoopCount(); ++li) {
+	const ON_BrepLoop *loop = face.Loop(li);
+	if (!loop || loop->m_type != ON_BrepLoop::inner ||
+		!brep_loop_points[li])
+	    return false;
+	if (fast_loop_is_provably_degenerate(surface, loop, tol))
+	    continue;
+	if (brep_loop_points[li]->Count() < 3 ||
+		!fast_boundary_has_resolvable_area(*brep_loop_points[li]))
+	    return false;
+	const ON_2dPoint &first = (*brep_loop_points[li])[0].p2d;
+	const ON_2dPoint &last = (*brep_loop_points[li])[
+	    brep_loop_points[li]->Count() - 1].p2d;
+	if (!first.IsValid() || !last.IsValid())
+	    return false;
+
 	hole_record &hole = holes[(size_t)li];
 	hole.points = *brep_loop_points[li];
 	for (int pi = 0; pi < hole.points.Count(); ++pi) {
@@ -3055,9 +3075,7 @@ fast_reconstruct_implicit_periodic_domain(const ON_Surface *surface,
 		    hole.points[pi].p2d[dir]);
 	    }
 	}
-	const ON_2dVector delta =
-	    hole.points[hole.points.Count() - 1].p2d -
-	    hole.points[0].p2d;
+	const ON_2dVector delta = last - first;
 	for (int dir = 0; dir < 2; ++dir) {
 	    const ON_Interval domain = surface->Domain(dir);
 	    if (fabs(delta[dir]) > parameter_tolerance)
@@ -3086,13 +3104,17 @@ fast_reconstruct_implicit_periodic_domain(const ON_Surface *surface,
 	}
 
 	std::vector<double> seam_candidates = {domain.Min()};
-	for (const hole_record &hole : holes)
-	    seam_candidates.push_back(hole.maximum[dir] +
-		parameter_tolerance);
+	for (const hole_record &hole : holes) {
+	    if (hole.points.Count())
+		seam_candidates.push_back(hole.maximum[dir] +
+		    parameter_tolerance);
+	}
 	bool found_seam = false;
 	for (double seam : seam_candidates) {
 	    bool fits = true;
 	    for (const hole_record &hole : holes) {
+		if (!hole.points.Count())
+		    continue;
 		const double midpoint = 0.5 * (hole.minimum[dir] +
 		    hole.maximum[dir]);
 		const double shift = std::round((seam +
@@ -3111,6 +3133,8 @@ fast_reconstruct_implicit_periodic_domain(const ON_Surface *surface,
 	    boundary_minimum[dir] = seam;
 	    boundary_maximum[dir] = seam + domain.Length();
 	    for (hole_record &hole : holes) {
+		if (!hole.points.Count())
+		    continue;
 		const double midpoint = 0.5 * (hole.minimum[dir] +
 		    hole.maximum[dir]);
 		const double shift = std::round((seam +
@@ -3163,8 +3187,10 @@ fast_reconstruct_implicit_periodic_domain(const ON_Surface *surface,
 	brep_loop_points[li]->Empty();
     reconstructed_holes.clear();
     reconstructed_holes.reserve(holes.size());
-    for (hole_record &hole : holes)
-	reconstructed_holes.push_back(hole.points);
+    for (hole_record &hole : holes) {
+	if (hole.points.Count())
+	    reconstructed_holes.push_back(hole.points);
+    }
     if (closed_direction)
 	*closed_direction = first_closed_dir;
     if (outer_loop_index)
@@ -4977,10 +5003,13 @@ fast_loop_uv_closed(const ON_Surface *surface, const ON_BrepLoop *loop,
 }
 
 static int
-fast_implicit_outer_loop(const ON_BrepFace &face,
-	ON_SimpleArray<BrepTrimPoint> **brep_loop_points)
+fast_closed_surface_implicit_outer_loop(const ON_Surface *surface,
+	const ON_BrepFace &face,
+	ON_SimpleArray<BrepTrimPoint> **brep_loop_points,
+	const struct bn_tol *tol)
 {
-    if (!brep_loop_points)
+    if (!surface || !brep_loop_points ||
+	    (!surface->IsClosed(0) && !surface->IsClosed(1)))
 	return -1;
     for (int li = 0; li < face.LoopCount(); ++li) {
 	const ON_BrepLoop *loop = face.Loop(li);
@@ -4989,19 +5018,16 @@ fast_implicit_outer_loop(const ON_BrepFace &face,
     }
 
     int largest_index = -1;
-    double largest_area = 0.0;
+    long double largest_area = 0.0L;
     for (int li = 0; li < face.LoopCount(); ++li) {
-	ON_SimpleArray<BrepTrimPoint> *points = brep_loop_points[li];
-	if (!points || points->Count() < 3)
+	const ON_BrepLoop *loop = face.Loop(li);
+	if (!loop || fast_loop_is_provably_degenerate(surface, loop, tol))
 	    continue;
-	double twice_area = 0.0;
-	for (int pi = 0; pi < points->Count(); ++pi) {
-	    const ON_2dPoint &first = (*points)[pi].p2d;
-	    const ON_2dPoint &second =
-		(*points)[(pi + 1) % points->Count()].p2d;
-	    twice_area += first.x * second.y - second.x * first.y;
-	}
-	const double area = fabs(twice_area);
+	ON_SimpleArray<BrepTrimPoint> *points = brep_loop_points[li];
+	if (!points || points->Count() < 3 ||
+		!fast_boundary_has_resolvable_area(*points))
+	    continue;
+	const long double area = fast_boundary_signed_area(*points);
 	if (std::isfinite(area) && area > largest_area) {
 	    largest_area = area;
 	    largest_index = li;
@@ -5013,9 +5039,15 @@ fast_implicit_outer_loop(const ON_BrepFace &face,
     ON_SimpleArray<BrepTrimPoint> &candidate =
 	*brep_loop_points[largest_index];
     for (int li = 0; li < face.LoopCount(); ++li) {
-	if (li == largest_index || !brep_loop_points[li] ||
-		brep_loop_points[li]->Count() < 3)
+	if (li == largest_index)
 	    continue;
+	const ON_BrepLoop *loop = face.Loop(li);
+	if (!loop || !brep_loop_points[li] ||
+		brep_loop_points[li]->Count() < 3 ||
+		!fast_boundary_has_resolvable_area(*brep_loop_points[li]))
+	    return -1;
+	if (!(fast_boundary_signed_area(*brep_loop_points[li]) < 0.0L))
+	    return -1;
 	if (!PointInPolygon((*brep_loop_points[li])[0].p2d, candidate))
 	    return -1;
     }
@@ -5064,6 +5096,84 @@ fast_boundary_has_resolvable_area(
     const long double roundoff = 64.0L *
 	std::numeric_limits<long double>::epsilon() * term_magnitude;
     return std::abs(twice_area) > roundoff;
+}
+
+enum fast_boundary_inference {
+    FAST_BOUNDARY_NOT_APPLICABLE = 0,
+    FAST_BOUNDARY_RESOLVED,
+    FAST_BOUNDARY_MISSING_OUTER,
+    FAST_BOUNDARY_ORPHANED_HOLE,
+    FAST_BOUNDARY_CONFLICTING_NESTING
+};
+
+static fast_boundary_inference
+fast_infer_inner_boundary_roles(const ON_Surface *surface,
+	const ON_BrepFace &face,
+	ON_SimpleArray<BrepTrimPoint> **brep_loop_points,
+	const struct bn_tol *tol, std::vector<bool> &usable)
+{
+    if (!surface || !brep_loop_points || face.LoopCount() < 1 ||
+	    surface->IsClosed(0) || surface->IsClosed(1))
+	return FAST_BOUNDARY_NOT_APPLICABLE;
+
+    const int loop_count = face.LoopCount();
+    usable.assign((size_t)loop_count, false);
+    std::vector<long double> areas((size_t)loop_count, 0.0L);
+    bool have_boundary = false;
+    bool have_outer = false;
+    for (int li = 0; li < loop_count; ++li) {
+	const ON_BrepLoop *loop = face.Loop(li);
+	if (!loop || !brep_loop_points[li] ||
+		loop->m_type != ON_BrepLoop::inner)
+	    return FAST_BOUNDARY_NOT_APPLICABLE;
+	if (fast_loop_is_provably_degenerate(surface, loop, tol))
+	    continue;
+	if (!fast_boundary_has_resolvable_area(*brep_loop_points[li]) ||
+		!fast_loop_uv_closed(surface, loop, *brep_loop_points[li],
+		    tol))
+	    return FAST_BOUNDARY_NOT_APPLICABLE;
+	have_boundary = true;
+	areas[(size_t)li] =
+	    fast_boundary_signed_area(*brep_loop_points[li]);
+	have_outer = have_outer || areas[(size_t)li] > 0.0L;
+    }
+    if (!have_boundary)
+	return FAST_BOUNDARY_NOT_APPLICABLE;
+    if (!have_outer)
+	return FAST_BOUNDARY_MISSING_OUTER;
+
+    /* Loop type metadata may be wrong while geometric winding remains useful.
+     * Each root must be an outline and every containment level must alternate
+     * between filled and excluded regions. */
+    for (int li = 0; li < loop_count; ++li) {
+	const long double area = areas[(size_t)li];
+	const long double area_magnitude = std::abs(area);
+	if (!(area_magnitude > 0.0L))
+	    continue;
+	ON_SimpleArray<BrepTrimPoint> &points = *brep_loop_points[li];
+	int parent = -1;
+	long double parent_area =
+	    std::numeric_limits<long double>::infinity();
+	for (int oi = 0; oi < loop_count; ++oi) {
+	    const long double outline_area = std::abs(areas[(size_t)oi]);
+	    if (!(outline_area > area_magnitude) ||
+		    !(outline_area < parent_area))
+		continue;
+	    ON_SimpleArray<BrepTrimPoint> &outline =
+		*brep_loop_points[oi];
+	    if (PointInPolygon(points[0].p2d, outline)) {
+		parent = oi;
+		parent_area = outline_area;
+	    }
+	}
+	if (parent < 0 && area < 0.0L)
+	    return FAST_BOUNDARY_ORPHANED_HOLE;
+	if (parent >= 0 && (area > 0.0L) ==
+		(areas[(size_t)parent] > 0.0L))
+	    return FAST_BOUNDARY_CONFLICTING_NESTING;
+	usable[(size_t)li] = true;
+    }
+    return FAST_BOUNDARY_RESOLVED;
 }
 
 
@@ -5247,10 +5357,6 @@ fast_split_bridged_inner_loop(const ON_Surface *surface,
 }
 
 static bool
-fast_loop_is_provably_degenerate(const ON_Surface *surface,
-	const ON_BrepLoop *loop, const struct bn_tol *tol);
-
-static bool
 fast_face_report_set(struct bg_triangulation_report *report,
 	enum bg_triangulation_reason reason, const char *message)
 {
@@ -5393,7 +5499,7 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 	    &full_periodic_closed_dir, &full_periodic_outer_index);
     if (!untrimmed_domain_face && !full_periodic_face)
 	full_periodic_face = fast_reconstruct_implicit_periodic_domain(s,
-	    face, brep_loop_points, BREP_SAME_POINT_TOLERANCE, scratch,
+	    face, brep_loop_points, tol, BREP_SAME_POINT_TOLERANCE, scratch,
 	    &full_periodic_closed_dir, &full_periodic_outer_index,
 	    reconstructed_inner_holes);
     if (!untrimmed_domain_face && !full_periodic_face)
@@ -5416,12 +5522,24 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 	    fast_split_bridged_inner_loop(s, loop, *brep_loop_points[li],
 		bridged_inner_holes);
     }
-    const int implicit_outer_index = fast_implicit_outer_loop(face,
-	brep_loop_points);
+    const int implicit_outer_index =
+	fast_closed_surface_implicit_outer_loop(s, face, brep_loop_points, tol);
+    std::vector<bool> auto_boundary_usable((size_t)loop_cnt, false);
+    fast_boundary_inference boundary_inference =
+	FAST_BOUNDARY_NOT_APPLICABLE;
+    if (implicit_outer_index < 0 && full_periodic_outer_index < 0 &&
+	    !periodic_cap_face && !split_touching_loop &&
+	    bridged_inner_holes.empty() && reconstructed_inner_holes.empty()) {
+	boundary_inference = fast_infer_inner_boundary_roles(s, face,
+	    brep_loop_points, tol, auto_boundary_usable);
+    }
+    const bool auto_detect_boundaries =
+	boundary_inference == FAST_BOUNDARY_RESOLVED;
 
     // process through loops building polygons.
     std::vector<detria::PointD> tpnts;
     std::vector<int> outer_polyline;
+    std::vector<std::vector<int>> auto_polylines;
     std::vector<std::vector<int>> holes;
     std::unordered_map<int, BrepTrimPoint *> pointmap;
     std::unordered_map<int, size_t> pind_map;
@@ -5440,7 +5558,7 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
     }
 
     auto append_boundary = [&](ON_SimpleArray<BrepTrimPoint> &boundary_points,
-	    bool uv_closed, bool is_outer) {
+	    bool uv_closed, bool is_outer, bool auto_detect = false) {
 	std::vector<int> polyline;
 	const int num_loop_points = boundary_points.Count();
 	if (num_loop_points <= 2)
@@ -5494,7 +5612,9 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 	    bb.m_min.z -= ON_ZERO_TOLERANCE;
 	    rt_trims.Insert2d(bb.Min(), bb.Max(), line);
 	}
-	if (is_outer) {
+	if (auto_detect) {
+	    auto_polylines.push_back(polyline);
+	} else if (is_outer) {
 	    if (have_outer)
 		return false;
 	    outer_polyline = polyline;
@@ -5508,6 +5628,8 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
     for (int li = 0; li < loop_cnt; li++) {
 	const ON_BrepLoop *face_loop = face.Loop(li);
 	if (!face_loop)
+	    continue;
+	if (auto_detect_boundaries && !auto_boundary_usable[(size_t)li])
 	    continue;
 	/* Invalid imports sometimes retain a seam retrace as a second outer
 	 * loop.  It bounds no chart area and must not displace the one usable
@@ -5523,7 +5645,8 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 	const bool is_outer = face_loop->m_type == ON_BrepLoop::outer ||
 	    (periodic_cap_face && li == 0) || li == implicit_outer_index ||
 	    li == full_periodic_outer_index;
-	if (!append_boundary(*brep_loop_points[li], uv_closed, is_outer))
+	if (!append_boundary(*brep_loop_points[li], uv_closed, is_outer,
+		auto_detect_boundaries))
 	    return fast_face_report_set(diagnostic,
 		BG_TRIANGULATION_INVALID_PSLG,
 		"a sampled trim boundary could not be assembled");
@@ -5554,12 +5677,18 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 		"an implicit inner boundary could not be assembled");
     }
 
-    if (!have_outer) {
+    if (!have_outer && auto_polylines.empty()) {
 	std::cerr << "Error: Face(" << fi << ") cannot evaluate its outer loop and will not be facetized." << std::endl;
 	return fast_face_report_set(diagnostic, BG_TRIANGULATION_INVALID_NESTING,
+	    boundary_inference == FAST_BOUNDARY_CONFLICTING_NESTING ?
+	    "inferred boundary nesting has conflicting winding" :
+	    boundary_inference == FAST_BOUNDARY_ORPHANED_HOLE ?
+	    "an inner-oriented boundary lies outside every inferred outer" :
+	    boundary_inference == FAST_BOUNDARY_MISSING_OUTER ?
+	    "face has only inner-oriented boundaries and no outer domain" :
 	    "face has no usable outer trim boundary");
     }
-    if (outer_polyline.size() < 3) {
+    if (have_outer && outer_polyline.size() < 3) {
 	/* The trim sampler closed a real outer loop with fewer than three
 	 * distinct vertices.  This is a successful empty display result at the
 	 * requested tolerance, not proof that the analytic face has zero area. */
@@ -5625,22 +5754,35 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
     // Run the core triangulation routine
     detria::Triangulation<detria::PointD, int> tri;
     tri.setPoints(tpnts);
-    tri.addOutline(outer_polyline);
-    for (size_t i = 0; i < holes.size(); i++)
-	tri.addHole(holes[i]);
+    if (auto_detect_boundaries) {
+	for (const std::vector<int> &polyline : auto_polylines)
+	    tri.addPolylineAutoDetectType(polyline);
+    } else {
+	tri.addOutline(outer_polyline);
+	for (const std::vector<int> &hole : holes)
+	    tri.addHole(hole);
+    }
 
     bool tri_success = false;
+    bool tri_threw = false;
     {
 	try {
 	    tri_success = tri.triangulate(true);
 	}
 	catch (...) {
 	    tri_success = false;
+	    tri_threw = true;
 	}
     }
 
     std::vector<int> cleaned_triangles;
     if (!tri_success) {
+	if (auto_detect_boundaries) {
+	    return fast_face_report_set(diagnostic,
+		BG_TRIANGULATION_DETRIA_FAILED, tri_threw ?
+		"detria threw while nesting inferred boundaries" :
+		tri.getErrorMessage().c_str());
+	}
 	/* The direct path deliberately avoids preprocessing overhead.  If its
 	 * constraints are invalid, use libbg's Clipper-based sanitizer to merge
 	 * duplicate UV points, resolve intersecting loops, and remove surface
@@ -6104,6 +6246,8 @@ static bool
 fast_face_is_provably_degenerate(const ON_BrepFace &face,
 	const struct bn_tol *tol)
 {
+    if (face.LoopCount() < 1)
+	return false;
     bool all_loops_empty = face.LoopCount() > 0;
     for (int li = 0; li < face.LoopCount(); ++li) {
 	const ON_BrepLoop *candidate = face.Loop(li);
@@ -6114,10 +6258,14 @@ fast_face_is_provably_degenerate(const ON_BrepFace &face,
     }
     if (all_loops_empty && face.LoopCount() > 1)
 	return true;
-    if (face.LoopCount() != 1)
-	return false;
-    return fast_loop_is_provably_degenerate(face.SurfaceOf(), face.Loop(0),
-	tol);
+    const ON_Surface *surface = face.SurfaceOf();
+    for (int li = 0; li < face.LoopCount(); ++li) {
+	const ON_BrepLoop *loop = face.Loop(li);
+	if (!loop || loop->TrimCount() < 1 ||
+		!fast_loop_is_provably_degenerate(surface, loop, tol))
+	    return false;
+    }
+    return true;
 }
 
 static fast_face_outcome
