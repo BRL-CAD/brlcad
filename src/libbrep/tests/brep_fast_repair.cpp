@@ -384,6 +384,50 @@ periodic_strip_test()
 }
 
 static bool
+periodic_holes_without_outer_test()
+{
+    ON_Brep brep;
+    ON_Circle base(ON_xy_plane, 1.0);
+    ON_Cylinder cylinder(base, 1.0);
+    ON_NurbsSurface *surface = new ON_NurbsSurface;
+    if (2 != cylinder.GetNurbForm(*surface)) {
+	delete surface;
+	return false;
+    }
+    const int si = brep.AddSurface(surface);
+    ON_BrepFace &face = brep.NewFace(si);
+    const ON_Interval udom = surface->Domain(0);
+    const ON_Interval vdom = surface->Domain(1);
+
+    auto append_hole = [&](double u0, double u1) {
+	ON_BrepLoop &loop = brep.NewLoop(ON_BrepLoop::inner, face);
+	const ON_2dPoint corners[4] = {
+	    ON_2dPoint(udom.ParameterAt(u0), vdom.ParameterAt(0.25)),
+	    ON_2dPoint(udom.ParameterAt(u0), vdom.ParameterAt(0.75)),
+	    ON_2dPoint(udom.ParameterAt(u1), vdom.ParameterAt(0.75)),
+	    ON_2dPoint(udom.ParameterAt(u1), vdom.ParameterAt(0.25))
+	};
+	int vertices[4];
+	for (int i = 0; i < 4; ++i)
+	    vertices[i] = brep.NewVertex(surface->PointAt(corners[i].x,
+		corners[i].y)).m_vertex_index;
+	for (int i = 0; i < 4; ++i) {
+	    const int next = (i + 1) % 4;
+	    add_uv_polyline_trim(brep, loop, *surface, vertices[i],
+		vertices[next], corners[i], corners[next]);
+	}
+    };
+    append_hole(0.15, 0.30);
+    append_hole(0.65, 0.80);
+
+    fast_result *result = run_fast(brep);
+    const bool valid = result->ret == BREP_CDT_FAST_OK &&
+	result->report.failed_faces == 0 && result->face_count > 0;
+    delete result;
+    return valid;
+}
+
+static bool
 redundant_periodic_boundaries_test()
 {
     ON_Brep brep;
@@ -2061,6 +2105,7 @@ main(int argc, const char **argv)
     RUN_FAST_TEST(degenerate_collinear_loop_test);
     RUN_FAST_TEST(singular_cap_test);
     RUN_FAST_TEST(periodic_strip_test);
+    RUN_FAST_TEST(periodic_holes_without_outer_test);
     RUN_FAST_TEST(redundant_periodic_boundaries_test);
     RUN_FAST_TEST(periodic_rectangle_test);
     RUN_FAST_TEST(periodic_zero_area_subcycle_test);
