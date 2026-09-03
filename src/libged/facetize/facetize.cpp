@@ -108,6 +108,7 @@ _ged_facetize_state_create()
     s->make_nmg = 0;
     s->nonovlp_brep = 0;
     s->no_fixup = 0;
+    s->no_perturb = 0;
     s->nmg_booleval = 0;
     s->use_variant_plan = 1;
     s->tolerate_failures = 0;
@@ -169,6 +170,11 @@ _ged_facetize_state_create()
     s->nonovlp_threshold = 0;
 
     s->gedp = NULL;
+    s->dbip = NULL;
+    s->error_flag = 0;
+    s->facetize_tree = NULL;
+    s->method_opts = NULL;
+    s->log_s = NULL;
     s->write_profiled = 0;
     s->write_profile_bytes = 0.0;
     s->write_profile_usec = 0.0;
@@ -349,6 +355,11 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     long verbosity = 0;
     int force_perturb = 0;
     int disable_perturb = 0;
+
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+
     method_options_t *method_options = new method_options_t;
     struct _ged_facetize_state *s = _ged_facetize_state_create();
     s->gedp = gedp;
@@ -364,7 +375,7 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[ 4], "r", "regions",                                   "",                  NULL,         &(s->regions), "For combs, walk the trees and create new copies of the hierarchies with each region's CSG tree replaced by a facetized evaluation of that region.  By default, enables perturb methodology (can be disabled - see --no-perturb)");
     BU_OPT(d[ 5], "s", "suffix",                               "<str>",           &bu_opt_vls,             s->suffix, "When creating new objects for facetize outputs, use this suffix to avoid conflicts");
     BU_OPT(d[ 6], "p", "prefix",                               "<str>",           &bu_opt_vls,             s->prefix, "When creating new objects for facetize, use this prefix to avoid conflicts");
-    BU_OPT(d[ 7],  "", "in-place",                                  "",                  NULL,        &(s->in_place), "Replace the specified object(s) with their facetizations. (Warning: this option changes pre-existing geometry!)");
+    BU_OPT(d[ 7],  "", "in-place",                                  "",                  NULL,        &(s->in_place), "Replace the specified object(s) with their facetizations. Not supported with --regions. (Warning: this option changes pre-existing geometry!)");
     BU_OPT(d[ 8],  "", "max-time",                                 "#",           &bu_opt_int,        &(s->max_time), "Maximum time to spend per object (in seconds).  Default is method specific.  Note that specifying shorter times may cut off conversions (particularly using sampling methods) that could succeed with longer runtimes.  Per-method time limits can also be adjusted to allow longer runtimes on slower methods.");
     BU_OPT(d[ 9],  "", "max-pnts",                                 "#",           &bu_opt_int,        &(s->max_pnts), "Maximum number of pnts per object to use when applying ray sampling methods.");
     BU_OPT(d[10],  "", "resume",                                    "",                  NULL,          &(s->resume), "Resume an interrupted conversion");
@@ -383,10 +394,6 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[23],  "", "tolerate-failures",                         "",                  NULL, &s->tolerate_failures, "Continue after failed primitive or subtree evaluations and generate a partial result.  The output will not be a complete representation of the input if any failures are tolerated.");
     BU_OPT(d[24], "j", "jobs",                                     "#",           &bu_opt_int,     &s->max_workers, "Maximum number of facetize worker processes.  The default is selected conservatively from CPU and memory availability.");
     BU_OPT_NULL(d[25]);
-
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* skip command name argv[0] */
     argc-=(argc>0); argv+=(argc>0);
@@ -448,6 +455,16 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     /* Sync -q and -v options */
     if (quiet)
 	s->verbosity = -1;
+
+    /* Region mode assembles a new hierarchy after processing.  Its historical
+     * in-place path does not currently perform a safe replacement, so reject
+     * the combination instead of risking partial or misnamed output. */
+    if (s->regions && s->in_place) {
+	bu_vls_printf(gedp->ged_result_str,
+		"--in-place is not supported with --regions; specify a new output combination name\n");
+	ret = BRLCAD_ERROR;
+	goto ged_facetize_memfree;
+    }
 
     /* Don't allow incorrect type suffixes */
     if (s->make_nmg && BU_STR_EQUAL(bu_vls_cstr(s->solid_suffix), ".bot")) {

@@ -139,6 +139,9 @@ extern int
 _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv);
 
 extern int
+_ged_facetize_objs(struct _ged_facetize_state *s, int argc, const char **argv);
+
+extern int
 _ged_facetize_nmgeval(struct _ged_facetize_state *s, int argc, const char **argv, const char *newname);
 
 extern int
