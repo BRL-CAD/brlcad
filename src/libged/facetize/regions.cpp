@@ -1284,7 +1284,7 @@ _validate_csg_vs_bot(struct db_i *csg_dbip, const char *obj_name,
 }
 
 int
-_ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv)
+_ged_facetize_regions(struct _ged_facetize_state *s, const FacetizePlan &plan)
 {
     int ret = BRLCAD_OK;
     struct db_i *dbip = s->dbip;
@@ -1317,18 +1317,18 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     struct rt_wdb *wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DEFAULT);
     s->tol = &(wdbp->wdb_ttol);
 
-    if (!argc) return BRLCAD_ERROR;
-
-    int command_argc = argc;
+    int argc = (int)plan.inputs.size();
+    std::vector<const char *> argv = plan.input_argv();
     struct directory **dpa = (struct directory **)bu_calloc(argc, sizeof(struct directory *), "dp array");
-    int newobjcnt = _ged_sort_existing_objs(dbip, argc, argv, dpa);
-    if (_ged_validate_objs_list(s, argc, argv, newobjcnt) == BRLCAD_ERROR) {
-	bu_free(dpa, "dp array");
-	return BRLCAD_ERROR;
+    for (int i = 0; i < argc; i++) {
+	dpa[i] = db_lookup(dbip, argv[i], LOOKUP_QUIET);
+	if (!dpa[i]) {
+	    facetize_failure(s, "input object '%s' disappeared before region processing", argv[i]);
+	    bu_free(dpa, "dp array");
+	    return BRLCAD_ERROR;
+	}
     }
-
-    const char *oname = argv[argc-1];
-    argc--;
+    const char *oname = plan.execution.writes_in_place() ? NULL : plan.output.c_str();
 
     // Before we go any further, see if we actually have regions in the
     // specified input(s).
@@ -1352,7 +1352,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	bu_ptbl_free(ar);
 	bu_free(ar, "ar table");
 	bu_free(dpa, "dpa");
-	return _ged_facetize_objs(s, command_argc, argv);
+	return _ged_facetize_objs(s, plan);
     }
 
     // We've got something warranting region processiong. For the working file
@@ -1414,7 +1414,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     }
 
     // We need all the solids converted
-    if (!s->make_nmg && !s->nmg_booleval) {
+    if (!s->execution.uses_nmg_boolean()) {
 	if (_ged_facetize_leaves_tri(s, dbip, as)) {
 	    if (s->verbosity >= 0) {
 		bu_log("regions.cpp:%d Failed to tessellate all solids - aborting.\n", __LINE__);
@@ -1453,7 +1453,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	return BRLCAD_ERROR;
     }
     if (BU_PTBL_LEN(ir)) {
-	if (s->make_nmg || s->nmg_booleval) {
+	if (s->execution.uses_nmg_boolean()) {
 	    for (size_t i = 0; i < BU_PTBL_LEN(ir); i++) {
 		struct directory *idp = (struct directory *)BU_PTBL_GET(ir, i);
 		char *obj_name = bu_strdup(idp->d_namep);
@@ -1497,7 +1497,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	eval_names.insert(std::string(dp->d_namep));
 	bu_ptbl_ins(&eval_roots, (long *)dp);
     }
-    if (!s->make_nmg && !s->nmg_booleval) {
+    if (!s->execution.uses_nmg_boolean()) {
 	for (size_t i = 0; i < BU_PTBL_LEN(ir); i++) {
 	    struct directory *dp = (struct directory *)BU_PTBL_GET(ir, i);
 	    if (eval_names.find(std::string(dp->d_namep)) == eval_names.end()) {
@@ -1512,7 +1512,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 
     /* Region mode starts with the baseline BoT path and only enables/tessellates
      * variants if Pass 1 validation says a perturb retry is needed. */
-    if (!s->make_nmg && !s->nmg_booleval && !s->no_perturb)
+    if (!s->execution.uses_nmg_boolean() && s->execution.uses_perturbation())
 	s->use_variant_plan = 0;
 
     /* The original-CSG side of Pass 1 validation is independent of generated
@@ -1520,7 +1520,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
      * before entering the serial Boolean/write phase.  Perturb retries remain
      * serial because they create temporary variants in the working database. */
     std::vector<RegionCsgMetrics> csg_metrics(eval_total);
-    if (!s->make_nmg && !s->nmg_booleval && !s->no_perturb) {
+    if (!s->execution.uses_nmg_boolean() && s->execution.uses_perturbation()) {
 	for (size_t i = 0; i < BU_PTBL_LEN(&eval_roots); i++) {
 	    struct directory *dp =
 		(struct directory *)BU_PTBL_GET(&eval_roots, i);
@@ -1537,7 +1537,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     struct bu_vls bname = BU_VLS_INIT_ZERO;
     std::vector<RegionBoolevalResult> region_boolevals(eval_total);
     int parallel_eval_status = BRLCAD_OK;
-    if (!s->make_nmg && !s->nmg_booleval && eval_total) {
+    if (!s->execution.uses_nmg_boolean() && eval_total) {
 	struct db_i *name_dbip = db_open(bu_vls_cstr(s->wfile),
 		DB_OPEN_READONLY);
 	if (name_dbip && db_dirbuild(name_dbip) >= 0) {
@@ -1592,11 +1592,11 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	dpw[0] = (struct directory *)BU_PTBL_GET(&eval_roots, i);
 
 	// Get a name for the region's output BoT
-	if (!s->make_nmg && !s->nmg_booleval &&
+	if (!s->execution.uses_nmg_boolean() &&
 		!region_boolevals[i].bot_name.empty()) {
 	    bu_vls_sprintf(&bname, "%s",
 		    region_boolevals[i].bot_name.c_str());
-	} else if (s->make_nmg) {
+	} else if (s->execution.writes_nmg()) {
 	    bu_vls_sprintf(&bname, "%s.nmg", dpw[0]->d_namep);
 	} else {
 	    bu_vls_sprintf(&bname, "%s.bot", dpw[0]->d_namep);
@@ -1610,7 +1610,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 			(void *)wdbip);
 	}
 
-	if (s->make_nmg || s->nmg_booleval) {
+	if (s->execution.uses_nmg_boolean()) {
 	    char *obj_name = bu_strdup(dpw[0]->d_namep);
 	    bret = _nmg_eval_in_db(s, wdbip, 1, (const char **)&obj_name, bu_vls_cstr(&bname));
 	    bu_free(obj_name, "obj_name");
@@ -1648,15 +1648,15 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 		}
 	    }
 
-	    bool can_validate = !s->no_perturb &&
+	    bool can_validate = s->execution.uses_perturbation() &&
 		csg_metrics[i].can_validate;
-	    if (!s->no_perturb && !can_validate) {
+	    if (s->execution.uses_perturbation() && !can_validate) {
 		vcnt_skip++;
 		if (s->verbosity > 0)
 		    bu_log("FACETIZE: %s has no ft_perturb-capable leaves; skipping raytrace validation\n", dpw[0]->d_namep);
 	    }
 
-	    if (bret == BRLCAD_OK && !s->no_perturb && can_validate) {
+	    if (bret == BRLCAD_OK && s->execution.uses_perturbation() && can_validate) {
 		vcnt_total++;
 		double sa_err_pct = -1.0, vol_err_pct = -1.0;
 		int vret = csg_metrics[i].attempted ?
@@ -1892,7 +1892,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     s->use_variant_plan = 1;
 
     /* Collect validation results for the unified end-of-command summary. */
-    if ((vcnt_total > 0 || vcnt_skip > 0) && !s->make_nmg && !s->nmg_booleval &&
+    if ((vcnt_total > 0 || vcnt_skip > 0) && !s->execution.uses_nmg_boolean() &&
 	    s->region_summary && s->inspection_log) {
 	double elapsed_s = (bu_gettime() - region_start) / FACETIZE_USEC_TO_SEC_DIVISOR;
 	bu_vls_trunc(s->region_summary, 0);
@@ -1923,7 +1923,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     }
 
     // Report on the primitive processing
-    if (!s->make_nmg && !s->nmg_booleval)
+    if (!s->execution.uses_nmg_boolean())
 	facetize_collect_primitive_summary(s);
 
     // keep active regions into .g copy
@@ -1959,9 +1959,30 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	return BRLCAD_ERROR;
     }
 
-    /* Capture the current tops list.  If we're not doing an in-place overwrite, we
-     * need to know what the new top level objects are for the assembly of the
-     * final comb. */
+    if (plan.execution.writes_in_place()) {
+	av[0] = "dbconcat";
+	av[1] = "-O";
+	av[2] = kfname;
+	av[3] = NULL;
+	int concat_ret = ged_exec_dbconcat(s->gedp, 3, av);
+	bu_free(av, "av");
+	if (concat_ret != BRLCAD_OK) {
+	    facetize_failure(s, "unable to commit staged region hierarchy from '%s'", kfname);
+	    bu_ptbl_free(ar);
+	    bu_free(ar, "ar table");
+	    bu_free(dpa, "free dpa");
+	    return BRLCAD_ERROR;
+	}
+	db_update_nref(dbip);
+	bu_ptbl_free(ar);
+	bu_free(ar, "ar table");
+	bu_free(dpa, "free dpa");
+	bu_dirclear(s->wdir);
+	return BRLCAD_OK;
+    }
+
+    /* Capture current tops so the imported hierarchy can be assembled beneath
+     * the requested output combination. */
     struct directory **tlist = NULL;
     size_t tcnt = db_ls(dbip, DB_LS_TOPS, NULL, &tlist);
     std::set<std::string> otops;
@@ -1988,11 +2009,9 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     }
     affix = (use_prefix) ? bu_vls_cstr(&prefix_str) : bu_vls_cstr(&suffix_str);
 
-    // dbconcat output .g into original .g - either using -O to overwrite
-    // or allowing dbconcat to suffix the names depending on whether we're
-    // in-place or not.
+    // Import with an affix so the original hierarchy remains unchanged.
     av[0] = "dbconcat";
-    av[1] = (s->in_place) ? "-O" : "-L";
+    av[1] = "-L";
     av[2] = (use_prefix) ? "-p" : "-s";
     av[3] = kfname;
     av[4] = affix;

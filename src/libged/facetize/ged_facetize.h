@@ -41,6 +41,8 @@
 #include "raytrace.h"
 #include "ged/defines.h"
 
+#include "./orchestrator.h"
+
 __BEGIN_DECLS
 
 #define FACETIZE_METHOD_ATTR "facetize_method"
@@ -50,10 +52,7 @@ struct _ged_facetize_state {
     // Output
     int verbosity;
     int no_empty;
-    int make_nmg;
-    int nonovlp_brep;
     int no_fixup;
-    int no_perturb;
     int use_variant_plan;
     int tolerate_failures;
     int tolerated_failures;
@@ -80,10 +79,8 @@ struct _ged_facetize_state {
     struct bu_vls *inspection_log;
 
     // Processing
-    int regions;
+    FacetizeExecutionOptions execution;
     int resume;
-    int in_place;
-    int nmg_booleval;
 
     // Settings
     int max_time;
@@ -133,13 +130,10 @@ extern int
 _db_uniq_test(struct bu_vls *n, void *data);
 
 extern int
-_ged_validate_objs_list(struct _ged_facetize_state *s, int argc, const char *argv[], int newobj_cnt);
+_ged_facetize_regions(struct _ged_facetize_state *s, const FacetizePlan &plan);
 
 extern int
-_ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv);
-
-extern int
-_ged_facetize_objs(struct _ged_facetize_state *s, int argc, const char **argv);
+_ged_facetize_objs(struct _ged_facetize_state *s, const FacetizePlan &plan);
 
 extern int
 _ged_facetize_nmgeval(struct _ged_facetize_state *s, int argc, const char **argv, const char *newname);
@@ -171,7 +165,7 @@ _ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, str
 extern int
 _ged_facetize_booleval_tri_to_db(struct _ged_facetize_state *s, struct db_i *dbip, struct rt_wdb *wdbp, int argc, const char **argv, const char *newname, struct bu_list *vlfree, struct db_i *output_dbip, int curr_cnt, int total_cnt);
 
-extern int _nonovlp_brep_facetize(struct _ged_facetize_state *s, int argc, const char **argv);
+extern int _nonovlp_brep_facetize(struct _ged_facetize_state *s, const FacetizePlan &plan);
 
 extern struct rt_bot_internal *
 bot_fixup(struct _ged_facetize_state *s, struct db_i *wdbip, struct directory *bot_dp, const char *bname);

@@ -419,7 +419,7 @@ _ged_facetize_nmgeval(struct _ged_facetize_state *s, int argc, const char **argv
 	goto ged_nmg_obj_memfree;
     }
 
-    if (!s->make_nmg) {
+    if (!s->execution.writes_nmg()) {
 
 	wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DEFAULT);
 	bot = _try_nmg_to_bot(s, nmg_model, vlfree, &wdbp->wdb_tol, &conversion_bombed);
