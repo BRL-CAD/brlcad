@@ -40,6 +40,9 @@
 
 #include "bio.h"
 #include "bresource.h"
+#if defined(__APPLE__) && defined(HAVE_SYS_SYSCTL_H)
+#  include <sys/sysctl.h>
+#endif
 
 #include "bu.h"
 
@@ -149,6 +152,53 @@ process_mem_tests(void)
 
 
 static int
+process_resident_tests(void)
+{
+    const ssize_t before = bu_mem(BU_MEM_PROCESS_RESIDENT, NULL);
+    if (before < 0) {
+	bu_log("MEM resident size is not available through a native API\n");
+	return 0;
+    }
+
+    /* Exceed normal allocator slack and RSS accounting granularity without
+     * imposing a substantial memory requirement on constrained test hosts. */
+    const size_t test_allocation_mebibytes = 16u;
+    const size_t bytes_per_mebibyte = 1024u * 1024u;
+    const size_t allocation_size = test_allocation_mebibytes *
+	bytes_per_mebibyte;
+    volatile unsigned char *allocation = (volatile unsigned char *)
+	bu_malloc(allocation_size, "resident memory test allocation");
+    ssize_t page_size = bu_mem(BU_MEM_PAGE_SIZE, NULL);
+    if (page_size <= 0)
+	page_size = BU_PAGE_SIZE;
+    for (size_t offset = 0; offset < allocation_size;
+	    offset += (size_t)page_size)
+	allocation[offset] = (unsigned char)(offset / (size_t)page_size);
+    allocation[allocation_size - 1] = 1;
+
+    size_t resident_output = 0;
+    const ssize_t after = bu_mem(BU_MEM_PROCESS_RESIDENT,
+	&resident_output);
+    bu_free((void *)allocation, "resident memory test allocation");
+    if (after < 0 || resident_output != (size_t)after) {
+	bu_log("bu_mem resident test: query returned %zd and wrote %zu\n",
+	    after, resident_output);
+	return -1;
+    }
+    if (after <= before) {
+	bu_log("bu_mem resident test: resident size did not increase after "
+	    "touching %zu bytes (before=%zd, after=%zd)\n",
+	    allocation_size, before, after);
+	return -2;
+    }
+
+    bu_log("MEM resident size increased from %zd to %zd after touching "
+	"%zu bytes\n", before, after, allocation_size);
+    return 0;
+}
+
+
+static int
 mem_test_failure(const char *query, ssize_t result, const size_t *output,
                  int return_code)
 {
@@ -160,6 +210,30 @@ mem_test_failure(const char *query, ssize_t result, const size_t *output,
 	       return_code, query, result);
     }
     return return_code;
+}
+
+
+static int
+platform_mem_tests(ssize_t all_mem)
+{
+#if defined(__APPLE__) && defined(HAVE_SYS_SYSCTL_H)
+    uint64_t native_total = 0;
+    size_t value_size = sizeof(native_total);
+    int mib[2] = {CTL_HW, HW_MEMSIZE};
+    if (sysctl(mib, 2, &native_total, &value_size, NULL, 0) != 0 ||
+	    value_size != sizeof(native_total)) {
+	bu_log("bu_mem platform test: unable to query HW_MEMSIZE\n");
+	return -1;
+    }
+    if (native_total != (uint64_t)all_mem) {
+	bu_log("bu_mem platform test: BU_MEM_ALL returned %zd; HW_MEMSIZE "
+	    "reported %llu\n", all_mem, (unsigned long long)native_total);
+	return -2;
+    }
+#else
+    (void)all_mem;
+#endif
+    return 0;
 }
 
 
@@ -352,17 +426,29 @@ main(int ac, char *av[])
 	return editor_tests();
     if (ac > 1 && BU_STR_EQUAL(av[1], "-m"))
 	return process_mem_tests();
+    if (ac > 1 && BU_STR_EQUAL(av[1], "-r"))
+	return process_resident_tests();
+
+    if (bu_mem(-1, NULL) >= 0 ||
+	    bu_mem(BU_MEM_PROCESS_RESIDENT + 1, NULL) >= 0)
+	return mem_test_failure("invalid query", 0, NULL, -1);
 
     ssize_t all_mem = bu_mem(BU_MEM_ALL, NULL);
-    if (all_mem < 0)
-	return mem_test_failure("BU_MEM_ALL", all_mem, NULL, -1);
+    if (all_mem <= 0)
+	return mem_test_failure("BU_MEM_ALL", all_mem, NULL, -2);
     ssize_t avail_mem = bu_mem(BU_MEM_AVAIL, NULL);
     if (avail_mem < 0)
-	return mem_test_failure("BU_MEM_AVAIL", avail_mem, NULL, -2);
+	return mem_test_failure("BU_MEM_AVAIL", avail_mem, NULL, -3);
     ssize_t page_mem = bu_mem(BU_MEM_PAGE_SIZE, NULL);
-    if (page_mem < 0)
-	return mem_test_failure("BU_MEM_PAGE_SIZE", page_mem, NULL, -3);
+    if (page_mem <= 0)
+	return mem_test_failure("BU_MEM_PAGE_SIZE", page_mem, NULL, -4);
+    if (avail_mem > all_mem)
+	return mem_test_failure("BU_MEM_AVAIL exceeds BU_MEM_ALL", avail_mem,
+	    NULL, -5);
+    if (platform_mem_tests(all_mem) != 0)
+	return -6;
     ssize_t process_mem = bu_mem(BU_MEM_PROCESS_AVAIL, NULL);
+    ssize_t resident_mem = bu_mem(BU_MEM_PROCESS_RESIDENT, NULL);
 
     /* Make sure the output pointer matches the return value from that call.
      * The values reported by the operating system can change between calls. */
@@ -370,27 +456,38 @@ main(int ac, char *av[])
     size_t avail_mem2 = 0;
     size_t page_mem2 = 0;
     size_t process_mem2 = 0;
+    size_t resident_mem2 = 0;
 
     const ssize_t all_mem_ret = bu_mem(BU_MEM_ALL, &all_mem2);
     if (all_mem_ret < 0 || all_mem2 != (size_t)all_mem_ret)
 	return mem_test_failure("BU_MEM_ALL with output", all_mem_ret,
-	                       &all_mem2, -4);
+	                       &all_mem2, -7);
 
     const ssize_t avail_mem_ret = bu_mem(BU_MEM_AVAIL, &avail_mem2);
     if (avail_mem_ret < 0 || avail_mem2 != (size_t)avail_mem_ret)
 	return mem_test_failure("BU_MEM_AVAIL with output", avail_mem_ret,
-	                       &avail_mem2, -5);
+	                       &avail_mem2, -8);
 
     const ssize_t page_mem_ret = bu_mem(BU_MEM_PAGE_SIZE, &page_mem2);
     if (page_mem_ret < 0 || page_mem2 != (size_t)page_mem_ret)
 	return mem_test_failure("BU_MEM_PAGE_SIZE with output", page_mem_ret,
-	                       &page_mem2, -6);
+	                       &page_mem2, -9);
 
     const ssize_t process_mem_ret = bu_mem(BU_MEM_PROCESS_AVAIL,
 	&process_mem2);
     if (process_mem_ret >= 0 && process_mem2 != (size_t)process_mem_ret)
 	return mem_test_failure("BU_MEM_PROCESS_AVAIL with output",
-	                       process_mem_ret, &process_mem2, -7);
+	                       process_mem_ret, &process_mem2, -10);
+
+    const ssize_t resident_mem_ret = bu_mem(BU_MEM_PROCESS_RESIDENT,
+	&resident_mem2);
+    if (resident_mem_ret >= 0 &&
+	    resident_mem2 != (size_t)resident_mem_ret)
+	return mem_test_failure("BU_MEM_PROCESS_RESIDENT with output",
+	                       resident_mem_ret, &resident_mem2, -11);
+    if (resident_mem >= 0 && resident_mem == 0)
+	return mem_test_failure("BU_MEM_PROCESS_RESIDENT", resident_mem,
+	    NULL, -12);
 
     char all_buf[6] = {'\0'};
     char avail_buf[6] = {'\0'};
@@ -408,6 +505,10 @@ main(int ac, char *av[])
 	bu_log("MEM process address-space available: %zd\n", process_mem);
     else
 	bu_log("MEM process address-space limit: unsupported or unlimited\n");
+    if (resident_mem >= 0)
+	bu_log("MEM process resident: %zd\n", resident_mem);
+    else
+	bu_log("MEM process resident: unsupported\n");
 
     return 0;
 }
