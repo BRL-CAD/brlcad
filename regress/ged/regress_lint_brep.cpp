@@ -86,12 +86,25 @@ make_database(const char *path)
 
     ON_Brep *good = box_brep();
     ON_Brep *bad = box_brep();
-    if (!good || !bad) {
+    ON_Brep *shading_failure = box_brep();
+    if (!good || !bad || !shading_failure) {
 	delete good;
 	delete bad;
+	delete shading_failure;
 	db_close(wdbp->dbip);
 	return false;
     }
+
+    ON_BrepLoop *failed_loop = shading_failure->m_F[0].OuterLoop();
+    if (!failed_loop) {
+	delete good;
+	delete bad;
+	delete shading_failure;
+	db_close(wdbp->dbip);
+	return false;
+    }
+    shading_failure->FlipLoop(*failed_loop);
+    failed_loop->m_type = ON_BrepLoop::inner;
 
     ON_BrepEdge &edge = bad->m_E[0];
     ON_Curve *curve = (edge.m_c3i >= 0 && edge.m_c3i < bad->m_C3.Count()) ?
@@ -121,9 +134,11 @@ make_database(const char *path)
     ON_TextLog text_log(stderr);
     const bool valid = good->IsValid(&text_log) && bad->IsValid(&text_log);
     const bool written = valid && mk_brep(wdbp, "good.s", good) == 0 &&
-	mk_brep(wdbp, "masked_mismatch.s", bad) == 0;
+	mk_brep(wdbp, "masked_mismatch.s", bad) == 0 &&
+	mk_brep(wdbp, "shading_failure.s", shading_failure) == 0;
     delete good;
     delete bad;
+    delete shading_failure;
     db_close(wdbp->dbip);
     return written;
 }
@@ -172,6 +187,7 @@ main(int argc, char **argv)
     const std::string gfile = temporary_path("lint_brep.g");
     const std::string good_json = temporary_path("lint_brep_good.json");
     const std::string bad_json = temporary_path("lint_brep_bad.json");
+    const std::string shading_json = temporary_path("lint_brep_shading.json");
     bool pass = make_database(gfile.c_str());
 
     const char *checks = "brep:edge_surface_mismatch brep:large_tolerance "
@@ -196,9 +212,37 @@ main(int argc, char **argv)
 	    bad_result.find("\"declared_tolerance_masks\": true") !=
 	    std::string::npos;
 
+    if (pass)
+	pass = run_lint(gfile.c_str(), "good.s", shading_json.c_str(),
+	    "brep:fast_shading") == BRLCAD_OK;
+    std::string shading_result = read_file(shading_json.c_str());
+    if (pass)
+	pass = !contains_problem(shading_result, "fast_shading_failure") &&
+	    !contains_problem(shading_result, "fast_shading_incomplete");
+
+    if (pass)
+	pass = run_lint(gfile.c_str(), "shading_failure.s",
+	    shading_json.c_str(), "brep:opennurbs") == BRLCAD_OK;
+    shading_result = read_file(shading_json.c_str());
+    if (pass)
+	pass = contains_problem(shading_result, "opennurbs_invalid") &&
+	    !contains_problem(shading_result, "fast_shading_failure") &&
+	    !contains_problem(shading_result, "fast_shading_incomplete");
+
+    if (pass)
+	pass = run_lint(gfile.c_str(), "shading_failure.s",
+	    shading_json.c_str(), "brep:fast_shading") == BRLCAD_OK;
+    shading_result = read_file(shading_json.c_str());
+    if (pass)
+	pass = contains_problem(shading_result, "fast_shading_failure") &&
+	    shading_result.find("\"face\": 0") != std::string::npos &&
+	    shading_result.find("\"stage_name\": \"pslg_validation\"") !=
+	    std::string::npos;
+
     bu_file_delete(gfile.c_str());
     bu_file_delete(good_json.c_str());
     bu_file_delete(bad_json.c_str());
+    bu_file_delete(shading_json.c_str());
     if (!pass)
 	bu_log("B-Rep lint regression failed\n");
     return pass ? 0 : 1;
