@@ -30,6 +30,28 @@ facetize_discard_log(void *UNUSED(data), void *UNUSED(message))
     return 0;
 }
 
+void
+facetize_log_hooks_silence(struct bu_hook_list *saved_hooks)
+{
+    if (!saved_hooks)
+	return;
+
+    bu_log_hook_save_all(saved_hooks);
+    bu_log_hook_delete_all();
+    bu_log_add_hook(facetize_discard_log, NULL);
+}
+
+void
+facetize_log_hooks_restore(struct bu_hook_list *saved_hooks)
+{
+    if (!saved_hooks)
+	return;
+
+    bu_log_hook_delete_all();
+    bu_log_hook_restore_all(saved_hooks);
+    bu_hook_delete_all(saved_hooks);
+}
+
 static int
 facetize_bound_internal(struct db_i *dbip, struct directory *dp,
 	point_t bounds_min, point_t bounds_max)
@@ -38,25 +60,19 @@ facetize_bound_internal(struct db_i *dbip, struct directory *dp,
      * otherwise unsampleable CSG.  rt_bound_internal logs every failure,
      * which floods large runs before facetize can report the aggregate. */
     struct bu_hook_list saved_hooks = BU_HOOK_LIST_INIT_ZERO;
-    bu_log_hook_save_all(&saved_hooks);
-    bu_log_hook_delete_all();
-    bu_log_add_hook(facetize_discard_log, NULL);
+    facetize_log_hooks_silence(&saved_hooks);
 
     int ret = BRLCAD_ERROR;
     if (!BU_SETJUMP) {
 	ret = rt_bound_internal(dbip, dp, bounds_min, bounds_max);
     } else {
 	BU_UNSETJUMP;
-	bu_log_hook_delete_all();
-	bu_log_hook_restore_all(&saved_hooks);
-	bu_hook_delete_all(&saved_hooks);
+	facetize_log_hooks_restore(&saved_hooks);
 	return BRLCAD_ERROR;
     }
     BU_UNSETJUMP;
 
-    bu_log_hook_delete_all();
-    bu_log_hook_restore_all(&saved_hooks);
-    bu_hook_delete_all(&saved_hooks);
+    facetize_log_hooks_restore(&saved_hooks);
     return ret;
 }
 
