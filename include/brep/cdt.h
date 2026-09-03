@@ -522,9 +522,11 @@ struct brep_cdt_fast_options {
 #define BREP_CDT_FAST_FACE_SKIPPED_DEGENERATE 2
 #define BREP_CDT_FAST_FACE_NOT_PROCESSED 3
 #define BREP_CDT_FAST_FACE_APPROXIMATED 4
+#define BREP_CDT_FAST_FACE_SKIPPED_TOLERANCE 5
 
-/* completed_faces includes faces proven to have no drawable area;
- * skipped_degenerate_faces reports that subset explicitly. */
+/* completed_faces includes faces with no drawable output.  Exact zero-area
+ * faces and faces which collapse at the requested display tolerance are
+ * reported separately. */
 struct brep_cdt_fast_report {
     int requested_faces;
     int completed_faces;
@@ -535,6 +537,9 @@ struct brep_cdt_fast_report {
     int hit_point_limit;
     /* Completed faces proven to have exactly zero parametric area. */
     int skipped_degenerate_faces;
+    /* Completed faces with no boundary resolvable at the requested
+     * tessellation and model tolerances. */
+    int skipped_tolerance_faces;
     /* Peak sum of conservative face-work reservations. */
     size_t peak_working_bytes;
     /* Adaptive display-quality provenance. */
