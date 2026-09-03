@@ -1899,11 +1899,26 @@ _ged_facetize_regions(struct _ged_facetize_state *s, const FacetizePlan &plan)
 	    }
 	} else {
 	    struct directory *bot_dp = db_lookup(wdbip, bu_vls_cstr(&bname), LOOKUP_QUIET);
-	    if (!wdp || !bot_dp || db_delete(wdbip, wdp) != 0 || db_dirdelete(wdbip, wdp) != 0 ||
-		    db_rename(wdbip, bot_dp, dpw[0]->d_namep) < 0) {
-		if (s->verbosity >= 0)
-		    bu_log("regions.cpp:%d Failed to replace implicit root %s.\n", __LINE__, dpw[0]->d_namep);
+	    struct rt_db_internal bot_internal;
+	    RT_DB_INTERNAL_INIT(&bot_internal);
+	    if (!wdp || !bot_dp ||
+		    rt_db_get_internal(&bot_internal, bot_dp, wdbip, NULL) < 0) {
 		bret = BRLCAD_ERROR;
+	    } else if (db_delete(wdbip, wdp) != 0 ||
+		    db_dirdelete(wdbip, wdp) != 0 ||
+		    db_rename(wdbip, bot_dp, dpw[0]->d_namep) != 0) {
+		rt_db_free_internal(&bot_internal);
+		bret = BRLCAD_ERROR;
+	    } else {
+		/* db_rename updates only the in-memory directory entry.  Rewriting
+		 * the object makes its new name survive closing the working database. */
+		if (rt_db_put_internal(bot_dp, wdbip, &bot_internal) < 0)
+		    bret = BRLCAD_ERROR;
+	    }
+	    if (bret != BRLCAD_OK) {
+		if (s->verbosity >= 0)
+		    bu_log("regions.cpp:%d Failed to replace implicit root %s.\n",
+			    __LINE__, dpw[0]->d_namep);
 		break;
 	    }
 	}
