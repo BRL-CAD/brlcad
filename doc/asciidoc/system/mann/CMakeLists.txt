@@ -16,6 +16,7 @@ set(
   aproposlib.adoc
   arb.adoc
   arced.adoc
+  arrange.adoc
   area.adoc
   arot.adoc
   art.adoc

@@ -1,0 +1,173 @@
+= ARRANGE(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+
+arrange - creates patterned arrangements of database objects; the nest style packs arbitrary shapes into a prescribed container
+
+== SYNOPSIS
+
+[source]
+----
+arrange <style> [style-options] ...
+arrange help [style]
+
+arrange nest [-n] [-C] [-d 2|3] [-a x|y|z] [-s cell_size] [-c clearance]
+             [-o fixed|upright|orthogonal] [-q fast|balanced|thorough]
+             [-g x,y,z] [--value name=value]...
+             output container object [object ...]
+----
+
+== DESCRIPTION
+
+The *arrange* command is a namespace for object-layout styles.  *nest* is the
+first available style.  It places as many input objects as possible into the
+permitted volume of _container_ and writes a non-region union combination
+named _output_.  The combination contains transformed instances; source
+objects are not copied or modified.  Repeat an object name to request more
+than one instance.
+
+The nest style ray traces every input with *libanalyze* and represents it on a
+shared-resolution spatial raster.  It accepts analytic primitives, CSG trees,
+BoTs, B-reps, and other ray-traceable database objects without converting
+them to a particular boundary representation.  Every retained placement is
+checked directly for raster containment and collision.  The result is valid
+at the reported cell size; it is not an exact continuous-geometry proof.
+
+The command is deterministic.  Equal inputs and options produce equal member
+matrices.  The output name must not already exist.  Validation, rasterization,
+and search finish before the output combination is written.
+
+Future layout styles may include *grid*, *hex*, *tri*, *row*, *col*, *polar*,
+and *spiral*.  They are reserved names, not installed subcommands.
+
+== OPTIONS
+
+*-n*::
+Run validation, rasterization, packing, and reporting without writing _output_.
+
+*-C*, *--conservative*::
+Use each object's complete axis-aligned raster bounding box for collision and
+containment.  This intentionally leaves more empty space, but protects thin or
+disconnected subfeatures that a coarse sampled raster might miss.  Use it when
+exact CSG separation is more important than fill efficiency.
+
+*-d 2|3*::
+Select planar or spatial nesting.  The default is 3D.  In 3D every occupied
+object voxel must be within the container voxel mask and outside all prior
+objects.
+
+*-a x|y|z*::
+Select the projection normal and upright rotation axis.  The default is _z_.
+
+*-s cell_size*::
+Set the isotropic cell or pixel size in the database's current local units.
+Smaller cells preserve more detail but increase time and memory.  The default
+is the longest container span divided into 128 cells.
+
+*-c clearance*::
+Require clearance from the container boundary and other placed objects.  The
+value is rounded upward to a whole number of cells.  The dilation is
+conservative in the raster's axis-aligned neighborhood.
+
+*-o fixed|upright|orthogonal*::
+Select allowed orientations.  _fixed_ retains the input orientation.
+_upright_ tests the four quarter turns about the selected axis.  _orthogonal_
+tests the 24 right-handed axis-aligned spatial orientations and is available
+only in 3D.  The default is
+_upright_ in 2D and _orthogonal_ in 3D.  Raster-identical symmetric
+orientations are evaluated once.
+
+*-q fast|balanced|thorough*::
+Select a named search budget.  _fast_ performs deterministic greedy
+construction.  _balanced_, the default, keeps a small beam of partial
+arrangements so it can reconsider a skipped object or alternate placement.
+_thorough_ adds deterministic multi-start and bounded neighborhood removal
+and reinsertion.
+
+*-g x,y,z*::
+Settle feasible candidates in the specified gravity direction before scoring
+them.  In 2D the component normal to the projection plane is ignored.
+
+*--value name=value*::
+Override the selection value for every instance named _name_.  By default an
+object's value is its occupied cell count.  Values make partial-fit cases a
+geometric knapsack problem; higher value density is considered before size.
+
+== 2D SEMANTICS
+
+With *-d 2*, each object is projected orthographically along the axis selected
+by *-a*.  A pixel is occupied if any ray-traced material is present along that
+projection ray.  This sampled silhouette is translated in the plane and
+rotated by quarter turns about its normal.  The command does not change the
+object’s coordinate along the projection axis.  Consequently 2D mode is
+appropriate for sheet layouts, footprints, planar parts, and conservative
+2.5D clearance checks.
+
+== SEARCH AND REPORTING
+
+Candidate translations come from a bounded coarse lattice, container and
+placed-object frontiers, and large empty-raster seeds.  Promising coarse
+candidates are refined at unit-cell resolution.  Feasible candidates prefer
+surface contact, then a smaller occupied envelope, followed by stable
+orientation and coordinate tie breakers.  Search continues after an object
+does not fit, allowing smaller or more valuable objects to use the remaining
+space.
+
+The result reports placed and requested counts, total value, occupied raster
+fill, dimension, cell size, quantized clearance, quality budget, and every
+unplaced input.  Partial placement is successful when at least one object is
+placed.  If none fits, no output is written and the command reports an error.
+
+== EXAMPLES
+
+.Pack planar silhouettes into an L-shaped permitted area.
+[example]
+====
+
+mged> *arrange nest -d 2 -a z -s 1 panels.c sheet-area.r panel.r bracket.r bracket.r*
+
+Creates _panels.c_ from translated and quarter-turned instances whose
+silhouettes fit in _sheet-area.r_.
+
+====
+
+.Pack spatial objects with clearance and gravity.
+[example]
+====
+
+mged> *arrange nest -d 3 -s 2 -c 1 -o orthogonal -g 0,0,-1 packed.c usable-volume.r gear.r gear.r bracket.r*
+
+Tests axis-aligned orientations, rounds the requested clearance up to one
+cell, settles feasible candidates toward negative Z, and creates _packed.c_.
+
+====
+
+.Select a value-weighted subset without changing the database.
+[example]
+====
+
+mged> *arrange nest -n -d 2 --value motor.r=20 --value spacer.r=2 trial.c tray.r motor.r spacer.r spacer.r spacer.r*
+
+Reports the selected subset statistics but does not create _trial.c_.
+
+====
+
+== LIMITATIONS
+
+Only discrete translations and orthogonal quarter-turn orientations are
+currently generated.  Features smaller than the cell size may disappear or
+merge.  Choose a cell size appreciably smaller than the minimum feature or
+clearance that matters, and verify critical results with a finer run or exact
+BRL-CAD analysis commands.
+
+== AUTHOR
+
+BRL-CAD Team
+
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to
+devs@brlcad.org
