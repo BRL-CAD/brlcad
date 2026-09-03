@@ -260,6 +260,7 @@ test_write_handshake()
     const size_t announced_resident_size = 456789;
     expect(server.send_write_ready(announced_payload_size,
 	    announced_resident_size), "server sends write size");
+    expect(server.send_write_started(), "server acknowledges write start");
     expect(server.send_write_result(BRLCAD_OK, announced_resident_size),
 	    "server sends write completion");
 
@@ -277,6 +278,8 @@ test_write_handshake()
 	"client preserves announced write size");
     expect(status.resident_size == announced_resident_size,
 	"client preserves worker resident memory");
+    expect(status.write_started,
+	"client recognizes fragmented write-start acknowledgement");
     expect(status.write_done, "client recognizes fragmented write completion");
     expect(status.result_received && status.result == BRLCAD_OK,
 	"write completion result is retained");
@@ -326,11 +329,12 @@ test_client_diagnostics_and_reset()
     std::vector<std::string> diagnostics;
 
     const char malformed_output[] =
-	"ordinary diagnostic\nFACETIZE_RESULT 0 trailing\n";
+	"ordinary diagnostic\nFACETIZE_RESULT 0 trailing\n"
+	"FACETIZE_WRITE_STARTED trailing\n";
     client.consume_output(malformed_output, sizeof(malformed_output) - 1,
 	status, diagnostics);
     expect(!status.result_received, "malformed result is not accepted as protocol");
-    expect(diagnostics.size() == 2, "ordinary and malformed lines remain diagnostics");
+    expect(diagnostics.size() == 3, "ordinary and malformed lines remain diagnostics");
 
     diagnostics.clear();
     const char partial_frame[] = "FACETIZE_WRITE_RE";
@@ -356,6 +360,8 @@ test_client_diagnostics_and_reset()
 	"server cannot receive acknowledgement without a stream");
     expect(!null_server.send_write_ready(1, 1),
 	"server cannot announce a write without a response stream");
+    expect(!null_server.send_write_started(),
+	"server cannot acknowledge a write without a response stream");
     expect(!null_server.send_tessellation_result(BRLCAD_OK, 1),
 	"server cannot send a result without a response stream");
     expect(!null_server.send_write_result(BRLCAD_OK, 1),

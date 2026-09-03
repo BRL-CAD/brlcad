@@ -23,6 +23,7 @@ extern const char FACETIZE_WORKER_RESULT_OBJECT[];
 
 struct FacetizeWorkerStatus {
     bool write_ready = false;
+    bool write_started = false;
     bool write_done = false;
     bool result_received = false;
     int result = BRLCAD_ERROR;
@@ -109,6 +110,7 @@ class FacetizeWorkerServer
 	FacetizeWorkerReadResult receive_commit(FacetizeCommitRequest &request);
 	bool send_write_ready(size_t payload_size, size_t resident_size);
 	bool receive_write_proceed();
+	bool send_write_started();
 	bool send_tessellation_result(int result, size_t resident_size);
 	bool send_write_result(int result, size_t resident_size);
 

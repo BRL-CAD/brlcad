@@ -69,6 +69,7 @@ static const int FACETIZE_POLL_INTERVAL_USEC = 1000;
 static const int FACETIZE_PROGRESS_BATCH_MIN = 100;
 static const int FACETIZE_PROGRESS_INTERVAL_SEC = 5;
 static const int FACETIZE_SHUTDOWN_TIMEOUT_SEC = 5;
+static const int FACETIZE_WRITER_RESTART_LIMIT = 1;
 static const char FACETIZE_WORKER_FILE_SUFFIX[] = ".facetize_worker_";
 
 enum tess_work_type {
@@ -914,8 +915,9 @@ struct tess_worker_state {
     int64_t write_deadline = 0;
     double write_timeout = 0.0;
     std::string result_file;
+    int commit_retries = 0;
     bool enabled = true;
-    bool write_started = false;
+    bool write_permitted = false;
     bool awaiting_commit = false;
 };
 
@@ -928,7 +930,7 @@ struct tess_writer_state {
     int64_t write_start = 0;
     int64_t write_deadline = 0;
     double write_timeout = 0.0;
-    bool write_started = false;
+    bool write_permitted = false;
 };
 
 static void
@@ -940,7 +942,8 @@ tess_worker_request_reset(struct tess_worker_state &worker)
     worker.write_start = 0;
     worker.write_deadline = 0;
     worker.write_timeout = 0.0;
-    worker.write_started = false;
+    worker.commit_retries = 0;
+    worker.write_permitted = false;
     worker.awaiting_commit = false;
 }
 
@@ -964,7 +967,7 @@ tess_writer_request_reset(struct tess_writer_state &writer)
     writer.write_start = 0;
     writer.write_deadline = 0;
     writer.write_timeout = 0.0;
-    writer.write_started = false;
+    writer.write_permitted = false;
 }
 
 static void
@@ -1092,6 +1095,28 @@ tess_run(struct _ged_facetize_state *s, const char **tess_cmd,
     int next_object = fixed_cnt;
     int completed_objects = 0;
 
+    auto submit_staged_result = [&](size_t worker_index) {
+	if (worker_index >= workers.size())
+	    return false;
+	tess_worker_state &worker = workers[worker_index];
+	if (!writer.process && tess_process_start(&writer.process,
+		&writer.input, writer.channel, writer_cmd, no_result_file,
+		"--writer") != BRLCAD_OK) {
+	    tess_writer_stop(s, writer, true);
+	    return false;
+	}
+	const char *object_name = tess_cmd[worker.object_index];
+	if (!writer.channel.send_commit(worker.result_file.c_str(), object_name,
+		worker.status.payload_size)) {
+	    tess_writer_stop(s, writer, true);
+	    return false;
+	}
+	tess_writer_request_reset(writer);
+	writer.worker_index = worker_index;
+	worker.awaiting_commit = true;
+	return true;
+    };
+
     while (completed_objects < ocnt && !unsafe_failure) {
 	bool made_progress = false;
 	if (staged_writes && writer.worker_index == SIZE_MAX &&
@@ -1176,7 +1201,7 @@ tess_run(struct _ged_facetize_state *s, const char **tess_cmd,
 	    bool write_timed_out = false;
 
 	    if (worker.status.result_received) {
-		if (worker.write_started && !worker.status.write_done) {
+		if (worker.status.write_started && !worker.status.write_done) {
 		    request_interrupted = true;
 		} else {
 		    bool commit_submission_failed = false;
@@ -1190,21 +1215,9 @@ tess_run(struct _ged_facetize_state *s, const char **tess_cmd,
 		    }
 		    if (worker.status.write_done &&
 			    worker.status.result == BRLCAD_OK && staged_writes) {
-			if (!writer.process && tess_process_start(&writer.process,
-				&writer.input, writer.channel, writer_cmd,
-				no_result_file, "--writer") != BRLCAD_OK) {
-			    tess_writer_stop(s, writer, true);
-			    commit_submission_failed = true;
-			} else if (!writer.channel.send_commit(
-				    worker.result_file.c_str(), object_name,
-				    worker.status.payload_size)) {
-			    tess_writer_stop(s, writer, true);
-			    commit_submission_failed = true;
-			}
+			commit_submission_failed =
+			    !submit_staged_result(worker_index);
 			if (!commit_submission_failed) {
-			    writer.status = FacetizeWorkerStatus();
-			    writer.worker_index = worker_index;
-			    worker.awaiting_commit = true;
 			    made_progress = true;
 			    continue;
 			}
@@ -1213,19 +1226,19 @@ tess_run(struct _ged_facetize_state *s, const char **tess_cmd,
 
 		    if (worker.status.result != BRLCAD_OK) {
 			bool canonical_write_ambiguous =
-			    worker.write_started && !staged_writes;
+			    worker.status.write_started && !staged_writes;
 			if (!canonical_write_ambiguous)
 			    failed_names->push_back(object_name);
 			if (commit_submission_failed) {
 			    facetize_log(s, 0,
 				    "FACETIZE: unable to submit staged tessellation for %s to the database writer with method %s\n",
 				    object_name, method);
-			} else if (worker.write_started && !staged_writes) {
+			} else if (worker.status.write_started && !staged_writes) {
 			    facetize_log(s, 0,
 				    "FACETIZE: failed to write tessellation for %s with method %s\n",
 				    object_name, method);
 			    unsafe_failure = true;
-			} else if (worker.write_started) {
+			} else if (worker.status.write_started) {
 			    facetize_log(s, 0,
 				    "FACETIZE: failed to stage tessellation for %s with method %s\n",
 				    object_name, method);
@@ -1239,7 +1252,7 @@ tess_run(struct _ged_facetize_state *s, const char **tess_cmd,
 		    if (write_owner == worker_index)
 			write_owner = workers.size();
 		    bool restart_worker = staged_writes &&
-			worker.write_started &&
+			worker.status.write_started &&
 			worker.status.result != BRLCAD_OK &&
 			!commit_submission_failed;
 		    if (restart_worker) {
@@ -1257,15 +1270,15 @@ tess_run(struct _ged_facetize_state *s, const char **tess_cmd,
 	    }
 
 	    if (!request_interrupted && worker.status.write_ready &&
-		    !worker.write_started && write_owner == workers.size()) {
+		    !worker.write_permitted && write_owner == workers.size()) {
 		if (max_time > 0 && now - worker.request_start >=
 			BU_SEC2USEC(max_time)) {
 		    request_interrupted = true;
 		    tessellation_timed_out = true;
 		} else {
-		    /* Once this is set, a failed pipe write cannot prove the child
-		     * did not receive permission and begin modifying its output. */
-		    worker.write_started = true;
+		    /* Reserve the write slot while the child acknowledges permission
+		     * and performs the update. */
+		    worker.write_permitted = true;
 		    write_owner = worker_index;
 		    worker.write_timeout = tess_write_timeout_seconds(
 			    worker.status.payload_size, s->write_profile_bytes,
@@ -1294,7 +1307,7 @@ tess_run(struct _ged_facetize_state *s, const char **tess_cmd,
 		request_interrupted = true;
 		tessellation_timed_out = true;
 	    }
-	    if (!request_interrupted && worker.write_started &&
+	    if (!request_interrupted && worker.write_permitted &&
 		    now >= worker.write_deadline) {
 		request_interrupted = true;
 		write_timed_out = true;
@@ -1310,17 +1323,21 @@ tess_run(struct _ged_facetize_state *s, const char **tess_cmd,
 		    facetize_log(s, 0,
 			    "FACETIZE: tessellation timed out after %.1f seconds for %s with method %s\n",
 			    max_time, object_name, method);
-		} else if (worker.write_started) {
+		} else if (worker.status.write_started) {
 		    facetize_log(s, 0,
 			    "FACETIZE: tessellation worker failed while writing %s%s with method %s\n",
 			    object_name, staged_writes ? " to staging" : "",
 			    method);
+		} else if (worker.write_permitted) {
+		    facetize_log(s, 0,
+			    "FACETIZE: tessellation worker failed before acknowledging write start for %s with method %s\n",
+			    object_name, method);
 		} else {
 		    facetize_log(s, 0,
 			    "FACETIZE: tessellation worker failed while processing %s with method %s\n",
 			    object_name, method);
 		}
-		bool write_was_started = worker.write_started;
+		bool write_was_started = worker.status.write_started;
 		if (!write_was_started || staged_writes)
 		    failed_names->push_back(object_name);
 		if (write_owner == worker_index)
@@ -1351,7 +1368,7 @@ tess_run(struct _ged_facetize_state *s, const char **tess_cmd,
 	    bool writer_interrupted = false;
 	    bool writer_timed_out = false;
 	    if (writer.status.result_received) {
-		if (writer.write_started && !writer.status.write_done) {
+		if (writer.status.write_started && !writer.status.write_done) {
 		    writer_interrupted = true;
 		} else {
 		    if (writer.status.write_done &&
@@ -1364,12 +1381,12 @@ tess_run(struct _ged_facetize_state *s, const char **tess_cmd,
 			s->write_profile_usec += now - writer.write_start;
 		    }
 		    if (writer.status.result != BRLCAD_OK) {
-			if (!writer.write_started)
+			if (!writer.status.write_started)
 			    failed_names->push_back(object_name);
 			facetize_log(s, 0,
 				"FACETIZE: failed to transfer tessellation for %s to the working database with method %s\n",
 				object_name, method);
-			unsafe_failure = writer.write_started;
+			unsafe_failure = writer.status.write_started;
 		    }
 
 		    write_owner = workers.size();
@@ -1382,8 +1399,8 @@ tess_run(struct _ged_facetize_state *s, const char **tess_cmd,
 	    }
 
 	    if (!writer_interrupted && writer.worker_index < workers.size() &&
-		    writer.status.write_ready && !writer.write_started) {
-		writer.write_started = true;
+		    writer.status.write_ready && !writer.write_permitted) {
+		writer.write_permitted = true;
 		writer.write_timeout = tess_write_timeout_seconds(
 			committing_worker.status.payload_size,
 			s->write_profile_bytes, s->write_profile_usec);
@@ -1404,7 +1421,7 @@ tess_run(struct _ged_facetize_state *s, const char **tess_cmd,
 		    bu_process_poll(writer.process, NULL) != 0)
 		writer_interrupted = true;
 	    if (!writer_interrupted && writer.worker_index < workers.size() &&
-		    writer.write_started && now >= writer.write_deadline) {
+		    writer.write_permitted && now >= writer.write_deadline) {
 		writer_interrupted = true;
 		writer_timed_out = true;
 	    }
@@ -1414,19 +1431,36 @@ tess_run(struct _ged_facetize_state *s, const char **tess_cmd,
 		    facetize_log(s, 0,
 			    "FACETIZE: working database write timed out after %.1f seconds for %s with method %s\n",
 			    writer.write_timeout, object_name, method);
-		} else if (writer.write_started) {
+		} else if (writer.status.write_started) {
 		    facetize_log(s, 0,
 			    "FACETIZE: database writer failed while committing %s with method %s\n",
+			    object_name, method);
+		} else if (writer.write_permitted) {
+		    facetize_log(s, 0,
+			    "FACETIZE: database writer failed before acknowledging write start for %s with method %s\n",
 			    object_name, method);
 		} else {
 		    facetize_log(s, 0,
 			    "FACETIZE: database writer failed before committing %s with method %s\n",
 			    object_name, method);
 		}
-		bool canonical_write_started = writer.write_started;
+		bool canonical_write_started = writer.status.write_started;
+		size_t interrupted_worker_index = writer.worker_index;
+		tess_writer_stop(s, writer, true);
+		if (!canonical_write_started &&
+			committing_worker.commit_retries <
+			FACETIZE_WRITER_RESTART_LIMIT) {
+		    committing_worker.commit_retries++;
+		    if (submit_staged_result(interrupted_worker_index)) {
+			facetize_log(s, 1,
+				"FACETIZE: resubmitted staged tessellation for %s after the database writer exited before acknowledging write start\n",
+				object_name);
+			made_progress = true;
+			continue;
+		    }
+		}
 		if (!canonical_write_started)
 		    failed_names->push_back(object_name);
-		tess_writer_stop(s, writer, true);
 		write_owner = workers.size();
 		tess_worker_request_reset(committing_worker);
 		active_workers--;
@@ -1441,7 +1475,7 @@ tess_run(struct _ged_facetize_state *s, const char **tess_cmd,
 	    if (writer.worker_index < workers.size()) {
 		const tess_worker_state &committing_worker =
 		    workers[writer.worker_index];
-		if (writer.write_started) {
+		if (writer.status.write_started) {
 		    facetize_log(s, 0,
 			    "FACETIZE: committing tessellation for %s with method %s (%d of %d complete, %zu workers active, %.1f seconds elapsed; %.1f second write limit)\n",
 			    tess_cmd[committing_worker.object_index], method,

@@ -39,6 +39,7 @@ static const char FACETIZE_COMMIT_MAGIC[] = "FACETIZE_COMMIT";
 static const char FACETIZE_RESULT_MAGIC[] = "FACETIZE_RESULT";
 static const char FACETIZE_WRITE_READY_MAGIC[] = "FACETIZE_WRITE_READY";
 static const char FACETIZE_WRITE_PROCEED_MAGIC[] = "FACETIZE_WRITE_PROCEED";
+static const char FACETIZE_WRITE_STARTED_MAGIC[] = "FACETIZE_WRITE_STARTED";
 static const char FACETIZE_WRITE_DONE_MAGIC[] = "FACETIZE_WRITE_DONE";
 static const size_t FACETIZE_PROTOCOL_FIELD_MAX = 1024u * 1024u;
 static const size_t FACETIZE_PROTOCOL_HEADER_SIZE = 128u;
@@ -233,6 +234,11 @@ FacetizeWorkerClient::consume_output(const char *data, size_t data_size,
 	    status.resident_size = parsed_resident_size;
 	    continue;
 	}
+	if (message_type == FACETIZE_WRITE_STARTED_MAGIC &&
+		(line_stream >> std::ws).eof()) {
+	    status.write_started = true;
+	    continue;
+	}
 	if (message_type == FACETIZE_WRITE_DONE_MAGIC &&
 		(line_stream >> parsed_result >> parsed_resident_size) &&
 		(line_stream >> std::ws).eof()) {
@@ -349,6 +355,16 @@ FacetizeWorkerServer::receive_write_proceed()
 
     std::string expected_response = std::string(FACETIZE_WRITE_PROCEED_MAGIC) + "\n";
     return expected_response == response;
+}
+
+bool
+FacetizeWorkerServer::send_write_started()
+{
+    if (!response_stream)
+	return false;
+
+    return fprintf(response_stream, "%s\n", FACETIZE_WRITE_STARTED_MAGIC) >= 0 &&
+	fflush(response_stream) == 0;
 }
 
 bool

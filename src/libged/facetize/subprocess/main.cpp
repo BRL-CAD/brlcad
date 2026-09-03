@@ -34,8 +34,11 @@
 #include <string>
 #include <vector>
 
+#include <stdlib.h>
+
 #include "bu/app.h"
 #include "bu/env.h"
+#include "bu/file.h"
 #include "bu/opt.h"
 #include "bg/trimesh.h"
 #include "rt/primitives/bot.h"
@@ -45,6 +48,48 @@
 #include "../transfer.h"
 #include "../worker.h"
 #include "./tessellate.h"
+
+static const char FACETIZE_TEST_FAULT_ENV[] =
+    "LIBGED_FACETIZE_TEST_FAULT";
+static const char FACETIZE_TEST_FAULT_FILE_ENV[] =
+    "LIBGED_FACETIZE_TEST_FAULT_FILE";
+static const char FACETIZE_TEST_FAULT_TESS_READY[] = "tess-before-ready";
+static const char FACETIZE_TEST_FAULT_STAGE_DONE[] = "stage-before-done";
+static const char FACETIZE_TEST_FAULT_WRITER_PROCEED[] =
+    "writer-before-proceed";
+static const char FACETIZE_TEST_FAULT_WRITER_DONE[] = "writer-before-done";
+
+/**
+ * Terminate at a named protocol boundary when explicitly armed by a test.
+ * Requiring both an exact stage/object selector and a writable one-shot claim
+ * file keeps this inaccessible during normal operation and prevents restarted
+ * workers from repeatedly taking the same fault.
+ */
+static void
+facetize_test_fault(const char *stage, const char *object_name)
+{
+    const char *fault = getenv(FACETIZE_TEST_FAULT_ENV);
+    const char *claim_file = getenv(FACETIZE_TEST_FAULT_FILE_ENV);
+    if (!fault || !fault[0] || !claim_file || !claim_file[0] ||
+	    !stage || !object_name)
+	return;
+
+    std::string expected = std::string(stage) + ":" + object_name;
+    if (expected != fault || bu_file_exists(claim_file, NULL))
+	return;
+
+    FILE *claim = fopen(claim_file, "wb");
+    if (!claim)
+	return;
+    bool written = fwrite(expected.data(), 1, expected.size(), claim) ==
+	expected.size();
+    bool closed = fclose(claim) == 0;
+    if (!written || !closed)
+	return;
+
+    bu_exit(BRLCAD_ERROR, "FACETIZE: injected test fault at %s for %s\n",
+	    stage, object_name);
+}
 
 static void
 facetize_payload_add(size_t *payload_size, size_t count, size_t item_size)
@@ -400,10 +445,12 @@ facetize_server_request(struct ged *gedp, struct db_i *result_dbip,
     if (ret == BRLCAD_OK && obot) {
 	// Waiting here lets the parent stop an over-time tessellation without
 	// risking a partially replaced object in the working database.
+	facetize_test_fault(FACETIZE_TEST_FAULT_TESS_READY, object_name);
 	size_t payload_size = facetize_bot_payload_size(obot);
 	if (!worker_channel.send_write_ready(payload_size,
 		facetize_resident_size()) ||
-		!worker_channel.receive_write_proceed()) {
+		!worker_channel.receive_write_proceed() ||
+		!worker_channel.send_write_started()) {
 	    _tess_facetize_free_bot(obot);
 	    ret = BRLCAD_ERROR;
 	} else {
@@ -412,6 +459,9 @@ facetize_server_request(struct ged *gedp, struct db_i *result_dbip,
 		FACETIZE_WORKER_RESULT_OBJECT : object_name;
 	    ret = _tess_facetize_write_bot(output_dbip, obot, output_name,
 		    bu_vls_cstr(&method));
+	    if (result_dbip && ret == BRLCAD_OK)
+		facetize_test_fault(FACETIZE_TEST_FAULT_STAGE_DONE,
+			object_name);
 	    if (!worker_channel.send_write_result(ret,
 		    facetize_resident_size())) {
 		ret = BRLCAD_ERROR;
@@ -493,14 +543,26 @@ facetize_writer(const char *work_file)
 	    break;
 	if (read_result == FacetizeWorkerReadResult::Error ||
 		!channel.send_write_ready(request.payload_size,
-		    facetize_resident_size()) ||
-		!channel.receive_write_proceed()) {
+		    facetize_resident_size())) {
+	    writer_status = BRLCAD_ERROR;
+	    break;
+	}
+	facetize_test_fault(FACETIZE_TEST_FAULT_WRITER_PROCEED,
+		request.object_name.c_str());
+	if (!channel.receive_write_proceed()) {
+	    writer_status = BRLCAD_ERROR;
+	    break;
+	}
+	if (!channel.send_write_started()) {
 	    writer_status = BRLCAD_ERROR;
 	    break;
 	}
 
 	int ret = facetize_transfer_staged_bot(dbip,
 		request.result_file.c_str(), request.object_name.c_str());
+	if (ret == BRLCAD_OK)
+	    facetize_test_fault(FACETIZE_TEST_FAULT_WRITER_DONE,
+		    request.object_name.c_str());
 	if (!channel.send_write_result(ret, facetize_resident_size())) {
 	    writer_status = BRLCAD_ERROR;
 	    break;
