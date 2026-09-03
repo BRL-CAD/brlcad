@@ -10,7 +10,7 @@ facetize - Creates __new_object__ using __old_object__ as a guide, creating an e
 
 [source]
 ----
-facetize [-h] [-v] [-q] [-n] [-r] [-s suffix] [-p prefix] [--in-place] [--max-time #] [--max-pnts #] [--resume] [--methods m1,m2,...] [--method-opts METHOD opt1=val opt2=val...] [--no-empty] [--log-file filename] [--nmg-booleval] [--disable-fixup] [--perturb] [--no-perturb] [--perturb-sa-tol #] [--perturb-vol-tol #] [--tolerate-failures] [-B -t threshold] {old_object new_object}
+facetize [-h] [-v] [-q] [-n] [-r] [-j jobs] [-s suffix] [-p prefix] [--in-place] [--max-time #] [--max-pnts #] [--resume] [--methods m1,m2,...] [--method-opts METHOD opt1=val opt2=val...] [--no-empty] [--log-file filename] [--nmg-booleval] [--disable-fixup] [--perturb] [--no-perturb] [--perturb-sa-tol #] [--perturb-vol-tol #] [--tolerate-failures] [-B -t threshold] {old_object new_object}
 ----
 
 
@@ -61,13 +61,17 @@ Different tolerance settings will create finer or coarser meshes. See the *tol* 
 
 Primitive tessellation is performed in a child process against a private working copy of the database in the BRL-CAD cache.  The original database is not modified as individual primitive meshes are generated.  Only after the conversion succeeds are the requested results transferred from the working database.  This separation also permits an interrupted conversion to retain its intermediate state for use with *--resume*.
 
-The parent command sends primitive names to a persistent tessellation process one at a time.  The child reports a result for each name, so a timeout, conversion failure, or child-process crash that occurs before a database write can be associated directly with the affected primitive.  The child is restarted when necessary and processing continues with the next name; the parent does not subdivide and retry the whole group to discover which object failed.  Unless output is suppressed with *--quiet*, long tessellation batches also report their current object and completed-object count at approximately five-second intervals.
+The parent command sends primitive names to a small pool of persistent tessellation processes.  Each child reports a result for every name, so a timeout, conversion failure, or child-process crash can be associated directly with the affected primitive.  A child is restarted when necessary and processing continues with the next name; the parent does not subdivide and retry the whole group to discover which object failed.  Unless output is suppressed with *--quiet*, long tessellation batches also report their completed-object count and active-worker state at approximately five-second intervals.
 
-Database updates use a separate write handshake.  After preparing a mesh in memory, the child announces that it is ready to write and reports the approximate mesh size, then waits.  The parent acknowledges that it is waiting for the write before the child may update the working database.  The child explicitly reports when the update is complete.  Consequently, the normal per-object tessellation limit, including *--max-time* and method-specific limits, applies to mesh preparation and does not interrupt an acknowledged database write.
+By default, *facetize* uses at most two primitive workers and only enables the second when both CPU and memory information indicate it is safe.  It reserves the larger of one GiB or one quarter of total physical memory for the rest of the system.  Starting another job also requires at least 512 MiB beyond that reserve, or the largest worker resident-memory measurement seen so far if that is greater.  If the platform cannot report the required memory information, *facetize* falls back to one worker.  The available CPU count is divided among worker processes and is also imposed as the thread limit inside each worker, preventing nested algorithms from independently using all CPUs.  *--jobs* changes the maximum process count; it does not bypass the memory admission checks.
+
+Database updates use a separate write handshake.  After preparing a mesh in memory, a child announces that it is ready to write and reports the approximate mesh size and its current resident memory, then waits.  The parent acknowledges that it is waiting for the write before the child may proceed, and the child explicitly reports when the update is complete.  Consequently, the normal per-object tessellation limit, including *--max-time* and method-specific limits, applies to mesh preparation and does not interrupt an acknowledged write.
+
+With multiple workers, each child writes to its own small staging database rather than modifying the shared working database.  After the child reports a completed staging write, the parent submits that result to a single persistent writer process.  The writer announces that it is ready, waits for the parent's acknowledgement, transfers the result through one persistent working-database handle, and reports completion.  This permits tessellation to proceed in parallel without concurrent database allocation updates or repeated full directory scans, while allowing the parent to supervise the canonical database write itself.  With one worker, the child writes directly to the working database to avoid the extra staging I/O.
 
 Before the first primitive conversion, the parent measures write throughput on the same cache filesystem as the working database.  It writes a temporary file in 1 MiB chunks until approximately one second has elapsed or 128 MiB has been written, then removes the file immediately.  Successful mesh writes of at least 1 MiB subsequently refine this profile.  For each database update, the parent allows ten times the projected write time, with a minimum of five seconds and a maximum of five minutes.  This measured allowance protects legitimate long writes on slow storage while still detecting a genuinely stalled update.
 
-If a child fails before write permission is granted, the working database is known to be unchanged and no rollback is needed.  A failure, crash, or write-deadline expiration after permission is granted but before completion is ambiguous: the working database may contain a partial update.  In that case *facetize* restores its cache-local checkpoint and replays only the primitive conversions already known to have succeeded.  The original database remains untouched during this recovery.
+If a child fails before write permission is granted, the working database is known to be unchanged and no rollback is needed.  In parallel mode, a failure during a child write affects only that worker's disposable staging database, so the failed object is reported and the worker can be restarted without replaying unrelated objects.  A serial child failure during a direct write, or a writer-process failure after permission to modify the working database, is ambiguous because the working database may contain a partial update.  In those cases *facetize* restores its cache-local checkpoint and replays only the conversions not already tied to a specific failure.  The original database remains untouched during this recovery.
 
 
 [[facetize_options]]
@@ -92,6 +96,10 @@ Instructs *facetize* to produce NMG solids rather than BoT solids.
 
 *-r, --regions*::
 Rather than converting all specified inputs to one top level object, walk specified trees and individually convert regions to facetized objects. This mode is useful when wanting to display models in shaded mode while preserving color and region ID properties. If no regions are present a normal conversion is performed instead.
+
+
+*-j, --jobs #*::
+Set the maximum number of primitive tessellation worker processes. A value of 1 forces serial processing. The default value of 0 selects a conservative automatic limit based on available CPUs and memory. Memory checks may delay or reduce parallel work even when a larger value is requested.
 
 
 *-s, --suffix*::

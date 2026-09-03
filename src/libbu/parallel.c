@@ -24,6 +24,9 @@
 #include <ctype.h>
 #include <math.h>
 #include <string.h>
+#if !defined(_WIN32) || defined(__CYGWIN__)
+#  include <stdatomic.h>
+#endif
 
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
@@ -129,6 +132,36 @@ void parallel_cpp11thread(void (*func)(int, void *), size_t ncpu, void *arg);
 #endif /* CPP11THREAD */
 
 int BU_SEM_THREAD = BU_SEM_ID_THREAD;
+
+#if defined(_WIN32) && !defined(__CYGWIN__)
+static LONG bu_cpu_limit = 0;
+
+static size_t
+cpu_limit_get(void)
+{
+    return (size_t)InterlockedCompareExchange(&bu_cpu_limit, 0, 0);
+}
+
+static void
+cpu_limit_set(size_t ncpu)
+{
+    (void)InterlockedExchange(&bu_cpu_limit, (LONG)ncpu);
+}
+#else
+static atomic_size_t bu_cpu_limit = ATOMIC_VAR_INIT(0);
+
+static size_t
+cpu_limit_get(void)
+{
+    return atomic_load_explicit(&bu_cpu_limit, memory_order_acquire);
+}
+
+static void
+cpu_limit_set(size_t ncpu)
+{
+    atomic_store_explicit(&bu_cpu_limit, ncpu, memory_order_release);
+}
+#endif
 
 
 typedef enum {
@@ -355,11 +388,20 @@ bu_avail_cpus(void)
     }
 
     if (LIKELY(ncpu > 0)) {
-	return ncpu;
+	size_t cpu_limit = cpu_limit_get();
+	return (cpu_limit && cpu_limit < (size_t)ncpu) ? cpu_limit :
+	    (size_t)ncpu;
     }
 
     /* non-PARALLEL */
     return 1;
+}
+
+
+void
+bu_avail_cpus_set(size_t ncpu)
+{
+    cpu_limit_set((ncpu > MAX_PSW) ? MAX_PSW : ncpu);
 }
 
 
@@ -538,6 +580,10 @@ parallel_interface_arg_stub(struct thread_data *user_thread_data)
 void
 bu_parallel(void (*func)(int, void *), size_t ncpu, void *arg)
 {
+    size_t cpu_limit = cpu_limit_get();
+    if (ncpu && cpu_limit && ncpu > cpu_limit)
+	ncpu = cpu_limit;
+
 #ifndef PARALLEL
 
     if (!func)

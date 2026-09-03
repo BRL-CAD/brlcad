@@ -24,6 +24,7 @@
 
 #include "common.h"
 
+#include <algorithm>
 #include <sstream>
 
 #include <string.h>
@@ -31,22 +32,123 @@
 #include "bu/log.h"
 #include "./worker.h"
 
+const char FACETIZE_WORKER_RESULT_OBJECT[] = "facetize_worker_result";
+
 static const char FACETIZE_REQUEST_MAGIC[] = "FACETIZE_REQUEST";
+static const char FACETIZE_COMMIT_MAGIC[] = "FACETIZE_COMMIT";
 static const char FACETIZE_RESULT_MAGIC[] = "FACETIZE_RESULT";
 static const char FACETIZE_WRITE_READY_MAGIC[] = "FACETIZE_WRITE_READY";
 static const char FACETIZE_WRITE_PROCEED_MAGIC[] = "FACETIZE_WRITE_PROCEED";
 static const char FACETIZE_WRITE_DONE_MAGIC[] = "FACETIZE_WRITE_DONE";
-static const size_t FACETIZE_REQUEST_NAME_MAX = 1024u * 1024u;
+static const size_t FACETIZE_PROTOCOL_FIELD_MAX = 1024u * 1024u;
 static const size_t FACETIZE_PROTOCOL_HEADER_SIZE = 128u;
+static const size_t FACETIZE_MIB = 1024u * 1024u;
+static const size_t FACETIZE_MIN_MEMORY_HEADROOM = 1024u * FACETIZE_MIB;
+static const size_t FACETIZE_MIN_WORKER_RESERVE = 512u * FACETIZE_MIB;
+static const size_t FACETIZE_MEMORY_HEADROOM_DIVISOR = 4u;
+static const size_t FACETIZE_AUTOMATIC_WORKER_LIMIT = 2u;
 
 static bool
-facetize_send_result(FILE *response_stream, const char *message_type, int result)
+facetize_send_field(FILE *stream, const char *field, size_t field_length)
+{
+    return stream && field &&
+	fwrite(field, 1, field_length, stream) == field_length &&
+	fputc('\n', stream) != EOF;
+}
+
+static FacetizeWorkerReadResult
+facetize_read_header(FILE *stream, char *header, size_t header_size)
+{
+    if (!stream || !header || header_size < 2)
+	return FacetizeWorkerReadResult::Error;
+    if (!bu_fgets(header, header_size, stream))
+	return feof(stream) ? FacetizeWorkerReadResult::End :
+	    FacetizeWorkerReadResult::Error;
+
+    size_t header_length = strlen(header);
+    return (header_length && header[header_length - 1] == '\n') ?
+	FacetizeWorkerReadResult::Request : FacetizeWorkerReadResult::Error;
+}
+
+static bool
+facetize_read_field(FILE *stream, size_t field_length, std::string &field)
+{
+    field.assign(field_length, '\0');
+    if (fread(&field[0], 1, field_length, stream) == field_length &&
+	fgetc(stream) == '\n')
+	return true;
+
+    field.clear();
+    return false;
+}
+
+static bool
+facetize_send_result(FILE *response_stream, const char *message_type, int result,
+	size_t resident_size)
 {
     if (!response_stream)
 	return false;
 
-    return fprintf(response_stream, "%s %d\n", message_type, result) >= 0 &&
-	fflush(response_stream) == 0;
+    return fprintf(response_stream, "%s %d %zu\n", message_type, result,
+	    resident_size) >= 0 && fflush(response_stream) == 0;
+}
+
+FacetizeWorkerPolicy::FacetizeWorkerPolicy(size_t requested_workers,
+	size_t work_count, size_t available_cpus, size_t total_memory,
+	size_t available_memory)
+{
+    available_cpus = std::max((size_t)1, available_cpus);
+    size_t worker_limit = requested_workers ? requested_workers :
+	FACETIZE_AUTOMATIC_WORKER_LIMIT;
+    worker_limit = std::min(worker_limit, available_cpus);
+    if (work_count)
+	worker_limit = std::min(worker_limit, work_count);
+
+    if (total_memory && available_memory) {
+	memory_headroom = std::max(FACETIZE_MIN_MEMORY_HEADROOM,
+		total_memory / FACETIZE_MEMORY_HEADROOM_DIVISOR);
+	if (available_memory > memory_headroom) {
+	    size_t memory_workers = (available_memory - memory_headroom) /
+		FACETIZE_MIN_WORKER_RESERVE;
+	    worker_limit = std::min(worker_limit,
+		    std::max((size_t)1, memory_workers));
+	} else {
+	    worker_limit = 1;
+	}
+    } else {
+	worker_limit = 1;
+    }
+
+    workers = std::max((size_t)1, worker_limit);
+    worker_threads = std::max((size_t)1, available_cpus / workers);
+}
+
+size_t
+FacetizeWorkerPolicy::worker_count() const
+{
+    return workers;
+}
+
+size_t
+FacetizeWorkerPolicy::threads_per_worker() const
+{
+    return worker_threads;
+}
+
+bool
+FacetizeWorkerPolicy::can_dispatch(size_t active_workers,
+	size_t available_memory, size_t observed_worker_resident) const
+{
+    if (!active_workers)
+	return true;
+    if (workers == 1 || !available_memory || !memory_headroom)
+	return false;
+
+    size_t worker_reserve = std::max(FACETIZE_MIN_WORKER_RESERVE,
+	    observed_worker_resident);
+    if (worker_reserve > SIZE_MAX - memory_headroom)
+	return false;
+    return available_memory > memory_headroom + worker_reserve;
 }
 
 void
@@ -63,13 +165,34 @@ FacetizeWorkerClient::send_request(const char *object_name)
 	return false;
 
     size_t name_length = strlen(object_name);
-    if (name_length > FACETIZE_REQUEST_NAME_MAX)
+    if (name_length > FACETIZE_PROTOCOL_FIELD_MAX)
 	return false;
 
     return fprintf(request_stream, "%s %zu\n", FACETIZE_REQUEST_MAGIC,
 	    name_length) >= 0 &&
-	fwrite(object_name, 1, name_length, request_stream) == name_length &&
-	fputc('\n', request_stream) != EOF && fflush(request_stream) == 0;
+	facetize_send_field(request_stream, object_name, name_length) &&
+	fflush(request_stream) == 0;
+}
+
+bool
+FacetizeWorkerClient::send_commit(const char *result_file,
+	const char *object_name, size_t payload_size)
+{
+    if (!request_stream || !result_file || !result_file[0] ||
+	    !object_name || !object_name[0])
+	return false;
+
+    size_t file_length = strlen(result_file);
+    size_t name_length = strlen(object_name);
+    if (file_length > FACETIZE_PROTOCOL_FIELD_MAX ||
+	    name_length > FACETIZE_PROTOCOL_FIELD_MAX)
+	return false;
+
+    return fprintf(request_stream, "%s %zu %zu %zu\n",
+	    FACETIZE_COMMIT_MAGIC, file_length, name_length, payload_size) >= 0 &&
+	facetize_send_field(request_stream, result_file, file_length) &&
+	facetize_send_field(request_stream, object_name, name_length) &&
+	fflush(request_stream) == 0;
 }
 
 bool
@@ -100,26 +223,30 @@ FacetizeWorkerClient::consume_output(const char *data, size_t data_size,
 	std::string message_type;
 	int parsed_result = BRLCAD_ERROR;
 	size_t parsed_payload_size = 0;
+	size_t parsed_resident_size = 0;
 	line_stream >> message_type;
 	if (message_type == FACETIZE_WRITE_READY_MAGIC &&
-		(line_stream >> parsed_payload_size) &&
+		(line_stream >> parsed_payload_size >> parsed_resident_size) &&
 		(line_stream >> std::ws).eof()) {
 	    status.write_ready = true;
 	    status.payload_size = parsed_payload_size;
+	    status.resident_size = parsed_resident_size;
 	    continue;
 	}
 	if (message_type == FACETIZE_WRITE_DONE_MAGIC &&
-		(line_stream >> parsed_result) &&
+		(line_stream >> parsed_result >> parsed_resident_size) &&
 		(line_stream >> std::ws).eof()) {
 	    status.result = parsed_result;
+	    status.resident_size = parsed_resident_size;
 	    status.write_done = true;
 	    status.result_received = true;
 	    continue;
 	}
 	if (message_type == FACETIZE_RESULT_MAGIC &&
-		(line_stream >> parsed_result) &&
+		(line_stream >> parsed_result >> parsed_resident_size) &&
 		(line_stream >> std::ws).eof()) {
 	    status.result = parsed_result;
+	    status.resident_size = parsed_resident_size;
 	    status.result_received = true;
 	    continue;
 	}
@@ -141,13 +268,10 @@ FacetizeWorkerServer::receive_request(std::string &object_name)
 	return FacetizeWorkerReadResult::Error;
 
     char header[FACETIZE_PROTOCOL_HEADER_SIZE];
-    if (!bu_fgets(header, sizeof(header), request_stream))
-	return feof(request_stream) ? FacetizeWorkerReadResult::End :
-	    FacetizeWorkerReadResult::Error;
-
-    size_t header_length = strlen(header);
-    if (!header_length || header[header_length - 1] != '\n')
-	return FacetizeWorkerReadResult::Error;
+    FacetizeWorkerReadResult read_result = facetize_read_header(request_stream,
+	    header, sizeof(header));
+    if (read_result != FacetizeWorkerReadResult::Request)
+	return read_result;
 
     size_t name_length = 0;
     std::string message_type;
@@ -156,13 +280,45 @@ FacetizeWorkerServer::receive_request(std::string &object_name)
 	    message_type != FACETIZE_REQUEST_MAGIC ||
 	    !(header_stream >> name_length) ||
 	    !(header_stream >> std::ws).eof() || !name_length ||
-	    name_length > FACETIZE_REQUEST_NAME_MAX)
+	    name_length > FACETIZE_PROTOCOL_FIELD_MAX)
 	return FacetizeWorkerReadResult::Error;
 
-    object_name.assign(name_length, '\0');
-    if (fread(&object_name[0], 1, name_length, request_stream) != name_length ||
-	    fgetc(request_stream) != '\n') {
-	object_name.clear();
+    if (!facetize_read_field(request_stream, name_length, object_name))
+	return FacetizeWorkerReadResult::Error;
+
+    return FacetizeWorkerReadResult::Request;
+}
+
+FacetizeWorkerReadResult
+FacetizeWorkerServer::receive_commit(FacetizeCommitRequest &request)
+{
+    request = FacetizeCommitRequest();
+    if (!request_stream)
+	return FacetizeWorkerReadResult::Error;
+
+    char header[FACETIZE_PROTOCOL_HEADER_SIZE];
+    FacetizeWorkerReadResult read_result = facetize_read_header(request_stream,
+	    header, sizeof(header));
+    if (read_result != FacetizeWorkerReadResult::Request)
+	return read_result;
+
+    size_t file_length = 0;
+    size_t name_length = 0;
+    std::string message_type;
+    std::istringstream header_stream(header);
+    if (!(header_stream >> message_type) ||
+	    message_type != FACETIZE_COMMIT_MAGIC ||
+	    !(header_stream >> file_length >> name_length >> request.payload_size) ||
+	    !(header_stream >> std::ws).eof() || !file_length || !name_length ||
+	    file_length > FACETIZE_PROTOCOL_FIELD_MAX ||
+	    name_length > FACETIZE_PROTOCOL_FIELD_MAX)
+	return FacetizeWorkerReadResult::Error;
+
+    if (!facetize_read_field(request_stream, file_length,
+	    request.result_file) ||
+	    !facetize_read_field(request_stream, name_length,
+		request.object_name)) {
+	request = FacetizeCommitRequest();
 	return FacetizeWorkerReadResult::Error;
     }
 
@@ -170,13 +326,15 @@ FacetizeWorkerServer::receive_request(std::string &object_name)
 }
 
 bool
-FacetizeWorkerServer::send_write_ready(size_t payload_size)
+FacetizeWorkerServer::send_write_ready(size_t payload_size,
+	size_t resident_size)
 {
     if (!response_stream)
 	return false;
 
-    return fprintf(response_stream, "%s %zu\n", FACETIZE_WRITE_READY_MAGIC,
-	    payload_size) >= 0 && fflush(response_stream) == 0;
+    return fprintf(response_stream, "%s %zu %zu\n",
+	    FACETIZE_WRITE_READY_MAGIC, payload_size, resident_size) >= 0 &&
+	fflush(response_stream) == 0;
 }
 
 bool
@@ -194,16 +352,18 @@ FacetizeWorkerServer::receive_write_proceed()
 }
 
 bool
-FacetizeWorkerServer::send_tessellation_result(int result)
+FacetizeWorkerServer::send_tessellation_result(int result,
+	size_t resident_size)
 {
-    return facetize_send_result(response_stream, FACETIZE_RESULT_MAGIC, result);
+    return facetize_send_result(response_stream, FACETIZE_RESULT_MAGIC, result,
+	    resident_size);
 }
 
 bool
-FacetizeWorkerServer::send_write_result(int result)
+FacetizeWorkerServer::send_write_result(int result, size_t resident_size)
 {
     return facetize_send_result(response_stream, FACETIZE_WRITE_DONE_MAGIC,
-	    result);
+	    result, resident_size);
 }
 
 // Local Variables:

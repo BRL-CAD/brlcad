@@ -103,9 +103,22 @@ BU_EXPORT extern void bu_nice_set(int newnice);
 
 /**
  * Return the maximum number of physical CPUs that are considered to
- * be available to this process now.
+ * be available to this process now, subject to any process-local limit set by
+ * bu_avail_cpus_set().
  */
 BU_EXPORT extern size_t bu_avail_cpus(void);
+
+/**
+ * Limit the CPU count reported by bu_avail_cpus() and honored by subsequent
+ * bu_parallel() calls in this process.  A value of zero removes the limit.
+ * Call this before starting worker threads; changing the limit does not resize
+ * work that is already running.
+ *
+ * This is useful when several independent processes share one machine and
+ * each process contains code that selects its own parallelism with
+ * bu_avail_cpus().
+ */
+BU_EXPORT extern void bu_avail_cpus_set(size_t ncpu);
 
 
 /**

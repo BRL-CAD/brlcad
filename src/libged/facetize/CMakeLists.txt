@@ -12,6 +12,7 @@ set(
   nmg.cpp
   plan.cpp
   regions.cpp
+  transfer.cpp
   tri.cpp
   util.cpp
   worker.cpp
@@ -44,6 +45,7 @@ cmakefiles(
   tess_opts.h
   ged_facetize.h
   old_facetize.h
+  transfer.h
   worker.h
   TODO
 )

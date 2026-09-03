@@ -10,6 +10,7 @@ set(
   main.cpp
   nmg.cpp
   util.cpp
+  ../transfer.cpp
   ../worker.cpp
 )
 

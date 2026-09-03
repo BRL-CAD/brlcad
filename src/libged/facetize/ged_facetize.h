@@ -88,6 +88,7 @@ struct _ged_facetize_state {
     // Settings
     int max_time;
     int max_pnts;
+    int max_workers;
     struct bu_vls *prefix;
     struct bu_vls *suffix;
 

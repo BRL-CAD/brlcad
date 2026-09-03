@@ -162,6 +162,81 @@ test_malformed_requests()
 
 
 static void
+test_commit_round_trip()
+{
+    FILE *requests = tmpfile();
+    expect(requests != NULL, "create commit stream");
+    if (!requests)
+	return;
+
+    const char result_file[] = "cache path/worker\nresult.g";
+    const char object_name[] = "assembly/part with spaces";
+    const size_t payload_size = 1234567;
+    FacetizeWorkerClient client;
+    client.reset(requests);
+    expect(client.send_commit(result_file, object_name, payload_size),
+	"client sends a framed commit request");
+    expect(fflush(requests) == 0 && fseek(requests, 0, SEEK_SET) == 0,
+	"rewind commit stream");
+
+    FacetizeWorkerServer server(requests, NULL);
+    FacetizeCommitRequest request;
+    expect(server.receive_commit(request) == FacetizeWorkerReadResult::Request,
+	"server accepts a complete commit request");
+    expect(request.result_file == result_file,
+	"commit framing preserves result path bytes");
+    expect(request.object_name == object_name,
+	"commit framing preserves object name bytes");
+    expect(request.payload_size == payload_size,
+	"commit framing preserves the payload size");
+    expect(server.receive_commit(request) == FacetizeWorkerReadResult::End,
+	"clean commit EOF ends the writer loop");
+    fclose(requests);
+
+    client.reset(NULL);
+    expect(!client.send_commit("result.g", "part", 1),
+	"client rejects a commit without a request stream");
+
+    FILE *invalid_requests = tmpfile();
+    expect(invalid_requests != NULL, "create invalid commit stream");
+    if (invalid_requests) {
+	client.reset(invalid_requests);
+	expect(!client.send_commit(NULL, "part", 1),
+	    "client rejects a null result path");
+	expect(!client.send_commit("", "part", 1),
+	    "client rejects an empty result path");
+	expect(!client.send_commit("result.g", NULL, 1),
+	    "client rejects a null object name");
+	expect(!client.send_commit("result.g", "", 1),
+	    "client rejects an empty object name");
+	fclose(invalid_requests);
+    }
+
+    const char *malformed_commits[] = {
+	"NOT_A_COMMIT 8 4 12\nresult.g\npart\n",
+	"FACETIZE_COMMIT 0 4 12\n\npart\n",
+	"FACETIZE_COMMIT 8 4 12 trailing\nresult.g\npart\n",
+	"FACETIZE_COMMIT 9 4 12\nresult.g\npart\n",
+	"FACETIZE_COMMIT 8 5 12\nresult.g\npart\n",
+	"FACETIZE_COMMIT 8 4 12\nresult.g!part\n"
+    };
+    for (const char *commit : malformed_commits) {
+	FILE *malformed = stream_with_contents(commit);
+	expect(malformed != NULL, "create malformed commit stream");
+	if (!malformed)
+	    continue;
+	FacetizeWorkerServer malformed_server(malformed, NULL);
+	expect(malformed_server.receive_commit(request) ==
+		FacetizeWorkerReadResult::Error,
+	    "server rejects malformed commit framing");
+	expect(request.result_file.empty() && request.object_name.empty(),
+	    "malformed commit does not expose partial fields");
+	fclose(malformed);
+    }
+}
+
+
+static void
 test_write_handshake()
 {
     FILE *requests = tmpfile();
@@ -182,8 +257,11 @@ test_write_handshake()
     expect(server.receive_write_proceed(), "server accepts exact write acknowledgement");
 
     const size_t announced_payload_size = 987654;
-    expect(server.send_write_ready(announced_payload_size), "server sends write size");
-    expect(server.send_write_result(BRLCAD_OK), "server sends write completion");
+    const size_t announced_resident_size = 456789;
+    expect(server.send_write_ready(announced_payload_size,
+	    announced_resident_size), "server sends write size");
+    expect(server.send_write_result(BRLCAD_OK, announced_resident_size),
+	    "server sends write completion");
 
     std::string output = read_stream(responses);
     FacetizeWorkerStatus status;
@@ -197,6 +275,8 @@ test_write_handshake()
     expect(status.write_ready, "client recognizes fragmented write-ready message");
     expect(status.payload_size == announced_payload_size,
 	"client preserves announced write size");
+    expect(status.resident_size == announced_resident_size,
+	"client preserves worker resident memory");
     expect(status.write_done, "client recognizes fragmented write completion");
     expect(status.result_received && status.result == BRLCAD_OK,
 	"write completion result is retained");
@@ -210,7 +290,8 @@ test_write_handshake()
     expect(failure_response != NULL, "create tessellation result stream");
     if (failure_response) {
 	FacetizeWorkerServer failure_server(NULL, failure_response);
-	expect(failure_server.send_tessellation_result(BRLCAD_ERROR),
+	expect(failure_server.send_tessellation_result(BRLCAD_ERROR,
+		announced_resident_size),
 	    "server sends pre-write tessellation failure");
 	std::string failure_output = read_stream(failure_response);
 	FacetizeWorkerStatus failure_status;
@@ -220,6 +301,8 @@ test_write_handshake()
 	expect(failure_status.result_received &&
 	    failure_status.result == BRLCAD_ERROR && !failure_status.write_done,
 	    "client distinguishes pre-write failure from write completion");
+	expect(failure_status.resident_size == announced_resident_size,
+	    "pre-write result reports worker resident memory");
 	expect(diagnostics.empty(), "valid tessellation failure emits no diagnostics");
 	fclose(failure_response);
     }
@@ -263,16 +346,64 @@ test_client_diagnostics_and_reset()
 
     FacetizeWorkerServer null_server(NULL, NULL);
     std::string object_name;
+    FacetizeCommitRequest commit_request;
     expect(null_server.receive_request(object_name) == FacetizeWorkerReadResult::Error,
 	"server rejects a missing request stream");
+    expect(null_server.receive_commit(commit_request) ==
+	    FacetizeWorkerReadResult::Error,
+	"writer rejects a missing request stream");
     expect(!null_server.receive_write_proceed(),
 	"server cannot receive acknowledgement without a stream");
-    expect(!null_server.send_write_ready(1),
+    expect(!null_server.send_write_ready(1, 1),
 	"server cannot announce a write without a response stream");
-    expect(!null_server.send_tessellation_result(BRLCAD_OK),
+    expect(!null_server.send_tessellation_result(BRLCAD_OK, 1),
 	"server cannot send a result without a response stream");
-    expect(!null_server.send_write_result(BRLCAD_OK),
+    expect(!null_server.send_write_result(BRLCAD_OK, 1),
 	"server cannot send write completion without a response stream");
+}
+
+
+static void
+test_worker_policy()
+{
+    const size_t mib = (size_t)1024 * 1024;
+    const size_t gib = (size_t)1024 * mib;
+
+    FacetizeWorkerPolicy automatic(0, 20, 16, 3 * gib, 2560 * mib);
+    expect(automatic.worker_count() == 2,
+	"automatic policy conservatively permits two workers");
+    expect(automatic.threads_per_worker() == 8,
+	"automatic policy divides CPUs between workers");
+    expect(automatic.can_dispatch(1, 2 * gib, 512 * mib),
+	"automatic policy admits work while its memory reserve is intact");
+    expect(!automatic.can_dispatch(1, 1536 * mib, 512 * mib),
+	"automatic policy preserves system memory headroom");
+    expect(!automatic.can_dispatch(1, 2 * gib, 1280 * mib),
+	"observed worker memory increases the next-job reserve");
+    expect(!automatic.can_dispatch(1, 0, 0),
+	"missing current memory data pauses additional dispatches");
+    expect(automatic.can_dispatch(0, 0, 0),
+	"one job may make progress when current memory data is missing");
+
+    FacetizeWorkerPolicy serial(1, 20, 16, 3 * gib, 2560 * mib);
+    expect(serial.worker_count() == 1 && serial.threads_per_worker() == 16,
+	"one requested worker retains the full CPU budget");
+    expect(!serial.can_dispatch(1, 2 * gib, 0),
+	"serial policy does not admit a second active task");
+
+    FacetizeWorkerPolicy requested(8, 3, 12, 3 * gib, 2560 * mib);
+    expect(requested.worker_count() == 3,
+	"requested policy is capped by available work");
+    expect(requested.threads_per_worker() == 4,
+	"requested policy divides the CPU budget by effective workers");
+
+    FacetizeWorkerPolicy unknown_memory(0, 20, 16, 0, 0);
+    expect(unknown_memory.worker_count() == 1,
+	"unknown memory availability falls back to one worker");
+
+    FacetizeWorkerPolicy low_memory(4, 20, 16, 3 * gib, gib);
+    expect(low_memory.worker_count() == 1,
+	"low memory availability falls back to one worker");
 }
 
 
@@ -281,8 +412,10 @@ main()
 {
     test_request_round_trip();
     test_malformed_requests();
+    test_commit_round_trip();
     test_write_handshake();
     test_client_diagnostics_and_reset();
+    test_worker_policy();
 
     if (failures)
 	std::fprintf(stderr, "%d facetize worker protocol test(s) failed\n", failures);

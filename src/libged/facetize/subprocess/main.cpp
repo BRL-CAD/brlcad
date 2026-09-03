@@ -42,6 +42,7 @@
 #include "ged.h"
 #define TESS_OPTS_IMPLEMENTATION
 #include "../tess_opts.h"
+#include "../transfer.h"
 #include "../worker.h"
 #include "./tessellate.h"
 
@@ -94,6 +95,13 @@ facetize_bot_payload_size(const struct rt_bot_internal *bot)
 	facetize_payload_add(&payload_size, bot->num_face_uvs,
 		3 * sizeof(*bot->face_uvs));
     return payload_size;
+}
+
+static size_t
+facetize_resident_size()
+{
+    ssize_t resident_size = bu_mem(BU_MEM_PROCESS_RESIDENT, NULL);
+    return (resident_size > 0) ? (size_t)resident_size : 0;
 }
 
 static void
@@ -374,8 +382,9 @@ print_tess_methods()
 }
 
 static int
-facetize_server_request(struct ged *gedp, const char *object_name,
-	tess_opts *s, FacetizeWorkerServer &worker_channel, bool *result_sent)
+facetize_server_request(struct ged *gedp, struct db_i *result_dbip,
+	const char *object_name, tess_opts *s,
+	FacetizeWorkerServer &worker_channel, bool *result_sent)
 {
     if (!gedp || !object_name || !s || !result_sent)
 	return BRLCAD_ERROR;
@@ -392,14 +401,19 @@ facetize_server_request(struct ged *gedp, const char *object_name,
 	// Waiting here lets the parent stop an over-time tessellation without
 	// risking a partially replaced object in the working database.
 	size_t payload_size = facetize_bot_payload_size(obot);
-	if (!worker_channel.send_write_ready(payload_size) ||
+	if (!worker_channel.send_write_ready(payload_size,
+		facetize_resident_size()) ||
 		!worker_channel.receive_write_proceed()) {
 	    _tess_facetize_free_bot(obot);
 	    ret = BRLCAD_ERROR;
 	} else {
-	    ret = _tess_facetize_write_bot(gedp->dbip, obot, object_name,
+	    struct db_i *output_dbip = result_dbip ? result_dbip : gedp->dbip;
+	    const char *output_name = result_dbip ?
+		FACETIZE_WORKER_RESULT_OBJECT : object_name;
+	    ret = _tess_facetize_write_bot(output_dbip, obot, output_name,
 		    bu_vls_cstr(&method));
-	    if (!worker_channel.send_write_result(ret)) {
+	    if (!worker_channel.send_write_result(ret,
+		    facetize_resident_size())) {
 		ret = BRLCAD_ERROR;
 	    } else {
 		*result_sent = true;
@@ -413,7 +427,7 @@ facetize_server_request(struct ged *gedp, const char *object_name,
 }
 
 static int
-facetize_server(const char *work_file, tess_opts *s)
+facetize_server(const char *work_file, const char *result_file, tess_opts *s)
 {
     int server_status = BRLCAD_OK;
     setvbuf(stdout, NULL, _IONBF, 0);
@@ -421,6 +435,13 @@ facetize_server(const char *work_file, tess_opts *s)
     struct ged *gedp = ged_open("db", work_file, 1);
     if (!gedp)
 	return BRLCAD_ERROR;
+
+    struct db_i *result_dbip = result_file ?
+	db_create(result_file, BRLCAD_DB_FORMAT_LATEST) : NULL;
+    if (result_file && !result_dbip) {
+	ged_close(gedp);
+	return BRLCAD_ERROR;
+    }
 
     FacetizeWorkerServer worker_channel(stdin, stdout);
     while (true) {
@@ -435,16 +456,59 @@ facetize_server(const char *work_file, tess_opts *s)
 	}
 
 	bool result_sent = false;
-	int ret = facetize_server_request(gedp, object_name.c_str(), s,
-		worker_channel, &result_sent);
-	if (!result_sent && !worker_channel.send_tessellation_result(ret)) {
+	int ret = facetize_server_request(gedp, result_dbip,
+		object_name.c_str(), s, worker_channel, &result_sent);
+	if (!result_sent && !worker_channel.send_tessellation_result(ret,
+		facetize_resident_size())) {
 	    server_status = BRLCAD_ERROR;
 	    break;
 	}
     }
 
+    if (result_dbip)
+	db_close(result_dbip);
     ged_close(gedp);
     return server_status;
+}
+
+static int
+facetize_writer(const char *work_file)
+{
+    setvbuf(stdout, NULL, _IONBF, 0);
+
+    struct db_i *dbip = db_open(work_file, DB_OPEN_READWRITE);
+    if (!dbip)
+	return BRLCAD_ERROR;
+    if (db_dirbuild(dbip) < 0) {
+	db_close(dbip);
+	return BRLCAD_ERROR;
+    }
+
+    int writer_status = BRLCAD_OK;
+    FacetizeWorkerServer channel(stdin, stdout);
+    while (true) {
+	FacetizeCommitRequest request;
+	FacetizeWorkerReadResult read_result = channel.receive_commit(request);
+	if (read_result == FacetizeWorkerReadResult::End)
+	    break;
+	if (read_result == FacetizeWorkerReadResult::Error ||
+		!channel.send_write_ready(request.payload_size,
+		    facetize_resident_size()) ||
+		!channel.receive_write_proceed()) {
+	    writer_status = BRLCAD_ERROR;
+	    break;
+	}
+
+	int ret = facetize_transfer_staged_bot(dbip,
+		request.result_file.c_str(), request.object_name.c_str());
+	if (!channel.send_write_result(ret, facetize_resident_size())) {
+	    writer_status = BRLCAD_ERROR;
+	    break;
+	}
+    }
+
+    db_close(dbip);
+    return writer_status;
 }
 
 extern "C" int
@@ -465,10 +529,13 @@ facetize_process(int argc, const char **argv)
 
     int list_methods = 0;
     int server_mode = 0;
+    int writer_mode = 0;
     int max_time = 0;
     int max_pnts = 0;
+    int worker_threads = 0;
+    struct bu_vls result_file = BU_VLS_INIT_ZERO;
 
-    struct bu_opt_desc d[10];
+    struct bu_opt_desc d[13];
     BU_OPT(d[ 0],  "h",         "help",                         "",                  NULL,           &print_help, "Print help and exit");
     BU_OPT(d[ 1],   "", "list-methods",                         "",                  NULL,         &list_methods, "List available tessellation methods.  When used with -h, print an informational summary of each method.");
     BU_OPT(d[ 2],  "O",    "overwrite",                         "",                  NULL,    &(s.overwrite_obj), "Replace original object with BoT");
@@ -477,8 +544,11 @@ facetize_process(int argc, const char **argv)
     BU_OPT(d[ 5],   "",     "max-time",                        "#",           &bu_opt_int,             &max_time, "Maximum number of seconds to allow for runtime (not supported by all methods).");
     BU_OPT(d[ 6],   "",     "max-pnts",                        "#",           &bu_opt_int,             &max_pnts, "Maximum number of pnts to use when applying ray sampling methods.");
     BU_OPT(d[ 7],   "",     "cache-dir",                     "dir",           &bu_opt_vls,            &cache_dir, "Directory to use for cached outputs (default is libbu cache directory).");
-    BU_OPT(d[ 8],   "",          "server",                        "",                  NULL,          &server_mode, "Run as a persistent worker, overwriting requested objects in the working database.");
-    BU_OPT_NULL(d[ 9]);
+    BU_OPT(d[ 8],   "",          "server",                        "",                  NULL,          &server_mode, "Run as a persistent worker.");
+    BU_OPT(d[ 9],   "",         "threads",                       "#",           &bu_opt_int,       &worker_threads, "Maximum CPU threads available to this process.");
+    BU_OPT(d[10],   "",     "result-file",                  "file.g",           &bu_opt_vls,          &result_file, "Write server results to a staging database.");
+    BU_OPT(d[11],   "",          "writer",                        "",                  NULL,          &writer_mode, "Run as a persistent staged-result writer.");
+    BU_OPT_NULL(d[12]);
 
     /* parse options */
     struct bu_vls omsg = BU_VLS_INIT_ZERO;
@@ -490,13 +560,25 @@ facetize_process(int argc, const char **argv)
     }
     bu_vls_free(&omsg);
 
+    if (worker_threads < 0 || worker_threads > MAX_PSW) {
+	bu_vls_free(&cache_dir);
+	bu_vls_free(&result_file);
+	return BRLCAD_ERROR;
+    }
+    if (worker_threads)
+	bu_avail_cpus_set((size_t)worker_threads);
+
     if (list_methods && print_help) {
 	print_methods_info();
+	bu_vls_free(&cache_dir);
+	bu_vls_free(&result_file);
 	return BRLCAD_OK;
     }
 
     if (list_methods) {
 	print_tess_methods();
+	bu_vls_free(&cache_dir);
+	bu_vls_free(&result_file);
 	return BRLCAD_OK;
     }
 
@@ -513,6 +595,8 @@ facetize_process(int argc, const char **argv)
 
 	bu_log("%s\n", bu_vls_cstr(&str));
 	bu_vls_free(&str);
+	bu_vls_free(&cache_dir);
+	bu_vls_free(&result_file);
         return BRLCAD_OK;
     }
 
@@ -524,19 +608,31 @@ facetize_process(int argc, const char **argv)
 	bu_setenv("BU_DIR_CACHE", bu_vls_cstr(&cache_dir), 1);
     }
 
-    // Do the setup for the various methods
+    if (writer_mode) {
+	int ret = (argc == 1 && !server_mode) ?
+	    facetize_writer(argv[0]) : BRLCAD_ERROR;
+	bu_vls_free(&cache_dir);
+	bu_vls_free(&result_file);
+	return ret;
+    }
+
+    // Do the setup for the various tessellation methods.
     method_setup(&s);
 
     if (server_mode) {
 	int ret = (argc == 1 && s.overwrite_obj) ?
-	    facetize_server(argv[0], &s) : BRLCAD_ERROR;
+	    facetize_server(argv[0], bu_vls_strlen(&result_file) ?
+		    bu_vls_cstr(&result_file) : NULL, &s) :
+	    BRLCAD_ERROR;
 	bu_vls_free(&cache_dir);
+	bu_vls_free(&result_file);
 	return ret;
     }
 
     if (argc < 2) {
 	bu_log("%s", usage);
 	bu_vls_free(&cache_dir);
+	bu_vls_free(&result_file);
 	return BRLCAD_ERROR;
     }
 
@@ -544,6 +640,7 @@ facetize_process(int argc, const char **argv)
     struct ged *gedp = ged_open("db", argv[0], 1);
     if (!gedp) {
 	bu_vls_free(&cache_dir);
+	bu_vls_free(&result_file);
 	return BRLCAD_ERROR;
     }
 
@@ -555,6 +652,7 @@ facetize_process(int argc, const char **argv)
 	    bu_ptbl_free(&dps);
 	    ged_close(gedp);
 	    bu_vls_free(&cache_dir);
+	    bu_vls_free(&result_file);
 	    return BRLCAD_ERROR;
 	}
 	bu_ptbl_ins(&dps, (long *)dp);
@@ -607,6 +705,7 @@ facetize_process(int argc, const char **argv)
     bu_ptbl_free(&dps);
     ged_close(gedp);
     bu_vls_free(&cache_dir);
+    bu_vls_free(&result_file);
 
     return process_ret;
 }

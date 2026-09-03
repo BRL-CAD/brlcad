@@ -720,6 +720,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     nmg_wstate.nmg_booleval = s->nmg_booleval;
     nmg_wstate.max_time = s->max_time;
     nmg_wstate.max_pnts = s->max_pnts;
+    nmg_wstate.max_workers = s->max_workers;
     nmg_wstate.prefix = s->prefix;
     nmg_wstate.suffix = s->suffix;
     nmg_wstate.tol = s->tol;
