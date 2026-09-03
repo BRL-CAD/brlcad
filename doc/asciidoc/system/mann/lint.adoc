@@ -43,7 +43,7 @@ Check for references to objects or files that are missing (not present in the da
 
 
 *-I*, *--invalid-shape* [check [check ...]]::
-Check for shapes in the database that do not satisfy one or more properties required for them to be valid definitions, where correcting the problem requires a change to the object's definition. (As of this writing the only implemented check is for BoT object solidity, but many more are possible and planned.) (Objects invalid due to missing objects are potentially valid without the necessity of changing the object's own definition - e.g. the missing object/file can be added. That category of error can be searched for with the *-M* check.)
+Check for shapes in the database that do not satisfy one or more properties required for them to be valid definitions, where correcting the problem requires a change to the object's definition. Individual checks may be selected with _type:check_ names such as *brep:opennurbs*. Objects invalid because they refer to missing objects or files are reported by *-M* instead.
 
 
 *-F*, *--filter*::
@@ -79,6 +79,21 @@ With *--perturb*, the reference BoT is the actual output that *facetize* would p
 
 *--raytrace-tol* _frac_::
 Fractional tolerance for raytrace validation comparisons (default: *0.10* = 10%).  A value of 0.05 requires the two independent estimates to agree within 5%.  Lower values are stricter.  Only meaningful when *--raytrace* is also specified.
+
+
+[[brep_checks]]
+== B-REP CHECKS
+
+The B-Rep invalid-shape checks include OpenNURBS validity, excessive stored tolerances, disagreement between edge curves and their surface trim paths, collapsed singular boundaries, and sampled trim-loop crossings. Their names are listed by *lint -h*. The full JSON report identifies the affected face, loop, trim, and edge where applicable.
+
+The *brep:fast_shading* check runs the display-quality face tessellator and reports individual faces it cannot triangulate. Genuine failures include the tessellation result, processing stage, and diagnostic message. Faces not processed because a resource limit was reached are reported separately as inconclusive. Degenerate or tolerance-empty faces are considered successfully handled. Their counts, and the count of successful approximations, accompany any reported issue but are not classified as failures.
+
+Fast shading is intentionally an explicit-only check because it is more expensive than the structural sampling checks. It has a 30-second per-object time budget, checked between face and refinement jobs, in addition to the display tessellator's default memory, point, and triangle budgets. It also attempts invalid B-Reps because the display path is designed to recover partial geometry from them. For example:
+
+[source]
+----
+lint -I brep:fast_shading -j shading.json object
+----
 
 
 [[raytrace_mode]]

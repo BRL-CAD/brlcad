@@ -1,4 +1,4 @@
-set(PLUGIN_LIBS libged libbu)
+set(PLUGIN_LIBS libged libbrep libbu)
 
 set(
   LINT_SRCS
