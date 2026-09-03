@@ -335,6 +335,26 @@ test_repair_data_preservation()
 
 
 static void
+test_repair_empty_bot()
+{
+    fastf_t unused_vertex[3] = {};
+    int unused_face[3] = {};
+    struct rt_bot_internal bot = {};
+    bot.magic = RT_BOT_INTERNAL_MAGIC;
+    bot.mode = RT_BOT_SOLID;
+    bot.orientation = RT_BOT_CCW;
+    bot.vertices = unused_vertex;
+    bot.faces = unused_face;
+
+    struct rt_bot_repair_info repair_info = RT_BOT_REPAIR_INFO_INIT;
+    struct rt_bot_internal *repaired = NULL;
+    CHECK(rt_bot_repair(&repaired, &bot, &repair_info) == -1 &&
+	    repaired == NULL,
+	"repair should reject an empty BOT without allocating output");
+}
+
+
+static void
 test_decimation_surface_validation()
 {
     fastf_t source_vertices[] = {
@@ -387,6 +407,7 @@ main(int UNUSED(argc), char **argv)
     test_mode(RT_BOT_PLATE_NOCOS);
     test_connected_and_invalid_plate();
     test_repair_data_preservation();
+    test_repair_empty_bot();
     test_decimation_surface_validation();
     return failures ? EXIT_FAILURE : EXIT_SUCCESS;
 }
