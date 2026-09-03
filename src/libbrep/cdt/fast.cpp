@@ -3000,6 +3000,178 @@ fast_reconstruct_full_periodic_face(const ON_Surface *surface,
 }
 
 static bool
+fast_reconstruct_implicit_periodic_domain(const ON_Surface *surface,
+	const ON_BrepFace &face,
+	ON_SimpleArray<BrepTrimPoint> **brep_loop_points,
+	double tolerance, fast_face_scratch &scratch, int *closed_direction,
+	int *outer_loop_index,
+	std::vector<ON_SimpleArray<BrepTrimPoint>> &reconstructed_holes)
+{
+    if (!surface || !brep_loop_points || face.LoopCount() < 1)
+	return false;
+    for (int li = 0; li < face.LoopCount(); ++li) {
+	const ON_BrepLoop *loop = face.Loop(li);
+	if (!loop || loop->m_type != ON_BrepLoop::inner ||
+		!brep_loop_points[li] || brep_loop_points[li]->Count() < 3)
+	    return false;
+    }
+
+    /* On a quotient surface, an all-inner face has a useful unambiguous
+     * interpretation when every loop is contractible: the full surface
+     * domain with those loops removed.  Choose artificial seams which do
+     * not cut any hole, then retain every supplied loop as a constraint. */
+    const double maximum_contractible_span_fraction = 0.90;
+    const double parameter_tolerance_fraction = 1.0e-4;
+    struct hole_record {
+	ON_SimpleArray<BrepTrimPoint> points;
+	double minimum[2] = {INFINITY, INFINITY};
+	double maximum[2] = {-INFINITY, -INFINITY};
+    };
+    std::vector<hole_record> holes((size_t)face.LoopCount());
+    double parameter_scale = 1.0;
+    int first_closed_dir = -1;
+    for (int dir = 0; dir < 2; ++dir) {
+	const double length = surface->Domain(dir).Length();
+	if (!(length > ON_ZERO_TOLERANCE))
+	    return false;
+	parameter_scale = std::max(parameter_scale, length);
+	if (first_closed_dir < 0 && surface->IsClosed(dir))
+	    first_closed_dir = dir;
+    }
+    if (first_closed_dir < 0)
+	return false;
+    const double parameter_tolerance = std::max(tolerance,
+	parameter_scale * parameter_tolerance_fraction);
+
+    for (int li = 0; li < face.LoopCount(); ++li) {
+	hole_record &hole = holes[(size_t)li];
+	hole.points = *brep_loop_points[li];
+	for (int pi = 0; pi < hole.points.Count(); ++pi) {
+	    for (int dir = 0; dir < 2; ++dir) {
+		hole.minimum[dir] = std::min(hole.minimum[dir],
+		    hole.points[pi].p2d[dir]);
+		hole.maximum[dir] = std::max(hole.maximum[dir],
+		    hole.points[pi].p2d[dir]);
+	    }
+	}
+	const ON_2dVector delta =
+	    hole.points[hole.points.Count() - 1].p2d -
+	    hole.points[0].p2d;
+	for (int dir = 0; dir < 2; ++dir) {
+	    const ON_Interval domain = surface->Domain(dir);
+	    if (fabs(delta[dir]) > parameter_tolerance)
+		return false;
+	    if (surface->IsClosed(dir)) {
+		if (hole.maximum[dir] - hole.minimum[dir] >=
+			maximum_contractible_span_fraction * domain.Length())
+		    return false;
+	    } else if (hole.minimum[dir] < domain.Min() -
+		    parameter_tolerance ||
+		    hole.maximum[dir] > domain.Max() +
+		    parameter_tolerance) {
+		return false;
+	    }
+	}
+    }
+
+    double boundary_minimum[2];
+    double boundary_maximum[2];
+    for (int dir = 0; dir < 2; ++dir) {
+	const ON_Interval domain = surface->Domain(dir);
+	if (!surface->IsClosed(dir)) {
+	    boundary_minimum[dir] = domain.Min();
+	    boundary_maximum[dir] = domain.Max();
+	    continue;
+	}
+
+	std::vector<double> seam_candidates = {domain.Min()};
+	for (const hole_record &hole : holes)
+	    seam_candidates.push_back(hole.maximum[dir] +
+		parameter_tolerance);
+	bool found_seam = false;
+	for (double seam : seam_candidates) {
+	    bool fits = true;
+	    for (const hole_record &hole : holes) {
+		const double midpoint = 0.5 * (hole.minimum[dir] +
+		    hole.maximum[dir]);
+		const double shift = std::round((seam +
+		    0.5 * domain.Length() - midpoint) /
+		    domain.Length()) * domain.Length();
+		fits = fits && hole.minimum[dir] + shift >= seam -
+		    parameter_tolerance &&
+		    hole.maximum[dir] + shift <= seam + domain.Length() +
+		    parameter_tolerance;
+		if (!fits)
+		    break;
+	    }
+	    if (!fits)
+		continue;
+
+	    boundary_minimum[dir] = seam;
+	    boundary_maximum[dir] = seam + domain.Length();
+	    for (hole_record &hole : holes) {
+		const double midpoint = 0.5 * (hole.minimum[dir] +
+		    hole.maximum[dir]);
+		const double shift = std::round((seam +
+		    0.5 * domain.Length() - midpoint) /
+		    domain.Length()) * domain.Length();
+		for (int pi = 0; pi < hole.points.Count(); ++pi)
+		    hole.points[pi].p2d[dir] += shift;
+		hole.minimum[dir] += shift;
+		hole.maximum[dir] += shift;
+	    }
+	    found_seam = true;
+	    break;
+	}
+	if (!found_seam)
+	    return false;
+    }
+
+    const int open_dir = 1 - first_closed_dir;
+    const int open_low_side = open_dir == 0 ? 3 : 0;
+    const int open_high_side = open_dir == 0 ? 1 : 2;
+    const double closed_coordinates[5] = {
+	boundary_minimum[first_closed_dir],
+	boundary_minimum[first_closed_dir],
+	boundary_maximum[first_closed_dir],
+	boundary_maximum[first_closed_dir],
+	boundary_minimum[first_closed_dir]
+    };
+    const double open_coordinates[5] = {
+	boundary_minimum[open_dir], boundary_maximum[open_dir],
+	boundary_maximum[open_dir], boundary_minimum[open_dir],
+	boundary_minimum[open_dir]
+    };
+    ON_SimpleArray<BrepTrimPoint> boundary;
+    for (int ci = 0; ci < 5; ++ci) {
+	ON_2dPoint uv;
+	uv[first_closed_dir] = closed_coordinates[ci];
+	uv[open_dir] = open_coordinates[ci];
+	const bool at_open_min = ci == 0 || ci == 3 || ci == 4;
+	int singular_side = at_open_min ? open_low_side : open_high_side;
+	if (surface->IsClosed(open_dir) ||
+		!surface->IsSingular(singular_side))
+	    singular_side = -1;
+	if (!fast_append_synthetic_uv(boundary, surface, uv, singular_side,
+		scratch))
+	    return false;
+    }
+
+    *brep_loop_points[0] = boundary;
+    for (int li = 1; li < face.LoopCount(); ++li)
+	brep_loop_points[li]->Empty();
+    reconstructed_holes.clear();
+    reconstructed_holes.reserve(holes.size());
+    for (hole_record &hole : holes)
+	reconstructed_holes.push_back(hole.points);
+    if (closed_direction)
+	*closed_direction = first_closed_dir;
+    if (outer_loop_index)
+	*outer_loop_index = 0;
+    return true;
+}
+
+static bool
 fast_reconstruct_periodic_singular_face(const ON_Surface *surface,
 	const ON_BrepFace &face,
 	ON_SimpleArray<BrepTrimPoint> **brep_loop_points,
@@ -5093,6 +5265,7 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
     log_provenance("closed surface checks", brep_loop_points, loop_cnt);
     int full_periodic_closed_dir = -1;
     int full_periodic_outer_index = -1;
+    std::vector<ON_SimpleArray<BrepTrimPoint>> reconstructed_inner_holes;
     bool full_periodic_face = fast_reconstruct_full_periodic_face(s,
 	face, brep_loop_points, BREP_SAME_POINT_TOLERANCE, scratch,
 	&full_periodic_closed_dir, &full_periodic_outer_index);
@@ -5120,6 +5293,11 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 	    brep_loop_points, BREP_SAME_POINT_TOLERANCE, scratch,
 	    &full_periodic_closed_dir, &full_periodic_outer_index);
     if (!full_periodic_face)
+	full_periodic_face = fast_reconstruct_implicit_periodic_domain(s,
+	    face, brep_loop_points, BREP_SAME_POINT_TOLERANCE, scratch,
+	    &full_periodic_closed_dir, &full_periodic_outer_index,
+	    reconstructed_inner_holes);
+    if (!full_periodic_face)
 	full_periodic_face = fast_reconstruct_periodic_empty_boundary(s, face,
 	    brep_loop_points, BREP_SAME_POINT_TOLERANCE, scratch,
 	    &full_periodic_closed_dir, &full_periodic_outer_index);
@@ -5134,7 +5312,8 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
     std::vector<ON_SimpleArray<BrepTrimPoint>> bridged_inner_holes;
     for (int li = 0; li < loop_cnt; ++li) {
 	const ON_BrepLoop *loop = face.Loop(li);
-	if (loop && loop->m_type == ON_BrepLoop::inner)
+	if (loop && loop->m_type == ON_BrepLoop::inner &&
+		li != full_periodic_outer_index)
 	    fast_split_bridged_inner_loop(s, loop, *brep_loop_points[li],
 		bridged_inner_holes);
     }
@@ -5238,6 +5417,12 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 	    return false;
     }
     for (ON_SimpleArray<BrepTrimPoint> &hole : bridged_inner_holes) {
+	const bool uv_closed = V2NEAR_EQUAL(hole[0].p2d,
+	    hole[hole.Count() - 1].p2d, BREP_SAME_POINT_TOLERANCE);
+	if (!append_boundary(hole, uv_closed, false))
+	    return false;
+    }
+    for (ON_SimpleArray<BrepTrimPoint> &hole : reconstructed_inner_holes) {
 	const bool uv_closed = V2NEAR_EQUAL(hole[0].p2d,
 	    hole[hole.Count() - 1].p2d, BREP_SAME_POINT_TOLERANCE);
 	if (!append_boundary(hole, uv_closed, false))
