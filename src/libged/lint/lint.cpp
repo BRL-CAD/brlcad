@@ -59,6 +59,7 @@ lint_data::summary()
 
     std::map<std::string, std::set<std::string>> categories;
     std::map<std::string, std::set<std::string>> obj_problems;
+    std::map<std::string, std::set<std::string>> inconclusive_problems;
 
     /* Raytrace result collections */
     struct rt_entry {
@@ -139,6 +140,13 @@ lint_data::summary()
 	    continue;
 	}
 	std::string otype(pdata["object_type"]);
+
+	if (ptype == std::string("fast_shading_incomplete")) {
+	    categories[std::string("inconclusive")].insert(oname);
+	    inconclusive_problems[oname].insert(otype + std::string(":") +
+		ptype);
+	    continue;
+	}
 
 	categories[std::string("invalid")].insert(oname);
 	std::string prob_type = otype + std::string(":") + ptype;
@@ -252,6 +260,21 @@ lint_data::summary()
 	    ostr.pop_back();
 	    ostr.append(std::string("]"));
 	    ostr.append(std::string("\n"));
+	}
+    }
+
+    c_it = categories.find(std::string("inconclusive"));
+    if (c_it != categories.end()) {
+	const std::set<std::string> &inconclusive = c_it->second;
+	ostr.append(std::string("Inconclusive object checks:\n"));
+	for (s_it = inconclusive.begin(); s_it != inconclusive.end(); s_it++) {
+	    ostr.append(std::string("\t") + *s_it + std::string(" ["));
+	    for (o_it = inconclusive_problems[*s_it].begin();
+		    o_it != inconclusive_problems[*s_it].end(); o_it++) {
+		ostr.append(*o_it + std::string(","));
+	    }
+	    ostr.pop_back();
+	    ostr.append(std::string("]\n"));
 	}
     }
 
@@ -391,6 +414,7 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "\tarb:non_standard_ordering\n");
 	bu_vls_printf(gedp->ged_result_str, "\tarb:twisted\n");
 	bu_vls_printf(gedp->ged_result_str, "\tbrep:edge_surface_mismatch\n");
+	bu_vls_printf(gedp->ged_result_str, "\tbrep:fast_shading (explicit only)\n");
 	bu_vls_printf(gedp->ged_result_str, "\tbrep:large_tolerance\n");
 	bu_vls_printf(gedp->ged_result_str, "\tbrep:opennurbs\n");
 	bu_vls_printf(gedp->ged_result_str, "\tbrep:singular_boundary\n");
