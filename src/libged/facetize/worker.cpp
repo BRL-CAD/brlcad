@@ -28,6 +28,7 @@
 
 #include <string.h>
 
+#include "bu/log.h"
 #include "./worker.h"
 
 static const char FACETIZE_REQUEST_MAGIC[] = "FACETIZE_REQUEST";
@@ -140,7 +141,7 @@ FacetizeWorkerServer::receive_request(std::string &object_name)
 	return FacetizeWorkerReadResult::Error;
 
     char header[FACETIZE_PROTOCOL_HEADER_SIZE];
-    if (!fgets(header, sizeof(header), request_stream))
+    if (!bu_fgets(header, sizeof(header), request_stream))
 	return feof(request_stream) ? FacetizeWorkerReadResult::End :
 	    FacetizeWorkerReadResult::Error;
 
