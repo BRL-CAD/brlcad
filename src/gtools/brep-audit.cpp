@@ -348,6 +348,20 @@ shaded_face_status(int face_index, int status, void *data)
     }
 }
 
+
+static void
+shaded_face_diagnostic(int face_index, int diagnostic_result,
+	int diagnostic_stage, const char *message, void *data)
+{
+    geom_result *result = (geom_result *)data;
+    face_failure detail;
+    detail.face_index = face_index;
+    detail.result = diagnostic_result;
+    detail.stage = diagnostic_stage;
+    detail.message = message ? message : "";
+    result->face_failures.push_back(detail);
+}
+
 static size_t
 peak_rss_bytes()
 {
@@ -667,6 +681,8 @@ shaded_result(struct db_i *dbip, struct directory *dp,
     struct brep_cdt_fast_options active_options = *options;
     active_options.face_status = shaded_face_status;
     active_options.face_status_data = &result;
+    active_options.face_diagnostic = shaded_face_diagnostic;
+    active_options.face_diagnostic_data = &result;
     int64_t start = bu_gettime();
     struct brep_cdt_fast_report report = {};
     result.ret = brep_cdt_fast_ex(&faces, &face_cnt, &normals, &points,

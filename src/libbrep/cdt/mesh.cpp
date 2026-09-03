@@ -4715,7 +4715,7 @@ topology_preserving_clean_triangulation(int **faces, int *face_count,
 	outer, outer_count, holes, hole_counts, hole_count, steiner,
 	steiner_count, clean_constraints.empty() ? NULL :
 	clean_constraints.data(), chart.constraints.size(), points,
-	chart.points.size());
+	chart.points.size(), NULL);
     if (clean_status != BRLCAD_OK || !clean_faces || !clean_points ||
 	    clean_face_count <= 0 || clean_point_count <= 0) {
 	if (cdt_failure_dumps_enabled())

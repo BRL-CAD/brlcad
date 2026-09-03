@@ -5253,7 +5253,7 @@ repair_failed_face_from_rigorous_boundary(
 		contours[outline].size(), hole_arrays.data(),
 		hole_counts.data(), hole_arrays.size(), NULL, 0,
 		clean_constraints.data(), boundary.size(),
-		(const point2d_t *)input_points.data(), points.size());
+		(const point2d_t *)input_points.data(), points.size(), NULL);
 	    if (debug_topology)
 		bu_log("Rigorous-boundary Clipper cleanup returned %d with "
 		    "%d points and %d triangles from %zu points\n",
