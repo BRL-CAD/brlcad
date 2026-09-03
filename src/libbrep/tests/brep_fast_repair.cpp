@@ -52,6 +52,28 @@ run_fast(const ON_Brep &brep)
     return result;
 }
 
+static double
+fast_result_area_xy(const fast_result &result)
+{
+    if (!result.faces || !result.points)
+	return -1.0;
+    double area = 0.0;
+    for (int fi = 0; fi < result.face_count; ++fi) {
+	const int ia = result.faces[3 * fi];
+	const int ib = result.faces[3 * fi + 1];
+	const int ic = result.faces[3 * fi + 2];
+	if (ia < 0 || ib < 0 || ic < 0 || ia >= result.point_count ||
+		ib >= result.point_count || ic >= result.point_count)
+	    return -1.0;
+	const double ab_x = result.points[ib][X] - result.points[ia][X];
+	const double ab_y = result.points[ib][Y] - result.points[ia][Y];
+	const double ac_x = result.points[ic][X] - result.points[ia][X];
+	const double ac_y = result.points[ic][Y] - result.points[ia][Y];
+	area += 0.5 * fabs(ab_x * ac_y - ab_y * ac_x);
+    }
+    return area;
+}
+
 static ON_PlaneSurface *
 large_plane()
 {
@@ -898,6 +920,25 @@ add_surface_iso_trim(ON_Brep &brep, ON_BrepLoop &loop,
     trim.m_tolerance[0] = trim.m_tolerance[1] = tolerance;
 }
 
+static void
+add_planar_polygon_loop(ON_Brep &brep, ON_BrepFace &face,
+	ON_PlaneSurface &surface, ON_BrepLoop::TYPE type,
+	const std::vector<ON_2dPoint> &corners)
+{
+    ON_BrepLoop &loop = brep.NewLoop(type, face);
+    std::vector<int> vertices;
+    vertices.reserve(corners.size());
+    for (const ON_2dPoint &corner : corners) {
+	vertices.push_back(brep.NewVertex(surface.PointAt(corner.x,
+	    corner.y)).m_vertex_index);
+    }
+    for (size_t i = 0; i < corners.size(); ++i) {
+	const size_t next = (i + 1) % corners.size();
+	add_surface_iso_trim(brep, loop, surface, vertices[i],
+	    vertices[next], corners[i], corners[next]);
+    }
+}
+
 static bool
 degenerate_closed_surface_slit_test()
 {
@@ -1047,23 +1088,7 @@ bridged_inner_loop_test()
 
     fast_result *result = run_fast(brep);
     const double expected_area = 22.0;
-    double triangulated_area = 0.0;
-    for (int fi = 0; result->faces && result->points &&
-	    fi < result->face_count; ++fi) {
-	const int ia = result->faces[3 * fi];
-	const int ib = result->faces[3 * fi + 1];
-	const int ic = result->faces[3 * fi + 2];
-	if (ia < 0 || ib < 0 || ic < 0 || ia >= result->point_count ||
-		ib >= result->point_count || ic >= result->point_count) {
-	    triangulated_area = -1.0;
-	    break;
-	}
-	const double ab_x = result->points[ib][X] - result->points[ia][X];
-	const double ab_y = result->points[ib][Y] - result->points[ia][Y];
-	const double ac_x = result->points[ic][X] - result->points[ia][X];
-	const double ac_y = result->points[ic][Y] - result->points[ia][Y];
-	triangulated_area += 0.5 * fabs(ab_x * ac_y - ab_y * ac_x);
-    }
+    const double triangulated_area = fast_result_area_xy(*result);
     const bool valid = result->ret == BREP_CDT_FAST_OK &&
 	result->report.failed_faces == 0 && result->face_count > 0 &&
 	NEAR_EQUAL(triangulated_area, expected_area, 1.0e-6);
@@ -1206,7 +1231,7 @@ periodic_vertex_copy_strip_test()
 }
 
 static bool
-doubly_periodic_winding_strip_test()
+doubly_periodic_winding_strip_case(bool all_inner)
 {
     ON_Brep brep;
     ON_Circle major(ON_xy_plane, 9.0);
@@ -1221,7 +1246,9 @@ doubly_periodic_winding_strip_test()
     const ON_Interval udom = surface->Domain(0);
     const ON_Interval vdom = surface->Domain(1);
 
-    ON_BrepLoop &outer = brep.NewLoop(ON_BrepLoop::outer, face);
+    const ON_BrepLoop::TYPE outer_type = all_inner ?
+	ON_BrepLoop::inner : ON_BrepLoop::outer;
+    ON_BrepLoop &outer = brep.NewLoop(outer_type, face);
     const double outer_u = udom.Min();
     const ON_2dPoint outer_walk[3] = {
 	ON_2dPoint(outer_u, vdom.Min()),
@@ -1253,10 +1280,22 @@ doubly_periodic_winding_strip_test()
 	inner_walk[1], inner_walk[2]);
 
     fast_result *result = run_fast(brep);
-    const bool valid = result->ret == BREP_CDT_FAST_OK &&
-	result->report.failed_faces == 0 && result->face_count > 0;
+    const bool valid = all_inner ?
+	(result->ret != BREP_CDT_FAST_OK &&
+	 result->report.failed_faces == 1 && result->face_count == 0) :
+	(result->ret == BREP_CDT_FAST_OK &&
+	 result->report.failed_faces == 0 && result->face_count > 0);
     delete result;
     return valid;
+}
+
+static bool
+doubly_periodic_winding_strip_test()
+{
+    /* Without a designated outer loop, parallel essential cuts on a torus
+     * select two complementary bands.  Neither is safely implicit. */
+    return doubly_periodic_winding_strip_case(false) &&
+	doubly_periodic_winding_strip_case(true);
 }
 
 static bool
@@ -1485,30 +1524,208 @@ touching_periodic_subloops_test()
 }
 
 static bool
-inner_only_planar_loop_test()
+inner_only_planar_loop_case(bool outer_orientation)
 {
     ON_Brep brep;
     ON_PlaneSurface *surface = large_plane();
     const int si = brep.AddSurface(surface);
     ON_BrepFace &face = brep.NewFace(si);
-    ON_BrepLoop &loop = brep.NewLoop(ON_BrepLoop::inner, face);
-    const ON_2dPoint corners[4] = {
+    const ON_2dPoint outer_corners[4] = {
 	ON_2dPoint(-2.0, -1.0), ON_2dPoint(2.0, -1.0),
 	ON_2dPoint(2.0, 1.0), ON_2dPoint(-2.0, 1.0)
     };
-    int vertices[4];
+    std::vector<ON_2dPoint> corners(4);
     for (int i = 0; i < 4; ++i)
-	vertices[i] = brep.NewVertex(surface->PointAt(corners[i].x,
-	    corners[i].y)).m_vertex_index;
-    for (int i = 0; i < 4; ++i) {
-	const int next = (i + 1) % 4;
-	add_surface_iso_trim(brep, loop, *surface, vertices[i],
-	    vertices[next], corners[i], corners[next]);
+	corners[i] = outer_corners[outer_orientation ? i : 3 - i];
+    add_planar_polygon_loop(brep, face, *surface, ON_BrepLoop::inner,
+	corners);
+
+    fast_result *result = run_fast(brep);
+    const bool valid = outer_orientation ?
+	(result->ret == BREP_CDT_FAST_OK &&
+	 result->report.failed_faces == 0 && result->face_count > 0) :
+	(result->ret != BREP_CDT_FAST_OK &&
+	 result->report.failed_faces == 1 && result->face_count == 0);
+    delete result;
+    return valid;
+}
+
+static bool
+inner_only_planar_loop_test()
+{
+    /* A mislabeled counterclockwise outline remains bounded.  A clockwise
+     * hole alone does not identify what part of an open support surface to
+     * fill, so it must remain an explicit failure. */
+    return inner_only_planar_loop_case(true) &&
+	inner_only_planar_loop_case(false);
+}
+
+static bool
+misclassified_planar_boundary_with_orphan_case(bool area_orphan)
+{
+    ON_Brep brep;
+    ON_PlaneSurface *surface = large_plane();
+    const int si = brep.AddSurface(surface);
+    ON_BrepFace &face = brep.NewFace(si);
+    add_planar_polygon_loop(brep, face, *surface, ON_BrepLoop::inner, {
+	ON_2dPoint(-2.0, -1.0), ON_2dPoint(2.0, -1.0),
+	ON_2dPoint(2.0, 1.0), ON_2dPoint(-2.0, 1.0)
+    });
+
+    if (area_orphan) {
+	add_planar_polygon_loop(brep, face, *surface, ON_BrepLoop::inner, {
+	    ON_2dPoint(5.0, -1.0), ON_2dPoint(5.0, 1.0),
+	    ON_2dPoint(7.0, 1.0), ON_2dPoint(7.0, -1.0)
+	});
+    } else {
+	ON_BrepLoop &orphan = brep.NewLoop(ON_BrepLoop::inner, face);
+	const ON_2dPoint orphan_start(6.0, 0.0);
+	const ON_2dPoint orphan_end(8.0, 0.0);
+	const int orphan_vertices[2] = {
+	    brep.NewVertex(surface->PointAt(orphan_start.x,
+		orphan_start.y)).m_vertex_index,
+	    brep.NewVertex(surface->PointAt(orphan_end.x,
+		orphan_end.y)).m_vertex_index
+	};
+	add_surface_iso_trim(brep, orphan, *surface, orphan_vertices[0],
+	    orphan_vertices[1], orphan_start, orphan_end);
+	add_surface_iso_trim(brep, orphan, *surface, orphan_vertices[1],
+	    orphan_vertices[0], orphan_end, orphan_start);
+    }
+
+    fast_result *result = run_fast(brep);
+    bool bounded = result->points != NULL;
+    for (int pi = 0; bounded && pi < result->point_count; ++pi) {
+	bounded = result->points[pi][X] >= -2.0 - 1.0e-9 &&
+	    result->points[pi][X] <= 2.0 + 1.0e-9 &&
+	    result->points[pi][Y] >= -1.0 - 1.0e-9 &&
+	    result->points[pi][Y] <= 1.0 + 1.0e-9;
+    }
+    const bool valid = area_orphan ?
+	(result->ret != BREP_CDT_FAST_OK &&
+	 result->report.failed_faces == 1 && result->face_count == 0) :
+	(result->ret == BREP_CDT_FAST_OK &&
+	 result->report.failed_faces == 0 && result->face_count > 0 && bounded);
+    delete result;
+    return valid;
+}
+
+static bool
+misclassified_planar_boundary_with_orphan_test()
+{
+    return misclassified_planar_boundary_with_orphan_case(false) &&
+	misclassified_planar_boundary_with_orphan_case(true);
+}
+
+static bool
+misclassified_planar_regions_test()
+{
+    ON_Brep brep;
+    ON_PlaneSurface *surface = large_plane();
+    const int si = brep.AddSurface(surface);
+    ON_BrepFace &face = brep.NewFace(si);
+    for (double center : {-4.0, 4.0}) {
+	add_planar_polygon_loop(brep, face, *surface,
+	    ON_BrepLoop::inner, {
+	    ON_2dPoint(center - 1.0, -1.0),
+	    ON_2dPoint(center + 1.0, -1.0),
+	    ON_2dPoint(center + 1.0, 1.0),
+	    ON_2dPoint(center - 1.0, 1.0)
+	});
+    }
+
+    fast_result *result = run_fast(brep);
+    bool found_left = false;
+    bool found_right = false;
+    bool found_middle = false;
+    for (int fi = 0; result->faces && fi < result->face_count; ++fi) {
+	const int *triangle = &result->faces[3 * fi];
+	double centroid_x = 0.0;
+	for (int corner = 0; corner < 3; ++corner)
+	    centroid_x += result->points[triangle[corner]][X] / 3.0;
+	found_left = found_left || centroid_x < -3.0;
+	found_right = found_right || centroid_x > 3.0;
+	found_middle = found_middle ||
+	    (centroid_x > -3.0 && centroid_x < 3.0);
+    }
+    const bool valid = result->ret == BREP_CDT_FAST_OK &&
+	result->report.failed_faces == 0 && result->face_count > 0 &&
+	found_left && found_right && !found_middle;
+    delete result;
+    return valid;
+}
+
+static bool
+misclassified_planar_nested_regions_case(bool alternating_winding)
+{
+    ON_Brep brep;
+    ON_PlaneSurface *surface = large_plane();
+    const int si = brep.AddSurface(surface);
+    ON_BrepFace &face = brep.NewFace(si);
+    add_planar_polygon_loop(brep, face, *surface, ON_BrepLoop::inner, {
+	ON_2dPoint(-5.0, -5.0), ON_2dPoint(5.0, -5.0),
+	ON_2dPoint(5.0, 5.0), ON_2dPoint(-5.0, 5.0)
+    });
+    const ON_2dPoint clockwise_hole[4] = {
+	ON_2dPoint(-3.0, -3.0), ON_2dPoint(-3.0, 3.0),
+	ON_2dPoint(3.0, 3.0), ON_2dPoint(3.0, -3.0)
+    };
+    std::vector<ON_2dPoint> hole(4);
+    for (int i = 0; i < 4; ++i)
+	hole[i] = clockwise_hole[alternating_winding ? i : 3 - i];
+    add_planar_polygon_loop(brep, face, *surface, ON_BrepLoop::inner,
+	hole);
+    add_planar_polygon_loop(brep, face, *surface, ON_BrepLoop::inner, {
+	ON_2dPoint(-1.0, -1.0), ON_2dPoint(1.0, -1.0),
+	ON_2dPoint(1.0, 1.0), ON_2dPoint(-1.0, 1.0)
+    });
+
+    fast_result *result = run_fast(brep);
+    const double expected_area = 100.0 - 36.0 + 4.0;
+    const bool valid = alternating_winding ?
+	(result->ret == BREP_CDT_FAST_OK &&
+	 result->report.failed_faces == 0 && result->face_count > 0 &&
+	 NEAR_EQUAL(fast_result_area_xy(*result), expected_area, 1.0e-6)) :
+	(result->ret != BREP_CDT_FAST_OK &&
+	 result->report.failed_faces == 1 && result->face_count == 0);
+    delete result;
+    return valid;
+}
+
+static bool
+misclassified_planar_nested_regions_test()
+{
+    return misclassified_planar_nested_regions_case(true) &&
+	misclassified_planar_nested_regions_case(false);
+}
+
+static bool
+multiple_degenerate_inner_loops_test()
+{
+    ON_Brep brep;
+    ON_PlaneSurface *surface = large_plane();
+    const int si = brep.AddSurface(surface);
+    ON_BrepFace &face = brep.NewFace(si);
+    for (double y : {-2.0, 2.0}) {
+	ON_BrepLoop &loop = brep.NewLoop(ON_BrepLoop::inner, face);
+	const ON_2dPoint start(-1.0, y);
+	const ON_2dPoint end(1.0, y);
+	const int vertices[2] = {
+	    brep.NewVertex(surface->PointAt(start.x, start.y)).m_vertex_index,
+	    brep.NewVertex(surface->PointAt(end.x, end.y)).m_vertex_index
+	};
+	add_surface_iso_trim(brep, loop, *surface, vertices[0], vertices[1],
+	    start, end);
+	add_surface_iso_trim(brep, loop, *surface, vertices[1], vertices[0],
+	    end, start);
     }
 
     fast_result *result = run_fast(brep);
     const bool valid = result->ret == BREP_CDT_FAST_OK &&
-	result->report.failed_faces == 0 && result->face_count > 0;
+	result->report.completed_faces == 1 &&
+	result->report.failed_faces == 0 &&
+	result->report.skipped_degenerate_faces == 1 &&
+	result->face_count == 0 && result->point_count == 0;
     delete result;
     return valid;
 }
@@ -2148,6 +2365,10 @@ main(int argc, const char **argv)
     RUN_FAST_TEST(misclassified_periodic_boundaries_test);
     RUN_FAST_TEST(touching_periodic_subloops_test);
     RUN_FAST_TEST(inner_only_planar_loop_test);
+    RUN_FAST_TEST(misclassified_planar_boundary_with_orphan_test);
+    RUN_FAST_TEST(misclassified_planar_regions_test);
+    RUN_FAST_TEST(misclassified_planar_nested_regions_test);
+    RUN_FAST_TEST(multiple_degenerate_inner_loops_test);
     RUN_FAST_TEST(empty_periodic_boundary_test);
     RUN_FAST_TEST(full_periodic_hole_test);
     RUN_FAST_TEST(periodic_singular_domain_test);
