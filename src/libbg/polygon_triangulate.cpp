@@ -67,6 +67,8 @@
 #include "bg/plane.h"
 #include "RTree.h"
 
+static constexpr ClipperLib::cInt CLIPPER_BOUNDARY_GRID_TOLERANCE = 2;
+
 static bool
 clipper_same_point(const ClipperLib::IntPoint &a,
 	const ClipperLib::IntPoint &b)
@@ -76,7 +78,7 @@ clipper_same_point(const ClipperLib::IntPoint &a,
 
 
 static bool
-clipper_point_on_segment(const ClipperLib::IntPoint &p,
+clipper_point_near_segment(const ClipperLib::IntPoint &p,
 	const ClipperLib::IntPoint &a, const ClipperLib::IntPoint &b)
 {
     const long double dx = (long double)b.X - a.X;
@@ -90,10 +92,26 @@ clipper_point_on_segment(const ClipperLib::IntPoint &p,
     /* Clipper's integer snap may move a point by a fraction of one grid
      * unit.  Treat points within two grid units of a segment as boundary
      * points, while also requiring their projection to lie on the segment. */
-    if (std::fabs(px * dy - py * dx) > 2.0L * length)
+    if (std::fabs(px * dy - py * dx) >
+	    (long double)CLIPPER_BOUNDARY_GRID_TOLERANCE * length)
 	return false;
     const long double dot = px * dx + py * dy;
     return dot >= 0.0L && dot <= dx * dx + dy * dy;
+}
+
+
+static bool
+clipper_point_exactly_on_segment(const ClipperLib::IntPoint &p,
+	const ClipperLib::IntPoint &a, const ClipperLib::IntPoint &b)
+{
+    const detria::PointD point = {(double)p.X, (double)p.Y};
+    const detria::PointD first = {(double)a.X, (double)a.Y};
+    const detria::PointD second = {(double)b.X, (double)b.Y};
+    if (detria::math::orient2d<true>(first, second, point) !=
+	    detria::math::Orientation::Collinear)
+	return false;
+    return p.X >= std::min(a.X, b.X) && p.X <= std::max(a.X, b.X) &&
+	p.Y >= std::min(a.Y, b.Y) && p.Y <= std::max(a.Y, b.Y);
 }
 
 
@@ -515,7 +533,8 @@ bg_nested_poly_triangulate_clean(int **faces, int *num_faces,
     /* Most failures need no topological change: detria rejects duplicate
      * coordinates and unconstrained samples lying on constrained edges.  Try
      * removing only those points first, preserving all original loop points. */
-    const double boundary_tol = 2.0 / scale;
+    const double boundary_tol =
+	(double)CLIPPER_BOUNDARY_GRID_TOLERANCE / scale;
 
     if (!constraint_cnt && deduplicated_detria(faces, num_faces, out_pts, num_outpts,
 	    poly, poly_pnts, holes_array, holes_npts, nholes, steiner,
@@ -538,9 +557,11 @@ bg_nested_poly_triangulate_clean(int **faces, int *num_faces,
 	    if (!clipper_input_path(hole, holes_array[h], holes_npts[h],
 		    pts, origin_x, origin_y, scale))
 		continue;
-	    hole_paths.push_back(hole);
-	    if (!clipper.AddPath(hole, ClipperLib::ptClip, true))
-		return BRLCAD_ERROR;
+	    /* A closed path rejected by Clipper has collapsed to a point or
+	     * line.  Such a hole removes no area, so omit it rather than
+	     * rejecting an otherwise drawable face. */
+	    if (clipper.AddPath(hole, ClipperLib::ptClip, true))
+		hole_paths.push_back(hole);
 	}
     } catch (...) {
 	return BRLCAD_ERROR;
@@ -579,6 +600,11 @@ bg_nested_poly_triangulate_clean(int **faces, int *num_faces,
     }
 
     std::vector<detria::PointD> tri_points;
+    /* Preserve model coordinates for the API result, but triangulate in
+     * Clipper's conditioned coordinate system.  Expanding a small chart
+     * around a large model-space origin can otherwise collapse distinct
+     * integer vertices back onto the same double coordinate. */
+    std::vector<detria::PointD> tri_detria_points;
     std::vector<ClipperLib::IntPoint> tri_integer_points;
     std::map<std::pair<ClipperLib::cInt, ClipperLib::cInt>, int>
 	point_indices;
@@ -596,6 +622,10 @@ bg_nested_poly_triangulate_clean(int **faces, int *num_faces,
 	np.y = (double)p.Y / scale + origin_y;
 	const int index = (int)tri_points.size();
 	tri_points.push_back(np);
+	detria::PointD detria_point;
+	detria_point.x = (double)p.X;
+	detria_point.y = (double)p.Y;
+	tri_detria_points.push_back(detria_point);
 	tri_integer_points.push_back(p);
 	point_indices[key] = index;
 	return index;
@@ -668,7 +698,7 @@ bg_nested_poly_triangulate_clean(int **faces, int *num_faces,
 		continue;
 	    const ClipperLib::IntPoint &point =
 		input_boundary_points[candidate];
-	    if (!clipper_point_on_segment(point, first, second) ||
+	    if (!clipper_point_exactly_on_segment(point, first, second) ||
 		    clipper_same_point(point, first) ||
 		    clipper_same_point(point, second))
 		continue;
@@ -746,7 +776,7 @@ bg_nested_poly_triangulate_clean(int **faces, int *num_faces,
 	bool on_boundary = false;
 	for (const ClipperLib::Path &path : boundary_paths) {
 	    for (size_t j = 0; j < path.size(); j++) {
-		if (clipper_point_on_segment(p, path[j],
+		if (clipper_point_near_segment(p, path[j],
 			path[(j + 1) % path.size()])) {
 		    on_boundary = true;
 		    break;
@@ -880,7 +910,8 @@ bg_nested_poly_triangulate_clean(int **faces, int *num_faces,
 	std::vector<detria::PointD> local_points;
 	local_points.reserve(local_to_global.size());
 	for (int global_index : local_to_global)
-	    local_points.push_back(tri_points[(size_t)global_index]);
+	    local_points.push_back(
+		tri_detria_points[(size_t)global_index]);
 
 	std::set<std::pair<int, int>> local_boundary_edges;
 	std::vector<std::pair<int, int>> local_boundary_segments;
