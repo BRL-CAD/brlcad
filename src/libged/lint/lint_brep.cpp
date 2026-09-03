@@ -32,6 +32,8 @@
 #include <string>
 #include <vector>
 
+#include "brep/cdt.h"
+
 #include "./ged_lint.h"
 
 
@@ -40,11 +42,14 @@ namespace {
 const size_t issue_report_limit = 64;
 const size_t trim_sample_count = 33;
 const size_t max_loop_segments = 512;
+const long fast_shading_time_limit_ms = 30000;
+const int fast_shading_status_unset = -1;
 
 
 struct issue_set {
     std::string type;
     std::vector<nlohmann::json> details;
+    nlohmann::json analysis;
     size_t count = 0;
     bool analysis_limited = false;
 };
@@ -57,6 +62,15 @@ struct uv_segment {
     int edge = -1;
     bool singular = false;
     bool seam = false;
+};
+
+
+struct fast_shading_face_result {
+    int status = fast_shading_status_unset;
+    int result = BREP_CDT_RESULT_UNATTEMPTED;
+    int stage = BREP_CDT_STAGE_NONE;
+    std::string message;
+    bool have_diagnostic = false;
 };
 
 
@@ -352,6 +366,8 @@ emit_issues(lint_data *ldata, struct directory *dp, const issue_set &set)
     result["issues"] = set.details;
     result["omitted"] = set.count - set.details.size();
     result["analysis_limited"] = set.analysis_limited;
+    if (!set.analysis.is_null())
+	result["analysis"] = set.analysis;
     std::ostringstream log;
     log << "B-Rep " << set.type << ": " << set.count << " issue";
     if (set.count != 1)
@@ -364,7 +380,216 @@ emit_issues(lint_data *ldata, struct directory *dp, const issue_set &set)
     ldata->j.push_back(result);
 }
 
+
+static const char *
+fast_shading_result_name(int result)
+{
+    switch (result) {
+	case BREP_CDT_RESULT_UNATTEMPTED: return "unattempted";
+	case BREP_CDT_RESULT_SUCCESS: return "success";
+	case BREP_CDT_RESULT_PARTIAL: return "partial";
+	case BREP_CDT_RESULT_REPAIRED: return "repaired";
+	case BREP_CDT_RESULT_INVALID_BREP: return "invalid_brep";
+	case BREP_CDT_RESULT_INVALID_TOLERANCE: return "invalid_tolerance";
+	case BREP_CDT_RESULT_INITIALIZATION_FAILED: return "initialization_failed";
+	case BREP_CDT_RESULT_FACE_FAILED: return "face_failed";
+	case BREP_CDT_RESULT_MESH_EXPORT_FAILED: return "mesh_export_failed";
+	case BREP_CDT_RESULT_NON_SOLID: return "non_solid";
+	case BREP_CDT_RESULT_INVALID_PSLG: return "invalid_pslg";
+	case BREP_CDT_RESULT_DETRIA_FAILED: return "detria_failed";
+	case BREP_CDT_RESULT_CERTIFICATION_FAILED:
+	    return "certification_failed";
+	case BREP_CDT_RESULT_CHART_FAILED: return "chart_failed";
+	case BREP_CDT_RESULT_REFINEMENT_LIMIT: return "refinement_limit";
+	case BREP_CDT_RESULT_GEOMETRIC_FAILED: return "geometric_failed";
+	case BREP_CDT_RESULT_REPAIR_FAILED: return "repair_failed";
+	default: return "unknown";
+    }
+}
+
+
+static const char *
+fast_shading_stage_name(int stage)
+{
+    switch (stage) {
+	case BREP_CDT_STAGE_NONE: return "none";
+	case BREP_CDT_STAGE_INPUT: return "input";
+	case BREP_CDT_STAGE_TOPOLOGY: return "topology";
+	case BREP_CDT_STAGE_EDGE_INITIALIZATION: return "edge_initialization";
+	case BREP_CDT_STAGE_FACE_TRIANGULATION: return "face_triangulation";
+	case BREP_CDT_STAGE_MESH_ASSEMBLY: return "mesh_assembly";
+	case BREP_CDT_STAGE_SOLID_VALIDATION: return "solid_validation";
+	case BREP_CDT_STAGE_PSLG_VALIDATION: return "pslg_validation";
+	case BREP_CDT_STAGE_DETRIA: return "detria";
+	case BREP_CDT_STAGE_CHART_CONSTRUCTION: return "chart_construction";
+	case BREP_CDT_STAGE_ADAPTIVE_REFINEMENT: return "adaptive_refinement";
+	case BREP_CDT_STAGE_GEOMETRIC_VALIDATION:
+	    return "geometric_validation";
+	case BREP_CDT_STAGE_MESH_REPAIR: return "mesh_repair";
+	default: return "unknown";
+    }
+}
+
+
+static void
+fast_shading_face_status(int face_index, int status, void *data)
+{
+    std::vector<fast_shading_face_result> *results =
+	static_cast<std::vector<fast_shading_face_result> *>(data);
+    if (!results || face_index < 0 ||
+	    (size_t)face_index >= results->size())
+	return;
+    (*results)[(size_t)face_index].status = status;
+}
+
+
+static void
+fast_shading_face_diagnostic(int face_index, int result, int stage,
+	const char *message, void *data)
+{
+    std::vector<fast_shading_face_result> *results =
+	static_cast<std::vector<fast_shading_face_result> *>(data);
+    if (!results || face_index < 0 ||
+	    (size_t)face_index >= results->size())
+	return;
+    fast_shading_face_result &face = (*results)[(size_t)face_index];
+    face.result = result;
+    face.stage = stage;
+    face.message = message ? message : "";
+    face.have_diagnostic = true;
+}
+
+
+static nlohmann::json
+fast_shading_report_json(int return_code, int triangle_count, int point_count,
+	const struct brep_cdt_fast_options &options,
+	const struct brep_cdt_fast_report &report)
+{
+    nlohmann::json summary;
+    summary["return_code"] = return_code;
+    summary["requested_faces"] = report.requested_faces;
+    summary["completed_faces"] = report.completed_faces;
+    summary["failed_or_unprocessed_faces"] = report.failed_faces;
+    summary["skipped_degenerate_faces"] = report.skipped_degenerate_faces;
+    summary["skipped_tolerance_faces"] = report.skipped_tolerance_faces;
+    summary["approximated_faces"] = report.approximated_faces;
+    summary["triangles"] = triangle_count;
+    summary["points"] = point_count;
+    summary["hit_time_limit"] = report.hit_time_limit != 0;
+    summary["hit_memory_limit"] = report.hit_memory_limit != 0;
+    summary["hit_point_limit"] = report.hit_point_limit != 0;
+    summary["time_limit_ms"] = options.max_time_ms;
+    summary["peak_working_bytes"] = report.peak_working_bytes;
+    summary["result_bytes"] = report.result_bytes;
+    summary["triangle_budget"] = report.triangle_budget;
+    summary["triangle_budget_limited_faces"] =
+	report.triangle_budget_limited_faces;
+    summary["boundary_envelope_incomplete_faces"] =
+	report.boundary_envelope_incomplete_faces;
+    return summary;
+}
+
 } // namespace
+
+
+void
+brep_fast_shading_check(lint_data *ldata, struct directory *dp,
+	struct rt_brep_internal *bi)
+{
+    if (!ldata || !dp || !bi || !bi->brep)
+	return;
+
+    issue_set failures;
+    failures.type = "fast_shading_failure";
+    issue_set incomplete;
+    incomplete.type = "fast_shading_incomplete";
+
+    struct bg_tess_tol ttol = BG_TESS_TOL_INIT_TOL;
+    struct bn_tol tol = BN_TOL_INIT_TOL;
+    if (ldata->ftol > 0.0) {
+	tol.dist = ldata->ftol;
+	tol.dist_sq = tol.dist * tol.dist;
+    }
+
+    std::vector<fast_shading_face_result> results(
+	(size_t)bi->brep->m_F.Count());
+    struct brep_cdt_fast_options options;
+    brep_cdt_fast_options_default(&options);
+    /* Lint must terminate on pathological input; a limit means that the
+     * capability result is inconclusive rather than that a face is bad. */
+    options.max_time_ms = fast_shading_time_limit_ms;
+    options.face_status = fast_shading_face_status;
+    options.face_status_data = &results;
+    options.face_diagnostic = fast_shading_face_diagnostic;
+    options.face_diagnostic_data = &results;
+
+    int *mesh_faces = NULL;
+    int triangle_count = 0;
+    vect_t *normals = NULL;
+    point_t *points = NULL;
+    int point_count = 0;
+    struct brep_cdt_fast_report report = {};
+    const int return_code = brep_cdt_fast_ex(&mesh_faces, &triangle_count,
+	&normals, &points, &point_count, bi->brep, -1, &ttol, &tol,
+	&options, &report);
+
+    size_t reported_faces = 0;
+
+    for (size_t face_index = 0; face_index < results.size();
+	    ++face_index) {
+	const fast_shading_face_result &face = results[face_index];
+	issue_set *issues = NULL;
+	const char *status = NULL;
+	if (face.status == BREP_CDT_FAST_FACE_FAILED) {
+	    issues = &failures;
+	    status = "failed";
+	} else if (face.status == BREP_CDT_FAST_FACE_NOT_PROCESSED) {
+	    issues = &incomplete;
+	    status = "not_processed";
+	}
+	if (!issues)
+	    continue;
+
+	nlohmann::json detail;
+	detail["face"] = face_index;
+	detail["status"] = status;
+	if (face.have_diagnostic) {
+	    detail["result"] = face.result;
+	    detail["result_name"] = fast_shading_result_name(face.result);
+	    detail["stage"] = face.stage;
+	    detail["stage_name"] = fast_shading_stage_name(face.stage);
+	    detail["message"] = face.message;
+	}
+	record_issue(issues, detail);
+	reported_faces++;
+    }
+
+    if (!reported_faces && return_code != BREP_CDT_FAST_OK) {
+	nlohmann::json detail;
+	detail["face"] = -1;
+	detail["status"] = return_code == BREP_CDT_FAST_LIMIT ?
+	    "not_processed" : "request_failed";
+	detail["message"] = "fast shading ended before reporting a face result";
+	record_issue(return_code == BREP_CDT_FAST_LIMIT ? &incomplete :
+	    &failures, detail);
+    }
+
+    const bool limited = report.hit_time_limit || report.hit_memory_limit ||
+	report.hit_point_limit || return_code == BREP_CDT_FAST_LIMIT;
+    incomplete.analysis_limited = limited;
+    failures.analysis_limited = limited;
+    const nlohmann::json summary = fast_shading_report_json(return_code,
+	triangle_count, point_count, options, report);
+    failures.analysis = summary;
+    incomplete.analysis = summary;
+
+    emit_issues(ldata, dp, failures);
+    emit_issues(ldata, dp, incomplete);
+
+    bu_free(mesh_faces, "B-Rep lint fast shading faces");
+    bu_free(normals, "B-Rep lint fast shading normals");
+    bu_free(points, "B-Rep lint fast shading points");
+}
 
 
 void
