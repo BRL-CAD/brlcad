@@ -758,6 +758,7 @@ if(BRLCAD_ENABLE_STEP)
 endif()
 
 cmakefiles(
+  AP203_IMPORT_REVIEW.txt
   AP_Common.h
   BRLCADWrapper.h
   CMakeLists.txt
@@ -854,6 +855,8 @@ cmakefiles(
   ap203e2_elements.txt
   ap214e3_elements.txt
   ap_schema.h
+  test_faceted_tetra.stp
+  test_mapped_assembly.stp
 )
 
 # Local Variables:

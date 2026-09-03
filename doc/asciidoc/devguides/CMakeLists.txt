@@ -32,6 +32,10 @@ endif(TARGET mged OR TARGET qged OR TARGET archer)
 
 cmakefiles(
   CMakeLists.txt
+  api_reference.adoc
+  getting_started_as_contributor.adoc
+  libged_command_authoring.adoc
+  raytracing_pipeline.adoc
   ${devguides_EN}
   ${devguides_EN_IMAGES}
 )

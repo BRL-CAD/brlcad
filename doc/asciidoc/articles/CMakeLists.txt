@@ -227,20 +227,21 @@ set(
   images/renderer_gallery_rthide.png
   images/renderer_gallery_rtdepth.png
   images/renderer_gallery_rtxray.png
-  images/adrt_toyjeep_path.png
-  images/adrt_toyjeep_rt.png
-  images/adrt_toyjeep_rt_ao.png
-  images/adrt_toyjeep_phong.png
-  images/adrt_toyjeep_normal.png
-  images/adrt_toyjeep_depth.png
-  images/adrt_chess_path.png
-  images/adrt_chess_rt.png
-  images/adrt_chess_rt_ao.png
   images/adrt_castle_path.png
   images/adrt_castle_rt.png
   images/adrt_castle_rt_ao.png
+  images/adrt_chess_path.png
+  images/adrt_chess_rt.png
+  images/adrt_chess_rt_ao.png
   images/adrt_cornell_path.png
   images/adrt_cornell_phong.png
+  images/adrt_toyjeep_depth.png
+  images/adrt_toyjeep_normal.png
+  images/adrt_toyjeep_path.png
+  images/adrt_toyjeep_phong.png
+  images/adrt_toyjeep_rt.png
+  images/adrt_toyjeep_rt_ao.png
+  images/adrt_toyjeep_spall.png
   images/objtype_arb8.png
   images/objtype_arb8_variety.png
   images/objtype_arbn.png
