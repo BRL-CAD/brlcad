@@ -1,34 +1,33 @@
 # Creo Phase 0 Behavior Matrix
 
-This matrix records the current v2 snapshot boundary and the evidence required
-before each behavior moves out of the diagnostic legacy converter. V2 is the
-forward Phase 0 contract. The core's v1 single-part reader remains a
-transitional baseline only: Phase 0 adds no v1 fixture coverage and no new v1
-behavior.
+This matrix records the fixed scene snapshot boundary and the evidence required
+before each behavior moves out of the diagnostic legacy converter. The fixed
+scene is the only Phase 0 contract: standalone parts are scenes with one part
+and a part root.
 
 ## Current Boundary Coverage
 
-| Behavior | Current source and v2 field | Current conversion effect | Required evidence |
+| Behavior | Current source and scene field | Current conversion effect | Required evidence |
 | --- | --- | --- | --- |
-| Snapshot identity and layout | `conversion_snapshot.h`; header magic, version, sizes, payload type, and bounded ranges | Accepts only a well-formed v2 scene | `creo_snapshot_core_v2` valid fixture plus malformed and unsupported requests |
-| Output path | `snapshot_writer.cpp`; `settings.output_path` | Creates or updates the requested `.g` file | `creo_snapshot_core_v2` manifest |
-| Root part hierarchy | `snapshot_writer.cpp`; scene root part | Writes `all` containing the part region | `creo_snapshot_core_v2` manifest |
-| Mesh topology | `snapshot_writer.cpp`; part vertices and triangles | Writes a BoT solid | `creo_snapshot_core_v2` manifest |
-| Model name and version | `snapshot_writer.cpp`; part name and version | Names output and writes `ptc_name` and `ptc_version_stamp` | `creo_snapshot_core_v2` manifest |
-| Material name | `snapshot_writer.cpp`; part material name | Writes `ptc_material_name` on the region | `creo_snapshot_core_v2` manifest |
-| Color and region ID | `snapshot_writer.cpp`; part color and region ID | Writes region color and ID | `creo_snapshot_core_v2` manifest |
-| Invalid request path | `conversion.cpp`; `creo_brl_core_convert` | Rejects null or empty request paths | `creo_snapshot_core_v2` |
+| Snapshot identity and layout | `conversion_snapshot.h`; header magic, total size, fixed record sizes, and bounded ranges | Accepts only a well-formed fixed scene | `creo_snapshot_core` valid fixture plus truncated and size-mismatch requests |
+| Output path | `snapshot_writer.cpp`; `settings.output_path` | Creates or updates the requested `.g` file | `creo_snapshot_core` manifest |
+| Root part hierarchy | `snapshot_writer.cpp`; scene root part | Writes `all` containing the part region | `creo_snapshot_core` manifest |
+| Mesh topology | `snapshot_writer.cpp`; part vertices and triangles | Writes a BoT solid | `creo_snapshot_core` manifest |
+| Model name and version | `snapshot_writer.cpp`; part name and version | Names output and writes `ptc_name` and `ptc_version_stamp` | `creo_snapshot_core` manifest |
+| Material name | `snapshot_writer.cpp`; part material name | Writes `ptc_material_name` on the region | `creo_snapshot_core` manifest |
+| Color and region ID | `snapshot_writer.cpp`; part color and region ID | Writes region color and ID | `creo_snapshot_core` manifest |
+| Invalid request path | `conversion.cpp`; `creo_brl_core_convert` | Rejects null or empty request paths | `creo_snapshot_core` |
 
 ## Planned Coverage
 
-| Behavior | Current source and v2 field | Current conversion effect | Planned evidence |
+| Behavior | Current source and scene field | Current conversion effect | Planned evidence |
 | --- | --- | --- | --- |
-| Coordinate transform | `snapshot_writer.cpp`; `settings.xform_mode` | Transforms the top-level `all` membership | v2 fixture for none, X-to-Z, and Y-to-Z transforms |
-| Assembly graph and transforms | `snapshot_writer.cpp`; scene assemblies and members | Writes combinations in dependency order and preserves member matrices | Phase 6 v2 assembly fixture manifest |
-| Multiple parts and name collisions | `conversion.cpp`; name normalization and unique-name allocation | Adds deterministic suffixes for collisions | v2 multi-part collision fixture manifest |
-| Tessellation normals | `snapshot_writer.cpp`; write-normals setting and part normal ranges | Writes a BoT with normals | v2 mesh-with-normals fixture manifest |
-| Tessellation capture | `snapshot_writer.cpp`; max chord and min angle | Controls Creo-side tessellation before the snapshot is written | Optional Creo smoke test plus captured v2 fixture replay |
-| Bounding-box fallback | `snapshot_writer.cpp`; part bounding box and fallback flags | Writes an RPP and `tess_fail` attribute when mesh data is absent | v2 fallback fixture manifest |
+| Coordinate transform | `snapshot_writer.cpp`; `settings.xform_mode` | Transforms the top-level `all` membership | Scene fixture for none, X-to-Z, and Y-to-Z transforms |
+| Assembly graph and transforms | `snapshot_writer.cpp`; scene assemblies and members | Writes combinations in dependency order and preserves member matrices | Phase 6 scene assembly fixture manifest |
+| Multiple parts and name collisions | `conversion.cpp`; name normalization and unique-name allocation | Adds deterministic suffixes for collisions | Scene multi-part collision fixture manifest |
+| Tessellation normals | `snapshot_writer.cpp`; write-normals setting and part normal ranges | Writes a BoT with normals | Scene mesh-with-normals fixture manifest |
+| Tessellation capture | `snapshot_writer.cpp`; max chord and min angle | Controls Creo-side tessellation before the snapshot is written | Optional Creo smoke test plus captured scene fixture replay |
+| Bounding-box fallback | `snapshot_writer.cpp`; part bounding box and fallback flags | Writes an RPP and `tess_fail` attribute when mesh data is absent | Scene fallback fixture manifest |
 | Part mass properties | `snapshot_writer.cpp`; density, mass, and volume | Captured but not written by the current core | Phase 4 parity fixture before implementing or relocating output policy |
 | Captured part attributes | `snapshot_writer.cpp`; part attribute ranges | Validated but not written by the current core | Phase 4 parity fixture before implementing or relocating output policy |
 | Captured part parameters | `snapshot_writer.cpp`; part parameter ranges | Validated but not written by the current core | Phase 4 parity fixture before implementing or relocating output policy |
@@ -44,9 +43,9 @@ behavior.
 
 ## Phase 0 Exit Evidence
 
-- `creo_snapshot_core_v2` uses a synthetic v2 scene fixture, passes it through
+- `creo_snapshot_core` uses a synthetic fixed scene fixture, passes it through
   `creo_brl_core_convert`, and compares a normalized semantic `.g` manifest.
-- The same test rejects malformed, unsupported-version, and invalid-request
-  inputs without launching Creo.
+- The same test rejects truncated, size-mismatch, and invalid-request inputs
+  without launching Creo.
 - The rows above identify every current setting and conversion data category,
-  including data that the v2 core does not yet consume.
+  including data that the core does not yet consume.

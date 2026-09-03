@@ -21,10 +21,10 @@ static const char FIXTURE_MATERIAL_NAME[] = "fixture_material";
 static const char FIXTURE_SOLID_NAME[] = "fixture_part.s";
 static const char FIXTURE_REGION_NAME[] = "fixture_part.r";
 static const char FIXTURE_TOP_LEVEL_NAME[] = "all";
-static const char FIXTURE_SNAPSHOT_NAME[] = "creo_phase0_v2.snapshot";
+static const char FIXTURE_SNAPSHOT_NAME[] = "creo_phase0.snapshot";
 static const char MALFORMED_SNAPSHOT_NAME[] = "creo_phase0_malformed.snapshot";
-static const char UNSUPPORTED_SNAPSHOT_NAME[] = "creo_phase0_unsupported.snapshot";
-static const char OUTPUT_DATABASE_NAME[] = "creo_phase0_v2.g";
+static const char INVALID_SIZE_SNAPSHOT_NAME[] = "creo_phase0_invalid_size.snapshot";
+static const char OUTPUT_DATABASE_NAME[] = "creo_phase0.g";
 static const char EMPTY_REQUEST[] = "";
 static const char IMPORTER_ATTRIBUTE[] = "importer";
 static const char MODEL_NAME_ATTRIBUTE[] = "ptc_name";
@@ -36,6 +36,8 @@ static const char MANIFEST_LINE_ENDING = 10;
 static const uint64_t FIXTURE_PART_COUNT = 1u;
 static const uint64_t FIXTURE_VERTEX_COUNT = 3u;
 static const uint64_t FIXTURE_TRIANGLE_COUNT = 1u;
+static const uint64_t VALID_SNAPSHOT_SIZE_DELTA = 0u;
+static const uint64_t INVALID_SNAPSHOT_SIZE_DELTA = 1u;
 static const int FIXTURE_REGION_ID = 42;
 
 
@@ -125,7 +127,7 @@ write_file(const std::string& path, const std::vector<unsigned char>& contents)
 static int
 write_snapshot_fixture(const std::string& snapshot_path,
                        const std::string& output_path,
-                       uint32_t format_version)
+                       uint64_t snapshot_size_adjustment)
 {
     struct creo_brl_snapshot_header header = {};
     struct creo_brl_snapshot_scene scene = {};
@@ -142,19 +144,13 @@ write_snapshot_fixture(const std::string& snapshot_path,
     const size_t part_offset = sizeof(header) + sizeof(scene);
 
     std::memcpy(header.magic, creo_brl_snapshot_magic, sizeof(header.magic));
-    header.format_version = format_version;
-    header.header_size = CREO_BRL_SNAPSHOT_HEADER_V1_SIZE;
-    header.payload_type = CREO_BRL_SNAPSHOT_PAYLOAD_SCENE;
 
-    scene.structure_size = CREO_BRL_SNAPSHOT_SCENE_V2_SIZE;
-    scene.settings.structure_size = CREO_BRL_SNAPSHOT_SETTINGS_V1_SIZE;
     scene.settings.log_type = CREO_BRL_SNAPSHOT_LOG_NONE;
     scene.part_count = FIXTURE_PART_COUNT;
     scene.parts.offset = part_offset;
     scene.parts.size = sizeof(part);
     scene.root_type = CREO_BRL_SNAPSHOT_SCENE_NODE_PART;
 
-    part.structure_size = CREO_BRL_SNAPSHOT_PART_V1_SIZE;
     part.flags = CREO_BRL_SNAPSHOT_PART_HAS_MESH | CREO_BRL_SNAPSHOT_PART_HAS_COLOR |
                  CREO_BRL_SNAPSHOT_PART_HAS_MATERIAL;
     part.region_id = FIXTURE_REGION_ID;
@@ -179,8 +175,9 @@ write_snapshot_fixture(const std::string& snapshot_path,
 
     part.vertex_count = FIXTURE_VERTEX_COUNT;
     part.triangle_count = FIXTURE_TRIANGLE_COUNT;
-    header.snapshot_size = (uint64_t)contents.size();
-    header.payload_size = header.snapshot_size - header.header_size;
+    if (contents.size() > UINT64_MAX - snapshot_size_adjustment)
+        return 0;
+    header.snapshot_size = (uint64_t)contents.size() + snapshot_size_adjustment;
 
     return replace_record(&contents, header_offset, &header, sizeof(header)) &&
            replace_record(&contents, scene_offset, &scene, sizeof(scene)) &&
@@ -290,9 +287,9 @@ normalize_output_manifest(const std::string& output_path, std::string *manifest)
             std::memcmp(region->rgb, FIXTURE_COLOR, sizeof(region->rgb)) != 0)
             goto cleanup;
 
-        manifest->append("fixture=v2_single_mesh");
+        manifest->append("fixture=scene_single_mesh");
         manifest->push_back(MANIFEST_LINE_ENDING);
-        manifest->append("input=synthetic_v2_scene");
+        manifest->append("input=synthetic_scene");
         manifest->push_back(MANIFEST_LINE_ENDING);
         manifest->append("all=combination leaf=");
         manifest->append(FIXTURE_REGION_NAME);
@@ -362,7 +359,7 @@ main(int argument_count, char *arguments[])
     const std::string working_directory = arguments[1];
     const std::string snapshot_path = path_join(working_directory, FIXTURE_SNAPSHOT_NAME);
     const std::string malformed_snapshot_path = path_join(working_directory, MALFORMED_SNAPSHOT_NAME);
-    const std::string unsupported_snapshot_path = path_join(working_directory, UNSUPPORTED_SNAPSHOT_NAME);
+    const std::string invalid_size_snapshot_path = path_join(working_directory, INVALID_SIZE_SNAPSHOT_NAME);
     const std::string output_path = path_join(working_directory, OUTPUT_DATABASE_NAME);
     std::string expected_manifest;
     std::string actual_manifest;
@@ -370,19 +367,19 @@ main(int argument_count, char *arguments[])
 
     std::remove(snapshot_path.c_str());
     std::remove(malformed_snapshot_path.c_str());
-    std::remove(unsupported_snapshot_path.c_str());
+    std::remove(invalid_size_snapshot_path.c_str());
     std::remove(output_path.c_str());
 
-    if (!write_snapshot_fixture(snapshot_path, output_path, CREO_BRL_SNAPSHOT_FORMAT_VERSION_V2) ||
+    if (!write_snapshot_fixture(snapshot_path, output_path, VALID_SNAPSHOT_SIZE_DELTA) ||
         creo_brl_core_convert(snapshot_path.c_str()) != CREO_BRL_CORE_CONVERT_SUCCESS ||
         !normalize_output_manifest(output_path, &actual_manifest) ||
         !read_manifest(arguments[2], &expected_manifest) || actual_manifest != expected_manifest ||
         !write_malformed_snapshot(malformed_snapshot_path) ||
         creo_brl_core_convert(malformed_snapshot_path.c_str()) != CREO_BRL_CORE_CONVERT_INVALID_SNAPSHOT ||
-        !write_snapshot_fixture(unsupported_snapshot_path, output_path,
-                                CREO_BRL_SNAPSHOT_FORMAT_VERSION_V2 + 1u) ||
-        creo_brl_core_convert(unsupported_snapshot_path.c_str()) !=
-            CREO_BRL_CORE_CONVERT_UNSUPPORTED_SNAPSHOT ||
+        !write_snapshot_fixture(invalid_size_snapshot_path, output_path,
+                                INVALID_SNAPSHOT_SIZE_DELTA) ||
+        creo_brl_core_convert(invalid_size_snapshot_path.c_str()) !=
+            CREO_BRL_CORE_CONVERT_INVALID_SNAPSHOT ||
         creo_brl_core_convert(NULL) != CREO_BRL_CORE_CONVERT_INVALID_REQUEST ||
         creo_brl_core_convert(EMPTY_REQUEST) != CREO_BRL_CORE_CONVERT_INVALID_REQUEST) {
         test_failure("snapshot core boundary test failed");
@@ -394,7 +391,7 @@ main(int argument_count, char *arguments[])
 cleanup:
     std::remove(snapshot_path.c_str());
     std::remove(malformed_snapshot_path.c_str());
-    std::remove(unsupported_snapshot_path.c_str());
+    std::remove(invalid_size_snapshot_path.c_str());
     std::remove(output_path.c_str());
     return result;
 }

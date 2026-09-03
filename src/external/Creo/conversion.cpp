@@ -51,7 +51,7 @@ static const char CREO_BRL_CORE_UNDEFINED_MATERIAL[] = "undefined";
 static const char CREO_BRL_CORE_TOP_LEVEL_NAME[] = "all";
 
 
-static_assert(sizeof(struct creo_brl_snapshot_header) == CREO_BRL_SNAPSHOT_HEADER_V1_SIZE,
+static_assert(sizeof(struct creo_brl_snapshot_header) == CREO_BRL_SNAPSHOT_HEADER_SIZE,
               "Snapshot header layout changed");
 static_assert(sizeof(struct creo_brl_snapshot_range) == CREO_BRL_SNAPSHOT_RANGE_SIZE,
               "Snapshot range layout changed");
@@ -61,20 +61,18 @@ static_assert(sizeof(struct creo_brl_snapshot_triangle) == CREO_BRL_SNAPSHOT_TRI
               "Snapshot triangle layout changed");
 static_assert(sizeof(struct creo_brl_snapshot_named_value) == CREO_BRL_SNAPSHOT_NAMED_VALUE_SIZE,
               "Snapshot name/value layout changed");
-static_assert(sizeof(struct creo_brl_snapshot_settings) == CREO_BRL_SNAPSHOT_SETTINGS_V1_SIZE,
+static_assert(sizeof(struct creo_brl_snapshot_settings) == CREO_BRL_SNAPSHOT_SETTINGS_SIZE,
               "Snapshot settings layout changed");
-static_assert(sizeof(struct creo_brl_snapshot_part) == CREO_BRL_SNAPSHOT_PART_V1_SIZE,
+static_assert(sizeof(struct creo_brl_snapshot_part) == CREO_BRL_SNAPSHOT_PART_SIZE,
               "Snapshot part layout changed");
-static_assert(sizeof(struct creo_brl_snapshot_single_part) == CREO_BRL_SNAPSHOT_SINGLE_PART_V1_SIZE,
-              "Snapshot payload layout changed");
 static_assert(sizeof(struct creo_brl_snapshot_matrix) == CREO_BRL_SNAPSHOT_MATRIX_SIZE,
               "Snapshot matrix layout changed");
 static_assert(sizeof(struct creo_brl_snapshot_assembly_member) ==
-                  CREO_BRL_SNAPSHOT_ASSEMBLY_MEMBER_V2_SIZE,
+                  CREO_BRL_SNAPSHOT_ASSEMBLY_MEMBER_SIZE,
               "Snapshot assembly member layout changed");
-static_assert(sizeof(struct creo_brl_snapshot_assembly) == CREO_BRL_SNAPSHOT_ASSEMBLY_V2_SIZE,
+static_assert(sizeof(struct creo_brl_snapshot_assembly) == CREO_BRL_SNAPSHOT_ASSEMBLY_SIZE,
               "Snapshot assembly layout changed");
-static_assert(sizeof(struct creo_brl_snapshot_scene) == CREO_BRL_SNAPSHOT_SCENE_V2_SIZE,
+static_assert(sizeof(struct creo_brl_snapshot_scene) == CREO_BRL_SNAPSHOT_SCENE_SIZE,
               "Snapshot scene layout changed");
 
 
@@ -335,9 +333,7 @@ snapshot_settings_are_valid(FILE *snapshot_file,
                             uint64_t snapshot_size,
                             uint64_t data_offset)
 {
-    if (settings->structure_size != CREO_BRL_SNAPSHOT_SETTINGS_V1_SIZE ||
-        settings->reserved != 0 ||
-        (settings->flags & ~CREO_BRL_SNAPSHOT_SETTINGS_FLAG_MASK) != 0 ||
+    if ((settings->flags & ~CREO_BRL_SNAPSHOT_SETTINGS_FLAG_MASK) != 0 ||
         settings->xform_mode < CREO_BRL_SNAPSHOT_XFORM_NONE ||
         settings->xform_mode > CREO_BRL_SNAPSHOT_XFORM_Y_TO_Z ||
         settings->chord_mode < CREO_BRL_SNAPSHOT_CHORD_ABSOLUTE ||
@@ -394,9 +390,7 @@ snapshot_part_is_valid(FILE *snapshot_file,
     const int has_normals = (part->flags & CREO_BRL_SNAPSHOT_PART_HAS_NORMALS) != 0;
     const int has_material = (part->flags & CREO_BRL_SNAPSHOT_PART_HAS_MATERIAL) != 0;
 
-    if (part->structure_size != CREO_BRL_SNAPSHOT_PART_V1_SIZE ||
-        part->reserved != 0 ||
-        (part->flags & ~CREO_BRL_SNAPSHOT_PART_FLAG_MASK) != 0 ||
+    if ((part->flags & ~CREO_BRL_SNAPSHOT_PART_FLAG_MASK) != 0 ||
         has_mesh == has_bbox || part->color_is_set !=
             ((part->flags & CREO_BRL_SNAPSHOT_PART_HAS_COLOR) != 0) ||
         !std::isfinite(part->model_to_mm) || part->model_to_mm <= 0.0 ||
@@ -464,9 +458,7 @@ snapshot_assembly_is_valid(FILE *snapshot_file,
 {
     uint64_t member_index = 0;
 
-    if (assembly->structure_size != CREO_BRL_SNAPSHOT_ASSEMBLY_V2_SIZE ||
-        assembly->reserved != 0 ||
-        !snapshot_range_is_valid(&assembly->model_name, snapshot_size, data_offset) ||
+    if (!snapshot_range_is_valid(&assembly->model_name, snapshot_size, data_offset) ||
         !snapshot_range_is_valid(&assembly->model_version, snapshot_size, data_offset) ||
         !snapshot_range_has_records(&assembly->members, assembly->member_count,
                                     sizeof(struct creo_brl_snapshot_assembly_member),
@@ -515,20 +507,12 @@ snapshot_scene_is_valid(FILE *snapshot_file,
         memcmp(header.magic, creo_brl_snapshot_magic, sizeof(header.magic)) != 0)
         return CREO_BRL_CORE_CONVERT_INVALID_SNAPSHOT;
 
-    if (header.format_version != CREO_BRL_SNAPSHOT_FORMAT_VERSION_V2 ||
-        header.header_size != CREO_BRL_SNAPSHOT_HEADER_V1_SIZE ||
-        header.payload_type != CREO_BRL_SNAPSHOT_PAYLOAD_SCENE)
-        return CREO_BRL_CORE_CONVERT_UNSUPPORTED_SNAPSHOT;
-
-    if (header.reserved != 0 || header.snapshot_size != file_size ||
-        header.snapshot_size < header.header_size + CREO_BRL_SNAPSHOT_SCENE_V2_SIZE ||
-        header.payload_size != header.snapshot_size - header.header_size ||
-        header.payload_size < CREO_BRL_SNAPSHOT_SCENE_V2_SIZE ||
-        !snapshot_read_at(snapshot_file, header.header_size, &scene, sizeof(scene)) ||
-        scene.structure_size != CREO_BRL_SNAPSHOT_SCENE_V2_SIZE || scene.reserved != 0)
+    if (header.snapshot_size != file_size ||
+        header.snapshot_size < sizeof(header) + sizeof(scene) ||
+        !snapshot_read_at(snapshot_file, sizeof(header), &scene, sizeof(scene)))
         return CREO_BRL_CORE_CONVERT_INVALID_SNAPSHOT;
 
-    part_records_offset = header.header_size + CREO_BRL_SNAPSHOT_SCENE_V2_SIZE;
+    part_records_offset = sizeof(header) + sizeof(scene);
     if (scene.part_count > UINT64_MAX / sizeof(struct creo_brl_snapshot_part) ||
         scene.part_count > (UINT64_MAX - part_records_offset) /
                            sizeof(struct creo_brl_snapshot_part) ||
@@ -585,44 +569,6 @@ snapshot_scene_is_valid(FILE *snapshot_file,
 
     if (scene_out)
         *scene_out = scene;
-
-    return CREO_BRL_CORE_CONVERT_SUCCESS;
-}
-
-
-static int
-snapshot_is_valid(FILE *snapshot_file,
-                  struct creo_brl_snapshot_single_part *single_part_out)
-{
-    struct creo_brl_snapshot_header header = {};
-    struct creo_brl_snapshot_single_part single_part = {};
-    uint64_t file_size = 0;
-    const uint64_t data_offset = CREO_BRL_SNAPSHOT_HEADER_V1_SIZE +
-                                 CREO_BRL_SNAPSHOT_SINGLE_PART_V1_SIZE;
-
-    if (!snapshot_file_size(snapshot_file, &file_size) ||
-        !snapshot_read_at(snapshot_file, 0, &header, sizeof(header)) ||
-        memcmp(header.magic, creo_brl_snapshot_magic, sizeof(header.magic)) != 0)
-        return CREO_BRL_CORE_CONVERT_INVALID_SNAPSHOT;
-
-    if (header.format_version != CREO_BRL_SNAPSHOT_FORMAT_VERSION ||
-        header.header_size != CREO_BRL_SNAPSHOT_HEADER_V1_SIZE ||
-        header.payload_type != CREO_BRL_SNAPSHOT_PAYLOAD_SINGLE_PART)
-        return CREO_BRL_CORE_CONVERT_UNSUPPORTED_SNAPSHOT;
-
-    if (header.reserved != 0 || header.snapshot_size != file_size ||
-        header.snapshot_size < data_offset ||
-        header.payload_size != header.snapshot_size - header.header_size ||
-        header.payload_size < CREO_BRL_SNAPSHOT_SINGLE_PART_V1_SIZE ||
-        !snapshot_read_at(snapshot_file, header.header_size, &single_part, sizeof(single_part)) ||
-        single_part.structure_size != CREO_BRL_SNAPSHOT_SINGLE_PART_V1_SIZE ||
-        single_part.reserved != 0 ||
-        !snapshot_settings_are_valid(snapshot_file, &single_part.settings, file_size, data_offset) ||
-        !snapshot_part_is_valid(snapshot_file, &single_part.part, file_size, data_offset))
-        return CREO_BRL_CORE_CONVERT_INVALID_SNAPSHOT;
-
-    if (single_part_out)
-        *single_part_out = single_part;
 
     return CREO_BRL_CORE_CONVERT_SUCCESS;
 }
@@ -1214,47 +1160,10 @@ cleanup:
 }
 
 
-static int
-snapshot_write_part(FILE *snapshot_file,
-                    const struct creo_brl_snapshot_single_part *single_part)
-{
-    std::string output_path;
-    struct snapshot_part_output output = {};
-    struct db_i *database = DBI_NULL;
-    struct rt_wdb *writer = RT_WDB_NULL;
-    int result = CREO_BRL_CORE_CONVERT_OUTPUT_FAILED;
-
-    try {
-        if (!snapshot_read_text(snapshot_file, &single_part->settings.output_path, &output_path)) {
-            result = CREO_BRL_CORE_CONVERT_INVALID_SNAPSHOT;
-            goto cleanup;
-        }
-        if (!snapshot_open_output(output_path.c_str(), &database) ||
-            !(writer = wdb_dbopen(database, RT_WDB_TYPE_DB_DISK))) {
-            result = CREO_BRL_CORE_CONVERT_OUTPUT_FAILED;
-            goto cleanup;
-        }
-
-        result = snapshot_write_part_definition(snapshot_file, &single_part->part, database, writer,
-                                                &output);
-    } catch (...) {
-        /* The exported C ABI cannot propagate C++ exceptions across the DLL boundary. */
-        result = CREO_BRL_CORE_CONVERT_OUTPUT_FAILED;
-    }
-
-cleanup:
-    if (database != DBI_NULL)
-        db_close(database);
-    return result;
-}
-
-
 extern "C" CREO_BRL_CORE_EXPORT int CREO_BRL_CORE_CALL
 creo_brl_core_convert(const char *snapshot_path)
 {
     FILE *snapshot_file = NULL;
-    struct creo_brl_snapshot_header header = {};
-    struct creo_brl_snapshot_single_part single_part = {};
     struct creo_brl_snapshot_scene scene = {};
     int result = CREO_BRL_CORE_CONVERT_INVALID_SNAPSHOT;
 
@@ -1265,21 +1174,9 @@ creo_brl_core_convert(const char *snapshot_path)
     if (!snapshot_file)
         return CREO_BRL_CORE_CONVERT_OPEN_FAILED;
 
-    if (!snapshot_read_at(snapshot_file, 0, &header, sizeof(header))) {
-        result = CREO_BRL_CORE_CONVERT_INVALID_SNAPSHOT;
-    } else if (header.format_version == CREO_BRL_SNAPSHOT_FORMAT_VERSION_V1 &&
-               header.payload_type == CREO_BRL_SNAPSHOT_PAYLOAD_SINGLE_PART) {
-        result = snapshot_is_valid(snapshot_file, &single_part);
-        if (result == CREO_BRL_CORE_CONVERT_SUCCESS)
-            result = snapshot_write_part(snapshot_file, &single_part);
-    } else if (header.format_version == CREO_BRL_SNAPSHOT_FORMAT_VERSION_V2 &&
-               header.payload_type == CREO_BRL_SNAPSHOT_PAYLOAD_SCENE) {
-        result = snapshot_scene_is_valid(snapshot_file, &scene);
-        if (result == CREO_BRL_CORE_CONVERT_SUCCESS)
-            result = snapshot_write_scene(snapshot_file, &scene);
-    } else {
-        result = CREO_BRL_CORE_CONVERT_UNSUPPORTED_SNAPSHOT;
-    }
+    result = snapshot_scene_is_valid(snapshot_file, &scene);
+    if (result == CREO_BRL_CORE_CONVERT_SUCCESS)
+        result = snapshot_write_scene(snapshot_file, &scene);
     fclose(snapshot_file);
 
     return result;

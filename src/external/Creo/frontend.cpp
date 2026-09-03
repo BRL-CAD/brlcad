@@ -170,8 +170,6 @@ frontend_core_failure_message(int result)
             return "FAILURE: The Creo-BRL runtime core is unavailable.";
         case CREO_BRL_CORE_CONVERT_INVALID_SNAPSHOT:
             return "FAILURE: The captured conversion request was invalid.";
-        case CREO_BRL_CORE_CONVERT_UNSUPPORTED_SNAPSHOT:
-            return "FAILURE: The captured conversion request is unsupported.";
         case CREO_BRL_CORE_CONVERT_NOT_IMPLEMENTED:
             return "FAILURE: The requested conversion path is not implemented.";
         case CREO_BRL_CORE_CONVERT_OUTPUT_FAILED:

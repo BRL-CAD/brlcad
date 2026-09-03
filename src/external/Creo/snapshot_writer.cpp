@@ -73,18 +73,18 @@ struct snapshot_scene_capture {
 static const double CREO_BRL_DEFAULT_MIN_EDGE_MM = 0.000254;
 
 
-static_assert(sizeof(struct creo_brl_snapshot_header) == CREO_BRL_SNAPSHOT_HEADER_V1_SIZE,
+static_assert(sizeof(struct creo_brl_snapshot_header) == CREO_BRL_SNAPSHOT_HEADER_SIZE,
               "Snapshot header layout changed");
-static_assert(sizeof(struct creo_brl_snapshot_settings) == CREO_BRL_SNAPSHOT_SETTINGS_V1_SIZE,
+static_assert(sizeof(struct creo_brl_snapshot_settings) == CREO_BRL_SNAPSHOT_SETTINGS_SIZE,
               "Snapshot settings layout changed");
-static_assert(sizeof(struct creo_brl_snapshot_part) == CREO_BRL_SNAPSHOT_PART_V1_SIZE,
+static_assert(sizeof(struct creo_brl_snapshot_part) == CREO_BRL_SNAPSHOT_PART_SIZE,
               "Snapshot part layout changed");
 static_assert(sizeof(struct creo_brl_snapshot_assembly_member) ==
-                  CREO_BRL_SNAPSHOT_ASSEMBLY_MEMBER_V2_SIZE,
+                  CREO_BRL_SNAPSHOT_ASSEMBLY_MEMBER_SIZE,
               "Snapshot assembly member layout changed");
-static_assert(sizeof(struct creo_brl_snapshot_assembly) == CREO_BRL_SNAPSHOT_ASSEMBLY_V2_SIZE,
+static_assert(sizeof(struct creo_brl_snapshot_assembly) == CREO_BRL_SNAPSHOT_ASSEMBLY_SIZE,
               "Snapshot assembly layout changed");
-static_assert(sizeof(struct creo_brl_snapshot_scene) == CREO_BRL_SNAPSHOT_SCENE_V2_SIZE,
+static_assert(sizeof(struct creo_brl_snapshot_scene) == CREO_BRL_SNAPSHOT_SCENE_SIZE,
               "Snapshot scene layout changed");
 
 
@@ -193,7 +193,6 @@ capture_settings(struct creo_brl_snapshot_settings *settings, snapshot_settings_
     std::string selection;
 
     memset(settings, 0, sizeof(*settings));
-    settings->structure_size = CREO_BRL_SNAPSHOT_SETTINGS_V1_SIZE;
 
     if (!dialog_text("out_fname", &strings->output_path) || strings->output_path.empty() ||
         !dialog_text("log_fname", &strings->log_path) ||
@@ -480,7 +479,6 @@ capture_part_definition(ProMdl model,
         !model_scale_to_mm(model, &scale))
         return CREO_BRL_SNAPSHOT_CAPTURE_MODEL_FAILURE;
 
-    capture->part.structure_size = CREO_BRL_SNAPSHOT_PART_V1_SIZE;
     capture->part.region_id = settings->region_id;
     capture->part.model_to_mm = scale;
     capture_model_version(model, &capture->strings.model_version);
@@ -718,7 +716,6 @@ capture_scene_assembly(ProMdl model,
     if (scene->assemblies.size() >= UINT32_MAX)
         return CREO_BRL_SNAPSHOT_CAPTURE_MODEL_FAILURE;
 
-    capture.assembly.structure_size = CREO_BRL_SNAPSHOT_ASSEMBLY_V2_SIZE;
     capture_model_version(model, &capture.model_version);
     *index_out = (uint32_t)scene->assemblies.size();
     scene->assemblies.push_back(capture);
@@ -785,51 +782,7 @@ finish_snapshot(FILE *snapshot_file, struct creo_brl_snapshot_header *header)
     if (end_offset < 0)
         return 0;
     header->snapshot_size = (uint64_t)end_offset;
-    header->payload_size = header->snapshot_size - header->header_size;
-    return header->snapshot_size >= header->header_size;
-}
-
-
-static int
-write_single_part_snapshot(const char *snapshot_path,
-                           const struct creo_brl_snapshot_settings *settings,
-                           const struct snapshot_settings_strings& settings_strings,
-                           struct snapshot_part_capture *capture)
-{
-    struct creo_brl_snapshot_header header = {};
-    struct creo_brl_snapshot_single_part request = {};
-    FILE *snapshot_file = NULL;
-    int result = CREO_BRL_SNAPSHOT_CAPTURE_WRITE_FAILURE;
-
-    if (!snapshot_open_for_write(snapshot_path, &snapshot_file))
-        return result;
-
-    memcpy(header.magic, creo_brl_snapshot_magic, sizeof(header.magic));
-    header.format_version = CREO_BRL_SNAPSHOT_FORMAT_VERSION_V1;
-    header.header_size = CREO_BRL_SNAPSHOT_HEADER_V1_SIZE;
-    header.payload_type = CREO_BRL_SNAPSHOT_PAYLOAD_SINGLE_PART;
-    request.structure_size = CREO_BRL_SNAPSHOT_SINGLE_PART_V1_SIZE;
-    request.settings = *settings;
-    request.part = capture->part;
-
-    if (fwrite(&header, 1, sizeof(header), snapshot_file) != sizeof(header) ||
-        fwrite(&request, 1, sizeof(request), snapshot_file) != sizeof(request) ||
-        !write_settings_strings(snapshot_file, &request.settings, settings_strings) ||
-        !write_part_capture(snapshot_file, capture) ||
-        !finish_snapshot(snapshot_file, &header))
-        goto cleanup;
-
-    request.part = capture->part;
-    if (_fseeki64(snapshot_file, 0, SEEK_SET) != 0 ||
-        fwrite(&header, 1, sizeof(header), snapshot_file) != sizeof(header) ||
-        fwrite(&request, 1, sizeof(request), snapshot_file) != sizeof(request))
-        goto cleanup;
-
-    result = CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS;
-
-cleanup:
-    fclose(snapshot_file);
-    return result;
+    return header->snapshot_size >= sizeof(*header);
 }
 
 
@@ -846,21 +799,17 @@ write_scene_snapshot(const char *snapshot_path, struct snapshot_scene_capture *c
         return result;
 
     memcpy(header.magic, creo_brl_snapshot_magic, sizeof(header.magic));
-    header.format_version = CREO_BRL_SNAPSHOT_FORMAT_VERSION_V2;
-    header.header_size = CREO_BRL_SNAPSHOT_HEADER_V1_SIZE;
-    header.payload_type = CREO_BRL_SNAPSHOT_PAYLOAD_SCENE;
-    scene.structure_size = CREO_BRL_SNAPSHOT_SCENE_V2_SIZE;
     scene.settings = capture->settings;
     scene.part_count = capture->parts.size();
     scene.assembly_count = capture->assemblies.size();
     scene.root_type = root_type;
     scene.root_index = root_index;
     if (scene.part_count > 0) {
-        scene.parts.offset = header.header_size + sizeof(scene);
+        scene.parts.offset = sizeof(header) + sizeof(scene);
         scene.parts.size = scene.part_count * sizeof(struct creo_brl_snapshot_part);
     }
     if (scene.assembly_count > 0) {
-        scene.assemblies.offset = header.header_size + sizeof(scene) + scene.parts.size;
+        scene.assemblies.offset = sizeof(header) + sizeof(scene) + scene.parts.size;
         scene.assemblies.size = scene.assembly_count * sizeof(struct creo_brl_snapshot_assembly);
     }
 
@@ -943,24 +892,20 @@ creo_brl_frontend_capture_snapshot(const char *snapshot_path)
     if (ProMdlTypeGet(model, &model_type) != PRO_TK_NO_ERROR)
         return CREO_BRL_SNAPSHOT_CAPTURE_MODEL_FAILURE;
 
-    if (model_type == PRO_MDL_PART) {
-        struct snapshot_part_capture capture;
-        const int result = capture_part_definition(model, &settings, &capture);
-
-        return result == CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS ?
-                   write_single_part_snapshot(snapshot_path, &settings, settings_strings, &capture) : result;
-    }
-    if (model_type == PRO_MDL_ASSEMBLY) {
+    if (model_type == PRO_MDL_PART || model_type == PRO_MDL_ASSEMBLY) {
         struct snapshot_scene_capture capture = {};
         uint32_t root_index = 0;
-        int result = CREO_BRL_SNAPSHOT_CAPTURE_MODEL_FAILURE;
-
+        const uint32_t root_type = model_type == PRO_MDL_PART ?
+                                       CREO_BRL_SNAPSHOT_SCENE_NODE_PART :
+                                       CREO_BRL_SNAPSHOT_SCENE_NODE_ASSEMBLY;
         capture.settings = settings;
         capture.settings_strings = settings_strings;
-        result = capture_scene_assembly(model, &capture, &root_index);
+        const int result = model_type == PRO_MDL_PART ?
+                               capture_scene_part(model, &capture, &root_index) :
+                               capture_scene_assembly(model, &capture, &root_index);
+
         return result == CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS ?
-                   write_scene_snapshot(snapshot_path, &capture,
-                                        CREO_BRL_SNAPSHOT_SCENE_NODE_ASSEMBLY, root_index) : result;
+                   write_scene_snapshot(snapshot_path, &capture, root_type, root_index) : result;
     }
 
     return CREO_BRL_SNAPSHOT_CAPTURE_UNSUPPORTED_MODEL;

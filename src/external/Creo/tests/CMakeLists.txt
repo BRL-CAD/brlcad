@@ -7,10 +7,10 @@ PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CREO_BUNDLE_BIN_DIR}"
 )
 
 add_test(
-NAME creo_snapshot_core_v2
-COMMAND "$<TARGET_FILE:creo_snapshot_core_test>"
+    NAME creo_snapshot_core
+    COMMAND "$<TARGET_FILE:creo_snapshot_core_test>"
     "${CMAKE_CURRENT_BINARY_DIR}"
-    "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/v2_single_mesh.manifest"
+    "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/scene_single_mesh.manifest"
 )
 
 add_executable(creo_core_abi_test test_core_abi.cpp)
