@@ -89,13 +89,11 @@ _open_working_db(struct _ged_facetize_state *s)
 }
 
 static int
-_nmg_eval_in_db(struct _ged_facetize_state *s, struct db_i *dbip, int argc, const char **argv, const char *output_name)
+_nmg_eval_in_db(struct _ged_facetize_state *s, struct db_i *dbip,
+	const std::vector<std::string> &input_names, const char *output_name)
 {
-    struct db_i *source_dbip = s->dbip;
-    s->dbip = dbip;
-    int ret = _ged_facetize_nmgeval(s, argc, argv, output_name);
-    s->dbip = source_dbip;
-    return ret;
+    return _ged_facetize_nmgeval(s, dbip, bu_vls_cstr(s->wfile),
+	    input_names, output_name);
 }
 
 static void
@@ -1458,32 +1456,31 @@ _ged_facetize_regions(struct _ged_facetize_state *s, const FacetizePlan &plan)
 	if (s->execution.uses_nmg_boolean()) {
 	    for (size_t i = 0; i < BU_PTBL_LEN(ir); i++) {
 		struct directory *idp = (struct directory *)BU_PTBL_GET(ir, i);
-		char *obj_name = bu_strdup(idp->d_namep);
+		std::string object_name(idp->d_namep);
 		struct db_i *wdbip = _open_working_db(s);
 		if (!wdbip) {
-		    facetize_failure(s, "unable to open working database while evaluating '%s' with NMG", obj_name);
+		    facetize_failure(s, "unable to open working database while evaluating '%s' with NMG", object_name.c_str());
 		    bu_ptbl_free(ir);
 		    bu_free(ir, "ir table");
 		    bu_ptbl_free(ar);
 		    bu_free(ar, "ar table");
-		    bu_free(obj_name, "obj_name");
 		    bu_free(dpa, "free dpa");
 		    return BRLCAD_ERROR;
 		}
-		int nret = _nmg_eval_in_db(s, wdbip, 1, (const char **)&obj_name, obj_name);
+		std::vector<std::string> object_input(1, object_name);
+		int nret = _nmg_eval_in_db(s, wdbip, object_input,
+			object_name.c_str());
 		if (nret != BRLCAD_OK) {
 		    if (s->verbosity >= 0)
-			bu_log("regions.cpp:%d Failed to process %s.\n", __LINE__, obj_name);
+			bu_log("regions.cpp:%d Failed to process %s.\n", __LINE__, object_name.c_str());
 		    bu_ptbl_free(ir);
 		    bu_free(ir, "ir table");
 		    bu_ptbl_free(ar);
 		    bu_free(ar, "ar table");
-		    bu_free(obj_name, "obj_name");
 		    bu_free(dpa, "free dpa");
 		    db_close(wdbip);
 		    return BRLCAD_ERROR;
 		}
-		bu_free(obj_name, "obj_name");
 		db_close(wdbip);
 	    }
 	}
@@ -1613,9 +1610,9 @@ _ged_facetize_regions(struct _ged_facetize_state *s, const FacetizePlan &plan)
 	}
 
 	if (s->execution.uses_nmg_boolean()) {
-	    char *obj_name = bu_strdup(dpw[0]->d_namep);
-	    bret = _nmg_eval_in_db(s, wdbip, 1, (const char **)&obj_name, bu_vls_cstr(&bname));
-	    bu_free(obj_name, "obj_name");
+	    std::vector<std::string> object_input(1, dpw[0]->d_namep);
+	    bret = _nmg_eval_in_db(s, wdbip, object_input,
+		    bu_vls_cstr(&bname));
 	} else {
 	    // Need wdbp in the next two stages for tolerances
 	    struct rt_wdb *wwdbp = wdb_dbopen(wdbip, RT_WDB_TYPE_DB_DEFAULT);

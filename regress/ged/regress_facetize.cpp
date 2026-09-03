@@ -68,6 +68,10 @@
  *          ("/tc6_reg.c/sub6.s#sub"), so the lookup missed and no variant was
  *          applied, leaving the phantom face.  After the fix the plan is built
  *          from region roots so keys match and the phantom face is eliminated.
+ *
+ *   TC7  - NMG Boolean isolation and output modes: verifies that an interrupted
+ *          worker cannot commit output, then exercises BoT, NMG, region, and
+ *          in-place output paths.
  */
 
 #include "common.h"
@@ -78,6 +82,7 @@
 #include <string>
 
 #include "bu/app.h"
+#include "bu/env.h"
 #include "bu/file.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
@@ -1209,25 +1214,46 @@ tc7_nmg_modes(const char *tmpdir, int verbose)
     wdb_close(wdbp);
 
     const char *bot_av[] = {"facetize", "--nmg-booleval", "box.r", "box.bot", NULL};
+    const char *fault_av[] = {"facetize", "--nmg-booleval", "box.r", "fault.bot", NULL};
     const char *nmg_av[] = {"facetize", "-n", "box.r", "box.nmg", NULL};
     const char *regions_av[] = {"facetize", "-r", "--nmg-booleval", "box.r", "box.regions", NULL};
     const char *fallback_av[] = {"facetize", "-r", "--nmg-booleval", "box.c", "box-fallback.bot", NULL};
+    const char *object_in_place_av[] = {"facetize", "--in-place", "--nmg-booleval", "box.c", NULL};
     const char *in_place_av[] = {"facetize", "-r", "--in-place", "--nmg-booleval", "box.r", NULL};
 
     int ret = BRLCAD_OK;
-    int hook_calls = 0;
-    bu_log_add_hook(count_log_hook, &hook_calls);
-    int bot_ret = run_facetize_command(gfile, 4, bot_av, verbose);
-    int hook_calls_before_probe = hook_calls;
-    bu_log("facetize NMG hook restoration probe\n");
-    bu_log_delete_hook(count_log_hook, &hook_calls);
-
     auto check_tc7 = [&ret](bool passed, const char *description) {
 	if (passed)
 	    return;
 	bu_log("[regress_facetize] TC7: FAIL - %s\n", description);
 	ret = BRLCAD_ERROR;
     };
+
+    struct bu_vls fault_path = BU_VLS_INIT_ZERO;
+    bu_vls_printf(&fault_path, "%s/tc7_nmg_worker.fault", tmpdir);
+    (void)bu_file_delete(bu_vls_cstr(&fault_path));
+    (void)bu_setenv("LIBGED_FACETIZE_TEST_FAULT",
+	    "nmg-before-ready:fault.bot", 1);
+    (void)bu_setenv("LIBGED_FACETIZE_TEST_FAULT_FILE",
+	    bu_vls_cstr(&fault_path), 1);
+    int fault_ret = run_facetize_command(gfile, 4, fault_av, verbose);
+    (void)bu_setenv("LIBGED_FACETIZE_TEST_FAULT", "", 1);
+    (void)bu_setenv("LIBGED_FACETIZE_TEST_FAULT_FILE", "", 1);
+    check_tc7(fault_ret == BRLCAD_ERROR,
+	    "an interrupted NMG Boolean worker did not report failure");
+    check_tc7(bu_file_exists(bu_vls_cstr(&fault_path), NULL),
+	    "NMG Boolean worker fault did not trigger");
+    check_tc7(check_object_type(gfile, "fault.bot", ID_BOT) != BRLCAD_OK,
+	    "an interrupted NMG Boolean worker committed an output");
+    (void)bu_file_delete(bu_vls_cstr(&fault_path));
+    bu_vls_free(&fault_path);
+
+    int hook_calls = 0;
+    bu_log_add_hook(count_log_hook, &hook_calls);
+    int bot_ret = run_facetize_command(gfile, 4, bot_av, verbose);
+    int hook_calls_before_probe = hook_calls;
+    bu_log("facetize NMG hook restoration probe\n");
+    bu_log_delete_hook(count_log_hook, &hook_calls);
 
     check_tc7(bot_ret == BRLCAD_OK, "NMG Boolean BoT command failed");
     check_tc7(hook_calls == hook_calls_before_probe + 1,
@@ -1250,6 +1276,13 @@ tc7_nmg_modes(const char *tmpdir, int verbose)
 	    "region mode object fallback command failed");
     check_tc7(check_bot_exists(gfile, "box-fallback.bot") == BRLCAD_OK,
 	    "region mode object fallback output is missing");
+
+    int object_in_place_ret = run_facetize_command(gfile, 4,
+	    object_in_place_av, verbose);
+    check_tc7(object_in_place_ret == BRLCAD_OK,
+	    "in-place NMG Boolean object command failed");
+    check_tc7(check_object_type(gfile, "box.c", ID_BOT) == BRLCAD_OK,
+	    "in-place NMG Boolean object has the wrong type");
 
     int in_place_ret = run_facetize_command(gfile, 5, in_place_av, verbose);
     check_tc7(in_place_ret == BRLCAD_OK,

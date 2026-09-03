@@ -126,6 +126,14 @@ test_request_round_trip()
     validation_request.input_names.push_back("assembly.r");
     expect(client.send_request(validation_request),
 	"client sends a typed validation request");
+
+    FacetizeWorkerRequest nmg_request;
+    nmg_request.operation = FacetizeWorkerOperation::NmgBooleanToNmg;
+    nmg_request.input_names.push_back("first.r");
+    nmg_request.input_names.push_back("second.r");
+    nmg_request.output_name = "combined.nmg";
+    expect(client.send_request(nmg_request),
+	"client sends an NMG Boolean request");
     expect(fflush(requests) == 0 && fseek(requests, 0, SEEK_SET) == 0,
 	"rewind request stream");
 
@@ -159,6 +167,12 @@ test_request_round_trip()
 	received.input_names == validation_request.input_names &&
 	received.primitive.empty() && received.region.empty(),
 	"validation request has no unrelated settings");
+    expect(server.receive_request(received) == FacetizeWorkerReadResult::Request,
+	"server accepts an NMG Boolean request");
+    expect(received.operation == FacetizeWorkerOperation::NmgBooleanToNmg &&
+	received.input_names == nmg_request.input_names &&
+	received.output_name == nmg_request.output_name,
+	"request framing preserves NMG Boolean inputs and output");
     expect(server.receive_request(received) == FacetizeWorkerReadResult::End,
 	"clean request EOF ends the worker loop");
 
@@ -198,6 +212,10 @@ test_request_round_trip()
 	    "client rejects an oversized field");
 	expect(ftell(invalid_stream) == 0,
 	    "invalid requests do not partially modify the request stream");
+	invalid.input_names.front() = "part";
+	invalid.input_names.push_back("other");
+	expect(!client.send_request(invalid),
+	    "client rejects multiple primitive inputs");
 	fclose(invalid_stream);
     }
 }
@@ -207,14 +225,14 @@ static void
 test_malformed_requests()
 {
     const char *invalid_requests[] = {
-	"NOT_A_REQUEST 2 1 1 0 0 0 0 0 0\n",
-	"FACETIZE_REQUEST 1 1 1 0 0 0 0 0 0\n",
-	"FACETIZE_REQUEST 2 99 1 0 0 0 0 0 0\n",
-	"FACETIZE_REQUEST 2 1 0 0 0 0 0 0 0\n",
-	"FACETIZE_REQUEST 2 1 1 0 0 0 2 0 0\n",
-	"FACETIZE_REQUEST 2 1 1 0 0 0 0 0 0 trailing\n",
-	"FACETIZE_REQUEST 2 1 1 0 0 0 0 0 0\n0\n\n5\npart\n",
-	"FACETIZE_REQUEST 2 1 1 0 0 0 0 0 0\n0\n\n4\npart!"
+	"NOT_A_REQUEST 3 1 1 0 0 0 0 0 0\n",
+	"FACETIZE_REQUEST 2 1 1 0 0 0 0 0 0\n",
+	"FACETIZE_REQUEST 3 99 1 0 0 0 0 0 0\n",
+	"FACETIZE_REQUEST 3 1 0 0 0 0 0 0 0\n",
+	"FACETIZE_REQUEST 3 1 1 0 0 0 2 0 0\n",
+	"FACETIZE_REQUEST 3 1 1 0 0 0 0 0 0 trailing\n",
+	"FACETIZE_REQUEST 3 1 1 0 0 0 0 0 0\n0\n\n0\n\n5\npart\n",
+	"FACETIZE_REQUEST 3 1 1 0 0 0 0 0 0\n0\n\n0\n\n4\npart!"
     };
 
     for (const char *invalid_request : invalid_requests) {

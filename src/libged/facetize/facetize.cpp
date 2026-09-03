@@ -32,6 +32,7 @@
 #include <vector>
 
 #include "bu/app.h"
+#include "bu/file.h"
 #include "bu/path.h"
 #include "bu/opt.h"
 #include "wdb.h"
@@ -41,6 +42,8 @@
 #define TESS_OPTS_IMPLEMENTATION
 #include "./tess_opts.h"
 #include "./ged_facetize.h"
+
+static const char FACETIZE_NMG_OUTPUT_FILE_SUFFIX[] = "_nmg_outputs.g";
 
 static int
 facetize_process_output(struct bu_vls *output, const char **command)
@@ -98,6 +101,50 @@ _facetize_methods_help(struct ged *gedp)
     bu_vls_free(&method_output);
 }
 
+static int
+facetize_commit_nmg_outputs(struct _ged_facetize_state *s,
+	const std::vector<std::string> &output_names)
+{
+    if (!s || output_names.empty())
+	return BRLCAD_ERROR;
+
+    std::string keep_file = std::string(bu_vls_cstr(s->wfile)) +
+	FACETIZE_NMG_OUTPUT_FILE_SUFFIX;
+    (void)bu_file_delete(keep_file.c_str());
+    struct ged *working_gedp = ged_open("db", bu_vls_cstr(s->wfile), 1);
+    if (!working_gedp) {
+	facetize_failure(s, "unable to open staged NMG Boolean database '%s'",
+		bu_vls_cstr(s->wfile));
+	return BRLCAD_ERROR;
+    }
+
+    std::vector<const char *> keep_argv;
+    keep_argv.reserve(output_names.size() + 2);
+    keep_argv.push_back("keep");
+    keep_argv.push_back(keep_file.c_str());
+    for (const std::string &output_name : output_names)
+	keep_argv.push_back(output_name.c_str());
+    int keep_result = ged_exec_keep(working_gedp, (int)keep_argv.size(),
+	    keep_argv.data());
+    ged_close(working_gedp);
+    if (keep_result != BRLCAD_OK) {
+	facetize_failure(s, "unable to stage NMG Boolean outputs for import");
+	(void)bu_file_delete(keep_file.c_str());
+	return BRLCAD_ERROR;
+    }
+
+    const char *concat_argv[] = {"dbconcat", "-O", keep_file.c_str(), NULL};
+    int concat_result = ged_exec_dbconcat(s->gedp, 3, concat_argv);
+    (void)bu_file_delete(keep_file.c_str());
+    if (concat_result != BRLCAD_OK) {
+	facetize_failure(s, "unable to import staged NMG Boolean outputs");
+	return BRLCAD_ERROR;
+    }
+    bu_vls_trunc(s->gedp->ged_result_str, 0);
+    db_update_nref(s->dbip);
+    return BRLCAD_OK;
+}
+
 int
 _ged_facetize_objs(struct _ged_facetize_state *s, const FacetizePlan &plan)
 {
@@ -123,25 +170,50 @@ _ged_facetize_objs(struct _ged_facetize_state *s, const FacetizePlan &plan)
 	NULL : plan.output.c_str();
 
     if (plan.execution.uses_nmg_boolean()) {
-	if (!plan.execution.writes_in_place()) {
-	    ret = _ged_facetize_nmgeval(s, argc, argv.data(), output_name);
+	if (_ged_facetize_working_file_setup(s, NULL) != BRLCAD_OK) {
+	    facetize_failure(s,
+		    "unable to prepare the NMG Boolean working database");
 	    goto booleval_cleanup;
 	}
-	for (int i = 0; i < argc; i++) {
-	    const char *object_argv[] = {argv[i], NULL};
-	    ret = _ged_facetize_nmgeval(s, 1, object_argv, argv[i]);
-	    if (ret == BRLCAD_ERROR && s->tolerate_failures) {
-		facetize_tolerated_failure(s,
-			"object '%s' failed during NMG boolean evaluation and was skipped",
-			argv[i]);
-		continue;
-	    }
-	    if (ret == BRLCAD_ERROR)
-		goto booleval_cleanup;
-	    ok_cnt++;
+	struct db_i *work_dbip = db_open(bu_vls_cstr(s->wfile),
+		DB_OPEN_READWRITE);
+	if (!work_dbip || db_dirbuild(work_dbip) < 0) {
+	    if (work_dbip)
+		db_close(work_dbip);
+	    facetize_failure(s,
+		    "unable to open the NMG Boolean working database");
+	    goto booleval_cleanup;
 	}
-	if (s->tolerate_failures && ok_cnt > 0)
-	    ret = BRLCAD_OK;
+
+	std::vector<std::string> successful_outputs;
+	if (!plan.execution.writes_in_place()) {
+	    ret = _ged_facetize_nmgeval(s, work_dbip,
+		    s->dbip->dbi_filename, plan.inputs, output_name);
+	    if (ret == BRLCAD_OK)
+		successful_outputs.emplace_back(output_name);
+	} else {
+	    for (int i = 0; i < argc; i++) {
+		std::vector<std::string> object_input(1, plan.inputs[i]);
+		ret = _ged_facetize_nmgeval(s, work_dbip,
+			s->dbip->dbi_filename, object_input, argv[i]);
+		if (ret == BRLCAD_ERROR && s->tolerate_failures) {
+		    facetize_tolerated_failure(s,
+			    "object '%s' failed during NMG boolean evaluation and was skipped",
+			    argv[i]);
+		    continue;
+		}
+		if (ret == BRLCAD_ERROR)
+		    break;
+		successful_outputs.emplace_back(argv[i]);
+	    }
+	    if (s->tolerate_failures && !successful_outputs.empty())
+		ret = BRLCAD_OK;
+	}
+	db_close(work_dbip);
+	if (ret == BRLCAD_OK)
+	    ret = facetize_commit_nmg_outputs(s, successful_outputs);
+	if (ret == BRLCAD_OK)
+	    bu_dirclear(s->wdir);
 	goto booleval_cleanup;
     }
 

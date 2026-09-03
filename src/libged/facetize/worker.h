@@ -44,7 +44,9 @@ struct FacetizeCommitRequest {
 enum class FacetizeWorkerOperation {
     TessellatePrimitive = 1,
     ValidateCsg = 2,
-    EvaluateRegion = 3
+    EvaluateRegion = 3,
+    NmgBooleanToBot = 4,
+    NmgBooleanToNmg = 5
 };
 
 struct FacetizePrimitiveSettings {
@@ -68,6 +70,7 @@ struct FacetizeWorkerRequest {
     FacetizeWorkerOperation operation =
 	FacetizeWorkerOperation::TessellatePrimitive;
     std::vector<std::string> input_names;
+    std::string output_name;
     FacetizePrimitiveSettings primitive;
     FacetizeRegionSettings region;
 

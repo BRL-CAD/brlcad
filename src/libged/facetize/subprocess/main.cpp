@@ -49,6 +49,7 @@
 #include "../transfer.h"
 #include "../validation.h"
 #include "../worker.h"
+#include "./nmg_boolean.h"
 #include "./tessellate.h"
 
 static const char FACETIZE_TEST_FAULT_ENV[] =
@@ -60,6 +61,7 @@ static const char FACETIZE_TEST_FAULT_STAGE_DONE[] = "stage-before-done";
 static const char FACETIZE_TEST_FAULT_WRITER_PROCEED[] =
     "writer-before-proceed";
 static const char FACETIZE_TEST_FAULT_WRITER_DONE[] = "writer-before-done";
+static const char FACETIZE_TEST_FAULT_NMG_READY[] = "nmg-before-ready";
 
 /**
  * Terminate at a named protocol boundary when explicitly armed by a test.
@@ -799,8 +801,8 @@ facetize_writer(const char *work_file)
 	    break;
 	}
 
-	int ret = facetize_transfer_staged_bot(dbip,
-		request.result_file.c_str(), request.object_name.c_str());
+	int ret = facetize_transfer_staged_object(dbip,
+		request.result_file.c_str(), request.object_name.c_str(), ID_BOT);
 	if (ret == BRLCAD_OK)
 	    facetize_test_fault(FACETIZE_TEST_FAULT_WRITER_DONE,
 		    request.object_name.c_str());
@@ -812,6 +814,58 @@ facetize_writer(const char *work_file)
 
     db_close(dbip);
     return writer_status;
+}
+
+static int
+facetize_nmg_server(const char *source_file, const char *result_file)
+{
+    if (!source_file || !result_file)
+	return BRLCAD_ERROR;
+
+    setvbuf(stdout, NULL, _IONBF, 0);
+    struct ged *gedp = ged_open("db", source_file, 1);
+    if (!gedp)
+	return BRLCAD_ERROR;
+
+    struct db_i *result_dbip = db_create(result_file,
+	    BRLCAD_DB_FORMAT_LATEST);
+    if (!result_dbip) {
+	ged_close(gedp);
+	return BRLCAD_ERROR;
+    }
+
+    FacetizeWorkerServer channel(stdin, stdout);
+    FacetizeWorkerRequest request;
+    FacetizeWorkerReadResult read_result = channel.receive_request(request);
+    int server_status = BRLCAD_OK;
+    FacetizeNmgBooleanResult *result = NULL;
+    int ret = (read_result == FacetizeWorkerReadResult::Request) ?
+	facetize_nmg_boolean_evaluate(gedp, request, &result) : BRLCAD_ERROR;
+    if (read_result != FacetizeWorkerReadResult::Request) {
+	server_status = BRLCAD_ERROR;
+    } else if (ret == BRLCAD_OK) {
+	size_t payload_size = facetize_nmg_boolean_payload_size(result);
+	facetize_test_fault(FACETIZE_TEST_FAULT_NMG_READY,
+		request.output_name.c_str());
+	if (!channel.send_write_ready(payload_size,
+		facetize_resident_size()) ||
+		!channel.receive_write_proceed() ||
+		!channel.send_write_started()) {
+	    server_status = BRLCAD_ERROR;
+	} else {
+	    ret = facetize_nmg_boolean_write(result_dbip, result);
+	    if (!channel.send_write_result(ret, facetize_resident_size()))
+		server_status = BRLCAD_ERROR;
+	}
+    } else if (!channel.send_tessellation_result(ret,
+	    facetize_resident_size())) {
+	server_status = BRLCAD_ERROR;
+    }
+
+    facetize_nmg_boolean_destroy(result);
+    db_close(result_dbip);
+    ged_close(gedp);
+    return server_status;
 }
 
 extern "C" int
@@ -835,12 +889,13 @@ facetize_process(int argc, const char **argv)
     int writer_mode = 0;
     int validation_server_mode = 0;
     int region_server_mode = 0;
+    int nmg_server_mode = 0;
     int max_time = 0;
     int max_pnts = 0;
     int worker_threads = 0;
     struct bu_vls result_file = BU_VLS_INIT_ZERO;
 
-    struct bu_opt_desc d[15];
+    struct bu_opt_desc d[16];
     BU_OPT(d[ 0],  "h",         "help",                         "",                  NULL,           &print_help, "Print help and exit");
     BU_OPT(d[ 1],   "", "list-methods",                         "",                  NULL,         &list_methods, "List available tessellation methods.  When used with -h, print an informational summary of each method.");
     BU_OPT(d[ 2],  "O",    "overwrite",                         "",                  NULL,    &(s.overwrite_obj), "Replace original object with BoT");
@@ -855,7 +910,8 @@ facetize_process(int argc, const char **argv)
     BU_OPT(d[11],   "",          "writer",                        "",                  NULL,          &writer_mode, "Run as a persistent staged-result writer.");
     BU_OPT(d[12],   "", "validation-server",                        "",                  NULL, &validation_server_mode, "Run as a persistent CSG validation worker.");
     BU_OPT(d[13],   "",     "region-server",                        "",                  NULL,     &region_server_mode, "Run as a persistent region Boolean worker.");
-    BU_OPT_NULL(d[14]);
+    BU_OPT(d[14],   "",        "nmg-server",                        "",                  NULL,        &nmg_server_mode, "Run one isolated NMG Boolean request.");
+    BU_OPT_NULL(d[15]);
 
     /* parse options */
     struct bu_vls omsg = BU_VLS_INIT_ZERO;
@@ -874,6 +930,14 @@ facetize_process(int argc, const char **argv)
     }
     if (worker_threads)
 	bu_avail_cpus_set((size_t)worker_threads);
+
+    int worker_mode_count = server_mode + writer_mode +
+	validation_server_mode + region_server_mode + nmg_server_mode;
+    if (worker_mode_count > 1) {
+	bu_vls_free(&cache_dir);
+	bu_vls_free(&result_file);
+	return BRLCAD_ERROR;
+    }
 
     if (list_methods && print_help) {
 	print_methods_info();
@@ -908,8 +972,7 @@ facetize_process(int argc, const char **argv)
     }
 
     if (writer_mode) {
-	int ret = (argc == 1 && !server_mode && !validation_server_mode &&
-		!region_server_mode) ?
+	int ret = (argc == 1 && !bu_vls_strlen(&result_file)) ?
 	    facetize_writer(argv[0]) : BRLCAD_ERROR;
 	bu_vls_free(&cache_dir);
 	bu_vls_free(&result_file);
@@ -917,8 +980,7 @@ facetize_process(int argc, const char **argv)
     }
 
     if (validation_server_mode) {
-	int ret = (argc == 1 && !server_mode && !writer_mode &&
-		!region_server_mode && !bu_vls_strlen(&result_file)) ?
+	int ret = (argc == 1 && !bu_vls_strlen(&result_file)) ?
 	    facetize_validation_server(argv[0]) : BRLCAD_ERROR;
 	bu_vls_free(&cache_dir);
 	bu_vls_free(&result_file);
@@ -926,10 +988,18 @@ facetize_process(int argc, const char **argv)
     }
 
     if (region_server_mode) {
-	int ret = (argc == 2 && !server_mode && !writer_mode &&
-		!validation_server_mode && bu_vls_strlen(&result_file)) ?
+	int ret = (argc == 2 && bu_vls_strlen(&result_file)) ?
 	    facetize_region_server(argv[0], argv[1],
 		    bu_vls_cstr(&result_file)) : BRLCAD_ERROR;
+	bu_vls_free(&cache_dir);
+	bu_vls_free(&result_file);
+	return ret;
+    }
+
+    if (nmg_server_mode) {
+	int ret = (argc == 1 && bu_vls_strlen(&result_file)) ?
+	    facetize_nmg_server(argv[0], bu_vls_cstr(&result_file)) :
+	    BRLCAD_ERROR;
 	bu_vls_free(&cache_dir);
 	bu_vls_free(&result_file);
 	return ret;

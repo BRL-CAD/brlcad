@@ -19,437 +19,183 @@
  */
 /** @file libged/facetize/nmg.cpp
  *
- * Classic NMG boolean evaluation path.
- *
+ * Parent-side launch policy for isolated NMG Boolean evaluation.
  */
 
 #include "common.h"
 
-#include <string.h>
+#include <string>
+#include <vector>
 
-#include "bio.h"
-
+#include "bu/app.h"
+#include "bu/datetime.h"
 #include "bu/file.h"
-#include "bu/hook.h"
-#include "bu/vls.h"
-#include "bu/log.h"
+#include "bu/path.h"
+#include "bu/process.h"
+#include "bu/snooze.h"
+#include "raytrace.h"
 
-#include "../ged_private.h"
 #include "./ged_facetize.h"
+#include "./process.h"
+#include "./transfer.h"
+#include "./worker.h"
 
-struct _ged_facetize_logging_state {
-    struct bu_hook_list saved_bomb_hooks;
-    struct bu_hook_list saved_log_hooks;
-    struct bu_vls nmg_log;
-    int stderr_stashed;
-    int serr;
-    int active;
-};
-
-extern "C" {
-static int
-_facetize_bomb_hook(void *cdata, void *str)
-{
-    struct _ged_facetize_state *o = (struct _ged_facetize_state *)cdata;
-    struct _ged_facetize_logging_state *log_s = (struct _ged_facetize_logging_state *)o->log_s;
-    bu_vls_printf(&log_s->nmg_log, "%s\n", (const char *)str);
-    return 0;
-}
-
-static int
-_facetize_nmg_logging_hook(void *data, void *str)
-{
-    struct _ged_facetize_state *o = (struct _ged_facetize_state *)data;
-    struct _ged_facetize_logging_state *log_s = (struct _ged_facetize_logging_state *)o->log_s;
-    bu_vls_printf(&log_s->nmg_log, "%s\n", (const char *)str);
-    return 0;
-}
-
-static struct _ged_facetize_logging_state *
-_facetize_logging_state_create(struct _ged_facetize_state *o)
-{
-    if (!o || o->log_s)
-	return NULL;
-
-    struct _ged_facetize_logging_state *log_s;
-    BU_GET(log_s, struct _ged_facetize_logging_state);
-    bu_hook_list_init(&log_s->saved_bomb_hooks);
-    bu_hook_list_init(&log_s->saved_log_hooks);
-    bu_bomb_save_all_hooks(&log_s->saved_bomb_hooks);
-    bu_log_hook_save_all(&log_s->saved_log_hooks);
-    bu_vls_init(&log_s->nmg_log);
-    log_s->stderr_stashed = -1;
-    log_s->serr = -1;
-    log_s->active = 0;
-    o->log_s = log_s;
-    return log_s;
-}
-
-static void
-_facetize_log_nmg(struct _ged_facetize_state *o)
-{
-    if (!o || !o->log_s)
-	return;
-
-    /* Seriously, bu_bomb, we don't want you blathering
-     * to stderr... shut down stderr temporarily. */
-    struct _ged_facetize_logging_state *log_s = (struct _ged_facetize_logging_state *)o->log_s;
-    log_s->serr = fileno(stderr);
-    if (log_s->serr >= 0) {
-	int fnull = open(bu_file_null(), O_WRONLY);
-	if (fnull != -1) {
-	    log_s->stderr_stashed = dup(log_s->serr);
-	    if (log_s->stderr_stashed >= 0)
-		(void)dup2(fnull, log_s->serr);
-	    close(fnull);
-	}
-    }
-
-    /* Set bu_log logging to capture in nmg_log, rather than the
-     * application defaults */
-    bu_log_hook_delete_all();
-    bu_log_add_hook(_facetize_nmg_logging_hook, (void *)o);
-
-    /* Also engage the nmg bomb hooks */
-    bu_bomb_delete_all_hooks();
-    bu_bomb_add_hook(_facetize_bomb_hook, (void *)o);
-    log_s->active = 1;
-}
-
-static void
-_facetize_log_default(struct _ged_facetize_state *o)
-{
-    if (!o || !o->log_s)
-	return;
-
-    /* Put stderr back */
-    struct _ged_facetize_logging_state *log_s = (struct _ged_facetize_logging_state *)o->log_s;
-    if (log_s->stderr_stashed >= 0) {
-	fflush(stderr);
-	(void)dup2(log_s->stderr_stashed, log_s->serr);
-	close(log_s->stderr_stashed);
-	log_s->stderr_stashed = -1;
-    }
-
-    if (!log_s->active)
-	return;
-
-    /* Restore bu_bomb hooks to the application defaults */
-    bu_bomb_delete_all_hooks();
-    bu_bomb_restore_hooks(&log_s->saved_bomb_hooks);
-
-    /* Restore bu_log hooks to the application defaults */
-    bu_log_hook_delete_all();
-    bu_log_hook_restore_all(&log_s->saved_log_hooks);
-    log_s->active = 0;
-}
-
-static void
-_facetize_logging_state_destroy(struct _ged_facetize_state *o)
-{
-    if (!o || !o->log_s)
-	return;
-
-    struct _ged_facetize_logging_state *log_s = (struct _ged_facetize_logging_state *)o->log_s;
-    _facetize_log_default(o);
-    if (bu_vls_strlen(&log_s->nmg_log))
-	facetize_log(o, 2, "%s", bu_vls_cstr(&log_s->nmg_log));
-    bu_vls_free(&log_s->nmg_log);
-    bu_hook_delete_all(&log_s->saved_bomb_hooks);
-    bu_hook_delete_all(&log_s->saved_log_hooks);
-    BU_PUT(log_s, struct _ged_facetize_logging_state);
-    o->log_s = NULL;
-}
-
-}
-
-static union tree *
-facetize_region_end(struct db_tree_state *tsp,
-		    const struct db_full_path *pathp,
-		    union tree *curtree,
-		    void *client_data)
-{
-    union tree **facetize_tree;
-
-    if (tsp) RT_CK_DBTS(tsp);
-    if (pathp) RT_CK_FULL_PATH(pathp);
-
-    struct _ged_facetize_state *s = (struct _ged_facetize_state *)client_data;
-    facetize_tree = &s->facetize_tree;
-
-    if (curtree->tr_op == OP_NOP) return curtree;
-
-    if (*facetize_tree) {
-	union tree *tr;
-	BU_ALLOC(tr, union tree);
-	RT_TREE_INIT(tr);
-	tr->tr_op = OP_UNION;
-	tr->tr_b.tb_regionp = REGION_NULL;
-	tr->tr_b.tb_left = *facetize_tree;
-	tr->tr_b.tb_right = curtree;
-	*facetize_tree = tr;
-    } else {
-	*facetize_tree = curtree;
-    }
-
-    /* Tree has been saved, and will be freed later */
-    return TREE_NULL;
-}
-
-
-static union tree *
-facetize_nmg_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *client_data)
-{
-    union tree *ret = rt_booltree_leaf_tess(tsp, pathp, ip, NULL);
-    if (!ret) {
-	struct _ged_facetize_state *s = (struct _ged_facetize_state *)client_data;
-	if (s && s->tolerate_failures && pathp) {
-	    char *path_str = db_path_to_string(pathp);
-	    facetize_tolerated_failure(s, "NMG leaf tessellation failed for '%s'; leaf will be omitted from boolean evaluation", path_str ? path_str : "(unknown)");
-	    if (path_str)
-		bu_free(path_str, "path string");
-	}
-    }
-    return ret;
-}
-
-
-static struct model *
-_try_nmg_facetize(struct _ged_facetize_state *s, struct bu_list *vlfree, int argc, const char **argv)
-{
-    struct db_i *dbip = s->dbip;
-    int i;
-    int failed = 0;
-    struct db_tree_state init_state;
-    union tree *facetize_tree;
-    struct model *nmg_model;
-    struct rt_wdb *wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DEFAULT);
-
-    if (!_facetize_logging_state_create(s))
-	return NULL;
-
-    _facetize_log_nmg(s);
-
-    db_init_db_tree_state(&init_state, dbip);
-
-
-    /* Establish tolerances */
-    init_state.ts_ttol = &wdbp->wdb_ttol;
-    init_state.ts_tol = &wdbp->wdb_tol;
-
-    s->facetize_tree = (union tree *)0;
-    facetize_tree = (union tree *)0;
-    nmg_model = nmg_mm();
-    init_state.ts_m = &nmg_model;
-
-    if (!BU_SETJUMP) {
-	/* try */
-	i = db_walk_tree(dbip, argc, (const char **)argv,
-			 1,
-				 &init_state,
-				 0,			/* take all regions */
-				 facetize_region_end,
-				 facetize_nmg_leaf_tess,
-				 (void *)s
-				);
-    } else {
-	/* catch */
-	BU_UNSETJUMP;
-	_facetize_logging_state_destroy(s);
-	/* The NMG structures may be inconsistent after a bomb.  Do not walk
-	 * them during cleanup and risk a second longjmp outside this guard. */
-	s->facetize_tree = NULL;
-	return NULL;
-    } BU_UNSETJUMP;
-
-    facetize_tree = s->facetize_tree;
-
-    if (i < 0) {
-	/* Destroy NMG */
-	_facetize_logging_state_destroy(s);
-	if (s->facetize_tree) {
-	    db_free_tree(s->facetize_tree);
-	    s->facetize_tree = NULL;
-	}
-	nmg_km(nmg_model);
-	return NULL;
-    }
-
-    if (facetize_tree) {
-	if (!BU_SETJUMP) {
-	    /* try */
-	    failed = nmg_boolean(facetize_tree, nmg_model, vlfree, &wdbp->wdb_tol);
-	} else {
-	    /* catch */
-	    BU_UNSETJUMP;
-	    _facetize_logging_state_destroy(s);
-	    /* See the db_walk_tree catch above: a bomb invalidates cleanup
-	     * assumptions, so abandon this model rather than bombing again. */
-	    s->facetize_tree = NULL;
-	    return NULL;
-	} BU_UNSETJUMP;
-
-    } else {
-	failed = 1;
-    }
-
-    if (!failed && facetize_tree) {
-	NMG_CK_REGION(facetize_tree->tr_d.td_r);
-	facetize_tree->tr_d.td_r = (struct nmgregion *)NULL;
-    }
-
-    if (failed && s->tolerate_failures) {
-	facetize_tolerated_failure(s, "NMG boolean evaluation failed after leaf tessellation; no partial NMG result could be generated for this tree");
-    }
-
-    if (facetize_tree) {
-	db_free_tree(facetize_tree);
-	s->facetize_tree = NULL;
-    }
-
-    _facetize_logging_state_destroy(s);
-    if (failed)
-	nmg_km(nmg_model);
-    return (failed) ? NULL : nmg_model;
-}
-
-static struct rt_bot_internal *
-_try_nmg_to_bot(struct _ged_facetize_state *s, struct model *nmg_model, struct bu_list *vlfree, const struct bn_tol *tol, int *bombed)
-{
-    struct rt_bot_internal *bot = NULL;
-
-    *bombed = 0;
-    if (!_facetize_logging_state_create(s))
-	return NULL;
-    _facetize_log_nmg(s);
-    if (!BU_SETJUMP) {
-	bot = (struct rt_bot_internal *)nmg_mdl_to_bot(nmg_model, vlfree, tol);
-    } else {
-	BU_UNSETJUMP;
-	*bombed = 1;
-	bot = NULL;
-    } BU_UNSETJUMP;
-    _facetize_logging_state_destroy(s);
-
-    return bot;
-}
-
-static int
-_write_nmg(struct _ged_facetize_state *s, struct model *nmg_model, const char *name)
-{
-    struct db_i *dbip = s->dbip;
-    struct rt_db_internal intern;
-    struct directory *dp;
-
-    /* Export NMG as a new solid */
-    RT_DB_INTERNAL_INIT(&intern);
-    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-    intern.idb_type = ID_NMG;
-    intern.idb_meth = &OBJ[ID_NMG];
-    intern.idb_ptr = (void *)nmg_model;
-
-    dp = db_diradd(dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
-    if (dp == RT_DIR_NULL) {
-	if (s->verbosity > 0) {
-	    bu_log("Cannot add %s to directory\n", name);
-	}
-	nmg_km(nmg_model);
-	return BRLCAD_ERROR;
-    }
-
-    if (rt_db_put_internal(dp, dbip, &intern) < 0) {
-	if (s->verbosity > 0) {
-	    bu_log("Failed to write %s to database\n", name);
-	}
-	return BRLCAD_ERROR;
-    }
-
-    return BRLCAD_OK;
-}
-
-static int
-_write_bot(struct _ged_facetize_state *s, struct rt_bot_internal *bot, const char *name)
-{
-    struct db_i *dbip = s->dbip;
-    struct rt_db_internal intern;
-    struct directory *dp;
-
-    /* Export BoT as a new solid */
-    RT_DB_INTERNAL_INIT(&intern);
-    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-    intern.idb_type = ID_BOT;
-    intern.idb_meth = &OBJ[ID_BOT];
-    intern.idb_ptr = (void *)bot;
-
-    dp = db_diradd(dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
-    if (dp == RT_DIR_NULL) {
-	if (s->verbosity > 0) {
-	    bu_log("Cannot add %s to directory\n", name);
-	}
-	rt_db_free_internal(&intern);
-	return BRLCAD_ERROR;
-    }
-
-    if (rt_db_put_internal(dp, dbip, &intern) < 0) {
-	if (s->verbosity > 0) {
-	    bu_log("Failed to write %s to database\n", name);
-	}
-	return BRLCAD_ERROR;
-    }
-
-    return BRLCAD_OK;
-}
+static const int FACETIZE_NMG_POLL_USEC = 1000;
+static const char FACETIZE_NMG_RESULT_FILE[] = "nmg_boolean_result.g";
 
 int
-_ged_facetize_nmgeval(struct _ged_facetize_state *s, int argc, const char **argv, const char *oname)
+_ged_facetize_nmgeval(struct _ged_facetize_state *s,
+	struct db_i *target_dbip, const char *database_path,
+	const std::vector<std::string> &input_names, const char *output_name)
 {
-    int ret = BRLCAD_OK;
-    struct db_i *dbip = s->dbip;
-    struct rt_wdb *wdbp;
-    struct rt_bot_internal *bot = NULL;
-    int conversion_bombed = 0;
-    struct bu_list *vlfree = &rt_vlfree;
-    struct model *nmg_model = _try_nmg_facetize(s, vlfree, argc, argv);
+    if (!s || !target_dbip || !database_path || !database_path[0] ||
+	    input_names.empty() || !output_name || !output_name[0] || !s->wdir)
+	return BRLCAD_ERROR;
 
-    if (nmg_model == NULL) {
-	if (s->verbosity > 1) {
-	    bu_log("NMG(%s):  no resulting region, aborting\n", oname);
-	}
-	ret = BRLCAD_ERROR;
-	goto ged_nmg_obj_memfree;
+    FacetizeWorkerRequest request;
+    request.operation = s->execution.writes_nmg() ?
+	FacetizeWorkerOperation::NmgBooleanToNmg :
+	FacetizeWorkerOperation::NmgBooleanToBot;
+    request.input_names = input_names;
+    request.output_name = output_name;
+    if (!request.valid())
+	return BRLCAD_ERROR;
+
+    char result_file[MAXPATHLEN];
+    bu_dir(result_file, MAXPATHLEN, s->wdir, FACETIZE_NMG_RESULT_FILE, NULL);
+    (void)bu_file_delete(result_file);
+
+    char executable[MAXPATHLEN];
+    bu_dir(executable, MAXPATHLEN, BU_DIR_BIN, "ged_exec", BU_DIR_EXT, NULL);
+    std::vector<std::string> command;
+    command.push_back(executable);
+    command.push_back("facetize_process");
+    command.push_back(database_path);
+
+    struct bu_process *process = NULL;
+    FILE *process_input = NULL;
+    FacetizeWorkerClient channel;
+    if (facetize_process_start(&process, &process_input, channel, command,
+	    result_file, "--nmg-server") != BRLCAD_OK) {
+	(void)bu_file_delete(result_file);
+	facetize_log(s, 0,
+		"FACETIZE: unable to start the NMG Boolean worker for %s\n",
+		output_name);
+	return BRLCAD_ERROR;
+    }
+    if (!channel.send_request(request)) {
+	(void)facetize_process_stop(s, &process, process_input, channel, true);
+	(void)bu_file_delete(result_file);
+	facetize_log(s, 0,
+		"FACETIZE: unable to submit %s to the NMG Boolean worker\n",
+		output_name);
+	return BRLCAD_ERROR;
     }
 
-    if (!s->execution.writes_nmg()) {
+    facetize_log(s, 1, "FACETIZE: evaluating %s with NMG Boolean...\n",
+	    output_name);
+    FacetizeWorkerStatus status;
+    int64_t request_start = bu_gettime();
+    int64_t write_deadline = 0;
+    bool write_permitted = false;
+    bool interrupted = false;
+    bool evaluation_timed_out = false;
+    bool write_timed_out = false;
+    while (!status.result_received) {
+	facetize_process_drain_stdout(s, process, channel, &status);
+	facetize_process_drain_stderr(s, process);
 
-	wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DEFAULT);
-	bot = _try_nmg_to_bot(s, nmg_model, vlfree, &wdbp->wdb_tol, &conversion_bombed);
-	if (!bot) {
-	    ret = BRLCAD_ERROR;
-	    if (conversion_bombed)
-		nmg_model = NULL;
-	    goto ged_nmg_obj_memfree;
+	int64_t now = bu_gettime();
+	if (status.write_ready && !write_permitted) {
+	    if (s->max_time > 0 && now - request_start >=
+		    BU_SEC2USEC(s->max_time)) {
+		interrupted = true;
+		evaluation_timed_out = true;
+		break;
+	    }
+	    write_permitted = true;
+	    double write_timeout = facetize_write_timeout_seconds(
+		    status.payload_size, 0.0, 0.0);
+	    write_deadline = now + BU_SEC2USEC(write_timeout);
+	    if (!channel.send_write_proceed()) {
+		interrupted = true;
+		break;
+	    }
+	    continue;
 	}
+	if (status.result_received) {
+	    if (status.write_started && !status.write_done)
+		interrupted = true;
+	    break;
+	}
+	if (bu_process_poll(process, NULL) != 0) {
+	    /* The final status may reach the pipe just before process exit.
+	     * Drain once more before deciding the worker was interrupted. */
+	    facetize_process_drain_stdout(s, process, channel, &status);
+	    facetize_process_drain_stderr(s, process);
+	    interrupted = !status.result_received ||
+		(status.write_started && !status.write_done);
+	    break;
+	}
+	if (!write_permitted && s->max_time > 0 &&
+		now - request_start >= BU_SEC2USEC(s->max_time)) {
+	    interrupted = true;
+	    evaluation_timed_out = true;
+	    break;
+	}
+	if (write_permitted && now >= write_deadline) {
+	    interrupted = true;
+	    write_timed_out = true;
+	    break;
+	}
+	(void)bu_snooze(FACETIZE_NMG_POLL_USEC);
+    }
 
-	ret = _write_bot(s, bot, oname);
-	nmg_km(nmg_model);
-	nmg_model = NULL;
+    int process_status = facetize_process_stop(s, &process, process_input,
+	    channel, interrupted);
+    int ret = BRLCAD_ERROR;
+    if (!interrupted && process_status == BRLCAD_OK &&
+	    status.result_received && status.write_done &&
+	    status.result == BRLCAD_OK) {
+	int expected_type = request.operation ==
+	    FacetizeWorkerOperation::NmgBooleanToNmg ? ID_NMG : ID_BOT;
+	ret = facetize_transfer_staged_object(target_dbip, result_file,
+		output_name, expected_type);
+    }
+    (void)bu_file_delete(result_file);
 
+    if (ret == BRLCAD_OK) {
+	facetize_log(s, 1,
+		"FACETIZE: NMG Boolean evaluation succeeded for %s\n",
+		output_name);
+	return BRLCAD_OK;
+    }
+    if (evaluation_timed_out) {
+	facetize_log(s, 0,
+		"FACETIZE: NMG Boolean evaluation timed out after %d seconds for %s\n",
+		s->max_time, output_name);
+    } else if (write_timed_out) {
+	facetize_log(s, 0,
+		"FACETIZE: staging the NMG Boolean result timed out for %s\n",
+		output_name);
+    } else if (interrupted) {
+	facetize_log(s, 0,
+		"FACETIZE: NMG Boolean worker exited while processing %s\n",
+		output_name);
+    } else if (process_status != BRLCAD_OK) {
+	facetize_log(s, 0,
+		"FACETIZE: NMG Boolean worker exited abnormally after processing %s\n",
+		output_name);
+    } else if (status.result != BRLCAD_OK) {
+	facetize_log(s, 0,
+		"FACETIZE: NMG Boolean evaluation failed for %s\n",
+		output_name);
     } else {
-
-	/* Write the NMG */
-	ret = _write_nmg(s, nmg_model, oname);
-	nmg_model = NULL;
-
+	facetize_log(s, 0,
+		"FACETIZE: unable to transfer the staged NMG Boolean result for %s\n",
+		output_name);
     }
-
-ged_nmg_obj_memfree:
-    if (nmg_model)
-	nmg_km(nmg_model);
-    if (s->verbosity >= 0 && ret != BRLCAD_OK) {
-	bu_log("NMG: failed to generate %s\n", oname);
-    }
-
-    return ret;
+    return BRLCAD_ERROR;
 }
 
 // Local Variables:

@@ -28,7 +28,7 @@
 #include <sstream>
 
 #include <errno.h>
-#if defined(HAVE_PTHREAD_H) && defined(SIGPIPE)
+#if defined(HAVE_PTHREAD_H) && defined(HAVE_SIGNAL_H)
 #  include <pthread.h>
 #  include <signal.h>
 #  include <time.h>
@@ -50,7 +50,7 @@ static const char FACETIZE_WRITE_PROCEED_MAGIC[] = "FACETIZE_WRITE_PROCEED";
 static const char FACETIZE_WRITE_STARTED_MAGIC[] = "FACETIZE_WRITE_STARTED";
 static const char FACETIZE_WRITE_DONE_MAGIC[] = "FACETIZE_WRITE_DONE";
 static const char FACETIZE_CSG_RESULT_MAGIC[] = "FACETIZE_CSG_RESULT";
-static const unsigned int FACETIZE_PROTOCOL_VERSION = 2u;
+static const unsigned int FACETIZE_PROTOCOL_VERSION = 3u;
 static const size_t FACETIZE_PROTOCOL_FIELD_MAX = 1024u * 1024u;
 static const size_t FACETIZE_PROTOCOL_LIST_MAX = 65536u;
 static const size_t FACETIZE_PROTOCOL_HEADER_SIZE = 256u;
@@ -65,7 +65,7 @@ class FacetizePipeWriteGuard
     public:
 	FacetizePipeWriteGuard()
 	{
-#if defined(HAVE_PTHREAD_H) && defined(SIGPIPE)
+#if defined(HAVE_PTHREAD_H) && defined(HAVE_SIGNAL_H) && defined(SIGPIPE)
 	    sigemptyset(&blocked_signals);
 	    sigaddset(&blocked_signals, SIGPIPE);
 	    active = pthread_sigmask(SIG_BLOCK, &blocked_signals,
@@ -78,7 +78,7 @@ class FacetizePipeWriteGuard
 
 	~FacetizePipeWriteGuard()
 	{
-#if defined(HAVE_PTHREAD_H) && defined(SIGPIPE)
+#if defined(HAVE_PTHREAD_H) && defined(HAVE_SIGNAL_H) && defined(SIGPIPE)
 	    if (!active)
 		return;
 
@@ -99,7 +99,7 @@ class FacetizePipeWriteGuard
 	}
 
     private:
-#if defined(HAVE_PTHREAD_H) && defined(SIGPIPE)
+#if defined(HAVE_PTHREAD_H) && defined(HAVE_SIGNAL_H) && defined(SIGPIPE)
 	sigset_t blocked_signals;
 	sigset_t original_mask;
 	bool active = false;
@@ -176,7 +176,9 @@ facetize_operation_valid(FacetizeWorkerOperation operation)
 {
     return operation == FacetizeWorkerOperation::TessellatePrimitive ||
 	operation == FacetizeWorkerOperation::ValidateCsg ||
-	operation == FacetizeWorkerOperation::EvaluateRegion;
+	operation == FacetizeWorkerOperation::EvaluateRegion ||
+	operation == FacetizeWorkerOperation::NmgBooleanToBot ||
+	operation == FacetizeWorkerOperation::NmgBooleanToNmg;
 }
 
 static bool
@@ -271,11 +273,11 @@ FacetizeRegionSettings::empty() const
 bool
 FacetizeWorkerRequest::valid() const
 {
-    if (!facetize_operation_valid(operation) || input_names.size() != 1 ||
-	    input_names.front().empty() ||
+    if (!facetize_operation_valid(operation) || input_names.empty() ||
 	    input_names.size() > FACETIZE_PROTOCOL_LIST_MAX ||
 	    primitive.methods.size() > FACETIZE_PROTOCOL_LIST_MAX ||
 	    primitive.method_options.size() > FACETIZE_PROTOCOL_LIST_MAX ||
+	    output_name.size() > FACETIZE_PROTOCOL_FIELD_MAX ||
 	    primitive.cache_directory.size() > FACETIZE_PROTOCOL_FIELD_MAX ||
 	    primitive.point_limit < 0)
 	return false;
@@ -292,11 +294,17 @@ FacetizeWorkerRequest::valid() const
 
     switch (operation) {
 	case FacetizeWorkerOperation::TessellatePrimitive:
-	    return region.empty();
+	    return input_names.size() == 1 && output_name.empty() &&
+		region.empty();
 	case FacetizeWorkerOperation::ValidateCsg:
-	    return primitive.empty() && region.empty();
+	    return input_names.size() == 1 && output_name.empty() &&
+		primitive.empty() && region.empty();
 	case FacetizeWorkerOperation::EvaluateRegion:
-	    return primitive.empty();
+	    return input_names.size() == 1 && output_name.empty() &&
+		primitive.empty();
+	case FacetizeWorkerOperation::NmgBooleanToBot:
+	case FacetizeWorkerOperation::NmgBooleanToNmg:
+	    return !output_name.empty() && primitive.empty() && region.empty();
     }
     return false;
 }
@@ -304,6 +312,8 @@ FacetizeWorkerRequest::valid() const
 std::string
 FacetizeWorkerRequest::label() const
 {
+    if (!output_name.empty())
+	return output_name;
     return input_names.empty() ? "(unknown)" : input_names.front();
 }
 
@@ -323,7 +333,8 @@ FacetizeWorkerClient::send_request(const FacetizeWorkerRequest &request)
 	    request.region.no_fixup ? 1 : 0,
 	    request.region.tolerate_failures ? 1 : 0) < 0 ||
 	    !facetize_send_sized_field(request_stream,
-		request.primitive.cache_directory))
+		request.primitive.cache_directory) ||
+	    !facetize_send_sized_field(request_stream, request.output_name))
 	return false;
     for (const std::string &input_name : request.input_names)
 	if (!facetize_send_sized_field(request_stream, input_name))
@@ -504,8 +515,11 @@ FacetizeWorkerServer::receive_request(FacetizeWorkerRequest &request)
     request.region.no_fixup = no_fixup != 0;
     request.region.tolerate_failures = tolerate_failures != 0;
     if (!facetize_read_sized_field(request_stream,
-	    request.primitive.cache_directory))
+	    request.primitive.cache_directory) ||
+	    !facetize_read_sized_field(request_stream, request.output_name)) {
+	request = FacetizeWorkerRequest();
 	return FacetizeWorkerReadResult::Error;
+    }
 
     request.input_names.reserve(input_count);
     for (size_t i = 0; i < input_count; i++) {
