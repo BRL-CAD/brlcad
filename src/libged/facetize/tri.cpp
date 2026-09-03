@@ -1847,7 +1847,7 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
 	s->variant_plan = NULL;
     }
     if (!s->make_nmg && !s->nmg_booleval && !s->no_perturb) {
-	FacetizeVariantPlan *vplan = _ged_facetize_build_variant_plan(s, argc, dpa);
+	FacetizeVariantPlan *vplan = _ged_facetize_build_variant_plan(s, argc, dpa, NULL);
 	s->variant_plan = (void *)vplan;
     }
 

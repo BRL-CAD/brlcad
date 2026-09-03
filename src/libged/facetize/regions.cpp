@@ -804,6 +804,40 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     // For evaluated roots, reduce each CSG tree to a single BoT/NMG result and
     // place that result back into the working hierarchy.
     struct bu_vls bname = BU_VLS_INIT_ZERO;
+    auto cleanup_eval_error = [&]() {
+	if (s->variant_plan) {
+	    delete (FacetizeVariantPlan *)s->variant_plan;
+	    s->variant_plan = NULL;
+	}
+	bu_ptbl_free(&eval_roots);
+	bu_ptbl_free(ir);
+	bu_free(ir, "ir table");
+	bu_ptbl_free(ar);
+	bu_free(ar, "ar table");
+	bu_vls_free(&bname);
+	bu_free(dpa, "free dpa");
+    };
+
+    struct db_i *wdbip = db_open(bu_vls_cstr(s->wfile), DB_OPEN_READWRITE);
+    if (!wdbip) {
+	if (s->verbosity >= 0)
+	    bu_log("regions.cpp:%d Failed to open working database.\n", __LINE__);
+	cleanup_eval_error();
+	return BRLCAD_ERROR;
+    }
+    wdbip->dbi_read_only = 1;
+    if (db_dirbuild(wdbip) < 0) {
+	if (s->verbosity >= 0)
+	    bu_log("regions.cpp:%d Failed to build working database directory.\n", __LINE__);
+	db_close(wdbip);
+	cleanup_eval_error();
+	return BRLCAD_ERROR;
+    }
+    db_update_nref(wdbip);
+    wdbip->dbi_read_only = 0;
+    nmg_wstate.dbip = wdbip;
+
+    int bret = BRLCAD_OK;
     for (size_t i = 0; i < BU_PTBL_LEN(&eval_roots); i++) {
 	struct directory *dpw[2] = {NULL};
 	dpw[0] = (struct directory *)BU_PTBL_GET(&eval_roots, i);
@@ -815,22 +849,14 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	    bu_vls_sprintf(&bname, "%s.bot", dpw[0]->d_namep);
 	}
 
-	struct db_i *wdbip = db_open(bu_vls_cstr(s->wfile), DB_OPEN_READWRITE);
-	wdbip->dbi_read_only = 1;
-	db_dirbuild(wdbip);
-	db_update_nref(wdbip);
 	struct directory *dcheck = db_lookup(wdbip, bu_vls_cstr(&bname), LOOKUP_QUIET);
 	if (dcheck != RT_DIR_NULL)
 	    bu_vls_incr(&bname, NULL, NULL, &_db_uniq_test, (void *)wdbip);
-	wdbip->dbi_read_only = 0;
-	nmg_wstate.dbip = wdbip;
 
-	int bret = BRLCAD_OK;
 	if (s->make_nmg || s->nmg_booleval) {
 	    char *obj_name = bu_strdup(dpw[0]->d_namep);
 	    bret = _ged_facetize_nmgeval(&nmg_wstate, 1, (const char **)&obj_name, bu_vls_cstr(&bname));
 	    bu_free(obj_name, "obj_name");
-	    db_close(wdbip);
 	} else {
 	    // Need wdbp in the next two stages for tolerances
 	    struct rt_wdb *wwdbp = wdb_dbopen(wdbip, RT_WDB_TYPE_DB_DEFAULT);
@@ -907,33 +933,36 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 		    vcnt_p1_trigger++;
 		    facetize_log(s, 1, "FACETIZE: %s CSG vs BoT MISMATCH (SA_err=%.2f%% VOL_err=%.2f%%) - triggering perturb\n",
 			    dpw[0]->d_namep, sa_err_pct, vol_err_pct);
-		    bool reopened_wdb = false;
 		    /* Region retries intentionally use a fresh plan scoped to the
 		     * failed root so passing regions do not create perturb variants. */
 		    _clear_variant_plan(s);
 		    FacetizeVariantPlan *region_vplan =
-			_ged_facetize_build_variant_plan(s, 1, dpw);
+			_ged_facetize_build_variant_plan(s, 1, dpw, wdbip);
 		    if (region_vplan) {
 			s->variant_plan = (void *)region_vplan;
 			vcnt_adjusted_instances += region_vplan->n_adjusted_instances;
 			vcnt_sub_variants += region_vplan->n_sub_variants;
 			vcnt_perturb_fallbacks += region_vplan->n_perturb_fallbacks;
-			if (!region_vplan->variant_names.empty())
-			    _ged_facetize_tessellate_variant_names(s, region_vplan);
-			vcnt_tess_failures += region_vplan->n_variant_tess_failures;
-			reopened_wdb = true;
-		    }
-		    if (region_vplan) {
-			if (reopened_wdb) {
+			if (!region_vplan->variant_names.empty()) {
 			    db_close(wdbip);
+			    wdbip = NULL;
+			    nmg_wstate.dbip = NULL;
+			    _ged_facetize_tessellate_variant_names(s, region_vplan);
 			    wdbip = db_open(bu_vls_cstr(s->wfile), DB_OPEN_READWRITE);
-			    if (!wdbip)
+			    if (!wdbip || db_dirbuild(wdbip) < 0) {
+				if (wdbip)
+				    db_close(wdbip);
+				wdbip = NULL;
+				bret = BRLCAD_ERROR;
 				break;
-			    db_dirbuild(wdbip);
+			    }
 			    db_update_nref(wdbip);
+			    nmg_wstate.dbip = wdbip;
 			    wwdbp = wdb_dbopen(wdbip, RT_WDB_TYPE_DB_DEFAULT);
 			}
-
+			vcnt_tess_failures += region_vplan->n_variant_tess_failures;
+		    }
+		    if (region_vplan) {
 			s->use_variant_plan = 1;
 			struct directory *od = db_lookup(wdbip, bu_vls_cstr(&bname), LOOKUP_QUIET);
 			if (od != RT_DIR_NULL) {
@@ -1020,30 +1049,15 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 			bu_log("FACETIZE: validation unavailable for %s (crofton/metric prep failure)\n", dpw[0]->d_namep);
 		}
 	    }
-	    db_close(wdbip);
 	}
 
 	if (bret != BRLCAD_OK) {
 	    if (s->verbosity >= 0)
 		bu_log("regions.cpp:%d Failed to generate %s.\n", __LINE__, bu_vls_cstr(&bname));
-	    if (s->variant_plan) {
-		delete (FacetizeVariantPlan *)s->variant_plan;
-		s->variant_plan = NULL;
-	    }
-	    bu_ptbl_free(&eval_roots);
-	    bu_ptbl_free(ir);
-	    bu_free(ir, "ir table");
-	    bu_ptbl_free(ar);
-	    bu_free(ar, "ar table");
-	    bu_vls_free(&bname);
-	    bu_free(dpa, "free dpa");
-	    return BRLCAD_ERROR;
+	    break;
 	}
 
 	// Replace comb roots with their evaluated BoT/NMG or swap primitive roots.
-	wdbip = db_open(bu_vls_cstr(s->wfile), DB_OPEN_READWRITE);
-	db_dirbuild(wdbip);
-	db_update_nref(wdbip);
 	struct directory *wdp = db_lookup(wdbip, dpw[0]->d_namep, LOOKUP_QUIET);
 	if (wdp && (wdp->d_flags & RT_DIR_COMB)) {
 	    struct rt_db_internal intern;
@@ -1071,23 +1085,20 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 		    db_rename(wdbip, bot_dp, dpw[0]->d_namep) < 0) {
 		if (s->verbosity >= 0)
 		    bu_log("regions.cpp:%d Failed to replace implicit root %s.\n", __LINE__, dpw[0]->d_namep);
-		db_close(wdbip);
-		if (s->variant_plan) {
-		    delete (FacetizeVariantPlan *)s->variant_plan;
-		    s->variant_plan = NULL;
-		}
-		bu_ptbl_free(&eval_roots);
-		bu_ptbl_free(ir);
-		bu_free(ir, "ir table");
-		bu_ptbl_free(ar);
-		bu_free(ar, "ar table");
-		bu_vls_free(&bname);
-		bu_free(dpa, "free dpa");
-		return BRLCAD_ERROR;
+		bret = BRLCAD_ERROR;
+		break;
 	    }
 	}
+    }
+    if (wdbip) {
 	db_update_nref(wdbip);
 	db_close(wdbip);
+	nmg_wstate.dbip = NULL;
+    }
+
+    if (bret != BRLCAD_OK) {
+	cleanup_eval_error();
+	return BRLCAD_ERROR;
     }
     bu_vls_free(&bname);
     bu_ptbl_free(&eval_roots);

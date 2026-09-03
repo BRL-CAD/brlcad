@@ -229,11 +229,14 @@ struct FacetizeVariantPlan {
  * Returns an allocated FacetizeVariantPlan owned by the caller (or NULL on
  * allocation failure).  Primitives without ft_perturb support are counted in
  * n_perturb_fallbacks and will fall back to the original mesh at booleval time.
+ * If working_dbip is non-NULL it must be an indexed writable handle for the
+ * working database; it is borrowed and remains open on return.
  */
 extern FacetizeVariantPlan *
 _ged_facetize_build_variant_plan(struct _ged_facetize_state *s,
                                  int argc,
-                                 struct directory **dpa);
+                                 struct directory **dpa,
+			 struct db_i *working_dbip);
 
 /**
  * Tessellate the variant primitives in the working .g using the NMG method.

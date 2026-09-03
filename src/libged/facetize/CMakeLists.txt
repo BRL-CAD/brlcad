@@ -3,6 +3,7 @@ brlcad_find_package(manifold REQUIRED)
 set(FACETIZE_LIBS libged libbu manifold::manifold)
 
 add_subdirectory(subprocess)
+add_subdirectory(tests)
 
 set(
   FACETIZE_SRCS
