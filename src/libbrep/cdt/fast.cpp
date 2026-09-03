@@ -4881,7 +4881,7 @@ fast_split_bridged_inner_loop(const ON_Surface *surface,
 
 static bool
 fast_loop_is_provably_degenerate(const ON_Surface *surface,
-	const ON_BrepLoop *loop);
+	const ON_BrepLoop *loop, const struct bn_tol *tol);
 
 static bool
 bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
@@ -5094,7 +5094,7 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 	if (!face_loop)
 	    continue;
 	if (face_loop->m_type != ON_BrepLoop::outer &&
-		fast_loop_is_provably_degenerate(s, face_loop))
+		fast_loop_is_provably_degenerate(s, face_loop, tol))
 	    continue;
 	const bool uv_closed = fast_loop_uv_closed(s, face_loop,
 	    *brep_loop_points[li], tol);
@@ -5469,7 +5469,7 @@ enum fast_face_outcome {
 
 static bool
 fast_loop_is_provably_degenerate(const ON_Surface *surface,
-	const ON_BrepLoop *loop)
+	const ON_BrepLoop *loop, const struct bn_tol *tol)
 {
     if (!loop || !surface || loop->TrimCount() < 1)
 	return false;
@@ -5573,6 +5573,27 @@ fast_loop_is_provably_degenerate(const ON_Surface *surface,
 	    if (fabs(cross) > parameter_tolerance * direction_length)
 		return false;
 	}
+
+	/* A trim tolerance describes the pcurve's agreement with its edge; it
+	 * is not a model-space width.  On a strongly scaled surface, distinct
+	 * drawable boundaries can be closer than that tolerance in UV.  Confirm
+	 * the candidate collapse on the surface before discarding its face. */
+	if (!tol || !std::isfinite(tol->dist) || !(tol->dist > 0.0))
+	    return false;
+	const double direction_squared = direction * direction;
+	if (!(direction_squared > 0.0) || !std::isfinite(direction_squared))
+	    return false;
+	for (const ON_2dPoint &point : endpoints) {
+	    const ON_2dVector offset = point - endpoints[0];
+	    const double fraction = (offset * direction) / direction_squared;
+	    const ON_2dPoint projected = endpoints[0] + fraction * direction;
+	    const ON_3dPoint model_point = surface->PointAt(point.x, point.y);
+	    const ON_3dPoint model_projection = surface->PointAt(projected.x,
+		projected.y);
+	    if (!model_point.IsValid() || !model_projection.IsValid() ||
+		    model_point.DistanceTo(model_projection) > tol->dist)
+		return false;
+	}
 	return true;
     }
     const ON_BrepTrim *trim = loop->Trim(0);
@@ -5606,7 +5627,8 @@ fast_loop_is_provably_degenerate(const ON_Surface *surface,
 }
 
 static bool
-fast_face_is_provably_degenerate(const ON_BrepFace &face)
+fast_face_is_provably_degenerate(const ON_BrepFace &face,
+	const struct bn_tol *tol)
 {
     bool all_loops_empty = face.LoopCount() > 0;
     for (int li = 0; li < face.LoopCount(); ++li) {
@@ -5620,7 +5642,8 @@ fast_face_is_provably_degenerate(const ON_BrepFace &face)
 	return true;
     if (face.LoopCount() != 1)
 	return false;
-    return fast_loop_is_provably_degenerate(face.SurfaceOf(), face.Loop(0));
+    return fast_loop_is_provably_degenerate(face.SurfaceOf(), face.Loop(0),
+	tol);
 }
 
 static fast_face_outcome
@@ -5631,7 +5654,7 @@ bg_CDT(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 	double model_diagonal,
 	const struct brep_cdt_fast_options *options)
 {
-    if (fast_face_is_provably_degenerate(face))
+    if (fast_face_is_provably_degenerate(face, tol))
 	return FAST_FACE_SKIPPED_DEGENERATE;
 
     bool repair_first = false;
