@@ -8,14 +8,14 @@ else()
   set(JFLAG)
 endif()
 add_custom_target(
-  regress
+  regress-run
   COMMAND
     ${CMAKE_CTEST_COMMAND} -L Regression --output-on-failure --output-log "${CMAKE_BINARY_DIR}/regress_output.log"
     ${JFLAG}
 )
 distclean(${CMAKE_BINARY_DIR}/regress_output.log)
-set_target_properties(regress PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
-set_target_properties(regress PROPERTIES FOLDER "BRL-CAD Regression Tests")
+set_target_properties(regress-run PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
+set_target_properties(regress-run PROPERTIES FOLDER "BRL-CAD Regression Tests")
 
 # ASC file Conversion Tests
 add_subdirectory(asc)
