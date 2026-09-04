@@ -4,7 +4,6 @@ set(TESS_LIBS libged manifold::manifold)
 set(
   GED_TESS_SRCS
   brep_csg.cpp
-  sample.cpp
   spsr.cpp
   main.cpp
   mdc.cpp

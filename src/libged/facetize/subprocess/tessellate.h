@@ -45,7 +45,6 @@ class tess_opts {
 	spsr_opts spsr_options;
 
 	int overwrite_obj = 0;
-	sample_opts pnt_options; // Values used by sample.cpp
 };
 
 extern struct rt_bot_internal *
@@ -56,9 +55,6 @@ _tess_facetize_write_bot(struct db_i *dbip, struct rt_bot_internal *bot, const c
 
 extern void
 _tess_facetize_free_bot(struct rt_bot_internal *bot);
-
-extern struct rt_pnts_internal *
-_tess_pnts_sample(const char *oname, struct db_i *dbip, tess_opts *s);
 
 extern int
 _brep_csg_tessellate(struct rt_bot_internal **obot, struct ged *gedp,
@@ -72,7 +68,9 @@ mdc_mesh(struct rt_bot_internal **output, struct db_i *dbip,
 	const char *object, tess_opts *settings);
 
 extern int
-spsr_mesh(struct rt_bot_internal **obot, struct db_i *dbip, struct rt_pnts_internal *pnts, tess_opts *s);
+spsr_mesh(struct rt_bot_internal **obot, struct db_i *dbip,
+	const char *object, struct rt_pnts_internal *pnts,
+	bool best_effort_source, tess_opts *s);
 
 extern bool
 bot_is_manifold(struct rt_bot_internal *bot);

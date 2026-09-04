@@ -67,6 +67,7 @@
 #define BG_SPSR_H
 
 #include "common.h"
+#include <stdint.h>
 #include "vmath.h"
 #include "bg/defines.h"
 
@@ -109,7 +110,7 @@ struct bg_3d_spsr_opts {
 #define BG_3D_SPSR_BOUNDARY_DIRICHLET        3
 
 #define BG_3D_SPSR_DEFAULT_DEGREE            1     /* DEFAULT_FEM_DEGREE */
-#define BG_3D_SPSR_DEFAULT_DEPTH             11
+#define BG_3D_SPSR_DEFAULT_DEPTH             8
 #define BG_3D_SPSR_DEFAULT_KERNELDEPTH       0
 #define BG_3D_SPSR_DEFAULT_ITERATIONS        0
 #define BG_3D_SPSR_DEFAULT_FULL_DEPTH        0
@@ -117,13 +118,13 @@ struct bg_3d_spsr_opts {
 #define BG_3D_SPSR_DEFAULT_BASEVCYCLES       0
 #define BG_3D_SPSR_DEFAULT_MAX_MEM           0
 #define BG_3D_SPSR_DEFAULT_THREADS           0
-#define BG_3D_SPSR_DEFAULT_SAMPLES_PER_NODE  1.1
-#define BG_3D_SPSR_DEFAULT_SCALE             1.0
+#define BG_3D_SPSR_DEFAULT_SAMPLES_PER_NODE  1.5
+#define BG_3D_SPSR_DEFAULT_SCALE             1.1
 #define BG_3D_SPSR_DEFAULT_WIDTH             0.0
 #define BG_3D_SPSR_DEFAULT_CONFIDENCE        0.0
 #define BG_3D_SPSR_DEFAULT_CONFIDENCE_BIAS   0.0
 #define BG_3D_SPSR_DEFAULT_CGSOLVER_ACCURACY 1.0e-3
-#define BG_3D_SPSR_DEFAULT_POINT_WEIGHT      8.0    /* DefaultPointWeightMultiplier * Degree */
+#define BG_3D_SPSR_DEFAULT_POINT_WEIGHT      2.0
 #define BG_3D_SPSR_DEFAULT_NONMANIFOLD       0
 #define BG_3D_SPSR_DEFAULT_LINEARFIT         0
 #define BG_3D_SPSR_DEFAULT_EXACT             1
@@ -167,9 +168,130 @@ struct bg_3d_spsr_opts {
  * @return 0 if successful, else error
  *
  */
-BG_EXPORT int bg_3d_spsr(int **faces, int *num_faces, point_t **vertices, int *num_vertices,
+DEPRECATED BG_EXPORT int bg_3d_spsr(int **faces, int *num_faces, point_t **vertices, int *num_vertices,
 			 const point_t *input_points_3d, const vect_t *input_normals_3d,
 			 int num_input_pnts, struct bg_3d_spsr_opts *opts);
+
+/** Reasons the SPSR solver may request additional source samples. */
+#define BG_3D_SPSR_REFINE_RESIDUAL          0x01u
+#define BG_3D_SPSR_REFINE_NORMAL            0x02u
+#define BG_3D_SPSR_REFINE_DENSITY           0x04u
+#define BG_3D_SPSR_REFINE_SURFACE_VARIATION 0x08u
+
+/** Adaptive SPSR termination states. */
+#define BG_3D_SPSR_COMPLETE                 0
+#define BG_3D_SPSR_CALLBACK_STOP            1
+#define BG_3D_SPSR_POINT_LIMIT              2
+#define BG_3D_SPSR_TIME_LIMIT               3
+#define BG_3D_SPSR_NO_NEW_SAMPLES           4
+#define BG_3D_SPSR_SOLVER_ERROR              5
+
+/**
+ * One oriented source sample.  A positive @p thickness records the length of
+ * the solid ray partition that supplied the sample.  Non-zero equal pair IDs
+ * identify the entry and exit samples of the same partition.
+ */
+struct bg_3d_spsr_sample {
+    point_t point;
+    vect_t normal;
+    fastf_t thickness;
+    uint64_t pair_id;
+};
+
+/** A spatial location at which the solver would benefit from more samples. */
+struct bg_3d_spsr_refinement_hint {
+    point_t point;
+    vect_t normal;
+    fastf_t error;
+    unsigned int reasons;
+};
+
+/** Source-to-candidate measurements supplied by an adaptive callback. */
+struct bg_3d_spsr_validation {
+    size_t ray_count;
+    size_t source_hit_rays;
+    size_t partition_mismatch_rays;
+    size_t thin_partition_count;
+    size_t thin_partition_mismatches;
+    fastf_t endpoint_error_p95;
+    fastf_t endpoint_error_p99;
+    fastf_t chord_error_fraction;
+    fastf_t surface_area_error_fraction;
+    fastf_t volume_error_fraction;
+    int passed;
+};
+
+/** Information passed to an adaptive source-sampling callback. */
+struct bg_3d_spsr_refinement_request {
+    size_t pass;
+    fastf_t target_feature_size;
+    double remaining_time;
+    const point_t *vertices;
+    size_t vertex_count;
+    const int *faces;
+    size_t face_count;
+    const struct bg_3d_spsr_refinement_hint *hints;
+    size_t hint_count;
+};
+
+/**
+ * Callback response.  Sample storage remains owned by the callback and need
+ * only remain valid until the callback returns; libbg copies it immediately.
+ */
+struct bg_3d_spsr_refinement_response {
+    const struct bg_3d_spsr_sample *samples;
+    size_t sample_count;
+    struct bg_3d_spsr_validation validation;
+    /** Non-zero asks the adaptive driver to stop after this candidate. */
+    int stop_refinement;
+};
+
+typedef int (*bg_3d_spsr_refinement_func_t)(
+    struct bg_3d_spsr_refinement_response *response,
+    const struct bg_3d_spsr_refinement_request *request,
+    void *client_data);
+
+/** Options controlling a bounded adaptive SPSR reconstruction. */
+struct bg_3d_spsr_adaptive_opts {
+    struct bg_3d_spsr_opts solver;
+    size_t max_refinement_passes;
+    size_t max_points;
+    fastf_t target_feature_size;
+    double max_time;
+};
+
+/** Last-resort solve budget; callbacks may stop earlier when progress stalls. */
+#define BG_3D_SPSR_DEFAULT_REFINEMENT_PASSES 8
+#define BG_3D_SPSR_ADAPTIVE_OPTS_DEFAULT { \
+	BG_3D_SPSR_OPTS_DEFAULT, \
+	BG_3D_SPSR_DEFAULT_REFINEMENT_PASSES, \
+	0, \
+	0.0, \
+	0.0 }
+
+/** Summary of an adaptive SPSR attempt. */
+struct bg_3d_spsr_report {
+    size_t solve_count;
+    size_t initial_sample_count;
+    size_t final_sample_count;
+    size_t requested_sample_count;
+    size_t accepted_sample_count;
+    double elapsed_time;
+    int termination;
+    struct bg_3d_spsr_validation validation;
+};
+
+/**
+ * Reconstruct a surface and, when requested, obtain targeted additional
+ * samples from @p refine.  A callback is required when refinement passes are
+ * enabled.  The final candidate must be marked as passed by the callback.
+ */
+BG_EXPORT int bg_3d_spsr_adaptive(int **faces, int *num_faces,
+        point_t **vertices, int *num_vertices,
+        const struct bg_3d_spsr_sample *input_samples, size_t sample_count,
+        const struct bg_3d_spsr_adaptive_opts *opts,
+        bg_3d_spsr_refinement_func_t refine, void *client_data,
+        struct bg_3d_spsr_report *report);
 
 __END_DECLS
 

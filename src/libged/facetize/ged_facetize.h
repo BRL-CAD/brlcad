@@ -246,10 +246,10 @@ _ged_facetize_build_variant_plan(struct _ged_facetize_state *s,
 			 struct db_i *working_dbip);
 
 /**
- * Tessellate the variant primitives in the working .g using the NMG method.
- * Called after _ged_facetize_leaves_tri() once original leaves are already
- * BoTs, either eagerly for direct booleval or lazily on the first
- * validation-triggered retry in region mode.  Updates
+ * Tessellate the variant primitives in the working .g using the configured
+ * primitive methods and options.  Called after _ged_facetize_leaves_tri() once
+ * original leaves are already BoTs, either eagerly for direct booleval or
+ * lazily on the first validation-triggered retry in region mode.  Updates
  * plan->n_variant_tess_failures for any variants that could not be
  * tessellated (they will silently fall back to the original mesh at booleval).
  */

@@ -1539,8 +1539,6 @@ _ged_facetize_regions(struct _ged_facetize_state *s, const FacetizePlan &plan)
 	}
     }
     size_t eval_total = BU_PTBL_LEN(&eval_roots);
-    if (s->verbosity == 0)
-	facetize_log(s, 0, "Evaluating %zu roots...\n", eval_total);
 
     /* Region mode starts with the baseline BoT path and only enables/tessellates
      * variants if Pass 1 validation says a perturb retry is needed. */
@@ -1619,6 +1617,12 @@ _ged_facetize_regions(struct _ged_facetize_state *s, const FacetizePlan &plan)
     }
 
     int bret = BRLCAD_OK;
+    int64_t finalization_start = bu_gettime();
+    int64_t next_finalization_progress = finalization_start +
+	BU_SEC2USEC(FACETIZE_REGION_PROGRESS_INTERVAL_SEC);
+    facetize_log(s, 0,
+	    "FACETIZE: finalizing and validating %zu region roots\n",
+	    eval_total);
     for (size_t i = 0; i < BU_PTBL_LEN(&eval_roots); i++) {
 	struct directory *dpw[2] = {NULL};
 	dpw[0] = (struct directory *)BU_PTBL_GET(&eval_roots, i);
@@ -1728,6 +1732,16 @@ _ged_facetize_regions(struct _ged_facetize_state *s, const FacetizePlan &plan)
 		}
 		if (vret == 0) {
 		    vcnt_p1_trigger++;
+		    double finalization_elapsed =
+			(bu_gettime() - finalization_start) /
+			FACETIZE_USEC_TO_SEC_DIVISOR;
+		    facetize_log(s, 0,
+			    "FACETIZE: perturb retry for %s (root %zu of %zu, "
+			    "%d %s triggered, %.1f seconds elapsed)\n",
+			    dpw[0]->d_namep, i + 1, eval_total,
+			    vcnt_p1_trigger,
+			    vcnt_p1_trigger == 1 ? "retry" : "retries",
+			    finalization_elapsed);
 		    facetize_log(s, 1, "FACETIZE: %s CSG vs BoT MISMATCH (SA_err=%.2f%% VOL_err=%.2f%%) - triggering perturb\n",
 			    dpw[0]->d_namep, sa_err_pct, vol_err_pct);
 		    /* Region retries intentionally use a fresh plan scoped to the
@@ -1921,6 +1935,20 @@ _ged_facetize_regions(struct _ged_facetize_state *s, const FacetizePlan &plan)
 			    __LINE__, dpw[0]->d_namep);
 		break;
 	    }
+	}
+
+	int64_t progress_time = bu_gettime();
+	if (progress_time >= next_finalization_progress ||
+		i + 1 == eval_total) {
+	    facetize_log(s, 0,
+		    "FACETIZE: finalized %zu of %zu region roots "
+		    "(%d perturb %s, %.1f seconds elapsed)\n",
+		    i + 1, eval_total, vcnt_p1_trigger,
+		    vcnt_p1_trigger == 1 ? "retry" : "retries",
+		    (progress_time - finalization_start) /
+		    FACETIZE_USEC_TO_SEC_DIVISOR);
+	    next_finalization_progress = progress_time +
+		BU_SEC2USEC(FACETIZE_REGION_PROGRESS_INTERVAL_SEC);
 	}
     }
     if (wdbip) {

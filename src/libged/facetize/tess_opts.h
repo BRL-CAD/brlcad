@@ -146,10 +146,8 @@ class spsr_opts : public sample_opts {
 	void sync(sample_opts &sopts);
 
 	struct bg_3d_spsr_opts s_opts = BG_3D_SPSR_OPTS_DEFAULT;
-	int depth = 8; // Maximum reconstruction depth s_opts.depth
-	fastf_t interpolate = 2.0; // Lower values (down to 0.0) bias towards a smoother mesh, higher values bias towards interpolation accuracy. s_opts.point_weight
-	fastf_t samples_per_node = 1.5; // How many samples should go into a cell before it is refined. s_opts.samples_per_node
-	int max_time = 600;  // Maximum overall time
+	int refinement_passes = BG_3D_SPSR_DEFAULT_REFINEMENT_PASSES;
+	int max_time = 600;
 };
 
 
@@ -310,52 +308,36 @@ sample_opts::print_options_help()
 int
 sample_opts::set_var(const std::string &key, const std::string &val)
 {
-    if (key.length() == 0)
+    if (key.empty())
 	return BRLCAD_ERROR;
 
-    const char *cstr[2];
-    cstr[0] = val.c_str();
-    cstr[1] = NULL;
+    const char *value[2] = {val.c_str(), NULL};
+    if (key == "feature_scale" || key == "feature_size" ||
+	key == "d_feature_size") {
+	fastf_t parsed = 0.0;
+	if ((!val.empty() &&
+		bu_opt_fastf_t(NULL, 1, value, &parsed) < 0) ||
+		parsed < 0.0)
+	    return BRLCAD_ERROR;
+	if (key == "feature_scale")
+	    feature_scale = parsed;
+	else if (key == "feature_size")
+	    feature_size = parsed;
+	else
+	    d_feature_size = parsed;
+	return BRLCAD_OK;
+    }
 
-    if (key == std::string("feature_scale")) {
-	if (!val.length()) {
-	    feature_scale = 0.0;
-	    return BRLCAD_OK;
-	}
-	if (bu_opt_fastf_t(NULL, 1, (const char **)cstr, (void *)&feature_scale) < 0)
+    if (key == "max_sample_time" || key == "max_pnts") {
+	int parsed = 0;
+	if ((!val.empty() && bu_opt_int(NULL, 1, value, &parsed) < 0) ||
+		parsed < 0)
 	    return BRLCAD_ERROR;
-    }
-    if (key == std::string("feature_size")) {
-	if (!val.length()) {
-	    feature_size = 0.0;
-	    return BRLCAD_OK;
-	}
-	if (bu_opt_fastf_t(NULL, 1, (const char **)cstr, (void *)&feature_size) < 0)
-	    return BRLCAD_ERROR;
-    }
-    if (key == std::string("d_feature_size")) {
-	if (!val.length()) {
-	    d_feature_size = 0.0;
-	    return BRLCAD_OK;
-	}
-	if (bu_opt_fastf_t(NULL, 1, (const char **)cstr, (void *)&d_feature_size) < 0)
-	    return BRLCAD_ERROR;
-    }
-    if (key == std::string("max_sample_time")) {
-	if (!val.length()) {
-	    max_sample_time = 0;
-	    return BRLCAD_OK;
-	}
-	if (bu_opt_int(NULL, 1, (const char **)cstr, (void *)&max_sample_time) < 0)
-	    return BRLCAD_ERROR;
-    }
-    if (key == std::string("max_pnts")) {
-	if (!val.length()) {
-	    max_pnts = 0;
-	    return BRLCAD_OK;
-	}
-	if (bu_opt_int(NULL, 1, (const char **)cstr, (void *)&max_pnts) < 0)
-	    return BRLCAD_ERROR;
+	if (key == "max_sample_time")
+	    max_sample_time = parsed;
+	else
+	    max_pnts = parsed;
+	return BRLCAD_OK;
     }
 
     return BRLCAD_ERROR;
@@ -609,6 +591,9 @@ spsr_opts::print_options_help()
     h.append("                    mesh, higher values bias towards interpolation\n");
     h.append("                    accuracy.  (Default is 2.0)\n");
     h.append("max_time         -  Maximum overall run time for object conversion\n");
+    h.append("refinement_passes-  Maximum adaptive source-refinement passes. (Default is ");
+    h.append(std::to_string(BG_3D_SPSR_DEFAULT_REFINEMENT_PASSES));
+    h.append(")\n");
     h.append("samples_per_node -  How many samples should go into a cell before it is\n");
     h.append("                    refined. (Default is 1.5)\n");
     return h;
@@ -617,48 +602,53 @@ spsr_opts::print_options_help()
 int
 spsr_opts::set_var(const std::string &key, const std::string &val)
 {
-    if (key.length() == 0)
+    if (key.empty())
 	return BRLCAD_ERROR;
 
-    const char *cstr[2];
-    cstr[0] = val.c_str();
-    cstr[1] = NULL;
+    const char *value[2] = {val.c_str(), NULL};
+    if (key == "depth") {
+	int parsed = BG_3D_SPSR_DEFAULT_DEPTH;
+	if ((!val.empty() && bu_opt_int(NULL, 1, value, &parsed) < 0) ||
+		parsed < 1)
+	    return BRLCAD_ERROR;
+	s_opts.depth = parsed;
+	return BRLCAD_OK;
+    }
+    if (key == "interpolate") {
+	fastf_t parsed = BG_3D_SPSR_DEFAULT_POINT_WEIGHT;
+	if ((!val.empty() &&
+		bu_opt_fastf_t(NULL, 1, value, &parsed) < 0) ||
+		parsed < 0.0)
+	    return BRLCAD_ERROR;
+	s_opts.point_weight = parsed;
+	return BRLCAD_OK;
+    }
+    if (key == "samples_per_node") {
+	fastf_t parsed = BG_3D_SPSR_DEFAULT_SAMPLES_PER_NODE;
+	if ((!val.empty() &&
+		bu_opt_fastf_t(NULL, 1, value, &parsed) < 0) ||
+		parsed <= 0.0)
+	    return BRLCAD_ERROR;
+	s_opts.samples_per_node = parsed;
+	return BRLCAD_OK;
+    }
+    if (key == "refinement_passes") {
+	int parsed = BG_3D_SPSR_DEFAULT_REFINEMENT_PASSES;
+	if ((!val.empty() && bu_opt_int(NULL, 1, value, &parsed) < 0) ||
+		parsed < 0)
+	    return BRLCAD_ERROR;
+	refinement_passes = parsed;
+	return BRLCAD_OK;
+    }
+    if (key == "max_time") {
+	int parsed = 600;
+	if ((!val.empty() && bu_opt_int(NULL, 1, value, &parsed) < 0) ||
+		parsed < 0)
+	    return BRLCAD_ERROR;
+	max_time = parsed;
+	return BRLCAD_OK;
+    }
 
-    if (key == std::string("depth")) {
-	if (!val.length()) {
-	    s_opts.depth = 0;
-	    return BRLCAD_OK;
-	}
-	if (bu_opt_int(NULL, 1, (const char **)cstr, (void *)&s_opts.depth) < 0)
-	    return BRLCAD_ERROR;
-    }
-    if (key == std::string("interpolate")) {
-	if (!val.length()) {
-	    s_opts.point_weight = 0.0;
-	    return BRLCAD_OK;
-	}
-	if (bu_opt_fastf_t(NULL, 1, (const char **)cstr, (void *)&s_opts.point_weight) < 0)
-	    return BRLCAD_ERROR;
-    }
-    if (key == std::string("samples_per_node")) {
-	if (!val.length()) {
-	    s_opts.samples_per_node = 0.0;
-	    return BRLCAD_OK;
-	}
-	if (bu_opt_fastf_t(NULL, 1, (const char **)cstr, (void *)&s_opts.samples_per_node) < 0)
-	    return BRLCAD_ERROR;
-    }
-
-    if (key == std::string("max_time")) {
-	if (!val.length()) {
-	    max_time = 0;
-	    return BRLCAD_OK;
-	}
-	if (bu_opt_int(NULL, 1, (const char **)cstr, (void *)&max_time) < 0)
-	    return BRLCAD_ERROR;
-    }
-
-    // If it's not a SPSR setting directly, it may be for sampling
     return sample_opts::set_var(key, val);
 }
 
