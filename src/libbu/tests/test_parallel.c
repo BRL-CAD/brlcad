@@ -121,6 +121,30 @@ main(int argc, char *argv[])
     if (bu_getprogname()[0] == '\0')
 	bu_setprogname(argv[0]);
 
+    {
+	size_t detected_cpus = bu_avail_cpus();
+	size_t requested_cpus = (detected_cpus > MAX_PSW) ? MAX_PSW :
+	    detected_cpus;
+	struct parallel_data limit_data = {1, NULL};
+	bu_avail_cpus_set(1);
+	if (bu_avail_cpus() != 1) {
+	    bu_log("bu_avail_cpus process limit [FAIL]\n");
+	    return 1;
+	}
+	memset(counter, 0, sizeof(counter));
+	bu_parallel(callback, requested_cpus, &limit_data);
+	if (tally(MAX_PSW) != 1) {
+	    bu_log("bu_parallel process limit [FAIL]\n");
+	    return 1;
+	}
+	bu_avail_cpus_set(0);
+	if (bu_avail_cpus() != detected_cpus) {
+	    bu_log("bu_avail_cpus process limit reset [FAIL]\n");
+	    return 1;
+	}
+	bu_log("bu_avail_cpus and bu_parallel process limit [PASS]\n");
+    }
+
     while ((c = bu_getopt(argc, argv, "P:!:")) != -1) {
 	switch (c) {
 	    case 'P':
@@ -137,8 +161,9 @@ main(int argc, char *argv[])
     }
 
     /* test calling without a hook function */
+    memset(counter, 0, sizeof(counter));
     bu_parallel(NULL, ncpu, NULL);
-    if (tally(ncpu) != 0) {
+    if (tally(MAX_PSW) != 0) {
 	bu_log("bu_parallel zero callback [FAIL]\n");
 	return 1;
     }
