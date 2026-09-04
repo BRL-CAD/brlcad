@@ -44,8 +44,13 @@
 
 namespace {
 
-constexpr fastf_t BUCKET_TOLERANCE_MULTIPLIER = 8.0;
 constexpr const char *CANONICAL_NAME_PREFIX = "unpush_";
+constexpr fastf_t BOT_METRIC_TOLERANCE_MULTIPLIER = 4.0;
+/* Matrix products in pushed models commonly subtract large translations to
+ * recover small relative placements.  Thousands of machine epsilons admit
+ * that accumulated roundoff without treating database-tolerance differences
+ * as identical transforms. */
+constexpr fastf_t MATRIX_ROUNDOFF_MULTIPLIER = 4096.0;
 
 
 struct unpush_reference {
@@ -61,6 +66,7 @@ struct unpush_walk_state {
     std::set<struct directory *> visited_combinations;
     std::set<struct directory *> primitives;
     std::set<struct directory *> root_primitives;
+    std::set<struct directory *> root_combinations;
     std::map<struct directory *, size_t> selected_references;
     std::map<struct directory *, std::vector<struct directory *>> children;
     std::vector<unpush_reference> references;
@@ -74,10 +80,39 @@ struct unpush_primitive_record {
     struct directory *dp = nullptr;
     mat_t canonical_to_input = MAT_INIT_IDN;
     std::string bucket;
+    fastf_t metric = 0.0;
+    fastf_t metric_tolerance = 0.0;
 };
 
 
 struct unpush_group {
+    std::vector<size_t> records;
+};
+
+
+struct canonical_combination_leaf {
+    size_t child_identity = 0;
+    mat_t effective_matrix = MAT_INIT_IDN;
+    mat_t relative_matrix = MAT_INIT_IDN;
+};
+
+
+struct canonical_combination_record {
+    struct directory *dp = nullptr;
+    mat_t placement = MAT_INIT_IDN;
+    mat_t identity_placement = MAT_INIT_IDN;
+    mat_t representative_to_input = MAT_INIT_IDN;
+    std::string bucket;
+    std::vector<canonical_combination_leaf> leaves;
+    fastf_t metric = 0.0;
+    fastf_t metric_tolerance = 0.0;
+    size_t identity = 0;
+    bool region = false;
+    bool valid = false;
+};
+
+
+struct combination_group {
     std::vector<size_t> records;
 };
 
@@ -101,14 +136,21 @@ struct rewrite_target {
 
 
 struct rewritten_leaf {
+    std::string path;
     std::string name;
     mat_t matrix = MAT_INIT_IDN;
 };
 
 
 struct planned_group {
-    const unpush_group *group = nullptr;
+    std::vector<size_t> records;
     std::string canonical_name;
+};
+
+
+struct planned_combination_group {
+    size_t representative = 0;
+    std::vector<size_t> records;
 };
 
 
@@ -252,83 +294,21 @@ collect_object(unpush_walk_state &state, struct directory *dp)
 }
 
 
-long long
-bucket_value(fastf_t value, const struct bn_tol *tol)
-{
-    fastf_t resolution = std::max(tol->dist * BUCKET_TOLERANCE_MULTIPLIER,
-	static_cast<fastf_t>(SMALL_FASTF));
-    long double scaled = static_cast<long double>(value) / resolution;
-    long double maximum = static_cast<long double>((std::numeric_limits<long long>::max)());
-
-    if (scaled >= maximum)
-	return (std::numeric_limits<long long>::max)();
-    if (scaled <= -maximum)
-	return -(std::numeric_limits<long long>::max)();
-    return std::llround(scaled);
-}
-
-
 std::string
-canonical_bucket(const canonical_object &object, const struct bn_tol *tol)
+canonical_bucket(const canonical_object &object)
 {
     std::ostringstream key;
     key << object.canonical.idb_minor_type << ':' << object.input.idb_avs.count;
 
     switch (object.canonical.idb_minor_type) {
-	case ID_HALF:
-	    break;
-	case ID_ELL:
-	case ID_SPH: {
-	    const auto *ell = static_cast<const struct rt_ell_internal *>(object.canonical.idb_ptr);
-	    key << ':' << bucket_value(MAGNITUDE(ell->a), tol)
-		<< ':' << bucket_value(MAGNITUDE(ell->b), tol)
-		<< ':' << bucket_value(MAGNITUDE(ell->c), tol);
-	    break;
-	}
-	case ID_TOR: {
-	    const auto *tor = static_cast<const struct rt_tor_internal *>(object.canonical.idb_ptr);
-	    key << ':' << bucket_value(tor->r_a, tol)
-		<< ':' << bucket_value(tor->r_h, tol);
-	    break;
-	}
-	case ID_ETO: {
-	    const auto *eto = static_cast<const struct rt_eto_internal *>(object.canonical.idb_ptr);
-	    key << ':' << bucket_value(eto->eto_C[X], tol)
-		<< ':' << bucket_value(eto->eto_C[Z], tol)
-		<< ':' << bucket_value(eto->eto_r, tol)
-		<< ':' << bucket_value(eto->eto_rd, tol);
-	    break;
-	}
-	case ID_TGC:
-	case ID_REC: {
-	    const auto *tgc = static_cast<const struct rt_tgc_internal *>(object.canonical.idb_ptr);
-	    const fastf_t *vectors[] = {tgc->h, tgc->a, tgc->b, tgc->c, tgc->d};
-	    for (const fastf_t *vector : vectors) {
-		key << ':' << bucket_value(vector[X], tol)
-		    << ':' << bucket_value(vector[Y], tol)
-		    << ':' << bucket_value(vector[Z], tol);
-	    }
-	    break;
-	}
-	case ID_ARB8: {
-	    const auto *arb = static_cast<const struct rt_arb_internal *>(object.canonical.idb_ptr);
-	    for (const point_t &point : arb->pt) {
-		key << ':' << bucket_value(point[X], tol)
-		    << ':' << bucket_value(point[Y], tol)
-		    << ':' << bucket_value(point[Z], tol);
-	    }
-	    break;
-	}
 	case ID_BOT: {
 	    const auto *bot = static_cast<const struct rt_bot_internal *>(object.canonical.idb_ptr);
-	    unsigned long long hash = bg_trimesh_hash(
-		bot->faces, bot->num_faces,
-		reinterpret_cast<const point_t *>(bot->vertices), bot->num_vertices,
-		tol->dist);
 	    key << ':' << static_cast<unsigned int>(bot->mode)
 		<< ':' << static_cast<unsigned int>(bot->orientation)
 		<< ':' << static_cast<unsigned int>(bot->bot_flags)
-		<< ':' << bot->num_vertices << ':' << bot->num_faces << ':' << hash;
+		<< ':' << bot->num_vertices << ':' << bot->num_faces
+		<< ':' << bot->num_normals << ':' << bot->num_face_normals
+		<< ':' << bot->num_uvs << ':' << bot->num_face_uvs;
 	    break;
 	}
 	default:
@@ -336,6 +316,78 @@ canonical_bucket(const canonical_object &object, const struct bn_tol *tol)
     }
 
     return key.str();
+}
+
+
+void
+canonical_metric(const canonical_object &object, const struct bn_tol *tol,
+		 fastf_t &metric, fastf_t &metric_tolerance)
+{
+    metric = 0.0;
+    metric_tolerance = 0.0;
+    /* Each analytic metric is a sum of vector magnitudes or scalar lengths.
+     * Its tolerance is therefore the number of terms times the database
+     * distance tolerance.  This guarantees that objects accepted by the full
+     * comparison overlap in the one-dimensional sweep interval. */
+    switch (object.canonical.idb_minor_type) {
+	case ID_HALF:
+	    return;
+	case ID_ELL:
+	case ID_SPH: {
+	    const auto *ell = static_cast<const struct rt_ell_internal *>(object.canonical.idb_ptr);
+	    metric = MAGNITUDE(ell->a) + MAGNITUDE(ell->b) + MAGNITUDE(ell->c);
+	    metric_tolerance = 3.0 * tol->dist;
+	    return;
+	}
+	case ID_TOR: {
+	    const auto *tor = static_cast<const struct rt_tor_internal *>(object.canonical.idb_ptr);
+	    metric = std::fabs(tor->r_a) + std::fabs(tor->r_h);
+	    metric_tolerance = 2.0 * tol->dist;
+	    return;
+	}
+	case ID_ETO: {
+	    const auto *eto = static_cast<const struct rt_eto_internal *>(object.canonical.idb_ptr);
+	    metric = MAGNITUDE(eto->eto_C) + std::fabs(eto->eto_r) +
+		std::fabs(eto->eto_rd);
+	    metric_tolerance = 3.0 * tol->dist;
+	    return;
+	}
+	case ID_TGC:
+	case ID_REC: {
+	    const auto *tgc = static_cast<const struct rt_tgc_internal *>(object.canonical.idb_ptr);
+	    metric = MAGNITUDE(tgc->h) + MAGNITUDE(tgc->a) + MAGNITUDE(tgc->b) +
+		MAGNITUDE(tgc->c) + MAGNITUDE(tgc->d);
+	    metric_tolerance = 5.0 * tol->dist;
+	    return;
+	}
+	case ID_ARB8: {
+	    const auto *arb = static_cast<const struct rt_arb_internal *>(object.canonical.idb_ptr);
+	    for (const point_t &point : arb->pt)
+		metric += MAGNITUDE(point);
+	    metric_tolerance = 8.0 * tol->dist;
+	    return;
+	}
+	case ID_BOT: {
+	    const auto *bot = static_cast<const struct rt_bot_internal *>(object.canonical.idb_ptr);
+	    if (!bot->num_vertices)
+		return;
+	    const point_t *vertices = reinterpret_cast<const point_t *>(bot->vertices);
+	    point_t minimum;
+	    point_t maximum;
+	    VMOVE(minimum, vertices[0]);
+	    VMOVE(maximum, vertices[0]);
+	    for (size_t i = 1; i < bot->num_vertices; i++) {
+		VMINMAX(minimum, maximum, vertices[i]);
+	    }
+	    vect_t extent;
+	    VSUB2(extent, maximum, minimum);
+	    metric = MAGNITUDE(extent);
+	    metric_tolerance = BOT_METRIC_TOLERANCE_MULTIPLIER * tol->dist;
+	    return;
+	}
+	default:
+	    return;
+    }
 }
 
 
@@ -382,6 +434,37 @@ bool
 near_value(fastf_t a, fastf_t b, fastf_t tolerance)
 {
     return std::fabs(a - b) <= tolerance;
+}
+
+
+fastf_t
+matrix_roundoff_tolerance(fastf_t a, fastf_t b, fastf_t database_limit)
+{
+    const fastf_t epsilon = std::numeric_limits<fastf_t>::epsilon();
+    fastf_t scale = std::max({1.0, std::fabs(a), std::fabs(b)});
+    fastf_t roundoff_limit = MATRIX_ROUNDOFF_MULTIPLIER * epsilon * scale;
+    return std::min(database_limit, roundoff_limit);
+}
+
+
+bool
+near_matrix_value(fastf_t a, fastf_t b, fastf_t database_limit)
+{
+    return near_value(a, b, matrix_roundoff_tolerance(a, b, database_limit));
+}
+
+
+bool
+matrices_numerically_equal(const mat_t a, const mat_t b,
+			   const struct bn_tol *tol)
+{
+    for (size_t i = 0; i < 16; i++) {
+	fastf_t database_limit = (i == 3 || i == 7 || i == 11) ?
+	    tol->dist : tol->perp;
+	if (!near_matrix_value(a[i], b[i], database_limit))
+	    return false;
+    }
+    return true;
 }
 
 
@@ -448,8 +531,12 @@ canonical_geometry_equal(const struct rt_db_internal *a,
 	return false;
 
     switch (a->idb_minor_type) {
-	case ID_HALF:
-	    return true;
+	case ID_HALF: {
+	    const auto *ahalf = static_cast<const struct rt_half_internal *>(a->idb_ptr);
+	    const auto *bhalf = static_cast<const struct rt_half_internal *>(b->idb_ptr);
+	    return VNEAR_EQUAL(ahalf->eqn, bhalf->eqn, tol->perp) &&
+		near_value(ahalf->eqn[W], bhalf->eqn[W], tol->dist);
+	}
 	case ID_ELL:
 	case ID_SPH: {
 	    const auto *aell = static_cast<const struct rt_ell_internal *>(a->idb_ptr);
@@ -505,9 +592,315 @@ canonical_geometry_equal(const struct rt_db_internal *a,
 }
 
 
+bool
+make_transform_output(struct rt_db_internal *output,
+		      const struct rt_db_internal *input)
+{
+    RT_DB_INTERNAL_INIT(output);
+    output->idb_major_type = input->idb_major_type;
+    output->idb_minor_type = input->idb_minor_type;
+    output->idb_meth = input->idb_meth;
+
+    switch (input->idb_minor_type) {
+	case ID_ELL:
+	case ID_SPH: {
+	    BU_ALLOC(output->idb_ptr, struct rt_ell_internal);
+	    auto *ell = static_cast<struct rt_ell_internal *>(output->idb_ptr);
+	    ell->magic = RT_ELL_INTERNAL_MAGIC;
+	    return true;
+	}
+	case ID_HALF: {
+	    BU_ALLOC(output->idb_ptr, struct rt_half_internal);
+	    auto *half = static_cast<struct rt_half_internal *>(output->idb_ptr);
+	    half->magic = RT_HALF_INTERNAL_MAGIC;
+	    return true;
+	}
+	case ID_TOR: {
+	    BU_ALLOC(output->idb_ptr, struct rt_tor_internal);
+	    auto *tor = static_cast<struct rt_tor_internal *>(output->idb_ptr);
+	    tor->magic = RT_TOR_INTERNAL_MAGIC;
+	    return true;
+	}
+	case ID_ETO: {
+	    BU_ALLOC(output->idb_ptr, struct rt_eto_internal);
+	    auto *eto = static_cast<struct rt_eto_internal *>(output->idb_ptr);
+	    eto->eto_magic = RT_ETO_INTERNAL_MAGIC;
+	    return true;
+	}
+	case ID_TGC:
+	case ID_REC: {
+	    BU_ALLOC(output->idb_ptr, struct rt_tgc_internal);
+	    auto *tgc = static_cast<struct rt_tgc_internal *>(output->idb_ptr);
+	    tgc->magic = RT_TGC_INTERNAL_MAGIC;
+	    return true;
+	}
+	case ID_ARB8: {
+	    BU_ALLOC(output->idb_ptr, struct rt_arb_internal);
+	    auto *arb = static_cast<struct rt_arb_internal *>(output->idb_ptr);
+	    arb->magic = RT_ARB_INTERNAL_MAGIC;
+	    return true;
+	}
+	case ID_BOT:
+	    output->idb_ptr = rt_bot_dup(
+		static_cast<const struct rt_bot_internal *>(input->idb_ptr));
+	    return output->idb_ptr != nullptr;
+	default:
+	    return false;
+    }
+}
+
+
+bool
+primitive_bounds_equal(struct rt_db_internal *a, struct rt_db_internal *b,
+		       const struct bn_tol *tol)
+{
+    if (!a->idb_meth->ft_bbox || !b->idb_meth->ft_bbox)
+	return true;
+
+    point_t a_minimum;
+    point_t a_maximum;
+    point_t b_minimum;
+    point_t b_maximum;
+    int a_status = a->idb_meth->ft_bbox(a, &a_minimum, &a_maximum, tol);
+    int b_status = b->idb_meth->ft_bbox(b, &b_minimum, &b_maximum, tol);
+    if (a_status != b_status)
+	return false;
+    if (a_status < 0)
+	return true;
+
+    return VNEAR_EQUAL(a_minimum, b_minimum, tol->dist) &&
+	VNEAR_EQUAL(a_maximum, b_maximum, tol->dist);
+}
+
+
+void
+ell_shape_matrix(fastf_t shape[9], const struct rt_ell_internal *ell)
+{
+    const fastf_t *axes[] = {ell->a, ell->b, ell->c};
+
+    for (size_t row = 0; row < 3; row++) {
+	for (size_t column = 0; column < 3; column++) {
+	    shape[3 * row + column] = 0.0;
+	    for (const fastf_t *axis : axes)
+		shape[3 * row + column] += axis[row] * axis[column];
+	}
+    }
+}
+
+
+bool
+shape_matrices_equal(const fastf_t a[9], const fastf_t b[9], fastf_t radius,
+		     size_t axis_count, const struct bn_tol *tol)
+{
+    /* An ellipse is unchanged when its spanning axes are permuted, negated, or
+     * rotated within an equal-radius subspace.  Comparing the sum of their
+     * outer products recognizes those equivalent parameterizations.  If each
+     * axis moves by at most d, one outer-product component moves by at most
+     * 2*r*d + d^2. */
+    fastf_t matrix_tolerance = axis_count *
+	(2.0 * radius * tol->dist + tol->dist * tol->dist);
+    for (size_t i = 0; i < 9; i++) {
+	if (!near_value(a[i], b[i], matrix_tolerance))
+	    return false;
+    }
+    return true;
+}
+
+
+void
+tgc_section(point_t center, fastf_t shape[9],
+	    const struct rt_tgc_internal *tgc, fastf_t parameter)
+{
+    vect_t axes[2];
+
+    VJOIN1(center, tgc->v, parameter, tgc->h);
+    VBLEND2(axes[0], 1.0 - parameter, tgc->a, parameter, tgc->c);
+    VBLEND2(axes[1], 1.0 - parameter, tgc->b, parameter, tgc->d);
+    for (size_t row = 0; row < 3; row++) {
+	for (size_t column = 0; column < 3; column++) {
+	    shape[3 * row + column] = axes[0][row] * axes[0][column] +
+		axes[1][row] * axes[1][column];
+	}
+    }
+}
+
+
+bool
+tgc_geometry_equal_direction(const struct rt_tgc_internal *a,
+			     const struct rt_tgc_internal *b, bool reverse_b,
+			     const struct bn_tol *tol)
+{
+    constexpr fastf_t SECTION_PARAMETERS[] = {0.0, 0.5, 1.0};
+    fastf_t maximum_radius = std::max({MAGNITUDE(a->a), MAGNITUDE(a->b),
+	MAGNITUDE(a->c), MAGNITUDE(a->d), MAGNITUDE(b->a), MAGNITUDE(b->b),
+	MAGNITUDE(b->c), MAGNITUDE(b->d)});
+
+    for (fastf_t parameter : SECTION_PARAMETERS) {
+	point_t a_center;
+	point_t b_center;
+	fastf_t a_shape[9];
+	fastf_t b_shape[9];
+	fastf_t b_parameter = reverse_b ? 1.0 - parameter : parameter;
+	tgc_section(a_center, a_shape, a, parameter);
+	tgc_section(b_center, b_shape, b, b_parameter);
+	if (!VNEAR_EQUAL(a_center, b_center, tol->dist) ||
+	    !shape_matrices_equal(a_shape, b_shape, maximum_radius, 2, tol))
+	    return false;
+    }
+    return true;
+}
+
+
+bool
+primitive_geometry_equal(const struct rt_db_internal *a,
+			 const struct rt_db_internal *b,
+			 const struct bn_tol *tol)
+{
+    if (a->idb_minor_type != b->idb_minor_type)
+	return false;
+
+    switch (a->idb_minor_type) {
+	case ID_HALF: {
+	    const auto *ahalf = static_cast<const struct rt_half_internal *>(a->idb_ptr);
+	    const auto *bhalf = static_cast<const struct rt_half_internal *>(b->idb_ptr);
+	    fastf_t a_magnitude = MAGNITUDE(ahalf->eqn);
+	    fastf_t b_magnitude = MAGNITUDE(bhalf->eqn);
+	    if (a_magnitude <= SMALL_FASTF || b_magnitude <= SMALL_FASTF)
+		return false;
+	    vect_t a_normal;
+	    vect_t b_normal;
+	    VSCALE(a_normal, ahalf->eqn, 1.0 / a_magnitude);
+	    VSCALE(b_normal, bhalf->eqn, 1.0 / b_magnitude);
+	    return VNEAR_EQUAL(a_normal, b_normal, tol->perp) &&
+		near_value(ahalf->eqn[W] / a_magnitude,
+		    bhalf->eqn[W] / b_magnitude, tol->dist);
+	}
+	case ID_ELL:
+	case ID_SPH: {
+	    const auto *aell = static_cast<const struct rt_ell_internal *>(a->idb_ptr);
+	    const auto *bell = static_cast<const struct rt_ell_internal *>(b->idb_ptr);
+	    if (!VNEAR_EQUAL(aell->v, bell->v, tol->dist))
+		return false;
+	    fastf_t a_shape[9];
+	    fastf_t b_shape[9];
+	    ell_shape_matrix(a_shape, aell);
+	    ell_shape_matrix(b_shape, bell);
+	    fastf_t maximum_radius = std::max({MAGNITUDE(aell->a), MAGNITUDE(aell->b),
+		MAGNITUDE(aell->c), MAGNITUDE(bell->a), MAGNITUDE(bell->b),
+		MAGNITUDE(bell->c)});
+	    return shape_matrices_equal(a_shape, b_shape, maximum_radius, 3, tol);
+	}
+	case ID_TOR: {
+	    const auto *ator = static_cast<const struct rt_tor_internal *>(a->idb_ptr);
+	    const auto *btor = static_cast<const struct rt_tor_internal *>(b->idb_ptr);
+	    vect_t a_normal;
+	    vect_t b_normal;
+	    VMOVE(a_normal, ator->h);
+	    VMOVE(b_normal, btor->h);
+	    VUNITIZE(a_normal);
+	    VUNITIZE(b_normal);
+	    return VNEAR_EQUAL(ator->v, btor->v, tol->dist) &&
+		near_value(std::fabs(VDOT(a_normal, b_normal)), 1.0, tol->perp) &&
+		near_value(ator->r_a, btor->r_a, tol->dist) &&
+		near_value(ator->r_h, btor->r_h, tol->dist);
+	}
+	case ID_ETO: {
+	    const auto *aeto = static_cast<const struct rt_eto_internal *>(a->idb_ptr);
+	    const auto *beto = static_cast<const struct rt_eto_internal *>(b->idb_ptr);
+	    vect_t a_normal;
+	    vect_t b_normal;
+	    VMOVE(a_normal, aeto->eto_N);
+	    VMOVE(b_normal, beto->eto_N);
+	    VUNITIZE(a_normal);
+	    VUNITIZE(b_normal);
+	    return VNEAR_EQUAL(aeto->eto_V, beto->eto_V, tol->dist) &&
+		near_value(std::fabs(VDOT(a_normal, b_normal)), 1.0, tol->perp) &&
+		near_value(MAGNITUDE(aeto->eto_C), MAGNITUDE(beto->eto_C), tol->dist) &&
+		near_value(std::fabs(VDOT(aeto->eto_C, a_normal)),
+		    std::fabs(VDOT(beto->eto_C, b_normal)), tol->dist) &&
+		near_value(aeto->eto_r, beto->eto_r, tol->dist) &&
+		near_value(aeto->eto_rd, beto->eto_rd, tol->dist);
+	}
+	case ID_TGC:
+	case ID_REC: {
+	    const auto *atgc = static_cast<const struct rt_tgc_internal *>(a->idb_ptr);
+	    const auto *btgc = static_cast<const struct rt_tgc_internal *>(b->idb_ptr);
+	    return tgc_geometry_equal_direction(atgc, btgc, false, tol) ||
+		tgc_geometry_equal_direction(atgc, btgc, true, tol);
+	}
+	case ID_ARB8:
+	case ID_BOT:
+	    return canonical_geometry_equal(a, b, tol);
+	default:
+	    return false;
+    }
+}
+
+
+bool
+transformed_geometry_equal(const struct rt_db_internal *a, const mat_t a_matrix,
+			   const struct rt_db_internal *b, const mat_t b_matrix,
+			   const struct bn_tol *tol)
+{
+    struct rt_db_internal transformed_a;
+    struct rt_db_internal transformed_b;
+    if (!make_transform_output(&transformed_a, a))
+	return false;
+    if (!make_transform_output(&transformed_b, b)) {
+	rt_db_free_internal(&transformed_a);
+	return false;
+    }
+
+    bool transformed = a->idb_meth->ft_mat && b->idb_meth->ft_mat &&
+	a->idb_meth->ft_mat(&transformed_a, a_matrix, a) == BRLCAD_OK &&
+	b->idb_meth->ft_mat(&transformed_b, b_matrix, b) == BRLCAD_OK;
+    bool equal = transformed &&
+	primitive_geometry_equal(&transformed_a, &transformed_b, tol) &&
+	primitive_bounds_equal(&transformed_a, &transformed_b, tol);
+    rt_db_free_internal(&transformed_b);
+    rt_db_free_internal(&transformed_a);
+    return equal;
+}
+
+
+bool
+canonical_reconstructs_references(const canonical_object &representative,
+				  const canonical_object &candidate,
+				  const std::vector<indexed_reference> &references,
+				  bool root_primitive,
+				  const struct bn_tol *tol)
+{
+    if (!canonical_geometry_equal(&representative.canonical,
+	    &candidate.canonical, tol))
+	return false;
+
+    /* Validate in the direct parent's coordinate system.  This catches the
+     * common case where an existing leaf scale would magnify an otherwise
+     * tolerable difference between canonical objects. */
+    auto reference_is_preserved = [&](const mat_t input_matrix) {
+	mat_t replacement_matrix;
+	bn_mat_mul(replacement_matrix, input_matrix, candidate.placement);
+	return transformed_geometry_equal(&representative.canonical,
+	    replacement_matrix, &candidate.input, input_matrix, tol);
+    };
+
+    if (root_primitive && !reference_is_preserved(bn_mat_identity))
+	return false;
+    if (!root_primitive && references.empty())
+	return false;
+    for (const indexed_reference &reference : references) {
+	if (!reference_is_preserved(reference.matrix))
+	    return false;
+    }
+    return true;
+}
+
+
 std::vector<unpush_group>
 verify_groups(struct db_i *dbip, const std::vector<unpush_primitive_record> &records,
 	      const std::map<std::string, std::vector<size_t>> &buckets,
+	      const std::map<struct directory *, std::vector<indexed_reference>> &references,
+	      const std::set<struct directory *> &root_primitives,
 	      const struct bn_tol *tol, enum rt_canonicalize_mode mode)
 {
     std::vector<unpush_group> groups;
@@ -516,22 +909,41 @@ verify_groups(struct db_i *dbip, const std::vector<unpush_primitive_record> &rec
 	if (bucket.second.size() < 2)
 	    continue;
 
-	std::set<size_t> remaining(bucket.second.begin(), bucket.second.end());
+	std::multimap<fastf_t, size_t> remaining;
+	for (size_t record_index : bucket.second)
+	    remaining.emplace(records[record_index].metric, record_index);
 	while (remaining.size() > 1) {
-	    size_t representative_index = *remaining.begin();
+	    size_t representative_index = remaining.begin()->second;
 	    remaining.erase(remaining.begin());
 	    canonical_object representative(dbip, records[representative_index].dp, tol, mode);
-	    if (representative.status != RT_CANONICALIZE_OK)
+	    auto representative_references = references.find(records[representative_index].dp);
+	    const std::vector<indexed_reference> no_references;
+	    const auto &representative_arcs = representative_references == references.end() ?
+		no_references : representative_references->second;
+	    if (representative.status != RT_CANONICALIZE_OK ||
+		!canonical_reconstructs_references(representative, representative,
+		    representative_arcs,
+		    root_primitives.find(records[representative_index].dp) !=
+			root_primitives.end(), tol))
 		continue;
 
 	    unpush_group group;
 	    group.records.push_back(representative_index);
-	    for (auto candidate_it = remaining.begin(); candidate_it != remaining.end();) {
-		canonical_object candidate(dbip, records[*candidate_it].dp, tol, mode);
+	    fastf_t maximum_metric = records[representative_index].metric +
+		records[representative_index].metric_tolerance;
+	    auto candidate_end = remaining.upper_bound(maximum_metric);
+	    for (auto candidate_it = remaining.begin(); candidate_it != candidate_end;) {
+		canonical_object candidate(dbip, records[candidate_it->second].dp, tol, mode);
+		auto candidate_references = references.find(records[candidate_it->second].dp);
+		const auto &candidate_arcs = candidate_references == references.end() ?
+		    no_references : candidate_references->second;
 		if (candidate.status == RT_CANONICALIZE_OK &&
 		    attributes_equal(&representative.input.idb_avs, &candidate.input.idb_avs) &&
-		    canonical_geometry_equal(&representative.canonical, &candidate.canonical, tol)) {
-		    group.records.push_back(*candidate_it);
+		    canonical_reconstructs_references(representative, candidate,
+			candidate_arcs,
+			root_primitives.find(records[candidate_it->second].dp) !=
+			    root_primitives.end(), tol)) {
+		    group.records.push_back(candidate_it->second);
 		    candidate_it = remaining.erase(candidate_it);
 		} else {
 		    ++candidate_it;
@@ -543,6 +955,392 @@ verify_groups(struct db_i *dbip, const std::vector<unpush_primitive_record> &rec
     }
 
     return groups;
+}
+
+
+struct canonical_child_info {
+    size_t identity = 0;
+    mat_t placement = MAT_INIT_IDN;
+};
+
+
+struct combination_analysis_state {
+    struct db_i *dbip = nullptr;
+    const struct bn_tol *tol = nullptr;
+    std::map<struct directory *, canonical_child_info> primitive_children;
+    std::map<struct directory *, size_t> record_indices;
+    std::set<struct directory *> active;
+    std::vector<canonical_combination_record> records;
+    std::map<std::string, std::multimap<fastf_t, size_t>> representatives;
+    size_t next_identity = 1;
+    size_t failures = 0;
+};
+
+
+struct combination_analysis_result {
+    std::vector<canonical_combination_record> records;
+    std::vector<combination_group> groups;
+    size_t failures = 0;
+};
+
+
+void
+append_key_field(std::string &key, const char *value, size_t length)
+{
+    key += std::to_string(length);
+    key.push_back(':');
+    if (length)
+	key.append(value, length);
+    key.push_back(';');
+}
+
+
+void
+append_key_string(std::string &key, const char *value)
+{
+    key.push_back(value ? '1' : '0');
+    if (value)
+	append_key_field(key, value, std::strlen(value));
+    else
+	key.push_back(';');
+}
+
+
+std::string
+combination_metadata_key(const struct rt_comb_internal *comb,
+			 const struct bu_attribute_value_set *attributes,
+			 const std::string &topology)
+{
+    std::string key;
+    auto append_integer = [&](long value) {
+	std::string text = std::to_string(value);
+	append_key_field(key, text.c_str(), text.size());
+    };
+
+    append_integer(comb->region_flag);
+    append_integer(comb->is_fastgen);
+    append_integer(comb->region_id);
+    append_integer(comb->aircode);
+    append_integer(comb->GIFTmater);
+    append_integer(comb->los);
+    append_integer(comb->rgb_valid);
+    for (unsigned char component : comb->rgb)
+	append_integer(component);
+    append_key_field(key, reinterpret_cast<const char *>(&comb->temperature),
+	sizeof(comb->temperature));
+    append_key_string(key, bu_vls_cstr(&comb->shader));
+    append_key_string(key, bu_vls_cstr(&comb->material));
+    append_integer(comb->inherit);
+
+    std::vector<const struct bu_attribute_value_pair *> sorted_attributes;
+    sorted_attributes.reserve(attributes->count);
+    for (size_t i = 0; i < attributes->count; i++)
+	sorted_attributes.push_back(&attributes->avp[i]);
+    std::sort(sorted_attributes.begin(), sorted_attributes.end(),
+	[](const struct bu_attribute_value_pair *a,
+	   const struct bu_attribute_value_pair *b) {
+	    const char *a_name = a->name ? a->name : "";
+	    const char *b_name = b->name ? b->name : "";
+	    return std::strcmp(a_name, b_name) < 0;
+	});
+    append_integer(static_cast<long>(sorted_attributes.size()));
+    for (const struct bu_attribute_value_pair *attribute : sorted_attributes) {
+	append_key_string(key, attribute->name);
+	append_key_string(key, attribute->value);
+#if defined(USE_BINARY_ATTRIBUTES)
+	append_key_field(key, reinterpret_cast<const char *>(attribute->binvalue),
+	    attribute->binvaluelen);
+#endif
+    }
+    append_key_field(key, topology.c_str(), topology.size());
+    return key;
+}
+
+
+bool analyze_combination(combination_analysis_state &state,
+			 struct directory *dp, size_t &record_index);
+
+
+bool
+describe_combination_tree(combination_analysis_state &state, const union tree *tree,
+			  std::string &topology,
+			  std::vector<canonical_combination_leaf> &leaves)
+{
+    if (!tree)
+	return false;
+
+    RT_CK_TREE(tree);
+    topology.push_back('(');
+    topology += std::to_string(tree->tr_op);
+    topology.push_back(':');
+    switch (tree->tr_op) {
+	case OP_DB_LEAF: {
+	    struct directory *child = db_lookup(state.dbip, tree->tr_l.tl_name,
+		LOOKUP_QUIET);
+	    if (child == RT_DIR_NULL)
+		return false;
+
+	    canonical_child_info child_info;
+	    char child_kind;
+	    if (child->d_flags & RT_DIR_COMB) {
+		size_t child_record_index;
+		if (!analyze_combination(state, child, child_record_index))
+		    return false;
+		const canonical_combination_record &child_record =
+		    state.records[child_record_index];
+		child_info.identity = child_record.identity;
+		mat_t child_reference_matrix;
+		mat_t child_representative_matrix;
+		if (tree->tr_l.tl_mat)
+		    MAT_COPY(child_reference_matrix, tree->tr_l.tl_mat);
+		else
+		    MAT_IDN(child_reference_matrix);
+		bn_mat_mul(child_representative_matrix, child_reference_matrix,
+		    child_record.representative_to_input);
+		bn_mat_mul(child_info.placement, child_representative_matrix,
+		    child_record.identity_placement);
+		child_kind = 'C';
+	    } else {
+		auto primitive = state.primitive_children.find(child);
+		if (primitive == state.primitive_children.end())
+		    return false;
+		child_info = primitive->second;
+		child_kind = 'P';
+	    }
+
+	    canonical_combination_leaf leaf;
+	    leaf.child_identity = child_info.identity;
+	    if (child_kind == 'C') {
+		MAT_COPY(leaf.effective_matrix, child_info.placement);
+	    } else {
+		mat_t leaf_matrix;
+		if (tree->tr_l.tl_mat)
+		    MAT_COPY(leaf_matrix, tree->tr_l.tl_mat);
+		else
+		    MAT_IDN(leaf_matrix);
+		bn_mat_mul(leaf.effective_matrix, leaf_matrix,
+		    child_info.placement);
+	    }
+	    leaves.push_back(leaf);
+	    topology.push_back(child_kind);
+	    topology += std::to_string(child_info.identity);
+	    break;
+	}
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+	case OP_XOR:
+	    if (!describe_combination_tree(state, tree->tr_b.tb_left, topology,
+		    leaves) ||
+		!describe_combination_tree(state, tree->tr_b.tb_right, topology,
+		    leaves))
+		return false;
+	    break;
+	case OP_NOT:
+	case OP_GUARD:
+	case OP_XNOP:
+	    if (!describe_combination_tree(state, tree->tr_b.tb_left, topology,
+		    leaves))
+		return false;
+	    break;
+	case OP_NOP:
+	    break;
+	default:
+	    return false;
+    }
+    topology.push_back(')');
+    return true;
+}
+
+
+bool
+combination_records_equal(const canonical_combination_record &representative,
+			  const canonical_combination_record &candidate,
+			  const struct bn_tol *tol)
+{
+    if (representative.bucket != candidate.bucket ||
+	representative.leaves.size() != candidate.leaves.size())
+	return false;
+
+    for (size_t i = 0; i < representative.leaves.size(); i++) {
+	if (representative.leaves[i].child_identity !=
+		candidate.leaves[i].child_identity ||
+	    !matrices_numerically_equal(representative.leaves[i].relative_matrix,
+		candidate.leaves[i].relative_matrix, tol))
+	    return false;
+
+	mat_t reconstructed;
+	bn_mat_mul(reconstructed, candidate.placement,
+	    representative.leaves[i].relative_matrix);
+	if (!matrices_numerically_equal(reconstructed,
+		candidate.leaves[i].effective_matrix, tol))
+	    return false;
+    }
+    return true;
+}
+
+
+bool
+analyze_combination(combination_analysis_state &state,
+		    struct directory *dp, size_t &record_index)
+{
+    auto existing = state.record_indices.find(dp);
+    if (existing != state.record_indices.end()) {
+	record_index = existing->second;
+	return state.records[record_index].valid;
+    }
+    if (!state.active.insert(dp).second)
+	return false;
+
+    canonical_combination_record record;
+    record.dp = dp;
+    struct rt_db_internal intern;
+    RT_DB_INTERNAL_INIT(&intern);
+    bool valid = (dp->d_flags & RT_DIR_COMB) &&
+	rt_db_get_internal(&intern, dp, state.dbip, nullptr) >= 0 &&
+	intern.idb_minor_type == ID_COMBINATION;
+    std::string topology;
+    if (valid) {
+	const auto *comb = static_cast<const struct rt_comb_internal *>(intern.idb_ptr);
+	RT_CK_COMB(comb);
+	record.region = comb->region_flag != 0;
+	valid = describe_combination_tree(state, comb->tree, topology,
+	    record.leaves) && !record.leaves.empty();
+	if (valid)
+	    record.bucket = combination_metadata_key(comb, &intern.idb_avs,
+		topology);
+    }
+
+    if (valid) {
+	mat_t input_to_canonical;
+	MAT_COPY(record.placement, record.leaves.front().effective_matrix);
+	valid = bn_mat_inverse(input_to_canonical, record.placement) != 0;
+	if (valid) {
+	    for (canonical_combination_leaf &leaf : record.leaves) {
+		bn_mat_mul(leaf.relative_matrix, input_to_canonical,
+		    leaf.effective_matrix);
+		for (size_t i = 0; i < 16; i++) {
+		    fastf_t value = leaf.relative_matrix[i];
+		    fastf_t database_limit = (i == 3 || i == 7 || i == 11) ?
+			state.tol->dist : state.tol->perp;
+		    record.metric += std::fabs(value);
+		    record.metric_tolerance += 2.0 *
+			matrix_roundoff_tolerance(value, value,
+			    database_limit);
+		}
+	    }
+	}
+    }
+
+    if (intern.idb_ptr)
+	rt_db_free_internal(&intern);
+    state.active.erase(dp);
+
+    bool new_identity = true;
+    if (valid) {
+	auto representatives = state.representatives.find(record.bucket);
+	if (representatives != state.representatives.end()) {
+	    auto candidate_begin = representatives->second.lower_bound(
+		record.metric - record.metric_tolerance);
+	    auto candidate_end = representatives->second.upper_bound(
+		record.metric + record.metric_tolerance);
+	    for (auto candidate = candidate_begin; candidate != candidate_end;
+		    ++candidate) {
+		const canonical_combination_record &representative =
+		    state.records[candidate->second];
+		if (combination_records_equal(representative, record, state.tol)) {
+		    mat_t identity_to_representative;
+		    if (!bn_mat_inverse(identity_to_representative,
+			    representative.identity_placement)) {
+			valid = false;
+			break;
+		    }
+		    record.identity = representative.identity;
+		    MAT_COPY(record.identity_placement,
+			representative.identity_placement);
+		    bn_mat_mul(record.representative_to_input, record.placement,
+			identity_to_representative);
+		    new_identity = false;
+		    break;
+		}
+	    }
+	}
+	if (valid && new_identity) {
+	    record.identity = state.next_identity++;
+	    MAT_COPY(record.identity_placement, record.placement);
+	    MAT_IDN(record.representative_to_input);
+	}
+	record.valid = valid;
+	if (!valid)
+	    state.failures++;
+    } else {
+	state.failures++;
+    }
+
+    record_index = state.records.size();
+    state.records.push_back(record);
+    state.record_indices[dp] = record_index;
+    if (valid && new_identity)
+	state.representatives[record.bucket].emplace(record.metric, record_index);
+    return valid;
+}
+
+
+combination_analysis_result
+analyze_combinations(struct db_i *dbip,
+		     const std::set<struct directory *> &combinations,
+		     const std::vector<unpush_primitive_record> &primitive_records,
+		     const std::vector<unpush_group> &primitive_groups,
+		     const struct bn_tol *tol)
+{
+    combination_analysis_state state;
+    state.dbip = dbip;
+    state.tol = tol;
+
+    std::map<struct directory *, size_t> primitive_identities;
+    size_t next_primitive_identity = 1;
+    for (const unpush_group &group : primitive_groups) {
+	size_t identity = next_primitive_identity++;
+	for (size_t record_index : group.records)
+	    primitive_identities[primitive_records[record_index].dp] = identity;
+    }
+    for (const unpush_primitive_record &primitive : primitive_records) {
+	if (primitive_identities.find(primitive.dp) == primitive_identities.end())
+	    primitive_identities[primitive.dp] = next_primitive_identity++;
+	canonical_child_info child;
+	child.identity = primitive_identities[primitive.dp];
+	MAT_COPY(child.placement, primitive.canonical_to_input);
+	state.primitive_children[primitive.dp] = child;
+    }
+
+    std::vector<struct directory *> ordered_combinations(combinations.begin(),
+	combinations.end());
+    std::sort(ordered_combinations.begin(), ordered_combinations.end(),
+	[](const struct directory *a, const struct directory *b) {
+	    return std::strcmp(a->d_namep, b->d_namep) < 0;
+	});
+    for (struct directory *combination : ordered_combinations) {
+	size_t record_index;
+	analyze_combination(state, combination, record_index);
+    }
+
+    std::map<size_t, std::vector<size_t>> identity_records;
+    for (size_t i = 0; i < state.records.size(); i++) {
+	if (state.records[i].valid)
+	    identity_records[state.records[i].identity].push_back(i);
+    }
+
+    combination_analysis_result result;
+    result.records = std::move(state.records);
+    result.failures = state.failures;
+    for (auto &identity : identity_records) {
+	if (identity.second.size() < 2)
+	    continue;
+	combination_group group;
+	group.records = std::move(identity.second);
+	result.groups.push_back(std::move(group));
+    }
+    return result;
 }
 
 
@@ -562,8 +1360,11 @@ mark_exposed_descendants(struct directory *dp,
 
 
 bool
-rewrite_tree(union tree *tree, const std::map<std::string, rewrite_target> &targets,
-	     const struct bn_tol *tol, std::vector<rewritten_leaf> &rewritten)
+rewrite_tree_at_path(union tree *tree,
+		     const std::map<std::string, rewrite_target> &targets,
+		     const struct bn_tol *tol,
+		     std::vector<rewritten_leaf> &rewritten,
+		     std::string &path)
 {
     if (!tree)
 	return true;
@@ -594,6 +1395,7 @@ rewrite_tree(union tree *tree, const std::map<std::string, rewrite_target> &targ
 		tree->tr_l.tl_mat = bn_mat_dup(replacement);
 
 	    rewritten_leaf leaf;
+	    leaf.path = path;
 	    leaf.name = target_it->second.canonical_name;
 	    MAT_COPY(leaf.matrix, replacement);
 	    rewritten.push_back(leaf);
@@ -603,12 +1405,29 @@ rewrite_tree(union tree *tree, const std::map<std::string, rewrite_target> &targ
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
 	case OP_XOR:
-	    return rewrite_tree(tree->tr_b.tb_left, targets, tol, rewritten) &&
-		rewrite_tree(tree->tr_b.tb_right, targets, tol, rewritten);
+	    path.push_back('L');
+	    if (!rewrite_tree_at_path(tree->tr_b.tb_left, targets, tol,
+		    rewritten, path)) {
+		path.pop_back();
+		return false;
+	    }
+	    path.back() = 'R';
+	    if (!rewrite_tree_at_path(tree->tr_b.tb_right, targets, tol,
+		    rewritten, path)) {
+		path.pop_back();
+		return false;
+	    }
+	    path.pop_back();
+	    return true;
 	case OP_NOT:
 	case OP_GUARD:
-	case OP_XNOP:
-	    return rewrite_tree(tree->tr_b.tb_left, targets, tol, rewritten);
+	case OP_XNOP: {
+	    path.push_back('L');
+	    bool rewritten_child = rewrite_tree_at_path(tree->tr_b.tb_left,
+		targets, tol, rewritten, path);
+	    path.pop_back();
+	    return rewritten_child;
+	}
 	case OP_NOP:
 	    return true;
 	default:
@@ -618,42 +1437,30 @@ rewrite_tree(union tree *tree, const std::map<std::string, rewrite_target> &targ
 
 
 bool
-collect_rewritten_leaves(const union tree *tree,
-			 const std::set<std::string> &canonical_names,
-			 std::vector<rewritten_leaf> &rewritten)
+rewrite_tree(union tree *tree,
+	     const std::map<std::string, rewrite_target> &targets,
+	     const struct bn_tol *tol, std::vector<rewritten_leaf> &rewritten)
 {
-    if (!tree)
-	return true;
+    std::string path;
+    return rewrite_tree_at_path(tree, targets, tol, rewritten, path);
+}
 
-    RT_CK_TREE(tree);
-    switch (tree->tr_op) {
-	case OP_DB_LEAF:
-	    if (canonical_names.find(tree->tr_l.tl_name) != canonical_names.end()) {
-		rewritten_leaf leaf;
-		leaf.name = tree->tr_l.tl_name;
-		if (tree->tr_l.tl_mat)
-		    MAT_COPY(leaf.matrix, tree->tr_l.tl_mat);
-		rewritten.push_back(leaf);
-	    }
-	    return true;
-	case OP_UNION:
-	case OP_INTERSECT:
-	case OP_SUBTRACT:
-	case OP_XOR:
-	    return collect_rewritten_leaves(tree->tr_b.tb_left, canonical_names,
-		rewritten) &&
-		collect_rewritten_leaves(tree->tr_b.tb_right, canonical_names,
-		    rewritten);
-	case OP_NOT:
-	case OP_GUARD:
-	case OP_XNOP:
-	    return collect_rewritten_leaves(tree->tr_b.tb_left, canonical_names,
-		rewritten);
-	case OP_NOP:
-	    return true;
-	default:
-	    return false;
+
+const union tree *
+tree_at_path(const union tree *tree, const std::string &path)
+{
+    for (char direction : path) {
+	if (!tree)
+	    return nullptr;
+	RT_CK_TREE(tree);
+	if (direction == 'L')
+	    tree = tree->tr_b.tb_left;
+	else if (direction == 'R')
+	    tree = tree->tr_b.tb_right;
+	else
+	    return nullptr;
     }
+    return tree;
 }
 
 
@@ -681,17 +1488,50 @@ remove_object(struct db_i *dbip, const std::string &name)
 }
 
 
+int
+put_internal_retyped(struct rt_wdb *wdbp, struct directory *dp,
+		     struct rt_db_internal *intern)
+{
+    const int major_type = intern->idb_major_type;
+    const int minor_type = intern->idb_minor_type;
+    const unsigned char previous_major_type = dp->d_major_type;
+    const unsigned char previous_minor_type = dp->d_minor_type;
+    const int previous_flags = dp->d_flags;
+
+    /* wdb_put_internal updates an existing directory's flags, but assumes its
+     * type already agrees with the new internal.  Set both before the write so
+     * database-change callbacks observe a consistent directory entry. */
+    dp->d_major_type = static_cast<unsigned char>(major_type);
+    dp->d_minor_type = static_cast<unsigned char>(minor_type);
+    int result = wdb_put_internal(wdbp, dp->d_namep, intern, 1.0);
+
+    if (result < 0) {
+	dp->d_major_type = previous_major_type;
+	dp->d_minor_type = previous_minor_type;
+	dp->d_flags = previous_flags;
+    }
+    return result;
+}
+
+
 bool
-rollback_parents(struct db_i *dbip,
+rollback_objects(struct rt_wdb *wdbp,
 		 const std::vector<struct directory *> &attempted,
+		 const std::set<struct directory *> &retyped,
 		 std::map<struct directory *, struct rt_db_internal *> &originals)
 {
     bool restored = true;
 
     for (auto parent_it = attempted.rbegin(); parent_it != attempted.rend(); ++parent_it) {
 	auto original_it = originals.find(*parent_it);
-	if (original_it == originals.end() ||
-	    rt_db_put_internal(*parent_it, dbip, original_it->second) < 0)
+	if (original_it == originals.end()) {
+	    restored = false;
+	    continue;
+	}
+	int result = retyped.find(*parent_it) != retyped.end() ?
+	    put_internal_retyped(wdbp, *parent_it, original_it->second) :
+	    rt_db_put_internal(*parent_it, wdbp->dbip, original_it->second);
+	if (result < 0)
 	    restored = false;
     }
     return restored;
@@ -700,26 +1540,74 @@ rollback_parents(struct db_i *dbip,
 
 bool
 validate_parent_rewrite(struct db_i *dbip, struct directory *parent,
-			const std::set<std::string> &canonical_names,
 			const std::vector<rewritten_leaf> &expected,
 			const struct bn_tol *tol)
 {
     struct rt_db_internal intern;
-    std::vector<rewritten_leaf> actual;
 
     RT_DB_INTERNAL_INIT(&intern);
     if (rt_db_get_internal(&intern, parent, dbip, nullptr) < 0)
 	return false;
+    if (intern.idb_minor_type != ID_COMBINATION || !intern.idb_ptr) {
+	rt_db_free_internal(&intern);
+	return false;
+    }
     const auto *comb = static_cast<const struct rt_comb_internal *>(intern.idb_ptr);
     RT_CK_COMB(comb);
-    bool valid = collect_rewritten_leaves(comb->tree, canonical_names, actual) &&
-	actual.size() == expected.size();
-    for (size_t i = 0; valid && i < expected.size(); i++) {
-	valid = actual[i].name == expected[i].name &&
-	    bn_mat_is_equal(actual[i].matrix, expected[i].matrix, tol);
+    bool valid = true;
+    for (const rewritten_leaf &expected_leaf : expected) {
+	const union tree *actual = tree_at_path(comb->tree, expected_leaf.path);
+	if (!actual || actual->tr_op != OP_DB_LEAF ||
+	    !BU_STR_EQUAL(actual->tr_l.tl_name, expected_leaf.name.c_str())) {
+	    valid = false;
+	    break;
+	}
+	mat_t actual_matrix;
+	if (actual->tr_l.tl_mat)
+	    MAT_COPY(actual_matrix, actual->tr_l.tl_mat);
+	else
+	    MAT_IDN(actual_matrix);
+	if (!bn_mat_is_equal(actual_matrix, expected_leaf.matrix, tol)) {
+	    valid = false;
+	    break;
+	}
     }
     rt_db_free_internal(&intern);
     return valid;
+}
+
+
+union tree *
+make_leaf_tree(const std::string &child_name, const mat_t matrix,
+	       const struct bn_tol *tol)
+{
+    union tree *leaf;
+    BU_GET(leaf, union tree);
+    RT_TREE_INIT(leaf);
+    leaf->tr_l.tl_op = OP_DB_LEAF;
+    leaf->tr_l.tl_name = bu_strdup(child_name.c_str());
+    if (!bn_mat_is_equal(matrix, bn_mat_identity, tol))
+	leaf->tr_l.tl_mat = bn_mat_dup(matrix);
+    return leaf;
+}
+
+
+void
+make_wrapper_internal(struct rt_db_internal *intern, const std::string &child_name,
+		      const mat_t matrix,
+		      const struct bu_attribute_value_set *attributes,
+		      const struct bn_tol *tol)
+{
+    auto *comb = static_cast<struct rt_comb_internal *>(
+	bu_calloc(1, sizeof(struct rt_comb_internal), "unpush wrapper combination"));
+    RT_COMB_INTERNAL_INIT(comb);
+    comb->tree = make_leaf_tree(child_name, matrix, tol);
+
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern->idb_minor_type = ID_COMBINATION;
+    intern->idb_meth = &OBJ[ID_COMBINATION];
+    intern->idb_ptr = comb;
+    bu_avs_merge(&intern->idb_avs, attributes);
 }
 
 
@@ -731,6 +1619,43 @@ replacement_matrix_is_writable(const mat_t input_matrix,
 
     bn_mat_mul(replacement, input_matrix, canonical_to_input);
     return bn_mat_ck("unpush replacement", replacement) == 0;
+}
+
+
+bool
+combination_reconstructs_reference(
+    const canonical_combination_record &representative,
+    const canonical_combination_record &candidate,
+    const mat_t reference_matrix, const struct bn_tol *tol,
+    mat_t representative_to_candidate)
+{
+    if (representative.leaves.size() != candidate.leaves.size())
+	return false;
+    mat_t representative_to_canonical;
+    if (!bn_mat_inverse(representative_to_canonical,
+	    representative.placement))
+	return false;
+    bn_mat_mul(representative_to_candidate, candidate.placement,
+	representative_to_canonical);
+    if (!replacement_matrix_is_writable(reference_matrix,
+	    representative_to_candidate))
+	return false;
+
+    for (size_t i = 0; i < representative.leaves.size(); i++) {
+	mat_t old_leaf_matrix;
+	mat_t candidate_leaf_matrix;
+	mat_t replacement_leaf_matrix;
+	bn_mat_mul(old_leaf_matrix, reference_matrix,
+	    candidate.leaves[i].effective_matrix);
+	bn_mat_mul(candidate_leaf_matrix, representative_to_candidate,
+	    representative.leaves[i].effective_matrix);
+	bn_mat_mul(replacement_leaf_matrix, reference_matrix,
+	    candidate_leaf_matrix);
+	if (!matrices_numerically_equal(old_leaf_matrix, replacement_leaf_matrix,
+		tol))
+	    return false;
+    }
+    return true;
 }
 
 
@@ -754,17 +1679,21 @@ apply_groups(struct ged *gedp, struct rt_wdb *wdbp,
 	     const unpush_walk_state &walk,
 	     const std::vector<unpush_primitive_record> &records,
 	     const std::vector<unpush_group> &groups,
-	     const database_reference_index &database_references,
+	     const combination_analysis_result &combination_analysis,
+	     const std::map<struct directory *, std::vector<indexed_reference>> &references,
 	     const struct bn_tol *tol, enum rt_canonicalize_mode mode,
 	     bool local_changes_only, int verbosity)
 {
     std::set<std::string> database_names;
     std::vector<planned_group> planned_groups;
+    std::vector<planned_combination_group> planned_combination_groups;
     std::map<std::string, rewrite_target> targets;
+    std::map<struct directory *, rewrite_target> wrapper_targets;
+    std::map<struct directory *, rewrite_target> combination_wrapper_targets;
     std::set<struct directory *> parents;
-    std::map<struct directory *, std::vector<indexed_reference>> local_references;
     size_t next_name_id = 1;
     size_t deferred_groups = 0;
+    size_t deferred_combination_groups = 0;
 
     struct directory *directory_entry;
     FOR_ALL_DIRECTORY_START(directory_entry, gedp->dbip)
@@ -772,42 +1701,40 @@ apply_groups(struct ged *gedp, struct rt_wdb *wdbp,
 	    database_names.insert(directory_entry->d_namep);
     FOR_ALL_DIRECTORY_END;
 
-    if (local_changes_only) {
-	for (const unpush_reference &reference : walk.references) {
-	    indexed_reference indexed;
-	    indexed.parent = reference.parent;
-	    MAT_COPY(indexed.matrix, reference.matrix);
-	    local_references[reference.child].push_back(indexed);
-	}
-    }
-    const auto &references = local_changes_only ? local_references :
-	database_references.references;
-
     for (const unpush_group &group : groups) {
-	bool eligible = true;
+	planned_group plan;
 	for (size_t record_index : group.records) {
 	    struct directory *dp = records[record_index].dp;
+	    bool root_primitive = walk.root_primitives.find(dp) !=
+		walk.root_primitives.end();
 	    auto references_it = references.find(dp);
 	    size_t reference_count = references_it == references.end() ? 0 :
 		references_it->second.size();
-	    if (walk.root_primitives.find(dp) != walk.root_primitives.end() ||
-		dp->d_nref < 0 || reference_count == 0 ||
-		reference_count != static_cast<size_t>(dp->d_nref)) {
-		eligible = false;
-		break;
+	    bool eligible = root_primitive ||
+		(dp->d_nref >= 0 && reference_count > 0 &&
+		    (local_changes_only ||
+		    reference_count == static_cast<size_t>(dp->d_nref)));
+	    if (eligible && root_primitive) {
+		eligible = replacement_matrix_is_writable(bn_mat_identity,
+		    records[record_index].canonical_to_input);
 	    }
-
-	    for (const indexed_reference &reference : references_it->second) {
-		if (!replacement_matrix_is_writable(reference.matrix,
-			records[record_index].canonical_to_input)) {
-		    eligible = false;
-		    break;
+	    if (eligible && !root_primitive) {
+		for (const indexed_reference &reference : references_it->second) {
+		    if (!replacement_matrix_is_writable(reference.matrix,
+			    records[record_index].canonical_to_input)) {
+			eligible = false;
+			break;
+		    }
 		}
 	    }
-	    if (!eligible)
+	    if (eligible) {
+		plan.records.push_back(record_index);
+	    } else if (!local_changes_only) {
+		plan.records.clear();
 		break;
+	    }
 	}
-	if (!eligible) {
+	if (plan.records.size() < 2) {
 	    deferred_groups++;
 	    continue;
 	}
@@ -819,28 +1746,111 @@ apply_groups(struct ged *gedp, struct rt_wdb *wdbp,
 	} while (database_names.find(canonical_name) != database_names.end());
 	database_names.insert(canonical_name);
 
-	planned_group plan;
-	plan.group = &group;
 	plan.canonical_name = canonical_name;
 	planned_groups.push_back(plan);
-	for (size_t record_index : group.records) {
+	for (size_t record_index : plan.records) {
 	    rewrite_target target;
 	    target.canonical_name = canonical_name;
 	    MAT_COPY(target.canonical_to_input,
 		records[record_index].canonical_to_input);
-	    targets[records[record_index].dp->d_namep] = target;
+	    struct directory *dp = records[record_index].dp;
+	    if (walk.root_primitives.find(dp) != walk.root_primitives.end())
+		wrapper_targets[dp] = target;
+	    else
+		targets[dp->d_namep] = target;
 	}
     }
 
-    if (planned_groups.empty()) {
+    for (const combination_group &group : combination_analysis.groups) {
+	std::vector<size_t> eligible_records;
+	for (size_t record_index : group.records) {
+	    struct directory *dp = combination_analysis.records[record_index].dp;
+	    bool root_combination = walk.root_combinations.find(dp) !=
+		walk.root_combinations.end();
+	    auto references_it = references.find(dp);
+	    size_t reference_count = references_it == references.end() ? 0 :
+		references_it->second.size();
+	    bool eligible = root_combination ||
+		(dp->d_nref >= 0 && reference_count > 0 &&
+		    (local_changes_only ||
+		    reference_count == static_cast<size_t>(dp->d_nref)));
+	    if (eligible)
+		eligible_records.push_back(record_index);
+	}
+	if (eligible_records.size() < 2) {
+	    deferred_combination_groups++;
+	    continue;
+	}
+
+	planned_combination_group plan;
+	plan.representative = eligible_records.front();
+	plan.records.push_back(plan.representative);
+	const canonical_combination_record &representative =
+	    combination_analysis.records[plan.representative];
+	for (size_t record_index : eligible_records) {
+	    if (record_index == plan.representative)
+		continue;
+	    const canonical_combination_record &candidate =
+		combination_analysis.records[record_index];
+	    struct directory *dp = candidate.dp;
+	    bool root_combination = walk.root_combinations.find(dp) !=
+		walk.root_combinations.end();
+
+	    mat_t representative_to_candidate;
+	    bool safe = true;
+	    if (root_combination) {
+		/* A combination wrapper can retain a selected assembly name, but
+		 * wrapping a region in another region changes region traversal. */
+		safe = !candidate.region && combination_reconstructs_reference(
+		    representative, candidate, bn_mat_identity, tol,
+		    representative_to_candidate);
+	    } else {
+		auto references_it = references.find(dp);
+		if (references_it == references.end() || references_it->second.empty()) {
+		    safe = false;
+		} else {
+		    for (const indexed_reference &reference : references_it->second) {
+			if (!combination_reconstructs_reference(representative,
+				candidate, reference.matrix, tol,
+				representative_to_candidate)) {
+			    safe = false;
+			    break;
+			}
+		    }
+		}
+	    }
+	    if (!safe)
+		continue;
+
+	    rewrite_target target;
+	    target.canonical_name = representative.dp->d_namep;
+	    MAT_COPY(target.canonical_to_input, representative_to_candidate);
+	    if (root_combination)
+		combination_wrapper_targets[dp] = target;
+	    else
+		targets[dp->d_namep] = target;
+	    plan.records.push_back(record_index);
+	}
+	if (plan.records.size() < 2) {
+	    deferred_combination_groups++;
+	    continue;
+	}
+	planned_combination_groups.push_back(plan);
+    }
+
+    if (planned_groups.empty() && planned_combination_groups.empty()) {
 	bu_vls_printf(gedp->ged_result_str,
 	    "unpush: no fully-contained groups are currently safe to rewrite"
-	    " (%zu deferred)\n", deferred_groups);
+	    " (%zu deferred)\n", deferred_groups +
+		deferred_combination_groups);
 	return BRLCAD_OK;
     }
 
     for (const planned_group &plan : planned_groups) {
-	for (size_t record_index : plan.group->records) {
+	for (size_t record_index : plan.records) {
+	    if (walk.root_primitives.find(records[record_index].dp) !=
+		    walk.root_primitives.end())
+		continue;
 	    auto references_it = references.find(records[record_index].dp);
 	    if (references_it == references.end())
 		continue;
@@ -848,9 +1858,43 @@ apply_groups(struct ged *gedp, struct rt_wdb *wdbp,
 		parents.insert(reference.parent);
 	}
     }
+    for (const planned_combination_group &plan : planned_combination_groups) {
+	for (size_t record_index : plan.records) {
+	    if (record_index == plan.representative)
+		continue;
+	    struct directory *dp = combination_analysis.records[record_index].dp;
+	    if (combination_wrapper_targets.find(dp) !=
+		    combination_wrapper_targets.end())
+		continue;
+	    auto references_it = references.find(dp);
+	    if (references_it == references.end())
+		continue;
+	    for (const indexed_reference &reference : references_it->second)
+		parents.insert(reference.parent);
+	}
+    }
+    /* Replacing a top-level combination's whole tree supersedes any child
+     * rewrites that would otherwise have been prepared for that combination. */
+    for (const auto &wrapper : combination_wrapper_targets)
+	parents.erase(wrapper.first);
 
     std::vector<struct directory *> ordered_parents(parents.begin(), parents.end());
     std::sort(ordered_parents.begin(), ordered_parents.end(),
+	[](const struct directory *a, const struct directory *b) {
+	    return std::strcmp(a->d_namep, b->d_namep) < 0;
+	});
+    std::vector<struct directory *> ordered_wrappers;
+    for (const auto &wrapper : wrapper_targets)
+	ordered_wrappers.push_back(wrapper.first);
+    std::sort(ordered_wrappers.begin(), ordered_wrappers.end(),
+	[](const struct directory *a, const struct directory *b) {
+	    return std::strcmp(a->d_namep, b->d_namep) < 0;
+	});
+    std::vector<struct directory *> ordered_combination_wrappers;
+    for (const auto &wrapper : combination_wrapper_targets)
+	ordered_combination_wrappers.push_back(wrapper.first);
+    std::sort(ordered_combination_wrappers.begin(),
+	ordered_combination_wrappers.end(),
 	[](const struct directory *a, const struct directory *b) {
 	    return std::strcmp(a->d_namep, b->d_namep) < 0;
 	});
@@ -882,11 +1926,64 @@ apply_groups(struct ged *gedp, struct rt_wdb *wdbp,
 	    break;
 	}
     }
+    for (struct directory *wrapper : ordered_wrappers) {
+	if (preparation_failed)
+	    break;
+	struct rt_db_internal *original;
+	struct rt_db_internal *update;
+	BU_GET(original, struct rt_db_internal);
+	BU_GET(update, struct rt_db_internal);
+	RT_DB_INTERNAL_INIT(original);
+	RT_DB_INTERNAL_INIT(update);
+	originals[wrapper] = original;
+	updates[wrapper] = update;
+	if ((wrapper->d_flags & RT_DIR_COMB) ||
+	    rt_db_get_internal(original, wrapper, gedp->dbip, nullptr) < 0) {
+	    preparation_failed = true;
+	    break;
+	}
+	const rewrite_target &target = wrapper_targets.at(wrapper);
+	make_wrapper_internal(update, target.canonical_name,
+	    target.canonical_to_input, &original->idb_avs, tol);
+	rewritten_leaf leaf;
+	leaf.name = target.canonical_name;
+	MAT_COPY(leaf.matrix, target.canonical_to_input);
+	expectations[wrapper].push_back(leaf);
+    }
+    for (struct directory *wrapper : ordered_combination_wrappers) {
+	if (preparation_failed)
+	    break;
+	struct rt_db_internal *original;
+	struct rt_db_internal *update;
+	BU_GET(original, struct rt_db_internal);
+	BU_GET(update, struct rt_db_internal);
+	RT_DB_INTERNAL_INIT(original);
+	RT_DB_INTERNAL_INIT(update);
+	originals[wrapper] = original;
+	updates[wrapper] = update;
+	if (!(wrapper->d_flags & RT_DIR_COMB) ||
+	    rt_db_get_internal(original, wrapper, gedp->dbip, nullptr) < 0 ||
+	    rt_db_get_internal(update, wrapper, gedp->dbip, nullptr) < 0 ||
+	    update->idb_minor_type != ID_COMBINATION) {
+	    preparation_failed = true;
+	    break;
+	}
+	auto *comb = static_cast<struct rt_comb_internal *>(update->idb_ptr);
+	RT_CK_COMB(comb);
+	db_free_tree(comb->tree);
+	const rewrite_target &target = combination_wrapper_targets.at(wrapper);
+	comb->tree = make_leaf_tree(target.canonical_name,
+	    target.canonical_to_input, tol);
+	rewritten_leaf leaf;
+	leaf.name = target.canonical_name;
+	MAT_COPY(leaf.matrix, target.canonical_to_input);
+	expectations[wrapper].push_back(leaf);
+    }
     if (preparation_failed) {
 	free_internals(updates);
 	free_internals(originals);
 	bu_vls_printf(gedp->ged_result_str,
-	    "unpush: unable to prepare parent rewrites; database unchanged\n");
+	    "unpush: unable to prepare object rewrites; database unchanged\n");
 	return BRLCAD_ERROR;
     }
 
@@ -894,7 +1991,7 @@ apply_groups(struct ged *gedp, struct rt_wdb *wdbp,
     bool canonical_write_failed = false;
     for (const planned_group &plan : planned_groups) {
 	struct directory *representative =
-	    records[plan.group->records.front()].dp;
+	    records[plan.records.front()].dp;
 	canonical_object object(gedp->dbip, representative, tol, mode);
 	if (object.status != RT_CANONICALIZE_OK) {
 	    canonical_write_failed = true;
@@ -922,33 +2019,75 @@ apply_groups(struct ged *gedp, struct rt_wdb *wdbp,
 	return BRLCAD_ERROR;
     }
 
-    std::vector<struct directory *> attempted_parents;
-    bool parent_write_failed = false;
+    std::vector<struct directory *> attempted_objects;
+    bool object_write_failed = false;
     for (struct directory *parent : ordered_parents) {
-	attempted_parents.push_back(parent);
+	attempted_objects.push_back(parent);
 	if (rt_db_put_internal(parent, gedp->dbip, updates[parent]) < 0) {
-	    parent_write_failed = true;
+	    object_write_failed = true;
 	    break;
 	}
     }
+    if (!object_write_failed) {
+	for (struct directory *wrapper : ordered_wrappers) {
+	    attempted_objects.push_back(wrapper);
+	    if (put_internal_retyped(wdbp, wrapper, updates[wrapper]) < 0) {
+		object_write_failed = true;
+		break;
+	    }
+	}
+    }
+    if (!object_write_failed) {
+	for (struct directory *wrapper : ordered_combination_wrappers) {
+	    attempted_objects.push_back(wrapper);
+	    if (rt_db_put_internal(wrapper, gedp->dbip, updates[wrapper]) < 0) {
+		object_write_failed = true;
+		break;
+	    }
+	}
+    }
 
-    std::set<std::string> canonical_names(written_canonical_names.begin(),
-	written_canonical_names.end());
     bool validation_failed = false;
-    if (!parent_write_failed) {
+    if (!object_write_failed) {
 	for (struct directory *parent : ordered_parents) {
-	    if (!validate_parent_rewrite(gedp->dbip, parent, canonical_names,
+	    if (!validate_parent_rewrite(gedp->dbip, parent,
 		    expectations[parent], tol)) {
 		validation_failed = true;
 		break;
 	    }
 	}
     }
+    if (!object_write_failed && !validation_failed) {
+	for (struct directory *wrapper : ordered_wrappers) {
+	    if (!validate_parent_rewrite(gedp->dbip, wrapper,
+		    expectations[wrapper], tol)) {
+		validation_failed = true;
+		break;
+	    }
+	}
+    }
+    if (!object_write_failed && !validation_failed) {
+	for (struct directory *wrapper : ordered_combination_wrappers) {
+	    if (!validate_parent_rewrite(gedp->dbip, wrapper,
+		    expectations[wrapper], tol)) {
+		validation_failed = true;
+		break;
+	    }
+	}
+    }
 
-    if (parent_write_failed || validation_failed) {
-	if (!parent_write_failed)
-	    attempted_parents = ordered_parents;
-	bool rollback_ok = rollback_parents(gedp->dbip, attempted_parents, originals);
+    if (object_write_failed || validation_failed) {
+	if (!object_write_failed) {
+	attempted_objects = ordered_parents;
+	attempted_objects.insert(attempted_objects.end(), ordered_wrappers.begin(),
+	    ordered_wrappers.end());
+	attempted_objects.insert(attempted_objects.end(),
+	    ordered_combination_wrappers.begin(),
+	    ordered_combination_wrappers.end());
+	}
+	std::set<struct directory *> retyped(ordered_wrappers.begin(),
+	    ordered_wrappers.end());
+	bool rollback_ok = rollback_objects(wdbp, attempted_objects, retyped, originals);
 	bool cleanup_ok = rollback_ok;
 	if (rollback_ok) {
 	    for (const std::string &name : written_canonical_names)
@@ -959,10 +2098,10 @@ apply_groups(struct ged *gedp, struct rt_wdb *wdbp,
 	free_internals(originals);
 	bu_vls_printf(gedp->ged_result_str,
 	    "unpush: %s; %s\n",
-	    parent_write_failed ? "a parent write failed" :
+	    object_write_failed ? "an object write failed" :
 	    "post-write validation failed",
-	    rollback_ok ? (cleanup_ok ? "original parents restored" :
-		"original parents restored, but redundant canonical objects remain") :
+	    rollback_ok ? (cleanup_ok ? "original objects restored" :
+		"original objects restored, but redundant canonical objects remain") :
 		"rollback was incomplete; canonical objects were retained to avoid missing references");
 	return BRLCAD_ERROR;
     }
@@ -971,15 +2110,46 @@ apply_groups(struct ged *gedp, struct rt_wdb *wdbp,
     free_internals(originals);
 
     db_update_nref(gedp->dbip);
+    size_t removed_combinations = 0;
+    size_t retained_combinations = 0;
+    bool deletion_failed = false;
+    for (const planned_combination_group &plan : planned_combination_groups) {
+	for (size_t record_index : plan.records) {
+	    if (record_index == plan.representative)
+		continue;
+	    struct directory *old_object =
+		combination_analysis.records[record_index].dp;
+	    if (combination_wrapper_targets.find(old_object) !=
+		    combination_wrapper_targets.end())
+		continue;
+	    if (old_object->d_nref != 0) {
+		retained_combinations++;
+		if (!local_changes_only)
+		    deletion_failed = true;
+		continue;
+	    }
+	    std::string old_name = old_object->d_namep;
+	    if (remove_object(gedp->dbip, old_name))
+		removed_combinations++;
+	    else {
+		retained_combinations++;
+		deletion_failed = true;
+	    }
+	}
+    }
+    db_update_nref(gedp->dbip);
+
     size_t removed_objects = 0;
     size_t retained_objects = 0;
-    bool deletion_failed = false;
     for (const planned_group &plan : planned_groups) {
-	for (size_t record_index : plan.group->records) {
+	for (size_t record_index : plan.records) {
 	    struct directory *old_object = records[record_index].dp;
+	    if (wrapper_targets.find(old_object) != wrapper_targets.end())
+		continue;
 	    if (old_object->d_nref != 0) {
 		retained_objects++;
-		deletion_failed = true;
+		if (!local_changes_only)
+		    deletion_failed = true;
 		continue;
 	    }
 	    std::string old_name = old_object->d_namep;
@@ -998,11 +2168,20 @@ apply_groups(struct ged *gedp, struct rt_wdb *wdbp,
 	"unpush rewrite complete\n"
 	"  canonical objects written: %zu\n"
 	"  parent combinations rewritten: %zu\n"
+	"  top-level wrappers written: %zu\n"
+	"  top-level combination wrappers written: %zu\n"
 	"  original objects removed: %zu\n"
 	"  original objects retained: %zu\n"
-	"  groups deferred: %zu\n",
-	planned_groups.size(), ordered_parents.size(), removed_objects,
-	retained_objects, deferred_groups);
+	"  groups deferred: %zu\n"
+	"  combination groups consolidated: %zu\n"
+	"  combination objects removed: %zu\n"
+	"  combination objects retained: %zu\n"
+	"  combination groups deferred: %zu\n",
+	planned_groups.size(), ordered_parents.size(), ordered_wrappers.size(),
+	ordered_combination_wrappers.size(), removed_objects, retained_objects,
+	deferred_groups, planned_combination_groups.size(),
+	removed_combinations, retained_combinations,
+	deferred_combination_groups);
     if (verbosity > 0) {
 	for (const planned_group &plan : planned_groups)
 	    bu_vls_printf(gedp->ged_result_str, "  wrote %s\n",
@@ -1010,7 +2189,7 @@ apply_groups(struct ged *gedp, struct rt_wdb *wdbp,
     }
     if (deletion_failed) {
 	bu_vls_printf(gedp->ged_result_str,
-	    "unpush: one or more unreferenced originals could not be removed; "
+	    "unpush: one or more superseded objects could not be removed; "
 	    "the rewritten trees remain valid\n");
 	return BRLCAD_ERROR;
     }
@@ -1104,7 +2283,9 @@ ged_unpush_core(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(gedp->ged_result_str, "unpush: object '%s' does not exist\n", argv[i]);
 	    return BRLCAD_ERROR;
 	}
-	if (!(root->d_flags & RT_DIR_COMB))
+	if (root->d_flags & RT_DIR_COMB)
+	    walk.root_combinations.insert(root);
+	else
 	    walk.root_primitives.insert(root);
 	collect_object(walk, root);
     }
@@ -1144,20 +2325,23 @@ ged_unpush_core(struct ged *gedp, int argc, const char *argv[])
 	unpush_primitive_record record;
 	record.dp = primitive;
 	MAT_COPY(record.canonical_to_input, object.placement);
-	record.bucket = canonical_bucket(object, tol);
+	record.bucket = canonical_bucket(object);
+	canonical_metric(object, tol, record.metric, record.metric_tolerance);
+	if (!std::isfinite(record.metric) ||
+	    !std::isfinite(record.metric_tolerance)) {
+	    failures++;
+	    failed_types[primitive->d_minor_type]++;
+	    failed_objects[primitive->d_minor_type].push_back(primitive->d_namep);
+	    continue;
+	}
 	records.push_back(record);
 	buckets[record.bucket].push_back(records.size() - 1);
     }
-
-    std::vector<unpush_group> groups = verify_groups(gedp->dbip, records, buckets, tol, mode);
-
-    std::set<struct directory *> grouped_primitives;
-    for (const unpush_group &group : groups) {
-	for (size_t record_index : group.records)
-	    grouped_primitives.insert(records[record_index].dp);
-    }
+    std::set<struct directory *> reference_targets = walk.primitives;
+    reference_targets.insert(walk.visited_combinations.begin(),
+	walk.visited_combinations.end());
     database_reference_index database_references;
-    database_references.targets = &grouped_primitives;
+    database_references.targets = &reference_targets;
     if (db_add_update_nref_clbk(gedp->dbip, collect_database_reference,
 	    &database_references) != 0) {
 	bu_vls_printf(gedp->ged_result_str,
@@ -1180,6 +2364,25 @@ ged_unpush_core(struct ged *gedp, int argc, const char *argv[])
 	    mark_exposed_descendants(combination, walk.children, exposed);
 	}
     }
+
+    std::map<struct directory *, std::vector<indexed_reference>> local_references;
+    const auto *rewrite_references = &database_references.references;
+    if (local_changes_only) {
+	for (const unpush_reference &reference : walk.references) {
+	    if (exposed.find(reference.parent) != exposed.end())
+		continue;
+	    indexed_reference indexed;
+	    indexed.parent = reference.parent;
+	    MAT_COPY(indexed.matrix, reference.matrix);
+	    local_references[reference.child].push_back(indexed);
+	}
+	rewrite_references = &local_references;
+    }
+
+    std::vector<unpush_group> groups = verify_groups(gedp->dbip, records,
+	buckets, *rewrite_references, walk.root_primitives, tol, mode);
+    combination_analysis_result combination_analysis = analyze_combinations(
+	gedp->dbip, walk.visited_combinations, records, groups, tol);
 
     size_t grouped_objects = 0;
     size_t duplicate_objects = 0;
@@ -1214,6 +2417,23 @@ ged_unpush_core(struct ged *gedp, int argc, const char *argv[])
 	estimated_granule_reduction += group_storage - largest_object;
     }
 
+    size_t grouped_combinations = 0;
+    size_t duplicate_combinations = 0;
+    size_t potential_boolean_reuse = 0;
+    for (const combination_group &group : combination_analysis.groups) {
+	grouped_combinations += group.records.size();
+	duplicate_combinations += group.records.size() - 1;
+	size_t group_instances = 0;
+	for (size_t record_index : group.records) {
+	    struct directory *dp = combination_analysis.records[record_index].dp;
+	    group_instances += walk.selected_references[dp];
+	    if (walk.root_combinations.find(dp) != walk.root_combinations.end())
+		group_instances++;
+	}
+	if (group_instances > 1)
+	    potential_boolean_reuse += group_instances - 1;
+    }
+
     bu_vls_printf(gedp->ged_result_str,
 	"unpush %s analysis\n"
 	"  mode: %s\n"
@@ -1230,14 +2450,25 @@ ged_unpush_core(struct ged *gedp, int argc, const char *argv[])
 	"  top-level primitive wrappers: %zu\n"
 	"  externally exposed grouped objects: %zu\n"
 	"  estimated removable database granules: %zu\n"
-	"  potential facetize primitive reuses: %zu\n",
+	"  potential facetize primitive reuses: %zu\n"
+	"  combination objects: %zu\n"
+	"  canonicalized combinations: %zu\n"
+	"  combination failures: %zu\n"
+	"  verified combination groups: %zu\n"
+	"  grouped combination objects: %zu\n"
+	"  duplicate combination objects: %zu\n"
+	"  potential facetize boolean reuses: %zu\n",
 	dry_run ? "dry-run" : "rewrite", mode_name(mode),
 	write_mode_constrained ?
 	    "  requested affine mode constrained to similarity for database writes\n" : "",
 	local_changes_only ? "yes" : "no", walk.primitives.size(),
 	records.size(), unsupported, failures, groups.size(), grouped_objects,
 	duplicate_objects, rewritable_references, walk.root_primitives.size(),
-	grouped_exposed.size(), estimated_granule_reduction, potential_reuse);
+	grouped_exposed.size(), estimated_granule_reduction, potential_reuse,
+	walk.visited_combinations.size(), combination_analysis.records.size() -
+	    combination_analysis.failures, combination_analysis.failures,
+	combination_analysis.groups.size(), grouped_combinations,
+	duplicate_combinations, potential_boolean_reuse);
 
     if (walk.missing_references)
 	bu_vls_printf(gedp->ged_result_str, "  pre-existing missing references: %zu\n",
@@ -1264,6 +2495,22 @@ ged_unpush_core(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(gedp->ged_result_str, "  group %zu:", group_index + 1);
 	    for (size_t record_index : groups[group_index].records)
 		bu_vls_printf(gedp->ged_result_str, " %s", records[record_index].dp->d_namep);
+	    bu_vls_putc(gedp->ged_result_str, '\n');
+	}
+	for (size_t group_index = 0;
+		group_index < combination_analysis.groups.size(); group_index++) {
+	    bu_vls_printf(gedp->ged_result_str, "  combination group %zu:",
+		group_index + 1);
+	    std::vector<const char *> names;
+	    for (size_t record_index : combination_analysis.groups[group_index].records)
+		names.push_back(
+		    combination_analysis.records[record_index].dp->d_namep);
+	    std::sort(names.begin(), names.end(),
+		[](const char *a, const char *b) {
+		    return std::strcmp(a, b) < 0;
+		});
+	    for (const char *name : names)
+		bu_vls_printf(gedp->ged_result_str, " %s", name);
 	    bu_vls_putc(gedp->ged_result_str, '\n');
 	}
     }
@@ -1307,7 +2554,8 @@ ged_unpush_core(struct ged *gedp, int argc, const char *argv[])
 	    return BRLCAD_ERROR;
 	}
 	return apply_groups(gedp, wdbp, walk, records, groups,
-	    database_references, tol, mode, local_changes_only != 0, verbosity);
+	    combination_analysis, *rewrite_references, tol, mode,
+	    local_changes_only != 0, verbosity);
     }
 
     return BRLCAD_OK;

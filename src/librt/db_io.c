@@ -400,6 +400,7 @@ db_rm_changed_clbk(struct db_i *dbip, dbi_changed_t c, void *u_data)
 	rm_cnt++;
     }
 
+    bu_ptbl_free(&rm_clbks);
     return rm_cnt;
 }
 
@@ -438,6 +439,7 @@ db_rm_update_nref_clbk(struct db_i *dbip, dbi_update_nref_t c, void *u_data)
 	rm_cnt++;
     }
 
+    bu_ptbl_free(&rm_clbks);
     return rm_cnt;
 }
 /** @} */
