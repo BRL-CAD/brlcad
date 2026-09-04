@@ -189,13 +189,18 @@ fi
 
 # G TO IGES TO G TO IGES (ROUND TRIP)
 
+# The modern import path applies the shared BRL-CAD name sanitizer.  Keep the
+# legacy NMG checks above on their historical name, but use the sanitized name
+# for direct B-Rep output.
+direct_brep_name=box_nmg
+
 # make sure we don't permute vertices or introduce some other
 # unintended change.
 
 # test G -> IGES #2a via -o
 output="iges.import.export.iges"
 rm -f "$output"
-run $GIGES -o "$output" iges.import.g box.nmg
+run $GIGES -o "$output" iges.import.g "$direct_brep_name"
 if [ ! -f "$output" ] ; then
     log "ERROR: g-iges failed to create $output"
     log "-> iges.sh FAILED, see $LOGFILE"
@@ -266,15 +271,15 @@ if [ ! -f "$output" ] ; then
     export STATUS
 fi
 
-btype=`$MGED -c "$output" "db get box.nmg" 2>&1 | tr -d '\r' | grep -oE '^(brep|bot|nmg)' | head -1`
-log "... default import type for box.nmg: [$btype]"
+btype=`$MGED -c "$output" "db get $direct_brep_name" 2>&1 | tr -d '\r' | grep -oE '^(brep|bot|nmg)' | head -1`
+log "... default import type for $direct_brep_name: [$btype]"
 if test "x$btype" != "xbrep" ; then
     log "ERROR: default IGES import did not produce a brep (got '$btype')"
     STATUS="`expr $STATUS + 1`"
     export STATUS
 fi
 
-valid=`$MGED -c "$output" "brep box.nmg valid" 2>&1 | tr -d '\r'`
+valid=`$MGED -c "$output" "brep $direct_brep_name valid" 2>&1 | tr -d '\r'`
 log "... brep validity: $valid"
 case "x$valid" in
     *valid*) : ;;
@@ -301,7 +306,7 @@ fi
 
 # Round-trip the BRep through native IGES 5.3 topology.  The default exporter
 # must use type 186 and the modern importer must preserve the box topology.
-run $GIGES -o iges.brep.export.iges iges.brep.g box.nmg
+run $GIGES -o iges.brep.export.iges iges.brep.g "$direct_brep_name"
 native_solids=`awk 'substr($0,73,1)=="D" && (substr($0,74,7)+0)%2==1 && (substr($0,1,8)+0)==186 {n++} END {print n+0}' iges.brep.export.iges`
 if test "x$native_solids" != "x1" ; then
     log "ERROR: native BRep export wrote $native_solids type 186 entities"
@@ -334,7 +339,7 @@ esac
 # Compatibility mode deliberately flattens the same BRep to independent type
 # 144 faces.  The modern importer must stitch them back into the same manifold
 # without routing through NMG.
-run $GIGES --flatten-brep -o iges.brep.flat.iges iges.brep.g box.nmg
+run $GIGES --flatten-brep -o iges.brep.flat.iges iges.brep.g "$direct_brep_name"
 flat_faces=`awk 'substr($0,73,1)=="D" && (substr($0,74,7)+0)%2==1 && (substr($0,1,8)+0)==144 {n++} END {print n+0}' iges.brep.flat.iges`
 flat_solids=`awk 'substr($0,73,1)=="D" && (substr($0,74,7)+0)%2==1 && (substr($0,1,8)+0)==186 {n++} END {print n+0}' iges.brep.flat.iges`
 if test "x$flat_faces" != "x6" -o "x$flat_solids" != "x0" ; then
@@ -349,6 +354,49 @@ case "x$flatinfo" in
     *"Valid: YES, Solid: YES"*"faces:     6"*"edges:     12"*"vertices:  8"*) : ;;
     *) log "ERROR: type 144 assembly did not recover box topology: $flatinfo" ; STATUS="`expr $STATUS + 1`" ; export STATUS ;;
 esac
+
+# A one-face BRep is an OpenNURBS plate-mode object.  Verify that import keeps
+# its zero-thickness default unless the user explicitly supplies a thickness,
+# and that the selected policy is visible in the structured report.
+plate_source="iges.brep.plate-source.g"
+cp iges.brep.g "$plate_source"
+if test $? -ne 0 ; then
+    log "ERROR: could not prepare the plate-mode test database"
+    STATUS="`expr $STATUS + 1`"
+    export STATUS
+else
+    $MGED -c "$plate_source" "brep $direct_brep_name split -O -o box.plates 0" >> "$LOGFILE" 2>&1
+    if test $? -ne 0 ; then
+	log "ERROR: could not extract a one-face BRep for the plate-mode test"
+	STATUS="`expr $STATUS + 1`"
+	export STATUS
+    else
+	run $GIGES --flatten-brep -o iges.brep.plate.iges "$plate_source" "$direct_brep_name.0"
+	run $IGESG --strict --repair none -o iges.brep.plate-default.g iges.brep.plate.iges
+	plate_obj=`$MGED -c iges.brep.plate-default.g "ls" 2>&1 | tr -d '\r' | awk '{print $1}' | head -1`
+	plate_info=`$MGED -c iges.brep.plate-default.g "brep $plate_obj info" 2>&1 | tr -d '\r'`
+	case "x$plate_info" in
+	    *"Valid: YES, Solid: NO, Plate mode: YES[0.000000 (COS)]"*) : ;;
+	    *) log "ERROR: one-face BRep did not retain zero-thickness plate mode: $plate_info" ; STATUS="`expr $STATUS + 1`" ; export STATUS ;;
+	esac
+
+	run $IGESG --strict --repair none --default-plate-thickness 1 \
+	    --report iges.brep.plate-thick.json \
+	    -o iges.brep.plate-thick.g iges.brep.plate.iges
+	plate_obj=`$MGED -c iges.brep.plate-thick.g "ls" 2>&1 | tr -d '\r' | awk '{print $1}' | head -1`
+	plate_info=`$MGED -c iges.brep.plate-thick.g "brep $plate_obj info" 2>&1 | tr -d '\r'`
+	case "x$plate_info" in
+	    *"Valid: YES, Solid: NO, Plate mode: YES[1.000000 (COS)]"*) : ;;
+	    *) log "ERROR: --default-plate-thickness was not applied: $plate_info" ; STATUS="`expr $STATUS + 1`" ; export STATUS ;;
+	esac
+	plate_count=`sed -n 's/.*"plate_mode_objects_thickened": \([0-9][0-9]*\).*/\1/p' iges.brep.plate-thick.json`
+	if test "x$plate_count" != "x1" ; then
+	    log "ERROR: plate-mode report count is '$plate_count', expected 1"
+	    STATUS="`expr $STATUS + 1`"
+	    export STATUS
+	fi
+    fi
+fi
 
 # COMPLEX TEST
 

@@ -33,6 +33,7 @@
 #include "raytrace.h"
 #include "rt/geom.h"
 #include "rt/primitives/annot.h"
+#include "rt/primitives/datum.h"
 #include "wdb.h"
 
 namespace brlcad {
@@ -131,6 +132,7 @@ public:
 
 private:
     bool translate(const DirectoryEntry &entry, const std::string &name);
+    bool translate_point(const DirectoryEntry &entry, const std::string &name);
     bool translate_line(const DirectoryEntry &entry, const std::string &name);
     bool translate_arc(const DirectoryEntry &entry, const std::string &name);
     bool translate_copious(const DirectoryEntry &entry, const std::string &name);
@@ -139,6 +141,8 @@ private:
     bool translate_leader(const DirectoryEntry &entry, const std::string &name);
     bool write_annotation(const DirectoryEntry &entry, const std::string &name,
 	const AnnotationData &data);
+    void write_entity_attributes(const DirectoryEntry &entry,
+	const std::string &name);
     bool write_groups();
     bool write_root(const std::vector<std::string> &members);
     Style style(const DirectoryEntry &entry, uint32_t role,
@@ -395,8 +399,8 @@ semantic_name(int type)
 bool
 is_drawable_type(int type)
 {
-    return type == 100 || type == 106 || type == 110 || type == 126 ||
-	type == 212 || type == 214;
+    return type == 100 || type == 106 || type == 110 || type == 116 ||
+	type == 126 || type == 212 || type == 214;
 }
 
 bool
@@ -408,17 +412,11 @@ is_dimension_type(int type)
 std::string
 sanitize_name(const std::string &source)
 {
-    std::string result;
-    result.reserve(source.size());
-    for (unsigned char character : source) {
-	if ((character >= 'a' && character <= 'z') ||
-		(character >= 'A' && character <= 'Z') ||
-		(character >= '0' && character <= '9') || character == '_' ||
-		character == '-' || character == '.')
-	    result.push_back(static_cast<char>(character));
-	else
-	    result.push_back('_');
-    }
+    struct bu_vls sanitized = BU_VLS_INIT_ZERO;
+
+    db_sanitize_name(&sanitized, source.c_str());
+    const std::string result = bu_vls_cstr(&sanitized);
+    bu_vls_free(&sanitized);
     return result;
 }
 
@@ -600,10 +598,15 @@ Translator::unique_name(const DirectoryEntry &entry, const char *suffix)
 	stem += "_" + std::to_string(entry.subscript);
     stem += suffix;
 
-    std::string candidate = stem;
+    if (db_lookup(wdbp_->dbip, stem.c_str(), LOOKUP_QUIET) == RT_DIR_NULL)
+	return stem;
+
+    const std::string collision_stem = stem + ".D" +
+	std::to_string(entry.id.value());
+    std::string candidate = collision_stem;
     size_t serial = 1;
     while (db_lookup(wdbp_->dbip, candidate.c_str(), LOOKUP_QUIET) != RT_DIR_NULL)
-	candidate = stem + "." + std::to_string(serial++);
+	candidate = collision_stem + "." + std::to_string(serial++);
     return candidate;
 }
 
@@ -758,20 +761,73 @@ Translator::write_annotation(const DirectoryEntry &entry,
     if (invalid || written < 0)
 	return false;
 
+    write_entity_attributes(entry, name);
+    ++result_.statistics.objects_written;
+    ++result_.statistics.annotations_written;
+    return true;
+}
+
+void
+Translator::write_entity_attributes(const DirectoryEntry &entry,
+    const std::string &name)
+{
     const std::string entity_id = std::to_string(entry.id.value());
     const std::string entity_type = std::to_string(entry.type);
     const std::string entity_form = std::to_string(entry.form);
+    const std::string entity_level = std::to_string(entry.level);
+    const std::string entity_color = std::to_string(entry.color);
+    const std::string entity_subscript = std::to_string(entry.subscript);
+    db5_update_attribute(name.c_str(), "importer", "iges-g", wdbp_->dbip);
+    db5_update_attribute(name.c_str(), "source_format", "iges", wdbp_->dbip);
     db5_update_attribute(name.c_str(), "iges.entity", entity_id.c_str(),
 	wdbp_->dbip);
     db5_update_attribute(name.c_str(), "iges.type", entity_type.c_str(),
 	wdbp_->dbip);
     db5_update_attribute(name.c_str(), "iges.form", entity_form.c_str(),
 	wdbp_->dbip);
+    db5_update_attribute(name.c_str(), "iges.level", entity_level.c_str(),
+	wdbp_->dbip);
+    db5_update_attribute(name.c_str(), "iges.color", entity_color.c_str(),
+	wdbp_->dbip);
+    db5_update_attribute(name.c_str(), "iges.subscript",
+	entity_subscript.c_str(), wdbp_->dbip);
     if (!entry.label.empty())
 	db5_update_attribute(name.c_str(), "iges.label", entry.label.c_str(),
 	    wdbp_->dbip);
+}
+
+bool
+Translator::translate_point(const DirectoryEntry &entry,
+    const std::string &name)
+{
+    const ParameterList *parameters = document_.parameters(entry.id);
+    Point3 local;
+    for (size_t coordinate = 0; coordinate < local.size(); ++coordinate)
+	if (!parameter_real(parameters, coordinate + 1, local[coordinate])) {
+	    diagnose(Severity::Error, "point_parameters",
+		"Point entity has invalid coordinates", &entry);
+	    return false;
+	}
+    Point3 model = point(entry, local);
+    if (options_.project_drawings)
+	model[2] = 0.0;
+
+    struct rt_datum_internal datum = {};
+    datum.magic = RT_DATUM_INTERNAL_MAGIC;
+    datum.type = RT_DATUM_POINT;
+    datum.role = RT_DATUM_ROLE_REFERENCE;
+    VSET(datum.pnt, model[0], model[1], model[2]);
+    if (rt_datum_validate(&datum, nullptr) ||
+	    mk_datums(wdbp_, name.c_str(), &datum) < 0) {
+	diagnose(Severity::Error, "point_write",
+	    "failed to write Point entity as a BRL-CAD datum", &entry);
+	return false;
+    }
+    write_entity_attributes(entry, name);
+    db5_update_attribute(name.c_str(), "iges.semantic", "point",
+	wdbp_->dbip);
     ++result_.statistics.objects_written;
-    ++result_.statistics.annotations_written;
+    ++result_.statistics.datums_written;
     return true;
 }
 
@@ -1333,6 +1389,7 @@ Translator::translate(const DirectoryEntry &entry, const std::string &name)
 	case 100: return translate_arc(entry, name);
 	case 106: return translate_copious(entry, name);
 	case 110: return translate_line(entry, name);
+	case 116: return translate_point(entry, name);
 	case 126: return translate_nurbs(entry, name);
 	case 212: return translate_note(entry, name);
 	case 214: return translate_leader(entry, name);
@@ -1484,7 +1541,8 @@ Translator::run()
 	if (subordinate != 0 && subordinate != 2 &&
 		referenced.find(entry.id) == referenced.end())
 	    continue;
-	const std::string name = unique_name(entry, ".annot");
+	const char *suffix = entry.type == 116 ? ".datum" : ".annot";
+	const std::string name = unique_name(entry, suffix);
 	if (translate(entry, name))
 	    objects_[entry.id] = name;
 	else
@@ -1505,7 +1563,9 @@ Translator::run()
 	    return diagnostic.severity == Severity::Error ||
 		diagnostic.severity == Severity::Fatal;
 	});
-    result_.success = !has_errors && result_.statistics.annotations_written > 0 &&
+    result_.success = !has_errors &&
+	(result_.statistics.annotations_written > 0 ||
+	 result_.statistics.datums_written > 0) &&
 	(!options_.strict || result_.statistics.omitted == 0);
     return result_;
 }
@@ -1556,6 +1616,8 @@ write_import_report(const std::string &path, const Document &document,
 	<< result.statistics.entities_read << ", \"objects_written\": "
 	<< result.statistics.objects_written << ", \"annotations_written\": "
 	<< result.statistics.annotations_written
+	<< ", \"datums_written\": "
+	<< result.statistics.datums_written
 	<< ", \"semantic_groups_written\": "
 	<< result.statistics.semantic_groups_written << ", \"omitted\": "
 	<< result.statistics.omitted << ", \"repairs\": "
@@ -1670,7 +1732,8 @@ iges_import_annotations(const char *path, struct rt_wdb *wdbp,
 		diagnostic.severity == brlcad::iges::Severity::Fatal;
 	});
     return document_error || import_error ||
-	result.statistics.annotations_written ? -1 : 0;
+	result.statistics.annotations_written || result.statistics.datums_written ?
+	-1 : 0;
 }
 
 /*

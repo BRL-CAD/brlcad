@@ -313,7 +313,7 @@ if(BRLCAD_ENABLE_STEP AND BUILD_TESTING)
   brlcad_addexec(
     ap214_import_test
     "tests/ap214_import_test.cpp;AP214Adapter.cpp;../STEPString.cpp"
-    "libbu"
+    "librt;libbu"
     TEST
   )
   target_include_directories(ap214_import_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/..)

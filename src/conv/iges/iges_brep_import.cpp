@@ -27,8 +27,10 @@
 #include <vector>
 
 #include "brep.h"
+#include "brep/pullback.h"
 #include "bu/log.h"
 #include "bu/str.h"
+#include "bu/vls.h"
 #include "raytrace.h"
 #include "wdb.h"
 
@@ -43,8 +45,40 @@ constexpr double DEFAULT_MODEL_SCALE = 1.0;
 constexpr double DEFAULT_UNIT_TO_MM = 1.0;
 constexpr double DEFAULT_TOPOLOGY_TOLERANCE_MM = 1.0e-6;
 constexpr double DEGENERATE_DOMAIN_TOLERANCE = 1.0e-12;
+constexpr double CURVE_ENDPOINT_RELATIVE_TOLERANCE = 1.0e-6;
+constexpr double CONIC_PARAMETER_TOLERANCE = 1.0e-12;
+constexpr int COLLAPSED_BOUNDARY_VALIDATION_SEGMENTS = 64;
+constexpr double SAFE_TRIM_REPAIR_TOLERANCE_FACTOR = 100.0;
+constexpr double SAFE_TRIM_MODEL_GAP_FACTOR = 10.0;
 constexpr int MAX_ENTITY_LIST_COUNT = 10000000;
+constexpr double IGES_COLOR_PERCENTAGE_MAX = 100.0;
+constexpr double COLOR_CHANNEL_MAX = 255.0;
+const unsigned char IGES_STANDARD_COLORS[][3] = {
+    {0, 0, 0}, {0, 0, 0}, {255, 0, 0}, {0, 255, 0},
+    {0, 0, 255}, {255, 255, 0}, {255, 0, 255}, {0, 255, 255},
+    {255, 255, 255}
+};
 constexpr double SINGULAR_CURVE_SAMPLES[] = {0.0, 0.5, 1.0};
+
+static bool
+is_native_csg_entity_type(int type)
+{
+    switch (type) {
+	case 150:
+	case 152:
+	case 154:
+	case 156:
+	case 158:
+	case 160:
+	case 162:
+	case 164:
+	case 168:
+	    return true;
+	default:
+	    return false;
+    }
+}
+
 
 using Point3 = std::array<double, 3>;
 
@@ -55,6 +89,20 @@ struct Matrix {
 	{0.0, 0.0, 1.0, 0.0},
 	{0.0, 0.0, 0.0, 1.0}
     };
+};
+
+struct InstanceProperties {
+    std::string shader_name;
+    std::string shader_arguments;
+    int region_flag = 0;
+    int ident = 0;
+    int air = 0;
+    int material = 0;
+    int line_of_sight = 0;
+    int inherit = 0;
+    std::array<unsigned char, 3> color = {0, 0, 0};
+    bool has_color = false;
+    int64_t source_entity = 0;
 };
 
 struct VertexKey {
@@ -167,6 +215,30 @@ parameter_entity(const ParameterList *parameters, size_t index, EntityId &value)
 	parameters->values[index].entity(value) && !value.empty();
 }
 
+bool
+is_surface_entity(int type)
+{
+    switch (type) {
+	case 108:
+	case 114:
+	case 118:
+	case 120:
+	case 122:
+	case 128:
+	case 140:
+	case 190:
+	    return true;
+	default:
+	    return false;
+    }
+}
+
+bool
+is_supported_standalone_surface(int type)
+{
+    return type == 118 || type == 120 || type == 122 || type == 128;
+}
+
 Matrix
 multiply(const Matrix &left, const Matrix &right)
 {
@@ -238,59 +310,206 @@ parameter_string(const ParameterList *parameters, size_t index,
 	parameters->values[index].string(value);
 }
 
+std::vector<EntityId>
+property_entities(const ParameterList *parameters,
+    size_t associativity_parameter)
+{
+    std::vector<EntityId> properties;
+    int associativity_count = 0;
+    if (!parameter_integer(parameters, associativity_parameter,
+	    associativity_count) ||
+	    associativity_count < 0 ||
+	    associativity_count > MAX_ENTITY_LIST_COUNT)
+	return properties;
+
+    size_t parameter = associativity_parameter + 1 +
+	static_cast<size_t>(associativity_count);
+    int property_count = 0;
+    if (!parameter_integer(parameters, parameter++, property_count) ||
+	    property_count < 0 || property_count > MAX_ENTITY_LIST_COUNT)
+	return properties;
+    properties.reserve(static_cast<size_t>(property_count));
+    for (int i = 0; i < property_count; ++i) {
+	EntityId property;
+	if (!parameter_entity(parameters, parameter++, property))
+	    break;
+	properties.push_back(property);
+    }
+    return properties;
+}
+
+
+static bool
+associativity_parameter(const ParameterList *parameters,
+    const DirectoryEntry &entry, size_t &parameter)
+{
+    int count = 0;
+    if (entry.type == 186 && parameter_integer(parameters, 3, count) &&
+	    count >= 0 && count <= MAX_ENTITY_LIST_COUNT)
+	parameter = 4 + static_cast<size_t>(count) * 2;
+    else if (entry.type == 184 &&
+	    parameter_integer(parameters, 1, count) && count >= 0 &&
+	    count <= MAX_ENTITY_LIST_COUNT)
+	parameter = 2 + static_cast<size_t>(count) * 2;
+    else if (entry.type == 180 &&
+	    parameter_integer(parameters, 1, count) && count >= 0 &&
+	    count <= MAX_ENTITY_LIST_COUNT)
+	parameter = 2 + static_cast<size_t>(count);
+    else if (entry.type == 430)
+	parameter = 2;
+    else if (entry.type == 308 &&
+	    parameter_integer(parameters, 3, count) && count >= 0 &&
+	    count <= MAX_ENTITY_LIST_COUNT)
+	parameter = 4 + static_cast<size_t>(count);
+    else if (entry.type == 408)
+	parameter = 6;
+    else if (entry.type == 402 &&
+	    parameter_integer(parameters, 1, count) && count >= 0 &&
+	    count <= MAX_ENTITY_LIST_COUNT)
+	parameter = 2 + static_cast<size_t>(count);
+    else if (entry.type == 144) {
+	int outer_boundary = 0;
+	if (!parameter_integer(parameters, 2, outer_boundary) ||
+		(outer_boundary != 0 && outer_boundary != 1) ||
+		!parameter_integer(parameters, 3, count) || count < 0 ||
+		count > MAX_ENTITY_LIST_COUNT)
+	    return false;
+	parameter = 4 + static_cast<size_t>(outer_boundary + count);
+    } else {
+	return false;
+    }
+    return true;
+}
+
+static std::string
+name_property(const Document &document, const DirectoryEntry &entry)
+{
+    const ParameterList *parameters = document.parameters(entry.id);
+    size_t parameter = 0;
+    if (!associativity_parameter(parameters, entry, parameter))
+	return std::string();
+
+    for (EntityId property_id : property_entities(parameters, parameter)) {
+	const DirectoryEntry *property = document.entity(property_id);
+	const ParameterList *property_parameters = property ?
+	    document.parameters(property_id) : nullptr;
+	int value_count = 0;
+	std::string candidate;
+	if (property && property->type == 406 && property->form == 15 &&
+		parameter_integer(property_parameters, 1, value_count) &&
+		value_count == 1 &&
+		parameter_string(property_parameters, 2, candidate) &&
+		!candidate.empty())
+	    return candidate;
+    }
+    return std::string();
+}
+
+static std::string
+semantic_name(const Document &document, const DirectoryEntry &entry)
+{
+    const std::string property = name_property(document, entry);
+    return property.empty() ? entry.label : property;
+}
+
+static std::string
+sanitized_database_name(const std::string &source)
+{
+    struct bu_vls sanitized = BU_VLS_INIT_ZERO;
+
+    db_sanitize_name(&sanitized, source.c_str());
+    const std::string result = bu_vls_cstr(&sanitized);
+    bu_vls_free(&sanitized);
+    return result;
+}
+
 std::string
 source_name(const Document &document, const DirectoryEntry &entry)
 {
-    std::string source = entry.label;
-    const ParameterList *parameters = document.parameters(entry.id);
-    int void_count = 0;
-    if (entry.type == 186 && parameter_integer(parameters, 3, void_count) &&
-	    void_count >= 0 && void_count <= MAX_ENTITY_LIST_COUNT) {
-	size_t parameter = 4 + static_cast<size_t>(void_count) * 2;
-	int associativity_count = 0;
-	if (parameter_integer(parameters, parameter++, associativity_count) &&
-		associativity_count >= 0 &&
-		associativity_count <= MAX_ENTITY_LIST_COUNT) {
-	    parameter += static_cast<size_t>(associativity_count);
-	    int property_count = 0;
-	    if (parameter_integer(parameters, parameter++, property_count) &&
-		    property_count >= 0 && property_count <= MAX_ENTITY_LIST_COUNT) {
-		for (int i = 0; i < property_count; ++i) {
-		    EntityId property_id;
-		    if (!parameter_entity(parameters, parameter++, property_id))
-			break;
-		    const DirectoryEntry *property = document.entity(property_id);
-		    const ParameterList *property_parameters = property ?
-			document.parameters(property_id) : nullptr;
-		    int value_count = 0;
-		    std::string candidate;
-		    if (property && property->type == 406 && property->form == 15 &&
-			    parameter_integer(property_parameters, 1, value_count) &&
-			    value_count == 1 &&
-			    parameter_string(property_parameters, 2, candidate) &&
-			    !candidate.empty()) {
-			source = candidate;
-			break;
-		    }
-		}
-	    }
-	}
-    }
-
-    std::string result;
-    for (unsigned char character : source) {
-	if ((character >= 'a' && character <= 'z') ||
-		(character >= 'A' && character <= 'Z') ||
-		(character >= '0' && character <= '9') || character == '_' ||
-		character == '-' || character == '.')
-	    result.push_back(static_cast<char>(character));
-	else
-	    result.push_back('_');
-    }
+    std::string result = sanitized_database_name(semantic_name(document, entry));
     if (result.empty())
 	result = "iges_brep_D" + std::to_string(entry.id.value());
     return result;
 }
+
+static bool
+entity_color(const Document &document, const DirectoryEntry &entry,
+    std::array<unsigned char, 3> &rgb)
+{
+    if (entry.color > 0 &&
+	    static_cast<size_t>(entry.color) <
+		sizeof(IGES_STANDARD_COLORS) / sizeof(IGES_STANDARD_COLORS[0])) {
+	std::copy(IGES_STANDARD_COLORS[entry.color],
+	    IGES_STANDARD_COLORS[entry.color] + 3, rgb.begin());
+	return true;
+    }
+    if (entry.color >= 0)
+	return false;
+
+    const EntityId color_id(-static_cast<int64_t>(entry.color));
+    const DirectoryEntry *color = document.entity(color_id);
+    const ParameterList *parameters = color ?
+	document.parameters(color_id) : nullptr;
+    if (!color || color->type != 314)
+	return false;
+    for (size_t channel = 0; channel < rgb.size(); ++channel) {
+	double percentage = 0.0;
+	if (!parameter_real(parameters, channel + 1, percentage) ||
+		!std::isfinite(percentage))
+	    return false;
+	const double bounded = std::max(0.0,
+	    std::min(IGES_COLOR_PERCENTAGE_MAX, percentage));
+	rgb[channel] = static_cast<unsigned char>(std::round(
+	    bounded * COLOR_CHANNEL_MAX / IGES_COLOR_PERCENTAGE_MAX));
+    }
+    return true;
+}
+
+void
+solid_instance_properties(const Document &document,
+    const DirectoryEntry &entry, InstanceProperties &properties)
+{
+    constexpr size_t instance_associativity_parameter = 2;
+    enum AttributeParameter : size_t {
+	ShaderName = 1,
+	ShaderArguments,
+	RegionFlag,
+	Ident,
+	Air,
+	Material,
+	LineOfSight,
+	Inherit,
+	ColorDefined
+    };
+
+    const ParameterList *instance_parameters =
+	document.parameters(entry.id);
+    for (EntityId property_id : property_entities(instance_parameters,
+	    instance_associativity_parameter)) {
+	const DirectoryEntry *property = document.entity(property_id);
+	if (!property || property->type != 422)
+	    continue;
+	const ParameterList *parameters = document.parameters(property_id);
+	parameter_string(parameters, ShaderName, properties.shader_name);
+	parameter_string(parameters, ShaderArguments,
+	    properties.shader_arguments);
+	parameter_integer(parameters, RegionFlag, properties.region_flag);
+	parameter_integer(parameters, Ident, properties.ident);
+	parameter_integer(parameters, Air, properties.air);
+	parameter_integer(parameters, Material, properties.material);
+	parameter_integer(parameters, LineOfSight, properties.line_of_sight);
+	parameter_integer(parameters, Inherit, properties.inherit);
+	properties.source_entity = property_id.value();
+
+	int color_defined = 0;
+	if (!parameter_integer(parameters, ColorDefined, color_defined) ||
+		!color_defined)
+	    return;
+	properties.has_color = entity_color(document, entry, properties.color);
+	return;
+    }
+}
+
 
 std::string
 json_escape(const std::string &value)
@@ -322,14 +541,26 @@ class Importer;
 class SolidBuilder {
 public:
     SolidBuilder(Importer &importer, const DirectoryEntry &solid);
+    SolidBuilder(Importer &importer, const DirectoryEntry &solid,
+	const Matrix &solid_transform);
 
     std::unique_ptr<ON_Brep> build();
     std::unique_ptr<ON_NurbsCurve> nurbs_curve(const DirectoryEntry &entry,
 	bool model_space);
+    std::unique_ptr<ON_NurbsCurve> nurbs_curve(const DirectoryEntry &entry,
+	bool model_space, const Matrix &parent);
+    std::unique_ptr<ON_NurbsCurve> curve(const DirectoryEntry &entry,
+	bool model_space, const Matrix &parent);
+    std::unique_ptr<ON_NurbsCurve> conic_arc(const DirectoryEntry &entry,
+	bool model_space, const Matrix &parent);
     std::unique_ptr<ON_NurbsSurface> nurbs_surface(
+	const DirectoryEntry &entry);
+    std::unique_ptr<ON_NurbsSurface> analytic_surface(
 	const DirectoryEntry &entry);
 
 private:
+    bool transform_curve(ON_NurbsCurve &curve, const DirectoryEntry &entry,
+	const Matrix &parent);
     bool add_shell(EntityId id, bool same_direction);
     bool add_face(EntityId id, bool same_direction,
 	bool shell_same_direction);
@@ -348,6 +579,12 @@ private:
     std::unique_ptr<ON_Surface> face_surface(EntityId id,
 	const std::vector<LoopRecord> &loops, ON_Plane &parameter_plane,
 	bool &has_parameter_plane);
+    std::unique_ptr<ON_NurbsSurface> ruled_surface(
+	const DirectoryEntry &entry, const Matrix &parent);
+    std::unique_ptr<ON_NurbsSurface> revolution_surface(
+	const DirectoryEntry &entry, const Matrix &parent);
+    std::unique_ptr<ON_NurbsSurface> tabulated_surface(
+	const DirectoryEntry &entry, const Matrix &parent);
     std::unique_ptr<ON_PlaneSurface> plane_surface(EntityId id,
 	const std::vector<LoopRecord> &loops, ON_Plane &plane);
 
@@ -373,6 +610,7 @@ private:
 	std::unique_ptr<ON_Curve> parameter;
 	std::unique_ptr<ON_Curve> model;
 	bool singular = false;
+	bool discard = false;
     };
 
     bool append_curve_entities(EntityId id, std::vector<EntityId> &curves,
@@ -383,6 +621,12 @@ private:
 	std::vector<CurvePair> &pairs);
     bool add_loop(ON_BrepFace &face, ON_BrepLoop::TYPE type,
 	std::vector<CurvePair> &pairs, const DirectoryEntry &source);
+    std::unique_ptr<ON_PlaneSurface> plane_surface(SolidBuilder &geometry,
+	const DirectoryEntry &surface_entry,
+	std::vector<std::vector<CurvePair> > &loops);
+    void recover_parameter_curves(const ON_Surface &surface,
+	std::vector<std::vector<CurvePair> > &loops,
+	const DirectoryEntry &source);
     bool add_face(const DirectoryEntry &entry);
 
     Importer &importer_;
@@ -406,6 +650,16 @@ public:
     BrepImportResult run();
     const Document &document() const { return document_; }
     double tolerance() const { return tolerance_; }
+    double source_tolerance() const
+    {
+	return unit_to_mm_ > 0.0 ? tolerance_ / unit_to_mm_ : tolerance_;
+    }
+    bool safe_repairs() const
+    {
+	return options_.repair == RepairMode::Safe && !options_.exact &&
+	    !options_.strict;
+    }
+    void count_repair() { ++result_.statistics.repairs; }
     Matrix transform(EntityId id);
     Point3 model_point(const DirectoryEntry &entry, const Point3 &point,
 	const Matrix &parent);
@@ -417,6 +671,40 @@ public:
 private:
     Matrix transform(EntityId id, std::set<EntityId> &active);
     std::string unique_name(const DirectoryEntry &entry) const;
+    std::string unique_name(const DirectoryEntry &entry,
+	const std::string &source) const;
+    std::string unique_name(const std::string &stem) const;
+    void write_entity_attributes(const std::string &name,
+	const DirectoryEntry &entry);
+    bool write_color_attribute(const std::string &name,
+	const std::array<unsigned char, 3> &rgb,
+	const DirectoryEntry &entry);
+    bool write_entity_color_attribute(const std::string &name,
+	const DirectoryEntry &entry);
+    bool write_face_metadata(const std::string &name, const ON_Brep &brep,
+	const std::vector<const DirectoryEntry *> &faces);
+    bool write_plate_mode_attributes(const std::string &name,
+	const ON_Brep &brep, const DirectoryEntry &entry);
+    bool write_trimmed_component(
+	const std::vector<const DirectoryEntry *> &faces);
+    void import_trimmed_components(
+	const std::vector<const DirectoryEntry *> &faces);
+    bool write_standalone_surface(const DirectoryEntry &entry);
+    void combination_matrix(const Matrix &source, mat_t result) const;
+    bool container_members(const DirectoryEntry &entry,
+	std::vector<EntityId> &members) const;
+    bool write_container(EntityId id, std::set<EntityId> &active);
+    bool write_boolean_tree(EntityId id, std::set<EntityId> &active);
+    bool write_instance(const DirectoryEntry &entry,
+	std::set<EntityId> &active);
+    bool write_solid_instance(const DirectoryEntry &entry,
+	std::set<EntityId> &active);
+    bool write_instance_combination(const DirectoryEntry &entry,
+	EntityId definition_id, const Matrix &placement, const std::string &stem,
+	const char *semantic);
+    bool write_hierarchy();
+    std::string hierarchy_name(const DirectoryEntry &entry) const;
+    bool write_root();
 
     const Document &document_;
     struct rt_wdb *wdbp_ = nullptr;
@@ -425,14 +713,22 @@ private:
     double unit_to_mm_ = DEFAULT_UNIT_TO_MM;
     double tolerance_ = DEFAULT_TOPOLOGY_TOLERANCE_MM;
     std::map<EntityId, Matrix> transforms_;
+    std::map<EntityId, std::string> objects_;
+    std::set<std::string> root_objects_;
+    std::set<EntityId> deferred_boolean_trees_;
+    std::set<EntityId> deferred_instances_;
 
     friend class SolidBuilder;
 };
 
 SolidBuilder::SolidBuilder(Importer &importer, const DirectoryEntry &solid) :
-    importer_(importer), solid_(solid),
-    solid_transform_(importer.transform(solid.transform)),
-    brep_(ON_Brep::New())
+    SolidBuilder(importer, solid, importer.transform(solid.transform))
+{
+}
+
+SolidBuilder::SolidBuilder(Importer &importer, const DirectoryEntry &solid,
+    const Matrix &solid_transform) : importer_(importer), solid_(solid),
+    solid_transform_(solid_transform), brep_(ON_Brep::New())
 {
 }
 
@@ -600,6 +896,13 @@ SolidBuilder::edge_record(const EdgeKey &key, EdgeRecord &record)
 std::unique_ptr<ON_NurbsCurve>
 SolidBuilder::nurbs_curve(const DirectoryEntry &entry, bool model_space)
 {
+    return nurbs_curve(entry, model_space, solid_transform_);
+}
+
+std::unique_ptr<ON_NurbsCurve>
+SolidBuilder::nurbs_curve(const DirectoryEntry &entry, bool model_space,
+    const Matrix &parent)
+{
     const ParameterList *parameters = importer_.document().parameters(entry.id);
     int upper_index = 0;
     int degree = 0;
@@ -639,7 +942,7 @@ SolidBuilder::nurbs_curve(const DirectoryEntry &entry, bool model_space)
 		return nullptr;
 	Point3 point = source;
 	if (model_space)
-	    point = importer_.model_point(entry, source, solid_transform_);
+	    point = importer_.model_point(entry, source, parent);
 	const double weight = weights[static_cast<size_t>(i)];
 	if (model_space && rational) {
 	    double homogeneous[4] = {
@@ -669,6 +972,267 @@ SolidBuilder::nurbs_curve(const DirectoryEntry &entry, bool model_space)
     return curve->IsValid() ? std::move(curve) : nullptr;
 }
 
+bool
+SolidBuilder::transform_curve(ON_NurbsCurve &curve,
+    const DirectoryEntry &entry, const Matrix &parent)
+{
+    for (int i = 0; i < curve.CVCount(); ++i) {
+	ON_4dPoint control;
+	if (!curve.GetCV(i, control) ||
+		std::fabs(control.w) <= DEGENERATE_DOMAIN_TOLERANCE)
+	    return false;
+	const Point3 source = {
+	    control.x / control.w,
+	    control.y / control.w,
+	    control.z / control.w
+	};
+	const Point3 transformed = importer_.model_point(entry, source, parent);
+	if (!curve.SetCV(i, ON_4dPoint(transformed[0] * control.w,
+		transformed[1] * control.w, transformed[2] * control.w,
+		control.w)))
+	    return false;
+    }
+    return curve.IsValid();
+}
+
+
+std::unique_ptr<ON_NurbsCurve>
+SolidBuilder::conic_arc(const DirectoryEntry &entry, bool model_space,
+    const Matrix &parent)
+{
+    const ParameterList *parameters = importer_.document().parameters(entry.id);
+    double coefficients[6] = {0.0};
+    for (size_t i = 0; i < 6; ++i)
+	if (!parameter_real(parameters, i + 1, coefficients[i]))
+	    return nullptr;
+
+    double depth = 0.0;
+    double start_x = 0.0;
+    double start_y = 0.0;
+    double end_x = 0.0;
+    double end_y = 0.0;
+    if (!parameter_real(parameters, 7, depth) ||
+	    !parameter_real(parameters, 8, start_x) ||
+	    !parameter_real(parameters, 9, start_y) ||
+	    !parameter_real(parameters, 10, end_x) ||
+	    !parameter_real(parameters, 11, end_y))
+	return nullptr;
+
+    if (coefficients[0] + coefficients[2] < 0.0)
+	for (double &coefficient : coefficients)
+	    coefficient = -coefficient;
+    const double a = coefficients[0];
+    const double b = coefficients[1];
+    const double c = coefficients[2];
+    const double d = coefficients[3];
+    const double e = coefficients[4];
+    const double f = coefficients[5];
+    const double coefficient_scale = std::max(std::fabs(a),
+	std::max(std::fabs(b), std::fabs(c)));
+    const double determinant = 4.0 * a * c - b * b;
+    if (!(coefficient_scale > 0.0) ||
+	    determinant <= DEGENERATE_DOMAIN_TOLERANCE *
+		coefficient_scale * coefficient_scale)
+	return nullptr;
+
+    const double center_x = (b * e - 2.0 * c * d) / determinant;
+    const double center_y = (b * d - 2.0 * a * e) / determinant;
+    const double center_value =
+	a * center_x * center_x + b * center_x * center_y +
+	c * center_y * center_y + d * center_x + e * center_y + f;
+    const double radius_squared_scale = -center_value;
+    if (!(radius_squared_scale > 0.0) ||
+	    !std::isfinite(radius_squared_scale))
+	return nullptr;
+
+    const double rotation = 0.5 * std::atan2(b, a - c);
+    const double cosine = std::cos(rotation);
+    const double sine = std::sin(rotation);
+    const double lambda_x = a * cosine * cosine +
+	b * cosine * sine + c * sine * sine;
+    const double lambda_y = a * sine * sine -
+	b * cosine * sine + c * cosine * cosine;
+    if (!(lambda_x > 0.0) || !(lambda_y > 0.0))
+	return nullptr;
+    const double radius_x = std::sqrt(radius_squared_scale / lambda_x);
+    const double radius_y = std::sqrt(radius_squared_scale / lambda_y);
+    if (!std::isfinite(radius_x) || !std::isfinite(radius_y) ||
+	    radius_x <= DEGENERATE_DOMAIN_TOLERANCE ||
+	    radius_y <= DEGENERATE_DOMAIN_TOLERANCE)
+	return nullptr;
+
+    const ON_3dPoint center(center_x, center_y, depth);
+    const ON_3dVector x_axis(cosine, sine, 0.0);
+    const ON_3dVector y_axis(-sine, cosine, 0.0);
+    const ON_Plane plane(center, x_axis, y_axis);
+    const ON_Ellipse ellipse(plane, radius_x, radius_y);
+    std::unique_ptr<ON_NurbsCurve> result(new ON_NurbsCurve());
+    if (!plane.IsValid() || !ellipse.IsValid() ||
+	    ellipse.GetNurbForm(*result) != 2 || !result->IsValid() ||
+	    !result->IsClosed())
+	return nullptr;
+
+    const auto ellipse_angle = [&](double x, double y) {
+	const ON_3dVector offset = ON_3dPoint(x, y, depth) - center;
+	double angle = std::atan2(ON_DotProduct(offset, y_axis) / radius_y,
+	    ON_DotProduct(offset, x_axis) / radius_x);
+	if (angle < 0.0)
+	    angle += 2.0 * ON_PI;
+	return angle;
+    };
+    const ON_3dPoint start(start_x, start_y, depth);
+    const ON_3dPoint end(end_x, end_y, depth);
+    const double start_angle = ellipse_angle(start_x, start_y);
+    const double end_angle = ellipse_angle(end_x, end_y);
+    const double endpoint_tolerance = std::max(DEGENERATE_DOMAIN_TOLERANCE,
+	std::max(importer_.source_tolerance(), std::max(radius_x, radius_y) * CURVE_ENDPOINT_RELATIVE_TOLERANCE));
+    if (ellipse.PointAt(start_angle).DistanceTo(start) > endpoint_tolerance ||
+	    ellipse.PointAt(end_angle).DistanceTo(end) > endpoint_tolerance)
+	return nullptr;
+
+    ON_Circle parameter_circle(plane, 1.0);
+    double nurbs_start = ON_UNSET_VALUE;
+    double nurbs_end = ON_UNSET_VALUE;
+    if (!parameter_circle.GetNurbFormParameterFromRadian(start_angle,
+	    &nurbs_start) ||
+	    !parameter_circle.GetNurbFormParameterFromRadian(end_angle,
+		&nurbs_end))
+	return nullptr;
+
+    const ON_Interval original_domain = result->Domain();
+    const double parameter_guard = std::max(ON_ZERO_TOLERANCE,
+	original_domain.Length() * CONIC_PARAMETER_TOLERANCE);
+    if (!original_domain.IsIncreasing() ||
+	    !result->ChangeClosedCurveSeam(nurbs_start) || !result->IsValid())
+	return nullptr;
+
+    const double closure_tolerance = std::max(DEGENERATE_DOMAIN_TOLERANCE,
+	std::max(radius_x, radius_y) * CONIC_PARAMETER_TOLERANCE);
+    const bool complete = start.DistanceTo(end) <= closure_tolerance;
+    if (!complete) {
+	const ON_Interval relocated_domain = result->Domain();
+	while (nurbs_end <= relocated_domain.Min() + parameter_guard)
+	    nurbs_end += original_domain.Length();
+	if (nurbs_end > relocated_domain.Max() + parameter_guard ||
+		!result->Trim(ON_Interval(relocated_domain.Min(),
+		    std::min(nurbs_end, relocated_domain.Max()))) ||
+		!result->IsValid())
+	    return nullptr;
+    }
+
+    if (result->PointAtStart().DistanceTo(start) > endpoint_tolerance ||
+	    result->PointAtEnd().DistanceTo(end) > endpoint_tolerance)
+	return nullptr;
+    if (!model_space)
+	return result->ChangeDimension(2) && result->IsValid() ?
+	    std::move(result) : nullptr;
+    return transform_curve(*result, entry, parent) ?
+	std::move(result) : nullptr;
+}
+
+
+std::unique_ptr<ON_NurbsCurve>
+SolidBuilder::curve(const DirectoryEntry &entry, bool model_space,
+    const Matrix &parent)
+{
+    if (entry.type == 126)
+	return nurbs_curve(entry, model_space, parent);
+    if (entry.type == 104)
+	return conic_arc(entry, model_space, parent);
+
+    const ParameterList *parameters = importer_.document().parameters(entry.id);
+    if (entry.type == 110) {
+	Point3 endpoints[2];
+	for (size_t point = 0; point < 2; ++point)
+	    for (size_t coordinate = 0; coordinate < 3; ++coordinate)
+		if (!parameter_real(parameters, 1 + point * 3 + coordinate,
+			endpoints[point][coordinate]))
+		    return nullptr;
+	if (model_space) {
+	    endpoints[0] = importer_.model_point(entry, endpoints[0], parent);
+	    endpoints[1] = importer_.model_point(entry, endpoints[1], parent);
+	}
+	std::unique_ptr<ON_NurbsCurve> line(ON_NurbsCurve::New(
+	    model_space ? 3 : 2, false, 2, 2));
+	if (!line)
+	    return nullptr;
+	line->SetKnot(0, 0.0);
+	line->SetKnot(1, 1.0);
+	if (model_space) {
+	    line->SetCV(0, ON_3dPoint(endpoints[0].data()));
+	    line->SetCV(1, ON_3dPoint(endpoints[1].data()));
+	} else {
+	    double start[2] = {endpoints[0][0], endpoints[0][1]};
+	    double end[2] = {endpoints[1][0], endpoints[1][1]};
+	    line->SetCV(0, ON::not_rational, start);
+	    line->SetCV(1, ON::not_rational, end);
+	}
+	return line->IsValid() ? std::move(line) : nullptr;
+    }
+    if (entry.type != 100)
+	return nullptr;
+
+    double depth = 0.0;
+    double center_x = 0.0;
+    double center_y = 0.0;
+    double start_x = 0.0;
+    double start_y = 0.0;
+    double end_x = 0.0;
+    double end_y = 0.0;
+    if (!parameter_real(parameters, 1, depth) ||
+	    !parameter_real(parameters, 2, center_x) ||
+	    !parameter_real(parameters, 3, center_y) ||
+	    !parameter_real(parameters, 4, start_x) ||
+	    !parameter_real(parameters, 5, start_y) ||
+	    !parameter_real(parameters, 6, end_x) ||
+	    !parameter_real(parameters, 7, end_y))
+	return nullptr;
+
+    const ON_3dPoint center(center_x, center_y, depth);
+    const ON_3dPoint start(start_x, start_y, depth);
+    const ON_3dPoint end(end_x, end_y, depth);
+    const double radius = center.DistanceTo(start);
+    const double end_radius = center.DistanceTo(end);
+    if (!std::isfinite(radius) || radius <= DEGENERATE_DOMAIN_TOLERANCE ||
+	    !std::isfinite(end_radius) ||
+	    std::fabs(radius - end_radius) >
+		std::max(importer_.source_tolerance(),
+		    std::max(radius, end_radius) *
+			CURVE_ENDPOINT_RELATIVE_TOLERANCE))
+	return nullptr;
+
+    ON_3dVector x_axis = start - center;
+    if (!x_axis.Unitize())
+	return nullptr;
+    const ON_3dVector y_axis = ON_CrossProduct(ON_zaxis, x_axis);
+    const ON_3dVector end_vector = end - center;
+    double angle = std::atan2(ON_DotProduct(end_vector, y_axis),
+	ON_DotProduct(end_vector, x_axis));
+    if (start.DistanceTo(end) <= DEGENERATE_DOMAIN_TOLERANCE)
+	angle = 2.0 * ON_PI;
+    else if (angle <= ON_ZERO_TOLERANCE)
+	angle += 2.0 * ON_PI;
+    const ON_Arc arc(ON_Circle(ON_Plane(center, x_axis, y_axis), radius),
+	angle);
+    std::unique_ptr<ON_NurbsCurve> result(ON_NurbsCurve::New());
+    if (!result || !arc.IsValid() || !arc.GetNurbForm(*result)) {
+	importer_.diagnose(Severity::Warning, "invalid_arc_curve",
+	    "could not construct the exact rational circular arc", &entry);
+	return nullptr;
+    }
+
+    if (!model_space)
+	return result->ChangeDimension(2) && result->IsValid() ?
+	    std::move(result) : nullptr;
+
+    if (!transform_curve(*result, entry, parent)) {
+	importer_.diagnose(Severity::Warning, "invalid_arc_curve",
+	    "could not transform the exact rational circular arc", &entry);
+	return nullptr;
+    }
+    return result;
+}
+
 std::unique_ptr<ON_Curve>
 SolidBuilder::edge_curve(EntityId id, const ON_3dPoint &start,
     const ON_3dPoint &end)
@@ -681,11 +1245,12 @@ SolidBuilder::edge_curve(EntityId id, const ON_3dPoint &start,
 	    "Edge List references a missing curve entity");
 	return nullptr;
     }
-    if (entry->type == 126) {
-	std::unique_ptr<ON_NurbsCurve> curve = nurbs_curve(*entry, true);
+    if (entry->type == 100 || entry->type == 104 || entry->type == 126) {
+	std::unique_ptr<ON_NurbsCurve> curve = this->curve(*entry, true,
+	    solid_transform_);
 	if (!curve) {
-	    importer_.diagnose(Severity::Warning, "nurbs_curve_parameters",
-		"B-Rep B-Spline edge has invalid parameters", entry);
+	    importer_.diagnose(Severity::Warning, "edge_curve_parameters",
+		"B-Rep edge curve has invalid parameters", entry);
 	    return nullptr;
 	}
 	const ON_3dPoint curve_start = curve->PointAtStart();
@@ -697,7 +1262,7 @@ SolidBuilder::edge_curve(EntityId id, const ON_3dPoint &start,
 	if (!curve_start.IsValid() || !curve_end.IsValid() ||
 		!std::isfinite(forward) || !std::isfinite(reverse)) {
 	    importer_.diagnose(Severity::Warning, "invalid_edge_curve",
-		"B-Rep B-Spline edge has invalid endpoints", entry);
+		"B-Rep edge curve has invalid endpoints", entry);
 	    return nullptr;
 	}
 	if (reverse < forward)
@@ -706,7 +1271,7 @@ SolidBuilder::edge_curve(EntityId id, const ON_3dPoint &start,
     }
     if (entry->type != 110) {
 	importer_.diagnose(Severity::Warning, "unsupported_edge_curve",
-	    "direct manifold import requires Line or B-Spline edge geometry",
+	    "direct manifold import requires Arc, Conic Arc, Line, or B-Spline edge geometry",
 	    entry);
 	return nullptr;
     }
@@ -1028,6 +1593,230 @@ SolidBuilder::nurbs_surface(const DirectoryEntry &entry)
     return surface;
 }
 
+bool
+synchronize_curve_knots(ON_NurbsCurve &first, ON_NurbsCurve &second)
+{
+    const int desired_degree = std::max(first.Degree(), second.Degree());
+    if ((first.Degree() < desired_degree &&
+	    !first.IncreaseDegree(desired_degree)) ||
+	    (second.Degree() < desired_degree &&
+	     !second.IncreaseDegree(desired_degree)))
+	return false;
+    if (!first.SetDomain(0.0, 1.0) || !second.SetDomain(0.0, 1.0))
+	return false;
+
+    const auto insert_missing = [](const ON_NurbsCurve &source,
+	    ON_NurbsCurve &target) {
+	const ON_Interval domain = source.Domain();
+	for (int i = 0; i < source.KnotCount();) {
+	    const double knot = source.Knot(i);
+	    const int multiplicity = source.KnotMultiplicity(i);
+	    if (knot > domain.Min() + ON_ZERO_TOLERANCE &&
+		    knot < domain.Max() - ON_ZERO_TOLERANCE &&
+		    !target.InsertKnot(knot, multiplicity))
+		return false;
+	    i += std::max(1, multiplicity);
+	}
+	return true;
+    };
+    if (!insert_missing(second, first) || !insert_missing(first, second) ||
+	    first.CVCount() != second.CVCount() ||
+	    first.KnotCount() != second.KnotCount())
+	return false;
+    for (int i = 0; i < first.KnotCount(); ++i)
+	if (std::fabs(first.Knot(i) - second.Knot(i)) >
+		DEGENERATE_DOMAIN_TOLERANCE)
+	    return false;
+    return true;
+}
+
+std::unique_ptr<ON_NurbsSurface>
+SolidBuilder::tabulated_surface(const DirectoryEntry &entry,
+    const Matrix &parent)
+{
+    const ParameterList *parameters = importer_.document().parameters(entry.id);
+    EntityId directrix_id;
+    Point3 line_end;
+    if (!parameter_entity(parameters, 1, directrix_id))
+	return nullptr;
+    for (size_t coordinate = 0; coordinate < line_end.size(); ++coordinate)
+	if (!parameter_real(parameters, coordinate + 2, line_end[coordinate]))
+	    return nullptr;
+    const DirectoryEntry *directrix = importer_.document().entity(directrix_id);
+    if (!directrix)
+	return nullptr;
+    std::unique_ptr<ON_NurbsCurve> base = curve(*directrix, true, parent);
+    if (!base)
+	return nullptr;
+
+    const Point3 transformed_end = importer_.model_point(entry, line_end,
+	solid_transform_);
+    const ON_3dVector direction =
+	ON_3dPoint(transformed_end.data()) - base->PointAtStart();
+    if (!direction.IsValid() || direction.Length() <= DEGENERATE_DOMAIN_TOLERANCE)
+	return nullptr;
+
+    const bool rational = base->IsRational();
+    std::unique_ptr<ON_NurbsSurface> surface(ON_NurbsSurface::New(3,
+	rational, base->Order(), 2, base->CVCount(), 2));
+    if (!surface)
+	return nullptr;
+    for (int i = 0; i < base->KnotCount(); ++i)
+	surface->SetKnot(0, i, base->Knot(i));
+    surface->SetKnot(1, 0, 0.0);
+    surface->SetKnot(1, 1, 1.0);
+    for (int u = 0; u < base->CVCount(); ++u) {
+	if (rational) {
+	    ON_4dPoint control;
+	    if (!base->GetCV(u, control) ||
+		    std::fabs(control.w) <= DEGENERATE_DOMAIN_TOLERANCE)
+		return nullptr;
+	    surface->SetCV(u, 0, control);
+	    surface->SetCV(u, 1, ON_4dPoint(
+		control.x + direction.x * control.w,
+		control.y + direction.y * control.w,
+		control.z + direction.z * control.w, control.w));
+	} else {
+	    ON_3dPoint control;
+	    if (!base->GetCV(u, control))
+		return nullptr;
+	    surface->SetCV(u, 0, control);
+	    surface->SetCV(u, 1, control + direction);
+	}
+    }
+    return surface->IsValid() ? std::move(surface) : nullptr;
+}
+
+std::unique_ptr<ON_NurbsSurface>
+SolidBuilder::ruled_surface(const DirectoryEntry &entry, const Matrix &parent)
+{
+    const ParameterList *parameters = importer_.document().parameters(entry.id);
+    EntityId first_id;
+    EntityId second_id;
+    int reverse_second = 0;
+    int developable = 0;
+    if (!parameter_entity(parameters, 1, first_id) ||
+	    !parameter_entity(parameters, 2, second_id) ||
+	    !parameter_integer(parameters, 3, reverse_second) ||
+	    !parameter_integer(parameters, 4, developable) ||
+	    (developable != 0 && developable != 1))
+	return nullptr;
+    const DirectoryEntry *first_entry = importer_.document().entity(first_id);
+    const DirectoryEntry *second_entry = importer_.document().entity(second_id);
+    if (!first_entry || !second_entry)
+	return nullptr;
+    std::unique_ptr<ON_NurbsCurve> first =
+	curve(*first_entry, true, parent);
+    std::unique_ptr<ON_NurbsCurve> second =
+	curve(*second_entry, true, parent);
+    if (!first || !second)
+	return nullptr;
+    if (reverse_second != 0 && !second->Reverse())
+	return nullptr;
+    if ((first->IsRational() || second->IsRational()) &&
+	    ((!first->IsRational() && !first->MakeRational()) ||
+	     (!second->IsRational() && !second->MakeRational())))
+	return nullptr;
+    if (!synchronize_curve_knots(*first, *second))
+	return nullptr;
+
+    const bool rational = first->IsRational();
+    std::unique_ptr<ON_NurbsSurface> surface(ON_NurbsSurface::New(3,
+	rational, first->Order(), 2, first->CVCount(), 2));
+    if (!surface)
+	return nullptr;
+    for (int i = 0; i < first->KnotCount(); ++i)
+	surface->SetKnot(0, i, first->Knot(i));
+    surface->SetKnot(1, 0, 0.0);
+    surface->SetKnot(1, 1, 1.0);
+    for (int u = 0; u < first->CVCount(); ++u) {
+	if (rational) {
+	    ON_4dPoint first_control;
+	    ON_4dPoint second_control;
+	    if (!first->GetCV(u, first_control) ||
+		    !second->GetCV(u, second_control))
+		return nullptr;
+	    surface->SetCV(u, 0, first_control);
+	    surface->SetCV(u, 1, second_control);
+	} else {
+	    ON_3dPoint first_control;
+	    ON_3dPoint second_control;
+	    if (!first->GetCV(u, first_control) ||
+		    !second->GetCV(u, second_control))
+		return nullptr;
+	    surface->SetCV(u, 0, first_control);
+	    surface->SetCV(u, 1, second_control);
+	}
+    }
+    return surface->IsValid() ? std::move(surface) : nullptr;
+}
+
+std::unique_ptr<ON_NurbsSurface>
+SolidBuilder::revolution_surface(const DirectoryEntry &entry,
+    const Matrix &parent)
+{
+    const ParameterList *parameters = importer_.document().parameters(entry.id);
+    EntityId axis_id;
+    EntityId generatrix_id;
+    double start_angle = 0.0;
+    double end_angle = 0.0;
+    if (!parameter_entity(parameters, 1, axis_id) ||
+	    !parameter_entity(parameters, 2, generatrix_id) ||
+	    !parameter_real(parameters, 3, start_angle) ||
+	    !parameter_real(parameters, 4, end_angle))
+	return nullptr;
+    const DirectoryEntry *axis_entry = importer_.document().entity(axis_id);
+    const DirectoryEntry *generatrix_entry =
+	importer_.document().entity(generatrix_id);
+    if (!axis_entry || axis_entry->type != 110 || !generatrix_entry)
+	return nullptr;
+    std::unique_ptr<ON_NurbsCurve> axis = curve(*axis_entry, true, parent);
+    std::unique_ptr<ON_NurbsCurve> generatrix =
+	curve(*generatrix_entry, true, parent);
+    if (!axis || !generatrix)
+	return nullptr;
+    const ON_3dPoint axis_start = axis->PointAtStart();
+    const ON_3dPoint axis_end = axis->PointAtEnd();
+    if (!axis_start.IsValid() || !axis_end.IsValid() ||
+	    axis_start.DistanceTo(axis_end) <= DEGENERATE_DOMAIN_TOLERANCE)
+	return nullptr;
+
+    while (end_angle <= start_angle + ON_ZERO_TOLERANCE)
+	end_angle += 2.0 * ON_PI;
+    if (end_angle - start_angle > 2.0 * ON_PI + ON_ZERO_TOLERANCE)
+	return nullptr;
+    end_angle = std::min(end_angle, start_angle + 2.0 * ON_PI);
+
+    ON_RevSurface revolution;
+    revolution.m_curve = generatrix.release();
+    revolution.m_axis = ON_Line(axis_start, axis_end);
+    revolution.m_angle = ON_Interval(start_angle, end_angle);
+    revolution.m_t = revolution.m_angle;
+    revolution.m_bTransposed = false;
+    std::unique_ptr<ON_NurbsSurface> surface(ON_NurbsSurface::New());
+    if (!surface || !revolution.IsValid() ||
+	    !revolution.GetNurbForm(*surface, importer_.tolerance()))
+	return nullptr;
+    return surface->IsValid() ? std::move(surface) : nullptr;
+}
+
+std::unique_ptr<ON_NurbsSurface>
+SolidBuilder::analytic_surface(const DirectoryEntry &entry)
+{
+    const Matrix parent = multiply(solid_transform_,
+	importer_.transform(entry.transform));
+    switch (entry.type) {
+	case 118:
+	    return ruled_surface(entry, parent);
+	case 120:
+	    return revolution_surface(entry, parent);
+	case 122:
+	    return tabulated_surface(entry, parent);
+	default:
+	    return nullptr;
+    }
+}
+
 std::unique_ptr<ON_Surface>
 SolidBuilder::face_surface(EntityId id,
     const std::vector<LoopRecord> &loops, ON_Plane &parameter_plane,
@@ -1042,13 +1831,15 @@ SolidBuilder::face_surface(EntityId id,
 	has_parameter_plane = surface != nullptr;
 	return std::unique_ptr<ON_Surface>(surface.release());
     }
-    if (entry->type == 128) {
-	std::unique_ptr<ON_NurbsSurface> surface = nurbs_surface(*entry);
+    if (entry->type == 118 || entry->type == 120 || entry->type == 122 ||
+	    entry->type == 128) {
+	std::unique_ptr<ON_NurbsSurface> surface = entry->type == 128 ?
+	    nurbs_surface(*entry) : analytic_surface(*entry);
 	has_parameter_plane = false;
 	return std::unique_ptr<ON_Surface>(surface.release());
     }
     importer_.diagnose(Severity::Warning, "unsupported_face_surface",
-	"direct manifold import requires Plane or B-Spline face geometry",
+	"direct manifold import does not support this face surface geometry",
 	entry);
     return nullptr;
 }
@@ -1061,13 +1852,15 @@ SolidBuilder::trim_curve(const EdgeUse &use,
     if (!use.parameter_curves.empty()) {
 	const DirectoryEntry *curve_entry =
 	    importer_.document().entity(use.parameter_curves.front());
-	if (!curve_entry || curve_entry->type != 126) {
+	if (!curve_entry || (curve_entry->type != 100 &&
+		curve_entry->type != 110 && curve_entry->type != 126)) {
 	    importer_.diagnose(Severity::Warning, "unsupported_parameter_curve",
-		"B-Rep trim requires a B-Spline parameter curve", curve_entry);
+		"B-Rep trim requires an Arc, Line, or B-Spline parameter curve",
+		curve_entry);
 	    return nullptr;
 	}
-	std::unique_ptr<ON_NurbsCurve> curve =
-	    nurbs_curve(*curve_entry, false);
+	std::unique_ptr<ON_NurbsCurve> curve = this->curve(*curve_entry, false,
+	    solid_transform_);
 	if (!curve)
 	    return nullptr;
 	return std::unique_ptr<ON_Curve>(curve.release());
@@ -1336,34 +2129,11 @@ TrimmedSurfaceBuilder::curve(SolidBuilder &geometry, EntityId id,
     bool model_space)
 {
     const DirectoryEntry *entry = importer_.document().entity(id);
-    const ParameterList *parameters = entry ?
-	importer_.document().parameters(id) : nullptr;
     if (!entry)
 	return nullptr;
-    if (entry->type == 126) {
-	std::unique_ptr<ON_NurbsCurve> nurbs =
-	    geometry.nurbs_curve(*entry, model_space);
-	return std::unique_ptr<ON_Curve>(nurbs.release());
-    }
-    if (entry->type != 110)
-	return nullptr;
-
-    Point3 points[2];
-    for (size_t point = 0; point < 2; ++point)
-	for (size_t coordinate = 0; coordinate < 3; ++coordinate)
-	    if (!parameter_real(parameters, 1 + point * 3 + coordinate,
-		    points[point][coordinate]))
-		return nullptr;
-    if (model_space) {
-	const Matrix &parent = geometry.solid_transform_;
-	const Point3 start = importer_.model_point(*entry, points[0], parent);
-	const Point3 end = importer_.model_point(*entry, points[1], parent);
-	return std::unique_ptr<ON_Curve>(new ON_LineCurve(
-	    ON_3dPoint(start.data()), ON_3dPoint(end.data())));
-    }
-    return std::unique_ptr<ON_Curve>(new ON_LineCurve(
-	ON_2dPoint(points[0][0], points[0][1]),
-	ON_2dPoint(points[1][0], points[1][1])));
+    std::unique_ptr<ON_NurbsCurve> result = geometry.curve(*entry,
+	model_space, geometry.solid_transform_);
+    return std::unique_ptr<ON_Curve>(result.release());
 }
 
 bool
@@ -1375,42 +2145,58 @@ TrimmedSurfaceBuilder::curve_pairs(SolidBuilder &geometry, EntityId boundary,
 	importer_.document().parameters(boundary) : nullptr;
     EntityId parameter_curve;
     EntityId model_curve;
+    const bool have_parameter_curve =
+	parameter_entity(parameters, 3, parameter_curve);
     if (!entry || entry->type != 142 ||
-	    !parameter_entity(parameters, 3, parameter_curve) ||
 	    !parameter_entity(parameters, 4, model_curve)) {
 	importer_.diagnose(Severity::Warning, "curve_on_surface_parameters",
-	    "trimmed-surface boundary requires parameter- and model-space curves",
-	    entry);
+	    "trimmed-surface boundary requires a model-space curve", entry);
 	return false;
     }
 
     std::vector<EntityId> parameter_entities;
     std::vector<EntityId> model_entities;
     std::set<EntityId> active;
-    if (!append_curve_entities(parameter_curve, parameter_entities, active))
+    if (have_parameter_curve &&
+	    !append_curve_entities(parameter_curve, parameter_entities, active))
 	return false;
     active.clear();
     if (!append_curve_entities(model_curve, model_entities, active))
 	return false;
-    if (parameter_entities.size() != model_entities.size()) {
+    if (have_parameter_curve &&
+	    parameter_entities.size() != model_entities.size()) {
 	importer_.diagnose(Severity::Warning, "boundary_curve_cardinality",
 	    "parameter- and model-space Composite Curves have different member counts",
 	    entry);
 	return false;
     }
 
-    pairs.reserve(parameter_entities.size());
-    for (size_t i = 0; i < parameter_entities.size(); ++i) {
+    pairs.reserve(model_entities.size());
+    for (size_t i = 0; i < model_entities.size(); ++i) {
 	CurvePair pair;
-	pair.singular = parameter_entities[i] == model_entities[i];
-	pair.parameter = curve(geometry, parameter_entities[i], false);
+	pair.singular = have_parameter_curve &&
+	    parameter_entities[i] == model_entities[i];
+	if (have_parameter_curve)
+	    pair.parameter = curve(geometry, parameter_entities[i], false);
 	if (!pair.singular)
 	    pair.model = curve(geometry, model_entities[i], true);
-	if (!pair.parameter || pair.parameter->Dimension() != 2 ||
-		(!pair.singular && (!pair.model || pair.model->Dimension() != 3))) {
+	const bool invalid_parameter =
+	    pair.parameter && pair.parameter->Dimension() != 2;
+	const bool invalid_model = !pair.singular &&
+	    (!pair.model || pair.model->Dimension() != 3);
+	if (invalid_parameter || invalid_model) {
+	    const EntityId failed_id = invalid_parameter ?
+		parameter_entities[i] : model_entities[i];
+	    const DirectoryEntry *failed =
+		importer_.document().entity(failed_id);
+	    std::ostringstream message;
+	    message << "direct trimmed-surface import could not construct the "
+		<< (invalid_parameter ? "parameter" : "model")
+		<< "-space boundary curve D" << failed_id.value();
+	    if (failed)
+		message << " (IGES type " << failed->type << ')';
 	    importer_.diagnose(Severity::Warning, "unsupported_boundary_curve",
-		"direct trimmed-surface import requires Line or B-Spline boundary curves",
-		entry);
+		message.str(), failed ? failed : entry);
 	    return false;
 	}
 	pairs.push_back(std::move(pair));
@@ -1424,8 +2210,13 @@ TrimmedSurfaceBuilder::add_loop(ON_BrepFace &face, ON_BrepLoop::TYPE type,
 {
     const double tolerance = importer_.tolerance();
     const ON_Surface *surface = face.SurfaceOf();
-    if (!surface || pairs.empty())
+    const auto reject = [&](const char *message) {
+	importer_.diagnose(Severity::Warning, "trimmed_surface_loop",
+	    message, &source);
 	return false;
+    };
+    if (!surface || pairs.empty())
+	return reject("trimmed-surface loop has no usable boundary members");
 
     /* Start at a pole when one is present so the final non-singular edge can
      * close onto the first vertex without creating two vertices at the pole. */
@@ -1472,10 +2263,170 @@ TrimmedSurfaceBuilder::add_loop(ON_BrepFace &face, ON_BrepLoop::TYPE type,
 	return have_point;
     };
 
+    /* Type 142 does not guarantee that the parameter and model curves use
+     * the same parameter direction.  Reversing a curve changes neither its
+     * locus nor the authored member order, and lets the OpenNURBS trim carry
+     * the direction IGES intended. */
+    for (CurvePair &pair : pairs) {
+	if (pair.singular || !pair.parameter || !pair.model)
+	    continue;
+	const ON_3dPoint parameter_start = pair.parameter->PointAtStart();
+	const ON_3dPoint parameter_end = pair.parameter->PointAtEnd();
+	const ON_3dPoint surface_start =
+	    surface->PointAt(parameter_start.x, parameter_start.y);
+	const ON_3dPoint surface_end =
+	    surface->PointAt(parameter_end.x, parameter_end.y);
+	const ON_3dPoint model_start = pair.model->PointAtStart();
+	const ON_3dPoint model_end = pair.model->PointAtEnd();
+	const double forward = surface_start.DistanceTo(model_start) +
+	    surface_end.DistanceTo(model_end);
+	const double reverse = surface_start.DistanceTo(model_end) +
+	    surface_end.DistanceTo(model_start);
+	if (std::isfinite(forward) && std::isfinite(reverse) &&
+		reverse < forward && !pair.parameter->Reverse())
+		    return reject("could not reverse a parameter curve to match its model curve");
+    }
+
+    /* Choose all curve directions together.  The two-state dynamic program
+     * minimizes model-space gaps around the complete cycle in linear time. */
+    struct OrientedEndpoints {
+	ON_3dPoint start[2];
+	ON_3dPoint end[2];
+    };
+    std::vector<OrientedEndpoints> endpoints(pairs.size());
+    for (size_t i = 0; i < pairs.size(); ++i) {
+	if (!pair_points(pairs[i], endpoints[i].start[0], endpoints[i].end[0]))
+		return reject("could not evaluate boundary-curve endpoints");
+	endpoints[i].start[1] = endpoints[i].end[0];
+	endpoints[i].end[1] = endpoints[i].start[0];
+    }
+    std::vector<int> best_directions(pairs.size(), 0);
+    double best_cost = std::numeric_limits<double>::infinity();
+    for (int first_direction = 0; first_direction < 2; ++first_direction) {
+	std::vector<std::array<double, 2> > costs(pairs.size());
+	std::vector<std::array<int, 2> > previous(pairs.size());
+	costs[0][0] = costs[0][1] =
+	    std::numeric_limits<double>::infinity();
+	costs[0][first_direction] = 0.0;
+	for (size_t i = 1; i < pairs.size(); ++i) {
+	    for (int direction = 0; direction < 2; ++direction) {
+		costs[i][direction] = std::numeric_limits<double>::infinity();
+		previous[i][direction] = 0;
+		for (int prior = 0; prior < 2; ++prior) {
+		    const double candidate = costs[i - 1][prior] +
+			endpoints[i - 1].end[prior].DistanceTo(
+			    endpoints[i].start[direction]);
+		    if (candidate < costs[i][direction]) {
+			costs[i][direction] = candidate;
+			previous[i][direction] = prior;
+		    }
+		}
+	    }
+	}
+	for (int last_direction = 0; last_direction < 2; ++last_direction) {
+	    const double cost = costs.back()[last_direction] +
+		endpoints.back().end[last_direction].DistanceTo(
+		    endpoints.front().start[first_direction]);
+	    if (cost >= best_cost)
+		continue;
+	    best_cost = cost;
+	    int direction = last_direction;
+	    for (size_t i = pairs.size(); i-- > 0;) {
+		best_directions[i] = direction;
+		if (i > 0)
+		    direction = previous[i][direction];
+	    }
+	}
+    }
+    if (!std::isfinite(best_cost))
+	return reject("could not determine finite boundary-curve orientations");
+    for (size_t i = 0; i < pairs.size(); ++i) {
+	if (!best_directions[i])
+	    continue;
+	if (!pairs[i].parameter->Reverse() ||
+		(pairs[i].model && !pairs[i].model->Reverse()))
+		return reject("could not reverse an oriented boundary curve");
+    }
+
+    if (importer_.safe_repairs()) {
+	for (size_t i = 0; i < pairs.size(); ++i) {
+	    const size_t next = (i + 1) % pairs.size();
+	    if (pairs[i].singular || pairs[next].singular ||
+		    !pairs[i].model || !pairs[next].model)
+		continue;
+	    const ON_3dPoint parameter_end = pairs[i].parameter->PointAtEnd();
+	    const ON_3dPoint parameter_start =
+		pairs[next].parameter->PointAtStart();
+	    if (!parameter_end.IsValid() || !parameter_start.IsValid() ||
+		    parameter_end.DistanceTo(parameter_start) <= ON_ZERO_TOLERANCE)
+		continue;
+	    const ON_3dPoint model_end = pairs[i].model->PointAtEnd();
+	    const ON_3dPoint model_start = pairs[next].model->PointAtStart();
+	    const double model_gap = model_end.DistanceTo(model_start);
+	    const ON_3dPoint end_surface =
+		surface->PointAt(parameter_end.x, parameter_end.y);
+	    const ON_3dPoint start_surface =
+		surface->PointAt(parameter_start.x, parameter_start.y);
+	    const double end_cost = std::max(end_surface.DistanceTo(model_end),
+		end_surface.DistanceTo(model_start));
+	    const double start_cost =
+		std::max(start_surface.DistanceTo(model_end),
+		    start_surface.DistanceTo(model_start));
+	    const bool prefer_end = end_cost <= start_cost;
+	    const std::array<ON_3dPoint, 2> targets = {
+		prefer_end ? parameter_end : parameter_start,
+		prefer_end ? parameter_start : parameter_end
+	    };
+	    const std::array<double, 2> repair_costs = {
+		prefer_end ? end_cost : start_cost,
+		prefer_end ? start_cost : end_cost
+	    };
+	    const double repair_limit = std::max(
+		SAFE_TRIM_REPAIR_TOLERANCE_FACTOR * tolerance,
+		model_gap + SAFE_TRIM_MODEL_GAP_FACTOR * tolerance);
+	    if (!std::isfinite(repair_limit))
+		continue;
+	    bool repaired = false;
+	    for (size_t candidate = 0;
+		    candidate < targets.size() && !repaired; ++candidate) {
+		if (!std::isfinite(repair_costs[candidate]) ||
+			repair_costs[candidate] > repair_limit)
+		    continue;
+		std::unique_ptr<ON_Curve> current_candidate(
+		    pairs[i].parameter->DuplicateCurve());
+		std::unique_ptr<ON_Curve> next_candidate;
+		ON_Curve *next_curve = current_candidate.get();
+		if (i != next) {
+		    next_candidate.reset(pairs[next].parameter->DuplicateCurve());
+		    next_curve = next_candidate.get();
+		}
+		if (!current_candidate || !next_curve)
+		    continue;
+		const bool endpoints_set =
+		    current_candidate->SetEndPoint(targets[candidate]) &&
+		    next_curve->SetStartPoint(targets[candidate]);
+		repaired = endpoints_set && current_candidate->IsValid() &&
+		    next_curve->IsValid();
+		if (!repaired)
+		    continue;
+		pairs[i].parameter = std::move(current_candidate);
+		if (i != next)
+		    pairs[next].parameter = std::move(next_candidate);
+	    }
+	    if (!repaired)
+		continue;
+	    importer_.count_repair();
+	    importer_.diagnose(Severity::Information,
+		"closed_parameter_loop",
+		"closed a bounded parameter-space trim gap using model geometry",
+		&source);
+	}
+    }
+
     ON_3dPoint loop_start;
     ON_3dPoint ignored;
     if (!pair_points(pairs.front(), loop_start, ignored))
-	return false;
+	return reject("could not evaluate the first model-space boundary member");
     ON_BrepVertex &first_vertex = brep_->NewVertex(loop_start, tolerance);
     const int first_vertex_index = first_vertex.m_vertex_index;
     int current_vertex_index = first_vertex_index;
@@ -1485,11 +2436,11 @@ TrimmedSurfaceBuilder::add_loop(ON_BrepFace &face, ON_BrepLoop::TYPE type,
 	ON_3dPoint curve_start;
 	ON_3dPoint curve_end;
 	if (!pair_points(pairs[i], curve_start, curve_end))
-	    return false;
+		return reject("could not evaluate a model-space boundary member");
 	ON_BrepVertex &current_vertex = brep_->m_V[current_vertex_index];
 	const double start_gap = current_vertex.Point().DistanceTo(curve_start);
 	if (!std::isfinite(start_gap))
-	    return false;
+		return reject("model-space edge start distance was non-finite");
 	/* Preserve finite gaps as tolerance metadata instead of moving either
 	 * curve; the ordered IGES boundary supplies the topology. */
 	current_vertex.m_tolerance = std::max(current_vertex.m_tolerance,
@@ -1501,7 +2452,7 @@ TrimmedSurfaceBuilder::add_loop(ON_BrepFace &face, ON_BrepLoop::TYPE type,
 	} else if (i + 1 == pairs.size()) {
 	    const double closure_gap = curve_end.DistanceTo(loop_start);
 	    if (!std::isfinite(closure_gap))
-		return false;
+		return reject("model-space loop closure distance was non-finite");
 	    next_vertex_index = first_vertex_index;
 	    ON_BrepVertex &next_vertex = brep_->m_V[next_vertex_index];
 	    next_vertex.m_tolerance = std::max(next_vertex.m_tolerance,
@@ -1542,6 +2493,356 @@ TrimmedSurfaceBuilder::add_loop(ON_BrepFace &face, ON_BrepLoop::TYPE type,
     return true;
 }
 
+std::unique_ptr<ON_PlaneSurface>
+TrimmedSurfaceBuilder::plane_surface(SolidBuilder &geometry,
+    const DirectoryEntry &surface_entry,
+    std::vector<std::vector<CurvePair> > &loops)
+{
+    const ParameterList *parameters =
+	importer_.document().parameters(surface_entry.id);
+    Point3 normal;
+    double distance = 0.0;
+    for (size_t coordinate = 0; coordinate < normal.size(); ++coordinate)
+	if (!parameter_real(parameters, coordinate + 1, normal[coordinate]))
+	    return nullptr;
+    if (!parameter_real(parameters, 4, distance))
+	return nullptr;
+    const double normal_squared = normal[0] * normal[0] +
+	normal[1] * normal[1] + normal[2] * normal[2];
+    if (!std::isfinite(normal_squared) ||
+	    normal_squared <= DEGENERATE_DOMAIN_TOLERANCE)
+	return nullptr;
+    Point3 origin = {
+	normal[0] * distance / normal_squared,
+	normal[1] * distance / normal_squared,
+	normal[2] * distance / normal_squared
+    };
+    if (!normalize(normal))
+	return nullptr;
+    const ON_Plane local_plane(ON_3dPoint(origin.data()),
+	ON_3dVector(normal.data()));
+    Point3 local_x = {
+	origin[0] + local_plane.xaxis.x,
+	origin[1] + local_plane.xaxis.y,
+	origin[2] + local_plane.xaxis.z
+    };
+    Point3 local_y = {
+	origin[0] + local_plane.yaxis.x,
+	origin[1] + local_plane.yaxis.y,
+	origin[2] + local_plane.yaxis.z
+    };
+    const Point3 model_origin = importer_.model_point(surface_entry, origin,
+	geometry.solid_transform_);
+    const Point3 model_x = importer_.model_point(surface_entry, local_x,
+	geometry.solid_transform_);
+    const Point3 model_y = importer_.model_point(surface_entry, local_y,
+	geometry.solid_transform_);
+    Point3 x_axis = {
+	model_x[0] - model_origin[0],
+	model_x[1] - model_origin[1],
+	model_x[2] - model_origin[2]
+    };
+    Point3 y_seed = {
+	model_y[0] - model_origin[0],
+	model_y[1] - model_origin[1],
+	model_y[2] - model_origin[2]
+    };
+    Point3 model_normal = cross(x_axis, y_seed);
+    if (!normalize(x_axis) || !normalize(model_normal))
+	return nullptr;
+    Point3 y_axis = cross(model_normal, x_axis);
+    if (!normalize(y_axis))
+	return nullptr;
+    const ON_Plane plane(ON_3dPoint(model_origin.data()),
+	ON_3dVector(x_axis.data()), ON_3dVector(y_axis.data()));
+    if (!plane.IsValid())
+	return nullptr;
+
+    double u_min = std::numeric_limits<double>::infinity();
+    double u_max = -std::numeric_limits<double>::infinity();
+    double v_min = std::numeric_limits<double>::infinity();
+    double v_max = -std::numeric_limits<double>::infinity();
+    for (std::vector<CurvePair> &loop : loops) {
+	for (CurvePair &pair : loop) {
+	    if (pair.singular || !pair.model)
+		return nullptr;
+	    ON_NurbsCurve model_curve;
+	    if (!pair.model->GetNurbForm(model_curve) ||
+		    model_curve.Dimension() != 3)
+		return nullptr;
+	    const ON_Interval domain = model_curve.Domain();
+	    for (double fraction : SINGULAR_CURVE_SAMPLES) {
+		const ON_3dPoint point =
+		    model_curve.PointAt(domain.ParameterAt(fraction));
+		if (!point.IsValid() ||
+			std::fabs(plane.DistanceTo(point)) > importer_.tolerance())
+		    return nullptr;
+	    }
+
+	    std::unique_ptr<ON_NurbsCurve> parameter_curve(
+		ON_NurbsCurve::New(2, model_curve.IsRational(),
+		    model_curve.Order(), model_curve.CVCount()));
+	    if (!parameter_curve)
+		return nullptr;
+	    for (int i = 0; i < model_curve.KnotCount(); ++i)
+		parameter_curve->SetKnot(i, model_curve.Knot(i));
+	    for (int i = 0; i < model_curve.CVCount(); ++i) {
+		ON_4dPoint control;
+		if (!model_curve.GetCV(i, control) ||
+			std::fabs(control.w) <= DEGENERATE_DOMAIN_TOLERANCE)
+		    return nullptr;
+		const ON_3dPoint point(control.x / control.w,
+		    control.y / control.w, control.z / control.w);
+		double u = 0.0;
+		double v = 0.0;
+		if (!plane.ClosestPointTo(point, &u, &v))
+		    return nullptr;
+		if (model_curve.IsRational()) {
+		    double homogeneous[3] = {
+			u * control.w, v * control.w, control.w
+		    };
+		    parameter_curve->SetCV(i, ON::homogeneous_rational,
+			homogeneous);
+		} else {
+		    double coordinates[2] = {u, v};
+		    parameter_curve->SetCV(i, ON::not_rational, coordinates);
+		}
+		u_min = std::min(u_min, u);
+		u_max = std::max(u_max, u);
+		v_min = std::min(v_min, v);
+		v_max = std::max(v_max, v);
+	    }
+	    if (!parameter_curve->IsValid())
+		return nullptr;
+	    pair.parameter = std::move(parameter_curve);
+	}
+    }
+    if (!std::isfinite(u_min) || !std::isfinite(u_max) ||
+	    !std::isfinite(v_min) || !std::isfinite(v_max) ||
+	    u_max - u_min <= DEGENERATE_DOMAIN_TOLERANCE ||
+	    v_max - v_min <= DEGENERATE_DOMAIN_TOLERANCE)
+	return nullptr;
+    std::unique_ptr<ON_PlaneSurface> surface(new ON_PlaneSurface(plane));
+    if (!surface->SetExtents(0, ON_Interval(u_min, u_max), true) ||
+	    !surface->SetExtents(1, ON_Interval(v_min, v_max), true) ||
+	    !surface->IsValid())
+	return nullptr;
+    return surface;
+}
+
+static std::unique_ptr<ON_LineCurve>
+collapsed_singular_parameter_curve(const ON_Surface &surface,
+    const ON_Curve &model_curve, double tolerance)
+{
+    const ON_3dPoint collapsed_point = model_curve.PointAtStart();
+    if (!collapsed_point.IsValid())
+	return nullptr;
+
+    std::unique_ptr<ON_LineCurve> result;
+    for (int fixed_direction = 0; fixed_direction < 2; ++fixed_direction) {
+	const ON_Interval fixed_domain = surface.Domain(fixed_direction);
+	const ON_Interval varying_domain = surface.Domain(1 - fixed_direction);
+	if (!fixed_domain.IsIncreasing() || !varying_domain.IsIncreasing())
+	    continue;
+	for (int side = 0; side < 2; ++side) {
+	    const int surface_side = fixed_direction == 0 ?
+		(side == 0 ? 3 : 1) : (side == 0 ? 0 : 2);
+	    if (!surface.IsSingular(surface_side))
+		continue;
+
+	    bool collapsed = true;
+	    for (int sample = 0;
+		    sample <= COLLAPSED_BOUNDARY_VALIDATION_SEGMENTS; ++sample) {
+		ON_2dPoint parameter;
+		parameter[fixed_direction] = fixed_domain[side];
+		parameter[1 - fixed_direction] = varying_domain.ParameterAt(
+		    static_cast<double>(sample) /
+			COLLAPSED_BOUNDARY_VALIDATION_SEGMENTS);
+		const ON_3dPoint lifted =
+		    surface.PointAt(parameter.x, parameter.y);
+		if (!lifted.IsValid() ||
+			lifted.DistanceTo(collapsed_point) > tolerance) {
+		    collapsed = false;
+		    break;
+		}
+	    }
+	    if (!collapsed)
+		continue;
+	    if (result)
+		return nullptr;
+
+	    ON_2dPoint start;
+	    ON_2dPoint end;
+	    start[fixed_direction] = fixed_domain[side];
+	    end[fixed_direction] = fixed_domain[side];
+	    start[1 - fixed_direction] = varying_domain.Min();
+	    end[1 - fixed_direction] = varying_domain.Max();
+	    std::unique_ptr<ON_LineCurve> candidate(
+		new ON_LineCurve(start, end));
+	    const ON_Interval model_domain = model_curve.Domain();
+	    const ON_Surface::ISO expected = fixed_direction == 0 ?
+		(side == 0 ? ON_Surface::W_iso : ON_Surface::E_iso) :
+		(side == 0 ? ON_Surface::S_iso : ON_Surface::N_iso);
+	    if (!candidate->SetDomain(model_domain.Min(), model_domain.Max()) ||
+		    !candidate->IsValid() ||
+		    surface.IsIsoparametric(*candidate) != expected)
+		continue;
+	    result = std::move(candidate);
+	}
+    }
+    return result;
+}
+
+
+void
+TrimmedSurfaceBuilder::recover_parameter_curves(
+    const ON_Surface &surface, std::vector<std::vector<CurvePair> > &loops,
+    const DirectoryEntry &source)
+{
+    if (!importer_.safe_repairs())
+	return;
+
+    const ON_Interval domains[2] = {
+	surface.Domain(0), surface.Domain(1)
+    };
+    if (!domains[0].IsIncreasing() || !domains[1].IsIncreasing())
+	return;
+
+    size_t isoparametric_recoveries = 0;
+    size_t pullback_recoveries = 0;
+    size_t singular_recoveries = 0;
+    size_t discarded_recoveries = 0;
+    size_t pullback_failures = 0;
+    std::string first_pullback_failure;
+    const double tolerance = std::max(importer_.tolerance(),
+	ON_ZERO_TOLERANCE) * SAFE_TRIM_REPAIR_TOLERANCE_FACTOR;
+    for (std::vector<CurvePair> &loop : loops) {
+	for (CurvePair &pair : loop) {
+	    if (pair.parameter || pair.singular || !pair.model)
+		continue;
+
+	    int matched_direction = -1;
+	    int matched_side = -1;
+	    bool reverse_parameter = false;
+	    bool ambiguous = false;
+	    for (int direction = 0; direction < 2 && !ambiguous; ++direction) {
+		const ON_Interval &constant_domain = domains[1 - direction];
+		for (int side = 0; side < 2; ++side) {
+		    const double constant = side == 0 ?
+			constant_domain.Min() : constant_domain.Max();
+		    std::unique_ptr<ON_Curve> isocurve(
+			surface.IsoCurve(direction, constant));
+		    bool reversed = false;
+		    if (!isocurve || !brep_curves_coincident(*pair.model,
+			    *isocurve, tolerance, &reversed))
+			continue;
+		    if (matched_direction >= 0) {
+			ambiguous = true;
+			break;
+		    }
+		    matched_direction = direction;
+		    matched_side = side;
+		    reverse_parameter = reversed;
+		}
+	    }
+	    if (!ambiguous && matched_direction >= 0) {
+		const double constant = matched_side == 0 ?
+		    domains[1 - matched_direction].Min() :
+		    domains[1 - matched_direction].Max();
+		ON_2dPoint start;
+		ON_2dPoint end;
+		if (matched_direction == 0) {
+		    start.Set(domains[0].Min(), constant);
+		    end.Set(domains[0].Max(), constant);
+		} else {
+		    start.Set(constant, domains[1].Min());
+		    end.Set(constant, domains[1].Max());
+		}
+		if (reverse_parameter)
+		    std::swap(start, end);
+		std::unique_ptr<ON_LineCurve> parameter(
+		    new ON_LineCurve(start, end));
+		const ON_Interval model_domain = pair.model->Domain();
+		if (parameter->SetDomain(model_domain.Min(), model_domain.Max()) &&
+			parameter->IsValid()) {
+		    pair.parameter = std::move(parameter);
+		    ++isoparametric_recoveries;
+		    importer_.count_repair();
+		    continue;
+		}
+	    }
+
+	    std::string failure_reason;
+	    PullbackFailureReason failure = PullbackFailureReason::None;
+	    pair.parameter.reset(brlcad::pullback_curve(&surface,
+		pair.model.get(), tolerance, tolerance, &failure_reason,
+		&failure));
+	    if (!pair.parameter) {
+		if (failure == PullbackFailureReason::ParameterCurveCollapsed) {
+		    pair.parameter = collapsed_singular_parameter_curve(surface,
+			*pair.model, tolerance);
+		    if (pair.parameter) {
+			pair.singular = true;
+			++singular_recoveries;
+			importer_.count_repair();
+			continue;
+		    }
+		    pair.discard = true;
+		    ++discarded_recoveries;
+		    importer_.count_repair();
+		    continue;
+		}
+		++pullback_failures;
+		if (first_pullback_failure.empty())
+		    first_pullback_failure = failure_reason;
+		continue;
+	    }
+	    ++pullback_recoveries;
+	    importer_.count_repair();
+	}
+	loop.erase(std::remove_if(loop.begin(), loop.end(),
+	    [](const CurvePair &pair) { return pair.discard; }), loop.end());
+    }
+    if (isoparametric_recoveries > 0) {
+	std::ostringstream message;
+	message << "recovered " << isoparametric_recoveries
+	    << " missing parameter-space boundaries from base-surface isocurves";
+	importer_.diagnose(Severity::Information,
+	    "recovered_isoparametric_boundary", message.str(), &source);
+    }
+    if (pullback_recoveries > 0) {
+	std::ostringstream message;
+	message << "recovered " << pullback_recoveries
+	    << " missing parameter-space boundaries by bounded pullback";
+	importer_.diagnose(Severity::Information,
+	    "recovered_parameter_curve", message.str(), &source);
+    }
+    if (singular_recoveries > 0) {
+	std::ostringstream message;
+	message << "recovered " << singular_recoveries
+	    << " collapsed model-space boundaries as singular trims";
+	importer_.diagnose(Severity::Information,
+	    "recovered_singular_boundary", message.str(), &source);
+    }
+    if (discarded_recoveries > 0) {
+	std::ostringstream message;
+	message << "discarded " << discarded_recoveries
+	    << " model-space boundary segments whose validated pullbacks "
+	    << "collapsed within the safe repair tolerance";
+	importer_.diagnose(Severity::Information,
+	    "discarded_collapsed_boundary", message.str(), &source);
+    }
+    if (pullback_failures > 0) {
+	std::ostringstream message;
+	message << "bounded pullback could not recover " << pullback_failures
+	    << " parameter-space boundaries";
+	if (!first_pullback_failure.empty())
+	    message << "; first failure: " << first_pullback_failure;
+	importer_.diagnose(Severity::Warning,
+	    "parameter_curve_pullback", message.str(), &source);
+    }
+}
+
 bool
 TrimmedSurfaceBuilder::add_face(const DirectoryEntry &entry)
 {
@@ -1564,20 +2865,6 @@ TrimmedSurfaceBuilder::add_face(const DirectoryEntry &entry)
 
     const DirectoryEntry *surface_entry = importer_.document().entity(surface_id);
     SolidBuilder geometry(importer_, entry);
-    if (!surface_entry || surface_entry->type != 128) {
-	importer_.diagnose(Severity::Warning, "unsupported_trimmed_surface",
-	    "direct trimmed-surface import currently requires a B-Spline surface",
-	    surface_entry);
-	return false;
-    }
-    std::unique_ptr<ON_NurbsSurface> surface =
-	geometry.nurbs_surface(*surface_entry);
-    if (!surface) {
-	importer_.diagnose(Severity::Warning, "invalid_trimmed_surface_geometry",
-	    "Trimmed Surface has invalid B-Spline surface geometry", surface_entry);
-	return false;
-    }
-
     std::vector<std::vector<CurvePair> > loops(
 	static_cast<size_t>(inner_count) + 1);
     if (!curve_pairs(geometry, outer_id, loops[0]))
@@ -1589,6 +2876,48 @@ TrimmedSurfaceBuilder::add_face(const DirectoryEntry &entry)
 		    loops[static_cast<size_t>(i + 1)]))
 	    return false;
     }
+
+    if (!surface_entry) {
+	importer_.diagnose(Severity::Warning, "trimmed_surface_reference",
+	    "Trimmed Surface references a missing base surface", &entry);
+	return false;
+    }
+    std::unique_ptr<ON_Surface> surface;
+    if (surface_entry->type == 108) {
+	std::unique_ptr<ON_PlaneSurface> plane = plane_surface(geometry,
+	    *surface_entry, loops);
+	surface.reset(plane.release());
+    } else if (surface_entry->type == 128) {
+	std::unique_ptr<ON_NurbsSurface> nurbs =
+	    geometry.nurbs_surface(*surface_entry);
+	surface.reset(nurbs.release());
+    } else if (surface_entry->type == 118 || surface_entry->type == 120 ||
+	    surface_entry->type == 122) {
+	std::unique_ptr<ON_NurbsSurface> analytic =
+	    geometry.analytic_surface(*surface_entry);
+	surface.reset(analytic.release());
+    } else {
+	importer_.diagnose(Severity::Warning, "unsupported_trimmed_surface",
+	    "direct trimmed-surface import does not support this base surface",
+	    surface_entry);
+	return false;
+    }
+    if (!surface) {
+	importer_.diagnose(Severity::Warning, "invalid_trimmed_surface_geometry",
+	    "could not construct the trimmed face's base surface", surface_entry);
+	return false;
+    }
+
+    recover_parameter_curves(*surface, loops, entry);
+    for (const std::vector<CurvePair> &loop : loops)
+	for (const CurvePair &pair : loop)
+	    if (!pair.parameter) {
+		importer_.diagnose(Severity::Warning,
+		    "missing_parameter_curve",
+		    "non-planar trimmed face has no parameter-space boundary",
+		    &entry);
+		return false;
+	    }
 
     const int surface_index = brep_->AddSurface(surface.release());
     ON_BrepFace &face = brep_->NewFace(surface_index);
@@ -1624,6 +2953,8 @@ TrimmedSurfaceBuilder::build(brep_assembly_result &assembly)
 	    << ", " << assembly.merged_edges << " edges merged, "
 	    << assembly.remaining_naked_edges << " naked, "
 	    << assembly.ambiguous_edges << " ambiguous)";
+	if (!assembly.validation_log.empty())
+	    detail << ": " << assembly.validation_log;
 	importer_.diagnose(Severity::Warning, "trimmed_surface_assembly",
 	    detail.str(), faces_.front());
 	return nullptr;
@@ -1634,7 +2965,39 @@ TrimmedSurfaceBuilder::build(brep_assembly_result &assembly)
 std::string
 Importer::unique_name(const DirectoryEntry &entry) const
 {
-    const std::string stem = source_name(document_, entry);
+    return unique_name(entry, source_name(document_, entry));
+}
+
+std::string
+Importer::unique_name(const DirectoryEntry &entry,
+    const std::string &source) const
+{
+    const auto imported = objects_.find(entry.id);
+    if (imported != objects_.end())
+	return imported->second;
+
+    std::string stem = sanitized_database_name(source);
+    if (stem.empty())
+	stem = "iges_geometry_D" + std::to_string(entry.id.value());
+    if (db_lookup(wdbp_->dbip, stem.c_str(), LOOKUP_QUIET) == RT_DIR_NULL)
+	return stem;
+
+    const std::string collision_stem = stem + ".D" +
+	std::to_string(entry.id.value());
+    std::string result = collision_stem;
+    size_t serial = 1;
+    while (db_lookup(wdbp_->dbip, result.c_str(), LOOKUP_QUIET) != RT_DIR_NULL)
+	result = collision_stem + "." + std::to_string(serial++);
+    return result;
+}
+
+std::string
+Importer::unique_name(const std::string &source) const
+{
+    std::string stem = sanitized_database_name(source);
+    if (stem.empty())
+	stem = "iges_geometry";
+
     std::string result = stem;
     size_t serial = 1;
     while (db_lookup(wdbp_->dbip, result.c_str(), LOOKUP_QUIET) != RT_DIR_NULL)
@@ -1642,12 +3005,854 @@ Importer::unique_name(const DirectoryEntry &entry) const
     return result;
 }
 
+void
+Importer::write_entity_attributes(const std::string &name,
+    const DirectoryEntry &entry)
+{
+    const std::string entity = std::to_string(entry.id.value());
+    const std::string type = std::to_string(entry.type);
+    const std::string form = std::to_string(entry.form);
+    const std::string level = std::to_string(entry.level);
+    const std::string color = std::to_string(entry.color);
+    const std::string line_font = std::to_string(entry.line_font);
+    const std::string line_weight = std::to_string(entry.line_weight);
+    const std::string status = std::to_string(entry.status);
+    const std::string subscript = std::to_string(entry.subscript);
+    db5_update_attribute(name.c_str(), "importer", "iges-g", wdbp_->dbip);
+    db5_update_attribute(name.c_str(), "source_format", "iges", wdbp_->dbip);
+    db5_update_attribute(name.c_str(), "iges.entity", entity.c_str(),
+	wdbp_->dbip);
+    db5_update_attribute(name.c_str(), "iges.type", type.c_str(), wdbp_->dbip);
+    db5_update_attribute(name.c_str(), "iges.form", form.c_str(), wdbp_->dbip);
+    db5_update_attribute(name.c_str(), "iges.level", level.c_str(), wdbp_->dbip);
+    db5_update_attribute(name.c_str(), "iges.color", color.c_str(), wdbp_->dbip);
+    db5_update_attribute(name.c_str(), "iges.line_font", line_font.c_str(),
+	wdbp_->dbip);
+    db5_update_attribute(name.c_str(), "iges.line_weight", line_weight.c_str(),
+	wdbp_->dbip);
+    db5_update_attribute(name.c_str(), "iges.status", status.c_str(),
+	wdbp_->dbip);
+    db5_update_attribute(name.c_str(), "iges.subscript", subscript.c_str(),
+	wdbp_->dbip);
+    const std::string semantic_name = name_property(document_, entry);
+    if (!semantic_name.empty())
+	db5_update_attribute(name.c_str(), "iges.name", semantic_name.c_str(),
+	    wdbp_->dbip);
+    if (!entry.label.empty())
+	db5_update_attribute(name.c_str(), "iges.label", entry.label.c_str(),
+	    wdbp_->dbip);
+}
+
+bool
+Importer::write_color_attribute(const std::string &name,
+    const std::array<unsigned char, 3> &rgb, const DirectoryEntry &entry)
+{
+    std::ostringstream value;
+    value << static_cast<unsigned int>(rgb[0]) << '/'
+	<< static_cast<unsigned int>(rgb[1]) << '/'
+	<< static_cast<unsigned int>(rgb[2]);
+    if (db5_update_attribute(name.c_str(),
+	    db5_standard_attribute(ATTR_COLOR), value.str().c_str(),
+	    wdbp_->dbip) < 0) {
+	diagnose(Severity::Error, "color_attribute",
+	    "failed to write the resolved IGES object color", &entry);
+	return false;
+    }
+    return true;
+}
+
+bool
+Importer::write_entity_color_attribute(const std::string &name,
+    const DirectoryEntry &entry)
+{
+    std::array<unsigned char, 3> rgb;
+    return !entity_color(document_, entry, rgb) ||
+	write_color_attribute(name, rgb, entry);
+}
+
+bool
+Importer::write_face_metadata(const std::string &name, const ON_Brep &brep,
+    const std::vector<const DirectoryEntry *> &faces)
+{
+    const DirectoryEntry *source = faces.empty() ? nullptr : faces.front();
+    if (brep.m_F.Count() != static_cast<int>(faces.size())) {
+	diagnose(Severity::Error, "face_metadata_mapping",
+	    "assembled B-Rep face count does not match its IGES source map",
+	    source);
+	return false;
+    }
+
+    std::ostringstream metadata;
+    metadata << '[';
+    bool uniform_color = true;
+    bool have_uniform_color = false;
+    std::array<unsigned char, 3> uniform_rgb = {0, 0, 0};
+    for (size_t face_index = 0; face_index < faces.size(); ++face_index) {
+	const DirectoryEntry *face = faces[face_index];
+	if (!face ||
+		brep.m_F[static_cast<int>(face_index)].m_face_user.i !=
+		    face->id.value()) {
+	    diagnose(Severity::Error, "face_metadata_mapping",
+		"assembled B-Rep face order does not match its IGES source map",
+		source);
+	    return false;
+	}
+
+	std::array<unsigned char, 3> rgb;
+	const bool have_color = entity_color(document_, *face, rgb);
+	if (face_index == 0) {
+	    have_uniform_color = have_color;
+	    if (have_color)
+		uniform_rgb = rgb;
+	} else if (have_color != have_uniform_color ||
+		(have_color && rgb != uniform_rgb)) {
+	    uniform_color = false;
+	}
+
+	if (face_index > 0)
+	    metadata << ',';
+	metadata << "{\"face\":" << face_index
+	    << ",\"entity\":" << face->id.value()
+	    << ",\"level\":" << face->level
+	    << ",\"color\":" << face->color
+	    << ",\"subscript\":" << face->subscript;
+	const std::string face_name = semantic_name(document_, *face);
+	if (!face_name.empty())
+	    metadata << ",\"name\":\"" << json_escape(face_name) << '"';
+	if (have_color)
+	    metadata << ",\"rgb\":["
+		<< static_cast<unsigned int>(rgb[0]) << ','
+		<< static_cast<unsigned int>(rgb[1]) << ','
+		<< static_cast<unsigned int>(rgb[2]) << ']';
+	metadata << '}';
+    }
+    metadata << ']';
+    if (db5_update_attribute(name.c_str(), "iges.face_metadata",
+	    metadata.str().c_str(), wdbp_->dbip) < 0) {
+	diagnose(Severity::Error, "face_metadata_attribute",
+	    "failed to preserve IGES per-face metadata", source);
+	return false;
+    }
+    return !uniform_color || !have_uniform_color ||
+	write_color_attribute(name, uniform_rgb, *source);
+}
+
+bool
+Importer::write_plate_mode_attributes(const std::string &name,
+    const ON_Brep &brep, const DirectoryEntry &entry)
+{
+    if (options_.default_plate_thickness <= 0.0 || brep.IsSolid())
+	return true;
+
+    std::ostringstream value;
+    value << std::setprecision(std::numeric_limits<double>::max_digits10)
+	<< options_.default_plate_thickness;
+    if (db5_update_attribute(name.c_str(), "_plate_mode_thickness",
+	    value.str().c_str(), wdbp_->dbip) < 0) {
+	diagnose(Severity::Error, "plate_mode_attribute",
+	    "failed to assign the requested default plate thickness", &entry);
+	return false;
+    }
+    ++result_.statistics.plate_mode_objects_thickened;
+    return true;
+}
+
+bool
+Importer::write_trimmed_component(
+    const std::vector<const DirectoryEntry *> &faces)
+{
+    brep_assembly_result assembly;
+    TrimmedSurfaceBuilder builder(*this, faces);
+    std::unique_ptr<ON_Brep> brep = builder.build(assembly);
+    if (!brep)
+	return false;
+
+    const DirectoryEntry &source = *faces.front();
+    const std::string name = unique_name(source);
+    if (mk_brep(wdbp_, name.c_str(), brep.get()) < 0) {
+	diagnose(Severity::Error, "brep_write",
+	    "failed to write assembled OpenNURBS B-Rep", &source);
+	return false;
+    }
+    if (!write_plate_mode_attributes(name, *brep, source))
+	return false;
+    write_entity_attributes(name, source);
+    if (!write_face_metadata(name, *brep, faces))
+	return false;
+    const std::string face_count = std::to_string(faces.size());
+    const std::string merged_edges = std::to_string(assembly.merged_edges);
+    const std::string naked_edges =
+	std::to_string(assembly.remaining_naked_edges);
+    db5_update_attribute(name.c_str(), "iges.type", "144", wdbp_->dbip);
+    db5_update_attribute(name.c_str(), "iges.face_count", face_count.c_str(),
+	wdbp_->dbip);
+    db5_update_attribute(name.c_str(), "iges.merged_edges",
+	merged_edges.c_str(), wdbp_->dbip);
+    db5_update_attribute(name.c_str(), "iges.naked_edges",
+	naked_edges.c_str(), wdbp_->dbip);
+    db5_update_attribute(name.c_str(), "iges.topology",
+	"direct-opennurbs-component", wdbp_->dbip);
+    for (const DirectoryEntry *face : faces)
+	objects_[face->id] = name;
+    root_objects_.insert(name);
+    ++result_.statistics.breps_written;
+    ++result_.statistics.components_written;
+    return true;
+}
+
+void
+Importer::import_trimmed_components(
+    const std::vector<const DirectoryEntry *> &faces)
+{
+    if (faces.empty())
+	return;
+    const size_t diagnostic_count = result_.diagnostics.size();
+    const size_t repair_count = result_.statistics.repairs;
+    if (write_trimmed_component(faces))
+	return;
+
+    const bool write_error = std::any_of(
+	result_.diagnostics.begin() +
+	    static_cast<std::ptrdiff_t>(diagnostic_count),
+	result_.diagnostics.end(), [](const ImportDiagnostic &diagnostic) {
+	    return diagnostic.severity == Severity::Error ||
+		diagnostic.severity == Severity::Fatal;
+	});
+    if (faces.size() == 1 || write_error) {
+	result_.statistics.repairs = repair_count;
+	result_.diagnostics.erase(std::remove_if(
+	    result_.diagnostics.begin() +
+		static_cast<std::ptrdiff_t>(diagnostic_count),
+	    result_.diagnostics.end(), [](const ImportDiagnostic &diagnostic) {
+		return diagnostic.severity == Severity::Information;
+	    }), result_.diagnostics.end());
+	result_.statistics.omitted += faces.size();
+	return;
+    }
+
+    result_.diagnostics.resize(diagnostic_count);
+    result_.statistics.repairs = repair_count;
+    const size_t middle = faces.size() / 2;
+    const std::vector<const DirectoryEntry *> first(faces.begin(),
+	faces.begin() + static_cast<std::ptrdiff_t>(middle));
+    const std::vector<const DirectoryEntry *> second(
+	faces.begin() + static_cast<std::ptrdiff_t>(middle), faces.end());
+    import_trimmed_components(first);
+    import_trimmed_components(second);
+}
+
+bool
+Importer::write_standalone_surface(const DirectoryEntry &entry)
+{
+    SolidBuilder geometry(*this, entry, Matrix());
+    std::unique_ptr<ON_NurbsSurface> surface = entry.type == 128 ?
+	geometry.nurbs_surface(entry) : geometry.analytic_surface(entry);
+    if (!surface) {
+	diagnose(Severity::Warning, "invalid_standalone_surface",
+	    "could not construct a finite OpenNURBS surface", &entry);
+	return false;
+    }
+
+    std::unique_ptr<ON_Brep> brep(ON_Brep::New());
+    if (!brep) {
+	diagnose(Severity::Error, "brep_allocation",
+	    "could not allocate an OpenNURBS B-Rep", &entry);
+	return false;
+    }
+    brep->NewFace(*surface);
+    brep->SetTolerancesBoxesAndFlags(false, false, false, false,
+	true, true, true, true);
+    ON_wString messages;
+    ON_TextLog log(messages);
+    if (!brep->IsValid(&log)) {
+	ON_String text(messages);
+	diagnose(Severity::Warning, "invalid_standalone_brep",
+	    std::string("OpenNURBS rejected the finite surface domain: ") +
+	    (text.Array() ? text.Array() : "no detail"), &entry);
+	return false;
+    }
+
+    const std::string name = unique_name(entry);
+    if (mk_brep(wdbp_, name.c_str(), brep.get()) < 0) {
+	diagnose(Severity::Error, "brep_write",
+	    "failed to write a standalone OpenNURBS surface", &entry);
+	return false;
+    }
+    if (!write_plate_mode_attributes(name, *brep, entry))
+	return false;
+    write_entity_attributes(name, entry);
+    if (!write_entity_color_attribute(name, entry))
+	return false;
+    db5_update_attribute(name.c_str(), "iges.topology",
+	"direct-opennurbs-surface", wdbp_->dbip);
+    objects_[entry.id] = name;
+    root_objects_.insert(name);
+    ++result_.statistics.breps_written;
+    return true;
+}
+
+void
+Importer::combination_matrix(const Matrix &source, mat_t result) const
+{
+    MAT_IDN(result);
+    for (size_t row = 0; row < 3; ++row)
+	for (size_t column = 0; column < 4; ++column)
+	    result[row * 4 + column] = column == 3 ?
+		source.m[row][column] * unit_to_mm_ : source.m[row][column];
+}
+
+bool
+Importer::container_members(const DirectoryEntry &entry,
+    std::vector<EntityId> &members) const
+{
+    const ParameterList *parameters = document_.parameters(entry.id);
+    int count = 0;
+    size_t first_member = 0;
+    if (entry.type == 402 &&
+	    (entry.form == 1 || entry.form == 7 || entry.form == 9)) {
+	if (!parameter_integer(parameters, 1, count))
+	    return false;
+	first_member = 2;
+    } else if (entry.type == 308) {
+	if (!parameter_integer(parameters, 3, count))
+	    return false;
+	first_member = 4;
+    } else if (entry.type == 184) {
+	if (!parameter_integer(parameters, 1, count))
+	    return false;
+	first_member = 2;
+    } else {
+	return false;
+    }
+    if (count < 0 || count > MAX_ENTITY_LIST_COUNT)
+	return false;
+    members.reserve(static_cast<size_t>(count));
+    for (int i = 0; i < count; ++i) {
+	EntityId member;
+	if (!parameter_entity(parameters, first_member + static_cast<size_t>(i),
+		member))
+	    return false;
+	members.push_back(member);
+    }
+    return true;
+}
+
+std::string
+Importer::hierarchy_name(const DirectoryEntry &entry) const
+{
+    const std::string property = name_property(document_, entry);
+    std::string source = property;
+    if (source.empty() && entry.type == 308) {
+	const ParameterList *parameters = document_.parameters(entry.id);
+	parameter_string(parameters, 2, source);
+    }
+    if (source.empty())
+	source = entry.label;
+    if (!source.empty() && property.empty() && entry.subscript != 0 &&
+	    entry.type != 180 && entry.type != 184 &&
+	    (entry.type != 430 || source == entry.label))
+	source += "." + std::to_string(entry.subscript);
+    if (source.empty()) {
+	const char *kind = entry.type == 308 ? "subfigure" :
+	    (entry.type == 184 ? "assembly" :
+	     (entry.type == 430 ? "solid_instance" : "group"));
+	source = std::string("iges_") + kind + "_D" +
+	    std::to_string(entry.id.value());
+    }
+    return source;
+}
+
+bool
+Importer::write_boolean_tree(EntityId id, std::set<EntityId> &active)
+{
+    if (objects_.find(id) != objects_.end() ||
+	    deferred_boolean_trees_.find(id) != deferred_boolean_trees_.end())
+	return true;
+    const DirectoryEntry *entry = document_.entity(id);
+    const ParameterList *parameters = entry ? document_.parameters(id) : nullptr;
+    int token_count = 0;
+    if (!entry || entry->type != 180 ||
+	    !parameter_integer(parameters, 1, token_count) || token_count < 1 ||
+	    token_count > MAX_ENTITY_LIST_COUNT) {
+	diagnose(Severity::Warning, "boolean_tree_parameters",
+	    "Boolean Tree has an invalid postfix token count", entry);
+	++result_.statistics.omitted;
+	return true;
+    }
+    if (!active.insert(id).second) {
+	diagnose(Severity::Warning, "hierarchy_cycle",
+	    "cyclic IGES Boolean Tree reference was omitted", entry);
+	++result_.statistics.omitted;
+	return true;
+    }
+
+    std::vector<union tree *> stack;
+    std::set<std::string> operands;
+    const auto release_stack = [&]() {
+	for (union tree *node : stack)
+	    db_free_tree(node);
+	stack.clear();
+    };
+    const auto abandon = [&](const char *message) {
+	release_stack();
+	active.erase(id);
+	diagnose(Severity::Warning, "boolean_tree_structure", message, entry);
+	++result_.statistics.omitted;
+	return true;
+    };
+
+    mat_t leaf_matrix;
+    combination_matrix(transform(entry->transform), leaf_matrix);
+    for (int i = 0; i < token_count; ++i) {
+	int token = 0;
+	if (!parameter_integer(parameters, static_cast<size_t>(i + 2), token) ||
+		token == 0)
+	    return abandon("Boolean Tree contains an invalid token");
+	if (token < 0) {
+	    const EntityId operand_id(-static_cast<int64_t>(token));
+	    auto object = objects_.find(operand_id);
+	    const DirectoryEntry *operand = document_.entity(operand_id);
+	    if (object == objects_.end() && operand &&
+		    (operand->type == 180 || operand->type == 430)) {
+		const bool written = operand->type == 180 ?
+		    write_boolean_tree(operand_id, active) :
+		    write_solid_instance(*operand, active);
+		if (!written) {
+		    release_stack();
+		    active.erase(id);
+		    return false;
+		}
+		object = objects_.find(operand_id);
+	    }
+	    if (object == objects_.end() && operand &&
+		    (is_native_csg_entity_type(operand->type) ||
+		     (operand->type == 180 &&
+		      deferred_boolean_trees_.find(operand_id) !=
+			  deferred_boolean_trees_.end()) ||
+		     (operand->type == 430 &&
+		      deferred_instances_.find(operand_id) !=
+			  deferred_instances_.end()))) {
+		/* The legacy solid converter constructs exact native primitives and
+		 * will subsequently emit this Boolean tree. */
+		release_stack();
+		active.erase(id);
+		deferred_boolean_trees_.insert(id);
+		return true;
+	    }
+	    if (object == objects_.end())
+		return abandon("Boolean Tree references geometry that was not imported");
+	    union tree *leaf;
+	    BU_ALLOC(leaf, union tree);
+	    RT_TREE_INIT(leaf);
+	    leaf->tr_l.tl_op = OP_DB_LEAF;
+	    leaf->tr_l.tl_name = bu_strdup(object->second.c_str());
+	    leaf->tr_l.tl_mat = static_cast<matp_t>(
+		bu_malloc(sizeof(mat_t), "IGES Boolean Tree leaf matrix"));
+	    MAT_COPY(leaf->tr_l.tl_mat, leaf_matrix);
+	    stack.push_back(leaf);
+	    operands.insert(object->second);
+	    continue;
+	}
+	if ((token != 1 && token != 2 && token != 3) || stack.size() < 2)
+	    return abandon("Boolean Tree postfix operators are unbalanced");
+	union tree *operation;
+	BU_ALLOC(operation, union tree);
+	RT_TREE_INIT(operation);
+	operation->tr_b.tb_op = token == 1 ? OP_UNION :
+	    (token == 2 ? OP_INTERSECT : OP_SUBTRACT);
+	operation->tr_b.tb_right = stack.back();
+	stack.pop_back();
+	operation->tr_b.tb_left = stack.back();
+	stack.pop_back();
+	stack.push_back(operation);
+    }
+    if (stack.size() != 1)
+	return abandon("Boolean Tree postfix expression has unused operands");
+
+    struct rt_comb_internal *combination;
+    BU_ALLOC(combination, struct rt_comb_internal);
+    RT_COMB_INTERNAL_INIT(combination);
+    combination->tree = stack.back();
+    stack.clear();
+    const std::string name = unique_name(*entry, hierarchy_name(*entry));
+    if (wdb_export(wdbp_, name.c_str(), combination, ID_COMBINATION, 1.0)) {
+	active.erase(id);
+	diagnose(Severity::Error, "boolean_tree_write",
+	    "failed to write an IGES Boolean Tree", entry);
+	return false;
+    }
+    active.erase(id);
+    write_entity_attributes(name, *entry);
+    db5_update_attribute(name.c_str(), "iges.semantic", "boolean_tree",
+	wdbp_->dbip);
+    objects_[id] = name;
+    for (const std::string &operand : operands)
+	root_objects_.erase(operand);
+    root_objects_.insert(name);
+    ++result_.statistics.groups_written;
+    return true;
+}
+
+bool
+Importer::write_container(EntityId id, std::set<EntityId> &active)
+{
+    if (objects_.find(id) != objects_.end())
+	return true;
+    const DirectoryEntry *entry = document_.entity(id);
+    if (!entry)
+	return false;
+    if (!active.insert(id).second) {
+	diagnose(Severity::Warning, "hierarchy_cycle",
+	    "cyclic IGES group or subfigure reference was omitted", entry);
+	return false;
+    }
+
+    std::vector<EntityId> source_members;
+    if (!container_members(*entry, source_members)) {
+	active.erase(id);
+	diagnose(Severity::Warning, "hierarchy_parameters",
+	    "IGES group or subfigure has invalid member parameters", entry);
+	return true;
+    }
+
+    struct wmember members;
+    BU_LIST_INIT(&members.l);
+    std::set<std::string> output_members;
+    std::ostringstream member_order;
+    size_t unresolved = 0;
+    for (size_t member_index = 0; member_index < source_members.size();
+	    ++member_index) {
+	const EntityId member_id = source_members[member_index];
+	if (member_order.tellp() > 0)
+	    member_order << ',';
+	member_order << member_id.value();
+	auto object = objects_.find(member_id);
+	if (object == objects_.end()) {
+	    const DirectoryEntry *member_entry = document_.entity(member_id);
+	    if (member_entry && (member_entry->type == 180 ||
+		    member_entry->type == 184 ||
+		    member_entry->type == 308 ||
+		    (member_entry->type == 402 &&
+		     (member_entry->form == 1 || member_entry->form == 7 ||
+		      member_entry->form == 9)))) {
+		const bool written = member_entry->type == 180 ?
+		    write_boolean_tree(member_id, active) :
+		    write_container(member_id, active);
+		if (!written) {
+		    active.erase(id);
+		    return false;
+		}
+		object = objects_.find(member_id);
+	    }
+	}
+	if (object == objects_.end()) {
+	    ++unresolved;
+	    continue;
+	}
+	const bool new_output_member =
+	    output_members.insert(object->second).second;
+	if (entry->type != 184 && !new_output_member)
+	    continue;
+	struct wmember *output_member = mk_addmember(object->second.c_str(),
+	    &members.l, nullptr, WMOP_UNION);
+	if (output_member == WMEMBER_NULL) {
+	    active.erase(id);
+	    diagnose(Severity::Error, "hierarchy_member",
+		"failed to add a member to an IGES group", entry);
+	    return false;
+	}
+	if (entry->type == 184) {
+	    const ParameterList *parameters = document_.parameters(entry->id);
+	    EntityId matrix_id;
+	    const size_t matrix_parameter =
+		2 + source_members.size() + member_index;
+	    if (parameter_entity(parameters, matrix_parameter, matrix_id)) {
+		mat_t placement;
+		combination_matrix(transform(matrix_id), placement);
+		MAT_COPY(output_member->wm_mat, placement);
+	    }
+	}
+    }
+    active.erase(id);
+    if (output_members.empty())
+	return true;
+
+    const std::string name = unique_name(*entry, hierarchy_name(*entry));
+    const int write_status = mk_lfcomb(wdbp_, name.c_str(), &members, 0);
+    if (write_status < 0) {
+	diagnose(Severity::Error, "hierarchy_write",
+	    "failed to write an IGES group or subfigure", entry);
+	return false;
+    }
+    write_entity_attributes(name, *entry);
+    const char *semantic = entry->type == 184 ? "solid_assembly" :
+	(entry->type == 308 ? "subfigure_definition" :
+	 (entry->form == 9 ? "ordered_group" : "unordered_group"));
+    const std::string unresolved_count = std::to_string(unresolved);
+    db5_update_attribute(name.c_str(), "iges.semantic", semantic, wdbp_->dbip);
+    db5_update_attribute(name.c_str(), "iges.member_order",
+	member_order.str().c_str(), wdbp_->dbip);
+    db5_update_attribute(name.c_str(), "iges.unresolved_members",
+	unresolved_count.c_str(), wdbp_->dbip);
+    objects_[id] = name;
+    for (const std::string &member : output_members)
+	root_objects_.erase(member);
+    root_objects_.insert(name);
+    ++result_.statistics.groups_written;
+    return true;
+}
+
+bool
+Importer::write_instance_combination(const DirectoryEntry &entry,
+    EntityId definition_id, const Matrix &placement, const std::string &stem,
+    const char *semantic)
+{
+    const auto definition = objects_.find(definition_id);
+    if (definition == objects_.end())
+	return false;
+
+    mat_t matrix;
+    combination_matrix(placement, matrix);
+    struct wmember members;
+    BU_LIST_INIT(&members.l);
+    struct wmember *member = mk_addmember(definition->second.c_str(),
+	&members.l, nullptr, WMOP_UNION);
+    if (member == WMEMBER_NULL) {
+	diagnose(Severity::Error, "instance_member",
+	    "failed to add an IGES instance member", &entry);
+	return false;
+    }
+    MAT_COPY(member->wm_mat, matrix);
+
+    const std::string name = unique_name(entry, stem);
+    InstanceProperties properties;
+    if (entry.type == 430)
+	solid_instance_properties(document_, entry, properties);
+    const char *shader_name = properties.shader_name.empty() ? nullptr :
+	properties.shader_name.c_str();
+    const char *shader_arguments = properties.shader_arguments.empty() ?
+	nullptr : properties.shader_arguments.c_str();
+    const unsigned char *color = properties.has_color ?
+	properties.color.data() : nullptr;
+    const int write_status = mk_lrcomb(wdbp_, name.c_str(), &members,
+	properties.region_flag, shader_name, shader_arguments, color,
+	properties.ident, properties.air, properties.material,
+	properties.line_of_sight, properties.inherit);
+    if (write_status < 0) {
+	diagnose(Severity::Error, "instance_write",
+	    "failed to write an IGES instance", &entry);
+	return false;
+    }
+    write_entity_attributes(name, entry);
+    const std::string definition_entity =
+	std::to_string(definition_id.value());
+    db5_update_attribute(name.c_str(), "iges.semantic", semantic, wdbp_->dbip);
+    db5_update_attribute(name.c_str(), "iges.definition",
+	definition_entity.c_str(), wdbp_->dbip);
+    if (properties.source_entity > 0) {
+	const std::string property_entity =
+	    std::to_string(properties.source_entity);
+	db5_update_attribute(name.c_str(), "iges.attribute_entity",
+	    property_entity.c_str(), wdbp_->dbip);
+    }
+    objects_[entry.id] = name;
+    root_objects_.erase(definition->second);
+    root_objects_.insert(name);
+    ++result_.statistics.groups_written;
+    return true;
+}
+
+
+bool
+Importer::write_instance(const DirectoryEntry &entry,
+    std::set<EntityId> &active)
+{
+    const ParameterList *parameters = document_.parameters(entry.id);
+    EntityId definition_id;
+    if (!parameter_entity(parameters, 1, definition_id)) {
+	diagnose(Severity::Warning, "subfigure_instance_parameters",
+	    "Subfigure Instance has no valid definition reference", &entry);
+	return true;
+    }
+    if (!write_container(definition_id, active))
+	return false;
+    const auto definition = objects_.find(definition_id);
+    if (definition == objects_.end()) {
+	diagnose(Severity::Warning, "subfigure_instance_unresolved",
+	    "Subfigure Instance definition contains no imported geometry", &entry);
+	return true;
+    }
+
+    double scale_factor = 1.0;
+    Point3 translation = {0.0, 0.0, 0.0};
+    double value = 0.0;
+    for (size_t coordinate = 0; coordinate < translation.size(); ++coordinate)
+	if (parameter_real(parameters, coordinate + 2, value))
+	    translation[coordinate] = value;
+    if (parameter_real(parameters, 5, value))
+	scale_factor = value;
+    if (!std::isfinite(scale_factor) ||
+	    std::fabs(scale_factor) <= DEGENERATE_DOMAIN_TOLERANCE) {
+	diagnose(Severity::Warning, "subfigure_instance_scale",
+	    "Subfigure Instance has an invalid scale", &entry);
+	return true;
+    }
+
+    Matrix placement;
+    for (size_t axis = 0; axis < 3; ++axis) {
+	placement.m[axis][axis] = scale_factor;
+	placement.m[axis][3] = translation[axis];
+    }
+    placement = multiply(transform(entry.transform), placement);
+    std::string stem = hierarchy_name(entry);
+    if (entry.label.empty())
+	stem = definition->second + ".instance_D" +
+	    std::to_string(entry.id.value());
+    return write_instance_combination(entry, definition_id, placement, stem,
+	"subfigure_instance");
+}
+
+bool
+Importer::write_solid_instance(const DirectoryEntry &entry,
+    std::set<EntityId> &active)
+{
+    if (objects_.find(entry.id) != objects_.end() ||
+	    deferred_instances_.find(entry.id) != deferred_instances_.end())
+	return true;
+    const ParameterList *parameters = document_.parameters(entry.id);
+    EntityId definition_id;
+    if (entry.type != 430 ||
+	    !parameter_entity(parameters, 1, definition_id)) {
+	diagnose(Severity::Warning, "solid_instance_parameters",
+	    "Solid Instance has no valid definition reference", &entry);
+	++result_.statistics.omitted;
+	return true;
+    }
+    if (!active.insert(entry.id).second) {
+	diagnose(Severity::Warning, "hierarchy_cycle",
+	    "cyclic IGES Solid Instance reference was omitted", &entry);
+	++result_.statistics.omitted;
+	return true;
+    }
+
+    const DirectoryEntry *definition_entry = document_.entity(definition_id);
+    auto definition = objects_.find(definition_id);
+    if (definition == objects_.end() && definition_entry) {
+	bool resolved = true;
+	if (definition_entry->type == 180)
+	    resolved = write_boolean_tree(definition_id, active);
+	else if (definition_entry->type == 184 ||
+		definition_entry->type == 308 ||
+		(definition_entry->type == 402 &&
+		 (definition_entry->form == 1 || definition_entry->form == 7 ||
+		  definition_entry->form == 9)))
+	    resolved = write_container(definition_id, active);
+	else if (definition_entry->type == 408)
+	    resolved = write_instance(*definition_entry, active);
+	else if (definition_entry->type == 430)
+	    resolved = write_solid_instance(*definition_entry, active);
+	if (!resolved) {
+	    active.erase(entry.id);
+	    return false;
+	}
+	definition = objects_.find(definition_id);
+    }
+
+    const bool definition_deferred = definition_entry &&
+	(is_native_csg_entity_type(definition_entry->type) ||
+	 (definition_entry->type == 180 &&
+	  deferred_boolean_trees_.find(definition_id) !=
+	      deferred_boolean_trees_.end()) ||
+	 (definition_entry->type == 430 &&
+	  deferred_instances_.find(definition_id) != deferred_instances_.end()));
+    if (definition == objects_.end() && definition_deferred) {
+	active.erase(entry.id);
+	deferred_instances_.insert(entry.id);
+	return true;
+    }
+    if (definition == objects_.end()) {
+	active.erase(entry.id);
+	diagnose(Severity::Warning, "solid_instance_unresolved",
+	    "Solid Instance definition contains no imported geometry", &entry);
+	++result_.statistics.omitted;
+	return true;
+    }
+
+    active.erase(entry.id);
+    return write_instance_combination(entry, definition_id,
+	transform(entry.transform), hierarchy_name(entry), "solid_instance");
+}
+
+
+bool
+Importer::write_hierarchy()
+{
+    std::set<EntityId> active;
+    for (const DirectoryEntry &entry : document_.entities())
+	if (entry.type == 180 && !write_boolean_tree(entry.id, active))
+	    return false;
+
+    for (const DirectoryEntry &entry : document_.entities()) {
+	if (entry.type != 184 && entry.type != 308 &&
+		(entry.type != 402 ||
+		(entry.form != 1 && entry.form != 7 && entry.form != 9)))
+	    continue;
+	if (!write_container(entry.id, active))
+	    return false;
+    }
+    for (const DirectoryEntry &entry : document_.entities())
+	if (entry.type == 408 && !write_instance(entry, active))
+	    return false;
+    for (const DirectoryEntry &entry : document_.entities())
+	if (entry.type == 430 && !write_solid_instance(entry, active))
+	    return false;
+    return true;
+}
+
+bool
+Importer::write_root()
+{
+    if (root_objects_.empty())
+	return true;
+    const std::string root_stem = options_.root_name.empty() ?
+	"iges_geometry" : options_.root_name;
+    const std::string name = unique_name(root_stem);
+    struct wmember members;
+    BU_LIST_INIT(&members.l);
+    for (const std::string &member : root_objects_)
+	if (mk_addmember(member.c_str(), &members.l, nullptr, WMOP_UNION) ==
+		WMEMBER_NULL) {
+	    diagnose(Severity::Error, "root_member",
+		"failed to add an imported object to the IGES root");
+	    return false;
+	}
+    const int write_status = mk_lfcomb(wdbp_, name.c_str(), &members, 0)
+    if (write_status < 0) {
+	diagnose(Severity::Error, "root_write",
+	    "failed to write the IGES geometry root");
+	return false;
+    }
+    db5_update_attribute(name.c_str(), "importer", "iges-g", wdbp_->dbip);
+    db5_update_attribute(name.c_str(), "source_format", "iges", wdbp_->dbip);
+    db5_update_attribute(name.c_str(), "iges.semantic", "geometry",
+	wdbp_->dbip);
+    ++result_.statistics.groups_written;
+    return true;
+}
+
+
 BrepImportResult
 Importer::run()
 {
     if (!wdbp_ || !wdbp_->dbip) {
 	diagnose(Severity::Fatal, "output_database",
 	    "no writable BRL-CAD database was supplied");
+	return result_;
+    }
+    if (!std::isfinite(options_.default_plate_thickness) ||
+	    options_.default_plate_thickness < 0.0) {
+	diagnose(Severity::Fatal, "plate_mode_thickness",
+	    "default plate thickness must be a finite non-negative value");
 	return result_;
     }
     if (!document_.valid()) {
@@ -1673,8 +3878,23 @@ Importer::run()
     const std::vector<const DirectoryEntry *> solids = document_.find(186);
     const std::vector<const DirectoryEntry *> trimmed_surfaces =
 	document_.find(144);
+    std::set<EntityId> referenced_surfaces;
+    for (const DirectoryEntry &entry : document_.entities()) {
+	if (entry.type != 144 && entry.type != 510)
+	    continue;
+	EntityId surface;
+	if (parameter_entity(document_.parameters(entry.id), 1, surface))
+	    referenced_surfaces.insert(surface);
+    }
+    std::vector<const DirectoryEntry *> standalone_surfaces;
+    for (const DirectoryEntry &entry : document_.entities())
+	if (is_surface_entity(entry.type) &&
+		referenced_surfaces.find(entry.id) == referenced_surfaces.end())
+	    standalone_surfaces.push_back(&entry);
+
     result_.statistics.solids_seen = solids.size();
     result_.statistics.trimmed_surfaces_seen = trimmed_surfaces.size();
+    result_.statistics.standalone_surfaces_seen = standalone_surfaces.size();
     for (const DirectoryEntry *solid : solids) {
 	SolidBuilder builder(*this, *solid);
 	std::unique_ptr<ON_Brep> brep = builder.build();
@@ -1689,53 +3909,59 @@ Importer::run()
 	    ++result_.statistics.omitted;
 	    continue;
 	}
-	const std::string entity_id = std::to_string(solid->id.value());
-	db5_update_attribute(name.c_str(), "importer", "iges-g", wdbp_->dbip);
-	db5_update_attribute(name.c_str(), "source_format", "iges", wdbp_->dbip);
-	db5_update_attribute(name.c_str(), "iges.entity", entity_id.c_str(),
-	    wdbp_->dbip);
-	db5_update_attribute(name.c_str(), "iges.type", "186", wdbp_->dbip);
-	db5_update_attribute(name.c_str(), "iges.topology", "direct-opennurbs",
-	    wdbp_->dbip);
+	if (!write_plate_mode_attributes(name, *brep, *solid)) {
+	    ++result_.statistics.omitted;
+	    continue;
+	}
+	write_entity_attributes(name, *solid);
+	if (!write_entity_color_attribute(name, *solid)) {
+	    ++result_.statistics.omitted;
+	    continue;
+	}
+	db5_update_attribute(name.c_str(), "iges.topology",
+	    "direct-opennurbs", wdbp_->dbip);
+	objects_[solid->id] = name;
+	root_objects_.insert(name);
 	++result_.statistics.breps_written;
     }
-    if (!trimmed_surfaces.empty()) {
-	brep_assembly_result assembly;
-	TrimmedSurfaceBuilder builder(*this, trimmed_surfaces);
-	std::unique_ptr<ON_Brep> brep = builder.build(assembly);
-	if (!brep) {
-	    result_.statistics.omitted += trimmed_surfaces.size();
-	} else {
-	    const DirectoryEntry &source = *trimmed_surfaces.front();
-	    const std::string name = unique_name(source);
-	    if (mk_brep(wdbp_, name.c_str(), brep.get()) < 0) {
-		diagnose(Severity::Error, "brep_write",
-		    "failed to write assembled OpenNURBS B-Rep", &source);
-		result_.statistics.omitted += trimmed_surfaces.size();
-	    } else {
-		const std::string entity_id = std::to_string(source.id.value());
-		const std::string face_count =
-		    std::to_string(trimmed_surfaces.size());
-		const std::string merged_edges =
-		    std::to_string(assembly.merged_edges);
-		db5_update_attribute(name.c_str(), "importer", "iges-g",
-		    wdbp_->dbip);
-		db5_update_attribute(name.c_str(), "source_format", "iges",
-		    wdbp_->dbip);
-		db5_update_attribute(name.c_str(), "iges.entity",
-		    entity_id.c_str(), wdbp_->dbip);
-		db5_update_attribute(name.c_str(), "iges.type", "144",
-		    wdbp_->dbip);
-		db5_update_attribute(name.c_str(), "iges.face_count",
-		    face_count.c_str(), wdbp_->dbip);
-		db5_update_attribute(name.c_str(), "iges.merged_edges",
-		    merged_edges.c_str(), wdbp_->dbip);
-		db5_update_attribute(name.c_str(), "iges.topology",
-		    "direct-opennurbs-assembled", wdbp_->dbip);
-		++result_.statistics.breps_written;
-	    }
+    for (const DirectoryEntry *surface : standalone_surfaces) {
+	if (!is_supported_standalone_surface(surface->type)) {
+	    const bool missing_extent =
+		surface->type == 108 || surface->type == 190;
+	    diagnose(Severity::Warning, "unsupported_standalone_surface",
+		missing_extent ?
+		"standalone plane surface has no finite trim extent" :
+		"direct import does not yet support this standalone surface representation",
+		surface);
+	    ++result_.statistics.omitted;
+	    continue;
+	}
+	if (!write_standalone_surface(*surface))
+	    ++result_.statistics.omitted;
+    }
+
+    std::map<EntityId, std::vector<EntityId> > owners;
+    for (const DirectoryEntry &entry : document_.entities()) {
+	std::vector<EntityId> members;
+	if (!container_members(entry, members))
+	    continue;
+	for (EntityId member : members) {
+	    const DirectoryEntry *member_entry = document_.entity(member);
+	    if (member_entry && member_entry->type == 144)
+		owners[member].push_back(entry.id);
 	}
     }
+    std::map<std::vector<EntityId>,
+	std::vector<const DirectoryEntry *> > partitions;
+    for (const DirectoryEntry *face : trimmed_surfaces)
+	partitions[owners[face->id]].push_back(face);
+    for (const auto &partition : partitions)
+	import_trimmed_components(partition.second);
+
+    if (!write_hierarchy())
+	return result_;
+    if (!write_root())
+	return result_;
     const bool has_errors = std::any_of(result_.diagnostics.begin(),
 	result_.diagnostics.end(), [](const ImportDiagnostic &diagnostic) {
 	    return diagnostic.severity == Severity::Error ||
@@ -1782,12 +4008,20 @@ write_brep_import_report(const std::string &path, const Document &document,
 	<< "  \"options\": {\"repair\": \""
 	<< (options.repair == RepairMode::Safe ? "safe" : "none")
 	<< "\", \"exact\": " << (options.exact ? "true" : "false")
-	<< ", \"strict\": " << (options.strict ? "true" : "false") << "},\n"
+	<< ", \"strict\": " << (options.strict ? "true" : "false")
+	<< ", \"default_plate_thickness\": "
+	<< options.default_plate_thickness << "},\n"
 	<< "  \"statistics\": {\"entities_read\": "
 	<< result.statistics.entities_read << ", \"solids_seen\": "
 	<< result.statistics.solids_seen << ", \"trimmed_surfaces_seen\": "
-	<< result.statistics.trimmed_surfaces_seen << ", \"breps_written\": "
-	<< result.statistics.breps_written << ", \"omitted\": "
+	<< result.statistics.trimmed_surfaces_seen
+	<< ", \"standalone_surfaces_seen\": "
+	<< result.statistics.standalone_surfaces_seen << ", \"breps_written\": "
+	<< result.statistics.breps_written << ", \"components_written\": "
+	<< result.statistics.components_written << ", \"groups_written\": "
+	<< result.statistics.groups_written
+	<< ", \"plate_mode_objects_thickened\": "
+	<< result.statistics.plate_mode_objects_thickened << ", \"omitted\": "
 	<< result.statistics.omitted << ", \"repairs\": "
 	<< result.statistics.repairs << "},\n"
 	<< "  \"diagnostics\": [";
@@ -1829,7 +4063,8 @@ write_brep_import_report(const std::string &path, const Document &document,
 
 extern "C" int
 iges_import_breps(const char *path, struct rt_wdb *wdbp, int exact,
-    int strict, const char *repair_mode, const char *report_path)
+    int strict, const char *repair_mode, double default_plate_thickness,
+    const char *root_name, const char *report_path)
 {
     if (!path || !wdbp)
 	return -1;
@@ -1838,17 +4073,17 @@ iges_import_breps(const char *path, struct rt_wdb *wdbp, int exact,
 	brlcad::iges::Document::parse_file(path);
     const bool mixed_csg = std::any_of(document.entities().begin(),
 	document.entities().end(), [](const brlcad::iges::DirectoryEntry &entry) {
-	    return entry.type >= 150 && entry.type <= 184;
+	    return brlcad::iges::brep_import_detail::
+		is_native_csg_entity_type(entry.type);
 	});
-    const bool has_direct_brep = !document.find(186).empty() ||
-	!document.find(144).empty();
-    if (mixed_csg && has_direct_brep)
-	return 0;
     brlcad::iges::ImportOptions options;
     options.exact = exact != 0;
     options.strict = strict != 0;
+    options.default_plate_thickness = default_plate_thickness;
     if (repair_mode && BU_STR_EQUAL(repair_mode, "none"))
 	options.repair = brlcad::iges::RepairMode::None;
+    options.root_name = root_name && root_name[0] != '\0' ?
+	root_name : "iges_geometry";
     const brlcad::iges::BrepImportResult result =
 	brlcad::iges::import_breps(document, wdbp, options);
 
@@ -1896,14 +4131,15 @@ iges_import_breps(const char *path, struct rt_wdb *wdbp, int exact,
     }
     if (report_path && report_path[0] != '\0' &&
 	(result.statistics.solids_seen > 0 ||
-	 result.statistics.trimmed_surfaces_seen > 0) &&
+	 result.statistics.trimmed_surfaces_seen > 0 ||
+	 result.statistics.standalone_surfaces_seen > 0) &&
 	!brlcad::iges::write_brep_import_report(report_path, document, options,
 	    result)) {
 	bu_log("IGES: unable to write import report %s\n", report_path);
 	return -1;
     }
     if (result.success)
-	return 1;
+	return mixed_csg ? 2 : 1;
     if (!document.valid())
 	return -1;
     const bool import_error = std::any_of(result.diagnostics.begin(),
@@ -1912,10 +4148,10 @@ iges_import_breps(const char *path, struct rt_wdb *wdbp, int exact,
 	    return diagnostic.severity == brlcad::iges::Severity::Error ||
 		diagnostic.severity == brlcad::iges::Severity::Fatal;
 	});
-	const bool direct_entities_seen = result.statistics.solids_seen > 0 ||
-	    result.statistics.trimmed_surfaces_seen > 0;
-    return import_error || (strict && direct_entities_seen) ?
-	-1 : 0;
+    const bool direct_entities_seen = result.statistics.solids_seen > 0 ||
+	result.statistics.trimmed_surfaces_seen > 0 ||
+	result.statistics.standalone_surfaces_seen > 0;
+    return import_error || direct_entities_seen ? -1 : 0;
 }
 
 /*

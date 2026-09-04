@@ -48,6 +48,10 @@ Convinst(void)
 	    continue;
 
 	totinst++;
+	if (dir[i]->direct_imported) {
+	    conv++;
+	    continue;
+	}
 
 	/* read parameters */
 	if (dir[i]->param <= pstart) {

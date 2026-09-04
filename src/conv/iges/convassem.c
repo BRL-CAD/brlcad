@@ -74,6 +74,10 @@ Convassem(void)
 
 	/* Increment count of solid assemblies */
 	totass++;
+	if (dir[i]->direct_imported) {
+	    conv++;
+	    continue;
+	}
 
 	if (dir[i]->param <= pstart) {
 	    bu_log("Illegal parameter pointer for entity D%07d (%s)\n",

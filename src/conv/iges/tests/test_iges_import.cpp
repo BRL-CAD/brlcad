@@ -23,6 +23,7 @@
 #include "raytrace.h"
 #include "rt/geom.h"
 #include "rt/primitives/annot.h"
+#include "rt/primitives/datum.h"
 #include "wdb.h"
 
 namespace {
@@ -103,7 +104,10 @@ sample()
 	{110, 0, "LINE", "110,0,0,0,10,0,0;"},
 	{212, 0, "NOTE", "212,1,5,20,4,1,1.5707963267948966,0,0,0,2,3,0,5HHELLO;"},
 	{214, 1, "LEADER", "214,2,2,1,0,0,0,5,0,10,5;"},
-	{210, 0, "DIM", "210,1,3,5;"}
+	{210, 0, "DIM", "210,1,3,5;"},
+	{116, 0, "POINT", "116,1,2,3;"},
+	{110, 0, "A(B", "110,0,0,0,0,1,0;"},
+	{110, 0, "A[B", "110,0,0,0,0,2,0;"}
     };
     std::vector<int> starts;
     std::vector<int> lines;
@@ -155,6 +159,17 @@ read_annotation(struct db_i *dbip, const char *name, struct rt_db_internal &inte
     return static_cast<const struct rt_annot_internal *>(intern.idb_ptr);
 }
 
+const struct rt_datum_internal *
+read_datum(struct db_i *dbip, const char *name, struct rt_db_internal &intern)
+{
+    struct directory *directory = db_lookup(dbip, name, LOOKUP_QUIET);
+    if (directory == RT_DIR_NULL ||
+	    rt_db_get_internal(&intern, directory, dbip, nullptr) < 0 ||
+	    intern.idb_type != ID_DATUM)
+	return nullptr;
+    return static_cast<const struct rt_datum_internal *>(intern.idb_ptr);
+}
+
 bool
 test_semantic_annotations()
 {
@@ -178,14 +193,20 @@ test_semantic_annotations()
     const brlcad::iges::ImportResult result =
 	brlcad::iges::import_annotations(document, wdbp, options);
     bool passed = expect(result.success, "semantic annotation import failed") &&
-	expect(result.statistics.annotations_written == 3,
+	expect(result.statistics.annotations_written == 5,
 	    "semantic annotation count is wrong") &&
+	expect(result.statistics.datums_written == 1,
+	    "semantic datum count is wrong") &&
 	expect(result.statistics.semantic_groups_written == 1,
 	    "semantic dimension group was not written") &&
 	expect(db_lookup(wdbp->dbip, "drawing", LOOKUP_QUIET) != RT_DIR_NULL,
 	    "semantic drawing root was not written") &&
 	expect(db_lookup(wdbp->dbip, "DIM.annot_group", LOOKUP_QUIET) != RT_DIR_NULL,
-	    "semantic dimension group name is missing");
+	    "semantic dimension group name is missing") &&
+	expect(db_lookup(wdbp->dbip, "A_B.annot", LOOKUP_QUIET) != RT_DIR_NULL,
+	    "first sanitized collision name is missing") &&
+	expect(db_lookup(wdbp->dbip, "A_B.annot.D13", LOOKUP_QUIET) != RT_DIR_NULL,
+	    "sanitized collision did not use its stable IGES entity suffix");
 
     struct rt_db_internal line_internal;
     RT_DB_INTERNAL_INIT(&line_internal);
@@ -234,6 +255,18 @@ test_semantic_annotations()
     passed = expect(have_leader && have_arrowhead,
 	"Leader and arrowhead roles were not preserved") && passed;
     rt_db_free_internal(&leader_internal);
+
+    struct rt_db_internal datum_internal;
+    RT_DB_INTERNAL_INIT(&datum_internal);
+    const struct rt_datum_internal *datum =
+	read_datum(wdbp->dbip, "POINT.datum", datum_internal);
+    passed = expect(datum && datum->type == RT_DATUM_POINT &&
+	    datum->role == RT_DATUM_ROLE_REFERENCE &&
+	    NEAR_EQUAL(datum->pnt[0], 1.0, SMALL_FASTF) &&
+	    NEAR_EQUAL(datum->pnt[1], 2.0, SMALL_FASTF) &&
+	    NEAR_ZERO(datum->pnt[2], SMALL_FASTF),
+	"Point entity was not preserved as a projected reference datum") && passed;
+    rt_db_free_internal(&datum_internal);
 
     struct bu_attribute_value_set attributes;
     bu_avs_init_empty(&attributes);

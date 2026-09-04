@@ -15,6 +15,7 @@
 #include <chrono>
 #include <cmath>
 #include <iostream>
+#include <memory>
 #include <thread>
 #include <vector>
 
@@ -389,6 +390,73 @@ exercise_nurbs_span_bounding_boxes()
 }
 
 
+static bool
+exercise_collapsed_curve_pullback()
+{
+    ON_PlaneSurface surface(ON_xy_plane);
+    if (!surface.SetExtents(0, ON_Interval(-1.0, 1.0), true) ||
+	    !surface.SetExtents(1, ON_Interval(-1.0, 1.0), true) ||
+	    !surface.IsValid())
+	return false;
+
+    const double tolerance = 1.0e-6;
+    ON_LineCurve source_curve(ON_3dPoint(0.0, 0.0, -0.5 * tolerance),
+	ON_3dPoint(0.0, 0.0, 0.5 * tolerance));
+    if (!source_curve.IsValid())
+	return false;
+
+    std::string message;
+    PullbackFailureReason failure = PullbackFailureReason::None;
+    std::unique_ptr<ON_Curve> parameter_curve(brlcad::pullback_curve(
+	&surface, &source_curve, tolerance, tolerance, &message, &failure));
+    return !parameter_curve &&
+	failure == PullbackFailureReason::ParameterCurveCollapsed;
+}
+
+
+static bool
+exercise_validated_curve_pullback()
+{
+    ON_Circle cylinder_circle(ON_xy_plane, 2.0);
+    ON_Cylinder cylinder(cylinder_circle, 5.0);
+    ON_NurbsSurface surface;
+    if (2 != cylinder.GetNurbForm(surface) || !surface.IsValid())
+	return false;
+
+    ON_Plane curve_plane(ON_3dPoint(0.0, 0.0, 2.5),
+	ON_3dVector::XAxis, ON_3dVector::YAxis);
+    ON_Arc source_arc(ON_Circle(curve_plane, 2.0),
+	ON_Interval(0.35, ON_PI + 0.35));
+    ON_NurbsCurve source_curve;
+    if (!source_arc.GetNurbForm(source_curve) || !source_curve.IsValid())
+	return false;
+    source_curve.SetDomain(-2.0, 3.0);
+
+    std::string failure;
+    std::unique_ptr<ON_Curve> parameter_curve(brlcad::pullback_curve(
+	&surface, &source_curve, 1.0e-7, 1.0e-5, &failure));
+    if (!parameter_curve || !parameter_curve->IsValid() ||
+	    parameter_curve->Dimension() != 2 ||
+	    parameter_curve->Domain() != source_curve.Domain()) {
+	if (!failure.empty())
+	    std::cerr << failure << std::endl;
+	return false;
+    }
+
+    const ON_Interval domain = parameter_curve->Domain();
+    const int sample_count = 32;
+    for (int sample = 0; sample <= sample_count; ++sample) {
+	const ON_3dPoint uv = parameter_curve->PointAt(domain.ParameterAt(
+	    static_cast<double>(sample) / sample_count));
+	const ON_3dPoint lifted = surface.PointAt(uv.x, uv.y);
+	if (!lifted.IsValid() || fabs(lifted.z - 2.5) > 1.0e-6 ||
+		fabs(hypot(lifted.x, lifted.y) - 2.0) > 1.0e-6)
+	    return false;
+    }
+    return true;
+}
+
+
 int
 main(int, const char **argv)
 {
@@ -531,6 +599,19 @@ main(int, const char **argv)
      * bounds-checked and sanitizer builds catch cross-indexing the arrays. */
     if (!exercise_adaptive_pullback_refinement())
 	std::cerr << "adaptive pullback refinement failed" << std::endl,
+	valid.store(false);
+
+    /* A 3-D trim lying inside a periodic surface must yield a validated 2-D
+     * parameter curve, not merely a set of individually projected points. */
+    if (!exercise_validated_curve_pullback())
+	std::cerr << "validated curve pullback failed" << std::endl,
+	valid.store(false);
+
+    /* A source boundary which lies within tolerance of one surface point has
+     * no usable parametric span.  Report that case explicitly so an importer
+     * can make a bounded topology decision. */
+    if (!exercise_collapsed_curve_pullback())
+	std::cerr << "collapsed curve pullback classification failed" << std::endl,
 	valid.store(false);
 
     /* Related edge jobs may share immutable surface span boxes without

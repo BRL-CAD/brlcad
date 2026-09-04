@@ -100,6 +100,7 @@ struct iges_directory
     unsigned char rgb[3]; /* Actual color */
     char *mater;	/* material parameter string */
     int referenced;
+    int direct_imported; /* written by the direct OpenNURBS importer */
 /*
  * uses of the "referenced" field:
  *	for solid objects - number of times this entity is referenced by
@@ -272,7 +273,6 @@ extern void write_vertex_list(struct nmgregion *r, struct bu_ptbl *vtab, FILE *f
 extern struct iges_edge *Get_edge(struct iges_edge_use *e_use);
 extern struct vertex *Get_edge_start_vertex(struct iges_edge *e);
 extern struct vertex *Get_edge_end_vertex(struct iges_edge *e);
-extern void usage(const char *);
 extern void Initstack(void);
 extern void Push(union tree *ptr);
 extern union tree *Pop(void);
@@ -296,7 +296,7 @@ extern void Do_subfigs(void);
 extern void Convtrimsurfs(struct bu_list *vlfree);
 extern void Convsurfs(void);
 extern void Convinst(void);
-extern void Convsolids(struct bu_list *vlfree);
+extern void Convsolids(struct bu_list *vlfree, int skip_brep);
 extern void Get_att(void);
 extern void Convtree(void);
 extern void Convassem(void);

@@ -29,7 +29,11 @@ struct BrepImportStatistics {
     size_t entities_read = 0;
     size_t solids_seen = 0;
     size_t trimmed_surfaces_seen = 0;
+    size_t standalone_surfaces_seen = 0;
     size_t breps_written = 0;
+    size_t components_written = 0;
+    size_t groups_written = 0;
+    size_t plate_mode_objects_thickened = 0;
     size_t omitted = 0;
     size_t repairs = 0;
 };
@@ -56,11 +60,12 @@ bool write_brep_import_report(const std::string &path,
 
 __BEGIN_DECLS
 
-/** Compatible command-line bridge.  Returns 1 if direct B-Reps were written,
- * 0 if the document has no directly supported manifold solid, and -1 for a
- * structural or strict-policy failure. */
+/** Compatible command-line bridge.  Returns 1 if direct B-Reps completed the
+ * import, 2 if direct B-Reps were written and legacy CSG entities remain,
+ * 0 if the document has no direct B-Rep entities, and -1 on failure. */
 int iges_import_breps(const char *path, struct rt_wdb *wdbp, int exact,
-    int strict, const char *repair_mode, const char *report_path);
+    int strict, const char *repair_mode, double default_plate_thickness,
+    const char *root_name, const char *report_path);
 
 __END_DECLS
 

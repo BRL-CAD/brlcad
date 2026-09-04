@@ -388,6 +388,8 @@ brep_assemble(ON_Brep &brep, double tolerance,
     ON_wString messages;
     ON_TextLog log(messages);
     report.valid = brep.IsValid(&log);
+    ON_String validation_text(messages);
+    report.validation_log = validation_text.Array() ? validation_text.Array() : "";
     report.solid = report.valid && brep.IsSolid();
     if (!report.valid && report.error == BREP_ASSEMBLY_OK)
 	report.error = BREP_ASSEMBLY_VALIDATION_FAILED;

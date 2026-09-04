@@ -64,6 +64,10 @@ Convtree(void)
 	att_de = 0;			/* For default if there is no attribute entity */
 
 	tottrees++;
+	if (dir[i]->direct_imported) {
+	    conv++;
+	    continue;
+	}
 
 	if (dir[i]->param <= pstart) {
 	    /* Illegal parameter address */

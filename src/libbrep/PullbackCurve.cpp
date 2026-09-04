@@ -41,6 +41,7 @@
 #include <map>
 #include <mutex>
 #include <string>
+#include <sstream>
 
 #if defined(HAVE_WINDOWS_H)
 #  include <windows.h>
@@ -69,6 +70,7 @@ namespace {
  * check. */
 constexpr size_t kMaximumClosestPointSubdivisionNodes = 4096;
 constexpr int kMaximumClosestPointSubdivisionDepth = 32;
+constexpr int kPullbackLiftValidationSegments = 64;
 /* The legacy span-box closest-point search can legitimately reject every
  * span when trimming a numerically narrow NURBS domain does not produce a
  * usable conservative bounding box.  On that failure path, sample the knot
@@ -5060,6 +5062,197 @@ pullback_samples(const ON_Surface* surf,
 	}
     }
     return data;
+}
+
+
+static void
+destroy_pullback_result(PBCData *data)
+{
+    if (!data)
+	return;
+    if (data->segments) {
+	while (!data->segments->empty()) {
+	    delete data->segments->front();
+	    data->segments->pop_front();
+	}
+	delete data->segments;
+    }
+    delete data;
+}
+
+
+static size_t
+pullback_result_sample_count(const PBCData *data)
+{
+    size_t count = 0;
+    if (!data || !data->segments)
+	return count;
+    for (std::list<ON_2dPointArray *>::const_iterator segment =
+	    data->segments->begin(); segment != data->segments->end(); ++segment) {
+	if (*segment)
+	    count += static_cast<size_t>((*segment)->Count());
+    }
+    return count;
+}
+
+
+static ON_Curve *
+pullback_failure(std::string *failure_reason, PullbackFailureReason *failure,
+    PullbackFailureReason reason, const std::string &message)
+{
+    if (failure_reason)
+	*failure_reason = message;
+    if (failure)
+	*failure = reason;
+    return NULL;
+}
+
+static double
+native_surface_parameter(const ON_Surface *surface, int direction,
+    double parameter)
+{
+    const ON_Interval domain = surface->Domain(direction);
+    if (!surface->IsClosed(direction) || domain.Includes(parameter))
+	return parameter;
+    const double period = domain.Length();
+    if (!(period > ON_ZERO_TOLERANCE))
+	return parameter;
+    double offset = fmod(parameter - domain.Min(), period);
+    if (offset < 0.0)
+	offset += period;
+    return domain.Min() + offset;
+}
+
+
+ON_Curve *
+brlcad::pullback_curve(const ON_Surface *surface, const ON_Curve *curve,
+    double tolerance, double flatness, std::string *failure_reason,
+    PullbackFailureReason *failure)
+{
+    if (failure)
+	*failure = PullbackFailureReason::None;
+    if (failure_reason)
+	failure_reason->clear();
+    if (!surface || !curve || !surface->IsValid() || !curve->IsValid() ||
+	    !std::isfinite(tolerance) || !std::isfinite(flatness) ||
+	    !(tolerance > 0.0) || !(flatness > 0.0))
+	return pullback_failure(failure_reason, failure, PullbackFailureReason::ProjectionFailed,
+	    "the surface, curve, tolerance, or flatness was invalid");
+
+    std::shared_ptr<PullbackContext> context(new PullbackContext());
+    PBCData *data = pullback_samples(surface, curve, tolerance, flatness,
+	tolerance, tolerance, context);
+    if (!data || data->rejected_projection_samples != 0 ||
+	    !data->samples_source_validated ||
+	    pullback_result_sample_count(data) < 2) {
+	std::ostringstream reason;
+	reason << "bounded curve-to-surface projection did not produce a "
+	    "complete parameter curve";
+	if (data)
+	    reason << " (" << data->rejected_projection_samples << '/'
+		<< data->projection_samples << " samples rejected, maximum "
+		<< "distance " << data->maximum_projection_distance << ')';
+	destroy_pullback_result(data);
+	return pullback_failure(failure_reason, failure, PullbackFailureReason::ProjectionFailed, reason.str());
+    }
+
+    ON_3dPointArray points;
+    ON_2dPoint previous = ON_2dPoint::UnsetPoint;
+    for (std::list<ON_2dPointArray *>::const_iterator segment =
+	    data->segments->begin(); segment != data->segments->end(); ++segment) {
+	if (!*segment)
+	    continue;
+	for (int sample = 0; sample < (*segment)->Count(); ++sample) {
+	    ON_2dPoint uv = (**segment)[sample];
+	    if (!uv.IsValid()) {
+		destroy_pullback_result(data);
+		return pullback_failure(failure_reason, failure, PullbackFailureReason::ProjectionFailed,
+		    "curve-to-surface projection produced a non-finite parameter");
+	    }
+	    if (previous.IsValid()) {
+		for (int direction = 0; direction < 2; ++direction) {
+		    if (!surface->IsClosed(direction))
+			continue;
+		    const double period = surface->Domain(direction).Length();
+		    if (period > ON_ZERO_TOLERANCE)
+			uv[direction] += std::round((previous[direction] -
+			    uv[direction]) / period) * period;
+		}
+		if (uv.DistanceTo(previous) <= ON_ZERO_TOLERANCE)
+		    continue;
+	    }
+	    points.Append(ON_3dPoint(uv.x, uv.y, 0.0));
+	    previous = uv;
+	}
+    }
+    destroy_pullback_result(data);
+    if (points.Count() < 2)
+	return pullback_failure(failure_reason, failure, PullbackFailureReason::ParameterCurveCollapsed,
+	    "curve-to-surface projection collapsed to one parameter point");
+
+    std::unique_ptr<ON_PolylineCurve> candidate(new ON_PolylineCurve(points));
+    const ON_Interval source_domain = curve->Domain();
+    if (!source_domain.IsIncreasing() ||
+	    !candidate->ChangeDimension(2) ||
+	    !candidate->SetDomain(source_domain.Min(), source_domain.Max()) ||
+	    !candidate->IsValid())
+	return pullback_failure(failure_reason, failure, PullbackFailureReason::ProjectionFailed,
+	    "the projected parameter polyline was invalid");
+
+    ON_NurbsCurve source_nurbs;
+    const ON_NurbsCurve *source = ON_NurbsCurve::Cast(curve);
+    if (!source) {
+	if (!curve->GetNurbForm(source_nurbs) || !source_nurbs.IsValid())
+	    return pullback_failure(failure_reason, failure, PullbackFailureReason::ProjectionFailed,
+		"the source curve could not be converted for lift validation");
+	source = &source_nurbs;
+    }
+
+    const ON_Interval parameter_domain = candidate->Domain();
+    for (int sample = 0; sample <= kPullbackLiftValidationSegments; ++sample) {
+	const double fraction = static_cast<double>(sample) /
+	    kPullbackLiftValidationSegments;
+	const ON_3dPoint projected = candidate->PointAt(
+	    parameter_domain.ParameterAt(fraction));
+	if (!projected.IsValid())
+	    return pullback_failure(failure_reason, failure, PullbackFailureReason::ProjectionFailed,
+		"the projected parameter polyline was non-finite");
+	const double u = native_surface_parameter(surface, 0, projected.x);
+	const double v = native_surface_parameter(surface, 1, projected.y);
+	const ON_3dPoint lifted = surface->PointAt(u, v);
+	double source_parameter = source->Domain().Min();
+	const bool searched = lifted.IsValid() && ON_NurbsCurve_GetClosestPoint(
+	    &source_parameter, source, lifted, 0.0);
+	const ON_3dPoint source_point = searched ?
+	    source->PointAt(source_parameter) : ON_3dPoint::UnsetPoint;
+	const double distance = source_point.IsValid() ?
+	    lifted.DistanceTo(source_point) : DBL_MAX;
+	if (distance > tolerance) {
+	    std::ostringstream reason;
+	    reason << "the projected parameter curve failed dense lift "
+		"validation at sample " << sample << '/'
+		<< kPullbackLiftValidationSegments << " (distance " << distance
+		<< ", tolerance " << tolerance << ", uv " << u << ',' << v
+		<< ", projected " << projected.x << ',' << projected.y
+		<< ", source parameter " << source_parameter
+		<< ", lifted valid " << lifted.IsValid() << ')';
+	    return pullback_failure(failure_reason, failure, PullbackFailureReason::SurfaceDistanceExceeded, reason.str());
+	}
+    }
+
+    return candidate.release();
+}
+
+
+ON_Curve *
+brlcad::pullback_curve(ON_BrepFace *face, const ON_Curve *curve,
+    brlcad::SurfaceTree *UNUSED(tree), double tolerance, double flatness,
+    std::string *failure_reason, PullbackFailureReason *failure)
+{
+    if (!face)
+	return pullback_failure(failure_reason, failure, PullbackFailureReason::ProjectionFailed, "the B-Rep face was null");
+    return pullback_curve(face->SurfaceOf(), curve, tolerance, flatness,
+	failure_reason, failure);
 }
 
 

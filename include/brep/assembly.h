@@ -20,6 +20,10 @@
 #include "common.h"
 #include "brep/defines.h"
 
+#ifdef __cplusplus
+#  include <string>
+#endif
+
 __BEGIN_DECLS
 
 #ifdef __cplusplus
@@ -46,6 +50,7 @@ struct brep_assembly_result {
     bool valid = false;
     bool solid = false;
     enum brep_assembly_error error = BREP_ASSEMBLY_OK;
+    std::string validation_log;
 };
 
 /** Test whether two curves trace the same locus within @p tolerance. */

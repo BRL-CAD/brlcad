@@ -27,10 +27,13 @@
 
 #include <errno.h>
 #include <limits.h>
+#include <math.h>
 #include <stdlib.h>
 
 #include "bu/app.h"
+#include "bu/avs.h"
 #include "bu/debug.h"
+#include "bu/malloc.h"
 #include "bu/opt.h"
 #include "bu/str.h"
 #include "bu/vls.h"
@@ -113,6 +116,20 @@ Parse_debug(struct bu_vls *message, size_t argc, const char **argv,
     return 1;
 }
 
+static void
+usage(const char *argv0, const struct bu_opt_desc *options)
+{
+    char *description = bu_opt_describe(options, NULL);
+    bu_log("Usage: %s [options] -o output.g input.iges\n%s", argv0,
+	description ? description : "");
+    if (description)
+	bu_free(description, "iges-g option description");
+    bu_log("The nurbs, drawings (or 3d-drawings), and trimmed-surfaces modes "
+	"are mutually exclusive. OpenNURBS B-Rep output is the default; mesh "
+	"and polygonal output are explicit fallbacks.\n");
+    bu_log("The name option sets the imported geometry root name.\n");
+}
+
 static const char *msg1 =
 "\nThis IGES file contains solid model entities, but your options do not permit\n\
 converting them to BRL-CAD. You may want to try 'iges-g -o file.g %s' to\n\
@@ -125,13 +142,13 @@ BRL-CAD object will be a 2D drawing, not a solid object. You might also try the\
 '-3' option to get 3D drawings\n";
 
 static const char *msg3 =
-"\nThis IGES file contains spline surfaces, but no solid model entities. All the spline\n\
-surfaces in the IGES file may be combined into a single BRL-CAD spline solid by\n\
+"\nThis IGES file contains spline surfaces, but no solid model entities. Import the\n\
+surfaces directly as OpenNURBS B-Rep geometry with\n\
 'iges-g -n -o file.g %s'\n";
 
 static const char *msg4 =
 "\nThis IGES file contains trimmed surfaces, but no solid model entities.\n\
-Try the '-t' option to convert all the trimmed surfaces into one BRL-CAD solid.\n\
+Import the trimmed faces directly as OpenNURBS B-Rep geometry with\n\
 'iges-g -t -o file.g %s'\n";
 
 void
@@ -179,26 +196,34 @@ Suggestions(void)
 }
 
 
-/*
- * Return 1 if the output database already holds at least one user-visible
- * geometry object (anything not named with a leading underscore, which
- * marks the internal _GLOBAL bookkeeping object), else 0.  Used to decide
- * whether a conversion produced anything renderable.
- */
-static int
-Have_geometry(void)
+static void
+Mark_direct_imports(void)
 {
     struct directory *dp;
 
-    if (!fdout || !fdout->dbip)
-	return 0;
-
+    if (!fdout || !fdout->dbip || !dir)
+	return;
     FOR_ALL_DIRECTORY_START(dp, fdout->dbip) {
-	if (dp->d_namep && dp->d_namep[0] != '_')
-	    return 1;
+	struct bu_attribute_value_set attributes = BU_AVS_INIT_ZERO;
+	if (db5_get_attributes(fdout->dbip, &attributes, dp) == 0) {
+	    const char *value = bu_avs_get(&attributes, "iges.entity");
+	    char *end = NULL;
+	    long parsed = 0;
+	    if (value) {
+		errno = 0;
+		parsed = strtol(value, &end, 10);
+	    }
+	    if (value && !errno && end != value && *end == '\0' &&
+		    parsed > 0 && parsed <= INT_MAX) {
+		const int directory_id = (int)parsed;
+		const int index = IGES_DE2INDEX(directory_id);
+		if (index >= 0 && (size_t)index < totentities && dir[index] &&
+			dir[index]->direct == directory_id)
+		    dir[index]->direct_imported = 1;
+	    }
+	}
+	bu_avs_free(&attributes);
     } FOR_ALL_DIRECTORY_END;
-
-    return 0;
 }
 
 
@@ -207,12 +232,15 @@ main(int argc, char *argv [])
 {
     int i;
     int file_count = 0;
+    int help = 0;
     int drawing_3d = 0;
     int mesh_output = 0;
     int polygon_output = 0;
     int strict_import = 0;
     int exact_import = 0;
     int legacy_drawings = 0;
+    int direct_brep_imported = 0;
+    fastf_t default_plate_thickness = 0.0;
     char *output_file = (char *)NULL;
     char *report_file = (char *)NULL;
     char *repair_mode = (char *)NULL;
@@ -220,6 +248,8 @@ main(int argc, char *argv [])
     struct bu_list *vlfree = &rt_vlfree;
     struct bu_vls option_messages = BU_VLS_INIT_ZERO;
     struct bu_opt_desc options[] = {
+	{"h", "help", "", NULL, &help, "print help and exit"},
+	{"?", "", "", NULL, &help, ""},
 	{"3", "3d-drawings", "", NULL, &drawing_3d,
 	    "preserve drawing model-space planes instead of projecting to XY"},
 	{"d", "drawings", "", NULL, &do_drawings,
@@ -227,15 +257,15 @@ main(int argc, char *argv [])
 	{"m", "mesh", "", NULL, &mesh_output,
 	    "write boundary representations as BoT meshes"},
 	{"n", "nurbs", "", NULL, &do_splines,
-	    "combine rational B-spline surfaces into one solid"},
+	    "import spline surfaces directly as OpenNURBS B-Rep geometry"},
 	{"t", "trimmed-surfaces", "", NULL, &trimmed_surf,
-	    "combine trimmed surfaces into one solid"},
+	    "import trimmed surfaces directly as OpenNURBS B-Rep geometry"},
 	{"p", "polygonal", "", NULL, &polygon_output,
 	    "write boundary representations as polygonal NMG solids"},
 	{"o", "output", "FILE", bu_opt_str, &output_file,
 	    "BRL-CAD output database"},
 	{"N", "name", "NAME", bu_opt_str, &solid_name,
-	    "name of the single requested output object"},
+	    "name of the imported geometry root"},
 	{"x", "rt-debug", "HEX", Parse_debug, &rt_debug,
 	    "librt hexadecimal debug mask"},
 	{"X", "nmg-debug", "HEX", Parse_debug, &nmg_debug,
@@ -244,6 +274,9 @@ main(int argc, char *argv [])
 	    "disallow source-data repairs during direct import"},
 	{"", "strict", "", NULL, &strict_import,
 	    "reject repaired or partial direct imports"},
+	{"", "default-plate-thickness", "MM", bu_opt_fastf_t,
+	    &default_plate_thickness,
+	    "assign this thickness to imported non-solid B-Reps"},
 	{"", "repair", "MODE", bu_opt_str, &repair_mode,
 	    "none or safe (default: safe)"},
 	{"", "report", "FILE", bu_opt_str, &report_file,
@@ -259,17 +292,30 @@ main(int argc, char *argv [])
     argc = bu_opt_parse(&option_messages, argc, (const char **)argv, options);
     if (bu_vls_strlen(&option_messages))
 	bu_log("%s\n", bu_vls_cstr(&option_messages));
+    if (help) {
+	usage(program_name, options);
+	bu_vls_free(&option_messages);
+	return BRLCAD_OK;
+    }
     if (drawing_3d) {
 	do_drawings = 1;
 	do_projection = 0;
     }
+    if (!isfinite(default_plate_thickness) || default_plate_thickness < 0.0)
+	bu_vls_printf(&option_messages,
+	    "default plate thickness must be a finite non-negative value");
+    else if (default_plate_thickness > 0.0 &&
+	    (do_drawings || mesh_output || polygon_output))
+	bu_vls_printf(&option_messages,
+	    "default plate thickness requires OpenNURBS B-Rep output");
     if (bu_vls_strlen(&option_messages) || argc != 1 || !output_file ||
 	    do_drawings + do_splines + trimmed_surf > 1 ||
 	    mesh_output + polygon_output > 1 ||
 	    (repair_mode && !BU_STR_EQUAL(repair_mode, "none") &&
 		!BU_STR_EQUAL(repair_mode, "safe"))) {
+	usage(program_name, options);
 	bu_vls_free(&option_messages);
-	usage(program_name);
+	return BRLCAD_ERROR;
     }
     bu_vls_free(&option_messages);
     if (mesh_output) {
@@ -308,7 +354,7 @@ main(int argc, char *argv [])
     if ((fdout = wdb_fopen(output_file)) == NULL) {
 	bu_log("Cannot open %s\n", output_file);
 	perror("iges-g");
-	usage(program_name);
+	return BRLCAD_ERROR;
     }
     bu_strlcpy(brlcad_file,  output_file, sizeof(brlcad_file));
 
@@ -330,22 +376,24 @@ main(int argc, char *argv [])
 	}
     }
 
-    /* A supported type 186 is assembled directly in OpenNURBS.  Returning
-     * zero deliberately hands unsupported or mixed legacy content to the
-     * established CSG/NMG handlers below. */
-    if (!do_drawings && !trimmed_surf && !do_splines && do_brep) {
+    /* Import all supported boundary representations directly in OpenNURBS.
+     * Native IGES CSG may still be handled below, but direct B-Reps must never
+     * enter the legacy NMG NURBS paths. */
+    if (!do_drawings && do_brep) {
 	const int direct_result = iges_import_breps(argv[0], fdout,
 	    exact_import, strict_import, repair_mode ? repair_mode : "safe",
-	    report_file);
+	    default_plate_thickness, solid_name, report_file);
 	if (direct_result < 0) {
 	    wdb_close(fdout);
 	    bu_exit(BRLCAD_ERROR,
 		"Direct IGES B-Rep import failed for %s\n", argv[0]);
 	}
-	if (direct_result > 0) {
+	if (direct_result == 1 ||
+		(direct_result == 2 && (do_splines || trimmed_surf))) {
 	    wdb_close(fdout);
 	    return BRLCAD_OK;
 	}
+	direct_brep_imported = direct_result == 2;
     }
 
     BU_LIST_INIT(&iges_list.l);
@@ -377,7 +425,8 @@ main(int argc, char *argv [])
 	if (fd == NULL) {
 	    bu_log("Cannot open %s\n", iges_file);
 	    perror("iges-g");
-	    usage(program_name);
+	    wdb_close(fdout);
+	    return BRLCAD_ERROR;
 	}
 
 	bu_log("\n\n\nIGES FILE: %s\n", iges_file);
@@ -399,6 +448,9 @@ main(int argc, char *argv [])
 	pstart = Findp();	/* Find start of parameter section */
 
 	Makedir();	/* Read directory section and build a linked list of entries */
+	const int direct_entities_imported = direct_brep_imported && file_count == 0;
+	if (direct_entities_imported)
+	    Mark_direct_imports();
 
 	Summary();	/* Print a summary of what is in the IGES file */
 
@@ -421,7 +473,7 @@ main(int argc, char *argv [])
 	else {
 	    Convinst();	/* Handle Instances */
 
-	    Convsolids(vlfree);	/* Convert solid entities */
+	    Convsolids(vlfree, direct_entities_imported); /* Convert solid entities */
 
 	    Convtree();	/* Convert Boolean Trees */
 
@@ -431,35 +483,12 @@ main(int argc, char *argv [])
 	     * These are how faithful boundary-rep geometry (e.g. g-iges brep
 	     * output) is expressed, so importing them here lets such files
 	     * round-trip without requiring the -t option. */
-	    for (i = 0; (size_t)i < totentities; i++) {
+	    for (i = 0; !direct_entities_imported && (size_t)i < totentities; i++) {
 		if (dir[i]->type == 144) {
 		    Do_subfigs();	/* Look for Singular Subfigure Instances */
 		    Convtrimsurfs(vlfree);
 		    break;
 		}
-	    }
-	}
-
-	/* Fallback: if brep output was requested but the faithful conversion
-	 * produced nothing renderable (common for trimmed-surface or
-	 * manifold-BREP files whose face loops we cannot yet fully
-	 * reconstruct), import the raw NURBS/analytic surfaces as an
-	 * untrimmed brep so the geometry is still usable.  (The -n path has
-	 * already done this, so skip it there.) */
-	if (do_brep && !do_drawings && !do_splines && !Have_geometry()) {
-	    int have_surf = 0;
-	    for (i = 0; (size_t)i < totentities; i++) {
-		int t = dir[i]->type;
-		if (t == 128 || t == 114 || t == 118 ||
-		    t == 120 || t == 122 || t == 140) {
-		    have_surf = 1;
-		    break;
-		}
-	    }
-	    if (have_surf) {
-		bu_log("\nNo faithful solids were produced; "
-		       "importing raw surfaces as an untrimmed brep\n");
-		Convsurfs();
 	    }
 	}
 

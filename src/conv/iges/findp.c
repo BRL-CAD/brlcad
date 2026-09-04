@@ -80,6 +80,7 @@ Findp(void)
 	for (i = 0; i < totentities; i++) {
 	    BU_ALLOC(dir[i], struct iges_directory);
 	    dir[i]->name = (char *)NULL;
+	    dir[i]->direct_imported = 0;
 	    dir[i]->trans = (-1);
 	}
     } else

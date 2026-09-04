@@ -17,6 +17,11 @@ set(
   iges.brep.g
   iges.brep.mesh.g
   iges.brep.nmg.g
+  iges.brep.plate-default.g
+  iges.brep.plate-source.g
+  iges.brep.plate-thick.g
+  iges.brep.plate-thick.json
+  iges.brep.plate.iges
   iges.brep.roundtrip.g
   iges.export.iges
   iges.export.stdout.iges

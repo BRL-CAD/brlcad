@@ -70,7 +70,6 @@ set(
   summary.c
   tor.c
   trimsurf.c
-  usage.c
   wedge.c
 )
 brlcad_addexec(iges-g "${iges-g_SRCS}" "libwdb;librt;libnmg;libbrep;libbn;libbu;${M_LIBRARY}" FOLDER Conv)

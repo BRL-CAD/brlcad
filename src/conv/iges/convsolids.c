@@ -29,7 +29,7 @@
 #include "./iges_extern.h"
 
 void
-Convsolids(struct bu_list *vlfree)
+Convsolids(struct bu_list *vlfree, int skip_brep)
 {
 
     size_t i;
@@ -81,8 +81,10 @@ Convsolids(struct bu_list *vlfree)
 		conv += ell(i);
 		break;
 	    case 186:
-		totsolids++;
-		conv += brep(i, vlfree);
+		if (!skip_brep) {
+		    totsolids++;
+		    conv += brep(i, vlfree);
+		}
 		break;
 	}
     }

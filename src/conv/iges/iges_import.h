@@ -41,6 +41,7 @@ struct ImportOptions {
     InvalidBrepPolicy invalid_brep = InvalidBrepPolicy::Preserve;
     bool exact = false;
     bool strict = false;
+    double default_plate_thickness = 0.0;
     bool project_drawings = true;
     std::string root_name = "iges_drawing";
 };
@@ -49,6 +50,7 @@ struct ImportStatistics {
     size_t entities_read = 0;
     size_t objects_written = 0;
     size_t annotations_written = 0;
+    size_t datums_written = 0;
     size_t semantic_groups_written = 0;
     size_t omitted = 0;
     size_t repairs = 0;

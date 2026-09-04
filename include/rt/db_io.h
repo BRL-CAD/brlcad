@@ -32,6 +32,7 @@
 /* interface headers */
 #include "vmath.h"
 #include "bu/avs.h"
+#include "bu/vls.h"
 #include "rt/db5.h"
 #include "rt/defines.h"
 #include "rt/resource.h"
@@ -707,6 +708,25 @@ RT_EXPORT extern void db_inmem(struct directory *dp,
 			       struct bu_external *ext,
 			       int flags,
 			       struct db_i *dbip);
+
+/* db_name.c */
+
+/**
+ * Convert a UTF-8 string into a conservative BRL-CAD database object name.
+ * ASCII letters and digits are retained, common Latin characters are
+ * transliterated, and runs of other characters become underscores.  Unicode
+ * characters without a transliteration are represented by their hexadecimal
+ * code point so distinct source names are not silently made identical.
+ *
+ * This routine only produces a name candidate.  Callers writing a database
+ * must still resolve collisions with existing and previously allocated names.
+ * An empty input produces an empty output so the caller can select a
+ * format-appropriate fallback name.
+ *
+ * Returns 0 on success and -1 for invalid arguments.
+ */
+RT_EXPORT extern int db_sanitize_name(struct bu_vls *output,
+				       const char *input);
 
 /* db_lookup.c */
 
