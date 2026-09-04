@@ -344,7 +344,10 @@ create_variant_in_working_g(struct db_i       *wdbip,
 	point_t bmin, bmax;
 	/* If bounds fail, keep -1 and fall back to the non-micro/default floor. */
 	fastf_t bbox_diag = -1.0;
-	if (rt_bound_internal(src_dbip, src_dp, bmin, bmax) == 0)
+	struct bn_tol tol;
+	BN_TOL_INIT(&tol);
+	if (src_intern.idb_meth && src_intern.idb_meth->ft_bbox &&
+		src_intern.idb_meth->ft_bbox(&src_intern, &bmin, &bmax, &tol) == 0)
 		bbox_diag = DIST_PNT_PNT(bmin, bmax);
 
 	fastf_t factor = variant_perturb_factor(src_name, is_sub, idx, bbox_diag);

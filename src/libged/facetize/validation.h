@@ -12,7 +12,14 @@
 #ifndef LIBGED_FACETIZE_VALIDATION_H
 #define LIBGED_FACETIZE_VALIDATION_H
 
+#include "bu/hook.h"
 #include "rt/db_instance.h"
+
+void
+facetize_log_hooks_silence(struct bu_hook_list *saved_hooks);
+
+void
+facetize_log_hooks_restore(struct bu_hook_list *saved_hooks);
 
 long
 facetize_csg_metrics(struct db_i *dbip, const char *object_name,

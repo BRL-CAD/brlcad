@@ -31,24 +31,11 @@ ged_plugin_library(ged-facetize
 # Plugin requires subprocess to work
 add_dependencies(ged-facetize ged_exec facetize_process)
 
-# Old version of facetize
-set(OLD_FACETIZE_SRCS
-  old_facetize.cpp
-  old_facetize_log.c
-)
-
-ged_plugin_library(ged-old_facetize
-  ${OLD_FACETIZE_SRCS}
-  INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}
-  LIBS ${FACETIZE_LIBS}
-)
-
 cmakefiles(
   CMakeLists.txt
   tess_opts.h
   ged_facetize.h
   orchestrator.h
-  old_facetize.h
   process.h
   transfer.h
   validation.h

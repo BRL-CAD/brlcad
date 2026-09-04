@@ -72,6 +72,9 @@
  *   TC7  - NMG Boolean isolation and output modes: verifies that an interrupted
  *          worker cannot commit output, then exercises BoT, NMG, region, and
  *          in-place output paths.
+ *
+ *   TC8  - implicit solid roots survive the working-database close and remain
+ *          valid members of the imported output hierarchy.
  */
 
 #include "common.h"
@@ -1298,6 +1301,67 @@ tc7_nmg_modes(const char *tmpdir, int verbose)
 }
 
 /* ------------------------------------------------------------------ */
+/* TC8: implicit root replacement persists across database reopen      */
+/* ------------------------------------------------------------------ */
+static int
+tc8_implicit_root_persistence(const char *tmpdir, int verbose)
+{
+    bu_log("[regress_facetize] TC8: implicit root persistence...\n");
+
+    struct bu_vls gpath = BU_VLS_INIT_ZERO;
+    bu_vls_printf(&gpath, "%s/tc8_implicit_root.g", tmpdir);
+    const char *gfile = bu_vls_cstr(&gpath);
+    if (bu_file_exists(gfile, NULL))
+	bu_file_delete(gfile);
+
+    struct db_i *dbip = db_create(gfile, 5);
+    if (!dbip) {
+	bu_vls_free(&gpath);
+	return BRLCAD_ERROR;
+    }
+    struct rt_wdb *wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DEFAULT);
+    point_t region_points[8] = {
+	{0.0, 0.0, 0.0}, {10.0, 0.0, 0.0},
+	{10.0, 10.0, 0.0}, {0.0, 10.0, 0.0},
+	{0.0, 0.0, 10.0}, {10.0, 0.0, 10.0},
+	{10.0, 10.0, 10.0}, {0.0, 10.0, 10.0}
+    };
+    point_t loose_points[8] = {
+	{20.0, 0.0, 0.0}, {30.0, 0.0, 0.0},
+	{30.0, 10.0, 0.0}, {20.0, 10.0, 0.0},
+	{20.0, 0.0, 10.0}, {30.0, 0.0, 10.0},
+	{30.0, 10.0, 10.0}, {20.0, 10.0, 10.0}
+    };
+    if (!wdbp || write_arb8(wdbp, "region.s", region_points) < 0 ||
+	    write_arb8(wdbp, "loose.s", loose_points) < 0 ||
+	    write_comb1(wdbp, "box.r", "region.s", 1) < 0 ||
+	    write_comb2(wdbp, "assembly.c", "box.r", 'u',
+		    "loose.s", 'u') < 0) {
+	if (wdbp)
+	    wdb_close(wdbp);
+	bu_vls_free(&gpath);
+	return BRLCAD_ERROR;
+    }
+    wdb_close(wdbp);
+
+    const char *facetize_args[] = {
+	"facetize", "-r", "assembly.c", "assembly.regions", NULL
+    };
+    int ret = run_facetize_command(gfile, 4, facetize_args, verbose);
+    if (ret == BRLCAD_OK &&
+	    (check_object_type(gfile, "assembly.regions", ID_COMBINATION) != BRLCAD_OK ||
+	     check_object_type(gfile, "facetize_assembly.c", ID_COMBINATION) != BRLCAD_OK ||
+	     check_bot_exists(gfile, "box.r.bot") != BRLCAD_OK ||
+	     check_bot_exists(gfile, "facetize_loose.s") != BRLCAD_OK))
+	ret = BRLCAD_ERROR;
+
+    bu_log("[regress_facetize] TC8: %s\n",
+	    ret == BRLCAD_OK ? "PASS" : "FAIL");
+    bu_vls_free(&gpath);
+    return ret;
+}
+
+/* ------------------------------------------------------------------ */
 /* main                                                                 */
 /* ------------------------------------------------------------------ */
 
@@ -1329,6 +1393,7 @@ return 1;
     if (tc5_near_coplanar_subTOL(tmpdir, verbose) != BRLCAD_OK) ret = 1;
     if (tc6_havoc_wind9_pattern(tmpdir, verbose) != BRLCAD_OK) ret = 1;
     if (tc7_nmg_modes(tmpdir, verbose)             != BRLCAD_OK) ret = 1;
+    if (tc8_implicit_root_persistence(tmpdir, verbose) != BRLCAD_OK) ret = 1;
 
     if (ret == 0)
 bu_log("[regress_facetize] All tests PASSED\n");

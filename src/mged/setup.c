@@ -191,7 +191,6 @@ static struct cmdtab mged_cmdtab[] = {
     {MGED_CMD_MAGIC, "exists", cmd_ged_plain_wrapper, ged_exec_exists, NULL},
     {MGED_CMD_MAGIC, "facedef", f_facedef, GED_FUNC_PTR_NULL, NULL},
     {MGED_CMD_MAGIC, "facetize", cmd_ged_plain_wrapper, ged_exec_facetize, NULL},
-    {MGED_CMD_MAGIC, "facetize_old", cmd_ged_plain_wrapper, ged_exec_facetize_old, NULL},
     {MGED_CMD_MAGIC, "fb2pix", cmd_ged_dm_wrapper, ged_exec_fb2pix, NULL},
     {MGED_CMD_MAGIC, "fbclear", cmd_ged_dm_wrapper, ged_exec_fbclear, NULL},
     {MGED_CMD_MAGIC, "find_arb_edge", cmd_ged_plain_wrapper, ged_exec_find_arb_edge, NULL},

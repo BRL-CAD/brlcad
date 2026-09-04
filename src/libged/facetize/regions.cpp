@@ -1006,16 +1006,70 @@ struct PerturCsgCtx {
     const FacetizeVariantPlan *vplan;
     std::vector<std::string>   path_stack;
     std::set<std::string>      written;      /* names already written to inmem */
+    bool                       valid = true;
 };
 
 /* Forward declarations (mutually recursive). */
 static union tree  *_pcsg_copy_tree(PerturCsgCtx &ctx, union tree *tp, bool in_sub);
 static bool         _pcsg_make_comb(PerturCsgCtx &ctx, const char *comb_name, bool in_sub);
 
+static bool
+_pcsg_write_solid(PerturCsgCtx &ctx, const char *source_name,
+	const char *output_name, const FacetizeVariantPlan::VariantRec *variant)
+{
+    if (!source_name || !output_name)
+	return false;
+    if (ctx.written.find(std::string(output_name)) != ctx.written.end())
+	return true;
+
+    struct directory *source_dp =
+	db_lookup(ctx.src_dbip, source_name, LOOKUP_QUIET);
+    if (!source_dp || (source_dp->d_flags & RT_DIR_COMB))
+	return false;
+
+    struct rt_db_internal source_internal;
+    RT_DB_INTERNAL_INIT(&source_internal);
+    if (rt_db_get_internal(&source_internal, source_dp, ctx.src_dbip, NULL) < 0)
+	return false;
+
+    bool written = false;
+    int primitive_type = source_internal.idb_type;
+    if (variant && primitive_type >= 0 && primitive_type < ID_MAXIMUM &&
+	    OBJ[primitive_type].ft_perturb) {
+	struct rt_db_internal *variant_internal = NULL;
+	int perturb_result = OBJ[primitive_type].ft_perturb(&variant_internal,
+		&source_internal, 0, variant->factor);
+	if (perturb_result == BRLCAD_OK && variant_internal) {
+	    written = (wdb_put_internal(ctx.inmem_wdbp, output_name,
+		    variant_internal, 1.0) >= 0);
+	    BU_PUT(variant_internal, struct rt_db_internal);
+	} else if (variant_internal) {
+	    rt_db_free_internal(variant_internal);
+	    BU_PUT(variant_internal, struct rt_db_internal);
+	}
+    }
+
+    if (written) {
+	rt_db_free_internal(&source_internal);
+    } else {
+	/* Keep validation available when perturbation itself is unsupported:
+	 * the unmodified CSG is still a better reference than no CSG. */
+	written = (wdb_put_internal(ctx.inmem_wdbp, output_name,
+		&source_internal, 1.0) >= 0);
+    }
+
+    if (written)
+	ctx.written.insert(std::string(output_name));
+    return written;
+}
+
 static union tree *
 _pcsg_copy_tree(PerturCsgCtx &ctx, union tree *tp, bool in_sub)
 {
-    if (!tp) return NULL;
+    if (!tp) {
+	ctx.valid = false;
+	return NULL;
+    }
 
     union tree *nt;
     BU_ALLOC(nt, union tree);
@@ -1024,91 +1078,43 @@ _pcsg_copy_tree(PerturCsgCtx &ctx, union tree *tp, bool in_sub)
 
     switch (tp->tr_op) {
 	case OP_DB_LEAF: {
-			     const char *leaf = tp->tr_l.tl_name;
-			     struct directory *ldp = db_lookup(ctx.src_dbip, leaf, LOOKUP_QUIET);
-			     std::string use_name = leaf;
+	    const char *leaf = tp->tr_l.tl_name;
+	    struct directory *ldp = db_lookup(ctx.src_dbip, leaf, LOOKUP_QUIET);
+	    std::string use_name = leaf;
 
-			     if (ldp && (ldp->d_flags & RT_DIR_COMB)) {
-				 /* Intermediate comb: recurse, writing it into the inmem db. */
-				 _pcsg_make_comb(ctx, leaf, in_sub);
-				 /* Use the same name in the inmem db. */
-			     } else {
-				 /* Solid leaf: check for a variant. */
-				 std::string path_key;
-				 for (const auto &seg : ctx.path_stack)
-				     path_key += "/" + seg;
-				 path_key += "/" + std::string(leaf);
-				 std::string role_key = path_key + (in_sub ? "#sub" : "#base");
-				 auto it = ctx.vplan->inst_to_variant.find(role_key);
+	    if (ldp && (ldp->d_flags & RT_DIR_COMB)) {
+		/* Intermediate comb: recurse, writing it into the inmem db. */
+		if (!_pcsg_make_comb(ctx, leaf, in_sub))
+		    ctx.valid = false;
+	    } else if (ldp) {
+		/* Solid leaf: check for a variant. */
+		std::string path_key;
+		for (const auto &seg : ctx.path_stack)
+		    path_key += "/" + seg;
+		path_key += "/" + std::string(leaf);
+		std::string role_key = path_key + (in_sub ? "#sub" : "#base");
+		const FacetizeVariantPlan::VariantRec *variant = NULL;
+		auto assignment = ctx.vplan->inst_to_variant.find(role_key);
+		if (assignment != ctx.vplan->inst_to_variant.end()) {
+		    auto record = ctx.vplan->variant_recs.find(assignment->second);
+		    if (record != ctx.vplan->variant_recs.end()) {
+			use_name = assignment->second;
+			variant = &record->second;
+		    }
+		}
+		if (!_pcsg_write_solid(ctx, leaf, use_name.c_str(), variant))
+		    ctx.valid = false;
+	    } else {
+		ctx.valid = false;
+	    }
 
-				 if (it != ctx.vplan->inst_to_variant.end()) {
-				     /* Variant exists: recreate the perturbed CSG from src_dbip. */
-				     const std::string &vname = it->second;
-				     use_name = vname;
-				     if (ctx.written.find(vname) == ctx.written.end()) {
-					 auto rec_it = ctx.vplan->variant_recs.find(vname);
-					 if (rec_it != ctx.vplan->variant_recs.end() && ldp) {
-					     struct rt_db_internal src_intern;
-					     RT_DB_INTERNAL_INIT(&src_intern);
-					     if (rt_db_get_internal(&src_intern, ldp, ctx.src_dbip,
-							 NULL) >= 0) {
-						 int ptype = src_intern.idb_type;
-						 struct rt_db_internal *var_intern = NULL;
-						 bool ok = false;
-						 if (OBJ[ptype].ft_perturb &&
-							 OBJ[ptype].ft_perturb(&var_intern, &src_intern, 0,
-							     rec_it->second.factor) == BRLCAD_OK &&
-							 var_intern) {
-						     if (wdb_put_internal(ctx.inmem_wdbp, vname.c_str(),
-								 var_intern, 1.0) >= 0)
-							 ok = true;
-						     /* wdb_put_internal frees var_intern's idb_ptr;
-						      * we still need to free the struct itself. */
-						     BU_PUT(var_intern, struct rt_db_internal);
-						 }
-						 if (!ok) {
-						     /* Fallback: write original CSG under variant name. */
-						     if (wdb_put_internal(ctx.inmem_wdbp, vname.c_str(),
-								 &src_intern, 1.0) >= 0)
-							 ok = true;
-						     /* src_intern freed by wdb_put_internal */
-						 } else {
-						     rt_db_free_internal(&src_intern);
-						 }
-						 if (ok) ctx.written.insert(vname);
-					     }
-					 } else {
-					     /* No variant record — fall back to original name. */
-					     use_name = leaf;
-					 }
-				     }
-				 }
-
-				 /* Ensure the (possibly original) leaf exists in the inmem db. */
-				 if (ctx.written.find(use_name) == ctx.written.end()) {
-				     struct directory *udp =
-					 db_lookup(ctx.src_dbip, use_name.c_str(), LOOKUP_QUIET);
-				     if (udp) {
-					 struct rt_db_internal leaf_intern;
-					 RT_DB_INTERNAL_INIT(&leaf_intern);
-					 if (rt_db_get_internal(&leaf_intern, udp, ctx.src_dbip,
-						     NULL) >= 0) {
-					     if (wdb_put_internal(ctx.inmem_wdbp, use_name.c_str(),
-							 &leaf_intern, 1.0) >= 0)
-						 ctx.written.insert(use_name);
-					     /* leaf_intern freed by wdb_put_internal */
-					 }
-				     }
-				 }
-			     }
-
-			     nt->tr_l.tl_name = bu_strdup(use_name.c_str());
-			     if (tp->tr_l.tl_mat) {
-				 nt->tr_l.tl_mat = (matp_t)bu_malloc(sizeof(mat_t), "tl_mat cp");
-				 MAT_COPY(nt->tr_l.tl_mat, tp->tr_l.tl_mat);
-			     }
-			     break;
-			 }
+	    nt->tr_l.tl_name = bu_strdup(use_name.c_str());
+	    if (tp->tr_l.tl_mat) {
+		nt->tr_l.tl_mat = (matp_t)bu_malloc(sizeof(mat_t), "tl_mat cp");
+		MAT_COPY(nt->tr_l.tl_mat, tp->tr_l.tl_mat);
+	    }
+	    break;
+	}
 	case OP_UNION:
 	case OP_INTERSECT:
 			 nt->tr_b.tb_left  = _pcsg_copy_tree(ctx, tp->tr_b.tb_left,  in_sub);
@@ -1138,7 +1144,7 @@ _pcsg_make_comb(PerturCsgCtx &ctx, const char *comb_name, bool in_sub)
 	return true;  /* already written */
 
     struct directory *dp = db_lookup(ctx.src_dbip, comb_name, LOOKUP_QUIET);
-    if (!dp) return false;
+    if (!dp || !(dp->d_flags & RT_DIR_COMB)) return false;
 
     struct rt_db_internal intern;
     RT_DB_INTERNAL_INIT(&intern);
@@ -1147,11 +1153,22 @@ _pcsg_make_comb(PerturCsgCtx &ctx, const char *comb_name, bool in_sub)
 
     struct rt_comb_internal *orig = (struct rt_comb_internal *)intern.idb_ptr;
 
+    if (!orig->tree) {
+	rt_db_free_internal(&intern);
+	return false;
+    }
+
     ctx.path_stack.push_back(std::string(comb_name));
     union tree *new_tree = _pcsg_copy_tree(ctx, orig->tree, in_sub);
     ctx.path_stack.pop_back();
 
     rt_db_free_internal(&intern);
+
+    if (!new_tree || !ctx.valid) {
+	if (new_tree)
+	    db_free_tree(new_tree);
+	return false;
+    }
 
     struct rt_comb_internal *new_comb;
     BU_ALLOC(new_comb, struct rt_comb_internal);
@@ -1202,7 +1219,23 @@ _create_perturbed_csg_db(struct db_i *src_dbip, const char *region_name,
     ctx.inmem_wdbp  = inmem_wdbp;
     ctx.vplan       = vplan;
 
-    if (!_pcsg_make_comb(ctx, region_name, false)) {
+    struct directory *root_dp = db_lookup(src_dbip, region_name, LOOKUP_QUIET);
+    bool copied = false;
+    if (root_dp && (root_dp->d_flags & RT_DIR_COMB)) {
+	copied = _pcsg_make_comb(ctx, region_name, false);
+    } else if (root_dp) {
+	std::string role_key = "/" + std::string(region_name) + "#base";
+	const FacetizeVariantPlan::VariantRec *variant = NULL;
+	auto assignment = vplan->inst_to_variant.find(role_key);
+	if (assignment != vplan->inst_to_variant.end()) {
+	    auto record = vplan->variant_recs.find(assignment->second);
+	    if (record != vplan->variant_recs.end())
+		variant = &record->second;
+	}
+	copied = _pcsg_write_solid(ctx, region_name, region_name, variant);
+    }
+
+    if (!copied || !ctx.valid) {
 	db_close(inmem_dbip);
 	return NULL;
     }
@@ -1866,11 +1899,26 @@ _ged_facetize_regions(struct _ged_facetize_state *s, const FacetizePlan &plan)
 	    }
 	} else {
 	    struct directory *bot_dp = db_lookup(wdbip, bu_vls_cstr(&bname), LOOKUP_QUIET);
-	    if (!wdp || !bot_dp || db_delete(wdbip, wdp) != 0 || db_dirdelete(wdbip, wdp) != 0 ||
-		    db_rename(wdbip, bot_dp, dpw[0]->d_namep) < 0) {
-		if (s->verbosity >= 0)
-		    bu_log("regions.cpp:%d Failed to replace implicit root %s.\n", __LINE__, dpw[0]->d_namep);
+	    struct rt_db_internal bot_internal;
+	    RT_DB_INTERNAL_INIT(&bot_internal);
+	    if (!wdp || !bot_dp ||
+		    rt_db_get_internal(&bot_internal, bot_dp, wdbip, NULL) < 0) {
 		bret = BRLCAD_ERROR;
+	    } else if (db_delete(wdbip, wdp) != 0 ||
+		    db_dirdelete(wdbip, wdp) != 0 ||
+		    db_rename(wdbip, bot_dp, dpw[0]->d_namep) != 0) {
+		rt_db_free_internal(&bot_internal);
+		bret = BRLCAD_ERROR;
+	    } else {
+		/* db_rename updates only the in-memory directory entry.  Rewriting
+		 * the object makes its new name survive closing the working database. */
+		if (rt_db_put_internal(bot_dp, wdbip, &bot_internal) < 0)
+		    bret = BRLCAD_ERROR;
+	    }
+	    if (bret != BRLCAD_OK) {
+		if (s->verbosity >= 0)
+		    bu_log("regions.cpp:%d Failed to replace implicit root %s.\n",
+			    __LINE__, dpw[0]->d_namep);
 		break;
 	    }
 	}
