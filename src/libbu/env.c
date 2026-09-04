@@ -388,30 +388,44 @@ mem_sysctl(int type, size_t *memsz)
 	return -2;
 
 #if defined(__FreeBSD__) && defined(HAVE_SYS_SYSCTL_H) && defined(HAVE_SYSCTL)
-    static const char *const page_size_name = "hw.pagesize";
     static const char *const total_memory_name = "hw.physmem";
-    static const char *const free_pages_name = "vm.stats.vm.v_free_count";
+    static const char *const available_page_names[] = {
+	"vm.stats.vm.v_free_count",
+	"vm.stats.vm.v_inactive_count",
+	"vm.stats.vm.v_cache_count"
+    };
 
-    uint64_t page_size = 0;
-    size_t value_size = sizeof(page_size);
-    if (sysctlbyname(page_size_name, &page_size, &value_size, NULL, 0) != 0 ||
-	    page_size == 0)
-	return -1;
     if (type == BU_MEM_PAGE_SIZE)
-	return mem_size_from_uint64(page_size, memsz);
+	return mem_page_size(memsz);
 
     uint64_t memory = 0;
-    value_size = sizeof(memory);
-    const char *memory_name = total_memory_name;
     if (type == BU_MEM_AVAIL) {
-	memory_name = free_pages_name;
-	if (sysctlbyname(memory_name, &memory, &value_size, NULL, 0) != 0 ||
-		memory > UINT64_MAX / page_size)
-	    return -1;
-	memory *= page_size;
-    } else if (sysctlbyname(memory_name, &memory, &value_size, NULL, 0) != 0) {
-	return -1;
+	/* FreeBSD's free queue omits clean inactive and cache pages that the VM
+	 * can reclaim without paging another process.  Counting only v_free_count
+	 * makes an otherwise idle system appear memory-starved and needlessly
+	 * disables memory-aware parallel work. */
+	for (size_t i = 0; i < sizeof(available_page_names) / sizeof(available_page_names[0]); i++) {
+	    uint32_t pages = 0;
+	    size_t value_size = sizeof(pages);
+	    if (sysctlbyname(available_page_names[i], &pages, &value_size,
+		    NULL, 0) != 0 || value_size != sizeof(pages)) {
+		/* v_free_count is required.  Cache accounting is absent on some
+		 * supported FreeBSD versions, so supplementary queues are optional. */
+		if (i == 0)
+		    return -1;
+		continue;
+	    }
+	    if ((uint64_t)pages > UINT64_MAX - memory)
+		return -1;
+	    memory += (uint64_t)pages;
+	}
+	return mem_pages_to_bytes(memory, memsz);
     }
+
+    size_t value_size = sizeof(memory);
+    if (sysctlbyname(total_memory_name, &memory, &value_size, NULL, 0) != 0 ||
+	    (value_size != sizeof(uint32_t) && value_size != sizeof(uint64_t)))
+	return -1;
 
     return mem_size_from_uint64(memory, memsz);
 #endif
