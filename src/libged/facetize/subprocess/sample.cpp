@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libged/facetize/continuation.cpp
+/** @file libged/facetize/subprocess/sample.cpp
  *
- * The facetize command's Continuation Method implementation.
+ * Ray sampling support for point-based facetization methods.
  */
 
 #include "common.h"
@@ -28,11 +28,8 @@
 #include "bu/datetime.h"
 #include "bg/trimesh.h"
 #include "raytrace.h"
-#include "analyze/polygonize.h"
 #include "../../ged_private.h"
 #include "./tessellate.h"
-
-#define FACETIZE_MEMORY_THRESHOLD 150000000
 
 static void
 _rt_pnts_bbox(point_t rpp_min, point_t rpp_max, struct rt_pnts_internal *pnts)
@@ -148,7 +145,7 @@ _tess_pnts_sample(const char *oname, struct db_i *dbip, tess_opts *s)
 
     /* Find the smallest value from either the bounding box lengths or the avg
      * thickness observed by the rays.  Some fraction of this value is our box
-     * size for the polygonizer and the decimation routine */
+     * size for point-based reconstruction and decimation. */
     double min_len = (xlen < ylen) ? xlen : ylen;
     min_len = (min_len < zlen) ? min_len : zlen;
     min_len = (min_len < s->pnt_options.avg_thickness) ? min_len : s->pnt_options.avg_thickness;

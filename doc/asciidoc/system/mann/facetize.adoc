@@ -133,7 +133,7 @@ Resume an incomplete facetization process (will utilize cached data from a previ
 
 
 *--methods*::
-Accepts a comma separated list of one or more facetization methods to use. The default is to try all algorithms available as needed, but if a user knows they want to try a specific methodology they can call it out using this option.
+Accepts a comma separated list of one or more facetization methods to use. The default tries NMG tessellation first, Manifold Dual Contouring (MDC) second, and SPSR as a final fallback. Other listed methods may be selected explicitly if a user wants to try a specific methodology.
 
 
 *--method-opts*::
@@ -245,21 +245,15 @@ mged>**facetize --tolerate-failures large_model large_model.partial.bot**
 
 ====
 
-.Increase Decimation in CM Mode
+.Refine a Manifold Dual Contouring conversion
 [example]
 ====
-mged>**facetize --methods CM --method-opts feature_size=0.06 d_feature_size=2.0 ellipse.r ell.bot**
+This selects MDC directly and requests a finer cell size with a larger ray
+budget than the default:
 
-The default settings on this object in CM mode will produce a little over 8000 faces in the final bot, but the addition of the *d_feature_size* option with a >1.5 value has dramatically reduced the count to 104.
+mged>**facetize --methods MDC --method-opts "MDC feature_size=0.1 max_rays=400000" ellipse.r ell.bot**
 
-====
-
-.Decrease Decimation in CM Mode
-[example]
-====
-mged>**facetize --methods CM --method-opts feature_size=0.06 d_feature_size=0.01 ellipse.r ell.bot**
-
-If the intent is preserve a more detailed mesh, reducing *decimation-feature-size* will keep more of the original triangles - in the above example, almost 250 thousand of the original 6.9 million faces were retained. NOTE: use lower values here cautiously, as extremely large meshes can be very difficult for many tools to deal with.
+Smaller feature sizes increase mesh detail, ray count, memory use, and runtime.
 
 ====
 

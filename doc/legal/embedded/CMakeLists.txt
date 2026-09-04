@@ -55,7 +55,6 @@ brlcad_manage_files(pbrt.txt                   ${DOC_DIR}/legal/embedded TRIGGER
 brlcad_manage_files(picohash.txt               ${DOC_DIR}/legal/embedded TRIGGER gist)
 brlcad_manage_files(pixcii.txt                 ${DOC_DIR}/legal/embedded TRIGGER libicv)
 brlcad_manage_files(point_in_polygon.txt       ${DOC_DIR}/legal/embedded TRIGGER libbg)
-brlcad_manage_files(polygonizer.txt            ${DOC_DIR}/legal/embedded TRIGGER libanalyze)
 brlcad_manage_files(predicates.txt             ${DOC_DIR}/legal/embedded TRIGGER libbg)
 brlcad_manage_files(profont.txt                ${DOC_DIR}/legal/embedded TRIGGER libbu)
 brlcad_manage_files(pstdint.txt                ${DOC_DIR}/legal/embedded TRIGGER libbu)
