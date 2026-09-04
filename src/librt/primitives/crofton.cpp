@@ -45,24 +45,28 @@
  * intersecting closed surface), and total_chord is the sum of solid
  * segment lengths.
  *
- * References:
- *   Li et al. (2003), "Using low-discrepancy sequences and the Crofton
- *   formula to compute surface areas of geometric models",
- *   Computer-Aided Design 35, 771-782.
- *
- *   Liu et al. (2010), "Surface area estimation of digitized 3D objects
- *   using quasi-Monte Carlo methods", Pattern Recognition 43, 3900-3909.
+ * Chord endpoints are independent pseudorandom points on the bounding
+ * sphere.  Reinitializing the generator with a fixed seed makes sampling
+ * reproducible without changing the ordinary Monte Carlo convergence
+ * behavior on which the estimator's stability checks rely.
  */
 
 #include "common.h"
 
+#include <chrono>
 #include <climits>
+#include <condition_variable>
 #include <cstdint>
+#include <exception>
+#include <mutex>
+#include <random>
 #include <stdlib.h>
 #include <math.h>
-#include <random>
+#include <stdexcept>
 #include <string.h>
+#include <thread>
 #include <time.h>
+#include <vector>
 
 #include "vmath.h"
 #include "bu/log.h"
@@ -100,8 +104,15 @@
 #define RT_CROFTON_STABILITY_MIN_WINDOWS   2u
 
 /** Fixed seed for reproducible estimates in tests and cross-platform runs. */
-#define RT_CROFTON_RNG_SEED 0x9e3779b97f4a7c15ULL
+#define RT_CROFTON_RNG_SEED UINT64_C(0x9e3779b97f4a7c15)
 
+/** Two sphere coordinates for each of two chord endpoints. */
+#define RT_CROFTON_RANDOM_VALUES_PER_RAY 4u
+
+/** Convert the high 53 random bits exactly to a double in [0, 1). */
+static constexpr unsigned int CROFTON_RANDOM_SHIFT = 11u;
+static constexpr double CROFTON_RANDOM_SCALE =
+    1.0 / 9007199254740992.0;
 
 /* ------------------------------------------------------------------ */
 /* Internal types                                                       */
@@ -110,6 +121,7 @@
 struct crofton_ray {
     point_t r_pt;
     vect_t  r_dir;
+    size_t  id;
 };
 
 struct crofton_shared {
@@ -117,14 +129,19 @@ struct crofton_shared {
     size_t  total_crossings; /* in+out hit events */
     double  total_chord;     /* solid segment length sum (mm) */
     size_t  total_rays;      /* rays fired (hits + misses) */
+    size_t  ray_offset;      /* first identifier in this sample stream */
     point_t *points;
     size_t point_count;
     size_t point_capacity;
+    struct rt_crofton_segment *segments;
+    size_t segment_count;
+    size_t segment_capacity;
     bool collect_points;
+    bool collect_segments;
 };
 
 struct crofton_worker_data {
-    struct application    *ap;        /* per-CPU application struct */
+    struct application     ap;        /* per-CPU application struct */
     struct crofton_ray    *rays;      /* shared ray array (read-only) */
     size_t                 start;
     size_t                 end;
@@ -135,6 +152,10 @@ struct crofton_worker_data {
     point_t               *local_points;
     size_t                 local_point_count;
     size_t                 local_point_capacity;
+    struct rt_crofton_segment *local_segments;
+    size_t                 local_segment_count;
+    size_t                 local_segment_capacity;
+    size_t                 current_ray;
 };
 
 
@@ -143,45 +164,87 @@ struct crofton_worker_data {
 /* ------------------------------------------------------------------ */
 
 static int
-crofton_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs))
+crofton_hit(struct application *ap, struct partition *PartHeadp,
+    struct seg *UNUSED(segs))
 {
-    struct crofton_worker_data *wd = (struct crofton_worker_data *)ap->a_uptr;
-
+    struct crofton_worker_data *worker =
+        (struct crofton_worker_data *)ap->a_uptr;
     size_t crossings = 0;
-    double chord     = 0.0;
+    double chord = 0.0;
 
-    struct partition *pp;
-    for (pp = PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw) {
-	/* Each partition contributes an in-hit and an out-hit */
-	crossings += 2;
-	chord += pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;
-	if (wd->shared->collect_points) {
-	    if (wd->local_point_count + 2 > wd->local_point_capacity) {
-		const size_t initial_capacity = 1024;
-		size_t new_capacity = wd->local_point_capacity ?
-		    2 * wd->local_point_capacity : initial_capacity;
-		while (new_capacity < wd->local_point_count + 2)
-		    new_capacity *= 2;
-		wd->local_points = (point_t *)bu_realloc(wd->local_points,
-		    new_capacity * sizeof(point_t), "Crofton worker hit points");
-		wd->local_point_capacity = new_capacity;
-	    }
-	    VJOIN1(wd->local_points[wd->local_point_count], ap->a_ray.r_pt,
-		pp->pt_inhit->hit_dist, ap->a_ray.r_dir);
-	    wd->local_point_count++;
-	    VJOIN1(wd->local_points[wd->local_point_count], ap->a_ray.r_pt,
-		pp->pt_outhit->hit_dist, ap->a_ray.r_dir);
-	    wd->local_point_count++;
-	}
+    struct partition *partition;
+    for (partition = PartHeadp->pt_forw; partition != PartHeadp;
+         partition = partition->pt_forw) {
+        fastf_t thickness = partition->pt_outhit->hit_dist -
+            partition->pt_inhit->hit_dist;
+        crossings += 2;
+        chord += thickness;
+
+        if (worker->shared->collect_points) {
+            if (worker->local_point_count + 2 >
+                worker->local_point_capacity) {
+                const size_t initial_capacity = 1024;
+                size_t new_capacity = worker->local_point_capacity ?
+                    2 * worker->local_point_capacity : initial_capacity;
+                while (new_capacity < worker->local_point_count + 2)
+                    new_capacity *= 2;
+                worker->local_points = (point_t *)bu_realloc(
+                    worker->local_points,
+                    new_capacity * sizeof(point_t),
+                    "Crofton worker hit points");
+                worker->local_point_capacity = new_capacity;
+            }
+            VJOIN1(worker->local_points[worker->local_point_count],
+                ap->a_ray.r_pt, partition->pt_inhit->hit_dist,
+                ap->a_ray.r_dir);
+            worker->local_point_count++;
+            VJOIN1(worker->local_points[worker->local_point_count],
+                ap->a_ray.r_pt, partition->pt_outhit->hit_dist,
+                ap->a_ray.r_dir);
+            worker->local_point_count++;
+        }
+
+        if (worker->shared->collect_segments) {
+            if (worker->local_segment_count + 1 >
+                worker->local_segment_capacity) {
+                const size_t initial_capacity = 512;
+                size_t new_capacity = worker->local_segment_capacity ?
+                    2 * worker->local_segment_capacity : initial_capacity;
+                worker->local_segments =
+                    (struct rt_crofton_segment *)bu_realloc(
+                        worker->local_segments,
+                        new_capacity * sizeof(struct rt_crofton_segment),
+                        "Crofton worker segments");
+                worker->local_segment_capacity = new_capacity;
+            }
+
+            struct rt_crofton_segment *sample =
+                &worker->local_segments[worker->local_segment_count];
+            struct soltab *in_solid =
+                partition->pt_inseg->seg_stp;
+            struct soltab *out_solid =
+                partition->pt_outseg->seg_stp;
+            VJOIN1(sample->in_point, ap->a_ray.r_pt,
+                partition->pt_inhit->hit_dist, ap->a_ray.r_dir);
+            VJOIN1(sample->out_point, ap->a_ray.r_pt,
+                partition->pt_outhit->hit_dist, ap->a_ray.r_dir);
+            RT_HIT_NORMAL(sample->in_normal, partition->pt_inhit,
+                in_solid, &ap->a_ray, partition->pt_inflip);
+            RT_HIT_NORMAL(sample->out_normal, partition->pt_outhit,
+                out_solid, &ap->a_ray, partition->pt_outflip);
+            sample->thickness = thickness;
+            sample->ray_id = worker->rays[worker->current_ray].id;
+            if (!VNEAR_ZERO(sample->in_normal, VUNITIZE_TOL) &&
+                !VNEAR_ZERO(sample->out_normal, VUNITIZE_TOL))
+                worker->local_segment_count++;
+        }
     }
 
-    wd->local_crossings += crossings;
-    wd->local_chord     += chord;
-    wd->local_rays      += 1;
-
+    worker->local_crossings += crossings;
+    worker->local_chord += chord;
+    worker->local_rays++;
     return 1;
 }
-
 
 static int
 crofton_miss(struct application *ap)
@@ -194,157 +257,271 @@ crofton_miss(struct application *ap)
 
 
 /* ------------------------------------------------------------------ */
-/* Parallel worker                                                      */
-/* ------------------------------------------------------------------ */
-
-static void
-crofton_worker(int id, void *data)
-{
-    struct crofton_worker_data *wd = &((struct crofton_worker_data *)data)[id - 1];
-    struct application         *ap = wd->ap;
-    struct crofton_ray         *rays = wd->rays;
-
-    for (size_t i = wd->start; i < wd->end; i++) {
-	VMOVE(ap->a_ray.r_pt,  rays[i].r_pt);
-	VMOVE(ap->a_ray.r_dir, rays[i].r_dir);
-	/* r_dir is already unit-length (set during ray generation) */
-	rt_shootray(ap);
-    }
-}
-
-
-/* ------------------------------------------------------------------ */
 /* Point / ray generation                                               */
 /* ------------------------------------------------------------------ */
 
 static double
-crofton_rand01(std::mt19937_64 &rng)
+crofton_random01(std::mt19937_64 &rng)
 {
-    return std::generate_canonical<double, 53>(rng);
+    return static_cast<double>(rng() >> CROFTON_RANDOM_SHIFT) *
+        CROFTON_RANDOM_SCALE;
 }
-
 
 static void
-random_point_on_sphere(double radius, const point_t center, point_t out, std::mt19937_64 &rng)
+random_point_on_sphere(double radius, const point_t center, double u,
+    double v, point_t point)
 {
-    double theta = 2.0 * M_PI * crofton_rand01(rng);
-    double phi   = acos(2.0 * crofton_rand01(rng) - 1.0);
-    double sp    = sin(phi);
-    out[X] = center[X] + radius * sp * cos(theta);
-    out[Y] = center[Y] + radius * sp * sin(theta);
-    out[Z] = center[Z] + radius * cos(phi);
+    double z = 1.0 - 2.0 * u;
+    double radial = sqrt(std::max(0.0, 1.0 - z * z));
+    double angle = 2.0 * M_PI * v;
+    point[X] = center[X] + radius * radial * cos(angle);
+    point[Y] = center[Y] + radius * radial * sin(angle);
+    point[Z] = center[Z] + radius * z;
 }
-
 
 /**
- * Generate @p nrays chord rays from 2*nrays random points on the
- * bounding sphere.  Each ray connects one randomly chosen point to
- * another.
+ * Generate independent random chord endpoints.  Pairing consecutive IID
+ * sphere points has the same distribution as shuffling a point array before
+ * pairing, but consumes exactly four random values per ray.  That fixed
+ * stride lets callers continue the deterministic stream with ray_offset.
  */
 static void
-generate_rays(struct crofton_ray *rays, size_t nrays,
-	      double radius, const point_t center, std::mt19937_64 &rng)
+generate_rays(struct crofton_ray *rays, size_t ray_count, size_t first_id,
+    double radius, const point_t center, std::mt19937_64 &rng)
 {
-    size_t npts = nrays * 2;
-
-    point_t *pts = (point_t *)bu_calloc(npts, sizeof(point_t), "crofton pts");
-    for (size_t i = 0; i < npts; i++)
-	random_point_on_sphere(radius, center, pts[i], rng);
-
-    /* Shuffle so pairing is random */
-    for (size_t i = npts - 1; i > 0; i--) {
-	size_t j = (size_t)(crofton_rand01(rng) * (i + 1));
-	if (j > i) j = i;
-	point_t tmp;
-	VMOVE(tmp, pts[i]);
-	VMOVE(pts[i], pts[j]);
-	VMOVE(pts[j], tmp);
+    for (size_t i = 0; i < ray_count; i++) {
+        point_t endpoint;
+        random_point_on_sphere(radius, center, crofton_random01(rng),
+            crofton_random01(rng), rays[i].r_pt);
+        random_point_on_sphere(radius, center, crofton_random01(rng),
+            crofton_random01(rng), endpoint);
+        VSUB2(rays[i].r_dir, endpoint, rays[i].r_pt);
+        VUNITIZE(rays[i].r_dir);
+        rays[i].id = first_id + i;
     }
-
-    for (size_t i = 0; i < nrays; i++) {
-	VMOVE(rays[i].r_pt, pts[i * 2]);
-	VSUB2(rays[i].r_dir, pts[i * 2 + 1], pts[i * 2]);
-	VUNITIZE(rays[i].r_dir);
-    }
-
-    bu_free(pts, "crofton pts");
 }
 
+/* ------------------------------------------------------------------ */
+/* Reusable parallel workers                                            */
+/* ------------------------------------------------------------------ */
 
-/* ------------------------------------------------------------------ */
-/* One iteration: fire nrays, accumulate into shared                   */
-/* ------------------------------------------------------------------ */
+class CroftonWorkerPool
+{
+    public:
+	CroftonWorkerPool(const struct application *ap_template,
+		struct resource *resources, size_t worker_count) :
+		count(worker_count), data(worker_count)
+	{
+	    for (size_t i = 0; i < count; i++) {
+		data[i].ap = *ap_template;
+		data[i].ap.a_resource = &resources[i];
+		data[i].shared = NULL;
+		data[i].ap.a_uptr = &data[i];
+	    }
+
+	    try {
+		executor = std::thread(&CroftonWorkerPool::run_workers, this);
+	    } catch (...) {
+		free_worker_points();
+		throw;
+	    }
+
+	    std::unique_lock<std::mutex> lock(mutex);
+	    if (!workers_started.wait_for(lock, worker_start_timeout,
+		    [this]() { return registered == count; })) {
+		stopping = true;
+		work_ready.notify_all();
+		lock.unlock();
+		executor.join();
+		free_worker_points();
+		throw std::runtime_error("worker startup timed out");
+	    }
+	}
+
+	~CroftonWorkerPool()
+	{
+	    stop_and_join();
+	    free_worker_points();
+	}
+
+	CroftonWorkerPool(const CroftonWorkerPool &) = delete;
+	CroftonWorkerPool &operator=(const CroftonWorkerPool &) = delete;
+
+	void run(struct crofton_ray *rays, size_t nrays,
+		struct crofton_shared *shared)
+	{
+	    const size_t rays_per_worker = nrays / count;
+	    std::unique_lock<std::mutex> lock(mutex);
+	    for (size_t i = 0; i < count; i++) {
+		struct crofton_worker_data &wd = data[i];
+		wd.rays = rays;
+		wd.start = i * rays_per_worker;
+		wd.end = (i == count - 1) ? nrays : (i + 1) * rays_per_worker;
+		wd.shared = shared;
+		wd.local_crossings = 0;
+		wd.local_chord = 0.0;
+		wd.local_rays = 0;
+		wd.local_point_count = 0;
+		wd.local_segment_count = 0;
+	    }
+	    completed = 0;
+	    generation++;
+	    work_ready.notify_all();
+	    work_done.wait(lock, [this]() { return completed == count; });
+	}
+
+	const std::vector<struct crofton_worker_data> &worker_data() const
+	{
+	    return data;
+	}
+
+    private:
+	/* Native thread creation should complete promptly.  A bounded startup wait
+	 * turns partial bu_parallel startup into a reported failure, not a hang. */
+	static constexpr std::chrono::seconds worker_start_timeout{5};
+
+	static void worker_entry(int UNUSED(id), void *context)
+	{
+	    CroftonWorkerPool *pool = static_cast<CroftonWorkerPool *>(context);
+	    size_t slot = 0;
+	    {
+		std::lock_guard<std::mutex> lock(pool->mutex);
+		slot = pool->registered++;
+		if (pool->registered == pool->count)
+		    pool->workers_started.notify_one();
+	    }
+	    pool->worker(slot);
+	}
+
+	void run_workers()
+	{
+	    bu_parallel(worker_entry, count, this);
+	}
+
+	void worker(size_t slot)
+	{
+	    size_t observed_generation = 0;
+	    std::unique_lock<std::mutex> lock(mutex);
+	    while (true) {
+		work_ready.wait(lock, [this, observed_generation]() {
+		    return stopping || generation != observed_generation;
+		});
+		if (stopping)
+		    return;
+
+		observed_generation = generation;
+		struct crofton_worker_data *wd = &data[slot];
+		lock.unlock();
+		for (size_t i = wd->start; i < wd->end; i++) {
+		    wd->current_ray = i;
+		    VMOVE(wd->ap.a_ray.r_pt, wd->rays[i].r_pt);
+		    VMOVE(wd->ap.a_ray.r_dir, wd->rays[i].r_dir);
+		    rt_shootray(&wd->ap);
+		}
+		lock.lock();
+		completed++;
+		if (completed == count)
+		    work_done.notify_one();
+	    }
+	}
+
+	void stop_and_join()
+	{
+	    {
+		std::lock_guard<std::mutex> lock(mutex);
+		stopping = true;
+		work_ready.notify_all();
+	    }
+	    if (executor.joinable())
+		executor.join();
+	}
+
+	void free_worker_points()
+	{
+	    for (struct crofton_worker_data &wd : data) {
+		if (wd.local_points)
+		    bu_free(wd.local_points, "Crofton worker hit points");
+		if (wd.local_segments)
+		    bu_free(wd.local_segments, "Crofton worker segments");
+		wd.local_points = NULL;
+		wd.local_segments = NULL;
+	    }
+	}
+
+	size_t count;
+	std::vector<struct crofton_worker_data> data;
+	std::thread executor;
+	std::mutex mutex;
+	std::condition_variable workers_started;
+	std::condition_variable work_ready;
+	std::condition_variable work_done;
+	size_t registered = 0;
+	size_t generation = 0;
+	size_t completed = 0;
+	bool stopping = false;
+};
+
 
 static void
-do_one_iteration(struct application *ap_template,
-		 struct resource    *resources,
-		 size_t              nrays,
-		 double              radius,
-		 const point_t       center,
-		 struct crofton_shared *shared,
-		 std::mt19937_64      &rng)
+do_one_iteration(CroftonWorkerPool &pool, size_t ray_count, double radius,
+    const point_t center, struct crofton_shared *shared,
+    std::mt19937_64 &rng)
 {
     struct crofton_ray *rays = (struct crofton_ray *)bu_calloc(
-	nrays, sizeof(struct crofton_ray), "crofton rays");
+        ray_count, sizeof(struct crofton_ray), "Crofton rays");
+    generate_rays(rays, ray_count, shared->ray_offset + shared->total_rays,
+        radius, center, rng);
+    pool.run(rays, ray_count, shared);
 
-    generate_rays(rays, nrays, radius, center, rng);
+    for (const struct crofton_worker_data &worker : pool.worker_data()) {
+        shared->total_crossings += worker.local_crossings;
+        shared->total_chord += worker.local_chord;
+        shared->total_rays += worker.local_rays;
 
-    size_t ncpus = bu_avail_cpus();
-    if (ncpus < 1) ncpus = 1;
-    if (ncpus > MAX_PSW) ncpus = MAX_PSW;
+        if (worker.local_point_count) {
+            const size_t needed =
+                shared->point_count + worker.local_point_count;
+            if (needed > shared->point_capacity) {
+                size_t new_capacity = shared->point_capacity ?
+                    2 * shared->point_capacity : needed;
+                if (new_capacity < needed)
+                    new_capacity = needed;
+                shared->points = (point_t *)bu_realloc(shared->points,
+                    new_capacity * sizeof(point_t),
+                    "Crofton hit points");
+                shared->point_capacity = new_capacity;
+            }
+            memcpy(&shared->points[shared->point_count],
+                worker.local_points,
+                worker.local_point_count * sizeof(point_t));
+            shared->point_count = needed;
+        }
 
-    struct crofton_worker_data *wdata = (struct crofton_worker_data *)bu_calloc(
-	ncpus, sizeof(struct crofton_worker_data), "crofton wdata");
-
-    size_t per_cpu = nrays / ncpus;
-
-    for (size_t i = 0; i < ncpus; i++) {
-	struct application *a = (struct application *)bu_calloc(
-	    1, sizeof(struct application), "crofton app");
-	*a = *ap_template;                  /* struct copy */
-	a->a_resource = &resources[i];
-
-	struct crofton_worker_data *wd = &wdata[i];
-	wd->ap     = a;
-	wd->rays   = rays;
-	wd->start  = i * per_cpu;
-	wd->end    = (i == ncpus - 1) ? nrays : (i + 1) * per_cpu;
-	wd->shared = shared;
-	a->a_uptr  = wd;
+        if (worker.local_segment_count) {
+            const size_t needed =
+                shared->segment_count + worker.local_segment_count;
+            if (needed > shared->segment_capacity) {
+                size_t new_capacity = shared->segment_capacity ?
+                    2 * shared->segment_capacity : needed;
+                if (new_capacity < needed)
+                    new_capacity = needed;
+                shared->segments =
+                    (struct rt_crofton_segment *)bu_realloc(
+                        shared->segments,
+                        new_capacity * sizeof(struct rt_crofton_segment),
+                        "Crofton segments");
+                shared->segment_capacity = new_capacity;
+            }
+            memcpy(&shared->segments[shared->segment_count],
+                worker.local_segments,
+                worker.local_segment_count *
+                    sizeof(struct rt_crofton_segment));
+            shared->segment_count = needed;
+        }
     }
 
-    bu_parallel(crofton_worker, (int)ncpus, (void *)wdata);
-
-    for (size_t i = 0; i < ncpus; i++) {
-	shared->total_crossings += wdata[i].local_crossings;
-	shared->total_chord     += wdata[i].local_chord;
-	shared->total_rays      += wdata[i].local_rays;
-	if (wdata[i].local_point_count) {
-	    const size_t needed = shared->point_count + wdata[i].local_point_count;
-	    if (needed > shared->point_capacity) {
-		size_t new_capacity = shared->point_capacity ?
-		    2 * shared->point_capacity : needed;
-		if (new_capacity < needed)
-		    new_capacity = needed;
-		shared->points = (point_t *)bu_realloc(shared->points,
-		    new_capacity * sizeof(point_t), "Crofton hit points");
-		shared->point_capacity = new_capacity;
-	    }
-	    memcpy(&shared->points[shared->point_count], wdata[i].local_points,
-		wdata[i].local_point_count * sizeof(point_t));
-	    shared->point_count = needed;
-	}
-    }
-
-    for (size_t i = 0; i < ncpus; i++) {
-	if (wdata[i].local_points)
-	    bu_free(wdata[i].local_points, "Crofton worker hit points");
-	bu_free(wdata[i].ap, "crofton app");
-    }
-    bu_free(wdata, "crofton wdata");
-    bu_free(rays,  "crofton rays");
+    bu_free(rays, "Crofton rays");
 }
-
 
 /* ------------------------------------------------------------------ */
 /* Public API: rt_crofton_shoot                                         */
@@ -375,7 +552,8 @@ do_one_iteration(struct application *ap_template,
  *          sampling (>= 0) on success; -1 on bad arguments.
  */
 static int
-crofton_shoot_impl(point_t                        **out_points,
+crofton_shoot_impl(struct rt_crofton_result       *out_result,
+                   point_t                        **out_points,
 		   size_t                          *out_point_count,
 		   double                          *out_surf_area,
 		   double                          *out_volume,
@@ -384,13 +562,22 @@ crofton_shoot_impl(point_t                        **out_points,
 		   point_t                          out_obb[8],
 		 struct rt_i                    *rtip,
 		 const struct rt_crofton_params *params,
+		 size_t                         ray_offset,
 		 const fastf_t                  *bbox_min,
 		 const fastf_t                  *bbox_max)
 {
-    if (!rtip || (!out_surf_area && !out_volume && !out_aabb_min && !out_obb && !out_points) ||
-	((out_points == NULL) != (out_point_count == NULL)) ||
-	((out_aabb_min == NULL) != (out_aabb_max == NULL)))
-	return -1;
+    if (!rtip ||
+        (!out_result && !out_surf_area && !out_volume && !out_aabb_min &&
+            !out_obb && !out_points) ||
+        ((out_points == NULL) != (out_point_count == NULL)) ||
+        ((out_aabb_min == NULL) != (out_aabb_max == NULL)) ||
+        (out_result && out_result->segments) ||
+        ray_offset > UINT64_MAX / RT_CROFTON_RANDOM_VALUES_PER_RAY)
+        return -1;
+    if (out_result) {
+        struct rt_crofton_result empty = RT_CROFTON_RESULT_INIT;
+        *out_result = empty;
+    }
     if (out_points) {
 	*out_points = NULL;
 	*out_point_count = 0;
@@ -473,10 +660,14 @@ crofton_shoot_impl(point_t                        **out_points,
     if (!use_default && max_rays > 0 && stability_mm <= 0.0 && time_ms <= 0.0)
 	batch = max_rays;   /* single-iteration mode */
 
+    size_t ncpus = bu_avail_cpus();
+    if (ncpus < 1) ncpus = 1;
+    if (ncpus > MAX_PSW) ncpus = MAX_PSW;
+
     /* ---- Initialize per-CPU resources ---- */
     struct resource *resources = (struct resource *)bu_calloc(
-	MAX_PSW, sizeof(struct resource), "crofton resources");
-    for (int i = 0; i < MAX_PSW; i++)
+	ncpus, sizeof(struct resource), "crofton resources");
+    for (size_t i = 0; i < ncpus; i++)
 	rt_init_resource(&resources[i], i, rtip);
 
     /* ---- Set up application template ---- */
@@ -494,10 +685,32 @@ crofton_shoot_impl(point_t                        **out_points,
     /* ---- Shared accumulator ---- */
     struct crofton_shared shared;
     memset(&shared, 0, sizeof(shared));
-    shared.collect_points = out_points != NULL || out_aabb_min != NULL || out_obb != NULL;
-    const bool stabilize_surface = out_surf_area != NULL || shared.collect_points;
+    shared.ray_offset = ray_offset;
+    shared.collect_points =
+        out_points != NULL || out_aabb_min != NULL || out_obb != NULL;
+    shared.collect_segments = out_result != NULL;
+    const bool stabilize_surface =
+        out_surf_area != NULL || out_result != NULL ||
+        shared.collect_points;
+
+    CroftonWorkerPool *pool = NULL;
+    try {
+	pool = new CroftonWorkerPool(&ap, resources, ncpus);
+    } catch (const std::exception &e) {
+	bu_log("rt_crofton: unable to start worker pool: %s\n", e.what());
+	for (size_t i = 0; i < ncpus; i++) {
+	    if (resources[i].re_magic == RESOURCE_MAGIC) {
+		rt_clean_resource_basic(rtip, &resources[i]);
+		BU_PTBL_SET(&rtip->rti_resources, i, NULL);
+	    }
+	}
+	bu_free(resources, "crofton resources");
+	return -1;
+    }
 
     std::mt19937_64 rng(RT_CROFTON_RNG_SEED);
+    rng.discard(static_cast<uint64_t>(ray_offset) *
+        RT_CROFTON_RANDOM_VALUES_PER_RAY);
 
     const double FOUR_PI    = 4.0 * M_PI;
     const double PI         = M_PI;
@@ -521,7 +734,7 @@ crofton_shoot_impl(point_t                        **out_points,
 		    curr_rays = batch;
 	    }
 
-	    do_one_iteration(&ap, resources, curr_rays, R, center, &shared, rng);
+	    do_one_iteration(*pool, curr_rays, R, center, &shared, rng);
 	    iteration++;
 
 	    if (shared.total_rays == 0) break;
@@ -562,9 +775,12 @@ crofton_shoot_impl(point_t                        **out_points,
     } else {
 	/* ---- Parametric loop: n_rays / stability_mm / time_ms ---- */
 	double prev_r_sa = -1.0, prev_r_v = -1.0;
+	double prev_sa = -1.0, prev_v = -1.0;
 	size_t total_fired = 0;
 	size_t stable_windows = 0;
 	int64_t t0 = (time_ms > 0.0) ? bu_gettime() : 0;
+	const bool use_relative_stability = out_result && time_ms > 0.0 &&
+	    stability_mm <= 0.0;
 
 	for (;;) {
 	    /* Time-budget check before firing */
@@ -581,7 +797,7 @@ crofton_shoot_impl(point_t                        **out_points,
 		if (fire > remaining) fire = remaining;
 	    }
 
-	    do_one_iteration(&ap, resources, fire, R, center, &shared, rng);
+	    do_one_iteration(*pool, fire, R, center, &shared, rng);
 	    total_fired += fire;
 
 	    if (shared.total_rays == 0) break;
@@ -594,27 +810,39 @@ crofton_shoot_impl(point_t                        **out_points,
 		/ (double)shared.total_rays;
 
 	    /* Stability check */
-	    if (stability_mm > 0.0 &&
+	    if ((stability_mm > 0.0 || use_relative_stability) &&
 		shared.total_rays >= RT_CROFTON_STABILITY_MIN_RAYS &&
 		shared.total_crossings >= RT_CROFTON_STABILITY_MIN_CROSSINGS) {
-		double r_sa = (curr_est_sa > 0.0) ? sqrt(curr_est_sa * INV_4PI)  : 0.0;
-		double r_v  = (curr_est_v  > 0.0) ? cbrt(curr_est_v  * INV_4PI3) : 0.0;
-
-		if (prev_r_sa >= 0.0) {
-		    int sa_ok = (!stabilize_surface) ||
-			fabs(r_sa - prev_r_sa) < stability_mm;
-		    int v_ok  = (!out_volume) ||
-			fabs(r_v  - prev_r_v)  < stability_mm;
-		    if (sa_ok && v_ok) {
-			stable_windows++;
-			if (stable_windows >= RT_CROFTON_STABILITY_MIN_WINDOWS)
-			    break;
-		    } else {
-			stable_windows = 0;
-		    }
+		bool sa_ok = false;
+		bool v_ok = false;
+		if (use_relative_stability) {
+		    sa_ok = !stabilize_surface || (prev_sa > 0.0 &&
+			fabs(curr_est_sa - prev_sa) / prev_sa * 100.0 <=
+			RT_CROFTON_DEFAULT_THRESHOLD);
+		    v_ok = !out_volume || (prev_v > 0.0 &&
+			fabs(curr_est_v - prev_v) / prev_v * 100.0 <=
+			RT_CROFTON_DEFAULT_THRESHOLD);
+		    prev_sa = curr_est_sa;
+		    prev_v = curr_est_v;
+		} else {
+		    double r_sa = (curr_est_sa > 0.0) ?
+			sqrt(curr_est_sa * INV_4PI) : 0.0;
+		    double r_v = (curr_est_v > 0.0) ?
+			cbrt(curr_est_v * INV_4PI3) : 0.0;
+		    sa_ok = !stabilize_surface || (prev_r_sa >= 0.0 &&
+			fabs(r_sa - prev_r_sa) < stability_mm);
+		    v_ok = !out_volume || (prev_r_v >= 0.0 &&
+			fabs(r_v - prev_r_v) < stability_mm);
+		    prev_r_sa = r_sa;
+		    prev_r_v = r_v;
 		}
-		prev_r_sa = r_sa;
-		prev_r_v  = r_v;
+		if (sa_ok && v_ok) {
+		    stable_windows++;
+		    if (stable_windows >= RT_CROFTON_STABILITY_MIN_WINDOWS)
+			break;
+		} else {
+		    stable_windows = 0;
+		}
 	    }
 
 	    /* Time-budget check after firing */
@@ -624,8 +852,16 @@ crofton_shoot_impl(point_t                        **out_points,
 	}
     }
 
-    if (out_surf_area) *out_surf_area = curr_est_sa;
-    if (out_volume)    *out_volume    = curr_est_v;
+    if (out_surf_area)
+        *out_surf_area = curr_est_sa;
+    if (out_volume)
+        *out_volume = curr_est_v;
+    if (out_result) {
+        out_result->surface_area = curr_est_sa;
+        out_result->volume = curr_est_v;
+        out_result->ray_count = shared.total_rays;
+        out_result->crossing_count = shared.total_crossings;
+    }
     if (out_aabb_min) {
 	for (size_t i = 0; i < shared.point_count; ++i)
 	    VMINMAX(*out_aabb_min, *out_aabb_max, shared.points[i]);
@@ -641,11 +877,19 @@ crofton_shoot_impl(point_t                        **out_points,
 	    bounds_ret = -1;
     }
     if (out_points && !bounds_ret) {
-	*out_points = shared.points;
-	*out_point_count = shared.point_count;
+        *out_points = shared.points;
+        *out_point_count = shared.point_count;
     } else if (shared.points) {
-	bu_free(shared.points, "Crofton hit points");
+        bu_free(shared.points, "Crofton hit points");
     }
+    if (out_result && !bounds_ret) {
+        out_result->segments = shared.segments;
+        out_result->segment_count = shared.segment_count;
+    } else if (shared.segments) {
+        bu_free(shared.segments, "Crofton segments");
+    }
+
+    delete pool;
 
     /* Clean each resource and NULL out its slot in rtip->rti_resources.
      * This is necessary because crofton_from_ip calls rt_i_destroy(rtip)
@@ -657,7 +901,7 @@ crofton_shoot_impl(point_t                        **out_points,
      *
      * By setting the slot to NULL we let rt_i_destroy's cleanup skip it,
      * and then we can safely bu_free the resources array.                */
-    for (int i = 0; i < MAX_PSW; i++) {
+    for (size_t i = 0; i < ncpus; i++) {
 	if (resources[i].re_magic == RESOURCE_MAGIC) {
 	    rt_clean_resource_basic(rtip, &resources[i]);
 	    BU_PTBL_SET(&rtip->rti_resources, i, NULL);
@@ -681,9 +925,31 @@ rt_crofton_shoot(double *out_surf_area, double *out_volume,
 		 const struct rt_crofton_params *params,
 		 const fastf_t *bbox_min, const fastf_t *bbox_max)
 {
-    return crofton_shoot_impl(out_points, out_point_count, out_surf_area,
-	out_volume, out_aabb_min, out_aabb_max, out_obb, rtip, params,
-	bbox_min, bbox_max);
+    return crofton_shoot_impl(NULL, out_points, out_point_count,
+        out_surf_area, out_volume, out_aabb_min, out_aabb_max, out_obb,
+        rtip, params, 0, bbox_min, bbox_max);
+}
+
+int
+rt_crofton_collect(struct rt_crofton_result *result, struct rt_i *rtip,
+    const struct rt_crofton_params *params, size_t ray_offset,
+    const fastf_t *bbox_min, const fastf_t *bbox_max)
+{
+    if (!result)
+        return -1;
+    return crofton_shoot_impl(result, NULL, NULL, NULL, NULL, NULL, NULL,
+        NULL, rtip, params, ray_offset, bbox_min, bbox_max);
+}
+
+void
+rt_crofton_result_free(struct rt_crofton_result *result)
+{
+    if (!result)
+        return;
+    if (result->segments)
+        bu_free(result->segments, "Crofton segments");
+    struct rt_crofton_result empty = RT_CROFTON_RESULT_INIT;
+    *result = empty;
 }
 
 
@@ -821,7 +1087,7 @@ crofton_from_ip_n(const struct rt_db_internal    *ip,
     double sa  = 0.0;
     double vol = 0.0;
     (void)rt_crofton_shoot(&sa, &vol, NULL, NULL, NULL, NULL, NULL,
-	rtip, params, NULL, NULL);
+        rtip, params, NULL, NULL);
 
     if (out_sa)  *out_sa  = sa;
     if (out_vol) *out_vol = vol;

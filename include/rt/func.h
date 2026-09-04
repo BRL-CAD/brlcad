@@ -227,6 +227,32 @@ struct rt_crofton_params {
     double time_ms;      /**< wall-clock time budget (ms); 0 = disabled */
 };
 
+/** One solid partition observed by a Crofton ray. */
+struct rt_crofton_segment {
+    point_t in_point;
+    vect_t in_normal;
+    point_t out_point;
+    vect_t out_normal;
+    fastf_t thickness;
+    size_t ray_id;
+};
+
+/**
+ * Structured samples and estimates produced by rt_crofton_collect().
+ * Release @p segments with rt_crofton_result_free().
+ */
+struct rt_crofton_result {
+    struct rt_crofton_segment *segments;
+    size_t segment_count;
+    size_t ray_count;
+    size_t crossing_count;
+    double surface_area;
+    double volume;
+};
+
+/** Initialize an rt_crofton_result before first use. */
+#define RT_CROFTON_RESULT_INIT { NULL, 0, 0, 0, 0.0, 0.0 }
+
 
 /**
  * Run the Cauchy-Crofton ray-sampling estimator on an already-prepared
@@ -336,6 +362,26 @@ struct rt_crofton_params {
  * 147 200 mm³, or 0.01%) is a far more reliable cross-check metric.
  */
 RT_EXPORT extern int rt_crofton_shoot(double *out_surf_area, double *out_volume, point_t *out_aabb_min, point_t *out_aabb_max, point_t out_obb[8], point_t **out_points, size_t *out_point_count, struct rt_i *rtip, const struct rt_crofton_params *params, const fastf_t *bbox_min, const fastf_t *bbox_max);
+
+/**
+ * Run Crofton sampling while preserving oriented entry/exit pairs.
+ *
+ * @p result must be initialized with RT_CROFTON_RESULT_INIT.  On success it
+ * owns the returned segment array.  @p rtip must already be prepared.
+ * @p ray_offset skips that many samples in the deterministic sequence and
+ * labels the returned rays starting at that value.  This lets successive
+ * calls use disjoint validation streams.
+ */
+RT_EXPORT extern int rt_crofton_collect(struct rt_crofton_result *result,
+					struct rt_i *rtip,
+					const struct rt_crofton_params *params,
+					size_t ray_offset,
+					const fastf_t *bbox_min,
+					const fastf_t *bbox_max);
+
+/** Release storage owned by a structured Crofton result. */
+RT_EXPORT extern void rt_crofton_result_free(
+					struct rt_crofton_result *result);
 
 
 /**
