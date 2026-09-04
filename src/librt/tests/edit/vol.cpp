@@ -23,8 +23,8 @@
  *
  * Reference VOL: name="vol_test.data", dims=4x4x4, lo=5, hi=250,
  *   cellsize=(1,1,1), mat=IDN.
- * Note: the data file does not need to exist. VOL import just logs a
- * warning if the file is missing and still returns 0 (success).
+ * Note: the data file does not need to exist. VOL import retains an
+ * unloaded primitive; raytrace preparation reports unavailable data.
  *
  * ECMD_VOL_CSIZE (e_inpara=3, e_para=(2,3,4)):
  *   ecmd_vol_csize sets vol->cellsize = (2,3,4).
