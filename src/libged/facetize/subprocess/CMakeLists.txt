@@ -9,6 +9,7 @@ set(
   spsr.cpp
   main.cpp
   nmg.cpp
+  nmg_boolean.cpp
   util.cpp
   ../plan.cpp
   ../process.cpp
@@ -26,6 +27,7 @@ ged_subprocess_library(facetize_process
 
 cmakefiles(
   CMakeLists.txt
+  nmg_boolean.h
   tessellate.h
   ${GED_TESS_SRCS}
 )

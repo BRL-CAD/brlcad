@@ -10,6 +10,7 @@ set(
   brep.cpp
   facetize.cpp
   nmg.cpp
+  orchestrator.cpp
   plan.cpp
   process.cpp
   regions.cpp
@@ -46,6 +47,7 @@ cmakefiles(
   CMakeLists.txt
   tess_opts.h
   ged_facetize.h
+  orchestrator.h
   old_facetize.h
   process.h
   transfer.h

@@ -35,26 +35,27 @@
 #include "./ged_facetize.h"
 
 int
-_nonovlp_brep_facetize(struct _ged_facetize_state *s, int argc, const char **argv)
+_nonovlp_brep_facetize(struct _ged_facetize_state *s, const FacetizePlan &plan)
 {
-    int newobj_cnt;
-    struct directory **dpa = NULL;
-
     RT_CHECK_DBI(s->dbip);
 
-    if (argc <= 0) return BRLCAD_ERROR;
-
-    dpa = (struct directory **)bu_calloc(argc, sizeof(struct directory *), "dp array");
-    newobj_cnt = _ged_sort_existing_objs(s->dbip, argc, argv, dpa);
-    if (_ged_validate_objs_list(s, argc, argv, newobj_cnt) == BRLCAD_ERROR) {
-	bu_free(dpa, "dp array");
-	return BRLCAD_ERROR;
+    int argc = (int)plan.inputs.size();
+    std::vector<const char *> argv = plan.input_argv();
+    struct directory **dpa = (struct directory **)bu_calloc(argc,
+	    sizeof(struct directory *), "BRep input directory array");
+    for (int i = 0; i < argc; i++) {
+	dpa[i] = db_lookup(s->dbip, argv[i], LOOKUP_QUIET);
+	if (!dpa[i]) {
+	    facetize_failure(s, "BRep input object '%s' disappeared before processing", argv[i]);
+	    bu_free(dpa, "BRep input directory array");
+	    return BRLCAD_ERROR;
+	}
     }
 
     /* If anything specified has subtractions or intersections, we can't facetize it with
      * this logic - that would require all-up Boolean evaluation processing. */
     const char *non_union = "-bool + -or -bool -";
-    if (db_search(NULL, DB_SEARCH_QUIET, non_union, newobj_cnt, dpa, s->dbip, NULL, NULL, NULL) > 0) {
+    if (db_search(NULL, DB_SEARCH_QUIET, non_union, argc, dpa, s->dbip, NULL, NULL, NULL) > 0) {
 	bu_free(dpa, "dp array");
 	bu_vls_printf(s->gedp->ged_result_str, "Found intersection or subtraction objects in specified inputs - currently unsupported. Aborting.\n");
 	return BRLCAD_ERROR;
@@ -63,7 +64,7 @@ _nonovlp_brep_facetize(struct _ged_facetize_state *s, int argc, const char **arg
     /* If anything other than combs or breps exists in the specified inputs, we can't
      * process with this logic - requires a preliminary brep conversion. */
     const char *obj_types = "! -type c -and ! -type brep";
-    if (db_search(NULL, DB_SEARCH_QUIET, obj_types, newobj_cnt, dpa, s->dbip, NULL, NULL, NULL) > 0) {
+    if (db_search(NULL, DB_SEARCH_QUIET, obj_types, argc, dpa, s->dbip, NULL, NULL, NULL) > 0) {
 	bu_free(dpa, "dp array");
 	bu_vls_printf(s->gedp->ged_result_str, "Found objects in specified inputs which are not of type comb or brep- currently unsupported. Aborting.\n");
 	return BRLCAD_ERROR;
@@ -83,12 +84,17 @@ _nonovlp_brep_facetize(struct _ged_facetize_state *s, int argc, const char **arg
 	bu_free(dpa, "dp array");
 	return BRLCAD_ERROR;
     }
-    for (int i = 0; i < newobj_cnt;  i++) {
-	int xac = 3;
+    for (int i = 0; i < argc; i++) {
+	int xac = 2;
 	const char *xav[3] = {NULL};
 	xav[0] = "xpush";
 	xav[1] = dpa[i]->d_namep;
-	ged_exec_xpush(wgedp, xac, (const char **)xav);
+	if (ged_exec_xpush(wgedp, xac, (const char **)xav) != BRLCAD_OK) {
+	    facetize_failure(s, "xpush failed for BRep input '%s'", dpa[i]->d_namep);
+	    ged_close(wgedp);
+	    bu_free(dpa, "BRep input directory array");
+	    return BRLCAD_ERROR;
+	}
     }
 
     /* Used the libged tolerances */
@@ -103,7 +109,7 @@ _nonovlp_brep_facetize(struct _ged_facetize_state *s, int argc, const char **arg
     const char *active_breps = "-type brep";
     struct bu_ptbl *br;
     BU_ALLOC(br, struct bu_ptbl);
-    if (db_search(br, DB_SEARCH_RETURN_UNIQ_DP, active_breps, newobj_cnt, dpa, wgedp->dbip, NULL, NULL, NULL) < 0) {
+    if (db_search(br, DB_SEARCH_RETURN_UNIQ_DP, active_breps, argc, dpa, wgedp->dbip, NULL, NULL, NULL) < 0) {
 	bu_free(dpa, "dp array");
 	bu_free(br, "brep results");
 	return BRLCAD_ERROR;
@@ -210,13 +216,6 @@ _nonovlp_brep_facetize(struct _ged_facetize_state *s, int argc, const char **arg
 	}
     }
 
-    /* Done changing stuff in working database. */
-    ged_close(wgedp);
-
-    for (size_t i = 0; i < ss_cdt.size(); i++) {
-	ON_Brep_CDT_Destroy(ss_cdt[i]);
-    }
-
     /* Keep out just what we asked for into a .g file */
     struct bu_vls kwfile = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&kwfile, "%s_keep", bu_vls_cstr(s->wfile));
@@ -227,7 +226,21 @@ _nonovlp_brep_facetize(struct _ged_facetize_state *s, int argc, const char **arg
 	av[i+2] = argv[i];
     }
     av[argc+2] = NULL;
-    ged_exec_keep(wgedp, argc+2, av);
+    if (ged_exec_keep(wgedp, argc+2, av) != BRLCAD_OK) {
+	facetize_failure(s, "unable to stage processed BRep hierarchy");
+	bu_free(av, "av");
+	bu_vls_free(&kwfile);
+	ged_close(wgedp);
+	for (size_t i = 0; i < ss_cdt.size(); i++)
+	    ON_Brep_CDT_Destroy(ss_cdt[i]);
+	return BRLCAD_ERROR;
+    }
+
+    /* Done changing stuff in working database. */
+    ged_close(wgedp);
+
+    for (size_t i = 0; i < ss_cdt.size(); i++)
+	ON_Brep_CDT_Destroy(ss_cdt[i]);
 
     /* Merge working geometry into original file */
     av[0] = "dbconcat";
@@ -235,14 +248,14 @@ _nonovlp_brep_facetize(struct _ged_facetize_state *s, int argc, const char **arg
     av[2] = bu_vls_cstr(&kwfile);
     av[3] = "brep_facetize_"; // TODO - customize
     av[4] = NULL;
-    ged_exec_dbconcat(s->gedp, 4, av);
+    int concat_ret = ged_exec_dbconcat(s->gedp, 4, av);
     bu_free(av, "av");
     bu_vls_free(&kwfile);
 
     /* Clean up */
     bu_dirclear(s->wdir);
 
-    return BRLCAD_OK;
+    return (concat_ret == BRLCAD_OK) ? BRLCAD_OK : BRLCAD_ERROR;
 }
 
 // Local Variables:
@@ -253,4 +266,3 @@ _nonovlp_brep_facetize(struct _ged_facetize_state *s, int argc, const char **arg
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-
