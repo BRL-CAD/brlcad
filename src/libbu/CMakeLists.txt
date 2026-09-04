@@ -234,7 +234,7 @@ set(
   mime.cmake
   parallel.h
   parallel_cpp11thread.cpp
-  process.h
+  process_private.h
   sha1.h
   struetype.h
   vfont.h

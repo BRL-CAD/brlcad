@@ -48,7 +48,7 @@
 #include "bu/str.h"
 #include "bu/datetime.h"
 #include "bu/vls.h"
-#include "./process.h"
+#include "./process_private.h"
 
 #ifndef HAVE_KILL
 #  include <TlHelp32.h>
