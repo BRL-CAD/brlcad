@@ -161,8 +161,9 @@ main(int argc, char *argv[])
     }
 
     /* test calling without a hook function */
+    memset(counter, 0, sizeof(counter));
     bu_parallel(NULL, ncpu, NULL);
-    if (tally(ncpu) != 0) {
+    if (tally(MAX_PSW) != 0) {
 	bu_log("bu_parallel zero callback [FAIL]\n");
 	return 1;
     }
