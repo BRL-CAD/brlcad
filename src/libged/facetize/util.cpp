@@ -39,6 +39,7 @@
 #include "wdb.h"
 #include "../ged_private.h"
 #include "./ged_facetize.h"
+#include "./validation.h"
 
 static const size_t FACETIZE_TERMINAL_DETAIL_LIMIT = 10u;
 static const char FACETIZE_LOG_EXTENSION[] = ".log";
@@ -531,8 +532,20 @@ bot_fixup(struct _ged_facetize_state *s, struct db_i *wdbip, struct directory *b
 
     // Have faces, test with raytracer
     struct rt_i *rtip = rt_i_create(wdbip);
-    rt_gettree(rtip, bname);
-    rt_prep(rtip);
+    struct bu_hook_list saved_hooks = BU_HOOK_LIST_INIT_ZERO;
+    facetize_log_hooks_silence(&saved_hooks);
+    int prep_status = rt_gettree(rtip, bname);
+    if (prep_status == 0)
+	rt_prep(rtip);
+    facetize_log_hooks_restore(&saved_hooks);
+
+    if (prep_status != 0 || !rtip->stats.nsolids || !rtip->stats.nregions) {
+	facetize_log(s, 2, "\t%s: raytrace preparation failed; retaining original manifold result.\n", bname);
+	rt_i_destroy(rtip);
+	rt_db_free_internal(&bot_intern);
+	return NULL;
+    }
+
     facetize_log(s, 2, "\t%s: raytrace preparation complete; scanning %zu faces...\n", bname, bot->num_faces);
     struct bu_ptbl tfaces = BU_PTBL_INIT_ZERO;
     int have_thin_faces = rt_bot_thin_check(&tfaces, bot, rtip, VUNITIZE_TOL, 0);

@@ -1762,11 +1762,11 @@ _ged_facetize_booleval_tri_to_db(struct _ged_facetize_state *s, struct db_i *dbi
 	return BRLCAD_ERROR;
 
     if (total_cnt < 0) {
-	facetize_log(s, 0, "Processing %s [%d perturb]...", oname, curr_cnt);
+	facetize_log(s, 1, "Processing %s [%d perturb]...", oname, curr_cnt);
     } else if (total_cnt == 0) {
-	facetize_log(s, 0, "Processing %s...", oname);
+	facetize_log(s, 1, "Processing %s...", oname);
     } else {
-	facetize_log(s, 0, "Processing %s [%d of %d]...", oname, curr_cnt, total_cnt);
+	facetize_log(s, 1, "Processing %s [%d of %d]...", oname, curr_cnt, total_cnt);
     }
     facetize_failure_clear(s);
 
@@ -1865,7 +1865,7 @@ _ged_facetize_booleval_tri_to_db(struct _ged_facetize_state *s, struct db_i *dbi
 	    facetize_log_current_failure(s, "unable to write empty BoT to the database");
 	    return BRLCAD_ERROR;
 	}
-	facetize_log(s, 0, " Success.\n");
+	facetize_log(s, 1, " Success.\n");
 	return BRLCAD_OK;
     }
 
@@ -1980,7 +1980,7 @@ _ged_facetize_booleval_tri_to_db(struct _ged_facetize_state *s, struct db_i *dbi
 		facetize_log_current_failure(s, "unable to write empty BoT to the database");
 		return BRLCAD_ERROR;
 	    }
-	    facetize_log(s, 0, "Success.\n");
+	    facetize_log(s, 1, "Success.\n");
 	    return BRLCAD_OK;
 	}
     }
@@ -2004,7 +2004,7 @@ _ged_facetize_booleval_tri_to_db(struct _ged_facetize_state *s, struct db_i *dbi
 	}
     }
 
-    facetize_log(s, 0, " Success.\n");
+    facetize_log(s, 1, " Success.\n");
     return BRLCAD_OK;
 }
 
