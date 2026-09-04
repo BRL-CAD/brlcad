@@ -39,9 +39,12 @@
 #include <string.h>
 
 #include "bu/app.h"
+#include "bu/file.h"
 #include "bu/path.h"
 #include "bu/env.h"
 #include "bu/datetime.h"
+#include "bu/process.h"
+#include "bu/snooze.h"
 #include "bg/trimesh.h"
 #include "rt/db_io.h"
 #include "rt/search.h"
@@ -49,9 +52,17 @@
 #include "wdb.h"
 #include "../ged_private.h"
 #include "./ged_facetize.h"
+#include "./process.h"
+#include "./validation.h"
+#include "./worker.h"
 
 static const double FACETIZE_RT_EMPTY_TOL = 1.0e-9;
 static const double FACETIZE_USEC_TO_SEC_DIVISOR = 1.0e6;
+static const int FACETIZE_REGION_PROGRESS_INTERVAL_SEC = 5;
+static const int FACETIZE_REGION_WORKER_POLL_USEC = 1000;
+static const int FACETIZE_REGION_WRITER_READY_TIMEOUT_SEC = 5;
+static const size_t FACETIZE_REGION_PROGRESS_MIN = 100u;
+static const double FACETIZE_GIB_BYTES = 1024.0 * 1024.0 * 1024.0;
 
 /* Minimum Crofton crossing count for a statistically meaningful SA
  * comparison.  Below this threshold (~1/sqrt(N) noise > 14 %) the
@@ -114,34 +125,760 @@ _has_perturbable_leaf(struct db_i *dbip, struct directory *dp, std::set<std::str
     return false;
 }
 
-static long
-_crofton_on_obj(struct db_i *dbip, const char *obj_name, double &out_sa, double &out_vol)
+struct RegionCsgMetrics {
+    std::string object_name;
+    bool can_validate = false;
+    bool attempted = false;
+    long crossings = -1;
+    double surface_area = -1.0;
+    double volume = -1.0;
+};
+
+struct RegionCsgWorker {
+    struct bu_process *process = NULL;
+    FILE *input = NULL;
+    FacetizeWorkerClient channel;
+    FacetizeWorkerStatus status;
+    size_t metrics_index = SIZE_MAX;
+    int64_t request_start = 0;
+    bool enabled = true;
+};
+
+struct RegionBoolevalResult {
+    std::string object_name;
+    std::string bot_name;
+    bool attempted = false;
+    bool succeeded = false;
+};
+
+struct RegionBoolevalWorker {
+    struct bu_process *process = NULL;
+    FILE *input = NULL;
+    FacetizeWorkerClient channel;
+    FacetizeWorkerStatus status;
+    size_t result_index = SIZE_MAX;
+    int64_t request_start = 0;
+    int64_t write_start = 0;
+    int64_t write_deadline = 0;
+    double write_timeout = 0.0;
+    std::string result_file;
+    bool enabled = true;
+    bool write_permitted = false;
+    bool awaiting_commit = false;
+};
+
+struct RegionSnapshotProgress {
+    struct _ged_facetize_state *state = NULL;
+    int64_t start = 0;
+    int64_t next_report = 0;
+};
+
+static void
+_region_snapshot_progress(uint64_t bytes_copied, void *data)
 {
-    out_sa = out_vol = -1.0;
+    RegionSnapshotProgress *progress =
+	static_cast<RegionSnapshotProgress *>(data);
+    if (!progress || !progress->state)
+	return;
 
-    point_t focus_min, focus_max;
-    int have_focus = (_ged_facetize_csg_bbox(dbip, obj_name, focus_min, focus_max) == BRLCAD_OK);
+    int64_t now = bu_gettime();
+    if (now < progress->next_report)
+	return;
+    facetize_log(progress->state, 0,
+	    "FACETIZE: prepared %.2f GiB of the shared region snapshot (%.1f seconds elapsed)\n",
+	    bytes_copied / FACETIZE_GIB_BYTES,
+	    (now - progress->start) / FACETIZE_USEC_TO_SEC_DIVISOR);
+    progress->next_report = now +
+	BU_SEC2USEC(FACETIZE_REGION_PROGRESS_INTERVAL_SEC);
+}
 
-    struct rt_i *rtip = rt_i_create(dbip);
-    if (!rtip) return -1L;
+struct RegionBoolevalWriter {
+    struct bu_process *process = NULL;
+    FILE *input = NULL;
+    FacetizeWorkerClient channel;
+    FacetizeWorkerStatus status;
+    size_t worker_index = SIZE_MAX;
+    int64_t write_start = 0;
+    int64_t write_deadline = 0;
+    double write_timeout = 0.0;
+    bool write_permitted = false;
+};
 
-    if (rt_gettree(rtip, obj_name) != 0) {
-	rt_i_destroy(rtip);
-	return -1L;
+static void
+_region_booleval_worker_reset(RegionBoolevalWorker &worker)
+{
+    worker.status = FacetizeWorkerStatus();
+    worker.result_index = SIZE_MAX;
+    worker.request_start = 0;
+    worker.write_start = 0;
+    worker.write_deadline = 0;
+    worker.write_timeout = 0.0;
+    worker.write_permitted = false;
+    worker.awaiting_commit = false;
+}
+
+static void
+_region_booleval_worker_stop(struct _ged_facetize_state *s,
+	RegionBoolevalWorker &worker, bool terminate)
+{
+    if (worker.process)
+	(void)facetize_process_stop(s, &worker.process, worker.input,
+		worker.channel, terminate);
+    worker.input = NULL;
+    worker.channel.reset(NULL);
+    _region_booleval_worker_reset(worker);
+}
+
+static void
+_region_booleval_writer_reset(RegionBoolevalWriter &writer)
+{
+    writer.status = FacetizeWorkerStatus();
+    writer.worker_index = SIZE_MAX;
+    writer.write_start = 0;
+    writer.write_deadline = 0;
+    writer.write_timeout = 0.0;
+    writer.write_permitted = false;
+}
+
+static void
+_region_booleval_writer_stop(struct _ged_facetize_state *s,
+	RegionBoolevalWriter &writer, bool terminate)
+{
+    if (writer.process)
+	(void)facetize_process_stop(s, &writer.process, writer.input,
+		writer.channel, terminate);
+    writer.input = NULL;
+    writer.channel.reset(NULL);
+    _region_booleval_writer_reset(writer);
+}
+
+static void
+_region_csg_worker_stop(struct _ged_facetize_state *s,
+	RegionCsgWorker &worker, bool terminate)
+{
+    if (worker.process)
+	(void)facetize_process_stop(s, &worker.process, worker.input,
+		worker.channel, terminate);
+    worker.input = NULL;
+    worker.channel.reset(NULL);
+    worker.status = FacetizeWorkerStatus();
+    worker.metrics_index = SIZE_MAX;
+    worker.request_start = 0;
+}
+
+static void
+_collect_region_csg_metrics(struct _ged_facetize_state *s,
+	std::vector<RegionCsgMetrics> &metrics)
+{
+    if (!s || !s->dbip)
+	return;
+
+    std::vector<size_t> work;
+    for (size_t i = 0; i < metrics.size(); i++) {
+	if (metrics[i].can_validate)
+	    work.push_back(i);
     }
-    rt_prep_parallel(rtip, 1);
+    if (work.empty())
+	return;
 
-    struct rt_crofton_params crp = {};
-    crp.n_rays = 0;
-    crp.stability_mm = 0.05;
-    crp.time_ms = 2000.0;
+    ssize_t total_memory_result = bu_mem(BU_MEM_ALL, NULL);
+    ssize_t available_memory_result = bu_mem(BU_MEM_AVAIL, NULL);
+    size_t total_memory = (total_memory_result > 0) ?
+	(size_t)total_memory_result : 0;
+    size_t available_memory = (available_memory_result > 0) ?
+	(size_t)available_memory_result : 0;
+    size_t available_cpus = bu_avail_cpus();
+    FacetizeWorkerPolicy policy((size_t)s->max_workers, work.size(),
+	available_cpus, total_memory, available_memory);
 
-    int cr = rt_crofton_shoot(&out_sa, &out_vol, NULL, NULL, NULL, NULL,
-	    NULL, rtip, &crp,
-	    have_focus ? focus_min : NULL,
-	    have_focus ? focus_max : NULL);
-    rt_i_destroy(rtip);
-    return (cr >= 0) ? (long)cr : -1L;
+    /* A one-worker run retains the established in-process validation order.
+     * Parallel validation requires file-backed input so each subprocess can
+     * open an isolated librt/database instance. */
+    if (policy.worker_count() == 1 || !s->dbip->dbi_filename ||
+	!s->dbip->dbi_filename[0])
+	return;
+
+    int start_msg_level = (work.size() >= FACETIZE_REGION_PROGRESS_MIN) ? 0 : 1;
+    facetize_log(s, start_msg_level,
+	    "FACETIZE: sampling CSG references for %zu regions using %zu workers with up to %zu ray threads each\n",
+	    work.size(), policy.worker_count(), policy.threads_per_worker());
+
+    char process_executable[MAXPATHLEN];
+    bu_dir(process_executable, MAXPATHLEN, BU_DIR_BIN, "ged_exec",
+	BU_DIR_EXT, NULL);
+    std::vector<std::string> process_command;
+    process_command.push_back(process_executable);
+    process_command.push_back("facetize_process");
+    process_command.push_back("--threads");
+    process_command.push_back(std::to_string(policy.threads_per_worker()));
+    process_command.push_back(s->dbip->dbi_filename);
+
+    int64_t start = bu_gettime();
+    int64_t next_progress = start +
+	BU_SEC2USEC(FACETIZE_REGION_PROGRESS_INTERVAL_SEC);
+    std::vector<RegionCsgWorker> workers(policy.worker_count());
+    size_t next_work = 0;
+    size_t completed = 0;
+    size_t active = 0;
+    size_t observed_worker_resident = 0;
+    std::string no_result_file;
+
+    while (completed < work.size()) {
+	bool made_progress = false;
+	for (RegionCsgWorker &worker : workers) {
+	    if (!worker.enabled || worker.metrics_index != SIZE_MAX ||
+		    next_work >= work.size())
+		continue;
+
+	    available_memory_result = bu_mem(BU_MEM_AVAIL, NULL);
+	    available_memory = (available_memory_result > 0) ?
+		(size_t)available_memory_result : 0;
+	    if (!policy.can_dispatch(active, available_memory,
+		    observed_worker_resident))
+		break;
+
+	    if (worker.process && bu_process_poll(worker.process, NULL) != 0)
+		_region_csg_worker_stop(s, worker, false);
+	    if (!worker.process && facetize_process_start(&worker.process,
+		    &worker.input, worker.channel, process_command,
+		    no_result_file, "--validation-server") != BRLCAD_OK) {
+		_region_csg_worker_stop(s, worker, true);
+		worker.enabled = false;
+		continue;
+	    }
+
+	    size_t metrics_index = work[next_work];
+	    if (!worker.channel.send_request(
+		    metrics[metrics_index].object_name.c_str())) {
+		_region_csg_worker_stop(s, worker, true);
+		worker.enabled = false;
+		continue;
+	    }
+	    worker.status = FacetizeWorkerStatus();
+	    worker.metrics_index = metrics_index;
+	    worker.request_start = bu_gettime();
+	    next_work++;
+	    active++;
+	    made_progress = true;
+	}
+
+	for (RegionCsgWorker &worker : workers) {
+	    if (worker.metrics_index == SIZE_MAX)
+		continue;
+
+	    facetize_process_drain_stdout(s, worker.process, worker.channel,
+		    &worker.status);
+	    facetize_process_drain_stderr(s, worker.process);
+	    observed_worker_resident = std::max(observed_worker_resident,
+		    worker.status.resident_size);
+	    bool process_exited = bu_process_poll(worker.process, NULL) != 0;
+	    bool timed_out = !worker.status.result_received && s->max_time > 0 &&
+		bu_gettime() - worker.request_start >= BU_SEC2USEC(s->max_time);
+	    if (!worker.status.result_received && !process_exited && !timed_out)
+		continue;
+
+	    RegionCsgMetrics &result = metrics[worker.metrics_index];
+	    result.attempted = true;
+	    if (worker.status.result_received &&
+		    worker.status.result == BRLCAD_OK) {
+		result.crossings = worker.status.csg_crossings;
+		result.surface_area = worker.status.csg_surface_area;
+		result.volume = worker.status.csg_volume;
+	    }
+	    if (timed_out) {
+		facetize_log(s, 0,
+			"FACETIZE: CSG reference sampling timed out after %d seconds for %s; validation will be unavailable\n",
+			s->max_time, result.object_name.c_str());
+		_region_csg_worker_stop(s, worker, true);
+	    } else if (process_exited) {
+		if (!worker.status.result_received)
+		    facetize_log(s, 0,
+			    "FACETIZE: CSG validation worker exited while sampling %s; validation will be unavailable\n",
+			    result.object_name.c_str());
+		_region_csg_worker_stop(s, worker, false);
+	    } else {
+		worker.status = FacetizeWorkerStatus();
+		worker.metrics_index = SIZE_MAX;
+		worker.request_start = 0;
+	    }
+	    active--;
+	    completed++;
+	    made_progress = true;
+	}
+
+	bool usable_worker = false;
+	for (const RegionCsgWorker &worker : workers)
+	    usable_worker = usable_worker || worker.enabled;
+	if (!active && next_work < work.size() && !usable_worker)
+	    break;
+
+	int64_t now = bu_gettime();
+	if (now >= next_progress) {
+	    facetize_log(s, 0,
+		    "FACETIZE: sampled CSG references for %zu of %zu regions (%zu workers active, %.1f seconds elapsed)\n",
+		    completed, work.size(), active,
+		    (now - start) / FACETIZE_USEC_TO_SEC_DIVISOR);
+	    next_progress = now +
+		BU_SEC2USEC(FACETIZE_REGION_PROGRESS_INTERVAL_SEC);
+	}
+	if (!made_progress)
+	    (void)bu_snooze(FACETIZE_REGION_WORKER_POLL_USEC);
+    }
+
+    int abnormal_workers = 0;
+    for (RegionCsgWorker &worker : workers) {
+	if (!worker.process)
+	    continue;
+	bu_process_file_close(worker.process, BU_PROCESS_STDIN);
+	worker.input = NULL;
+	int process_status = facetize_process_reap(s, &worker.process,
+		worker.channel, false);
+	worker.channel.reset(NULL);
+	if (process_status != BRLCAD_OK)
+	    abnormal_workers++;
+    }
+    if (abnormal_workers)
+	facetize_log(s, 0,
+		"FACETIZE: %d CSG validation worker%s exited abnormally\n",
+		abnormal_workers, (abnormal_workers == 1) ? "" : "s");
+
+    /* Worker startup failure is recoverable.  Leave undispatched metrics
+     * untouched so the region loop uses its established serial path. */
+    size_t deferred = 0;
+    for (size_t metrics_index : work) {
+	if (!metrics[metrics_index].attempted)
+	    deferred++;
+    }
+
+    double elapsed_seconds = (bu_gettime() - start) /
+	FACETIZE_USEC_TO_SEC_DIVISOR;
+    int completion_msg_level = (start_msg_level == 0 ||
+	elapsed_seconds >= FACETIZE_REGION_PROGRESS_INTERVAL_SEC) ? 0 : 1;
+    if (deferred) {
+	facetize_log(s, 0,
+		"FACETIZE: parallel CSG reference sampling completed for %zu of %zu regions; %zu deferred to serial validation (%.1f seconds)\n",
+		completed, work.size(), deferred, elapsed_seconds);
+    } else {
+	facetize_log(s, completion_msg_level,
+		"FACETIZE: CSG reference sampling complete for %zu regions (%.1f seconds)\n",
+		completed, elapsed_seconds);
+    }
+}
+
+static int
+_evaluate_regions_parallel(struct _ged_facetize_state *s,
+	std::vector<RegionBoolevalResult> &results)
+{
+    if (!s || !s->dbip || results.size() < 2 ||
+	    !s->dbip->dbi_filename || !s->dbip->dbi_filename[0])
+	return BRLCAD_OK;
+
+    ssize_t total_memory_result = bu_mem(BU_MEM_ALL, NULL);
+    ssize_t available_memory_result = bu_mem(BU_MEM_AVAIL, NULL);
+    size_t total_memory = (total_memory_result > 0) ?
+	(size_t)total_memory_result : 0;
+    size_t available_memory = (available_memory_result > 0) ?
+	(size_t)available_memory_result : 0;
+    FacetizeWorkerPolicy policy((size_t)s->max_workers, results.size(),
+	bu_avail_cpus(), total_memory, available_memory);
+    if (policy.worker_count() < 2)
+	return BRLCAD_OK;
+
+    const char *work_file = bu_vls_cstr(s->wfile);
+    std::string backup_file = std::string(work_file) + ".region_eval.bak";
+    (void)bu_file_delete(backup_file.c_str());
+    RegionSnapshotProgress snapshot_progress;
+    snapshot_progress.state = s;
+    snapshot_progress.start = bu_gettime();
+    snapshot_progress.next_report = snapshot_progress.start +
+	BU_SEC2USEC(FACETIZE_REGION_PROGRESS_INTERVAL_SEC);
+    if (facetize_file_copy(work_file, backup_file.c_str(),
+	    _region_snapshot_progress, &snapshot_progress) != BRLCAD_OK) {
+	facetize_log(s, 0,
+		"FACETIZE: unable to checkpoint the working database before parallel region evaluation\n");
+	return BRLCAD_OK;
+    }
+    double snapshot_seconds = (bu_gettime() - snapshot_progress.start) /
+	FACETIZE_USEC_TO_SEC_DIVISOR;
+    if (snapshot_seconds >= FACETIZE_REGION_PROGRESS_INTERVAL_SEC)
+	facetize_log(s, 0,
+		"FACETIZE: shared region snapshot ready (%.1f seconds)\n",
+		snapshot_seconds);
+
+    char process_executable[MAXPATHLEN];
+    bu_dir(process_executable, MAXPATHLEN, BU_DIR_BIN, "ged_exec",
+	BU_DIR_EXT, NULL);
+    std::vector<std::string> command_prefix;
+    command_prefix.push_back(process_executable);
+    command_prefix.push_back("facetize_process");
+    command_prefix.push_back("--threads");
+    command_prefix.push_back(std::to_string(policy.threads_per_worker()));
+    if (s->no_empty)
+	command_prefix.push_back("--no-empty");
+    if (s->no_fixup)
+	command_prefix.push_back("--no-fixup");
+    if (s->tolerate_failures)
+	command_prefix.push_back("--tolerate-failures");
+
+    std::vector<std::string> writer_command;
+    writer_command.push_back(process_executable);
+    writer_command.push_back("facetize_process");
+    writer_command.push_back(work_file);
+
+    RegionBoolevalWriter writer;
+    std::string no_result_file;
+    std::vector<RegionBoolevalWorker> workers(policy.worker_count());
+    for (size_t i = 0; i < workers.size(); i++) {
+	workers[i].result_file = std::string(work_file) +
+	    ".region_worker_" + std::to_string(i) + ".result.g";
+	(void)bu_file_delete(workers[i].result_file.c_str());
+    }
+
+    if (facetize_process_start(&writer.process, &writer.input,
+	    writer.channel, writer_command, no_result_file,
+	    "--writer") != BRLCAD_OK) {
+	_region_booleval_writer_stop(s, writer, true);
+	for (RegionBoolevalWorker &worker : workers) {
+	    (void)bu_file_delete(worker.result_file.c_str());
+	}
+	(void)bu_file_delete(backup_file.c_str());
+	return BRLCAD_OK;
+    }
+
+    facetize_log(s, 0,
+	    "FACETIZE: evaluating %zu region roots using %zu isolated workers with up to %zu CPU threads available to each\n",
+	    results.size(), policy.worker_count(), policy.threads_per_worker());
+
+    int64_t run_start = bu_gettime();
+    int64_t next_progress = run_start +
+	BU_SEC2USEC(FACETIZE_REGION_PROGRESS_INTERVAL_SEC);
+    size_t next_result = 0;
+    size_t completed = 0;
+    size_t active = 0;
+    size_t observed_worker_resident = 0;
+    bool unsafe_write = false;
+
+    auto submit_commit = [&](size_t worker_index) {
+	if (worker_index >= workers.size() || writer.worker_index != SIZE_MAX)
+	    return false;
+	RegionBoolevalWorker &worker = workers[worker_index];
+	RegionBoolevalResult &result = results[worker.result_index];
+	if (writer.process && bu_process_poll(writer.process, NULL) != 0)
+	    _region_booleval_writer_stop(s, writer, false);
+	if (!writer.process && facetize_process_start(&writer.process,
+		&writer.input, writer.channel, writer_command, no_result_file,
+		"--writer") != BRLCAD_OK) {
+	    _region_booleval_writer_stop(s, writer, true);
+	    return false;
+	}
+	if (!writer.channel.send_commit(worker.result_file.c_str(),
+		result.bot_name.c_str(), worker.status.payload_size)) {
+	    _region_booleval_writer_stop(s, writer, true);
+	    return false;
+	}
+	_region_booleval_writer_reset(writer);
+	writer.worker_index = worker_index;
+	writer.write_deadline = bu_gettime() +
+	    BU_SEC2USEC(FACETIZE_REGION_WRITER_READY_TIMEOUT_SEC);
+	worker.awaiting_commit = true;
+	return true;
+    };
+    auto defer_commit = [&](RegionBoolevalWorker &worker) {
+	RegionBoolevalResult &result = results[worker.result_index];
+	result.attempted = false;
+	result.succeeded = false;
+	facetize_log(s, 0,
+		"FACETIZE: unable to commit parallel region result for %s; deferring it to serial evaluation\n",
+		result.object_name.c_str());
+	_region_booleval_worker_reset(worker);
+	active--;
+	completed++;
+    };
+
+    while (completed < results.size() && !unsafe_write) {
+	bool made_progress = false;
+
+	for (RegionBoolevalWorker &worker : workers) {
+	    if (!worker.enabled || worker.result_index != SIZE_MAX ||
+		    next_result >= results.size())
+		continue;
+
+	    available_memory_result = bu_mem(BU_MEM_AVAIL, NULL);
+	    available_memory = (available_memory_result > 0) ?
+		(size_t)available_memory_result : 0;
+	    if (!policy.can_dispatch(active, available_memory,
+		    observed_worker_resident))
+		break;
+
+	    if (worker.process && bu_process_poll(worker.process, NULL) != 0)
+		_region_booleval_worker_stop(s, worker, false);
+	    if (!worker.process) {
+		std::vector<std::string> worker_command = command_prefix;
+		worker_command.push_back(backup_file);
+		worker_command.push_back(s->dbip->dbi_filename);
+		if (facetize_process_start(&worker.process, &worker.input,
+			worker.channel, worker_command, worker.result_file,
+			"--region-server") != BRLCAD_OK) {
+		    _region_booleval_worker_stop(s, worker, true);
+		    worker.enabled = false;
+		    continue;
+		}
+	    }
+
+	    if (!worker.channel.send_request(
+		    results[next_result].object_name.c_str())) {
+		_region_booleval_worker_stop(s, worker, true);
+		worker.enabled = false;
+		continue;
+	    }
+	    worker.status = FacetizeWorkerStatus();
+	    worker.result_index = next_result++;
+	    worker.request_start = bu_gettime();
+	    active++;
+	    made_progress = true;
+	}
+
+	for (size_t worker_index = 0; worker_index < workers.size();
+		worker_index++) {
+	    RegionBoolevalWorker &worker = workers[worker_index];
+	    if (worker.result_index == SIZE_MAX || worker.awaiting_commit)
+		continue;
+
+	    facetize_process_drain_stdout(s, worker.process, worker.channel,
+		    &worker.status);
+	    facetize_process_drain_stderr(s, worker.process);
+	    observed_worker_resident = std::max(observed_worker_resident,
+		    worker.status.resident_size);
+	    int64_t now = bu_gettime();
+
+	    if (worker.status.result_received) {
+		if (worker.status.write_done &&
+			worker.status.result == BRLCAD_OK) {
+		    if (writer.worker_index == SIZE_MAX) {
+			if (submit_commit(worker_index)) {
+			    made_progress = true;
+			    continue;
+			}
+			defer_commit(worker);
+			made_progress = true;
+			continue;
+		    }
+		} else {
+		    RegionBoolevalResult &result =
+			results[worker.result_index];
+		    result.attempted = true;
+		    result.succeeded = false;
+		    facetize_log(s, 0,
+			    "FACETIZE: region Boolean evaluation failed for %s\n",
+			    result.object_name.c_str());
+		    if (worker.status.write_started)
+			_region_booleval_worker_stop(s, worker, true);
+		    else
+			_region_booleval_worker_reset(worker);
+		    active--;
+		    completed++;
+		    made_progress = true;
+		    continue;
+		}
+	    }
+
+	    bool interrupted = false;
+	    bool timed_out = false;
+	    if (worker.status.write_ready && !worker.write_permitted) {
+		worker.write_permitted = true;
+		worker.write_timeout = facetize_write_timeout_seconds(
+			worker.status.payload_size, s->write_profile_bytes,
+			s->write_profile_usec);
+		worker.write_start = now;
+		worker.write_deadline = now +
+		    BU_SEC2USEC(worker.write_timeout);
+		if (!worker.channel.send_write_proceed())
+		    interrupted = true;
+		made_progress = true;
+	    }
+	    if (!interrupted && bu_process_poll(worker.process, NULL) != 0)
+		interrupted = true;
+	    if (!interrupted && !worker.status.write_ready && s->max_time > 0 &&
+		    now - worker.request_start >= BU_SEC2USEC(s->max_time)) {
+		interrupted = true;
+		timed_out = true;
+	    }
+	    if (!interrupted && worker.write_permitted &&
+		    now >= worker.write_deadline) {
+		interrupted = true;
+		timed_out = true;
+	    }
+
+	    if (interrupted) {
+		RegionBoolevalResult &result = results[worker.result_index];
+		result.attempted = true;
+		result.succeeded = false;
+		facetize_log(s, 0,
+			"FACETIZE: region Boolean worker %s for %s%s\n",
+			timed_out ? "timed out" : "exited",
+			result.object_name.c_str(),
+			worker.status.write_started ? " while staging output" : "");
+		_region_booleval_worker_stop(s, worker, true);
+		active--;
+		completed++;
+		made_progress = true;
+	    }
+	}
+
+	if (writer.worker_index < workers.size()) {
+	    RegionBoolevalWorker &worker = workers[writer.worker_index];
+	    RegionBoolevalResult &result = results[worker.result_index];
+	    facetize_process_drain_stdout(s, writer.process, writer.channel,
+		    &writer.status);
+	    facetize_process_drain_stderr(s, writer.process);
+	    int64_t now = bu_gettime();
+	    bool interrupted = false;
+	    if (writer.status.result_received) {
+		if (writer.status.write_done &&
+			writer.status.result == BRLCAD_OK) {
+		    result.attempted = true;
+		    result.succeeded = true;
+		    s->tolerated_failures +=
+			worker.status.tolerated_failures;
+		    s->tolerated_failure_omitted +=
+			worker.status.tolerated_failures;
+		    if (now > writer.write_start &&
+			    worker.status.payload_size >=
+			    FACETIZE_WRITE_PROFILE_MIN_BYTES) {
+			s->write_profile_bytes += worker.status.payload_size;
+			s->write_profile_usec += now - writer.write_start;
+		    }
+		    _region_booleval_worker_reset(worker);
+		    _region_booleval_writer_reset(writer);
+		    active--;
+		    completed++;
+		    made_progress = true;
+		    continue;
+		}
+		interrupted = true;
+	    }
+	    if (!interrupted && writer.status.write_ready &&
+		    !writer.write_permitted) {
+		writer.write_permitted = true;
+		writer.write_timeout = facetize_write_timeout_seconds(
+			worker.status.payload_size, s->write_profile_bytes,
+			s->write_profile_usec);
+		writer.write_start = now;
+		writer.write_deadline = now +
+		    BU_SEC2USEC(writer.write_timeout);
+		if (!writer.channel.send_write_proceed())
+		    interrupted = true;
+		made_progress = true;
+	    }
+	    if (!interrupted && bu_process_poll(writer.process, NULL) != 0)
+		interrupted = true;
+	    if (!interrupted && writer.write_deadline > 0 &&
+		    now >= writer.write_deadline)
+		interrupted = true;
+
+	    if (interrupted) {
+		unsafe_write = writer.status.write_started;
+		if (!unsafe_write) {
+		    result.attempted = false;
+		    result.succeeded = false;
+		    _region_booleval_worker_reset(worker);
+		    active--;
+		    completed++;
+		}
+		facetize_log(s, 0,
+			"FACETIZE: database writer failed %s committing region %s\n",
+			unsafe_write ? "while" : "before",
+			result.object_name.c_str());
+		_region_booleval_writer_stop(s, writer, true);
+		made_progress = true;
+	    }
+	}
+
+	if (writer.worker_index == SIZE_MAX) {
+	    for (size_t worker_index = 0; worker_index < workers.size();
+		    worker_index++) {
+		RegionBoolevalWorker &worker = workers[worker_index];
+		if (worker.result_index != SIZE_MAX &&
+			worker.status.write_done &&
+			worker.status.result == BRLCAD_OK &&
+			!worker.awaiting_commit) {
+		    if (submit_commit(worker_index)) {
+			made_progress = true;
+			break;
+		    }
+		    defer_commit(worker);
+		    made_progress = true;
+		    break;
+		}
+	    }
+	}
+
+	bool usable_worker = false;
+	for (const RegionBoolevalWorker &worker : workers)
+	    usable_worker = usable_worker || worker.enabled;
+	if (!active && next_result < results.size() && !usable_worker)
+	    break;
+
+	int64_t now = bu_gettime();
+	if (now >= next_progress) {
+	    facetize_log(s, 0,
+		    "FACETIZE: evaluated %zu of %zu region roots (%zu workers active, %.1f seconds elapsed)\n",
+		    completed, results.size(), active,
+		    (now - run_start) / FACETIZE_USEC_TO_SEC_DIVISOR);
+	    next_progress = now +
+		BU_SEC2USEC(FACETIZE_REGION_PROGRESS_INTERVAL_SEC);
+	}
+	if (!made_progress)
+	    (void)bu_snooze(FACETIZE_REGION_WORKER_POLL_USEC);
+    }
+
+    if (writer.process) {
+	if (!unsafe_write) {
+	    bu_process_file_close(writer.process, BU_PROCESS_STDIN);
+	    writer.input = NULL;
+	}
+	(void)facetize_process_reap(s, &writer.process, writer.channel,
+		unsafe_write);
+	writer.channel.reset(NULL);
+    }
+    for (RegionBoolevalWorker &worker : workers) {
+	if (worker.process) {
+	    if (!unsafe_write) {
+		bu_process_file_close(worker.process, BU_PROCESS_STDIN);
+		worker.input = NULL;
+	    }
+	    (void)facetize_process_reap(s, &worker.process, worker.channel,
+		    unsafe_write);
+	    worker.channel.reset(NULL);
+	}
+	(void)bu_file_delete(worker.result_file.c_str());
+    }
+
+    int restore_status = BRLCAD_OK;
+    if (unsafe_write) {
+	if (facetize_file_copy(backup_file.c_str(), work_file) != BRLCAD_OK) {
+	    facetize_log(s, 0,
+		    "FACETIZE: unable to restore the region-evaluation checkpoint after an interrupted database write; checkpoint retained at %s\n",
+		    backup_file.c_str());
+	    restore_status = BRLCAD_ERROR;
+	}
+	for (RegionBoolevalResult &result : results) {
+	    result.attempted = false;
+	    result.succeeded = false;
+	}
+    }
+    if (restore_status == BRLCAD_OK)
+	(void)bu_file_delete(backup_file.c_str());
+
+    double elapsed_seconds = (bu_gettime() - run_start) /
+	FACETIZE_USEC_TO_SEC_DIVISOR;
+    size_t succeeded = 0;
+    for (const RegionBoolevalResult &result : results)
+	succeeded += result.succeeded ? 1u : 0u;
+    facetize_log(s, 0,
+	    "FACETIZE: isolated region evaluation complete: %zu of %zu roots committed (%.1f seconds)\n",
+	    succeeded, results.size(), elapsed_seconds);
+    return restore_status;
 }
 
 static int
@@ -216,6 +953,11 @@ _clear_variant_plan(struct _ged_facetize_state *s)
 /* returns 1 on pass, 0 on mismatch, -1 on unavailable/skip */
 static int
 _validate_csg_vs_bot(struct db_i *csg_dbip, const char *obj_name, struct db_i *bot_dbip, const char *bot_name, double sa_tol_pct, double vol_tol_pct, double *sa_err_pct, double *vol_err_pct);
+
+static int
+_validate_csg_metrics_vs_bot(const RegionCsgMetrics &csg_metrics,
+	struct db_i *bot_dbip, const char *bot_name, double sa_tol_pct,
+	double vol_tol_pct, double *sa_err_pct, double *vol_err_pct);
 
 /* -----------------------------------------------------------------------
  * Perturbed-CSG in-memory db helpers for Pass 2 Crofton validation.
@@ -441,7 +1183,9 @@ _create_perturbed_csg_db(struct db_i *src_dbip, const char *region_name,
 }
 
 static int
-_validate_csg_vs_bot(struct db_i *csg_dbip, const char *obj_name, struct db_i *bot_dbip, const char *bot_name, double sa_tol_pct, double vol_tol_pct, double *sa_err_pct, double *vol_err_pct)
+_validate_csg_metrics_vs_bot(const RegionCsgMetrics &csg_metrics,
+	struct db_i *bot_dbip, const char *bot_name, double sa_tol_pct,
+	double vol_tol_pct, double *sa_err_pct, double *vol_err_pct)
 {
     /* Return codes:
      *   1  PASS:      SA and volume within tolerance.
@@ -451,16 +1195,15 @@ _validate_csg_vs_bot(struct db_i *csg_dbip, const char *obj_name, struct db_i *b
      *                 too few for a meaningful comparison; accept with note.
      *   3  ZERO_HIT:  sampler found zero crossings for a non-empty BoT —
      *                 the BoT output is suspect; warn user to inspect.       */
-    double csa = -1.0, cvol = -1.0, bsa = -1.0, bvol = -1.0;
-    long csg_crossings = _crofton_on_obj(csg_dbip, obj_name, csa, cvol);
-    if (csg_crossings < 0)
+    if (csg_metrics.crossings < 0)
 	return -1;
+    double bsa = -1.0, bvol = -1.0;
     if (_bot_metrics(bot_dbip, bot_name, bsa, bvol) != 0)
 	return -1;
 
     /* --- Empty-BoT case: pass iff the CSG also read as empty ---------- */
     if (std::fabs(bsa) <= FACETIZE_RT_EMPTY_TOL && std::fabs(bvol) <= FACETIZE_RT_EMPTY_TOL) {
-	bool csg_empty = (csg_crossings == 0);
+	bool csg_empty = (csg_metrics.crossings == 0);
 	*sa_err_pct  = csg_empty ? 0.0 : 100.0;
 	*vol_err_pct = csg_empty ? 0.0 : 100.0;
 	return csg_empty ? 1 : 0;
@@ -474,7 +1217,7 @@ _validate_csg_vs_bot(struct db_i *csg_dbip, const char *obj_name, struct db_i *b
      * the BoT contains leftover noise triangles, or the geometry is so
      * extreme that not a single stochastic chord hit it.  Either outcome
      * warrants user inspection rather than silent acceptance.            */
-    if (csg_crossings == 0) {
+    if (csg_metrics.crossings == 0) {
 	*sa_err_pct  = 100.0;
 	*vol_err_pct = 100.0;
 	return 3;
@@ -484,18 +1227,33 @@ _validate_csg_vs_bot(struct db_i *csg_dbip, const char *obj_name, struct db_i *b
      * the threshold at which the SA estimate is statistically reliable
      * (~1/sqrt(N) noise > 14 %).  A perturb retry would face the same
      * sampling limitation, so we accept the BoT with a note instead.    */
-    if (csg_crossings < CROFTON_FEW_HIT_THRESHOLD) {
+    if (csg_metrics.crossings < CROFTON_FEW_HIT_THRESHOLD) {
 	*sa_err_pct  = 100.0;
 	*vol_err_pct = 100.0;
 	return 2;
     }
 
     /* Normal case: enough crossings for a reliable SA/volume estimate.   */
-    double sa_err  = (bsa > 0.0) ? std::fabs(csa - bsa) / bsa : 1.0;
-    double vol_err = (bvol > 0.0) ? std::fabs(cvol - bvol) / bvol : 1.0;
+    double sa_err = (bsa > 0.0) ?
+	std::fabs(csg_metrics.surface_area - bsa) / bsa : 1.0;
+    double vol_err = (bvol > 0.0) ?
+	std::fabs(csg_metrics.volume - bvol) / bvol : 1.0;
     *sa_err_pct  = sa_err  * 100.0;
     *vol_err_pct = vol_err * 100.0;
     return (sa_err > sa_tol_pct || vol_err > vol_tol_pct) ? 0 : 1;
+}
+
+static int
+_validate_csg_vs_bot(struct db_i *csg_dbip, const char *obj_name,
+	struct db_i *bot_dbip, const char *bot_name, double sa_tol_pct,
+	double vol_tol_pct, double *sa_err_pct, double *vol_err_pct)
+{
+    RegionCsgMetrics csg_metrics;
+    csg_metrics.object_name = obj_name ? obj_name : "";
+    csg_metrics.crossings = facetize_csg_metrics(csg_dbip, obj_name,
+	    &csg_metrics.surface_area, &csg_metrics.volume);
+    return _validate_csg_metrics_vs_bot(csg_metrics, bot_dbip, bot_name,
+	    sa_tol_pct, vol_tol_pct, sa_err_pct, vol_err_pct);
 }
 
 int
@@ -720,6 +1478,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     nmg_wstate.nmg_booleval = s->nmg_booleval;
     nmg_wstate.max_time = s->max_time;
     nmg_wstate.max_pnts = s->max_pnts;
+    nmg_wstate.max_workers = s->max_workers;
     nmg_wstate.prefix = s->prefix;
     nmg_wstate.suffix = s->suffix;
     nmg_wstate.tol = s->tol;
@@ -801,42 +1560,131 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     if (!s->make_nmg && !s->nmg_booleval && !s->no_perturb)
 	s->use_variant_plan = 0;
 
+    /* The original-CSG side of Pass 1 validation is independent of generated
+     * BoTs and of all other roots.  Sample those references concurrently
+     * before entering the serial Boolean/write phase.  Perturb retries remain
+     * serial because they create temporary variants in the working database. */
+    std::vector<RegionCsgMetrics> csg_metrics(eval_total);
+    if (!s->make_nmg && !s->nmg_booleval && !s->no_perturb) {
+	for (size_t i = 0; i < BU_PTBL_LEN(&eval_roots); i++) {
+	    struct directory *dp =
+		(struct directory *)BU_PTBL_GET(&eval_roots, i);
+	    csg_metrics[i].object_name = dp->d_namep;
+	    std::set<std::string> visited;
+	    csg_metrics[i].can_validate =
+		_has_perturbable_leaf(s->dbip, dp, visited);
+	}
+	_collect_region_csg_metrics(s, csg_metrics);
+    }
+
     // For evaluated roots, reduce each CSG tree to a single BoT/NMG result and
     // place that result back into the working hierarchy.
     struct bu_vls bname = BU_VLS_INIT_ZERO;
+    std::vector<RegionBoolevalResult> region_boolevals(eval_total);
+    int parallel_eval_status = BRLCAD_OK;
+    if (!s->make_nmg && !s->nmg_booleval && eval_total) {
+	struct db_i *name_dbip = db_open(bu_vls_cstr(s->wfile),
+		DB_OPEN_READONLY);
+	if (name_dbip && db_dirbuild(name_dbip) >= 0) {
+	    for (size_t i = 0; i < eval_total; i++) {
+		struct directory *root =
+		    (struct directory *)BU_PTBL_GET(&eval_roots, i);
+		region_boolevals[i].object_name = root->d_namep;
+		bu_vls_sprintf(&bname, "%s.bot", root->d_namep);
+		if (db_lookup(name_dbip, bu_vls_cstr(&bname),
+			LOOKUP_QUIET) != RT_DIR_NULL)
+		    bu_vls_incr(&bname, NULL, NULL, &_db_uniq_test,
+			    (void *)name_dbip);
+		region_boolevals[i].bot_name = bu_vls_cstr(&bname);
+	    }
+	}
+	if (name_dbip)
+	    db_close(name_dbip);
+	if (!region_boolevals.empty() &&
+		!region_boolevals[0].bot_name.empty())
+	    parallel_eval_status =
+		_evaluate_regions_parallel(s, region_boolevals);
+    }
+
+    auto cleanup_eval_error = [&]() {
+	if (s->variant_plan) {
+	    delete (FacetizeVariantPlan *)s->variant_plan;
+	    s->variant_plan = NULL;
+	}
+	bu_ptbl_free(&eval_roots);
+	bu_ptbl_free(ir);
+	bu_free(ir, "ir table");
+	bu_ptbl_free(ar);
+	bu_free(ar, "ar table");
+	bu_vls_free(&bname);
+	bu_free(dpa, "free dpa");
+    };
+
+    if (parallel_eval_status != BRLCAD_OK) {
+	cleanup_eval_error();
+	return BRLCAD_ERROR;
+    }
+
+    struct db_i *wdbip = db_open(bu_vls_cstr(s->wfile), DB_OPEN_READWRITE);
+    if (!wdbip) {
+	if (s->verbosity >= 0)
+	    bu_log("regions.cpp:%d Failed to open working database.\n", __LINE__);
+	cleanup_eval_error();
+	return BRLCAD_ERROR;
+    }
+    wdbip->dbi_read_only = 1;
+    if (db_dirbuild(wdbip) < 0) {
+	if (s->verbosity >= 0)
+	    bu_log("regions.cpp:%d Failed to build working database directory.\n", __LINE__);
+	db_close(wdbip);
+	cleanup_eval_error();
+	return BRLCAD_ERROR;
+    }
+    db_update_nref(wdbip);
+    wdbip->dbi_read_only = 0;
+    nmg_wstate.dbip = wdbip;
+
+    int bret = BRLCAD_OK;
     for (size_t i = 0; i < BU_PTBL_LEN(&eval_roots); i++) {
 	struct directory *dpw[2] = {NULL};
 	dpw[0] = (struct directory *)BU_PTBL_GET(&eval_roots, i);
 
 	// Get a name for the region's output BoT
-	if (s->make_nmg) {
+	if (!s->make_nmg && !s->nmg_booleval &&
+		!region_boolevals[i].bot_name.empty()) {
+	    bu_vls_sprintf(&bname, "%s",
+		    region_boolevals[i].bot_name.c_str());
+	} else if (s->make_nmg) {
 	    bu_vls_sprintf(&bname, "%s.nmg", dpw[0]->d_namep);
 	} else {
 	    bu_vls_sprintf(&bname, "%s.bot", dpw[0]->d_namep);
 	}
 
-	struct db_i *wdbip = db_open(bu_vls_cstr(s->wfile), DB_OPEN_READWRITE);
-	wdbip->dbi_read_only = 1;
-	db_dirbuild(wdbip);
-	db_update_nref(wdbip);
-	struct directory *dcheck = db_lookup(wdbip, bu_vls_cstr(&bname), LOOKUP_QUIET);
-	if (dcheck != RT_DIR_NULL)
-	    bu_vls_incr(&bname, NULL, NULL, &_db_uniq_test, (void *)wdbip);
-	wdbip->dbi_read_only = 0;
-	nmg_wstate.dbip = wdbip;
+	if (region_boolevals[i].bot_name.empty()) {
+	    struct directory *dcheck = db_lookup(wdbip,
+		    bu_vls_cstr(&bname), LOOKUP_QUIET);
+	    if (dcheck != RT_DIR_NULL)
+		bu_vls_incr(&bname, NULL, NULL, &_db_uniq_test,
+			(void *)wdbip);
+	}
 
-	int bret = BRLCAD_OK;
 	if (s->make_nmg || s->nmg_booleval) {
 	    char *obj_name = bu_strdup(dpw[0]->d_namep);
 	    bret = _ged_facetize_nmgeval(&nmg_wstate, 1, (const char **)&obj_name, bu_vls_cstr(&bname));
 	    bu_free(obj_name, "obj_name");
-	    db_close(wdbip);
 	} else {
 	    // Need wdbp in the next two stages for tolerances
 	    struct rt_wdb *wwdbp = wdb_dbopen(wdbip, RT_WDB_TYPE_DB_DEFAULT);
-	    char *obj_name = bu_strdup(dpw[0]->d_namep);
-	    bret = _ged_facetize_booleval_tri(s, wdbip, wwdbp, 1, (const char **)&obj_name, bu_vls_cstr(&bname), vlfree, 1, i+1, eval_total);
-	    bu_free(obj_name, "obj_name");
+	    if (region_boolevals[i].attempted) {
+		bret = region_boolevals[i].succeeded ?
+		    BRLCAD_OK : BRLCAD_ERROR;
+	    } else {
+		char *obj_name = bu_strdup(dpw[0]->d_namep);
+		bret = _ged_facetize_booleval_tri(s, wdbip, wwdbp, 1,
+			(const char **)&obj_name, bu_vls_cstr(&bname),
+			vlfree, 1, i+1, eval_total);
+		bu_free(obj_name, "obj_name");
+	    }
 
 	    /* Track regions where the Boolean evaluation itself yielded no geometry.
 	     * These are distinct from zero-hit replacements: here the tessellator
@@ -858,11 +1706,8 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 		}
 	    }
 
-	    bool can_validate = false;
-	    if (!s->no_perturb) {
-		std::set<std::string> visited;
-		can_validate = _has_perturbable_leaf(s->dbip, dpw[0], visited);
-	    }
+	    bool can_validate = !s->no_perturb &&
+		csg_metrics[i].can_validate;
 	    if (!s->no_perturb && !can_validate) {
 		vcnt_skip++;
 		if (s->verbosity > 0)
@@ -872,9 +1717,13 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	    if (bret == BRLCAD_OK && !s->no_perturb && can_validate) {
 		vcnt_total++;
 		double sa_err_pct = -1.0, vol_err_pct = -1.0;
-		int vret = _validate_csg_vs_bot(s->dbip, dpw[0]->d_namep, wdbip, bu_vls_cstr(&bname),
-			perturb_sa_frac, perturb_vol_frac,
-			&sa_err_pct, &vol_err_pct);
+		int vret = csg_metrics[i].attempted ?
+		    _validate_csg_metrics_vs_bot(csg_metrics[i], wdbip,
+			    bu_vls_cstr(&bname), perturb_sa_frac,
+			    perturb_vol_frac, &sa_err_pct, &vol_err_pct) :
+		    _validate_csg_vs_bot(s->dbip, dpw[0]->d_namep, wdbip,
+			    bu_vls_cstr(&bname), perturb_sa_frac,
+			    perturb_vol_frac, &sa_err_pct, &vol_err_pct);
 		if (vret == 1) {
 		    vcnt_p1_pass++;
 		    facetize_log(s, 1, "FACETIZE: %s CSG vs BoT MATCH (SA_err=%.2f%% VOL_err=%.2f%%) - skipping perturb\n",
@@ -907,33 +1756,36 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 		    vcnt_p1_trigger++;
 		    facetize_log(s, 1, "FACETIZE: %s CSG vs BoT MISMATCH (SA_err=%.2f%% VOL_err=%.2f%%) - triggering perturb\n",
 			    dpw[0]->d_namep, sa_err_pct, vol_err_pct);
-		    bool reopened_wdb = false;
 		    /* Region retries intentionally use a fresh plan scoped to the
 		     * failed root so passing regions do not create perturb variants. */
 		    _clear_variant_plan(s);
 		    FacetizeVariantPlan *region_vplan =
-			_ged_facetize_build_variant_plan(s, 1, dpw);
+			_ged_facetize_build_variant_plan(s, 1, dpw, wdbip);
 		    if (region_vplan) {
 			s->variant_plan = (void *)region_vplan;
 			vcnt_adjusted_instances += region_vplan->n_adjusted_instances;
 			vcnt_sub_variants += region_vplan->n_sub_variants;
 			vcnt_perturb_fallbacks += region_vplan->n_perturb_fallbacks;
-			if (!region_vplan->variant_names.empty())
-			    _ged_facetize_tessellate_variant_names(s, region_vplan);
-			vcnt_tess_failures += region_vplan->n_variant_tess_failures;
-			reopened_wdb = true;
-		    }
-		    if (region_vplan) {
-			if (reopened_wdb) {
+			if (!region_vplan->variant_names.empty()) {
 			    db_close(wdbip);
+			    wdbip = NULL;
+			    nmg_wstate.dbip = NULL;
+			    _ged_facetize_tessellate_variant_names(s, region_vplan);
 			    wdbip = db_open(bu_vls_cstr(s->wfile), DB_OPEN_READWRITE);
-			    if (!wdbip)
+			    if (!wdbip || db_dirbuild(wdbip) < 0) {
+				if (wdbip)
+				    db_close(wdbip);
+				wdbip = NULL;
+				bret = BRLCAD_ERROR;
 				break;
-			    db_dirbuild(wdbip);
+			    }
 			    db_update_nref(wdbip);
+			    nmg_wstate.dbip = wdbip;
 			    wwdbp = wdb_dbopen(wdbip, RT_WDB_TYPE_DB_DEFAULT);
 			}
-
+			vcnt_tess_failures += region_vplan->n_variant_tess_failures;
+		    }
+		    if (region_vplan) {
 			s->use_variant_plan = 1;
 			struct directory *od = db_lookup(wdbip, bu_vls_cstr(&bname), LOOKUP_QUIET);
 			if (od != RT_DIR_NULL) {
@@ -1020,30 +1872,15 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 			bu_log("FACETIZE: validation unavailable for %s (crofton/metric prep failure)\n", dpw[0]->d_namep);
 		}
 	    }
-	    db_close(wdbip);
 	}
 
 	if (bret != BRLCAD_OK) {
 	    if (s->verbosity >= 0)
 		bu_log("regions.cpp:%d Failed to generate %s.\n", __LINE__, bu_vls_cstr(&bname));
-	    if (s->variant_plan) {
-		delete (FacetizeVariantPlan *)s->variant_plan;
-		s->variant_plan = NULL;
-	    }
-	    bu_ptbl_free(&eval_roots);
-	    bu_ptbl_free(ir);
-	    bu_free(ir, "ir table");
-	    bu_ptbl_free(ar);
-	    bu_free(ar, "ar table");
-	    bu_vls_free(&bname);
-	    bu_free(dpa, "free dpa");
-	    return BRLCAD_ERROR;
+	    break;
 	}
 
 	// Replace comb roots with their evaluated BoT/NMG or swap primitive roots.
-	wdbip = db_open(bu_vls_cstr(s->wfile), DB_OPEN_READWRITE);
-	db_dirbuild(wdbip);
-	db_update_nref(wdbip);
 	struct directory *wdp = db_lookup(wdbip, dpw[0]->d_namep, LOOKUP_QUIET);
 	if (wdp && (wdp->d_flags & RT_DIR_COMB)) {
 	    struct rt_db_internal intern;
@@ -1071,23 +1908,20 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 		    db_rename(wdbip, bot_dp, dpw[0]->d_namep) < 0) {
 		if (s->verbosity >= 0)
 		    bu_log("regions.cpp:%d Failed to replace implicit root %s.\n", __LINE__, dpw[0]->d_namep);
-		db_close(wdbip);
-		if (s->variant_plan) {
-		    delete (FacetizeVariantPlan *)s->variant_plan;
-		    s->variant_plan = NULL;
-		}
-		bu_ptbl_free(&eval_roots);
-		bu_ptbl_free(ir);
-		bu_free(ir, "ir table");
-		bu_ptbl_free(ar);
-		bu_free(ar, "ar table");
-		bu_vls_free(&bname);
-		bu_free(dpa, "free dpa");
-		return BRLCAD_ERROR;
+		bret = BRLCAD_ERROR;
+		break;
 	    }
 	}
+    }
+    if (wdbip) {
 	db_update_nref(wdbip);
 	db_close(wdbip);
+	nmg_wstate.dbip = NULL;
+    }
+
+    if (bret != BRLCAD_OK) {
+	cleanup_eval_error();
+	return BRLCAD_ERROR;
     }
     bu_vls_free(&bname);
     bu_ptbl_free(&eval_roots);
