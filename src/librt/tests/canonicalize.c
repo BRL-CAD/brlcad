@@ -759,6 +759,34 @@ test_eto_parameterization_invariance(void)
 
 
 static int
+test_eto_vertical_major_axis(void)
+{
+    const struct bn_tol tol = BN_TOL_INIT_TOL;
+    const point_t center = VINIT_ZERO;
+    const vect_t normal = {0.0, 0.0, 1.0};
+    const vect_t major_axis = {0.0, 0.0, 5.0};
+    struct rt_db_internal input;
+    struct rt_db_internal canonical;
+    mat_t placement;
+    int failed = 0;
+
+    make_eto(&input, center, normal, major_axis, 8.0, 2.0);
+    RT_DB_INTERNAL_INIT(&canonical);
+    if (rt_obj_canonicalize(&canonical, placement, &input, &tol,
+	    RT_CANONICALIZE_RIGID) != RT_CANONICALIZE_OK ||
+	!matrix_is_identity(placement)) {
+	bu_log("vertical-axis ETO did not retain an identity placement\n");
+	failed = 1;
+    }
+
+    if (canonical.idb_ptr)
+	rt_db_free_internal(&canonical);
+    rt_db_free_internal(&input);
+    return failed;
+}
+
+
+static int
 test_tgc_mode(int type, enum rt_canonicalize_mode mode)
 {
     const struct bn_tol tol = BN_TOL_INIT_TOL;
@@ -1317,6 +1345,7 @@ main(int UNUSED(argc), const char *argv[])
     failures += test_eto_mode(RT_CANONICALIZE_SIMILARITY, 8.0);
     failures += test_eto_mode(RT_CANONICALIZE_AFFINE, 8.0);
     failures += test_eto_parameterization_invariance();
+    failures += test_eto_vertical_major_axis();
     failures += test_tgc_mode(ID_TGC, RT_CANONICALIZE_RIGID);
     failures += test_tgc_mode(ID_TGC, RT_CANONICALIZE_SIMILARITY);
     failures += test_tgc_mode(ID_TGC, RT_CANONICALIZE_AFFINE);

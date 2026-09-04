@@ -19,9 +19,8 @@
  */
 /** @file libged/npush/unpush.cpp
  *
- * Read-only analysis for restoring shared primitive definitions from pushed
- * geometry.  Database rewriting is intentionally deferred until the analysis
- * and reference accounting have independent regression coverage.
+ * Restore shared primitive definitions from pushed geometry.  Analysis and
+ * reference accounting are completed before recoverable database rewrites.
  */
 
 #include "common.h"
@@ -46,6 +45,7 @@
 namespace {
 
 constexpr fastf_t BUCKET_TOLERANCE_MULTIPLIER = 8.0;
+constexpr const char *CANONICAL_NAME_PREFIX = "unpush_";
 
 
 struct unpush_reference {
@@ -79,6 +79,36 @@ struct unpush_primitive_record {
 
 struct unpush_group {
     std::vector<size_t> records;
+};
+
+
+struct indexed_reference {
+    struct directory *parent = nullptr;
+    mat_t matrix = MAT_INIT_IDN;
+};
+
+
+struct database_reference_index {
+    const std::set<struct directory *> *targets = nullptr;
+    std::map<struct directory *, std::vector<indexed_reference>> references;
+};
+
+
+struct rewrite_target {
+    std::string canonical_name;
+    mat_t canonical_to_input = MAT_INIT_IDN;
+};
+
+
+struct rewritten_leaf {
+    std::string name;
+    mat_t matrix = MAT_INIT_IDN;
+};
+
+
+struct planned_group {
+    const unpush_group *group = nullptr;
+    std::string canonical_name;
 };
 
 
@@ -116,6 +146,28 @@ public:
 private:
     bool input_loaded = false;
 };
+
+
+void
+collect_database_reference(struct db_i *UNUSED(dbip), struct directory *parent,
+			   struct directory *child, const char *UNUSED(child_name),
+			   db_op_t UNUSED(operation), matp_t matrix,
+			   void *data)
+{
+    auto *index = static_cast<database_reference_index *>(data);
+
+    if (!index || !index->targets || !parent || !child ||
+	index->targets->find(child) == index->targets->end())
+	return;
+
+    if (parent->d_flags & RT_DIR_COMB) {
+	indexed_reference reference;
+	reference.parent = parent;
+	if (matrix)
+	    MAT_COPY(reference.matrix, matrix);
+	index->references[child].push_back(reference);
+    }
+}
 
 
 void collect_object(unpush_walk_state &state, struct directory *dp);
@@ -509,6 +561,179 @@ mark_exposed_descendants(struct directory *dp,
 }
 
 
+bool
+rewrite_tree(union tree *tree, const std::map<std::string, rewrite_target> &targets,
+	     const struct bn_tol *tol, std::vector<rewritten_leaf> &rewritten)
+{
+    if (!tree)
+	return true;
+
+    RT_CK_TREE(tree);
+    switch (tree->tr_op) {
+	case OP_DB_LEAF: {
+	    auto target_it = targets.find(tree->tr_l.tl_name);
+	    if (target_it == targets.end())
+		return true;
+
+	    mat_t input_matrix;
+	    mat_t replacement;
+	    if (tree->tr_l.tl_mat)
+		MAT_COPY(input_matrix, tree->tr_l.tl_mat);
+	    else
+		MAT_IDN(input_matrix);
+	    bn_mat_mul(replacement, input_matrix,
+		target_it->second.canonical_to_input);
+
+	    bu_free(tree->tr_l.tl_name, "unpush old leaf name");
+	    tree->tr_l.tl_name = bu_strdup(target_it->second.canonical_name.c_str());
+	    if (tree->tr_l.tl_mat) {
+		bu_free(tree->tr_l.tl_mat, "unpush old leaf matrix");
+		tree->tr_l.tl_mat = nullptr;
+	    }
+	    if (!bn_mat_is_equal(replacement, bn_mat_identity, tol))
+		tree->tr_l.tl_mat = bn_mat_dup(replacement);
+
+	    rewritten_leaf leaf;
+	    leaf.name = target_it->second.canonical_name;
+	    MAT_COPY(leaf.matrix, replacement);
+	    rewritten.push_back(leaf);
+	    return true;
+	}
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+	case OP_XOR:
+	    return rewrite_tree(tree->tr_b.tb_left, targets, tol, rewritten) &&
+		rewrite_tree(tree->tr_b.tb_right, targets, tol, rewritten);
+	case OP_NOT:
+	case OP_GUARD:
+	case OP_XNOP:
+	    return rewrite_tree(tree->tr_b.tb_left, targets, tol, rewritten);
+	case OP_NOP:
+	    return true;
+	default:
+	    return false;
+    }
+}
+
+
+bool
+collect_rewritten_leaves(const union tree *tree,
+			 const std::set<std::string> &canonical_names,
+			 std::vector<rewritten_leaf> &rewritten)
+{
+    if (!tree)
+	return true;
+
+    RT_CK_TREE(tree);
+    switch (tree->tr_op) {
+	case OP_DB_LEAF:
+	    if (canonical_names.find(tree->tr_l.tl_name) != canonical_names.end()) {
+		rewritten_leaf leaf;
+		leaf.name = tree->tr_l.tl_name;
+		if (tree->tr_l.tl_mat)
+		    MAT_COPY(leaf.matrix, tree->tr_l.tl_mat);
+		rewritten.push_back(leaf);
+	    }
+	    return true;
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+	case OP_XOR:
+	    return collect_rewritten_leaves(tree->tr_b.tb_left, canonical_names,
+		rewritten) &&
+		collect_rewritten_leaves(tree->tr_b.tb_right, canonical_names,
+		    rewritten);
+	case OP_NOT:
+	case OP_GUARD:
+	case OP_XNOP:
+	    return collect_rewritten_leaves(tree->tr_b.tb_left, canonical_names,
+		rewritten);
+	case OP_NOP:
+	    return true;
+	default:
+	    return false;
+    }
+}
+
+
+void
+free_internals(std::map<struct directory *, struct rt_db_internal *> &internals)
+{
+    for (auto &entry : internals) {
+	rt_db_free_internal(entry.second);
+	BU_PUT(entry.second, struct rt_db_internal);
+    }
+    internals.clear();
+}
+
+
+bool
+remove_object(struct db_i *dbip, const std::string &name)
+{
+    struct directory *dp = db_lookup(dbip, name.c_str(), LOOKUP_QUIET);
+
+    if (dp == RT_DIR_NULL)
+	return true;
+    if (dp->d_addr != RT_DIR_PHONY_ADDR && db_delete(dbip, dp) != 0)
+	return false;
+    return db_dirdelete(dbip, dp) == 0;
+}
+
+
+bool
+rollback_parents(struct db_i *dbip,
+		 const std::vector<struct directory *> &attempted,
+		 std::map<struct directory *, struct rt_db_internal *> &originals)
+{
+    bool restored = true;
+
+    for (auto parent_it = attempted.rbegin(); parent_it != attempted.rend(); ++parent_it) {
+	auto original_it = originals.find(*parent_it);
+	if (original_it == originals.end() ||
+	    rt_db_put_internal(*parent_it, dbip, original_it->second) < 0)
+	    restored = false;
+    }
+    return restored;
+}
+
+
+bool
+validate_parent_rewrite(struct db_i *dbip, struct directory *parent,
+			const std::set<std::string> &canonical_names,
+			const std::vector<rewritten_leaf> &expected,
+			const struct bn_tol *tol)
+{
+    struct rt_db_internal intern;
+    std::vector<rewritten_leaf> actual;
+
+    RT_DB_INTERNAL_INIT(&intern);
+    if (rt_db_get_internal(&intern, parent, dbip, nullptr) < 0)
+	return false;
+    const auto *comb = static_cast<const struct rt_comb_internal *>(intern.idb_ptr);
+    RT_CK_COMB(comb);
+    bool valid = collect_rewritten_leaves(comb->tree, canonical_names, actual) &&
+	actual.size() == expected.size();
+    for (size_t i = 0; valid && i < expected.size(); i++) {
+	valid = actual[i].name == expected[i].name &&
+	    bn_mat_is_equal(actual[i].matrix, expected[i].matrix, tol);
+    }
+    rt_db_free_internal(&intern);
+    return valid;
+}
+
+
+bool
+replacement_matrix_is_writable(const mat_t input_matrix,
+			       const mat_t canonical_to_input)
+{
+    mat_t replacement;
+
+    bn_mat_mul(replacement, input_matrix, canonical_to_input);
+    return bn_mat_ck("unpush replacement", replacement) == 0;
+}
+
+
 const char *
 mode_name(enum rt_canonicalize_mode mode)
 {
@@ -524,15 +749,286 @@ mode_name(enum rt_canonicalize_mode mode)
 }
 
 
+int
+apply_groups(struct ged *gedp, struct rt_wdb *wdbp,
+	     const unpush_walk_state &walk,
+	     const std::vector<unpush_primitive_record> &records,
+	     const std::vector<unpush_group> &groups,
+	     const database_reference_index &database_references,
+	     const struct bn_tol *tol, enum rt_canonicalize_mode mode,
+	     bool local_changes_only, int verbosity)
+{
+    std::set<std::string> database_names;
+    std::vector<planned_group> planned_groups;
+    std::map<std::string, rewrite_target> targets;
+    std::set<struct directory *> parents;
+    std::map<struct directory *, std::vector<indexed_reference>> local_references;
+    size_t next_name_id = 1;
+    size_t deferred_groups = 0;
+
+    struct directory *directory_entry;
+    FOR_ALL_DIRECTORY_START(directory_entry, gedp->dbip)
+	if (directory_entry->d_namep)
+	    database_names.insert(directory_entry->d_namep);
+    FOR_ALL_DIRECTORY_END;
+
+    if (local_changes_only) {
+	for (const unpush_reference &reference : walk.references) {
+	    indexed_reference indexed;
+	    indexed.parent = reference.parent;
+	    MAT_COPY(indexed.matrix, reference.matrix);
+	    local_references[reference.child].push_back(indexed);
+	}
+    }
+    const auto &references = local_changes_only ? local_references :
+	database_references.references;
+
+    for (const unpush_group &group : groups) {
+	bool eligible = true;
+	for (size_t record_index : group.records) {
+	    struct directory *dp = records[record_index].dp;
+	    auto references_it = references.find(dp);
+	    size_t reference_count = references_it == references.end() ? 0 :
+		references_it->second.size();
+	    if (walk.root_primitives.find(dp) != walk.root_primitives.end() ||
+		dp->d_nref < 0 || reference_count == 0 ||
+		reference_count != static_cast<size_t>(dp->d_nref)) {
+		eligible = false;
+		break;
+	    }
+
+	    for (const indexed_reference &reference : references_it->second) {
+		if (!replacement_matrix_is_writable(reference.matrix,
+			records[record_index].canonical_to_input)) {
+		    eligible = false;
+		    break;
+		}
+	    }
+	    if (!eligible)
+		break;
+	}
+	if (!eligible) {
+	    deferred_groups++;
+	    continue;
+	}
+
+	std::string canonical_name;
+	do {
+	    canonical_name = std::string(CANONICAL_NAME_PREFIX) +
+		std::to_string(next_name_id++);
+	} while (database_names.find(canonical_name) != database_names.end());
+	database_names.insert(canonical_name);
+
+	planned_group plan;
+	plan.group = &group;
+	plan.canonical_name = canonical_name;
+	planned_groups.push_back(plan);
+	for (size_t record_index : group.records) {
+	    rewrite_target target;
+	    target.canonical_name = canonical_name;
+	    MAT_COPY(target.canonical_to_input,
+		records[record_index].canonical_to_input);
+	    targets[records[record_index].dp->d_namep] = target;
+	}
+    }
+
+    if (planned_groups.empty()) {
+	bu_vls_printf(gedp->ged_result_str,
+	    "unpush: no fully-contained groups are currently safe to rewrite"
+	    " (%zu deferred)\n", deferred_groups);
+	return BRLCAD_OK;
+    }
+
+    for (const planned_group &plan : planned_groups) {
+	for (size_t record_index : plan.group->records) {
+	    auto references_it = references.find(records[record_index].dp);
+	    if (references_it == references.end())
+		continue;
+	    for (const indexed_reference &reference : references_it->second)
+		parents.insert(reference.parent);
+	}
+    }
+
+    std::vector<struct directory *> ordered_parents(parents.begin(), parents.end());
+    std::sort(ordered_parents.begin(), ordered_parents.end(),
+	[](const struct directory *a, const struct directory *b) {
+	    return std::strcmp(a->d_namep, b->d_namep) < 0;
+	});
+
+    std::map<struct directory *, struct rt_db_internal *> originals;
+    std::map<struct directory *, struct rt_db_internal *> updates;
+    std::map<struct directory *, std::vector<rewritten_leaf>> expectations;
+    bool preparation_failed = false;
+    for (struct directory *parent : ordered_parents) {
+	struct rt_db_internal *original;
+	struct rt_db_internal *update;
+	BU_GET(original, struct rt_db_internal);
+	BU_GET(update, struct rt_db_internal);
+	RT_DB_INTERNAL_INIT(original);
+	RT_DB_INTERNAL_INIT(update);
+	originals[parent] = original;
+	updates[parent] = update;
+	if (!(parent->d_flags & RT_DIR_COMB) ||
+	    rt_db_get_internal(original, parent, gedp->dbip, nullptr) < 0 ||
+	    rt_db_get_internal(update, parent, gedp->dbip, nullptr) < 0) {
+	    preparation_failed = true;
+	    break;
+	}
+	auto *comb = static_cast<struct rt_comb_internal *>(update->idb_ptr);
+	RT_CK_COMB(comb);
+	if (!rewrite_tree(comb->tree, targets, tol, expectations[parent]) ||
+	    expectations[parent].empty()) {
+	    preparation_failed = true;
+	    break;
+	}
+    }
+    if (preparation_failed) {
+	free_internals(updates);
+	free_internals(originals);
+	bu_vls_printf(gedp->ged_result_str,
+	    "unpush: unable to prepare parent rewrites; database unchanged\n");
+	return BRLCAD_ERROR;
+    }
+
+    std::vector<std::string> written_canonical_names;
+    bool canonical_write_failed = false;
+    for (const planned_group &plan : planned_groups) {
+	struct directory *representative =
+	    records[plan.group->records.front()].dp;
+	canonical_object object(gedp->dbip, representative, tol, mode);
+	if (object.status != RT_CANONICALIZE_OK) {
+	    canonical_write_failed = true;
+	    break;
+	}
+	bu_avs_merge(&object.canonical.idb_avs, &object.input.idb_avs);
+	written_canonical_names.push_back(plan.canonical_name);
+	if (wdb_put_internal(wdbp, plan.canonical_name.c_str(),
+		&object.canonical, 1.0) < 0) {
+	    canonical_write_failed = true;
+	    break;
+	}
+    }
+    if (canonical_write_failed) {
+	bool cleanup_ok = true;
+	for (const std::string &name : written_canonical_names)
+	    cleanup_ok = remove_object(gedp->dbip, name) && cleanup_ok;
+	db_sync(gedp->dbip);
+	free_internals(updates);
+	free_internals(originals);
+	bu_vls_printf(gedp->ged_result_str,
+	    "unpush: unable to write canonical primitives; database references "
+	    "were not changed%s\n", cleanup_ok ? "" :
+	    "; an unreferenced canonical object could not be removed");
+	return BRLCAD_ERROR;
+    }
+
+    std::vector<struct directory *> attempted_parents;
+    bool parent_write_failed = false;
+    for (struct directory *parent : ordered_parents) {
+	attempted_parents.push_back(parent);
+	if (rt_db_put_internal(parent, gedp->dbip, updates[parent]) < 0) {
+	    parent_write_failed = true;
+	    break;
+	}
+    }
+
+    std::set<std::string> canonical_names(written_canonical_names.begin(),
+	written_canonical_names.end());
+    bool validation_failed = false;
+    if (!parent_write_failed) {
+	for (struct directory *parent : ordered_parents) {
+	    if (!validate_parent_rewrite(gedp->dbip, parent, canonical_names,
+		    expectations[parent], tol)) {
+		validation_failed = true;
+		break;
+	    }
+	}
+    }
+
+    if (parent_write_failed || validation_failed) {
+	if (!parent_write_failed)
+	    attempted_parents = ordered_parents;
+	bool rollback_ok = rollback_parents(gedp->dbip, attempted_parents, originals);
+	bool cleanup_ok = rollback_ok;
+	if (rollback_ok) {
+	    for (const std::string &name : written_canonical_names)
+		cleanup_ok = remove_object(gedp->dbip, name) && cleanup_ok;
+	}
+	db_sync(gedp->dbip);
+	free_internals(updates);
+	free_internals(originals);
+	bu_vls_printf(gedp->ged_result_str,
+	    "unpush: %s; %s\n",
+	    parent_write_failed ? "a parent write failed" :
+	    "post-write validation failed",
+	    rollback_ok ? (cleanup_ok ? "original parents restored" :
+		"original parents restored, but redundant canonical objects remain") :
+		"rollback was incomplete; canonical objects were retained to avoid missing references");
+	return BRLCAD_ERROR;
+    }
+
+    free_internals(updates);
+    free_internals(originals);
+
+    db_update_nref(gedp->dbip);
+    size_t removed_objects = 0;
+    size_t retained_objects = 0;
+    bool deletion_failed = false;
+    for (const planned_group &plan : planned_groups) {
+	for (size_t record_index : plan.group->records) {
+	    struct directory *old_object = records[record_index].dp;
+	    if (old_object->d_nref != 0) {
+		retained_objects++;
+		deletion_failed = true;
+		continue;
+	    }
+	    std::string old_name = old_object->d_namep;
+	    if (remove_object(gedp->dbip, old_name))
+		removed_objects++;
+	    else {
+		retained_objects++;
+		deletion_failed = true;
+	    }
+	}
+    }
+    db_update_nref(gedp->dbip);
+    db_sync(gedp->dbip);
+
+    bu_vls_printf(gedp->ged_result_str,
+	"unpush rewrite complete\n"
+	"  canonical objects written: %zu\n"
+	"  parent combinations rewritten: %zu\n"
+	"  original objects removed: %zu\n"
+	"  original objects retained: %zu\n"
+	"  groups deferred: %zu\n",
+	planned_groups.size(), ordered_parents.size(), removed_objects,
+	retained_objects, deferred_groups);
+    if (verbosity > 0) {
+	for (const planned_group &plan : planned_groups)
+	    bu_vls_printf(gedp->ged_result_str, "  wrote %s\n",
+		plan.canonical_name.c_str());
+    }
+    if (deletion_failed) {
+	bu_vls_printf(gedp->ged_result_str,
+	    "unpush: one or more unreferenced originals could not be removed; "
+	    "the rewritten trees remain valid\n");
+	return BRLCAD_ERROR;
+    }
+
+    return BRLCAD_OK;
+}
+
+
 void
 unpush_usage(struct bu_vls *output, struct bu_opt_desc *options)
 {
     char *option_help = bu_opt_describe(options, nullptr);
-    bu_vls_sprintf(output, "Usage: unpush -D [options] object...\n\n");
+    bu_vls_sprintf(output, "Usage: unpush [options] object...\n\n");
     bu_vls_printf(output,
-	"Analyzes pushed primitive geometry and reports opportunities to restore "
-	"shared objects and reference matrices.  The current implementation is "
-	"read-only and requires -D.\n\n");
+	"Restores shared primitive objects and reference matrices inferred from "
+	"pushed geometry.  Use -D to analyze without modifying the database.  "
+	"Writes constrain affine requests to similarity transforms because stored "
+	"combination matrices cannot represent general shear.\n\n");
     if (option_help) {
 	bu_vls_printf(output, "Options:\n%s\n", option_help);
 	bu_free(option_help, "unpush option help");
@@ -549,6 +1045,7 @@ ged_unpush_core(struct ged *gedp, int argc, const char *argv[])
     int dry_run = 0;
     int local_changes_only = 0;
     int verbosity = 0;
+    bool write_mode_constrained = false;
     const char *mode_argument = "affine";
     struct bu_opt_desc options[7];
     BU_OPT(options[0], "h", "help", "", nullptr, &print_help, "Print help and exit");
@@ -572,12 +1069,8 @@ ged_unpush_core(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
     bu_vls_trunc(gedp->ged_result_str, 0);
-
-    if (!dry_run) {
-	bu_vls_printf(gedp->ged_result_str,
-	    "unpush: database rewriting is not enabled yet; use -D for analysis\n");
-	return BRLCAD_ERROR;
-    }
+    if (!dry_run)
+	GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
 
     enum rt_canonicalize_mode mode = RT_CANONICALIZE_AFFINE;
     if (BU_STR_EQUAL(mode_argument, "rigid"))
@@ -588,6 +1081,13 @@ ged_unpush_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "unpush: unknown mode '%s'\n", mode_argument);
 	return BRLCAD_ERROR;
     }
+    if (!dry_run && mode == RT_CANONICALIZE_AFFINE) {
+	/* General affine canonical placements may contain shear, which librt
+	 * deliberately rejects in stored combination matrices.  Similarity is
+	 * the strongest transform class accepted for every orientation. */
+	mode = RT_CANONICALIZE_SIMILARITY;
+	write_mode_constrained = true;
+    }
 
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     if (!wdbp) {
@@ -596,7 +1096,6 @@ ged_unpush_core(struct ged *gedp, int argc, const char *argv[])
     }
     const struct bn_tol *tol = &wdbp->wdb_tol;
 
-    db_update_nref(gedp->dbip);
     unpush_walk_state walk;
     walk.dbip = gedp->dbip;
     for (int i = 0; i < argc; i++) {
@@ -652,6 +1151,27 @@ ged_unpush_core(struct ged *gedp, int argc, const char *argv[])
 
     std::vector<unpush_group> groups = verify_groups(gedp->dbip, records, buckets, tol, mode);
 
+    std::set<struct directory *> grouped_primitives;
+    for (const unpush_group &group : groups) {
+	for (size_t record_index : group.records)
+	    grouped_primitives.insert(records[record_index].dp);
+    }
+    database_reference_index database_references;
+    database_references.targets = &grouped_primitives;
+    if (db_add_update_nref_clbk(gedp->dbip, collect_database_reference,
+	    &database_references) != 0) {
+	bu_vls_printf(gedp->ged_result_str,
+	    "unpush: unable to register reference accounting\n");
+	return BRLCAD_ERROR;
+    }
+    db_update_nref(gedp->dbip);
+    if (db_rm_update_nref_clbk(gedp->dbip, collect_database_reference,
+	    &database_references) != 1) {
+	bu_vls_printf(gedp->ged_result_str,
+	    "unpush: unable to unregister reference accounting\n");
+	return BRLCAD_ERROR;
+    }
+
     std::set<struct directory *> exposed;
     for (struct directory *combination : walk.visited_combinations) {
 	size_t selected = walk.selected_references[combination];
@@ -695,8 +1215,9 @@ ged_unpush_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     bu_vls_printf(gedp->ged_result_str,
-	"unpush dry-run analysis\n"
+	"unpush %s analysis\n"
 	"  mode: %s\n"
+	"%s"
 	"  local preservation: %s\n"
 	"  primitive objects: %zu\n"
 	"  canonicalized: %zu\n"
@@ -710,7 +1231,10 @@ ged_unpush_core(struct ged *gedp, int argc, const char *argv[])
 	"  externally exposed grouped objects: %zu\n"
 	"  estimated removable database granules: %zu\n"
 	"  potential facetize primitive reuses: %zu\n",
-	mode_name(mode), local_changes_only ? "yes" : "no", walk.primitives.size(),
+	dry_run ? "dry-run" : "rewrite", mode_name(mode),
+	write_mode_constrained ?
+	    "  requested affine mode constrained to similarity for database writes\n" : "",
+	local_changes_only ? "yes" : "no", walk.primitives.size(),
 	records.size(), unsupported, failures, groups.size(), grouped_objects,
 	duplicate_objects, rewritable_references, walk.root_primitives.size(),
 	grouped_exposed.size(), estimated_granule_reduction, potential_reuse);
@@ -774,6 +1298,16 @@ ged_unpush_core(struct ged *gedp, int argc, const char *argv[])
 		records[record_it->second].canonical_to_input, gedp->ged_result_str);
 	    bu_vls_free(&title);
 	}
+    }
+
+    if (!dry_run) {
+	if (walk.missing_references) {
+	    bu_vls_printf(gedp->ged_result_str,
+		"unpush: refusing to rewrite a tree with pre-existing missing references\n");
+	    return BRLCAD_ERROR;
+	}
+	return apply_groups(gedp, wdbp, walk, records, groups,
+	    database_references, tol, mode, local_changes_only != 0, verbosity);
     }
 
     return BRLCAD_OK;
