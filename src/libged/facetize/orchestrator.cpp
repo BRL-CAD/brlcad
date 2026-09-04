@@ -100,7 +100,6 @@ facetize_state_create()
     s->dbip = NULL;
     s->facetize_tree = NULL;
     s->method_opts = NULL;
-    s->log_s = NULL;
     s->write_profiled = 0;
     s->write_profile_bytes = 0.0;
     s->write_profile_usec = 0.0;
