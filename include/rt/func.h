@@ -284,6 +284,26 @@ struct rt_crofton_result {
  *          bound fit failure.  A return
  *          value of 0 means no geometry was intersected by the sampler.
  *
+ * @section crofton_sampler Sampling method
+ *
+ * When BRL-CAD is built with BRLCAD_ENABLE_QMC, Crofton sampling defaults to
+ * OpenQMC's randomized rank-one lattice.  It maps four uniformly distributed
+ * coordinates directly to the two direction and two perpendicular-offset
+ * coordinates of an oriented line.  Directions are isotropic, and the offset
+ * radius uses R*sqrt(u) so lines are uniform by area across the bounding disk,
+ * not concentrated toward its center.  This is the same invariant line
+ * measure used by the independent-random-endpoint construction, so the
+ * Crofton area and volume formulas and stopping criteria do not change.
+ *
+ * The lattice improves finite-sample coverage but its samples are correlated,
+ * unlike ordinary Monte Carlo samples.  OpenQMC shuffles indices and applies
+ * toroidal shifts to mitigate alignment artifacts; a fixed pattern schedule
+ * keeps runs reproducible.  Set the LIBRT_CROFTON_USE_PRNG environment
+ * variable to a value accepted by bu_str_true() to force the original
+ * independent-PRNG generator.  That path is useful for compatibility and for
+ * checking whether an unexpected result is specific to lattice correlation.
+ *
+ *
  * @section crofton_near_tol Near-tolerance sliver geometry: CSG vs BoT divergence
  *
  * The Cauchy-Crofton formula is mathematically exact for any well-defined
@@ -387,8 +407,8 @@ RT_EXPORT extern void rt_crofton_result_free(
 /**
  * Cauchy-Crofton surface-area and/or volume estimator for a primitive.
  *
- * Creates a temporary in-memory raytrace of @p ip and fires random chord
- * rays until the stopping criteria in @p params are satisfied (or all
+ * Creates a temporary in-memory raytrace of @p ip and samples Crofton lines
+ * until the stopping criteria in @p params are satisfied (or all
  * criteria are zero / params is NULL, in which case the 2 000-ray default
  * is used).  Stores the estimated surface area in @p *area (if non-NULL)
  * and the estimated volume in @p *vol (if non-NULL).
