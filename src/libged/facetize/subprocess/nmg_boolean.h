@@ -1,4 +1,4 @@
-/*                     T R A N S F E R . H
+/*                 N M G _ B O O L E A N . H
  * BRL-CAD
  *
  * Copyright (c) 2026 United States Government as represented by
@@ -18,18 +18,24 @@
  * information.
  */
 
-#ifndef LIBGED_FACETIZE_TRANSFER_H
-#define LIBGED_FACETIZE_TRANSFER_H
+#ifndef FACETIZE_PROCESS_NMG_BOOLEAN_H
+#define FACETIZE_PROCESS_NMG_BOOLEAN_H
 
-#include "rt/db_instance.h"
+#include <cstddef>
 
-/**
- * Move the worker's fixed-name staged result into @p target_dbip under
- * @p object_name.  The expected type is checked before the target changes.
- */
-int
-facetize_transfer_staged_object(struct db_i *target_dbip,
-	const char *result_file, const char *object_name,
-	int expected_object_type);
+#include "../worker.h"
 
-#endif /* LIBGED_FACETIZE_TRANSFER_H */
+struct db_i;
+struct ged;
+struct FacetizeNmgBooleanResult;
+
+int facetize_nmg_boolean_evaluate(struct ged *gedp,
+	const FacetizeWorkerRequest &request,
+	FacetizeNmgBooleanResult **result);
+size_t facetize_nmg_boolean_payload_size(
+	const FacetizeNmgBooleanResult *result);
+int facetize_nmg_boolean_write(struct db_i *dbip,
+	FacetizeNmgBooleanResult *result);
+void facetize_nmg_boolean_destroy(FacetizeNmgBooleanResult *result);
+
+#endif /* FACETIZE_PROCESS_NMG_BOOLEAN_H */

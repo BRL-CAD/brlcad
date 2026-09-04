@@ -49,6 +49,7 @@
 #include "../transfer.h"
 #include "../validation.h"
 #include "../worker.h"
+#include "./nmg_boolean.h"
 #include "./tessellate.h"
 
 static const char FACETIZE_TEST_FAULT_ENV[] =
@@ -60,6 +61,7 @@ static const char FACETIZE_TEST_FAULT_STAGE_DONE[] = "stage-before-done";
 static const char FACETIZE_TEST_FAULT_WRITER_PROCEED[] =
     "writer-before-proceed";
 static const char FACETIZE_TEST_FAULT_WRITER_DONE[] = "writer-before-done";
+static const char FACETIZE_TEST_FAULT_NMG_READY[] = "nmg-before-ready";
 
 /**
  * Terminate at a named protocol boundary when explicitly armed by a test.
@@ -430,20 +432,45 @@ print_tess_methods()
 
 static int
 facetize_server_request(struct ged *gedp, struct db_i *result_dbip,
-	const char *object_name, tess_opts *s,
+	const FacetizeWorkerRequest &request,
 	FacetizeWorkerServer &worker_channel, bool *result_sent)
 {
-    if (!gedp || !object_name || !s || !result_sent)
+    if (!gedp || !result_sent ||
+	    request.operation != FacetizeWorkerOperation::TessellatePrimitive ||
+	    request.input_names.size() != 1)
 	return BRLCAD_ERROR;
     *result_sent = false;
 
+    if (!request.primitive.cache_directory.empty()) {
+	bu_mkdir(request.primitive.cache_directory.c_str());
+	if (bu_setenv("BU_DIR_CACHE",
+		request.primitive.cache_directory.c_str(), 1) != 0)
+	    return BRLCAD_ERROR;
+    }
+
+    tess_opts options;
+    options.method_opts.methods = request.primitive.methods;
+    for (const std::string &option_string :
+	    request.primitive.method_options) {
+	const char *option = option_string.c_str();
+	if (_tess_method_opts(NULL, 1, &option, &options.method_opts) != 1)
+	    return BRLCAD_ERROR;
+    }
+    method_setup(&options);
+    if (request.primitive.point_limit > 0) {
+	options.pnt_options.max_pnts = request.primitive.point_limit;
+	options.cm_options.max_pnts = request.primitive.point_limit;
+	options.spsr_options.max_pnts = request.primitive.point_limit;
+    }
+
+    const char *object_name = request.input_names.front().c_str();
     struct directory *dp = db_lookup(gedp->dbip, object_name, LOOKUP_QUIET);
     if (!dp || dp->d_major_type != DB5_MAJORTYPE_BRLCAD)
 	return BRLCAD_ERROR;
 
     struct rt_bot_internal *obot = NULL;
     struct bu_vls method = BU_VLS_INIT_ZERO;
-    int ret = dp_tessellate(&obot, &method, gedp, dp, s);
+    int ret = dp_tessellate(&obot, &method, gedp, dp, &options);
     if (ret == BRLCAD_OK && obot) {
 	// Waiting here lets the parent stop an over-time tessellation without
 	// risking a partially replaced object in the working database.
@@ -479,7 +506,7 @@ facetize_server_request(struct ged *gedp, struct db_i *result_dbip,
 }
 
 static int
-facetize_server(const char *work_file, const char *result_file, tess_opts *s)
+facetize_server(const char *work_file, const char *result_file)
 {
     int server_status = BRLCAD_OK;
     setvbuf(stdout, NULL, _IONBF, 0);
@@ -497,9 +524,9 @@ facetize_server(const char *work_file, const char *result_file, tess_opts *s)
 
     FacetizeWorkerServer worker_channel(stdin, stdout);
     while (true) {
-	std::string object_name;
+	FacetizeWorkerRequest request;
 	FacetizeWorkerReadResult read_result =
-	    worker_channel.receive_request(object_name);
+	    worker_channel.receive_request(request);
 	if (read_result == FacetizeWorkerReadResult::End)
 	    break;
 	if (read_result == FacetizeWorkerReadResult::Error) {
@@ -509,7 +536,7 @@ facetize_server(const char *work_file, const char *result_file, tess_opts *s)
 
 	bool result_sent = false;
 	int ret = facetize_server_request(gedp, result_dbip,
-		object_name.c_str(), s, worker_channel, &result_sent);
+		request, worker_channel, &result_sent);
 	if (!result_sent && !worker_channel.send_tessellation_result(ret,
 		facetize_resident_size())) {
 	    server_status = BRLCAD_ERROR;
@@ -541,16 +568,19 @@ facetize_validation_server(const char *source_file)
     int server_status = BRLCAD_OK;
     FacetizeWorkerServer channel(stdin, stdout);
     while (true) {
-	std::string object_name;
+	FacetizeWorkerRequest request;
 	FacetizeWorkerReadResult read_result =
-	    channel.receive_request(object_name);
+	    channel.receive_request(request);
 	if (read_result == FacetizeWorkerReadResult::End)
 	    break;
-	if (read_result == FacetizeWorkerReadResult::Error) {
+	if (read_result == FacetizeWorkerReadResult::Error ||
+		request.operation != FacetizeWorkerOperation::ValidateCsg ||
+		request.input_names.size() != 1) {
 	    server_status = BRLCAD_ERROR;
 	    break;
 	}
 
+	const std::string &object_name = request.input_names.front();
 	double surface_area = -1.0;
 	double volume = -1.0;
 	long crossings = facetize_csg_metrics(dbip, object_name.c_str(),
@@ -635,8 +665,7 @@ facetize_region_server_request(struct _ged_facetize_state *state,
 
 static int
 facetize_region_server(const char *work_file, const char *source_file,
-	const char *result_file,
-	int no_empty, int no_fixup, int tolerate_failures)
+	const char *result_file)
 {
     if (!work_file || !source_file || !result_file)
 	return BRLCAD_ERROR;
@@ -683,9 +712,6 @@ facetize_region_server(const char *work_file, const char *source_file,
     struct bu_vls tolerated_failure_log = BU_VLS_INIT_ZERO;
     struct _ged_facetize_state state = {};
     state.verbosity = -1;
-    state.no_empty = no_empty;
-    state.no_fixup = no_fixup;
-    state.tolerate_failures = tolerate_failures;
     state.failure_msg = &failure_message;
     state.tolerated_failure_log = &tolerated_failure_log;
     state.dbip = source_dbip;
@@ -693,16 +719,22 @@ facetize_region_server(const char *work_file, const char *source_file,
     int server_status = BRLCAD_OK;
     FacetizeWorkerServer channel(stdin, stdout);
     while (true) {
-	std::string object_name;
+	FacetizeWorkerRequest request;
 	FacetizeWorkerReadResult read_result =
-	    channel.receive_request(object_name);
+	    channel.receive_request(request);
 	if (read_result == FacetizeWorkerReadResult::End)
 	    break;
-	if (read_result == FacetizeWorkerReadResult::Error) {
+	if (read_result == FacetizeWorkerReadResult::Error ||
+		request.operation != FacetizeWorkerOperation::EvaluateRegion ||
+		request.input_names.size() != 1) {
 	    server_status = BRLCAD_ERROR;
 	    break;
 	}
 
+	const std::string &object_name = request.input_names.front();
+	state.no_empty = request.region.no_empty;
+	state.no_fixup = request.region.no_fixup;
+	state.tolerate_failures = request.region.tolerate_failures;
 	state.error_flag = 0;
 	state.facetize_tree = NULL;
 	state.tolerated_failures = 0;
@@ -769,8 +801,8 @@ facetize_writer(const char *work_file)
 	    break;
 	}
 
-	int ret = facetize_transfer_staged_bot(dbip,
-		request.result_file.c_str(), request.object_name.c_str());
+	int ret = facetize_transfer_staged_object(dbip,
+		request.result_file.c_str(), request.object_name.c_str(), ID_BOT);
 	if (ret == BRLCAD_OK)
 	    facetize_test_fault(FACETIZE_TEST_FAULT_WRITER_DONE,
 		    request.object_name.c_str());
@@ -782,6 +814,58 @@ facetize_writer(const char *work_file)
 
     db_close(dbip);
     return writer_status;
+}
+
+static int
+facetize_nmg_server(const char *source_file, const char *result_file)
+{
+    if (!source_file || !result_file)
+	return BRLCAD_ERROR;
+
+    setvbuf(stdout, NULL, _IONBF, 0);
+    struct ged *gedp = ged_open("db", source_file, 1);
+    if (!gedp)
+	return BRLCAD_ERROR;
+
+    struct db_i *result_dbip = db_create(result_file,
+	    BRLCAD_DB_FORMAT_LATEST);
+    if (!result_dbip) {
+	ged_close(gedp);
+	return BRLCAD_ERROR;
+    }
+
+    FacetizeWorkerServer channel(stdin, stdout);
+    FacetizeWorkerRequest request;
+    FacetizeWorkerReadResult read_result = channel.receive_request(request);
+    int server_status = BRLCAD_OK;
+    FacetizeNmgBooleanResult *result = NULL;
+    int ret = (read_result == FacetizeWorkerReadResult::Request) ?
+	facetize_nmg_boolean_evaluate(gedp, request, &result) : BRLCAD_ERROR;
+    if (read_result != FacetizeWorkerReadResult::Request) {
+	server_status = BRLCAD_ERROR;
+    } else if (ret == BRLCAD_OK) {
+	size_t payload_size = facetize_nmg_boolean_payload_size(result);
+	facetize_test_fault(FACETIZE_TEST_FAULT_NMG_READY,
+		request.output_name.c_str());
+	if (!channel.send_write_ready(payload_size,
+		facetize_resident_size()) ||
+		!channel.receive_write_proceed() ||
+		!channel.send_write_started()) {
+	    server_status = BRLCAD_ERROR;
+	} else {
+	    ret = facetize_nmg_boolean_write(result_dbip, result);
+	    if (!channel.send_write_result(ret, facetize_resident_size()))
+		server_status = BRLCAD_ERROR;
+	}
+    } else if (!channel.send_tessellation_result(ret,
+	    facetize_resident_size())) {
+	server_status = BRLCAD_ERROR;
+    }
+
+    facetize_nmg_boolean_destroy(result);
+    db_close(result_dbip);
+    ged_close(gedp);
+    return server_status;
 }
 
 extern "C" int
@@ -805,15 +889,13 @@ facetize_process(int argc, const char **argv)
     int writer_mode = 0;
     int validation_server_mode = 0;
     int region_server_mode = 0;
-    int no_empty = 0;
-    int no_fixup = 0;
-    int tolerate_failures = 0;
+    int nmg_server_mode = 0;
     int max_time = 0;
     int max_pnts = 0;
     int worker_threads = 0;
     struct bu_vls result_file = BU_VLS_INIT_ZERO;
 
-    struct bu_opt_desc d[18];
+    struct bu_opt_desc d[16];
     BU_OPT(d[ 0],  "h",         "help",                         "",                  NULL,           &print_help, "Print help and exit");
     BU_OPT(d[ 1],   "", "list-methods",                         "",                  NULL,         &list_methods, "List available tessellation methods.  When used with -h, print an informational summary of each method.");
     BU_OPT(d[ 2],  "O",    "overwrite",                         "",                  NULL,    &(s.overwrite_obj), "Replace original object with BoT");
@@ -828,10 +910,8 @@ facetize_process(int argc, const char **argv)
     BU_OPT(d[11],   "",          "writer",                        "",                  NULL,          &writer_mode, "Run as a persistent staged-result writer.");
     BU_OPT(d[12],   "", "validation-server",                        "",                  NULL, &validation_server_mode, "Run as a persistent CSG validation worker.");
     BU_OPT(d[13],   "",     "region-server",                        "",                  NULL,     &region_server_mode, "Run as a persistent region Boolean worker.");
-    BU_OPT(d[14],   "",          "no-empty",                        "",                  NULL,              &no_empty, "Do not create empty BoT results.");
-    BU_OPT(d[15],   "",          "no-fixup",                        "",                  NULL,              &no_fixup, "Skip thin-face result repair.");
-    BU_OPT(d[16],   "", "tolerate-failures",                        "",                  NULL,     &tolerate_failures, "Allow partial Boolean results.");
-    BU_OPT_NULL(d[17]);
+    BU_OPT(d[14],   "",        "nmg-server",                        "",                  NULL,        &nmg_server_mode, "Run one isolated NMG Boolean request.");
+    BU_OPT_NULL(d[15]);
 
     /* parse options */
     struct bu_vls omsg = BU_VLS_INIT_ZERO;
@@ -850,6 +930,14 @@ facetize_process(int argc, const char **argv)
     }
     if (worker_threads)
 	bu_avail_cpus_set((size_t)worker_threads);
+
+    int worker_mode_count = server_mode + writer_mode +
+	validation_server_mode + region_server_mode + nmg_server_mode;
+    if (worker_mode_count > 1) {
+	bu_vls_free(&cache_dir);
+	bu_vls_free(&result_file);
+	return BRLCAD_ERROR;
+    }
 
     if (list_methods && print_help) {
 	print_methods_info();
@@ -883,6 +971,50 @@ facetize_process(int argc, const char **argv)
         return BRLCAD_OK;
     }
 
+    if (writer_mode) {
+	int ret = (argc == 1 && !bu_vls_strlen(&result_file)) ?
+	    facetize_writer(argv[0]) : BRLCAD_ERROR;
+	bu_vls_free(&cache_dir);
+	bu_vls_free(&result_file);
+	return ret;
+    }
+
+    if (validation_server_mode) {
+	int ret = (argc == 1 && !bu_vls_strlen(&result_file)) ?
+	    facetize_validation_server(argv[0]) : BRLCAD_ERROR;
+	bu_vls_free(&cache_dir);
+	bu_vls_free(&result_file);
+	return ret;
+    }
+
+    if (region_server_mode) {
+	int ret = (argc == 2 && bu_vls_strlen(&result_file)) ?
+	    facetize_region_server(argv[0], argv[1],
+		    bu_vls_cstr(&result_file)) : BRLCAD_ERROR;
+	bu_vls_free(&cache_dir);
+	bu_vls_free(&result_file);
+	return ret;
+    }
+
+    if (nmg_server_mode) {
+	int ret = (argc == 1 && bu_vls_strlen(&result_file)) ?
+	    facetize_nmg_server(argv[0], bu_vls_cstr(&result_file)) :
+	    BRLCAD_ERROR;
+	bu_vls_free(&cache_dir);
+	bu_vls_free(&result_file);
+	return ret;
+    }
+
+    if (server_mode) {
+	int ret = (argc == 1) ?
+	    facetize_server(argv[0], bu_vls_strlen(&result_file) ?
+		    bu_vls_cstr(&result_file) : NULL) :
+	    BRLCAD_ERROR;
+	bu_vls_free(&cache_dir);
+	bu_vls_free(&result_file);
+	return ret;
+    }
+
     // If we have a non-default cache directory specified, set it up
     if (bu_vls_strlen(&cache_dir)) {
 	// Make sure it's there first
@@ -891,47 +1023,8 @@ facetize_process(int argc, const char **argv)
 	bu_setenv("BU_DIR_CACHE", bu_vls_cstr(&cache_dir), 1);
     }
 
-    if (writer_mode) {
-	int ret = (argc == 1 && !server_mode && !validation_server_mode &&
-		!region_server_mode) ?
-	    facetize_writer(argv[0]) : BRLCAD_ERROR;
-	bu_vls_free(&cache_dir);
-	bu_vls_free(&result_file);
-	return ret;
-    }
-
-    if (validation_server_mode) {
-	int ret = (argc == 1 && !server_mode && !writer_mode &&
-		!region_server_mode && !bu_vls_strlen(&result_file)) ?
-	    facetize_validation_server(argv[0]) : BRLCAD_ERROR;
-	bu_vls_free(&cache_dir);
-	bu_vls_free(&result_file);
-	return ret;
-    }
-
-    if (region_server_mode) {
-	int ret = (argc == 2 && !server_mode && !writer_mode &&
-		!validation_server_mode && bu_vls_strlen(&result_file)) ?
-	    facetize_region_server(argv[0], argv[1],
-		    bu_vls_cstr(&result_file), no_empty, no_fixup,
-		    tolerate_failures) : BRLCAD_ERROR;
-	bu_vls_free(&cache_dir);
-	bu_vls_free(&result_file);
-	return ret;
-    }
-
     // Do the setup for the various tessellation methods.
     method_setup(&s);
-
-    if (server_mode) {
-	int ret = (argc == 1 && s.overwrite_obj) ?
-	    facetize_server(argv[0], bu_vls_strlen(&result_file) ?
-		    bu_vls_cstr(&result_file) : NULL, &s) :
-	    BRLCAD_ERROR;
-	bu_vls_free(&cache_dir);
-	bu_vls_free(&result_file);
-	return ret;
-    }
 
     if (argc < 2) {
 	bu_log("%s", usage);

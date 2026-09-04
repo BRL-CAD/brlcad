@@ -283,46 +283,6 @@ _db_uniq_test(struct bu_vls *n, void *data)
 }
 
 int
-_ged_validate_objs_list(struct _ged_facetize_state *s, int argc, const char *argv[], int newobj_cnt)
-{
-    int i;
-    struct ged *gedp = s->gedp;
-
-    if (s->in_place && newobj_cnt) {
-	bu_vls_printf(gedp->ged_result_str, "In place conversion specified, but object list includes objects that do not exist:\n");
-	for (i = argc - newobj_cnt; i < argc; i++) {
-	    bu_vls_printf(gedp->ged_result_str, "       %s\n", argv[i]);
-	}
-	bu_vls_printf(gedp->ged_result_str, "\nAborting.  When performing an in-place facetization, a single pre-existing object must be specified.\n");
-	return BRLCAD_ERROR;
-
-    }
-
-    if (!s->in_place) {
-	if (newobj_cnt < 1) {
-	    bu_vls_printf(gedp->ged_result_str, "all objects listed already exist, aborting.  (Need new object name to write out results to.)\n");
-	    return BRLCAD_ERROR;
-	}
-
-	if (newobj_cnt > 1) {
-	    bu_vls_printf(gedp->ged_result_str, "More than one object listed does not exist:\n");
-	    for (i = argc - newobj_cnt; i < argc; i++) {
-		bu_vls_printf(gedp->ged_result_str, "   %s\n", argv[i]);
-	    }
-	    bu_vls_printf(gedp->ged_result_str, "\nAborting.  Need to specify exactly one object name that does not exist to hold facetization output.\n");
-	    return BRLCAD_ERROR;
-	}
-
-	if (argc - newobj_cnt == 0) {
-	    bu_vls_printf(gedp->ged_result_str, "No existing objects specified, nothing to facetize.  Aborting.\n");
-	    return BRLCAD_ERROR;
-	}
-    }
-
-    return BRLCAD_OK;
-}
-
-int
 _ged_facetize_write_bot(struct db_i *dbip, struct rt_bot_internal *bot, const char *name, int verbosity)
 {
     /* Export BOT as a new solid */

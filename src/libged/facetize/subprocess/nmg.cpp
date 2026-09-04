@@ -42,7 +42,8 @@ _nmg_tessellate(struct rt_bot_internal **nbot, struct rt_db_internal *intern, te
     int ret = BRLCAD_ERROR;
     struct bu_list *vlfree = &rt_vlfree;
 
-    if (!nbot || !intern || !intern->idb_meth || !s)
+    if (!nbot || !intern || !intern->idb_meth || !s ||
+	    !intern->idb_meth->ft_tessellate)
 	return BRLCAD_ERROR;
 
     // TODO - get the nmg debug option from nmg_options and set it

@@ -50,6 +50,7 @@
 
 static int failures = 0;
 static const double METRIC_COMPARISON_TOLERANCE = 1.0e-12;
+static const size_t PROTOCOL_OVERSIZED_FIELD_LENGTH = 1024u * 1024u + 1u;
 
 
 static void
@@ -102,27 +103,122 @@ test_request_round_trip()
     if (!requests)
 	return;
 
-    const char object_name[] = "assembly/part\nwith spaces";
+    FacetizeWorkerRequest request;
+    request.operation = FacetizeWorkerOperation::TessellatePrimitive;
+    request.input_names.push_back("assembly/part\nwith spaces");
+    request.primitive.methods.push_back("NMG");
+    request.primitive.method_options.push_back("NMG max_time=30\ntol=0.01");
+    request.primitive.cache_directory = "cache path\nwith spaces";
+    request.primitive.point_limit = 12345;
     FacetizeWorkerClient client;
     client.reset(requests);
-    expect(client.send_request(object_name), "client sends a framed object name");
+    expect(client.send_request(request), "client sends a typed primitive request");
+
+    FacetizeWorkerRequest region_request;
+    region_request.operation = FacetizeWorkerOperation::EvaluateRegion;
+    region_request.input_names.push_back("assembly.r");
+    region_request.region.no_empty = true;
+    region_request.region.no_fixup = true;
+    region_request.region.tolerate_failures = true;
+    expect(client.send_request(region_request), "client sends a typed region request");
+
+    FacetizeWorkerRequest validation_request;
+    validation_request.operation = FacetizeWorkerOperation::ValidateCsg;
+    validation_request.input_names.push_back("assembly.r");
+    expect(client.send_request(validation_request),
+	"client sends a typed validation request");
+
+    FacetizeWorkerRequest nmg_request;
+    nmg_request.operation = FacetizeWorkerOperation::NmgBooleanToNmg;
+    nmg_request.input_names.push_back("first.r");
+    nmg_request.input_names.push_back("second.r");
+    nmg_request.output_name = "combined.nmg";
+    expect(client.send_request(nmg_request),
+	"client sends an NMG Boolean request");
     expect(fflush(requests) == 0 && fseek(requests, 0, SEEK_SET) == 0,
 	"rewind request stream");
 
     FacetizeWorkerServer server(requests, NULL);
-    std::string received_name;
-    expect(server.receive_request(received_name) == FacetizeWorkerReadResult::Request,
+    FacetizeWorkerRequest received;
+    expect(server.receive_request(received) == FacetizeWorkerReadResult::Request,
 	"server accepts a complete request");
-    expect(received_name == object_name, "request framing preserves object name bytes");
-    expect(server.receive_request(received_name) == FacetizeWorkerReadResult::End,
+    expect(received.operation == request.operation,
+	"request framing preserves the operation");
+    expect(received.input_names == request.input_names,
+	"request framing preserves object name bytes");
+    expect(received.primitive.methods == request.primitive.methods &&
+	received.primitive.method_options == request.primitive.method_options,
+	"request framing preserves tessellation settings");
+    expect(received.primitive.cache_directory ==
+	request.primitive.cache_directory &&
+	received.primitive.point_limit == request.primitive.point_limit,
+	"request framing preserves cache and point settings");
+
+    expect(server.receive_request(received) == FacetizeWorkerReadResult::Request,
+	"server accepts a region request");
+    expect(received.operation == FacetizeWorkerOperation::EvaluateRegion &&
+	received.input_names == region_request.input_names &&
+	received.region.no_empty && received.region.no_fixup &&
+	received.region.tolerate_failures,
+	"request framing preserves region settings");
+
+    expect(server.receive_request(received) == FacetizeWorkerReadResult::Request,
+	"server accepts a validation request");
+    expect(received.operation == FacetizeWorkerOperation::ValidateCsg &&
+	received.input_names == validation_request.input_names &&
+	received.primitive.empty() && received.region.empty(),
+	"validation request has no unrelated settings");
+    expect(server.receive_request(received) == FacetizeWorkerReadResult::Request,
+	"server accepts an NMG Boolean request");
+    expect(received.operation == FacetizeWorkerOperation::NmgBooleanToNmg &&
+	received.input_names == nmg_request.input_names &&
+	received.output_name == nmg_request.output_name,
+	"request framing preserves NMG Boolean inputs and output");
+    expect(server.receive_request(received) == FacetizeWorkerReadResult::End,
 	"clean request EOF ends the worker loop");
 
     fclose(requests);
 
     client.reset(NULL);
-    expect(!client.send_request("part"), "client rejects a missing request stream");
-    expect(!client.send_request(NULL), "client rejects a null object name");
-    expect(!client.send_request(""), "client rejects an empty object name");
+    expect(!client.send_request(request),
+	"client rejects a missing request stream");
+
+    FILE *invalid_stream = tmpfile();
+    expect(invalid_stream != NULL, "create invalid request stream");
+    if (invalid_stream) {
+	client.reset(invalid_stream);
+	FacetizeWorkerRequest invalid;
+	expect(!client.send_request(invalid),
+	    "client rejects a request without an input");
+	invalid.input_names.push_back("");
+	expect(!client.send_request(invalid),
+	    "client rejects an empty input name");
+	invalid.input_names.front() = "part";
+	invalid.primitive.point_limit = -1;
+	expect(!client.send_request(invalid),
+	    "client rejects a negative point limit");
+	invalid.primitive.point_limit = 0;
+	invalid.region.no_empty = true;
+	expect(!client.send_request(invalid),
+	    "client rejects region settings on a primitive request");
+	invalid.operation = FacetizeWorkerOperation::ValidateCsg;
+	invalid.region = FacetizeRegionSettings();
+	invalid.primitive.methods.push_back("NMG");
+	expect(!client.send_request(invalid),
+	    "client rejects tessellation settings on a validation request");
+	invalid.operation = FacetizeWorkerOperation::TessellatePrimitive;
+	invalid.primitive.methods.clear();
+	invalid.input_names.front().assign(PROTOCOL_OVERSIZED_FIELD_LENGTH, 'x');
+	expect(!client.send_request(invalid),
+	    "client rejects an oversized field");
+	expect(ftell(invalid_stream) == 0,
+	    "invalid requests do not partially modify the request stream");
+	invalid.input_names.front() = "part";
+	invalid.input_names.push_back("other");
+	expect(!client.send_request(invalid),
+	    "client rejects multiple primitive inputs");
+	fclose(invalid_stream);
+    }
 }
 
 
@@ -130,23 +226,27 @@ static void
 test_malformed_requests()
 {
     const char *invalid_requests[] = {
-	"NOT_A_REQUEST 4\npart\n",
-	"FACETIZE_REQUEST 0\n\n",
-	"FACETIZE_REQUEST 4 trailing\npart\n",
-	"FACETIZE_REQUEST 5\npart\n",
-	"FACETIZE_REQUEST 4\npart!"
+	"NOT_A_REQUEST 3 1 1 0 0 0 0 0 0\n",
+	"FACETIZE_REQUEST 2 1 1 0 0 0 0 0 0\n",
+	"FACETIZE_REQUEST 3 99 1 0 0 0 0 0 0\n",
+	"FACETIZE_REQUEST 3 1 0 0 0 0 0 0 0\n",
+	"FACETIZE_REQUEST 3 1 1 0 0 0 2 0 0\n",
+	"FACETIZE_REQUEST 3 1 1 0 0 0 0 0 0 trailing\n",
+	"FACETIZE_REQUEST 3 1 1 0 0 0 0 0 0\n0\n\n0\n\n5\npart\n",
+	"FACETIZE_REQUEST 3 1 1 0 0 0 0 0 0\n0\n\n0\n\n4\npart!"
     };
 
-    for (const char *request : invalid_requests) {
-	FILE *stream = stream_with_contents(request);
+    for (const char *invalid_request : invalid_requests) {
+	FILE *stream = stream_with_contents(invalid_request);
 	expect(stream != NULL, "create malformed request stream");
 	if (!stream)
 	    continue;
 	FacetizeWorkerServer server(stream, NULL);
-	std::string object_name;
-	expect(server.receive_request(object_name) == FacetizeWorkerReadResult::Error,
+	FacetizeWorkerRequest decoded_request;
+	expect(server.receive_request(decoded_request) == FacetizeWorkerReadResult::Error,
 	    "server rejects malformed request framing");
-	expect(object_name.empty(), "malformed request does not expose a partial name");
+	expect(decoded_request.input_names.empty(),
+	    "malformed request does not expose partial inputs");
 	fclose(stream);
     }
 
@@ -156,8 +256,8 @@ test_malformed_requests()
     expect(stream != NULL, "create overlong header stream");
     if (stream) {
 	FacetizeWorkerServer server(stream, NULL);
-	std::string object_name;
-	expect(server.receive_request(object_name) == FacetizeWorkerReadResult::Error,
+	FacetizeWorkerRequest request;
+	expect(server.receive_request(request) == FacetizeWorkerReadResult::Error,
 	    "server rejects a header without a terminator");
 	fclose(stream);
     }
@@ -410,9 +510,9 @@ test_client_diagnostics_and_reset()
 	"post-reset bytes are reported independently");
 
     FacetizeWorkerServer null_server(NULL, NULL);
-    std::string object_name;
+    FacetizeWorkerRequest request;
     FacetizeCommitRequest commit_request;
-    expect(null_server.receive_request(object_name) == FacetizeWorkerReadResult::Error,
+    expect(null_server.receive_request(request) == FacetizeWorkerReadResult::Error,
 	"server rejects a missing request stream");
     expect(null_server.receive_commit(commit_request) ==
 	    FacetizeWorkerReadResult::Error,

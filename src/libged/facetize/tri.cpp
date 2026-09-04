@@ -32,6 +32,7 @@
 #include <sstream>
 #include <iostream>
 #include <fstream>
+#include <limits>
 #include <queue>
 
 #include <string.h>
@@ -55,7 +56,6 @@
 static const size_t FACETIZE_EMPTY_CHECK_CROFTON_RAYS = 800u;
 static const double FACETIZE_EMPTY_CHECK_REL_VOL_TOL = 1.0e-9;
 static const double FACETIZE_EMPTY_CHECK_ABS_VOL_TOL = 1.0e-12;
-static const int FACETIZE_METHOD_COMMAND_INDEX = 5;
 static const double FACETIZE_USEC_TO_SEC_DIVISOR = 1.0e6;
 static const double FACETIZE_IO_PROBE_DURATION_SEC = 1.0;
 static const size_t FACETIZE_MIB_BYTES = 1024u * 1024u;
@@ -851,18 +851,19 @@ tess_writer_stop(struct _ged_facetize_state *s, struct tess_writer_state &writer
 }
 
 static int
-tess_run(struct _ged_facetize_state *s, const char **tess_cmd,
-	int tess_cmd_cnt, fastf_t max_time, int ocnt,
+tess_run(struct _ged_facetize_state *s, const char *process_executable,
+	const char *work_file, const FacetizePrimitiveSettings &settings,
+	fastf_t max_time, const std::vector<std::string> &object_names,
 	std::vector<std::string> *failed_names, enum tess_work_type work_type,
 	bool replay)
 {
-    if (!s || !tess_cmd || !tess_cmd[3] || ocnt <= 0 ||
-	    ocnt > tess_cmd_cnt || !failed_names)
+    if (!s || !process_executable || !work_file || object_names.empty() ||
+	    object_names.size() > (size_t)std::numeric_limits<int>::max() ||
+	    !failed_names || settings.methods.empty())
 	return BRLCAD_ERROR;
     failed_names->clear();
 
-    const int fixed_cnt = tess_cmd_cnt - ocnt;
-    const char *work_file = tess_cmd[3];
+    const int object_count = (int)object_names.size();
     if (!s->write_profiled) {
 	if (tess_write_probe(work_file, &s->write_profile_bytes,
 		&s->write_profile_usec) != BRLCAD_OK) {
@@ -894,41 +895,41 @@ tess_run(struct _ged_facetize_state *s, const char **tess_cmd,
     size_t available_memory = (available_memory_result > 0) ?
 	(size_t)available_memory_result : 0;
     size_t requested_workers = replay ? 1 : (size_t)s->max_workers;
-    FacetizeWorkerPolicy worker_policy(requested_workers, (size_t)ocnt,
+    FacetizeWorkerPolicy worker_policy(requested_workers, object_names.size(),
 	bu_avail_cpus(), total_memory, available_memory);
     bool staged_writes = worker_policy.worker_count() > 1;
 
     std::string worker_threads = std::to_string(
 	    worker_policy.threads_per_worker());
     std::vector<std::string> worker_cmd;
-    for (int i = 0; i < fixed_cnt; i++)
-	worker_cmd.push_back(tess_cmd[i]);
+    worker_cmd.push_back(process_executable);
+    worker_cmd.push_back("facetize_process");
     worker_cmd.push_back("--threads");
     worker_cmd.push_back(worker_threads);
+    worker_cmd.push_back(work_file);
 
     std::vector<std::string> writer_cmd;
     if (staged_writes) {
-	writer_cmd.push_back(tess_cmd[0]);
-	writer_cmd.push_back(tess_cmd[1]);
+	writer_cmd.push_back(process_executable);
+	writer_cmd.push_back("facetize_process");
 	writer_cmd.push_back(work_file);
     }
 
-    const char *method = (tess_cmd_cnt > FACETIZE_METHOD_COMMAND_INDEX &&
-	    tess_cmd[FACETIZE_METHOD_COMMAND_INDEX]) ?
-	tess_cmd[FACETIZE_METHOD_COMMAND_INDEX] : "unknown";
+    const char *method = settings.methods.front().c_str();
     int64_t run_start = bu_gettime();
     int64_t next_progress = run_start +
 	BU_SEC2USEC(FACETIZE_PROGRESS_INTERVAL_SEC);
-    int start_msg_level = (ocnt >= FACETIZE_PROGRESS_BATCH_MIN) ? 0 : 1;
-    const char *work_description = tess_work_description(work_type, ocnt);
+    int start_msg_level = (object_count >= FACETIZE_PROGRESS_BATCH_MIN) ? 0 : 1;
+    const char *work_description = tess_work_description(work_type,
+	    object_count);
     if (replay) {
 	facetize_log(s, start_msg_level,
 		"FACETIZE: retrying tessellation of %d %s after restoring the working database, using method %s...\n",
-		ocnt, work_description, method);
+		object_count, work_description, method);
     } else {
 	facetize_log(s, start_msg_level,
 		"FACETIZE: tessellating %d %s with method %s...\n",
-		ocnt, work_description, method);
+		object_count, work_description, method);
     }
     facetize_log(s, start_msg_level,
 	    "FACETIZE: using %zu tessellation worker%s with up to %zu thread%s each\n",
@@ -960,7 +961,7 @@ tess_run(struct _ged_facetize_state *s, const char **tess_cmd,
     size_t active_workers = 0;
     size_t observed_worker_resident = 0;
     size_t write_owner = workers.size();
-    int next_object = fixed_cnt;
+    int next_object = 0;
     int completed_objects = 0;
 
     auto submit_staged_result = [&](size_t worker_index) {
@@ -973,7 +974,7 @@ tess_run(struct _ged_facetize_state *s, const char **tess_cmd,
 	    tess_writer_stop(s, writer, true);
 	    return false;
 	}
-	const char *object_name = tess_cmd[worker.object_index];
+	const char *object_name = object_names[worker.object_index].c_str();
 	if (!writer.channel.send_commit(worker.result_file.c_str(), object_name,
 		worker.status.payload_size)) {
 	    tess_writer_stop(s, writer, true);
@@ -985,7 +986,7 @@ tess_run(struct _ged_facetize_state *s, const char **tess_cmd,
 	return true;
     };
 
-    while (completed_objects < ocnt && !unsafe_failure) {
+    while (completed_objects < object_count && !unsafe_failure) {
 	bool made_progress = false;
 	if (staged_writes && writer.worker_index == SIZE_MAX &&
 		writer.process && bu_process_poll(writer.process, NULL) != 0)
@@ -993,7 +994,7 @@ tess_run(struct _ged_facetize_state *s, const char **tess_cmd,
 
 	for (tess_worker_state &worker : workers) {
 	    if (!worker.enabled || worker.object_index >= 0 ||
-		    next_object >= tess_cmd_cnt)
+		    next_object >= object_count)
 		continue;
 
 	    available_memory_result = bu_mem(BU_MEM_AVAIL, NULL);
@@ -1015,8 +1016,12 @@ tess_run(struct _ged_facetize_state *s, const char **tess_cmd,
 		continue;
 	    }
 
-	    const char *object_name = tess_cmd[next_object];
-	    if (!worker.channel.send_request(object_name)) {
+	    const char *object_name = object_names[next_object].c_str();
+	    FacetizeWorkerRequest request;
+	    request.operation = FacetizeWorkerOperation::TessellatePrimitive;
+	    request.input_names.push_back(object_name);
+	    request.primitive = settings;
+	    if (!worker.channel.send_request(request)) {
 		facetize_log(s, 0,
 			"FACETIZE: unable to submit %s to a tessellation worker\n",
 			object_name);
@@ -1035,13 +1040,13 @@ tess_run(struct _ged_facetize_state *s, const char **tess_cmd,
 	    made_progress = true;
 	}
 
-	if (!active_workers && next_object < tess_cmd_cnt) {
+	if (!active_workers && next_object < object_count) {
 	    bool usable_worker = false;
 	    for (const tess_worker_state &worker : workers)
 		usable_worker = usable_worker || worker.enabled;
 	    if (!usable_worker) {
-		for (; next_object < tess_cmd_cnt; next_object++) {
-		    failed_names->push_back(tess_cmd[next_object]);
+		for (; next_object < object_count; next_object++) {
+		    failed_names->push_back(object_names[next_object]);
 		    completed_objects++;
 		}
 		break;
@@ -1056,7 +1061,7 @@ tess_run(struct _ged_facetize_state *s, const char **tess_cmd,
 	    if (worker.awaiting_commit)
 		continue;
 
-	    const char *object_name = tess_cmd[worker.object_index];
+	    const char *object_name = object_names[worker.object_index].c_str();
 	    facetize_process_drain_stdout(s, worker.process, worker.channel,
 		    &worker.status);
 	    facetize_process_drain_stderr(s, worker.process);
@@ -1225,7 +1230,7 @@ tess_run(struct _ged_facetize_state *s, const char **tess_cmd,
 	    tess_worker_state &committing_worker =
 		workers[writer.worker_index];
 	    const char *object_name =
-		tess_cmd[committing_worker.object_index];
+		object_names[committing_worker.object_index].c_str();
 	    facetize_process_drain_stdout(s, writer.process, writer.channel,
 		    &writer.status);
 	    facetize_process_drain_stderr(s, writer.process);
@@ -1346,29 +1351,29 @@ tess_run(struct _ged_facetize_state *s, const char **tess_cmd,
 		if (writer.status.write_started) {
 		    facetize_log(s, 0,
 			    "FACETIZE: committing tessellation for %s with method %s (%d of %d complete, %zu workers active, %.1f seconds elapsed; %.1f second write limit)\n",
-			    tess_cmd[committing_worker.object_index], method,
-			    completed_objects, ocnt, active_workers,
+			    object_names[committing_worker.object_index].c_str(), method,
+			    completed_objects, object_count, active_workers,
 			    (now - run_start) / FACETIZE_USEC_TO_SEC_DIVISOR,
 			    writer.write_timeout);
 		} else {
 		    facetize_log(s, 0,
 			    "FACETIZE: waiting to commit tessellation for %s with method %s (%d of %d complete, %zu workers active, %.1f seconds elapsed)\n",
-			    tess_cmd[committing_worker.object_index], method,
-			    completed_objects, ocnt, active_workers,
+			    object_names[committing_worker.object_index].c_str(), method,
+			    completed_objects, object_count, active_workers,
 			    (now - run_start) / FACETIZE_USEC_TO_SEC_DIVISOR);
 		}
 	    } else if (write_owner < workers.size()) {
 		const tess_worker_state &writing_worker = workers[write_owner];
 		facetize_log(s, 0,
 			"FACETIZE: writing tessellation for %s with method %s (%d of %d complete, %zu workers active, %.1f seconds elapsed; %.1f second write limit)\n",
-			tess_cmd[writing_worker.object_index], method, completed_objects,
-			ocnt, active_workers,
+			object_names[writing_worker.object_index].c_str(), method,
+			completed_objects, object_count, active_workers,
 			(now - run_start) / FACETIZE_USEC_TO_SEC_DIVISOR,
 			writing_worker.write_timeout);
 	    } else {
 		facetize_log(s, 0,
 			"FACETIZE: tessellating with method %s (%d of %d complete, %zu workers active, %.1f seconds elapsed)\n",
-			method, completed_objects, ocnt, active_workers,
+			method, completed_objects, object_count, active_workers,
 			(now - run_start) / FACETIZE_USEC_TO_SEC_DIVISOR);
 	    }
 	    next_progress = now + BU_SEC2USEC(FACETIZE_PROGRESS_INTERVAL_SEC);
@@ -1416,7 +1421,8 @@ tess_run(struct _ged_facetize_state *s, const char **tess_cmd,
 		elapsed_seconds >= FACETIZE_PROGRESS_INTERVAL_SEC) ? 0 : 1;
 	facetize_log(s, completion_msg_level,
 		"FACETIZE: tessellation complete: %d of %d %s succeeded with method %s (%.1f seconds)\n",
-		ocnt - (int)failed_names->size(), ocnt, work_description, method,
+		object_count - (int)failed_names->size(), object_count,
+		work_description, method,
 		elapsed_seconds);
 	bu_file_delete(backup_file.c_str());
 	return failed_names->empty() ? BRLCAD_OK : BRLCAD_ERROR;
@@ -1434,8 +1440,8 @@ tess_run(struct _ged_facetize_state *s, const char **tess_cmd,
      * not produce a trustworthy database.  Its checkpoint predates all work
      * in this batch, so every requested result is absent after restoration. */
     if (replay) {
-	for (int obj_ind = fixed_cnt; obj_ind < tess_cmd_cnt; obj_ind++)
-	    failed_names->push_back(tess_cmd[obj_ind]);
+	failed_names->insert(failed_names->end(), object_names.begin(),
+		object_names.end());
 	std::sort(failed_names->begin(), failed_names->end());
 	failed_names->erase(std::unique(failed_names->begin(),
 	    failed_names->end()), failed_names->end());
@@ -1448,19 +1454,15 @@ tess_run(struct _ged_facetize_state *s, const char **tess_cmd,
     // checkpoint, then replay only names not already tied to a known failure.
     std::set<std::string> failed_set(failed_names->begin(),
 	    failed_names->end());
-    const char *retry_cmd[MAXPATHLEN] = {NULL};
-    for (int i = 0; i < fixed_cnt; i++)
-	retry_cmd[i] = tess_cmd[i];
-    int retry_cnt = fixed_cnt;
-    for (int obj_ind = fixed_cnt; obj_ind < tess_cmd_cnt; obj_ind++) {
-	if (failed_set.find(tess_cmd[obj_ind]) == failed_set.end())
-	    retry_cmd[retry_cnt++] = tess_cmd[obj_ind];
-    }
+    std::vector<std::string> retry_names;
+    for (const std::string &object_name : object_names)
+	if (failed_set.find(object_name) == failed_set.end())
+	    retry_names.push_back(object_name);
 
-    if (retry_cnt > fixed_cnt) {
+    if (!retry_names.empty()) {
 	std::vector<std::string> retry_failures;
-	(void)tess_run(s, retry_cmd, retry_cnt, max_time,
-		retry_cnt - fixed_cnt, &retry_failures, work_type, true);
+	(void)tess_run(s, process_executable, work_file, settings, max_time,
+		retry_names, &retry_failures, work_type, true);
 	failed_names->insert(failed_names->end(), retry_failures.begin(),
 		retry_failures.end());
     }
@@ -1473,10 +1475,9 @@ tess_run(struct _ged_facetize_state *s, const char **tess_cmd,
 
 /*
  * Tessellate variant primitives that were created by _ged_facetize_build_variant_plan().
- * Processes all names using the NMG method (same fixed command structure as
- * _ged_facetize_leaves_tri).  Tessellation failures are logged but do not
- * abort: the booleval will silently fall back to the original (non-variant)
- * mesh for any variant whose BoT is not available.
+ * Processes all names using the NMG method.  Tessellation failures are logged
+ * but do not abort: the booleval will silently fall back to the original
+ * (non-variant) mesh for any variant whose BoT is not available.
  */
 int
 _ged_facetize_tessellate_variant_names(struct _ged_facetize_state *s,
@@ -1500,57 +1501,23 @@ _ged_facetize_tessellate_variant_names(struct _ged_facetize_state *s,
 	l_max_time = (fastf_t)mo->max_time[mstrpp];
     }
 
-    const char *tess_cmd[MAXPATHLEN] = {NULL};
-    tess_cmd[0] = tess_exec;
-    tess_cmd[1] = "facetize_process";
-    tess_cmd[2] = "-O";
-    tess_cmd[3] = bu_vls_cstr(s->wfile);
-    tess_cmd[4] = "--methods";
-    tess_cmd[5] = "NMG";
-    tess_cmd[6] = "--method-opts";
+    FacetizePrimitiveSettings settings;
+    settings.methods.push_back("NMG");
+    if (!nmg_opts.empty())
+	settings.method_options.push_back(nmg_opts);
+    settings.cache_directory = lcache;
+    settings.point_limit = s->max_pnts;
 
-    struct bu_vls mopts_vls = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&mopts_vls, "%s", nmg_opts.c_str());
-    tess_cmd[7] = bu_vls_cstr(&mopts_vls);
-    tess_cmd[8] = "--cache-dir";
-    tess_cmd[9] = lcache;
-    int cmd_fixed_cnt = 10;
+    std::vector<std::string> failures;
+    int run_ret = tess_run(s, tess_exec, bu_vls_cstr(s->wfile), settings,
+	    l_max_time, plan->variant_names, &failures,
+	    TESS_WORK_PERTURBATION_VARIANT, false);
+    int fail_cnt = (int)failures.size();
+    if (run_ret != BRLCAD_OK)
+	facetize_log(s, 0,
+		"FACETIZE: variant tessellation failed for %d object(s)\n",
+		fail_cnt);
 
-    /* Names travel over stdin, so only the local pointer array bounds a batch. */
-    int fail_cnt = 0;
-    size_t vi = 0;
-    while (vi < plan->variant_names.size()) {
-	std::vector<const char *> batch_names;
-	while (vi < plan->variant_names.size() &&
-	       cmd_fixed_cnt + (int)batch_names.size() < MAXPATHLEN) {
-	    batch_names.push_back(plan->variant_names[vi].c_str());
-	    vi++;
-	}
-
-	if (batch_names.empty())
-	    break;
-
-	for (size_t i = 0; i < batch_names.size(); i++)
-	    tess_cmd[cmd_fixed_cnt + i] = batch_names[i];
-	int total_cnt = cmd_fixed_cnt + (int)batch_names.size();
-
-	std::vector<std::string> batch_failures;
-	int ret = tess_run(s, tess_cmd, total_cnt, l_max_time,
-		(int)batch_names.size(), &batch_failures,
-		TESS_WORK_PERTURBATION_VARIANT, false);
-	if (ret != BRLCAD_OK) {
-	    facetize_log(s, 0,
-			"FACETIZE: variant tessellation failed for %d object(s)\n",
-			(int)batch_failures.size());
-	    fail_cnt += (int)batch_failures.size();
-	}
-
-	/* Clear per-batch name slots */
-	for (size_t i = 0; i < batch_names.size(); i++)
-	    tess_cmd[cmd_fixed_cnt + i] = NULL;
-    }
-
-    bu_vls_free(&mopts_vls);
     plan->n_variant_tess_failures = fail_cnt;
     return (fail_cnt == 0) ? BRLCAD_OK : BRLCAD_ERROR;
 }
@@ -1558,22 +1525,23 @@ _ged_facetize_tessellate_variant_names(struct _ged_facetize_state *s,
 static int
 tess_run_inputs(struct _ged_facetize_state *s,
 	std::vector<struct directory *> &bad_dps,
-	const std::vector<struct directory *> &inputs, const char **orig_cmd,
-	int cmd_cnt, fastf_t max_time, enum tess_work_type work_type)
+	const std::vector<struct directory *> &inputs,
+	const char *process_executable, const char *work_file,
+	const FacetizePrimitiveSettings &settings, fastf_t max_time,
+	enum tess_work_type work_type)
 {
     bad_dps.clear();
     if (inputs.empty())
 	return 0;
 
-    const char *tess_cmd[MAXPATHLEN] = {NULL};
-    for (int i = 0; i < cmd_cnt; i++)
-	tess_cmd[i] = orig_cmd[i];
+    std::vector<std::string> object_names;
+    object_names.reserve(inputs.size());
     for (size_t i = 0; i < inputs.size(); i++)
-	tess_cmd[cmd_cnt+i] = inputs[i]->d_namep;
+	object_names.push_back(inputs[i]->d_namep);
 
     std::vector<std::string> failed_names;
-    (void)tess_run(s, tess_cmd, cmd_cnt+inputs.size(), max_time,
-	    (int)inputs.size(), &failed_names, work_type, false);
+    (void)tess_run(s, process_executable, work_file, settings, max_time,
+	    object_names, &failed_names, work_type, false);
     std::set<std::string> failed_set(failed_names.begin(),
 	    failed_names.end());
     for (size_t i = 0; i < inputs.size(); i++) {
@@ -1684,7 +1652,6 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, struct db_i *dbip, struc
 
     method_options_t *mo = (method_options_t*)s->method_opts;
     std::queue<std::string> method_flags;
-    std::queue<std::string> method_flags_bak;
     for (size_t i = 0; i < mo->methods.size(); i++) {
 	std::string cmethod = mo->methods[i];
 	if (std::find(avail_methods.begin(), avail_methods.end(), cmethod) != avail_methods.end()) {
@@ -1706,133 +1673,72 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, struct db_i *dbip, struc
 	}
     }
 
-    method_flags_bak = method_flags;
-
-    // We want the subprocess to be using the same cache directory
-    // as the parent
+    /* Workers use the same cache directory as the parent. */
     char lcache[MAXPATHLEN] = {0};
     bu_dir(lcache, MAXPATHLEN, BU_DIR_CACHE, NULL);
 
-
-    // Call ged_exec to produce evaluated solids.
-    // First step is to build up the command to run
     std::vector<std::string> failed_dps;
-    std::string mstrpp;
-    int l_max_time;
-    struct bu_vls method_str = BU_VLS_INIT_ZERO;
-    struct bu_vls method_opts_str = BU_VLS_INIT_ZERO;
-    const char *tess_cmd[MAXPATHLEN] = {NULL};
-    int method_ind = 5;
-    int method_opt_ind = 7;
-    tess_cmd[ 0] = tess_exec;
-    tess_cmd[ 1] = "facetize_process";
-    tess_cmd[ 2] = "-O";
-    tess_cmd[ 3] = bu_vls_cstr(s->wfile);
-    tess_cmd[ 4] = "--methods";
-    tess_cmd[ 5] = NULL;
-    tess_cmd[ 6] = "--method-opts";
-    tess_cmd[ 7] = NULL;
-    tess_cmd[ 8] = "--cache-dir";
-    tess_cmd[ 9] = lcache;
-    int cmd_fixed_cnt = 10;
+    std::vector<struct directory *> dps;
     while (!pq.empty()) {
-	// Starting a new round of object processing - reset method flags
-	method_flags = method_flags_bak;
-
-	// There are a number of methods that can be tried.  We try them in priority
-	// order, timing out if one of them goes too long.
-	mstrpp = method_flags.front();
-	method_flags.pop();
-	bu_vls_sprintf(&method_str, "%s", mstrpp.c_str());
-	tess_cmd[method_ind] = bu_vls_cstr(&method_str);
-	// Each method has its own default (or possibly user set) time limit
-	l_max_time = mo->max_time[mstrpp];
-	// Get defined options for this particular method
-	bu_vls_sprintf(&method_opts_str, "%s", mo->method_optstr(mstrpp, dbip).c_str());
-	tess_cmd[method_opt_ind] = bu_vls_cstr(&method_opts_str);
-
-	std::vector<struct directory *> dps;
-	std::vector<struct directory *> bad_dps;
-	while (!pq.empty() && cmd_fixed_cnt + dps.size() < MAXPATHLEN) {
-	    struct directory *ldp = pq.top();
-	    pq.pop();
-	    dps.push_back(ldp);
-	}
-
-	// We have the list of objects to feed the process - now, trigger
-	// the runs with as many methods as it takes to facetize all the
-	// primitives
-	int err_cnt = 0;
-	while (bu_vls_strlen(&method_str)) {
-	    err_cnt = tess_run_inputs(s, bad_dps, dps, tess_cmd,
-		    cmd_fixed_cnt, l_max_time, TESS_WORK_ORIGINAL_PRIMITIVE);
-
-	    // If we dealt successfully with everything, we're done
-	    if (!err_cnt)
-		break;
-
-	    if (method_flags.size()) {
-		// If we still have available methods to try, go another round
-		err_cnt = 0;
-		mstrpp = method_flags.front();
-		method_flags.pop();
-		bu_vls_sprintf(&method_str, "%s", mstrpp.c_str());
-		tess_cmd[method_ind] = bu_vls_cstr(&method_str);
-		// Each method has its own default (or possibly user set) time limit
-		l_max_time = mo->max_time[mstrpp];
-		// Get defined options for this particular method
-		bu_vls_sprintf(&method_opts_str, "%s", mo->method_optstr(mstrpp, dbip).c_str());
-		tess_cmd[method_opt_ind] = bu_vls_cstr(&method_opts_str);
-		dps = bad_dps;
-		bad_dps.clear();
-	    } else {
-		// All done - nothing left to try
-		bu_vls_trunc(&method_str, 0);
-		tess_cmd[method_ind] = NULL;
-	    }
-	}
-
-	if (err_cnt || bad_dps.size() > 0) {
-	    // If we tried all the active methods and still had failures, we have an
-	    // error.  We'll keep trying to process all the leaves, since we want to
-	    // get a full picture of what the issues with the conversion are, but
-	    // we need to record these as a full-on failure.
-	    for (size_t i = 0; i < bad_dps.size(); i++)
-		failed_dps.push_back(std::string(bad_dps[i]->d_namep));
-	}
+	dps.push_back(pq.top());
+	pq.pop();
     }
 
-    while (!q_pbot.empty()) {
-	bu_vls_sprintf(&method_str, "NMG");
-	tess_cmd[method_ind] = bu_vls_cstr(&method_str);
-	mstrpp = std::string("NMG");
-	l_max_time = mo->plate_max_time;
-	bu_vls_sprintf(&method_opts_str, "%s", mo->method_optstr(mstrpp, dbip).c_str());
-	tess_cmd[method_opt_ind] = bu_vls_cstr(&method_opts_str);
+    std::vector<struct directory *> bad_dps;
+    while (!dps.empty() && !method_flags.empty()) {
+	std::string method = method_flags.front();
+	method_flags.pop();
+	FacetizePrimitiveSettings settings;
+	settings.methods.push_back(method);
+	std::string method_options = mo->method_optstr(method, dbip);
+	if (!method_options.empty())
+	    settings.method_options.push_back(method_options);
+	settings.cache_directory = lcache;
+	settings.point_limit = s->max_pnts;
 
-
-	std::vector<struct directory *> dps;
-	std::vector<struct directory *> bad_dps;
-	while (!q_pbot.empty() && cmd_fixed_cnt + dps.size() < MAXPATHLEN) {
-	    struct directory *ldp = q_pbot.top();
-	    q_pbot.pop();
-	    dps.push_back(ldp);
+	int error_count = tess_run_inputs(s, bad_dps, dps, tess_exec,
+		bu_vls_cstr(s->wfile), settings, mo->max_time[method],
+		TESS_WORK_ORIGINAL_PRIMITIVE);
+	if (!error_count) {
+	    dps.clear();
+	    break;
 	}
+	dps = bad_dps;
+	bad_dps.clear();
+    }
+    for (struct directory *failed_dp : dps)
+	failed_dps.push_back(failed_dp->d_namep);
 
+    dps.clear();
+    while (!q_pbot.empty()) {
+	dps.push_back(q_pbot.top());
+	q_pbot.pop();
+    }
+    if (!dps.empty()) {
+	std::string method("NMG");
+	FacetizePrimitiveSettings settings;
+	settings.methods.push_back(method);
+	std::string method_options = mo->method_optstr(method, dbip);
+	if (!method_options.empty())
+	    settings.method_options.push_back(method_options);
+	settings.cache_directory = lcache;
+	settings.point_limit = s->max_pnts;
 
-	int err_cnt = tess_run_inputs(s, bad_dps, dps, tess_cmd,
-		cmd_fixed_cnt, l_max_time, TESS_WORK_PLATE_MODE_PRIMITIVE);
-	if (err_cnt) {
-	    for (size_t i = 0; i < bad_dps.size(); i++)
-		failed_dps.push_back(std::string(bad_dps[i]->d_namep));
-	    // If we couldn't handle the plate mode conversion, we can't do the
-	    // boolean evaluation unless partial output was explicitly requested.
+	int error_count = tess_run_inputs(s, bad_dps, dps, tess_exec,
+		bu_vls_cstr(s->wfile), settings, mo->plate_max_time,
+		TESS_WORK_PLATE_MODE_PRIMITIVE);
+	if (error_count) {
+	    for (struct directory *failed_dp : bad_dps)
+		failed_dps.push_back(failed_dp->d_namep);
+	    /* Plate-mode BoTs cannot participate in the Boolean evaluation if
+	     * their volume conversion fails. */
 	    if (!s->tolerate_failures) {
 		mark_failed_tessellations(s, failed_dps);
-		facetize_log(s, 0, "Plate mode conversion wasn't able to complete\n");
+		facetize_log(s, 0,
+			"Plate mode conversion wasn't able to complete\n");
 		return BRLCAD_ERROR;
 	    }
-	}
+    }
     }
 
     if (failed_dps.size()) {
@@ -2151,7 +2057,7 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
 	delete (FacetizeVariantPlan *)s->variant_plan;
 	s->variant_plan = NULL;
     }
-    if (!s->make_nmg && !s->nmg_booleval && !s->no_perturb) {
+    if (!s->execution.uses_nmg_boolean() && s->execution.uses_perturbation()) {
 	FacetizeVariantPlan *vplan = _ged_facetize_build_variant_plan(s, argc, dpa, NULL);
 	s->variant_plan = (void *)vplan;
     }

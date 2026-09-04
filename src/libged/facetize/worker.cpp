@@ -27,6 +27,12 @@
 #include <algorithm>
 #include <sstream>
 
+#include <errno.h>
+#if defined(HAVE_PTHREAD_H) && defined(HAVE_SIGNAL_H)
+#  include <pthread.h>
+#  include <signal.h>
+#  include <time.h>
+#endif
 #include <string.h>
 
 #include "bu/log.h"
@@ -44,13 +50,62 @@ static const char FACETIZE_WRITE_PROCEED_MAGIC[] = "FACETIZE_WRITE_PROCEED";
 static const char FACETIZE_WRITE_STARTED_MAGIC[] = "FACETIZE_WRITE_STARTED";
 static const char FACETIZE_WRITE_DONE_MAGIC[] = "FACETIZE_WRITE_DONE";
 static const char FACETIZE_CSG_RESULT_MAGIC[] = "FACETIZE_CSG_RESULT";
+static const unsigned int FACETIZE_PROTOCOL_VERSION = 3u;
 static const size_t FACETIZE_PROTOCOL_FIELD_MAX = 1024u * 1024u;
-static const size_t FACETIZE_PROTOCOL_HEADER_SIZE = 128u;
+static const size_t FACETIZE_PROTOCOL_LIST_MAX = 65536u;
+static const size_t FACETIZE_PROTOCOL_HEADER_SIZE = 256u;
 static const size_t FACETIZE_MIB = 1024u * 1024u;
 static const size_t FACETIZE_MIN_MEMORY_HEADROOM = 1024u * FACETIZE_MIB;
 static const size_t FACETIZE_MIN_WORKER_RESERVE = 512u * FACETIZE_MIB;
 static const size_t FACETIZE_MEMORY_HEADROOM_DIVISOR = 4u;
 static const size_t FACETIZE_AUTOMATIC_WORKER_LIMIT = 2u;
+
+class FacetizePipeWriteGuard
+{
+    public:
+	FacetizePipeWriteGuard()
+	{
+#if defined(HAVE_PTHREAD_H) && defined(HAVE_SIGNAL_H) && defined(SIGPIPE)
+	    sigemptyset(&blocked_signals);
+	    sigaddset(&blocked_signals, SIGPIPE);
+	    active = pthread_sigmask(SIG_BLOCK, &blocked_signals,
+		    &original_mask) == 0;
+	    sigset_t pending_signals;
+	    if (active && sigpending(&pending_signals) == 0)
+		had_pending_sigpipe = sigismember(&pending_signals, SIGPIPE) == 1;
+#endif
+	}
+
+	~FacetizePipeWriteGuard()
+	{
+#if defined(HAVE_PTHREAD_H) && defined(HAVE_SIGNAL_H) && defined(SIGPIPE)
+	    if (!active)
+		return;
+
+	    int saved_errno = errno;
+	    sigset_t pending_signals;
+	    bool have_new_sigpipe = !had_pending_sigpipe &&
+		sigpending(&pending_signals) == 0 &&
+		sigismember(&pending_signals, SIGPIPE) == 1;
+	    if (have_new_sigpipe) {
+		struct timespec timeout = {0, 0};
+		while (sigtimedwait(&blocked_signals, NULL, &timeout) < 0 &&
+			errno == EINTR)
+		    ;
+	    }
+	    (void)pthread_sigmask(SIG_SETMASK, &original_mask, NULL);
+	    errno = saved_errno;
+#endif
+	}
+
+    private:
+#if defined(HAVE_PTHREAD_H) && defined(HAVE_SIGNAL_H) && defined(SIGPIPE)
+	sigset_t blocked_signals;
+	sigset_t original_mask;
+	bool active = false;
+	bool had_pending_sigpipe = false;
+#endif
+};
 
 static bool
 facetize_send_field(FILE *stream, const char *field, size_t field_length)
@@ -58,6 +113,16 @@ facetize_send_field(FILE *stream, const char *field, size_t field_length)
     return stream && field &&
 	fwrite(field, 1, field_length, stream) == field_length &&
 	fputc('\n', stream) != EOF;
+}
+
+static bool
+facetize_send_sized_field(FILE *stream, const std::string &field)
+{
+    if (!stream || field.size() > FACETIZE_PROTOCOL_FIELD_MAX)
+	return false;
+
+    return fprintf(stream, "%zu\n", field.size()) >= 0 &&
+	facetize_send_field(stream, field.c_str(), field.size());
 }
 
 static FacetizeWorkerReadResult
@@ -78,12 +143,42 @@ static bool
 facetize_read_field(FILE *stream, size_t field_length, std::string &field)
 {
     field.assign(field_length, '\0');
-    if (fread(&field[0], 1, field_length, stream) == field_length &&
-	fgetc(stream) == '\n')
+    if ((!field_length ||
+	    fread(&field[0], 1, field_length, stream) == field_length) &&
+	    fgetc(stream) == '\n')
 	return true;
 
     field.clear();
     return false;
+}
+
+static bool
+facetize_read_sized_field(FILE *stream, std::string &field)
+{
+    field.clear();
+    char header[FACETIZE_PROTOCOL_HEADER_SIZE];
+    if (facetize_read_header(stream, header, sizeof(header)) !=
+	    FacetizeWorkerReadResult::Request)
+	return false;
+
+    size_t field_length = 0;
+    std::istringstream header_stream(header);
+    if (!(header_stream >> field_length) ||
+	    !(header_stream >> std::ws).eof() ||
+	    field_length > FACETIZE_PROTOCOL_FIELD_MAX)
+	return false;
+
+    return facetize_read_field(stream, field_length, field);
+}
+
+static bool
+facetize_operation_valid(FacetizeWorkerOperation operation)
+{
+    return operation == FacetizeWorkerOperation::TessellatePrimitive ||
+	operation == FacetizeWorkerOperation::ValidateCsg ||
+	operation == FacetizeWorkerOperation::EvaluateRegion ||
+	operation == FacetizeWorkerOperation::NmgBooleanToBot ||
+	operation == FacetizeWorkerOperation::NmgBooleanToNmg;
 }
 
 static bool
@@ -163,19 +258,94 @@ FacetizeWorkerClient::reset(FILE *stream)
 }
 
 bool
-FacetizeWorkerClient::send_request(const char *object_name)
+FacetizePrimitiveSettings::empty() const
 {
-    if (!request_stream || !object_name || !object_name[0])
+    return methods.empty() && method_options.empty() &&
+	cache_directory.empty() && point_limit == 0;
+}
+
+bool
+FacetizeRegionSettings::empty() const
+{
+    return !no_empty && !no_fixup && !tolerate_failures;
+}
+
+bool
+FacetizeWorkerRequest::valid() const
+{
+    if (!facetize_operation_valid(operation) || input_names.empty() ||
+	    input_names.size() > FACETIZE_PROTOCOL_LIST_MAX ||
+	    primitive.methods.size() > FACETIZE_PROTOCOL_LIST_MAX ||
+	    primitive.method_options.size() > FACETIZE_PROTOCOL_LIST_MAX ||
+	    output_name.size() > FACETIZE_PROTOCOL_FIELD_MAX ||
+	    primitive.cache_directory.size() > FACETIZE_PROTOCOL_FIELD_MAX ||
+	    primitive.point_limit < 0)
 	return false;
 
-    size_t name_length = strlen(object_name);
-    if (name_length > FACETIZE_PROTOCOL_FIELD_MAX)
+    for (const std::string &input_name : input_names)
+	if (input_name.empty() || input_name.size() > FACETIZE_PROTOCOL_FIELD_MAX)
+	    return false;
+    for (const std::string &method : primitive.methods)
+	if (method.empty() || method.size() > FACETIZE_PROTOCOL_FIELD_MAX)
+	    return false;
+    for (const std::string &options : primitive.method_options)
+	if (options.empty() || options.size() > FACETIZE_PROTOCOL_FIELD_MAX)
+	    return false;
+
+    switch (operation) {
+	case FacetizeWorkerOperation::TessellatePrimitive:
+	    return input_names.size() == 1 && output_name.empty() &&
+		region.empty();
+	case FacetizeWorkerOperation::ValidateCsg:
+	    return input_names.size() == 1 && output_name.empty() &&
+		primitive.empty() && region.empty();
+	case FacetizeWorkerOperation::EvaluateRegion:
+	    return input_names.size() == 1 && output_name.empty() &&
+		primitive.empty();
+	case FacetizeWorkerOperation::NmgBooleanToBot:
+	case FacetizeWorkerOperation::NmgBooleanToNmg:
+	    return !output_name.empty() && primitive.empty() && region.empty();
+    }
+    return false;
+}
+
+std::string
+FacetizeWorkerRequest::label() const
+{
+    if (!output_name.empty())
+	return output_name;
+    return input_names.empty() ? "(unknown)" : input_names.front();
+}
+
+bool
+FacetizeWorkerClient::send_request(const FacetizeWorkerRequest &request)
+{
+    if (!request_stream || !request.valid())
 	return false;
 
-    return fprintf(request_stream, "%s %zu\n", FACETIZE_REQUEST_MAGIC,
-	    name_length) >= 0 &&
-	facetize_send_field(request_stream, object_name, name_length) &&
-	fflush(request_stream) == 0;
+    FacetizePipeWriteGuard write_guard;
+    if (fprintf(request_stream, "%s %u %d %zu %zu %zu %d %d %d %d\n",
+	    FACETIZE_REQUEST_MAGIC, FACETIZE_PROTOCOL_VERSION,
+	    static_cast<int>(request.operation), request.input_names.size(),
+	    request.primitive.methods.size(),
+	    request.primitive.method_options.size(),
+	    request.primitive.point_limit, request.region.no_empty ? 1 : 0,
+	    request.region.no_fixup ? 1 : 0,
+	    request.region.tolerate_failures ? 1 : 0) < 0 ||
+	    !facetize_send_sized_field(request_stream,
+		request.primitive.cache_directory) ||
+	    !facetize_send_sized_field(request_stream, request.output_name))
+	return false;
+    for (const std::string &input_name : request.input_names)
+	if (!facetize_send_sized_field(request_stream, input_name))
+	    return false;
+    for (const std::string &method : request.primitive.methods)
+	if (!facetize_send_sized_field(request_stream, method))
+	    return false;
+    for (const std::string &options : request.primitive.method_options)
+	if (!facetize_send_sized_field(request_stream, options))
+	    return false;
+    return fflush(request_stream) == 0;
 }
 
 bool
@@ -192,6 +362,7 @@ FacetizeWorkerClient::send_commit(const char *result_file,
 	    name_length > FACETIZE_PROTOCOL_FIELD_MAX)
 	return false;
 
+    FacetizePipeWriteGuard write_guard;
     return fprintf(request_stream, "%s %zu %zu %zu\n",
 	    FACETIZE_COMMIT_MAGIC, file_length, name_length, payload_size) >= 0 &&
 	facetize_send_field(request_stream, result_file, file_length) &&
@@ -205,6 +376,7 @@ FacetizeWorkerClient::send_write_proceed()
     if (!request_stream)
 	return false;
 
+    FacetizePipeWriteGuard write_guard;
     return fprintf(request_stream, "%s\n", FACETIZE_WRITE_PROCEED_MAGIC) >= 0 &&
 	fflush(request_stream) == 0;
 }
@@ -297,9 +469,9 @@ FacetizeWorkerServer::FacetizeWorkerServer(FILE *input, FILE *output) :
 }
 
 FacetizeWorkerReadResult
-FacetizeWorkerServer::receive_request(std::string &object_name)
+FacetizeWorkerServer::receive_request(FacetizeWorkerRequest &request)
 {
-    object_name.clear();
+    request = FacetizeWorkerRequest();
     if (!request_stream)
 	return FacetizeWorkerReadResult::Error;
 
@@ -309,18 +481,78 @@ FacetizeWorkerServer::receive_request(std::string &object_name)
     if (read_result != FacetizeWorkerReadResult::Request)
 	return read_result;
 
-    size_t name_length = 0;
+    unsigned int protocol_version = 0;
+    int operation_value = 0;
+    size_t input_count = 0;
+    size_t method_count = 0;
+    size_t method_option_count = 0;
+    int point_limit = 0;
+    int no_empty = 0;
+    int no_fixup = 0;
+    int tolerate_failures = 0;
     std::string message_type;
     std::istringstream header_stream(header);
     if (!(header_stream >> message_type) ||
 	    message_type != FACETIZE_REQUEST_MAGIC ||
-	    !(header_stream >> name_length) ||
-	    !(header_stream >> std::ws).eof() || !name_length ||
-	    name_length > FACETIZE_PROTOCOL_FIELD_MAX)
+	    !(header_stream >> protocol_version) ||
+	    protocol_version != FACETIZE_PROTOCOL_VERSION ||
+	    !(header_stream >> operation_value >> input_count >> method_count >>
+		method_option_count >> point_limit >> no_empty >> no_fixup >>
+		tolerate_failures) ||
+	    !(header_stream >> std::ws).eof() || !input_count ||
+	    input_count > FACETIZE_PROTOCOL_LIST_MAX ||
+	    method_count > FACETIZE_PROTOCOL_LIST_MAX ||
+	    method_option_count > FACETIZE_PROTOCOL_LIST_MAX || point_limit < 0 ||
+	    (no_empty != 0 && no_empty != 1) ||
+	    (no_fixup != 0 && no_fixup != 1) ||
+	    (tolerate_failures != 0 && tolerate_failures != 1))
 	return FacetizeWorkerReadResult::Error;
 
-    if (!facetize_read_field(request_stream, name_length, object_name))
+
+    request.operation = static_cast<FacetizeWorkerOperation>(operation_value);
+    request.primitive.point_limit = point_limit;
+    request.region.no_empty = no_empty != 0;
+    request.region.no_fixup = no_fixup != 0;
+    request.region.tolerate_failures = tolerate_failures != 0;
+    if (!facetize_read_sized_field(request_stream,
+	    request.primitive.cache_directory) ||
+	    !facetize_read_sized_field(request_stream, request.output_name)) {
+	request = FacetizeWorkerRequest();
 	return FacetizeWorkerReadResult::Error;
+    }
+
+    request.input_names.reserve(input_count);
+    for (size_t i = 0; i < input_count; i++) {
+	std::string input_name;
+	if (!facetize_read_sized_field(request_stream, input_name)) {
+	    request = FacetizeWorkerRequest();
+	    return FacetizeWorkerReadResult::Error;
+	}
+	request.input_names.push_back(input_name);
+    }
+    request.primitive.methods.reserve(method_count);
+    for (size_t i = 0; i < method_count; i++) {
+	std::string method;
+	if (!facetize_read_sized_field(request_stream, method)) {
+	    request = FacetizeWorkerRequest();
+	    return FacetizeWorkerReadResult::Error;
+	}
+	request.primitive.methods.push_back(method);
+    }
+    request.primitive.method_options.reserve(method_option_count);
+    for (size_t i = 0; i < method_option_count; i++) {
+	std::string options;
+	if (!facetize_read_sized_field(request_stream, options)) {
+	    request = FacetizeWorkerRequest();
+	    return FacetizeWorkerReadResult::Error;
+	}
+	request.primitive.method_options.push_back(options);
+    }
+
+    if (!request.valid()) {
+	request = FacetizeWorkerRequest();
+	return FacetizeWorkerReadResult::Error;
+    }
 
     return FacetizeWorkerReadResult::Request;
 }
