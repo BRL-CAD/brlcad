@@ -32,7 +32,8 @@ enum brep_assembly_error {
     BREP_ASSEMBLY_EDGE_MERGE_FAILED,
     BREP_ASSEMBLY_CULL_FAILED,
     BREP_ASSEMBLY_ORIENTATION_FAILED,
-    BREP_ASSEMBLY_VALIDATION_FAILED
+    BREP_ASSEMBLY_VALIDATION_FAILED,
+    BREP_ASSEMBLY_TOLERANCE_FAILED
 };
 
 struct brep_assembly_result {
@@ -62,6 +63,13 @@ brep_curves_coincident(const ON_Curve &first, const ON_Curve &second,
 extern BREP_EXPORT int
 brep_stitch_naked_edges(ON_Brep &brep, double tolerance,
 	brep_assembly_result *result = NULL);
+
+/**
+ * Derive edge tolerances required by authored vertex and trim endpoints.
+ * Geometry is not changed; existing larger tolerances are preserved.
+ */
+extern BREP_EXPORT bool
+brep_set_edge_endpoint_tolerances(ON_Brep &brep, double minimum_tolerance);
 
 /** Make face orientations consistent in a closed two-manifold B-Rep. */
 extern BREP_EXPORT bool

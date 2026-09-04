@@ -57,13 +57,14 @@ nonmanifold_edge_count(const ON_Brep &brep)
 
 bool
 merge_edge_pair(ON_Brep &brep, int first_index, int second_index,
-	bool reversed, double tolerance, enum brep_assembly_error *error)
+	bool reversed, enum brep_assembly_error *error)
 {
     for (int endpoint = 0; endpoint < 2; ++endpoint) {
 	const int first_vertex = brep.m_E[first_index].m_vi[endpoint];
 	const int second_vertex = brep.m_E[second_index].m_vi[
 	    reversed ? 1 - endpoint : endpoint];
-	if (first_vertex < 0 || second_vertex < 0) {
+	if (first_vertex < 0 || first_vertex >= brep.m_V.Count() ||
+		second_vertex < 0 || second_vertex >= brep.m_V.Count()) {
 	    *error = BREP_ASSEMBLY_VERTEX_MERGE_FAILED;
 	    return false;
 	}
@@ -72,12 +73,19 @@ merge_edge_pair(ON_Brep &brep, int first_index, int second_index,
 	ON_BrepVertex &first = brep.m_V[first_vertex];
 	ON_BrepVertex &second = brep.m_V[second_vertex];
 	const double separation = first.Point().DistanceTo(second.Point());
-	if (!std::isfinite(separation) || separation > tolerance) {
+	if (!std::isfinite(separation)) {
 	    *error = BREP_ASSEMBLY_VERTEX_MERGE_FAILED;
 	    return false;
 	}
-	first.m_tolerance = std::max(first.m_tolerance, separation);
-	second.m_tolerance = std::max(second.m_tolerance, separation);
+	/* Matching edge geometry establishes the shared endpoint.  Authored
+	 * face boundaries may locate its topological vertices farther apart than
+	 * the global resolution, so retain that deviation as vertex tolerance. */
+	first.m_tolerance = std::isfinite(first.m_tolerance) &&
+	    first.m_tolerance >= 0.0 ?
+	    std::max(first.m_tolerance, separation) : separation;
+	second.m_tolerance = std::isfinite(second.m_tolerance) &&
+	    second.m_tolerance >= 0.0 ?
+	    std::max(second.m_tolerance, separation) : separation;
 	if (!brep.CombineCoincidentVertices(first, second)) {
 	    *error = BREP_ASSEMBLY_VERTEX_MERGE_FAILED;
 	    return false;
@@ -155,6 +163,65 @@ brep_curves_coincident(const ON_Curve &first, const ON_Curve &second,
 }
 
 
+bool
+brep_set_edge_endpoint_tolerances(ON_Brep &brep,
+	double minimum_tolerance)
+{
+    if (!std::isfinite(minimum_tolerance) || minimum_tolerance <= 0.0)
+	return false;
+
+    for (int edge_index = 0; edge_index < brep.m_E.Count(); ++edge_index) {
+	ON_BrepEdge &edge = brep.m_E[edge_index];
+	const ON_3dPoint edge_start = edge.PointAtStart();
+	const ON_3dPoint edge_end = edge.PointAtEnd();
+	if (!edge_start.IsValid() || !edge_end.IsValid())
+	    return false;
+	double measured = std::isfinite(edge.m_tolerance) &&
+	    edge.m_tolerance >= 0.0 ? edge.m_tolerance : minimum_tolerance;
+	measured = std::max(measured, minimum_tolerance);
+
+	for (int endpoint = 0; endpoint < 2; ++endpoint) {
+	    const int vertex_index = edge.m_vi[endpoint];
+	    if (vertex_index < 0 || vertex_index >= brep.m_V.Count())
+		return false;
+	    const ON_3dPoint vertex = brep.m_V[vertex_index].Point();
+	    if (!vertex.IsValid())
+		return false;
+	    const ON_3dPoint edge_point = endpoint == 0 ? edge_start : edge_end;
+	    const double distance = vertex.DistanceTo(edge_point);
+	    if (!std::isfinite(distance))
+		return false;
+	    measured = std::max(measured, distance);
+	}
+
+	for (int use = 0; use < edge.m_ti.Count(); ++use) {
+	    const int trim_index = edge.m_ti[use];
+	    if (trim_index < 0 || trim_index >= brep.m_T.Count())
+		return false;
+	    const ON_BrepTrim &trim = brep.m_T[trim_index];
+	    ON_3dPoint trim_start;
+	    ON_3dPoint trim_end;
+	    if (!brep.GetTrim3dStart(trim_index, trim_start) ||
+		    !brep.GetTrim3dEnd(trim_index, trim_end) ||
+		    !trim_start.IsValid() || !trim_end.IsValid())
+		return false;
+	    const ON_3dPoint expected_start = trim.m_bRev3d ?
+		edge_end : edge_start;
+	    const ON_3dPoint expected_end = trim.m_bRev3d ?
+		edge_start : edge_end;
+	    const double start_distance = trim_start.DistanceTo(expected_start);
+	    const double end_distance = trim_end.DistanceTo(expected_end);
+	    if (!std::isfinite(start_distance) || !std::isfinite(end_distance))
+		return false;
+	    measured = std::max(measured,
+		std::max(start_distance, end_distance));
+	}
+	edge.m_tolerance = measured;
+    }
+    return true;
+}
+
+
 int
 brep_stitch_naked_edges(ON_Brep &brep, double tolerance,
 	brep_assembly_result *result)
@@ -215,7 +282,7 @@ brep_stitch_naked_edges(ON_Brep &brep, double tolerance,
 		match_counts[match.second] != 1)
 	    continue;
 	if (!merge_edge_pair(brep, match.first, match.second, match.reversed,
-		tolerance, &report.error))
+		&report.error))
 	    return -1;
 	++report.merged_edges;
     }
@@ -311,6 +378,10 @@ brep_assemble(ON_Brep &brep, double tolerance,
     brep.SetTrimIsoFlags();
     brep.SetTrimTypeFlags();
     brep.SetVertexTolerances(true);
+    if (!brep_set_edge_endpoint_tolerances(brep, tolerance)) {
+	report.error = BREP_ASSEMBLY_TOLERANCE_FAILED;
+	return false;
+    }
     brep.SetTrimBoundingBoxes(false);
     set_unset_tolerances(brep, tolerance);
 

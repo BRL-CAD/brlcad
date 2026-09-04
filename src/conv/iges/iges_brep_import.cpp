@@ -44,6 +44,7 @@ constexpr double DEFAULT_UNIT_TO_MM = 1.0;
 constexpr double DEFAULT_TOPOLOGY_TOLERANCE_MM = 1.0e-6;
 constexpr double DEGENERATE_DOMAIN_TOLERANCE = 1.0e-12;
 constexpr int MAX_ENTITY_LIST_COUNT = 10000000;
+constexpr double SINGULAR_CURVE_SAMPLES[] = {0.0, 0.5, 1.0};
 
 using Point3 = std::array<double, 3>;
 
@@ -371,6 +372,7 @@ private:
     struct CurvePair {
 	std::unique_ptr<ON_Curve> parameter;
 	std::unique_ptr<ON_Curve> model;
+	bool singular = false;
     };
 
     bool append_curve_entities(EntityId id, std::vector<EntityId> &curves,
@@ -380,7 +382,7 @@ private:
     bool curve_pairs(SolidBuilder &geometry, EntityId boundary,
 	std::vector<CurvePair> &pairs);
     bool add_loop(ON_BrepFace &face, ON_BrepLoop::TYPE type,
-	std::vector<CurvePair> &pairs);
+	std::vector<CurvePair> &pairs, const DirectoryEntry &source);
     bool add_face(const DirectoryEntry &entry);
 
     Importer &importer_;
@@ -686,21 +688,20 @@ SolidBuilder::edge_curve(EntityId id, const ON_3dPoint &start,
 		"B-Rep B-Spline edge has invalid parameters", entry);
 	    return nullptr;
 	}
-	const double forward = curve->PointAtStart().DistanceTo(start) +
-	    curve->PointAtEnd().DistanceTo(end);
-	const double reverse = curve->PointAtStart().DistanceTo(end) +
-	    curve->PointAtEnd().DistanceTo(start);
-	if (reverse < forward)
-	    curve->Reverse();
-	const double mismatch = std::max(
-	    curve->PointAtStart().DistanceTo(start),
-	    curve->PointAtEnd().DistanceTo(end));
-	if (mismatch > importer_.tolerance()) {
-	    importer_.diagnose(Severity::Warning, "edge_endpoint_mismatch",
-		"B-Spline edge does not agree with its authored topology vertices",
-		entry);
+	const ON_3dPoint curve_start = curve->PointAtStart();
+	const ON_3dPoint curve_end = curve->PointAtEnd();
+	const double forward = curve_start.DistanceTo(start) +
+	    curve_end.DistanceTo(end);
+	const double reverse = curve_start.DistanceTo(end) +
+	    curve_end.DistanceTo(start);
+	if (!curve_start.IsValid() || !curve_end.IsValid() ||
+		!std::isfinite(forward) || !std::isfinite(reverse)) {
+	    importer_.diagnose(Severity::Warning, "invalid_edge_curve",
+		"B-Rep B-Spline edge has invalid endpoints", entry);
 	    return nullptr;
 	}
+	if (reverse < forward)
+	    curve->Reverse();
 	return std::unique_ptr<ON_Curve>(curve.release());
     }
     if (entry->type != 110) {
@@ -757,10 +758,15 @@ SolidBuilder::edge_index(const EdgeKey &key)
     std::unique_ptr<ON_Curve> curve = edge_curve(record.curve, start, end);
     if (!curve)
 	return -1;
+    const double endpoint_mismatch = std::max(
+	curve->PointAtStart().DistanceTo(start),
+	curve->PointAtEnd().DistanceTo(end));
+    if (!std::isfinite(endpoint_mismatch))
+	return -1;
     const int curve_index = brep_->AddEdgeCurve(curve.release());
     ON_BrepEdge &edge = brep_->NewEdge(brep_->m_V[start_index],
 	brep_->m_V[end_index], curve_index);
-    edge.m_tolerance = importer_.tolerance();
+    edge.m_tolerance = std::max(importer_.tolerance(), endpoint_mismatch);
     edges_[key] = edge.m_edge_index;
     return edge.m_edge_index;
 }
@@ -1244,6 +1250,11 @@ SolidBuilder::build()
     brep_->SetTrimIsoFlags();
     brep_->SetTrimTypeFlags();
     brep_->SetVertexTolerances(true);
+    if (!brep_set_edge_endpoint_tolerances(*brep_, importer_.tolerance())) {
+	importer_.diagnose(Severity::Warning, "edge_tolerance_derivation",
+	    "could not derive B-Rep edge endpoint tolerances", &solid_);
+	return nullptr;
+    }
     brep_->SetTrimBoundingBoxes(false);
     for (int i = 0; i < brep_->m_V.Count(); ++i) {
 	ON_BrepVertex &vertex = brep_->m_V[i];
@@ -1391,10 +1402,12 @@ TrimmedSurfaceBuilder::curve_pairs(SolidBuilder &geometry, EntityId boundary,
     pairs.reserve(parameter_entities.size());
     for (size_t i = 0; i < parameter_entities.size(); ++i) {
 	CurvePair pair;
+	pair.singular = parameter_entities[i] == model_entities[i];
 	pair.parameter = curve(geometry, parameter_entities[i], false);
-	pair.model = curve(geometry, model_entities[i], true);
-	if (!pair.parameter || !pair.model ||
-		pair.parameter->Dimension() != 2 || pair.model->Dimension() != 3) {
+	if (!pair.singular)
+	    pair.model = curve(geometry, model_entities[i], true);
+	if (!pair.parameter || pair.parameter->Dimension() != 2 ||
+		(!pair.singular && (!pair.model || pair.model->Dimension() != 3))) {
 	    importer_.diagnose(Severity::Warning, "unsupported_boundary_curve",
 		"direct trimmed-surface import requires Line or B-Spline boundary curves",
 		entry);
@@ -1407,11 +1420,61 @@ TrimmedSurfaceBuilder::curve_pairs(SolidBuilder &geometry, EntityId boundary,
 
 bool
 TrimmedSurfaceBuilder::add_loop(ON_BrepFace &face, ON_BrepLoop::TYPE type,
-    std::vector<CurvePair> &pairs)
+    std::vector<CurvePair> &pairs, const DirectoryEntry &source)
 {
     const double tolerance = importer_.tolerance();
-    const ON_3dPoint loop_start = pairs.front().model->PointAtStart();
-    if (!loop_start.IsValid())
+    const ON_Surface *surface = face.SurfaceOf();
+    if (!surface || pairs.empty())
+	return false;
+
+    /* Start at a pole when one is present so the final non-singular edge can
+     * close onto the first vertex without creating two vertices at the pole. */
+    for (size_t i = 0; i < pairs.size(); ++i) {
+	const size_t previous = i == 0 ? pairs.size() - 1 : i - 1;
+	if (pairs[i].singular && !pairs[previous].singular) {
+	    std::rotate(pairs.begin(), pairs.begin() + i, pairs.end());
+	    break;
+	}
+    }
+
+    const auto pair_points = [&](const CurvePair &pair, ON_3dPoint &start,
+	    ON_3dPoint &end) {
+	if (!pair.singular) {
+	    if (!pair.model)
+		return false;
+	    start = pair.model->PointAtStart();
+	    end = pair.model->PointAtEnd();
+	    return start.IsValid() && end.IsValid();
+	}
+
+	const ON_Interval domain = pair.parameter->Domain();
+	ON_3dPoint collapsed;
+	bool have_point = false;
+	for (double fraction : SINGULAR_CURVE_SAMPLES) {
+	    const ON_3dPoint parameter = pair.parameter->PointAt(
+		domain.ParameterAt(fraction));
+	    const ON_3dPoint point = surface->PointAt(parameter.x, parameter.y);
+	    if (!parameter.IsValid() || !point.IsValid())
+		return false;
+	    if (!have_point) {
+		collapsed = point;
+		have_point = true;
+	    } else if (collapsed.DistanceTo(point) > tolerance) {
+		importer_.diagnose(Severity::Warning,
+		    "noncollapsed_singular_boundary",
+		    "shared parameter/model boundary does not map to a surface pole",
+		    &source);
+		return false;
+	    }
+	}
+	start = collapsed;
+	end = collapsed;
+	return have_point;
+    };
+
+    ON_3dPoint loop_start;
+    ON_3dPoint ignored;
+    if (!pair_points(pairs.front(), loop_start, ignored))
 	return false;
     ON_BrepVertex &first_vertex = brep_->NewVertex(loop_start, tolerance);
     const int first_vertex_index = first_vertex.m_vertex_index;
@@ -1419,21 +1482,25 @@ TrimmedSurfaceBuilder::add_loop(ON_BrepFace &face, ON_BrepLoop::TYPE type,
     ON_BrepLoop &loop = brep_->NewLoop(type, face);
 
     for (size_t i = 0; i < pairs.size(); ++i) {
-	ON_Curve *model = pairs[i].model.get();
-	const ON_3dPoint curve_start = model->PointAtStart();
-	const ON_3dPoint curve_end = model->PointAtEnd();
+	ON_3dPoint curve_start;
+	ON_3dPoint curve_end;
+	if (!pair_points(pairs[i], curve_start, curve_end))
+	    return false;
 	ON_BrepVertex &current_vertex = brep_->m_V[current_vertex_index];
 	const double start_gap = current_vertex.Point().DistanceTo(curve_start);
-	if (!curve_start.IsValid() || !curve_end.IsValid() ||
-		!std::isfinite(start_gap) || start_gap > tolerance)
+	if (!std::isfinite(start_gap))
 	    return false;
+	/* Preserve finite gaps as tolerance metadata instead of moving either
+	 * curve; the ordered IGES boundary supplies the topology. */
 	current_vertex.m_tolerance = std::max(current_vertex.m_tolerance,
 	    start_gap);
 
 	int next_vertex_index = -1;
-	if (i + 1 == pairs.size()) {
+	if (pairs[i].singular) {
+	    next_vertex_index = current_vertex_index;
+	} else if (i + 1 == pairs.size()) {
 	    const double closure_gap = curve_end.DistanceTo(loop_start);
-	    if (!std::isfinite(closure_gap) || closure_gap > tolerance)
+	    if (!std::isfinite(closure_gap))
 		return false;
 	    next_vertex_index = first_vertex_index;
 	    ON_BrepVertex &next_vertex = brep_->m_V[next_vertex_index];
@@ -1444,15 +1511,32 @@ TrimmedSurfaceBuilder::add_loop(ON_BrepFace &face, ON_BrepLoop::TYPE type,
 		tolerance).m_vertex_index;
 	}
 
-	const int model_index = brep_->AddEdgeCurve(pairs[i].model.release());
-	ON_BrepEdge &edge = brep_->NewEdge(brep_->m_V[current_vertex_index],
-	    brep_->m_V[next_vertex_index], model_index);
-	edge.m_tolerance = tolerance;
 	const int parameter_index =
 	    brep_->AddTrimCurve(pairs[i].parameter.release());
-	ON_BrepTrim &trim = brep_->NewTrim(edge, false, loop, parameter_index);
-	trim.m_tolerance[0] = tolerance;
-	trim.m_tolerance[1] = tolerance;
+	ON_BrepTrim *trim = nullptr;
+	if (pairs[i].singular) {
+	    ON_Curve *parameter = brep_->m_C2[parameter_index];
+	    const ON_Interval domain = parameter->Domain();
+	    const ON_Surface::ISO iso =
+		surface->IsIsoparametric(*parameter, &domain);
+	    if (iso < ON_Surface::W_iso || iso > ON_Surface::N_iso) {
+		importer_.diagnose(Severity::Warning,
+		    "nonisoparametric_singular_boundary",
+		    "surface pole boundary is not a boundary isoparametric curve",
+		    &source);
+		return false;
+	    }
+	    trim = &brep_->NewSingularTrim(brep_->m_V[current_vertex_index],
+		loop, iso, parameter_index);
+	} else {
+	    const int model_index = brep_->AddEdgeCurve(pairs[i].model.release());
+	    ON_BrepEdge &edge = brep_->NewEdge(brep_->m_V[current_vertex_index],
+		brep_->m_V[next_vertex_index], model_index);
+	    edge.m_tolerance = tolerance;
+	    trim = &brep_->NewTrim(edge, false, loop, parameter_index);
+	}
+	trim->m_tolerance[0] = tolerance;
+	trim->m_tolerance[1] = tolerance;
 	current_vertex_index = next_vertex_index;
     }
     return true;
@@ -1488,8 +1572,11 @@ TrimmedSurfaceBuilder::add_face(const DirectoryEntry &entry)
     }
     std::unique_ptr<ON_NurbsSurface> surface =
 	geometry.nurbs_surface(*surface_entry);
-    if (!surface)
+    if (!surface) {
+	importer_.diagnose(Severity::Warning, "invalid_trimmed_surface_geometry",
+	    "Trimmed Surface has invalid B-Spline surface geometry", surface_entry);
 	return false;
+    }
 
     std::vector<std::vector<CurvePair> > loops(
 	static_cast<size_t>(inner_count) + 1);
@@ -1508,7 +1595,7 @@ TrimmedSurfaceBuilder::add_face(const DirectoryEntry &entry)
     face.m_face_user.i = static_cast<int>(entry.id.value());
     for (size_t i = 0; i < loops.size(); ++i)
 	if (!add_loop(face, i == 0 ? ON_BrepLoop::outer : ON_BrepLoop::inner,
-		loops[i]))
+		loops[i], entry))
 	    return false;
     return true;
 }
@@ -1518,9 +1605,19 @@ TrimmedSurfaceBuilder::build(brep_assembly_result &assembly)
 {
     if (!brep_ || faces_.empty())
 	return nullptr;
-    for (const DirectoryEntry *entry : faces_)
-	if (!entry || !add_face(*entry))
+
+    for (const DirectoryEntry *entry : faces_) {
+	if (!entry) {
+	    importer_.diagnose(Severity::Warning, "trimmed_surface_reference",
+		"trimmed-surface collection contains a missing face");
 	    return nullptr;
+	}
+	if (!add_face(*entry)) {
+	    importer_.diagnose(Severity::Warning, "trimmed_surface_face",
+		"could not construct an OpenNURBS face", entry);
+	    return nullptr;
+	}
+    }
     if (!brep_assemble(*brep_, importer_.tolerance(), &assembly)) {
 	std::ostringstream detail;
 	detail << "OpenNURBS face assembly failed (error " << assembly.error
