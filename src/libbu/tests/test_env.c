@@ -40,7 +40,7 @@
 
 #include "bio.h"
 #include "bresource.h"
-#if defined(__APPLE__) && defined(HAVE_SYS_SYSCTL_H)
+#if (defined(__APPLE__) || defined(__FreeBSD__)) && defined(HAVE_SYS_SYSCTL_H)
 #  include <sys/sysctl.h>
 #endif
 
@@ -214,7 +214,7 @@ mem_test_failure(const char *query, ssize_t result, const size_t *output,
 
 
 static int
-platform_mem_tests(ssize_t all_mem)
+platform_mem_tests(ssize_t all_mem, ssize_t avail_mem, ssize_t page_mem)
 {
 #if defined(__APPLE__) && defined(HAVE_SYS_SYSCTL_H)
     uint64_t native_total = 0;
@@ -230,8 +230,55 @@ platform_mem_tests(ssize_t all_mem)
 	    "reported %llu\n", all_mem, (unsigned long long)native_total);
 	return -2;
     }
+#elif defined(__FreeBSD__) && defined(HAVE_SYS_SYSCTL_H)
+    uint64_t native_total = 0;
+    size_t value_size = sizeof(native_total);
+    if (sysctlbyname("hw.physmem", &native_total, &value_size, NULL, 0) != 0 ||
+	    (value_size != sizeof(uint32_t) && value_size != sizeof(uint64_t))) {
+	bu_log("bu_mem platform test: unable to query hw.physmem\n");
+	return -1;
+    }
+    if (native_total != (uint64_t)all_mem) {
+	bu_log("bu_mem platform test: BU_MEM_ALL returned %zd; hw.physmem "
+	    "reported %llu\n", all_mem, (unsigned long long)native_total);
+	return -2;
+    }
+
+    uint64_t reclaimable_pages = 0;
+    const char *const page_names[] = {
+	"vm.stats.vm.v_free_count",
+	"vm.stats.vm.v_inactive_count",
+	"vm.stats.vm.v_cache_count"
+    };
+    for (size_t i = 0; i < sizeof(page_names) / sizeof(page_names[0]); i++) {
+	uint32_t pages = 0;
+	value_size = sizeof(pages);
+	if (sysctlbyname(page_names[i], &pages, &value_size, NULL, 0) != 0 ||
+		value_size != sizeof(pages)) {
+	    if (i == 0)
+		return -3;
+	    continue;
+	}
+	reclaimable_pages += pages;
+    }
+    /* VM counters may change between the bu_mem and direct sysctl queries.
+     * A one-percent allowance is ample for that race while still detecting
+     * the former free-pages-only implementation. */
+    uint64_t native_available = reclaimable_pages * (uint64_t)page_mem;
+    uint64_t allowance = native_total / 100u;
+    uint64_t available_difference = ((uint64_t)avail_mem > native_available) ?
+	(uint64_t)avail_mem - native_available :
+	native_available - (uint64_t)avail_mem;
+    if (available_difference > allowance) {
+	bu_log("bu_mem platform test: BU_MEM_AVAIL returned %zd; FreeBSD "
+	    "reclaimable queues reported %llu\n", avail_mem,
+	    (unsigned long long)native_available);
+	return -4;
+    }
 #else
     (void)all_mem;
+    (void)avail_mem;
+    (void)page_mem;
 #endif
     return 0;
 }
@@ -445,7 +492,7 @@ main(int ac, char *av[])
     if (avail_mem > all_mem)
 	return mem_test_failure("BU_MEM_AVAIL exceeds BU_MEM_ALL", avail_mem,
 	    NULL, -5);
-    if (platform_mem_tests(all_mem) != 0)
+    if (platform_mem_tests(all_mem, avail_mem, page_mem) != 0)
 	return -6;
     ssize_t process_mem = bu_mem(BU_MEM_PROCESS_AVAIL, NULL);
     ssize_t resident_mem = bu_mem(BU_MEM_PROCESS_RESIDENT, NULL);

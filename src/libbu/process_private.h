@@ -1,4 +1,4 @@
-/*                      P R O C E S S . H
+/*              P R O C E S S _ P R I V A T E . H
  * BRL-CAD
  *
  * Copyright (c) 2013-2026 United States Government as represented by
@@ -20,8 +20,8 @@
 
 /* Private libbu process related definitions shared between multiple files */
 
-#ifndef LIBBU_PROCESS_H
-#define LIBBU_PROCESS_H
+#ifndef LIBBU_PROCESS_PRIVATE_H
+#define LIBBU_PROCESS_PRIVATE_H
 
 /* Apparently the termination code on Windows is arbitrary and somewhat
  * ill-defined - see https://bugs.python.org/issue31863 for more info.  Try our
@@ -29,7 +29,7 @@
  * abort identification. */
 #define BU_MSVC_ABORT_EXIT 97101  /* ascii - a == 97 && e == 101 */
 
-#endif /* LIBBU_PROCESS_H */
+#endif /* LIBBU_PROCESS_PRIVATE_H */
 
 /*
  * Local Variables:
