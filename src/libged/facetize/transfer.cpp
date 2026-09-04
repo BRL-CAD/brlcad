@@ -26,10 +26,13 @@
 #include "./worker.h"
 
 int
-facetize_transfer_staged_bot(struct db_i *target_dbip,
-	const char *result_file, const char *object_name)
+facetize_transfer_staged_object(struct db_i *target_dbip,
+	const char *result_file, const char *object_name,
+	int expected_object_type)
 {
-    if (!target_dbip || !result_file || !object_name)
+    if (!target_dbip || !result_file || !object_name ||
+	    expected_object_type <= ID_NULL ||
+	    expected_object_type > ID_MAXIMUM)
 	return BRLCAD_ERROR;
 
     struct db_i *result_dbip = db_open(result_file, DB_OPEN_READONLY);
@@ -44,8 +47,12 @@ facetize_transfer_staged_bot(struct db_i *target_dbip,
 	    FACETIZE_WORKER_RESULT_OBJECT, LOOKUP_QUIET);
     struct rt_db_internal intern;
     RT_DB_INTERNAL_INIT(&intern);
-    if (!result_dp || result_dp->d_minor_type != ID_BOT ||
-	    rt_db_get_internal(&intern, result_dp, result_dbip, NULL) < 0) {
+    if (!result_dp || result_dp->d_major_type != DB5_MAJORTYPE_BRLCAD ||
+	    result_dp->d_minor_type != expected_object_type ||
+	    rt_db_get_internal(&intern, result_dp, result_dbip, NULL) < 0 ||
+	    intern.idb_type != expected_object_type) {
+	if (intern.idb_ptr)
+	    rt_db_free_internal(&intern);
 	db_close(result_dbip);
 	return BRLCAD_ERROR;
     }
@@ -65,10 +72,8 @@ facetize_transfer_staged_bot(struct db_i *target_dbip,
 	rt_db_free_internal(&intern);
 	return BRLCAD_ERROR;
     }
-    if (rt_db_put_internal(target_dp, target_dbip, &intern) < 0) {
-	rt_db_free_internal(&intern);
+    if (rt_db_put_internal(target_dp, target_dbip, &intern) < 0)
 	return BRLCAD_ERROR;
-    }
 
     return BRLCAD_OK;
 }
