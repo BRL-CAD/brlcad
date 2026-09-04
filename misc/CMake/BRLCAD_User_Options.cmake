@@ -245,6 +245,10 @@ if(BRLCAD_ENABLE_OPENCL)
   endif(NOT OPENCL_FOUND)
 endif(BRLCAD_ENABLE_OPENCL)
 
+# Enable quasi-Monte Carlo sampling where supported
+option(BRLCAD_ENABLE_QMC "Enable quasi-Monte Carlo sampling" OFF)
+mark_as_advanced(BRLCAD_ENABLE_QMC)
+
 # Enable features requiring OpenVDB
 option(BRLCAD_ENABLE_OPENVDB "Enable features requiring OpenVDB" OFF)
 mark_as_advanced(BRLCAD_ENABLE_OPENVDB)

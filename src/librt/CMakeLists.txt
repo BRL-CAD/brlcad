@@ -6,6 +6,24 @@ brlcad_find_package(OPENNURBS REQUIRED SYSPATTERN openNURBS)
 brlcad_find_package(REGEX REQUIRED)
 find_package_gte(REQUIRED)
 
+set(OPENQMC_LIBS)
+if(BRLCAD_ENABLE_QMC)
+  brlcad_find_package(OpenQMC CONFIG)
+  if(OpenQMC_FOUND AND TARGET OpenQMC::OpenQMC)
+    add_definitions(-DBRLCAD_ENABLE_QMC)
+    set(OPENQMC_LIBS OpenQMC::OpenQMC)
+  else()
+    message(
+      WARNING
+      "QMC requested, but OpenQMC was not found - disabling"
+    )
+    set(
+      BRLCAD_ENABLE_QMC OFF CACHE BOOL
+      "Disabled because OpenQMC was not found" FORCE
+    )
+  endif()
+endif()
+
 if(BRLCAD_ENABLE_OPENCL)
   add_definitions(-DUSE_OPENCL)
 endif(BRLCAD_ENABLE_OPENCL)
@@ -434,6 +452,7 @@ set(
   ${RPCRT_LIB}
   ${STDCXX_LIBRARIES}
   manifold::manifold
+  ${OPENQMC_LIBS}
 )
 
 # Include directories needed by librt users
