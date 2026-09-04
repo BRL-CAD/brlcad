@@ -44,6 +44,18 @@ rel_err(double estimated, double exact)
 
 
 static int
+crofton_segments_equal(const struct rt_crofton_segment *left,
+		       const struct rt_crofton_segment *right)
+{
+    return left->ray_id == right->ray_id &&
+	NEAR_EQUAL(left->thickness, right->thickness, SMALL_FASTF) &&
+	VNEAR_EQUAL(left->in_point, right->in_point, SMALL_FASTF) &&
+	VNEAR_EQUAL(left->in_normal, right->in_normal, SMALL_FASTF) &&
+	VNEAR_EQUAL(left->out_point, right->out_point, SMALL_FASTF) &&
+	VNEAR_EQUAL(left->out_normal, right->out_normal, SMALL_FASTF);
+}
+
+static int
 verify_crofton_estimates(void)
 {
     int failures = 0;
@@ -379,6 +391,102 @@ run_convergence_case(struct db_i *dbip,
 	    &sample_points, &sample_count,
 	    rtip, &p, NULL, NULL);
 	run_sec = (double)(bu_gettime() - t0) / 1000000.0;
+
+	if (i == 0) {
+	    struct rt_crofton_result samples = RT_CROFTON_RESULT_INIT;
+	    const size_t ray_offset = 4096u;
+	    const size_t continuation_rays = 256u;
+	    struct rt_crofton_params sample_params =
+		{ray_offset + continuation_rays, 0.0, 0.0};
+	    int sample_ret = rt_crofton_collect(&samples, rtip,
+		&sample_params, 0, NULL, NULL);
+	    int full_samples_valid = sample_ret > 0 && samples.segments &&
+		samples.segment_count * 2 == samples.crossing_count &&
+		samples.ray_count == sample_params.n_rays;
+	    if (!full_samples_valid) {
+		printf("  %-24s  invalid structured Crofton output\\n", label);
+		failures++;
+	    } else {
+		for (size_t sample_index = 0;
+		     sample_index < samples.segment_count; sample_index++) {
+		    struct rt_crofton_segment *segment =
+			&samples.segments[sample_index];
+		    if (segment->thickness <= 0.0 ||
+			!NEAR_EQUAL(DIST_PNT_PNT(segment->in_point,
+				segment->out_point), segment->thickness, RT_LEN_TOL) ||
+			!NEAR_EQUAL(MAGNITUDE(segment->in_normal), 1.0,
+				VUNITIZE_TOL) ||
+			!NEAR_EQUAL(MAGNITUDE(segment->out_normal), 1.0,
+				VUNITIZE_TOL) ||
+			segment->ray_id >= samples.ray_count) {
+			printf("  %-24s  invalid structured segment\\n", label);
+			failures++;
+			break;
+		    }
+		}
+	    }
+
+	    struct rt_crofton_result offset_samples =
+		RT_CROFTON_RESULT_INIT;
+	    struct rt_crofton_params offset_params =
+		{continuation_rays, 0.0, 0.0};
+	    sample_ret = rt_crofton_collect(&offset_samples, rtip,
+		&offset_params, ray_offset, NULL, NULL);
+	    int offset_samples_valid = sample_ret > 0 &&
+		offset_samples.ray_count == offset_params.n_rays;
+	    if (!offset_samples_valid) {
+		printf("  %-24s  invalid offset Crofton output\\n", label);
+		failures++;
+	    } else {
+		for (size_t sample_index = 0;
+		     sample_index < offset_samples.segment_count;
+		     sample_index++) {
+		    size_t ray_id = offset_samples.segments[sample_index].ray_id;
+		    if (ray_id < ray_offset ||
+			    ray_id >= ray_offset + offset_params.n_rays) {
+			printf("  %-24s  invalid offset ray identifier\\n",
+			    label);
+			failures++;
+			break;
+		    }
+		}
+	    }
+
+	    if (full_samples_valid && offset_samples_valid) {
+		size_t suffix_start = 0;
+		while (suffix_start < samples.segment_count &&
+		       samples.segments[suffix_start].ray_id < ray_offset)
+		    suffix_start++;
+		size_t suffix_count = samples.segment_count - suffix_start;
+
+		if (suffix_count != offset_samples.segment_count) {
+		    printf("  %-24s  random stream continuation count mismatch\\n",
+			label);
+		    failures++;
+		} else {
+		    for (size_t sample_index = 0;
+			 sample_index < suffix_count; sample_index++) {
+			const struct rt_crofton_segment *full_segment =
+			    &samples.segments[suffix_start + sample_index];
+			const struct rt_crofton_segment *offset_segment =
+			    &offset_samples.segments[sample_index];
+			if (!crofton_segments_equal(full_segment, offset_segment)) {
+			    printf("  %-24s  random stream continuation mismatch\\n",
+				label);
+			    failures++;
+			    break;
+			}
+		    }
+		}
+	    }
+
+	    rt_crofton_result_free(&samples);
+	    if (samples.segments || samples.segment_count)
+		failures++;
+	    rt_crofton_result_free(&offset_samples);
+	    if (offset_samples.segments || offset_samples.segment_count)
+		failures++;
+	}
 	rt_i_destroy(rtip);
 
 	if (elapsed_total_sec)
