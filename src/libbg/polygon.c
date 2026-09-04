@@ -205,6 +205,25 @@ bg_3d_polygon_centroid(point_t *cent, size_t npts, const point_t *pts)
 }
 
 
+static int
+append_plane_point(size_t *count, point_t *points, size_t capacity,
+	const point_t point)
+{
+    size_t i;
+
+    for (i = 0; i < *count; i++) {
+	if (VNEAR_EQUAL(points[i], point, BN_TOL_DIST))
+	    return 0;
+    }
+    if (*count >= capacity)
+	return 1;
+
+    VMOVE(points[*count], point);
+    (*count)++;
+    return 0;
+}
+
+
 int
 bg_3d_polygon_make_pnts_planes(size_t *npts, point_t **pts, size_t neqs, const plane_t *eqs)
 {
@@ -230,9 +249,11 @@ bg_3d_polygon_make_pnts_planes(size_t *npts, point_t **pts, size_t neqs, const p
 		}
 		/* found a good point, add it to each of the intersecting faces */
 		if (keep_point) {
-		    VMOVE(pts[i][npts[i]], (pt)); npts[i]++;
-		    VMOVE(pts[j][npts[j]], (pt)); npts[j]++;
-		    VMOVE(pts[k][npts[k]], (pt)); npts[k]++;
+		    size_t capacity = neqs - 1;
+		    if (append_plane_point(&npts[i], pts[i], capacity, pt) ||
+			    append_plane_point(&npts[j], pts[j], capacity, pt) ||
+			    append_plane_point(&npts[k], pts[k], capacity, pt))
+			return 1;
 		}
 	    }
 	}

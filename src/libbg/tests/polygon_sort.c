@@ -62,5 +62,36 @@ main(int argc, char **argv)
 	return 1;
     }
 
+    {
+	plane_t pyramid_planes[5] = {
+	    {0.0, 0.0, -1.0, 0.0},
+	    {M_SQRT1_2, 0.0, M_SQRT1_2, M_SQRT1_2},
+	    {-M_SQRT1_2, 0.0, M_SQRT1_2, M_SQRT1_2},
+	    {0.0, M_SQRT1_2, M_SQRT1_2, M_SQRT1_2},
+	    {0.0, -M_SQRT1_2, M_SQRT1_2, M_SQRT1_2}
+	};
+	point_t point_storage[5][4] = {{{0.0}}};
+	point_t *face_points[5];
+	size_t point_counts[5] = {0};
+	size_t i;
+
+	for (i = 0; i < 5; i++)
+	    face_points[i] = point_storage[i];
+
+	if (bg_3d_polygon_make_pnts_planes(point_counts, face_points, 5,
+		(const plane_t *)pyramid_planes) != 0) {
+	    fprintf(stderr, "Unable to construct square pyramid faces\n");
+	    return 1;
+	}
+	if (point_counts[0] != 4 || point_counts[1] != 3 ||
+		point_counts[2] != 3 || point_counts[3] != 3 ||
+		point_counts[4] != 3) {
+	    fprintf(stderr, "Square pyramid face counts: %zu %zu %zu %zu %zu\n",
+		    point_counts[0], point_counts[1], point_counts[2],
+		    point_counts[3], point_counts[4]);
+	    return 1;
+	}
+    }
+
     return 0;
 }
