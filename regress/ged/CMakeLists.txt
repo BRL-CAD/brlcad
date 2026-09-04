@@ -19,6 +19,12 @@ if(TARGET libged)
   distclean("${CMAKE_CURRENT_BINARY_DIR}/regress-ged_push.log")
   distclean("${CMAKE_CURRENT_BINARY_DIR}/ged_push.g")
 
+  brlcad_addexec(regress_unpush unpush.cpp "libged;libwdb;librt;libbg;libbu" TEST_USESDATA)
+  if(TARGET regress_unpush)
+    add_dependencies(regress_unpush ged_plugins)
+  endif(TARGET regress_unpush)
+  brlcad_regression_test(regress-ged_unpush "regress_unpush;ged-npush" EXEC regress_unpush)
+
   # Phase D regression: coplanar window-frame subtraction pattern.
   # Exercises the instance-aware variant planning pass in the Manifold
   # facetize pipeline (plan.cpp + _booltree_leaf_tess variant resolution).
@@ -44,6 +50,7 @@ cmakefiles(
   mater.c
   regdef.c
   push.cpp
+  unpush.cpp
   regress_facetize.cpp
   regress_lint_raytrace.cpp
   d2push_tests.g

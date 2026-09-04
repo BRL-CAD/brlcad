@@ -27,6 +27,9 @@ brlcad_addexec(bg_test "${CMAKE_CURRENT_BINARY_DIR}/bg_test.c" "${BG_TEST_LIBS}"
 # TODO - convert this into the scheme used by other tests below
 brlcad_addexec(bgtester bgtester.c "${BG_TEST_LIBS}" TEST)
 
+brlcad_addexec(bg_pca pca.c "${BG_TEST_LIBS}" TEST)
+brlcad_add_test(NAME bg_pca COMMAND bg_pca)
+
 #  ************ aabb_ray.c tests *************
 
 brlcad_addexec(bg_aabb_ray aabb_ray.c "${BG_TEST_LIBS}" TEST)
@@ -478,6 +481,7 @@ brlcad_add_test(NAME bg_geogram_optimizer COMMAND bg_geogram_optimizer)
 cmakefiles(
   bg_test.c.in
   geogram_optimizer.cpp
+  pca.c
   plane_dist.c
   plane_isect.c
   plane_pt.c

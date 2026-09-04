@@ -86,6 +86,16 @@ __BEGIN_DECLS
  */
 BG_EXPORT extern int bg_pca(point_t *c, vect_t *xaxis, vect_t *yaxis, vect_t *zaxis, size_t npnts, const point_t *pnts);
 
+/**
+ * Perform PCA and also report the singular values of the centered point
+ * matrix, ordered to correspond to xaxis, yaxis, and zaxis.  A zero singular
+ * value identifies a dimension in which the input point set has no extent.
+ * The values scale with the square root of the number of input points.
+ */
+BG_EXPORT extern int bg_pca_svd(point_t *c, vect_t *xaxis, vect_t *yaxis,
+				vect_t *zaxis, vect_t *singular_values,
+				size_t npnts, const point_t *pnts);
+
 __END_DECLS
 
 #endif  /* BG_PLANE_H */

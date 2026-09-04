@@ -653,6 +653,61 @@ rt_hlf_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
     return 0;			/* OK */
 }
 
+
+C_DECL int
+rt_hlf_canonicalize(struct rt_db_internal *canonical,
+		    mat_t canonical_to_input,
+		    const struct rt_db_internal *input,
+		    const struct bn_tol *tol,
+		    enum rt_canonicalize_mode mode)
+{
+    struct rt_half_internal *hip;
+    struct rt_half_internal *chip;
+    vect_t normal;
+    vect_t zaxis = VINIT_ZERO;
+    point_t plane_point;
+    mat_t rotate;
+    mat_t translate;
+    fastf_t normal_mag;
+    fastf_t plane_dist;
+
+    if (!canonical || !canonical_to_input || !input || !tol)
+	return RT_CANONICALIZE_ERROR;
+    if (mode < RT_CANONICALIZE_RIGID || mode > RT_CANONICALIZE_AFFINE)
+	return RT_CANONICALIZE_ERROR;
+    if (input->idb_type != ID_HALF)
+	return RT_CANONICALIZE_ERROR;
+
+    hip = (struct rt_half_internal *)input->idb_ptr;
+    RT_HALF_CK_MAGIC(hip);
+
+    VMOVE(normal, hip->eqn);
+    normal_mag = MAGNITUDE(normal);
+    if (normal_mag <= tol->dist)
+	return RT_CANONICALIZE_ERROR;
+
+    VSCALE(normal, normal, 1.0 / normal_mag);
+    plane_dist = hip->eqn[W] / normal_mag;
+    VSCALE(plane_point, normal, plane_dist);
+
+    VSET(zaxis, 0.0, 0.0, 1.0);
+    bn_mat_fromto(rotate, zaxis, normal, tol);
+    MAT_IDN(translate);
+    MAT_DELTAS_VEC(translate, plane_point);
+    bn_mat_mul(canonical_to_input, translate, rotate);
+
+    canonical->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    canonical->idb_minor_type = ID_HALF;
+    canonical->idb_meth = &OBJ[ID_HALF];
+    BU_ALLOC(canonical->idb_ptr, struct rt_half_internal);
+    chip = (struct rt_half_internal *)canonical->idb_ptr;
+    chip->magic = RT_HALF_INTERNAL_MAGIC;
+    VSET(chip->eqn, 0.0, 0.0, 1.0);
+    chip->eqn[W] = 0.0;
+
+    return RT_CANONICALIZE_OK;
+}
+
 C_DECL int
 rt_hlf_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {

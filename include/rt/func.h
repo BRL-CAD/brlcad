@@ -179,6 +179,20 @@ RT_EXPORT extern int rt_obj_make(const char *label, const point_t origin, double
 RT_EXPORT extern int rt_obj_xform(struct rt_db_internal *op, const mat_t mat, struct rt_db_internal *ip, int release, struct db_i *dbip);
 
 /**
+ * Factor an object's placement into a canonical primitive and a matrix mapping
+ * that primitive back to the input geometry.
+ *
+ * The caller must pass an initialized, empty @p canonical and owns its contents
+ * on success.  Applying @p canonical_to_input to @p canonical with ft_mat must
+ * reproduce geometry equivalent to @p input within @p tol.
+ */
+RT_EXPORT extern int rt_obj_canonicalize(struct rt_db_internal *canonical,
+					 mat_t canonical_to_input,
+					 const struct rt_db_internal *input,
+					 const struct bn_tol *tol,
+					 enum rt_canonicalize_mode mode);
+
+/**
  * obtain parameters for an object in libpc form
  */
 RT_EXPORT extern int rt_obj_params(struct pc_pc_set *ps, const struct rt_db_internal *ip);

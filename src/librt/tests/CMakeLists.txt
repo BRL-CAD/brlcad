@@ -55,6 +55,9 @@ brlcad_addexec(rt_diff diff.c "${RT_TEST_LIBS}" TEST)
 brlcad_addexec(rt_default_object default_object.c "librt;libwdb;libbu;${M_LIBRARY}" TEST)
 brlcad_add_test(NAME rt_default_object COMMAND rt_default_object)
 
+brlcad_addexec(rt_canonicalize canonicalize.c "${RT_TEST_LIBS}" TEST)
+brlcad_add_test(NAME rt_canonicalize COMMAND rt_canonicalize)
+
 brlcad_addexec(rt_bound_internal bound_internal.c "librt;libwdb;libbu;${M_LIBRARY}" TEST)
 brlcad_add_test(NAME rt_bound_internal COMMAND rt_bound_internal)
 
@@ -186,6 +189,7 @@ set(
   binary_attribute.c
   brep_io.cpp
   bound_internal.c
+  canonicalize.c
   crofton.c
   default_object.c
   datum_annot_semantics.c

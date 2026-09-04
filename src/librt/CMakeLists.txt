@@ -160,6 +160,7 @@ set(
   primitives/ars/ars_mirror.c
   primitives/bot/bot.c
   primitives/bot/bot_brep.cpp
+  primitives/bot/bot_canonicalize.cpp
   primitives/bot/bot_edge.c
   primitives/bot/bot_mirror.c
   primitives/bot/bot_oriented_bbox.cpp
@@ -227,6 +228,7 @@ set(
   primitives/nmg/nmg_mirror.c
   primitives/nmg/nmg_tri_mc.c
   primitives/obj_adjust.c
+  primitives/obj_canonicalize.c
   primitives/obj_curve.c
   primitives/obj_describe.c
   primitives/obj_export.c
@@ -482,6 +484,7 @@ brlcad_addlib(librt "${LIBRT_SOURCES}" "${RT_INCLUDE_DIRS}" "${RT_LOCAL_INCLUDE_
     primitives/bot/edbot.c
     primitives/bot/bot.c
     primitives/bot/bot_brep.cpp
+    primitives/bot/bot_canonicalize.cpp
     primitives/bot/bot_edge.c
     primitives/bot/bot_mirror.c
     primitives/bot/bot_oriented_bbox.cpp
