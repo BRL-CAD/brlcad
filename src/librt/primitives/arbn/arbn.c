@@ -39,12 +39,10 @@
 
 #include "bu/cv.h"
 #include "bg/polygon.h"
-#include "bg/trimesh.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rt/db4.h"
 #include "rt/geom.h"
-#include "rt/nmg_conv.h"
 #include "raytrace.h"
 #include "../../librt_private.h"
 
@@ -1499,9 +1497,12 @@ rt_arbn_faces_area(struct poly_face* faces, struct rt_arbn_internal* aip)
     plane_t *eqs = (plane_t *)bu_calloc(aip->neqn, sizeof(plane_t), "rt_arbn_faces_area: eqs");
 
     for (i = 0; i < aip->neqn; i++) {
+	fastf_t normal_length = MAGNITUDE(aip->eqn[i]);
 	HMOVE(faces[i].plane_eqn, aip->eqn[i]);
-	VUNITIZE(faces[i].plane_eqn);
 	tmp_pts[i] = faces[i].pts;
+	if (normal_length < VDIVIDE_TOL)
+	    continue;
+	HSCALE(faces[i].plane_eqn, faces[i].plane_eqn, 1.0 / normal_length);
 	HMOVE(eqs[i], faces[i].plane_eqn);
     }
     bg_3d_polygon_make_pnts_planes(npts, tmp_pts, aip->neqn, (const plane_t *)eqs);
@@ -1516,89 +1517,59 @@ rt_arbn_faces_area(struct poly_face* faces, struct rt_arbn_internal* aip)
 }
 
 
+static void
+rt_arbn_area_volume(fastf_t *area, fastf_t *volume,
+	const struct rt_db_internal *ip)
+{
+    struct rt_arbn_internal *aip;
+    struct poly_face *faces;
+    size_t i;
+
+    if (area)
+	*area = 0.0;
+    if (volume)
+	*volume = 0.0;
+    if (!ip || !ip->idb_ptr)
+	return;
+
+    aip = (struct rt_arbn_internal *)ip->idb_ptr;
+    RT_ARBN_CK_MAGIC(aip);
+    if (aip->neqn < 4)
+	return;
+
+    faces = (struct poly_face *)bu_calloc(aip->neqn,
+	    sizeof(struct poly_face), "rt_arbn_area_volume: faces");
+    for (i = 0; i < aip->neqn; i++) {
+	faces[i].pts = (point_t *)bu_calloc(aip->neqn - 1,
+		sizeof(point_t), "rt_arbn_area_volume: points");
+    }
+
+    rt_arbn_faces_area(faces, aip);
+    for (i = 0; i < aip->neqn; i++) {
+	if (area)
+	    *area += faces[i].area;
+	if (volume)
+	    *volume += faces[i].plane_eqn[W] * faces[i].area / 3.0;
+	bu_free(faces[i].pts, "rt_arbn_area_volume: points");
+    }
+    bu_free(faces, "rt_arbn_area_volume: faces");
+
+    if (volume)
+	*volume = fabs(*volume);
+}
+
+
 C_DECL void
 rt_arbn_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
-    struct bg_tess_tol ttol = BG_TESS_TOL_INIT_ZERO;
-    struct bn_tol tol;
-    struct model *m;
-    struct nmgregion *r = NULL;
-    struct rt_bot_internal *bot;
-    struct bu_list vlfree;
-
-    /* Tessellate the ARBN (all faces are planar, so the BOT is exact) */
-    ttol.rel   = 0.01;
-    BN_TOL_INIT(&tol);
-    BU_LIST_INIT(&vlfree);
-
-    m = nmg_mm();
-    if (rt_arbn_tess(&r, m, (struct rt_db_internal *)(uintptr_t)ip, &ttol, &tol) != 0 || !r) {
-	nmg_km(m);
-	return;
-    }
-
-    bot = nmg_mdl_to_bot(m, &vlfree, &tol);
-    nmg_km(m);
-    if (!bot || bot->num_faces == 0) {
-	if (bot) {
-	    bu_free(bot->faces, "arbn bot faces");
-	    bu_free(bot->vertices, "arbn bot verts");
-	    bu_free(bot, "arbn bot");
-	}
-	return;
-    }
-
-    *area = bg_trimesh_area(
-	bot->faces, bot->num_faces,
-	(const point_t *)bot->vertices, bot->num_vertices);
-
-    bu_free(bot->faces, "arbn bot faces");
-    bu_free(bot->vertices, "arbn bot verts");
-    bu_free(bot, "arbn bot");
+    rt_arbn_area_volume(area, NULL, ip);
 }
 
 
 C_DECL void
 rt_arbn_volume(fastf_t *volume, const struct rt_db_internal *ip)
 {
-    struct bg_tess_tol ttol = BG_TESS_TOL_INIT_ZERO;
-    struct bn_tol tol;
-    struct model *m;
-    struct nmgregion *r = NULL;
-    struct rt_bot_internal *bot;
-    struct bu_list vlfree;
-
-    /* Tessellate the ARBN (all faces are planar, so the BOT is exact) */
-    ttol.rel   = 0.01;
-    BN_TOL_INIT(&tol);
-    BU_LIST_INIT(&vlfree);
-
-    *volume = 0.0;
-
-    m = nmg_mm();
-    if (rt_arbn_tess(&r, m, (struct rt_db_internal *)(uintptr_t)ip, &ttol, &tol) != 0 || !r) {
-	nmg_km(m);
-	return;
-    }
-
-    bot = nmg_mdl_to_bot(m, &vlfree, &tol);
-    nmg_km(m);
-    if (!bot || bot->num_faces == 0) {
-	if (bot) {
-	    bu_free(bot->faces, "arbn bot faces");
-	    bu_free(bot->vertices, "arbn bot verts");
-	    bu_free(bot, "arbn bot");
-	}
-	return;
-    }
-
-    *volume = bg_trimesh_volume(
-	bot->faces, bot->num_faces,
-	(const point_t *)bot->vertices, bot->num_vertices);
-
-    bu_free(bot->faces, "arbn bot faces");
-    bu_free(bot->vertices, "arbn bot verts");
-    bu_free(bot, "arbn bot");
+    rt_arbn_area_volume(NULL, volume, ip);
 }
 
 

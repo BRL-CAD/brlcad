@@ -127,6 +127,46 @@ verify_crofton_estimates(void)
     }
 
     {
+	plane_t planes[7] = {
+	    {2.0, 0.0, 0.0, 2.0},
+	    {-3.0, 0.0, 0.0, 0.0},
+	    {0.0, 4.0, 0.0, 4.0},
+	    {0.0, -5.0, 0.0, 0.0},
+	    {0.0, 0.0, 6.0, 6.0},
+	    {0.0, 0.0, -7.0, 0.0},
+	    {2.0, 2.0, 2.0, 5.0}
+	};
+	struct rt_arbn_internal arbn;
+	memset(&arbn, 0, sizeof(arbn));
+	arbn.magic = RT_ARBN_INTERNAL_MAGIC;
+	arbn.neqn = 7;
+	arbn.eqn = planes;
+
+	struct rt_db_internal ip;
+	RT_DB_INTERNAL_INIT(&ip);
+	ip.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	ip.idb_minor_type = ID_ARBN;
+	ip.idb_type = ID_ARBN;
+	ip.idb_ptr = &arbn;
+	ip.idb_meth = &OBJ[ID_ARBN];
+
+	const double exact_volume = 47.0 / 48.0;
+	const double exact_area = 45.0 / 8.0 + sqrt(3.0) / 8.0;
+	fastf_t reported_volume = 0.0;
+	fastf_t reported_area = 0.0;
+	ip.idb_meth->ft_volume(&reported_volume, &ip);
+	ip.idb_meth->ft_surf_area(&reported_area, &ip);
+	double volume_error = rel_err(reported_volume, exact_volume) * 100.0;
+	double area_error = rel_err(reported_area, exact_area) * 100.0;
+	printf("  %-42s  SA_err=%.12f%%  V_err=%.12f%%  [%s]\n",
+	       "ARBN clipped cube", area_error, volume_error,
+	       (area_error <= 1.0e-9 && volume_error <= 1.0e-9) ?
+	       "OK" : "FORMULA-FAIL");
+	if (area_error > 1.0e-9 || volume_error > 1.0e-9)
+	    failures++;
+    }
+
+    {
 	struct rt_tgc_internal tgc;
 	memset(&tgc, 0, sizeof(tgc));
 	tgc.magic = RT_TGC_INTERNAL_MAGIC;
