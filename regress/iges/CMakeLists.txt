@@ -12,6 +12,8 @@ cmakefiles(
 set(
   iges_outfiles
   iges.brep.export.iges
+  iges.brep.flat.g
+  iges.brep.flat.iges
   iges.brep.g
   iges.brep.mesh.g
   iges.brep.nmg.g

@@ -43,6 +43,28 @@ struct iges_properties
 
 };
 
+/* In-memory descriptions of the repeating tuples in IGES topology entities.
+ * Indices are zero based here and converted to IGES's one-based list indices
+ * by the writers below. */
+#define IGES_BREP_EDGE_USE 0
+#define IGES_BREP_VERTEX_USE 1
+
+struct iges_brep_edge
+{
+    int curve_de;
+    size_t start_vertex;
+    size_t end_vertex;
+};
+
+struct iges_brep_loop_use
+{
+    int kind;
+    size_t index;
+    int orientation;
+    int isoparametric;
+    int parameter_curve_de;
+};
+
 /* Low-level IGES entity writers used by the faithful brep (OpenNURBS)
  * exporter.  Defined in iges.c (which owns the directory/parameter section
  * sequence counters); declared here with C linkage so the C++ ON_Brep
@@ -58,7 +80,8 @@ extern "C" {
  * k+m+2 clamped values; weights and euclidean xyz control points are in
  * IGES order (u index fastest, then v). */
 extern int write_nurb_surface_entity(int k1, int k2, int m1, int m2,
-				     int rational,
+				     int rational, int closed_u, int closed_v,
+				     int periodic_u, int periodic_v,
 				     const double *uknots, const double *vknots,
 				     const double *weights, const double *ctlpts,
 				     double u0, double u1, double v0, double v1,
@@ -68,6 +91,7 @@ extern int write_nurb_surface_entity(int k1, int k2, int m1, int m2,
  * (n_cv-1), m the degree; knots hold k+m+2 values, ctlpts are euclidean
  * xyz triples (z=0 for 2d parameter-space curves). */
 extern int write_nurb_curve_entity(int k, int m, int rational, int planar,
+				   int closed, int periodic,
 				   const double *knots, const double *weights,
 				   const double *ctlpts, double v0, double v1,
 				   double nx, double ny, double nz,
@@ -88,6 +112,29 @@ extern int write_curve_on_surface_entity(int surf_de, int bcurve_de,
 extern int write_trimmed_surface_entity(int surf_de, int outer_de,
 					const int *inner_des, int n_inner,
 					FILE *fp_dir, FILE *fp_param);
+
+/* IGES 502/504/508/510/514/186 topology writers.  The geometry referenced
+ * by these entities must be written first. */
+extern int write_brep_vertex_list_entity(const double *vertices, size_t count,
+					 FILE *fp_dir, FILE *fp_param);
+extern int write_brep_edge_list_entity(int vertex_list_de,
+				       const struct iges_brep_edge *edges,
+				       size_t count, FILE *fp_dir, FILE *fp_param);
+extern int write_brep_loop_entity(int vertex_list_de, int edge_list_de,
+				  const struct iges_brep_loop_use *uses,
+				  size_t count, FILE *fp_dir, FILE *fp_param);
+extern int write_brep_face_entity(int surface_de, const int *loop_des,
+				  size_t count, int has_outer_loop,
+				  FILE *fp_dir, FILE *fp_param);
+extern int write_brep_shell_entity(const int *face_des,
+				   const int *orientations, size_t count,
+				   FILE *fp_dir, FILE *fp_param);
+extern int write_brep_solid_entity(const char *name, int dependent,
+				   int outer_shell_de, int outer_orientation,
+				   const int *void_shell_des,
+				   const int *void_orientations, size_t void_count,
+				   FILE *fp_dir, FILE *fp_param);
+extern int iges_name_is_independent(const char *name);
 
 #ifdef __cplusplus
 }

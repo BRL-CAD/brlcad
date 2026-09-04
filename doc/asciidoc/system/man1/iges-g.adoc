@@ -11,7 +11,7 @@ iges-g - convert an IGES file to a BRL-CAD database
 
 [source]
 ----
-iges-g [-3] [-d] [-n] [-t] [-p] [-N _solid_name_] [-x _rt_debug_flag_] [-X _nmg_debug_flag_] -o _database.g_ _file.iges_
+iges-g [--exact|--strict] [--repair _none|safe_] [--report _file.json_] [-3] [-d] [-n] [-t] [-m|-p] [-N _solid_name_] [-x _rt_debug_flag_] [-X _nmg_debug_flag_] -o _database.g_ _file.iges_
 ----
 
 
@@ -20,14 +20,18 @@ iges-g [-3] [-d] [-n] [-t] [-p] [-N _solid_name_] [-x _rt_debug_flag_] [-X _nmg_
 
 *iges-g* reads an IGES (Initial Graphics Exchange Specification) file and
 writes the converted geometry to a BRL-CAD _database.g_ file. The input is
-expected to conform to IGES version 5.1.
+expected to conform to IGES version 5.3 or an earlier version.
 
 With none of the *-3*, *-d*, *-n*, or *-t* options, the default action is to
-convert only IGES solid model entities (CSG primitives and planar-face BREP
-objects) to their BRL-CAD equivalents. Most CSG conversions are exact; solids
+convert IGES solid model entities to their BRL-CAD equivalents. Type 186
+manifold topology is constructed directly in OpenNURBS. Type 144 trimmed
+surfaces are constructed as independent OpenNURBS faces and conservatively
+stitched into shared manifold topology when their boundary curves agree within
+the file tolerance. Most CSG conversions are exact; solids
 of revolution are approximated by a series of BRL-CAD cones and solids of
-linear extrusion are approximated by polysolids. Planar-faced BREP objects are
-written as BOT solids by default (or as NMG solids with *-p*).
+linear extrusion are approximated by polysolids. BREP objects are written as
+native BRL-CAD BRep objects by default; *-m* and *-p* select polygonal
+fallbacks.
 
 The *-3*/*-d*, *-n*, and *-t* options are mutually exclusive and select
 alternate conversion modes (drawings, B-spline surfaces, or trimmed surfaces,
@@ -40,24 +44,38 @@ other direction, see *g-iges*(1).
 == OPTIONS
 
 *-3*::
-  Convert IGES drawings to BRL-CAD NMG objects without the final projection
-  into 2D, preserving 3D drawings produced from a 3D model. Solid model
-  entities are ignored.
+  Preserve drawing model-space planes instead of projecting them to XY.
 
 *-d*::
-  Convert IGES drawings to BRL-CAD NMG objects (projected to 2D). Solid model
-  entities are ignored.
+  Convert IGES drawings to native BRL-CAD sketch and annotation objects,
+  preserving text, leaders, grouping, and style metadata when possible.
 
 *-n*::
   Combine all rational B-spline surfaces in the IGES file into a single
   BRL-CAD spline solid.
 
 *-t*::
-  Convert all trimmed surfaces in the IGES file into a single BRL-CAD NMG
-  trimmed-NURBS solid.
+  Request the legacy trimmed-surface conversion mode. The default mode imports
+  supported type 144 surfaces directly as OpenNURBS faces and assembles shared
+  topology without using NMG.
 
 *-p*::
-  Write BREP objects as NMG solids instead of the default BOT solids.
+  Write BREP objects as polygonal NMG solids instead of native BRep objects.
+
+*-m*::
+  Write BREP objects as triangulated BOT solids instead of native BRep objects.
+
+*--exact*::
+  Disallow source-data repairs during direct geometry or annotation import.
+
+*--strict*::
+  Reject repaired or partial direct imports.
+
+*--repair* _none|safe_::
+  Select no repairs or bounded structural repairs. The default is _safe_.
+
+*--report* _file.json_::
+  Write structured parser and import diagnostics to a JSON file.
 
 *-o* _database.g_::
   Specify the output BRL-CAD database file. This option is required.
@@ -85,19 +103,20 @@ other direction, see *g-iges*(1).
 iges-g -o widget.g widget.iges
 mged widget.g 'tops'
 ----
-Convert the CSG and planar-face BREP entities of _widget.iges_ into
+Convert the CSG and BREP entities of _widget.iges_ into
 _widget.g_, then list the resulting top-level objects with *mged*(1) to verify
 the conversion.
 ====
 
-.Convert trimmed surfaces into a single named solid
+.Assemble trimmed surfaces into a BRep
 ====
 [source,bash]
 ----
-iges-g -t -N hull -o boat.g boat.iges
+iges-g --strict --report boat-import.json -o boat.g boat.iges
 ----
-Collapse all trimmed surfaces in _boat.iges_ into one BRL-CAD NMG solid named
-"hull" inside _boat.g_, useful for surface models that have no CSG geometry.
+Build the supported trimmed surfaces in _boat.iges_ directly as OpenNURBS
+faces, stitch coincident naked edges conservatively, and write diagnostics to
+_boat-import.json_.
 ====
 
 [[see_also]]
@@ -105,7 +124,7 @@ Collapse all trimmed surfaces in _boat.iges_ into one BRL-CAD NMG solid named
 
 *brlcad*(1), *g-iges*(1), *mged*(1)
 
-_The Initial Graphics Exchange Specification (IGES) Version 5.1_, IGES/PDES Organization, September 1991.
+_The Initial Graphics Exchange Specification (IGES) Version 5.3_, US PRO/IPO, September 1996.
 
 [[author]]
 == AUTHOR

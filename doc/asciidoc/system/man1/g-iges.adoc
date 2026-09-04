@@ -11,19 +11,21 @@ g-iges - convert a BRL-CAD database to an IGES file
 
 [source]
 ----
-g-iges [-f|-t|-m] [-s] [-v] [-a _abs_tol_] [-r _rel_tol_] [-n _norm_tol_] [-d _dist_tol_] [-P _ncpu_] [-x _rt_debug_] [-X _nmg_debug_] [-o _output_file_] _database.g_ _object_ [_object_ ...]
+g-iges [-f|-t|-m] [--flatten-brep] [-s] [-v] [-a _abs_tol_] [-r _rel_tol_] [-n _norm_tol_] [-d _dist_tol_] [-P _ncpu_] [-x _rt_debug_] [-X _nmg_debug_] [-o _output_file_] _database.g_ _object_ [_object_ ...]
 ----
 
 [[description]]
 == DESCRIPTION
 
 *g-iges* converts the specified _object_(s) from a BRL-CAD _database.g_ database
-into an IGES version 5.1 file.
+into an IGES version 5.3 file.
 
 By default a CSG IGES file is produced: every region is written as a Boolean
 tree, with each solid represented by its IGES CSG equivalent. Any solid that has
 no IGES CSG equivalent is tessellated (using the tessellation tolerances) and
-written as a boundary-representation (B-Rep) object. The *-f*, *-t*, and *-m*
+written as a boundary-representation (B-Rep) object. Native OpenNURBS B-Reps
+are written with IGES manifold topology (type 186), preserving shared vertices,
+edges, loops, faces, shells, and NURBS geometry. The *-f*, *-t*, and *-m*
 options select alternative output modes; they are mutually exclusive, and the
 last one given wins.
 
@@ -51,6 +53,13 @@ output. The inverse translation, from IGES to BRL-CAD, is performed by
 
 *-s*::
   Write the faces of B-Rep objects as planar NURBS surfaces.
+
+*--flatten-brep*::
+  Write native OpenNURBS B-Reps as independent type 144 trimmed surfaces
+  instead of type 186 manifold topology. This compatibility mode is intended
+  for older readers that do not implement IGES 5.3 B-Rep entities. Exact
+  surfaces and trimming curves are retained, but shared topology is not
+  represented explicitly in the file.
 
 *-a* _abs_tol_::
   Absolute tessellation tolerance, in millimeters. Default 0.0 (disabled).

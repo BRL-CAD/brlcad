@@ -32,6 +32,7 @@
 __BEGIN_DECLS
 
 #include "brep/defines.h"
+#include "brep/assembly.h"
 #include "brep/util.h"
 #include "brep/ray.h"
 #include "brep/brnode.h"

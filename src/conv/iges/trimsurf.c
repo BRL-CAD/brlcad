@@ -1986,6 +1986,10 @@ Convtrimsurfs(struct bu_list *vlfree)
     if (convsurf) {
 	const char *nm = !BU_STR_EMPTY(curr_file->obj_name) ? curr_file->obj_name : "Trimmed_surf";
 
+	/* Type 144 carries independent trimmed faces.  Fuse their coincident
+	 * vertices here; iges_nmg_to_brep subsequently compares the boundary
+	 * geometry before sharing edges, since NMG cannot fuse the unlike edge
+	 * geometry types produced by planar and spline faces. */
 	(void)nmg_vertex_fuse(&m->magic, vlfree, &tol);
 
 	/* Preferred output is a faithful rt_brep (OpenNURBS) built from the

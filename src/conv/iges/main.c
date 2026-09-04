@@ -25,13 +25,21 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
+#include <stdlib.h>
+
 #include "bu/app.h"
 #include "bu/debug.h"
-#include "bu/getopt.h"
+#include "bu/opt.h"
+#include "bu/str.h"
+#include "bu/vls.h"
 /* private */
 #include "./iges_struct.h"
 #include "./iges_types.h"
 #include "./iges_extern.h"
+#include "./iges_brep_import.h"
+#include "./iges_import.h"
 #include "brlcad_ident.h"
 
 
@@ -83,6 +91,27 @@ int do_bots = 0;	/* -m: write boundary-rep as a BoT (triangle mesh) */
 int do_brep = 1;	/* default: write boundary-rep as rt_brep (OpenNURBS) */
 
 static char *iges_file = NULL;
+
+
+static int
+Parse_debug(struct bu_vls *message, size_t argc, const char **argv,
+    void *destination)
+{
+    char *end = NULL;
+    unsigned long value;
+
+    BU_OPT_CHECK_ARGV0(message, argc, argv, "debug mask");
+    errno = 0;
+    value = strtoul(argv[0], &end, 16);
+    if (errno || end == argv[0] || *end != '\0' || value > UINT_MAX) {
+	if (message)
+	    bu_vls_printf(message, "invalid hexadecimal debug mask: %s",
+		argv[0]);
+	return -1;
+    }
+    *((uint32_t *)destination) = (uint32_t)value;
+    return 1;
+}
 
 static const char *msg1 =
 "\nThis IGES file contains solid model entities, but your options do not permit\n\
@@ -177,65 +206,78 @@ int
 main(int argc, char *argv [])
 {
     int i;
-    int c;
     int file_count = 0;
+    int drawing_3d = 0;
+    int mesh_output = 0;
+    int polygon_output = 0;
+    int strict_import = 0;
+    int exact_import = 0;
+    int legacy_drawings = 0;
     char *output_file = (char *)NULL;
+    char *report_file = (char *)NULL;
+    char *repair_mode = (char *)NULL;
+    const char *program_name = argv[0];
     struct bu_list *vlfree = &rt_vlfree;
+    struct bu_vls option_messages = BU_VLS_INIT_ZERO;
+    struct bu_opt_desc options[] = {
+	{"3", "3d-drawings", "", NULL, &drawing_3d,
+	    "preserve drawing model-space planes instead of projecting to XY"},
+	{"d", "drawings", "", NULL, &do_drawings,
+	    "import drawings as native sketch/annotation objects"},
+	{"m", "mesh", "", NULL, &mesh_output,
+	    "write boundary representations as BoT meshes"},
+	{"n", "nurbs", "", NULL, &do_splines,
+	    "combine rational B-spline surfaces into one solid"},
+	{"t", "trimmed-surfaces", "", NULL, &trimmed_surf,
+	    "combine trimmed surfaces into one solid"},
+	{"p", "polygonal", "", NULL, &polygon_output,
+	    "write boundary representations as polygonal NMG solids"},
+	{"o", "output", "FILE", bu_opt_str, &output_file,
+	    "BRL-CAD output database"},
+	{"N", "name", "NAME", bu_opt_str, &solid_name,
+	    "name of the single requested output object"},
+	{"x", "rt-debug", "HEX", Parse_debug, &rt_debug,
+	    "librt hexadecimal debug mask"},
+	{"X", "nmg-debug", "HEX", Parse_debug, &nmg_debug,
+	    "NMG hexadecimal debug mask"},
+	{"", "exact", "", NULL, &exact_import,
+	    "disallow source-data repairs during direct import"},
+	{"", "strict", "", NULL, &strict_import,
+	    "reject repaired or partial direct imports"},
+	{"", "repair", "MODE", bu_opt_str, &repair_mode,
+	    "none or safe (default: safe)"},
+	{"", "report", "FILE", bu_opt_str, &report_file,
+	    "structured JSON import report"},
+	{"", "legacy-drawings", "", NULL, &legacy_drawings,
+	    "request the historical NMG wire drawing path"},
+	BU_OPT_DESC_NULL
+    };
 
-    bu_setprogname(argv[0]);
-
-    while ((c = bu_getopt(argc, argv, "3dmntpo:x:X:N:")) != -1) {
-	switch (c) {
-	    case '3':
-		do_drawings = 1;
-		do_projection = 0;
-		break;
-	    case 'd':
-		do_drawings = 1;
-		break;
-	    case 'm':
-		/* mesh: write boundary-rep as a BoT (triangle mesh) */
-		do_brep = 0;
-		do_bots = 1;
-		break;
-	    case 'n':
-		do_splines = 1;
-		break;
-	    case 'o':
-		output_file = bu_optarg;
-		break;
-	    case 't':
-		trimmed_surf = 1;
-		break;
-	    case 'p':
-		/* polygonal: write boundary-rep as an NMG solid */
-		do_brep = 0;
-		do_bots = 0;
-		break;
-	    case 'N':
-		solid_name = bu_optarg;
-		break;
-	    case 'x':
-		/* rt_debug is an unsigned int; read it directly */
-		sscanf(bu_optarg, "%x", &rt_debug);
-		break;
-	    case 'X':
-		{
-		    /* nmg_debug is a uint32_t; read into an unsigned int first
-		     * rather than type-punning &nmg_debug to unsigned int * */
-		    unsigned int dbg = 0;
-		    sscanf(bu_optarg, "%x", &dbg);
-		    nmg_debug = dbg;
-		}
-		break;
-	    default:
-		usage(argv[0]);
-		break;
-	}
+    bu_setprogname(program_name);
+    ++argv;
+    --argc;
+    argc = bu_opt_parse(&option_messages, argc, (const char **)argv, options);
+    if (bu_vls_strlen(&option_messages))
+	bu_log("%s\n", bu_vls_cstr(&option_messages));
+    if (drawing_3d) {
+	do_drawings = 1;
+	do_projection = 0;
     }
-
-    if (bu_optind >= argc || output_file == (char *)NULL || do_drawings+do_splines+trimmed_surf > 1) {
-	usage(argv[0]);
+    if (bu_vls_strlen(&option_messages) || argc != 1 || !output_file ||
+	    do_drawings + do_splines + trimmed_surf > 1 ||
+	    mesh_output + polygon_output > 1 ||
+	    (repair_mode && !BU_STR_EQUAL(repair_mode, "none") &&
+		!BU_STR_EQUAL(repair_mode, "safe"))) {
+	bu_vls_free(&option_messages);
+	usage(program_name);
+    }
+    bu_vls_free(&option_messages);
+    if (mesh_output) {
+	do_brep = 0;
+	do_bots = 1;
+    } else if (polygon_output) {
+	do_brep = 0;
+	do_bots = 0;
     }
 
     bu_log("%s", brlcad_ident("IGES to BRL-CAD Translator"));
@@ -266,15 +308,44 @@ main(int argc, char *argv [])
     if ((fdout = wdb_fopen(output_file)) == NULL) {
 	bu_log("Cannot open %s\n", output_file);
 	perror("iges-g");
-	usage(argv[0]);
+	usage(program_name);
     }
     bu_strlcpy(brlcad_file,  output_file, sizeof(brlcad_file));
 
-    argc -= bu_optind;
-    argv += bu_optind;
+    /* Keep the semantic importer independent of the legacy parser.  Besides
+     * avoiding duplicate work, this ensures bounded repairs in the modern
+     * parser are not rejected first by historical global parser state. */
+    if (do_drawings && !legacy_drawings) {
+	const int semantic_result = iges_import_annotations(argv[0], fdout,
+	    do_projection, exact_import, strict_import,
+	    repair_mode ? repair_mode : "safe", solid_name, report_file);
+	if (semantic_result < 0) {
+	    wdb_close(fdout);
+	    bu_exit(BRLCAD_ERROR,
+		"Semantic IGES drawing import failed for %s\n", argv[0]);
+	}
+	if (semantic_result > 0) {
+	    wdb_close(fdout);
+	    return BRLCAD_OK;
+	}
+    }
 
-    if (argc <= 0) {
-	bu_exit(BRLCAD_ERROR, "Need filename\n");
+    /* A supported type 186 is assembled directly in OpenNURBS.  Returning
+     * zero deliberately hands unsupported or mixed legacy content to the
+     * established CSG/NMG handlers below. */
+    if (!do_drawings && !trimmed_surf && !do_splines && do_brep) {
+	const int direct_result = iges_import_breps(argv[0], fdout,
+	    exact_import, strict_import, repair_mode ? repair_mode : "safe",
+	    report_file);
+	if (direct_result < 0) {
+	    wdb_close(fdout);
+	    bu_exit(BRLCAD_ERROR,
+		"Direct IGES B-Rep import failed for %s\n", argv[0]);
+	}
+	if (direct_result > 0) {
+	    wdb_close(fdout);
+	    return BRLCAD_OK;
+	}
     }
 
     BU_LIST_INIT(&iges_list.l);
@@ -306,7 +377,7 @@ main(int argc, char *argv [])
 	if (fd == NULL) {
 	    bu_log("Cannot open %s\n", iges_file);
 	    perror("iges-g");
-	    usage(argv[0]);
+	    usage(program_name);
 	}
 
 	bu_log("\n\n\nIGES FILE: %s\n", iges_file);
@@ -340,7 +411,7 @@ main(int argc, char *argv [])
 	Check_names();	/* Look for name entities */
 
 	if (do_drawings)
-	    Conv_drawings(vlfree);	/* convert drawings to wire edges */
+	    Conv_drawings(vlfree); /* non-planar/unsupported wire fallback */
 	else if (trimmed_surf) {
 	    Do_subfigs();		/* Look for Singular Subfigure Instances */
 
@@ -403,6 +474,7 @@ main(int argc, char *argv [])
 
     iges_file = argv[0];
     Suggestions();
+    wdb_close(fdout);
     return 0;
 }
 

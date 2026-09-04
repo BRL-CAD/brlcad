@@ -29,10 +29,10 @@
 void
 usage(const char *argv0)
 {
-    bu_log("Usage:  %s [-N solid_name] [-X nmg_debug_flag] [-x rt_debug_flag] [-m|p] [-n|d|t] -o file.g file.iges\n", argv0);
+    bu_log("Usage:  %s [--exact|--strict] [--repair none|safe] [--report file.json] [--legacy-drawings] [-N solid_name] [-X nmg_debug_flag] [-x rt_debug_flag] [-m|p] [-n|d|t] -o file.g file.iges\n", argv0);
     bu_log("	-n - Convert all rational B-spline surfaces to a single spline solid\n");
-    bu_log("	-d - Convert IGES drawings to NMG objects (and ignore solid objects)\n");
-    bu_log("	-3 - Convert IGES drawings to NMG objects, but don't project to 2D (and ignore solid objects)\n");
+    bu_log("	-d - Convert IGES drawings to native sketch/annotation objects\n");
+    bu_log("	-3 - Convert drawings without projecting model-space planes to XY\n");
     bu_log("	-t - Convert all trimmed surfaces to a single NMG trimmed NURBS solid\n");
     bu_log("	-o - Specify BRL-CAD output file\n");
     bu_log("	-m - Write boundary-rep objects as BoT (triangle mesh) solids\n");
@@ -40,6 +40,11 @@ usage(const char *argv0)
     bu_log("	-X - Set debug flag for NMG routines\n");
     bu_log("	-x - Set debug flag for librt\n");
     bu_log("	-N - Specify name of solid to be created\n");
+    bu_log("	--exact - Disallow source-data repairs during direct import\n");
+    bu_log("	--strict - Reject repaired or partial direct imports\n");
+    bu_log("	--repair - Select none or bounded safe repairs (default: safe)\n");
+    bu_log("	--report - Write structured IGES import diagnostics as JSON\n");
+    bu_log("	--legacy-drawings - Request the historical NMG wire drawing path\n");
     bu_log("The n, d (or 3), and t options are mutually exclusive.\n");
     bu_log("With none of the n, d (or 3), or t options specified, the default action\n");
     bu_log("is to convert only IGES solid model entities (CSG and BREP).  Boundary-rep\n");

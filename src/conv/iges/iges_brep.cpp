@@ -488,11 +488,20 @@ iges_nmg_to_brep(struct rt_wdb *wdbp, const char *name, struct model *m,
 	return 0;
     }
 
-    /* finalize derived data (iso/type flags, tolerances, bounding boxes) */
-    brep->SetTrimIsoFlags();
-    brep->SetTrimTypeFlags();
-    brep->SetVertexTolerances(true);
-    brep->SetTrimBoundingBoxes(true);
+    brep_assembly_result assembly;
+    if (!brep_assemble(*brep, tol->dist, &assembly)) {
+	ON_wString assembly_messages;
+	ON_TextLog assembly_log(assembly_messages);
+	(void)brep->IsValid(&assembly_log);
+	ON_String assembly_text(assembly_messages);
+	bu_log("IGES: unable to assemble trimmed faces for '%s' "
+	    "(error %d, %d edges merged, %d naked, %d ambiguous):\n%s\n",
+	    name, (int)assembly.error, assembly.merged_edges,
+	    assembly.remaining_naked_edges, assembly.ambiguous_edges,
+	    assembly_text.Array() ? assembly_text.Array() : "no detail");
+	delete brep;
+	return 0;
+    }
 
     ON_wString wonstr;
     ON_TextLog log(wonstr);

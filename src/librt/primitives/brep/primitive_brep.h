@@ -17,149 +17,6 @@
 #define LIBRT_PRIMITIVES_BREP_PRIMITIVE_BREP_H
 
 
-static inline bool
-rt_brep_curves_coincident(const ON_Curve &first, const ON_Curve &second,
-	double tolerance, bool *reversed)
-{
-    const ON_Interval first_domain = first.Domain();
-    const ON_Interval second_domain = second.Domain();
-    const double samples[] = {0.0, 0.173, 0.419, 0.731, 1.0};
-    bool forward = true;
-    bool reverse = true;
-    for (size_t i = 0; i < sizeof(samples) / sizeof(samples[0]); ++i) {
-	const ON_3dPoint point = first.PointAt(first_domain.ParameterAt(samples[i]));
-	forward = forward && point.DistanceTo(second.PointAt(
-	    second_domain.ParameterAt(samples[i]))) <= tolerance;
-	reverse = reverse && point.DistanceTo(second.PointAt(
-	    second_domain.ParameterAt(1.0 - samples[i]))) <= tolerance;
-    }
-    if (reversed)
-	*reversed = !forward && reverse;
-    return forward || reverse;
-}
-
-
-/* Merge pairs of geometrically coincident naked edges.  This is intended for
- * exact primitive patches constructed from a common analytic definition, not
- * as a general tolerance-based BRep repair operation. */
-static inline int
-rt_brep_merge_naked_edges(ON_Brep &brep, const struct bn_tol *tol)
-{
-    const double tolerance = (tol && tol->dist > 0.0) ? tol->dist : RT_LEN_TOL;
-    int merge_count = 0;
-    bool merged = true;
-    while (merged) {
-	merged = false;
-	for (int i = 0; i < brep.m_E.Count() && !merged; ++i) {
-	    if (brep.m_E[i].m_ti.Count() != 1)
-		continue;
-	    for (int j = i + 1; j < brep.m_E.Count(); ++j) {
-		if (brep.m_E[j].m_ti.Count() != 1)
-		    continue;
-		bool reversed = false;
-		if (!rt_brep_curves_coincident(brep.m_E[i], brep.m_E[j],
-			tolerance, &reversed))
-		    continue;
-
-		for (int endpoint = 0; endpoint < 2; ++endpoint) {
-		    const int first_vertex = brep.m_E[i].m_vi[endpoint];
-		    const int second_vertex = brep.m_E[j].m_vi[
-			reversed ? 1 - endpoint : endpoint];
-		    if (first_vertex < 0 || second_vertex < 0)
-			return -1;
-		    if (first_vertex != second_vertex &&
-			!brep.CombineCoincidentVertices(brep.m_V[first_vertex],
-			    brep.m_V[second_vertex]))
-			return -1;
-		}
-		/* The retained edge uses the first curve's direction.  Trims from
-		 * an oppositely directed duplicate must reverse their 3D sense when
-		 * they are moved to that edge. */
-		if (reversed) {
-		    for (int k = 0; k < brep.m_E[j].m_ti.Count(); ++k) {
-			const int trim_index = brep.m_E[j].m_ti[k];
-			if (trim_index >= 0 && trim_index < brep.m_T.Count())
-			    brep.m_T[trim_index].m_bRev3d =
-				!brep.m_T[trim_index].m_bRev3d;
-		    }
-		}
-		if (!brep.CombineCoincidentEdges(brep.m_E[i], brep.m_E[j]))
-		    return -1;
-		++merge_count;
-		merged = true;
-		break;
-	    }
-	}
-    }
-    return merge_count;
-}
-
-
-/* Make the face senses of a closed two-manifold consistent.  Edge topology
- * must already be exact and paired; this only solves the binary face-flip
- * constraints implied by the two trims on every edge. */
-static inline bool
-rt_brep_orient_faces(ON_Brep &brep)
-{
-    const int face_count = brep.m_F.Count();
-    if (face_count < 1)
-	return false;
-    ON_SimpleArray<int> flip;
-    for (int i = 0; i < face_count; ++i)
-	flip.Append(-1);
-
-    for (int seed = 0; seed < face_count; ++seed) {
-	if (flip[seed] >= 0)
-	    continue;
-	flip[seed] = 0;
-	bool changed = true;
-	while (changed) {
-	    changed = false;
-	    for (int edge_index = 0; edge_index < brep.m_E.Count(); ++edge_index) {
-		const ON_BrepEdge &edge = brep.m_E[edge_index];
-		if (edge.m_ti.Count() != 2)
-		    return false;
-		const ON_BrepTrim &first_trim = brep.m_T[edge.m_ti[0]];
-		const ON_BrepTrim &second_trim = brep.m_T[edge.m_ti[1]];
-		if (first_trim.m_li < 0 || first_trim.m_li >= brep.m_L.Count() ||
-		    second_trim.m_li < 0 || second_trim.m_li >= brep.m_L.Count())
-		    return false;
-		const int first_face = brep.m_L[first_trim.m_li].m_fi;
-		const int second_face = brep.m_L[second_trim.m_li].m_fi;
-		if (first_face < 0 || first_face >= face_count ||
-		    second_face < 0 || second_face >= face_count)
-		    return false;
-		const int first_sense = first_trim.m_bRev3d ^
-		    brep.m_F[first_face].m_bRev;
-		const int second_sense = second_trim.m_bRev3d ^
-		    brep.m_F[second_face].m_bRev;
-		const int relation = first_sense ^ second_sense ^ 1;
-		if (first_face == second_face) {
-		    if (relation != 0)
-			return false;
-		    continue;
-		}
-		if (flip[first_face] >= 0 && flip[second_face] < 0) {
-		    flip[second_face] = flip[first_face] ^ relation;
-		    changed = true;
-		} else if (flip[second_face] >= 0 && flip[first_face] < 0) {
-		    flip[first_face] = flip[second_face] ^ relation;
-		    changed = true;
-		} else if (flip[first_face] >= 0 &&
-		    flip[second_face] != (flip[first_face] ^ relation)) {
-		    return false;
-		}
-	    }
-	}
-    }
-
-    for (int i = 0; i < face_count; ++i)
-	if (flip[i] == 1)
-	    brep.FlipFace(brep.m_F[i]);
-    return true;
-}
-
-
 /* Add a planar cap trimmed by a duplicate of an existing naked closed edge,
  * then merge the duplicate vertex and edge so the cap and side are one
  * topological manifold. */
@@ -334,7 +191,9 @@ rt_brep_mate_planar_cap_loops(ON_Brep &brep,
 	const bool loop_created = brep.NewPlanarFaceLoop(face_index, loop_type,
 	    boundary, true);
 	delete cap_curve;
-	if (!loop_created || rt_brep_merge_naked_edges(brep, tol) != 1)
+	const double tolerance = (tol && tol->dist > 0.0) ?
+	    tol->dist : RT_LEN_TOL;
+	if (!loop_created || brep_stitch_naked_edges(brep, tolerance) != 1)
 	    return false;
     }
 

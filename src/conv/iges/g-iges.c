@@ -34,6 +34,8 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -47,8 +49,9 @@
 #include "rt/geom.h"
 
 #include "bu/app.h"
+#include "bu/malloc.h"
+#include "bu/opt.h"
 #include "bu/parallel.h"
-#include "bu/getopt.h"
 /* private */
 #include "./iges.h"
 #include "brlcad_ident.h"
@@ -83,27 +86,36 @@ extern void get_props(struct iges_properties *props, struct rt_comb_internal *co
 extern int comb_to_iges(struct rt_comb_internal *comb, size_t length, int dependent, struct iges_properties *props, int de_pointers[], FILE *fp_dir, FILE *fp_param);
 
 static void
-usage(const char *argv0)
+usage(const char *argv0, const struct bu_opt_desc *options)
 {
-    bu_log("Usage: %s [-f|t|m] [-v] [-s] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-d dist_tol] [-P num_cpus] [-o output_file] brlcad_db.g object(s)\n", argv0);
-    bu_log("	options:\n");
-    bu_log("		f - convert each region to faceted BREP before output\n");
-    bu_log("		t - produce a file of trimmed surfaces (experimental)\n");
-    bu_log("		m - produces a separate IGES file for each region, \n");
-    bu_log("			implies -t, -o gives directory for output IGES file\n");
-    bu_log("		s - produce NURBS for faces of any BREP objects\n");
-    bu_log("		v - verbose\n");
-    bu_log("		a - absolute tolerance for tessellation (mm)\n");
-    bu_log("		r - relative tolerance for tessellation\n");
-    bu_log("		n - normal tolerance for tessellation\n");
-    bu_log("		d - distance tolerance (mm) (minimum distance between distinct points)\n");
-    bu_log("		x - librt debug flag\n");
-    bu_log("		X - nmg debug flag\n");
-    bu_log("		o - file to receive IGES output (or directory when '-m' option is used)\n");
-    bu_log("		P - number of processors to use\n");
-    bu_log("	The f and t options are mutually exclusive. If neither is specified, \n");
-    bu_log("	the default output is a CSG file to the maximum extent possible\n");
-    bu_exit(1, NULL);
+    char *description = bu_opt_describe(options, NULL);
+    bu_log("Usage: %s [options] brlcad_db.g object [object ...]\n%s",
+	argv0, description);
+    bu_log("The faceted, trimmed-surface, and multi-file modes are mutually "
+	"exclusive.  The default preserves native CSG where possible and "
+	"exports exact OpenNURBS topology for BRep solids.\n");
+    bu_free(description, "g-iges option description");
+}
+
+
+static int
+parse_debug(struct bu_vls *message, size_t argc, const char **argv,
+	    void *destination)
+{
+    char *end = NULL;
+    unsigned long value;
+
+    BU_OPT_CHECK_ARGV0(message, argc, argv, "debug mask");
+    errno = 0;
+    value = strtoul(argv[0], &end, 16);
+    if (errno || end == argv[0] || *end != '\0' || value > UINT_MAX) {
+	if (message)
+	    bu_vls_printf(message, "invalid hexadecimal debug mask: %s",
+		argv[0]);
+	return -1;
+    }
+    *((uint32_t *)destination) = (uint32_t)value;
+    return 1;
 }
 
 
@@ -184,7 +196,7 @@ struct iges_functab iges_write[ID_MAXIMUM+1] = {
     {null_to_iges},	/* ID_UNUSED2 (34) */
     {primitive_brep_to_iges},	/* ID_SUPERELL (35) - faithful NURBS via ft_brep */
     {nmg_to_iges},	/* ID_METABALL (36) - faceted (no ft_brep) */
-    {brep_to_iges},	/* ID_BREP (37) - faithful NURBS (128/144); trims preserved */
+    {brep_to_iges},	/* ID_BREP (37) - exact IGES 186 topology; 144 fallback */
     {primitive_brep_to_iges},	/* ID_HYP (38) - faithful NURBS via ft_brep */
     {null_to_iges},	/* ID_CONSTRAINT (39) */
     {primitive_brep_to_iges},	/* ID_REVOLVE (40) - faithful NURBS via ft_brep */
@@ -206,16 +218,53 @@ int comb_form;
 char **independent;
 size_t no_of_indeps = 0;
 int do_nurbs = 0;
+int flatten_brep = 0;
 
 int
 main(int argc, char *argv[])
 {
     size_t i;
     int ret;
-    int c;
+    int help = 0;
+    int faceted_output = 0;
+    int trimmed_output = 0;
     double percent;
     char copy_buffer[CP_BUF_SIZE] = {0};
     struct directory *dp;
+    struct bu_list *vlfree = &rt_vlfree;
+    struct bu_vls option_messages = BU_VLS_INIT_ZERO;
+    struct bu_opt_desc options[] = {
+	{"h", "help", "", NULL, &help, "print help and exit"},
+	{"?", "", "", NULL, &help, ""},
+	{"f", "faceted", "", NULL, &faceted_output,
+	    "tessellate each region and export a faceted BRep"},
+	{"t", "trimmed-surfaces", "", NULL, &trimmed_output,
+	    "tessellate regions and export independent trimmed surfaces"},
+	{"m", "multi-file", "", NULL, &multi_file,
+	    "write one trimmed-surface IGES file per region"},
+	{"s", "nurbs", "", NULL, &do_nurbs,
+	    "use NURBS geometry for faces produced from NMG topology"},
+	{"", "flatten-brep", "", NULL, &flatten_brep,
+	    "write exact BReps as IGES 144 trimmed surfaces for older readers"},
+	{"v", "verbose", "", NULL, &verbose, "enable verbose diagnostics"},
+	{"a", "absolute-tolerance", "MM", bu_opt_fastf_t, &ttol.abs,
+	    "absolute tessellation tolerance in millimeters"},
+	{"r", "relative-tolerance", "FRACTION", bu_opt_fastf_t, &ttol.rel,
+	    "relative tessellation tolerance"},
+	{"n", "normal-tolerance", "RADIANS", bu_opt_fastf_t, &ttol.norm,
+	    "surface-normal tessellation tolerance"},
+	{"d", "distance-tolerance", "MM", bu_opt_fastf_t, &tol.dist,
+	    "minimum distance between distinct points"},
+	{"x", "rt-debug", "HEX", parse_debug, &rt_debug,
+	    "librt hexadecimal debug mask"},
+	{"X", "nmg-debug", "HEX", parse_debug, &nmg_debug,
+	    "NMG hexadecimal debug mask"},
+	{"o", "output", "FILE", bu_opt_str, &output_file,
+	    "IGES output file, or output directory in multi-file mode"},
+	{"P", "processors", "COUNT", bu_opt_int, &ncpu,
+	    "number of processors used for tessellation"},
+	BU_OPT_DESC_NULL
+    };
 
     bu_setprogname(argv[0]);
     bu_setlinebuf(stderr);
@@ -241,78 +290,41 @@ main(int argc, char *argv[])
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
 
-    the_model = nmg_mm();
-    struct bu_list *vlfree = &rt_vlfree;
-
     prog_name = argv[0];
 
     /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "ftsmd:a:n:o:p:r:vx:P:X:")) != -1) {
-	switch (c) {
-	    case 'f':		/* Select facetized output */
-		mode = FACET_MODE;
-		multi_file = 0;
-		break;
-	    case 't':
-		mode = TRIMMED_SURF_MODE;
-		multi_file = 0;
-		break;
-	    case 'm':		/* multi-file mode */
-		multi_file = 1;
-		mode = TRIMMED_SURF_MODE;
-		break;
-	    case 's':		/* Select NURB output */
-		do_nurbs = 1;
-		break;
-	    case 'v':
-		verbose++;
-		break;
-	    case 'a':		/* Absolute tolerance. */
-		ttol.abs = atof(bu_optarg);
-		break;
-	    case 'r':		/* Relative tolerance. */
-		ttol.rel = atof(bu_optarg);
-		break;
-	    case 'n':		/* Surface normal tolerance. */
-		ttol.norm = atof(bu_optarg);
-		break;
-	    case 'd':		/* distance tolerance */
-		tol.dist = atof(bu_optarg);
-		tol.dist_sq = tol.dist * tol.dist;
-		break;
-	    case 'x':
-		/* rt_debug is an unsigned int; read it directly */
-		sscanf(bu_optarg, "%x", &rt_debug);
-		break;
-	    case 'X':
-		{
-		    /* nmg_debug is a uint32_t; read into an unsigned int first
-		     * rather than type-punning &nmg_debug to unsigned int * */
-		    unsigned int dbg = 0;
-		    sscanf(bu_optarg, "%x", &dbg);
-		    nmg_debug = dbg;
-		}
-		NMG_debug = nmg_debug;
-		break;
-	    case 'o':		/* Output file name. */
-		output_file = bu_optarg;
-		break;
-	    case 'P':
-		ncpu = atoi(bu_optarg);
-		break;
-	    default:
-		usage(argv[0]);
-		break;
-	}
+    ++argv;
+    --argc;
+    argc = bu_opt_parse(&option_messages, argc, (const char **)argv,
+	options);
+    if (bu_vls_strlen(&option_messages))
+	bu_log("%s\n", bu_vls_cstr(&option_messages));
+    if (help) {
+	usage(prog_name, options);
+	bu_vls_free(&option_messages);
+	return 0;
     }
-
-    if (bu_optind+1 >= argc) {
-	usage(argv[0]);
+    if (bu_vls_strlen(&option_messages) || argc < 2 ||
+	    faceted_output + trimmed_output + multi_file > 1 ||
+	    ttol.abs < 0.0 || !isfinite(ttol.abs) ||
+	    ttol.rel < 0.0 || !isfinite(ttol.rel) ||
+	    ttol.norm < 0.0 || ttol.norm > M_PI || !isfinite(ttol.norm) ||
+	    tol.dist <= 0.0 || !isfinite(tol.dist) || ncpu < 1 ||
+	    (multi_file && !output_file)) {
+	usage(prog_name, options);
+	bu_vls_free(&option_messages);
+	return 1;
     }
+    bu_vls_free(&option_messages);
+    if (faceted_output)
+	mode = FACET_MODE;
+    else if (trimmed_output || multi_file)
+	mode = TRIMMED_SURF_MODE;
+    tol.dist_sq = tol.dist * tol.dist;
+    NMG_debug = nmg_debug;
+    the_model = nmg_mm();
 
     /* Open BRL-CAD database */
-    argc -= bu_optind;
-    argv += bu_optind;
     db_name = argv[0];
     if ((DBIP = db_open(db_name, DB_OPEN_READONLY)) == DBI_NULL) {
 	perror("g-iges");

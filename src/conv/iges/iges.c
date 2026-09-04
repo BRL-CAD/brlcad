@@ -162,6 +162,7 @@ static const char *type_label[NO_OF_TYPES] = {
 
 
 static const char *type_name[NO_OF_TYPES] = {
+    "Composite Curve",
     "Copious Data",
     "Line",
     "Point",
@@ -718,8 +719,8 @@ w_start_global(
 		  timep->tm_min,
 		  timep->tm_sec);
 
-    bu_vls_printf(&str, ",%g,100000.0,7HUnknown,7HUnknown,9,0",
-		  RT_LEN_TOL);
+    bu_vls_printf(&str, ",%g,100000.0,7HUnknown,7HUnknown,11,0",
+		  tol.dist);
 
     if (stat(db_name, &db_stat)) {
 	bu_log("Cannot stat %s\n", db_name);
@@ -2542,17 +2543,10 @@ nmg_to_iges(struct rt_db_internal *ip,
     int brep_de;
     int dependent;
     size_t region_count;
-    size_t i;
 
     RT_CK_DB_INTERNAL(ip);
 
-    dependent = 1;
-    for (i = 0; i < no_of_indeps; i++) {
-	if (!bu_strncmp(name, independent[i], NAMESIZE+1)) {
-	    dependent = 0;
-	    break;
-	}
-    }
+    dependent = !iges_name_is_independent(name);
 
     solid_is_brep = 1;
     comb_form = 1;
@@ -2609,6 +2603,22 @@ nmg_to_iges(struct rt_db_internal *ip,
 	    return brep_de;
 	}
     }
+}
+
+
+/* Return nonzero when name is one of the explicitly requested top-level
+ * objects.  Subordinate status is shared by the legacy and BRep exporters. */
+int
+iges_name_is_independent(const char *name)
+{
+    size_t i;
+
+    if (!name)
+	return 0;
+    for (i = 0; i < no_of_indeps; i++)
+	if (!bu_strncmp(name, independent[i], NAMESIZE+1))
+	    return 1;
+    return 0;
 }
 
 
@@ -3057,6 +3067,7 @@ append_dbls(struct bu_vls *str, const double *v, int n)
  * knot vectors, weights, and control points. */
 int
 write_nurb_surface_entity(int k1, int k2, int m1, int m2, int rational,
+			  int closed_u, int closed_v, int periodic_u, int periodic_v,
 			  const double *uknots, const double *vknots,
 			  const double *weights, const double *ctlpts,
 			  double u0, double u1, double v0, double v1,
@@ -3071,8 +3082,10 @@ write_nurb_surface_entity(int k1, int k2, int m1, int m2, int rational,
 	dir_entry[i] = DEFAULT;
 
     /* PROP3 is the polynomial flag: 1 => polynomial, 0 => rational */
-    bu_vls_printf(&str, "128,%d,%d,%d,%d,0,0,%d,0,0",
-		  k1, k2, m1, m2, rational ? 0 : 1);
+    bu_vls_printf(&str, "128,%d,%d,%d,%d,%d,%d,%d,%d,%d",
+		  k1, k2, m1, m2, closed_u ? 1 : 0, closed_v ? 1 : 0,
+		  rational ? 0 : 1, periodic_u ? 1 : 0,
+		  periodic_v ? 1 : 0);
     append_dbls(&str, uknots, k1 + m1 + 2);
     append_dbls(&str, vknots, k2 + m2 + 2);
     append_dbls(&str, weights, ncv);
@@ -3096,6 +3109,7 @@ write_nurb_surface_entity(int k1, int k2, int m1, int m2, int rational,
  * weights, and control points. */
 int
 write_nurb_curve_entity(int k, int m, int rational, int planar,
+			int closed, int periodic,
 			const double *knots, const double *weights,
 			const double *ctlpts, double v0, double v1,
 			double nx, double ny, double nz,
@@ -3108,8 +3122,9 @@ write_nurb_curve_entity(int k, int m, int rational, int planar,
     for (i = 0; i < 21; i++)
 	dir_entry[i] = DEFAULT;
 
-    bu_vls_printf(&str, "126,%d,%d,%d,0,%d,0",
-		  k, m, planar ? 1 : 0, rational ? 0 : 1);
+    bu_vls_printf(&str, "126,%d,%d,%d,%d,%d,%d",
+		  k, m, planar ? 1 : 0, closed ? 1 : 0,
+		  rational ? 0 : 1, periodic ? 1 : 0);
     append_dbls(&str, knots, k + m + 2);
     append_dbls(&str, weights, k + 1);
     append_dbls(&str, ctlpts, 3 * (k + 1));
@@ -3119,7 +3134,7 @@ write_nurb_curve_entity(int k, int m, int rational, int planar,
     dir_entry[14] = write_freeform(fp_param, bu_vls_addr(&str), dir_seq + 1, 'P');
     dir_entry[1] = 126;
     dir_entry[8] = 0;
-    dir_entry[9] = 10001;
+    dir_entry[9] = planar ? 10501 : 10001;
     dir_entry[11] = 126;
     dir_entry[15] = 0;
 
@@ -3218,6 +3233,205 @@ write_trimmed_surface_entity(int surf_de, int outer_de, const int *inner_des,
 
     bu_vls_free(&str);
     return write_dir_entry(fp_dir, dir_entry);
+}
+
+
+/* Write one of the topology entities used by a Manifold Solid B-Rep Object.
+ * Keeping the shared Directory/Parameter bookkeeping here prevents the C++
+ * OpenNURBS walker from depending on exporter-global sequence state. */
+static int
+write_brep_topology_entity(int type, int form, int status, int color,
+			   struct bu_vls *parameters,
+			   FILE *fp_dir, FILE *fp_param)
+{
+    int dir_entry[21];
+    size_t i;
+
+    for (i = 0; i < 21; i++)
+	dir_entry[i] = DEFAULT;
+    dir_entry[1] = type;
+    dir_entry[2] = param_seq + 1;
+    dir_entry[8] = 0;
+    dir_entry[9] = status;
+    dir_entry[11] = type;
+    dir_entry[13] = color;
+    dir_entry[15] = form;
+    dir_entry[14] = write_freeform(fp_param, bu_vls_addr(parameters),
+	dir_seq + 1, 'P');
+    return write_dir_entry(fp_dir, dir_entry);
+}
+
+
+/* Write an IGES Vertex List Entity (type 502, form 1). */
+int
+write_brep_vertex_list_entity(const double *vertices, size_t count,
+			      FILE *fp_dir, FILE *fp_param)
+{
+    struct bu_vls str = BU_VLS_INIT_ZERO;
+    size_t i;
+    int de;
+
+    if (!vertices || !count)
+	return 0;
+    bu_vls_printf(&str, "502,%zu", count);
+    for (i = 0; i < count; i++)
+	bu_vls_printf(&str, ",%.17g,%.17g,%.17g", vertices[3 * i],
+	    vertices[3 * i + 1], vertices[3 * i + 2]);
+    bu_vls_strcat(&str, ";");
+    de = write_brep_topology_entity(502, 1, 10001, DEFAULT, &str,
+	fp_dir, fp_param);
+    bu_vls_free(&str);
+    return de;
+}
+
+
+/* Write an IGES Edge List Entity (type 504, form 1). */
+int
+write_brep_edge_list_entity(int vertex_list_de,
+			    const struct iges_brep_edge *edges, size_t count,
+			    FILE *fp_dir, FILE *fp_param)
+{
+    struct bu_vls str = BU_VLS_INIT_ZERO;
+    size_t i;
+    int de;
+
+    if (vertex_list_de <= 0 || !edges || !count)
+	return 0;
+    bu_vls_printf(&str, "504,%zu", count);
+    for (i = 0; i < count; i++)
+	bu_vls_printf(&str, ",%d,%d,%zu,%d,%zu", edges[i].curve_de,
+	    vertex_list_de, edges[i].start_vertex + 1, vertex_list_de,
+	    edges[i].end_vertex + 1);
+    bu_vls_strcat(&str, ";");
+    de = write_brep_topology_entity(504, 1, 10001, DEFAULT, &str,
+	fp_dir, fp_param);
+    bu_vls_free(&str);
+    return de;
+}
+
+
+/* Write an IGES Loop Entity (type 508, form 1). */
+int
+write_brep_loop_entity(int vertex_list_de, int edge_list_de,
+		       const struct iges_brep_loop_use *uses, size_t count,
+		       FILE *fp_dir, FILE *fp_param)
+{
+    struct bu_vls str = BU_VLS_INIT_ZERO;
+    size_t i;
+    int de;
+
+    if (vertex_list_de <= 0 || edge_list_de <= 0 || !uses || !count)
+	return 0;
+    bu_vls_printf(&str, "508,%zu", count);
+    for (i = 0; i < count; i++) {
+	const int list_de = uses[i].kind == IGES_BREP_VERTEX_USE ?
+	    vertex_list_de : edge_list_de;
+	const int parameter_count = uses[i].parameter_curve_de > 0 ? 1 : 0;
+	bu_vls_printf(&str, ",%d,%d,%zu,%d,%d", uses[i].kind, list_de,
+	    uses[i].index + 1, uses[i].orientation ? 1 : 0,
+	    parameter_count);
+	if (parameter_count)
+	    bu_vls_printf(&str, ",%d,%d", uses[i].isoparametric ? 1 : 0,
+		uses[i].parameter_curve_de);
+    }
+    bu_vls_strcat(&str, ";");
+    de = write_brep_topology_entity(508, 1, 10001, DEFAULT, &str,
+	fp_dir, fp_param);
+    bu_vls_free(&str);
+    return de;
+}
+
+
+/* Write an IGES Face Entity (type 510, form 1). */
+int
+write_brep_face_entity(int surface_de, const int *loop_des, size_t count,
+		       int has_outer_loop, FILE *fp_dir, FILE *fp_param)
+{
+    struct bu_vls str = BU_VLS_INIT_ZERO;
+    size_t i;
+    int de;
+
+    if (surface_de <= 0 || !loop_des || !count)
+	return 0;
+    bu_vls_printf(&str, "510,%d,%zu,%d", surface_de, count,
+	has_outer_loop ? 1 : 0);
+    for (i = 0; i < count; i++)
+	bu_vls_printf(&str, ",%d", loop_des[i]);
+    bu_vls_strcat(&str, ";");
+    de = write_brep_topology_entity(510, 1, 10001, DEFAULT, &str,
+	fp_dir, fp_param);
+    bu_vls_free(&str);
+    return de;
+}
+
+
+/* Write an IGES Shell Entity (type 514, form 1). */
+int
+write_brep_shell_entity(const int *face_des, const int *orientations,
+			size_t count, FILE *fp_dir, FILE *fp_param)
+{
+    struct bu_vls str = BU_VLS_INIT_ZERO;
+    size_t i;
+    int de;
+
+    if (!face_des || !orientations || !count)
+	return 0;
+    bu_vls_printf(&str, "514,%zu", count);
+    for (i = 0; i < count; i++)
+	bu_vls_printf(&str, ",%d,%d", face_des[i], orientations[i] ? 1 : 0);
+    bu_vls_strcat(&str, ";");
+    de = write_brep_topology_entity(514, 1, 10001, DEFAULT, &str,
+	fp_dir, fp_param);
+    bu_vls_free(&str);
+    return de;
+}
+
+
+/* Write an IGES Manifold Solid B-Rep Object (type 186). */
+int
+write_brep_solid_entity(const char *name, int dependent, int outer_shell_de,
+			int outer_orientation, const int *void_shell_des,
+			const int *void_orientations, size_t void_count,
+			FILE *fp_dir, FILE *fp_param)
+{
+    struct bu_vls str = BU_VLS_INIT_ZERO;
+    struct iges_properties props;
+    int name_de = 0;
+    int prop_de = 0;
+    int color_de = DEFAULT;
+    size_t i;
+    int de;
+
+    if (outer_shell_de <= 0 ||
+	    (void_count && (!void_shell_des || !void_orientations)))
+	return 0;
+    if (name && name[0] != '\0')
+	name_de = write_name_entity((char *)name, fp_dir, fp_param);
+    if (name && lookup_props(&props, (char *)name) == 0) {
+	prop_de = write_att_entity(&props, fp_dir, fp_param);
+	if (props.color_defined)
+	    color_de = get_color(props.color, fp_dir, fp_param);
+    } else {
+	color_de = 0;
+    }
+
+    bu_vls_printf(&str, "186,%d,%d,%zu", outer_shell_de,
+	outer_orientation ? 1 : 0, void_count);
+    for (i = 0; i < void_count; i++)
+	bu_vls_printf(&str, ",%d,%d", void_shell_des[i],
+	    void_orientations[i] ? 1 : 0);
+    if (prop_de || name_de) {
+	bu_vls_printf(&str, ",0,%d", prop_de && name_de ? 2 : 1);
+	if (prop_de)
+	    bu_vls_printf(&str, ",%d", prop_de);
+	if (name_de)
+	    bu_vls_printf(&str, ",%d", name_de);
+    }
+    bu_vls_strcat(&str, ";");
+    de = write_brep_topology_entity(186, 0, dependent ? 10001 : 1,
+	color_de, &str, fp_dir, fp_param);
+    bu_vls_free(&str);
+    return de;
 }
 
 

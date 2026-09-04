@@ -32,6 +32,9 @@ set(
   get_vertex_list.c
   getcurve.c
   iges_brep.cpp
+  iges_brep_import.cpp
+  iges_document.cpp
+  iges_import.cpp
   iges_surf.cpp
   iges_types.c
   main.c
@@ -74,6 +77,8 @@ brlcad_addexec(iges-g "${iges-g_SRCS}" "libwdb;librt;libnmg;libbrep;libbn;libbu;
 
 brlcad_addexec(g-iges "g-iges.c;iges.c;brep_iges.cpp" "librt;libnmg;libbrep;libbu;${M_LIBRARY}" FOLDER Conv)
 
+add_subdirectory(tests)
+
 set(
   iges_ignore_files
   BrepHandler.cpp
@@ -88,6 +93,9 @@ set(
   ge6.igs
   iges.h
   iges_brep.h
+  iges_brep_import.h
+  iges_document.h
+  iges_import.h
   iges_surf.h
   iges_extern.h
   iges_struct.h

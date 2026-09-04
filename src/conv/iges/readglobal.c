@@ -29,7 +29,7 @@ fastf_t cnv[] = {
     10.0, 0.0000254	};
 
 /* IGES Version */
-#define NO_OF_VERSIONS 10
+#define NO_OF_VERSIONS 12
 #define COMMA ','
 
 const char *iges_version[NO_OF_VERSIONS] = {
@@ -42,7 +42,9 @@ const char *iges_version[NO_OF_VERSIONS] = {
     "4.0",
     "ASME Y14.26M - 1989",
     "5.0",
-    "5.1" };
+    "5.1",
+    "5.2",
+    "5.3" };
 
 /*
  * Parse the IGES Global Section from the shared global "card" buffer.

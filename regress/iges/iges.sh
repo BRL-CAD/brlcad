@@ -299,11 +299,16 @@ if test "x$ptype" != "xnmg" ; then
     export STATUS
 fi
 
-# Round-trip the brep back out to IGES and in again; the NURBS geometry
-# should survive.  g-iges exports a brep as faithful trimmed NURBS surfaces
-# (IGES 144), which iges-g reads back with the -t option.
+# Round-trip the BRep through native IGES 5.3 topology.  The default exporter
+# must use type 186 and the modern importer must preserve the box topology.
 run $GIGES -o iges.brep.export.iges iges.brep.g box.nmg
-run $IGESG -t -o iges.brep.roundtrip.g iges.brep.export.iges
+native_solids=`awk 'substr($0,73,1)=="D" && (substr($0,74,7)+0)%2==1 && (substr($0,1,8)+0)==186 {n++} END {print n+0}' iges.brep.export.iges`
+if test "x$native_solids" != "x1" ; then
+    log "ERROR: native BRep export wrote $native_solids type 186 entities"
+    STATUS="`expr $STATUS + 1`"
+    export STATUS
+fi
+run $IGESG --strict --repair none -o iges.brep.roundtrip.g iges.brep.export.iges
 if [ ! -f iges.brep.roundtrip.g ] ; then
     log "ERROR: brep round-trip failed to produce iges.brep.roundtrip.g"
     STATUS="`expr $STATUS + 1`"
@@ -319,6 +324,31 @@ if test "x$rttype" != "xbrep" ; then
     STATUS="`expr $STATUS + 1`"
     export STATUS
 fi
+
+rtinfo=`$MGED -c iges.brep.roundtrip.g "brep $rtobj info" 2>&1 | tr -d '\r'`
+case "x$rtinfo" in
+    *"Valid: YES, Solid: YES"*"faces:     6"*"edges:     12"*"vertices:  8"*) : ;;
+    *) log "ERROR: native BRep round-trip did not preserve box topology: $rtinfo" ; STATUS="`expr $STATUS + 1`" ; export STATUS ;;
+esac
+
+# Compatibility mode deliberately flattens the same BRep to independent type
+# 144 faces.  The modern importer must stitch them back into the same manifold
+# without routing through NMG.
+run $GIGES --flatten-brep -o iges.brep.flat.iges iges.brep.g box.nmg
+flat_faces=`awk 'substr($0,73,1)=="D" && (substr($0,74,7)+0)%2==1 && (substr($0,1,8)+0)==144 {n++} END {print n+0}' iges.brep.flat.iges`
+flat_solids=`awk 'substr($0,73,1)=="D" && (substr($0,74,7)+0)%2==1 && (substr($0,1,8)+0)==186 {n++} END {print n+0}' iges.brep.flat.iges`
+if test "x$flat_faces" != "x6" -o "x$flat_solids" != "x0" ; then
+    log "ERROR: flattened BRep export wrote $flat_faces type 144 and $flat_solids type 186 entities"
+    STATUS="`expr $STATUS + 1`"
+    export STATUS
+fi
+run $IGESG --strict --repair none -o iges.brep.flat.g iges.brep.flat.iges
+flatobj=`$MGED -c iges.brep.flat.g "ls" 2>&1 | tr -d '\r' | awk '{print $1}' | head -1`
+flatinfo=`$MGED -c iges.brep.flat.g "brep $flatobj info" 2>&1 | tr -d '\r'`
+case "x$flatinfo" in
+    *"Valid: YES, Solid: YES"*"faces:     6"*"edges:     12"*"vertices:  8"*) : ;;
+    *) log "ERROR: type 144 assembly did not recover box topology: $flatinfo" ; STATUS="`expr $STATUS + 1`" ; export STATUS ;;
+esac
 
 # COMPLEX TEST
 
