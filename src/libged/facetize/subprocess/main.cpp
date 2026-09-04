@@ -175,26 +175,17 @@ method_setup(tess_opts *s)
 	return;
 
     std::vector<std::string> *methods = &s->method_opts.methods;
-    if (!methods->size()) {
-	methods->push_back(std::string("NMG"));
-	methods->push_back(std::string("CM"));
-	methods->push_back(std::string("SPSR"));
-    }
+    if (!methods->size())
+	*methods = tess_default_methods();
 
     // Now that we've set any default overrides for multiple types, get the
     // method specific options for each method set up
     s->nmg_options.sync(s->method_opts);
-    s->cm_options.sync(s->method_opts);
+    s->mdc_options.sync(s->method_opts);
     s->spsr_options.sync(s->method_opts);
 
-    // Set the sampling options.  If CM is active we will be using its settings
-    // to sample first, so default to those values.
-    bool sample_sync = false;
-    if (std::find(methods->begin(), methods->end(), std::string("CM")) != methods->end()) {
-	s->pnt_options.sync(s->cm_options);
-	sample_sync = true;
-    }
-    if (!sample_sync && std::find(methods->begin(), methods->end(), std::string("SPSR")) != methods->end()) {
+    if (std::find(methods->begin(), methods->end(),
+	    std::string("SPSR")) != methods->end()) {
 	s->pnt_options.sync(s->spsr_options);
     }
 }
@@ -256,7 +247,7 @@ dp_tessellate(struct rt_bot_internal **obot, struct bu_vls *method_flag, struct 
 	    // If we are going to try a pnts wrapping, there are only a few
 	    // candidates in the fallback methods list that we can use.
 	    mset.erase(std::string("NMG"));
-	    mset.erase(std::string("CM"));
+	    mset.erase(std::string("MDC"));
 
 	    // point the pnts arguments to the internal point data
 	    pnts = (struct rt_pnts_internal *)intern.idb_ptr;
@@ -330,28 +321,11 @@ dp_tessellate(struct rt_bot_internal **obot, struct bu_vls *method_flag, struct 
 	}
     }
 
-
-    if (mset.find(std::string("CM")) != mset.end()) {
-	// The continuation method (CM) is a marching algorithm using an
-	// inside/outside test, building from a seed point on the surface.
-	//
-	// CM needs some awareness of properties of the solid, so we use the
-	// raytrace interrogation to build up that data.  Unlike the sampling
-	// methods we don't make direct use of the points beyond using one of
-	// them for the seed, but we do use information collected during the
-	// sampling process.
-	if (!pnts) {
-	    pnts = _tess_pnts_sample(dp->d_namep, dbip, s);
-	    free_pnts = (pnts != NULL);
-	}
-	if (pnts) {
-	    s->cm_options.sync(s->pnt_options);
-	    struct pnt_normal *seed = BU_LIST_PNEXT(pnt_normal, (struct pnt_normal *)pnts->point);
-	    ret = continuation_mesh(obot, dbip, dp->d_namep, s, seed->v);
-	    if (ret == BRLCAD_OK) {
-		bu_vls_sprintf(method_flag, "CM");
-		goto dp_tessellate_cleanup;
-	    }
+    if (mset.find(std::string("MDC")) != mset.end()) {
+	ret = mdc_mesh(obot, dbip, dp->d_namep, s);
+	if (ret == BRLCAD_OK) {
+	    bu_vls_sprintf(method_flag, "MDC");
+	    goto dp_tessellate_cleanup;
 	}
     }
 
@@ -412,13 +386,13 @@ void
 print_methods_info()
 {
     nmg_opts nopts;
-    cm_opts cmopts;
+    mdc_opts mdcopts;
     spsr_opts spsropts;
 
     std::string info;
     info.append(nopts.print_options_help());
     info.append(std::string("\n"));
-    info.append(cmopts.print_options_help());
+    info.append(mdcopts.print_options_help());
     info.append(std::string("\n"));
     info.append(spsropts.print_options_help());
     fprintf(stdout, "%s\n", info.c_str());
@@ -427,7 +401,7 @@ print_methods_info()
 void
 print_tess_methods()
 {
-    fprintf(stdout, "NMG CM SPSR");
+    fprintf(stdout, "NMG MDC SPSR\n");
 }
 
 static int
@@ -459,7 +433,6 @@ facetize_server_request(struct ged *gedp, struct db_i *result_dbip,
     method_setup(&options);
     if (request.primitive.point_limit > 0) {
 	options.pnt_options.max_pnts = request.primitive.point_limit;
-	options.cm_options.max_pnts = request.primitive.point_limit;
 	options.spsr_options.max_pnts = request.primitive.point_limit;
     }
 
