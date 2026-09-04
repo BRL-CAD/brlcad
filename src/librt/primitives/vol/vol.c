@@ -764,7 +764,7 @@ get_vol_data(struct rt_vol_internal *vip, const struct db_i *dbip)
 
     if (dbip)
 	bu_log("%s", dbip->dbi_filename);
-    return 0; //temporary
+    return 1;
 }
 
 C_DECL int
@@ -1001,6 +1001,14 @@ rt_vol_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     vip = (struct rt_vol_internal *)ip->idb_ptr;
     RT_VOL_CK_MAGIC(vip);
+
+    if (!vip->map &&
+	(get_vol_data(vip, rtip ? rtip->rti_dbip : NULL) != 0 || !vip->map))
+    {
+	bu_log("vol(%s): data source '%s' is unavailable\n", stp->st_name,
+		vip->name);
+	return 1;
+    }
 
     BU_GET(volp, struct rt_vol_specific);
     volp->vol_i = *vip;		/* struct copy */
