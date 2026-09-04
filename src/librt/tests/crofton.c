@@ -92,6 +92,41 @@ verify_crofton_estimates(void)
     }
 
     {
+	const double full_height = 20.0;
+	const double major_radius = 5.0;
+	const double minor_radius = 3.0;
+	const double neck_base_ratio = 0.4;
+
+	struct rt_hyp_internal hyp;
+	memset(&hyp, 0, sizeof(hyp));
+	hyp.hyp_magic = RT_HYP_INTERNAL_MAGIC;
+	VSET(hyp.hyp_Vi, 0, 0, 0);
+	VSET(hyp.hyp_Hi, 0, 0, full_height);
+	VSET(hyp.hyp_A, major_radius, 0, 0);
+	hyp.hyp_b = minor_radius;
+	hyp.hyp_bnr = neck_base_ratio;
+
+	struct rt_db_internal ip;
+	RT_DB_INTERNAL_INIT(&ip);
+	ip.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	ip.idb_minor_type = ID_HYP;
+	ip.idb_type = ID_HYP;
+	ip.idb_ptr = &hyp;
+	ip.idb_meth = &OBJ[ID_HYP];
+
+	double exact_volume = M_PI * major_radius * minor_radius * full_height *
+	    (1.0 + 2.0 * neck_base_ratio * neck_base_ratio) / 3.0;
+	fastf_t reported_volume = 0.0;
+	ip.idb_meth->ft_volume(&reported_volume, &ip);
+	double volume_error = rel_err(reported_volume, exact_volume) * 100.0;
+	printf("  %-42s  analytic_formula_err=%.12f%%  [%s]\n",
+	       "HYP (rt_hyp_volume)", volume_error,
+	       (volume_error <= 1.0e-9) ? "OK" : "FORMULA-FAIL");
+	if (volume_error > 1.0e-9)
+	    failures++;
+    }
+
+    {
 	struct rt_tgc_internal tgc;
 	memset(&tgc, 0, sizeof(tgc));
 	tgc.magic = RT_TGC_INTERNAL_MAGIC;

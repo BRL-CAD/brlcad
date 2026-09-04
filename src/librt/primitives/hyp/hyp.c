@@ -1718,8 +1718,13 @@ rt_hyp_volume(fastf_t *volume, const struct rt_db_internal *ip)
 	RT_HYP_CK_MAGIC(hip);
 
 	hyp = hyp_internal_to_specific(hip);
+	/* Cross-sectional area grows quadratically from the neck at z=0 to
+	 * both end caps.  hyp_Hmag is the half-height, so integrating from
+	 * -hyp_Hmag to +hyp_Hmag gives a factor of 1/3 for the quadratic
+	 * term. */
 	*volume = M_2PI * hyp->hyp_r1 * hyp->hyp_r2 * hyp->hyp_Hmag *
-	    (1 + hyp->hyp_Hmag * hyp->hyp_Hmag * hyp->hyp_c * hyp->hyp_c / (12 * hyp->hyp_r1 * hyp->hyp_r1));
+	    (1 + hyp->hyp_Hmag * hyp->hyp_Hmag * hyp->hyp_c * hyp->hyp_c /
+	     (3 * hyp->hyp_r1 * hyp->hyp_r1));
 	bu_free(hyp, "hyp volume");
     }
 }
