@@ -113,6 +113,46 @@ make_tor(struct rt_db_internal *intern, const point_t center, const vect_t norma
 }
 
 
+static void
+make_tgc(struct rt_db_internal *intern, int type, const point_t v,
+	 const vect_t h, const vect_t a, const vect_t b,
+	 const vect_t c, const vect_t d)
+{
+    struct rt_tgc_internal *tgc;
+
+    RT_DB_INTERNAL_INIT(intern);
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern->idb_minor_type = type;
+    intern->idb_meth = &OBJ[type];
+    BU_ALLOC(intern->idb_ptr, struct rt_tgc_internal);
+    tgc = (struct rt_tgc_internal *)intern->idb_ptr;
+    tgc->magic = RT_TGC_INTERNAL_MAGIC;
+    VMOVE(tgc->v, v);
+    VMOVE(tgc->h, h);
+    VMOVE(tgc->a, a);
+    VMOVE(tgc->b, b);
+    VMOVE(tgc->c, c);
+    VMOVE(tgc->d, d);
+}
+
+
+static void
+make_arb(struct rt_db_internal *intern, const point_t points[8])
+{
+    struct rt_arb_internal *arb;
+
+    RT_DB_INTERNAL_INIT(intern);
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern->idb_minor_type = ID_ARB8;
+    intern->idb_meth = &OBJ[ID_ARB8];
+    BU_ALLOC(intern->idb_ptr, struct rt_arb_internal);
+    arb = (struct rt_arb_internal *)intern->idb_ptr;
+    arb->magic = RT_ARB_INTERNAL_MAGIC;
+    for (size_t i = 0; i < 8; i++)
+	VMOVE(arb->pt[i], points[i]);
+}
+
+
 static int
 make_transform_output(struct rt_db_internal *output,
 		      const struct rt_db_internal *input)
@@ -143,6 +183,21 @@ make_transform_output(struct rt_db_internal *output,
 	    BU_ALLOC(output->idb_ptr, struct rt_tor_internal);
 	    tor = (struct rt_tor_internal *)output->idb_ptr;
 	    tor->magic = RT_TOR_INTERNAL_MAGIC;
+	    return 0;
+	}
+	case ID_TGC:
+	case ID_REC: {
+	    struct rt_tgc_internal *tgc;
+	    BU_ALLOC(output->idb_ptr, struct rt_tgc_internal);
+	    tgc = (struct rt_tgc_internal *)output->idb_ptr;
+	    tgc->magic = RT_TGC_INTERNAL_MAGIC;
+	    return 0;
+	}
+	case ID_ARB8: {
+	    struct rt_arb_internal *arb;
+	    BU_ALLOC(output->idb_ptr, struct rt_arb_internal);
+	    arb = (struct rt_arb_internal *)output->idb_ptr;
+	    arb->magic = RT_ARB_INTERNAL_MAGIC;
 	    return 0;
 	}
 	case ID_BOT:
@@ -232,6 +287,76 @@ same_tor_geometry(const struct rt_db_internal *a,
     VUNITIZE(anormal);
     VUNITIZE(bnormal);
     return near_value(fabs(VDOT(anormal, bnormal)), 1.0);
+}
+
+
+static void
+tgc_section(point_t center, fastf_t shape[9],
+	    const struct rt_tgc_internal *tgc, fastf_t parameter)
+{
+    vect_t axes[2];
+
+    VJOIN1(center, tgc->v, parameter, tgc->h);
+    VBLEND2(axes[0], 1.0 - parameter, tgc->a, parameter, tgc->c);
+    VBLEND2(axes[1], 1.0 - parameter, tgc->b, parameter, tgc->d);
+    for (size_t row = 0; row < 3; row++) {
+	for (size_t column = 0; column < 3; column++) {
+	    shape[3 * row + column] =
+		axes[0][row] * axes[0][column] +
+		axes[1][row] * axes[1][column];
+	}
+    }
+}
+
+
+static int
+same_tgc_direction(const struct rt_tgc_internal *a,
+		   const struct rt_tgc_internal *b, int reverse_b)
+{
+    const fastf_t parameters[] = {0.0, 0.5, 1.0};
+
+    for (size_t sample = 0; sample < 3; sample++) {
+	point_t acenter, bcenter;
+	fastf_t ashape[9], bshape[9];
+	fastf_t bparameter = reverse_b ? 1.0 - parameters[sample] : parameters[sample];
+
+	tgc_section(acenter, ashape, a, parameters[sample]);
+	tgc_section(bcenter, bshape, b, bparameter);
+	if (!near_vector(acenter, bcenter))
+	    return 0;
+	for (size_t i = 0; i < 9; i++) {
+	    if (!near_value(ashape[i], bshape[i]))
+		return 0;
+	}
+    }
+
+    return 1;
+}
+
+
+static int
+same_tgc_geometry(const struct rt_db_internal *a,
+		  const struct rt_db_internal *b)
+{
+    const struct rt_tgc_internal *atgc = (const struct rt_tgc_internal *)a->idb_ptr;
+    const struct rt_tgc_internal *btgc = (const struct rt_tgc_internal *)b->idb_ptr;
+
+    return same_tgc_direction(atgc, btgc, 0) || same_tgc_direction(atgc, btgc, 1);
+}
+
+
+static int
+same_arb_geometry(const struct rt_db_internal *a,
+		  const struct rt_db_internal *b)
+{
+    const struct rt_arb_internal *aarb = (const struct rt_arb_internal *)a->idb_ptr;
+    const struct rt_arb_internal *barb = (const struct rt_arb_internal *)b->idb_ptr;
+
+    for (size_t i = 0; i < 8; i++) {
+	if (!near_vector(aarb->pt[i], barb->pt[i]))
+	    return 0;
+    }
+    return 1;
 }
 
 
@@ -461,6 +586,330 @@ cleanup:
 }
 
 
+static int
+test_tgc_mode(int type, enum rt_canonicalize_mode mode)
+{
+    const struct bn_tol tol = BN_TOL_INIT_TOL;
+    const point_t v = {3.0, -4.0, 5.0};
+    const vect_t tgc_h = {2.0, 1.0, 6.0};
+    const vect_t rec_h = {0.0, 0.0, 6.0};
+    const vect_t a = {0.0, 4.0, 0.0};
+    const vect_t b = {-2.0, 0.0, 0.0};
+    const vect_t tgc_c = {0.0, 2.0, 0.0};
+    const vect_t tgc_d = {-3.0, 0.0, 0.0};
+    const vect_t rec_c = {0.0, 4.0, 0.0};
+    const vect_t rec_d = {-2.0, 0.0, 0.0};
+    const vect_t *h = (type == ID_REC) ? &rec_h : &tgc_h;
+    const vect_t *c = (type == ID_REC) ? &rec_c : &tgc_c;
+    const vect_t *d = (type == ID_REC) ? &rec_d : &tgc_d;
+    struct rt_db_internal input;
+    struct rt_db_internal canonical;
+    struct rt_db_internal reconstructed;
+    struct rt_db_internal recanonical;
+    const struct rt_tgc_internal *ctgc;
+    mat_t placement;
+    mat_t second_placement;
+    fastf_t scale = 1.0;
+    fastf_t expected_h[3];
+    fastf_t expected_a, expected_b, expected_c, expected_d;
+    int failed = 0;
+
+    make_tgc(&input, type, v, *h, a, b, *c, *d);
+    RT_DB_INTERNAL_INIT(&canonical);
+    RT_DB_INTERNAL_INIT(&recanonical);
+    if (rt_obj_canonicalize(&canonical, placement, &input, &tol, mode) != RT_CANONICALIZE_OK) {
+	bu_log("%s mode %d canonicalization failed\n", type == ID_REC ? "REC" : "TGC", (int)mode);
+	failed = 1;
+	goto cleanup;
+    }
+
+    ctgc = (const struct rt_tgc_internal *)canonical.idb_ptr;
+    if (mode == RT_CANONICALIZE_AFFINE) {
+	VSET(expected_h, 0.0, 0.0, 1.0);
+	expected_a = 1.0;
+	expected_b = 1.0;
+	if (type == ID_REC) {
+	    expected_c = 1.0;
+	    expected_d = 1.0;
+	} else {
+	    expected_c = 1.5;
+	    expected_d = 0.5;
+	}
+    } else {
+	if (mode == RT_CANONICALIZE_SIMILARITY)
+	    scale = (type == ID_REC) ? 6.0 : sqrt(41.0);
+	if (type == ID_REC) {
+	    VSET(expected_h, 0.0, 0.0, 6.0 / scale);
+	    expected_a = 4.0 / scale;
+	    expected_b = 2.0 / scale;
+	    expected_c = 4.0 / scale;
+	    expected_d = 2.0 / scale;
+	} else {
+	    VSET(expected_h, 2.0 / scale, 1.0 / scale, 6.0 / scale);
+	    expected_a = 2.0 / scale;
+	    expected_b = 4.0 / scale;
+	    expected_c = 3.0 / scale;
+	    expected_d = 2.0 / scale;
+	}
+    }
+
+    if (!VNEAR_ZERO(ctgc->v, TEST_EPSILON) ||
+	!near_vector(ctgc->h, expected_h) ||
+	!near_value(ctgc->a[X], expected_a) ||
+	!near_value(ctgc->b[Y], expected_b) ||
+	!near_value(ctgc->c[X], expected_c) ||
+	!near_value(ctgc->d[Y], expected_d) ||
+	!near_value(ctgc->a[Y], 0.0) || !near_value(ctgc->a[Z], 0.0) ||
+	!near_value(ctgc->b[X], 0.0) || !near_value(ctgc->b[Z], 0.0) ||
+	!near_value(ctgc->c[Y], 0.0) || !near_value(ctgc->c[Z], 0.0) ||
+	!near_value(ctgc->d[X], 0.0) || !near_value(ctgc->d[Z], 0.0)) {
+	bu_log("%s mode %d produced a non-canonical result\n",
+	    type == ID_REC ? "REC" : "TGC", (int)mode);
+	failed = 1;
+	goto cleanup;
+    }
+
+    if (make_transform_output(&reconstructed, &canonical)) {
+	failed = 1;
+	goto cleanup;
+    }
+    if (canonical.idb_meth->ft_mat(&reconstructed, placement, &canonical) != BRLCAD_OK ||
+	!same_tgc_geometry(&input, &reconstructed)) {
+	bu_log("%s mode %d placement did not reconstruct the input\n",
+	    type == ID_REC ? "REC" : "TGC", (int)mode);
+	failed = 1;
+    }
+    rt_db_free_internal(&reconstructed);
+
+    if (rt_obj_canonicalize(&recanonical, second_placement, &canonical, &tol, mode) != RT_CANONICALIZE_OK ||
+	!same_tgc_geometry(&canonical, &recanonical) || !matrix_is_identity(second_placement)) {
+	bu_log("%s mode %d canonicalization is not idempotent\n",
+	    type == ID_REC ? "REC" : "TGC", (int)mode);
+	failed = 1;
+    }
+
+cleanup:
+    if (recanonical.idb_ptr)
+	rt_db_free_internal(&recanonical);
+    if (canonical.idb_ptr)
+	rt_db_free_internal(&canonical);
+    rt_db_free_internal(&input);
+    return failed;
+}
+
+
+static int
+test_tgc_affine_invariance(void)
+{
+    const struct bn_tol tol = BN_TOL_INIT_TOL;
+    const point_t v = {3.0, -4.0, 5.0};
+    const vect_t h = {2.0, 1.0, 6.0};
+    const vect_t a = {0.0, 4.0, 0.0};
+    const vect_t b = {-2.0, 0.0, 0.0};
+    const vect_t c = {0.0, 2.0, 0.0};
+    const vect_t d = {-3.0, 0.0, 0.0};
+    struct rt_db_internal input;
+    struct rt_db_internal transformed;
+    struct rt_db_internal input_canonical;
+    struct rt_db_internal transformed_canonical;
+    mat_t transform;
+    mat_t input_placement;
+    mat_t transformed_placement;
+    int failed = 0;
+
+    make_tgc(&input, ID_TGC, v, h, a, b, c, d);
+    if (make_transform_output(&transformed, &input)) {
+	rt_db_free_internal(&input);
+	return 1;
+    }
+    MAT_IDN(transform);
+    transform[0] = 3.0;
+    transform[5] = 0.5;
+    transform[10] = 2.0;
+    MAT_DELTAS(transform, 7.0, -2.0, 9.0);
+    if (input.idb_meth->ft_mat(&transformed, transform, &input) != BRLCAD_OK) {
+	bu_log("TGC affine invariance input transform failed\n");
+	failed = 1;
+	goto cleanup_inputs;
+    }
+
+    RT_DB_INTERNAL_INIT(&input_canonical);
+    RT_DB_INTERNAL_INIT(&transformed_canonical);
+    if (rt_obj_canonicalize(&input_canonical, input_placement, &input, &tol,
+	    RT_CANONICALIZE_AFFINE) != RT_CANONICALIZE_OK ||
+	rt_obj_canonicalize(&transformed_canonical, transformed_placement,
+	    &transformed, &tol, RT_CANONICALIZE_AFFINE) != RT_CANONICALIZE_OK ||
+	!same_tgc_direction(
+	    (const struct rt_tgc_internal *)input_canonical.idb_ptr,
+	    (const struct rt_tgc_internal *)transformed_canonical.idb_ptr, 0)) {
+	bu_log("TGC affine canonicalization is not invariant under affine placement\n");
+	failed = 1;
+    }
+
+    if (transformed_canonical.idb_ptr)
+	rt_db_free_internal(&transformed_canonical);
+    if (input_canonical.idb_ptr)
+	rt_db_free_internal(&input_canonical);
+cleanup_inputs:
+    rt_db_free_internal(&transformed);
+    rt_db_free_internal(&input);
+    return failed;
+}
+
+
+static int
+test_tgc_degenerate_tip(void)
+{
+    const struct bn_tol tol = BN_TOL_INIT_TOL;
+    const point_t v = VINIT_ZERO;
+    const vect_t h = {1.0, 0.5, 7.0};
+    const vect_t a = {4.0, 0.0, 0.0};
+    const vect_t b = {0.0, 2.0, 0.0};
+    const vect_t tip = VINIT_ZERO;
+    struct rt_db_internal input;
+    struct rt_db_internal canonical;
+    struct rt_db_internal reconstructed;
+    mat_t placement;
+    int failed = 0;
+
+    make_tgc(&input, ID_TGC, v, h, a, b, tip, tip);
+    RT_DB_INTERNAL_INIT(&canonical);
+    if (rt_obj_canonicalize(&canonical, placement, &input, &tol,
+	    RT_CANONICALIZE_AFFINE) != RT_CANONICALIZE_OK) {
+	bu_log("degenerate-tip TGC canonicalization failed\n");
+	failed = 1;
+	goto cleanup;
+    }
+
+    {
+	const struct rt_tgc_internal *ctgc =
+	    (const struct rt_tgc_internal *)canonical.idb_ptr;
+	if (!VNEAR_ZERO(ctgc->c, TEST_EPSILON) ||
+	    !VNEAR_ZERO(ctgc->d, TEST_EPSILON)) {
+	    bu_log("degenerate-tip TGC did not retain its tip\n");
+	    failed = 1;
+	}
+    }
+
+    if (make_transform_output(&reconstructed, &canonical)) {
+	failed = 1;
+	goto cleanup;
+    }
+    if (canonical.idb_meth->ft_mat(&reconstructed, placement, &canonical) != BRLCAD_OK ||
+	!same_tgc_geometry(&input, &reconstructed)) {
+	bu_log("degenerate-tip TGC placement did not reconstruct the input\n");
+	failed = 1;
+    }
+    rt_db_free_internal(&reconstructed);
+
+cleanup:
+    if (canonical.idb_ptr)
+	rt_db_free_internal(&canonical);
+    rt_db_free_internal(&input);
+    return failed;
+}
+
+
+static int
+test_arb_mode(enum rt_canonicalize_mode mode)
+{
+    const struct bn_tol tol = BN_TOL_INIT_TOL;
+    const point_t points[8] = {
+	{0.0, 0.0, 0.0},
+	{4.0, 0.0, 0.0},
+	{4.0, 3.0, 0.0},
+	{0.0, 3.0, 0.0},
+	{0.0, 0.0, 2.0},
+	{4.0, 0.0, 2.0},
+	{4.0, 3.0, 2.0},
+	{0.0, 3.0, 2.0}
+    };
+    struct rt_db_internal base;
+    struct rt_db_internal input;
+    struct rt_db_internal base_canonical;
+    struct rt_db_internal canonical;
+    struct rt_db_internal reconstructed;
+    struct rt_db_internal recanonical;
+    mat_t transform;
+    mat_t base_placement;
+    mat_t placement;
+    mat_t second_placement;
+    int failed = 0;
+
+    make_arb(&base, points);
+    if (make_transform_output(&input, &base)) {
+	rt_db_free_internal(&base);
+	return 1;
+    }
+    MAT_IDN(transform);
+    transform[0] = 2.0;
+    transform[1] = 0.3;
+    transform[2] = 0.2;
+    transform[4] = 0.1;
+    transform[5] = 1.5;
+    transform[6] = 0.4;
+    transform[8] = 0.2;
+    transform[9] = 0.1;
+    transform[10] = 1.7;
+    MAT_DELTAS(transform, 5.0, -7.0, 11.0);
+    if (base.idb_meth->ft_mat(&input, transform, &base) != BRLCAD_OK) {
+	bu_log("ARB input transform failed\n");
+	failed = 1;
+	goto cleanup_inputs;
+    }
+
+    RT_DB_INTERNAL_INIT(&base_canonical);
+    RT_DB_INTERNAL_INIT(&canonical);
+    RT_DB_INTERNAL_INIT(&recanonical);
+    if (rt_obj_canonicalize(&canonical, placement, &input, &tol, mode) !=
+	RT_CANONICALIZE_OK) {
+	bu_log("ARB mode %d canonicalization failed\n", (int)mode);
+	failed = 1;
+	goto cleanup_canonical;
+    }
+
+    if (make_transform_output(&reconstructed, &canonical)) {
+	failed = 1;
+	goto cleanup_canonical;
+    }
+    if (canonical.idb_meth->ft_mat(&reconstructed, placement, &canonical) != BRLCAD_OK ||
+	!same_arb_geometry(&input, &reconstructed)) {
+	bu_log("ARB mode %d placement did not reconstruct the input\n", (int)mode);
+	failed = 1;
+    }
+    rt_db_free_internal(&reconstructed);
+
+    if (rt_obj_canonicalize(&recanonical, second_placement, &canonical, &tol,
+	    mode) != RT_CANONICALIZE_OK ||
+	!same_arb_geometry(&canonical, &recanonical) ||
+	!matrix_is_identity(second_placement)) {
+	bu_log("ARB mode %d canonicalization is not idempotent\n", (int)mode);
+	failed = 1;
+    }
+
+    if (mode == RT_CANONICALIZE_AFFINE) {
+	if (rt_obj_canonicalize(&base_canonical, base_placement, &base, &tol,
+		RT_CANONICALIZE_AFFINE) != RT_CANONICALIZE_OK ||
+	    !same_arb_geometry(&base_canonical, &canonical)) {
+	    bu_log("ARB affine canonicalization is not invariant under affine placement\n");
+	    failed = 1;
+	}
+    }
+
+cleanup_canonical:
+    if (recanonical.idb_ptr)
+	rt_db_free_internal(&recanonical);
+    if (canonical.idb_ptr)
+	rt_db_free_internal(&canonical);
+    if (base_canonical.idb_ptr)
+	rt_db_free_internal(&base_canonical);
+cleanup_inputs:
+    rt_db_free_internal(&input);
+    rt_db_free_internal(&base);
+    return failed;
+}
+
+
 static void
 make_bot(struct rt_db_internal *intern)
 {
@@ -608,10 +1057,43 @@ test_errors(void)
     }
     rt_db_free_internal(&invalid);
 
+    {
+	const vect_t h = {1.0, 1.0, 0.0};
+	const vect_t tgc_a = {2.0, 0.0, 0.0};
+	const vect_t tgc_b = {0.0, 3.0, 0.0};
+	const vect_t tgc_c = {1.0, 0.0, 0.0};
+	const vect_t tgc_d = {0.0, 1.5, 0.0};
+
+	make_tgc(&invalid, ID_TGC, center, h, tgc_a, tgc_b, tgc_c, tgc_d);
+	if (rt_obj_canonicalize(&output, placement, &invalid, &tol,
+		RT_CANONICALIZE_AFFINE) != RT_CANONICALIZE_ERROR || output.idb_ptr) {
+	    bu_log("invalid TGC was not rejected cleanly\n");
+	    failed = 1;
+	}
+	rt_db_free_internal(&invalid);
+    }
+
+    {
+	const point_t invalid_arb[8] = {
+	    {0.0, 0.0, 0.0}, {4.0, 0.0, 0.0},
+	    {4.0, 3.0, 0.5}, {0.0, 3.0, 0.0},
+	    {0.0, 0.0, 2.0}, {4.0, 0.0, 2.0},
+	    {4.0, 3.0, 2.0}, {0.0, 3.0, 2.0}
+	};
+
+	make_arb(&invalid, invalid_arb);
+	if (rt_obj_canonicalize(&output, placement, &invalid, &tol,
+		RT_CANONICALIZE_AFFINE) != RT_CANONICALIZE_ERROR || output.idb_ptr) {
+	    bu_log("invalid ARB was not rejected cleanly\n");
+	    failed = 1;
+	}
+	rt_db_free_internal(&invalid);
+    }
+
     RT_DB_INTERNAL_INIT(&unsupported);
     unsupported.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-    unsupported.idb_minor_type = ID_ARB8;
-    unsupported.idb_meth = &OBJ[ID_ARB8];
+    unsupported.idb_minor_type = ID_ARS;
+    unsupported.idb_meth = &OBJ[ID_ARS];
     if (rt_obj_canonicalize(&output, placement, &unsupported, &tol,
 	    RT_CANONICALIZE_RIGID) != RT_CANONICALIZE_UNSUPPORTED || output.idb_ptr) {
 	bu_log("unsupported primitive did not report unsupported cleanly\n");
@@ -646,6 +1128,17 @@ main(int UNUSED(argc), const char *argv[])
     failures += test_tor_mode(RT_CANONICALIZE_RIGID, 5.0, 2.0);
     failures += test_tor_mode(RT_CANONICALIZE_SIMILARITY, 1.0, 0.4);
     failures += test_tor_mode(RT_CANONICALIZE_AFFINE, 1.0, 0.4);
+    failures += test_tgc_mode(ID_TGC, RT_CANONICALIZE_RIGID);
+    failures += test_tgc_mode(ID_TGC, RT_CANONICALIZE_SIMILARITY);
+    failures += test_tgc_mode(ID_TGC, RT_CANONICALIZE_AFFINE);
+    failures += test_tgc_mode(ID_REC, RT_CANONICALIZE_RIGID);
+    failures += test_tgc_mode(ID_REC, RT_CANONICALIZE_SIMILARITY);
+    failures += test_tgc_mode(ID_REC, RT_CANONICALIZE_AFFINE);
+    failures += test_tgc_affine_invariance();
+    failures += test_tgc_degenerate_tip();
+    failures += test_arb_mode(RT_CANONICALIZE_RIGID);
+    failures += test_arb_mode(RT_CANONICALIZE_SIMILARITY);
+    failures += test_arb_mode(RT_CANONICALIZE_AFFINE);
     failures += test_bot_mode(RT_CANONICALIZE_RIGID);
     failures += test_bot_mode(RT_CANONICALIZE_SIMILARITY);
     failures += test_bot_mode(RT_CANONICALIZE_AFFINE);

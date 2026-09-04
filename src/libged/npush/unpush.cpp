@@ -239,6 +239,26 @@ canonical_bucket(const canonical_object &object, const struct bn_tol *tol)
 		<< ':' << bucket_value(tor->r_h, tol);
 	    break;
 	}
+	case ID_TGC:
+	case ID_REC: {
+	    const auto *tgc = static_cast<const struct rt_tgc_internal *>(object.canonical.idb_ptr);
+	    const fastf_t *vectors[] = {tgc->h, tgc->a, tgc->b, tgc->c, tgc->d};
+	    for (const fastf_t *vector : vectors) {
+		key << ':' << bucket_value(vector[X], tol)
+		    << ':' << bucket_value(vector[Y], tol)
+		    << ':' << bucket_value(vector[Z], tol);
+	    }
+	    break;
+	}
+	case ID_ARB8: {
+	    const auto *arb = static_cast<const struct rt_arb_internal *>(object.canonical.idb_ptr);
+	    for (const point_t &point : arb->pt) {
+		key << ':' << bucket_value(point[X], tol)
+		    << ':' << bucket_value(point[Y], tol)
+		    << ':' << bucket_value(point[Z], tol);
+	    }
+	    break;
+	}
 	case ID_BOT: {
 	    const auto *bot = static_cast<const struct rt_bot_internal *>(object.canonical.idb_ptr);
 	    unsigned long long hash = bg_trimesh_hash(
@@ -386,6 +406,26 @@ canonical_geometry_equal(const struct rt_db_internal *a,
 		VNEAR_EQUAL(ator->h, btor->h, tol->perp) &&
 		near_value(ator->r_a, btor->r_a, tol->dist) &&
 		near_value(ator->r_h, btor->r_h, tol->dist);
+	}
+	case ID_TGC:
+	case ID_REC: {
+	    const auto *atgc = static_cast<const struct rt_tgc_internal *>(a->idb_ptr);
+	    const auto *btgc = static_cast<const struct rt_tgc_internal *>(b->idb_ptr);
+	    return VNEAR_EQUAL(atgc->v, btgc->v, tol->dist) &&
+		VNEAR_EQUAL(atgc->h, btgc->h, tol->dist) &&
+		VNEAR_EQUAL(atgc->a, btgc->a, tol->dist) &&
+		VNEAR_EQUAL(atgc->b, btgc->b, tol->dist) &&
+		VNEAR_EQUAL(atgc->c, btgc->c, tol->dist) &&
+		VNEAR_EQUAL(atgc->d, btgc->d, tol->dist);
+	}
+	case ID_ARB8: {
+	    const auto *aarb = static_cast<const struct rt_arb_internal *>(a->idb_ptr);
+	    const auto *barb = static_cast<const struct rt_arb_internal *>(b->idb_ptr);
+	    for (size_t i = 0; i < 8; i++) {
+		if (!VNEAR_EQUAL(aarb->pt[i], barb->pt[i], tol->dist))
+		    return false;
+	    }
+	    return true;
 	}
 	case ID_BOT:
 	    return bot_payload_equal(static_cast<const struct rt_bot_internal *>(a->idb_ptr),
@@ -563,6 +603,7 @@ ged_unpush_core(struct ged *gedp, int argc, const char *argv[])
     std::map<std::string, std::vector<size_t>> buckets;
     std::map<int, size_t> unsupported_types;
     std::map<int, size_t> failed_types;
+    std::map<int, std::vector<std::string>> failed_objects;
     size_t unsupported = 0;
     size_t failures = 0;
     std::vector<struct directory *> primitive_objects(walk.primitives.begin(), walk.primitives.end());
@@ -580,6 +621,7 @@ ged_unpush_core(struct ged *gedp, int argc, const char *argv[])
 	if (object.status != RT_CANONICALIZE_OK) {
 	    failures++;
 	    failed_types[primitive->d_minor_type]++;
+	    failed_objects[primitive->d_minor_type].push_back(primitive->d_namep);
 	    continue;
 	}
 
@@ -672,6 +714,10 @@ ged_unpush_core(struct ged *gedp, int argc, const char *argv[])
 		OBJ[type_count.first].ft_label : "unknown";
 	    bu_vls_printf(gedp->ged_result_str, "  failed %s: %zu\n",
 		label, type_count.second);
+	    bu_vls_printf(gedp->ged_result_str, "    objects:");
+	    for (const std::string &name : failed_objects[type_count.first])
+		bu_vls_printf(gedp->ged_result_str, " %s", name.c_str());
+	    bu_vls_putc(gedp->ged_result_str, '\n');
 	}
 	for (size_t group_index = 0; group_index < groups.size(); group_index++) {
 	    bu_vls_printf(gedp->ged_result_str, "  group %zu:", group_index + 1);

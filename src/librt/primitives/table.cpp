@@ -354,7 +354,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_PERTURB_CAST(rt_tgc_perturb), /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
 	RTFUNCTAB_FUNC_VALIDATE_CAST(rt_tgc_functab_validate), /* validate */
-	NULL /* canonicalize */
+	RTFUNCTAB_FUNC_CANONICALIZE_CAST(rt_tgc_canonicalize) /* canonicalize */
     },
 
     {
@@ -460,7 +460,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_PERTURB_CAST(rt_arb_perturb), /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
 	RTFUNCTAB_FUNC_VALIDATE_CAST(rt_arb_functab_validate), /* validate */
-	NULL /* canonicalize */
+	RTFUNCTAB_FUNC_CANONICALIZE_CAST(rt_arb_canonicalize) /* canonicalize */
     },
 
     {
@@ -619,7 +619,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_PERTURB_CAST(rt_tgc_perturb), /* perturb - REC shares rt_tgc_internal */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
 	NULL, /* validate */
-	NULL /* canonicalize */
+	RTFUNCTAB_FUNC_CANONICALIZE_CAST(rt_tgc_canonicalize) /* canonicalize */
     },
 
     {

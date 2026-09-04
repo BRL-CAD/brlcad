@@ -1757,6 +1757,248 @@ rt_tgc_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
 }
 
 
+static void
+tgc_swap_vectors(vect_t a, vect_t b)
+{
+    vect_t tmp;
+
+    VMOVE(tmp, a);
+    VMOVE(a, b);
+    VMOVE(b, tmp);
+}
+
+
+static int
+tgc_ratio_pair_greater(fastf_t a0, fastf_t a1, fastf_t b0, fastf_t b1,
+		       fastf_t tolerance)
+{
+    fastf_t ahi = fmax(a0, a1);
+    fastf_t alo = fmin(a0, a1);
+    fastf_t bhi = fmax(b0, b1);
+    fastf_t blo = fmin(b0, b1);
+
+    if (ahi > bhi + tolerance)
+	return 1;
+    if (bhi > ahi + tolerance)
+	return 0;
+    return alo > blo + tolerance;
+}
+
+
+C_DECL int
+rt_tgc_canonicalize(struct rt_db_internal *canonical,
+		    mat_t canonical_to_input,
+		    const struct rt_db_internal *input,
+		    const struct bn_tol *tol,
+		    enum rt_canonicalize_mode mode)
+{
+    const struct rt_tgc_internal *tip;
+    struct rt_tgc_internal *ctip;
+    point_t v;
+    vect_t h, a, b, c, d;
+    vect_t u, w, normal;
+    fastf_t mag_h, mag_a, mag_b, mag_c, mag_d;
+    fastf_t ratio_c, ratio_d;
+    fastf_t h_a, h_b, h_w;
+    fastf_t uniform_scale = 1.0;
+    fastf_t ratio_tolerance;
+    int a_sign = 1;
+    int b_sign = 1;
+    int a_projection_zero;
+    int b_projection_zero;
+    int reverse_ends = 0;
+
+    if (!canonical || !canonical_to_input || !input || !tol)
+	return RT_CANONICALIZE_ERROR;
+    if (mode < RT_CANONICALIZE_RIGID || mode > RT_CANONICALIZE_AFFINE)
+	return RT_CANONICALIZE_ERROR;
+    if (input->idb_type != ID_TGC && input->idb_type != ID_REC)
+	return RT_CANONICALIZE_ERROR;
+
+    tip = (const struct rt_tgc_internal *)input->idb_ptr;
+    RT_TGC_CK_MAGIC(tip);
+    VMOVE(v, tip->v);
+    VMOVE(h, tip->h);
+    VMOVE(a, tip->a);
+    VMOVE(b, tip->b);
+    VMOVE(c, tip->c);
+    VMOVE(d, tip->d);
+
+    mag_h = MAGNITUDE(h);
+    mag_a = MAGNITUDE(a);
+    mag_b = MAGNITUDE(b);
+    mag_c = MAGNITUDE(c);
+    mag_d = MAGNITUDE(d);
+    if (!isfinite(v[X]) || !isfinite(v[Y]) || !isfinite(v[Z]) ||
+	!isfinite(mag_h) || !isfinite(mag_a) || !isfinite(mag_b) ||
+	!isfinite(mag_c) || !isfinite(mag_d) || mag_h <= tol->dist)
+	return RT_CANONICALIZE_ERROR;
+    if ((mag_a <= tol->dist && mag_c <= tol->dist) ||
+	(mag_b <= tol->dist && mag_d <= tol->dist))
+	return RT_CANONICALIZE_ERROR;
+    if ((mag_a <= tol->dist || mag_b <= tol->dist) &&
+	(mag_c <= tol->dist || mag_d <= tol->dist))
+	return RT_CANONICALIZE_ERROR;
+    if (input->idb_type == ID_REC) {
+	vect_t difference;
+	VSUB2(difference, a, c);
+	if (MAGNITUDE(difference) > tol->dist)
+	    return RT_CANONICALIZE_ERROR;
+	VSUB2(difference, b, d);
+	if (MAGNITUDE(difference) > tol->dist ||
+	    !NEAR_ZERO(VDOT(h, a) / (mag_h * mag_a), tol->perp) ||
+	    !NEAR_ZERO(VDOT(h, b) / (mag_h * mag_b), tol->perp))
+	    return RT_CANONICALIZE_ERROR;
+    }
+
+    /* A complete end supplies the affine basis.  When both ends are
+     * complete, select between the two reciprocal taper descriptions so
+     * reversing an otherwise identical TGC does not change its canonical
+     * form. */
+    ratio_tolerance = fmax(tol->perp, SMALL_FASTF);
+    if (mag_a <= tol->dist || mag_b <= tol->dist) {
+	reverse_ends = 1;
+    } else if (mag_c > tol->dist && mag_d > tol->dist) {
+	fastf_t taper_c = mag_c / mag_a;
+	fastf_t taper_d = mag_d / mag_b;
+	int forward_greater = tgc_ratio_pair_greater(taper_c, taper_d,
+	    1.0 / taper_c, 1.0 / taper_d, ratio_tolerance);
+	int reverse_greater = tgc_ratio_pair_greater(1.0 / taper_c,
+	    1.0 / taper_d, taper_c, taper_d, ratio_tolerance);
+
+	reverse_ends = forward_greater;
+	if (!forward_greater && !reverse_greater &&
+	    mode != RT_CANONICALIZE_AFFINE)
+	    reverse_ends = tgc_ratio_pair_greater(mag_c, mag_d,
+		mag_a, mag_b, tol->dist);
+    }
+    if (reverse_ends) {
+	VADD2(v, v, h);
+	VREVERSE(h, h);
+	tgc_swap_vectors(a, c);
+	tgc_swap_vectors(b, d);
+	mag_a = MAGNITUDE(a);
+	mag_b = MAGNITUDE(b);
+	mag_c = MAGNITUDE(c);
+	mag_d = MAGNITUDE(d);
+    }
+
+    ratio_c = mag_c / mag_a;
+    ratio_d = mag_d / mag_b;
+
+    /* Axis interchange is a parameterization change, not a geometry
+     * change.  Taper ratio is affine-invariant, so use it as the primary
+     * ordering key. */
+    if (ratio_d > ratio_c + ratio_tolerance ||
+	(mode != RT_CANONICALIZE_AFFINE &&
+	 NEAR_EQUAL(ratio_c, ratio_d, ratio_tolerance) &&
+	 mag_b > mag_a + tol->dist)) {
+	tgc_swap_vectors(a, b);
+	tgc_swap_vectors(c, d);
+	{
+	    fastf_t tmp = mag_a;
+	    mag_a = mag_b;
+	    mag_b = tmp;
+	    tmp = mag_c;
+	    mag_c = mag_d;
+	    mag_d = tmp;
+	    tmp = ratio_c;
+	    ratio_c = ratio_d;
+	    ratio_d = tmp;
+	}
+    }
+
+    VSCALE(u, a, 1.0 / mag_a);
+    VSCALE(w, b, 1.0 / mag_b);
+    if (!NEAR_ZERO(VDOT(u, w), tol->perp))
+	return RT_CANONICALIZE_ERROR;
+    if (mag_c > tol->dist && !NEAR_EQUAL(VDOT(u, c) / mag_c, 1.0, tol->perp))
+	return RT_CANONICALIZE_ERROR;
+    if (mag_d > tol->dist && !NEAR_EQUAL(VDOT(w, d) / mag_d, 1.0, tol->perp))
+	return RT_CANONICALIZE_ERROR;
+
+    h_a = VDOT(h, u);
+    h_b = VDOT(h, w);
+    VCROSS(normal, u, w);
+    h_w = VDOT(h, normal);
+    if (fabs(h_w) <= mag_h * tol->perp)
+	return RT_CANONICALIZE_ERROR;
+
+    /* A/C and B/D may each be negated without changing the TGC.  Use the
+     * height projections to resolve those signs without referring to world
+     * coordinates, which keeps the result invariant under placement. */
+    a_projection_zero = fabs(h_a) <= tol->dist;
+    b_projection_zero = fabs(h_b) <= tol->dist;
+    if (!a_projection_zero && h_a < 0.0)
+	a_sign = -1;
+    if (!b_projection_zero && h_b < 0.0)
+	b_sign = -1;
+    if (a_projection_zero && a_sign * b_sign * h_w < 0.0)
+	a_sign = -1;
+    else if (b_projection_zero && a_sign * b_sign * h_w < 0.0)
+	b_sign = -1;
+    if (a_sign < 0)
+	VREVERSE(u, u);
+    if (b_sign < 0)
+	VREVERSE(w, w);
+    VCROSS(normal, u, w);
+
+    MAT_IDN(canonical_to_input);
+    MAT_DELTAS_VEC(canonical_to_input, v);
+    if (mode == RT_CANONICALIZE_AFFINE) {
+	canonical_to_input[0] = u[X] * mag_a;
+	canonical_to_input[4] = u[Y] * mag_a;
+	canonical_to_input[8] = u[Z] * mag_a;
+	canonical_to_input[1] = w[X] * mag_b;
+	canonical_to_input[5] = w[Y] * mag_b;
+	canonical_to_input[9] = w[Z] * mag_b;
+	canonical_to_input[2] = h[X];
+	canonical_to_input[6] = h[Y];
+	canonical_to_input[10] = h[Z];
+    } else {
+	if (mode == RT_CANONICALIZE_SIMILARITY)
+	    uniform_scale = fmax(mag_h, fmax(mag_a, fmax(mag_b, fmax(mag_c, mag_d))));
+	canonical_to_input[0] = u[X];
+	canonical_to_input[4] = u[Y];
+	canonical_to_input[8] = u[Z];
+	canonical_to_input[1] = w[X];
+	canonical_to_input[5] = w[Y];
+	canonical_to_input[9] = w[Z];
+	canonical_to_input[2] = normal[X];
+	canonical_to_input[6] = normal[Y];
+	canonical_to_input[10] = normal[Z];
+	canonical_to_input[15] = 1.0 / uniform_scale;
+	canonical_to_input[3] /= uniform_scale;
+	canonical_to_input[7] /= uniform_scale;
+	canonical_to_input[11] /= uniform_scale;
+    }
+
+    canonical->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    canonical->idb_minor_type = input->idb_minor_type;
+    canonical->idb_meth = &OBJ[input->idb_minor_type];
+    BU_ALLOC(canonical->idb_ptr, struct rt_tgc_internal);
+    ctip = (struct rt_tgc_internal *)canonical->idb_ptr;
+    ctip->magic = RT_TGC_INTERNAL_MAGIC;
+    VSETALL(ctip->v, 0.0);
+    if (mode == RT_CANONICALIZE_AFFINE) {
+	VSET(ctip->h, 0.0, 0.0, 1.0);
+	VSET(ctip->a, 1.0, 0.0, 0.0);
+	VSET(ctip->b, 0.0, 1.0, 0.0);
+	VSET(ctip->c, ratio_c, 0.0, 0.0);
+	VSET(ctip->d, 0.0, ratio_d, 0.0);
+    } else {
+	VSET(ctip->h, VDOT(h, u) / uniform_scale,
+	    VDOT(h, w) / uniform_scale, VDOT(h, normal) / uniform_scale);
+	VSET(ctip->a, mag_a / uniform_scale, 0.0, 0.0);
+	VSET(ctip->b, 0.0, mag_b / uniform_scale, 0.0);
+	VSET(ctip->c, mag_c / uniform_scale, 0.0, 0.0);
+	VSET(ctip->d, 0.0, mag_d / uniform_scale, 0.0);
+    }
+
+    return RT_CANONICALIZE_OK;
+}
+
+
 /**
  * Import a TGC from the database format to the internal format.
  * Apply modeling transformations as well.

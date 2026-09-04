@@ -63,9 +63,49 @@ make_database(void)
     point_t center_a = {10.0, 0.0, 0.0};
     point_t center_b = {0.0, 20.0, 0.0};
     point_t center_c = {0.0, 0.0, 30.0};
+    point_t tgc_base_a = VINIT_ZERO;
+    vect_t tgc_height_a = {0.0, 0.0, 4.0};
+    vect_t tgc_a_a = {2.0, 0.0, 0.0};
+    vect_t tgc_b_a = {0.0, 3.0, 0.0};
+    vect_t tgc_c_a = {1.0, 0.0, 0.0};
+    vect_t tgc_d_a = {0.0, 1.5, 0.0};
+    point_t tgc_base_b = {40.0, -5.0, 7.0};
+    vect_t tgc_height_b = {2.0, 0.8, 6.0};
+    vect_t tgc_a_b = {0.0, 6.0, 0.0};
+    vect_t tgc_b_b = {-6.0, 0.0, 0.0};
+    vect_t tgc_c_b = {0.0, 3.0, 0.0};
+    vect_t tgc_d_b = {-3.0, 0.0, 0.0};
+    point_t arb_a[8] = {
+	{0.0, 0.0, 0.0}, {4.0, 0.0, 0.0},
+	{4.0, 3.0, 0.0}, {0.0, 3.0, 0.0},
+	{0.0, 0.0, 2.0}, {4.0, 0.0, 2.0},
+	{4.0, 3.0, 2.0}, {0.0, 3.0, 2.0}
+    };
+    point_t arb_b[8];
+    mat_t arb_transform;
+    MAT_IDN(arb_transform);
+    arb_transform[0] = 2.0;
+    arb_transform[1] = 0.3;
+    arb_transform[2] = 0.2;
+    arb_transform[4] = 0.1;
+    arb_transform[5] = 1.5;
+    arb_transform[6] = 0.4;
+    arb_transform[8] = 0.2;
+    arb_transform[9] = 0.1;
+    arb_transform[10] = 1.7;
+    MAT_DELTAS(arb_transform, -20.0, 15.0, 8.0);
+    for (size_t i = 0; i < 8; i++)
+	MAT4X3PNT(arb_b[i], arb_transform, arb_a[i]);
+
     if (mk_sph(wdbp, "sphere_a.s", center_a, 2.0) ||
 	mk_sph(wdbp, "sphere_b.s", center_b, 4.0) ||
-	mk_sph(wdbp, "sphere_c.s", center_c, 8.0)) {
+	mk_sph(wdbp, "sphere_c.s", center_c, 8.0) ||
+	mk_tgc(wdbp, "tgc_a.s", tgc_base_a, tgc_height_a,
+	    tgc_a_a, tgc_b_a, tgc_c_a, tgc_d_a) ||
+	mk_tgc(wdbp, "tgc_b.s", tgc_base_b, tgc_height_b,
+	    tgc_a_b, tgc_b_b, tgc_c_b, tgc_d_b) ||
+	mk_arb8(wdbp, "arb_a.s", &arb_a[0][X]) ||
+	mk_arb8(wdbp, "arb_b.s", &arb_b[0][X])) {
 	wdb_close(wdbp);
 	bu_file_delete(path.c_str());
 	return std::string();
@@ -76,6 +116,10 @@ make_database(void)
     mk_addmember("sphere_a.s", &selected.l, nullptr, WMOP_UNION);
     mk_addmember("sphere_b.s", &selected.l, nullptr, WMOP_UNION);
     mk_addmember("sphere_c.s", &selected.l, nullptr, WMOP_UNION);
+    mk_addmember("tgc_a.s", &selected.l, nullptr, WMOP_UNION);
+    mk_addmember("tgc_b.s", &selected.l, nullptr, WMOP_UNION);
+    mk_addmember("arb_a.s", &selected.l, nullptr, WMOP_UNION);
+    mk_addmember("arb_b.s", &selected.l, nullptr, WMOP_UNION);
     if (mk_lcomb(wdbp, "selected.c", &selected, 0, nullptr, nullptr, nullptr, 0)) {
 	wdb_close(wdbp);
 	bu_file_delete(path.c_str());
@@ -124,10 +168,10 @@ main(int UNUSED(argc), char *argv[])
     int result = ged_exec(gedp, 6, dry_run);
     const char *report = bu_vls_cstr(gedp->ged_result_str);
     bool report_ok = result == BRLCAD_OK &&
-	contains(report, "verified groups: 1") &&
-	contains(report, "grouped objects: 3") &&
-	contains(report, "duplicate objects: 2") &&
-	contains(report, "rewritable selected references: 3") &&
+	contains(report, "verified groups: 3") &&
+	contains(report, "grouped objects: 7") &&
+	contains(report, "duplicate objects: 4") &&
+	contains(report, "rewritable selected references: 7") &&
 	contains(report, "externally exposed grouped objects: 1") &&
 	contains(report, "selected.c/sphere_a.s replacement matrix");
     if (!report_ok)

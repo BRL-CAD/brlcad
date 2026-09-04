@@ -1977,6 +1977,233 @@ rt_arb_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
 }
 
 
+static int
+arb_affine_frame(mat_t canonical_to_input, mat_t input_to_canonical,
+		 const struct rt_arb_internal *arb, const struct bn_tol *tol)
+{
+    vect_t first, second, third;
+    vect_t cross;
+    fastf_t first_mag = 0.0;
+    fastf_t cross_mag = 0.0;
+    int first_index = -1;
+    int second_index = -1;
+    int third_index = -1;
+
+    for (int i = 1; i < 8; i++) {
+	VSUB2(first, arb->pt[i], arb->pt[0]);
+	first_mag = MAGNITUDE(first);
+	if (first_mag > tol->dist) {
+	    first_index = i;
+	    break;
+	}
+    }
+    if (first_index < 0)
+	return 0;
+
+    for (int i = first_index + 1; i < 8; i++) {
+	fastf_t second_mag;
+	VSUB2(second, arb->pt[i], arb->pt[0]);
+	second_mag = MAGNITUDE(second);
+	if (second_mag <= tol->dist)
+	    continue;
+	VCROSS(cross, first, second);
+	cross_mag = MAGNITUDE(cross);
+	if (cross_mag > first_mag * second_mag * tol->perp) {
+	    second_index = i;
+	    break;
+	}
+    }
+    if (second_index < 0)
+	return 0;
+
+    for (int i = second_index + 1; i < 8; i++) {
+	fastf_t third_mag;
+	VSUB2(third, arb->pt[i], arb->pt[0]);
+	third_mag = MAGNITUDE(third);
+	if (third_mag <= tol->dist)
+	    continue;
+	if (fabs(VDOT(third, cross)) > third_mag * cross_mag * tol->perp) {
+	    third_index = i;
+	    break;
+	}
+    }
+    if (third_index < 0)
+	return 0;
+
+    VSUB2(first, arb->pt[first_index], arb->pt[0]);
+    VSUB2(second, arb->pt[second_index], arb->pt[0]);
+    VSUB2(third, arb->pt[third_index], arb->pt[0]);
+    MAT_IDN(canonical_to_input);
+    canonical_to_input[0] = first[X];
+    canonical_to_input[4] = first[Y];
+    canonical_to_input[8] = first[Z];
+    canonical_to_input[1] = second[X];
+    canonical_to_input[5] = second[Y];
+    canonical_to_input[9] = second[Z];
+    canonical_to_input[2] = third[X];
+    canonical_to_input[6] = third[Y];
+    canonical_to_input[10] = third[Z];
+    MAT_DELTAS_VEC(canonical_to_input, arb->pt[0]);
+
+    return bn_mat_inverse(input_to_canonical, canonical_to_input);
+}
+
+
+static int
+arb_rigid_frame(mat_t canonical_to_input, mat_t input_to_canonical,
+		const struct rt_arb_internal *arb, const struct bn_tol *tol,
+		enum rt_canonicalize_mode mode)
+{
+    vect_t xaxis, yaxis, zaxis;
+    fastf_t longest_sq = 0.0;
+    fastf_t widest_sq = 0.0;
+    fastf_t highest = 0.0;
+    fastf_t uniform_scale = 1.0;
+    int x_index = -1;
+    int y_index = -1;
+    int z_index = -1;
+
+    for (int i = 1; i < 8; i++) {
+	vect_t delta;
+	fastf_t distance_sq;
+	VSUB2(delta, arb->pt[i], arb->pt[0]);
+	distance_sq = MAGSQ(delta);
+	if (distance_sq > longest_sq + tol->dist_sq) {
+	    longest_sq = distance_sq;
+	    x_index = i;
+	}
+    }
+    if (x_index < 0 || longest_sq <= tol->dist_sq)
+	return 0;
+    VSUB2(xaxis, arb->pt[x_index], arb->pt[0]);
+    VUNITIZE(xaxis);
+
+    for (int i = 1; i < 8; i++) {
+	vect_t delta, perpendicular;
+	fastf_t width_sq;
+	VSUB2(delta, arb->pt[i], arb->pt[0]);
+	VJOIN1(perpendicular, delta, -VDOT(delta, xaxis), xaxis);
+	width_sq = MAGSQ(perpendicular);
+	if (width_sq > widest_sq + tol->dist_sq) {
+	    widest_sq = width_sq;
+	    VMOVE(yaxis, perpendicular);
+	    y_index = i;
+	}
+    }
+    if (y_index < 0 || widest_sq <= tol->dist_sq)
+	return 0;
+    VUNITIZE(yaxis);
+    VCROSS(zaxis, xaxis, yaxis);
+
+    for (int i = 1; i < 8; i++) {
+	vect_t delta;
+	fastf_t height;
+	VSUB2(delta, arb->pt[i], arb->pt[0]);
+	height = fabs(VDOT(delta, zaxis));
+	if (height > highest + tol->dist) {
+	    highest = height;
+	    z_index = i;
+	}
+    }
+    if (z_index < 0 || highest <= tol->dist)
+	return 0;
+    {
+	vect_t delta;
+	VSUB2(delta, arb->pt[z_index], arb->pt[0]);
+	if (VDOT(delta, zaxis) < 0.0) {
+	    VREVERSE(yaxis, yaxis);
+	    VREVERSE(zaxis, zaxis);
+	}
+    }
+
+    if (mode == RT_CANONICALIZE_SIMILARITY) {
+	fastf_t diameter_sq = 0.0;
+	for (int i = 0; i < 7; i++) {
+	    for (int j = i + 1; j < 8; j++) {
+		vect_t delta;
+		VSUB2(delta, arb->pt[j], arb->pt[i]);
+		diameter_sq = fmax(diameter_sq, MAGSQ(delta));
+	    }
+	}
+	uniform_scale = sqrt(diameter_sq);
+	if (uniform_scale <= tol->dist)
+	    return 0;
+    }
+
+    MAT_IDN(canonical_to_input);
+    canonical_to_input[0] = xaxis[X];
+    canonical_to_input[4] = xaxis[Y];
+    canonical_to_input[8] = xaxis[Z];
+    canonical_to_input[1] = yaxis[X];
+    canonical_to_input[5] = yaxis[Y];
+    canonical_to_input[9] = yaxis[Z];
+    canonical_to_input[2] = zaxis[X];
+    canonical_to_input[6] = zaxis[Y];
+    canonical_to_input[10] = zaxis[Z];
+    MAT_DELTAS_VEC(canonical_to_input, arb->pt[0]);
+    canonical_to_input[15] = 1.0 / uniform_scale;
+    canonical_to_input[3] /= uniform_scale;
+    canonical_to_input[7] /= uniform_scale;
+    canonical_to_input[11] /= uniform_scale;
+
+    return bn_mat_inverse(input_to_canonical, canonical_to_input);
+}
+
+
+C_DECL int
+rt_arb_canonicalize(struct rt_db_internal *canonical,
+		    mat_t canonical_to_input,
+		    const struct rt_db_internal *input,
+		    const struct bn_tol *tol,
+		    enum rt_canonicalize_mode mode)
+{
+    const struct rt_arb_internal *aip;
+    struct rt_arb_internal *caip;
+    mat_t input_to_canonical;
+    int frame_ok;
+    int validation_issues = 0;
+
+    if (!canonical || !canonical_to_input || !input || !tol)
+	return RT_CANONICALIZE_ERROR;
+    if (mode < RT_CANONICALIZE_RIGID || mode > RT_CANONICALIZE_AFFINE)
+	return RT_CANONICALIZE_ERROR;
+    if (input->idb_type != ID_ARB8)
+	return RT_CANONICALIZE_ERROR;
+
+    aip = (const struct rt_arb_internal *)input->idb_ptr;
+    RT_ARB_CK_MAGIC(aip);
+    for (int i = 0; i < 8; i++) {
+	if (!isfinite(aip->pt[i][X]) || !isfinite(aip->pt[i][Y]) ||
+	    !isfinite(aip->pt[i][Z]))
+	    return RT_CANONICALIZE_ERROR;
+    }
+    (void)rt_arb_validate(NULL, aip, tol, &validation_issues);
+    /* Historic databases contain usable non-standard vertex encodings.  The
+     * index-stable factorization preserves those encodings exactly. */
+    if (validation_issues & ~RT_ARB_VALIDATE_NONSTANDARD)
+	return RT_CANONICALIZE_ERROR;
+
+    if (mode == RT_CANONICALIZE_AFFINE)
+	frame_ok = arb_affine_frame(canonical_to_input, input_to_canonical, aip, tol);
+    else
+	frame_ok = arb_rigid_frame(canonical_to_input, input_to_canonical,
+	    aip, tol, mode);
+    if (!frame_ok)
+	return RT_CANONICALIZE_ERROR;
+
+    canonical->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    canonical->idb_minor_type = ID_ARB8;
+    canonical->idb_meth = &OBJ[ID_ARB8];
+    BU_ALLOC(canonical->idb_ptr, struct rt_arb_internal);
+    caip = (struct rt_arb_internal *)canonical->idb_ptr;
+    caip->magic = RT_ARB_INTERNAL_MAGIC;
+    for (int i = 0; i < 8; i++)
+	MAT4X3PNT(caip->pt[i], input_to_canonical, aip->pt[i]);
+
+    return RT_CANONICALIZE_OK;
+}
+
+
 /**
  * Import an arb from the db5 format and convert to the internal
  * structure.  Code duplicated from rt_arb_import4() with db5 help from
