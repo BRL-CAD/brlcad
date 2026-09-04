@@ -22,6 +22,7 @@
 
 #include <bio.h>
 
+#include "bn/mat.h"
 #include "bu/malloc.h"
 #include "bu/sort.h"
 #include "bg/plane.h"
@@ -240,12 +241,35 @@ bg_3d_polygon_make_pnts_planes(size_t *npts, point_t **pts, size_t neqs, const p
 }
 
 
+struct sort_ccw_data {
+    vect_t x_axis;
+    vect_t y_axis;
+};
+
+
 static int
-sort_ccw_3d(const void *x, const void *y, void *cmp)
+sort_ccw_3d(const void *left, const void *right, void *context)
 {
-    vect_t tmp;
-    VCROSS(tmp, ((fastf_t *)x), ((fastf_t *)y));
-    return VDOT(*((point_t *)cmp), tmp);
+    const struct sort_ccw_data *data = (const struct sort_ccw_data *)context;
+    const fastf_t *left_point = (const fastf_t *)left;
+    const fastf_t *right_point = (const fastf_t *)right;
+    double left_angle = atan2(VDOT(left_point, data->y_axis),
+	    VDOT(left_point, data->x_axis));
+    double right_angle = atan2(VDOT(right_point, data->y_axis),
+	    VDOT(right_point, data->x_axis));
+
+    if (left_angle < right_angle)
+	return -1;
+    if (left_angle > right_angle)
+	return 1;
+
+    double left_radius = MAGSQ(left_point);
+    double right_radius = MAGSQ(right_point);
+    if (left_radius < right_radius)
+	return -1;
+    if (left_radius > right_radius)
+	return 1;
+    return 0;
 }
 
 
@@ -254,16 +278,21 @@ bg_3d_polygon_sort_ccw(size_t npts, point_t *pts, plane_t cmp)
 {
     size_t i;
     point_t centroid;
+    vect_t normal;
+    struct sort_ccw_data data;
 
     if (!pts || npts < 3)
 	return 1;
+    if (MAGNITUDE(cmp) < VDIVIDE_TOL)
+	return 1;
 
-    /* Compute the centroid of all points.  The sort_ccw_3d comparator
-     * measures angles using cross products of the raw position vectors,
-     * which is equivalent to sorting by angle around the *origin*.  For
-     * faces not centred at the origin the resulting order can be wrong
-     * (self-intersecting polygon), so translate all points to be centred
-     * at the origin before sorting and translate back afterwards.        */
+    VMOVE(normal, cmp);
+    VUNITIZE(normal);
+    bn_vec_ortho(data.x_axis, normal);
+    VCROSS(data.y_axis, normal, data.x_axis);
+
+    /* Angular ordering is about the polygon center, not the model origin.
+     * Translate temporarily so the comparator only needs the plane axes. */
     VSETALL(centroid, 0.0);
     for (i = 0; i < npts; i++)
 	VADD2(centroid, centroid, pts[i]);
@@ -272,7 +301,7 @@ bg_3d_polygon_sort_ccw(size_t npts, point_t *pts, plane_t cmp)
     for (i = 0; i < npts; i++)
 	VSUB2(pts[i], pts[i], centroid);
 
-    bu_sort(pts, npts, sizeof(point_t), sort_ccw_3d, &cmp);
+    bu_sort(pts, npts, sizeof(point_t), sort_ccw_3d, &data);
 
     for (i = 0; i < npts; i++)
 	VADD2(pts[i], pts[i], centroid);
