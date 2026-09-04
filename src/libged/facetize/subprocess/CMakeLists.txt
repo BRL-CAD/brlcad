@@ -4,10 +4,10 @@ set(TESS_LIBS libged manifold::manifold)
 set(
   GED_TESS_SRCS
   brep_csg.cpp
-  continuation.cpp
   sample.cpp
   spsr.cpp
   main.cpp
+  mdc.cpp
   nmg.cpp
   nmg_boolean.cpp
   util.cpp
