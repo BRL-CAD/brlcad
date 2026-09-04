@@ -395,7 +395,8 @@ create_variant_in_working_g(struct db_i       *wdbip,
 FacetizeVariantPlan *
 _ged_facetize_build_variant_plan(struct _ged_facetize_state *s,
 					int                         argc,
-					struct directory           **dpa)
+					struct directory           **dpa,
+					struct db_i                 *working_dbip)
 {
 	if (!s || !s->dbip || argc <= 0 || !dpa)
 		return NULL;
@@ -427,18 +428,22 @@ _ged_facetize_build_variant_plan(struct _ged_facetize_state *s,
 	 * name is not in dbnames, then insert the chosen name into
 	 * dbnames to reserve it for subsequent instances.
 	 * ============================================================ */
-	struct db_i *wdbip =
-		db_open(bu_vls_cstr(s->wfile), DB_OPEN_READWRITE);
+	struct db_i *wdbip = working_dbip;
+	bool close_wdbip = false;
 	if (!wdbip) {
-		delete plan;
-		return NULL;
+		wdbip = db_open(bu_vls_cstr(s->wfile), DB_OPEN_READWRITE);
+		if (!wdbip) {
+			delete plan;
+			return NULL;
+		}
+		close_wdbip = true;
+		if (db_dirbuild(wdbip) < 0) {
+			db_close(wdbip);
+			delete plan;
+			return NULL;
+		}
+		db_update_nref(wdbip);
 	}
-	if (db_dirbuild(wdbip) < 0) {
-		db_close(wdbip);
-		delete plan;
-		return NULL;
-	}
-	db_update_nref(wdbip);
 
 	/* Pre-collect all names currently in the working .g */
 	std::set<std::string> dbnames;
@@ -553,7 +558,8 @@ _ged_facetize_build_variant_plan(struct _ged_facetize_state *s,
 		}
 	}
 
-	db_close(wdbip);
+	if (close_wdbip)
+		db_close(wdbip);
 	return plan;
 }
 
