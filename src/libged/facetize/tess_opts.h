@@ -39,6 +39,7 @@
 #include "bn/tol.h"
 #include "bg/defines.h"
 #include "bg/spsr.h"
+#include "analyze/contour.h"
 #include "raytrace.h"
 
 class method_options_t {
@@ -62,6 +63,13 @@ class method_options_t {
 	// will take precedence
 	std::string method_optstr(std::string &method, struct db_i *dbip);
 };
+
+inline const std::vector<std::string> &
+tess_default_methods()
+{
+    static const std::vector<std::string> methods = {"NMG", "MDC", "SPSR"};
+    return methods;
+}
 
 
 int _tess_active_methods(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
@@ -111,17 +119,23 @@ class nmg_opts : public method_opts {
 	int plate_max_time = 1200;
 };
 
-class cm_opts : public sample_opts {
+class mdc_opts : public method_opts {
     public:
 	std::string about_method();
 	std::string print_options_help();
 	int set_var(const std::string &key, const std::string &val);
 	void sync(method_options_t &mopts);
-	void sync(sample_opts &sopts);
 
-	int max_cycle_time = 30;  // Maximum length of a processing cycle to allow before finalizing
-	int max_time = 600;  // Maximum overall time
+	fastf_t feature_size = 0.0;
+	long max_rays = ANALYZE_MDC_DEFAULT_MAX_RAYS;
+	long minimum_free_mem = ANALYZE_MDC_DEFAULT_MINIMUM_FREE_MEM;
+	int min_depth = ANALYZE_MDC_DEFAULT_MIN_DEPTH;
+	int max_depth = ANALYZE_MDC_DEFAULT_MAX_DEPTH;
+	int max_time = ANALYZE_MDC_DEFAULT_MAX_TIME;
+	int verbosity = 0;
+	std::string invalid_option;
 };
+
 
 class spsr_opts : public sample_opts {
     public:
@@ -146,11 +160,11 @@ class spsr_opts : public sample_opts {
 method_options_t::method_options_t()
 {
     nmg_opts n;
-    cm_opts cm;
+    mdc_opts mdc;
     spsr_opts s;
 
     max_time[std::string("NMG")] = n.max_time;
-    max_time[std::string("CM")] = cm.max_time;
+    max_time[std::string("MDC")] = mdc.max_time;
     max_time[std::string("SPSR")] = s.max_time;
     plate_max_time = n.plate_max_time;
 }
@@ -379,75 +393,102 @@ sample_opts::equals(sample_opts &o)
 }
 
 std::string
-cm_opts::about_method()
+mdc_opts::about_method()
 {
-    std::string msg = "Continuation Method (Bloomenthal polygonizer)\n";
-    return msg;
+    return std::string("Ray-driven Manifold Dual Contouring\n");
 }
 
 std::string
-cm_opts::print_options_help()
+mdc_opts::print_options_help()
 {
-    std::string h = std::string("Continuation (CM) Method Options:\n") + sample_opts::print_options_help();
-    h.append("max_cycle_time   -  Maximum time to take for one processing cycle\n");
-    h.append("                    Default is 30.  Zero means run until the target\n");
-    h.append("                    size is met or other termination criteria kick\n");
-    h.append("                    in.  Be careful when specifying zero - it can\n");
-    h.append("                    produce very long runs!\n");
-    h.append("max_time         -  Maximum overall run time for object conversion\n");
-    return h;
+    std::string help;
+    help.append("Manifold Dual Contouring (MDC) options:\n");
+    help.append("feature_size      -  Maximum finest-cell edge length.  Zero selects\n");
+    help.append("                     an automatic size from the object bounds.\n");
+    help.append("max_rays          -  Optional ray-budget ceiling.  Zero uses automatic\n");
+    help.append("                     geometry and system resource limits.\n");
+    help.append("minimum_free_mem  -  Stop before free memory falls below this many bytes.\n");
+    help.append("min_depth         -  Minimum power-of-two grid depth.\n");
+    help.append("max_depth         -  Maximum power-of-two grid depth.\n");
+    help.append("max_time          -  Maximum run time in seconds.  Zero is unlimited.\n");
+    help.append("verbosity         -  Emit diagnostics when non-zero.\n");
+    return help;
 }
 
 int
-cm_opts::set_var(const std::string &key, const std::string &val)
+mdc_opts::set_var(const std::string &key, const std::string &val)
 {
-      if (key.length() == 0)
-          return BRLCAD_ERROR;
+    if (key.empty())
+	return BRLCAD_ERROR;
 
-      const char *cstr[2];
-      cstr[0] = val.c_str();
-      cstr[1] = NULL;
+    const char *value[2] = {val.c_str(), NULL};
+    if (key == "feature_size") {
+	fastf_t parsed = 0.0;
+	if ((!val.empty() &&
+		bu_opt_fastf_t(NULL, 1, value, &parsed) < 0) ||
+		parsed < 0.0)
+	    return BRLCAD_ERROR;
+	feature_size = parsed;
+	return BRLCAD_OK;
+    }
 
-      if (key == std::string("max_cycle_time")) {
-	  if (!val.length()) {
-	      max_cycle_time = 0;
-	      return BRLCAD_OK;
-	  }
-	  if (bu_opt_int(NULL, 1, (const char **)cstr, (void *)&max_cycle_time) < 0)
-	      return BRLCAD_ERROR;
-      }
+    if (key == "max_rays" || key == "minimum_free_mem") {
+	long parsed = 0;
+	if ((!val.empty() && bu_opt_long(NULL, 1, value, &parsed) < 0) ||
+		parsed < 0)
+	    return BRLCAD_ERROR;
+	if (key == "max_rays")
+	    max_rays = parsed;
+	else
+	    minimum_free_mem = parsed;
+	return BRLCAD_OK;
+    }
 
-      if (key == std::string("max_time")) {
-	  if (!val.length()) {
-	      max_time = 0;
-	      return BRLCAD_OK;
-	  }
-	  if (bu_opt_int(NULL, 1, (const char **)cstr, (void *)&max_time) < 0)
-	      return BRLCAD_ERROR;
-      }
+    int parsed = 0;
+    if (!val.empty() && bu_opt_int(NULL, 1, value, &parsed) < 0)
+	return BRLCAD_ERROR;
+    if (key == "min_depth") {
+	if (parsed < 1 || parsed > ANALYZE_MDC_MAX_DEPTH)
+	    return BRLCAD_ERROR;
+	min_depth = parsed;
+	return BRLCAD_OK;
+    }
+    if (key == "max_depth") {
+	if (parsed < 1 || parsed > ANALYZE_MDC_MAX_DEPTH)
+	    return BRLCAD_ERROR;
+	max_depth = parsed;
+	return BRLCAD_OK;
+    }
+    if (key == "max_time") {
+	if (parsed < 0)
+	    return BRLCAD_ERROR;
+	max_time = parsed;
+	return BRLCAD_OK;
+    }
+    if (key == "verbosity") {
+	if (parsed < 0)
+	    return BRLCAD_ERROR;
+	verbosity = parsed;
+	return BRLCAD_OK;
+    }
 
-      // If it's not a CM setting directly, it may be for sampling
-      return sample_opts::set_var(key, val);
+    return BRLCAD_ERROR;
 }
 
 void
-cm_opts::sync(method_options_t &o)
+mdc_opts::sync(method_options_t &options)
 {
-    std::map<std::string, std::map<std::string,std::string>>::iterator o_it;
-    o_it = o.options_map.find(std::string("CM"));
-    if (o_it == o.options_map.end())
+    invalid_option.clear();
+    auto method = options.options_map.find("MDC");
+    if (method == options.options_map.end())
 	return;
 
-    std::map<std::string,std::string>::iterator m_it;
-    for (m_it = o_it->second.begin(); m_it != o_it->second.end(); m_it++) {
-	set_var(m_it->first, m_it->second);
+    for (const auto &option : method->second) {
+	if (set_var(option.first, option.second) != BRLCAD_OK) {
+	    invalid_option = option.first + "=" + option.second;
+	    return;
+	}
     }
-}
-
-void
-cm_opts::sync(sample_opts &opts)
-{
-    sample_opts::sync(opts);
 }
 
 std::string

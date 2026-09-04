@@ -1,3 +1,6 @@
+brlcad_addexec(analyze_contour contour.cpp "libanalyze;libwdb;librt;libbg;libbu" TEST)
+brlcad_add_test(NAME analyze_contour COMMAND analyze_contour)
+
 brlcad_addexec(analyze_raydiff raydiff.c "libanalyze;librt;libbu" TEST)
 brlcad_addexec(analyze_sp solid_partitions.c "libanalyze;librt;libbu" TEST)
 brlcad_addexec(analyze_nhit nhit.cpp "libanalyze;librt;libbu" TEST_USESDATA)
@@ -13,6 +16,7 @@ brlcad_add_test(NAME analyze_densities_std        COMMAND analyze_densities std)
 cmakefiles(
   CMakeLists.txt
   arbs.g
+  contour.cpp
   raydiff.g
 )
 

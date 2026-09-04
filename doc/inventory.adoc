@@ -679,23 +679,21 @@ Convert CSG geometry to a 3D voxel grid by:
 fill fraction
 * Level-of-detail parameter controls sub-voxel sampling
 
-==== 7.5 Implicit Surface Polygonizer (Marching Cubes / Tetrahedral)
+==== 7.5 Manifold Dual Contouring
 
-An implicit surface polygonizer (Bloomenthal tetrahedral marching) for
-converting any inside/outside function to a triangle mesh.
+`contour.cpp` evaluates CSG geometry directly with `librt` and constructs
+closed, oriented triangle meshes:
 
-`polygonizer.c` (based on Jules Bloomenthal’s "`An Implicit Surface
-Polygonizer,`" Graphics Gems IV, 1994) converts any implicit function
-(inside/outside test) to a triangle mesh:
-
-* Maintains a hash table of evaluated lattice corners and edges
-* Expanding front: starts at a seed point and spreads outward, testing
-adjacent cube faces
-* Each transitive cube is optionally decomposed into 6 tetrahedra for
-sub-cube accuracy
-* Edge-surface crossing is found by bisection (`converge`) then the
-vertex normal is estimated from finite differences
-* Used in `libanalyze` for converting CSG regions to faceted form
+* Recursively refines an implicit octree using cached axis-aligned rays along
+node box edges and interior quarter- and center-lines
+* Reuses complete ray partitions at the conforming finest grid and retains
+evaluated boundary points with analytic surface normals
+* Resolves ambiguous faces consistently and permits multiple vertices in a
+cell to preserve local topology
+* Places vertices with bounded quadratic-error minimization
+* Validates the resulting indexed mesh before returning it
+* Backs the legacy `analyze_polygonize` interface without retaining the old
+  seed-driven marching-tetrahedra implementation
 
 ==== 7.6 Geometry Differencing (raydiff)
 
@@ -1712,7 +1710,6 @@ import
 runtime
 * *MT19937*: Mersenne Twister PRNG
 * *pbrt-v3* (derived): HLBVH construction algorithm
-* *Bloomenthal polygonizer*: implicit surface polygonization
 * *Screened Poisson Reconstruction* (Michael Kazhdan): surface
 reconstruction from point clouds
 * *Ball Pivoting Algorithm*: surface reconstruction
