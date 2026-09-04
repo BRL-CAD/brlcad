@@ -18,7 +18,8 @@ Link with *-lanalyze*.
 The public interface is organized across the headers included by
 _analyze.h_, including _analyze/diff.h_, _analyze/density.h_,
 _analyze/grid.h_, _analyze/heal.h_, _analyze/info.h_, _analyze/pnts.h_,
-_analyze/polygonize.h_, _analyze/nirt.h_, _analyze/voxelize.h_, and
+_analyze/contour.h_, _analyze/polygonize.h_, _analyze/nirt.h_,
+_analyze/voxelize.h_, and
 _analyze/worker.h_.
 
 == DESCRIPTION
@@ -32,7 +33,7 @@ to gather the information they need.
 Facilities provided by the library include model differencing, material
 density and mass property analysis, ray-based gridding and sampling,
 geometry healing, model information queries, point-cloud generation and
-processing, polygonization and voxelization of geometry, and the
+processing, manifold dual contouring and voxelization of geometry, and the
 interactive ray-tracing engine used by the *nirt*(1) command. A parallel
 worker interface supports distributing analysis work across multiple
 threads.

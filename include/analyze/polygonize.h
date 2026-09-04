@@ -43,9 +43,29 @@ struct analyze_polygonize_params {
     size_t minimum_free_mem;
     int verbosity;
 };
-#define ANALYZE_POLYGONIZE_PARAMS_DEFAULT { 0, 0, 30, 150000000, 0 }
+#define ANALYZE_POLYGONIZE_DEFAULT_MAX_CYCLE_TIME 30
+#define ANALYZE_POLYGONIZE_DEFAULT_MINIMUM_FREE_MEM 150000000
+#define ANALYZE_POLYGONIZE_PARAMS_DEFAULT { 0, 0, \
+    ANALYZE_POLYGONIZE_DEFAULT_MAX_CYCLE_TIME, \
+    ANALYZE_POLYGONIZE_DEFAULT_MINIMUM_FREE_MEM, 0 }
+
+/**
+ * Legacy polygonization interface, implemented by analyze_mdc().
+ *
+ * @p size is the requested maximum cell edge length.  @p p_s is retained for
+ * source and binary compatibility but is no longer used as a starting seed.
+ * The caller owns successful output arrays and must release them with
+ * bu_free().  Failure leaves all outputs empty.
+ *
+ * @return 0 on success
+ * @return -1 on invalid input or polygonization failure
+ * @return 2 when a time limit is reached
+ * @return 3 when the minimum-free-memory limit is reached
+ */
 ANALYZE_EXPORT extern int
-analyze_polygonize(int **faces, int *num_faces, point_t **vertices, int *num_vertices, fastf_t size, point_t p_s, const char *obj, struct db_i *dbip, struct analyze_polygonize_params *p);
+analyze_polygonize(int **faces, int *num_faces, point_t **vertices,
+	int *num_vertices, fastf_t size, point_t p_s, const char *obj,
+	struct db_i *dbip, struct analyze_polygonize_params *p);
 
 __END_DECLS
 

@@ -41,7 +41,7 @@ class tess_opts {
     public:
 	method_options_t method_opts;
 	nmg_opts nmg_options;
-	cm_opts cm_options;
+	mdc_opts mdc_options;
 	spsr_opts spsr_options;
 
 	int overwrite_obj = 0;
@@ -68,7 +68,8 @@ extern int
 _nmg_tessellate(struct rt_bot_internal **nbot, struct rt_db_internal *intern, tess_opts *s);
 
 extern int
-continuation_mesh(struct rt_bot_internal **obot, struct db_i *dbip, const char *objname, tess_opts *s, point_t seed);
+mdc_mesh(struct rt_bot_internal **output, struct db_i *dbip,
+	const char *object, tess_opts *settings);
 
 extern int
 spsr_mesh(struct rt_bot_internal **obot, struct db_i *dbip, struct rt_pnts_internal *pnts, tess_opts *s);

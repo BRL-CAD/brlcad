@@ -29,6 +29,7 @@ set(
   api.c
   centroid.c
   check_options.c
+  contour.cpp
   density.cpp
   globals.c
   inside.c
@@ -68,7 +69,7 @@ set(
 cmakefiles(${libanalyze_ignored_files})
 
 # Note - libanalyze_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
-brlcad_addlib(libanalyze "${LIBANALYZE_SOURCES}" "" "${CMAKE_CURRENT_BINARY_DIR}"
+brlcad_addlib(libanalyze "${LIBANALYZE_SOURCES}" "" "${CMAKE_CURRENT_BINARY_DIR};${EIGEN3_INCLUDE_DIR}"
   PUBLIC_LIBS ${libanalyze_deps}
 )
 set_target_properties(libanalyze PROPERTIES VERSION 20.0.1 SOVERSION 20)

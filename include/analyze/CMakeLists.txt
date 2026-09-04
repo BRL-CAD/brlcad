@@ -1,5 +1,6 @@
 set(
   analyze_headers
+  contour.h
   debug.h
   defines.h
   density.h
