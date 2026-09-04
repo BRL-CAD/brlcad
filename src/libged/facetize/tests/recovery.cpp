@@ -217,9 +217,29 @@ reset_cache(const std::filesystem::path &cache_dir)
 {
     std::error_code error;
     std::filesystem::remove_all(cache_dir, error);
-    if (error)
+    if (error) {
+	bu_log("[facetize_recovery] unable to remove %s: %s\n",
+		cache_dir.string().c_str(), error.message().c_str());
 	return false;
-    return std::filesystem::create_directories(cache_dir, error) && !error;
+    }
+    std::filesystem::create_directories(cache_dir, error);
+    if (error) {
+	bu_log("[facetize_recovery] unable to create %s: %s\n",
+		cache_dir.string().c_str(), error.message().c_str());
+	return false;
+    }
+    return true;
+}
+
+static bool
+cache_is_empty(const std::filesystem::path &cache_dir)
+{
+    std::error_code error;
+    bool empty = std::filesystem::is_empty(cache_dir, error);
+    if (error)
+	bu_log("[facetize_recovery] unable to inspect %s: %s\n",
+		cache_dir.string().c_str(), error.message().c_str());
+    return empty && !error;
 }
 
 static int
@@ -231,6 +251,9 @@ run_recovery_case(const recovery_case &test_case,
 	(std::string(test_case.name) + ".g");
     std::filesystem::path claim_file = test_dir /
 	(std::string(test_case.name) + ".fault");
+    std::string selector = std::string(test_case.stage) + ":" + TEST_OBJECT;
+    bu_log("[facetize_recovery] %s: starting fault %s\n",
+	    test_case.name, selector.c_str());
     (void)bu_file_delete(claim_file.string().c_str());
     if (create_input(gfile.string().c_str()) != BRLCAD_OK) {
 	bu_log("[facetize_recovery] %s: unable to create input\n",
@@ -238,13 +261,14 @@ run_recovery_case(const recovery_case &test_case,
 	return BRLCAD_ERROR;
     }
 
-    std::string selector = std::string(test_case.stage) + ":" + TEST_OBJECT;
     (void)bu_setenv(FAULT_ENV, selector.c_str(), 1);
     (void)bu_setenv(FAULT_FILE_ENV, claim_file.string().c_str(), 1);
     std::string output;
     int ret = run_facetize(gfile.string().c_str(), 2, output);
     (void)bu_setenv(FAULT_ENV, "", 1);
     (void)bu_setenv(FAULT_FILE_ENV, "", 1);
+    bu_log("[facetize_recovery] %s: facetize returned %d\n",
+	    test_case.name, ret);
 
     bool passed = true;
     if (!bu_file_exists(claim_file.string().c_str(), NULL)) {
@@ -253,11 +277,17 @@ run_recovery_case(const recovery_case &test_case,
 	passed = false;
     }
     if ((ret == BRLCAD_OK) != test_case.expect_success) {
-	bu_log("[facetize_recovery] %s: unexpected command result %d\n%s\n",
-		test_case.name, ret, output.c_str());
+	bu_log("[facetize_recovery] %s: command result %d; expected %s\n",
+		test_case.name, ret,
+		test_case.expect_success ? "success" : "failure");
 	passed = false;
     }
     if (test_case.expect_success) {
+	if (!cache_is_empty(cache_dir)) {
+	    bu_log("[facetize_recovery] %s: workspace was not cleaned\n",
+		    test_case.name);
+	    passed = false;
+	}
 	if (!outputs_match(control_file, gfile.string().c_str())) {
 	    bu_log("[facetize_recovery] %s: result differs from serial control\n",
 		    test_case.name);
@@ -271,15 +301,17 @@ run_recovery_case(const recovery_case &test_case,
     bool replay_reported = output.find("retrying tessellation") !=
 	std::string::npos;
     if (replay_reported != test_case.expect_replay) {
-	bu_log("[facetize_recovery] %s: unexpected replay reporting\n%s\n",
-		test_case.name, output.c_str());
+	bu_log("[facetize_recovery] %s: replay reporting %s; expected %s\n",
+		test_case.name, replay_reported ? "present" : "absent",
+		test_case.expect_replay ? "present" : "absent");
 	passed = false;
     }
     bool resubmit_reported = output.find("resubmitted staged tessellation") !=
 	std::string::npos;
     if (resubmit_reported != test_case.expect_resubmit) {
-	bu_log("[facetize_recovery] %s: unexpected resubmission reporting\n%s\n",
-		test_case.name, output.c_str());
+	bu_log("[facetize_recovery] %s: resubmission reporting %s; expected %s\n",
+		test_case.name, resubmit_reported ? "present" : "absent",
+		test_case.expect_resubmit ? "present" : "absent");
 	passed = false;
     }
     if (has_temporary_write_file(cache_dir)) {
@@ -288,6 +320,9 @@ run_recovery_case(const recovery_case &test_case,
 	passed = false;
     }
 
+    if (!passed)
+	bu_log("[facetize_recovery] %s: captured command output:\n%s\n",
+		test_case.name, output.empty() ? "(none)" : output.c_str());
     bu_log("[facetize_recovery] %s: %s\n", test_case.name,
 	    passed ? "PASS" : "FAIL");
     return passed ? BRLCAD_OK : BRLCAD_ERROR;
@@ -332,6 +367,10 @@ main(int argc, const char **argv)
     };
 
     int ret = 0;
+    if (!cache_is_empty(cache_dir)) {
+	bu_log("[facetize_recovery] serial control workspace was not cleaned\n");
+	ret = 1;
+    }
     for (const recovery_case &test_case : cases) {
 	if (!reset_cache(cache_dir)) {
 	    bu_log("[facetize_recovery] %s: unable to reset cache directory\n",

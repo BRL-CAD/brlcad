@@ -68,6 +68,10 @@
  *          ("/tc6_reg.c/sub6.s#sub"), so the lookup missed and no variant was
  *          applied, leaving the phantom face.  After the fix the plan is built
  *          from region roots so keys match and the phantom face is eliminated.
+ *
+ *   TC7  - NMG Boolean isolation and output modes: verifies that an interrupted
+ *          worker cannot commit output, then exercises BoT, NMG, region, and
+ *          in-place output paths.
  */
 
 #include "common.h"
@@ -78,7 +82,9 @@
 #include <string>
 
 #include "bu/app.h"
+#include "bu/env.h"
 #include "bu/file.h"
+#include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
 #include "bu/vls.h"
@@ -142,6 +148,36 @@ write_comb2(struct rt_wdb *wdbp,
    0, 0, 0, 0, 0, 0, 0);
 }
 
+static int
+write_comb1(struct rt_wdb *wdbp, const char *comb_name, const char *member, int is_region)
+{
+    struct bu_list head;
+    BU_LIST_INIT(&head);
+    mk_addmember(member, &head, NULL, WMOP_UNION);
+    return mk_comb(wdbp, comb_name, &head, is_region, NULL, NULL, NULL,
+	    0, 0, 0, 0, 0, 0, 0);
+}
+
+static int
+run_facetize_command(const char *gfile, int argc, const char **argv, int verbose)
+{
+    struct ged *gedp = ged_open("db", gfile, 1);
+    if (!gedp) {
+	bu_log("[regress_facetize] ged_open(%s) failed\n", gfile);
+	return BRLCAD_ERROR;
+    }
+
+    int ret = ged_exec(gedp, argc, argv);
+    if (verbose || ret != BRLCAD_OK) {
+	const char *log = bu_vls_cstr(gedp->ged_result_str);
+	if (log && log[0])
+	    bu_log("[facetize] %s\n", log);
+    }
+
+    ged_close(gedp);
+    return ret;
+}
+
 /**
  * Open @a gfile with ged_open and run "facetize @a input @a output".
  * Returns BRLCAD_OK on success, BRLCAD_ERROR otherwise.
@@ -149,23 +185,8 @@ write_comb2(struct rt_wdb *wdbp,
 static int
 run_facetize(const char *gfile, const char *input, const char *output, int verbose)
 {
-    struct ged *gedp = ged_open("db", gfile, 1);
-    if (!gedp) {
-bu_log("[regress_facetize] ged_open(%s) failed\n", gfile);
-return BRLCAD_ERROR;
-    }
-
     const char *av[4] = {"facetize", input, output, NULL};
-    int ret = ged_exec(gedp, 3, av);
-
-    if (verbose || ret != BRLCAD_OK) {
-const char *log = bu_vls_cstr(gedp->ged_result_str);
-if (log && log[0])
-    bu_log("[facetize] %s\n", log);
-    }
-
-    ged_close(gedp);
-    return ret;
+    return run_facetize_command(gfile, 3, av, verbose);
 }
 
 /**
@@ -210,6 +231,46 @@ bu_log("[regress_facetize] check_bot: '%s' type %d is not a BoT\n",
     rt_db_free_internal(&intern);
     db_close(dbip);
     return ok;
+}
+
+static int
+check_object_type(const char *gfile, const char *object_name, int expected_type)
+{
+    struct db_i *dbip = db_open(gfile, DB_OPEN_READONLY);
+    if (!dbip || db_dirbuild(dbip) < 0) {
+	if (dbip)
+	    db_close(dbip);
+	return BRLCAD_ERROR;
+    }
+
+    struct directory *dp = db_lookup(dbip, object_name, LOOKUP_QUIET);
+    if (!dp) {
+	bu_log("[regress_facetize] '%s' does not exist\n", object_name);
+	db_close(dbip);
+	return BRLCAD_ERROR;
+    }
+
+    struct rt_db_internal intern;
+    RT_DB_INTERNAL_INIT(&intern);
+    if (rt_db_get_internal(&intern, dp, dbip, NULL) < 0) {
+	db_close(dbip);
+	return BRLCAD_ERROR;
+    }
+    int ret = (intern.idb_minor_type == expected_type) ? BRLCAD_OK : BRLCAD_ERROR;
+    if (ret != BRLCAD_OK)
+	bu_log("[regress_facetize] '%s' type %d, expected %d\n",
+		object_name, intern.idb_minor_type, expected_type);
+    rt_db_free_internal(&intern);
+    db_close(dbip);
+    return ret;
+}
+
+static int
+count_log_hook(void *data, void *UNUSED(message))
+{
+    int *count = (int *)data;
+    (*count)++;
+    return 0;
 }
 
 /**
@@ -1120,6 +1181,122 @@ tc6_havoc_wind9_pattern(const char *tmpdir, int verbose)
     return BRLCAD_OK;
 }
 
+static int
+tc7_nmg_modes(const char *tmpdir, int verbose)
+{
+    bu_log("[regress_facetize] TC7: NMG Boolean and output modes...\n");
+
+    struct bu_vls gpath = BU_VLS_INIT_ZERO;
+    bu_vls_printf(&gpath, "%s/tc7_nmg.g", tmpdir);
+    const char *gfile = bu_vls_cstr(&gpath);
+    if (bu_file_exists(gfile, NULL))
+	bu_file_delete(gfile);
+
+    struct db_i *dbip = db_create(gfile, 5);
+    if (!dbip) {
+	bu_vls_free(&gpath);
+	return BRLCAD_ERROR;
+    }
+    struct rt_wdb *wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DEFAULT);
+    point_t box_pts[8] = {
+	{0.0,  0.0,  0.0}, {10.0, 0.0,  0.0},
+	{10.0, 10.0, 0.0}, {0.0,  10.0, 0.0},
+	{0.0,  0.0, 10.0}, {10.0, 0.0, 10.0},
+	{10.0, 10.0, 10.0}, {0.0, 10.0, 10.0}
+    };
+    if (write_arb8(wdbp, "box.s", box_pts) < 0 ||
+	    write_comb1(wdbp, "box.r", "box.s", 1) < 0 ||
+	    write_comb1(wdbp, "box.c", "box.s", 0) < 0) {
+	wdb_close(wdbp);
+	bu_vls_free(&gpath);
+	return BRLCAD_ERROR;
+    }
+    wdb_close(wdbp);
+
+    const char *bot_av[] = {"facetize", "--nmg-booleval", "box.r", "box.bot", NULL};
+    const char *fault_av[] = {"facetize", "--nmg-booleval", "box.r", "fault.bot", NULL};
+    const char *nmg_av[] = {"facetize", "-n", "box.r", "box.nmg", NULL};
+    const char *regions_av[] = {"facetize", "-r", "--nmg-booleval", "box.r", "box.regions", NULL};
+    const char *fallback_av[] = {"facetize", "-r", "--nmg-booleval", "box.c", "box-fallback.bot", NULL};
+    const char *object_in_place_av[] = {"facetize", "--in-place", "--nmg-booleval", "box.c", NULL};
+    const char *in_place_av[] = {"facetize", "-r", "--in-place", "--nmg-booleval", "box.r", NULL};
+
+    int ret = BRLCAD_OK;
+    auto check_tc7 = [&ret](bool passed, const char *description) {
+	if (passed)
+	    return;
+	bu_log("[regress_facetize] TC7: FAIL - %s\n", description);
+	ret = BRLCAD_ERROR;
+    };
+
+    struct bu_vls fault_path = BU_VLS_INIT_ZERO;
+    bu_vls_printf(&fault_path, "%s/tc7_nmg_worker.fault", tmpdir);
+    (void)bu_file_delete(bu_vls_cstr(&fault_path));
+    (void)bu_setenv("LIBGED_FACETIZE_TEST_FAULT",
+	    "nmg-before-ready:fault.bot", 1);
+    (void)bu_setenv("LIBGED_FACETIZE_TEST_FAULT_FILE",
+	    bu_vls_cstr(&fault_path), 1);
+    int fault_ret = run_facetize_command(gfile, 4, fault_av, verbose);
+    (void)bu_setenv("LIBGED_FACETIZE_TEST_FAULT", "", 1);
+    (void)bu_setenv("LIBGED_FACETIZE_TEST_FAULT_FILE", "", 1);
+    check_tc7(fault_ret == BRLCAD_ERROR,
+	    "an interrupted NMG Boolean worker did not report failure");
+    check_tc7(bu_file_exists(bu_vls_cstr(&fault_path), NULL),
+	    "NMG Boolean worker fault did not trigger");
+    check_tc7(check_object_type(gfile, "fault.bot", ID_BOT) != BRLCAD_OK,
+	    "an interrupted NMG Boolean worker committed an output");
+    (void)bu_file_delete(bu_vls_cstr(&fault_path));
+    bu_vls_free(&fault_path);
+
+    int hook_calls = 0;
+    bu_log_add_hook(count_log_hook, &hook_calls);
+    int bot_ret = run_facetize_command(gfile, 4, bot_av, verbose);
+    int hook_calls_before_probe = hook_calls;
+    bu_log("facetize NMG hook restoration probe\n");
+    bu_log_delete_hook(count_log_hook, &hook_calls);
+
+    check_tc7(bot_ret == BRLCAD_OK, "NMG Boolean BoT command failed");
+    check_tc7(hook_calls == hook_calls_before_probe + 1,
+	    "temporary log hook was not restored");
+    check_tc7(check_bot_exists(gfile, "box.bot") == BRLCAD_OK,
+	    "NMG Boolean BoT output is missing");
+
+    int nmg_ret = run_facetize_command(gfile, 4, nmg_av, verbose);
+    check_tc7(nmg_ret == BRLCAD_OK, "NMG output command failed");
+    check_tc7(check_object_type(gfile, "box.nmg", ID_NMG) == BRLCAD_OK,
+	    "NMG output has the wrong type");
+
+    int regions_ret = run_facetize_command(gfile, 5, regions_av, verbose);
+    check_tc7(regions_ret == BRLCAD_OK, "NMG Boolean region command failed");
+    check_tc7(check_object_type(gfile, "box.regions", ID_COMBINATION) == BRLCAD_OK,
+	    "NMG Boolean region output is missing");
+
+    int fallback_ret = run_facetize_command(gfile, 5, fallback_av, verbose);
+    check_tc7(fallback_ret == BRLCAD_OK,
+	    "region mode object fallback command failed");
+    check_tc7(check_bot_exists(gfile, "box-fallback.bot") == BRLCAD_OK,
+	    "region mode object fallback output is missing");
+
+    int object_in_place_ret = run_facetize_command(gfile, 4,
+	    object_in_place_av, verbose);
+    check_tc7(object_in_place_ret == BRLCAD_OK,
+	    "in-place NMG Boolean object command failed");
+    check_tc7(check_object_type(gfile, "box.c", ID_BOT) == BRLCAD_OK,
+	    "in-place NMG Boolean object has the wrong type");
+
+    int in_place_ret = run_facetize_command(gfile, 5, in_place_av, verbose);
+    check_tc7(in_place_ret == BRLCAD_OK,
+	    "in-place NMG Boolean region command failed");
+    check_tc7(check_object_type(gfile, "box.r", ID_COMBINATION) == BRLCAD_OK,
+	    "in-place region root has the wrong type");
+    check_tc7(check_bot_exists(gfile, "box.r.bot") == BRLCAD_OK,
+	    "in-place region BoT output is missing");
+
+    bu_log("[regress_facetize] TC7: %s\n", ret == BRLCAD_OK ? "PASS" : "FAIL");
+    bu_vls_free(&gpath);
+    return ret;
+}
+
 /* ------------------------------------------------------------------ */
 /* main                                                                 */
 /* ------------------------------------------------------------------ */
@@ -1151,6 +1328,7 @@ return 1;
     if (tc4_havoc_reuse(tmpdir, verbose)         != BRLCAD_OK) ret = 1;
     if (tc5_near_coplanar_subTOL(tmpdir, verbose) != BRLCAD_OK) ret = 1;
     if (tc6_havoc_wind9_pattern(tmpdir, verbose) != BRLCAD_OK) ret = 1;
+    if (tc7_nmg_modes(tmpdir, verbose)             != BRLCAD_OK) ret = 1;
 
     if (ret == 0)
 bu_log("[regress_facetize] All tests PASSED\n");

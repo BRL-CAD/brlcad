@@ -13,13 +13,24 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+/* Apple's POSIX feature profile hides F_SETNOSIGPIPE. */
+#if defined(__APPLE__) && !defined(_DARWIN_C_SOURCE)
+#  define _DARWIN_C_SOURCE
+#endif
 #include "common.h"
 
 #include <algorithm>
 #include <fstream>
 
+#if defined(__APPLE__)
+#  include <errno.h>
+#  include <fcntl.h>
+#  include <string.h>
+#endif
+
 #include "bu/datetime.h"
 #include "bu/file.h"
+#include "bu/log.h"
 #include "bu/process.h"
 #include "bu/snooze.h"
 
@@ -133,11 +144,29 @@ facetize_process_start(struct bu_process **process, FILE **process_input,
     *process_input = NULL;
     channel.reset(NULL);
     bu_process_create(process, process_command.data(), BU_PROCESS_HIDE_WINDOW);
-    if (*process) {
+    if (*process)
 	*process_input = bu_process_file_open(*process, BU_PROCESS_STDIN);
-	channel.reset(*process_input);
+    bool input_ready = *process && *process_input;
+#if defined(__APPLE__)
+    if (input_ready && fcntl(fileno(*process_input), F_SETNOSIGPIPE, 1) < 0) {
+	/* Darwin sends a broken pipe's SIGPIPE to the process, so masking
+	 * only the writing thread cannot protect this worker channel. */
+	bu_log("FACETIZE: unable to suppress SIGPIPE on worker stdin: %s\n",
+		strerror(errno));
+	input_ready = false;
     }
-    return (*process && *process_input) ? BRLCAD_OK : BRLCAD_ERROR;
+#endif
+    if (input_ready && setvbuf(*process_input, NULL, _IONBF, 0) == 0) {
+	channel.reset(*process_input);
+	return BRLCAD_OK;
+    }
+
+    if (*process) {
+	(void)bu_process_terminate(*process);
+	(void)bu_process_wait_n(process, 0);
+    }
+    *process_input = NULL;
+    return BRLCAD_ERROR;
 }
 
 double
