@@ -88,6 +88,7 @@ struct _ged_facetize_state {
     // Settings
     int max_time;
     int max_pnts;
+    int max_workers;
     struct bu_vls *prefix;
     struct bu_vls *suffix;
 
@@ -157,6 +158,15 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, struct db_i *dbip, struc
 
 extern int
 _ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, struct rt_wdb *wdbp, int argc, const char **argv, const char *newname, struct bu_list *vlfree, bool output_to_working, int curr_cnt, int total_cnt);
+
+/**
+ * Evaluate a tessellated CSG tree and write the resulting BoT to an explicit
+ * database.  The input database is never modified unless it is also supplied
+ * as @p output_dbip.  This form lets isolated workers evaluate into an
+ * in-memory database before entering the staged-write protocol.
+ */
+extern int
+_ged_facetize_booleval_tri_to_db(struct _ged_facetize_state *s, struct db_i *dbip, struct rt_wdb *wdbp, int argc, const char **argv, const char *newname, struct bu_list *vlfree, struct db_i *output_dbip, int curr_cnt, int total_cnt);
 
 extern int _nonovlp_brep_facetize(struct _ged_facetize_state *s, int argc, const char **argv);
 
@@ -229,11 +239,14 @@ struct FacetizeVariantPlan {
  * Returns an allocated FacetizeVariantPlan owned by the caller (or NULL on
  * allocation failure).  Primitives without ft_perturb support are counted in
  * n_perturb_fallbacks and will fall back to the original mesh at booleval time.
+ * If working_dbip is non-NULL it must be an indexed writable handle for the
+ * working database; it is borrowed and remains open on return.
  */
 extern FacetizeVariantPlan *
 _ged_facetize_build_variant_plan(struct _ged_facetize_state *s,
                                  int argc,
-                                 struct directory **dpa);
+                                 struct directory **dpa,
+			 struct db_i *working_dbip);
 
 /**
  * Tessellate the variant primitives in the working .g using the NMG method.

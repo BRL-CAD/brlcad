@@ -163,6 +163,7 @@ _ged_facetize_state_create()
 
     s->max_time = 0;
     s->max_pnts = 0;
+    s->max_workers = 0;
 
     s->tol = NULL;
     s->nonovlp_threshold = 0;
@@ -355,7 +356,7 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     s->method_opts = method_options;
 
     /* General options */
-    struct bu_opt_desc d[25];
+    struct bu_opt_desc d[26];
     BU_OPT(d[ 0], "h", "help",                                      "",                  NULL,           &print_help, "Print help and exit");
     BU_OPT(d[ 1], "v", "verbose",                                   "",  &bu_opt_incr_long,       &verbosity, "Verbose output (multiple flags increase verbosity)");
     BU_OPT(d[ 2], "q", "quiet",                                     "",                  NULL,                &quiet, "Suppress all output (overrides verbose flag)");
@@ -380,7 +381,8 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[21],  "", "perturb-sa-tol",                           "#",       &bu_opt_fastf_t,   &s->perturb_sa_tol,  "Surface-area percentage threshold (0-100) that triggers the coplanarity-avoidance perturb retry when the CSG Crofton SA differs from the BoT SA by more than this amount. Default is 10.");
     BU_OPT(d[22],  "", "perturb-vol-tol",                          "#",       &bu_opt_fastf_t,   &s->perturb_vol_tol, "Volume percentage threshold (0-100) that triggers the coplanarity-avoidance perturb retry when the CSG Crofton volume differs from the BoT volume by more than this amount. Default is 10.");
     BU_OPT(d[23],  "", "tolerate-failures",                         "",                  NULL, &s->tolerate_failures, "Continue after failed primitive or subtree evaluations and generate a partial result.  The output will not be a complete representation of the input if any failures are tolerated.");
-    BU_OPT_NULL(d[24]);
+    BU_OPT(d[24], "j", "jobs",                                     "#",           &bu_opt_int,     &s->max_workers, "Maximum number of facetize worker processes.  The default is selected conservatively from CPU and memory availability.");
+    BU_OPT_NULL(d[25]);
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -406,6 +408,12 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     // Sanity
     if (force_perturb && disable_perturb) {
     	bu_vls_printf(gedp->ged_result_str, "Can only specify one of --perturb or --no-perturb\n");
+	ret = BRLCAD_ERROR;
+	goto ged_facetize_memfree;
+    }
+    if (s->max_workers < 0 || s->max_workers > MAX_PSW) {
+	bu_vls_printf(gedp->ged_result_str,
+		"--jobs must be between 0 and %d\n", MAX_PSW);
 	ret = BRLCAD_ERROR;
 	goto ged_facetize_memfree;
     }
