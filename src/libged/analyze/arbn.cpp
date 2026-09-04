@@ -36,7 +36,7 @@ void
 analyze_arbn(struct ged *gedp, const struct rt_db_internal *ip)
 {
     size_t i;
-    fastf_t tot_vol = 0.0, tot_area = 0.0;
+    fastf_t tot_vol = -1.0, tot_area = -1.0;
     table_t table;
     struct poly_face *faces;
     struct bu_vls tmpstr = BU_VLS_INIT_ZERO;
@@ -62,23 +62,20 @@ analyze_arbn(struct ged *gedp, const struct rt_db_internal *ip)
     bg_3d_polygon_make_pnts_planes(npts, tmp_pts, aip->neqn, (const plane_t *)eqs);
 
     for (i = 0; i < aip->neqn; i++) {
-	vect_t tmp;
 	bu_vls_sprintf(&tmpstr, "%4zu", i);
 	snprintf(faces[i].label, sizeof(faces[i].label), "%s", bu_vls_addr(&tmpstr));
 
 	faces[i].npts = npts[i];
 
-	/* calculate surface area */
 	analyze_poly_face(gedp, &faces[i], &table.rows[i]);
-	tot_area += faces[i].area;
-
-	/* calculate volume */
-	VSCALE(tmp, faces[i].plane_eqn, faces[i].area);
-	tot_vol += VDOT(faces[i].pts[0], tmp);
     }
-    tot_vol /= 3.0;
 
     print_faces_table(gedp, &table);
+    if (ip->idb_meth->ft_volume)
+	ip->idb_meth->ft_volume(&tot_vol, ip);
+    if (ip->idb_meth->ft_surf_area)
+	ip->idb_meth->ft_surf_area(&tot_area, ip);
+
     print_volume_table(gedp,
 		       tot_vol
 		      * gedp->dbip->dbi_base2local

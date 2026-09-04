@@ -412,7 +412,7 @@ print_faces_table(struct ged *gedp, table_t *table)
 	    bu_vls_printf(gedp->ged_result_str, "***NOT A PLANE ***");
 
 	bu_vls_printf(gedp->ged_result_str, "|");
-	for (j = 0; j < table->rows[i].nfields - 1; ++j) {
+	for (j = 0; j < table->rows[i].nfields; ++j) {
 
 	    // For Coverity - check to ensure we never overrun maxwidth
 	    if (j == 8) {
