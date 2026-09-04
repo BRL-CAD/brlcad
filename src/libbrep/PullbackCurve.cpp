@@ -5190,6 +5190,33 @@ brlcad::pullback_curve(const ON_Surface *surface, const ON_Curve *curve,
 	return pullback_failure(failure_reason, failure, PullbackFailureReason::ParameterCurveCollapsed,
 	    "curve-to-surface projection collapsed to one parameter point");
 
+    /* At a collapsed surface side, closest-point search may return any value
+     * in the non-collapsing parameter direction.  Align an endpoint with its
+     * neighbor only when that alternate parameter still lifts to the
+     * authoritative source endpoint within the caller's tolerance. */
+    for (int end = 0; end < 2; ++end) {
+	const int endpoint_index = end == 0 ? 0 : points.Count() - 1;
+	const int neighbor_index = end == 0 ? 1 : points.Count() - 2;
+	ON_2dPoint endpoint(points[endpoint_index].x, points[endpoint_index].y);
+	const int singular_side = IsAtSingularity(surface, endpoint,
+	    PBC_SEAM_TOL);
+	if (singular_side < 0)
+	    continue;
+	const int varying_direction =
+	    singular_side == 0 || singular_side == 2 ? 0 : 1;
+	endpoint[varying_direction] = points[neighbor_index][varying_direction];
+	const ON_3dPoint lifted = surface->PointAt(
+	    native_surface_parameter(surface, 0, endpoint.x),
+	    native_surface_parameter(surface, 1, endpoint.y));
+	const ON_3dPoint target = end == 0 ? curve->PointAtStart() :
+	    curve->PointAtEnd();
+	if (lifted.IsValid() && target.IsValid() &&
+		lifted.DistanceTo(target) <= tolerance) {
+	    points[endpoint_index].x = endpoint.x;
+	    points[endpoint_index].y = endpoint.y;
+	}
+    }
+
     std::unique_ptr<ON_PolylineCurve> candidate(new ON_PolylineCurve(points));
     const ON_Interval source_domain = curve->Domain();
     if (!source_domain.IsIncreasing() ||

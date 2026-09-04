@@ -29,11 +29,14 @@ struct BrepImportStatistics {
     size_t entities_read = 0;
     size_t solids_seen = 0;
     size_t trimmed_surfaces_seen = 0;
+    size_t bounded_surfaces_seen = 0;
     size_t standalone_surfaces_seen = 0;
     size_t breps_written = 0;
     size_t components_written = 0;
     size_t groups_written = 0;
     size_t plate_mode_objects_thickened = 0;
+    size_t relaxed_faces_written = 0;
+    double maximum_repair_tolerance_used = 0.0;
     size_t omitted = 0;
     size_t repairs = 0;
 };
@@ -44,7 +47,7 @@ struct BrepImportResult {
     std::vector<ImportDiagnostic> diagnostics;
 };
 
-/** Build IGES 186 manifold topology and assemble IGES 144 trimmed faces
+/** Build IGES 186 manifold topology and assemble IGES 143/144 bounded faces
  * directly in OpenNURBS.  No NMG intermediate representation is used. */
 BrepImportResult import_breps(const Document &document, struct rt_wdb *wdbp,
     const ImportOptions &options);
@@ -65,7 +68,8 @@ __BEGIN_DECLS
  * 0 if the document has no direct B-Rep entities, and -1 on failure. */
 int iges_import_breps(const char *path, struct rt_wdb *wdbp, int exact,
     int strict, const char *repair_mode, double default_plate_thickness,
-    const char *root_name, const char *report_path);
+    double maximum_repair_tolerance, const char *root_name,
+    const char *report_path);
 
 __END_DECLS
 

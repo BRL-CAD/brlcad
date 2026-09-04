@@ -15,6 +15,7 @@ brlcad_add_test(
 
 set(IGES_IMPORT_TEST_SRCS
   ../iges_document.cpp
+  ../iges_brep_import.cpp
   ../iges_import.cpp
   test_iges_import.cpp
 )
@@ -22,7 +23,7 @@ set(IGES_IMPORT_TEST_SRCS
 brlcad_addexec(
   test_iges_import
   "${IGES_IMPORT_TEST_SRCS}"
-  "libwdb;librt;libnmg;libbn;libbu;${M_LIBRARY}"
+  "libwdb;librt;libnmg;libbrep;libbn;libbu;${M_LIBRARY}"
   NO_INSTALL
 )
 brlcad_add_test(NAME iges_import_test COMMAND test_iges_import)

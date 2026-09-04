@@ -144,6 +144,7 @@ private:
     void write_entity_attributes(const DirectoryEntry &entry,
 	const std::string &name);
     bool write_groups();
+    bool write_subfigures();
     bool write_root(const std::vector<std::string> &members);
     Style style(const DirectoryEntry &entry, uint32_t role,
 	const std::string &symbol = std::string()) const;
@@ -154,6 +155,8 @@ private:
     void diagnose(Severity severity, const char *code, const std::string &message,
 	const DirectoryEntry *entry = nullptr);
     std::string unique_name(const DirectoryEntry &entry, const char *suffix);
+    std::string unique_name(const DirectoryEntry &entry,
+	const std::string &source, const char *suffix);
 
     const Document &document_;
     struct rt_wdb *wdbp_ = nullptr;
@@ -271,6 +274,15 @@ parameter_entity(const ParameterList *parameters, size_t index, EntityId &value)
 {
     return parameters && index < parameters->values.size() &&
 	parameters->values[index].entity(value) && !value.empty();
+}
+
+
+bool
+parameter_string(const ParameterList *parameters, size_t index,
+    std::string &value)
+{
+    return parameters && index < parameters->values.size() &&
+	parameters->values[index].string(value);
 }
 
 double
@@ -590,7 +602,14 @@ Translator::style(const DirectoryEntry &entry, uint32_t role,
 std::string
 Translator::unique_name(const DirectoryEntry &entry, const char *suffix)
 {
-    std::string stem = sanitize_name(entry.label);
+    return unique_name(entry, entry.label, suffix);
+}
+
+std::string
+Translator::unique_name(const DirectoryEntry &entry,
+    const std::string &source, const char *suffix)
+{
+    std::string stem = sanitize_name(source);
     if (stem.empty())
 	stem = "iges_" + std::to_string(entry.type) + "_d" +
 	    std::to_string(entry.id.value());
@@ -1454,6 +1473,181 @@ Translator::write_groups()
 }
 
 bool
+Translator::write_subfigures()
+{
+    for (const DirectoryEntry &entry : document_.entities()) {
+	if (entry.type != 308)
+	    continue;
+	const ParameterList *parameters = document_.parameters(entry.id);
+	int member_count = 0;
+	if (!parameter_integer(parameters, 3, member_count) || member_count < 0 ||
+		member_count > MAX_ENTITY_LIST_COUNT) {
+	    diagnose(Severity::Warning, "subfigure_definition_parameters",
+		"Subfigure Definition has an invalid member count", &entry);
+	    continue;
+	}
+
+	std::vector<EntityId> source_members;
+	bool valid_definition = true;
+	for (int i = 0; i < member_count; ++i) {
+	    EntityId member_id;
+	    if (!parameter_entity(parameters, static_cast<size_t>(i + 4),
+		    member_id)) {
+		diagnose(Severity::Warning, "subfigure_definition_parameters",
+		    "Subfigure Definition has an invalid member reference", &entry);
+		valid_definition = false;
+		break;
+	    }
+	    source_members.push_back(member_id);
+	}
+	if (!valid_definition) {
+	    ++result_.statistics.omitted;
+	    continue;
+	}
+
+	struct wmember members;
+	BU_LIST_INIT(&members.l);
+	std::vector<EntityId> imported_members;
+	for (EntityId member_id : source_members) {
+	    const auto object = objects_.find(member_id);
+	    if (object == objects_.end())
+		continue;
+	    if (mk_addmember(object->second.c_str(), &members.l, nullptr,
+		    WMOP_UNION) == WMEMBER_NULL) {
+		diagnose(Severity::Error, "subfigure_definition_member",
+		    "failed to add an annotation to a Subfigure Definition", &entry);
+		return false;
+	    }
+	    imported_members.push_back(member_id);
+	}
+	if (imported_members.empty())
+	    continue;
+
+	std::string source_name;
+	parameter_string(parameters, 2, source_name);
+	const std::string name = unique_name(entry, source_name, ".annot_def");
+	const int write_status = mk_lfcomb(wdbp_, name.c_str(), &members, 0)
+	if (write_status < 0) {
+	    diagnose(Severity::Error, "subfigure_definition_write",
+		"failed to write an annotation Subfigure Definition", &entry);
+	    return false;
+	}
+	write_entity_attributes(entry, name);
+	if (!source_name.empty())
+	    db5_update_attribute(name.c_str(), "iges.name", source_name.c_str(),
+		wdbp_->dbip);
+	db5_update_attribute(name.c_str(), "iges.semantic",
+	    "subfigure_definition", wdbp_->dbip);
+	objects_[entry.id] = name;
+	grouped_.insert(imported_members.begin(), imported_members.end());
+	++result_.statistics.objects_written;
+	++result_.statistics.semantic_groups_written;
+    }
+
+    for (const DirectoryEntry &entry : document_.entities()) {
+	if (entry.type != 408)
+	    continue;
+	const ParameterList *parameters = document_.parameters(entry.id);
+	EntityId definition_id;
+	if (!parameter_entity(parameters, 1, definition_id))
+	    continue;
+	const auto definition = objects_.find(definition_id);
+	if (definition == objects_.end())
+	    continue;
+
+	double scale_factor = 1.0;
+	Point3 translation = {0.0, 0.0, 0.0};
+	double value = 0.0;
+	for (size_t coordinate = 0; coordinate < translation.size(); ++coordinate)
+	    if (parameter_real(parameters, coordinate + 2, value))
+		translation[coordinate] = value;
+	if (parameter_real(parameters, 5, value))
+	    scale_factor = value;
+	if (!std::isfinite(scale_factor) ||
+		std::fabs(scale_factor) <= MIN_VECTOR_LENGTH) {
+	    diagnose(Severity::Warning, "subfigure_instance_parameters",
+		"Subfigure Instance has an invalid placement", &entry);
+	    ++result_.statistics.omitted;
+	    continue;
+	}
+
+	Matrix placement;
+	for (size_t axis = 0; axis < 3; ++axis) {
+	    placement.m[axis][axis] = scale_factor;
+	    placement.m[axis][3] = translation[axis];
+	}
+	placement = multiply(transform(entry), placement);
+	mat_t member_matrix;
+	MAT_IDN(member_matrix);
+	for (size_t row = 0; row < 3; ++row)
+	    for (size_t column = 0; column < 4; ++column)
+		member_matrix[row * 4 + column] = column == 3 ?
+		    placement.m[row][column] * unit_to_mm_ :
+		    placement.m[row][column];
+
+	struct wmember members;
+	BU_LIST_INIT(&members.l);
+	struct wmember *definition_member = mk_addmember(
+	    definition->second.c_str(), &members.l, nullptr, WMOP_UNION);
+	if (definition_member == WMEMBER_NULL) {
+	    diagnose(Severity::Error, "subfigure_instance_member",
+		"failed to add a Subfigure Definition to its instance", &entry);
+	    return false;
+	}
+	MAT_COPY(definition_member->wm_mat, member_matrix);
+
+	int associated_count = 0;
+	if (parameter_integer(parameters, 6, associated_count) &&
+		associated_count >= 0 && associated_count <= MAX_ENTITY_LIST_COUNT) {
+	    for (int i = 0; i < associated_count; ++i) {
+		EntityId associated_id;
+		if (!parameter_entity(parameters, static_cast<size_t>(i + 7),
+			associated_id))
+		    break;
+		const auto associated = objects_.find(associated_id);
+		if (associated == objects_.end())
+		    continue;
+		if (mk_addmember(associated->second.c_str(), &members.l, nullptr,
+			WMOP_UNION) == WMEMBER_NULL) {
+		    diagnose(Severity::Error, "subfigure_instance_member",
+			"failed to add associated annotation content to an instance",
+			&entry);
+		    return false;
+		}
+		grouped_.insert(associated_id);
+	    }
+	}
+
+	const DirectoryEntry *definition_entry = document_.entity(definition_id);
+	std::string source_name;
+	if (definition_entry)
+	    parameter_string(document_.parameters(definition_id), 2, source_name);
+	if (source_name.empty())
+	    source_name = "iges_subfigure";
+	source_name += ".instance_D" + std::to_string(entry.id.value());
+	const std::string name = unique_name(entry, source_name, ".annot_instance");
+	const int write_status = mk_lfcomb(wdbp_, name.c_str(), &members, 0)
+	if (write_status < 0) {
+	    diagnose(Severity::Error, "subfigure_instance_write",
+		"failed to write an annotation Subfigure Instance", &entry);
+	    return false;
+	}
+	write_entity_attributes(entry, name);
+	db5_update_attribute(name.c_str(), "iges.semantic",
+	    "subfigure_instance", wdbp_->dbip);
+	const std::string definition_entity =
+	    std::to_string(definition_id.value());
+	db5_update_attribute(name.c_str(), "iges.definition",
+	    definition_entity.c_str(), wdbp_->dbip);
+	objects_[entry.id] = name;
+	grouped_.insert(definition_id);
+	++result_.statistics.objects_written;
+	++result_.statistics.semantic_groups_written;
+    }
+    return true;
+}
+
+bool
 Translator::write_root(const std::vector<std::string> &members)
 {
     if (members.empty())
@@ -1519,7 +1713,8 @@ Translator::run()
 
     std::set<EntityId> referenced;
     for (const DirectoryEntry &entry : document_.entities()) {
-	if (!is_dimension_type(entry.type))
+	if (!is_dimension_type(entry.type) && entry.type != 308 &&
+		entry.type != 408)
 	    continue;
 	const ParameterList *parameters = document_.parameters(entry.id);
 	if (!parameters)
@@ -1549,6 +1744,8 @@ Translator::run()
 	    ++result_.statistics.omitted;
     }
     if (!write_groups())
+	return result_;
+    if (!write_subfigures())
 	return result_;
 
     std::vector<std::string> root_members = groups_;

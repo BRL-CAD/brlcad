@@ -11,7 +11,7 @@ iges-g - convert an IGES file to a BRL-CAD database
 
 [source]
 ----
-iges-g [--exact|--strict] [--repair _none|safe_] [--report _file.json_] [-3] [-d] [-n] [-t] [-m|-p] [-N _solid_name_] [-x _rt_debug_flag_] [-X _nmg_debug_flag_] -o _database.g_ _file.iges_
+iges-g [--exact|--strict] [--repair _none|safe_] [--max-repair-tolerance _mm_] [--default-plate-thickness _mm_] [--report _file.json_] [-3] [-d] [-n] [-t] [-m|-p] [-N _solid_name_] [-x _rt_debug_flag_] [-X _nmg_debug_flag_] -o _database.g_ _file.iges_
 ----
 
 
@@ -24,10 +24,10 @@ expected to conform to IGES version 5.3 or an earlier version.
 
 With none of the *-3*, *-d*, *-n*, or *-t* options, the default action is to
 convert IGES solid model entities to their BRL-CAD equivalents. Type 186
-manifold topology is constructed directly in OpenNURBS. Type 144 trimmed
-surfaces are constructed as independent OpenNURBS faces and conservatively
-stitched into shared manifold topology when their boundary curves agree within
-the file tolerance. Most CSG conversions are exact; solids
+manifold topology is constructed directly in OpenNURBS. Type 143 bounded and
+Type 144 trimmed surfaces are constructed as independent OpenNURBS faces and
+conservatively stitched into shared manifold topology when their boundary
+curves agree within the file tolerance. Most CSG conversions are exact; solids
 of revolution are approximated by a series of BRL-CAD cones and solids of
 linear extrusion are approximated by polysolids. BREP objects are written as
 native BRL-CAD BRep objects by default; *-m* and *-p* select polygonal
@@ -73,6 +73,16 @@ other direction, see *g-iges*(1).
 
 *--repair* _none|safe_::
   Select no repairs or bounded structural repairs. The default is _safe_.
+
+*--max-repair-tolerance* _mm_::
+  Permit failed model-space boundary pullbacks to be retried up to the given
+  tolerance. Relaxed faces remain subject to OpenNURBS validity checks and are
+  flagged with their actual repair tolerance in the output database and JSON
+  report. This option requires safe OpenNURBS BRep output.
+
+*--default-plate-thickness* _mm_::
+  Assign the given thickness to imported open BReps in plate mode. The default
+  zero thickness retains the authored sheet geometry.
 
 *--report* _file.json_::
   Write structured parser and import diagnostics to a JSON file.

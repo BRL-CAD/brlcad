@@ -9,6 +9,7 @@
 
 #include "common.h"
 
+#include <cmath>
 #include <map>
 #include <string>
 
@@ -28,7 +29,7 @@
 
 namespace {
 
-constexpr size_t IGES_OPTION_COUNT = 6;
+constexpr size_t IGES_OPTION_COUNT = 7;
 
 struct IgesReadOptions {
     int drawings_only = 0;
@@ -36,6 +37,7 @@ struct IgesReadOptions {
     int drawings_3d = 0;
     int exact = 0;
     int strict = 0;
+    fastf_t maximum_repair_tolerance = 0.0;
     char *repair = nullptr;
 };
 
@@ -59,7 +61,10 @@ iges_create_options(struct bu_opt_desc **descriptions, void **options_data)
 	&options->strict, "reject repaired or partial imports");
     BU_OPT((*descriptions)[5], nullptr, "repair", "MODE", bu_opt_str,
 	&options->repair, "none or safe (default: safe)");
-    BU_OPT_NULL((*descriptions)[6]);
+    BU_OPT((*descriptions)[6], nullptr, "max-repair-tolerance", "MM",
+	bu_opt_fastf_t, &options->maximum_repair_tolerance,
+	"permit and flag boundary pullbacks up to this tolerance");
+    BU_OPT_NULL((*descriptions)[7]);
 }
 
 void
@@ -171,9 +176,16 @@ iges_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
 	static_cast<const struct IgesReadOptions *>(options_data);
     if (!reader_options ||
 	    (reader_options->repair &&
-		!BU_STR_EQUAL(reader_options->repair, "none") &&
-		!BU_STR_EQUAL(reader_options->repair, "safe")) ||
-	    (reader_options->drawings_only && reader_options->breps_only)) {
+	     !BU_STR_EQUAL(reader_options->repair, "none") &&
+	     !BU_STR_EQUAL(reader_options->repair, "safe")) ||
+	    (reader_options->drawings_only && reader_options->breps_only) ||
+	    !std::isfinite(reader_options->maximum_repair_tolerance) ||
+	    reader_options->maximum_repair_tolerance < 0.0 ||
+	    (reader_options->maximum_repair_tolerance > 0.0 &&
+	     (reader_options->drawings_only || reader_options->exact ||
+	      reader_options->strict ||
+	      (reader_options->repair &&
+	       BU_STR_EQUAL(reader_options->repair, "none"))))) {
 	bu_log("IGES: invalid reader options\n");
 	return 0;
     }
@@ -197,6 +209,8 @@ iges_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     options.exact = reader_options->exact != 0;
     options.strict = reader_options->strict != 0;
     options.project_drawings = reader_options->drawings_3d == 0;
+    options.maximum_repair_tolerance =
+	reader_options->maximum_repair_tolerance;
     if (reader_options->repair &&
 	    BU_STR_EQUAL(reader_options->repair, "none"))
 	options.repair = brlcad::iges::RepairMode::None;

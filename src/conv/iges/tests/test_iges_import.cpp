@@ -9,6 +9,7 @@
 
 #include "common.h"
 
+#include "../iges_brep_import.h"
 #include "../iges_import.h"
 
 #include <cstdio>
@@ -98,17 +99,8 @@ parameter_record(const std::string &data, int owner, int sequence)
 }
 
 std::string
-sample()
+sample(const std::vector<Entity> &entities, const char *description)
 {
-    const std::vector<Entity> entities = {
-	{110, 0, "LINE", "110,0,0,0,10,0,0;"},
-	{212, 0, "NOTE", "212,1,5,20,4,1,1.5707963267948966,0,0,0,2,3,0,5HHELLO;"},
-	{214, 1, "LEADER", "214,2,2,1,0,0,0,5,0,10,5;"},
-	{210, 0, "DIM", "210,1,3,5;"},
-	{116, 0, "POINT", "116,1,2,3;"},
-	{110, 0, "A(B", "110,0,0,0,0,1,0;"},
-	{110, 0, "A[B", "110,0,0,0,0,2,0;"}
-    };
     std::vector<int> starts;
     std::vector<int> lines;
     int parameter_sequence = 1;
@@ -120,7 +112,7 @@ sample()
     }
 
     std::string result;
-    result += record("semantic annotation test", 'S', 1);
+    result += record(description, 'S', 1);
     result += record("1H,,1H;;", 'G', 1);
     int directory_sequence = 1;
     for (size_t i = 0; i < entities.size(); ++i) {
@@ -139,6 +131,43 @@ sample()
     result += record("", 'T', 1);
     return result;
 }
+
+std::string
+annotation_sample()
+{
+    const std::vector<Entity> entities = {
+	{110, 0, "LINE", "110,0,0,0,10,0,0;"},
+	{212, 0, "NOTE", "212,1,5,20,4,1,1.5707963267948966,0,0,0,2,3,0,5HHELLO;"},
+	{214, 1, "LEADER", "214,2,2,1,0,0,0,5,0,10,5;"},
+	{210, 0, "DIM", "210,1,3,5;"},
+	{116, 0, "POINT", "116,1,2,3;"},
+	{110, 0, "A(B", "110,0,0,0,0,1,0;"},
+	{110, 0, "A[B", "110,0,0,0,0,2,0;"},
+	{308, 0, "SUBDEF", "308,0,4Hwire,1,1;"},
+	{408, 0, "SUBINST", "408,15,10,20,30,2;"}
+    };
+    return sample(entities, "semantic annotation test");
+}
+
+
+std::string
+bounded_surface_sample()
+{
+    const std::vector<Entity> entities = {
+	{128, 0, "SURFACE",
+	    "128,1,1,1,1,0,0,1,0,0,0,0,1,1,0,0,1,1,1,1,1,1,"
+	    "0,0,0,10,0,0,0,10,0,10,10,0,0,1,0,1;"},
+	{110, 0, "BOTTOM", "110,0,0,0.05,10,0,0.05;"},
+	{110, 0, "RIGHT", "110,10,0,0.05,10,10,0.05;"},
+	{110, 0, "TOP", "110,10,10,0.05,0,10,0.05;"},
+	{110, 0, "LEFT", "110,0,10,0.05,0,0,0.05;"},
+	{141, 0, "BOUNDARY",
+	    "141,0,0,1,4,3,1,0,5,1,0,7,1,0,9,1,0;"},
+	{143, 0, "FACE", "143,0,1,1,11;"}
+    };
+    return sample(entities, "bounded surface tolerance test");
+}
+
 
 bool
 expect(bool condition, const char *message)
@@ -174,7 +203,7 @@ bool
 test_semantic_annotations()
 {
     const brlcad::iges::Document document =
-	brlcad::iges::Document::parse_buffer(sample(), "annotation.iges");
+	brlcad::iges::Document::parse_buffer(annotation_sample(), "annotation.iges");
     if (!expect(document.valid(), "semantic test IGES did not parse"))
 	return false;
 
@@ -197,12 +226,17 @@ test_semantic_annotations()
 	    "semantic annotation count is wrong") &&
 	expect(result.statistics.datums_written == 1,
 	    "semantic datum count is wrong") &&
-	expect(result.statistics.semantic_groups_written == 1,
-	    "semantic dimension group was not written") &&
+	expect(result.statistics.semantic_groups_written == 3,
+	    "semantic dimension and subfigure groups were not written") &&
 	expect(db_lookup(wdbp->dbip, "drawing", LOOKUP_QUIET) != RT_DIR_NULL,
 	    "semantic drawing root was not written") &&
 	expect(db_lookup(wdbp->dbip, "DIM.annot_group", LOOKUP_QUIET) != RT_DIR_NULL,
 	    "semantic dimension group name is missing") &&
+	expect(db_lookup(wdbp->dbip, "wire.annot_def", LOOKUP_QUIET) != RT_DIR_NULL,
+	    "annotation subfigure definition is missing") &&
+	expect(db_lookup(wdbp->dbip, "wire_instance_D17.annot_instance",
+		LOOKUP_QUIET) != RT_DIR_NULL,
+	    "annotation subfigure instance is missing") &&
 	expect(db_lookup(wdbp->dbip, "A_B.annot", LOOKUP_QUIET) != RT_DIR_NULL,
 	    "first sanitized collision name is missing") &&
 	expect(db_lookup(wdbp->dbip, "A_B.annot.D13", LOOKUP_QUIET) != RT_DIR_NULL,
@@ -279,10 +313,132 @@ test_semantic_annotations()
 	"dimension semantic attribute is missing") && passed;
     bu_avs_free(&attributes);
 
+
+    bu_avs_init_empty(&attributes);
+    group = db_lookup(wdbp->dbip, "wire.annot_def", LOOKUP_QUIET);
+    if (group != RT_DIR_NULL)
+	db5_get_attributes(wdbp->dbip, &attributes, group);
+    const char *original_name = bu_avs_get(&attributes, "iges.name");
+    passed = expect(original_name && BU_STR_EQUAL(original_name, "wire"),
+	"subfigure source name was not preserved") && passed;
+    bu_avs_free(&attributes);
+    bu_avs_init_empty(&attributes);
+    group = db_lookup(wdbp->dbip, "wire_instance_D17.annot_instance",
+	LOOKUP_QUIET);
+    if (group != RT_DIR_NULL)
+	db5_get_attributes(wdbp->dbip, &attributes, group);
+    semantic = bu_avs_get(&attributes, "iges.semantic");
+    const char *definition = bu_avs_get(&attributes, "iges.definition");
+    passed = expect(semantic && BU_STR_EQUAL(semantic, "subfigure_instance") &&
+	    definition && BU_STR_EQUAL(definition, "15"),
+	"subfigure instance metadata is missing") && passed;
+    bu_avs_free(&attributes);
+
     wdb_close(wdbp);
     bu_file_delete(path);
     return passed;
 }
+
+bool
+run_bounded_surface_import(const brlcad::iges::Document &document,
+    const brlcad::iges::ImportOptions &options,
+    brlcad::iges::BrepImportResult &result, bool &face_written,
+    bool &brep_valid, struct bu_attribute_value_set *attributes)
+{
+    char path[MAXPATHLEN] = {0};
+    FILE *temporary = bu_temp_file(path, sizeof(path));
+    if (!temporary)
+	return false;
+    std::fclose(temporary);
+    bu_file_delete(path);
+
+    struct rt_wdb *wdbp = wdb_fopen(path);
+    if (wdbp == RT_WDB_NULL)
+	return false;
+    result = brlcad::iges::import_breps(document, wdbp, options);
+    struct directory *face = db_lookup(wdbp->dbip, "FACE", LOOKUP_QUIET);
+    face_written = face != RT_DIR_NULL;
+    brep_valid = false;
+    if (face_written) {
+	struct rt_db_internal internal;
+	RT_DB_INTERNAL_INIT(&internal);
+	if (rt_db_get_internal(&internal, face, wdbp->dbip, nullptr) >= 0) {
+	    if (internal.idb_type == ID_BREP) {
+		const struct rt_brep_internal *brep =
+		    static_cast<const struct rt_brep_internal *>(internal.idb_ptr);
+		brep_valid = brep && brep->brep && brep->brep->IsValid();
+	    }
+	    rt_db_free_internal(&internal);
+	}
+	if (attributes)
+	    db5_get_attributes(wdbp->dbip, attributes, face);
+    }
+    wdb_close(wdbp);
+    bu_file_delete(path);
+    return true;
+}
+
+
+bool
+test_bounded_surface_tolerance()
+{
+    const brlcad::iges::Document document =
+	brlcad::iges::Document::parse_buffer(bounded_surface_sample(),
+	    "bounded.iges");
+    if (!expect(document.valid(), "bounded-surface test IGES did not parse"))
+	return false;
+
+    brlcad::iges::ImportOptions conservative_options;
+    brlcad::iges::BrepImportResult conservative_result;
+    bool conservative_face = false;
+    bool conservative_valid = false;
+    if (!expect(run_bounded_surface_import(document, conservative_options,
+	    conservative_result, conservative_face, conservative_valid, nullptr),
+	    "could not run conservative bounded-surface import"))
+	return false;
+    bool passed = expect(!conservative_result.success && !conservative_face &&
+	    !conservative_valid &&
+	    conservative_result.statistics.bounded_surfaces_seen == 1 &&
+	    conservative_result.statistics.relaxed_faces_written == 0 &&
+	    conservative_result.statistics.omitted == 1,
+	"conservative import did not reject the out-of-tolerance face");
+
+    brlcad::iges::ImportOptions relaxed_options;
+    relaxed_options.maximum_repair_tolerance = 0.1;
+    brlcad::iges::BrepImportResult relaxed_result;
+    bool relaxed_face = false;
+    bool relaxed_valid = false;
+    struct bu_attribute_value_set attributes;
+    bu_avs_init_empty(&attributes);
+    if (!expect(run_bounded_surface_import(document, relaxed_options,
+	    relaxed_result, relaxed_face, relaxed_valid, &attributes),
+	    "could not run relaxed bounded-surface import")) {
+	bu_avs_free(&attributes);
+	return false;
+    }
+    const char *status = bu_avs_get(&attributes, "iges.tolerance_status");
+    const char *basis = bu_avs_get(&attributes, "iges.tolerance_basis");
+    const char *maximum = bu_avs_get(&attributes,
+	"iges.maximum_repair_tolerance_mm");
+    const char *nominal = bu_avs_get(&attributes,
+	"iges.nominal_tolerance_mm");
+    const char *face_metadata = bu_avs_get(&attributes, "iges.face_metadata");
+    const bool flagged = status && BU_STR_EQUAL(status, "relaxed") &&
+	basis && BU_STR_EQUAL(basis, "import_default") && maximum && nominal &&
+	face_metadata && std::string(face_metadata).find("repair_tolerance_mm") !=
+	    std::string::npos;
+    passed = expect(relaxed_result.success && relaxed_face && relaxed_valid &&
+	    relaxed_result.statistics.bounded_surfaces_seen == 1 &&
+	    relaxed_result.statistics.relaxed_faces_written == 1 &&
+	    relaxed_result.statistics.omitted == 0 &&
+	    NEAR_EQUAL(relaxed_result.statistics.maximum_repair_tolerance_used,
+		0.1, SMALL_FASTF) && flagged,
+	"relaxed import did not preserve and flag the repaired valid face") &&
+	passed;
+    bu_avs_free(&attributes);
+    return passed;
+}
+
 
 } /* namespace */
 
@@ -292,7 +448,9 @@ main(int argc, char **argv)
     bu_setprogname(argv[0]);
     if (argc != 1)
 	return 1;
-    return test_semantic_annotations() ? 0 : 1;
+    bool passed = test_semantic_annotations();
+    passed = test_bounded_surface_tolerance() && passed;
+    return passed ? 0 : 1;
 }
 
 /*

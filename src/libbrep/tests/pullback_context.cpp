@@ -317,6 +317,49 @@ exercise_narrow_singular_domain_guard()
 
 
 static bool
+exercise_singular_endpoint_pullback()
+{
+    ON_NurbsSurface surface(3, false, 2, 2, 2, 2);
+    if (!surface.MakeClampedUniformKnotVector(0) ||
+	    !surface.MakeClampedUniformKnotVector(1))
+	return false;
+    surface.SetCV(0, 0, ON_3dPoint::Origin);
+    surface.SetCV(0, 1, ON_3dPoint::Origin);
+    surface.SetCV(1, 0, ON_3dPoint(10.0, 0.0, 0.0));
+    surface.SetCV(1, 1, ON_3dPoint(10.0, 10.0, 0.0));
+    if (!surface.IsValid() || !surface.IsSingular(3))
+	return false;
+
+    std::unique_ptr<ON_Curve> source_curve(surface.IsoCurve(0, 0.5));
+    if (!source_curve || !source_curve->IsValid())
+	return false;
+    std::string failure;
+    std::unique_ptr<ON_Curve> parameter_curve(brlcad::pullback_curve(
+	&surface, source_curve.get(), 1.0e-7, 1.0e-5, &failure));
+    const ON_PolylineCurve *polyline =
+	ON_PolylineCurve::Cast(parameter_curve.get());
+    if (!polyline || polyline->PointCount() < 2)
+	return false;
+
+    bool found_singular_endpoint = false;
+    for (int end = 0; end < 2; ++end) {
+	const int endpoint = end == 0 ? 0 : polyline->PointCount() - 1;
+	const int neighbor = end == 0 ? 1 : polyline->PointCount() - 2;
+	const ON_2dPoint uv(polyline->m_pline[endpoint].x,
+	    polyline->m_pline[endpoint].y);
+	const int side = IsAtSingularity(&surface, uv);
+	if (side < 0)
+	    continue;
+	found_singular_endpoint = true;
+	const int varying_direction = side == 0 || side == 2 ? 0 : 1;
+	if (fabs(polyline->m_pline[endpoint][varying_direction] -
+		polyline->m_pline[neighbor][varying_direction]) > 1.0e-12)
+	    return false;
+    }
+    return found_singular_endpoint;
+}
+
+static bool
 exercise_nurbs_span_bounding_boxes()
 {
     ON_NurbsSurface surface(3, true, 4, 4, 8, 7);
@@ -638,6 +681,12 @@ main(int, const char **argv)
 	std::cerr << "narrow singular-domain guard failed" << std::endl,
 	valid.store(false);
 
+
+    /* A pole endpoint has no unique parameter in the varying direction; use
+     * its adjacent sample to keep the recovered trim on the intended branch. */
+    if (!exercise_singular_endpoint_pullback())
+	std::cerr << "singular endpoint pullback failed" << std::endl,
+	valid.store(false);
     /* NURBS sub-span bounds must remain conservative while avoiding a copy of
      * the complete surface for each prepared span. */
     if (!exercise_nurbs_span_bounding_boxes())

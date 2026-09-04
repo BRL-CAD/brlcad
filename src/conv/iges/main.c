@@ -241,6 +241,7 @@ main(int argc, char *argv [])
     int legacy_drawings = 0;
     int direct_brep_imported = 0;
     fastf_t default_plate_thickness = 0.0;
+    fastf_t maximum_repair_tolerance = 0.0;
     char *output_file = (char *)NULL;
     char *report_file = (char *)NULL;
     char *repair_mode = (char *)NULL;
@@ -277,6 +278,9 @@ main(int argc, char *argv [])
 	{"", "default-plate-thickness", "MM", bu_opt_fastf_t,
 	    &default_plate_thickness,
 	    "assign this thickness to imported non-solid B-Reps"},
+	{"", "max-repair-tolerance", "MM", bu_opt_fastf_t,
+	    &maximum_repair_tolerance,
+	    "permit and flag boundary pullbacks up to this tolerance"},
 	{"", "repair", "MODE", bu_opt_str, &repair_mode,
 	    "none or safe (default: safe)"},
 	{"", "report", "FILE", bu_opt_str, &report_file,
@@ -308,6 +312,14 @@ main(int argc, char *argv [])
 	    (do_drawings || mesh_output || polygon_output))
 	bu_vls_printf(&option_messages,
 	    "default plate thickness requires OpenNURBS B-Rep output");
+    if (!isfinite(maximum_repair_tolerance) || maximum_repair_tolerance < 0.0)
+	bu_vls_printf(&option_messages,
+	    "maximum repair tolerance must be a finite non-negative value");
+    else if (maximum_repair_tolerance > 0.0 &&
+	    (do_drawings || mesh_output || polygon_output || exact_import ||
+	     strict_import || (repair_mode && BU_STR_EQUAL(repair_mode, "none"))))
+	bu_vls_printf(&option_messages,
+	    "maximum repair tolerance requires safe OpenNURBS B-Rep output");
     if (bu_vls_strlen(&option_messages) || argc != 1 || !output_file ||
 	    do_drawings + do_splines + trimmed_surf > 1 ||
 	    mesh_output + polygon_output > 1 ||
@@ -382,7 +394,8 @@ main(int argc, char *argv [])
     if (!do_drawings && do_brep) {
 	const int direct_result = iges_import_breps(argv[0], fdout,
 	    exact_import, strict_import, repair_mode ? repair_mode : "safe",
-	    default_plate_thickness, solid_name, report_file);
+	    default_plate_thickness, maximum_repair_tolerance, solid_name,
+	    report_file);
 	if (direct_result < 0) {
 	    wdb_close(fdout);
 	    bu_exit(BRLCAD_ERROR,

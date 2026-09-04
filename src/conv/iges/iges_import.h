@@ -42,6 +42,7 @@ struct ImportOptions {
     bool exact = false;
     bool strict = false;
     double default_plate_thickness = 0.0;
+    double maximum_repair_tolerance = 0.0;
     bool project_drawings = true;
     std::string root_name = "iges_drawing";
 };
