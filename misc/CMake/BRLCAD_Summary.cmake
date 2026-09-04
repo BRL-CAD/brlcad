@@ -258,6 +258,7 @@ function(BRLCAD_Summary)
   ext_report("Netpbm" NETPBM_STATUS)
   ext_report("OpenCV" OPENCV_STATUS)
   ext_report("OpenNURBS" OPENNURBS_STATUS)
+  ext_report("OpenQMC" OPENQMC_STATUS REQUIRED_VARS "BRLCAD_ENABLE_QMC")
   ext_report("OSMesa" OSMESA_STATUS)
   ext_report("Portable Network Graphics" PNG_STATUS)
 

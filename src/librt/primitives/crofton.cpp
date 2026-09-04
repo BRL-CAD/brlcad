@@ -45,14 +45,22 @@
  * intersecting closed surface), and total_chord is the sum of solid
  * segment lengths.
  *
- * Chord endpoints are independent pseudorandom points on the bounding
- * sphere.  Reinitializing the generator with a fixed seed makes sampling
- * reproducible without changing the ordinary Monte Carlo convergence
- * behavior on which the estimator's stability checks rely.
+ * Correctness requires uniform coverage of the invariant measure on
+ * oriented lines intersecting the bounding sphere: directions are
+ * isotropic and offsets perpendicular to each direction are uniform by
+ * disk area.  The legacy PRNG obtains that measure by joining two
+ * independent uniform sphere points.
+ *
+ * When BRLCAD_ENABLE_QMC is enabled, an OpenQMC randomized rank-one
+ * lattice samples the line's four natural coordinates directly.  This
+ * improves finite-sample coverage without changing the target measure.
+ * The independent-PRNG implementation remains intact as a runtime
+ * compatibility path and an independent check on QMC correlation.
  */
 
 #include "common.h"
 
+#include <algorithm>
 #include <chrono>
 #include <climits>
 #include <condition_variable>
@@ -68,11 +76,16 @@
 #include <time.h>
 #include <vector>
 
+#ifdef BRLCAD_ENABLE_QMC
+#  include <oqmc/lattice.h>
+#endif
+
 #include "vmath.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/parallel.h"
 #include "bu/datetime.h"
+#include "bu/str.h"
 #include "bg/obr.h"
 #include "raytrace.h"
 #include "rt/geom.h"
@@ -106,13 +119,31 @@
 /** Fixed seed for reproducible estimates in tests and cross-platform runs. */
 #define RT_CROFTON_RNG_SEED UINT64_C(0x9e3779b97f4a7c15)
 
-/** Two sphere coordinates for each of two chord endpoints. */
-#define RT_CROFTON_RANDOM_VALUES_PER_RAY 4u
+/** An oriented line has two direction and two perpendicular-offset values. */
+static constexpr int CROFTON_LINE_DIMENSIONS = 4;
 
 /** Convert the high 53 random bits exactly to a double in [0, 1). */
 static constexpr unsigned int CROFTON_RANDOM_SHIFT = 11u;
 static constexpr double CROFTON_RANDOM_SCALE =
     1.0 / 9007199254740992.0;
+
+#ifdef BRLCAD_ENABLE_QMC
+/** Keep the reference axis safely separated from the sampled direction. */
+static constexpr double CROFTON_BASIS_REFERENCE_LIMIT = 0.9;
+
+/** Crofton uses one OpenQMC domain rather than image pixel domains. */
+static constexpr int CROFTON_QMC_DOMAIN_COORDINATE = 0;
+
+/** Number of nonnegative values representable by OpenQMC's int frame. */
+static constexpr uint64_t CROFTON_QMC_FRAME_COUNT =
+    static_cast<uint64_t>(INT_MAX) + 1u;
+
+/** Convert every uint32_t value uniformly and exactly into [0, 1). */
+static constexpr double CROFTON_QMC_SCALE =
+    1.0 / (static_cast<double>(UINT32_MAX) + 1.0);
+
+static const char CROFTON_PRNG_ENV[] = "LIBRT_CROFTON_USE_PRNG";
+#endif
 
 /* ------------------------------------------------------------------ */
 /* Internal types                                                       */
@@ -280,13 +311,18 @@ random_point_on_sphere(double radius, const point_t center, double u,
 }
 
 /**
- * Generate independent random chord endpoints.  Pairing consecutive IID
- * sphere points has the same distribution as shuffling a point array before
- * pairing, but consumes exactly four random values per ray.  That fixed
- * stride lets callers continue the deterministic stream with ray_offset.
+ * Generate the legacy independent-pseudorandom endpoint chords.  For two
+ * uniform sphere endpoints, rotational invariance makes the line direction
+ * isotropic.  If alpha is their central angle, cos(alpha) is uniform and the
+ * squared distance of their line from the center is
+ * R^2(1 + cos(alpha))/2.  The offset is therefore uniform by disk area, as
+ * required by the Crofton line measure.
+ *
+ * Keep this implementation unchanged as the compatibility fallback.  Four
+ * PRNG values per ray give ray_offset a fixed deterministic stream stride.
  */
 static void
-generate_rays(struct crofton_ray *rays, size_t ray_count, size_t first_id,
+generate_prng_rays(struct crofton_ray *rays, size_t ray_count, size_t first_id,
     double radius, const point_t center, std::mt19937_64 &rng)
 {
     for (size_t i = 0; i < ray_count; i++) {
@@ -299,6 +335,159 @@ generate_rays(struct crofton_ray *rays, size_t ray_count, size_t first_id,
         VUNITIZE(rays[i].r_dir);
         rays[i].id = first_id + i;
     }
+}
+
+/**
+ * Return whether this process should use the QMC generator.  Sampler choice is
+ * intentionally not part of rt_crofton_params: that public structure describes
+ * accuracy and resource limits, whereas the two generators implement the same
+ * mathematical measure.  Keeping the experimental compatibility control in
+ * the environment avoids an ABI change.  Set LIBRT_CROFTON_USE_PRNG to any
+ * value accepted by bu_str_true() to recover the original generator exactly.
+ */
+static bool
+use_qmc_sampler()
+{
+#ifdef BRLCAD_ENABLE_QMC
+    return !bu_str_true(getenv(CROFTON_PRNG_ENV));
+#else
+    return false;
+#endif
+}
+
+#ifdef BRLCAD_ENABLE_QMC
+/**
+ * Construct an oriented line from four uniform coordinates.
+ *
+ * A line intersecting a sphere has four degrees of freedom.  Its unit
+ * direction d contributes two; its closest point p to the sphere center
+ * contributes two more because (p-center) is perpendicular to d.  The
+ * invariant Crofton measure factorizes as:
+ *
+ *     uniform solid angle for d  *  uniform disk area for p
+ *
+ * sample[0:1] map to a uniform sphere direction by making cos(theta), not
+ * theta, uniform.  sample[2:3] map to the perpendicular disk.  In particular,
+ * offset_radius = R*sqrt(sample[2]) is essential: the probability inside
+ * radius r is then r^2/R^2, exactly the fraction of disk area inside r.
+ * Sampling the radius linearly would put too many lines near the center and
+ * bias both surface-area and volume estimates.
+ *
+ * The arbitrary perpendicular basis cannot change the distribution because
+ * its disk angle is uniform.  Switching reference axes when d approaches Z
+ * avoids a nearly zero cross product.  Finally, moving backward from p by the
+ * sphere half-chord places the ray origin on the near side of the bounding
+ * sphere, matching the numerical setup used by the endpoint generator.
+ *
+ * This is a reparameterization, not a different integral.  For the legacy
+ * endpoint construction, rotational invariance makes d isotropic and the
+ * squared center-to-line offset is uniform.  Those are precisely the two
+ * distributions constructed directly here.
+ */
+static void
+qmc_line_from_sample(struct crofton_ray *ray, double radius,
+    const point_t center, const double sample[CROFTON_LINE_DIMENSIONS])
+{
+    const double direction_z = 1.0 - 2.0 * sample[0];
+    const double direction_radius =
+        sqrt(std::max(0.0, 1.0 - direction_z * direction_z));
+    const double direction_angle = 2.0 * M_PI * sample[1];
+    vect_t direction;
+    VSET(direction, direction_radius * cos(direction_angle),
+        direction_radius * sin(direction_angle), direction_z);
+
+    vect_t reference;
+    if (fabs(direction[Z]) < CROFTON_BASIS_REFERENCE_LIMIT)
+        VSET(reference, 0.0, 0.0, 1.0);
+    else
+        VSET(reference, 0.0, 1.0, 0.0);
+
+    vect_t basis_u;
+    vect_t basis_v;
+    VCROSS(basis_u, reference, direction);
+    VUNITIZE(basis_u);
+    VCROSS(basis_v, direction, basis_u);
+
+    const double offset_radius = radius * sqrt(sample[2]);
+    const double offset_angle = 2.0 * M_PI * sample[3];
+    point_t closest_point;
+    VJOIN2(closest_point, center,
+        offset_radius * cos(offset_angle), basis_u,
+        offset_radius * sin(offset_angle), basis_v);
+
+    const double half_chord = sqrt(std::max(0.0,
+        radius * radius - offset_radius * offset_radius));
+    VJOIN1(ray->r_pt, closest_point, -half_chord, direction);
+    VMOVE(ray->r_dir, direction);
+}
+
+/**
+ * Generate direct-line samples with OpenQMC's LatticeSampler.
+ *
+ * OpenQMC uses the rank-one generator from Hickernell et al., "Weighted
+ * compound integration rules with higher order convergence for all N", makes
+ * it progressive by bit-reversing and shuffling the index, and randomizes it
+ * with per-dimension toroidal shifts.  The lattice's even coverage reduces
+ * finite-sample clumping and gaps compared with independent PRNG points.  The
+ * shifts remove fixed alignment with the origin and give uniform coordinate
+ * marginals over the randomization ensemble; they do not make samples IID.
+ * A deterministic frame schedule therefore gives reproducible randomized-QMC
+ * estimates, while the PRNG override remains available to check an unusual
+ * geometry for a lattice-correlation artifact.
+ *
+ * OpenQMC stores a 16-bit local sample index.  Its normal high-index behavior
+ * changes the randomization pattern for each 65,536-sample block.  Mapping the
+ * global Crofton ray id to (frame, local index) preserves that behavior across
+ * rt_crofton_collect() continuations rather than restarting the lattice.  The
+ * frame modulo can repeat only after 2^47 rays, beyond a realizable Crofton
+ * run, and avoids implementation-defined conversion to a signed int.
+ */
+static void
+generate_qmc_rays(struct crofton_ray *rays, size_t ray_count, size_t first_id,
+    double radius, const point_t center)
+{
+    const uint64_t block_size =
+        static_cast<uint64_t>(oqmc::State64Bit::maxIndexSize);
+
+    for (size_t i = 0; i < ray_count; i++) {
+        const uint64_t ray_id = static_cast<uint64_t>(first_id) + i;
+        const uint64_t block_id = ray_id / block_size;
+        const int frame = static_cast<int>(
+            block_id % CROFTON_QMC_FRAME_COUNT);
+        const int local_index = static_cast<int>(ray_id % block_size);
+        const oqmc::LatticeSampler sampler(
+            CROFTON_QMC_DOMAIN_COORDINATE,
+            CROFTON_QMC_DOMAIN_COORDINATE, frame, local_index, NULL);
+
+        uint32_t integer_sample[CROFTON_LINE_DIMENSIONS];
+        double sample[CROFTON_LINE_DIMENSIONS];
+        sampler.drawSample<CROFTON_LINE_DIMENSIONS>(integer_sample);
+        for (int dimension = 0;
+             dimension < CROFTON_LINE_DIMENSIONS; dimension++) {
+            sample[dimension] =
+                static_cast<double>(integer_sample[dimension]) *
+                CROFTON_QMC_SCALE;
+        }
+
+        qmc_line_from_sample(&rays[i], radius, center, sample);
+        rays[i].id = first_id + i;
+    }
+}
+#endif
+
+static void
+generate_rays(struct crofton_ray *rays, size_t ray_count, size_t first_id,
+    double radius, const point_t center, std::mt19937_64 &rng, bool use_qmc)
+{
+#ifdef BRLCAD_ENABLE_QMC
+    if (use_qmc) {
+        generate_qmc_rays(rays, ray_count, first_id, radius, center);
+        return;
+    }
+#else
+    (void)use_qmc;
+#endif
+    generate_prng_rays(rays, ray_count, first_id, radius, center, rng);
 }
 
 /* ------------------------------------------------------------------ */
@@ -464,13 +653,13 @@ class CroftonWorkerPool
 
 static void
 do_one_iteration(CroftonWorkerPool &pool, size_t ray_count, double radius,
-    const point_t center, struct crofton_shared *shared,
+    const point_t center, struct crofton_shared *shared, bool use_qmc,
     std::mt19937_64 &rng)
 {
     struct crofton_ray *rays = (struct crofton_ray *)bu_calloc(
         ray_count, sizeof(struct crofton_ray), "Crofton rays");
     generate_rays(rays, ray_count, shared->ray_offset + shared->total_rays,
-        radius, center, rng);
+        radius, center, rng, use_qmc);
     pool.run(rays, ray_count, shared);
 
     for (const struct crofton_worker_data &worker : pool.worker_data()) {
@@ -572,7 +761,7 @@ crofton_shoot_impl(struct rt_crofton_result       *out_result,
         ((out_points == NULL) != (out_point_count == NULL)) ||
         ((out_aabb_min == NULL) != (out_aabb_max == NULL)) ||
         (out_result && out_result->segments) ||
-        ray_offset > UINT64_MAX / RT_CROFTON_RANDOM_VALUES_PER_RAY)
+        ray_offset > UINT64_MAX / CROFTON_LINE_DIMENSIONS)
         return -1;
     if (out_result) {
         struct rt_crofton_result empty = RT_CROFTON_RESULT_INIT;
@@ -708,9 +897,12 @@ crofton_shoot_impl(struct rt_crofton_result       *out_result,
 	return -1;
     }
 
+    const bool use_qmc = use_qmc_sampler();
     std::mt19937_64 rng(RT_CROFTON_RNG_SEED);
-    rng.discard(static_cast<uint64_t>(ray_offset) *
-        RT_CROFTON_RANDOM_VALUES_PER_RAY);
+    if (!use_qmc) {
+        rng.discard(static_cast<uint64_t>(ray_offset) *
+            CROFTON_LINE_DIMENSIONS);
+    }
 
     const double FOUR_PI    = 4.0 * M_PI;
     const double PI         = M_PI;
@@ -734,7 +926,7 @@ crofton_shoot_impl(struct rt_crofton_result       *out_result,
 		    curr_rays = batch;
 	    }
 
-	    do_one_iteration(*pool, curr_rays, R, center, &shared, rng);
+	    do_one_iteration(*pool, curr_rays, R, center, &shared, use_qmc, rng);
 	    iteration++;
 
 	    if (shared.total_rays == 0) break;
@@ -797,7 +989,7 @@ crofton_shoot_impl(struct rt_crofton_result       *out_result,
 		if (fire > remaining) fire = remaining;
 	    }
 
-	    do_one_iteration(*pool, fire, R, center, &shared, rng);
+	    do_one_iteration(*pool, fire, R, center, &shared, use_qmc, rng);
 	    total_fired += fire;
 
 	    if (shared.total_rays == 0) break;
