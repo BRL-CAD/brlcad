@@ -1361,7 +1361,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_PERTURB_CAST(rt_eto_perturb), /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
 	RTFUNCTAB_FUNC_VALIDATE_CAST(rt_eto_functab_validate), /* validate */
-	NULL /* canonicalize */
+	RTFUNCTAB_FUNC_CANONICALIZE_CAST(rt_eto_canonicalize) /* canonicalize */
     },
 
     {

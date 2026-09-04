@@ -114,6 +114,28 @@ make_tor(struct rt_db_internal *intern, const point_t center, const vect_t norma
 
 
 static void
+make_eto(struct rt_db_internal *intern, const point_t center, const vect_t normal,
+	 const vect_t major_axis, fastf_t revolution_radius,
+	 fastf_t minor_radius)
+{
+    struct rt_eto_internal *eto;
+
+    RT_DB_INTERNAL_INIT(intern);
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern->idb_minor_type = ID_ETO;
+    intern->idb_meth = &OBJ[ID_ETO];
+    BU_ALLOC(intern->idb_ptr, struct rt_eto_internal);
+    eto = (struct rt_eto_internal *)intern->idb_ptr;
+    eto->eto_magic = RT_ETO_INTERNAL_MAGIC;
+    VMOVE(eto->eto_V, center);
+    VMOVE(eto->eto_N, normal);
+    VMOVE(eto->eto_C, major_axis);
+    eto->eto_r = revolution_radius;
+    eto->eto_rd = minor_radius;
+}
+
+
+static void
 make_tgc(struct rt_db_internal *intern, int type, const point_t v,
 	 const vect_t h, const vect_t a, const vect_t b,
 	 const vect_t c, const vect_t d)
@@ -183,6 +205,13 @@ make_transform_output(struct rt_db_internal *output,
 	    BU_ALLOC(output->idb_ptr, struct rt_tor_internal);
 	    tor = (struct rt_tor_internal *)output->idb_ptr;
 	    tor->magic = RT_TOR_INTERNAL_MAGIC;
+	    return 0;
+	}
+	case ID_ETO: {
+	    struct rt_eto_internal *eto;
+	    BU_ALLOC(output->idb_ptr, struct rt_eto_internal);
+	    eto = (struct rt_eto_internal *)output->idb_ptr;
+	    eto->eto_magic = RT_ETO_INTERNAL_MAGIC;
 	    return 0;
 	}
 	case ID_TGC:
@@ -287,6 +316,39 @@ same_tor_geometry(const struct rt_db_internal *a,
     VUNITIZE(anormal);
     VUNITIZE(bnormal);
     return near_value(fabs(VDOT(anormal, bnormal)), 1.0);
+}
+
+
+static int
+same_eto_geometry(const struct rt_db_internal *a,
+		  const struct rt_db_internal *b)
+{
+    const struct rt_eto_internal *aeto = (const struct rt_eto_internal *)a->idb_ptr;
+    const struct rt_eto_internal *beto = (const struct rt_eto_internal *)b->idb_ptr;
+    vect_t anormal;
+    vect_t bnormal;
+    fastf_t amajor = MAGNITUDE(aeto->eto_C);
+    fastf_t bmajor = MAGNITUDE(beto->eto_C);
+    fastf_t avertical;
+    fastf_t bvertical;
+
+    if (!near_vector(aeto->eto_V, beto->eto_V) ||
+	!near_value(aeto->eto_r, beto->eto_r) ||
+	!near_value(aeto->eto_rd, beto->eto_rd) ||
+	!near_value(amajor, bmajor) || amajor <= SMALL_FASTF ||
+	bmajor <= SMALL_FASTF)
+	return 0;
+
+    VMOVE(anormal, aeto->eto_N);
+    VMOVE(bnormal, beto->eto_N);
+    VUNITIZE(anormal);
+    VUNITIZE(bnormal);
+    if (!near_value(fabs(VDOT(anormal, bnormal)), 1.0))
+	return 0;
+
+    avertical = fabs(VDOT(aeto->eto_C, anormal));
+    bvertical = fabs(VDOT(beto->eto_C, bnormal));
+    return near_value(avertical, bvertical);
 }
 
 
@@ -581,6 +643,116 @@ cleanup:
 	rt_db_free_internal(&recanonical);
     if (canonical.idb_ptr)
 	rt_db_free_internal(&canonical);
+    rt_db_free_internal(&input);
+    return failed;
+}
+
+
+static int
+test_eto_mode(enum rt_canonicalize_mode mode, fastf_t expected_scale)
+{
+    const struct bn_tol tol = BN_TOL_INIT_TOL;
+    const point_t center = {-3.0, 7.0, 12.0};
+    const vect_t normal = {0.0, 2.0, 0.0};
+    const vect_t major_axis = {3.0, 4.0, 0.0};
+    struct rt_db_internal input;
+    struct rt_db_internal canonical;
+    struct rt_db_internal reconstructed;
+    struct rt_db_internal recanonical;
+    const struct rt_eto_internal *ceto;
+    mat_t placement;
+    mat_t second_placement;
+    int failed = 0;
+
+    make_eto(&input, center, normal, major_axis, 8.0, 2.0);
+    RT_DB_INTERNAL_INIT(&canonical);
+    RT_DB_INTERNAL_INIT(&recanonical);
+    if (rt_obj_canonicalize(&canonical, placement, &input, &tol, mode) !=
+	RT_CANONICALIZE_OK) {
+	bu_log("ETO mode %d canonicalization failed\n", (int)mode);
+	failed = 1;
+	goto cleanup;
+    }
+
+    ceto = (const struct rt_eto_internal *)canonical.idb_ptr;
+    if (!VNEAR_ZERO(ceto->eto_V, TEST_EPSILON) ||
+	!near_value(ceto->eto_N[X], 0.0) ||
+	!near_value(ceto->eto_N[Y], 0.0) ||
+	!near_value(ceto->eto_N[Z], 1.0) ||
+	!near_value(ceto->eto_C[X], 3.0 / expected_scale) ||
+	!near_value(ceto->eto_C[Y], 0.0) ||
+	!near_value(ceto->eto_C[Z], 4.0 / expected_scale) ||
+	!near_value(ceto->eto_r, 8.0 / expected_scale) ||
+	!near_value(ceto->eto_rd, 2.0 / expected_scale)) {
+	bu_log("ETO mode %d produced a non-canonical result\n", (int)mode);
+	failed = 1;
+	goto cleanup;
+    }
+
+    if (make_transform_output(&reconstructed, &canonical)) {
+	failed = 1;
+	goto cleanup;
+    }
+    if (canonical.idb_meth->ft_mat(&reconstructed, placement, &canonical) !=
+	BRLCAD_OK || !same_eto_geometry(&input, &reconstructed)) {
+	bu_log("ETO mode %d placement did not reconstruct the input\n", (int)mode);
+	failed = 1;
+    }
+    rt_db_free_internal(&reconstructed);
+
+    if (rt_obj_canonicalize(&recanonical, second_placement, &canonical, &tol,
+	    mode) != RT_CANONICALIZE_OK ||
+	!same_eto_geometry(&canonical, &recanonical) ||
+	!matrix_is_identity(second_placement)) {
+	bu_log("ETO mode %d canonicalization is not idempotent\n", (int)mode);
+	failed = 1;
+    }
+
+cleanup:
+    if (recanonical.idb_ptr)
+	rt_db_free_internal(&recanonical);
+    if (canonical.idb_ptr)
+	rt_db_free_internal(&canonical);
+    rt_db_free_internal(&input);
+    return failed;
+}
+
+
+static int
+test_eto_parameterization_invariance(void)
+{
+    const struct bn_tol tol = BN_TOL_INIT_TOL;
+    const point_t center = VINIT_ZERO;
+    const vect_t normal = {0.0, 1.0, 0.0};
+    const vect_t major_axis = {3.0, 4.0, 0.0};
+    const vect_t reversed_major_axis = {-3.0, -4.0, 0.0};
+    struct rt_db_internal input;
+    struct rt_db_internal reversed;
+    struct rt_db_internal canonical;
+    struct rt_db_internal reversed_canonical;
+    mat_t placement;
+    mat_t reversed_placement;
+    int failed = 0;
+
+    make_eto(&input, center, normal, major_axis, 8.0, 2.0);
+    make_eto(&reversed, center, normal, reversed_major_axis, 8.0, 2.0);
+    RT_DB_INTERNAL_INIT(&canonical);
+    RT_DB_INTERNAL_INIT(&reversed_canonical);
+    if (rt_obj_canonicalize(&canonical, placement, &input, &tol,
+	    RT_CANONICALIZE_AFFINE) != RT_CANONICALIZE_OK ||
+	rt_obj_canonicalize(&reversed_canonical, reversed_placement, &reversed,
+	    &tol, RT_CANONICALIZE_AFFINE) != RT_CANONICALIZE_OK ||
+	!near_vector(((const struct rt_eto_internal *)canonical.idb_ptr)->eto_C,
+	    ((const struct rt_eto_internal *)reversed_canonical.idb_ptr)->eto_C)) {
+	bu_log("ETO equivalent axis parameterizations produced different canonical forms\n");
+	failed = 1;
+    }
+
+    if (reversed_canonical.idb_ptr)
+	rt_db_free_internal(&reversed_canonical);
+    if (canonical.idb_ptr)
+	rt_db_free_internal(&canonical);
+    rt_db_free_internal(&reversed);
     rt_db_free_internal(&input);
     return failed;
 }
@@ -1074,6 +1246,19 @@ test_errors(void)
     }
 
     {
+	const vect_t normal = {0.0, 0.0, 1.0};
+	const vect_t major_axis = {1.0, 0.0, 1.0};
+
+	make_eto(&invalid, center, normal, major_axis, 4.0, 2.0);
+	if (rt_obj_canonicalize(&output, placement, &invalid, &tol,
+		RT_CANONICALIZE_AFFINE) != RT_CANONICALIZE_ERROR || output.idb_ptr) {
+	    bu_log("invalid ETO was not rejected cleanly\n");
+	    failed = 1;
+	}
+	rt_db_free_internal(&invalid);
+    }
+
+    {
 	const point_t invalid_arb[8] = {
 	    {0.0, 0.0, 0.0}, {4.0, 0.0, 0.0},
 	    {4.0, 3.0, 0.5}, {0.0, 3.0, 0.0},
@@ -1128,6 +1313,10 @@ main(int UNUSED(argc), const char *argv[])
     failures += test_tor_mode(RT_CANONICALIZE_RIGID, 5.0, 2.0);
     failures += test_tor_mode(RT_CANONICALIZE_SIMILARITY, 1.0, 0.4);
     failures += test_tor_mode(RT_CANONICALIZE_AFFINE, 1.0, 0.4);
+    failures += test_eto_mode(RT_CANONICALIZE_RIGID, 1.0);
+    failures += test_eto_mode(RT_CANONICALIZE_SIMILARITY, 8.0);
+    failures += test_eto_mode(RT_CANONICALIZE_AFFINE, 8.0);
+    failures += test_eto_parameterization_invariance();
     failures += test_tgc_mode(ID_TGC, RT_CANONICALIZE_RIGID);
     failures += test_tgc_mode(ID_TGC, RT_CANONICALIZE_SIMILARITY);
     failures += test_tgc_mode(ID_TGC, RT_CANONICALIZE_AFFINE);

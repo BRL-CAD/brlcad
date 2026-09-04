@@ -63,6 +63,12 @@ make_database(void)
     point_t center_a = {10.0, 0.0, 0.0};
     point_t center_b = {0.0, 20.0, 0.0};
     point_t center_c = {0.0, 0.0, 30.0};
+    point_t eto_center_a = {0.0, -20.0, 5.0};
+    vect_t eto_normal_a = {0.0, 0.0, 1.0};
+    vect_t eto_major_a = {3.0, 0.0, 4.0};
+    point_t eto_center_b = {50.0, 10.0, -5.0};
+    vect_t eto_normal_b = {0.0, 1.0, 0.0};
+    vect_t eto_major_b = {0.0, 8.0, 6.0};
     point_t tgc_base_a = VINIT_ZERO;
     vect_t tgc_height_a = {0.0, 0.0, 4.0};
     vect_t tgc_a_a = {2.0, 0.0, 0.0};
@@ -100,6 +106,8 @@ make_database(void)
     if (mk_sph(wdbp, "sphere_a.s", center_a, 2.0) ||
 	mk_sph(wdbp, "sphere_b.s", center_b, 4.0) ||
 	mk_sph(wdbp, "sphere_c.s", center_c, 8.0) ||
+	mk_eto(wdbp, "eto_a.s", eto_center_a, eto_normal_a, eto_major_a, 8.0, 2.0) ||
+	mk_eto(wdbp, "eto_b.s", eto_center_b, eto_normal_b, eto_major_b, 16.0, 4.0) ||
 	mk_tgc(wdbp, "tgc_a.s", tgc_base_a, tgc_height_a,
 	    tgc_a_a, tgc_b_a, tgc_c_a, tgc_d_a) ||
 	mk_tgc(wdbp, "tgc_b.s", tgc_base_b, tgc_height_b,
@@ -116,6 +124,8 @@ make_database(void)
     mk_addmember("sphere_a.s", &selected.l, nullptr, WMOP_UNION);
     mk_addmember("sphere_b.s", &selected.l, nullptr, WMOP_UNION);
     mk_addmember("sphere_c.s", &selected.l, nullptr, WMOP_UNION);
+    mk_addmember("eto_a.s", &selected.l, nullptr, WMOP_UNION);
+    mk_addmember("eto_b.s", &selected.l, nullptr, WMOP_UNION);
     mk_addmember("tgc_a.s", &selected.l, nullptr, WMOP_UNION);
     mk_addmember("tgc_b.s", &selected.l, nullptr, WMOP_UNION);
     mk_addmember("arb_a.s", &selected.l, nullptr, WMOP_UNION);
@@ -168,12 +178,13 @@ main(int UNUSED(argc), char *argv[])
     int result = ged_exec(gedp, 6, dry_run);
     const char *report = bu_vls_cstr(gedp->ged_result_str);
     bool report_ok = result == BRLCAD_OK &&
-	contains(report, "verified groups: 3") &&
-	contains(report, "grouped objects: 7") &&
-	contains(report, "duplicate objects: 4") &&
-	contains(report, "rewritable selected references: 7") &&
+	contains(report, "verified groups: 4") &&
+	contains(report, "grouped objects: 9") &&
+	contains(report, "duplicate objects: 5") &&
+	contains(report, "rewritable selected references: 9") &&
 	contains(report, "externally exposed grouped objects: 1") &&
-	contains(report, "selected.c/sphere_a.s replacement matrix");
+	contains(report, "selected.c/sphere_a.s replacement matrix") &&
+	contains(report, "selected.c/eto_a.s replacement matrix");
     if (!report_ok)
 	bu_log("unexpected unpush report:\n%s\n", report);
 

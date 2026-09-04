@@ -239,6 +239,14 @@ canonical_bucket(const canonical_object &object, const struct bn_tol *tol)
 		<< ':' << bucket_value(tor->r_h, tol);
 	    break;
 	}
+	case ID_ETO: {
+	    const auto *eto = static_cast<const struct rt_eto_internal *>(object.canonical.idb_ptr);
+	    key << ':' << bucket_value(eto->eto_C[X], tol)
+		<< ':' << bucket_value(eto->eto_C[Z], tol)
+		<< ':' << bucket_value(eto->eto_r, tol)
+		<< ':' << bucket_value(eto->eto_rd, tol);
+	    break;
+	}
 	case ID_TGC:
 	case ID_REC: {
 	    const auto *tgc = static_cast<const struct rt_tgc_internal *>(object.canonical.idb_ptr);
@@ -406,6 +414,15 @@ canonical_geometry_equal(const struct rt_db_internal *a,
 		VNEAR_EQUAL(ator->h, btor->h, tol->perp) &&
 		near_value(ator->r_a, btor->r_a, tol->dist) &&
 		near_value(ator->r_h, btor->r_h, tol->dist);
+	}
+	case ID_ETO: {
+	    const auto *aeto = static_cast<const struct rt_eto_internal *>(a->idb_ptr);
+	    const auto *beto = static_cast<const struct rt_eto_internal *>(b->idb_ptr);
+	    return VNEAR_EQUAL(aeto->eto_V, beto->eto_V, tol->dist) &&
+		VNEAR_EQUAL(aeto->eto_N, beto->eto_N, tol->perp) &&
+		VNEAR_EQUAL(aeto->eto_C, beto->eto_C, tol->dist) &&
+		near_value(aeto->eto_r, beto->eto_r, tol->dist) &&
+		near_value(aeto->eto_rd, beto->eto_rd, tol->dist);
 	}
 	case ID_TGC:
 	case ID_REC: {
