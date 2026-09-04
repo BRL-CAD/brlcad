@@ -154,21 +154,6 @@ facetize_resident_size()
 }
 
 static void
-rt_pnts_free(struct rt_pnts_internal *pnts)
-{
-    struct pnt_normal *rpnt = (struct pnt_normal *)pnts->point;
-    if (rpnt) {
-	struct pnt_normal *entry;
-	while (BU_LIST_WHILE(entry, pnt_normal, &(rpnt->l))) {
-	    BU_LIST_DEQUEUE(&(entry->l));
-	    BU_PUT(entry, struct pnt_normal);
-	}
-	BU_PUT(rpnt, struct pnt_normal);
-    }
-    BU_PUT(pnts, struct rt_pnts_internal);
-}
-
-static void
 method_setup(tess_opts *s)
 {
     if (!s)
@@ -183,11 +168,6 @@ method_setup(tess_opts *s)
     s->nmg_options.sync(s->method_opts);
     s->mdc_options.sync(s->method_opts);
     s->spsr_options.sync(s->method_opts);
-
-    if (std::find(methods->begin(), methods->end(),
-	    std::string("SPSR")) != methods->end()) {
-	s->pnt_options.sync(s->spsr_options);
-    }
 }
 
 static int
@@ -211,8 +191,8 @@ dp_tessellate(struct rt_bot_internal **obot, struct bu_vls *method_flag, struct 
     }
 
     struct rt_pnts_internal *pnts = NULL;
-    bool free_pnts = false;
     struct rt_bot_internal *bot = NULL;
+    bool best_effort_source = false;
     int propVal;
     int ret = BRLCAD_OK;
 
@@ -275,6 +255,7 @@ dp_tessellate(struct rt_bot_internal **obot, struct bu_vls *method_flag, struct 
 	    // Volumetric bot - if it can be manifold we're good, but if
 	    // not we need to try and repair it.
 	    if (!bot_is_manifold(bot)) {
+		best_effort_source = true;
 		// Nope - try repairing
 		struct rt_bot_repair_info settings = RT_BOT_REPAIR_INFO_INIT;
 		// We're aggressive preparing facetize inputs, since non-lint-passing
@@ -332,25 +313,11 @@ dp_tessellate(struct rt_bot_internal **obot, struct bu_vls *method_flag, struct 
 pnt_sampling_methods:
 
     if (mset.find(std::string("SPSR")) != mset.end()) {
-	if (!pnts) {
-	    pnts = _tess_pnts_sample(dp->d_namep, dbip, s);
-	    free_pnts = (pnts != NULL);
-	} else {
-	    if (!s->spsr_options.equals(s->pnt_options)) {
-		s->pnt_options.sync(s->spsr_options);
-		if (free_pnts)
-		    rt_pnts_free(pnts);
-		pnts = _tess_pnts_sample(dp->d_namep, dbip, s);
-		free_pnts = (pnts != NULL);
-	    }
-	}
-	if (pnts) {
-	    s->spsr_options.sync(s->pnt_options);
-	    ret = spsr_mesh(obot, dbip, pnts, s);
-	    if (ret == BRLCAD_OK) {
-		bu_vls_sprintf(method_flag, "SPSR");
-		goto dp_tessellate_cleanup;
-	    }
+	ret = spsr_mesh(obot, dbip, dp->d_namep, pnts,
+	    best_effort_source, s);
+	if (ret == BRLCAD_OK) {
+	    bu_vls_sprintf(method_flag, "SPSR");
+	    goto dp_tessellate_cleanup;
 	}
     }
 
@@ -372,8 +339,6 @@ pnt_sampling_methods:
     ret = BRLCAD_ERROR;
 
 dp_tessellate_cleanup:
-    if (free_pnts && pnts)
-	rt_pnts_free(pnts);
     if (ret != BRLCAD_OK && *obot) {
 	_tess_facetize_free_bot(*obot);
 	*obot = NULL;
@@ -432,7 +397,6 @@ facetize_server_request(struct ged *gedp, struct db_i *result_dbip,
     }
     method_setup(&options);
     if (request.primitive.point_limit > 0) {
-	options.pnt_options.max_pnts = request.primitive.point_limit;
 	options.spsr_options.max_pnts = request.primitive.point_limit;
     }
 

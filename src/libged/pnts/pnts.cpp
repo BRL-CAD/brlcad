@@ -483,19 +483,6 @@ _ged_pnts_tri_cmd_ballpivot(void *bs, int argc, const char **argv)
     return wret;
 }
 
-/* custom bu_opt for size_t threads in spsr */
-static int
-_pnts_opt_size_t(struct bu_vls *UNUSED(msg), size_t UNUSED(argc), const char **argv, void *set_c)
-{
-    size_t *t = (size_t *)set_c;
-    int tmp = 0;
-    const char *a = argv[0];
-    if (bu_opt_int(NULL, 1, &a, &tmp) < 0) return -1;
-    if (tmp < 0) return -1;
-    *t = (size_t)tmp;
-    return 1;
-}
-
 /* tri spsr */
 static int
 _ged_pnts_tri_cmd_spsr(void *bs, int argc, const char **argv)
@@ -508,29 +495,23 @@ _ged_pnts_tri_cmd_spsr(void *bs, int argc, const char **argv)
     struct bg_3d_spsr_opts opts = BG_3D_SPSR_OPTS_DEFAULT;
 
     int print_help = 0;
-    struct bu_opt_desc d[23];
-    BU_OPT(d[0],  "h", "help",             "",  NULL,              &print_help,           "Print help and exit");
-    BU_OPT(d[1],  "",  "degree",           "#", &bu_opt_int,       &opts.degree,          "Finite element degree");
-    BU_OPT(d[2],  "",  "btype",            "#", &bu_opt_int,       &opts.btype,           "Boundary type (1:FREE, 2:NEUMANN, 3:DIRICHLET)");
-    BU_OPT(d[3],  "",  "depth",            "#", &bu_opt_int,       &opts.depth,           "Max reconstruction depth");
-    BU_OPT(d[4],  "",  "kerneldepth",      "#", &bu_opt_int,       &opts.kerneldepth,     "Kernel depth");
-    BU_OPT(d[5],  "",  "iterations",       "#", &bu_opt_int,       &opts.iterations,      "Solver iterations");
-    BU_OPT(d[6],  "",  "full-depth",       "#", &bu_opt_int,       &opts.full_depth,      "Full depth");
-    BU_OPT(d[7],  "",  "base-depth",       "#", &bu_opt_int,       &opts.base_depth,      "Coarse MG depth");
-    BU_OPT(d[8],  "",  "base-vcycles",     "#", &bu_opt_int,       &opts.baseVcycles,     "Coarse MG v-cycles");
-    BU_OPT(d[9],  "",  "max-mem",          "#", &bu_opt_int,       &opts.max_memory_GB,   "Max memory (GB)");
-    BU_OPT(d[10], "",  "threads",          "#", _pnts_opt_size_t,  &opts.threads,         "Threads to use");
-    BU_OPT(d[11], "",  "samples-per-node", "#", &bu_opt_fastf_t,   &opts.samples_per_node,"Min samples per node");
-    BU_OPT(d[12], "",  "scale",            "#", &bu_opt_fastf_t,   &opts.scale,           "Scale factor");
-    BU_OPT(d[13], "",  "width",            "#", &bu_opt_fastf_t,   &opts.width,           "Voxel width");
-    BU_OPT(d[14], "",  "confidence",       "#", &bu_opt_fastf_t,   &opts.confidence,      "Normal confidence exponent");
-    BU_OPT(d[15], "",  "confidence-bias",  "#", &bu_opt_fastf_t,   &opts.confidence_bias, "Normal confidence bias exponent");
-    BU_OPT(d[16], "",  "cg-accuracy",      "#", &bu_opt_fastf_t,   &opts.cgsolver_accuracy,"CG solver accuracy");
-    BU_OPT(d[17], "",  "point-weight",     "#", &bu_opt_fastf_t,   &opts.point_weight,     "Interpolation weight");
-    BU_OPT(d[18], "",  "nonmanifold",      "#", &bu_opt_int,       &opts.nonManifold,      "NonManifold (0/1)");
-    BU_OPT(d[19], "",  "linearfit",        "#", &bu_opt_int,       &opts.linearFit,        "Linear Fit (0/1)");
-    BU_OPT(d[20], "",  "exact",            "#", &bu_opt_int,       &opts.exact,            "Exact interpolation (0/1)");
-    BU_OPT_NULL(d[21]);
+    struct bu_opt_desc d[16];
+    BU_OPT(d[0],  "h", "help",             "",  NULL,            &print_help,            "Print help and exit");
+    BU_OPT(d[1],  "",  "depth",            "#", &bu_opt_int,     &opts.depth,            "Max reconstruction depth");
+    BU_OPT(d[2],  "",  "kerneldepth",      "#", &bu_opt_int,     &opts.kerneldepth,      "Kernel depth");
+    BU_OPT(d[3],  "",  "iterations",       "#", &bu_opt_int,     &opts.iterations,       "Solver iterations");
+    BU_OPT(d[4],  "",  "full-depth",       "#", &bu_opt_int,     &opts.full_depth,       "Full depth");
+    BU_OPT(d[5],  "",  "base-depth",       "#", &bu_opt_int,     &opts.base_depth,       "Coarse MG depth");
+    BU_OPT(d[6],  "",  "base-vcycles",     "#", &bu_opt_int,     &opts.baseVcycles,      "Coarse MG v-cycles");
+    BU_OPT(d[7],  "",  "samples-per-node", "#", &bu_opt_fastf_t, &opts.samples_per_node, "Min samples per node");
+    BU_OPT(d[8],  "",  "scale",            "#", &bu_opt_fastf_t, &opts.scale,            "Scale factor");
+    BU_OPT(d[9],  "",  "width",            "#", &bu_opt_fastf_t, &opts.width,            "Voxel width");
+    BU_OPT(d[10], "",  "cg-accuracy",      "#", &bu_opt_fastf_t, &opts.cgsolver_accuracy,"CG solver accuracy");
+    BU_OPT(d[11], "",  "point-weight",     "#", &bu_opt_fastf_t, &opts.point_weight,     "Interpolation weight");
+    BU_OPT(d[12], "",  "nonmanifold",      "#", &bu_opt_int,     &opts.nonManifold,      "NonManifold (0/1)");
+    BU_OPT(d[13], "",  "linearfit",        "#", &bu_opt_int,     &opts.linearFit,        "Linear Fit (0/1)");
+    BU_OPT(d[14], "",  "exact",            "#", &bu_opt_int,     &opts.exact,            "Exact interpolation (0/1)");
+    BU_OPT_NULL(d[15]);
 
     argc -= (argc>0); argv += (argc>0); // skip "spsr"
     if (argc < 1) {
@@ -581,7 +562,18 @@ _ged_pnts_tri_cmd_spsr(void *bs, int argc, const char **argv)
     point_t *overts = NULL;
     int nverts = 0;
 
-    int sret = bg_3d_spsr(&faces, &nfaces, &overts, &nverts, (const point_t *)ipts, (const vect_t *)inrms, pcnt, &opts);
+    std::vector<struct bg_3d_spsr_sample> samples(
+	static_cast<size_t>(pcnt));
+    for (size_t i = 0; i < samples.size(); i++) {
+	VMOVE(samples[i].point, ipts[i]);
+	VMOVE(samples[i].normal, inrms[i]);
+    }
+    struct bg_3d_spsr_adaptive_opts adaptive_options =
+	BG_3D_SPSR_ADAPTIVE_OPTS_DEFAULT;
+    adaptive_options.solver = opts;
+    adaptive_options.max_refinement_passes = 0;
+    int sret = bg_3d_spsr_adaptive(&faces, &nfaces, &overts, &nverts,
+	samples.data(), samples.size(), &adaptive_options, NULL, NULL, NULL);
 
     // free inputs
     if (ipts)
