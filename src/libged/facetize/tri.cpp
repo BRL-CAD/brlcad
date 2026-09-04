@@ -1473,14 +1473,15 @@ tess_run(struct _ged_facetize_state *s, const char *process_executable,
 }
 
 /*
- * Tessellate variant primitives that were created by _ged_facetize_build_variant_plan().
- * Processes all names using the NMG method.  Tessellation failures are logged
- * but do not abort: the booleval will silently fall back to the original
- * (non-variant) mesh for any variant whose BoT is not available.
+ * Tessellate variant primitives created by _ged_facetize_build_variant_plan().
+ * Try the configured primitive methods in priority order, carrying only
+ * failures forward to the next method.  Tessellation failures are logged but
+ * do not abort: booleval will fall back to the original mesh for any variant
+ * whose BoT is unavailable.
  */
 int
 _ged_facetize_tessellate_variant_names(struct _ged_facetize_state *s,
-				       FacetizeVariantPlan *plan)
+	FacetizeVariantPlan *plan)
 {
     if (!s || !plan || plan->variant_names.empty())
 	return BRLCAD_OK;
@@ -1488,37 +1489,42 @@ _ged_facetize_tessellate_variant_names(struct _ged_facetize_state *s,
     char tess_exec[MAXPATHLEN];
     bu_dir(tess_exec, MAXPATHLEN, BU_DIR_BIN, "ged_exec", BU_DIR_EXT, NULL);
 
-    char lcache[MAXPATHLEN] = {0};
-    bu_dir(lcache, MAXPATHLEN, BU_DIR_CACHE, NULL);
+    char cache_directory[MAXPATHLEN] = {0};
+    bu_dir(cache_directory, MAXPATHLEN, BU_DIR_CACHE, NULL);
 
-    method_options_t *mo = (method_options_t *)s->method_opts;
-    std::string mstrpp("NMG");
-    std::string nmg_opts;
-    fastf_t l_max_time = 30;
-    if (mo) {
-	nmg_opts = mo->method_optstr(mstrpp, s->dbip);
-	l_max_time = (fastf_t)mo->max_time[mstrpp];
+    method_options_t defaults;
+    method_options_t *options = s->method_opts ?
+	static_cast<method_options_t *>(s->method_opts) : &defaults;
+    const std::vector<std::string> &configured_methods =
+	options->methods.empty() ? tess_default_methods() : options->methods;
+
+    std::vector<std::string> remaining = plan->variant_names;
+    for (const std::string &configured_method : configured_methods) {
+	if (remaining.empty())
+	    break;
+
+	std::string method = configured_method;
+	FacetizePrimitiveSettings settings;
+	settings.methods.push_back(method);
+	std::string method_options = options->method_optstr(method, s->dbip);
+	if (!method_options.empty())
+	    settings.method_options.push_back(method_options);
+	settings.cache_directory = cache_directory;
+	settings.point_limit = s->max_pnts;
+
+	std::vector<std::string> failures;
+	(void)tess_run(s, tess_exec, bu_vls_cstr(s->wfile), settings,
+	    options->max_time[method], remaining, &failures,
+	    TESS_WORK_PERTURBATION_VARIANT, false);
+	remaining.swap(failures);
     }
 
-    FacetizePrimitiveSettings settings;
-    settings.methods.push_back("NMG");
-    if (!nmg_opts.empty())
-	settings.method_options.push_back(nmg_opts);
-    settings.cache_directory = lcache;
-    settings.point_limit = s->max_pnts;
-
-    std::vector<std::string> failures;
-    int run_ret = tess_run(s, tess_exec, bu_vls_cstr(s->wfile), settings,
-	    l_max_time, plan->variant_names, &failures,
-	    TESS_WORK_PERTURBATION_VARIANT, false);
-    int fail_cnt = (int)failures.size();
-    if (run_ret != BRLCAD_OK)
+    plan->n_variant_tess_failures = static_cast<int>(remaining.size());
+    if (!remaining.empty())
 	facetize_log(s, 0,
-		"FACETIZE: variant tessellation failed for %d object(s)\n",
-		fail_cnt);
-
-    plan->n_variant_tess_failures = fail_cnt;
-    return (fail_cnt == 0) ? BRLCAD_OK : BRLCAD_ERROR;
+	    "FACETIZE: perturbation-variant tessellation failed for %zu object(s) after all configured methods\n",
+	    remaining.size());
+    return remaining.empty() ? BRLCAD_OK : BRLCAD_ERROR;
 }
 
 static int

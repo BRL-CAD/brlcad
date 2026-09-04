@@ -33,6 +33,10 @@ brlcad_addexec(bg_aabb_ray aabb_ray.c "${BG_TEST_LIBS}" TEST)
 
 brlcad_add_test(NAME bg_aabb_ray COMMAND bg_aabb_ray)
 
+brlcad_addexec(bg_spsr spsr.cpp "${BG_TEST_LIBS}" TEST)
+
+brlcad_add_test(NAME bg_spsr COMMAND bg_spsr)
+
 brlcad_addexec(bg_polygon_sort polygon_sort.c "${BG_TEST_LIBS}" TEST)
 
 brlcad_add_test(NAME bg_polygon_sort COMMAND bg_polygon_sort)
