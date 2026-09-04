@@ -17,11 +17,64 @@
 
 #include <cmath>
 
+#include "bu/log.h"
 #include "rt/calc.h"
 #include "raytrace.h"
 
 #include "./ged_facetize.h"
 #include "./validation.h"
+
+static int
+facetize_discard_log(void *UNUSED(data), void *UNUSED(message))
+{
+    return 0;
+}
+
+void
+facetize_log_hooks_silence(struct bu_hook_list *saved_hooks)
+{
+    if (!saved_hooks)
+	return;
+
+    bu_log_hook_save_all(saved_hooks);
+    bu_log_hook_delete_all();
+    bu_log_add_hook(facetize_discard_log, NULL);
+}
+
+void
+facetize_log_hooks_restore(struct bu_hook_list *saved_hooks)
+{
+    if (!saved_hooks)
+	return;
+
+    bu_log_hook_delete_all();
+    bu_log_hook_restore_all(saved_hooks);
+    bu_hook_delete_all(saved_hooks);
+}
+
+static int
+facetize_bound_internal(struct db_i *dbip, struct directory *dp,
+	point_t bounds_min, point_t bounds_max)
+{
+    /* A failed bound is an expected validation outcome for unbounded or
+     * otherwise unsampleable CSG.  rt_bound_internal logs every failure,
+     * which floods large runs before facetize can report the aggregate. */
+    struct bu_hook_list saved_hooks = BU_HOOK_LIST_INIT_ZERO;
+    facetize_log_hooks_silence(&saved_hooks);
+
+    int ret = BRLCAD_ERROR;
+    if (!BU_SETJUMP) {
+	ret = rt_bound_internal(dbip, dp, bounds_min, bounds_max);
+    } else {
+	BU_UNSETJUMP;
+	facetize_log_hooks_restore(&saved_hooks);
+	return BRLCAD_ERROR;
+    }
+    BU_UNSETJUMP;
+
+    facetize_log_hooks_restore(&saved_hooks);
+    return ret;
+}
 
 int
 _ged_facetize_csg_bbox(struct db_i *dbip, const char *object_name,
@@ -32,7 +85,7 @@ _ged_facetize_csg_bbox(struct db_i *dbip, const char *object_name,
 
     struct directory *dp = db_lookup(dbip, object_name, LOOKUP_QUIET);
     if (dp == RT_DIR_NULL ||
-	rt_bound_internal(dbip, dp, bounds_min, bounds_max) != 0)
+	facetize_bound_internal(dbip, dp, bounds_min, bounds_max) != 0)
 	return BRLCAD_ERROR;
 
     vect_t dimensions;
@@ -72,11 +125,17 @@ facetize_csg_metrics(struct db_i *dbip, const char *object_name,
     if (!rtip)
 	return -1L;
 
-    if (rt_gettree(rtip, object_name) != 0) {
+    struct bu_hook_list saved_hooks = BU_HOOK_LIST_INIT_ZERO;
+    facetize_log_hooks_silence(&saved_hooks);
+    int prep_status = rt_gettree(rtip, object_name);
+    if (prep_status == 0)
+	rt_prep_parallel(rtip, 1);
+    facetize_log_hooks_restore(&saved_hooks);
+
+    if (prep_status != 0 || !rtip->stats.nsolids || !rtip->stats.nregions) {
 	rt_i_destroy(rtip);
 	return -1L;
     }
-    rt_prep_parallel(rtip, 1);
 
     struct rt_crofton_params parameters = {};
     parameters.n_rays = 0;

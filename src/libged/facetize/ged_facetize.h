@@ -36,7 +36,6 @@
 #include "vmath.h"
 #include "bu/vls.h"
 #include "bn/tol.h"
-#include "bg/spsr.h"
 #include "rt/geom.h"
 #include "raytrace.h"
 #include "ged/defines.h"
@@ -100,7 +99,6 @@ struct _ged_facetize_state {
     struct db_i *dbip;
     union tree *facetize_tree;
     void *method_opts;
-    void *log_s;
 
     /* Cache-local write measurements seed and refine worker write deadlines. */
     int write_profiled;
