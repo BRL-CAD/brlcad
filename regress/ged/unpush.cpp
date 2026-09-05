@@ -60,6 +60,157 @@ temporary_database_path(const char *suffix)
 }
 
 
+static bool
+write_superell(struct rt_wdb *wdbp, const char *name, const point_t center,
+	       const vect_t a, const vect_t b, const vect_t c,
+	       fastf_t n, fastf_t e)
+{
+    struct rt_db_internal intern;
+    struct rt_superell_internal *superell;
+
+    RT_DB_INTERNAL_INIT(&intern);
+    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern.idb_minor_type = ID_SUPERELL;
+    intern.idb_meth = &OBJ[ID_SUPERELL];
+    BU_ALLOC(intern.idb_ptr, struct rt_superell_internal);
+    superell = static_cast<struct rt_superell_internal *>(intern.idb_ptr);
+    superell->magic = RT_SUPERELL_INTERNAL_MAGIC;
+    VMOVE(superell->v, center);
+    VMOVE(superell->a, a);
+    VMOVE(superell->b, b);
+    VMOVE(superell->c, c);
+    superell->n = n;
+    superell->e = e;
+    return wdb_put_internal(wdbp, name, &intern, 1.0) == 0;
+}
+
+
+static std::string
+make_superell_database()
+{
+    std::string path = temporary_database_path("unpush_superell");
+    struct rt_wdb *wdbp = wdb_fopen(path.c_str());
+    if (!wdbp)
+	return std::string();
+    mk_id(wdbp, "unpush SUPERELL regression");
+
+    const point_t center_a = VINIT_ZERO;
+    const vect_t a_a = {2.0, 0.0, 0.0};
+    const vect_t b_a = {0.0, 3.0, 0.0};
+    const vect_t c_a = {0.0, 0.0, 5.0};
+    const point_t center_b = {20.0, -10.0, 4.0};
+    const vect_t a_b = {0.0, 0.0, 4.0};
+    const vect_t b_b = {-6.0, 0.0, 0.0};
+    const vect_t c_b = {0.0, -10.0, 0.0};
+    bool failed = !write_superell(wdbp, "superell_a.s", center_a, a_a,
+	    b_a, c_a, 0.7, 1.4) ||
+	!write_superell(wdbp, "superell_b.s", center_b, a_b, b_b, c_b,
+	    0.7, 1.4);
+
+    struct wmember root;
+    BU_LIST_INIT(&root.l);
+    mk_addmember("superell_a.s", &root.l, nullptr, WMOP_UNION);
+    mk_addmember("superell_b.s", &root.l, nullptr, WMOP_UNION);
+    failed = failed || mk_lcomb(wdbp, "superells.c", &root, 0, nullptr,
+	nullptr, nullptr, 0);
+    wdb_close(wdbp);
+    if (failed) {
+	bu_file_delete(path.c_str());
+	return std::string();
+    }
+    return path;
+}
+
+
+static std::string
+make_axial_analytic_database()
+{
+    std::string path = temporary_database_path("unpush_axial_analytics");
+    struct rt_wdb *wdbp = wdb_fopen(path.c_str());
+    if (!wdbp)
+	return std::string();
+    mk_id(wdbp, "unpush axial analytic regression");
+
+    const point_t rpc_vertex_a = VINIT_ZERO;
+    const vect_t rpc_height_a = {0.0, 0.0, 4.0};
+    const vect_t rpc_breadth_a = {3.0, 0.0, 0.0};
+    const point_t rpc_vertex_b = {20.0, -10.0, 4.0};
+    const vect_t rpc_height_b = {0.0, 8.0, 0.0};
+    const vect_t rpc_breadth_b = {-6.0, 0.0, 0.0};
+    const point_t rhc_vertex_a = {-5.0, 8.0, 2.0};
+    const vect_t rhc_height_a = {0.0, 0.0, 4.0};
+    const vect_t rhc_breadth_a = {3.0, 0.0, 0.0};
+    const point_t rhc_vertex_b = {30.0, 6.0, -7.0};
+    const vect_t rhc_height_b = {0.0, 12.0, 0.0};
+    const vect_t rhc_breadth_b = {0.0, 0.0, 9.0};
+    const point_t epa_vertex_a = {4.0, -3.0, 1.0};
+    const vect_t epa_height_a = {0.0, 0.0, 4.0};
+    const vect_t epa_axis_a = {1.0, 0.0, 0.0};
+    const point_t epa_vertex_b = {-20.0, 15.0, 6.0};
+    const vect_t epa_height_b = {0.0, 8.0, 0.0};
+    const vect_t epa_axis_b = {-1.0, 0.0, 0.0};
+    const point_t ehy_vertex_a = {-12.0, -4.0, 3.0};
+    const vect_t ehy_height_a = {0.0, 0.0, 4.0};
+    const vect_t ehy_axis_a = {1.0, 0.0, 0.0};
+    const point_t ehy_vertex_b = {25.0, -12.0, -5.0};
+    const vect_t ehy_height_b = {0.0, 12.0, 0.0};
+    const vect_t ehy_axis_b = {0.0, 0.0, 1.0};
+    point_t part_vertex_a = {6.0, -9.0, 2.0};
+    vect_t part_height_a = {0.0, 0.0, 4.0};
+    point_t part_vertex_b = {-15.0, 7.0, -3.0};
+    vect_t part_height_b = {0.0, 8.0, 0.0};
+    point_t part_sphere_vertex_a = {-8.0, 3.0, 11.0};
+    vect_t part_sphere_height_a = VINIT_ZERO;
+    point_t part_sphere_vertex_b = {18.0, -6.0, 5.0};
+    vect_t part_sphere_height_b = VINIT_ZERO;
+    bool failed = mk_rpc(wdbp, "rpc_a.s", rpc_vertex_a, rpc_height_a,
+	    rpc_breadth_a, 2.0) ||
+	mk_rpc(wdbp, "rpc_b.s", rpc_vertex_b, rpc_height_b,
+	    rpc_breadth_b, 4.0) ||
+	mk_rhc(wdbp, "rhc_a.s", rhc_vertex_a, rhc_height_a,
+	    rhc_breadth_a, 2.0, 5.0) ||
+	mk_rhc(wdbp, "rhc_b.s", rhc_vertex_b, rhc_height_b,
+	    rhc_breadth_b, 6.0, 15.0) ||
+	mk_epa(wdbp, "epa_a.s", epa_vertex_a, epa_height_a, epa_axis_a,
+	    3.0, 2.0) ||
+	mk_epa(wdbp, "epa_b.s", epa_vertex_b, epa_height_b, epa_axis_b,
+	    6.0, 4.0) ||
+	mk_ehy(wdbp, "ehy_a.s", ehy_vertex_a, ehy_height_a, ehy_axis_a,
+	    3.0, 2.0, 5.0) ||
+	mk_ehy(wdbp, "ehy_b.s", ehy_vertex_b, ehy_height_b, ehy_axis_b,
+	    9.0, 6.0, 15.0) ||
+	mk_particle(wdbp, "part_a.s", part_vertex_a, part_height_a, 3.0, 2.0) ||
+	mk_particle(wdbp, "part_b.s", part_vertex_b, part_height_b, 4.0, 6.0) ||
+	mk_particle(wdbp, "part_sphere_a.s", part_sphere_vertex_a,
+	    part_sphere_height_a, 2.0, 2.0) ||
+	mk_particle(wdbp, "part_sphere_b.s", part_sphere_vertex_b,
+	    part_sphere_height_b, 4.0, 4.0);
+
+    struct wmember root;
+    BU_LIST_INIT(&root.l);
+    mk_addmember("rpc_a.s", &root.l, nullptr, WMOP_UNION);
+    mk_addmember("rpc_b.s", &root.l, nullptr, WMOP_UNION);
+    mk_addmember("rhc_a.s", &root.l, nullptr, WMOP_UNION);
+    mk_addmember("rhc_b.s", &root.l, nullptr, WMOP_UNION);
+    mk_addmember("epa_a.s", &root.l, nullptr, WMOP_UNION);
+    mk_addmember("epa_b.s", &root.l, nullptr, WMOP_UNION);
+    mk_addmember("ehy_a.s", &root.l, nullptr, WMOP_UNION);
+    mk_addmember("ehy_b.s", &root.l, nullptr, WMOP_UNION);
+    mk_addmember("part_a.s", &root.l, nullptr, WMOP_UNION);
+    mk_addmember("part_b.s", &root.l, nullptr, WMOP_UNION);
+    mk_addmember("part_sphere_a.s", &root.l, nullptr, WMOP_UNION);
+    mk_addmember("part_sphere_b.s", &root.l, nullptr, WMOP_UNION);
+    failed = failed || mk_lcomb(wdbp, "axial_analytics.c", &root, 0, nullptr,
+	nullptr, nullptr, 0);
+    wdb_close(wdbp);
+    if (failed) {
+	bu_file_delete(path.c_str());
+	return std::string();
+    }
+    return path;
+}
+
+
 static std::string
 make_database(bool expose_selected = false)
 {
@@ -311,6 +462,25 @@ single_leaf_combination(struct db_i *dbip, const char *name,
 
 
 static bool
+combination_is_region(struct db_i *dbip, const char *name)
+{
+    struct directory *dp = db_lookup(dbip, name, LOOKUP_QUIET);
+    if (dp == RT_DIR_NULL || !(dp->d_flags & RT_DIR_COMB) ||
+	dp->d_minor_type != ID_COMBINATION)
+	return false;
+
+    struct rt_db_internal intern;
+    RT_DB_INTERNAL_INIT(&intern);
+    if (rt_db_get_internal(&intern, dp, dbip, nullptr) < 0)
+	return false;
+    const auto *comb = static_cast<const struct rt_comb_internal *>(intern.idb_ptr);
+    bool is_region = comb && comb->region_flag;
+    rt_db_free_internal(&intern);
+    return is_region;
+}
+
+
+static bool
 attribute_equals(struct db_i *dbip, const char *name,
 		 const char *attribute, const char *expected)
 {
@@ -391,6 +561,82 @@ inject_validation_failure(struct db_i *dbip, struct directory *dp,
     } else if (intern.idb_ptr) {
 	rt_db_free_internal(&intern);
     }
+}
+
+
+static bool
+run_analytic_family_regression(const std::string &database,
+			       const char *root, const char *label,
+			       const char *mode, size_t expected_groups,
+			       const std::vector<const char *> &original_names)
+{
+    if (database.empty())
+	return false;
+
+    const std::string before = file_contents(database);
+    struct ged *gedp = ged_open("db", database.c_str(), 1);
+    if (!gedp)
+	return false;
+
+    point_t minimum;
+    point_t maximum;
+    point_t after_minimum;
+    point_t after_maximum;
+    bool bounds_before = get_bounds(gedp, root, minimum, maximum);
+    const char *dry_run[] = {"unpush", "-D", "-m", mode, root};
+    int result = ged_exec(gedp, 5, dry_run);
+    const std::string dry_report = bu_vls_cstr(gedp->ged_result_str);
+    const std::string primitive_count = "primitive objects: " +
+	std::to_string(original_names.size());
+    const std::string canonical_count = "canonicalized: " +
+	std::to_string(original_names.size());
+    const std::string group_count = "verified groups: " +
+	std::to_string(expected_groups);
+    const std::string grouped_count = "grouped objects: " +
+	std::to_string(original_names.size());
+    bool ok = result == BRLCAD_OK &&
+	contains(dry_report.c_str(), primitive_count.c_str()) &&
+	contains(dry_report.c_str(), canonical_count.c_str()) &&
+	contains(dry_report.c_str(), group_count.c_str()) &&
+	contains(dry_report.c_str(), grouped_count.c_str()) &&
+	before == file_contents(database);
+    if (!ok)
+	bu_log("unexpected %s analysis:\n%s\n", label, dry_report.c_str());
+
+    const char *write[] = {"unpush", "-m", mode, root};
+    result = ged_exec(gedp, 4, write);
+    const std::string write_report = bu_vls_cstr(gedp->ged_result_str);
+    const std::string written_count = "canonical objects written: " +
+	std::to_string(expected_groups);
+    const std::string removed_count = "original objects removed: " +
+	std::to_string(original_names.size());
+    bool originals_removed = true;
+    for (const char *name : original_names) {
+	if (db_lookup(gedp->dbip, name, LOOKUP_QUIET) != RT_DIR_NULL)
+	    originals_removed = false;
+    }
+    bool bounds_preserved = bounds_before &&
+	get_bounds(gedp, root, after_minimum, after_maximum) &&
+	VNEAR_EQUAL(minimum, after_minimum, BN_TOL_DIST) &&
+	VNEAR_EQUAL(maximum, after_maximum, BN_TOL_DIST);
+    ok = ok && result == BRLCAD_OK &&
+	contains(write_report.c_str(), written_count.c_str()) &&
+	contains(write_report.c_str(), "parent combinations rewritten: 1") &&
+	contains(write_report.c_str(), removed_count.c_str()) &&
+	originals_removed && bounds_preserved;
+    if (!ok)
+	bu_log("unexpected %s rewrite:\n%s\n", label, write_report.c_str());
+
+    result = ged_exec(gedp, 5, dry_run);
+    const std::string second_report = bu_vls_cstr(gedp->ged_result_str);
+    ok = ok && result == BRLCAD_OK &&
+	contains(second_report.c_str(), "verified groups: 0");
+    if (!ok)
+	bu_log("unexpected second %s analysis:\n%s\n", label,
+	    second_report.c_str());
+
+    ged_close(gedp);
+    return ok;
 }
 
 
@@ -673,6 +919,28 @@ main(int argc, char *argv[])
     if (!exposed_database.empty())
 	bu_file_delete(exposed_database.c_str());
 
+    std::string superell_database = make_superell_database();
+
+    const std::vector<const char *> superell_names = {
+	"superell_a.s", "superell_b.s"
+    };
+    bool superell_ok = run_analytic_family_regression(superell_database,
+	"superells.c", "SUPERELL", "similarity", 1, superell_names);
+    if (!superell_database.empty())
+	bu_file_delete(superell_database.c_str());
+
+    std::string axial_analytic_database = make_axial_analytic_database();
+    const std::vector<const char *> axial_analytic_names = {
+	"rpc_a.s", "rpc_b.s", "rhc_a.s", "rhc_b.s",
+	"epa_a.s", "epa_b.s", "ehy_a.s", "ehy_b.s",
+	"part_a.s", "part_b.s", "part_sphere_a.s", "part_sphere_b.s"
+    };
+    bool axial_analytic_ok = run_analytic_family_regression(
+	axial_analytic_database, "axial_analytics.c", "RPC/RHC/EPA/EHY/PART",
+	"affine", 6, axial_analytic_names);
+    if (!axial_analytic_database.empty())
+	bu_file_delete(axial_analytic_database.c_str());
+
     std::string combination_database = make_combination_database();
     const std::string combination_before = file_contents(combination_database);
     struct ged *combination_gedp = combination_database.empty() ? nullptr :
@@ -792,7 +1060,7 @@ main(int argc, char *argv[])
 	combination_wrapper_ok = result == BRLCAD_OK &&
 	    contains(wrapper_report.c_str(), "canonical objects written: 1") &&
 	    contains(wrapper_report.c_str(),
-		"parent combinations rewritten: 1") &&
+		"parent combinations rewritten: 3") &&
 	    contains(wrapper_report.c_str(),
 		"top-level combination wrappers written: 1") &&
 	    contains(wrapper_report.c_str(),
@@ -835,6 +1103,112 @@ main(int argc, char *argv[])
     }
     if (!combination_wrapper_database.empty())
 	bu_file_delete(combination_wrapper_database.c_str());
+
+    std::string combination_wrapper_rollback_database =
+	make_combination_database();
+    struct ged *combination_wrapper_rollback_gedp =
+	combination_wrapper_rollback_database.empty() ? nullptr :
+	ged_open("db", combination_wrapper_rollback_database.c_str(), 1);
+    bool combination_wrapper_rollback_ok =
+	combination_wrapper_rollback_gedp != nullptr;
+    if (combination_wrapper_rollback_gedp) {
+	point_t rollback_minimum;
+	point_t rollback_maximum;
+	point_t rollback_after_minimum;
+	point_t rollback_after_maximum;
+	bool rollback_bounds_before = get_bounds(
+	    combination_wrapper_rollback_gedp, "root.c", rollback_minimum,
+	    rollback_maximum);
+	rollback_fault_state fault;
+	fault.target = "part_b.c";
+	bool callback_added = db_add_changed_clbk(
+	    combination_wrapper_rollback_gedp->dbip,
+	    inject_validation_failure, &fault) == 0;
+	const char *wrapper_rollback_write[] = {
+	    "unpush", "part_a.c", "part_b.c"
+	};
+	result = callback_added ? ged_exec(combination_wrapper_rollback_gedp,
+	    3, wrapper_rollback_write) : BRLCAD_ERROR;
+	const std::string rollback_report =
+	    bu_vls_cstr(combination_wrapper_rollback_gedp->ged_result_str);
+	bool callback_removed = callback_added && db_rm_changed_clbk(
+	    combination_wrapper_rollback_gedp->dbip,
+	    inject_validation_failure, &fault) == 1;
+	bool rollback_bounds_preserved = rollback_bounds_before &&
+	    get_bounds(combination_wrapper_rollback_gedp, "root.c",
+		rollback_after_minimum, rollback_after_maximum) &&
+	    VNEAR_EQUAL(rollback_minimum, rollback_after_minimum,
+		BN_TOL_DIST) &&
+	    VNEAR_EQUAL(rollback_maximum, rollback_after_maximum,
+		BN_TOL_DIST);
+	const char *restored_names[] = {
+	    "a_anchor.s", "a_second.s", "b_anchor.s", "b_second.s"
+	};
+	bool originals_restored = true;
+	for (const char *name : restored_names) {
+	    if (db_lookup(combination_wrapper_rollback_gedp->dbip, name,
+		    LOOKUP_QUIET) == RT_DIR_NULL)
+		originals_restored = false;
+	}
+	combination_wrapper_rollback_ok = callback_added && callback_removed &&
+	    fault.injected && result == BRLCAD_ERROR &&
+	    contains(rollback_report.c_str(),
+		"post-write validation failed") &&
+	    contains(rollback_report.c_str(), "original objects restored") &&
+	    !single_leaf_combination(combination_wrapper_rollback_gedp->dbip,
+		"part_b.c", "part_a.c") && originals_restored &&
+	    db_lookup(combination_wrapper_rollback_gedp->dbip, "unpush_1",
+		LOOKUP_QUIET) == RT_DIR_NULL && rollback_bounds_preserved;
+	if (!combination_wrapper_rollback_ok)
+	    bu_log("unexpected combination wrapper rollback result:\n%s\n",
+		rollback_report.c_str());
+	ged_close(combination_wrapper_rollback_gedp);
+    }
+    if (!combination_wrapper_rollback_database.empty())
+	bu_file_delete(combination_wrapper_rollback_database.c_str());
+
+    std::string region_root_database = make_combination_database();
+    struct ged *region_root_gedp = region_root_database.empty() ? nullptr :
+	ged_open("db", region_root_database.c_str(), 1);
+    bool region_root_ok = region_root_gedp != nullptr;
+    if (region_root_gedp) {
+	point_t root_minimum;
+	point_t root_maximum;
+	point_t root_after_minimum;
+	point_t root_after_maximum;
+	bool region_bounds_before = get_bounds(region_root_gedp, "root.c",
+	    root_minimum, root_maximum);
+	const char *region_root_write[] = {
+	    "unpush", "region_a.r", "region_b.r"
+	};
+	result = ged_exec(region_root_gedp, 3, region_root_write);
+	const std::string region_report =
+	    bu_vls_cstr(region_root_gedp->ged_result_str);
+	bool region_bounds_preserved = region_bounds_before &&
+	    get_bounds(region_root_gedp, "root.c", root_after_minimum,
+		root_after_maximum) &&
+	    VNEAR_EQUAL(root_minimum, root_after_minimum, BN_TOL_DIST) &&
+	    VNEAR_EQUAL(root_maximum, root_after_maximum, BN_TOL_DIST);
+	region_root_ok = result == BRLCAD_OK &&
+	    contains(region_report.c_str(),
+		"top-level combination wrappers written: 0") &&
+	    contains(region_report.c_str(),
+		"combination groups consolidated: 1") &&
+	    contains(region_report.c_str(),
+		"combination groups deferred: 1") &&
+	    db_lookup(region_root_gedp->dbip, "part_b.c", LOOKUP_QUIET) ==
+		RT_DIR_NULL &&
+	    single_leaf_combination(region_root_gedp->dbip, "region_b.r",
+		"part_a.c") &&
+	    combination_is_region(region_root_gedp->dbip, "region_b.r") &&
+	    region_bounds_preserved;
+	if (!region_root_ok)
+	    bu_log("unexpected top-level region result:\n%s\n",
+		region_report.c_str());
+	ged_close(region_root_gedp);
+    }
+    if (!region_root_database.empty())
+	bu_file_delete(region_root_database.c_str());
 
     std::string combination_rollback_database = make_combination_database();
     struct ged *combination_rollback_gedp = combination_rollback_database.empty() ?
@@ -1005,7 +1379,10 @@ main(int argc, char *argv[])
 
     return report_ok && dry_run_unchanged && write_ok && post_write_ok &&
 	directory_ok && bounds_preserved && write_changed_database && local_ok &&
-	wrapper_ok && exposed_ok && combination_ok && combination_wrapper_ok &&
+	wrapper_ok && exposed_ok && superell_ok && axial_analytic_ok &&
+	combination_ok &&
+	combination_wrapper_ok &&
+	combination_wrapper_rollback_ok && region_root_ok &&
 	combination_rollback_ok && rollback_ok && wrapper_rollback_ok ? 0 : 1;
 }
 

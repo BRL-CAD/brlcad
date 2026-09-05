@@ -389,16 +389,21 @@ _ged_facetize_working_file_setup(struct _ged_facetize_state *s, struct bu_ptbl *
     // can't collide with another active process trying to facetize the same .g file
     int pid;
     if (bu_file_exists(bu_vls_cstr(s->wfile), NULL)) {
-	struct db_i *wdbip = db_open(bu_vls_cstr(s->wfile), DB_OPEN_READONLY);
-	if (wdbip) {
-	    if (db_dirbuild(wdbip) < 0)
-		return BRLCAD_ERROR;
+		struct db_i *wdbip = db_open(bu_vls_cstr(s->wfile), DB_OPEN_READONLY);
+		if (wdbip) {
+		    if (db_dirbuild(wdbip) < 0) {
+			db_close(wdbip);
+			return BRLCAD_ERROR;
+		    }
 	    struct bu_attribute_value_set avs;
 	    bu_avs_init_empty(&avs);
-	    struct directory *wgdp = db_lookup(wdbip, DB5_GLOBAL_OBJECT_NAME, LOOKUP_QUIET);
-	    if (!wgdp)
-		return BRLCAD_ERROR;
-	    if (db5_get_attributes(wdbip, &avs, wgdp)) {
+		    struct directory *wgdp = db_lookup(wdbip, DB5_GLOBAL_OBJECT_NAME, LOOKUP_QUIET);
+		    if (!wgdp) {
+			bu_avs_free(&avs);
+			db_close(wdbip);
+			return BRLCAD_ERROR;
+		    }
+		    if (db5_get_attributes(wdbip, &avs, wgdp) == 0) {
 		const char *val = bu_avs_get(&avs, PID_KEY);
 		if (bu_opt_int(NULL, 1, (const char **)&val, (void *)&pid) == 1) {
 		    if (bu_pid_alive(pid)) {
@@ -459,22 +464,28 @@ _ged_facetize_working_file_setup(struct _ged_facetize_state *s, struct bu_ptbl *
     if (write_pid) {
 	// Write the current pid to the working file as a _GLOBAL attribute
 	pid = bu_pid();
-	struct db_i *wdbip = db_open(bu_vls_cstr(s->wfile), DB_OPEN_READWRITE);
-	if (wdbip) {
-	    if (db_dirbuild(wdbip) < 0)
-		return BRLCAD_ERROR;
+		struct db_i *wdbip = db_open(bu_vls_cstr(s->wfile), DB_OPEN_READWRITE);
+		if (wdbip) {
+		    if (db_dirbuild(wdbip) < 0) {
+			db_close(wdbip);
+			return BRLCAD_ERROR;
+		    }
 	    struct bu_attribute_value_set avs;
 	    bu_avs_init_empty(&avs);
-	    struct directory *wgdp = db_lookup(wdbip, DB5_GLOBAL_OBJECT_NAME, LOOKUP_QUIET);
-	    if (!wgdp)
-		return BRLCAD_ERROR;
-	    if (db5_get_attributes(wdbip, &avs, wgdp)) {
-		struct bu_vls pid_str = BU_VLS_INIT_ZERO;
-		bu_vls_sprintf(&pid_str, "%d", pid);
-		(void)bu_avs_add(&avs, PID_KEY, bu_vls_cstr(&pid_str));
-		(void)db5_update_attributes(wgdp, &avs, wdbip);
-		bu_avs_free(&avs);
-	    }
+		    struct directory *wgdp = db_lookup(wdbip, DB5_GLOBAL_OBJECT_NAME, LOOKUP_QUIET);
+		    if (!wgdp) {
+			bu_avs_free(&avs);
+			db_close(wdbip);
+			return BRLCAD_ERROR;
+		    }
+		    if (db5_get_attributes(wdbip, &avs, wgdp) == 0) {
+			struct bu_vls pid_str = BU_VLS_INIT_ZERO;
+			bu_vls_sprintf(&pid_str, "%d", pid);
+			(void)bu_avs_add(&avs, PID_KEY, bu_vls_cstr(&pid_str));
+			(void)db5_update_attributes(wgdp, &avs, wdbip);
+			bu_vls_free(&pid_str);
+		    }
+		    bu_avs_free(&avs);
 	    db_close(wdbip);
 	}
     }

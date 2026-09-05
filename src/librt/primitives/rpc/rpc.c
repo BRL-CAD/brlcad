@@ -172,6 +172,7 @@
 #include "raytrace.h"
 
 #include "../../librt_private.h"
+#include "../canonicalize_private.h"
 
 #if defined(HAVE_ASINH) && !defined(HAVE_DECL_ASINH)
 extern double asinh(double x);
@@ -1717,6 +1718,45 @@ rt_rpc_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
     top->rpc_r = tip->rpc_r / mat[15];
 
     return BRLCAD_OK;
+}
+
+
+C_DECL int
+rt_rpc_canonicalize(struct rt_db_internal *canonical,
+		    mat_t canonical_to_input,
+		    const struct rt_db_internal *input,
+		    const struct bn_tol *tol,
+		    enum rt_canonicalize_mode mode)
+{
+    const struct rt_rpc_internal *rip;
+    struct rt_rpc_internal *crip;
+    fastf_t lengths[3];
+    fastf_t canonical_lengths[3];
+
+    if (!canonical || !canonical_to_input || !input || !tol ||
+	input->idb_type != ID_RPC)
+	return RT_CANONICALIZE_ERROR;
+    rip = (const struct rt_rpc_internal *)input->idb_ptr;
+    RT_RPC_CK_MAGIC(rip);
+    lengths[0] = MAGNITUDE(rip->rpc_B);
+    lengths[1] = MAGNITUDE(rip->rpc_H);
+    lengths[2] = rip->rpc_r;
+    if (!rt_make_canonical_similarity_frame(canonical_to_input,
+	    canonical_lengths, rip->rpc_V, rip->rpc_B, rip->rpc_H, lengths,
+	    3, tol, mode))
+	return RT_CANONICALIZE_ERROR;
+
+    canonical->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    canonical->idb_minor_type = ID_RPC;
+    canonical->idb_meth = &OBJ[ID_RPC];
+    BU_ALLOC(canonical->idb_ptr, struct rt_rpc_internal);
+    crip = (struct rt_rpc_internal *)canonical->idb_ptr;
+    crip->rpc_magic = RT_RPC_INTERNAL_MAGIC;
+    VSETALL(crip->rpc_V, 0.0);
+    VSET(crip->rpc_B, canonical_lengths[0], 0.0, 0.0);
+    VSET(crip->rpc_H, 0.0, 0.0, canonical_lengths[1]);
+    crip->rpc_r = canonical_lengths[2];
+    return RT_CANONICALIZE_OK;
 }
 
 /**

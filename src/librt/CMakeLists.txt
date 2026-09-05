@@ -176,6 +176,7 @@ set(
   primitives/bspline/bspline.cpp
   primitives/bspline/bspline_brep.cpp
   primitives/bspline/bspline_mirror.c
+  primitives/canonicalize.c
   primitives/crofton.cpp
   primitives/cline/cline.c
   primitives/cline/cline_brep.cpp
@@ -326,6 +327,7 @@ set(
   material/materialX.h
   cut_hlbvh.h
   prcomb.c
+  primitives/canonicalize_private.h
   primitives/bot/bot_edge.h
   primitives/bot/decimate_private.h
   primitives/bot/bot_wireframe.cpp

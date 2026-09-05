@@ -4,6 +4,9 @@ if(TARGET ged_test_tops)
 endif(TARGET ged_test_tops)
 brlcad_add_test(NAME ged_test_tops_moss COMMAND ged_test_tops "${CMAKE_CURRENT_SOURCE_DIR}/ged_tests.g")
 
+brlcad_addexec(ged_test_canonicalize canonicalize.cpp libged TEST)
+brlcad_add_test(NAME ged_canonicalize COMMAND ged_test_canonicalize)
+
 brlcad_addexec(ged_test_rm ged_test_rm.c "libged;libwdb;librt;libbu" TEST)
 if(TARGET ged_test_rm)
   add_dependencies(ged_test_rm ged_plugins)
@@ -113,6 +116,7 @@ add_subdirectory(edit)
 # in a separate file, since its bad input examples stand an excellent chance of
 # breaking commands.
 cmakefiles(
+  canonicalize.cpp
   lint_tests.g
   rt_search_tests.g
   search_tests.g

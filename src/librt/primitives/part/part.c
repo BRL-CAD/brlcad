@@ -191,6 +191,7 @@
 #include "raytrace.h"
 #include "nmg.h"
 #include "../../librt_private.h"
+#include "../canonicalize_private.h"
 
 
 struct part_specific {
@@ -1977,6 +1978,110 @@ rt_part_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inte
     return BRLCAD_OK;		/* OK */
 
 }
+
+
+C_DECL int
+rt_part_canonicalize(struct rt_db_internal *canonical,
+		     mat_t canonical_to_input,
+		     const struct rt_db_internal *input,
+		     const struct bn_tol *tol,
+		     enum rt_canonicalize_mode mode)
+{
+    const struct rt_part_internal *pip;
+    struct rt_part_internal *cpip;
+    point_t origin;
+    vect_t axis;
+    vect_t x_axis;
+    fastf_t vertex_radius;
+    fastf_t height_radius;
+    fastf_t height_length;
+    fastf_t maximum_radius;
+    fastf_t uniform_scale;
+
+    if (!canonical || !canonical_to_input || !input || !tol ||
+	input->idb_type != ID_PARTICLE || mode < RT_CANONICALIZE_RIGID ||
+	mode > RT_CANONICALIZE_AFFINE)
+	return RT_CANONICALIZE_ERROR;
+    pip = (const struct rt_part_internal *)input->idb_ptr;
+    RT_PART_CK_MAGIC(pip);
+    if (!isfinite(pip->part_V[X]) || !isfinite(pip->part_V[Y]) ||
+	!isfinite(pip->part_V[Z]) || !isfinite(pip->part_H[X]) ||
+	!isfinite(pip->part_H[Y]) || !isfinite(pip->part_H[Z]) ||
+	!isfinite(pip->part_vrad) || !isfinite(pip->part_hrad) ||
+	pip->part_vrad < 0.0 || pip->part_hrad < 0.0)
+	return RT_CANONICALIZE_ERROR;
+
+    height_length = MAGNITUDE(pip->part_H);
+    maximum_radius = fmax(pip->part_vrad, pip->part_hrad);
+    if (!isfinite(height_length) || maximum_radius <= tol->dist)
+	return RT_CANONICALIZE_ERROR;
+    uniform_scale = mode == RT_CANONICALIZE_RIGID ? 1.0 :
+	fmax(height_length, maximum_radius);
+
+    canonical->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    canonical->idb_minor_type = ID_PARTICLE;
+    canonical->idb_meth = &OBJ[ID_PARTICLE];
+    BU_ALLOC(canonical->idb_ptr, struct rt_part_internal);
+    cpip = (struct rt_part_internal *)canonical->idb_ptr;
+    cpip->part_magic = RT_PART_INTERNAL_MAGIC;
+    cpip->part_type = pip->part_type;
+    VSETALL(cpip->part_V, 0.0);
+
+    /* Imported particle spheres have H cleared by rt_part_mat.  Do not turn a
+     * merely short cone into a different solid just because its height falls
+     * below the caller's modeling tolerance; the frame helper will reject
+     * nonzero axes that are too short to orient reliably. */
+    if (height_length <= SMALL_FASTF) {
+	mat_t scale;
+	mat_t translate;
+	MAT_IDN(scale);
+	scale[15] = 1.0 / uniform_scale;
+	MAT_IDN(translate);
+	MAT_DELTAS_VEC(translate, pip->part_V);
+	bn_mat_mul(canonical_to_input, translate, scale);
+	VSETALL(cpip->part_H, 0.0);
+	cpip->part_vrad = maximum_radius / uniform_scale;
+	cpip->part_hrad = cpip->part_vrad;
+	cpip->part_type = RT_PARTICLE_TYPE_SPHERE;
+	return RT_CANONICALIZE_OK;
+    }
+
+    if (pip->part_vrad <= pip->part_hrad) {
+	VMOVE(origin, pip->part_V);
+	VMOVE(axis, pip->part_H);
+	vertex_radius = pip->part_vrad;
+	height_radius = pip->part_hrad;
+    } else {
+	VADD2(origin, pip->part_V, pip->part_H);
+	VREVERSE(axis, pip->part_H);
+	vertex_radius = pip->part_hrad;
+	height_radius = pip->part_vrad;
+    }
+    /* Canonical input must retain an identity placement.  Other axial
+     * directions may use any deterministic perpendicular because PART is
+     * rotationally symmetric about H. */
+    if (NEAR_ZERO(axis[X], tol->perp) &&
+	NEAR_ZERO(axis[Y], tol->perp) && axis[Z] > 0.0)
+	VSET(x_axis, 1.0, 0.0, 0.0);
+    else
+	bn_vec_ortho(x_axis, axis);
+    {
+	const fastf_t frame_lengths[2] = {height_length, maximum_radius};
+	fastf_t canonical_frame_lengths[2];
+	if (!rt_make_canonical_similarity_frame(canonical_to_input,
+		canonical_frame_lengths, origin, x_axis, axis, frame_lengths, 2,
+		tol, mode)) {
+	    rt_db_free_internal(canonical);
+	    return RT_CANONICALIZE_ERROR;
+	}
+    }
+
+    VSET(cpip->part_H, 0.0, 0.0, height_length / uniform_scale);
+    cpip->part_vrad = vertex_radius / uniform_scale;
+    cpip->part_hrad = height_radius / uniform_scale;
+    return RT_CANONICALIZE_OK;
+}
+
 
 C_DECL int
 rt_part_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)

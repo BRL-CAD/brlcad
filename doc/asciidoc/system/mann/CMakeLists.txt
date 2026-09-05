@@ -370,6 +370,7 @@ set(
   translate.adoc
   tree.adoc
   unhide.adoc
+  unpush.adoc
   units.adoc
   v2m_point.adoc
   vars.adoc

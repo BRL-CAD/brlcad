@@ -71,6 +71,134 @@ make_ell(struct rt_db_internal *intern, int type, const point_t center,
 
 
 static void
+make_superell(struct rt_db_internal *intern, const point_t center,
+	      const vect_t a, const vect_t b, const vect_t c,
+	      fastf_t n, fastf_t e)
+{
+    struct rt_superell_internal *superell;
+
+    RT_DB_INTERNAL_INIT(intern);
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern->idb_minor_type = ID_SUPERELL;
+    intern->idb_meth = &OBJ[ID_SUPERELL];
+    BU_ALLOC(intern->idb_ptr, struct rt_superell_internal);
+    superell = (struct rt_superell_internal *)intern->idb_ptr;
+    superell->magic = RT_SUPERELL_INTERNAL_MAGIC;
+    VMOVE(superell->v, center);
+    VMOVE(superell->a, a);
+    VMOVE(superell->b, b);
+    VMOVE(superell->c, c);
+    superell->n = n;
+    superell->e = e;
+}
+
+
+static void
+make_rpc(struct rt_db_internal *intern, const point_t vertex, const vect_t h,
+	 const vect_t b, fastf_t r)
+{
+    struct rt_rpc_internal *rpc;
+
+    RT_DB_INTERNAL_INIT(intern);
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern->idb_minor_type = ID_RPC;
+    intern->idb_meth = &OBJ[ID_RPC];
+    BU_ALLOC(intern->idb_ptr, struct rt_rpc_internal);
+    rpc = (struct rt_rpc_internal *)intern->idb_ptr;
+    rpc->rpc_magic = RT_RPC_INTERNAL_MAGIC;
+    VMOVE(rpc->rpc_V, vertex);
+    VMOVE(rpc->rpc_H, h);
+    VMOVE(rpc->rpc_B, b);
+    rpc->rpc_r = r;
+}
+
+
+static void
+make_rhc(struct rt_db_internal *intern, const point_t vertex, const vect_t h,
+	 const vect_t b, fastf_t r, fastf_t c)
+{
+    struct rt_rhc_internal *rhc;
+
+    RT_DB_INTERNAL_INIT(intern);
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern->idb_minor_type = ID_RHC;
+    intern->idb_meth = &OBJ[ID_RHC];
+    BU_ALLOC(intern->idb_ptr, struct rt_rhc_internal);
+    rhc = (struct rt_rhc_internal *)intern->idb_ptr;
+    rhc->rhc_magic = RT_RHC_INTERNAL_MAGIC;
+    VMOVE(rhc->rhc_V, vertex);
+    VMOVE(rhc->rhc_H, h);
+    VMOVE(rhc->rhc_B, b);
+    rhc->rhc_r = r;
+    rhc->rhc_c = c;
+}
+
+
+static void
+make_epa(struct rt_db_internal *intern, const point_t vertex, const vect_t h,
+	 const vect_t au, fastf_t r1, fastf_t r2)
+{
+    struct rt_epa_internal *epa;
+
+    RT_DB_INTERNAL_INIT(intern);
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern->idb_minor_type = ID_EPA;
+    intern->idb_meth = &OBJ[ID_EPA];
+    BU_ALLOC(intern->idb_ptr, struct rt_epa_internal);
+    epa = (struct rt_epa_internal *)intern->idb_ptr;
+    epa->epa_magic = RT_EPA_INTERNAL_MAGIC;
+    VMOVE(epa->epa_V, vertex);
+    VMOVE(epa->epa_H, h);
+    VMOVE(epa->epa_Au, au);
+    epa->epa_r1 = r1;
+    epa->epa_r2 = r2;
+}
+
+
+static void
+make_ehy(struct rt_db_internal *intern, const point_t vertex, const vect_t h,
+	 const vect_t au, fastf_t r1, fastf_t r2, fastf_t c)
+{
+    struct rt_ehy_internal *ehy;
+
+    RT_DB_INTERNAL_INIT(intern);
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern->idb_minor_type = ID_EHY;
+    intern->idb_meth = &OBJ[ID_EHY];
+    BU_ALLOC(intern->idb_ptr, struct rt_ehy_internal);
+    ehy = (struct rt_ehy_internal *)intern->idb_ptr;
+    ehy->ehy_magic = RT_EHY_INTERNAL_MAGIC;
+    VMOVE(ehy->ehy_V, vertex);
+    VMOVE(ehy->ehy_H, h);
+    VMOVE(ehy->ehy_Au, au);
+    ehy->ehy_r1 = r1;
+    ehy->ehy_r2 = r2;
+    ehy->ehy_c = c;
+}
+
+
+static void
+make_part(struct rt_db_internal *intern, const point_t vertex, const vect_t h,
+	  fastf_t vertex_radius, fastf_t height_radius, int type)
+{
+    struct rt_part_internal *part;
+
+    RT_DB_INTERNAL_INIT(intern);
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern->idb_minor_type = ID_PARTICLE;
+    intern->idb_meth = &OBJ[ID_PARTICLE];
+    BU_ALLOC(intern->idb_ptr, struct rt_part_internal);
+    part = (struct rt_part_internal *)intern->idb_ptr;
+    part->part_magic = RT_PART_INTERNAL_MAGIC;
+    VMOVE(part->part_V, vertex);
+    VMOVE(part->part_H, h);
+    part->part_vrad = vertex_radius;
+    part->part_hrad = height_radius;
+    part->part_type = type;
+}
+
+
+static void
 make_half(struct rt_db_internal *intern, const plane_t equation)
 {
     struct rt_half_internal *half;
@@ -193,6 +321,48 @@ make_transform_output(struct rt_db_internal *output,
 	    ell->magic = RT_ELL_INTERNAL_MAGIC;
 	    return 0;
 	}
+	case ID_SUPERELL: {
+	    struct rt_superell_internal *superell;
+	    BU_ALLOC(output->idb_ptr, struct rt_superell_internal);
+	    superell = (struct rt_superell_internal *)output->idb_ptr;
+	    superell->magic = RT_SUPERELL_INTERNAL_MAGIC;
+	    return 0;
+	}
+	case ID_RPC: {
+	    struct rt_rpc_internal *rpc;
+	    BU_ALLOC(output->idb_ptr, struct rt_rpc_internal);
+	    rpc = (struct rt_rpc_internal *)output->idb_ptr;
+	    rpc->rpc_magic = RT_RPC_INTERNAL_MAGIC;
+	    return 0;
+	}
+	case ID_RHC: {
+	    struct rt_rhc_internal *rhc;
+	    BU_ALLOC(output->idb_ptr, struct rt_rhc_internal);
+	    rhc = (struct rt_rhc_internal *)output->idb_ptr;
+	    rhc->rhc_magic = RT_RHC_INTERNAL_MAGIC;
+	    return 0;
+	}
+	case ID_EPA: {
+	    struct rt_epa_internal *epa;
+	    BU_ALLOC(output->idb_ptr, struct rt_epa_internal);
+	    epa = (struct rt_epa_internal *)output->idb_ptr;
+	    epa->epa_magic = RT_EPA_INTERNAL_MAGIC;
+	    return 0;
+	}
+	case ID_EHY: {
+	    struct rt_ehy_internal *ehy;
+	    BU_ALLOC(output->idb_ptr, struct rt_ehy_internal);
+	    ehy = (struct rt_ehy_internal *)output->idb_ptr;
+	    ehy->ehy_magic = RT_EHY_INTERNAL_MAGIC;
+	    return 0;
+	}
+	case ID_PARTICLE: {
+	    struct rt_part_internal *part;
+	    BU_ALLOC(output->idb_ptr, struct rt_part_internal);
+	    part = (struct rt_part_internal *)output->idb_ptr;
+	    part->part_magic = RT_PART_INTERNAL_MAGIC;
+	    return 0;
+	}
 	case ID_HALF: {
 	    struct rt_half_internal *half;
 	    BU_ALLOC(output->idb_ptr, struct rt_half_internal);
@@ -273,6 +443,129 @@ same_ell_geometry(const struct rt_db_internal *a,
     }
 
     return 1;
+}
+
+
+static int
+same_superell_axis(const vect_t a, const vect_t b)
+{
+    for (size_t row = 0; row < 3; row++) {
+	for (size_t column = 0; column < 3; column++) {
+	    if (!near_value(a[row] * a[column], b[row] * b[column]))
+		return 0;
+	}
+    }
+    return 1;
+}
+
+
+static int
+same_superell_geometry(const struct rt_db_internal *a,
+		       const struct rt_db_internal *b)
+{
+    const struct rt_superell_internal *as =
+	(const struct rt_superell_internal *)a->idb_ptr;
+    const struct rt_superell_internal *bs =
+	(const struct rt_superell_internal *)b->idb_ptr;
+
+    return near_vector(as->v, bs->v) && near_value(as->n, bs->n) &&
+	near_value(as->e, bs->e) && same_superell_axis(as->a, bs->a) &&
+	same_superell_axis(as->b, bs->b) &&
+	same_superell_axis(as->c, bs->c);
+}
+
+
+static int
+same_rpc_geometry(const struct rt_db_internal *a,
+		  const struct rt_db_internal *b)
+{
+    const struct rt_rpc_internal *arpc =
+	(const struct rt_rpc_internal *)a->idb_ptr;
+    const struct rt_rpc_internal *brpc =
+	(const struct rt_rpc_internal *)b->idb_ptr;
+
+    return near_vector(arpc->rpc_V, brpc->rpc_V) &&
+	near_vector(arpc->rpc_H, brpc->rpc_H) &&
+	near_vector(arpc->rpc_B, brpc->rpc_B) &&
+	near_value(arpc->rpc_r, brpc->rpc_r);
+}
+
+
+static int
+same_rhc_geometry(const struct rt_db_internal *a,
+		  const struct rt_db_internal *b)
+{
+    const struct rt_rhc_internal *arhc =
+	(const struct rt_rhc_internal *)a->idb_ptr;
+    const struct rt_rhc_internal *brhc =
+	(const struct rt_rhc_internal *)b->idb_ptr;
+
+    return near_vector(arhc->rhc_V, brhc->rhc_V) &&
+	near_vector(arhc->rhc_H, brhc->rhc_H) &&
+	near_vector(arhc->rhc_B, brhc->rhc_B) &&
+	near_value(arhc->rhc_r, brhc->rhc_r) &&
+	near_value(arhc->rhc_c, brhc->rhc_c);
+}
+
+
+static int
+same_epa_geometry(const struct rt_db_internal *a,
+		  const struct rt_db_internal *b)
+{
+    const struct rt_epa_internal *aepa =
+	(const struct rt_epa_internal *)a->idb_ptr;
+    const struct rt_epa_internal *bepa =
+	(const struct rt_epa_internal *)b->idb_ptr;
+
+    return near_vector(aepa->epa_V, bepa->epa_V) &&
+	near_vector(aepa->epa_H, bepa->epa_H) &&
+	near_vector(aepa->epa_Au, bepa->epa_Au) &&
+	near_value(aepa->epa_r1, bepa->epa_r1) &&
+	near_value(aepa->epa_r2, bepa->epa_r2);
+}
+
+
+static int
+same_ehy_geometry(const struct rt_db_internal *a,
+		  const struct rt_db_internal *b)
+{
+    const struct rt_ehy_internal *aehy =
+	(const struct rt_ehy_internal *)a->idb_ptr;
+    const struct rt_ehy_internal *behy =
+	(const struct rt_ehy_internal *)b->idb_ptr;
+
+    return near_vector(aehy->ehy_V, behy->ehy_V) &&
+	near_vector(aehy->ehy_H, behy->ehy_H) &&
+	near_vector(aehy->ehy_Au, behy->ehy_Au) &&
+	near_value(aehy->ehy_r1, behy->ehy_r1) &&
+	near_value(aehy->ehy_r2, behy->ehy_r2) &&
+	near_value(aehy->ehy_c, behy->ehy_c);
+}
+
+
+static int
+same_part_geometry(const struct rt_db_internal *a,
+		   const struct rt_db_internal *b)
+{
+    const struct rt_part_internal *apart =
+	(const struct rt_part_internal *)a->idb_ptr;
+    const struct rt_part_internal *bpart =
+	(const struct rt_part_internal *)b->idb_ptr;
+    point_t a_end;
+    point_t b_end;
+
+    if (near_vector(apart->part_V, bpart->part_V) &&
+	near_vector(apart->part_H, bpart->part_H) &&
+	near_value(apart->part_vrad, bpart->part_vrad) &&
+	near_value(apart->part_hrad, bpart->part_hrad))
+	return 1;
+
+    VADD2(a_end, apart->part_V, apart->part_H);
+    VADD2(b_end, bpart->part_V, bpart->part_H);
+    return near_vector(apart->part_V, b_end) &&
+	near_vector(a_end, bpart->part_V) &&
+	near_value(apart->part_vrad, bpart->part_hrad) &&
+	near_value(apart->part_hrad, bpart->part_vrad);
 }
 
 
@@ -511,6 +804,347 @@ test_ell_mode(enum rt_canonicalize_mode mode, const vect_t expected_lengths)
     if (rt_obj_canonicalize(&recanonical, second_placement, &canonical, &tol, mode) != RT_CANONICALIZE_OK ||
 	!same_ell_geometry(&canonical, &recanonical) || !matrix_is_identity(second_placement)) {
 	bu_log("ELL mode %d canonicalization is not idempotent\n", (int)mode);
+	failed = 1;
+    }
+
+cleanup:
+    if (recanonical.idb_ptr)
+	rt_db_free_internal(&recanonical);
+    if (canonical.idb_ptr)
+	rt_db_free_internal(&canonical);
+    rt_db_free_internal(&input);
+    return failed;
+}
+
+
+static int
+test_superell_mode(enum rt_canonicalize_mode mode,
+		   const vect_t expected_lengths)
+{
+    const struct bn_tol tol = BN_TOL_INIT_TOL;
+    const point_t center = {11.0, -7.0, 5.0};
+    const vect_t a = {0.0, 0.0, 2.0};
+    const vect_t b = {-3.0, 0.0, 0.0};
+    const vect_t c = {0.0, 5.0, 0.0};
+    struct rt_db_internal input;
+    struct rt_db_internal canonical;
+    struct rt_db_internal reconstructed;
+    struct rt_db_internal recanonical;
+    const struct rt_superell_internal *cs;
+    mat_t placement;
+    mat_t second_placement;
+    int failed = 0;
+
+    make_superell(&input, center, a, b, c, 0.7, 1.4);
+    RT_DB_INTERNAL_INIT(&canonical);
+    RT_DB_INTERNAL_INIT(&recanonical);
+    if (rt_obj_canonicalize(&canonical, placement, &input, &tol, mode) !=
+	    RT_CANONICALIZE_OK) {
+	bu_log("SUPERELL mode %d canonicalization failed\n", (int)mode);
+	failed = 1;
+	goto cleanup;
+    }
+
+    cs = (const struct rt_superell_internal *)canonical.idb_ptr;
+    if (!VNEAR_ZERO(cs->v, TEST_EPSILON) ||
+	!near_value(cs->a[X], expected_lengths[X]) ||
+	!near_value(cs->b[Y], expected_lengths[Y]) ||
+	!near_value(cs->c[Z], expected_lengths[Z]) ||
+	!near_value(cs->a[Y], 0.0) || !near_value(cs->a[Z], 0.0) ||
+	!near_value(cs->b[X], 0.0) || !near_value(cs->b[Z], 0.0) ||
+	!near_value(cs->c[X], 0.0) || !near_value(cs->c[Y], 0.0) ||
+	!near_value(cs->n, 0.7) || !near_value(cs->e, 1.4)) {
+	bu_log("SUPERELL mode %d produced a non-canonical result\n",
+	    (int)mode);
+	failed = 1;
+	goto cleanup;
+    }
+
+    if (make_transform_output(&reconstructed, &canonical)) {
+	failed = 1;
+	goto cleanup;
+    }
+    if (canonical.idb_meth->ft_mat(&reconstructed, placement, &canonical) !=
+	    BRLCAD_OK || !same_superell_geometry(&input, &reconstructed)) {
+	bu_log("SUPERELL mode %d placement did not reconstruct the input\n",
+	    (int)mode);
+	failed = 1;
+    }
+    rt_db_free_internal(&reconstructed);
+
+    if (rt_obj_canonicalize(&recanonical, second_placement, &canonical,
+	    &tol, mode) != RT_CANONICALIZE_OK ||
+	!same_superell_geometry(&canonical, &recanonical) ||
+	!matrix_is_identity(second_placement)) {
+	bu_log("SUPERELL mode %d canonicalization is not idempotent\n",
+	    (int)mode);
+	failed = 1;
+    }
+
+cleanup:
+    if (recanonical.idb_ptr)
+	rt_db_free_internal(&recanonical);
+    if (canonical.idb_ptr)
+	rt_db_free_internal(&canonical);
+    rt_db_free_internal(&input);
+    return failed;
+}
+
+
+static int
+test_rpc_family_mode(int type, enum rt_canonicalize_mode mode,
+		     const fastf_t *expected_lengths)
+{
+    const struct bn_tol tol = BN_TOL_INIT_TOL;
+    const point_t vertex = {11.0, -7.0, 5.0};
+    const vect_t h = {0.0, 4.0, 0.0};
+    const vect_t b = {-3.0, 0.0, 0.0};
+    struct rt_db_internal input;
+    struct rt_db_internal canonical;
+    struct rt_db_internal reconstructed;
+    struct rt_db_internal recanonical;
+    mat_t placement;
+    mat_t second_placement;
+    int failed = 0;
+
+    if (type == ID_RPC)
+	make_rpc(&input, vertex, h, b, 2.0);
+    else
+	make_rhc(&input, vertex, h, b, 2.0, 5.0);
+    RT_DB_INTERNAL_INIT(&canonical);
+    RT_DB_INTERNAL_INIT(&recanonical);
+    if (rt_obj_canonicalize(&canonical, placement, &input, &tol, mode) !=
+	    RT_CANONICALIZE_OK) {
+	bu_log("%s mode %d canonicalization failed\n", OBJ[type].ft_label,
+	    (int)mode);
+	failed = 1;
+	goto cleanup;
+    }
+
+    if (type == ID_RPC) {
+	const struct rt_rpc_internal *rpc =
+	    (const struct rt_rpc_internal *)canonical.idb_ptr;
+	if (!VNEAR_ZERO(rpc->rpc_V, TEST_EPSILON) ||
+	    !near_value(rpc->rpc_B[X], expected_lengths[0]) ||
+	    !near_value(rpc->rpc_H[Z], expected_lengths[1]) ||
+	    !near_value(rpc->rpc_r, expected_lengths[2]) ||
+	    !near_value(rpc->rpc_B[Y], 0.0) ||
+	    !near_value(rpc->rpc_B[Z], 0.0) ||
+	    !near_value(rpc->rpc_H[X], 0.0) ||
+	    !near_value(rpc->rpc_H[Y], 0.0))
+	    failed = 1;
+    } else {
+	const struct rt_rhc_internal *rhc =
+	    (const struct rt_rhc_internal *)canonical.idb_ptr;
+	if (!VNEAR_ZERO(rhc->rhc_V, TEST_EPSILON) ||
+	    !near_value(rhc->rhc_B[X], expected_lengths[0]) ||
+	    !near_value(rhc->rhc_H[Z], expected_lengths[1]) ||
+	    !near_value(rhc->rhc_r, expected_lengths[2]) ||
+	    !near_value(rhc->rhc_c, expected_lengths[3]) ||
+	    !near_value(rhc->rhc_B[Y], 0.0) ||
+	    !near_value(rhc->rhc_B[Z], 0.0) ||
+	    !near_value(rhc->rhc_H[X], 0.0) ||
+	    !near_value(rhc->rhc_H[Y], 0.0))
+	    failed = 1;
+    }
+    if (failed) {
+	bu_log("%s mode %d produced a non-canonical result\n",
+	    OBJ[type].ft_label, (int)mode);
+	goto cleanup;
+    }
+
+    if (make_transform_output(&reconstructed, &canonical)) {
+	failed = 1;
+	goto cleanup;
+    }
+    if (canonical.idb_meth->ft_mat(&reconstructed, placement, &canonical) !=
+	    BRLCAD_OK || (type == ID_RPC ?
+	    !same_rpc_geometry(&input, &reconstructed) :
+	    !same_rhc_geometry(&input, &reconstructed))) {
+	bu_log("%s mode %d placement did not reconstruct the input\n",
+	    OBJ[type].ft_label, (int)mode);
+	failed = 1;
+    }
+    rt_db_free_internal(&reconstructed);
+
+    if (rt_obj_canonicalize(&recanonical, second_placement, &canonical,
+	    &tol, mode) != RT_CANONICALIZE_OK ||
+	(type == ID_RPC ? !same_rpc_geometry(&canonical, &recanonical) :
+	    !same_rhc_geometry(&canonical, &recanonical)) ||
+	!matrix_is_identity(second_placement)) {
+	bu_log("%s mode %d canonicalization is not idempotent\n",
+	    OBJ[type].ft_label, (int)mode);
+	failed = 1;
+    }
+
+cleanup:
+    if (recanonical.idb_ptr)
+	rt_db_free_internal(&recanonical);
+    if (canonical.idb_ptr)
+	rt_db_free_internal(&canonical);
+    rt_db_free_internal(&input);
+    return failed;
+}
+
+
+static int
+test_epa_family_mode(int type, enum rt_canonicalize_mode mode,
+		     const fastf_t *expected_lengths)
+{
+    const struct bn_tol tol = BN_TOL_INIT_TOL;
+    const point_t vertex = {11.0, -7.0, 5.0};
+    const vect_t h = {0.0, 4.0, 0.0};
+    const vect_t au = {-1.0, 0.0, 0.0};
+    struct rt_db_internal input;
+    struct rt_db_internal canonical;
+    struct rt_db_internal reconstructed;
+    struct rt_db_internal recanonical;
+    mat_t placement;
+    mat_t second_placement;
+    int failed = 0;
+
+    if (type == ID_EPA)
+	make_epa(&input, vertex, h, au, 3.0, 2.0);
+    else
+	make_ehy(&input, vertex, h, au, 3.0, 2.0, 5.0);
+    RT_DB_INTERNAL_INIT(&canonical);
+    RT_DB_INTERNAL_INIT(&recanonical);
+    if (rt_obj_canonicalize(&canonical, placement, &input, &tol, mode) !=
+	    RT_CANONICALIZE_OK) {
+	bu_log("%s mode %d canonicalization failed\n", OBJ[type].ft_label,
+	    (int)mode);
+	failed = 1;
+	goto cleanup;
+    }
+
+    if (type == ID_EPA) {
+	const struct rt_epa_internal *epa =
+	    (const struct rt_epa_internal *)canonical.idb_ptr;
+	if (!VNEAR_ZERO(epa->epa_V, TEST_EPSILON) ||
+	    !near_value(epa->epa_H[Z], expected_lengths[0]) ||
+	    !near_value(epa->epa_Au[X], 1.0) ||
+	    !near_value(epa->epa_r1, expected_lengths[1]) ||
+	    !near_value(epa->epa_r2, expected_lengths[2]) ||
+	    !near_value(epa->epa_H[X], 0.0) ||
+	    !near_value(epa->epa_H[Y], 0.0) ||
+	    !near_value(epa->epa_Au[Y], 0.0) ||
+	    !near_value(epa->epa_Au[Z], 0.0))
+	    failed = 1;
+    } else {
+	const struct rt_ehy_internal *ehy =
+	    (const struct rt_ehy_internal *)canonical.idb_ptr;
+	if (!VNEAR_ZERO(ehy->ehy_V, TEST_EPSILON) ||
+	    !near_value(ehy->ehy_H[Z], expected_lengths[0]) ||
+	    !near_value(ehy->ehy_Au[X], 1.0) ||
+	    !near_value(ehy->ehy_r1, expected_lengths[1]) ||
+	    !near_value(ehy->ehy_r2, expected_lengths[2]) ||
+	    !near_value(ehy->ehy_c, expected_lengths[3]) ||
+	    !near_value(ehy->ehy_H[X], 0.0) ||
+	    !near_value(ehy->ehy_H[Y], 0.0) ||
+	    !near_value(ehy->ehy_Au[Y], 0.0) ||
+	    !near_value(ehy->ehy_Au[Z], 0.0))
+	    failed = 1;
+    }
+    if (failed) {
+	bu_log("%s mode %d produced a non-canonical result\n",
+	    OBJ[type].ft_label, (int)mode);
+	goto cleanup;
+    }
+
+    if (make_transform_output(&reconstructed, &canonical)) {
+	failed = 1;
+	goto cleanup;
+    }
+    if (canonical.idb_meth->ft_mat(&reconstructed, placement, &canonical) !=
+	    BRLCAD_OK || (type == ID_EPA ?
+	    !same_epa_geometry(&input, &reconstructed) :
+	    !same_ehy_geometry(&input, &reconstructed))) {
+	bu_log("%s mode %d placement did not reconstruct the input\n",
+	    OBJ[type].ft_label, (int)mode);
+	failed = 1;
+    }
+    rt_db_free_internal(&reconstructed);
+
+    if (rt_obj_canonicalize(&recanonical, second_placement, &canonical,
+	    &tol, mode) != RT_CANONICALIZE_OK ||
+	(type == ID_EPA ? !same_epa_geometry(&canonical, &recanonical) :
+	    !same_ehy_geometry(&canonical, &recanonical)) ||
+	!matrix_is_identity(second_placement)) {
+	bu_log("%s mode %d canonicalization is not idempotent\n",
+	    OBJ[type].ft_label, (int)mode);
+	failed = 1;
+    }
+
+cleanup:
+    if (recanonical.idb_ptr)
+	rt_db_free_internal(&recanonical);
+    if (canonical.idb_ptr)
+	rt_db_free_internal(&canonical);
+    rt_db_free_internal(&input);
+    return failed;
+}
+
+
+static int
+test_part_mode(enum rt_canonicalize_mode mode, int sphere,
+	       fastf_t expected_height, fastf_t expected_vertex_radius,
+	       fastf_t expected_height_radius)
+{
+    const struct bn_tol tol = BN_TOL_INIT_TOL;
+    const point_t vertex = {11.0, -7.0, 5.0};
+    const vect_t cone_height = {0.0, 4.0, 0.0};
+    const vect_t sphere_height = VINIT_ZERO;
+    struct rt_db_internal input;
+    struct rt_db_internal canonical;
+    struct rt_db_internal reconstructed;
+    struct rt_db_internal recanonical;
+    const struct rt_part_internal *part;
+    mat_t placement;
+    mat_t second_placement;
+    int failed = 0;
+
+    make_part(&input, vertex, sphere ? sphere_height : cone_height,
+	sphere ? 2.0 : 3.0, 2.0,
+	sphere ? RT_PARTICLE_TYPE_SPHERE : RT_PARTICLE_TYPE_CONE);
+    RT_DB_INTERNAL_INIT(&canonical);
+    RT_DB_INTERNAL_INIT(&recanonical);
+    if (rt_obj_canonicalize(&canonical, placement, &input, &tol, mode) !=
+	    RT_CANONICALIZE_OK) {
+	bu_log("PART mode %d canonicalization failed\n", (int)mode);
+	failed = 1;
+	goto cleanup;
+    }
+
+    part = (const struct rt_part_internal *)canonical.idb_ptr;
+    if (!VNEAR_ZERO(part->part_V, TEST_EPSILON) ||
+	!near_value(part->part_H[X], 0.0) ||
+	!near_value(part->part_H[Y], 0.0) ||
+	!near_value(part->part_H[Z], expected_height) ||
+	!near_value(part->part_vrad, expected_vertex_radius) ||
+	!near_value(part->part_hrad, expected_height_radius) ||
+	(sphere && part->part_type != RT_PARTICLE_TYPE_SPHERE)) {
+	bu_log("PART mode %d produced a non-canonical result\n", (int)mode);
+	failed = 1;
+	goto cleanup;
+    }
+
+    if (make_transform_output(&reconstructed, &canonical)) {
+	failed = 1;
+	goto cleanup;
+    }
+    if (canonical.idb_meth->ft_mat(&reconstructed, placement, &canonical) !=
+	    BRLCAD_OK || !same_part_geometry(&input, &reconstructed)) {
+	bu_log("PART mode %d placement did not reconstruct the input\n",
+	    (int)mode);
+	failed = 1;
+    }
+    rt_db_free_internal(&reconstructed);
+
+    if (rt_obj_canonicalize(&recanonical, second_placement, &canonical,
+	    &tol, mode) != RT_CANONICALIZE_OK ||
+	!same_part_geometry(&canonical, &recanonical) ||
+	!matrix_is_identity(second_placement)) {
+	bu_log("PART mode %d canonicalization is not idempotent\n", (int)mode);
 	failed = 1;
     }
 
@@ -1258,6 +1892,78 @@ test_errors(void)
     rt_db_free_internal(&invalid);
 
     {
+	const vect_t superell_a = {2.0, 0.0, 0.0};
+	const vect_t superell_b = {0.0, 3.0, 0.0};
+	const vect_t superell_c = {0.0, 0.0, 4.0};
+
+	make_superell(&invalid, center, superell_a, superell_b, superell_c,
+	    0.0, 1.0);
+	if (rt_obj_canonicalize(&output, placement, &invalid, &tol,
+		RT_CANONICALIZE_AFFINE) != RT_CANONICALIZE_ERROR ||
+	    output.idb_ptr) {
+	    bu_log("invalid SUPERELL was not rejected cleanly\n");
+	    failed = 1;
+	}
+	rt_db_free_internal(&invalid);
+    }
+
+    {
+	const vect_t rpc_h = {0.0, 0.0, 4.0};
+	const vect_t rpc_b = {1.0, 0.0, 2.0};
+
+	make_rpc(&invalid, center, rpc_h, rpc_b, 2.0);
+	if (rt_obj_canonicalize(&output, placement, &invalid, &tol,
+		RT_CANONICALIZE_SIMILARITY) != RT_CANONICALIZE_ERROR ||
+	    output.idb_ptr) {
+	    bu_log("invalid RPC was not rejected cleanly\n");
+	    failed = 1;
+	}
+	rt_db_free_internal(&invalid);
+    }
+
+    {
+	const vect_t epa_h = {0.0, 0.0, 4.0};
+	const vect_t epa_au = {1.0, 0.0, 2.0};
+
+	make_epa(&invalid, center, epa_h, epa_au, 3.0, 2.0);
+	if (rt_obj_canonicalize(&output, placement, &invalid, &tol,
+		RT_CANONICALIZE_SIMILARITY) != RT_CANONICALIZE_ERROR ||
+	    output.idb_ptr) {
+	    bu_log("invalid EPA was not rejected cleanly\n");
+	    failed = 1;
+	}
+	rt_db_free_internal(&invalid);
+    }
+
+    {
+	const vect_t part_h = {0.0, 0.0, 4.0};
+
+	make_part(&invalid, center, part_h, -1.0, 2.0,
+	    RT_PARTICLE_TYPE_CONE);
+	if (rt_obj_canonicalize(&output, placement, &invalid, &tol,
+		RT_CANONICALIZE_SIMILARITY) != RT_CANONICALIZE_ERROR ||
+	    output.idb_ptr) {
+	    bu_log("invalid PART was not rejected cleanly\n");
+	    failed = 1;
+	}
+	rt_db_free_internal(&invalid);
+    }
+
+    {
+	const vect_t part_h = {0.0, 0.0, 0.5 * BN_TOL_DIST};
+
+	make_part(&invalid, center, part_h, 1.0, 2.0,
+	    RT_PARTICLE_TYPE_CONE);
+	if (rt_obj_canonicalize(&output, placement, &invalid, &tol,
+		RT_CANONICALIZE_SIMILARITY) != RT_CANONICALIZE_ERROR ||
+	    output.idb_ptr) {
+	    bu_log("short nonzero PART axis was reinterpreted as a sphere\n");
+	    failed = 1;
+	}
+	rt_db_free_internal(&invalid);
+    }
+
+    {
 	const vect_t h = {1.0, 1.0, 0.0};
 	const vect_t tgc_a = {2.0, 0.0, 0.0};
 	const vect_t tgc_b = {0.0, 3.0, 0.0};
@@ -1330,6 +2036,16 @@ main(int UNUSED(argc), const char *argv[])
     const vect_t rigid_lengths = {5.0, 3.0, 2.0};
     const vect_t similarity_lengths = {1.0, 0.6, 0.4};
     const vect_t affine_lengths = {1.0, 1.0, 1.0};
+    const vect_t superell_rigid_lengths = {2.0, 3.0, 5.0};
+    const vect_t superell_similarity_lengths = {0.4, 0.6, 1.0};
+    const fastf_t rpc_rigid_lengths[] = {3.0, 4.0, 2.0};
+    const fastf_t rpc_similarity_lengths[] = {0.75, 1.0, 0.5};
+    const fastf_t rhc_rigid_lengths[] = {3.0, 4.0, 2.0, 5.0};
+    const fastf_t rhc_similarity_lengths[] = {0.6, 0.8, 0.4, 1.0};
+    const fastf_t epa_rigid_lengths[] = {4.0, 3.0, 2.0};
+    const fastf_t epa_similarity_lengths[] = {1.0, 0.75, 0.5};
+    const fastf_t ehy_rigid_lengths[] = {4.0, 3.0, 2.0, 5.0};
+    const fastf_t ehy_similarity_lengths[] = {0.8, 0.6, 0.4, 1.0};
     int failures = 0;
 
     bu_setprogname(argv[0]);
@@ -1337,6 +2053,43 @@ main(int UNUSED(argc), const char *argv[])
     failures += test_ell_mode(RT_CANONICALIZE_RIGID, rigid_lengths);
     failures += test_ell_mode(RT_CANONICALIZE_SIMILARITY, similarity_lengths);
     failures += test_ell_mode(RT_CANONICALIZE_AFFINE, affine_lengths);
+    failures += test_superell_mode(RT_CANONICALIZE_RIGID,
+	superell_rigid_lengths);
+    failures += test_superell_mode(RT_CANONICALIZE_SIMILARITY,
+	superell_similarity_lengths);
+    failures += test_superell_mode(RT_CANONICALIZE_AFFINE, affine_lengths);
+    failures += test_rpc_family_mode(ID_RPC, RT_CANONICALIZE_RIGID,
+	rpc_rigid_lengths);
+    failures += test_rpc_family_mode(ID_RPC, RT_CANONICALIZE_SIMILARITY,
+	rpc_similarity_lengths);
+    failures += test_rpc_family_mode(ID_RPC, RT_CANONICALIZE_AFFINE,
+	rpc_similarity_lengths);
+    failures += test_rpc_family_mode(ID_RHC, RT_CANONICALIZE_RIGID,
+	rhc_rigid_lengths);
+    failures += test_rpc_family_mode(ID_RHC, RT_CANONICALIZE_SIMILARITY,
+	rhc_similarity_lengths);
+    failures += test_rpc_family_mode(ID_RHC, RT_CANONICALIZE_AFFINE,
+	rhc_similarity_lengths);
+    failures += test_epa_family_mode(ID_EPA, RT_CANONICALIZE_RIGID,
+	epa_rigid_lengths);
+    failures += test_epa_family_mode(ID_EPA, RT_CANONICALIZE_SIMILARITY,
+	epa_similarity_lengths);
+    failures += test_epa_family_mode(ID_EPA, RT_CANONICALIZE_AFFINE,
+	epa_similarity_lengths);
+    failures += test_epa_family_mode(ID_EHY, RT_CANONICALIZE_RIGID,
+	ehy_rigid_lengths);
+    failures += test_epa_family_mode(ID_EHY, RT_CANONICALIZE_SIMILARITY,
+	ehy_similarity_lengths);
+    failures += test_epa_family_mode(ID_EHY, RT_CANONICALIZE_AFFINE,
+	ehy_similarity_lengths);
+    failures += test_part_mode(RT_CANONICALIZE_RIGID, 0, 4.0, 2.0, 3.0);
+    failures += test_part_mode(RT_CANONICALIZE_SIMILARITY, 0, 1.0, 0.5,
+	0.75);
+    failures += test_part_mode(RT_CANONICALIZE_AFFINE, 0, 1.0, 0.5, 0.75);
+    failures += test_part_mode(RT_CANONICALIZE_RIGID, 1, 0.0, 2.0, 2.0);
+    failures += test_part_mode(RT_CANONICALIZE_SIMILARITY, 1, 0.0, 1.0,
+	1.0);
+    failures += test_part_mode(RT_CANONICALIZE_AFFINE, 1, 0.0, 1.0, 1.0);
     failures += test_half();
     failures += test_tor_mode(RT_CANONICALIZE_RIGID, 5.0, 2.0);
     failures += test_tor_mode(RT_CANONICALIZE_SIMILARITY, 1.0, 0.4);

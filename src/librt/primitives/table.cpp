@@ -1096,7 +1096,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_PERTURB_CAST(rt_part_perturb), /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
 	NULL, /* validate */
-	NULL /* canonicalize */
+	RTFUNCTAB_FUNC_CANONICALIZE_CAST(rt_part_canonicalize) /* canonicalize */
     },
 
     {
@@ -1149,7 +1149,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_PERTURB_CAST(rt_rpc_perturb), /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
 	RTFUNCTAB_FUNC_VALIDATE_CAST(rt_rpc_functab_validate), /* validate */
-	NULL /* canonicalize */
+	RTFUNCTAB_FUNC_CANONICALIZE_CAST(rt_rpc_canonicalize) /* canonicalize */
     },
 
     {
@@ -1202,7 +1202,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_PERTURB_CAST(rt_rhc_perturb), /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
 	RTFUNCTAB_FUNC_VALIDATE_CAST(rt_rhc_functab_validate), /* validate */
-	NULL /* canonicalize */
+	RTFUNCTAB_FUNC_CANONICALIZE_CAST(rt_rhc_canonicalize) /* canonicalize */
     },
 
     {
@@ -1255,7 +1255,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_PERTURB_CAST(rt_epa_perturb), /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
 	RTFUNCTAB_FUNC_VALIDATE_CAST(rt_epa_functab_validate), /* validate */
-	NULL /* canonicalize */
+	RTFUNCTAB_FUNC_CANONICALIZE_CAST(rt_epa_canonicalize) /* canonicalize */
     },
 
     {
@@ -1308,7 +1308,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_PERTURB_CAST(rt_ehy_perturb), /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
 	RTFUNCTAB_FUNC_VALIDATE_CAST(rt_ehy_functab_validate), /* validate */
-	NULL /* canonicalize */
+	RTFUNCTAB_FUNC_CANONICALIZE_CAST(rt_ehy_canonicalize) /* canonicalize */
     },
 
     {
@@ -2107,7 +2107,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_PERTURB_CAST(rt_superell_perturb), /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
 	NULL, /* validate */
-	NULL /* canonicalize */
+	RTFUNCTAB_FUNC_CANONICALIZE_CAST(rt_superell_canonicalize) /* canonicalize */
     },
 
     {

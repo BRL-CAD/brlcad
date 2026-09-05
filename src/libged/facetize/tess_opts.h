@@ -187,29 +187,33 @@ method_options_t::method_optstr(std::string &method, struct db_i *dbip)
 	// generated NMG method options if the user hasn't specifically overridden them
 	if (options_map[method].find(std::string("nmg_debug")) == options_map[method].end()) {
 	    struct bu_vls debug_str = BU_VLS_INIT_ZERO;
-	    bu_vls_sprintf(&debug_str, "0x%08lx", (unsigned long)nmg_debug);
-	    std::string kvalstr = std::string(" nmg_debug=") + std::string(bu_vls_cstr(&debug_str));
-	    moptstr.append(kvalstr);
+		    bu_vls_sprintf(&debug_str, "0x%08lx", (unsigned long)nmg_debug);
+		    std::string kvalstr = std::string(" nmg_debug=") + std::string(bu_vls_cstr(&debug_str));
+		    moptstr.append(kvalstr);
+		    bu_vls_free(&debug_str);
 	}
 	if (dbip) {
 	    struct rt_wdb *wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DEFAULT);
 	    if (options_map[method].find(std::string("tol_abs")) == options_map[method].end()) {
 		struct bu_vls val_str = BU_VLS_INIT_ZERO;
 		bu_vls_sprintf(&val_str, "%0.17f", wdbp->wdb_ttol.abs);
-		std::string kvalstr = std::string(" tol_abs=") + std::string(bu_vls_cstr(&val_str));
-		moptstr.append(kvalstr);
+			std::string kvalstr = std::string(" tol_abs=") + std::string(bu_vls_cstr(&val_str));
+			moptstr.append(kvalstr);
+			bu_vls_free(&val_str);
 	    }
 	    if (options_map[method].find(std::string("tol_rel")) == options_map[method].end()) {
 		struct bu_vls val_str = BU_VLS_INIT_ZERO;
 		bu_vls_sprintf(&val_str, "%0.17f", wdbp->wdb_ttol.rel);
-		std::string kvalstr = std::string(" tol_rel=") + std::string(bu_vls_cstr(&val_str));
-		moptstr.append(kvalstr);
+			std::string kvalstr = std::string(" tol_rel=") + std::string(bu_vls_cstr(&val_str));
+			moptstr.append(kvalstr);
+			bu_vls_free(&val_str);
 	    }
 	    if (options_map[method].find(std::string("tol_norm")) == options_map[method].end()) {
 		struct bu_vls val_str = BU_VLS_INIT_ZERO;
 		bu_vls_sprintf(&val_str, "%0.17f", wdbp->wdb_ttol.norm);
-		std::string kvalstr = std::string(" tol_norm=") + std::string(bu_vls_cstr(&val_str));
-		moptstr.append(kvalstr);
+			std::string kvalstr = std::string(" tol_norm=") + std::string(bu_vls_cstr(&val_str));
+			moptstr.append(kvalstr);
+			bu_vls_free(&val_str);
 	    }
 	}
     }

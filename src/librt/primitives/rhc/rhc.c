@@ -174,6 +174,7 @@
 #include "raytrace.h"
 
 #include "../../librt_private.h"
+#include "../canonicalize_private.h"
 
 static int
 rhc_is_valid(struct rt_rhc_internal *rhc);
@@ -1930,6 +1931,47 @@ rt_rhc_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
     top->rhc_c = rhc_c;
 
     return BRLCAD_OK;
+}
+
+
+C_DECL int
+rt_rhc_canonicalize(struct rt_db_internal *canonical,
+		    mat_t canonical_to_input,
+		    const struct rt_db_internal *input,
+		    const struct bn_tol *tol,
+		    enum rt_canonicalize_mode mode)
+{
+    const struct rt_rhc_internal *rip;
+    struct rt_rhc_internal *crip;
+    fastf_t lengths[4];
+    fastf_t canonical_lengths[4];
+
+    if (!canonical || !canonical_to_input || !input || !tol ||
+	input->idb_type != ID_RHC)
+	return RT_CANONICALIZE_ERROR;
+    rip = (const struct rt_rhc_internal *)input->idb_ptr;
+    RT_RHC_CK_MAGIC(rip);
+    lengths[0] = MAGNITUDE(rip->rhc_B);
+    lengths[1] = MAGNITUDE(rip->rhc_H);
+    lengths[2] = rip->rhc_r;
+    lengths[3] = rip->rhc_c;
+    if (!rt_make_canonical_similarity_frame(canonical_to_input,
+	    canonical_lengths, rip->rhc_V, rip->rhc_B, rip->rhc_H, lengths,
+	    4, tol, mode))
+	return RT_CANONICALIZE_ERROR;
+
+    canonical->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    canonical->idb_minor_type = ID_RHC;
+    canonical->idb_meth = &OBJ[ID_RHC];
+    BU_ALLOC(canonical->idb_ptr, struct rt_rhc_internal);
+    crip = (struct rt_rhc_internal *)canonical->idb_ptr;
+    crip->rhc_magic = RT_RHC_INTERNAL_MAGIC;
+    VSETALL(crip->rhc_V, 0.0);
+    VSET(crip->rhc_B, canonical_lengths[0], 0.0, 0.0);
+    VSET(crip->rhc_H, 0.0, 0.0, canonical_lengths[1]);
+    crip->rhc_r = canonical_lengths[2];
+    crip->rhc_c = canonical_lengths[3];
+    return RT_CANONICALIZE_OK;
 }
 
 /**

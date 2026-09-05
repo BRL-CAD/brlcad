@@ -53,6 +53,7 @@
 #include "../ged_private.h"
 #include "./ged_facetize.h"
 #include "./process.h"
+#include "./reuse.h"
 #include "./validation.h"
 #include "./worker.h"
 
@@ -174,6 +175,17 @@ struct RegionBoolevalResult {
     std::string bot_name;
     bool attempted = false;
     bool succeeded = false;
+};
+
+
+struct RegionEvaluationOptions {
+    const FacetizeRegionReusePlan *reuse_plan = nullptr;
+    const std::map<std::string, std::string> *snapshot_substitutions = nullptr;
+    const char *object_description = "region roots";
+    const char *reuse_description = "region Boolean evaluation";
+    bool allow_single_worker = false;
+    bool reuse_snapshot = false;
+    bool retain_snapshot = false;
 };
 
 struct RegionBoolevalWorker {
@@ -493,12 +505,57 @@ _collect_region_csg_metrics(struct _ged_facetize_state *s,
     }
 }
 
+
+static int
+_remove_intermediate_results(struct _ged_facetize_state *s,
+	const std::vector<std::string> &names)
+{
+    if (!s || names.empty())
+	return BRLCAD_OK;
+
+    struct db_i *dbip = _open_working_db(s);
+    if (!dbip)
+	return BRLCAD_ERROR;
+    int result = BRLCAD_OK;
+    for (const std::string &name : names) {
+	struct directory *dp = db_lookup(dbip, name.c_str(), LOOKUP_QUIET);
+	if (!dp)
+	    continue;
+	if (db_delete(dbip, dp) != 0 || db_dirdelete(dbip, dp) != 0) {
+	    result = BRLCAD_ERROR;
+	    break;
+	}
+    }
+    db_close(dbip);
+    if (result != BRLCAD_OK)
+	facetize_failure(s,
+	    "unable to remove a temporary intermediate CSG result");
+    return result;
+}
+
 static int
 _evaluate_regions_parallel(struct _ged_facetize_state *s,
-	std::vector<RegionBoolevalResult> &results)
+	std::vector<RegionBoolevalResult> &results,
+	const RegionEvaluationOptions &options)
 {
-    if (!s || !s->dbip || results.size() < 2 ||
+    if (!s || !s->dbip || results.empty() ||
 	    !s->dbip->dbi_filename || !s->dbip->dbi_filename[0])
+	return BRLCAD_OK;
+
+    std::set<std::string> reuse_members;
+    if (options.reuse_plan) {
+	for (const FacetizeRegionReuseGroup &group : options.reuse_plan->groups)
+	    for (const FacetizeRegionReuseMember &member : group.members)
+		reuse_members.insert(member.name);
+    }
+    std::vector<size_t> evaluation_indices;
+    for (size_t i = 0; i < results.size(); i++) {
+	if (reuse_members.find(results[i].object_name) == reuse_members.end())
+	    evaluation_indices.push_back(i);
+    }
+    if (evaluation_indices.empty() ||
+	(evaluation_indices.size() < 2 && reuse_members.empty() &&
+	    !options.allow_single_worker))
 	return BRLCAD_OK;
 
     ssize_t total_memory_result = bu_mem(BU_MEM_ALL, NULL);
@@ -507,31 +564,48 @@ _evaluate_regions_parallel(struct _ged_facetize_state *s,
 	(size_t)total_memory_result : 0;
     size_t available_memory = (available_memory_result > 0) ?
 	(size_t)available_memory_result : 0;
-    FacetizeWorkerPolicy policy((size_t)s->max_workers, results.size(),
+    FacetizeWorkerPolicy policy((size_t)s->max_workers,
+	evaluation_indices.size(),
 	bu_avail_cpus(), total_memory, available_memory);
-    if (policy.worker_count() < 2)
+    if (!policy.worker_count() ||
+	(policy.worker_count() < 2 && reuse_members.empty() &&
+	    !options.allow_single_worker))
 	return BRLCAD_OK;
 
     const char *work_file = bu_vls_cstr(s->wfile);
     std::string backup_file = std::string(work_file) + ".region_eval.bak";
-    (void)bu_file_delete(backup_file.c_str());
-    RegionSnapshotProgress snapshot_progress;
-    snapshot_progress.state = s;
-    snapshot_progress.start = bu_gettime();
-    snapshot_progress.next_report = snapshot_progress.start +
-	BU_SEC2USEC(FACETIZE_REGION_PROGRESS_INTERVAL_SEC);
-    if (facetize_file_copy(work_file, backup_file.c_str(),
-	    _region_snapshot_progress, &snapshot_progress) != BRLCAD_OK) {
-	facetize_log(s, 0,
-		"FACETIZE: unable to checkpoint the working database before parallel region evaluation\n");
-	return BRLCAD_OK;
+    bool have_snapshot = options.reuse_snapshot &&
+	bu_file_exists(backup_file.c_str(), nullptr);
+    if (!have_snapshot) {
+	(void)bu_file_delete(backup_file.c_str());
+	RegionSnapshotProgress snapshot_progress;
+	snapshot_progress.state = s;
+	snapshot_progress.start = bu_gettime();
+	snapshot_progress.next_report = snapshot_progress.start +
+	    BU_SEC2USEC(FACETIZE_REGION_PROGRESS_INTERVAL_SEC);
+	if (facetize_file_copy(work_file, backup_file.c_str(),
+		_region_snapshot_progress, &snapshot_progress) != BRLCAD_OK) {
+	    facetize_log(s, 0,
+		    "FACETIZE: unable to checkpoint the working database before parallel region evaluation\n");
+	    return BRLCAD_OK;
+	}
+	if (options.snapshot_substitutions &&
+		!options.snapshot_substitutions->empty() &&
+		facetize_intermediate_reuse_apply(backup_file.c_str(),
+		    *options.snapshot_substitutions) != BRLCAD_OK) {
+	    facetize_log(s, 0,
+		    "FACETIZE: unable to prepare intermediate CSG substitutions in the worker snapshot; deferring to direct evaluation\n");
+	    (void)bu_file_delete(backup_file.c_str());
+	    return BRLCAD_OK;
+	}
+	double snapshot_seconds =
+	    (bu_gettime() - snapshot_progress.start) /
+	    FACETIZE_USEC_TO_SEC_DIVISOR;
+	if (snapshot_seconds >= FACETIZE_REGION_PROGRESS_INTERVAL_SEC)
+	    facetize_log(s, 0,
+		    "FACETIZE: shared region snapshot ready (%.1f seconds)\n",
+		    snapshot_seconds);
     }
-    double snapshot_seconds = (bu_gettime() - snapshot_progress.start) /
-	FACETIZE_USEC_TO_SEC_DIVISOR;
-    if (snapshot_seconds >= FACETIZE_REGION_PROGRESS_INTERVAL_SEC)
-	facetize_log(s, 0,
-		"FACETIZE: shared region snapshot ready (%.1f seconds)\n",
-		snapshot_seconds);
 
     char process_executable[MAXPATHLEN];
     bu_dir(process_executable, MAXPATHLEN, BU_DIR_BIN, "ged_exec",
@@ -568,13 +642,15 @@ _evaluate_regions_parallel(struct _ged_facetize_state *s,
     }
 
     facetize_log(s, 0,
-	    "FACETIZE: evaluating %zu region roots using %zu isolated workers with up to %zu CPU threads available to each\n",
-	    results.size(), policy.worker_count(), policy.threads_per_worker());
+	    "FACETIZE: evaluating %zu %s using %zu isolated workers with up to %zu CPU threads available to each\n",
+	    evaluation_indices.size(), options.object_description,
+	    policy.worker_count(),
+	    policy.threads_per_worker());
 
     int64_t run_start = bu_gettime();
     int64_t next_progress = run_start +
 	BU_SEC2USEC(FACETIZE_REGION_PROGRESS_INTERVAL_SEC);
-    size_t next_result = 0;
+    size_t next_request = 0;
     size_t completed = 0;
     size_t active = 0;
     size_t observed_worker_resident = 0;
@@ -617,12 +693,12 @@ _evaluate_regions_parallel(struct _ged_facetize_state *s,
 	completed++;
     };
 
-    while (completed < results.size() && !unsafe_write) {
+    while (completed < evaluation_indices.size() && !unsafe_write) {
 	bool made_progress = false;
 
 	for (RegionBoolevalWorker &worker : workers) {
 	    if (!worker.enabled || worker.result_index != SIZE_MAX ||
-		    next_result >= results.size())
+		    next_request >= evaluation_indices.size())
 		continue;
 
 	    available_memory_result = bu_mem(BU_MEM_AVAIL, NULL);
@@ -649,7 +725,8 @@ _evaluate_regions_parallel(struct _ged_facetize_state *s,
 
 	    FacetizeWorkerRequest request;
 	    request.operation = FacetizeWorkerOperation::EvaluateRegion;
-	    request.input_names.push_back(results[next_result].object_name);
+	    size_t result_index = evaluation_indices[next_request++];
+	    request.input_names.push_back(results[result_index].object_name);
 	    request.region.no_empty = s->no_empty != 0;
 	    request.region.no_fixup = s->no_fixup != 0;
 	    request.region.tolerate_failures = s->tolerate_failures != 0;
@@ -659,7 +736,7 @@ _evaluate_regions_parallel(struct _ged_facetize_state *s,
 		continue;
 	    }
 	    worker.status = FacetizeWorkerStatus();
-	    worker.result_index = next_result++;
+	    worker.result_index = result_index;
 	    worker.request_start = bu_gettime();
 	    active++;
 	    made_progress = true;
@@ -843,14 +920,14 @@ _evaluate_regions_parallel(struct _ged_facetize_state *s,
 	bool usable_worker = false;
 	for (const RegionBoolevalWorker &worker : workers)
 	    usable_worker = usable_worker || worker.enabled;
-	if (!active && next_result < results.size() && !usable_worker)
+	if (!active && next_request < evaluation_indices.size() && !usable_worker)
 	    break;
 
 	int64_t now = bu_gettime();
 	if (now >= next_progress) {
 	    facetize_log(s, 0,
 		    "FACETIZE: evaluated %zu of %zu region roots (%zu workers active, %.1f seconds elapsed)\n",
-		    completed, results.size(), active,
+		    completed, evaluation_indices.size(), active,
 		    (now - run_start) / FACETIZE_USEC_TO_SEC_DIVISOR);
 	    next_progress = now +
 		BU_SEC2USEC(FACETIZE_REGION_PROGRESS_INTERVAL_SEC);
@@ -881,9 +958,66 @@ _evaluate_regions_parallel(struct _ged_facetize_state *s,
 	(void)bu_file_delete(worker.result_file.c_str());
     }
 
+    if (!unsafe_write && options.reuse_plan &&
+	    !options.reuse_plan->groups.empty()) {
+	std::map<std::string, std::string> output_names;
+	std::map<std::string, size_t> result_indices;
+	std::set<std::string> completed_representatives;
+	for (size_t i = 0; i < results.size(); i++) {
+	    const RegionBoolevalResult &result = results[i];
+	    output_names[result.object_name] = result.bot_name;
+	    result_indices[result.object_name] = i;
+	    if (result.succeeded)
+		completed_representatives.insert(result.object_name);
+	}
+	std::vector<std::string> clone_failures;
+	size_t written_count = 0;
+	bool clone_write_unsafe = false;
+	int clone_result = facetize_region_reuse_write_clones(work_file,
+	    *options.reuse_plan, output_names, completed_representatives,
+	    clone_failures, &written_count, &clone_write_unsafe);
+	unsafe_write = clone_write_unsafe;
+
+	std::set<std::string> failed_names(clone_failures.begin(),
+	    clone_failures.end());
+	if (clone_result == BRLCAD_OK) {
+	    for (const FacetizeRegionReuseGroup &group :
+		    options.reuse_plan->groups) {
+		if (completed_representatives.find(group.representative) ==
+			completed_representatives.end())
+		    continue;
+		for (const FacetizeRegionReuseMember &member : group.members) {
+		    if (failed_names.find(member.name) != failed_names.end())
+			continue;
+		    auto result = result_indices.find(member.name);
+		    if (result != result_indices.end()) {
+			results[result->second].attempted = true;
+			results[result->second].succeeded = true;
+		    }
+		}
+	    }
+	}
+	if (clone_result == BRLCAD_OK && !unsafe_write && written_count)
+	    facetize_log(s, 0,
+		"FACETIZE: reused %zu completed %s%s by rigid transformation\n",
+		written_count, options.reuse_description,
+		(written_count == 1) ? "" : "s");
+	if (unsafe_write)
+	    facetize_log(s, 0,
+		"FACETIZE: failed while writing a reused region result; restoring the region-evaluation checkpoint\n");
+    }
+
     int restore_status = BRLCAD_OK;
     if (unsafe_write) {
-	if (facetize_file_copy(backup_file.c_str(), work_file) != BRLCAD_OK) {
+	bool checkpoint_ready = true;
+	if (options.snapshot_substitutions &&
+		!options.snapshot_substitutions->empty())
+	    checkpoint_ready = facetize_intermediate_reuse_restore(
+		backup_file.c_str(), s->dbip,
+		*options.snapshot_substitutions) ==
+		BRLCAD_OK;
+	if (!checkpoint_ready ||
+		facetize_file_copy(backup_file.c_str(), work_file) != BRLCAD_OK) {
 	    facetize_log(s, 0,
 		    "FACETIZE: unable to restore the region-evaluation checkpoint after an interrupted database write; checkpoint retained at %s\n",
 		    backup_file.c_str());
@@ -894,7 +1028,8 @@ _evaluate_regions_parallel(struct _ged_facetize_state *s,
 	    result.succeeded = false;
 	}
     }
-    if (restore_status == BRLCAD_OK)
+    if (restore_status == BRLCAD_OK &&
+	    (!options.retain_snapshot || unsafe_write))
 	(void)bu_file_delete(backup_file.c_str());
 
     double elapsed_seconds = (bu_gettime() - run_start) /
@@ -903,8 +1038,9 @@ _evaluate_regions_parallel(struct _ged_facetize_state *s,
     for (const RegionBoolevalResult &result : results)
 	succeeded += result.succeeded ? 1u : 0u;
     facetize_log(s, 0,
-	    "FACETIZE: isolated region evaluation complete: %zu of %zu roots committed (%.1f seconds)\n",
-	    succeeded, results.size(), elapsed_seconds);
+	    "FACETIZE: isolated evaluation complete: %zu of %zu %s committed (%.1f seconds)\n",
+	    succeeded, results.size(), options.object_description,
+	    elapsed_seconds);
     return restore_status;
 }
 
@@ -1542,6 +1678,47 @@ _ged_facetize_regions(struct _ged_facetize_state *s, const FacetizePlan &plan)
     if (s->verbosity == 0)
 	facetize_log(s, 0, "Evaluating %zu roots...\n", eval_total);
 
+    FacetizeRegionReusePlan region_reuse_plan;
+    const FacetizeRegionReusePlan *active_reuse_plan = nullptr;
+    std::vector<struct directory *> reuse_roots;
+    reuse_roots.reserve(eval_total);
+    for (size_t i = 0; i < eval_total; i++)
+	reuse_roots.push_back(reinterpret_cast<struct directory *>(
+	    BU_PTBL_GET(&eval_roots, i)));
+    if (!s->execution.uses_nmg_boolean() && eval_total > 1) {
+	if (facetize_region_reuse_plan(&region_reuse_plan, s->dbip,
+		reuse_roots, &wdbp->wdb_tol) == BRLCAD_OK &&
+		region_reuse_plan.reuse_count()) {
+	    active_reuse_plan = &region_reuse_plan;
+	    facetize_log(s, 0,
+		"FACETIZE: sharing %zu rigid-equivalent region Boolean evaluation%s across %zu representative%s\n",
+		region_reuse_plan.reuse_count(),
+		(region_reuse_plan.reuse_count() == 1) ? "" : "s",
+		eval_total - region_reuse_plan.reuse_count(),
+		(eval_total - region_reuse_plan.reuse_count() == 1) ? "" : "s");
+	}
+    }
+
+    FacetizeIntermediateReusePlan intermediate_reuse_plan;
+    if (!s->execution.uses_nmg_boolean() && eval_total) {
+	std::vector<struct directory *> intermediate_roots;
+	if (active_reuse_plan)
+	    active_reuse_plan->representatives(reuse_roots,
+		intermediate_roots);
+	else
+	    intermediate_roots = reuse_roots;
+	if (facetize_intermediate_reuse_plan(&intermediate_reuse_plan,
+		s->dbip, intermediate_roots, &wdbp->wdb_tol) == BRLCAD_OK &&
+		intermediate_reuse_plan.reuse_count()) {
+	    facetize_log(s, 0,
+		"FACETIZE: sharing at least %zu repeated intermediate CSG evaluation%s across %zu maximal subassembl%s\n",
+		intermediate_reuse_plan.reuse_count(),
+		(intermediate_reuse_plan.reuse_count() == 1) ? "" : "s",
+		intermediate_reuse_plan.groups.size(),
+		(intermediate_reuse_plan.groups.size() == 1) ? "y" : "ies");
+	}
+    }
+
     /* Region mode starts with the baseline BoT path and only enables/tessellates
      * variants if Pass 1 validation says a perturb retry is needed. */
     if (!s->execution.uses_nmg_boolean() && s->execution.uses_perturbation())
@@ -1567,9 +1744,79 @@ _ged_facetize_regions(struct _ged_facetize_state *s, const FacetizePlan &plan)
     // For evaluated roots, reduce each CSG tree to a single BoT/NMG result and
     // place that result back into the working hierarchy.
     struct bu_vls bname = BU_VLS_INIT_ZERO;
-    std::vector<RegionBoolevalResult> region_boolevals(eval_total);
+    std::vector<RegionBoolevalResult> intermediate_boolevals;
+    std::vector<std::string> intermediate_result_names;
+    std::map<std::string, std::string> intermediate_substitutions;
     int parallel_eval_status = BRLCAD_OK;
-    if (!s->execution.uses_nmg_boolean() && eval_total) {
+    if (!intermediate_reuse_plan.groups.empty()) {
+	FacetizeRegionReusePlan intermediate_clone_plan;
+	struct db_i *name_dbip = db_open(bu_vls_cstr(s->wfile),
+	    DB_OPEN_READONLY);
+	if (name_dbip && db_dirbuild(name_dbip) >= 0) {
+	    for (const FacetizeRegionReuseGroup &group :
+		    intermediate_reuse_plan.groups) {
+		intermediate_clone_plan.groups.push_back(group);
+		std::vector<std::string> names(1, group.representative);
+		for (const FacetizeRegionReuseMember &member : group.members)
+		    names.push_back(member.name);
+		for (const std::string &name : names) {
+		    RegionBoolevalResult result;
+		    result.object_name = name;
+		    bu_vls_sprintf(&bname, "%s.facetize_reuse.bot",
+			name.c_str());
+		    if (db_lookup(name_dbip, bu_vls_cstr(&bname),
+			    LOOKUP_QUIET) != RT_DIR_NULL)
+			bu_vls_incr(&bname, NULL, NULL, &_db_uniq_test,
+			    (void *)name_dbip);
+		    result.bot_name = bu_vls_cstr(&bname);
+		    intermediate_result_names.push_back(result.bot_name);
+		    intermediate_boolevals.push_back(result);
+		}
+	    }
+	}
+	if (name_dbip)
+	    db_close(name_dbip);
+	if (intermediate_boolevals.size() ==
+		intermediate_reuse_plan.substitution_count()) {
+	    RegionEvaluationOptions intermediate_options;
+	    intermediate_options.reuse_plan = &intermediate_clone_plan;
+	    intermediate_options.object_description =
+		"intermediate subassemblies";
+	    intermediate_options.reuse_description =
+		"intermediate CSG evaluation";
+	    intermediate_options.allow_single_worker = true;
+	    intermediate_options.retain_snapshot = true;
+	    parallel_eval_status = _evaluate_regions_parallel(s,
+		intermediate_boolevals, intermediate_options);
+	    if (parallel_eval_status == BRLCAD_OK) {
+		for (const RegionBoolevalResult &result : intermediate_boolevals) {
+		    if (result.succeeded)
+			intermediate_substitutions[result.object_name] =
+			    result.bot_name;
+		}
+		if (!intermediate_substitutions.empty())
+		    facetize_log(s, 0,
+			"FACETIZE: prepared %zu reusable intermediate CSG result%s for the worker snapshot\n",
+			intermediate_substitutions.size(),
+			(intermediate_substitutions.size() == 1) ? "" : "s");
+		std::string snapshot_file = std::string(bu_vls_cstr(s->wfile)) +
+		    ".region_eval.bak";
+		if (!intermediate_substitutions.empty() &&
+			bu_file_exists(snapshot_file.c_str(), nullptr) &&
+			facetize_intermediate_reuse_apply(snapshot_file.c_str(),
+			    intermediate_substitutions,
+			    bu_vls_cstr(s->wfile)) != BRLCAD_OK) {
+		    facetize_log(s, 0,
+			"FACETIZE: unable to add intermediate CSG results to the shared worker snapshot; deferring to direct evaluation\n");
+		    intermediate_substitutions.clear();
+		    (void)bu_file_delete(snapshot_file.c_str());
+		}
+	    }
+	}
+    }
+    std::vector<RegionBoolevalResult> region_boolevals(eval_total);
+    if (parallel_eval_status == BRLCAD_OK &&
+	    !s->execution.uses_nmg_boolean() && eval_total) {
 	struct db_i *name_dbip = db_open(bu_vls_cstr(s->wfile),
 		DB_OPEN_READONLY);
 	if (name_dbip && db_dirbuild(name_dbip) >= 0) {
@@ -1588,9 +1835,26 @@ _ged_facetize_regions(struct _ged_facetize_state *s, const FacetizePlan &plan)
 	if (name_dbip)
 	    db_close(name_dbip);
 	if (!region_boolevals.empty() &&
-		!region_boolevals[0].bot_name.empty())
+		!region_boolevals[0].bot_name.empty()) {
+	    RegionEvaluationOptions region_options;
+	    region_options.reuse_plan = active_reuse_plan;
+	    region_options.snapshot_substitutions =
+		intermediate_substitutions.empty() ? nullptr :
+		    &intermediate_substitutions;
+	    region_options.reuse_snapshot =
+		!intermediate_reuse_plan.groups.empty();
 	    parallel_eval_status =
-		_evaluate_regions_parallel(s, region_boolevals);
+		_evaluate_regions_parallel(s, region_boolevals, region_options);
+	}
+    }
+
+    if (parallel_eval_status == BRLCAD_OK) {
+	std::string retained_snapshot = std::string(bu_vls_cstr(s->wfile)) +
+	    ".region_eval.bak";
+	(void)bu_file_delete(retained_snapshot.c_str());
+	if (_remove_intermediate_results(s, intermediate_result_names) !=
+		BRLCAD_OK)
+	    parallel_eval_status = BRLCAD_ERROR;
     }
 
     auto cleanup_eval_error = [&]() {
@@ -1881,9 +2145,10 @@ _ged_facetize_regions(struct _ged_facetize_state *s, const FacetizePlan &plan)
 	    RT_TREE_INIT(tp);
 	    tree_list[0].tl_tree = tp;
 	    tp->tr_l.tl_op = OP_DB_LEAF;
-	    tp->tr_l.tl_name = bu_strdup(bu_vls_cstr(&bname));
-	    tp->tr_l.tl_mat = NULL;
-	    comb->tree = (union tree *)db_mkgift_tree(tree_list, 1);
+		    tp->tr_l.tl_name = bu_strdup(bu_vls_cstr(&bname));
+		    tp->tr_l.tl_mat = NULL;
+		    comb->tree = (union tree *)db_mkgift_tree(tree_list, 1);
+		    BU_PUT(tree_list, struct rt_tree_array);
 	    struct rt_wdb *wwdbp = wdb_dbopen(wdbip, RT_WDB_TYPE_DB_DEFAULT);
 	    if (wdb_put_internal(wwdbp, wdp->d_namep, &intern, 1.0) < 0) {
 		facetize_failure(s, "unable to update working combination '%s'", dpw[0]->d_namep);

@@ -454,6 +454,7 @@ static struct cmdtab mged_cmdtab[] = {
     {MGED_CMD_MAGIC, "translate", f_tr_obj, GED_FUNC_PTR_NULL, NULL},
     {MGED_CMD_MAGIC, "tree", cmd_ged_plain_wrapper, ged_exec_tree, NULL},
     {MGED_CMD_MAGIC, "unhide", cmd_ged_plain_wrapper, ged_exec_unhide, NULL},
+    {MGED_CMD_MAGIC, "unpush", cmd_ged_plain_wrapper, ged_exec_unpush, NULL},
     {MGED_CMD_MAGIC, "units", cmd_units, GED_FUNC_PTR_NULL, NULL},
     {MGED_CMD_MAGIC, "v2m_point", cmd_ged_plain_wrapper, ged_exec_v2m_point, NULL},
     {MGED_CMD_MAGIC, "vars", f_set, GED_FUNC_PTR_NULL, NULL},

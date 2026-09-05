@@ -14,6 +14,7 @@ set(
   plan.cpp
   process.cpp
   regions.cpp
+  reuse.cpp
   transfer.cpp
   tri.cpp
   util.cpp
@@ -37,6 +38,7 @@ cmakefiles(
   ged_facetize.h
   orchestrator.h
   process.h
+  reuse.h
   transfer.h
   validation.h
   worker.h

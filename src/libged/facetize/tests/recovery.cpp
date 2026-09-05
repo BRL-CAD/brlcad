@@ -94,9 +94,10 @@ create_input(const char *gfile)
 	{60.0, 0.0, 0.0}
     };
     const char *names[3] = {TEST_OBJECT, "two.s", "three.s"};
+    const fastf_t radii[3] = {10.0, 11.0, 12.0};
     int ret = BRLCAD_OK;
     for (size_t i = 0; i < 3; i++) {
-	if (mk_sph(wdbp, names[i], centers[i], 10.0) < 0) {
+	if (mk_sph(wdbp, names[i], centers[i], radii[i]) < 0) {
 	    ret = BRLCAD_ERROR;
 	    break;
 	}

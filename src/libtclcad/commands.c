@@ -789,6 +789,7 @@ static struct to_cmdtab ged_cmds[] = {
     {"track",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec_track},
     {"tree",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec_tree},
     {"unhide",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec_unhide},
+    {"unpush",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec_unpush},
     {"units",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec_units},
     {"v2m_point",	"x y z", 5, to_view_func, ged_exec_v2m_point},
     {"vdraw",	(char *)0, TO_UNLIMITED, to_pass_through_and_refresh_func, ged_exec_vdraw},

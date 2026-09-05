@@ -50,6 +50,7 @@
 #include "../ged_private.h"
 #include "./ged_facetize.h"
 #include "./process.h"
+#include "./reuse.h"
 #include "./tess_opts.h"
 #include "./worker.h"
 
@@ -855,13 +856,17 @@ tess_run(struct _ged_facetize_state *s, const char *process_executable,
 	const char *work_file, const FacetizePrimitiveSettings &settings,
 	fastf_t max_time, const std::vector<std::string> &object_names,
 	std::vector<std::string> *failed_names, enum tess_work_type work_type,
-	bool replay)
+	const FacetizeReusePlan *reuse_plan,
+	std::vector<std::string> *reuse_failures, bool replay)
 {
     if (!s || !process_executable || !work_file || object_names.empty() ||
 	    object_names.size() > (size_t)std::numeric_limits<int>::max() ||
-	    !failed_names || settings.methods.empty())
+	    !failed_names || settings.methods.empty() ||
+	    (reuse_plan && !reuse_failures))
 	return BRLCAD_ERROR;
     failed_names->clear();
+    if (reuse_failures && !replay)
+	reuse_failures->clear();
 
     const int object_count = (int)object_names.size();
     if (!s->write_profiled) {
@@ -1410,6 +1415,47 @@ tess_run(struct _ged_facetize_state *s, const char *process_executable,
 	if (!worker.result_file.empty())
 	    (void)bu_file_delete(worker.result_file.c_str());
     }
+
+    if (!unsafe_failure && reuse_plan) {
+	std::set<std::string> failed_set(failed_names->begin(),
+	    failed_names->end());
+	std::set<std::string> completed_representatives;
+	for (const std::string &object_name : object_names)
+	    if (failed_set.find(object_name) == failed_set.end())
+		completed_representatives.insert(object_name);
+
+	std::vector<std::string> clone_failures;
+	size_t clone_count = 0;
+	bool clone_write_unsafe = false;
+	int clone_result = facetize_reuse_write_clones(work_file, *reuse_plan,
+	    completed_representatives, clone_failures, &clone_count,
+	    &clone_write_unsafe);
+	if (reuse_failures)
+	    reuse_failures->insert(reuse_failures->end(),
+		clone_failures.begin(), clone_failures.end());
+	if (clone_result == BRLCAD_OK && !clone_write_unsafe && clone_count)
+	    facetize_log(s, 0,
+		"FACETIZE: reused %zu completed primitive tessellation%s by rigid transformation\n",
+		clone_count, (clone_count == 1) ? "" : "s");
+	if (clone_result != BRLCAD_OK) {
+	    if (clone_write_unsafe) {
+		unsafe_failure = true;
+		facetize_log(s, 0,
+		    "FACETIZE: failed while writing a reused tessellation; restoring the working database\n");
+	    } else {
+		/* No database update began, so direct tessellation is sufficient
+		 * recovery for every member whose representative completed. */
+		for (const FacetizeReuseGroup &group : reuse_plan->groups) {
+		    if (completed_representatives.find(group.representative) ==
+			    completed_representatives.end())
+			continue;
+		    for (const FacetizeReuseMember &member : group.members)
+			reuse_failures->push_back(member.name);
+		}
+	    }
+	}
+    }
+
     if (!unsafe_failure) {
 	if (abnormal_workers)
 	    facetize_log(s, 0,
@@ -1462,7 +1508,8 @@ tess_run(struct _ged_facetize_state *s, const char *process_executable,
     if (!retry_names.empty()) {
 	std::vector<std::string> retry_failures;
 	(void)tess_run(s, process_executable, work_file, settings, max_time,
-		retry_names, &retry_failures, work_type, true);
+		retry_names, &retry_failures, work_type, reuse_plan,
+		reuse_failures, true);
 	failed_names->insert(failed_names->end(), retry_failures.begin(),
 		retry_failures.end());
     }
@@ -1511,7 +1558,7 @@ _ged_facetize_tessellate_variant_names(struct _ged_facetize_state *s,
     std::vector<std::string> failures;
     int run_ret = tess_run(s, tess_exec, bu_vls_cstr(s->wfile), settings,
 	    l_max_time, plan->variant_names, &failures,
-	    TESS_WORK_PERTURBATION_VARIANT, false);
+	    TESS_WORK_PERTURBATION_VARIANT, nullptr, nullptr, false);
     int fail_cnt = (int)failures.size();
     if (run_ret != BRLCAD_OK)
 	facetize_log(s, 0,
@@ -1541,13 +1588,88 @@ tess_run_inputs(struct _ged_facetize_state *s,
 
     std::vector<std::string> failed_names;
     (void)tess_run(s, process_executable, work_file, settings, max_time,
-	    object_names, &failed_names, work_type, false);
+	    object_names, &failed_names, work_type, nullptr, nullptr, false);
     std::set<std::string> failed_set(failed_names.begin(),
 	    failed_names.end());
     for (size_t i = 0; i < inputs.size(); i++) {
 	if (failed_set.find(inputs[i]->d_namep) != failed_set.end())
 	    bad_dps.push_back(inputs[i]);
     }
+    return (int)bad_dps.size();
+}
+
+
+static int
+tess_run_reused_inputs(struct _ged_facetize_state *s,
+	std::vector<struct directory *> &bad_dps,
+	const std::vector<struct directory *> &inputs,
+	const char *process_executable, const char *work_file,
+	const FacetizePrimitiveSettings &settings, fastf_t max_time,
+	enum tess_work_type work_type)
+{
+    const struct bn_tol tol = BN_TOL_INIT_TOL;
+    FacetizeReusePlan reuse_plan;
+    if (facetize_reuse_plan(&reuse_plan, s->dbip, inputs, &tol) !=
+	    BRLCAD_OK || !reuse_plan.reuse_count())
+	return tess_run_inputs(s, bad_dps, inputs, process_executable,
+	    work_file, settings, max_time, work_type);
+
+    std::vector<struct directory *> representatives;
+    reuse_plan.representatives(inputs, representatives);
+    facetize_log(s, 0,
+	"FACETIZE: sharing %zu rigid-equivalent primitive tessellation%s across %zu representative%s\n",
+	reuse_plan.reuse_count(),
+	(reuse_plan.reuse_count() == 1) ? "" : "s",
+	representatives.size(), (representatives.size() == 1) ? "" : "s");
+
+    std::vector<std::string> representative_names;
+    representative_names.reserve(representatives.size());
+    for (struct directory *dp : representatives)
+	representative_names.push_back(dp->d_namep);
+    std::vector<std::string> representative_failures;
+    std::vector<std::string> reuse_failures;
+    (void)tess_run(s, process_executable, work_file, settings, max_time,
+	representative_names, &representative_failures, work_type, &reuse_plan,
+	&reuse_failures, false);
+
+    std::map<std::string, struct directory *> input_by_name;
+    for (struct directory *dp : inputs)
+	input_by_name[dp->d_namep] = dp;
+    std::set<std::string> representative_failure_set(
+	representative_failures.begin(), representative_failures.end());
+    std::set<std::string> fallback_names(reuse_failures.begin(),
+	reuse_failures.end());
+    for (const FacetizeReuseGroup &group : reuse_plan.groups) {
+	if (representative_failure_set.find(group.representative) ==
+		representative_failure_set.end())
+	    continue;
+	for (const FacetizeReuseMember &member : group.members)
+	    fallback_names.insert(member.name);
+    }
+
+    std::vector<struct directory *> fallback_inputs;
+    for (const std::string &name : fallback_names) {
+	auto input_it = input_by_name.find(name);
+	if (input_it != input_by_name.end())
+	    fallback_inputs.push_back(input_it->second);
+    }
+    std::vector<struct directory *> fallback_failures;
+    if (!fallback_inputs.empty()) {
+	facetize_log(s, 0,
+	    "FACETIZE: directly tessellating %zu reuse fallback%s\n",
+	    fallback_inputs.size(), (fallback_inputs.size() == 1) ? "" : "s");
+	(void)tess_run_inputs(s, fallback_failures, fallback_inputs,
+	    process_executable, work_file, settings, max_time, work_type);
+    }
+
+    std::set<std::string> failed_names(representative_failures.begin(),
+	representative_failures.end());
+    for (struct directory *dp : fallback_failures)
+	failed_names.insert(dp->d_namep);
+    bad_dps.clear();
+    for (struct directory *dp : inputs)
+	if (failed_names.find(dp->d_namep) != failed_names.end())
+	    bad_dps.push_back(dp);
     return (int)bad_dps.size();
 }
 
@@ -1697,7 +1819,7 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, struct db_i *dbip, struc
 	settings.cache_directory = lcache;
 	settings.point_limit = s->max_pnts;
 
-	int error_count = tess_run_inputs(s, bad_dps, dps, tess_exec,
+	int error_count = tess_run_reused_inputs(s, bad_dps, dps, tess_exec,
 		bu_vls_cstr(s->wfile), settings, mo->max_time[method],
 		TESS_WORK_ORIGINAL_PRIMITIVE);
 	if (!error_count) {
