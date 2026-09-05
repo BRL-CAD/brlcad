@@ -30,11 +30,10 @@
 #include <errno.h>
 #if defined(HAVE_PTHREAD_H) && defined(HAVE_SIGNAL_H)
 #  include <pthread.h>
-#  include <signal.h>
-#  include <time.h>
 #endif
 #include <string.h>
 
+#include "bu/interrupt.h"
 #include "bu/log.h"
 #include "./worker.h"
 
@@ -88,9 +87,10 @@ class FacetizePipeWriteGuard
 		sigpending(&pending_signals) == 0 &&
 		sigismember(&pending_signals, SIGPIPE) == 1;
 	    if (have_new_sigpipe) {
-		struct timespec timeout = {0, 0};
-		while (sigtimedwait(&blocked_signals, NULL, &timeout) < 0 &&
-			errno == EINTR)
+		/* The write's SIGPIPE is blocked and already pending on this
+		 * thread, so sigwait can consume it without waiting. */
+		int signal_number = 0;
+		while (sigwait(&blocked_signals, &signal_number) == EINTR)
 		    ;
 	    }
 	    (void)pthread_sigmask(SIG_SETMASK, &original_mask, NULL);

@@ -61,6 +61,7 @@ facetize_state_create()
     s->perturb_sa_tol = 10.0;
     s->perturb_vol_tol = 10.0;
     s->wdir = NULL;
+    s->cleanup_workspace = false;
 
     BU_GET(s->log_file, struct bu_vls);
     bu_vls_init(s->log_file);
@@ -114,10 +115,13 @@ facetize_state_destroy(struct _ged_facetize_state *s)
     if (!s)
 	return;
 
-    if (s->wdir)
-	bu_free(s->wdir, "wdir");
     if (s->lfile)
 	fclose(s->lfile);
+    /* Windows cannot delete the workspace while its log is still open. */
+    if (s->cleanup_workspace)
+	bu_dirclear(s->wdir);
+    if (s->wdir)
+	bu_free(s->wdir, "wdir");
 
     struct bu_vls *strings[] = {
 	s->bname, s->log_file, s->failure_msg, s->tolerated_failure_log,

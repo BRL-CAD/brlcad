@@ -66,6 +66,7 @@ struct _ged_facetize_state {
     fastf_t perturb_vol_tol;
 
     char *wdir;
+    bool cleanup_workspace;
     struct bu_vls *wfile;
     struct bu_vls *bname;
     struct bu_vls *log_file;

@@ -217,9 +217,29 @@ reset_cache(const std::filesystem::path &cache_dir)
 {
     std::error_code error;
     std::filesystem::remove_all(cache_dir, error);
-    if (error)
+    if (error) {
+	bu_log("[facetize_recovery] unable to remove %s: %s\n",
+		cache_dir.string().c_str(), error.message().c_str());
 	return false;
-    return std::filesystem::create_directories(cache_dir, error) && !error;
+    }
+    std::filesystem::create_directories(cache_dir, error);
+    if (error) {
+	bu_log("[facetize_recovery] unable to create %s: %s\n",
+		cache_dir.string().c_str(), error.message().c_str());
+	return false;
+    }
+    return true;
+}
+
+static bool
+cache_is_empty(const std::filesystem::path &cache_dir)
+{
+    std::error_code error;
+    bool empty = std::filesystem::is_empty(cache_dir, error);
+    if (error)
+	bu_log("[facetize_recovery] unable to inspect %s: %s\n",
+		cache_dir.string().c_str(), error.message().c_str());
+    return empty && !error;
 }
 
 static int
@@ -258,6 +278,11 @@ run_recovery_case(const recovery_case &test_case,
 	passed = false;
     }
     if (test_case.expect_success) {
+	if (!cache_is_empty(cache_dir)) {
+	    bu_log("[facetize_recovery] %s: workspace was not cleaned\n",
+		    test_case.name);
+	    passed = false;
+	}
 	if (!outputs_match(control_file, gfile.string().c_str())) {
 	    bu_log("[facetize_recovery] %s: result differs from serial control\n",
 		    test_case.name);
@@ -332,6 +357,10 @@ main(int argc, const char **argv)
     };
 
     int ret = 0;
+    if (!cache_is_empty(cache_dir)) {
+	bu_log("[facetize_recovery] serial control workspace was not cleaned\n");
+	ret = 1;
+    }
     for (const recovery_case &test_case : cases) {
 	if (!reset_cache(cache_dir)) {
 	    bu_log("[facetize_recovery] %s: unable to reset cache directory\n",

@@ -213,7 +213,7 @@ _ged_facetize_objs(struct _ged_facetize_state *s, const FacetizePlan &plan)
 	if (ret == BRLCAD_OK)
 	    ret = facetize_commit_nmg_outputs(s, successful_outputs);
 	if (ret == BRLCAD_OK)
-	    bu_dirclear(s->wdir);
+	    s->cleanup_workspace = true;
 	goto booleval_cleanup;
     }
 
@@ -240,8 +240,7 @@ _ged_facetize_objs(struct _ged_facetize_state *s, const FacetizePlan &plan)
     // Report on the primitive processing
     facetize_collect_primitive_summary(s);
 
-    // After collecting info for summary, we can now clean up working files
-    bu_dirclear(s->wdir);
+    s->cleanup_workspace = true;
 
 booleval_cleanup:
     bu_free(dpa, "facetize input directory array");

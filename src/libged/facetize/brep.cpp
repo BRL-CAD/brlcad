@@ -252,8 +252,7 @@ _nonovlp_brep_facetize(struct _ged_facetize_state *s, const FacetizePlan &plan)
     bu_free(av, "av");
     bu_vls_free(&kwfile);
 
-    /* Clean up */
-    bu_dirclear(s->wdir);
+    s->cleanup_workspace = true;
 
     return (concat_ret == BRLCAD_OK) ? BRLCAD_OK : BRLCAD_ERROR;
 }

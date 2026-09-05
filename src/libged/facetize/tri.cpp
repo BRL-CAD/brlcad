@@ -1651,7 +1651,7 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, struct db_i *dbip, struc
     std::vector<std::string> avail_methods = tess_avail_methods();
     if (avail_methods.size() == 0) {
 	bu_log("No methods for tessellation found.\n");
-	bu_dirclear(s->wdir);
+	s->cleanup_workspace = true;
 	return BRLCAD_ERROR;
     }
 
@@ -1668,7 +1668,7 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, struct db_i *dbip, struc
 
     if (mo->methods.size() && !method_flags.size()) {
 	bu_log("Error: all user requested tessellation methods unsupported.\n");
-	bu_dirclear(s->wdir);
+	s->cleanup_workspace = true;
 	return BRLCAD_ERROR;
     }
 
@@ -2086,7 +2086,7 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
     struct db_i *wdbip = db_open(bu_vls_cstr(s->wfile), (output_to_working) ? DB_OPEN_READWRITE :  DB_OPEN_READONLY);
     if (!wdbip) {
 	facetize_log(s, 0, "FACETIZE: unable to open working database %s for boolean evaluation\n", bu_vls_cstr(s->wfile));
-	bu_dirclear(s->wdir);
+	s->cleanup_workspace = true;
 	bu_ptbl_free(&leaf_dps);
 	return BRLCAD_ERROR;
     }
@@ -2128,7 +2128,7 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
     db_close(wdbip);
 
     if (cleanup)
-	bu_dirclear(s->wdir);
+	s->cleanup_workspace = true;
 
     bu_ptbl_free(&leaf_dps);
 

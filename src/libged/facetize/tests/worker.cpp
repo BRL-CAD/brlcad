@@ -44,7 +44,14 @@
 #include <string>
 #include <vector>
 
+#include <errno.h>
+#if defined(HAVE_PTHREAD_H) && defined(HAVE_SIGNAL_H) && defined(HAVE_UNISTD_H)
+#  include <pthread.h>
+#  include <unistd.h>
+#endif
+
 #include "bu/app.h"
+#include "bu/interrupt.h"
 #include "../worker.h"
 
 
@@ -431,6 +438,83 @@ test_write_handshake()
 
 
 static void
+test_broken_pipe(bool pending_sigpipe)
+{
+#if defined(HAVE_PTHREAD_H) && defined(HAVE_SIGNAL_H) && defined(HAVE_UNISTD_H) && defined(SIGPIPE)
+    int descriptors[2];
+    int ret = pipe(descriptors);
+    expect(ret == 0, "create pipe for worker write failure");
+    if (ret != 0)
+	return;
+    close(descriptors[0]);
+    FILE *stream = fdopen(descriptors[1], "w");
+    expect(stream != NULL, "open worker pipe stream");
+    if (!stream) {
+	close(descriptors[1]);
+	return;
+    }
+    if (setvbuf(stream, NULL, _IONBF, 0) != 0) {
+	expect(false, "disable buffering for worker pipe");
+	fclose(stream);
+	return;
+    }
+
+    sigset_t sigpipe_set, original_mask;
+    sigemptyset(&sigpipe_set);
+    sigaddset(&sigpipe_set, SIGPIPE);
+    ret = pthread_sigmask(pending_sigpipe ? SIG_BLOCK : SIG_UNBLOCK,
+	    &sigpipe_set, &original_mask);
+    expect(ret == 0, "set initial SIGPIPE mask");
+    if (ret != 0) {
+	fclose(stream);
+	return;
+    }
+
+    struct sigaction action = {}, original_action;
+    sigemptyset(&action.sa_mask);
+    action.sa_handler = SIG_DFL;
+    ret = sigaction(SIGPIPE, &action, &original_action);
+    expect(ret == 0, "use default SIGPIPE disposition");
+    if (ret != 0) {
+	pthread_sigmask(SIG_SETMASK, &original_mask, NULL);
+	fclose(stream);
+	return;
+    }
+    if (pending_sigpipe)
+	expect(raise(SIGPIPE) == 0, "queue a pre-existing SIGPIPE");
+
+    FacetizeWorkerClient client;
+    client.reset(stream);
+    errno = 0;
+    expect(!client.send_write_proceed(), "worker write detects a closed pipe");
+    expect(errno == EPIPE, "worker write preserves the broken-pipe error");
+
+    sigset_t current_mask, pending_signals;
+    expect(pthread_sigmask(SIG_BLOCK, NULL, &current_mask) == 0 &&
+	    sigismember(&current_mask, SIGPIPE) == (pending_sigpipe ? 1 : 0),
+	"worker write restores the SIGPIPE mask");
+    ret = sigpending(&pending_signals);
+    expect(ret == 0 &&
+	    sigismember(&pending_signals, SIGPIPE) == (pending_sigpipe ? 1 : 0),
+	"worker write consumes only a newly generated SIGPIPE");
+
+    if (ret == 0 && sigismember(&pending_signals, SIGPIPE) == 1) {
+	int signal_number = 0;
+	expect(sigwait(&sigpipe_set, &signal_number) == 0,
+		"consume test SIGPIPE before restoring its mask");
+    }
+    expect(sigaction(SIGPIPE, &original_action, NULL) == 0,
+	    "restore original SIGPIPE disposition");
+    expect(pthread_sigmask(SIG_SETMASK, &original_mask, NULL) == 0,
+	    "restore original signal mask");
+    fclose(stream);
+#else
+    (void)pending_sigpipe;
+#endif
+}
+
+
+static void
 test_csg_result()
 {
     FILE *responses = tmpfile();
@@ -582,6 +666,8 @@ main(int UNUSED(argc), const char **argv)
     test_malformed_requests();
     test_commit_round_trip();
     test_write_handshake();
+    test_broken_pipe(false);
+    test_broken_pipe(true);
     test_csg_result();
     test_client_diagnostics_and_reset();
     test_worker_policy();

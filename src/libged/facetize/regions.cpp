@@ -2052,7 +2052,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, const FacetizePlan &plan)
 	bu_ptbl_free(ar);
 	bu_free(ar, "ar table");
 	bu_free(dpa, "free dpa");
-	bu_dirclear(s->wdir);
+	s->cleanup_workspace = true;
 	return BRLCAD_OK;
     }
 
@@ -2181,7 +2181,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, const FacetizePlan &plan)
     bu_ptbl_free(ar);
     bu_free(ar, "ar table");
     bu_free(dpa, "free dpa");
-    bu_dirclear(s->wdir);
+    s->cleanup_workspace = true;
     return ret;
 }
 
