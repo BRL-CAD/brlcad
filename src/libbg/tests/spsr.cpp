@@ -24,6 +24,7 @@
 #include <vector>
 
 #include "vmath.h"
+#include "bu/app.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bg/spsr.h"
@@ -87,8 +88,10 @@ accept_candidate(struct bg_3d_spsr_refinement_response *response,
 }
 
 int
-main(void)
+main(int UNUSED(argc), const char **argv)
 {
+    bu_setprogname(argv[0]);
+
     std::vector<struct bg_3d_spsr_sample> samples = sphere_samples(256);
     struct bg_3d_spsr_adaptive_opts options =
         BG_3D_SPSR_ADAPTIVE_OPTS_DEFAULT;
