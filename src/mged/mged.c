@@ -2540,6 +2540,7 @@ main(int argc, char *argv[])
     s->dpy_string = NULL;
     s->cmd_running = 0;
     s->log_drain_timer = NULL;
+    s->gui_thread_id = NULL;
     s->shutdown_state = MGED_SHUTDOWN_RUNNING;
     s->shutdown_exitcode = 0;
     s->stdin_chan = NULL;

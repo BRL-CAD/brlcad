@@ -547,13 +547,21 @@ mged_output_handler(struct ged *UNUSED(gp), char *line)
 }
 
 static void
-mged_refresh_handler(void *clientdata)
+mged_refresh_handler_impl(void *clientdata)
 {
     struct mged_state *s = (struct mged_state *)clientdata;
     MGED_CK_STATE(s);
 
     view_state->vs_flag = 1;
     refresh(s);
+}
+
+static void
+mged_refresh_handler(void *clientdata)
+{
+    struct mged_state *s = (struct mged_state *)clientdata;
+    MGED_CK_STATE(s);
+    mged_run_on_gui_thread(s, mged_refresh_handler_impl, clientdata);
 }
 
 /*
@@ -588,7 +596,7 @@ mged_setup(struct mged_state *s)
 
     /* Create the interpreter */
     s->interp = Tcl_CreateInterp();
-    s->interp = s->interp;
+    s->gui_thread_id = Tcl_GetCurrentThread();
 
     /* Do basic Tcl initialization - note that Tk
      * is not initialized at this point. */

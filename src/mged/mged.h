@@ -122,6 +122,7 @@ struct mged_tol {
 
 
 typedef int (*tcl_func_ptr)(ClientData, Tcl_Interp *, int, const char *[]);
+typedef void (*mged_gui_callback_t)(void *);
 
 struct cmdtab {
     uint32_t magic;
@@ -256,9 +257,11 @@ struct mged_state {
      * cmd_running is set to 1 while ged_exec runs in a worker thread so
      * that re-entrant command dispatch (e.g. from stdin_input) is blocked.
      * log_drain_timer is the recurring Tcl timer token used to flush
-     * accumulated bu_log output to the Tcl command prompt. */
+     * accumulated bu_log output to the Tcl command prompt.  gui_thread_id
+     * identifies the Tcl thread that owns Tk and the display contexts. */
     int cmd_running;
     Tcl_TimerToken log_drain_timer;
+    Tcl_ThreadId gui_thread_id;
 
     /* Staged shutdown state.  Tcl callbacks request shutdown and return; the
      * outer MGED event loop performs final teardown after Tcl has unwound. */
@@ -499,6 +502,8 @@ void mged_start_log_drain_timer(struct mged_state *s);
 void mged_stop_log_drain_timer(struct mged_state *s);
 void mged_output_cleanup(void);
 int mged_ged_exec_async(struct mged_state *s, int argc, const char *argv[]);
+void mged_run_on_gui_thread(struct mged_state *s, mged_gui_callback_t callback,
+	void *data);
 
 /* columns.c */
 void vls_col_item(struct bu_vls *str, const char *cp);

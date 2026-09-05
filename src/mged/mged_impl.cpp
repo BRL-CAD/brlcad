@@ -66,6 +66,7 @@ mged_state_create(void)
     bu_vls_init(&s->scratchline);
     bu_vls_init(&s->mged_prompt);
     s->dpy_string = NULL;
+    s->gui_thread_id = NULL;
 
     // Register default callbacks
     mged_state_clbk_set(s, 0, ECMD_PRINT_STR, BU_CLBK_DURING, mged_print_str, s);

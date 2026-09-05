@@ -240,42 +240,55 @@ createDLists(void *data, struct bu_list *hdlp)
  * 3 - has not already been created (i.e. sharing with a
  * display manager that has already created the display list)
  */
+struct create_dlist_solid_data {
+    struct mged_state *s;
+    struct bv_scene_obj *sp;
+};
+
+static void
+create_dlist_solid(void *data)
+{
+    struct create_dlist_solid_data *d =
+	(struct create_dlist_solid_data *)data;
+    struct mged_state *s = d->s;
+    struct bv_scene_obj *sp = d->sp;
+    MGED_CK_STATE(s);
+
+    for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
+	struct mged_dm *dlp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
+	struct dm *dmp = dlp->dm_dmp;
+	if (dlp->dm_mapped &&
+		dm_get_displaylist(dmp) &&
+		dlp->dm_mged_variables->mv_dlist) {
+	    (void)dm_make_current(dmp);
+	    if (sp->s_dlist == 0)
+		sp->s_dlist = dm_gen_dlists(dmp, 1);
+
+	    dm_set_dirty(dmp, 1);
+	    (void)dm_begin_dlist(dmp, sp->s_dlist);
+	    if (sp->s_iflag == UP)
+		(void)dm_set_fg(dmp, 255, 255, 255, 0, sp->s_os->transparency);
+	    else
+		(void)dm_set_fg(dmp,
+			(unsigned char)sp->s_color[0],
+			(unsigned char)sp->s_color[1],
+			(unsigned char)sp->s_color[2], 0, sp->s_os->transparency);
+	    (void)dm_draw_vlist(dmp, (struct bv_vlist *)&sp->s_vlist);
+	    (void)dm_end_dlist(dmp);
+	}
+
+	dlp->dm_dirty = 1;
+	dm_set_dirty(dmp, 1);
+    }
+}
+
 void
 createDListSolid(void *vlist_ctx, struct bv_scene_obj *sp)
 {
     struct mged_state *s = (struct mged_state *)vlist_ctx;
+    struct create_dlist_solid_data data = {s, sp};
     MGED_CK_STATE(s);
-    struct mged_dm *save_dlp;
-
-    save_dlp = s->mged_curr_dm;
-
-    for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
-	struct mged_dm *dlp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
-	if (dlp->dm_mapped &&
-		dm_get_displaylist(dlp->dm_dmp) &&
-		dlp->dm_mged_variables->mv_dlist) {
-	    if (sp->s_dlist == 0)
-		sp->s_dlist = dm_gen_dlists(DMP, 1);
-
-	    dm_set_dirty(DMP, 1);
-	    (void)dm_make_current(DMP);
-	    (void)dm_begin_dlist(DMP, sp->s_dlist);
-	    if (sp->s_iflag == UP)
-		(void)dm_set_fg(DMP, 255, 255, 255, 0, sp->s_os->transparency);
-	    else
-		(void)dm_set_fg(DMP,
-			(unsigned char)sp->s_color[0],
-			(unsigned char)sp->s_color[1],
-			(unsigned char)sp->s_color[2], 0, sp->s_os->transparency);
-	    (void)dm_draw_vlist(DMP, (struct bv_vlist *)&sp->s_vlist);
-	    (void)dm_end_dlist(DMP);
-	}
-
-	dlp->dm_dirty = 1;
-	dm_set_dirty(DMP, 1);
-    }
-
-    set_curr_dm(s, save_dlp);
+    mged_run_on_gui_thread(s, create_dlist_solid, &data);
 }
 
 /*
@@ -286,15 +299,31 @@ createDListSolid(void *vlist_ctx, struct bv_scene_obj *sp)
  * 3 - has not already been created (i.e. sharing with a
  * display manager that has already created the display list)
  */
+struct create_dlist_all_data {
+    struct mged_state *s;
+    struct display_list *gdlp;
+};
+
+static void
+create_dlist_all(void *data)
+{
+    struct create_dlist_all_data *d = (struct create_dlist_all_data *)data;
+    struct mged_state *s = d->s;
+    MGED_CK_STATE(s);
+    struct bv_scene_obj *sp;
+    for (BU_LIST_FOR(sp, bv_scene_obj, &d->gdlp->dl_head_scene_obj)) {
+	struct create_dlist_solid_data solid_data = {s, sp};
+	create_dlist_solid(&solid_data);
+    }
+}
+
 void
 createDListAll(void *vlist_ctx, struct display_list *gdlp)
 {
     struct mged_state *s = (struct mged_state *)vlist_ctx;
+    struct create_dlist_all_data data = {s, gdlp};
     MGED_CK_STATE(s);
-    struct bv_scene_obj *sp;
-    for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
-	createDListSolid(s, sp);
-    }
+    mged_run_on_gui_thread(s, create_dlist_all, &data);
 }
 
 
@@ -302,22 +331,39 @@ createDListAll(void *vlist_ctx, struct display_list *gdlp)
  * Free the range of display lists for all display managers
  * that support display lists and have them activated.
  */
+struct free_dlists_data {
+    struct mged_state *s;
+    unsigned int dlist;
+    int range;
+};
+
+static void
+free_dlists(void *data)
+{
+    struct free_dlists_data *d = (struct free_dlists_data *)data;
+    struct mged_state *s = d->s;
+    MGED_CK_STATE(s);
+    for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
+	struct mged_dm *dlp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
+	struct dm *dmp = dlp->dm_dmp;
+	if (dm_get_displaylist(dmp) &&
+	    dlp->dm_mged_variables->mv_dlist) {
+	    (void)dm_make_current(dmp);
+	    (void)dm_free_dlists(dmp, d->dlist, d->range);
+	}
+
+	dlp->dm_dirty = 1;
+	dm_set_dirty(dmp, 1);
+    }
+}
+
 void
 freeDListsAll(void *data, unsigned int dlist, int range)
 {
     struct mged_state *s = (struct mged_state *)data;
+    struct free_dlists_data free_data = {s, dlist, range};
     MGED_CK_STATE(s);
-    for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
-	struct mged_dm *dlp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
-	if (dm_get_displaylist(dlp->dm_dmp) &&
-	    dlp->dm_mged_variables->mv_dlist) {
-	    (void)dm_make_current(DMP);
-	    (void)dm_free_dlists(dlp->dm_dmp, dlist, range);
-	}
-
-	dlp->dm_dirty = 1;
-	dm_set_dirty(DMP, 1);
-    }
+    mged_run_on_gui_thread(s, free_dlists, &free_data);
 }
 
 

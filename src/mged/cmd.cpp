@@ -27,7 +27,9 @@
 
 /* Includes for C++17 threading support (used for async ged_exec) */
 #include <atomic>
+#include <condition_variable>
 #include <functional>
+#include <mutex>
 #include <thread>
 
 #include "./mged.h"
@@ -109,9 +111,28 @@ static int MGED_SEM_LOG = -1;
 /* Wake event the worker posts to break the main thread out of Tcl_DoOneEvent.
  * It carries no payload pointing into the run_ged_async frame,
  * so it is safe to service even if a later Tcl_DoOneEvent runs it after the
- * loop has already exited via 'done'. anonymous namespace is not technically
- * required right now, but safely avoids potential collision in the future. */
-namespace { struct WakeEvent { Tcl_Event event; }; }
+ * loop has already exited via 'done'.  The anonymous namespace also avoids
+ * potential future name collisions. */
+namespace {
+
+struct WakeEvent {
+    Tcl_Event event;
+};
+
+struct GuiThreadRequest {
+    mged_gui_callback_t callback = nullptr;
+    void *data = nullptr;
+    std::mutex mutex;
+    std::condition_variable completed;
+    bool done = false;
+};
+
+struct GuiThreadEvent {
+    Tcl_Event event;
+    GuiThreadRequest *request;
+};
+
+}
 
 /* No-op wake proc */
 static int
@@ -121,6 +142,55 @@ wake_proc(Tcl_Event* UNUSED(evPtr), int UNUSED(mask))
      * returning 0 would restore the proc and requeue it forever.  Do NOT free the
      * event here -- Tcl owns it. */
     return 1;
+}
+
+/* Execute a display-affine callback queued by a GED worker.  Tcl services
+ * this event on the thread that owns the GUI and its graphics contexts. */
+static int
+gui_thread_proc(Tcl_Event *event_ptr, int UNUSED(mask))
+{
+    GuiThreadEvent *event = reinterpret_cast<GuiThreadEvent *>(event_ptr);
+    GuiThreadRequest *request = event->request;
+
+    request->callback(request->data);
+
+    /* Keep the request lock through notification.  The waiting worker cannot
+     * destroy its stack-based request until this event has stopped using it. */
+    std::lock_guard<std::mutex> lock(request->mutex);
+    request->done = true;
+    request->completed.notify_one();
+    return 1;
+}
+
+extern "C" void
+mged_run_on_gui_thread(struct mged_state *s, mged_gui_callback_t callback,
+	void *data)
+{
+    if (!s || !callback)
+	return;
+
+    /* Classic and non-interactive sessions do not have a GUI thread. */
+    if (!s->interactive || s->classic_mged || !s->gui_thread_id ||
+	Tcl_GetCurrentThread() == s->gui_thread_id) {
+	callback(data);
+	return;
+    }
+
+    GuiThreadRequest request;
+    request.callback = callback;
+    request.data = data;
+
+    GuiThreadEvent *event = reinterpret_cast<GuiThreadEvent *>(
+	ckalloc(sizeof(GuiThreadEvent)));
+    event->event.proc = gui_thread_proc;
+    event->request = &request;
+
+    Tcl_ThreadQueueEvent(s->gui_thread_id, reinterpret_cast<Tcl_Event *>(event),
+	TCL_QUEUE_TAIL);
+    Tcl_ThreadAlert(s->gui_thread_id);
+
+    std::unique_lock<std::mutex> lock(request.mutex);
+    request.completed.wait(lock, [&request]() { return request.done; });
 }
 
 /* Internal C++ async helper.
@@ -177,7 +247,9 @@ run_ged_async(struct mged_state *s, std::function<int()> func)
      * (Tcl services the event queue before it ever blocks, so there is no
      * lost-wakeup race); log_drain_callback timer is the liveness backstop and
      * continues to stream intermediate bu_log output to the command prompt */
-    while (!done.load(std::memory_order_acquire) && !mged_shutting_down(s)) {
+    /* A worker may be waiting for a GUI-thread callback.  A staged shutdown
+     * must therefore keep servicing events until the worker has completed. */
+    while (!done.load(std::memory_order_acquire)) {
 	Tcl_DoOneEvent(TCL_ALL_EVENTS);
 	mged_pr_output(s->interp);
     }
