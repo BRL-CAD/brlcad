@@ -653,8 +653,9 @@ public:
 	result_.statistics.entities_read = document.entities().size();
 	const double source_resolution = global_real(document.global(),
 	    GLOBAL_MINIMUM_RESOLUTION, 0.0) * unit_to_mm_;
-	source_resolution_declared_ = source_resolution > 0.0;
-	tolerance_ = source_resolution > 0.0 ? source_resolution :
+	source_resolution_declared_ = std::isfinite(source_resolution) &&
+	    source_resolution > 0.0;
+	tolerance_ = source_resolution_declared_ ? source_resolution :
 	    DEFAULT_TOPOLOGY_TOLERANCE_MM;
     }
 
@@ -2327,6 +2328,7 @@ TrimmedSurfaceBuilder::bounded_curve_pairs(SolidBuilder &geometry,
     }
     return !pairs.empty();
 }
+
 bool
 TrimmedSurfaceBuilder::add_loop(ON_BrepFace &face, ON_BrepLoop::TYPE type,
     std::vector<CurvePair> &pairs, const DirectoryEntry &source)

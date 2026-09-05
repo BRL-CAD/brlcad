@@ -681,12 +681,12 @@ main(int, const char **argv)
 	std::cerr << "narrow singular-domain guard failed" << std::endl,
 	valid.store(false);
 
-
     /* A pole endpoint has no unique parameter in the varying direction; use
      * its adjacent sample to keep the recovered trim on the intended branch. */
     if (!exercise_singular_endpoint_pullback())
 	std::cerr << "singular endpoint pullback failed" << std::endl,
 	valid.store(false);
+
     /* NURBS sub-span bounds must remain conservative while avoiding a copy of
      * the complete surface for each prepared span. */
     if (!exercise_nurbs_span_bounding_boxes())

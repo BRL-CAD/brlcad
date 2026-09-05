@@ -313,7 +313,6 @@ test_semantic_annotations()
 	"dimension semantic attribute is missing") && passed;
     bu_avs_free(&attributes);
 
-
     bu_avs_init_empty(&attributes);
     group = db_lookup(wdbp->dbip, "wire.annot_def", LOOKUP_QUIET);
     if (group != RT_DIR_NULL)
@@ -322,6 +321,7 @@ test_semantic_annotations()
     passed = expect(original_name && BU_STR_EQUAL(original_name, "wire"),
 	"subfigure source name was not preserved") && passed;
     bu_avs_free(&attributes);
+
     bu_avs_init_empty(&attributes);
     group = db_lookup(wdbp->dbip, "wire_instance_D17.annot_instance",
 	LOOKUP_QUIET);

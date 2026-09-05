@@ -1484,6 +1484,7 @@ Translator::write_subfigures()
 		member_count > MAX_ENTITY_LIST_COUNT) {
 	    diagnose(Severity::Warning, "subfigure_definition_parameters",
 		"Subfigure Definition has an invalid member count", &entry);
+	    ++result_.statistics.omitted;
 	    continue;
 	}
 
