@@ -687,6 +687,22 @@ validate_references(ParseState &state)
     }
 }
 
+Document
+finish_parse(ParseState &state)
+{
+    if (state.records.empty()) {
+	add_diagnostic(state.document, Severity::Fatal, "empty_input",
+	    "IGES input is empty");
+	return std::move(state.document);
+    }
+    validate_sections(state);
+    parse_global(state);
+    parse_directory(state);
+    parse_parameters(state);
+    validate_references(state);
+    return std::move(state.document);
+}
+
 } /* namespace */
 
 bool
@@ -745,24 +761,27 @@ Parameter::entity(EntityId &value) const
 Document
 Document::parse_file(const std::string &path)
 {
+    ParseState state;
+    state.document.source_name_ = path;
     std::ifstream input(path, std::ios::binary);
     if (!input) {
-	Document result;
-	result.source_name_ = path;
-	add_diagnostic(result, Severity::Fatal, "input_open",
+	add_diagnostic(state.document, Severity::Fatal, "input_open",
 	    "unable to open IGES input file");
-	return result;
+	return std::move(state.document);
     }
-    std::ostringstream contents;
-    contents << input.rdbuf();
-    if (!input.good() && !input.eof()) {
-	Document result;
-	result.source_name_ = path;
-	add_diagnostic(result, Severity::Fatal, "input_read",
-	    "unable to read complete IGES input file");
-	return result;
+    {
+	/* Release the input buffers before allocating entity parameters.
+	 * Large models otherwise retain two complete file copies here. */
+	std::ostringstream contents;
+	contents << input.rdbuf();
+	if (!input.good() && !input.eof()) {
+	    add_diagnostic(state.document, Severity::Fatal, "input_read",
+		"unable to read complete IGES input file");
+	    return std::move(state.document);
+	}
+	read_records(state, contents.str());
     }
-    return parse_buffer(contents.str(), path);
+    return finish_parse(state);
 }
 
 Document
@@ -770,19 +789,8 @@ Document::parse_buffer(const std::string &contents, const std::string &source_na
 {
     ParseState state;
     state.document.source_name_ = source_name;
-    if (contents.empty()) {
-	add_diagnostic(state.document, Severity::Fatal, "empty_input",
-	    "IGES input is empty");
-	return std::move(state.document);
-    }
-
     read_records(state, contents);
-    validate_sections(state);
-    parse_global(state);
-    parse_directory(state);
-    parse_parameters(state);
-    validate_references(state);
-    return std::move(state.document);
+    return finish_parse(state);
 }
 
 bool

@@ -33,6 +33,16 @@ linear extrusion are approximated by polysolids. BREP objects are written as
 native BRL-CAD BRep objects by default; *-m* and *-p* select polygonal
 fallbacks.
 
+Surfaces of revolution retain their angular parameterization so their trims
+remain in the authored parameter space. Boundaries at surface poles may have
+parameter-space segments without corresponding model-space edges. Safe repair
+recognizes rounded poles and can match differently segmented boundaries using
+bounded geometric comparison while retaining the original model curves.
+
+Default imports may be partial. The conversion summary counts omitted source
+geometry entities, and *--report* identifies their failures. Use *--strict*
+when omissions or repairs must cause the import to fail.
+
 The *-3*/*-d*, *-n*, and *-t* options are mutually exclusive and select
 alternate conversion modes (drawings, B-spline surfaces, or trimmed surfaces,
 respectively). The *-o* output option is required. When the chosen mode cannot
@@ -75,10 +85,13 @@ other direction, see *g-iges*(1).
   Select no repairs or bounded structural repairs. The default is _safe_.
 
 *--max-repair-tolerance* _mm_::
-  Permit failed model-space boundary pullbacks to be retried up to the given
-  tolerance. Relaxed faces remain subject to OpenNURBS validity checks and are
+  Permit model-space boundary reconstruction and parameter-space trim-loop
+  endpoint repairs up to the given tolerance in millimeters. Relaxed faces
+  remain subject to OpenNURBS validity checks and are
   flagged with their actual repair tolerance in the output database and JSON
-  report. This option requires safe OpenNURBS BRep output.
+  report. This is not a guarantee that existing source boundary-to-surface
+  discrepancies are below that value. This option requires safe OpenNURBS
+  BRep output.
 
 *--default-plate-thickness* _mm_::
   Assign the given thickness to imported open BReps in plate mode. The default

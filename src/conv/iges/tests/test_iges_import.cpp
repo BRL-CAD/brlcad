@@ -12,6 +12,8 @@
 #include "../iges_brep_import.h"
 #include "../iges_import.h"
 
+#include <algorithm>
+#include <cmath>
 #include <cstdio>
 #include <iomanip>
 #include <sstream>
@@ -339,11 +341,23 @@ test_semantic_annotations()
     return passed;
 }
 
+constexpr double SURFACE_SAMPLE_U = 0.3;
+constexpr double SURFACE_SAMPLE_V = 0.7;
+
+struct ImportedFace {
+    bool written = false;
+    bool valid = false;
+    int edges = 0;
+    int singular_trims = 0;
+    double maximum_parameter_gap = 0.0;
+    ON_3dPoint surface_sample;
+};
+
 bool
-run_bounded_surface_import(const brlcad::iges::Document &document,
+run_surface_import(const brlcad::iges::Document &document,
     const brlcad::iges::ImportOptions &options,
-    brlcad::iges::BrepImportResult &result, bool &face_written,
-    bool &brep_valid, struct bu_attribute_value_set *attributes)
+    brlcad::iges::BrepImportResult &result, ImportedFace &face,
+    struct bu_attribute_value_set *attributes)
 {
     char path[MAXPATHLEN] = {0};
     FILE *temporary = bu_temp_file(path, sizeof(path));
@@ -356,22 +370,44 @@ run_bounded_surface_import(const brlcad::iges::Document &document,
     if (wdbp == RT_WDB_NULL)
 	return false;
     result = brlcad::iges::import_breps(document, wdbp, options);
-    struct directory *face = db_lookup(wdbp->dbip, "FACE", LOOKUP_QUIET);
-    face_written = face != RT_DIR_NULL;
-    brep_valid = false;
-    if (face_written) {
+    struct directory *directory = db_lookup(wdbp->dbip, "FACE", LOOKUP_QUIET);
+    face = ImportedFace();
+    face.written = directory != RT_DIR_NULL;
+    if (face.written) {
 	struct rt_db_internal internal;
 	RT_DB_INTERNAL_INIT(&internal);
-	if (rt_db_get_internal(&internal, face, wdbp->dbip, nullptr) >= 0) {
+	if (rt_db_get_internal(&internal, directory, wdbp->dbip, nullptr) >= 0) {
 	    if (internal.idb_type == ID_BREP) {
 		const struct rt_brep_internal *brep =
 		    static_cast<const struct rt_brep_internal *>(internal.idb_ptr);
-		brep_valid = brep && brep->brep && brep->brep->IsValid();
+		if (brep && brep->brep) {
+		    face.valid = brep->brep->IsValid();
+		    face.edges = brep->brep->m_E.Count();
+		    for (int i = 0; i < brep->brep->m_L.Count(); ++i) {
+			const ON_BrepLoop &loop = brep->brep->m_L[i];
+			for (int j = 0; j < loop.m_ti.Count(); ++j) {
+			    const ON_BrepTrim &trim = brep->brep->m_T[loop.m_ti[j]];
+			    const ON_BrepTrim &next = brep->brep->m_T[
+				loop.m_ti[(j + 1) % loop.m_ti.Count()]];
+			    face.maximum_parameter_gap = std::max(face.maximum_parameter_gap,
+				trim.PointAtEnd().DistanceTo(next.PointAtStart()));
+			}
+		    }
+		    if (brep->brep->m_S.Count() > 0) {
+			const ON_Surface *surface = brep->brep->m_S[0];
+			face.surface_sample = surface->PointAt(
+			    surface->Domain(0).ParameterAt(SURFACE_SAMPLE_U),
+			    surface->Domain(1).ParameterAt(SURFACE_SAMPLE_V));
+		    }
+		    for (int i = 0; i < brep->brep->m_T.Count(); ++i)
+			if (brep->brep->m_T[i].m_type == ON_BrepTrim::singular)
+			    ++face.singular_trims;
+		}
 	    }
 	    rt_db_free_internal(&internal);
 	}
 	if (attributes)
-	    db5_get_attributes(wdbp->dbip, attributes, face);
+	    db5_get_attributes(wdbp->dbip, attributes, directory);
     }
     wdb_close(wdbp);
     bu_file_delete(path);
@@ -390,14 +426,13 @@ test_bounded_surface_tolerance()
 
     brlcad::iges::ImportOptions conservative_options;
     brlcad::iges::BrepImportResult conservative_result;
-    bool conservative_face = false;
-    bool conservative_valid = false;
-    if (!expect(run_bounded_surface_import(document, conservative_options,
-	    conservative_result, conservative_face, conservative_valid, nullptr),
+    ImportedFace conservative_face;
+    if (!expect(run_surface_import(document, conservative_options,
+	    conservative_result, conservative_face, nullptr),
 	    "could not run conservative bounded-surface import"))
 	return false;
-    bool passed = expect(!conservative_result.success && !conservative_face &&
-	    !conservative_valid &&
+    bool passed = expect(!conservative_result.success && !conservative_face.written &&
+	    !conservative_face.valid &&
 	    conservative_result.statistics.bounded_surfaces_seen == 1 &&
 	    conservative_result.statistics.relaxed_faces_written == 0 &&
 	    conservative_result.statistics.omitted == 1,
@@ -406,12 +441,11 @@ test_bounded_surface_tolerance()
     brlcad::iges::ImportOptions relaxed_options;
     relaxed_options.maximum_repair_tolerance = 0.1;
     brlcad::iges::BrepImportResult relaxed_result;
-    bool relaxed_face = false;
-    bool relaxed_valid = false;
+    ImportedFace relaxed_face;
     struct bu_attribute_value_set attributes;
     bu_avs_init_empty(&attributes);
-    if (!expect(run_bounded_surface_import(document, relaxed_options,
-	    relaxed_result, relaxed_face, relaxed_valid, &attributes),
+    if (!expect(run_surface_import(document, relaxed_options,
+	    relaxed_result, relaxed_face, &attributes),
 	    "could not run relaxed bounded-surface import")) {
 	bu_avs_free(&attributes);
 	return false;
@@ -427,7 +461,7 @@ test_bounded_surface_tolerance()
 	basis && BU_STR_EQUAL(basis, "import_default") && maximum && nominal &&
 	face_metadata && std::string(face_metadata).find("repair_tolerance_mm") !=
 	    std::string::npos;
-    passed = expect(relaxed_result.success && relaxed_face && relaxed_valid &&
+    passed = expect(relaxed_result.success && relaxed_face.written && relaxed_face.valid &&
 	    relaxed_result.statistics.bounded_surfaces_seen == 1 &&
 	    relaxed_result.statistics.relaxed_faces_written == 1 &&
 	    relaxed_result.statistics.omitted == 0 &&
@@ -437,6 +471,302 @@ test_bounded_surface_tolerance()
 	passed;
     bu_avs_free(&attributes);
     return passed;
+}
+
+bool
+has_diagnostic(const brlcad::iges::BrepImportResult &result, const char *code)
+{
+    return std::any_of(result.diagnostics.begin(), result.diagnostics.end(),
+	[&](const brlcad::iges::ImportDiagnostic &diagnostic) {
+	    return diagnostic.code == code;
+	});
+}
+
+bool
+test_singular_boundary()
+{
+    std::vector<Entity> entities = {
+	{128, 0, "SURFACE",
+	    "128,1,1,1,1,0,0,1,0,0,0,0,1,1,0,0,1,1,1,1,1,1,"
+	    "0,0,0,0,1,0,1,0,0,0,1,0,0,1,0,1;"},
+	{110, 0, "PBOTTOM", "110,0,0,0,1,0,0;"},
+	{110, 0, "PPOLE", "110,1,0,0,1,1,0;"},
+	{110, 0, "PTOP", "110,1,1,0,0,1,0;"},
+	{110, 0, "PLEFT", "110,0,1,0,0,0,0;"},
+	{110, 0, "MBOTTOM", "110,0,0,0,0,1,0;"},
+	{110, 0, "MTOP", "110,0,1,0,1,0,0;"},
+	{110, 0, "MLEFT", "110,1,0,0,0,0,0;"},
+	{102, 0, "PARAM", "102,4,3,5,7,9;"},
+	{102, 0, "MODEL", "102,3,11,13,15;"},
+	{142, 0, "BOUNDARY", "142,1,1,17,19,1;"},
+	{144, 0, "FACE", "144,1,1,0,21;"}
+    };
+    brlcad::iges::ImportOptions options;
+    options.exact = true;
+    brlcad::iges::BrepImportResult result;
+    ImportedFace face;
+    const brlcad::iges::Document document =
+	brlcad::iges::Document::parse_buffer(sample(entities,
+	    "singular boundary without a model edge"));
+    if (!expect(document.valid() && run_surface_import(document, options,
+	    result, face, nullptr), "could not run singular boundary import"))
+	return false;
+    bool passed = expect(result.success && face.valid && face.edges == 3 &&
+	face.singular_trims == 1 && result.statistics.repairs == 0 &&
+	result.statistics.omitted == 0,
+	"exact import did not preserve the unmatched singular trim");
+
+    std::vector<Entity> rounded = entities;
+    rounded[1].parameters = "110,0,0,0,0.99999999,0,0;";
+    rounded[2].parameters = "110,0.99999999,0,0,0.99999999,1,0;";
+    rounded[3].parameters = "110,0.99999999,1,0,0,1,0;";
+    const brlcad::iges::Document near_pole =
+	brlcad::iges::Document::parse_buffer(sample(rounded,
+	    "rounded parameter coordinates near a pole"));
+    options.exact = false;
+    passed = expect(near_pole.valid() && run_surface_import(near_pole,
+	options, result, face, nullptr) && result.success && face.valid &&
+	face.singular_trims == 1 && result.statistics.repairs > 0 &&
+	has_diagnostic(result, "snapped_singular_boundary"),
+	"bounded repair did not preserve the rounded pole boundary") && passed;
+    options.exact = true;
+    passed = expect(run_surface_import(near_pole, options, result, face,
+	nullptr) && !result.success && !face.written,
+	"exact import snapped a rounded pole boundary") && passed;
+
+    std::vector<Entity> rounded_surface = entities;
+    rounded_surface[0].parameters =
+	"128,1,1,1,1,0,0,1,0,0,0,0,1,1,0,0,1,1,1,1,1,1,"
+	"0,0,0,0,1,0,1,0,0,0.00000001,1,0,0,1,0,1;";
+    const brlcad::iges::Document approximate_pole =
+	brlcad::iges::Document::parse_buffer(sample(rounded_surface,
+	    "rounded surface control points at a pole"));
+    options.exact = false;
+    passed = expect(approximate_pole.valid() && run_surface_import(approximate_pole,
+	options, result, face, nullptr) && result.success && face.valid &&
+	face.edges == 3 && face.singular_trims == 1 &&
+	has_diagnostic(result, "approximated_singular_boundary"),
+	"bounded pole recognition rejected rounded control points") && passed;
+    options.exact = true;
+    passed = expect(run_surface_import(approximate_pole, options, result, face,
+	nullptr) && !result.success && !face.written,
+	"exact import approximated a surface pole") && passed;
+    options.exact = false;
+    options.maximum_repair_tolerance = ON_ZERO_TOLERANCE;
+    passed = expect(run_surface_import(approximate_pole, options, result, face,
+	nullptr) && !result.success && !face.written,
+	"surface pole approximation exceeded the requested tolerance") && passed;
+    options.maximum_repair_tolerance = 0.0;
+
+    std::vector<Entity> segmented = entities;
+    segmented[5] = {126, 0, "ACROSS",
+	"126,2,1,1,0,1,0,0,0,0.5,1,1,1,1,1,"
+	"0,0,0,0,1,0,1,0,0,0,1,0,0,1;"};
+    segmented[9].parameters = "102,2,11,15;";
+    const brlcad::iges::Document crossing =
+	brlcad::iges::Document::parse_buffer(sample(segmented,
+	    "model curve crosses a parameter-space pole"));
+    options.exact = false;
+    passed = expect(crossing.valid() && run_surface_import(crossing,
+	options, result, face, nullptr) && result.success && face.valid &&
+	face.edges == 3 && face.singular_trims == 1 &&
+	has_diagnostic(result, "matched_boundary_segments"),
+	"differently segmented pole boundary was not matched") && passed;
+    options.maximum_repair_tolerance = 2.0;
+    passed = expect(run_surface_import(crossing, options, result, face,
+	nullptr) && result.success && face.valid && face.edges == 3,
+	"increased tolerance lost a uniquely matched boundary") && passed;
+    options.maximum_repair_tolerance = 0.0;
+    options.exact = true;
+    passed = expect(run_surface_import(crossing, options, result, face,
+	nullptr) && !result.success && !face.written,
+	"exact import reconstructed boundary segmentation") && passed;
+
+    /* The extra parameter segment must not be accepted on a regular side. */
+    entities[0].parameters =
+	"128,1,1,1,1,0,0,1,0,0,0,0,1,1,0,0,1,1,1,1,1,1,"
+	"0,0,0,0,1,0,1,0,0,1,1,0,0,1,0,1;";
+    const brlcad::iges::Document nonsingular =
+	brlcad::iges::Document::parse_buffer(sample(entities,
+	    "mismatched nonsingular boundary"));
+    passed = expect(nonsingular.valid() && run_surface_import(nonsingular,
+	options, result, face, nullptr) && !result.success && !face.written &&
+	result.statistics.omitted == 1 &&
+	has_diagnostic(result, "boundary_curve_cardinality"),
+	"unmatched nonsingular boundary was not rejected") && passed;
+    return passed;
+}
+
+bool
+test_trim_loop_tolerance()
+{
+    const std::vector<Entity> entities = {
+	{128, 0, "SURFACE",
+	    "128,1,1,1,1,0,0,1,0,0,0,0,1,1,0,0,1,1,1,1,1,1,"
+	    "0,0,0,10,0,0,0,10,0,10,10,0,0,1,0,1;"},
+	{110, 0, "PBOTTOM", "110,0,0,0,1,0.005,0;"},
+	{110, 0, "PRIGHT", "110,1,0.0051,0,1,1,0;"},
+	{110, 0, "PTOP", "110,1,1,0,0,1,0;"},
+	{110, 0, "PLEFT", "110,0,1,0,0,0,0;"},
+	{110, 0, "MBOTTOM", "110,0,0,0,10,0,0;"},
+	{110, 0, "MRIGHT", "110,10,0,0,10,10,0;"},
+	{110, 0, "MTOP", "110,10,10,0,0,10,0;"},
+	{110, 0, "MLEFT", "110,0,10,0,0,0,0;"},
+	{102, 0, "PARAM", "102,4,3,5,7,9;"},
+	{102, 0, "MODEL", "102,4,11,13,15,17;"},
+	{142, 0, "BOUNDARY", "142,1,1,19,21,1;"},
+	{144, 0, "FACE", "144,1,1,0,23;"}
+    };
+    const brlcad::iges::Document document =
+	brlcad::iges::Document::parse_buffer(sample(entities,
+	    "trim loop with inconsistent model and parameter endpoints"));
+    if (!expect(document.valid(), "trim-loop test IGES did not parse"))
+	return false;
+    brlcad::iges::ImportOptions options;
+    brlcad::iges::BrepImportResult result;
+    ImportedFace face;
+    bool passed = expect(run_surface_import(document, options, result,
+	face, nullptr) && result.statistics.repairs == 0 &&
+	result.statistics.relaxed_faces_written == 0,
+	"default import repaired the out-of-tolerance trim loop");
+    options.maximum_repair_tolerance = 0.001;
+    passed = expect(run_surface_import(document, options, result, face,
+	nullptr) && result.statistics.repairs == 0 &&
+	result.statistics.relaxed_faces_written == 0,
+	"trim-loop repair exceeded the supplied tolerance") && passed;
+
+    options.maximum_repair_tolerance = 0.1;
+    struct bu_attribute_value_set attributes;
+    bu_avs_init_empty(&attributes);
+    passed = expect(run_surface_import(document, options, result, face,
+	&attributes) && result.success && face.valid && face.edges == 4 &&
+	NEAR_ZERO(face.maximum_parameter_gap, SMALL_FASTF) &&
+	result.statistics.omitted == 0 &&
+	result.statistics.relaxed_faces_written == 1 &&
+	NEAR_EQUAL(result.statistics.maximum_repair_tolerance_used, 0.05,
+	    ON_ZERO_TOLERANCE) && has_diagnostic(result, "relaxed_parameter_loop"),
+	"explicit trim-loop repair did not produce and report a valid face") && passed;
+    const char *status = bu_avs_get(&attributes, "iges.tolerance_status");
+    const char *metadata = bu_avs_get(&attributes, "iges.face_metadata");
+    passed = expect(status && BU_STR_EQUAL(status, "relaxed") && metadata &&
+	std::string(metadata).find("repair_tolerance_mm") != std::string::npos,
+	"trim-loop repair tolerance is missing from the database") && passed;
+    bu_avs_free(&attributes);
+
+    options.exact = true;
+    passed = expect(run_surface_import(document, options, result, face,
+	nullptr) && result.statistics.repairs == 0 &&
+	result.statistics.relaxed_faces_written == 0,
+	"exact import repaired a trim loop") && passed;
+    return passed;
+}
+
+bool
+test_revolution_parameters()
+{
+    std::vector<Entity> entities = {
+	{110, 0, "AXIS", "110,0,0,0,0,0,1;"},
+	{110, 0, "LINE", "110,2,0,0,2,0,10;"},
+	{120, 0, "FACE", "120,1,3,0,3.141592653589793;"}
+    };
+    brlcad::iges::ImportOptions options;
+    options.exact = true;
+    brlcad::iges::BrepImportResult result;
+    ImportedFace face;
+    const brlcad::iges::Document cylinder =
+	brlcad::iges::Document::parse_buffer(sample(entities,
+	    "cylinder with angular surface parameters"));
+    const double rotation = SURFACE_SAMPLE_V * ON_PI;
+    const ON_3dPoint cylinder_point(2.0 * std::cos(rotation),
+	2.0 * std::sin(rotation), 10.0 * SURFACE_SAMPLE_U);
+    bool passed = expect(cylinder.valid() && run_surface_import(cylinder,
+	options, result, face, nullptr) && result.success && face.valid &&
+	face.surface_sample.DistanceTo(cylinder_point) < ON_ZERO_TOLERANCE,
+	"revolution did not preserve curve-first, angle-second parameters");
+
+    /* A nonzero starting angle and non-quadrant sample distinguish the
+     * authored angular parameter from the rational arc parameter. */
+    entities[1] = {100, 0, "ARC", "100,0,3,0,3,1,2,0;"};
+    const brlcad::iges::Document revolved_arc =
+	brlcad::iges::Document::parse_buffer(sample(entities,
+	    "revolution with a circular generatrix"));
+    const double curve_angle = (1.0 + SURFACE_SAMPLE_U) * ON_PI / 2.0;
+    const double x = 3.0 + std::cos(curve_angle);
+    const double y = std::sin(curve_angle);
+    const ON_3dPoint arc_point(x * std::cos(rotation) - y * std::sin(rotation),
+	x * std::sin(rotation) + y * std::cos(rotation), 0.0);
+    passed = expect(revolved_arc.valid() && run_surface_import(revolved_arc,
+	options, result, face, nullptr) && result.success && face.valid &&
+	face.surface_sample.DistanceTo(arc_point) < ON_ZERO_TOLERANCE,
+	"circular generatrix lost its original angular domain") && passed;
+    return passed;
+}
+
+bool
+test_relative_revolution_parameters()
+{
+    const std::vector<Entity> entities = {
+	{110, 0, "AXIS", "110,0,0,0,1,0,0;"},
+	{100, 0, "ARC", "100,0,0,0,0,1,-1,0;"},
+	{120, 0, "SURFACE", "120,1,3,0,1.5707963267948966;"},
+	{110, 0, "PBOTTOM", "110,0,0,0,1.5707963267948966,0,0;"},
+	{110, 0, "PPOLE", "110,1.5707963267948966,0,0,1.5707963267948966,1.5707963267948966,0;"},
+	{110, 0, "PTOP", "110,1.5707963267948966,1.5707963267948966,0,0,1.5707963267948966,0;"},
+	{110, 0, "PLEFT", "110,0,1.5707963267948966,0,0,0,0;"},
+	{100, 0, "MBOTTOM", "100,0,0,0,0,1,-1,0;"},
+	{126, 0, "MTOP", "126,2,2,1,0,0,0,0,0,0,1,1,1,1,0.7071067811865476,1,"
+	    "-1,0,0,-1,0,1,0,0,1,0,1,0,1,0;"},
+	{126, 0, "MLEFT", "126,2,2,1,0,0,0,0,0,0,1,1,1,1,0.7071067811865476,1,"
+	    "0,0,1,0,1,1,0,1,0,0,1,1,0,0;"},
+	{102, 0, "PARAM", "102,4,7,9,11,13;"},
+	{102, 0, "MODEL", "102,3,15,17,19;"},
+	{142, 0, "BOUNDARY", "142,1,5,21,23,1;"},
+	{144, 0, "FACE", "144,5,1,0,25;"}
+    };
+    const brlcad::iges::Document document =
+	brlcad::iges::Document::parse_buffer(sample(entities,
+	    "explicit boundaries use a relative circular parameter"));
+    brlcad::iges::ImportOptions options;
+    options.exact = true;
+    brlcad::iges::BrepImportResult result;
+    ImportedFace face;
+    const double curve_angle = SURFACE_SAMPLE_U * ON_PI / 2.0;
+    const double rotation = SURFACE_SAMPLE_V * ON_PI / 2.0;
+    const ON_3dPoint expected(-std::sin(curve_angle),
+	std::cos(curve_angle) * std::cos(rotation),
+	std::cos(curve_angle) * std::sin(rotation));
+    if (!expect(document.valid() && run_surface_import(document, options,
+	result, face, nullptr), "relative angular fixture could not be imported"))
+	return false;
+    bool passed = expect(result.success && face.valid,
+	"relative angular boundary did not produce a valid face");
+    passed = expect(face.surface_sample.DistanceTo(expected) < ON_ZERO_TOLERANCE,
+	"relative angular surface has incorrect interior coordinates") && passed;
+    passed = expect(face.singular_trims == 1 && result.statistics.repairs == 0,
+	"relative angular boundary did not retain its exact singular trim") && passed;
+    return expect(has_diagnostic(result, "relative_revolution_parameters"),
+	"authored boundaries did not resolve the relative angular convention") && passed;
+}
+
+bool
+test_degenerate_revolution()
+{
+    const std::vector<Entity> entities = {
+	{110, 0, "AXIS", "110,0,0,0,0,0,1;"},
+	{110, 0, "POINT", "110,1,0,0,1,0,0;"},
+	{120, 0, "FACE", "120,1,3,0,6.283185307179586;"}
+    };
+    const brlcad::iges::Document document =
+	brlcad::iges::Document::parse_buffer(sample(entities,
+	    "revolution with collapsed generating line"));
+    brlcad::iges::ImportOptions options;
+    brlcad::iges::BrepImportResult result;
+    ImportedFace face;
+    return expect(document.valid() && run_surface_import(document, options,
+	result, face, nullptr) && !result.success && !face.written &&
+	result.statistics.omitted == 1 &&
+	has_diagnostic(result, "degenerate_revolution_generatrix"),
+	"collapsed revolution was not explicitly rejected");
 }
 
 
@@ -450,6 +780,11 @@ main(int argc, char **argv)
 	return 1;
     bool passed = test_semantic_annotations();
     passed = test_bounded_surface_tolerance() && passed;
+    passed = test_singular_boundary() && passed;
+    passed = test_trim_loop_tolerance() && passed;
+    passed = test_revolution_parameters() && passed;
+    passed = test_relative_revolution_parameters() && passed;
+    passed = test_degenerate_revolution() && passed;
     return passed ? 0 : 1;
 }
 

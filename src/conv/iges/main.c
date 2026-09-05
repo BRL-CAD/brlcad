@@ -280,7 +280,7 @@ main(int argc, char *argv [])
 	    "assign this thickness to imported non-solid B-Reps"},
 	{"", "max-repair-tolerance", "MM", bu_opt_fastf_t,
 	    &maximum_repair_tolerance,
-	    "permit and flag boundary pullbacks up to this tolerance"},
+	    "permit and flag boundary repairs up to this tolerance"},
 	{"", "repair", "MODE", bu_opt_str, &repair_mode,
 	    "none or safe (default: safe)"},
 	{"", "report", "FILE", bu_opt_str, &report_file,
