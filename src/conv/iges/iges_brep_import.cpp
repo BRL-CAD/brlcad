@@ -540,6 +540,18 @@ json_escape(const std::string &value)
 
 class Importer;
 
+struct CurvePair {
+    std::unique_ptr<ON_Curve> parameter;
+    std::unique_ptr<ON_Curve> model;
+    double repair_tolerance = 0.0;
+    bool singular = false;
+    bool discard = false;
+};
+
+static void recover_parameter_curves(Importer &importer,
+    const ON_Surface &surface, std::vector<std::vector<CurvePair> > &loops,
+    const DirectoryEntry &source, std::map<EntityId, double> &relaxed_tolerances);
+
 class SolidBuilder {
 public:
     SolidBuilder(Importer &importer, const DirectoryEntry &solid);
@@ -559,8 +571,13 @@ public:
 	const DirectoryEntry &entry);
     std::unique_ptr<ON_Surface> analytic_surface(
 	const DirectoryEntry &entry);
+    const std::map<EntityId, double> &relaxed_tolerances() const
+    {
+	return relaxed_tolerances_;
+    }
 
 private:
+    std::unique_ptr<ON_ArcCurve> circular_arc(const DirectoryEntry &entry);
     bool transform_curve(ON_NurbsCurve &curve, const DirectoryEntry &entry,
 	const Matrix &parent);
     bool add_shell(EntityId id, bool same_direction);
@@ -576,8 +593,7 @@ private:
     std::unique_ptr<ON_Curve> edge_curve(EntityId id,
 	const ON_3dPoint &start, const ON_3dPoint &end);
     std::unique_ptr<ON_Curve> trim_curve(const EdgeUse &use,
-	const ON_Plane *parameter_plane, const ON_3dPoint &start,
-	const ON_3dPoint &end);
+	const ON_Plane *parameter_plane, const ON_Curve *model);
     std::unique_ptr<ON_Surface> face_surface(EntityId id,
 	const std::vector<LoopRecord> &loops, ON_Plane &parameter_plane,
 	bool &has_parameter_plane);
@@ -596,6 +612,7 @@ private:
     std::unique_ptr<ON_Brep> brep_;
     std::map<VertexKey, int> vertices_;
     std::map<EdgeKey, int> edges_;
+    std::map<EntityId, double> relaxed_tolerances_;
 
     friend class TrimmedSurfaceBuilder;
 };
@@ -612,14 +629,6 @@ public:
     }
 
 private:
-    struct CurvePair {
-	std::unique_ptr<ON_Curve> parameter;
-	std::unique_ptr<ON_Curve> model;
-	double repair_tolerance = 0.0;
-	bool singular = false;
-	bool discard = false;
-    };
-
     bool append_curve_entities(EntityId id, std::vector<EntityId> &curves,
 	std::set<EntityId> &active);
     std::unique_ptr<ON_Curve> curve(SolidBuilder &geometry, EntityId id,
@@ -640,9 +649,6 @@ private:
     std::unique_ptr<ON_PlaneSurface> plane_surface(SolidBuilder &geometry,
 	const DirectoryEntry &surface_entry,
 	std::vector<std::vector<CurvePair> > &loops);
-    void recover_parameter_curves(const ON_Surface &surface,
-	std::vector<std::vector<CurvePair> > &loops,
-	const DirectoryEntry &source);
     bool add_face(const DirectoryEntry &entry);
 
     Importer &importer_;
@@ -693,6 +699,11 @@ public:
 	    result_.statistics.maximum_repair_tolerance_used, tolerance);
     }
     void count_repair() { ++result_.statistics.repairs; }
+    std::vector<EntityId> plane_holes(EntityId plane) const
+    {
+	const auto found = plane_holes_.find(plane);
+	return found == plane_holes_.end() ? std::vector<EntityId>() : found->second;
+    }
     Matrix transform(EntityId id);
     Point3 model_point(const DirectoryEntry &entry, const Point3 &point,
 	const Matrix &parent);
@@ -719,10 +730,14 @@ private:
 	const std::map<EntityId, double> &relaxed_tolerances);
     bool write_plate_mode_attributes(const std::string &name,
 	const ON_Brep &brep, const DirectoryEntry &entry);
+    bool write_repair_attributes(const std::string &name,
+	const std::map<EntityId, double> &relaxed_tolerances,
+	const DirectoryEntry &entry);
     bool write_trimmed_component(
 	const std::vector<const DirectoryEntry *> &faces);
     void import_trimmed_components(
 	const std::vector<const DirectoryEntry *> &faces);
+    void discard_failed_repairs(size_t first_diagnostic, size_t repair_count);
     bool write_standalone_surface(const DirectoryEntry &entry);
     void combination_matrix(const Matrix &source, mat_t result) const;
     bool container_members(const DirectoryEntry &entry,
@@ -748,6 +763,7 @@ private:
     double tolerance_ = DEFAULT_TOPOLOGY_TOLERANCE_MM;
     bool source_resolution_declared_ = false;
     std::map<EntityId, Matrix> transforms_;
+    std::map<EntityId, std::vector<EntityId> > plane_holes_;
     std::map<EntityId, std::string> objects_;
     std::set<std::string> root_objects_;
     std::set<EntityId> deferred_boolean_trees_;
@@ -1207,6 +1223,25 @@ SolidBuilder::curve(const DirectoryEntry &entry, bool model_space,
     if (entry.type != 100)
 	return nullptr;
 
+    std::unique_ptr<ON_ArcCurve> arc = circular_arc(entry);
+    std::unique_ptr<ON_NurbsCurve> result(ON_NurbsCurve::New());
+    if (!arc || !result || !arc->GetNurbForm(*result))
+	return nullptr;
+    if (!model_space)
+	return result->ChangeDimension(2) && result->IsValid() ?
+	    std::move(result) : nullptr;
+    if (!transform_curve(*result, entry, parent)) {
+	importer_.diagnose(Severity::Warning, "invalid_arc_curve",
+	    "could not transform the exact rational circular arc", &entry);
+	return nullptr;
+    }
+    return result;
+}
+
+std::unique_ptr<ON_ArcCurve>
+SolidBuilder::circular_arc(const DirectoryEntry &entry)
+{
+    const ParameterList *parameters = importer_.document().parameters(entry.id);
     double depth = 0.0;
     double center_x = 0.0;
     double center_y = 0.0;
@@ -1249,23 +1284,16 @@ SolidBuilder::curve(const DirectoryEntry &entry, bool model_space,
 	angle += 2.0 * ON_PI;
     const ON_Arc arc(ON_Circle(ON_Plane(center, x_axis, y_axis), radius),
 	angle);
-    std::unique_ptr<ON_NurbsCurve> result(ON_NurbsCurve::New());
-    if (!result || !arc.IsValid() || !arc.GetNurbForm(*result)) {
+    if (!arc.IsValid()) {
 	importer_.diagnose(Severity::Warning, "invalid_arc_curve",
 	    "could not construct the exact rational circular arc", &entry);
 	return nullptr;
     }
-
-    if (!model_space)
-	return result->ChangeDimension(2) && result->IsValid() ?
-	    std::move(result) : nullptr;
-
-    if (!transform_curve(*result, entry, parent)) {
-	importer_.diagnose(Severity::Warning, "invalid_arc_curve",
-	    "could not transform the exact rational circular arc", &entry);
-	return nullptr;
-    }
-    return result;
+    double start_angle = std::atan2(start_y - center_y, start_x - center_x);
+    if (start_angle < 0.0)
+	start_angle += 2.0 * ON_PI;
+    return std::unique_ptr<ON_ArcCurve>(new ON_ArcCurve(arc, start_angle,
+	start_angle + angle));
 }
 
 std::unique_ptr<ON_Curve>
@@ -1351,12 +1379,12 @@ SolidBuilder::edge_index(const EdgeKey &key)
 	return -1;
     const int start_index = vertex_index(record.start);
     const int end_index = vertex_index(record.end);
-    if (start_index < 0 || end_index < 0 || start_index == end_index)
+    if (start_index < 0 || end_index < 0)
 	return -1;
     const ON_3dPoint start = brep_->m_V[start_index].Point();
     const ON_3dPoint end = brep_->m_V[end_index].Point();
     std::unique_ptr<ON_Curve> curve = edge_curve(record.curve, start, end);
-    if (!curve)
+    if (!curve || !curve->IsValid())
 	return -1;
     const double endpoint_mismatch = std::max(
 	curve->PointAtStart().DistanceTo(start),
@@ -1513,8 +1541,18 @@ SolidBuilder::plane_surface(EntityId id,
 	    ON_3dPoint end;
 	    if (!edge_use_points(use, start, end))
 		return nullptr;
-	    const ON_3dPoint points[2] = {start, end};
-	    for (const ON_3dPoint &point : points) {
+	    ON_BoundingBox bounds(start, end);
+	    if (!use.vertex_use) {
+		const int index = edge_index(use.edge);
+		if (index < 0)
+		    return nullptr;
+		bounds = brep_->m_E[index].BoundingBox();
+	    }
+	    ON_3dPointArray corners;
+	    if (!bounds.GetCorners(corners))
+		return nullptr;
+	    for (int i = 0; i < corners.Count(); ++i) {
+		const ON_3dPoint &point = corners[i];
 		double u = 0.0;
 		double v = 0.0;
 		if (!plane.ClosestPointTo(point, &u, &v))
@@ -1830,28 +1868,38 @@ SolidBuilder::revolution_surface(const DirectoryEntry &entry,
     end_angle = std::min(end_angle, start_angle + 2.0 * ON_PI);
 
     if (generatrix_entry->type == 100) {
-	ON_Arc arc;
-	const ParameterList *arc_parameters =
-	    importer_.document().parameters(generatrix_entry->id);
-	double center_x = 0.0;
-	double center_y = 0.0;
-	double start_x = 0.0;
-	double start_y = 0.0;
-	if (!parameter_real(arc_parameters, 2, center_x) ||
-		!parameter_real(arc_parameters, 3, center_y) ||
-		!parameter_real(arc_parameters, 4, start_x) ||
-		!parameter_real(arc_parameters, 5, start_y) ||
-		!generatrix->IsArc(nullptr, &arc, importer_.tolerance())) {
+	std::unique_ptr<ON_ArcCurve> arc = circular_arc(*generatrix_entry);
+	const ON_ArcCurve original = arc ? *arc : ON_ArcCurve();
+	ON_Xform placement(ON_Xform::IdentityTransformation);
+	const Point3 origin = importer_.model_point(*generatrix_entry,
+	    {0.0, 0.0, 0.0}, parent);
+	for (size_t column = 0; column < 3; ++column) {
+	    Point3 unit = {0.0, 0.0, 0.0};
+	    unit[column] = 1.0;
+	    const Point3 axis_vector = importer_.model_vector(*generatrix_entry, unit, parent);
+	    for (size_t row = 0; row < 3; ++row)
+		placement[row][column] = axis_vector[row];
+	    placement[column][3] = origin[column];
+	}
+	/* Transform the known circle directly.  Refitting an arc to its NURBS
+	 * form loses accuracy for small radii at large model coordinates. */
+	bool faithful = arc && arc->Transform(placement) && arc->IsValid();
+	/* OpenNURBS permits an approximate circle under nonuniform scaling.
+	 * Do not silently accept that approximation as an exact generatrix. */
+	for (int i = 0; faithful && i <= BOUNDARY_VALIDATION_SEGMENTS; ++i) {
+	    const double parameter = original.Domain().ParameterAt(
+		static_cast<double>(i) / BOUNDARY_VALIDATION_SEGMENTS);
+	    const ON_3dPoint expected = placement * original.PointAt(parameter);
+	    faithful = expected.IsValid() &&
+		arc->PointAt(parameter).DistanceTo(expected) <= importer_.tolerance();
+	}
+	if (!faithful) {
 	    importer_.diagnose(Severity::Warning, "revolution_arc_parameters",
 		"could not preserve the circular generatrix's angular parameterization",
 		generatrix_entry);
 	    return nullptr;
 	}
-	double curve_start = std::atan2(start_y - center_y, start_x - center_x);
-	if (curve_start < 0.0)
-	    curve_start += 2.0 * ON_PI;
-	generatrix.reset(new ON_ArcCurve(arc, curve_start,
-	    curve_start + arc.AngleRadians()));
+	generatrix = std::move(arc);
     }
 
     /* IGES uses the generating curve parameter first and the rotation
@@ -1914,8 +1962,7 @@ SolidBuilder::face_surface(EntityId id,
 
 std::unique_ptr<ON_Curve>
 SolidBuilder::trim_curve(const EdgeUse &use,
-    const ON_Plane *parameter_plane,
-    const ON_3dPoint &start, const ON_3dPoint &end)
+    const ON_Plane *parameter_plane, const ON_Curve *model)
 {
     if (!use.parameter_curves.empty()) {
 	const DirectoryEntry *curve_entry =
@@ -1933,26 +1980,23 @@ SolidBuilder::trim_curve(const EdgeUse &use,
 	    return nullptr;
 	return std::unique_ptr<ON_Curve>(curve.release());
     }
-    if (use.vertex_use) {
-	importer_.diagnose(Severity::Warning, "missing_parameter_curve",
-	    "B-Rep pole has no authored parameter-space curve");
+    if (!parameter_plane || !model)
 	return nullptr;
+
+    /* Project the whole curve.  Endpoint chords erase circular plane
+     * boundaries, including the single closed edge of a disk. */
+    ON_Xform projection(ON_Xform::IdentityTransformation);
+    const ON_3dVector axes[3] = {parameter_plane->xaxis,
+	parameter_plane->yaxis, parameter_plane->zaxis};
+    for (int row = 0; row < 3; ++row) {
+	for (int column = 0; column < 3; ++column)
+	    projection[row][column] = axes[row][column];
+	projection[row][3] = -ON_DotProduct(axes[row], parameter_plane->origin);
     }
-    if (!parameter_plane) {
-	importer_.diagnose(Severity::Warning, "missing_parameter_curve",
-	    "non-planar B-Rep trim has no authored parameter-space curve");
+    std::unique_ptr<ON_Curve> curve(model->DuplicateCurve());
+    if (!curve || !curve->Transform(projection) ||
+	    !curve->ChangeDimension(2) || !curve->IsValid())
 	return nullptr;
-    }
-    double start_u = 0.0;
-    double start_v = 0.0;
-    double end_u = 0.0;
-    double end_v = 0.0;
-    if (!parameter_plane->ClosestPointTo(start, &start_u, &start_v) ||
-	    !parameter_plane->ClosestPointTo(end, &end_u, &end_v))
-	return nullptr;
-    std::unique_ptr<ON_Curve> curve(new ON_LineCurve(
-	ON_2dPoint(start_u, start_v), ON_2dPoint(end_u, end_v)));
-    curve->SetDomain(0.0, 1.0);
     return curve;
 }
 
@@ -1989,6 +2033,29 @@ SolidBuilder::add_face(EntityId id, bool same_direction,
 	face_surface(surface_id, loops, parameter_plane, has_parameter_plane);
     if (!surface)
 	return false;
+    std::vector<std::vector<CurvePair> > boundaries(loops.size());
+    for (size_t i = 0; i < loops.size(); ++i) {
+	boundaries[i].resize(loops[i].uses.size());
+	for (size_t j = 0; j < loops[i].uses.size(); ++j) {
+	    const EdgeUse &use = loops[i].uses[j];
+	    CurvePair &pair = boundaries[i][j];
+	    pair.singular = use.vertex_use;
+	    if (!use.vertex_use) {
+		const int index = edge_index(use.edge);
+		if (index < 0)
+		    return false;
+		pair.model.reset(brep_->m_E[index].DuplicateCurve());
+		if (!pair.model || (!use.same_direction && !pair.model->Reverse()))
+		    return false;
+	    }
+	    pair.parameter = trim_curve(use,
+		has_parameter_plane ? &parameter_plane : nullptr, pair.model.get());
+	    if (!pair.parameter && !use.parameter_curves.empty())
+		return false;
+	}
+    }
+    recover_parameter_curves(importer_, *surface, boundaries, *entry,
+	relaxed_tolerances_);
     ON_Surface *surface_geometry = surface.get();
     const int surface_index = brep_->AddSurface(surface.release());
     ON_BrepFace &face = brep_->NewFace(surface_index);
@@ -2001,15 +2068,16 @@ SolidBuilder::add_face(EntityId id, bool same_direction,
 	ON_BrepLoop &loop = brep_->NewLoop(loop_type, face);
 	loop.m_loop_user.i =
 	    static_cast<int>(loops[loop_index].source.value());
-	for (const EdgeUse &use : loops[loop_index].uses) {
-	    ON_3dPoint start;
-	    ON_3dPoint end;
-	    if (!edge_use_points(use, start, end))
+	for (size_t use_index = 0; use_index < loops[loop_index].uses.size(); ++use_index) {
+	    const EdgeUse &use = loops[loop_index].uses[use_index];
+	    CurvePair &pair = boundaries[loop_index][use_index];
+	    if (!pair.parameter || pair.discard || pair.singular != use.vertex_use) {
+		importer_.diagnose(Severity::Warning, "missing_parameter_curve",
+		    "could not construct a trim consistent with the authored manifold topology", entry);
 		return false;
-	    std::unique_ptr<ON_Curve> trim = trim_curve(use,
-		has_parameter_plane ? &parameter_plane : nullptr, start, end);
-	    if (!trim)
-		return false;
+	    }
+	    const double tolerance = std::max(importer_.tolerance(), pair.repair_tolerance);
+	    std::unique_ptr<ON_Curve> trim = std::move(pair.parameter);
 	    ON_Curve *trim_geometry = trim.get();
 	    const int trim_curve_index =
 		brep_->AddTrimCurve(trim.release());
@@ -2023,21 +2091,21 @@ SolidBuilder::add_face(EntityId id, bool same_direction,
 		ON_BrepTrim &brep_trim = brep_->NewSingularTrim(
 		    brep_->m_V[vertex_index_value], loop, iso,
 		    trim_curve_index);
-		brep_trim.m_tolerance[0] = importer_.tolerance();
-		brep_trim.m_tolerance[1] = importer_.tolerance();
+		brep_trim.m_tolerance[0] = tolerance;
+		brep_trim.m_tolerance[1] = tolerance;
 		continue;
 	    }
 	    const int edge_index_value = edge_index(use.edge);
 	    if (edge_index_value < 0)
 		return false;
 	    ON_BrepEdge &edge = brep_->m_E[edge_index_value];
-	    const int start_vertex = use.same_direction ? edge.m_vi[0] :
-		edge.m_vi[1];
-	    const bool reverse_edge = edge.m_vi[0] != start_vertex;
+	    /* A closed edge has the same vertex at both ends; its direction
+	     * must come from the edge use, not vertex identity. */
+	    const bool reverse_edge = !use.same_direction;
 	    ON_BrepTrim &brep_trim = brep_->NewTrim(edge, reverse_edge, loop,
 		trim_curve_index);
-	    brep_trim.m_tolerance[0] = importer_.tolerance();
-	    brep_trim.m_tolerance[1] = importer_.tolerance();
+	    brep_trim.m_tolerance[0] = tolerance;
+	    brep_trim.m_tolerance[1] = tolerance;
 	    const ON_Interval domain = brep_trim.ProxyCurveDomain();
 	    brep_trim.m_iso =
 		surface_geometry->IsIsoparametric(*trim_geometry, &domain);
@@ -2084,10 +2152,14 @@ SolidBuilder::build()
     if (!parameter_entity(parameters, 1, outer_shell) ||
 	    !parameter_integer(parameters, 2, orientation) ||
 	    !parameter_integer(parameters, 3, void_count) || void_count < 0 ||
-	    void_count > MAX_ENTITY_LIST_COUNT ||
-	    !add_shell(outer_shell, orientation != 0)) {
+	    void_count > MAX_ENTITY_LIST_COUNT) {
 	importer_.diagnose(Severity::Warning, "solid_parameters",
 	    "Manifold Solid B-Rep has invalid outer-shell parameters", &solid_);
+	return nullptr;
+    }
+    if (!add_shell(outer_shell, orientation != 0)) {
+	importer_.diagnose(Severity::Warning, "solid_outer_shell",
+	    "could not construct the manifold solid's outer shell", &solid_);
 	return nullptr;
     }
     size_t parameter = 4;
@@ -3069,10 +3141,41 @@ TrimmedSurfaceBuilder::plane_surface(SolidBuilder &geometry,
     Point3 y_axis = cross(model_normal, x_axis);
     if (!normalize(y_axis))
 	return nullptr;
-    const ON_Plane plane(ON_3dPoint(model_origin.data()),
+    ON_Plane plane(ON_3dPoint(model_origin.data()),
 	ON_3dVector(x_axis.data()), ON_3dVector(y_axis.data()));
     if (!plane.IsValid())
 	return nullptr;
+
+    /* Older bounded-plane exports sometimes use Ax+By+Cz+D=0.  Only
+     * accept that convention when every authored boundary supports it. */
+    if (importer_.safe_repairs()) {
+	const Point3 transformed_zero = importer_.model_point(surface_entry,
+	    {0.0, 0.0, 0.0}, geometry.solid_transform_);
+	const ON_3dPoint alternate_origin = ON_3dPoint(transformed_zero.data()) +
+	    (ON_3dPoint(transformed_zero.data()) - plane.origin);
+	const ON_Plane alternate(alternate_origin, plane.xaxis, plane.yaxis);
+	double original_error = 0.0;
+	double alternate_error = 0.0;
+	for (const auto &loop : loops)
+	    for (const CurvePair &pair : loop) {
+		if (!pair.model)
+		    return nullptr;
+		for (int i = 0; i <= BOUNDARY_VALIDATION_SEGMENTS; ++i) {
+		    const ON_3dPoint point = pair.model->PointAt(pair.model->Domain().ParameterAt(
+			static_cast<double>(i) / BOUNDARY_VALIDATION_SEGMENTS));
+		    if (!point.IsValid())
+			return nullptr;
+		    original_error = std::max(original_error, std::fabs(plane.DistanceTo(point)));
+		    alternate_error = std::max(alternate_error, std::fabs(alternate.DistanceTo(point)));
+		}
+	    }
+	if (original_error > importer_.tolerance() && alternate_error <= importer_.tolerance()) {
+	    plane = alternate;
+	    importer_.count_repair();
+	    importer_.diagnose(Severity::Information, "repaired_plane_constant",
+		"authored boundaries identify the opposite plane-constant sign", &surface_entry);
+	}
+    }
 
     double u_min = std::numeric_limits<double>::infinity();
     double u_max = -std::numeric_limits<double>::infinity();
@@ -3210,12 +3313,45 @@ collapsed_singular_parameter_curve(const ON_Surface &surface,
 }
 
 
-void
-TrimmedSurfaceBuilder::recover_parameter_curves(
-    const ON_Surface &surface, std::vector<std::vector<CurvePair> > &loops,
-    const DirectoryEntry &source)
+static bool
+place_periodic_parameter_curve(const ON_Surface &surface, ON_Curve &curve)
 {
-    if (!importer_.safe_repairs())
+    const ON_BoundingBox bounds = curve.BoundingBox();
+    if (!bounds.IsValid())
+	return false;
+    const ON_RevSurface *revolution = ON_RevSurface::Cast(&surface);
+    ON_3dVector offset(0.0, 0.0, 0.0);
+    for (int direction = 0; direction < 2; ++direction) {
+	if (!surface.IsClosed(direction))
+	    continue;
+	/* Native revolution angles evaluate periodically, unlike NURBS
+	 * extrapolation, and may safely straddle their domain seam. */
+	if (revolution && direction == (revolution->m_bTransposed ? 1 : 0))
+	    continue;
+	const ON_Interval domain = surface.Domain(direction);
+	const double period = domain.Length();
+	if (!domain.IsIncreasing())
+	    return false;
+	const double parameter_tolerance = DEGENERATE_DOMAIN_TOLERANCE *
+	    std::max(1.0, std::max(std::fabs(domain.Min()), std::fabs(domain.Max())));
+	if (bounds.m_min[direction] >= domain.Min() - parameter_tolerance &&
+	    bounds.m_max[direction] <= domain.Max() + parameter_tolerance)
+	    continue;
+	const double center = bounds.Center()[direction];
+	offset[direction] = std::floor((domain.Mid() - center) / period + 0.5) * period;
+	if (bounds.m_min[direction] + offset[direction] < domain.Min() - parameter_tolerance ||
+	    bounds.m_max[direction] + offset[direction] > domain.Max() + parameter_tolerance)
+	    return false;
+    }
+    return curve.Translate(offset) && curve.IsValid();
+}
+
+static void
+recover_parameter_curves(Importer &importer,
+    const ON_Surface &surface, std::vector<std::vector<CurvePair> > &loops,
+    const DirectoryEntry &source, std::map<EntityId, double> &relaxed_tolerances)
+{
+    if (!importer.safe_repairs())
 	return;
 
     const ON_Interval domains[2] = {
@@ -3231,11 +3367,14 @@ TrimmedSurfaceBuilder::recover_parameter_curves(
     size_t discarded_recoveries = 0;
     size_t pullback_failures = 0;
     std::string first_pullback_failure;
-    const double safe_tolerance = std::max(importer_.tolerance(),
+    const double safe_tolerance = std::max(importer.tolerance(),
 	ON_ZERO_TOLERANCE) * SAFE_TRIM_REPAIR_TOLERANCE_FACTOR;
     const double maximum_tolerance =
-	importer_.maximum_trim_repair_tolerance();
-    const double tolerance = std::min(safe_tolerance, maximum_tolerance);
+	importer.maximum_trim_repair_tolerance();
+    /* Start at source accuracy.  Starting at the full repair allowance
+     * can collapse real small features before a tighter pullback is tried. */
+    const double tolerance = std::min(std::max(importer.tolerance(),
+	ON_ZERO_TOLERANCE), maximum_tolerance);
     double maximum_relaxed_tolerance = 0.0;
     for (std::vector<CurvePair> &loop : loops) {
 	std::array<size_t, 2> periodic_seam_uses = {0, 0};
@@ -3300,7 +3439,7 @@ TrimmedSurfaceBuilder::recover_parameter_curves(
 			parameter->IsValid()) {
 		    pair.parameter = std::move(parameter);
 		    ++isoparametric_recoveries;
-		    importer_.count_repair();
+		    importer.count_repair();
 		    continue;
 		}
 	    }
@@ -3317,18 +3456,19 @@ TrimmedSurfaceBuilder::recover_parameter_curves(
 		if (pair.parameter) {
 		    pair.singular = true;
 		    ++singular_recoveries;
-		    importer_.count_repair();
+		    importer.count_repair();
 		    continue;
 		}
 		pair.discard = true;
 		++discarded_recoveries;
-		importer_.count_repair();
+		importer.count_repair();
 		continue;
 	    }
 
 	    double attempted_tolerance = tolerance;
 	    while (!pair.parameter &&
-		    failure == PullbackFailureReason::ProjectionFailed &&
+		    (failure == PullbackFailureReason::ProjectionFailed ||
+		     failure == PullbackFailureReason::SurfaceDistanceExceeded) &&
 		    attempted_tolerance < maximum_tolerance) {
 		const double next_tolerance = std::min(maximum_tolerance,
 		    attempted_tolerance * RELAXED_TRIM_TOLERANCE_STEP_FACTOR);
@@ -3337,8 +3477,16 @@ TrimmedSurfaceBuilder::recover_parameter_curves(
 		attempted_tolerance = next_tolerance;
 		failure_reason.clear();
 		pair.parameter.reset(brlcad::pullback_curve(&surface,
-		    pair.model.get(), attempted_tolerance, attempted_tolerance,
+		    pair.model.get(), attempted_tolerance, tolerance,
 		    &failure_reason, &failure));
+	    }
+	    /* Pullback returns a continuous periodic image.  Closed NURBS
+	     * surfaces do not evaluate that image periodically outside their
+	     * native domain.  Translate a whole branch when possible; crossing
+	     * a seam otherwise requires splitting the authored topology. */
+	    if (pair.parameter && !place_periodic_parameter_curve(surface, *pair.parameter)) {
+		pair.parameter.reset();
+		failure_reason = "periodic boundary requires a seam split to fit the surface domain";
 	    }
 	    if (!pair.parameter) {
 		++pullback_failures;
@@ -3346,32 +3494,30 @@ TrimmedSurfaceBuilder::recover_parameter_curves(
 		    first_pullback_failure = failure_reason;
 		continue;
 	    }
-	    if (attempted_tolerance > tolerance) {
+	    if (attempted_tolerance > safe_tolerance) {
 		pair.repair_tolerance = attempted_tolerance;
 		maximum_relaxed_tolerance = std::max(maximum_relaxed_tolerance,
 		    attempted_tolerance);
-		relaxed_tolerances_[source.id] = std::max(
-		    relaxed_tolerances_[source.id], attempted_tolerance);
+		relaxed_tolerances[source.id] = std::max(
+		    relaxed_tolerances[source.id], attempted_tolerance);
 		++relaxed_recoveries;
 	    }
 	    ++pullback_recoveries;
-	    importer_.count_repair();
+	    importer.count_repair();
 	}
-	loop.erase(std::remove_if(loop.begin(), loop.end(),
-	    [](const CurvePair &pair) { return pair.discard; }), loop.end());
     }
     if (isoparametric_recoveries > 0) {
 	std::ostringstream message;
 	message << "recovered " << isoparametric_recoveries
 	    << " missing parameter-space boundaries from base-surface isocurves";
-	importer_.diagnose(Severity::Information,
+	importer.diagnose(Severity::Information,
 	    "recovered_isoparametric_boundary", message.str(), &source);
     }
     if (pullback_recoveries > 0) {
 	std::ostringstream message;
 	message << "recovered " << pullback_recoveries
 	    << " missing parameter-space boundaries by bounded pullback";
-	importer_.diagnose(Severity::Information,
+	importer.diagnose(Severity::Information,
 	    "recovered_parameter_curve", message.str(), &source);
     }
     if (relaxed_recoveries > 0) {
@@ -3379,14 +3525,14 @@ TrimmedSurfaceBuilder::recover_parameter_curves(
 	message << "recovered " << relaxed_recoveries
 	    << " boundary curves using an explicitly relaxed tolerance up to "
 	    << maximum_relaxed_tolerance << " mm";
-	importer_.diagnose(Severity::Warning, "relaxed_parameter_curve",
+	importer.diagnose(Severity::Warning, "relaxed_parameter_curve",
 	    message.str(), &source);
     }
     if (singular_recoveries > 0) {
 	std::ostringstream message;
 	message << "recovered " << singular_recoveries
 	    << " collapsed model-space boundaries as singular trims";
-	importer_.diagnose(Severity::Information,
+	importer.diagnose(Severity::Information,
 	    "recovered_singular_boundary", message.str(), &source);
     }
     if (discarded_recoveries > 0) {
@@ -3394,7 +3540,7 @@ TrimmedSurfaceBuilder::recover_parameter_curves(
 	message << "discarded " << discarded_recoveries
 	    << " model-space boundary segments whose validated pullbacks "
 	    << "collapsed within the safe repair tolerance";
-	importer_.diagnose(Severity::Information,
+	importer.diagnose(Severity::Information,
 	    "discarded_collapsed_boundary", message.str(), &source);
     }
     if (pullback_failures > 0) {
@@ -3403,7 +3549,7 @@ TrimmedSurfaceBuilder::recover_parameter_curves(
 	    << " parameter-space boundaries";
 	if (!first_pullback_failure.empty())
 	    message << "; first failure: " << first_pullback_failure;
-	importer_.diagnose(Severity::Warning,
+	importer.diagnose(Severity::Warning,
 	    "parameter_curve_pullback", message.str(), &source);
     }
 }
@@ -3413,8 +3559,11 @@ TrimmedSurfaceBuilder::add_face(const DirectoryEntry &entry)
 {
     const ParameterList *parameters = importer_.document().parameters(entry.id);
     EntityId surface_id;
-    SolidBuilder geometry(importer_, entry);
+    SolidBuilder geometry(importer_, entry, entry.type == 108 ?
+	Matrix() : importer_.transform(entry.transform));
     std::vector<EntityId> boundaries;
+    std::vector<EntityId> plane_sources;
+    bool natural_outer_boundary = false;
     if (entry.type == 144) {
 	int outer_boundary = 0;
 	int inner_count = 0;
@@ -3422,15 +3571,17 @@ TrimmedSurfaceBuilder::add_face(const DirectoryEntry &entry)
 	if (!parameter_entity(parameters, 1, surface_id) ||
 		!parameter_integer(parameters, 2, outer_boundary) ||
 		!parameter_integer(parameters, 3, inner_count) ||
-		outer_boundary != 1 || inner_count < 0 ||
+		(outer_boundary != 0 && outer_boundary != 1) || inner_count < 0 ||
 		inner_count > MAX_ENTITY_LIST_COUNT ||
-		!parameter_entity(parameters, 4, outer_id)) {
+		(outer_boundary == 1 && !parameter_entity(parameters, 4, outer_id))) {
 	    importer_.diagnose(Severity::Warning, "trimmed_surface_parameters",
-		"direct import requires a Trimmed Surface with an explicit outer boundary",
+		"Trimmed Surface has invalid boundary parameters",
 		&entry);
 	    return false;
 	}
-	boundaries.push_back(outer_id);
+	natural_outer_boundary = outer_boundary == 0;
+	if (!natural_outer_boundary)
+	    boundaries.push_back(outer_id);
 	for (int i = 0; i < inner_count; ++i) {
 	    EntityId inner_id;
 	    if (!parameter_entity(parameters, static_cast<size_t>(i + 5),
@@ -3455,6 +3606,19 @@ TrimmedSurfaceBuilder::add_face(const DirectoryEntry &entry)
 		return false;
 	    boundaries.push_back(boundary_id);
 	}
+    } else if (entry.type == 108 && entry.form == 1) {
+	EntityId boundary;
+	if (!parameter_entity(parameters, 5, boundary))
+	    return false;
+	surface_id = entry.id;
+	boundaries.push_back(boundary);
+	plane_sources.push_back(entry.id);
+	for (EntityId hole : importer_.plane_holes(entry.id)) {
+	    if (!parameter_entity(importer_.document().parameters(hole), 5, boundary))
+		return false;
+	    boundaries.push_back(boundary);
+	    plane_sources.push_back(hole);
+	}
     } else {
 	importer_.diagnose(Severity::Warning, "bounded_surface_type",
 	    "direct surface-boundary import received an unsupported entity",
@@ -3469,6 +3633,11 @@ TrimmedSurfaceBuilder::add_face(const DirectoryEntry &entry)
 	return false;
     }
     std::unique_ptr<ON_Surface> surface;
+    if (natural_outer_boundary && surface_entry->type == 108) {
+	importer_.diagnose(Severity::Warning, "unbounded_natural_boundary",
+	    "an infinite plane has no finite natural outer boundary", &entry);
+	return false;
+    }
     if (surface_entry->type == 128) {
 	surface = geometry.nurbs_surface(*surface_entry);
     } else if (surface_entry->type == 118 || surface_entry->type == 120 ||
@@ -3484,6 +3653,24 @@ TrimmedSurfaceBuilder::add_face(const DirectoryEntry &entry)
 	resolve_revolution_parameters(geometry, *surface, boundaries);
     std::vector<std::vector<CurvePair> > loops(boundaries.size());
     for (size_t i = 0; i < boundaries.size(); ++i) {
+	if (entry.type == 108) {
+	    std::vector<EntityId> members;
+	    std::set<EntityId> active;
+	    if (!append_curve_entities(boundaries[i], members, active))
+		return false;
+	    for (EntityId member : members) {
+		const DirectoryEntry *curve_entry = importer_.document().entity(member);
+		CurvePair pair;
+		if (!curve_entry)
+		    return false;
+		pair.model = geometry.curve(*curve_entry, true,
+		    importer_.transform(importer_.document().entity(plane_sources[i])->transform));
+		if (!pair.model)
+		    return false;
+		loops[i].push_back(std::move(pair));
+	    }
+	    continue;
+	}
 	const bool valid = entry.type == 144 ?
 	    curve_pairs(geometry, boundaries[i], surface.get(), loops[i]) :
 	    bounded_curve_pairs(geometry, boundaries[i], surface_id, loops[i]);
@@ -3498,7 +3685,10 @@ TrimmedSurfaceBuilder::add_face(const DirectoryEntry &entry)
 	return false;
     }
 
-    recover_parameter_curves(*surface, loops, entry);
+    recover_parameter_curves(importer_, *surface, loops, entry, relaxed_tolerances_);
+    for (std::vector<CurvePair> &loop : loops)
+	loop.erase(std::remove_if(loop.begin(), loop.end(),
+	    [](const CurvePair &pair) { return pair.discard; }), loop.end());
     for (const std::vector<CurvePair> &loop : loops)
 	for (const CurvePair &pair : loop)
 	    if (!pair.parameter) {
@@ -3509,11 +3699,14 @@ TrimmedSurfaceBuilder::add_face(const DirectoryEntry &entry)
 		return false;
 	    }
 
-    const int surface_index = brep_->AddSurface(surface.release());
-    ON_BrepFace &face = brep_->NewFace(surface_index);
-    face.m_face_user.i = static_cast<int>(entry.id.value());
+    ON_BrepFace *face = natural_outer_boundary ? brep_->NewFace(*surface) :
+	&brep_->NewFace(brep_->AddSurface(surface.release()));
+    if (!face)
+	return false;
+    face->m_face_user.i = static_cast<int>(entry.id.value());
     for (size_t i = 0; i < loops.size(); ++i)
-	if (!add_loop(face, i == 0 ? ON_BrepLoop::outer : ON_BrepLoop::inner,
+	if (!add_loop(*face, !natural_outer_boundary && i == 0 ?
+		ON_BrepLoop::outer : ON_BrepLoop::inner,
 		loops[i], entry))
 	    return false;
     return true;
@@ -3755,6 +3948,38 @@ Importer::write_plate_mode_attributes(const std::string &name,
 }
 
 bool
+Importer::write_repair_attributes(const std::string &name,
+    const std::map<EntityId, double> &relaxed_tolerances,
+    const DirectoryEntry &entry)
+{
+    if (relaxed_tolerances.empty())
+	return true;
+    double maximum_tolerance = 0.0;
+    for (const auto &repair : relaxed_tolerances)
+	maximum_tolerance = std::max(maximum_tolerance, repair.second);
+    std::ostringstream maximum;
+    maximum << std::setprecision(std::numeric_limits<double>::max_digits10)
+	<< maximum_tolerance;
+    std::ostringstream nominal;
+    nominal << std::setprecision(std::numeric_limits<double>::max_digits10)
+	<< tolerance_;
+    if (db5_update_attribute(name.c_str(), "iges.tolerance_status", "relaxed", wdbp_->dbip) < 0 ||
+	db5_update_attribute(name.c_str(), "iges.maximum_repair_tolerance_mm",
+	    maximum.str().c_str(), wdbp_->dbip) < 0 ||
+	db5_update_attribute(name.c_str(), "iges.nominal_tolerance_mm",
+	    nominal.str().c_str(), wdbp_->dbip) < 0 ||
+	db5_update_attribute(name.c_str(), "iges.tolerance_basis",
+	    source_resolution_declared_ ? "source_resolution" : "import_default", wdbp_->dbip) < 0) {
+	diagnose(Severity::Error, "repair_attributes",
+	    "could not record the relaxed repair tolerance", &entry);
+	return false;
+    }
+    for (const auto &repair : relaxed_tolerances)
+	count_relaxed_face(repair.second);
+    return true;
+}
+
+bool
 Importer::write_trimmed_component(
     const std::vector<const DirectoryEntry *> &faces)
 {
@@ -3790,35 +4015,25 @@ Importer::write_trimmed_component(
 	naked_edges.c_str(), wdbp_->dbip);
     db5_update_attribute(name.c_str(), "iges.topology",
 	"direct-opennurbs-component", wdbp_->dbip);
-    if (!relaxed_tolerances.empty()) {
-	double maximum_tolerance = 0.0;
-	for (const auto &repair : relaxed_tolerances) {
-	    maximum_tolerance = std::max(maximum_tolerance, repair.second);
-	    count_relaxed_face(repair.second);
-	}
-	std::ostringstream value;
-	value << std::setprecision(std::numeric_limits<double>::max_digits10)
-	    << maximum_tolerance;
-	db5_update_attribute(name.c_str(), "iges.tolerance_status", "relaxed",
-	    wdbp_->dbip);
-	db5_update_attribute(name.c_str(), "iges.maximum_repair_tolerance_mm",
-	    value.str().c_str(), wdbp_->dbip);
-	value.str(std::string());
-	value.clear();
-	value << std::setprecision(std::numeric_limits<double>::max_digits10)
-	    << tolerance_;
-	db5_update_attribute(name.c_str(), "iges.nominal_tolerance_mm",
-	    value.str().c_str(), wdbp_->dbip);
-	db5_update_attribute(name.c_str(), "iges.tolerance_basis",
-	    source_resolution_declared_ ? "source_resolution" : "import_default",
-	    wdbp_->dbip);
-    }
+    if (!write_repair_attributes(name, relaxed_tolerances, source))
+	return false;
     for (const DirectoryEntry *face : faces)
 	objects_[face->id] = name;
     root_objects_.insert(name);
     ++result_.statistics.breps_written;
     ++result_.statistics.components_written;
     return true;
+}
+
+void
+Importer::discard_failed_repairs(size_t first_diagnostic, size_t repair_count)
+{
+    result_.statistics.repairs = repair_count;
+    result_.diagnostics.erase(std::remove_if(
+	result_.diagnostics.begin() + static_cast<std::ptrdiff_t>(first_diagnostic),
+	result_.diagnostics.end(), [](const ImportDiagnostic &diagnostic) {
+	    return diagnostic.severity == Severity::Information;
+	}), result_.diagnostics.end());
 }
 
 void
@@ -3840,13 +4055,7 @@ Importer::import_trimmed_components(
 		diagnostic.severity == Severity::Fatal;
 	});
     if (faces.size() == 1 || write_error) {
-	result_.statistics.repairs = repair_count;
-	result_.diagnostics.erase(std::remove_if(
-	    result_.diagnostics.begin() +
-		static_cast<std::ptrdiff_t>(diagnostic_count),
-	    result_.diagnostics.end(), [](const ImportDiagnostic &diagnostic) {
-		return diagnostic.severity == Severity::Information;
-	    }), result_.diagnostics.end());
+	discard_failed_repairs(diagnostic_count, repair_count);
 	result_.statistics.omitted += faces.size();
 	return;
     }
@@ -3929,8 +4138,16 @@ Importer::container_members(const DirectoryEntry &entry,
     const ParameterList *parameters = document_.parameters(entry.id);
     int count = 0;
     size_t first_member = 0;
-    if (entry.type == 402 &&
-	    (entry.form == 1 || entry.form == 7 || entry.form == 9)) {
+    if (entry.type == 402 && entry.form == 9) {
+	int parent_count = 0;
+	if (!parameter_integer(parameters, 1, parent_count) || parent_count != 1 ||
+		!parameter_integer(parameters, 2, count) || count < 0 ||
+		count >= MAX_ENTITY_LIST_COUNT)
+	    return false;
+	++count;
+	first_member = 3;
+    } else if (entry.type == 402 &&
+	    (entry.form == 1 || entry.form == 7)) {
 	if (!parameter_integer(parameters, 1, count))
 	    return false;
 	first_member = 2;
@@ -4522,19 +4739,47 @@ Importer::run()
 	    referenced_surfaces.insert(surface);
     }
     std::vector<const DirectoryEntry *> standalone_surfaces;
+    size_t bounded_plane_count = 0;
+    for (const DirectoryEntry *association : document_.find(402)) {
+	std::vector<EntityId> members;
+	if (association->form != 9 || !container_members(*association, members) || members.empty())
+	    continue;
+	const DirectoryEntry *parent = document_.entity(members.front());
+	if (!parent || parent->type != 108 || parent->form != 1)
+	    continue;
+	for (size_t i = 1; i < members.size(); ++i) {
+	    const DirectoryEntry *hole = document_.entity(members[i]);
+	    if (hole && hole->type == 108 && hole->form == -1) {
+		plane_holes_[parent->id].push_back(hole->id);
+		referenced_surfaces.insert(hole->id);
+	    }
+	}
+    }
     for (const DirectoryEntry &entry : document_.entities())
 	if (is_surface_entity(entry.type) &&
-		referenced_surfaces.find(entry.id) == referenced_surfaces.end())
-	    standalone_surfaces.push_back(&entry);
+		referenced_surfaces.find(entry.id) == referenced_surfaces.end()) {
+	    EntityId boundary;
+	    if (entry.type == 108 && entry.form == 1 &&
+		    parameter_entity(document_.parameters(entry.id), 5, boundary)) {
+		bounded_faces.push_back(&entry);
+		++bounded_plane_count;
+	    } else {
+		standalone_surfaces.push_back(&entry);
+	    }
+	}
 
     result_.statistics.solids_seen = solids.size();
     result_.statistics.trimmed_surfaces_seen = trimmed_surfaces.size();
     result_.statistics.bounded_surfaces_seen = bounded_surfaces.size();
-    result_.statistics.standalone_surfaces_seen = standalone_surfaces.size();
+    result_.statistics.standalone_surfaces_seen =
+	standalone_surfaces.size() + bounded_plane_count;
     for (const DirectoryEntry *solid : solids) {
+	const size_t diagnostic_count = result_.diagnostics.size();
+	const size_t repair_count = result_.statistics.repairs;
 	SolidBuilder builder(*this, *solid);
 	std::unique_ptr<ON_Brep> brep = builder.build();
 	if (!brep) {
+	    discard_failed_repairs(diagnostic_count, repair_count);
 	    ++result_.statistics.omitted;
 	    continue;
 	}
@@ -4553,6 +4798,19 @@ Importer::run()
 	if (!write_entity_color_attribute(name, *solid)) {
 	    ++result_.statistics.omitted;
 	    continue;
+	}
+	if (!builder.relaxed_tolerances().empty()) {
+	    std::vector<const DirectoryEntry *> faces;
+	    for (int i = 0; i < brep->m_F.Count(); ++i) {
+		const DirectoryEntry *face = document_.entity(EntityId(brep->m_F[i].m_face_user.i));
+		if (face)
+		    faces.push_back(face);
+	    }
+	    if (!write_face_metadata(name, *brep, faces, builder.relaxed_tolerances()) ||
+		    !write_repair_attributes(name, builder.relaxed_tolerances(), *solid)) {
+		++result_.statistics.omitted;
+		continue;
+	    }
 	}
 	db5_update_attribute(name.c_str(), "iges.topology",
 	    "direct-opennurbs", wdbp_->dbip);
@@ -4584,7 +4842,7 @@ Importer::run()
 	for (EntityId member : members) {
 	    const DirectoryEntry *member_entry = document_.entity(member);
 	    if (member_entry &&
-		    (member_entry->type == 143 || member_entry->type == 144))
+		    (member_entry->type == 108 || member_entry->type == 143 || member_entry->type == 144))
 		owners[member].push_back(entry.id);
 	}
     }
@@ -4785,7 +5043,8 @@ iges_import_breps(const char *path, struct rt_wdb *wdbp, int exact,
 	    "omitted %zu source geometry entities\n",
 	    result.statistics.breps_written, result.statistics.groups_written,
 	    result.statistics.entities_read, result.statistics.omitted);
-    if (report_path && report_path[0] != '\0' && direct_entities_seen &&
+    if (report_path && report_path[0] != '\0' &&
+	(direct_entities_seen || !document.valid()) &&
 	!brlcad::iges::write_brep_import_report(report_path, document, options,
 	    result)) {
 	bu_log("IGES: unable to write import report %s\n", report_path);

@@ -27,7 +27,10 @@ convert IGES solid model entities to their BRL-CAD equivalents. Type 186
 manifold topology is constructed directly in OpenNURBS. Type 143 bounded and
 Type 144 trimmed surfaces are constructed as independent OpenNURBS faces and
 conservatively stitched into shared manifold topology when their boundary
-curves agree within the file tolerance. Most CSG conversions are exact; solids
+curves agree within the file tolerance. Trimmed surfaces may use the finite
+natural outer boundary of their base surface. Legacy type 108 bounded planes
+and their type 402 single-parent hole associations are also supported.
+Most CSG conversions are exact; solids
 of revolution are approximated by a series of BRL-CAD cones and solids of
 linear extrusion are approximated by polysolids. BREP objects are written as
 native BRL-CAD BRep objects by default; *-m* and *-p* select polygonal
@@ -38,6 +41,14 @@ remain in the authored parameter space. Boundaries at surface poles may have
 parameter-space segments without corresponding model-space edges. Safe repair
 recognizes rounded poles and can match differently segmented boundaries using
 bounded geometric comparison while retaining the original model curves.
+Closed manifold edges retain their authored use orientation. Missing optional
+manifold parameter curves can be reconstructed from model-space boundaries in
+safe repair mode, starting at the source accuracy to preserve small features.
+Recovered periodic trims are placed inside closed NURBS surface domains;
+boundaries requiring unsupported seam splits are rejected.
+For legacy bounded planes, safe repair can resolve an opposite plane-constant
+sign when all sampled boundary points support that interpretation within the
+nominal tolerance; the repair is reported without moving the boundary curves.
 
 Default imports may be partial. The conversion summary counts omitted source
 geometry entities, and *--report* identifies their failures. Use *--strict*

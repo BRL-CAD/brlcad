@@ -36,6 +36,7 @@ struct Entity {
     int form = 0;
     std::string label;
     std::string parameters;
+    int transform = 0;
 };
 
 std::string
@@ -67,7 +68,7 @@ directory_first(const Entity &entity, int parameter_record, int sequence)
     data += field(entity.type == 110 ? 2 : 0); /* dashed test line */
     data += field(0); /* level */
     data += field(0); /* view */
-    data += field(0); /* transform */
+    data += field(entity.transform);
     data += field(0); /* label associativity */
     data += field(0); /* status */
     return record(data, 'D', sequence);
@@ -348,8 +349,13 @@ struct ImportedFace {
     bool written = false;
     bool valid = false;
     int edges = 0;
+    int loops = 0;
+    int closed_edges = 0;
+    int reversed_closed_trims = 0;
+    bool solid = false;
     int singular_trims = 0;
     double maximum_parameter_gap = 0.0;
+    double maximum_edge_tolerance = 0.0;
     ON_3dPoint surface_sample;
 };
 
@@ -383,6 +389,18 @@ run_surface_import(const brlcad::iges::Document &document,
 		if (brep && brep->brep) {
 		    face.valid = brep->brep->IsValid();
 		    face.edges = brep->brep->m_E.Count();
+		    face.loops = brep->brep->m_L.Count();
+		    face.solid = brep->brep->IsSolid();
+		    for (int i = 0; i < brep->brep->m_E.Count(); ++i) {
+			const ON_BrepEdge &edge = brep->brep->m_E[i];
+			face.maximum_edge_tolerance = std::max(face.maximum_edge_tolerance,
+			    edge.m_tolerance);
+			if (edge.m_vi[0] != edge.m_vi[1])
+			    continue;
+			++face.closed_edges;
+			for (int j = 0; j < edge.m_ti.Count(); ++j)
+			    face.reversed_closed_trims += brep->brep->m_T[edge.m_ti[j]].m_bRev3d;
+		    }
 		    for (int i = 0; i < brep->brep->m_L.Count(); ++i) {
 			const ON_BrepLoop &loop = brep->brep->m_L[i];
 			for (int j = 0; j < loop.m_ti.Count(); ++j) {
@@ -699,7 +717,156 @@ test_revolution_parameters()
 	options, result, face, nullptr) && result.success && face.valid &&
 	face.surface_sample.DistanceTo(arc_point) < ON_ZERO_TOLERANCE,
 	"circular generatrix lost its original angular domain") && passed;
+
+    entities[1] = {100, 0, "ARC", "100,0,0,0,0.0254,0,0,0.0254;", 7};
+    entities.push_back({124, 0, "PLACE", "124,1,0,0,1000,0,1,0,2000,0,0,1,3;"});
+    const auto placed_arc = brlcad::iges::Document::parse_buffer(sample(entities,
+	"small circular generatrix with a placement transform"));
+    const double placed_angle = SURFACE_SAMPLE_U * ON_PI / 2.0;
+    const double placed_x = 1000.0 + 0.0254 * std::cos(placed_angle);
+    const double placed_y = 2000.0 + 0.0254 * std::sin(placed_angle);
+    const ON_3dPoint placed_point(placed_x * std::cos(rotation) - placed_y * std::sin(rotation),
+	placed_x * std::sin(rotation) + placed_y * std::cos(rotation), 3.0);
+    passed = expect(placed_arc.valid() && run_surface_import(placed_arc,
+	options, result, face, nullptr) && result.success && face.valid &&
+	face.surface_sample.DistanceTo(placed_point) < ON_ZERO_TOLERANCE,
+	"transformed small circular generatrix was not preserved") && passed;
+
+    entities[3].parameters = "124,2,0,0,1000,0,1,0,2000,0,0,1,3;";
+    const auto stretched_arc = brlcad::iges::Document::parse_buffer(sample(entities,
+	"nonuniform transform must not approximate an ellipse by a circle"));
+    passed = expect(run_surface_import(stretched_arc, options, result, face, nullptr) &&
+	!result.success && !face.written && has_diagnostic(result, "revolution_arc_parameters"),
+	"nonuniformly transformed generatrix was silently approximated") && passed;
     return passed;
+}
+
+bool
+test_natural_boundary()
+{
+    std::vector<Entity> entities = {
+	{128, 0, "SURFACE",
+	    "128,1,1,1,1,0,0,1,0,0,0,0,1,1,0,0,1,1,1,1,1,1,"
+	    "0,0,0,10,0,0,0,10,0,10,10,0,0,1,0,1;"},
+	{144, 0, "FACE", "144,1,0,0,0;"},
+	{100, 0, "PARAM", "100,0,0.5,0.5,0.6,0.5,0.6,0.5;"},
+	{100, 0, "MODEL", "100,0,5,5,6,5,6,5;"},
+	{142, 0, "HOLE", "142,1,1,5,7,1;"}
+    };
+    brlcad::iges::ImportOptions options;
+    options.exact = true;
+    brlcad::iges::BrepImportResult result;
+    ImportedFace face;
+    const auto natural = brlcad::iges::Document::parse_buffer(sample(entities,
+	"trimmed surface with its natural outer boundary"));
+    bool passed = expect(natural.valid() && run_surface_import(natural, options,
+	result, face, nullptr) && result.success && face.valid && face.edges == 4 &&
+	face.loops == 1 && result.statistics.omitted == 0,
+	"natural outer surface boundary was not imported");
+    entities[1].parameters = "144,1,0,1,0,9;";
+    const auto hole = brlcad::iges::Document::parse_buffer(sample(entities,
+	"natural outer boundary with an explicit inner loop"));
+    return expect(hole.valid() && run_surface_import(hole, options,
+	result, face, nullptr) && result.success && face.valid && face.edges == 5 &&
+	face.loops == 2 && result.statistics.omitted == 0,
+	"natural outer boundary lost its inner loop") && passed;
+}
+
+bool
+test_bounded_plane()
+{
+    std::vector<Entity> entities = {
+	{108, 1, "FACE", "108,0,0,1,1,5,0,0,1,1;"},
+	{108, -1, "INNER", "108,0,0,1,1,7,0,0,1,1;"},
+	{100, 0, "OUTER", "100,1,0,0,2,0,2,0;"},
+	{100, 0, "HOLE", "100,1,0,0,1,0,1,0;"},
+	{402, 9, "PARENT", "402,1,1,1,3;"}
+    };
+    brlcad::iges::ImportOptions options;
+    options.exact = true;
+    brlcad::iges::BrepImportResult result;
+    ImportedFace face;
+    const auto annulus = brlcad::iges::Document::parse_buffer(sample(entities,
+	"bounded plane with a single-parent hole association"));
+    bool passed = expect(annulus.valid() && run_surface_import(annulus, options,
+	result, face, nullptr) && result.success && face.valid && face.loops == 2 &&
+	face.closed_edges == 2 && result.statistics.omitted == 0 &&
+	result.statistics.repairs == 0 && NEAR_EQUAL(face.surface_sample.z, 1.0, SMALL_FASTF),
+	"bounded plane or its associated hole was not preserved");
+
+    entities[0].parameters = "108,0,0,1,-1,5,0,0,1,1;";
+    const auto opposite_constant = brlcad::iges::Document::parse_buffer(sample(entities,
+	"legacy plane constant uses the opposite sign"));
+    options.exact = false;
+    passed = expect(run_surface_import(opposite_constant, options, result, face, nullptr) &&
+	result.success && face.valid && face.loops == 2 &&
+	has_diagnostic(result, "repaired_plane_constant") &&
+	NEAR_EQUAL(face.surface_sample.z, 1.0, SMALL_FASTF),
+	"boundary-supported plane constant repair failed") && passed;
+    options.exact = true;
+    return expect(run_surface_import(opposite_constant, options, result, face, nullptr) &&
+	!result.success && !face.written && result.statistics.repairs == 0,
+	"exact mode repaired an inconsistent bounded plane") && passed;
+}
+
+bool
+test_small_boundary_pullback()
+{
+    const std::vector<Entity> entities = {
+	{128, 0, "SURFACE",
+	    "128,1,1,1,1,0,0,1,0,0,0,0,1,1,0,0,1,1,1,1,1,1,"
+	    "0,0,0,1,0,0,0,1,0,1,1,0,0,1,0,1;"},
+	{110, 0, "BOTTOM", "110,0.5,0.5,0,0.50005,0.5,0;"},
+	{110, 0, "RIGHT", "110,0.50005,0.5,0,0.50005,0.50005,0;"},
+	{110, 0, "TOP", "110,0.50005,0.50005,0,0.5,0.50005,0;"},
+	{110, 0, "LEFT", "110,0.5,0.50005,0,0.5,0.5,0;"},
+	{141, 0, "BOUNDARY", "141,0,0,1,4,3,1,0,5,1,0,7,1,0,9,1,0;"},
+	{143, 0, "FACE", "143,0,1,1,11;"}
+    };
+    const auto document = brlcad::iges::Document::parse_buffer(sample(entities,
+	"small features must survive missing parameter-curve recovery"));
+    brlcad::iges::ImportOptions options;
+    brlcad::iges::BrepImportResult result;
+    ImportedFace face;
+    return expect(document.valid() && run_surface_import(document, options,
+	result, face, nullptr) && result.success && face.valid && face.edges == 4 &&
+	!has_diagnostic(result, "discarded_collapsed_boundary"),
+	"pullback repair collapsed real small boundary segments");
+}
+
+bool
+test_periodic_boundary_pullback()
+{
+    const std::vector<Entity> entities = {
+	{128, 0, "SURFACE",
+	    "128,1,8,1,2,0,1,0,0,0,0,0,1,1,"
+	    "-3.141592653589793,-3.141592653589793,-3.141592653589793,"
+	    "-1.5707963267948966,-1.5707963267948966,0,0,"
+	    "1.5707963267948966,1.5707963267948966,"
+	    "3.141592653589793,3.141592653589793,3.141592653589793,"
+	    "1,1,0.7071067811865476,0.7071067811865476,"
+	    "1,1,0.7071067811865476,0.7071067811865476,"
+	    "1,1,0.7071067811865476,0.7071067811865476,"
+	    "1,1,0.7071067811865476,0.7071067811865476,1,1,"
+	    "1,0,0,1,0,1,1,1,0,1,1,1,0,1,0,0,1,1,-1,1,0,-1,1,1,"
+	    "-1,0,0,-1,0,1,-1,-1,0,-1,-1,1,0,-1,0,0,-1,1,1,-1,0,1,-1,1,"
+	    "1,0,0,1,0,1,0,1,-3.141592653589793,3.141592653589793;"},
+	{100, 0, "BOTTOM", "100,0,0,0,-1,0,1,0;"},
+	{110, 0, "RIGHT", "110,1,0,0,1,0,1;"},
+	{100, 0, "TOP", "100,1,0,0,-1,0,1,0;"},
+	{110, 0, "LEFT", "110,-1,0,1,-1,0,0;"},
+	{141, 0, "BOUNDARY", "141,0,0,1,4,3,1,0,5,1,0,7,2,0,9,1,0;"},
+	{143, 0, "FACE", "143,0,1,1,11;"}
+    };
+    const auto document = brlcad::iges::Document::parse_buffer(sample(entities,
+	"periodic pullbacks must evaluate inside the native NURBS domain"));
+    brlcad::iges::ImportOptions options;
+    brlcad::iges::BrepImportResult result;
+    ImportedFace face;
+    return expect(document.valid() && run_surface_import(document, options,
+	result, face, nullptr) && result.success && face.valid && face.edges == 4 &&
+	face.maximum_edge_tolerance <= 1.0e-6,
+	"periodic pullback produced a trim outside the native surface domain");
 }
 
 bool
@@ -749,6 +916,77 @@ test_relative_revolution_parameters()
 }
 
 bool
+test_manifold_closed_edges()
+{
+    std::vector<Entity> entities = {
+	{110, 0, "AXIS", "110,0,0,0,0,0,1;"},
+	{110, 0, "LINE", "110,1,0,0,1,0,1;"},
+	{120, 0, "SIDE", "120,1,3,0,6.283185307179586;"},
+	{128, 0, "BOTTOM", "128,1,1,1,1,0,0,1,0,0,-1,-1,1,1,-1,-1,1,1,1,1,1,1,"
+	    "-1,-1,0,1,-1,0,-1,1,0,1,1,0,-1,1,-1,1;"},
+	{128, 0, "TOP", "128,1,1,1,1,0,0,1,0,0,-1,-1,1,1,-1,-1,1,1,1,1,1,1,"
+	    "-1,-1,1,1,-1,1,-1,1,1,1,1,1,-1,1,-1,1;"},
+	{502, 1, "VERTICES", "502,2,1,0,0,1,0,1;"},
+	{100, 0, "BCIRCLE", "100,0,0,0,1,0,1,0;"},
+	{100, 0, "TCIRCLE", "100,1,0,0,1,0,1,0;"},
+	{110, 0, "SEAM", "110,1,0,0,1,0,1;"},
+	{504, 1, "EDGES", "504,3,13,11,1,11,1,15,11,2,11,2,17,11,1,11,2;"},
+	{110, 0, "PSEAM0", "110,0,0,0,1,0,0;"},
+	{110, 0, "PTOP", "110,1,0,0,1,6.283185307179586,0;"},
+	{110, 0, "PSEAM1", "110,1,6.283185307179586,0,0,6.283185307179586,0;"},
+	{110, 0, "PBOTTOM", "110,0,6.283185307179586,0,0,0,0;"},
+	{508, 1, "SIDELOOP", "508,4,0,19,3,1,1,1,21,0,19,2,1,1,1,23,"
+	    "0,19,3,0,1,1,25,0,19,1,0,1,1,27;"},
+	{508, 1, "BOTLOOP", "508,1,0,19,1,1,1,0,13;"},
+	{508, 1, "TOPLOOP", "508,1,0,19,2,1,1,0,13;"},
+	{510, 1, "SIDEFACE", "510,5,1,1,29;"},
+	{510, 1, "BOTFACE", "510,7,1,1,31;"},
+	{510, 1, "TOPFACE", "510,9,1,1,33;"},
+	{514, 1, "SHELL", "514,3,35,0,37,0,39,1;"},
+	{186, 0, "FACE", "186,41,1,0;"}
+    };
+    brlcad::iges::ImportOptions options;
+    options.exact = true;
+    brlcad::iges::BrepImportResult result;
+    ImportedFace face;
+    const auto cylinder = brlcad::iges::Document::parse_buffer(sample(entities,
+	"manifold cylinder with closed circle edges"));
+    bool passed = expect(cylinder.valid() && run_surface_import(cylinder, options,
+	result, face, nullptr) && result.success && face.valid && face.solid &&
+	face.edges == 3 && face.closed_edges == 2 && face.reversed_closed_trims == 1,
+	"manifold import lost a closed edge or its use orientation");
+
+    entities[14].parameters = "508,4,0,19,3,1,0,0,19,2,1,0,0,19,3,0,0,0,19,1,0,0;";
+    entities[15].parameters = "508,1,0,19,1,1,0;";
+    entities[16].parameters = "508,1,0,19,2,1,0;";
+    const auto no_trims = brlcad::iges::Document::parse_buffer(sample(entities,
+	"manifold cylinder without optional parameter curves"));
+    options.exact = false;
+    passed = expect(no_trims.valid() && run_surface_import(no_trims, options,
+	result, face, nullptr) && result.success && face.valid && face.solid &&
+	face.edges == 3 && has_diagnostic(result, "recovered_parameter_curve"),
+	"missing manifold trims were not recovered from model geometry") && passed;
+    options.exact = true;
+
+    passed = expect(run_surface_import(no_trims, options, result, face, nullptr) &&
+	!result.success && !face.written,
+	"exact import recovered missing non-planar manifold trims") && passed;
+
+    entities[3] = {190, 0, "BOTTOM", "190,45,49;"};
+    entities[4] = {190, 0, "TOP", "190,47,49;"};
+    entities.push_back({116, 0, "BORIGIN", "116,0,0,0;"});
+    entities.push_back({116, 0, "TORIGIN", "116,0,0,1;"});
+    entities.push_back({123, 0, "NORMAL", "123,0,0,1;"});
+    const auto plane_caps = brlcad::iges::Document::parse_buffer(sample(entities,
+	"closed circular edges bound analytic planar caps"));
+    options.exact = false;
+    return expect(plane_caps.valid() && run_surface_import(plane_caps, options,
+	result, face, nullptr) && result.success && face.valid && face.solid &&
+	face.edges == 3 && face.closed_edges == 2,
+	"analytic plane caps lost their complete circular boundaries") && passed;
+}
+
+bool
 test_degenerate_revolution()
 {
     const std::vector<Entity> entities = {
@@ -783,7 +1021,12 @@ main(int argc, char **argv)
     passed = test_singular_boundary() && passed;
     passed = test_trim_loop_tolerance() && passed;
     passed = test_revolution_parameters() && passed;
+    passed = test_natural_boundary() && passed;
+    passed = test_bounded_plane() && passed;
+    passed = test_small_boundary_pullback() && passed;
+    passed = test_periodic_boundary_pullback() && passed;
     passed = test_relative_revolution_parameters() && passed;
+    passed = test_manifold_closed_edges() && passed;
     passed = test_degenerate_revolution() && passed;
     return passed ? 0 : 1;
 }
