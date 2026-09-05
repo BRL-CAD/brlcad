@@ -9,6 +9,8 @@
 
 #include "common.h"
 
+#include "vmath.h"
+
 #include "../iges_document.h"
 
 #include "bu/app.h"
@@ -154,7 +156,7 @@ test_valid_document()
 
     double coordinate = 0.0;
     std::string text;
-    return expect(parameters->values[1].real(coordinate) && coordinate == 125.0,
+    return expect(parameters->values[1].real(coordinate) && EQUAL(coordinate, 125.0),
 	"D exponent was not parsed") &&
 	expect(parameters->values[2].string(text) && text == "abc,;xyz",
 	    "Hollerith string containing delimiters was not parsed");
