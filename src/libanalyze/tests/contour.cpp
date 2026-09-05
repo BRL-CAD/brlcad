@@ -24,6 +24,7 @@
 
 #include "common.h"
 
+#include <algorithm>
 #include <climits>
 #include <cmath>
 #include <cstdio>
