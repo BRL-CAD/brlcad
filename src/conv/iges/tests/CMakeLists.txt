@@ -28,7 +28,7 @@ brlcad_addexec(
 )
 brlcad_add_test(NAME iges_import_test COMMAND test_iges_import)
 
-cmakefiles(CMakeLists.txt test_iges_document.cpp test_iges_import.cpp)
+cmakefiles(CMakeLists.txt test_iges_document.cpp test_iges_import.cpp native-csg.igs mixed-assembly.igs)
 
 # Local Variables:
 # tab-width: 8

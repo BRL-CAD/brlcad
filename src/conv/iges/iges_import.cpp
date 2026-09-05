@@ -920,7 +920,7 @@ Translator::translate_arc(const DirectoryEntry &entry, const std::string &name)
 	std::max(start_radius, end_radius);
     if (relative_radius_error > COPLANAR_RELATIVE_TOLERANCE) {
 	if (relative_radius_error <= ARC_RADIUS_REPAIR_LIMIT &&
-		options_.repair == RepairMode::Safe && !options_.exact &&
+		options_.repair != RepairMode::None && !options_.exact &&
 		!options_.strict) {
 	    start_radius = 0.5 * (start_radius + end_radius);
 	    ++result_.statistics.repairs;
@@ -1805,7 +1805,7 @@ write_import_report(const std::string &path, const Document &document,
 	<< "  \"source\": \"" << json_escape(document.source_name()) << "\",\n"
 	<< "  \"success\": " << (result.success ? "true" : "false") << ",\n"
 	<< "  \"options\": {\"repair\": \""
-	<< (options.repair == RepairMode::Safe ? "safe" : "none")
+	<< repair_mode_name(options.repair)
 	<< "\", \"exact\": " << (options.exact ? "true" : "false")
 	<< ", \"strict\": " << (options.strict ? "true" : "false")
 	<< ", \"project_drawings\": "
@@ -1873,6 +1873,8 @@ iges_import_annotations(const char *path, struct rt_wdb *wdbp,
     options.strict = strict != 0;
     if (repair_mode && BU_STR_EQUAL(repair_mode, "none"))
 	options.repair = brlcad::iges::RepairMode::None;
+    else if (repair_mode && BU_STR_EQUAL(repair_mode, "safe"))
+	options.repair = brlcad::iges::RepairMode::Safe;
     if (root_name && root_name[0] != '\0')
 	options.root_name = root_name;
     const brlcad::iges::ImportResult result =

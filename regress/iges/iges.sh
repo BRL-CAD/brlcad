@@ -189,9 +189,7 @@ fi
 
 # G TO IGES TO G TO IGES (ROUND TRIP)
 
-# The modern import path applies the shared BRL-CAD name sanitizer.  Keep the
-# legacy NMG checks above on their historical name, but use the sanitized name
-# for direct B-Rep output.
+# All boundary-representation output modes use the shared name sanitizer.
 direct_brep_name=box_nmg
 
 # make sure we don't permute vertices or introduce some other
@@ -211,7 +209,7 @@ fi
 # test G -> IGES #2b via -o
 output="iges.import2.export.iges"
 rm -f "$output"
-run $GIGES -o "$output" iges.import2.g box.nmg
+run $GIGES -o "$output" iges.import2.g "$direct_brep_name"
 if [ ! -f "$output" ] ; then
     log "ERROR: g-iges failed to create $output"
     log "-> iges.sh FAILED, see $LOGFILE"
@@ -222,7 +220,7 @@ fi
 # test G -> IGES #2c via -o
 output="iges.import3.export.iges"
 rm -f "$output"
-run $GIGES -o "$output" iges.import3.g box.nmg
+run $GIGES -o "$output" iges.import3.g "$direct_brep_name"
 if [ ! -f "$output" ] ; then
     log "ERROR: g-iges failed to create $output"
     log "-> iges.sh FAILED, see $LOGFILE"
@@ -288,7 +286,7 @@ esac
 
 # -m should produce a BoT (mesh)
 $IGESG -m -o iges.brep.mesh.g iges.export.iges >> "$LOGFILE" 2>&1
-mtype=`$MGED -c iges.brep.mesh.g "db get box.nmg" 2>&1 | tr -d '\r' | grep -oE '^(brep|bot|nmg)' | head -1`
+mtype=`$MGED -c iges.brep.mesh.g "db get $direct_brep_name" 2>&1 | tr -d '\r' | grep -oE '^(brep|bot|nmg)' | head -1`
 if test "x$mtype" != "xbot" ; then
     log "ERROR: -m did not produce a BoT (got '$mtype')"
     STATUS="`expr $STATUS + 1`"
@@ -297,7 +295,7 @@ fi
 
 # -p should produce an NMG
 $IGESG -p -o iges.brep.nmg.g iges.export.iges >> "$LOGFILE" 2>&1
-ptype=`$MGED -c iges.brep.nmg.g "db get box.nmg" 2>&1 | tr -d '\r' | grep -oE '^(brep|bot|nmg)' | head -1`
+ptype=`$MGED -c iges.brep.nmg.g "db get $direct_brep_name" 2>&1 | tr -d '\r' | grep -oE '^(brep|bot|nmg)' | head -1`
 if test "x$ptype" != "xnmg" ; then
     log "ERROR: -p did not produce an NMG (got '$ptype')"
     STATUS="`expr $STATUS + 1`"
@@ -314,6 +312,56 @@ if test "x$native_solids" != "x1" ; then
     export STATUS
 fi
 run $IGESG --strict --repair none -o iges.brep.roundtrip.g iges.brep.export.iges
+# Native exports contain NURBS faces, which must tessellate without passing
+# curved edge geometry into the legacy straight-edge NMG assembler.
+for mode in m p ; do
+    run $IGESG -$mode --report iges.native-$mode.json -o iges.native-$mode.g iges.brep.export.iges
+    case "$mode" in m) expected=bot ;; p) expected=nmg ;; esac
+    actual=`$MGED -c iges.native-$mode.g "db get $direct_brep_name" 2>&1 | tr -d '\r' | grep -oE '^(brep|bot|nmg)' | head -1`
+    if test "x$actual" != "x$expected" ; then
+        log "ERROR: native NURBS -$mode import produced '$actual', expected '$expected'"
+        STATUS="`expr $STATUS + 1`"
+        export STATUS
+    fi
+done
+
+# Reject path aliases before opening either destination, and preserve an
+# existing database when parsing or strict conversion fails.
+cp iges.brep.export.iges iges.protected.iges
+cp iges.brep.g iges.protected.g
+for alias in iges.protected.iges ./iges.protected.iges ; do
+    $IGESG -o "$alias" iges.protected.iges >> "$LOGFILE" 2>&1
+    if test $? -eq 0 || ! cmp -s iges.protected.iges iges.brep.export.iges ; then
+        log "ERROR: input/output alias was accepted or modified the input"
+        STATUS="`expr $STATUS + 1`"
+        export STATUS
+    fi
+done
+$IGESG --report iges.protected.g -o ./iges.protected.g iges.protected.iges >> "$LOGFILE" 2>&1
+if test $? -eq 0 || ! cmp -s iges.protected.g iges.brep.g ; then
+    log "ERROR: output/report alias was accepted or modified the database"
+    STATUS="`expr $STATUS + 1`"
+    export STATUS
+fi
+rm -f iges.alias-hard.iges iges.alias-symbolic.iges
+for link_kind in hard symbolic ; do
+    link_option=
+    if test "x$link_kind" = "xsymbolic" ; then link_option=-s ; fi
+    if ln $link_option iges.protected.iges iges.alias-$link_kind.iges ; then
+        $IGESG -o iges.alias-$link_kind.iges iges.protected.iges >> "$LOGFILE" 2>&1
+        if test $? -eq 0 || ! cmp -s iges.protected.iges iges.brep.export.iges ; then
+            log "ERROR: $link_kind input/output alias was accepted or modified the input"
+            STATUS="`expr $STATUS + 1`"
+            export STATUS
+        fi
+    fi
+done
+$IGESG --strict --report iges.failed.json -o iges.protected.g iges.brep.g >> "$LOGFILE" 2>&1
+if test $? -eq 0 || ! cmp -s iges.protected.g iges.brep.g || test ! -s iges.failed.json ; then
+    log "ERROR: failed conversion did not preserve the database and report failure"
+    STATUS="`expr $STATUS + 1`"
+    export STATUS
+fi
 if [ ! -f iges.brep.roundtrip.g ] ; then
     log "ERROR: brep round-trip failed to produce iges.brep.roundtrip.g"
     STATUS="`expr $STATUS + 1`"
@@ -335,6 +383,18 @@ case "x$rtinfo" in
     *"Valid: YES, Solid: YES"*"faces:     6"*"edges:     12"*"vertices:  8"*) : ;;
     *) log "ERROR: native BRep round-trip did not preserve box topology: $rtinfo" ; STATUS="`expr $STATUS + 1`" ; export STATUS ;;
 esac
+
+# Verify both a legacy-only report and a mixed modern/legacy assembly.  The
+# dotted surface label exercises name reconciliation across the two paths.
+for fixture in native-csg mixed-assembly ; do
+    run $IGESG --strict --report iges.$fixture.json -o iges.$fixture.g "$1/src/conv/iges/tests/$fixture.igs"
+    if ! grep -q '"success": true' iges.$fixture.json ||
+       ! grep -q '"unresolved_output_references": 0' iges.$fixture.json ; then
+        log "ERROR: $fixture did not produce a complete consolidated report"
+        STATUS="`expr $STATUS + 1`"
+        export STATUS
+    fi
+done
 
 # Compatibility mode deliberately flattens the same BRep to independent type
 # 144 faces.  The modern importer must stitch them back into the same manifold

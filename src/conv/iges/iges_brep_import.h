@@ -32,10 +32,18 @@ struct BrepImportStatistics {
     size_t bounded_surfaces_seen = 0;
     size_t standalone_surfaces_seen = 0;
     size_t breps_written = 0;
+    size_t meshes_written = 0;
+    size_t polygons_written = 0;
+    size_t solid_breps_written = 0;
+    size_t invalid_solids_written = 0;
+    size_t unreconstructed_faces = 0;
     size_t components_written = 0;
+    size_t reassembly_edges_merged = 0;
     size_t groups_written = 0;
+    size_t unresolved_members = 0;
     size_t plate_mode_objects_thickened = 0;
     size_t relaxed_faces_written = 0;
+    size_t recovered_faces_written = 0;
     double maximum_repair_tolerance_used = 0.0;
     size_t omitted = 0;
     size_t repairs = 0;
@@ -68,8 +76,8 @@ __BEGIN_DECLS
  * 0 if the document has no direct B-Rep entities, and -1 on failure. */
 int iges_import_breps(const char *path, struct rt_wdb *wdbp, int exact,
     int strict, const char *repair_mode, double default_plate_thickness,
-    double maximum_repair_tolerance, const char *root_name,
-    const char *report_path);
+    double maximum_repair_tolerance, double relative_tolerance, const char *root_name,
+    const char *report_path, int output_mode);
 
 __END_DECLS
 

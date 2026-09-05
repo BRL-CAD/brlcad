@@ -21,9 +21,301 @@
 
 namespace {
 
-static const double curve_samples[] = {
-    0.0, 0.091, 0.217, 0.353, 0.5, 0.647, 0.783, 0.909, 1.0
-};
+/* A failed proof must leave edges separate, including when refinement is
+ * too expensive.  Divide the error budget between both approximations
+ * and the comparison of their polygonal paths. */
+constexpr size_t MAX_CURVE_SUBDIVISIONS = 65536;
+constexpr unsigned int MAX_CURVE_SUBDIVISION_DEPTH = 48;
+constexpr double CURVE_APPROXIMATION_FRACTION = 0.125;
+constexpr size_t MAX_POINT_CURVE_SUBDIVISIONS = 4096;
+constexpr size_t MAX_PAIRED_CURVE_SUBDIVISIONS = 4096;
+
+int
+next_curve_span(const ON_NurbsCurve &curve, int span)
+{
+    while (span <= curve.CVCount() - curve.Order() &&
+	!(curve.Knot(span + curve.Order() - 2) < curve.Knot(span + curve.Order() - 1)))
+	++span;
+    return span;
+}
+
+template <typename Curve>
+bool
+matching_basis_controls(const Curve &first, const Curve &second,
+    double tolerance)
+{
+    if (first.Order() != second.Order() || first.CVCount() != second.CVCount())
+	return false;
+
+    ON_3dPoint origin;
+    if (!first.GetCV(0, origin) || !origin.IsValid())
+	return false;
+    double radius = 0.0;
+    double deviation = 0.0;
+    double minimum_ratio = ON_DBL_MAX;
+    double maximum_ratio = 0.0;
+    for (int i = 0; i < first.CVCount(); ++i) {
+	ON_3dPoint a, b;
+	const double ratio = second.Weight(i) / first.Weight(i);
+	if (!(first.Weight(i) > 0.0) || !(second.Weight(i) > 0.0) ||
+	    !(ratio > 0.0) || !std::isfinite(ratio) ||
+	    !first.GetCV(i, a) || !second.GetCV(i, b) ||
+	    !a.IsValid() || !b.IsValid() || a.DistanceTo(b) > tolerance)
+	    return false;
+	minimum_ratio = std::min(minimum_ratio, ratio);
+	maximum_ratio = std::max(maximum_ratio, ratio);
+	radius = std::max(radius, origin.DistanceTo(a));
+	deviation = std::max(deviation, a.DistanceTo(b));
+    }
+    /* Identical nonnegative bases bound control-point displacement.  A
+     * change of rational weights contributes at most this additional
+     * displacement about the first control point. */
+    const double weight_error = radius * ((maximum_ratio - minimum_ratio) / minimum_ratio);
+    return std::isfinite(weight_error) && deviation + weight_error <= tolerance;
+}
+
+bool
+matching_bezier_pair(const ON_BezierCurve &first, const ON_BezierCurve &second,
+    double tolerance, unsigned int depth, size_t &subdivisions)
+{
+    if (matching_basis_controls(first, second, tolerance))
+	return true;
+    /* Subdivision tightens a loose control-polygon bound without replacing
+     * either curved span with line segments.  Unequal paired points only
+     * reject this parameter correspondence, not the curves' loci. */
+    for (double parameter : {0.0, 0.5, 1.0})
+	if (first.PointAt(parameter).DistanceTo(second.PointAt(parameter)) > tolerance)
+	    return false;
+    if (depth >= MAX_CURVE_SUBDIVISION_DEPTH || ++subdivisions > MAX_PAIRED_CURVE_SUBDIVISIONS)
+	return false;
+    ON_BezierCurve first_left, first_right, second_left, second_right;
+    return first.Split(0.5, first_left, first_right) && second.Split(0.5, second_left, second_right) &&
+	matching_bezier_pair(first_left, second_left, tolerance, depth + 1, subdivisions) &&
+	matching_bezier_pair(first_right, second_right, tolerance, depth + 1, subdivisions);
+}
+
+bool
+matching_bezier_controls(ON_BezierCurve &first, ON_BezierCurve &second, double tolerance)
+{
+    if (matching_basis_controls(first, second, tolerance))
+	return true;
+    /* Positive rational end weights can encode different speeds along
+     * the same span.  Normalize them without changing the curve's locus. */
+    const int degree = std::max(first.Degree(), second.Degree());
+    if (!first.IncreaseDegree(degree) || !second.IncreaseDegree(degree))
+	return false;
+    size_t subdivisions = 0;
+    if (matching_bezier_pair(first, second, tolerance, 0, subdivisions))
+	return true;
+    subdivisions = 0;
+    return first.ChangeWeights(0, 1.0, degree, 1.0) && second.ChangeWeights(0, 1.0, degree, 1.0) &&
+	matching_bezier_pair(first, second, tolerance, 0, subdivisions);
+}
+
+bool
+matching_bezier_spans(const ON_NurbsCurve &first, const ON_NurbsCurve &second,
+    double tolerance)
+{
+    int a = next_curve_span(first, 0);
+    int b = next_curve_span(second, 0);
+    while (true) {
+	const bool first_done = a > first.CVCount() - first.Order();
+	const bool second_done = b > second.CVCount() - second.Order();
+	if (first_done || second_done)
+	    return first_done && second_done;
+	ON_BezierCurve first_span, second_span;
+	/* Corresponding spans may have different parameter intervals.  Their
+	 * Bezier bases agree on [0,1], so the proof does not require equal
+	 * knot spacing or bit-identical domain normalization. */
+	if (!first.ConvertSpanToBezier(a, first_span) ||
+	    !second.ConvertSpanToBezier(b, second_span) ||
+	    !matching_bezier_controls(first_span, second_span, tolerance))
+	    return false;
+	a = next_curve_span(first, a + 1);
+	b = next_curve_span(second, b + 1);
+    }
+}
+
+bool
+matching_refined_spans(const ON_NurbsCurve &first, const ON_NurbsCurve &second,
+    double tolerance)
+{
+    int a = next_curve_span(first, 0);
+    int b = next_curve_span(second, 0);
+    while (a <= first.CVCount() - first.Order() && b <= second.CVCount() - second.Order()) {
+	const ON_Interval first_domain(first.Knot(a + first.Order() - 2), first.Knot(a + first.Order() - 1));
+	const ON_Interval second_domain(second.Knot(b + second.Order() - 2), second.Knot(b + second.Order() - 1));
+	const double start = std::max(first_domain.Min(), second_domain.Min());
+	const double end = std::min(first_domain.Max(), second_domain.Max());
+	ON_BezierCurve first_span, second_span;
+	/* Refinement aligns equivalent curves with different knot insertion
+	 * or degree elevation histories without flattening their curvature. */
+	if (!(start < end) || !first.ConvertSpanToBezier(a, first_span) ||
+	    !second.ConvertSpanToBezier(b, second_span) ||
+	    !first_span.Trim(ON_Interval(first_domain.NormalizedParameterAt(start), first_domain.NormalizedParameterAt(end))) ||
+	    !second_span.Trim(ON_Interval(second_domain.NormalizedParameterAt(start), second_domain.NormalizedParameterAt(end))))
+	    return false;
+	if (!matching_bezier_controls(first_span, second_span, tolerance))
+	    return false;
+	if (first_domain.Max() <= second_domain.Max())
+	    a = next_curve_span(first, a + 1);
+	if (second_domain.Max() <= first_domain.Max())
+	    b = next_curve_span(second, b + 1);
+    }
+    return a > first.CVCount() - first.Order() && b > second.CVCount() - second.Order();
+}
+
+bool
+append_curve_polygon(const ON_BezierCurve &curve, double tolerance,
+    unsigned int depth, size_t &subdivisions, std::vector<ON_3dPoint> &points)
+{
+    const ON_3dPoint start = curve.PointAt(0.0);
+    const ON_3dPoint end = curve.PointAt(1.0);
+    if (!start.IsValid() || !end.IsValid())
+	return false;
+    const ON_Line chord(start, end);
+    bool flat = true;
+    for (int i = 0; i < curve.CVCount(); ++i) {
+	ON_3dPoint point;
+	if (!(curve.Weight(i) > 0.0) || !std::isfinite(curve.Weight(i)) ||
+	    !curve.GetCV(i, point) || !point.IsValid())
+	    return false;
+	double parameter = 0.0;
+	chord.ClosestPointTo(point, &parameter);
+	parameter = std::max(0.0, std::min(1.0, parameter));
+	flat = flat && point.DistanceTo(chord.PointAt(parameter)) <= tolerance;
+    }
+    if (flat) {
+	points.push_back(end);
+	return true;
+    }
+    if (depth >= MAX_CURVE_SUBDIVISION_DEPTH || ++subdivisions > MAX_CURVE_SUBDIVISIONS)
+	return false;
+    ON_BezierCurve left, right;
+    return curve.Split(0.5, left, right) &&
+	append_curve_polygon(left, tolerance, depth + 1, subdivisions, points) &&
+	append_curve_polygon(right, tolerance, depth + 1, subdivisions, points);
+}
+
+bool
+curve_polygon(const ON_NurbsCurve &curve, double tolerance,
+    std::vector<ON_3dPoint> &points)
+{
+    size_t subdivisions = 0;
+    points.push_back(curve.PointAtStart());
+    for (int span = 0; span <= curve.CVCount() - curve.Order(); ++span) {
+	const int knot = span + curve.Order() - 2;
+	if (!(curve.Knot(knot) < curve.Knot(knot + 1)))
+	    continue;
+	ON_BezierCurve bezier;
+	if (++subdivisions > MAX_CURVE_SUBDIVISIONS || !curve.ConvertSpanToBezier(span, bezier) ||
+	    points.back().DistanceTo(bezier.PointAt(0.0)) > tolerance ||
+	    !append_curve_polygon(bezier, tolerance, 0, subdivisions, points))
+	    return false;
+    }
+    return points.size() > 1;
+}
+
+bool
+polygon_lengths(const std::vector<ON_3dPoint> &points, std::vector<double> &lengths)
+{
+    lengths.assign(points.size(), 0.0);
+    for (size_t i = 1; i < points.size(); ++i)
+	lengths[i] = lengths[i - 1] + points[i].DistanceTo(points[i - 1]);
+    const double total = lengths.back();
+    if (!std::isfinite(total) || !(total > 0.0))
+	return false;
+    for (double &length : lengths)
+	length /= total;
+    return true;
+}
+
+bool
+polygon_vertices_match(const std::vector<ON_3dPoint> &first,
+    const std::vector<double> &first_lengths, const std::vector<ON_3dPoint> &second,
+    const std::vector<double> &second_lengths, double tolerance)
+{
+    size_t segment = 1;
+    for (size_t i = 0; i < first.size(); ++i) {
+	while (segment + 1 < second.size() && second_lengths[segment] < first_lengths[i])
+	    ++segment;
+	const double length = second_lengths[segment] - second_lengths[segment - 1];
+	const double fraction = length > 0.0 ?
+	    (first_lengths[i] - second_lengths[segment - 1]) / length : 0.0;
+	const ON_3dPoint point = ON_Line(second[segment - 1], second[segment]).PointAt(fraction);
+	if (first[i].DistanceTo(point) > tolerance)
+	    return false;
+    }
+    return true;
+}
+
+bool
+matching_polygons(const std::vector<ON_3dPoint> &first,
+    const std::vector<ON_3dPoint> &second, double tolerance)
+{
+    std::vector<double> first_lengths, second_lengths;
+    /* Between vertices of either polygon the paired difference is linear;
+     * testing both vertex sets bounds the entire paired paths. */
+    return polygon_lengths(first, first_lengths) && polygon_lengths(second, second_lengths) &&
+	polygon_vertices_match(first, first_lengths, second, second_lengths, tolerance) &&
+	polygon_vertices_match(second, second_lengths, first, first_lengths, tolerance);
+}
+
+bool
+point_may_meet_bezier(const ON_3dPoint &point, const ON_BezierCurve &curve,
+    double tolerance, unsigned int depth, size_t &subdivisions)
+{
+    ON_BoundingBox bounds;
+    for (int i = 0; i < curve.CVCount(); ++i) {
+	ON_3dPoint control;
+	if (!(curve.Weight(i) > 0.0) || !std::isfinite(curve.Weight(i)) ||
+	    !curve.GetCV(i, control) || !control.IsValid())
+	    return true;
+	bounds.Set(control, i != 0);
+    }
+    ON_3dPoint closest;
+    for (int axis = 0; axis < 3; ++axis)
+	closest[axis] = std::max(bounds.m_min[axis], std::min(bounds.m_max[axis], point[axis]));
+    if (point.DistanceTo(closest) > tolerance)
+	return false;
+    if (point.DistanceTo(curve.PointAt(0.0)) <= tolerance ||
+	point.DistanceTo(curve.PointAt(1.0)) <= tolerance ||
+	depth >= MAX_CURVE_SUBDIVISION_DEPTH || ++subdivisions > MAX_POINT_CURVE_SUBDIVISIONS)
+	return true;
+    ON_BezierCurve left, right;
+    return !curve.Split(0.5, left, right) ||
+	point_may_meet_bezier(point, left, tolerance, depth + 1, subdivisions) ||
+	point_may_meet_bezier(point, right, tolerance, depth + 1, subdivisions);
+}
+
+bool
+curve_has_separated_point(const ON_NurbsCurve &first, const ON_NurbsCurve &second,
+    double tolerance)
+{
+    /* Samples are used only to DISPROVE coincidence.  Subdivided positive
+     * weight control hulls enclose every point of the other curve; an
+     * exhausted work budget is inconclusive, never a separation proof. */
+    constexpr double PROBES[] = {0.25, 0.5, 0.75};
+    for (double parameter : PROBES) {
+	const ON_3dPoint point = first.PointAt(parameter);
+	if (!point.IsValid())
+	    return false;
+	size_t subdivisions = 0;
+	bool may_meet = false;
+	for (int span = next_curve_span(second, 0); span <= second.CVCount() - second.Order();
+	    span = next_curve_span(second, span + 1)) {
+	    ON_BezierCurve bezier;
+	    if (!second.ConvertSpanToBezier(span, bezier) ||
+		point_may_meet_bezier(point, bezier, tolerance, 0, subdivisions)) {
+		may_meet = true;
+		break;
+	    }
+	}
+	if (!may_meet)
+	    return true;
+    }
+    return false;
+}
 
 
 struct edge_match {
@@ -135,31 +427,50 @@ brep_curves_coincident(const ON_Curve &first, const ON_Curve &second,
 {
     if (!std::isfinite(tolerance) || tolerance < 0.0)
 	return false;
-    const ON_Interval first_domain = first.Domain();
-    const ON_Interval second_domain = second.Domain();
-    if (!first_domain.IsIncreasing() || !second_domain.IsIncreasing())
+    const bool forward = first.PointAtStart().DistanceTo(second.PointAtStart()) <= tolerance &&
+	first.PointAtEnd().DistanceTo(second.PointAtEnd()) <= tolerance;
+    const bool reverse = first.PointAtStart().DistanceTo(second.PointAtEnd()) <= tolerance &&
+	first.PointAtEnd().DistanceTo(second.PointAtStart()) <= tolerance;
+    if (!forward && !reverse)
 	return false;
-
-    bool forward = true;
-    bool reverse = true;
-    for (size_t i = 0; i < sizeof(curve_samples) / sizeof(curve_samples[0]); ++i) {
-	const ON_3dPoint point = first.PointAt(
-	    first_domain.ParameterAt(curve_samples[i]));
-	const ON_3dPoint forward_point = second.PointAt(
-	    second_domain.ParameterAt(curve_samples[i]));
-	const ON_3dPoint reverse_point = second.PointAt(
-	    second_domain.ParameterAt(1.0 - curve_samples[i]));
-	if (!point.IsValid() || !forward_point.IsValid() ||
-		!reverse_point.IsValid())
+    ON_NurbsCurve a, b;
+    if (!first.GetNurbForm(a) || !second.GetNurbForm(b) || !a.IsValid() || !b.IsValid() ||
+	!a.SetDomain(0.0, 1.0) || !b.SetDomain(0.0, 1.0))
+	return false;
+    for (bool direction : {false, true}) {
+	if (direction && (!b.Reverse() || !b.SetDomain(0.0, 1.0)))
 	    return false;
-	forward = forward && point.DistanceTo(forward_point) <= tolerance;
-	reverse = reverse && point.DistanceTo(reverse_point) <= tolerance;
-	if (!forward && !reverse)
-	    return false;
+	const bool same_knots = a.Order() == b.Order() && a.CVCount() == b.CVCount() &&
+	    std::equal(a.m_knot, a.m_knot + a.KnotCount(), b.m_knot);
+	if ((direction ? reverse : forward) &&
+	    ((same_knots && matching_basis_controls(a, b, tolerance)) ||
+	     matching_bezier_spans(a, b, tolerance) || matching_refined_spans(a, b, tolerance))) {
+	    if (reversed)
+		*reversed = direction;
+	    return true;
+	}
     }
-    if (reversed)
-	*reversed = !forward && reverse;
-    return forward || reverse;
+    if (!(tolerance > 0.0))
+	return false;
+    std::vector<ON_3dPoint> first_polygon, second_polygon;
+    if (curve_has_separated_point(a, b, tolerance) || curve_has_separated_point(b, a, tolerance))
+	return false;
+    const double approximation = tolerance * CURVE_APPROXIMATION_FRACTION;
+    if (!curve_polygon(a, approximation, first_polygon) || !curve_polygon(b, approximation, second_polygon))
+	return false;
+    /* b is reversed from the control-point comparison above. */
+    /* Each curve budget also covers endpoint roundoff between spans. */
+    const double comparison = tolerance - 4.0 * approximation;
+    for (bool direction : {true, false}) {
+	if (!direction)
+	    std::reverse(second_polygon.begin(), second_polygon.end());
+	if ((direction ? reverse : forward) && matching_polygons(first_polygon, second_polygon, comparison)) {
+	    if (reversed)
+		*reversed = direction;
+	    return true;
+	}
+    }
+    return false;
 }
 
 

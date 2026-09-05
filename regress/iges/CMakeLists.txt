@@ -34,6 +34,19 @@ set(
   iges.import3.export.iges
   iges.import3.g
   iges.log
+  iges.failed.json
+  iges.alias-hard.iges
+  iges.alias-symbolic.iges
+  iges.native-csg.g
+  iges.native-csg.json
+  iges.mixed-assembly.g
+  iges.mixed-assembly.json
+  iges.native-m.g
+  iges.native-m.json
+  iges.native-p.g
+  iges.native-p.json
+  iges.protected.g
+  iges.protected.iges
   iges.m35.asc
   iges.m35.g
   iges.m35.r516.iges

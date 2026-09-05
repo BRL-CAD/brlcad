@@ -449,7 +449,12 @@ desc_1(const char *cgy, int test_num)
 	    case 1:
 		ac = 1;
 		av[0] = "-s";
+		/* The parser must honor argc even if the backing array contains
+		 * another value, as happens with per-filter argument slices. */
+		av[1] = "outside argc";
 		EXPECT_FAILURE("string", "missing argument");
+		if (!strstr(bu_vls_cstr(&parse_msgs), "Invalid argument supplied to -s: (missing)"))
+		    val_ok = 0;
 		break;
 	    case 2:
 		ac = 2;

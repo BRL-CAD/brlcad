@@ -35,6 +35,7 @@ set(
   iges_brep_import.cpp
   iges_document.cpp
   iges_import.cpp
+  iges_output.cpp
   iges_surf.cpp
   iges_types.c
   main.c
@@ -95,6 +96,7 @@ set(
   iges_brep_import.h
   iges_document.h
   iges_import.h
+  iges_output.h
   iges_surf.h
   iges_extern.h
   iges_struct.h

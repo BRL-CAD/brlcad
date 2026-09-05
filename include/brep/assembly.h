@@ -53,7 +53,9 @@ struct brep_assembly_result {
     std::string validation_log;
 };
 
-/** Test whether two curves trace the same locus within @p tolerance. */
+/** Bound whether two curves trace the same locus within @p tolerance.
+ * Returns false when refinement cannot establish coincidence within its
+ * work limit.  Point samples alone never establish a match. */
 extern BREP_EXPORT bool
 brep_curves_coincident(const ON_Curve &first, const ON_Curve &second,
 	double tolerance, bool *reversed = NULL);

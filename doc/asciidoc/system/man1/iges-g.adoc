@@ -11,7 +11,7 @@ iges-g - convert an IGES file to a BRL-CAD database
 
 [source]
 ----
-iges-g [--exact|--strict] [--repair _none|safe_] [--max-repair-tolerance _mm_] [--default-plate-thickness _mm_] [--report _file.json_] [-3] [-d] [-n] [-t] [-m|-p] [-N _solid_name_] [-x _rt_debug_flag_] [-X _nmg_debug_flag_] -o _database.g_ _file.iges_
+iges-g [--exact|--strict] [--repair _none|safe|best-effort_] [--relative-tolerance _fraction_] [--max-repair-tolerance _mm_] [--default-plate-thickness _mm_] [--report _file.json_] [-3] [-d] [-n] [-t] [-m|-p] [-N _solid_name_] [-x _rt_debug_flag_] [-X _nmg_debug_flag_] -o _database.g_ _file.iges_
 ----
 
 
@@ -24,7 +24,10 @@ expected to conform to IGES version 5.3 or an earlier version.
 
 With none of the *-3*, *-d*, *-n*, or *-t* options, the default action is to
 convert IGES solid model entities to their BRL-CAD equivalents. Type 186
-manifold topology is constructed directly in OpenNURBS. Type 143 bounded and
+manifold topology is constructed directly in OpenNURBS, including type 192
+analytic cylindrical faces. Parameterized planes and cylinders retain their
+reference directions and authored parameter units (degrees for cylinder
+angles). Type 143 bounded and
 Type 144 trimmed surfaces are constructed as independent OpenNURBS faces and
 conservatively stitched into shared manifold topology when their boundary
 curves agree within the file tolerance. Trimmed surfaces may use the finite
@@ -34,18 +37,55 @@ Most CSG conversions are exact; solids
 of revolution are approximated by a series of BRL-CAD cones and solids of
 linear extrusion are approximated by polysolids. BREP objects are written as
 native BRL-CAD BRep objects by default; *-m* and *-p* select polygonal
-fallbacks.
+output by tessellating the validated OpenNURBS representation.
 
 Surfaces of revolution retain their angular parameterization so their trims
 remain in the authored parameter space. Boundaries at surface poles may have
 parameter-space segments without corresponding model-space edges. Safe repair
-recognizes rounded poles and can match differently segmented boundaries using
+recognizes rounded poles, completes missing parameter-space sides at poles,
+and can match differently segmented boundaries using
 bounded geometric comparison while retaining the original model curves.
 Closed manifold edges retain their authored use orientation. Missing optional
 manifold parameter curves can be reconstructed from model-space boundaries in
 safe repair mode, starting at the source accuracy to preserve small features.
+Bounded parameter-loop endpoint repairs also apply to manifold faces.
+The initial repair allowance and the allowance for boundary recovery
+are the larger of 100 times the source resolution and 0.0001 times the local
+model-space boundary bounding-box diagonal. If no resolution is declared,
+0.000001 mm supplies the source-resolution fallback. The bound uses the
+geometry being repaired, not the entire assembly, its distance from the
+origin, or the size of an untrimmed supporting surface. Initial pullback
+fitting still starts at source accuracy, and repairs exceeding the
+source-based allowance are flagged in the output and report.
+The default best-effort mode retries otherwise omitted bounded or trimmed
+faces individually. It first reconstructs parameter boundaries from the
+authored model curves, then tries adaptive parameter endpoint corrections
+if reconstruction fails. The adaptive pass can exceed the initial relative
+allowance while retaining the original model curves and supporting surface.
+It does not enlarge the tolerance used to stitch neighboring faces.
+Recovered faces must still pass OpenNURBS validity checks and periodic-domain
+checks. Their database objects carry *iges.import_status=needs_review* and
+*iges.recovery* attributes; adaptive repairs also record their tolerance.
+Warnings and the JSON report identify the source faces and recovery methods.
+Validity does not certify agreement between inconsistent source descriptions
+or make an open sheet a closed solid.
 Recovered periodic trims are placed inside closed NURBS surface domains;
 boundaries requiring unsupported seam splits are rejected.
+
+After face recovery, retained bounded and trimmed faces are reassembled within
+their original source ownership groups, at the unchanged stitching tolerance.
+Closed connected components are oriented and recognized independently of
+unrelated open sheets. Closed shells with overlapping bounding boxes remain
+together, preserving possible cavity relationships and their relative
+orientation; the importer does not infer containment or force every shell
+outward. The open remainder stays grouped, and plate thickness applies only
+to non-solid output. If reassembly fails validation, the previously validated
+batches are retained. Explicit manifold solid and void-shell relationships
+are unchanged.
+Per-face metadata retains source IDs and recovery methods after regrouping.
+An object containing different recovery methods or tolerance bases records
+*mixed* in the corresponding object-level attribute.
+
 For legacy bounded planes, safe repair can resolve an opposite plane-constant
 sign when all sampled boundary points support that interpretation within the
 nominal tolerance; the repair is reported without moving the boundary curves.
@@ -53,6 +93,16 @@ nominal tolerance; the repair is reported without moving the boundary curves.
 Default imports may be partial. The conversion summary counts omitted source
 geometry entities, and *--report* identifies their failures. Use *--strict*
 when omissions or repairs must cause the import to fail.
+
+An explicit type 186 manifold solid that cannot be reconstructed is retained
+by default as one invalid-solid BRep, containing its independently validated
+faces. An empty BRep preserves the identity when no faces can be rebuilt.
+The *iges.shell_metadata* attribute records outer and void shells, source
+face IDs, orientations, and which faces were retained. Such objects carry
+*iges.import_status=invalid_solid* and *_brep_invalid_solid=1*. They are not
+treated as plate-mode sheets, and validity checking and ray-tracing preparation
+reject them. Repair the intended solid topology before clearing the marker.
+Strict, exact, and polygonal output modes reject these incomplete solids.
 
 The *-3*/*-d*, *-n*, and *-t* options are mutually exclusive and select
 alternate conversion modes (drawings, B-spline surfaces, or trimmed surfaces,
@@ -92,8 +142,20 @@ other direction, see *g-iges*(1).
 *--strict*::
   Reject repaired or partial direct imports.
 
-*--repair* _none|safe_::
-  Select no repairs or bounded structural repairs. The default is _safe_.
+*--repair* _none|safe|best-effort_::
+  Select no repairs, bounded structural repairs, or bounded repairs followed
+  by isolated face recovery. The default is _best-effort_. Use _safe_ to
+  disable the last-resort boundary reconstruction and adaptive endpoint pass.
+
+*--relative-tolerance* _fraction_::
+  Set the dimensionless local boundary repair allowance. The default 0.0001
+  is 0.01% of the boundary bounding-box diagonal: for example, 0.1 mm for a
+  1,000 mm diagonal. Zero disables the relative part of the initial allowance;
+  combine it with *--repair safe* for source-resolution-based bounded repairs.
+  In best-effort mode this is a repair target, not a final omission cutoff.
+  This does not change initial fitting accuracy or enable repairs under
+  *--exact*, *--strict*, or *--repair none*. It does not affect legacy
+  polygonal or drawing conversion modes.
 
 *--max-repair-tolerance* _mm_::
   Permit model-space boundary reconstruction and parameter-space trim-loop
@@ -102,17 +164,25 @@ other direction, see *g-iges*(1).
   flagged with their actual repair tolerance in the output database and JSON
   report. This is not a guarantee that existing source boundary-to-surface
   discrepancies are below that value. This option requires safe OpenNURBS
-  BRep output.
+  BRep output. A positive value overrides the object-relative allowance and
+  disables best-effort fallback; the existing source-based endpoint closure
+  allowance is retained.
 
 *--default-plate-thickness* _mm_::
   Assign the given thickness to imported open BReps in plate mode. The default
   zero thickness retains the authored sheet geometry.
 
 *--report* _file.json_::
-  Write structured parser and import diagnostics to a JSON file.
+  Write structured parser and import diagnostics to a JSON file, including
+  valid and invalid solid counts, unreconstructed faces, unresolved hierarchy
+  members, legacy conversion results, and post-recovery reassembly counts.
+  An import producing no supported geometry fails, including in legacy modes.
 
 *-o* _database.g_::
   Specify the output BRL-CAD database file. This option is required.
+  Conversion is staged beside the destination; a failed conversion leaves
+  an existing database untouched. The input, output, and report must identify
+  distinct files, including through symbolic links or hard links.
 
 *-N* _solid_name_::
   Name the single solid created by the *-n* or *-t* option. If not given, the

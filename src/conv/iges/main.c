@@ -43,6 +43,7 @@
 #include "./iges_extern.h"
 #include "./iges_brep_import.h"
 #include "./iges_import.h"
+#include "./iges_output.h"
 #include "brlcad_ident.h"
 
 
@@ -218,8 +219,13 @@ Mark_direct_imports(void)
 		const int directory_id = (int)parsed;
 		const int index = IGES_DE2INDEX(directory_id);
 		if (index >= 0 && (size_t)index < totentities && dir[index] &&
-			dir[index]->direct == directory_id)
+			dir[index]->direct == directory_id) {
 		    dir[index]->direct_imported = 1;
+		    /* Directory names remain alive until the database closes.
+		     * Legacy combinations must use the actual sanitized name,
+		     * including names longer than the old fixed-size name table. */
+		    dir[index]->name = dp->d_namep;
+		}
 	    }
 	}
 	bu_avs_free(&attributes);
@@ -242,6 +248,7 @@ main(int argc, char *argv [])
     int direct_brep_imported = 0;
     fastf_t default_plate_thickness = 0.0;
     fastf_t maximum_repair_tolerance = 0.0;
+    fastf_t relative_tolerance = IGES_DEFAULT_RELATIVE_TOLERANCE;
     char *output_file = (char *)NULL;
     char *report_file = (char *)NULL;
     char *repair_mode = (char *)NULL;
@@ -281,8 +288,11 @@ main(int argc, char *argv [])
 	{"", "max-repair-tolerance", "MM", bu_opt_fastf_t,
 	    &maximum_repair_tolerance,
 	    "permit and flag boundary repairs up to this tolerance"},
+	{"", "relative-tolerance", "FRACTION", bu_opt_fastf_t,
+	    &relative_tolerance,
+	    "local boundary repair target (default: 0.0001 of box diagonal; 0 disables)"},
 	{"", "repair", "MODE", bu_opt_str, &repair_mode,
-	    "none or safe (default: safe)"},
+	    "none, safe, or best-effort (default: best-effort)"},
 	{"", "report", "FILE", bu_opt_str, &report_file,
 	    "structured JSON import report"},
 	{"", "legacy-drawings", "", NULL, &legacy_drawings,
@@ -320,11 +330,15 @@ main(int argc, char *argv [])
 	     strict_import || (repair_mode && BU_STR_EQUAL(repair_mode, "none"))))
 	bu_vls_printf(&option_messages,
 	    "maximum repair tolerance requires safe OpenNURBS B-Rep output");
+    if (!isfinite(relative_tolerance) || relative_tolerance < 0.0)
+	bu_vls_printf(&option_messages,
+	    "relative tolerance must be a finite non-negative fraction");
     if (bu_vls_strlen(&option_messages) || argc != 1 || !output_file ||
 	    do_drawings + do_splines + trimmed_surf > 1 ||
 	    mesh_output + polygon_output > 1 ||
 	    (repair_mode && !BU_STR_EQUAL(repair_mode, "none") &&
-		!BU_STR_EQUAL(repair_mode, "safe"))) {
+		!BU_STR_EQUAL(repair_mode, "safe") &&
+		!BU_STR_EQUAL(repair_mode, "best-effort"))) {
 	usage(program_name, options);
 	bu_vls_free(&option_messages);
 	return BRLCAD_ERROR;
@@ -363,10 +377,13 @@ main(int argc, char *argv [])
 	    (*identity)[i] = 0.0;
     }
 
-    if ((fdout = wdb_fopen(output_file)) == NULL) {
+    if (!iges_output_begin(argv[0], output_file, report_file, strict_import))
+	return BRLCAD_ERROR;
+    report_file = (char *)iges_output_report_path();
+    if ((fdout = wdb_fopen(iges_output_database_path())) == NULL) {
 	bu_log("Cannot open %s\n", output_file);
 	perror("iges-g");
-	return BRLCAD_ERROR;
+	return iges_output_finish(NULL, 0);
     }
     bu_strlcpy(brlcad_file,  output_file, sizeof(brlcad_file));
 
@@ -376,35 +393,32 @@ main(int argc, char *argv [])
     if (do_drawings && !legacy_drawings) {
 	const int semantic_result = iges_import_annotations(argv[0], fdout,
 	    do_projection, exact_import, strict_import,
-	    repair_mode ? repair_mode : "safe", solid_name, report_file);
+	    repair_mode ? repair_mode : "best-effort", solid_name, report_file);
 	if (semantic_result < 0) {
-	    wdb_close(fdout);
-	    bu_exit(BRLCAD_ERROR,
-		"Semantic IGES drawing import failed for %s\n", argv[0]);
+	    bu_log("Semantic IGES drawing import failed for %s\n", argv[0]);
+	    return iges_output_finish(fdout, 0);
 	}
 	if (semantic_result > 0) {
-	    wdb_close(fdout);
-	    return BRLCAD_OK;
+	    return iges_output_finish(fdout, 1);
 	}
     }
 
     /* Import all supported boundary representations directly in OpenNURBS.
      * Native IGES CSG may still be handled below, but direct B-Reps must never
      * enter the legacy NMG NURBS paths. */
-    if (!do_drawings && do_brep) {
+    if (!do_drawings) {
 	const int direct_result = iges_import_breps(argv[0], fdout,
-	    exact_import, strict_import, repair_mode ? repair_mode : "safe",
-	    default_plate_thickness, maximum_repair_tolerance, solid_name,
-	    report_file);
+	    exact_import, strict_import, repair_mode ? repair_mode : "best-effort",
+	    default_plate_thickness, maximum_repair_tolerance, relative_tolerance, solid_name,
+	    report_file, mesh_output ? IGES_OUTPUT_MESH :
+		polygon_output ? IGES_OUTPUT_POLYGON : IGES_OUTPUT_BREP);
 	if (direct_result < 0) {
-	    wdb_close(fdout);
-	    bu_exit(BRLCAD_ERROR,
-		"Direct IGES B-Rep import failed for %s\n", argv[0]);
+	    bu_log("Direct IGES B-Rep import failed for %s\n", argv[0]);
+	    return iges_output_finish(fdout, 0);
 	}
 	if (direct_result == 1 ||
 		(direct_result == 2 && (do_splines || trimmed_surf))) {
-	    wdb_close(fdout);
-	    return BRLCAD_OK;
+	    return iges_output_finish(fdout, 1);
 	}
 	direct_brep_imported = direct_result == 2;
     }
@@ -438,8 +452,7 @@ main(int argc, char *argv [])
 	if (fd == NULL) {
 	    bu_log("Cannot open %s\n", iges_file);
 	    perror("iges-g");
-	    wdb_close(fdout);
-	    return BRLCAD_ERROR;
+	    return iges_output_finish(fdout, 0);
 	}
 
 	bu_log("\n\n\nIGES FILE: %s\n", iges_file);
@@ -462,8 +475,6 @@ main(int argc, char *argv [])
 
 	Makedir();	/* Read directory section and build a linked list of entries */
 	const int direct_entities_imported = direct_brep_imported && file_count == 0;
-	if (direct_entities_imported)
-	    Mark_direct_imports();
 
 	Summary();	/* Print a summary of what is in the IGES file */
 
@@ -474,6 +485,8 @@ main(int argc, char *argv [])
 	Evalxform();	/* Accumulate the transformation matrices */
 
 	Check_names();	/* Look for name entities */
+	if (direct_entities_imported)
+	    Mark_direct_imports();
 
 	if (do_drawings)
 	    Conv_drawings(vlfree); /* non-planar/unsupported wire fallback */
@@ -505,6 +518,16 @@ main(int argc, char *argv [])
 	    }
 	}
 
+	if (!do_drawings) {
+	    size_t entity;
+	    for (entity = 0; entity < totentities; ++entity) {
+		const int type = dir[entity]->type;
+		if (dir[entity]->direct_imported || type < 150 || (type > 198 && type != 430))
+		    continue;
+		iges_output_legacy_entity(dir[entity]->direct, type, dir[entity]->name,
+		    db_lookup(fdout->dbip, dir[entity]->name, LOOKUP_QUIET) != RT_DIR_NULL);
+	    }
+	}
 	Free_dir();
 	Free_rec_index();
 
@@ -516,8 +539,7 @@ main(int argc, char *argv [])
 
     iges_file = argv[0];
     Suggestions();
-    wdb_close(fdout);
-    return 0;
+    return iges_output_finish(fdout, 1);
 }
 
 

@@ -14,6 +14,15 @@
 
 struct rt_wdb;
 
+/* Dimensionless fraction of a local model-space boundary's box diagonal. */
+#define IGES_DEFAULT_RELATIVE_TOLERANCE 1.0e-4
+
+enum iges_geometry_output {
+    IGES_OUTPUT_BREP,
+    IGES_OUTPUT_MESH,
+    IGES_OUTPUT_POLYGON
+};
+
 #ifdef __cplusplus
 
 #  include <cstddef>
@@ -28,8 +37,20 @@ namespace iges {
 
 enum class RepairMode {
     None,
-    Safe
+    Safe,
+    BestEffort
 };
+
+inline const char *
+repair_mode_name(RepairMode mode)
+{
+    switch (mode) {
+	case RepairMode::None: return "none";
+	case RepairMode::Safe: return "safe";
+	case RepairMode::BestEffort: return "best-effort";
+    }
+    return "unknown";
+}
 
 enum class InvalidBrepPolicy {
     Preserve,
@@ -37,12 +58,14 @@ enum class InvalidBrepPolicy {
 };
 
 struct ImportOptions {
-    RepairMode repair = RepairMode::Safe;
+    enum iges_geometry_output output = IGES_OUTPUT_BREP;
+    RepairMode repair = RepairMode::BestEffort;
     InvalidBrepPolicy invalid_brep = InvalidBrepPolicy::Preserve;
     bool exact = false;
     bool strict = false;
     double default_plate_thickness = 0.0;
     double maximum_repair_tolerance = 0.0;
+    double relative_tolerance = IGES_DEFAULT_RELATIVE_TOLERANCE;
     bool project_drawings = true;
     std::string root_name = "iges_drawing";
 };

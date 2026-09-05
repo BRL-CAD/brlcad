@@ -9,6 +9,7 @@
 
 #include "common.h"
 
+#include <algorithm>
 #include <cmath>
 #include <map>
 #include <string>
@@ -29,7 +30,7 @@
 
 namespace {
 
-constexpr size_t IGES_OPTION_COUNT = 7;
+constexpr size_t IGES_OPTION_COUNT = 8;
 
 struct IgesReadOptions {
     int drawings_only = 0;
@@ -38,6 +39,7 @@ struct IgesReadOptions {
     int exact = 0;
     int strict = 0;
     fastf_t maximum_repair_tolerance = 0.0;
+    fastf_t relative_tolerance = IGES_DEFAULT_RELATIVE_TOLERANCE;
     char *repair = nullptr;
 };
 
@@ -46,6 +48,7 @@ iges_create_options(struct bu_opt_desc **descriptions, void **options_data)
 {
     struct IgesReadOptions *options;
     BU_ALLOC(options, struct IgesReadOptions);
+    options->relative_tolerance = IGES_DEFAULT_RELATIVE_TOLERANCE;
     *options_data = options;
     *descriptions = static_cast<struct bu_opt_desc *>(bu_calloc(
 	IGES_OPTION_COUNT + 1, sizeof(struct bu_opt_desc), "IGES reader options"));
@@ -60,11 +63,13 @@ iges_create_options(struct bu_opt_desc **descriptions, void **options_data)
     BU_OPT((*descriptions)[4], nullptr, "strict", "", nullptr,
 	&options->strict, "reject repaired or partial imports");
     BU_OPT((*descriptions)[5], nullptr, "repair", "MODE", bu_opt_str,
-	&options->repair, "none or safe (default: safe)");
+	&options->repair, "none, safe, or best-effort (default: best-effort)");
     BU_OPT((*descriptions)[6], nullptr, "max-repair-tolerance", "MM",
 	bu_opt_fastf_t, &options->maximum_repair_tolerance,
 	"permit and flag boundary pullbacks up to this tolerance");
-    BU_OPT_NULL((*descriptions)[7]);
+    BU_OPT((*descriptions)[7], nullptr, "relative-tolerance", "FRACTION", bu_opt_fastf_t,
+	&options->relative_tolerance, "local boundary repair allowance (default: 0.0001)");
+    BU_OPT_NULL((*descriptions)[8]);
 }
 
 void
@@ -177,10 +182,12 @@ iges_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     if (!reader_options ||
 	    (reader_options->repair &&
 	     !BU_STR_EQUAL(reader_options->repair, "none") &&
-	     !BU_STR_EQUAL(reader_options->repair, "safe")) ||
+	     !BU_STR_EQUAL(reader_options->repair, "safe") &&
+	     !BU_STR_EQUAL(reader_options->repair, "best-effort")) ||
 	    (reader_options->drawings_only && reader_options->breps_only) ||
 	    !std::isfinite(reader_options->maximum_repair_tolerance) ||
 	    reader_options->maximum_repair_tolerance < 0.0 ||
+	    !std::isfinite(reader_options->relative_tolerance) || reader_options->relative_tolerance < 0.0 ||
 	    (reader_options->maximum_repair_tolerance > 0.0 &&
 	     (reader_options->drawings_only || reader_options->exact ||
 	      reader_options->strict ||
@@ -211,9 +218,13 @@ iges_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     options.project_drawings = reader_options->drawings_3d == 0;
     options.maximum_repair_tolerance =
 	reader_options->maximum_repair_tolerance;
+    options.relative_tolerance = reader_options->relative_tolerance;
     if (reader_options->repair &&
 	    BU_STR_EQUAL(reader_options->repair, "none"))
 	options.repair = brlcad::iges::RepairMode::None;
+    else if (reader_options->repair &&
+	    BU_STR_EQUAL(reader_options->repair, "safe"))
+	options.repair = brlcad::iges::RepairMode::Safe;
     if (gcv_options->default_name && gcv_options->default_name[0] != '\0')
 	options.root_name = gcv_options->default_name;
     else if (bu_vls_strlen(&title))
@@ -221,19 +232,26 @@ iges_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
 
     bool imported = false;
     bool failed = false;
+    const auto has_errors = [](const std::vector<brlcad::iges::ImportDiagnostic> &diagnostics) {
+	return std::any_of(diagnostics.begin(), diagnostics.end(), [](const brlcad::iges::ImportDiagnostic &diagnostic) {
+	    return diagnostic.severity == brlcad::iges::Severity::Error ||
+		diagnostic.severity == brlcad::iges::Severity::Fatal;
+	});
+    };
     if (!reader_options->drawings_only) {
 	const brlcad::iges::BrepImportResult result =
 	    brlcad::iges::import_breps(document, wdbp, options);
 	log_import_diagnostics(result.diagnostics);
 	imported = result.success || imported;
-	failed = (options.strict && result.statistics.omitted) || failed;
+	failed = has_errors(result.diagnostics) || (options.strict &&
+	    (result.statistics.omitted || result.statistics.unresolved_members)) || failed;
     }
     if (!reader_options->breps_only) {
 	const brlcad::iges::ImportResult result =
 	    brlcad::iges::import_annotations(document, wdbp, options);
 	log_import_diagnostics(result.diagnostics);
 	imported = result.success || imported;
-	failed = (options.strict && result.statistics.omitted) || failed;
+	failed = has_errors(result.diagnostics) || (options.strict && result.statistics.omitted) || failed;
     }
 
     bool unsupported_solids = false;
