@@ -48,6 +48,12 @@ main(int argc, const char **UNUSED(argv))
     result = cdt_test_repair_patch_limits();
     if (result)
 	return result;
+    result = cdt_test_repair_source_coverage();
+    if (result)
+	return result;
+    result = cdt_test_periodic_surface_conditioning();
+    if (result)
+	return result;
     result = cdt_test_repair_duplicate_quarantine();
     if (result)
 	return 40 + result;
