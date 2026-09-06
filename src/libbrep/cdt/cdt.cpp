@@ -5101,15 +5101,19 @@ repair_failed_face_from_rigorous_boundary(
 	    if (from < 0 || to < 0 || from >= *vertex_count ||
 		    to >= *vertex_count)
 		return reject_boundary("mesh incidence has an invalid vertex");
-	    incidence[std::minmax(from, to)].push_back({face, from, to});
+	    const mesh_edge key = std::minmax(from, to);
+	    /* A requested ring needs all uses of its edges, but no incidence
+	     * storage for the rest of the retained mesh.  Keep vertex validation
+	     * above this filter so unrelated malformed indices still reject. */
+	    if (requested_boundary && requested_boundary->find(key) ==
+		    requested_boundary->end())
+		continue;
+	    incidence[key].push_back({face, from, to});
 	}
     }
     std::vector<edge_use> boundary;
     std::set<mesh_edge> selected_boundary;
     for (const auto &edge : incidence) {
-	if (requested_boundary && requested_boundary->find(edge.first) ==
-		requested_boundary->end())
-	    continue;
 	if (edge.second.size() > 2) {
 	    if (debug_topology) {
 		bu_log("Rigorous-boundary retained edge %d-%d has %zu uses:",
@@ -13449,7 +13453,10 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    approximation_faces.insert(
 		degenerate_neighborhood_stats.source_faces.begin(),
 		degenerate_neighborhood_stats.source_faces.end());
-	    for (int face = 0; face < input_face_count; ++face) {
+	    /* Retained rigorous triangles are recognized by their coordinate keys
+	     * before local provenance is consulted.  Recording those keys here
+	     * duplicates a large part of the mesh without helping attribution. */
+	    for (int face = rigorous_input_face_count; face < input_face_count; ++face) {
 		const int source = input_source_faces[(size_t)face];
 		if (source < 0)
 		    continue;
@@ -13527,6 +13534,11 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    return -1;
 	}
     }
+
+    /* Assembly point identities and its source array are no longer needed.
+     * Release their storage before Manifold allocates its topology indices. */
+    std::unordered_map<ON_3dPoint *, int>().swap(approximate_source_points);
+    std::vector<int>().swap(input_face_brep_sources);
 
     struct bg_trimesh_repair_settings mesh_settings = settings->mesh;
     mesh_settings.require_solid = 1;
@@ -13712,12 +13724,10 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	face_bounds[(size_t)face] =
 	    s_cdt->orig_brep->m_F[face].BoundingBox();
 
-    std::set<repair_triangle_key> rigorous_triangles;
     std::map<repair_triangle_key, size_t> rigorous_triangle_counts;
     for (int face = 0; face < rigorous_input_face_count; ++face) {
 	const repair_triangle_key key = repair_triangle_coordinates(
 	    input_vertices, &input_faces[(size_t)face * 3]);
-	rigorous_triangles.insert(key);
 	rigorous_triangle_counts[key]++;
     }
     report->mesh.output_vertices = repaired_vertex_count;
@@ -13828,7 +13838,7 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    const auto provenance = [&](int face) {
 		const repair_triangle_key key = repair_triangle_coordinates(
 		    repaired_vertices, &repaired_faces[(size_t)face * 3]);
-		if (rigorous_triangles.find(key) != rigorous_triangles.end()) {
+		if (rigorous_triangle_counts.find(key) != rigorous_triangle_counts.end()) {
 		    for (int input_face = 0;
 			    input_face < rigorous_input_face_count; ++input_face) {
 			if (key != repair_triangle_coordinates(input_vertices,
@@ -13884,27 +13894,29 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
      * reindexing, reorientation, and vertex duplication remain acceptable.
      * A bounded edge split is also preservation: mesh repair uses it to mate
      * a rigorous triangle to an already certified hanging boundary sample. */
-    std::map<repair_triangle_key, size_t> output_triangle_counts;
-    for (int face = 0; face < repaired_face_count; ++face) {
-	const repair_triangle_key key = repair_triangle_coordinates(
-	    repaired_vertices, &repaired_faces[(size_t)face * 3]);
-	output_triangle_counts[key]++;
-    }
     std::vector<repair_triangle_key> missing_rigorous_keys;
     std::set<repair_triangle_edge_key> missing_rigorous_edges;
-    for (const auto &required : rigorous_triangle_counts) {
-	const auto found = output_triangle_counts.find(required.first);
-	const size_t available = found == output_triangle_counts.end() ? 0 :
-	    found->second;
-	for (size_t occurrence = available; occurrence < required.second;
-		++occurrence)
-	    missing_rigorous_keys.push_back(required.first);
-	if (available >= required.second)
-	    continue;
-	for (int corner = 0; corner < 3; ++corner)
-	    missing_rigorous_edges.insert(repair_triangle_edge(
-		required.first[(size_t)corner],
-		required.first[(size_t)((corner + 1) % 3)]));
+    {
+	std::map<repair_triangle_key, size_t> output_triangle_counts;
+	for (int face = 0; face < repaired_face_count; ++face) {
+	    const repair_triangle_key key = repair_triangle_coordinates(
+		repaired_vertices, &repaired_faces[(size_t)face * 3]);
+	    output_triangle_counts[key]++;
+	}
+	for (const auto &required : rigorous_triangle_counts) {
+	    const auto found = output_triangle_counts.find(required.first);
+	    const size_t available = found == output_triangle_counts.end() ? 0 :
+		found->second;
+	    for (size_t occurrence = available; occurrence < required.second;
+		    ++occurrence)
+		missing_rigorous_keys.push_back(required.first);
+	    if (available >= required.second)
+		continue;
+	    for (int corner = 0; corner < 3; ++corner)
+		missing_rigorous_edges.insert(repair_triangle_edge(
+		    required.first[(size_t)corner],
+		    required.first[(size_t)((corner + 1) % 3)]));
+	}
     }
     std::map<repair_triangle_edge_key, std::vector<int>>
 	output_faces_by_missing_edge;
@@ -13974,16 +13986,16 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 		for (int first_face : first_candidates->second) {
 		    if (subdivision_faces_used.find(first_face) !=
 			    subdivision_faces_used.end() ||
-			    rigorous_triangles.find(output_triangle_keys[
-			    (size_t)first_face]) != rigorous_triangles.end())
+			    rigorous_triangle_counts.find(output_triangle_keys[
+			    (size_t)first_face]) != rigorous_triangle_counts.end())
 			continue;
 		    for (int second_face : second_candidates->second) {
 			if (first_face == second_face ||
 				subdivision_faces_used.find(second_face) !=
 				subdivision_faces_used.end() ||
-				rigorous_triangles.find(output_triangle_keys[
+				rigorous_triangle_counts.find(output_triangle_keys[
 				(size_t)second_face]) !=
-				rigorous_triangles.end())
+				rigorous_triangle_counts.end())
 			    continue;
 			if (!repair_triangle_edge_split(required,
 				output_triangle_keys[(size_t)first_face],
@@ -14143,7 +14155,7 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	const int *triangle = &repaired_faces[(size_t)face * 3];
 	const repair_triangle_key key = repair_triangle_coordinates(
 	    repaired_vertices, triangle);
-	if (rigorous_triangles.find(key) != rigorous_triangles.end())
+	if (rigorous_triangle_counts.find(key) != rigorous_triangle_counts.end())
 	    continue;
 	int source_brep_face = -1;
 	bool local_surface_approximation = false;

@@ -326,10 +326,24 @@ trimesh_split_hanging_boundary_edges(
     if (unmatched_edges.empty())
 	return 0;
 
+    /* A scan of every boundary vertex for every open edge is quadratic even
+     * when the boundaries are far apart.  The index only filters candidates;
+     * the segment-distance and endpoint tests below still decide each split. */
+    RTree<int32_t, double, 3> boundary_index;
+    for (int32_t point : boundary_vertices) {
+	const double location[3] = {vertices[point][0], vertices[point][1],
+	    vertices[point][2]};
+	boundary_index.Insert(location, location, point);
+    }
+
     std::vector<std::array<int32_t, 3>> output;
     output.reserve(triangles.size());
     size_t added = 0;
     const double tolerance_squared = tolerance * tolerance;
+    /* The squared-distance predicate can underflow for very small inputs.
+     * Its spatial filter must include that uncertainty as well. */
+    const double search_radius = std::max(tolerance,
+	std::sqrt(std::numeric_limits<double>::min()));
     for (std::array<int32_t, 3> const& triangle : triangles) {
 	bool split = false;
 	for (int edge = 0; edge < 3 && !split; ++edge) {
@@ -344,26 +358,40 @@ trimesh_split_hanging_boundary_edges(
 	    const double length_squared = gte::Dot(segment, segment);
 	    if (!(length_squared > tolerance_squared))
 		continue;
+	    const double length = std::sqrt(length_squared);
+	    double minimum[3], maximum[3];
+	    for (int axis = 0; axis < 3; ++axis) {
+		/* Cover roundoff in the projected distance calculation as well as
+		 * the requested radius.  This padding never changes acceptance. */
+		constexpr double projection_roundoff_factor = 8.0;
+		const double scale = std::max(std::fabs(vertices[first][axis]),
+		    std::fabs(vertices[second][axis]));
+		const double padding = search_radius + projection_roundoff_factor *
+		    std::numeric_limits<double>::epsilon() * scale;
+		minimum[axis] = std::min(vertices[first][axis], vertices[second][axis]) - padding;
+		maximum[axis] = std::max(vertices[first][axis], vertices[second][axis]) + padding;
+	    }
 	    std::vector<std::pair<double, int32_t>> candidates;
-	    for (int32_t point : boundary_vertices) {
+	    boundary_index.Search(minimum, maximum, [&](int32_t point, void *) {
 		if (point == first || point == second || point == opposite)
-		    continue;
+		    return true;
 		gte::Vector3<double> offset =
 		    vertices[point] - vertices[first];
 		const double parameter = gte::Dot(offset, segment) /
 		    length_squared;
 		if (!(parameter > 0.0) || !(parameter < 1.0))
-		    continue;
-		const double along = parameter * std::sqrt(length_squared);
+		    return true;
+		const double along = parameter * length;
 		if (along <= tolerance ||
-		    std::sqrt(length_squared) - along <= tolerance)
-		    continue;
+		    length - along <= tolerance)
+		    return true;
 		gte::Vector3<double> separation = offset -
 		    parameter * segment;
 		if (gte::Dot(separation, separation) > tolerance_squared)
-		    continue;
+		    return true;
 		candidates.push_back(std::make_pair(parameter, point));
-	    }
+		return true;
+	    }, NULL);
 	    if (candidates.empty())
 		continue;
 	    std::sort(candidates.begin(), candidates.end(),
@@ -510,21 +538,55 @@ trimesh_reject_nonimproving_added_components(
 
     std::vector<std::array<int32_t, 3>> accepted(triangles.begin(),
 	triangles.begin() + (ptrdiff_t)first_added_face);
-    size_t current_score = trimesh_topology_defect_score(accepted,
-	vertex_count);
+    std::vector<std::vector<size_t>> incident_faces(vertex_count);
+    for (size_t face = 0; face < first_added_face; ++face) {
+	for (int32_t vertex : triangles[face])
+	    incident_faces[(size_t)vertex].push_back(face);
+    }
     size_t rejected = 0;
     for (const auto &component : components) {
-	std::vector<std::array<int32_t, 3>> trial = accepted;
+	/* Only the new triangles' edges and vertex links can change score.
+	 * Include every accepted triangle incident on those vertices, so their
+	 * complete links and edge incidences are present.  All other terms are
+	 * identical in both local scores and cancel.  Compact indices also keep
+	 * the link check from allocating space for the entire mesh per cap. */
+	std::set<size_t> neighborhood;
+	for (size_t face : component.second) {
+	    for (int32_t vertex : triangles[face]) {
+		const auto &incident = incident_faces[(size_t)vertex];
+		neighborhood.insert(incident.begin(), incident.end());
+	    }
+	}
+	std::map<int32_t, int32_t> local_vertices;
+	std::vector<std::array<int32_t, 3>> trial;
+	trial.reserve(neighborhood.size() + component.second.size());
+	const auto append_local_face = [&](size_t face) {
+	    std::array<int32_t, 3> local_triangle;
+	    for (int corner = 0; corner < 3; ++corner) {
+		const int32_t vertex = triangles[face][corner];
+		auto entry = local_vertices.emplace(vertex,
+		    (int32_t)local_vertices.size());
+		local_triangle[corner] = entry.first->second;
+	    }
+	    trial.push_back(local_triangle);
+	};
+	for (size_t face : neighborhood)
+	    append_local_face(face);
+	const size_t current_score = trimesh_topology_defect_score(trial,
+	    local_vertices.size());
 	for (size_t face : component.second)
-	    trial.push_back(triangles[face]);
+	    append_local_face(face);
 	const size_t trial_score = trimesh_topology_defect_score(trial,
-	    vertex_count);
+	    local_vertices.size());
 	if (trial_score >= current_score) {
 	    rejected += component.second.size();
 	    continue;
 	}
-	current_score = trial_score;
-	accepted.swap(trial);
+	for (size_t face : component.second) {
+	    accepted.push_back(triangles[face]);
+	    for (int32_t vertex : triangles[face])
+		incident_faces[(size_t)vertex].push_back(face);
+	}
     }
     if (rejected)
 	triangles.swap(accepted);
@@ -1212,14 +1274,10 @@ trimesh_sync_closed_orientation(
     return changed;
 }
 
-/* With perform_union false, round-trip an accepted Manifold input through its
- * topology normalizer without a Boolean operation.  In both modes, publish a
- * candidate only after libbg independently certifies its indexed topology. */
-static bool
-trimesh_manifold_union(
-	std::vector<gte::Vector3<double>>& vertices,
-	std::vector<std::array<int32_t, 3>>& triangles,
-	bool *manifold_accepted, bool perform_union)
+static manifold::Manifold
+trimesh_manifold_input(
+	std::vector<gte::Vector3<double>> const& vertices,
+	std::vector<std::array<int32_t, 3>> const& triangles)
 {
     manifold::MeshGL64 mesh;
     mesh.vertProperties.reserve(vertices.size() * 3);
@@ -1233,7 +1291,20 @@ trimesh_manifold_union(
 	for (int corner = 0; corner < 3; ++corner)
 	    mesh.triVerts.push_back((uint64_t)triangle[corner]);
     }
-    manifold::Manifold input(mesh);
+    return manifold::Manifold(mesh);
+}
+
+/* With perform_union false, round-trip an accepted Manifold input through its
+ * topology normalizer without a Boolean operation.  In both modes, publish a
+ * candidate only after libbg independently certifies its indexed topology. */
+static bool
+trimesh_manifold_union(
+	std::vector<gte::Vector3<double>>& vertices,
+	std::vector<std::array<int32_t, 3>>& triangles,
+	bool *manifold_accepted, bool perform_union)
+{
+    /* Release the interchange mesh before allocating the normalized output. */
+    manifold::Manifold input = trimesh_manifold_input(vertices, triangles);
     if (input.Status() != manifold::Manifold::Error::NoError)
 	return false;
     if (manifold_accepted)
@@ -1661,11 +1732,11 @@ bg_trimesh_repair_ex_impl(
 	    !settings->separate_touching_vertices &&
 	    !settings->remove_small_components &&
 	    !settings->union_components && settings->require_manifold) {
-	bool manifold_accepted = false;
-	std::vector<gte::Vector3<double>> manifold_vertices = verts;
-	std::vector<std::array<int32_t, 3>> manifold_triangles = tris;
-	(void)trimesh_manifold_union(manifold_vertices, manifold_triangles,
-	    &manifold_accepted, false);
+	/* Only acceptance is needed here: the original indexed solid is already
+	 * certified and must be preserved.  Exporting and validating a normalized
+	 * copy wastes memory and can fail after Manifold accepted the input. */
+	const bool manifold_accepted = trimesh_manifold_input(verts, tris).Status() ==
+	    manifold::Manifold::Error::NoError;
 	report->manifold_accepted = manifold_accepted;
 	if (manifold_accepted)
 	    return trimesh_repair_export(ofaces, n_ofaces, opnts, n_opnts,
