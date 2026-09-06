@@ -40,6 +40,26 @@
 /* declare our callbacks used by _ged_drawtrees() */
 static int drawtrees_depth = 0;
 
+static int
+solid_get_color_attribute(const struct rt_db_internal *ip, unsigned char color[3])
+{
+    const int MAX_COLOR_COMPONENT = 255;
+    const char *attribute = bu_avs_get(&ip->idb_avs, db5_standard_attribute(ATTR_COLOR));
+    int components[3];
+    int i;
+
+    /* Preserve wireframe parsing and clamping.  Invalid attributes must
+     * fall through to the inherited material or default color. */
+    if (!attribute ||
+	sscanf(attribute, "%3i%*c%3i%*c%3i", components, components + 1, components + 2) != 3 ||
+	components[0] < 0 || components[1] < 0 || components[2] < 0)
+	return 0;
+
+    for (i = 0; i < 3; ++i)
+	color[i] = (unsigned char)(components[i] > MAX_COLOR_COMPONENT ? MAX_COLOR_COMPONENT : components[i]);
+    return 1;
+}
+
 /* Set solid's basecolor, color, and color flags based on client data and tree
  * state. If user color isn't set in client data, the solid's region id must be
  * set for proper material lookup.
@@ -385,26 +405,11 @@ append_solid_to_display_list(
 	    wire_color[BLU] = (unsigned char)bv_data->wireframe_color[BLU];
             solid_set_color_info(sp, wire_color, tsp);
         } else {
-	    const char *attr_color = bu_avs_get(&ip->idb_avs, db5_standard_attribute(ATTR_COLOR));
-	    if (attr_color) {
-		int i;
-		unsigned char obj_color[3];
-		int color[3];
-		int color_cnt = sscanf(attr_color, "%3i%*c%3i%*c%3i", color+0, color+1, color+2);
-		if (color_cnt == 3 && color[0] >= 0 && color[1] >= 0 && color[2] >= 0) {
-		    for (i = 0; i < 3; i++) {
-			if (color[i] > 255) color[i] = 255;
-		    }
-		    obj_color[RED] = (unsigned char)color[RED];
-		    obj_color[GRN] = (unsigned char)color[GRN];
-		    obj_color[BLU] = (unsigned char)color[BLU];
-		    solid_set_color_info(sp, obj_color, tsp);
-		} else {
-		    solid_set_color_info(sp, NULL, tsp);
-		}
-	    } else {
+	    unsigned char obj_color[3];
+	    if (solid_get_color_attribute(ip, obj_color))
+		solid_set_color_info(sp, obj_color, tsp);
+	    else
 		solid_set_color_info(sp, NULL, tsp);
-	    }
 	}
     }
 
@@ -486,7 +491,13 @@ plot_shaded(
 		(void)rt_brep_plot_poly(&vhead, DB_FULL_PATH_CUR_DIR(pathp), ip, tsp->ts_ttol,
 			tsp->ts_tol, NULL);
 	}
-	_ged_drawH_part2(0, &vhead, pathp, tsp, dgcdp);
+	/* Match wireframe colors without changing client data shared with
+	 * sibling leaves.  An explicit draw color still takes precedence. */
+	unsigned char obj_color[3];
+	if (!dgcdp->vs.color_override && solid_get_color_attribute(ip, obj_color))
+	    dl_add_path(0, &vhead, pathp, tsp, obj_color, dgcdp);
+	else
+	    _ged_drawH_part2(0, &vhead, pathp, tsp, dgcdp);
     } else {
 	int ac = 1;
 	const char *av[2];

@@ -13,6 +13,15 @@ set(
   ged-zap
 )
 
+brlcad_addexec(ged_test_draw_color draw_color.cpp "libged;libwdb;librt;libbu" TEST)
+if(TARGET ged_test_draw_color)
+  add_dependencies(ged_test_draw_color ged_plugins)
+endif()
+brlcad_add_test(NAME ged_test_drawing_color COMMAND ged_test_draw_color)
+if(TARGET ged_test_draw_color)
+  set_property(TEST ged_test_drawing_color APPEND PROPERTY ENVIRONMENT BRLCAD_ROOT=${CMAKE_BINARY_DIR})
+endif()
+
 set(basic_view_test_ctrls basic.apng)
 brlcad_addexec(ged_test_draw "basic.cpp;util.cpp" "libged;libdm;PNG::PNG;ZLIB::ZLIB;Threads::Threads" TEST)
 if(TARGET ged_test_draw)
