@@ -23,6 +23,7 @@
 import argparse
 import concurrent.futures
 import json
+import math
 import os
 from pathlib import Path
 import queue
@@ -173,6 +174,9 @@ def append_repair_options(command, args):
         command.append("--repair-full-fast")
     if args.repair_full_fast_if_needed:
         command.append("--repair-full-fast-if-needed")
+    if args.repair_planar_cap_area_percent > 0.0:
+        command.extend(("--repair-planar-cap-area-percent",
+                        str(args.repair_planar_cap_area_percent)))
     if args.repair_try_invalid:
         command.append("--repair-try-invalid")
     if args.repair_poisson:
@@ -824,6 +828,11 @@ def parse_args():
               "repair; zero disables"),
     )
     parser.add_argument("--repair-area-change-percent", type=float, default=1.0)
+    parser.add_argument(
+        "--repair-planar-cap-area-percent", type=float, default=0.0,
+        help=("opt-in aggregate area ceiling for disjoint planar caps; requires "
+              "--quality-repair and --repair-try-invalid"),
+    )
     parser.add_argument("--repair-max-deviation", type=float, default=0.0)
     parser.add_argument(
         "--repair-max-deviation-rel", type=float, default=0.0
@@ -908,6 +917,12 @@ def parse_args():
     if args.repair_try_invalid and \
             (args.repair_full_fast or args.repair_poisson):
         parser.error("invalid rigorous retry conflicts with forced whole-fast")
+    if not math.isfinite(args.repair_planar_cap_area_percent) or \
+            args.repair_planar_cap_area_percent < 0.0:
+        parser.error("invalid planar cap area ceiling")
+    if args.repair_planar_cap_area_percent > 0.0 and \
+            not (args.quality_repair and args.repair_try_invalid):
+        parser.error("planar capping needs --quality-repair and --repair-try-invalid")
     if (args.repair_poisson or args.repair_full_fast or
             args.repair_full_fast_if_needed or args.repair_try_invalid or
             args.repair_union_components or

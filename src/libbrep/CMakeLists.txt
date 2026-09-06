@@ -12,6 +12,7 @@ set(
   cdt/chart.cpp
   cdt/cdt.cpp
   cdt/fast.cpp
+  cdt/heal.cpp
   cdt/surf.cpp
   cdt/cdt_util.cpp
   cdt/validate.cpp
@@ -76,6 +77,7 @@ cmakefiles(
   brep_except.h
   cdt/chart.h
   cdt/cdt.h
+  cdt/heal.h
   cdt/mesh.h
   cdt/test_api.h
   debug_plot.h
