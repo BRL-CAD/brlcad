@@ -117,6 +117,9 @@ struct brep_cdt_diagnostic {
  * fallback limits.  Ambiguous boundaries are left unresolved; any candidate
  * must still pass the requested mesh and fidelity checks.  Provenance uses
  * the caller's original face and edge indices, including ignored wire edges.
+ * A failed whole-display repair of a valid closed source may retry a small
+ * open boundary residue with its validated pullback samples retained.  The
+ * same resource, solid, and fidelity requirements apply to that retry.
  * Edge-initialization failures caused by disagreeing paired p-curves may make
  * one repair-only retry when their shared midpoint stays within the same
  * maximum surface-deviation bound of both faces and the native edge curve.
@@ -336,9 +339,12 @@ struct brep_cdt_repair_report {
     int adaptive_hole_area_retry_attempted;
     fastf_t adaptive_hole_area_percent;
     struct brep_cdt_healing_report healing;
+    /** A closed-source retry retained validated pullback boundary samples. */
+    int pullback_retry_attempted;
+    int pullback_retry_applied;
 };
 
-#define BREP_CDT_REPAIR_REPORT_INIT {BG_TRIMESH_REPAIR_REPORT_INIT, {BREP_CDT_RESULT_UNATTEMPTED, BREP_CDT_STAGE_NONE, -1, 0, 0, {0}}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0, 0, 0, 0.0, BREP_CDT_HEALING_REPORT_INIT}
+#define BREP_CDT_REPAIR_REPORT_INIT {BG_TRIMESH_REPAIR_REPORT_INIT, {BREP_CDT_RESULT_UNATTEMPTED, BREP_CDT_STAGE_NONE, -1, 0, 0, {0}}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0, 0, 0, 0.0, BREP_CDT_HEALING_REPORT_INIT, 0, 0}
 
 /** Create and initialize a CDT state with default tolerances.  bv
  * must be a pointer to an ON_Brep object. */
@@ -558,6 +564,9 @@ struct brep_cdt_fast_options {
      * convergence threshold.  Zero values select library defaults. */
     double coarse_relative_tolerance;
     double area_change_tolerance;
+    /* Retain validated pcurve-repair samples for cross-face mesh assembly.
+     * Display callers normally simplify them within the repair tolerance. */
+    int preserve_pullback_samples;
 };
 
 #define BREP_CDT_FAST_FACE_COMPLETED 0

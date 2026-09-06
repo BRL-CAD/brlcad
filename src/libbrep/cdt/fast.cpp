@@ -37,6 +37,7 @@
 #include <list>
 #include <limits>
 #include <map>
+#include <memory>
 #include <mutex>
 #include <new>
 #include <stack>
@@ -740,7 +741,7 @@ fast_simplify_pullback_samples(const ON_Surface *surface,
 static bool
 fast_append_pullback_samples(ON_SimpleArray<BrepTrimPoint> *points,
 	const ON_BrepTrim &trim, bool omit_last, const struct bn_tol *tol,
-	double model_diagonal, fast_face_scratch &scratch)
+	double model_diagonal, fast_face_scratch &scratch, bool preserve_samples)
 {
     const ON_Surface *surface = trim.Face() ?
 	static_cast<const ON_Surface *>(trim.Face()) : trim.SurfaceOf();
@@ -756,8 +757,11 @@ fast_append_pullback_samples(ON_SimpleArray<BrepTrimPoint> *points,
     if (!(repair_tolerance > 0.0) || !std::isfinite(repair_tolerance))
 	return false;
 
+    /* Display recovery rejects the whole pullback after any source mismatch.
+     * Further global projections cannot make that candidate usable. */
     PBCData *data = pullback_samples(surface, edge_curve, repair_tolerance,
-	1.0e-3, BREP_SAME_POINT_TOLERANCE, repair_tolerance);
+	1.0e-3, BREP_SAME_POINT_TOLERANCE, repair_tolerance,
+	std::shared_ptr<brlcad::PullbackContext>(), true);
     if (!data || !data->samples_source_validated || !data->segments ||
 	    data->segments->empty() || data->rejected_projection_samples) {
 	fast_free_pullback(data);
@@ -825,8 +829,9 @@ fast_append_pullback_samples(ON_SimpleArray<BrepTrimPoint> *points,
 	    return false;
 	lifted_points.push_back(point);
     }
-    fast_simplify_pullback_samples(surface, samples, lifted_points,
-	repair_tolerance);
+    if (!preserve_samples)
+	fast_simplify_pullback_samples(surface, samples, lifted_points,
+	    repair_tolerance);
 
     const size_t append_count = samples.size() - (omit_last ? 1 : 0);
     for (size_t i = 0; i < append_count; ++i) {
@@ -2003,7 +2008,8 @@ get_loop_sample_points(
 	if (repair_pcurves && (fast_pullback_candidate(loop, *trim, tol,
 		model_diagonal) || fast_pcurve_edge_mismatch(*trim, tol,
 		model_diagonal)) && fast_append_pullback_samples(points, *trim,
-		lti < trim_count - 1, tol, model_diagonal, scratch))
+		lti < trim_count - 1, tol, model_diagonal, scratch,
+		options && options->preserve_pullback_samples))
 	    continue;
 
 	fast_trim_point_map *param_points3d = getEdgePoints(*trim, max_dist,
@@ -7217,6 +7223,7 @@ brep_cdt_fast_options_default(struct brep_cdt_fast_options *options)
 	FAST_CDT_DEFAULT_COARSE_RELATIVE_TOLERANCE;
     options->area_change_tolerance =
 	FAST_CDT_DEFAULT_AREA_CHANGE_TOLERANCE;
+    options->preserve_pullback_samples = 0;
 }
 
 int
@@ -7275,6 +7282,7 @@ brep_cdt_fast_ex(int **faces, int *face_cnt, vect_t **pnt_norms,
 	if (user_options->max_triangles)
 	    options.max_triangles = user_options->max_triangles;
 	options.adaptive_quality = user_options->adaptive_quality;
+	options.preserve_pullback_samples = user_options->preserve_pullback_samples;
 	if (std::isfinite(user_options->coarse_relative_tolerance) &&
 		user_options->coarse_relative_tolerance > 0.0)
 	    options.coarse_relative_tolerance =
