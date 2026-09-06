@@ -303,6 +303,30 @@ main(int argc, const char **argv)
 	    return 1;
     }
 
+    {
+	/* The overlapping holes split the clipped boundary into several filled
+	 * nodes.  One retained triangular hole is attached to a node outside it;
+	 * it must be reassigned without filling the hole or changing chart area. */
+	point2d_t points[17] = {
+	    {0.997, 0.000}, {0.997, 0.500}, {0.152, 1.000},
+	    {0.773, 0.322}, {0.777, 0.297}, {0.757, 0.321},
+	    {0.881, 0.382}, {0.903, 0.337}, {0.881, 0.291},
+	    {0.713, 0.279}, {0.728, 0.334}, {0.768, 0.277},
+	    {0.908, 0.428}, {0.907, 0.347}, {0.902, 0.417},
+	    {0.790, 0.254}, {0.820, 0.326}
+	};
+	const int outer[3] = {0, 1, 2};
+	const int first_hole[3] = {3, 4, 5};
+	const int second_hole[3] = {6, 7, 8};
+	const int crossing_hole[8] = {9, 10, 11, 12, 13, 14, 15, 16};
+	const int *holes[3] = {first_hole, second_hole, crossing_hole};
+	const size_t hole_counts[3] = {3, 3, 8};
+	const double clipped_area = 0.20669859094190662;
+	if (check_clean_triangulation((const point2d_t *)points, 17, outer,
+		3, holes, hole_counts, 3, NULL, 0, clipped_area))
+	    return 1;
+    }
+
     if (check_clean_constraint())
 	return 1;
     if (check_clean_failure_report())
