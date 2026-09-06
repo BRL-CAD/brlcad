@@ -11140,7 +11140,8 @@ static int
 brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	const struct brep_cdt_repair_settings *settings,
 	struct brep_cdt_repair_report *report, bool area_weighted_samples,
-	bool closure_biased_poisson, bool automatic_local_repair)
+	bool closure_biased_poisson, bool automatic_local_repair,
+	bool preserve_pullback_samples = false)
 {
     struct brep_cdt_repair_report local_report =
 	BREP_CDT_REPAIR_REPORT_INIT;
@@ -11862,6 +11863,7 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	brep_cdt_fast_options_default(&fast_options);
 	fast_options.max_workers = 1;
 	fast_options.adaptive_quality = 0;
+	fast_options.preserve_pullback_samples = preserve_pullback_samples ? 1 : 0;
 	fast_options.max_points = settings->max_fast_points;
 	fast_options.max_result_bytes = settings->max_fast_result_bytes;
 	fast_options.max_time_ms = settings->max_fast_time_ms;
@@ -14534,6 +14536,25 @@ brep_cdt_repair(struct ON_Brep_CDT_State *s_cdt,
 	    bool area_weighted, bool closure_biased, bool automatic_local) {
 	int result = brep_cdt_repair_attempt(s_cdt, opts, active_report,
 	    area_weighted, closure_biased, automatic_local);
+	/* Simplifying a repaired pcurve is suitable for display, but can leave
+	 * a long edge opposite a finely sampled neighboring boundary.  Retry a
+	 * small open residue on a closed source before giving up on assembly. */
+	if (result < 0 && opts && opts->use_full_fast_fallback &&
+	    !opts->use_poisson_reconstruction &&
+	    active_report->full_fast_fallback_used &&
+	    active_report->mesh.unmatched_edges > 0 &&
+	    (size_t)active_report->mesh.unmatched_edges <=
+		opts->mesh.max_hole_edges &&
+	    !active_report->mesh.excess_edges &&
+	    !active_report->mesh.misoriented_edges &&
+	    s_cdt && s_cdt->orig_brep && s_cdt->orig_brep->IsValid() &&
+	    s_cdt->orig_brep->IsSolid() &&
+	    cdt_topology_references_safe(s_cdt->orig_brep, NULL)) {
+	    result = brep_cdt_repair_attempt(s_cdt, opts, active_report,
+		area_weighted, closure_biased, automatic_local, true);
+	    active_report->pullback_retry_attempted = 1;
+	    active_report->pullback_retry_applied = result >= 0 ? 1 : 0;
+	}
 	active_report->relaxed_tessellation_attempted =
 	    relaxed_tessellation_attempted ? 1 : 0;
 	active_report->relaxed_tessellation_completed_faces =

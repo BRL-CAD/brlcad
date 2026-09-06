@@ -38,7 +38,7 @@ struct fast_result {
 };
 
 static fast_result *
-run_fast(const ON_Brep &brep)
+run_fast(const ON_Brep &brep, bool preserve_pullback_samples = false)
 {
     fast_result *result = new fast_result;
     struct bg_tess_tol ttol = BG_TESS_TOL_INIT_TOL;
@@ -46,6 +46,7 @@ run_fast(const ON_Brep &brep)
     struct brep_cdt_fast_options options;
     brep_cdt_fast_options_default(&options);
     options.max_workers = 1;
+    options.preserve_pullback_samples = preserve_pullback_samples ? 1 : 0;
     result->ret = brep_cdt_fast_ex(&result->faces, &result->face_count,
 	&result->normals, &result->points, &result->point_count, &brep, -1,
 	&ttol, &tol, &options, &result->report);
@@ -1299,7 +1300,7 @@ doubly_periodic_winding_strip_test()
 }
 
 static bool
-collapsed_closed_pcurve_test()
+collapsed_closed_pcurve_case(bool preserve_samples)
 {
     ON_Brep brep;
     ON_PlaneSurface *surface = large_plane();
@@ -1353,7 +1354,8 @@ collapsed_closed_pcurve_test()
     trim.m_iso = ON_Surface::not_iso;
     trim.m_tolerance[0] = trim.m_tolerance[1] = repair_tolerance;
 
-    fast_result *result = run_fast(brep);
+    const auto source_crc = brep.DataCRC(0);
+    fast_result *result = run_fast(brep, preserve_samples);
     bool center_covered = false;
     for (int fi = 0; result->faces && result->points &&
 	    fi < result->face_count; ++fi) {
@@ -1380,15 +1382,25 @@ collapsed_closed_pcurve_test()
 	    break;
     }
     const int maximum_output_points = dense_span_count / 2;
+    const bool expected_sampling = preserve_samples ?
+	result->point_count >= maximum_output_points :
+	result->point_count < maximum_output_points;
     const bool valid = result->ret == BREP_CDT_FAST_OK &&
 	result->report.failed_faces == 0 && result->face_count > 0 &&
-	result->point_count < maximum_output_points && !center_covered;
+	expected_sampling && !center_covered && brep.DataCRC(0) == source_crc;
     if (!valid)
 	bu_log("collapsed pcurve: ret=%d failed=%d faces=%d points=%d "
 	    "center=%d\n", result->ret, result->report.failed_faces,
 	    result->face_count, result->point_count, (int)center_covered);
     delete result;
     return valid;
+}
+
+static bool
+collapsed_closed_pcurve_test()
+{
+    return collapsed_closed_pcurve_case(false) &&
+	collapsed_closed_pcurve_case(true);
 }
 
 static bool

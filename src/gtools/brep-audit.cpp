@@ -148,6 +148,8 @@ struct geom_result {
     double repair_rigorous_first_output_area = 0.0;
     double repair_rigorous_first_area_change_percent = 0.0;
     int repair_approximation_tier = BREP_CDT_REPAIR_APPROX_NONE;
+    bool repair_pullback_retry_attempted = false;
+    bool repair_pullback_retry_applied = false;
     int repair_retained_rigorous_triangles = 0;
     int repair_best_effort_faces = 0;
     int repair_best_effort_triangles = 0;
@@ -1125,6 +1127,10 @@ quality_result(struct db_i *dbip, struct directory *dp,
 	    repair_report.rigorous_first_area_change_percent;
 	result.repair_approximation_tier =
 	    repair_report.approximation_tier;
+	result.repair_pullback_retry_attempted =
+	    repair_report.pullback_retry_attempted != 0;
+	result.repair_pullback_retry_applied =
+	    repair_report.pullback_retry_applied != 0;
 	result.repair_retained_rigorous_triangles =
 	    repair_report.retained_rigorous_triangles;
 	result.repair_best_effort_faces = repair_report.best_effort_faces;
@@ -1624,6 +1630,10 @@ print_result(const geom_result &result, const vect_t ref_dims)
 	    "false")
 	<< ",\"adaptive_hole_area_percent\":"
 	<< result.repair_adaptive_hole_area_percent
+	<< ",\"pullback_retry_attempted\":"
+	<< (result.repair_pullback_retry_attempted ? "true" : "false")
+	<< ",\"pullback_retry_applied\":"
+	<< (result.repair_pullback_retry_applied ? "true" : "false")
 	<< ",\"topology_healing\":{\"attempted\":"
 	<< (result.repair_healing.attempted ? "true" : "false")
 	<< ",\"applied\":" << (result.repair_healing.applied ? "true" : "false")
