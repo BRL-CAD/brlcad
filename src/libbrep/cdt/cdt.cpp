@@ -63,6 +63,7 @@
 #  pragma clang diagnostic pop
 #endif
 #include "./cdt.h"
+#include "heal.h"
 
 #define BREP_PLANAR_TOL 0.05
 #define MAX_TRIANGULATION_ATTEMPTS 5
@@ -2800,85 +2801,6 @@ refine_assembled_shared_chords(struct ON_Brep_CDT_State *s_cdt,
     return inserted;
 }
 
-static bool
-brep_cdt_relaxed_topology_safe(const ON_Brep *brep, std::string *reason)
-{
-    const auto fail = [reason](const std::string &message) {
-	if (reason)
-	    *reason = message;
-	return false;
-    };
-    if (!brep || brep->m_F.Count() <= 0 || brep->m_V.Count() <= 0)
-	return fail("missing faces or vertices");
-    for (int edge_index = 0; edge_index < brep->m_E.Count(); ++edge_index) {
-	const ON_BrepEdge &edge = brep->m_E[edge_index];
-	if (edge.m_edge_index != edge_index || edge.TrimCount() != 2 ||
-		!edge.EdgeCurveOf())
-	    return fail("edge " + std::to_string(edge_index) +
-		" lacks paired trims, a curve, or stable indexing");
-	if (!edge.Vertex(0) || !edge.Vertex(1) ||
-		edge.Vertex(0)->m_vertex_index < 0 ||
-		edge.Vertex(0)->m_vertex_index >= brep->m_V.Count() ||
-		edge.Vertex(1)->m_vertex_index < 0 ||
-		edge.Vertex(1)->m_vertex_index >= brep->m_V.Count())
-	    return fail("edge " + std::to_string(edge_index) +
-		" has invalid endpoint references");
-	for (int edge_trim = 0; edge_trim < edge.TrimCount(); ++edge_trim) {
-	    const ON_BrepTrim *trim = edge.Trim(edge_trim);
-	    if (!trim || trim->m_trim_index < 0 ||
-		    trim->m_trim_index >= brep->m_T.Count() ||
-		    trim->m_ei != edge_index || !trim->TrimCurveOf())
-		return fail("edge " + std::to_string(edge_index) +
-		    " has an invalid trim reference");
-	}
-    }
-    for (int face_index = 0; face_index < brep->m_F.Count(); ++face_index) {
-	const ON_BrepFace &face = brep->m_F[face_index];
-	if (face.m_face_index != face_index)
-	    return fail("face " + std::to_string(face_index) +
-		" lacks stable indexing");
-	if (!face.SurfaceOf())
-	    return fail("face " + std::to_string(face_index) +
-		" lacks a surface");
-	if (face.LoopCount() <= 0)
-	    return fail("face " + std::to_string(face_index) +
-		" has no trim loops");
-	for (int loop_index = 0; loop_index < face.LoopCount(); ++loop_index) {
-	    const ON_BrepLoop *loop = face.Loop(loop_index);
-	    if (!loop || loop->m_loop_index < 0 ||
-		    loop->m_loop_index >= brep->m_L.Count() ||
-		    loop->Face() != &face || loop->TrimCount() <= 0)
-		return fail("face " + std::to_string(face_index) +
-		    " has an invalid loop reference");
-	    for (int loop_trim = 0; loop_trim < loop->TrimCount(); ++loop_trim) {
-		const ON_BrepTrim *trim = loop->Trim(loop_trim);
-		if (!trim || trim->m_trim_index < 0 ||
-			trim->m_trim_index >= brep->m_T.Count() ||
-			trim->Loop() != loop || trim->Face() != &face ||
-			!trim->Vertex(0) || !trim->Vertex(1) ||
-			trim->Vertex(0)->m_vertex_index < 0 ||
-			trim->Vertex(0)->m_vertex_index >= brep->m_V.Count() ||
-			trim->Vertex(1)->m_vertex_index < 0 ||
-			trim->Vertex(1)->m_vertex_index >= brep->m_V.Count() ||
-			!trim->Domain().IsIncreasing())
-		    return fail("face " + std::to_string(face_index) +
-			" has an invalid trim or vertex reference");
-		if (trim->m_type == ON_BrepTrim::singular) {
-		    if (trim->m_ei >= 0)
-			return fail("face " + std::to_string(face_index) +
-			    " has a singular trim with an edge");
-		} else if (trim->m_ei < 0 ||
-			trim->m_ei >= brep->m_E.Count() ||
-			!trim->TrimCurveOf()) {
-		    return fail("face " + std::to_string(face_index) +
-			" has an unpaired nonsingular trim");
-		}
-	    }
-	}
-    }
-    return true;
-}
-
 static size_t
 brep_cdt_promote_missing_outer_loops(ON_Brep *brep)
 {
@@ -2986,7 +2908,7 @@ brep_cdt_tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt,
 	    return -1;
 	}
 	std::string relaxed_failure;
-	if (!brep_cdt_relaxed_topology_safe(s_cdt->orig_brep,
+	if (!cdt_topology_references_safe(s_cdt->orig_brep,
 		&relaxed_failure)) {
 	    const std::string message =
 		"invalid B-Rep failed relaxed referential-safety checks: " +
@@ -11259,6 +11181,10 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    settings->max_surface_deviation < 0.0 ||
 	    !std::isfinite(settings->max_area_change_percent) ||
 	    settings->max_area_change_percent < 0.0 ||
+	    !std::isfinite(settings->max_planar_cap_area_percent) ||
+	    settings->max_planar_cap_area_percent < 0.0 ||
+	    (settings->max_planar_cap_area_percent > 0.0 &&
+	     !settings->try_invalid_brep) ||
 	    !std::isfinite(settings->relaxed_fidelity_factor) ||
 	    settings->relaxed_fidelity_factor < 0.0 ||
 	    (settings->relaxed_fidelity_factor > 0.0 &&
@@ -13399,7 +13325,7 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    std::to_string(report->mesh.invalid_vertex_links) +
 	    " invalid vertex links, " +
 	    std::to_string(report->mesh.rejected_hole_faces) +
-	    " intersecting cap faces rejected";
+	    " candidate cap faces rejected";
 	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_REPAIR_FAILED,
 	    BREP_CDT_STAGE_MESH_REPAIR, -1,
 	    report->source_diagnostic.completed_faces,
@@ -14539,8 +14465,8 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
     return 0;
 }
 
-int
-ON_Brep_CDT_Repair(struct ON_Brep_CDT_State *s_cdt,
+static int
+brep_cdt_repair(struct ON_Brep_CDT_State *s_cdt,
 	const struct brep_cdt_repair_settings *settings,
 	struct brep_cdt_repair_report *report)
 {
@@ -14686,6 +14612,9 @@ ON_Brep_CDT_Repair(struct ON_Brep_CDT_State *s_cdt,
 	    fallback_settings.use_full_fast_fallback = 1;
 	    fallback_settings.use_full_fast_fallback_if_needed = 0;
 	    fallback_settings.try_invalid_brep = 0;
+	    /* The outer healing transaction owns cap construction and its area
+	     * ceiling.  A mesh-only retry must disable both topology options. */
+	    fallback_settings.max_planar_cap_area_percent = 0.0;
 	    result = run_repair_attempt(&fallback_settings, false, false,
 		false);
 	    active_report->rigorous_first_attempted = 1;
@@ -14781,6 +14710,172 @@ ON_Brep_CDT_Repair(struct ON_Brep_CDT_State *s_cdt,
     if (result >= 0 || !active_report->poisson_reconstruction_applied)
 	return result;
     return run_attempt(1.2, true, true);
+}
+
+int
+ON_Brep_CDT_Repair(struct ON_Brep_CDT_State *s_cdt,
+	const struct brep_cdt_repair_settings *settings,
+	struct brep_cdt_repair_report *report)
+{
+    struct brep_cdt_repair_report local_report = BREP_CDT_REPAIR_REPORT_INIT;
+    struct brep_cdt_repair_report *active = report ? report : &local_report;
+    const int original_result = brep_cdt_repair(s_cdt, settings, active);
+    if (original_result >= 0 || !s_cdt || !s_cdt->orig_brep || !settings ||
+	!settings->try_invalid_brep || settings->use_full_fast_fallback ||
+	active->source_diagnostic.result != BREP_CDT_RESULT_INVALID_BREP)
+	return original_result;
+
+    active->healing.attempted = 1;
+    double tolerance = BN_TOL_DIST;
+    if (settings->max_surface_deviation > 0.0)
+	tolerance = std::min(tolerance, settings->max_surface_deviation);
+    cdt_healing healing;
+    const bool have_candidate = cdt_heal_topology(*s_cdt->orig_brep,
+	tolerance, settings->max_fast_points, settings->max_fast_result_bytes,
+	settings->max_fast_time_ms, healing,
+	settings->max_planar_cap_area_percent > 0.0);
+    active->healing.limited = healing.limited ? 1 : 0;
+    active->healing.restored_outer_loops = healing.outer_loops;
+    active->healing.corrected_loop_roles = healing.loop_roles;
+    active->healing.reoriented_faces = healing.orientations;
+    active->healing.removed_unused_edges = healing.unused_edges;
+    active->healing.max_edge_deviation = healing.max_deviation;
+    active->healing.capped_loops = healing.capped_loops;
+    active->healing.cap_area_bound = healing.cap_area_bound;
+    if (!have_candidate)
+	return original_result;
+
+    std::unique_ptr<ON_Brep_CDT_State, decltype(&ON_Brep_CDT_Destroy)> candidate(
+	ON_Brep_CDT_Create(healing.brep.get(), s_cdt->name), ON_Brep_CDT_Destroy);
+    ON_Brep_CDT_Tol_Set(candidate.get(), &s_cdt->tol);
+    ON_Brep_CDT_Face_Time_Limit_Set(candidate.get(), s_cdt->max_face_time_ms);
+    ON_Brep_CDT_Tessellate(candidate.get(), 0, NULL);
+
+    struct provenance_capture {
+	cdt_healing *healing;
+	bool valid = true;
+    } capture = {&healing};
+    struct brep_cdt_repair_settings candidate_settings = *settings;
+    if (healing.capped_loops)
+	candidate_settings.mesh.require_manifold = 1;
+    candidate_settings.provenance = [](int, const int *faces, size_t face_count,
+	    const int *edges, size_t edge_count, void *data) {
+	auto *context = static_cast<provenance_capture *>(data);
+	for (size_t i = 0; i < face_count; ++i) {
+	    if (faces[i] < 0 || faces[i] >= context->healing->brep->m_F.Count())
+		context->valid = false;
+	    else
+		context->healing->faces.insert(faces[i]);
+	}
+	for (size_t i = 0; i < edge_count; ++i) {
+	    if (edges[i] < 0 || (size_t)edges[i] >= context->healing->original_edges.size()) {
+		context->valid = false;
+		continue;
+	    }
+	    context->healing->edges.insert(context->healing->original_edges[(size_t)edges[i]]);
+	}
+    };
+    candidate_settings.provenance_data = &capture;
+    struct brep_cdt_repair_report candidate_report = BREP_CDT_REPAIR_REPORT_INIT;
+
+    const auto reject_candidate = [&](const std::string &reason) {
+	/* The diagnostic describes the healed candidate, so its validation
+	 * measurements must accompany it.  Keep the original topology failure
+	 * and healing history identifiable without reporting stale tolerances
+	 * or edge counts from the preceding repair attempt. */
+	candidate_report.healing = active->healing;
+	candidate_report.source_diagnostic = active->source_diagnostic;
+	candidate_report.source_failed_faces = active->source_failed_faces;
+	*active = candidate_report;
+	const std::string message = "topology healing candidate rejected: " + reason;
+	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_REPAIR_FAILED,
+	    BREP_CDT_STAGE_MESH_REPAIR, -1,
+	    active->source_diagnostic.completed_faces,
+	    active->source_failed_faces, message.c_str());
+	return original_result;
+    };
+    if (brep_cdt_repair(candidate.get(), &candidate_settings, &candidate_report) < 0) {
+	struct brep_cdt_diagnostic diagnostic;
+	if (ON_Brep_CDT_Diagnostic(&diagnostic, candidate.get()) == 0)
+	    return reject_candidate(diagnostic.message);
+	return reject_candidate("mesh certification failed");
+    }
+    if (!capture.valid || !candidate_report.mesh.solid ||
+	(settings->mesh.require_manifold && !candidate_report.mesh.manifold_accepted) ||
+	!candidate->certified_faces || !candidate->certified_vertices)
+	return reject_candidate("mesh certification or provenance is incomplete");
+
+    if (healing.capped_loops) {
+	const double output_area = repair_mesh_area(candidate->certified_vertices,
+	    candidate->certified_faces, candidate->certified_face_count);
+	const double remaining_area = output_area - healing.cap_area_bound;
+	active->healing.cap_area_percent = remaining_area > 0.0 ?
+	    100.0 * healing.cap_area_bound / remaining_area :
+	    std::numeric_limits<double>::infinity();
+	if (!candidate_report.mesh.manifold_accepted ||
+	    !std::isfinite(active->healing.cap_area_percent) ||
+	    active->healing.cap_area_percent > settings->max_planar_cap_area_percent)
+	    return reject_candidate("planar cap exceeds its area ceiling or lacks Manifold acceptance");
+	/* Added faces have no original face identity.  Their boundary edges and
+	 * adjacent source faces carry provenance, with the new area reported
+	 * separately. */
+	healing.faces.erase(healing.faces.lower_bound(s_cdt->orig_brep->m_F.Count()),
+	    healing.faces.end());
+    }
+
+    for (int fi : healing.faces) {
+	if (fi < 0 || fi >= s_cdt->orig_brep->m_F.Count())
+	    return original_result;
+	const ON_BrepFace &face = s_cdt->orig_brep->m_F[fi];
+	for (int li = 0; li < face.LoopCount(); ++li) {
+	    const ON_BrepLoop &loop = *face.Loop(li);
+	    for (int ti = 0; ti < loop.TrimCount(); ++ti)
+		if (loop.Trim(ti)->m_ei >= 0) healing.edges.insert(loop.Trim(ti)->m_ei);
+	}
+    }
+    candidate_report.healing = active->healing;
+    candidate_report.healing.applied = 1;
+    candidate_report.source_diagnostic = active->source_diagnostic;
+    candidate_report.source_failed_faces = active->source_failed_faces;
+    candidate_report.approximation_faces = (int)healing.faces.size();
+    candidate_report.approximation_edges = (int)healing.edges.size();
+    if (candidate_report.approximation_tier == BREP_CDT_REPAIR_APPROX_NONE)
+	candidate_report.approximation_tier = BREP_CDT_REPAIR_APPROX_TOPOLOGY;
+
+    /* Only the certified export survives the temporary healed B-Rep.  No
+     * cached mesh may retain pointers into its curves, faces, or vertices. */
+    auto source_failed_faces = std::move(s_cdt->failed_face_indices);
+    auto source_face_diagnostics = std::move(s_cdt->failed_face_diagnostics);
+    cdt_state_reset(s_cdt);
+    s_cdt->failed_face_indices = std::move(source_failed_faces);
+    s_cdt->failed_face_diagnostics = std::move(source_face_diagnostics);
+    std::swap(s_cdt->certified_faces, candidate->certified_faces);
+    std::swap(s_cdt->certified_face_count, candidate->certified_face_count);
+    std::swap(s_cdt->certified_vertices, candidate->certified_vertices);
+    std::swap(s_cdt->certified_vertex_count, candidate->certified_vertex_count);
+    s_cdt->certified_repaired = true;
+    s_cdt->status = BREP_CDT_SOLID;
+    s_cdt->repair_source_valid = true;
+    s_cdt->repair_source_diagnostic = candidate_report.source_diagnostic;
+    *active = candidate_report;
+    const std::string message = "certified mesh after topology healing: " +
+	std::to_string(healing.outer_loops) + " outer loops restored, " +
+	std::to_string(healing.loop_roles) + " loop roles corrected, " +
+	std::to_string(healing.orientations) + " face orientations corrected, " +
+	std::to_string(healing.unused_edges) + " unused edges ignored" +
+	(healing.capped_loops ? ", planar caps added: " +
+	    std::to_string(healing.capped_loops) : "");
+    cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_REPAIRED,
+	BREP_CDT_STAGE_MESH_REPAIR, -1, s_cdt->orig_brep->m_F.Count(), 0,
+	message.c_str());
+    if (settings->provenance) {
+	const std::vector<int> faces(healing.faces.begin(), healing.faces.end());
+	const std::vector<int> edges(healing.edges.begin(), healing.edges.end());
+	settings->provenance(active->approximation_tier,
+	    faces.empty() ? NULL : faces.data(), faces.size(),
+	    edges.empty() ? NULL : edges.data(), edges.size(), settings->provenance_data);
+    }
+    return 0;
 }
 
 static bool

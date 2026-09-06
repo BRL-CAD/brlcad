@@ -110,6 +110,13 @@ struct brep_cdt_diagnostic {
  * certified.  try_invalid_brep permits the repair entry point to make one
  * rigorous attempt after broad OpenNURBS validity failure, while retaining
  * the mesher's closed-manifold and paired-edge topology prerequisites.
+ * If ordinary repair fails, that option also permits a bounded topology
+ * healing attempt on an owned copy: unused edges, inconsistent orientations,
+ * and supported planar trim loops may be corrected without changing source
+ * surfaces or 3-D curves.  Sampling, storage, and time are bounded by the fast
+ * fallback limits.  Ambiguous boundaries are left unresolved; any candidate
+ * must still pass the requested mesh and fidelity checks.  Provenance uses
+ * the caller's original face and edge indices, including ignored wire edges.
  * Edge-initialization failures caused by disagreeing paired p-curves may make
  * one repair-only retry when their shared midpoint stays within the same
  * maximum surface-deviation bound of both faces and the native edge curve.
@@ -140,6 +147,8 @@ struct brep_cdt_diagnostic {
  * area-change limits without changing the generated mesh.  Acceptance is
  * tagged explicitly in the report and provenance callback; zero disables it.
  */
+/* These identifiers describe accepted paths; their values do not rank
+ * geometric error. */
 /** No approximate geometry was needed. */
 #define BREP_CDT_REPAIR_APPROX_NONE 0
 /** A failed face used display triangulation with rigorous edge samples. */
@@ -152,6 +161,8 @@ struct brep_cdt_diagnostic {
 #define BREP_CDT_REPAIR_APPROX_POISSON 4
 /** A Manifold mesh used the explicitly relaxed final fidelity bound. */
 #define BREP_CDT_REPAIR_APPROX_RELAXED_FIDELITY 5
+/** Source topology was healed without replacing its support geometry. */
+#define BREP_CDT_REPAIR_APPROX_TOPOLOGY 6
 
 /**
  * Report the B-Rep topology whose interpretation required approximation.
@@ -196,9 +207,35 @@ struct brep_cdt_repair_settings {
      * limits remain authoritative for accepting the resulting solid.
      */
     fastf_t max_adaptive_hole_area_percent;
+    /** Opt-in planar caps for simple open boundaries on a multi-face B-Rep.
+     * Cap bounding boxes must be disjoint.  Their aggregate conservative
+     * area bound must not exceed this percentage of
+     * the accepted mesh's remaining area.  Zero disables capping.  Capped
+     * candidates require Manifold acceptance and retain the caller's mesh
+     * intersection policy and fidelity limits.  Requires try_invalid_brep. */
+    fastf_t max_planar_cap_area_percent;
 };
 
-#define BREP_CDT_REPAIR_SETTINGS_INIT {BG_TRIMESH_REPAIR_SETTINGS_INIT, 0.0, 4096, 1.0, 0, 1, 0, 0, 8, 64, 1048576, 134217728, 5000, 0.0, 0, 0, NULL, NULL, 0.0, 0, 0.0}
+#define BREP_CDT_REPAIR_SETTINGS_INIT {BG_TRIMESH_REPAIR_SETTINGS_INIT, 0.0, 4096, 1.0, 0, 1, 0, 0, 8, 64, 1048576, 134217728, 5000, 0.0, 0, 0, NULL, NULL, 0.0, 0, 0.0, 0.0}
+
+/** Bounded topology interpretation, distinct from triangle-mesh repair.
+ * Counts describe a candidate; applied is set only after mesh acceptance. */
+struct brep_cdt_healing_report {
+    int attempted;
+    int applied;
+    int limited;
+    int restored_outer_loops;
+    int corrected_loop_roles;
+    int reoriented_faces;
+    int removed_unused_edges;
+    /** Plane-distance bound for reconstructed outer loops and cap curves. */
+    fastf_t max_edge_deviation;
+    int capped_loops;
+    fastf_t cap_area_bound;
+    fastf_t cap_area_percent;
+};
+
+#define BREP_CDT_HEALING_REPORT_INIT {0, 0, 0, 0, 0, 0, 0, 0.0, 0, 0.0, 0.0}
 
 /** Provenance and quality measurements for a repair attempt. */
 struct brep_cdt_repair_report {
@@ -298,9 +335,10 @@ struct brep_cdt_repair_report {
     size_t adaptive_hole_edges;
     int adaptive_hole_area_retry_attempted;
     fastf_t adaptive_hole_area_percent;
+    struct brep_cdt_healing_report healing;
 };
 
-#define BREP_CDT_REPAIR_REPORT_INIT {BG_TRIMESH_REPAIR_REPORT_INIT, {BREP_CDT_RESULT_UNATTEMPTED, BREP_CDT_STAGE_NONE, -1, 0, 0, {0}}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0, 0, 0, 0.0}
+#define BREP_CDT_REPAIR_REPORT_INIT {BG_TRIMESH_REPAIR_REPORT_INIT, {BREP_CDT_RESULT_UNATTEMPTED, BREP_CDT_STAGE_NONE, -1, 0, 0, {0}}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0, 0, 0, 0.0, BREP_CDT_HEALING_REPORT_INIT}
 
 /** Create and initialize a CDT state with default tolerances.  bv
  * must be a pointer to an ON_Brep object. */
