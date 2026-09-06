@@ -513,15 +513,15 @@ brep_fast_shading_check(lint_data *ldata, struct directory *dp,
 
     std::vector<fast_shading_face_result> results(
 	(size_t)bi->brep->m_F.Count());
-    struct brep_cdt_fast_options options;
-    brep_cdt_fast_options_default(&options);
+    struct brep_cdt_fast_options fast_options;
+    brep_cdt_fast_options_default(&fast_options);
     /* Lint must terminate on pathological input; a limit means that the
      * capability result is inconclusive rather than that a face is bad. */
-    options.max_time_ms = fast_shading_time_limit_ms;
-    options.face_status = fast_shading_face_status;
-    options.face_status_data = &results;
-    options.face_diagnostic = fast_shading_face_diagnostic;
-    options.face_diagnostic_data = &results;
+    fast_options.max_time_ms = fast_shading_time_limit_ms;
+    fast_options.face_status = fast_shading_face_status;
+    fast_options.face_status_data = &results;
+    fast_options.face_diagnostic = fast_shading_face_diagnostic;
+    fast_options.face_diagnostic_data = &results;
 
     int *mesh_faces = NULL;
     int triangle_count = 0;
@@ -531,7 +531,7 @@ brep_fast_shading_check(lint_data *ldata, struct directory *dp,
     struct brep_cdt_fast_report report = {};
     const int return_code = brep_cdt_fast_ex(&mesh_faces, &triangle_count,
 	&normals, &points, &point_count, bi->brep, -1, &ttol, &tol,
-	&options, &report);
+	&fast_options, &report);
 
     size_t reported_faces = 0;
 
@@ -579,7 +579,7 @@ brep_fast_shading_check(lint_data *ldata, struct directory *dp,
     incomplete.analysis_limited = limited;
     failures.analysis_limited = limited;
     const nlohmann::json summary = fast_shading_report_json(return_code,
-	triangle_count, point_count, options, report);
+	triangle_count, point_count, fast_options, report);
     failures.analysis = summary;
     incomplete.analysis = summary;
 
