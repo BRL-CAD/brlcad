@@ -1287,6 +1287,35 @@ do_triangulation(struct ON_Brep_CDT_State *s_cdt, int fi)
 	    message.c_str());
 	return false;
     }
+    /* A closed indexed mesh is insufficient evidence when evaluation has
+     * escaped the source surface.  Quarantine that face before its triangles
+     * can become the trusted reference for a later repair. */
+    ON_BoundingBox source_bounds;
+    const ON_Surface *source_surface =
+	s_cdt->orig_brep->m_F[face.m_face_index].SurfaceOf();
+    if (!source_surface || !source_surface->GetBoundingBox(source_bounds) ||
+	!source_bounds.IsValid()) {
+	cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_GEOMETRIC_FAILED,
+	    BREP_CDT_STAGE_GEOMETRIC_VALIDATION, face.m_face_index, 0, 1,
+	    "source surface has no finite extent bound");
+	return false;
+    }
+    const double bounds_tolerance = std::isfinite(s_cdt->absmax) ?
+	std::max((double)BN_TOL_DIST, (double)s_cdt->absmax) : BN_TOL_DIST;
+    RTree<size_t, double, 3>::Iterator triangle;
+    for (fmesh->tris_tree.GetFirst(triangle); !triangle.IsNull(); ++triangle) {
+	const triangle_t &active = fmesh->tris_vect[*triangle];
+	for (int corner = 0; corner < 3; ++corner) {
+	    const ON_3dPoint &point = *fmesh->pnts[(size_t)active.v[corner]];
+	    if (!point.IsValid() || point.DistanceTo(
+		    source_bounds.ClosestPoint(point)) > bounds_tolerance) {
+		cdt_diagnostic_set(s_cdt, BREP_CDT_RESULT_GEOMETRIC_FAILED,
+		    BREP_CDT_STAGE_GEOMETRIC_VALIDATION, face.m_face_index, 0, 1,
+		    "face mesh escapes the original support surface bounds");
+		return false;
+	    }
+	}
+    }
     return true;
 }
 
@@ -2852,6 +2881,78 @@ brep_cdt_promote_missing_outer_loops(ON_Brep *brep)
     return promoted;
 }
 
+static void
+brep_cdt_shrink_surfaces(ON_Brep &brep)
+{
+    /* Shrinking a periodic support to a pcurve bounding box can discard the
+     * surface needed by trims in another periodic image.  Preserve closed
+     * directions used by seam faces while conditioning the other domains.
+     * These bits are the side masks in ON_Brep::ShrinkSurface. */
+    enum shrink_side {
+	west = 0x1, south = 0x2, east = 0x4, north = 0x8
+    };
+    for (int fi = 0; fi < brep.m_F.Count(); ++fi) {
+	ON_BrepFace &face = brep.m_F[fi];
+	const ON_Surface *surface = face.SurfaceOf();
+	if (!surface)
+	    continue;
+	int disabled_sides = 0;
+	if (cdt_face_has_seam(face)) {
+	    if (surface->IsClosed(0))
+		disabled_sides |= west | east;
+	    if (surface->IsClosed(1))
+		disabled_sides |= south | north;
+	}
+	/* A false return also means the surface already has the requested size;
+	 * shrinking is optional conditioning, not a tessellation prerequisite. */
+	brep.ShrinkSurface(face, disabled_sides);
+    }
+    brep.Compact();
+}
+
+int
+cdt_test_periodic_surface_conditioning(void)
+{
+    const ON_Torus torus(ON_Circle(ON_xy_plane, 9.0), 2.5);
+    ON_NurbsSurface full_surface;
+    if (!torus.GetNurbForm(full_surface))
+	return 1;
+    ON_NurbsSurface band(full_surface);
+    const ON_Interval domain = full_surface.Domain(0);
+    if (!band.Trim(0, ON_Interval(domain.ParameterAt(0.2),
+	    domain.ParameterAt(0.4))))
+	return 2;
+    ON_Brep source;
+    ON_BrepFace *face = source.NewFace(band);
+    if (!face)
+	return 3;
+    face->m_si = source.AddSurface(full_surface.DuplicateSurface());
+    face->SetProxySurface(source.m_S[face->m_si]);
+    source.SetTrimIsoFlags();
+    source.Compact();
+    if (!source.IsValid() || !cdt_face_has_seam(source.m_F[0]))
+	return 4;
+
+    const ON__UINT32 crc = source.DataCRC(0);
+    ON_Brep working(source);
+    brep_cdt_shrink_surfaces(working);
+    const ON_Surface *conditioned = working.m_F[0].SurfaceOf();
+    if (!working.IsValid() || !conditioned->IsClosed(0) ||
+	!conditioned->IsClosed(1) || source.DataCRC(0) != crc)
+	return 5;
+    for (int li = 0; li < source.m_F[0].LoopCount(); ++li) {
+	const ON_BrepLoop *loop = source.m_F[0].Loop(li);
+	for (int ti = 0; ti < loop->TrimCount(); ++ti) {
+	    const ON_BrepTrim *trim = loop->Trim(ti);
+	    const ON_3dPoint uv = trim->PointAt(trim->Domain().Mid());
+	    if (conditioned->PointAt(uv.x, uv.y).DistanceTo(
+		    full_surface.PointAt(uv.x, uv.y)) > ON_ZERO_TOLERANCE)
+		return 6;
+	}
+    }
+    return 0;
+}
+
 static int
 brep_cdt_tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt,
 	int *faces, bool try_invalid_brep)
@@ -2952,7 +3053,7 @@ brep_cdt_tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt,
 
 	// Attempt to minimize situations where 2D and 3D distances get out of sync
 	// by shrinking the surfaces down to the active area of the face
-	s_cdt->brep->ShrinkSurfaces();
+	brep_cdt_shrink_surfaces(*s_cdt->brep);
 
     }
 
@@ -3702,7 +3803,8 @@ repair_input_mesh_distance(RTree<size_t, double, 3> &triangle_index,
 	const fastf_t *vertices, const int *faces, const ON_3dPoint &point,
 	double allowed, double *distance, size_t *closest_face = NULL)
 {
-    if (!vertices || !faces || !distance || !(allowed > 0.0))
+    if (!vertices || !faces || !distance || !point.IsValid() ||
+	!(allowed > 0.0))
 	return false;
     double minimum[3] = {
 	point.x - allowed, point.y - allowed, point.z - allowed
@@ -3738,6 +3840,234 @@ repair_input_mesh_distance(RTree<size_t, double, 3> &triangle_index,
     if (closest_face)
 	*closest_face = closest_triangle;
     return true;
+}
+
+struct repair_source_sample {
+    ON_3dPoint point;
+    int face;
+};
+
+static size_t
+repair_sample_position(size_t sample, size_t count, size_t available)
+{
+    return (size_t)(((long double)sample + 0.5L) *
+	(long double)available / (long double)count);
+}
+
+static std::vector<repair_source_sample>
+repair_source_boundary_samples(const ON_Brep &brep, size_t sample_limit)
+{
+    size_t referenced_edges = 0;
+    for (int ei = 0; ei < brep.m_E.Count(); ++ei)
+	if (brep.m_E[ei].TrimCount() > 0)
+	    referenced_edges++;
+    const size_t selected_edges = std::min(referenced_edges, sample_limit);
+    std::vector<repair_source_sample> samples;
+    if (!selected_edges)
+	return samples;
+
+    /* Include endpoints and interior curve samples, including seam edges.
+     * The source may have many more edges than the validation budget.  Spread
+     * that budget over the complete edge list rather than its first faces. */
+    const size_t maximum_samples_per_edge = 17;
+    const size_t samples_per_edge = std::min(maximum_samples_per_edge,
+	sample_limit / selected_edges);
+    samples.reserve(selected_edges * samples_per_edge);
+    size_t selected = 0;
+    size_t ordinal = 0;
+    for (int ei = 0; ei < brep.m_E.Count() && selected < selected_edges; ++ei) {
+	const ON_BrepEdge &edge = brep.m_E[ei];
+	if (edge.TrimCount() == 0)
+	    continue;
+	const size_t target = repair_sample_position(selected, selected_edges,
+	    referenced_edges);
+	if (ordinal++ != target)
+	    continue;
+	selected++;
+	const ON_BrepTrim *trim = edge.Trim(0);
+	const int source_face = trim && trim->Face() ?
+	    trim->Face()->m_face_index : -1;
+	const ON_Interval domain = edge.Domain();
+	for (size_t sample = 0; sample < samples_per_edge; ++sample) {
+	    const double fraction = samples_per_edge == 1 ? 0.5 :
+		(double)sample / (double)(samples_per_edge - 1);
+	    const ON_3dPoint point = domain.IsIncreasing() ?
+		edge.PointAt(domain.ParameterAt(fraction)) : ON_3dPoint::UnsetPoint;
+	    samples.push_back({point, source_face});
+	}
+    }
+    return samples;
+}
+
+static bool
+repair_face_covers_surface(const ON_Brep &brep, int face_index)
+{
+    if (!brep.FaceIsSurface(face_index))
+	return false;
+    const ON_BrepFace &face = brep.m_F[face_index];
+    const ON_Surface *surface = face.SurfaceOf();
+    const ON_BrepLoop *loop = face.OuterLoop();
+    if (!surface || !loop)
+	return false;
+    unsigned int sides = 0;
+    for (int ti = 0; ti < loop->TrimCount(); ++ti) {
+	const ON_BrepTrim *trim = loop->Trim(ti);
+	int side = -1;
+	switch (trim->m_iso) {
+	    case ON_Surface::W_iso: side = 0; break;
+	    case ON_Surface::S_iso: side = 1; break;
+	    case ON_Surface::E_iso: side = 2; break;
+	    case ON_Surface::N_iso: side = 3; break;
+	    default: return false;
+	}
+	ON_BoundingBox bounds;
+	if (!trim->GetBoundingBox(bounds) || !bounds.IsValid())
+	    return false;
+	for (int direction = 0; direction < 2; ++direction) {
+	    const ON_Interval domain = surface->Domain(direction);
+	    if (!domain.IsIncreasing())
+		return false;
+	    const double coordinate_scale = std::max(domain.Length(),
+		std::max(std::fabs(domain.Min()), std::fabs(domain.Max())));
+	    const double roundoff = 256.0 *
+		std::numeric_limits<double>::epsilon() * coordinate_scale;
+	    if (bounds.m_min[direction] < domain.Min() - roundoff ||
+		bounds.m_max[direction] > domain.Max() + roundoff)
+		return false;
+	    if (direction != side % 2)
+		continue;
+	    const double boundary = side < 2 ? domain.Min() : domain.Max();
+	    if (std::fabs(bounds.m_min[direction] - boundary) > roundoff ||
+		std::fabs(bounds.m_max[direction] - boundary) > roundoff)
+		return false;
+	}
+	sides |= 1u << side;
+    }
+    /* Iso flags alone can be stale on imported faces.  Require geometric
+     * agreement with all four sides before sampling the untrimmed interior. */
+    return sides == 0xfu;
+}
+
+static std::vector<repair_source_sample>
+repair_source_interior_samples(const ON_Brep &brep, size_t sample_limit)
+{
+    std::vector<repair_source_sample> samples;
+    const size_t selected_faces = std::min(sample_limit,
+	(size_t)brep.m_F.Count());
+    if (!selected_faces)
+	return samples;
+    /* A 3 by 3 interior grid includes the middle of a bulging face whose
+     * complete boundary could still match a flattened output mesh.  General
+     * trimmed faces need a separate region proof; do not sample their holes
+     * or the unused parts of their support surfaces. */
+    const size_t grid_width = 3;
+    const size_t grid_size = grid_width * grid_width;
+    const size_t per_face = std::min(grid_size, sample_limit / selected_faces);
+    samples.reserve(selected_faces * per_face);
+    for (size_t selected = 0; selected < selected_faces; ++selected) {
+	const int face_index = (int)repair_sample_position(selected,
+	    selected_faces, (size_t)brep.m_F.Count());
+	if (!repair_face_covers_surface(brep, face_index))
+	    continue;
+	const ON_Surface *surface = brep.m_F[face_index].SurfaceOf();
+	for (size_t sample = 0; sample < per_face; ++sample) {
+	    const size_t cell = repair_sample_position(sample, per_face, grid_size);
+	    const double u = (double)(1 + cell % grid_width) / (grid_width + 1);
+	    const double v = (double)(1 + cell / grid_width) / (grid_width + 1);
+	    samples.push_back({surface->PointAt(surface->Domain(0).ParameterAt(u),
+		surface->Domain(1).ParameterAt(v)), face_index});
+	}
+    }
+    return samples;
+}
+
+int
+cdt_test_repair_source_coverage(void)
+{
+    const ON_3dPoint corners[8] = {
+	ON_3dPoint(0, 0, 0), ON_3dPoint(1, 0, 0),
+	ON_3dPoint(1, 1, 0), ON_3dPoint(0, 1, 0),
+	ON_3dPoint(0, 0, 1), ON_3dPoint(1, 0, 1),
+	ON_3dPoint(1, 1, 1), ON_3dPoint(0, 1, 1)
+    };
+    std::unique_ptr<ON_Brep> box(ON_BrepBox(corners));
+    if (!box)
+	return 1;
+    const size_t sample_budget = 4096;
+    const auto samples = repair_source_boundary_samples(*box, sample_budget);
+    if (samples.empty() || samples.size() > sample_budget)
+	return 2;
+    const fastf_t vertices[] = {0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0};
+    const int faces[] = {0, 1, 2, 0, 2, 3};
+    RTree<size_t, double, 3> triangle_index;
+    const double minimum[3] = {0, 0, 0};
+    const double maximum[3] = {1, 1, 0};
+    triangle_index.Insert(minimum, maximum, 0);
+    triangle_index.Insert(minimum, maximum, 1);
+    size_t covered = 0;
+    size_t omitted = 0;
+    for (const auto &sample : samples) {
+	if (!sample.point.IsValid() || sample.face < 0 ||
+	    !box->BoundingBox().IsPointIn(sample.point))
+	    return 3;
+	double distance;
+	if (repair_input_mesh_distance(triangle_index, vertices, faces,
+	    sample.point, BN_TOL_DIST, &distance))
+	    ++covered;
+	else
+	    ++omitted;
+    }
+    if (!covered || !omitted)
+	return 4;
+
+    /* An unrelated construction curve must not become a required surface. */
+    const int start = box->NewVertex(ON_3dPoint(10, 10, 10)).m_vertex_index;
+    const int end = box->NewVertex(ON_3dPoint(11, 10, 10)).m_vertex_index;
+    box->NewEdge(box->m_V[start], box->m_V[end], box->AddEdgeCurve(
+	new ON_LineCurve(box->m_V[start].Point(), box->m_V[end].Point())));
+    const auto with_wire = repair_source_boundary_samples(*box, sample_budget);
+    if (with_wire.size() != samples.size())
+	return 5;
+    for (size_t i = 0; i < samples.size(); ++i)
+	if (samples[i].point != with_wire[i].point ||
+	    samples[i].face != with_wire[i].face)
+	    return 6;
+    if (repair_source_boundary_samples(*box, 1).size() != 1)
+	return 7;
+
+    ON_NurbsSurface dome(3, false, 3, 3, 3, 3);
+    dome.MakeClampedUniformKnotVector(0, 1.0);
+    dome.MakeClampedUniformKnotVector(1, 1.0);
+    for (int u = 0; u < 3; ++u) {
+	for (int v = 0; v < 3; ++v)
+	    dome.SetCV(u, v, ON_3dPoint(0.5 * u, 0.5 * v,
+		u == 1 && v == 1 ? 1.0 : 0.0));
+    }
+    ON_Brep curved;
+    if (!curved.NewFace(dome) || !curved.IsValid())
+	return 8;
+    for (const auto &sample : repair_source_boundary_samples(curved,
+	    sample_budget)) {
+	double distance;
+	if (!repair_input_mesh_distance(triangle_index, vertices, faces,
+		sample.point, BN_TOL_DIST, &distance))
+	    return 9;
+    }
+    const auto interior = repair_source_interior_samples(curved, 1);
+    double distance;
+    if (interior.size() != 1 || interior[0].face != 0 ||
+	!interior[0].point.IsValid() || repair_input_mesh_distance(triangle_index,
+	    vertices, faces, interior[0].point, BN_TOL_DIST, &distance))
+	return 10;
+    /* A hole-only or contradictory boundary does not authorize samples from
+     * the entire underlying patch. */
+    curved.m_L[0].m_type = ON_BrepLoop::inner;
+    if (!repair_source_interior_samples(curved, sample_budget).empty())
+	return 11;
+    curved.m_L[0].m_type = ON_BrepLoop::outer;
+    curved.m_C2[curved.m_T[0].m_c2i]->Transform(
+	ON_Xform::TranslationTransformation(0.0, 0.1, 0.0));
+    return repair_source_interior_samples(curved, sample_budget).empty() ? 0 : 12;
 }
 
 struct repair_changed_face {
@@ -14280,6 +14610,16 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    report->max_coverage_deviation, (fastf_t)distance);
 	coverage_squared_distance_sum += distance * distance;
     };
+
+    /* A faulty tessellation can omit a source face before either mesh
+     * reference is constructed.  Independently require coverage of referenced
+     * 3-D boundary curves; unused wire edges carry no surface obligation. */
+    for (const auto &sample : repair_source_boundary_samples(
+	    *s_cdt->orig_brep, sample_limit))
+	sample_output_coverage(sample.point, sample.face);
+    for (const auto &sample : repair_source_interior_samples(
+	    *s_cdt->orig_brep, sample_limit))
+	sample_output_coverage(sample.point, sample.face);
 
     /* The ordinary deterministic coverage budget may omit a few triangles
      * from a large mesh.  A locally replaced neighborhood is exceptional and

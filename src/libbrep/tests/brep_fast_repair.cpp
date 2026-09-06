@@ -407,6 +407,76 @@ periodic_strip_test()
 }
 
 static bool
+wrapped_polyline_strip_test()
+{
+    ON_Brep brep;
+    const double radius = 1.0;
+    const double height = 1.0;
+    ON_Cylinder cylinder(ON_Circle(ON_xy_plane, radius), height);
+    ON_RevSurface *surface = cylinder.RevSurfaceForm();
+    if (!surface || !surface->IsPeriodic(0)) {
+	delete surface;
+	return false;
+    }
+    ON_BrepFace &face = brep.NewFace(brep.AddSurface(surface));
+    const int boundary_segments = 256;
+    for (int boundary = 0; boundary < 2; ++boundary) {
+	ON_BrepLoop &loop = brep.NewLoop(boundary ? ON_BrepLoop::inner :
+	    ON_BrepLoop::outer, face);
+	ON_3dPointArray edge_points;
+	ON_3dPointArray trim_points;
+	for (int sample = 0; sample <= boundary_segments; ++sample) {
+	    const double fraction = (double)sample / boundary_segments;
+	    const double angle = M_PI_2 + M_2PI * fraction;
+	    const ON_3dPoint point(radius * cos(angle), radius * sin(angle),
+		boundary * height);
+	    edge_points.Append(point);
+	    trim_points.Append(ON_3dPoint(atan2(point.y, point.x), point.z, 0.0));
+	}
+	ON_PolylineCurve *edge_curve = new ON_PolylineCurve(edge_points);
+	ON_PolylineCurve *trim_curve = new ON_PolylineCurve(trim_points);
+	trim_curve->ChangeDimension(2);
+	/* Corresponding vertices have identical parameters, despite the jump
+	 * between periodic images in the trim's coordinates. */
+	for (int sample = 0; sample <= boundary_segments; ++sample) {
+	    edge_curve->m_t[sample] = (double)sample / boundary_segments;
+	    trim_curve->m_t[sample] = edge_curve->m_t[sample];
+	}
+	if (boundary)
+	    trim_curve->Reverse();
+	const int vertex = brep.NewVertex(edge_points[0]).m_vertex_index;
+	ON_BrepEdge &edge = brep.NewEdge(brep.m_V[vertex], brep.m_V[vertex],
+	    brep.AddEdgeCurve(edge_curve));
+	edge.m_tolerance = 1.0e-6;
+	ON_BrepTrim &trim = brep.NewTrim(edge, boundary != 0, loop,
+	    brep.AddTrimCurve(trim_curve));
+	trim.m_type = ON_BrepTrim::boundary;
+	trim.m_iso = ON_Surface::x_iso;
+	trim.m_tolerance[0] = trim.m_tolerance[1] = 1.0e-4;
+    }
+    const auto source_crc = brep.DataCRC(0);
+    fast_result *result = run_fast(brep);
+    double area = 0.0;
+    for (int fi = 0; fi < result->face_count; ++fi) {
+	const int *triangle = &result->faces[3 * fi];
+	const ON_3dPoint a(result->points[triangle[0]]);
+	const ON_3dPoint b(result->points[triangle[1]]);
+	const ON_3dPoint c(result->points[triangle[2]]);
+	area += 0.5 * ON_CrossProduct(b - a, c - a).Length();
+    }
+    const double expected_area = M_2PI * radius * height;
+    const double relative_area_tolerance = 0.01;
+    const bool valid = result->ret == BREP_CDT_FAST_OK &&
+	result->report.failed_faces == 0 && brep.DataCRC(0) == source_crc &&
+	fabs(area - expected_area) <= relative_area_tolerance * expected_area;
+    if (!valid)
+	bu_log("wrapped periodic strip: result %d, area %.17g, expected %.17g\n",
+	    result->ret, area, expected_area);
+    delete result;
+    return valid;
+}
+
+static bool
 periodic_holes_without_outer_test()
 {
     ON_Brep brep;
@@ -2359,6 +2429,7 @@ main(int argc, const char **argv)
     RUN_FAST_TEST(degenerate_collinear_loop_test);
     RUN_FAST_TEST(singular_cap_test);
     RUN_FAST_TEST(periodic_strip_test);
+    RUN_FAST_TEST(wrapped_polyline_strip_test);
     RUN_FAST_TEST(periodic_holes_without_outer_test);
     RUN_FAST_TEST(redundant_periodic_boundaries_test);
     RUN_FAST_TEST(periodic_rectangle_test);

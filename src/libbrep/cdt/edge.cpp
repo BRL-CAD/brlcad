@@ -2848,8 +2848,7 @@ refine_close_edges(struct ON_Brep_CDT_State *s_cdt)
 	const ON_Surface *surface = face.SurfaceOf();
 	const bool cylinder_seam = cdt_face_uses_cylinder_chart(face) &&
 	    cdt_face_has_seam(face);
-	const int closed_direction = surface && surface->IsClosed(0) ? 0 :
-	    (surface && surface->IsClosed(1) ? 1 : -1);
+	const int closed_direction = cdt_face_closed_direction(face);
 	const bool inconsistent_periodic_image = !cylinder_seam && surface &&
 	    closed_direction >= 0 && cdt_face_has_seam(face) &&
 	    periodic_trim_has_inconsistent_image(face, *surface,

@@ -88,8 +88,9 @@ cpolyedge_fdists(struct cdt_surf_info *s, cdt_mesh_t *fmesh, cpolyedge_t *pe)
     s->min_edge = (s->min_edge > dist) ? dist : s->min_edge;
     s->max_edge = (s->max_edge < dist) ? dist : s->max_edge;
 
-    // Only want the next bit if we're dealing with non-linear edges
-    if (pe->eseg->edge_type != 1 || !pe->next->eseg || pe->next->eseg->edge_type != 1) return;
+    /* Pole welding can leave a broken polygon walk for chart recovery.
+     * Skip neighbor-based refinement when that link is absent. */
+    if (pe->eseg->edge_type != 1 || !pe->next || !pe->next->eseg || pe->next->eseg->edge_type != 1) return;
 
     ON_Line line3d(*p3d1, *p3d2);
     fastf_t emid = (pe->eseg->edge_start + pe->eseg->edge_end) / 2.0;

@@ -18,6 +18,8 @@
 #include <map>
 #include <set>
 
+#include "bn/tol.h"
+#include "bu/str.h"
 #include "brep/util.h"
 #include "brep/pullback.h"
 #include "chart.h"
@@ -341,6 +343,70 @@ cdt_face_has_seam(const ON_BrepFace &face)
 	}
     }
     return false;
+}
+
+int
+cdt_face_closed_direction(const ON_BrepFace &face)
+{
+    const ON_Surface *surface = face.SurfaceOf();
+    if (!surface)
+	return -1;
+    if (!surface->IsClosed(0))
+	return surface->IsClosed(1) ? 1 : -1;
+    if (!surface->IsClosed(1))
+	return 0;
+
+    /* A toroidal support is closed in both directions, but a trimmed band
+     * usually traverses only one of them.  Its topological seam identifies
+     * the chart cut; choosing the first closed direction can collapse both
+     * copies of that cut onto the same constraint. */
+    unsigned int seam_directions = 0;
+    for (int li = 0; li < face.LoopCount(); ++li) {
+	const ON_BrepLoop *loop = face.Loop(li);
+	if (!loop)
+	    continue;
+	for (int ti = 0; ti < loop->TrimCount(); ++ti) {
+	    const ON_BrepTrim *trim = loop->Trim(ti);
+	    if (!trim || trim->m_type != ON_BrepTrim::seam)
+		continue;
+	    switch (trim->m_iso) {
+		case ON_Surface::x_iso:
+		case ON_Surface::W_iso:
+		case ON_Surface::E_iso:
+		    seam_directions |= 1u;
+		    break;
+		case ON_Surface::y_iso:
+		case ON_Surface::S_iso:
+		case ON_Surface::N_iso:
+		    seam_directions |= 2u;
+		    break;
+		default:
+		    break;
+	    }
+	    const ON_BrepEdge *edge = trim->Edge();
+	    if (!edge || edge->TrimCount() != 2)
+		continue;
+	    const ON_BrepTrim *other = edge->Trim(0) == trim ?
+		edge->Trim(1) : edge->Trim(0);
+	    if (!other || other->Face() != &face ||
+		other->m_type != ON_BrepTrim::seam)
+		continue;
+	    const ON_3dPoint first = trim->PointAt(trim->Domain().Mid());
+	    const ON_3dPoint second = other->PointAt(other->Domain().Mid());
+	    if (!first.IsValid() || !second.IsValid())
+		continue;
+	    for (int direction = 0; direction < 2; ++direction) {
+		const double period = surface->Domain(direction).Length();
+		if (period > 0.0 && std::isfinite(period) &&
+		    std::fabs(first[direction] - second[direction]) >
+		    0.5 * period)
+		    seam_directions |= 1u << direction;
+	    }
+	}
+    }
+    /* Retain the existing chart choice for a face with both seam directions
+     * or no usable seam evidence. */
+    return seam_directions == 2u ? 1 : 0;
 }
 
 bool
@@ -1601,8 +1667,7 @@ cdt_face_chart::build_native(const ON_BrepFace &face,
 
     std::vector<double> lifted_closed(native_points.size(),
 	std::numeric_limits<double>::quiet_NaN());
-    m_closed_dir = surface->IsClosed(0) ? 0 :
-	(surface->IsClosed(1) ? 1 : -1);
+    m_closed_dir = cdt_face_closed_direction(face);
     m_periodic = m_closed_dir >= 0 && cdt_face_has_seam(face);
     if (m_periodic) {
 	const double period = m_native_domain[m_closed_dir].Length();
