@@ -4338,17 +4338,15 @@ repair_ordered_source_edge(ON_3dPoint *first, ON_3dPoint *second)
     return repair_source_edge(first, second);
 }
 
-/* A cleaned chart must not invent a second boundary inside a face.  Compare
- * its source-point boundary to a topology-defined disk built from the exact
- * shared-edge samples.  Interior edges must occur once in each direction and
- * every boundary vertex must have degree two. */
+/* Boundary comparisons require an oriented patch without branching edges.
+ * Interior edges must occur once in each direction and every boundary
+ * vertex must have degree two. */
 static bool
-repair_patch_source_boundary(const int *faces, int face_count,
-	const std::vector<ON_3dPoint *> &sources,
-	std::set<repair_source_edge> &boundary)
+repair_patch_indexed_boundary(const int *faces, int face_count,
+	size_t vertex_count, std::set<std::pair<int, int>> &boundary)
 {
     boundary.clear();
-    if (!faces || face_count <= 0 || sources.size() < 3)
+    if (!faces || face_count <= 0 || vertex_count < 3)
 	return false;
     struct edge_use {
 	int count = 0;
@@ -4360,8 +4358,8 @@ repair_patch_source_boundary(const int *faces, int face_count,
 	    const int from = faces[(size_t)face * 3 + corner];
 	    const int to = faces[(size_t)face * 3 + (corner + 1) % 3];
 	    if (from < 0 || to < 0 || from == to ||
-		    (size_t)from >= sources.size() ||
-		    (size_t)to >= sources.size())
+		    (size_t)from >= vertex_count ||
+		    (size_t)to >= vertex_count)
 		return false;
 	    const std::pair<int, int> edge = from < to ?
 		std::make_pair(from, to) : std::make_pair(to, from);
@@ -4377,11 +4375,7 @@ repair_patch_source_boundary(const int *faces, int face_count,
 	    continue;
 	if (use.count != 1)
 	    return false;
-	ON_3dPoint *first = sources[(size_t)entry.first.first];
-	ON_3dPoint *second = sources[(size_t)entry.first.second];
-	if (!first || !second || first == second)
-	    return false;
-	boundary.insert(repair_ordered_source_edge(first, second));
+	boundary.insert(entry.first);
 	boundary_degree[entry.first.first]++;
 	boundary_degree[entry.first.second]++;
     }
@@ -4390,6 +4384,26 @@ repair_patch_source_boundary(const int *faces, int face_count,
     for (const auto &entry : boundary_degree) {
 	if (entry.second != 2)
 	    return false;
+    }
+    return true;
+}
+
+static bool
+repair_patch_source_boundary(const int *faces, int face_count,
+	const std::vector<ON_3dPoint *> &sources,
+	std::set<repair_source_edge> &boundary)
+{
+    boundary.clear();
+    std::set<std::pair<int, int>> indexed_boundary;
+    if (!repair_patch_indexed_boundary(faces, face_count, sources.size(),
+	    indexed_boundary))
+	return false;
+    for (const auto &edge : indexed_boundary) {
+	ON_3dPoint *first = sources[(size_t)edge.first];
+	ON_3dPoint *second = sources[(size_t)edge.second];
+	if (!first || !second || first == second)
+	    return false;
+	boundary.insert(repair_ordered_source_edge(first, second));
     }
     return true;
 }
@@ -4460,13 +4474,177 @@ cdt_test_repair_patch_boundary(void)
 	0 : 5;
 }
 
+/* A fan folds when its center lies outside a concave boundary's kernel.
+ * A simple orthogonal projection instead defines an embedded disk using the
+ * exact boundary vertices.  Keep an existing fan when a valid chart proves
+ * its center lies in the polygon kernel; otherwise prefer the least-area
+ * valid projected triangulation.  Source fidelity is checked by the caller.
+ * Failure to find a chart does not establish that the spatial ring is bad. */
+static bool
+repair_projected_disk(const std::vector<ON_3dPoint> &boundary,
+	const ON_3dPoint &center, std::vector<int> &replacement)
+{
+    if (boundary.size() < 3 || boundary.size() > (size_t)INT_MAX ||
+	    !center.IsValid())
+	return false;
+    std::vector<int> outline(boundary.size());
+    std::iota(outline.begin(), outline.end(), 0);
+    std::set<std::pair<int, int>> expected_boundary;
+    for (size_t point = 0; point < boundary.size(); ++point)
+	expected_boundary.insert(std::minmax((int)point,
+	    (int)((point + 1) % boundary.size())));
+    std::vector<int> best_faces;
+    double best_area = std::numeric_limits<double>::infinity();
+    for (int normal_axis = 0; normal_axis < 3; ++normal_axis) {
+	const int x = (normal_axis + 1) % 3;
+	const int y = (normal_axis + 2) % 3;
+	std::vector<detria::PointD> points;
+	points.reserve(boundary.size());
+	double coordinate_scale = 0.0;
+	for (const ON_3dPoint &point : boundary) {
+	    if (!point.IsValid())
+		return false;
+	    const ON_3dVector offset = point - center;
+	    points.push_back({offset[x], offset[y]});
+	    coordinate_scale = std::max(coordinate_scale,
+		std::max(std::fabs(offset[x]), std::fabs(offset[y])));
+	}
+	detria::Triangulation<detria::PointD, int> triangulation;
+	triangulation.setPoints(points);
+	triangulation.addOutline(outline);
+	if (!triangulation.triangulate(true))
+	    continue;
+	double signed_area = 0.0;
+	for (size_t point = 0; point < points.size(); ++point) {
+	    const detria::PointD &first = points[point];
+	    const detria::PointD &second = points[(point + 1) % points.size()];
+	    signed_area += first.x * second.y - second.x * first.y;
+	}
+	if (!std::isfinite(signed_area) || !(std::fabs(signed_area) > 0.0))
+	    continue;
+	const double orientation = signed_area > 0.0 ? 1.0 : -1.0;
+	/* Roundoff allowance for the projected determinant, independent of
+	 * modeling tolerance and the policy for thin-sheet intersections. */
+	constexpr double determinant_roundoff_factor = 64.0;
+	const double orientation_roundoff = determinant_roundoff_factor *
+	    std::numeric_limits<double>::epsilon() * coordinate_scale *
+	    coordinate_scale;
+	bool fan_in_kernel = true;
+	for (size_t point = 0; point < points.size(); ++point) {
+	    const detria::PointD &first = points[point];
+	    const detria::PointD &second = points[(point + 1) % points.size()];
+	    if (orientation * (first.x * second.y - second.x * first.y) <
+		    -orientation_roundoff) {
+		fan_in_kernel = false;
+		break;
+	    }
+	}
+	if (fan_in_kernel)
+	    return false;
+	std::vector<int> candidate;
+	double area = 0.0;
+	bool valid = true;
+	triangulation.forEachTriangle([&](const detria::Triangle<int> triangle) {
+	    const ON_3dPoint vertices[3] = {boundary[(size_t)triangle.x],
+		boundary[(size_t)triangle.y], boundary[(size_t)triangle.z]};
+	    if (assembled_mesh_triangle_degenerate(vertices)) {
+		valid = false;
+		return;
+	    }
+	    area += 0.5 * ON_CrossProduct(vertices[1] - vertices[0],
+		vertices[2] - vertices[0]).Length();
+	    candidate.insert(candidate.end(), {triangle.x,
+		orientation > 0.0 ? triangle.y : triangle.z,
+		orientation > 0.0 ? triangle.z : triangle.y});
+	}, false);
+	std::set<std::pair<int, int>> candidate_boundary;
+	if (valid && candidate.size() / 3 == boundary.size() - 2 &&
+		std::isfinite(area) && area < best_area &&
+		repair_patch_indexed_boundary(candidate.data(),
+		    (int)(candidate.size() / 3), boundary.size(),
+		    candidate_boundary) && candidate_boundary == expected_boundary) {
+	    best_faces.swap(candidate);
+	    best_area = area;
+	}
+    }
+    if (best_faces.empty())
+	return false;
+    replacement.swap(best_faces);
+    return true;
+}
+
+/* A new disk diagonal may share its endpoint indices with an unrelated
+ * retained edge.  Joining those edges would create four incident faces.
+ * Subdivide only the new diagonal, preserving both the patch geometry and
+ * the retained mesh.  This also permits distinct sheets to touch under the
+ * caller's existing intersection policy. */
+static bool
+repair_split_conflicting_patch_edges(std::vector<int> &patch_faces,
+	std::vector<fastf_t> &vertices, const std::vector<int> &retained_faces)
+{
+    typedef std::pair<int, int> mesh_edge;
+    std::map<mesh_edge, size_t> patch_edges;
+    for (size_t face = 0; face < patch_faces.size() / 3; ++face) {
+	for (int corner = 0; corner < 3; ++corner)
+	    patch_edges[std::minmax(patch_faces[face * 3 + corner],
+		patch_faces[face * 3 + (corner + 1) % 3])]++;
+    }
+    std::set<mesh_edge> conflicts;
+    for (size_t face = 0; face < retained_faces.size() / 3; ++face) {
+	for (int corner = 0; corner < 3; ++corner) {
+	    const mesh_edge edge = std::minmax(retained_faces[face * 3 + corner],
+		retained_faces[face * 3 + (corner + 1) % 3]);
+	    const auto found = patch_edges.find(edge);
+	    if (found != patch_edges.end() && found->second == 2)
+		conflicts.insert(edge);
+	}
+    }
+    for (const mesh_edge &edge : conflicts) {
+	if (vertices.size() / 3 >= (size_t)INT_MAX)
+	    return false;
+	const ON_3dPoint first(&vertices[(size_t)edge.first * 3]);
+	const ON_3dPoint second(&vertices[(size_t)edge.second * 3]);
+	const ON_3dPoint midpoint = first + 0.5 * (second - first);
+	if (!midpoint.IsValid() || !(midpoint.DistanceTo(first) > 0.0) ||
+		!(midpoint.DistanceTo(second) > 0.0))
+	    return false;
+	const int middle = (int)(vertices.size() / 3);
+	vertices.insert(vertices.end(), {midpoint.x, midpoint.y, midpoint.z});
+	std::vector<int> split_faces;
+	size_t split_count = 0;
+	for (size_t face = 0; face < patch_faces.size() / 3; ++face) {
+	    bool split = false;
+	    for (int corner = 0; corner < 3; ++corner) {
+		const int from = patch_faces[face * 3 + corner];
+		const int to = patch_faces[face * 3 + (corner + 1) % 3];
+		const mesh_edge candidate_edge = std::minmax(from, to);
+		if (candidate_edge != edge)
+		    continue;
+		const int opposite = patch_faces[face * 3 + (corner + 2) % 3];
+		split_faces.insert(split_faces.end(),
+		    {from, middle, opposite, middle, to, opposite});
+		split = true;
+		split_count++;
+		break;
+	    }
+	    if (!split)
+		split_faces.insert(split_faces.end(),
+		    patch_faces.begin() + (ptrdiff_t)(face * 3),
+		    patch_faces.begin() + (ptrdiff_t)(face * 3 + 3));
+	}
+	if (split_count != 2)
+	    return false;
+	patch_faces.swap(split_faces);
+    }
+    return true;
+}
+
 /* Some imported faces have a trustworthy topological disk boundary but no
  * globally consistent pullback: loose incident edge curves can cross on the
  * source surface even though their authoritative 3-D samples form the local
- * boundary expected by adjacent faces.  Preserve every shared sample and use
- * the loop order itself as the disk embedding.  A single interior point keeps
- * the interpretation bounded to this failed face and avoids the unreliable
- * best-fit-plane projection historically used for this case. */
+ * boundary expected by adjacent faces.  Preserve every shared sample and
+ * prefer a simple projected chart when a single interior point would fold
+ * the disk.  Approximation remains restricted to this failed source face. */
 static bool
 repair_constrained_topological_disk(struct ON_Brep_CDT_State *s_cdt,
 	int face_index, const repair_fast_constraint_store &constraints,
@@ -4611,6 +4789,14 @@ repair_constrained_topological_disk(struct ON_Brep_CDT_State *s_cdt,
 	patch.faces.push_back((int)i);
 	patch.faces.push_back((int)next);
 	patch.faces.push_back(center_index);
+    }
+    std::vector<ON_3dPoint> boundary_points;
+    boundary_points.reserve(boundary.size());
+    for (const disk_point &point : boundary)
+	boundary_points.push_back(point.point);
+    if (repair_projected_disk(boundary_points, center, patch.faces)) {
+	patch.vertices.resize(boundary.size() * 3);
+	patch.source_points.resize(boundary.size());
     }
     ON_3dPoint surface_point;
     ON_3dVector surface_normal;
@@ -5295,6 +5481,7 @@ repair_failed_face_from_rigorous_boundary(
     std::vector<fastf_t> added_vertices;
     double center_distance = 0.0;
     bool inferred_topology = false;
+    bool projected_disk = false;
     if (rings.size() == 1) {
 	ON_3dPoint average(0.0, 0.0, 0.0);
 	for (int vertex : ring)
@@ -5361,6 +5548,20 @@ repair_failed_face_from_rigorous_boundary(
 	    patch_faces.push_back(ring[point]);
 	    patch_faces.push_back(ring[(point + 1) % ring.size()]);
 	    patch_faces.push_back(center_index);
+	}
+	std::vector<ON_3dPoint> boundary_points;
+	boundary_points.reserve(ring.size());
+	for (int vertex : ring)
+	    boundary_points.push_back(ON_3dPoint(
+		&input_vertices[(size_t)vertex * 3]));
+	std::vector<int> projected_faces;
+	if (repair_projected_disk(boundary_points, center, projected_faces)) {
+	    for (int &vertex : projected_faces)
+		vertex = ring[(size_t)vertex];
+	    patch_faces.swap(projected_faces);
+	    added_vertices.clear();
+	    center_distance = 0.0;
+	    projected_disk = true;
 	}
     } else {
 	/* Every chart below is used only to choose triangle connectivity.  The
@@ -6196,6 +6397,9 @@ repair_failed_face_from_rigorous_boundary(
 	*vertices + (size_t)*vertex_count * 3);
     candidate_vertices.insert(candidate_vertices.end(),
 	added_vertices.begin(), added_vertices.end());
+    if (projected_disk && !repair_split_conflicting_patch_edges(patch_faces,
+	    candidate_vertices, candidate_faces))
+	return false;
     candidate_faces.insert(candidate_faces.end(), patch_faces.begin(),
 	patch_faces.end());
     candidate_sources.insert(candidate_sources.end(),
@@ -10274,6 +10478,122 @@ repair_closed_periodic_surface(struct ON_Brep_CDT_State *s_cdt,
 }
 
 static int
+repair_projected_disk_contract(void)
+{
+    /* The mean of this U-shaped boundary lies in the missing notch.  Test
+     * tilted planes, both windings, and every coordinate-axis orientation. */
+    const double outline[8][2] = {
+	{0, 0}, {4, 0}, {4, 4}, {3, 4},
+	{3, 1}, {1, 1}, {1, 4}, {0, 4}
+    };
+    constexpr double slope_x = 0.125;
+    constexpr double slope_y = 0.25;
+    const double expected_area = 10.0 *
+	std::sqrt(1.0 + slope_x * slope_x + slope_y * slope_y);
+    for (int axis = 0; axis < 3; ++axis) {
+	for (bool reverse : {false, true}) {
+	    std::vector<ON_3dPoint> boundary;
+	    ON_3dPoint center(0.0, 0.0, 0.0);
+	    for (const auto &point : outline) {
+		ON_3dPoint transformed;
+		transformed[axis] = point[0];
+		transformed[(axis + 1) % 3] = point[1];
+		transformed[(axis + 2) % 3] =
+		    slope_x * point[0] + slope_y * point[1];
+		boundary.push_back(transformed);
+		center += transformed;
+	    }
+	    center /= (double)boundary.size();
+	    if (reverse)
+		std::reverse(boundary.begin(), boundary.end());
+	    std::vector<int> faces;
+	    if (!repair_projected_disk(boundary, center, faces) ||
+		    faces.size() / 3 != boundary.size() - 2)
+		return 1;
+	    double area = 0.0;
+	    std::map<std::pair<int, int>, size_t> edge_uses;
+	    std::map<std::pair<int, int>, int> edge_directions;
+	    for (size_t face = 0; face < faces.size() / 3; ++face) {
+		ON_3dPoint points[3];
+		for (int corner = 0; corner < 3; ++corner) {
+		    const int vertex = faces[face * 3 + corner];
+		    const int next = faces[face * 3 + (corner + 1) % 3];
+		    if (vertex < 0 || (size_t)vertex >= boundary.size())
+			return 2;
+		    points[corner] = boundary[(size_t)vertex];
+		    edge_uses[std::minmax(vertex, next)]++;
+		    edge_directions[std::minmax(vertex, next)] +=
+			vertex < next ? 1 : -1;
+		}
+		if (assembled_mesh_triangle_degenerate(points))
+		    return 3;
+		area += 0.5 * ON_CrossProduct(points[1] - points[0],
+		    points[2] - points[0]).Length();
+	    }
+	    constexpr double area_roundoff_factor = 64.0;
+	    if (std::fabs(area - expected_area) > area_roundoff_factor *
+		    std::numeric_limits<double>::epsilon() * expected_area)
+		return 4;
+	    for (size_t vertex = 0; vertex < boundary.size(); ++vertex) {
+		const std::pair<int, int> edge = std::minmax((int)vertex,
+		    (int)((vertex + 1) % boundary.size()));
+		const int direction = vertex + 1 < boundary.size() ? 1 : -1;
+		if (edge_uses[edge] != 1 || edge_directions[edge] != direction)
+		    return 5;
+		edge_uses.erase(edge);
+		edge_directions.erase(edge);
+	    }
+	    for (const auto &edge : edge_uses) {
+		if (edge.second != 2 || edge_directions[edge.first] != 0)
+		    return 6;
+	    }
+	}
+    }
+    const std::vector<ON_3dPoint> square = {
+	ON_3dPoint(0, 0, 0), ON_3dPoint(1, 0, 0),
+	ON_3dPoint(1, 1, 0), ON_3dPoint(0, 1, 0)
+    };
+    std::vector<int> unchanged = {0, 1, 2};
+    if (repair_projected_disk(square, ON_3dPoint(0.5, 0.5, 0.0),
+	    unchanged) || unchanged != std::vector<int>({0, 1, 2}))
+	return 7;
+    std::vector<ON_3dPoint> crossed = square;
+    std::swap(crossed[1], crossed[2]);
+    if (repair_projected_disk(crossed, ON_3dPoint(0.5, 0.5, 0.0),
+	    unchanged) || unchanged != std::vector<int>({0, 1, 2}))
+	return 8;
+    /* The retained triangle already uses the square's new diagonal.  Its
+     * endpoint indices must not become a four-face edge after assembly. */
+    std::vector<fastf_t> vertices = {
+	0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 1
+    };
+    const std::vector<int> retained = {0, 2, 4};
+    std::vector<int> patch = {0, 1, 2, 0, 2, 3};
+    if (!repair_split_conflicting_patch_edges(patch, vertices, retained) ||
+	    vertices.size() / 3 != 6 || patch.size() / 3 != 4 ||
+	    !NEAR_EQUAL(vertices[15], 0.5, ON_ZERO_TOLERANCE) ||
+	    !NEAR_EQUAL(vertices[16], 0.5, ON_ZERO_TOLERANCE) ||
+	    !NEAR_ZERO(vertices[17], ON_ZERO_TOLERANCE))
+	return 9;
+    std::set<std::pair<int, int>> patch_boundary;
+    const std::set<std::pair<int, int>> expected = {
+	{0, 1}, {1, 2}, {2, 3}, {0, 3}
+    };
+    if (!repair_patch_indexed_boundary(patch.data(), (int)(patch.size() / 3),
+	    vertices.size() / 3, patch_boundary) || patch_boundary != expected)
+	return 10;
+    for (size_t face = 0; face < patch.size() / 3; ++face) {
+	for (int corner = 0; corner < 3; ++corner) {
+	    const std::pair<int, int> edge = std::minmax(
+		patch[face * 3 + corner], patch[face * 3 + (corner + 1) % 3]);
+	    if (edge == std::make_pair(0, 2))
+		return 11;
+	}
+    }
+    return 0;
+}
+
+static int
 repair_topological_disk_contract(void)
 {
     ON_3dPoint corners[8] = {
@@ -10387,6 +10707,9 @@ repair_topological_disk_contract(void)
 int
 cdt_test_repair_periodic_strip(void)
 {
+    const int projected_contract = repair_projected_disk_contract();
+    if (projected_contract)
+	return 30 + projected_contract;
     const int disk_contract = repair_topological_disk_contract();
     if (disk_contract)
 	return 20 + disk_contract;
