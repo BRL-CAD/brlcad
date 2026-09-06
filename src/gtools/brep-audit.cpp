@@ -745,7 +745,8 @@ shaded_result(struct db_i *dbip, struct directory *dp,
     else if (result.ret != BREP_CDT_FAST_OK)
 	result.issues.push_back("generation_failed");
     const bool expected_empty = result.ret == BREP_CDT_FAST_OK &&
-	result.failed_items == 0 && result.completed_items > 0 &&
+	result.failed_items == 0 &&
+	result.completed_items == result.requested_items &&
 	result.completed_items == result.skipped_items +
 	result.tolerance_skipped_items;
     if ((!result.vertices || !result.primitives) && !expected_empty)
@@ -2058,6 +2059,7 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
     bool input_solid = false;
     bool input_two_trim_edges = false;
     bool quality_eligible = false;
+    bool wireframe_only = false;
     /* Visualization must not require the expensive source-validation and
      * trimmed-bounding-box reference pass.  The display generators have
      * their own bounded geometry/resource diagnostics. */
@@ -2068,6 +2070,7 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
 	    struct rt_brep_internal *bi =
 		(struct rt_brep_internal *)intern.idb_ptr;
 	    input_loaded = true;
+	    wireframe_only = bi->brep->m_F.Count() == 0;
 	    ON_wString validity_log;
 	    ON_TextLog validity_output(validity_log);
 	    input_valid = bi->brep->IsValid(&validity_output);
@@ -2123,7 +2126,7 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
 		VMOVE(ref_min, bbox.m_min);
 		VMOVE(ref_max, bbox.m_max);
 		ref_valid = true;
-	    } else if (!excluded) {
+	    } else if (!excluded && !wireframe_only) {
 		top_issues.push_back("trimmed_bbox_failed");
 	    }
 	    if (boundary_bbox.IsValid()) {
@@ -2145,6 +2148,7 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
 	BU_STR_EQUAL(mode_name, "both") || BU_STR_EQUAL(mode_name, "all");
     const bool run_quality = BU_STR_EQUAL(mode_name, "quality") ||
 	BU_STR_EQUAL(mode_name, "all");
+    const bool quality_not_applicable = run_quality && wireframe_only;
     const bool excluded = config.valid_solids_only && input_loaded &&
 	!quality_eligible;
     geom_result wire;
@@ -2236,7 +2240,7 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
 		"database_internal_load_failed") != shaded.issues.end())
 	    input_loaded = false;
     }
-    if (run_quality && !excluded) {
+    if (run_quality && !excluded && !quality_not_applicable) {
 	std::cerr << "brep-audit: phase=quality" << std::endl;
 	quality = quality_result(dbip, dp, &ttol,
 	    (int)config.face_index, config.quality_face_time_ms,
@@ -2294,7 +2298,7 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
 	}
     }
 
-    bool okay = !excluded && (config.display_only || ref_valid) &&
+    bool okay = !excluded && (config.display_only || ref_valid || wireframe_only) &&
 	top_issues.empty() &&
 	(!run_wireframe || wire.issues.empty()) &&
 	(!run_shaded || shaded.issues.empty()) &&
@@ -2324,8 +2328,11 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
     std::cout << "{\"format\":\"brlcad-brep-realization-audit-v1\",\"database\":"
 	<< json_quote(db_path) << ",\"object\":" << json_quote(dp->d_namep)
 	<< ",\"task_index\":" << task_index
-	<< ",\"status\":" << json_quote(excluded ? "excluded" :
+	<< ",\"status\":" << json_quote((excluded || (quality_not_applicable &&
+	    !run_wireframe && !run_shaded && top_issues.empty())) ? "excluded" :
 	    (okay ? "ok" : "fail"))
+	<< ",\"quality_exclusion_reason\":" <<
+	    (quality_not_applicable ? "\"wireframe_only\"" : "null")
 	<< ",\"ratio_limits\":[" << std::setprecision(17)
 	<< config.ratio_min << "," << config.ratio_max << "]"
 	<< ",\"tessellation_tolerance\":{\"abs\":" << config.tess_abs
@@ -2345,7 +2352,8 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
 	<< ",\"two_trim_edges\":" <<
 	    (input_two_trim_edges ? "true" : "false")
 	<< ",\"quality_eligible\":" <<
-	    (quality_eligible ? "true" : "false") << "}"
+	    (quality_eligible ? "true" : "false")
+	<< ",\"wireframe_only\":" << (wireframe_only ? "true" : "false") << "}"
 	<< ",\"fast_options\":{\"jobs\":" << fast_options.max_workers
 	<< ",\"max_time_ms\":" << fast_options.max_time_ms
 	<< ",\"max_result_bytes\":" << fast_options.max_result_bytes
@@ -2399,7 +2407,8 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
     if (run_shaded && !excluded) print_result(shaded, ref_dims);
     else std::cout << "null";
 	std::cout << ",\"quality\":";
-    if (run_quality && !excluded) print_result(quality, ref_dims);
+    if (run_quality && !excluded && !quality_not_applicable)
+	print_result(quality, ref_dims);
     else std::cout << "null";
     std::cout << ",\"images\":{\"wireframe\":"
 	<< (wire_image.empty() ? "null" : json_quote(wire_image.c_str()))

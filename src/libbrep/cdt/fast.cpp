@@ -7241,8 +7241,11 @@ brep_cdt_fast_ex(int **faces, int *face_cnt, vect_t **pnt_norms,
 	return BREP_CDT_FAST_ERROR;
 
     const int brep_face_count = brep->m_F.Count();
-    if (brep_face_count <= 0 || index < -1 || index >= brep_face_count)
+
+    if (index < -1 || (index >= 0 && index >= brep_face_count))
 	return BREP_CDT_FAST_ERROR;
+    if (!brep_face_count)
+	return BREP_CDT_FAST_OK;
 
     struct brep_cdt_fast_options options;
     brep_cdt_fast_options_default(&options);
