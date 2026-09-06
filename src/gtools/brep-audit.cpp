@@ -984,6 +984,7 @@ quality_result(struct db_i *dbip, struct directory *dp,
 	 * point/triangle limits are reached.  Do not let that terminate a
 	 * corpus worker; retain a bounded, actionable quality failure instead. */
 	memory_exhausted = true;
+	result.hit_memory_limit = true;
 	result.ret = BREP_CDT_RESULT_REFINEMENT_LIMIT;
 	result.diagnostic_result = BREP_CDT_RESULT_REFINEMENT_LIMIT;
 	result.diagnostic_stage = BREP_CDT_STAGE_FACE_TRIANGULATION;
@@ -1049,6 +1050,7 @@ quality_result(struct db_i *dbip, struct directory *dp,
 		&repair_report);
 	} catch (const std::bad_alloc &) {
 	    repair_memory_exhausted = true;
+	    result.hit_memory_limit = true;
 	    result.issues.push_back("resource_limit");
 	    result.diagnostic_result = BREP_CDT_RESULT_REFINEMENT_LIMIT;
 	    result.diagnostic_stage = BREP_CDT_STAGE_MESH_REPAIR;
