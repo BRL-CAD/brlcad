@@ -644,11 +644,8 @@ brep_to_iges(struct rt_db_internal *ip, char *name,
 }
 
 
-/* Export a non-brep primitive by first converting it to an ON_Brep via its
- * ft_brep callback, so curved analytic primitives (eto, rpc, rhc, epa, ehy,
- * hyp, superell, revolve, particle, ...) are written as faithful NURBS
- * surfaces rather than being dropped or faceted.  Falls back to the faceted
- * NMG exporter when no brep callback exists or the brep is unusable. */
+/* Preserve a primitive's NURBS representation when its callback succeeds.
+ * Faceting remains a fallback when no usable BRep can be produced. */
 extern "C" int
 primitive_brep_to_iges(struct rt_db_internal *ip, char *name,
 		       FILE *fp_dir, FILE *fp_param, struct bu_list *vlfree)
@@ -656,17 +653,16 @@ primitive_brep_to_iges(struct rt_db_internal *ip, char *name,
     RT_CK_DB_INTERNAL(ip);
 
     if (ip->idb_type > 0 && ip->idb_type <= ID_MAXIMUM && OBJ[ip->idb_type].ft_brep) {
-	struct bn_tol tol;
-	tol.magic = BN_TOL_MAGIC;
-	tol.dist = 0.0005;
-	tol.dist_sq = tol.dist * tol.dist;
-	tol.perp = 1.0e-6;
-	tol.para = 1.0 - tol.perp;
-
+	if (ip->idb_type == ID_CLINE &&
+	    static_cast<const struct rt_cline_internal *>(ip->idb_ptr)->thickness > 0.0)
+	    bu_log("%s: exporting CLINE plate thickness as a fixed wall; "
+		"ray-dependent line-of-sight thickness is not representable in IGES\n", name);
 	ON::Begin();
 
-	ON_Brep *brep = NULL;
-	OBJ[ip->idb_type].ft_brep(&brep, ip, &tol);
+	/* The ft_brep contract takes an allocated destination; several native
+	 * primitives populate it directly rather than allocating one. */
+	ON_Brep *brep = ON_Brep::New();
+	OBJ[ip->idb_type].ft_brep(&brep, ip, iges_export_tolerance());
 	if (brep) {
 	    if (brep->IsValid()) {
 		solid_is_brep = 1;

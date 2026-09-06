@@ -291,6 +291,10 @@ extern void Docolor(void);
 extern void Gett_att(void);
 extern void Evalxform(void);
 extern void Check_names(void);
+extern int iges_legacy_index(int de);
+extern int iges_legacy_count(size_t owner, int count, size_t stride);
+extern int Read_property(size_t owner, int type, int form);
+extern void Skip_field(void);
 extern void Conv_drawings(struct bu_list *vlfree);
 extern void Do_subfigs(void);
 extern void Convtrimsurfs(struct bu_list *vlfree);
@@ -301,6 +305,10 @@ extern void Get_att(void);
 extern void Convtree(void);
 extern void Convassem(void);
 extern int Readrec(int recno);
+/* Read a numeric field into a MAX_NUM-byte buffer: 1 for a value, 0 for
+ * an empty/default field, -1 for truncated or excessive data. */
+extern int iges_read_number(char *field);
+extern void iges_read_real(double *value, double factor, const char *id);
 extern void Readint(int *inum, const char *id);
 extern void Readflt(fastf_t *inum, const char *id);
 extern void Readdbl(double *inum, const char *id);

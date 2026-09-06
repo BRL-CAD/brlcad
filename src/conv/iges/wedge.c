@@ -30,7 +30,7 @@ wedge(size_t entityno)
     fastf_t xscale = 0.0;
     fastf_t yscale = 0.0;
     fastf_t zscale = 0.0;
-    fastf_t txscale = 0.0;		/* top xscale */
+    fastf_t txscale = 0.0;		/* x length at local y = yscale */
     fastf_t x_1, y_1, z_1;		/* first vertex components */
     fastf_t x_2, y_2, z_2;		/* xdir vector components */
     fastf_t x_3, y_3, z_3;		/* zdir vector components */
@@ -41,15 +41,15 @@ wedge(size_t entityno)
     vect_t yvec;			/* vector along y-axis */
     vect_t zdir;			/* a unit vector */
     vect_t zvec;			/* vector along z-axis */
-    point_t pts[9];			/* array of points */
+    point_t pts[8];			/* array of points */
     int sol_num;		/* IGES solid type number */
 
     /* Default values */
     x_1 = 0.0;
     y_1 = 0.0;
     z_1 = 0.0;
-    x_2 = 0.0;
-    y_2 = 1.0;
+    x_2 = 1.0;
+    y_2 = 0.0;
     z_2 = 0.0;
     x_3 = 0.0;
     y_3 = 0.0;
@@ -72,14 +72,15 @@ wedge(size_t entityno)
     Readcnv(&x_1, "");
     Readcnv(&y_1, "");
     Readcnv(&z_1, "");
-    Readcnv(&x_2, "");
-    Readcnv(&y_2, "");
-    Readcnv(&z_2, "");
-    Readcnv(&x_3, "");
-    Readcnv(&y_3, "");
-    Readcnv(&z_3, "");
+    Readflt(&x_2, "");
+    Readflt(&y_2, "");
+    Readflt(&z_2, "");
+    Readflt(&x_3, "");
+    Readflt(&y_3, "");
+    Readflt(&z_3, "");
 
-    if (xscale <= 0.0 || yscale <= 0.0 || zscale <= 0.0) {
+    if (xscale <= 0.0 || yscale <= 0.0 || zscale <= 0.0 ||
+	txscale < 0.0 || txscale >= xscale) {
 	bu_log("Illegal parameters for entity D%07d (%s)\n",
 	       dir[entityno]->direct, dir[entityno]->name);
 	return 0;
@@ -112,15 +113,16 @@ wedge(size_t entityno)
 
     VSET(pts[0], x_1, y_1, z_1);		/* Yields first vertex */
     VADD2(pts[1], pts[0], xvec);		/* Finds second vertex */
-    VADD2(pts[2], pts[1], yvec);		/* Finds third vertex */
     VADD2(pts[3], pts[0], yvec);		/* Finds fourth vertex */
+    /* IGES 152 tapers in the XY plane, then extrudes along Z. */
+    VADD2(pts[2], pts[3], txvec);
 
     /* Make the top face by extruding the bottom face vertices.
      */
 
     VADD2(pts[4], pts[0], zvec);		/* Finds fifth vertex */
-    VADD2(pts[5], pts[4], txvec);		/* Finds sixth vertex */
-    VADD2(pts[6], pts[5], yvec);		/* Finds seventh vertex */
+    VADD2(pts[5], pts[1], zvec);		/* Finds sixth vertex */
+    VADD2(pts[6], pts[2], zvec);		/* Finds seventh vertex */
     VADD2(pts[7], pts[4], yvec);		/* Find eighth vertex */
 
 

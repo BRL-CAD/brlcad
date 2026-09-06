@@ -135,6 +135,10 @@ extern int write_brep_solid_entity(const char *name, int dependent,
 				   const int *void_orientations, size_t void_count,
 				   FILE *fp_dir, FILE *fp_param);
 extern int iges_name_is_independent(const char *name);
+extern const struct bn_tol *iges_export_tolerance(void);
+
+/* Prefer a primitive's exact BRep representation before faceted fallback. */
+extern int primitive_brep_to_iges(struct rt_db_internal *, char *, FILE *, FILE *, struct bu_list *);
 
 #ifdef __cplusplus
 }

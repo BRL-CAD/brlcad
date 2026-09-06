@@ -21,8 +21,8 @@
 #ifndef CONV_IGES_IGES_EXTERN_H
 #define CONV_IGES_IGES_EXTERN_H
 
-#define CARDLEN 71 /* length of data portion in Global records */
-#define PARAMLEN 63 /* length of data portion in Parameter records */
+#define CARDLEN 71 /* last 0-based data column in Global records */
+#define PARAMLEN 63 /* last 0-based data column in Parameter records */
 
 extern int do_projection;
 extern char eord; /* IGES end of record delimiter */

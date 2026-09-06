@@ -22,12 +22,20 @@ into an IGES version 5.3 file.
 
 By default a CSG IGES file is produced: every region is written as a Boolean
 tree, with each solid represented by its IGES CSG equivalent. Any solid that has
-no IGES CSG equivalent is tessellated (using the tessellation tolerances) and
-written as a boundary-representation (B-Rep) object. Native OpenNURBS B-Reps
+no IGES CSG equivalent uses a primitive B-Rep conversion where available,
+including general truncated cones, oblique cylinders, pipes, extrusions,
+clines, and legacy B-splines. Already-faceted geometry keeps its polygonal
+representation. Tessellation is a fallback for other supported geometry when
+no usable primitive B-Rep conversion is available; it is controlled by the
+tessellation tolerances. Native OpenNURBS B-Reps
 are written with IGES manifold topology (type 186), preserving shared vertices,
 edges, loops, faces, shells, and NURBS geometry. The *-f*, *-t*, and *-m*
 options select alternative output modes; they are mutually exclusive, and the
 last one given wins.
+
+CLINE plate-mode geometry is exported with fixed wall thickness. Its native
+ray-dependent line-of-sight thickness cannot be represented exactly in IGES;
+the exporter reports this limitation.
 
 If no output file is given with *-o*, the IGES file is written to standard
 output. The inverse translation, from IGES to BRL-CAD, is performed by
@@ -99,8 +107,8 @@ output. The inverse translation, from IGES to BRL-CAD, is performed by
 g-iges -o assembly.iges assembly.g hull turret
 ----
 Writes the hull and turret regions of assembly.g as a CSG IGES file, preserving
-the Boolean tree where IGES primitive equivalents exist and tessellating the
-rest.
+the Boolean tree where IGES primitive equivalents exist and using B-Rep
+representations for other supported geometry.
 ====
 
 .Produce a faceted B-Rep IGES file with tight tolerances
@@ -127,6 +135,13 @@ parts directory, which is convenient for importing assemblies part-by-part.
 ====
 
 [[see_also]]
+== EXIT STATUS
+
+Zero indicates successful conversion.  A nonzero status indicates an error,
+including missing requested objects or omitted solids or combinations.
+A partial IGES file may still
+contain usable geometry; consult the diagnostics before using it.
+
 == SEE ALSO
 
 *brlcad*(1), *iges-g*(1), *g-step*(1), *mged*(1)

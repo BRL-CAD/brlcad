@@ -36,6 +36,18 @@
 #include "rt/primitives/datum.h"
 #include "wdb.h"
 
+extern "C" int
+iges_is_native_csg(int type)
+{
+    switch (type) {
+	case 150: case 152: case 154: case 156: case 158:
+	case 160: case 162: case 164: case 168:
+	    return 1;
+	default:
+	    return 0;
+    }
+}
+
 namespace brlcad {
 namespace iges {
 namespace {
@@ -1712,6 +1724,8 @@ Translator::run()
     if (!result_.diagnostics.empty())
 	return result_;
 
+    if (options_.progress)
+	options_.progress("annotations", "resolving drawing references", 0, 0, 0);
     std::set<EntityId> referenced;
     for (const DirectoryEntry &entry : document_.entities()) {
 	if (!is_dimension_type(entry.type) && entry.type != 308 &&
@@ -1738,12 +1752,16 @@ Translator::run()
 		referenced.find(entry.id) == referenced.end())
 	    continue;
 	const char *suffix = entry.type == 116 ? ".datum" : ".annot";
+	if (options_.progress)
+	    options_.progress("annotations", "converting drawing entity", 0, 0, entry.id.value());
 	const std::string name = unique_name(entry, suffix);
 	if (translate(entry, name))
 	    objects_[entry.id] = name;
 	else
 	    ++result_.statistics.omitted;
     }
+    if (options_.progress)
+	options_.progress("hierarchy", "resolving drawing groups and instances", 0, 0, 0);
     if (!write_groups())
 	return result_;
     if (!write_subfigures())
@@ -1861,13 +1879,14 @@ write_import_report(const std::string &path, const Document &document,
 extern "C" int
 iges_import_annotations(const char *path, struct rt_wdb *wdbp,
     int project_to_xy, int exact, int strict, const char *repair_mode,
-    const char *root_name, const char *report_path)
+    const char *root_name, const char *report_path, iges_progress_callback progress)
 {
     if (!path || !wdbp)
 	return -1;
     const brlcad::iges::Document document =
 	brlcad::iges::Document::parse_file(path);
     brlcad::iges::ImportOptions options;
+    options.progress = progress;
     options.project_drawings = project_to_xy != 0;
     options.exact = exact != 0;
     options.strict = strict != 0;

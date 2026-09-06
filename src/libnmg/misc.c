@@ -824,8 +824,11 @@ nmg_find_outer_and_void_shells(struct nmgregion *r, struct bu_ptbl ***shells, st
     /* outer_shells is now a list of all the outer shells in the region */
     outer_shell_count = BU_PTBL_LEN(outer_shells);
 
-    *shells = (struct bu_ptbl **)bu_calloc(BU_PTBL_LEN(outer_shells), sizeof(struct bu_ptbl *) ,
-					   "nmg_find_outer_and_void_shells: shells");
+    /* A region can contain only inward-facing shells and have no outer shell. */
+    *shells = NULL;
+    if (outer_shell_count)
+	*shells = (struct bu_ptbl **)bu_calloc(outer_shell_count, sizeof(struct bu_ptbl *),
+					     "nmg_find_outer_and_void_shells: shells");
     for (i=0; i<BU_PTBL_LEN(outer_shells); i++) {
 	NMG_ALLOC((*shells)[i], struct bu_ptbl);
 
@@ -838,6 +841,7 @@ nmg_find_outer_and_void_shells(struct nmgregion *r, struct bu_ptbl ***shells, st
 
     bu_free((char *)flags, "nmg_find_outer_and_void_shells: flags");
     bu_ptbl_free(outer_shells);
+    bu_free(outer_shells, "nmg_find_outer_and_void_shells: outer_shells");
     return outer_shell_count;
 }
 

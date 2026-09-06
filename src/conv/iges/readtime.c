@@ -39,6 +39,7 @@
 
 #include "./iges_struct.h"
 #include "./iges_extern.h"
+#include "iges_output.h"
 
 
 /*
@@ -51,93 +52,38 @@
 void
 Readtime(const char *id)
 {
-    int i = 0, length = 0, lencard, done = 0, year;
-    char num[MAX_NUM] = {0};
-    char year_str[5];
-
-    if (card[counter] == eofd) {
-	/* This is an empty field */
-	counter++;
+    char *value = NULL;
+    Readname(&value, "");
+    if (!value)
 	return;
-    } else if (card[counter] == eord) {
-	/* Up against the end of record */
+    const size_t length = strlen(value);
+    const size_t short_length = 13; /* YYMMDD.HHMMSS */
+    const size_t long_length = 15; /* YYYYMMDD.HHMMSS */
+    if (length != short_length && length != long_length) {
+	iges_output_legacy_warning(0, "invalid_legacy_timestamp",
+	    "timestamp must have 13 or 15 characters");
+	bu_free(value, "IGES timestamp");
 	return;
     }
-
-    if (*id != '\0')
-	bu_log("%s", id);
-
-    if (card[IGES_SECTION_COL] == 'P')
-	lencard = PARAMLEN;
-    else
-	lencard = CARDLEN;
-
-    if (counter > lencard)
-	Readrec(++currec);
-
-    while (!done && i < MAX_NUM-1) {
-	while (i < MAX_NUM-1 &&
-	       (counter <= lencard) &&
-	       ((num[i] = card[counter++]) != 'H'))
-	{
-	    if (i >= MAX_NUM-1) {
-		done = 1;
-	    }
-	    i++;
+    const size_t year_digits = length == short_length ? 2 : 4;
+    for (size_t i = 0; i < length; ++i) {
+	if (i == year_digits + 4 ? value[i] != '.' :
+	    (value[i] < '0' || value[i] > '9')) {
+	    iges_output_legacy_warning(0, "invalid_legacy_timestamp",
+		"timestamp must use YYMMDD.HHMMSS or YYYYMMDD.HHMMSS");
+	    bu_free(value, "IGES timestamp");
+	    return;
 	}
-	if (counter > lencard)
-	    Readrec(++currec);
-	else
-	    done = 1;
     }
-
-    length = atoi(num);
-    if (length != 13 && length != 15) {
-	bu_log("\tError in time stamp\n");
-	bu_log("\tlength of string=%s (should be 13 or 15)\n", num);
-    }
-
-    for (i = 0; i < length; i++) {
-	if (counter > lencard)
-	    Readrec(++currec);
-	num[i] = card[counter++];
-    }
-
-    year_str[0] = num[0];
-    year_str[1] = num[1];
-    if (length == 13) {
-	year_str[2] = '\0';
-	year = atoi(year_str);
+    int year = 0;
+    for (size_t i = 0; i < year_digits; ++i)
+	year = year * 10 + value[i] - '0';
+    if (length == short_length)
 	year += 1900;
-	bu_log("%c%c/%c%c/%d", num[2], num[3], num[4], num[5],
-	       year);
-	if (length > 12 && length < 16)
-	    bu_log(" at %c%c:%c%c:%c%c\n", num[7], num[8], num[9],
-		   num[10], num[11], num[12]);
-
-    } else {
-	year_str[2] = num[2];
-	year_str[3] = num[3];
-	year_str[4] = '\0';
-	year = atoi(year_str);
-	bu_log("%c%c/%c%c/%d", num[4], num[5], num[6], num[7],
-	       year);
-	bu_log(" at %c%c:%c%c:%c%c\n", num[9], num[10], num[11],
-	       num[12], num[13], num[14]);
-    }
-
-    while (card[counter] != eofd && card[counter] != eord) {
-	if (counter < lencard)
-	    counter++;
-	else
-	    Readrec(++currec);
-    }
-
-    if (card[counter] == eofd) {
-	counter++;
-	if (counter > lencard)
-	    Readrec(++ currec);
-    }
+    bu_log("%s%.2s/%.2s/%d at %.2s:%.2s:%.2s\n", id ? id : "",
+	value + year_digits, value + year_digits + 2, year,
+	value + year_digits + 5, value + year_digits + 7, value + year_digits + 9);
+    bu_free(value, "IGES timestamp");
 }
 
 

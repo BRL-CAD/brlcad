@@ -25,7 +25,7 @@
 /*
  * extrude() converts an IGES 164 Solid of Linear Extrusion entity into a
  * BRL-CAD primitive.  The result depends on the extruded base curve: a
- * circular arc yields an RCC (via Extrudcirc), a conic arc an TGC (via
+ * circular arc yields a TGC (via Extrudcirc), a conic arc a TGC (via
  * Extrudcon), and other supported curve types a BOT from an extruded NMG face.
  */
 int
@@ -38,7 +38,6 @@ extrude(size_t entityno, struct bu_list *vlfree)
     int sol_num = 0;			/* IGES solid type number */
     int curve = 0;			/* pointer to directory entry for base curve */
     struct ptlist *curv_pts;		/* List of points along curve */
-    size_t i;
 
     /* Default values */
     VSET(edir, 0.0, 0.0, 1.0);
@@ -61,7 +60,9 @@ extrude(size_t entityno, struct bu_list *vlfree)
 
     /* Convert this to a "dir" index */
 
-    curve = IGES_DE2INDEX(curve);
+    curve = iges_legacy_index(curve);
+    if (curve < 0)
+	return 0;
 
     Readcnv(&length, "");
     Readflt(&edir[X], "");
@@ -146,13 +147,7 @@ extrude(size_t entityno, struct bu_list *vlfree)
 	    return 1;
 	}
 	default:
-	    i = 0;
-	    while (dir[curve]->type != typecount[i].type && i < ntypes)
-		i++;
-	    if (dir[curve]->type == typecount[++i].type)
-		bu_log("Extrusions of %s are not allowed\n", typecount[i].name);
-	    else
-		bu_log("Extrusions of unknown type are not allowed\n");
+	    bu_log("Extrusions of %s are not supported\n", iges_type(dir[curve]->type));
 	    break;
     }
     return 0;

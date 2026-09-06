@@ -27,6 +27,7 @@
 
 #include "./iges_struct.h"
 #include "./iges_extern.h"
+#include "iges_output.h"
 
 void
 Convsolids(struct bu_list *vlfree, int skip_brep)
@@ -38,6 +39,7 @@ Convsolids(struct bu_list *vlfree, int skip_brep)
     bu_log("\n\nConverting solid entities:\n");
 
     for (i = 0; i < totentities; i++) {
+	iges_output_progress("legacy compatibility", "converting solid entities", i, totentities, dir[i]->direct);
 	/*
 	 * Dispatch on the IGES entity type number to the matching
 	 * converter.  Solid types that have no case here fall through

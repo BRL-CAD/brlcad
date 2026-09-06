@@ -31,14 +31,10 @@ Convinst(void)
 {
 
     size_t i = 0;
-    int j = 0;
-    int k = 0;
     int type = 0;
     int pointer = 0;
     int conv = 0;
     int totinst = 0;
-    int no_of_assoc = 0;
-    int no_of_props = 0;
     int att_de = 0;
     struct brlcad_att brl_att;
     mat_t *rot;
@@ -71,22 +67,7 @@ Convinst(void)
 	    continue;
 	}
 
-	/* skip over the associativities */
-	Readint(&no_of_assoc, "");
-	for (k = 0; k < no_of_assoc; k++)
-	    Readint(&j, "");
-
-	/* get property entity DE's */
-	att_de = 0;
-	Readint(&no_of_props, "");
-	for (k = 0; k < no_of_props; k++) {
-	    Readint(&j, "");
-	    if (dir[IGES_DE2INDEX(j)]->type == 422 &&
-		dir[IGES_DE2INDEX(j)]->referenced == brlcad_att_de) {
-		/* this is one of our attribute instances */
-		att_de = j;
-	    }
-	}
+	att_de = Read_property(i, 422, 0);
 
 	memset(&brl_att, 0, sizeof(struct brlcad_att));
 	Read_att(att_de, &brl_att);

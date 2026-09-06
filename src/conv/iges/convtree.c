@@ -46,13 +46,9 @@ Convtree(void)
     int tottrees = 0;
     union tree *ptr;
     struct rt_comb_internal *comb;
-    int no_of_assoc = 0;
-    int no_of_props = 0;
     int att_de = 0;
     struct brlcad_att brl_att;
     size_t i;
-    int j = 0;
-    int k = 0;
 
     bu_log("\nConverting boolean tree entities:\n");
 
@@ -85,21 +81,7 @@ Convtree(void)
 	    continue;
 	}
 
-	/* skip over the associativities */
-	Readint(&no_of_assoc, "");
-	for (k = 0; k < no_of_assoc; k++)
-	    Readint(&j, "");
-
-	/* get property entity DE's */
-	Readint(&no_of_props, "");
-	for (k = 0; k < no_of_props; k++) {
-	    Readint(&j, "");
-	    if (dir[IGES_DE2INDEX(j)]->type == 422 &&
-		dir[IGES_DE2INDEX(j)]->referenced == brlcad_att_de) {
-		/* this is one of our attribute instances */
-		att_de = j;
-	    }
-	}
+	att_de = Read_property(i, 422, 0);
 
 	Read_att(att_de, &brl_att);
 	/* Read_att will supply defaults if att_de is 0 */

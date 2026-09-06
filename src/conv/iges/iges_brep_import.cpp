@@ -67,20 +67,7 @@ constexpr double CURVE_ORIENTATION_SAMPLES[] = {0.0, 0.25, 0.5, 0.75, 1.0};
 static bool
 is_native_csg_entity_type(int type)
 {
-    switch (type) {
-	case 150:
-	case 152:
-	case 154:
-	case 156:
-	case 158:
-	case 160:
-	case 162:
-	case 164:
-	case 168:
-	    return true;
-	default:
-	    return false;
-    }
+    return iges_is_native_csg(type) != 0;
 }
 
 
@@ -95,7 +82,7 @@ struct Matrix {
     };
 };
 
-struct InstanceProperties {
+struct SolidProperties {
     std::string shader_name;
     std::string shader_arguments;
     int region_flag = 0;
@@ -470,10 +457,13 @@ entity_color(const Document &document, const DirectoryEntry &entry,
 }
 
 void
-solid_instance_properties(const Document &document,
-    const DirectoryEntry &entry, InstanceProperties &properties)
+solid_properties(const Document &document,
+    const DirectoryEntry &entry, SolidProperties &properties)
 {
-    constexpr size_t instance_associativity_parameter = 2;
+    size_t property_parameter = 0;
+    if (!associativity_parameter(document.parameters(entry.id), entry, property_parameter))
+	return;
+    properties.has_color = entity_color(document, entry, properties.color);
     enum AttributeParameter : size_t {
 	ShaderName = 1,
 	ShaderArguments,
@@ -486,10 +476,10 @@ solid_instance_properties(const Document &document,
 	ColorDefined
     };
 
-    const ParameterList *instance_parameters =
+    const ParameterList *entity_parameters =
 	document.parameters(entry.id);
-    for (EntityId property_id : property_entities(instance_parameters,
-	    instance_associativity_parameter)) {
+    for (EntityId property_id : property_entities(entity_parameters,
+	    property_parameter)) {
 	const DirectoryEntry *property = document.entity(property_id);
 	if (!property || property->type != 422)
 	    continue;
@@ -712,8 +702,8 @@ private:
 class Importer {
 public:
     Importer(const Document &document, struct rt_wdb *wdbp,
-	const ImportOptions &options) : document_(document), wdbp_(wdbp),
-	options_(options), unit_to_mm_(unit_scale(document.global()))
+	const ImportOptions &options, bool defer_root = false) : document_(document), wdbp_(wdbp),
+	options_(options), unit_to_mm_(unit_scale(document.global())), defer_root_(defer_root)
     {
 	result_.statistics.entities_read = document.entities().size();
 	const double source_resolution = global_real(document.global(),
@@ -725,6 +715,13 @@ public:
     }
 
     BrepImportResult run();
+    void register_legacy(EntityId id, const char *name);
+    BrepImportResult complete_hierarchy();
+    void progress(const char *activity, EntityId entity = EntityId()) const
+    {
+	if (options_.progress)
+	    options_.progress("geometry", activity, progress_completed_, progress_total_, entity.value());
+    }
     const Document &document() const { return document_; }
     double tolerance() const { return tolerance_; }
     double source_tolerance() const
@@ -836,6 +833,8 @@ private:
     struct rt_wdb *wdbp_ = nullptr;
     ImportOptions options_;
     BrepImportResult result_;
+    size_t progress_completed_ = 0;
+    size_t progress_total_ = 0;
     double unit_to_mm_ = DEFAULT_UNIT_TO_MM;
     double tolerance_ = DEFAULT_TOPOLOGY_TOLERANCE_MM;
     bool source_resolution_declared_ = false;
@@ -845,8 +844,10 @@ private:
     std::set<std::string> root_objects_;
     std::set<EntityId> deferred_boolean_trees_;
     std::set<EntityId> deferred_instances_;
-    std::set<EntityId> deferred_assemblies_;
+    std::set<EntityId> deferred_containers_;
     std::set<EntityId> unresolved_objects_;
+    bool defer_root_ = false;
+    bool legacy_complete_ = false;
 
     friend class SolidBuilder;
 };
@@ -2134,6 +2135,7 @@ bool
 SolidBuilder::add_face(EntityId id, bool same_direction,
     bool shell_same_direction)
 {
+    importer_.progress("constructing explicit solid face", id);
     const DirectoryEntry *entry = importer_.document().entity(id);
     const ParameterList *parameters = entry ?
 	importer_.document().parameters(id) : nullptr;
@@ -2360,6 +2362,7 @@ SolidBuilder::build()
 bool
 SolidBuilder::finish_geometry()
 {
+    importer_.progress("validating explicit solid topology", solid_.id);
     /* IGES topology is authoritative, but its curves and surfaces may differ
      * within the source system's modeling accuracy.  Measure those deviations
      * instead of rewriting the imported topology.  Loop types remain the
@@ -4099,6 +4102,8 @@ TrimmedSurfaceBuilder::build(brep_assembly_result &assembly)
 		"trimmed-surface collection contains a missing face");
 	    return nullptr;
 	}
+	importer_.progress(recovery_ == FaceRecovery::None ?
+	    "constructing trimmed faces" : "recovering trimmed faces", entry->id);
 	if (!add_face(*entry)) {
 	    importer_.diagnose(Severity::Warning, "trimmed_surface_face",
 		"could not construct an OpenNURBS face", entry);
@@ -4109,6 +4114,7 @@ TrimmedSurfaceBuilder::build(brep_assembly_result &assembly)
      * per-object merge diagnostics exclude pre-existing natural seams. */
     for (int i = 0; i < brep_->m_E.Count(); ++i)
 	brep_->m_E[i].m_edge_user.i = brep_->m_E[i].m_ti.Count();
+    importer_.progress("stitching and validating face batch", faces_.front()->id);
     if (!brep_assemble(*brep_, importer_.tolerance(), &assembly)) {
 	std::ostringstream detail;
 	detail << "OpenNURBS face assembly failed (error " << assembly.error
@@ -4240,6 +4246,8 @@ Importer::write_entity_color_attribute(const std::string &name,
 bool
 Importer::write_geometry(const std::string &name, ON_Brep &brep)
 {
+    progress(options_.output == IGES_OUTPUT_BREP ?
+	"writing B-Rep geometry" : "tessellating geometry");
     if (options_.output == IGES_OUTPUT_BREP)
 	return mk_brep(wdbp_, name.c_str(), &brep) >= 0;
     if (!brep.IsValid() || !brep.m_F.Count())
@@ -4569,6 +4577,7 @@ Importer::collect_trimmed_components(
     TrimmedComponent component;
     if (build_trimmed_component(faces, component)) {
 	components.push_back(std::move(component));
+	progress_completed_ += faces.size();
 	return;
     }
 
@@ -4599,6 +4608,7 @@ Importer::collect_trimmed_components(
 		FaceRecovery::TrimEndpoints}) {
 		if (build_trimmed_component(faces, component, recovery)) {
 		    components.push_back(std::move(component));
+		    progress_completed_ += faces.size();
 		    return;
 		}
 		if (write_error())
@@ -4611,6 +4621,7 @@ Importer::collect_trimmed_components(
     if (faces.size() == 1 || write_error()) {
 	discard_failed_repairs(diagnostic_count, repair_count);
 	result_.statistics.omitted += faces.size();
+	progress_completed_ += faces.size();
 	return;
     }
 
@@ -4682,6 +4693,7 @@ extract_component(const TrimmedComponent &source, const std::vector<int> &indice
 void
 Importer::write_trimmed_components(TrimmedComponent &component)
 {
+    progress("separating closed solids and retained sheets", component.faces.front()->id);
     const auto write = [&](const TrimmedComponent &part) {
 	if (!write_trimmed_component(part))
 	    result_.statistics.omitted += part.faces.size();
@@ -4847,6 +4859,7 @@ Importer::import_trimmed_components(const std::vector<const DirectoryEntry *> &f
     for (const TrimmedComponent &component : components)
 	appended = appended && append_component(joined, component);
     brep_assembly_result assembly;
+    progress("reassembling recovered face batches", faces.front()->id);
     if (appended && brep_assemble(*joined.brep, tolerance_, &assembly) &&
 	periodic_trims_in_domain(*joined.brep)) {
 	result_.statistics.reassembly_edges_merged += assembly.merged_edges;
@@ -5000,7 +5013,7 @@ Importer::hierarchy_name(const DirectoryEntry &entry) const
 bool
 Importer::write_boolean_tree(EntityId id, std::set<EntityId> &active)
 {
-    if (objects_.find(id) != objects_.end() ||
+    if (objects_.find(id) != objects_.end() || unresolved_objects_.count(id) ||
 	    deferred_boolean_trees_.find(id) != deferred_boolean_trees_.end())
 	return true;
     const DirectoryEntry *entry = document_.entity(id);
@@ -5011,6 +5024,7 @@ Importer::write_boolean_tree(EntityId id, std::set<EntityId> &active)
 	    token_count > MAX_ENTITY_LIST_COUNT) {
 	diagnose(Severity::Warning, "boolean_tree_parameters",
 	    "Boolean Tree has an invalid postfix token count", entry);
+	unresolved_objects_.insert(id);
 	++result_.statistics.omitted;
 	return true;
     }
@@ -5032,6 +5046,7 @@ Importer::write_boolean_tree(EntityId id, std::set<EntityId> &active)
 	release_stack();
 	active.erase(id);
 	diagnose(Severity::Warning, "boolean_tree_structure", message, entry);
+	unresolved_objects_.insert(id);
 	++result_.statistics.omitted;
 	return true;
     };
@@ -5059,7 +5074,7 @@ Importer::write_boolean_tree(EntityId id, std::set<EntityId> &active)
 		}
 		object = objects_.find(operand_id);
 	    }
-	    if (object == objects_.end() && operand &&
+	    if (!legacy_complete_ && object == objects_.end() && operand &&
 		    (is_native_csg_entity_type(operand->type) ||
 		     (operand->type == 180 &&
 		      deferred_boolean_trees_.find(operand_id) !=
@@ -5067,8 +5082,7 @@ Importer::write_boolean_tree(EntityId id, std::set<EntityId> &active)
 		     (operand->type == 430 &&
 		      deferred_instances_.find(operand_id) !=
 			  deferred_instances_.end()))) {
-		/* The legacy solid converter constructs exact native primitives and
-		 * will subsequently emit this Boolean tree. */
+		/* Native primitives are registered after the compatibility pass. */
 		release_stack();
 		active.erase(id);
 		deferred_boolean_trees_.insert(id);
@@ -5107,6 +5121,21 @@ Importer::write_boolean_tree(EntityId id, std::set<EntityId> &active)
     struct rt_comb_internal *combination;
     BU_ALLOC(combination, struct rt_comb_internal);
     RT_COMB_INTERNAL_INIT(combination);
+    SolidProperties properties;
+    solid_properties(document_, *entry, properties);
+    combination->region_flag = properties.source_entity ? properties.region_flag : 1;
+    combination->region_id = properties.ident;
+    combination->aircode = properties.air;
+    combination->GIFTmater = properties.material;
+    combination->los = properties.line_of_sight;
+    combination->inherit = properties.inherit;
+    combination->rgb_valid = properties.has_color;
+    std::copy(properties.color.begin(), properties.color.end(), combination->rgb);
+    if (!properties.shader_name.empty()) {
+	bu_vls_strcpy(&combination->shader, properties.shader_name.c_str());
+	if (!properties.shader_arguments.empty())
+	    bu_vls_printf(&combination->shader, " %s", properties.shader_arguments.c_str());
+    }
     combination->tree = stack.back();
     stack.clear();
     const std::string name = unique_name(*entry, hierarchy_name(*entry));
@@ -5131,7 +5160,7 @@ Importer::write_boolean_tree(EntityId id, std::set<EntityId> &active)
 bool
 Importer::write_container(EntityId id, std::set<EntityId> &active)
 {
-    if (objects_.find(id) != objects_.end() || unresolved_objects_.count(id) || deferred_assemblies_.count(id))
+    if (objects_.find(id) != objects_.end() || unresolved_objects_.count(id) || deferred_containers_.count(id))
 	return true;
     const DirectoryEntry *entry = document_.entity(id);
     if (!entry)
@@ -5192,10 +5221,10 @@ Importer::write_container(EntityId id, std::set<EntityId> &active)
 	}
 	if (object == objects_.end()) {
 	    const DirectoryEntry *member_entry = document_.entity(member_id);
-	    if (entry->type == 184 && member_entry &&
+	    if (!legacy_complete_ && member_entry &&
 		(is_native_csg_entity_type(member_entry->type) ||
 		 deferred_boolean_trees_.count(member_id) || deferred_instances_.count(member_id) ||
-		 deferred_assemblies_.count(member_id))) {
+		 deferred_containers_.count(member_id))) {
 		defer_to_legacy = true;
 		continue;
 	    }
@@ -5214,17 +5243,17 @@ Importer::write_container(EntityId id, std::set<EntityId> &active)
 		"failed to add a member to an IGES group", entry);
 	    return false;
 	}
+	Matrix member_placement = transform(entry->transform);
 	if (entry->type == 184) {
 	    const ParameterList *parameters = document_.parameters(entry->id);
 	    EntityId matrix_id;
 	    const size_t matrix_parameter =
 		2 + source_members.size() + member_index;
 	    if (parameter_entity(parameters, matrix_parameter, matrix_id)) {
-		mat_t placement;
-		combination_matrix(transform(matrix_id), placement);
-		MAT_COPY(output_member->wm_mat, placement);
+		member_placement = multiply(member_placement, transform(matrix_id));
 	    }
 	}
+	combination_matrix(member_placement, output_member->wm_mat);
     }
     active.erase(id);
     if (unresolved) {
@@ -5233,10 +5262,10 @@ Importer::write_container(EntityId id, std::set<EntityId> &active)
 	    "group or subfigure has " + std::to_string(unresolved) + " unresolved members", entry);
     }
     if (defer_to_legacy) {
-	/* The compatibility pass must see the complete assembly.  Publishing
-	 * a partial one now would cause it to skip native CSG members later. */
+	/* Keep the source container pending until native geometry exists.
+	 * Publishing a partial definition would lose members in its instances. */
 	mk_freemembers(&members.l);
-	deferred_assemblies_.insert(id);
+	deferred_containers_.insert(id);
 	return true;
     }
     if (output_members.empty()) {
@@ -5247,7 +5276,12 @@ Importer::write_container(EntityId id, std::set<EntityId> &active)
     }
 
     const std::string name = unique_name(*entry, hierarchy_name(*entry));
-    const int write_status = mk_lfcomb(wdbp_, name.c_str(), &members, 0);
+    SolidProperties properties;
+    solid_properties(document_, *entry, properties);
+    const int write_status = mk_lrcomb(wdbp_, name.c_str(), &members,
+	properties.region_flag, properties.shader_name.c_str(),
+	properties.shader_arguments.c_str(), properties.has_color ? properties.color.data() : nullptr,
+	properties.ident, properties.air, properties.material, properties.line_of_sight, properties.inherit);
     if (write_status < 0) {
 	diagnose(Severity::Error, "hierarchy_write",
 	    "failed to write an IGES group or subfigure", entry);
@@ -5301,9 +5335,8 @@ Importer::write_instance_combination(const DirectoryEntry &entry,
     MAT_COPY(member->wm_mat, matrix);
 
     const std::string name = unique_name(entry, stem);
-    InstanceProperties properties;
-    if (entry.type == 430)
-	solid_instance_properties(document_, entry, properties);
+    SolidProperties properties;
+    solid_properties(document_, entry, properties);
     const char *shader_name = properties.shader_name.empty() ? nullptr :
 	properties.shader_name.c_str();
     const char *shader_arguments = properties.shader_arguments.empty() ?
@@ -5343,7 +5376,8 @@ bool
 Importer::write_instance(const DirectoryEntry &entry,
     std::set<EntityId> &active)
 {
-    if (objects_.find(entry.id) != objects_.end() || unresolved_objects_.count(entry.id))
+    if (objects_.find(entry.id) != objects_.end() || unresolved_objects_.count(entry.id) ||
+	deferred_instances_.count(entry.id))
 	return true;
     if (!active.insert(entry.id).second) {
 	diagnose(Severity::Warning, "hierarchy_cycle",
@@ -5361,7 +5395,7 @@ Importer::write_instance(const DirectoryEntry &entry,
     const ParameterList *parameters = document_.parameters(entry.id);
     EntityId definition_id;
     if (!parameter_entity(parameters, 1, definition_id)) {
-	diagnose(Severity::Warning, "subfigure_instance_parameters",
+	diagnose(Severity::Warning, "subfigure_entity_parameters",
 	    "Subfigure Instance has no valid definition reference", &entry);
 	unresolved_objects_.insert(entry.id);
 	++result_.statistics.omitted;
@@ -5371,6 +5405,10 @@ Importer::write_instance(const DirectoryEntry &entry,
 	return false;
     const auto definition = objects_.find(definition_id);
     if (definition == objects_.end()) {
+	if (deferred_containers_.count(definition_id)) {
+	    deferred_instances_.insert(entry.id);
+	    return true;
+	}
 	diagnose(Severity::Warning, "subfigure_instance_unresolved",
 	    "Subfigure Instance definition contains no imported geometry", &entry);
 	unresolved_objects_.insert(entry.id);
@@ -5413,15 +5451,16 @@ bool
 Importer::write_solid_instance(const DirectoryEntry &entry,
     std::set<EntityId> &active)
 {
-    if (objects_.find(entry.id) != objects_.end() ||
+    if (objects_.find(entry.id) != objects_.end() || unresolved_objects_.count(entry.id) ||
 	    deferred_instances_.find(entry.id) != deferred_instances_.end())
 	return true;
     const ParameterList *parameters = document_.parameters(entry.id);
     EntityId definition_id;
     if (entry.type != 430 ||
 	    !parameter_entity(parameters, 1, definition_id)) {
-	diagnose(Severity::Warning, "solid_instance_parameters",
+	diagnose(Severity::Warning, "solid_entity_parameters",
 	    "Solid Instance has no valid definition reference", &entry);
+	unresolved_objects_.insert(entry.id);
 	++result_.statistics.omitted;
 	return true;
     }
@@ -5455,9 +5494,9 @@ Importer::write_solid_instance(const DirectoryEntry &entry,
 	definition = objects_.find(definition_id);
     }
 
-    const bool definition_deferred = definition_entry &&
+    const bool definition_deferred = !legacy_complete_ && definition_entry &&
 	(is_native_csg_entity_type(definition_entry->type) ||
-	 deferred_assemblies_.count(definition_id) ||
+	 deferred_containers_.count(definition_id) ||
 	 (definition_entry->type == 180 &&
 	  deferred_boolean_trees_.find(definition_id) !=
 	      deferred_boolean_trees_.end()) ||
@@ -5472,6 +5511,7 @@ Importer::write_solid_instance(const DirectoryEntry &entry,
 	active.erase(entry.id);
 	diagnose(Severity::Warning, "solid_instance_unresolved",
 	    "Solid Instance definition contains no imported geometry", &entry);
+	unresolved_objects_.insert(entry.id);
 	++result_.statistics.omitted;
 	return true;
     }
@@ -5485,6 +5525,8 @@ Importer::write_solid_instance(const DirectoryEntry &entry,
 bool
 Importer::write_hierarchy()
 {
+    if (options_.progress)
+	options_.progress("hierarchy", "resolving groups, instances, and Boolean trees", 0, 0, 0);
     std::set<EntityId> active;
     for (const DirectoryEntry &entry : document_.entities())
 	if (entry.type == 180 && !write_boolean_tree(entry.id, active))
@@ -5510,6 +5552,8 @@ Importer::write_hierarchy()
 bool
 Importer::write_root()
 {
+    if (options_.progress)
+	options_.progress("hierarchy", "writing geometry root", 0, 0, 0);
     if (root_objects_.empty())
 	return true;
     const std::string root_stem = options_.root_name.empty() ?
@@ -5637,7 +5681,10 @@ Importer::run()
     result_.statistics.bounded_surfaces_seen = bounded_surfaces.size();
     result_.statistics.standalone_surfaces_seen =
 	standalone_surfaces.size() + bounded_plane_count;
-    for (const DirectoryEntry *solid : solids) {
+    progress_total_ = solids.size() + standalone_surfaces.size() + bounded_faces.size();
+    for (size_t index = 0; index < solids.size(); ++index, ++progress_completed_) {
+	const DirectoryEntry *solid = solids[index];
+	progress("constructing explicit solid", solid->id);
 	const size_t diagnostic_count = result_.diagnostics.size();
 	const size_t repair_count = result_.statistics.repairs;
 	SolidBuilder builder(*this, *solid);
@@ -5711,7 +5758,9 @@ Importer::run()
 	root_objects_.insert(name);
 	count_geometry(*brep, invalid_solid);
     }
-    for (const DirectoryEntry *surface : standalone_surfaces) {
+    for (size_t index = 0; index < standalone_surfaces.size(); ++index, ++progress_completed_) {
+	const DirectoryEntry *surface = standalone_surfaces[index];
+	progress("constructing standalone surface", surface->id);
 	if (!is_supported_standalone_surface(surface->type)) {
 	    const bool missing_extent =
 		surface->type == 108 || surface->type == 190;
@@ -5728,6 +5777,7 @@ Importer::run()
     }
 
     std::map<EntityId, std::vector<EntityId> > owners;
+    progress("partitioning faces by source ownership");
     for (const DirectoryEntry &entry : document_.entities()) {
 	std::vector<EntityId> members;
 	if (!container_members(entry, members))
@@ -5746,9 +5796,11 @@ Importer::run()
     for (const auto &partition : partitions)
 	import_trimmed_components(partition.second);
 
+    progress("geometry processing complete");
     if (!write_hierarchy())
 	return result_;
-    if (!write_root())
+    if (!defer_root_ && deferred_boolean_trees_.empty() && deferred_instances_.empty() &&
+	deferred_containers_.empty() && !write_root())
 	return result_;
     const bool has_errors = std::any_of(result_.diagnostics.begin(),
 	result_.diagnostics.end(), [](const ImportDiagnostic &diagnostic) {
@@ -5758,6 +5810,65 @@ Importer::run()
     result_.success = !has_errors && (result_.statistics.breps_written +
 	result_.statistics.meshes_written + result_.statistics.polygons_written) > 0 &&
 	(!options_.strict || (result_.statistics.omitted == 0 && result_.statistics.unresolved_members == 0));
+    return result_;
+}
+
+void
+Importer::register_legacy(EntityId id, const char *name)
+{
+    const DirectoryEntry *entry = document_.entity(id);
+    struct directory *dp = db_lookup(wdbp_->dbip, name, LOOKUP_QUIET);
+    if (!entry || !dp)
+	return;
+    /* Native writers emit local geometry.  Bake the directory transform
+     * exactly once, as the BRep path does, before sharing hierarchy code. */
+    if (entry->transform.value()) {
+	mat_t matrix;
+	combination_matrix(transform(entry->transform), matrix);
+	struct rt_db_internal internal;
+	RT_DB_INTERNAL_INIT(&internal);
+	if (rt_db_get_internal(&internal, dp, wdbp_->dbip, matrix) < 0 ||
+	    rt_db_put_internal(dp, wdbp_->dbip, &internal) < 0) {
+	    rt_db_free_internal(&internal);
+	    diagnose(Severity::Error, "native_transform",
+		"failed to apply the native primitive's directory transform", entry);
+	    return;
+	}
+    }
+    write_entity_attributes(name, *entry);
+    write_entity_color_attribute(name, *entry);
+    objects_[id] = name;
+    root_objects_.insert(name);
+}
+
+BrepImportResult
+Importer::complete_hierarchy()
+{
+    legacy_complete_ = true;
+    deferred_boolean_trees_.clear();
+    deferred_containers_.clear();
+    deferred_instances_.clear();
+    result_.success = false;
+    if (!write_hierarchy())
+	return result_;
+    /* Reconcile roots against the final database so a completed instance is not
+     * accompanied by an unplaced copy of its definition. */
+    db_update_nref(wdbp_->dbip);
+    for (auto root = root_objects_.begin(); root != root_objects_.end();) {
+	const struct directory *entry = db_lookup(wdbp_->dbip, root->c_str(), LOOKUP_QUIET);
+	if (!entry || entry->d_nref)
+	    root = root_objects_.erase(root);
+	else
+	    ++root;
+    }
+    if (!write_root())
+	return result_;
+    const bool errors = std::any_of(result_.diagnostics.begin(), result_.diagnostics.end(),
+	[](const ImportDiagnostic &diagnostic) {
+	    return diagnostic.severity == Severity::Error || diagnostic.severity == Severity::Fatal;
+	});
+    result_.success = !errors && (!options_.strict ||
+	(!result_.statistics.omitted && !result_.statistics.unresolved_members));
     return result_;
 }
 
@@ -5868,23 +5979,61 @@ write_brep_import_report(const std::string &path, const Document &document,
 } /* namespace iges */
 } /* namespace brlcad */
 
+struct iges_brep_context {
+    brlcad::iges::Document document;
+    brlcad::iges::ImportOptions options;
+    std::unique_ptr<brlcad::iges::brep_import_detail::Importer> importer;
+};
+
+extern "C" void
+iges_cancel_brep_import(struct iges_brep_context *pending)
+{
+    delete pending;
+}
+
+extern "C" void
+iges_brep_register_legacy(struct iges_brep_context *pending, int entity, const char *name)
+{
+    if (pending && name)
+	pending->importer->register_legacy(brlcad::iges::EntityId(entity), name);
+}
+
+extern "C" int
+iges_finish_brep_import(struct iges_brep_context **pending, const char *report_path)
+{
+    if (!pending || !*pending)
+	return 1;
+    std::unique_ptr<iges_brep_context> context(*pending);
+    *pending = nullptr;
+    const auto result = context->importer->complete_hierarchy();
+    bu_log("IGES: completed hierarchy; %zu groups, %zu unresolved members\n",
+	result.statistics.groups_written, result.statistics.unresolved_members);
+    if (report_path && report_path[0] && !brlcad::iges::write_brep_import_report(
+	report_path, context->document, context->options, result))
+	return 0;
+    return result.success;
+}
+
 extern "C" int
 iges_import_breps(const char *path, struct rt_wdb *wdbp, int exact,
     int strict, const char *repair_mode, double default_plate_thickness,
     double maximum_repair_tolerance, double relative_tolerance, const char *root_name,
-    const char *report_path, int output_mode)
+    const char *report_path, int output_mode, iges_progress_callback progress,
+    struct iges_brep_context **pending)
 {
     if (!path || !wdbp)
 	return -1;
     ON::Begin();
-    const brlcad::iges::Document document =
-	brlcad::iges::Document::parse_file(path);
+    std::unique_ptr<iges_brep_context> context(new iges_brep_context());
+    context->document = brlcad::iges::Document::parse_file(path);
+    const auto &document = context->document;
     const bool mixed_csg = std::any_of(document.entities().begin(),
 	document.entities().end(), [](const brlcad::iges::DirectoryEntry &entry) {
 	    return brlcad::iges::brep_import_detail::
 		is_native_csg_entity_type(entry.type);
 	});
-    brlcad::iges::ImportOptions options;
+    auto &options = context->options;
+    options.progress = progress;
     options.output = static_cast<iges_geometry_output>(output_mode);
     options.exact = exact != 0;
     options.strict = strict != 0;
@@ -5897,8 +6046,8 @@ iges_import_breps(const char *path, struct rt_wdb *wdbp, int exact,
 	options.repair = brlcad::iges::RepairMode::Safe;
     options.root_name = root_name && root_name[0] != '\0' ?
 	root_name : "iges_geometry";
-    const brlcad::iges::BrepImportResult result =
-	brlcad::iges::import_breps(document, wdbp, options);
+    context->importer.reset(new brlcad::iges::brep_import_detail::Importer(document, wdbp, options, mixed_csg));
+    const auto result = context->importer->run();
     const bool direct_entities_seen = result.statistics.solids_seen > 0 ||
 	result.statistics.trimmed_surfaces_seen > 0 ||
 	result.statistics.bounded_surfaces_seen > 0 ||
@@ -5954,14 +6103,14 @@ iges_import_breps(const char *path, struct rt_wdb *wdbp, int exact,
 	    result.statistics.entities_read, result.statistics.solid_breps_written,
 	    result.statistics.recovered_faces_written,
 	    result.statistics.omitted);
+    if (progress)
+	progress("diagnostics", "summarizing conversion and writing report", 0, 0, 0);
     if (report_path && report_path[0] != '\0' &&
 	!brlcad::iges::write_brep_import_report(report_path, document, options,
 	    result)) {
 	bu_log("IGES: unable to write import report %s\n", report_path);
 	return -1;
     }
-    if (result.success)
-	return mixed_csg ? 2 : 1;
     if (!document.valid())
 	return -1;
     const bool import_error = std::any_of(result.diagnostics.begin(),
@@ -5970,6 +6119,12 @@ iges_import_breps(const char *path, struct rt_wdb *wdbp, int exact,
 	    return diagnostic.severity == brlcad::iges::Severity::Error ||
 		diagnostic.severity == brlcad::iges::Severity::Fatal;
 	});
+    if (mixed_csg && pending && !import_error && (!direct_entities_seen || result.success)) {
+	*pending = context.release();
+	return 2;
+    }
+    if (result.success)
+	return 1;
     return import_error || direct_entities_seen ? -1 : 0;
 }
 

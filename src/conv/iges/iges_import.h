@@ -11,6 +11,8 @@
 #define CONV_IGES_IGES_IMPORT_H
 
 #include "common.h"
+#include <stddef.h>
+#include <stdint.h>
 
 struct rt_wdb;
 
@@ -24,9 +26,18 @@ enum iges_geometry_output {
 };
 
 #ifdef __cplusplus
+extern "C"
+#endif
+int iges_is_native_csg(int type);
 
-#  include <cstddef>
-#  include <cstdint>
+/* Counts describe completed source items in the named stage, not elapsed
+ * work.  Recovery may revisit an item without advancing these counts. */
+typedef void (*iges_progress_callback)(const char *stage, const char *activity,
+    size_t completed, size_t total, int64_t entity);
+
+#ifdef __cplusplus
+
+#  include <functional>
 #  include <string>
 #  include <vector>
 
@@ -68,6 +79,8 @@ struct ImportOptions {
     double relative_tolerance = IGES_DEFAULT_RELATIVE_TOLERANCE;
     bool project_drawings = true;
     std::string root_name = "iges_drawing";
+    /* Called synchronously; library imports remain silent unless supplied. */
+    std::function<void(const char *, const char *, size_t, size_t, int64_t)> progress;
 };
 
 struct ImportStatistics {
@@ -116,7 +129,7 @@ __BEGIN_DECLS
  * semantic drawing objects were applicable, and -1 on error. */
 int iges_import_annotations(const char *path, struct rt_wdb *wdbp,
     int project_to_xy, int exact, int strict, const char *repair_mode,
-    const char *root_name, const char *report_path);
+    const char *root_name, const char *report_path, iges_progress_callback progress);
 
 __END_DECLS
 

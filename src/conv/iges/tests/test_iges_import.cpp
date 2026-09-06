@@ -690,6 +690,44 @@ test_nested_instances()
 }
 
 bool
+test_import_progress()
+{
+    std::vector<Entity> entities;
+    const std::vector<int> sources = append_box(entities, 0.0, 1.0, BoxOrientation::Outward, true);
+    const auto document = brlcad::iges::Document::parse_buffer(sample(entities,
+	"progress counts must not double-count retried faces"));
+    brlcad::iges::ImportOptions options;
+    brlcad::iges::BrepImportResult result;
+    for (const auto repair : {brlcad::iges::RepairMode::BestEffort, brlcad::iges::RepairMode::Safe}) {
+	size_t previous = 0;
+	bool consistent = true;
+	bool recovery_seen = false;
+	bool hierarchy_seen = false;
+	options.repair = repair;
+	options.progress = [&](const char *stage, const char *activity, size_t completed,
+	    size_t total, int64_t entity) {
+	    if (BU_STR_EQUAL(stage, "hierarchy"))
+		hierarchy_seen = true;
+	    if (!BU_STR_EQUAL(stage, "geometry"))
+		return;
+	    consistent = consistent && total == sources.size() && completed >= previous &&
+		completed <= total && !hierarchy_seen;
+	    previous = completed;
+	    if (BU_STR_EQUAL(activity, "recovering trimmed faces")) {
+		consistent = consistent && entity == sources.back();
+		recovery_seen = true;
+	    }
+	};
+	if (!expect(run_import(document, options, result, [](struct rt_wdb *) { return true; }) &&
+	    result.success && consistent && hierarchy_seen && previous == sources.size() &&
+	    recovery_seen == (repair == brlcad::iges::RepairMode::BestEffort),
+	    "progress lost stages, counted retries, or failed to count omitted faces"))
+	    return false;
+    }
+    return true;
+}
+
+bool
 test_post_recovery_assembly()
 {
     std::vector<Entity> entities;
@@ -1642,6 +1680,7 @@ main(int argc, char **argv)
 	return 1;
     ON::Begin();
     bool passed = test_semantic_annotations();
+    passed = test_import_progress() && passed;
     passed = test_post_recovery_assembly() && passed;
     passed = test_nested_instances() && passed;
     passed = test_bounded_surface_tolerance() && passed;

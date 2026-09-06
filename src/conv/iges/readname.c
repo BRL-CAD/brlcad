@@ -32,6 +32,8 @@
 
 #include "./iges_struct.h"
 #include "./iges_extern.h"
+#include "iges_output.h"
+#include <ctype.h>
 
 
 /*
@@ -41,89 +43,77 @@
  * field).  Advances the field "counter" and auto-advances to the next
  * record when the field spans a record boundary.
  */
+/* Bound malformed lengths before allocation or advancing through records. */
+#define IGES_MAX_NAME_LENGTH 1000000U
+
+static int
+name_record(int last_column)
+{
+    if (counter <= last_column || !Readrec(currec + 1))
+	return 1;
+    iges_output_legacy_warning(0, "truncated_legacy_name",
+	"Hollerith string extends past the end of the file");
+    return 0;
+}
+
 void
 Readname(char **ptr, const char *id)
 {
-    int i = 0, length = 0, done = 0, lencard;
-    char num[MAX_NUM] = {0};
-    char *ch;
-
+    const int last_column = card[IGES_SECTION_COL] == 'P' ? PARAMLEN : CARDLEN;
+    size_t length = 0;
+    int have_digit = 0;
+    *ptr = NULL;
+    if (!name_record(last_column))
+	return;
     if (card[counter] == eofd) {
-	/* This is an empty field */
-	*ptr = (char *)NULL;
-	counter++;
-	return;
-    } else if (card[counter] == eord) {
-	/* Up against the end of record */
-	*ptr = (char *)NULL;
+	++counter;
 	return;
     }
+    if (card[counter] == eord)
+	return;
 
-    if (card[IGES_SECTION_COL] == 'P')
-	lencard = PARAMLEN;
-    else
-	lencard = CARDLEN;
-
-    if (counter > lencard)
-	Readrec(++currec);
-
-    if (*id != '\0')
-	bu_log("%s", id);
-
-    while (!done && i < MAX_NUM-1) {
-	while (i < MAX_NUM-1 &&
-	       (num[i] = card[counter++]) != 'H' &&
-	       counter <= lencard)
-	{
-	    if (i >= MAX_NUM-1) {
-		done = 1;
-	    }
-	    i++;
+    for (;;) {
+	if (!name_record(last_column))
+	    return;
+	const unsigned char character = (unsigned char)card[counter++];
+	if (isspace(character))
+	    continue;
+	if (!have_digit && (character == eofd || character == eord)) {
+	    if (character == eord)
+		--counter;
+	    return;
 	}
-	if (counter > lencard) {
-	    Readrec(++currec);
-	} else {
-	    done = 1;
+	if ((character == 'H' || character == 'h') && have_digit)
+	    break;
+	if (!isdigit(character) ||
+	    length > (IGES_MAX_NAME_LENGTH - (character - '0')) / 10) {
+	    iges_output_legacy_warning(0, "invalid_legacy_name",
+		"Hollerith string has an invalid or excessive length");
+	    /* Do not consume a record terminator while discarding a bad prefix. */
+	    if (character == eord || character == eofd)
+		--counter;
+	    Skip_field();
+	    return;
 	}
+	length = length * 10 + (character - '0');
+	have_digit = 1;
     }
 
-    length = atoi(num);
-
-    /* guard against a malformed Hollerith length that would cause a
-     * huge (or negative) allocation and copy
-     */
-    if (length < 0 || length > 1000000) {
-	bu_log("Readname: illegal name length (%d), ignoring name\n", length);
-	*ptr = bu_strdup("");
-	return;
+    *ptr = (char *)bu_malloc(length + 1, "IGES Hollerith string");
+    for (size_t i = 0; i < length; ++i) {
+	if (!name_record(last_column)) {
+	    bu_free(*ptr, "IGES Hollerith string");
+	    *ptr = NULL;
+	    return;
+	}
+	(*ptr)[i] = card[counter++];
     }
-
-    /* we may tack on a letter to the name */
-    *ptr = (char *)bu_malloc((length + 2)*sizeof(char), "Readname: name");
-    ch = *ptr;
-    for (i = 0; i < length; i++) {
-	if (counter > lencard)
-	    Readrec(++currec);
-	ch[i] = card[counter++];
-	if (*id != '\0')
-	    bu_log("%c", ch[i]);
-    }
-    ch[length] = '\0';
-    if (*id != '\0')
-	bu_log("%c", '\n');
-
-    done = 0;
-    while (!done) {
-	while (card[counter++] != eofd && card[counter] != eord && counter <= lencard)
-	    ;
-	if (counter > lencard && card[counter] != eord && card[counter] != eofd)
-	    Readrec(++currec);
-	else
-	    done = 1;
-    }
-
-    if (card[counter-1] == eord)
-	counter--;
+    (*ptr)[length] = '\0';
+    /* Boundary checks precede reading either prefix or data.  In particular,
+     * an H in the last column must not start parsing a second length. */
+    Skip_field();
+    if (*id)
+	bu_log("%s%s\n", id, *ptr);
 }
 
 

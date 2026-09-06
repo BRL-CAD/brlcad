@@ -97,7 +97,9 @@ Readglobal(int file_count)
     /* Read all the fields in the Global Section */
     counter++;
     while (field < 23) {
-	if (card[counter-1] == eord) {
+	/* Field readers leave the record terminator unconsumed and may
+	 * already have advanced to column zero of a continuation record. */
+	if (card[counter] == eord) {
 	    Readrec(++currec);
 	    break;
 	}

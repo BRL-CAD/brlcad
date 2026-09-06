@@ -45,74 +45,10 @@
 void
 Readstrg(const char *id)
 {
-    int i = 0, length = 0, done = 0, lencard;
-    char num[MAX_NUM] = {0};
-
-    if (card[counter] == eofd) {
-	/* This is an empty field */
-	counter++;
-	return;
-    } else if (card[counter] == eord) {
-	/* Up against the end of record */
-	return;
-    }
-
-    if (card[IGES_SECTION_COL] == 'P')
-	lencard = PARAMLEN;
-    else
-	lencard = CARDLEN;
-
-    if (counter > lencard)
-	Readrec(++currec);
-
-    if (!id) {
-	return;
-    }
-
-    if (*id != '\0')
-	bu_log("%s", id);
-
-    while (!done && i < MAX_NUM-1) {
-	while (i < MAX_NUM-1 &&
-	       (num[i] = card[counter++]) != 'H' &&
-	       counter <= lencard)
-	{
-	    if (i >= MAX_NUM-1) {
-		done = 1;
-	    }
-	    i++;
-	}
-	if (counter > lencard)
-	    Readrec(++currec);
-	if (num[i] == 'H')
-	    done = 1;
-    }
-
-    length = atoi(num);
-
-    for (i = 0; i < length; i++) {
-	if (counter > lencard)
-	    Readrec(++currec);
-	if (*id != '\0')
-	    bu_log("%c", card[counter]);
-	counter++;
-    }
-
-    if (*id != '\0')
-	bu_log("%c", '\n');
-
-    while (card[counter] != eofd && card[counter] != eord) {
-	if (counter < lencard)
-	    counter++;
-	else
-	    Readrec(++currec);
-    }
-
-    if (card[counter] == eofd) {
-	counter++;
-	if (counter > lencard)
-	    Readrec(++ currec);
-    }
+    char *value = NULL;
+    Readname(&value, id ? id : "");
+    if (value)
+	bu_free(value, "IGES string");
 }
 
 

@@ -386,7 +386,7 @@ esac
 
 # Verify both a legacy-only report and a mixed modern/legacy assembly.  The
 # dotted surface label exercises name reconciliation across the two paths.
-for fixture in native-csg mixed-assembly ; do
+for fixture in native-csg mixed-assembly name-collision mixed-subfigure hollerith-boundary numeric-boundary ; do
     run $IGESG --strict --report iges.$fixture.json -o iges.$fixture.g "$1/src/conv/iges/tests/$fixture.igs"
     if ! grep -q '"success": true' iges.$fixture.json ||
        ! grep -q '"unresolved_output_references": 0' iges.$fixture.json ; then
@@ -395,6 +395,118 @@ for fixture in native-csg mixed-assembly ; do
         export STATUS
     fi
 done
+
+# Numeric parameters may span the last data column without losing a digit.
+numeric_sphere=`$MGED -c iges.numeric-boundary.g "db get sphere.0" 2>&1 | tr -d '\r'`
+case "$numeric_sphere" in
+    *"A {120 0 0}"*) : ;;
+    *) log "ERROR: record-boundary numeric parsing changed the radius: $numeric_sphere" ; STATUS="`expr $STATUS + 1`" ;;
+esac
+
+# Compatibility surface switches must still complete deferred mixed hierarchy.
+for mode in n t ; do
+    run $IGESG -$mode --strict -N selected_root --report iges.mixed-$mode.json \
+        -o iges.mixed-$mode.g "$1/src/conv/iges/tests/mixed-subfigure.igs"
+    definition=`$MGED -c iges.mixed-$mode.g "db get MIXED" 2>&1 | tr -d '\r'`
+    instance=`$MGED -c iges.mixed-$mode.g "db get INST" 2>&1 | tr -d '\r'`
+    root=`$MGED -c iges.mixed-$mode.g "db get selected_root" 2>&1 | tr -d '\r'`
+    case "$definition/$instance/$root" in
+        *sphere.0*FACE_X*MIXED*100*INST*) : ;;
+        *) log "ERROR: -$mode lost mixed hierarchy: $definition/$instance/$root" ; STATUS="`expr $STATUS + 1`" ;;
+    esac
+    if ! grep -q '"groups_written": 3' iges.mixed-$mode.json ||
+       ! grep -q '"unresolved_members": 0' iges.mixed-$mode.json ||
+       ! grep -q '"omitted": 0' iges.mixed-$mode.json ; then
+        log "ERROR: -$mode did not finalize its mixed import report"
+        STATUS="`expr $STATUS + 1`"
+    fi
+    run $IGESG -$mode --strict -N selected_root -o iges.native-$mode.g \
+        "$1/src/conv/iges/tests/native-csg.igs"
+    root=`$MGED -c iges.native-$mode.g "db get selected_root" 2>&1 | tr -d '\r'`
+    case "$root" in
+        *sphere.0*) : ;;
+        *) log "ERROR: -$mode did not complete a native-only import: $root" ; STATUS="`expr $STATUS + 1`" ;;
+    esac
+done
+
+# String prefixes may end exactly at the last data column of either section.
+boundary_sphere=`$MGED -c iges.hollerith-boundary.g "db get boundary" 2>&1 | tr -d '\r'`
+case "$boundary_sphere" in
+    *"A {1 0 0}"*) : ;;
+    *) log "ERROR: record-boundary string parsing changed the name or units: $boundary_sphere" ; STATUS="`expr $STATUS + 1`" ;;
+esac
+
+# A native name must not overwrite a modern BRep with the same sanitized name.
+collision_brep=`$MGED -c iges.name-collision.g "db get FACE_X" 2>&1 | grep -oE '^brep' | head -1`
+collision_sphere=`$MGED -c iges.name-collision.g "db get FACE_X_1" 2>&1 | grep -oE '^ell' | head -1`
+collision_types="$collision_brep $collision_sphere"
+case "$collision_types" in
+    *brep*ell*) : ;;
+    *) log "ERROR: mixed-path name collision lost geometry: $collision_types" ; STATUS="`expr $STATUS + 1`" ;;
+esac
+definition=`$MGED -c iges.mixed-subfigure.g "db get MIXED" 2>&1 | tr -d '\r'`
+instance=`$MGED -c iges.mixed-subfigure.g "db get INST" 2>&1 | tr -d '\r'`
+case "$definition/$instance" in
+    *sphere.0*FACE_X*MIXED*100*) : ;;
+    *) log "ERROR: mixed subfigure lost a member or its placement: $definition/$instance" ; STATUS="`expr $STATUS + 1`" ;;
+esac
+
+# Invalid optional metadata is recoverable in default mode, but strict mode
+# must reject it without crashing or replacing an existing database.
+run $IGESG --report iges.bad-property.json -o iges.bad-property.g "$1/src/conv/iges/tests/bad-property.igs"
+$IGESG --strict -o iges.protected.g "$1/src/conv/iges/tests/bad-property.igs" >> "$LOGFILE" 2>&1
+if test $? -ne 1 || ! cmp -s iges.protected.g iges.brep.g ||
+   ! grep -q 'invalid_legacy_reference' iges.bad-property.json ; then
+    log "ERROR: invalid name-property reference was not handled safely"
+    STATUS="`expr $STATUS + 1`"
+fi
+
+# In-place repair/edit commands must not silently turn a marked solid into
+# an ordinary sheet by replacing the primitive without its attributes.
+cp iges.brep.g iges.marked.g
+run $MGED -c iges.marked.g "attr set $direct_brep_name _brep_invalid_solid 1 review_note retained"
+for edit in "shrink_surfaces" "flip" "geo c2_create_line 0 0 1 1" "topo f_rev 0" ; do
+    run $MGED -c iges.marked.g "brep $direct_brep_name $edit"
+    marker=`$MGED -c iges.marked.g "attr get $direct_brep_name _brep_invalid_solid review_note" 2>&1 | tr -d '\r'`
+    case "$marker" in
+        *1*retained*) : ;;
+        *) log "ERROR: BRep edit '$edit' lost attributes: $marker" ; STATUS="`expr $STATUS + 1`" ;;
+    esac
+done
+export STATUS
+
+# Unsupported source geometry must make export fail explicitly, while the
+# successfully written subset remains a readable IGES file.
+run $MGED -c iges.g "in unsupported.half half 0 0 1 0"
+run $MGED -c iges.g "put unsupported.heart hrt V {0 0 0} X {10 0 0} Y {0 10 0} Z {0 0 10} d 1"
+$GIGES -o iges.partial.iges iges.g box.nmg unsupported.half unsupported.heart >> "$LOGFILE" 2>&1
+if test $? -ne 1 ; then
+    log "ERROR: partial CSG export did not return a failure status"
+    STATUS="`expr $STATUS + 1`"
+    export STATUS
+fi
+run $IGESG --strict -o iges.partial.g iges.partial.iges
+
+# Missing selections are export failures, even when no selected object exists.
+for selection in "missing.object" "box.nmg missing.object" ; do
+    $GIGES -o iges.missing.iges iges.g $selection >> "$LOGFILE" 2>&1
+    if test $? -ne 1 ; then
+        log "ERROR: missing export selection '$selection' returned success"
+        STATUS="`expr $STATUS + 1`"
+    fi
+done
+run $IGESG --strict -o iges.missing.g iges.missing.iges
+
+# A selected combination with a missing child must also fail explicitly.
+run $MGED -c iges.g "put broken.group comb tree {l missing.member}"
+$GIGES -o iges.missing.iges iges.g box.nmg broken.group >> "$LOGFILE" 2>&1
+if test $? -eq 0 ; then
+    log "ERROR: export with a missing combination member returned success"
+    STATUS="`expr $STATUS + 1`"
+    export STATUS
+fi
+run $IGESG --strict -o iges.missing.g iges.missing.iges
+export STATUS
 
 # Compatibility mode deliberately flattens the same BRep to independent type
 # 144 faces.  The modern importer must stitch them back into the same manifold

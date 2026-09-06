@@ -393,7 +393,8 @@ main(int argc, char *argv [])
     if (do_drawings && !legacy_drawings) {
 	const int semantic_result = iges_import_annotations(argv[0], fdout,
 	    do_projection, exact_import, strict_import,
-	    repair_mode ? repair_mode : "best-effort", solid_name, report_file);
+	    repair_mode ? repair_mode : "best-effort", solid_name, report_file,
+	    iges_output_progress);
 	if (semantic_result < 0) {
 	    bu_log("Semantic IGES drawing import failed for %s\n", argv[0]);
 	    return iges_output_finish(fdout, 0);
@@ -411,13 +412,15 @@ main(int argc, char *argv [])
 	    exact_import, strict_import, repair_mode ? repair_mode : "best-effort",
 	    default_plate_thickness, maximum_repair_tolerance, relative_tolerance, solid_name,
 	    report_file, mesh_output ? IGES_OUTPUT_MESH :
-		polygon_output ? IGES_OUTPUT_POLYGON : IGES_OUTPUT_BREP);
+		polygon_output ? IGES_OUTPUT_POLYGON : IGES_OUTPUT_BREP, iges_output_progress,
+	    iges_output_pending_breps());
 	if (direct_result < 0) {
 	    bu_log("Direct IGES B-Rep import failed for %s\n", argv[0]);
 	    return iges_output_finish(fdout, 0);
 	}
-	if (direct_result == 1 ||
-		(direct_result == 2 && (do_splines || trimmed_surf))) {
+	if (direct_result == 0)
+	    return iges_output_finish(fdout, 0);
+	if (direct_result == 1) {
 	    return iges_output_finish(fdout, 1);
 	}
 	direct_brep_imported = direct_result == 2;
@@ -447,6 +450,7 @@ main(int argc, char *argv [])
     while (BU_LIST_NON_EMPTY(&iges_list.l)) {
 	curr_file = BU_LIST_FIRST(file_list, &iges_list.l);
 	iges_file = curr_file->file_name;
+	iges_output_progress("legacy compatibility", "reading IGES records", 0, 0, 0);
 
 	fd = fopen(iges_file, "rb");	/* open IGES file */
 	if (fd == NULL) {
@@ -484,26 +488,34 @@ main(int argc, char *argv [])
 
 	Evalxform();	/* Accumulate the transformation matrices */
 
-	Check_names();	/* Look for name entities */
 	if (direct_entities_imported)
 	    Mark_direct_imports();
+	Check_names();	/* Look for name entities */
 
+	iges_output_progress("legacy compatibility", "converting geometry", 0, totentities, 0);
 	if (do_drawings)
 	    Conv_drawings(vlfree); /* non-planar/unsupported wire fallback */
-	else if (trimmed_surf) {
+	else if (trimmed_surf && !direct_entities_imported) {
 	    Do_subfigs();		/* Look for Singular Subfigure Instances */
 
 	    Convtrimsurfs(vlfree);	/* try to convert trimmed surfaces to a single solid */
-	} else if (do_splines)
+	} else if (do_splines && !direct_entities_imported)
 	    Convsurfs();		/* Convert NURBS to a single solid */
 	else {
-	    Convinst();	/* Handle Instances */
+	    iges_output_progress("legacy compatibility", "resolving instances", 0, 0, 0);
+	    if (!direct_entities_imported)
+		Convinst();	/* Handle Instances */
 
+	    iges_output_progress("legacy compatibility", "converting solids", 0, 0, 0);
 	    Convsolids(vlfree, direct_entities_imported); /* Convert solid entities */
 
-	    Convtree();	/* Convert Boolean Trees */
+	    iges_output_progress("legacy compatibility", "converting Boolean trees", 0, 0, 0);
+	    if (!direct_entities_imported)
+		Convtree();	/* Convert Boolean Trees */
 
-	    Convassem();	/* Convert solid assemblies */
+	    iges_output_progress("legacy compatibility", "converting assemblies", 0, 0, 0);
+	    if (!direct_entities_imported)
+		Convassem();	/* Convert solid assemblies */
 
 	    /* Also import any Trimmed Parametric Surfaces (IGES 144) present.
 	     * These are how faithful boundary-rep geometry (e.g. g-iges brep
@@ -518,11 +530,26 @@ main(int argc, char *argv [])
 	    }
 	}
 
+	if (direct_entities_imported) {
+	    /* Complete all hierarchy against the same source-to-object map once
+	     * the exact native primitives are available. */
+	    for (size_t entity = 0; entity < totentities; ++entity) {
+		if (iges_is_native_csg(dir[entity]->type) &&
+		    db_lookup(fdout->dbip, dir[entity]->name, LOOKUP_QUIET) != RT_DIR_NULL)
+		    iges_brep_register_legacy(*iges_output_pending_breps(),
+			dir[entity]->direct, dir[entity]->name);
+	    }
+	    if (!iges_finish_brep_import(iges_output_pending_breps(), report_file))
+		return iges_output_finish(fdout, 0);
+	}
+
 	if (!do_drawings) {
 	    size_t entity;
 	    for (entity = 0; entity < totentities; ++entity) {
 		const int type = dir[entity]->type;
-		if (dir[entity]->direct_imported || type < 150 || (type > 198 && type != 430))
+		if (dir[entity]->direct_imported ||
+		    (direct_entities_imported && !iges_is_native_csg(type)) ||
+		    (!iges_is_native_csg(type) && type != 180 && type != 184 && type != 186 && type != 430))
 		    continue;
 		iges_output_legacy_entity(dir[entity]->direct, type, dir[entity]->name,
 		    db_lookup(fdout->dbip, dir[entity]->name, LOOKUP_QUIET) != RT_DIR_NULL);
@@ -530,6 +557,8 @@ main(int argc, char *argv [])
 	}
 	Free_dir();
 	Free_rec_index();
+	fclose(fd);
+	fd = NULL;
 
 	BU_LIST_DEQUEUE(&curr_file->l);
 	bu_free(curr_file->file_name, "iges-g: curr_file->file_name");

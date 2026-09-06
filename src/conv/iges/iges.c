@@ -29,7 +29,6 @@
  *	3. modify arb_to_iges to use above
  *
  * How to handle half-space solids????
- * How to handle xforms with scale factors?????
  */
 
 #include "common.h"
@@ -498,7 +497,7 @@ write_color_entity(unsigned char color[3],
     for (i = 0; i < 3; i++)
 	c[i] = (float)color[i]/2.55;
 
-    bu_vls_printf(&str, "314,%g,%g,%g;", c[0], c[1], c[2]);
+    bu_vls_printf(&str, "314,%.17g,%.17g,%.17g;", c[0], c[1], c[2]);
 
     dir_entry[1] = 314;
     dir_entry[2] = param_seq + 1;
@@ -603,6 +602,13 @@ iges_init(struct bn_tol *set_tol,
     param_seq = 0;
     start_len = 0;
     global_len = 0;
+}
+
+
+const struct bn_tol *
+iges_export_tolerance(void)
+{
+    return &tol;
 }
 
 
@@ -719,7 +725,7 @@ w_start_global(
 		  timep->tm_min,
 		  timep->tm_sec);
 
-    bu_vls_printf(&str, ",%g,100000.0,7HUnknown,7HUnknown,11,0",
+    bu_vls_printf(&str, ",%.17g,100000.0,7HUnknown,7HUnknown,11,0",
 		  tol.dist);
 
     if (stat(db_name, &db_stat)) {
@@ -769,6 +775,7 @@ nmgregion_to_iges(char *name,
     size_t outer_shell_count; /* number of outer shells in nmgregion */
     size_t face_count = 0;	/* number of faces in nmgregion */
     size_t i;
+    int result;
 
     NMG_CK_REGION(r);
 
@@ -809,6 +816,11 @@ nmgregion_to_iges(char *name,
 
     /* Find outer shells and void shells and their associations */
     outer_shell_count = nmg_find_outer_and_void_shells(r, &shells, vlfree, &tol);
+    if (outer_shell_count == 0) {
+	bu_log("g-iges: %s has no outer shell, cannot write a manifold solid\n",
+	       name ? name : "NMG region");
+	return 0;
+    }
 
     brep_de = (int *)bu_calloc(outer_shell_count, sizeof(*brep_de), "nmgregion_to_iges: brep_de");
 
@@ -846,22 +858,24 @@ nmgregion_to_iges(char *name,
 	/* Make the face, loop, shell entities */
 	brep_de[i] = write_shell_face_loop(tmp_name, new_r, tmp_dependent, edge_de, &etab, vert_de, &vtab, fp_dir, fp_param);
 
-	/* Clear the tables */
-	(void)bu_ptbl_reset(&vtab);
-	(void)bu_ptbl_reset(&etab);
+	/* Tabulation initializes fresh tables for each region. */
+	bu_ptbl_free(&vtab);
+	bu_ptbl_free(&etab);
+	bu_ptbl_free(shells[i]);
+	bu_free(shells[i], "nmgregion_to_iges: shell table");
 
 	if (outer_shell_count != 1)
 	    (void)nmg_kr(new_r);
     }
 
-    /* Free the tables */
-    (void)bu_ptbl_free(&vtab);
-    (void)bu_ptbl_free(&etab);
-
     if (outer_shell_count != 1)
-	return write_solid_assembly(name, brep_de, outer_shell_count, dependent, fp_dir, fp_param);
+	result = write_solid_assembly(name, brep_de, outer_shell_count, dependent, fp_dir, fp_param);
     else
-	return brep_de[0];
+	result = brep_de[0];
+
+    bu_free(brep_de, "nmgregion_to_iges: brep_de");
+    bu_free(shells, "nmgregion_to_iges: shells");
+    return result;
 }
 
 
@@ -1154,7 +1168,7 @@ write_vertex_list(struct nmgregion *r,
 	    bu_log("No geometry for vertex %p #%zu in table\n", (void *)v, i);
 	} else {
 	    NMG_CK_VERTEX_G(vg);
-	    bu_vls_printf(&str, ",%g,%g,%g",
+	    bu_vls_printf(&str, ",%.17g,%.17g,%.17g",
 			  vg->coord[X],
 			  vg->coord[Y],
 			  vg->coord[Z]);
@@ -1200,7 +1214,7 @@ write_line_entity(struct vertex_g *start_vg,
 	dir_entry[i] = DEFAULT;
 
     /* start with parameter data */
-    bu_vls_printf(&str, "110,%g,%g,%g,%g,%g,%g;",
+    bu_vls_printf(&str, "110,%.17g,%.17g,%.17g,%.17g,%.17g,%.17g;",
 		  start_vg->coord[X],
 		  start_vg->coord[Y],
 		  start_vg->coord[Z],
@@ -1246,7 +1260,7 @@ write_linear_bspline(struct vertex_g *start_vg,
 	dir_entry[i] = DEFAULT;
 
     /* start with parameter data */
-    bu_vls_printf(&str, "126,1,1,0,0,1,0,0.,0.,1.,1.,1.,1.,%g,%g,%g,%g,%g,%g,0.,1.;",
+    bu_vls_printf(&str, "126,1,1,0,0,1,0,0.,0.,1.,1.,1.,1.,%.17g,%.17g,%.17g,%.17g,%.17g,%.17g,0.,1.;",
 		  start_vg->coord[X],
 		  start_vg->coord[Y],
 		  start_vg->coord[Z],
@@ -1366,7 +1380,7 @@ write_point_entity(point_t pt,
     for (i = 0; i < 21; i++)
 	dir_entry[i] = DEFAULT;
 
-    bu_vls_printf(&str, "116,%g,%g,%g,0;",
+    bu_vls_printf(&str, "116,%.17g,%.17g,%.17g,0;",
 		  pt[X],
 		  pt[Y],
 		  pt[Z]);
@@ -1401,7 +1415,7 @@ write_direction_entity(point_t pt,
     for (i = 0; i < 21; i++)
 	dir_entry[i] = DEFAULT;
 
-    bu_vls_printf(&str, "123,%g,%g,%g;",
+    bu_vls_printf(&str, "123,%.17g,%.17g,%.17g;",
 		  pt[X],
 		  pt[Y],
 		  pt[Z]);
@@ -1551,13 +1565,13 @@ write_planar_nurb(struct faceuse *fu,
     /* Now put control points in string */
     VJOIN2(ctl_pt, vg->coord, umin, u_dir, vmin, v_dir);
     VMOVE(base_pt, ctl_pt);
-    bu_vls_printf(&str, ",%g,%g,%g", V3ARGS(ctl_pt));
+    bu_vls_printf(&str, ",%.17g,%.17g,%.17g", V3ARGS(ctl_pt));
     VJOIN1(ctl_pt, ctl_pt, umax-umin, u_dir);
-    bu_vls_printf(&str, ",%g,%g,%g", V3ARGS(ctl_pt));
+    bu_vls_printf(&str, ",%.17g,%.17g,%.17g", V3ARGS(ctl_pt));
     VJOIN2(ctl_pt, vg->coord, umin, u_dir, vmax, v_dir);
-    bu_vls_printf(&str, ",%g,%g,%g", V3ARGS(ctl_pt));
+    bu_vls_printf(&str, ",%.17g,%.17g,%.17g", V3ARGS(ctl_pt));
     VJOIN1(ctl_pt, ctl_pt, umax-umin, u_dir);
-    bu_vls_printf(&str, ",%g,%g,%g", V3ARGS(ctl_pt));
+    bu_vls_printf(&str, ",%.17g,%.17g,%.17g", V3ARGS(ctl_pt));
 
     /* Now put parameter ranges last */
     bu_vls_printf(&str, ",0.,1.,0.,1.;");
@@ -2007,7 +2021,7 @@ tor_to_iges(struct rt_db_internal *ip,
     name_de = write_name_entity(name, fp_dir, fp_param);
 
     /* write parameter data into a string */
-    bu_vls_printf(&str, "160,%g,%g,%g,%g,%g,%g,%g,%g,0,1,%d;",
+    bu_vls_printf(&str, "160,%.17g,%.17g,%.17g,%.17g,%.17g,%.17g,%.17g,%.17g,0,1,%d;",
 		  tor->r_a,
 		  tor->r_h,
 		  tor->v[X], tor->v[Y], tor->v[Z],
@@ -2062,7 +2076,7 @@ sph_to_iges(struct rt_db_internal *ip,
     radius = MAGNITUDE(sph->a);
 
     /* write parameter data into a string */
-    bu_vls_printf(&str, "158,%g,%g,%g,%g,0,1,%d;",
+    bu_vls_printf(&str, "158,%.17g,%.17g,%.17g,%.17g,0,1,%d;",
 		  radius,
 		  sph->v[X], sph->v[Y], sph->v[Z],
 		  name_de);
@@ -2130,7 +2144,7 @@ ell_to_iges(struct rt_db_internal *ip,
     VUNITIZE(c_dir);
 
     /* write parameter data into a string */
-    bu_vls_printf(&str, "168,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,0,1,%d;",
+    bu_vls_printf(&str, "168,%.17g,%.17g,%.17g,%.17g,%.17g,%.17g,%.17g,%.17g,%.17g,%.17g,%.17g,%.17g,0,1,%d;",
 		  radius_a, radius_b, radius_c,
 		  ell->v[X], ell->v[Y], ell->v[Z],
 		  a_dir[X], a_dir[Y], a_dir[Z],
@@ -2216,7 +2230,7 @@ rpp_to_iges(struct rt_db_internal *ip,
     }
 
     /* write parameter data into a string */
-    bu_vls_printf(&str, "150,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,0,1,%d;",
+    bu_vls_printf(&str, "150,%.17g,%.17g,%.17g,%.17g,%.17g,%.17g,%.17g,%.17g,%.17g,%.17g,%.17g,%.17g,0,1,%d;",
 		  length_a, length_b, length_c,
 		  arb->pt[0][X], arb->pt[0][Y], arb->pt[0][Z],
 		  a_dir[X], a_dir[Y], a_dir[Z],
@@ -2266,7 +2280,7 @@ arb_to_iges(struct rt_db_internal *ip,
 
 
 /* Write a TGC: as an IGES Right Circular Cylinder (154) or Right Circular
- * Cone Frustum (156) when it is an rcc/trc, otherwise via NMG tessellation. */
+ * Cone Frustum (156) when it is an rcc/trc, otherwise via its BRep callback. */
 int
 tgc_to_iges(struct rt_db_internal *ip,
 	    char *name,
@@ -2311,7 +2325,7 @@ tgc_to_iges(struct rt_db_internal *ip,
     if (!BN_VECT_ARE_PERP(VDOT(h_dir, a_dir), &tol) ||
 	!BN_VECT_ARE_PERP(VDOT(h_dir, b_dir), &tol)) {
 	/* this is not an rcc or a trc */
-	return nmg_to_iges(ip, name, fp_dir, fp_param, vlfree);
+	return primitive_brep_to_iges(ip, name, fp_dir, fp_param, vlfree);
     }
 
     if (NEAR_EQUAL(a_len, b_len, tol.dist) &&
@@ -2328,7 +2342,7 @@ tgc_to_iges(struct rt_db_internal *ip,
 	if (NEAR_EQUAL(a_len, c_len, tol.dist)) {
 	    /* it's an rcc */
 	    iges_type = 154;
-	    bu_vls_printf(&str, "154,%g,%g,%g,%g,%g,%g,%g,%g",
+	    bu_vls_printf(&str, "154,%.17g,%.17g,%.17g,%.17g,%.17g,%.17g,%.17g,%.17g",
 			  h_len, a_len,
 			  tgc->v[X], tgc->v[Y], tgc->v[Z],
 			  h_dir[X], h_dir[Y], h_dir[Z]);
@@ -2349,7 +2363,7 @@ tgc_to_iges(struct rt_db_internal *ip,
 		VADD2(base, tgc->v, tgc->h);
 		VREVERSE(h_dir, h_dir);
 	    }
-	    bu_vls_printf(&str, "156,%g,%g,%g,%g,%g,%g,%g,%g,%g",
+	    bu_vls_printf(&str, "156,%.17g,%.17g,%.17g,%.17g,%.17g,%.17g,%.17g,%.17g,%.17g",
 			  h_len, bigger_r, smaller_r,
 			  base[X], base[Y], base[Z],
 			  h_dir[X], h_dir[Y], h_dir[Z]);
@@ -2373,7 +2387,7 @@ tgc_to_iges(struct rt_db_internal *ip,
 
 	return write_dir_entry(fp_dir, dir_entry);
     } else
-	return nmg_to_iges(ip, name, fp_dir, fp_param, vlfree);
+	return primitive_brep_to_iges(ip, name, fp_dir, fp_param, vlfree);
 }
 
 
@@ -2585,6 +2599,11 @@ nmg_to_iges(struct rt_db_internal *ip,
 	    return brep_de;
 	}
     } else {
+	if (ip->idb_type <= ID_NULL || ip->idb_type > ID_MAXIMUM ||
+	    !OBJ[ip->idb_type].ft_tessellate) {
+	    bu_log("%s has no IGES tessellation fallback (type=%d)\n", name, ip->idb_type);
+	    return 0;
+	}
 	if (ip->idb_type == ID_BOT) {
 	    struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
 	    if (bot->mode != RT_BOT_SOLID) {
@@ -2654,8 +2673,8 @@ null_to_iges(struct rt_db_internal *UNUSED(ip), char *UNUSED(name), FILE *UNUSED
 }
 
 
-/* Write a Transformation Matrix Entity (IGES type 124) from the first twelve
- * elements (3x3 rotation plus translation) of a 4x4 matrix. */
+/* IGES 124 has an implicit homogeneous divisor of one.  BRL-CAD stores
+ * uniform scale in mat[15], so normalize it into all twelve affine entries. */
 int
 write_xform_entity(mat_t mat,
 		   FILE *fp_dir, FILE *fp_param)
@@ -2664,6 +2683,11 @@ write_xform_entity(mat_t mat,
     int dir_entry[21];
     size_t i;
 
+    if (!isfinite(mat[15]) || ZERO(mat[15])) {
+	bu_log("g-iges: cannot export a transformation with an invalid scale\n");
+	return 0;
+    }
+
     /* initialize directory entry */
     for (i = 0; i < 21; i++)
 	dir_entry[i] = DEFAULT;
@@ -2671,7 +2695,7 @@ write_xform_entity(mat_t mat,
     /* write parameter data into a string */
     bu_vls_strcpy(&str, "124");
     for (i = 0; i < 12; i++) {
-	bu_vls_printf(&str, ",%g", mat[i]);
+	bu_vls_printf(&str, ",%.17g", mat[i] / mat[15]);
     }
     bu_vls_strcat(&str, ";");
 
@@ -2706,6 +2730,8 @@ write_solid_instance(int orig_de,
 
     /* write the transformation matrix and make the link */
     dir_entry[7] = write_xform_entity(mat, fp_dir, fp_param);
+    if (!dir_entry[7])
+	return 0;
 
     /* write parameter data into a string */
     bu_vls_printf(&str, "430,%d;", orig_de);

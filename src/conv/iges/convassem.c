@@ -48,14 +48,11 @@ Convassem(void)
 {
     size_t i;
     int j = 0;
-    int k = 0;
     int comblen = 0;
     int conv = 0;
     int totass = 0;
     struct solid_list *root, *ptr, *ptr_tmp;
     struct wmember head, *wmem;
-    int no_of_assoc = 0;
-    int no_of_props = 0;
     int att_de = 0;
     unsigned char *rgb;
     struct brlcad_att brl_att;
@@ -142,21 +139,7 @@ Convassem(void)
 	    ptr = ptr->next;
 	}
 
-	/* skip over the associativities */
-	Readint(&no_of_assoc, "");
-	for (k = 0; k < no_of_assoc; k++)
-	    Readint(&j, "");
-
-	/* get property entity DE's */
-	Readint(&no_of_props, "");
-	for (k = 0; k < no_of_props; k++) {
-	    Readint(&j, "");
-	    if (dir[IGES_DE2INDEX(j)]->type == 422 &&
-		dir[IGES_DE2INDEX(j)]->referenced == brlcad_att_de) {
-		/* this is one of our attribute instances */
-		att_de = j;
-	    }
-	}
+	att_de = Read_property(i, 422, 0);
 
 	Read_att(att_de, &brl_att);
 

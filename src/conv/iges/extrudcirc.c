@@ -25,7 +25,7 @@
 /*
  * Extrudcirc() is a helper for extrude() (IGES 164 Solid of Linear
  * Extrusion) for the case where the extruded base curve is an IGES 100
- * Circular Arc.  It produces a BRL-CAD RCC.
+ * Circular Arc.  It retains the profile plane for oblique extrusions.
  */
 int
 Extrudcirc(size_t entityno, int curve, vect_t evect)
@@ -72,11 +72,18 @@ Extrudcirc(size_t entityno, int curve, vect_t evect)
     radius = sqrt((x_1 - base[X])*(x_1 - base[X]) + (y_1 - base[Y])*(y_1 - base[Y]));
 
 
-    /* Make an rcc */
-
-    mk_rcc(fdout, dir[entityno]->name, base, evect, radius);
-
-    return 1;
+    /* The profile plane need not be normal to the extrusion vector.  An
+     * RCC would silently replace an oblique extrusion with a different
+     * cylinder.  TGC axes also retain a transformed circular profile. */
+    point_t transformed_base;
+    vect_t axis_a, axis_b, transformed_a, transformed_b;
+    VSET(axis_a, radius, 0.0, 0.0);
+    VSET(axis_b, 0.0, radius, 0.0);
+    MAT4X3PNT(transformed_base, *dir[curve]->rot, base);
+    MAT4X3VEC(transformed_a, *dir[curve]->rot, axis_a);
+    MAT4X3VEC(transformed_b, *dir[curve]->rot, axis_b);
+    return mk_tgc(fdout, dir[entityno]->name, transformed_base, evect,
+	transformed_a, transformed_b, transformed_a, transformed_b) == 0;
 }
 
 

@@ -20,6 +20,7 @@
 
 #include "./iges_struct.h"
 #include "./iges_extern.h"
+#include "iges_output.h"
 
 
 /* This routine evaluates the transformation matrix list for each
@@ -45,12 +46,25 @@ Evalxform(void)
     long xform;
     struct list *ptr, *ptr1, *ptr_root;
     mat_t rot;
+    size_t *visited = (size_t *)bu_calloc(totentities, sizeof(size_t), "IGES transform path");
+
+    for (i = 0; i < totentities; ++i) {
+	const int parent = dir[i]->trans;
+	if (parent < 0)
+	    continue;
+	if ((size_t)parent >= totentities ||
+	    (dir[parent]->type != 124 && dir[parent]->type != 700) || !dir[parent]->rot) {
+	    iges_output_legacy_warning(dir[i]->direct, "invalid_legacy_transform",
+		"ignored reference to a missing or invalid transformation");
+	    dir[i]->trans = -1;
+	}
+    }
 
 
     for (i = 0; i < totentities; i++) {
 	/* loop through all entities */
 	/* skip non-transformation entities */
-	if (dir[i]->type != 124 && dir[i]->type != 700)
+	if ((dir[i]->type != 124 && dir[i]->type != 700) || !dir[i]->rot)
 	    continue;
 
 	if (dir[i]->trans >= 0 && !dir[i]->referenced) {
@@ -61,6 +75,12 @@ Evalxform(void)
 	    ptr_root = NULL;
 	    xform = i;
 	    while (xform >= 0) {
+		if (visited[xform] == i + 1) {
+		    iges_output_legacy_warning(dir[i]->direct, "cyclic_legacy_transform",
+			"stopped a cyclic transformation chain");
+		    break;
+		}
+		visited[xform] = i + 1;
 		if (ptr == NULL)
 		    BU_ALLOC(ptr, struct list);
 		else {
@@ -104,6 +124,7 @@ Evalxform(void)
 	    }
 	}
     }
+    bu_free(visited, "IGES transform path");
 
     /* set matrices for all other entities */
     for (i = 0; i < totentities; i++) {

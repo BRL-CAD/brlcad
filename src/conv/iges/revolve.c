@@ -104,12 +104,14 @@ revolve(size_t entityno)
 
     /* Convert this to a "dir" index */
 
-    curve = IGES_DE2INDEX(curve);
+    curve = iges_legacy_index(curve);
+    if (curve < 0)
+	return 0;
 
     Readflt(&fract, "");
-    Readflt(&pt[X], "");
-    Readflt(&pt[Y], "");
-    Readflt(&pt[Z], "");
+    Readcnv(&pt[X], "");
+    Readcnv(&pt[Y], "");
+    Readcnv(&pt[Z], "");
     Readflt(&adir[X], "");
     Readflt(&adir[Y], "");
     Readflt(&adir[Z], "");
@@ -158,17 +160,19 @@ revolve(size_t entityno)
 	if (trcs == NULL) {
 	    BU_ALLOC(trcs, struct trclist);
 	    trcptr = trcs;
+	    bu_vls_init(&trcptr->name);
 	    prev = NULL;
 	} else if (bu_vls_cstr(&trcptr->name)[0] != '\0') {
 	    BU_ALLOC(trcptr->next, struct trclist);
 	    prev = trcptr;
 	    trcptr = trcptr->next;
+	    bu_vls_init(&trcptr->name);
 	} else prev = NULL;
 	trcptr->next = NULL;
 	trcptr->prev = prev;
 	trcptr->op = 0;
 	trcptr->subtr = NULL;
-	bu_vls_addr(&trcptr->name)[0] = '\0';
+	bu_vls_trunc(&trcptr->name, 0);
 
 	/* Calculate base point of TRC */
 	VSUB2(v1, ptr->pt, pt);
@@ -184,12 +188,15 @@ revolve(size_t entityno)
 
 	/* Calculate new top radius */
 	VSUB2(v1, ptr->next->pt, pt);
+	h1 = VDOT(v1, adir);
+	V_MIN(hmin, h1);
+	V_MAX(hmax, h1);
 	VCROSS(tmp, v1, adir);
 	trcptr->r2 = MAGNITUDE(tmp);
 	V_MAX(trcptr->r2, TOL);
 
 	r2 = trcptr->r2;
-	V_MIN(rmax, r2);
+	V_MAX(rmax, r2);
 
 	/* Calculate height of TRC */
 	VSUB2(v1, ptr->next->pt, pt);

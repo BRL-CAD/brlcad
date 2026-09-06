@@ -94,6 +94,14 @@ Default imports may be partial. The conversion summary counts omitted source
 geometry entities, and *--report* identifies their failures. Use *--strict*
 when omissions or repairs must cause the import to fail.
 
+Long conversions print a progress message about every five seconds, including
+elapsed time, the current stage and operation, and the source entity where
+available. Geometry counts include processed source items, both retained and
+omitted; retries do not advance the count again. These counts are not an
+estimate of elapsed work or remaining time. Reporting continues during lengthy
+individual geometry operations. Short conversions do not incur a reporting
+delay.
+
 An explicit type 186 manifold solid that cannot be reconstructed is retained
 by default as one invalid-solid BRep, containing its independently validated
 faces. An empty BRep preserves the identity when no faces can be rebuilt.
@@ -104,9 +112,10 @@ treated as plate-mode sheets, and validity checking and ray-tracing preparation
 reject them. Repair the intended solid topology before clearing the marker.
 Strict, exact, and polygonal output modes reject these incomplete solids.
 
-The *-3*/*-d*, *-n*, and *-t* options are mutually exclusive and select
-alternate conversion modes (drawings, B-spline surfaces, or trimmed surfaces,
-respectively). The *-o* output option is required. When the chosen mode cannot
+The *-3*/*-d* drawing options and the *-n*/*-t* compatibility surface options
+are mutually exclusive. Both surface options use the direct B-Rep importer
+and retain native CSG members and their hierarchy. The *-o* output option is
+required. When the chosen mode cannot
 represent something present in the file, *iges-g* prints suggestions for the
 options that would convert the remaining entities. To export geometry in the
 other direction, see *g-iges*(1).
@@ -122,13 +131,13 @@ other direction, see *g-iges*(1).
   preserving text, leaders, grouping, and style metadata when possible.
 
 *-n*::
-  Combine all rational B-spline surfaces in the IGES file into a single
-  BRL-CAD spline solid.
+  Import supported surfaces directly as OpenNURBS BReps, as in the default
+  mode. Native CSG members and their assembly placements are also retained.
 
 *-t*::
-  Request the legacy trimmed-surface conversion mode. The default mode imports
-  supported type 144 surfaces directly as OpenNURBS faces and assembles shared
-  topology without using NMG.
+  Import supported trimmed surfaces directly as OpenNURBS BReps, as in the
+  default mode, retaining native CSG members and assembly placements. Shared
+  topology is assembled without using NMG.
 
 *-p*::
   Write BREP objects as polygonal NMG solids instead of native BRep objects.

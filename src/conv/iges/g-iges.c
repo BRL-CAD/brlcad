@@ -124,7 +124,6 @@ static char *db_name;	/* name of the BRL-CAD database */
 static char *prog_name;	/* name of this program as it was invoked */
 static int multi_file = 0;	/* Flag to indicate output of separate IGES file for each region */
 static int NMG_debug;	/* saved arg of -X, for longjmp handling */
-static int scale_error = 0;	/* Count indicating how many scaled objects were encountered */
 static int solid_error = 0;	/* Count indicating how many solids were not converted */
 static int comb_error = 0;	/* Count indicating how many combinations were not converted */
 static int ncpu = 1;	/* Number of processors */
@@ -148,7 +147,6 @@ extern int tgc_to_iges(struct rt_db_internal *, char *, FILE *, FILE *, struct b
 extern int nmg_to_iges(struct rt_db_internal *, char *, FILE *, FILE *, struct bu_list *);
 extern int sketch_to_iges(struct rt_db_internal *, char *, FILE *, FILE *, struct bu_list *);
 extern int brep_to_iges(struct rt_db_internal *, char *, FILE *, FILE *, struct bu_list *);
-extern int primitive_brep_to_iges(struct rt_db_internal *, char *, FILE *, FILE *, struct bu_list *);
 extern void iges_init(struct bn_tol *, struct bg_tess_tol *, int, struct db_i *);
 extern void Print_stats(FILE *);
 
@@ -158,6 +156,8 @@ struct iges_functab
 };
 
 
+/* Polyhedral primitives retain the direct NMG path: their ft_brep callbacks
+ * also construct NMG first, so OpenNURBS would add no geometric fidelity. */
 struct iges_functab iges_write[ID_MAXIMUM+1] = {
     {null_to_iges},	/* ID_NULL */
     {tor_to_iges}, 	/* ID_TOR */
@@ -166,15 +166,15 @@ struct iges_functab iges_write[ID_MAXIMUM+1] = {
     {arb_to_iges},	/* ID_ARB8 */
     {nmg_to_iges},	/* ID_ARS */
     {nmg_to_iges},	/* ID_HALF */
-    {nmg_to_iges},	/* ID_REC */
+    {primitive_brep_to_iges},	/* ID_REC */
     {nmg_to_iges},	/* ID_POLY */
-    {nmg_to_iges},	/* ID_BSPLINE */
+    {primitive_brep_to_iges},	/* ID_BSPLINE */
     {sph_to_iges},	/* ID_SPH */
     {nmg_to_iges},	/* ID_NMG */
     {null_to_iges},	/* ID_EBM */
     {null_to_iges},	/* ID_VOL */
     {nmg_to_iges},	/* ID_ARBN */
-    {nmg_to_iges},	/* ID_PIPE */
+    {primitive_brep_to_iges},	/* ID_PIPE */
     {primitive_brep_to_iges},	/* ID_PARTICLE - faithful NURBS via ft_brep */
     {primitive_brep_to_iges},	/* ID_RPC - faithful NURBS via ft_brep */
     {primitive_brep_to_iges},	/* ID_RHC - faithful NURBS via ft_brep */
@@ -186,9 +186,9 @@ struct iges_functab iges_write[ID_MAXIMUM+1] = {
     {nmg_to_iges},	/* ID_HF */
     {nmg_to_iges},	/* ID_DSP */
     {sketch_to_iges},	/* ID_SKETCH */
-    {nmg_to_iges},	/* ID_EXTRUDE */
+    {primitive_brep_to_iges},	/* ID_EXTRUDE */
     {null_to_iges},	/* ID_SUBMODEL */
-    {nmg_to_iges},	/* ID_CLINE */
+    {primitive_brep_to_iges},	/* ID_CLINE */
     {nmg_to_iges},	/* ID_BOT */
     {null_to_iges},	/* ID_COMBINATION (31) */
     {null_to_iges},	/* ID_UNUSED1 (32) */
@@ -202,7 +202,7 @@ struct iges_functab iges_write[ID_MAXIMUM+1] = {
     {primitive_brep_to_iges},	/* ID_REVOLVE (40) - faithful NURBS via ft_brep */
     {null_to_iges},	/* ID_PNTS (41) */
     {null_to_iges},	/* ID_ANNOT (42) */
-    {nmg_to_iges},	/* ID_HRT (43) - faceted */
+    {null_to_iges},	/* ID_HRT (43) - no BRep or tessellation callback */
     {null_to_iges},	/* ID_DATUM (44) */
     {null_to_iges},	/* ID_SCRIPT (45) */
     {null_to_iges},	/* ID_MATERIAL (46) */
@@ -228,6 +228,7 @@ main(int argc, char *argv[])
     int help = 0;
     int faceted_output = 0;
     int trimmed_output = 0;
+    size_t missing_objects = 0;
     double percent;
     char copy_buffer[CP_BUF_SIZE] = {0};
     struct directory *dp;
@@ -403,6 +404,7 @@ main(int argc, char *argv[])
 		dp = db_lookup(DBIP, ptr, 1);
 		if (!dp) {
 		    bu_log("WARNING: Unable to locate %s in %s\n, skipping\n", ptr, db_name);
+		    ++missing_objects;
 		    continue;
 		}
 		db_treewalk_basic(DBIP, dp, csg_comb_func, 0, NULL);
@@ -417,6 +419,7 @@ main(int argc, char *argv[])
 	    dp = db_lookup(DBIP, argv[i], 1);
 	    if (!dp) {
 		bu_log("WARNING: Unable to locate %s in %s\n, skipping\n", argv[i], db_name);
+		++missing_objects;
 		continue;
 	    }
 	    db_treewalk_basic(DBIP, dp, csg_comb_func, csg_leaf_func, NULL);
@@ -469,16 +472,16 @@ main(int argc, char *argv[])
     }
 
     /* re-iterate warnings */
-    if (scale_error || solid_error || comb_error)
+    if (solid_error || comb_error || missing_objects)
 	bu_log("WARNING: the IGES file produced has errors:\n");
-    if (scale_error)
-	bu_log("\t%d scaled objects found, written to IGES file without being scaled\n", scale_error);
     if (solid_error)
 	bu_log("\t%d solids were not converted to IGES format\n", solid_error);
     if (comb_error)
 	bu_log("\t%d combinations were not converted to IGES format\n", comb_error);
+    if (missing_objects)
+	bu_log("\t%zu requested objects were not found\n", missing_objects);
 
-    return 0;
+    return solid_error || comb_error || missing_objects ? 1 : 0;
 }
 
 
@@ -725,11 +728,14 @@ get_de_pointers(union tree *tp, struct directory *dp, int de_len,
 	case OP_UNION:
 	case OP_SUBTRACT:
 	case OP_INTERSECT:
-	    get_de_pointers(tp->tr_b.tb_left, dp, de_len, de_pointers);
-	    get_de_pointers(tp->tr_b.tb_right, dp, de_len, de_pointers);
+	    if (get_de_pointers(tp->tr_b.tb_left, dp, de_len, de_pointers) ||
+		get_de_pointers(tp->tr_b.tb_right, dp, de_len, de_pointers))
+		return 1;
 	    break;
 	case OP_DB_LEAF: {
 	    struct directory *dp_M;
+	    if (de_pointer_number >= de_len)
+		return 1;
 
 	    dp_M = db_lookup(DBIP, tp->tr_l.tl_name, LOOKUP_NOISY);
 	    if (dp_M == RT_DIR_NULL)
@@ -745,14 +751,9 @@ get_de_pointers(union tree *tp, struct directory *dp, int de_len,
 		/* write a solid instance entity for this member
 		   with a pointer to the new matrix */
 
-		if (!NEAR_ZERO(tp->tr_l.tl_mat[15] - 1.0, tol.dist)) {
-		    /* scale factor is not 1.0, IGES can't handle it.
-		       go ahead and write the solid instance anyway,
-		       but warn the user twice */
-		    bu_log("g-iges WARNING: member (%s) of combination (%s) is scaled, IGES cannot handle this\n", dp_M->d_namep, dp->d_namep);
-		    scale_error++;
-		}
 		de_pointers[de_pointer_number++] = write_solid_instance(-dp_M->d_uses, tp->tr_l.tl_mat, fp_dir, fp_param);
+		if (!de_pointers[de_pointer_number - 1])
+		    return 1;
 	    } else
 		de_pointers[de_pointer_number++] = (-dp_M->d_uses);
 	    if (dp_M->d_nref)
@@ -804,10 +805,16 @@ csg_comb_func(struct db_i *dbip, struct directory *dp, void *UNUSED(ptr))
     }
 
     id = rt_db_get_internal(&intern, dp, dbip, (matp_t)NULL);
-    if (id < 0)
+
+    if (id < 0) {
+	bu_log("g-iges: error importing combination %s, skipping\n", dp->d_namep);
+	comb_error++;
 	return;
+    }
     if (id != ID_COMBINATION) {
 	bu_log("Directory/Database mismatch! is %s a combination or not?\n", dp->d_namep);
+	comb_error++;
+	rt_db_free_internal(&intern);
 	return;
     }
 
@@ -820,6 +827,8 @@ csg_comb_func(struct db_i *dbip, struct directory *dp, void *UNUSED(ptr))
     if (!comb->tree) {
 	bu_log("Warning: empty combination (%s)\n", dp->d_namep);
 	dp->d_uses = 0;
+	comb_error++;
+	rt_db_free_internal(&intern);
 	return;
     }
     comb_len = db_tree_nleaves(comb->tree);
@@ -830,6 +839,7 @@ csg_comb_func(struct db_i *dbip, struct directory *dp, void *UNUSED(ptr))
     de_pointer_number = 0;
     if (get_de_pointers(comb->tree, dp, (int)comb_len, de_pointers)) {
 	bu_log("Error in combination %s\n", dp->d_namep);
+	comb_error++;
 	bu_free(de_pointers, "csg_comb_func de_pointers");
 	rt_db_free_internal(&intern);
 	return;
@@ -866,9 +876,9 @@ csg_comb_func(struct db_i *dbip, struct directory *dp, void *UNUSED(ptr))
  * an IGES entity.
  *
  * Skips solids already written.  Imports the solid, dispatches through
- * the iges_write[] function table by primitive type (tessellating to a
- * BREP when there is no direct CSG equivalent), and records the negated
- * DE in dp->d_uses and the BREP flag in dp->d_nref.
+ * the iges_write[] function table by primitive type, preferring a primitive
+ * BRep before tessellation when no native CSG equivalent exists.  Records
+ * the negated DE in dp->d_uses and the BREP flag in dp->d_nref.
  */
 void
 csg_leaf_func(struct db_i *dbip, struct directory *dp, void *UNUSED(ptr))
@@ -890,6 +900,14 @@ csg_leaf_func(struct db_i *dbip, struct directory *dp, void *UNUSED(ptr))
     }
 
     solid_is_brep = 0;
+    /* Minor type IDs only identify primitives in the BRL-CAD major type. */
+    if (ip.idb_major_type != DB5_MAJORTYPE_BRLCAD) {
+	bu_log("g-iges: %s is non-geometric data (major type %d, minor type %d), skipping\n",
+	       dp->d_namep, ip.idb_major_type, ip.idb_type);
+	solid_error++;
+	rt_db_free_internal(&ip);
+	return;
+    }
     if (ip.idb_type < 0 || ip.idb_type > ID_MAXIMUM ||
 	!iges_write[ip.idb_type].do_iges_write) {
 	bu_log("g-iges: no IGES writer for %s (type %d), skipping\n",

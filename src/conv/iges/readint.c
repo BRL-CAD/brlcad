@@ -32,6 +32,9 @@
 
 #include "./iges_struct.h"
 #include "./iges_extern.h"
+#include "iges_output.h"
+#include <errno.h>
+#include <limits.h>
 
 
 /*
@@ -43,47 +46,25 @@
 void
 Readint(int *inum, const char *id)
 {
-    int i = 0, done = 0, lencard;
-    char num[MAX_NUM] = {0};
-
-    if (card[counter] == eofd) {
-	/* This is an empty field */
-	counter++;
+    char num[MAX_NUM];
+    const int status = iges_read_number(num);
+    if (!status)
 	return;
-    } else if (card[counter] == eord) {
-	/* Up against the end of record */
+    if (status < 0) {
+	*inum = INT_MIN;
 	return;
     }
 
-    if (card[IGES_SECTION_COL] == 'P')
-	lencard = PARAMLEN;
-    else
-	lencard = CARDLEN;
-
-    if (counter >= lencard)
-	Readrec(++currec);
-
-    while (!done && i < MAX_NUM-1) {
-	while (i < MAX_NUM-1 &&
-	       (num[i] = card[counter++]) != eofd &&
-	       num[i] != eord && counter <= lencard)
-	{
-	    if (i >= MAX_NUM-1) {
-		done = 1;
-	    }
-	    i++;
-	}
-	if (counter > lencard && num[i] != eord && num[i] != eofd) {
-	    Readrec(++currec);
-	} else {
-	    done = 1;
-	}
+    char *end = NULL;
+    errno = 0;
+    const long value = strtol(num, &end, 10);
+    if (end == num || *end || errno == ERANGE || value < INT_MIN || value > INT_MAX) {
+	iges_output_legacy_warning(0, "invalid_legacy_integer",
+	    "integer parameter is invalid or outside the supported range");
+	*inum = INT_MIN;
+    } else {
+	*inum = (int)value;
     }
-
-    if (num[i] == eord)
-	counter--;
-
-    *inum = atoi(num);
     if (*id != '\0')
 	bu_log("%s%d\n", id, *inum);
 }

@@ -33,6 +33,7 @@ Get_att(void)
     int j = 0;
     char *str;
 
+    brlcad_att_de = 0;
     for (i = 0; i < totentities; i++) {
 	/* Look for attribute definitions */
 	if (dir[i]->type == 322) {
@@ -48,11 +49,13 @@ Get_att(void)
 	    }
 
 	    Readname(&str, "");
-	    if (!bu_strncmp(str, "BRLCAD", 6) || !bu_strncmp(str, "BRL-CAD", 7)) {
+	    if (str && (!bu_strncmp(str, "BRLCAD", 6) || !bu_strncmp(str, "BRL-CAD", 7))) {
 		/* this is what we have been looking for */
 		brlcad_att_de = (int)i*2+1;
+		bu_free(str, "IGES attribute definition name");
 		return;
 	    }
+	    bu_free(str, "IGES attribute definition name");
 	}
     }
 }

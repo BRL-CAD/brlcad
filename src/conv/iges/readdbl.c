@@ -43,55 +43,7 @@
 void
 Readdbl(double *inum, const char *id)
 {
-    int i = 0, done = 0, lencard;
-    char num[MAX_NUM] = {0};
-
-    if (card[counter] == eofd) {
-	/* This is an empty field */
-	counter++;
-	return;
-    } else if (card[counter] == eord) /* Up against the end of record */
-	return;
-
-    if (card[IGES_SECTION_COL] == 'P')
-	lencard = PARAMLEN;
-    else
-	lencard = CARDLEN;
-
-    if (counter >= lencard)
-	Readrec(++currec);
-
-    while (!done && i < MAX_NUM-1) {
-	while (i < MAX_NUM-1 &&
-	       (num[i] = card[counter++]) != eofd &&
-	       num[i] != eord &&
-	       counter <= lencard)
-	{
-	    /* IGES writes exponents in Fortran style (e.g. 1.0D+00);
-	     * translate the 'D' exponent marker to 'e' so atof() parses it
-	     */
-	    if (num[i] == 'D') {
-		num[i] = 'e';
-	    }
-	    if (i >= MAX_NUM-1) {
-		done = 1;
-	    }
-	    i++;
-	}
-
-	if (counter > lencard && num[i] != eord && num[i] != eofd) {
-	    Readrec(++currec);
-	} else {
-	    done = 1;
-	}
-    }
-
-    if (num[i] == eord)
-	counter--;
-
-    *inum = atof(num);
-    if (*id != '\0')
-	bu_log("%s%g\n", id, *inum);
+    iges_read_real(inum, 1.0, id);
 }
 
 

@@ -10,15 +10,21 @@
 #define CONV_IGES_OUTPUT_H
 
 #include "common.h"
+#include "iges_import.h"
 
 struct rt_wdb;
+struct iges_brep_context;
 
 __BEGIN_DECLS
 
 int iges_output_begin(const char *input, const char *output, const char *report, int strict);
 const char *iges_output_database_path(void);
 const char *iges_output_report_path(void);
+struct iges_brep_context **iges_output_pending_breps(void);
 void iges_output_legacy_entity(int id, int type, const char *name, int written);
+void iges_output_legacy_warning(int id, const char *code, const char *message);
+void iges_output_progress(const char *stage, const char *activity,
+    size_t completed, size_t total, int64_t entity);
 /* Finalize diagnostics, close the database, and publish only a successful
  * conversion.  Failed imports leave any existing database untouched. */
 int iges_output_finish(struct rt_wdb *wdbp, int success);

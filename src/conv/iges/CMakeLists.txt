@@ -35,6 +35,7 @@ set(
   iges_brep_import.cpp
   iges_document.cpp
   iges_import.cpp
+  iges_legacy.c
   iges_output.cpp
   iges_surf.cpp
   iges_types.c
@@ -56,6 +57,7 @@ set(
   readint.c
   readmatrix.c
   readname.c
+  readnum.c
   readrec.c
   readstart.c
   readstrg.c

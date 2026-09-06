@@ -9,12 +9,18 @@
 #include "common.h"
 
 #include "iges_output.h"
+#include "iges_brep_import.h"
 
+#include <chrono>
+#include <condition_variable>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <memory>
+#include <mutex>
+#include <sstream>
 #include <string>
+#include <thread>
 #include <vector>
 
 #include "json.hpp"
@@ -29,6 +35,71 @@ namespace {
 namespace fs = std::filesystem;
 using Json = nlohmann::ordered_json;
 constexpr unsigned int STAGING_ATTEMPTS = 64;
+constexpr std::chrono::seconds PROGRESS_INTERVAL(5);
+
+class ProgressReporter {
+public:
+    ProgressReporter() : started_(std::chrono::steady_clock::now()),
+	worker_([this]() { run(); })
+    {
+    }
+
+    ~ProgressReporter()
+    {
+	{
+	    std::lock_guard<std::mutex> lock(mutex_);
+	    stopped_ = true;
+	}
+	wake_.notify_one();
+	worker_.join();
+    }
+
+    void update(const char *stage, const char *activity, size_t completed,
+	size_t total, int64_t entity)
+    {
+	std::lock_guard<std::mutex> lock(mutex_);
+	stage_ = stage;
+	activity_ = activity;
+	completed_ = completed;
+	total_ = total;
+	entity_ = entity;
+    }
+
+private:
+    void run()
+    {
+	std::unique_lock<std::mutex> lock(mutex_);
+	while (!wake_.wait_for(lock, PROGRESS_INTERVAL, [this]() { return stopped_; })) {
+	    const auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(
+		std::chrono::steady_clock::now() - started_).count();
+	    std::ostringstream message;
+	    message << "IGES progress: " << elapsed << "s elapsed; " << stage_;
+	    if (total_)
+		message << ": " << completed_ << '/' << total_ << " source items processed";
+	    message << "; " << activity_;
+	    if (entity_)
+		message << " (D" << entity_ << ')';
+	    message << '\n';
+	    /* The worker reads only this snapshot, never live geometry or
+	     * importer statistics.  Keep logging outside the snapshot lock. */
+	    lock.unlock();
+	    bu_log("%s", message.str().c_str());
+	    lock.lock();
+	}
+    }
+
+    std::mutex mutex_;
+    std::condition_variable wake_;
+    bool stopped_ = false;
+    std::string stage_ = "input";
+    std::string activity_ = "reading and validating IGES records";
+    size_t completed_ = 0;
+    size_t total_ = 0;
+    int64_t entity_ = 0;
+    std::chrono::steady_clock::time_point started_;
+    /* Start only after all state the worker reads has been initialized. */
+    std::thread worker_;
+};
 
 struct StagedFile {
     std::string target;
@@ -81,13 +152,17 @@ struct StagedFile {
 };
 
 struct ConversionOutput {
+    ~ConversionOutput() { iges_cancel_brep_import(pending_breps); }
     StagedFile database;
     StagedFile report;
     std::string source;
     bool strict = false;
     size_t legacy_seen = 0;
     size_t legacy_written = 0;
+    size_t legacy_warnings = 0;
     Json legacy_diagnostics = Json::array();
+    ProgressReporter progress;
+    struct iges_brep_context *pending_breps = nullptr;
 };
 
 bool
@@ -177,6 +252,31 @@ iges_output_report_path(void)
     return conversion && !conversion->report.path.empty() ? conversion->report.path.c_str() : nullptr;
 }
 
+extern "C" struct iges_brep_context **
+iges_output_pending_breps(void)
+{
+    return conversion ? &conversion->pending_breps : nullptr;
+}
+
+extern "C" void
+iges_output_progress(const char *stage, const char *activity,
+    size_t completed, size_t total, int64_t entity)
+{
+    if (conversion)
+	conversion->progress.update(stage, activity, completed, total, entity);
+}
+
+extern "C" void
+iges_output_legacy_warning(int id, const char *code, const char *message)
+{
+    bu_log("IGES %s (D%d): %s\n", code, id, message);
+    if (!conversion)
+	return;
+    ++conversion->legacy_warnings;
+    conversion->legacy_diagnostics.push_back({{"severity", "warning"}, {"code", code},
+	{"message", message}, {"entity", id}});
+}
+
 extern "C" void
 iges_output_legacy_entity(int id, int type, const char *name, int written)
 {
@@ -202,6 +302,7 @@ iges_output_finish(struct rt_wdb *wdbp, int success)
     }
     size_t objects = 0;
     size_t unresolved = 0;
+    iges_output_progress("finalization", "checking output references", 0, 0, 0);
     if (wdbp && wdbp->dbip) {
 	struct directory *entry;
 	FOR_ALL_DIRECTORY_START(entry, wdbp->dbip) {
@@ -223,13 +324,15 @@ iges_output_finish(struct rt_wdb *wdbp, int success)
 	} FOR_ALL_DIRECTORY_END;
     }
     const size_t omitted = conversion->legacy_seen - conversion->legacy_written;
-    success = success && objects > 0 && (!conversion->strict || (!omitted && !unresolved));
+    success = success && objects > 0 && (!conversion->strict ||
+	(!omitted && !unresolved && !conversion->legacy_warnings));
     if (!objects)
 	bu_log("IGES: no supported geometry was created\n");
     if (unresolved)
 	bu_log("IGES: output contains %zu unresolved geometry references\n", unresolved);
     if (wdbp)
 	wdb_close(wdbp);
+    iges_output_progress("finalization", "publishing database and report", 0, 0, 0);
     try {
 	Json report;
 	if (!conversion->report.path.empty()) {

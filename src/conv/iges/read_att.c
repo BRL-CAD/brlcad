@@ -28,26 +28,19 @@
 void
 Read_att(size_t att_de, struct brlcad_att *att)
 {
-    size_t entityno;
+    int entityno;
     int i = 0;
 
-    if (att_de == 0) {
-	/* fill structure with default info */
-	att->material_name = (char *)NULL;
-	att->material_params = (char *)NULL;
-	att->region_flag = 0;
-	att->ident = 0;
-	att->air_code = 0;
-	att->material_code = 0;
-	att->los_density = 100;
-	att->inherit = 0;
-	att->color_defined = 0;
+    memset(att, 0, sizeof(*att));
+    att->los_density = 100;
+    if (att_de == 0)
 	return;
-    }
 
     /* Acquiring Data */
 
-    entityno = IGES_DE2INDEX(att_de);
+    entityno = iges_legacy_index((int)att_de);
+    if (entityno < 0)
+	return;
 
     if (dir[entityno]->param <= pstart) {
 	bu_log("Illegal parameter pointer for entity D%07d (%s)\n",
