@@ -739,6 +739,39 @@ fast_simplify_pullback_samples(const ON_Surface *surface,
 }
 
 static bool
+fast_append_surface_samples(ON_SimpleArray<BrepTrimPoint> &points,
+	const ON_BrepTrim &trim, const std::vector<ON_2dPoint> &samples,
+	bool omit_last, fast_face_scratch &scratch)
+{
+    const ON_Surface *surface = trim.SurfaceOf();
+    if (!surface || samples.size() < 2)
+	return false;
+    const size_t append_count = samples.size() - (omit_last ? 1 : 0);
+    ON_SimpleArray<BrepTrimPoint> candidate;
+    for (size_t i = 0; i < append_count; ++i) {
+	const ON_2dPoint uv = UnwrapUVPoint(surface, samples[i],
+	    BREP_SAME_POINT_TOLERANCE);
+	ON_3dPoint point = ON_3dPoint::UnsetPoint;
+	ON_3dVector normal = ON_3dVector::UnsetVector;
+	if (!surface_EvNormal(surface, uv.x, uv.y, point, normal))
+	    return false;
+	BrepTrimPoint sample = {};
+	sample.p3d = scratch.make_point(point);
+	sample.n3d = NULL;
+	sample.p2d = samples[i];
+	sample.normal = normal;
+	sample.tangent = ON_3dVector::UnsetVector;
+	sample.t = ON_UNSET_VALUE;
+	sample.e = ON_UNSET_VALUE;
+	sample.trim_ind = trim.m_trim_index;
+	sample.edge_ind = trim.m_ei;
+	candidate.Append(sample);
+    }
+    points.Append(candidate.Count(), candidate.Array());
+    return true;
+}
+
+static bool
 fast_append_pullback_samples(ON_SimpleArray<BrepTrimPoint> *points,
 	const ON_BrepTrim &trim, bool omit_last, const struct bn_tol *tol,
 	double model_diagonal, fast_face_scratch &scratch, bool preserve_samples)
@@ -833,27 +866,131 @@ fast_append_pullback_samples(ON_SimpleArray<BrepTrimPoint> *points,
 	fast_simplify_pullback_samples(surface, samples, lifted_points,
 	    repair_tolerance);
 
-    const size_t append_count = samples.size() - (omit_last ? 1 : 0);
-    for (size_t i = 0; i < append_count; ++i) {
-	const ON_2dPoint uv = UnwrapUVPoint(surface, samples[i],
-	    BREP_SAME_POINT_TOLERANCE);
-	ON_3dPoint point = ON_3dPoint::UnsetPoint;
-	ON_3dVector normal = ON_3dVector::UnsetVector;
-	if (!surface_EvNormal(surface, uv.x, uv.y, point, normal))
-	    return false;
-	BrepTrimPoint sample = {};
-	sample.p3d = scratch.make_point(point);
-	sample.n3d = NULL;
-	sample.p2d = samples[i];
-	sample.normal = normal;
-	sample.tangent = ON_3dVector::UnsetVector;
-	sample.t = ON_UNSET_VALUE;
-	sample.e = ON_UNSET_VALUE;
-	sample.trim_ind = trim.m_trim_index;
-	sample.edge_ind = trim.m_ei;
-	points->Append(sample);
+    return fast_append_surface_samples(*points, trim, samples, omit_last,
+	scratch);
+}
+
+/* A polyline pcurve can interpolate across a jump between periodic images.
+ * Translating complete segments preserves their surface locus; only the
+ * segments across a jump need a new geometric interpretation.  Accept those
+ * segments only when their lifted samples agree with the existing 3-D edge. */
+static std::unique_ptr<ON_Curve>
+fast_unwrap_periodic_polyline(const ON_BrepTrim &trim,
+	const struct bn_tol *tol, double model_diagonal)
+{
+    const ON_Surface *surface = trim.SurfaceOf();
+    const ON_BrepEdge *edge = trim.Edge();
+    const ON_PolylineCurve *source = ON_PolylineCurve::Cast(trim.TrimCurveOf());
+    if (!surface || !edge || !source || source->PointCount() < 3 ||
+	(size_t)source->PointCount() > FAST_CDT_MAX_TRIM_SAMPLES)
+	return nullptr;
+
+    const double periods[2] = {
+	surface->IsPeriodic(0) ? surface->Domain(0).Length() : 0.0,
+	surface->IsPeriodic(1) ? surface->Domain(1).Length() : 0.0
+    };
+    bool crosses_seam = false;
+    for (int dir = 0; dir < 2; ++dir) {
+	if (!(periods[dir] > ON_ZERO_TOLERANCE) || !std::isfinite(periods[dir]))
+	    continue;
+	for (int pi = 1; pi < source->PointCount(); ++pi)
+	    crosses_seam = crosses_seam || fabs(source->m_pline[pi][dir] -
+		source->m_pline[pi - 1][dir]) > 0.5 * periods[dir];
     }
-    return append_count > 0;
+    if (!crosses_seam)
+	return nullptr;
+
+    std::unique_ptr<ON_Curve> curve(trim.DuplicateCurve());
+    ON_PolylineCurve *polyline = ON_PolylineCurve::Cast(curve.get());
+    if (!polyline || polyline->PointCount() < 3 ||
+	polyline->m_t.Count() != polyline->PointCount())
+	return nullptr;
+    std::vector<bool> changed((size_t)polyline->PointCount(), false);
+    for (int dir = 0; dir < 2; ++dir) {
+	const double period = periods[dir];
+	if (!(period > ON_ZERO_TOLERANCE) || !std::isfinite(period))
+	    continue;
+	double previous_shift = 0.0;
+	for (int pi = 1; pi < polyline->PointCount(); ++pi) {
+	    const double delta = polyline->m_pline[pi - 1][dir] -
+		polyline->m_pline[pi][dir];
+	    const double shift = std::round(delta / period) * period;
+	    const double half_period_guard = period * ON_SQRT_EPSILON;
+	    if (!std::isfinite(shift) ||
+		fabs(fabs(delta - shift) - 0.5 * period) <= half_period_guard)
+		return nullptr;
+	    changed[(size_t)pi] = changed[(size_t)pi] ||
+		fabs(shift - previous_shift) > half_period_guard;
+	    polyline->m_pline[pi][dir] += shift;
+	    previous_shift = shift;
+	}
+    }
+    polyline->DestroyRuntimeCache();
+    if (!polyline->IsValid())
+	return nullptr;
+
+    const ON_Interval domain = polyline->Domain();
+    const ON_Interval edge_domain = edge->Domain();
+    const double distance_cap = std::max(16.0 * tol->dist,
+	std::max(model_diagonal, 1.0) * 1.0e-4);
+    const double tolerance = std::min(distance_cap,
+	std::max(tol->dist, trim.m_tolerance[0]));
+    if (!domain.IsIncreasing() || !edge_domain.IsIncreasing() ||
+	!std::isfinite(tolerance) || !(tolerance > 0.0))
+	return nullptr;
+
+    const int validation_segments = 16;
+    for (int pi = 1; pi < polyline->PointCount(); ++pi) {
+	if (!changed[(size_t)pi])
+	    continue;
+	const ON_Interval interval(polyline->m_t[pi - 1], polyline->m_t[pi]);
+	if (!interval.IsIncreasing())
+	    return nullptr;
+	for (int sample = 0; sample <= validation_segments; ++sample) {
+	    const double t = interval.ParameterAt((double)sample /
+		validation_segments);
+	    double fraction = domain.NormalizedParameterAt(t);
+	    if (trim.m_bRev3d)
+		fraction = 1.0 - fraction;
+	    const ON_2dPoint uv = UnwrapUVPoint(surface, polyline->PointAt(t),
+		BREP_SAME_POINT_TOLERANCE);
+	    const ON_3dPoint lift = surface->PointAt(uv.x, uv.y);
+	    const ON_3dPoint reference = edge->PointAt(
+		edge_domain.ParameterAt(fraction));
+	    if (!lift.IsValid() || !reference.IsValid() ||
+		lift.DistanceTo(reference) > tolerance)
+		return nullptr;
+	}
+    }
+    return curve;
+}
+
+static bool
+fast_append_periodic_polyline(ON_SimpleArray<BrepTrimPoint> &points,
+	const ON_BrepTrim &trim, bool omit_last, const struct bn_tol *tol,
+	double model_diagonal, fast_face_scratch &scratch, bool preserve_samples)
+{
+    std::unique_ptr<ON_Curve> curve = fast_unwrap_periodic_polyline(trim,
+	tol, model_diagonal);
+    const ON_PolylineCurve *polyline = ON_PolylineCurve::Cast(curve.get());
+    if (!polyline)
+	return false;
+    const ON_Surface *surface = trim.SurfaceOf();
+    std::vector<ON_2dPoint> samples;
+    std::vector<ON_3dPoint> lifted_points;
+    for (int i = 0; i < polyline->PointCount(); ++i) {
+	const ON_2dPoint uv = UnwrapUVPoint(surface, polyline->m_pline[i],
+	    BREP_SAME_POINT_TOLERANCE);
+	const ON_3dPoint point = surface->PointAt(uv.x, uv.y);
+	if (!point.IsValid())
+	    return false;
+	samples.push_back(polyline->m_pline[i]);
+	lifted_points.push_back(point);
+    }
+    if (!preserve_samples)
+	fast_simplify_pullback_samples(surface, samples, lifted_points, tol->dist);
+    return fast_append_surface_samples(points, trim, samples, omit_last,
+	scratch);
 }
 
 static
@@ -2004,6 +2141,11 @@ get_loop_sample_points(
 	    }
 	    continue;
 	}
+
+	if (fast_append_periodic_polyline(*points, *trim,
+		lti < trim_count - 1, tol, model_diagonal, scratch,
+		options && options->preserve_pullback_samples))
+	    continue;
 
 	if (repair_pcurves && (fast_pullback_candidate(loop, *trim, tol,
 		model_diagonal) || fast_pcurve_edge_mismatch(*trim, tol,
@@ -3549,17 +3691,18 @@ fast_reconstruct_paired_periodic_strip(const ON_Surface *surface,
     return false;
 }
 
-static void
-fast_seed_full_periodic_face(const ON_Surface *surface,
-	const ON_SimpleArray<BrepTrimPoint> &boundary,
+static bool
+fast_sample_full_periodic_face(const ON_Surface *surface,
+	ON_SimpleArray<BrepTrimPoint> &boundary,
 	const struct bg_tess_tol *ttol, double model_diagonal,
-	int closed_dir, ON_2dPointArray &surface_points)
+	int closed_dir, ON_2dPointArray &surface_points,
+	fast_face_scratch &scratch)
 {
     if (!surface || boundary.Count() != 5 || !ttol)
-	return;
+	return false;
     if (closed_dir < 0 || closed_dir > 1 ||
 	    !surface->IsClosed(closed_dir))
-	return;
+	return false;
     const int open_dir = 1 - closed_dir;
 
     double relative_tolerance = ttol->rel > 0.0 ? ttol->rel : 0.01;
@@ -3592,11 +3735,38 @@ fast_seed_full_periodic_face(const ON_Surface *surface,
     const double open_delta = parameter_max[open_dir] - open_start;
     if (!(closed_delta > ON_ZERO_TOLERANCE) ||
 	    !(open_delta > ON_ZERO_TOLERANCE))
-	return;
+	return false;
+
+    /* A rectangle's periodic sides span a complete curved boundary.  Four
+     * corner constraints make their 3-D chords collapse and allow triangles
+     * to bridge across the surface.  Sample the boundary on the same grid as
+     * its interior before constructing the triangulation constraints. */
+    ON_SimpleArray<BrepTrimPoint> sampled_boundary;
+    for (int side = 0; side < boundary.Count() - 1; ++side) {
+	const ON_2dPoint start = boundary[side].p2d;
+	const ON_2dPoint delta = boundary[side + 1].p2d - start;
+	const size_t steps = std::max((size_t)1, (size_t)ceil(std::max(
+	    fabs(delta[closed_dir]) * closed_steps / closed_delta,
+	    fabs(delta[open_dir]) * open_steps / open_delta)));
+	for (size_t sample = 0; sample < steps; ++sample) {
+	    if (!sample) {
+		sampled_boundary.Append(boundary[side]);
+		continue;
+	    }
+	    const ON_2dPoint uv = start + delta * ((double)sample / steps);
+	    const int singular_side = boundary[side].from_singular ==
+		boundary[side + 1].from_singular ?
+		boundary[side].from_singular : -1;
+	    if (!fast_append_synthetic_uv(sampled_boundary, surface, uv,
+		    singular_side, scratch))
+		return false;
+	}
+    }
+    sampled_boundary.Append(boundary[boundary.Count() - 1]);
     for (size_t i = 1; i < closed_steps; ++i) {
 	for (size_t j = 1; j < open_steps; ++j) {
 	    if (surface_points.Count() >= FAST_CDT_MAX_SURFACE_SAMPLES)
-		return;
+		return false;
 	    ON_2dPoint uv = boundary[0].p2d;
 	    uv[closed_dir] = closed_start + closed_delta *
 		(double)i / (double)closed_steps;
@@ -3605,6 +3775,8 @@ fast_seed_full_periodic_face(const ON_Surface *surface,
 	    surface_points.Append(uv);
 	}
     }
+    boundary = sampled_boundary;
+    return true;
 }
 
 static bool
@@ -3784,6 +3956,18 @@ fast_rotate_periodic_boundary(const ON_Surface *surface,
 	if (cut < end - 0.05 * period)
 	    return false;
     }
+
+    /* Period translation can move an endpoint a few ulps outside the sampled
+     * interval.  Keep the exact boundary point instead of missing its segment
+     * or interpolating an unnecessary new seam vertex. */
+    const double translation_roundoff_units = 16.0;
+    const double cut_tolerance = translation_roundoff_units *
+	std::numeric_limits<double>::epsilon() * std::max({period,
+	    fabs(start), fabs(end), fabs(target_start)});
+    if (fabs(cut - start) <= cut_tolerance)
+	cut = start;
+    else if (fabs(cut - end) <= cut_tolerance)
+	cut = end;
 
     int cut_segment = -1;
     double fraction = 0.0;
@@ -5542,6 +5726,15 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
     const bool auto_detect_boundaries =
 	boundary_inference == FAST_BOUNDARY_RESOLVED;
 
+    const bool sampled_periodic_rectangle = full_periodic_face &&
+	brep_loop_points[full_periodic_outer_index]->Count() == 5;
+    if (sampled_periodic_rectangle &&
+	    !fast_sample_full_periodic_face(s,
+	    *brep_loop_points[full_periodic_outer_index], ttol,
+	    model_diagonal, full_periodic_closed_dir, on_surf_points, scratch))
+	return fast_face_report_set(diagnostic, BG_TRIANGULATION_INVALID_INPUT,
+	    "periodic surface boundary sampling failed");
+
     // process through loops building polygons.
     std::vector<detria::PointD> tpnts;
     std::vector<int> outer_polyline;
@@ -5704,14 +5897,9 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 
     const size_t boundary_point_count = tpnts.size();
 
-    getSurfacePoints(face, ttol, tol, on_surf_points, metrics,
-	model_diagonal);
-    if (full_periodic_face) {
-	on_surf_points.Empty();
-	fast_seed_full_periodic_face(s,
-	    *brep_loop_points[full_periodic_outer_index], ttol,
-	    model_diagonal, full_periodic_closed_dir, on_surf_points);
-    }
+    if (!sampled_periodic_rectangle)
+	getSurfacePoints(face, ttol, tol, on_surf_points, metrics,
+	    model_diagonal);
     if (on_surf_points.Count() >= FAST_CDT_MAX_SURFACE_SAMPLES) {
 	return fast_face_report_set(diagnostic, BG_TRIANGULATION_INVALID_INPUT,
 	    "surface sampling exceeded its point limit");

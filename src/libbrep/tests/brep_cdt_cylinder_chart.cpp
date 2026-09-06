@@ -829,6 +829,30 @@ exercise_periodic_metric_chart()
 	}
     }
 
+    ON_Brep transposed(*brep);
+    if (!transposed.m_F[0].Transpose())
+	return false;
+    std::vector<std::pair<double, double>> transposed_points(native_points);
+    for (auto &point : transposed_points)
+	std::swap(point.first, point.second);
+    cdt_face_chart transposed_chart;
+    if (!transposed_chart.build(transposed.m_F[0], transposed_points,
+	    outer, std::vector<std::vector<int>>(), std::vector<int>(),
+	    std::vector<int>(), points_3d, topology_vertices) ||
+	    transposed_chart.closed_direction() != 1) {
+	std::cerr << "transposed torus band lost its seam direction"
+	    << std::endl;
+	return false;
+    }
+    for (int i = 1; i < 5; ++i) {
+	if (!(transposed_chart.points[(size_t)low_path[i - 1]].second <
+		transposed_chart.points[(size_t)low_path[i]].second)) {
+	    std::cerr << "transposed torus band winding was not repaired"
+		<< std::endl;
+	    return false;
+	}
+    }
+
     std::vector<std::pair<double, double>> seam_hole_points =
 	native_points;
     std::vector<ON_3dPoint> seam_hole_storage = point_storage;
