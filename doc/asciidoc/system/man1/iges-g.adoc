@@ -33,11 +33,19 @@ conservatively stitched into shared manifold topology when their boundary
 curves agree within the file tolerance. Trimmed surfaces may use the finite
 natural outer boundary of their base surface. Legacy type 108 bounded planes
 and their type 402 single-parent hole associations are also supported.
-Most CSG conversions are exact; solids
-of revolution are approximated by a series of BRL-CAD cones and solids of
-linear extrusion are approximated by polysolids. BREP objects are written as
+Native CSG uses BRL-CAD primitives where representable. Supported general
+revolution and extrusion profiles use exact NURBS and primitive BRep callbacks;
+linear revolutions and circular extrusions retain native CSG when possible.
+All geometry and hierarchy are read from the same validated document.
+BREP objects are written as
 native BRL-CAD BRep objects by default; *-m* and *-p* select polygonal
 output by tessellating the validated OpenNURBS representation.
+
+If a default import contains no bounded surface or solid entities, the converter imports
+its supported drawings and datums in model space without projecting them to XY.
+Unbounded construction planes do not prevent this drawing-mode selection.
+Non-planar curves and supported composite, conic, and parametric spline curves
+can be retained as adaptively sampled NMG wire geometry.
 
 Surfaces of revolution retain their angular parameterization so their trims
 remain in the authored parameter space. Boundaries at surface poles may have
@@ -115,10 +123,8 @@ Strict, exact, and polygonal output modes reject these incomplete solids.
 The *-3*/*-d* drawing options and the *-n*/*-t* compatibility surface options
 are mutually exclusive. Both surface options use the direct B-Rep importer
 and retain native CSG members and their hierarchy. The *-o* output option is
-required. When the chosen mode cannot
-represent something present in the file, *iges-g* prints suggestions for the
-options that would convert the remaining entities. To export geometry in the
-other direction, see *g-iges*(1).
+required. Diagnostics identify unsupported or omitted geometry. To export
+geometry in the other direction, see *g-iges*(1).
 
 [[options]]
 == OPTIONS
@@ -129,6 +135,11 @@ other direction, see *g-iges*(1).
 *-d*::
   Convert IGES drawings to native BRL-CAD sketch and annotation objects,
   preserving text, leaders, grouping, and style metadata when possible.
+
+*--legacy-drawings*::
+  Request NMG wire geometry for supported drawing curves. This compatibility
+  option uses the C++ document reader; it does not select a separate parser.
+  Use with *-d* or *-3* to select drawing import explicitly.
 
 *-n*::
   Import supported surfaces directly as OpenNURBS BReps, as in the default
@@ -163,8 +174,8 @@ other direction, see *g-iges*(1).
   combine it with *--repair safe* for source-resolution-based bounded repairs.
   In best-effort mode this is a repair target, not a final omission cutoff.
   This does not change initial fitting accuracy or enable repairs under
-  *--exact*, *--strict*, or *--repair none*. It does not affect legacy
-  polygonal or drawing conversion modes.
+  *--exact*, *--strict*, or *--repair none*. It does not set the drawing-wire
+  sampling tolerance.
 
 *--max-repair-tolerance* _mm_::
   Permit model-space boundary reconstruction and parameter-space trim-loop
@@ -184,8 +195,8 @@ other direction, see *g-iges*(1).
 *--report* _file.json_::
   Write structured parser and import diagnostics to a JSON file, including
   valid and invalid solid counts, unreconstructed faces, unresolved hierarchy
-  members, legacy conversion results, and post-recovery reassembly counts.
-  An import producing no supported geometry fails, including in legacy modes.
+  members, native-solid and wire conversion counts, and post-recovery reassembly
+  counts. An import producing no supported geometry fails in every mode.
 
 *-o* _database.g_::
   Specify the output BRL-CAD database file. This option is required.
@@ -194,9 +205,9 @@ other direction, see *g-iges*(1).
   distinct files, including through symbolic links or hard links.
 
 *-N* _solid_name_::
-  Name the single solid created by the *-n* or *-t* option. If not given, the
-  default name "all" (or a unique variant) is used. Ignored for all other
-  modes.
+  Name the output root combination. The default is *iges_geometry* for solid
+  and surface imports or *iges_drawing* for drawings, with a unique suffix if
+  needed. This option applies to all import modes.
 
 *-x* _rt_debug_flag_::
   Set the librt debug flag, given as a hexadecimal value. See _raytrace.h_ for

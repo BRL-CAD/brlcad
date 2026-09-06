@@ -17,6 +17,12 @@ elseif(CASE STREQUAL "inward_shell")
   set(create_failure
     "put ${failed_object} bot mode volume orient rh flags {} V {{0 0 0} {10 0 0} {0 10 0} {0 0 10}} F {{0 1 2} {0 3 1} {0 2 3} {1 3 2}}")
   set(diagnostic "has no outer shell")
+elseif(CASE STREQUAL "submodel")
+  # A generic fallback reaches a SUBMODEL tessellator with a null region.
+  # Keep this unsupported type outside the qualified IGES callback set.
+  set(failed_object submodel.s)
+  set(create_failure "put ${failed_object} submodel file {} treetop valid.c meth 0")
+  set(diagnostic "primitive type is not supported")
 else()
   message(FATAL_ERROR "Unknown export failure case: ${CASE}")
 endif()

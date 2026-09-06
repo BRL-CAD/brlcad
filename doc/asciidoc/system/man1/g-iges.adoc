@@ -30,8 +30,7 @@ no usable primitive B-Rep conversion is available; it is controlled by the
 tessellation tolerances. Native OpenNURBS B-Reps
 are written with IGES manifold topology (type 186), preserving shared vertices,
 edges, loops, faces, shells, and NURBS geometry. The *-f*, *-t*, and *-m*
-options select alternative output modes; they are mutually exclusive, and the
-last one given wins.
+options select alternative output modes and are mutually exclusive.
 
 CLINE plate-mode geometry is exported with fixed wall thickness. Its native
 ray-dependent line-of-sight thickness cannot be represented exactly in IGES;
@@ -40,6 +39,10 @@ the exporter reports this limitation.
 If no output file is given with *-o*, the IGES file is written to standard
 output. The inverse translation, from IGES to BRL-CAD, is performed by
 *iges-g*(1).
+
+Long conversions report their current operation, elapsed time, and completed
+top-level selections about every five seconds. Counts describe source items,
+not an estimate of remaining time.
 
 [[options]]
 == OPTIONS
@@ -55,19 +58,23 @@ output. The inverse translation, from IGES to BRL-CAD, is performed by
   region.
 
 *-m*::
-  Multi-file output: write a separate IGES file for each converted region.
+  Multi-file output: write a separate IGES file for each converted region occurrence.
   Implies *-t*, and the *-o* argument must name an existing directory in which
-  the per-region files are created.
+  the per-region files are created. Repeated regions retain their individual
+  assembly placements. Names are sanitized and numbered to avoid overwriting
+  another occurrence or an existing file.
 
 *-s*::
-  Write the faces of B-Rep objects as planar NURBS surfaces.
+  Write NMG facets using NURBS surfaces and boundary curves instead of analytic
+  planes and lines. This does not tessellate native OpenNURBS B-Reps.
 
 *--flatten-brep*::
   Write native OpenNURBS B-Reps as independent type 144 trimmed surfaces
   instead of type 186 manifold topology. This compatibility mode is intended
   for older readers that do not implement IGES 5.3 B-Rep entities. Exact
   surfaces and trimming curves are retained, but shared topology is not
-  represented explicitly in the file.
+  represented explicitly in the file. The faces remain grouped so instances
+  reference the entire original object.
 
 *-a* _abs_tol_::
   Absolute tessellation tolerance, in millimeters. Default 0.0 (disabled).
@@ -82,10 +89,12 @@ output. The inverse translation, from IGES to BRL-CAD, is performed by
   Minimum distance between distinct points, in millimeters. Default 0.0005.
 
 *-P* _ncpu_::
-  Number of processors to use during tessellation. Default 1.
+  Requested maximum worker count. Default 1. IGES conversion currently runs
+  serially to protect record ordering and NMG error recovery; larger positive
+  values are accepted with a diagnostic.
 
 *-v*::
-  Verbose output; repeat for more detail.
+  Include entity-type counts in the export summary.
 
 *-x* _rt_debug_::
   Set the *librt* raytrace debug flag (hexadecimal). See raytrace.h for values.
@@ -95,7 +104,10 @@ output. The inverse translation, from IGES to BRL-CAD, is performed by
 
 *-o* _output_file_::
   Write the IGES output to _output_file_ instead of standard output. With *-m*,
-  this argument must be a directory.
+  this argument must be a directory. File output is staged beside its destination.
+  Input/output aliases are rejected before writing, and an I/O failure does not
+  replace an existing destination. A diagnosed partial conversion may publish
+  its usable geometry while returning a nonzero status.
 
 [[examples]]
 == EXAMPLES

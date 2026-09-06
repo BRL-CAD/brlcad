@@ -11,40 +11,21 @@
 #define CONV_IGES_IGES_IMPORT_H
 
 #include "common.h"
-#include <stddef.h>
-#include <stdint.h>
+#include <cstddef>
+#include <cstdint>
+#include <functional>
+#include <string>
+#include <vector>
+#include "iges_document.h"
 
 struct rt_wdb;
 
-/* Dimensionless fraction of a local model-space boundary's box diagonal. */
-#define IGES_DEFAULT_RELATIVE_TOLERANCE 1.0e-4
-
-enum iges_geometry_output {
-    IGES_OUTPUT_BREP,
-    IGES_OUTPUT_MESH,
-    IGES_OUTPUT_POLYGON
-};
-
-#ifdef __cplusplus
-extern "C"
-#endif
-int iges_is_native_csg(int type);
-
-/* Counts describe completed source items in the named stage, not elapsed
- * work.  Recovery may revisit an item without advancing these counts. */
-typedef void (*iges_progress_callback)(const char *stage, const char *activity,
-    size_t completed, size_t total, int64_t entity);
-
-#ifdef __cplusplus
-
-#  include <functional>
-#  include <string>
-#  include <vector>
-
-#  include "iges_document.h"
-
 namespace brlcad {
 namespace iges {
+
+// Dimensionless fraction of a local model-space boundary's box diagonal.
+constexpr double DEFAULT_RELATIVE_TOLERANCE = 1.0e-4;
+enum class GeometryOutput { Brep, Mesh, Polygon };
 
 enum class RepairMode {
     None,
@@ -69,15 +50,16 @@ enum class InvalidBrepPolicy {
 };
 
 struct ImportOptions {
-    enum iges_geometry_output output = IGES_OUTPUT_BREP;
+    GeometryOutput output = GeometryOutput::Brep;
     RepairMode repair = RepairMode::BestEffort;
     InvalidBrepPolicy invalid_brep = InvalidBrepPolicy::Preserve;
     bool exact = false;
     bool strict = false;
     double default_plate_thickness = 0.0;
     double maximum_repair_tolerance = 0.0;
-    double relative_tolerance = IGES_DEFAULT_RELATIVE_TOLERANCE;
+    double relative_tolerance = DEFAULT_RELATIVE_TOLERANCE;
     bool project_drawings = true;
+    bool wire_drawings = false;
     std::string root_name = "iges_drawing";
     /* Called synchronously; library imports remain silent unless supplied. */
     std::function<void(const char *, const char *, size_t, size_t, int64_t)> progress;
@@ -86,7 +68,9 @@ struct ImportOptions {
 struct ImportStatistics {
     size_t entities_read = 0;
     size_t objects_written = 0;
+    size_t unresolved_output_references = 0;
     size_t annotations_written = 0;
+    size_t wire_objects_written = 0;
     size_t datums_written = 0;
     size_t semantic_groups_written = 0;
     size_t omitted = 0;
@@ -120,18 +104,6 @@ bool write_import_report(const std::string &path, const Document &document,
 } /* namespace iges */
 } /* namespace brlcad */
 
-#endif /* __cplusplus */
-
-__BEGIN_DECLS
-
-/** C bridge used by the compatible iges-g command while its native-solid
- * handlers are migrated independently.  Returns 1 on success, 0 when no
- * semantic drawing objects were applicable, and -1 on error. */
-int iges_import_annotations(const char *path, struct rt_wdb *wdbp,
-    int project_to_xy, int exact, int strict, const char *repair_mode,
-    const char *root_name, const char *report_path, iges_progress_callback progress);
-
-__END_DECLS
 
 #endif /* CONV_IGES_IGES_IMPORT_H */
 

@@ -384,8 +384,8 @@ case "x$rtinfo" in
     *) log "ERROR: native BRep round-trip did not preserve box topology: $rtinfo" ; STATUS="`expr $STATUS + 1`" ; export STATUS ;;
 esac
 
-# Verify both a legacy-only report and a mixed modern/legacy assembly.  The
-# dotted surface label exercises name reconciliation across the two paths.
+# Verify native CSG reports and mixed assemblies.  The dotted surface label
+# exercises source-to-database name reconciliation.
 for fixture in native-csg mixed-assembly name-collision mixed-subfigure hollerith-boundary numeric-boundary ; do
     run $IGESG --strict --report iges.$fixture.json -o iges.$fixture.g "$1/src/conv/iges/tests/$fixture.igs"
     if ! grep -q '"success": true' iges.$fixture.json ||
@@ -403,7 +403,7 @@ case "$numeric_sphere" in
     *) log "ERROR: record-boundary numeric parsing changed the radius: $numeric_sphere" ; STATUS="`expr $STATUS + 1`" ;;
 esac
 
-# Compatibility surface switches must still complete deferred mixed hierarchy.
+# Compatibility surface switches must still complete mixed hierarchy.
 for mode in n t ; do
     run $IGESG -$mode --strict -N selected_root --report iges.mixed-$mode.json \
         -o iges.mixed-$mode.g "$1/src/conv/iges/tests/mixed-subfigure.igs"
@@ -456,7 +456,7 @@ esac
 run $IGESG --report iges.bad-property.json -o iges.bad-property.g "$1/src/conv/iges/tests/bad-property.igs"
 $IGESG --strict -o iges.protected.g "$1/src/conv/iges/tests/bad-property.igs" >> "$LOGFILE" 2>&1
 if test $? -ne 1 || ! cmp -s iges.protected.g iges.brep.g ||
-   ! grep -q 'invalid_legacy_reference' iges.bad-property.json ; then
+   ! grep -q 'invalid_property_reference' iges.bad-property.json ; then
     log "ERROR: invalid name-property reference was not handled safely"
     STATUS="`expr $STATUS + 1`"
 fi
@@ -520,7 +520,7 @@ if test "x$flat_faces" != "x6" -o "x$flat_solids" != "x0" ; then
     export STATUS
 fi
 run $IGESG --strict --repair none -o iges.brep.flat.g iges.brep.flat.iges
-flatobj=`$MGED -c iges.brep.flat.g "ls" 2>&1 | tr -d '\r' | awk '{print $1}' | head -1`
+flatobj=`$MGED -c iges.brep.flat.g "search -type brep" 2>&1 | tr -d '\r' | awk '{print $1}' | head -1`
 flatinfo=`$MGED -c iges.brep.flat.g "brep $flatobj info" 2>&1 | tr -d '\r'`
 case "x$flatinfo" in
     *"Valid: YES, Solid: YES"*"faces:     6"*"edges:     12"*"vertices:  8"*) : ;;
@@ -545,7 +545,7 @@ else
     else
 	run $GIGES --flatten-brep -o iges.brep.plate.iges "$plate_source" "$direct_brep_name.0"
 	run $IGESG --strict --repair none -o iges.brep.plate-default.g iges.brep.plate.iges
-	plate_obj=`$MGED -c iges.brep.plate-default.g "ls" 2>&1 | tr -d '\r' | awk '{print $1}' | head -1`
+	plate_obj=`$MGED -c iges.brep.plate-default.g "search -type brep" 2>&1 | tr -d '\r' | awk '{print $1}' | head -1`
 	plate_info=`$MGED -c iges.brep.plate-default.g "brep $plate_obj info" 2>&1 | tr -d '\r'`
 	case "x$plate_info" in
 	    *"Valid: YES, Solid: NO, Plate mode: YES[0.000000 (COS)]"*) : ;;
@@ -555,7 +555,7 @@ else
 	run $IGESG --strict --repair none --default-plate-thickness 1 \
 	    --report iges.brep.plate-thick.json \
 	    -o iges.brep.plate-thick.g iges.brep.plate.iges
-	plate_obj=`$MGED -c iges.brep.plate-thick.g "ls" 2>&1 | tr -d '\r' | awk '{print $1}' | head -1`
+	plate_obj=`$MGED -c iges.brep.plate-thick.g "search -type brep" 2>&1 | tr -d '\r' | awk '{print $1}' | head -1`
 	plate_info=`$MGED -c iges.brep.plate-thick.g "brep $plate_obj info" 2>&1 | tr -d '\r'`
 	case "x$plate_info" in
 	    *"Valid: YES, Solid: NO, Plate mode: YES[1.000000 (COS)]"*) : ;;

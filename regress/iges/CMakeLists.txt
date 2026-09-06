@@ -4,7 +4,15 @@ if(SH_EXEC AND TARGET mged AND TARGET asc2g)
 endif(SH_EXEC AND TARGET mged AND TARGET asc2g)
 
 if(TARGET g-iges AND TARGET iges-g AND TARGET asc2g AND TARGET mged AND TARGET test_iges_rays AND TARGET test_iges_brep)
-  foreach(case metadata inward_shell)
+  foreach(case aliases write_failure multi_file representations drawing_default)
+    brlcad_add_test(NAME iges_io_${case}
+      COMMAND ${CMAKE_COMMAND}
+        "-DGIGES=$<TARGET_FILE:g-iges>" "-DIGESG=$<TARGET_FILE:iges-g>"
+        "-DMGED=$<TARGET_FILE:mged>" "-DRAY_CHECK=$<TARGET_FILE:test_iges_rays>"
+        "-DCASE=${case}" "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}/io-${case}"
+        -P "${CMAKE_SOURCE_DIR}/src/conv/iges/tests/io.cmake")
+  endforeach()
+  foreach(case metadata inward_shell submodel)
     brlcad_add_test(NAME iges_export_failure_${case}
       COMMAND ${CMAKE_COMMAND}
         "-DGIGES=$<TARGET_FILE:g-iges>" "-DIGESG=$<TARGET_FILE:iges-g>"

@@ -14,19 +14,21 @@
 #include "iges_import.h"
 
 struct rt_wdb;
-struct iges_brep_context;
 
-#ifdef __cplusplus
 
-#  include <cstddef>
-#  include <string>
-#  include <vector>
+#include <cstddef>
+#include <string>
+#include <vector>
 
 namespace brlcad {
 namespace iges {
 
 struct BrepImportStatistics {
     size_t entities_read = 0;
+    size_t objects_written = 0;
+    size_t unresolved_output_references = 0;
+    size_t native_solids_seen = 0;
+    size_t native_solids_written = 0;
     size_t solids_seen = 0;
     size_t trimmed_surfaces_seen = 0;
     size_t bounded_surfaces_seen = 0;
@@ -67,24 +69,6 @@ bool write_brep_import_report(const std::string &path,
 } /* namespace iges */
 } /* namespace brlcad */
 
-#endif /* __cplusplus */
-
-__BEGIN_DECLS
-
-/** Command-line bridge.  Returns 1 for a completed import, 2 when native CSG
- * remains (transferring ownership of the pending hierarchy to the caller),
- * 0 if no supported geometry was found, and -1 on failure.  A pending import
- * must be completed after registering native primitives, or cancelled. */
-int iges_import_breps(const char *path, struct rt_wdb *wdbp, int exact,
-    int strict, const char *repair_mode, double default_plate_thickness,
-    double maximum_repair_tolerance, double relative_tolerance, const char *root_name,
-    const char *report_path, int output_mode, iges_progress_callback progress,
-    struct iges_brep_context **pending);
-void iges_brep_register_legacy(struct iges_brep_context *pending, int entity, const char *name);
-int iges_finish_brep_import(struct iges_brep_context **pending, const char *report_path);
-void iges_cancel_brep_import(struct iges_brep_context *pending);
-
-__END_DECLS
 
 #endif /* CONV_IGES_IGES_BREP_IMPORT_H */
 

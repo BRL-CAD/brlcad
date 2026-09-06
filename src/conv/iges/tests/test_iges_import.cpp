@@ -11,6 +11,8 @@
 
 #include "../iges_brep_import.h"
 #include "../iges_import.h"
+#include "../iges_native.h"
+#include "../iges_runtime.h"
 
 #include <algorithm>
 #include <array>
@@ -686,6 +688,119 @@ test_nested_instances()
     passed = expect(run_import(empty_instances, options, result, [](struct rt_wdb *) { return true; }) &&
 	result.success && result.statistics.unresolved_members == 1 && result.statistics.omitted == 3,
 	"repeated empty definitions multiplied unresolved source-member counts") && passed;
+    return passed;
+}
+
+bool
+test_native_profiles()
+{
+    using namespace brlcad::iges;
+    const std::vector<Entity> entities = {
+	{112, 0, "CUBIC", "112,3,0,3,1,2,4,1,2,3,4,5,-1,0,2,7,3,1,0;", 3},
+	{124, 0, "SHIFT", "124,1,0,0,100,0,1,0,0,0,0,1,0;"},
+	{102, 0, "PROFILE", "102,2,1,7;", 9},
+	{106, 12, "SPACE", "106,2,3,0,0,0,1,1,0,1,1,1;"},
+	{124, 0, "PARENT", "124,1,0,0,0,0,1,0,10,0,0,1,0;"},
+	{102, 0, "CYCLE", "102,1,11;"}
+    };
+    const auto document = Document::parse_buffer(sample(entities, "native profile coverage"));
+    ProfileCurves curves;
+    std::string error;
+    bool passed = expect(document.valid() && read_model_curves(document, EntityId(5), curves, error) &&
+	curves.size() == 3, "composite spline and copious-data profile was not read");
+    if (curves.size() == 3) {
+	const auto midpoint = curves[0]->PointAt(curves[0]->Domain().Mid());
+	passed = expect(midpoint.DistanceTo(ON_3dPoint(110, 16, 11)) < ON_ZERO_TOLERANCE,
+	    "power-basis spline evaluation or nested placement changed") && passed;
+	passed = expect(curves[2]->PointAtEnd().DistanceTo(ON_3dPoint(1, 11, 1)) < ON_ZERO_TOLERANCE,
+	    "copious-data profile placement changed") && passed;
+    }
+    curves.clear();
+    passed = expect(!read_model_curves(document, EntityId(11), curves, error),
+	"cyclic composite profile was accepted") && passed;
+
+    char path[MAXPATHLEN] = {0};
+    File temporary(bu_temp_file(path, sizeof(path)));
+    if (!temporary)
+	return false;
+    close_file(temporary);
+    std::unique_ptr<struct rt_wdb, decltype(&wdb_close)> database(wdb_fopen(path), wdb_close);
+    if (!database)
+	return false;
+    const auto *profile = document.entity(EntityId(5));
+    passed = expect(profile && write_wire_curves(document, *profile,
+	database.get(), "profile.wire", false, error),
+	"model-space wire conversion failed") && passed;
+    Internal internal;
+    const auto *entry = db_lookup(database->dbip, "profile.wire", LOOKUP_QUIET);
+    passed = expect(entry && rt_db_get_internal(&internal.value, entry, database->dbip, nullptr) >= 0 &&
+	internal.value.idb_type == ID_NMG, "wire geometry did not retain NMG representation") && passed;
+    database.reset();
+    bu_file_delete(path);
+    return passed;
+}
+
+bool
+test_native_metadata()
+{
+    using namespace brlcad::iges;
+    for (const std::string suffix : {"2", "0,2,3", "0,1,0", "0,-1", "0,1,999"}) {
+	const auto document = Document::parse_buffer(sample({
+	    {158, 0, "SPHERE", "158,1,0,0,0," + suffix + ';'}}, "invalid native metadata"));
+	ImportOptions options;
+	BrepImportResult result;
+	const auto inspect = [](struct rt_wdb *) { return true; };
+	if (!expect(document.valid() && run_import(document, options, result, inspect) &&
+	    result.success && result.statistics.native_solids_written == 1 &&
+	    has_diagnostic(result, "invalid_property_reference"),
+	    "invalid optional metadata discarded usable geometry or lacked a warning"))
+	    return false;
+	options.strict = true;
+	if (!expect(run_import(document, options, result, inspect) && !result.success,
+	    "strict import accepted invalid native metadata"))
+	    return false;
+    }
+    return true;
+}
+
+bool
+test_nested_drawings()
+{
+    using namespace brlcad::iges;
+    const std::vector<Entity> entities = {
+	{110, 0, "LINE", "110,0,0,0,10,0,0;"},
+	{308, 0, "OUTER", "308,0,5HOUTER,1,5;"},
+	{408, 0, "CHILD", "408,7,10,20,30,2;"},
+	{308, 0, "INNER", "308,0,5HINNER,1,1;"},
+	{408, 0, "ROOT", "408,3,100,0,0,1;"}
+    };
+    const auto document = Document::parse_buffer(sample(entities, "nested drawing definitions"));
+    char path[MAXPATHLEN] = {0};
+    File temporary(bu_temp_file(path, sizeof(path)));
+    if (!document.valid() || !temporary)
+	return false;
+    close_file(temporary);
+    std::unique_ptr<struct rt_wdb, decltype(&wdb_close)> database(wdb_fopen(path), wdb_close);
+    if (!database)
+	return false;
+    ImportOptions options;
+    options.project_drawings = false;
+    options.strict = true;
+    const auto result = import_annotations(document, database.get(), options);
+    bool passed = expect(result.success && result.statistics.semantic_groups_written == 4 &&
+	!result.statistics.omitted, "nested drawing hierarchy was not completed");
+    const auto *entry = db_lookup(database->dbip, "OUTER.annot_def", LOOKUP_QUIET);
+    Internal internal;
+    if (!entry || rt_db_get_internal(&internal.value, entry, database->dbip, nullptr) < 0)
+	passed = false;
+    else {
+	const auto *combination = static_cast<const struct rt_comb_internal *>(internal.value.idb_ptr);
+	passed = expect(combination->tree && combination->tree->tr_op == OP_DB_LEAF &&
+	    BU_STR_EQUAL(combination->tree->tr_l.tl_name, "INNER_instance_D5.annot_instance"),
+	    "outer drawing definition lost its nested instance") && passed;
+    }
+    database.reset();
+    bu_file_delete(path);
     return passed;
 }
 
@@ -1683,6 +1798,9 @@ main(int argc, char **argv)
     passed = test_import_progress() && passed;
     passed = test_post_recovery_assembly() && passed;
     passed = test_nested_instances() && passed;
+    passed = test_native_profiles() && passed;
+    passed = test_native_metadata() && passed;
+    passed = test_nested_drawings() && passed;
     passed = test_bounded_surface_tolerance() && passed;
     passed = test_singular_boundary() && passed;
     passed = test_trim_loop_tolerance() && passed;

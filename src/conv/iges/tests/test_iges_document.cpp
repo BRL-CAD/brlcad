@@ -245,6 +245,86 @@ test_missing_section()
 	    "missing section diagnostic is absent");
 }
 
+bool
+test_field_boundaries()
+{
+    using namespace brlcad::iges;
+    constexpr size_t GLOBAL_WIDTH = 72;
+    constexpr size_t PARAMETER_WIDTH = 64;
+    enum class Kind { Real, Integer, String, Empty, InvalidReal, InvalidInteger };
+    struct Case { std::string field; Kind kind; double number; std::string text; };
+    const std::vector<Case> cases = {
+	{"120", Kind::Integer, 120, {}}, {"-120", Kind::Integer, -120, {}},
+	{"+120", Kind::Integer, 120, {}}, {" 120 ", Kind::Integer, 120, {}},
+	{"-1.25", Kind::Real, -1.25, {}}, {"+1.2D+02", Kind::Real, 120, {}},
+	{"1.2d+02", Kind::Real, 120, {}}, {"", Kind::Empty, 0, {}},
+	{"   ", Kind::Empty, 0, {}}, {"5Hhello", Kind::String, 0, "hello"},
+	{"8Ha,^;!xyz", Kind::String, 0, "a,^;!xyz"},
+	{"15H20260905.000000", Kind::String, 0, "20260905.000000"},
+	{"13H260905.000000", Kind::String, 0, "260905.000000"},
+	{"1junk", Kind::InvalidReal, 0, {}}, {"NaN", Kind::InvalidReal, 0, {}},
+	{"Inf", Kind::InvalidReal, 0, {}}, {"1e9999", Kind::InvalidReal, 0, {}},
+	{"1e-9999", Kind::InvalidReal, 0, {}}, {"1junk", Kind::InvalidInteger, 0, {}},
+	{std::string(1024, '1'), Kind::InvalidInteger, 0, {}}
+    };
+    for (bool custom : {false, true}) {
+	const char separator = custom ? '^' : ',';
+	const char terminator = custom ? '!' : ';';
+	const std::string delimiters = std::string("1H") + separator + separator + "1H" + terminator;
+	for (bool global : {false, true}) {
+	    const size_t width = global ? GLOBAL_WIDTH : PARAMETER_WIDTH;
+	    for (size_t offset = 0; offset <= width; ++offset) {
+		for (const auto &test : cases) {
+		    const std::string values = std::string(offset, ' ') + test.field + separator + '7' + terminator;
+		    const std::string global_data = delimiters + (global ? separator + values : std::string(1, terminator));
+		    const std::string parameter_data = "110" + std::string(1, separator) +
+			(global ? std::string("0") + terminator : values);
+		    const size_t parameter_lines = (parameter_data.size() + PARAMETER_WIDTH - 1) / PARAMETER_WIDTH;
+		    std::string input = record("field boundary test", 'S', 1) + '\n';
+		    for (size_t start = 0; start < global_data.size(); start += GLOBAL_WIDTH)
+			input += record(global_data.substr(start, GLOBAL_WIDTH), 'G', start / GLOBAL_WIDTH + 1) + '\n';
+		    input += directory_first(110, 1, 1) + '\n' + directory_second(110, parameter_lines, 2) + '\n';
+		    for (size_t start = 0; start < parameter_data.size(); start += PARAMETER_WIDTH)
+			input += parameter_record(parameter_data.substr(start, PARAMETER_WIDTH), 1, start / PARAMETER_WIDTH + 1) + '\n';
+		    input += record("", 'T', 1) + '\n';
+		    const auto document = Document::parse_buffer(input);
+		    if (!expect(document.valid(), "field boundary fixture failed to parse"))
+			return false;
+		    Parameter value, following;
+		    if (global) {
+			if (!expect(document.global().parameters.size() == 4, "global fields were lost"))
+			    return false;
+			value.raw = document.global().parameters[2];
+			following.raw = document.global().parameters[3];
+		    } else {
+			const auto *parameters = document.parameters(EntityId(1));
+			if (!expect(parameters && parameters->values.size() == 3, "parameter fields were lost"))
+			    return false;
+			value = parameters->values[1];
+			following = parameters->values[2];
+		    }
+		    double number = 0.0;
+		    int64_t integer = 0;
+		    std::string text;
+		    bool correct = false;
+		    switch (test.kind) {
+			case Kind::Real: correct = value.real(number) && NEAR_EQUAL(number, test.number, SMALL_FASTF); break;
+			case Kind::Integer: correct = value.integer(integer) && integer == static_cast<int64_t>(test.number); break;
+			case Kind::String: correct = value.string(text) && text == test.text; break;
+			case Kind::Empty: correct = value.empty(); break;
+			case Kind::InvalidReal: correct = !value.real(number); break;
+			case Kind::InvalidInteger: correct = !value.integer(integer); break;
+		    }
+		    if (!expect(correct, "field value changed at a physical record boundary") ||
+			!expect(following.integer(integer) && integer == 7, "following field was consumed"))
+			return false;
+		}
+	    }
+	}
+    }
+    return true;
+}
+
 } /* namespace */
 
 int
@@ -273,6 +353,7 @@ main(int argc, char **argv)
     passed = test_inferred_parameter_count() && passed;
     passed = test_blank_overrun() && passed;
     passed = test_missing_section() && passed;
+    passed = test_field_boundaries() && passed;
     return passed ? 0 : 1;
 }
 

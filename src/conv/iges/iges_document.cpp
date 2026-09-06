@@ -82,6 +82,12 @@ parse_integer(const std::string &input, int64_t &value)
 
     const char *first = field.data();
     const char *last = first + field.size();
+    // Unlike IGES integers, from_chars does not accept a leading plus.
+    if (*first == '+') {
+	++first;
+	if (first == last || *first < '0' || *first > '9')
+	    return false;
+    }
     const std::from_chars_result result = std::from_chars(first, last, value, 10);
     return result.ec == std::errc() && result.ptr == last;
 }

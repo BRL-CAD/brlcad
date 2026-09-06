@@ -10,6 +10,9 @@
 #include "common.h"
 
 #include "iges_import.h"
+#include "iges_report.h"
+#include "iges_parameters.h"
+#include "iges_native.h"
 
 #include <algorithm>
 #include <array>
@@ -36,28 +39,13 @@
 #include "rt/primitives/datum.h"
 #include "wdb.h"
 
-extern "C" int
-iges_is_native_csg(int type)
-{
-    switch (type) {
-	case 150: case 152: case 154: case 156: case 158:
-	case 160: case 162: case 164: case 168:
-	    return 1;
-	default:
-	    return 0;
-    }
-}
 
 namespace brlcad {
 namespace iges {
 namespace {
 
-constexpr size_t GLOBAL_MODEL_SCALE = 12;
-constexpr size_t GLOBAL_UNITS_FLAG = 13;
 constexpr size_t GLOBAL_LINE_GRADATIONS = 15;
 constexpr size_t GLOBAL_MAX_LINE_WIDTH = 16;
-constexpr double DEFAULT_MODEL_SCALE = 1.0;
-constexpr double DEFAULT_UNIT_TO_MM = 1.0;
 constexpr double MIN_VECTOR_LENGTH = 1.0e-12;
 constexpr double COPLANAR_RELATIVE_TOLERANCE = 1.0e-9;
 constexpr double ARC_RADIUS_REPAIR_LIMIT = 1.0e-6;
@@ -128,7 +116,6 @@ struct AnnotationData {
     std::vector<Segment> segments;
 };
 
-double unit_scale(const GlobalSection &global);
 
 class Translator {
 public:
@@ -144,6 +131,7 @@ public:
 
 private:
     bool translate(const DirectoryEntry &entry, const std::string &name);
+    bool translate_wire(const DirectoryEntry &entry, const std::string &name);
     bool translate_point(const DirectoryEntry &entry, const std::string &name);
     bool translate_line(const DirectoryEntry &entry, const std::string &name);
     bool translate_arc(const DirectoryEntry &entry, const std::string &name);
@@ -261,80 +249,6 @@ multiply(const Matrix &left, const Matrix &right)
     return result;
 }
 
-bool
-parameter_real(const ParameterList *parameters, size_t index, double &value)
-{
-    return parameters && index < parameters->values.size() &&
-	parameters->values[index].real(value);
-}
-
-bool
-parameter_integer(const ParameterList *parameters, size_t index, int &value)
-{
-    int64_t parsed = 0;
-    if (!parameters || index >= parameters->values.size() ||
-	    !parameters->values[index].integer(parsed) ||
-	    parsed < std::numeric_limits<int>::min() ||
-	    parsed > std::numeric_limits<int>::max())
-	return false;
-    value = static_cast<int>(parsed);
-    return true;
-}
-
-bool
-parameter_entity(const ParameterList *parameters, size_t index, EntityId &value)
-{
-    return parameters && index < parameters->values.size() &&
-	parameters->values[index].entity(value) && !value.empty();
-}
-
-
-bool
-parameter_string(const ParameterList *parameters, size_t index,
-    std::string &value)
-{
-    return parameters && index < parameters->values.size() &&
-	parameters->values[index].string(value);
-}
-
-double
-global_real(const GlobalSection &global, size_t index, double fallback)
-{
-    if (index >= global.parameters.size())
-	return fallback;
-    char *end = nullptr;
-    std::string value = global.parameters[index];
-    std::replace(value.begin(), value.end(), 'D', 'E');
-    std::replace(value.begin(), value.end(), 'd', 'e');
-    const double parsed = std::strtod(value.c_str(), &end);
-    return end == value.c_str() + value.size() && std::isfinite(parsed) ?
-	parsed : fallback;
-}
-
-int
-global_integer(const GlobalSection &global, size_t index, int fallback)
-{
-    const double parsed = global_real(global, index, fallback);
-    return parsed >= std::numeric_limits<int>::min() &&
-	parsed <= std::numeric_limits<int>::max() ?
-	static_cast<int>(parsed) : fallback;
-}
-
-double
-unit_scale(const GlobalSection &global)
-{
-    static const double to_mm[] = {
-	1.0, 25.4, 1.0, 1.0, 304.8, 1609344.0, 1000.0,
-	1000000.0, 0.0254, 0.001, 10.0, 0.0000254
-    };
-    const double model_scale = global_real(global, GLOBAL_MODEL_SCALE,
-	DEFAULT_MODEL_SCALE);
-    const int units = global_integer(global, GLOBAL_UNITS_FLAG, 2);
-    const double conversion = units > 0 &&
-	static_cast<size_t>(units) < sizeof(to_mm) / sizeof(to_mm[0]) ?
-	to_mm[units] : DEFAULT_UNIT_TO_MM;
-    return conversion / (model_scale > 0.0 ? model_scale : DEFAULT_MODEL_SCALE);
-}
 
 bool
 plane_from_points(const std::vector<Point3> &points, Plane &plane,
@@ -423,7 +337,8 @@ semantic_name(int type)
 bool
 is_drawable_type(int type)
 {
-    return type == 100 || type == 106 || type == 110 || type == 116 ||
+    return type == 100 || type == 102 || type == 104 || type == 106 ||
+	type == 110 || type == 112 || type == 116 ||
 	type == 126 || type == 212 || type == 214;
 }
 
@@ -444,30 +359,6 @@ sanitize_name(const std::string &source)
     return result;
 }
 
-std::string
-json_escape(const std::string &value)
-{
-    std::ostringstream output;
-    for (unsigned char character : value) {
-	switch (character) {
-	    case '\\': output << "\\\\"; break;
-	    case '"': output << "\\\""; break;
-	    case '\b': output << "\\b"; break;
-	    case '\f': output << "\\f"; break;
-	    case '\n': output << "\\n"; break;
-	    case '\r': output << "\\r"; break;
-	    case '\t': output << "\\t"; break;
-	    default:
-		if (character < 0x20)
-		    output << "\\u" << std::hex << std::setw(4) <<
-			std::setfill('0') << static_cast<unsigned int>(character) <<
-			std::dec << std::setfill(' ');
-		else
-		    output << static_cast<char>(character);
-	}
-    }
-    return output.str();
-}
 
 } /* namespace */
 
@@ -1035,9 +926,7 @@ Translator::translate_copious(const DirectoryEntry &entry,
 	xy_plane_from_points(points, data.plane, data.vertices) :
 	plane_from_points(points, data.plane, data.vertices);
     if (!have_plane) {
-	diagnose(Severity::Warning, "nonplanar_copious_data",
-	    "non-planar Copious Data requires the wire-geometry fallback", &entry);
-	return false;
+	return translate_wire(entry, name);
     }
     for (int i = 1; i < count; ++i) {
 	Segment segment;
@@ -1108,9 +997,7 @@ Translator::translate_nurbs(const DirectoryEntry &entry, const std::string &name
 	xy_plane_from_points(controls, data.plane, data.vertices) :
 	plane_from_points(controls, data.plane, data.vertices);
     if (!have_plane) {
-	diagnose(Severity::Warning, "nonplanar_nurbs",
-	    "non-planar B-Spline Curve requires the wire-geometry fallback", &entry);
-	return false;
+	return translate_wire(entry, name);
     }
     Segment segment;
     segment.kind = SegmentKind::Nurbs;
@@ -1414,10 +1301,28 @@ Translator::translate_leader(const DirectoryEntry &entry, const std::string &nam
 }
 
 bool
+Translator::translate_wire(const DirectoryEntry &entry, const std::string &name)
+{
+    std::string error;
+    if (!write_wire_curves(document_, entry, wdbp_, name, options_.project_drawings, error)) {
+	diagnose(Severity::Warning, "wire_curve_import", error, &entry);
+	return false;
+    }
+    write_entity_attributes(entry, name);
+    db5_update_attribute(name.c_str(), "iges.representation", "wire-polyline", wdbp_->dbip);
+    ++result_.statistics.objects_written;
+    ++result_.statistics.wire_objects_written;
+    return true;
+}
+
+bool
 Translator::translate(const DirectoryEntry &entry, const std::string &name)
 {
+    if (options_.wire_drawings && entry.type < 200 && entry.type != 116)
+	return translate_wire(entry, name);
     switch (entry.type) {
 	case 100: return translate_arc(entry, name);
+	case 102: case 104: case 112: return translate_wire(entry, name);
 	case 106: return translate_copious(entry, name);
 	case 110: return translate_line(entry, name);
 	case 116: return translate_point(entry, name);
@@ -1487,79 +1392,103 @@ Translator::write_groups()
 bool
 Translator::write_subfigures()
 {
-    for (const DirectoryEntry &entry : document_.entities()) {
-	if (entry.type != 308)
-	    continue;
-	const ParameterList *parameters = document_.parameters(entry.id);
-	int member_count = 0;
-	if (!parameter_integer(parameters, 3, member_count) || member_count < 0 ||
-		member_count > MAX_ENTITY_LIST_COUNT) {
-	    diagnose(Severity::Warning, "subfigure_definition_parameters",
-		"Subfigure Definition has an invalid member count", &entry);
-	    ++result_.statistics.omitted;
-	    continue;
-	}
-
-	std::vector<EntityId> source_members;
-	bool valid_definition = true;
-	for (int i = 0; i < member_count; ++i) {
-	    EntityId member_id;
-	    if (!parameter_entity(parameters, static_cast<size_t>(i + 4),
-		    member_id)) {
-		diagnose(Severity::Warning, "subfigure_definition_parameters",
-		    "Subfigure Definition has an invalid member reference", &entry);
-		valid_definition = false;
-		break;
+    enum class State { Visiting, Complete, Failed };
+    constexpr size_t MAX_SUBFIGURE_DEPTH = 512;
+    std::map<EntityId, State> states;
+    std::map<EntityId, std::vector<EntityId>> dependencies;
+    std::vector<const DirectoryEntry *> ordered;
+    std::function<bool(const DirectoryEntry &, size_t)> visit;
+    visit = [&](const DirectoryEntry &entry, size_t depth) {
+	const auto found = states.find(entry.id);
+	if (found != states.end())
+	    return found->second == State::Complete;
+	states[entry.id] = State::Visiting;
+	auto &references = dependencies[entry.id];
+	const auto *parameters = document_.parameters(entry.id);
+	bool valid = depth < MAX_SUBFIGURE_DEPTH;
+	if (entry.type == 308) {
+	    int count = 0;
+	    valid = valid && parameter_integer(parameters, 3, count) && count >= 0 &&
+		parameters->values.size() >= 4 && static_cast<size_t>(count) <= parameters->values.size() - 4;
+	    for (int index = 0; valid && index < count; ++index) {
+		EntityId member;
+		valid = parameter_entity(parameters, index + 4, member);
+		if (valid)
+		    references.push_back(member);
 	    }
-	    source_members.push_back(member_id);
+	} else {
+	    EntityId definition;
+	    valid = valid && parameter_entity(parameters, 1, definition);
+	    const auto *source = valid ? document_.entity(definition) : nullptr;
+	    valid = valid && source && source->type == 308;
+	    if (valid)
+		references.push_back(definition);
 	}
-	if (!valid_definition) {
+	for (EntityId reference : references) {
+	    const auto *child = document_.entity(reference);
+	    if (child && (child->type == 308 || child->type == 408))
+		valid = visit(*child, depth + 1) && valid;
+	}
+	states[entry.id] = valid ? State::Complete : State::Failed;
+	if (valid)
+	    ordered.push_back(&entry);
+	else {
+	    diagnose(Severity::Warning, "subfigure_dependencies",
+		"subfigure contains invalid, cyclic, or excessively deep dependencies", &entry);
 	    ++result_.statistics.omitted;
-	    continue;
 	}
+	return valid;
+    };
+    for (const auto &entry : document_.entities())
+	if (entry.type == 308 || entry.type == 408)
+	    visit(entry, 0);
 
-	struct wmember members;
-	BU_LIST_INIT(&members.l);
-	std::vector<EntityId> imported_members;
-	for (EntityId member_id : source_members) {
-	    const auto object = objects_.find(member_id);
-	    if (object == objects_.end())
-		continue;
-	    if (mk_addmember(object->second.c_str(), &members.l, nullptr,
+    // Definitions and instances are interdependent.  Writing all definitions
+    // first loses nested instances when they have not been created yet.
+    for (const auto *source : ordered) {
+	const auto &entry = *source;
+	if (entry.type == 308) {
+	    const ParameterList *parameters = document_.parameters(entry.id);
+	    const auto &source_members = dependencies.at(entry.id);
+	    struct wmember members;
+	    BU_LIST_INIT(&members.l);
+	    std::vector<EntityId> imported_members;
+	    for (EntityId member_id : source_members) {
+		const auto object = objects_.find(member_id);
+		if (object == objects_.end())
+		    continue;
+		if (mk_addmember(object->second.c_str(), &members.l, nullptr,
 		    WMOP_UNION) == WMEMBER_NULL) {
-		diagnose(Severity::Error, "subfigure_definition_member",
-		    "failed to add an annotation to a Subfigure Definition", &entry);
+		    diagnose(Severity::Error, "subfigure_definition_member",
+			"failed to add an annotation to a Subfigure Definition", &entry);
+		    mk_freemembers(&members.l);
+		    return false;
+		}
+		imported_members.push_back(member_id);
+	    }
+	    if (imported_members.empty())
+		continue;
+
+	    std::string source_name;
+	    parameter_string(parameters, 2, source_name);
+	    const std::string name = unique_name(entry, source_name, ".annot_def");
+	    const int write_status = mk_lfcomb(wdbp_, name.c_str(), &members, 0)
+	    if (write_status < 0) {
+		diagnose(Severity::Error, "subfigure_definition_write",
+		    "failed to write an annotation Subfigure Definition", &entry);
 		return false;
 	    }
-	    imported_members.push_back(member_id);
-	}
-	if (imported_members.empty())
+	    write_entity_attributes(entry, name);
+	    if (!source_name.empty())
+		db5_update_attribute(name.c_str(), "iges.name", source_name.c_str(), wdbp_->dbip);
+	    db5_update_attribute(name.c_str(), "iges.semantic",
+		"subfigure_definition", wdbp_->dbip);
+	    objects_[entry.id] = name;
+	    grouped_.insert(imported_members.begin(), imported_members.end());
+	    ++result_.statistics.objects_written;
+	    ++result_.statistics.semantic_groups_written;
 	    continue;
-
-	std::string source_name;
-	parameter_string(parameters, 2, source_name);
-	const std::string name = unique_name(entry, source_name, ".annot_def");
-	const int write_status = mk_lfcomb(wdbp_, name.c_str(), &members, 0)
-	if (write_status < 0) {
-	    diagnose(Severity::Error, "subfigure_definition_write",
-		"failed to write an annotation Subfigure Definition", &entry);
-	    return false;
 	}
-	write_entity_attributes(entry, name);
-	if (!source_name.empty())
-	    db5_update_attribute(name.c_str(), "iges.name", source_name.c_str(),
-		wdbp_->dbip);
-	db5_update_attribute(name.c_str(), "iges.semantic",
-	    "subfigure_definition", wdbp_->dbip);
-	objects_[entry.id] = name;
-	grouped_.insert(imported_members.begin(), imported_members.end());
-	++result_.statistics.objects_written;
-	++result_.statistics.semantic_groups_written;
-    }
-
-    for (const DirectoryEntry &entry : document_.entities()) {
-	if (entry.type != 408)
-	    continue;
 	const ParameterList *parameters = document_.parameters(entry.id);
 	EntityId definition_id;
 	if (!parameter_entity(parameters, 1, definition_id))
@@ -1781,7 +1710,7 @@ Translator::run()
 	});
     result_.success = !has_errors &&
 	(result_.statistics.annotations_written > 0 ||
-	 result_.statistics.datums_written > 0) &&
+	 result_.statistics.datums_written > 0 || result_.statistics.wire_objects_written > 0) &&
 	(!options_.strict || result_.statistics.omitted == 0);
     return result_;
 }
@@ -1796,172 +1725,9 @@ import_annotations(const Document &document, struct rt_wdb *wdbp,
 
 namespace {
 
-const char *
-severity_name(Severity severity)
-{
-    switch (severity) {
-	case Severity::Information: return "information";
-	case Severity::Warning: return "warning";
-	case Severity::Error: return "error";
-	case Severity::Fatal: return "fatal";
-    }
-    return "error";
-}
 
 } /* namespace */
 
-bool
-write_import_report(const std::string &path, const Document &document,
-    const ImportOptions &options, const ImportResult &result)
-{
-    std::ofstream output(path, std::ios::binary | std::ios::trunc);
-    if (!output)
-	return false;
-
-    output << "{\n"
-	<< "  \"format\": \"iges\",\n"
-	<< "  \"source\": \"" << json_escape(document.source_name()) << "\",\n"
-	<< "  \"success\": " << (result.success ? "true" : "false") << ",\n"
-	<< "  \"options\": {\"repair\": \""
-	<< repair_mode_name(options.repair)
-	<< "\", \"exact\": " << (options.exact ? "true" : "false")
-	<< ", \"strict\": " << (options.strict ? "true" : "false")
-	<< ", \"project_drawings\": "
-	<< (options.project_drawings ? "true" : "false") << "},\n"
-	<< "  \"statistics\": {\"entities_read\": "
-	<< result.statistics.entities_read << ", \"objects_written\": "
-	<< result.statistics.objects_written << ", \"annotations_written\": "
-	<< result.statistics.annotations_written
-	<< ", \"datums_written\": "
-	<< result.statistics.datums_written
-	<< ", \"semantic_groups_written\": "
-	<< result.statistics.semantic_groups_written << ", \"omitted\": "
-	<< result.statistics.omitted << ", \"repairs\": "
-	<< result.statistics.repairs << "},\n"
-	<< "  \"diagnostics\": [";
-
-    bool first = true;
-    const auto write_diagnostic = [&](Severity severity, const std::string &code,
-	const std::string &message, int64_t entity_id, int entity_type,
-	size_t record, size_t column) {
-	if (!first)
-	    output << ',';
-	first = false;
-	output << "\n    {\"severity\": \"" << severity_name(severity)
-	    << "\", \"code\": \"" << json_escape(code)
-	    << "\", \"message\": \"" << json_escape(message) << '"';
-	if (entity_id)
-	    output << ", \"entity\": " << entity_id;
-	if (entity_type)
-	    output << ", \"entity_type\": " << entity_type;
-	if (record)
-	    output << ", \"record\": " << record;
-	if (column)
-	    output << ", \"column\": " << column;
-	output << '}';
-    };
-    for (const Diagnostic &diagnostic : document.diagnostics())
-	write_diagnostic(diagnostic.severity, diagnostic.code, diagnostic.message,
-	    diagnostic.entity_id, diagnostic.entity_type,
-	    diagnostic.location.record, diagnostic.location.column);
-    for (const ImportDiagnostic &diagnostic : result.diagnostics)
-	write_diagnostic(diagnostic.severity, diagnostic.code, diagnostic.message,
-	    diagnostic.entity_id, diagnostic.entity_type, 0, 0);
-    if (!first)
-	output << '\n';
-    output << "  ]\n}\n";
-    return output.good();
-}
 
 } /* namespace iges */
 } /* namespace brlcad */
-
-extern "C" int
-iges_import_annotations(const char *path, struct rt_wdb *wdbp,
-    int project_to_xy, int exact, int strict, const char *repair_mode,
-    const char *root_name, const char *report_path, iges_progress_callback progress)
-{
-    if (!path || !wdbp)
-	return -1;
-    const brlcad::iges::Document document =
-	brlcad::iges::Document::parse_file(path);
-    brlcad::iges::ImportOptions options;
-    options.progress = progress;
-    options.project_drawings = project_to_xy != 0;
-    options.exact = exact != 0;
-    options.strict = strict != 0;
-    if (repair_mode && BU_STR_EQUAL(repair_mode, "none"))
-	options.repair = brlcad::iges::RepairMode::None;
-    else if (repair_mode && BU_STR_EQUAL(repair_mode, "safe"))
-	options.repair = brlcad::iges::RepairMode::Safe;
-    if (root_name && root_name[0] != '\0')
-	options.root_name = root_name;
-    const brlcad::iges::ImportResult result =
-	brlcad::iges::import_annotations(document, wdbp, options);
-
-    struct LogSummary {
-	size_t count = 0;
-	std::string message;
-	int64_t entity_id = 0;
-	size_t record = 0;
-    };
-    std::map<std::string, LogSummary> summaries;
-    for (const brlcad::iges::Diagnostic &diagnostic : document.diagnostics()) {
-	if (diagnostic.severity == brlcad::iges::Severity::Information)
-	    continue;
-	LogSummary &summary = summaries[diagnostic.code];
-	++summary.count;
-	if (summary.message.empty()) {
-	    summary.message = diagnostic.message;
-	    summary.entity_id = diagnostic.entity_id;
-	    summary.record = diagnostic.location.record;
-	}
-    }
-    for (const brlcad::iges::ImportDiagnostic &diagnostic : result.diagnostics) {
-	LogSummary &summary = summaries[diagnostic.code];
-	++summary.count;
-	if (summary.message.empty()) {
-	    summary.message = diagnostic.message;
-	    summary.entity_id = diagnostic.entity_id;
-	}
-    }
-    for (const auto &item : summaries) {
-	const LogSummary &summary = item.second;
-	bu_log("IGES %s%s%s%s%s%s: %s\n", item.first.c_str(),
-	    summary.count > 1 ? " (" : "",
-	    summary.count > 1 ? std::to_string(summary.count).c_str() : "",
-	    summary.count > 1 ? " occurrences)" : "",
-	    summary.record ? " first at record " :
-		(summary.entity_id ? " first for D" : ""),
-	    summary.record ? std::to_string(summary.record).c_str() :
-		(summary.entity_id ? std::to_string(summary.entity_id).c_str() : ""),
-	    summary.message.c_str());
-    }
-    if (report_path && report_path[0] != '\0' &&
-	    !brlcad::iges::write_import_report(report_path, document, options, result)) {
-	bu_log("IGES: unable to write import report %s\n", report_path);
-	return -1;
-    }
-    if (result.success)
-	return 1;
-    const bool document_error = !document.valid();
-    const bool import_error = std::any_of(result.diagnostics.begin(),
-	result.diagnostics.end(), [](const brlcad::iges::ImportDiagnostic &diagnostic) {
-	    return diagnostic.severity == brlcad::iges::Severity::Error ||
-		diagnostic.severity == brlcad::iges::Severity::Fatal;
-	});
-    return document_error || import_error ||
-	result.statistics.annotations_written || result.statistics.datums_written ?
-	-1 : 0;
-}
-
-/*
- * Local Variables:
- * mode: C++
- * tab-width: 8
- * c-basic-offset: 4
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */

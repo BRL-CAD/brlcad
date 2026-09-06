@@ -10,6 +10,10 @@
 #include "common.h"
 
 #include "iges_brep_import.h"
+#include "iges_report.h"
+#include "iges_parameters.h"
+#include "iges_native.h"
+#include "iges_runtime.h"
 
 #include <algorithm>
 #include <array>
@@ -40,11 +44,7 @@ namespace brlcad {
 namespace iges {
 namespace brep_import_detail {
 
-constexpr size_t GLOBAL_MODEL_SCALE = 12;
-constexpr size_t GLOBAL_UNITS_FLAG = 13;
 constexpr size_t GLOBAL_MINIMUM_RESOLUTION = 18;
-constexpr double DEFAULT_MODEL_SCALE = 1.0;
-constexpr double DEFAULT_UNIT_TO_MM = 1.0;
 constexpr double DEFAULT_TOPOLOGY_TOLERANCE_MM = 1.0e-6;
 constexpr double DEGENERATE_DOMAIN_TOLERANCE = 1.0e-12;
 constexpr double CURVE_ENDPOINT_RELATIVE_TOLERANCE = 1.0e-6;
@@ -63,12 +63,6 @@ const unsigned char IGES_STANDARD_COLORS[][3] = {
 };
 constexpr double SINGULAR_CURVE_SAMPLES[] = {0.0, 0.5, 1.0};
 constexpr double CURVE_ORIENTATION_SAMPLES[] = {0.0, 0.25, 0.5, 0.75, 1.0};
-
-static bool
-is_native_csg_entity_type(int type)
-{
-    return iges_is_native_csg(type) != 0;
-}
 
 
 using Point3 = std::array<double, 3>;
@@ -139,72 +133,6 @@ struct LoopRecord {
     std::vector<EdgeUse> uses;
 };
 
-double
-global_real(const GlobalSection &global, size_t index, double fallback)
-{
-    if (index >= global.parameters.size())
-	return fallback;
-    std::string text = global.parameters[index];
-    std::replace(text.begin(), text.end(), 'D', 'E');
-    std::replace(text.begin(), text.end(), 'd', 'e');
-    char *end = nullptr;
-    const double value = std::strtod(text.c_str(), &end);
-    return end == text.c_str() + text.size() && std::isfinite(value) ?
-	value : fallback;
-}
-
-int
-global_integer(const GlobalSection &global, size_t index, int fallback)
-{
-    const double value = global_real(global, index, fallback);
-    return value >= std::numeric_limits<int>::min() &&
-	value <= std::numeric_limits<int>::max() ?
-	static_cast<int>(value) : fallback;
-}
-
-double
-unit_scale(const GlobalSection &global)
-{
-    static const double to_mm[] = {
-	1.0, 25.4, 1.0, 1.0, 304.8, 1609344.0, 1000.0,
-	1000000.0, 0.0254, 0.001, 10.0, 0.0000254
-    };
-    const double model_scale = global_real(global, GLOBAL_MODEL_SCALE,
-	DEFAULT_MODEL_SCALE);
-    const int units = global_integer(global, GLOBAL_UNITS_FLAG, 2);
-    const double conversion = units > 0 &&
-	static_cast<size_t>(units) < sizeof(to_mm) / sizeof(to_mm[0]) ?
-	to_mm[units] : DEFAULT_UNIT_TO_MM;
-    return conversion / (model_scale > 0.0 ? model_scale :
-	DEFAULT_MODEL_SCALE);
-}
-
-bool
-parameter_real(const ParameterList *parameters, size_t index, double &value)
-{
-    return parameters && index < parameters->values.size() &&
-	parameters->values[index].real(value);
-}
-
-bool
-parameter_integer(const ParameterList *parameters, size_t index, int &value)
-{
-    int64_t parsed = 0;
-    if (!parameters || index >= parameters->values.size() ||
-	    !parameters->values[index].integer(parsed) ||
-	    parsed < std::numeric_limits<int>::min() ||
-	    parsed > std::numeric_limits<int>::max())
-	return false;
-    value = static_cast<int>(parsed);
-    return true;
-}
-
-bool
-parameter_entity(const ParameterList *parameters, size_t index, EntityId &value)
-{
-    return parameters && index < parameters->values.size() &&
-	parameters->values[index].entity(value) && !value.empty();
-}
 
 bool
 is_surface_entity(int type)
@@ -293,40 +221,42 @@ normalize(Point3 &value)
     return true;
 }
 
-bool
-parameter_string(const ParameterList *parameters, size_t index,
-    std::string &value)
-{
-    return parameters && index < parameters->values.size() &&
-	parameters->values[index].string(value);
-}
 
-std::vector<EntityId>
-property_entities(const ParameterList *parameters,
-    size_t associativity_parameter)
-{
+struct PropertyList {
     std::vector<EntityId> properties;
-    int associativity_count = 0;
-    if (!parameter_integer(parameters, associativity_parameter,
-	    associativity_count) ||
-	    associativity_count < 0 ||
-	    associativity_count > MAX_ENTITY_LIST_COUNT)
-	return properties;
+    bool valid = true;
+};
 
-    size_t parameter = associativity_parameter + 1 +
-	static_cast<size_t>(associativity_count);
-    int property_count = 0;
-    if (!parameter_integer(parameters, parameter++, property_count) ||
-	    property_count < 0 || property_count > MAX_ENTITY_LIST_COUNT)
-	return properties;
-    properties.reserve(static_cast<size_t>(property_count));
-    for (int i = 0; i < property_count; ++i) {
-	EntityId property;
-	if (!parameter_entity(parameters, parameter++, property))
-	    break;
-	properties.push_back(property);
+PropertyList
+property_entities(const Document &document, const ParameterList *parameters,
+    size_t parameter)
+{
+    PropertyList result;
+    if (!parameters)
+	return result;
+    // Both trailing lists are optional.  A present count, however, must
+    // fit its actual payload; malformed metadata must not shift geometry.
+    for (bool properties : {false, true}) {
+	if (parameter >= parameters->values.size())
+	    return result;
+	int count = 0;
+	if ((!parameters->values[parameter].empty() && !parameter_integer(parameters, parameter, count)) ||
+	    count < 0 || static_cast<size_t>(count) > parameters->values.size() - parameter - 1) {
+	    result.valid = false;
+	    return result;
+	}
+	++parameter;
+	for (int index = 0; index < count; ++index) {
+	    EntityId reference;
+	    if (!parameter_entity(parameters, parameter++, reference) || !document.entity(reference)) {
+		result.valid = false;
+		continue;
+	    }
+	    if (properties)
+		result.properties.push_back(reference);
+	}
     }
-    return properties;
+    return result;
 }
 
 
@@ -334,6 +264,16 @@ static bool
 associativity_parameter(const ParameterList *parameters,
     const DirectoryEntry &entry, size_t &parameter)
 {
+    // Index of the optional associativity list after each fixed solid record.
+    switch (entry.type) {
+	case 150: case 168: parameter = 13; return true;
+	case 152: parameter = 14; return true;
+	case 154: case 160: case 162: parameter = 9; return true;
+	case 156: parameter = 10; return true;
+	case 158: parameter = 5; return true;
+	case 164: parameter = 6; return true;
+	default: break;
+    }
     int count = 0;
     if (entry.type == 186 && parameter_integer(parameters, 3, count) &&
 	    count >= 0 && count <= MAX_ENTITY_LIST_COUNT)
@@ -380,7 +320,7 @@ name_property(const Document &document, const DirectoryEntry &entry)
     if (!associativity_parameter(parameters, entry, parameter))
 	return std::string();
 
-    for (EntityId property_id : property_entities(parameters, parameter)) {
+    for (EntityId property_id : property_entities(document, parameters, parameter).properties) {
 	const DirectoryEntry *property = document.entity(property_id);
 	const ParameterList *property_parameters = property ?
 	    document.parameters(property_id) : nullptr;
@@ -478,8 +418,8 @@ solid_properties(const Document &document,
 
     const ParameterList *entity_parameters =
 	document.parameters(entry.id);
-    for (EntityId property_id : property_entities(entity_parameters,
-	    property_parameter)) {
+    for (EntityId property_id : property_entities(document, entity_parameters,
+	    property_parameter).properties) {
 	const DirectoryEntry *property = document.entity(property_id);
 	if (!property || property->type != 422)
 	    continue;
@@ -504,31 +444,6 @@ solid_properties(const Document &document,
     }
 }
 
-
-std::string
-json_escape(const std::string &value)
-{
-    std::ostringstream output;
-    for (unsigned char character : value) {
-	switch (character) {
-	    case '\\': output << "\\\\"; break;
-	    case '"': output << "\\\""; break;
-	    case '\b': output << "\\b"; break;
-	    case '\f': output << "\\f"; break;
-	    case '\n': output << "\\n"; break;
-	    case '\r': output << "\\r"; break;
-	    case '\t': output << "\\t"; break;
-	    default:
-		if (character < 0x20)
-		    output << "\\u" << std::hex << std::setw(4) <<
-			std::setfill('0') << static_cast<unsigned int>(character) <<
-			std::dec << std::setfill(' ');
-		else
-		    output << static_cast<char>(character);
-	}
-    }
-    return output.str();
-}
 
 class Importer;
 
@@ -702,8 +617,8 @@ private:
 class Importer {
 public:
     Importer(const Document &document, struct rt_wdb *wdbp,
-	const ImportOptions &options, bool defer_root = false) : document_(document), wdbp_(wdbp),
-	options_(options), unit_to_mm_(unit_scale(document.global())), defer_root_(defer_root)
+	const ImportOptions &options) : document_(document), wdbp_(wdbp),
+	options_(options), unit_to_mm_(unit_scale(document.global()))
     {
 	result_.statistics.entities_read = document.entities().size();
 	const double source_resolution = global_real(document.global(),
@@ -715,7 +630,9 @@ public:
     }
 
     BrepImportResult run();
-    void register_legacy(EntityId id, const char *name);
+    bool read_profile(EntityId id, ProfileCurves &curves, const Matrix &parent,
+	std::set<EntityId> &active);
+    bool register_native(EntityId id, const char *name);
     BrepImportResult complete_hierarchy();
     void progress(const char *activity, EntityId entity = EntityId()) const
     {
@@ -842,12 +759,7 @@ private:
     std::map<EntityId, std::vector<EntityId> > plane_holes_;
     std::map<EntityId, std::string> objects_;
     std::set<std::string> root_objects_;
-    std::set<EntityId> deferred_boolean_trees_;
-    std::set<EntityId> deferred_instances_;
-    std::set<EntityId> deferred_containers_;
     std::set<EntityId> unresolved_objects_;
-    bool defer_root_ = false;
-    bool legacy_complete_ = false;
 
     friend class SolidBuilder;
 };
@@ -4246,9 +4158,9 @@ Importer::write_entity_color_attribute(const std::string &name,
 bool
 Importer::write_geometry(const std::string &name, ON_Brep &brep)
 {
-    progress(options_.output == IGES_OUTPUT_BREP ?
+    progress(options_.output == GeometryOutput::Brep ?
 	"writing B-Rep geometry" : "tessellating geometry");
-    if (options_.output == IGES_OUTPUT_BREP)
+    if (options_.output == GeometryOutput::Brep)
 	return mk_brep(wdbp_, name.c_str(), &brep) >= 0;
     if (!brep.IsValid() || !brep.m_F.Count())
 	return false;
@@ -4278,7 +4190,7 @@ Importer::write_geometry(const std::string &name, ON_Brep &brep)
 	face_count <= 0 || vertex_count <= 0)
 	return false;
     const unsigned char mode = brep.IsSolid() ? RT_BOT_SOLID : RT_BOT_SURFACE;
-    if (options_.output == IGES_OUTPUT_MESH)
+    if (options_.output == GeometryOutput::Mesh)
 	return mk_bot(wdbp_, name.c_str(), mode, RT_BOT_CCW, 0, vertex_count, face_count,
 	    mesh.vertices, mesh.faces, nullptr, nullptr) >= 0;
 
@@ -4310,10 +4222,10 @@ Importer::write_geometry(const std::string &name, ON_Brep &brep)
 void
 Importer::count_geometry(const ON_Brep &brep, bool invalid_solid)
 {
-    if (options_.output == IGES_OUTPUT_BREP) {
+    if (options_.output == GeometryOutput::Brep) {
 	++result_.statistics.breps_written;
 	result_.statistics.solid_breps_written += !invalid_solid && brep.IsSolid();
-    } else if (options_.output == IGES_OUTPUT_MESH) {
+    } else if (options_.output == GeometryOutput::Mesh) {
 	++result_.statistics.meshes_written;
     } else {
 	++result_.statistics.polygons_written;
@@ -4388,7 +4300,7 @@ Importer::write_face_metadata(const std::string &name, const ON_Brep &brep,
 	metadata << '}';
     }
     metadata << ']';
-    const char *attribute = options_.output == IGES_OUTPUT_BREP ?
+    const char *attribute = options_.output == GeometryOutput::Brep ?
 	"iges.face_metadata" : "iges.source_face_metadata";
     if (db5_update_attribute(name.c_str(), attribute,
 	    metadata.str().c_str(), wdbp_->dbip) < 0) {
@@ -4521,7 +4433,7 @@ Importer::write_trimmed_component(const TrimmedComponent &component)
     db5_update_attribute(name.c_str(), "iges.naked_edges",
 	naked_edges.c_str(), wdbp_->dbip);
     db5_update_attribute(name.c_str(), "iges.topology",
-	options_.output == IGES_OUTPUT_BREP ? "direct-opennurbs-component" : "tessellated-opennurbs-component",
+	options_.output == GeometryOutput::Brep ? "direct-opennurbs-component" : "tessellated-opennurbs-component",
 	wdbp_->dbip);
     if (!write_repair_attributes(name, relaxed_tolerances, source, recoveries))
 	return false;
@@ -4923,7 +4835,7 @@ Importer::write_standalone_surface(const DirectoryEntry &entry)
     if (!write_entity_color_attribute(name, entry))
 	return false;
     db5_update_attribute(name.c_str(), "iges.topology",
-	options_.output == IGES_OUTPUT_BREP ? "direct-opennurbs-surface" : "tessellated-opennurbs-surface",
+	options_.output == GeometryOutput::Brep ? "direct-opennurbs-surface" : "tessellated-opennurbs-surface",
 	wdbp_->dbip);
     objects_[entry.id] = name;
     root_objects_.insert(name);
@@ -5013,8 +4925,7 @@ Importer::hierarchy_name(const DirectoryEntry &entry) const
 bool
 Importer::write_boolean_tree(EntityId id, std::set<EntityId> &active)
 {
-    if (objects_.find(id) != objects_.end() || unresolved_objects_.count(id) ||
-	    deferred_boolean_trees_.find(id) != deferred_boolean_trees_.end())
+    if (objects_.find(id) != objects_.end() || unresolved_objects_.count(id))
 	return true;
     const DirectoryEntry *entry = document_.entity(id);
     const ParameterList *parameters = entry ? document_.parameters(id) : nullptr;
@@ -5073,20 +4984,6 @@ Importer::write_boolean_tree(EntityId id, std::set<EntityId> &active)
 		    return false;
 		}
 		object = objects_.find(operand_id);
-	    }
-	    if (!legacy_complete_ && object == objects_.end() && operand &&
-		    (is_native_csg_entity_type(operand->type) ||
-		     (operand->type == 180 &&
-		      deferred_boolean_trees_.find(operand_id) !=
-			  deferred_boolean_trees_.end()) ||
-		     (operand->type == 430 &&
-		      deferred_instances_.find(operand_id) !=
-			  deferred_instances_.end()))) {
-		/* Native primitives are registered after the compatibility pass. */
-		release_stack();
-		active.erase(id);
-		deferred_boolean_trees_.insert(id);
-		return true;
 	    }
 	    if (object == objects_.end())
 		return abandon("Boolean Tree references geometry that was not imported");
@@ -5160,7 +5057,7 @@ Importer::write_boolean_tree(EntityId id, std::set<EntityId> &active)
 bool
 Importer::write_container(EntityId id, std::set<EntityId> &active)
 {
-    if (objects_.find(id) != objects_.end() || unresolved_objects_.count(id) || deferred_containers_.count(id))
+    if (objects_.find(id) != objects_.end() || unresolved_objects_.count(id))
 	return true;
     const DirectoryEntry *entry = document_.entity(id);
     if (!entry)
@@ -5186,7 +5083,6 @@ Importer::write_container(EntityId id, std::set<EntityId> &active)
     std::set<std::string> output_members;
     std::ostringstream member_order;
     size_t unresolved = 0;
-    bool defer_to_legacy = false;
     for (size_t member_index = 0; member_index < source_members.size();
 	    ++member_index) {
 	const EntityId member_id = source_members[member_index];
@@ -5220,14 +5116,6 @@ Importer::write_container(EntityId id, std::set<EntityId> &active)
 	    }
 	}
 	if (object == objects_.end()) {
-	    const DirectoryEntry *member_entry = document_.entity(member_id);
-	    if (!legacy_complete_ && member_entry &&
-		(is_native_csg_entity_type(member_entry->type) ||
-		 deferred_boolean_trees_.count(member_id) || deferred_instances_.count(member_id) ||
-		 deferred_containers_.count(member_id))) {
-		defer_to_legacy = true;
-		continue;
-	    }
 	    ++unresolved;
 	    continue;
 	}
@@ -5260,13 +5148,6 @@ Importer::write_container(EntityId id, std::set<EntityId> &active)
 	result_.statistics.unresolved_members += unresolved;
 	diagnose(Severity::Warning, "unresolved_container_members",
 	    "group or subfigure has " + std::to_string(unresolved) + " unresolved members", entry);
-    }
-    if (defer_to_legacy) {
-	/* Keep the source container pending until native geometry exists.
-	 * Publishing a partial definition would lose members in its instances. */
-	mk_freemembers(&members.l);
-	deferred_containers_.insert(id);
-	return true;
     }
     if (output_members.empty()) {
 	/* Repeated instances of an empty definition must not repeat its
@@ -5376,8 +5257,7 @@ bool
 Importer::write_instance(const DirectoryEntry &entry,
     std::set<EntityId> &active)
 {
-    if (objects_.find(entry.id) != objects_.end() || unresolved_objects_.count(entry.id) ||
-	deferred_instances_.count(entry.id))
+    if (objects_.find(entry.id) != objects_.end() || unresolved_objects_.count(entry.id))
 	return true;
     if (!active.insert(entry.id).second) {
 	diagnose(Severity::Warning, "hierarchy_cycle",
@@ -5405,10 +5285,6 @@ Importer::write_instance(const DirectoryEntry &entry,
 	return false;
     const auto definition = objects_.find(definition_id);
     if (definition == objects_.end()) {
-	if (deferred_containers_.count(definition_id)) {
-	    deferred_instances_.insert(entry.id);
-	    return true;
-	}
 	diagnose(Severity::Warning, "subfigure_instance_unresolved",
 	    "Subfigure Instance definition contains no imported geometry", &entry);
 	unresolved_objects_.insert(entry.id);
@@ -5451,8 +5327,7 @@ bool
 Importer::write_solid_instance(const DirectoryEntry &entry,
     std::set<EntityId> &active)
 {
-    if (objects_.find(entry.id) != objects_.end() || unresolved_objects_.count(entry.id) ||
-	    deferred_instances_.find(entry.id) != deferred_instances_.end())
+    if (objects_.find(entry.id) != objects_.end() || unresolved_objects_.count(entry.id))
 	return true;
     const ParameterList *parameters = document_.parameters(entry.id);
     EntityId definition_id;
@@ -5494,19 +5369,6 @@ Importer::write_solid_instance(const DirectoryEntry &entry,
 	definition = objects_.find(definition_id);
     }
 
-    const bool definition_deferred = !legacy_complete_ && definition_entry &&
-	(is_native_csg_entity_type(definition_entry->type) ||
-	 deferred_containers_.count(definition_id) ||
-	 (definition_entry->type == 180 &&
-	  deferred_boolean_trees_.find(definition_id) !=
-	      deferred_boolean_trees_.end()) ||
-	 (definition_entry->type == 430 &&
-	  deferred_instances_.find(definition_id) != deferred_instances_.end()));
-    if (definition == objects_.end() && definition_deferred) {
-	active.erase(entry.id);
-	deferred_instances_.insert(entry.id);
-	return true;
-    }
     if (definition == objects_.end()) {
 	active.erase(entry.id);
 	diagnose(Severity::Warning, "solid_instance_unresolved",
@@ -5583,6 +5445,117 @@ Importer::write_root()
 }
 
 
+bool
+Importer::read_profile(EntityId id, ProfileCurves &curves, const Matrix &parent,
+    std::set<EntityId> &active)
+{
+    // Cycles and very deep composite definitions must not exhaust the stack.
+    constexpr size_t MAX_PROFILE_DEPTH = 512;
+    const DirectoryEntry *entry = document_.entity(id);
+    if (!entry || active.size() >= MAX_PROFILE_DEPTH || !active.insert(id).second)
+	return false;
+    bool success = false;
+    const ParameterList *parameters = document_.parameters(id);
+    if (entry->type == 102) {
+	int count = 0;
+	success = parameter_integer(parameters, 1, count) && count > 0 &&
+	    static_cast<size_t>(count) <= parameters->values.size() - 2;
+	const Matrix placement = multiply(parent, transform(entry->transform));
+	for (int index = 0; success && index < count; ++index) {
+	    EntityId child;
+	    success = parameter_entity(parameters, index + 2, child) &&
+		read_profile(child, curves, placement, active);
+	}
+    } else if (entry->type == 112) {
+	int dimensions = 0;
+	int count = 0;
+	constexpr size_t CUBIC_COEFFICIENTS = 4;
+	constexpr size_t COEFFICIENTS_PER_SEGMENT = 3 * CUBIC_COEFFICIENTS;
+	success = parameter_integer(parameters, 3, dimensions) &&
+	    (dimensions == 2 || dimensions == 3) &&
+	    parameter_integer(parameters, 4, count) && count > 0 &&
+	    parameters->values.size() >= 6 &&
+	    static_cast<size_t>(count) <= (parameters->values.size() - 6) / (COEFFICIENTS_PER_SEGMENT + 1);
+	for (int segment = 0; success && segment < count; ++segment) {
+	    double start = 0.0;
+	    double end = 0.0;
+	    success = parameter_real(parameters, 5 + segment, start) &&
+		parameter_real(parameters, 6 + segment, end) && end > start;
+	    const double span = end - start;
+	    std::array<Point3, CUBIC_COEFFICIENTS> controls;
+	    for (size_t coordinate = 0; success && coordinate < 3; ++coordinate) {
+		std::array<double, CUBIC_COEFFICIENTS> coefficient;
+		for (size_t power = 0; success && power < coefficient.size(); ++power)
+		    success = parameter_real(parameters, 6 + count +
+			COEFFICIENTS_PER_SEGMENT * segment + CUBIC_COEFFICIENTS * coordinate + power,
+			coefficient[power]);
+		if (!success)
+		    break;
+		// Convert power-basis coefficients on the segment interval to
+		// cubic Bernstein controls, preserving the polynomial exactly.
+		const double a = coefficient[0];
+		const double b = coefficient[1] * span;
+		const double c = coefficient[2] * span * span;
+		const double d = coefficient[3] * span * span * span;
+		controls[0][coordinate] = a;
+		controls[1][coordinate] = a + b / 3.0;
+		controls[2][coordinate] = a + (2.0 * b + c) / 3.0;
+		controls[3][coordinate] = a + b + c + d;
+	    }
+	    if (!success)
+		break;
+	    ON_BezierCurve bezier(3, false, CUBIC_COEFFICIENTS);
+	    for (size_t cv = 0; cv < controls.size(); ++cv) {
+		const Point3 placed = model_point(*entry, controls[cv], parent);
+		success = bezier.SetCV(cv, ON_3dPoint(placed.data())) && success;
+	    }
+	    auto curve = std::make_unique<ON_NurbsCurve>();
+	    success = success && bezier.GetNurbForm(*curve) && curve->IsValid();
+	    if (success)
+		curves.push_back(std::move(curve));
+	}
+    } else if (entry->type == 106) {
+	int dimensions = 0;
+	int count = 0;
+	success = parameter_integer(parameters, 1, dimensions) &&
+	    (dimensions == 1 || dimensions == 2 || dimensions == 3) &&
+	    parameter_integer(parameters, 2, count) && count >= 2;
+	const size_t stride = dimensions == 1 ? 2 : dimensions == 2 ? 3 : 6;
+	size_t parameter = dimensions == 1 ? 4 : 3;
+	double depth = 0.0;
+	if (dimensions == 1)
+	    success = success && parameter_real(parameters, 3, depth);
+	success = success && parameters && parameter <= parameters->values.size() &&
+	    static_cast<size_t>(count) <= (parameters->values.size() - parameter) / stride;
+	ON_3dPoint previous;
+	for (int index = 0; success && index < count; ++index, parameter += stride) {
+	    Point3 point = {0.0, 0.0, depth};
+	    success = parameter_real(parameters, parameter, point[0]) &&
+		parameter_real(parameters, parameter + 1, point[1]) &&
+		(dimensions == 1 || parameter_real(parameters, parameter + 2, point[2]));
+	    if (!success)
+		break;
+	    const Point3 placed = model_point(*entry, point, parent);
+	    const ON_3dPoint current(placed.data());
+	    if (index > 0 && current.DistanceTo(previous) > ON_ZERO_TOLERANCE) {
+		auto line = std::make_unique<ON_NurbsCurve>();
+		success = ON_LineCurve(previous, current).GetNurbForm(*line) > 0;
+		if (success)
+		    curves.push_back(std::move(line));
+	    }
+	    previous = current;
+	}
+    } else {
+	SolidBuilder geometry(*this, *entry);
+	auto curve = geometry.curve(*entry, true, parent);
+	success = curve != nullptr;
+	if (success)
+	    curves.push_back(std::move(curve));
+    }
+    active.erase(id);
+    return success;
+}
+
 BrepImportResult
 Importer::run()
 {
@@ -5591,8 +5564,8 @@ Importer::run()
 	    "no writable BRL-CAD database was supplied");
 	return result_;
     }
-    if (options_.output != IGES_OUTPUT_BREP && options_.output != IGES_OUTPUT_MESH &&
-	options_.output != IGES_OUTPUT_POLYGON) {
+    if (options_.output != GeometryOutput::Brep && options_.output != GeometryOutput::Mesh &&
+	options_.output != GeometryOutput::Polygon) {
 	diagnose(Severity::Fatal, "invalid_output_mode", "unknown geometry output mode");
 	return result_;
     }
@@ -5681,7 +5654,12 @@ Importer::run()
     result_.statistics.bounded_surfaces_seen = bounded_surfaces.size();
     result_.statistics.standalone_surfaces_seen =
 	standalone_surfaces.size() + bounded_plane_count;
-    progress_total_ = solids.size() + standalone_surfaces.size() + bounded_faces.size();
+    for (const auto &entry : document_.entities())
+	if (native_solid_name(entry.type))
+	    ++result_.statistics.native_solids_seen;
+    progress_total_ = solids.size() + standalone_surfaces.size() + bounded_faces.size() +
+	result_.statistics.native_solids_seen;
+
     for (size_t index = 0; index < solids.size(); ++index, ++progress_completed_) {
 	const DirectoryEntry *solid = solids[index];
 	progress("constructing explicit solid", solid->id);
@@ -5693,7 +5671,7 @@ Importer::run()
 	if (invalid_solid) {
 	    discard_failed_repairs(diagnostic_count, repair_count);
 	    if (options_.invalid_brep == InvalidBrepPolicy::Reject || options_.strict || options_.exact ||
-		options_.output != IGES_OUTPUT_BREP) {
+		options_.output != GeometryOutput::Brep) {
 		diagnose(Severity::Warning, "rejected_invalid_solid",
 		    "explicit manifold solid could not be reconstructed as a valid solid", solid);
 		++result_.statistics.omitted;
@@ -5753,7 +5731,7 @@ Importer::run()
 	    result_.statistics.unreconstructed_faces += builder.missing_faces();
 	}
 	db5_update_attribute(name.c_str(), "iges.topology",
-	    options_.output == IGES_OUTPUT_BREP ? "direct-opennurbs" : "tessellated-opennurbs", wdbp_->dbip);
+	    options_.output == GeometryOutput::Brep ? "direct-opennurbs" : "tessellated-opennurbs", wdbp_->dbip);
 	objects_[solid->id] = name;
 	root_objects_.insert(name);
 	count_geometry(*brep, invalid_solid);
@@ -5796,58 +5774,88 @@ Importer::run()
     for (const auto &partition : partitions)
 	import_trimmed_components(partition.second);
 
+    for (const auto &entry : document_.entities()) {
+	const char *stem = native_solid_name(entry.type);
+	if (!stem)
+	    continue;
+	progress("constructing native solid", entry.id);
+	++progress_completed_;
+	const std::string source = name_property(document_, entry);
+	const std::string native_stem = source.empty() ? std::string(stem) + '.' +
+	    std::to_string((entry.id.value() - 1) / 2) : sanitized_database_name(source);
+	std::string name = native_stem;
+	for (size_t suffix = 1; db_lookup(wdbp_->dbip, name.c_str(), LOOKUP_QUIET) != RT_DIR_NULL; ++suffix)
+	    name = native_stem + '_' + std::to_string(suffix);
+	// Native object names and collision suffixes are retained for scripts
+	// that refer to the established names of unlabeled CSG entities.
+	size_t metadata_parameter = 0;
+	if (associativity_parameter(document_.parameters(entry.id), entry, metadata_parameter)) {
+	    if (!property_entities(document_, document_.parameters(entry.id), metadata_parameter).valid) {
+		++result_.statistics.repairs;
+		diagnose(options_.strict || options_.exact || options_.repair == RepairMode::None ?
+		    Severity::Error : Severity::Warning, "invalid_property_reference",
+		    "optional metadata has invalid counts or entity references", &entry);
+	    }
+	}
+	std::string error;
+	const ProfileReader read = [&](EntityId profile, ProfileCurves &curves) {
+	    std::set<EntityId> active;
+	    return read_profile(profile, curves, Matrix(), active);
+	};
+	const NativeBrepWriter write = [&](const std::string &object, ON_Brep &brep) {
+	    if (!write_geometry(object, brep))
+		return false;
+	    count_geometry(brep, false);
+	    return true;
+	};
+	if (!write_native_solid(document_, entry, wdbp_, name, unit_to_mm_,
+		tolerance_, read, write, error)) {
+	    diagnose(Severity::Warning, "native_solid_import",
+		error.empty() ? "failed to write native solid" : error, &entry);
+	    ++result_.statistics.omitted;
+	    continue;
+	}
+	if (register_native(entry.id, name.c_str()))
+	    ++result_.statistics.native_solids_written;
+	else
+	    ++result_.statistics.omitted;
+    }
+
     progress("geometry processing complete");
-    if (!write_hierarchy())
-	return result_;
-    if (!defer_root_ && deferred_boolean_trees_.empty() && deferred_instances_.empty() &&
-	deferred_containers_.empty() && !write_root())
-	return result_;
-    const bool has_errors = std::any_of(result_.diagnostics.begin(),
-	result_.diagnostics.end(), [](const ImportDiagnostic &diagnostic) {
-	    return diagnostic.severity == Severity::Error ||
-		diagnostic.severity == Severity::Fatal;
-	});
-    result_.success = !has_errors && (result_.statistics.breps_written +
-	result_.statistics.meshes_written + result_.statistics.polygons_written) > 0 &&
-	(!options_.strict || (result_.statistics.omitted == 0 && result_.statistics.unresolved_members == 0));
-    return result_;
+    return complete_hierarchy();
 }
 
-void
-Importer::register_legacy(EntityId id, const char *name)
+bool
+Importer::register_native(EntityId id, const char *name)
 {
     const DirectoryEntry *entry = document_.entity(id);
     struct directory *dp = db_lookup(wdbp_->dbip, name, LOOKUP_QUIET);
     if (!entry || !dp)
-	return;
+	return false;
     /* Native writers emit local geometry.  Bake the directory transform
      * exactly once, as the BRep path does, before sharing hierarchy code. */
     if (entry->transform.value()) {
 	mat_t matrix;
 	combination_matrix(transform(entry->transform), matrix);
-	struct rt_db_internal internal;
-	RT_DB_INTERNAL_INIT(&internal);
-	if (rt_db_get_internal(&internal, dp, wdbp_->dbip, matrix) < 0 ||
-	    rt_db_put_internal(dp, wdbp_->dbip, &internal) < 0) {
-	    rt_db_free_internal(&internal);
+	Internal internal;
+	if (rt_db_get_internal(&internal.value, dp, wdbp_->dbip, matrix) < 0 ||
+	    rt_db_put_internal(dp, wdbp_->dbip, &internal.value) < 0) {
 	    diagnose(Severity::Error, "native_transform",
 		"failed to apply the native primitive's directory transform", entry);
-	    return;
+	    return false;
 	}
     }
     write_entity_attributes(name, *entry);
-    write_entity_color_attribute(name, *entry);
+    if (!write_entity_color_attribute(name, *entry))
+	return false;
     objects_[id] = name;
     root_objects_.insert(name);
+    return true;
 }
 
 BrepImportResult
 Importer::complete_hierarchy()
 {
-    legacy_complete_ = true;
-    deferred_boolean_trees_.clear();
-    deferred_containers_.clear();
-    deferred_instances_.clear();
     result_.success = false;
     if (!write_hierarchy())
 	return result_;
@@ -5867,22 +5875,11 @@ Importer::complete_hierarchy()
 	[](const ImportDiagnostic &diagnostic) {
 	    return diagnostic.severity == Severity::Error || diagnostic.severity == Severity::Fatal;
 	});
-    result_.success = !errors && (!options_.strict ||
+    result_.success = !errors && !root_objects_.empty() && (!options_.strict ||
 	(!result_.statistics.omitted && !result_.statistics.unresolved_members));
     return result_;
 }
 
-const char *
-severity_name(Severity severity)
-{
-    switch (severity) {
-	case Severity::Information: return "information";
-	case Severity::Warning: return "warning";
-	case Severity::Error: return "error";
-	case Severity::Fatal: return "fatal";
-    }
-    return "error";
-}
 
 } /* namespace brep_import_detail */
 
@@ -5895,246 +5892,18 @@ import_breps(const Document &document, struct rt_wdb *wdbp,
 }
 
 bool
-write_brep_import_report(const std::string &path, const Document &document,
-    const ImportOptions &options, const BrepImportResult &result)
+read_model_curves(const Document &document, EntityId id, ProfileCurves &curves,
+    std::string &error)
 {
-    std::ofstream output(path, std::ios::binary | std::ios::trunc);
-    if (!output)
-	return false;
-    output << "{\n"
-	<< "  \"format\": \"iges\",\n"
-	<< "  \"source\": \"" << brep_import_detail::json_escape(document.source_name()) << "\",\n"
-	<< "  \"success\": " << (result.success ? "true" : "false") << ",\n"
-	<< "  \"options\": {\"repair\": \""
-	<< repair_mode_name(options.repair)
-	<< "\", \"exact\": " << (options.exact ? "true" : "false")
-	<< ", \"strict\": " << (options.strict ? "true" : "false")
-	<< ", \"default_plate_thickness\": "
-	<< options.default_plate_thickness
-	<< ", \"maximum_repair_tolerance\": "
-	<< options.maximum_repair_tolerance
-	<< ", \"relative_tolerance\": " << options.relative_tolerance << "},\n"
-	<< "  \"statistics\": {\"entities_read\": "
-	<< result.statistics.entities_read << ", \"solids_seen\": "
-	<< result.statistics.solids_seen << ", \"trimmed_surfaces_seen\": "
-	<< result.statistics.trimmed_surfaces_seen
-	<< ", \"bounded_surfaces_seen\": "
-	<< result.statistics.bounded_surfaces_seen
-	<< ", \"standalone_surfaces_seen\": "
-	<< result.statistics.standalone_surfaces_seen << ", \"breps_written\": "
-	<< result.statistics.breps_written << ", \"components_written\": "
-	<< result.statistics.components_written << ", \"meshes_written\": "
-	<< result.statistics.meshes_written << ", \"polygons_written\": "
-	<< result.statistics.polygons_written << ", \"groups_written\": "
-	<< result.statistics.groups_written
-	<< ", \"unresolved_members\": " << result.statistics.unresolved_members
-	<< ", \"solid_breps_written\": " << result.statistics.solid_breps_written
-	<< ", \"invalid_solids_written\": " << result.statistics.invalid_solids_written
-	<< ", \"unreconstructed_faces\": " << result.statistics.unreconstructed_faces
-	<< ", \"reassembly_edges_merged\": " << result.statistics.reassembly_edges_merged
-	<< ", \"plate_mode_objects_thickened\": "
-	<< result.statistics.plate_mode_objects_thickened
-	<< ", \"relaxed_faces_written\": "
-	<< result.statistics.relaxed_faces_written
-	<< ", \"recovered_faces_written\": "
-	<< result.statistics.recovered_faces_written
-	<< ", \"maximum_repair_tolerance_used\": "
-	<< result.statistics.maximum_repair_tolerance_used << ", \"omitted\": "
-	<< result.statistics.omitted << ", \"repairs\": "
-	<< result.statistics.repairs << "},\n"
-	<< "  \"diagnostics\": [";
-    bool first = true;
-    const auto write_diagnostic = [&](Severity severity, const std::string &code,
-	const std::string &message, int64_t entity_id, int entity_type,
-	size_t record, size_t column) {
-	if (!first)
-	    output << ',';
-	first = false;
-	output << "\n    {\"severity\": \"" << brep_import_detail::severity_name(severity)
-	    << "\", \"code\": \"" << brep_import_detail::json_escape(code)
-	    << "\", \"message\": \"" << brep_import_detail::json_escape(message) << '"';
-	if (entity_id)
-	    output << ", \"entity\": " << entity_id;
-	if (entity_type)
-	    output << ", \"entity_type\": " << entity_type;
-	if (record)
-	    output << ", \"record\": " << record;
-	if (column)
-	    output << ", \"column\": " << column;
-	output << '}';
-    };
-    for (const Diagnostic &diagnostic : document.diagnostics())
-	write_diagnostic(diagnostic.severity, diagnostic.code, diagnostic.message,
-	    diagnostic.entity_id, diagnostic.entity_type,
-	    diagnostic.location.record, diagnostic.location.column);
-    for (const ImportDiagnostic &diagnostic : result.diagnostics)
-	write_diagnostic(diagnostic.severity, diagnostic.code, diagnostic.message,
-	    diagnostic.entity_id, diagnostic.entity_type, 0, 0);
-    if (!first)
-	output << '\n';
-    output << "  ]\n}\n";
-    return output.good();
+    ImportOptions options;
+    brep_import_detail::Importer reader(document, nullptr, options);
+    std::set<EntityId> active;
+    if (reader.read_profile(id, curves, brep_import_detail::Matrix(), active))
+	return true;
+    error = "unsupported, cyclic, or invalid curve definition";
+    return false;
 }
+
 
 } /* namespace iges */
 } /* namespace brlcad */
-
-struct iges_brep_context {
-    brlcad::iges::Document document;
-    brlcad::iges::ImportOptions options;
-    std::unique_ptr<brlcad::iges::brep_import_detail::Importer> importer;
-};
-
-extern "C" void
-iges_cancel_brep_import(struct iges_brep_context *pending)
-{
-    delete pending;
-}
-
-extern "C" void
-iges_brep_register_legacy(struct iges_brep_context *pending, int entity, const char *name)
-{
-    if (pending && name)
-	pending->importer->register_legacy(brlcad::iges::EntityId(entity), name);
-}
-
-extern "C" int
-iges_finish_brep_import(struct iges_brep_context **pending, const char *report_path)
-{
-    if (!pending || !*pending)
-	return 1;
-    std::unique_ptr<iges_brep_context> context(*pending);
-    *pending = nullptr;
-    const auto result = context->importer->complete_hierarchy();
-    bu_log("IGES: completed hierarchy; %zu groups, %zu unresolved members\n",
-	result.statistics.groups_written, result.statistics.unresolved_members);
-    if (report_path && report_path[0] && !brlcad::iges::write_brep_import_report(
-	report_path, context->document, context->options, result))
-	return 0;
-    return result.success;
-}
-
-extern "C" int
-iges_import_breps(const char *path, struct rt_wdb *wdbp, int exact,
-    int strict, const char *repair_mode, double default_plate_thickness,
-    double maximum_repair_tolerance, double relative_tolerance, const char *root_name,
-    const char *report_path, int output_mode, iges_progress_callback progress,
-    struct iges_brep_context **pending)
-{
-    if (!path || !wdbp)
-	return -1;
-    ON::Begin();
-    std::unique_ptr<iges_brep_context> context(new iges_brep_context());
-    context->document = brlcad::iges::Document::parse_file(path);
-    const auto &document = context->document;
-    const bool mixed_csg = std::any_of(document.entities().begin(),
-	document.entities().end(), [](const brlcad::iges::DirectoryEntry &entry) {
-	    return brlcad::iges::brep_import_detail::
-		is_native_csg_entity_type(entry.type);
-	});
-    auto &options = context->options;
-    options.progress = progress;
-    options.output = static_cast<iges_geometry_output>(output_mode);
-    options.exact = exact != 0;
-    options.strict = strict != 0;
-    options.default_plate_thickness = default_plate_thickness;
-    options.maximum_repair_tolerance = maximum_repair_tolerance;
-    options.relative_tolerance = relative_tolerance;
-    if (repair_mode && BU_STR_EQUAL(repair_mode, "none"))
-	options.repair = brlcad::iges::RepairMode::None;
-    else if (repair_mode && BU_STR_EQUAL(repair_mode, "safe"))
-	options.repair = brlcad::iges::RepairMode::Safe;
-    options.root_name = root_name && root_name[0] != '\0' ?
-	root_name : "iges_geometry";
-    context->importer.reset(new brlcad::iges::brep_import_detail::Importer(document, wdbp, options, mixed_csg));
-    const auto result = context->importer->run();
-    const bool direct_entities_seen = result.statistics.solids_seen > 0 ||
-	result.statistics.trimmed_surfaces_seen > 0 ||
-	result.statistics.bounded_surfaces_seen > 0 ||
-	result.statistics.standalone_surfaces_seen > 0;
-
-    struct LogSummary {
-	size_t count = 0;
-	std::string message;
-	int64_t entity_id = 0;
-	size_t record = 0;
-    };
-    std::map<std::string, LogSummary> summaries;
-    for (const brlcad::iges::Diagnostic &diagnostic : document.diagnostics()) {
-	if (diagnostic.severity == brlcad::iges::Severity::Information)
-	    continue;
-	LogSummary &summary = summaries[diagnostic.code];
-	++summary.count;
-	if (summary.message.empty()) {
-	    summary.message = diagnostic.message;
-	    summary.entity_id = diagnostic.entity_id;
-	    summary.record = diagnostic.location.record;
-	}
-    }
-    for (const brlcad::iges::ImportDiagnostic &diagnostic : result.diagnostics) {
-	if (diagnostic.severity == brlcad::iges::Severity::Information)
-	    continue;
-	LogSummary &summary = summaries[diagnostic.code];
-	++summary.count;
-	if (summary.message.empty()) {
-	    summary.message = diagnostic.message;
-	    summary.entity_id = diagnostic.entity_id;
-	}
-    }
-    for (const auto &item : summaries) {
-	const LogSummary &summary = item.second;
-	const std::string count = std::to_string(summary.count);
-	const std::string location = summary.record ?
-	    std::to_string(summary.record) : std::to_string(summary.entity_id);
-	bu_log("IGES %s%s%s%s%s%s: %s\n", item.first.c_str(),
-	    summary.count > 1 ? " (" : "",
-	    summary.count > 1 ? count.c_str() : "",
-	    summary.count > 1 ? " occurrences)" : "",
-	    summary.record ? " first at record " :
-		(summary.entity_id ? " first for D" : ""),
-	    summary.record || summary.entity_id ? location.c_str() : "",
-	    summary.message.c_str());
-    }
-    if (direct_entities_seen)
-	bu_log("IGES: wrote %zu B-Reps, %zu meshes, %zu polygon objects, and %zu groups from %zu entities; "
-	    "%zu solid B-Reps; recovered %zu faces for review; omitted %zu source geometry entities\n",
-	    result.statistics.breps_written, result.statistics.meshes_written, result.statistics.polygons_written,
-	    result.statistics.groups_written,
-	    result.statistics.entities_read, result.statistics.solid_breps_written,
-	    result.statistics.recovered_faces_written,
-	    result.statistics.omitted);
-    if (progress)
-	progress("diagnostics", "summarizing conversion and writing report", 0, 0, 0);
-    if (report_path && report_path[0] != '\0' &&
-	!brlcad::iges::write_brep_import_report(report_path, document, options,
-	    result)) {
-	bu_log("IGES: unable to write import report %s\n", report_path);
-	return -1;
-    }
-    if (!document.valid())
-	return -1;
-    const bool import_error = std::any_of(result.diagnostics.begin(),
-	result.diagnostics.end(),
-	[](const brlcad::iges::ImportDiagnostic &diagnostic) {
-	    return diagnostic.severity == brlcad::iges::Severity::Error ||
-		diagnostic.severity == brlcad::iges::Severity::Fatal;
-	});
-    if (mixed_csg && pending && !import_error && (!direct_entities_seen || result.success)) {
-	*pending = context.release();
-	return 2;
-    }
-    if (result.success)
-	return 1;
-    return import_error || direct_entities_seen ? -1 : 0;
-}
-
-/*
- * Local Variables:
- * mode: C++
- * tab-width: 8
- * c-basic-offset: 4
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
