@@ -641,7 +641,9 @@ test_manifold_preserves_point_contact(void)
     const bool valid = result == 0 && output_faces && output_points &&
 	output_face_count == 8 && output_point_count == 8 && report.solid &&
 	report.manifold_accepted && !report.excess_edges &&
-	!report.invalid_vertex_links;
+	!report.invalid_vertex_links &&
+	!memcmp(output_faces, faces, sizeof(faces)) &&
+	!memcmp(output_points, points, sizeof(points));
     if (output_faces)
 	bu_free(output_faces, "point-contact faces");
     if (output_points)
@@ -939,6 +941,64 @@ test_independent_safe_hole_patch_retained(void)
 	return -1;
     }
     bu_log("PASS test_independent_safe_hole_patch_retained\n");
+    return 0;
+}
+
+/* Cap many independent five-edge holes while retaining an oversized hole.
+ * Unchanged defects outside each cap's neighborhood must not affect the
+ * decision to retain that cap.  Five edges exercise the general hole filler
+ * rather than the preliminary triangle and quad cycle passes. */
+static int
+test_many_independent_holes(void)
+{
+    static const double pyramid_points[6][3] = {
+	{0, 0, 0}, {2, 0, 0}, {3, 1, 0}, {1, 3, 0}, {0, 2, 0},
+	{1, 1, 1}
+    };
+    constexpr int boundary_vertices = 5;
+    constexpr int capped_components = 64;
+    constexpr double spacing = 16.0;
+    constexpr double oversized_scale = 4.0;
+    constexpr double hole_area_limit = 8.0;
+    constexpr int closed_pyramid_faces = 8;
+    std::vector<std::array<double, 3>> points;
+    std::vector<int> faces;
+    for (int component = 0; component <= capped_components; ++component) {
+	const int first = (int)points.size();
+	const double scale = component == capped_components ? oversized_scale : 1.0;
+	for (const auto &point : pyramid_points)
+	    points.push_back({component * spacing + scale * point[0],
+		scale * point[1], scale * point[2]});
+	for (int edge = 0; edge < boundary_vertices; ++edge)
+	    faces.insert(faces.end(), {first + edge,
+		first + (edge + 1) % boundary_vertices, first + boundary_vertices});
+    }
+    struct bg_trimesh_repair_settings settings = BG_TRIMESH_REPAIR_SETTINGS_INIT;
+    settings.fill_holes = 1;
+    settings.max_hole_area = hole_area_limit;
+    settings.max_hole_edges = boundary_vertices;
+    settings.require_solid = 0;
+    int *output_faces = NULL;
+    int output_face_count = 0;
+    point_t *output_points = NULL;
+    int output_point_count = 0;
+    struct bg_trimesh_repair_report report = BG_TRIMESH_REPAIR_REPORT_INIT;
+    const int result = bg_trimesh_repair_ex(&output_faces, &output_face_count,
+	&output_points, &output_point_count, faces.data(), (int)faces.size() / 3,
+	reinterpret_cast<const point_t *>(points.data()), (int)points.size(),
+	&settings, &report);
+    const bool valid = result == 0 && output_faces && output_points &&
+	!report.solid && report.unmatched_edges == boundary_vertices &&
+	!report.excess_edges && !report.misoriented_edges &&
+	output_face_count == capped_components * closed_pyramid_faces + boundary_vertices;
+    bu_free(output_faces, "independent hole faces");
+    bu_free(output_points, "independent hole points");
+    if (!valid) {
+	bu_log("FAIL test_many_independent_holes: result=%d faces=%d unmatched=%d\n",
+	    result, output_face_count, report.unmatched_edges);
+	return -1;
+    }
+    bu_log("PASS test_many_independent_holes\n");
     return 0;
 }
 
@@ -1443,6 +1503,83 @@ test_hanging_boundary_edge_split(void)
     return 0;
 }
 
+/* Nearby samples must all split the long edge in parameter order, regardless
+ * of spatial-index traversal order.  Distant open seams and samples outside
+ * the requested radius must not affect that decision. */
+static int
+test_hanging_boundary_neighborhood(double normal_offset_fraction)
+{
+    point_t *cube_points;
+    int cube_point_count;
+    int *cube_faces;
+    int cube_face_count;
+    make_cube(&cube_points, &cube_point_count, &cube_faces, &cube_face_count);
+    constexpr int grid_width = 8;
+    constexpr int component_count = grid_width * grid_width;
+    constexpr double component_spacing = 4.0;
+    constexpr double tolerance = 1.0e-6;
+    const double fractions[] = {0.75, 0.25, 0.5};
+    std::vector<std::array<double, 3>> points;
+    std::vector<int> faces;
+    for (int component = 0; component < component_count; ++component) {
+	const int first = (int)points.size();
+	const double translation[3] = {
+	    component_spacing * (component % grid_width - grid_width / 2),
+	    component_spacing * (component / grid_width - grid_width / 2), 0.0
+	};
+	const auto append_point = [&](const double *point) {
+	    std::array<double, 3> transformed;
+	    for (int axis = 0; axis < 3; ++axis)
+		transformed[axis] = point[(axis + component) % 3] + translation[axis];
+	    points.push_back(transformed);
+	};
+	for (int point = 0; point < cube_point_count; ++point)
+	    append_point(cube_points[point]);
+	for (double fraction : fractions) {
+	    const double point[3] = {fraction, normal_offset_fraction * tolerance, 1.0};
+	    append_point(point);
+	}
+	for (int face = 0; face < cube_face_count; ++face) {
+	    if (face == 2) {
+		/* Subdivide the (4,5,6) top triangle around three boundary
+		 * points stored out of edge order. */
+		const int chain[] = {4, 9, 10, 8, 5};
+		for (size_t i = 1; i < sizeof(chain) / sizeof(chain[0]); ++i)
+		    faces.insert(faces.end(), {first + chain[i - 1], first + chain[i], first + 6});
+	    } else {
+		for (int corner = 0; corner < 3; ++corner)
+		    faces.push_back(first + cube_faces[face * 3 + corner]);
+	    }
+	}
+    }
+    struct bg_trimesh_repair_settings settings = BG_TRIMESH_REPAIR_SETTINGS_INIT;
+    settings.vertex_tolerance = tolerance;
+    int *output_faces = NULL;
+    int output_face_count = 0;
+    point_t *output_points = NULL;
+    int output_point_count = 0;
+    struct bg_trimesh_repair_report report = BG_TRIMESH_REPAIR_REPORT_INIT;
+    const int result = bg_trimesh_repair_ex(&output_faces, &output_face_count,
+	&output_points, &output_point_count, faces.data(), (int)faces.size() / 3,
+	reinterpret_cast<const point_t *>(points.data()), (int)points.size(),
+	&settings, &report);
+    const bool expected_solid = normal_offset_fraction < 1.0;
+    const bool valid = expected_solid ? result == 0 && report.solid &&
+	output_faces && output_points && output_face_count == component_count * 18 &&
+	!bg_trimesh_solid2(output_point_count, output_face_count,
+	    (fastf_t *)output_points, output_faces, NULL) :
+	result < 0 && !report.solid && !output_faces && !output_points;
+    bu_free(output_faces, "boundary neighborhood faces");
+    bu_free(output_points, "boundary neighborhood points");
+    if (!valid) {
+	bu_log("FAIL test_hanging_boundary_neighborhood: offset=%g result=%d solid=%d faces=%d\n",
+	    normal_offset_fraction, result, report.solid, output_face_count);
+	return -1;
+    }
+    bu_log("PASS test_hanging_boundary_neighborhood: offset=%g\n", normal_offset_fraction);
+    return 0;
+}
+
 /* Test specifically for the SplitNonManifoldVertices backward-walk bug.
  *
  * The bug: SplitNonManifoldVertices only triggered its backward walk when
@@ -1693,6 +1830,7 @@ main(int UNUSED(argc), const char *argv[])
     failures +=
 	(test_intersecting_hole_patch_manifold_accepted() != 0) ? 1 : 0;
     failures += (test_independent_safe_hole_patch_retained() != 0) ? 1 : 0;
+    failures += (test_many_independent_holes() != 0) ? 1 : 0;
     failures += (test_collinear_hole_boundary()    != 0) ? 1 : 0;
     failures += (test_concave_planar_hole()         != 0) ? 1 : 0;
     failures += (test_validated_ear_alternative()    != 0) ? 1 : 0;
@@ -1701,6 +1839,9 @@ main(int UNUSED(argc), const char *argv[])
     failures += (test_overlapping_component_union() != 0) ? 1 : 0;
     failures += (test_touching_component_separation() != 0) ? 1 : 0;
     failures += (test_hanging_boundary_edge_split() != 0) ? 1 : 0;
+    failures += (test_hanging_boundary_neighborhood(0.0) != 0) ? 1 : 0;
+    failures += (test_hanging_boundary_neighborhood(0.5) != 0) ? 1 : 0;
+    failures += (test_hanging_boundary_neighborhood(2.0) != 0) ? 1 : 0;
     failures += (test_split_nmv_backward_walk()   != 0) ? 1 : 0;
     failures += (test_split_nmv_cycle_guard()     != 0) ? 1 : 0;
     failures += (test_split_nmv_cyclic_adjacency() != 0) ? 1 : 0;
