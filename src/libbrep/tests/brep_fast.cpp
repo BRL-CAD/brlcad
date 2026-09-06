@@ -106,7 +106,7 @@ run_shaded(wire_output *output, struct directory *dp,
 static int
 run_fast(fast_output *output, const ON_Brep *brep, size_t workers,
 	size_t max_points, size_t max_working_bytes = 0,
-	size_t max_triangles = 0, bool adaptive_quality = true)
+	size_t max_triangles = 0, bool adaptive_quality = true, int face_index = -1)
 {
     int *faces = NULL;
     int face_count = 0;
@@ -126,7 +126,7 @@ run_fast(fast_output *output, const ON_Brep *brep, size_t workers,
     options.adaptive_quality = adaptive_quality ? 1 : 0;
 
     int ret = brep_cdt_fast_ex(&faces, &face_count, &normals, &points,
-	&point_count, brep, -1, &ttol, &tol, &options, &output->report);
+	&point_count, brep, face_index, &ttol, &tol, &options, &output->report);
     if (faces)
 	output->faces.assign(faces, faces + (size_t)face_count * 3);
     if (normals) {
@@ -149,6 +149,17 @@ main(int argc, const char **argv)
 {
     if (argc != 3)
 	return 2;
+
+    ON_Brep empty_brep;
+    fast_output empty;
+    fast_output nonexistent_face;
+    if (run_fast(&empty, &empty_brep, 1, 0) != BREP_CDT_FAST_OK ||
+	    !empty.faces.empty() || !empty.points.empty() || !empty.normals.empty() ||
+	    empty.report.requested_faces || empty.report.failed_faces ||
+	    empty.report.completed_faces ||
+	    run_fast(&nonexistent_face, &empty_brep, 1, 0, 0, 0, true, 0) !=
+	    BREP_CDT_FAST_ERROR)
+	return 1;
 
     struct db_i *dbip = db_open(argv[1], DB_OPEN_READONLY);
     if (dbip == DBI_NULL || db_dirbuild(dbip) < 0)

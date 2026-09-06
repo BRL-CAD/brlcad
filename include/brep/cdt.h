@@ -583,7 +583,8 @@ brep_cdt_fast_options_default(struct brep_cdt_fast_options *options);
  * the caller.  They are initialized to NULL/zero before any validation or
  * processing.  The optional report receives resource and per-face status
  * information.  A partial result is returned only when the options permit
- * partial output.
+ * partial output.  An all-faces request for a B-Rep with no faces succeeds
+ * with empty output; selecting an individual nonexistent face is an error.
  *
  * @param faces receives triangle vertex indices
  * @param face_cnt receives the number of triangles
