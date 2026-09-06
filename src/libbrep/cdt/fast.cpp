@@ -5559,6 +5559,56 @@ fast_face_report_set(struct bg_triangulation_report *report,
     return reason == BG_TRIANGULATION_OK;
 }
 
+static void
+fast_triangle_display_normals(const ON_3dPoint points[3],
+	ON_3dVector normals[3])
+{
+    ON_3dVector geometric = ON_CrossProduct(points[1] - points[0],
+	points[2] - points[0]);
+    if (!geometric.IsValid() || !geometric.Unitize())
+	return;
+    /* Coarse chords and exact boundary samples can disagree with the
+     * source tangent plane.  An opposing smooth normal cannot light the
+     * realized facet consistently; use its geometric normal at that corner. */
+    for (int corner = 0; corner < 3; ++corner) {
+	if (!normals[corner].IsValid() ||
+		!(geometric * normals[corner] > 0.0))
+	    normals[corner] = geometric;
+    }
+}
+
+int
+cdt_test_fast_display_normals(void)
+{
+    for (bool reverse : {false, true}) {
+	ON_3dPoint points[3] = {
+	    ON_3dPoint(0, 0, 0), ON_3dPoint(2, 0, 0), ON_3dPoint(0, 3, 0)
+	};
+	if (reverse)
+	    std::swap(points[1], points[2]);
+	const double direction = reverse ? -1.0 : 1.0;
+	const ON_3dVector expected(0, 0, direction);
+	const ON_3dVector smooth(0, direction, direction);
+	ON_3dVector normals[3] = {
+	    smooth, ON_3dVector(0, direction, -direction), ON_3dVector(1, 0, 0)
+	};
+	fast_triangle_display_normals(points, normals);
+	if (normals[0] != smooth || normals[1] != expected ||
+		normals[2] != expected)
+	    return 1;
+	normals[0] = ON_3dVector::UnsetVector;
+	fast_triangle_display_normals(points, normals);
+	if (normals[0] != expected)
+	    return 2;
+	points[2] = points[1];
+	normals[0] = smooth;
+	fast_triangle_display_normals(points, normals);
+	if (normals[0] != smooth)
+	    return 3;
+    }
+    return 0;
+}
+
 
 static bool
 bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
@@ -6133,7 +6183,10 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
     };
     auto emit_triangle = [&](int t0, int t1, int t2) {
 	attempted_triangles++;
-	const int tris[3] = {t0, t1, t2};
+	/* Both chart triangulators return clockwise UV triangles.  Match the
+	 * winding to the face-oriented surface normals emitted below. */
+	const int tris[3] = {t0, face.m_bRev ? t1 : t2,
+	    face.m_bRev ? t2 : t1};
 	ON_3dPoint triangle_points[3];
 	ON_3dVector triangle_normals[3];
 	for (size_t j = 0; j < 3; j++) {
@@ -6235,10 +6288,15 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 		triangle_normals[j] = *(bt_it->second->n3d);
 	    if (face.m_bRev)
 		triangle_normals[j] = triangle_normals[j] * -1.0;
-	    pnt_norms.push_back(triangle_normals[j].x);
-	    pnt_norms.push_back(triangle_normals[j].y);
-	    pnt_norms.push_back(triangle_normals[j].z);
 	}
+	/* Reused edge, seam, and singular indices may resolve to coordinates
+	 * different from the surface evaluations used during triangulation. */
+	for (size_t corner = 0; corner < 3; ++corner)
+	    triangle_points[corner] = ON_3dPoint(&pnts[(size_t)
+		faces[faces.size() - 3 + corner] * 3]);
+	fast_triangle_display_normals(triangle_points, triangle_normals);
+	for (const ON_3dVector &normal : triangle_normals)
+	    pnt_norms.insert(pnt_norms.end(), {normal.x, normal.y, normal.z});
     };
 
     if (tri_success) {

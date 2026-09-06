@@ -61,6 +61,7 @@ extern BREP_EXPORT int cdt_test_repair_patch_boundary(void);
 extern BREP_EXPORT int cdt_test_subtolerance_edge_collapse(void);
 extern BREP_EXPORT int cdt_test_subtolerance_ring(void);
 extern BREP_EXPORT int cdt_test_developable_clean(void);
+extern BREP_EXPORT int cdt_test_fast_display_normals(void);
 
 __END_DECLS
 

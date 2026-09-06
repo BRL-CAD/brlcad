@@ -635,7 +635,9 @@ brep_cdt_fast_options_default(struct brep_cdt_fast_options *options);
  *
  * @param faces receives triangle vertex indices
  * @param face_cnt receives the number of triangles
- * @param pnt_norms receives per-vertex normals
+ * @param pnt_norms receives three face-oriented corner normals per triangle,
+ *        in the same order as faces; smooth normals opposing a realized
+ *        nondegenerate facet are replaced by its geometric normal
  * @param pnts receives output vertices
  * @param pntcnt receives the number of output vertices
  * @param brep source B-Rep

@@ -14,6 +14,7 @@
 #include <vector>
 
 #include "brep/cdt.h"
+#include "cdt/test_api.h"
 #include "bv/vlist.h"
 #include "raytrace.h"
 #include "rt/geom.h"
@@ -144,11 +145,79 @@ run_fast(fast_output *output, const ON_Brep *brep, size_t workers,
     return ret;
 }
 
+static bool
+triangle_geometric_normal(const fast_output &output, size_t triangle,
+	ON_3dVector &normal)
+{
+    ON_3dPoint points[3];
+    for (int corner = 0; corner < 3; ++corner) {
+	const int vertex = output.faces[triangle * 3 + corner];
+	if (vertex < 0 || (size_t)vertex >= output.points.size() / 3)
+	    return false;
+	points[corner] = ON_3dPoint(&output.points[(size_t)vertex * 3]);
+    }
+    normal = ON_CrossProduct(points[1] - points[0], points[2] - points[0]);
+    return normal.IsValid() && normal.Unitize();
+}
+
+static bool
+normals_match_winding(const fast_output &output)
+{
+    if (output.faces.empty() || output.faces.size() % 3 ||
+	    output.normals.size() != output.faces.size() * 3)
+	return false;
+    for (size_t triangle = 0; triangle < output.faces.size() / 3; ++triangle) {
+	ON_3dVector geometric;
+	if (!triangle_geometric_normal(output, triangle, geometric))
+	    return false;
+	for (int corner = 0; corner < 3; ++corner) {
+	    ON_3dVector normal(&output.normals[triangle * 9 + corner * 3]);
+	    if (!normal.IsValid() || !normal.Unitize() ||
+		    !(geometric * normal > 0.0))
+		return false;
+	}
+    }
+    return true;
+}
+
+static bool
+planar_winding_matches_source(const ON_Brep &brep)
+{
+    /* Check source orientation independently of the emitted normals, so
+     * the display fallback cannot hide a reversed triangulator winding. */
+    for (int face_index = 0; face_index < brep.m_F.Count(); ++face_index) {
+	const ON_BrepFace &face = brep.m_F[face_index];
+	const ON_Surface *surface = face.SurfaceOf();
+	if (!surface || !surface->IsPlanar())
+	    continue;
+	ON_3dPoint point;
+	ON_3dVector expected;
+	if (!surface->EvNormal(surface->Domain(0).Mid(),
+		surface->Domain(1).Mid(), point, expected))
+	    return false;
+	if (face.m_bRev)
+	    expected = -expected;
+	fast_output output;
+	if (run_fast(&output, &brep, 1, 0, 0, 0, true, face_index) !=
+		BREP_CDT_FAST_OK || output.faces.empty())
+	    return false;
+	for (size_t triangle = 0; triangle < output.faces.size() / 3; ++triangle) {
+	    ON_3dVector geometric;
+	    if (!triangle_geometric_normal(output, triangle, geometric) ||
+		    !(geometric * expected > 0.0))
+		return false;
+	}
+    }
+    return true;
+}
+
 int
 main(int argc, const char **argv)
 {
     if (argc != 3)
 	return 2;
+    if (cdt_test_fast_display_normals())
+	return 1;
 
     ON_Brep empty_brep;
     fast_output empty;
@@ -205,6 +274,14 @@ main(int argc, const char **argv)
 
     bool same = serial.faces == parallel.faces &&
 	serial.normals == parallel.normals && serial.points == parallel.points;
+    ON_Brep reversed_brep(*bi->brep);
+    reversed_brep.Flip();
+    fast_output reversed;
+    const bool oriented_normals = normals_match_winding(serial) &&
+	run_fast(&reversed, &reversed_brep, 1, 16 * 1024 * 1024) ==
+	    BREP_CDT_FAST_OK && normals_match_winding(reversed) &&
+	planar_winding_matches_source(*bi->brep) &&
+	planar_winding_matches_source(reversed_brep);
     bool complete = serial.report.failed_faces == 0 &&
 	parallel.report.failed_faces == 0 &&
 	serial.report.completed_faces == bi->brep->m_F.Count() &&
@@ -338,7 +415,8 @@ main(int argc, const char **argv)
 
     rt_db_free_internal(&intern);
     db_close(dbip);
-    return (same && complete && working_bounded && adaptive_reported &&
+    return (same && oriented_normals && complete && working_bounded &&
+	adaptive_reported &&
 	unchanged && limited_cleanly && authoritative_boundaries_retained &&
 	wire_same && wire_repeatable && wire_limited_cleanly &&
 	wire_admission_repeatable &&
