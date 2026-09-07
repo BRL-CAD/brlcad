@@ -4,6 +4,7 @@ set(
   LIBBREP_SOURCES
   BBNode.cpp
   BRNode.cpp
+  assembly.cpp
   PullbackCurve.cpp
   Subcurve.cpp
   Subsurface.cpp

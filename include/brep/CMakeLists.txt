@@ -2,6 +2,7 @@ set(
   brep_headers
   defines.h
   bbnode.h
+  assembly.h
   boolean.h
   brnode.h
   cdt.h

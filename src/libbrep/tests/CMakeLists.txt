@@ -5,6 +5,9 @@ find_package(Threads REQUIRED)
 brlcad_addexec(test_brep_ppx ppx.cpp "libbrep" TEST)
 brlcad_add_test(NAME brep_ppx COMMAND test_brep_ppx)
 
+brlcad_addexec(test_brep_assembly assembly.cpp "libbrep" TEST)
+brlcad_add_test(NAME brep_assembly COMMAND test_brep_assembly)
+
 # Standalone CDT hole-triangulation tests: verify that bg_nested_poly_triangulate
 # produces no triangles whose centroid falls inside a hole polygon, for two
 # faces from the NIST MBE PMI sample that are known to have multiple holes.
@@ -26,6 +29,7 @@ brlcad_add_test(NAME brep_pullback_context COMMAND test_pullback_context)
 cmakefiles(
   CMakeLists.txt
   ayam_hyperbolid.3dm
+  assembly.cpp
   brep_cdt_invalid.cpp
   brep_cdt_hole_face17.c
   brep_cdt_hole_face27.c
