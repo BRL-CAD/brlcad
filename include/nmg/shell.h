@@ -126,6 +126,13 @@ NMG_EXPORT extern struct face *nmg_find_top_face_in_dir(const struct shell *s,
 NMG_EXPORT extern struct face *nmg_find_top_face(const struct shell *s,
                                                  int *dir,
                                                  long *flags);
+/**
+ * Group each outer shell with its enclosed void shells.  May decompose
+ * shells, changing region topology but not geometry.  Returns the number
+ * of outer shells, or zero with *shells set to NULL if none are found.
+ * The caller must bu_ptbl_free and bu_free each returned table, then
+ * bu_free the array.  The shells themselves remain owned by the model.
+ */
 NMG_EXPORT extern int nmg_find_outer_and_void_shells(struct nmgregion *r,
                                                      struct bu_ptbl ***shells,
                                                      struct bu_list *vlfree,
