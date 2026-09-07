@@ -251,9 +251,11 @@ main(int argc, char **argv)
 	     * advertised it via -I or PKG_ADDR (PKG_ADDR_ENVVAR).
 	     * pkg_connect_addr/env wraps the already-inherited fd into a
 	     * pkg_conn so the rest of the code is transport-agnostic. */
-	    if (debug)
+	    if (debug) {
+		const char *active_addr = ipc_addr ? ipc_addr : getenv(PKG_ADDR_ENVVAR);
 		fprintf(stderr, "rtsrv: IPC mode active (addr=%s)\n",
-			ipc_addr ? ipc_addr : getenv(PKG_ADDR_ENVVAR));
+			active_addr ? active_addr : "unknown");
+	    }
 	} else {
 	    /* Normal TCP mode */
 	    if (argc != 3 && argc != 4) {
