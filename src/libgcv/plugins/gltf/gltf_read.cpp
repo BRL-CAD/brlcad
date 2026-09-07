@@ -21,7 +21,12 @@
 
 #include "common.h"
 
+#include <climits>
+#include <cstdint>
+#include <cstring>
+#include <set>
 #include <stdlib.h>
+#include <vector>
 
 #include "tiny_gltf.h"
 
@@ -36,180 +41,297 @@
 #include "raytrace.h"
 #include "wdb.h"
 
-struct gltf_read_options
-{
-};
-
 struct conversion_state
 {
-	const struct gcv_opts *gcv_options;
-	struct gltf_read_options *gltf_read_options;
-
 	std::string input_file;	/* name of the input file */
-	FILE *fd_in;		/* input file */
 	struct rt_wdb *fd_out;	/* Resulting BRL-CAD file */
-
 	struct wmember scene;
-
-	int num_vert_values;
-	int num_face_values;
-	int num_norm_values;
-
-	int bot_fcurr; //current face
-	int id_no; //????
-	int mat_code;
 };
-#define CONVERSION_STATE_ZERO {NULL, NULL, "", NULL, NULL, WMEMBER_INIT_ZERO, 0, 0, 0, 0, 0, 0}
+#define CONVERSION_STATE_ZERO {"", NULL, WMEMBER_INIT_ZERO}
 
 
-static void testingStringIntMap(const std::map<std::string, int> &m, int &pos) {
-	std::map<std::string, int>::const_iterator it(m.begin());
-	std::map<std::string, int>::const_iterator itEnd(m.end());
-	for (; it != itEnd; it++) {
-		//std::cout << Indent(indent) << it->first << ": " << it->second << std::endl;
-		if (it->first == "POSITION")
-		{
-			pos = it->second;
-			//std::cout << "BOT position: " << pos << std::endl;
-		}
+static bool
+accessor_data(const tinygltf::Model &model, int accessor_index,
+	const tinygltf::Accessor **accessor_out, const unsigned char **data_out,
+	size_t *stride_out)
+{
+	if (accessor_index < 0 || (size_t)accessor_index >= model.accessors.size())
+		return false;
 
+	const tinygltf::Accessor &accessor = model.accessors[accessor_index];
+	if (accessor.bufferView < 0 ||
+		(size_t)accessor.bufferView >= model.bufferViews.size())
+		return false;
+
+	const tinygltf::BufferView &view = model.bufferViews[accessor.bufferView];
+	if (view.buffer < 0 || (size_t)view.buffer >= model.buffers.size())
+		return false;
+
+	const tinygltf::Buffer &buffer = model.buffers[view.buffer];
+	int stride = accessor.ByteStride(view);
+	int component_size = tinygltf::GetComponentSizeInBytes(accessor.componentType);
+	int component_count = tinygltf::GetNumComponentsInType(accessor.type);
+	if (stride <= 0 || component_size <= 0 || component_count <= 0)
+		return false;
+
+	size_t element_size = (size_t)component_size * (size_t)component_count;
+	if ((size_t)stride < element_size || view.byteOffset > buffer.data.size() ||
+		view.byteLength > buffer.data.size() - view.byteOffset ||
+		accessor.byteOffset > view.byteLength)
+		return false;
+
+	size_t available = view.byteLength - accessor.byteOffset;
+	if (accessor.count > 0 &&
+		(available < element_size ||
+		 accessor.count - 1 > (available - element_size) / (size_t)stride))
+		return false;
+
+	*accessor_out = &accessor;
+	*data_out = buffer.data.data() + view.byteOffset + accessor.byteOffset;
+	*stride_out = (size_t)stride;
+	return true;
+}
+
+
+static bool
+read_index(const unsigned char *data, int component_type, size_t *index)
+{
+	switch (component_type) {
+		case TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE:
+			*index = *data;
+			return true;
+		case TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT:
+			*index = (size_t)data[0] | ((size_t)data[1] << 8);
+			return true;
+		case TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT:
+			*index = (size_t)data[0] | ((size_t)data[1] << 8) |
+				((size_t)data[2] << 16) | ((size_t)data[3] << 24);
+			return true;
+		default:
+			return false;
 	}
 }
 
-void
-generate_geometry(struct conversion_state *state, tinygltf::Model &model, int mesh_number, std::string shape_name, wmember &region)
+
+static float
+read_float(const unsigned char *data)
 {
-	tinygltf::Mesh mesh = model.meshes[mesh_number];
-	//for each mesh primitive
-	for (size_t j = 0; j < mesh.primitives.size(); j++)
-	{
-		//get face data
-		int indices_pos = mesh.primitives[j].indices;
-
-		tinygltf::Accessor accessor = model.accessors.at(indices_pos);
-		tinygltf::BufferView bufferView = model.bufferViews[accessor.bufferView];
-		tinygltf::Buffer buffer = model.buffers[bufferView.buffer];
-		//unsigned char to short int arr
-		const unsigned char * dataPtr3 = buffer.data.data() + bufferView.byteOffset + accessor.byteOffset;
-
-		//const int byte_stride3 = accessor.ByteStride(bufferView);
-		//const size_t count = accessor.count;
-
-		unsigned short* indices = (unsigned short*)dataPtr3;
-		//int faces[bufferView.byteLength / byte_stride] ;
-		//int numfaces = bufferView.byteLength / byte_stride;
-		size_t numfaces = accessor.count;
-		int *faces = new int[numfaces];
-		for (size_t i = 0; i < numfaces; i++)
-		{
-			faces[i] = indices[i];
-		}
-		//get vertex data
-		int bot_pos = 0;
-		testingStringIntMap(mesh.primitives[j].attributes, bot_pos);
-		accessor = model.accessors[bot_pos];
-		bufferView = model.bufferViews[accessor.bufferView];
-		buffer = model.buffers[bufferView.buffer];
-		//unsigned char to short int arr
-		const unsigned char * dataPtr = buffer.data.data() + bufferView.byteOffset +
-			accessor.byteOffset;
-		//int byte_stride = accessor.ByteStride(bufferView);
-		//const size_t count = accessor.count;
-
-		float* positions = (float*)dataPtr;
-		int numvert = accessor.count * 3;
-		double* vertices = new double[numvert];
-		for (long unsigned int i = 0; i < accessor.count; i++)
-		{
-			vertices[i * 3] = positions[i * 3];
-			vertices[(i * 3) + 1] = positions[(i * 3) + 1];
-			vertices[(i * 3) + 2] = positions[(i * 3) + 2];
-		}
-		//make shape and add to region
-		mk_bot(state->fd_out, (shape_name + std::to_string(j)).c_str(), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, numvert / 3, numfaces / 3, vertices, faces, (fastf_t *)NULL, (struct bu_bitv *)NULL);
-		(void)mk_addmember((char*)(shape_name + std::to_string(j)).c_str(), &region.l, NULL, WMOP_UNION);
-	}
+	uint32_t bits = (uint32_t)data[0] | ((uint32_t)data[1] << 8) |
+		((uint32_t)data[2] << 16) | ((uint32_t)data[3] << 24);
+	float value;
+	memcpy(&value, &bits, sizeof(value));
+	return value;
 }
 
-void
-handle_node(struct conversion_state *state, tinygltf::Model &model, int node_index, struct wmember &regions)
+
+static bool
+generate_geometry(struct conversion_state *state, const tinygltf::Model &model,
+	int mesh_number, const std::string &shape_name, wmember &region)
 {
-	tinygltf::Node node = model.nodes[node_index];
+	if (mesh_number < 0 || (size_t)mesh_number >= model.meshes.size()) {
+		bu_log("glTF mesh index %d is invalid\n", mesh_number);
+		return false;
+	}
+
+	const tinygltf::Mesh &mesh = model.meshes[mesh_number];
+	for (size_t j = 0; j < mesh.primitives.size(); j++) {
+		const tinygltf::Primitive &primitive = mesh.primitives[j];
+		if (primitive.mode != -1 && primitive.mode != TINYGLTF_MODE_TRIANGLES) {
+			bu_log("glTF primitive %zu is not a triangle mesh\n", j);
+			return false;
+		}
+
+		auto position_it = primitive.attributes.find("POSITION");
+		if (position_it == primitive.attributes.end()) {
+			bu_log("glTF primitive %zu has no POSITION accessor\n", j);
+			return false;
+		}
+
+		const tinygltf::Accessor *position_accessor = NULL;
+		const unsigned char *position_data = NULL;
+		size_t position_stride = 0;
+		if (!accessor_data(model, position_it->second, &position_accessor,
+			&position_data, &position_stride) ||
+			position_accessor->type != TINYGLTF_TYPE_VEC3 ||
+			position_accessor->componentType != TINYGLTF_COMPONENT_TYPE_FLOAT) {
+			bu_log("glTF primitive %zu has invalid POSITION data\n", j);
+			return false;
+		}
+
+		if (position_accessor->count > SIZE_MAX / 3) {
+			bu_log("glTF primitive %zu has too many vertices\n", j);
+			return false;
+		}
+		std::vector<fastf_t> vertices(position_accessor->count * 3);
+		for (size_t i = 0; i < position_accessor->count; i++) {
+			for (size_t axis = 0; axis < 3; axis++) {
+				vertices[i * 3 + axis] = (fastf_t)read_float(
+					position_data + i * position_stride + axis * sizeof(float));
+			}
+		}
+
+		const tinygltf::Accessor *index_accessor = NULL;
+		const unsigned char *index_data = NULL;
+		size_t index_stride = 0;
+		size_t index_count = position_accessor->count;
+		if (primitive.indices >= 0) {
+			if (!accessor_data(model, primitive.indices, &index_accessor,
+				&index_data, &index_stride) ||
+				index_accessor->type != TINYGLTF_TYPE_SCALAR) {
+				bu_log("glTF primitive %zu has invalid index data\n", j);
+				return false;
+			}
+			index_count = index_accessor->count;
+		}
+
+		if (index_count == 0 || index_count % 3 != 0) {
+			bu_log("glTF primitive %zu does not contain complete triangles\n", j);
+			return false;
+		}
+
+		std::vector<int> faces(index_count);
+		for (size_t i = 0; i < index_count; i++) {
+			size_t index = i;
+			if (index_accessor &&
+				!read_index(index_data + i * index_stride,
+					index_accessor->componentType, &index)) {
+				bu_log("glTF primitive %zu uses an unsupported index type\n", j);
+				return false;
+			}
+			if (index >= position_accessor->count || index > INT_MAX) {
+				bu_log("glTF primitive %zu contains an invalid vertex index\n", j);
+				return false;
+			}
+			faces[i] = (int)index;
+		}
+
+		std::string bot_name = shape_name + std::to_string(j);
+		if (mk_bot(state->fd_out, bot_name.c_str(), RT_BOT_SOLID,
+			RT_BOT_UNORIENTED, 0, position_accessor->count,
+			index_count / 3, vertices.data(), faces.data(), NULL, NULL) < 0 ||
+			!mk_addmember(bot_name.c_str(), &region.l, NULL, WMOP_UNION)) {
+			bu_log("Unable to write glTF primitive %zu\n", j);
+			return false;
+		}
+	}
+
+	return true;
+}
+
+
+static bool
+handle_node(struct conversion_state *state, const tinygltf::Model &model,
+	int node_index, struct wmember &regions, std::set<int> &active_nodes)
+{
+	if (node_index < 0 || (size_t)node_index >= model.nodes.size()) {
+		bu_log("glTF node index %d is invalid\n", node_index);
+		return false;
+	}
+	if (!active_nodes.insert(node_index).second) {
+		bu_log("glTF node hierarchy contains a cycle at node %d\n", node_index);
+		return false;
+	}
+	struct active_node_guard {
+		std::set<int> &nodes;
+		int index;
+		~active_node_guard() { nodes.erase(index); }
+	} guard = {active_nodes, node_index};
+
+	const tinygltf::Node &node = model.nodes[node_index];
+	if (!node.translation.empty() && node.translation.size() != 3) {
+		bu_log("glTF node %d has invalid translation data\n", node_index);
+		return false;
+	}
+	if (!node.matrix.empty() && node.matrix.size() != 16) {
+		bu_log("glTF node %d has invalid matrix data\n", node_index);
+		return false;
+	}
 	if (node.children.empty() && node.mesh == -1)
-	{
-		//trapping nodes without meshes or children to avoid errors
-		//Fix me
-		return;
-	}
-	std::string region_name = "Region_" +std::to_string(node_index);
+		return true;
+
+	std::string region_name = "Region_" + std::to_string(node_index);
 	struct wmember region;
-	//generate a list to hold this node's children nodes
 	BU_LIST_INIT(&region.l);
+	struct wmember_list_guard {
+		struct bu_list *head;
+		~wmember_list_guard() { if (head) mk_freemembers(head); }
+	} region_guard = {&region.l};
+
 	int mesh_number = node.mesh;
-	//if the node is a leaf, therefore has a mesh
-	if (mesh_number != -1)
-	{
-		tinygltf::Mesh mesh = model.meshes[node.mesh];
-		std::string shape_name = model.meshes[mesh_number].name;
-		if (mesh.name.empty())
-		{
+	if (mesh_number != -1) {
+		if ((size_t)mesh_number >= model.meshes.size()) {
+			bu_log("glTF node %d has invalid mesh index %d\n", node_index, mesh_number);
+			return false;
+		}
+		const tinygltf::Mesh &mesh = model.meshes[mesh_number];
+		std::string shape_name = mesh.name;
+		if (mesh.name.empty()) {
 			shape_name = "shape" + std::to_string(node_index);
 		}
-		state->bot_fcurr = 0;
-		state->id_no = 0;
-		generate_geometry(state, model, mesh_number, shape_name, region);
-		//make a combination between the region and the mesh
-		mk_lrcomb(state->fd_out, region_name.c_str(), &region, 1, (char *)NULL, (char *)NULL, NULL, state->id_no, 0, 0, 100, 0);
-	}
-	//account for translation of children
-	if (!node.translation.empty())
-	{
-		fastf_t arr[16] = { 0 };
-		arr[0] = arr[5] = arr[10] = arr[15] = 1;
-		arr[3] = (fastf_t)node.translation[0];
-		arr[7] = (fastf_t)node.translation[1];
-		arr[11] = (fastf_t)node.translation[2];
-		(void)mk_addmember(region_name.c_str(), &regions.l, arr, WMOP_UNION);
-	}
-	//account for child transformation matrix
-	else if (!node.matrix.empty())
-	{
-		fastf_t *arr = new fastf_t[16];
-		for (int i = 0; i < 16; i++)
-		{
-			arr[i] = (fastf_t)node.matrix[i];
+		if (!generate_geometry(state, model, mesh_number, shape_name, region)) {
+			return false;
 		}
-		(void)mk_addmember(region_name.c_str(), &regions.l, arr, WMOP_UNION);
 	}
-	else
-	{
-		(void)mk_addmember(region_name.c_str(), &regions.l, NULL, WMOP_UNION);
+	for (size_t i = 0; i < node.children.size(); i++) {
+		if (!handle_node(state, model, node.children[i], region, active_nodes)) {
+			return false;
+		}
 	}
-	//for each child node
-	for (size_t i = 0; i < node.children.size(); i++)
-	{
-		handle_node(state, model, node.children[i], region);
+
+	if (BU_LIST_IS_EMPTY(&region.l)) {
+		return true;
 	}
-	//if the node had children, make them all into a region
-	if (node.children.size() > 0)
-	{
-		mk_lrcomb(state->fd_out, region_name.c_str(), &region, 0, (char *)NULL, (char *)NULL, NULL, state->id_no, 0, 0, 100, 0);
+	int comb_result = mk_lrcomb(state->fd_out, region_name.c_str(), &region,
+		node.children.empty() ? 1 : 0, NULL, NULL, NULL,
+		0, 0, 0, 100, 0);
+	region_guard.head = NULL;
+	if (comb_result < 0) {
+		return false;
 	}
+
+	if (!node.translation.empty()) {
+		fastf_t matrix[16] = {0};
+		matrix[0] = matrix[5] = matrix[10] = matrix[15] = 1;
+		matrix[3] = (fastf_t)node.translation[0];
+		matrix[7] = (fastf_t)node.translation[1];
+		matrix[11] = (fastf_t)node.translation[2];
+		if (!mk_addmember(region_name.c_str(), &regions.l, matrix, WMOP_UNION)) {
+			return false;
+		}
+	} else if (!node.matrix.empty()) {
+		fastf_t matrix[16];
+		for (int i = 0; i < 16; i++)
+			matrix[i] = (fastf_t)node.matrix[i];
+		if (!mk_addmember(region_name.c_str(), &regions.l, matrix, WMOP_UNION)) {
+			return false;
+		}
+	} else if (!mk_addmember(region_name.c_str(), &regions.l, NULL, WMOP_UNION)) {
+		return false;
+	}
+	return true;
 }
 
-void
-convert_from_gltf(struct conversion_state *state, tinygltf::Model &model)
+static bool
+convert_from_gltf(struct conversion_state *state, const tinygltf::Model &model)
 {
-	//assume file has one scene
-	const tinygltf::Scene &scene = model.scenes[0];
-	tinygltf::Node node;
+	if (model.scenes.empty()) {
+		bu_log("glTF input does not define a scene\n");
+		return false;
+	}
+	int scene_index = model.defaultScene >= 0 ? model.defaultScene : 0;
+	if ((size_t)scene_index >= model.scenes.size()) {
+		bu_log("glTF default scene index %d is invalid\n", scene_index);
+		return false;
+	}
+	const tinygltf::Scene &scene = model.scenes[scene_index];
+	std::set<int> active_nodes;
 	//for each top level scene node
 	for (size_t i = 0; i < scene.nodes.size(); i++)
 	{
-		node = model.nodes[scene.nodes[i]];
-		handle_node(state, model, scene.nodes[i], state->scene);
-
+		if (!handle_node(state, model, scene.nodes[i], state->scene, active_nodes))
+			return false;
 	}
+	return true;
 }
 
 static int
@@ -270,10 +392,14 @@ gltf_read(struct gcv_context *context, const struct gcv_opts *UNUSED(gcv_options
 	//set geometry title
 	mk_id(state.fd_out, title.c_str());
 
-	convert_from_gltf(&state, model);
+	if (!convert_from_gltf(&state, model)) {
+		mk_freemembers(&state.scene.l);
+		return -1;
+	}
 
 	//combine all top level regions
-	mk_lcomb(wdbp, "all", &state.scene, 0, (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
+	if (mk_lcomb(wdbp, "all", &state.scene, 0, NULL, NULL, NULL, 0) < 0)
+		return -1;
 
 	return 1;
 }
