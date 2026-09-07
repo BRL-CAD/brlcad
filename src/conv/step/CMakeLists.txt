@@ -426,7 +426,7 @@ if(BRLCAD_ENABLE_STEP)
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_BINARY_DIR}
   )
-  target_link_libraries(step_plugin_host_objects PRIVATE libbu ${CMAKE_DL_LIBS})
+  target_link_libraries(step_plugin_host_objects PRIVATE librt libbu ${CMAKE_DL_LIBS})
   target_compile_definitions(step_plugin_host_objects PRIVATE BRLCADBUILD HAVE_CONFIG_H)
   set_target_properties(
     step_plugin_host_objects PROPERTIES
@@ -675,8 +675,8 @@ add_subdirectory(util)
 if(BRLCAD_ENABLE_STEP)
   target_sources(step-g PRIVATE $<TARGET_OBJECTS:step_plugin_host_objects>)
   target_sources(g-step PRIVATE $<TARGET_OBJECTS:step_plugin_host_objects>)
-  target_link_libraries(step-g ${CMAKE_DL_LIBS})
-  target_link_libraries(g-step ${CMAKE_DL_LIBS})
+  target_link_libraries(step-g librt ${CMAKE_DL_LIBS})
+  target_link_libraries(g-step librt ${CMAKE_DL_LIBS})
   foreach(_schema ap203 ap203e2 ap214 ap242e1 ap242e2 ap242e3 ap242e4)
     if(TARGET step-schema-${_schema})
       add_dependencies(step-g step-schema-${_schema})
@@ -691,7 +691,7 @@ if(BRLCAD_ENABLE_STEP)
       $<TARGET_OBJECTS:step_plugin_host_objects>
     )
     target_include_directories(step_plugin_api_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-    target_link_libraries(step_plugin_api_test PRIVATE libbu ${CMAKE_DL_LIBS})
+    target_link_libraries(step_plugin_api_test PRIVATE librt libbu ${CMAKE_DL_LIBS})
     set_target_properties(step_plugin_api_test PROPERTIES FOLDER "BRL-CAD Tests/STEP")
     brlcad_add_test(NAME step_plugin_api COMMAND step_plugin_api_test)
 
@@ -702,7 +702,7 @@ if(BRLCAD_ENABLE_STEP)
       STEPString.cpp
     )
     target_include_directories(step_header_schema_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-    target_link_libraries(step_header_schema_test PRIVATE libbu)
+    target_link_libraries(step_header_schema_test PRIVATE librt libbu)
     set_target_properties(step_header_schema_test PROPERTIES FOLDER "BRL-CAD Tests/STEP")
     brlcad_add_test(NAME step_header_schema COMMAND step_header_schema_test)
 
@@ -722,7 +722,7 @@ if(BRLCAD_ENABLE_STEP)
       $<TARGET_OBJECTS:step_plugin_host_objects>
     )
     target_include_directories(step_plugin_load_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-    target_link_libraries(step_plugin_load_test PRIVATE libbu ${CMAKE_DL_LIBS})
+    target_link_libraries(step_plugin_load_test PRIVATE librt libbu ${CMAKE_DL_LIBS})
     set_target_properties(step_plugin_load_test PROPERTIES FOLDER "BRL-CAD Tests/STEP")
     add_library(step_plugin_bad_abi MODULE tests/step_plugin_bad_abi.cpp)
     target_include_directories(step_plugin_bad_abi PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

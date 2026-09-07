@@ -202,8 +202,6 @@ public:
 	const brlcad::step::Style *style = NULL);
     bool SetCombinationAttribute(const std::string &combname,
 	const std::string &key, const std::string &value);
-    std::string ReplaceAccented( std::string &str );
-    std::string CleanBRLCADName(std::string &name);
     std::string GetBRLCADName(std::string &name);
     std::string StableBRLCADName(const std::string &name, int64_t step_id);
     bool SetAttribute(const std::string &object, const std::string &key, const std::string &value);

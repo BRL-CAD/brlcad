@@ -618,44 +618,6 @@ BRLCADWrapper::WriteAnnotation(const std::string &name, const double *origin,
 }
 
 
-/* This simple routine will replace diacritic characters(code >= 192) from the extended
- * ASCII set with a specific mapping from the standard ASCII set. This code was copied
- * and modified from a solution provided on stackoverflow.com at:
- *     (http://stackoverflow.com/questions/14094621/)
- */
-std::string
-BRLCADWrapper::ReplaceAccented( std::string &str ) {
-    std::string retStr = "";
-    const char *p = str.c_str();
-    while ( (*p)!=0 ) {
-        const char*
-        //   "ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ"
-        tr = "AAAAAAECEEEEIIIIDNOOOOOx0UUUUYPsaaaaaaeceeeeiiiiOnooooo/0uuuuypy";
-        unsigned char ch = (*p);
-        if ( ch >=192 ) {
-            retStr += tr[ ch-192 ];
-        } else {
-            retStr += *p;
-        }
-        ++p;
-    }
-    return retStr;
-}
-
-
-/*
- * Simplifying names for better behavior under our Tcl based tools. This routine
- * replaces spaces and non-alphanumeric characters with underscores. It also replaces
- * ASCII extended characters representing diacritics (code >= 192)  with specific
- * mapped ASCII characters below ASCII code 128.
- */
-std::string
-BRLCADWrapper::CleanBRLCADName(std::string &inname)
-{
-    return brlcad::step::sanitize_name(inname);
-}
-
-
 std::string
 BRLCADWrapper::StableBRLCADName(const std::string &inname, int64_t step_id)
 {

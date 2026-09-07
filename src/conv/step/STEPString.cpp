@@ -13,6 +13,8 @@
 
 #include "STEPString.h"
 
+#include "rt/db_io.h"
+
 #include <cctype>
 #include <climits>
 #include <cstdint>
@@ -110,36 +112,6 @@ next_utf8(const std::string &s, size_t &pos)
     return cp;
 }
 
-const char *
-latin_ascii(uint32_t cp)
-{
-    switch (cp) {
-	case 0x00c0: case 0x00c1: case 0x00c2: case 0x00c3: case 0x00c4: case 0x00c5: return "A";
-	case 0x00c6: return "AE";
-	case 0x00c7: return "C";
-	case 0x00c8: case 0x00c9: case 0x00ca: case 0x00cb: return "E";
-	case 0x00cc: case 0x00cd: case 0x00ce: case 0x00cf: return "I";
-	case 0x00d0: return "D";
-	case 0x00d1: return "N";
-	case 0x00d2: case 0x00d3: case 0x00d4: case 0x00d5: case 0x00d6: case 0x00d8: return "O";
-	case 0x00d9: case 0x00da: case 0x00db: case 0x00dc: return "U";
-	case 0x00dd: return "Y";
-	case 0x00de: return "TH";
-	case 0x00df: return "ss";
-	case 0x00e0: case 0x00e1: case 0x00e2: case 0x00e3: case 0x00e4: case 0x00e5: return "a";
-	case 0x00e6: return "ae";
-	case 0x00e7: return "c";
-	case 0x00e8: case 0x00e9: case 0x00ea: case 0x00eb: return "e";
-	case 0x00ec: case 0x00ed: case 0x00ee: case 0x00ef: return "i";
-	case 0x00f0: return "d";
-	case 0x00f1: return "n";
-	case 0x00f2: case 0x00f3: case 0x00f4: case 0x00f5: case 0x00f6: case 0x00f8: return "o";
-	case 0x00f9: case 0x00fa: case 0x00fb: case 0x00fc: return "u";
-	case 0x00fd: case 0x00ff: return "y";
-	case 0x00fe: return "th";
-	default: return NULL;
-    }
-}
 
 } // namespace
 
@@ -272,40 +244,12 @@ std::string
 brlcad::step::sanitize_name(const std::string &input)
 {
     const std::string decoded = decode_string(input);
-    std::string out;
-    bool separator = false;
-    for (size_t i = 0; i < decoded.size();) {
-	uint32_t cp = next_utf8(decoded, i);
-	if (cp < 0x80 && std::isalnum(static_cast<unsigned char>(cp))) {
-	    if (separator && !out.empty() && out.back() != '_') out.push_back('_');
-	    separator = false;
-	    out.push_back(static_cast<char>(cp));
-	    continue;
-	}
-	if (cp == '_') {
-	    separator = !out.empty();
-	    continue;
-	}
-	const char *ascii = latin_ascii(cp);
-	if (ascii) {
-	    if (separator && !out.empty() && out.back() != '_') out.push_back('_');
-	    separator = false;
-	    out.append(ascii);
-	    continue;
-	}
-	if (cp > 0x7f) {
-	    if (separator && !out.empty() && out.back() != '_') out.push_back('_');
-	    separator = false;
-	    std::ostringstream code;
-	    code << "u" << std::uppercase << std::hex << cp;
-	    if (!out.empty() && out.back() != '_') out.push_back('_');
-	    out.append(code.str());
-	    continue;
-	}
-	separator = !out.empty();
-    }
-    while (!out.empty() && out.back() == '_') out.pop_back();
-    return out.empty() ? std::string("step") : out;
+    struct bu_vls output = BU_VLS_INIT_ZERO;
+
+    db_sanitize_name(&output, decoded.c_str());
+    const std::string result = bu_vls_cstr(&output);
+    bu_vls_free(&output);
+    return result.empty() ? std::string("step") : result;
 }
 
 std::string
