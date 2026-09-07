@@ -42,6 +42,7 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
+#include "bu/str.h"
 #include "bg/chull.h"
 #include "bg/spsr.h"
 #include "bg/tri_pt.h"
