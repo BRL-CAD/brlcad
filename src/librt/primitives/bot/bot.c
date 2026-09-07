@@ -717,6 +717,15 @@ rt_bot_makesegs(hit_da *hits,
 		struct seg *seghead,
 		struct rt_piecestate *psp);
 
+static int
+bot_makesegs_specific(hit_da *hits,
+		      struct bot_specific *bot,
+		      struct soltab *stp,
+		      struct xray *rp,
+		      struct application *ap,
+		      struct seg *seghead,
+		      struct rt_piecestate *psp);
+
 
 void
 bot_shot_hlbvh_flat(struct bvh_flat_node *root, struct xray* rp, triangle_s *tris, size_t ntris, hit_da* hits, fastf_t toldist)
@@ -893,12 +902,11 @@ THREADLOCAL hit_da hits_per_cpu = {0, 0, NULL};
  * >0 HIT
  */
 C_DECL int
-rt_bot_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
+rt_bot_shot_specific(struct bot_specific *bot, struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
     if (UNLIKELY(!stp || !ap || !seghead))
 	return 0;
 
-    struct bot_specific *bot = (struct bot_specific *)stp->st_specific;
     if (UNLIKELY(!bot))
 	return 0;
 
@@ -941,7 +949,16 @@ rt_bot_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 	}
     }
 
-    return rt_bot_makesegs(&hits_per_cpu, stp, rp, ap, seghead, NULL);
+    return bot_makesegs_specific(&hits_per_cpu, bot, stp, rp, ap, seghead, NULL);
+}
+
+
+C_DECL int
+rt_bot_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
+{
+    struct bot_specific *bot = stp ? (struct bot_specific *)stp->st_specific : NULL;
+
+    return rt_bot_shot_specific(bot, stp, rp, ap, seghead);
 }
 
 
@@ -1977,11 +1994,10 @@ rt_bot_oriented_segs(hit_da *hits_da, struct soltab *stp, struct application *ap
  * Given an array of hits, make sebgents out of them.  Exactly how
  * this is to be done depends on the mode of the BoT.
  */
-int
-rt_bot_makesegs(hit_da *hits, struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead, struct rt_piecestate *psp)
+static int
+bot_makesegs_specific(hit_da *hits, struct bot_specific *bot, struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead, struct rt_piecestate *psp)
 {
     RT_CK_SOLTAB(stp);
-    struct bot_specific *bot = (struct bot_specific *)stp->st_specific;
 
     if (bot->bot_mode == RT_BOT_PLATE ||
 	bot->bot_mode == RT_BOT_PLATE_NOCOS) {
@@ -1999,6 +2015,15 @@ rt_bot_makesegs(hit_da *hits, struct soltab *stp, struct xray *rp, struct applic
     }
 
     return rt_bot_oriented_segs(hits, stp, ap, seghead, psp);
+}
+
+
+int
+rt_bot_makesegs(hit_da *hits, struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead, struct rt_piecestate *psp)
+{
+    struct bot_specific *bot = (struct bot_specific *)stp->st_specific;
+
+    return bot_makesegs_specific(hits, bot, stp, rp, ap, seghead, psp);
 }
 
 C_DECL void
@@ -2956,6 +2981,13 @@ rt_bot_xform(struct rt_db_internal *op, const fastf_t *mat, struct rt_db_interna
     RT_BOT_CK_MAGIC(botip);
     if (dbip) RT_CK_DBI(dbip);
 
+    if ((botip->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) &&
+	(!botip->normals || !botip->face_normals ||
+	 botip->num_normals == 0 || botip->num_face_normals != botip->num_faces)) {
+	bu_log("rt_bot_xform: BOT surface normal data is incomplete\n");
+	return -1;
+    }
+
     if (op != ip && !release) {
 	RT_DB_INTERNAL_INIT(op);
 	BU_ALLOC(botop, struct rt_bot_internal);
@@ -2983,9 +3015,10 @@ rt_bot_xform(struct rt_db_internal *op, const fastf_t *mat, struct rt_db_interna
 
 	if (botop->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) {
 	    botop->num_normals = botip->num_normals;
+	    botop->num_face_normals = botip->num_face_normals;
 	    botop->normals = (fastf_t *)bu_calloc(botop->num_normals * 3, sizeof(fastf_t), "BOT normals");
-	    botop->face_normals = (int *)bu_calloc(botop->num_faces * 3, sizeof(int), "BOT face normals");
-	    memcpy(botop->face_normals, botip->face_normals, botop->num_faces * 3 * sizeof(int));
+	    botop->face_normals = (int *)bu_calloc(botop->num_face_normals * 3, sizeof(int), "BOT face normals");
+	    memcpy(botop->face_normals, botip->face_normals, botop->num_face_normals * 3 * sizeof(int));
 	}
 	op->idb_ptr = (void *)botop;
 	op->idb_major_type = DB5_MAJORTYPE_BRLCAD;
