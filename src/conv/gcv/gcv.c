@@ -71,12 +71,20 @@ fmt_fun(struct bu_vls *UNUSED(msgs), size_t argc, const char **argv, void *set_v
 
     for (i = 0; i < argc; i++) {
 	struct bu_vls cmp_arg = BU_VLS_INIT_ZERO;
-	const char *arg = argv[i]+1;
+	const char *arg = argv[i];
 	const char *equal_pos;
 	int d_ind = 0;
 	int in_desc = 0;
 	struct bu_opt_desc *d = &(gfo->ds[d_ind]);
 
+	/* Values such as "0" are filter arguments, not an empty spelling of
+	 * a top-level option.  Strip dashes only from actual option tokens. */
+	if (arg[0] != '-' || arg[1] == '\0') {
+	    bu_ptbl_ins(gfo->args, (long *)argv[i]);
+	    args_used++;
+	    continue;
+	}
+	arg++;
 	if (arg[0] == '-')
 	    arg++;
 	equal_pos = strchr(arg, '=');
