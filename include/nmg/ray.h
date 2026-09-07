@@ -43,6 +43,8 @@
 __BEGIN_DECLS
 
 struct model;
+struct nmg_class_scratch;
+struct bu_ptbl;
 
 NMG_EXPORT extern struct bu_list re_nmgfree;     /**< @brief  head of NMG hitmiss freelist */
 
@@ -123,8 +125,40 @@ NMG_EXPORT extern struct bu_list re_nmgfree;     /**< @brief  head of NMG hitmis
     }
 #endif
 
-/* re_nmgfree is a process-global freelist shared by every rt_nmg_shot()
- * worker thread, so all mutation of it must be serialized */
+/* librt supplies a prep-owned, worker-local freelist.  Standalone libnmg
+ * callers leave hitmiss_free NULL and retain the serialized global fallback. */
+#define NMG_GET_HITMISS_RD(_rd, _p) { \
+        struct bu_list *_hmfree = (_rd)->hitmiss_free; \
+        if (_hmfree) { \
+            (_p) = BU_LIST_FIRST(nmg_hitmiss, _hmfree); \
+            if (UNLIKELY(BU_LIST_IS_HEAD((_p), _hmfree))) \
+                bu_bomb("NMG hitmiss scratch exhausted\n"); \
+            else \
+                BU_LIST_DEQUEUE(&((_p)->l)); \
+        } else { \
+            bu_semaphore_acquire(BU_SEM_GENERAL); \
+            (_p) = BU_LIST_FIRST(nmg_hitmiss, &(re_nmgfree)); \
+            if (BU_LIST_IS_HEAD((_p), &(re_nmgfree))) \
+                BU_ALLOC((_p), struct nmg_hitmiss); \
+            else \
+                BU_LIST_DEQUEUE(&((_p)->l)); \
+            bu_semaphore_release(BU_SEM_GENERAL); \
+        } \
+    }
+
+
+#define NMG_FREE_HITLIST_RD(_rd, _p) { \
+        BU_CK_LIST_HEAD((_p)); \
+        if ((_rd)->hitmiss_free) { \
+            BU_LIST_APPEND_LIST((_rd)->hitmiss_free, (_p)); \
+        } else { \
+            bu_semaphore_acquire(BU_SEM_GENERAL); \
+            BU_LIST_APPEND_LIST(&(re_nmgfree), (_p)); \
+            bu_semaphore_release(BU_SEM_GENERAL); \
+        } \
+    }
+
+/* Source-compatible global-freelist forms for existing libnmg callers. */
 #define NMG_GET_HITMISS(_p) { \
         bu_semaphore_acquire(BU_SEM_GENERAL); \
         (_p) = BU_LIST_FIRST(nmg_hitmiss, &(re_nmgfree)); \
@@ -134,7 +168,6 @@ NMG_EXPORT extern struct bu_list re_nmgfree;     /**< @brief  head of NMG hitmis
             BU_LIST_DEQUEUE(&((_p)->l)); \
         bu_semaphore_release(BU_SEM_GENERAL); \
     }
-
 
 #define NMG_FREE_HITLIST(_p) { \
         BU_CK_LIST_HEAD((_p)); \
@@ -268,6 +301,10 @@ struct nmg_ray_data {
      * functions should not be called.
      */
     int                 classifying_ray;
+
+    struct bu_list      *hitmiss_free;  /**< @brief  optional worker-local freelist */
+    struct nmg_class_scratch *class_scratch; /**< @brief optional point-classifier scratch */
+    struct bu_ptbl      *hitstate[2];   /**< @brief optional state-transition scratch */
 };
 
 int
