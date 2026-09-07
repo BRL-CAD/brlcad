@@ -40,6 +40,7 @@
 #include "nmg.h"
 #include "rt/db4.h"
 #include "rt/conv.h"
+#include "rt/primitives/bot.h"
 #include "rt/primitives/nmg.h"
 #include "raytrace.h"
 #include "../../librt_private.h"
@@ -48,6 +49,8 @@
 
 #define NMG_SPEC_START_MAGIC 6014061
 #define NMG_SPEC_END_MAGIC 7013061
+/* A collinear ray records both endpoint subhits plus the edge subhit. */
+#define NMG_MAX_HITMISS_PER_EDGE 3
 
 #define ERR_MSG "INTERNAL ERROR:  Probably bad geometry.  Trying to continue."
 
@@ -81,7 +84,20 @@ struct nmg_specific {
     uint32_t nmg_smagic;	/* STRUCT START magic number */
     struct model *nmg_model;
     char *manifolds;		/* structure 1-3manifold table */
+    struct bot_specific *bot;	/* prep-time ray tracing accelerator */
+    struct nmg_shot_scratch *scratch;
+    size_t scratch_count;
     uint32_t nmg_emagic;	/* STRUCT END magic number */
+};
+
+
+struct nmg_shot_scratch {
+    int in_use;
+    struct hitmiss **hitmiss;
+    struct hitmiss *hitmiss_pool;
+    struct bu_list hitmiss_free;
+    struct nmg_class_scratch *class_scratch;
+    struct bu_ptbl hitstate[2];
 };
 
 
@@ -89,6 +105,253 @@ struct tmp_v {
     point_t pt;
     struct vertex *v;
 };
+
+
+/* from g_bot.c */
+__BEGIN_DECLS
+extern int rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip);
+extern void rt_bot_ifree(struct rt_db_internal *ip);
+extern void rt_bot_free(struct soltab *stp);
+__END_DECLS
+
+
+/* A solid, planar NMG has the same ray intersection semantics as its BoT
+ * representation.  Other NMG topology must continue through libnmg's general
+ * classifier. */
+static int
+nmg_bot_accel_eligible(const struct model *m, const char *manifolds, const struct bn_tol *tol)
+{
+    const struct nmgregion *r;
+    size_t face_count = 0;
+
+    NMG_CK_MODEL(m);
+    BN_CK_TOL(tol);
+
+    if (!manifolds)
+	return 0;
+
+    for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
+	const struct shell *s;
+
+	for (BU_LIST_FOR(s, shell, &r->s_hd)) {
+	    const struct faceuse *fu;
+	    size_t shell_face_count = 0;
+
+	    if (BU_LIST_NON_EMPTY(&s->lu_hd) ||
+		BU_LIST_NON_EMPTY(&s->eu_hd) || s->vu_p)
+		return 0;
+
+	    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
+		if (fu->orientation != OT_SAME)
+		    continue;
+
+		NMG_CK_FACEUSE(fu);
+		NMG_CK_FACE(fu->f_p);
+		if (!fu->f_p->g.magic_p ||
+		    *fu->f_p->g.magic_p != NMG_FACE_G_PLANE_MAGIC ||
+		    !(NMG_MANIFOLDS(manifolds, fu) & NMG_3MANIFOLD))
+		    return 0;
+
+		shell_face_count++;
+	    }
+
+	    if (shell_face_count && nmg_check_closed_shell(s, tol))
+		return 0;
+
+	    face_count += shell_face_count;
+	}
+    }
+
+    return face_count > 0;
+}
+
+
+static size_t
+nmg_max_face_elements(const struct model *m)
+{
+    const struct nmgregion *r;
+    size_t max_elements = 0;
+
+    for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
+	const struct shell *s;
+
+	for (BU_LIST_FOR(s, shell, &r->s_hd)) {
+	    const struct faceuse *fu;
+
+	    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
+		const struct loopuse *lu;
+		size_t face_elements = 0;
+
+		if (fu->orientation != OT_SAME)
+		    continue;
+
+		for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
+		    const struct edgeuse *eu;
+
+		    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {
+			for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd))
+			    face_elements++;
+		    } else if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) {
+			face_elements++;
+		    }
+		}
+
+		if (max_elements < face_elements)
+		    max_elements = face_elements;
+	    }
+	}
+    }
+
+    return max_elements;
+}
+
+
+static void
+nmg_shot_scratch_destroy(struct nmg_shot_scratch *scratch)
+{
+    if (!scratch)
+	return;
+
+    nmg_class_scratch_destroy(scratch->class_scratch);
+    bu_ptbl_free(&scratch->hitstate[0]);
+    bu_ptbl_free(&scratch->hitstate[1]);
+    bu_free(scratch->hitmiss_pool, "NMG hitmiss scratch");
+    bu_free(scratch->hitmiss, "NMG hitmiss table scratch");
+}
+
+
+static void
+nmg_shot_scratch_prep(struct nmg_specific *nmg, struct rt_i *rtip)
+{
+    struct nmg_struct_counts counts;
+    uint32_t **structs;
+    size_t edge_hitmiss_capacity;
+    size_t hitmiss_capacity;
+    size_t max_face_elements;
+
+    structs = nmg_m_struct_count(&counts, nmg->nmg_model);
+    bu_free(structs, "nmg_m_struct_count");
+
+    if ((size_t)counts.edge > SIZE_MAX / NMG_MAX_HITMISS_PER_EDGE)
+	bu_bomb("NMG hitmiss scratch size overflow\n");
+    edge_hitmiss_capacity = NMG_MAX_HITMISS_PER_EDGE * (size_t)counts.edge;
+    if ((size_t)counts.face > SIZE_MAX - edge_hitmiss_capacity)
+	bu_bomb("NMG hitmiss scratch size overflow\n");
+    hitmiss_capacity = (size_t)counts.face + edge_hitmiss_capacity;
+    if ((size_t)counts.vertex > SIZE_MAX - hitmiss_capacity)
+	bu_bomb("NMG hitmiss scratch size overflow\n");
+    hitmiss_capacity += (size_t)counts.vertex;
+    if (hitmiss_capacity == 0)
+	hitmiss_capacity = 1;
+    max_face_elements = nmg_max_face_elements(nmg->nmg_model);
+
+    nmg->scratch_count = bu_avail_cpus();
+    if (nmg->scratch_count > MAX_PSW)
+	nmg->scratch_count = MAX_PSW;
+    nmg->scratch = (struct nmg_shot_scratch *)bu_calloc(
+	nmg->scratch_count, sizeof(struct nmg_shot_scratch), "NMG shot scratch");
+
+    for (size_t cpu = 0; cpu < nmg->scratch_count; cpu++) {
+	struct nmg_shot_scratch *scratch = &nmg->scratch[cpu];
+
+	scratch->hitmiss = (struct hitmiss **)bu_calloc(
+	    (size_t)nmg->nmg_model->maxindex, sizeof(struct hitmiss *),
+	    "NMG hitmiss table scratch");
+	scratch->hitmiss_pool = (struct hitmiss *)bu_calloc(
+	    hitmiss_capacity, sizeof(struct hitmiss), "NMG hitmiss scratch");
+	BU_LIST_INIT(&scratch->hitmiss_free);
+	for (size_t i = 0; i < hitmiss_capacity; i++) {
+	    BU_LIST_MAGIC_SET(&scratch->hitmiss_pool[i].l, NMG_RT_MISS_MAGIC);
+	    BU_LIST_APPEND(&scratch->hitmiss_free, &scratch->hitmiss_pool[i].l);
+	}
+	scratch->class_scratch = nmg_class_scratch_create(max_face_elements);
+	bu_ptbl_init(&scratch->hitstate[0], hitmiss_capacity, "NMG hitstate scratch 0");
+	bu_ptbl_init(&scratch->hitstate[1], hitmiss_capacity, "NMG hitstate scratch 1");
+    }
+}
+
+
+static struct nmg_shot_scratch *
+nmg_shot_scratch_acquire(struct nmg_specific *nmg)
+{
+    struct nmg_shot_scratch *scratch = NULL;
+
+    /* gettrees declares the maximum concurrent worker count.  A serial
+     * application cannot contend for its only slot. */
+    if (nmg->scratch_count == 1)
+	return &nmg->scratch[0];
+
+    bu_semaphore_acquire(BU_SEM_GENERAL);
+    for (size_t i = 0; i < nmg->scratch_count; i++) {
+	if (!nmg->scratch[i].in_use) {
+	    nmg->scratch[i].in_use = 1;
+	    scratch = &nmg->scratch[i];
+	    break;
+	}
+    }
+    bu_semaphore_release(BU_SEM_GENERAL);
+
+    return scratch;
+}
+
+
+static void
+nmg_shot_scratch_release(struct nmg_specific *nmg, struct nmg_shot_scratch *scratch)
+{
+    if (!scratch)
+	return;
+
+    if (nmg->scratch_count == 1)
+	return;
+
+    bu_semaphore_acquire(BU_SEM_GENERAL);
+    scratch->in_use = 0;
+    bu_semaphore_release(BU_SEM_GENERAL);
+}
+
+
+static struct bot_specific *
+nmg_bot_accel_prep(struct soltab *stp, const struct model *m, struct rt_i *rtip)
+{
+    struct rt_bot_internal *bot;
+    struct rt_db_internal intern;
+    struct model *copy;
+    struct soltab bot_stp = *stp;
+    struct bot_specific *specific = NULL;
+    struct bu_list *vlfree = &rt_vlfree;
+
+    copy = nmg_clone_model(m);
+    if (!copy)
+	return NULL;
+
+    bot = nmg_mdl_to_bot(copy, vlfree, &rtip->rti_tol);
+    nmg_km(copy);
+    if (!bot)
+	return NULL;
+
+    intern.idb_magic = RT_DB_INTERNAL_MAGIC;
+    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern.idb_minor_type = ID_BOT;
+    intern.idb_meth = &OBJ[ID_BOT];
+    intern.idb_ptr = (void *)bot;
+    bu_avs_init(&intern.idb_avs, 0, "NMG BoT accelerator prep");
+
+    bot_stp.st_specific = NULL;
+    if (rt_bot_prep(&bot_stp, &intern, rtip) == 0) {
+	specific = (struct bot_specific *)bot_stp.st_specific;
+	VMOVE(stp->st_min, bot_stp.st_min);
+	VMOVE(stp->st_max, bot_stp.st_max);
+	VMOVE(stp->st_center, bot_stp.st_center);
+	stp->st_aradius = bot_stp.st_aradius;
+	stp->st_bradius = bot_stp.st_bradius;
+    } else if (bot_stp.st_specific) {
+	rt_bot_free(&bot_stp);
+    }
+
+    rt_bot_ifree(&intern);
+    bu_avs_free(&intern.idb_avs);
+    return specific;
+}
 
 
 /**
@@ -140,11 +403,22 @@ rt_nmg_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     ip->idb_ptr = (void *)NULL;
     nmg_s->nmg_smagic = NMG_SPEC_START_MAGIC;
     nmg_s->nmg_emagic = NMG_SPEC_END_MAGIC;
+    nmg_s->bot = NULL;
+    nmg_s->scratch = NULL;
+    nmg_s->scratch_count = 0;
 
     /* build table indicating the manifold level of each sub-element
      * of NMG solid
      */
-    nmg_s->manifolds = nmg_manifolds(m);
+    if (!m->manifolds)
+	m->manifolds = nmg_manifolds(m);
+    nmg_s->manifolds = m->manifolds;
+
+    if (nmg_bot_accel_eligible(m, nmg_s->manifolds, &rtip->rti_tol))
+	nmg_s->bot = nmg_bot_accel_prep(stp, m, rtip);
+
+    if (!nmg_s->bot)
+	nmg_shot_scratch_prep(nmg_s, rtip);
 
     return 0;
 }
@@ -153,11 +427,11 @@ rt_nmg_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 C_DECL void
 rt_nmg_print(const struct soltab *stp)
 {
-    struct model *m =
-	(struct model *)stp->st_specific;
+    const struct nmg_specific *nmg =
+	(const struct nmg_specific *)stp->st_specific;
 
-    NMG_CK_MODEL(m);
-    nmg_pr_m(m);
+    NMG_CK_MODEL(nmg->nmg_model);
+    nmg_pr_m(nmg->nmg_model);
 }
 
 static void
@@ -165,6 +439,7 @@ visitor(uint32_t *l_p, void *tbl, int UNUSED(unused))
 {
     (void)bu_ptbl_ins_unique((struct bu_ptbl *)tbl, (long *)l_p);
 }
+
 
 /**
  * Add an element provided by nmg_visit to a bu_ptbl struct.
@@ -394,6 +669,7 @@ check_hitstate(struct bu_list *hd, struct ray_data *rd, struct bu_list *vlfree)
     struct bu_ptbl *a_tbl = (struct bu_ptbl *)NULL;
     struct bu_ptbl *next_tbl = (struct bu_ptbl *)NULL;
     struct bu_ptbl *tbl_p = (struct bu_ptbl *)NULL;
+    int scratch_tables = 0;
     long *long_ptr;
 
     BU_CK_LIST_HEAD(hd);
@@ -426,11 +702,19 @@ check_hitstate(struct bu_list *hd, struct ray_data *rd, struct bu_list *vlfree)
     }
     if (BU_LIST_IS_HEAD(a_hit, hd)) return 1;
 
-    BU_ALLOC(a_tbl, struct bu_ptbl);
-    bu_ptbl_init(a_tbl, 64, "a_tbl");
+    if (rd->hitstate[0] && rd->hitstate[1]) {
+	a_tbl = rd->hitstate[0];
+	next_tbl = rd->hitstate[1];
+	bu_ptbl_reset(a_tbl);
+	bu_ptbl_reset(next_tbl);
+	scratch_tables = 1;
+    } else {
+	BU_ALLOC(a_tbl, struct bu_ptbl);
+	bu_ptbl_init(a_tbl, 64, "a_tbl");
 
-    BU_ALLOC(next_tbl, struct bu_ptbl);
-    bu_ptbl_init(next_tbl, 64, "next_tbl");
+	BU_ALLOC(next_tbl, struct bu_ptbl);
+	bu_ptbl_init(next_tbl, 64, "next_tbl");
+    }
 
     /* check the state transition on the rest of the hit points */
     while (BU_LIST_NOT_HEAD((next_hit = BU_LIST_PNEXT(hitmiss, &a_hit->l)), hd)) {
@@ -485,10 +769,15 @@ check_hitstate(struct bu_list *hd, struct ray_data *rd, struct bu_list *vlfree)
 	a_hit = next_hit;
     }
 
-    bu_ptbl_free(next_tbl);
-    bu_ptbl_free(a_tbl);
-    (void)bu_free((char *)a_tbl, "a_tbl");
-    (void)bu_free((char *)next_tbl, "next_tbl");
+    if (scratch_tables) {
+	bu_ptbl_reset(next_tbl);
+	bu_ptbl_reset(a_tbl);
+    } else {
+	bu_ptbl_free(next_tbl);
+	bu_ptbl_free(a_tbl);
+	(void)bu_free((char *)a_tbl, "a_tbl");
+	(void)bu_free((char *)next_tbl, "next_tbl");
+    }
 
     return 0;
 }
@@ -497,7 +786,7 @@ check_hitstate(struct bu_list *hd, struct ray_data *rd, struct bu_list *vlfree)
 
 
 static void
-print_seg_list(struct seg *seghead, int seg_count, char *s)
+print_seg_list(struct seg *seghead, int seg_count, const char *s)
 {
     struct seg *seg_p;
 
@@ -1244,8 +1533,8 @@ nmg_ray_segs(struct ray_data *rd, struct bu_list *vlfree)
 	/* segs_error() longjmp'd out of the state machine; the hitmiss
 	 * structs are still linked on rd_hit/rd_miss.  Return them to the
 	 * freelist (as the non-error exits below do) */
-	NMG_FREE_HITLIST(&rd->rd_hit);
-	NMG_FREE_HITLIST(&rd->rd_miss);
+	NMG_FREE_HITLIST_RD(rd, &rd->rd_hit);
+	NMG_FREE_HITLIST_RD(rd, &rd->rd_miss);
 	return 0;
     }
 
@@ -1253,7 +1542,7 @@ nmg_ray_segs(struct ray_data *rd, struct bu_list *vlfree)
 
     if (BU_LIST_IS_EMPTY(&rd->rd_hit)) {
 
-	NMG_FREE_HITLIST(&rd->rd_miss);
+	NMG_FREE_HITLIST_RD(rd, &rd->rd_miss);
 
 	if (nmg_debug & NMG_DEBUG_RT_SEGS) {
 	    if (last_miss) bu_log(".");
@@ -1263,9 +1552,7 @@ nmg_ray_segs(struct ray_data *rd, struct bu_list *vlfree)
 	return 0;			/* MISS */
     } else if (nmg_debug & NMG_DEBUG_RT_SEGS) {
 	int seg_count=0;
-	char *bstr = bu_strdup("before");
-	print_seg_list(rd->seghead, seg_count, bstr);
-	bu_free(bstr, "bstr");
+	print_seg_list(rd->seghead, seg_count, "before");
 
 	bu_log("\n\nnmg_ray_segs(rd)\nsorted nmg/ray hit list\n");
 
@@ -1276,8 +1563,8 @@ nmg_ray_segs(struct ray_data *rd, struct bu_list *vlfree)
     last_miss = 0;
 
     if (check_hitstate(&rd->rd_hit, rd, vlfree)) {
-	NMG_FREE_HITLIST(&rd->rd_hit);
-	NMG_FREE_HITLIST(&rd->rd_miss);
+	NMG_FREE_HITLIST_RD(rd, &rd->rd_hit);
+	NMG_FREE_HITLIST_RD(rd, &rd->rd_miss);
 	return 0;
     }
 
@@ -1293,15 +1580,13 @@ nmg_ray_segs(struct ray_data *rd, struct bu_list *vlfree)
 	int seg_count = nmg_bsegs(rd, rd->ap, rd->seghead, rd->stp);
 
 
-	NMG_FREE_HITLIST(&rd->rd_hit);
-	NMG_FREE_HITLIST(&rd->rd_miss);
+	NMG_FREE_HITLIST_RD(rd, &rd->rd_hit);
+	NMG_FREE_HITLIST_RD(rd, &rd->rd_miss);
 
 
 	if (nmg_debug & NMG_DEBUG_RT_SEGS) {
 	    /* print debugging data before returning */
-	    char *astr = bu_strdup("after");
-	    print_seg_list(rd->seghead, seg_count, astr);
-	    bu_free(astr, "astr");
+	    print_seg_list(rd->seghead, seg_count, "after");
 	}
 	return seg_count;
     }
@@ -1325,6 +1610,7 @@ rt_nmg_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 {
     struct bu_list *vlfree = &rt_vlfree;
     struct ray_data rd;
+    struct nmg_shot_scratch *scratch = NULL;
     int status;
     struct nmg_specific *nmg =
 	(struct nmg_specific *)stp->st_specific;
@@ -1340,6 +1626,11 @@ rt_nmg_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 
     if (nmg->nmg_emagic != NMG_SPEC_END_MAGIC)
 	bu_bomb("end of NMG st_specific structure corrupted\n");
+
+    if (nmg->bot)
+	return rt_bot_shot_specific(nmg->bot, stp, rp, ap, seghead);
+
+    scratch = nmg_shot_scratch_acquire(nmg);
 
     /* Compute the inverse of the direction cosines.  This is per-ray scratch,
      * so it must live in the per-thread ray_data (rd) -- NOT in the shared
@@ -1373,13 +1664,16 @@ rt_nmg_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     rd.seghead = seghead;
     rd.classifying_ray = 0;
 
-    /* create a table to keep track of which elements have been
-     * processed before and which haven't.  Elements in this table
-     * will either be (NULL) if item not previously processed or a
-     * hitmiss ptr if item was previously processed
-     */
-    rd.hitmiss = (struct hitmiss **)bu_calloc(rd.rd_m->maxindex,
-					      sizeof(struct hitmiss *), "nmg geom hit list");
+    if (LIKELY(scratch != NULL)) {
+	rd.hitmiss = scratch->hitmiss;
+	memset(rd.hitmiss, 0, (size_t)rd.rd_m->maxindex * sizeof(struct hitmiss *));
+	rd.hitmiss_free = &scratch->hitmiss_free;
+	rd.class_scratch = scratch->class_scratch;
+	rd.hitstate[0] = &scratch->hitstate[0];
+	rd.hitstate[1] = &scratch->hitstate[1];
+    } else {
+	bu_bomb("NMG shot scratch exhausted: concurrent shots exceed the gettrees worker count\n");
+    }
 
     /* initialize the lists of things that have been hit/missed */
     BU_LIST_INIT(&rd.rd_hit);
@@ -1392,8 +1686,7 @@ rt_nmg_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     /* build the sebgent lists */
     status = nmg_ray_segs(&rd, vlfree);
 
-    /* free the hitmiss table */
-    bu_free((char *)rd.hitmiss, "free nmg geom hit list");
+    nmg_shot_scratch_release(nmg, scratch);
 
     return status;
 }
@@ -1472,6 +1765,21 @@ rt_nmg_free(struct soltab *stp)
 {
     struct nmg_specific *nmg =
 	(struct nmg_specific *)stp->st_specific;
+
+    if (nmg->bot) {
+	struct soltab bot_stp = *stp;
+	bot_stp.st_specific = (void *)nmg->bot;
+	rt_bot_free(&bot_stp);
+	nmg->bot = NULL;
+    }
+
+    if (nmg->scratch) {
+	for (size_t cpu = 0; cpu < nmg->scratch_count; cpu++)
+	    nmg_shot_scratch_destroy(&nmg->scratch[cpu]);
+	bu_free(nmg->scratch, "NMG shot scratch");
+	nmg->scratch = NULL;
+	nmg->scratch_count = 0;
+    }
 
     nmg_km(nmg->nmg_model);
     BU_PUT(nmg, struct nmg_specific);
