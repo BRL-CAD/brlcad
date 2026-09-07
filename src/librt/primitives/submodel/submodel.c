@@ -54,6 +54,7 @@ EXTERNCPP const struct bu_structparse rt_submodel_parse[] = {
     {"%V", 1, "file", RT_SUBMODEL_O(file), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%V", 1, "treetop", RT_SUBMODEL_O(treetop), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d", 1, "meth", RT_SUBMODEL_O(meth), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 16, "mat", RT_SUBMODEL_O(root2leaf), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"", 0, (char *)0, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
@@ -837,6 +838,28 @@ rt_submodel_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
 }
 
 
+C_DECL int
+rt_submodel_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
+{
+    mat_t transformed;
+    const struct rt_submodel_internal *tip;
+    struct rt_submodel_internal *top;
+
+    if (!rop || !ip || !mat)
+	return BRLCAD_OK;
+
+    tip = (const struct rt_submodel_internal *)ip->idb_ptr;
+    RT_SUBMODEL_CK_MAGIC(tip);
+    top = (struct rt_submodel_internal *)rop->idb_ptr;
+    RT_SUBMODEL_CK_MAGIC(top);
+
+    bn_mat_mul(transformed, mat, tip->root2leaf);
+    MAT_COPY(top->root2leaf, transformed);
+
+    return BRLCAD_OK;
+}
+
+
 /**
  * Import an SUBMODEL from the database format to the internal format.
  * Apply modeling transformations as well.
@@ -866,16 +889,19 @@ rt_submodel_import4(struct rt_db_internal *ip, const struct bu_external *ep, con
 
     sip = (struct rt_submodel_internal *)ip->idb_ptr;
     sip->magic = RT_SUBMODEL_INTERNAL_MAGIC;
+    BU_VLS_INIT(&sip->file);
+    BU_VLS_INIT(&sip->treetop);
+    sip->meth = 0;
+    MAT_IDN(sip->root2leaf);
     sip->dbip = dbip;
-
-    if (mat == NULL) mat = bn_mat_identity;
-    MAT_COPY(sip->root2leaf, mat);
 
     bu_vls_strcpy(&str, rp->ss.ss_args);
 
     if (bu_struct_parse(&str, rt_submodel_parse, (char *)sip, NULL) < 0) {
 	bu_vls_free(&str);
     fail:
+	bu_vls_free(&sip->file);
+	bu_vls_free(&sip->treetop);
 	bu_free((char *)sip, "rt_submodel_import4: sip");
 	ip->idb_type = ID_NULL;
 	ip->idb_ptr = (void *)NULL;
@@ -888,6 +914,9 @@ rt_submodel_import4(struct rt_db_internal *ip, const struct bu_external *ep, con
 	bu_log("rt_submodel_import4() treetop= must be specified\n");
 	goto fail;
     }
+
+    if (mat == NULL) mat = bn_mat_identity;
+    rt_submodel_mat(ip, mat, ip);
 
     return 0;			/* OK */
 }
@@ -909,13 +938,18 @@ rt_submodel_export4(struct bu_external *ep, const struct rt_db_internal *ip, dou
     if (ip->idb_type != ID_SUBMODEL) return -1;
     sip = (struct rt_submodel_internal *)ip->idb_ptr;
     RT_SUBMODEL_CK_MAGIC(sip);
-
     BU_CK_EXTERNAL(ep);
+
+    bu_vls_struct_print(&str, rt_submodel_parse, (char *)sip);
+    if (bu_vls_strlen(&str) + 1 > DB_SS_LEN) {
+	bu_log("rt_submodel_export4: parameters exceed the v4 record capacity\n");
+	bu_vls_free(&str);
+	return -1;
+    }
+
     ep->ext_nbytes = sizeof(union record)*DB_SS_NGRAN;
     ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "submodel external");
     rec = (union record *)ep->ext_buf;
-
-    bu_vls_struct_print(&str, rt_submodel_parse, (char *)sip);
 
     rec->ss.ss_id = DBID_STRSOL;
     bu_strlcpy(rec->ss.ss_keyword, "submodel", sizeof(rec->ss.ss_keyword));
@@ -923,20 +957,6 @@ rt_submodel_export4(struct bu_external *ep, const struct rt_db_internal *ip, dou
     bu_vls_free(&str);
 
     return 0;
-}
-
-C_DECL int
-rt_submodel_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *UNUSED(ip))
-{
-    if (!rop || !mat)
-	return BRLCAD_OK;
-
-    struct rt_submodel_internal *top = (struct rt_submodel_internal *)rop->idb_ptr;
-    RT_SUBMODEL_CK_MAGIC(top);
-
-    MAT_COPY(top->root2leaf, mat);
-
-    return BRLCAD_OK;
 }
 
 /**
@@ -965,8 +985,7 @@ rt_submodel_import5(struct rt_db_internal *ip, const struct bu_external *ep, con
     BU_VLS_INIT(&sip->file);
     BU_VLS_INIT(&sip->treetop);
     sip->meth = 0;
-    if (mat == NULL) mat = bn_mat_identity;
-    rt_submodel_mat(ip, mat, ip);
+    MAT_IDN(sip->root2leaf);
     sip->dbip = dbip;
 
     bu_vls_strncpy(&str, (const char *)ep->ext_buf, ep->ext_nbytes);
@@ -974,7 +993,9 @@ rt_submodel_import5(struct rt_db_internal *ip, const struct bu_external *ep, con
     if (bu_struct_parse(&str, rt_submodel_parse, (char *)sip, NULL) < 0) {
 	bu_vls_free(&str);
     fail:
-	bu_free((char *)sip, "rt_submodel_import4: sip");
+	bu_vls_free(&sip->file);
+	bu_vls_free(&sip->treetop);
+	bu_free((char *)sip, "rt_submodel_import5: sip");
 	ip->idb_type = ID_NULL;
 	ip->idb_ptr = (void *)NULL;
 	return -2;
@@ -983,9 +1004,12 @@ rt_submodel_import5(struct rt_db_internal *ip, const struct bu_external *ep, con
 
     /* Check for reasonable values */
     if (bu_vls_strlen(&sip->treetop) == 0) {
-	bu_log("rt_submodel_import4() treetop= must be specified\n");
+	bu_log("rt_submodel_import5() treetop= must be specified\n");
 	goto fail;
     }
+
+    if (mat == NULL) mat = bn_mat_identity;
+    rt_submodel_mat(ip, mat, ip);
 
     return 0;			/* OK */
 }
@@ -1063,6 +1087,7 @@ rt_submodel_make(const struct rt_functab *ftp, struct rt_db_internal *intern, co
     ip->magic = RT_SUBMODEL_INTERNAL_MAGIC;
     ip->file = empty;
     ip->treetop = empty;
+    MAT_IDN(ip->root2leaf);
     return BRLCAD_OK;
 }
 
