@@ -393,7 +393,7 @@ main(int argc, const char *argv[])
 	ofile << "\t\t\t\t\t\ti++;\n";
 	ofile << "\t\t\t\t\t\tcontinue;\n";
 	ofile << "\t\t\t\t\t}\n";
-	ofile << "\t\t\t\t\tbu_vls_printf(vl, \"%s=%s\\n\", env_vars[i], evval);\n";
+	ofile << "\t\t\t\t\tbu_vls_printf(vl, \"%s=%s\\n\", env_vars[i], evval ? evval : \"\");\n";
 	ofile << "\t\t\t\t}\n";
 	ofile << "\t\t\t\ti++;\n";
 	ofile << "\t\t\t}\n";
@@ -406,7 +406,7 @@ main(int argc, const char *argv[])
 	ofile << "\t\t\t\t\ti++;\n";
 	ofile << "\t\t\t\t\tcontinue;\n";
 	ofile << "\t\t\t\t}\n";
-	ofile << "\t\t\t\tbu_vls_printf(vl, \"%s=%s\\n\", cad_env_vars[i], evval);\n";
+	ofile << "\t\t\t\tbu_vls_printf(vl, \"%s=%s\\n\", cad_env_vars[i], evval ? evval : \"\");\n";
 	ofile << "\t\t\t}\n";
 	ofile << "\t\t\ti++;\n";
 	ofile << "\t\t}\n";
@@ -421,7 +421,7 @@ main(int argc, const char *argv[])
 	ofile << "\t\t\t\t\ti++;\n";
 	ofile << "\t\t\t\t\tcontinue;\n";
 	ofile << "\t\t\t\t}\n";
-	ofile << "\t\t\t\tbu_vls_printf(vl, \"[%s] %s=%s\\n\", other_vars[i].key, other_vars[i].var, evval);\n";
+	ofile << "\t\t\t\tbu_vls_printf(vl, \"[%s] %s=%s\\n\", other_vars[i].key, other_vars[i].var, evval ? evval : \"\");\n";
 	ofile << "\t\t\t}\n";
 	ofile << "\t\t\ti++;\n";
 	ofile << "\t\t}\n";
@@ -434,7 +434,7 @@ main(int argc, const char *argv[])
 	ofile << "\t\t\t\ti++;\n";
 	ofile << "\t\t\t\tcontinue;\n";
 	ofile << "\t\t\t}\n";
-	ofile << "\t\t\tbu_vls_printf(vl, \"[lib%s] %s=%s\\n\", lib_vars[i].key, lib_vars[i].var, evval);\n";
+	ofile << "\t\t\tbu_vls_printf(vl, \"[lib%s] %s=%s\\n\", lib_vars[i].key, lib_vars[i].var, evval ? evval : \"\");\n";
 	ofile << "\t\t}\n";
 	ofile << "\t\ti++;\n";
 	ofile << "\t}\n";
@@ -447,7 +447,7 @@ main(int argc, const char *argv[])
 	ofile << "\t\t\t\ti++;\n";
 	ofile << "\t\t\t\tcontinue;\n";
 	ofile << "\t\t\t}\n";
-	ofile << "\t\t\tbu_vls_printf(vl, \"[%s] %s=%s\\n\", exe_vars[i].key, exe_vars[i].var, evval);\n";
+	ofile << "\t\t\tbu_vls_printf(vl, \"[%s] %s=%s\\n\", exe_vars[i].key, exe_vars[i].var, evval ? evval : \"\");\n";
 	ofile << "\t\t}\n";
 	ofile << "\t\ti++;\n";
 	ofile << "\t}\n";
@@ -521,7 +521,9 @@ main(int argc, const char *argv[])
 	ofile << "\t\t\t\treturn BRLCAD_ERROR;\n";
 	ofile << "\t\t\t}\n";
 	ofile << "\n";
-	ofile << "\t\t\tbu_vls_printf(s_out, \"%s\", getenv(argv[1]));\n";
+	ofile << "\t\t\tconst char *value = getenv(argv[1]);\n";
+	ofile << "\t\t\tif (value)\n";
+	ofile << "\t\t\t\tbu_vls_printf(s_out, \"%s\", value);\n";
 	ofile << "\t\t\treturn BRLCAD_OK;\n";
 	ofile << "\t\t}\n";
 	ofile << "\n";
