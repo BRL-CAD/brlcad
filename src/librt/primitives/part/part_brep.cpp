@@ -146,8 +146,11 @@ rt_part_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
     for (int i = 0; i < part_brep->m_E.Count(); ++i)
 	if (part_brep->m_E[i].m_ti.Count() == 1)
 	    ++naked_edge_count;
+    const double assembly_tolerance = (tol && tol->dist > 0.0) ?
+	tol->dist : RT_LEN_TOL;
     if (naked_edge_count < 2 || (naked_edge_count % 2) != 0 ||
-	rt_brep_merge_naked_edges(*part_brep, tol) != naked_edge_count / 2) {
+	brep_stitch_naked_edges(*part_brep, assembly_tolerance) !=
+	    naked_edge_count / 2) {
 	delete part_brep;
 	bu_log("rt_part_brep: unable to mate body and end-cap surfaces!\n");
 	return;

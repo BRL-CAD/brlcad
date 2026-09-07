@@ -165,7 +165,7 @@ make_bend_surface(const ON_Curve &start_curve, const ON_Line &axis,
     }
     for (int i = 0; i < (*bend)->m_E.Count(); ++i) {
 	const ON_BrepEdge &edge = (*bend)->m_E[i];
-	if (edge.IsClosed() && !rt_brep_curves_coincident(edge,
+	if (edge.IsClosed() && !brep_curves_coincident(edge,
 		start_curve, tolerance, NULL)) {
 	    *end_curve = edge.DuplicateCurve();
 	    break;
@@ -501,10 +501,13 @@ rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
     for (int i = 0; i < (*b)->m_E.Count(); ++i)
 	if ((*b)->m_E[i].m_ti.Count() == 1)
 	    ++naked_edge_count;
-    const int merged_edge_count = rt_brep_merge_naked_edges(**b, tol);
+    const double assembly_tolerance = (tol && tol->dist > 0.0) ?
+	tol->dist : RT_LEN_TOL;
+    const int merged_edge_count = brep_stitch_naked_edges(**b,
+	assembly_tolerance);
     (*b)->Compact();
     (*b)->SetTolerancesBoxesAndFlags(false);
-    const bool oriented = rt_brep_orient_faces(**b);
+    const bool oriented = brep_orient_faces(**b);
     const double model_tolerance = (tol && tol->dist > 0.0) ? tol->dist : RT_LEN_TOL;
     for (int i = 0; i < (*b)->m_E.Count(); ++i)
 	if ((*b)->m_E[i].m_tolerance < 0.0)
