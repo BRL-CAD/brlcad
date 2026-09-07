@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 20XX-XX-XX  Release 7.46.0                                     ---
 ----------------------------------------------------------------------
 
+* faster NMG solid ray tracing (10-20x faster) - Sean Morrison
 * improved iges-g importer robustness - Cliff Yapp
 * expanded g-iges native CSG and B-Rep export support - Cliff Yapp
 * added IGES import and export support to gcv - Cliff Yapp
