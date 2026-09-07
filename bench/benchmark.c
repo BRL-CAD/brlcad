@@ -237,7 +237,7 @@ set_if_unset(void (*echo)(const char *, ...), void (*verbose)(const char *, ...)
     }
 
     setval = getenv(var);
-    echo("Using [%s] for %s\n", setval, var);
+    echo("Using [%s] for %s\n", setval ? setval : "", var);
 }
 
 
@@ -589,6 +589,7 @@ main(int ac, char *av[])
     {
 	struct bu_vls v = BU_VLS_INIT_ZERO;
 	char rfc2822[1024] = {0};
+	const char *logfile = getenv("LOGFILE");
 #ifdef HAVE_SYS_UTSNAME_H
 	struct utsname n;
 	time_t t = time(NULL);
@@ -604,7 +605,7 @@ main(int ac, char *av[])
 	echo("B R L - C A D   B E N C H M A R K\n");
 	echo("=================================\n");
 	echo("Running %s on %s\n", av[0], rfc2822);
-	echo("Logging output to %s\n", getenv("LOGFILE"));
+	echo("Logging output to %s\n", logfile ? logfile : "disabled");
 	echo("%s\n\n", bu_vls_addr(&v));
     }
 
@@ -653,6 +654,7 @@ main(int ac, char *av[])
 	bu_setenv("PIX", bu_path_dirname(getenv("PIX")), 1);
     }
 
+    const char *pix_env = getenv("PIX");
     bu_vls_printf(&vp,
 		  "%s "
 		  "%s "
@@ -661,7 +663,7 @@ main(int ac, char *av[])
 		  "%s/../../pix "
 		  "%s/../../../pix "
 		  "./pix",
-		  getenv("PIX"), pix, thisp, thisp, thisp, thisp);
+		  pix_env ? pix_env : "", pix, thisp, thisp, thisp, thisp);
     bu_argv_from_string(argv, 32, bu_vls_addr(&vp));
     look_for(verbose_echo, directory, "a benchmark reference log directory", "LOG", (const char **)argv);
     bu_vls_trunc(&vp, 0);
