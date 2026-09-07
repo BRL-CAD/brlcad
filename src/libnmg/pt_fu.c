@@ -50,6 +50,7 @@ struct ve_dist {
     struct vertex *v1;
     struct vertex *v2;
     int status;	/* return code from bg_dist_pnt3_lseg3 */
+    int scratch_owned;
 };
 #define NMG_VE_DIST_MAGIC 0x102938
 #define NMG_CK_VED(_p) NMG_CKMAG(_p, NMG_VE_DIST_MAGIC, "vertex/edge_dist")
@@ -63,6 +64,7 @@ struct edge_info {
     struct ve_dist *ved_p;	  /* ptr to ve_dist for this item */
     struct edgeuse *eu_p;	  /* edgeuse pointer */
     int nmg_class;	  /* pt classification WRT this item use */
+    int scratch_owned;
 };
 #define NMG_EDGE_INFO_MAGIC 0xe100
 #define NMG_CK_EI(_p) NMG_CKMAG(_p, NMG_EDGE_INFO_MAGIC, "edge_info")
@@ -78,6 +80,7 @@ struct fpi {
     void (*vu_func)(struct vertexuse *, point_t, const char *);	/* call w/vu when pt on vertexuse */
     const char *priv;		/* caller's private data */
     int hits;		/* flag PERUSE/PERGEOM */
+    struct nmg_class_scratch *scratch;
 };
 #define NMG_FPI_MAGIC 12345678 /* fpi\0 */
 #define NMG_CK_FPI(_fpi) \
@@ -88,11 +91,111 @@ struct fpi {
 #define NMG_FPI_TOUCHED 27
 #define NMG_FPI_MISSED  32768
 
+struct nmg_class_scratch {
+    struct edge_info *edge_info;
+    size_t edge_info_capacity;
+    size_t edge_info_used;
+    struct ve_dist *ve_dist;
+    size_t ve_dist_capacity;
+    size_t ve_dist_used;
+};
+
 static int nmg_class_pt_vu(struct fpi *fpi, struct vertexuse *vu);
 static struct edge_info *nmg_class_pt_eu(struct fpi *fpi, struct edgeuse *eu, struct edge_info *edge_list, const int in_or_out_only);
 static int compute_loop_class(struct fpi *fpi, const struct loopuse *lu, struct edge_info *edge_list, struct bu_list *vlfree);
 static int nmg_class_pnt_lu(struct loopuse *lu, struct fpi *fpi, const int in_or_out_only, struct bu_list *vlfree);
-int nmg_class_pnt_fu_except(const point_t pt, const struct faceuse *fu, const struct loopuse *ignore_lu, void (*eu_func)(struct edgeuse *, point_t, const char *, struct bu_list *), void (*vu_func)(struct vertexuse *, point_t, const char *), const char *priv, const int call_on_hits, const int in_or_out_only, struct bu_list *vlfree, const struct bn_tol *tol);
+static int nmg_class_pnt_fu_except_impl(const point_t pt, const struct faceuse *fu, const struct loopuse *ignore_lu, void (*eu_func)(struct edgeuse *, point_t, const char *, struct bu_list *), void (*vu_func)(struct vertexuse *, point_t, const char *), const char *priv, const int call_on_hits, const int in_or_out_only, struct bu_list *vlfree, const struct bn_tol *tol, struct nmg_class_scratch *scratch);
+
+
+struct nmg_class_scratch *
+nmg_class_scratch_create(size_t max_face_elements)
+{
+    struct nmg_class_scratch *scratch;
+
+    if (max_face_elements == 0)
+	max_face_elements = 1;
+    if (max_face_elements > SIZE_MAX / 2)
+	bu_bomb("NMG point classifier scratch size overflow\n");
+
+    BU_GET(scratch, struct nmg_class_scratch);
+    scratch->edge_info_capacity = max_face_elements;
+    scratch->edge_info_used = 0;
+    scratch->edge_info = (struct edge_info *)bu_calloc(
+	max_face_elements, sizeof(struct edge_info), "NMG point classifier edge scratch");
+    /* Each edge may also cache one endpoint; lone vertices need one entry. */
+    scratch->ve_dist_capacity = 2 * max_face_elements;
+    scratch->ve_dist_used = 0;
+    scratch->ve_dist = (struct ve_dist *)bu_calloc(
+	scratch->ve_dist_capacity, sizeof(struct ve_dist), "NMG point classifier distance scratch");
+
+    return scratch;
+}
+
+
+void
+nmg_class_scratch_destroy(struct nmg_class_scratch *scratch)
+{
+    if (!scratch)
+	return;
+
+    bu_free(scratch->edge_info, "NMG point classifier edge scratch");
+    bu_free(scratch->ve_dist, "NMG point classifier distance scratch");
+    BU_PUT(scratch, struct nmg_class_scratch);
+}
+
+
+static struct ve_dist *
+ve_dist_get(struct fpi *fpi)
+{
+    struct ve_dist *ved;
+
+    if (LIKELY(fpi->scratch && fpi->scratch->ve_dist_used < fpi->scratch->ve_dist_capacity)) {
+	ved = &fpi->scratch->ve_dist[fpi->scratch->ve_dist_used++];
+	memset(ved, 0, sizeof(*ved));
+	ved->scratch_owned = 1;
+	return ved;
+    }
+    if (fpi->scratch)
+	bu_bomb("NMG point classifier distance scratch exhausted\n");
+
+    NMG_ALLOC(ved, struct ve_dist);
+    return ved;
+}
+
+
+static void
+ve_dist_put(struct ve_dist *ved)
+{
+    if (!ved->scratch_owned)
+	bu_free((char *)ved, "ve_dist struct");
+}
+
+
+static struct edge_info *
+edge_info_get(struct fpi *fpi)
+{
+    struct edge_info *ei;
+
+    if (LIKELY(fpi->scratch && fpi->scratch->edge_info_used < fpi->scratch->edge_info_capacity)) {
+	ei = &fpi->scratch->edge_info[fpi->scratch->edge_info_used++];
+	memset(ei, 0, sizeof(*ei));
+	ei->scratch_owned = 1;
+	return ei;
+    }
+    if (fpi->scratch)
+	bu_bomb("NMG point classifier edge scratch exhausted\n");
+
+    NMG_ALLOC(ei, struct edge_info);
+    return ei;
+}
+
+
+static void
+edge_info_put(struct edge_info *ei)
+{
+    if (!ei->scratch_owned)
+	bu_free((char *)ei, "edge_info struct");
+}
 
 
 /**
@@ -223,7 +326,7 @@ nmg_class_pt_vu(struct fpi *fpi, struct vertexuse *vu)
      */
     VSUB2(delta, vu->v_p->vg_p->coord, fpi->pt);
 
-    NMG_ALLOC(ved, struct ve_dist);
+    ved = ve_dist_get(fpi);
     ved->magic_p = &vu->v_p->magic;
     ved->dist = MAGNITUDE(delta);
     if (ved->dist < fpi->tol->dist_sq) {
@@ -576,7 +679,7 @@ nmg_class_pt_eu(struct fpi *fpi, struct edgeuse *eu, struct edge_info *edge_list
 	tmp_tol.dist_sq = 0.0;
     }
 
-    NMG_ALLOC(ved, struct ve_dist);
+    ved = ve_dist_get(fpi);
     ved->magic_p = &eu->e_p->magic;
     ved->status = bn_distsq_pt3_lseg3(&ved->dist,
 				      eu->vu_p->v_p->vg_p->coord,
@@ -601,7 +704,7 @@ nmg_class_pt_eu(struct fpi *fpi, struct edgeuse *eu, struct edge_info *edge_list
     /* Add a struct for this edgeuse to the loop's list of dist-sorted
      * edgeuses.
      */
-    NMG_ALLOC(ei, struct edge_info);
+    ei = edge_info_get(fpi);
     ei->ved_p = ved;
     ei->eu_p = eu;
     BU_LIST_MAGIC_SET(&ei->l, NMG_EDGE_INFO_MAGIC);
@@ -623,7 +726,7 @@ nmg_class_pt_eu(struct fpi *fpi, struct edgeuse *eu, struct edge_info *edge_list
 	     * other uses of this vertex will claim the point is within
 	     * tolerance without re-computing
 	     */
-	    NMG_ALLOC(ed, struct ve_dist);
+	    ed = ve_dist_get(fpi);
 	    ed->magic_p = &ved->v1->magic;
 	    ed->status = ved->status;
 	    ed->v1 = ed->v2 = ved->v1;
@@ -647,7 +750,7 @@ nmg_class_pt_eu(struct fpi *fpi, struct edgeuse *eu, struct edge_info *edge_list
 	     * other uses of this vertex will claim the point is within
 	     * tolerance without re-computing
 	     */
-	    NMG_ALLOC(ed, struct ve_dist);
+	    ed = ve_dist_get(fpi);
 	    ed->magic_p = &ved->v2->magic;
 	    ed->status = ved->status;
 	    ed->v1 = ed->v2 = ved->v2;
@@ -763,11 +866,11 @@ static void make_near_list(struct edge_info *edge_list, struct bu_list *near1, c
 
 		tmp = ei_p;
 		BU_LIST_DEQUEUE(&tmp->l);
-		bu_free((char *)tmp, "edge info struct");
+		edge_info_put(tmp);
 		tmp = ei;
 		ei = BU_LIST_PLAST(edge_info, &ei->l);
 		BU_LIST_DEQUEUE(&tmp->l);
-		bu_free((char *)tmp, "edge info struct");
+		edge_info_put(tmp);
 		break;
 	    }
 	    ei_p = BU_LIST_PNEXT(edge_info, &ei_p->l);
@@ -978,7 +1081,7 @@ compute_loop_class(struct fpi *fpi,
      */
     while (BU_LIST_WHILE(ei, edge_info, &near1)) {
 	BU_LIST_DEQUEUE(&ei->l);
-	bu_free((char *)ei, "edge_info struct");
+	edge_info_put(ei);
     }
 
     if (UNLIKELY(nmg_debug & NMG_DEBUG_PNT_FU)) {
@@ -1102,7 +1205,7 @@ nmg_class_pnt_lu(struct loopuse *lu, struct fpi *fpi, const int in_or_out_only, 
 	/* free up the edge_list elements */
 	while (BU_LIST_WHILE(ei, edge_info, &edge_list.l)) {
 	    BU_LIST_DEQUEUE(&ei->l);
-	    bu_free((char *)ei, "edge info struct");
+	    edge_info_put(ei);
 	}
     } else if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) {
 	register struct vertexuse *vu;
@@ -1222,10 +1325,10 @@ plot_parity_error(const struct faceuse *fu, const fastf_t *pt, struct bu_list *v
  * Returns -
  *	NMG_CLASS_AonB, etc...
  */
-int
-nmg_class_pnt_fu_except(const point_t pt, const struct faceuse *fu, const struct loopuse *ignore_lu,
+static int
+nmg_class_pnt_fu_except_impl(const point_t pt, const struct faceuse *fu, const struct loopuse *ignore_lu,
 		       void (*eu_func) (struct edgeuse *, point_t, const char *, struct bu_list *), void (*vu_func) (struct vertexuse *, point_t, const char *), const char *priv,
-		       const int call_on_hits, const int in_or_out_only, struct bu_list *vlfree, const struct bn_tol *tol)
+		       const int call_on_hits, const int in_or_out_only, struct bu_list *vlfree, const struct bn_tol *tol, struct nmg_class_scratch *scratch)
 
 /* func to call when pt on edgeuse */
 /* func to call when pt on vertexuse*/
@@ -1286,6 +1389,7 @@ nmg_class_pnt_fu_except(const point_t pt, const struct faceuse *fu, const struct
     fpi.vu_func = vu_func;
     fpi.priv = priv;
     fpi.hits = call_on_hits;
+    fpi.scratch = scratch;
     fpi.magic = NMG_FPI_MAGIC;
 
     for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
@@ -1360,7 +1464,7 @@ nmg_class_pnt_fu_except(const point_t pt, const struct faceuse *fu, const struct
 
     while (BU_LIST_WHILE(ved_p, ve_dist, &fpi.ve_dh)) {
 	BU_LIST_DEQUEUE(&ved_p->l);
-	bu_free((char *)ved_p, "ve_dist struct");
+	ve_dist_put(ved_p);
     }
 
 
@@ -1369,6 +1473,32 @@ nmg_class_pnt_fu_except(const point_t pt, const struct faceuse *fu, const struct
 	       nmg_class_name(fu_class));
 
     return fu_class;
+}
+
+
+int
+nmg_class_pnt_fu_except(const point_t pt, const struct faceuse *fu, const struct loopuse *ignore_lu,
+		       void (*eu_func) (struct edgeuse *, point_t, const char *, struct bu_list *), void (*vu_func) (struct vertexuse *, point_t, const char *), const char *priv,
+		       const int call_on_hits, const int in_or_out_only, struct bu_list *vlfree, const struct bn_tol *tol)
+{
+    return nmg_class_pnt_fu_except_impl(pt, fu, ignore_lu, eu_func, vu_func,
+	priv, call_on_hits, in_or_out_only, vlfree, tol, NULL);
+}
+
+
+int
+nmg_class_pnt_fu_except_scratch(const point_t pt, const struct faceuse *fu, const struct loopuse *ignore_lu,
+		       void (*eu_func) (struct edgeuse *, point_t, const char *, struct bu_list *), void (*vu_func) (struct vertexuse *, point_t, const char *), const char *priv,
+		       const int call_on_hits, const int in_or_out_only, struct bu_list *vlfree, const struct bn_tol *tol, struct nmg_class_scratch *scratch)
+{
+    if (!scratch)
+	return nmg_class_pnt_fu_except(pt, fu, ignore_lu, eu_func, vu_func,
+	    priv, call_on_hits, in_or_out_only, vlfree, tol);
+
+    scratch->edge_info_used = 0;
+    scratch->ve_dist_used = 0;
+    return nmg_class_pnt_fu_except_impl(pt, fu, ignore_lu, eu_func, vu_func,
+	priv, call_on_hits, in_or_out_only, vlfree, tol, scratch);
 }
 
 
@@ -1445,6 +1575,7 @@ nmg_class_pnt_lu_except(point_t pt, const struct loopuse *lu, const struct edge 
     fpi.vu_func = NULL;
     fpi.priv = (char *)NULL;
     fpi.hits = 0;
+    fpi.scratch = NULL;
     fpi.magic = NMG_FPI_MAGIC;
 
     for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
@@ -1473,12 +1604,12 @@ nmg_class_pnt_lu_except(point_t pt, const struct loopuse *lu, const struct edge 
     /* free up the edge_list elements */
     while (BU_LIST_WHILE(ei, edge_info, &edge_list.l)) {
 	BU_LIST_DEQUEUE(&ei->l);
-	bu_free((char *)ei, "edge info struct");
+	edge_info_put(ei);
     }
 
     while (BU_LIST_WHILE(ved_p, ve_dist, &fpi.ve_dh)) {
 	BU_LIST_DEQUEUE(&ved_p->l);
-	bu_free((char *)ved_p, "ve_dist struct");
+	ve_dist_put(ved_p);
     }
 
     if (nmg_debug & NMG_DEBUG_PNT_FU)
