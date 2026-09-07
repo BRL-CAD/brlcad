@@ -1076,11 +1076,17 @@ bu_process_poll(struct bu_process *pinfo, int *exit_status)
     }
 
 #if defined(_WIN32)
+    /* An exit code can be available before process teardown releases
+     * inherited files and pipes.  Only report completion once signaled. */
+    DWORD wait_result = WaitForSingleObject(pinfo->hProcess, 0);
+    if (wait_result == WAIT_TIMEOUT)
+	return 0;
+    if (wait_result != WAIT_OBJECT_0)
+	return -1;
+
     DWORD status = 0;
     if (!GetExitCodeProcess(pinfo->hProcess, &status))
 	return -1;
-    if (status == STILL_ACTIVE)
-	return 0;
 
     pinfo->exit_status = (status == BU_MSVC_ABORT_EXIT) ?
 	ERROR_PROCESS_ABORTED : (int)status;
