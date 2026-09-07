@@ -13,6 +13,7 @@
 #include <cmath>
 #include <memory>
 
+#include "bu/app.h"
 #include "brep.h"
 
 
@@ -100,8 +101,9 @@ test_curve_matching()
 
 
 int
-main()
+main(int UNUSED(argc), char **argv)
 {
+    bu_setprogname(argv[0]);
     if (!test_curve_matching())
 	return 15;
     const ON_3dPoint corners[8] = {

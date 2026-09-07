@@ -58,7 +58,6 @@ int
 convert(int argc, const char **argv)
 {
     const char *program = argv[0];
-    bu_setprogname(program);
     ExportOptions settings;
     int processors = 1;
     int help = 0, faceted = 0, trimmed = 0, multi_file = 0, nurbs = 0, flatten = 0, verbose = 0;
@@ -175,6 +174,7 @@ convert(int argc, const char **argv)
 int
 main(int argc, const char **argv)
 {
+    bu_setprogname(argv[0]);
     try {
 	return convert(argc, argv);
     } catch (const std::exception &error) {

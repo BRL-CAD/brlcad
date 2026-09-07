@@ -20,11 +20,12 @@
 
 #include "common.h"
 
+#include "bu/app.h"
 #include "bu/log.h"
 #include "nmg.h"
 
 int
-main(int UNUSED(argc), char **UNUSED(argv))
+main(int UNUSED(argc), char **argv)
 {
     const struct bn_tol tol = BN_TOL_INIT_TOL;
     struct bu_list vlfree = BU_LIST_INIT_ZERO;
@@ -35,6 +36,8 @@ main(int UNUSED(argc), char **UNUSED(argv))
     struct bu_ptbl **shells = &table_p;
     int count;
     int result = 0;
+
+    bu_setprogname(argv[0]);
 
     BU_LIST_INIT(&vlfree);
     /* The empty result must replace the caller's non-NULL output pointer. */

@@ -97,7 +97,6 @@ int
 convert(int argc, const char **argv)
 {
     const char *program = argv[0];
-    bu_setprogname(program);
     int help = 0, drawing = 0, drawing_3d = 0, nurbs = 0, trimmed = 0;
     int mesh = 0, polygon = 0, exact = 0, strict = 0, wire = 0;
     const char *output_path = nullptr, *report_path = nullptr, *root = nullptr, *repair = nullptr;
@@ -195,6 +194,7 @@ convert(int argc, const char **argv)
 int
 main(int argc, const char **argv)
 {
+    bu_setprogname(argv[0]);
     try {
 	return convert(argc, argv);
     } catch (const std::exception &error) {

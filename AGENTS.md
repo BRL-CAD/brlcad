@@ -26,3 +26,5 @@ Never commit without permission (ask every time).  Never push to remote.  Never 
 ## Repository Coding Conventions
 
 The HACKING file in the root of the source tree defines coding conventions specific to BRL-CAD, including versions of common functions that are used in our code base instead of raw standard functions.  Review this file before writing code so your changes and additions adhere to BRL-CAD standards.
+
+When completing a code change (not for intermediate iterations, but when preparing to hand back a finalized change) use our regress-repository build target to check that the result satisfies our internal checker.

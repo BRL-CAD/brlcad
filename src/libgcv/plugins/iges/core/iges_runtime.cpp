@@ -129,12 +129,10 @@ StagedFile::StagedFile(const std::filesystem::path &destination) :
 
 StagedFile::~StagedFile()
 {
-    std::error_code error;
-    std::filesystem::remove(path_, error);
-    error.clear();
-    std::filesystem::remove(directory_, error);
-    if (error)
-	bu_log("IGES: cannot remove temporary output directory: %s\n", error.message().c_str());
+    if (!bu_file_delete(path_.c_str()))
+	bu_log("IGES: cannot remove temporary output file: %s\n", path_.c_str());
+    if (!bu_file_delete(directory_.string().c_str()))
+	bu_log("IGES: cannot remove temporary output directory: %s\n", directory_.string().c_str());
 }
 
 void
