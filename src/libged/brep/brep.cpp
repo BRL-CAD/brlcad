@@ -636,12 +636,7 @@ _brep_cmd_flip(void *bs, int argc, const char **argv)
 
     b_ip->brep->Flip();
 
-    // Make the new one
-    struct rt_wdb *wdbp = wdb_dbopen(gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-    if (mk_brep(wdbp, gb->solid_name.c_str(), (void *)b_ip->brep)) {
-	return BRLCAD_ERROR;
-    }
-    return BRLCAD_OK;
+    return _brep_write_edit(gb);
 }
 
 extern "C" int
@@ -1146,9 +1141,15 @@ _brep_cmd_shrink_surfaces(void *bs, int argc, const char **argv)
 
     b_ip->brep->ShrinkSurfaces();
 
-    // Make the new one
-    struct rt_wdb *wdbp = wdb_dbopen(gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-    if (mk_brep(wdbp, gb->solid_name.c_str(), (void *)b_ip->brep)) {
+    return _brep_write_edit(gb);
+}
+
+int
+_brep_write_edit(struct _ged_brep_info *gb)
+{
+    if (rt_db_put_internal(gb->dp, gb->gedp->dbip, &gb->intern) < 0) {
+	bu_vls_printf(gb->gedp->ged_result_str, "Could not write edited BRep %s\n",
+	    gb->solid_name.c_str());
 	return BRLCAD_ERROR;
     }
     return BRLCAD_OK;
@@ -1610,4 +1611,3 @@ GED_DECLARE_PLUGIN_MANIFEST("libged_brep", 1, GED_BREP_COMMANDS)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-
