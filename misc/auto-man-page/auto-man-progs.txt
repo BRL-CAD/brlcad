@@ -96,7 +96,7 @@ lowp                src/util/lowp.c
 masonry             src/proc-db/masonry.c
 menger              src/proc-db/menger.c
 metaball            src/proc-db/metaball.c
-mkbuilding          src/proc-db/mkbuilding.c
+mkbuilding          src/shapes/building/mkbuilding.cpp
 molecule            src/proc-db/molecule.c
 nmg-sgp             src/conv/nmg/nmg-sgp.c
 nmgmodel            src/proc-db/nmgmodel.c
