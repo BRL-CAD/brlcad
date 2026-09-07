@@ -21,12 +21,6 @@ Recent Bugs
   Something is concatenating EXEPATH and/or fbserv silently fails with
   return codes (e.g., when not specifying -F, only giving the port.)
 
-* rt -H hypersample, -J jitter, and -j# for sub-grid-mode assumes a
-  framebuffer, causing pix data to get written to the -o file (e.g.,
-  even with -o file.png).  See view_pixel() near src/rt/view.c:472 for
-  problem area with -j but there are likely call sites..  Need to
-  scrub all fb_write() and ideally make this a non-issue via icv API.
-
 * recursive bu_parallel() failure, tbd whether cpp11 or pthread impl,
   likely because IDs are exceeding MAX_PSW, causing mayhem and chaos.
 
@@ -64,19 +58,11 @@ Recent Bugs
   Backtrace indicates write buffer is full, likely because no output
   is going to terminal. (Observed on Mac)
 
-* gcv on a glTF file (at least a binary .glb) crashes hard with a NULL
-  pointer bomb (workaround: gltf-g succeeds albeit incomplete
-  conversion).  Takes out the entire Terminal app on Mac for some
-  reason (consistently).
-
 * Running"mged -c test.g" exits automatically on default prompt:
   ...
   Create new database (y|n)[n]? 
   Warning: no database is currently open!
   morrison@Miniagua .build %
-
-* TGC tess fails when we have a near-zero c axis and a larger d
-  axis, or vice versa.
 
 * MGED crashes trying to open the repository file
   doc/docbook/resources/other/standard/xsl/images/important.tif
@@ -132,12 +118,6 @@ Recent Bugs
 * apparently all four BRL-CAD Tutorial Series volumes are missing from
   our bibliography...
 
-* Tessellating an ETO with a normal tolerance results in stack
-  smashing due to bad logic in recursive algorithm: set norm 2;
-  facetize my.eto my.bot;. Observed infinite recursion in both
-  make_ellipse4() in eto.c and (after adding max recursion test) in
-  paint_face() in manif.c:190
-
 * mater -d information stored in the .g file doesn't survive a
   garbage collection operation.
 
@@ -152,9 +132,6 @@ Recent Bugs
   view (at least View and Eye_pos parameters are non) despite geometry
   still being displayed.  this causes 'rt' to fly into an infinite
   loop, presumably trying to increment rays from the eye position.
-
-* icv dpix support is not cross-platform (it writes out native, reads
-  in assuming same encoding).  regression tests fail on big endian.
 
 * creating an object with a slashes in the name (e.g., cp foo foo/R)
   results in an object that cannot be deleted/renamed.  bad behavior
@@ -172,15 +149,6 @@ Recent Bugs
   # ann2.s's label looks wrong, points at origin?
   in ann3.s annot 0 0 0 1 10 10 3 1
   # using numbers for a label results in no label
-
-* make eto eto
-  tol norm 1
-  facetize eto.bot eto
-  [crashes due to excessive recursion]
-
-* crash in rt_bot_xform() due to a bot being marked as having face
-  normals, but didn't.  bot probably written wrong via conversion
-  to/from obj or asc.  found importing teapot.
 
 * rtedge with perspective is wrong.  it fills in nearly entire faces,
   vertically in particular.  it's worse on small sized renders, and
@@ -238,11 +206,6 @@ Recent Bugs
 * wgl framebuffer is not lingering on windows (regardless of using
   wgll or default) when it should
 
-* calling "attr set obj key value" should always result in key getting
-  set to value, no matter what, as it is the lowest-level attribute
-  management interface and what the command (correctly) documents.
-  example demonstrated to not work was: attr set obj rgb 123/123/123
-
 * report of LIBBU not working when accessed by a multithreaded
   application on Windows.  reportedly due to some problem with the
   debug memory queue.
@@ -290,9 +253,6 @@ Recent Bugs
   book-keeping is fuxored or the db_lookup is returning NULL (or isn't
   yet performed).
 
-* src/librt/primitives/bot/g_bot_include.c:rt_bot_bbox() routine isn't
-  calculating the bbox correctly
-
 * encountered a crash during rtarea on a (default) facetized version
   of the hyp from the proc-db csgbrep tool.
 
@@ -306,9 +266,6 @@ Recent Bugs
 
 * torus with a near zero inner diameter results in zero-length edges
   during tessellation.
-
-* bu_log() with a width specifier does not align like printf().
-  Example: bu_log("%24s", str);
 
 * report that "keep" sometimes results in a .g file with unknown units;
   dbconcat also is reported to set the units to unknown if concatting
@@ -336,10 +293,6 @@ Recent Bugs
   to be verified.
 
 * rt -i -s4096 -H16 -F/dev/null boolean-ops.g all
-
-* asc2g of a .asc file containing the first line as a "#" comment
-  results in a bu_malloc(0) bomb.  comment lines should be valid in
-  .asc files.
 
 * compilation reportedly fails when building Tcl if the path to the
   source directory includes a space.
@@ -671,9 +624,6 @@ Recent Bugs
 
 * sketches extruded with non-square AB vectors results in inner sketch
   components not getting scaled properly.
-
-* rtcheck is ignoring fastgen tagged geometry since no multioverlap
-  handler is set.
 
 * bot-bldxf fails in db_walk_tree(), interface may have changed
 
