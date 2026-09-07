@@ -931,7 +931,9 @@ main(int argc, const char **argv)
             g_verbose = true;
 
     struct bu_vls fbserv_bin = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&fbserv_bin, "%s", getenv("FBSERV_BIN"));
+    const char *fbserv_env = getenv("FBSERV_BIN");
+    if (fbserv_env)
+        bu_vls_strcpy(&fbserv_bin, fbserv_env);
     if (!bu_vls_strlen(&fbserv_bin)) {
         /* Try to find fbserv relative to this test binary's directory.
          * CMake sets the build dir; fall back to a common path.        */
