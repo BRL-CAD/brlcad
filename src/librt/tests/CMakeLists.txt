@@ -210,6 +210,7 @@ set(
   search_stress.c
   static_init.cpp
   sketch.g
+  submodel_xform.c
   prim_tess.c
   tess_timing.c
   tree_prune.c
