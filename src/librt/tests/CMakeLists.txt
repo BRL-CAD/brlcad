@@ -67,6 +67,9 @@ brlcad_add_test(NAME rt_tree_prune COMMAND rt_tree_prune)
 brlcad_addexec(rt_reprep_prune reprep_prune.c "librt;libwdb;libbu;${M_LIBRARY}" TEST)
 brlcad_add_test(NAME rt_reprep_prune COMMAND rt_reprep_prune)
 
+brlcad_addexec(rt_submodel_xform submodel_xform.c "librt;libwdb;libbu;${M_LIBRARY}" TEST)
+brlcad_add_test(NAME rt_submodel_xform COMMAND rt_submodel_xform)
+
 brlcad_addexec(rt_lcomb_large lcomb_large.c "librt;libwdb;libbu;${M_LIBRARY}" TEST)
 brlcad_add_test(NAME rt_lcomb_large COMMAND rt_lcomb_large)
 
