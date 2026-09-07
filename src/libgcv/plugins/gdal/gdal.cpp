@@ -191,10 +191,11 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     /* If the environment is identifying a PROJ_LIB directory use it,
      * else set it to the correct one for BRL-CAD */
     if (!getenv("PROJ_LIB")) {
-	const char *pjenv = NULL;
-	bu_setenv("PROJ_LIB", bu_dir(NULL, 0, BU_DIR_DATA, "proj", NULL), 1);
-	pjenv = getenv("PROJ_LIB");
-	bu_log("Setting PROJ_LIB to %s\n", pjenv);
+	const char *proj_dir = bu_dir(NULL, 0, BU_DIR_DATA, "proj", NULL);
+	if (bu_setenv("PROJ_LIB", proj_dir, 1) == 0)
+	    bu_log("Setting PROJ_LIB to %s\n", proj_dir);
+	else
+	    bu_log("Unable to set PROJ_LIB\n");
     }
 
     GDALAllRegister();
