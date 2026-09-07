@@ -832,6 +832,7 @@ submodel_in(struct ged *UNUSED(gedp), const char **cmd_argvs, struct rt_db_inter
     sip->meth = atoi(cmd_argvs[4]);
     bu_vls_init(&sip->file);
     bu_vls_strcpy(&sip->file, cmd_argvs[5]);
+    MAT_IDN(sip->root2leaf);
 
     return BRLCAD_OK;
 }
