@@ -39,34 +39,19 @@
 #define DPIX_CHANNELS 3
 
 
-/* Existing DPIX files use little-endian IEEE-754 doubles.  Convert via
- * libbu's portable network-double routines so the file representation does
- * not depend on the host byte order. */
+/* DPIX files store doubles in network byte order so their representation is
+ * independent of host byte order. */
 static void
 dpix_decode(double *out, const unsigned char *in, size_t count)
 {
-    unsigned char network[SIZEOF_NETWORK_DOUBLE];
-
-    for (size_t i = 0; i < count; i++) {
-	for (size_t j = 0; j < SIZEOF_NETWORK_DOUBLE; j++)
-	    network[j] = in[i * SIZEOF_NETWORK_DOUBLE +
-		SIZEOF_NETWORK_DOUBLE - j - 1];
-	bu_cv_ntohd((unsigned char *)&out[i], network, 1);
-    }
+    bu_cv_ntohd((unsigned char *)out, in, count);
 }
 
 
 static void
 dpix_encode(unsigned char *out, const double *in, size_t count)
 {
-    unsigned char network[SIZEOF_NETWORK_DOUBLE];
-
-    for (size_t i = 0; i < count; i++) {
-	bu_cv_htond(network, (const unsigned char *)&in[i], 1);
-	for (size_t j = 0; j < SIZEOF_NETWORK_DOUBLE; j++)
-	    out[i * SIZEOF_NETWORK_DOUBLE + j] =
-		network[SIZEOF_NETWORK_DOUBLE - j - 1];
-    }
+    bu_cv_htond(out, (const unsigned char *)in, count);
 }
 
 /*

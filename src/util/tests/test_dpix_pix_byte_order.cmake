@@ -6,13 +6,13 @@ set(input_file "${TEST_DIR}/dpix-pix-byte-order-input.dpix")
 set(output_file "${TEST_DIR}/dpix-pix-byte-order-output.pix")
 file(REMOVE "${input_file}" "${output_file}")
 
-# Portable little-endian encodings of 0.1, 0.2, and 0.4.  These values avoid
+# Portable big-endian encodings of 0.1, 0.2, and 0.4.  These values avoid
 # zero bytes so CMake can construct the binary fixture as a string.
 string(
   ASCII
-  154 153 153 153 153 153 185 63
-  154 153 153 153 153 153 201 63
-  154 153 153 153 153 153 217 63
+  63 185 153 153 153 153 153 154
+  63 201 153 153 153 153 153 154
+  63 217 153 153 153 153 153 154
   input_data
 )
 file(WRITE "${input_file}" "${input_data}")

@@ -223,7 +223,7 @@ sets the NMG_debug flags to the given hexadecimalbit vector. See h/nmg.h for the
 
 
 *-O output.dpix*, *--output-double output.dpix*::
-specifies the name of a file in which to store a double-precision floating-point version of the image. *dpix-pix*(1) can be used to later convert the file to *pix*(5) format output.
+specifies the name of a file in which to store a double-precision floating-point version of the image in *dpix*(5) format. *dpix-pix*(1) can be used to later convert the file to *pix*(5) format output.
 
 
 *-P #*, *--cpus #*::
@@ -348,7 +348,7 @@ Renders with 8 hypersamples each averaging 512 ambient-occlusion samples (a brut
 [[see_also]]
 == SEE ALSO
 
-*brlcad*(1), *mged*(1), *pix-fb*(1), *png-fb*(1), *librt*(3), *pix*(5)
+*brlcad*(1), *mged*(1), *pix-fb*(1), *png-fb*(1), *librt*(3), *dpix*(5), *pix*(5)
 
 
 [[diagnostics]]

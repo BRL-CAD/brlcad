@@ -49,12 +49,9 @@
 static ssize_t
 read_dpix(int fd, unsigned char *encoded, double *decoded)
 {
-    unsigned char network[SIZEOF_NETWORK_DOUBLE];
     const size_t encoded_size = NUM * SIZEOF_NETWORK_DOUBLE;
     long int bytes_read;
     size_t count;
-    size_t i;
-    size_t j;
 
     bytes_read = bu_mread(fd, encoded, (long int)encoded_size);
     if (bytes_read <= 0)
@@ -65,12 +62,7 @@ read_dpix(int fd, unsigned char *encoded, double *decoded)
     }
 
     count = (size_t)bytes_read / SIZEOF_NETWORK_DOUBLE;
-    for (i = 0; i < count; i++) {
-	for (j = 0; j < SIZEOF_NETWORK_DOUBLE; j++)
-	    network[j] = encoded[i * SIZEOF_NETWORK_DOUBLE +
-		SIZEOF_NETWORK_DOUBLE - j - 1];
-	bu_cv_ntohd((unsigned char *)&decoded[i], network, 1);
-    }
+    bu_cv_ntohd((unsigned char *)decoded, encoded, count);
 
     return (ssize_t)count;
 }

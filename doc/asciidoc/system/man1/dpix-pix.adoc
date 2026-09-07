@@ -16,12 +16,13 @@ dpix-pix file.dpix > file.pix
 [[description]]
 == DESCRIPTION
 
-*dpix-pix* converts a double-precision image (dpix) file to a *pix*(5)
-format file.  It scans the entire input file once to find the minimum
-and maximum sample values, then reads the file a second time and
-linearly maps each value from that [min, max] range onto the 8-bit
-range of 0 to 255, writing the resulting bytes to standard output.  The
-discovered minimum and maximum are reported on standard error.
+*dpix-pix* converts a double-precision *dpix*(5) image file to a *pix*(5)
+format file.  DPIX samples are stored as big-endian IEEE-754 doubles.
+The program scans the entire input file once to find the minimum and
+maximum sample values, then reads the file a second time and linearly
+maps each value from that [min, max] range onto the 8-bit range of 0 to
+255, writing the resulting bytes to standard output.  The discovered
+minimum and maximum are reported on standard error.
 
 Because the input must be read twice, the data is taken from a named
 file rather than from standard input.  The output is binary and is
@@ -46,7 +47,7 @@ error indicate the exposure range used for the conversion.
 [[see_also]]
 == SEE ALSO
 
-*brlcad*(1), *pix-fb*(1), *cv*(1), *pix*(5)
+*brlcad*(1), *pix-fb*(1), *cv*(1), *dpix*(5), *pix*(5)
 
 [[author]]
 == AUTHOR
