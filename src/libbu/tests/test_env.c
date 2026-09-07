@@ -216,6 +216,10 @@ mem_test_failure(const char *query, ssize_t result, const size_t *output,
 static int
 platform_mem_tests(ssize_t all_mem, ssize_t avail_mem, ssize_t page_mem)
 {
+    (void)all_mem;
+    (void)avail_mem;
+    (void)page_mem;
+
 #if defined(__APPLE__) && defined(HAVE_SYS_SYSCTL_H)
     uint64_t native_total = 0;
     size_t value_size = sizeof(native_total);
@@ -275,10 +279,6 @@ platform_mem_tests(ssize_t all_mem, ssize_t avail_mem, ssize_t page_mem)
 	    (unsigned long long)native_available);
 	return -4;
     }
-#else
-    (void)all_mem;
-    (void)avail_mem;
-    (void)page_mem;
 #endif
     return 0;
 }
