@@ -38,6 +38,7 @@
 #ifdef __cplusplus
 
 #  include <memory>
+#  include <string>
 
 __BEGIN_DECLS
 
@@ -87,7 +88,8 @@ enum class PullbackFailureReason {
     None,
     Cancelled,
     ProjectionFailed,
-    SurfaceDistanceExceeded
+    SurfaceDistanceExceeded,
+    ParameterCurveCollapsed
 };
 
 typedef struct pbc_data {
@@ -326,18 +328,26 @@ namespace brlcad {
      * middle of the interval [t1, t2] ____ then the curve between t1 and
      * t2 is flat if distance(C(m), p1p2) < flatness
      *
-     * 2. Use the sampled points to perform a global interpolation using
-     *    universal knot generation to build a B-Spline curve.
+     * 2. Join the validated samples on a continuous image of any periodic
+     *    surface domains.
      *
-     * 3. If the curve is a line or an arc (determined with openNURBS
-     *    routines), return the appropriate ON_Curve subclass (otherwise,
-     *    return an ON_NurbsCurve).
+     * 3. Construct a two-dimensional polyline and densely validate its lifted
+     *    locus against the source curve.
      */
-    extern ON_Curve *pullback_curve(ON_BrepFace *face,
-				    const ON_Curve *curve,
-				    SurfaceTree *tree = NULL,
-				    double tolerance = BREP_FCP_ROOT_EPSILON,
-				    double flatness = 1.0e-3);
+    extern BREP_EXPORT ON_Curve *pullback_curve(const ON_Surface *surface,
+						 const ON_Curve *curve,
+						 double tolerance = BREP_FCP_ROOT_EPSILON,
+						 double flatness = 1.0e-3,
+						 std::string *failure_reason = NULL,
+						 PullbackFailureReason *failure = NULL);
+
+    extern BREP_EXPORT ON_Curve *pullback_curve(ON_BrepFace *face,
+						 const ON_Curve *curve,
+						 SurfaceTree *tree = NULL,
+						 double tolerance = BREP_FCP_ROOT_EPSILON,
+						 double flatness = 1.0e-3,
+						 std::string *failure_reason = NULL,
+						 PullbackFailureReason *failure = NULL);
 } /* end namespace brlcad */
 
 

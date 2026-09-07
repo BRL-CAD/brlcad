@@ -15,6 +15,7 @@
 #include <chrono>
 #include <cmath>
 #include <iostream>
+#include <memory>
 #include <thread>
 #include <vector>
 
@@ -316,6 +317,49 @@ exercise_narrow_singular_domain_guard()
 
 
 static bool
+exercise_singular_endpoint_pullback()
+{
+    ON_NurbsSurface surface(3, false, 2, 2, 2, 2);
+    if (!surface.MakeClampedUniformKnotVector(0) ||
+	    !surface.MakeClampedUniformKnotVector(1))
+	return false;
+    surface.SetCV(0, 0, ON_3dPoint::Origin);
+    surface.SetCV(0, 1, ON_3dPoint::Origin);
+    surface.SetCV(1, 0, ON_3dPoint(10.0, 0.0, 0.0));
+    surface.SetCV(1, 1, ON_3dPoint(10.0, 10.0, 0.0));
+    if (!surface.IsValid() || !surface.IsSingular(3))
+	return false;
+
+    std::unique_ptr<ON_Curve> source_curve(surface.IsoCurve(0, 0.5));
+    if (!source_curve || !source_curve->IsValid())
+	return false;
+    std::string failure;
+    std::unique_ptr<ON_Curve> parameter_curve(brlcad::pullback_curve(
+	&surface, source_curve.get(), 1.0e-7, 1.0e-5, &failure));
+    const ON_PolylineCurve *polyline =
+	ON_PolylineCurve::Cast(parameter_curve.get());
+    if (!polyline || polyline->PointCount() < 2)
+	return false;
+
+    bool found_singular_endpoint = false;
+    for (int end = 0; end < 2; ++end) {
+	const int endpoint = end == 0 ? 0 : polyline->PointCount() - 1;
+	const int neighbor = end == 0 ? 1 : polyline->PointCount() - 2;
+	const ON_2dPoint uv(polyline->m_pline[endpoint].x,
+	    polyline->m_pline[endpoint].y);
+	const int side = IsAtSingularity(&surface, uv);
+	if (side < 0)
+	    continue;
+	found_singular_endpoint = true;
+	const int varying_direction = side == 0 || side == 2 ? 0 : 1;
+	if (fabs(polyline->m_pline[endpoint][varying_direction] -
+		polyline->m_pline[neighbor][varying_direction]) > 1.0e-12)
+	    return false;
+    }
+    return found_singular_endpoint;
+}
+
+static bool
 exercise_nurbs_span_bounding_boxes()
 {
     ON_NurbsSurface surface(3, true, 4, 4, 8, 7);
@@ -386,6 +430,73 @@ exercise_nurbs_span_bounding_boxes()
     return surface_GetBoundingBox(&surface, first_u, first_v, grown, true) &&
 	contains(grown, ON_3dPoint(-100.0, -100.0, -100.0)) &&
 	contains(grown, surface.PointAt(first_u.Mid(), first_v.Mid()));
+}
+
+
+static bool
+exercise_collapsed_curve_pullback()
+{
+    ON_PlaneSurface surface(ON_xy_plane);
+    if (!surface.SetExtents(0, ON_Interval(-1.0, 1.0), true) ||
+	    !surface.SetExtents(1, ON_Interval(-1.0, 1.0), true) ||
+	    !surface.IsValid())
+	return false;
+
+    const double tolerance = 1.0e-6;
+    ON_LineCurve source_curve(ON_3dPoint(0.0, 0.0, -0.5 * tolerance),
+	ON_3dPoint(0.0, 0.0, 0.5 * tolerance));
+    if (!source_curve.IsValid())
+	return false;
+
+    std::string message;
+    PullbackFailureReason failure = PullbackFailureReason::None;
+    std::unique_ptr<ON_Curve> parameter_curve(brlcad::pullback_curve(
+	&surface, &source_curve, tolerance, tolerance, &message, &failure));
+    return !parameter_curve &&
+	failure == PullbackFailureReason::ParameterCurveCollapsed;
+}
+
+
+static bool
+exercise_validated_curve_pullback()
+{
+    ON_Circle cylinder_circle(ON_xy_plane, 2.0);
+    ON_Cylinder cylinder(cylinder_circle, 5.0);
+    ON_NurbsSurface surface;
+    if (2 != cylinder.GetNurbForm(surface) || !surface.IsValid())
+	return false;
+
+    ON_Plane curve_plane(ON_3dPoint(0.0, 0.0, 2.5),
+	ON_3dVector::XAxis, ON_3dVector::YAxis);
+    ON_Arc source_arc(ON_Circle(curve_plane, 2.0),
+	ON_Interval(0.35, ON_PI + 0.35));
+    ON_NurbsCurve source_curve;
+    if (!source_arc.GetNurbForm(source_curve) || !source_curve.IsValid())
+	return false;
+    source_curve.SetDomain(-2.0, 3.0);
+
+    std::string failure;
+    std::unique_ptr<ON_Curve> parameter_curve(brlcad::pullback_curve(
+	&surface, &source_curve, 1.0e-7, 1.0e-5, &failure));
+    if (!parameter_curve || !parameter_curve->IsValid() ||
+	    parameter_curve->Dimension() != 2 ||
+	    parameter_curve->Domain() != source_curve.Domain()) {
+	if (!failure.empty())
+	    std::cerr << failure << std::endl;
+	return false;
+    }
+
+    const ON_Interval domain = parameter_curve->Domain();
+    const int sample_count = 32;
+    for (int sample = 0; sample <= sample_count; ++sample) {
+	const ON_3dPoint uv = parameter_curve->PointAt(domain.ParameterAt(
+	    static_cast<double>(sample) / sample_count));
+	const ON_3dPoint lifted = surface.PointAt(uv.x, uv.y);
+	if (!lifted.IsValid() || fabs(lifted.z - 2.5) > 1.0e-6 ||
+		fabs(hypot(lifted.x, lifted.y) - 2.0) > 1.0e-6)
+	    return false;
+    }
+    return true;
 }
 
 
@@ -533,6 +644,19 @@ main(int, const char **argv)
 	std::cerr << "adaptive pullback refinement failed" << std::endl,
 	valid.store(false);
 
+    /* A 3-D trim lying inside a periodic surface must yield a validated 2-D
+     * parameter curve, not merely a set of individually projected points. */
+    if (!exercise_validated_curve_pullback())
+	std::cerr << "validated curve pullback failed" << std::endl,
+	valid.store(false);
+
+    /* A source boundary which lies within tolerance of one surface point has
+     * no usable parametric span.  Report that case explicitly so an importer
+     * can make a bounded topology decision. */
+    if (!exercise_collapsed_curve_pullback())
+	std::cerr << "collapsed curve pullback classification failed" << std::endl,
+	valid.store(false);
+
     /* Related edge jobs may share immutable surface span boxes without
      * sharing mutable closest-point state or rebuilding the cache. */
     if (!exercise_shared_surface_cache())
@@ -555,6 +679,12 @@ main(int, const char **argv)
      * the proposed snap must also preserve its represented 3-D point. */
     if (!exercise_narrow_singular_domain_guard())
 	std::cerr << "narrow singular-domain guard failed" << std::endl,
+	valid.store(false);
+
+    /* A pole endpoint has no unique parameter in the varying direction; use
+     * its adjacent sample to keep the recovered trim on the intended branch. */
+    if (!exercise_singular_endpoint_pullback())
+	std::cerr << "singular endpoint pullback failed" << std::endl,
 	valid.store(false);
 
     /* NURBS sub-span bounds must remain conservative while avoiding a copy of
