@@ -49,6 +49,14 @@ brlcad_add_test(
   )
 set_tests_properties(mkbuilding_gable_closure PROPERTIES FIXTURES_REQUIRED mkbuilding_house_database)
 brlcad_add_test(
+  NAME mkbuilding_roof_support
+  COMMAND ${CMAKE_COMMAND}
+    -DMKBUILDING_EXECUTABLE=$<TARGET_FILE:mkbuilding>
+    -DNIRT_EXECUTABLE=$<TARGET_FILE:nirt>
+    -DOUTPUT_DIRECTORY=${CMAKE_CURRENT_BINARY_DIR}
+    -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/roof_support.cmake
+  )
+brlcad_add_test(
   NAME mkbuilding_demo_unique_geometry
   COMMAND mkbuilding --force --demo-file ${CMAKE_CURRENT_BINARY_DIR}/mkbuilding-demo-test.g
   )
@@ -67,6 +75,7 @@ cmakefiles(
   examples/osm_feature.geojson
   mkbuilding.cpp
   tests/gable_closure.cmake
+  tests/roof_support.cmake
   )
 
 # Local Variables:

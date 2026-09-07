@@ -41,6 +41,7 @@ namespace {
 constexpr double MM_PER_METER = 1000.0;
 constexpr double PI = 3.14159265358979323846;
 constexpr double GEOMETRY_EPSILON_METERS = 0.002;
+constexpr double AXIS_ALIGNMENT_TOLERANCE_METERS = 1.0e-9;
 
 struct mesh {
     std::vector<fastf_t> vertices;
@@ -99,6 +100,26 @@ signed_area(const std::vector<point2> &points)
 	area += a.x * b.y - b.x * a.y;
     }
     return area * 0.5;
+}
+
+bool
+axis_aligned_rectangle(const std::vector<point2> &points)
+{
+    if (points.size() != 4)
+	return false;
+    size_t horizontal_edges = 0;
+    size_t vertical_edges = 0;
+    for (size_t i = 0; i < points.size(); ++i) {
+	const point2 &a = points[i];
+	const point2 &b = points[(i + 1) % points.size()];
+	const bool horizontal = std::fabs(a.y - b.y) <= AXIS_ALIGNMENT_TOLERANCE_METERS;
+	const bool vertical = std::fabs(a.x - b.x) <= AXIS_ALIGNMENT_TOLERANCE_METERS;
+	if (horizontal == vertical)
+	    return false;
+	horizontal_edges += horizontal ? 1 : 0;
+	vertical_edges += vertical ? 1 : 0;
+    }
+    return horizontal_edges == 2 && vertical_edges == 2;
 }
 
 bool
@@ -301,55 +322,6 @@ write_solid_bot(writer_state &state, const std::string &name, mesh &geometry)
 	geometry.vertices.data(), geometry.faces.data(), nullptr, nullptr) != 0)
 	throw std::runtime_error("unable to write solid BoT " + name);
     ++state.report.primitive_count;
-}
-
-mesh
-planar_prism_mesh(const std::vector<point3> &face, point3 extrusion)
-{
-    if (face.size() < 3)
-	throw std::runtime_error("planar closure needs at least three vertices");
-    std::vector<point3> ordered_face = face;
-    point2 axis = {face.back().x - face.front().x, face.back().y - face.front().y};
-    double axis_length = std::hypot(axis.x, axis.y);
-    if (axis_length < 1.0e-9) {
-	axis = {face[1].x - face.front().x, face[1].y - face.front().y};
-	axis_length = std::hypot(axis.x, axis.y);
-    }
-    axis = axis * (1.0 / axis_length);
-    const double normal_alignment = axis.y * extrusion.x - axis.x * extrusion.y;
-    if (normal_alignment < 0.0)
-	axis = axis * -1.0;
-    std::vector<point2> projected;
-    projected.reserve(face.size());
-    for (const point3 &point : ordered_face)
-	projected.push_back({(point.x - face.front().x) * axis.x + (point.y - face.front().y) * axis.y, point.z});
-    if (signed_area(projected) < 0.0) {
-	std::reverse(ordered_face.begin(), ordered_face.end());
-	std::reverse(projected.begin(), projected.end());
-    }
-    const auto triangles = triangulate(projected);
-    mesh result;
-    const int count = static_cast<int>(ordered_face.size());
-    result.vertices.reserve(ordered_face.size() * 6);
-    auto add_point = [&result](const point3 &point) {
-	result.vertices.push_back(static_cast<fastf_t>(point.x * MM_PER_METER));
-	result.vertices.push_back(static_cast<fastf_t>(point.y * MM_PER_METER));
-	result.vertices.push_back(static_cast<fastf_t>(point.z * MM_PER_METER));
-    };
-    for (const point3 &point : ordered_face)
-	add_point(point);
-    for (const point3 &point : ordered_face)
-	add_point({point.x + extrusion.x, point.y + extrusion.y, point.z + extrusion.z});
-    for (const auto &triangle : triangles) {
-	result.faces.insert(result.faces.end(), {triangle[2], triangle[1], triangle[0]});
-	result.faces.insert(result.faces.end(), {triangle[0] + count, triangle[1] + count, triangle[2] + count});
-    }
-    for (int i = 0; i < count; ++i) {
-	const int next = (i + 1) % count;
-	result.faces.insert(result.faces.end(), {i, next, next + count});
-	result.faces.insert(result.faces.end(), {i, next + count, i + count});
-    }
-    return result;
 }
 
 void
@@ -965,73 +937,49 @@ build_roof_mesh(const building_spec &spec, const std::vector<point2> &footprint,
     return make_flat_roof(roof_footprint, surface_eave + height, shape + "_flat_fallback");
 }
 
-bool
-profile_roof_shape(const std::string &raw_shape)
-{
-    const std::string shape = normalized_roof_shape(raw_shape);
-    const std::set<std::string> profiles = {
-	"gabled", "pitched", "gabled_height_moved", "skillion", "saltbox", "gambrel", "bellcast_gable",
-	"mansard", "equal_mansard", "butterfly", "sawtooth", "round", "round_gabled", "parabolic"
-    };
-    return profiles.count(shape) != 0;
-}
-
 void
-add_profile_closures(
+add_roof_closures(
     writer_state &state,
     const building_spec &spec,
+    const std::vector<point2> &footprint,
     const roof_mesh &roof,
     double eave,
     const std::string &prefix,
+    const std::string &roof_solid,
+    const std::set<size_t> &selected_walls,
     struct wmember &wall_members)
 {
-    if (!profile_roof_shape(spec.roof.shape) || roof.vertices.size() < 4 || roof.vertices.size() % 2 != 0)
+    const double roof_depth = roof_solid_depth(spec);
+    double maximum_underside = eave;
+    double maximum_surface = eave;
+    for (const point3 &vertex : roof.vertices) {
+	maximum_underside = std::max(maximum_underside, vertex.z - roof_depth);
+	maximum_surface = std::max(maximum_surface, vertex.z);
+    }
+    if (maximum_underside <= eave + GEOMETRY_EPSILON_METERS)
 	return;
-    point3 direction = {
-	roof.vertices[1].x - roof.vertices[0].x,
-	roof.vertices[1].y - roof.vertices[0].y,
-	0.0
-    };
-    const double length = std::hypot(direction.x, direction.y);
-    if (length < 1.0e-9)
-	return;
-    direction.x /= length;
-    direction.y /= length;
-    std::vector<point3> first;
-    std::vector<point3> second;
-    for (size_t i = 0; i < roof.vertices.size(); i += 2) {
-	first.push_back(roof.vertices[i]);
-	second.push_back(roof.vertices[i + 1]);
+
+    struct wmember closure_members;
+    BU_LIST_INIT(&closure_members.l);
+    for (size_t i = 0; i < footprint.size(); ++i) {
+	if (!selected_walls.empty() && selected_walls.count(i) == 0)
+	    continue;
+	const double length = distance(footprint[i], footprint[(i + 1) % footprint.size()]);
+	const std::string closure = prefix + "_roof_closure_" + std::to_string(i) + ".s";
+	write_segment_box(state, closure, footprint[i], footprint[(i + 1) % footprint.size()],
+	    -spec.wall_thickness * 0.5, length + spec.wall_thickness * 0.5,
+	    0.0, spec.wall_thickness, eave, maximum_surface);
+	(void)mk_addmember(closure.c_str(), &closure_members.l, nullptr, WMOP_UNION);
     }
-    /* The roof profile follows the overhang perimeter.  Gable closures are
-     * wall geometry, so move them back to the facade before extruding them
-     * inward by the wall thickness. */
-    for (point3 &point : first) {
-	point.x += direction.x * spec.roof.overhang;
-	point.y += direction.y * spec.roof.overhang;
-    }
-    for (point3 &point : second) {
-	point.x -= direction.x * spec.roof.overhang;
-	point.y -= direction.y * spec.roof.overhang;
-    }
-    auto complete_profile = [eave](std::vector<point3> &profile) {
-	if (profile.back().z > eave + 1.0e-9)
-	    profile.push_back({profile.back().x, profile.back().y, eave});
-	if (profile.front().z > eave + 1.0e-9)
-	    profile.push_back({profile.front().x, profile.front().y, eave});
-    };
-    complete_profile(first);
-    complete_profile(second);
-    const point3 first_extrusion = {direction.x * spec.wall_thickness, direction.y * spec.wall_thickness, 0.0};
-    const point3 second_extrusion = {-first_extrusion.x, -first_extrusion.y, 0.0};
-    mesh first_mesh = planar_prism_mesh(first, first_extrusion);
-    mesh second_mesh = planar_prism_mesh(second, second_extrusion);
-    const std::string first_name = prefix + "_gable_0.s";
-    const std::string second_name = prefix + "_gable_1.s";
-    write_solid_bot(state, first_name, first_mesh);
-    write_solid_bot(state, second_name, second_mesh);
-    (void)mk_addmember(first_name.c_str(), &wall_members.l, nullptr, WMOP_UNION);
-    (void)mk_addmember(second_name.c_str(), &wall_members.l, nullptr, WMOP_UNION);
+
+    const std::string envelope = prefix + "_roof_envelope.s";
+    mesh envelope_geometry = roof_solid_mesh(roof, maximum_surface - eave + GEOMETRY_EPSILON_METERS);
+    write_solid_bot(state, envelope, envelope_geometry);
+    (void)mk_addmember(envelope.c_str(), &closure_members.l, nullptr, WMOP_INTERSECT);
+    (void)mk_addmember(roof_solid.c_str(), &closure_members.l, nullptr, WMOP_SUBTRACT);
+    const std::string closure = prefix + "_roof_closure.c";
+    write_group(state, closure, closure_members);
+    (void)mk_addmember(closure.c_str(), &wall_members.l, nullptr, WMOP_UNION);
 }
 
 std::vector<double>
@@ -1262,14 +1210,19 @@ write_structure(
 	}
     }
     if (!BU_LIST_IS_EMPTY(&members.l)) {
-	const std::vector<point2> interior = spec.walls ? offset_polygon(footprint, -spec.wall_thickness) : footprint;
-	const std::string clip = prefix + "_structure_clip.s";
-	double structure_top = facade_top(spec);
-	for (const point3 &vertex : roof.vertices)
-	    structure_top = std::max(structure_top, vertex.z - roof_depth);
-	write_prism(state, clip, interior, basement_bottom(spec) - GEOMETRY_EPSILON_METERS,
-	    structure_top);
-	(void)mk_addmember(clip.c_str(), &members.l, nullptr, WMOP_INTERSECT);
+	/* Rectangular grids are inset from every facade edge, so clipping them is
+	 * redundant.  Avoiding that Boolean also works around ART dropping ARB/BoT
+	 * intersections.  Arbitrary footprints still require an explicit clip. */
+	if (!axis_aligned_rectangle(footprint)) {
+	    const std::vector<point2> interior = spec.walls ? offset_polygon(footprint, -spec.wall_thickness) : footprint;
+	    const std::string clip = prefix + "_structure_clip.s";
+	    double structure_top = facade_top(spec);
+	    for (const point3 &vertex : roof.vertices)
+		structure_top = std::max(structure_top, vertex.z - roof_depth);
+	    write_prism(state, clip, interior, basement_bottom(spec) - GEOMETRY_EPSILON_METERS,
+		structure_top);
+	    (void)mk_addmember(clip.c_str(), &members.l, nullptr, WMOP_INTERSECT);
+	}
 	subtract_members(members, part_cutters);
 	const std::string region = prefix + "_structure.r";
 	write_region(state, region, members, spec.structure.material, spec.structure.color);
@@ -1363,7 +1316,7 @@ write_building(writer_state &state, const building_spec &spec, bool is_part)
 		(void)mk_addmember(basement_wall.c_str(), &wall_members.l, nullptr, WMOP_UNION);
 	    }
 	}
-	add_profile_closures(state, spec, roof, wall_z1, prefix, wall_members);
+	add_roof_closures(state, spec, footprint, roof, wall_z1, prefix, roof_solid, selected, wall_members);
 	(void)mk_addmember(roof_solid.c_str(), &wall_members.l, nullptr, WMOP_SUBTRACT);
 	subtract_members(wall_members, part_cutters);
 	const std::vector<opening_spec> openings = automatic_openings(spec, footprint);
