@@ -130,6 +130,7 @@ set(
   db_io.c
   db_lookup.c
   db_match.c
+  db_name.c
   db_open.c
   db_scan.c
   db_tree.cpp
