@@ -290,6 +290,33 @@ int test_rhc(void) {
     return ret;
 }
 
+
+int test_bot(void) {
+    struct rt_db_internal intern;
+    struct rt_db_internal transformed;
+    struct rt_bot_internal bot = {0};
+
+    RT_DB_INTERNAL_INIT(&intern);
+    RT_DB_INTERNAL_INIT(&transformed);
+    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern.idb_minor_type = ID_BOT;
+    intern.idb_type = ID_BOT;
+    intern.idb_ptr = &bot;
+    intern.idb_meth = &OBJ[ID_BOT];
+
+    bot.magic = RT_BOT_INTERNAL_MAGIC;
+    bot.bot_flags = RT_BOT_HAS_SURFACE_NORMALS;
+    bot.num_faces = 1;
+    bot.num_normals = 1;
+
+    if (rt_obj_xform(&transformed, bn_mat_identity, &intern, 0, NULL) == 0) {
+	bu_log("BOT transform accepted missing surface normal data!\n");
+	return 1;
+    }
+
+    return 0;
+}
+
 int main(int UNUSED(argc), const char **argv) {
 
     bu_setprogname(argv[0]);
@@ -310,6 +337,9 @@ int main(int UNUSED(argc), const char **argv) {
 
     bu_log("Testing RHC...\n");
     errors += test_rhc();
+
+    bu_log("Testing BOT...\n");
+    errors += test_bot();
 
     if (errors > 0) {
 	bu_log("FAILED\n");
