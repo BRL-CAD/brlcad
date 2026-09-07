@@ -28,7 +28,8 @@ embedded blanks) drawn from the choices `[h|n][s|u][c|s|i|l|d|8|16|32|64]`:
   two's complement; network doubles are 64-bit IEEE 754 in big-endian
   order. When omitted, network format is assumed.
 * *s* or *u*: Signed (*s*) or unsigned (*u*) integer. This flag has no
-  effect on the double-precision format.
+  effect on the double-precision format. When omitted, signed format is
+  assumed.
 * *c*, *s*, *i*, *l*, *d*: C language types `char`, `short`, `int`,
   `long`, and `double`, sized as on the host processor.
 * *8*, *16*, *32*, *64*: Explicit bit sizes, typically paired with *n*

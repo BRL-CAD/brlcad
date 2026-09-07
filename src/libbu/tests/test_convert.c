@@ -39,6 +39,44 @@
 
 
 static int
+test_cookie_signedness(void)
+{
+    const struct {
+	const char *format;
+	int expected_signed;
+    } cases[] = {
+	{"c", 1},
+	{"s", 1},
+	{"nl", 1},
+	{"n16", 1},
+	{"n32", 1},
+	{"n64", 1},
+	{"uc", 0},
+	{"nus", 0},
+	{"nul", 0},
+	{"nss", 1},
+	{"nsl", 1}
+    };
+    int errors = 0;
+    size_t i;
+
+    for (i = 0; i < ARRAY_LEN(cases); i++) {
+	int cookie = bu_cv_cookie(cases[i].format);
+	int is_signed = !!(cookie & CV_SIGNED_MASK);
+
+	TEST_API_CHECK(cookie != 0,
+	    "bu_cv_cookie rejected valid format \"%s\"", cases[i].format);
+	TEST_API_CHECK(is_signed == cases[i].expected_signed,
+	    "bu_cv_cookie(\"%s\") returned %s, expected %s",
+	    cases[i].format, is_signed ? "signed" : "unsigned",
+	    cases[i].expected_signed ? "signed" : "unsigned");
+    }
+
+    return errors ? BRLCAD_ERROR : BRLCAD_OK;
+}
+
+
+static int
 test_network_signed_conversion(void)
 {
     const unsigned char short_bytes[] = {
@@ -78,10 +116,17 @@ test_network_signed_conversion(void)
 int
 main(int UNUSED(argc), char *argv[])
 {
+    int result = BRLCAD_OK;
+
     if (bu_getprogname()[0] == '\0')
 	bu_setprogname(argv[0]);
 
-    return test_network_signed_conversion();
+    if (test_cookie_signedness() != BRLCAD_OK)
+	result = BRLCAD_ERROR;
+    if (test_network_signed_conversion() != BRLCAD_OK)
+	result = BRLCAD_ERROR;
+
+    return result;
 }
 
 

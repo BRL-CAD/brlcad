@@ -190,7 +190,7 @@ BU_EXPORT extern size_t bu_cv(void *out, char *outfmt, size_t size, void *in, ch
  *
  * @n channels must be null or 1
  * @n Host | Network
- * @n signed | unsigned
+ * @n signed | unsigned (signed by default)
  * @n char | short | integer | long | double | number of bits of integer
  * @n Normalize | Clip | low-order
  */

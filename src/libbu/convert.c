@@ -35,7 +35,7 @@ bu_cv_cookie(const char *in)			/* input format */
 {
     const char *p;
     int collector;
-    int result = 0x0000;	/* zero/one channel, Net, unsigned, char, clip */
+    int result;
     int val;
 
     if (UNLIKELY(!in)) return 0;
@@ -51,7 +51,8 @@ bu_cv_cookie(const char *in)			/* input format */
     } else if (collector == 0) {
 	collector = 1;
     }
-    result = collector;	/* number of channels set '|=' */
+    /* A missing signedness qualifier historically means signed. */
+    result = collector | CV_SIGNED_MASK;
 
     if (!*p) return 0;
 
@@ -64,6 +65,7 @@ bu_cv_cookie(const char *in)			/* input format */
 
     if (!*p) return 0;
     if (*p == 'u') {
+	result &= ~CV_SIGNED_MASK;
 	++p;
     } else if (*p == 's') {
 	/* could be 'signed' or 'short' */
