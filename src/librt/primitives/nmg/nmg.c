@@ -221,7 +221,7 @@ nmg_shot_scratch_destroy(struct nmg_shot_scratch *scratch)
 
 
 static void
-nmg_shot_scratch_prep(struct nmg_specific *nmg, struct rt_i *rtip)
+nmg_shot_scratch_prep(struct nmg_specific *nmg)
 {
     struct nmg_struct_counts counts;
     uint32_t **structs;
@@ -418,7 +418,7 @@ rt_nmg_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	nmg_s->bot = nmg_bot_accel_prep(stp, m, rtip);
 
     if (!nmg_s->bot)
-	nmg_shot_scratch_prep(nmg_s, rtip);
+	nmg_shot_scratch_prep(nmg_s);
 
     return 0;
 }
