@@ -39,6 +39,8 @@
 __BEGIN_DECLS
 
 struct rt_db_internal; /*forward declaration*/
+struct nmg_class_scratch;
+struct bu_ptbl;
 
 struct hitmiss {
     struct bu_list      l;
@@ -123,6 +125,10 @@ struct ray_data {
      * functions should not be called.
      */
     int                 classifying_ray;
+
+    struct bu_list      *hitmiss_free;  /**< @brief  optional worker-local freelist */
+    struct nmg_class_scratch *class_scratch; /**< @brief optional point-classifier scratch */
+    struct bu_ptbl      *hitstate[2];   /**< @brief optional state-transition scratch */
 };
 
 #define NMG_PCA_EDGE    1
