@@ -4,6 +4,7 @@ if(BRLCAD_EXTRADOCS)
   add_asciidoc("MAN5" benchmark.adoc       man5 "" REQUIRED "benchmark")
   add_asciidoc("MAN5" bw.adoc              man5 "" REQUIRED "libicv")
   add_asciidoc("MAN5" cmap.adoc            man5 "" REQUIRED "libdm")
+  add_asciidoc("MAN5" dpix.adoc            man5 "" REQUIRED "libicv")
   add_asciidoc("MAN5" dsp.adoc             man5 "" REQUIRED "librt")
   add_asciidoc("MAN5" idents.adoc          man5 "" REQUIRED "libged")
   add_asciidoc("MAN5" nirt_formatting.adoc man5 "" REQUIRED "libanalyze")
@@ -18,6 +19,7 @@ cmakefiles(
   benchmark.adoc
   bw.adoc
   cmap.adoc
+  dpix.adoc
   dsp.adoc
   idents.adoc
   nirt_formatting.adoc

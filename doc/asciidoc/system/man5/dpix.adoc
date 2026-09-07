@@ -1,0 +1,66 @@
+= DPIX(5)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+dpix - Double-precision RGB image file format
+
+[[format]]
+== FORMAT
+
+A _dpix_ file is a headerless raster image containing red, green, and
+blue samples.  Each pixel occupies 24 bytes: three 8-byte IEEE-754
+binary64 values in red, green, blue order.  Each value is stored most
+significant byte first (big-endian, or network byte order), independent
+of the byte order used for doubles in host memory.  There is no padding
+between samples or pixels.
+
+The first pixel is the lower-left corner of the image.  Pixels proceed
+from left to right across each scanline, and scanlines proceed from the
+bottom to the top of the image, matching the ordering of *pix*(5).
+
+DPIX does not encode image dimensions or a required sample range.
+Renderers ordinarily produce values between 0.0 and 1.0, but the format
+can retain values outside that range for subsequent exposure or other
+processing.  A reader must therefore be given the width and height by
+some external means.  The file size for an image of width _w_ and height
+_h_ is `w * h * 24` bytes.
+
+[[utilities]]
+== UTILITIES
+
+*rt*(1) writes DPIX renderings with its *-O* option.
+
+*dpix-pix*(1) exposure-maps a DPIX image into an 8-bit *pix*(5) image.
+
+*icv*(1) reads, writes, and converts DPIX images.
+
+*pixautosize*(1) can infer dimensions from a DPIX file when given a
+24-byte pixel size.
+
+[[files]]
+== FILES
+
+file.dpix
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *dpix-pix*(1), *icv*(1), *pixautosize*(1), *rt*(1),
+*pix*(5)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org
