@@ -79,7 +79,7 @@ building the `procedural-gallery-snapshot` target.
 |image:images/gallery_brickwall.png[brickwall,512]
 |*brickwall*: Builds a brick wall: emits mged commands that create RPP brick solids arranged in rows (with optional mortar slabs between them) to fill a specified wall width and height. Output is a stream of mged commands on stdout, not a .g directly.
 |image:images/gallery_mkbuilding.png[mkbuilding,512]
-|*mkbuilding*: Procedurally builds a small building: a floor slab, four framed walls with openings, and an overhanging roof.
+|*mkbuilding*: Generates physically dimensioned buildings from presets, a validated native JSON schema, OSM GeoJSON or Overpass data, and CityJSON 2.x. It supports arbitrary footprints, storeys and basements, material-separated envelopes and roofs, doors and windows, structural grids, installations, and nested building parts.
 |image:images/gallery_cchannel.png[cchannel,512]
 |*cchannel*: Creates a section of fully configurable C-channel (structural metal beam). Default is a 1" diameter by 12" long section of American standard C-channel, here generated with a row of drilled holes.
 |image:images/gallery_ringworld.png[ringworld,512]
