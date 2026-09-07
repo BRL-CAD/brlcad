@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 20XX-XX-XX  Release 7.46.0                                     ---
 ----------------------------------------------------------------------
 
+* improved several cv default behaviors (s, 32, 64, n) - Sean Morrison
 * fixed invalid bot handling bug applying matricies - Sean Morrison
 * improved glTF import robustness via gcv - Sean Morrison
 * faster NMG solid ray tracing (10-20x faster) - Sean Morrison
