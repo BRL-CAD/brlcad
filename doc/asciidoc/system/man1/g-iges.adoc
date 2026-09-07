@@ -11,25 +11,53 @@ g-iges - convert a BRL-CAD database to an IGES file
 
 [source]
 ----
-g-iges [-f|-t|-m] [-s] [-v] [-a _abs_tol_] [-r _rel_tol_] [-n _norm_tol_] [-d _dist_tol_] [-P _ncpu_] [-x _rt_debug_] [-X _nmg_debug_] [-o _output_file_] _database.g_ _object_ [_object_ ...]
+g-iges [-f|-t|-m] [--flatten-brep] [-s] [-v] [-a _abs_tol_] [-r _rel_tol_] [-n _norm_tol_] [-d _dist_tol_] [-P _ncpu_] [-x _rt_debug_] [-X _nmg_debug_] [-o _output_file_] _database.g_ [_output.igs_] [_object_ ...]
 ----
 
 [[description]]
 == DESCRIPTION
 
 *g-iges* converts the specified _object_(s) from a BRL-CAD _database.g_ database
-into an IGES version 5.1 file.
+into an IGES version 5.3 file.
 
 By default a CSG IGES file is produced: every region is written as a Boolean
 tree, with each solid represented by its IGES CSG equivalent. Any solid that has
-no IGES CSG equivalent is tessellated (using the tessellation tolerances) and
-written as a boundary-representation (B-Rep) object. The *-f*, *-t*, and *-m*
-options select alternative output modes; they are mutually exclusive, and the
-last one given wins.
+no IGES CSG equivalent uses a primitive B-Rep conversion where available,
+including general truncated cones, oblique cylinders, pipes, extrusions,
+clines, and legacy B-splines. Already-faceted geometry keeps its polygonal
+representation. Tessellation is a fallback for other supported geometry when
+no usable primitive B-Rep conversion is available; it is controlled by the
+tessellation tolerances. Native OpenNURBS B-Reps
+are written with IGES manifold topology (type 186), preserving shared vertices,
+edges, loops, faces, shells, and NURBS geometry. The *-f*, *-t*, and *-m*
+options select alternative output modes and are mutually exclusive.
 
-If no output file is given with *-o*, the IGES file is written to standard
-output. The inverse translation, from IGES to BRL-CAD, is performed by
+CLINE plate-mode geometry is exported with fixed wall thickness. Its native
+ray-dependent line-of-sight thickness cannot be represented exactly in IGES;
+the exporter reports this limitation.
+
+Temporary B-Reps produced by native primitive callbacks receive the same
+conservative closed-shell orientation check used by *iges-g*. Clearly inverted
+isolated shells are corrected before export, with a diagnostic. This does not
+change the source database or reorient authored B-Rep inputs; open, nested,
+overlapping, and uncertain shells are left unchanged.
+
+An output filename ending in *.igs* or *.iges* (case-insensitive) may follow
+the input database, as in *g-iges input.g output.igs*. Remaining arguments
+select objects; when a destination is given without objects, all top-level
+objects are exported. The *-o* option overrides a positional destination and
+supports output filenames without an IGES extension. In multi-file mode,
+an existing output directory may take the place of the positional filename.
+If the candidate destination also names an object in the database, *-o* is
+required to disambiguate; that positional argument then selects the object.
+
+If neither form specifies a destination, the IGES file for the named objects
+is written to standard output. The inverse translation, from IGES to BRL-CAD, is performed by
 *iges-g*(1).
+
+Long conversions report their current operation, elapsed time, and completed
+top-level selections about every five seconds. Counts describe source items,
+not an estimate of remaining time.
 
 [[options]]
 == OPTIONS
@@ -45,12 +73,23 @@ output. The inverse translation, from IGES to BRL-CAD, is performed by
   region.
 
 *-m*::
-  Multi-file output: write a separate IGES file for each converted region.
-  Implies *-t*, and the *-o* argument must name an existing directory in which
-  the per-region files are created.
+  Multi-file output: write a separate IGES file for each converted region occurrence.
+  Implies *-t*, and the output destination must name an existing directory in which
+  the per-region files are created. Repeated regions retain their individual
+  assembly placements. Names are sanitized and numbered to avoid overwriting
+  another occurrence or an existing file.
 
 *-s*::
-  Write the faces of B-Rep objects as planar NURBS surfaces.
+  Write NMG facets using NURBS surfaces and boundary curves instead of analytic
+  planes and lines. This does not tessellate native OpenNURBS B-Reps.
+
+*--flatten-brep*::
+  Write native OpenNURBS B-Reps as independent type 144 trimmed surfaces
+  instead of type 186 manifold topology. This compatibility mode is intended
+  for older readers that do not implement IGES 5.3 B-Rep entities. Exact
+  surfaces and trimming curves are retained, but shared topology is not
+  represented explicitly in the file. The faces remain grouped so instances
+  reference the entire original object.
 
 *-a* _abs_tol_::
   Absolute tessellation tolerance, in millimeters. Default 0.0 (disabled).
@@ -65,10 +104,12 @@ output. The inverse translation, from IGES to BRL-CAD, is performed by
   Minimum distance between distinct points, in millimeters. Default 0.0005.
 
 *-P* _ncpu_::
-  Number of processors to use during tessellation. Default 1.
+  Requested maximum worker count. Default 1. IGES conversion currently runs
+  serially to protect record ordering and NMG error recovery; larger positive
+  values are accepted with a diagnostic.
 
 *-v*::
-  Verbose output; repeat for more detail.
+  Include entity-type counts in the export summary.
 
 *-x* _rt_debug_::
   Set the *librt* raytrace debug flag (hexadecimal). See raytrace.h for values.
@@ -77,8 +118,12 @@ output. The inverse translation, from IGES to BRL-CAD, is performed by
   Set the NMG debug flag (hexadecimal). See nmg.h for values.
 
 *-o* _output_file_::
-  Write the IGES output to _output_file_ instead of standard output. With *-m*,
-  this argument must be a directory.
+  Write the IGES output to _output_file_, overriding a positional destination.
+  With *-m*,
+  this argument must be a directory. File output is staged beside its destination.
+  Input/output aliases are rejected before writing, and an I/O failure does not
+  replace an existing destination. A diagnosed partial conversion may publish
+  its usable geometry while returning a nonzero status.
 
 [[examples]]
 == EXAMPLES
@@ -87,11 +132,11 @@ output. The inverse translation, from IGES to BRL-CAD, is performed by
 ====
 [source,bash]
 ----
-g-iges -o assembly.iges assembly.g hull turret
+g-iges assembly.g assembly.iges hull turret
 ----
 Writes the hull and turret regions of assembly.g as a CSG IGES file, preserving
-the Boolean tree where IGES primitive equivalents exist and tessellating the
-rest.
+the Boolean tree where IGES primitive equivalents exist and using B-Rep
+representations for other supported geometry.
 ====
 
 .Produce a faceted B-Rep IGES file with tight tolerances
@@ -118,6 +163,13 @@ parts directory, which is convenient for importing assemblies part-by-part.
 ====
 
 [[see_also]]
+== EXIT STATUS
+
+Zero indicates successful conversion.  A nonzero status indicates an error,
+including missing requested objects or omitted solids or combinations.
+A partial IGES file may still
+contain usable geometry; consult the diagnostics before using it.
+
 == SEE ALSO
 
 *brlcad*(1), *iges-g*(1), *g-step*(1), *mged*(1)

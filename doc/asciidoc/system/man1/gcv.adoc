@@ -78,6 +78,35 @@ filter, or both, allowing format-specific behavior to be tuned without
   Pass _opts_ to both the input and output filters. Consumes arguments until
   the next top-level *gcv* option is encountered.
 
+[[iges_options]]
+== IGES FILTER OPTIONS
+
+The IGES reader and writer share their conversion implementation with
+*iges-g*(1) and *g-iges*(1). Native CSG, exact B-Reps, and NMG conversion
+remain available without changing BRL-CAD's library interfaces.
+
+The reader accepts *--breps-only* (solid and surface geometry, including
+native CSG), *--drawings-only*, *--3d-drawings*, *--exact*, *--strict*,
+*--repair* _none|safe|best-effort_, *--relative-tolerance* _fraction_, and
+*--max-repair-tolerance* _mm_ through *-I*. By default it attempts both model
+geometry and drawings; a drawing-only file retains its model-space planes.
+The relative boundary repair target defaults to 0.0001 of the local bounding
+box diagonal. Strict mode rejects repaired or partial imports.
+Safe and best-effort imports also correct clearly inward or inconsistently
+oriented isolated closed BRep shells, using the same low-memory signed-volume
+check as *iges-g*. Open, nested, overlapping, and uncertain shells are left
+unchanged. Orientation corrections are diagnosed and recorded on the objects.
+
+The writer preserves native CSG where representable and uses exact B-Reps
+for supported non-CSG primitives. Its *-O* options are *--faceted*,
+*--trimmed-surfaces*, *--nurbs*, and *--flatten-brep*, corresponding to the
+same export modes in *g-iges*. Tessellation is explicit for regions; existing
+polyhedral geometry retains the NMG export path. Output replaces the
+destination only after a complete IGES file has been written. A partial
+export reports failure even when a readable subset has been written.
+The filters honor IGES file units; a non-unit libgcv scale override is
+rejected rather than silently ignored.
+
 [[examples]]
 == EXAMPLES
 

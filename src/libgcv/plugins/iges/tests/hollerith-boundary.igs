@@ -1,0 +1,13 @@
+Hollerith prefixes ending at Global and Parameter record boundaries     S      1
+,,                                                                    8HG      1
+boundary,11Hnative.iges,6H7.45.0,4Htest,32,38,6,308,15,7Hfixture,1.0,2,2G      2
+HMM,,1.0,15H20260905.000000,0.0005,100000.0,7HUnknown,7HUnknown,11,0,15HG      3
+20260905.000000;                                                        G      4
+     158       1       0       0       0       0       0       0       0D      1
+     158       0       0       1       0       0       0               0D      2
+     406       2       0       0       0       0       0       0       0D      3
+     406       0       0       2      15       0       0               0D      4
+158,1,0,0,0,0,1,3;                                                     1P      1
+406,1,                                                        8H       3P      2
+boundary;                                                              3P      3
+S      1G      4D      4P      3                                        T      1
