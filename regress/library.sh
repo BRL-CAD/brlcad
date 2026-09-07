@@ -35,6 +35,10 @@
 #
 ###
 
+# Non-login shells on Windows may inherit a PATH without their POSIX tools.
+PATH="$PATH:/usr/bin:/bin"
+export PATH
+
 # save the precious args
 ARGS="$*"
 ARG0="$0"

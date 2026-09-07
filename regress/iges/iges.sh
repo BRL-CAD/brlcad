@@ -43,11 +43,13 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 . "$1/regress/library.sh"
 
 # Tests should use a local cache
-BU_DIR_CACHE="`pwd`/cache"
-rm -rf $BU_DIR_CACHE && mkdir $BU_DIR_CACHE
+# Native executables need Windows paths in custom environment variables.
+test_dir=`pwd -W 2>/dev/null || pwd`
+BU_DIR_CACHE="$test_dir/cache"
+rm -rf "$BU_DIR_CACHE" && mkdir "$BU_DIR_CACHE"
 export BU_DIR_CACHE
-LIBRT_CACHE="`pwd`/rtcache"
-rm -rf $LIBRT_CACHE && mkdir $LIBRT_CACHE
+LIBRT_CACHE="$test_dir/rtcache"
+rm -rf "$LIBRT_CACHE" && mkdir "$LIBRT_CACHE"
 export LIBRT_CACHE
 
 if test "x$LOGFILE" = "x" ; then
@@ -63,13 +65,13 @@ if test ! -f "$MGED" ; then
 fi
 
 GIGES="`ensearch g-iges`"
-if test ! -f "$MGED" ; then
+if test ! -f "$GIGES" ; then
     log "Unable to find g-iges, aborting"
     exit 1
 fi
 
 IGESG="`ensearch iges-g`"
-if test ! -f "$MGED" ; then
+if test ! -f "$IGESG" ; then
     log "Unable to find iges-g, aborting"
     exit 1
 fi
@@ -348,6 +350,11 @@ for link_kind in hard symbolic ; do
     link_option=
     if test "x$link_kind" = "xsymbolic" ; then link_option=-s ; fi
     if ln $link_option iges.protected.iges iges.alias-$link_kind.iges ; then
+        # Some Windows shells emulate symbolic links with ordinary copies.
+        if test "x$link_kind" = "xsymbolic" && ! test -L iges.alias-symbolic.iges ; then
+            log "... skipping symbolic alias check: ln did not create a symbolic link"
+            continue
+        fi
         $IGESG -o iges.alias-$link_kind.iges iges.protected.iges >> "$LOGFILE" 2>&1
         if test $? -eq 0 || ! cmp -s iges.protected.iges iges.brep.export.iges ; then
             log "ERROR: $link_kind input/output alias was accepted or modified the input"
