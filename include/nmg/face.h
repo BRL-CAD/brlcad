@@ -226,6 +226,25 @@ NMG_EXPORT extern int nmg_class_pnt_fu_except(const point_t pt,
                                              const int in_or_out_only,
                                              struct bu_list *vlfree,
                                              const struct bn_tol *tol);
+struct nmg_class_scratch;
+/**
+ * Allocate reusable storage for point/face classification.  The capacity is
+ * the maximum number of edge or lone-vertex elements in any classified face.
+ * The caller must provide separate scratch to concurrent classifiers.
+ */
+NMG_EXPORT extern struct nmg_class_scratch *nmg_class_scratch_create(size_t max_face_elements);
+NMG_EXPORT extern void nmg_class_scratch_destroy(struct nmg_class_scratch *scratch);
+NMG_EXPORT extern int nmg_class_pnt_fu_except_scratch(const point_t pt,
+                                                     const struct faceuse *fu,
+                                                     const struct loopuse *ignore_lu,
+                                                     void (*eu_func)(struct edgeuse *, point_t, const char *, struct bu_list *),
+                                                     void (*vu_func)(struct vertexuse *, point_t, const char *),
+                                                     const char *priv,
+                                                     const int call_on_hits,
+                                                     const int in_or_out_only,
+                                                     struct bu_list *vlfree,
+                                                     const struct bn_tol *tol,
+                                                     struct nmg_class_scratch *scratch);
 NMG_EXPORT extern int nmg_mesh_two_faces(struct faceuse *fu1,
                                          struct faceuse *fu2,
                                          const struct bn_tol     *tol);
