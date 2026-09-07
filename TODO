@@ -368,9 +368,6 @@ lookup check to ensure none are missing.
   comb2 is shared with comb1.  A workaround is to keep out comb2 and
   dbconcat it back in, then gdiff comb1 with the imported tree.
 
-* pixscale doesn't seem to handle stdin (due to bu_seek) for very
-  long
-
 * The embedded framebuffer for the X display manager is not working
   with Tcl/Tk 8.6 - it brings down mged with an Xerror when it tries
   to XFlush after X24_blit.  Better solution is to replace the X dm/fb
@@ -494,8 +491,6 @@ lookup check to ensure none are missing.
     function in lots of places (e.g., the ged_arb() function).
 
 * add unit tests for primitive callback routines (e.g., bbox).
-
-* use bu_gettime() in rt -l8 heatgraph visualization mode
 
 * fully implement analyze for all geometry objects
 
@@ -648,8 +643,6 @@ lookup check to ensure none are missing.
   expected?  intuitively, I would expected feeding the results of
   get_eyemodel to eye_pt to result in no change, modulo unit
   conversions.
-
-* make rt -b accept a pixel index in addition to x,y pixel coordinates
 
 * teach pixdiff and other tools that can/should support the capability
   to read/write (as appropriate) pixel index values or x,y coordinates
@@ -1084,12 +1077,6 @@ lookup check to ensure none are missing.
   ignore negative regions (regions subtracted from regions or
   intersected with them) since, while bad practice, are valid
   geometrically.
-
-* make sure there are no getenv() non-NULL assumptions within the
-  code.  might want to see if there's a pattern of variables being
-  checked such that a libbu interface would be warranted (e.g.,
-  instead of checking HOME, having a bu_find_directory(BU_USER_HOME)
-  routine or similar facility) for finding common resource locations.
 
 * make db_open modes behave the same as the fopen() modes (i.e.,
   create the .g if one doesn't exist when write mode)
