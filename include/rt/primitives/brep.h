@@ -46,6 +46,9 @@ RT_EXPORT extern int rt_brep_plot_poly(struct bu_list           *vhead,
 				       const struct bn_tol       *tol,
 				       const struct bview *info);
 /* BREP validity test */
+/* Preserved intended solid whose reconstruction is incomplete.  Clear
+ * this marker only after repairing and validating its solid semantics. */
+#define RT_BREP_INVALID_SOLID_ATTRIBUTE "_brep_invalid_solid"
 #define RT_BREP_OPENNURBS    0x1    /**< @brief OpenNURBS tests (default)*/
 #define RT_BREP_UV_PARAM     0x2    /**< @brief sanity checks for UV parameterization bounds */
 #define RT_BREP_EDGE_CRACK   0x4    /**< @brief check for trim geometry at edges that isn't closely aligned */

@@ -467,6 +467,13 @@ brep_build_bvh(struct brep_specific* bs)
  * BRL-CAD Primitive interface
  ********************************************************************************/
 
+static bool
+brep_preserves_invalid_solid(const struct rt_db_internal *ip)
+{
+    return ip->idb_avs.magic == BU_AVS_MAGIC &&
+	BU_STR_EQUAL(bu_avs_get(&ip->idb_avs, RT_BREP_INVALID_SOLID_ATTRIBUTE), "1");
+}
+
 /**
  * Calculate a bounding RPP around a BREP.  Unlike the prep
  * routine, which makes use of the full bounding volume hierarchy,
@@ -512,6 +519,10 @@ rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip)
     const struct bn_tol *tol = &rtip->rti_tol;
 
     RT_CK_DB_INTERNAL(ip);
+    if (brep_preserves_invalid_solid(ip)) {
+	bu_log("B-Rep %s preserves an incomplete solid; repair is required before analysis\n", stp->st_name);
+	return -1;
+    }
     bi = (struct rt_brep_internal*)ip->idb_ptr;
     RT_BREP_CK_MAGIC(bi);
 
@@ -2988,6 +2999,11 @@ rt_brep_valid(struct bu_vls *log, struct rt_db_internal *ip, int flags)
 	brep_log(log, "Object is not a brep.\n");
 	return 0;
     }
+    if (brep_preserves_invalid_solid(ip)) {
+	brep_log(log, "Brep represents an unreconstructed solid; repair its topology before clearing %s.\n",
+	    RT_BREP_INVALID_SOLID_ATTRIBUTE);
+	return 0;
+    }
     struct rt_brep_internal *bi = (struct rt_brep_internal *)ip->idb_ptr;
     ON_Brep *brep = NULL;
     if (bi == NULL || bi->brep == NULL) {
@@ -3075,6 +3091,8 @@ rt_brep_plate_mode(const struct rt_db_internal *ip)
     if (ip->idb_type != ID_BREP) {
 	return 0;
     }
+    if (brep_preserves_invalid_solid(ip))
+	return 0;
     struct rt_brep_internal *bi = (struct rt_brep_internal *)ip->idb_ptr;
     if (bi == NULL || bi->brep == NULL) {
 	return 0;
@@ -3101,6 +3119,8 @@ rt_brep_prep_serialize(struct soltab *stp, const struct rt_db_internal *ip, stru
     RT_CK_SOLTAB(stp);
     RT_CK_DB_INTERNAL(ip);
     BU_CK_EXTERNAL(external);
+    if (brep_preserves_invalid_solid(ip))
+	return -1;
 
     const size_t current_version = 0;
 
