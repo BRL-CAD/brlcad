@@ -2974,8 +2974,8 @@ brep_log(struct bu_vls *log, const char *fmt, ...)
 	BU_CK_VLS(log);
 	va_start(ap, fmt);
 	bu_vls_vprintf(log, fmt, ap);
+	va_end(ap);
     }
-    va_end(ap);
 }
 
 
