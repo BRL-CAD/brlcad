@@ -175,10 +175,11 @@ sets (see ADDITIONAL OPTIONS and OCCLUSION CHECKING).
 *-K* _#_::
   Ending (kill-after) frame number for animation scripts; pair with *-D*.
 
-*-b* _"x y"_::
-  Fire a single debug ray at pixel (x, y) and force serial execution. The X
-  and Y coordinates must be combined into one quoted argument. Best used with
-  debugging options, and must follow any viewing parameters.
+*-b* _index|"x y"_::
+  Fire a single debug ray at a linear pixel index or at pixel (x, y), and
+  force serial execution. Coordinate pairs must be combined into one quoted
+  argument. Best used with debugging options, and must follow any viewing
+  parameters.
 
 *-Q* _x,y_::
   Compute the full image but enable debug flags only for the pixel (x, y).

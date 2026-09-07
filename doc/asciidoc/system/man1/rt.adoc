@@ -56,8 +56,12 @@ The following options are recognized:
 selects auto-sizing, and gives the view azimuth in degrees. Used with *-e* and conflicts with *-M* .
 
 
-*-b "# #"*, *--single-pixel # #*::
-is sometimes useful for debugging. A single ray is fired at the pixel coordinates specified. This is best when accompanied by debugging options. Note that the standard *getopt*(3) routine only allows options to have one parameter, so the X and Y pixel coordinates need to be combined into one string parameter by enclosing them in double quotes. This option must follow any viewing parameters.
+*-b #*, *-b "# #"*, *--single-pixel #*, *--single-pixel "# #"*::
+is sometimes useful for debugging. A single ray is fired at the specified
+linear pixel index or X and Y pixel coordinates. This is best when
+accompanied by debugging options. Because *getopt*(3) only allows one option
+parameter, coordinate pairs must be enclosed in double quotes. This option
+must follow any viewing parameters.
 
 
 *-c "script_command"*, *--command "script_command"*::
