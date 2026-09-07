@@ -696,9 +696,8 @@ struct rt_submodel_internal {
     struct bu_vls treetop;	/**< @brief one treetop only */
     int meth;			/**< @brief space partitioning method */
     /* other option flags (lazy prep, etc.)?? */
-    /* REMAINING ELEMENTS PROVIDED BY IMPORT, UNUSED BY EXPORT */
-    mat_t root2leaf;
-    const struct db_i *dbip;
+    mat_t root2leaf;		/**< @brief submodel-to-model transform */
+    const struct db_i *dbip;	/**< @brief import-time database context */
 };
 #define RT_SUBMODEL_CK_MAGIC(_p) BU_CKMAG(_p, RT_SUBMODEL_INTERNAL_MAGIC, "rt_submodel_internal")
 /** @} */
