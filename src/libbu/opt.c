@@ -886,8 +886,11 @@ bu_opt_parse(struct bu_vls *msgs, size_t argc, const char **argv, const struct b
 		     * arg was seen.  Fail early and hard.
 		     */
 		    if (msgs) {
-			bu_vls_printf(msgs, "Invalid argument supplied to %s: %s - halting.\n", argv[i-1], argv[i]);
+			bu_vls_printf(msgs, "Invalid argument supplied to %s: %s - halting.\n",
+			    prev_opt, g_argc && g_argv[0] ? g_argv[0] : "(missing)");
 		    }
+		    if (eq_arg)
+			g_argv[0] = prev_opt;
 		    bu_ptbl_free(&unknown_args);
 		    bu_ptbl_free(&known_args);
 
