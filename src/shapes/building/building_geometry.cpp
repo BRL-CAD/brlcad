@@ -591,22 +591,25 @@ automatic_openings(const building_spec &spec, const std::vector<point2> &footpri
 	return spec.openings;
     std::vector<opening_spec> result;
     const bool garage = spec.type == "garage" || spec.type == "garages";
+    const bool bunker = spec.type == "bunker";
     opening_spec door;
-    door.id = garage ? "overhead_door" : "main_door";
+    door.id = garage ? "overhead_door" : (bunker ? "armored_door" : "main_door");
     door.kind = "door";
-    door.type = garage ? "overhead" : "main";
+    door.type = garage ? "overhead" : (bunker ? "armored" : "main");
     door.wall = 0;
     door.level = spec.min_level;
-    door.width = garage ? 3.2 : 1.0;
+    door.width = garage ? 3.2 : (bunker ? 1.2 : 1.0);
     door.height = garage ? 2.4 : 2.1;
     door.sill = 0.0;
-    door.material = garage ? "metal" : "wood";
+    door.material = garage || bunker ? "metal" : "wood";
+    if (bunker)
+	door.color = {75, 82, 82};
     const double front_length = distance(footprint[0], footprint[1]);
     door.offset = std::max(0.25, (front_length - door.width) * 0.5);
     const bool door_added = door.offset + door.width < front_length - 0.1;
     if (door_added)
 	result.push_back(door);
-    if (garage)
+    if (garage || bunker)
 	return result;
 
     const bool sparse = spec.type == "warehouse" || spec.type == "barn" || spec.type == "church" || spec.type == "sports_hall";
