@@ -59,13 +59,21 @@
       "type": "object",
       "properties": {
         "shape": {"type": "string"},
-        "height": {"type": "number", "minimum": 0},
+        "height": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Vertical roof rise above the facade; for flat and many roofs this is the full roof assembly depth."
+        },
         "angle": {"type": "number", "exclusiveMinimum": 0, "maximum": 89},
         "levels": {"type": "integer", "minimum": 0},
         "orientation": {"enum": ["along", "across"]},
         "direction": {"type": "number", "minimum": 0, "exclusiveMaximum": 360},
         "overhang": {"type": "number", "minimum": 0},
-        "thickness": {"type": "number", "exclusiveMinimum": 0},
+        "thickness": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Roof shell thickness. Flat and many roofs use the greater of height and thickness as their assembly depth."
+        },
         "material": {"type": "string"},
         "color": {"$ref": "#/$defs/color"}
       },

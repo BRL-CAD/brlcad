@@ -469,6 +469,40 @@ write_axis_box(writer_state &state, const std::string &name, point3 minimum, poi
 }
 
 void
+write_beam_segment(
+    writer_state &state,
+    const std::string &name,
+    const point3 &start,
+    const point3 &end,
+    double width,
+    double depth)
+{
+    const double length = std::hypot(end.x - start.x, end.y - start.y);
+    if (length <= GEOMETRY_EPSILON_METERS)
+	throw std::runtime_error("beam endpoints are coincident");
+    const point2 normal = {-(end.y - start.y) / length, (end.x - start.x) / length};
+    const point2 offset = normal * (width * 0.5);
+    const point2 start_xy = {start.x, start.y};
+    const point2 end_xy = {end.x, end.y};
+    const point2 corners[4] = {
+	start_xy - offset, end_xy - offset, end_xy + offset, start_xy + offset
+    };
+    point_t points[8];
+    VSET(points[0], corners[0].x * MM_PER_METER, corners[0].y * MM_PER_METER, (start.z - depth) * MM_PER_METER);
+    VSET(points[1], corners[1].x * MM_PER_METER, corners[1].y * MM_PER_METER, (end.z - depth) * MM_PER_METER);
+    VSET(points[2], corners[2].x * MM_PER_METER, corners[2].y * MM_PER_METER, (end.z - depth) * MM_PER_METER);
+    VSET(points[3], corners[3].x * MM_PER_METER, corners[3].y * MM_PER_METER, (start.z - depth) * MM_PER_METER);
+    VSET(points[4], corners[0].x * MM_PER_METER, corners[0].y * MM_PER_METER, start.z * MM_PER_METER);
+    VSET(points[5], corners[1].x * MM_PER_METER, corners[1].y * MM_PER_METER, end.z * MM_PER_METER);
+    VSET(points[6], corners[2].x * MM_PER_METER, corners[2].y * MM_PER_METER, end.z * MM_PER_METER);
+    VSET(points[7], corners[3].x * MM_PER_METER, corners[3].y * MM_PER_METER, start.z * MM_PER_METER);
+    reserve_name(state, name);
+    if (mk_arb8(state.fp, name.c_str(), &points[0][X]) != 0)
+	throw std::runtime_error("unable to write roof beam " + name);
+    ++state.report.primitive_count;
+}
+
+void
 write_cylinder(writer_state &state, const std::string &name, point3 base, double height, double radius)
 {
     point_t base_point;
@@ -665,6 +699,26 @@ roof_profile(const std::string &raw_shape, double height)
 	return result;
     }
     return {0.0, 0.0, 0.50, height, 1.0, 0.0};
+}
+
+std::string
+normalized_roof_shape(std::string shape)
+{
+    std::replace(shape.begin(), shape.end(), '-', '_');
+    return shape;
+}
+
+bool
+level_roof_shape(const std::string &shape)
+{
+    const std::string normalized = normalized_roof_shape(shape);
+    return normalized == "flat" || normalized == "many";
+}
+
+double
+roof_solid_depth(const building_spec &spec)
+{
+    return level_roof_shape(spec.roof.shape) ? effective_roof_height(spec) : spec.roof.thickness;
 }
 
 roof_mesh
@@ -887,8 +941,7 @@ roof_mesh
 build_roof_mesh(const building_spec &spec, const std::vector<point2> &footprint, double eave)
 {
     const std::vector<point2> roof_footprint = offset_polygon(footprint, spec.roof.overhang);
-    std::string shape = spec.roof.shape;
-    std::replace(shape.begin(), shape.end(), '-', '_');
+    const std::string shape = normalized_roof_shape(spec.roof.shape);
     double height = effective_roof_height(spec);
     const roof_orientation orientation = resolve_roof_orientation(spec, roof_footprint);
     const double surface_eave = eave + spec.roof.thickness;
@@ -915,8 +968,7 @@ build_roof_mesh(const building_spec &spec, const std::vector<point2> &footprint,
 bool
 profile_roof_shape(const std::string &raw_shape)
 {
-    std::string shape = raw_shape;
-    std::replace(shape.begin(), shape.end(), '-', '_');
+    const std::string shape = normalized_roof_shape(raw_shape);
     const std::set<std::string> profiles = {
 	"gabled", "pitched", "gabled_height_moved", "skillion", "saltbox", "gambrel", "bellcast_gable",
 	"mansard", "equal_mansard", "butterfly", "sawtooth", "round", "round_gabled", "parabolic"
@@ -1058,6 +1110,7 @@ write_structure(
     writer_state &state,
     const building_spec &spec,
     const std::vector<point2> &footprint,
+    const roof_mesh &roof,
     const std::string &prefix,
     const std::vector<std::string> &part_cutters,
     struct wmember &building_members)
@@ -1076,42 +1129,120 @@ write_structure(
     const double column_inset = (spec.walls ? spec.wall_thickness : 0.0) + member_half_width + GEOMETRY_EPSILON_METERS;
     const std::vector<double> x_positions = axis_positions(min_x, max_x, spec.structure.grid_x, column_inset);
     const std::vector<double> y_positions = axis_positions(min_y, max_y, spec.structure.grid_y, column_inset);
+    const double roof_depth = roof_solid_depth(spec);
+    auto roof_underside = [&roof, roof_depth](const point2 &position) {
+	double height = -std::numeric_limits<double>::infinity();
+	for (size_t i = 0; i < roof.faces.size(); i += 3) {
+	    const point3 &a = roof.vertices[static_cast<size_t>(roof.faces[i])];
+	    const point3 &b = roof.vertices[static_cast<size_t>(roof.faces[i + 1])];
+	    const point3 &c = roof.vertices[static_cast<size_t>(roof.faces[i + 2])];
+	    const double denominator = (b.y - c.y) * (a.x - c.x) + (c.x - b.x) * (a.y - c.y);
+	    if (std::fabs(denominator) <= 1.0e-12)
+		continue;
+	    const double wa = ((b.y - c.y) * (position.x - c.x) + (c.x - b.x) * (position.y - c.y)) / denominator;
+	    const double wb = ((c.y - a.y) * (position.x - c.x) + (a.x - c.x) * (position.y - c.y)) / denominator;
+	    const double wc = 1.0 - wa - wb;
+	    if (wa < -1.0e-9 || wb < -1.0e-9 || wc < -1.0e-9)
+		continue;
+	    height = std::max(height, wa * a.z + wb * b.z + wc * c.z - roof_depth);
+	}
+	if (!std::isfinite(height))
+	    throw std::runtime_error("unable to locate structural support beneath roof");
+	return height;
+    };
+    auto column_bearing_height = [&spec, &roof_underside](double x, double y) {
+	const double half_x = spec.structure.column_shape == "round" ?
+	    spec.structure.column_diameter * 0.5 : spec.structure.column_width * 0.5;
+	const double half_y = spec.structure.column_shape == "round" ?
+	    spec.structure.column_diameter * 0.5 : spec.structure.column_depth * 0.5;
+	double height = std::numeric_limits<double>::infinity();
+	const point2 corners[] = {
+	    {x - half_x, y - half_y}, {x + half_x, y - half_y},
+	    {x + half_x, y + half_y}, {x - half_x, y + half_y}
+	};
+	for (const point2 &corner : corners)
+	    height = std::min(height, roof_underside(corner));
+	return height;
+    };
+
+    std::vector<std::vector<bool>> grid(x_positions.size(), std::vector<bool>(y_positions.size(), false));
+    for (size_t x = 0; x < x_positions.size(); ++x) {
+	for (size_t y = 0; y < y_positions.size(); ++y)
+	    grid[x][y] = point_in_polygon({x_positions[x], y_positions[y]}, footprint);
+    }
+
     struct wmember members;
     BU_LIST_INIT(&members.l);
     size_t column_index = 0;
-    struct storey_span { double base; double ceiling; bool has_slab_above; };
+    size_t beam_index = 0;
+    struct storey_span { double base; double ceiling; bool has_slab_above; bool roof_bearing; };
     std::vector<storey_span> storeys;
     for (int level = -spec.levels_below; level < 0; ++level)
-	storeys.push_back({level_z(spec, level), level_z(spec, level + 1), true});
+	storeys.push_back({level_z(spec, level), level_z(spec, level + 1), true, false});
     for (int level = spec.min_level; level < spec.levels_above; ++level) {
 	const bool last = level + 1 == spec.levels_above;
-	const double ceiling = last ? facade_top(spec) - GEOMETRY_EPSILON_METERS : level_z(spec, level + 1);
-	storeys.push_back({level_z(spec, level), ceiling, !last});
+	storeys.push_back({level_z(spec, level), last ? facade_top(spec) : level_z(spec, level + 1), !last, last});
     }
     std::vector<double> beam_levels;
     for (const storey_span &storey : storeys) {
-	const double column_top = storey.ceiling - (storey.has_slab_above ? spec.slab_thickness : 0.0);
-	if (column_top <= storey.base)
-	    continue;
-	for (double x : x_positions) {
-	    for (double y : y_positions) {
-		if (!point_in_polygon({x, y}, footprint))
+	for (size_t x = 0; x < x_positions.size(); ++x) {
+	    for (size_t y = 0; y < y_positions.size(); ++y) {
+		if (!grid[x][y])
+		    continue;
+		const double column_top = storey.roof_bearing ?
+		    column_bearing_height(x_positions[x], y_positions[y]) :
+		    storey.ceiling - (storey.has_slab_above ? spec.slab_thickness : 0.0);
+		if (column_top <= storey.base)
 		    continue;
 		const std::string name = prefix + "_column_" + std::to_string(column_index++) + ".s";
 		if (spec.structure.column_shape == "round") {
-		    write_cylinder(state, name, {x, y, storey.base}, column_top - storey.base, spec.structure.column_diameter * 0.5);
+		    write_cylinder(state, name, {x_positions[x], y_positions[y], storey.base},
+			column_top - storey.base, spec.structure.column_diameter * 0.5);
 		} else {
 		    write_axis_box(state, name,
-			{x - spec.structure.column_width * 0.5, y - spec.structure.column_depth * 0.5, storey.base},
-			{x + spec.structure.column_width * 0.5, y + spec.structure.column_depth * 0.5, column_top});
+			{x_positions[x] - spec.structure.column_width * 0.5,
+			 y_positions[y] - spec.structure.column_depth * 0.5, storey.base},
+			{x_positions[x] + spec.structure.column_width * 0.5,
+			 y_positions[y] + spec.structure.column_depth * 0.5, column_top});
 		}
 		(void)mk_addmember(name.c_str(), &members.l, nullptr, WMOP_UNION);
 		++state.report.column_count;
 	    }
 	}
-	beam_levels.push_back(column_top);
+	if (!storey.roof_bearing) {
+	    beam_levels.push_back(storey.ceiling - (storey.has_slab_above ? spec.slab_thickness : 0.0));
+	    continue;
+	}
+
+	const bool sloped_beams = normalized_roof_shape(spec.roof.shape) == "skillion";
+	auto add_roof_beam = [&](size_t x0, size_t y0, size_t x1, size_t y1) {
+	    if (!grid[x0][y0] || !grid[x1][y1])
+		return;
+	    point3 start = {x_positions[x0], y_positions[y0], facade_top(spec)};
+	    point3 end = {x_positions[x1], y_positions[y1], facade_top(spec)};
+	    if (sloped_beams) {
+		const double length = std::hypot(end.x - start.x, end.y - start.y);
+		const point2 lateral = {-(end.y - start.y) / length * spec.structure.beam_width * 0.5,
+		    (end.x - start.x) / length * spec.structure.beam_width * 0.5};
+		start.z = std::min(roof_underside({start.x - lateral.x, start.y - lateral.y}),
+		    roof_underside({start.x + lateral.x, start.y + lateral.y}));
+		end.z = std::min(roof_underside({end.x - lateral.x, end.y - lateral.y}),
+		    roof_underside({end.x + lateral.x, end.y + lateral.y}));
+	    }
+	    const std::string name = prefix + "_roof_beam_" + std::to_string(beam_index++) + ".s";
+	    write_beam_segment(state, name, start, end, spec.structure.beam_width, spec.structure.beam_depth);
+	    (void)mk_addmember(name.c_str(), &members.l, nullptr, WMOP_UNION);
+	    ++state.report.beam_count;
+	};
+	for (size_t x = 0; x < x_positions.size(); ++x) {
+	    for (size_t y = 0; y < y_positions.size(); ++y) {
+		if (x + 1 < x_positions.size())
+		    add_roof_beam(x, y, x + 1, y);
+		if (y + 1 < y_positions.size())
+		    add_roof_beam(x, y, x, y + 1);
+	    }
+	}
     }
-    size_t beam_index = 0;
     for (double z : beam_levels) {
 	for (double y : y_positions) {
 	    const std::string name = prefix + "_beam_x_" + std::to_string(beam_index++) + ".s";
@@ -1133,8 +1264,11 @@ write_structure(
     if (!BU_LIST_IS_EMPTY(&members.l)) {
 	const std::vector<point2> interior = spec.walls ? offset_polygon(footprint, -spec.wall_thickness) : footprint;
 	const std::string clip = prefix + "_structure_clip.s";
+	double structure_top = facade_top(spec);
+	for (const point3 &vertex : roof.vertices)
+	    structure_top = std::max(structure_top, vertex.z - roof_depth);
 	write_prism(state, clip, interior, basement_bottom(spec) - GEOMETRY_EPSILON_METERS,
-	    facade_top(spec) - GEOMETRY_EPSILON_METERS);
+	    structure_top);
 	(void)mk_addmember(clip.c_str(), &members.l, nullptr, WMOP_INTERSECT);
 	subtract_members(members, part_cutters);
 	const std::string region = prefix + "_structure.r";
@@ -1205,7 +1339,8 @@ write_building(writer_state &state, const building_spec &spec, bool is_part)
     const double wall_z1 = facade_top(spec);
     const roof_mesh roof = build_roof_mesh(spec, footprint, wall_z1);
     const std::string roof_solid = prefix + "_roof.bot";
-    mesh roof_geometry = roof_solid_mesh(roof, spec.roof.thickness);
+    const double roof_solid_thickness = roof_solid_depth(spec);
+    mesh roof_geometry = roof_solid_mesh(roof, roof_solid_thickness);
     write_solid_bot(state, roof_solid, roof_geometry);
     if (spec.walls && wall_z1 > facade_base(spec)) {
 	struct wmember wall_members;
@@ -1294,7 +1429,7 @@ write_building(writer_state &state, const building_spec &spec, bool is_part)
     set_attribute(state, roof_region, "building::roof_realization", roof.realization);
     (void)mk_addmember(roof_region.c_str(), &building_members.l, nullptr, WMOP_UNION);
 
-    write_structure(state, spec, footprint, prefix, part_cutters, building_members);
+    write_structure(state, spec, footprint, roof, prefix, part_cutters, building_members);
     write_installations(state, spec, prefix, building_members);
     for (const building_spec &part : spec.parts) {
 	const std::string part_group = write_building(state, part, true);

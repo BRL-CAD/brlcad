@@ -461,12 +461,20 @@ set_type_specific_defaults(building_spec &spec, const std::string &requested_typ
 	spec.walls = false;
 	spec.auto_openings = false;
 	spec.roof.shape = "skillion";
+	spec.roof.height = 3.0;
+	spec.roof.thickness = 0.25;
+	spec.roof.material = "metal";
     }
     if (type == "stadium") {
 	set_storeys(1, 10.0);
 	spec.footprint = circle(28.0, 48);
 	spec.auto_openings = false;
-	spec.roof.shape = "flat";
+	spec.roof.shape = "dome";
+	spec.roof.height = 8.0;
+	spec.roof.thickness = 0.40;
+	spec.roof.overhang = 0.0;
+	spec.structure.enabled = false;
+	spec.structure.system = "shell";
     }
     if (type == "water_tower") {
 	set_storeys(1, 18.0);
@@ -492,6 +500,15 @@ set_type_specific_defaults(building_spec &spec, const std::string &requested_typ
 	spec.wall_thickness = 0.50;
 	spec.wall_material = "reinforced_concrete";
 	spec.foundation_thickness = 0.60;
+	spec.roof.shape = "flat";
+	spec.roof.height = 0.60;
+	spec.roof.thickness = 0.60;
+	spec.roof.overhang = 0.0;
+	spec.roof.material = "reinforced_concrete";
+    }
+    if (type == "museum") {
+	spec.roof.height = 0.35;
+	spec.roof.thickness = 0.35;
     }
     if (type == "container") {
 	constexpr double container_length = 12.192;
@@ -597,6 +614,7 @@ preset_impl(const std::string &raw_preset)
 	spec.auto_openings = false;
 	spec.roof.shape = "flat";
 	spec.roof.height = 0.30;
+	spec.roof.thickness = 0.30;
 	spec.structure = {"reinforced_concrete_frame", true, 7.2, 6.0, "rectangular", 0.50, 0.50, 0.55, 0.40, 0.70, "reinforced_concrete", {145, 145, 140}};
     } else if (preset == "greenhouse") {
 	spec.type = "greenhouse";
@@ -1615,6 +1633,8 @@ geometry_signature_json(const building_spec &spec, const point3 &reference_origi
     const std::string roof_shape = realized_roof_shape(spec);
     roof["shape"] = roof_shape;
     roof["effective_height"] = effective_roof_height(spec);
+    if (roof_shape == "flat")
+	roof["thickness"] = effective_roof_height(spec);
     erase_keys(roof, {"height", "levels", "angle", "material", "color"});
     const bool oriented_roof = roof_shape == "hipped" || roof_shape == "gabled" ||
 	roof_shape == "saltbox" || roof_shape == "skillion" || roof_shape == "gambrel" ||
@@ -1716,7 +1736,7 @@ make_demo_specs()
 	{"civic", "hipped-and-gabled"}, {"school", "half-hipped"}, {"hospital", "side_half-hipped"},
 	{"museum", "many"}, {"train_station", "bellcast_gable"}, {"fire_station", "gabled"},
 	{"barn", "gambrel"}, {"cowshed", "saltbox"}, {"greenhouse", "round"}, {"stable", "pitched"},
-	{"sports_hall", "parabolic"}, {"stadium", "flat"}, {"grandstand", "skillion"},
+	{"sports_hall", "parabolic"}, {"stadium", "dome"}, {"grandstand", "skillion"},
 	{"riding_hall", "round_gabled"}, {"garage", "gabled"}, {"parking", "flat"},
 	{"carport", "skillion"}, {"shed", "saltbox"}, {"boathouse", "gabled"}, {"silo", "cone"},
 	{"storage_tank", "dome"}, {"water_tower", "onion"}, {"digester", "dome"},
