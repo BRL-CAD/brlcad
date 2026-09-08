@@ -21,60 +21,61 @@
 
 
 static int
-test_solid_diagnostics(void)
+check_solid_diagnostics(int *faces, int face_count, int unmatched,
+    int misoriented, int excess)
 {
-    fastf_t vertices[][3] = {
-	{0.0, 0.0, 0.0},
-	{1.0, 0.0, 0.0},
-	{0.0, 1.0, 0.0},
-	{0.0, 0.0, 1.0},
-	{1.0, 1.0, 1.0}
-    };
-    int solid_faces[] = {
-	0, 2, 1,
-	0, 1, 3,
-	0, 3, 2,
-	1, 2, 3
-    };
-    int reversed_faces[] = {
-	0, 1, 2,
-	0, 1, 3,
-	0, 3, 2,
-	1, 2, 3
-    };
-    int mixed_error_faces[] = {
-	0, 1, 2,
-	0, 1, 3,
-	0, 3, 4,
-	1, 2, 3
+    fastf_t vertices[15] = {
+	0.0, 0.0, 0.0,
+	1.0, 0.0, 0.0,
+	0.0, 1.0, 0.0,
+	0.0, 0.0, 1.0,
+	0.0, -1.0, 0.0
     };
     int *bad_edges = NULL;
     struct bg_trimesh_solid_errors errors = BG_TRIMESH_SOLID_ERRORS_INIT_NULL;
-    int failed = 0;
+    const int expected = unmatched || misoriented || excess;
+    int failed =
+	((bg_trimesh_solid2(5, face_count, vertices, faces, &errors) != 0) !=
+	 expected);
 
-    if (bg_trimesh_solid(4, 4, &vertices[0][0], solid_faces, &bad_edges) || bad_edges)
-	failed = 1;
+    failed |= errors.unmatched.count != unmatched;
+    failed |= errors.misoriented.count != misoriented;
+    failed |= errors.excess.count != excess;
+    failed |= ((bg_trimesh_solid2(5, face_count, vertices, faces, NULL) != 0)
+	!= expected);
+    failed |= bg_trimesh_solid(5, face_count, vertices, faces,
+	&bad_edges) != expected;
+    failed |= (expected && !bad_edges) || (!expected && bad_edges);
 
-    if (bad_edges) {
-	bu_free(bad_edges, "bad edges");
-	bad_edges = NULL;
-    }
-
-    if (bg_trimesh_solid(4, 4, &vertices[0][0], reversed_faces, &bad_edges) != 1
-	|| !bad_edges) {
-	failed = 1;
-    }
-
+    bg_free_trimesh_solid_errors(&errors);
     if (bad_edges)
 	bu_free(bad_edges, "bad edges");
 
-    if (!bg_trimesh_solid2(5, 4, &vertices[0][0], mixed_error_faces, &errors)
-	|| !errors.unmatched.count || !errors.misoriented.count) {
-	failed = 1;
-    }
-    bg_free_trimesh_solid_errors(&errors);
-
     return failed;
+}
+
+
+static int
+test_solid_diagnostics(void)
+{
+    /* Reverse one tetrahedron face, then attach a fin to an edge.  Boundary,
+     * orientation, and overuse defects must be reported independently. */
+    int faces[15] = {
+	0, 1, 2,
+	0, 1, 3,
+	1, 2, 3,
+	2, 0, 3,
+	0, 1, 4
+    };
+
+    if (check_solid_diagnostics(faces, 5, 2, 2, 1) ||
+	check_solid_diagnostics(faces, 4, 0, 3, 0))
+	return 1;
+
+    faces[1] = 2;
+    faces[2] = 1;
+    return check_solid_diagnostics(faces, 5, 2, 0, 1) ||
+	check_solid_diagnostics(faces, 4, 0, 0, 0);
 }
 
 
