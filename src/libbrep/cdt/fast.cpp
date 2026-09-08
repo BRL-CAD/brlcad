@@ -4472,7 +4472,8 @@ static bool
 fast_reconstruct_periodic_boundary_loops(const ON_Surface *surface,
 	const ON_BrepFace &face,
 	ON_SimpleArray<BrepTrimPoint> **brep_loop_points,
-	double tolerance, fast_face_scratch &scratch, int *closed_direction,
+	double tolerance, const struct bn_tol *tol,
+	fast_face_scratch &scratch, int *closed_direction,
 	int *outer_loop_index)
 {
     if (!surface || face.LoopCount() != 2 || !brep_loop_points)
@@ -4515,7 +4516,9 @@ fast_reconstruct_periodic_boundary_loops(const ON_Surface *surface,
 	    std::max(period, open_length) * 1.0e-4);
 	const double isocurve_tolerance = std::max(parameter_tolerance,
 	    open_length * 1.0e-3);
+	const bool transverse_closed = surface->IsClosed(open_dir);
 	double open_coordinates[2] = {0.0, 0.0};
+	int winding[2] = {0, 0};
 	bool loops_valid = true;
 	for (int li = 0; li < 2; ++li) {
 	    const ON_SimpleArray<BrepTrimPoint> &points =
@@ -4524,21 +4527,53 @@ fast_reconstruct_periodic_boundary_loops(const ON_Surface *surface,
 	    double closed_max = -INFINITY;
 	    double open_min = INFINITY;
 	    double open_max = -INFINITY;
+	    double closed_coordinate = points[0].p2d[closed_dir];
 	    for (int pi = 0; pi < points.Count(); ++pi) {
-		closed_min = std::min(closed_min,
-		    points[pi].p2d[closed_dir]);
-		closed_max = std::max(closed_max,
-		    points[pi].p2d[closed_dir]);
-		open_min = std::min(open_min, points[pi].p2d[open_dir]);
-		open_max = std::max(open_max, points[pi].p2d[open_dir]);
+		if (!points[pi].p2d.IsValid()) {
+		    loops_valid = false;
+		    break;
+		}
+		double open_coordinate = points[pi].p2d[open_dir];
+		if (transverse_closed) {
+		    /* Equivalent copies on a doubly closed surface do not widen
+		     * an isocurve.  Lift each walk continuously in its winding
+		     * direction and place its transverse samples near one copy. */
+		    open_coordinate -= std::round((open_coordinate -
+			points[0].p2d[open_dir]) / open_length) * open_length;
+		    if (pi) {
+			const double step = std::remainder(
+			    points[pi].p2d[closed_dir] -
+			    points[pi - 1].p2d[closed_dir], period);
+			/* Half-period steps do not identify a direction. */
+			if (fabs(step) >= 0.5 * period - parameter_tolerance) {
+			    loops_valid = false;
+			    break;
+			}
+			closed_coordinate += step;
+		    }
+		} else {
+		    closed_coordinate = points[pi].p2d[closed_dir];
+		}
+		closed_min = std::min(closed_min, closed_coordinate);
+		closed_max = std::max(closed_max, closed_coordinate);
+		open_min = std::min(open_min, open_coordinate);
+		open_max = std::max(open_max, open_coordinate);
 	    }
-	    if (closed_max - closed_min < 0.90 * period ||
+	    if (!loops_valid || closed_max - closed_min < 0.90 * period ||
 		    closed_max - closed_min > 1.10 * period ||
 		    open_max - open_min > isocurve_tolerance) {
 		loops_valid = false;
 		break;
 	    }
 	    open_coordinates[li] = 0.5 * (open_min + open_max);
+	    if (transverse_closed) {
+		const double delta = closed_coordinate - points[0].p2d[closed_dir];
+		if (fabs(fabs(delta) - period) > parameter_tolerance) {
+		    loops_valid = false;
+		    break;
+		}
+		winding[li] = delta > 0.0 ? 1 : -1;
+	    }
 	}
 	if (!loops_valid || fabs(open_coordinates[outer_index] -
 		open_coordinates[inner_index]) <= isocurve_tolerance)
@@ -4547,7 +4582,53 @@ fast_reconstruct_periodic_boundary_loops(const ON_Surface *surface,
 	const double closed_start = surface->Domain(closed_dir).Min();
 	const double closed_end = surface->Domain(closed_dir).Max();
 	const double outer_open = open_coordinates[outer_index];
-	const double inner_open = open_coordinates[inner_index];
+	double inner_open = open_coordinates[inner_index];
+	if (transverse_closed) {
+	    if (winding[outer_index] != -winding[inner_index] || !tol ||
+		    !(tol->dist > 0.0))
+		continue;
+	    /* The interior is to the left of the directed outer boundary.
+	     * Winding, not the shortest periodic distance, selects the band. */
+	    const int side = (closed_dir == 0 ? 1 : -1) * winding[outer_index];
+	    double width = side * (inner_open - outer_open);
+	    width -= std::floor(width / open_length) * open_length;
+	    if (width <= isocurve_tolerance ||
+		    open_length - width <= isocurve_tolerance)
+		continue;
+	    inner_open = outer_open + side * width;
+	    /* Flatten only within model tolerance.  Imported pcurves may already
+	     * differ from their edges by the source's declared edge tolerance;
+	     * preserve that agreement without enlarging the allowed adjustment. */
+	    for (int li = 0; loops_valid && li < 2; ++li) {
+		const auto &points = *brep_loop_points[li];
+		for (int pi = 0; pi < points.Count(); ++pi) {
+		    const ON_2dPoint original_uv = UnwrapUVPoint(surface,
+			points[pi].p2d, BREP_SAME_POINT_TOLERANCE);
+		    const ON_3dPoint original = surface->PointAt(original_uv.x,
+			original_uv.y);
+		    ON_2dPoint uv = points[pi].p2d;
+		    uv[open_dir] = li == outer_index ? outer_open : inner_open;
+		    uv = UnwrapUVPoint(surface, uv, BREP_SAME_POINT_TOLERANCE);
+		    const ON_3dPoint point = surface->PointAt(uv.x, uv.y);
+		    double edge_tolerance = tol->dist;
+		    const int ei = points[pi].edge_ind;
+		    if (face.Brep() && ei >= 0 && ei < face.Brep()->m_E.Count()) {
+			const double source_tolerance = face.Brep()->m_E[ei].m_tolerance;
+			if (std::isfinite(source_tolerance))
+			    edge_tolerance = std::max(edge_tolerance, source_tolerance);
+		    }
+		    if (!points[pi].p3d || !points[pi].p3d->IsValid() ||
+			    !point.IsValid() || !original.IsValid() ||
+			    point.DistanceTo(original) > tol->dist ||
+			    point.DistanceTo(*points[pi].p3d) > edge_tolerance) {
+			loops_valid = false;
+			break;
+		    }
+		}
+	    }
+	    if (!loops_valid)
+		continue;
+	}
 	ON_2dPoint corners[5];
 	for (int ci = 0; ci < 5; ++ci)
 	    corners[ci] = (*brep_loop_points[outer_index])[0].p2d;
@@ -5733,7 +5814,7 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 	    &full_periodic_closed_dir, &full_periodic_outer_index);
     if (!untrimmed_domain_face && !full_periodic_face)
 	full_periodic_face = fast_reconstruct_periodic_boundary_loops(s, face,
-	    brep_loop_points, BREP_SAME_POINT_TOLERANCE, scratch,
+	    brep_loop_points, BREP_SAME_POINT_TOLERANCE, tol, scratch,
 	    &full_periodic_closed_dir, &full_periodic_outer_index);
     if (!untrimmed_domain_face && !full_periodic_face)
 	full_periodic_face = fast_reconstruct_winding_periodic_strip(s, face,

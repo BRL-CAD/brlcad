@@ -39,7 +39,8 @@ struct fast_result {
 };
 
 static fast_result *
-run_fast(const ON_Brep &brep, bool preserve_pullback_samples = false)
+run_fast(const ON_Brep &brep, bool preserve_pullback_samples = false,
+	double relative_tolerance = 0.0)
 {
     fast_result *result = new fast_result;
     struct bg_tess_tol ttol = BG_TESS_TOL_INIT_TOL;
@@ -48,6 +49,10 @@ run_fast(const ON_Brep &brep, bool preserve_pullback_samples = false)
     brep_cdt_fast_options_default(&options);
     options.max_workers = 1;
     options.preserve_pullback_samples = preserve_pullback_samples ? 1 : 0;
+    if (relative_tolerance > 0.0) {
+	ttol.rel = relative_tolerance;
+	options.coarse_relative_tolerance = relative_tolerance;
+    }
     result->ret = brep_cdt_fast_ex(&result->faces, &result->face_count,
 	&result->normals, &result->points, &result->point_count, &brep, -1,
 	&ttol, &tol, &options, &result->report);
@@ -1371,6 +1376,110 @@ doubly_periodic_winding_strip_test()
 }
 
 static bool
+periodic_copy_band_case(bool reverse, bool alternate_copies, bool transpose)
+{
+    ON_Brep brep;
+    const double major_radius = 9.0;
+    const double minor_radius = 2.5;
+    ON_Torus torus(ON_Circle(ON_xy_plane, major_radius), minor_radius);
+    ON_NurbsSurface *surface = new ON_NurbsSurface;
+    if (!torus.GetNurbForm(*surface)) {
+	delete surface;
+	return false;
+    }
+    if (transpose)
+	surface->Transpose();
+    ON_BrepFace &face = brep.NewFace(brep.AddSurface(surface));
+    const int winding_dir = transpose ? 0 : 1;
+    const ON_Interval udom = surface->Domain(1 - winding_dir);
+    const ON_Interval vdom = surface->Domain(winding_dir);
+    const auto chart_point = [transpose](double u, double v) {
+	return transpose ? ON_2dPoint(v, u) : ON_2dPoint(u, v);
+    };
+    const int segments = 4;
+    for (int boundary = 0; boundary < 2; ++boundary) {
+	ON_BrepLoop &loop = brep.NewLoop(boundary ? ON_BrepLoop::inner :
+	    ON_BrepLoop::outer, face);
+	const double u = udom.ParameterAt(boundary ? 0.75 : 0.0);
+	const bool decreasing = ((boundary != 0) != reverse) != transpose;
+	int vertices[segments];
+	for (int i = 0; i < segments; ++i) {
+	    const double fraction = (double)i / segments;
+	    const double v = vdom.ParameterAt(decreasing ? 1.0 - fraction : fraction);
+	    const ON_2dPoint uv = chart_point(u, v);
+	    vertices[i] = brep.NewVertex(surface->PointAt(uv.x, uv.y)).m_vertex_index;
+	}
+	for (int i = 0; i < segments; ++i) {
+	    const double first = (double)i / segments;
+	    const double second = (double)(i + 1) / segments;
+	    const double v0 = vdom.ParameterAt(decreasing ? 1.0 - first : first);
+	    const double v1 = vdom.ParameterAt(decreasing ? 1.0 - second : second);
+	    ON_Curve *curve = surface->IsoCurve(winding_dir, u);
+	    if (!curve || !curve->Trim(ON_Interval(std::min(v0, v1),
+		    std::max(v0, v1)))) {
+		delete curve;
+		return false;
+	    }
+	    if (decreasing)
+		curve->Reverse();
+	    curve->SetDomain(0.0, 1.0);
+	    ON_BrepEdge &edge = brep.NewEdge(brep.m_V[vertices[i]],
+		brep.m_V[vertices[(i + 1) % segments]], brep.AddEdgeCurve(curve));
+	    edge.m_tolerance = 1.0e-6;
+	    /* Some trims use the negative copy and others the positive copy
+	     * of the same meridian.  This must not select another band. */
+	    const double chart_u = u - (boundary &&
+		(!alternate_copies || i % 2) ? udom.Length() : 0.0);
+	    ON_LineCurve *pcurve = new ON_LineCurve(chart_point(chart_u, v0),
+		chart_point(chart_u, v1));
+	    pcurve->SetDomain(0.0, 1.0);
+	    ON_BrepTrim &trim = brep.NewTrim(edge, false, loop, brep.AddTrimCurve(pcurve));
+	    trim.m_type = ON_BrepTrim::boundary;
+	    trim.m_tolerance[0] = trim.m_tolerance[1] = 1.0e-6;
+	}
+    }
+    const auto crc = brep.DataCRC(0);
+    const double relative_tolerance = 0.001;
+    fast_result *result = run_fast(brep, false, relative_tolerance);
+    double area = 0.0;
+    bool region_matches = true;
+    for (int i = 0; i < result->face_count; ++i) {
+	const ON_3dPoint a(result->points[result->faces[3 * i]]);
+	const ON_3dPoint b(result->points[result->faces[3 * i + 1]]);
+	const ON_3dPoint c(result->points[result->faces[3 * i + 2]]);
+	area += 0.5 * ON_CrossProduct(b - a, c - a).Length();
+	for (const ON_3dPoint &point : {a, b, c}) {
+	    const bool excluded_quadrant = reverse ?
+		(point.x > BN_TOL_DIST && point.y < -BN_TOL_DIST) :
+		(point.x < -BN_TOL_DIST || point.y > BN_TOL_DIST);
+	    region_matches = region_matches && !excluded_quadrant;
+	}
+    }
+    const double fraction = reverse ? 0.75 : 0.25;
+    const double expected = fraction * M_2PI * M_2PI * major_radius * minor_radius;
+    const double relative_area_tolerance = 0.03;
+    const bool valid = result->ret == BREP_CDT_FAST_OK &&
+	!result->report.failed_faces && region_matches && brep.DataCRC(0) == crc &&
+	fabs(area - expected) <= relative_area_tolerance * expected;
+    if (!valid)
+	bu_log("periodic copy band: reverse=%d copies=%d transpose=%d ret=%d area=%.17g expected=%.17g region=%d\n",
+	    reverse, alternate_copies, transpose, result->ret, area, expected, region_matches);
+    delete result;
+    return valid;
+}
+
+static bool
+periodic_copy_band_test()
+{
+    for (bool reverse : {false, true})
+	for (bool alternate_copies : {false, true})
+	    for (bool transpose : {false, true})
+		if (!periodic_copy_band_case(reverse, alternate_copies, transpose))
+		    return false;
+    return true;
+}
+
+static bool
 collapsed_closed_pcurve_case(bool preserve_samples)
 {
     ON_Brep brep;
@@ -2450,6 +2559,7 @@ main(int argc, const char **argv)
     RUN_FAST_TEST(winding_periodic_strip_test);
     RUN_FAST_TEST(periodic_vertex_copy_strip_test);
     RUN_FAST_TEST(doubly_periodic_winding_strip_test);
+    RUN_FAST_TEST(periodic_copy_band_test);
     RUN_FAST_TEST(collapsed_closed_pcurve_test);
     RUN_FAST_TEST(misclassified_periodic_boundaries_test);
     RUN_FAST_TEST(touching_periodic_subloops_test);
