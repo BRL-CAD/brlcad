@@ -633,6 +633,11 @@ brep_cdt_fast_options_default(struct brep_cdt_fast_options *options);
  * partial output.  An all-faces request for a B-Rep with no faces succeeds
  * with empty output; selecting an individual nonexistent face is an error.
  *
+ * Failed trim boundaries may be retried after bounded topology healing on
+ * an owned copy.  The source is unchanged and no holes are capped.  This
+ * recovery is disabled when authoritative trim samples, source callbacks,
+ * or preserve_pullback_samples require the original topology identities.
+ *
  * @param faces receives triangle vertex indices
  * @param face_cnt receives the number of triangles
  * @param pnt_norms receives three face-oriented corner normals per triangle,
