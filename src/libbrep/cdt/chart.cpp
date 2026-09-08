@@ -1134,6 +1134,24 @@ cdt_face_chart::triangle_chart_image(const long native_triangle[3],
 }
 
 bool
+cdt_face_chart::triangle_surface_samples(const long native_triangle[3],
+	ON_2dPoint native_uv[4]) const
+{
+    ON_2dPoint triangle[3];
+    if (!native_uv || !triangle_chart_image(native_triangle, triangle))
+	return false;
+    if (!chart_to_native((triangle[0] + triangle[1] + triangle[2]) / 3.0,
+	    native_uv[0]))
+	return false;
+    for (int edge = 0; edge < 3; ++edge) {
+	if (!chart_to_native((triangle[edge] + triangle[(edge + 1) % 3]) / 2.0,
+		native_uv[edge + 1]))
+	    return false;
+    }
+    return true;
+}
+
+bool
 cdt_face_chart::triangle_interior_sample(const long native_triangle[3],
 	ON_2dPoint &native_uv) const
 {

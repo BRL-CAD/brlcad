@@ -37,6 +37,7 @@
 #include "common.h"
 
 #include <algorithm>
+#include <array>
 #include <vector>
 #include <set>
 #include <map>
@@ -630,6 +631,9 @@ public:
     RTree<size_t, double, 3> tris_tree;
     std::vector<ON_3dPoint *> pnts;
 
+    void record_chart_triangle(const triangle_t &triangle,
+	const triangle_t &native_triangle, const cdt_face_chart &chart);
+
     /* Setup / Repair */
     long add_point(ON_2dPoint &on_2dp);
     long add_point(ON_3dPoint *on_3dp);
@@ -819,6 +823,10 @@ private:
     std::map<long, long> p3d2d;
     std::set<long> ambiguous_p3d2d;
     std::set<long> periodic_ambiguous_p3d2d;
+    /* Only triangles spanning more than half a periodic domain need
+     * explicit chart samples; a nearest-copy reconstruction can choose their
+     * complementary region after seam vertices have been welded. */
+    std::map<std::array<long, 3>, std::array<ON_2dPoint, 4>> periodic_triangle_samples;
 
     // For situations where we need to process using Brep data
     std::set<ON_3dPoint *> *edge_pnts;
