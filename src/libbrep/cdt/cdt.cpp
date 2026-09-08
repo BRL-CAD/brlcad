@@ -65,6 +65,7 @@
 #endif
 #include "./cdt.h"
 #include "heal.h"
+#include "surface.h"
 
 #define BREP_PLANAR_TOL 0.05
 #define MAX_TRIANGULATION_ATTEMPTS 5
@@ -2331,13 +2332,13 @@ calc_trim_vnorm(ON_BrepVertex& v, ON_BrepTrim *trim)
     } else {
 	int ev1 = 0;
 	int ev2 = 0;
-	if (surface_EvNormal(s, t_2d1.x, t_2d1.y, t1, v1)) {
+	if (cdt_surface_normal(s, ON_2dPoint(t_2d1), t1, v1)) {
 	    if (trim->Face()->m_bRev) {
 		v1 = v1 * -1;
 	    }
 	    ev1 = 1;
 	}
-	if (surface_EvNormal(s, t_2d2.x, t_2d2.y, t2, v2)) {
+	if (cdt_surface_normal(s, ON_2dPoint(t_2d2), t2, v2)) {
 	    if (trim->Face()->m_bRev) {
 		v2 = v2 * -1;
 	    }

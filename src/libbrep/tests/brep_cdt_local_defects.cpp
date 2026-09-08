@@ -18,7 +18,10 @@ main(int argc, const char **UNUSED(argv))
 {
     if (argc != 1)
 	return 1;
-    int result = cdt_test_edge_singular_pair();
+    int result = cdt_test_periodic_edge_normals();
+    if (result)
+	return 50 + result;
+    result = cdt_test_edge_singular_pair();
     if (result)
 	return result;
     result = cdt_test_closed_edge_seed_policy();

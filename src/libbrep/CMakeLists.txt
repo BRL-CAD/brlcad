@@ -78,6 +78,7 @@ cmakefiles(
   cdt/chart.h
   cdt/cdt.h
   cdt/heal.h
+  cdt/surface.h
   cdt/mesh.h
   cdt/test_api.h
   debug_plot.h
