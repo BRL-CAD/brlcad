@@ -130,6 +130,7 @@ struct geom_result {
     size_t repair_projection_failures = 0;
     size_t repair_untrimmed_samples = 0;
     size_t repair_input_mesh_samples = 0;
+    unsigned int repair_resource_limits = 0;
     int repair_fast_attempted_faces = 0;
     int repair_fast_used_faces = 0;
     int repair_fast_failed_faces = 0;
@@ -1060,6 +1061,7 @@ quality_result(struct db_i *dbip, struct directory *dp,
 	}
 	result.repair_succeeded = repair_result == 0;
 	result.repair_source_result = repair_report.source_diagnostic.result;
+	result.repair_resource_limits = repair_report.resource_limits;
 	result.repair_source_stage = repair_report.source_diagnostic.stage;
 	result.repair_removed_faces = repair_report.mesh.removed_faces;
 	result.repair_added_faces = repair_report.mesh.added_faces;
@@ -1621,6 +1623,7 @@ print_result(const geom_result &result, const vect_t ref_dims)
 	<< result.repair_relaxed_tessellation_completed_faces
 	<< ",\"bounded_edge_retry_attempted\":"
 	<< (result.repair_bounded_edge_retry_attempted ? "true" : "false")
+	<< ",\"resource_limits\":" << result.repair_resource_limits
 	<< ",\"bounded_edge_retry_completed_faces\":"
 	<< result.repair_bounded_edge_retry_completed_faces
 	<< ",\"adaptive_hole_retry_attempted\":"
