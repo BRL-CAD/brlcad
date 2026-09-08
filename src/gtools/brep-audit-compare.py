@@ -14,6 +14,10 @@ from pathlib import Path
 
 REALIZATION_FORMAT = "brlcad-brep-realization-audit-v1"
 MODES = ("wireframe", "shaded", "quality")
+EXCLUSION_MODES = {
+    "wireframe_only": ("shaded", "quality"),
+    "open_surface": ("quality",),
+}
 TOP_LEVEL_FIELDS = (
     "database", "object", "task_index", "status", "mode",
     "ratio_limits", "tessellation_tolerance", "memory_limit_mib",
@@ -52,6 +56,10 @@ def parse_args():
     )
     parser.add_argument("--output", type=Path)
     parser.add_argument(
+        "--exclusions", type=Path,
+        help="shared eligibility JSONL: database, object, reason, evidence",
+    )
+    parser.add_argument(
         "--allow-incomplete", action="store_true",
         help="report unequal task sets without returning an error",
     )
@@ -79,6 +87,20 @@ def validate_vector(value):
             for component in value)
 
 
+def expected_empty_shading(result):
+    counts = [result.get(name) for name in (
+        "requested_items", "completed_items", "failed_items",
+        "skipped_items", "tolerance_skipped_items",
+    )]
+    if not all(isinstance(count, int) and not isinstance(count, bool) and
+               count >= 0 for count in counts):
+        return False
+    requested, completed, failed, skipped, tolerance_skipped = counts
+    return result.get("return_code") == 0 and failed == 0 and \
+        requested == completed == skipped + tolerance_skipped and \
+        result.get("vertices") == 0 and result.get("primitives") == 0
+
+
 def validate_realization(record):
     errors = []
     for name in TOP_LEVEL_FIELDS:
@@ -89,6 +111,14 @@ def validate_realization(record):
         errors.append("invalid mode {!r}".format(mode))
         return errors
     result = record.get(mode)
+    if mode == "quality" and record.get("status") == "excluded" and \
+            record.get("quality_exclusion_reason") == "wireframe_only" and \
+            field(record, ("input", "loaded")) is True and \
+            field(record, ("input", "wireframe_only")) is True and \
+            result is None:
+        if record.get("issues") != []:
+            errors.append("wireframe-only quality exclusion contains issues")
+        return errors
     if not isinstance(result, dict):
         errors.append("mode result '{}' is not an object".format(mode))
         return errors
@@ -115,11 +145,13 @@ def validate_realization(record):
     if not isinstance(record.get("issues"), list):
         errors.append("invalid top-level issues")
     if record.get("status") == "ok":
+        empty_shading = mode == "shaded" and expected_empty_shading(result)
         if result.get("issues") or record.get("issues"):
             errors.append("ok record contains issues")
-        if not result.get("bbox_valid"):
+        if not result.get("bbox_valid") and not empty_shading:
             errors.append("ok record has no bounding box")
-        if result.get("vertices", 0) == 0 or result.get("primitives", 0) == 0:
+        if (result.get("vertices", 0) == 0 or result.get("primitives", 0) == 0) \
+                and not empty_shading:
             errors.append("ok record has empty geometry")
         if mode == "quality":
             solid = result.get("solid_validation")
@@ -135,6 +167,56 @@ def file_digest(path):
         for chunk in iter(lambda: source.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def load_exclusions(path):
+    """Load documented input exclusions, independently of meshing outcomes."""
+    exclusions = {}
+    if path is None:
+        return exclusions
+    with path.open(encoding="utf-8") as source:
+        for line_number, line in enumerate(source, 1):
+            try:
+                row = json.loads(line)
+                if not isinstance(row, dict) or not all(
+                        isinstance(row.get(name), str) and row[name]
+                        for name in ("database", "object", "reason")) or \
+                        row["reason"] not in EXCLUSION_MODES or \
+                        not isinstance(row.get("evidence"), dict) or \
+                        not row["evidence"]:
+                    raise ValueError("expected object identity, supported reason, and evidence")
+                for mode in EXCLUSION_MODES[row["reason"]]:
+                    key = (row["database"], row["object"], mode)
+                    if key in exclusions:
+                        raise ValueError("duplicate exclusion for " + "/".join(key))
+                    exclusions[key] = row
+            except ValueError as error:
+                raise ValueError("{}:{}: {}".format(path, line_number, error)) from error
+    return exclusions
+
+
+def shared_exclusions(baseline, candidate, declared=None):
+    exclusions = dict(declared or {})
+    for records in (baseline, candidate):
+        for key, record in records.items():
+            # A positive face-count classification transfers across revisions;
+            # failed validity or solid checks alone do not establish intent.
+            if record.get("format") != REALIZATION_FORMAT or \
+                    key[2] != "quality" or \
+                    field(record, ("input", "loaded")) is not True or \
+                    field(record, ("input", "wireframe_only")) is not True:
+                continue
+            row = {
+                "database": key[0], "object": key[1],
+                "reason": "wireframe_only", "evidence": {"input": record["input"]},
+            }
+            for mode in EXCLUSION_MODES["wireframe_only"]:
+                exclusions.setdefault((key[0], key[1], mode), row)
+    return exclusions
+
+
+def comparison_status(key, record, exclusions):
+    return "excluded" if key in exclusions else record.get("status", "unknown")
 
 
 def load_records(paths):
@@ -187,11 +269,12 @@ def fmt_number(value):
     return "{:.6g}".format(value)
 
 
-def timing_values(records, mode):
+def timing_values(records, mode, exclusions):
     values = []
-    for record in records.values():
+    for key, record in records.items():
         if record.get("mode") != mode or \
-                record.get("format") != REALIZATION_FORMAT:
+                record.get("format") != REALIZATION_FORMAT or \
+                comparison_status(key, record, exclusions) == "excluded":
             continue
         seconds = field(record, (mode, "seconds"))
         if finite_nonnegative(seconds):
@@ -199,12 +282,29 @@ def timing_values(records, mode):
     return values
 
 
-def status_counts(records, mode):
+def status_counts(records, mode, exclusions):
     counts = collections.Counter()
-    for record in records.values():
+    for key, record in records.items():
         if record.get("mode") == mode:
-            counts[record.get("status", "unknown")] += 1
+            counts[comparison_status(key, record, exclusions)] += 1
     return counts
+
+
+def append_outcome_counts(lines, title, revisions, exclusions):
+    lines.extend(("", title, "-" * len(title)))
+    lines.append("revision       mode       total eligible      ok    fail  timeout excluded other")
+    for name, records in revisions:
+        for mode in MODES:
+            counts = status_counts(records, mode, exclusions)
+            known = sum(counts[status] for status in
+                        ("ok", "fail", "timeout", "excluded"))
+            total = sum(counts.values())
+            lines.append(
+                "{:<14} {:<10} {:>5} {:>8} {:>7} {:>7} {:>8} {:>8} {:>5}".format(
+                    name, mode, total, total - counts["excluded"], counts["ok"],
+                    counts["fail"], counts["timeout"], counts["excluded"], total - known
+                )
+            )
 
 
 def failure_category(record):
@@ -226,12 +326,14 @@ def nested_equal(left, right, path):
 
 
 def comparison_report(args, baseline, candidate, baseline_inputs,
-                      candidate_inputs, schema_errors):
+                      candidate_inputs, schema_errors, declared_exclusions=None):
     baseline_keys = set(baseline)
     candidate_keys = set(candidate)
     common_keys = baseline_keys & candidate_keys
     baseline_only = sorted(baseline_keys - candidate_keys)
     candidate_only = sorted(candidate_keys - baseline_keys)
+    exclusions = shared_exclusions(baseline, candidate, declared_exclusions)
+    revisions = ((args.baseline_name, baseline), (args.candidate_name, candidate))
     config_errors = []
     for key in sorted(common_keys):
         left = baseline[key]
@@ -271,33 +373,30 @@ def comparison_report(args, baseline, candidate, baseline_inputs,
     lines.append("{}-only tasks: {}".format(
         args.candidate_name, len(candidate_only)
     ))
+    lines.extend(("", "Shared eligibility", "------------------"))
+    lines.append("No-face inputs are excluded from shaded and quality comparisons; "
+                 "documented open surfaces from quality only.")
+    lines.append("Exclusions apply to both revisions, including successes, failures, "
+                 "timeouts, and errors. Wireframe remains eligible.")
+    lines.append("Invalidity or an open boundary alone does not exclude a repair "
+                 "candidate. Raw records remain unchanged.")
+    if getattr(args, "exclusions", None):
+        lines.append("Exclusion evidence: {}  {}".format(file_digest(args.exclusions), args.exclusions))
+    exclusion_counts = collections.Counter(
+        (key[2], exclusions[key]["reason"])
+        for key in (baseline_keys | candidate_keys) & set(exclusions)
+    )
+    for (mode, reason), count in sorted(exclusion_counts.items()):
+        lines.append("{} {}: {} shared tasks".format(mode, reason, count))
+    append_outcome_counts(lines, "Outcome counts (shared eligibility)", revisions, exclusions)
+    append_outcome_counts(lines, "Raw outcome counts (recorded)", revisions, {})
     lines.append("")
-    lines.append("Outcome counts")
-    lines.append("--------------")
-    lines.append("revision       mode       total      ok    fail  timeout excluded other")
-    for name, records in (
-            (args.baseline_name, baseline),
-            (args.candidate_name, candidate)):
-        for mode in MODES:
-            counts = status_counts(records, mode)
-            known = sum(counts[name] for name in
-                        ("ok", "fail", "timeout", "excluded"))
-            total = sum(counts.values())
-            lines.append(
-                "{:<14} {:<10} {:>5} {:>7} {:>7} {:>8} {:>8} {:>5}".format(
-                    name, mode, total, counts["ok"], counts["fail"],
-                    counts["timeout"], counts["excluded"], total - known
-                )
-            )
-    lines.append("")
-    lines.append("Generator timing (seconds, completed process records)")
-    lines.append("-----------------------------------------------------")
+    lines.append("Generator timing (seconds, eligible completed process records)")
+    lines.append("--------------------------------------------------------------")
     lines.append("revision       mode           n       total      median         p95         max")
-    for name, records in (
-            (args.baseline_name, baseline),
-            (args.candidate_name, candidate)):
+    for name, records in revisions:
         for mode in MODES:
-            values = timing_values(records, mode)
+            values = timing_values(records, mode, exclusions)
             lines.append(
                 "{:<14} {:<10} {:>5} {:>11} {:>11} {:>11} {:>11}".format(
                     name, mode, len(values), fmt_number(sum(values)),
@@ -313,7 +412,7 @@ def comparison_report(args, baseline, candidate, baseline_inputs,
     for mode in MODES:
         ratios = []
         for key in common_keys:
-            if key[2] != mode:
+            if key[2] != mode or key in exclusions:
                 continue
             left = baseline[key]
             right = candidate[key]
@@ -332,12 +431,11 @@ def comparison_report(args, baseline, candidate, baseline_inputs,
     lines.append("")
     lines.append("Failure categories")
     lines.append("------------------")
-    for name, records in (
-            (args.baseline_name, baseline),
-            (args.candidate_name, candidate)):
+    for name, records in revisions:
         counts = collections.Counter(
             (record.get("mode"), failure_category(record))
-            for record in records.values() if record.get("status") != "ok"
+            for key, record in records.items()
+            if comparison_status(key, record, exclusions) not in ("ok", "excluded")
         )
         if not counts:
             lines.append("{}: none".format(name))
@@ -367,13 +465,18 @@ def comparison_report(args, baseline, candidate, baseline_inputs,
 
 def main():
     args = parse_args()
+    try:
+        exclusions = load_exclusions(args.exclusions)
+    except (OSError, ValueError) as error:
+        sys.stderr.write("Invalid exclusion manifest: {}\n".format(error))
+        return 1
     baseline, baseline_errors, baseline_inputs = load_records(args.baseline)
     candidate, candidate_errors, candidate_inputs = load_records(
         args.candidate
     )
     report, invalid = comparison_report(
         args, baseline, candidate, baseline_inputs, candidate_inputs,
-        baseline_errors + candidate_errors,
+        baseline_errors + candidate_errors, exclusions,
     )
     if args.output:
         args.output.write_text(report, encoding="utf-8")
