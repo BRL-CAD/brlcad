@@ -35,6 +35,8 @@
 
 #include "common.h"
 
+#include <stdint.h>
+
 #include "test_api.h"
 
 
@@ -113,6 +115,64 @@ test_network_signed_conversion(void)
 }
 
 
+static int
+test_64_bit_conversion(void)
+{
+    const unsigned char network_signed[] = {
+	0, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfe
+    };
+    const unsigned char network_unsigned[] = {
+	0, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
+    };
+    const unsigned char signed_16[] = {0xff, 0xfe};
+    const unsigned char signed_64[] = {
+	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfe
+    };
+    unsigned char output_16[sizeof(signed_16)] = {0};
+    unsigned char output_64[sizeof(signed_64)] = {0};
+    const unsigned long expected_unsigned = (unsigned long)UINT64_MAX;
+    unsigned long unsigned_value = 0;
+    long signed_value = 0;
+    int errors = 0;
+
+    TEST_API_CHECK(bu_cv_w_cookie(&signed_value, bu_cv_cookie("hsl"),
+	sizeof(signed_value), (void *)(network_signed + 1),
+	bu_cv_cookie("nsl"), 1) == 1,
+	"bu_cv_w_cookie did not convert signed network 64 to host long");
+    TEST_API_CHECK(signed_value == -2,
+	"signed network 64 conversion returned %ld, expected -2", signed_value);
+
+    TEST_API_CHECK(bu_cv_w_cookie(&unsigned_value, bu_cv_cookie("hul"),
+	sizeof(unsigned_value), (void *)(network_unsigned + 1),
+	bu_cv_cookie("nul"), 1) == 1,
+	"bu_cv_w_cookie did not convert unsigned network 64 to host long");
+    TEST_API_CHECK(unsigned_value == expected_unsigned,
+	"unsigned network 64 conversion returned %lu, expected %lu",
+	unsigned_value, expected_unsigned);
+
+    signed_value = -2;
+    TEST_API_CHECK(bu_cv_w_cookie(output_64, bu_cv_cookie("nsl"),
+	sizeof(output_64), &signed_value, bu_cv_cookie("hsl"), 1) == 1,
+	"bu_cv_w_cookie did not convert signed host long to network 64");
+    TEST_API_CHECK(memcmp(output_64, signed_64, sizeof(output_64)) == 0,
+	"signed host long to network 64 conversion produced incorrect bytes");
+
+    TEST_API_CHECK(bu_cv_w_cookie(output_64, bu_cv_cookie("ns64"),
+	sizeof(output_64), (void *)signed_16, bu_cv_cookie("ns16"), 1) == 1,
+	"bu_cv_w_cookie did not widen signed network 16 to network 64");
+    TEST_API_CHECK(memcmp(output_64, signed_64, sizeof(output_64)) == 0,
+	"signed network 16 to network 64 conversion produced incorrect bytes");
+
+    TEST_API_CHECK(bu_cv_w_cookie(output_16, bu_cv_cookie("ns16"),
+	sizeof(output_16), (void *)signed_64, bu_cv_cookie("ns64"), 1) == 1,
+	"bu_cv_w_cookie did not narrow signed network 64 to network 16");
+    TEST_API_CHECK(memcmp(output_16, signed_16, sizeof(output_16)) == 0,
+	"signed network 64 to network 16 conversion produced incorrect bytes");
+
+    return errors ? BRLCAD_ERROR : BRLCAD_OK;
+}
+
+
 int
 main(int UNUSED(argc), char *argv[])
 {
@@ -124,6 +184,8 @@ main(int UNUSED(argc), char *argv[])
     if (test_cookie_signedness() != BRLCAD_OK)
 	result = BRLCAD_ERROR;
     if (test_network_signed_conversion() != BRLCAD_OK)
+	result = BRLCAD_ERROR;
+    if (test_64_bit_conversion() != BRLCAD_OK)
 	result = BRLCAD_ERROR;
 
     return result;
