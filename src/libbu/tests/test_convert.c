@@ -116,6 +116,97 @@ test_network_signed_conversion(void)
 
 
 static int
+test_32_bit_cookie_conversion(void)
+{
+    const unsigned char network_signed[] = {
+	0, 0x00, 0x00, 0x00, 0x01, 0xff, 0xff, 0xff, 0xfe
+    };
+    const unsigned char network_unsigned[] = {
+	0, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x01
+    };
+    const unsigned char expected_network[] = {
+	0x00, 0x00, 0x00, 0x01, 0xff, 0xff, 0xff, 0xfe
+    };
+    const int signed_input[] = {1, -2};
+    const double double_input[] = {1.0, -2.0};
+    unsigned char network_output[sizeof(expected_network)] = {0};
+    unsigned int unsigned_output[2] = {0};
+    int signed_output[2] = {0};
+    double double_output[2] = {0.0};
+    struct {
+	int values[2];
+	uint64_t guard;
+    } bounded_output = {{0}, UINT64_C(0x0123456789abcdef)};
+    const uint64_t expected_guard = bounded_output.guard;
+    int errors = 0;
+
+    TEST_API_CHECK(sizeof(int) == sizeof(uint32_t),
+	"CV_32 host int is %zu bytes, expected %zu", sizeof(int), sizeof(uint32_t));
+
+    TEST_API_CHECK(bu_cv_w_cookie(signed_output, bu_cv_cookie("hsi"),
+	sizeof(signed_output), (void *)(network_signed + 1),
+	bu_cv_cookie("nsi"), 2) == 2,
+	"bu_cv_w_cookie did not convert all signed network 32 inputs");
+    TEST_API_CHECK(signed_output[0] == 1 && signed_output[1] == -2,
+	"signed network 32 conversion returned {%d, %d}, expected {1, -2}",
+	signed_output[0], signed_output[1]);
+
+    TEST_API_CHECK(bu_cv_w_cookie(unsigned_output, bu_cv_cookie("hui"),
+	sizeof(unsigned_output), (void *)(network_unsigned + 1),
+	bu_cv_cookie("nui"), 2) == 2,
+	"bu_cv_w_cookie did not convert all unsigned network 32 inputs");
+    TEST_API_CHECK(unsigned_output[0] == (unsigned int)UINT32_MAX &&
+	unsigned_output[1] == 1,
+	"unsigned network 32 conversion returned {%u, %u}, expected {%u, 1}",
+	unsigned_output[0], unsigned_output[1], (unsigned int)UINT32_MAX);
+
+    TEST_API_CHECK(bu_cv_w_cookie(network_output, bu_cv_cookie("nsi"),
+	sizeof(network_output), (void *)signed_input, bu_cv_cookie("hsi"), 2) == 2,
+	"bu_cv_w_cookie did not convert all signed host 32 inputs");
+    TEST_API_CHECK(memcmp(network_output, expected_network,
+	sizeof(network_output)) == 0,
+	"signed host 32 to network conversion produced incorrect bytes");
+
+    TEST_API_CHECK(bu_cv_w_cookie(double_output, bu_cv_cookie("hd"),
+	sizeof(double_output), (void *)signed_input, bu_cv_cookie("hsi"), 2) == 2,
+	"bu_cv_w_cookie did not widen all host 32 inputs to double");
+    TEST_API_CHECK(test_api_close_enough(double_output[0], 1.0, 0.0, 0.0) &&
+	test_api_close_enough(double_output[1], -2.0, 0.0, 0.0),
+	"host 32 to double conversion returned {%g, %g}, expected {1, -2}",
+	double_output[0], double_output[1]);
+
+    double_output[0] = double_output[1] = 0.0;
+    TEST_API_CHECK(bu_cv_w_cookie(double_output, bu_cv_cookie("hd"),
+	sizeof(double_output), (void *)(network_signed + 1),
+	bu_cv_cookie("nsi"), 2) == 2,
+	"bu_cv_w_cookie did not widen all network 32 inputs to double");
+    TEST_API_CHECK(test_api_close_enough(double_output[0], 1.0, 0.0, 0.0) &&
+	test_api_close_enough(double_output[1], -2.0, 0.0, 0.0),
+	"network 32 to double conversion returned {%g, %g}, expected {1, -2}",
+	double_output[0], double_output[1]);
+
+    TEST_API_CHECK(bu_cv_w_cookie(bounded_output.values, bu_cv_cookie("hsi"),
+	sizeof(bounded_output.values), (void *)double_input, bu_cv_cookie("hd"), 2) == 2,
+	"bu_cv_w_cookie did not narrow all doubles to host 32");
+    TEST_API_CHECK(bounded_output.values[0] == 1 && bounded_output.values[1] == -2,
+	"double to host 32 conversion returned {%d, %d}, expected {1, -2}",
+	bounded_output.values[0], bounded_output.values[1]);
+    TEST_API_CHECK(bounded_output.guard == expected_guard,
+	"double to host 32 conversion wrote beyond the output buffer");
+
+    memset(network_output, 0, sizeof(network_output));
+    TEST_API_CHECK(bu_cv_w_cookie(network_output, bu_cv_cookie("nsi"),
+	sizeof(network_output), (void *)double_input, bu_cv_cookie("hd"), 2) == 2,
+	"bu_cv_w_cookie did not narrow all doubles to network 32");
+    TEST_API_CHECK(memcmp(network_output, expected_network,
+	sizeof(network_output)) == 0,
+	"double to network 32 conversion produced incorrect bytes");
+
+    return errors ? BRLCAD_ERROR : BRLCAD_OK;
+}
+
+
+static int
 test_64_bit_conversion(void)
 {
     const unsigned char network_signed[] = {
@@ -184,6 +275,8 @@ main(int UNUSED(argc), char *argv[])
     if (test_cookie_signedness() != BRLCAD_OK)
 	result = BRLCAD_ERROR;
     if (test_network_signed_conversion() != BRLCAD_OK)
+	result = BRLCAD_ERROR;
+    if (test_32_bit_cookie_conversion() != BRLCAD_OK)
 	result = BRLCAD_ERROR;
     if (test_64_bit_conversion() != BRLCAD_OK)
 	result = BRLCAD_ERROR;
