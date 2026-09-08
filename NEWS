@@ -42,6 +42,7 @@ changes made.  See document footer for additional details.
 * added option validation to image & framebuffer tools - Sean Morrison
 * added contributor, API, command, & raytracing guides - Sean Morrison
 * added and updated command and library manual pages - Sean Morrison
+* added parashot gravity trajectory path generator - Sean Morrison
 * added metaball point scaling (via metaball_move_pnt) - Sean Morrison
 * all raytracing apps now report object prep failures - Sean Morrison
 * improved fast4-g robustness and error reporting - Cliff Yapp
