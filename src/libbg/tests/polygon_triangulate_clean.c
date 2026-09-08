@@ -229,6 +229,46 @@ main(int argc, const char **argv)
     }
 
     {
+	/* Reinserting (2, 1) on the nonadjacent horizontal edge exposes a
+	 * clockwise triangular cutout in this touching walk.  Filling both
+	 * extracted cycles would produce area 18 instead of area 10.  The
+	 * interpretation must not depend on the starting vertex or winding. */
+	point2d_t points[14] = {
+	    {2.0, 1.0}, {0.0, -1.0}, {-2.0, 1.0},
+	    {3.0, 1.0}, {-3.0, 2.0}, {0.0, -4.0},
+	    {-5.0, -5.0}, {5.0, -5.0}, {5.0, 5.0}, {-5.0, 5.0},
+	    {-0.25, 0.0}, {0.25, 0.0}, {0.25, 0.5}, {-0.25, 0.5}
+	};
+	const size_t ring_count = 6;
+	const int enclosing[4] = {6, 7, 8, 9};
+	const int island_hole[4] = {10, 11, 12, 13};
+	for (int direction = -1; direction <= 1; direction += 2) {
+	    for (size_t start = 0; start < ring_count; ++start) {
+		int ring[6];
+		for (size_t i = 0; i < ring_count; ++i) {
+		    ring[i] = ((int)start + direction * (int)i +
+			(int)ring_count) % (int)ring_count;
+		}
+		if (check_clean_triangulation((const point2d_t *)points, 14,
+			ring, ring_count, NULL, NULL, 0, NULL, 0, 10.0))
+		    return 1;
+		/* The same walk used as a hole leaves its cutout as a filled
+		 * island, which must be retained exactly once. */
+		const int *holes[2] = {ring, island_hole};
+		const size_t hole_counts[2] = {ring_count, 4};
+		if (check_clean_triangulation((const point2d_t *)points, 14,
+			enclosing, 4, holes, hole_counts, 1, NULL, 0, 90.0))
+		    return 1;
+		/* A hole in the island belongs to its smallest enclosing
+		 * filled cycle, not to the enclosing square. */
+		if (check_clean_triangulation((const point2d_t *)points, 14,
+			enclosing, 4, holes, hole_counts, 2, NULL, 0, 89.75))
+		    return 1;
+	    }
+	}
+    }
+
+    {
 	/* A zero-area A-B-A whisker in a hole does not change the filled set. */
 	point2d_t points[11] = {
 	    {0.0, 0.0}, {10.0, 0.0}, {10.0, 10.0}, {0.0, 10.0},
