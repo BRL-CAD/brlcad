@@ -65,6 +65,7 @@ extern BREP_EXPORT int cdt_test_fast_display_normals(void);
 extern BREP_EXPORT int cdt_test_periodic_uv_sampling(void);
 extern BREP_EXPORT int cdt_test_periodic_edge_normals(void);
 extern BREP_EXPORT int cdt_test_surface_length_estimates(void);
+extern BREP_EXPORT int cdt_test_repair_nearest_triangle(void);
 
 __END_DECLS
 

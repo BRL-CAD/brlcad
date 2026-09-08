@@ -3808,40 +3808,158 @@ repair_input_mesh_distance(RTree<size_t, double, 3> &triangle_index,
     if (!vertices || !faces || !distance || !point.IsValid() ||
 	!(allowed > 0.0))
 	return false;
-    double minimum[3] = {
-	point.x - allowed, point.y - allowed, point.z - allowed
-    };
-    double maximum[3] = {
-	point.x + allowed, point.y + allowed, point.z + allowed
-    };
-    std::vector<size_t> candidates;
-    triangle_index.Search(minimum, maximum,
-	assembled_mesh_collect_candidate, &candidates);
-    double closest = std::numeric_limits<double>::infinity();
-    size_t closest_triangle = std::numeric_limits<size_t>::max();
     point_t test_point;
     VSET(test_point, point.x, point.y, point.z);
-    for (size_t candidate : candidates) {
-	point_t triangle[3];
-	for (int corner = 0; corner < 3; ++corner) {
-	    const int vertex = faces[candidate * 3 + (size_t)corner];
-	    VSET(triangle[corner], vertices[(size_t)vertex * 3],
-		vertices[(size_t)vertex * 3 + 1],
-		vertices[(size_t)vertex * 3 + 2]);
+    /* Once a query finds a triangle within its radius, every equally near
+     * triangle must also overlap that cube.  Repeating the original traversal
+     * order preserves source attribution on ties.  Most fidelity samples are
+     * much closer than the maximum permitted repair distance. */
+    constexpr double initial_radius_subdivisions = 64.0;
+    constexpr long double distance_roundoff_factor = 64.0L;
+    double radius = allowed / initial_radius_subdivisions;
+    for (;;) {
+	double minimum[3], maximum[3];
+	for (int axis = 0; axis < 3; ++axis) {
+	    minimum[axis] = std::nextafter(test_point[axis] - radius,
+		-std::numeric_limits<double>::infinity());
+	    maximum[axis] = std::nextafter(test_point[axis] + radius,
+		std::numeric_limits<double>::infinity());
 	}
-	const double candidate_distance = bg_tri_closest_pt(NULL, test_point,
-	    triangle[0], triangle[1], triangle[2]);
-	if (candidate_distance < closest) {
-	    closest = candidate_distance;
-	    closest_triangle = candidate;
+	double closest = std::numeric_limits<double>::infinity();
+	size_t closest_triangle = std::numeric_limits<size_t>::max();
+	triangle_index.Search(minimum, maximum, [&](size_t candidate, void *) {
+	    point_t triangle[3];
+	    for (int corner = 0; corner < 3; ++corner) {
+		const int vertex = faces[candidate * 3 + (size_t)corner];
+		VSET(triangle[corner], vertices[(size_t)vertex * 3],
+		    vertices[(size_t)vertex * 3 + 1],
+		    vertices[(size_t)vertex * 3 + 2]);
+	    }
+	    long double lower_squared = 0.0L;
+	    double magnitude = 0.0;
+	    for (int axis = 0; axis < 3; ++axis) {
+		const double low = std::min(triangle[0][axis],
+		    std::min(triangle[1][axis], triangle[2][axis]));
+		const double high = std::max(triangle[0][axis],
+		    std::max(triangle[1][axis], triangle[2][axis]));
+		const long double separation = std::max(0.0L,
+		    std::max((long double)low - test_point[axis],
+		    (long double)test_point[axis] - high));
+		lower_squared += separation * separation;
+		magnitude = std::max(magnitude, std::max(std::fabs(low),
+		    std::max(std::fabs(high), std::fabs(test_point[axis]))));
+	    }
+	    /* Only prune a strictly farther box.  Allow floating-point distance
+	     * roundoff here; this guard does not change the acceptance tolerance. */
+	    const long double guarded_closest = (long double)closest +
+		distance_roundoff_factor * DBL_EPSILON * magnitude;
+	    if (lower_squared > guarded_closest * guarded_closest)
+		return true;
+	    const double candidate_distance = bg_tri_closest_pt(NULL,
+		test_point, triangle[0], triangle[1], triangle[2]);
+	    if (candidate_distance < closest) {
+		closest = candidate_distance;
+		closest_triangle = candidate;
+	    }
+	    return true;
+	}, NULL);
+	if (std::isfinite(closest) && closest <= radius) {
+	    *distance = closest;
+	    if (closest_face)
+		*closest_face = closest_triangle;
+	    return true;
+	}
+	if (radius >= allowed)
+	    return false;
+	radius = radius > 0.0 ? std::min(allowed, 2.0 * radius) : allowed;
+    }
+}
+
+extern "C" int
+cdt_test_repair_nearest_triangle(void)
+{
+    constexpr int side = 8;
+    const double scales[] = {0.0001, 1.0, 10000.0};
+    const double offsets[] = {0.0, 10000000.0};
+    const double allowances[] = {0.00001, 0.125, 1.0, 64.0};
+    for (double scale : scales) {
+	for (double offset : offsets) {
+	    std::vector<fastf_t> vertices;
+	    for (int y = 0; y <= side; ++y) {
+		for (int x = 0; x <= side; ++x) {
+		    vertices.push_back((offset + x) * scale);
+		    vertices.push_back((offset + y) * scale);
+		    vertices.push_back(offset * scale);
+		}
+	    }
+	    std::vector<int> faces;
+	    for (int y = 0; y < side; ++y) {
+		for (int x = 0; x < side; ++x) {
+		    const int a = y * (side + 1) + x;
+		    const int cell[6] = {a, a + 1, a + side + 2,
+			a, a + side + 2, a + side + 1};
+		    faces.insert(faces.end(), cell, cell + 6);
+		}
+	    }
+	    /* Include collinear and duplicate triangles to exercise degenerate
+	     * distance evaluation and exact source-attribution ties. */
+	    const int extra[6] = {0, 1, 2, 0, 1, side + 2};
+	    faces.insert(faces.end(), extra, extra + 6);
+	    RTree<size_t, double, 3> tree;
+	    for (size_t triangle = 0; triangle < faces.size() / 3; ++triangle) {
+		double minimum[3], maximum[3];
+		for (int axis = 0; axis < 3; ++axis) {
+		    minimum[axis] = DBL_MAX;
+		    maximum[axis] = -DBL_MAX;
+		    for (int corner = 0; corner < 3; ++corner) {
+			const double coordinate = vertices[
+			    (size_t)faces[triangle * 3 + corner] * 3 + axis];
+			minimum[axis] = std::min(minimum[axis], coordinate);
+			maximum[axis] = std::max(maximum[axis], coordinate);
+		    }
+		}
+		tree.Insert(minimum, maximum, triangle);
+	    }
+	    for (int sample = 0; sample < (side + 2) * (side + 2); ++sample) {
+		point_t point;
+		VSET(point, (offset + sample % (side + 2) - 0.25) * scale,
+		    (offset + sample / (side + 2) - 0.25) * scale,
+		    (offset + (sample % 3) * 0.0625) * scale);
+		for (double allowance : allowances) {
+		    const double allowed = allowance * scale;
+		    double minimum[3], maximum[3];
+		    for (int axis = 0; axis < 3; ++axis) {
+			minimum[axis] = point[axis] - allowed;
+			maximum[axis] = point[axis] + allowed;
+		    }
+		    double exhaustive = std::numeric_limits<double>::infinity();
+		    size_t exhaustive_face = SIZE_MAX;
+		    tree.Search(minimum, maximum, [&](size_t candidate, void *) {
+			const double distance = bg_tri_closest_pt(NULL, point,
+			    &vertices[(size_t)faces[candidate * 3] * 3],
+			    &vertices[(size_t)faces[candidate * 3 + 1] * 3],
+			    &vertices[(size_t)faces[candidate * 3 + 2] * 3]);
+			if (distance < exhaustive) {
+			    exhaustive = distance;
+			    exhaustive_face = candidate;
+			}
+			return true;
+		    }, NULL);
+		    double nearest = -1.0;
+		    size_t nearest_face = SIZE_MAX;
+		    const bool found = repair_input_mesh_distance(tree,
+			vertices.data(), faces.data(), ON_3dPoint(point), allowed,
+			&nearest, &nearest_face);
+		    if (found != (std::isfinite(exhaustive) && exhaustive <= allowed))
+			return 1;
+		    if (found && (nearest < exhaustive || nearest > exhaustive ||
+			nearest_face != exhaustive_face))
+			return 2;
+		}
+	    }
 	}
     }
-    if (!std::isfinite(closest) || closest > allowed)
-	return false;
-    *distance = closest;
-    if (closest_face)
-	*closest_face = closest_triangle;
-    return true;
+    return 0;
 }
 
 struct repair_source_sample {
