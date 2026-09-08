@@ -431,6 +431,9 @@ brlcad_add_test(NAME bg_sat_basic   COMMAND bg_sat)
 
 #  ************ trimesh_sync.cpp tests ***********
 
+brlcad_addexec(bg_trimesh_solid_test trimesh_solid.c "${BG_TEST_LIBS}" TEST)
+brlcad_add_test(NAME bg_trimesh_solid COMMAND bg_trimesh_solid_test)
+
 brlcad_addexec(bg_trimesh_gc trimesh_gc.c "${BG_TEST_LIBS}" TEST)
 
 brlcad_add_test(NAME bg_trimesh_gc COMMAND bg_trimesh_gc)
