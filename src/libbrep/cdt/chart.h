@@ -77,6 +77,8 @@ public:
 	ON_2dPoint &native_uv) const;
     bool triangle_interior_sample(const long native_triangle[3],
 	ON_2dPoint &native_uv) const;
+    bool triangle_surface_samples(const long native_triangle[3],
+	ON_2dPoint native_uv[4]) const;
     int triangle_orientation(const long native_triangle[3]) const;
     bool edge_midpoint_sample(const long native_edge[2],
 	ON_2dPoint &native_uv, ON_2dPoint &chart_uv) const;

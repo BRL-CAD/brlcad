@@ -50,6 +50,7 @@
 #include "./chart.h"
 #include "./cdt.h"
 #include "./mesh.h"
+#include "./surface.h"
 
 /* GTE mean-value parameterization for the lscm_reproject path */
 #if defined(__GNUC__) && !defined(__clang__)
@@ -2009,6 +2010,56 @@ cdt_test_local_defects(void)
 	    0.999)
 	return 10;
 
+    /* A valid chart region can cover more than half a period.  Welding its
+     * seam copies must not turn the orientation sample into its complement. */
+    const ON_2dPoint wide_uv[3] = {
+	ON_2dPoint(udom.ParameterAt(0.10), vdom.ParameterAt(0.20)),
+	ON_2dPoint(udom.ParameterAt(0.65), vdom.ParameterAt(0.20)),
+	ON_2dPoint(udom.ParameterAt(0.65), vdom.ParameterAt(0.80))
+    };
+    cdt_face_chart wide_chart;
+    periodic_mesh.m_pnts_2d.clear();
+    for (int vertex = 0; vertex < 3; ++vertex) {
+	periodic_mesh.m_pnts_2d.push_back(std::make_pair(wide_uv[vertex].x,
+	    wide_uv[vertex].y));
+	cdt_chart_vertex identity;
+	identity.id = vertex;
+	identity.native_point = vertex;
+	wide_chart.vertices.push_back(identity);
+    }
+    wide_chart.points = periodic_mesh.m_pnts_2d;
+    for (int vertex = 0; vertex < 3; ++vertex)
+	seam_points[vertex] = cdt_surface_point(surface, wide_uv[vertex]);
+    const ON_2dPoint wide_center = (wide_uv[0] + wide_uv[1] + wide_uv[2]) / 3.0;
+    if (!cdt_surface_normal(surface, wide_center, center_point,
+	    expected_normal) || !expected_normal.Unitize())
+	return 93;
+    periodic_mesh.record_chart_triangle(seam_triangle, seam_triangle,
+	wide_chart);
+    double expected_deviation = ((seam_points[0] + seam_points[1] +
+	seam_points[2]) / 3.0).DistanceTo(center_point);
+    for (int edge = 0; edge < 3; ++edge) {
+	const int next = (edge + 1) % 3;
+	expected_deviation = std::max(expected_deviation,
+	    ((seam_points[edge] + seam_points[next]) / 2.0).DistanceTo(
+	    cdt_surface_point(surface, (wide_uv[edge] + wide_uv[next]) / 2.0)));
+    }
+    for (int orientation = 0; orientation < 2; ++orientation) {
+	double measured_deviation = 0.0;
+	if (!periodic_mesh.surface_triangle_deviation(seam_triangle,
+		&measured_deviation) || std::fabs(measured_deviation -
+		expected_deviation) > ON_ZERO_TOLERANCE)
+	    return 96;
+	if (ON_DotProduct(periodic_mesh.bnorm(seam_triangle),
+		expected_normal) < 0.999)
+	    return 94;
+	std::swap(seam_triangle.v[1], seam_triangle.v[2]);
+	periodic_mesh.m_bRev = !periodic_mesh.m_bRev;
+    }
+    periodic_mesh.reset();
+    if (!periodic_mesh.periodic_triangle_samples.empty())
+	return 95;
+
     const auto release_polygon_edges = [](cpolygon_t &polygon) {
 	for (cpolyedge_t *edge : polygon.poly)
 	    delete edge;
@@ -2691,6 +2742,59 @@ cdt_mesh_t::tplane(const triangle_t &t)
     return ON_Plane(tc, tn);
 }
 
+static std::array<long, 3>
+chart_triangle_key(const triangle_t &triangle)
+{
+    std::array<long, 3> key = {{triangle.v[0], triangle.v[1], triangle.v[2]}};
+    std::sort(key.begin(), key.end());
+    return key;
+}
+
+void
+cdt_mesh_t::record_chart_triangle(const triangle_t &triangle,
+	const triangle_t &native_triangle, const cdt_face_chart &chart)
+{
+    if (!brep || f_id < 0 || f_id >= brep->m_F.Count())
+	return;
+    const ON_Surface *surface = brep->m_F[f_id].SurfaceOf();
+    if (!surface)
+	return;
+    for (int corner = 0; corner < 3; ++corner) {
+	if (native_triangle.v[corner] < 0 ||
+		(size_t)native_triangle.v[corner] >= m_pnts_2d.size())
+	    return;
+    }
+    bool wide = false;
+    for (int direction = 0; direction < 2; ++direction) {
+	if (!surface->IsClosed(direction))
+	    continue;
+	const double period = surface->Domain(direction).Length();
+	if (!(period > 0.0) || !std::isfinite(period))
+	    return;
+	double minimum = DBL_MAX;
+	double maximum = -DBL_MAX;
+	for (int corner = 0; corner < 3; ++corner) {
+	    const auto &uv = m_pnts_2d[(size_t)native_triangle.v[corner]];
+	    const double coordinate = direction ? uv.second : uv.first;
+	    minimum = std::min(minimum, coordinate);
+	    maximum = std::max(maximum, coordinate);
+	}
+	wide = wide || maximum - minimum > 0.5 * period;
+    }
+    const auto key = chart_triangle_key(triangle);
+    periodic_triangle_samples.erase(key);
+    if (!wide)
+	return;
+    long native[3];
+    for (int corner = 0; corner < 3; ++corner) {
+	const auto found = std::find(triangle.v, triangle.v + 3, key[(size_t)corner]);
+	native[corner] = native_triangle.v[found - triangle.v];
+    }
+    std::array<ON_2dPoint, 4> samples;
+    if (chart.triangle_surface_samples(native, samples.data()))
+	periodic_triangle_samples[key] = samples;
+}
+
 ON_3dVector
 cdt_mesh_t::bnorm(const triangle_t &t)
 {
@@ -2709,6 +2813,15 @@ cdt_mesh_t::bnorm(const triangle_t &t)
     if (brep && f_id >= 0 && f_id < brep->m_F.Count()) {
 	const ON_Surface *surface = brep->m_F[f_id].SurfaceOf();
 	if (surface) {
+	    const auto retained = periodic_triangle_samples.find(
+		chart_triangle_key(t));
+	    if (retained != periodic_triangle_samples.end()) {
+		ON_3dPoint point;
+		ON_3dVector normal;
+		if (cdt_surface_normal(surface, retained->second[0], point,
+			normal) && normal.Unitize())
+		    return normal;
+	    }
 	    ON_2dPoint uv[3];
 	    bool mapped = true;
 	    for (int corner = 0; corner < 3; ++corner) {
@@ -2823,14 +2936,22 @@ cdt_mesh_t::surface_triangle_deviation(const triangle_t &triangle,
     if (!surface)
 	return false;
 
+    const auto key = chart_triangle_key(triangle);
+    const auto retained = periodic_triangle_samples.find(key);
+    const bool have_chart_samples = retained != periodic_triangle_samples.end();
     ON_2dPoint uv[3];
     ON_3dPoint points[3];
     for (int corner = 0; corner < 3; ++corner) {
-	const long vertex = triangle.v[corner];
-	if (vertex < 0 || (size_t)vertex >= pnts.size() ||
-		(ambiguous_p3d2d.find(vertex) != ambiguous_p3d2d.end() &&
+	const long vertex = have_chart_samples ? key[(size_t)corner] :
+	    triangle.v[corner];
+	if (vertex < 0 || (size_t)vertex >= pnts.size())
+	    return false;
+	points[corner] = *pnts[(size_t)vertex];
+	if (have_chart_samples)
+	    continue;
+	if (ambiguous_p3d2d.find(vertex) != ambiguous_p3d2d.end() &&
 		periodic_ambiguous_p3d2d.find(vertex) ==
-		periodic_ambiguous_p3d2d.end()))
+		periodic_ambiguous_p3d2d.end())
 	    return false;
 	const auto native = p3d2d.find(vertex);
 	if (native == p3d2d.end() || native->second < 0 ||
@@ -2839,9 +2960,8 @@ cdt_mesh_t::surface_triangle_deviation(const triangle_t &triangle,
 	uv[corner] = ON_2dPoint(
 	    m_pnts_2d[(size_t)native->second].first,
 	    m_pnts_2d[(size_t)native->second].second);
-	points[corner] = *pnts[(size_t)vertex];
     }
-    for (int direction = 0; direction < 2; ++direction) {
+    for (int direction = 0; !have_chart_samples && direction < 2; ++direction) {
 	if (!surface->IsClosed(direction))
 	    continue;
 	const double period = surface->Domain(direction).Length();
@@ -2862,26 +2982,17 @@ cdt_mesh_t::surface_triangle_deviation(const triangle_t &triangle,
 	ON_2dPoint sample_uv(0.0, 0.0);
 	ON_3dPoint chord(0.0, 0.0, 0.0);
 	for (int corner = 0; corner < 3; ++corner) {
-	    sample_uv.x += weights[sample][corner] * uv[corner].x;
-	    sample_uv.y += weights[sample][corner] * uv[corner].y;
+	    if (!have_chart_samples) {
+		sample_uv.x += weights[sample][corner] * uv[corner].x;
+		sample_uv.y += weights[sample][corner] * uv[corner].y;
+	    }
 	    chord.x += weights[sample][corner] * points[corner].x;
 	    chord.y += weights[sample][corner] * points[corner].y;
 	    chord.z += weights[sample][corner] * points[corner].z;
 	}
-	for (int direction = 0; direction < 2; ++direction) {
-	    if (!surface->IsClosed(direction))
-		continue;
-	    const ON_Interval domain = surface->Domain(direction);
-	    const double period = domain.Length();
-	    if (!(period > 0.0) || !std::isfinite(period))
-		return false;
-	    sample_uv[direction] = domain.Min() + std::fmod(
-		sample_uv[direction] - domain.Min(), period);
-	    if (sample_uv[direction] < domain.Min())
-		sample_uv[direction] += period;
-	}
-	const ON_3dPoint surface_point = surface->PointAt(sample_uv.x,
-	    sample_uv.y);
+	if (have_chart_samples)
+	    sample_uv = retained->second[(size_t)sample];
+	const ON_3dPoint surface_point = cdt_surface_point(surface, sample_uv);
 	if (!surface_point.IsValid())
 	    return false;
 	const double deviation = chord.DistanceTo(surface_point);
@@ -3046,6 +3157,7 @@ cdt_mesh_t::repair_incorrect_normal_edges()
 
     const std::vector<triangle_t> saved_triangles = tris_vect;
     const std::vector<triangle_t> saved_triangles_2d = tris_2d;
+    const auto saved_chart_samples = periodic_triangle_samples;
     const decltype(v2edges) saved_v2edges = v2edges;
     const decltype(v2tris) saved_v2tris = v2tris;
     const decltype(edges2tris) saved_edges2tris = edges2tris;
@@ -3062,6 +3174,7 @@ cdt_mesh_t::repair_incorrect_normal_edges()
     const auto restore = [&]() {
 	tris_vect = saved_triangles;
 	tris_2d = saved_triangles_2d;
+	periodic_triangle_samples = saved_chart_samples;
 	v2edges = saved_v2edges;
 	v2tris = saved_v2tris;
 	edges2tris = saved_edges2tris;
@@ -3108,11 +3221,23 @@ cdt_mesh_t::repair_incorrect_normal_edges()
 	return 0;
     };
     const auto acceptable_triangle = [&](triangle_t &triangle) {
+	triangle_t native;
+	if (!native_triangle(triangle, native.v))
+	    return false;
+	for (const cdt_face_chart &chart : m_face_charts) {
+	    if (chart.triangle_orientation(native.v)) {
+		record_chart_triangle(triangle, native, chart);
+		break;
+	    }
+	}
 	const ON_3dVector triangle_normal = tnorm(triangle);
 	const ON_3dVector surface_normal = bnorm(triangle);
-	return triangle_normal.Length() > 0.0 &&
+	const bool acceptable = triangle_normal.Length() > 0.0 &&
 	    surface_normal.Length() > 0.0 &&
 	    ON_DotProduct(triangle_normal, surface_normal) >= 0.1;
+	if (!acceptable)
+	    periodic_triangle_samples.erase(chart_triangle_key(triangle));
+	return acceptable;
     };
     const auto erase_native_triangle = [&](const long native[3]) {
 	long wanted[3] = {native[0], native[1], native[2]};
@@ -3498,6 +3623,7 @@ cdt_mesh_t::toleranced_boundary_triangle(const triangle_t &triangle)
 
 void cdt_mesh_t::reset()
 {
+    periodic_triangle_samples.clear();
     this->tris_vect.clear();
     this->tris_tree.RemoveAll();
     this->v2edges.clear();
@@ -5779,12 +5905,14 @@ install_face_chart_atlas(cdt_mesh_t *mesh, const ON_BrepFace &face,
     }
 
     std::vector<triangle_t> atlas_triangles;
+    std::vector<size_t> component_ends;
     for (const cdt_face_chart &component : atlas) {
 	if (!triangulate_chart_component(mesh, face, component,
 		atlas_triangles)) {
 	    failure.clear();
 	    return false;
 	}
+	component_ends.push_back(atlas_triangles.size());
     }
     if (atlas_triangles.empty()) {
 	failure = "face atlas produced no chart triangles";
@@ -5792,8 +5920,6 @@ install_face_chart_atlas(cdt_mesh_t *mesh, const ON_BrepFace &face,
     }
 
     std::vector<triangle_t> mapped_triangles;
-    size_t forward_count = 0;
-    size_t reverse_count = 0;
     for (const triangle_t &triangle_2d : atlas_triangles) {
 	triangle_t triangle_3d;
 	for (int corner = 0; corner < 3; ++corner) {
@@ -5812,6 +5938,19 @@ install_face_chart_atlas(cdt_mesh_t *mesh, const ON_BrepFace &face,
 	    }
 	    triangle_3d.v[corner] = mesh_point->second;
 	}
+	mapped_triangles.push_back(triangle_3d);
+    }
+
+    mesh->reset();
+    size_t forward_count = 0;
+    size_t reverse_count = 0;
+    size_t component_index = 0;
+    for (size_t index = 0; index < mapped_triangles.size(); ++index) {
+	while (index >= component_ends[component_index])
+	    ++component_index;
+	const triangle_t &triangle_3d = mapped_triangles[index];
+	mesh->record_chart_triangle(triangle_3d, atlas_triangles[index],
+	    atlas[component_index]);
 	const ON_3dVector triangle_normal = mesh->tnorm(triangle_3d);
 	const ON_3dVector surface_normal = mesh->bnorm(triangle_3d);
 	if (triangle_normal.Length() > 0 && surface_normal.Length() > 0) {
@@ -5820,11 +5959,8 @@ install_face_chart_atlas(cdt_mesh_t *mesh, const ON_BrepFace &face,
 	    else
 		reverse_count++;
 	}
-	mapped_triangles.push_back(triangle_3d);
     }
-
     const bool reverse_atlas = reverse_count > forward_count;
-    mesh->reset();
     for (triangle_t &triangle : mapped_triangles) {
 	if (reverse_atlas)
 	    std::swap(triangle.v[1], triangle.v[2]);
@@ -7099,6 +7235,7 @@ cdt_mesh_t::cdt(bool allow_general_boundary_cleanup)
 	tri3d.v[1] = p2ind[pnts[p2d3d[tri2d.v[1]]]];
 	tri3d.v[2] = p2ind[pnts[p2d3d[tri2d.v[2]]]];
 
+	record_chart_triangle(tri3d, tri2d, chart);
 	ON_3dVector tdir = tnorm(tri3d);
 	ON_3dVector bdir = bnorm(tri3d);
 	if (tdir.Length() > 0 && bdir.Length() > 0) {
@@ -7523,6 +7660,12 @@ cdt_mesh_t::split_problem_triangle_edges(
 		std::set<triangle_t> native_replacements =
 		    old_native_triangles[i].split(native_split, point_2d,
 			false);
+		for (const triangle_t &native : native_replacements) {
+		    triangle_t mapped;
+		    for (int corner = 0; corner < 3; ++corner)
+			mapped.v[corner] = mesh_vertex(native.v[corner]);
+		    record_chart_triangle(mapped, native, *active_chart);
+		}
 		tris_2d.insert(tris_2d.end(), native_replacements.begin(),
 		    native_replacements.end());
 	    }
