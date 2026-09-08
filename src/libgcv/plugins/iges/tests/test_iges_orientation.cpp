@@ -189,7 +189,7 @@ test_uncertain()
 	!result.shells.front().corrected), "invalid parameter-loop senses caused an incorrect face repair");
     auto flat = box();
     ON_Xform flatten;
-    flatten.Diagonal(1.0);
+    flatten.DiagonalTransformation(1.0);
     flatten[2][2] = 1.0e-13;
     require(flat->Transform(flatten), "could not construct thin shell");
     result = repair_brep_orientation(*flat);
