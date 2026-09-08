@@ -37,6 +37,7 @@
 
 #include <stdint.h>
 
+#include "bu/endian.h"
 #include "test_api.h"
 
 
@@ -207,6 +208,75 @@ test_32_bit_cookie_conversion(void)
 
 
 static int
+test_double_cookie_conversion(void)
+{
+    const unsigned char network_values[] = {
+	0x3f, 0xf0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0xc0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+    };
+    const double host_values[] = {1.0, -2.0};
+    const int integer_values[] = {1, -2};
+    unsigned char network_output[sizeof(network_values)] = {0};
+    double host_output[2] = {0.0};
+    int integer_output[2] = {0};
+    struct {
+	unsigned char value[SIZEOF_NETWORK_DOUBLE];
+	uint64_t guard;
+    } bounded_output = {{0}, UINT64_C(0x0123456789abcdef)};
+    const uint64_t expected_guard = bounded_output.guard;
+    const int optimized = bu_cv_optimize(bu_cv_cookie("nd"));
+    const int expected_host = sizeof(double) == SIZEOF_NETWORK_DOUBLE &&
+	bu_byteorder() == BU_BIG_ENDIAN;
+    int errors = 0;
+
+    TEST_API_CHECK(!!(optimized & CV_HOST_MASK) == expected_host,
+	"bu_cv_optimize treated network double as %s on this host",
+	(optimized & CV_HOST_MASK) ? "host format" : "network format");
+
+    TEST_API_CHECK(bu_cv_w_cookie(host_output, bu_cv_cookie("hd"),
+	sizeof(host_output), (void *)network_values, bu_cv_cookie("nd"), 2) == 2,
+	"bu_cv_w_cookie did not convert all network doubles to host doubles");
+    TEST_API_CHECK(test_api_close_enough(host_output[0], 1.0, 0.0, 0.0) &&
+	test_api_close_enough(host_output[1], -2.0, 0.0, 0.0),
+	"network double conversion returned {%g, %g}, expected {1, -2}",
+	host_output[0], host_output[1]);
+
+    TEST_API_CHECK(bu_cv_w_cookie(network_output, bu_cv_cookie("nd"),
+	sizeof(network_output), (void *)host_values, bu_cv_cookie("hd"), 2) == 2,
+	"bu_cv_w_cookie did not convert all host doubles to network doubles");
+    TEST_API_CHECK(memcmp(network_output, network_values,
+	sizeof(network_output)) == 0,
+	"host double conversion produced incorrect network bytes");
+
+    TEST_API_CHECK(bu_cv_w_cookie(integer_output, bu_cv_cookie("hsi"),
+	sizeof(integer_output), (void *)network_values, bu_cv_cookie("nd"), 2) == 2,
+	"bu_cv_w_cookie did not convert all network doubles to host integers");
+    TEST_API_CHECK(integer_output[0] == 1 && integer_output[1] == -2,
+	"network double to host integer conversion returned {%d, %d}, expected {1, -2}",
+	integer_output[0], integer_output[1]);
+
+    memset(network_output, 0, sizeof(network_output));
+    TEST_API_CHECK(bu_cv_w_cookie(network_output, bu_cv_cookie("nd"),
+	sizeof(network_output), (void *)integer_values, bu_cv_cookie("hsi"), 2) == 2,
+	"bu_cv_w_cookie did not convert all host integers to network doubles");
+    TEST_API_CHECK(memcmp(network_output, network_values,
+	sizeof(network_output)) == 0,
+	"host integer to network double conversion produced incorrect bytes");
+
+    TEST_API_CHECK(bu_cv_w_cookie(bounded_output.value, bu_cv_cookie("nd"),
+	sizeof(bounded_output.value), (void *)host_values, bu_cv_cookie("hd"), 2) == 1,
+	"host double conversion did not honor the network output size");
+    TEST_API_CHECK(memcmp(bounded_output.value, network_values,
+	sizeof(bounded_output.value)) == 0,
+	"bounded host double conversion produced incorrect network bytes");
+    TEST_API_CHECK(bounded_output.guard == expected_guard,
+	"host double conversion wrote beyond the network output buffer");
+
+    return errors ? BRLCAD_ERROR : BRLCAD_OK;
+}
+
+
+static int
 test_64_bit_conversion(void)
 {
     const unsigned char network_signed[] = {
@@ -277,6 +347,8 @@ main(int UNUSED(argc), char *argv[])
     if (test_network_signed_conversion() != BRLCAD_OK)
 	result = BRLCAD_ERROR;
     if (test_32_bit_cookie_conversion() != BRLCAD_OK)
+	result = BRLCAD_ERROR;
+    if (test_double_cookie_conversion() != BRLCAD_OK)
 	result = BRLCAD_ERROR;
     if (test_64_bit_conversion() != BRLCAD_OK)
 	result = BRLCAD_ERROR;
