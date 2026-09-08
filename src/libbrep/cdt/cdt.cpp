@@ -11913,6 +11913,14 @@ cdt_test_repair_patch_limits(void)
 	settings, NULL) ? 4 : 0;
 }
 
+static unsigned int
+repair_fast_resource_limits(const struct brep_cdt_fast_report &report)
+{
+    return (report.hit_time_limit ? BREP_CDT_REPAIR_LIMIT_TIME : 0u) |
+	(report.hit_memory_limit ? BREP_CDT_REPAIR_LIMIT_MEMORY : 0u) |
+	(report.hit_point_limit ? BREP_CDT_REPAIR_LIMIT_POINTS : 0u);
+}
+
 static int
 brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	const struct brep_cdt_repair_settings *settings,
@@ -11937,6 +11945,13 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	s_cdt->repair_source_valid = true;
     }
     report->source_diagnostic = s_cdt->repair_source_diagnostic;
+    if (s_cdt->diagnostic.result == BREP_CDT_RESULT_REFINEMENT_LIMIT ||
+	    report->source_diagnostic.result == BREP_CDT_RESULT_REFINEMENT_LIMIT)
+	report->resource_limits |= BREP_CDT_REPAIR_LIMIT_REFINEMENT;
+    for (const auto &failure : s_cdt->failed_face_diagnostics) {
+	if (failure.second.result == BREP_CDT_RESULT_REFINEMENT_LIMIT)
+	    report->resource_limits |= BREP_CDT_REPAIR_LIMIT_REFINEMENT;
+    }
     report->source_failed_faces = (int)s_cdt->failed_face_indices.size();
     report->bounded_edge_approximation_edges = (int)std::min(
 	s_cdt->approximated_edges.size(), (size_t)INT_MAX);
@@ -12660,6 +12675,7 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    &fast_face_count, &fast_normals, &fast_points,
 	    &fast_point_count, s_cdt->orig_brep, -1, &s_cdt->tol,
 	    &model_tolerance, &fast_options, &fast_report);
+	report->resource_limits |= repair_fast_resource_limits(fast_report);
 	bool valid_fast_mesh =
 	    (fast_result == BREP_CDT_FAST_OK ||
 	    fast_result == BREP_CDT_FAST_PARTIAL) && fast_faces &&
@@ -12699,6 +12715,8 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 		BREP_CDT_STAGE_MESH_REPAIR, -1,
 		report->source_diagnostic.completed_faces,
 		report->source_failed_faces,
+		repair_fast_resource_limits(fast_report) ?
+		"whole-B-Rep fast fallback exhausted a configured resource limit" :
 		"whole-B-Rep fast fallback did not produce usable geometry");
 	    return -1;
 	}
@@ -13139,6 +13157,7 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 		&fast_point_count, s_cdt->orig_brep, failed_face,
 		&s_cdt->tol, &model_tolerance, &fast_options,
 		&fast_report);
+	    report->resource_limits |= repair_fast_resource_limits(fast_report);
 	    bool valid_fast_mesh =
 		(fast_result == BREP_CDT_FAST_OK ||
 		 fast_result == BREP_CDT_FAST_PARTIAL) &&
@@ -14026,6 +14045,15 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    input_vertex_count, input_face_count, input_vertices,
 	    input_faces, NULL);
     }
+    const auto run_mesh_repair = [&]() {
+	const int result = bg_trimesh_repair_ex(&repaired_faces,
+	    &repaired_face_count, &repaired_points, &repaired_vertex_count,
+	    input_faces, input_face_count, (const point_t *)input_vertices,
+	    input_vertex_count, &mesh_settings, &report->mesh);
+	if (report->mesh.allocation_failed)
+	    report->resource_limits |= BREP_CDT_REPAIR_LIMIT_MEMORY;
+	return result;
+    };
     int repair_result = 1;
     size_t adaptive_hole_edges = 0;
     if (preserve_poisson) {
@@ -14035,10 +14063,7 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    input_faces, input_face_count);
 	report->mesh.solid = 1;
     } else {
-	repair_result = bg_trimesh_repair_ex(&repaired_faces,
-	    &repaired_face_count, &repaired_points, &repaired_vertex_count,
-	    input_faces, input_face_count, (const point_t *)input_vertices,
-	    input_vertex_count, &mesh_settings, &report->mesh);
+	repair_result = run_mesh_repair();
 	adaptive_hole_edges = repair_result < 0 ?
 	    repair_adaptive_hole_edge_budget(settings, &report->mesh) : 0;
 	if (adaptive_hole_edges) {
@@ -14047,11 +14072,7 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    mesh_settings.max_hole_edges = adaptive_hole_edges;
 	    bu_log("Retrying final mesh repair with a bounded %zu-edge hole "
 		"ceiling\n", adaptive_hole_edges);
-	    repair_result = bg_trimesh_repair_ex(&repaired_faces,
-		&repaired_face_count, &repaired_points,
-		&repaired_vertex_count, input_faces, input_face_count,
-		(const point_t *)input_vertices, input_vertex_count,
-		&mesh_settings, &report->mesh);
+	    repair_result = run_mesh_repair();
 	}
 	const fastf_t adaptive_hole_area = repair_result < 0 ?
 	    repair_adaptive_hole_area_budget(settings, &mesh_settings,
@@ -14062,11 +14083,7 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    mesh_settings.max_hole_area_percent = adaptive_hole_area;
 	    bu_log("Retrying final mesh repair with a bounded %.6g%% hole "
 		"area ceiling\n", adaptive_hole_area);
-	    repair_result = bg_trimesh_repair_ex(&repaired_faces,
-		&repaired_face_count, &repaired_points,
-		&repaired_vertex_count, input_faces, input_face_count,
-		(const point_t *)input_vertices, input_vertex_count,
-		&mesh_settings, &report->mesh);
+	    repair_result = run_mesh_repair();
 	}
 	/* Point-contact separation is useful for Poisson meshes with touching
 	 * shells, but can reopen a seam that tolerance welding just closed.
@@ -14076,11 +14093,7 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	if (repair_result < 0 && settings->use_poisson_reconstruction &&
 		!mesh_settings.separate_touching_vertices) {
 	    mesh_settings.separate_touching_vertices = 1;
-	    repair_result = bg_trimesh_repair_ex(&repaired_faces,
-		&repaired_face_count, &repaired_points,
-		&repaired_vertex_count, input_faces, input_face_count,
-		(const point_t *)input_vertices, input_vertex_count,
-		&mesh_settings, &report->mesh);
+	    repair_result = run_mesh_repair();
 	}
     }
     if (degenerate_neighborhood_repair) {
@@ -14220,6 +14233,8 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    &separated_vertex_count, repaired_faces, repaired_face_count,
 	    (const point_t *)repaired_vertices, repaired_vertex_count,
 	    &separation_settings, &separated_report);
+	if (separated_report.allocation_failed)
+	    report->resource_limits |= BREP_CDT_REPAIR_LIMIT_MEMORY;
 	assembled_mesh_validation separated_validation;
 	const bool separated_geometric = separated_result == 0 &&
 	    assembled_mesh_validate(separated_vertex_count,
@@ -15327,10 +15342,12 @@ brep_cdt_repair(struct ON_Brep_CDT_State *s_cdt,
 	s_cdt->repair_source_diagnostic = source_diagnostic;
 	s_cdt->repair_source_valid = true;
     }
+    unsigned int resource_limits = 0;
     const auto run_repair_attempt = [&](const brep_cdt_repair_settings *opts,
 	    bool area_weighted, bool closure_biased, bool automatic_local) {
 	int result = brep_cdt_repair_attempt(s_cdt, opts, active_report,
 	    area_weighted, closure_biased, automatic_local);
+	resource_limits |= active_report->resource_limits;
 	/* Simplifying a repaired pcurve is suitable for display, but can leave
 	 * a long edge opposite a finely sampled neighboring boundary.  Retry a
 	 * small open residue on a closed source before giving up on assembly. */
@@ -15350,6 +15367,8 @@ brep_cdt_repair(struct ON_Brep_CDT_State *s_cdt,
 	    active_report->pullback_retry_attempted = 1;
 	    active_report->pullback_retry_applied = result >= 0 ? 1 : 0;
 	}
+	resource_limits |= active_report->resource_limits;
+	active_report->resource_limits = resource_limits;
 	active_report->relaxed_tessellation_attempted =
 	    relaxed_tessellation_attempted ? 1 : 0;
 	active_report->relaxed_tessellation_completed_faces =
@@ -15551,6 +15570,8 @@ ON_Brep_CDT_Repair(struct ON_Brep_CDT_State *s_cdt,
 	settings->max_fast_time_ms, healing,
 	settings->max_planar_cap_area_percent > 0.0);
     active->healing.limited = healing.limited ? 1 : 0;
+    if (healing.limited)
+	active->resource_limits |= BREP_CDT_REPAIR_LIMIT_REFINEMENT;
     active->healing.restored_outer_loops = healing.outer_loops;
     active->healing.corrected_loop_roles = healing.loop_roles;
     active->healing.reoriented_faces = healing.orientations;
@@ -15599,6 +15620,7 @@ ON_Brep_CDT_Repair(struct ON_Brep_CDT_State *s_cdt,
 	 * measurements must accompany it.  Keep the original topology failure
 	 * and healing history identifiable without reporting stale tolerances
 	 * or edge counts from the preceding repair attempt. */
+	candidate_report.resource_limits |= active->resource_limits;
 	candidate_report.healing = active->healing;
 	candidate_report.source_diagnostic = active->source_diagnostic;
 	candidate_report.source_failed_faces = active->source_failed_faces;
@@ -15649,6 +15671,7 @@ ON_Brep_CDT_Repair(struct ON_Brep_CDT_State *s_cdt,
 		if (loop.Trim(ti)->m_ei >= 0) healing.edges.insert(loop.Trim(ti)->m_ei);
 	}
     }
+    candidate_report.resource_limits |= active->resource_limits;
     candidate_report.healing = active->healing;
     candidate_report.healing.applied = 1;
     candidate_report.source_diagnostic = active->source_diagnostic;

@@ -2287,7 +2287,7 @@ bg_trimesh_repair_ex(
 	const struct bg_trimesh_repair_settings *settings,
 	struct bg_trimesh_repair_report *report)
 {
-    auto fail = [&]() {
+    auto fail = [&](bool allocation_failed) {
 	if (ofaces && n_ofaces) *ofaces = NULL;
 	if (n_ofaces) *n_ofaces = 0;
 	if (opnts && n_opnts) *opnts = NULL;
@@ -2298,6 +2298,7 @@ bg_trimesh_repair_ex(
 	    *report = reset_report;
 	    report->input_vertices = n_ipnts;
 	    report->input_faces = n_ifaces;
+	    report->allocation_failed = allocation_failed ? 1 : 0;
 	}
 	return -1;
     };
@@ -2305,11 +2306,11 @@ bg_trimesh_repair_ex(
 	return bg_trimesh_repair_ex_impl(ofaces, n_ofaces, opnts, n_opnts,
 		ifaces, n_ifaces, ipnts, n_ipnts, settings, report);
     } catch (const std::bad_alloc &) {
-	return fail();
+	return fail(true);
     } catch (const std::exception &) {
-	return fail();
+	return fail(false);
     } catch (...) {
-	return fail();
+	return fail(false);
     }
 }
 

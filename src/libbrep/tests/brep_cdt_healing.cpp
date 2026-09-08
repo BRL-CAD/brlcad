@@ -545,6 +545,25 @@ main()
 	bu_log("drawing recovery contracts failed\n");
 	return 1;
     }
+    for (bool point_limit : {false, true}) {
+	std::unique_ptr<ON_Brep_CDT_State, decltype(&ON_Brep_CDT_Destroy)> state(
+	    ON_Brep_CDT_Create(source.get(), "repair resource regression"),
+	    ON_Brep_CDT_Destroy);
+	struct brep_cdt_repair_settings settings = BREP_CDT_REPAIR_SETTINGS_INIT;
+	settings.use_full_fast_fallback = 1;
+	if (point_limit)
+	    settings.max_fast_points = 1;
+	else
+	    settings.max_fast_result_bytes = 1;
+	struct brep_cdt_repair_report report = BREP_CDT_REPAIR_REPORT_INIT;
+	const unsigned int expected = point_limit ? BREP_CDT_REPAIR_LIMIT_POINTS :
+	    BREP_CDT_REPAIR_LIMIT_MEMORY;
+	if (ON_Brep_CDT_Repair(state.get(), &settings, &report) >= 0 ||
+	    !(report.resource_limits & expected)) {
+	    bu_log("repair lost its resource limit reason\n");
+	    return 1;
+	}
+    }
     if (!boundary_contracts(*source)) {
 	bu_log("boundary interpretation contracts failed\n");
 	return 1;
