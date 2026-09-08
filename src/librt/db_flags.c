@@ -46,6 +46,9 @@ db_flags_internal(const struct rt_db_internal *intern)
 
     RT_CK_DB_INTERNAL(intern);
 
+    if (intern->idb_major_type & DB5_MAJORTYPE_BINARY_MASK)
+	return RT_DIR_NON_GEOM;
+
     if (intern->idb_type != ID_COMBINATION)
 	return RT_DIR_SOLID;
 

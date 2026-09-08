@@ -718,6 +718,8 @@ booleanize(const char *answer)
 static int
 binunif_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern, const char *name)
 {
+    long requested_count;
+    size_t max_count;
     unsigned int minor_type;
 
     intern->idb_ptr = NULL;
@@ -762,8 +764,10 @@ binunif_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *inte
 	    bu_log("Unrecognized minor type (%c)\n", *cmd_argvs[3]);
 	    return BRLCAD_ERROR;
     }
+    requested_count = atol(cmd_argvs[5]);
+    max_count = requested_count > 0 ? (size_t)requested_count : 0;
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-    if (rt_mk_binunif(wdbp, name, cmd_argvs[4], minor_type, atol(cmd_argvs[5]))) {
+    if (rt_mk_binunif(wdbp, name, cmd_argvs[4], minor_type, max_count)) {
 	bu_vls_printf(gedp->ged_result_str,
 		      "Failed to create binary object %s from file %s\n",
 		      name, cmd_argvs[4]);

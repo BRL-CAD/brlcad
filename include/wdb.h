@@ -405,6 +405,15 @@ typedef enum {
     WDB_BINUNIF_FILE_UINT64
 } wdb_binunif;
 
+/** Base wdb_binunif value bits. */
+#define WDB_BINUNIF_TYPE_MASK 0x00ffu
+
+/**
+ * File data has network byte order.  File data is assumed to have host byte
+ * order when this flag is absent.  In-memory data must have host byte order.
+ */
+#define WDB_BINUNIF_NETWORK_ORDER 0x0100u
+
 
 /**
  * Make a uniform binary data object from an array or a data file.
@@ -415,7 +424,14 @@ typedef enum {
  *
  * Files can use a non-positive 'count' to mean "read the whole file",
  * pre-loaded data, however, must provide a positive 'count' otherwise
- * an empty binunif will be created.
+ * an empty binunif will be created.  File input is assumed to have host byte
+ * order unless WDB_BINUNIF_NETWORK_ORDER is combined with a file data type.
+ * In-memory input is always host order.  C++ callers must cast a combined
+ * type and flag back to wdb_binunif.  BINUNIF database objects are always
+ * serialized in network byte order.
+ *
+ * Example: (wdb_binunif)(WDB_BINUNIF_FILE_UINT16 |
+ *                         WDB_BINUNIF_NETWORK_ORDER)
  */
 WDB_EXPORT extern int mk_binunif(struct rt_wdb *fp, const char *name, const void *data, wdb_binunif data_type, long count);
 

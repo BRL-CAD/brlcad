@@ -101,6 +101,19 @@ wdb_import(struct rt_wdb *wdbp,	struct rt_db_internal *internp,	const char *name
 }
 
 
+static void
+wdb_set_directory_type(struct directory *dp, int version,
+		       unsigned char major_type,
+		       unsigned char minor_type)
+{
+    if (version < 5)
+	return;
+
+    dp->d_major_type = major_type;
+    dp->d_minor_type = minor_type;
+}
+
+
 int
 wdb_export_external(
     struct rt_wdb *wdbp,
@@ -110,6 +123,8 @@ wdb_export_external(
     unsigned char type)
 {
     struct directory *dp;
+    unsigned char major_type = DB5_MAJORTYPE_BRLCAD;
+    unsigned char minor_type = type;
     int version;
 
     RT_CK_WDB(wdbp);
@@ -120,11 +135,20 @@ wdb_export_external(
     if (version < 5) {
 	db_wrap_v4_external(ep, name);
     } else if (version == 5) {
+	struct db5_raw_internal raw;
+
 	if (db_wrap_v5_external(ep, name) < 0) {
 	    bu_log("wdb_export_external(%s): db_wrap_v5_external error\n",
 		   name);
 	    return -4;
 	}
+	if (db5_get_raw_internal_ptr(&raw, (unsigned char *)ep->ext_buf) == NULL) {
+	    bu_log("wdb_export_external(%s): invalid DB5 external object\n",
+		   name);
+	    return -4;
+	}
+	major_type = raw.major_type;
+	minor_type = raw.minor_type;
     } else {
 	bu_log("wdb_export_external(%s): version %d unsupported\n",
 	       name, version);
@@ -164,6 +188,7 @@ wdb_export_external(
 		    return -3;
 		}
 	    }
+	    wdb_set_directory_type(dp, version, major_type, minor_type);
 	    /* keep the caller's flags, except we don't want to
 	     * pretend a disk dp is an inmem dp.  the data is
 	     * read/written differently for both.
@@ -186,6 +211,7 @@ wdb_export_external(
 		bu_log("wdb_export_external(%s): db_diradd error\n", name);
 		return -3;
 	    }
+	    wdb_set_directory_type(dp, version, major_type, minor_type);
 	    if (db_put_external(ep, dp, wdbp->dbip) < 0) {
 		bu_log("wdb_export_external(%s): db_put_external error\n",
 		       name);
@@ -205,6 +231,7 @@ wdb_export_external(
 		       name);
 		return -3;
 	    }
+	    wdb_set_directory_type(dp, version, major_type, minor_type);
 
 	    db_inmem(dp, ep, flags, wdbp->dbip);
 	    /* ep->buf has been stolen, replaced with null. */
@@ -222,6 +249,7 @@ wdb_export_external(
 	    } else {
 		dp->d_flags = (dp->d_flags & ~7) | flags;
 	    }
+	    wdb_set_directory_type(dp, version, major_type, minor_type);
 
 	    db_inmem(dp, ep, flags, wdbp->dbip);
 	    /* ep->buf has been stolen, replaced with null. */

@@ -14,6 +14,15 @@ if(TARGET ged_test_rm)
 endif(TARGET ged_test_rm)
 distclean(${CMAKE_CURRENT_BINARY_DIR}/ged_test_rm.g)
 
+brlcad_addexec(ged_test_bo test_bo.c "libged;libwdb;librt;libbu" TEST)
+if(TARGET ged_test_bo)
+  add_dependencies(ged_test_bo ged_plugins)
+endif(TARGET ged_test_bo)
+brlcad_add_test(NAME ged_test_bo COMMAND ged_test_bo)
+if(TARGET ged_test_bo)
+  set_property(TEST ged_test_bo APPEND PROPERTY ENVIRONMENT BRLCAD_ROOT=${CMAKE_BINARY_DIR})
+endif(TARGET ged_test_bo)
+
 brlcad_addexec(ged_test_bb_tight test_bb_tight.c "libged;libwdb;librt;libbu" TEST)
 if(TARGET ged_test_bb_tight)
   add_dependencies(ged_test_bb_tight ged_plugins)
@@ -119,6 +128,7 @@ cmakefiles(
   obb_tests.g
   ged_tests.g
   pnts_in_out.g
+  test_bo.c
 )
 
 cmakefiles(CMakeLists.txt)

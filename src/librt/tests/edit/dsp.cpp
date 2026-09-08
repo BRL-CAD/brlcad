@@ -46,8 +46,10 @@
 #include "common.h"
 
 #include <math.h>
+#include <stdint.h>
 #include <string.h>
 
+#include "bnetwork.h"
 #include "vmath.h"
 #include "bu/app.h"
 #include "bu/log.h"
@@ -77,12 +79,17 @@ create_dsp_data_file(unsigned int xcnt, unsigned int ycnt)
     if (!f)
 	bu_exit(1, "ERROR: Cannot create DSP data file %s\n", DSP_DATA_FILE);
     size_t n = xcnt * ycnt;
-    unsigned short *buf = (unsigned short *)bu_calloc(n, sizeof(unsigned short), "dsp tmp");
+    uint16_t *buf = (uint16_t *)bu_calloc(n, sizeof(uint16_t), "dsp tmp");
     for (size_t i = 0; i < n; i++)
-	buf[i] = (unsigned short)(i % 256);
-    fwrite(buf, sizeof(unsigned short), n, f);
+	buf[i] = htons((uint16_t)(i % 256));
+    if (fwrite(buf, sizeof(uint16_t), n, f) != n) {
+	bu_free(buf, "dsp tmp");
+	fclose(f);
+	bu_exit(1, "ERROR: Cannot write DSP data file %s\n", DSP_DATA_FILE);
+    }
     bu_free(buf, "dsp tmp");
-    fclose(f);
+    if (fclose(f) != 0)
+	bu_exit(1, "ERROR: Cannot close DSP data file %s\n", DSP_DATA_FILE);
 }
 
 

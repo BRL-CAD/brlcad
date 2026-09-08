@@ -129,7 +129,9 @@ struct rt_comb_internal {
 
 /**
  * In-memory format for database uniform-array binary object.  Perhaps
- * move to wdb.h or rtgeom.h?
+ * move to wdb.h or rtgeom.h?  Elements are stored in host byte order in this
+ * structure and converted to or from network byte order at the database
+ * serialization boundary.
  */
 struct rt_binunif_internal {
     uint32_t            magic;

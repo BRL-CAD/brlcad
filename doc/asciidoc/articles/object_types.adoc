@@ -1242,8 +1242,8 @@ by object name instead of by external file.
 [cols="1,1,4"]
 |===
 |Parameter |Type |Description
-|minor type |char |Element type: `f` d `c` s `i` L (signed) / `C` S `I` L (unsigned).
-|file |name |File to read the array from.
+|minor type |char |Element type: `f` d `c` s `i` l (signed) / `C` S `I` L (unsigned).
+|file |name |Host-order file to read the array from.
 |count |integer |Number of values to read (-1 for the whole file).
 |===
 

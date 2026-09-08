@@ -30,6 +30,7 @@
 
 #include <stdlib.h>
 #include <math.h>
+#include <stdint.h>
 #include <string.h>
 #include <ctype.h>
 #include "bio.h"
@@ -66,6 +67,86 @@ static const int binu_sizes[]={
 };
 
 
+static void
+binunif_network_to_host(unsigned char *dest, const unsigned char *src,
+			size_t count, size_t width)
+{
+    size_t i;
+
+    switch (width) {
+	case 1:
+	    memcpy(dest, src, count);
+	    return;
+	case 2:
+	    for (i = 0; i < count; i++, dest += 2, src += 2) {
+		uint16_t value;
+		memcpy(&value, src, sizeof(value));
+		value = ntohs(value);
+		memcpy(dest, &value, sizeof(value));
+	    }
+	    return;
+	case 4:
+	    for (i = 0; i < count; i++, dest += 4, src += 4) {
+		uint32_t value;
+		memcpy(&value, src, sizeof(value));
+		value = ntohl(value);
+		memcpy(dest, &value, sizeof(value));
+	    }
+	    return;
+	case 8:
+	    for (i = 0; i < count; i++, dest += 8, src += 8) {
+		uint64_t value;
+		memcpy(&value, src, sizeof(value));
+		value = ntohll(value);
+		memcpy(dest, &value, sizeof(value));
+	    }
+	    return;
+    }
+
+    bu_bomb("Unsupported BINUNIF integer width\n");
+}
+
+
+static void
+binunif_host_to_network(unsigned char *dest, const unsigned char *src,
+			size_t count, size_t width)
+{
+    size_t i;
+
+    switch (width) {
+	case 1:
+	    memcpy(dest, src, count);
+	    return;
+	case 2:
+	    for (i = 0; i < count; i++, dest += 2, src += 2) {
+		uint16_t value;
+		memcpy(&value, src, sizeof(value));
+		value = htons(value);
+		memcpy(dest, &value, sizeof(value));
+	    }
+	    return;
+	case 4:
+	    for (i = 0; i < count; i++, dest += 4, src += 4) {
+		uint32_t value;
+		memcpy(&value, src, sizeof(value));
+		value = htonl(value);
+		memcpy(dest, &value, sizeof(value));
+	    }
+	    return;
+	case 8:
+	    for (i = 0; i < count; i++, dest += 8, src += 8) {
+		uint64_t value;
+		memcpy(&value, src, sizeof(value));
+		value = htonll(value);
+		memcpy(dest, &value, sizeof(value));
+	    }
+	    return;
+    }
+
+    bu_bomb("Unsupported BINUNIF integer width\n");
+}
+
+
 
 /**
  * Import a uniform-array binary object from the database format to
@@ -80,11 +161,7 @@ rt_binunif_import5_minor_type(struct rt_db_internal *ip,
 			      int minor_type)
 {
     struct rt_binunif_internal *bip;
-    size_t i;
-    unsigned char *srcp;
-    unsigned long *ldestp;
-    int in_cookie, out_cookie;
-    size_t gotten;
+    size_t width;
 
     BU_CK_EXTERNAL(ep);
     if (dbip) RT_CK_DBI(dbip);
@@ -125,47 +202,20 @@ rt_binunif_import5_minor_type(struct rt_db_internal *ip,
 	    break;
 	case DB5_MINORTYPE_BINU_8BITINT:
 	case DB5_MINORTYPE_BINU_8BITINT_U:
-	    bip->count = ep->ext_nbytes;
-	    bip->u.uint8 = (unsigned char *) bu_malloc(ep->ext_nbytes,
-							"rt_binunif_internal");
-	    memcpy((char *) bip->u.uint8, (char *) ep->ext_buf, ep->ext_nbytes);
-	    break;
 	case DB5_MINORTYPE_BINU_16BITINT:
 	case DB5_MINORTYPE_BINU_16BITINT_U:
-	    bip->count = ep->ext_nbytes/2;
-	    bip->u.uint8 = (unsigned char *) bu_malloc(ep->ext_nbytes,
-							"rt_binunif_internal");
-	    in_cookie = bu_cv_cookie("nus");
-	    out_cookie = bu_cv_cookie("hus");
-	    if (bu_cv_optimize(in_cookie) != bu_cv_optimize(out_cookie)) {
-		gotten =
-		    bu_cv_w_cookie((void *)bip->u.uint8, out_cookie,
-				   ep->ext_nbytes,
-				   ep->ext_buf, in_cookie, bip->count);
-		if (gotten != bip->count) {
-		    bu_log("%s:%d: Tried to convert %zu, did %zu",
-			   __FILE__, __LINE__, bip->count, gotten);
-		    bu_bomb("\n");
-		}
-	    } else
-		memcpy((char *) bip->u.uint8,
-		       (char *) ep->ext_buf,
-		       ep->ext_nbytes);
-	    break;
 	case DB5_MINORTYPE_BINU_32BITINT:
 	case DB5_MINORTYPE_BINU_32BITINT_U:
-	    bip->count = ep->ext_nbytes/4;
-	    bip->u.uint8 = (unsigned char *) bu_malloc(ep->ext_nbytes,
-							"rt_binunif_internal");
-	    srcp = (unsigned char *) ep->ext_buf;
-	    ldestp = (unsigned long *) bip->u.uint8;
-	    for (i = 0; i < bip->count; ++i, ++ldestp, srcp += 4) {
-		*ldestp = ntohl(*(uint32_t *)&srcp[0]);
-	    }
-	    break;
 	case DB5_MINORTYPE_BINU_64BITINT:
 	case DB5_MINORTYPE_BINU_64BITINT_U:
-	    bu_log("rt_binunif_import5_minor_type() Can't handle 64-bit integers yet\n");
+	    width = (size_t)binu_sizes[bip->type];
+	    bip->count = ep->ext_nbytes / width;
+	    bip->u.uint8 = (unsigned char *)bu_malloc(bip->count * width,
+						       "rt_binunif_internal");
+	    binunif_network_to_host(bip->u.uint8, ep->ext_buf, bip->count, width);
+	    break;
+	default:
+	    bu_log("Unrecognized BINUNIF minor type (%d)\n", bip->type);
 	    return -1;
     }
 
@@ -194,11 +244,7 @@ rt_binunif_export5(struct bu_external		*ep,
 		    const struct db_i		*dbip)
 {
     struct rt_binunif_internal	*bip;
-    size_t			i;
-    unsigned char		*destp;
-    unsigned long		*lsrcp;
-    int				in_cookie, out_cookie;
-    size_t			gotten;
+    size_t			width;
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -230,49 +276,24 @@ rt_binunif_export5(struct bu_external		*ep,
 	    break;
 	case DB5_MINORTYPE_BINU_8BITINT:
 	case DB5_MINORTYPE_BINU_8BITINT_U:
-	    ep->ext_nbytes = bip->count;
-	    ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes,
-					      "binunif external");
-	    memcpy((char *)ep->ext_buf, (char *)bip->u.uint8, bip->count);
-	    break;
 	case DB5_MINORTYPE_BINU_16BITINT:
 	case DB5_MINORTYPE_BINU_16BITINT_U:
-	    ep->ext_nbytes = bip->count * 2;
-	    ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "binunif external");
-	    in_cookie = bu_cv_cookie("hus");
-	    out_cookie = bu_cv_cookie("nus");
-	    if (bu_cv_optimize(in_cookie) != bu_cv_optimize(out_cookie)) {
-		gotten =
-		    bu_cv_w_cookie(ep->ext_buf, out_cookie,
-				   ep->ext_nbytes,
-				   (void *) bip->u.uint8, in_cookie,
-				   bip->count);
-
-		if (gotten != bip->count) {
-		    bu_log("%s:%d: Tried to convert %zu, did %zu",
-			   __FILE__, __LINE__, bip->count, gotten);
-		    bu_bomb("\n");
-		}
-	    } else {
-		memcpy((char *) ep->ext_buf,
-		       (char *) bip->u.uint8,
-		       ep->ext_nbytes);
-	    }
-	    break;
 	case DB5_MINORTYPE_BINU_32BITINT:
 	case DB5_MINORTYPE_BINU_32BITINT_U:
-	    ep->ext_nbytes = bip->count * 4;
-	    ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "binunif external");
-
-	    lsrcp = (unsigned long *) bip->u.uint8;
-	    destp = (unsigned char *) ep->ext_buf;
-	    for (i = 0; i < bip->count; ++i, ++destp, ++lsrcp) {
-		*(uint32_t *)&destp[0] = htonl(*lsrcp);
-	    }
-	    break;
 	case DB5_MINORTYPE_BINU_64BITINT:
 	case DB5_MINORTYPE_BINU_64BITINT_U:
-	    bu_log("rt_binunif_export5() Can't handle 64-bit integers yet\n");
+	    width = (size_t)binu_sizes[bip->type];
+	    if (bip->count > SIZE_MAX / width) {
+		bu_log("BINUNIF object is too large to export\n");
+		return -1;
+	    }
+	    ep->ext_nbytes = bip->count * width;
+	    ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "binunif external");
+	    binunif_host_to_network(ep->ext_buf, bip->u.uint8,
+				    bip->count, width);
+	    break;
+	default:
+	    bu_log("Unrecognized BINUNIF minor type (%d)\n", bip->type);
 	    return -1;
     }
 

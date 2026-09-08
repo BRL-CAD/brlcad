@@ -3847,6 +3847,8 @@ include/rt/application.h: #define RT_CK_AP(_p) BU_CKMAG(_p, RT_AP_MAGIC, "struct
 include/rt/application.h: #define RT_CK_APPLICATION(_p) BU_CKMAG(_p, RT_AP_MAGIC, "struct application")
 include/rt/application.h: #define RT_APPLICATION_INIT(_p) { ;#  define RT_AP_CHECK(_ap) (void)(_ap)
 include/rt/application.h: #  define RT_AP_CHECK(_ap)      \
+include/rt/binunif.h: #define RT_BINUNIF_TYPE_MASK 0x00ffu
+include/rt/binunif.h: #define RT_BINUNIF_NETWORK_ORDER 0x0100u
 include/rt/binunif.h: RT_EXPORT extern int rt_mk_binunif(struct rt_wdb *wdbp,
 include/rt/binunif.h: RT_EXPORT extern void rt_binunif_free(struct rt_binunif_internal *bip);
 include/rt/binunif.h: RT_EXPORT extern void rt_binunif_dump(struct rt_binunif_internal *bip);
@@ -5347,6 +5349,8 @@ include/wdb.h: WDB_EXPORT extern int mk_arbn(struct rt_wdb *fp, const char *name
 include/wdb.h: WDB_EXPORT extern int mk_ars(struct rt_wdb *fp, const char *name, size_t ncurves, size_t pts_per_curve, fastf_t *curves[]);
 include/wdb.h: WDB_EXPORT extern int mk_constraint(struct rt_wdb *wdbp, const char *name, const char *expr);
 include/wdb.h: WDB_EXPORT extern int mk_material(struct rt_wdb *wdbp,
+include/wdb.h: #define WDB_BINUNIF_TYPE_MASK 0x00ffu
+include/wdb.h: #define WDB_BINUNIF_NETWORK_ORDER 0x0100u
 include/wdb.h: WDB_EXPORT extern int mk_binunif(struct rt_wdb *fp, const char *name, const void *data, wdb_binunif data_type, long count);
 include/wdb.h: WDB_EXPORT int mk_bot(
 include/wdb.h: WDB_EXPORT int mk_bot_w_normals(

@@ -44,6 +44,7 @@
 
 #include "vmath.h"
 #include "bn.h"
+#include "rt/binunif.h"
 #include "rt/geom.h"
 #include "raytrace.h"
 #include "wdb.h"
@@ -631,11 +632,20 @@ mk_binunif (
 {
     struct rt_db_internal intern;
     struct rt_binunif_internal *binunif;
+    unsigned int encoded_type = (unsigned int)data_type;
+    unsigned int input_flags = encoded_type & ~WDB_BINUNIF_TYPE_MASK;
+    int network_order = input_flags & WDB_BINUNIF_NETWORK_ORDER;
     unsigned int minor_type = 0;
     int from_file = 0;
     size_t bytes = 0;
     int nosign = 0;
 
+    if (input_flags & ~WDB_BINUNIF_NETWORK_ORDER) {
+	bu_log("Unknown binunif input flags: 0x%x\n", input_flags);
+	return -1;
+    }
+
+    data_type = (wdb_binunif)(encoded_type & WDB_BINUNIF_TYPE_MASK);
     switch (data_type) {
 	case WDB_BINUNIF_FILE_FLOAT:
 	    from_file = 1;
@@ -771,8 +781,13 @@ mk_binunif (
 	    bytes = sizeof(uint64_t);
 	    break;
 	default:
-	    bu_log("Unknown binunif data source type: %d", data_type);
+	    bu_log("Unknown binunif data source type: %d\n", data_type);
 	    return 1;
+    }
+
+    if (network_order && !from_file) {
+	bu_log("Network byte order is only valid for binunif file input\n");
+	return -1;
     }
 
     /* the floating point types already have their minor type set */
@@ -819,7 +834,11 @@ mk_binunif (
 
     /* use the librt load-from-file routine? */
     if (from_file) {
-	return rt_mk_binunif (wdbp, name, (char *)data, minor_type, count);
+	size_t max_count = count > 0 ? (size_t)count : 0;
+	unsigned int input_type = minor_type;
+	if (network_order)
+	    input_type |= RT_BINUNIF_NETWORK_ORDER;
+	return rt_mk_binunif(wdbp, name, (const char *)data, input_type, max_count);
     }
 
     /* count must be non-negative */
@@ -837,6 +856,7 @@ mk_binunif (
     RT_DB_INTERNAL_INIT(&intern);
     intern.idb_major_type = DB5_MAJORTYPE_BINARY_UNIF;
     intern.idb_type = minor_type;
+    intern.idb_minor_type = minor_type;
     intern.idb_ptr = (void*)binunif;
     intern.idb_meth = &OBJ[ID_BINUNIF];
     memcpy(binunif->u.int8, data, count * bytes);

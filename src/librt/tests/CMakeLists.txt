@@ -61,6 +61,9 @@ brlcad_add_test(NAME rt_db_name COMMAND rt_db_name)
 brlcad_addexec(rt_bound_internal bound_internal.c "librt;libwdb;libbu;${M_LIBRARY}" TEST)
 brlcad_add_test(NAME rt_bound_internal COMMAND rt_bound_internal)
 
+brlcad_addexec(rt_binunif binunif.c "librt;libwdb;libbu;${M_LIBRARY}" TEST)
+brlcad_add_test(NAME rt_binunif COMMAND rt_binunif)
+
 brlcad_addexec(rt_tree_prune tree_prune.c "librt;libwdb;libbu;${M_LIBRARY}" TEST)
 brlcad_add_test(NAME rt_tree_prune COMMAND rt_tree_prune)
 
@@ -190,6 +193,7 @@ set(
   CMakeLists.txt
   arb_intersect.g
   binary_attribute.c
+  binunif.c
   brep_io.cpp
   bound_internal.c
   crofton.c

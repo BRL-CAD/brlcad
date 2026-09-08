@@ -52,7 +52,6 @@
 #include "vrtdataset.h"
 
 #include "bu/app.h"
-#include "bu/cv.h"
 #include "bu/env.h"
 #include "bu/path.h"
 #include "bu/units.h"
@@ -290,18 +289,6 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
 	    continue;
 	} else {
 	    bu_log("GDAL read error for band scanline %d\n", i);
-	}
-    }
-
-    /* Convert the data before writing it so the DSP get_obj_data
-     * routine sees what it expects */
-    int in_cookie = bu_cv_cookie("hus");
-    int out_cookie = bu_cv_cookie("nus"); /* data is network unsigned short */
-    if (bu_cv_optimize(in_cookie) != bu_cv_optimize(out_cookie)) {
-	size_t got = bu_cv_w_cookie(uint16_array, out_cookie, count * sizeof(unsigned short), uint16_array, in_cookie, count);
-	if (got != count) {
-	    bu_log("got %zu != count %zu", got, count);
-	    bu_bomb("\n");
 	}
     }
 

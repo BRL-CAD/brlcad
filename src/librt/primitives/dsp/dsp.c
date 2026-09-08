@@ -3569,7 +3569,7 @@ get_obj_data(struct rt_dsp_internal *dsp_ip, const struct db_i *dbip)
 	    bu_vls_nibble(&binudesc, 1);
 
 	bu_log("ERROR: Binary object '%s' has invalid data (expected type %d, found %d).\n"
-	       "       Expecting %zu 16-bit unsigned short (nus) integer data values.\n"
+	       "       Expecting %zu host-order 16-bit unsigned integer data values.\n"
 	       "       Encountered %s\n",
 	       bu_vls_cstr(&dsp_ip->dsp_name),
 	       DB5_MINORTYPE_BINU_16BITINT_U,
@@ -3580,8 +3580,8 @@ get_obj_data(struct rt_dsp_internal *dsp_ip, const struct db_i *dbip)
     }
 
     /* rt_retrieve_binunif() calls rt_db_get_internal5() which in turn calls
-     * rt_binunif_import5().  That import function already performs the
-     * network-to-host byte-order conversion for 16-bit integer data.  The
+     * rt_binunif_import5_minor_type().  That import function already performs
+     * the network-to-host byte-order conversion for 16-bit integer data.  The
      * data in bip->u.uint16 is therefore already in host byte order by the
      * time we reach this point; no second conversion is needed or correct.
      * (A second swap would leave heights 256× too large on little-endian

@@ -2452,13 +2452,13 @@ mged> bev -t triangulated_lens sphere1 + sphere2
 
 – Create a triangulated object by intersecting objects _sphere1_ and _sphere2._
 
-*bo*_[-o|-i pattern type] dest source_
+*bo*_[-o|-i pattern [h|n]type] dest source_
 
 The “bo” command is used to create or retrieve binary opaque objects. One of _-i_ or _-o_ must be specified.
 
-The _-o_ option “outputs” or extracts a binary object from the database object _source_ to a file called _dest_.
+The _-o_ option “outputs” or extracts a binary object from the database object _source_ to a host-order file called _dest_.
 
-The _-i_ option “inputs” or imports a file called _source_ into a binary object called _dest_ in the database. There are two additional arguments that must be specified with the _-i_ option: pattern and type. Currently, only uniform binary objects (arrays of values) are supported. As a result, the _pattern_ is always _u_ for “uniform” pattern. The _type_ can be one of the following:
+The _-i_ option “inputs” or imports a file called _source_ into a binary object called _dest_ in the database. There are two additional arguments that must be specified with the _-i_ option: pattern and type. Currently, only uniform binary objects (arrays of values) are supported. As a result, the _pattern_ is always _u_ for “uniform” pattern. Input defaults to host byte order. An `h` or `n` prefix on _type_ explicitly selects host or network byte order. The base _type_ can be one of the following:
 
 _f_-> float
 
@@ -2482,9 +2482,13 @@ _L_-> unsigned long (64 bit)
 
 Examples:
 
-`mged>` *bo -i -u c cmds /usr/brlcad/html/manuals/mged/mged_cmds.html*
+`mged>` *bo -i u c cmds /usr/brlcad/html/manuals/mged/mged_cmds.html*
 
 – Create an opaque uniform binary object of characters with the name _cmds_ that contains the contents of the file __/usr/brlcad/html/manuals/mged/mged_cmds.html.__
+
+`mged>` *bo -i u nS dsp.data terrain.dsp*
+
+– Import a standard network-order DSP data file as an unsigned-short binary object named _dsp.data_.
 
 `mged>` *bo -o /home/jim/cmds.html cmds*
 

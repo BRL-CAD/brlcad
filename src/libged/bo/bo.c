@@ -27,18 +27,76 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <ctype.h>
 #include <string.h>
 
 #include "bu/getopt.h"
 #include "ged.h"
 
 
+static int
+bo_decode_input_type(unsigned int *input_type, const char *type_string)
+{
+    const char *type = type_string;
+    unsigned int order = 0;
+    unsigned int minor_type;
+    size_t type_length = strlen(type_string);
+
+    if (type_length == 2) {
+	if (type_string[0] == 'n') {
+	    order = RT_BINUNIF_NETWORK_ORDER;
+	} else if (type_string[0] != 'h') {
+	    return -1;
+	}
+	type++;
+    } else if (type_length != 1) {
+	return -1;
+    }
+
+    switch ((int)type[0]) {
+	case 'f':
+	    minor_type = DB5_MINORTYPE_BINU_FLOAT;
+	    break;
+	case 'd':
+	    minor_type = DB5_MINORTYPE_BINU_DOUBLE;
+	    break;
+	case 'c':
+	    minor_type = DB5_MINORTYPE_BINU_8BITINT;
+	    break;
+	case 's':
+	    minor_type = DB5_MINORTYPE_BINU_16BITINT;
+	    break;
+	case 'i':
+	    minor_type = DB5_MINORTYPE_BINU_32BITINT;
+	    break;
+	case 'l':
+	    minor_type = DB5_MINORTYPE_BINU_64BITINT;
+	    break;
+	case 'C':
+	    minor_type = DB5_MINORTYPE_BINU_8BITINT_U;
+	    break;
+	case 'S':
+	    minor_type = DB5_MINORTYPE_BINU_16BITINT_U;
+	    break;
+	case 'I':
+	    minor_type = DB5_MINORTYPE_BINU_32BITINT_U;
+	    break;
+	case 'L':
+	    minor_type = DB5_MINORTYPE_BINU_64BITINT_U;
+	    break;
+	default:
+	    return -1;
+    }
+
+    *input_type = minor_type | order;
+    return 0;
+}
+
+
 int
 ged_bo_core(struct ged *gedp, int argc, const char *argv[])
 {
     int c;
-    unsigned int minor_type=0;
+    unsigned int input_type = 0;
     char *obj_name;
     char *file_name;
     int input_mode=0;
@@ -47,7 +105,7 @@ ged_bo_core(struct ged *gedp, int argc, const char *argv[])
     struct rt_db_internal intern;
     struct directory *dp;
     const char *argv0;
-    static const char *usage = "{-i major_type minor_type | -o} dest source";
+    static const char *usage = "{-i u [h|n]type | -o} dest source";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -102,47 +160,10 @@ ged_bo_core(struct ged *gedp, int argc, const char *argv[])
 
 
     if (input_mode) {
-	if (argv[0][0] == 'u') {
-
-	    if (argv[1][1] != '\0') {
+	if (BU_STR_EQUAL(argv[0], "u")) {
+	    if (bo_decode_input_type(&input_type, argv[1]) != 0) {
 		bu_vls_printf(gedp->ged_result_str, "Unrecognized minor type: %s", argv[1]);
 		return BRLCAD_ERROR;
-	    }
-
-	    switch ((int)argv[1][0]) {
-		case 'f':
-		    minor_type = DB5_MINORTYPE_BINU_FLOAT;
-		    break;
-		case 'd':
-		    minor_type = DB5_MINORTYPE_BINU_DOUBLE;
-		    break;
-		case 'c':
-		    minor_type = DB5_MINORTYPE_BINU_8BITINT;
-		    break;
-		case 's':
-		    minor_type = DB5_MINORTYPE_BINU_16BITINT;
-		    break;
-		case 'i':
-		    minor_type = DB5_MINORTYPE_BINU_32BITINT;
-		    break;
-		case 'l':
-		    minor_type = DB5_MINORTYPE_BINU_64BITINT;
-		    break;
-		case 'C':
-		    minor_type = DB5_MINORTYPE_BINU_8BITINT_U;
-		    break;
-		case 'S':
-		    minor_type = DB5_MINORTYPE_BINU_16BITINT_U;
-		    break;
-		case 'I':
-		    minor_type = DB5_MINORTYPE_BINU_32BITINT_U;
-		    break;
-		case 'L':
-		    minor_type = DB5_MINORTYPE_BINU_64BITINT_U;
-		    break;
-		default:
-		    bu_vls_printf(gedp->ged_result_str, "Unrecognized minor type: %s", argv[1]);
-		    return BRLCAD_ERROR;
 	    }
 	} else {
 	    bu_vls_printf(gedp->ged_result_str, "Unrecognized major type: %s", argv[0]);
@@ -152,11 +173,6 @@ ged_bo_core(struct ged *gedp, int argc, const char *argv[])
 	/* skip past major_type and minor_type */
 	argc -= 2;
 	argv += 2;
-
-	if (minor_type == 0) {
-	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv0, usage);
-	    return BRLCAD_ERROR;
-	}
 
 	obj_name = (char *)*argv;
 	GED_CHECK_EXISTS(gedp, obj_name, LOOKUP_QUIET, BRLCAD_ERROR);
@@ -168,7 +184,7 @@ ged_bo_core(struct ged *gedp, int argc, const char *argv[])
 
 	/* make a binunif of the entire file */
 	struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-	if (rt_mk_binunif (wdbp, obj_name, file_name, minor_type, 0)) {
+	if (rt_mk_binunif(wdbp, obj_name, file_name, input_type, 0)) {
 	    bu_vls_printf(gedp->ged_result_str, "Error creating %s", obj_name);
 	    return BRLCAD_ERROR;
 	}
