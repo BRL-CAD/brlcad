@@ -277,6 +277,131 @@ boundary_contracts(const ON_Brep &source)
 }
 
 bool
+drawing_case(const ON_Brep &source, int index, double expected_area,
+	bool source_tokens = false, size_t working_bytes = 0)
+{
+    const ON__UINT32 crc = source.DataCRC(0);
+    struct brep_cdt_fast_options options;
+    brep_cdt_fast_options_default(&options);
+    options.max_workers = 1;
+    options.max_time_ms = 5000;
+    if (working_bytes)
+	options.max_working_bytes = working_bytes;
+    if (source_tokens)
+	options.point_source = [](int, size_t, const void *, void *) {};
+    struct bg_tess_tol tolerance = BG_TESS_TOL_INIT_TOL;
+    struct bn_tol distance = BN_TOL_INIT_TOL;
+    struct brep_cdt_fast_report report = {};
+    int *faces = NULL;
+    int face_count = 0, point_count = 0;
+    point_t *points = NULL;
+    vect_t *normals = NULL;
+    const int status = brep_cdt_fast_ex(&faces, &face_count, &normals,
+	&points, &point_count, &source, index, &tolerance, &distance,
+	&options, &report);
+    double area = 0.0;
+    for (int i = 0; i < face_count; ++i) {
+	const ON_3dPoint a(points[faces[3 * i]]);
+	const ON_3dPoint b(points[faces[3 * i + 1]]);
+	const ON_3dPoint c(points[faces[3 * i + 2]]);
+	area += 0.5 * ON_CrossProduct(b - a, c - a).Length();
+    }
+    bu_free(faces, "drawing recovery faces");
+    bu_free(points, "drawing recovery points");
+    bu_free(normals, "drawing recovery normals");
+    const bool success = expected_area > 0.0 ?
+	(status == BREP_CDT_FAST_OK && !report.failed_faces &&
+	 fabs(area - expected_area) <= ON_SQRT_EPSILON * expected_area) :
+	(status != BREP_CDT_FAST_OK && report.failed_faces > 0);
+    if (!success)
+	bu_log("drawing recovery: index=%d status=%d failed=%d area=%.17g expected=%.17g\n",
+	    index, status, report.failed_faces, area, expected_area);
+    return success && source.DataCRC(0) == crc &&
+	report.result_bytes <= options.max_result_bytes &&
+	report.peak_working_bytes <= options.max_working_bytes;
+}
+
+bool
+drawing_contracts(const ON_Brep &source)
+{
+    ON_Brep reversed(source);
+    for (int li = 0; li < reversed.m_F[0].LoopCount(); ++li) {
+	ON_BrepLoop &loop = *reversed.m_F[0].Loop(li);
+	reversed.FlipLoop(loop);
+	loop.m_type = ON_BrepLoop::inner;
+    }
+    /* The tube has two annular ends, four outside walls, and four inside
+     * walls.  A successful recovery must retain the central opening. */
+    const double end_area = 100.0 - 16.0;
+    const double tube_area = 2.0 * end_area + 4.0 * 100.0 + 4.0 * 40.0;
+    if (!drawing_case(reversed, -1, tube_area) ||
+	!drawing_case(reversed, 0, end_area) ||
+	!drawing_case(reversed, 0, 0.0, true) ||
+	!drawing_case(reversed, 0, 0.0, false, 1))
+	return false;
+
+    ON_Brep empty_inner(reversed);
+    empty_inner.NewLoop(ON_BrepLoop::inner, empty_inner.m_F[1]);
+    cdt_healing repaired;
+    const ON__UINT32 crc = empty_inner.DataCRC(0);
+    if (cdt_topology_references_safe(&empty_inner, NULL, false) ||
+	!interpret(empty_inner, repaired) || !repaired.brep->IsValid() ||
+	!repaired.brep->IsSolid() || empty_inner.DataCRC(0) != crc ||
+	!drawing_case(empty_inner, -1, tube_area))
+	return false;
+
+    /* Empty outlines and bad references cannot enter through the special
+     * treatment of empty inner loops. */
+    ON_Brep empty_outer(reversed);
+    empty_outer.NewLoop(ON_BrepLoop::outer, empty_outer.m_F[1]);
+    cdt_healing rejected;
+    if (interpret(empty_outer, rejected) || rejected.brep)
+	return false;
+    ON_Brep broken(empty_inner);
+    broken.m_L[broken.m_L.Count() - 1].m_fi = broken.m_F.Count();
+    if (interpret(broken, rejected) || rejected.brep)
+	return false;
+
+    ON_Brep isolated_empty(reversed);
+    ON_BrepFace &empty_face = isolated_empty.NewFace(isolated_empty.m_F[0].m_si);
+    const int empty_index = empty_face.m_face_index;
+    isolated_empty.NewLoop(ON_BrepLoop::inner, empty_face);
+    isolated_empty.NewLoop(ON_BrepLoop::inner, empty_face);
+    const ON__UINT32 isolated_crc = isolated_empty.DataCRC(0);
+    const struct brep_cdt_repair_settings limits = BREP_CDT_REPAIR_SETTINGS_INIT;
+    cdt_healing component_copy;
+    if (interpret(isolated_empty, rejected) ||
+	!cdt_heal_topology(isolated_empty, BN_TOL_DIST, limits.max_fast_points,
+	    limits.max_fast_result_bytes, limits.max_fast_time_ms,
+	    component_copy, false, CDT_HEAL_DRAWABLE_COMPONENTS) ||
+	component_copy.brep->m_F.Count() != isolated_empty.m_F.Count() ||
+	component_copy.faces.count(empty_index) ||
+	component_copy.brep->m_F[empty_index].LoopCount() != 2 ||
+	isolated_empty.DataCRC(0) != isolated_crc ||
+	!drawing_case(isolated_empty, 0, end_area) ||
+	!drawing_case(isolated_empty, -1, tube_area))
+	return false;
+    ON_Brep bad_component(isolated_empty);
+    bad_component.m_L[bad_component.m_L.Count() - 1].m_fi = bad_component.m_F.Count();
+    cdt_healing unsafe_component;
+    if (cdt_heal_topology(bad_component, BN_TOL_DIST, limits.max_fast_points,
+	limits.max_fast_result_bytes, limits.max_fast_time_ms, unsafe_component,
+	false, CDT_HEAL_DRAWABLE_COMPONENTS) || unsafe_component.brep)
+	return false;
+
+    ON_Brep missing(source);
+    missing.DeleteLoop(*missing.m_F[0].OuterLoop(), false);
+    missing.Compact();
+    if (!drawing_case(missing, -1, tube_area))
+	return false;
+    std::unique_ptr<ON_Brep> sheet(source.DuplicateFace(0, false));
+    sheet->DeleteLoop(*sheet->m_F[0].OuterLoop(), false);
+    sheet->Compact();
+    sheet->Append(source);
+    return drawing_case(*sheet, 0, 0.0);
+}
+
+bool
 cap_case(ON_Brep &source, double ceiling, bool accept, int expected_caps = 1)
 {
     const ON__UINT32 crc = source.DataCRC(0);
@@ -414,6 +539,10 @@ main()
     std::unique_ptr<ON_Brep> source = tube();
     if (!source) {
 	bu_log("healing fixture construction failed\n");
+	return 1;
+    }
+    if (!drawing_contracts(*source)) {
+	bu_log("drawing recovery contracts failed\n");
 	return 1;
     }
     if (!boundary_contracts(*source)) {
