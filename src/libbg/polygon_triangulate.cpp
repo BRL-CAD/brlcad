@@ -31,10 +31,10 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
-#include <iterator>
 #include <limits>
 #include <map>
 #include <set>
+#include <utility>
 #include <vector>
 
 #include "clipper.hpp"
@@ -189,17 +189,18 @@ clipper_remove_contour_spikes(std::vector<int> &contour,
 }
 
 
-static std::vector<std::vector<int>>
+static void
 clipper_decompose_touching_contour(const std::vector<int> &contour,
-	const std::vector<ClipperLib::IntPoint> &points)
+	const std::vector<ClipperLib::IntPoint> &points,
+	std::vector<std::vector<int>> &outlines,
+	std::vector<std::vector<int>> &holes)
 {
     /* Reinserting authoritative collinear samples can expose a vertex which
      * also lies on a nonadjacent edge.  Split every such edge explicitly,
      * then extract the resulting closed walks.  This preserves all bounded
      * area instead of perturbing or deleting the touching vertex. */
-    std::vector<std::vector<int>> cycles;
     if (contour.size() < 3)
-	return cycles;
+	return;
 
     RTree<size_t, double, 2> vertex_index;
     for (size_t i = 0; i < contour.size(); ++i) {
@@ -288,14 +289,18 @@ clipper_decompose_touching_contour(const std::vector<int> &contour,
 		area += (long double)first.X * second.Y -
 		    (long double)first.Y * second.X;
 	    }
-	    if (std::abs(area) > 0.0L)
-		cycles.push_back(std::move(cycle));
+	    /* Clipper orients filled contours positively and holes negatively.
+	     * A touching walk can contain both: treating every extracted cycle
+	     * as filled would cover a cutout twice instead of preserving it. */
+	    if (area > 0.0L)
+		outlines.push_back(std::move(cycle));
+	    else if (area < 0.0L)
+		holes.push_back(std::move(cycle));
 	}
 	for (size_t j = cycle_start + 1; j < stack.size(); ++j)
 	    positions.erase(stack[j]);
 	stack.resize(cycle_start + 1);
     }
-    return cycles;
 }
 
 
@@ -982,14 +987,9 @@ bg_nested_poly_triangulate_clean(int **faces, int *num_faces,
 		node->Contour[(i + 1) % node->Contour.size()]);
 	if (contour.size() > 1 && contour.front() == contour.back())
 	    contour.pop_back();
-	std::set<int> seen_contour_points;
-	std::vector<int> simple_contour;
-	simple_contour.reserve(contour.size());
-	for (int point : contour) {
-	    if (seen_contour_points.insert(point).second)
-		simple_contour.push_back(point);
-	}
-	contour.swap(simple_contour);
+	/* Nonadjacent occurrences delimit touching cycles.  Removing a repeated
+	 * vertex would join unrelated edges and change the filled area.  Keep
+	 * the walk intact for decomposition below. */
 	clipper_remove_contour_spikes(contour, tri_integer_points);
 	if (contour.size() < 3)
 	    continue;
@@ -1094,83 +1094,52 @@ bg_nested_poly_triangulate_clean(int **faces, int *num_faces,
 	    cleaned_constraints.push_back(edge);
     }
 
-    /* Conditioning a touching contour can leave a hole attached to a filled
-     * node which no longer encloses it.  Preserve valid parent relationships;
-     * reassign an orphan only to its smallest enclosing filled contour.  The
-     * final area check still requires every cleaned hole to be represented. */
-    std::map<const ClipperLib::PolyNode *, ClipperLib::Path> outline_paths;
-    for (const auto &entry : node_contours) {
-	if (entry.first->IsHole())
-	    continue;
-	ClipperLib::Path &path = outline_paths[entry.first];
-	path.reserve(entry.second.size());
-	for (int point : entry.second)
-	    path.push_back(tri_integer_points[(size_t)point]);
-    }
-    std::map<const ClipperLib::PolyNode *, std::vector<const ClipperLib::PolyNode *>>
-	owned_holes;
-    for (const auto &entry : node_contours) {
-	if (!entry.first->IsHole())
-	    continue;
-	const ClipperLib::PolyNode *owner = entry.first->Parent;
-	const auto parent = outline_paths.find(owner);
-	if (parent == outline_paths.end() || !clipper_contour_inside(
-		entry.second, parent->second, tri_integer_points)) {
-	    owner = NULL;
-	    double smallest_area = std::numeric_limits<double>::infinity();
-	    bool ambiguous = false;
-	    for (const auto &outline : outline_paths) {
-		if (!clipper_contour_inside(entry.second, outline.second,
-			tri_integer_points))
-		    continue;
-		const double area = std::fabs(ClipperLib::Area(outline.second));
-		if (area < smallest_area) {
-		    smallest_area = area;
-		    owner = outline.first;
-		    ambiguous = false;
-		} else if (!(area > smallest_area)) {
-		    ambiguous = true;
-		}
-	    }
-	    if (!owner || ambiguous)
-		return bg_triangulation_report_set(report,
-		    BG_TRIANGULATION_INVALID_NESTING, -1,
-		    "cleaned hole has no unique enclosing filled contour");
-	}
-	owned_holes[owner].push_back(entry.first);
-    }
+    /* Reinserting boundary samples can turn a Clipper contour into a
+     * touching walk with both filled and excluded cycles.  Resolve that
+     * hierarchy after decomposition rather than inheriting the old node's
+     * role for every cycle. */
+    std::vector<std::vector<int>> outlines;
+    std::vector<std::vector<int>> holes;
+    for (const auto &entry : node_contours)
+	clipper_decompose_touching_contour(entry.second, tri_integer_points,
+	    outlines, holes);
 
-    /* A strictly-simple Clipper result may contain several filled
-     * components which touch at a vertex.  detria's multi-outline mode does
-     * not represent that hierarchy reliably, so triangulate every filled
-     * PolyNode with only its direct hole children.  Islands nested inside a
-     * hole are filled nodes in their own right and are handled separately. */
-    std::vector<int> combined_faces;
-    for (ClipperLib::PolyNode *node = clipped.GetFirst(); node;
-	    node = node->GetNext()) {
-	if (node->IsHole())
-	    continue;
-	const auto outline_entry = node_contours.find(node);
-	if (outline_entry == node_contours.end() ||
-		outline_entry->second.size() < 3)
-	    continue;
-
-	const std::vector<std::vector<int>> component_outlines =
-	    clipper_decompose_touching_contour(outline_entry->second,
-		tri_integer_points);
-	std::vector<std::vector<int>> decomposed_holes;
-	for (const ClipperLib::PolyNode *child : owned_holes[node]) {
-	    const auto hole_entry = node_contours.find(child);
-	    if (!child->IsHole() || hole_entry == node_contours.end() ||
-		    hole_entry->second.size() < 3)
+    std::vector<ClipperLib::Path> outline_paths(outlines.size());
+    for (size_t i = 0; i < outlines.size(); ++i) {
+	outline_paths[i].reserve(outlines[i].size());
+	for (int point : outlines[i])
+	    outline_paths[i].push_back(tri_integer_points[(size_t)point]);
+    }
+    std::vector<std::vector<size_t>> owned_holes(outlines.size());
+    for (size_t hole = 0; hole < holes.size(); ++hole) {
+	size_t owner = outlines.size();
+	double smallest_area = std::numeric_limits<double>::infinity();
+	bool ambiguous = false;
+	for (size_t i = 0; i < outlines.size(); ++i) {
+	    if (!clipper_contour_inside(holes[hole], outline_paths[i],
+		    tri_integer_points))
 		continue;
-	    std::vector<std::vector<int>> hole_cycles =
-		clipper_decompose_touching_contour(hole_entry->second,
-		    tri_integer_points);
-	    decomposed_holes.insert(decomposed_holes.end(),
-		std::make_move_iterator(hole_cycles.begin()),
-		std::make_move_iterator(hole_cycles.end()));
+	    const double area = std::fabs(ClipperLib::Area(outline_paths[i]));
+	    if (area < smallest_area) {
+		smallest_area = area;
+		owner = i;
+		ambiguous = false;
+	    } else if (!(area > smallest_area)) {
+		ambiguous = true;
+	    }
 	}
+	if (owner == outlines.size() || ambiguous)
+	    return bg_triangulation_report_set(report,
+		BG_TRIANGULATION_INVALID_NESTING, -1,
+		"decomposed hole has no unique enclosing filled contour");
+	owned_holes[owner].push_back(hole);
+    }
+
+    /* detria's multi-outline mode does not reliably represent components
+     * which touch at a vertex.  Triangulate each filled cycle with only its
+     * directly contained holes; islands inside holes are separate cycles. */
+    std::vector<int> combined_faces;
+    for (size_t component = 0; component < outlines.size(); ++component) {
 	const auto triangulate_component = [&](
 		const std::vector<int> &component_outline,
 		const std::vector<std::vector<int>> &component_holes,
@@ -1385,31 +1354,19 @@ bg_nested_poly_triangulate_clean(int **faces, int *num_faces,
 		return BRLCAD_OK;
 	};
 
-	for (const std::vector<int> &component_outline : component_outlines) {
-	    ClipperLib::Path component_outline_path;
-	    component_outline_path.reserve(component_outline.size());
-	    for (int point : component_outline)
-		component_outline_path.push_back(
-		    tri_integer_points[(size_t)point]);
-
-	    std::vector<ClipperLib::Path> component_hole_paths;
-	    std::vector<std::vector<int>> component_holes;
-	    for (const std::vector<int> &hole_cycle : decomposed_holes) {
-		    ClipperLib::Path hole_path;
-		    hole_path.reserve(hole_cycle.size());
-		    for (int point : hole_cycle) {
-			hole_path.push_back(tri_integer_points[(size_t)point]);
-		    }
-		    if (clipper_contour_inside(hole_cycle,
-			    component_outline_path, tri_integer_points)) {
-			component_holes.push_back(hole_cycle);
-			component_hole_paths.push_back(std::move(hole_path));
-		    }
-	    }
-	    if (triangulate_component(component_outline, component_holes,
-		    component_outline_path, component_hole_paths) != BRLCAD_OK)
-		return BRLCAD_ERROR;
+	std::vector<ClipperLib::Path> component_hole_paths;
+	std::vector<std::vector<int>> component_holes;
+	for (size_t hole : owned_holes[component]) {
+	    ClipperLib::Path hole_path;
+	    hole_path.reserve(holes[hole].size());
+	    for (int point : holes[hole])
+		hole_path.push_back(tri_integer_points[(size_t)point]);
+	    component_holes.push_back(holes[hole]);
+	    component_hole_paths.push_back(std::move(hole_path));
 	}
+	if (triangulate_component(outlines[component], component_holes,
+		outline_paths[component], component_hole_paths) != BRLCAD_OK)
+	    return BRLCAD_ERROR;
     }
     long double expected_area2 = 0.0L;
     for (const auto &entry : node_contours) {
