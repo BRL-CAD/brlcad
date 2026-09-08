@@ -77,6 +77,7 @@
 #include "bg/polygon.h"
 #include "brep.h"
 #include "./cdt.h"
+#include "heal.h"
 #include "surface.h"
 
 #define YELLOW 255, 255, 0
@@ -7506,6 +7507,102 @@ fast_cdt_refine_worker(int UNUSED(cpu), void *data)
     }
 }
 
+/* Healing is an optional recovery step even when drawing has no deadline.
+ * Bound its topology search so a malformed import cannot monopolize drawing. */
+static constexpr long FAST_CDT_HEALING_TIME_MS = 1000;
+
+static void
+fast_heal_failed_faces(const ON_Brep &source, int first_face, int end_face,
+	const struct brep_cdt_fast_options &options,
+	const struct bg_tess_tol *ttol, const struct bn_tol *tol,
+	double model_diagonal, int64_t deadline,
+	std::vector<fast_cdt_face_result> &results, fast_work_budget &work_budget,
+	std::vector<int> &recovered)
+{
+    /* Authoritative trim samples and source tokens belong to the original
+     * topology.  An owned copy cannot silently change their identities. */
+    if (options.trim_sample_count || options.trim_sample ||
+	options.trim_sample_source || options.point_source ||
+	options.preserve_pullback_samples)
+	return;
+    bool needed = false;
+    size_t retained_bytes = 0;
+    size_t retained_points = 0;
+    for (int fi = first_face; fi < end_face; ++fi) {
+	const fast_cdt_face_result &result = results[(size_t)fi];
+	needed = needed || (result.failed && !result.completed &&
+	    result.diagnostic_result == BREP_CDT_RESULT_INVALID_PSLG);
+	if (result.completed) {
+	    retained_bytes = fast_saturating_add(retained_bytes,
+		fast_face_result_bytes(result), options.max_result_bytes);
+	    retained_points = fast_saturating_add(retained_points,
+		result.pnts.size() / 3, options.max_points);
+	}
+    }
+    if (!needed)
+	return;
+    long healing_time = FAST_CDT_HEALING_TIME_MS;
+    if (deadline > 0)
+	healing_time = (long)std::min((int64_t)healing_time,
+	    (deadline - bu_gettime()) / 1000);
+    if (healing_time <= 0)
+	return;
+
+    /* Keep a face-sized scratch allowance beyond the B-Rep copies, while
+     * leaving at least half the working budget for the subsequent mesher. */
+    const size_t source_bytes = source.SizeOf();
+    const size_t healing_bytes = std::min(options.max_working_bytes / 2,
+	fast_saturating_add(fast_saturating_multiply(source_bytes, 2,
+	    options.max_working_bytes), FAST_CDT_BASE_FACE_WORKING_BYTES,
+	    options.max_working_bytes));
+    if (!healing_bytes || source_bytes > healing_bytes / 2)
+	return;
+    std::atomic<bool> stop(false), time_limited(false);
+    if (!work_budget.acquire(healing_bytes, stop, time_limited, deadline))
+	return;
+    fast_work_reservation healing_reservation(&work_budget, healing_bytes);
+    cdt_healing healing;
+    if (!cdt_heal_topology(source, tol->dist, options.max_points,
+	    healing_bytes, healing_time, healing, false,
+	    CDT_HEAL_DRAWABLE_COMPONENTS) || !healing.brep ||
+	    healing.brep->m_F.Count() != source.m_F.Count())
+	return;
+
+    for (int fi : healing.faces) {
+	if (fi < first_face || fi >= end_face)
+	    continue;
+	fast_cdt_face_result &current = results[(size_t)fi];
+	if (current.completed || !current.failed ||
+	    current.diagnostic_result != BREP_CDT_RESULT_INVALID_PSLG)
+	    continue;
+	if (deadline > 0 && bu_gettime() >= deadline)
+	    break;
+	const ON_BrepFace &face = healing.brep->m_F[fi];
+	const size_t working_bytes = fast_face_working_estimate(face,
+	    options.max_working_bytes - healing_bytes);
+	if (!work_budget.acquire(working_bytes, stop, time_limited, deadline))
+	    break;
+	fast_work_reservation face_reservation(&work_budget, working_bytes);
+	fast_cdt_face_result candidate;
+	struct bg_triangulation_report diagnostic = {};
+	if (bg_CDT(candidate.faces, candidate.norms, candidate.pnts,
+		candidate.point_sources, face, ttol, tol, model_diagonal,
+		&options, &diagnostic) != FAST_FACE_COMPLETED)
+	    continue;
+	const size_t bytes = fast_face_result_bytes(candidate);
+	const size_t points = candidate.pnts.size() / 3;
+	if (bytes > options.max_result_bytes - retained_bytes ||
+	    points > options.max_points - retained_points)
+	    continue;
+	retained_bytes += bytes;
+	retained_points += points;
+	candidate.completed = true;
+	fast_face_result_diagnostic(candidate, diagnostic);
+	recovered.push_back(fi);
+	current = std::move(candidate);
+    }
+}
+
 void
 brep_cdt_fast_options_default(struct brep_cdt_fast_options *options)
 {
@@ -7893,6 +7990,38 @@ brep_cdt_fast_ex(int **faces, int *face_cnt, vect_t **pnt_norms,
 		break;
 	    relative *= 0.5;
 	}
+    }
+
+    if (!hit_time_limit && !hit_memory_limit && !hit_point_limit) {
+	std::vector<int> recovered;
+	try {
+	    fast_heal_failed_faces(*brep,
+		first_face, end_face, options, ttol, tol, model_diagonal,
+		deadline, face_results, work_budget, recovered);
+	} catch (const std::bad_alloc &) {
+	    hit_memory_limit = true;
+	} catch (...) {
+	    /* Optional healing must leave the original per-face diagnostics
+	     * and any completed drawing available when recovery throws. */
+	    bu_log("BRep drawing topology recovery threw an unexpected exception\n");
+	}
+	for (int fi : recovered) {
+	    const fast_cdt_face_result &result = face_results[(size_t)fi];
+	    fast_face_refinement &quality = refinement[(size_t)fi];
+	    const fast_boundary_coverage coverage = fast_face_boundary_coverage(
+		result, face_boundary_boxes[(size_t)fi],
+		face_boundary_tolerances[(size_t)fi]);
+	    quality.area = fast_face_mesh_area(result);
+	    quality.boundary_coverage = coverage.fraction;
+	    quality.boundary_covered = coverage.covered;
+	    quality.accepted_relative_tolerance = requested_relative;
+	    quality.area_converged = coverage.covered &&
+		brep->m_F[fi].SurfaceOf()->IsPlanar(NULL, tol->dist);
+	    quality.budget_limited = result.faces.size() / 3 >
+		face_triangle_budgets[(size_t)fi];
+	}
+	if (deadline > 0 && bu_gettime() >= deadline)
+	    hit_time_limit = true;
     }
 
     int completed_faces = 0;

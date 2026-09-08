@@ -941,9 +941,10 @@ cdt_test_planar_cap_hulls(void)
     return simple_corner_cap(curves, tolerance, exhausted) || !exhausted.limited;
 }
 
-bool
-cdt_topology_references_safe(const ON_Brep *brep, std::string *reason,
-	bool require_paired_edges)
+static bool
+topology_references_safe(const ON_Brep *brep, std::string *reason,
+	bool require_paired_edges, bool allow_empty_inner_loops,
+	bool allow_empty_faces, healing_budget *budget)
 {
     const auto fail = [reason](const char *message) {
 	if (reason)
@@ -957,6 +958,8 @@ cdt_topology_references_safe(const ON_Brep *brep, std::string *reason,
     std::vector<int> trim_edges((size_t)brep->m_T.Count(), 0);
     for (int vi = 0; vi < brep->m_V.Count(); ++vi) {
 	const ON_BrepVertex &vertex = brep->m_V[vi];
+	if (budget && !budget->spend((size_t)vertex.m_ei.Count() + 1))
+	    return fail("topology reference validation exceeded its budget");
 	/* Unattached vertex records do not participate in tessellation. */
 	if (!vertex.m_ei.Count())
 	    continue;
@@ -971,6 +974,8 @@ cdt_topology_references_safe(const ON_Brep *brep, std::string *reason,
     }
     for (int ei = 0; ei < brep->m_E.Count(); ++ei) {
 	const ON_BrepEdge &edge = brep->m_E[ei];
+	if (budget && !budget->spend((size_t)edge.TrimCount() + 1))
+	    return fail("topology reference validation exceeded its budget");
 	if (edge.m_edge_index != ei ||
 	    (require_paired_edges ? edge.TrimCount() != 2 : edge.TrimCount() > 2) ||
 	    edge.m_c3i < 0 || edge.m_c3i >= brep->m_C3.Count() ||
@@ -992,17 +997,28 @@ cdt_topology_references_safe(const ON_Brep *brep, std::string *reason,
     }
     for (int fi = 0; fi < brep->m_F.Count(); ++fi) {
 	const ON_BrepFace &face = brep->m_F[fi];
+	if (budget && !budget->spend())
+	    return fail("topology reference validation exceeded its budget");
 	if (face.m_face_index != fi || face.m_si < 0 || face.m_si >= brep->m_S.Count() ||
-	    !face.SurfaceOf() || face.LoopCount() <= 0)
+	    !face.SurfaceOf() || (!allow_empty_faces && face.LoopCount() <= 0))
 	    return fail("face lacks a surface, trim loops, or stable indexing");
+	bool have_boundary = false;
+	bool unsupported_empty_loop = false;
 	for (int i = 0; i < face.LoopCount(); ++i) {
 	    const int li = face.m_li[i];
 	    if (li < 0 || li >= brep->m_L.Count() || ++loop_owners[(size_t)li] != 1)
 		return fail("invalid or duplicate face loop reference");
 	    const ON_BrepLoop &loop = brep->m_L[li];
+	    if (budget && !budget->spend((size_t)loop.TrimCount() + 1))
+		return fail("topology reference validation exceeded its budget");
 	    if (loop.m_loop_index != li || loop.m_fi != fi || loop.Face() != &face ||
-		loop.TrimCount() <= 0)
+		(loop.TrimCount() <= 0 &&
+		 (!allow_empty_faces &&
+		  (!allow_empty_inner_loops || loop.m_type != ON_BrepLoop::inner))))
 		return fail("invalid loop face or trim references");
+	    have_boundary = have_boundary || loop.TrimCount() > 0;
+	    unsupported_empty_loop = unsupported_empty_loop ||
+		(!loop.TrimCount() && loop.m_type != ON_BrepLoop::inner);
 	    for (int j = 0; j < loop.TrimCount(); ++j) {
 		const int ti = loop.m_ti[j];
 		if (ti < 0 || ti >= brep->m_T.Count() || ++trim_owners[(size_t)ti] != 1)
@@ -1030,6 +1046,10 @@ cdt_topology_references_safe(const ON_Brep *brep, std::string *reason,
 		}
 	    }
 	}
+	if (have_boundary && unsupported_empty_loop)
+	    return fail("face has an empty non-inner loop");
+	if (!have_boundary && !allow_empty_faces)
+	    return fail("face has no nonempty trim boundary");
     }
     if (std::find(loop_owners.begin(), loop_owners.end(), 0) != loop_owners.end() ||
 	std::find(trim_owners.begin(), trim_owners.end(), 0) != trim_owners.end())
@@ -1038,31 +1058,112 @@ cdt_topology_references_safe(const ON_Brep *brep, std::string *reason,
 }
 
 bool
+cdt_topology_references_safe(const ON_Brep *brep, std::string *reason,
+	bool require_paired_edges)
+{
+    return topology_references_safe(brep, reason, require_paired_edges, false, false, NULL);
+}
+
+bool
 cdt_heal_topology(const ON_Brep &source, double tolerance,
 	size_t max_points, size_t max_bytes, long max_time_ms, cdt_healing &result,
-	bool cap_boundary)
+	bool cap_boundary, cdt_healing_scope scope)
 {
     if (!source.m_F.Count() || !(tolerance > 0.0) || !std::isfinite(tolerance) ||
 	!max_points || !max_bytes || max_time_ms <= 0)
 	return false;
-    if (source.SizeOf() > max_bytes / 2) {
-	result.limited = true;
-	return false;
-    }
-    if (!cdt_topology_references_safe(&source, NULL, false))
-	return false;
-    const size_t point_budget = std::min(max_points,
-	max_bytes / (sizeof(segment) * segment_storage_factor));
-    const size_t operation_budget = point_budget > SIZE_MAX / operations_per_point ?
-	SIZE_MAX : point_budget * operations_per_point;
     const int64_t now = bu_gettime();
     const int64_t duration = std::min((int64_t)max_time_ms,
 	(INT64_MAX - now) / 1000) * 1000;
+    const size_t source_bytes = source.SizeOf();
+    if (source_bytes > max_bytes / 2) {
+	result.limited = true;
+	return false;
+    }
+    const size_t point_budget = std::min(max_points,
+	(max_bytes - 2 * source_bytes) /
+	    (sizeof(segment) * segment_storage_factor));
+    const size_t operation_budget = point_budget > SIZE_MAX / operations_per_point ?
+	SIZE_MAX : point_budget * operations_per_point;
     healing_budget budget = {point_budget, operation_budget, now + duration};
+    const bool drawable_components = scope == CDT_HEAL_DRAWABLE_COMPONENTS;
+    if (drawable_components && cap_boundary)
+	return false;
+    /* An empty inner loop excludes no region.  Permit only this exception
+     * during healing; the ordinary meshing preflight stays strict. */
+    if (!topology_references_safe(&source, NULL, false, true,
+	    drawable_components, &budget)) {
+	result.limited = budget.limited;
+	return false;
+    }
     std::unique_ptr<ON_Brep> candidate(new ON_Brep(source));
-    bool closed_source = true;
-    for (int ei = 0; ei < candidate->m_E.Count(); ++ei)
-	closed_source = closed_source && candidate->m_E[ei].TrimCount() != 1;
+    /* Retain unsupported empty faces in the drawing copy.  Validate their
+     * original references above, and never let them become new geometry. */
+    std::vector<bool> has_boundary((size_t)source.m_F.Count(), false);
+    for (int fi = 0; fi < source.m_F.Count(); ++fi) {
+	for (int li = 0; li < source.m_F[fi].LoopCount(); ++li)
+	    has_boundary[(size_t)fi] = has_boundary[(size_t)fi] ||
+		source.m_F[fi].Loop(li)->TrimCount() > 0;
+    }
+    bool removed_empty_loops = false;
+    for (int li = candidate->m_L.Count() - 1; li >= 0; --li) {
+	ON_BrepLoop &loop = candidate->m_L[li];
+	if (has_boundary[(size_t)loop.m_fi] &&
+	    loop.m_type == ON_BrepLoop::inner && !loop.TrimCount()) {
+	    if (!budget.spend()) {
+		result.limited = true;
+		return false;
+	    }
+	    result.faces.insert(loop.m_fi);
+	    candidate->DeleteLoop(loop, false);
+	    removed_empty_loops = true;
+	}
+    }
+    /* Closure is evidence local to a connected shell.  A separate solid
+     * cannot disambiguate a clockwise ring on an open component.  Connect
+     * through vertices too, including singular trims. */
+    std::vector<int> components((size_t)candidate->m_F.Count());
+    for (size_t fi = 0; fi < components.size(); ++fi)
+	components[fi] = (int)fi;
+    const auto component_root = [&](int face_index) {
+	while (components[(size_t)face_index] != face_index) {
+	    components[(size_t)face_index] = components[(size_t)
+		components[(size_t)face_index]];
+	    face_index = components[(size_t)face_index];
+	}
+	return face_index;
+    };
+    std::vector<int> vertex_face((size_t)candidate->m_V.Count(), -1);
+    for (int ti = 0; ti < candidate->m_T.Count(); ++ti) {
+	const ON_BrepTrim &trim = candidate->m_T[ti];
+	if (trim.m_trim_index < 0)
+	    continue;
+	if (!budget.spend()) {
+	    result.limited = true;
+	    return false;
+	}
+	const int fi = trim.Face()->m_face_index;
+	for (int end = 0; end < 2; ++end) {
+	    int &owner = vertex_face[(size_t)trim.m_vi[end]];
+	    if (owner >= 0)
+		components[(size_t)component_root(fi)] = component_root(owner);
+	    else
+		owner = fi;
+	}
+    }
+    for (size_t fi = 0; fi < components.size(); ++fi)
+	components[fi] = component_root((int)fi);
+    std::vector<bool> closed_component(components.size(), true);
+    for (size_t fi = 0; fi < components.size(); ++fi) {
+	if (!has_boundary[fi])
+	    closed_component[(size_t)components[fi]] = false;
+    }
+    for (int ei = 0; ei < candidate->m_E.Count(); ++ei) {
+	const ON_BrepEdge &edge = candidate->m_E[ei];
+	if (edge.TrimCount() == 1)
+	    closed_component[(size_t)components[(size_t)
+		edge.Trim(0)->Face()->m_face_index]] = false;
+    }
     for (int fi = 0; fi < candidate->m_F.Count(); ++fi) {
 	if (!budget.spend())
 	    break;
@@ -1093,7 +1194,8 @@ cdt_heal_topology(const ON_Brep &source, double tolerance,
 	    tolerance, budget, result))
 	    continue;
 	normalize_roles(*candidate, fi, loops,
-	    closed_source || (loops.size() > 1 && paired_boundaries(face)), budget, result);
+	    closed_component[(size_t)components[(size_t)fi]] ||
+	    (loops.size() > 1 && paired_boundaries(face)), budget, result);
     }
     if (cap_boundary && !budget.limited)
 	cap_boundaries(*candidate, tolerance, budget, result);
@@ -1113,7 +1215,7 @@ cdt_heal_topology(const ON_Brep &source, double tolerance,
     if (!result.faces.size() && !result.unused_edges)
 	return false;
     candidate->SetTrimBoundingBoxes(false);
-    if (result.unused_edges) {
+    if (result.unused_edges || removed_empty_loops) {
 	if (!candidate->Compact() ||
 	    candidate->m_F.Count() != source.m_F.Count() + result.capped_loops ||
 	    candidate->m_E.Count() != (int)result.original_edges.size())
