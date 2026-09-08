@@ -178,40 +178,63 @@ void SPatch::plot(const char *filename)
 }
 
 static double
+surface_length_at(double parameter, const ON_Interval &domain,
+	double lower, double middle, double upper)
+{
+    /* Interpolate between adjacent measurements.  Reversing the lower
+     * weights creates a discontinuity at the middle of a tapered surface. */
+    const double position = domain.NormalizedParameterAt(parameter);
+    if (position < 0.5)
+	return lower + 2.0 * position * (middle - lower);
+    return middle + (2.0 * position - 1.0) * (upper - middle);
+}
+
+static double
 uline_len_est(struct cdt_surf_info *sinfo, double u1, double u2, double v)
 {
     if (sinfo->s->IsClosed(1))
 	v = cdt_surface_parameter(v, sinfo->s->Domain(1));
-    double t, lenfact, lenest;
-    int active_half = (fabs(sinfo->v1 - v) < fabs(sinfo->v2 - v)) ? 0 : 1;
-    t = (active_half == 0) ? 1 - fabs(sinfo->v1 - v)/fabs((sinfo->v2 - sinfo->v1)*0.5) : 1 - fabs(sinfo->v2 - v)/fabs((sinfo->v2 - sinfo->v1)*0.5);
-    if (active_half == 0) {
-	lenfact = sinfo->u_lower_3dlen * (1 - (t)) + sinfo->u_mid_3dlen * (t);
-	lenest = (u2 - u1)/sinfo->ulen * lenfact;
-    } else {
-	lenfact = sinfo->u_mid_3dlen * (1 - (t)) + sinfo->u_upper_3dlen * (t);
-	lenest = (u2 - u1)/sinfo->ulen * lenfact;
-    }
-    return lenest;
+    return (u2 - u1) / sinfo->ulen * surface_length_at(v,
+	ON_Interval(sinfo->v1, sinfo->v2), sinfo->u_lower_3dlen,
+	sinfo->u_mid_3dlen, sinfo->u_upper_3dlen);
 }
-
 
 static double
 vline_len_est(struct cdt_surf_info *sinfo, double u, double v1, double v2)
 {
     if (sinfo->s->IsClosed(0))
 	u = cdt_surface_parameter(u, sinfo->s->Domain(0));
-    double t, lenfact, lenest;
-    int active_half = (fabs(sinfo->u1 - u) < fabs(sinfo->u2 - u)) ? 0 : 1;
-    t = (active_half == 0) ? 1 - fabs(sinfo->u1 - u)/fabs((sinfo->u2 - sinfo->u1)*0.5) : 1 - fabs(sinfo->u2 - u)/fabs((sinfo->u2 - sinfo->u1)*0.5);
-    if (active_half == 0) {
-	lenfact = sinfo->v_lower_3dlen * (1 - (t)) + sinfo->v_mid_3dlen * (t);
-	lenest = (v2 - v1)/sinfo->vlen * lenfact;
-    } else {
-	lenfact = sinfo->v_mid_3dlen * (1 - (t)) + sinfo->v_upper_3dlen * (t);
-	lenest = (v2 - v1)/sinfo->vlen * lenfact;
+    return (v2 - v1) / sinfo->vlen * surface_length_at(u,
+	ON_Interval(sinfo->u1, sinfo->u2), sinfo->v_lower_3dlen,
+	sinfo->v_mid_3dlen, sinfo->v_upper_3dlen);
+}
+
+int
+cdt_test_surface_length_estimates(void)
+{
+    const double lengths[2][3] = {{2.0, 6.0, 10.0}, {10.0, 6.0, 2.0}};
+    for (const ON_Interval &domain : {ON_Interval(0.0, 1.0),
+	    ON_Interval(-5.0, 12.0)}) {
+	for (const auto &values : lengths) {
+	    for (int quarter = 0; quarter <= 4; ++quarter) {
+		const double fraction = (double)quarter / 4.0;
+		const double expected = values[0] + fraction *
+		    (values[2] - values[0]);
+		const double measured = surface_length_at(
+		    domain.ParameterAt(fraction), domain,
+		    values[0], values[1], values[2]);
+		if (!NEAR_EQUAL(measured, expected, ON_ZERO_TOLERANCE))
+		    return 1;
+	    }
+	}
+	/* An interior maximum must retain both independently measured halves. */
+	if (!NEAR_EQUAL(surface_length_at(domain.ParameterAt(0.25),
+		domain, 2.0, 10.0, 6.0), 6.0, ON_ZERO_TOLERANCE) ||
+	    !NEAR_EQUAL(surface_length_at(domain.ParameterAt(0.75),
+		domain, 2.0, 10.0, 6.0), 8.0, ON_ZERO_TOLERANCE))
+	    return 2;
     }
-    return lenest;
+    return 0;
 }
 
 static bool EdgeSegCallback(void *data, void *a_context) {
