@@ -28,6 +28,7 @@
 #include "common.h"
 #include "./cdt.h"
 #include "./chart.h"
+#include "surface.h"
 
 #define MAX_INITIAL_SURFACE_PATCHES 65536
 
@@ -179,6 +180,8 @@ void SPatch::plot(const char *filename)
 static double
 uline_len_est(struct cdt_surf_info *sinfo, double u1, double u2, double v)
 {
+    if (sinfo->s->IsClosed(1))
+	v = cdt_surface_parameter(v, sinfo->s->Domain(1));
     double t, lenfact, lenest;
     int active_half = (fabs(sinfo->v1 - v) < fabs(sinfo->v2 - v)) ? 0 : 1;
     t = (active_half == 0) ? 1 - fabs(sinfo->v1 - v)/fabs((sinfo->v2 - sinfo->v1)*0.5) : 1 - fabs(sinfo->v2 - v)/fabs((sinfo->v2 - sinfo->v1)*0.5);
@@ -196,6 +199,8 @@ uline_len_est(struct cdt_surf_info *sinfo, double u1, double u2, double v)
 static double
 vline_len_est(struct cdt_surf_info *sinfo, double u, double v1, double v2)
 {
+    if (sinfo->s->IsClosed(0))
+	u = cdt_surface_parameter(u, sinfo->s->Domain(0));
     double t, lenfact, lenest;
     int active_half = (fabs(sinfo->u1 - u) < fabs(sinfo->u2 - u)) ? 0 : 1;
     t = (active_half == 0) ? 1 - fabs(sinfo->u1 - u)/fabs((sinfo->u2 - sinfo->u1)*0.5) : 1 - fabs(sinfo->u2 - u)/fabs((sinfo->u2 - sinfo->u1)*0.5);
@@ -651,9 +656,11 @@ filter_surface_pnts(struct cdt_surf_info *sinfo)
 	// Calculate the 3D point and normal values.
 	ON_3dPoint p3d;
 	ON_3dVector norm = ON_3dVector::UnsetVector;
-	if (!surface_EvNormal(sinfo->s, n2dp.x, n2dp.y, p3d, norm)) {
-	    p3d = sinfo->s->PointAt(n2dp.x, n2dp.y);
+	if (!cdt_surface_normal(sinfo->s, n2dp, p3d, norm)) {
+	    p3d = cdt_surface_point(sinfo->s, n2dp);
 	}
+	if (!p3d.IsValid())
+	    continue;
 
 	// Last filtering pass before insertion: if we're too close to an edge
 	// in 3D, the point is out.
@@ -692,9 +699,11 @@ filter_surface_pnts(struct cdt_surf_info *sinfo)
 	// Calculate the 3D point and normal values.
 	ON_3dPoint p3d;
 	ON_3dVector norm = ON_3dVector::UnsetVector;
-	if (!surface_EvNormal(sinfo->s, n2dp.x, n2dp.y, p3d, norm)) {
-	    p3d = sinfo->s->PointAt(n2dp.x, n2dp.y);
+	if (!cdt_surface_normal(sinfo->s, n2dp, p3d, norm)) {
+	    p3d = cdt_surface_point(sinfo->s, n2dp);
 	}
+	if (!p3d.IsValid())
+	    continue;
 
 	long f_ind2d = fmesh->add_point(n2dp);
 	fmesh->m_interior_pnts.insert(f_ind2d);
@@ -798,10 +807,10 @@ getSurfacePoint(
 	ON_3dPoint p[4] = {ON_3dPoint(), ON_3dPoint(), ON_3dPoint(), ON_3dPoint()};
 	ON_3dVector norm[4] = {ON_3dVector(), ON_3dVector(), ON_3dVector(), ON_3dVector()};
 
-	if ((surface_EvNormal(sinfo->s, u1, v1, p[0], norm[0]))
-		&& (surface_EvNormal(sinfo->s, u2, v1, p[1], norm[1]))
-		&& (surface_EvNormal(sinfo->s, u2, v2, p[2], norm[2]))
-		&& (surface_EvNormal(sinfo->s, u1, v2, p[3], norm[3]))) {
+	if ((cdt_surface_normal(sinfo->s, ON_2dPoint(u1, v1), p[0], norm[0]))
+		&& (cdt_surface_normal(sinfo->s, ON_2dPoint(u2, v1), p[1], norm[1]))
+		&& (cdt_surface_normal(sinfo->s, ON_2dPoint(u2, v2), p[2], norm[2]))
+		&& (cdt_surface_normal(sinfo->s, ON_2dPoint(u1, v2), p[3], norm[3]))) {
 
 
 	    ON_BoundingBox uvbb;
@@ -831,11 +840,11 @@ getSurfacePoint(
 	ON_3dPoint p[5] = {ON_3dPoint(), ON_3dPoint(), ON_3dPoint(), ON_3dPoint(), ON_3dPoint()};
 	ON_3dVector norm[5] = {ON_3dVector(), ON_3dVector(), ON_3dVector(), ON_3dVector(), ON_3dVector()};
 
-	if ((surface_EvNormal(sinfo->s, u, v1, p[0], norm[0]))
-		&& (surface_EvNormal(sinfo->s, u, v2, p[1], norm[1]))
-		&& (surface_EvNormal(sinfo->s, u1, v, p[2], norm[2]))
-		&& (surface_EvNormal(sinfo->s, u2, v, p[3], norm[3]))
-		&& (surface_EvNormal(sinfo->s, u, v, p[4], norm[4]))
+	if ((cdt_surface_normal(sinfo->s, ON_2dPoint(u, v1), p[0], norm[0]))
+		&& (cdt_surface_normal(sinfo->s, ON_2dPoint(u, v2), p[1], norm[1]))
+		&& (cdt_surface_normal(sinfo->s, ON_2dPoint(u1, v), p[2], norm[2]))
+		&& (cdt_surface_normal(sinfo->s, ON_2dPoint(u2, v), p[3], norm[3]))
+		&& (cdt_surface_normal(sinfo->s, ON_2dPoint(u, v), p[4], norm[4]))
 		) {
 	    ON_Line uline(p[2], p[3]);
 	    ON_Line vline(p[0], p[1]);
