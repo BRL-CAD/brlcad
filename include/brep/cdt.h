@@ -240,6 +240,13 @@ struct brep_cdt_healing_report {
 
 #define BREP_CDT_HEALING_REPORT_INIT {0, 0, 0, 0, 0, 0, 0, 0.0, 0, 0.0, 0.0}
 
+/* Resource limits encountered by any nested repair attempt. */
+#define BREP_CDT_REPAIR_LIMIT_TIME 1u
+#define BREP_CDT_REPAIR_LIMIT_MEMORY 2u
+#define BREP_CDT_REPAIR_LIMIT_POINTS 4u
+/* Bounded refinement or topology healing exhausted its work budget. */
+#define BREP_CDT_REPAIR_LIMIT_REFINEMENT 8u
+
 /** Provenance and quality measurements for a repair attempt. */
 struct brep_cdt_repair_report {
     struct bg_trimesh_repair_report mesh;
@@ -342,9 +349,11 @@ struct brep_cdt_repair_report {
     /** A closed-source retry retained validated pullback boundary samples. */
     int pullback_retry_attempted;
     int pullback_retry_applied;
+    /** Cumulative BREP_CDT_REPAIR_LIMIT_* flags, also retained on success. */
+    unsigned int resource_limits;
 };
 
-#define BREP_CDT_REPAIR_REPORT_INIT {BG_TRIMESH_REPAIR_REPORT_INIT, {BREP_CDT_RESULT_UNATTEMPTED, BREP_CDT_STAGE_NONE, -1, 0, 0, {0}}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0, 0, 0, 0.0, BREP_CDT_HEALING_REPORT_INIT, 0, 0}
+#define BREP_CDT_REPAIR_REPORT_INIT {BG_TRIMESH_REPAIR_REPORT_INIT, {BREP_CDT_RESULT_UNATTEMPTED, BREP_CDT_STAGE_NONE, -1, 0, 0, {0}}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0, 0, 0, 0.0, BREP_CDT_HEALING_REPORT_INIT, 0, 0, 0u}
 
 /** Create and initialize a CDT state with default tolerances.  bv
  * must be a pointer to an ON_Brep object. */

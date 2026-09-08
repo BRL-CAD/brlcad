@@ -630,9 +630,11 @@ struct bg_trimesh_repair_report {
     fastf_t output_area;
     fastf_t output_volume;
     fastf_t max_vertex_displacement;
+    /** An allocation failure prevented completion of the repair attempt. */
+    int allocation_failed;
 };
 
-#define BG_TRIMESH_REPAIR_REPORT_INIT {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0.0}
+#define BG_TRIMESH_REPAIR_REPORT_INIT {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0.0, 0}
 
 /**
  * Attempt a bounded, explicitly configured triangle mesh repair.
@@ -648,6 +650,7 @@ struct bg_trimesh_repair_report {
  * satisfied.  On return 1, the output pointers remain NULL and their counts
  * remain zero unless topology normalization required an exported copy.
  * Allocation and library exceptions are converted to return value -1.
+ * The report distinguishes allocation failure from geometric rejection.
  */
 BG_EXPORT extern int
 bg_trimesh_repair_ex(
