@@ -37,8 +37,10 @@
 #include <iterator>
 #include <memory>
 #include "bg/chull.h"
+#include "bu/str.h"
 #include "./chart.h"
 #include "./cdt.h"
+#include "./surface.h"
 
 static bool
 edge_has_singular_trim(const ON_BrepTrim *trim1, const ON_BrepTrim *trim2)
@@ -276,7 +278,7 @@ rtree_bbox_3d(struct ON_Brep_CDT_State *s_cdt, cpolyedge_t *pe)
     double tcparam = (pe->trim_start + pe->trim_end) / 2.0;
     ON_3dPoint trim_2d = trim.PointAt(tcparam);
     const ON_Surface *s = trim.SurfaceOf();
-    ON_3dPoint trim_3d = s->PointAt(trim_2d.x, trim_2d.y);
+    ON_3dPoint trim_3d = cdt_surface_point(s, trim_2d);
 
     ON_3dPoint *p3d1 = pe->eseg->e_start;
     ON_3dPoint *p3d2 = pe->eseg->e_end;
@@ -428,7 +430,7 @@ trim_normal(ON_BrepTrim *trim, ON_2dPoint &cp)
 	    norm = fplane.Normal();
 	} else {
 	    ON_3dPoint tmp1;
-	    surface_EvNormal(trim->SurfaceOf(), cp.x, cp.y, tmp1, norm);
+	    cdt_surface_normal(s, cp, tmp1, norm);
 	}
 	if (trim->Face()->m_bRev) {
 	    norm = -1 * norm;
@@ -438,27 +440,71 @@ trim_normal(ON_BrepTrim *trim, ON_2dPoint &cp)
     return norm;
 }
 
-static double
-periodic_surface_parameter(double parameter, const ON_Interval &domain)
+int
+cdt_test_periodic_edge_normals(void)
 {
-    const double period = domain.Length();
-    if (!(period > 0.0) || !std::isfinite(parameter))
-	return parameter;
-    const double magnitude = std::max(std::fabs(domain.Min()),
-	std::fabs(domain.Max()));
-    const double tolerance = 256.0 *
-	std::numeric_limits<double>::epsilon() *
-	std::max(magnitude, period);
-    if (parameter >= domain.Min() - tolerance &&
-	    parameter <= domain.Max() + tolerance)
-	return std::max(domain.Min(), std::min(domain.Max(), parameter));
-    double remainder = std::fmod(parameter - domain.Min(), period);
-    if (remainder < 0.0)
-	remainder += period;
-    if (std::fabs(remainder) <= tolerance && parameter > domain.Min())
-	return domain.Max();
-    return domain.Min() + remainder;
+    ON_Brep brep;
+    ON_Torus torus(ON_Circle(ON_xy_plane, 9.0), 2.5);
+    std::unique_ptr<ON_NurbsSurface> surface(new ON_NurbsSurface());
+    if (!torus.GetNurbForm(*surface))
+	return 1;
+    ON_BrepFace &face = brep.NewFace(brep.AddSurface(surface.release()));
+    ON_BrepLoop &loop = brep.NewLoop(ON_BrepLoop::outer, face);
+    const int curve_index = brep.AddTrimCurve(new ON_LineCurve(
+	ON_2dPoint(0.0, 0.0), ON_2dPoint(1.0, 1.0)));
+    ON_BrepTrim &trim = brep.NewTrim(false, loop, curve_index);
+    trim.m_type = ON_BrepTrim::boundary;
+    const ON_Surface *source = face.SurfaceOf();
+    const ON_2dPoint native(source->Domain(0).ParameterAt(0.375),
+	source->Domain(1).ParameterAt(0.125));
+    ON_3dPoint expected_point;
+    ON_3dVector expected_normal;
+    if (!surface_EvNormal(source, native.x, native.y,
+	    expected_point, expected_normal))
+	return 2;
+    for (bool reverse : {false, true}) {
+	face.m_bRev = reverse;
+	for (int ucopy : {-3, 0, 2}) {
+	    for (int vcopy : {-2, 0, 3}) {
+		ON_2dPoint uv(native.x + ucopy * source->Domain(0).Length(),
+		    native.y + vcopy * source->Domain(1).Length());
+		const ON_2dPoint original = uv;
+		const ON_3dVector normal = trim_normal(&trim, uv);
+		const ON_3dVector expected = reverse ? -expected_normal : expected_normal;
+		if (!normal.IsValid() || (normal - expected).Length() > ON_SQRT_EPSILON ||
+		    uv != original || cdt_surface_point(source, uv).DistanceTo(expected_point) > BN_TOL_DIST)
+		    return 3;
+		/* Initial vertex normals use the p-curve endpoints, whereas
+		 * splitting evaluates an interior trim parameter.  Cover both. */
+		ON_Curve *curve = brep.m_C2[curve_index];
+		const ON_2dVector shift = uv - ON_2dPoint(curve->PointAtStart());
+		if (!curve->Translate(ON_3dVector(shift.x, shift.y, 0.0)))
+		    return 6;
+		ON_BrepVertex vertex;
+		vertex.SetPoint(expected_point);
+		const ON_3dVector vertex_normal = calc_trim_vnorm(vertex, &trim);
+		if (!vertex_normal.IsValid() ||
+		    (vertex_normal - expected).Length() > ON_SQRT_EPSILON)
+		    return 7;
+	    }
+	}
+    }
+    ON_3dPoint point;
+    ON_3dVector normal;
+    if (cdt_surface_normal(NULL, native, point, normal) ||
+	cdt_surface_point(source, ON_2dPoint::UnsetPoint).IsValid())
+	return 4;
+    /* A finite extreme copy must not overflow an integer turn counter. */
+    /* OpenNURBS reserves values near DBL_MAX as invalid coordinates. */
+    const ON_2dPoint distant(std::numeric_limits<double>::max() / 2.0, native.y);
+    const ON_2dPoint evaluated = cdt_surface_uv(source, distant);
+    if (!evaluated.IsValid() || !source->Domain(0).Includes(evaluated.x) ||
+	!source->Domain(0).Includes(cdt_surface_parameter(
+	    std::numeric_limits<double>::max(), source->Domain(0))))
+	return 5;
+    return 0;
 }
+
 
 static ON_2dPoint
 get_trim_midpt(fastf_t *t, struct ON_Brep_CDT_State *s_cdt,
@@ -478,12 +524,7 @@ get_trim_midpt(fastf_t *t, struct ON_Brep_CDT_State *s_cdt,
 	ON_2dPoint uv = trim.PointAt(parameter);
 	if (!uv.IsValid() || !surface)
 	    return std::numeric_limits<double>::infinity();
-	for (int direction = 0; direction < 2; ++direction) {
-	    if (surface->IsClosed(direction))
-		uv[direction] = periodic_surface_parameter(uv[direction],
-		    surface->Domain(direction));
-	}
-	const ON_3dPoint point = surface->PointAt(uv.x, uv.y);
+	const ON_3dPoint point = cdt_surface_point(surface, uv);
 	if (!point.IsValid())
 	    return std::numeric_limits<double>::infinity();
 	const double distance = point.DistanceTo(edge_mid_3d);
@@ -1193,10 +1234,10 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, bedge_seg_t *bseg,
 	const ON_Surface *surface1 = trim1->SurfaceOf();
 	const ON_Surface *surface2 = trim2->SurfaceOf();
 	const ON_3dPoint fallback_point1 = surface1 && fallback_uv1.IsValid() ?
-	    surface1->PointAt(fallback_uv1.x, fallback_uv1.y) :
+	    cdt_surface_point(surface1, fallback_uv1) :
 	    ON_3dPoint::UnsetPoint;
 	const ON_3dPoint fallback_point2 = surface2 && fallback_uv2.IsValid() ?
-	    surface2->PointAt(fallback_uv2.x, fallback_uv2.y) :
+	    cdt_surface_point(surface2, fallback_uv2) :
 	    ON_3dPoint::UnsetPoint;
 	double agreement_tolerance = BN_TOL_DIST;
 	if (std::isfinite(edge.m_tolerance) && edge.m_tolerance > 0.0 &&
@@ -1452,12 +1493,7 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, bedge_seg_t *bseg,
 	    const ON_Surface *surface = trim->SurfaceOf();
 	    if (!surface || !uv.IsValid())
 		return DBL_MAX;
-	    for (int direction = 0; direction < 2; ++direction) {
-		if (surface->IsClosed(direction))
-		    uv[direction] = periodic_surface_parameter(uv[direction],
-			surface->Domain(direction));
-	    }
-	    const ON_3dPoint surface_point = surface->PointAt(uv.x, uv.y);
+	    const ON_3dPoint surface_point = cdt_surface_point(surface, uv);
 	    return surface_point.IsValid() ?
 		surface_point.DistanceTo(edge_point) : DBL_MAX;
 	};

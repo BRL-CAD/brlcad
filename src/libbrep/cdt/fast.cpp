@@ -71,11 +71,13 @@
 
 #include "bu/cv.h"
 #include "bu/opt.h"
+#include "bu/str.h"
 #include "bu/datetime.h"
 #include "bn/dvec.h"
 #include "bg/polygon.h"
 #include "brep.h"
 #include "./cdt.h"
+#include "surface.h"
 
 #define YELLOW 255, 255, 0
 
@@ -147,23 +149,16 @@ struct fast_line_store {
     }
 };
 
+using fast_bridge_samples = std::map<double, ON_3dPoint>;
+
 struct fast_bridge_store {
-    std::vector<std::map<double, ON_3dPoint *> *> maps;
+    std::vector<std::unique_ptr<fast_bridge_samples>> maps;
+    bool invalid = false;
 
-    ~fast_bridge_store()
+    fast_bridge_samples *create()
     {
-	for (std::map<double, ON_3dPoint *> *map : maps) {
-	    if (!map)
-		continue;
-	    for (const auto &sample : *map)
-		delete sample.second;
-	    delete map;
-	}
-    }
-
-    void push_back(std::map<double, ON_3dPoint *> *map)
-    {
-	maps.push_back(map);
+	maps.push_back(std::make_unique<fast_bridge_samples>());
+	return maps.back().get();
     }
 };
 
@@ -308,7 +303,8 @@ getEdgePoints(const ON_BrepTrim &trim,
     if (!std::isfinite(t) || !(t > sbtp->t) || !(t < ebtp->t))
 	return;
 
-    int etrim = (trim.EvTangent(t, mid_2d, mid_tang) && surface_EvNormal(s, mid_2d.x, mid_2d.y, mid_3d, mid_norm)) ? 1 : 0;
+    int etrim = (trim.EvTangent(t, mid_2d, mid_tang) &&
+	cdt_surface_normal(s, mid_2d, mid_3d, mid_norm)) ? 1 : 0;
     int leval = 0;
 
     if (etrim) {
@@ -352,7 +348,7 @@ getEdgePoints(const ON_BrepTrim &trim,
 	ON_2dPoint to = ON_2dPoint::UnsetPoint;
 	if (FindTrimSeamCrossing(trim, sbtp->t, ebtp->t, seam_t, from, to, BREP_SAME_POINT_TOLERANCE)) {
 	    ON_2dPoint seam_2d = trim.PointAt(seam_t);
-	    ON_3dPoint seam_3d = s->PointAt(seam_2d.x, seam_2d.y);
+	    ON_3dPoint seam_3d = cdt_surface_point(s, seam_2d);
 	    if (param_points.find(seam_t) == param_points.end()) {
 		BrepTrimPoint *nbtp = new BrepTrimPoint;
 		nbtp->p3d = new ON_3dPoint(seam_3d);
@@ -384,8 +380,7 @@ fast_add_trim_sample(const ON_BrepTrim &trim, double t,
     ON_3dPoint point = ON_3dPoint::UnsetPoint;
     ON_3dVector tangent = ON_3dVector::UnsetVector;
     ON_3dVector normal = ON_3dVector::UnsetVector;
-    if (!uv.IsValid() || !surface_EvNormal(surface, uv.x, uv.y, point,
-	    normal))
+    if (!uv.IsValid() || !cdt_surface_normal(surface, uv, point, normal))
 	return false;
     trim.EvTangent(t, uv, tangent);
 
@@ -521,8 +516,7 @@ fast_collapsed_closed_pcurve(const ON_BrepLoop *loop,
 	return false;
 
     const ON_2dPoint start_uv = trim.PointAt(trim_domain.Min());
-    const ON_3dPoint trim_start = surface->PointAt(start_uv.x,
-	start_uv.y);
+    const ON_3dPoint trim_start = cdt_surface_point(surface, start_uv);
     const ON_3dPoint edge_start = edge_curve->PointAt(edge_domain.Min());
     double trim_extent = 0.0;
     double edge_extent = 0.0;
@@ -531,7 +525,7 @@ fast_collapsed_closed_pcurve(const ON_BrepLoop *loop,
 	const double fraction = (double)si / 16.0;
 	const ON_2dPoint uv = trim.PointAt(
 	    trim_domain.ParameterAt(fraction));
-	const ON_3dPoint trim_point = surface->PointAt(uv.x, uv.y);
+	const ON_3dPoint trim_point = cdt_surface_point(surface, uv);
 	const ON_3dPoint edge_point = edge_curve->PointAt(
 	    edge_domain.ParameterAt(fraction));
 	samples_valid = uv.IsValid() && trim_point.IsValid() &&
@@ -1053,14 +1047,14 @@ getEdgePoints(ON_BrepTrim &trim,
 
     evals += (trim.EvTangent(range.m_t[0], start_2d, start_tang)) ? 1 : 0;
     evals += (trim.EvTangent(range.m_t[1], end_2d, end_tang)) ? 1 : 0;
-    evals += (surface_EvNormal(s, start_2d.x, start_2d.y, start_3d, start_norm)) ? 1 : 0;
-    evals += (surface_EvNormal(s, end_2d.x, end_2d.y, end_3d, end_norm)) ? 1 : 0;
+    evals += cdt_surface_normal(s, start_2d, start_3d, start_norm) ? 1 : 0;
+    evals += cdt_surface_normal(s, end_2d, end_3d, end_norm) ? 1 : 0;
 
     if (evals != 4) {
 	start_2d = trim.PointAt(range.m_t[0]);
 	end_2d = trim.PointAt(range.m_t[1]);
-	start_3d = s->PointAt(start_2d.x,start_2d.y);
-	end_3d = s->PointAt(end_2d.x,end_2d.y);
+	start_3d = cdt_surface_point(s, start_2d);
+	end_3d = cdt_surface_point(s, end_2d);
 	evals = 4;
     }
 
@@ -1096,10 +1090,10 @@ getEdgePoints(ON_BrepTrim &trim,
 	ON_3dVector mid_norm(0.0, 0.0, 0.0);
 
 	evals += (trim.EvTangent(mid_range, mid_2d, mid_tang)) ? 1 : 0;
-	evals += (surface_EvNormal(s, mid_2d.x, mid_2d.y, mid_3d, mid_norm)) ? 1 : 0;
+	evals += cdt_surface_normal(s, mid_2d, mid_3d, mid_norm) ? 1 : 0;
 	if (evals != 6) {
 	    mid_2d = trim.PointAt(mid_range);
-	    mid_3d = s->PointAt(mid_2d.x, mid_2d.y);
+	    mid_3d = cdt_surface_point(s, mid_2d);
 	}
 
 	BrepTrimPoint *mbtp = new BrepTrimPoint;
@@ -1546,180 +1540,192 @@ getSurfacePoints(const ON_BrepFace &face,
 }
 
 
-static void
-getUVCurveSamples(const ON_Surface *s,
-		  const ON_Curve *curve,
-		  fastf_t t1,
-		  const ON_3dPoint &start_2d,
-		  const ON_3dVector &start_tang,
-		  const ON_3dPoint &start_3d,
-		  const ON_3dVector &start_norm,
-		  fastf_t t2,
-		  const ON_3dPoint &end_2d,
-		  const ON_3dVector &end_tang,
-		  const ON_3dPoint &end_3d,
-		  const ON_3dVector &end_norm,
-		  fastf_t min_dist,
-		  fastf_t max_dist,
-		  fastf_t within_dist,
-		  fastf_t cos_within_ang,
-		  std::map<double, ON_3dPoint *> &param_points)
+struct fast_uv_curve_sample {
+    double fraction = 0.0;
+    ON_3dPoint uv;
+    ON_3dPoint point;
+    ON_3dVector tangent;
+    ON_3dVector normal;
+};
+
+static bool
+fast_uv_curve_evaluate(const ON_Surface *surface, const ON_Curve *curve,
+	double fraction, fast_uv_curve_sample &sample)
 {
-    static thread_local int recursion_depth = 0;
-    if (recursion_depth >= FAST_CDT_MAX_RECURSION ||
-	    param_points.size() >= FAST_CDT_MAX_TRIM_SAMPLES ||
-	    !std::isfinite(t1) || !std::isfinite(t2) || !(t2 > t1))
-	return;
-    fast_recursion_guard guard(recursion_depth);
+    sample.fraction = fraction;
+    return curve->EvTangent(curve->Domain().ParameterAt(fraction),
+	sample.uv, sample.tangent) &&
+	cdt_surface_normal(surface, sample.uv, sample.point, sample.normal);
+}
 
-    ON_Interval range = curve->Domain();
-    ON_3dPoint mid_2d(0.0, 0.0, 0.0);
-    ON_3dPoint mid_3d(0.0, 0.0, 0.0);
-    ON_3dVector mid_norm(0.0, 0.0, 0.0);
-    ON_3dVector mid_tang(0.0, 0.0, 0.0);
-    fastf_t t = (t1 + t2) / 2.0;
-    if (!range.IsIncreasing() || !std::isfinite(t) ||
-	    !(t > t1) || !(t < t2))
-	return;
+static bool
+fast_sample_uv_interval(const ON_Surface *surface, const ON_Curve *curve,
+	const fast_uv_curve_sample &start, const fast_uv_curve_sample &end,
+	const struct brep_cdt_tol &tolerance, int depth,
+	fast_bridge_samples &points)
+{
+    const double fraction = 0.5 * (start.fraction + end.fraction);
+    if (!(fraction > start.fraction) || !(fraction < end.fraction))
+	return false;
+    fast_uv_curve_sample mid;
+    if (!fast_uv_curve_evaluate(surface, curve, fraction, mid))
+	return false;
+    const ON_Line chord(start.point, end.point);
+    const double deviation = mid.point.DistanceTo(chord.ClosestPointTo(mid.point));
+    const bool angle_split = start.tangent * end.tangent <
+	tolerance.cos_within_ang - ON_ZERO_TOLERANCE ||
+	start.normal * end.normal < tolerance.cos_within_ang - ON_ZERO_TOLERANCE;
+    const bool split = chord.Length() > tolerance.max_dist ||
+	deviation > tolerance.within_dist + ON_ZERO_TOLERANCE ||
+	(angle_split && deviation > tolerance.min_dist + ON_ZERO_TOLERANCE);
+    if (!split)
+	return true;
+    if (depth >= FAST_CDT_MAX_RECURSION ||
+	points.size() >= FAST_CDT_MAX_TRIM_SAMPLES)
+	return false;
+    points.emplace(fraction, mid.point);
+    return fast_sample_uv_interval(surface, curve, start, mid, tolerance,
+	depth + 1, points) &&
+	fast_sample_uv_interval(surface, curve, mid, end, tolerance,
+	    depth + 1, points);
+}
 
-    if (curve->EvTangent(t, mid_2d, mid_tang)
-	&& surface_EvNormal(s, mid_2d.x, mid_2d.y, mid_3d, mid_norm)) {
-	ON_Line line3d(start_3d, end_3d);
-	double dist3d;
+static fast_bridge_samples *
+getUVCurveSamples(const ON_Surface *surface, const ON_Curve *curve,
+	fastf_t max_dist, const struct bg_tess_tol *ttol,
+	const struct bn_tol *tol, fast_bridge_store &storage)
+{
+    fast_bridge_samples *points = storage.create();
+    const auto fail = [&]() {
+	points->clear();
+	storage.invalid = true;
+	return points;
+    };
+    if (!surface || !curve || !curve->Domain().IsIncreasing())
+	return fail();
 
-	if ((line3d.Length() > max_dist)
-	    || ((dist3d = mid_3d.DistanceTo(line3d.ClosestPointTo(mid_3d)))
-		> within_dist + ON_ZERO_TOLERANCE)
-	    || ((((start_tang * end_tang)
-		  < cos_within_ang - ON_ZERO_TOLERANCE)
-		 || ((start_norm * end_norm)
-		     < cos_within_ang - ON_ZERO_TOLERANCE))
-		&& (dist3d > min_dist + ON_ZERO_TOLERANCE))) {
-	    getUVCurveSamples(s, curve, t1, start_2d, start_tang, start_3d, start_norm,
-			      t, mid_2d, mid_tang, mid_3d, mid_norm, min_dist, max_dist,
-			      within_dist, cos_within_ang, param_points);
-	    param_points[(t - range.m_t[0]) / (range.m_t[1] - range.m_t[0])] =
-		new ON_3dPoint(mid_3d);
-	    getUVCurveSamples(s, curve, t, mid_2d, mid_tang, mid_3d, mid_norm, t2,
-			      end_2d, end_tang, end_3d, end_norm, min_dist, max_dist,
-			      within_dist, cos_within_ang, param_points);
-	}
+    /* Seed each possible turn at quarter intervals so coincident periodic
+     * endpoints cannot hide a curved bridge.  UV extents count turns only;
+     * distances and refinement tolerances come from the lifted 3-D points. */
+    const int segments_per_turn = 4;
+    int segments = segments_per_turn;
+    ON_BoundingBox uv_box;
+    if (!curve->GetBoundingBox(uv_box) || !uv_box.IsValid())
+	return fail();
+    for (int direction = 0; direction < 2; ++direction) {
+	if (!surface->IsClosed(direction))
+	    continue;
+	const double period = surface->Domain(direction).Length();
+	if (!(period > 0.0) || !std::isfinite(period))
+	    return fail();
+	const double turns = std::ceil((uv_box.m_max[direction] -
+	    uv_box.m_min[direction]) / period);
+	const double required = std::max(1.0, turns) * segments_per_turn;
+	if (!std::isfinite(required) || required >= FAST_CDT_MAX_TRIM_SAMPLES)
+	    return fail();
+	segments = std::max(segments, (int)required);
     }
+    std::vector<fast_uv_curve_sample> seeds((size_t)segments + 1);
+    ON_BoundingBox model_box;
+    for (int i = 0; i <= segments; ++i) {
+	fast_uv_curve_sample &sample = seeds[(size_t)i];
+	if (!fast_uv_curve_evaluate(surface, curve, (double)i / segments, sample))
+	    return fail();
+	model_box.Set(sample.point, i != 0);
+	points->emplace(sample.fraction, sample.point);
+    }
+    const double model_extent = model_box.Diagonal().Length();
+    if (!std::isfinite(model_extent))
+	return fail();
+    struct brep_cdt_tol tolerance;
+    CDT_Tol_Set(&tolerance, model_extent, max_dist, ttol, tol);
+    for (int i = 0; i < segments; ++i) {
+	if (!fast_sample_uv_interval(surface, curve, seeds[(size_t)i],
+		seeds[(size_t)i + 1], tolerance, 0, *points))
+	    return fail();
+    }
+    return points;
 }
 
 
-static
-std::map<double, ON_3dPoint *> *
-getUVCurveSamples(const ON_Surface *surf,
-		  const ON_Curve *curve,
-		  fastf_t max_dist,
-		  const struct bg_tess_tol *ttol,
-		  const struct bn_tol *tol)
+int
+cdt_test_periodic_uv_sampling(void)
 {
-    fastf_t min_dist, within_dist, cos_within_ang;
-
-    double dist = 1000.0;
-
-    bool bGrowBox = false;
-    ON_3dPoint min, max;
-    if (curve->GetBoundingBox(min, max, bGrowBox)) {
-	dist = DIST_PNT_PNT(min, max);
-    }
-
-    if (ttol->abs < tol->dist + ON_ZERO_TOLERANCE) {
-	min_dist = tol->dist;
-    } else {
-	min_dist = ttol->abs;
-    }
-
-    double rel = 0.0;
-    if (ttol->rel > 0.0 + ON_ZERO_TOLERANCE) {
-	rel = ttol->rel * dist;
-	if (max_dist < rel * 10.0) {
-	    max_dist = rel * 10.0;
-	}
-	within_dist = rel < min_dist ? min_dist : rel;
-    } else if (ttol->abs > 0.0 + ON_ZERO_TOLERANCE) {
-	within_dist = min_dist;
-    } else {
-	within_dist = 0.01 * dist; // default to 1% minimum surface distance
-    }
-
-    if (ttol->norm > 0.0 + ON_ZERO_TOLERANCE) {
-	cos_within_ang = cos(ttol->norm);
-    } else {
-	cos_within_ang = cos(ON_PI / 2.0);
-    }
-
-    std::map<double, ON_3dPoint *> *param_points = new std::map<double, ON_3dPoint *>();
-    ON_Interval range = curve->Domain();
-
-    if (curve->IsClosed()) {
-	double mid_range = (range.m_t[0] + range.m_t[1]) / 2.0;
-	ON_3dPoint start_2d(0.0, 0.0, 0.0);
-	ON_3dPoint start_3d(0.0, 0.0, 0.0);
-	ON_3dVector start_tang(0.0, 0.0, 0.0);
-	ON_3dVector start_norm(0.0, 0.0, 0.0);
-	ON_3dPoint mid_2d(0.0, 0.0, 0.0);
-	ON_3dPoint mid_3d(0.0, 0.0, 0.0);
-	ON_3dVector mid_tang(0.0, 0.0, 0.0);
-	ON_3dVector mid_norm(0.0, 0.0, 0.0);
-	ON_3dPoint end_2d(0.0, 0.0, 0.0);
-	ON_3dPoint end_3d(0.0, 0.0, 0.0);
-	ON_3dVector end_tang(0.0, 0.0, 0.0);
-	ON_3dVector end_norm(0.0, 0.0, 0.0);
-
-	if (curve->EvTangent(range.m_t[0], start_2d, start_tang)
-	    && curve->EvTangent(mid_range, mid_2d, mid_tang)
-	    && curve->EvTangent(range.m_t[1], end_2d, end_tang)
-	    && surface_EvNormal(surf, mid_2d.x, mid_2d.y, mid_3d, mid_norm)
-	    && surface_EvNormal(surf, start_2d.x, start_2d.y, start_3d, start_norm)
-	    && surface_EvNormal(surf, end_2d.x, end_2d.y, end_3d, end_norm))
-	{
-	    (*param_points)[0.0] = new ON_3dPoint(
-		surf->PointAt(curve->PointAt(range.m_t[0]).x,
-			      curve->PointAt(range.m_t[0]).y));
-	    getUVCurveSamples(surf, curve, range.m_t[0], start_2d, start_tang,
-			      start_3d, start_norm, mid_range, mid_2d, mid_tang,
-			      mid_3d, mid_norm, min_dist, max_dist, within_dist,
-			      cos_within_ang, *param_points);
-	    (*param_points)[0.5] = new ON_3dPoint(
-		surf->PointAt(curve->PointAt(mid_range).x,
-			      curve->PointAt(mid_range).y));
-	    getUVCurveSamples(surf, curve, mid_range, mid_2d, mid_tang, mid_3d,
-			      mid_norm, range.m_t[1], end_2d, end_tang, end_3d,
-			      end_norm, min_dist, max_dist, within_dist,
-			      cos_within_ang, *param_points);
-	    (*param_points)[1.0] = new ON_3dPoint(
-		surf->PointAt(curve->PointAt(range.m_t[1]).x,
-			      curve->PointAt(range.m_t[1]).y));
-	}
-    } else {
-	ON_3dPoint start_2d(0.0, 0.0, 0.0);
-	ON_3dPoint start_3d(0.0, 0.0, 0.0);
-	ON_3dVector start_tang(0.0, 0.0, 0.0);
-	ON_3dVector start_norm(0.0, 0.0, 0.0);
-	ON_3dPoint end_2d(0.0, 0.0, 0.0);
-	ON_3dPoint end_3d(0.0, 0.0, 0.0);
-	ON_3dVector end_tang(0.0, 0.0, 0.0);
-	ON_3dVector end_norm(0.0, 0.0, 0.0);
-
-	if (curve->EvTangent(range.m_t[0], start_2d, start_tang)
-	    && curve->EvTangent(range.m_t[1], end_2d, end_tang)
-	    && surface_EvNormal(surf, start_2d.x, start_2d.y, start_3d, start_norm)
-	    && surface_EvNormal(surf, end_2d.x, end_2d.y, end_3d, end_norm))
-	{
-	    (*param_points)[0.0] = new ON_3dPoint(start_3d);
-	    getUVCurveSamples(surf, curve, range.m_t[0], start_2d, start_tang,
-			      start_3d, start_norm, range.m_t[1], end_2d, end_tang,
-			      end_3d, end_norm, min_dist, max_dist, within_dist,
-			      cos_within_ang, *param_points);
-	    (*param_points)[1.0] = new ON_3dPoint(end_3d);
+    const double major_radius = 9.0;
+    const double minor_radius = 2.5;
+    ON_Torus torus(ON_Circle(ON_xy_plane, major_radius), minor_radius);
+    ON_NurbsSurface reference_surface;
+    if (!torus.GetNurbForm(reference_surface))
+	return 1;
+    struct bg_tess_tol ttol = BG_TESS_TOL_INIT_TOL;
+    struct bn_tol tol = BN_TOL_INIT_TOL;
+    const double max_segment_length = 1000.0;
+    for (int direction = 0; direction < 2; ++direction) {
+	fast_bridge_samples reference;
+	for (double scale : {1.0, 1.0 / 1024.0, 1024.0}) {
+	    for (int copy : {0, -2, 3}) {
+		ON_NurbsSurface surface(reference_surface);
+		/* Independent axis scales expose accidental use of UV distance
+		 * as a 3-D tolerance, without changing the torus geometry. */
+		for (int axis = 0; axis < 2; ++axis) {
+		    const double length = reference_surface.Domain(axis).Length() *
+			(axis ? 1.0 / scale : scale);
+		    if (!surface.SetDomain(axis, 0.0, length))
+			return 2;
+		}
+		ON_2dPoint start, end;
+		for (int axis = 0; axis < 2; ++axis) {
+		    const ON_Interval domain = surface.Domain(axis);
+		    start[axis] = domain.ParameterAt(axis == direction ? 0.0 : 0.125) +
+			copy * domain.Length();
+		    end[axis] = start[axis] + (axis == direction ? domain.Length() : 0.0);
+		}
+		ON_LineCurve curve(start, end);
+		const ON__UINT32 crc = surface.DataCRC(0);
+		fast_bridge_store storage;
+		const auto *points = getUVCurveSamples(&surface, &curve,
+		    max_segment_length, &ttol, &tol, storage);
+		if (storage.invalid || points->size() < 4 || surface.DataCRC(0) != crc)
+		    return 3;
+		if (reference.empty())
+		    reference = *points;
+		if (points->size() != reference.size())
+		    return 4;
+		auto expected = reference.begin();
+		double length = 0.0;
+		ON_3dPoint previous = points->begin()->second;
+		for (const auto &entry : *points) {
+		    if (!NEAR_EQUAL(entry.first, expected->first, ON_ZERO_TOLERANCE) ||
+			entry.second.DistanceTo(expected->second) > tol.dist)
+			return 5;
+		    ON_2dPoint uv;
+		    for (int axis = 0; axis < 2; ++axis)
+			uv[axis] = reference_surface.Domain(axis).ParameterAt(
+			    axis == direction ? entry.first : 0.125);
+		    if (entry.second.DistanceTo(reference_surface.PointAt(uv.x, uv.y)) > tol.dist)
+			return 6;
+		    length += previous.DistanceTo(entry.second);
+		    previous = entry.second;
+		    ++expected;
+		}
+		const double radius = direction ? minor_radius :
+		    major_radius + minor_radius * std::sqrt(0.5);
+		const double circumference = M_2PI * radius;
+		const double relative_length_tolerance = 0.03;
+		if (std::fabs(length - circumference) >
+		    relative_length_tolerance * circumference)
+		    return 7;
+	    }
 	}
     }
-
-
-    return param_points;
+    /* Excessive winding must fail as a bounded sampling request. */
+    const ON_Interval domain = reference_surface.Domain(0);
+    ON_LineCurve excessive(ON_2dPoint(domain.Min(), 0.0),
+	ON_2dPoint(domain.Min() + FAST_CDT_MAX_TRIM_SAMPLES * domain.Length(), 0.0));
+    fast_bridge_store storage;
+    const auto *points = getUVCurveSamples(&reference_surface, &excessive,
+	max_segment_length, &ttol, &tol, storage);
+    return storage.invalid && points->empty() ? 0 : 8;
 }
 
 
@@ -2478,10 +2484,9 @@ CloseOpenLoops(
 				if (IsAtSeam(s, rbrep_loop_begin, same_point_tolerance) && IsAtSeam(s, rbrep_loop_end, same_point_tolerance)) {
 				    double t0, t1;
 				    ON_LineCurve line1(brep_loop_end, rbrep_loop_begin);
-				    std::map<double, ON_3dPoint *> *linepoints3d = getUVCurveSamples(s, &line1, 1000.0, ttol, tol);
-				    bridgePoints.push_back(linepoints3d);
+				    fast_bridge_samples *linepoints3d = getUVCurveSamples(s, &line1, 1000.0, ttol, tol, bridgePoints);
 				    line1.GetDomain(&t0, &t1);
-				    std::map<double, ON_3dPoint*>::const_iterator i;
+				    fast_bridge_samples::iterator i;
 				    for (i = linepoints3d->begin();
 					 i != linepoints3d->end(); i++) {
 					BrepTrimPoint btp;
@@ -2491,7 +2496,7 @@ CloseOpenLoops(
 					    continue;
 
 					btp.t = (*i).first;
-					btp.p3d = (*i).second;
+					btp.p3d = &(*i).second;
 					btp.n3d = NULL;
 					btp.p2d = line1.PointAt(t0 + (t1 - t0) * btp.t);
 					btp.e = ON_UNSET_VALUE;
@@ -2502,8 +2507,7 @@ CloseOpenLoops(
 					brep_loop_points[li]->Append((*brep_loop_points[rli])[j]);
 				    }
 				    ON_LineCurve line2(rbrep_loop_end, brep_loop_begin);
-				    linepoints3d = getUVCurveSamples(s, &line2, 1000.0, ttol, tol);
-				    bridgePoints.push_back(linepoints3d);
+				    linepoints3d = getUVCurveSamples(s, &line2, 1000.0, ttol, tol, bridgePoints);
 				    line2.GetDomain(&t0, &t1);
 
 				    for (i = linepoints3d->begin();
@@ -2514,7 +2518,7 @@ CloseOpenLoops(
 					    continue;
 
 					btp.t = (*i).first;
-					btp.p3d = (*i).second;
+					btp.p3d = &(*i).second;
 					btp.n3d = NULL;
 					btp.p2d = line2.PointAt(t0 + (t1 - t0) * btp.t);
 					btp.e = ON_UNSET_VALUE;
@@ -2541,10 +2545,9 @@ CloseOpenLoops(
 				    ON_2dPoint p = brep_loop_end;
 				    p.y = v.m_t[0];
 				    ON_LineCurve line1(brep_loop_end, p);
-				    std::map<double, ON_3dPoint *> *linepoints3d = getUVCurveSamples(s, &line1, 1000.0, ttol, tol);
-				    bridgePoints.push_back(linepoints3d);
+				    fast_bridge_samples *linepoints3d = getUVCurveSamples(s, &line1, 1000.0, ttol, tol, bridgePoints);
 				    line1.GetDomain(&t0, &t1);
-				    std::map<double, ON_3dPoint*>::const_iterator i;
+				    fast_bridge_samples::iterator i;
 				    for (i = linepoints3d->begin();
 					 i != linepoints3d->end(); i++) {
 					BrepTrimPoint btp;
@@ -2554,7 +2557,7 @@ CloseOpenLoops(
 					    continue;
 
 					btp.t = (*i).first;
-					btp.p3d = (*i).second;
+					btp.p3d = &(*i).second;
 					btp.n3d = NULL;
 					btp.p2d = line1.PointAt(t0 + (t1 - t0) * btp.t);
 					btp.e = ON_UNSET_VALUE;
@@ -2563,8 +2566,7 @@ CloseOpenLoops(
 				    line1.SetStartPoint(p);
 				    p.x = u.m_t[1];
 				    line1.SetEndPoint(p);
-				    linepoints3d = getUVCurveSamples(s, &line1, 1000.0, ttol, tol);
-				    bridgePoints.push_back(linepoints3d);
+				    linepoints3d = getUVCurveSamples(s, &line1, 1000.0, ttol, tol, bridgePoints);
 				    line1.GetDomain(&t0, &t1);
 				    for (i = linepoints3d->begin();
 					 i != linepoints3d->end(); i++) {
@@ -2575,7 +2577,7 @@ CloseOpenLoops(
 					    continue;
 
 					btp.t = (*i).first;
-					btp.p3d = (*i).second;
+					btp.p3d = &(*i).second;
 					btp.n3d = NULL;
 					btp.p2d = line1.PointAt(t0 + (t1 - t0) * btp.t);
 					btp.e = ON_UNSET_VALUE;
@@ -2583,8 +2585,7 @@ CloseOpenLoops(
 				    }
 				    line1.SetStartPoint(p);
 				    line1.SetEndPoint(brep_loop_begin);
-				    linepoints3d = getUVCurveSamples(s, &line1, 1000.0, ttol, tol);
-				    bridgePoints.push_back(linepoints3d);
+				    linepoints3d = getUVCurveSamples(s, &line1, 1000.0, ttol, tol, bridgePoints);
 				    line1.GetDomain(&t0, &t1);
 				    for (i = linepoints3d->begin();
 					 i != linepoints3d->end(); i++) {
@@ -2595,7 +2596,7 @@ CloseOpenLoops(
 					    continue;
 
 					btp.t = (*i).first;
-					btp.p3d = (*i).second;
+					btp.p3d = &(*i).second;
 					btp.n3d = NULL;
 					btp.p2d = line1.PointAt(t0 + (t1 - t0) * btp.t);
 					btp.e = ON_UNSET_VALUE;
@@ -2617,10 +2618,9 @@ CloseOpenLoops(
 				    ON_2dPoint p = brep_loop_end;
 				    p.y = v.m_t[1];
 				    ON_LineCurve line1(brep_loop_end, p);
-				    std::map<double, ON_3dPoint *> *linepoints3d = getUVCurveSamples(s, &line1, 1000.0, ttol, tol);
-				    bridgePoints.push_back(linepoints3d);
+				    fast_bridge_samples *linepoints3d = getUVCurveSamples(s, &line1, 1000.0, ttol, tol, bridgePoints);
 				    line1.GetDomain(&t0, &t1);
-				    std::map<double, ON_3dPoint*>::const_iterator i;
+				    fast_bridge_samples::iterator i;
 				    for (i = linepoints3d->begin();
 					 i != linepoints3d->end(); i++) {
 					BrepTrimPoint btp;
@@ -2630,7 +2630,7 @@ CloseOpenLoops(
 					    continue;
 
 					btp.t = (*i).first;
-					btp.p3d = (*i).second;
+					btp.p3d = &(*i).second;
 					btp.n3d = NULL;
 					btp.p2d = line1.PointAt(t0 + (t1 - t0) * btp.t);
 					btp.e = ON_UNSET_VALUE;
@@ -2639,8 +2639,7 @@ CloseOpenLoops(
 				    line1.SetStartPoint(p);
 				    p.x = u.m_t[0];
 				    line1.SetEndPoint(p);
-				    linepoints3d = getUVCurveSamples(s, &line1, 1000.0, ttol, tol);
-				    bridgePoints.push_back(linepoints3d);
+				    linepoints3d = getUVCurveSamples(s, &line1, 1000.0, ttol, tol, bridgePoints);
 				    line1.GetDomain(&t0, &t1);
 				    for (i = linepoints3d->begin();
 					 i != linepoints3d->end(); i++) {
@@ -2651,7 +2650,7 @@ CloseOpenLoops(
 					    continue;
 
 					btp.t = (*i).first;
-					btp.p3d = (*i).second;
+					btp.p3d = &(*i).second;
 					btp.n3d = NULL;
 					btp.p2d = line1.PointAt(t0 + (t1 - t0) * btp.t);
 					btp.e = ON_UNSET_VALUE;
@@ -2659,8 +2658,7 @@ CloseOpenLoops(
 				    }
 				    line1.SetStartPoint(p);
 				    line1.SetEndPoint(brep_loop_begin);
-				    linepoints3d = getUVCurveSamples(s, &line1, 1000.0, ttol, tol);
-				    bridgePoints.push_back(linepoints3d);
+				    linepoints3d = getUVCurveSamples(s, &line1, 1000.0, ttol, tol, bridgePoints);
 				    line1.GetDomain(&t0, &t1);
 				    for (i = linepoints3d->begin();
 					 i != linepoints3d->end(); i++) {
@@ -2671,7 +2669,7 @@ CloseOpenLoops(
 					    continue;
 
 					btp.t = (*i).first;
-					btp.p3d = (*i).second;
+					btp.p3d = &(*i).second;
 					btp.n3d = NULL;
 					btp.p2d = line1.PointAt(t0 + (t1 - t0) * btp.t);
 					btp.e = ON_UNSET_VALUE;
@@ -4820,8 +4818,9 @@ detria_CDT(struct bu_list *vhead,
     if (s->IsClosed(0) || s->IsClosed(1)) {
 	PerformClosedSurfaceChecks(s, face, ttol, tol, brep_loop_points,
 	    BREP_SAME_POINT_TOLERANCE, bridgePoints);
-
     }
+    if (bridgePoints.invalid)
+	return;
     // process through loops building polygons.
     std::vector<detria::PointD> tpnts;
     std::vector<int> outer_polyline;
@@ -5553,8 +5552,8 @@ fast_face_report_set(struct bg_triangulation_report *report,
     if (report) {
 	report->reason = reason;
 	report->input_index = -1;
-	std::snprintf(report->message, sizeof(report->message), "%s",
-	    message ? message : "");
+	bu_strlcpy(report->message, message ? message : "",
+	    sizeof(report->message));
     }
     return reason == BG_TRIANGULATION_OK;
 }
@@ -5700,6 +5699,9 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
     if (!untrimmed_domain_face && (s->IsClosed(0) || s->IsClosed(1)))
 	PerformClosedSurfaceChecks(s, face, ttol, tol, brep_loop_points,
 	    BREP_SAME_POINT_TOLERANCE, bridgePoints);
+    if (bridgePoints.invalid)
+	return fast_face_report_set(diagnostic, BG_TRIANGULATION_INVALID_PSLG,
+	    "periodic seam bridge sampling failed");
     log_provenance("closed surface checks", brep_loop_points, loop_cnt);
     int full_periodic_closed_dir = -1;
     int full_periodic_outer_index = -1;
@@ -6143,30 +6145,12 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
     size_t degenerate_triangles = 0;
     const bool surface_closed[2] = {s->IsClosed(0), s->IsClosed(1)};
     const ON_Interval surface_domains[2] = {s->Domain(0), s->Domain(1)};
-    const double surface_periods[2] = {
-	surface_domains[0].Length(), surface_domains[1].Length()
-    };
     const auto unwrap_surface_point = [&](const ON_2dPoint &point) {
 	ON_2dPoint unwrapped = point;
 	for (int dir = 0; dir < 2; ++dir) {
-	    if (!surface_closed[dir] ||
-		    !(surface_periods[dir] > ON_ZERO_TOLERANCE))
-		continue;
-	    const double minimum = surface_domains[dir].Min() -
-		ON_ZERO_TOLERANCE;
-	    const double maximum = surface_domains[dir].Max() +
-		ON_ZERO_TOLERANCE;
-	    if (unwrapped[dir] < surface_domains[dir].m_t[0] -
-		    BREP_SAME_POINT_TOLERANCE) {
-		const int domains_away = (int)((minimum - unwrapped[dir]) /
-		    surface_periods[dir] + 1.0);
-		unwrapped[dir] += surface_periods[dir] * domains_away;
-	    } else if (unwrapped[dir] >= surface_domains[dir].m_t[1] +
-		    BREP_SAME_POINT_TOLERANCE) {
-		const int domains_away = (int)((unwrapped[dir] - maximum) /
-		    surface_periods[dir] + 1.0);
-		unwrapped[dir] -= surface_periods[dir] * domains_away;
-	    }
+	    if (surface_closed[dir])
+		unwrapped[dir] = cdt_surface_parameter(unwrapped[dir],
+		    surface_domains[dir]);
 	}
 	return unwrapped;
     };
@@ -6197,6 +6181,10 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 		    tpnts[tris[j]].x, tpnts[tris[j]].y));
 		std::unordered_map<int, BrepTrimPoint *>::const_iterator bt_it =
 		    pointmap.find(tris[j]);
+		if (!realized.uv.IsValid()) {
+		    surface_evaluation_failures++;
+		    return;
+		}
 		if (!surface_EvNormal(s, realized.uv.x, realized.uv.y,
 			realized.point, realized.normal)) {
 		    if (bt_it == pointmap.end() || !bt_it->second->p3d ||
@@ -6455,9 +6443,8 @@ fast_loop_is_provably_degenerate(const ON_Surface *surface,
 	    const ON_2dVector offset = point - endpoints[0];
 	    const double fraction = (offset * direction) / direction_squared;
 	    const ON_2dPoint projected = endpoints[0] + fraction * direction;
-	    const ON_3dPoint model_point = surface->PointAt(point.x, point.y);
-	    const ON_3dPoint model_projection = surface->PointAt(projected.x,
-		projected.y);
+	    const ON_3dPoint model_point = cdt_surface_point(surface, point);
+	    const ON_3dPoint model_projection = cdt_surface_point(surface, projected);
 	    if (!model_point.IsValid() || !model_projection.IsValid() ||
 		    model_point.DistanceTo(model_projection) > tol->dist)
 		return false;

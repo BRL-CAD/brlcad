@@ -19,6 +19,7 @@
 #include "bu/app.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
+#include "cdt/test_api.h"
 
 struct fast_result {
     int ret = BREP_CDT_FAST_ERROR;
@@ -2423,6 +2424,11 @@ main(int argc, const char **argv)
 	    return 1; \
 	} \
     } while (0)
+    const int sampling = cdt_test_periodic_uv_sampling();
+    if (sampling) {
+	bu_log("periodic UV sampling failed: %d\n", sampling);
+	return 1;
+    }
     RUN_FAST_TEST(thin_lens_test);
     RUN_FAST_TEST(tolerance_narrow_surface_test);
     RUN_FAST_TEST(degenerate_line_test);
