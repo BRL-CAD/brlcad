@@ -18,7 +18,10 @@ main(int argc, const char **UNUSED(argv))
 {
     if (argc != 1)
 	return 1;
-    int result = cdt_test_periodic_edge_normals();
+    int result = cdt_test_surface_length_estimates();
+    if (result)
+	return 60 + result;
+    result = cdt_test_periodic_edge_normals();
     if (result)
 	return 50 + result;
     result = cdt_test_edge_singular_pair();
