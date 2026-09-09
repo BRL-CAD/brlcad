@@ -95,6 +95,7 @@ static struct cmdtab mged_cmdtab[] = {
     {MGED_CMD_MAGIC, "repair", cmd_ged_plain_wrapper, ged_exec_repair, NULL},
     {MGED_CMD_MAGIC, "annotate", cmd_ged_plain_wrapper, ged_exec_annotate, NULL},
     {MGED_CMD_MAGIC, "arb", cmd_ged_plain_wrapper, ged_exec_arb, NULL},
+    {MGED_CMD_MAGIC, "arrange", cmd_ged_plain_wrapper, ged_exec_arrange, NULL},
     {MGED_CMD_MAGIC, "arced", cmd_ged_plain_wrapper, ged_exec_arced, NULL},
     {MGED_CMD_MAGIC, "area", f_area, GED_FUNC_PTR_NULL, NULL},
     {MGED_CMD_MAGIC, "arot", cmd_arot, GED_FUNC_PTR_NULL, NULL},
