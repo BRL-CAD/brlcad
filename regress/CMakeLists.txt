@@ -23,6 +23,9 @@ add_subdirectory(asc)
 # Bag of Triangles Tests
 add_subdirectory(bots)
 
+# Procedural building shape generator Regression Tests
+add_subdirectory(building)
+
 # comgeom Conversion Tests
 add_subdirectory(comgeom)
 
