@@ -1,5 +1,0 @@
-fixture=scene_single_mesh
-input=synthetic_scene
-all=combination leaf=fixture_part.r
-fixture_part.s=bot vertices=3 faces=1 normals=0 importer=creo-g ptc_name=fixture_part
-fixture_part.r=region id=42 rgb=17,34,51 leaf=fixture_part.s ptc_name=fixture_part ptc_version_stamp=phase0 material=fixture_material

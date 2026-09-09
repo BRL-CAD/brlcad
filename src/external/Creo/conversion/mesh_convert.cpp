@@ -12,15 +12,19 @@
 /**
  * @file conversion/mesh_convert.cpp
  *
- * Toolkit-free mesh and fallback output helpers for snapshot part conversion.
+ * Toolkit-free mesh normalization and fallback output helpers for snapshot
+ * part conversion.
  */
 
 #include "common.h"
 
 #include "conversion/mesh_convert.h"
 
+#include <cmath>
 #include <string.h>
 
+#include "bg/trimesh.h"
+#include "bg/vert_tree.h"
 #include "bu/avs.h"
 #include "part_writer.h"
 #include "shared/core_api.h"
@@ -39,6 +43,15 @@ const char CREO_BRL_CORE_MODEL_VERSION_ATTRIBUTE[] = "ptc_version_stamp";
 const char CREO_BRL_CORE_MATERIAL_ATTRIBUTE[] = "ptc_material_name";
 const char CREO_BRL_CORE_FALLBACK_ATTRIBUTE[] = "tess_fail";
 static const char CREO_BRL_CORE_UNDEFINED_MATERIAL[] = "undefined";
+
+
+struct normalized_mesh {
+    std::vector<fastf_t> vertices;
+    std::vector<int> faces;
+    std::vector<fastf_t> normals;
+    std::vector<int> face_normals;
+    int is_solid;
+};
 
 
 std::string
@@ -140,38 +153,223 @@ cleanup:
 }
 
 
-int
-creo_brl_convert_snapshot_part(const struct creo_brl_snapshot_part *part,
-                               const std::string& model_name,
-                               const std::string& model_version,
-                               const std::string& material_name,
-                               std::vector<fastf_t>& vertices,
-                               std::vector<int>& triangles,
-                               std::vector<fastf_t>& normals,
-                               std::vector<int>& normal_indices,
-                               struct db_i *database,
-                               struct rt_wdb *writer,
-                               struct snapshot_part_output *output)
+static int
+failed_facet(double min_edge, size_t v1, size_t v2, size_t v3, const struct bg_vert_tree *tree)
 {
-    const int has_mesh = (part->flags & CREO_BRL_SNAPSHOT_PART_HAS_MESH) != 0;
+    point_t point1, point2, point3;
+    const double minimum_edge = fabs(min_edge);
+
+    if (v1 == v2 || v2 == v3 || v1 == v3)
+        return 1;
+
+    VMOVE(point1, &tree->the_array[v1 * 3]);
+    VMOVE(point2, &tree->the_array[v2 * 3]);
+    VMOVE(point3, &tree->the_array[v3 * 3]);
+
+    if (DIST_PNT_PNT(point1, point2) < minimum_edge ||
+        DIST_PNT_PNT(point2, point3) < minimum_edge ||
+        DIST_PNT_PNT(point1, point3) < minimum_edge)
+        return 1;
+
+    return 0;
+}
+
+
+static int
+facet_winds_ccw(size_t v1, size_t v2, size_t v3,
+                size_t n1, size_t n2, size_t n3,
+                const struct bg_vert_tree *vertices,
+                const struct bg_vert_tree *normals)
+{
+    vect_t point1, point2, point3;
+    vect_t normal1, normal2, normal3;
+    vect_t edge12, edge13;
+    vect_t facet_normal, average_normal;
+
+    VMOVE(point1, &vertices->the_array[v1 * 3]);
+    VMOVE(point2, &vertices->the_array[v2 * 3]);
+    VMOVE(point3, &vertices->the_array[v3 * 3]);
+    VMOVE(normal1, &normals->the_array[n1 * 3]);
+    VMOVE(normal2, &normals->the_array[n2 * 3]);
+    VMOVE(normal3, &normals->the_array[n3 * 3]);
+
+    VSUB2(edge12, point2, point1);
+    VSUB2(edge13, point3, point1);
+    VCROSS(facet_normal, edge12, edge13);
+    if (VNEAR_ZERO(facet_normal, VUNITIZE_TOL))
+        return 0;
+    VUNITIZE(facet_normal);
+
+    average_normal[0] = (normal1[0] + normal2[0] + normal3[0]) / 3.0;
+    average_normal[1] = (normal1[1] + normal2[1] + normal3[1]) / 3.0;
+    average_normal[2] = (normal1[2] + normal2[2] + normal3[2]) / 3.0;
+    if (VNEAR_ZERO(average_normal, VUNITIZE_TOL))
+        return 0;
+    VUNITIZE(average_normal);
+
+    return VDOT(facet_normal, average_normal) > 0.0;
+}
+
+
+static int
+normalize_snapshot_mesh(const struct creo_brl_snapshot_part *part,
+                        const struct creo_brl_snapshot_settings *settings,
+                        std::vector<fastf_t>& source_vertices,
+                        std::vector<int>& source_triangles,
+                        std::vector<fastf_t>& source_normals,
+                        std::vector<int>& source_normal_indices,
+                        struct normalized_mesh *mesh)
+{
+    struct bg_vert_tree *vertex_tree = NULL;
+    struct bg_vert_tree *normal_tree = NULL;
     const int has_normals = (part->flags & CREO_BRL_SNAPSHOT_PART_HAS_NORMALS) != 0;
+    const int use_normals = has_normals && settings &&
+                            (settings->flags & CREO_BRL_SNAPSHOT_SETTING_WRITE_NORMALS) != 0;
+    const double min_edge = settings ? settings->min_edge : 0.0;
+    const double min_edge_sq = min_edge * min_edge;
+
+    if (!mesh)
+        return 0;
+
+    mesh->vertices.clear();
+    mesh->faces.clear();
+    mesh->normals.clear();
+    mesh->face_normals.clear();
+    mesh->is_solid = 0;
+
+    vertex_tree = bg_vert_tree_create();
+    normal_tree = bg_vert_tree_create();
+    if (!vertex_tree || !normal_tree)
+        goto cleanup;
+
+    for (uint64_t triangle_index = 0; triangle_index < part->triangle_count; ++triangle_index) {
+        const size_t face_offset = (size_t)triangle_index * CREO_BRL_SNAPSHOT_TRIANGLE_VERTEX_COUNT;
+        const size_t vertex_offset1 = (size_t)source_triangles[face_offset + 0] * 3;
+        const size_t vertex_offset2 = (size_t)source_triangles[face_offset + 1] * 3;
+        const size_t vertex_offset3 = (size_t)source_triangles[face_offset + 2] * 3;
+        size_t v1, v2, v3;
+        size_t n1 = 0, n2 = 0, n3 = 0;
+
+        v1 = bg_vert_tree_add(vertex_tree,
+                              source_vertices[vertex_offset1 + 0],
+                              source_vertices[vertex_offset1 + 1],
+                              source_vertices[vertex_offset1 + 2],
+                              min_edge_sq);
+        v2 = bg_vert_tree_add(vertex_tree,
+                              source_vertices[vertex_offset2 + 0],
+                              source_vertices[vertex_offset2 + 1],
+                              source_vertices[vertex_offset2 + 2],
+                              min_edge_sq);
+        v3 = bg_vert_tree_add(vertex_tree,
+                              source_vertices[vertex_offset3 + 0],
+                              source_vertices[vertex_offset3 + 1],
+                              source_vertices[vertex_offset3 + 2],
+                              min_edge_sq);
+
+        if (use_normals) {
+            const size_t normal_offset1 = (size_t)source_normal_indices[face_offset + 0] * 3;
+            const size_t normal_offset2 = (size_t)source_normal_indices[face_offset + 1] * 3;
+            const size_t normal_offset3 = (size_t)source_normal_indices[face_offset + 2] * 3;
+
+            n1 = bg_vert_tree_add(normal_tree,
+                                  source_normals[normal_offset1 + 0],
+                                  source_normals[normal_offset1 + 1],
+                                  source_normals[normal_offset1 + 2],
+                                  min_edge_sq);
+            n2 = bg_vert_tree_add(normal_tree,
+                                  source_normals[normal_offset2 + 0],
+                                  source_normals[normal_offset2 + 1],
+                                  source_normals[normal_offset2 + 2],
+                                  min_edge_sq);
+            n3 = bg_vert_tree_add(normal_tree,
+                                  source_normals[normal_offset3 + 0],
+                                  source_normals[normal_offset3 + 1],
+                                  source_normals[normal_offset3 + 2],
+                                  min_edge_sq);
+        }
+
+        if (failed_facet(min_edge, v1, v2, v3, vertex_tree))
+            continue;
+
+        if (use_normals && facet_winds_ccw(v1, v3, v2, n1, n3, n2, vertex_tree, normal_tree)) {
+            mesh->faces.push_back((int)v1);
+            mesh->faces.push_back((int)v3);
+            mesh->faces.push_back((int)v2);
+            mesh->face_normals.push_back((int)n1);
+            mesh->face_normals.push_back((int)n3);
+            mesh->face_normals.push_back((int)n2);
+        } else {
+            mesh->faces.push_back((int)v1);
+            mesh->faces.push_back((int)v2);
+            mesh->faces.push_back((int)v3);
+            if (use_normals) {
+                mesh->face_normals.push_back((int)n1);
+                mesh->face_normals.push_back((int)n2);
+                mesh->face_normals.push_back((int)n3);
+            }
+        }
+    }
+
+    if (mesh->faces.empty() || vertex_tree->curr_vert == 0)
+        goto cleanup;
+    if (use_normals && mesh->face_normals.empty())
+        goto cleanup;
+
+    mesh->vertices.assign(vertex_tree->the_array,
+                          vertex_tree->the_array + vertex_tree->curr_vert * 3);
+    if (use_normals) {
+        mesh->normals.assign(normal_tree->the_array,
+                             normal_tree->the_array + normal_tree->curr_vert * 3);
+    }
+    mesh->is_solid = !bg_trimesh_solid((int)vertex_tree->curr_vert,
+                                       (int)(mesh->faces.size() / 3),
+                                       vertex_tree->the_array,
+                                       mesh->faces.data(), NULL);
+
+    bg_vert_tree_destroy(vertex_tree);
+    bg_vert_tree_destroy(normal_tree);
+    return 1;
+
+cleanup:
+    bg_vert_tree_destroy(vertex_tree);
+    bg_vert_tree_destroy(normal_tree);
+    mesh->vertices.clear();
+    mesh->faces.clear();
+    mesh->normals.clear();
+    mesh->face_normals.clear();
+    mesh->is_solid = 0;
+    return 0;
+}
+
+
+static int
+write_part_definition(struct db_i *database,
+                      struct rt_wdb *writer,
+                      const struct creo_brl_snapshot_part *part,
+                      const std::string& model_name,
+                      const std::string& model_version,
+                      const std::string& material_name,
+                      int has_mesh,
+                      size_t vertex_count,
+                      size_t face_count,
+                      fastf_t *vertices,
+                      int *faces,
+                      size_t normal_count,
+                      fastf_t *normals,
+                      int *face_normals,
+                      struct snapshot_part_output *output)
+{
     std::string solid_name;
     std::string region_name;
     struct bu_list members;
-
-    if (!part || !database || !writer || !output)
-        return CREO_BRL_CORE_CONVERT_INVALID_REQUEST;
 
     if (!snapshot_object_names(database, creo_brl_snapshot_name_root(model_name),
                                has_mesh ? CREO_BRL_CORE_SOLID_SUFFIX : CREO_BRL_CORE_RPP_SUFFIX,
                                &solid_name, &region_name) ||
         (has_mesh ?
-         creo_brl_write_bot(writer, solid_name.c_str(), has_normals,
-                            (size_t)part->vertex_count, (size_t)part->triangle_count,
-                            vertices.data(), triangles.data(),
-                            has_normals ? (size_t)part->normal_count : 0,
-                            has_normals ? normals.data() : NULL,
-                            has_normals ? normal_indices.data() : NULL) :
+         creo_brl_write_bot(writer, solid_name.c_str(), normal_count > 0,
+                            vertex_count, face_count, vertices, faces,
+                            normal_count, normals, face_normals) :
          mk_rpp(writer, solid_name.c_str(), part->bbox_min.coordinates,
                 part->bbox_max.coordinates)) != 0)
         return CREO_BRL_CORE_CONVERT_OUTPUT_FAILED;
@@ -191,4 +389,62 @@ creo_brl_convert_snapshot_part(const struct creo_brl_snapshot_part *part,
 
     output->region_name = region_name;
     return CREO_BRL_CORE_CONVERT_SUCCESS;
+}
+
+
+int
+creo_brl_convert_snapshot_part(const struct creo_brl_snapshot_part *part,
+                               const struct creo_brl_snapshot_settings *settings,
+                               const std::string& model_name,
+                               const std::string& model_version,
+                               const std::string& material_name,
+                               std::vector<fastf_t>& vertices,
+                               std::vector<int>& triangles,
+                               std::vector<fastf_t>& normals,
+                               std::vector<int>& normal_indices,
+                               struct db_i *database,
+                               struct rt_wdb *writer,
+                               struct snapshot_part_output *output)
+{
+    const int has_mesh = (part->flags & CREO_BRL_SNAPSHOT_PART_HAS_MESH) != 0;
+    const int has_bbox_fallback = (part->flags & CREO_BRL_SNAPSHOT_PART_HAS_BBOX_FALLBACK) != 0;
+    const int require_solidity = settings &&
+                                 (settings->flags & CREO_BRL_SNAPSHOT_SETTING_CHECK_SOLIDITY) != 0;
+    const int allow_box_fallback = settings &&
+                                   (settings->flags & CREO_BRL_SNAPSHOT_SETTING_CREATE_BOXES) != 0;
+    const int write_normals = settings &&
+                              (settings->flags & CREO_BRL_SNAPSHOT_SETTING_WRITE_NORMALS) != 0;
+    struct normalized_mesh mesh = {};
+
+    if (!part || !database || !writer || !output)
+        return CREO_BRL_CORE_CONVERT_INVALID_REQUEST;
+
+    if (!has_mesh || has_bbox_fallback) {
+        if (!has_bbox_fallback)
+            return CREO_BRL_CORE_CONVERT_OUTPUT_FAILED;
+        return write_part_definition(database, writer, part, model_name, model_version,
+                                     material_name, 0, 0, 0, NULL, NULL, 0, NULL, NULL,
+                                     output);
+    }
+
+    if (!normalize_snapshot_mesh(part, settings, vertices, triangles, normals, normal_indices, &mesh) ||
+        (require_solidity && !mesh.is_solid)) {
+        if (!allow_box_fallback)
+            return CREO_BRL_CORE_CONVERT_OUTPUT_FAILED;
+
+        return write_part_definition(database, writer, part, model_name, model_version,
+                                     material_name, 0, 0, 0, NULL, NULL, 0, NULL, NULL,
+                                     output);
+    }
+
+    return write_part_definition(database, writer, part, model_name, model_version,
+                                 material_name, 1,
+                                 mesh.vertices.size() / 3,
+                                 mesh.faces.size() / 3,
+                                 mesh.vertices.data(),
+                                 mesh.faces.data(),
+                                 write_normals ? mesh.normals.size() / 3 : 0,
+                                 write_normals ? mesh.normals.data() : NULL,
+                                 write_normals ? mesh.face_normals.data() : NULL,
+                                 output);
 }

@@ -33,6 +33,7 @@ struct snapshot_part_output {
 std::string creo_brl_snapshot_name_root(const std::string& model_name);
 
 int creo_brl_convert_snapshot_part(const struct creo_brl_snapshot_part *part,
+                                   const struct creo_brl_snapshot_settings *settings,
                                    const std::string& model_name,
                                    const std::string& model_version,
                                    const std::string& material_name,

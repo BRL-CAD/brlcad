@@ -1,0 +1,5 @@
+fixture=scene_bbox_fallback
+input=synthetic_scene
+all=combination leaf=fixture_part.r
+fixture_part.rpp=rpp min=0,0,0 max=100,100,10 importer=creo-g ptc_name=fixture_part tess_fail=fixture_part
+fixture_part.r=region id=42 rgb=17,34,51 leaf=fixture_part.rpp ptc_name=fixture_part ptc_version_stamp=phase3 material=fixture_material

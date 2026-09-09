@@ -4,6 +4,8 @@
 #include <cstdio>
 #include <cstring>
 #include <fstream>
+#include <iomanip>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -17,35 +19,57 @@
 
 
 static const char FIXTURE_MODEL_NAME[] = "fixture_part";
-static const char FIXTURE_MODEL_VERSION[] = "phase0";
+static const char FIXTURE_MODEL_VERSION[] = "phase3";
 static const char FIXTURE_MATERIAL_NAME[] = "fixture_material";
 static const char FIXTURE_SOLID_NAME[] = "fixture_part.s";
+static const char FIXTURE_FALLBACK_NAME[] = "fixture_part.rpp";
 static const char FIXTURE_REGION_NAME[] = "fixture_part.r";
 static const char FIXTURE_TOP_LEVEL_NAME[] = "all";
-static const char FIXTURE_SNAPSHOT_NAME[] = "creo_phase0.snapshot";
-static const char MALFORMED_SNAPSHOT_NAME[] = "creo_phase0_malformed.snapshot";
-static const char INVALID_SIZE_SNAPSHOT_NAME[] = "creo_phase0_invalid_size.snapshot";
-static const char OUTPUT_DATABASE_NAME[] = "creo_phase0.g";
+static const char MALFORMED_SNAPSHOT_NAME[] = "creo_phase3_malformed.snapshot";
+static const char INVALID_SIZE_SNAPSHOT_NAME[] = "creo_phase3_invalid_size.snapshot";
+static const char INVALID_TRIANGLE_SNAPSHOT_NAME[] = "creo_phase3_invalid_triangle.snapshot";
 static const char EMPTY_REQUEST[] = "";
 static const char IMPORTER_ATTRIBUTE[] = "importer";
 static const char MODEL_NAME_ATTRIBUTE[] = "ptc_name";
 static const char MODEL_VERSION_ATTRIBUTE[] = "ptc_version_stamp";
 static const char MATERIAL_ATTRIBUTE[] = "ptc_material_name";
+static const char FALLBACK_ATTRIBUTE[] = "tess_fail";
 static const char IMPORTER_VALUE[] = "creo-g";
 static const unsigned char FIXTURE_COLOR[] = {17u, 34u, 51u};
 static const char MANIFEST_LINE_ENDING = 10;
-static const uint64_t FIXTURE_PART_COUNT = 1u;
-static const uint64_t FIXTURE_VERTEX_COUNT = 3u;
-static const uint64_t FIXTURE_TRIANGLE_COUNT = 1u;
 static const uint64_t VALID_SNAPSHOT_SIZE_DELTA = 0u;
 static const uint64_t INVALID_SNAPSHOT_SIZE_DELTA = 1u;
 static const int FIXTURE_REGION_ID = 42;
+
+
+struct fixture_definition {
+    const char *fixture_name;
+    const char *snapshot_name;
+    const char *output_name;
+    const char *manifest_name;
+    int expected_result;
+    int compare_manifest;
+    struct creo_brl_snapshot_settings settings;
+    struct creo_brl_snapshot_part part;
+    std::vector<struct creo_brl_snapshot_vector> vertices;
+    std::vector<struct creo_brl_snapshot_triangle> triangles;
+    std::vector<struct creo_brl_snapshot_vector> normals;
+    std::vector<uint32_t> normal_indices;
+};
 
 
 static int
 test_failure(const char *message)
 {
     std::fprintf(stderr, "%s\n", message);
+    return 0;
+}
+
+
+static int
+test_failuref(const char *fixture_name, const char *message)
+{
+    std::fprintf(stderr, "%s: %s\n", fixture_name, message);
     return 0;
 }
 
@@ -125,20 +149,107 @@ write_file(const std::string& path, const std::vector<unsigned char>& contents)
 }
 
 
+static void
+set_bbox(struct creo_brl_snapshot_part *part,
+         double min_x, double min_y, double min_z,
+         double max_x, double max_y, double max_z)
+{
+    const double dx = max_x - min_x;
+    const double dy = max_y - min_y;
+    const double dz = max_z - min_z;
+
+    part->bbox_min.coordinates[0] = min_x;
+    part->bbox_min.coordinates[1] = min_y;
+    part->bbox_min.coordinates[2] = min_z;
+    part->bbox_max.coordinates[0] = max_x;
+    part->bbox_max.coordinates[1] = max_y;
+    part->bbox_max.coordinates[2] = max_z;
+    part->bbox_area = 2.0 * (dx * dy + dx * dz + dy * dz);
+    part->bbox_diagonal = std::sqrt(dx * dx + dy * dy + dz * dz);
+    part->bbox_volume = dx * dy * dz;
+}
+
+
+static fixture_definition
+make_mesh_fixture(const char *fixture_name,
+                  const char *snapshot_name,
+                  const char *output_name,
+                  const char *manifest_name,
+                  uint32_t settings_flags,
+                  const std::vector<struct creo_brl_snapshot_vector>& vertices,
+                  const std::vector<struct creo_brl_snapshot_triangle>& triangles,
+                  const std::vector<struct creo_brl_snapshot_vector>& normals,
+                  const std::vector<uint32_t>& normal_indices,
+                  double max_x,
+                  double max_y,
+                  double max_z)
+{
+    fixture_definition fixture = {};
+
+    fixture.fixture_name = fixture_name;
+    fixture.snapshot_name = snapshot_name;
+    fixture.output_name = output_name;
+    fixture.manifest_name = manifest_name;
+    fixture.expected_result = CREO_BRL_CORE_CONVERT_SUCCESS;
+    fixture.compare_manifest = 1;
+    fixture.settings.flags = settings_flags;
+    fixture.settings.log_type = CREO_BRL_SNAPSHOT_LOG_NONE;
+    fixture.part.flags = CREO_BRL_SNAPSHOT_PART_HAS_MESH |
+                         CREO_BRL_SNAPSHOT_PART_HAS_COLOR |
+                         CREO_BRL_SNAPSHOT_PART_HAS_MATERIAL;
+    if (!normals.empty() && !normal_indices.empty())
+        fixture.part.flags |= CREO_BRL_SNAPSHOT_PART_HAS_NORMALS;
+    fixture.part.region_id = FIXTURE_REGION_ID;
+    fixture.part.model_to_mm = 1.0;
+    fixture.part.color_is_set = 1;
+    std::memcpy(fixture.part.color, FIXTURE_COLOR, sizeof(fixture.part.color));
+    set_bbox(&fixture.part, 0.0, 0.0, 0.0, max_x, max_y, max_z);
+    fixture.vertices = vertices;
+    fixture.triangles = triangles;
+    fixture.normals = normals;
+    fixture.normal_indices = normal_indices;
+    return fixture;
+}
+
+
+static fixture_definition
+make_bbox_fallback_fixture(const char *fixture_name,
+                           const char *snapshot_name,
+                           const char *output_name,
+                           const char *manifest_name,
+                           uint32_t settings_flags)
+{
+    fixture_definition fixture = {};
+
+    fixture.fixture_name = fixture_name;
+    fixture.snapshot_name = snapshot_name;
+    fixture.output_name = output_name;
+    fixture.manifest_name = manifest_name;
+    fixture.expected_result = CREO_BRL_CORE_CONVERT_SUCCESS;
+    fixture.compare_manifest = 1;
+    fixture.settings.flags = settings_flags;
+    fixture.settings.log_type = CREO_BRL_SNAPSHOT_LOG_NONE;
+    fixture.part.flags = CREO_BRL_SNAPSHOT_PART_HAS_BBOX_FALLBACK |
+                         CREO_BRL_SNAPSHOT_PART_HAS_COLOR |
+                         CREO_BRL_SNAPSHOT_PART_HAS_MATERIAL;
+    fixture.part.region_id = FIXTURE_REGION_ID;
+    fixture.part.model_to_mm = 1.0;
+    fixture.part.color_is_set = 1;
+    std::memcpy(fixture.part.color, FIXTURE_COLOR, sizeof(fixture.part.color));
+    set_bbox(&fixture.part, 0.0, 0.0, 0.0, 100.0, 100.0, 10.0);
+    return fixture;
+}
+
+
 static int
 write_snapshot_fixture(const std::string& snapshot_path,
                        const std::string& output_path,
+                       const fixture_definition& fixture,
                        uint64_t snapshot_size_adjustment)
 {
     struct creo_brl_snapshot_header header = {};
     struct creo_brl_snapshot_scene scene = {};
-    struct creo_brl_snapshot_part part = {};
-    const struct creo_brl_snapshot_vector vertices[] = {
-        {{0.0, 0.0, 0.0}},
-        {{100.0, 0.0, 0.0}},
-        {{0.0, 100.0, 0.0}}
-    };
-    const struct creo_brl_snapshot_triangle triangles[] = {{{0u, 1u, 2u}}};
+    struct creo_brl_snapshot_part part = fixture.part;
     std::vector<unsigned char> contents;
     const size_t header_offset = 0;
     const size_t scene_offset = sizeof(header);
@@ -146,20 +257,11 @@ write_snapshot_fixture(const std::string& snapshot_path,
 
     std::memcpy(header.magic, creo_brl_snapshot_magic, sizeof(header.magic));
 
-    scene.settings.log_type = CREO_BRL_SNAPSHOT_LOG_NONE;
-    scene.part_count = FIXTURE_PART_COUNT;
+    scene.settings = fixture.settings;
+    scene.part_count = 1u;
     scene.parts.offset = part_offset;
     scene.parts.size = sizeof(part);
     scene.root_type = CREO_BRL_SNAPSHOT_SCENE_NODE_PART;
-
-    part.flags = CREO_BRL_SNAPSHOT_PART_HAS_MESH | CREO_BRL_SNAPSHOT_PART_HAS_COLOR |
-                 CREO_BRL_SNAPSHOT_PART_HAS_MATERIAL;
-    part.region_id = FIXTURE_REGION_ID;
-    part.model_to_mm = 1.0;
-    std::memcpy(part.color, FIXTURE_COLOR, sizeof(part.color));
-    part.color_is_set = 1;
-    part.bbox_max.coordinates[0] = 100.0;
-    part.bbox_max.coordinates[1] = 100.0;
 
     if (!append_record(&contents, &header, sizeof(header)) ||
         !append_record(&contents, &scene, sizeof(scene)) ||
@@ -170,12 +272,25 @@ write_snapshot_fixture(const std::string& snapshot_path,
                      &part.model_version) ||
         !append_data(&contents, FIXTURE_MATERIAL_NAME, std::strlen(FIXTURE_MATERIAL_NAME),
                      &part.material_name) ||
-        !append_data(&contents, vertices, sizeof(vertices), &part.vertices) ||
-        !append_data(&contents, triangles, sizeof(triangles), &part.triangles))
+        !append_data(&contents,
+                     fixture.vertices.empty() ? NULL : fixture.vertices.data(),
+                     fixture.vertices.size() * sizeof(fixture.vertices[0]), &part.vertices) ||
+        !append_data(&contents,
+                     fixture.triangles.empty() ? NULL : fixture.triangles.data(),
+                     fixture.triangles.size() * sizeof(fixture.triangles[0]), &part.triangles) ||
+        !append_data(&contents,
+                     fixture.normals.empty() ? NULL : fixture.normals.data(),
+                     fixture.normals.size() * sizeof(fixture.normals[0]), &part.normals) ||
+        !append_data(&contents,
+                     fixture.normal_indices.empty() ? NULL : fixture.normal_indices.data(),
+                     fixture.normal_indices.size() * sizeof(fixture.normal_indices[0]),
+                     &part.normal_indices))
         return 0;
 
-    part.vertex_count = FIXTURE_VERTEX_COUNT;
-    part.triangle_count = FIXTURE_TRIANGLE_COUNT;
+    part.vertex_count = fixture.vertices.size();
+    part.triangle_count = fixture.triangles.size();
+    part.normal_count = fixture.normals.size();
+    part.normal_index_count = fixture.normal_indices.size();
     if (contents.size() > UINT64_MAX - snapshot_size_adjustment)
         return 0;
     header.snapshot_size = (uint64_t)contents.size() + snapshot_size_adjustment;
@@ -227,14 +342,16 @@ read_attribute(struct db_i *database,
     const char *attribute_value = NULL;
     int result = 0;
 
-    if (directory == RT_DIR_NULL || db5_get_attributes(database, &attributes, directory) != 0)
+    if (directory == RT_DIR_NULL ||
+        db5_get_attributes(database, &attributes, directory) != 0)
         goto cleanup;
 
     attribute_value = bu_avs_get(&attributes, attribute_name);
-    if (attribute_value) {
-        *value = attribute_value;
-        result = 1;
-    }
+    if (!attribute_value)
+        goto cleanup;
+
+    *value = attribute_value;
+    result = 1;
 
 cleanup:
     bu_avs_free(&attributes);
@@ -242,16 +359,38 @@ cleanup:
 }
 
 
+static std::string
+format_double(double value)
+{
+    std::ostringstream stream;
+    std::string text;
+
+    stream << std::setprecision(15) << value;
+    text = stream.str();
+    if (text.find('.') != std::string::npos) {
+        while (!text.empty() && text[text.size() - 1] == '0')
+            text.resize(text.size() - 1);
+        if (!text.empty() && text[text.size() - 1] == '.')
+            text.resize(text.size() - 1);
+    }
+    return text;
+}
+
+
 static int
-normalize_output_manifest(const std::string& output_path, std::string *manifest)
+normalize_output_manifest(const char *fixture_name,
+                          const std::string& output_path,
+                          std::string *manifest)
 {
     struct db_i *database = db_open(output_path.c_str(), DB_OPEN_READONLY);
     struct directory *solid_directory = RT_DIR_NULL;
     struct directory *region_directory = RT_DIR_NULL;
     struct rt_db_internal solid_internal = RT_DB_INTERNAL_INIT_ZERO;
     struct rt_db_internal region_internal = RT_DB_INTERNAL_INIT_ZERO;
+    std::string solid_name;
     std::string solid_importer;
     std::string solid_model_name;
+    std::string solid_fallback;
     std::string region_model_name;
     std::string region_model_version;
     std::string region_material_name;
@@ -261,16 +400,22 @@ normalize_output_manifest(const std::string& output_path, std::string *manifest)
         goto cleanup;
 
     solid_directory = db_lookup(database, FIXTURE_SOLID_NAME, LOOKUP_QUIET);
+    if (solid_directory != RT_DIR_NULL)
+        solid_name = FIXTURE_SOLID_NAME;
+    else {
+        solid_directory = db_lookup(database, FIXTURE_FALLBACK_NAME, LOOKUP_QUIET);
+        if (solid_directory != RT_DIR_NULL)
+            solid_name = FIXTURE_FALLBACK_NAME;
+    }
     region_directory = db_lookup(database, FIXTURE_REGION_NAME, LOOKUP_QUIET);
     if (solid_directory == RT_DIR_NULL || region_directory == RT_DIR_NULL ||
         rt_db_get_internal(&solid_internal, solid_directory, database, NULL) < 0 ||
-        solid_internal.idb_type != ID_BOT ||
         rt_db_get_internal(&region_internal, region_directory, database, NULL) < 0 ||
         region_internal.idb_type != ID_COMBINATION ||
         !combination_has_leaf(database, FIXTURE_TOP_LEVEL_NAME, FIXTURE_REGION_NAME) ||
-        !combination_has_leaf(database, FIXTURE_REGION_NAME, FIXTURE_SOLID_NAME) ||
-        !read_attribute(database, FIXTURE_SOLID_NAME, IMPORTER_ATTRIBUTE, &solid_importer) ||
-        !read_attribute(database, FIXTURE_SOLID_NAME, MODEL_NAME_ATTRIBUTE, &solid_model_name) ||
+        !combination_has_leaf(database, FIXTURE_REGION_NAME, solid_name.c_str()) ||
+        !read_attribute(database, solid_name.c_str(), IMPORTER_ATTRIBUTE, &solid_importer) ||
+        !read_attribute(database, solid_name.c_str(), MODEL_NAME_ATTRIBUTE, &solid_model_name) ||
         !read_attribute(database, FIXTURE_REGION_NAME, MODEL_NAME_ATTRIBUTE, &region_model_name) ||
         !read_attribute(database, FIXTURE_REGION_NAME, MODEL_VERSION_ATTRIBUTE, &region_model_version) ||
         !read_attribute(database, FIXTURE_REGION_NAME, MATERIAL_ATTRIBUTE, &region_material_name) ||
@@ -278,35 +423,80 @@ normalize_output_manifest(const std::string& output_path, std::string *manifest)
         goto cleanup;
 
     {
-        struct rt_bot_internal *bot = static_cast<struct rt_bot_internal *>(solid_internal.idb_ptr);
         struct rt_comb_internal *region =
             static_cast<struct rt_comb_internal *>(region_internal.idb_ptr);
 
-        if (bot->num_vertices != FIXTURE_VERTEX_COUNT || bot->num_faces != FIXTURE_TRIANGLE_COUNT ||
-            bot->num_normals != 0 || !region->region_flag ||
-            region->region_id != FIXTURE_REGION_ID || !region->rgb_valid ||
+        if (!region->region_flag || region->region_id != FIXTURE_REGION_ID || !region->rgb_valid ||
             std::memcmp(region->rgb, FIXTURE_COLOR, sizeof(region->rgb)) != 0)
             goto cleanup;
 
-        manifest->append("fixture=scene_single_mesh");
+        manifest->append("fixture=");
+        manifest->append(fixture_name);
         manifest->push_back(MANIFEST_LINE_ENDING);
         manifest->append("input=synthetic_scene");
         manifest->push_back(MANIFEST_LINE_ENDING);
         manifest->append("all=combination leaf=");
         manifest->append(FIXTURE_REGION_NAME);
         manifest->push_back(MANIFEST_LINE_ENDING);
-        manifest->append("fixture_part.s=bot vertices=");
-        manifest->append(std::to_string(bot->num_vertices));
-        manifest->append(" faces=");
-        manifest->append(std::to_string(bot->num_faces));
-        manifest->append(" normals=");
-        manifest->append(std::to_string(bot->num_normals));
-        manifest->append(" importer=");
-        manifest->append(solid_importer);
-        manifest->append(" ptc_name=");
-        manifest->append(solid_model_name);
-        manifest->push_back(MANIFEST_LINE_ENDING);
-        manifest->append("fixture_part.r=region id=");
+
+        if (solid_internal.idb_type == ID_BOT) {
+            struct rt_bot_internal *bot = static_cast<struct rt_bot_internal *>(solid_internal.idb_ptr);
+
+            manifest->append(solid_name);
+            manifest->append("=bot vertices=");
+            manifest->append(std::to_string(bot->num_vertices));
+            manifest->append(" faces=");
+            manifest->append(std::to_string(bot->num_faces));
+            manifest->append(" normals=");
+            manifest->append(std::to_string(bot->num_normals));
+            manifest->append(" importer=");
+            manifest->append(solid_importer);
+            manifest->append(" ptc_name=");
+            manifest->append(solid_model_name);
+            manifest->push_back(MANIFEST_LINE_ENDING);
+        } else if (solid_internal.idb_type == ID_ARB8) {
+            struct rt_arb_internal *arb = static_cast<struct rt_arb_internal *>(solid_internal.idb_ptr);
+            point_t min_point, max_point;
+
+            VMOVE(min_point, arb->pt[0]);
+            VMOVE(max_point, arb->pt[0]);
+            for (size_t point_index = 1; point_index < 8; ++point_index) {
+                for (size_t coordinate = 0; coordinate < 3; ++coordinate) {
+                    if (arb->pt[point_index][coordinate] < min_point[coordinate])
+                        min_point[coordinate] = arb->pt[point_index][coordinate];
+                    if (arb->pt[point_index][coordinate] > max_point[coordinate])
+                        max_point[coordinate] = arb->pt[point_index][coordinate];
+                }
+            }
+            if (!read_attribute(database, solid_name.c_str(), FALLBACK_ATTRIBUTE, &solid_fallback))
+                goto cleanup;
+
+            manifest->append(solid_name);
+            manifest->append("=rpp min=");
+            manifest->append(format_double(min_point[0]));
+            manifest->push_back(',');
+            manifest->append(format_double(min_point[1]));
+            manifest->push_back(',');
+            manifest->append(format_double(min_point[2]));
+            manifest->append(" max=");
+            manifest->append(format_double(max_point[0]));
+            manifest->push_back(',');
+            manifest->append(format_double(max_point[1]));
+            manifest->push_back(',');
+            manifest->append(format_double(max_point[2]));
+            manifest->append(" importer=");
+            manifest->append(solid_importer);
+            manifest->append(" ptc_name=");
+            manifest->append(solid_model_name);
+            manifest->append(" tess_fail=");
+            manifest->append(solid_fallback);
+            manifest->push_back(MANIFEST_LINE_ENDING);
+        } else {
+            goto cleanup;
+        }
+
+        manifest->append(FIXTURE_REGION_NAME);
+        manifest->append("=region id=");
         manifest->append(std::to_string(region->region_id));
         manifest->append(" rgb=");
         manifest->append(std::to_string((unsigned int)region->rgb[0]));
@@ -315,7 +505,7 @@ normalize_output_manifest(const std::string& output_path, std::string *manifest)
         manifest->push_back(',');
         manifest->append(std::to_string((unsigned int)region->rgb[2]));
         manifest->append(" leaf=");
-        manifest->append(FIXTURE_SOLID_NAME);
+        manifest->append(solid_name);
         manifest->append(" ptc_name=");
         manifest->append(region_model_name);
         manifest->append(" ptc_version_stamp=");
@@ -352,6 +542,58 @@ read_manifest(const char *path, std::string *contents)
 }
 
 
+static int
+run_fixture(const std::string& working_directory,
+            const std::string& fixtures_directory,
+            const fixture_definition& fixture)
+{
+    const std::string snapshot_path = path_join(working_directory, fixture.snapshot_name);
+    const std::string output_path = path_join(working_directory, fixture.output_name);
+    const std::string manifest_path = fixture.manifest_name ?
+                                          path_join(fixtures_directory, fixture.manifest_name) :
+                                          std::string();
+    std::string expected_manifest;
+    std::string actual_manifest;
+    int result = 0;
+
+    std::remove(snapshot_path.c_str());
+    std::remove(output_path.c_str());
+
+    if (!write_snapshot_fixture(snapshot_path, output_path, fixture, VALID_SNAPSHOT_SIZE_DELTA)) {
+        test_failuref(fixture.fixture_name, "failed to write snapshot fixture");
+        goto cleanup;
+    }
+
+    if (creo_brl_core_convert(snapshot_path.c_str()) != fixture.expected_result) {
+        test_failuref(fixture.fixture_name, "unexpected conversion result");
+        goto cleanup;
+    }
+
+    if (fixture.compare_manifest) {
+        if (!normalize_output_manifest(fixture.fixture_name, output_path, &actual_manifest)) {
+            test_failuref(fixture.fixture_name, "failed to normalize output manifest");
+            goto cleanup;
+        }
+        if (!read_manifest(manifest_path.c_str(), &expected_manifest)) {
+            test_failuref(fixture.fixture_name, "failed to read expected manifest");
+            goto cleanup;
+        }
+        if (actual_manifest != expected_manifest) {
+            std::fprintf(stderr, "%s: manifest mismatch\nEXPECTED:\n%sACTUAL:\n%s",
+                         fixture.fixture_name, expected_manifest.c_str(), actual_manifest.c_str());
+            goto cleanup;
+        }
+    }
+
+    result = 1;
+
+cleanup:
+    std::remove(snapshot_path.c_str());
+    std::remove(output_path.c_str());
+    return result;
+}
+
+
 int
 main(int argument_count, char *arguments[])
 {
@@ -359,27 +601,95 @@ main(int argument_count, char *arguments[])
         return 1;
 
     const std::string working_directory = arguments[1];
-    const std::string snapshot_path = path_join(working_directory, FIXTURE_SNAPSHOT_NAME);
+    const std::string fixtures_directory = arguments[2];
     const std::string malformed_snapshot_path = path_join(working_directory, MALFORMED_SNAPSHOT_NAME);
     const std::string invalid_size_snapshot_path = path_join(working_directory, INVALID_SIZE_SNAPSHOT_NAME);
-    const std::string output_path = path_join(working_directory, OUTPUT_DATABASE_NAME);
-    std::string expected_manifest;
-    std::string actual_manifest;
+    const std::string invalid_triangle_snapshot_path = path_join(working_directory, INVALID_TRIANGLE_SNAPSHOT_NAME);
+    const std::string invalid_triangle_output_path = path_join(working_directory, "creo_phase3_invalid_triangle.g");
     int result = 1;
 
-    std::remove(snapshot_path.c_str());
+    const fixture_definition normalized_mesh_fixture = make_mesh_fixture(
+        "scene_normalized_mesh",
+        "creo_phase3_normalized_mesh.snapshot",
+        "creo_phase3_normalized_mesh.g",
+        "scene_normalized_mesh.manifest",
+        0u,
+        {{{0.0, 0.0, 0.0}}, {{100.0, 0.0, 0.0}}, {{100.0, 100.0, 0.0}},
+         {{0.0, 0.0, 0.0}}, {{100.0, 100.0, 0.0}}, {{0.0, 100.0, 0.0}}},
+        {{{0u, 1u, 2u}}, {{3u, 4u, 5u}}}, {}, {}, 100.0, 100.0, 0.0);
+    const fixture_definition normals_fixture = make_mesh_fixture(
+        "scene_mesh_with_normals",
+        "creo_phase3_normals.snapshot",
+        "creo_phase3_normals.g",
+        "scene_mesh_with_normals.manifest",
+        CREO_BRL_SNAPSHOT_SETTING_WRITE_NORMALS,
+        {{{0.0, 0.0, 0.0}}, {{100.0, 0.0, 0.0}}, {{0.0, 100.0, 0.0}}},
+        {{{0u, 1u, 2u}}},
+        {{{0.0, 0.0, 1.0}}, {{0.0, 0.0, 1.0}}, {{0.0, 0.0, 1.0}}},
+        {0u, 1u, 2u}, 100.0, 100.0, 0.0);
+    const fixture_definition solid_fixture = make_mesh_fixture(
+        "scene_solid_mesh",
+        "creo_phase3_solid.snapshot",
+        "creo_phase3_solid.g",
+        "scene_solid_mesh.manifest",
+        CREO_BRL_SNAPSHOT_SETTING_CHECK_SOLIDITY,
+        {{{0.0, 0.0, 0.0}}, {{0.0, 100.0, 0.0}}, {{100.0, 0.0, 0.0}},
+         {{0.0, 0.0, 0.0}}, {{100.0, 0.0, 0.0}}, {{0.0, 0.0, 100.0}},
+         {{0.0, 0.0, 0.0}}, {{0.0, 0.0, 100.0}}, {{0.0, 100.0, 0.0}},
+         {{100.0, 0.0, 0.0}}, {{0.0, 100.0, 0.0}}, {{0.0, 0.0, 100.0}}},
+        {{{0u, 1u, 2u}}, {{3u, 4u, 5u}}, {{6u, 7u, 8u}}, {{9u, 10u, 11u}}},
+        {}, {}, 100.0, 100.0, 100.0);
+    const fixture_definition fallback_fixture = make_mesh_fixture(
+        "scene_box_fallback",
+        "creo_phase3_box_fallback.snapshot",
+        "creo_phase3_box_fallback.g",
+        "scene_box_fallback.manifest",
+        CREO_BRL_SNAPSHOT_SETTING_CHECK_SOLIDITY | CREO_BRL_SNAPSHOT_SETTING_CREATE_BOXES,
+        {{{0.0, 0.0, 0.0}}, {{100.0, 0.0, 0.0}}, {{0.0, 100.0, 0.0}}},
+        {{{0u, 1u, 2u}}}, {}, {}, 100.0, 100.0, 10.0);
+    const fixture_definition bbox_fixture = make_bbox_fallback_fixture(
+        "scene_bbox_fallback",
+        "creo_phase3_bbox_fallback.snapshot",
+        "creo_phase3_bbox_fallback.g",
+        "scene_bbox_fallback.manifest",
+        0u);
+    fixture_definition failure_fixture = make_mesh_fixture(
+        "scene_output_failure",
+        "creo_phase3_output_failure.snapshot",
+        "creo_phase3_output_failure.g",
+        NULL,
+        CREO_BRL_SNAPSHOT_SETTING_CHECK_SOLIDITY,
+        {{{0.0, 0.0, 0.0}}, {{100.0, 0.0, 0.0}}, {{0.0, 100.0, 0.0}}},
+        {{{0u, 1u, 2u}}}, {}, {}, 100.0, 100.0, 10.0);
+    fixture_definition invalid_triangle_fixture = make_mesh_fixture(
+        "scene_invalid_triangle",
+        INVALID_TRIANGLE_SNAPSHOT_NAME,
+        "creo_phase3_invalid_triangle.g",
+        NULL,
+        0u,
+        {{{0.0, 0.0, 0.0}}, {{100.0, 0.0, 0.0}}, {{0.0, 100.0, 0.0}}},
+        {{{0u, 1u, 9u}}}, {}, {}, 100.0, 100.0, 0.0);
+    failure_fixture.expected_result = CREO_BRL_CORE_CONVERT_OUTPUT_FAILED;
+    failure_fixture.compare_manifest = 0;
+    invalid_triangle_fixture.expected_result = CREO_BRL_CORE_CONVERT_INVALID_SNAPSHOT;
+    invalid_triangle_fixture.compare_manifest = 0;
+
     std::remove(malformed_snapshot_path.c_str());
     std::remove(invalid_size_snapshot_path.c_str());
-    std::remove(output_path.c_str());
+    std::remove(invalid_triangle_snapshot_path.c_str());
+    std::remove(invalid_triangle_output_path.c_str());
 
-    if (!write_snapshot_fixture(snapshot_path, output_path, VALID_SNAPSHOT_SIZE_DELTA) ||
-        creo_brl_core_convert(snapshot_path.c_str()) != CREO_BRL_CORE_CONVERT_SUCCESS ||
-        !normalize_output_manifest(output_path, &actual_manifest) ||
-        !read_manifest(arguments[2], &expected_manifest) || actual_manifest != expected_manifest ||
+    if (!run_fixture(working_directory, fixtures_directory, normalized_mesh_fixture) ||
+        !run_fixture(working_directory, fixtures_directory, normals_fixture) ||
+        !run_fixture(working_directory, fixtures_directory, solid_fixture) ||
+        !run_fixture(working_directory, fixtures_directory, fallback_fixture) ||
+        !run_fixture(working_directory, fixtures_directory, bbox_fixture) ||
+        !run_fixture(working_directory, fixtures_directory, failure_fixture) ||
+        !run_fixture(working_directory, fixtures_directory, invalid_triangle_fixture) ||
         !write_malformed_snapshot(malformed_snapshot_path) ||
         creo_brl_core_convert(malformed_snapshot_path.c_str()) != CREO_BRL_CORE_CONVERT_INVALID_SNAPSHOT ||
-        !write_snapshot_fixture(invalid_size_snapshot_path, output_path,
-                                INVALID_SNAPSHOT_SIZE_DELTA) ||
+        !write_snapshot_fixture(invalid_size_snapshot_path, invalid_triangle_output_path,
+                                normalized_mesh_fixture, INVALID_SNAPSHOT_SIZE_DELTA) ||
         creo_brl_core_convert(invalid_size_snapshot_path.c_str()) !=
             CREO_BRL_CORE_CONVERT_INVALID_SNAPSHOT ||
         creo_brl_core_convert(NULL) != CREO_BRL_CORE_CONVERT_INVALID_REQUEST ||
@@ -391,9 +701,9 @@ main(int argument_count, char *arguments[])
     result = 0;
 
 cleanup:
-    std::remove(snapshot_path.c_str());
     std::remove(malformed_snapshot_path.c_str());
     std::remove(invalid_size_snapshot_path.c_str());
-    std::remove(output_path.c_str());
+    std::remove(invalid_triangle_snapshot_path.c_str());
+    std::remove(invalid_triangle_output_path.c_str());
     return result;
 }

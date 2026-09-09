@@ -15,6 +15,9 @@ set(CREO2BRL_FRONTEND_OPTION_SOURCES
   frontend/profile_path.cpp
   frontend/profile_ui.cpp
   )
+set(CREO2BRL_FRONTEND_CAPTURE_SOURCES
+  frontend/model_capture.cpp
+  )
 set(CREO2BRL_FRONTEND_OPTION_SOURCE_PATHS)
 foreach(frontend_option_source ${CREO2BRL_FRONTEND_OPTION_SOURCES})
   # note: we build this as absolute paths so we can reuse for tests/ targets
@@ -345,6 +348,7 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     loader.c
     frontend.cpp
     snapshot_writer.cpp
+    ${CREO2BRL_FRONTEND_CAPTURE_SOURCES}
     ${CREO2BRL_FRONTEND_OPTION_SOURCE_PATHS})
   target_include_directories(creo-brl PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
   target_link_libraries(creo-brl ${WIN_LIBS} ${CREO_PTK_DLL_LIBS})
@@ -523,6 +527,7 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     creo-brl.h
     conversion_snapshot.h
     frontend/profile_path.h
+    frontend/model_capture.h
     frontend/profile_ui.h
     part_writer.h
     profile_controls.h

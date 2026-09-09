@@ -25,9 +25,9 @@ and a part root.
 | Coordinate transform | `snapshot_writer.cpp`; `settings.xform_mode` | Transforms the top-level `all` membership | Scene fixture for none, X-to-Z, and Y-to-Z transforms |
 | Assembly graph and transforms | `snapshot_writer.cpp`; scene assemblies and members | Writes combinations in dependency order and preserves member matrices | Phase 6 scene assembly fixture manifest |
 | Multiple parts and name collisions | `conversion.cpp`; name normalization and unique-name allocation | Adds deterministic suffixes for collisions | Scene multi-part collision fixture manifest |
-| Tessellation normals | `snapshot_writer.cpp`; write-normals setting and part normal ranges | Writes a BoT with normals | Scene mesh-with-normals fixture manifest |
+| Tessellation normals | `frontend/model_capture.cpp`; write-normals setting and part normal ranges | `conversion/mesh_convert.cpp` writes a normalized BoT with normals when requested | `scene_mesh_with_normals.manifest` via `creo_snapshot_core` |
 | Tessellation capture | `snapshot_writer.cpp`; max chord and min angle | Controls Creo-side tessellation before the snapshot is written | Optional Creo smoke test plus captured scene fixture replay |
-| Bounding-box fallback | `snapshot_writer.cpp`; part bounding box and fallback flags | Writes an RPP and `tess_fail` attribute when mesh data is absent | Scene fallback fixture manifest |
+| Bounding-box fallback | `frontend/model_capture.cpp`; part bounding box and fallback eligibility | `conversion/mesh_convert.cpp` writes an RPP and `tess_fail` attribute for captured fallback parts and failed-solidity mesh fallback | `scene_box_fallback.manifest` and `scene_bbox_fallback.manifest` via `creo_snapshot_core` |
 | Part mass properties | `snapshot_writer.cpp`; density, mass, and volume | Captured but not written by the current core | Phase 4 parity fixture before implementing or relocating output policy |
 | Captured part attributes | `snapshot_writer.cpp`; part attribute ranges | Validated but not written by the current core | Phase 4 parity fixture before implementing or relocating output policy |
 | Captured part parameters | `snapshot_writer.cpp`; part parameter ranges | Validated but not written by the current core | Phase 4 parity fixture before implementing or relocating output policy |
@@ -35,9 +35,9 @@ and a part root.
 | Log path and log type | `snapshot_writer.cpp`; `settings.log_path` and `settings.log_type` | Captured but not consumed by snapshot conversion | Phase 2 diagnostic/result test |
 | Minimum luminance | `profile_controls.h`; `minimum_luminance` to `settings.min_luminance` | Captured but not consumed by snapshot conversion | Phase 2 profile mapping and replay test |
 | Parameter rename and preserve controls | `snapshot_writer.cpp`; settings string ranges | Captured but not consumed by snapshot conversion | Phase 2 mapping test and Phase 4 output fixture |
-| Chord mode, max angle, max facets, max steps, and min edge | `snapshot_writer.cpp`; snapshot settings | Captured or defaulted; only max chord and min angle currently affect Creo-side tessellation | Phase 2 option mapping and optional Creo smoke evidence |
+| Chord mode, max angle, max facets, max steps, and min edge | `frontend/model_capture.cpp`; snapshot settings | Captured or defaulted; max chord and min angle affect Creo-side tessellation, and min edge now affects core-side mesh filtering | Phase 2 option mapping plus `scene_normalized_mesh.manifest` replay |
 | Small-feature controls | `snapshot_writer.cpp`; eliminate-small-features flag and minimum hole, chamfer, and round values | Captured but not consumed by snapshot conversion | Phase 2 option mapping and Phase 5 parity fixture |
-| Facets-only, STL export, solidity, and box controls | `snapshot_writer.cpp`; settings flags | Captured but not consumed by snapshot conversion | Phase 2 option mapping and corresponding behavior fixture |
+| Facets-only, STL export, solidity, and box controls | `frontend/model_capture.cpp`; settings flags | Solidity and box fallback now affect snapshot conversion; facets-only and STL export remain capture-only | `scene_solid_mesh.manifest`, `scene_box_fallback.manifest`, and output-failure replay in `creo_snapshot_core` |
 | CSG primitives and boolean structure | `csg.cpp`; absent from the snapshot | Not representable by the current request | Phase 5 request extension and legacy parity fixture |
 | Legacy launch and failure behavior | `main.cpp`, `part.cpp`, and `assembly.cpp` | Diagnostic reference only; not a production dependency | Optional Creo smoke test; never a normal repository-test requirement |
 

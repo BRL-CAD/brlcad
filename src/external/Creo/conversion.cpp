@@ -700,6 +700,7 @@ snapshot_open_output(const char *output_path, struct db_i **database)
 static int
 snapshot_write_part_definition(FILE *snapshot_file,
                                const struct creo_brl_snapshot_part *part,
+                               const struct creo_brl_snapshot_settings *settings,
                                struct db_i *database,
                                struct rt_wdb *writer,
                                struct snapshot_part_output *output)
@@ -728,7 +729,7 @@ snapshot_write_part_definition(FILE *snapshot_file,
                                    &normal_indices))))))
         return CREO_BRL_CORE_CONVERT_INVALID_SNAPSHOT;
 
-    return creo_brl_convert_snapshot_part(part, model_name, model_version, material_name,
+    return creo_brl_convert_snapshot_part(part, settings, model_name, model_version, material_name,
                                           vertices, triangles, normals, normal_indices,
                                           database, writer, output);
 }
@@ -911,7 +912,8 @@ snapshot_write_scene(FILE *snapshot_file,
                 result = CREO_BRL_CORE_CONVERT_INVALID_SNAPSHOT;
                 goto cleanup;
             }
-            result = snapshot_write_part_definition(snapshot_file, &part, database, writer,
+            result = snapshot_write_part_definition(snapshot_file, &part, &scene->settings,
+                                                    database, writer,
                                                     &part_outputs[(size_t)index]);
             if (result != CREO_BRL_CORE_CONVERT_SUCCESS)
                 goto cleanup;
