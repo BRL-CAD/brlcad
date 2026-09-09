@@ -33,6 +33,7 @@ set(CREO2BRL_LEGACY_SOURCES
 set(CREO2BRL_CORE_SOURCES
   core.cpp
   conversion.cpp
+  conversion/mesh_convert.cpp
   conversion/profile_reader.cpp
   ${CREO2BRL_SHARED_SOURCES}
   )
