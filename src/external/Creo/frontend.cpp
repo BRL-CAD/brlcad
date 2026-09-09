@@ -32,6 +32,9 @@
 
 #include "creo-brl.h"
 #include "conversion_snapshot.h"
+#if !defined(CREO_EXEC_PLUGIN)
+#include "frontend/profile_ui.h"
+#endif
 #include "shared/core_api.h"
 #include "snapshot_writer.h"
 
@@ -66,42 +69,60 @@ frontend_status(const char *fmt, ...)
 }
 
 
-extern "C" void __cdecl
-creo_brl_frontend_apply_control(
-    const char *resource,
-    const char *type,
-    const char *value,
-    const char *UNUSED(default_value))
+#if !defined(CREO_EXEC_PLUGIN)
+static int
+frontend_set_text(void *UNUSED(context), const char *resource, const char *value)
 {
-    ProError err = PRO_TK_GENERAL_ERROR;
+    wchar_t text[CREO_NAME_MAX];
 
-    if (!resource || !type || !value) {
-        frontend_status("FAILURE: Unable to apply an invalid profile control value");
-        return;
-    }
+    if (!resource || !value)
+        return 0;
 
-    if (strcmp(type, "STR") == 0) {
-        wchar_t text[CREO_NAME_MAX];
-
-        ProStringToWstring(text, (char *)value);
-        err = ProUIInputpanelValueSet(CREO_UI_NAME, (char *)resource, text);
-    } else if (strcmp(type, "BOX") == 0) {
-        if (strcmp(value, "on") == 0)
-            err = ProUICheckbuttonSet(CREO_UI_NAME, (char *)resource);
-        else
-            err = ProUICheckbuttonUnset(CREO_UI_NAME, (char *)resource);
-    } else if (strcmp(type, "RAD") == 0) {
-        char *selected_name = (char *)value;
-
-        err = ProUIRadiogroupSelectednamesSet(CREO_UI_NAME, (char *)resource, 1, &selected_name);
-    } else {
-        frontend_status("Unknown control type: %s", type);
-        return;
-    }
-
-    if (err != PRO_TK_NO_ERROR)
-        frontend_status("FAILURE: Unable to apply profile value for %s (%d)", resource, err);
+    ProStringToWstring(text, (char *)value);
+    return ProUIInputpanelValueSet(CREO_UI_NAME, (char *)resource, text) == PRO_TK_NO_ERROR;
 }
+
+
+static int
+frontend_set_check(void *UNUSED(context), const char *resource, int checked)
+{
+    if (!resource)
+        return 0;
+
+    return (checked ? ProUICheckbuttonSet(CREO_UI_NAME, (char *)resource) :
+                      ProUICheckbuttonUnset(CREO_UI_NAME, (char *)resource)) == PRO_TK_NO_ERROR;
+}
+
+
+static int
+frontend_set_radio(void *UNUSED(context), const char *resource, const char *selection)
+{
+    char *selected_name = (char *)selection;
+
+    return resource && selection &&
+           ProUIRadiogroupSelectednamesSet(CREO_UI_NAME, (char *)resource, 1,
+                                            &selected_name) == PRO_TK_NO_ERROR;
+}
+
+
+static const struct creo_brl_frontend_control_api frontend_controls = {
+    NULL,
+    frontend_set_text,
+    frontend_set_check,
+    frontend_set_radio,
+    NULL,
+    NULL,
+    NULL
+};
+
+
+extern "C" void __cdecl
+creo_brl_frontend_apply_options(const struct creo_brl_conversion_options *options)
+{
+    if (!creo_brl_frontend_apply_options_to_controls(options, &frontend_controls))
+        frontend_status("FAILURE: Unable to apply Creo-BRL profile settings.");
+}
+#endif
 
 
 static void

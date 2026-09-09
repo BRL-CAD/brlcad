@@ -72,13 +72,26 @@
 #include <algorithm>
 #include <regex.h>
 #include "creo-brl.h"
-#include "frontend_api.h"
 #include "profile_controls.h"
 
-static struct creo_brl_frontend_api frontend_api = {0};
+typedef void (__cdecl *creo_brl_legacy_status_fn_t)(const char *message);
+typedef void (__cdecl *creo_brl_legacy_popup_fn_t)(const char *title, const char *message);
+typedef void (__cdecl *creo_brl_legacy_apply_control_fn_t)(
+    const char *resource,
+    const char *type,
+    const char *value,
+    const char *default_value);
+
+struct creo_brl_legacy_frontend_api {
+    creo_brl_legacy_status_fn_t show_status;
+    creo_brl_legacy_popup_fn_t show_popup;
+    creo_brl_legacy_apply_control_fn_t apply_control;
+};
+
+static struct creo_brl_legacy_frontend_api frontend_api = {0};
 
 extern "C" __declspec(dllexport) void
-creo_brl_core_set_frontend_api(const struct creo_brl_frontend_api *api)
+creo_brl_core_set_frontend_api(const struct creo_brl_legacy_frontend_api *api)
 {
     if (api) {
         frontend_api = *api;

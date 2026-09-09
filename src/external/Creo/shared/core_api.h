@@ -37,13 +37,13 @@ enum creo_brl_core_convert_result {
 CREO_BRL_CORE_EXPORT int CREO_BRL_CORE_CALL creo_brl_core_initialize(void);
 CREO_BRL_CORE_EXPORT int CREO_BRL_CORE_CALL creo_brl_core_convert(const char *snapshot_path);
 CREO_BRL_CORE_EXPORT void CREO_BRL_CORE_CALL creo_brl_core_terminate(void);
-CREO_BRL_CORE_EXPORT void CREO_BRL_CORE_CALL creo_brl_core_load_profile(const char *profile_directory, const char *material_directory);
+CREO_BRL_CORE_EXPORT void CREO_BRL_CORE_CALL creo_brl_core_load_profile(const char *profile_path, const char *material_directory);
 CREO_BRL_CORE_EXPORT void CREO_BRL_CORE_CALL creo_brl_core_set_frontend_api(const struct creo_brl_frontend_api *api);
 
 typedef int (CREO_BRL_CORE_CALL *creo_brl_core_initialize_fn_t)(void);
 typedef int (CREO_BRL_CORE_CALL *creo_brl_core_convert_fn_t)(const char *snapshot_path);
 typedef void (CREO_BRL_CORE_CALL *creo_brl_core_terminate_fn_t)(void);
-typedef void (CREO_BRL_CORE_CALL *creo_brl_core_load_profile_fn_t)(const char *profile_directory, const char *material_directory);
+typedef void (CREO_BRL_CORE_CALL *creo_brl_core_load_profile_fn_t)(const char *profile_path, const char *material_directory);
 typedef void (CREO_BRL_CORE_CALL *creo_brl_core_set_frontend_api_fn_t)(const struct creo_brl_frontend_api *api);
 
 #ifdef __cplusplus

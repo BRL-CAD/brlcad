@@ -1,5 +1,6 @@
 #include "common.h"
 
+#include <algorithm>
 #include <cstdio>
 #include <cstring>
 #include <fstream>
@@ -346,6 +347,7 @@ read_manifest(const char *path, std::string *contents)
         return 0;
 
     *contents = std::string(std::istreambuf_iterator<char>(input), std::istreambuf_iterator<char>());
+    contents->erase(std::remove(contents->begin(), contents->end(), '\r'), contents->end());
     return 1;
 }
 

@@ -11,6 +11,16 @@ set(CREO2BRL_SHARED_SOURCES
   part_writer.cpp
   )
 
+set(CREO2BRL_FRONTEND_OPTION_SOURCES
+  frontend/profile_path.cpp
+  frontend/profile_ui.cpp
+  )
+set(CREO2BRL_FRONTEND_OPTION_SOURCE_PATHS)
+foreach(frontend_option_source ${CREO2BRL_FRONTEND_OPTION_SOURCES})
+  # note: we build this as absolute paths so we can reuse for tests/ targets
+  list(APPEND CREO2BRL_FRONTEND_OPTION_SOURCE_PATHS "${CMAKE_CURRENT_SOURCE_DIR}/${frontend_option_source}")
+endforeach()
+
 set(CREO2BRL_LEGACY_SOURCES
   assembly.cpp
   csg.cpp
@@ -23,7 +33,7 @@ set(CREO2BRL_LEGACY_SOURCES
 set(CREO2BRL_CORE_SOURCES
   core.cpp
   conversion.cpp
-  profile.cpp
+  conversion/profile_reader.cpp
   ${CREO2BRL_SHARED_SOURCES}
   )
 
@@ -322,6 +332,7 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     )
 
   add_library(creo-brl-core SHARED ${CREO2BRL_CORE_SOURCES})
+  target_include_directories(creo-brl-core PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
   set_property(TARGET creo-brl-core APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H CREO_BRL_CORE_BUILD)
   target_link_libraries(creo-brl-core REGEX::REGEX ${WIN_LIBS} ${CREO_BRLCAD_LIBS})
   set_target_properties(creo-brl-core PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CREO_BUNDLE_BIN_DIR}")
@@ -332,7 +343,9 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   add_library(creo-brl SHARED
     loader.c
     frontend.cpp
-    snapshot_writer.cpp)
+    snapshot_writer.cpp
+    ${CREO2BRL_FRONTEND_OPTION_SOURCE_PATHS})
+  target_include_directories(creo-brl PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
   target_link_libraries(creo-brl ${WIN_LIBS} ${CREO_PTK_DLL_LIBS})
   set_target_properties(creo-brl PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CREO_BUNDLE_BIN_DIR}")
   add_dependencies(creo-brl creo-brl-core)
@@ -500,6 +513,7 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   set(creo_dist_files
     ${CREO2BRL_SOURCES}
     ${CREO2BRL_CORE_SOURCES}
+    ${CREO2BRL_FRONTEND_OPTION_SOURCES}
     loader.c
     frontend.cpp
     README.txt
@@ -507,9 +521,12 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     creo-brl.dat.in
     creo-brl.h
     conversion_snapshot.h
+    frontend/profile_path.h
+    frontend/profile_ui.h
     part_writer.h
     profile_controls.h
     shared/core_api.h
+    shared/conversion_options.h
     snapshot_writer.cpp
     snapshot_writer.h
     resources/creo-brl-msg.txt

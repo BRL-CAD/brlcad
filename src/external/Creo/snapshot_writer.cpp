@@ -25,6 +25,7 @@
 
 #include "creo-brl.h"
 #include "conversion_snapshot.h"
+#include "frontend/profile_ui.h"
 #include "snapshot_writer.h"
 
 
@@ -68,10 +69,6 @@ struct snapshot_scene_capture {
     std::vector<struct snapshot_part_capture> parts;
     std::vector<struct snapshot_assembly_capture> assemblies;
 };
-
-/* The legacy converter keeps this tolerance internal; the dialog has no min_edge control. */
-static const double CREO_BRL_DEFAULT_MIN_EDGE_MM = 0.000254;
-
 
 static_assert(sizeof(struct creo_brl_snapshot_header) == CREO_BRL_SNAPSHOT_HEADER_SIZE,
               "Snapshot header layout changed");
@@ -125,51 +122,20 @@ dialog_text(const char *name, std::string *text)
 
 
 static int
-dialog_number(const char *name, double *value)
+dialog_get_check(void *UNUSED(context), const char *name, int *checked)
 {
-    std::string text;
-    char *end = NULL;
+    ProBoolean state = PRO_B_FALSE;
 
-    if (!dialog_text(name, &text) || text.empty())
+    if (!checked || ProUICheckbuttonGetState(CREO_UI_NAME, (char *)name, &state) != PRO_TK_NO_ERROR)
         return 0;
 
-    *value = strtod(text.c_str(), &end);
-    return end && *end == '\0' && std::isfinite(*value);
-}
-
-
-static int
-dialog_integer(const char *name, int32_t *value)
-{
-    std::string text;
-    char *end = NULL;
-    const long parsed = dialog_text(name, &text) ? strtol(text.c_str(), &end, 10) : 0;
-
-    if (!end || *end != '\0' || parsed < INT32_MIN || parsed > INT32_MAX)
-        return 0;
-
-    *value = (int32_t)parsed;
+    *checked = state != PRO_B_FALSE;
     return 1;
 }
 
 
 static int
-dialog_check(const char *name, uint32_t flag, uint32_t *flags)
-{
-    ProBoolean checked = PRO_B_FALSE;
-
-    if (ProUICheckbuttonGetState(CREO_UI_NAME, (char *)name, &checked) != PRO_TK_NO_ERROR)
-        return 0;
-
-    if (checked)
-        *flags |= flag;
-
-    return 1;
-}
-
-
-static int
-dialog_radio(const char *name, std::string *selection)
+dialog_get_radio(void *UNUSED(context), const char *name, std::string *selection)
 {
     char **names = NULL;
     int count = 0;
@@ -188,51 +154,39 @@ dialog_radio(const char *name, std::string *selection)
 
 
 static int
+dialog_get_text(void *UNUSED(context), const char *name, std::string *text)
+{
+    return dialog_text(name, text);
+}
+
+
+static const struct creo_brl_frontend_control_api snapshot_controls = {
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    dialog_get_text,
+    dialog_get_check,
+    dialog_get_radio
+};
+
+
+static int
 capture_settings(struct creo_brl_snapshot_settings *settings, snapshot_settings_strings *strings)
 {
-    std::string selection;
+    struct creo_brl_frontend_snapshot_options captured = {};
 
-    memset(settings, 0, sizeof(*settings));
-
-    if (!dialog_text("out_fname", &strings->output_path) || strings->output_path.empty() ||
-        !dialog_text("log_fname", &strings->log_path) ||
-        !dialog_text("mtl_fname", &strings->material_path) ||
-        !dialog_text("param_rename", &strings->rename_parameters) ||
-        !dialog_text("param_save", &strings->preserve_parameters) ||
-        !dialog_integer("region_counter", &settings->region_id) ||
-         !dialog_integer("min_luminance", &settings->min_luminance) ||
-         !dialog_number("max_chord", &settings->max_chord) ||
-         !dialog_number("min_angle", &settings->min_angle) ||
-         !dialog_radio("transform", &selection))
+    if (!settings || !strings ||
+        !creo_brl_frontend_capture_snapshot_options(&snapshot_controls, &captured))
         return 0;
 
-    settings->xform_mode = selection == "x_to_z" ? CREO_BRL_SNAPSHOT_XFORM_X_TO_Z :
-                           selection == "y_to_z" ? CREO_BRL_SNAPSHOT_XFORM_Y_TO_Z :
-                                                   CREO_BRL_SNAPSHOT_XFORM_NONE;
-    if (!dialog_radio("chord_mode", &selection))
-        return 0;
-    settings->chord_mode = selection == "percent" ? CREO_BRL_SNAPSHOT_CHORD_RELATIVE :
-                                                       CREO_BRL_SNAPSHOT_CHORD_ABSOLUTE;
-    settings->max_angle = settings->min_angle * 1.5;
-    settings->max_facets = 0;
-    settings->max_steps = 1;
-    settings->log_type = CREO_BRL_SNAPSHOT_LOG_FAILURE;
-    settings->min_edge = CREO_BRL_DEFAULT_MIN_EDGE_MM;
-
-    if (!dialog_check("elim_small", CREO_BRL_SNAPSHOT_SETTING_ELIMINATE_SMALL_FEATURES,
-                      &settings->flags))
-        return 0;
-    if ((settings->flags & CREO_BRL_SNAPSHOT_SETTING_ELIMINATE_SMALL_FEATURES) != 0 &&
-        (!dialog_number("min_hole", &settings->min_hole) ||
-         !dialog_number("min_chamfer", &settings->min_chamfer) ||
-         !dialog_number("min_round", &settings->min_round)))
-        return 0;
-
-    return dialog_check("facets_only", CREO_BRL_SNAPSHOT_SETTING_FACETS_ONLY, &settings->flags) &&
-           dialog_check("export_stl", CREO_BRL_SNAPSHOT_SETTING_EXPORT_STL, &settings->flags) &&
-           dialog_check("check_solidity", CREO_BRL_SNAPSHOT_SETTING_CHECK_SOLIDITY, &settings->flags) &&
-           dialog_check("create_boxes", CREO_BRL_SNAPSHOT_SETTING_CREATE_BOXES, &settings->flags) &&
-           dialog_check("write_normals", CREO_BRL_SNAPSHOT_SETTING_WRITE_NORMALS, &settings->flags);
+    *settings = captured.settings;
+    strings->output_path = captured.output_path;
+    strings->log_path = captured.log_path;
+    strings->material_path = captured.material_path;
+    strings->rename_parameters = captured.rename_parameters;
+    strings->preserve_parameters = captured.preserve_parameters;
+    return 1;
 }
 
 

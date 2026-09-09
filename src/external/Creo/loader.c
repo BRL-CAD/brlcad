@@ -37,6 +37,7 @@
 
 #include "conversion_snapshot.h"
 #include "frontend_api.h"
+#include "frontend/profile_path.h"
 #include "shared/core_api.h"
 
 #define FRONTEND_MSG_FILE "creo-brl-msg.txt"
@@ -45,6 +46,8 @@
 #define FACADE_PATH_MAX 32768
 #define BUNDLE_CONFIG_PATH L"config"
 #define BUNDLE_MATERIAL_PATH L"text\\usascii"
+#define BUNDLE_PROFILE_FILE L"Creo_to_BRL.g"
+#define PROFILE_ENVIRONMENT_VARIABLE "CREO_BRL_PROFILE"
 
 static HMODULE core_module = NULL;
 static creo_brl_core_initialize_fn_t core_initialize_fn = NULL;
@@ -135,16 +138,13 @@ show_popup_message(const char *title, const char *message)
     (void)ProArrayFree((ProArray *)&button);
 }
 
-extern void __cdecl creo_brl_frontend_apply_control(
-    const char *resource,
-    const char *type,
-    const char *value,
-    const char *default_value);
+extern void __cdecl creo_brl_frontend_apply_options(
+    const struct creo_brl_conversion_options *options);
 
 static const struct creo_brl_frontend_api frontend_api = {
     show_status_message,
     show_popup_message,
-    creo_brl_frontend_apply_control
+    creo_brl_frontend_apply_options
 };
 
 static int
@@ -204,6 +204,22 @@ bundle_subdirectory(wchar_t *path, size_t path_len, const wchar_t *relative_path
 
 
 static int
+bundle_file(wchar_t *path, size_t path_len,
+            const wchar_t *relative_directory, const wchar_t *file_name)
+{
+    size_t directory_length = 0;
+
+    if (!path || !relative_directory || !file_name ||
+        !bundle_subdirectory(path, path_len, relative_directory))
+        return 0;
+
+    directory_length = wcslen(path);
+    return swprintf_s(path + directory_length, path_len - directory_length,
+                      L"\\%ls", file_name) >= 0;
+}
+
+
+static int
 wide_path_to_string(const wchar_t *wide_path, char *path, size_t path_len)
 {
     if (!wide_path || !path || path_len == 0)
@@ -218,6 +234,28 @@ wide_path_to_string(const wchar_t *wide_path, char *path, size_t path_len)
         (int)path_len,
         NULL,
         NULL) != 0;
+}
+
+
+static int
+profile_path_exists(const char *path, void *context)
+{
+    const DWORD attributes = GetFileAttributesA(path);
+
+    (void)context;
+    return attributes != INVALID_FILE_ATTRIBUTES &&
+           (attributes & FILE_ATTRIBUTE_DIRECTORY) == 0;
+}
+
+
+static void
+profile_environment_value(char *value, size_t value_size)
+{
+    const DWORD length = GetEnvironmentVariableA(PROFILE_ENVIRONMENT_VARIABLE,
+                                                 value, (DWORD)value_size);
+
+    if (length == 0 || length >= value_size)
+        value[0] = '\0';
 }
 
 
@@ -259,36 +297,52 @@ creo_brl_show_status(const char *message)
 void
 creo_brl_core_load_profile_shim(void)
 {
-    wchar_t profile_directory_wide[FACADE_PATH_MAX] = {0};
+    ProPath working_directory_wide = {'\0'};
+    wchar_t bundled_profile_wide[FACADE_PATH_MAX] = {0};
     wchar_t material_directory_wide[FACADE_PATH_MAX] = {0};
-    char profile_directory[FACADE_PATH_MAX] = {0};
+    char environment_profile[FACADE_PATH_MAX] = {0};
+    char working_directory[FACADE_PATH_MAX] = {0};
+    char bundled_profile[FACADE_PATH_MAX] = {0};
     char material_directory[FACADE_PATH_MAX] = {0};
+    char profile_path[FACADE_PATH_MAX] = {0};
+    const char *working_directory_path = NULL;
+    const char *bundled_profile_path = NULL;
+    const char *material_directory_path = NULL;
 
     if (!core_load_profile_fn)
         return;
 
-    if (!bundle_subdirectory(
-            profile_directory_wide,
-            _countof(profile_directory_wide),
-            BUNDLE_CONFIG_PATH) ||
-        !bundle_subdirectory(
+    if (ProDirectoryCurrentGet(working_directory_wide) == PRO_TK_NO_ERROR &&
+        wide_path_to_string(working_directory_wide, working_directory,
+                            sizeof(working_directory)))
+        working_directory_path = working_directory;
+
+    if (bundle_file(bundled_profile_wide, _countof(bundled_profile_wide),
+                    BUNDLE_CONFIG_PATH, BUNDLE_PROFILE_FILE) &&
+        wide_path_to_string(bundled_profile_wide, bundled_profile,
+                            sizeof(bundled_profile)))
+        bundled_profile_path = bundled_profile;
+    else
+        show_status_message("Unable to determine the bundled Creo-BRL profile path.");
+
+    if (bundle_subdirectory(
             material_directory_wide,
             _countof(material_directory_wide),
-            BUNDLE_MATERIAL_PATH) ||
-        !wide_path_to_string(
-            profile_directory_wide,
-            profile_directory,
-            sizeof(profile_directory)) ||
-        !wide_path_to_string(
-            material_directory_wide,
+            BUNDLE_MATERIAL_PATH) &&
+        wide_path_to_string(material_directory_wide,
             material_directory,
-            sizeof(material_directory))) {
-        show_status_message("Unable to determine the Creo-BRL bundle configuration paths.");
-        core_load_profile_fn(NULL, NULL);
-        return;
-    }
+            sizeof(material_directory)))
+        material_directory_path = material_directory;
+    else
+        show_status_message("Unable to determine the bundled Creo-BRL material path.");
 
-    core_load_profile_fn(profile_directory, material_directory);
+    profile_environment_value(environment_profile, sizeof(environment_profile));
+    if (!creo_brl_resolve_profile_path(environment_profile, working_directory_path,
+                                       bundled_profile_path, profile_path_exists, NULL,
+                                       profile_path, sizeof(profile_path)))
+        show_status_message("No Creo-BRL profile was found; using defaults.");
+
+    core_load_profile_fn(profile_path[0] ? profile_path : NULL, material_directory_path);
 }
 
 
