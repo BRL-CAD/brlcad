@@ -234,7 +234,7 @@ jobs:
   linux_static:
     name: Clang Static Analyser
     needs: [linux_bext]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: true
     env:
@@ -269,42 +269,19 @@ jobs:
           sudo apt-get install libgl-dev
           sudo apt-get install libinput-dev          # Cleanup
 
-      - name: Clone bext
-        run: git clone https://github.com/BRL-CAD/bext.git
-
-      - name: Get bext commit SHA
-        id: bext-sha
-        run: |
-          cd bext
-          echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
-
-      - name: Compute bext cache discriminator
-        id: cachekey
-        shell: bash
-        run: |
-          info="${{ steps.bext-sha.outputs.sha }}-$(uname -s)-$(uname -r)-$(gcc --version | head -n 1)"
-          echo "hash=$(echo -n "$info" | sha1sum | awk '{print $1}')" >> $GITHUB_OUTPUT
-
-      - name: Cache bext build outputs
-        id: cache-bext
-        uses: actions/cache@v6
-        with:
-          path: ${{ github.workspace }}/bext_output
-          key: ${{ runner.os }}-bext-${{ steps.cachekey.outputs.hash }}
-
-      - name: Build bext (if cache miss)
-        if: steps.cache-bext.outputs.cache-hit != 'true'
-        run: |
-          cmake -E make_directory bext_build
-          cmake -S bext -B bext_build -DCMAKE_BUILD_TYPE=Release -DENABLE_ALL=ON -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/bext_output
-          cmake --build bext_build --config Release -j 2
-          cmake -E rm -rf bext
-          cmake -E rm -rf bext_build
-
       - name: Checkout
         uses: actions/checkout@v6
         with:
           path: brlcad
+
+      - name: Prepare bext dependencies
+        uses: ./brlcad/.github/actions/prepare-bext
+        with:
+          platform-channel: ubuntu-24.04-${{ runner.arch }}-release
+          source-dir: ${{ github.workspace }}/brlcad
+          output-dir: ${{ runner.temp }}/bext_output
+          build-type: Release
+          artifact-token: ${{ secrets.BEXT_ARTIFACT_TOKEN }}
 
       - name: Directory setup
         run: |
@@ -314,6 +291,8 @@ jobs:
         working-directory: ${{ github.workspace }}/brlcad
 
       - name: Run Analyzer
+        env:
+          BRLCAD_EXT_DIR: ${{ runner.temp }}/bext_output
         run: |
           export PATH=$GITHUB_WORKSPACE:/usr/share/clang/scan-build-18/bin:/usr/share/clang/scan-build-18/libexec:$PATH
           cp $GITHUB_WORKSPACE/brlcad/misc/clang-static-analyzer-run.sh .
@@ -332,7 +311,7 @@ jobs:
   linux_cov:
     name: LCOV Coverage testing
     needs: [linux_bext]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: true
     env:
@@ -367,42 +346,19 @@ jobs:
           sudo apt-get install libgl-dev
           sudo apt-get install libinput-dev
 
-      - name: Clone bext
-        run: git clone https://github.com/BRL-CAD/bext.git
-
-      - name: Get bext commit SHA
-        id: bext-sha
-        run: |
-          cd bext
-          echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
-
-      - name: Compute bext cache discriminator
-        id: cachekey
-        shell: bash
-        run: |
-          info="${{ steps.bext-sha.outputs.sha }}-$(uname -s)-$(uname -r)-$(gcc --version | head -n 1)"
-          echo "hash=$(echo -n "$info" | sha1sum | awk '{print $1}')" >> $GITHUB_OUTPUT
-
-      - name: Cache bext build outputs
-        id: cache-bext
-        uses: actions/cache@v6
-        with:
-          path: ${{ github.workspace }}/bext_output
-          key: ${{ runner.os }}-bext-${{ steps.cachekey.outputs.hash }}
-
-      - name: Build bext (if cache miss)
-        if: steps.cache-bext.outputs.cache-hit != 'true'
-        run: |
-          cmake -E make_directory bext_build
-          cmake -S bext -B bext_build -DCMAKE_BUILD_TYPE=Release -DENABLE_ALL=ON -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/bext_output
-          cmake --build bext_build --config Release -j 2
-          cmake -E rm -rf bext
-          cmake -E rm -rf bext_build
-
       - name: Checkout
         uses: actions/checkout@v6
         with:
           path: brlcad
+
+      - name: Prepare bext dependencies
+        uses: ./brlcad/.github/actions/prepare-bext
+        with:
+          platform-channel: ubuntu-24.04-${{ runner.arch }}-release
+          source-dir: ${{ github.workspace }}/brlcad
+          output-dir: ${{ runner.temp }}/bext_output
+          build-type: Release
+          artifact-token: ${{ secrets.BEXT_ARTIFACT_TOKEN }}
 
       - name: Directory setup
         run: |
@@ -413,12 +369,14 @@ jobs:
       - name: Configure
         run: |
           export PATH=$GITHUB_WORKSPACE:$PATH
-          cmake -S brlcad -B build_lcov -DBRLCAD_ENABLE_COVERAGE=ON -DCMAKE_BUILD_TYPE=Debug -DBRLCAD_EXT_DIR=${{ github.workspace }}/bext_output -DBRLCAD_ENABLE_QT=ON
+          cmake -S brlcad -B build_lcov -DBRLCAD_ENABLE_COVERAGE=ON -DCMAKE_BUILD_TYPE=Debug -DBRLCAD_EXT_DIR=${{ runner.temp }}/bext_output -DBRLCAD_ENABLE_QT=ON
 
       - name: Build
+        id: build_parallel
         run: |
           export PATH=$GITHUB_WORKSPACE:$PATH
           cmake --build build_lcov -j2
+        continue-on-error: true
 
       - name: Build (serial for diagnostics)
         if: steps.build_parallel.outcome == 'failure'

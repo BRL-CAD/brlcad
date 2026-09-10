@@ -26,17 +26,22 @@ declare -i failure num
 declare -i report_cnt num
 
 # For this purpose, we don't need (or want) bext to be compiled with the static
-# analyzer, so build it up front
+# analyzer.  CI supplies a prebuilt tree; retain the local fallback so this
+# script remains useful on its own.
 export CC=clang
 export CXX=clang++
 cwdir=$(pwd)
-git clone https://github.com/BRL-CAD/bext
-mkdir bext-build
-cmake -S $cwdir/bext -B $cwdir/bext-build -DCMAKE_INSTALL_PREFIX=$cwdir -DCMAKE_BUILD_TYPE=Debug
-cmake --build bext-build --config Debug -j 1
-# Save a little space
-rm -rf bext-build
-rm -rf bext
+bext_dir="${BRLCAD_EXT_DIR:-}"
+if [ -z "$bext_dir" ]; then
+	bext_dir="$cwdir"
+	git clone https://github.com/BRL-CAD/bext
+	mkdir bext-build
+	cmake -S "$cwdir/bext" -B "$cwdir/bext-build" -DCMAKE_INSTALL_PREFIX="$bext_dir" -DCMAKE_BUILD_TYPE=Debug
+	cmake --build bext-build --config Debug -j 1
+	# Save a little space
+	rm -rf bext-build
+	rm -rf bext
+fi
 
 # Encapsulate the logic to do a scan build
 function runtest {
@@ -52,7 +57,7 @@ function runtest {
 
 # configure using the correct compiler and values.  We don't
 # need this report, so clear it after configure is done
-scan-build --use-analyzer=/usr/bin/$CCC_CC -o ./scan-reports-config cmake .. -DBRLCAD_EXTRADOCS=OFF -DBRLCAD_ENABLE_QT=ON -DBRLCAD_LTO_MODE=OFF -DBRLCAD_EXT_DIR=$cwdir -DCMAKE_C_COMPILER=ccc-analyzer -DCMAKE_CXX_COMPILER=c++-analyzer
+scan-build --use-analyzer=/usr/bin/$CCC_CC -o ./scan-reports-config cmake .. -DBRLCAD_EXTRADOCS=OFF -DBRLCAD_ENABLE_QT=ON -DBRLCAD_LTO_MODE=OFF -DBRLCAD_EXT_DIR="$bext_dir" -DCMAKE_C_COMPILER=ccc-analyzer -DCMAKE_CXX_COMPILER=c++-analyzer
 
 # clear out any old reports
 rm -rfv ./scan-reports-*

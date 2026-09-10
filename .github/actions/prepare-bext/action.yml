@@ -1,0 +1,260 @@
+name: Prepare bext dependencies
+description: Restore a compatible bext production artifact or build the pinned revision.
+
+inputs:
+  platform-channel:
+    description: Published bext platform channel.
+    required: true
+  source-dir:
+    description: Absolute path to the BRL-CAD source tree.
+    required: true
+  output-dir:
+    description: Absolute path where the bext dependency tree will be prepared.
+    required: true
+  build-type:
+    description: BRL-CAD build configuration that will consume the dependency tree.
+    required: false
+    default: Release
+  artifact-token:
+    description: Token with Actions read access to BRL-CAD/bext.
+    required: false
+
+outputs:
+  bext-sha:
+    description: The bext revision in the prepared dependency tree.
+    value: ${{ steps.result.outputs.bext-sha }}
+  source:
+    description: Whether preparation used a production artifact, cache, or local build.
+    value: ${{ steps.result.outputs.source }}
+
+runs:
+  using: composite
+  steps:
+    - name: Resolve bext production artifact
+      id: resolve
+      shell: bash
+      env:
+        BEXT_BUILD_TYPE: ${{ inputs.build-type }}
+        BEXT_CHANNEL: ${{ inputs.platform-channel }}
+        BRLCAD_SOURCE_DIR: ${{ inputs.source-dir }}
+        GH_TOKEN: ${{ inputs.artifact-token }}
+      run: |
+        set -uo pipefail
+        source_dir="$BRLCAD_SOURCE_DIR"
+        if command -v cygpath >/dev/null 2>&1; then
+          source_dir="$(cygpath -u "$source_dir")"
+        fi
+        required_sha="$(awk -F'[()]' '/^[[:space:]]*brlcad_bext_init\([0-9a-fA-F]{40}\)/ { print tolower($2) }' "$source_dir/CMakeLists.txt")"
+        if [[ ! "$required_sha" =~ ^[0-9a-f]{40}$ ]]; then
+          echo "Expected exactly one brlcad_bext_init(<sha>) call in $source_dir/CMakeLists.txt" >&2
+          exit 1
+        fi
+
+        repository='BRL-CAD/bext'
+        marker_name="bext-production-$required_sha"
+        marker_info="$(gh api "repos/$repository/actions/artifacts?name=$marker_name&per_page=100" \
+          --jq '[.artifacts[] | select(.expired == false and .name == "'"$marker_name"'")] | sort_by(.created_at) | last | select(. != null) | [.name, .workflow_run.id] | @tsv' 2>/dev/null)" || marker_info=''
+
+        selected_sha=''
+        run_id=''
+        if [[ -n "$marker_info" ]]; then
+          selected_sha="$required_sha"
+          IFS=$'\t' read -r _ run_id <<< "$marker_info"
+          echo "Found complete bext production artifacts for pinned revision $required_sha."
+        else
+          marker_info="$(gh api "repos/$repository/actions/artifacts?per_page=100" \
+            --jq '[.artifacts[] | select(.expired == false and (.name | test("^bext-production-[0-9a-f]{40}$")))] | sort_by(.created_at) | last | select(. != null) | [.name, .workflow_run.id] | @tsv' 2>/dev/null)" || marker_info=''
+          if [[ -n "$marker_info" ]]; then
+            IFS=$'\t' read -r latest_marker run_id <<< "$marker_info"
+            selected_sha="${latest_marker#bext-production-}"
+            comparison="$(gh api "repos/$repository/compare/$required_sha...$selected_sha" --jq '.status' 2>/dev/null)" || comparison=''
+            if [[ "$comparison" == 'ahead' || "$comparison" == 'identical' ]]; then
+              echo "::warning::Using newer successful bext revision $selected_sha instead of BRL-CAD's pinned revision $required_sha."
+            else
+              selected_sha=''
+              run_id=''
+            fi
+          fi
+        fi
+
+        artifact_ready=false
+        artifact_name=''
+        if [[ "$RUNNER_OS" == 'Windows' && "$BEXT_BUILD_TYPE" == 'Debug' ]]; then
+          echo 'Windows Debug requires a Debug bext build; skipping Release production artifacts.'
+          selected_sha=''
+          run_id=''
+        elif [[ -n "$selected_sha" ]]; then
+          artifact_name="bext-$BEXT_CHANNEL-$selected_sha"
+          artifact_count="$(gh api "repos/$repository/actions/runs/$run_id/artifacts?name=$artifact_name&per_page=100" \
+            --jq '[.artifacts[] | select(.expired == false and .name == "'"$artifact_name"'")] | length' 2>/dev/null)" || artifact_count=0
+          if [[ "$artifact_count" == '1' ]]; then
+            artifact_ready=true
+          else
+            selected_sha=''
+            run_id=''
+            artifact_name=''
+          fi
+        fi
+
+        cache_schema=1
+        image_version="${ImageVersion:-unknown}"
+        runner_arch="${RUNNER_ARCH:-unknown}"
+        fallback_cache_key="bext-$cache_schema-$BEXT_CHANNEL-$BEXT_BUILD_TYPE-$required_sha-$image_version-$runner_arch"
+        production_cache_key="bext-$cache_schema-$BEXT_CHANNEL-Release-$selected_sha"
+        if [[ "$artifact_ready" != 'true' ]]; then
+          echo "No compatible production artifact is available; using the cache/build fallback for $required_sha."
+        fi
+
+        echo "required-sha=$required_sha" >> "$GITHUB_OUTPUT"
+        echo "selected-sha=$selected_sha" >> "$GITHUB_OUTPUT"
+        echo "run-id=$run_id" >> "$GITHUB_OUTPUT"
+        echo "artifact-name=$artifact_name" >> "$GITHUB_OUTPUT"
+        echo "artifact-ready=$artifact_ready" >> "$GITHUB_OUTPUT"
+        echo "production-cache-key=$production_cache_key" >> "$GITHUB_OUTPUT"
+        echo "fallback-cache-key=$fallback_cache_key" >> "$GITHUB_OUTPUT"
+
+    - name: Restore production artifact cache
+      if: steps.resolve.outputs.artifact-ready == 'true'
+      id: production-cache
+      uses: actions/cache/restore@v6
+      with:
+        path: ${{ inputs.output-dir }}
+        key: ${{ steps.resolve.outputs.production-cache-key }}
+
+    - name: Download bext production artifact
+      if: steps.resolve.outputs.artifact-ready == 'true' && steps.production-cache.outputs.cache-hit != 'true'
+      id: download
+      shell: bash
+      env:
+        ARTIFACT_NAME: ${{ steps.resolve.outputs.artifact-name }}
+        BEXT_CHANNEL: ${{ inputs.platform-channel }}
+        BEXT_OUTPUT_DIR: ${{ inputs.output-dir }}
+        BEXT_RUN_ID: ${{ steps.resolve.outputs.run-id }}
+        GH_TOKEN: ${{ inputs.artifact-token }}
+      run: |
+        set -uo pipefail
+        output_dir="$BEXT_OUTPUT_DIR"
+        if command -v cygpath >/dev/null 2>&1; then
+          output_dir="$(cygpath -u "$output_dir")"
+        fi
+        download_dir="$RUNNER_TEMP/bext-download-$BEXT_RUN_ID-$BEXT_CHANNEL"
+        cmake -E rm -rf "$download_dir" "$output_dir"
+        cmake -E make_directory "$download_dir" "$output_dir"
+
+        ready=false
+        if gh run download "$BEXT_RUN_ID" --repo BRL-CAD/bext --name "$ARTIFACT_NAME" --dir "$download_dir"; then
+          archive="$download_dir/bext-$BEXT_CHANNEL.tar.gz"
+          if (cd "$output_dir" && cmake -E tar xzf "$archive") && \
+             [[ -d "$output_dir/install" && -d "$output_dir/noinstall" && -f "$output_dir/bext-install-manifest.json" ]]; then
+            ready=true
+          fi
+        fi
+        cmake -E rm -rf "$download_dir"
+        if [[ "$ready" != 'true' ]]; then
+          cmake -E rm -rf "$output_dir"
+          echo '::warning::Unable to download or validate the bext production artifact; using the pinned cache/build fallback.'
+        fi
+        echo "ready=$ready" >> "$GITHUB_OUTPUT"
+
+    - name: Restore fallback bext cache
+      if: steps.production-cache.outputs.cache-hit != 'true' && steps.download.outputs.ready != 'true'
+      id: fallback-cache
+      uses: actions/cache/restore@v6
+      with:
+        path: ${{ inputs.output-dir }}
+        key: ${{ steps.resolve.outputs.fallback-cache-key }}
+
+    - name: Build pinned bext revision
+      if: steps.production-cache.outputs.cache-hit != 'true' && steps.download.outputs.ready != 'true' && steps.fallback-cache.outputs.cache-hit != 'true'
+      shell: bash
+      env:
+        BEXT_BUILD_TYPE: ${{ inputs.build-type }}
+        BEXT_OUTPUT_DIR: ${{ inputs.output-dir }}
+        BEXT_SHA: ${{ steps.resolve.outputs.required-sha }}
+      run: |
+        set -euo pipefail
+        output_dir="$BEXT_OUTPUT_DIR"
+        if command -v cygpath >/dev/null 2>&1; then
+          output_dir="$(cygpath -u "$output_dir")"
+        fi
+        source_dir="$RUNNER_TEMP/bext-source-$BEXT_SHA"
+        build_dir="$RUNNER_TEMP/bext-build-$BEXT_SHA"
+        cleanup() {
+          cmake -E rm -rf "$source_dir" "$build_dir"
+        }
+        trap cleanup EXIT
+        cleanup
+        cmake -E rm -rf "$output_dir"
+
+        git clone --filter=blob:none https://github.com/BRL-CAD/bext.git "$source_dir"
+        git -C "$source_dir" -c advice.detachedHead=false checkout "$BEXT_SHA"
+        configure_args=(-S "$source_dir" -B "$build_dir" -G Ninja -DENABLE_ALL=ON -DGIT_SHALLOW_CLONE=ON "-DCMAKE_BUILD_TYPE=$BEXT_BUILD_TYPE" "-DCMAKE_INSTALL_PREFIX=$output_dir")
+        if [[ "$RUNNER_OS" == 'Windows' ]]; then
+          configure_args+=(-DCMAKE_C_COMPILER=cl.exe -DCMAKE_CXX_COMPILER=cl.exe)
+        elif [[ "$RUNNER_OS" == 'macOS' ]]; then
+          export CC=clang
+          export CXX=clang++
+        fi
+        cmake "${configure_args[@]}"
+        cmake --build "$build_dir" --config "$BEXT_BUILD_TYPE" --parallel 2
+
+    - name: Validate bext dependency tree
+      shell: bash
+      env:
+        BEXT_OUTPUT_DIR: ${{ inputs.output-dir }}
+      run: |
+        set -euo pipefail
+        output_dir="$BEXT_OUTPUT_DIR"
+        if command -v cygpath >/dev/null 2>&1; then
+          output_dir="$(cygpath -u "$output_dir")"
+        fi
+        [[ -d "$output_dir/install" && -d "$output_dir/noinstall" && -f "$output_dir/bext-install-manifest.json" ]]
+        tool="$output_dir/noinstall/bin/strclear"
+        if [[ "$RUNNER_OS" == 'Windows' ]]; then
+          [[ -f "$tool.exe" ]]
+        else
+          [[ -x "$tool" ]]
+        fi
+
+    - name: Save production artifact cache
+      if: steps.download.outputs.ready == 'true'
+      uses: actions/cache/save@v6
+      with:
+        path: ${{ inputs.output-dir }}
+        key: ${{ steps.resolve.outputs.production-cache-key }}
+
+    - name: Save fallback bext cache
+      if: steps.production-cache.outputs.cache-hit != 'true' && steps.download.outputs.ready != 'true' && steps.fallback-cache.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v6
+      with:
+        path: ${{ inputs.output-dir }}
+        key: ${{ steps.resolve.outputs.fallback-cache-key }}
+
+    - name: Report bext source
+      id: result
+      shell: bash
+      env:
+        ARTIFACT_READY: ${{ steps.resolve.outputs.artifact-ready }}
+        ARTIFACT_SHA: ${{ steps.resolve.outputs.selected-sha }}
+        DOWNLOAD_READY: ${{ steps.download.outputs.ready }}
+        FALLBACK_CACHE_HIT: ${{ steps.fallback-cache.outputs.cache-hit }}
+        PRODUCTION_CACHE_HIT: ${{ steps.production-cache.outputs.cache-hit }}
+        REQUIRED_SHA: ${{ steps.resolve.outputs.required-sha }}
+      run: |
+        if [[ "$PRODUCTION_CACHE_HIT" == 'true' ]]; then
+          source=production-cache
+        elif [[ "$DOWNLOAD_READY" == 'true' ]]; then
+          source=production-artifact
+        elif [[ "$FALLBACK_CACHE_HIT" == 'true' ]]; then
+          source=fallback-cache
+        else
+          source=local-build
+        fi
+        if [[ "$ARTIFACT_READY" == 'true' && ( "$PRODUCTION_CACHE_HIT" == 'true' || "$DOWNLOAD_READY" == 'true' ) ]]; then
+          sha="$ARTIFACT_SHA"
+        else
+          sha="$REQUIRED_SHA"
+        fi
+        echo "source=$source" >> "$GITHUB_OUTPUT"
+        echo "bext-sha=$sha" >> "$GITHUB_OUTPUT"
+        echo "Prepared bext $sha from $source."
