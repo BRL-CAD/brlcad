@@ -10,6 +10,7 @@
 
 #include "common.h"
 
+#include <algorithm>
 #include <cmath>
 #include <map>
 #include <set>
@@ -1376,6 +1377,9 @@ doubly_periodic_winding_strip_test()
 }
 
 static bool
+constrained_periodic_band_test(const ON_Brep &brep, double expected_area);
+
+static bool
 periodic_copy_band_case(bool reverse, bool alternate_copies, bool transpose)
 {
     ON_Brep brep;
@@ -1465,7 +1469,7 @@ periodic_copy_band_case(bool reverse, bool alternate_copies, bool transpose)
 	bu_log("periodic copy band: reverse=%d copies=%d transpose=%d ret=%d area=%.17g expected=%.17g region=%d\n",
 	    reverse, alternate_copies, transpose, result->ret, area, expected, region_matches);
     delete result;
-    return valid;
+    return valid && constrained_periodic_band_test(brep, expected);
 }
 
 static bool
@@ -2403,11 +2407,13 @@ struct source_sample {
     fastf_t uv[2];
     fastf_t point[3];
     int identity;
+    const void *source = NULL;
 };
 
 struct source_store {
     std::map<int, std::vector<source_sample>> trims;
     std::set<const void *> output;
+    std::map<size_t, const void *> indexed_output;
 };
 
 static size_t
@@ -2442,16 +2448,113 @@ source_sample_identity(int UNUSED(face_index), int trim_index,
     const auto trim = store->trims.find(trim_index);
     if (trim == store->trims.end() || sample_index >= trim->second.size())
 	return NULL;
-    return &trim->second[sample_index].identity;
+    const source_sample &sample = trim->second[sample_index];
+    return sample.source ? sample.source : &sample.identity;
 }
 
 static void
-source_point_output(int UNUSED(face_index), size_t UNUSED(point_index),
+source_point_output(int UNUSED(face_index), size_t point_index,
 	const void *source, void *data)
 {
     source_store *store = (source_store *)data;
     if (source)
 	store->output.insert(source);
+    store->indexed_output[point_index] = source;
+}
+
+static bool
+constrained_periodic_band_test(const ON_Brep &brep, double expected_area)
+{
+    source_store store;
+    const int subdivisions = 8;
+    std::map<const void *, size_t> identities;
+    std::map<size_t, ON_3dPoint> source_points;
+    std::set<std::pair<size_t, size_t>> expected_edges;
+    for (int ti = 0; ti < brep.m_T.Count(); ++ti) {
+	const ON_BrepTrim &trim = brep.m_T[ti];
+	std::vector<source_sample> &samples = store.trims[ti];
+	samples.resize(subdivisions + 1);
+	size_t previous = 0;
+	for (int point = 0; point <= subdivisions; ++point) {
+	    source_sample &sample = samples[(size_t)point];
+	    const double fraction = (double)point / subdivisions;
+	    sample.parameter = trim.Domain().ParameterAt(fraction);
+	    const ON_3dPoint uv = trim.PointAt(sample.parameter);
+	    const ON_BrepEdge *edge = trim.Edge();
+	    const ON_3dPoint position = edge->PointAt(edge->Domain().ParameterAt(
+		trim.m_bRev3d ? 1.0 - fraction : fraction));
+	    V2SET(sample.uv, uv.x, uv.y);
+	    VSET(sample.point, position.x, position.y, position.z);
+	    sample.source = !point ? (const void *)&brep.m_V[trim.m_vi[0]] :
+		point == subdivisions ? (const void *)&brep.m_V[trim.m_vi[1]] :
+		(const void *)&sample.identity;
+	    auto inserted = identities.emplace(sample.source, identities.size());
+	    const size_t identity = inserted.first->second;
+	    source_points[identity] = position;
+	    if (point)
+		expected_edges.insert(std::minmax(previous, identity));
+	    previous = identity;
+	}
+    }
+
+    struct bg_tess_tol ttol = BG_TESS_TOL_INIT_TOL;
+    ttol.rel = 0.001;
+    struct bn_tol tol = BN_TOL_INIT_TOL;
+    struct brep_cdt_fast_options options;
+    brep_cdt_fast_options_default(&options);
+    options.max_workers = 1;
+    options.adaptive_quality = 0;
+    options.trim_sample_count = source_sample_count;
+    options.trim_sample = source_sample_get;
+    options.trim_sample_data = &store;
+    options.trim_sample_source = source_sample_identity;
+    options.point_source = source_point_output;
+    options.point_source_data = &store;
+    fast_result result;
+    result.ret = brep_cdt_fast_ex(&result.faces, &result.face_count,
+	&result.normals, &result.points, &result.point_count, &brep, -1,
+	&ttol, &tol, &options, &result.report);
+    if (result.ret != BREP_CDT_FAST_OK || result.face_count <= 0 ||
+	    result.report.failed_faces)
+	return false;
+
+    std::map<std::pair<int, int>, int> edge_counts;
+    double area = 0.0;
+    for (int face = 0; face < result.face_count; ++face) {
+	const int *triangle = &result.faces[face * 3];
+	const ON_3dPoint a(result.points[triangle[0]]);
+	const ON_3dPoint b(result.points[triangle[1]]);
+	const ON_3dPoint c(result.points[triangle[2]]);
+	area += 0.5 * ON_CrossProduct(b - a, c - a).Length();
+	for (int corner = 0; corner < 3; ++corner)
+	    edge_counts[std::minmax(triangle[corner],
+		triangle[(corner + 1) % 3])]++;
+    }
+    std::set<std::pair<size_t, size_t>> output_edges;
+    for (const auto &edge : edge_counts) {
+	if (edge.second == 2)
+	    continue;
+	if (edge.second != 1)
+	    return false;
+	const int vertices[2] = {edge.first.first, edge.first.second};
+	size_t endpoints[2];
+	for (int endpoint = 0; endpoint < 2; ++endpoint) {
+	    const int vertex = vertices[endpoint];
+	    const auto identity = identities.find(store.indexed_output[vertex]);
+	    if (identity == identities.end())
+		return false;
+	    endpoints[endpoint] = identity->second;
+	    if (ON_3dPoint(result.points[vertex]).DistanceTo(
+		    source_points[identity->second]) > ON_ZERO_TOLERANCE)
+		return false;
+	}
+	output_edges.insert(std::minmax(endpoints[0], endpoints[1]));
+    }
+    /* The only open edges must be the supplied physical rings, with exact
+     * coordinates and identities.  The artificial periodic cut is welded. */
+    const double area_tolerance = 0.03;
+    return output_edges == expected_edges &&
+	fabs(area - expected_area) <= area_tolerance * expected_area;
 }
 
 static bool
