@@ -9752,6 +9752,9 @@ repair_spherical_cap_mesh(const ON_BrepFace &face, const ON_Sphere &sphere,
 	    candidate.vertices.push_back(point.y);
 	    candidate.vertices.push_back(point.z);
 	}
+	candidate.source_points.assign(points.size(), NULL);
+	for (size_t point = 0; point < segments; ++point)
+	    candidate.source_points[point] = boundary[point].source_point;
 	const auto append_triangle = [&](int first, int second, int third) {
 	    int triangle[3] = {first, second, third};
 	    ON_3dPoint triangle_points[3] = {points[(size_t)first],
@@ -11020,6 +11023,7 @@ cdt_test_repair_periodic_strip(void)
     if (!cap_brep || cap_brep->m_F.Count() != 1)
 	return 6;
     std::vector<repair_fast_trim_sample> cap_boundary(32);
+    std::vector<ON_3dPoint> cap_source_points(cap_boundary.size());
     const double cap_plane = -0.2;
     const double cap_radius = std::sqrt(1.0 - cap_plane * cap_plane);
     for (size_t point = 0; point < cap_boundary.size(); ++point) {
@@ -11027,6 +11031,8 @@ cdt_test_repair_periodic_strip(void)
 	    (double)cap_boundary.size();
 	VSET(cap_boundary[point].point, cap_radius * std::cos(angle),
 	    cap_plane, cap_radius * std::sin(angle));
+	cap_source_points[point] = ON_3dPoint(cap_boundary[point].point);
+	cap_boundary[point].source_point = &cap_source_points[point];
     }
     repair_boundary_patch cap_patch;
     const bool cap_reconstructed = repair_spherical_cap_mesh(
@@ -11038,7 +11044,18 @@ cdt_test_repair_periodic_strip(void)
 	cap_patch.faces.size() / 3 == cap_boundary.size() *
 	(2 * cap_patch.strip_interior_rows + 1) &&
 	cap_patch.direct_surface_deviations.size() ==
-	cap_patch.faces.size() / 3;
+	cap_patch.faces.size() / 3 && cap_patch.source_points.size() ==
+	cap_patch.vertices.size() / 3;
+    /* Assembly must reuse the exact rigorous rim, while generated interior
+     * vertices must not claim a source identity. */
+    for (size_t point = 0; valid && point < cap_patch.source_points.size(); ++point) {
+	const ON_3dPoint *expected = point < cap_source_points.size() ?
+	    &cap_source_points[point] : NULL;
+	valid = cap_patch.source_points[point] == expected;
+	if (expected)
+	    valid = ON_3dPoint(&cap_patch.vertices[point * 3]).DistanceTo(
+		*expected) <= ON_ZERO_TOLERANCE;
+    }
     for (double deviation : cap_patch.direct_surface_deviations)
 	valid = valid && std::isfinite(deviation) && deviation <= 0.01;
     if (!valid)
@@ -11921,11 +11938,18 @@ repair_fast_resource_limits(const struct brep_cdt_fast_report &report)
 	(report.hit_point_limit ? BREP_CDT_REPAIR_LIMIT_POINTS : 0u);
 }
 
+enum repair_closed_boundary_action {
+    REPAIR_PRESERVE_CLOSED_BOUNDARY,
+    REPAIR_DEFERRED_CLOSED_BOUNDARY,
+    REPAIR_RECONSTRUCT_CLOSED_BOUNDARY
+};
+
 static int
 brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	const struct brep_cdt_repair_settings *settings,
 	struct brep_cdt_repair_report *report, bool area_weighted_samples,
 	bool closure_biased_poisson, bool automatic_local_repair,
+	repair_closed_boundary_action &closed_boundary_action,
 	bool preserve_pullback_samples = false)
 {
     struct brep_cdt_repair_report local_report =
@@ -13568,7 +13592,25 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	const size_t neighborhood_max_edges =
 	    settings->mesh.max_hole_edges > 0 ?
 	    (size_t)settings->mesh.max_hole_edges : (size_t)256;
+	bool reconstruct_approximate_boundary = false;
 	if (!settings->use_full_fast_fallback) {
+	    struct bg_trimesh_solid_errors boundary_errors =
+		BG_TRIMESH_SOLID_ERRORS_INIT_NULL;
+	    (void)bg_trimesh_solid2(input_vertex_count, input_face_count,
+		input_vertices, input_faces, &boundary_errors);
+	    reconstruct_approximate_boundary = boundary_errors.unmatched.count > 0 ||
+		closed_boundary_action == REPAIR_RECONSTRUCT_CLOSED_BOUNDARY;
+	    bg_free_trimesh_solid_errors(&boundary_errors);
+	    if (!reconstruct_approximate_boundary && rigorous_input_face_count > 0 &&
+		    input_face_count > rigorous_input_face_count)
+		closed_boundary_action = REPAIR_DEFERRED_CLOSED_BOUNDARY;
+	}
+	/* First preserve an edge-closed approximation: reconstructing its
+	 * perimeter can flatten a curved cap or select another periodic band.
+	 * If local and generic mesh repair cannot certify it, the caller retries
+	 * with rigorous-boundary reconstruction enabled.  Every attempt still
+	 * requires Manifold, source coverage, and fidelity validation. */
+	if (reconstruct_approximate_boundary) {
 	    rigorous_boundary_repair =
 		repair_failed_face_from_rigorous_boundary(s_cdt, &input_faces,
 		    &input_face_count, &input_vertices, &input_vertex_count,
@@ -13583,8 +13625,7 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	 * open only at the other proved source rings; the final source must close
 	 * and validate the complete mesh.  For one failed source, this is also the
 	 * authoritative requested-boundary path. */
-	if (!settings->use_full_fast_fallback &&
-		!rigorous_boundary_repair) {
+	if (reconstruct_approximate_boundary && !rigorous_boundary_repair) {
 	    std::set<int> approximate_sources;
 	    bool attributed = true;
 	    for (int face = rigorous_input_face_count;
@@ -15345,9 +15386,25 @@ brep_cdt_repair(struct ON_Brep_CDT_State *s_cdt,
     unsigned int resource_limits = 0;
     const auto run_repair_attempt = [&](const brep_cdt_repair_settings *opts,
 	    bool area_weighted, bool closure_biased, bool automatic_local) {
+	repair_closed_boundary_action closed_boundary_action =
+	    REPAIR_PRESERVE_CLOSED_BOUNDARY;
 	int result = brep_cdt_repair_attempt(s_cdt, opts, active_report,
-	    area_weighted, closure_biased, automatic_local);
+	    area_weighted, closure_biased, automatic_local,
+	    closed_boundary_action);
 	resource_limits |= active_report->resource_limits;
+	/* Edge closure alone does not prove a manifold: flat facets can join
+	 * unrelated vertex fans.  Keep the existing rigorous-boundary repair
+	 * available after the less invasive candidate fails certification. */
+	if (result < 0 && closed_boundary_action == REPAIR_DEFERRED_CLOSED_BOUNDARY &&
+		!(active_report->resource_limits & BREP_CDT_REPAIR_LIMIT_MEMORY)) {
+	    closed_boundary_action = REPAIR_RECONSTRUCT_CLOSED_BOUNDARY;
+	    bu_log("Retrying failed closed approximation with rigorous-boundary "
+		"reconstruction\n");
+	    result = brep_cdt_repair_attempt(s_cdt, opts, active_report,
+		area_weighted, closure_biased, automatic_local,
+		closed_boundary_action);
+	    resource_limits |= active_report->resource_limits;
+	}
 	/* Simplifying a repaired pcurve is suitable for display, but can leave
 	 * a long edge opposite a finely sampled neighboring boundary.  Retry a
 	 * small open residue on a closed source before giving up on assembly. */
@@ -15363,7 +15420,8 @@ brep_cdt_repair(struct ON_Brep_CDT_State *s_cdt,
 	    s_cdt->orig_brep->IsSolid() &&
 	    cdt_topology_references_safe(s_cdt->orig_brep, NULL)) {
 	    result = brep_cdt_repair_attempt(s_cdt, opts, active_report,
-		area_weighted, closure_biased, automatic_local, true);
+		area_weighted, closure_biased, automatic_local,
+		closed_boundary_action, true);
 	    active_report->pullback_retry_attempted = 1;
 	    active_report->pullback_retry_applied = result >= 0 ? 1 : 0;
 	}
