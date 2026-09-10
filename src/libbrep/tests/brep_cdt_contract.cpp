@@ -573,6 +573,8 @@ paired_pcurve_edge_contract()
     settings.provenance_data = &provenance;
     struct brep_cdt_repair_report report = BREP_CDT_REPAIR_REPORT_INIT;
     const int repair_result = ON_Brep_CDT_Repair(state, &settings, &report);
+    /* The constrained faces already close this shell.  Reconstructing them
+     * again from their perimeters would discard the accepted surface mesh. */
     valid = valid && repair_result == 0 && report.mesh.solid &&
 	report.mesh.manifold_accepted &&
 	report.fast_fallback_used_faces >= 1 &&
@@ -581,7 +583,8 @@ paired_pcurve_edge_contract()
 	report.deviation_projection_failures == 0 &&
 	report.best_effort_faces == 0 &&
 	report.missing_rigorous_triangles == 0 && provenance.calls == 1 &&
-	provenance.tier == BREP_CDT_REPAIR_APPROX_LOCAL_MESH &&
+	provenance.tier == BREP_CDT_REPAIR_APPROX_CONSTRAINED_FACE &&
+	report.mesh.added_faces == 0 &&
 	!provenance.faces.empty() && !provenance.edges.empty();
     if (!valid) {
 	bu_log("paired p-curve edge contract failed: tess %d repair %d stage "
