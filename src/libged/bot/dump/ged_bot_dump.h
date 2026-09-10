@@ -117,6 +117,7 @@ extern int dxf_setup(struct _ged_bot_dump_client_data *d, const char *fname, con
 extern int dxf_finish(struct _ged_bot_dump_client_data *d);
 extern void dxf_write_bot(struct _ged_bot_dump_client_data *d, struct rt_bot_internal *bot, FILE *fp, char *name);
 
+extern int gltf_validate_options(struct _ged_bot_dump_client_data *d);
 extern int gltf_setup(struct _ged_bot_dump_client_data *d, const char *fname);
 extern int gltf_finish(struct _ged_bot_dump_client_data *d);
 extern void gltf_write_bot(struct _ged_bot_dump_client_data *d, struct rt_bot_internal *bot, char *name);

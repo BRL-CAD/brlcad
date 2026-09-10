@@ -20,267 +20,136 @@
 
 #include "common.h"
 
-#include <cstdio>
-#include <fstream>
+#include <climits>
+#include <cstdint>
 #include <iostream>
+#include <limits>
+#include <string>
 #include <vector>
-
-#include "tiny_gltf.h"
 
 #include "vmath.h"
 #include "bu/app.h"
 #include "bu/opt.h"
-#include "bu/path.h"
 #include "bg/trimesh.h"
 #include "wdb.h"
 
-static void
-process_mesh(struct rt_wdb *outfp, const tinygltf::Model &model, const tinygltf::Mesh &mesh, int verbosity, size_t cnt)
-{
-    int numverts = 0;
-    int numfaces = 0;
+#include "gltf_read_util.h"
 
-    std::string shape_name = mesh.name;
-    if (!shape_name.length())
-	shape_name = std::string("gltf_import_") + std::to_string(cnt);
+static bool
+process_mesh(struct rt_wdb *outfp, const tg3_model &model, const tg3_mesh &mesh,
+    int verbosity, uint32_t mesh_number)
+{
+    std::string shape_name = brlcad_gltf::to_string(mesh.name);
+    if (shape_name.empty())
+	shape_name = "gltf_import_" + std::to_string(mesh_number);
 
     if (verbosity)
-	std::cout << "BoT " << cnt << " name: " << shape_name << "\n";
+	std::cout << "BoT " << mesh_number << " name: " << shape_name << "\n";
 
-    // Iterate over mesh primitives, count vertices and triangles
-    for (size_t i = 0; i < mesh.primitives.size(); i++) {
-	const tinygltf::Primitive &p = mesh.primitives[i];
+    std::vector<fastf_t> vertices;
+    std::vector<int> faces;
+    for (uint32_t primitive_number = 0; primitive_number < mesh.primitives_count;
+	++primitive_number) {
+	const tg3_primitive &primitive = mesh.primitives[primitive_number];
+	if (primitive.mode != TG3_MODE_TRIANGLES) {
+	    bu_log("Error: glTF primitive %u is not a triangle mesh\n", primitive_number);
+	    return false;
+	}
 
-	// Triangle faces
-	{
-	    const tinygltf::Accessor &ta = model.accessors[p.indices];
-	    const tinygltf::BufferView &tv = model.bufferViews[ta.bufferView];
-	    int byte_stride = (tv.byteStride > 1) ? tv.byteStride : 0;
+	int32_t position_index = brlcad_gltf::find_attribute(primitive, "POSITION");
+	brlcad_gltf::accessor_view positions;
+	if (position_index == TG3_INDEX_NONE ||
+	    !brlcad_gltf::get_accessor_view(model, position_index, positions) ||
+	    positions.accessor->type != TG3_TYPE_VEC3 ||
+	    !brlcad_gltf::is_supported_position_component(
+		positions.accessor->component_type) ||
+	    positions.accessor->count > std::numeric_limits<size_t>::max()) {
+	    bu_log("Error: glTF primitive %u has invalid POSITION data\n", primitive_number);
+	    return false;
+	}
+	if (positions.accessor->component_type == TG3_COMPONENT_TYPE_DOUBLE)
+	    brlcad_gltf::warn_legacy_double_position(mesh_number, primitive_number);
 
-	    switch (ta.componentType) {
-		case TINYGLTF_COMPONENT_TYPE_SHORT:
-		    byte_stride = (!byte_stride) ? sizeof(short) * 3 : byte_stride;
-		    numfaces += tv.byteLength / byte_stride;
-		    break;
-		case TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT:
-		    byte_stride = (!byte_stride) ? sizeof(unsigned short) * 3 : byte_stride;
-		    numfaces += tv.byteLength / byte_stride;
-		    break;
-		case TINYGLTF_COMPONENT_TYPE_INT:
-		    byte_stride = (!byte_stride) ? sizeof(int) * 3 : byte_stride;
-		    numfaces += tv.byteLength / byte_stride;
-		    break;
-		case TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT:
-		    byte_stride = (!byte_stride) ? sizeof(unsigned int) * 3 : byte_stride;
-		    numfaces += tv.byteLength / byte_stride;
-		    break;
-		default:
-		    bu_log("Warning:  unsupported triangle indices type: %d\n", ta.componentType);
-		    continue;
+	size_t primitive_vertex_count = static_cast<size_t>(positions.accessor->count);
+	size_t first_vertex = vertices.size() / 3;
+	if (primitive_vertex_count > static_cast<size_t>(INT_MAX) - first_vertex ||
+	    primitive_vertex_count > (vertices.max_size() - vertices.size()) / 3) {
+	    bu_log("Error: glTF mesh %u has too many vertices\n", mesh_number);
+	    return false;
+	}
+	vertices.resize(vertices.size() + primitive_vertex_count * 3);
+
+	int32_t component_size = tg3_component_size(positions.accessor->component_type);
+	for (size_t vertex = 0; vertex < primitive_vertex_count; ++vertex) {
+	    for (size_t axis = 0; axis < 3; ++axis) {
+		double coordinate;
+		if (!brlcad_gltf::read_coordinate(
+			positions.data + vertex * positions.stride + axis * component_size,
+			positions.accessor->component_type, coordinate))
+		    return false;
+		vertices[(first_vertex + vertex) * 3 + axis] =
+		    static_cast<fastf_t>(coordinate);
 	    }
 	}
 
-	// Vertices
-	{
-	    std::map<std::string, int>::const_iterator p_it = p.attributes.find(std::string("POSITION"));
-	    if (p_it == p.attributes.end()) {
-		bu_log("Error - could not find POSITION attribute for mesh %zd\n", i);
-		continue;
+	brlcad_gltf::accessor_view indices;
+	const tg3_accessor *index_accessor = nullptr;
+	size_t index_count = primitive_vertex_count;
+	if (primitive.indices != TG3_INDEX_NONE) {
+	    if (!brlcad_gltf::get_accessor_view(model, primitive.indices, indices) ||
+		indices.accessor->type != TG3_TYPE_SCALAR ||
+		indices.accessor->count > std::numeric_limits<size_t>::max()) {
+		bu_log("Error: glTF primitive %u has invalid index data\n", primitive_number);
+		return false;
 	    }
-	    const tinygltf::Accessor &va = model.accessors[p_it->second];
-	    const tinygltf::BufferView &vv = model.bufferViews[va.bufferView];
-	    int byte_stride = (vv.byteStride > 1) ? vv.byteStride : 0;
+	    index_accessor = indices.accessor;
+	    index_count = static_cast<size_t>(index_accessor->count);
+	}
+	if (index_count == 0 || index_count % 3 != 0 ||
+	    index_count > faces.max_size() - faces.size()) {
+	    bu_log("Error: glTF primitive %u does not contain complete triangles\n",
+		primitive_number);
+	    return false;
+	}
 
-	    switch (va.componentType) {
-		case TINYGLTF_COMPONENT_TYPE_FLOAT:
-		    byte_stride = (!byte_stride) ? sizeof(float) * 3 : byte_stride;
-		    numverts += vv.byteLength / byte_stride;
-		    break;
-		case TINYGLTF_COMPONENT_TYPE_DOUBLE:
-		    byte_stride = (!byte_stride) ? sizeof(double) * 3 : byte_stride;
-		    numverts += vv.byteLength / byte_stride;
-		    break;
-		default:
-		    bu_log("Warning - unsupported vertex type: %d\n", va.componentType);
-		    continue;
+	size_t first_index = faces.size();
+	faces.resize(first_index + index_count);
+	for (size_t i = 0; i < index_count; ++i) {
+	    size_t index = i;
+	    if (index_accessor &&
+		!brlcad_gltf::read_index(indices.data + i * indices.stride,
+		    index_accessor->component_type, index)) {
+		bu_log("Error: glTF primitive %u uses an unsupported index type\n",
+		    primitive_number);
+		return false;
 	    }
+	    if (index >= primitive_vertex_count) {
+		bu_log("Error: glTF primitive %u contains an invalid vertex index\n",
+		    primitive_number);
+		return false;
+	    }
+	    faces[first_index + i] = static_cast<int>(first_vertex + index);
 	}
     }
 
-    // We now know how many faces and vertices are in the mesh - allocate new arrays
-    int *o_faces = (int *)bu_calloc(numfaces, sizeof(int) * 3, "faces");
-    fastf_t *o_vertices = (fastf_t *)bu_calloc(numverts, sizeof(fastf_t) * 3, "verts");
-
-    // Iterate over vertices, building a mapping (we may be combining multiple primitives
-    // into one BoT, so our indexing may change.)
-    std::unordered_map<int, std::unordered_map<unsigned int, unsigned int>> prim_vertmap;
-
-    // Iterate again, transcribing information into vertex array and building map.
-    int vcnt = 0;
-    for (size_t i = 0; i < mesh.primitives.size(); i++) {
-	const tinygltf::Primitive &p = mesh.primitives[i];
-
-	std::map<std::string, int>::const_iterator p_it = p.attributes.find(std::string("POSITION"));
-	if (p_it == p.attributes.end()) {
-	    bu_log("Error - could not find POSITION attribute for mesh %zd\n", i);
-	    continue;
-	}
-	const tinygltf::Accessor &va = model.accessors[p_it->second];
-	const tinygltf::BufferView &vv = model.bufferViews[va.bufferView];
-	const tinygltf::Buffer &buffer = model.buffers[vv.buffer];
-	int byte_stride = (vv.byteStride > 1) ? vv.byteStride : 0;
-
-	switch (va.componentType) {
-	    case TINYGLTF_COMPONENT_TYPE_FLOAT:
-		byte_stride = (!byte_stride) ? sizeof(float) * 3 : byte_stride;
-		if (verbosity > 1)
-		    std::cout << "byte stride: " << byte_stride << "\n";
-		numverts = vv.byteLength / byte_stride;
-		if (verbosity)
-		    std::cout << "Vertex count: " << numverts << "\n";
-		{
-		    float *verts = (float *)(buffer.data.data() + vv.byteOffset + va.byteOffset);
-		    for (int j = 0; j < numverts; j++) {
-			if (verbosity > 1)
-			    bu_log("V: %g %g %g\n", verts[3*j+0], verts[3*j+1], verts[3*j+2]);
-			o_vertices[3*vcnt + 0] = verts[3*j+0];
-			o_vertices[3*vcnt + 1] = verts[3*j+1];
-			o_vertices[3*vcnt + 2] = verts[3*j+2];
-			prim_vertmap[i][j] = vcnt;
-			vcnt++;
-		    }
-		}
-		break;
-	    case TINYGLTF_COMPONENT_TYPE_DOUBLE:
-		byte_stride = (!byte_stride) ? sizeof(double) * 3 : byte_stride;
-		if (verbosity > 1)
-		    std::cout << "byte stride: " << byte_stride << "\n";
-		numverts = vv.byteLength / byte_stride;
-		if (verbosity)
-		    std::cout << "Vertex count: " << numverts << "\n";
-		{
-		    double *verts = (double *)(buffer.data.data() + vv.byteOffset + va.byteOffset);
-		    for (int j = 0; j < numverts; j++) {
-			if (verbosity > 1)
-			    bu_log("V: %g %g %g\n", verts[3*j+0], verts[3*j+1], verts[3*j+2]);
-			o_vertices[3*vcnt + 0] = verts[3*j+0];
-			o_vertices[3*vcnt + 1] = verts[3*j+1];
-			o_vertices[3*vcnt + 2] = verts[3*j+2];
-			prim_vertmap[i][j] = vcnt;
-			vcnt++;
-		    }
-		}
-		break;
-	    default:
-		bu_log("Warning - unsupported vertex type: %d\n", va.componentType);
-		continue;
-	}
-    }
-
-    // Iterate a final time, transcribing information into face arrays.
-    int fcnt = 0;
-    for (size_t i = 0; i < mesh.primitives.size(); i++) {
-	const tinygltf::Primitive &p = mesh.primitives[i];
-
-	// Triangle faces
-	{
-	    const tinygltf::Accessor &ta = model.accessors[p.indices];
-	    const tinygltf::BufferView &tv = model.bufferViews[ta.bufferView];
-	    const tinygltf::Buffer &buffer = model.buffers[tv.buffer];
-	    int byte_stride = (tv.byteStride > 1) ? tv.byteStride : 0;
-
-	    switch (ta.componentType) {
-		case TINYGLTF_COMPONENT_TYPE_SHORT:
-		    byte_stride = (!byte_stride) ? sizeof(short) * 3 : byte_stride;
-		    if (verbosity > 1)
-			std::cout << "byte stride: " << byte_stride << "\n";
-		    numfaces = tv.byteLength / byte_stride;
-		    if (verbosity)
-			std::cout << "Face count: " << numfaces << "\n";
-		    {
-			short *faces = (short *)(buffer.data.data() + tv.byteOffset + ta.byteOffset);
-			for (int j = 0; j < numfaces; j++) {
-			    if (verbosity > 1)
-				bu_log("F: %d %d %d\n", faces[3*j+0], faces[3*j+1], faces[3*j+2]);
-			    o_faces[3*fcnt + 0] = prim_vertmap[i][faces[3*j+0]];
-			    o_faces[3*fcnt + 1] = prim_vertmap[i][faces[3*j+1]];
-			    o_faces[3*fcnt + 2] = prim_vertmap[i][faces[3*j+2]];
-			    fcnt++;
-			}
-		    }
-		    break;
-		case TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT:
-		    byte_stride = (!byte_stride) ? sizeof(unsigned short) * 3 : byte_stride;
-		    if (verbosity > 1)
-			std::cout << "byte stride: " << byte_stride << "\n";
-		    numfaces = tv.byteLength / byte_stride;
-		    if (verbosity)
-			std::cout << "Face count: " << numfaces << "\n";
-		    {
-			unsigned short *faces = (unsigned short *)(buffer.data.data() + tv.byteOffset + ta.byteOffset);
-			for (int j = 0; j < numfaces; j++) {
-			    if (verbosity > 1)
-				bu_log("F: %d %d %d\n", faces[3*j+0], faces[3*j+1], faces[3*j+2]);
-			    o_faces[3*fcnt + 0] = prim_vertmap[i][faces[3*j+0]];
-			    o_faces[3*fcnt + 1] = prim_vertmap[i][faces[3*j+1]];
-			    o_faces[3*fcnt + 2] = prim_vertmap[i][faces[3*j+2]];
-			    fcnt++;
-			}
-		    }
-		    break;
-		case TINYGLTF_COMPONENT_TYPE_INT:
-		    byte_stride = (!byte_stride) ? sizeof(int) * 3 : byte_stride;
-		    if (verbosity > 1)
-			std::cout << "byte stride: " << byte_stride << "\n";
-		    numfaces = tv.byteLength / byte_stride;
-		    if (verbosity)
-			std::cout << "Face count: " << numfaces << "\n";
-		    {
-			int *faces = (int *)(buffer.data.data() + tv.byteOffset + ta.byteOffset);
-			for (int j = 0; j < numfaces; j++) {
-			    if (verbosity > 1)
-				bu_log("F: %d %d %d\n", faces[3*j+0], faces[3*j+1], faces[3*j+2]);
-			    o_faces[3*fcnt + 0] = prim_vertmap[i][faces[3*j+0]];
-			    o_faces[3*fcnt + 1] = prim_vertmap[i][faces[3*j+1]];
-			    o_faces[3*fcnt + 2] = prim_vertmap[i][faces[3*j+2]];
-			    fcnt++;
-			}
-		    }
-		    break;
-		case TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT:
-		    byte_stride = (!byte_stride) ? sizeof(unsigned int) * 3 : byte_stride;
-		    if (verbosity > 1)
-			std::cout << "byte stride: " << byte_stride << "\n";
-		    numfaces = tv.byteLength / byte_stride;
-		    if (verbosity)
-			std::cout << "Face count: " << numfaces << "\n";
-		    {
-			unsigned int *faces = (unsigned int *)(buffer.data.data() + tv.byteOffset + ta.byteOffset);
-			for (int j = 0; j < numfaces; j++) {
-			    if (verbosity > 1)
-				bu_log("F: %d %d %d\n", faces[3*j+0], faces[3*j+1], faces[3*j+2]);
-			    o_faces[3*fcnt + 0] = prim_vertmap[i][faces[3*j+0]];
-			    o_faces[3*fcnt + 1] = prim_vertmap[i][faces[3*j+1]];
-			    o_faces[3*fcnt + 2] = prim_vertmap[i][faces[3*j+2]];
-			    fcnt++;
-			}
-		    }
-		    break;
-		default:
-		    bu_log("Warning - unsupported triangle indices type: %d\n", ta.componentType);
-		    continue;
-	    }
-	}
+    size_t vertex_count = vertices.size() / 3;
+    size_t face_count = faces.size() / 3;
+    if (vertex_count == 0 || face_count == 0) {
+	bu_log("Error: glTF mesh %u contains no triangles\n", mesh_number);
+	return false;
     }
 
     int type = RT_BOT_SURFACE;
-    if (bg_trimesh_manifold_closed(numverts, numfaces, o_vertices, o_faces))
+    if (bg_trimesh_manifold_closed(vertex_count, face_count, vertices.data(), faces.data()))
 	type = RT_BOT_SOLID;
 
-    mk_bot(outfp, shape_name.c_str(), type, RT_BOT_CCW, 0, numverts, numfaces, o_vertices, o_faces, NULL, NULL);
+    return mk_bot(outfp, shape_name.c_str(), type, RT_BOT_CCW, 0,
+	vertex_count, face_count, vertices.data(), faces.data(), NULL, NULL) >= 0;
 }
 
-int main(int argc, char **argv)
+
+int
+main(int argc, char **argv)
 {
     const char * const usage = "Usage: gltf-g [options] input_file [output_file.g]\n";
     int verbosity = 0;
@@ -298,21 +167,21 @@ int main(int argc, char **argv)
 
     bu_setprogname(argv[0]);
 
-    argc-=(argc>0); argv+=(argc>0); /* skip command name argv[0] */
-
-    /* Parse options */
-    int opt_ret = bu_opt_parse(NULL, argc, (const char**)argv, d);
+    if (argc > 0) {
+	--argc;
+	++argv;
+    }
+    int opt_ret = bu_opt_parse(NULL, argc, (const char **)argv, d);
 
     if (print_help) {
-	char* help = bu_opt_describe(d, NULL);
+	char *help = bu_opt_describe(d, NULL);
 	bu_log("%s\nOptions:\n%s", usage, help);
 	if (help)
 	    bu_free(help, "help str");
 	bu_vls_free(&output_path);
-	return 1;
+	return BRLCAD_OK;
     }
 
-    /* See what is left */
     argc = opt_ret;
     if (argc < 2 && !bu_vls_strlen(&output_path))
 	bu_exit(BRLCAD_ERROR, "Need input glTF filename\n");
@@ -321,62 +190,40 @@ int main(int argc, char **argv)
     if (argc == 2)
 	bu_vls_sprintf(&output_path, "%s", argv[1]);
 
-    /* Start reading */
-    tinygltf::Model model;
-    std::string err;
-    std::string warn;
-    std::string input_filename(argv[0]);
-
-    bool read_ascii = true;
-    struct bu_vls ext = BU_VLS_INIT_ZERO;
-    if (bu_path_component(&ext, argv[0], BU_PATH_EXT))
-	if (BU_STR_EQUAL(bu_vls_cstr(&ext), "glb"))
-	    read_ascii = false;
-
-    tinygltf::TinyGLTF gltf_ctx;
-    gltf_ctx.SetStoreOriginalJSONForExtrasAndExtensions(extensions);
-
-
-    bool ret = false;
-    if (read_ascii) {
-	if (verbosity)
-	    std::cout << "Reading as ascii glTF\n";
-	ret = gltf_ctx.LoadASCIIFromFile(&model, &err, &warn, input_filename);
-    } else {
-	if (verbosity)
-	    std::cout << "Reading as binary glTF (glb)\n";
-	ret = gltf_ctx.LoadBinaryFromFile(&model, &err, &warn, input_filename);
-    }
-
-    if (verbosity && !warn.empty())
-	std::cerr << "Warn:" << warn.c_str() << "\n";
-
-    if (!err.empty())
-	std::cerr << "Error:" << err.c_str() << "\n";
-
-    if (!ret) {
-	std::cerr << "Failed to parse glTF\n";
+    tinygltf3::Model model;
+    tinygltf3::ErrorStack errors;
+    brlcad_gltf::confined_file_reader reader(argv[0]);
+    tg3_error_code parse_result = reader.parse(model.get(), errors.get(), extensions != 0);
+    brlcad_gltf::log_errors(*errors.get());
+    if (parse_result != TG3_OK) {
+	bu_log("Failed to parse glTF input %s (error %d)\n", argv[0],
+	    static_cast<int>(parse_result));
+	bu_vls_free(&output_path);
 	return BRLCAD_ERROR;
     }
 
-
-    // Write out to .g file
-    // TODO - check if pre-existing output is present
     struct rt_wdb *outfp = wdb_fopen(bu_vls_cstr(&output_path));
-    std::string title = "gltf-g import of " + input_filename;
+    if (!outfp) {
+	bu_log("Unable to open output file %s\n", bu_vls_cstr(&output_path));
+	bu_vls_free(&output_path);
+	return BRLCAD_ERROR;
+    }
+    std::string title = "gltf-g import of " + std::string(argv[0]);
     mk_id(outfp, title.c_str());
 
-    // Iterate over meshes.  TODO - we could probably interpret
-    // nodes as comb instances...
-    std::cout << "Mesh count: " << model.meshes.size() << "\n";
-    for (size_t i = 0; i < model.meshes.size(); i++) {
-	tinygltf::Mesh &mesh = model.meshes[i];
-	process_mesh(outfp, model, mesh, verbosity, i);
+    if (verbosity)
+	std::cout << "Mesh count: " << model->meshes_count << "\n";
+    for (uint32_t i = 0; i < model->meshes_count; ++i) {
+	if (!process_mesh(outfp, *model.get(), model->meshes[i], verbosity, i)) {
+	    db_close(outfp->dbip);
+	    bu_vls_free(&output_path);
+	    return BRLCAD_ERROR;
+	}
     }
 
     db_close(outfp->dbip);
-
-    return 0;
+    bu_vls_free(&output_path);
+    return BRLCAD_OK;
 }
 
 

@@ -8,6 +8,7 @@ plugin_setup(gcv-gltf gcv)
 
 cmakefiles(
   gltf_read.cpp
+  gltf_read_util.h
   CMakeLists.txt
 )
 
