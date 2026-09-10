@@ -37,6 +37,8 @@ import time
 
 BATCH_MODE_ORDER = ("wireframe", "shaded", "quality")
 MAX_NO_PROGRESS_RESTARTS = 3
+# Keep this bit consistent with BREP_CDT_REPAIR_LIMIT_MEMORY in brep/cdt.h.
+REPAIR_LIMIT_MEMORY = 2
 
 
 def databases(corpus):
@@ -383,7 +385,22 @@ def stream_reader(stream, stream_name, events):
         for line in stream:
             events.put((stream_name, line))
     finally:
+        stream.close()
         events.put((stream_name, None))
+
+
+def batch_resource_retry_reason(record):
+    if record.get("status") != "fail":
+        return None
+    result = record.get(record.get("mode")) or {}
+    issues = record.get("issues", []) + result.get("issues", [])
+    if "database_internal_load_failed" in issues:
+        return "batch_internal_load_failed"
+    repair_limits = (result.get("repair") or {}).get("resource_limits", 0)
+    if (result.get("limits") or {}).get("memory") or \
+            repair_limits & REPAIR_LIMIT_MEMORY:
+        return "batch_memory_limit"
+    return None
 
 
 def audit_database(audit, args, run_dir, database, start_index, sink,
@@ -596,6 +613,27 @@ def audit_database(audit, args, run_dir, database, start_index, sink,
                     }
                 process.kill()
                 process.wait()
+                break
+            retry_reason = batch_resource_retry_reason(record)
+            if made_progress and retry_reason:
+                # Allocator reservations from earlier objects can exhaust an
+                # address-space limit below the RSS rollover threshold.  Stop
+                # the batch before giving this object one fresh-process attempt
+                # with the same limits, retaining the failed attempt for review.
+                if process.poll() is None:
+                    process.kill()
+                    process.wait()
+                isolated = audit_one(
+                    audit, args, run_dir, database_name,
+                    record.get("object"), record.get("mode"),
+                )
+                isolated["task_index"] = task_index
+                isolated["batch_fallback_reason"] = retry_reason
+                isolated["batch_attempt"] = record
+                sink(isolated)
+                next_index = task_index + 1
+                process_retries.pop(task_index, None)
+                restart = True
                 break
             sink(record)
             next_index = task_index + 1

@@ -10,7 +10,12 @@ if(TARGET slow-bigdb_5gb)
   set_property(TEST slow-bigdb_5gb PROPERTY SKIP_RETURN_CODE 123)
 endif(TARGET slow-bigdb_5gb)
 
-cmakefiles(CMakeLists.txt)
+find_package(Python3 QUIET COMPONENTS Interpreter)
+if(Python3_Interpreter_FOUND)
+  brlcad_add_test(NAME brep_audit_corpus COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/brep_audit_corpus.py")
+endif()
+
+cmakefiles(CMakeLists.txt brep_audit_corpus.py)
 
 # Local Variables:
 # tab-width: 8
