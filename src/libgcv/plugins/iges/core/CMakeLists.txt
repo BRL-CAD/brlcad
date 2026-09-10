@@ -19,7 +19,7 @@ set(IGES_CORE_SRCS
 # It is not installed and does not add an IGES interface to libgcv's public API.
 add_library(gcv_iges_core STATIC ${IGES_CORE_SRCS})
 target_include_directories(gcv_iges_core PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
-target_link_libraries(gcv_iges_core PUBLIC libwdb librt libnmg libbrep libbn libbu ${M_LIBRARY})
+target_link_libraries(gcv_iges_core PUBLIC libwdb librt libnmg libbrep libbn libbu Threads::Threads ${M_LIBRARY})
 target_compile_definitions(gcv_iges_core PRIVATE BRLCADBUILD HAVE_CONFIG_H)
 set_target_properties(gcv_iges_core PROPERTIES
   POSITION_INDEPENDENT_CODE ON

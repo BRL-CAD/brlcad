@@ -125,7 +125,8 @@ rt_mk_binunif(struct rt_wdb *wdbp, const char *obj_name,
     intern.idb_type = minor_type;
     intern.idb_minor_type = minor_type;
 
-    if (wdbp->dbip->i->dbi_eof == RT_DIR_PHONY_ADDR && db_dirbuild(wdbp->dbip) != 0) {
+    if (wdbp->dbip->i->dbi_fp && wdbp->dbip->i->dbi_eof == RT_DIR_PHONY_ADDR &&
+	db_dirbuild(wdbp->dbip) != 0) {
 	rt_db_free_internal(&intern);
 	return -1;
     }
