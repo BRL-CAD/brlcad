@@ -16231,14 +16231,20 @@ ON_Brep_CDT_Mesh(
 	 * rigorous assembled validation does not mistake legal stale BoT entries
 	 * for a geometric failure. */
 	std::vector<int> vertex_remap((size_t)*vcnt, -1);
-	int compact_vertex_count = 0;
 	for (int face = 0; face < *fcnt; ++face) {
 	    for (int corner = 0; corner < 3; ++corner) {
 		const int vertex = (*faces)[(size_t)face * 3 + corner];
-		if (vertex >= 0 && vertex < *vcnt &&
-			vertex_remap[(size_t)vertex] < 0)
-		    vertex_remap[(size_t)vertex] = compact_vertex_count++;
+		if (vertex >= 0 && vertex < *vcnt)
+		    vertex_remap[(size_t)vertex] = 0;
 	    }
+	}
+	/* Preserve the original vertex order so in-place copies only move
+	 * toward the beginning of the array.  Triangle encounter order can
+	 * otherwise overwrite coordinates that have not yet been copied. */
+	int compact_vertex_count = 0;
+	for (int vertex = 0; vertex < *vcnt; ++vertex) {
+	    if (vertex_remap[(size_t)vertex] >= 0)
+		vertex_remap[(size_t)vertex] = compact_vertex_count++;
 	}
 	if (compact_vertex_count < *vcnt) {
 	    std::vector<ON_3dPoint *> compact_point_map(
@@ -16267,10 +16273,102 @@ ON_Brep_CDT_Mesh(
 
     output_face_ids.resize((size_t)*fcnt);
     output_triangle_ids.resize((size_t)*fcnt);
+    if (fn_cnt)
+	*fn_cnt = *fcnt;
     s_cdt->bot_face_to_brep_face = output_face_ids;
     s_cdt->bot_face_to_cdt_triangle = output_triangle_ids;
 
     return 0;
+}
+
+static bool
+compacted_export_preserves_geometry(void)
+{
+    /* A face-local triangle collapses during export because two of its
+     * vertices share a source point.  Removing it leaves an unused vertex
+     * before the tetrahedron's vertices in the sorted output array. */
+    ON_3dPoint points[] = {
+	ON_3dPoint(0.0, 0.0, 0.0), ON_3dPoint(1.0, 0.0, 0.0),
+	ON_3dPoint(0.0, 1.0, 0.0), ON_3dPoint(0.0, 0.0, 1.0),
+	ON_3dPoint(-1.0, 0.0, 0.0)
+    };
+    ON_3dPoint source_normals[] = {
+	ON_3dPoint(1.0, 0.0, 0.0), ON_3dPoint(0.0, 1.0, 0.0),
+	ON_3dPoint(0.0, 0.0, 1.0), ON_3dPoint(0.0, 0.0, -1.0),
+	ON_3dPoint(0.0, -1.0, 0.0)
+    };
+    const int triangles[][3] = {
+	{0, 2, 1}, {0, 1, 3}, {0, 3, 2}, {1, 2, 3}, {4, 5, 1}
+    };
+    ON_Brep brep;
+    brep.m_F.AppendNew();
+    ON_Brep_CDT_State state = {};
+    state.status = BREP_CDT_UNTESSELLATED;
+    state.brep = &brep;
+    cdt_mesh_t &mesh = state.fmeshes[0];
+    mesh.f_id = 0;
+    for (size_t i = 0; i < sizeof(points) / sizeof(points[0]); ++i) {
+	mesh.add_point(&points[i]);
+	mesh.add_normal(&source_normals[i]);
+	mesh.nmap[i] = i;
+    }
+    mesh.add_point(&points[4]);
+    mesh.nmap[5] = 4;
+    for (size_t i = 0; i < sizeof(triangles) / sizeof(triangles[0]); ++i) {
+	triangle_t triangle;
+	for (int corner = 0; corner < 3; ++corner)
+	    triangle.v[corner] = triangles[i][corner];
+	if (!mesh.tri_add(triangle))
+	    return false;
+    }
+    std::vector<ON_3dPoint *> source_points;
+    std::map<ON_3dPoint *, ON_3dPoint *> singular_normals;
+    state.w3dpnts = &mesh.pnts;
+    state.w3dnorms = &mesh.normals;
+    state.bot_pnt_to_on_pnt = &source_points;
+    state.singular_vert_to_norms = &singular_normals;
+
+    /* Repeated exports must preserve the source as well as the coordinates,
+     * corner normals, and provenance of every retained triangle. */
+    for (int attempt = 0; attempt < 2; ++attempt) {
+	int *faces = NULL, *face_normals = NULL;
+	fastf_t *vertices = NULL, *normals = NULL;
+	int face_count = 0, vertex_count = 0;
+	int face_normal_count = 0, normal_count = 0;
+	bool valid = ON_Brep_CDT_Mesh(&faces, &face_count, &vertices,
+	    &vertex_count, &face_normals, &face_normal_count, &normals,
+	    &normal_count, &state, 0, NULL) == 0;
+	valid = valid && face_count == 4 && vertex_count == 4 &&
+	    face_normal_count == face_count && source_points.size() == 4 &&
+	    state.bot_face_to_brep_face.size() == 4 &&
+	    state.bot_face_to_cdt_triangle.size() == 4;
+	for (int face = 0; valid && face < face_count; ++face) {
+	    valid = state.bot_face_to_brep_face[(size_t)face] == 0 &&
+		state.bot_face_to_cdt_triangle[(size_t)face] == (size_t)face;
+	    for (int corner = 0; valid && corner < 3; ++corner) {
+		const int vertex = faces[face * 3 + corner];
+		const int normal = face_normals[face * 3 + corner];
+		const ON_3dPoint &expected = points[triangles[face][corner]];
+		const ON_3dPoint &expected_normal =
+		    source_normals[triangles[face][corner]];
+		valid = vertex >= 0 && vertex < vertex_count &&
+		    normal >= 0 && normal < normal_count &&
+		    source_points[(size_t)vertex] == &expected;
+		for (int axis = 0; valid && axis < 3; ++axis)
+		    valid = NEAR_EQUAL(vertices[vertex * 3 + axis],
+			expected[axis], ON_ZERO_TOLERANCE) &&
+			NEAR_EQUAL(normals[normal * 3 + axis],
+			expected_normal[axis], ON_ZERO_TOLERANCE);
+	    }
+	}
+	bu_free(faces, "test exported faces");
+	bu_free(vertices, "test exported vertices");
+	bu_free(face_normals, "test exported face normals");
+	bu_free(normals, "test exported normals");
+	if (!valid)
+	    return false;
+    }
+    return true;
 }
 
 int
@@ -16380,6 +16478,9 @@ cdt_test_spurious_components(void)
 	    nonmanifold_vertices, 5, NULL) != 0 || face_count != 2 ||
 	    !std::equal(invalid_faces, invalid_faces + 6, invalid_original))
 	return 8;
+
+    if (!compacted_export_preserves_geometry())
+	return 9;
 
     return 0;
 }
