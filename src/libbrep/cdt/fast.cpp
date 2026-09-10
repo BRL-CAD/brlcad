@@ -3697,7 +3697,7 @@ fast_sample_full_periodic_face(const ON_Surface *surface,
 	int closed_dir, ON_2dPointArray &surface_points,
 	fast_face_scratch &scratch)
 {
-    if (!surface || boundary.Count() != 5 || !ttol)
+    if (!surface || boundary.Count() < 5 || !ttol)
 	return false;
     if (closed_dir < 0 || closed_dir > 1 ||
 	    !surface->IsClosed(closed_dir))
@@ -3744,6 +3744,13 @@ fast_sample_full_periodic_face(const ON_Surface *surface,
     for (int side = 0; side < boundary.Count() - 1; ++side) {
 	const ON_2dPoint start = boundary[side].p2d;
 	const ON_2dPoint delta = boundary[side + 1].p2d - start;
+	/* Shared physical edges already have authoritative sampling.  Adding
+	 * points here would introduce hanging vertices against rigorous faces. */
+	if (boundary[side].source_id && boundary[side + 1].source_id &&
+		NEAR_ZERO(delta[open_dir], ON_ZERO_TOLERANCE)) {
+	    sampled_boundary.Append(boundary[side]);
+	    continue;
+	}
 	const size_t steps = std::max((size_t)1, (size_t)ceil(std::max(
 	    fabs(delta[closed_dir]) * closed_steps / closed_delta,
 	    fabs(delta[open_dir]) * open_steps / open_delta)));
@@ -4470,12 +4477,93 @@ fast_reconstruct_periodic_strip_domain(const ON_Surface *surface,
 }
 
 static bool
+fast_constrained_periodic_band(
+	const ON_SimpleArray<BrepTrimPoint> &outer,
+	const ON_SimpleArray<BrepTrimPoint> &inner, int closed_dir,
+	double period, double outer_open, double inner_open,
+	ON_SimpleArray<BrepTrimPoint> &boundary)
+{
+    const ON_SimpleArray<BrepTrimPoint> *rings[2] = {&outer, &inner};
+    for (const auto *ring : rings) {
+	if (ring->Count() < 4 || (*ring)[0].source_id !=
+		(*ring)[ring->Count() - 1].source_id)
+	    return false;
+	for (int point = 0; point < ring->Count(); ++point) {
+	    if (!(*ring)[point].source_id)
+		return false;
+	}
+    }
+    /* Put the artificial seam at existing samples on both rings.  Splitting
+     * a shared physical edge to choose another cut would require its
+     * rigorous neighbor to be remeshed as well. */
+    const double roundoff = 256.0 * std::numeric_limits<double>::epsilon() *
+	std::max({period, fabs(outer[0].p2d[closed_dir]),
+	    fabs(inner[0].p2d[closed_dir])});
+    const auto periodic_offset = [period](double coordinate) {
+	double offset = std::fmod(coordinate, period);
+	return offset < 0.0 ? offset + period : offset;
+    };
+    std::vector<std::pair<double, int>> inner_phases;
+    for (int point = 0; point < inner.Count() - 1; ++point)
+	inner_phases.emplace_back(periodic_offset(inner[point].p2d[closed_dir]),
+	    point);
+    std::sort(inner_phases.begin(), inner_phases.end());
+    int cuts[2] = {-1, -1};
+    for (int first = 0; first < outer.Count() - 1 && cuts[0] < 0; ++first) {
+	const auto next = std::lower_bound(inner_phases.begin(), inner_phases.end(),
+	    std::make_pair(periodic_offset(outer[first].p2d[closed_dir]), -1));
+	const size_t position = (size_t)(next - inner_phases.begin());
+	const size_t candidates[2] = {position % inner_phases.size(),
+	    (position + inner_phases.size() - 1) % inner_phases.size()};
+	for (size_t candidate : candidates) {
+	    const int second = inner_phases[candidate].second;
+	    if (fabs(std::remainder(outer[first].p2d[closed_dir] -
+		    inner[second].p2d[closed_dir], period)) <= roundoff) {
+		cuts[0] = first;
+		cuts[1] = second;
+		break;
+	    }
+	}
+    }
+    if (cuts[0] < 0)
+	return false;
+    const double cut = outer[cuts[0]].p2d[closed_dir];
+    ON_SimpleArray<BrepTrimPoint> candidate;
+    for (int row = 0; row < 2; ++row) {
+	const auto &ring = *rings[row];
+	const int count = ring.Count() - 1;
+	const int direction = row ? -1 : 1;
+	const double winding = ring[count].p2d[closed_dir] -
+	    ring[0].p2d[closed_dir];
+	const int step = (winding > 0.0 ? 1 : -1) * direction;
+	double previous = row ? cut + period : cut;
+	for (int point = 0; point <= count; ++point) {
+	    const int index = (cuts[row] + step * point + count) % count;
+	    BrepTrimPoint sample = ring[index];
+	    double parameter = cut + periodic_offset(sample.p2d[closed_dir] - cut);
+	    if (!point || point == count)
+		parameter = cut + ((row == 0 && point == count) ||
+		    (row == 1 && point == 0) ? period : 0.0);
+	    if (direction * (parameter - previous) < -roundoff)
+		return false;
+	    sample.p2d[closed_dir] = parameter;
+	    sample.p2d[1 - closed_dir] = row ? inner_open : outer_open;
+	    candidate.Append(sample);
+	    previous = parameter;
+	}
+    }
+    candidate.Append(candidate[0]);
+    boundary = candidate;
+    return true;
+}
+
+static bool
 fast_reconstruct_periodic_boundary_loops(const ON_Surface *surface,
 	const ON_BrepFace &face,
 	ON_SimpleArray<BrepTrimPoint> **brep_loop_points,
 	double tolerance, const struct bn_tol *tol,
 	fast_face_scratch &scratch, int *closed_direction,
-	int *outer_loop_index)
+	int *outer_loop_index, bool *constrained_band)
 {
     if (!surface || face.LoopCount() != 2 || !brep_loop_points)
 	return false;
@@ -4641,11 +4729,18 @@ fast_reconstruct_periodic_boundary_loops(const ON_Surface *surface,
 	corners[1][open_dir] = corners[2][open_dir] = inner_open;
 
 	ON_SimpleArray<BrepTrimPoint> replacement;
-	for (int ci = 0; ci < 5; ++ci) {
-	    if (!fast_append_synthetic_uv(replacement, surface, corners[ci],
-		    -1, scratch))
-		return false;
+	const bool retained = transverse_closed &&
+	    fast_constrained_periodic_band(*brep_loop_points[outer_index],
+		*brep_loop_points[inner_index], closed_dir, period,
+		outer_open, inner_open, replacement);
+	if (!retained) {
+	    for (int ci = 0; ci < 5; ++ci) {
+		if (!fast_append_synthetic_uv(replacement, surface, corners[ci],
+			-1, scratch))
+		    return false;
+	    }
 	}
+	*constrained_band = retained;
 	*brep_loop_points[outer_index] = replacement;
 	brep_loop_points[inner_index]->Empty();
 	if (closed_direction)
@@ -5787,6 +5882,7 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
     log_provenance("closed surface checks", brep_loop_points, loop_cnt);
     int full_periodic_closed_dir = -1;
     int full_periodic_outer_index = -1;
+    bool constrained_periodic_band = false;
     std::vector<ON_SimpleArray<BrepTrimPoint>> reconstructed_inner_holes;
     bool full_periodic_face = false;
     if (untrimmed_domain_face && (s->IsClosed(0) || s->IsClosed(1))) {
@@ -5816,7 +5912,8 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
     if (!untrimmed_domain_face && !full_periodic_face)
 	full_periodic_face = fast_reconstruct_periodic_boundary_loops(s, face,
 	    brep_loop_points, BREP_SAME_POINT_TOLERANCE, tol, scratch,
-	    &full_periodic_closed_dir, &full_periodic_outer_index);
+	    &full_periodic_closed_dir, &full_periodic_outer_index,
+	    &constrained_periodic_band);
     if (!untrimmed_domain_face && !full_periodic_face)
 	full_periodic_face = fast_reconstruct_winding_periodic_strip(s, face,
 	    brep_loop_points, BREP_SAME_POINT_TOLERANCE, scratch,
@@ -5861,7 +5958,8 @@ bg_CDT_attempt(std::vector<int> &faces, std::vector<fastf_t> &pnt_norms,
 	boundary_inference == FAST_BOUNDARY_RESOLVED;
 
     const bool sampled_periodic_rectangle = full_periodic_face &&
-	brep_loop_points[full_periodic_outer_index]->Count() == 5;
+	(brep_loop_points[full_periodic_outer_index]->Count() == 5 ||
+	 constrained_periodic_band);
     if (sampled_periodic_rectangle &&
 	    !fast_sample_full_periodic_face(s,
 	    *brep_loop_points[full_periodic_outer_index], ttol,
