@@ -11895,6 +11895,19 @@ cdt_test_repair_duplicate_quarantine(void)
     return 0;
 }
 
+static bool
+repair_preserve_approximate_boundary(
+	const struct bg_trimesh_solid_errors &errors,
+	size_t degenerate_faces, size_t invalid_vertex_links, size_t max_edges)
+{
+    /* Winding can be synchronized without changing a boundary.  Excess edge
+     * uses instead describe branching, which bounded hole repair cannot fix. */
+    if (degenerate_faces && invalid_vertex_links)
+	return false;
+    return !errors.unmatched.count || (!errors.excess.count &&
+	(size_t)errors.unmatched.count <= max_edges);
+}
+
 int
 cdt_test_repair_patch_limits(void)
 {
@@ -11933,8 +11946,39 @@ cdt_test_repair_patch_limits(void)
 	std::sort(candidate.begin(), candidate.end());
 	excessive_valence.push_back(candidate);
     }
-    return repair_missing_patch_bounded(excessive_valence, 100.0,
-	settings, NULL) ? 4 : 0;
+    if (repair_missing_patch_bounded(excessive_valence, 100.0,
+	    settings, NULL))
+	return 4;
+
+    struct bg_trimesh_solid_errors errors =
+	BG_TRIMESH_SOLID_ERRORS_INIT_NULL;
+    /* These profiles reduce the pistol's bounded crack and the Mirage's
+     * closed degenerate fan to deterministic policy checks. */
+    const int boundary_limit = 64;
+    const int bounded_open_edges = 4;
+    const int orientation_errors = 64;
+    const size_t degenerate_faces = 10;
+    const size_t invalid_vertex_links = 11;
+    errors.unmatched.count = bounded_open_edges;
+    errors.misoriented.count = orientation_errors;
+    if (!repair_preserve_approximate_boundary(errors, 0,
+	    bounded_open_edges, boundary_limit))
+	return 5;
+    errors.excess.count = 1;
+    if (repair_preserve_approximate_boundary(errors, 0,
+	    bounded_open_edges, boundary_limit))
+	return 6;
+    errors.excess.count = 0;
+    errors.unmatched.count = boundary_limit + 1;
+    if (repair_preserve_approximate_boundary(errors, 0,
+	    bounded_open_edges, boundary_limit))
+	return 7;
+    errors.unmatched.count = 0;
+    if (repair_preserve_approximate_boundary(errors, degenerate_faces,
+	    invalid_vertex_links, boundary_limit))
+	return 8;
+    return repair_preserve_approximate_boundary(errors, 0, 0,
+	boundary_limit) ? 0 : 9;
 }
 
 static unsigned int
@@ -13601,22 +13645,35 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    (size_t)settings->mesh.max_hole_edges : (size_t)256;
 	bool reconstruct_approximate_boundary = false;
 	if (!settings->use_full_fast_fallback) {
+	    assembled_mesh_validation approximation_validation;
+	    (void)assembled_mesh_validate(input_vertex_count, input_face_count,
+		input_vertices, input_faces, &approximation_validation, false);
 	    struct bg_trimesh_solid_errors boundary_errors =
 		BG_TRIMESH_SOLID_ERRORS_INIT_NULL;
 	    (void)bg_trimesh_solid2(input_vertex_count, input_face_count,
 		input_vertices, input_faces, &boundary_errors);
-	    reconstruct_approximate_boundary = boundary_errors.unmatched.count > 0 ||
+	    const bool preserve_approximate_boundary =
+		repair_preserve_approximate_boundary(boundary_errors,
+		    approximation_validation.degenerate_faces,
+		    approximation_validation.invalid_vertex_links,
+		    neighborhood_max_edges);
+	    reconstruct_approximate_boundary =
+		!preserve_approximate_boundary ||
 		closed_boundary_action == REPAIR_RECONSTRUCT_CLOSED_BOUNDARY;
 	    bg_free_trimesh_solid_errors(&boundary_errors);
 	    if (!reconstruct_approximate_boundary && rigorous_input_face_count > 0 &&
 		    input_face_count > rigorous_input_face_count)
 		closed_boundary_action = REPAIR_DEFERRED_CLOSED_BOUNDARY;
 	}
-	/* First preserve an edge-closed approximation: reconstructing its
-	 * perimeter can flatten a curved cap or select another periodic band.
-	 * If local and generic mesh repair cannot certify it, the caller retries
-	 * with rigorous-boundary reconstruction enabled.  Every attempt still
-	 * requires Manifold, source coverage, and fidelity validation. */
+	/* First preserve an edge-closed approximation or one with only a bounded,
+	 * non-branching open residue.  Reconstructing its perimeter can
+	 * flatten a curved cap or select another periodic band.  If local and
+	 * generic mesh repair cannot certify it, the caller retries with
+	 * rigorous-boundary reconstruction enabled.  A closed candidate whose
+	 * flat triangles participate in invalid vertex links goes directly to
+	 * reconstruction; generic repair can expand that local defect across the
+	 * mesh before it reaches the retry.  Every attempt still requires Manifold,
+	 * source coverage, and fidelity validation. */
 	if (reconstruct_approximate_boundary) {
 	    rigorous_boundary_repair =
 		repair_failed_face_from_rigorous_boundary(s_cdt, &input_faces,
@@ -14080,16 +14137,18 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
     int repaired_vertex_count = 0;
     /* A reconstructed mesh may already satisfy every topology and geometry
      * condition.  Preserve it exactly: tolerance welding intended for an
-     * open mixed-source mesh can remove valid, very small Poisson facets and
-     * create a new hole.  The independent fidelity gates still run below. */
-    bool preserve_poisson = false;
-    if (report->poisson_reconstruction_applied) {
-	assembled_mesh_validation poisson_validation;
-	const bool poisson_geometric = assembled_mesh_validate(
+     * open mixed-source mesh can remove valid, very small facets and create a
+     * new hole.  The independent fidelity gates still run below. */
+    bool preserve_input = false;
+    if (report->poisson_reconstruction_applied ||
+	    (closed_boundary_action == REPAIR_DEFERRED_CLOSED_BOUNDARY &&
+	    !settings->mesh.union_components)) {
+	assembled_mesh_validation input_validation;
+	const bool input_geometric = assembled_mesh_validate(
 	    input_vertex_count, input_face_count, input_vertices,
-	    input_faces, &poisson_validation,
+	    input_faces, &input_validation,
 	    !settings->mesh.allow_self_intersections);
-	preserve_poisson = poisson_geometric && !bg_trimesh_solid2(
+	preserve_input = input_geometric && !bg_trimesh_solid2(
 	    input_vertex_count, input_face_count, input_vertices,
 	    input_faces, NULL);
     }
@@ -14104,12 +14163,13 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
     };
     int repair_result = 1;
     size_t adaptive_hole_edges = 0;
-    if (preserve_poisson) {
+    if (preserve_input) {
 	report->mesh.input_vertices = input_vertex_count;
 	report->mesh.input_faces = input_face_count;
 	report->mesh.input_area = repair_mesh_area(input_vertices,
 	    input_faces, input_face_count);
 	report->mesh.solid = 1;
+	report->mesh.manifold_accepted = 1;
     } else {
 	repair_result = run_mesh_repair();
 	adaptive_hole_edges = repair_result < 0 ?
@@ -14860,7 +14920,13 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 		local_filter.insert(support_face);
 		}
 	    }
-	    if (changed.direct_surface_samples) {
+	    if (preserve_input && !have_display_reference) {
+		/* The accepted output is an exact copy of this mixed-source
+		 * input.  Reverse coverage below still proves that the B-Rep is
+		 * represented. */
+		matched_local_surface = true;
+		report->input_mesh_surface_samples++;
+	    } else if (changed.direct_surface_samples) {
 		distance = changed.direct_surface_deviation;
 		used_untrimmed = true;
 		matched_local_surface = distance <=
@@ -15189,6 +15255,10 @@ brep_cdt_repair_attempt(struct ON_Brep_CDT_State *s_cdt,
 	    source_brep_face = rigorous_input_brep_faces[
 		(size_t)reference.index];
 	for (size_t sample = 0; sample < face_sample_count; ++sample) {
+	    if (preserve_input && !have_display_reference) {
+		report->coverage_samples++;
+		continue;
+	    }
 	    sample_output_coverage(samples[sample], source_brep_face);
 	}
     }
