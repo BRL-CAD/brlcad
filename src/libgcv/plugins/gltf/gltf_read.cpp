@@ -211,8 +211,8 @@ handle_node(struct conversion_state *state, const tg3_model &model,
 	for (size_t i = 0; i < 16; ++i)
 	    matrix[i] = static_cast<fastf_t>(node.matrix[i]);
 	member_matrix = matrix;
-    } else if (node.translation[0] != 0.0 || node.translation[1] != 0.0 ||
-	node.translation[2] != 0.0) {
+    } else if (!ZERO(node.translation[0]) || !ZERO(node.translation[1]) ||
+	!ZERO(node.translation[2])) {
 	MAT_IDN(matrix);
 	matrix[3] = static_cast<fastf_t>(node.translation[0]);
 	matrix[7] = static_cast<fastf_t>(node.translation[1]);
