@@ -9944,12 +9944,15 @@ repair_full_spherical_mesh(const ON_BrepFace &face, const ON_Sphere &sphere,
     const size_t first_points = first.vertices.size() / 3;
     const size_t second_points = second.vertices.size() / 3;
     if (first_points < segments + 1 || second_points < segments + 1 ||
-	    first_points + second_points - segments > max_points)
+	    first_points + second_points - segments > max_points ||
+	    first.source_points.size() != first_points ||
+	    second.source_points.size() != second_points)
 	return false;
 
     const size_t interior_rows = std::max(first.strip_interior_rows,
 	second.strip_interior_rows);
     patch = std::move(first);
+    patch.source_points.reserve(first_points + second_points - segments);
     std::vector<int> second_to_patch(second_points, -1);
     for (size_t point = 0; point < segments; ++point)
 	second_to_patch[point] = (int)point;
@@ -9958,6 +9961,7 @@ repair_full_spherical_mesh(const ON_BrepFace &face, const ON_Sphere &sphere,
 	patch.vertices.insert(patch.vertices.end(),
 	    second.vertices.begin() + (ptrdiff_t)(point * 3),
 	    second.vertices.begin() + (ptrdiff_t)(point * 3 + 3));
+	patch.source_points.push_back(second.source_points[point]);
     }
     patch.faces.reserve(patch.faces.size() + second.faces.size());
     for (int point : second.faces) {
@@ -9971,7 +9975,8 @@ repair_full_spherical_mesh(const ON_BrepFace &face, const ON_Sphere &sphere,
 	second.direct_surface_deviations.end());
     patch.strip_interior_rows = interior_rows;
     return !patch.faces.empty() &&
-	patch.direct_surface_deviations.size() == patch.faces.size() / 3;
+	patch.direct_surface_deviations.size() == patch.faces.size() / 3 &&
+	patch.source_points.size() == patch.vertices.size() / 3;
 }
 
 static bool
@@ -11130,6 +11135,8 @@ cdt_test_repair_periodic_strip(void)
 	full_sphere_faces > 0 &&
 	full_sphere_patch.direct_surface_deviations.size() ==
 	(size_t)full_sphere_faces &&
+	full_sphere_patch.source_points.size() ==
+	(size_t)full_sphere_points &&
 	!bg_trimesh_solid2(full_sphere_points, full_sphere_faces,
 	    full_sphere_patch.vertices.data(),
 	    full_sphere_patch.faces.data(), NULL);
