@@ -469,6 +469,27 @@ function(brlcad_ext_setup)
     -DUSE_APPLESEED=${BEXT_USE_APPLESEED} -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
     -DCMAKE_INSTALL_PREFIX=${BRLCAD_EXT_INSTALL_DIR}
     )
+  if(BRLCAD_X11_PROVIDER_RESOLVED STREQUAL "XMIN" AND BRLCAD_XMIN_ROOT)
+    list(APPEND CMAKE_CMD_ARGS
+      "-DBEXT_XMIN_ROOT:PATH=${BRLCAD_XMIN_ROOT}"
+    )
+  endif()
+
+  # Preserve optional toolkit patch/configure lists when BRL-CAD manages bext.
+  # Escaping list separators keeps each -D assignment a single child-CMake
+  # argument while reconstructing the original list in bext's cache.
+  foreach(_bext_list_var TK_EXTRA_PATCHES TK_CONFIGURE_ARGS QT_EXTRA_PATCHES)
+    if(DEFINED ${_bext_list_var} AND NOT "${${_bext_list_var}}" STREQUAL "")
+      string(REPLACE ";" "\\;" _bext_list_value "${${_bext_list_var}}")
+      list(APPEND CMAKE_CMD_ARGS "-D${_bext_list_var}:STRING=${_bext_list_value}")
+    endif()
+  endforeach()
+  unset(_bext_list_value)
+  unset(_bext_list_var)
+  if(DEFINED QT_XMIN_ROOT AND NOT "${QT_XMIN_ROOT}" STREQUAL "")
+    list(APPEND CMAKE_CMD_ARGS "-DQT_XMIN_ROOT:PATH=${QT_XMIN_ROOT}")
+  endif()
+
   if(BEXT_ENABLE_ALL)
     # Some bext projects cache empty ENABLE_<pkg> entries, which prevents
     # bext's ENABLE_ALL checks from forcing these dependencies on.

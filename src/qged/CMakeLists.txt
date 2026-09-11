@@ -40,6 +40,8 @@ if(BRLCAD_ENABLE_QT)
     PROPERTY COMPILE_DEFINITIONS "QGED_PLUGIN_SUFFIX=\"${CMAKE_SHARED_LIBRARY_SUFFIX}\""
   )
 
+  include(CheckLinkerFlag)
+  check_linker_flag(CXX "-pie" QGED_LINK_PIE_SUPPORTED)
   if(Qt6Widgets_FOUND)
     qt6_wrap_cpp(moc_srcs ${moc_headers})
   else()
@@ -55,6 +57,10 @@ if(BRLCAD_ENABLE_QT)
 
   add_executable(qged WIN32 main.cpp ${qged_srcs} ${moc_srcs} ${theme_qrc})
   # Note - Network is needed for async embedded raytracing display
+  set_property(TARGET qged PROPERTY POSITION_INDEPENDENT_CODE TRUE)
+  if(QGED_LINK_PIE_SUPPORTED)
+    target_link_options(qged PRIVATE "-pie")
+  endif()
   if(Qt6Widgets_FOUND)
     target_link_libraries(
       qged

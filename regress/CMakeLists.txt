@@ -104,6 +104,9 @@ add_subdirectory(rtedge)
 # RtWizard Image Generation Regression Tests
 add_subdirectory(rtwizard)
 
+# Shared Xmin GUI test support
+add_subdirectory(xmin)
+
 # per-primitive validity
 add_subdirectory(rt_primitives)
 

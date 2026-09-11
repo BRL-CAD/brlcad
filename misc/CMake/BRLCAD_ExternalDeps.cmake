@@ -1904,6 +1904,21 @@ function(find_package_opengl)
   # Initialize to empty
   set(OPENGL_TARGETS "" PARENT_SCOPE)
 
+  # Xmin's GLX implementation and Xlib facade share private Display state.
+  # Using a host libGL here may configure successfully but is ABI-invalid.
+  if(BRLCAD_X11_PROVIDER_RESOLVED STREQUAL "XMIN")
+    if(TARGET Xmin::GL)
+      set(OPENGL_TARGETS Xmin::GL PARENT_SCOPE)
+      brlcad_deferred_define("BRLCAD_OPENGL 1")
+      brlcad_deferred_define("HAVE_GL_GL_H 1")
+      brlcad_deferred_define("HAVE_GL_GLEXT_H 1")
+      brlcad_deferred_define("HAVE_GL_GLX_H 1")
+    elseif(O_REQUIRED)
+      message(FATAL_ERROR "OpenGL requires an Xmin SDK built with XMIN_BUILD_CLIENT_GL=ON")
+    endif()
+    return()
+  endif()
+
   # If we're X11, we don't want the OSX framework
   set(_TMP_FIND_FRAMEWORK ${CMAKE_FIND_FRAMEWORK})
 
@@ -2350,6 +2365,27 @@ macro(find_package_qt)
     message("Qt requested, but Qt installation not found - disabling")
     set(BRLCAD_ENABLE_QT OFF)
   endif(NOT Qt6Widgets_FOUND AND NOT Qt5Widgets_FOUND AND BRLCAD_ENABLE_QT)
+
+  # Qt's platform plugin and OpenGL implementation must use the same client
+  # ABI as BRL-CAD.  Patched Xmin Qt records its private feature in Qt6::Gui;
+  # checking that metadata avoids loading both Xmin and host X libraries.
+  if(BRLCAD_ENABLE_QT AND Qt6Widgets_FOUND)
+    get_target_property(_qt_gui_private_features Qt6::Gui QT_ENABLED_PRIVATE_FEATURES)
+    if(BRLCAD_X11_PROVIDER_RESOLVED STREQUAL "XMIN")
+      if(NOT "xmin_x11" IN_LIST _qt_gui_private_features)
+        message(FATAL_ERROR
+          "BRLCAD_X11_PROVIDER=XMIN requires Qt6 built with Xmin support"
+        )
+      endif()
+    elseif("xmin_x11" IN_LIST _qt_gui_private_features)
+      message(FATAL_ERROR "Xmin-backed Qt6 cannot be used with system X11")
+    endif()
+    unset(_qt_gui_private_features)
+  elseif(BRLCAD_ENABLE_QT AND Qt5Widgets_FOUND
+         AND BRLCAD_X11_PROVIDER_RESOLVED STREQUAL "XMIN")
+    message(FATAL_ERROR "BRLCAD_X11_PROVIDER=XMIN requires Xmin-backed Qt6")
+  endif()
+
   if(Qt6Widgets_FOUND)
     find_package(Qt6 COMPONENTS Test)
     if(Qt6Test_FOUND)

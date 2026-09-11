@@ -231,7 +231,7 @@ set(CMAKE_FIND_USE_PACKAGE_REGISTRY FALSE)
 # Prepare to manage and build BRL-CAD's external dependencies. Specifies a
 # specific commit hash to use in the 'bext' repository.
 include(BRLCAD_ExternalDeps)
-brlcad_bext_init(fe4d95add4e7f5219d0164a2966badb76097b1de)
+brlcad_bext_init(d8c5953928c4763dc774d7ab85c5ae35f483cee6)
 
 #---------------------------------------------------------------------
 # Define various utilities.
@@ -1806,17 +1806,22 @@ brlcad_check_library(BSD c daemon)
 
 # Mark X11 as available if it is enabled and we find Xlib.h
 if(BRLCAD_ENABLE_X11)
-  message("X11 detected and enabled")
-  if(X11_Xlib_INCLUDE_PATH)
+  message("X11 provider ${BRLCAD_X11_PROVIDER_RESOLVED} detected and enabled")
+  if(BRLCAD_X11_PROVIDER_RESOLVED STREQUAL "XMIN")
     set(HAVE_X11_XLIB_H 1)
     brlcad_deferred_define("HAVE_X11_XLIB_H 1")
-    # message("Defining HAVE_X11_XLIB_H")
-  endif(X11_Xlib_INCLUDE_PATH)
-  if(X11_Xi_INCLUDE_PATH)
-    set(HAVE_X11_EXTENSIONS_XINPUT_H 1)
-    brlcad_deferred_define("HAVE_X11_EXTENSIONS_XINPUT_H 1")
-    # message("Defining HAVE_X11_EXTENSIONS_XINPUT_H")
-  endif(X11_Xi_INCLUDE_PATH)
+  else()
+    if(X11_Xlib_INCLUDE_PATH)
+      set(HAVE_X11_XLIB_H 1)
+      brlcad_deferred_define("HAVE_X11_XLIB_H 1")
+      # message("Defining HAVE_X11_XLIB_H")
+    endif(X11_Xlib_INCLUDE_PATH)
+    if(X11_Xi_INCLUDE_PATH)
+      set(HAVE_X11_EXTENSIONS_XINPUT_H 1)
+      brlcad_deferred_define("HAVE_X11_EXTENSIONS_XINPUT_H 1")
+      # message("Defining HAVE_X11_EXTENSIONS_XINPUT_H")
+    endif(X11_Xi_INCLUDE_PATH)
+  endif()
 endif(BRLCAD_ENABLE_X11)
 
 # math library

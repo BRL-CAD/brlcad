@@ -156,10 +156,43 @@ if(TARGET mged)
     brlcad_add_test(NAME regress-mged COMMAND ${SH_EXEC} "${CMAKE_CURRENT_SOURCE_DIR}/mged.sh" ${CMAKE_SOURCE_DIR})
     brlcad_regression_test(regress-mged "mged;rtarea;rt;rtcheck" TEST_DEFINED)
   endif(SH_EXEC)
+
+  if(BRLCAD_X11_PROVIDER_RESOLVED STREQUAL "XMIN"
+     AND TARGET dm-tkswrast AND TARGET dm-X AND TARGET dm-ogl
+     AND TARGET icv AND TARGET pixcrop AND TARGET rt AND SH_EXEC)
+    brlcad_add_xmin_test(
+      NAME regress-mged-xmin-gui-edit
+      TIMEOUT 600
+      ENVIRONMENT
+        "CMAKE_COMMAND=${CMAKE_COMMAND}"
+        "ICV_BIN=$<TARGET_FILE:icv>"
+        "LD_LIBRARY_PATH=${CMAKE_BINARY_DIR}/${LIB_DIR}"
+        "MGED_BIN=$<TARGET_FILE:mged>"
+        "MGED_DM_TYPES=tkswrast X ogl"
+        "MGED_GUI_APNG_DIR=${CMAKE_CURRENT_BINARY_DIR}"
+        "MGED_GUI_MANIFEST=${CMAKE_CURRENT_SOURCE_DIR}/mged_gui_menu_manifest.txt"
+        "MGED_PIPE_ORACLE=${CMAKE_CURRENT_SOURCE_DIR}/xmin_gui_pipe_oracle.tcl"
+        "MGED_RT_BIN=$<TARGET_FILE:rt>"
+        "MGED_XMIN_ACTIVE_SESSION=1"
+        "MGED_TEST_SHELL=${SH_EXEC}"
+        "MGED_XMIN_RC=${CMAKE_CURRENT_SOURCE_DIR}/xmin_gui_edit.tcl"
+        "PIXCROP_BIN=$<TARGET_FILE:pixcrop>"
+        "XMIN_GUI_LIBRARY=${CMAKE_SOURCE_DIR}/regress/xmin/xmin_gui_test.tcl"
+      COMMAND "${SH_EXEC}" "${CMAKE_CURRENT_SOURCE_DIR}/mged_xmin_gui.sh"
+    )
+    brlcad_regression_test(regress-mged-xmin-gui-edit
+      "mged;dm-tkswrast;dm-X;dm-ogl;icv;pixcrop;rt"
+      STAND_ALONE TEST_DEFINED)
+  endif()
 endif(TARGET mged)
 
 cmakefiles(
   mged.sh
+  MGED_GUI_TEST_COVERAGE.md
+  mged_gui_menu_manifest.txt
+  mged_xmin_gui.sh
+  xmin_gui_edit.tcl
+  xmin_gui_pipe_oracle.tcl
   mged_test.sh
 )
 

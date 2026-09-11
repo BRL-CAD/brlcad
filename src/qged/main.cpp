@@ -76,6 +76,10 @@ main(int argc, char **argv)
     struct bu_vls msg = BU_VLS_INIT_ZERO;
     const char *exec_name = argv[0];
 
+    // QApplication requires argv[0] to remain the executable name.  Parse
+    // BRL-CAD's options through a separate view of the argument vector.
+    int qt_argc = argc;
+    char **qt_argv = argv;
     // All BRL-CAD programs need to set this in order for relative path lookups
     // to work reliably.
     bu_setprogname(argv[0]);
@@ -141,8 +145,9 @@ main(int argc, char **argv)
 	return BRLCAD_ERROR;
     }
 
-    // We derive our own app type from QApplication
-    QgEdApp app(argc, argv, swrast_mode, quad_mode);
+    // We derive our own app type from QApplication.
+    const char *g_file = argc ? argv[0] : NULL;
+    QgEdApp app(qt_argc, qt_argv, g_file, swrast_mode, quad_mode);
 
     // Setup complete - time to enter the interactive event loop
     return app.exec();

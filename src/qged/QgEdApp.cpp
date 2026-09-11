@@ -149,7 +149,7 @@ qt_delete_io_handler(struct ged_subprocess *p, bu_process_io_t t)
 }
 
 
-QgEdApp::QgEdApp(int &argc, char *argv[], int swrast_mode, int quad_mode) :QApplication(argc, argv)
+QgEdApp::QgEdApp(int &argc, char *argv[], const char *g_file, int swrast_mode, int quad_mode) :QApplication(argc, argv)
 {
     setOrganizationName("BRL-CAD");
     setOrganizationDomain("brlcad.org");
@@ -263,13 +263,13 @@ QgEdApp::QgEdApp(int &argc, char *argv[], int swrast_mode, int quad_mode) :QAppl
     // initialization/show() available - the GED structure will need to know
     // about some of them to have drawing commands connect properly to the 3D
     // displays.
-    if (argc) {
-	char *fname = bu_strdup(bu_dir(NULL, 0, BU_DIR_CURR, argv[0], NULL));
+    if (g_file) {
+	char *fname = bu_strdup(bu_dir(NULL, 0, BU_DIR_CURR, g_file, NULL));
 	if (!bu_file_exists(fname, NULL)) {
 	    // Current dir prefix didn't work - were we given a full path rather
 	    // than a relative path?
 	    bu_free(fname, "path");
-	    fname = bu_strdup(bu_path_normalize(argv[0]));
+	    fname = bu_strdup(bu_path_normalize(g_file));
 	}
 	int ret = load_g_file(fname, false);
 	if (ret != BRLCAD_OK) {

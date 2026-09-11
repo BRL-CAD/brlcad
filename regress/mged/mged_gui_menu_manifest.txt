@@ -1,0 +1,240 @@
+Create/Arbs/arb4...|command|normal
+Create/Arbs/arb5...|command|normal
+Create/Arbs/arb6...|command|normal
+Create/Arbs/arb7...|command|normal
+Create/Arbs/arb8...|command|normal
+Create/Arbs/arbn...|command|normal
+Create/Arbs/rpp...|command|normal
+Create/Arbs|cascade|normal
+Create/ars...|command|normal
+Create/binunif...|command|normal
+Create/bot...|command|normal
+Create/Cones & Cylinders/rcc...|command|normal
+Create/Cones & Cylinders/rec...|command|normal
+Create/Cones & Cylinders/rhc...|command|normal
+Create/Cones & Cylinders/rpc...|command|normal
+Create/Cones & Cylinders/tec...|command|normal
+Create/Cones & Cylinders/tgc...|command|normal
+Create/Cones & Cylinders/trc...|command|normal
+Create/Cones & Cylinders|cascade|normal
+Create/dsp...|command|normal
+Create/Ellipsoids/ehy...|command|normal
+Create/Ellipsoids/ell...|command|normal
+Create/Ellipsoids/ell1...|command|normal
+Create/Ellipsoids/epa...|command|normal
+Create/Ellipsoids/sph...|command|normal
+Create/Ellipsoids|cascade|normal
+Create/eto...|command|normal
+Create/extrude...|command|normal
+Create/half...|command|normal
+Create/metaball...|command|normal
+Create/nmg...|command|normal
+Create/part...|command|normal
+Create/pipe...|command|normal
+Create/sketch...|command|normal
+Create/tor...|command|normal
+Create|cascade|normal
+Edit/Attribute Editor|command|normal
+Edit/Browse Geometry|command|normal
+Edit/Combination Editor|command|normal
+Edit/Matrix Selection...|command|normal
+Edit/Primitive Editor|command|normal
+Edit/Primitive Selection...|command|normal
+Edit|cascade|normal
+File/Clear Command Window|command|normal
+File/Create/Update .mgedrc|command|normal
+File/Exit|command|normal
+File/Export/Ascii Database|command|normal
+File/Export/Database Objects|command|normal
+File/Export|cascade|normal
+File/Import/Ascii Database|command|normal
+File/Import/Binary Database|command|normal
+File/Import|cascade|normal
+File/Load Script...|command|normal
+File/New...|command|normal
+File/Open...|command|normal
+File/Preferences/Color Schemes|command|normal
+File/Preferences/Command Line Edit/Emacs|radiobutton|normal
+File/Preferences/Command Line Edit/Vi|radiobutton|normal
+File/Preferences/Command Line Edit|cascade|normal
+File/Preferences/Fonts|command|normal
+File/Preferences/Special Characters/Object Name Matching|radiobutton|normal
+File/Preferences/Special Characters/Tcl Evaluation|radiobutton|normal
+File/Preferences/Special Characters|cascade|normal
+File/Preferences/Units/Centimeters|radiobutton|normal
+File/Preferences/Units/Feet|radiobutton|normal
+File/Preferences/Units/Inches|radiobutton|normal
+File/Preferences/Units/Kilometers|radiobutton|normal
+File/Preferences/Units/Meters|radiobutton|normal
+File/Preferences/Units/Micrometers|radiobutton|normal
+File/Preferences/Units/Miles|radiobutton|normal
+File/Preferences/Units/Millimeters|radiobutton|normal
+File/Preferences/Units/Yards|radiobutton|normal
+File/Preferences/Units|cascade|normal
+File/Preferences|cascade|normal
+File/Raytrace|command|normal
+File/Render View/Plot...|command|normal
+File/Render View/PostScript...|command|normal
+File/Render View/RT Script...|command|normal
+File/Render View|cascade|normal
+File|cascade|normal
+Help/About MGED|command|normal
+Help/Apropos|command|normal
+Help/Command Manual Pages|command|normal
+Help/Dedication|command|normal
+Help/Manual Search|command|normal
+Help/Manual|command|normal
+Help/Shift Grips|command|normal
+Help|cascade|normal
+Misc/Depth Cueing|checkbutton|normal
+Misc/Faceplate GUI|checkbutton|normal
+Misc/Faceplate|checkbutton|normal
+Misc/Keystroke Forwarding|checkbutton|normal
+Misc/Lighting|checkbutton|normal
+Misc/Perspective|checkbutton|normal
+Misc/Z Buffer|checkbutton|normal
+Misc/Z Clipping|checkbutton|normal
+Misc|cascade|normal
+Modes/Angle/Dist Cursor|checkbutton|normal
+Modes/Axes/Edit|checkbutton|normal
+Modes/Axes/Model Axes Ticks|checkbutton|normal
+Modes/Axes/Model|checkbutton|normal
+Modes/Axes/View|checkbutton|normal
+Modes/Axes|cascade|normal
+Modes/Collaborate|checkbutton|normal
+Modes/Display Lists|checkbutton|normal
+Modes/Draw Grid|checkbutton|normal
+Modes/Edit Info|checkbutton|normal
+Modes/Faceplate|checkbutton|normal
+Modes/Framebuffer Active|checkbutton|normal
+Modes/Listen For Clients|checkbutton|normal
+Modes/Multipane|checkbutton|normal
+Modes/Persistent Sweep Rectangle|checkbutton|normal
+Modes/Rateknobs|checkbutton|normal
+Modes/Snap To Grid|checkbutton|normal
+Modes/Status Bar|checkbutton|normal
+Modes|cascade|normal
+Settings/Active Pane/Lower Left|radiobutton|normal
+Settings/Active Pane/Lower Right|radiobutton|normal
+Settings/Active Pane/Upper Left|radiobutton|normal
+Settings/Active Pane/Upper Right|radiobutton|normal
+Settings/Active Pane|cascade|normal
+Settings/Apply To/Active Pane|radiobutton|normal
+Settings/Apply To/All Panes|radiobutton|normal
+Settings/Apply To/Listed Panes|radiobutton|normal
+Settings/Apply To/Local Panes|radiobutton|normal
+Settings/Apply To|cascade|normal
+Settings/Constraint Coords/Model|radiobutton|normal
+Settings/Constraint Coords/Object|radiobutton|disabled
+Settings/Constraint Coords/View|radiobutton|normal
+Settings/Constraint Coords|cascade|normal
+Settings/Framebuffer/All|radiobutton|normal
+Settings/Framebuffer/Framebuffer Active|checkbutton|normal
+Settings/Framebuffer/Interlay|radiobutton|normal
+Settings/Framebuffer/Listen For Clients|checkbutton|normal
+Settings/Framebuffer/Overlay|radiobutton|normal
+Settings/Framebuffer/Rectangle Area|radiobutton|normal
+Settings/Framebuffer/Underlay|radiobutton|normal
+Settings/Framebuffer|cascade|normal
+Settings/Grid Spacing/1/2 Inch|command|normal
+Settings/Grid Spacing/1/4 Inch|command|normal
+Settings/Grid Spacing/1/10 Inch|command|normal
+Settings/Grid Spacing/Arbitrary|command|normal
+Settings/Grid Spacing/Autosize|command|normal
+Settings/Grid Spacing/Centimeter|command|normal
+Settings/Grid Spacing/Decimeter|command|normal
+Settings/Grid Spacing/Foot|command|normal
+Settings/Grid Spacing/Inch|command|normal
+Settings/Grid Spacing/Kilometer|command|normal
+Settings/Grid Spacing/Meter|command|normal
+Settings/Grid Spacing/Micrometer|command|normal
+Settings/Grid Spacing/Mile|command|normal
+Settings/Grid Spacing/Millimeter|command|normal
+Settings/Grid Spacing/Yard|command|normal
+Settings/Grid Spacing|cascade|normal
+Settings/Grid/Anchor|command|normal
+Settings/Grid/Draw Grid|checkbutton|normal
+Settings/Grid/Snap To Grid|checkbutton|normal
+Settings/Grid/Spacing/1/2 Inch|command|normal
+Settings/Grid/Spacing/1/4 Inch|command|normal
+Settings/Grid/Spacing/1/10 Inch|command|normal
+Settings/Grid/Spacing/Arbitrary|command|normal
+Settings/Grid/Spacing/Autosize|command|normal
+Settings/Grid/Spacing/Centimeter|command|normal
+Settings/Grid/Spacing/Decimeter|command|normal
+Settings/Grid/Spacing/Foot|command|normal
+Settings/Grid/Spacing/Inch|command|normal
+Settings/Grid/Spacing/Kilometer|command|normal
+Settings/Grid/Spacing/Meter|command|normal
+Settings/Grid/Spacing/Micrometer|command|normal
+Settings/Grid/Spacing/Mile|command|normal
+Settings/Grid/Spacing/Millimeter|command|normal
+Settings/Grid/Spacing/Yard|command|normal
+Settings/Grid/Spacing|cascade|normal
+Settings/Grid|cascade|normal
+Settings/Mouse Behavior/Default|radiobutton|normal
+Settings/Mouse Behavior/Pick Edit-Combination|radiobutton|normal
+Settings/Mouse Behavior/Pick Edit-Matrix|radiobutton|normal
+Settings/Mouse Behavior/Pick Edit-Primitive|radiobutton|normal
+Settings/Mouse Behavior/Pick Raytrace-Object(s)|radiobutton|normal
+Settings/Mouse Behavior/Query Ray|radiobutton|normal
+Settings/Mouse Behavior/Sweep Paint-Rectangle|radiobutton|normal
+Settings/Mouse Behavior/Sweep Raytrace-Rectangle|radiobutton|normal
+Settings/Mouse Behavior/Sweep Zoom-Rectangle|radiobutton|normal
+Settings/Mouse Behavior|cascade|normal
+Settings/Query Ray Effects/Both|radiobutton|normal
+Settings/Query Ray Effects/Graphics|radiobutton|normal
+Settings/Query Ray Effects/Text|radiobutton|normal
+Settings/Query Ray Effects|cascade|normal
+Settings/Rotate About/Eye|radiobutton|normal
+Settings/Rotate About/Key Point|radiobutton|disabled
+Settings/Rotate About/Model Origin|radiobutton|normal
+Settings/Rotate About/View Center|radiobutton|normal
+Settings/Rotate About|cascade|normal
+Settings/Transform/ADC|radiobutton|normal
+Settings/Transform/Model Params|radiobutton|disabled
+Settings/Transform/View|radiobutton|normal
+Settings/Transform|cascade|normal
+Settings/View Axes Position/Center|radiobutton|normal
+Settings/View Axes Position/Lower Left|radiobutton|normal
+Settings/View Axes Position/Lower Right|radiobutton|normal
+Settings/View Axes Position/Upper Left|radiobutton|normal
+Settings/View Axes Position/Upper Right|radiobutton|normal
+Settings/View Axes Position|cascade|normal
+Settings|cascade|normal
+Tools/ADC Control Panel|command|normal
+Tools/BoT Edit Tool|command|normal
+Tools/Build Pattern Tool|command|normal
+Tools/Color Selector|command|normal
+Tools/Command Window (c)|command|normal
+Tools/Geometry Browser|command|normal
+Tools/Graphics Window|command|normal
+Tools/Grid Control Panel|command|normal
+Tools/LOD Configuration|command|normal
+Tools/Overlaps Tool|command|normal
+Tools/Query Ray Control Panel|command|normal
+Tools/Raytrace Control Panel|command|normal
+Tools/Search Geometry|command|normal
+Tools/Upgrade Database...|command|normal
+Tools|cascade|normal
+View/az35,el25|command|normal
+View/az45,el45|command|normal
+View/Bottom (b)|command|normal
+View/Default|command|normal
+View/Front (f)|command|normal
+View/Left (l)|command|normal
+View/Multipane Defaults|command|normal
+View/Rear (R)|command|normal
+View/Right (r)|command|normal
+View/Top (t)|command|normal
+View/Zero|command|normal
+View/Zoom In|command|normal
+View/Zoom Out|command|normal
+ViewRing/Add View|command|normal
+ViewRing/Delete View|cascade|normal
+ViewRing/Last View|command|normal
+ViewRing/Next View|command|normal
+ViewRing/Prev View|command|normal
+ViewRing/Select View|cascade|normal
+ViewRing|cascade|normal
+View|cascade|normal

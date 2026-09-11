@@ -56,7 +56,7 @@ class QgEdApp : public QApplication
     Q_OBJECT
 
     public:
-	QgEdApp(int &argc, char *argv[], int swrast_mode = 0, int quad_mode = 0);
+	QgEdApp(int &argc, char *argv[], const char *g_file, int swrast_mode = 0, int quad_mode = 0);
 	~QgEdApp();
 
 	int run_cmd(struct bu_vls *msg, int argc, const char **argv);

@@ -1,0 +1,17 @@
+File New command disabled
+File Quit command normal
+File {Open BRL-CAD Database} command disabled
+File {Write .rtwizardrc} command normal
+File {} separator normal
+Help About... command normal
+Help Help... command normal
+Image {Ghost Image with Insert and Lines} radiobutton normal
+Image {Ghost Image with Insert} radiobutton normal
+Image {Highlighted Image} radiobutton normal
+Image {Mixed Full-Color and Edges} radiobutton normal
+Image {New Image...} command normal
+Image {Simple Full-Color Image} radiobutton normal
+Image {Simple Line Drawing} radiobutton normal
+Image {} separator normal
+Render Full-Size command normal
+Render Preview command normal
