@@ -5532,14 +5532,6 @@ proc title_node_handler {node} {
     $itk_component(menubar) menuconfigure .file.save \
 	-command [::itcl::code $this askToSave] \
 	-state disabled
-    $itk_component(menubar) menuconfigure .file.export \
-	-command [::itcl::code $this exportDb]
-    $itk_component(menubar) menuconfigure .file.revert \
-	-command [::itcl::code $this askToRevert] \
-	-state disabled
-    $itk_component(menubar) menuconfigure .file.rt \
-	-command [::itcl::code $this raytracePanel] \
-	-state disabled
     $itk_component(menubar) menuconfigure .file.pref \
 	-command [::itcl::code $this doPreferences]
     $itk_component(menubar) menuconfigure .file.exit \
@@ -5549,7 +5541,7 @@ proc title_node_handler {node} {
 
 ::itcl::body Archer::buildEmbeddedDisplayMenu {} {
     $itk_component(menubar) add menubutton display \
-	-text "Display" -menu {
+	-text "Display" -menu [subst -nocommands -nobackslashes {
 	    options -tearoff 0
 
 	    command reset -label "Reset" \
@@ -5574,7 +5566,7 @@ proc title_node_handler {node} {
 		    -helpstr "Set display background to Navy"
 	    }
 
-	    cascade standard -label "Standard Views" -menu $mStandardViewsMenuCommands
+	    cascade standard -label "Standard Views" -menu {$mStandardViewsMenuCommands}
 	    command clear -label "Clear" \
 		-helpstr "Clear the display"
 	    command refresh -label "Refresh" \
@@ -5582,7 +5574,7 @@ proc title_node_handler {node} {
 	    separator sep1
 	    command save_png -label "Save as png ..." \
 		-helpstr "Save the display as png"
-	}
+	}]
 
     $itk_component(menubar) menuconfigure .display.standard \
 	-state disabled
@@ -5619,9 +5611,9 @@ proc title_node_handler {node} {
 	-command [::itcl::code $this doAe 270 90]
     $itk_component(menubar) menuconfigure .display.standard.bottom \
 	-command [::itcl::code $this doAe 270 -90]
-    $itk_component(menubar) menuconfigure .display.standard.35, 25 \
+    $itk_component(menubar) menuconfigure .display.standard.ae_35_25 \
 	-command [::itcl::code $this doAe 35 25]
-    $itk_component(menubar) menuconfigure .display.standard.45, 45 \
+    $itk_component(menubar) menuconfigure .display.standard.ae_45_45 \
 	-command [::itcl::code $this doAe 45 45]
     $itk_component(menubar) menuconfigure .display.clear \
 	-command [::itcl::code $this zap] \
@@ -5664,7 +5656,7 @@ proc title_node_handler {node} {
 
 ::itcl::body Archer::buildEmbeddedModesMenu {} {
     $itk_component(menubar) add menubutton modes \
-	-text "Modes" -menu {
+	-text "Modes" -menu [subst -nobackslashes {
 	    options -tearoff 0
 
 	    cascade activepane -label "Active Pane" -menu {
@@ -5693,19 +5685,19 @@ proc title_node_handler {node} {
 	    }
 	    cascade compselect -label "Comp Select Mode" -menu {
 
-		radiobutton selectlist -label [lindex $COMP_SELECT_MODE_NAMES $COMP_SELECT_LIST_MODE] \
+		radiobutton selectlist -label {[lindex $COMP_SELECT_MODE_NAMES $COMP_SELECT_LIST_MODE]} \
 		    -helpstr "Returns a list of the selected components."
-		radiobutton selectlistp -label [lindex $COMP_SELECT_MODE_NAMES $COMP_SELECT_LIST_PARTIAL_MODE] \
+		radiobutton selectlistp -label {[lindex $COMP_SELECT_MODE_NAMES $COMP_SELECT_LIST_PARTIAL_MODE]} \
 		    -helpstr "Returns a list of the partially selected components."
-		radiobutton selectgroupadd -label [lindex $COMP_SELECT_MODE_NAMES $COMP_SELECT_GROUP_ADD_MODE] \
+		radiobutton selectgroupadd -label {[lindex $COMP_SELECT_MODE_NAMES $COMP_SELECT_GROUP_ADD_MODE]} \
 		    -helpstr "Adds the selected components to a group."
-		radiobutton selectgroupadd -label [lindex $COMP_SELECT_MODE_NAMES $COMP_SELECT_GROUP_ADD_PARTIAL_MODE] \
+		radiobutton selectgroupaddp -label {[lindex $COMP_SELECT_MODE_NAMES $COMP_SELECT_GROUP_ADD_PARTIAL_MODE]} \
 		    -helpstr "Adds the selected components to a group."
-		radiobutton selectgroupadd -label [lindex $COMP_SELECT_MODE_NAMES $COMP_SELECT_GROUP_REMOVE_MODE] \
+		radiobutton selectgroupremove -label {[lindex $COMP_SELECT_MODE_NAMES $COMP_SELECT_GROUP_REMOVE_MODE]} \
 		    -helpstr "Remove the selected components from group."
-		radiobutton selectgroupadd -label [lindex $COMP_SELECT_MODE_NAMES $COMP_SELECT_GROUP_REMOVE_PARTIAL_MODE] \
+		radiobutton selectgroupremovep -label {[lindex $COMP_SELECT_MODE_NAMES $COMP_SELECT_GROUP_REMOVE_PARTIAL_MODE]} \
 		    -helpstr "Remove the selected components from group."
-		radiobutton selectbotpts -label [lindex $COMP_SELECT_MODE_NAMES $COMP_SELECT_BOT_POINTS_MODE] \
+		radiobutton selectbotpts -label {[lindex $COMP_SELECT_MODE_NAMES $COMP_SELECT_BOT_POINTS_MODE]} \
 		    -helpstr "Select BOT points from $mSelectedObj."
 	    }
 	    checkbutton quad -label "Quad View" \
@@ -5733,7 +5725,7 @@ proc title_node_handler {node} {
 		-helpstr "Toggle line snapping."
 	    checkbutton adc -label "Angle/Distance Cursor" \
 		-helpstr "Toggle display of the angle distance cursor."
-	}
+	}]
     $itk_component(menubar) menuconfigure .modes.activepane \
 	-state disabled
     set i 0
@@ -6237,7 +6229,6 @@ proc title_node_handler {node} {
 		$itk_component(${prefix}raytracemenu) entryconfigure "nirt" -state normal
 	    }
 	} else {
-	    $itk_component(menubar) menuconfigure .file.rt -state normal
 
 	    $itk_component(menubar) menuconfigure .display.standard -state normal
 	    $itk_component(menubar) menuconfigure .display.reset -state normal
@@ -6254,7 +6245,6 @@ proc title_node_handler {node} {
 	    $itk_component(menubar) menuconfigure .modes.gplane -state normal
 	    $itk_component(menubar) menuconfigure .modes.plabels -state normal
 	    $itk_component(menubar) menuconfigure .modes.vparams -state normal
-	    $itk_component(menubar) menuconfigure .modes.cdot -state normal
 	    $itk_component(menubar) menuconfigure .modes.scale -state normal
 	    $itk_component(menubar) menuconfigure .modes.light -state normal
 	    $itk_component(menubar) menuconfigure .modes.grid -state normal

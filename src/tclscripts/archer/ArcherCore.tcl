@@ -1067,9 +1067,9 @@ namespace eval ArcherCore {
 	command bottom -label "Bottom" \
 	    -helpstr "Set view to bottom"
 	separator sep0
-	command 35, 25 -label "35, 25" \
+	command ae_35_25 -label "35, 25" \
 	    -helpstr "Set view to az=35, el=25"
-	command 45, 45 -label "45, 45" \
+	command ae_45_45 -label "45, 45" \
 	    -helpstr "Set view to az=45, el=45"
     }
 
@@ -1510,10 +1510,10 @@ namespace eval ArcherCore {
 	$itk_component(canvas_menu) menuconfigure .view.bottom \
 	    -command [::itcl::code $this doAe 270 -90] \
 	    -state disabled
-	$itk_component(canvas_menu) menuconfigure .view.35,25 \
+	$itk_component(canvas_menu) menuconfigure .view.ae_35_25 \
 	    -command [::itcl::code $this doAe 35 25] \
 	    -state disabled
-	$itk_component(canvas_menu) menuconfigure .view.45,45 \
+	$itk_component(canvas_menu) menuconfigure .view.ae_45_45 \
 	    -command [::itcl::code $this doAe 45 45] \
 	    -state disabled
 
