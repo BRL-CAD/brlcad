@@ -40,7 +40,7 @@ namespace eval RtWizard {
 		      -slant italic}
 }
 
-namespace eval ArcherCore {
+namespace eval ArcherCoreBootstrap {
     set parentClass itk::Widget
     set inheritFromToplevel 0
 }

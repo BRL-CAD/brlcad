@@ -32,6 +32,17 @@ if(TARGET libtclcad)
     if(TARGET itk_pkgIndex)
       add_dependencies(bwish itk_pkgIndex)
     endif(TARGET itk_pkgIndex)
+
+    set(_itcl4_gui_test "${CMAKE_SOURCE_DIR}/src/libtclcad/tests/itcl4_gui.tcl")
+    foreach(_shell btclsh bwish)
+      brlcad_add_xmin_test(
+        NAME tclcad_test_itcl4_gui_${_shell}
+        SCREEN 1280x960x24
+        TIMEOUT 120
+        COMMAND $<TARGET_FILE:${_shell}> "${_itcl4_gui_test}"
+      )
+    endforeach()
+    unset(_itcl4_gui_test)
   endif(BRLCAD_ENABLE_TK)
 endif(TARGET libtclcad)
 

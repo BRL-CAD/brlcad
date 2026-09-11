@@ -27,7 +27,7 @@
 # Set the Tcl encoding to UTF-8
 encoding system utf-8
 
-namespace eval Archer {
+namespace eval ArcherBootstrap {
     set methodDecls ""
     set methodImpls ""
     set extraMgedCommands ""
@@ -80,8 +80,8 @@ package provide Archer 1.0
 
 
     # Dynamically load methods
-    if {$Archer::methodDecls != ""} {
-	foreach meth $::Archer::methodDecls {
+    if {$::ArcherBootstrap::methodDecls != ""} {
+	foreach meth $::ArcherBootstrap::methodDecls {
 	    eval $meth
 	}
     }
@@ -90,6 +90,7 @@ package provide Archer 1.0
     public {
 	# Public Class Variables
 	common plugins ""
+	common extraMgedCommands $::ArcherBootstrap::extraMgedCommands
 	common pluginMajorTypeCore "Core"
 	common pluginMajorTypeCommand "Command"
 	common pluginMajorTypeWizard "Wizard"
@@ -436,8 +437,8 @@ package provide Archer 1.0
 ::itcl::body Archer::constructor {{_viewOnly 0} {_noCopy 0} args} {
 
     # Append a few more commands
-    if {$Archer::extraMgedCommands != ""} {
-	eval lappend mArcherCoreCommands $Archer::extraMgedCommands
+    if {$extraMgedCommands != ""} {
+	eval lappend mArcherCoreCommands $extraMgedCommands
     }
     lappend mArcherCoreCommands importFg4Sections bot_flip_check \
 	bot_flip_check_all bot_split_all bot_sync_all bot_fix_all
@@ -8394,7 +8395,7 @@ proc title_node_handler {node} {
     if {$xmlAction != ""} {
 	set xml [$wizard $xmlAction]
 	foreach callback $wizardXmlCallbacks {
-	    $callback $xml
+	    {*}$callback $xml
 	}
     }
 
@@ -9848,8 +9849,8 @@ proc title_node_handler {node} {
 ################################### End Protected Section ###################################
 
 
-if {$Archer::methodImpls != ""} {
-    foreach impl $::Archer::methodImpls {
+if {$::ArcherBootstrap::methodImpls != ""} {
+    foreach impl $::ArcherBootstrap::methodImpls {
 	eval $impl
     }
 }
@@ -9857,11 +9858,13 @@ if {$Archer::methodImpls != ""} {
 
 Archer::initArcher
 
-if {$Archer::corePluginInit != ""} {
-    foreach cpi $::Archer::corePluginInit {
+if {$::ArcherBootstrap::corePluginInit != ""} {
+    foreach cpi $::ArcherBootstrap::corePluginInit {
 	eval $cpi
     }
 }
+
+namespace delete ::ArcherBootstrap
 
 
 # Local Variables:

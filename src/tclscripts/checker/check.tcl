@@ -829,12 +829,12 @@ body GeometryChecker::copySelection {} {
 
 body GeometryChecker::subtractItemRightFromLeft {left right} {
     set _commandText "Subtracting ($right) from ($left)"
-    $_overlapCallback $left $right $subtractFirst
+    {*}$_overlapCallback $left $right $subtractFirst
 }
 
 body GeometryChecker::subtractItemLeftFromRight {left right} {
     set _commandText "Subtracting ($left) from ($right)"
-    $_overlapCallback $right $left $subtractFirst
+    {*}$_overlapCallback $right $left $subtractFirst
 }
 
 body GeometryChecker::subtractSelectionRightFromLeft {{swap "false"}} {
@@ -970,7 +970,7 @@ body GeometryChecker::display {} {
 		set _abort false
 		lappend _afterCommands [after 3000 \
 		    "if {! \[set \"[scope _progressButtonInvoked]\"\]} { \
-		        [code $_leftDrawCallback $leftPath]; \
+		        [list {*}$_leftDrawCallback $leftPath]; \
 			[code set [scope _commandText] ""] \
 		    }"]
 
@@ -987,7 +987,7 @@ body GeometryChecker::display {} {
 		    break
 		}
 	    } elseif {! $_progressButtonInvoked} {
-		$_leftDrawCallback $leftPath
+		{*}$_leftDrawCallback $leftPath
 	    }
 
 	    if {! $_progressButtonInvoked} {
@@ -1000,7 +1000,7 @@ body GeometryChecker::display {} {
 		    break
 		}
 
-		$_rightDrawCallback $rightPath
+		{*}$_rightDrawCallback $rightPath
 
 		incr count
 		set _progressValue [expr $count / [expr $total + 1.0] * 100]
@@ -1024,7 +1024,7 @@ body GeometryChecker::display {} {
 	set erased 0
 	foreach obj $_drew {
 	    if {[lsearch -exact $drawing $obj] == -1} {
-		$_eraseCallback $obj
+		{*}$_eraseCallback $obj
 		incr erased
 	    }
 	}
@@ -1052,7 +1052,7 @@ body GeometryChecker::display {} {
 #
 body GeometryChecker::registerWhoCallback {callback} {
     set _whoCallback $callback
-    set _who [$_whoCallback]
+    set _who [{*}$_whoCallback]
 }
 
 # registerDrawCallback

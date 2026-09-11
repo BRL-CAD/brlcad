@@ -957,21 +957,23 @@ package provide cadwidgets::Ged 1.0
     itk_component add upw {
 	::iwidgets::Panedwindow [childsite upper].pw -orient vertical
     } {
-	usual
-	keep -sashwidth -sashheight
-	keep -sashborderwidth -sashindent
-	keep -thickness -showhandle
-	rename -sashcursor -hsashcursor hsashcursor HSashCursor
+	# Itk 4 evaluates usual option code in the class context, where the
+	# public Ged::keep method takes precedence over the option parser.
+	::itk::option-parser::keep -background -cursor -sashcursor
+	::itk::option-parser::keep -sashwidth -sashheight
+	::itk::option-parser::keep -sashborderwidth -sashindent
+	::itk::option-parser::keep -thickness -showhandle
+	::itk::option-parser::rename -sashcursor -hsashcursor hsashcursor HSashCursor
     }
 
     itk_component add lpw {
 	::iwidgets::Panedwindow [childsite lower].pw -orient vertical
     } {
-	usual
-	keep -sashwidth -sashheight
-	keep -sashborderwidth -sashindent
-	keep -thickness -showhandle
-	rename -sashcursor -hsashcursor hsashcursor HSashCursor
+	::itk::option-parser::keep -background -cursor -sashcursor
+	::itk::option-parser::keep -sashwidth -sashheight
+	::itk::option-parser::keep -sashborderwidth -sashindent
+	::itk::option-parser::keep -thickness -showhandle
+	::itk::option-parser::rename -sashcursor -hsashcursor hsashcursor HSashCursor
     }
 
     $itk_component(upw) add ulp
@@ -2841,7 +2843,7 @@ package provide cadwidgets::Ged 1.0
     eval $mGed mouse_metaball_add_pnt $itk_component($_pane) $args
 
     if {$mMetaballPointCallback != ""} {
-	catch {$mMetaballPointCallback}
+	catch {{*}$mMetaballPointCallback}
     }
 }
 
@@ -2849,7 +2851,7 @@ package provide cadwidgets::Ged 1.0
     eval $mGed mouse_pipe_append_pnt $itk_component($_pane) $args
 
     if {$mPipePointCallback != ""} {
-	catch {$mPipePointCallback}
+	catch {{*}$mPipePointCallback}
     }
 }
 
@@ -2875,7 +2877,7 @@ package provide cadwidgets::Ged 1.0
     set elist [$mGed mouse_find_arb_edge $itk_component($_pane) $_arb $_mx $_my $_ptol]
 
     if {$mArbEdgeCallback != ""} {
-	catch {$mArbEdgeCallback $elist}
+	catch {{*}$mArbEdgeCallback $elist}
     }
 
     return $elist
@@ -2915,7 +2917,7 @@ package provide cadwidgets::Ged 1.0
     }
 
     if {$mBotEdgeCallback != ""} {
-	catch {$mBotEdgeCallback $elist}
+	catch {{*}$mBotEdgeCallback $elist}
     }
 
     return $elist
@@ -2950,7 +2952,7 @@ package provide cadwidgets::Ged 1.0
     }
 
     if {$mBotPointCallback != ""} {
-	catch {$mBotPointCallback $i}
+	catch {{*}$mBotPointCallback $i}
     }
 
     return $i
@@ -2964,7 +2966,7 @@ package provide cadwidgets::Ged 1.0
     set mPrevGedMouseY $_my
 
     if {$mMetaballPointCallback != ""} {
-	catch {$mMetaballPointCallback $i}
+	catch {{*}$mMetaballPointCallback $i}
     }
 
     return $i
@@ -2978,7 +2980,7 @@ package provide cadwidgets::Ged 1.0
     set mPrevGedMouseY $_my
 
     if {$mPipePointCallback != ""} {
-	catch {$mPipePointCallback $i}
+	catch {{*}$mPipePointCallback $i}
     }
 
     return $i
@@ -3007,7 +3009,7 @@ package provide cadwidgets::Ged 1.0
     }
 
     if {$_callback != ""} {
-	catch {$_callback $surfno}
+	catch {{*}$_callback $surfno}
     }
 
     return $surfno
@@ -3050,7 +3052,7 @@ package provide cadwidgets::Ged 1.0
     eval $mGed mouse_pipe_prepend_pnt $itk_component($_pane) $args
 
     if {$mPipePointCallback != ""} {
-	catch {$mPipePointCallback}
+	catch {{*}$mPipePointCallback}
     }
 }
 
@@ -4085,7 +4087,7 @@ package provide cadwidgets::Ged 1.0
     }
 
     foreach callback $mBeginDataArrowCallbacks {
-	catch {$callback $point}
+	catch {{*}$callback $point}
     }
 
     #XXX Temporarily depend on callbacks to create the arrow
@@ -4110,7 +4112,7 @@ package provide cadwidgets::Ged 1.0
     }
 
     foreach callback $mBeginDataLineCallbacks {
-	catch {$callback $point}
+	catch {{*}$callback $point}
     }
 
     #XXX Temporarily depend on callbacks to create the line
@@ -4136,7 +4138,7 @@ package provide cadwidgets::Ged 1.0
     }
 
     foreach callback $mBeginDataMoveCallbacks {
-	catch {$callback $point}
+	catch {{*}$callback $point}
     }
 
     set mLastDataType [lindex $data 0]
@@ -4161,28 +4163,28 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::begin_data_poly_circ {} {
     foreach callback $mBeginDataPolygonCallbacks {
-	catch {$callback}
+	catch {{*}$callback}
     }
 }
 
 
 ::itcl::body cadwidgets::Ged::begin_data_poly_cont {} {
     foreach callback $mBeginDataPolygonCallbacks {
-	catch {$callback}
+	catch {{*}$callback}
     }
 }
 
 
 ::itcl::body cadwidgets::Ged::begin_data_poly_ell {} {
     foreach callback $mBeginDataPolygonCallbacks {
-	catch {$callback}
+	catch {{*}$callback}
     }
 }
 
 
 ::itcl::body cadwidgets::Ged::begin_data_poly_rect {} {
     foreach callback $mBeginDataPolygonCallbacks {
-	catch {$callback}
+	catch {{*}$callback}
     }
 }
 
@@ -4270,7 +4272,7 @@ package provide cadwidgets::Ged 1.0
     $mGed data_arrows $itk_component($_pane) points $points
 
     foreach callback $mEndDataArrowCallbacks {
-	catch {$callback $point}
+	catch {{*}$callback $point}
     }
 
     refresh_on
@@ -4296,7 +4298,7 @@ package provide cadwidgets::Ged 1.0
     $mGed data_lines $itk_component($_pane) points $points
 
     foreach callback $mEndDataLineCallbacks {
-	catch {$callback $point}
+	catch {{*}$callback $point}
     }
 
     refresh_on
@@ -4373,7 +4375,7 @@ package provide cadwidgets::Ged 1.0
     }
 
     foreach callback $mEndDataMoveCallbacks {
-	catch {$callback $mLastDataType}
+	catch {{*}$callback $mLastDataType}
     }
 
     set mLastDataIndex ""
@@ -4404,7 +4406,7 @@ package provide cadwidgets::Ged 1.0
 
     if {[$mGed data_polygons $itk_component($_pane) moveall]} {
 	foreach callback $mEndDataPolygonCallbacks {
-	    catch {$callback $mLastDataIndex}
+	    catch {{*}$callback $mLastDataIndex}
 	}
 
 	set mLastDataIndex ""
@@ -4424,7 +4426,7 @@ package provide cadwidgets::Ged 1.0
     set poly [lindex $plist $pindex]
     if {[llength $poly] < 2} {
 	foreach callback $mEndDataPolygonCallbacks {
-	    catch {$callback $mLastDataIndex}
+	    catch {{*}$callback $mLastDataIndex}
 	}
 
 	set mLastDataIndex ""
@@ -4454,7 +4456,7 @@ package provide cadwidgets::Ged 1.0
     }
 
     foreach callback $mEndDataPolygonCallbacks {
-	catch {$callback $mLastDataIndex}
+	catch {{*}$callback $mLastDataIndex}
     }
 
     set mLastDataIndex ""
@@ -4479,7 +4481,7 @@ package provide cadwidgets::Ged 1.0
     }
 
     foreach callback $mEndDataPolygonCallbacks {
-	catch {$callback $mLastDataIndex}
+	catch {{*}$callback $mLastDataIndex}
     }
 }
 
@@ -4506,7 +4508,7 @@ package provide cadwidgets::Ged 1.0
     }
 
     foreach callback $mEndDataPolygonCallbacks {
-	catch {$callback $mLastDataIndex}
+	catch {{*}$callback $mLastDataIndex}
     }
 }
 
@@ -4527,7 +4529,7 @@ package provide cadwidgets::Ged 1.0
     }
 
     foreach callback $mEndDataPolygonCallbacks {
-	catch {$callback $mLastDataIndex}
+	catch {{*}$callback $mLastDataIndex}
     }
 }
 
@@ -4548,7 +4550,7 @@ package provide cadwidgets::Ged 1.0
     }
 
     foreach callback $mEndDataPolygonCallbacks {
-	catch {$callback $mLastDataIndex}
+	catch {{*}$callback $mLastDataIndex}
     }
 }
 
@@ -4562,7 +4564,7 @@ package provide cadwidgets::Ged 1.0
     refresh_off
 
     foreach callback $mEndDataScaleCallbacks {
-	catch {$callback}
+	catch {{*}$callback}
     }
 
     refresh_on
@@ -4612,7 +4614,7 @@ package provide cadwidgets::Ged 1.0
 	    -message $mstring
     } else {
 	foreach callback $mViewMeasureCallbacks {
-	    catch {$callback $mstring}
+	    catch {{*}$callback $mstring}
 	}
     }
 
@@ -4649,12 +4651,12 @@ package provide cadwidgets::Ged 1.0
 	# So, split the string into two pieces.
 	set mstring "Measured Distance (Leg 2):  $delta [$mGed units -s]"
 	foreach callback $mViewMeasureCallbacks {
-	    catch {$callback $mstring}
+	    catch {{*}$callback $mstring}
 	}
 
 	set mstring "Measured Angle:  $angle"
 	foreach callback $mViewMeasureCallbacks {
-	    catch {$callback $mstring}
+	    catch {{*}$callback $mstring}
 	}
     }
 
@@ -4687,12 +4689,12 @@ package provide cadwidgets::Ged 1.0
     } else {
 	foreach callback $mViewRectCallbacks {
 	    if {$_bot != ""} {
-		catch {$callback [$mGed rselect $itk_component($_pane) -b $_bot]}
+		catch {{*}$callback [$mGed rselect $itk_component($_pane) -b $_bot]}
 	    } else {
 		if {$_pflag} {
-		    catch {$callback [$mGed rselect $itk_component($_pane) -p]}
+		    catch {{*}$callback [$mGed rselect $itk_component($_pane) -p]}
 		} else {
-		    catch {$callback [$mGed rselect $itk_component($_pane)]}
+		    catch {{*}$callback [$mGed rselect $itk_component($_pane)]}
 		}
 	    }
 	}
@@ -5200,7 +5202,7 @@ package provide cadwidgets::Ged 1.0
 	    set point $mLastMouseRayTarget
 	} else {
 	    if {$mDataPointCallback != ""} {
-		if {![catch {$mDataPointCallback $mLastMouseRayStart $mLastMouseRayTarget $partitions} point]} {
+		if {![catch {{*}$mDataPointCallback $mLastMouseRayStart $mLastMouseRayTarget $partitions} point]} {
 		    return $point
 		}
 	    }
@@ -5252,7 +5254,7 @@ package provide cadwidgets::Ged 1.0
     # should prompt the user for a label via the callback, then create
 
     foreach callback $mDataLabelCallbacks {
-	catch {$callback $point}
+	catch {{*}$callback $point}
     }
 }
 
@@ -5263,7 +5265,7 @@ package provide cadwidgets::Ged 1.0
 	tk_messageBox -message "pdata - $pdata"
     } else {
 	foreach callback $mMouseDataCallbacks {
-	    catch {$callback $pdata} msg
+	    catch {{*}$callback $pdata} msg
 	}
     }
 }
@@ -5301,7 +5303,7 @@ package provide cadwidgets::Ged 1.0
 	}
     } else {
 	foreach callback $mMouseRayCallbacks {
-	    catch {$callback $_pane $mLastMouseRayStart $mLastMouseRayTarget $partitions}
+	    catch {{*}$callback $_pane $mLastMouseRayStart $mLastMouseRayTarget $partitions}
 	}
     }
 }

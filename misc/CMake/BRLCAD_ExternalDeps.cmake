@@ -1218,7 +1218,7 @@ endfunction()
   # external building but counterproductive in the BRL-CAD install.
   set(
     EXCLUDED_PATTERNS
-    ${LIB_DIR}/itcl4.2.3/itclConfig.sh
+    ${LIB_DIR}/itcl[^/]*/itclConfig[.]sh$
     ${LIB_DIR}/tclConfig.sh
     ${LIB_DIR}/tdbc1.1.5/tdbcConfig.sh
     ${LIB_DIR}/tkConfig.sh
@@ -1542,7 +1542,7 @@ endfunction()
               "${_brlcad_ext_plief_report}"
             )
           else(_brlcad_ext_set_rpath_result EQUAL 0)
-            message(WARNING "Batch RPATH update failed: ${_brlcad_ext_set_rpath_error}")
+            message(FATAL_ERROR "Batch RPATH update failed: ${_brlcad_ext_set_rpath_error}")
           endif(_brlcad_ext_set_rpath_result EQUAL 0)
         else(P_RPATH_SUPPORTS_CHANGE_REPORT)
           string(SHA256 _brlcad_ext_rpath_log_key "${CMAKE_BINARY_DIR}|${_brlcad_ext_strclear_log_time}|${_brlcad_ext_binary_list}")

@@ -419,7 +419,7 @@ package provide cadwidgets::Accordion 1.0
 	}
 
 	foreach callback $mTogglePanelCallbacks {
-	    catch {$callback $_item $state}
+	    catch {{*}$callback $_item $state}
 	}
 
 	return
@@ -442,7 +442,7 @@ package provide cadwidgets::Accordion 1.0
     }
 
     foreach callback $mTogglePanelCallbacks {
-	catch {$callback $_item $state}
+	catch {{*}$callback $_item $state}
     }
 }
 
