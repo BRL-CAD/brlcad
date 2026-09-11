@@ -385,6 +385,7 @@ package provide Archer 1.0
 	method applyPreferenceSettings {}
 	method cancelPreferences {}
 	method doPreferences {}
+	method preferencePath {}
 	method readPreferences {}
 	method readPreferencesInit {}
 	method writePreferences {}
@@ -9171,24 +9172,33 @@ proc title_node_handler {node} {
 }
 
 
-::itcl::body Archer::readPreferences {} {
+::itcl::body Archer::preferencePath {} {
     global env
+
+    # Tests and embedding hosts need an isolated file without changing the
+    # process-wide meaning of HOME for Tcl, Tk, or child programs.
+    if {[info exists env(ARCHER_PREFS_FILE)] &&
+	$env(ARCHER_PREFS_FILE) ne ""} {
+	return $env(ARCHER_PREFS_FILE)
+    }
+    if {[info exists env(HOME)]} {
+	return [file join $env(HOME) $mPrefFile]
+    }
+    return [file join . $mPrefFile]
+}
+
+
+::itcl::body Archer::readPreferences {} {
     global no_tree_decorate
 
     if {$mViewOnly} {
 	return
     }
 
-    if {[info exists env(HOME)]} {
-	set home $env(HOME)
-    } else {
-	set home .
-    }
-
     readPreferencesInit
 
     # Read in the preferences file.
-    if {![catch {open [file join $home $mPrefFile] r} pfile]} {
+    if {![catch {open [preferencePath] r} pfile]} {
 	set lines [split [read $pfile] "\n"]
 	close $pfile
 
@@ -9215,23 +9225,15 @@ proc title_node_handler {node} {
 
 
 ::itcl::body Archer::writePreferences {} {
-    global env
-
     if {$mViewOnly} {
 	return
-    }
-
-    if {[info exists env(HOME)]} {
-	set home $env(HOME)
-    } else {
-	set home .
     }
 
     updateHPaneFractions
     updateVPaneFractions
 
     # Write the preferences file.
-    if {![catch {open [file join $home $mPrefFile] w} pfile]} {
+    if {![catch {open [preferencePath] w} pfile]} {
 	writePreferencesHeader $pfile
 	writePreferencesBody $pfile
 	close $pfile
