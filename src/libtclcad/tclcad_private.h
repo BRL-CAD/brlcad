@@ -38,6 +38,9 @@ __BEGIN_DECLS
 
 #define TO_UNLIMITED -1
 
+#define TCLCAD_ITCL_MIN_VERSION "4.1.1"
+#define TCLCAD_ITK_MIN_VERSION "4.2.3"
+
 typedef int (*to_wrapper_func_ptr)(struct ged *, int, const char *[], ged_func_ptr, const char *, int);
 #define TO_WRAPPER_FUNC_PTR_NULL (to_wrapper_func_ptr)0
 

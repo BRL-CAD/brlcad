@@ -136,7 +136,7 @@ class Sketch_editor {
     private variable bezier_indices ""
     private variable selection_mode ""
     common pi2 [expr {4.0 * asin( 1.0 )}]
-    common rad2deg  [expr {360.0 / $pi2}]
+    public common rad2deg [expr {360.0 / $pi2}]
 
     constructor { args } {
 	set num_args [llength $args]

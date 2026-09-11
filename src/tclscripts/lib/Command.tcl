@@ -376,7 +376,7 @@
 	    $hist add $cmd
 
 	    if {$itk_option(-cmd_history_callback) != ""} {
-		$itk_option(-cmd_history_callback) $cmd
+		{*}$itk_option(-cmd_history_callback) $cmd
 	    }
 	}
 

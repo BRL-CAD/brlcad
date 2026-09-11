@@ -161,13 +161,17 @@ tclcad_auto_path(Tcl_Interp *interp)
 	p = bu_strdup(bu_vls_cstr(&buffer));
 	bu_ptbl_ins(&lib_subpaths, (long *)p);
 
+#ifdef ITK_VERSION
 	bu_vls_sprintf(&buffer, "itk%s", ITK_VERSION);
 	p = bu_strdup(bu_vls_cstr(&buffer));
 	bu_ptbl_ins(&lib_subpaths, (long *)p);
+#endif
 
+#ifdef IWIDGETS_VERSION
 	bu_vls_sprintf(&buffer, "Iwidgets%s", IWIDGETS_VERSION);
 	p = bu_strdup(bu_vls_cstr(&buffer));
 	bu_ptbl_ins(&lib_subpaths, (long *)p);
+#endif
 
 	bu_vls_sprintf(&buffer, "Tkhtml3.0");
 	p = bu_strdup(bu_vls_cstr(&buffer));

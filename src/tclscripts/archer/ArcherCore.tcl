@@ -26,9 +26,7 @@
 LoadArcherCoreLibs
 package provide ArcherCore 1.0
 
-namespace eval ArcherCore {
-    set cursorWaitCount 0
-
+namespace eval ArcherCoreBootstrap {
     if {![info exists parentClass]} {
 	set parentClass itk::Toplevel
 	set inheritFromToplevel 1
@@ -36,7 +34,7 @@ namespace eval ArcherCore {
 }
 
 ::itcl::class ArcherCore {
-    inherit $ArcherCore::parentClass
+    inherit $::ArcherCoreBootstrap::parentClass
 
     itk_option define -quitcmd quitCmd Command {}
     itk_option define -master master Master "."
@@ -49,6 +47,7 @@ namespace eval ArcherCore {
 	common application ""
 	common splash ""
 	common showWindow 0
+	common inheritFromToplevel $::ArcherCoreBootstrap::inheritFromToplevel
 
 	common TREE_AFFECTED_TAG "affected"
 	common TREE_FULLY_DISPLAYED_TAG "displayed"
@@ -1016,6 +1015,8 @@ namespace eval ArcherCore {
 	method updatePrimitiveLabels {args}
     }
 }
+
+namespace delete ::ArcherCoreBootstrap
 
 # ------------------------------------------------------------
 #                      CONSTRUCTOR
@@ -2046,7 +2047,7 @@ namespace eval ArcherCore {
     $itk_component(ged) transparency_all 1
     $itk_component(ged) bounds_all "-4096 4095 -4096 4095 -4096 4095"
     $itk_component(ged) more_args_callback [::itcl::code $this handleMoreArgs]
-    $itk_component(ged) history_callback [::itcl::code $this addHistory]
+    $itk_component(ged) history_callback {*}[::itcl::code $this addHistory]
 
 
     # RT Control Panel

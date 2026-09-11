@@ -44,10 +44,10 @@ set(
   bgerror.tcl
   itk_redefines.tcl
   tabwindow.itk
+  pkgIndex.tcl
 )
 if(BRLCAD_ENABLE_TCL)
   brlcad_adddata(archer_TCLSCRIPTS tclscripts/archer)
-  pkgindex_build(tclscripts/archer)
   tclindex_build(tclscripts/archer)
 endif(BRLCAD_ENABLE_TCL)
 

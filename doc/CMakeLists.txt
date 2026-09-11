@@ -27,6 +27,7 @@ set(
   notes/editors.txt
   notes/history.txt
   notes/hypot.txt
+  notes/itcl4_migration.txt
   notes/mater.txt
   notes/matrix.txt
   pre_BRL-CAD.bib

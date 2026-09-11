@@ -33,8 +33,8 @@
 
     public {
 	# Override's for the Utility class
-	common utilityMajorType $Archer::pluginMajorTypeUtility
-	common utilityMinorType $Archer::pluginMinorTypeMged
+	common utilityMajorType $::Archer::pluginMajorTypeUtility
+	common utilityMinorType $::Archer::pluginMinorTypeMged
 	common utilityName "AttrGroupsDisplay Utility"
 	common utilityVersion "1.0"
 	common utilityClass AttrGroupsDisplayUtility

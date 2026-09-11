@@ -1,0 +1,294 @@
+BRL-CAD Itcl/Itk 4 migration
+============================
+
+Decision
+--------
+
+BRL-CAD requires Itcl 4.1.1 or newer and Itk 4.2.3 or newer.  Bext uses the
+Itcl 4.3.7 already bundled in Tcl 8.6.18 and separately builds upstream Itk
+4.2.7.  The former Itcl/Itk 3 forks and their copied private headers are not
+needed.
+
+This is preferable to creating a permanent private Itcl/Itk 3 fork.  It keeps
+the Tcl object system on a supported upstream line, removes a large body of
+old compatibility code, and confines BRL-CAD changes to the few source patterns
+that actually differ under Itcl/Itk 4.
+
+History and root cause
+----------------------
+
+The 2016 Tcl/Tk 8.6 migration tried Itcl/Itk 4 and recorded an Archer failure
+in commits bccac5c335cac70a6dd1fac88626a088956a7280 and
+9e9b9733ccd5efc6aad8820fa10fef3b1870c5b9.  The associated upstream report is
+Itcl ticket 61952ca33e9e58df9e0519a0b4583a144e8ec77b.  The test case in that
+ticket concerns access to a default-protected common.  Upstream subsequently
+fixed public common-variable access, and that correction has been present
+since Itcl 4.0.4.
+
+Archer's remaining failure has a narrower cause.  Itcl 3 allowed a Tcl
+namespace to be used as a staging area and later converted to a class of the
+same name.  Itcl 4 does not expose class common variables through the
+pre-existing namespace in the same way.  Archer and ArcherCore both created
+their class namespaces before declaring the classes, and plug-ins initialized
+some class common values with relative namespace references.  That produced
+errors such as "cannot access object-specific info without an object context."
+It did not mean that BRL-CAD's class model as a whole depended on Itcl 3.
+
+The source-wide survey checked all 110 Itcl class declaration sites against
+every literal Tcl namespace declaration.  Comparing their fully qualified names
+found only two same-name class/namespace collisions: Archer and ArcherCore.
+Both now stage pre-class data in short-lived ArcherBootstrap and
+ArcherCoreBootstrap namespaces.  The six affected plug-in initializers use explicitly global
+Archer common-variable names.  No class rewrite is required.
+
+Itk 4 exposed one additional command-resolution collision while constructing
+cadwidgets::Ged.  That class has a public method named keep, while Itk's option
+parser also provides keep and expands an Iwidgets Panedwindow usual declaration
+in the class context.  The class method consequently received option names as
+method arguments.  Ged now explicitly calls the Itk option-parser commands and
+spells out the Panedwindow usual options registered by the bundled Iwidgets
+4.1.1.  A source-wide comparison of option-parser command names with class
+methods found no other class that invokes a colliding parser command.
+
+Iwidgets 4.1.1 also used ``itcl::scope`` to give Tk widgets the names of class
+common arrays.  Under Itcl 4 those arrays live in TclOO's internal variable
+namespace, while ``itcl::scope`` still returns the legacy class-namespace
+name.  Tk then attempted to install a variable trace in a namespace that did
+not exist.  The 30 affected references in eight Iwidgets files now ask Tcl for
+the variable's actual fully qualified name with ``namespace which -variable``.
+The one remaining Iwidgets ``itcl::scope`` use names an object variable and is
+not affected.  Inspection of the current Itcl 4.3 source found the same common
+variable behavior, so raising the version floor would not avoid this source
+fix.
+
+A final difference concerned callbacks produced by ``itcl::code``.  Itcl 3
+attached a private command object representation that allowed a multiword
+callback to be invoked as ``$callback argument``.  Itcl 4 returns an ordinary
+Tcl command prefix, for which the supported invocation is
+``{*}$callback argument``.  The source-wide survey therefore covered callback
+consumers as well as class declarations.  Raw callback invocations in Archer,
+Checker, Accordion, Command, Ged, RtControl, and TkTable now use argument
+expansion; consumers already using ``eval``, ``uplevel``, or handing a script
+directly to Tk need no change.  Ged's history callback setter accepts a list of
+prefix words, so Archer expands the ``itcl::code`` result when registering it
+instead of storing a one-element nested list.  Iwidgets' Finddialog applies the
+same command-prefix rule to its match callback.
+
+A separate 2023 failure after updating Itcl 3.4.4, recorded by commit
+cbb45a1c7170131dfc55fc5dd361c2b3b5eef29f, was a regression on the old branch
+and is not evidence that the Itcl 4 namespace fix is incomplete.
+
+Legacy branch status and assessed backports
+-------------------------------------------
+
+Itcl 3 is not completely abandoned, but it is a sparse maintenance branch
+rather than the actively developed line.  Its last tagged release is 3.4.4
+from November 2022.  The branch then received a thread-safety fix in August
+2024 and constructor/destructor regression coverage in February 2025.  The
+August change replaces Itcl's process-global linked-list pool with Tcl's
+thread-local object cache and would be important if BRL-CAD retained Itcl 3.
+The February change adds tests for existing same-short-name base/derived class
+behavior and does not change production code.  Itk 3 is quieter still: its
+upstream maintenance branch last changed in June 2018.
+
+No legacy backport is necessary after migrating.  The August 2024 Itk 4.2.6
+release marker and formatting change, the 2025 Windows/Tcl-Tk 9/TEA work, and
+the later warning and maintenance fixes are all already included in the Itk
+4.2.7 revision pinned by bext.
+
+Supported versions
+------------------
+
+Itcl 4.1.0 is not a viable minimum for current Itk.  The complete Itk 4.2.3
+suite produced 93 passes and seven failures with Itcl 4.1.0.  The failures
+exercise private/protected components and destroyed-component cleanup.  The
+same 100 tests all pass with Itcl 4.1.1, Itcl 4.1.2, and Tcl's bundled Itcl
+4.2.3.  Current Itk 4.2.7 also passes all 100 tests with Itcl 4.1.1, 4.2.3, and
+Tcl 8.6.18's bundled Itcl 4.3.7.  For that reason the enforced Itcl
+floor is 4.1.1 rather than Itk's historical nominal 4.1 requirement.
+
+Itk 4.2.3 is the oldest Itk release tested for this migration and is the
+runtime floor.  Bext's 4.2.7 snapshot includes the August 2024 4.2.6 release,
+the 2025 Windows/Tcl-Tk 9/TEA updates, and later warning and maintenance fixes.
+Keeping the runtime floor below the bundled version permits compatible system
+packages without weakening the configuration actually shipped by bext.
+
+Private Tcl and Itcl interfaces
+-------------------------------
+
+Itcl 3's use of Tcl private headers was a functional property of that
+implementation, not a fundamental requirement for object-oriented Tcl.  It
+implemented its own resolver, call-frame, namespace, and object machinery by
+directly using Tcl internals.  Replacing those accesses while preserving Itcl
+3 behavior would amount to writing a substantial new object engine.  Itcl 4
+instead builds on TclOO, but it remains part of the Tcl source bundle and still
+uses selected private Tcl interfaces.
+
+Itk 4 also still includes tclInt.h and itclInt.h and directly uses internal
+Itcl structures and functions for component and option behavior.  Those
+headers are needed for the implementation; they are not merely copied there
+to define missing public types.  Consequently, Itk must be compiled against
+the exact Tcl/Itcl source and stub configuration it accompanies.  Bext builds
+Itk only with its own Tcl, Tk, and bundled-Itcl sources; it does not infer
+private source locations from external installations.  A system Tcl/Tk is
+therefore usable only when that system also provides a compatible Itk package.
+BRL-CAD itself includes no Tcl, Itcl, or Itk private headers.
+
+Bext layout
+-----------
+
+Tcl builds and installs its bundled Itcl package.  There is no independent
+Itcl ExternalProject, patch set, copied-header tree, or Itcl submodule.  Itk is
+pinned directly to the official upstream repository and built after Tcl and
+Tk with its native TEA or nmake build.  The small bext Itk patch does only the
+following:
+
+* raises Itk's Itcl stub and package-index floor from 4.1 to 4.1.1;
+* lets the Windows build accept an explicit Itcl source directory;
+* fixes the analogous explicit Tk source-directory handling; and
+* suppresses TEA's direct platform X library dependency because Itk makes no
+  Xlib calls and reaches X only through Tk's stub interface.
+
+Tcl 8.6.18 is sourced from the complete release distribution mirrored by the
+RELEASE branch of BRL-CAD/tcl, not from the core-only Git tag: the tag omits
+``pkgs/itcl*``.  Bext rejects that incomplete layout.  When z_brl is selected
+on Unix, the Tcl configuration probe must find the prefixed ``-lz_brl`` API
+and bext removes ``compat/zlib`` from only the ExternalProject staging copy.
+This prevents bundled zlib headers from producing a mixed configuration while
+leaving the archived source unchanged.
+
+System selection is all-or-nothing whenever Tk is required.  The selected
+tclsh must load Itcl 4.1.1 or newer, FindTCL must locate the matching Tk, and
+Tcl's package path must advertise Itk 4.2.3 or newer.  If automatic selection
+misses either extension floor, bext selects its complete bundled
+Tcl/Tk/Itcl/Itk stack.  An explicitly forced system selection instead fails
+with instructions to install a complete system stack or enable bundled Tcl.
+Bext will not build Itk against system Tcl/Tk private implementation details.
+
+The Itk probe asks Tcl to index packages without executing Itk's Tk-dependent
+load script, so configuration remains display-independent.  Tcl-only component
+builds still require Itcl but do not unnecessarily require Tk or Itk.
+
+Archer and ArcherCore use a checked-in pkgIndex.tcl.  Generating that file with
+pkg_mkIndex would source the Tk-dependent packages at build time.  Itk 4
+initializes Tk when loaded, so a display-less btclsh cannot perform that step.
+A static two-entry index is deterministic and does not make the build depend on
+a display or on whichever Itk happens to appear first in auto_path.
+
+Validation
+----------
+
+The migration was checked at these levels:
+
+* all 247 BRL-CAD and all 57 Iwidgets Tcl-family source files were checked for
+  complete Tcl syntax;
+* all Itcl class names were compared with explicit namespace declarations,
+  Itk option-parser command names with class methods, and stored callback
+  consumers with valid Tcl command-prefix use;
+* the full upstream Itk suites described above were run;
+* libtclcad's non-GUI initialization was tested against the enforced Itcl
+  minimum;
+* Archer package, class, and application initialization were exercised with
+  Xmin and its matching patched Tk build;
+* Archer's exact 99-entry live menu tree, widget inventory, GED draw and view
+  state, background control, and representative dialogs were checked;
+* rtwizard's exact 17-entry base menu, all six image types, common pages, and
+  dynamically rebuilt Steps menu were checked; and
+* MGED's deep fixture exercised its classic Tk UI with tkswrast, X, and ogl,
+  including menu inventory, viewport editing, database-result oracles,
+  framebuffer composition, and embedded raytracing.
+
+The Archer package smoke test loaded Tcl 8.6.14, Tk 8.6.14, Itcl 4.2.3, and Itk
+4.2.7, provided the Archer 1.0 package, initialized 22 classes and six objects,
+and verified that the bootstrap namespaces had been deleted.
+
+The subsequent Tcl/Tk 8.6.18 dependency refresh built and installed the full
+stack with Itcl 4.3.7, Itk 4.2.7, and Iwidgets 4.1.1.  An Xmin smoke test loaded
+all four packages and constructed an Iwidgets dialog.  The complete upstream
+Itk suite passed all 100 tests.  Dynamic-library and symbol inspection
+confirmed that ``libtcl8.6`` linked to ``libz_brl`` and called the prefixed zlib
+entry points.
+
+Both Archer and rtwizard have a semantic Tcl fixture and a separate XTEST
+fixture.  The latter enters input through the X protocol and requires a
+meaningful screen-image change, so the suite does not accidentally prove only
+that internal Tcl methods work.  qged has a deliberately narrower experimental
+smoke test which launches its Qt UI, submits ``draw all.g`` through the console,
+and verifies an OpenGL redraw; its evolving interface is not treated as a
+stable menu or widget contract.
+
+The all-up interactive run used the same Xmin SDK for Tk, X11, and OpenGL.
+This is required because GLX reaches into Xlib's private ``Display``
+representation; a host GLX library cannot safely consume an Xmin client
+object.  ``BRLCAD_X11_PROVIDER=XMIN`` selects the SDK's
+``Xmin::ToolkitX11`` and OSMesa-backed ``Xmin::GL`` targets as one coherent
+implementation.  Dynamic-library inspection confirmed that ``libdm-ogl``
+loaded those SDK libraries rather than host GLX, OpenGL, or Xlib.
+
+Archer itself did not request an abnormally large desktop window.  Its main
+top-level was 1257 by 917 pixels on the 1280 by 960 test screen.  Tkhtml3's
+``htmltcl.c`` instead creates an internal child named ``document`` and gives it
+a fixed 30000 by 30000 logical size.  ``htmldraw.c`` moves that child through a
+large negative/modulo coordinate range as the document scrolls.  This is a
+virtual drawing plane behind the 1100 by 800 Help browser viewport, not an
+Archer top-level or a request for a 30000-pixel monitor.
+
+That geometry was nevertheless a valid Xmin issue.  Xmin formerly allocated a
+dense 32-bit surface for every window, so the child implied 3.6 GB (about 3.35
+GiB) of backing storage and exceeded the 64 MiB per-surface limit.  Oversized
+windows
+now retain their full X geometry in a bounded, tiled sparse surface sized for
+one viewport.  Moving a mapped sparse window generates an Expose event for the
+new visible area because an old tile may have been recycled.  Normal windows
+and pixmaps retain their dense storage and existing allocation limits.
+
+The final interactive sequence opened and closed About Archer, opened the Help
+browser, scrolled its HTML content in both directions without blank recycled
+regions, ran ``draw all.g`` on the sample database, and mouse-rotated the
+rendered geometry.  The OpenGL view updated correctly and neither the former
+Iwidgets common-array trace error nor either command-prefix callback error
+recurred.  The launcher and server reported no diagnostic output.
+
+The upstream Itk suite additionally exposed that the Xmin server handled only
+the 16 basic named colors even though its Xlib facade carried the complete
+generated X.Org color table.  Itk uses standard names including ``linen`` and
+``ivory`` in its option database.  Xmin now shares that table between the
+client and server implementations; the named-color unit and protocol tests
+and all 100 Itk tests pass.
+
+The full Xmin regression run also exposed an unrelated raw-protocol test bug:
+the test did not consume the valid NoExposure events produced by CopyArea and
+CopyPlane before reading subsequent replies.  The corrected test verifies both
+events, and all 34 Xmin tests pass.
+
+Maintenance guidance
+---------------------
+
+When updating Tcl, verify the bundled Itcl version and run the Itk suite
+against that exact build.  When updating Itk, retain the 4.1.1 compatibility
+check unless support for that floor is intentionally dropped.  Configure an
+Xmin build with ``-DBRLCAD_X11_PROVIDER=XMIN`` and the SDK in ``Xmin_ROOT``;
+the selected Tk, Qt, X11, and GLX implementations must always come from that
+one provider.  Any future Tcl source that declares an Itcl class and an
+explicit namespace with the same fully qualified name needs a bootstrap
+namespace or equivalent separation.
+Compare Itk option-parser command names with class methods, paying special
+attention to usual declarations whose bodies are evaluated later.  Invoke
+stored callbacks as command prefixes with argument expansion, and use
+``namespace which -variable`` rather than ``itcl::scope`` when a Tk option must
+name an Itcl 4 common variable.  Run both the non-GUI version test and an
+Xmin-backed Archer package/application test, including Help scrolling, a Ged
+command, and display interaction, for each upgrade.
+
+Upstream references
+-------------------
+
+* Itcl source and history: https://core.tcl-lang.org/itcl/
+* Itcl branch status: https://core.tcl-lang.org/itcl/brlist
+* Original BRL-CAD report:
+  https://core.tcl-lang.org/itcl/tktview/61952ca33e9e58df9e0519a0b4583a144e8ec77b
+* Itk source and history: https://core.tcl-lang.org/itk/
+* Official Itk Git mirror used by bext: https://github.com/tcltk/itk
+
+The Fossil repositories are authoritative; the GitHub repositories are
+read-only mirrors intended to make the same history convenient to consume.
