@@ -22,7 +22,7 @@ if(BUILD_TESTING AND TARGET rtwizard)
 
   # This target also acts like the check target in that it depends on the
   # necessary inputs for the CTest tests
-  add_dependencies(regress-rtwizard rtwizard pixcmp m35.g)
+  add_dependencies(regress-rtwizard rtwizard pixcmp m35.g moss.g)
 
   # All rtwizard tests used the same script
   set(TSCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/regress-rtwiz.cmake.in")
@@ -101,6 +101,15 @@ if(BUILD_TESTING AND TARGET rtwizard)
     EXEC rtwizard
   )
 
+  set(INPUT_FILE "${DATA_DIR}/db/moss.g")
+  brlcad_regression_test(
+    regress-rtwiz_moss_occlusion
+    "rtwizard;moss.g"
+    TEST_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/regress-rtwiz-occlusion.cmake.in"
+    EXEC rtwizard
+  )
+  distclean(${CMAKE_CURRENT_BINARY_DIR}/moss_multi_occlusion.pix ${CMAKE_CURRENT_BINARY_DIR}/moss_multi_occlusion.log)
+
   distclean(${CMAKE_CURRENT_BINARY_DIR}/rtedge.log)
 endif()
 
@@ -115,6 +124,7 @@ cmakefiles(
   m35_edge_only_color_ref.pix
   m35_edge_only_ref.pix
   regress-rtwiz.cmake.in
+  regress-rtwiz-occlusion.cmake.in
   regress-rtwiz-anim.cmake.in
 )
 
