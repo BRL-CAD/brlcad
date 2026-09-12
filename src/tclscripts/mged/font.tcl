@@ -750,15 +750,19 @@ proc font_scheme_ok { id top gui_top } {
 
 proc font_scheme_apply { id } {
     global font_scheme_data
+    global mged_default
 
     # apply the font_scheme font configurations to the gui component fonts
     foreach datum $font_scheme_data {
 	set fsname [lindex $datum 0]($id)
 	set fname [lindex $datum 1]
 
+	set fsconfig [font configure $fsname]
 	if {$fname != {}} {
-	    set fsconfig [font configure $fsname]
 	    eval font configure $fname $fsconfig
+	    set mged_default($fname) $fsconfig
+	} else {
+	    set mged_default(all_font) $fsconfig
 	}
     }
 }
