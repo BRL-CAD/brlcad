@@ -273,48 +273,44 @@ main(int argc, const char **argv)
 	    }
 	}
 
-	// Run gqa equiv.
+	// The grid-spacing check examines all three model axes in one invocation.
 	for (size_t i = 0; i < objs.size(); i++) {
-	    for (int az = 0; az < 180; az+=45) {
-		for (int el = 0; el < 180; el+=45) {
-		    const char **av = (const char **)bu_calloc(6, sizeof(char *), "cmd array");
-		    av[0] = bu_strdup("check");
-		    av[1] = bu_strdup("overlaps");
-		    av[2] = bu_strdup("-g1mm,1mm");
-		    av[3] = bu_strdup("-q");
-		    av[4] = bu_strdup(objs[i]->d_namep);
-		    bu_vls_trunc(gedp->ged_result_str, 0);
-		    if (ged_exec_check(gedp, 5, av) != BRLCAD_OK) {
-			bu_exit(1, "error running ged 'check' command\n");
-		    }
-		    for (int j = 0; j < 5; j++) bu_free((void *)av[j], "str");
-		    bu_free(av, "av array");
+	    const char **av = (const char **)bu_calloc(6, sizeof(char *), "cmd array");
+	    av[0] = bu_strdup("check");
+	    av[1] = bu_strdup("overlaps");
+	    av[2] = bu_strdup("-g1mm,1mm");
+	    av[3] = bu_strdup("-q");
+	    av[4] = bu_strdup(objs[i]->d_namep);
+	    bu_vls_trunc(gedp->ged_result_str, 0);
+	    if (ged_exec_check(gedp, 5, av) != BRLCAD_OK) {
+		bu_exit(1, "error running ged 'check' command\n");
+	    }
+	    for (int j = 0; j < 5; j++) bu_free((void *)av[j], "str");
+	    bu_free(av, "av array");
 
-		    // Split up results into something we can process with regex
-		    std::istringstream sres(bu_vls_cstr(gedp->ged_result_str));
-		    std::string line;
-		    while (std::getline(sres, line)) {
-			std::smatch nvar;
-			if (!std::regex_search(line, nvar, oregex) || nvar.size() != 5) {
-			    continue;
-			}
-			if (verbose) {
-			    bu_log("%zd: %s\n", nvar.size(), line.c_str());
-			    for (size_t m = 0; m < nvar.size(); m++) {
-				bu_log("   %zd: %s\n", m, nvar.str(m).c_str());
-			    }
-			}
-			std::pair<std::string, std::string> key;
-			// sort left and right strings lexicographically to produce unique pairing keys
-			key = (nvar.str(1) < nvar.str(2)) ? std::make_pair(nvar.str(1), nvar.str(2)) :  std::make_pair(nvar.str(2), nvar.str(1));
-			// size = count * depth
-			double val = std::stod(nvar.str(3)) * std::stod(nvar.str(4));
-			unique_pairs.insert(key);
-			pair_sizes.insert(std::make_pair(key, val));
-			if (verbose) {
-			    bu_log("Inserting: %s,%s -> %f\n", key.first.c_str(), key.second.c_str(), val);
-			}
+	    // Split up results into something we can process with regex
+	    std::istringstream sres(bu_vls_cstr(gedp->ged_result_str));
+	    std::string line;
+	    while (std::getline(sres, line)) {
+		std::smatch nvar;
+		if (!std::regex_search(line, nvar, oregex) || nvar.size() != 5) {
+		    continue;
+		}
+		if (verbose) {
+		    bu_log("%zd: %s\n", nvar.size(), line.c_str());
+		    for (size_t m = 0; m < nvar.size(); m++) {
+			bu_log("   %zd: %s\n", m, nvar.str(m).c_str());
 		    }
+		}
+		std::pair<std::string, std::string> key;
+		// sort left and right strings lexicographically to produce unique pairing keys
+		key = (nvar.str(1) < nvar.str(2)) ? std::make_pair(nvar.str(1), nvar.str(2)) :  std::make_pair(nvar.str(2), nvar.str(1));
+		// size = count * depth
+		double val = std::stod(nvar.str(3)) * std::stod(nvar.str(4));
+		unique_pairs.insert(key);
+		pair_sizes.insert(std::make_pair(key, val));
+		if (verbose) {
+		    bu_log("Inserting: %s,%s -> %f\n", key.first.c_str(), key.second.c_str(), val);
 		}
 	    }
 	}

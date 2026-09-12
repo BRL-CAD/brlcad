@@ -13,6 +13,8 @@ changes made.  See document footer for additional details.
 --- 20XX-XX-XX  Release 7.46.0                                     ---
 ----------------------------------------------------------------------
 
+* fixed MGED Overlap Tool multi-object result handling - Cliff Yapp
+* eliminated 16-fold redundant gchecker grid analysis - Cliff Yapp
 * fixed Archer tree handling for object names with spaces - Cliff Yapp
 * fixed RtWizard multi-object edge occlusion handling - Cliff Yapp
 * fixed RtWizard title, About, and preference handling - Cliff Yapp
