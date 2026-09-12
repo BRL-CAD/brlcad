@@ -120,8 +120,7 @@ main(int argc, const char **argv)
     (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
 
     /* Pass on ac/av - for now, handling all that in Tcl/Tk land */
-    ac--; av++;
-    tclcad_set_argv(interp, ac, av);
+    tclcad_set_argv(interp, ac - 1, av + 1);
 
 #ifdef HAVE_WINDOWS_H
     Tk_InitConsoleChannels(interp);
