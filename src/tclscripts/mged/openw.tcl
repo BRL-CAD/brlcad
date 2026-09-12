@@ -2795,16 +2795,17 @@ proc view_ring_add {id} {
 }
 
 proc find_view_index {vid vi_in m} {
-    global mged_default
     upvar $vi_in vi
 
-    # find view index of menu entry whose value is $vid
-    for {set vi 0} {$vi < $mged_default(max_views)} {incr vi} {
+    set last [$m index end]
+    if {$last eq "none"} {
+	return 0
+    }
+    for {set vi 0} {$vi <= $last} {incr vi} {
 	if {[$m entrycget $vi -value] == $vid} {
 	    return 1
 	}
     }
-
     return 0
 }
 
@@ -2838,33 +2839,44 @@ proc view_ring_set_view {id vid vi} {
     }
 }
 
+proc view_ring_reconcile_selection {id} {
+    global view_ring
+
+    set menu .$id.menubar.viewring.select
+    # Stored view IDs are not renumbered, so deleting ID 0 may leave a
+    # different ID as the first valid selection.
+    set last [$menu index end]
+    if {$last eq "none"} {
+	set fallback 0
+    } else {
+	set fallback [$menu entrycget 0 -value]
+    }
+
+    foreach key [list $id "$id,prev" "$id,curr"] {
+	if {![info exists view_ring($key)] ||
+	    ![find_view_index $view_ring($key) unused $menu]} {
+	    set view_ring($key) $fallback
+	}
+    }
+}
+
 proc view_ring_delete {id vid} {
     global mged_gui
-    global mged_default
-    global view_ring
     global mged_collaborators
-
-    #		 winset $mged_gui($id,active_dm)
 
     if {![find_view_index $vid vi .$id.menubar.viewring.select]} {
 	return
     }
 
-    # we're collaborating, so update collaborators
+    set targets [list $id]
     if {[lsearch -exact $mged_collaborators $id] != -1} {
-	foreach cid $mged_collaborators {
-	    .$cid.menubar.viewring.select delete $vi
-	    .$cid.menubar.viewring.delete delete $vi
-	    set mged_gui($cid,views) [lreplace $mged_gui($cid,views) $vi $vi]
-	    set view_ring($cid) 0
-	    set view_ring($cid,prev) 0
-	}
-    } else {
-	.$id.menubar.viewring.select delete $vi
-	.$id.menubar.viewring.delete delete $vi
-	set mged_gui($id,views) [lreplace $mged_gui($id,views) $vi $vi]
-	set view_ring($id) 0
-	set view_ring($id,prev) 0
+	set targets $mged_collaborators
+    }
+    foreach cid $targets {
+	.$cid.menubar.viewring.select delete $vi
+	.$cid.menubar.viewring.delete delete $vi
+	set mged_gui($cid,views) [lreplace $mged_gui($cid,views) $vi $vi]
+	view_ring_reconcile_selection $cid
     }
 }
 
