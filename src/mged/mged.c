@@ -64,6 +64,7 @@
 #include "bu/version.h"
 #include "bu/datetime.h"
 #include "bu/snooze.h"
+#include "bu/str.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
@@ -765,6 +766,32 @@ parse_rset(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 }
 
 
+static int
+mgedrc_has_legacy_set(const char *line)
+{
+    const char *cursor = line;
+
+    while (isspace((unsigned char)*cursor))
+	cursor++;
+
+    if (bu_strncmp(cursor, "set", 3) != 0 ||
+	!isspace((unsigned char)cursor[3]))
+	return 0;
+
+    cursor += 3;
+    while (isspace((unsigned char)*cursor))
+	cursor++;
+
+    /* Legacy MGED startup files used "set name=value". */
+    while (*cursor != '\0' && !isspace((unsigned char)*cursor)) {
+	if (*cursor == '=')
+	    return 1;
+	cursor++;
+    }
+    return 0;
+}
+
+
 /**
  * If an mgedrc file exists, open it and process the commands within.
  * Look first for a Shell environment variable, then for a file in the
@@ -780,7 +807,7 @@ do_rc(struct mged_state *s, int skip_rc, const char *rcfile_override)
     FILE *fp = NULL;
     char *path;
     struct bu_vls str = BU_VLS_INIT_ZERO;
-    int bogus;
+    int legacy_set;
 
 #define ENVRC	"MGED_RCFILE"
 #define RCFILE	".mgedrc"
@@ -828,25 +855,21 @@ do_rc(struct mged_state *s, int skip_rc, const char *rcfile_override)
 	}
     }
 
-    bogus = 0;
-    while (!feof(fp)) {
-	char buf[80];
+    legacy_set = 0;
+    while (!legacy_set) {
+	char buf[BUFSIZ];
 
-	/* Get beginning of line */
-	bu_fgets(buf, 80, fp);
-	/* If the user has a set command with an equal sign, remember to warn */
-	if (strstr(buf, "set") != NULL)
-	    if (strchr(buf, '=') != NULL) {
-		bogus = 1;
-		break;
-	    }
+	if (bu_fgets(buf, sizeof(buf), fp) == NULL)
+	    break;
+	legacy_set = mgedrc_has_legacy_set(buf);
     }
 
     fclose(fp);
-    if (bogus) {
+    if (legacy_set) {
 	bu_log("\nWARNING: The new format of the \"set\" command is:\n");
 	bu_log("    set varname value\n");
-	bu_log("If you are setting variables in your %s, you will ", RCFILE);
+	bu_log("If you are setting variables in %s, you will ",
+	       bu_vls_cstr(&str));
 	bu_log("need to change those\ncommands.\n\n");
     }
     if (Tcl_EvalFile(s->interp, bu_vls_addr(&str)) != TCL_OK) {
