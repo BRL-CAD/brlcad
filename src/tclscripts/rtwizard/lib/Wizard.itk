@@ -138,6 +138,7 @@ namespace eval RtWizard {
 	    method preview {}
 
 	    method UpdateRC {}
+	    method showAbout {}
 
 	    method updateRenderMenu {}
 	    method activateMenu {token}
@@ -338,7 +339,7 @@ namespace eval RtWizard {
 	$itk_component(menubar) add command .help.goAbout \
 	    -label "About..." \
 	    -helpstr "About the RtWizard" \
-	    -command {puts "selected: About..."}
+	    -command "[::itcl::code $this showAbout]"
     }
 
     #
@@ -570,36 +571,15 @@ namespace eval RtWizard {
     # UpdateRC - update .rtwizardrc file with current info. 
     #
     itcl::body Wizard::UpdateRC { } {
-	set existing_file 0
-	if {[info exists ::env(RTWIZARD_RCFILE)]} {
-	    if {[file exists $::env(RTWIZARD_RCFILE)]} {
-	      set fp [open $::env(RTWIZARD_RCFILE) w]
-	      set existing_file $::env(RTWIZARD_RCFILE)
-	    }
-        } else {
-	    if {[info exists ::env(HOME)]} {
-		set homefile [file join $::env(HOME) .rtwizardrc]
-	        if {[file exists $homefile]} {
-		  set fp [open $homefile w]
-	          set existing_file $homefile
-		}
-	   } else {
-	       if {[file exists ".rtwizardrc"]} {
-	         set fp [open ".rtwizardrc" w]
-	         set existing_file ".rtwizardrc"
-	       }
-	   }
-        }
-	if {$existing_file == 0} {
-	    if {[info exists ::env(HOME)]} {
-		set homefile [file join $::env(HOME) .rtwizardrc]
-	        set fp [open $homefile w]
-	        set existing_file $homefile
-	    } else {
-	        set fp [open ".rtwizardrc" w]
-	        set existing_file ".rtwizardrc"
-	    }
-        }
+	if {[info exists ::env(RTWIZARD_RCFILE)] &&
+	    $::env(RTWIZARD_RCFILE) ne ""} {
+	    set config_file $::env(RTWIZARD_RCFILE)
+	} elseif {[info exists ::env(HOME)] && $::env(HOME) ne ""} {
+	    set config_file [file join $::env(HOME) .rtwizardrc]
+	} else {
+	    set config_file [file join [pwd] .rtwizardrc]
+	}
+	set fp [open $config_file w]
 
 	eval $pages($currentPageToken) onDeselect
 	eval $pages($currentPageToken) onSelect
@@ -609,7 +589,14 @@ namespace eval RtWizard {
 	puts $fp "set ::wizard_height $cheight"
 	puts $fp "set ::gpane [list $::gpane]"
 	close $fp
-	tk_messageBox -message "Updated RtWizard configuration file is located at $existing_file" -type ok
+	tk_messageBox -parent . \
+	    -message "Updated RtWizard configuration file is located at $config_file" \
+	    -type ok
+    }
+
+    itcl::body Wizard::showAbout {} {
+	tk_messageBox -parent . -title "About RtWizard" -icon info -type ok \
+	    -message "RtWizard\nBRL-CAD raytracing wizard"
     }
 
 

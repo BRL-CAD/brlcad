@@ -89,6 +89,7 @@ namespace eval RaytraceWizard {
     # Do all that is doable
     #
     proc main { args } {
+	set ::RtWizard::wizard_state(gui_ready) 0
 
 	# As of now we haven't drawn anything
 	set ::first_draw 1
@@ -217,6 +218,7 @@ namespace eval RaytraceWizard {
 	#
 	set ::mgedObj [ArcherCore .\#auto 1 1 1 1]
 	$::mgedObj opendb $::RtWizard::wizard_state(dbFile)
+	wm title . "RtWizard - [file tail $::RtWizard::wizard_state(dbFile)]"
 	$fb inform "MGED object instantiated." 40
 
 	$w add RtWizard::FullColorPage fullColor $::RtWizard::wizard_state(dbFile)
@@ -230,6 +232,7 @@ namespace eval RaytraceWizard {
 
 	$w add RtWizard::LinePage lines $::RtWizard::wizard_state(dbFile)
 	$w select "exp"
+	set ::RtWizard::wizard_state(gui_ready) 1
 	$fb inform "rtwizard ready!" 5
 
 	#
