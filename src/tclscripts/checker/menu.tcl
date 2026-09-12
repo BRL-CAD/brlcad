@@ -43,7 +43,7 @@ catch {delete class OverlapMenu} error
 	method browseOverlapFile {} {}
 	method loadOverlapFile { filename } {}
 	method runOvFileTool {} {}
-	method runCheckerTool {} {}
+	method runCheckerTool {{filename ""}} {}
     }
     private {
 	variable _hintText
@@ -125,7 +125,10 @@ catch {delete class OverlapMenu} error
 #
 # runs the checker tool
 #
-body OverlapMenu::runCheckerTool { } {
+body OverlapMenu::runCheckerTool {{filename ""}} {
+    if {$filename ne ""} {
+	set ovfile $filename
+    }
     set parent ""
 
     if {[winfo exists $parent.checker]} {

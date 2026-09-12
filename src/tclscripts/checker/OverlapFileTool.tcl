@@ -180,10 +180,10 @@ package provide OverlapFileTool 1.0
 #
 body OverlapFileTool::runTools { } {
     # get _objs from list
-    set _objs ""
+    set _objs {}
     foreach obj [$itk_component(objectsList) get 0 end] {
 	set objn [string trim $obj "/"]
-	append _objs $objn
+	lappend _objs $objn
     }
     # check if user passed the objects list
     if { [llength $_objs] == 0 } {
@@ -210,7 +210,7 @@ body OverlapFileTool::runTools { } {
     file delete -force -- $ol_dir
 
     # run overlaps check for all the specified objects
-    set gcheck_status [catch {exec [file join [bu_dir bin] gchecker] "-f" $db_path $_objs} result]
+    set gcheck_status [catch {exec [file join [bu_dir bin] gchecker] -f $db_path {*}$_objs} result]
     if { $gcheck_status != 0 && ![string equal $::errorCode NONE] } {
 	#set gcmd "[file join [bu_dir bin] gchecker] $db_path $_objs"
 	tk_messageBox -type ok -title "Run Error" -message $result
@@ -252,7 +252,7 @@ body OverlapFileTool::runTools { } {
     puts "\nOverlaps file saved: $filename"
 
     # run checker tool
-    eval $runCheckCallback
+    {*}$runCheckCallback $filename
 }
 
 # getNodeChildren is the -querycommand

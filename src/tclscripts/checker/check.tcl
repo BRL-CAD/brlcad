@@ -736,7 +736,7 @@ body GeometryChecker::writeMarks {} {
     file copy -force $tmp_mark_file $mark_file
 
     # verify copy matches temp
-    if {[file size $tmp_mark_file] != [file size $tmp_mark_file]} {
+    if {[file size $tmp_mark_file] != [file size $mark_file]} {
 	puts "ERROR: overwrite of mark file failed"
 	return
     }
