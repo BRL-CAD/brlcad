@@ -55,6 +55,8 @@
 	variable mShader ""
 	#	variable mMaterial ""
 	variable mInherit ""
+	variable mOriginalTree ""
+	variable mOriginalTreeText ""
 	variable mMemberData ""
 	variable mMemberDataRotAet ""
 	variable mMemberDataRotXyz ""
@@ -200,10 +202,13 @@
     }
 
     if {![catch {bu_get_value_by_keyword tree $gdata} _tree]} {
-	set tree [ArcherCore::unpackTree $_tree]
+	set mOriginalTree $_tree
+	set tree [string trim [ArcherCore::unpackTree $_tree]]
     } else {
+	set mOriginalTree ""
 	set tree ""
     }
+	set mOriginalTreeText $tree
     $itk_component(combTreeT) delete 1.0 end
     $itk_component(combTreeT) insert end $tree
 
@@ -267,11 +272,22 @@
 	lappend _attrs inherit "no"
     }
 
-    lappend _attrs tree [ArcherCore::packTree [$itk_component(combTreeT) get 1.0 end]]
+    set tree_text [string trim [$itk_component(combTreeT) get 1.0 end]]
+    if {$tree_text eq $mOriginalTreeText} {
+	# packTree necessarily chooses a new grouping.  Preserve the database's
+	# exact Boolean tree when the user only changed another attribute.
+	set tree $mOriginalTree
+    } else {
+	set tree [ArcherCore::packTree $tree_text]
+    }
+    lappend _attrs tree $tree
 
     if {[catch {eval $itk_option(-mged) adjust $itk_option(-geometryObject) $_attrs}]} {
 	return
     }
+
+    set mOriginalTree $tree
+    set mOriginalTreeText $tree_text
 
     $::ArcherCore::application syncTree
     GeometryEditFrame::updateGeometry
