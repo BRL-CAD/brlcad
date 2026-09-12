@@ -91,7 +91,7 @@ class GeometryBrowser {
 
     protected {
 	# hook to the idle loop callback for automatic updates
-	variable _updateHook
+	variable _updateHook ""
 
 	# menu toggle options
 	variable _showAllGeometry
@@ -176,12 +176,14 @@ body GeometryBrowser::constructor {} {
     # set the window title
     $this configure -title "Geometry Browser"
 
-    itk_component add menubar {
-	menu $itk_interior.menubar
-    }
-
-    menu $itk_interior.menubar.close -title "Close"
-    $itk_interior.menubar.close add command -label "Close" -underline 0 -command ""
+    set menubar [menu $itk_interior.menubar -tearoff 0]
+    menu $itk_interior.menubar.close -tearoff 0 -title "Close"
+    $menubar add cascade -label "File" -underline 0 \
+	-menu $itk_interior.menubar.close
+    $itk_interior.menubar.close add command -label "Close" -underline 0 \
+	-command [list itcl::delete object $this]
+    $this component hull configure -menu $menubar
+    wm protocol $itk_interior WM_DELETE_WINDOW [list itcl::delete object $this]
 
     # set up the adjustable sliding pane with a left and right side
     itk_component add pw_pane {
@@ -1404,7 +1406,7 @@ body GeometryBrowser::validateGeometry { } {
     }
 
     # cancel any prior pending hook
-    after cancel _updateHook
+    after cancel $_updateHook
 
     # if the database is not open, poll a little slower
     if { $dbNotOpen == 1 } {

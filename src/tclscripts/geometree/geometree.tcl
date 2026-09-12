@@ -52,9 +52,10 @@ proc geometree { } {
 	return
     }
 
-    # just to quell the tk name returned and report fatal errors
-    if [ catch { GeometryBrowser $gt } gbName ] {
-	puts $gbName
+    # Suppress the object name returned on success, but preserve construction
+    # errors so callers do not mistake a failed launch for an open browser.
+    if {[catch {GeometryBrowser $gt} gbName gbOptions]} {
+	return -options $gbOptions $gbName
     }
 }
 
