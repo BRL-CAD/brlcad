@@ -418,7 +418,9 @@ proc rtimage {rtimage_dict} {
 	    -c $fgMode \
 	    -c $bgMode
 	if {[llength $occlude_objects]} {
-	    lappend cmd -c "set om=$_occmode" -c "set oo=\"$occlude_objects\""
+	    # bu_structparse needs literal quotes to preserve spaces in its
+	    # variable-length string value.
+	    lappend cmd -c "set om=$_occmode" -c "set oo=\\\"$occlude_objects\\\""
 	}
 	lappend cmd \
 	    -c "viewsize $_viewsize" \
@@ -431,10 +433,8 @@ proc rtimage {rtimage_dict} {
 
 	#puts "RTEDGE: $cmd"
 	
-	#
 	# Run rtedge to generate the full-color version of the ghost image
-	# !!! manually write an rtedge log
-	rtimage_exec_log $cmd rtedge.log
+	rtimage_exec_log $cmd $_log_file
     }
 
     catch {file delete -force $tgi}

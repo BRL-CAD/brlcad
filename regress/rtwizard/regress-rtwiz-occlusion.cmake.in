@@ -1,0 +1,72 @@
+# Values set at CMake configure time
+set(CBDIR "@CMAKE_CURRENT_BINARY_DIR@")
+set(INPUTFILE "@INPUT_FILE@")
+set(BIN_DIR "@BIN_DIR@")
+
+string(REPLACE "\\" "" RTWIZ "${EXEC}")
+if(NOT EXISTS "${RTWIZ}")
+  message(FATAL_ERROR "rtwizard not found at ${RTWIZ}")
+endif()
+
+get_filename_component(BDIR "${RTWIZ}" DIRECTORY)
+string(REGEX REPLACE "${BIN_DIR}$" "" RDIR "${BDIR}")
+set(SRCFILE "${RDIR}/${INPUTFILE}")
+set(TARGET_IMAGE "${CBDIR}/moss_multi_occlusion.pix")
+set(LOG_FILE "${CBDIR}/moss_multi_occlusion.log")
+set(RENDER_SIZE 64)
+
+file(REMOVE "${TARGET_IMAGE}" "${LOG_FILE}")
+execute_process(
+  COMMAND
+    "${RTWIZ}"
+    --no-gui
+    --input-file "${SRCFILE}"
+    --output-file "${TARGET_IMAGE}"
+    --ghost-objects "platform.r,light.r,cone.r"
+    --color-objects "cone.r"
+    --line-objects "cone.r"
+    --type F
+    --benchmark
+    --size "${RENDER_SIZE}"
+    --occlusion 3
+    --log-file "${LOG_FILE}"
+  RESULT_VARIABLE rtwiz_result
+  OUTPUT_VARIABLE rtwiz_stdout
+  ERROR_VARIABLE rtwiz_stderr
+)
+
+if(rtwiz_result)
+  message(
+    FATAL_ERROR
+    "RtWizard multi-object occlusion render failed (${rtwiz_result}):\n${rtwiz_stdout}\n${rtwiz_stderr}"
+  )
+endif()
+if(NOT EXISTS "${TARGET_IMAGE}")
+  message(FATAL_ERROR "RtWizard did not generate ${TARGET_IMAGE}")
+endif()
+if(NOT EXISTS "${LOG_FILE}")
+  message(FATAL_ERROR "RtWizard did not generate ${LOG_FILE}")
+endif()
+
+file(READ "${LOG_FILE}" rtedge_log)
+foreach(expected_line
+    "rtedge: occlusion object 0 = cone.r"
+    "rtedge: occlusion object 1 = light.r"
+    "rtedge: occlusion object 2 = platform.r"
+)
+  string(FIND "${rtedge_log}" "${expected_line}" line_offset)
+  if(line_offset EQUAL -1)
+    message(FATAL_ERROR "Missing '${expected_line}' in RtWizard edge log:\n${rtedge_log}")
+  endif()
+endforeach()
+if(rtedge_log MATCHES "input keyword|could not parse")
+  message(FATAL_ERROR "RtWizard passed a malformed occlusion list to rtedge:\n${rtedge_log}")
+endif()
+
+file(SIZE "${TARGET_IMAGE}" image_size)
+math(EXPR expected_image_size "${RENDER_SIZE} * ${RENDER_SIZE} * 3")
+if(NOT image_size EQUAL expected_image_size)
+  message(FATAL_ERROR "Unexpected ${RENDER_SIZE}x${RENDER_SIZE} RGB image size: ${image_size}")
+endif()
+
+file(REMOVE "${TARGET_IMAGE}" "${LOG_FILE}")

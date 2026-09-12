@@ -418,11 +418,6 @@ Recent Bugs
 * running 'keep' on too many objects (hundreds is causing a usage
   statement (and not doing the keep)
 
-* rtwizard won't display a line overlay if you line object is obscured
-  by another.  Example being to display a vehicle as ghost, crew as
-  solid, and crew as line.  confirmed even when using the other line
-  occlusion settings.
-
 * fbserv is receiving image data very slowly if the framebuffer is a
   remote X24 interface.  could reproduce on mac with the following:
 
@@ -578,11 +573,6 @@ Recent Bugs
 * the findfont directive in gv postscript is reporting font not found
 
 * concave arbs give correct wireframe but do not raytrace correctly.
-
-* rtwizard/rtedge creates incorrect "fuzzy" edge overlay when creating
-  a "Ghost Image with Insert and Lines" that includes a light source
-  and object close to surface (e.g. moss.g; select plane, light, and
-  cone for ghost; select cone for insert and lines.)
 
 * mged's solid illuminate doesn't work when Lighting is turned on
 
