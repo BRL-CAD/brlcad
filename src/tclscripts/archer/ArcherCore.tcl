@@ -330,6 +330,7 @@ namespace eval ArcherCore {
     }
 
     protected {
+	proc getTreeLeafNames     {_tree}
 	proc unpackTreeGuts      {_tree}
 
 	variable mLastSelectedDir ""
@@ -3766,12 +3767,56 @@ namespace eval ArcherCore {
 }
 
 
+::itcl::body ArcherCore::getTreeLeafNames {_tree} {
+    if {$_tree == ""} {
+	return {}
+    }
+
+    set operator [lindex $_tree 0]
+    set tree_length [llength $_tree]
+    switch -- $operator {
+	"l" {
+	    if {$tree_length != 2 && $tree_length != 3} {
+		error "getTreeLeafNames: malformed leaf - $_tree"
+	    }
+
+	    return [list [lindex $_tree 1]]
+	}
+	"u" -
+	"+" -
+	"-" -
+	"^" {
+	    if {$tree_length != 3} {
+		error "getTreeLeafNames: malformed binary tree - $_tree"
+	    }
+
+	    return [concat \
+		[getTreeLeafNames [lindex $_tree 1]] \
+		[getTreeLeafNames [lindex $_tree 2]]]
+	}
+	"!" -
+	"G" -
+	"X" {
+	    if {$tree_length != 2} {
+		error "getTreeLeafNames: malformed unary tree - $_tree"
+	    }
+
+	    return [getTreeLeafNames [lindex $_tree 1]]
+	}
+	default {
+	    error "getTreeLeafNames: unrecognized operator - $operator"
+	}
+    }
+}
+
+
 ::itcl::body ArcherCore::getTreeMembers {_comb {_wflag 0}} {
     if {![$itk_component(ged) exists $_comb]} {
 	return ""
     }
 
-    set tlist [$itk_component(ged) lt -c " " $_comb]
+    set tree [$itk_component(ged) get $_comb tree]
+    set tlist [getTreeLeafNames $tree]
     set tlen [llength $tlist]
 
     if {$tlen >= $mMaxCombMembersShown} {
@@ -6780,9 +6825,9 @@ namespace eval ArcherCore {
 	set len [llength $line]
 
 	if {$len == 2} {
-	    return "l [lindex $line 1]"
+	    return [list l [lindex $line 1]]
 	} elseif {$len == 3} {
-	    return "l [lindex $line 1] [list [lindex $line 2]]"
+	    return [list l [lindex $line 1] [lindex $line 2]]
 	}
 
 	error "packTree: malformed data - $data"
@@ -6793,9 +6838,9 @@ namespace eval ArcherCore {
     set line [lindex $lines 0]
     set len [llength $line]
     if {$len == 2} {
-	set tree "l [lindex $line 1]"
+	set tree [list l [lindex $line 1]]
     } elseif {$len == 18} {
-	set tree "l [lindex $line 1] [list [lrange $line 2 end]]"
+	set tree [list l [lindex $line 1] [lrange $line 2 end]]
     } else {
 	#	error "packTree: malformed line - $line"
     }
@@ -6999,7 +7044,7 @@ namespace eval ArcherCore {
     }
 
     if {[llength $tree] == 2} {
-	return [lindex $tree 1]
+	return [list [lindex $tree 1]]
     }
 
     if {[llength $tree] != 3} {
@@ -7009,7 +7054,7 @@ namespace eval ArcherCore {
     set op [lindex $tree 0]
 
     if {$op == "l"} {
-	return "[lindex $tree 1]\t[lindex $tree 2]"
+	return "[list [lindex $tree 1]]\t[lindex $tree 2]"
     } else {
 	if {$op == "n"} {
 	    set op "+"
