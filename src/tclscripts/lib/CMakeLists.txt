@@ -5,25 +5,17 @@ set(
   ColorEntry.tcl
   ComboBox.tcl
   Command.tcl
-  Database.tcl
-  Db.tcl
-  Display.tcl
-  Dm.tcl
-  Drawable.tcl
   Ged.tcl
   GeometryIO.tcl
   Help.tcl
   Legend.tcl
-  Mged.tcl
   ModelAxesControl.tcl
-  QuadDisplay.tcl
   RtControl.tcl
   RtImage.tcl
   Splash.tcl
   Table.tcl
   TableView.tcl
   TkTable.tcl
-  View.tcl
   ViewAxesControl.tcl
   cursor.tcl
   apply_mat.tcl

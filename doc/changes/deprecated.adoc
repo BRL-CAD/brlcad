@@ -455,8 +455,6 @@ include/raytrace.h librt
 
 
 == 7.20
-tclscripts/lib
-	Mged, Database, Db, Dm, Drawable, Display, QuadDisplay, View -> Ged [deprecated 7.20]
 librt
 	bspline primitive [deprecated 7.20]
 	poly primitive [deprecated 7.20]
