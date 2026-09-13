@@ -19,8 +19,8 @@
 #
 ###
 #
-#        This is a control panel for setting an Mged widget's
-#        view axes attributes.
+#        This is a control panel for setting a cadwidgets::Ged
+#        widget's view axes attributes.
 #
 
 ::itk::usual ViewAxesControl {
@@ -87,9 +87,9 @@
 	return
     }
 
-    if {[catch {$itk_option(-mged) isa Mged} result] ||
-	[catch {$itk_option(-mged) isa cadwidgets::Ged} result]} {
-	error "The view axes control panel, $this, is not associated with an Mged object"
+    if {[catch {$itk_option(-mged) isa cadwidgets::Ged} result] ||
+	!$result} {
+	error "The view axes control panel, $this, is not associated with a Ged widget"
     }
 
     updateControlPanel

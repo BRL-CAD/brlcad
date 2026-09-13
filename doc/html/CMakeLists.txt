@@ -4,15 +4,7 @@ add_doc(toplevel_HTML html REQUIRED "mged")
 set(
   cadwidgets_HTML
   manuals/cadwidgets/Command.html
-  manuals/cadwidgets/Database.html
-  manuals/cadwidgets/Db.html
-  manuals/cadwidgets/Display.html
-  manuals/cadwidgets/Dm.html
-  manuals/cadwidgets/Drawable.html
-  manuals/cadwidgets/Mged.html
-  manuals/cadwidgets/QuadDisplay.html
   manuals/cadwidgets/Splash.html
-  manuals/cadwidgets/View.html
   manuals/cadwidgets/contents.html
   manuals/cadwidgets/index.html
   manuals/cadwidgets/skeleton.html

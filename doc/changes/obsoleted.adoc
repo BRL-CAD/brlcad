@@ -5,6 +5,11 @@ toc::[]
 
 The interfaces listed here have completed their deprecation or minimally impacting transition and are now obsolete.
 
+== 7.46.0
+tclscripts/lib
+	Mged, Database, Db, Dm, Drawable, Display, QuadDisplay, View ->
+	cadwidgets::Ged [deprecated 7.20]
+
 == 7.44.0
 include/rt/geom.h
         removed 'tie' void pointer from rt_bot_internal as TIE
