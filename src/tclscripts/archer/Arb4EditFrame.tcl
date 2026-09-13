@@ -488,7 +488,7 @@
     switch -- $mEditMode \
 	$movePoint1 - \
 	$movePoint2 - \
-	$movePoint2 - \
+	$movePoint3 - \
 	$movePoint4 {
 	    $::ArcherCore::application initFindArbEdge $itk_option(-geometryObjectPath) 1 [::itcl::code $this arbEdgeMoveCallback]
 	} \
@@ -539,15 +539,6 @@
 	return
     }
 
-    #    $itk_option(-mged) put $obj arb8 \
-	V1 [list $mXmin $mYmin $mZmin] \
-	V2 [list $mXmax $mYmin $mZmin] \
-	V3 [list $mXmax $mYmin $mZmax] \
-	V4 [list $mXmin $mYmin $mZmin] \
-	V5 [list $mXmax $mYmax $mZmin] \
-	V6 [list $mXmax $mYmax $mZmin] \
-	V7 [list $mXmax $mYmax $mZmin] \
-	V8 [list $mXmax $mYmax $mZmin]
     $itk_option(-mged) put $obj arb8 \
 	V1 [list $mXmin $mYmin $mZmin] \
 	V2 [list $mXmax $mYmin $mZmin] \
@@ -568,7 +559,7 @@
 	$movePoint2 {
 	    set pt [$itk_option(-mged) get $_obj V2]
 	} \
-	$movePoint2 {
+	$movePoint3 {
 	    set pt [$itk_option(-mged) get $_obj V3]
 	} \
 	$movePoint4 {
