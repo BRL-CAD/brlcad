@@ -55,17 +55,10 @@ struct to_cmdtab {
 // For the test program check_tclcad_cmds
 TCLCAD_EXPORT extern struct to_cmdtab to_cmds[];
 
-extern struct tclcad_obj HeadTclcadObj;
-extern struct tclcad_obj *current_top;
-
-/**
- * function returns truthfully whether the library has been
- * initialized.  calling this routine with setit true considers the
- * library henceforth initialized.  there is presently no way to unset
- * or reset initialization.
- */
-extern int library_initialized(int setit);
-
+extern struct bu_list *tclcad_interp_objects(Tcl_Interp *interp,
+	const char *key, const char *description, int *created);
+extern struct tclcad_obj **tclcad_current_top(void);
+#define current_top (*tclcad_current_top())
 
 /**
  * Evaluates a TCL command, escaping the list of arguments.

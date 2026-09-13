@@ -83,6 +83,13 @@
 #include "./tclcad_private.h"
 #include "./view/view.h"
 
+#define TCLCAD_GED_ASSOC_KEY "libtclcad::ged"
+
+static struct bu_list *
+ged_objects(Tcl_Interp *interp, int *created)
+{
+    return tclcad_interp_objects(interp, TCLCAD_GED_ASSOC_KEY, "GED", created);
+}
 static int to_base2local(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -955,8 +962,9 @@ struct to_cmdtab to_cmds[] = {
 TCLCAD_EXPORT int
 Ged_Init(Tcl_Interp *interp)
 {
-
-    if (library_initialized(0))
+    int created = 0;
+    (void)ged_objects(interp, &created);
+    if (!created)
 	return TCL_OK;
 
     {
@@ -964,14 +972,11 @@ Ged_Init(Tcl_Interp *interp)
 	tclcad_eval_noresult(interp, "set brlcad_version", 1, &version_str);
     }
 
-    BU_LIST_INIT(&HeadTclcadObj.l);
     (void)Tcl_CreateCommand(interp, (const char *)"go_open", to_open_tcl,
 	    (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 
     (void)Tcl_CreateCommand(interp, (const char *)"dm_list", dm_list_tcl,
 	    (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
-
-    (void)library_initialized(1);
 
     return TCL_OK;
 }
@@ -1199,13 +1204,16 @@ to_open_tcl(ClientData UNUSED(clientData),
 	int argc,
 	const char **argv)
 {
+    struct bu_list *objects = ged_objects(interp, NULL);
     struct tclcad_obj *top = NULL;
     struct ged *gedp = NULL;
     const char *dbname = NULL;
 
+    BU_ASSERT(objects);
+
     if (argc == 1) {
 	/* get list of database objects */
-	for (BU_LIST_FOR(top, tclcad_obj, &HeadTclcadObj.l))
+	for (BU_LIST_FOR(top, tclcad_obj, objects))
 	    Tcl_AppendResult(interp, bu_vls_addr(&top->to_gedp->go_name), " ", (char *)NULL);
 
 	return TCL_OK;
@@ -1285,7 +1293,7 @@ to_open_tcl(ClientData UNUSED(clientData),
     bu_vls_strcpy(&top->to_gedp->go_name, argv[1]);
 
     /* append to list of tclcad_obj */
-    BU_LIST_APPEND(&HeadTclcadObj.l, &top->l);
+    BU_LIST_APPEND(objects, &top->l);
 
     return to_create_cmd(interp, top, argv[1]);
 }
@@ -1650,6 +1658,7 @@ to_copy(struct ged *gedp,
     int ret;
     const char *cp;
     struct tclcad_obj *top;
+    struct bu_list *objects = ged_objects(current_top->to_interp, NULL);
     struct bu_vls db_vls = BU_VLS_INIT_ZERO;
     struct bu_vls from_vls = BU_VLS_INIT_ZERO;
     struct bu_vls to_vls = BU_VLS_INIT_ZERO;
@@ -1688,7 +1697,7 @@ to_copy(struct ged *gedp,
 	bu_vls_strncpy(&db_vls, argv[1], cp-argv[1]);
 	bu_vls_strcpy(&from_vls, cp+1);
 
-	for (BU_LIST_FOR(top, tclcad_obj, &HeadTclcadObj.l)) {
+	for (BU_LIST_FOR(top, tclcad_obj, objects)) {
 	    if (BU_STR_EQUAL(bu_vls_addr(&top->to_gedp->go_name), bu_vls_addr(&db_vls))) {
 		from_gedp = top->to_gedp;
 		break;
@@ -1713,7 +1722,7 @@ to_copy(struct ged *gedp,
 	bu_vls_strncpy(&db_vls, argv[2], cp-argv[2]);
 	bu_vls_strcpy(&to_vls, cp+1);
 
-	for (BU_LIST_FOR(top, tclcad_obj, &HeadTclcadObj.l)) {
+	for (BU_LIST_FOR(top, tclcad_obj, objects)) {
 	    if (BU_STR_EQUAL(bu_vls_addr(&top->to_gedp->go_name), bu_vls_addr(&db_vls))) {
 		to_gedp = top->to_gedp;
 		break;
