@@ -28,6 +28,7 @@
 #include <string.h>
 
 #include "bu/cmd.h"
+#include "bu/opt.h"
 #include "rt/primitives/arb8.h"
 #include "../ged_private.h"
 #include "./ged_edit.h"
@@ -143,7 +144,7 @@ edarb_mirface(void *data, int argc, const char *argv[])
     struct directory *dp;
     struct rt_db_internal intern;
     struct rt_arb_internal *arb;
-    static int face;
+    int face;
     fastf_t peqn[7][4];
     static const char *usage = "arb face axis";
 
@@ -215,7 +216,7 @@ edarb_edgedir(void *data, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if (sscanf(argv[3], "%d", &edge) != 1) {
+    if (bu_opt_int(NULL, 1, &argv[3], (void *)&edge) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "bad edge - %s", argv[3]);
 	return BRLCAD_ERROR;
     }
@@ -231,6 +232,12 @@ edarb_edgedir(void *data, int argc, const char *argv[])
     }
 
     type = rt_arb_std_type(&intern, &wdbp->wdb_tol);
+    if (type < ARB4 || type > ARB8) {
+	bu_vls_printf(gedp->ged_result_str, "unrecognized ARB type\n");
+	rt_db_free_internal(&intern);
+	return BRLCAD_ERROR;
+    }
+
     arb = (struct rt_arb_internal *)intern.idb_ptr;
     RT_ARB_CK_MAGIC(arb);
 
@@ -239,8 +246,8 @@ edarb_edgedir(void *data, int argc, const char *argv[])
      * else assume delta_x, delta_y, delta_z
      */
     if (argc == 6) {
-	rot = atof(argv[1]) * DEG2RAD;
-	fb_a = atof(argv[2]) * DEG2RAD;
+	rot = atof(argv[4]) * DEG2RAD;
+	fb_a = atof(argv[5]) * DEG2RAD;
 	slope[0] = cos(fb_a) * cos(rot);
 	slope[1] = cos(fb_a) * sin(rot);
 	slope[2] = sin(fb_a);

@@ -58,6 +58,7 @@
 #include "bu/malloc.h"
 #include "bu/str.h"
 #include "raytrace.h"
+#include "rt/db4.h"
 #include "rt/rt_ecmds.h"
 #include "rt/primitives/arb8.h"
 
@@ -72,6 +73,11 @@
 #define ECMD_ARB_ROTATE_FACE	4015
 
 static const char move_edges_menu_label[] = "Move Edges";
+
+
+enum {
+    ARB8_EDIT_COUNT = 12
+};
 
 
 struct menu_capture {
@@ -681,6 +687,23 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
     if (VEQUAL(a->es_peqn[a->edit_menu], knob_orig_peqn))
 	bu_exit(1, "ERROR: ECMD_ARB_ROTATE_FACE knob edit did not rotate face\n");
     bu_log("ECMD_ARB_ROTATE_FACE knob edit SUCCESS\n");
+
+    /* The public editing entry point must reject invalid type and menu indexes
+     * before using them to address the type-specific editing tables. */
+    plane_t invalid_planes[6] = {{0}};
+    vect_t invalid_position = VINIT_ZERO;
+    bu_vls_trunc(s->log_str, 0);
+    if (rt_arb_edit(s->log_str, arb, NULL, ARB4 - 1, 0,
+	    RT_ARB_EDIT_DEFAULT, invalid_position, invalid_planes, &tol) != 1)
+	bu_exit(1, "ERROR: rt_arb_edit accepted an invalid ARB type\n");
+
+    bu_vls_trunc(s->log_str, 0);
+    if (rt_arb_edit(s->log_str, arb, NULL, ARB8, ARB8_EDIT_COUNT,
+	    RT_ARB_EDIT_DEFAULT, invalid_position, invalid_planes, &tol) != 1)
+	bu_exit(1, "ERROR: rt_arb_edit accepted an invalid edit index\n");
+    if (!strstr(bu_vls_cstr(s->log_str), "bad edit index"))
+	bu_exit(1, "ERROR: rt_arb_edit did not report the invalid edit index\n");
+    bu_log("rt_arb_edit invalid input rejection SUCCESS\n");
 
     rt_edit_destroy(s);
     db_close(dbip);

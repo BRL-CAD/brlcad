@@ -1144,6 +1144,7 @@ rt_arb_edit(struct bu_vls *error_msg_ret,
 	    plane_t planes[6],
 	    const struct bn_tol *tol)
 {
+    static const int arb_edit_counts[ARB8 - ARB4 + 1] = {5, 9, 10, 12, 12};
     int pt1 = 0, pt2 = 0, bp1, bp2, newp, p1, p2, p3;
     const short *edptr;		/* pointer to arb edit array */
     const short *final;		/* location of points to redo */
@@ -1159,8 +1160,14 @@ rt_arb_edit(struct bu_vls *error_msg_ret,
     RT_ARB_CK_MAGIC(arb);
 
     arb_type = rt_arb_edit_type(error_msg_ret, s, arb, arb_type, tol);
-    if (arb_type == 0)
+    if (arb_type < ARB4 || arb_type > ARB8)
 	return 1;
+
+    if (edit_type < 0 || edit_type >= arb_edit_counts[arb_type - ARB4]) {
+	if (error_msg_ret)
+	    bu_vls_printf(error_msg_ret, "rt_arb_edit: bad edit index %d for ARB%d\n", edit_type, arb_type);
+	return 1;
+    }
 
     /* set the pointer */
     switch (arb_type) {
@@ -2472,9 +2479,9 @@ arb_mirror_face_axis(struct rt_arb_internal *arb, fastf_t peqn[7][4], const int 
     int i, j, k;
     int type;
     int uvec[8], svec[11];
-    static int pt[4];
-    static int prod;
-    static vect_t work;
+    int pt[4];
+    int prod;
+    vect_t work;
     struct rt_arb_internal larb;	/* local copy of solid */
 
     /* check which axis */

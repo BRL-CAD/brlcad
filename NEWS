@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 20XX-XX-XX  Release 7.46.0                                     ---
 ----------------------------------------------------------------------
 
+* fixed direct ARB face and edge-direction editing - Cliff Yapp
 * fixed rtwizard startup with framebuffer contention - Cliff Yapp
 * fixed Archer annotation line display updates - Cliff Yapp
 * fixed Archer sketch scale drift in non-mm databases - Cliff Yapp

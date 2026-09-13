@@ -1,0 +1,56 @@
+puts "*** Testing 'edarb edgedir' command ***"
+
+in_arb8 edgedir _angles
+in_arb8 edgedir _vector
+
+set angles_prim edgedir_arb8_angles.s
+set vector_prim edgedir_arb8_vector.s
+set original [db get $angles_prim]
+
+# The two-argument form specifies rotation and fallback angles.  Compare it to
+# the equivalent explicit direction to ensure those arguments reach librt.
+if {[catch {edarb edgedir $angles_prim 1 90 10} result]} {
+    error "angular edarb edgedir failed: $result"
+}
+if {[catch {
+    edarb edgedir $vector_prim 1 0 0.984807753012208 0.17364817766693
+} result]} {
+    error "vector edarb edgedir failed: $result"
+}
+if {[db get $angles_prim] eq $original} {
+    error "angular edarb edgedir did not change its ARB8"
+}
+
+set tolerance 0.001
+foreach attribute {V1 V2 V3 V4 V5 V6 V7 V8} {
+    set angular [db get $angles_prim $attribute]
+    set vector [db get $vector_prim $attribute]
+    set dx [expr {[lindex $angular 0] - [lindex $vector 0]}]
+    set dy [expr {[lindex $angular 1] - [lindex $vector 1]}]
+    set dz [expr {[lindex $angular 2] - [lindex $vector 2]}]
+    set distance [expr {sqrt($dx*$dx + $dy*$dy + $dz*$dz)}]
+    if {$distance > $tolerance} {
+	error "edarb edgedir angle/vector mismatch at $attribute: $angular != $vector"
+    }
+}
+arb_standard_storage_check arb8 $angles_prim
+arb_standard_storage_check arb8 $vector_prim
+
+
+# Invalid edit indices must fail without reaching an ARB edit table out of
+# bounds or changing the object.
+set before_invalid [db get $angles_prim]
+if {![catch {edarb edgedir $angles_prim 13 1 0 0} result]} {
+    error "edarb edgedir accepted invalid edge 13"
+}
+if {[db get $angles_prim] ne $before_invalid} {
+    error "invalid edarb edgedir changed its ARB8"
+}
+
+puts "*** 'edarb edgedir' testing completed ***"
+
+# Local Variables:
+# tab-width: 8
+# mode: Tcl
+# End:
+# ex: shiftwidth=4 tabstop=8

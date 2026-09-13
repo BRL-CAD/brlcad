@@ -116,14 +116,14 @@ get_3pts(struct ged *gedp, fastf_t *plane, const char *argv[], const struct bn_t
 /*
  * Gets information from the array argv[].  Finds the planar equation
  * given rotation and fallback angles, plus a fixed point. Result is
- * stored in 'plane'. The vertices pointed to by 's_recp' are used if
- * a vertex is chosen as fixed point.
+ * stored in 'plane'.  A named ARB vertex may be used as the fixed point.
  */
-static void
+static int
 get_rotfb(struct ged *gedp, fastf_t *plane, const char *argv[], const struct rt_arb_internal *arb)
 {
     fastf_t rota, fb_a;
-    short int i, temp;
+    char *endptr;
+    int i;
     point_t pt;
 
     rota= atof(argv[0]) * DEG2RAD;
@@ -135,16 +135,21 @@ get_rotfb(struct ged *gedp, fastf_t *plane, const char *argv[], const struct rt_
     plane[2] = sin(fb_a);
 
     if (argv[2][0] == 'v') {
-	/* vertex given */
-	/* strip off 'v', subtract 1 */
-	temp = atoi(argv[2]+1) - 1;
-	plane[W]= VDOT(&plane[0], arb->pt[temp]);
+	long vertex = strtol(argv[2] + 1, &endptr, 10);
+
+	if (endptr == argv[2] + 1 || *endptr != '\0' || vertex < 1 || vertex > 8) {
+	    bu_vls_printf(gedp->ged_result_str, "facedef: bad vertex - %s\n", argv[2]);
+	    return -1;
+	}
+	plane[W]= VDOT(&plane[0], arb->pt[vertex - 1]);
     } else {
 	/* definite point given */
 	for (i=0; i<3; i++)
 	    pt[i]=atof(argv[2+i]) * gedp->dbip->dbi_local2base;
 	plane[W]=VDOT(&plane[0], pt);
     }
+
+    return 0;
 }
 
 
@@ -201,8 +206,8 @@ edarb_facedef(void *data, int argc, const char *argv[])
     }
 
     type = rt_arb_std_type(&intern, &wdbp->wdb_tol);
-    if (type != 8 && type != 6 && type != 4) {
-	bu_vls_printf(gedp->ged_result_str, "ARB%d: extrusion of faces not allowed\n", type);
+    if (type < ARB4 || type > ARB8) {
+	bu_vls_printf(gedp->ged_result_str, "unrecognized ARB type\n");
 	rt_db_free_internal(&intern);
 	return BRLCAD_ERROR;
     }
@@ -319,10 +324,14 @@ Enter form of new face definition: ");
 		return GED_MORE;
 	    }
 	    if (get_3pts(gedp, planes[plane], &argv[5], &wdbp->wdb_tol)) {
+		rt_db_free_internal(&intern);
 		return BRLCAD_ERROR;
 	    }
 	    break;
-	case 'c':
+	case 'c': {
+	    const char *arb7_args[3];
+	    const char **rotfb_args = &argv[5];
+
 	    /* special case for arb7, because of 2 4-pt planes meeting */
 	    if (type == 7 && (plane != 0 && plane != 3)) {
 		if (argc < 7) {
@@ -331,17 +340,24 @@ Enter form of new face definition: ");
 		    return GED_MORE;
 		}
 
-		argv[7] = "Release 6";
+		arb7_args[0] = argv[5];
+		arb7_args[1] = argv[6];
+		arb7_args[2] = "v5";
+		rotfb_args = arb7_args;
 		bu_vls_printf(gedp->ged_result_str, "Fixed point is vertex five.\n");
 	    }
-	    /* total # of as under this option */
-	    else if (argc < 10 && (argc > 7 ? argv[7][0] != 'R' : 1)) {
+	    /* total # of args under this option */
+	    else if (argc < 8 || (argv[7][0] != 'v' && argc < 10)) {
 		bu_vls_printf(gedp->ged_result_str, "%s", p_rotfb[argc-5]);
 		rt_db_free_internal(&intern);
 		return GED_MORE;
 	    }
-	    get_rotfb(gedp, planes[plane], &argv[5], arb);
+	    if (get_rotfb(gedp, planes[plane], rotfb_args, arb)) {
+		rt_db_free_internal(&intern);
+		return BRLCAD_ERROR;
+	    }
 	    break;
+	}
 	case 'd':
 	    /* special case for arb7, because of 2 4-pt planes meeting */
 	    if (type == 7)
@@ -358,9 +374,10 @@ Enter form of new face definition: ");
 	    get_nupnt(gedp, planes[plane], &argv[5]);
 	    break;
 	case 'q':
+	    rt_db_free_internal(&intern);
 	    return BRLCAD_OK;
 	default:
-	    bu_vls_printf(gedp->ged_result_str, "facedef: %s is not an option\n", argv[2]);
+	    bu_vls_printf(gedp->ged_result_str, "facedef: %s is not an option\n", argv[4]);
 	    rt_db_free_internal(&intern);
 	    return BRLCAD_ERROR;
     }

@@ -18,6 +18,7 @@ set(
   cp.mged
   draw_e_erase_d_who.mged
   draw.mged
+  edgedir.mged
   erase.mged
   exists.mged
   extrude.mged
