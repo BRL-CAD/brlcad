@@ -34,6 +34,17 @@ proc assert_equal {description actual expected} {
     }
 }
 
+proc assert_coordinates {description actual expected} {
+    if {[llength $actual] != [llength $expected]} {
+	fail "$description: got {$actual}, expected {$expected}"
+    }
+    foreach a $actual e $expected {
+	if {abs($a - $e) > 1.0e-9} {
+	    fail "$description: got {$actual}, expected {$expected}"
+	}
+    }
+}
+
 proc exercise_object_lifecycle {class object args} {
     set is_widget [string match .* $object]
     foreach cycle {first second} {
@@ -79,7 +90,7 @@ proc bgerror {message} {
 }
 
 set tk_version [require_at_least Tk 8.6]
-set itcl_version [require_at_least Itcl 4.1.1]
+set itcl_version [require_at_least Itcl 4.3.0]
 set itk_version [require_at_least Itk 4.2.3]
 set iwidgets_version [require_at_least Iwidgets 4.1.1]
 interp alias {} Hierarchy {} ::iwidgets::Hierarchy
@@ -160,7 +171,11 @@ foreach package {
     GraphEditor
     cadwidgets::Accordion
     cadwidgets::Ged
-    Wizard
+    cadwidgets::GeometryIO
+    cadwidgets::RtImage
+    RtWizard::Wizard
+    Sdialogs
+    Swidgets
     DbPage
     ExamplePage
     FbPage
@@ -188,22 +203,118 @@ if {$SketchEditFrame::rad2deg <= 0.0} {
     fail "Archer SketchEditFrame common variable is not publicly accessible"
 }
 
+# Archer and RtWizard deliberately have separate framework classes.  Loading
+# and constructing both in one interpreter protects that namespace boundary.
+if {![llength [info commands ::Wizard]] &&
+    ![auto_load ::Wizard]} {
+    fail "Archer Wizard class is not autoloadable"
+}
+foreach class {::Wizard ::RtWizard::Wizard} {
+    if {[llength [info commands $class]] != 1} {
+	fail "missing distinct wizard class $class"
+    }
+}
+
 foreach lifecycle {
     {cadwidgets::Accordion .lifecycle_accordion}
+    {cadwidgets::CellPlot .lifecycle_cell_plot}
     {cadwidgets::ColorEntry .lifecycle_color_entry}
     {cadwidgets::ComboBox .lifecycle_combo_box}
     {cadwidgets::Help lifecycle_help}
     {cadwidgets::Legend .lifecycle_legend}
+    {Command .lifecycle_command}
     {GeometryChecker .geometry_checker}
     {GraphEditor .lifecycle_graph_editor}
     {OverlapFileTool .overlap_file_tool}
     {Splash .lifecycle_splash -message Lifecycle}
+    {TabWindow .lifecycle_tab_window}
     {Table lifecycle_table}
     {TableView .lifecycle_table_view {{Column A} {Column B}}}
-    {Wizard .lifecycle_wizard}
+    {sdialogs::Entrydialog .lifecycle_entry_dialog}
+    {sdialogs::Listdialog .lifecycle_list_dialog}
+    {swidgets::Selectlists .lifecycle_select_lists}
+    {swidgets::Tooltip .lifecycle_tooltip}
+    {swidgets::Tree .lifecycle_tree}
+    {swidgets::tkgetdir .lifecycle_directory_chooser}
+    {::Wizard .lifecycle_archer_wizard}
+    {::RtWizard::Wizard .lifecycle_rtwizard_wizard}
 } {
     exercise_object_lifecycle {*}$lifecycle
 }
+
+# Exercise the retained cadwidgets classes as functional components, not just
+# as parse/load probes.
+cadwidgets::CellPlot .functional_cell_plot \
+    -range {0 10} -plotWidth 100 -plotHeight 50
+set cell [.functional_cell_plot createCell 1 2 3 4 -fill red]
+assert_coordinates "CellPlot rectangular coordinate transform" \
+    [.functional_cell_plot coords $cell] {10 30 30 40}
+::itcl::delete object .functional_cell_plot
+
+array set ::cadwidget_table_data {}
+cadwidgets::TkTable .functional_tk_table ::cadwidget_table_data \
+    {{Name} {Value}} -rows 3
+.functional_tk_table setTableVal 1,1 alpha
+assert_equal "TkTable data update" $::cadwidget_table_data(1,1) alpha
+.functional_tk_table selectSingleRow 1
+assert_equal "TkTable row selection" \
+    [.functional_tk_table getSelectedRows] 1
+::itcl::delete object .functional_tk_table
+unset ::cadwidget_table_data
+
+sdialogs::Listdialog .functional_list_dialog -label Selection
+.functional_list_dialog insert end alpha
+.functional_list_dialog insert end beta
+set listbox [.functional_list_dialog component listbox]
+$listbox selection set 1
+assert_equal "Listdialog selection" [.functional_list_dialog get] beta
+::itcl::delete object .functional_list_dialog
+
+swidgets::Selectlists .functional_select_lists -unique true
+.functional_select_lists insert end {beta alpha beta}
+.functional_select_lists select alpha
+assert_equal "Selectlists transfer" [.functional_select_lists get] alpha
+::itcl::delete object .functional_select_lists
+
+set source_database [file join [bu_dir data] db m35.g]
+set test_database [file join [pwd] itcl4-cadwidgets-[pid].g]
+set copied_database [file join [pwd] itcl4-cadwidgets-copy-[pid].g]
+file delete -force $test_database $copied_database
+file copy $source_database $test_database
+
+cadwidgets::Ged .functional_ged $test_database
+pack .functional_ged -fill both -expand yes
+update
+assert_equal "Ged database query" [.functional_ged exists all.g] 1
+.functional_ged draw all.g
+.functional_ged autoview
+update
+
+foreach lifecycle {
+    {ModelAxesControl .functional_model_axes -mged .functional_ged}
+    {ViewAxesControl .functional_view_axes -mged .functional_ged}
+    {RtControl .functional_rt_control -mged .functional_ged}
+} {
+    exercise_object_lifecycle {*}$lifecycle
+}
+
+assert_equal "GeometryIO .g load" \
+    [cadwidgets::geom_load $test_database 0] $test_database
+assert_equal "GeometryIO .g save" \
+    [cadwidgets::geom_save $test_database $copied_database .functional_ged] \
+    $copied_database
+assert_equal "GeometryIO .g copy size" [file size $copied_database] \
+    [file size $test_database]
+set unsupported_file [file join [pwd] itcl4-cadwidgets-[pid].unsupported]
+if {![catch {
+    cadwidgets::geom_save $test_database $unsupported_file .functional_ged
+} unsupported_message] ||
+    [string first "is not supported" $unsupported_message] < 0} {
+    fail "GeometryIO did not reject an unsupported output format"
+}
+
+::itcl::delete object .functional_ged
+file delete -force $test_database $copied_database $unsupported_file
 
 pack .checkbox .radiobox .combobox .spinner .spinint .searchtext .watch \
     -side top -fill x
