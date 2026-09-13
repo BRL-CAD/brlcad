@@ -25,51 +25,55 @@
 
 ::itcl::class sdialogs::Stddlgs {
     public {
-	proc errordlg {title message {buttons "ok"} {args ""}}
-	proc warningdlg {title message {buttons "ok"} {args ""}}
-	proc infodlg {title message {buttons "ok"} {args ""}}
-	proc questiondlg {title message {buttons "yesno"} {args ""}}
-	proc messagedlg {title icon buttons message {args ""}}
+	proc errordlg {title message {buttons "ok"} args}
+	proc warningdlg {title message {buttons "ok"} args}
+	proc infodlg {title message {buttons "ok"} args}
+	proc questiondlg {title message {buttons "yesno"} args}
+	proc messagedlg {title icon buttons message args}
     }
 }
 
-::itcl::body sdialogs::Stddlgs::errordlg {title message {buttons "ok"} {args ""}} {
+::itcl::body sdialogs::Stddlgs::errordlg {title message {buttons "ok"} args} {
     return [Stddlgs::messagedlg $title \
 		error \
 		$buttons \
 		$message \
-		$args]
+		{*}$args]
 }
 
-::itcl::body sdialogs::Stddlgs::warningdlg {title message {buttons "ok"} {args ""}} {
+::itcl::body sdialogs::Stddlgs::warningdlg {title message {buttons "ok"} args} {
     return [Stddlgs::messagedlg $title \
 		warning \
 		$buttons \
 		$message \
-		$args]
+		{*}$args]
 }
 
-::itcl::body sdialogs::Stddlgs::infodlg {title message {buttons "ok"} {args ""}} {
+::itcl::body sdialogs::Stddlgs::infodlg {title message {buttons "ok"} args} {
     return [Stddlgs::messagedlg $title \
 		info \
 		$buttons \
 		$message \
-		$args]
+		{*}$args]
 }
 
-::itcl::body sdialogs::Stddlgs::questiondlg {title message {buttons "yesno"} {args ""}} {
+::itcl::body sdialogs::Stddlgs::questiondlg {title message {buttons "yesno"} args} {
     return [Stddlgs::messagedlg $title \
 		question \
 		$buttons \
 		$message \
-		$args]
+		{*}$args]
 }
 
-::itcl::body sdialogs::Stddlgs::messagedlg {title icon buttons message {args ""}} {
-    return [eval tk_messageBox -title {$title} \
-		-icon {$icon} \
-		-type {$buttons} \
-		-message {$message} [lindex $args 0]]
+::itcl::body sdialogs::Stddlgs::messagedlg {title icon buttons message args} {
+    if {[llength $args] == 1} {
+	set args [lindex $args 0]
+    }
+    return [tk_messageBox \
+	-title $title \
+	-icon $icon \
+	-type $buttons \
+	-message $message {*}$args]
 }
 
 
