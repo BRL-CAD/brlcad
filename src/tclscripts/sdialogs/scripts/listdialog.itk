@@ -100,7 +100,7 @@ proc ::sdialogs::listdialog {pathName args} {
 ::itcl::body sdialogs::Listdialog::get {} {
     set selected ""
     foreach elem [$itk_component(listbox) curselection] {
-	lappend selected [$itk_component(list) get $elem]
+	lappend selected [$itk_component(listbox) get $elem]
     }
     return $selected
 }
