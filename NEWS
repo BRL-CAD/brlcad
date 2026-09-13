@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 20XX-XX-XX  Release 7.46.0                                     ---
 ----------------------------------------------------------------------
 
+* fixed Archer sketch scale drift in non-mm databases - Cliff Yapp
 * fixed toggle arrow callbacks during setup - Cliff Yapp
 * fixed Tcl dialogs with multi-word titles and messages - Cliff Yapp
 * fixed Archer Tank Wizard gun generation - Cliff Yapp
