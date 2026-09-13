@@ -64,8 +64,8 @@ itcl::class swidgets::Togglearrow {
     private {
 	method _cleararrows {}
 	method _createpolys {}
-	method _open {}
-	method _close {}
+	method _open {{notify 1}}
+	method _close {{notify 1}}
     }
 }
 
@@ -145,10 +145,10 @@ proc ::swidgets::togglearrow {args} {
 ::itcl::configbody swidgets::Togglearrow::togglestate {
     switch $itk_option(-togglestate) {
 	"open" {
-	    _open
+	    _open 0
 	}
 	"closed" {
-	    _close
+	    _close 0
 	}
 	default {
 	    error "bad togglestate option \"$itk_option(-togglestate)\":\
@@ -202,7 +202,7 @@ proc ::swidgets::togglearrow {args} {
     }
 }
 
-::itcl::body swidgets::Togglearrow::_open {} {
+::itcl::body swidgets::Togglearrow::_open {{notify 1}} {
     # if disabled ... do nothing
     if {$itk_option(-state) == "disabled"} {return}
 
@@ -214,12 +214,12 @@ proc ::swidgets::togglearrow {args} {
     set itk_option(-togglestate) "open"
 
     # perform command
-    if {$itk_option(-command) != {}} {
+    if {$notify && $itk_option(-command) != {}} {
 	eval $itk_option(-command)
     }
 }
 
-::itcl::body swidgets::Togglearrow::_close {} {
+::itcl::body swidgets::Togglearrow::_close {{notify 1}} {
     # if disabled ... do nothing
     if {$itk_option(-state) == "disabled"} {return}
 
@@ -231,7 +231,7 @@ proc ::swidgets::togglearrow {args} {
     set itk_option(-togglestate) "closed"
 
     # perform command
-    if {$itk_option(-command) != {}} {
+    if {$notify && $itk_option(-command) != {}} {
 	eval $itk_option(-command)
     }
 }
