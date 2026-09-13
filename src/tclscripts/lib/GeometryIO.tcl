@@ -176,7 +176,7 @@ proc geom_load {input_file gui_feedback} {
 # and may only want a subset.
 proc geom_save {input_file output_file db_component} {
 
-    set binpath [bu_dir bin] ]
+    set binpath [bu_dir bin]
 
     set output_filename [file tail $output_file]
     set output_dir [file dirname $output_file]
@@ -190,9 +190,9 @@ proc geom_save {input_file output_file db_component} {
     # Don't do anything except a copy if we're give a file that's already a .g file
     if {[string compare $output_ext ".g"] == 0} {
 	file copy -force $input_file $output_file
-	if {[file exists $output_file]
+	if {[file exists $output_file]} {
 	    return $output_file
-        } else {
+	} else {
 	    return -code error "Error saving as $output_file"
 	}
     }
@@ -219,6 +219,9 @@ proc geom_save {input_file output_file db_component} {
 		append cmd [lindex $tops_list $i] { }
 	    }
             catch {eval exec $cmd} _conv_log
+	}
+	default {
+	    return -code error "File format $output_ext is not supported."
 	}
     }
 

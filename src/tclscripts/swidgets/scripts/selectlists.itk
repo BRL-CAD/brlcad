@@ -51,7 +51,7 @@ itcl::class swidgets::Selectlists {
     itk_option define -state state State normal
 
     public {
-	method component {name}
+	method component {{name ""}}
 	method insert {index args}
 	method clear {}
 	method select {index}
@@ -319,8 +319,9 @@ proc ::swidgets::selectlists {args} {
     }
 }
 
-::itcl::body swidgets::Selectlists::component {name} {
+::itcl::body swidgets::Selectlists::component {{name ""}} {
     switch -- $name {
+	""         {return}
 	"add"      {return $itk_component(btn_add)}
 	"all"      {return $itk_component(btn_all)}
 	"remove"   {return $itk_component(btn_del)}

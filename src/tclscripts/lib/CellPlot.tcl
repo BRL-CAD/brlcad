@@ -106,9 +106,9 @@
     set tx1 [expr {($x1 - $min) * $sf * $itk_option(-plotWidth)}]
     set tx2 [expr {($x2 - $min) * $sf * $itk_option(-plotWidth)}]
     set ty1 [expr {$itk_option(-plotHeight) - \
-		       (($y1 - $min) * $sf * $itk_option(-plotWidth))}]
+		       (($y1 - $min) * $sf * $itk_option(-plotHeight))}]
     set ty2 [expr {$itk_option(-plotHeight) - \
-		       (($y2 - $min) * $sf * $itk_option(-plotWidth))}]
+		       (($y2 - $min) * $sf * $itk_option(-plotHeight))}]
     return "$tx1 $ty1 $tx2 $ty2"
 }
 
