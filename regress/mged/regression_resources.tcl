@@ -415,4 +415,35 @@ if {![info exists make_primitives_list]} {
       puts "  PASS: \[$prim\] NMG Next EU (navigation)"
   }
 
+  # Compact ARBs use repeated points in their eight storage slots.  Check both
+  # the logical type and the public slot convention after an editing operation.
+  proc arb_standard_storage_check {arb_type prim} {
+    set tolerance 0.001
+
+    if {[get_type $prim] ne $arb_type} {
+      error "$prim is not an $arb_type after editing"
+    }
+
+    set duplicate_groups [dict create \
+      arb4 {{V1 V4} {V5 V6 V7 V8}} \
+      arb5 {{V5 V6 V7 V8}} \
+      arb6 {{V5 V6} {V7 V8}} \
+      arb7 {{V5 V8}} \
+      arb8 {}]
+
+    foreach group [dict get $duplicate_groups $arb_type] {
+	set expected [db get $prim [lindex $group 0]]
+	foreach attribute [lrange $group 1 end] {
+	  set actual [db get $prim $attribute]
+	  set dx [expr {[lindex $actual 0] - [lindex $expected 0]}]
+	  set dy [expr {[lindex $actual 1] - [lindex $expected 1]}]
+	  set dz [expr {[lindex $actual 2] - [lindex $expected 2]}]
+	  set distance [expr {sqrt($dx*$dx + $dy*$dy + $dz*$dz)}]
+	  if {$distance > $tolerance} {
+	    error "$prim has nonstandard $arb_type storage: [lindex $group 0]=$expected, $attribute=$actual"
+	  }
+	}
+    }
+  }
+
 }

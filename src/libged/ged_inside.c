@@ -956,7 +956,6 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
 
 	case ID_ARB8: {
 	    const char **prompt = p_arb6;
-	    struct rt_arb_internal *arb = (struct rt_arb_internal *)ip->idb_ptr;
 
 	    nface = 6;
 
@@ -972,7 +971,6 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
 		case 6:
 		    prompt = p_arb6;
 		    nface = 5;
-		    VMOVE(arb->pt[5], arb->pt[6]);
 		    break;
 
 		case 5:
@@ -983,7 +981,6 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
 		case 4:
 		    prompt = p_arb4;
 		    nface = 4;
-		    VMOVE(arb->pt[3], arb->pt[4]);
 		    break;
 	    }
 

@@ -498,6 +498,12 @@ puts "*** Testing broad MGED CSG edit integration ***"
       return V$logical_vertex
   }
 
+  proc csg_edit_arb_result {arb_type geometry_validator prim} {
+      uplevel #0 [linsert $geometry_validator end $prim]
+      arb_standard_storage_check $arb_type $prim
+  }
+
+
   # Run an MGED primitive-edit command sequence against a disposable copy.
   # The common assertion verifies persistence; a required validator checks a
   # known geometric outcome after MGED accepts librt's result.  Requiring the
@@ -1006,6 +1012,7 @@ foreach {arb_type menu_items} $csg_arb_move_options {
             [list press {Move Edges}] \
             [list press $menu_item] \
             [linsert $move_point 0 p]]
+        set validator [list csg_edit_arb_result $arb_type $validator]
         csg_edit_sequence_check $prim $menu_item $commands $validator
     }
 }
@@ -1042,6 +1049,7 @@ foreach {arb_type menu_items} $csg_arb_move_face_options {
             [list press $menu_item] \
             [linsert $move_point 0 p]]
         set validator [list csg_edit_arb_face_through $face_vertices $move_point]
+        set validator [list csg_edit_arb_result $arb_type $validator]
         csg_edit_sequence_check $prim $menu_item $commands $validator
     }
 }
@@ -1118,6 +1126,7 @@ foreach {arb_type menu_items} $csg_arb_rotate_face_options {
             set validator [list csg_edit_arb_face_normal_at $prim $face_vertices \
                 $fixed_vertex $csg_arb5_345_target_normal]
         }
+        set validator [list csg_edit_arb_result $arb_type $validator]
         csg_edit_sequence_check $prim $menu_item $commands $validator
     }
 }

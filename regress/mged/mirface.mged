@@ -8,5 +8,46 @@ tra -10000  0 0
 mirface 1234 x
 accept
 Z
+arb_standard_storage_check arb8 mirface_arb8.s
+
+
+# Exercise every supported mirror branch.  Faces lying on the coordinate plane
+# are translated first so mirroring creates a solid instead of a zero-thickness
+# result.
+set arb_mirface_cases {
+    arb6 125  z
+    arb6 346  z
+    arb8 1234 x
+    arb8 5678 x
+    arb8 1256 z
+    arb8 4378 z
+    arb8 2367 y
+    arb8 1548 y
+}
+set arb_mirface_case_id 0
+foreach {arb_type face axis} $arb_mirface_cases {
+    incr arb_mirface_case_id
+    set suffix "_direct_$arb_mirface_case_id"
+    in_$arb_type mirface $suffix
+    set prim "mirface_${arb_type}${suffix}.s"
+
+    if {$face == 346 || $face == 4378} {
+	Z
+	e $prim
+	sed $prim
+	tra 0 0 1
+	accept
+	Z
+    }
+    set before [db get $prim]
+
+    if {[catch {edarb mirface $prim $face $axis} result]} {
+	error "edarb mirface failed for $arb_type face $face: $result"
+    }
+    if {[db get $prim] eq $before} {
+	error "edarb mirface did not change $arb_type face $face"
+    }
+    arb_standard_storage_check $arb_type $prim
+}
 
 puts "*** 'mirface' testing completed ***"
