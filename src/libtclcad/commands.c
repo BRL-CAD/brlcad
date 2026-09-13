@@ -1304,7 +1304,7 @@ to_base2local(struct ged *gedp,
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    bu_vls_printf(gedp->ged_result_str, "%lf", current_top->to_gedp->dbip->dbi_base2local);
+    bu_vls_printf(gedp->ged_result_str, "%.17g", current_top->to_gedp->dbip->dbi_base2local);
 
     return BRLCAD_OK;
 }
@@ -3800,7 +3800,7 @@ to_local2base(struct ged *gedp,
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    bu_vls_printf(gedp->ged_result_str, "%lf", current_top->to_gedp->dbip->dbi_local2base);
+    bu_vls_printf(gedp->ged_result_str, "%.17g", current_top->to_gedp->dbip->dbi_local2base);
 
     return BRLCAD_OK;
 }
