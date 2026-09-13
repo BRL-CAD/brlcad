@@ -63,6 +63,12 @@ if {[llength [info procs rtwiz_port_occupied]] == 0} {
 
 namespace eval RtWizard {
 
+    # FbPage is independently loadable, so it cannot rely on the rtwizard
+    # launcher to initialize optional diagnostic state.
+    if {![info exists wizard_state(verbose)]} {
+	set wizard_state(verbose) 0
+    }
+
     package provide FbPage 1.0
 
     #
