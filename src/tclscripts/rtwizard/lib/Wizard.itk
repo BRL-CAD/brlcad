@@ -35,6 +35,7 @@ package require Iwidgets
 
 namespace eval RtWizard {
 
+    package provide RtWizard::Wizard 1.0
     package provide Wizard 1.0
 
     #
@@ -42,7 +43,7 @@ namespace eval RtWizard {
     #          Wizard class.
     #
     proc wizard {pathName args} {
-	uplevel Wizard $pathName $args
+	uplevel ::RtWizard::Wizard $pathName $args
     }
 
     #
@@ -107,7 +108,7 @@ namespace eval RtWizard {
     }
 
 
-    ::itcl::class Wizard {
+    ::itcl::class ::RtWizard::Wizard {
 	inherit ::itk::Widget
 
 	public {
@@ -115,6 +116,7 @@ namespace eval RtWizard {
 	    # methods
 	    #
 	    constructor {args} {}
+	    destructor {}
 	    method add {type token args}
 	    method delete {token}
 	    method enable {token}
@@ -233,6 +235,12 @@ namespace eval RtWizard {
 	pack $itk_component(helpThing) -fill x
 
 	set wizardInstance $this
+    }
+
+    itcl::body Wizard::destructor {} {
+	if {$::wizardInstance eq $this} {
+	    set ::wizardInstance ""
+	}
     }
 
     #

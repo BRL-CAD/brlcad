@@ -56,7 +56,7 @@ namespace eval RaytraceWizard {
     package require Itk
     package require Iwidgets
 
-    package require Wizard 1.0
+    package require RtWizard::Wizard 1.0
     package require DbPage
     package require FbPage
     package require HelpPage
