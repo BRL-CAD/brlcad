@@ -325,7 +325,7 @@ package provide cadwidgets::Ged 1.0
 	method mat_vec_ortho {args}
 	method mat_vec_perp {args}
 	method mat_scale_about_pnt {args}
-	method mat_xform_about_pt {args}
+	method mat_xform_about_pnt {args}
 	method mat_arb_rot {args}
 	method match {args}
 	method mater {args}
@@ -2269,8 +2269,8 @@ package provide cadwidgets::Ged 1.0
     uplevel \#0 mat_scale_about_pnt $args
 }
 
-::itcl::body cadwidgets::Ged::mat_xform_about_pt {args} {
-    uplevel \#0 mat_xform_about_pt $args
+::itcl::body cadwidgets::Ged::mat_xform_about_pnt {args} {
+    uplevel \#0 mat_xform_about_pnt $args
 }
 
 ::itcl::body cadwidgets::Ged::mat_arb_rot {args} {
@@ -6353,7 +6353,7 @@ package provide cadwidgets::Ged 1.0
     $help add mat_vec_ortho	{{vec} {returns a vector orthogonal to vec}}
     $help add mat_vec_perp	{{vec} {returns a vector perpendicular to vec}}
     $help add mat_scale_about_pnt {{pt scale} {}}
-    $help add mat_xform_about_pt {{xform pt} {}}
+    $help add mat_xform_about_pnt {{xform pt} {}}
     $help add mat_arb_rot	{{pt dir angle} {returns a rotation matrix}}
     $help add mater		{{region shader R G B inherit} {modify region's material information}}
     $help add mirror		{{[-p point] [-d dir] [-x] [-y] [-z] [-o offset] old new}	{mirror object along the specified axis}}

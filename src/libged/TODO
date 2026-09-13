@@ -140,8 +140,8 @@ Be specific.
     mat_lookat
     mat_vec_ortho
     mat_vec_perp
-    mat_scale_about_pt
-    mat_xform_about_pt
+    mat_scale_about_pnt
+    mat_xform_about_pnt
     mat_arb_rot
     quat_mat2quat
     quat_quat2mat

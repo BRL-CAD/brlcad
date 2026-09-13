@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 20XX-XX-XX  Release 7.46.0                                     ---
 ----------------------------------------------------------------------
 
+* fixed Archer Tank Wizard gun generation - Cliff Yapp
 * fixed MGED and Archer sketch arc tangency editing - Cliff Yapp
 * fixed Archer ARB4 point 3 editing - Cliff Yapp
 * fixed ARB4 storage from make and mk_arb4 - Cliff Yapp
