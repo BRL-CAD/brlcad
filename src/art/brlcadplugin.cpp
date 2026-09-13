@@ -365,7 +365,6 @@ BrlcadObject::intersect(
     }
 }
 
-
 /* Compute intersection between ray and object surface (SIMPLE) */
 bool
 BrlcadObject::intersect(const asr::ShadingRay& ray) const
