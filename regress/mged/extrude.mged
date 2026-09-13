@@ -7,5 +7,40 @@ sed extrude_arb8.s
 extrude 1234 100
 accept
 Z
+arb_standard_storage_check arb8 extrude_arb8.s
+
+
+# Cover every valid extrusion branch, including each ARB4 face that promotes to
+# ARB6, and confirm that the edited primitive retains standard storage.
+set arb_extrude_cases {
+    arb4 123  arb6
+    arb4 124  arb6
+    arb4 134  arb6
+    arb4 234  arb6
+    arb6 125  arb6
+    arb6 346  arb6
+    arb8 1234 arb8
+    arb8 5678 arb8
+    arb8 1256 arb8
+    arb8 4378 arb8
+    arb8 2367 arb8
+    arb8 1548 arb8
+}
+set arb_extrude_case_id 0
+foreach {arb_type face expected_type} $arb_extrude_cases {
+    incr arb_extrude_case_id
+    set suffix "_direct_$arb_extrude_case_id"
+    in_$arb_type extrude $suffix
+    set prim "extrude_${arb_type}${suffix}.s"
+    set before [db get $prim]
+
+    if {[catch {edarb extrude $prim $face 1} result]} {
+	error "edarb extrude failed for $arb_type face $face: $result"
+    }
+    if {[db get $prim] eq $before} {
+	error "edarb extrude did not change $arb_type face $face"
+    }
+    arb_standard_storage_check $expected_type $prim
+}
 
 puts "*** 'extrude' testing completed ***"

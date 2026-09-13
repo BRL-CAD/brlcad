@@ -204,6 +204,9 @@ const short local_arb4_edge_vertex_mapping[6][2] = {
 };
 
 
+static void arb_build_equiv_pts(const struct rt_arb_internal *, fastf_t, int [8]);
+
+
 #ifdef USE_OPENCL
 /* largest data members first */
 struct clt_arb_specific {
@@ -361,44 +364,34 @@ rt_arb_std_type(const struct rt_db_internal *ip, const struct bn_tol *tol)
 void
 rt_arb_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
-
     struct rt_arb_internal *aip;
     struct bn_tol tmp_tol;
-    int arb_type = -1;
+    vect_t sum = VINIT_ZERO;
+    int equiv_pts[8];
+    int unique_count = 0;
     int i;
-    fastf_t x_avg, y_avg, z_avg;
 
     if (!cent || !ip)
 	return;
     aip = (struct rt_arb_internal *)ip->idb_ptr;
     RT_ARB_CK_MAGIC(aip);
 
-    /* set up tolerance for rt_arb_std_type */
     tmp_tol.magic = BN_TOL_MAGIC;
     tmp_tol.dist = 0.0001; /* to get old behavior of rt_arb_std_type() */
     tmp_tol.dist_sq = tmp_tol.dist * tmp_tol.dist;
     tmp_tol.perp = 1e-5;
     tmp_tol.para = 1 - tmp_tol.perp;
-    x_avg = y_avg = z_avg = 0;
 
-    /* get number of vertices in arb_type */
-    arb_type = rt_arb_std_type(ip, &tmp_tol);
-
-    /* centroid is the average for each axis of all coordinates of vertices */
-    for (i = 0; i < arb_type; i++) {
-	x_avg += aip->pt[i][0];
-	y_avg += aip->pt[i][1];
-	z_avg += aip->pt[i][2];
+    arb_build_equiv_pts(aip, tmp_tol.dist_sq, equiv_pts);
+    for (i = 0; i < 8; i++) {
+	if (equiv_pts[i] != i)
+	    continue;
+	VADD2(sum, sum, aip->pt[i]);
+	unique_count++;
     }
 
-    x_avg /= arb_type;
-    y_avg /= arb_type;
-    z_avg /= arb_type;
-
-    (*cent)[0] = x_avg;
-    (*cent)[1] = y_avg;
-    (*cent)[2] = z_avg;
-
+    if (unique_count > 0)
+	VSCALE(*cent, sum, 1.0 / unique_count);
 }
 
 
@@ -2231,8 +2224,6 @@ rt_arb_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const c
 	arb_ip->pt[1][Y] += scale;
 	arb_ip->pt[2][Y] += scale;
 	arb_ip->pt[2][Z] += scale;
-	arb_ip->pt[3][Y] += scale;
-	arb_ip->pt[3][Z] += scale;
 	for (i = 4; i < 8; i++)
 	{
 	    arb_ip->pt[i][X] -= scale;
@@ -2293,80 +2284,37 @@ arb_build_equiv_pts(const struct rt_arb_internal *arb, fastf_t tol_sq, int equiv
 
 
 /*
- * Return non-zero when the ARB has a non-canonical encoding.
- *
- * The canonical ARB encoding stores duplicate vertices in the "top" group
- * (indices 4–7).  A non-canonical encoding occurs when any "top" vertex
- * (index 4–7) is a duplicate of a "bottom" vertex (index 0–3), or when a
- * "bottom" vertex duplicates another "bottom" vertex in a way that is NOT
- * the standard ARB4 tetrahedron encoding.
- *
- * The canonical ARB4 encoding stored in BRL-CAD databases has:
- *   pt[0], pt[1]       — two unique base vertices
- *   pt[2] == pt[3]     — third base vertex (duplicate pair in the bottom group)
- *   pt[4..7]           — all coincident at the apex (top group)
- *
- * This produces equiv_pts[3] == 2 (a bottom-to-bottom alias), which the naive
- * check would flag as non-canonical.  However, the standard rt_arb_mk_planes
- * face construction handles this encoding correctly: the deduplication logic
- * collapses face "1234" to the base triangle, and the three side faces are
- * built properly.  Such an ARB has exactly 4 unique spatial vertices (a valid
- * tetrahedron) and must not be routed to the hull fallback.
+ * Return non-zero unless duplicate vertices follow the public ARB storage
+ * contract.  Comparing the tolerance-aware equivalence map distinguishes
+ * geometrically equivalent permutations that break table-driven operations.
  */
 int
 rt_arb_nonstandard_encoding(const struct rt_arb_internal *arb, fastf_t tol_sq)
 {
-    int equiv_pts[8];
+    static const int standard_equiv[ARB8 - ARB4 + 1][ARB8] = {
+	{0, 1, 2, 0, 4, 4, 4, 4},
+	{0, 1, 2, 3, 4, 4, 4, 4},
+	{0, 1, 2, 3, 4, 4, 6, 6},
+	{0, 1, 2, 3, 4, 5, 6, 4},
+	{0, 1, 2, 3, 4, 5, 6, 7}
+    };
+    int equiv_pts[ARB8];
+    int unique_count = 0;
     int i;
 
     arb_build_equiv_pts(arb, tol_sq, equiv_pts);
 
-    /* Check whether any top vertex (4–7) maps to a bottom vertex (0–3).
-     * This always indicates a non-canonical (mis-encoded) ARB. */
-    for (i = 4; i < 8; i++) {
-	if (equiv_pts[i] < 4)
+    for (i = 0; i < ARB8; i++) {
+	if (equiv_pts[i] == i)
+	    unique_count++;
+    }
+
+    if (unique_count < ARB4 || unique_count > ARB8)
+	return 1;
+
+    for (i = 0; i < ARB8; i++) {
+	if (equiv_pts[i] != standard_equiv[unique_count - ARB4][i])
 	    return 1;
-    }
-
-    /* Check whether any bottom vertex (0–3) duplicates an earlier bottom vertex.
-     * This fires for the canonical ARB4 encoding (pt[2]==pt[3]), but also for
-     * genuinely mis-encoded ARBs.  Distinguish by counting unique spatial
-     * vertices: only the ARB4 tetrahedron (exactly 4 unique vertices) is valid
-     * here; anything else is a non-canonical encoding. */
-    {
-	int has_bottom_dup = 0;
-	for (i = 1; i < 4; i++) {
-	    if (equiv_pts[i] != i) {
-		has_bottom_dup = 1;
-		break;
-	    }
-	}
-	if (has_bottom_dup) {
-	    int n_unique = 0;
-	    int j;
-	    for (j = 0; j < 8; j++) {
-		if (equiv_pts[j] == j) n_unique++;
-	    }
-	    return (n_unique == 4) ? 0 : 1;
-	}
-    }
-
-    /* For ARB6 (exactly 6 unique vertices from 8 points), verify that the
-     * duplicate pairs among the top vertices follow the canonical adjacent
-     * pattern: pt[4]==pt[5] and pt[6]==pt[7].  Any other pairing — such as
-     * the diagonal encoding pt[4]==pt[7] and pt[5]==pt[6] — causes the
-     * standard face table to misidentify degenerate triangles as quads,
-     * producing an incorrect surface area / volume.  Route such cases to
-     * the convex-hull path. */
-    {
-	int n_unique = 0;
-	int j;
-	for (j = 0; j < 8; j++)
-	    if (equiv_pts[j] == j) n_unique++;
-	if (n_unique == 6) {
-	    if (!(equiv_pts[5] == 4 && equiv_pts[7] == 6))
-		return 1;
-	}
     }
 
     return 0;

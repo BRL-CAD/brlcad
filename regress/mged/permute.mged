@@ -7,5 +7,34 @@ sed permute_arb8.s
 permute 321
 accept
 Z
+arb_standard_storage_check arb8 permute_arb8.s
+
+
+# Exercise every compact ARB permutation table and verify both the requested
+# vertex mapping and the canonical duplicate-slot encoding.
+set arb_permute_cases {
+    arb4 321 V3
+    arb5 21  V2
+    arb6 21  V2
+    arb7 4   V4
+    arb8 321 V3
+}
+foreach {arb_type tuple source_attribute} $arb_permute_cases {
+    in_$arb_type permute _direct
+    set prim "permute_${arb_type}_direct.s"
+    set before [db get $prim]
+    set expected [db get $prim $source_attribute]
+
+    if {[catch {edarb permute $prim $tuple} result]} {
+	error "edarb permute failed for $arb_type tuple $tuple: $result"
+    }
+    if {[db get $prim] eq $before} {
+	error "edarb permute did not change $arb_type for tuple $tuple"
+    }
+    if {[db get $prim V1] ne $expected} {
+	error "edarb permute mapped $arb_type tuple $tuple to the wrong V1"
+    }
+    arb_standard_storage_check $arb_type $prim
+}
 
 puts "*** 'permute' testing completed ***"

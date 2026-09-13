@@ -262,6 +262,112 @@ releaseRays(ray_input_t *rays)
     bu_free(rays, "free rays");
 }
 
+enum {
+    ARB4_COMGEOM_TYPE = 4,
+    ARB5_COMGEOM_TYPE = 5,
+    ARB6_COMGEOM_TYPE = 6,
+    ARB7_COMGEOM_TYPE = 7,
+    ARB8_COMGEOM_TYPE = 8,
+    ARB_ENCODED_VERTEX_COUNT = 8
+};
+
+
+static int
+arb4_has_standard_storage(const struct rt_arb_internal *arb, const struct bn_tol *tol)
+{
+    int i;
+
+    if (!VNEAR_EQUAL(arb->pt[3], arb->pt[0], tol->dist))
+	return 0;
+    for (i = 5; i < ARB_ENCODED_VERTEX_COUNT; i++) {
+	if (!VNEAR_EQUAL(arb->pt[i], arb->pt[4], tol->dist))
+	    return 0;
+    }
+
+    return 1;
+}
+
+
+static int
+run_arb_encoding_tests(void)
+{
+    static const char *const additional_type_names[] = {
+	"arb5", "arb6", "arb7", "arb8"
+    };
+    struct bn_tol tol = BN_TOL_INIT_TOL;
+    struct rt_db_internal intern;
+    struct rt_arb_internal legacy;
+    struct rt_arb_internal repaired;
+    struct rt_arb_internal *arb;
+    point_t origin = VINIT_ZERO;
+    int failures = 0;
+    int repair_type;
+    int type;
+
+    bu_log("ARB encoding tests:\n");
+    RT_DB_INTERNAL_INIT(&intern);
+    if (OBJ[ID_ARB8].ft_make(&OBJ[ID_ARB8], &intern, "arb4", origin, 1.0) != BRLCAD_OK) {
+	bu_log("  FAIL default creation\n");
+	return 1;
+    }
+
+    arb = (struct rt_arb_internal *)intern.idb_ptr;
+    if (!arb4_has_standard_storage(arb, &tol) ||
+	rt_arb_std_type(&intern, &tol) != ARB4_COMGEOM_TYPE ||
+	rt_arb_nonstandard_encoding(arb, tol.dist_sq)) {
+	bu_log("  FAIL default creation did not use standard ARB4 storage\n");
+	failures++;
+    } else {
+	bu_log("  PASS default creation uses standard ARB4 storage\n");
+    }
+
+    memcpy(&legacy, arb, sizeof(legacy));
+    VMOVE(legacy.pt[3], legacy.pt[2]);
+    rt_db_free_internal(&intern);
+
+    for (type = ARB5_COMGEOM_TYPE; type <= ARB8_COMGEOM_TYPE; type++) {
+	const char *type_name = additional_type_names[type - ARB5_COMGEOM_TYPE];
+
+	RT_DB_INTERNAL_INIT(&intern);
+	if (OBJ[ID_ARB8].ft_make(&OBJ[ID_ARB8], &intern, type_name, origin, 1.0) != BRLCAD_OK) {
+	    bu_log("  FAIL %s default creation\n", type_name);
+	    failures++;
+	    continue;
+	}
+
+	arb = (struct rt_arb_internal *)intern.idb_ptr;
+	if (rt_arb_std_type(&intern, &tol) != type ||
+	    rt_arb_nonstandard_encoding(arb, tol.dist_sq)) {
+	    bu_log("  FAIL %s default creation did not use standard storage\n", type_name);
+	    failures++;
+	} else {
+	    bu_log("  PASS %s default creation uses standard storage\n", type_name);
+	}
+
+	rt_db_free_internal(&intern);
+    }
+
+    if (!rt_arb_nonstandard_encoding(&legacy, tol.dist_sq)) {
+	bu_log("  FAIL legacy make encoding was accepted as standard\n");
+	failures++;
+    } else {
+	bu_log("  PASS legacy make encoding is detected\n");
+    }
+
+    memset(&repaired, 0, sizeof(repaired));
+    repair_type = rt_arb_repair(&repaired, &legacy, &tol, 0);
+    if (repair_type != ARB4_COMGEOM_TYPE ||
+	!arb4_has_standard_storage(&repaired, &tol) ||
+	rt_arb_nonstandard_encoding(&repaired, tol.dist_sq)) {
+	bu_log("  FAIL legacy make encoding was not canonicalized\n");
+	failures++;
+    } else {
+	bu_log("  PASS legacy make encoding canonicalizes without changing type\n");
+    }
+
+    return failures;
+}
+
 
 typedef struct {
     const char *label;
@@ -608,6 +714,9 @@ run_repair_tests(void)
 }
 
 
+static int run_arb_mk_encoding_tests(void);
+
+
 // Main execution and validation
 int
 main(int ac, char *av[])
@@ -646,6 +755,8 @@ main(int ac, char *av[])
 	wdb_close(wdbp);
     }
 
+    failures += run_arb_encoding_tests();
+    failures += run_arb_mk_encoding_tests();
     failures += run_validation_tests();
     failures += run_3face_intersect_tests();
     failures += run_bg_3plane_intersection_tests();
@@ -735,6 +846,184 @@ main(int ac, char *av[])
     }
 
     return failures ? 1 : 0;
+}
+
+
+typedef int (*arb_mk_func_t)(struct rt_wdb *, const char *, const fastf_t *);
+
+
+typedef struct {
+    int type;
+    const char *name;
+    arb_mk_func_t create;
+    int input_count;
+    point_t points[ARB_ENCODED_VERTEX_COUNT];
+} arb_mk_case_t;
+
+
+static const arb_mk_case_t arb_mk_cases[] = {
+    {ARB4_COMGEOM_TYPE, "mk_arb4", mk_arb4, 4,
+     {{0, 0, 0}, {1, 0, 0}, {0, 1, 0}, {0, 0, 1}}},
+    {ARB5_COMGEOM_TYPE, "mk_arb5", mk_arb5, 5,
+     {{0, 0, 0}, {1, 0, 0}, {1, 1, 0}, {0, 1, 0}, {0.5, 0.5, 1}}},
+    {ARB6_COMGEOM_TYPE, "mk_arb6", mk_arb6, 6,
+     {{0, 0, 0}, {0, 1, 0}, {0, 1, 1}, {0, 0, 1},
+      {1, 0, 0}, {1, 0, 1}}},
+    {ARB7_COMGEOM_TYPE, "mk_arb7", mk_arb7, 7,
+     {{1, -1, -1}, {1, 1, -1}, {1, 1, 3}, {1, -1, 1},
+      {-1, -1, -1}, {-1, 1, -1}, {-1, 1, 1}}},
+    {ARB8_COMGEOM_TYPE, "mk_arb8", mk_arb8, 8,
+     {{0, 0, 0}, {0, 1, 0}, {0, 1, 1}, {0, 0, 1},
+      {1, 0, 0}, {1, 1, 0}, {1, 1, 1}, {1, 0, 1}}}
+};
+
+
+static void
+arb_test_swap_points(point_t a, point_t b)
+{
+    point_t tmp;
+
+    VMOVE(tmp, a);
+    VMOVE(a, b);
+    VMOVE(b, tmp);
+}
+
+
+static int
+run_arb_mk_encoding_tests(void)
+{
+    struct bn_tol tol = BN_TOL_INIT_TOL;
+    struct db_i *dbip;
+    struct rt_wdb *wdbp;
+    int failures = 0;
+
+    bu_log("LIBWDB ARB encoding tests:\n");
+    dbip = db_open_inmem();
+    if (dbip == DBI_NULL) {
+	bu_log("  FAIL unable to create in-memory database\n");
+	return 1;
+    }
+    wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_INMEM);
+    if (!wdbp) {
+	bu_log("  FAIL unable to create in-memory database writer\n");
+	db_close(dbip);
+	return 1;
+    }
+
+    for (size_t c = 0; c < sizeof(arb_mk_cases) / sizeof(arb_mk_case_t); c++) {
+	const arb_mk_case_t *tc = &arb_mk_cases[c];
+	struct directory *dp;
+	struct rt_db_internal intern;
+	int issues = 0;
+	struct rt_arb_internal *arb;
+	point_t expected_center = VINIT_ZERO;
+	point_t actual_center;
+
+	if (tc->create(wdbp, tc->name, &tc->points[0][X]) != 0 ||
+	    (dp = db_lookup(dbip, tc->name, LOOKUP_QUIET)) == RT_DIR_NULL) {
+	    bu_log("  FAIL %s creation\n", tc->name);
+	    failures++;
+	    continue;
+	}
+
+	RT_DB_INTERNAL_INIT(&intern);
+	if (rt_db_get_internal(&intern, dp, dbip, NULL) < 0) {
+	    bu_log("  FAIL reading %s result\n", tc->name);
+	    failures++;
+	    continue;
+	}
+	arb = (struct rt_arb_internal *)intern.idb_ptr;
+
+	(void)rt_arb_validate(NULL, arb, &tol, &issues);
+	if (rt_arb_std_type(&intern, &tol) != tc->type ||
+	    rt_arb_nonstandard_encoding(arb, tol.dist_sq) ||
+	    issues ||
+	    (tc->type == ARB4_COMGEOM_TYPE && !arb4_has_standard_storage(arb, &tol))) {
+	    bu_log("  FAIL %s did not produce a valid standard encoding\n", tc->name);
+	    failures++;
+	} else {
+	    bu_log("  PASS %s uses standard storage\n", tc->name);
+	}
+
+	for (int i = 0; i < tc->input_count; i++)
+	    VADD2(expected_center, expected_center, tc->points[i]);
+	VSCALE(expected_center, expected_center, 1.0 / tc->input_count);
+	rt_arb_centroid(&actual_center, &intern);
+	if (!VNEAR_EQUAL(actual_center, expected_center, tol.dist)) {
+	    bu_log("  FAIL %s centroid omitted a logical vertex\n", tc->name);
+	    failures++;
+	}
+
+	if (tc->type < ARB8_COMGEOM_TYPE) {
+	    struct rt_arb_internal nonstandard;
+	    struct rt_arb_internal repaired;
+	    struct rt_db_internal nonstandard_intern = intern;
+	    struct bu_external external = BU_EXTERNAL_INIT_ZERO;
+	    struct rt_db_internal roundtrip;
+	    int repair_type;
+
+	    memcpy(&nonstandard, arb, sizeof(nonstandard));
+	    if (tc->type == ARB4_COMGEOM_TYPE)
+		VMOVE(nonstandard.pt[3], nonstandard.pt[2]);
+	    else
+		arb_test_swap_points(nonstandard.pt[0], nonstandard.pt[4]);
+	    nonstandard_intern.idb_ptr = &nonstandard;
+
+	    if (!rt_arb_nonstandard_encoding(&nonstandard, tol.dist_sq) ||
+		rt_arb_std_type(&nonstandard_intern, &tol) != tc->type) {
+		bu_log("  FAIL nonstandard %s encoding was not detected as ARB%d\n",
+		       tc->name, tc->type);
+		failures++;
+	    }
+
+	    RT_DB_INTERNAL_INIT(&roundtrip);
+	    if (OBJ[ID_ARB8].ft_export5(&external, &nonstandard_intern, 1.0, dbip) < 0) {
+		bu_log("  FAIL nonstandard %s DB5 export\n", tc->name);
+		failures++;
+	    } else if (OBJ[ID_ARB8].ft_import5(&roundtrip, &external, NULL, dbip) < 0) {
+		bu_log("  FAIL nonstandard %s DB5 import\n", tc->name);
+		failures++;
+	    } else {
+		struct rt_arb_internal *roundtrip_arb = (struct rt_arb_internal *)roundtrip.idb_ptr;
+		int preserved = rt_arb_nonstandard_encoding(roundtrip_arb, tol.dist_sq);
+
+		for (int i = 0; i < ARB_ENCODED_VERTEX_COUNT && preserved; i++) {
+		    if (!VNEAR_EQUAL(roundtrip_arb->pt[i], nonstandard.pt[i], tol.dist))
+			preserved = 0;
+		}
+		if (!preserved) {
+		    bu_log("  FAIL nonstandard %s encoding changed during DB5 round trip\n", tc->name);
+		    failures++;
+		}
+	    }
+	    bu_free_external(&external);
+	    if (roundtrip.idb_ptr)
+		rt_db_free_internal(&roundtrip);
+
+	    rt_arb_centroid(&actual_center, &nonstandard_intern);
+	    if (!VNEAR_EQUAL(actual_center, expected_center, tol.dist)) {
+		bu_log("  FAIL nonstandard %s centroid changed with storage order\n", tc->name);
+		failures++;
+	    }
+
+	    memset(&repaired, 0, sizeof(repaired));
+	    repair_type = rt_arb_repair(&repaired, &nonstandard, &tol, 0);
+	    if (repair_type != tc->type ||
+		rt_arb_nonstandard_encoding(&repaired, tol.dist_sq) ||
+		(tc->type == ARB4_COMGEOM_TYPE && !arb4_has_standard_storage(&repaired, &tol))) {
+		bu_log("  FAIL nonstandard %s encoding was not canonicalized (type %d, nonstandard %d)\n",
+		       tc->name, repair_type, rt_arb_nonstandard_encoding(&repaired, tol.dist_sq));
+		failures++;
+	    } else {
+		bu_log("  PASS nonstandard ARB%d is detected and canonicalized\n", tc->type);
+	    }
+	}
+
+	rt_db_free_internal(&intern);
+    }
+
+    db_close(dbip);
+    return failures;
 }
 
 

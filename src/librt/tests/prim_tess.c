@@ -2985,18 +2985,13 @@ test_arb(void)
     init_tols(&ttol, &tol, 0.0, 0.01, 0.0);
     if (!run_tess("arb5 square pyramid", &ip, &ttol, &tol, 0)) failures++;
 
-    /* ARB4: tetrahedron — canonical BRL-CAD encoding.
-     * pt[0], pt[1] are unique base vertices; pt[2]==pt[3] is the third base
-     * vertex (bottom duplicate pair); pt[4..7] all coincide at the apex.
-     * This is the encoding stored in actual .g databases (e.g. primitives.g).
-     * arb_is_noncanonical recognises it as a valid tetrahedron (exactly 4
-     * unique spatial vertices, no top-to-bottom alias) and returns 0, so
-     * rt_arb_mk_planes handles it via the standard face table — no hull
-     * fallback needed. */
+    /* ARB4: tetrahedron in the public BRL-CAD storage convention.
+     * pt[0]==pt[3] is the repeated base vertex and pt[4..7] coincide at the
+     * apex.  The standard face table handles this representation directly. */
     VSET(tip.pt[0],  0,  0,  0);
     VSET(tip.pt[1], 10,  0,  0);
     VSET(tip.pt[2],  5,  8,  0);
-    VSET(tip.pt[3],  5,  8,  0);   /* same as pt[2]: canonical bottom dup */
+    VSET(tip.pt[3],  0,  0,  0);   /* same as pt[0]: canonical bottom dup */
     VSET(tip.pt[4],  5,  3, 10);   /* apex */
     VSET(tip.pt[5],  5,  3, 10);
     VSET(tip.pt[6],  5,  3, 10);
@@ -3004,10 +2999,18 @@ test_arb(void)
     init_tols(&ttol, &tol, 0.0, 0.01, 0.0);
     if (!run_tess("arb4 tetrahedron (canonical encoding)", &ip, &ttol, &tol, 0)) failures++;
 
+    /* The make command used pt[2]==pt[3] from 1985 through 2026.  Preserve
+     * rendering support for those geometrically valid but nonstandard ARB4s
+     * through the convex-hull fallback. */
+    VSET(tip.pt[3],  5,  8,  0);
+    init_tols(&ttol, &tol, 0.0, 0.01, 0.0);
+    if (!run_tess("arb4 tetrahedron (legacy make encoding)", &ip, &ttol, &tol, 0)) failures++;
+
     /* ARB4: tetrahedron — non-canonical encoding (pts[3..7] all at apex).
      * In this encoding equiv_pts[4..7] map to index 3, a "bottom" index.
-     * arb_is_noncanonical detects the top-to-bottom alias and routes through
-     * the convex-hull fallback, which still produces the correct 4-face mesh. */
+     * rt_arb_nonstandard_encoding detects the top-to-bottom alias and routes
+     * through the convex-hull fallback, which still produces the correct
+     * 4-face mesh. */
     VSET(tip.pt[0],  0,  0,  0);
     VSET(tip.pt[1], 10,  0,  0);
     VSET(tip.pt[2],  5,  8,  0);
@@ -3088,16 +3091,16 @@ test_arb(void)
     init_tols(&ttol, &tol, 0.0, 0.01, 0.0);
     if (!run_tess("arb6 non-canonical wedge (hull fallback)", &ip, &ttol, &tol, 0)) failures++;
 
-    /* Non-canonical ARB7:
-     * pt[4]==pt[0] makes one top vertex a duplicate of a bottom vertex. */
-    VSET(tip.pt[0],  0,  0, 10);  /* apex (duplicated at pt[4]) */
-    VSET(tip.pt[1], 10,  0,  0);
-    VSET(tip.pt[2], 10, 10,  0);
-    VSET(tip.pt[3],  0, 10,  0);
-    VSET(tip.pt[4],  0,  0, 10);  /* = pt[0] */
-    VSET(tip.pt[5], 10,  0,  0);  /* = pt[1] (canonical ARB7 dup) */
-    VSET(tip.pt[6], 10, 10,  0);
-    VSET(tip.pt[7],  0, 10,  0);
+    /* Non-canonical ARB7: seven unique vertices, with pt[0]==pt[7]
+     * instead of the standard pt[4]==pt[7]. */
+    VSET(tip.pt[0], -1, -1, -1);  /* = pt[7] */
+    VSET(tip.pt[1],  1,  1, -1);
+    VSET(tip.pt[2],  1,  1,  3);
+    VSET(tip.pt[3],  1, -1,  1);
+    VSET(tip.pt[4],  1, -1, -1);
+    VSET(tip.pt[5], -1,  1, -1);
+    VSET(tip.pt[6], -1,  1,  1);
+    VSET(tip.pt[7], -1, -1, -1);  /* = pt[0] */
     init_tols(&ttol, &tol, 0.0, 0.01, 0.0);
     if (!run_tess("arb7 non-canonical (hull fallback)", &ip, &ttol, &tol, 0)) failures++;
 

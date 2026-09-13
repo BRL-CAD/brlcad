@@ -3,4 +3,34 @@ puts "*** Testing 'arb' command ***"
 arb arb_test1.s 30 3
 arb arb_test2.s 55 20
 
+
+# The inside command calculates face normals relative to the ARB center.  Check
+# the compact forms whose inset remains an ARB and confirm that they preserve
+# the public duplicate-slot convention.  ARB4 and ARB6 in particular must not
+# depend on rearranging the source object's slots before finding that center.
+# ARB7 has a separate NMG-to-BOT inset path and therefore has no ARB storage
+# convention to check here.
+set arb_inside_cases {
+    arb4 4
+    arb5 5
+    arb6 5
+    arb8 6
+}
+foreach {arb_type face_count} $arb_inside_cases {
+    set outer "inside_${arb_type}_outer.s"
+    set inner "inside_${arb_type}_inner.s"
+    make $outer $arb_type
+
+    set inside_cmd [list inside $outer $inner]
+    for {set face 0} {$face < $face_count} {incr face} {
+	lappend inside_cmd 1
+    }
+    if {[catch {uplevel #0 $inside_cmd} result]} {
+	error "inside failed for $arb_type: $result"
+    }
+
+    arb_standard_storage_check $arb_type $inner
+}
+
+
 puts "*** 'arb' testing completed ***"

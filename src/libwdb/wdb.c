@@ -158,7 +158,7 @@ mk_arb4(struct rt_wdb *wdbp, const char *name, const fastf_t *pts)
     VMOVE(pt8[0], &pts[0*3]);
     VMOVE(pt8[1], &pts[1*3]);
     VMOVE(pt8[2], &pts[2*3]);
-    VMOVE(pt8[3], &pts[2*3]);	/* shared point for base */
+    VMOVE(pt8[3], &pts[0*3]);	/* repeated base point */
 
     VMOVE(pt8[4], &pts[3*3]);	/* top point */
     VMOVE(pt8[5], &pts[3*3]);

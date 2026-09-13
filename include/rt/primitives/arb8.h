@@ -49,10 +49,6 @@
  * ARB8 0 1 2 3 4 5 6 7
  */
 
-/*
- * ARB6 0 1 2 3 4 5 5 4
- */
-
 /**
  * Another summary of how the vertices of ARBs are stored:
  *
@@ -527,7 +523,7 @@ RT_EXPORT extern int rt_arb_std_type(const struct rt_db_internal *ip,
 
 
 /**
- * Find the center point for the arb in the rt_db_internal structure,
+ * Find the center point by averaging the arb's geometrically distinct vertices,
  * and return it as a point_t.
  */
 RT_EXPORT extern void rt_arb_centroid(point_t                       *cent,
