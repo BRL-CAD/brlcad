@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 20XX-XX-XX  Release 7.46.0                                     ---
 ----------------------------------------------------------------------
 
+* fixed direct ARB face and edge-direction editing - Cliff Yapp
 * fixed make and mk_arb4 producing nonstandard ARB4 storage - Cliff Yapp
 * fixed ARB4 and ARB6 center point calculations - Cliff Yapp
 * fixed MGED BoT editor property handling - Cliff Yapp

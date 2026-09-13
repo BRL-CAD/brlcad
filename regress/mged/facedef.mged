@@ -10,20 +10,102 @@ sed facedef_arb8_a.s
 facedef 1234 a 1 .3 0 20
 accept
 Z
+arb_standard_storage_check arb8 facedef_arb8_a.s
 e facedef_arb8_b.s
 sed facedef_arb8_b.s
 facedef 2367 b 100 100 0 100 100 100 0 100 0
 accept
 Z
+arb_standard_storage_check arb8 facedef_arb8_b.s
 e facedef_arb8_c.s
 sed facedef_arb8_c.s
 facedef 3478 c 20 10 5 0 0
 accept
 Z
+arb_standard_storage_check arb8 facedef_arb8_c.s
 e facedef_arb8_d.s
 sed facedef_arb8_d.s
 facedef 1458 d 30 10 10
 accept
+Z
+arb_standard_storage_check arb8 facedef_arb8_d.s
+
+
+# ARB7 side-face rotation has a constrained fixed vertex and historically used
+# an interactive sentinel argument.  Exercise that special case directly.
+in_arb7 facedef _legacy_c
+e facedef_arb7_legacy_c.s
+sed facedef_arb7_legacy_c.s
+facedef 567 c 0 0
+accept
+Z
+arb_standard_storage_check arb7 facedef_arb7_legacy_c.s
+
+
+# Confirm the non-interactive edarb command accepts and preserves every compact
+# ARB type.  The legacy facedef command above already covers all four forms.
+set arb_facedef_cases {
+    arb4 123  {2.5 0 0}
+    arb5 1234 {0 0 0.25}
+    arb6 1234 {2.1 0 0}
+    arb7 1234 {3.0 0 0}
+    arb8 1234 {9.0 0 0}
+}
+foreach {arb_type face point} $arb_facedef_cases {
+    in_$arb_type facedef _direct
+    set prim "facedef_${arb_type}_direct.s"
+    set before [db get $prim]
+
+    if {[catch {edarb facedef $prim $face d {*}$point} result]} {
+	error "edarb facedef failed for $arb_type face $face: $result"
+    }
+    if {[db get $prim] eq $before} {
+	error "edarb facedef did not change $arb_type face $face"
+    }
+    arb_standard_storage_check $arb_type $prim
+}
+
+# Exercise the direct command's ARB7 fixed-vertex special case too.
+in_arb7 facedef _direct_c
+set arb7_direct_c facedef_arb7_direct_c.s
+if {[catch {edarb facedef $arb7_direct_c 567 c 0 0} result]} {
+    error "edarb facedef ARB7 fixed-vertex rotation failed: $result"
+}
+arb_standard_storage_check arb7 $arb7_direct_c
+
+
+# A malformed fixed-vertex selector must be rejected without indexing past the
+# ARB point array or changing the object.
+set arb8_direct facedef_arb8_direct.s
+set before_invalid [db get $arb8_direct]
+if {![catch {
+    edarb facedef $arb8_direct 1234 c 0 0 v9
+} result]} {
+    error "edarb facedef accepted invalid vertex v9"
+}
+if {[db get $arb8_direct] ne $before_invalid} {
+    error "invalid edarb facedef changed its ARB8"
+}
+
+# Reject an unknown direct-editor form and report the form, rather than the
+# object name, that caused the error.
+if {![catch {
+    edarb facedef $arb8_direct 1234 z
+} result]} {
+    error "edarb facedef accepted invalid form z"
+}
+if {![string match "*z is not an option*" $result]} {
+    error "edarb facedef reported the wrong invalid form: $result"
+}
+
+# The legacy command must safely reject non-ARB primitives.  Its error-reporting
+# path formerly omitted the Tcl variadic argument terminator.
+make facedef_not_arb.s sph
+e facedef_not_arb.s
+sed facedef_not_arb.s
+if {![catch {facedef 1234 q} result]} {
+    error "legacy facedef accepted a non-ARB primitive"
+}
 Z
 
 puts "*** 'facedef' testing completed ***"

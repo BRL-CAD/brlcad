@@ -65,7 +65,7 @@ char *p_nupnt[] = {
 
 
 static void get_pleqn(struct mged_state *s, fastf_t *plane, const char *argv[]);
-static void get_rotfb(struct mged_state *s, fastf_t *plane, const char *argv[], const struct rt_arb_internal *arb);
+static int get_rotfb(struct mged_state *s, fastf_t *plane, const char *argv[], const struct rt_arb_internal *arb);
 static void get_nupnt(struct mged_state *s, fastf_t *plane, const char *argv[]);
 static int get_3pts(struct mged_state *s, fastf_t *plane, const char *argv[], const struct bn_tol *tol);
 
@@ -113,7 +113,7 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 	goto end;
     }
     if (MEDIT(s)->es_int.idb_type != ID_ARB8) {
-	Tcl_AppendResult(interp, "Facedef: solid type must be ARB\n");
+	Tcl_AppendResult(interp, "Facedef: solid type must be ARB\n", (char *)NULL);
 	status = TCL_ERROR;
 	goto end;
     }
@@ -248,7 +248,10 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 		goto end;
 	    }
 	    break;
-	case 'c':
+	case 'c': {
+	    const char *arb7_args[3];
+	    const char **rotfb_args = &argv[3];
+
 	    /* special case for arb7, because of 2 4-pt planes meeting */
 	    if (arb_type == 7 && (plane != 0 && plane != 3)) {
 		if (argc < 5) {
@@ -258,17 +261,24 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 		    goto end;
 		}
 
-		argv[5] = "Release 6";
-		Tcl_AppendResult(interp, "Fixed point is vertex five.\n");
+		arb7_args[0] = argv[3];
+		arb7_args[1] = argv[4];
+		arb7_args[2] = "v5";
+		rotfb_args = arb7_args;
+		Tcl_AppendResult(interp, "Fixed point is vertex five.\n", (char *)NULL);
 	    }
-	    /* total # of as under this option */
-	    else if (argc < 8 && (argc > 5 ? argv[5][0] != 'R' : 1)) {
+	    /* total # of args under this option */
+	    else if (argc < 6 || (argv[5][0] != 'v' && argc < 8)) {
 		Tcl_AppendResult(interp, MORE_ARGS_STR, p_rotfb[argc-3], (char *)NULL);
 		status = TCL_ERROR;
 		goto end;
 	    }
-	    get_rotfb(s, planes[plane], &argv[3], arb);
+	    if (get_rotfb(s, planes[plane], rotfb_args, arb)) {
+		status = TCL_ERROR;
+		goto end;
+	    }
 	    break;
+	}
 	case 'd':
 	    /* special case for arb7, because of 2 4-pt planes meeting */
 	    if (arb_type == 7)
@@ -286,7 +296,8 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 	    get_nupnt(s, planes[plane], &argv[3]);
 	    break;
 	case 'q':
-	    return TCL_OK;
+	    status = TCL_OK;
+	    goto end;
 	default:
 	    Tcl_AppendResult(interp, "Facedef: '", argv[2], "' is not an option\n", (char *)NULL);
 	    status = TCL_ERROR;
@@ -309,12 +320,12 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     for (i=0; i<8; i++) {
 	MAT4X3PNT(arbo->pt[i], MEDIT(s)->e_invmat, arb->pt[i]);
     }
-    rt_db_free_internal(&intern);
 
     /* draw the new solid */
     replot_editing_solid(0, NULL, s, NULL);
 
  end:
+    rt_db_free_internal(&intern);
     (void)signal(SIGINT, SIG_IGN);
     return status;
 }
@@ -375,18 +386,18 @@ get_3pts(struct mged_state *s, fastf_t *plane, const char *argv[], const struct 
 /*
  * Gets information from the array argv[].  Finds the planar equation
  * given rotation and fallback angles, plus a fixed point. Result is
- * stored in 'plane'. The vertices pointed to by 's_recp' are used if
- * a vertex is chosen as fixed point.
+ * stored in 'plane'.  A named ARB vertex may be used as the fixed point.
  */
-static void
+static int
 get_rotfb(struct mged_state *s, fastf_t *plane, const char *argv[], const struct rt_arb_internal *arb)
 {
     fastf_t rota, fb_a;
-    short int i, temp;
+    char *endptr;
+    int i;
     point_t pt;
 
     if (s->dbip == DBI_NULL)
-	return;
+	return -1;
 
     rota= atof(argv[0]) * DEG2RAD;
     fb_a  = atof(argv[1]) * DEG2RAD;
@@ -397,16 +408,21 @@ get_rotfb(struct mged_state *s, fastf_t *plane, const char *argv[], const struct
     plane[2] = sin(fb_a);
 
     if (argv[2][0] == 'v') {
-	/* vertex given */
-	/* strip off 'v', subtract 1 */
-	temp = atoi(argv[2]+1) - 1;
-	plane[W]= VDOT(&plane[0], arb->pt[temp]);
+	long vertex = strtol(argv[2] + 1, &endptr, 10);
+
+	if (endptr == argv[2] + 1 || *endptr != '\0' || vertex < 1 || vertex > 8) {
+	    Tcl_AppendResult(s->interp, "Facedef: bad vertex - ", argv[2], "\n", (char *)NULL);
+	    return -1;
+	}
+	plane[W]= VDOT(&plane[0], arb->pt[vertex - 1]);
     } else {
 	/* definite point given */
 	for (i=0; i<3; i++)
 	    pt[i]=atof(argv[2+i]) * s->dbip->dbi_local2base;
 	plane[W]=VDOT(&plane[0], pt);
     }
+
+    return 0;
 }
 
 
