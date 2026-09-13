@@ -2879,7 +2879,7 @@ class SketchCArc {
 	set ex [expr {$myscale * [lindex $end 0]}]
 	set ey [expr {-$myscale * [lindex $end 1]}]
 	if { $radius < 0.0 } {
-	    if { $vertex == $end_index } {
+	    if { $index == $end_index } {
 		return "0 0"
 	    }
 	    set normalx [expr $ex - $sx]
@@ -2895,7 +2895,7 @@ class SketchCArc {
 	    set center [find_arc_center $sx $sy $ex $ey $tmp_radius $center_is_left]
 	    set cx [lindex $center 0]
 	    set cy [lindex $center 1]
-	    if { $vertex == $start_index } {
+	    if { $index == $start_index } {
 		set normalx [expr $sx - $cx]
 		set normally [expr $sy - $cy]
 		set len [::dist $sx $sy $cx $cy]
