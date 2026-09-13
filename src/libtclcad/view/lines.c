@@ -25,12 +25,13 @@
 /** @} */
 
 #include "common.h"
+
+#include "bu/str.h"
 #include "bu/units.h"
 #include "ged.h"
 #include "tclcad.h"
 
 /* Private headers */
-#include "../../libged/ged_private.h" /* for ged_view_data_lines */
 #include "../tclcad_private.h"
 #include "../view/view.h"
 
@@ -111,14 +112,17 @@ to_data_lines(struct ged *gedp,
 	return BRLCAD_ERROR;
     }
 
-    /* turn the argv into a ged command */
+    /* Remove the view name before dispatching the GED command. */
     argv[1] = argv[0];
-    argv[0] = "view";
 
     struct bview *btmp = gedp->ged_gvp;
     gedp->ged_gvp = gdvp;
 
-    ret = ged_exec_view(gedp, argc, argv);
+    if (BU_STR_EQUAL(argv[0], "sdata_lines")) {
+	ret = ged_exec_sdata_lines(gedp, argc - 1, argv + 1);
+    } else {
+	ret = ged_exec_data_lines(gedp, argc - 1, argv + 1);
+    }
 
     gedp->ged_gvp = btmp;
 
