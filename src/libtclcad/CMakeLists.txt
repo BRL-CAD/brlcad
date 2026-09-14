@@ -48,13 +48,13 @@ if(BRLCAD_ENABLE_TCL)
   # Include directories needed by libtclcad users
   set(TCLCAD_INCLUDE_DIRS ${TCL_INCLUDE_PATH})
   if(TK_INCLUDE_PATH)
-    set(TCLCAD_INCLUDE_DIRS ${TCLCAD_INCLUDE_DIRS} ${TK_INCLUDE_PATH} ${X11_INCLUDE_DIR})
+    set(TCLCAD_INCLUDE_DIRS ${TCLCAD_INCLUDE_DIRS} ${TK_INCLUDE_PATH} ${BRLCAD_X11_INCLUDE_DIRS})
   endif(TK_INCLUDE_PATH)
 
   # Include directories only needed by the implementation
   set(TCLCAD_LOCAL_INCLUDE_DIRS ${PNG_INCLUDE_DIRS})
   if(BRLCAD_ENABLE_X11)
-    set(TCLCAD_XLIBS ${TCLCAD_XLIBS} ${X11_LIBRARIES})
+    set(TCLCAD_XLIBS ${TCLCAD_XLIBS} ${BRLCAD_X11_LIBRARIES})
   endif(BRLCAD_ENABLE_X11)
 
   # Note - libtclcad_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
