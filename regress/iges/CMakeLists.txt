@@ -4,6 +4,7 @@ if(SH_EXEC AND TARGET mged AND TARGET asc2g)
 endif(SH_EXEC AND TARGET mged AND TARGET asc2g)
 
 if(TARGET g-iges AND TARGET iges-g AND TARGET asc2g AND TARGET mged AND TARGET test_iges_rays AND TARGET test_iges_brep)
+  set(iges_test_dirs)
   if(TARGET gcv AND TARGET gcv-iges)
     brlcad_add_test(NAME iges_plugin_roundtrip
       COMMAND ${CMAKE_COMMAND}
@@ -11,6 +12,7 @@ if(TARGET g-iges AND TARGET iges-g AND TARGET asc2g AND TARGET mged AND TARGET t
         "-DMGED=$<TARGET_FILE:mged>" "-DRAY_CHECK=$<TARGET_FILE:test_iges_rays>"
         "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}/plugin-roundtrip"
         -P "${CMAKE_SOURCE_DIR}/src/libgcv/plugins/iges/tests/plugin.cmake")
+    list(APPEND iges_test_dirs "${CMAKE_CURRENT_BINARY_DIR}/plugin-roundtrip")
   endif()
   foreach(case aliases write_failure multi_file representations drawing_default positional)
     brlcad_add_test(NAME iges_io_${case}
@@ -19,6 +21,7 @@ if(TARGET g-iges AND TARGET iges-g AND TARGET asc2g AND TARGET mged AND TARGET t
         "-DMGED=$<TARGET_FILE:mged>" "-DRAY_CHECK=$<TARGET_FILE:test_iges_rays>"
         "-DCASE=${case}" "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}/io-${case}"
         -P "${CMAKE_SOURCE_DIR}/src/libgcv/plugins/iges/tests/io.cmake")
+    list(APPEND iges_test_dirs "${CMAKE_CURRENT_BINARY_DIR}/io-${case}")
   endforeach()
   foreach(case metadata inward_shell submodel)
     brlcad_add_test(NAME iges_export_failure_${case}
@@ -27,6 +30,7 @@ if(TARGET g-iges AND TARGET iges-g AND TARGET asc2g AND TARGET mged AND TARGET t
         "-DMGED=$<TARGET_FILE:mged>" "-DRAY_CHECK=$<TARGET_FILE:test_iges_rays>"
         "-DCASE=${case}" "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}/export-failure-${case}"
         -P "${CMAKE_SOURCE_DIR}/src/libgcv/plugins/iges/tests/export_failure.cmake")
+    list(APPEND iges_test_dirs "${CMAKE_CURRENT_BINARY_DIR}/export-failure-${case}")
   endforeach()
   foreach(case wedge revolve extrude)
     brlcad_add_test(NAME iges_native_${case}
@@ -36,6 +40,7 @@ if(TARGET g-iges AND TARGET iges-g AND TARGET asc2g AND TARGET mged AND TARGET t
         "-DCASE=${case}" "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}/native-${case}"
         "-DFIXTURE=${CMAKE_SOURCE_DIR}/src/libgcv/plugins/iges/tests/native-${case}.igs"
         -P "${CMAKE_SOURCE_DIR}/src/libgcv/plugins/iges/tests/native.cmake")
+    list(APPEND iges_test_dirs "${CMAKE_CURRENT_BINARY_DIR}/native-${case}")
   endforeach()
   foreach(case IN ITEMS
       "block,primitives,rpp.r,150" "cylinder,primitives,rcc.r,154"
@@ -61,7 +66,10 @@ if(TARGET g-iges AND TARGET iges-g AND TARGET asc2g AND TARGET mged AND TARGET t
         "-DMODEL=${CMAKE_SOURCE_DIR}/db/${model}.asc" "-DOBJECT=${object}"
         "-DENTITY_TYPE=${type}" "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}/roundtrip-${label}"
         -P "${CMAKE_SOURCE_DIR}/src/libgcv/plugins/iges/tests/roundtrip.cmake")
+    list(APPEND iges_test_dirs "${CMAKE_CURRENT_BINARY_DIR}/roundtrip-${label}")
   endforeach()
+  set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${iges_test_dirs}")
+  distclean(${iges_test_dirs})
 endif()
 
 cmakefiles(
