@@ -22,6 +22,7 @@ changes made.  See document footer for additional details.
 * fixed MGED BoT editor property handling - Cliff Yapp
 * fixed MGED LOD dialog and adaptive BoT wireframes - Cliff Yapp
 * fixed MGED Plot, PostScript, and manual launch tools - Cliff Yapp
+* fixed MGED Build Pattern failures - Cliff Yapp
 * fixed MGED Overlap Tool multi-object result handling - Cliff Yapp
 * eliminated 16-fold redundant gchecker grid analysis - Cliff Yapp
 * fixed Archer tree handling for object names with spaces - Cliff Yapp
