@@ -79,6 +79,7 @@ void set_curr_dm(struct mged_state *s, struct mged_dm *nc)
     }
 
     s->mged_curr_dm = nc;
+    mged_fbserv_set_active_session(nc);
     if (nc != MGED_DM_NULL && nc->dm_view_state) {
 	s->gedp->ged_gvp = nc->dm_view_state->vs_gvp;
 	s->gedp->ged_gvp->gv_s->gv_grid = *nc->dm_grid_state; /* struct copy */
