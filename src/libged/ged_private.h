@@ -116,6 +116,24 @@ class Ged_Internal {
 
 	std::map<std::string, void *> dm_map;
 
+	/* Normalized paths represented by the legacy display-list chain.  The
+	 * index handles ordinary hierarchy queries; instance-qualified or malformed
+	 * paths retain the established database-parser and linked-list behavior.
+	 * The endpoint sentinels detect additions made through the legacy API. */
+	std::map<std::string, struct display_list *> display_paths;
+	const void *display_paths_first = nullptr;
+	const void *display_paths_last = nullptr;
+	size_t display_paths_complex = 0;
+
+	/* Canonical scene paths within each display root.  List endpoints
+	 * detect append-only legacy users that bypass the indexed API. */
+	struct scene_path_index {
+	    std::multimap<std::string, struct bv_scene_obj *> paths;
+	    const void *first = nullptr;
+	    const void *last = nullptr;
+	};
+	std::map<struct display_list *, scene_path_index> display_scene_paths;
+
 	// Persisting state between loadview and preview
 	// commands and subcommands.
 	vect_t ged_eye_model = VINIT_ZERO;
@@ -271,11 +289,31 @@ GED_EXPORT extern int _ged_combadd2(struct ged *gedp,
 			 int validate);
 
 /* defined in display_list.c */
+extern struct display_list *_ged_dl_addToDisplay(struct ged *gedp, const char *name);
 GED_EXPORT extern void _dl_eraseAllNamesFromDisplay(struct ged *gedp, const char *name, const int skip_first);
 GED_EXPORT extern void _dl_eraseAllPathsFromDisplay(struct ged *gedp, const char *path, const int skip_first);
 GED_EXPORT extern void _ged_erase_legacy_overlap_plot(struct ged *gedp);
 extern void _dl_freeDisplayListItem(struct ged *gedp, struct display_list *gdlp);
 GED_EXPORT extern int dl_bounding_sph(struct bu_list *hdlp, vect_t *min, vect_t *max, int pflag);
+
+/* defined in ged.cpp */
+extern void _ged_dl_path_sync(struct ged *gedp);
+extern int _ged_dl_path_lookup(struct ged *gedp, const char *path,
+                               struct display_list **ancestor, int *exact);
+extern int _ged_dl_path_has_related(struct ged *gedp, const char *path);
+extern void _ged_dl_path_insert(struct ged *gedp, const char *path, struct display_list *entry);
+extern void _ged_dl_path_remove(struct ged *gedp, const char *path);
+extern void _ged_dl_path_invalidate(struct ged *gedp);
+extern void _ged_dl_path_clear(struct ged *gedp);
+extern int _ged_dl_scene_path_matches(struct ged *gedp,
+	struct display_list *entry, const struct db_full_path *path,
+	struct bu_ptbl *matches);
+extern void _ged_dl_scene_path_insert(struct ged *gedp,
+	struct display_list *entry, struct bv_scene_obj *sp);
+extern void _ged_dl_scene_path_remove(struct ged *gedp,
+	struct display_list *entry, struct bv_scene_obj *sp);
+extern void _ged_dl_scene_path_invalidate(struct ged *gedp,
+	struct display_list *entry);
 
 GED_EXPORT extern void color_soltab(struct db_i *dbip, struct bv_scene_obj *sp);
 

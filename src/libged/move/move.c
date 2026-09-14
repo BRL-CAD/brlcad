@@ -126,6 +126,7 @@ ged_move_core(struct ged *gedp, int argc, const char *argv[])
 	free((void *)dupstr);
 	bu_vls_free(&new_path);
     }
+    _ged_dl_path_invalidate(gedp);
 
     return BRLCAD_OK;
 }

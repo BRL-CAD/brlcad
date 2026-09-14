@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 20XX-XX-XX  Release 7.46.0                                     ---
 ----------------------------------------------------------------------
 
+* accelerated large and repeated MGED path drawing - Cliff Yapp
 * fixed ARB7 inside solid construction - Cliff Yapp
 * fixed direct ARB face and edge-direction editing - Cliff Yapp
 * fixed make and mk_arb4 producing nonstandard ARB4 storage - Cliff Yapp
