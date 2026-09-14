@@ -633,6 +633,7 @@ void free_all_resources(struct mged_dm *dlp);
 extern void set_absolute_tran(struct mged_state *);
 extern void set_absolute_view_tran(struct mged_state *);
 extern void set_absolute_model_tran(struct mged_state *);
+extern void mged_fbserv_set_active_session(struct mged_dm *);
 extern void fbserv_set_port(const struct bu_structparse *, const char *, void *, const char *, void *);
 extern void set_scroll_private(const struct bu_structparse *, const char *, void *, const char *, void *);
 extern void mged_variable_setup(struct mged_state *s);

@@ -34,6 +34,7 @@
 #include "bnetwork.h"
 #include "bsocket.h"
 
+#include "bu/env.h"
 #include "bu/str.h"
 #include "tcl.h"
 #include "vmath.h"
@@ -43,6 +44,7 @@
 #include "./mged_dm.h"
 
 /* Enable token verification for MGED's embedded fbserv */
+#define FBSERV_AUTH_SERVER
 #define FBSERV_AUTH_IMPL
 #include "../fbserv/auth.h"
 
@@ -270,6 +272,64 @@ fbserv_new_client_handler(ClientData clientData,
     set_curr_dm(MGED_STATE, scdlp);
 }
 
+/** Return non-zero if Tcl opened an IPv4 listener in @p channel. */
+static int
+fbserv_has_ipv4_listener(Tcl_Channel channel)
+{
+    Tcl_DString socket_names;
+    const char **values = NULL;
+    int value_count = 0;
+    int have_ipv4 = 0;
+    enum { SOCKET_NAME_FIELD_COUNT = 3 };
+
+    Tcl_DStringInit(&socket_names);
+    if (Tcl_GetChannelOption(NULL, channel, "-sockname", &socket_names) != TCL_OK)
+	goto done;
+    if (Tcl_SplitList(NULL, Tcl_DStringValue(&socket_names), &value_count, &values) != TCL_OK)
+	goto done;
+
+    /* Tcl reports address, host name, and port for each listening socket.
+     * The first value is numeric, so IPv6 addresses contain a colon. */
+    for (int i = 0; i + SOCKET_NAME_FIELD_COUNT <= value_count;
+	 i += SOCKET_NAME_FIELD_COUNT) {
+	if (strchr(values[i], ':') == NULL) {
+	    have_ipv4 = 1;
+	    break;
+	}
+    }
+
+done:
+    if (values)
+	Tcl_Free((char *)values);
+    Tcl_DStringFree(&socket_names);
+    return have_ipv4;
+}
+
+
+/** Select the framebuffer authentication token inherited by child tools. */
+void
+mged_fbserv_set_active_session(struct mged_dm *display_manager)
+{
+    const char *token = "";
+
+    if (display_manager && display_manager->dm_netchan &&
+	display_manager->dm_session_token[0] != '\0')
+	token = display_manager->dm_session_token;
+
+    if (bu_setenv(FBSERV_AUTH_TOKEN_ENVVAR, token, 1) != 0)
+	bu_log("MGED: unable to update the active framebuffer session token\n");
+}
+
+
+static void
+fbserv_clear_session(struct mged_dm *display_manager)
+{
+    display_manager->dm_session_token[0] = '\0';
+    display_manager->dm_require_auth = 0;
+    mged_fbserv_set_active_session(display_manager);
+}
+
+
 void
 fbserv_set_port(const struct bu_structparse *UNUSED(sp), const char *UNUSED(c1), void *UNUSED(v1), const char *UNUSED(c2), void *UNUSED(v2))
 {
@@ -292,6 +352,7 @@ fbserv_set_port(const struct bu_structparse *UNUSED(sp), const char *UNUSED(c1),
 
 	s->mged_curr_dm->dm_netchan = NULL;
 	s->mged_curr_dm->dm_netfd = -1;
+	fbserv_clear_session(s->mged_curr_dm);
     }
 
     if (!mged_variables->mv_listen)
@@ -301,6 +362,13 @@ fbserv_set_port(const struct bu_structparse *UNUSED(sp), const char *UNUSED(c1),
 	mged_variables->mv_listen = 0;
 	return;
     }
+
+    /* Token-capable BRL-CAD clients present this display manager's
+     * token.  Tokenless clients remain accepted for compatibility with the
+     * public "listen for clients" feature and older framebuffer tools. */
+    fbserv_generate_token(s->mged_curr_dm->dm_session_token);
+    s->mged_curr_dm->dm_require_auth = 0;
+    mged_fbserv_set_active_session(s->mged_curr_dm);
 
     save_port = mged_variables->mv_port;
 
@@ -325,6 +393,15 @@ fbserv_set_port(const struct bu_structparse *UNUSED(sp), const char *UNUSED(c1),
 		    fbserv_new_client_handler, (ClientData)s->mged_curr_dm);
 	}
 
+	/* Tcl considers the operation successful when any resolved address
+	 * binds.  If another process owns the IPv4 port it may return an
+	 * IPv6-only listener, although framebuffer clients using a numeric
+	 * port connect over IPv4.  Reject that partial bind and keep looking. */
+	if (s->mged_curr_dm->dm_netchan &&
+	    !fbserv_has_ipv4_listener(s->mged_curr_dm->dm_netchan)) {
+	    Tcl_Close((Tcl_Interp *)dm_interp(DMP), s->mged_curr_dm->dm_netchan);
+	    s->mged_curr_dm->dm_netchan = NULL;
+	}
 	if (s->mged_curr_dm->dm_netchan == NULL)
 	    ++port;
 	else
@@ -334,6 +411,7 @@ fbserv_set_port(const struct bu_structparse *UNUSED(sp), const char *UNUSED(c1),
     if (s->mged_curr_dm->dm_netchan == NULL) {
 	mged_variables->mv_port = save_port;
 	mged_variables->mv_listen = 0;
+	fbserv_clear_session(s->mged_curr_dm);
 	bu_log("fbserv_set_port: failed to hang a listen on ports %d - %d\n",
 		save_port, save_port + MAX_PORT_TRIES - 1);
     } else {
