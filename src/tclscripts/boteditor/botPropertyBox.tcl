@@ -87,7 +87,7 @@ package require Itk
     $itk_component(gpane) component modverts configure \
 	-text [bot get vertices $bot]
 
-    set ::${itk_interior}Radio [bot get type $bot]
+    $itk_component(tpane) update
 }
 
 ::itcl::class PropertiesPane {
@@ -96,6 +96,7 @@ package require Itk
     constructor {bot args} {}
 
     public {
+	method update {}
 	method updateMode {}
 	method updateOrientation {}
     }
@@ -134,8 +135,6 @@ package require Itk
 	    -state readonly
     } {}
 
-    # keep bot's mode synced with combo selection
-    $itk_component(modeCombo) current [expr [bot get type $bot] - 1]
     bind $itk_component(modeCombo) <<ComboboxSelected>> "$this updateMode"
 
     # add orientation combo box and label
@@ -148,9 +147,8 @@ package require Itk
 	    -state readonly
     } {}
 
-    # keep bot's orientation synced with combo selection
-    $itk_component(orientCombo) current [expr [bot get orientation $bot] - 1]
     bind $itk_component(orientCombo) <<ComboboxSelected>> "$this updateOrientation"
+    $this update
 
     # display container frame
     pack $itk_component(main) -expand yes -fill both
@@ -166,6 +164,24 @@ package require Itk
     grid $itk_component(modeCombo) -row 0 -column 1 -sticky nw -pady 2
     grid $itk_component(orientLabel) -row 1 -column 0 -sticky ne -pady 2
     grid $itk_component(orientCombo) -row 1 -column 1 -sticky nw -pady 2
+}
+
+::itcl::body PropertiesPane::update {} {
+    set bot_modes {surface solid plate plate_nocos}
+    set mode_index [lsearch -exact $bot_modes [bot get type $bot]]
+    if {$mode_index < 0} {
+	error "unsupported BoT mode for $bot"
+    }
+
+    set bot_orientations {none ccw cw}
+    set orientation_index [lsearch -exact $bot_orientations \
+	[bot get orientation $bot]]
+    if {$orientation_index < 0} {
+	error "unsupported BoT orientation for $bot"
+    }
+
+    $itk_component(modeCombo) current $mode_index
+    $itk_component(orientCombo) current $orientation_index
 }
 
 ::itcl::body PropertiesPane::updateMode {} {
