@@ -42,7 +42,6 @@ set(
   Utility.tcl
   Wizard.tcl
   bgerror.tcl
-  itk_redefines.tcl
   tabwindow.itk
   pkgIndex.tcl
 )

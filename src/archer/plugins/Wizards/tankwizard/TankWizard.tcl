@@ -1213,7 +1213,7 @@
     itk_component add $prefix\View {
 	::ttk::frame $itk_component($prefix).$prefix\View
     } {}
-    $buildViewFunc $itk_component($prefix\View)
+    {*}$buildViewFunc $itk_component($prefix\View)
     grid $itk_component($prefix\Arrow) -row 0 -column 0 -sticky e
     grid $itk_component($prefix\Label) -row 0 -column 1 -sticky w
     grid columnconfigure $itk_component($prefix) 1 -weight 1

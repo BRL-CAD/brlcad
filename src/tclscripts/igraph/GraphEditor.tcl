@@ -117,7 +117,7 @@ body GraphEditor::constructor {} {
 
     # set up the adjustable sliding pane with a left and right side
     itk_component add pw_pane {
-	panedwindow $itk_interior.pw_pane -orient vertical -height 512 -width 256
+	::iwidgets::panedwindow $itk_interior.pw_pane -orient vertical -height 512 -width 256
     }
 
     $itk_interior.pw_pane add left -margin 5

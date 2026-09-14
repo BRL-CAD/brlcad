@@ -537,6 +537,16 @@ package provide Archer 1.0
 # ------------------------------------------------------------
 ::itcl::body Archer::destructor {} {
     writePreferences
+
+    # Tk can defer menu <Destroy> bindings until Itk has already cleared
+    # the component table.  Disconnect menus while their windows and
+    # component records are both still valid.
+    foreach component [component] {
+	set widget [component $component]
+	if {[winfo exists $widget] && [winfo class $widget] eq "Menu"} {
+	    itk_component delete $component
+	}
+    }
 }
 
 

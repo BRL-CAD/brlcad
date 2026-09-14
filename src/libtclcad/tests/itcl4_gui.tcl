@@ -34,6 +34,37 @@ proc assert_equal {description actual expected} {
     }
 }
 
+proc exercise_object_lifecycle {class object args} {
+    set is_widget [string match .* $object]
+    foreach cycle {first second} {
+	if {[catch {$class $object {*}$args} message options]} {
+	    catch {::itcl::delete object $object}
+	    catch {destroy $object}
+	    if {[dict exists $options -errorinfo]} {
+		set message "[dict get $options -errorinfo]\n$message"
+	    }
+	    fail "$class $cycle construction failed: $message"
+	}
+	update
+	if {[llength [info commands $object]] != 1} {
+	    fail "$class $cycle construction omitted its object command"
+	}
+	if {$is_widget && ![winfo exists $object]} {
+	    fail "$class $cycle construction omitted its Tk window"
+	}
+	if {[catch {::itcl::delete object $object} message]} {
+	    fail "$class $cycle destruction failed: $message"
+	}
+	update
+	if {[llength [info commands $object]] != 0} {
+	    fail "$class $cycle destruction retained its object command"
+	}
+	if {$is_widget && [winfo exists $object]} {
+	    fail "$class $cycle destruction retained its Tk window"
+	}
+    }
+}
+
 proc require_at_least {package minimum} {
     set version [package require $package $minimum]
     if {[package vcompare $version $minimum] < 0} {
@@ -116,6 +147,10 @@ proc who {} {
     return {}
 }
 
+proc graph {args} {
+    return {}
+}
+
 foreach package {
     Archer
     ArcherCore
@@ -153,8 +188,22 @@ if {$SketchEditFrame::rad2deg <= 0.0} {
     fail "Archer SketchEditFrame common variable is not publicly accessible"
 }
 
-GeometryChecker .geometry_checker
-OverlapFileTool .overlap_file_tool
+foreach lifecycle {
+    {cadwidgets::Accordion .lifecycle_accordion}
+    {cadwidgets::ColorEntry .lifecycle_color_entry}
+    {cadwidgets::ComboBox .lifecycle_combo_box}
+    {cadwidgets::Help lifecycle_help}
+    {cadwidgets::Legend .lifecycle_legend}
+    {GeometryChecker .geometry_checker}
+    {GraphEditor .lifecycle_graph_editor}
+    {OverlapFileTool .overlap_file_tool}
+    {Splash .lifecycle_splash -message Lifecycle}
+    {Table lifecycle_table}
+    {TableView .lifecycle_table_view {{Column A} {Column B}}}
+    {Wizard .lifecycle_wizard}
+} {
+    exercise_object_lifecycle {*}$lifecycle
+}
 
 pack .checkbox .radiobox .combobox .spinner .spinint .searchtext .watch \
     -side top -fill x
@@ -162,8 +211,6 @@ update idletasks
 update
 
 foreach widget {
-    .geometry_checker
-    .overlap_file_tool
     .dialogshell
     .watch
     .canvasprintbox
