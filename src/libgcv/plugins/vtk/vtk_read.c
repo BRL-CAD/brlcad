@@ -530,7 +530,7 @@ static int
 vtk_pick(struct vtk_darray *arr, int n, const char *name)
 {
     int i;
-    if (n <= 0)
+    if (!arr || n <= 0)
 	return -1;
     if (name && name[0]) {
 	for (i = 0; i < n; i++)
