@@ -17,12 +17,28 @@ changes made.  See document footer for additional details.
 * accelerated large and repeated MGED path drawing - Cliff Yapp
 * fixed ARB7 inside solid construction - Cliff Yapp
 * fixed direct ARB face and edge-direction editing - Cliff Yapp
+* fixed rtwizard render startup during framebuffer contention - Cliff Yapp
 * fixed make and mk_arb4 producing nonstandard ARB4 storage - Cliff Yapp
 * fixed ARB4 and ARB6 center point calculations - Cliff Yapp
-* fixed MGED BoT editor property handling - Cliff Yapp
+* fixed concurrent MGED and rtwizard framebuffer renders - Cliff Yapp
+* fixed Archer Tank Wizard gun generation - Cliff Yapp
+* fixed Archer ARB4 point 3 editing - Cliff Yapp
+* fixed Tcl dialogs with multi-word titles and messages - Cliff Yapp
+* fixed Archer sketch scale drift in non-mm databases - Cliff Yapp
+* fixed toggle arrow callbacks firing during creation - Cliff Yapp
+* fixed Archer annotation line display updates - Cliff Yapp
+* fixed MGED and Archer sketch arc tangency editing - Cliff Yapp
+* fixed MGED ShotVis editing and reload failures - Cliff Yapp
+* fixed Tcl widget geometry, selection, and cleanup defects - Cliff Yapp
+* removed long-deprecated Tcl Mged widget class stack - Cliff Yapp
+* fixed TclCAD use with multiple Tcl interpreters - Cliff Yapp
+* fixed TclCAD framebuffer object lifecycle corruption - Cliff Yapp
+* fixed Archer primitive editors under Itcl 4 - Cliff Yapp
+* fixed Archer shutdown menu cleanup errors - Cliff Yapp
 * fixed MGED LOD dialog and adaptive BoT wireframes - Cliff Yapp
 * fixed MGED Plot, PostScript, and manual launch tools - Cliff Yapp
 * fixed MGED Build Pattern failures - Cliff Yapp
+* fixed MGED BoT editor property handling - Cliff Yapp
 * fixed MGED Overlap Tool multi-object result handling - Cliff Yapp
 * eliminated 16-fold redundant gchecker grid analysis - Cliff Yapp
 * fixed Archer tree handling for object names with spaces - Cliff Yapp

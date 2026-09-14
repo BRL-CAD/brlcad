@@ -45,6 +45,15 @@ proc assert_coordinates {description actual expected} {
     }
 }
 
+proc assert_point_lists {description actual expected} {
+    if {[llength $actual] != [llength $expected]} {
+	fail "$description: got {$actual}, expected {$expected}"
+    }
+    foreach actual_point $actual expected_point $expected {
+	assert_coordinates $description $actual_point $expected_point
+    }
+}
+
 proc exercise_object_lifecycle {class object args} {
     set is_widget [string match .* $object]
     foreach cycle {first second} {
@@ -198,6 +207,38 @@ foreach package {
     package require $package
 }
 
+foreach class {::DataUtils ::sdialogs::Stddlgs ::swidgets::Togglearrow} {
+    if {![llength [info commands $class]] && ![auto_load $class]} {
+	fail "$class is not autoloadable"
+    }
+}
+
+rename ::tk_messageBox ::itcl4_tk_messageBox
+proc ::tk_messageBox {args} {
+    set ::message_box_arguments $args
+    return xmin-answer
+}
+set dialog_status [catch {
+    sdialogs::Stddlgs::questiondlg {Xmin title} {Xmin message} yesno -parent .
+} dialog_result dialog_options]
+rename ::tk_messageBox {}
+rename ::itcl4_tk_messageBox ::tk_messageBox
+if {$dialog_status} {
+    return -options $dialog_options $dialog_result
+}
+assert_equal "Stddlgs result forwarding" $dialog_result xmin-answer
+foreach {option expected} {
+    -title {Xmin title}
+    -icon question
+    -type yesno
+    -message {Xmin message}
+    -parent .
+} {
+    assert_equal "Stddlgs $option forwarding" \
+	[dict get $::message_box_arguments $option] $expected
+}
+unset ::message_box_arguments
+
 source [file join [bu_dir data] tclscripts archer SketchEditFrame.tcl]
 if {$SketchEditFrame::rad2deg <= 0.0} {
     fail "Archer SketchEditFrame common variable is not publicly accessible"
@@ -233,6 +274,7 @@ foreach lifecycle {
     {sdialogs::Entrydialog .lifecycle_entry_dialog}
     {sdialogs::Listdialog .lifecycle_list_dialog}
     {swidgets::Selectlists .lifecycle_select_lists}
+    {swidgets::Togglearrow .lifecycle_toggle_arrow}
     {swidgets::Tooltip .lifecycle_tooltip}
     {swidgets::Tree .lifecycle_tree}
     {swidgets::tkgetdir .lifecycle_directory_chooser}
@@ -276,6 +318,27 @@ swidgets::Selectlists .functional_select_lists -unique true
 assert_equal "Selectlists transfer" [.functional_select_lists get] alpha
 ::itcl::delete object .functional_select_lists
 
+set ::toggle_count 0
+swidgets::Togglearrow .functional_toggle_arrow \
+    -command {incr ::toggle_count}
+pack .functional_toggle_arrow
+update
+set closed_arrow [.functional_toggle_arrow component closed]
+event generate $closed_arrow <ButtonPress-1> -x 8 -y 8
+update
+assert_equal "Togglearrow open state" \
+    [.functional_toggle_arrow cget -togglestate] open
+assert_equal "Togglearrow callback" $::toggle_count 1
+.functional_toggle_arrow configure -state disabled
+set open_arrow [.functional_toggle_arrow component open]
+event generate $open_arrow <ButtonPress-1> -x 8 -y 8
+update
+assert_equal "disabled Togglearrow state" \
+    [.functional_toggle_arrow cget -togglestate] open
+assert_equal "disabled Togglearrow callback" $::toggle_count 1
+::itcl::delete object .functional_toggle_arrow
+unset ::toggle_count
+
 set source_database [file join [bu_dir data] db m35.g]
 set test_database [file join [pwd] itcl4-cadwidgets-[pid].g]
 set copied_database [file join [pwd] itcl4-cadwidgets-copy-[pid].g]
@@ -286,9 +349,32 @@ cadwidgets::Ged .functional_ged $test_database
 pack .functional_ged -fill both -expand yes
 update
 assert_equal "Ged database query" [.functional_ged exists all.g] 1
+assert_coordinates "Ged unit conversion round trip" \
+    [expr {[.functional_ged base2local] * [.functional_ged local2base]}] 1.0
+assert_coordinates "Ged point-centered matrix wrapper" \
+    [.functional_ged mat_xform_about_pnt [mat_angles 0 0 0] {1 2 3}] \
+    [mat_idn]
 .functional_ged draw all.g
 .functional_ged autoview
 update
+
+set annotation_points {{0 0 0} {1 2 3}}
+DataUtils::appendGlobalData .functional_ged .functional_ged xmin \
+    Xmin_Data_Lines data_lines points $annotation_points 0 2
+set stored_annotations [.functional_ged attr get _GLOBAL Xmin_Data_Lines]
+assert_equal "DataUtils persisted group" \
+    [lindex [lindex $stored_annotations 0] 0] xmin
+assert_equal "DataUtils persisted coordinates" \
+    [lrange [lindex $stored_annotations 0] 1 end] $annotation_points
+assert_point_lists "DataUtils synchronized display data" \
+    [.functional_ged data_lines points] $annotation_points
+DataUtils::deleteGlobalData .functional_ged .functional_ged xmin Xmin_Data_Lines
+assert_equal "DataUtils deleted persisted group" \
+    [.functional_ged attr get _GLOBAL Xmin_Data_Lines] {}
+set selected_points {{4 5 6} {7 8 9}}
+.functional_ged sdata_lines points $selected_points
+assert_point_lists "selected data line display" \
+    [.functional_ged sdata_lines points] $selected_points
 
 foreach lifecycle {
     {ModelAxesControl .functional_model_axes -mged .functional_ged}

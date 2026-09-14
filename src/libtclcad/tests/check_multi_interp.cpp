@@ -75,6 +75,39 @@ init_tclcad(Tcl_Interp *interp, int init_gui)
 
 
 static bool
+check_gui_packages(Tcl_Interp *interp)
+{
+    const char *script =
+	"proc tops {args} {return {}};"
+	"proc who {} {return {}};"
+	"proc graph {args} {return {}};"
+	"foreach package {"
+	" Archer cadwidgets::Ged RtWizard::Wizard Sdialogs Swidgets"
+	"} {package require $package};"
+	"foreach class {"
+	" ::DataUtils ::sdialogs::Stddlgs ::swidgets::Togglearrow"
+	"} {"
+	" if {![llength [info commands $class]] && ![auto_load $class]} {"
+	"  error \"class $class is not autoloadable\""
+	" }"
+	"};"
+	"expr {"
+	" [llength [info commands ::Archer]] == 1 &&"
+	" [llength [info commands ::cadwidgets::Ged]] == 1 &&"
+	" [llength [info commands ::RtWizard::Wizard]] == 1"
+	"}";
+
+    if (!eval_ok(interp, script) || !result_is(interp, "1")) {
+	std::fprintf(stderr, "GUI package initialization was incomplete: %s\n",
+	    Tcl_GetStringResult(interp));
+	return false;
+    }
+
+    return true;
+}
+
+
+static bool
 check_initialized(Tcl_Interp *interp, const char *value, bool init_gui)
 {
     if (!has_command(interp, "bu_dir") ||
@@ -92,6 +125,9 @@ check_initialized(Tcl_Interp *interp, const char *value, bool init_gui)
 	std::fprintf(stderr, "libtclcad did not complete GUI initialization\n");
 	return false;
     }
+
+    if (init_gui && !check_gui_packages(interp))
+	return false;
 
     const char *script =
 	"itcl::class MultiInterpClass {"
