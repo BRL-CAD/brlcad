@@ -97,6 +97,7 @@ if(BRLCAD_X11_PROVIDER_RESOLVED STREQUAL "XMIN" AND
     mged_add_xmin_gui_fixture(bot "mged;dm-tkswrast;m35.g")
     mged_add_xmin_gui_fixture(editors "mged;dm-tkswrast;m35.g")
     mged_add_xmin_gui_fixture(query-pattern "mged;dm-tkswrast;m35.g")
+    mged_add_xmin_gui_fixture(search-exec "mged;dm-tkswrast;m35.g")
     mged_add_xmin_gui_fixture(overlaps
       "mged;dm-tkswrast;m35.g;gchecker"
     )
@@ -222,6 +223,7 @@ cmakefiles(
   mged/xmin_gui_overlaps.tcl
   mged/xmin_gui_query_pattern.tcl
   mged/xmin_gui_render_outputs.tcl
+  mged/xmin_gui_search_exec.tcl
   mged/xmin_gui_shotvis.tcl
   mged/xmin_gui_test.tcl
   mged/xmin_gui_workflows.tcl

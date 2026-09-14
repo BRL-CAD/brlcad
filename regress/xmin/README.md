@@ -83,10 +83,14 @@ loading, Geometry Browser actions, and a collaborating second GUI.  It checks
 the resulting database, files, display, synchronized view, and clean teardown.
 The detailed coverage ledger is
 `regress/xmin/mged/MGED_GUI_TEST_COVERAGE.md`.  MGED's retiring Predictor feature
-is absent from both the menu manifest and behavioral coverage.  A focused
-ShotVis fixture also edits, redraws, persists, reloads, and re-edits an actual
-visualization through its live Tk controls.  Predictor's removal
-is not part of the test contract.
+is absent from both the menu manifest and behavioral coverage.
+
+A focused search-exec fixture draws and redraws more than 1,000 m35.g paths,
+verifies display-list hierarchy semantics, rejects GUI event-loop command
+reentry, exercises Control-C, and confirms that the next search succeeds.  A
+focused ShotVis fixture also edits, redraws, persists, reloads, and re-edits
+an actual visualization through its live Tk controls.  Predictor's removal is
+not part of the test contract.
 
 `regress-qged-xmin-smoke` is intentionally experimental.  It proves only that
 the Qt application starts, its console accepts `draw all.g`, and the OpenGL

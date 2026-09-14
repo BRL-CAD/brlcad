@@ -30,6 +30,14 @@ all represented exactly as a user sees them.
 The retiring Predictor feature is deliberately absent from both the manifest
 and behavioral coverage, so its removal is not part of the GUI test contract.
 
+The `regress-mged-xmin-gui-search-exec` fixture runs the reported m35.g
+workload through MGED itself.  It draws more than 1,000 search results twice,
+checks display-list ancestor and consolidation semantics, rejects an event-loop
+reentry attempt, sends Control-C through the live command widget, and verifies
+that a subsequent search still succeeds.  The empty-display draw, repeated
+redraw, and aggregate-root replacement are timed to prevent reintroducing
+quadratic display-list or scene-object scans.
+
 The focused `regress-mged-xmin-gui-controls` fixture drives ViewRing, grid,
 ADC, font persistence, and About through their live Tk widgets and checks the
 resulting MGED state, view, named font, or generated preferences file.  It also
@@ -204,9 +212,10 @@ The automated matrix is intentionally tiered:
    operations, Geometry Browser actions, and in-process collaboration.
 5. Renderer-specific depth cue, Z buffer, and lighting controls run only when
    the active DM reports support.
-6. Focused fixtures cover LOD/VDS density, renderer output, manuals and help,
-   Combination and Attribute editors, Query Ray, Build Pattern, BoT editing,
-   overlap generation, and Geometry Checker result handling.
+6. Focused fixtures cover search execution, interruption and reentry; LOD/VDS
+   density; renderer output; manuals and help; Combination and Attribute
+   editors; Query Ray; Build Pattern; BoT editing; overlap generation; and
+   Geometry Checker result handling.
 7. `rt_edit_test_pipe` and `rt_edit_test_sketch` exhaust complex edit APIs that
    are impractical or currently impossible to reach through one GUI surface.
 
