@@ -8,8 +8,6 @@ arb arb_test2.s 55 20
 # the compact forms whose inset remains an ARB and confirm that they preserve
 # the public duplicate-slot convention.  ARB4 and ARB6 in particular must not
 # depend on rearranging the source object's slots before finding that center.
-# ARB7 has a separate NMG-to-BOT inset path and therefore has no ARB storage
-# convention to check here.
 set arb_inside_cases {
     arb4 4
     arb5 5
@@ -30,6 +28,94 @@ foreach {arb_type face_count} $arb_inside_cases {
     }
 
     arb_standard_storage_check $arb_type $inner
+}
+
+
+# Independently moving the six faces of an ARB7 can produce either of two
+# topologies at its four-plane V5/V8 vertex.  The result is therefore an exact
+# six-halfspace ARBN rather than an ARB with a fixed topology.  A zero-thickness
+# result supplies the consistently oriented source planes used to check both
+# inward and outward offsets.
+set arb7_face_count 6
+set arb7_outer inside_arb7_outer.s
+set arb7_reference inside_arb7_reference.s
+make $arb7_outer arb7
+inside $arb7_outer $arb7_reference {*}[lrepeat $arb7_face_count 0]
+
+set reference_definition [get $arb7_reference]
+if {[lindex $reference_definition 0] ne "arbn" ||
+    [lindex $reference_definition 1] ne "N" ||
+    [lindex $reference_definition 2] != $arb7_face_count} {
+    error "ARB7 zero-thickness inside did not produce a six-plane ARBN: $reference_definition"
+}
+set reference_planes {}
+for {set face 0} {$face < $arb7_face_count} {incr face} {
+    set key_index [expr {3 + 2 * $face}]
+    if {[lindex $reference_definition $key_index] ne "P$face"} {
+	error "ARB7 inside returned unexpected plane ordering: $reference_definition"
+    }
+    lappend reference_planes [lindex $reference_definition [expr {$key_index + 1}]]
+}
+
+set plane_tolerance 1.0e-7
+set arb7_inside_cases {
+    inside_arb7_inner.s {1 2 3 4 5 6}
+    inside_arb7_expanded.s {-1 -2 -3 -4 -5 -6}
+}
+foreach {inner thicknesses} $arb7_inside_cases {
+    if {[catch {inside $arb7_outer $inner {*}$thicknesses} result]} {
+	error "inside failed for ARB7 with thicknesses $thicknesses: $result"
+    }
+
+    set inner_definition [get $inner]
+    if {[lindex $inner_definition 0] ne "arbn" ||
+	[lindex $inner_definition 2] != $arb7_face_count} {
+	error "ARB7 inside did not produce a six-plane ARBN: $inner_definition"
+    }
+
+    for {set face 0} {$face < $arb7_face_count} {incr face} {
+	set reference_plane [lindex $reference_planes $face]
+	set inner_plane [lindex $inner_definition [expr {4 + 2 * $face}]]
+	for {set component 0} {$component < 3} {incr component} {
+	    if {abs([lindex $inner_plane $component] -
+		    [lindex $reference_plane $component]) > $plane_tolerance} {
+		error "ARB7 inside changed face $face normal: $reference_plane -> $inner_plane"
+	    }
+	}
+	set actual_offset [expr {[lindex $reference_plane 3] - [lindex $inner_plane 3]}]
+	if {abs($actual_offset - [lindex $thicknesses $face]) > $plane_tolerance} {
+	    error "ARB7 inside face $face offset is $actual_offset, expected [lindex $thicknesses $face]"
+	}
+    }
+
+    # Exercise ARBN's topology construction as well as its stored planes.
+    if {[catch {facetize -n "${inner}_nmg" $inner} result]} {
+	error "ARB7 inside ARBN could not be tessellated: $result"
+    }
+}
+
+# Check a second, explicitly defined ARB7 at a much smaller scale.
+in_arb7 inside_explicit
+set explicit_outer inside_explicit_arb7.s
+set explicit_inner inside_explicit_arb7_inner.s
+set explicit_thicknesses [lrepeat $arb7_face_count 0.05]
+if {[catch {inside $explicit_outer $explicit_inner {*}$explicit_thicknesses} result]} {
+    error "inside failed for explicit ARB7: $result"
+}
+set explicit_definition [get $explicit_inner]
+if {[lindex $explicit_definition 0] ne "arbn" ||
+    [lindex $explicit_definition 2] != $arb7_face_count} {
+    error "explicit ARB7 inside did not produce a six-plane ARBN: $explicit_definition"
+}
+facetize -n inside_explicit_arb7_inner_nmg.s $explicit_inner
+
+set invalid_inner inside_arb7_invalid.s
+set invalid_thicknesses [lrepeat $arb7_face_count 1000]
+if {![catch {inside $arb7_outer $invalid_inner {*}$invalid_thicknesses}]} {
+    error "ARB7 inside accepted thicknesses that collapse the solid"
+}
+if {![catch {get $invalid_inner}]} {
+    error "ARB7 inside wrote an invalid collapsed solid"
 }
 
 

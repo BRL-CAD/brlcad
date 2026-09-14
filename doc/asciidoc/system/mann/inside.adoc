@@ -20,6 +20,11 @@ inside [outside_shape_name new_inside_shape_name] {parameters}
 Creates a new shape that is _inside_ an existing shape. This command is typically used to create an _inside_ shape that can be subtracted from the original shape to produce a hollow shell. The command is typically used with no arguments, and it prompts the user for all needed information; however, all the parameters may be supplied on the command line. If MGED is in primitive edit mode when the *inside* command is issued, then the shape currently being edited will be used as the __outside_shape__. Similarly, if MGED is in matrix edit mode when the *inside* command is executed, then the current key shape will be used as the outside shape.
 
 
+An ARB7 inside is stored as an ARBN because independently offsetting its six
+faces can produce either of two topologies at the ARB7's four-plane vertex.
+The ARBN preserves the exact offset planes without faceting the result.
+
+
 [[examples]]
 == EXAMPLES
 
