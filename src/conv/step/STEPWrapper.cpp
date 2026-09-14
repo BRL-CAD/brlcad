@@ -834,6 +834,8 @@ STEPWrapper::ParallelForGeometry(size_t count,
     const double representation_tolerance =
 	LocalUnits::representation_tolerance;
     const brlcad::step::RepairMode repair = ImportOptions().repair;
+    const uint64_t stall_timeout =
+	ImportOptions().effective_stall_timeout_milliseconds;
     const bool speculative = thread_options_active &&
 	thread_option_wrapper == this && thread_options_speculative;
     const std::shared_ptr<CurveInferenceTransaction> inference_transaction =
@@ -845,8 +847,8 @@ STEPWrapper::ParallelForGeometry(size_t count,
 	thread_inference_wrapper == this &&
 	thread_whole_item_curve_inference_enabled;
     const std::function<void(size_t)> helper_task = [this, task, work_budget,
-	length, planeangle, solidangle, tolerance, representation_tolerance, repair,
-	speculative, inference_transaction, curve_inference_enabled,
+	length, planeangle, solidangle, tolerance, representation_tolerance,
+	repair, stall_timeout, speculative, inference_transaction, curve_inference_enabled,
 	whole_item_curve_inference_enabled](size_t index) {
 	RepairModeScope repair_scope(this, repair, speculative);
 	CurveInferenceScope inference_scope(this, inference_transaction,
@@ -858,7 +860,7 @@ STEPWrapper::ParallelForGeometry(size_t count,
 	LocalUnits::representation_tolerance = representation_tolerance;
 	brlcad::SetPullbackWorkLimit(geometry_helper_cancelled, this,
 	    work_budget,
-	    import_options.effective_stall_timeout_milliseconds);
+	    stall_timeout);
 	try {
 	    task(index);
 	    const bool deadline_expired =
