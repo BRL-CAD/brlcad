@@ -115,6 +115,14 @@ brlcad_add_test(NAME rt_cache_parallel_multiple_different_objects_hierarchy_1  C
 # lod testing
 brlcad_addexec(rt_lod lod.c "librt;libbg;${M_LIBRARY}" TEST)
 
+# VDS vertex tree construction and traversal.  Compile the private VDS
+# implementation into the test because its symbols are not part of librt's ABI.
+brlcad_addexec(rt_vds_tree "vds_tree.c;../vds/vds.c" "libbu;${M_LIBRARY}" TEST)
+target_include_directories(rt_vds_tree PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/../vds
+)
+brlcad_add_test(NAME rt_vds_tree COMMAND rt_vds_tree)
+
 # bv_polygon <-> sketch testing
 brlcad_addexec(rt_bv_poly_sketch bv_poly_sketch.c "librt;libbv;${M_LIBRARY}" TEST)
 
@@ -221,6 +229,7 @@ set(
   prim_tess.c
   tess_timing.c
   tree_prune.c
+  vds_tree.c
 )
 
 cmakefiles(${distcheck_files})

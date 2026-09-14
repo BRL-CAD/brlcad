@@ -200,6 +200,8 @@ rt_bot_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 
     fold_data.root = vertex_tree;
     fold_data.point_spacing = avg_sample_spacing(v);
+    if (v->gv_s->point_scale > SMALL_FASTF)
+	fold_data.point_spacing /= v->gv_s->point_scale;
     bg_trimesh_aabb(&min, &max, bot->faces, bot->num_faces, (const point_t *)bot->vertices, bot->num_vertices);
     d1 = max[0] - min[0];
     d2 = max[1] - min[1];

@@ -78,6 +78,7 @@ EMail:               luebke@cs.virginia.edu
 /*@{*/
 
 #include "common.h"
+#include <assert.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -382,6 +383,50 @@ vdsNode *vdsClusterNodes(int nnodes, vdsNode **nodes,
     return parent;
 }
 
+
+/*
+ * Function:	assignNodeIds
+ * Description:	Recursively assign paths and depths to the vertex tree and
+ *		store each leaf's ID at its original vertex-array index.
+ * Arguments:	s - VDS builder state containing the leaf-node array
+ *		node - root of the subtree being assigned
+ *		nodeId - ID to assign to node
+ *		idArray - output array indexed by original vertex number
+ */
+static int
+assignNodeIds(struct vdsState *s, vdsNode *node, vdsNodeId nodeId, vdsNodeId *idArray)
+{
+    int child_depth;
+    int child_number = 0;
+    int max_depth = nodeId.depth;
+    vdsNode *child = node->children;
+    vdsNodeId child_id;
+
+    node->status = Inactive;
+    node->depth = nodeId.depth;
+    while (child != NULL) {
+	assert(child_number < VDS_MAXDEGREE);
+	assert(nodeId.depth < VDS_MAXDEPTH);
+	child_id.depth = nodeId.depth + 1;
+	PATH_COPY(child_id.path, nodeId.path);
+	PATH_SET_BRANCH(child_id.path, nodeId.depth, child_number);
+
+	child_depth = assignNodeIds(s, child, child_id, idArray);
+	if (child_depth > max_depth)
+	    max_depth = child_depth;
+	child_number++;
+	child = child->sibling;
+    }
+
+    if (child_number == 0) {
+	size_t index = (size_t)(node - s->nodearray);
+	if (index < (size_t)s->vdsNumnodes)
+	    idArray[index] = nodeId;
+    }
+
+    return max_depth;
+}
+
 /*
  * Function:	verifyRootedTree
  * Description:	Verifies that all the leaf nodes in nodearray belong to a
@@ -452,73 +497,66 @@ static void computeSubtris(struct vdsState *s, vdsNode *root)
 
 /*
  * Function:	moveTrisToNodes
- * Description:	After all subtris have been associated with nodes via the
- *		node->vistris linked list, this function traverses the tree
- *		and reallocates each node to include room for the subtris
- *		directly in the node->subtris[] field.  The triangle data
- *		is then copied into this field, allowing triarray to be freed.
- *		After reallocating the node, corrects parent/child pointers.
+ * Description:	Builds a replacement tree after all subtris have been
+ *		associated with nodes via node->vistris.  Each new node has
+ *		room for its subtris directly in node->subtris[], allowing the
+ *		builder arrays to be freed without leaving pointers into them.
+ *		Parent, child, and sibling links are rebuilt in the new tree.
  * Note:	Since leaf nodes of the vertex tree (the original vertices
  *		of the model) are reallocated, nodearray can now be freed.
  */
-static vdsNode *moveTrisToNodes(vdsNode *N)
+static vdsNode *moveTrisToNodes(vdsNode *node, vdsNode *parent)
 {
-    vdsTri *t, *nextt;
-    int whichtri, numchildren;
-    vdsNode *newN, *child;
+    vdsTri *tri, *next_tri;
+    vdsNode *child, *next_child, *new_node;
+    vdsNode **new_child;
+    size_t node_size;
+    int leaf_node;
+    int which_tri;
 
-    if (!N || !N->children)
+    if (!node)
 	return NULL;
 
-    /* Reallocate node and adjust child pointers */
-    newN = (vdsNode *) malloc(sizeof(vdsNode) + N->nsubtris * sizeof(vdsTri));
-    memcpy(newN, N, sizeof(vdsNode));
-    child = N->children;
-    numchildren = 0;
-    while (child != NULL) {
-	child->parent = newN;
-	numchildren++;
-	child = child->sibling;
-    }
-    /* Adjust parent's pointer to this node */
-    if (N->parent != NULL) {
-	vdsNode *pp = N->parent->children;
+    node_size = sizeof(vdsNode);
+    if (node->nsubtris > 1)
+	node_size += (node->nsubtris - 1) * sizeof(vdsTri);
+    new_node = (vdsNode *)malloc(node_size);
+    memcpy(new_node, node, sizeof(vdsNode));
+    new_node->parent = parent;
+    new_node->children = NULL;
+    new_node->sibling = NULL;
+    new_node->next = NULL;
+    new_node->prev = NULL;
 
-	if (pp == N) {
-	    N->parent->children = newN;
-	} else {
-	    while (pp->sibling != N) {
-		pp = pp->sibling;
-	    }
-	    pp->sibling = newN;
-	}
-    }
-    /* Don't try to free leaf nodes, which belong to nodearray */
-    if (numchildren) {
-	N->children = NULL;
-	N->sibling = NULL;
-	return NULL;
-    }
-    N = newN;
     /* Copy node->vistris list into node->subtris[]; clear linked list ptrs */
-    t = N->vistris;
-    N->vistris = NULL;
-    whichtri = 0;
-    while (t != NULL) {
-	N->subtris[whichtri] = *t;
-	whichtri++;
-	nextt = t->next;
-	t->next = t->prev = NULL;
-	t = nextt;
+    tri = node->vistris;
+    new_node->vistris = NULL;
+    which_tri = 0;
+    while (tri != NULL) {
+	new_node->subtris[which_tri++] = *tri;
+	new_node->subtris[which_tri - 1].next = NULL;
+	new_node->subtris[which_tri - 1].prev = NULL;
+	next_tri = tri->next;
+	tri->next = tri->prev = NULL;
+	tri = next_tri;
     }
-    /* Recurse on children nodes */
-    child = N->children;
+
+    /* Rebuild child and sibling links without mutating the old tree. */
+    leaf_node = (node->children == NULL);
+    child = node->children;
+    new_child = &new_node->children;
     while (child != NULL) {
-	/* since moveTrisToNodes() reallocates nodes, have to reset child */
-	child = moveTrisToNodes(child);
-	child = child->sibling;
+	next_child = child->sibling;
+	*new_child = moveTrisToNodes(child, new_node);
+	new_child = &(*new_child)->sibling;
+	child = next_child;
     }
-    return N;
+
+    /* Internal nodes are individually allocated; leaves belong to nodearray. */
+    if (!leaf_node)
+	free(node);
+
+    return new_node;
 }
 
 
@@ -534,7 +572,7 @@ static vdsNode *moveTrisToNodes(vdsNode *N)
  *		<li> Computes node bounds for fold & visibility tests
  *		<li> Computes node subtris, attaching via vistris linked list
  *		<li> Converts vdsTris to use leaf node ids, rather than indices
- *		<li> Reallocates each node to store subtris directly
+ *		<li> Rebuilds each node to store subtris directly
  *		<li> Nullifies node->vistris list and tri next,prev pointers
  *		<li> Computes triangle container nodes for tri->node field
  *		<li> Assigns tri->proxies[] pointers to point at root node
@@ -545,24 +583,21 @@ static vdsNode *moveTrisToNodes(vdsNode *N)
 vdsNode *vdsEndVertexTree(struct vdsState *s)
 {
     vdsNode *root;
-#ifdef VDS_DEBUGPRINT
     vdsNodeId rootId = {0, 0};
-#endif
     vdsNodeId *ids;
     int i;
-    int have_parent = 0;
 
     root = &s->nodearray[0];
     while (root->parent != NULL) {
 	root = root->parent;
-	have_parent = 1;
     }
 
     VDS_DEBUG(("Assigning node ids..."));
     ids = (vdsNodeId *) calloc(s->vdsNumnodes, sizeof(vdsNodeId));
 #ifdef VDS_DEBUGPRINT
-    int maxdepth = assignNodeIds(root, rootId, ids);
+    int maxdepth =
 #endif
+    assignNodeIds(s, root, rootId, ids);
     VDS_DEBUG(("Done.\n"));
     VDS_DEBUG(("Verifying that all nodes form a single rooted tree..."));
     verifyRootedTree(s, root);
@@ -596,15 +631,16 @@ vdsNode *vdsEndVertexTree(struct vdsState *s)
     VDS_DEBUG(("Done.\n"));
     VDS_DEBUG(("Reallocating nodes and copying triangles into node->subtris "
 		"fields..."));
-    root = moveTrisToNodes(root);	/* Note: reallocates all nodes	    */
-    if (have_parent)
-	free(s->nodearray);
+    root = moveTrisToNodes(root, NULL);
+    free(s->nodearray);
+    s->nodearray = NULL;
     VDS_DEBUG(("Done.\n"));
     VDS_DEBUG(("Computing triangle container nodes..."));
     if (!root)
 	return NULL;
     vdsComputeTriNodes(root, root);
-    free(s->triarray);			/* nodearray still holds leaf nodes */
+    free(s->triarray);
+    s->triarray = NULL;
     root->status = Boundary;		/* root initially on boundary	    */
     root->next = root->prev = root;	/* root always on boundary path	    */
 #ifdef VDS_DEBUGPRINT

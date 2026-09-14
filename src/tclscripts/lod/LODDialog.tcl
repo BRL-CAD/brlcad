@@ -148,9 +148,8 @@ package require Itk
     set pointsScale [format "%.1f" [lodcmd scale points]]
     set curvesScale [format "%.0f" [lodcmd scale curves]]
 
-    set pointsScale 1.0
-    set curvesScale 1
-
+    $itk_component(pointsScale) set $pointsScale
+    $itk_component(curvesScale) set $curvesScale
     disableLODWidgets
 
 # DISPLAY WIDGETS
@@ -192,19 +191,21 @@ package require Itk
     if {$lodon} {
 	$itk_component(lodFrame).pointsLabel state !disabled
 	$itk_component(lodFrame).pointsScale state !disabled
-	$itk_component(lodFrame).pointsLabel state !disabled
+	$itk_component(lodFrame).pointsValueLabel state !disabled
 	$itk_component(lodFrame).curvesLabel state !disabled
 	$itk_component(lodFrame).curvesScale state !disabled
-	$itk_component(lodFrame).curvesLabel state !disabled
+	$itk_component(lodFrame).curvesValueLabel state !disabled
+	$itk_component(lodFrame).updateButton state !disabled
 	$itk_component(lodFrame).liveUpdateCheckbutton state !disabled
 	lodcmd on
     } else {
 	$itk_component(lodFrame).pointsLabel state disabled
 	$itk_component(lodFrame).pointsScale state disabled
-	$itk_component(lodFrame).pointsLabel state disabled
+	$itk_component(lodFrame).pointsValueLabel state disabled
 	$itk_component(lodFrame).curvesLabel state disabled
 	$itk_component(lodFrame).curvesScale state disabled
-	$itk_component(lodFrame).curvesLabel state disabled
+	$itk_component(lodFrame).curvesValueLabel state disabled
+	$itk_component(lodFrame).updateButton state disabled
 	$itk_component(lodFrame).liveUpdateCheckbutton state disabled
 	lodcmd off
     }

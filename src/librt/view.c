@@ -121,6 +121,9 @@ solid_point_spacing(const struct bview *gvp, fastf_t solid_width)
     }
     p2[X] = sqrt((radius * radius) - (p2[Y] * p2[Y]));
 
+    if (gvp->gv_s->point_scale > SMALL_FASTF)
+	return DIST_PNT2_PNT2(p1, p2) / gvp->gv_s->point_scale;
+
     return DIST_PNT2_PNT2(p1, p2);
 }
 
