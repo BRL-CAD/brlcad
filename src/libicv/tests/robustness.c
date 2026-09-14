@@ -182,6 +182,8 @@ test_create_zero_and_pixel_io(void)
     double row_d[6] = {0.1, 0.2, 0.3, 0.4, 0.5, 0.6};
 
     CHECK(rgb != NULL, "icv_create returns an image");
+    if (!rgb)
+	return;
     CHECK(rgb->magic == ICV_IMAGE_MAGIC, "icv_create initializes magic");
     CHECK(rgb->width == 2 && rgb->height == 3, "icv_create records dimensions");
     CHECK(rgb->color_space == ICV_COLOR_SPACE_RGB && rgb->channels == 3, "icv_create records RGB layout");
