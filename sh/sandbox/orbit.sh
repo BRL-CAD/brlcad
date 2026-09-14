@@ -86,7 +86,7 @@ ffmpeg -framerate 25 -pattern_type glob -i "$dir/$base.*.png" -c:v libx264 -pix_
 
 # clean up
 if test -f $base.$$.gif && test -f $base.$$.mp4 ; then
-    echo "Run this to remove intermediate render frames:  rm -rf "$dir"
+    echo "Run this to remove intermediate render frames:  rm -rf \"$dir\""
 fi
 
 echo "---"
