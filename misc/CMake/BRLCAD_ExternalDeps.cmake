@@ -884,6 +884,7 @@ function(brlcad_bext_process)
   # detect if the latter has changed and we need to redo the process.
   set(TP_INVENTORY "${CMAKE_BINARY_DIR}/CMakeFiles/thirdparty.txt")
   set(TP_INVENTORY_BINARIES "${CMAKE_BINARY_DIR}/CMakeFiles/thirdparty_binaries.txt")
+  set(TP_PENDING "${CMAKE_BINARY_DIR}/CMakeFiles/thirdparty_pending.txt")
   set(BRLCAD_EXT_BUILD_CACHE "${CMAKE_CURRENT_BINARY_DIR}/bext_build/CMakeCache.txt")
 
   # If we are using git, do some checks
@@ -1263,10 +1264,6 @@ endfunction()
 
   endif(NOT EXISTS "${TP_INVENTORY}")
 
-  # Write the current third party file list
-  string(REPLACE ";" "\n" TP_W "${TP_FILES}")
-  file(WRITE "${TP_INVENTORY}" "${TP_W}")
-
   # Make sure both lists are sorted
   list(SORT TP_FILES)
   list(SORT TP_PREVIOUS)
@@ -1276,6 +1273,21 @@ endfunction()
   message("Comparing previous and current states...")
   tp_compare_state(TP_FILES TP_PREVIOUS)
   message("Comparing previous and current states... done.")
+
+  # A failed post-processing pass must be retried even though its staged files
+  # are now newer than their bext originals.  Retain the pending set until all
+  # path and RPATH processing has completed successfully.
+  if(EXISTS "${TP_PENDING}")
+    file(READ "${TP_PENDING}" TP_RETRY_CONTENTS)
+    string(REPLACE "\n" ";" TP_RETRY "${TP_RETRY_CONTENTS}")
+    list(FILTER TP_RETRY EXCLUDE REGEX "^$")
+    foreach(tf ${TP_RETRY})
+      if(tf IN_LIST TP_FILES AND NOT tf IN_LIST TP_NEW)
+        list(APPEND TP_CHANGED "${tf}")
+      endif()
+    endforeach()
+    list(REMOVE_DUPLICATES TP_CHANGED)
+  endif()
 
   # If we do have changes in a repeat configure process, we're going
   # to have to redo the find_package tests.  However, we don't want to
@@ -1365,6 +1377,11 @@ endfunction()
   # both of the others.  Regardless, the processing from here on out
   # is the same.
   set(TP_PROCESS ${TP_CHANGED} ${TP_NEW} ${TP_INIT})
+  list(REMOVE_DUPLICATES TP_PROCESS)
+  if(TP_PROCESS)
+    string(REPLACE ";" "\n" TP_PENDING_CONTENTS "${TP_PROCESS}")
+    file(WRITE "${TP_PENDING}" "${TP_PENDING_CONTENTS}\n")
+  endif()
 
   # We're only going to characterize new files, but even on repeat
   # configures we need to know about ALL binary files, old and new,
@@ -1452,11 +1469,9 @@ endfunction()
     message("Characterizing new or changed bundled third party files... done.")
   endif()
 
-  # Combine the previous lists and the new determinations, writing the
-  # final lists back out to files
+  # Combine the previous lists and the new determinations.  The inventories
+  # are committed only after post-processing succeeds.
   set(ALL_BINARY_FILES ${BINARY_FILES} ${NBINARY_FILES})
-  string(REPLACE ";" "\n" TP_B "${ALL_BINARY_FILES}")
-  file(WRITE "${TP_INVENTORY_BINARIES}" "${TP_B}")
 
   set(_brlcad_ext_strclear_log "${CMAKE_BINARY_DIR}/CMakeFiles/brlcad_ext_strclear_updates.log")
   set(_brlcad_ext_strclear_history_log "${CMAKE_BINARY_DIR}/CMakeFiles/brlcad_ext_strclear_updates_history.log")
@@ -1774,6 +1789,15 @@ endfunction()
     message("Detailed 3rd party path update log for this configure pass: ${_brlcad_ext_strclear_log}")
     message("Cumulative 3rd party path update history log: ${_brlcad_ext_strclear_history_log}")
   endif(NBINARY_FILES OR NNOEXEC_FILES OR NTEXT_FILES)
+
+  # Record the new state only after every staged file has been processed.  If
+  # a fatal tool failure aborts configuration, TP_PENDING makes the next pass
+  # restage and retry the complete affected set.
+  string(REPLACE ";" "\n" TP_W "${TP_FILES}")
+  file(WRITE "${TP_INVENTORY}" "${TP_W}")
+  string(REPLACE ";" "\n" TP_B "${ALL_BINARY_FILES}")
+  file(WRITE "${TP_INVENTORY_BINARIES}" "${TP_B}")
+  file(REMOVE "${TP_PENDING}")
 
   # Tell the build cleanup about all the copied-in files - otherwise
   # it won't the distcheck cleaning logic won't know to scrub them.
