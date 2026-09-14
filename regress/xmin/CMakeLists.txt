@@ -37,6 +37,72 @@ if(BRLCAD_X11_PROVIDER_RESOLVED STREQUAL "XMIN" AND
       STAND_ALONE TEST_DEFINED)
   endif()
 
+  if(TARGET mged AND TARGET dm-tkswrast)
+    brlcad_add_xmin_test(
+      NAME regress-mged-xmin-gui-controls
+      TIMEOUT 180
+      ENVIRONMENT ${_xmin_smoke_environment}
+        "XMIN_GUI_LIBRARY=${_xmin_gui_library}"
+      COMMAND "${SH_EXEC}" "${_xmin_tcl_runner}"
+        mged-controls $<TARGET_FILE:mged> --gui --dm-type tkswrast
+        --rcfile "${CMAKE_CURRENT_SOURCE_DIR}/mged/xmin_gui_controls.tcl"
+        --geom 680x520+0+0 --ggeom 512x512+700+0
+        "${_xmin_test_db}"
+    )
+    brlcad_regression_test(regress-mged-xmin-gui-controls
+      "mged;dm-tkswrast;m35.g" STAND_ALONE TEST_DEFINED)
+
+    brlcad_add_xmin_test(
+      NAME regress-mged-xmin-gui-workflows
+      TIMEOUT 300
+      ENVIRONMENT ${_xmin_smoke_environment}
+        "XMIN_GUI_LIBRARY=${_xmin_gui_library}"
+      COMMAND "${SH_EXEC}" "${_xmin_tcl_runner}"
+        mged-workflows $<TARGET_FILE:mged> --gui --dm-type tkswrast
+        --rcfile "${CMAKE_CURRENT_SOURCE_DIR}/mged/xmin_gui_workflows.tcl"
+        --geom 680x520+0+0 --ggeom 512x512+700+0
+        "${_xmin_test_db}"
+    )
+    brlcad_regression_test(regress-mged-xmin-gui-workflows
+      "mged;dm-tkswrast;m35.g" STAND_ALONE TEST_DEFINED)
+
+    function(mged_add_xmin_gui_fixture test_name dependencies)
+      string(REPLACE "-" "_" script_name "${test_name}")
+      brlcad_add_xmin_test(
+        NAME regress-mged-xmin-gui-${test_name}
+        TIMEOUT 180
+        ENVIRONMENT ${_xmin_smoke_environment}
+          "MGED_XMIN_GUI_LIBRARY=${CMAKE_CURRENT_SOURCE_DIR}/mged/xmin_gui_test.tcl"
+          "XMIN_GUI_LIBRARY=${_xmin_gui_library}"
+          ${ARGN}
+        COMMAND "${SH_EXEC}" "${_xmin_tcl_runner}"
+          mged-${test_name} $<TARGET_FILE:mged> --gui --dm-type tkswrast
+          --rcfile "${CMAKE_CURRENT_SOURCE_DIR}/mged/xmin_gui_${script_name}.tcl"
+          --geom 680x520+0+0 --ggeom 512x512+700+0
+          "${_xmin_test_db}"
+      )
+      brlcad_regression_test(regress-mged-xmin-gui-${test_name}
+        "${dependencies}" STAND_ALONE TEST_DEFINED)
+    endfunction()
+
+    mged_add_xmin_gui_fixture(lod
+      "mged;dm-tkswrast;m35.g;plot3-asc"
+      "PLOT3_ASC_BIN=$<TARGET_FILE:plot3-asc>"
+    )
+    mged_add_xmin_gui_fixture(render-outputs
+      "mged;dm-tkswrast;m35.g;plot3-asc;rt"
+      "PLOT3_ASC_BIN=$<TARGET_FILE:plot3-asc>"
+    )
+    mged_add_xmin_gui_fixture(help "mged;dm-tkswrast;m35.g")
+    mged_add_xmin_gui_fixture(bot "mged;dm-tkswrast;m35.g")
+    mged_add_xmin_gui_fixture(editors "mged;dm-tkswrast;m35.g")
+    mged_add_xmin_gui_fixture(query-pattern "mged;dm-tkswrast;m35.g")
+    mged_add_xmin_gui_fixture(overlaps
+      "mged;dm-tkswrast;m35.g;gchecker"
+    )
+    mged_add_xmin_gui_fixture(shotvis "mged;dm-tkswrast;m35.g")
+  endif()
+
   if(TARGET archer)
     brlcad_add_xmin_test(
       NAME regress-archer-xmin-smoke
@@ -148,6 +214,17 @@ cmakefiles(
   mged/MGED_GUI_TEST_COVERAGE.md
   mged/mged_gui_menu_manifest.txt
   mged/mged_xmin_gui.sh
+  mged/xmin_gui_bot.tcl
+  mged/xmin_gui_controls.tcl
+  mged/xmin_gui_editors.tcl
+  mged/xmin_gui_help.tcl
+  mged/xmin_gui_lod.tcl
+  mged/xmin_gui_overlaps.tcl
+  mged/xmin_gui_query_pattern.tcl
+  mged/xmin_gui_render_outputs.tcl
+  mged/xmin_gui_shotvis.tcl
+  mged/xmin_gui_test.tcl
+  mged/xmin_gui_workflows.tcl
   mged/xmin_gui_edit.tcl
   mged/xmin_gui_pipe_oracle.tcl
 )

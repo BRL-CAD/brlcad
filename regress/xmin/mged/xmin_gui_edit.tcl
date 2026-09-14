@@ -788,7 +788,7 @@ proc xmin_monitor_raytrace {id} {
     global fb fb_overlay mged_gui xmin_poll_ms
     global xmin_raytrace_completion_settle_ms
     global xmin_raytrace_current_request xmin_raytrace_started
-    global xmin_raytrace_wait_started xmin_test_dir
+    global xmin_raytrace_idle_started xmin_raytrace_wait_started xmin_test_dir
 
     set panel .$id.rt
     if {[winfo exists $panel]} {
@@ -816,21 +816,37 @@ proc xmin_monitor_raytrace {id} {
 	    set xmin_raytrace_current_request $request
 	    set xmin_raytrace_wait_started [clock milliseconds]
 	    unset -nocomplain xmin_raytrace_started
+	    unset -nocomplain xmin_raytrace_idle_started
 	}
     }
     if {[info exists xmin_raytrace_wait_started]} {
 	set processes [process list]
 	set idle [string match "No currently running*" $processes]
+	set now [clock milliseconds]
 	if {!$idle} {
 	    set xmin_raytrace_started 1
+	    unset -nocomplain xmin_raytrace_idle_started
 	    xmin_write raytrace_process_started 1
 	}
-	set elapsed [expr {[clock milliseconds] - $xmin_raytrace_wait_started}]
-	if {$idle && ([info exists xmin_raytrace_started] ||
-	    $elapsed >= $xmin_raytrace_completion_settle_ms)} {
+	set elapsed [expr {$now - $xmin_raytrace_wait_started}]
+	set complete 0
+	if {$idle && [info exists xmin_raytrace_started]} {
+	    if {![info exists xmin_raytrace_idle_started]} {
+		set xmin_raytrace_idle_started $now
+	    } elseif {$now - $xmin_raytrace_idle_started >=
+		$xmin_raytrace_completion_settle_ms} {
+		set complete 1
+	    }
+	} elseif {$idle && $elapsed >= $xmin_raytrace_completion_settle_ms} {
+	    # A short render may start and finish between polls.  In that case,
+	    # elapsed quiet time provides the same framebuffer settling interval.
+	    set complete 1
+	}
+	if {$complete} {
 	    xmin_write raytrace_elapsed_${xmin_raytrace_current_request}_ms $elapsed
 	    xmin_write raytrace_complete $xmin_raytrace_current_request
 	    unset xmin_raytrace_wait_started
+	    unset -nocomplain xmin_raytrace_idle_started
 	}
     }
 

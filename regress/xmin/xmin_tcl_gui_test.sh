@@ -32,6 +32,18 @@ if ! "$@"; then
     exit 1
 fi
 
+if [ -s "$XMIN_TEST_DIR/result" ]; then
+    test_result=$(sed -n '1p' "$XMIN_TEST_DIR/result")
+    case "$test_result" in
+	PASS:*) ;;
+	*)
+	    echo "$test_result" >&2
+	    echo "Xmin GUI test artifacts: $XMIN_TEST_DIR" >&2
+	    exit 1
+	    ;;
+    esac
+fi
+
 if [ "${XMIN_KEEP_ARTIFACTS:-0}" -eq 1 ]; then
     echo "Xmin GUI test artifacts: $XMIN_TEST_DIR"
 else

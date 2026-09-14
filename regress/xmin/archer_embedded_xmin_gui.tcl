@@ -41,6 +41,7 @@ if {[catch {package require Archer 1.0} message options]} {
     }
     exit 1
 }
+::xmin::test::capture_background_errors
 
 proc ::archer_embedded_check {} {
     if {[catch {
@@ -88,8 +89,14 @@ proc ::archer_embedded_check {} {
 	exit 1
     }
 
-    puts "PASS: embedded Archer menu construction"
-    exit 0
+    catch {update}
+    lassign [::xmin::test::check_background_errors 0 \
+	"PASS: embedded Archer menu construction"] status result
+    puts $result
+    if {$status != 0} {
+	puts stderr $result
+    }
+    exit $status
 }
 
 after 0 ::archer_embedded_check

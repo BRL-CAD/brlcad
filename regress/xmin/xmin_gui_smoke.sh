@@ -47,17 +47,9 @@ if ! kill -0 "$XMIN_APP_PID" 2>/dev/null; then
 fi
 
 "$XMIN_CTL" activate "$window_id"
-geometry=$("$XMIN_CTL" geometry "$window_id") ||
-    xmin_fail "could not query window geometry: $expected_window"
-set -- $geometry
-if [ "$#" -lt 4 ]; then
-    xmin_fail "unexpected window geometry: $geometry"
-fi
-width=$3
-height=$4
-if [ "$width" -lt "$XMIN_MIN_WINDOW_WIDTH" ] ||
-   [ "$height" -lt "$XMIN_MIN_WINDOW_HEIGHT" ]; then
-    xmin_fail "window is unexpectedly small: ${width}x${height}"
+if ! geometry=$(xmin_wait_for_minimum_geometry "$window_id" \
+    "$XMIN_MIN_WINDOW_WIDTH" "$XMIN_MIN_WINDOW_HEIGHT"); then
+    xmin_fail "window did not reach a usable geometry: $expected_window ($geometry)"
 fi
 
 xmin_capture_root "$window_id" "$XMIN_ARTIFACT_DIR/before.ppm"
@@ -65,10 +57,12 @@ xmin_capture_root "$window_id" "$XMIN_ARTIFACT_DIR/before.ppm"
 if [ -n "${XMIN_SMOKE_ACTION:-}" ]; then
     xmin_require_executable "$XMIN_SMOKE_ACTION"
     "$XMIN_SMOKE_ACTION" "$window_id" "$XMIN_ARTIFACT_DIR"
-    xmin_capture_root "$window_id" "$XMIN_ARTIFACT_DIR/after.ppm"
     if [ "${XMIN_MIN_CHANGED_BYTES:-0}" -gt 0 ]; then
-	xmin_assert_images_differ "$XMIN_ARTIFACT_DIR/before.ppm" \
-	    "$XMIN_ARTIFACT_DIR/after.ppm" "$XMIN_MIN_CHANGED_BYTES"
+	xmin_wait_for_image_difference "$XMIN_ARTIFACT_DIR/before.ppm" \
+	    "$XMIN_ARTIFACT_DIR/after.ppm" "$XMIN_MIN_CHANGED_BYTES" \
+	    "$window_id"
+    else
+	xmin_capture_root "$window_id" "$XMIN_ARTIFACT_DIR/after.ppm"
     fi
 fi
 

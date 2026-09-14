@@ -11,21 +11,77 @@ unnoticed.
 
 | Menu | Graphically exposed features | Headless exercise strategy |
 | --- | --- | --- |
-| File | New/open database, ASCII and binary import, ASCII and object export, load script, raytrace, render-view scripts/plot/PostScript, units and command editing preferences, color/font settings, command clear, exit | Inventory and menu rendering are covered.  File operations need temporary input/output fixtures; renderer launchers need their child-process results checked. |
-| Edit | Primitive and matrix selection, primitive editor, combination editor, attribute editor, geometry browser | Primitive Editor is edited and applied through XTEST.  Matrix selection is covered by an exact geometry-result test.  The remaining editors can be isolated with generated database fixtures. |
-| Create | ARB variants, cones/cylinders, ellipsoids, and all other supported primitive creation dialogs | Inventory is covered.  Comprehensive action tests require one valid form fixture per primitive type and database-result comparison. |
+| File | New/open database, ASCII and binary import, ASCII and object export, load script, raytrace, render-view scripts/plot/PostScript, units and command editing preferences, color/font settings, command clear, exit | New/open, script loading, both imports, and both exports use isolated generated paths and assert their database or file results.  Font selection is applied to the live named font and persisted through Create/Update `.mgedrc`.  RT script, Plot, PostScript, and Raytrace controls produce and validate their external files; the deep fixture also compares framebuffer and file renders. |
+| Edit | Primitive and matrix selection, primitive editor, combination editor, attribute editor, geometry browser | Primitive and matrix edits are checked against exact geometry results.  Combination and Attribute editors exercise apply/reset/accept/dismiss transitions and verify database trees, region fields, shaders, colors, and attributes.  Geometry Browser display, autosize, zoom, clear, and close actions are checked against database and display state. |
+| Create | ARB variants, cones/cylinders, ellipsoids, and all other supported primitive creation dialogs | All 30 generic primitive dialogs plus the specialized DSP and BINUNIF dialogs are driven through their live controls.  Every result must exist and be readable from the database. |
 | View | Orthographic and oblique views, zoom, default/multipane defaults, zero | Menu rendering is covered.  The Faceplate 35,25 equivalent is action/result tested; the remaining deterministic view commands can use the same before/after view-state oracle. |
-| ViewRing | Add/select/delete/next/previous/last saved views | Inventory is covered.  A complete test can build a ring, exercise every transition, and compare center, size, and orientation. |
-| Settings | Mouse behavior, transform space, constraint coordinates, rotation origin, pane/application scope, query-ray effects, grid controls and spacing, framebuffer behavior, axes position | Inventory is covered.  Settings divide into variable-state tests, pane-layout tests, and framebuffer tests requiring a known image fixture. |
-| Modes | Grid/snap/framebuffer/listener, rubber band, ADC, Faceplate, axes, multipane, edit/status/command/DM panels, collaboration, rate knobs, display lists | Inventory is covered.  These are suitable for action/result testing via the controlling MGED variable plus visible widget, DM, or view state.  Listener/collaboration also need socket lifecycle checks. |
-| Misc | Faceplate/menu visibility, predictor, perspective, faceplate GUI, depth cueing, Z buffer, lighting | Depth cueing, Z buffer, and lighting are physically toggled and restored on every DM that reports the capability. |
-| Tools | ADC, grid, query-ray and raytrace panels; BoT editor; pattern, color, geometry browser/search, LOD and overlap tools; database upgrade; command/graphics windows | Inventory is covered.  Each panel can be opened and dismissed headlessly; meaningful action coverage needs BoT, overlap, search, and legacy-database fixtures. |
-| Help | Dedication/about, command manuals, shift-grip guide, apropos, manual search, manual | Inventory is covered.  Static dialogs are straightforward; manual lookup needs a known installed manual and input-dialog checks. |
+| ViewRing | Add/select/delete/next/previous/last saved views | Every transition is invoked through the live menu and compared with exact center, size, and orientation state, including traversal after deletion. |
+| Settings | Mouse behavior, transform space, constraint coordinates, rotation origin, pane/application scope, query-ray effects, grid controls and spacing, framebuffer behavior, axes position | The Grid Control Panel applies independent horizontal and vertical spacing, major spacing, anchor, draw, and snap state, then restores and dismisses the panel.  Other settings remain inventory-only or are covered by the deep framebuffer fixture. |
+| Modes | Grid/snap/framebuffer/listener, rubber band, ADC, Faceplate, axes, multipane, edit/status/command/DM panels, collaboration, rate knobs, display lists | The ADC panel applies model coordinates, absolute values, position, distance, both angles, and draw state, then exercises reset, restoration, and dismissal.  The deep fixture covers Faceplate and framebuffer modes.  Collaboration covers a second GUI joining, synchronized view state, leaving, and clean destruction; listener network lifecycle remains. |
+| Misc | Faceplate/menu visibility, perspective, faceplate GUI, depth cueing, Z buffer, lighting | Depth cueing, Z buffer, and lighting are physically toggled and restored on every DM that reports the capability. |
+| Tools | ADC, grid, query-ray and raytrace panels; BoT editor; pattern, color, geometry browser/search, LOD and overlap tools; database upgrade; command/graphics windows | ADC, grid, query-ray, raytrace, BoT, Build Pattern, LOD, Overlap, and Geometry Browser tools have action and semantic-result coverage.  Search, color, legacy-database upgrade, and separate command/graphics windows remain shallower. |
+| Help | Dedication/about, command manuals, shift-grip guide, apropos, manual search, manual | About, Dedication, Shift Grips, Apropos, Manual Search, command-page lookup and search, configured external manual launch, and the internal fallback viewer are exercised through their live controls. |
 
 The manifest is deliberately captured from a live Tk hierarchy instead of
 duplicating `openw.tcl` parsing logic.  Cascades, radiobuttons, checkbuttons,
 commands, disabled states, and configuration-dependent entries are therefore
 all represented exactly as a user sees them.
+
+The retiring Predictor feature is deliberately absent from both the manifest
+and behavioral coverage, so its removal is not part of the GUI test contract.
+
+The focused `regress-mged-xmin-gui-controls` fixture drives ViewRing, grid,
+ADC, font persistence, and About through their live Tk widgets and checks the
+resulting MGED state, view, named font, or generated preferences file.  It also
+requires Itcl 4.3.0, Itk 4.2.3, and Iwidgets 4.1.1 from the running
+application.  This complements the deeper multi-display-manager fixture with
+fast coverage for stateful controls that are otherwise easy to inventory
+without actually validating.  The semantic MGED fixtures share the Xmin
+background-error ledger and cannot pass with a delayed Tcl callback failure.
+The deep fixture also renders through MGED's embedded framebuffer and compares
+its readback with an independent file render.  Running it concurrently with
+the rtwizard framebuffer suite verifies that MGED rejects a partial dual-stack
+port bind and that authenticated clients cannot cross between application
+sessions.
+
+The `regress-mged-xmin-gui-workflows` fixture creates every generic primitive
+and the specialized DSP and BINUNIF forms in a scratch database.  It then
+exercises New, Open, Load Script, ASCII and binary import, ASCII and object
+export, Geometry Browser display controls, and a second collaborating GUI.
+The fixture checks database contents, generated files, display state,
+synchronized views, and clean collaboration teardown rather than treating a
+dialog opening as success.
+
+The focused `regress-mged-xmin-gui-lod` fixture checks initial and live-update
+dialog state and drives both adaptive CSG drawing and VDS-backed BoT wireframe
+simplification.  It measures Plot3 line counts at sparse, dense, and full
+detail, so a dialog that changes settings without affecting the renderer
+cannot pass.
+
+The `regress-mged-xmin-gui-render-outputs` fixture creates and inspects RT
+script, Plot3, PostScript, and 32x32 raytrace files.  The Plot3 output is
+decoded, PostScript metadata is checked, the overwrite/append path is
+exercised, and the raytrace child must produce the expected number of pixels
+before its panel is dismissed.
+
+The `regress-mged-xmin-gui-help` fixture covers installed manual lookup, short
+and full-text searches, external-browser dispatch and fallback, and the
+Apropos, Usage, Shift Grips, and Dedication dialogs.  The
+`regress-mged-xmin-gui-editors` fixture checks Combination and Attribute editor
+state transitions and their resulting database state.
+
+The `regress-mged-xmin-gui-query-pattern` fixture verifies Query Ray settings
+and creates clone groups with all three Build Pattern coordinate systems.  The
+`regress-mged-xmin-gui-bot` fixture edits and simplifies an intentionally
+redundant mesh and verifies revert and accept semantics.  Finally,
+`regress-mged-xmin-gui-overlaps` generates two independent overlap results
+with the real `gchecker`, then exercises full paths, drawing, navigation,
+clipboard, and persistent resolved marks in the Geometry Checker.
+
+The `regress-mged-xmin-gui-shotvis` fixture constructs a ShotVis object in a
+scratch database, edits its start, direction, and length through validated Tk
+entries, checks the resulting geometry, switches tabs to force redraw, and
+closes and reloads the persisted visualization.
 
 ## Dialog families
 
@@ -77,11 +133,15 @@ custom Tk Sketch Editor, which exposes line/circle/arc/Bezier construction,
 segment and vertex selection/move/delete, arc complement/radius/tangency,
 zoom/reset/save/dismiss, and coordinate entry.  The GUI regression creates a
 line with real canvas clicks, checks the vertex-list result, tests zoom and
-reset, and dismisses the editor.  The lower edit regression covers the newer
-20-command contextual API, including NURB knot/weight editing, split, plane,
-reverse, arc orientation/radius, and tangency.  The contextual sketch menu is
-not normally reachable through MGED because of the Sketch Editor diversion;
-the two surfaces should not be treated as interchangeable coverage.
+reset, and dismisses the editor.  A focused custom-editor fixture directly
+constructs arc and Bezier segments on its Tk canvas.  It checks bounded-arc
+tangency at both endpoints and at an unrelated vertex, orientation reversal,
+full-circle tangent and center handling, and Bezier drawing and serialization.
+The lower edit regression covers the newer 20-command contextual API,
+including NURB knot/weight editing, split, plane, reverse, arc
+orientation/radius, and tangency.  The contextual sketch menu is not normally
+reachable through MGED because of the Sketch Editor diversion; the two
+surfaces should not be treated as interchangeable coverage.
 
 ## Raytrace and framebuffer integration
 
@@ -134,17 +194,24 @@ separate, focused dependency change.
 
 The automated matrix is intentionally tiered:
 
-1. `tkswrast` performs the canonical full menu-manifest comparison and all GUI
-   actions.
+1. `tkswrast` performs the canonical full menu-manifest comparison and the
+   deep GUI actions.
 2. `X` and `ogl` repeat the user-visible GUI actions and geometry or state
    assertions, catching display-manager-specific input/rendering failures.
-3. Renderer-specific depth cue, Z buffer, and lighting controls run only when
+3. The focused `tkswrast` controls fixture verifies ViewRing transitions and
+   deletion plus grid, ADC, fonts, preferences, and About dialog behavior.
+4. The workflow fixture validates every primitive creation dialog, core file
+   operations, Geometry Browser actions, and in-process collaboration.
+5. Renderer-specific depth cue, Z buffer, and lighting controls run only when
    the active DM reports support.
-4. `rt_edit_test_pipe` and `rt_edit_test_sketch` exhaust complex edit APIs that
+6. Focused fixtures cover LOD/VDS density, renderer output, manuals and help,
+   Combination and Attribute editors, Query Ray, Build Pattern, BoT editing,
+   overlap generation, and Geometry Checker result handling.
+7. `rt_edit_test_pipe` and `rt_edit_test_sketch` exhaust complex edit APIs that
    are impractical or currently impossible to reach through one GUI surface.
 
-Every semantically checked GUI state is captured into one UTC-datestamped
-`<datestamp>_MGED_GUI_test_run.apng`.  Frames from all tested DMs are ordered in
+Every semantically checked state in the deep fixture is captured in one
+UTC-datestamped `<datestamp>_MGED_GUI_test_run.apng`.  Frames are ordered in
 the same file at one frame per second.  Temporary PPMs are removed after the
 APNG is reopened and its frame count is verified; on failure they are retained
 with the state log for diagnosis.

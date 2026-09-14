@@ -260,29 +260,70 @@ assert_raw_images_equal()
     fi
 }
 
-assert_images_differ()
+image_changed_channels()
 {
-    description=$1
-    first=$2
-    second=$3
+    first=$1
+    second=$2
     set +e
     diff_report=$("$ICV_BIN" diff "$first" "$second" 2>&1 >/dev/null)
     diff_status=$?
     set -e
     if [ "$diff_status" -eq 0 ]; then
-	fail "$description did not visibly change the display-manager image"
+	echo 0
+	return 0
     fi
     off_one=$(printf '%s\n' "$diff_report" | \
 	sed -n 's/.* \([0-9][0-9]*\) off by 1,.*/\1/p')
     off_many=$(printf '%s\n' "$diff_report" | \
 	sed -n 's/.* \([0-9][0-9]*\) off by many.*/\1/p')
     if [ "$diff_status" -ne 1 ] || [ -z "$off_one" ] || [ -z "$off_many" ]; then
-	fail "could not compare images for $description: $diff_report"
+	echo "$diff_report"
+	return 1
     fi
-    changed_channels=$((off_one + off_many))
+    echo $((off_one + off_many))
+}
+
+assert_images_differ()
+{
+    description=$1
+    first=$2
+    second=$3
+    if ! changed_channels=$(image_changed_channels "$first" "$second"); then
+	fail "could not compare images for $description: $changed_channels"
+    fi
+    if [ "$changed_channels" -eq 0 ]; then
+	fail "$description did not visibly change the display-manager image"
+    fi
     if [ "$changed_channels" -lt "$MIN_RENDER_CHANGED_CHANNELS" ]; then
 	fail "$description changed only $changed_channels image channels"
     fi
+}
+
+wait_for_changed_dm_snapshot()
+{
+    description=$1
+    baseline=$2
+    snapshot_name=$3
+    snapshot="$MGED_XMIN_TEST_DIR/$snapshot_name.ppm"
+    count=0
+    changed_channels=0
+
+    while [ "$count" -lt "$WAIT_LIMIT" ]; do
+	capture_dm_snapshot "$snapshot_name"
+	if ! changed_channels=$(image_changed_channels "$baseline" "$snapshot"); then
+	    fail "could not compare images for $description: $changed_channels"
+	fi
+	if [ "$changed_channels" -ge "$MIN_RENDER_CHANGED_CHANNELS" ]; then
+	    return 0
+	fi
+	sleep "$WAIT_DELAY"
+	count=$((count + 1))
+    done
+
+    if [ "$changed_channels" -eq 0 ]; then
+	fail "$description did not visibly change the display-manager image"
+    fi
+    fail "$description changed only $changed_channels image channels"
 }
 
 assert_raytrace_duration()
@@ -899,6 +940,15 @@ assert_raw_images_equal "embedded framebuffer readback" \
     "$reference_image" "$embedded_image"
 record_state "embedded framebuffer matches standalone rt"
 
+# The X display manager's opaque graphics window hides an underlay.  Select
+# overlay before checking the active toggle so every display manager has a
+# visible framebuffer image to remove.
+click_target raytrace_framebuffer_menu
+activate_menu_target raytrace_overlay
+if ! wait_for_value "$MGED_XMIN_TEST_DIR/raytrace_overlay_current" 2; then
+    fail "embedded framebuffer did not return to overlay mode"
+fi
+capture_dm_snapshot raytrace_active
 if ! wait_for_value "$MGED_XMIN_TEST_DIR/raytrace_fb_current" 1; then
     fail "embedded framebuffer was not active after raytracing"
 fi
@@ -907,10 +957,8 @@ if ! wait_for_value "$MGED_XMIN_TEST_DIR/raytrace_fb_current" 0; then
     fail "Raytrace Control Panel did not deactivate the framebuffer"
 fi
 record_state "embedded framebuffer inactive"
-capture_dm_snapshot raytrace_inactive
-assert_images_differ "framebuffer active toggle" \
-    "$MGED_XMIN_TEST_DIR/raytrace_underlay.ppm" \
-    "$MGED_XMIN_TEST_DIR/raytrace_inactive.ppm"
+wait_for_changed_dm_snapshot "framebuffer active toggle" \
+    "$MGED_XMIN_TEST_DIR/raytrace_active.ppm" raytrace_inactive
 click_target raytrace_active
 if ! wait_for_value "$MGED_XMIN_TEST_DIR/raytrace_fb_current" 1; then
     fail "Raytrace Control Panel did not reactivate the framebuffer"
