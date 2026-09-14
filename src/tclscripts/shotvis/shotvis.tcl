@@ -679,10 +679,10 @@ catch {delete class ShotVis} error
 ::itcl::body ShotVis::atan2 {y x} {
     # bn_atan2
     if {[near_zero $x]} {
-	if {y < -$epsilon} {
+	if {$y < -$epsilon} {
 	    return -$M_PI_2
 	}
-	if {y > $epsilon} {
+	if {$y > $epsilon} {
 	    return $M_PI_2
 	}
 	return 0.0
@@ -1158,7 +1158,9 @@ namespace eval shotvis {
     proc vec_angle {v1 v2} {
 	global RAD2DEG
 
-	return [expr [vdot $v1 $v2] / ([magitude $v1] * [magnitude $v2]) * $RAD2DEG]
+	set cosine [expr {[vdot $v1 $v2] /
+	    ([magnitude $v1] * [magnitude $v2])}]
+	return [expr {acos(max(-1.0, min(1.0, $cosine))) * $RAD2DEG}]
     }
 
     proc mat_mul {a b} {
