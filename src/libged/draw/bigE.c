@@ -2055,7 +2055,7 @@ ged_E_core(struct ged *gedp, int argc, const char *argv[])
     av[1] = (char *)0;
     for (i = 0; i < argc; ++i) {
 	dl_erasePathFromDisplay(gedp, argv[i], 0);
-	dgcdp->gdlp = dl_addToDisplay(gedp->i->ged_gdp->gd_headDisplay, gedp->dbip, argv[i]);
+	dgcdp->gdlp = _ged_dl_addToDisplay(gedp, argv[i]);
 
 	BU_ALLOC(dgcdp->ap, struct application);
 	RT_APPLICATION_INIT(dgcdp->ap);

@@ -58,6 +58,387 @@ extern "C" {
 #include "./qray.h"
 }
 
+namespace {
+
+constexpr char display_path_separator = '/';
+constexpr char display_path_instance = '@';
+
+static bool
+simple_display_path(std::string &normalized, const char *path)
+{
+    if (!path || !path[0] || strchr(path, display_path_instance) ||
+	strstr(path, "//"))
+	return false;
+
+    normalized.assign(path);
+    size_t first = normalized.find_first_not_of(display_path_separator);
+    if (first == std::string::npos)
+	return false;
+    normalized.erase(0, first);
+
+    if (normalized.back() == display_path_separator)
+	return false;
+
+    return true;
+}
+
+
+static void
+record_display_list_ends(struct ged *gedp)
+{
+    struct bu_list *head = gedp->i->ged_gdp->gd_headDisplay;
+    Ged_Internal *internal = gedp->i->i;
+
+    internal->display_paths_first = head->forw;
+    internal->display_paths_last = head->back;
+}
+
+
+static void
+sync_display_paths(struct ged *gedp)
+{
+    struct bu_list *head = gedp->i->ged_gdp->gd_headDisplay;
+    Ged_Internal *internal = gedp->i->i;
+
+    if (internal->display_paths_first == head->forw &&
+	internal->display_paths_last == head->back)
+	return;
+
+    internal->display_paths.clear();
+    internal->display_scene_paths.clear();
+    internal->display_paths_complex = 0;
+    struct display_list *entry;
+    for (BU_LIST_FOR(entry, display_list, head)) {
+	std::string path;
+	if (simple_display_path(path, bu_vls_cstr(&entry->dl_path)))
+	    internal->display_paths[path] = entry;
+	else
+	    internal->display_paths_complex++;
+    }
+    record_display_list_ends(gedp);
+}
+
+
+static void
+insert_display_path(struct ged *gedp, const char *path, struct display_list *entry)
+{
+    Ged_Internal *internal = gedp->i->i;
+    std::string normalized;
+
+    if (simple_display_path(normalized, path))
+	internal->display_paths[normalized] = entry;
+    else
+	internal->display_paths_complex++;
+}
+
+
+static void
+remove_display_path(struct ged *gedp, const char *path)
+{
+    Ged_Internal *internal = gedp->i->i;
+    std::string normalized;
+
+    if (simple_display_path(normalized, path)) {
+	internal->display_paths.erase(normalized);
+    } else if (internal->display_paths_complex) {
+	internal->display_paths_complex--;
+    }
+}
+
+
+static int
+lookup_display_path(struct ged *gedp, const char *path,
+                    struct display_list **ancestor, int *exact)
+{
+    Ged_Internal *internal = gedp->i->i;
+    std::string normalized;
+    bool exact_match = true;
+
+    *ancestor = NULL;
+    if (exact)
+        *exact = 0;
+    sync_display_paths(gedp);
+    if (internal->display_paths_complex ||
+	!simple_display_path(normalized, path))
+	return 0;
+
+    struct db_full_path validated_path;
+    if (db_string_to_path(&validated_path, gedp->dbip, path) != 0)
+	return 0;
+    db_free_full_path(&validated_path);
+
+    for (;;) {
+	std::map<std::string, struct display_list *>::const_iterator match =
+	    internal->display_paths.find(normalized);
+	if (match != internal->display_paths.end()) {
+	    *ancestor = match->second;
+	    if (exact)
+		*exact = exact_match ? 1 : 0;
+	    break;
+	}
+	exact_match = false;
+	const size_t separator = normalized.rfind(display_path_separator);
+	if (separator == std::string::npos)
+	    break;
+	normalized.resize(separator);
+    }
+
+    return 1;
+}
+
+
+static std::string
+scene_path_key(const struct db_full_path *path)
+{
+    char *path_string = db_path_to_string(path);
+    std::string key;
+
+    if (path_string) {
+	key.assign(path_string);
+	bu_free(path_string, "display scene path");
+    }
+
+    return key;
+}
+
+
+static void
+record_scene_list_ends(Ged_Internal::scene_path_index &index,
+		       struct display_list *entry)
+{
+    index.first = entry->dl_head_scene_obj.forw;
+    index.last = entry->dl_head_scene_obj.back;
+}
+
+
+static void
+rebuild_scene_paths(struct ged *gedp, struct display_list *entry)
+{
+    Ged_Internal::scene_path_index &index =
+	gedp->i->i->display_scene_paths[entry];
+    struct bv_scene_obj *sp;
+
+    index.paths.clear();
+    for (BU_LIST_FOR(sp, bv_scene_obj, &entry->dl_head_scene_obj)) {
+	if (!sp->s_u_data)
+	    continue;
+	struct ged_bv_data *bdata =
+	    (struct ged_bv_data *)sp->s_u_data;
+	if (!bdata->s_fullpath.fp_len)
+	    continue;
+	index.paths.emplace(scene_path_key(&bdata->s_fullpath), sp);
+    }
+    record_scene_list_ends(index, entry);
+}
+
+
+static Ged_Internal::scene_path_index &
+sync_scene_paths(struct ged *gedp, struct display_list *entry)
+{
+    Ged_Internal *internal = gedp->i->i;
+    auto found = internal->display_scene_paths.find(entry);
+
+    if (found == internal->display_scene_paths.end() ||
+	found->second.first != entry->dl_head_scene_obj.forw ||
+	found->second.last != entry->dl_head_scene_obj.back) {
+	rebuild_scene_paths(gedp, entry);
+    }
+
+    return internal->display_scene_paths[entry];
+}
+
+
+static int
+scene_path_is_descendant(const std::string &candidate,
+			 const std::string &path)
+{
+    return candidate.size() > path.size() &&
+	candidate.compare(0, path.size(), path) == 0 &&
+	candidate[path.size()] == display_path_separator;
+}
+
+}
+
+
+extern "C" void
+_ged_dl_path_sync(struct ged *gedp)
+{
+    sync_display_paths(gedp);
+}
+
+
+extern "C" int
+_ged_dl_path_lookup(struct ged *gedp, const char *path,
+                    struct display_list **ancestor, int *exact)
+{
+    return lookup_display_path(gedp, path, ancestor, exact);
+}
+
+
+extern "C" int
+_ged_dl_path_has_related(struct ged *gedp, const char *path)
+{
+    struct display_list *ancestor = NULL;
+    if (!lookup_display_path(gedp, path, &ancestor, NULL) || ancestor)
+	return 1;
+
+    std::string normalized;
+    if (!simple_display_path(normalized, path))
+	return 1;
+
+    normalized.push_back(display_path_separator);
+    const std::map<std::string, struct display_list *> &paths = gedp->i->i->display_paths;
+    std::map<std::string, struct display_list *>::const_iterator descendant =
+	paths.lower_bound(normalized);
+    if (descendant == paths.end())
+	return 0;
+
+    return descendant->first.compare(0, normalized.size(), normalized) == 0;
+}
+
+
+extern "C" void
+_ged_dl_path_insert(struct ged *gedp, const char *path, struct display_list *entry)
+{
+    insert_display_path(gedp, path, entry);
+    record_display_list_ends(gedp);
+}
+
+
+extern "C" void
+_ged_dl_path_remove(struct ged *gedp, const char *path)
+{
+    remove_display_path(gedp, path);
+    record_display_list_ends(gedp);
+}
+
+
+extern "C" void
+_ged_dl_path_invalidate(struct ged *gedp)
+{
+    gedp->i->i->display_paths.clear();
+    gedp->i->i->display_scene_paths.clear();
+    gedp->i->i->display_paths_complex = 0;
+    gedp->i->i->display_paths_first = nullptr;
+    gedp->i->i->display_paths_last = nullptr;
+}
+
+
+extern "C" void
+_ged_dl_path_clear(struct ged *gedp)
+{
+    gedp->i->i->display_paths.clear();
+    gedp->i->i->display_scene_paths.clear();
+    gedp->i->i->display_paths_complex = 0;
+    record_display_list_ends(gedp);
+}
+
+
+extern "C" int
+_ged_dl_scene_path_matches(struct ged *gedp,
+			   struct display_list *entry,
+			   const struct db_full_path *path,
+			   struct bu_ptbl *matches)
+{
+    if (!gedp || !entry || !path || !matches || !path->fp_len)
+	return 0;
+
+    Ged_Internal::scene_path_index &index =
+	sync_scene_paths(gedp, entry);
+    const std::string key = scene_path_key(path);
+    if (key.empty())
+	return 0;
+
+    auto exact = index.paths.equal_range(key);
+    for (auto i = exact.first; i != exact.second; ++i)
+	bu_ptbl_ins(matches, (long *)i->second);
+
+    const std::string prefix = key + display_path_separator;
+    auto descendant = index.paths.lower_bound(prefix);
+    while (descendant != index.paths.end() &&
+	scene_path_is_descendant(descendant->first, key)) {
+	bu_ptbl_ins(matches, (long *)descendant->second);
+	++descendant;
+    }
+
+    return 1;
+}
+
+
+/* Update an existing lazy index after sp is appended at the list tail. */
+extern "C" void
+_ged_dl_scene_path_insert(struct ged *gedp, struct display_list *entry,
+			  struct bv_scene_obj *sp)
+{
+    if (!gedp || !entry || !sp)
+	return;
+
+    Ged_Internal *internal = gedp->i->i;
+    auto found = internal->display_scene_paths.find(entry);
+    if (found == internal->display_scene_paths.end())
+	return;
+
+    struct bu_list *head = &entry->dl_head_scene_obj;
+    const void *old_first = (sp->l.back == head) ? head : head->forw;
+    const void *old_last = sp->l.back;
+    if (found->second.first != old_first ||
+	found->second.last != old_last) {
+	internal->display_scene_paths.erase(found);
+	return;
+    }
+
+    if (sp->s_u_data) {
+	struct ged_bv_data *bdata =
+	    (struct ged_bv_data *)sp->s_u_data;
+	if (bdata->s_fullpath.fp_len) {
+	    found->second.paths.emplace(
+		scene_path_key(&bdata->s_fullpath), sp);
+	}
+    }
+    record_scene_list_ends(found->second, entry);
+}
+
+
+/* Update an existing lazy index after sp is removed from the list. */
+extern "C" void
+_ged_dl_scene_path_remove(struct ged *gedp, struct display_list *entry,
+			  struct bv_scene_obj *sp)
+{
+    if (!gedp || !entry || !sp)
+	return;
+
+    Ged_Internal *internal = gedp->i->i;
+    auto found = internal->display_scene_paths.find(entry);
+    if (found == internal->display_scene_paths.end())
+	return;
+
+    if (sp->s_u_data) {
+	struct ged_bv_data *bdata =
+	    (struct ged_bv_data *)sp->s_u_data;
+	if (bdata->s_fullpath.fp_len) {
+	    const std::string key = scene_path_key(&bdata->s_fullpath);
+	    auto range = found->second.paths.equal_range(key);
+	    for (auto i = range.first; i != range.second; ++i) {
+		if (i->second == sp) {
+		    found->second.paths.erase(i);
+		    break;
+		}
+	    }
+	}
+    }
+    record_scene_list_ends(found->second, entry);
+}
+
+
+extern "C" void
+_ged_dl_scene_path_invalidate(struct ged *gedp,
+			      struct display_list *entry)
+{
+    if (gedp && entry)
+	gedp->i->i->display_scene_paths.erase(entry);
+}
+
+
 
 void
 ged_subprocesses_terminate(struct ged *gedp)

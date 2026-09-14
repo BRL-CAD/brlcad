@@ -226,6 +226,7 @@ move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new
 	    free((void *)dupstr);
 	    bu_vls_free(&new_path);
 	}
+	_ged_dl_path_invalidate(gedp);
     }
 
     if (!moved) {

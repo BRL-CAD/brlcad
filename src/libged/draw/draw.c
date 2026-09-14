@@ -149,6 +149,7 @@ dl_add_path(int dashflag, struct bu_list *vhead, const struct db_full_path *path
     /* append solid to display list */
     bu_semaphore_acquire(RT_SEM_MODEL);
     BU_LIST_APPEND(dgcdp->gdlp->dl_head_scene_obj.back, &sp->l);
+    _ged_dl_scene_path_insert(dgcdp->gedp, dgcdp->gdlp, sp);
     bu_semaphore_release(RT_SEM_MODEL);
 
     ged_create_vlist_solid_cb(dgcdp->gedp, sp);
@@ -253,6 +254,42 @@ dl_redraw(struct display_list *gdlp, struct ged *gedp, int skip_subtractions)
 	}
     }
     ged_create_vlist_display_list_cb(gedp, gdlp);
+    return ret;
+}
+
+static int
+redraw_scene_objs(struct bu_ptbl *scene_objs, struct bu_ptbl *changed_dlists,
+		  struct ged *gedp, int skip_subtractions)
+{
+    struct db_i *dbip = gedp->dbip;
+    struct rt_wdb *wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DEFAULT);
+    struct db_tree_state *tsp = &wdbp->wdb_initial_tree_state;
+    struct bview *gvp = gedp->ged_gvp;
+    struct bu_list *vlfree = &rt_vlfree;
+    int ret = 0;
+
+    for (size_t i = 0; i < BU_PTBL_LEN(scene_objs); i++) {
+	struct bv_scene_obj *sp =
+	    (struct bv_scene_obj *)BU_PTBL_GET(scene_objs, i);
+	if (!skip_subtractions || !sp->s_soldash)
+	    ret += redraw_solid(sp, dbip, tsp, gvp, vlfree);
+    }
+
+    if (gedp->ged_create_vlist_scene_obj_callback !=
+	GED_CREATE_VLIST_SOLID_FUNC_NULL) {
+	for (size_t i = 0; i < BU_PTBL_LEN(scene_objs); i++) {
+	    struct bv_scene_obj *sp =
+		(struct bv_scene_obj *)BU_PTBL_GET(scene_objs, i);
+	    ged_create_vlist_solid_cb(gedp, sp);
+	}
+    } else {
+	for (size_t i = 0; i < BU_PTBL_LEN(changed_dlists); i++) {
+	    struct display_list *gdlp =
+		(struct display_list *)BU_PTBL_GET(changed_dlists, i);
+	    ged_create_vlist_display_list_cb(gedp, gdlp);
+	}
+    }
+
     return ret;
 }
 
@@ -421,6 +458,9 @@ append_solid_to_display_list(
     /* append solid to display list */
     bu_semaphore_acquire(RT_SEM_MODEL);
     BU_LIST_APPEND(bv_data->gdlp->dl_head_scene_obj.back, &sp->l);
+    _ged_dl_scene_path_insert(bv_data->gedp, bv_data->gdlp, sp);
+    if (bv_data->new_scene_objs)
+	bu_ptbl_ins(bv_data->new_scene_objs, (long *)sp);
     bu_semaphore_release(RT_SEM_MODEL);
 
     /* indicate success by returning something other than TREE_NULL */
@@ -1212,7 +1252,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 
 		for (i = 0; i < argc; ++i) {
 		    if (drawtrees_depth == 1)
-			dgcdp.gdlp = dl_addToDisplay(gedp->i->ged_gdp->gd_headDisplay, gedp->dbip, argv[i]);
+			dgcdp.gdlp = _ged_dl_addToDisplay(gedp, argv[i]);
 
 		    if (dgcdp.gdlp == GED_DISPLAY_LIST_NULL)
 			continue;
@@ -1252,16 +1292,17 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		bu_free(eav, "eav");
 		return eret;
 	    } else {
-		struct display_list **paths_to_draw;
-		struct display_list *gdlp;
+		struct bu_ptbl changed_dlists = BU_PTBL_INIT_ZERO;
+		struct bu_ptbl new_scene_objs = BU_PTBL_INIT_ZERO;
 
-		paths_to_draw = (struct display_list **)
-		    bu_malloc(sizeof(struct display_list *) * argc,
-		    "redraw paths");
+		bu_ptbl_init(&changed_dlists, argc, "changed display lists");
+		bu_ptbl_init(&new_scene_objs, argc, "new draw scene objects");
 
 		/* create solids */
 		for (i = 0; i < argc; ++i) {
 		    struct ged_solid_data bv_data;
+		    bv_data.gedp = gedp;
+		    bv_data.new_scene_objs = &new_scene_objs;
 		    bv_data.draw_solid_lines_only = dgcdp.vs.draw_solid_lines_only;
 		    bv_data.wireframe_color_override = dgcdp.vs.color_override;
 		    bv_data.wireframe_color[0]= dgcdp.vs.color[0];
@@ -1271,16 +1312,14 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		    bv_data.dmode = dgcdp.vs.s_dmode;
 		    bv_data.v = gedp->ged_gvp;
 
-		    dgcdp.gdlp = dl_addToDisplay(gedp->i->ged_gdp->gd_headDisplay, gedp->dbip, argv[i]);
+		    dgcdp.gdlp = _ged_dl_addToDisplay(gedp, argv[i]);
 		    bv_data.gdlp = dgcdp.gdlp;
 
-		    /* store draw path */
-		    paths_to_draw[i] = dgcdp.gdlp;
-
-		    if (dgcdp.gdlp == GED_DISPLAY_LIST_NULL) {
+		    if (dgcdp.gdlp == GED_DISPLAY_LIST_NULL)
 			continue;
-		    }
 
+		    bu_ptbl_ins_unique(&changed_dlists,
+			(long *)dgcdp.gdlp);
 		    av[0] = (char *)argv[i];
 		    ret = db_walk_tree(gedp->dbip,
 				       ac,
@@ -1307,28 +1346,21 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		/* Set the view threshold */
 		if (gedp && gedp->ged_gvp) gedp->ged_gvp->gv_s->bot_threshold = bot_threshold;
 
-		/* calculate plot vlists for solids of each draw path */
-		for (i = 0; i < argc; ++i) {
-		    gdlp = paths_to_draw[i];
-
-		    if (gdlp == GED_DISPLAY_LIST_NULL) {
-			continue;
-		    }
-
-		    ret = dl_redraw(gdlp, gedp, dgcdp.vs.draw_non_subtract_only);
-		    if (ret < 0) {
-			/* restore view bot threshold */
-			if (gedp && gedp->ged_gvp) gedp->ged_gvp->gv_s->bot_threshold = threshold_cached;
-
-			bu_vls_printf(gedp->ged_result_str, "%s: %s redraw failure\n", argv[0], argv[i]);
-			return BRLCAD_ERROR;
-		    }
-		}
+		/* Calculate plot vlists only for newly walked solids. */
+		ret = redraw_scene_objs(&new_scene_objs, &changed_dlists,
+		    gedp, dgcdp.vs.draw_non_subtract_only);
+		bu_ptbl_free(&new_scene_objs);
+		bu_ptbl_free(&changed_dlists);
 
 		/* restore view bot threshold */
-		if (gedp && gedp->ged_gvp) gedp->ged_gvp->gv_s->bot_threshold = threshold_cached;
+		if (gedp && gedp->ged_gvp)
+		    gedp->ged_gvp->gv_s->bot_threshold = threshold_cached;
 
-		bu_free(paths_to_draw, "draw paths");
+		if (ret < 0) {
+		    bu_vls_printf(gedp->ged_result_str,
+			"wireframe redraw failure\n");
+		    return BRLCAD_ERROR;
+		}
 	    }
 	    break;
 	case _GED_DRAW_NMG_POLY:
@@ -1342,7 +1374,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 
 		for (i = 0; i < argc; ++i) {
 		    if (drawtrees_depth == 1)
-			dgcdp.gdlp = dl_addToDisplay(gedp->i->ged_gdp->gd_headDisplay, gedp->dbip, argv[i]);
+			dgcdp.gdlp = _ged_dl_addToDisplay(gedp, argv[i]);
 
 		    if (dgcdp.gdlp == GED_DISPLAY_LIST_NULL)
 			continue;

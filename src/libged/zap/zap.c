@@ -58,14 +58,14 @@ dl_zap(struct ged *gedp)
 				 BU_LIST_FIRST(bv_scene_obj, &gdlp->dl_head_scene_obj)->s_dlist + 1);
 
 	while (BU_LIST_WHILE(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
-	    if (!sp->s_u_data)
-		continue;
-	    struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
-	    dp = FIRST_SOLID(bdata);
-	    RT_CK_DIR(dp);
-	    if (dp->d_addr == RT_DIR_PHONY_ADDR) {
-		if (db_dirdelete(dbip, dp) < 0) {
-		    bu_log("ged_zap: db_dirdelete failed\n");
+	    if (sp->s_u_data) {
+		struct ged_bv_data *bdata =
+		    (struct ged_bv_data *)sp->s_u_data;
+		dp = FIRST_SOLID(bdata);
+		RT_CK_DIR(dp);
+		if (dp->d_addr == RT_DIR_PHONY_ADDR) {
+		    if (db_dirdelete(dbip, dp) < 0)
+			bu_log("ged_zap: db_dirdelete failed\n");
 		}
 	    }
 
@@ -78,6 +78,8 @@ dl_zap(struct ged *gedp)
 	bu_ptbl_ins_unique(&dls, (long *)gdlp);
 	gdlp = NULL;
     }
+
+    _ged_dl_path_clear(gedp);
 
     /* Free all display lists */
     for(i = 0; i < BU_PTBL_LEN(&dls); i++) {
