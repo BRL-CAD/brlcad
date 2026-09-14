@@ -232,6 +232,7 @@ static struct cmdtab mged_cmdtab[] = {
     {MGED_CMD_MAGIC, "ill", f_ill, GED_FUNC_PTR_NULL, NULL},
     {MGED_CMD_MAGIC, "importFg4Section", cmd_ged_plain_wrapper, ged_exec_importFg4Section, NULL},
     {MGED_CMD_MAGIC, "in", cmd_ged_in, ged_exec_in, NULL},
+    {MGED_CMD_MAGIC, "interrupt", cmd_interrupt, GED_FUNC_PTR_NULL, NULL},
     {MGED_CMD_MAGIC, "inside", cmd_ged_inside, ged_exec_inside, NULL},
     {MGED_CMD_MAGIC, "instance", cmd_ged_plain_wrapper, ged_exec_instance, NULL},
     {MGED_CMD_MAGIC, "isize", cmd_ged_plain_wrapper, ged_exec_isize, NULL},
@@ -492,6 +493,43 @@ static struct cmdtab mged_cmdtab[] = {
 
 
 /**
+ * Dispatch an MGED command only when its shared GED state is available.
+ */
+static int
+mged_cmd_dispatch(ClientData clientData, Tcl_Interp *interp, int argc,
+                  const char *argv[])
+{
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    struct mged_state *s;
+
+    MGED_CK_CMD(ctp);
+    s = ctp->s;
+
+    if (s->cmd_running) {
+	if (ctp->tcl_func == cmd_interrupt)
+	    return ctp->tcl_func(clientData, interp, argc, argv);
+
+	if (ctp->tcl_func == f_quit) {
+	    if (argc != 1) {
+		Tcl_AppendResult(interp, "Usage: ", argv[0], NULL);
+		return TCL_ERROR;
+	    }
+	    (void)mged_request_command_interrupt(s);
+	    mged_request_shutdown(s, 0);
+	    return TCL_OK;
+	}
+
+	Tcl_SetErrorCode(interp, "BRLCAD", "MGED", "COMMAND_BUSY", NULL);
+	Tcl_SetObjResult(interp,
+		Tcl_NewStringObj("another MGED command is already running", -1));
+	return TCL_ERROR;
+    }
+
+    return ctp->tcl_func(clientData, interp, argc, argv);
+}
+
+
+/**
  * Register all MGED commands.
  */
 static void
@@ -525,9 +563,9 @@ cmd_setup(struct mged_state *s)
 	bu_vls_strcpy(&temp, "_mged_");
 	bu_vls_strcat(&temp, ctp->name);
 
-	(void)Tcl_CreateCommand(s->interp, ctp->name, ctp->tcl_func,
+	(void)Tcl_CreateCommand(s->interp, ctp->name, mged_cmd_dispatch,
 				(ClientData)ctp, (Tcl_CmdDeleteProc *)NULL);
-	(void)Tcl_CreateCommand(s->interp, bu_vls_addr(&temp), ctp->tcl_func,
+	(void)Tcl_CreateCommand(s->interp, bu_vls_addr(&temp), mged_cmd_dispatch,
 				(ClientData)ctp, (Tcl_CmdDeleteProc *)NULL);
     }
 
@@ -590,8 +628,7 @@ mged_setup(struct mged_state *s)
     if (s->interp != NULL)
 	Tcl_DeleteInterp(s->interp);
 
-    /* These are created and destroyed around each search command. */
-    s->search_interp = NULL;
+    /* This is created on the main thread and replayed by the worker. */
     s->search_snapshot = NULL;
     s->search_snapshot_len = 0;
 
