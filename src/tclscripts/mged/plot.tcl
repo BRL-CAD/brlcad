@@ -22,7 +22,7 @@
 #	Widget for producing Unix Plot files of MGED's current view.
 #
 
-check_externs "_mged_opendb _mged_pl"
+check_externs "_mged_opendb _mged_plot"
 
 proc init_plotTool { id } {
     global mged_gui
@@ -159,7 +159,7 @@ proc do_plot { id } {
     global ::tk::Priv
 
     cmd_win set $id
-    set pl_cmd "_mged_pl"
+    set pl_cmd "_mged_plot"
 
     if {$pl_control($id,zclip)} {
 	append pl_cmd " -zclip"

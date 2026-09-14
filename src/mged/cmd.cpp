@@ -2350,7 +2350,7 @@ f_postscript(ClientData clientData, Tcl_Interp *interpreter, int argc, const cha
 
     dml = s->mged_curr_dm;
     s->gedp->ged_gvp = view_state->vs_gvp;
-    status = mged_attach(s, "postscript", argc, argv);
+    status = mged_attach(s, "ps", argc, argv);
     if (status == TCL_ERROR)
 	return TCL_ERROR;
 

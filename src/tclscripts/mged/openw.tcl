@@ -277,8 +277,9 @@ proc mged_open_manual {parent screen} {
     global mged_html_dir
 
     set manual_path [file join $mged_html_dir index.html]
+    set browser [auto_execok $mged_browser]
     if {[file readable $manual_path] &&
-	![catch {exec -- $mged_browser $manual_path &}]} {
+	[llength $browser] && ![catch {exec -- {*}$browser $manual_path &}]} {
 	return
     }
 
