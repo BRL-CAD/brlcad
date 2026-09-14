@@ -62,6 +62,23 @@ brlcad_add_test(
   )
 set_tests_properties(mkbuilding_demo_unique_geometry PROPERTIES PASS_REGULAR_EXPRESSION "Generated 51 building\\(s\\)")
 
+set(building_test_outputs
+  ${CMAKE_CURRENT_BINARY_DIR}/mkbuilding-osm-test.g
+  ${CMAKE_CURRENT_BINARY_DIR}/mkbuilding-cityjson-test.g
+  ${CMAKE_CURRENT_BINARY_DIR}/mkbuilding-test.g
+  ${CMAKE_CURRENT_BINARY_DIR}/mkbuilding-roof-support-museum.g
+  ${CMAKE_CURRENT_BINARY_DIR}/mkbuilding-roof-support-stadium.g
+  ${CMAKE_CURRENT_BINARY_DIR}/mkbuilding-roof-support-bunker.g
+  ${CMAKE_CURRENT_BINARY_DIR}/mkbuilding-roof-support-parking.g
+  ${CMAKE_CURRENT_BINARY_DIR}/mkbuilding-roof-support-grandstand.g
+  ${CMAKE_CURRENT_BINARY_DIR}/mkbuilding-roof-support-carport.g
+  ${CMAKE_CURRENT_BINARY_DIR}/mkbuilding-demo-test.g
+  )
+set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${building_test_outputs}")
+distclean(${building_test_outputs})
+distclean(${CMAKE_CURRENT_BINARY_DIR}/building_schema.h)
+
+
 cmakefiles(
   CMakeLists.txt
   building.h
