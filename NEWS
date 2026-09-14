@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 20XX-XX-XX  Release 7.46.0                                     ---
 ----------------------------------------------------------------------
 
+* fixed MGED ShotVis editing and reload failures - Cliff Yapp
 * fixed Tcl widget geometry and selection defects - Cliff Yapp
 * fixed MGED BoT editor property handling - Cliff Yapp
 * fixed MGED LOD dialog and adaptive BoT wireframes - Cliff Yapp
