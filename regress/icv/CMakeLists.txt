@@ -56,7 +56,7 @@ distclean(${LOG_FILE} ${TARGET_IMAGE})
 
 # Unpack compressed dpix file
 execute_process(
-  COMMAND "${CMAKE_COMMAND}" -E tar xjf "${CMAKE_CURRENT_SOURCE_DIR}/m35.dpix.tbz2"
+  COMMAND "${CMAKE_COMMAND}" -E tar xjf "${CMAKE_CURRENT_SOURCE_DIR}/m35.dpix.tbz2" m35.dpix
   WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
 )
 distclean("${CMAKE_CURRENT_BINARY_DIR}/m35.dpix")
