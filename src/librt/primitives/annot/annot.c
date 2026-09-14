@@ -2054,8 +2054,10 @@ annot_segment_mesh(struct annot_mesh *mesh,
 		    break;
 		case BV_VLIST_POLY_DRAW:
 		case BV_VLIST_TRI_DRAW:
-		    if (polygon_count < 3)
-			VMOVE(polygon[polygon_count++], vp->pt[i]);
+		    if (polygon_count < 3) {
+			VMOVE(polygon[polygon_count], vp->pt[i]);
+			polygon_count++;
+		    }
 		    break;
 		case BV_VLIST_POLY_END:
 		case BV_VLIST_TRI_END:
