@@ -1,0 +1,99 @@
+Display Autoview command normal
+Display cascade normal
+Display Center... command normal
+Display Clear command normal
+Display Refresh command normal
+Display Reset command normal
+Display {Background Color} Black command normal
+Display {Background Color} Blue command normal
+Display {Background Color} cascade normal
+Display {Background Color} Cyan command normal
+Display {Background Color} Grey command normal
+Display {Background Color} Navy command normal
+Display {Background Color} White command normal
+Display {Save as png ...} command normal
+Display {Standard Views} Bottom command normal
+Display {Standard Views} cascade normal
+Display {Standard Views} Front command normal
+Display {Standard Views} Port command normal
+Display {Standard Views} Rear command normal
+Display {Standard Views} Starboard command normal
+Display {Standard Views} Top command normal
+Display {Standard Views} {35, 25} command normal
+Display {Standard Views} {45, 45} command normal
+Display {Standard Views} {} separator normal
+Display {} separator normal
+File cascade normal
+File Export... command normal
+File New... command normal
+File Open... command normal
+File Preferences... command normal
+File Quit command normal
+File Revert command disabled
+File Save command disabled
+File {} separator normal
+Help cascade normal
+Help {About Archer...} command normal
+Help {About Plug-ins...} command normal
+Help {Archer Help...} command normal
+Help {Archer Man Pages...} command normal
+Help {} separator normal
+Modes cascade normal
+Modes Grid checkbutton normal
+Modes Lighting checkbutton normal
+Modes Scale checkbutton normal
+Modes {Active Pane} cascade normal
+Modes {Active Pane} {Lower Left} radiobutton normal
+Modes {Active Pane} {Lower Right} radiobutton normal
+Modes {Active Pane} {Upper Left} radiobutton normal
+Modes {Active Pane} {Upper Right} radiobutton normal
+Modes {Angle/Distance Cursor} checkbutton normal
+Modes {Comp Pick Mode} cascade normal
+Modes {Comp Pick Mode} {Bot Flip} radiobutton normal
+Modes {Comp Pick Mode} {Bot Split} radiobutton normal
+Modes {Comp Pick Mode} {Bot Sync} radiobutton normal
+Modes {Comp Pick Mode} {Erase Object} radiobutton normal
+Modes {Comp Pick Mode} {Get Object Name} radiobutton normal
+Modes {Comp Pick Mode} {Tree Select} radiobutton normal
+Modes {Comp Select Mode} cascade normal
+Modes {Comp Select Mode} List radiobutton normal
+Modes {Comp Select Mode} {Add to Group (Partial)} radiobutton normal
+Modes {Comp Select Mode} {Add to Group} radiobutton normal
+Modes {Comp Select Mode} {List (Partial)} radiobutton normal
+Modes {Comp Select Mode} {Remove from Group (Partial)} radiobutton normal
+Modes {Comp Select Mode} {Remove from Group} radiobutton normal
+Modes {Comp Select Mode} {Select BOT Points} radiobutton normal
+Modes {Ground Plane} checkbutton normal
+Modes {Model Axes} checkbutton normal
+Modes {Primitive Labels} checkbutton normal
+Modes {Quad View} checkbutton normal
+Modes {Snap Grid} checkbutton normal
+Modes {Snap to Lines} checkbutton normal
+Modes {View Axes} checkbutton normal
+Modes {Viewing Parameters} checkbutton normal
+Modes {} separator normal
+Raytrace cascade normal
+Raytrace nirt command normal
+Raytrace rt 512x512 command normal
+Raytrace rt 1024x1024 command normal
+Raytrace rt cascade normal
+Raytrace rt {Window Size} command normal
+Raytrace rtcheck 50x50 command normal
+Raytrace rtcheck 100x100 command normal
+Raytrace rtcheck 256x256 command normal
+Raytrace rtcheck 512x512 command normal
+Raytrace rtcheck cascade normal
+Raytrace rtedge 512x512 command normal
+Raytrace rtedge 1024x1024 command normal
+Raytrace rtedge cascade normal
+Raytrace rtedge {Window Size} command normal
+Raytrace {check overlaps} 50x50 command normal
+Raytrace {check overlaps} 100x100 command normal
+Raytrace {check overlaps} 256x256 command normal
+Raytrace {check overlaps} 512x512 command normal
+Raytrace {check overlaps} cascade normal
+Raytrace {} separator normal
+Utilities cascade normal
+Utilities {AttrGroupsDisplay Utility} command normal
+Utilities {Bot Utility} command normal
+Utilities {LOD Utility} command normal
