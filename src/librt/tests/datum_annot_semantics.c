@@ -398,7 +398,12 @@ main(int argc, char **argv)
 	struct bu_list vhead;
 	struct bg_tess_tol ttol = BG_TESS_TOL_INIT_TOL;
 	struct bn_tol tol = BN_TOL_INIT_TOL;
-	if (!(loaded->flags & RT_ANNOT_MODEL_SPACE) || !loaded->styles ||
+	if (!loaded || !loaded->styles || !loaded->ant.segments ||
+		loaded->ant.count != 11 || !loaded->ant.segments[10])
+	    bu_exit(1,
+		"enhanced annotation structure did not round trip\n");
+
+	if (!(loaded->flags & RT_ANNOT_MODEL_SPACE) ||
 		loaded->styles[0].role != RT_ANNOT_ROLE_CENTERMARK ||
 		loaded->styles[0].line_pattern != RT_ANNOT_LINE_DASHED ||
 		!loaded->styles[0].font ||
@@ -417,7 +422,6 @@ main(int argc, char **argv)
 		!NEAR_EQUAL(loaded->styles[1].xy_scale, 0.25, SMALL_FASTF) ||
 		!NEAR_EQUAL(loaded->styles[1].yx_scale, 0.1, SMALL_FASTF) ||
 		!NEAR_EQUAL(loaded->styles[1].y_scale, 0.75, SMALL_FASTF) ||
-		loaded->ant.count != 11 ||
 		*(uint32_t *)loaded->ant.segments[10] != ANN_FSEG_MAGIC ||
 		loaded->styles[10].role != RT_ANNOT_ROLE_MASK ||
 		!loaded->styles[10].symbol ||
