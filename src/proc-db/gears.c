@@ -326,7 +326,7 @@ main(int ac, char *av[])
     /* tunable parameters with sensible defaults */
     double module = 5.0;	/* tooth size (mm) */
     int ngears = 3;		/* number of gears in the train */
-    int teeth[MAX_GEARS];	/* teeth per gear */
+    int teeth[MAX_GEARS] = {12, 18, 24};	/* teeth per gear */
     double thickness = 12.0;	/* extrusion depth (mm) */
     double bore_frac = 0.18;	/* bore radius as a fraction of pitch radius */
 
@@ -343,20 +343,12 @@ main(int ac, char *av[])
     double max_outer;
 
     int i;
-    int default_teeth[3];
 
     bu_setprogname(av[0]);
 
     if (ac < 2) {
 	bu_exit(1, "Usage: %s output.g [--module m] [--gears n] [--teeth \"t1 t2 ...\"] [--thickness t]\n", av[0]);
     }
-
-    /* default gear train: 12, 18, 24 teeth */
-    default_teeth[0] = 12;
-    default_teeth[1] = 18;
-    default_teeth[2] = 24;
-    for (i = 0; i < 3; i++)
-	teeth[i] = default_teeth[i];
 
     /*
      * Parse optional arguments.  Everything past the output path is
