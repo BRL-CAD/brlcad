@@ -137,6 +137,119 @@ static const char *p_nmgin[] = {
 };
 
 
+#define ARB_FACE_COUNT 6
+#define ARB_MAX_PLANE_INTERSECTIONS 20
+
+
+/* Verify that every plane bounds a non-degenerate convex volume.  Translating
+ * the planes of an existing convex ARB cannot make their intersection
+ * unbounded, but excessive or unequal thicknesses can eliminate a face or
+ * collapse the volume. */
+static int
+arb_in_planes_valid(plane_t planes[ARB_FACE_COUNT], const struct bn_tol *tol)
+{
+    point_t vertices[ARB_MAX_PLANE_INTERSECTIONS];
+    int plane_used[ARB_FACE_COUNT] = {0};
+    size_t vertex_count = 0;
+
+    for (size_t i = 0; i < ARB_FACE_COUNT - 2; i++) {
+	for (size_t j = i + 1; j < ARB_FACE_COUNT - 1; j++) {
+	    for (size_t k = j + 1; k < ARB_FACE_COUNT; k++) {
+		point_t candidate;
+		int outside = 0;
+
+		if (bg_make_pnt_3planes(candidate, planes[i], planes[j], planes[k]) < 0)
+		    continue;
+
+		for (size_t face = 0; face < ARB_FACE_COUNT; face++) {
+		    if (DIST_PNT_PLANE(candidate, planes[face]) > tol->dist) {
+			outside = 1;
+			break;
+		    }
+		}
+		if (outside)
+		    continue;
+
+		plane_used[i] = 1;
+		plane_used[j] = 1;
+		plane_used[k] = 1;
+		VMOVE(vertices[vertex_count], candidate);
+		vertex_count++;
+	    }
+	}
+    }
+
+    for (size_t face = 0; face < ARB_FACE_COUNT; face++)
+	if (!plane_used[face])
+	    return 0;
+
+    /* At least four non-coplanar vertices are required for a volume. */
+    for (size_t i = 0; i + 2 < vertex_count; i++) {
+	for (size_t j = i + 1; j + 1 < vertex_count; j++) {
+	    for (size_t k = j + 1; k < vertex_count; k++) {
+		plane_t vertex_plane;
+
+		if (bg_make_plane_3pnts(vertex_plane, vertices[i], vertices[j], vertices[k], tol) < 0)
+		    continue;
+		for (size_t l = 0; l < vertex_count; l++) {
+		    if (l == i || l == j || l == k)
+			continue;
+		    if (!NEAR_ZERO(DIST_PNT_PLANE(vertices[l], vertex_plane), tol->dist))
+			return 1;
+		}
+	    }
+	}
+    }
+
+    return 0;
+}
+
+
+/* An ARB7 has four faces meeting at its coincident V5/V8 vertex.  Moving those
+ * faces independently generally replaces that vertex with an edge, and either
+ * of two edge topologies can result.  Store the exact intersection of the six
+ * translated halfspaces as an ARBN instead of approximating it through NMG
+ * tessellation and BOT conversion. */
+static int
+arb7in(struct ged *gedp,
+       struct rt_db_internal *ip,
+       const fastf_t thick[ARB_FACE_COUNT],
+       plane_t planes[ARB_FACE_COUNT],
+       const point_t center_pt,
+       const struct bn_tol *tol)
+{
+    struct rt_arbn_internal *arbn;
+
+    for (size_t i = 0; i < ARB_FACE_COUNT; i++) {
+	/* ARBN halfspaces use outward normals. */
+	if (DIST_PNT_PLANE(center_pt, planes[i]) > 0.0)
+	    HREVERSE(planes[i], planes[i]);
+	planes[i][W] -= thick[i];
+    }
+
+    if (!arb_in_planes_valid(planes, tol)) {
+	bu_vls_printf(gedp->ged_result_str,
+		      "Cannot find a valid inside arb7: thicknesses eliminate a face or collapse the volume\n");
+	return BRLCAD_ERROR;
+    }
+
+    BU_ALLOC(arbn, struct rt_arbn_internal);
+    arbn->magic = RT_ARBN_INTERNAL_MAGIC;
+    arbn->neqn = ARB_FACE_COUNT;
+    arbn->eqn = (plane_t *)bu_calloc(arbn->neqn, sizeof(plane_t), "inside arb7 planes");
+    for (size_t i = 0; i < arbn->neqn; i++)
+	HMOVE(arbn->eqn[i], planes[i]);
+
+    rt_db_free_internal(ip);
+    ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    ip->idb_type = ID_ARBN;
+    ip->idb_meth = &OBJ[ID_ARBN];
+    ip->idb_ptr = (void *)arbn;
+
+    return BRLCAD_OK;
+}
+
+
 /* finds inside arbs */
 static int
 arbin(struct ged *gedp,
@@ -145,7 +258,7 @@ arbin(struct ged *gedp,
       size_t nface,
       int cgtype,		/* # of points, 4..8 */
       plane_t planes[6],
-      struct bu_list *vlfree)
+      const struct bn_tol *tol)
 {
     struct rt_arb_internal *arb = (struct rt_arb_internal *)ip->idb_ptr;
     point_t center_pt = VINIT_ZERO;
@@ -157,20 +270,18 @@ arbin(struct ged *gedp,
     /* find reference point (center_pt[3]) to find direction of normals */
     rt_arb_centroid(&center_pt, ip);
 
-    /* move new face planes for the desired thicknesses
-     * don't do this yet for an arb7 */
-    if (cgtype != 7) {
-	for (i = 0; i < nface; i++) {
-	    if ((planes[i][W] - VDOT(center_pt, &planes[i][0])) > 0.0)
-		thick[i] *= -1.0;
-	    planes[i][W] += thick[i];
-	}
+    if (cgtype == ARB7)
+	return arb7in(gedp, ip, thick, planes, center_pt, tol);
+
+    /* move new face planes for the desired thicknesses */
+    for (i = 0; i < nface; i++) {
+	if ((planes[i][W] - VDOT(center_pt, &planes[i][0])) > 0.0)
+	    thick[i] *= -1.0;
+	planes[i][W] += thick[i];
     }
 
     if (cgtype == 5)
 	num_pts = 4;	/* use rt_arb_3face_intersect for first 4 points */
-    else if (cgtype == 7)
-	num_pts = 0;	/* don't use rt_arb_3face_intersect for any points */
 
     /* find the new vertices by intersecting the new face planes */
     for (i = 0; i < num_pts; i++) {
@@ -180,10 +291,8 @@ arbin(struct ged *gedp,
 	}
     }
 
-    /* The following is code for the special cases of arb5 and arb7
-     * These arbs have a vertex that is the intersection of four planes, and
-     * the inside solid may have a single vertex or an edge replacing this vertex
-     */
+    /* An ARB5 has a vertex where four planes intersect.  Its inside solid may
+     * have either a single vertex or an edge replacing that vertex. */
     if (cgtype == 5) {
 	/* Here we are only concerned with the one vertex where 4 planes intersect
 	 * in the original solid
@@ -263,105 +372,6 @@ arbin(struct ged *gedp,
 	    VMOVE(arb->pt[6], pt[1]);
 	    VMOVE(arb->pt[7], pt[1]);
 	}
-    } else if (cgtype == 7) {
-	struct model *m;
-	struct nmgregion *r;
-	struct shell *s = NULL;
-	struct faceuse *fu;
-	struct bg_tess_tol ttol;
-	struct bu_ptbl vert_tab;
-	struct rt_bot_internal *bot;
-
-	struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-	ttol.magic = BG_TESS_TOL_MAGIC;
-	ttol.abs = wdbp->wdb_ttol.abs;
-	ttol.rel = wdbp->wdb_ttol.rel;
-	ttol.norm = wdbp->wdb_ttol.norm;
-
-	/* Make a model to hold the inside solid */
-	m = nmg_mm();
-
-	/* get an NMG version of this arb7 */
-	if (!OBJ[ip->idb_type].ft_tessellate || OBJ[ip->idb_type].ft_tessellate(&r, m, ip, &ttol, &wdbp->wdb_tol)) {
-	    bu_vls_printf(gedp->ged_result_str, "Cannot tessellate arb7\n");
-	    rt_db_free_internal(ip);
-	    return BRLCAD_ERROR;
-	}
-
-	/* move face planes */
-	for (i = 0; i < nface; i++) {
-	    int found=0;
-
-	    /* look for the face plane with the same geometry as the arb7 planes */
-	    s = BU_LIST_FIRST(shell, &r->s_hd);
-	    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
-		struct face_g_plane *fg;
-		plane_t pl;
-
-		NMG_CK_FACEUSE(fu);
-		if (fu->orientation != OT_SAME)
-		    continue;
-
-		NMG_GET_FU_PLANE(pl, fu);
-		if (bg_coplanar(planes[i], pl, &wdbp->wdb_tol) > 0) {
-		    /* found the NMG face geometry that matches arb face i */
-		    found = 1;
-		    fg = fu->f_p->g.plane_p;
-		    NMG_CK_FACE_G_PLANE(fg);
-
-		    /* move the face by distance "thick[i]" */
-		    if (fu->f_p->flip)
-			fg->N[3] += thick[i];
-		    else
-			fg->N[3] -= thick[i];
-
-		    break;
-		}
-	    }
-	    if (!found) {
-		bu_vls_printf(gedp->ged_result_str, "Could not move face plane for arb7, face #%zu\n", i);
-		nmg_km(m);
-		return BRLCAD_ERROR;
-	    }
-	}
-
-	/* solve for new vertex geometry
-	 * This does all the vertices
-	 */
-	bu_ptbl_init(&vert_tab, 64, "vert_tab");
-	nmg_vertex_tabulate(&vert_tab, &m->magic, vlfree);
-	for (i = 0; i < BU_PTBL_LEN(&vert_tab); i++) {
-	    struct vertex *v;
-
-	    v = (struct vertex *)BU_PTBL_GET(&vert_tab, i);
-	    NMG_CK_VERTEX(v);
-
-	    if (nmg_in_vert(v, 0, vlfree, &wdbp->wdb_tol)) {
-		bu_vls_printf(gedp->ged_result_str, "Could not find coordinates for inside arb7\n");
-		nmg_km(m);
-		bu_ptbl_free(&vert_tab);
-		return BRLCAD_ERROR;
-	    }
-	}
-	bu_ptbl_free(&vert_tab);
-
-	/* rebound model */
-	nmg_rebound(m, &wdbp->wdb_tol);
-
-	/* free old ip pointer */
-	rt_db_free_internal(ip);
-
-	/* convert the NMG to a BOT */
-	bot = (struct rt_bot_internal *)nmg_bot(s, vlfree, &wdbp->wdb_tol);
-	nmg_km(m);
-
-	nmg_extrude_cleanup(s, 0, vlfree, &wdbp->wdb_tol);
-
-	/* put new solid in "ip" */
-	ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
-	ip->idb_type = ID_BOT;
-	ip->idb_meth = &OBJ[ID_BOT];
-	ip->idb_ptr = (void *)bot;
     }
 
     return BRLCAD_OK;
@@ -993,7 +1003,7 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
 		++arg;
 	    }
 
-	    if (arbin(gedp, ip, thick, nface, cgtype, planes, vlfree))
+	    if (arbin(gedp, ip, thick, nface, cgtype, planes, &wdbp->wdb_tol))
 		return BRLCAD_ERROR;
 	    break;
 	}
