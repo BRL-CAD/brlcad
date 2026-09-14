@@ -78,19 +78,10 @@ stability & usability
 
 * need a manual page
 
-* raytrace button won't abort correctly due to using rtwizard rather
-  than rt directly - will probably need fixes to rtwizard and archer
-
 * need proper "raytrace control" panel for easy access to raytracing
   options
 
 * fix archer/libdm labels/axes to not use pointer printing
-
-* "archer -h" causes archer to halt with a Tk_Init error.  should
-  display usage/help.
-
-* reports "ArcherCore::getTreeMembers: faulty tree - " on some .g
-  files, valid ones
 
 * numerous warnings on exit on Mac OS X (10.6):
    <Error>: kCGErrorIllegalArgument: CGSGetSurfaceBounds
@@ -126,10 +117,10 @@ stability & usability
   toggling visibility should ideally be moved to an adjacent icon,
   with double-clicking reserved to expanding or hiding the subtree.
 
-* make sure archer behaves properly with relative paths to dbopen.
-  Windows in particular is doing something different in
-  src/librt/db_open.c that should be a problem as it only records the
-  file name (so gui will work, but dbopen + cd + rt will not).
+* verify relative dbopen paths on Windows.  The Unix Xmin regression covers
+  opening a relative path and changing directory without losing the database,
+  but src/librt/db_open.c has Windows-specific behavior that records only the
+  file name (so the GUI may work while dbopen + cd + rt does not).
 
 * make it move comb members to other combs via drag and drop
   (currently copy and paste are options in the right-click menu).

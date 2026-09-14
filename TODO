@@ -343,11 +343,6 @@ lookup check to ensure none are missing.
   error.  code appears to be assuming both /dev/X framebuffer and uses
   /dev/null redirect to sink output.
 
-* rtwizard greys out the File->New and Open menu items when run with a
-  filename, which is very confusing.  Either menu should remain usable
-  or there should be some other indication that a file was specified
-  and is open.
-
 * ability to visualize metaball centerpoints and with/without
   translucency.
 

@@ -4,7 +4,7 @@ BRL-CAD Itcl/Itk 4 migration
 Decision
 --------
 
-BRL-CAD requires Itcl 4.1.1 or newer and Itk 4.2.3 or newer.  Bext uses the
+BRL-CAD requires Itcl 4.3.0 or newer and Itk 4.2.3 or newer.  Bext uses the
 Itcl 4.3.7 already bundled in Tcl 8.6.18 and separately builds upstream Itk
 4.2.7.  The former Itcl/Itk 3 forks and their copied private headers are not
 needed.
@@ -99,13 +99,22 @@ the later warning and maintenance fixes are all already included in the Itk
 Supported versions
 ------------------
 
-Itcl 4.1.0 is not a viable minimum for current Itk.  The complete Itk 4.2.3
-suite produced 93 passes and seven failures with Itcl 4.1.0.  The failures
-exercise private/protected components and destroyed-component cleanup.  The
-same 100 tests all pass with Itcl 4.1.1, Itcl 4.1.2, and Tcl's bundled Itcl
-4.2.3.  Current Itk 4.2.7 also passes all 100 tests with Itcl 4.1.1, 4.2.3, and
-Tcl 8.6.18's bundled Itcl 4.3.7.  For that reason the enforced Itcl
-floor is 4.1.1 rather than Itk's historical nominal 4.1 requirement.
+The upstream Itk suite alone is not sufficient to establish BRL-CAD's Itcl
+floor.  Itk 4.2.3 produced 93 passes and seven failures with Itcl 4.1.0, while
+all 100 tests passed with Itcl 4.1.1, 4.1.2, and 4.2.3.  Current Itk 4.2.7 also
+passes that suite with those versions and with Tcl 8.6.18's bundled Itcl
+4.3.7.
+
+BRL-CAD's Tk-first baseline found a separate incompatibility in every tested
+pre-4.3 release.  With Tcl/Tk 8.6.18, Itcl 4.1.1, 4.1.2, and 4.2.3 all fail
+when Iwidgets creates ``iwidgets::Checkbox`` after Tk has initialized the
+same-named namespace.  The Tcl-first initialization order passes, which is why
+the Itk suite and package probes did not expose the problem.  Upstream Itcl
+4.3.0 includes the workaround for the ``Tcl_NewObjectInstance`` behavior
+introduced in Tcl 8.6.15 (upstream Tcl ticket 154f0982f2).  A release build
+using Tcl/Tk 8.6.18, Itcl 4.3.0, Itk 4.2.3, and Iwidgets 4.1.1 passes the full
+BRL-CAD compatibility baseline in both initialization orders.  Itcl 4.3.0 is
+therefore the enforced runtime floor.
 
 Itk 4.2.3 is the oldest Itk release tested for this migration and is the
 runtime floor.  Bext's 4.2.7 snapshot includes the August 2024 4.2.6 release,
@@ -158,7 +167,7 @@ This prevents bundled zlib headers from producing a mixed configuration while
 leaving the archived source unchanged.
 
 System selection is all-or-nothing whenever Tk is required.  The selected
-tclsh must load Itcl 4.1.1 or newer, FindTCL must locate the matching Tk, and
+tclsh must load Itcl 4.3.0 or newer, FindTCL must locate the matching Tk, and
 Tcl's package path must advertise Itk 4.2.3 or newer.  If automatic selection
 misses either extension floor, bext selects its complete bundled
 Tcl/Tk/Itcl/Itk stack.  An explicitly forced system selection instead fails
@@ -175,6 +184,42 @@ initializes Tk when loaded, so a display-less btclsh cannot perform that step.
 A static two-entry index is deterministic and does not make the build depend on
 a display or on whichever Itk happens to appear first in auto_path.
 
+Multiple-interpreter initialization
+-----------------------------------
+
+libtclcad formerly used one process-wide ``library_initialized`` flag for both
+full initialization and ``Ged_Init``.  Consequently, initializing any first
+interpreter caused later interpreters to return success without registering
+their commands; calling ``Ged_Init`` first could suppress the rest of
+libtclcad even in that same interpreter.  The GED, display-manager, framebuffer,
+and command-history object registries were also process globals.  A second
+initialization reset some of those lists, and identical Tcl command names in
+independent interpreters incorrectly collided in the others.
+
+Initialization state and all four object registries now belong to their
+``Tcl_Interp`` through Tcl associated data.  Tcl's namespace teardown deletes
+the registered object commands before the associated list heads, giving each
+interpreter deterministic cleanup without imposing ownership on another.
+Core initialization is independently idempotent in every interpreter, and an
+interpreter first initialized without Tk can later be upgraded exactly once to
+Tk, Itk, and Iwidgets.  The transient current GED object is thread-local so
+simultaneous interpreter threads cannot overwrite that dispatch context.  This
+removes the known process globals but does not assert that every libged or
+display-manager backend is generally safe for unconstrained concurrent use.
+
+Converting the framebuffer registry also corrected latent defects in the old
+resizable array: enumeration indexed one element past the live range, growth
+invalidated Tcl command client-data pointers, and deletion could free an
+interior array address.  Individually allocated list objects now have stable
+addresses and are released by their Tcl command deletion callbacks.
+
+A native regression initializes two interpreters with identical Itcl class,
+history, GED, and framebuffer names; its Xmin mode adds identical display
+manager names and the core-to-GUI upgrade.  It deletes the first interpreter,
+continues using the second, deletes that one, then successfully initializes a
+replacement.  It also verifies that ``Ged_Init`` alone cannot masquerade as
+full initialization and that a null interpreter is rejected deliberately.
+
 Validation
 ----------
 
@@ -186,17 +231,34 @@ The migration was checked at these levels:
   Itk option-parser command names with class methods, and stored callback
   consumers with valid Tcl command-prefix use;
 * the full upstream Itk suites described above were run;
-* libtclcad's non-GUI initialization was tested against the enforced Itcl
-  minimum;
+* libtclcad initialization was tested in simultaneous and replacement
+  interpreters, both without Tk and with the complete Xmin-backed GUI stack;
+* the package baseline constructs, destroys, reconstructs, and functionally
+  checks retained cadwidgets, Sdialogs, Swidgets, tools, and data classes under
+  both btclsh and bwish.  It also proves that Archer's ``::Wizard`` and
+  rtwizard's explicit ``::RtWizard::Wizard`` coexist in one interpreter;
 * Archer package, class, and application initialization were exercised with
   Xmin and its matching patched Tk build;
-* Archer's exact 99-entry live menu tree, widget inventory, GED draw and view
-  state, background control, and representative dialogs were checked;
-* rtwizard's exact 17-entry base menu, all six image types, common pages, and
-  dynamically rebuilt Steps menu were checked; and
+* Archer's exact 99-entry live menu tree, widget inventory, relative database
+  handling, GED draw and view state, background control, HTML Help browser,
+  representative dialogs, hierarchy discovery for names containing spaces,
+  combination editing, and a real toolbar raytrace launch and abort were
+  checked.  The same fixture initializes and reconstructs all 26 primitive
+  editors, the Combination Editor, three utilities, and three wizards;
+* rtwizard's exact 17-entry base menu, all six image types and exact dynamic
+  Steps menus, framebuffer and animation control bindings, explicit
+  configuration destination, About dialog, and a complete GUI-initiated render
+  were checked, along with multi-object edge occlusion at the command line;
+* every semantic Archer, rtwizard, and MGED Xmin fixture records asynchronous
+  Tcl errors and fails at teardown if Tk would otherwise report them only to
+  ``bgerror``; and
 * MGED's deep fixture exercised its classic Tk UI with tkswrast, X, and ogl,
   including menu inventory, viewport editing, database-result oracles,
-  framebuffer composition, and embedded raytracing.
+  framebuffer composition, and embedded raytracing.  A focused fixture also
+  checks ViewRing traversal and deletion, grid and ADC controls, font
+  persistence, ``.mgedrc`` generation, and About MGED.  A workflow fixture
+  drives every primitive creation dialog, core file operations, Geometry
+  Browser actions, and a collaborating second GUI.
 
 The Archer package smoke test loaded Tcl 8.6.14, Tk 8.6.14, Itcl 4.2.3, and Itk
 4.2.7, provided the Archer 1.0 package, initialized 22 classes and six objects,
@@ -209,6 +271,17 @@ Itk suite passed all 100 tests.  Dynamic-library and symbol inspection
 confirmed that ``libtcl8.6`` linked to ``libz_brl`` and called the prefixed zlib
 entry points.
 
+A fresh strict Release build of the complete BRL-CAD ``all`` target then used
+that Tcl/Tk 8.6.18 stack and Xmin consistently for Tk, Qt, X11, and GL.  The
+focused application matrix passed all 111 tests: 96 MGED tests, ten rtwizard
+command-line render tests, two rtwizard Xmin GUI tests, and three Archer Xmin
+tests.  The runtime package oracle reported Tcl 8.6.18, Itcl 4.3.7, Itk 4.2.7,
+and Iwidgets 4.1.1.  Five additional TclCAD tests cover version enforcement,
+headless and GUI multi-interpreter initialization, and the btclsh/bwish widget
+baseline, for 116 tests in the complete migration matrix.  MGED's retiring
+Predictor feature is intentionally absent from both the menu-inventory contract
+and behavioral coverage.
+
 Both Archer and rtwizard have a semantic Tcl fixture and a separate XTEST
 fixture.  The latter enters input through the X protocol and requires a
 meaningful screen-image change, so the suite does not accidentally prove only
@@ -216,6 +289,64 @@ that internal Tcl methods work.  qged has a deliberately narrower experimental
 smoke test which launches its Qt UI, submits ``draw all.g`` through the console,
 and verifies an OpenGL redraw; its evolving interface is not treated as a
 stable menu or widget contract.
+
+Application fixes from expanded validation
+------------------------------------------
+
+The broader interactive tests found additional application bugs and migration
+defects:
+
+* The closed ``Mged``, ``Database``, ``Db``, ``Dm``, ``Drawable``, ``Display``,
+  ``QuadDisplay``, and ``View`` Tcl class stack had no callers outside its own
+  inheritance cluster and had been formally deprecated in favor of
+  ``cadwidgets::Ged`` since 7.20.  It therefore satisfied the project's
+  removal policy and is now obsolete; its source, build entries, and manuals
+  were removed.  Retained axes and raytrace controls now validate their actual
+  ``cadwidgets::Ged`` dependency directly.
+* Parallel rtwizard framebuffer servers exposed a dual-stack MGED listener
+  flaw.  Tcl reports success if either address family binds, so MGED could
+  retain an IPv6-only port after rtwizard had claimed its IPv4 counterpart;
+  the MGED renderer then connected to rtwizard instead.  MGED now advances
+  until its listener owns IPv4, retains IPv6 on the selected port when
+  available, and gives each display manager a token inherited by its child
+  tools.  Tokenless external clients remain accepted for compatibility, while
+  a client presenting another BRL-CAD session's token is rejected.
+* Archer no longer replaces ``itk::Toplevel`` at startup.  The removed local
+  definition duplicated Itk 4.2.7's implementation and therefore provided no
+  compatibility behavior while making ownership and future updates unclear.
+* Archer's primitive-editor and Tank Wizard panel builders now invoke stored
+  callbacks as Tcl command prefixes.  GraphEditor and GeometryBrowser also name
+  the Iwidgets Panedwindow explicitly instead of depending on whether Tk or
+  Iwidgets last imported an unqualified ``panedwindow`` command.
+* Archer disconnects its registered Tk menu components before top-level
+  teardown, preventing deferred ``<Destroy>`` hooks from reporting errors
+  against component records that Itk has already cleared.
+* Archer shifted its original argument-vector pointer before shutdown, allowing
+  Tcl finalization to free an interior pointer.  It now passes the shifted view
+  to Tcl without losing the allocation's base address.
+* Archer's Combination Editor always flattened and repacked a Boolean tree,
+  which changed the grouping of right-nested operations when only an unrelated
+  attribute such as color was edited.  The editor now preserves the exact
+  database tree unless the tree text itself changes.
+* Archer used a space-delimited textual ``lt`` result to populate its
+  hierarchy, splitting one legal object name containing spaces into several
+  bogus members.  It now walks the structured Boolean tree and keeps names
+  list-safe through the tree editor.
+* rtwizard exposed its partially constructed page set to tests and callbacks,
+  had a placeholder About command, did not identify the open database in its
+  title, and ignored an explicit configuration path when that file did not yet
+  exist.  It now publishes a readiness state, supplies the missing UI behavior,
+  and creates the explicitly requested configuration file.
+* rtwizard's list-safe process invocation had dropped the literal quoting that
+  ``rtedge`` requires around a multi-object occlusion value.  It now preserves
+  that value as one ``bu_structparse`` assignment and sends diagnostics to the
+  requested log file.
+* MGED's Fonts Apply action updated live named fonts but not the values later
+  serialized to ``.mgedrc``.  ViewRing deletion reset traversal to ID 0 even
+  after that monotonically allocated ID had been deleted.  Both states are now
+  reconciled and checked through live controls.  MGED's legacy startup-file
+  scanner also now distinguishes obsolete ``set name=value`` assignments from
+  valid Tcl expressions containing an equals sign.
 
 The all-up interactive run used the same Xmin SDK for Tk, X11, and OpenGL.
 This is required because GLX reaches into Xlib's private ``Display``
@@ -265,7 +396,7 @@ Maintenance guidance
 ---------------------
 
 When updating Tcl, verify the bundled Itcl version and run the Itk suite
-against that exact build.  When updating Itk, retain the 4.1.1 compatibility
+against that exact build.  When updating Itk, retain the 4.3.0 compatibility
 check unless support for that floor is intentionally dropped.  Configure an
 Xmin build with ``-DBRLCAD_X11_PROVIDER=XMIN`` and the SDK in ``Xmin_ROOT``;
 the selected Tk, Qt, X11, and GLX implementations must always come from that
