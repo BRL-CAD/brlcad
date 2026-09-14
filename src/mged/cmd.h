@@ -61,6 +61,7 @@ extern int cmd_get(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_get_more_default(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_has_embedded_fb(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_hist(ClientData, Tcl_Interp *, int, const char *[]);
+extern int cmd_interrupt(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_kill(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_lm(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_ls(ClientData, Tcl_Interp *, int, const char *[]);

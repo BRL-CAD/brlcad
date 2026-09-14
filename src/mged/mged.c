@@ -341,7 +341,16 @@ mged_bomb_hook(void *clientData, void *data)
 {
     struct bu_vls vls = BU_VLS_INIT_ZERO;
     char *str = (char *)data;
-    Tcl_Interp *interpreter = (Tcl_Interp *)clientData;
+    struct mged_state *s = (struct mged_state *)clientData;
+
+    /* Tcl interpreters are owned by one thread.  A worker-side bomb is
+     * already written to stderr by bu_bomb; attempting to show its dialog
+     * through the GUI interpreter would corrupt Tcl before termination. */
+    if (!s || !s->interp || !str ||
+	(s->gui_thread_id && Tcl_GetCurrentThread() != s->gui_thread_id))
+	return TCL_OK;
+
+    Tcl_Interp *interpreter = s->interp;
 
     bu_vls_printf(&vls, "set mbh_dialog [Dialog .#auto -modality application];");
     bu_vls_printf(&vls, "$mbh_dialog hide 1; $mbh_dialog hide 2; $mbh_dialog hide 3;");
@@ -2562,6 +2571,7 @@ main(int argc, char *argv[])
     bu_vls_init(&s->mged_prompt);
     s->dpy_string = NULL;
     s->cmd_running = 0;
+    s->command_state = NULL;
     s->log_drain_timer = NULL;
     s->gui_thread_id = NULL;
     s->shutdown_state = MGED_SHUTDOWN_RUNNING;
@@ -3213,7 +3223,7 @@ main(int argc, char *argv[])
 		/* since we're in GUI mode, display any bu_bomb()
 		 * calls in text dialog windows.
 		 */
-		bu_bomb_add_hook(mged_bomb_hook, s->interp);
+		bu_bomb_add_hook(mged_bomb_hook, s);
 	    } /* status -- gui initialized */
 	} /* classic */
 

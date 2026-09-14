@@ -253,13 +253,15 @@ struct mged_state {
      * views need to be redrawn. */
     int update_views;
 
-    /* Asynchronous ged_exec state (cmd.cpp).
-     * cmd_running is set to 1 while ged_exec runs in a worker thread so
-     * that re-entrant command dispatch (e.g. from stdin_input) is blocked.
+    /* GED command execution state (cmd.cpp).
+     * cmd_running is set while a GED command owns the shared state so that
+     * re-entrant command dispatch is blocked.  command_state is an
+     * opaque, execution-scoped C++ object used for cooperative interrupts.
      * log_drain_timer is the recurring Tcl timer token used to flush
      * accumulated bu_log output to the Tcl command prompt.  gui_thread_id
      * identifies the Tcl thread that owns Tk and the display contexts. */
     int cmd_running;
+    void *command_state;
     Tcl_TimerToken log_drain_timer;
     Tcl_ThreadId gui_thread_id;
 
@@ -283,10 +285,8 @@ struct mged_state {
      * Status codes: CMD_OK (919), CMD_BAD (920), CMD_MORE (921). */
     int pipe_mode;
 
-    /* Secondary Tcl interpreter used exclusively for search -exec evaluation.
-     * search_snapshot is captured from interp before an asynchronous search
-     * starts, then replayed when the worker creates search_interp. */
-    Tcl_Interp *search_interp;
+    /* search_snapshot is captured from interp before an asynchronous search
+     * starts, then replayed into the worker-owned search interpreter. */
     char *search_snapshot;
     int search_snapshot_len;
 };
@@ -502,6 +502,8 @@ void mged_start_log_drain_timer(struct mged_state *s);
 void mged_stop_log_drain_timer(struct mged_state *s);
 void mged_output_cleanup(void);
 int mged_ged_exec_async(struct mged_state *s, int argc, const char *argv[]);
+int mged_request_command_interrupt(struct mged_state *s);
+int mged_command_interrupted(struct mged_state *s);
 void mged_run_on_gui_thread(struct mged_state *s, mged_gui_callback_t callback,
 	void *data);
 

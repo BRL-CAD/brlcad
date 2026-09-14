@@ -370,6 +370,12 @@ proc execute_cmd {w} {
 proc interrupt_cmd { w } {
     global mged_gui
 
+    if {[llength [info commands _mged_interrupt]] && [_mged_interrupt]} {
+	$w insert insert "\nInterrupt requested.\n"
+	$w see insert
+	return
+    }
+
     set id [get_player_id_t $w]
     set mged_gui($id,cmd_prefix) ""
     set mged_gui($id,more_default) ""

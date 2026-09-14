@@ -187,7 +187,9 @@ if {![info exists mged_default(lighting)]} {
 proc mged_dm_supports {id setting} {
     global mged_gui
 
-    winset $mged_gui($id,active_dm)
+    if {[catch {winset $mged_gui($id,active_dm)}]} {
+	return 0
+    }
     if {[catch {dm set $setting} value]} {
 	return 0
     }
