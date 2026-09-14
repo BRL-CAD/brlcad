@@ -26,6 +26,7 @@
 
 #include <stdlib.h> /* exit */
 #include <sys/types.h>
+#include <string.h>
 #include <errno.h>
 #include <time.h>
 #ifdef HAVE_POLL_H
