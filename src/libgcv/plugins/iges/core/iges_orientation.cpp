@@ -79,7 +79,7 @@ integrate(const Function &function, double a, double b, double tolerance, int de
 	0.3818300505051189, 0.4179591836734694};
     const double half = (b - a) * 0.5;
     const double center = a + half;
-    Integral result, coarse;
+    Integral result{}, coarse{};
     Moments magnitude{};
     const auto accumulate = [&](const Integral &sample, size_t node) {
 	result.add(sample, kronrod[node]);
