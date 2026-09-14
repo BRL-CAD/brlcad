@@ -30,6 +30,20 @@ brlcad_addexec(test_gcv_iges test_gcv_iges.cpp "libgcv;gcv_iges_core" NO_INSTALL
 add_dependencies(test_gcv_iges gcv-iges)
 brlcad_add_test(NAME gcv_iges_test COMMAND test_gcv_iges "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}")
 
+set(iges_test_outputs
+  ${CMAKE_CURRENT_BINARY_DIR}/orientation-io
+  ${CMAKE_CURRENT_BINARY_DIR}/plugin-native.igs
+  ${CMAKE_CURRENT_BINARY_DIR}/plugin-faceted-0.igs
+  ${CMAKE_CURRENT_BINARY_DIR}/plugin-faceted-1.igs
+  ${CMAKE_CURRENT_BINARY_DIR}/plugin-faceted-2.igs
+  ${CMAKE_CURRENT_BINARY_DIR}/plugin-flat.igs
+  ${CMAKE_CURRENT_BINARY_DIR}/plugin-brep.igs
+  ${CMAKE_CURRENT_BINARY_DIR}/plugin-missing.igs
+  ${CMAKE_CURRENT_BINARY_DIR}/plugin-scaled.igs
+  )
+set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${iges_test_outputs}")
+distclean(${iges_test_outputs})
+
 cmakefiles(CMakeLists.txt test_iges_document.cpp test_iges_import.cpp test_iges_rays.cpp test_iges_brep.cpp test_iges_writer.cpp
   test_gcv_iges.cpp test_iges_orientation.cpp orientation.cmake data/ge6.igs data/wing128.igs data/woodie.igs
   roundtrip.cmake native-csg.igs mixed-assembly.igs bad-property.igs name-collision.igs mixed-subfigure.igs
