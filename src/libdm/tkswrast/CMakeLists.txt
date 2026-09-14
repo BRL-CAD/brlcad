@@ -30,18 +30,8 @@ if(BRLCAD_ENABLE_TK)
     # If Tk is using X11, we need the X11 headers/libs as well.  Aqua Tk
     # builds do not need or want these.
     if("${TK_WINDOWING_SYSTEM}" STREQUAL "x11")
-      find_package(X11)
-      if(NOT X11_FOUND)
-	message(STATUS "Skipping dm-tkswrast: Tk reports x11 windowing, but X11 was not found")
-	return()
-      endif()
-
-      list(APPEND TKSWRAST_INCLUDE_DIRS ${X11_INCLUDE_DIR})
-      list(APPEND TKSWRAST_LIBS ${X11_LIBRARIES})
-
-      if(X11_Xi_LIB)
-	list(APPEND TKSWRAST_LIBS ${X11_Xi_LIB})
-      endif()
+      list(APPEND TKSWRAST_INCLUDE_DIRS ${BRLCAD_X11_INCLUDE_DIRS})
+      list(APPEND TKSWRAST_LIBS ${BRLCAD_X11_LIBRARIES})
       list(APPEND TKSWRAST_COMPILE_DEFINITIONS TKSWRAST_X11)
     endif()
 

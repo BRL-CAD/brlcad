@@ -350,6 +350,35 @@ if it is, default is to enable.
 Aliases:  ENABLE_OPENGL
 
 
+--- BRLCAD_X11_PROVIDER ---
+
+Selects the X11 implementation used by BRL-CAD, Tk, Qt, and OpenGL.  Accepted
+values are AUTO, SYSTEM, and XMIN.  AUTO is the default and deliberately
+resolves to SYSTEM so installing Xmin cannot change an existing build.
+
+XMIN selects an installed Xmin client SDK for deterministic GUI testing
+without a host X server.  The SDK must provide Xmin::ToolkitX11; OpenGL builds
+also need Xmin::GL.  Set Xmin_ROOT to the SDK installation prefix.  Tk and Qt
+must be built for the same provider because their public X11 APIs conceal
+provider-private state; mixing Xmin and system client libraries is not ABI
+safe and is rejected during configuration.
+
+When BRL-CAD manages bext, it derives the matching bext SDK prefix from the
+selected Xmin package.  Bext then applies its version-matched Tk and Qt patches
+automatically to whichever bundled toolkits are selected.  No external patch
+paths are needed.
+
+A typical Xmin configuration is:
+
+  cmake .. -DBRLCAD_X11_PROVIDER=XMIN \
+    -DXmin_ROOT=/path/to/xmin-prefix
+
+Bext retains advanced TK_EXTRA_PATCHES, TK_CONFIGURE_ARGS, QT_EXTRA_PATCHES,
+and QT_XMIN_ROOT controls for custom profiles.  The standard BRL-CAD Xmin
+configuration does not need them.  Refer to bext's Xmin profile documentation
+before changing the bundled Tk or Qt revision.
+
+
 --- BRLCAD_COMPONENTS ---
 
 Semicolon separated list of components to enable for building - see

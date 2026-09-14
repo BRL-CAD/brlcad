@@ -358,7 +358,7 @@ function(BRLCAD_Summary)
   ###################################################
 
   # Build options
-  set(BRLCAD_ENABLE_X11_LABEL "X11 support (optional) ")
+  set(BRLCAD_X11_SUPPORT_LABEL "X11 support (optional) ")
   set(BRLCAD_ENABLE_OPENGL_LABEL "OpenGL support (optional) ")
   set(BRLCAD_ENABLE_QT_LABEL "Qt support (optional) ")
   set(BRLCAD_ENABLE_RUNTIME_DEBUG_LABEL "Run-time debuggability (optional) ")
@@ -385,7 +385,15 @@ function(BRLCAD_Summary)
   # Make sets to use for iteration over all report items
   set(BUILD_REPORT_ITEMS)
 
-  set(FEATURE_REPORT_ITEMS BRLCAD_ENABLE_OPENGL BRLCAD_ENABLE_X11 BRLCAD_ENABLE_QT BRLCAD_ENABLE_RUNTIME_DEBUG)
+  if(NOT BRLCAD_ENABLE_X11)
+    set(BRLCAD_X11_SUPPORT "OFF")
+  elseif(BRLCAD_X11_PROVIDER_RESOLVED STREQUAL "XMIN")
+    set(BRLCAD_X11_SUPPORT "Xmin")
+  else()
+    set(BRLCAD_X11_SUPPORT "System")
+  endif()
+
+  set(FEATURE_REPORT_ITEMS BRLCAD_ENABLE_OPENGL BRLCAD_X11_SUPPORT BRLCAD_ENABLE_QT BRLCAD_ENABLE_RUNTIME_DEBUG)
 
   set(
     OTHER_REPORT_ITEMS
