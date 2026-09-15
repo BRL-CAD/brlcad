@@ -21,13 +21,6 @@ jobs:
       - name: Setup - CMake
         uses: lukka/get-cmake@latest
 
-      - name: Cache apt packages
-        uses: actions/cache@v6
-        with:
-          path: |
-            /var/cache/apt/archives
-          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/check.yml') }}
-
       - name: Install apt dependencies
         run: |
           sudo apt-get update
@@ -64,16 +57,10 @@ jobs:
     needs: [bext]
     env:
       DEBIAN_FRONTEND: noninteractive
-    if: github.ref == 'refs/heads/main'
+    if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
     steps:
       - name: Setup - CMake
         uses: lukka/get-cmake@latest
-      - name: Cache apt packages
-        uses: actions/cache@v6
-        with:
-          path: |
-            /var/cache/apt/archives
-          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/check.yml') }}
       - name: Install apt dependencies
         run: |
           sudo apt-get update
@@ -102,9 +89,6 @@ jobs:
       - name: Log
         if: always()
         run: cat build_distcheck-default_build_type/distcheck-default_build_type.log
-      - name: Debug if failure
-        if: failure()
-        uses: mxschmitt/action-tmate@v3
 
   distcheck-debug:
     name: distcheck-debug
@@ -112,16 +96,10 @@ jobs:
     needs: [bext]
     env:
       DEBIAN_FRONTEND: noninteractive
-    if: github.ref == 'refs/heads/main'
+    if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
     steps:
       - name: Setup - CMake
         uses: lukka/get-cmake@latest
-      - name: Cache apt packages
-        uses: actions/cache@v6
-        with:
-          path: |
-            /var/cache/apt/archives
-          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/check.yml') }}
       - name: Install apt dependencies
         run: |
           sudo apt-get update
@@ -150,9 +128,6 @@ jobs:
       - name: Log
         if: always()
         run: cat build_distcheck-debug/distcheck-debug.log
-      - name: Debug if failure
-        if: failure()
-        uses: mxschmitt/action-tmate@v3
 
   distcheck-release:
     name: distcheck-release
@@ -160,16 +135,10 @@ jobs:
     needs: [bext]
     env:
       DEBIAN_FRONTEND: noninteractive
-    if: github.ref == 'refs/heads/main'
+    if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
     steps:
       - name: Setup - CMake
         uses: lukka/get-cmake@latest
-      - name: Cache apt packages
-        uses: actions/cache@v6
-        with:
-          path: |
-            /var/cache/apt/archives
-          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/check.yml') }}
       - name: Install apt dependencies
         run: |
           sudo apt-get update
@@ -198,9 +167,6 @@ jobs:
       - name: Log
         if: always()
         run: cat build_distcheck-release/distcheck-release.log
-      - name: Debug if failure
-        if: failure()
-        uses: mxschmitt/action-tmate@v3
 
   distcheck-no_unity_debug:
     name: distcheck-no_unity_debug
@@ -208,16 +174,10 @@ jobs:
     needs: [bext]
     env:
       DEBIAN_FRONTEND: noninteractive
-    if: github.ref == 'refs/heads/main'
+    if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
     steps:
       - name: Setup - CMake
         uses: lukka/get-cmake@latest
-      - name: Cache apt packages
-        uses: actions/cache@v6
-        with:
-          path: |
-            /var/cache/apt/archives
-          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/check.yml') }}
       - name: Install apt dependencies
         run: |
           sudo apt-get update
@@ -246,9 +206,6 @@ jobs:
       - name: Log
         if: always()
         run: cat build_distcheck-no_unity_debug/distcheck-no_unity_debug.log
-      - name: Debug if failure
-        if: failure()
-        uses: mxschmitt/action-tmate@v3
 
   distcheck-no_unity_release:
     name: distcheck-no_unity_release
@@ -256,16 +213,10 @@ jobs:
     needs: [bext]
     env:
       DEBIAN_FRONTEND: noninteractive
-    if: github.ref == 'refs/heads/main'
+    if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
     steps:
       - name: Setup - CMake
         uses: lukka/get-cmake@latest
-      - name: Cache apt packages
-        uses: actions/cache@v6
-        with:
-          path: |
-            /var/cache/apt/archives
-          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/check.yml') }}
       - name: Install apt dependencies
         run: |
           sudo apt-get update
@@ -294,9 +245,6 @@ jobs:
       - name: Log
         if: always()
         run: cat build_distcheck-no_unity_release/distcheck-no_unity_release.log
-      - name: Debug if failure
-        if: failure()
-        uses: mxschmitt/action-tmate@v3
 
   distcheck-enableall_debug:
     name: distcheck-enableall_debug
@@ -304,16 +252,10 @@ jobs:
     needs: [distcheck-default_build_type]
     env:
       DEBIAN_FRONTEND: noninteractive
-    if: github.ref == 'refs/heads/main'
+    if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
     steps:
       - name: Setup - CMake
         uses: lukka/get-cmake@latest
-      - name: Cache apt packages
-        uses: actions/cache@v6
-        with:
-          path: |
-            /var/cache/apt/archives
-          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/check.yml') }}
       - name: Install apt dependencies
         run: |
           sudo apt-get update
@@ -342,9 +284,6 @@ jobs:
       - name: Log
         if: always()
         run: cat build_distcheck-enableall_debug/distcheck-enableall_debug.log
-      - name: Debug if failure
-        if: failure()
-        uses: mxschmitt/action-tmate@v3
 
   distcheck-enableall_release:
     name: distcheck-enableall_release
@@ -352,16 +291,10 @@ jobs:
     needs: [distcheck-debug]
     env:
       DEBIAN_FRONTEND: noninteractive
-    if: github.ref == 'refs/heads/main'
+    if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
     steps:
       - name: Setup - CMake
         uses: lukka/get-cmake@latest
-      - name: Cache apt packages
-        uses: actions/cache@v6
-        with:
-          path: |
-            /var/cache/apt/archives
-          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/check.yml') }}
       - name: Install apt dependencies
         run: |
           sudo apt-get update
@@ -390,9 +323,6 @@ jobs:
       - name: Log
         if: always()
         run: cat build_distcheck-enableall_release/distcheck-enableall_release.log
-      - name: Debug if failure
-        if: failure()
-        uses: mxschmitt/action-tmate@v3
 
   distcheck-prepared_debug:
     name: distcheck-prepared_debug
@@ -400,16 +330,10 @@ jobs:
     needs: [distcheck-release]
     env:
       DEBIAN_FRONTEND: noninteractive
-    if: github.ref == 'refs/heads/main'
+    if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
     steps:
       - name: Setup - CMake
         uses: lukka/get-cmake@latest
-      - name: Cache apt packages
-        uses: actions/cache@v6
-        with:
-          path: |
-            /var/cache/apt/archives
-          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/check.yml') }}
       - name: Install apt dependencies
         run: |
           sudo apt-get update
@@ -438,9 +362,6 @@ jobs:
       - name: Log
         if: always()
         run: cat build_distcheck-prepared_debug/distcheck-prepared_debug.log
-      - name: Debug if failure
-        if: failure()
-        uses: mxschmitt/action-tmate@v3
 
   distcheck-prepared_release:
     name: distcheck-prepared_release
@@ -448,16 +369,10 @@ jobs:
     needs: [distcheck-no_unity_debug]
     env:
       DEBIAN_FRONTEND: noninteractive
-    if: github.ref == 'refs/heads/main'
+    if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
     steps:
       - name: Setup - CMake
         uses: lukka/get-cmake@latest
-      - name: Cache apt packages
-        uses: actions/cache@v6
-        with:
-          path: |
-            /var/cache/apt/archives
-          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/check.yml') }}
       - name: Install apt dependencies
         run: |
           sudo apt-get update
@@ -486,9 +401,6 @@ jobs:
       - name: Log
         if: always()
         run: cat build_distcheck-prepared_release/distcheck-prepared_release.log
-      - name: Debug if failure
-        if: failure()
-        uses: mxschmitt/action-tmate@v3
 
   distcheck-no_tcl:
     name: distcheck-no_tcl
@@ -496,16 +408,10 @@ jobs:
     needs: [distcheck-no_unity_release]
     env:
       DEBIAN_FRONTEND: noninteractive
-    if: github.ref == 'refs/heads/main'
+    if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
     steps:
       - name: Setup - CMake
         uses: lukka/get-cmake@latest
-      - name: Cache apt packages
-        uses: actions/cache@v6
-        with:
-          path: |
-            /var/cache/apt/archives
-          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/check.yml') }}
       - name: Install apt dependencies
         run: |
           sudo apt-get update
@@ -534,9 +440,6 @@ jobs:
       - name: Log
         if: always()
         run: cat build_distcheck-no_tcl/distcheck-no_tcl.log
-      - name: Debug if failure
-        if: failure()
-        uses: mxschmitt/action-tmate@v3
 
   distcheck-no_tk:
     name: distcheck-no_tk
@@ -544,16 +447,10 @@ jobs:
     needs: [distcheck-enableall_debug]
     env:
       DEBIAN_FRONTEND: noninteractive
-    if: github.ref == 'refs/heads/main'
+    if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
     steps:
       - name: Setup - CMake
         uses: lukka/get-cmake@latest
-      - name: Cache apt packages
-        uses: actions/cache@v6
-        with:
-          path: |
-            /var/cache/apt/archives
-          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/check.yml') }}
       - name: Install apt dependencies
         run: |
           sudo apt-get update
@@ -582,9 +479,6 @@ jobs:
       - name: Log
         if: always()
         run: cat build_distcheck-no_tk/distcheck-no_tk.log
-      - name: Debug if failure
-        if: failure()
-        uses: mxschmitt/action-tmate@v3
 
   distcheck-no_strict:
     name: distcheck-no_strict
@@ -592,16 +486,10 @@ jobs:
     needs: [distcheck-enableall_release]
     env:
       DEBIAN_FRONTEND: noninteractive
-    if: github.ref == 'refs/heads/main'
+    if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
     steps:
       - name: Setup - CMake
         uses: lukka/get-cmake@latest
-      - name: Cache apt packages
-        uses: actions/cache@v6
-        with:
-          path: |
-            /var/cache/apt/archives
-          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/check.yml') }}
       - name: Install apt dependencies
         run: |
           sudo apt-get update
@@ -630,9 +518,6 @@ jobs:
       - name: Log
         if: always()
         run: cat build_distcheck-no_strict/distcheck-no_strict.log
-      - name: Debug if failure
-        if: failure()
-        uses: mxschmitt/action-tmate@v3
 
   distcheck-no_object:
     name: distcheck-no_object
@@ -640,16 +525,10 @@ jobs:
     needs: [distcheck-prepared_debug]
     env:
       DEBIAN_FRONTEND: noninteractive
-    if: github.ref == 'refs/heads/main'
+    if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
     steps:
       - name: Setup - CMake
         uses: lukka/get-cmake@latest
-      - name: Cache apt packages
-        uses: actions/cache@v6
-        with:
-          path: |
-            /var/cache/apt/archives
-          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/check.yml') }}
       - name: Install apt dependencies
         run: |
           sudo apt-get update
@@ -678,9 +557,6 @@ jobs:
       - name: Log
         if: always()
         run: cat build_distcheck-no_object/distcheck-no_object.log
-      - name: Debug if failure
-        if: failure()
-        uses: mxschmitt/action-tmate@v3
 
   distcheck-odd_pathnames:
     name: distcheck-odd_pathnames
@@ -688,16 +564,10 @@ jobs:
     needs: [distcheck-prepared_release]
     env:
       DEBIAN_FRONTEND: noninteractive
-    if: github.ref == 'refs/heads/main'
+    if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
     steps:
       - name: Setup - CMake
         uses: lukka/get-cmake@latest
-      - name: Cache apt packages
-        uses: actions/cache@v6
-        with:
-          path: |
-            /var/cache/apt/archives
-          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/check.yml') }}
       - name: Install apt dependencies
         run: |
           sudo apt-get update
@@ -726,9 +596,6 @@ jobs:
       - name: Log
         if: always()
         run: cat build_distcheck-odd_pathnames/distcheck-odd_pathnames.log
-      - name: Debug if failure
-        if: failure()
-        uses: mxschmitt/action-tmate@v3
 
   distcheck-in_src_dir:
     name: distcheck-in_src_dir
@@ -736,16 +603,10 @@ jobs:
     needs: [distcheck-no_tcl]
     env:
       DEBIAN_FRONTEND: noninteractive
-    if: github.ref == 'refs/heads/main'
+    if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
     steps:
       - name: Setup - CMake
         uses: lukka/get-cmake@latest
-      - name: Cache apt packages
-        uses: actions/cache@v6
-        with:
-          path: |
-            /var/cache/apt/archives
-          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/check.yml') }}
       - name: Install apt dependencies
         run: |
           sudo apt-get update
@@ -774,6 +635,3 @@ jobs:
       - name: Log
         if: always()
         run: cat build_distcheck-in_src_dir/distcheck-in_src_dir.log
-      - name: Debug if failure
-        if: failure()
-        uses: mxschmitt/action-tmate@v3

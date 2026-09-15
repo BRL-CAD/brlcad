@@ -21,13 +21,6 @@ jobs:
       - name: Setup - CMake
         uses: lukka/get-cmake@latest
 
-      - name: Cache apt packages
-        uses: actions/cache@v6
-        with:
-          path: |
-            /var/cache/apt/archives
-          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/check.yml') }}
-
       - name: Install apt dependencies
         run: |
           sudo apt-get update
