@@ -1049,9 +1049,8 @@ function(_brlcad_postprocess_finish stamp_dir source file signature)
   file(WRITE "${_brlcad_stamp_file}" "${_brlcad_source_hash}\n${_brlcad_clean_hash}\n")
 endfunction()
 
-function(_brlcad_install_copy source file install_type)
-  get_filename_component(_brlcad_dest_dir "${file}" DIRECTORY)
-  file(MAKE_DIRECTORY "${_brlcad_dest_dir}")
+function(_brlcad_install_copy source install_file install_type)
+  get_filename_component(_brlcad_dest_dir "${install_file}" DIRECTORY)
   file(INSTALL DESTINATION "${_brlcad_dest_dir}" TYPE ${install_type} FILES "${source}")
 endfunction()
 
@@ -1073,37 +1072,45 @@ function(_brlcad_path_forms outvar)
   set(${outvar} ${_brlcad_forms} PARENT_SCOPE)
 endfunction()
 
-function(brlcad_install_strclear_replace stamp_dir strclear source file install_type from_path to_path verbose)
+function(brlcad_install_strclear_replace stamp_dir strclear source install_file install_type from_path to_path verbose)
+  set(_brlcad_physical_file "$ENV{DESTDIR}${install_file}")
   set(_brlcad_signature "strclear-replace|${strclear}|${install_type}|${from_path}|${to_path}")
-  _brlcad_postprocess_needed(_brlcad_needed "${stamp_dir}" "${source}" "${file}" "${_brlcad_signature}")
+  _brlcad_postprocess_needed(_brlcad_needed "${stamp_dir}" "${source}" "${_brlcad_physical_file}" "${_brlcad_signature}")
   if(NOT _brlcad_needed)
     return()
   endif()
 
-  _brlcad_install_copy("${source}" "${file}" "${install_type}")
+  _brlcad_install_copy("${source}" "${install_file}" "${install_type}")
+  if(NOT EXISTS "${_brlcad_physical_file}")
+    message(FATAL_ERROR "Post-install copy did not create ${_brlcad_physical_file}")
+  endif()
   set(_brlcad_strclear_verbose_arg)
   if(verbose)
     set(_brlcad_strclear_verbose_arg "-v")
   endif()
   execute_process(
-    COMMAND "${strclear}" ${_brlcad_strclear_verbose_arg} -p -r "${file}" "${from_path}" "${to_path}"
+    COMMAND "${strclear}" ${_brlcad_strclear_verbose_arg} -p -r "${_brlcad_physical_file}" "${from_path}" "${to_path}"
     RESULT_VARIABLE _brlcad_result
   )
   if(_brlcad_result EQUAL 0)
-    _brlcad_postprocess_finish("${stamp_dir}" "${source}" "${file}" "${_brlcad_signature}")
+    _brlcad_postprocess_finish("${stamp_dir}" "${source}" "${_brlcad_physical_file}" "${_brlcad_signature}")
   else()
-    message(WARNING "Post-install path replacement failed for ${file}")
+    message(WARNING "Post-install path replacement failed for ${_brlcad_physical_file}")
   endif()
 endfunction()
 
-function(brlcad_install_binary_postprocess stamp_dir strclear source file install_type mode rpath_tool install_rpath build_lib_path rel_rpath use_selective_rpath verbose)
+function(brlcad_install_binary_postprocess stamp_dir strclear source install_file install_type mode rpath_tool install_rpath build_lib_path rel_rpath use_selective_rpath verbose)
+  set(_brlcad_physical_file "$ENV{DESTDIR}${install_file}")
   set(_brlcad_signature "binary-postprocess|${install_type}|${mode}|${rpath_tool}|${install_rpath}|${build_lib_path}|${rel_rpath}|${use_selective_rpath}|${strclear}")
-  _brlcad_postprocess_needed(_brlcad_needed "${stamp_dir}" "${source}" "${file}" "${_brlcad_signature}")
+  _brlcad_postprocess_needed(_brlcad_needed "${stamp_dir}" "${source}" "${_brlcad_physical_file}" "${_brlcad_signature}")
   if(NOT _brlcad_needed)
     return()
   endif()
 
-  _brlcad_install_copy("${source}" "${file}" "${install_type}")
+  _brlcad_install_copy("${source}" "${install_file}" "${install_type}")
+  if(NOT EXISTS "${_brlcad_physical_file}")
+    message(FATAL_ERROR "Post-install copy did not create ${_brlcad_physical_file}")
+  endif()
   set(_brlcad_result 0)
   if("${mode}" STREQUAL "RPATH_TOOL")
     set(_brlcad_selective_rpath_args)
@@ -1111,26 +1118,26 @@ function(brlcad_install_binary_postprocess stamp_dir strclear source file instal
       set(_brlcad_selective_rpath_args --set-rpath-if-needed --set-rpath-if-needed-prepend --stale-rpath-prefix "${build_lib_path}")
     endif()
     execute_process(
-      COMMAND "${rpath_tool}" --set-rpath "${install_rpath}" ${_brlcad_selective_rpath_args} "${file}"
+      COMMAND "${rpath_tool}" --set-rpath "${install_rpath}" ${_brlcad_selective_rpath_args} "${_brlcad_physical_file}"
       RESULT_VARIABLE _brlcad_result
     )
   elseif("${mode}" STREQUAL "APPLE")
     execute_process(
-      COMMAND install_name_tool -delete_rpath "${build_lib_path}" "${file}"
+      COMMAND install_name_tool -delete_rpath "${build_lib_path}" "${_brlcad_physical_file}"
       RESULT_VARIABLE _brlcad_result
       OUTPUT_VARIABLE _brlcad_output
       ERROR_VARIABLE _brlcad_error
     )
     if(_brlcad_result EQUAL 0)
       execute_process(
-        COMMAND install_name_tool -add_rpath "${rel_rpath}" "${file}"
+        COMMAND install_name_tool -add_rpath "${rel_rpath}" "${_brlcad_physical_file}"
         RESULT_VARIABLE _brlcad_result
       )
     endif()
   endif()
 
   if(NOT _brlcad_result EQUAL 0)
-    message(WARNING "Post-install RPATH update failed for ${file}")
+    message(WARNING "Post-install RPATH update failed for ${_brlcad_physical_file}")
     return()
   endif()
 
@@ -1147,26 +1154,26 @@ function(brlcad_install_binary_postprocess stamp_dir strclear source file instal
     list(REMOVE_DUPLICATES _brlcad_binary_clear_paths)
   endif()
   execute_process(
-    COMMAND "${strclear}" ${_brlcad_strclear_verbose_arg} -p -b -c "${file}" ${_brlcad_binary_clear_paths}
+    COMMAND "${strclear}" ${_brlcad_strclear_verbose_arg} -p -b -c "${_brlcad_physical_file}" ${_brlcad_binary_clear_paths}
     RESULT_VARIABLE _brlcad_result
   )
   if(NOT _brlcad_result EQUAL 0)
-    message(WARNING "Post-install binary path cleanup failed for ${file}")
+    message(WARNING "Post-install binary path cleanup failed for ${_brlcad_physical_file}")
     return()
   endif()
 
   if("${mode}" STREQUAL "APPLE")
     execute_process(
-      COMMAND codesign --force -s - "${file}"
+      COMMAND codesign --force -s - "${_brlcad_physical_file}"
       RESULT_VARIABLE _brlcad_result
     )
     if(NOT _brlcad_result EQUAL 0)
-      message(WARNING "Post-install codesign failed for ${file}")
+      message(WARNING "Post-install codesign failed for ${_brlcad_physical_file}")
       return()
     endif()
   endif()
 
-  _brlcad_postprocess_finish("${stamp_dir}" "${source}" "${file}" "${_brlcad_signature}")
+  _brlcad_postprocess_finish("${stamp_dir}" "${source}" "${_brlcad_physical_file}" "${_brlcad_signature}")
 endfunction()
 ]=])
 
@@ -1807,7 +1814,7 @@ endfunction()
       endif(P_RPATH_SUPPORTS_SET_IF_NEEDED_PREPEND)
       install(
         CODE
-          "include(\"${BRLCAD_EXT_INSTALL_POSTPROCESS_SCRIPT}\")\nbrlcad_install_binary_postprocess(\"${BRLCAD_EXT_INSTALL_POSTPROCESS_STAMP_DIR}\" \"${STRCLEAR_EXECUTABLE}\" \"${CMAKE_BINARY_DIR}/${tf}\" \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${tf}\" \"PROGRAM\" \"${_brlcad_install_postprocess_mode}\" \"${_brlcad_install_postprocess_tool}\" \"${_brlcad_install_postprocess_rpath}\" \"${CMAKE_BINARY_DIR}/${LIB_DIR}\" \"${REL_RPATH}\" \"${_brlcad_install_use_selective_rpath}\" \"${BRLCAD_VERBOSE}\")"
+          "include(\"${BRLCAD_EXT_INSTALL_POSTPROCESS_SCRIPT}\")\nbrlcad_install_binary_postprocess(\"${BRLCAD_EXT_INSTALL_POSTPROCESS_STAMP_DIR}\" \"${STRCLEAR_EXECUTABLE}\" \"${CMAKE_BINARY_DIR}/${tf}\" \"\${CMAKE_INSTALL_PREFIX}/${tf}\" \"PROGRAM\" \"${_brlcad_install_postprocess_mode}\" \"${_brlcad_install_postprocess_tool}\" \"${_brlcad_install_postprocess_rpath}\" \"${CMAKE_BINARY_DIR}/${LIB_DIR}\" \"${REL_RPATH}\" \"${_brlcad_install_use_selective_rpath}\" \"${BRLCAD_VERBOSE}\")"
       )
       continue()
     endif("${tf}" IN_LIST ALL_BINARY_FILES)
@@ -1822,7 +1829,7 @@ endfunction()
         math(EXPR _brlcad_ext_cmake_install_rules "${_brlcad_ext_cmake_install_rules} + 1")
         install(
           CODE
-          "include(\"${BRLCAD_EXT_INSTALL_POSTPROCESS_SCRIPT}\")\nbrlcad_install_strclear_replace(\"${BRLCAD_EXT_INSTALL_POSTPROCESS_STAMP_DIR}\" \"${STRCLEAR_EXECUTABLE}\" \"${CMAKE_BINARY_DIR}/${tf}\" \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${tf}\" \"FILE\" \"${CMAKE_BINARY_DIR}\" \"\${CMAKE_INSTALL_PREFIX}\" \"${BRLCAD_VERBOSE}\")"
+          "include(\"${BRLCAD_EXT_INSTALL_POSTPROCESS_SCRIPT}\")\nbrlcad_install_strclear_replace(\"${BRLCAD_EXT_INSTALL_POSTPROCESS_STAMP_DIR}\" \"${STRCLEAR_EXECUTABLE}\" \"${CMAKE_BINARY_DIR}/${tf}\" \"\${CMAKE_INSTALL_PREFIX}/${tf}\" \"FILE\" \"${CMAKE_BINARY_DIR}\" \"\${CMAKE_INSTALL_PREFIX}\" \"${BRLCAD_VERBOSE}\")"
           )
       else(CMAKE_FILE)
         install(FILES "${CMAKE_BINARY_DIR}/${tf}" DESTINATION "${dir}")
