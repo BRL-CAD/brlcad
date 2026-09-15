@@ -172,10 +172,10 @@ typedef void* ProSurfaceshapedata;
 typedef void* ProUnitsystem;
 typedef void* ProValue;
 typedef void* ProWVerstamp;
-typedef wchar_t ProFileName[1];
-typedef wchar_t ProLine[1];
-typedef wchar_t ProName[1];
-typedef wchar_t ProPath[1];
+typedef wchar_t ProFileName[260];
+typedef wchar_t ProLine[260];
+typedef wchar_t ProName[PRO_NAME_SIZE + 1];
+typedef wchar_t ProPath[260];
 
 /* 
  * Definitions where we need to provide internal structure
@@ -254,6 +254,7 @@ extern "C" int ProParameterVisit(void **, void*, int (*)(ProParameter*, int, voi
 extern "C" int ProParamvalueTypeGet(void **,void *);
 extern "C" int ProParamvalueValueGet(void **,int,void *);
 extern "C" int ProPartDensityGet(void*,double*);
+extern "C" int ProPartMaterialNameGet(void*,wchar_t*);
 extern "C" int ProPartTessellate(void*,double,double,int,ProSurfaceTessellationData**);
 extern "C" int ProSolidBodiesCollect(void*, ProSolidBody**);
 extern "C" int ProSolidBodySurfaceVisit(void*,int(*)(void*,int,void*),void*);
