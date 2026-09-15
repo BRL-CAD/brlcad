@@ -22,21 +22,32 @@ if ![info exists mged_players] {
     set mged_players {}
 }
 
+proc mged_activate_dm {w} {
+    global tcl_platform
+
+    if {[catch {winset $w} message options]} {
+	if {[dict exists $options -errorcode] &&
+	    [dict get $options -errorcode] eq {BRLCAD MGED COMMAND_BUSY}} {
+	    return
+	}
+	return -options $options $message
+    }
+
+    # Some platforms should not be forced to move keyboard focus on entry.
+    if {$tcl_platform(platform) != "windows" &&
+	$tcl_platform(os) != "Darwin"} {
+	focus $w
+    }
+}
+
 proc mged_bind_dm { w } {
     global hot_key
     global forwarding_key
-    global tcl_platform
 
     # KeySym for <F9> --> 0xffc6 --> 65478
     set hot_key 65478
 
-    #make this the current display manager
-    if { $::tcl_platform(platform) != "windows" && $::tcl_platform(os) != "Darwin" } {
-	bind $w <Enter> "winset $w; focus $w;"
-    } else {
-	# some platforms should not be forced window activation (winset)
-	bind $w <Enter> "winset $w;"
-    }
+    bind $w <Enter> [list mged_activate_dm $w]
 
     #default mouse bindings
     default_mouse_bindings $w

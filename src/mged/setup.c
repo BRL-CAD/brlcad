@@ -519,6 +519,7 @@ mged_cmd_dispatch(ClientData clientData, Tcl_Interp *interp, int argc,
 	    return TCL_OK;
 	}
 
+	Tcl_SetErrorCode(interp, "BRLCAD", "MGED", "COMMAND_BUSY", NULL);
 	Tcl_SetObjResult(interp,
 		Tcl_NewStringObj("another MGED command is already running", -1));
 	return TCL_ERROR;

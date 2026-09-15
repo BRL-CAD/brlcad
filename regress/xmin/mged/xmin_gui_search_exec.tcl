@@ -32,10 +32,12 @@ namespace eval ::mged::xmin::search_exec {
     variable command_widget ""
     variable covered_draw_time_limit_ms 5000
     variable draw_time_limit_ms 15000
+    variable display_widget ""
     variable finished 0
     variable interrupt_requested 0
     variable minimum_tgc_paths 1000
     variable nested_done 0
+    variable nested_error_code {}
     variable nested_message ""
     variable nested_status 0
     variable ready_retries 0
@@ -48,13 +50,19 @@ proc ::mged::xmin::search_exec::fail {message} {
 }
 
 proc ::mged::xmin::search_exec::nested_search {} {
+    variable display_widget
     variable nested_done
+    variable nested_error_code
     variable nested_message
     variable nested_status
 
+    event generate $display_widget <Enter>
     set nested_status [catch {
 	_mged_search / -type tgc -exec ls "{}" ";"
-    } nested_message]
+    } nested_message nested_options]
+    if {[dict exists $nested_options -errorcode]} {
+	set nested_error_code [dict get $nested_options -errorcode]
+    }
     set nested_done 1
 }
 
@@ -72,6 +80,7 @@ proc ::mged::xmin::search_exec::exercise {} {
     variable interrupt_requested
     variable minimum_tgc_paths
     variable nested_done
+    variable nested_error_code
     variable nested_message
     variable nested_status
 
@@ -80,6 +89,7 @@ proc ::mged::xmin::search_exec::exercise {} {
 	"m35.g supplied too few TGC paths for the scaling regression"
 
     set nested_done 0
+    set nested_error_code {}
     set nested_message ""
     set nested_status 0
     after 25 ::mged::xmin::search_exec::nested_search
@@ -95,7 +105,8 @@ proc ::mged::xmin::search_exec::exercise {} {
 	"the event loop did not service the nested search probe"
     ::xmin::test::require {
 	$nested_status == 1 &&
-	$nested_message eq "another MGED command is already running"
+	$nested_message eq "another MGED command is already running" &&
+	$nested_error_code eq {BRLCAD MGED COMMAND_BUSY}
     } "nested search was not rejected safely: $nested_message"
     set draw_limit_message [format \
 	"search -exec draw took %dms; expected less than %dms" \
@@ -210,6 +221,7 @@ proc ::mged::xmin::search_exec::finish {status message} {
 proc ::mged::xmin::search_exec::run {} {
     global mged_gui mged_players
     variable command_widget
+    variable display_widget
     variable ready_retries
     variable ready_retry_limit
     variable retry_delay_ms
@@ -245,6 +257,7 @@ proc ::mged::xmin::search_exec::run {} {
     }
 
     set command_widget $top.t
+    set display_widget $mged_gui($id,active_dm)
     exercise
     finish 0 "PASS: MGED search drawing is linear, serialized, and interruptible"
 }
