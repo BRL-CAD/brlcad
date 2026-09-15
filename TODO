@@ -18,6 +18,8 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* revert the pixdiff/pixcmp change back to grayscale
+
 * coordinate with bext to have it produce a manifest of what files
   need strclear/plief processing of various types so we don't need to
   redo the characterization pass every time we configure.  We have
@@ -590,10 +592,6 @@ lookup check to ensure none are missing.
   attr and rtcheck/gqa commands.  this should probably be handled by a
   libged command wrapper so it's consistent and available to any
   command.
-
-* mater command does not validate its arguments - fix that.  Also
-  properly document using "." to skip specifying something - not in
-  the man page currently.
 
 * bullet integration - need to expose restitution as an
   object parameter so we can configure behavior:
@@ -2546,8 +2544,6 @@ DOCUMENTATION
   reference.
 
 * Need ability to search manual pages
-
-* rename MGED Help->Apropos to Help->Search Commands (apropos)
 
 * BRL-CAD Primitives
 	An overview of the various primitive object types in BRL-CAD,
