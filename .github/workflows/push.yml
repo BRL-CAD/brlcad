@@ -33,14 +33,6 @@ jobs:
       - name: Setup - CMake
         uses: lukka/get-cmake@latest
 
-      # Cache apt package downloads (not installed pkgs)
-      - name: Cache apt packages
-        uses: actions/cache@v6
-        with:
-          path: |
-            /var/cache/apt/archives
-          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/push.yml') }}
-
       # Install system dependencies
       - name: Install apt dependencies
         run: |
@@ -113,13 +105,6 @@ jobs:
       - name: Setup - CMake
         uses: lukka/get-cmake@latest
 
-      - name: Cache apt packages
-        uses: actions/cache@v6
-        with:
-          path: |
-            /var/cache/apt/archives
-          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/push.yml') }}
-
       # Install system dependencies - we do the full setup here, even though
       # source archives isn't intended to build the main BRL-CAD, in case
       # this check is the one where the bext dependency cache check gets a miss.
@@ -178,13 +163,6 @@ jobs:
       - name: Setup - CMake
         uses: lukka/get-cmake@latest
 
-      - name: Cache apt packages
-        uses: actions/cache@v6
-        with:
-          path: |
-            /var/cache/apt/archives
-          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/push.yml') }}
-
       # Install system dependencies - we do the full setup here, even though
       # source archives isn't intended to build the main BRL-CAD, in case
       # this check is the one where the bext dependency cache check gets a miss.
@@ -219,7 +197,6 @@ jobs:
 
       - name: Build
         run: |
-          cmake -E make_directory build_components_
           cmake -S brlcad -B build_components -DCMAKE_BUILD_TYPE=Release -DBRLCAD_COMPONENTS=libbg
           cmake --build build_components --config Release
 
