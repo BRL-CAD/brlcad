@@ -27,4 +27,6 @@ Never commit without permission (ask every time).  Never push to remote.  Never 
 
 The HACKING file in the root of the source tree defines coding conventions specific to BRL-CAD, including versions of common functions that are used in our code base instead of raw standard functions.  Review this file before writing code so your changes and additions adhere to BRL-CAD standards.
 
-When completing a code change (not for intermediate iterations, but when preparing to hand back a finalized change) use our regress-repository build target to check that the result satisfies our internal checker.
+BRL-CAD code should typically use our ZERO and EQUAL macros rather than raw floating-point equality comparisons to avoid Werror=float-equal compilation failures on expressions such as a == 0.0 (should be ZERO(a)) or b != c (should be !EQUAL(b, c)).
+
+When completing a code change (not for intermediate iterations, but when preparing to hand back a finalized change) use our regress-repository and regress-licenses build targets to check that the result satisfies our internal checkers.
