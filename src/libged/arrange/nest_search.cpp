@@ -198,7 +198,7 @@ settle_candidate(const Raster &allowed, const SearchState &state,
 
     double magnitude = std::max({std::fabs(options.gravity[X]),
         std::fabs(options.gravity[Y]), std::fabs(options.gravity[Z])});
-    if (magnitude == 0.0)
+    if (ZERO(magnitude))
         return initial;
 
     Cell settled = initial;

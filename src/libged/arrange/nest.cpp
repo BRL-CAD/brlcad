@@ -102,7 +102,7 @@ parse_gravity(const char *text, std::array<double, 3> &gravity)
         &gravity[X], &gravity[Y], &gravity[Z], &trailing);
     return matched == 3 && std::isfinite(gravity[X]) &&
         std::isfinite(gravity[Y]) && std::isfinite(gravity[Z]) &&
-        (gravity[X] != 0.0 || gravity[Y] != 0.0 || gravity[Z] != 0.0);
+        (!ZERO(gravity[X]) || !ZERO(gravity[Y]) || !ZERO(gravity[Z]));
 }
 
 bool
@@ -349,7 +349,7 @@ ged_arrange_nest(struct ged *gedp, int argc, const char *argv[])
         }
     }
 
-    if (options.cell_size == 0.0) {
+    if (ZERO(options.cell_size)) {
         point_t minimum;
         point_t maximum;
         const char *container_name = options.container.c_str();
