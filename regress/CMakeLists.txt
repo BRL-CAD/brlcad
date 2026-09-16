@@ -35,6 +35,9 @@ add_subdirectory(coverage)
 # DSP Regression Tests
 add_subdirectory(dsp)
 
+# DXF importer face index tests
+add_subdirectory(dxf)
+
 # Fuzz tests (if supported by the compiler)
 add_subdirectory(fuzz)
 
