@@ -13,6 +13,9 @@ changes made.  See document footer for additional details.
 --- 20XX-XX-XX  Release 7.46.0                                     ---
 ----------------------------------------------------------------------
 
+* fixed Archer primitive editors under Itcl 4 - Cliff Yapp
+* fixed Archer shutdown menu cleanup errors - Cliff Yapp
+* fixed MGED Build Pattern dialog under Itcl 4 - Cliff Yapp
 * fixed TclCAD framebuffer listing and deletion - Cliff Yapp
 * fixed MGED Build Pattern progress updates - Cliff Yapp
 * fixed MGED search -exec reentry and Ctrl-C crashes - Cliff Yapp

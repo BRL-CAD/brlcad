@@ -635,17 +635,17 @@
     }
 
     if {$itk_option(-fb_active_pane_callback) != ""} {
-	catch {$itk_option(-fb_active_pane_callback) $rtActivePane}
+	catch {{*}$itk_option(-fb_active_pane_callback) $rtActivePane}
     }
 
     update_control_panel
 
     if {$itk_option(-fb_enabled_callback) != ""} {
-	catch {$itk_option(-fb_enabled_callback) $itk_option(-fb_enabled)}
+	catch {{*}$itk_option(-fb_enabled_callback) $itk_option(-fb_enabled)}
     }
 
     if {$itk_option(-fb_mode_callback) != ""} {
-	catch {$itk_option(-fb_mode_callback) $fb_mode}
+	catch {{*}$itk_option(-fb_mode_callback) $fb_mode}
     }
 }
 
@@ -1144,7 +1144,7 @@
 		set_fb_mode_str
 
 		if {$itk_option(-fb_mode_callback) != ""} {
-		    catch {$itk_option(-fb_mode_callback) $fb_mode}
+		    catch {{*}$itk_option(-fb_mode_callback) $fb_mode}
 		}
 	    }
 	    return [$itk_option(-mged) pane_listen $dest]
@@ -1166,7 +1166,7 @@
     set fb_mode_$rtActivePane $fb_mode
 
     if {$itk_option(-fb_mode_callback) != ""} {
-	catch {$itk_option(-fb_mode_callback) $fb_mode}
+	catch {{*}$itk_option(-fb_mode_callback) $fb_mode}
     }
 }
 
@@ -1398,7 +1398,7 @@
     fb_mode
 
     if {$itk_option(-fb_enabled_callback) != ""} {
-	catch {$itk_option(-fb_enabled_callback) $itk_option(-fb_enabled)}
+	catch {{*}$itk_option(-fb_enabled_callback) $itk_option(-fb_enabled)}
     }
 }
 

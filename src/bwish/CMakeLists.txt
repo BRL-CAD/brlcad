@@ -32,6 +32,7 @@ if(TARGET libtclcad)
     if(TARGET itk_pkgIndex)
       add_dependencies(bwish itk_pkgIndex)
     endif(TARGET itk_pkgIndex)
+
   endif(BRLCAD_ENABLE_TK)
 endif(TARGET libtclcad)
 

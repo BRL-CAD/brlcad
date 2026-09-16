@@ -262,7 +262,7 @@
 	set row [lindex $ilist 0]
 	set col [lindex $ilist 1]
 
-	if {[catch {$itk_option(-validatecommand) $row $col $data $itk_option(-vclientdata)} isvalid]} {
+	if {[catch {{*}$itk_option(-validatecommand) $row $col $data $itk_option(-vclientdata)} isvalid]} {
 	    set isvalid 0
 	}
     } else {
@@ -284,7 +284,7 @@
 ::itcl::body cadwidgets::TkTable::setDataEntry {_index _val} {
     set $mTableDataVar\($_index\) $_val
     if {$itk_option(-dataCallback) != ""} {
-	catch {$itk_option(-dataCallback)}
+	catch {{*}$itk_option(-dataCallback)}
     }
 }
 
@@ -427,7 +427,7 @@
 	$_win activate $row,$col
 	$_win selection set $row,$col
 
-	catch {$itk_option(-entercommand) $row $col}
+	catch {{*}$itk_option(-entercommand) $row $col}
     }
 }
 
@@ -452,7 +452,7 @@
 	    setInsertMode 1
 
 	    if {$itk_option(-validatecommand) != ""} {
-		if {[catch {$itk_option(-validatecommand) $row $col $_ucc $itk_option(-vclientdata)} isvalid]} {
+		if {[catch {{*}$itk_option(-validatecommand) $row $col $_ucc $itk_option(-vclientdata)} isvalid]} {
 		    set isvalid 0
 		}
 	    } else {
@@ -489,11 +489,11 @@
 
 	    #XXX Remove this after updating the applications that use TkTable
 	    if {$itk_option(-dataCallback) != ""} {
-		catch {$itk_option(-dataCallback)}
+		catch {{*}$itk_option(-dataCallback)}
 	    }
 
 	    if {$itk_option(-multiSelectCallback) != ""} {
-		catch {$itk_option(-multiSelectCallback)}
+		catch {{*}$itk_option(-multiSelectCallback)}
 	    }
 	} else {
 	    set mDoBreak 0
@@ -553,7 +553,7 @@
     }
 
     set index [$_win index @$_x,$_y]
-    catch {$itk_option(-tablePopupHandler) $index $_X $_Y}
+    catch {{*}$itk_option(-tablePopupHandler) $index $_X $_Y}
 }
 
 ::itcl::body cadwidgets::TkTable::handleUpDown {_win _up} {
@@ -648,7 +648,7 @@
     if {$itk_option(-singleSelectCallback) != ""} {
 	set mDoBreak 1
 	selectSingleRow $row
-	catch {$itk_option(-singleSelectCallback) $row}
+	catch {{*}$itk_option(-singleSelectCallback) $row}
     } else {
 	set mDoBreak 0
 
@@ -677,18 +677,18 @@
 
 	#XXX Remove this after updating the applications that use TkTable
 	if {$itk_option(-dataCallback) != ""} {
-	    catch {$itk_option(-dataCallback)}
+	    catch {{*}$itk_option(-dataCallback)}
 	}
 
 	if {$itk_option(-multiSelectCallback) != ""} {
-	    catch {$itk_option(-multiSelectCallback)}
+	    catch {{*}$itk_option(-multiSelectCallback)}
 	}
     }
 }
 
 ::itcl::body cadwidgets::TkTable::validateTableEntry {_row _col _newval} {
     if {$itk_option(-validatecommand) != ""} {
-	if {[catch {$itk_option(-validatecommand) $_row $_col $_newval $itk_option(-vclientdata)} isvalid]} {
+	if {[catch {{*}$itk_option(-validatecommand) $_row $_col $_newval $itk_option(-vclientdata)} isvalid]} {
 	    # Always invalid
 	    return 0
 	}

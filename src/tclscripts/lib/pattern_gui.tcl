@@ -1826,12 +1826,12 @@ body pattern_control::constructor {} {
 
     update
     update idletasks
-    [code $this switch_states f_dir_r f_list_r]
-    [code $this switch_states f_num_s f_list_s]
-    [code $this switch_states f_radius_s f_radlist_s]
-    [code $this switch_states f_num_c f_list_c]
-    [code $this switch_states f_radius_c f_radlist_c]
-    [code $this switch_states f_height_c f_lnum_c]
+    $this switch_states f_dir_r f_list_r
+    $this switch_states f_num_s f_list_s
+    $this switch_states f_radius_s f_radlist_s
+    $this switch_states f_num_c f_list_c
+    $this switch_states f_radius_c f_radlist_c
+    $this switch_states f_height_c f_lnum_c
 }
 
 

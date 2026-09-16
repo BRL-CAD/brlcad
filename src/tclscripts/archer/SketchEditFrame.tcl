@@ -62,7 +62,7 @@
 	}
 
 	common pi2 [expr {4.0 * asin( 1.0 )}]
-	common rad2deg  [expr {360.0 / $pi2}]
+	public common rad2deg [expr {360.0 / $pi2}]
 
 	method get_scale {}
 	method get_tobase {}
