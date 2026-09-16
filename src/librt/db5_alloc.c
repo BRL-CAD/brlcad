@@ -108,7 +108,22 @@ db5_realloc(struct db_i *dbip, struct directory *dp, struct bu_external *ep)
 
     BU_ASSERT((ep->ext_nbytes&7) == 0);
 
-    if (dp->d_addr != RT_DIR_PHONY_ADDR && ep->ext_nbytes == dp->d_len) {
+    /* A fileless database needs a buffer before a phony entry can be
+     * treated as an in-memory object.  d_addr and d_un.ptr overlap.
+     */
+    if (!dbip->i->dbi_fp) {
+	if (dp->d_addr == RT_DIR_PHONY_ADDR) {
+	    BU_ASSERT(dp->d_len == 0);
+	    dp->d_un.ptr = NULL;
+	    dp->d_flags |= RT_DIR_INMEM;
+	} else if (!(dp->d_flags & RT_DIR_INMEM)) {
+	    bu_log("db5_realloc(%s): fileless database has a file offset\n", dp->d_namep);
+	    return -1;
+	}
+    }
+
+    if (dp->d_addr != RT_DIR_PHONY_ADDR && ep->ext_nbytes == dp->d_len &&
+	(!(dp->d_flags & RT_DIR_INMEM) || dp->d_un.ptr)) {
 	if (RT_G_DEBUG&RT_DEBUG_DB)
 	    bu_log("db5_realloc(%s) current allocation is exactly right.\n", dp->d_namep);
 	return 0;

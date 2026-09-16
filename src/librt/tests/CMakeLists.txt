@@ -61,6 +61,9 @@ brlcad_add_test(NAME rt_db_name COMMAND rt_db_name)
 brlcad_addexec(rt_bound_internal bound_internal.c "librt;libwdb;libbu;${M_LIBRARY}" TEST)
 brlcad_add_test(NAME rt_bound_internal COMMAND rt_bound_internal)
 
+brlcad_addexec(rt_inmem_write inmem_write.c "librt;libwdb;libbu;${M_LIBRARY}" TEST)
+brlcad_add_test(NAME rt_inmem_write COMMAND rt_inmem_write)
+
 brlcad_addexec(rt_binunif binunif.c "librt;libwdb;libbu;${M_LIBRARY}" TEST)
 brlcad_add_test(NAME rt_binunif COMMAND rt_binunif)
 
