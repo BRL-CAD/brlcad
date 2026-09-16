@@ -840,44 +840,53 @@ mged_db_search_callback(int argc, const char *argv[], void *UNUSED(u1), void *u2
     return ret == BRLCAD_OK;
 }
 
+struct CloneProgressData {
+    Tcl_Interp *interp;
+    const char *current;
+    const char *total;
+};
+
+
+static void
+mged_clone_progress_on_gui_thread(void *data_ptr)
+{
+    CloneProgressData *data = static_cast<CloneProgressData *>(data_ptr);
+    Tcl_Obj *prefix = Tcl_GetVar2Ex(data->interp, "clone_progress_callback",
+	    NULL, TCL_GLOBAL_ONLY);
+    if (!prefix)
+	return;
+
+    Tcl_Obj *command = Tcl_DuplicateObj(prefix);
+    Tcl_IncrRefCount(command);
+    Tcl_ListObjAppendElement(data->interp, command,
+	    Tcl_NewStringObj(data->current, -1));
+    Tcl_ListObjAppendElement(data->interp, command,
+	    Tcl_NewStringObj(data->total, -1));
+    if (Tcl_EvalObjEx(data->interp, command, TCL_EVAL_GLOBAL) != TCL_OK) {
+	bu_log("clone progress callback failed: %s\n",
+		Tcl_GetStringResult(data->interp));
+    }
+    Tcl_DecrRefCount(command);
+    Tcl_ResetResult(data->interp);
+}
+
+
 int
 mged_clone_during_callback(int argc, const char **argv,
 			   void *UNUSED(u1), void *u2)
 {
-    struct mged_state *s = (struct mged_state *)u2;
+    struct mged_state *s = static_cast<struct mged_state *>(u2);
     MGED_CK_STATE(s);
-    Tcl_Interp *interp = s->interp;
 
-    /* Evaluate the Tcl command stored in the interpreter global variable
-     * "clone_progress_callback", if any.  Tcl GUIs (e.g. pattern_gui)
-     * can set this variable to a command prefix before invoking clone,
-     * and unset it afterwards:
-     *
-     *   set clone_progress_callback [list my_proc $widget]
-     *   clone ...
-     *   unset -nocomplain clone_progress_callback
-     *
-     * The C callback appends the current clone count (argv[2]) and the
-     * total expected clone count (argv[3]) as additional arguments, so
-     * the Tcl proc receives: my_proc $widget $current $total
-     */
-    const char *cmd = Tcl_GetVar(interp, "clone_progress_callback",
-				 TCL_GLOBAL_ONLY);
-    if (!cmd || !cmd[0])
-	return 1;
-
-    /* argv: {"step", name, current_str, total_str} */
-    const char *current_str = (argc >= 3) ? argv[2] : "0";
-    const char *total_str   = (argc >= 4) ? argv[3] : "0";
-
-    Tcl_DString script;
-    Tcl_DStringInit(&script);
-    Tcl_DStringAppend(&script, cmd, -1);
-    Tcl_DStringAppendElement(&script, current_str);
-    Tcl_DStringAppendElement(&script, total_str);
-    Tcl_Eval(interp, Tcl_DStringValue(&script));
-    Tcl_DStringFree(&script);
-    Tcl_ResetResult(interp);
+    /* Clone runs on a GED worker in interactive MGED.  Tcl interpreters and
+     * Tk widgets are thread-affine, so evaluating the optional progress
+     * command must be marshalled back to the GUI thread. */
+    CloneProgressData data = {
+	s->interp,
+	(argc >= 3) ? argv[2] : "0",
+	(argc >= 4) ? argv[3] : "0"
+    };
+    mged_run_on_gui_thread(s, mged_clone_progress_on_gui_thread, &data);
 
     return 1;
 }
