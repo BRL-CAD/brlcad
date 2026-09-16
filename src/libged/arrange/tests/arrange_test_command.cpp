@@ -212,8 +212,9 @@ test_fractional_origin_and_clearance(struct ged *gedp)
 } // namespace
 
 int
-main()
+main(int UNUSED(argc), char **argv)
 {
+    bu_setprogname(argv[0]);
     struct ged *gedp = create_database();
     if (!gedp) {
         std::fprintf(stderr, "unable to create arrange test database\n");

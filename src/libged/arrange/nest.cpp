@@ -46,6 +46,8 @@ const char *usage =
     "             [-g x,y,z] [--value name=value]...\n"
     "             output container object [object ...]";
 
+const char value_prefix[] = "--value=";
+
 void
 print_help(struct ged *gedp)
 {
@@ -151,8 +153,8 @@ parse_options(struct ged *gedp, int argc, const char *argv[], NestOptions &optio
 
         const char *value = nullptr;
         bool inline_value = false;
-        if (std::strncmp(argument, "--value=", 8) == 0) {
-            value = argument + 8;
+        if (bu_strncmp(argument, value_prefix, sizeof(value_prefix) - 1) == 0) {
+            value = argument + sizeof(value_prefix) - 1;
             inline_value = true;
         } else {
             if (index + 1 >= argc) {

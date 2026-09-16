@@ -11,6 +11,8 @@
 #include <random>
 #include <vector>
 
+#include "bu/app.h"
+
 #include "../arrange_private.h"
 
 using namespace arrange;
@@ -212,8 +214,9 @@ test_deterministic_search()
 } // namespace
 
 int
-main()
+main(int UNUSED(argc), char **argv)
 {
+    bu_setprogname(argv[0]);
     test_bit_rows();
     test_orientations_and_clearance();
     test_direct_oracle();
