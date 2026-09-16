@@ -937,6 +937,10 @@ function(brlcad_bext_process)
   if(EXISTS "${BEXT_MANIFEST_PATH}")
     set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${BEXT_MANIFEST_PATH}")
   endif()
+  set(BEXT_CONTENT_STAMP_PATH "${BRLCAD_EXT_DIR}/bext-content-stamp")
+  if(EXISTS "${BEXT_CONTENT_STAMP_PATH}")
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${BEXT_CONTENT_STAMP_PATH}")
+  endif()
 
   # If we have a bext directories in the build directory, we need to clear them for distcheck
   distclean("${CMAKE_BINARY_DIR}/bext")
@@ -1840,33 +1844,29 @@ endfunction()
     message("Adding install rules for ${_brlcad_ext_cmake_install_rules} CMake find_package files.")
   endif(_brlcad_ext_cmake_install_rules)
 
-  # Because ${BRLCAD_EXT_DIR}/install is handled at configure time
-  # (and indeed MUST be handled at configure time so find_package
-  # results will be correct) we make the CMake process depend on the
-  # ${BRLCAD_EXT_DIR}/install files
-  foreach(ef ${TP_FILES})
-    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${BRLCAD_EXT_INSTALL_DIR}/${ef})
-  endforeach(ef ${TP_FILES})
+  # Older bext outputs have no content stamp, so continue watching their
+  # individual files.  Newer bext builds update the stamp only when finalized
+  # content or the output inventory changes.
+  if(NOT EXISTS "${BEXT_CONTENT_STAMP_PATH}")
+    foreach(ef ${TP_FILES})
+      set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${BRLCAD_EXT_INSTALL_DIR}/${ef})
+    endforeach(ef ${TP_FILES})
 
-  # Add a extnoinstall touched file to also trigger CMake as above, to
-  # help ensure a reconfigure whenever the brlcad_externals repository
-  # is built.  There should be a build-stamp file there that should be
-  # updated after each build run in brlcad_externals, regardless of
-  # what happens with other files.
-  file(
-    GLOB_RECURSE TP_NOINST_FILES
-    LIST_DIRECTORIES false
-    RELATIVE "${BRLCAD_EXT_NOINSTALL_DIR}"
-    "${BRLCAD_EXT_NOINSTALL_DIR}/*"
-  )
-  # For consistency, ignore files that would fall into the
-  # STRIP_EXCLUDED set
-  foreach(ep ${EXCLUDED_PATTERNS})
-    list(FILTER TP_NOINST_FILES EXCLUDE REGEX ${ep})
-  endforeach(ep ${EXCLUDED_PATTERNS})
-  foreach(ef ${TP_NOINST_FILES})
-    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${BRLCAD_EXT_NOINSTALL_DIR}/${ef})
-  endforeach(ef ${TP_NOINST_FILES})
+    file(
+      GLOB_RECURSE TP_NOINST_FILES
+      LIST_DIRECTORIES false
+      RELATIVE "${BRLCAD_EXT_NOINSTALL_DIR}"
+      "${BRLCAD_EXT_NOINSTALL_DIR}/*"
+    )
+    # For consistency, ignore files that would fall into the
+    # STRIP_EXCLUDED set
+    foreach(ep ${EXCLUDED_PATTERNS})
+      list(FILTER TP_NOINST_FILES EXCLUDE REGEX ${ep})
+    endforeach(ep ${EXCLUDED_PATTERNS})
+    foreach(ef ${TP_NOINST_FILES})
+      set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${BRLCAD_EXT_NOINSTALL_DIR}/${ef})
+    endforeach(ef ${TP_NOINST_FILES})
+  endif()
 
   # We got these from brlcad_ext_setup, but they're now scoped to our
   # function.  Let the parent context know as well.
