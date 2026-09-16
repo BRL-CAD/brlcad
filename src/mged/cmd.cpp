@@ -797,10 +797,10 @@ mged_search_post_clbk(int argc, const char **argv,
  * custom unknown command forwards GED operations through _mged_ged_exec.
  * Display callbacks are separately marshalled to the GUI thread.
  *
- * The secondary interpreter initializes Tcl only and creates no TclCAD GED
- * object, so it does not access TclCAD object registries. If initialization
- * is unavailable, use a temporary interpreter and finally a direct GED call
- * so -exec retains its historical fallback behavior.
+ * The secondary interpreter is initialized with Tcl only. It creates no GED
+ * object and therefore cannot replace libtclcad interpreter-local state. If
+ * initialization is unavailable, use a temporary interpreter and finally a
+ * direct GED call so -exec retains its historical fallback behavior.
  */
 int
 mged_db_search_callback(int argc, const char *argv[], void *UNUSED(u1), void *u2)

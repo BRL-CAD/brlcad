@@ -58,7 +58,14 @@ struct tclcad_cmdhist_obj {
 };
 #define TCLCAD_CMDHIST_OBJ_NULL (struct tclcad_cmdhist_obj *)NULL
 
-static struct tclcad_cmdhist_obj HeadCmdHistObj;		/* head of command history object list */
+#define TCLCAD_CMDHIST_ASSOC_KEY "libtclcad::cmdhist"
+
+static struct bu_list *
+cmdhist_objects(Tcl_Interp *interp, int *created)
+{
+    return tclcad_interp_objects(interp, TCLCAD_CMDHIST_ASSOC_KEY,
+	    "command history", created);
+}
 
 /**
  * Stores the given command with start and finish times in the
@@ -325,10 +332,13 @@ cho_deleteProc(ClientData clientData)
 static struct tclcad_cmdhist_obj *
 cho_open(ClientData UNUSED(clientData), Tcl_Interp *interp, const char *name)
 {
+    struct bu_list *objects = cmdhist_objects(interp, NULL);
     struct tclcad_cmdhist_obj *chop;
 
+    BU_ASSERT(objects);
+
     /* check to see if command history object exists */
-    for (BU_LIST_FOR(chop, tclcad_cmdhist_obj, &HeadCmdHistObj.l)) {
+    for (BU_LIST_FOR(chop, tclcad_cmdhist_obj, objects)) {
 	if (BU_STR_EQUAL(name, bu_vls_addr(&chop->cho_name))) {
 	    Tcl_AppendResult(interp, "ch_open: ", name,
 			     " exists.\n", (char *)NULL);
@@ -346,7 +356,7 @@ cho_open(ClientData UNUSED(clientData), Tcl_Interp *interp, const char *name)
     chop->cho_head.h_status = TCL_OK;
     chop->cho_curr = &chop->cho_head;
 
-    BU_LIST_APPEND(&HeadCmdHistObj.l, &chop->l);
+    BU_LIST_APPEND(objects, &chop->l);
     return chop;
 }
 
@@ -354,12 +364,15 @@ cho_open(ClientData UNUSED(clientData), Tcl_Interp *interp, const char *name)
 int
 cho_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
 {
+    struct bu_list *objects = cmdhist_objects(interp, NULL);
     struct tclcad_cmdhist_obj *chop;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
+    BU_ASSERT(objects);
+
     if (argc == 1) {
 	/* get list of command history objects */
-	for (BU_LIST_FOR(chop, tclcad_cmdhist_obj, &HeadCmdHistObj.l))
+	for (BU_LIST_FOR(chop, tclcad_cmdhist_obj, objects))
 	    Tcl_AppendResult(interp, bu_vls_addr(&chop->cho_name), " ", (char *)NULL);
 
 	return TCL_OK;
@@ -391,11 +404,10 @@ cho_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, const char **a
 int
 Cho_Init(Tcl_Interp *interp)
 {
-    memset(&HeadCmdHistObj, 0, sizeof(struct tclcad_cmdhist_obj));
-    BU_LIST_INIT(&HeadCmdHistObj.l);
-    BU_VLS_INIT(&HeadCmdHistObj.cho_name);
-    /* cho_head already zero'd */
-    HeadCmdHistObj.cho_curr = NULL;
+    int created = 0;
+    (void)cmdhist_objects(interp, &created);
+    if (!created)
+	return TCL_OK;
 
     (void)Tcl_CreateCommand(interp, "ch_open", (Tcl_CmdProc *)cho_open_tcl,
 			    (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);

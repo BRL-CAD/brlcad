@@ -65,7 +65,14 @@ struct dm_obj {
 };
 
 
-static struct dm_obj HeadDMObj;	/* head of display manager object list */
+#define TCLCAD_DM_ASSOC_KEY "libtclcad::dm"
+
+static struct bu_list *
+dm_objects(Tcl_Interp *interp, int *created)
+{
+    return tclcad_interp_objects(interp, TCLCAD_DM_ASSOC_KEY,
+	    "display manager", created);
+}
 
 
 #ifdef USE_FBSERV
@@ -2620,6 +2627,7 @@ dmo_cmd(ClientData clientData, Tcl_Interp *UNUSED(interp), int argc, const char 
 static int
 dmo_open_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
+    struct bu_list *objects = dm_objects(interp, NULL);
     struct dm_obj *dmop;
     struct dm *dmp;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
@@ -2633,7 +2641,7 @@ dmo_open_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char *
 
     if (argc == 1) {
 	/* get list of display manager objects */
-	for (BU_LIST_FOR(dmop, dm_obj, &HeadDMObj.l))
+	for (BU_LIST_FOR(dmop, dm_obj, objects))
 	    Tcl_AppendStringsToObj(obj, bu_vls_addr(&dmop->dmo_name), " ", (char *)NULL);
 
 	Tcl_SetObjResult(interp, obj);
@@ -2648,7 +2656,7 @@ dmo_open_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char *
     }
 
     /* check to see if display manager object exists */
-    for (BU_LIST_FOR(dmop, dm_obj, &HeadDMObj.l)) {
+    for (BU_LIST_FOR(dmop, dm_obj, objects)) {
 	if (BU_STR_EQUAL(argv[name_index], bu_vls_addr(&dmop->dmo_name))) {
 	    Tcl_AppendStringsToObj(obj, "dmo_open: ", argv[name_index],
 				   " exists.", (char *)NULL);
@@ -2746,8 +2754,8 @@ dmo_open_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char *
 #endif
     dmop->interp = interp;
 
-    /* append to list of dm_obj's */
-    BU_LIST_APPEND(&HeadDMObj.l, &dmop->l);
+    /* append to list of dm objects */
+    BU_LIST_APPEND(objects, &dmop->l);
 
     (void)Tcl_CreateCommand(interp,
 			    bu_vls_addr(&dmop->dmo_name),
@@ -2774,8 +2782,11 @@ dmo_open_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char *
 TCLCAD_EXPORT int
 Dmo_Init(Tcl_Interp *interp)
 {
-    BU_LIST_INIT(&HeadDMObj.l);
-    BU_VLS_INIT(&HeadDMObj.dmo_name);
+    int created = 0;
+    (void)dm_objects(interp, &created);
+    if (!created)
+	return TCL_OK;
+
     (void)Tcl_CreateCommand(interp, "dm_open", (Tcl_CmdProc *)dmo_open_tcl, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 
     return BRLCAD_OK;

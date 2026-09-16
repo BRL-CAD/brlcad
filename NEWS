@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 20XX-XX-XX  Release 7.46.0                                     ---
 ----------------------------------------------------------------------
 
+* fixed TclCAD framebuffer listing and deletion - Cliff Yapp
 * fixed MGED Build Pattern progress updates - Cliff Yapp
 * fixed MGED search -exec reentry and Ctrl-C crashes - Cliff Yapp
 * accelerated large and repeated MGED path drawing - Cliff Yapp

@@ -52,14 +52,39 @@
 #include "./tclcad_private.h"
 
 
-int
-library_initialized(int setit)
-{
-    static int initialized = 0;
-    if (setit)
-	initialized = 1;
+#define TCLCAD_INIT_ASSOC_KEY "libtclcad::init"
+#define TCLCAD_CORE_INITIALIZED 0x1
+#define TCLCAD_GUI_INITIALIZED 0x2
 
-    return initialized;
+struct tclcad_init_state {
+    int initialized;
+};
+
+
+static void
+tclcad_init_state_delete(ClientData clientData, Tcl_Interp *UNUSED(interp))
+{
+    struct tclcad_init_state *state = (struct tclcad_init_state *)clientData;
+    BU_PUT(state, struct tclcad_init_state);
+}
+
+
+static struct tclcad_init_state *
+tclcad_init_state(Tcl_Interp *interp)
+{
+    struct tclcad_init_state *state = NULL;
+
+    state = (struct tclcad_init_state *)Tcl_GetAssocData(interp,
+	    TCLCAD_INIT_ASSOC_KEY, NULL);
+    if (state)
+	return state;
+
+    BU_GET(state, struct tclcad_init_state);
+    state->initialized = 0;
+    Tcl_SetAssocData(interp, TCLCAD_INIT_ASSOC_KEY,
+	    tclcad_init_state_delete, (ClientData)state);
+
+    return state;
 }
 
 
@@ -106,11 +131,82 @@ extern int Itcl_Init(Tcl_Interp *);
 extern int Itk_Init(Tcl_Interp *);
 #endif
 
+static int
+tclcad_init_gui(Tcl_Interp *interp, struct bu_vls *tlog)
+{
+#ifdef HAVE_TK
+    if (Tk_Init(interp) == TCL_ERROR) {
+	if (tlog)
+	    bu_vls_printf(tlog, "Tk init ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	return TCL_ERROR;
+    }
+
+    if (Tcl_Eval(interp, "package require Itk " TCLCAD_ITK_MIN_VERSION) != TCL_OK) {
+	if (tlog)
+	    bu_vls_printf(tlog, "Itk init ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	return TCL_ERROR;
+    }
+
+    if (Tcl_Eval(interp, "package require Iwidgets") != TCL_OK) {
+	if (tlog)
+	    bu_vls_printf(tlog, "Iwidgets init ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	return TCL_ERROR;
+    }
+
+    if (Tcl_Import(interp, Tcl_GetGlobalNamespace(interp),
+		"::itk::*", /* allowOverwrite */ 1) != TCL_OK ||
+	Tcl_Import(interp, Tcl_GetGlobalNamespace(interp),
+		"::iwidgets::*", /* allowOverwrite */ 1) != TCL_OK) {
+	if (tlog)
+	    bu_vls_printf(tlog, "Tcl_Import ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	return TCL_ERROR;
+    }
+
+    if (Tcl_Eval(interp,
+	    "auto_mkindex_parser::slavehook { _%@namespace import -force ::tk::* }") != TCL_OK ||
+	Tcl_Eval(interp,
+	    "auto_mkindex_parser::slavehook { _%@namespace import -force ::itk::* }") != TCL_OK) {
+	if (tlog)
+	    bu_vls_printf(tlog, "Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	return TCL_ERROR;
+    }
+
+    if (!Tk_MainWindow(interp)) {
+	if (tlog)
+	    bu_vls_printf(tlog, "Tk init ERROR:\nno main window\n");
+	return TCL_ERROR;
+    }
+
+    return TCL_OK;
+#else
+    (void)interp;
+    if (tlog)
+	bu_vls_printf(tlog, "Tk init ERROR:\nTk support is unavailable\n");
+    return TCL_ERROR;
+#endif
+}
+
+
 int
 tclcad_init(Tcl_Interp *interp, int init_gui, struct bu_vls *tlog)
 {
-    if (library_initialized(0))
+    struct tclcad_init_state *state = NULL;
+
+    if (!interp) {
+	if (tlog)
+	    bu_vls_printf(tlog, "Tcl init ERROR:\nNULL interpreter\n");
+	return TCL_ERROR;
+    }
+
+    state = tclcad_init_state(interp);
+    if (state->initialized & TCLCAD_CORE_INITIALIZED) {
+	if (!init_gui || (state->initialized & TCLCAD_GUI_INITIALIZED))
+	    return TCL_OK;
+	if (tclcad_init_gui(interp, tlog) != TCL_OK)
+	    return TCL_ERROR;
+	state->initialized |= TCLCAD_GUI_INITIALIZED;
 	return TCL_OK;
+    }
 
     /* Tcl_Init needs init.tcl.  It can be tricky to find init.tcl - help out,
      * if we can.  Per the Tcl_Init() definition in generic/tclInterp.c in the
@@ -161,17 +257,6 @@ tclcad_init(Tcl_Interp *interp, int init_gui, struct bu_vls *tlog)
 	bu_vls_free(&tcl_init_error);
     }
 
-    if (init_gui) {
-#ifdef HAVE_TK
-	if (Tk_Init(interp) == TCL_ERROR) {
-	    if (tlog)
-		bu_vls_printf(tlog, "Tk init ERROR:\n%s\n", Tcl_GetStringResult(interp));
-	    return TCL_ERROR;
-	}
-#endif
-    }
-
-    /* Locate the BRL-CAD-specific Tcl scripts, set the auto_path */
     tclcad_auto_path(interp);
 
     /* Initialize [incr Tcl] */
@@ -179,24 +264,6 @@ tclcad_init(Tcl_Interp *interp, int init_gui, struct bu_vls *tlog)
 	if (tlog)
 	    bu_vls_printf(tlog, "Itcl init ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	return TCL_ERROR;
-    }
-
-    /* Initialize [incr Tk] */
-    if (init_gui) {
-#ifdef HAVE_TK
-	if (Tcl_Eval(interp, "package require Itk 3") != TCL_OK) {
-	    if (tlog)
-	       	bu_vls_printf(tlog, "Itk init ERROR:\n%s\n", Tcl_GetStringResult(interp));
-	    return TCL_ERROR;
-	}
-
-	/* Initialize the Iwidgets package */
-	if (Tcl_Eval(interp, "package require Iwidgets") != TCL_OK) {
-	    if (tlog)
-	       	bu_vls_printf(tlog, "Iwidgets init ERROR:\n%s\n", Tcl_GetStringResult(interp));
-	    return TCL_ERROR;
-	}
-#endif
     }
 
     /* Initialize libbu */
@@ -239,9 +306,7 @@ tclcad_init(Tcl_Interp *interp, int init_gui, struct bu_vls *tlog)
 
     Tcl_PkgProvide(interp, "Tclcad", brlcad_version());
 
-    (void)library_initialized(1);
-
-    /* Import Itcl/Itk and iwidgets into global namespace
+    /* Import Itcl into the global namespace
      *
      * TODO - this is probably a bad idea - figure out why we're doing it and
      * whether we really need to... */
@@ -253,49 +318,18 @@ tclcad_init(Tcl_Interp *interp, int init_gui, struct bu_vls *tlog)
 	return TCL_ERROR;
     }
 
-    if (init_gui) {
-#ifdef HAVE_TK
-	if (Tcl_Import(interp, Tcl_GetGlobalNamespace(interp),
-		    "::itk::*", /* allowOverwrite */ 1) != TCL_OK) {
-	    if (tlog)
-	       	bu_vls_printf(tlog, "Tcl_Import ERROR:\n%s\n", Tcl_GetStringResult(interp));
-	    return TCL_ERROR;
-	}
-	if (Tcl_Import(interp, Tcl_GetGlobalNamespace(interp),
-		    "::iwidgets::*", /* allowOverwrite */ 1) != TCL_OK) {
-	    if (tlog)
-	       	bu_vls_printf(tlog, "Tcl_Import ERROR:\n%s\n", Tcl_GetStringResult(interp));
-	    return TCL_ERROR;
-	}
-#endif
-    }
-
-    if (Tcl_Eval(interp, "auto_mkindex_parser::slavehook { _%@namespace import -force ::itcl::* }") != TCL_OK) {
+    if (Tcl_Eval(interp,
+	    "auto_mkindex_parser::slavehook { _%@namespace import -force ::itcl::* }") != TCL_OK) {
 	if (tlog)
 	    bu_vls_printf(tlog, "Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	return TCL_ERROR;
     }
 
-#ifdef HAVE_TK
-    if (init_gui) {
-	if (Tcl_Eval(interp, "auto_mkindex_parser::slavehook { _%@namespace import -force ::tk::* }") != TCL_OK) {
-	    if (tlog)
-		bu_vls_printf(tlog, "Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
-	    return TCL_ERROR;
-	}
-	if (Tcl_Eval(interp, "auto_mkindex_parser::slavehook { _%@namespace import -force ::itk::* }") != TCL_OK) {
-	    if (tlog)
-		bu_vls_printf(tlog, "Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
-	    return TCL_ERROR;
-	}
-    }
-
-    /* If we're doing Tk, make sure we have a window */
-    if (init_gui) {
-	Tk_Window tkwin = Tk_MainWindow(interp);
-	if (!tkwin) return TCL_ERROR;
-    }
-#endif
+    state->initialized |= TCLCAD_CORE_INITIALIZED;
+    if (init_gui && tclcad_init_gui(interp, tlog) != TCL_OK)
+	return TCL_ERROR;
+    if (init_gui)
+	state->initialized |= TCLCAD_GUI_INITIALIZED;
 
     return TCL_OK;
 }

@@ -37,6 +37,7 @@
 __BEGIN_DECLS
 
 #define TO_UNLIMITED -1
+#define TCLCAD_ITK_MIN_VERSION "3"
 
 typedef int (*to_wrapper_func_ptr)(struct ged *, int, const char *[], ged_func_ptr, const char *, int);
 #define TO_WRAPPER_FUNC_PTR_NULL (to_wrapper_func_ptr)0
@@ -52,17 +53,10 @@ struct to_cmdtab {
 // For the test program check_tclcad_cmds
 TCLCAD_EXPORT extern struct to_cmdtab to_cmds[];
 
-extern struct tclcad_obj HeadTclcadObj;
-extern struct tclcad_obj *current_top;
-
-/**
- * function returns truthfully whether the library has been
- * initialized.  calling this routine with setit true considers the
- * library henceforth initialized.  there is presently no way to unset
- * or reset initialization.
- */
-extern int library_initialized(int setit);
-
+extern struct bu_list *tclcad_interp_objects(Tcl_Interp *interp,
+	const char *key, const char *description, int *created);
+extern struct tclcad_obj **tclcad_current_top(void);
+#define current_top (*tclcad_current_top())
 
 /**
  * Evaluates a TCL command, escaping the list of arguments.

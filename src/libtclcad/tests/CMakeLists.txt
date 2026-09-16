@@ -4,11 +4,17 @@ if(BRLCAD_ENABLE_TCL)
     add_dependencies(tclcad_check_ged_cmds libtclcad ged_plugins)
   endif(TARGET tclcad_check_ged_cmds)
   brlcad_add_test(NAME tclcad_test_ged_cmds_exist COMMAND tclcad_check_ged_cmds)
+  brlcad_addexec(tclcad_check_multi_interp check_multi_interp.cpp "libtclcad" TEST)
+  if(TARGET m35.g)
+    add_dependencies(tclcad_check_multi_interp m35.g)
+  endif()
+  brlcad_add_test(NAME tclcad_test_multi_interp COMMAND tclcad_check_multi_interp)
 endif(BRLCAD_ENABLE_TCL)
 
 cmakefiles(
   CMakeLists.txt
   check_tclcad_cmds.cpp
+  check_multi_interp.cpp
   )
 
 # Local Variables:
