@@ -2876,6 +2876,23 @@ include(${CMAKE_SOURCE_DIR}/src/source_dirs.cmake)
 # Now we have the necessary info - trigger the primary management logic
 brlcad_bext_process()
 
+# Zlib is discovered indirectly by packages such as OpenVDB, OpenNURBS, and
+# PNG.  Select it now so none of those packages can create an imported target
+# from stale cache entries; a later lookup cannot replace an existing target.
+find_package_zlib()
+
+# OpenVDB may be supplied by bext, so it cannot be discovered until bext files
+# have been staged in the build directory.
+if(BRLCAD_ENABLE_OPENVDB)
+  find_package_reset(OpenVDB RESET_TP)
+  set(OpenVDB_ROOT "${CMAKE_BINARY_DIR}")
+  find_package(OpenVDB)
+  if(NOT OpenVDB_FOUND)
+    message("OpenVDB enablement requested, but OpenVDB is not found - disabling")
+    set(BRLCAD_ENABLE_OPENVDB OFF)
+  endif(NOT OpenVDB_FOUND)
+endif(BRLCAD_ENABLE_OPENVDB)
+
 # Define some Tcl related variables for libtclcad
 if(BRLCAD_ITCL_BUILD)
   config_h_append(BRLCAD "#cmakedefine ITCL_VERSION \"${ITCL_VERSION}\"\n")
