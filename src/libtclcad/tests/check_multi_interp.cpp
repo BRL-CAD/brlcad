@@ -63,10 +63,10 @@ has_command(Tcl_Interp *interp, const char *command)
 
 
 static bool
-init_tclcad(Tcl_Interp *interp)
+init_tclcad(Tcl_Interp *interp, int init_gui)
 {
     struct bu_vls log = BU_VLS_INIT_ZERO;
-    int status = tclcad_init(interp, 0, &log);
+    int status = tclcad_init(interp, init_gui, &log);
     if (status != TCL_OK)
 	std::fprintf(stderr, "%s", bu_vls_cstr(&log));
     bu_vls_free(&log);
@@ -75,7 +75,40 @@ init_tclcad(Tcl_Interp *interp)
 
 
 static bool
-check_initialized(Tcl_Interp *interp, const char *value)
+check_gui_packages(Tcl_Interp *interp)
+{
+    const char *script =
+	"proc tops {args} {return {}};"
+	"proc who {} {return {}};"
+	"proc graph {args} {return {}};"
+	"foreach package {"
+	" Archer cadwidgets::Ged RtWizard::Wizard Sdialogs Swidgets"
+	"} {package require $package};"
+	"foreach class {"
+	" ::DataUtils ::sdialogs::Stddlgs ::swidgets::Togglearrow"
+	"} {"
+	" if {![llength [info commands $class]] && ![auto_load $class]} {"
+	"  error \"class $class is not autoloadable\""
+	" }"
+	"};"
+	"expr {"
+	" [llength [info commands ::Archer]] == 1 &&"
+	" [llength [info commands ::cadwidgets::Ged]] == 1 &&"
+	" [llength [info commands ::RtWizard::Wizard]] == 1"
+	"}";
+
+    if (!eval_ok(interp, script) || !result_is(interp, "1")) {
+	std::fprintf(stderr, "GUI package initialization was incomplete: %s\n",
+	    Tcl_GetStringResult(interp));
+	return false;
+    }
+
+    return true;
+}
+
+
+static bool
+check_initialized(Tcl_Interp *interp, const char *value, bool init_gui)
 {
     if (!has_command(interp, "bu_dir") ||
 	!has_command(interp, "bn_noise_perlin") ||
@@ -85,6 +118,17 @@ check_initialized(Tcl_Interp *interp, const char *value)
 	std::fprintf(stderr, "libtclcad did not register all expected commands\n");
 	return false;
     }
+    if (init_gui &&
+	(!has_command(interp, "frame") ||
+	 !Tcl_PkgPresent(interp, "Tk", "8.6", 0) ||
+	 !Tcl_PkgPresent(interp, "Itk", TCLCAD_ITK_MIN_VERSION, 0))) {
+	std::fprintf(stderr, "libtclcad did not complete GUI initialization\n");
+	return false;
+    }
+
+    if (init_gui && !check_gui_packages(interp))
+	return false;
+
     const char *script =
 	"itcl::class MultiInterpClass {"
 	" variable value;"
@@ -162,9 +206,10 @@ check_framebuffer_registry_growth(Tcl_Interp *interp)
 
 
 static bool
-open_shared_runtime_objects(Tcl_Interp *first, Tcl_Interp *second)
+open_shared_runtime_objects(Tcl_Interp *first, Tcl_Interp *second, bool init_gui)
 {
     const char *open_framebuffer = "fb_open shared_fb /dev/mem -s 16";
+    const char *open_display_manager = "dm_open shared_dm X";
 
     if (!eval_ok(first, open_framebuffer) ||
 	!eval_ok(second, open_framebuffer) ||
@@ -173,6 +218,17 @@ open_shared_runtime_objects(Tcl_Interp *first, Tcl_Interp *second)
 	!eval_ok(second, "llength [fb_open]") ||
 	!result_is(second, "1")) {
 	std::fprintf(stderr, "framebuffer registry crossed interpreter boundaries\n");
+	return false;
+    }
+
+    if (init_gui &&
+	(!eval_ok(first, open_display_manager) ||
+	 !eval_ok(second, open_display_manager) ||
+	 !eval_ok(first, "llength [dm_open]") ||
+	 !result_is(first, "1") ||
+	 !eval_ok(second, "llength [dm_open]") ||
+	 !result_is(second, "1"))) {
+	std::fprintf(stderr, "display manager registry crossed interpreter boundaries\n");
 	return false;
     }
 
@@ -186,8 +242,11 @@ main(int argc, const char **argv)
     bu_setprogname(argv[0]);
     Tcl_FindExecutable(argv[0]);
 
-    if (argc != 1) {
-	std::fprintf(stderr, "Usage: %s\n", argv[0]);
+    bool init_gui = false;
+    if (argc == 2 && BU_STR_EQUAL(argv[1], "--gui")) {
+	init_gui = true;
+    } else if (argc != 1) {
+	std::fprintf(stderr, "Usage: %s [--gui]\n", argv[0]);
 	return 1;
     }
 
@@ -211,15 +270,19 @@ main(int argc, const char **argv)
 	return 1;
     }
 
-    /* Initializing GED alone must not suppress full TclCAD initialization. */
+    /*
+     * Initializing GED alone must not suppress full TclCAD initialization.
+     * The GUI run also checks the supported core-to-GUI upgrade sequence.
+     */
     if (Ged_Init(first) != TCL_OK || !has_command(first, "go_open") ||
 	has_command(first, "bu_dir") || !init_tclcad(first, 0) ||
-	!init_tclcad(first) ||
-	!init_tclcad(second) ||
-	!check_initialized(first, "first") ||
-	!check_initialized(second, "second") ||
+	(init_gui && !init_tclcad(first, 1)) ||
+	!init_tclcad(first, init_gui) ||
+	!init_tclcad(second, init_gui) ||
+	!check_initialized(first, "first", init_gui) ||
+	!check_initialized(second, "second", init_gui) ||
 	!open_shared_database(first, second) ||
-	!open_shared_runtime_objects(first, second)) {
+	!open_shared_runtime_objects(first, second, init_gui)) {
 	Tcl_DeleteInterp(first);
 	Tcl_DeleteInterp(second);
 	return 1;
@@ -234,15 +297,16 @@ main(int argc, const char **argv)
 	!eval_ok(second, "llength [shared_ged tops]") ||
 	result_is(second, "0") ||
 	!eval_ok(second, "shared_fb getwidth") ||
-	!result_is(second, "16")) {
+	!result_is(second, "16") ||
+	(init_gui && !eval_ok(second, "shared_dm get_aspect"))) {
 	Tcl_DeleteInterp(second);
 	return 1;
     }
     Tcl_DeleteInterp(second);
 
     Tcl_Interp *replacement = Tcl_CreateInterp();
-    if (!replacement || !init_tclcad(replacement) ||
-	!check_initialized(replacement, "replacement") ||
+    if (!replacement || !init_tclcad(replacement, init_gui) ||
+	!check_initialized(replacement, "replacement", init_gui) ||
 	!check_framebuffer_registry_growth(replacement)) {
 	if (replacement)
 	    Tcl_DeleteInterp(replacement);
@@ -250,7 +314,8 @@ main(int argc, const char **argv)
     }
     Tcl_DeleteInterp(replacement);
 
-    std::printf("libtclcad initialized independent and replacement interpreters\n");
+    std::printf("libtclcad initialized independent and replacement interpreters%s\n",
+	init_gui ? " with Tk" : "");
     return 0;
 }
 

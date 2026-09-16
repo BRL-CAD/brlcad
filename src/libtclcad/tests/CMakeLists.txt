@@ -11,6 +11,17 @@ if(BRLCAD_ENABLE_TCL)
   endif()
   brlcad_add_test(NAME tclcad_test_itcl_version COMMAND tclcad_check_itcl)
   brlcad_add_test(NAME tclcad_test_multi_interp COMMAND tclcad_check_multi_interp)
+
+  if(BRLCAD_ENABLE_TK AND
+     BRLCAD_X11_PROVIDER_RESOLVED STREQUAL "XMIN" AND
+     Xmin_RUN_EXECUTABLE)
+    brlcad_add_xmin_test(
+      NAME tclcad_test_multi_interp_gui
+      SCREEN 1280x960x24
+      TIMEOUT 120
+      COMMAND $<TARGET_FILE:tclcad_check_multi_interp> --gui
+    )
+  endif()
 endif(BRLCAD_ENABLE_TCL)
 
 cmakefiles(
@@ -18,6 +29,7 @@ cmakefiles(
   check_tclcad_cmds.cpp
   check_itcl.cpp
   check_multi_interp.cpp
+  itcl4_gui.tcl
   )
 
 # Local Variables:
