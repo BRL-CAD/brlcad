@@ -1,7 +1,7 @@
 /*                     N M G _ C O N V . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2025 United States Government as represented by
+ * Copyright (c) 1993-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,6 +39,8 @@
 __BEGIN_DECLS
 
 struct rt_db_internal; /*forward declaration*/
+struct nmg_class_scratch;
+struct bu_ptbl;
 
 struct hitmiss {
     struct bu_list      l;
@@ -123,6 +125,10 @@ struct ray_data {
      * functions should not be called.
      */
     int                 classifying_ray;
+
+    struct bu_list      *hitmiss_free;  /**< @brief  optional worker-local freelist */
+    struct nmg_class_scratch *class_scratch; /**< @brief optional point-classifier scratch */
+    struct bu_ptbl      *hitstate[2];   /**< @brief optional state-transition scratch */
 };
 
 #define NMG_PCA_EDGE    1
@@ -167,13 +173,11 @@ RT_EXPORT extern union tree *nmg_booltree_leaf_tnurb(struct db_tree_state *tsp,
 RT_EXPORT extern int nmg_bool_eval_silent;      /* quell output from nmg_booltree_evaluate */
 RT_EXPORT extern union tree *nmg_booltree_evaluate(union tree *tp,
 						   struct bu_list *vlfree,
-						   const struct bn_tol *tol,
-						   struct resource *resp);
+						   const struct bn_tol *tol);
 RT_EXPORT extern int nmg_boolean(union tree *tp,
 				 struct model *m,
 				 struct bu_list *vlfree,
-				 const struct bn_tol *tol,
-				 struct resource *resp);
+				 const struct bn_tol *tol);
 
 
 

@@ -1,7 +1,7 @@
 /*                       I F _ N U L L . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2025 United States Government as represented by
+ * Copyright (c) 1989-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -312,7 +312,11 @@ struct fb_impl fb_null_interface_impl =  {
     {0}, /* u3 */
     {0}, /* u4 */
     {0}, /* u5 */
-    {0}  /* u6 */
+    {0}, /* u6 */
+    0,   /* if_interactive */
+    {{FB_EVENT_NONE, 0, 0, 0, 0, 0}}, /* if_equeue */
+    0,   /* if_ehead */
+    0    /* if_etail */
 };
 
 struct fb fb_null_interface =  { &fb_null_interface_impl };

@@ -1,0 +1,81 @@
+= G-VDB(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+
+g-vdb - convert BRL-CAD geometry to an OpenVDB voxel volume
+
+== SYNOPSIS
+
+[source]
+----
+g-vdb [-s "dx dy dz"] [-d n] [-t f] model.g objects...
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*g-vdb* voxelizes one or more objects from a BRL-CAD geometry database
+(*.g*) and writes the result as an OpenVDB volume.  Each named object is
+sampled on a regular voxel grid via ray tracing; voxels whose fractional
+fill meets the threshold are stored as a signed level set.  The output is
+always written to a file named *file.vdb* in the current directory, which
+can then be consumed by OpenVDB-aware tools and renderers.
+
+At least one geometry database and one object must be supplied on the
+command line.
+
+[[options]]
+== OPTIONS
+
+*-s* _"dx dy dz"_::
+  Set the voxel cell size along the X, Y, and Z axes (a single
+  space-separated, quoted triple).  Defaults to "1.0 1.0 1.0".
+
+*-d* _n_::
+  Set the level of detail (subsampling depth) used while voxelizing.
+  Higher values yield a finer result at greater cost.  Defaults to 4.
+
+*-t* _f_::
+  Set the fill threshold in the range 0.0 to 1.0.  A voxel is marked
+  solid only when its fractional occupancy is at least this value.
+  Defaults to 0.5.
+
+[[examples]]
+== EXAMPLES
+
+.Voxelize a component at fine resolution
+====
+[source,bash]
+----
+g-vdb -s "0.5 0.5 0.5" -d 6 -t 0.4 havoc.g havoc
+mv file.vdb havoc.vdb
+----
+Samples the *havoc* object from *havoc.g* using half-millimeter voxels at
+a higher level of detail, marking any voxel that is at least 40% filled.
+Because *g-vdb* always writes to *file.vdb*, the result is renamed so a
+subsequent run does not overwrite it.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *mged*(1), *rt*(1), *g-dot*(1)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

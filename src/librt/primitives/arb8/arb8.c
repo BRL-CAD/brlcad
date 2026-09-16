@@ -1,7 +1,7 @@
 /*                          A R B 8 . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2025 United States Government as represented by
+ * Copyright (c) 1985-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -61,6 +61,7 @@
 #include "vmath.h"
 #include "bn.h"
 #include "bg.h"
+#include "bg/tri_tri.h"
 #include "nmg.h"
 #include "rt/db4.h"
 #include "rt/geom.h"
@@ -119,7 +120,7 @@ struct prep_arb {
  * (Although the cross product wants counter-clockwise order)
  */
 struct arb_info {
-    char *ai_title;
+    const char *ai_title;
     int ai_sub[4];
 };
 
@@ -166,7 +167,7 @@ static const int rt_arb_planes[5][24] = {
 
 #define ARB_AO(_t, _a, _i) offsetof(_t, _a) + sizeof(point_t) * _i + sizeof(point_t) / ELEMENTS_PER_POINT * X
 
-const struct bu_structparse rt_arb_parse[] = {
+EXTERNCPP const struct bu_structparse rt_arb_parse[] = {
     { "%f", 3, "V1", ARB_AO(struct rt_arb_internal, pt, 0), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 3, "V2", ARB_AO(struct rt_arb_internal, pt, 1), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 3, "V3", ARB_AO(struct rt_arb_internal, pt, 2), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -645,6 +646,63 @@ rt_arb_mk_planes(register struct prep_arb *pap, struct rt_arb_internal *aip, con
 	    continue;
 	}
 
+	/*
+	 * If we ended up with only 3 vertices because the 3rd candidate
+	 * was collinear with the first two (making rt_arb_add_pnt return
+	 * -1 at ptno==2), the 4th vertex was used for the plane equation
+	 * instead and the collinear vertex was silently dropped.  That
+	 * leaves the face as a triangle even though all four of the
+	 * original ai_sub vertices are coplanar, which breaks edge
+	 * connectivity with adjacent faces.
+	 *
+	 * Recover by finding the dropped vertex, verifying it is still on
+	 * the computed face plane, and re-inserting it at its original
+	 * position in pa_pindex so that nmg_cmface() creates all four
+	 * edges.
+	 */
+	if (npts == 3) {
+	    struct aface *afp = &pap->pa_face[pap->pa_faces];
+	    for (j = 0; j < 4; j++) {
+		int pt_idx = equiv_pts[rt_arb_info[i].ai_sub[j]];
+		int present = 0;
+		for (k = 0; k < npts; k++) {
+		    if (pap->pa_pindex[k][pap->pa_faces] == pt_idx) {
+			present = 1;
+			break;
+		    }
+		}
+		if (!present) {
+		    /* This vertex was dropped.  Use the same angle-based
+		     * coplanarity check as rt_arb_add_pnt's default case:
+		     * normalize (P - A) and take its dot product with the
+		     * face normal.  If that is near zero the vector is
+		     * perpendicular to the normal, i.e. the point is on
+		     * the plane.  The magnitude guard avoids passing a
+		     * near-zero vector to VUNITIZE; if |P-A| is tiny the
+		     * dropped vertex coincides with A which is impossible
+		     * here because A is already in the face. */
+		    vect_t P_A;
+		    fastf_t f;
+		    VSUB2(P_A, aip->pt[pt_idx], afp->A);
+		    if (MAGNITUDE(P_A) > SMALL_FASTF) {
+			VUNITIZE(P_A);
+			f = VDOT(afp->peqn, P_A);
+			if (NEAR_ZERO(f, RT_SLOPPY_DOT_TOL)) {
+			    /* Coplanar: re-insert at position j in
+			     * pa_pindex.  pa_pindex has 4 slots (0-3);
+			     * npts==3 means slot 3 is free. */
+			    for (k = npts; k > j; k--)
+				pap->pa_pindex[k][pap->pa_faces] =
+				    pap->pa_pindex[k-1][pap->pa_faces];
+			    pap->pa_pindex[j][pap->pa_faces] = pt_idx;
+			    npts++;
+			}
+		    }
+		    break; /* at most one vertex dropped per face */
+		}
+	    }
+	}
+
 	if (pap->pa_doopt) {
 	    register struct oface *ofp;
 
@@ -670,7 +728,7 @@ rt_arb_mk_planes(register struct prep_arb *pap, struct rt_arb_internal *aip, con
 }
 
 
-void
+C_DECL void
 rt_arb_print(register const struct soltab *stp)
 {
     register struct arb_specific *arbp =
@@ -703,7 +761,7 @@ rt_arb_print(register const struct soltab *stp)
 /**
  * Find the bounding RPP of an arb
  */
-int
+C_DECL int
 rt_arb_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
     int i;
     struct rt_arb_internal *aip;
@@ -723,7 +781,7 @@ rt_arb_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
 
 
 static fastf_t
-arb_concave_eps(const point_t v[8])
+arb_concave_eps(const point_t v[8], const struct bn_tol *tol)
 {
     fastf_t minx = v[0][X];
     fastf_t maxx = v[0][X];
@@ -745,7 +803,7 @@ arb_concave_eps(const point_t v[8])
     if (maxz - minz > span) span = maxz - minz;
 
     const struct bn_tol default_tol = BN_TOL_INIT_TOL;
-    fastf_t eps = default_tol.dist; /* distance units */
+    fastf_t eps = tol ? tol->dist : default_tol.dist; /* distance units */
     fastf_t scale_eps = span * 1.0e-4; /* 1e-4 of span */
     if (scale_eps > eps)
 	eps = scale_eps;
@@ -787,7 +845,7 @@ point_inside_face(const point_t v[8], const int f[4], const point_t P, const poi
  * outward facing planes.  If it lies outside any, it's concave.
  */
 static bool
-arb_is_concave(const struct rt_arb_internal *aip)
+arb_is_concave(const struct rt_arb_internal *aip, const struct bn_tol *tol)
 {
     register const point_t *v = aip->pt;
 
@@ -798,7 +856,7 @@ arb_is_concave(const struct rt_arb_internal *aip)
     }
     VSCALE(centroid, centroid, 1.0 / 8.0);
 
-    const fastf_t eps = arb_concave_eps(v);
+    const fastf_t eps = arb_concave_eps(v, tol);
 
     /* every vertex‑pair midpoint must stay inside */
     for (size_t i = 0; i < 8; ++i) {
@@ -843,6 +901,356 @@ arb_is_planar(const struct rt_arb_internal *aip, const struct bn_tol *tol)
       }
     }
     return true; /* all coplanar */
+}
+
+
+static int
+arb_face_label(struct bu_vls *label, const int face[4])
+{
+    bu_vls_trunc(label, 0);
+    for (int i = 0; i < 4; i++) {
+	if (face[i] < 0)
+	    continue;
+	bu_vls_printf(label, "%d", face[i] + 1);
+    }
+    return bu_vls_strlen(label) ? 0 : -1;
+}
+
+
+static int
+arb_face_plane(plane_t plane, const point_t v[8], const int face[4], const struct bn_tol *tol)
+{
+    int uniq[4];
+    int nuniq = 0;
+
+    for (int i = 0; i < 4; i++) {
+	int dup = 0;
+
+	if (face[i] < 0)
+	    continue;
+
+	for (int j = 0; j < nuniq; j++) {
+	    if (VNEAR_EQUAL(v[face[i]], v[uniq[j]], tol->dist)) {
+		dup = 1;
+		break;
+	    }
+	}
+
+	if (!dup)
+	    uniq[nuniq++] = face[i];
+    }
+
+    if (nuniq < 3)
+	return -1;
+
+    for (int i = 0; i < nuniq - 2; i++) {
+	for (int j = i + 1; j < nuniq - 1; j++) {
+	    for (int k = j + 1; k < nuniq; k++) {
+		if (bg_make_plane_3pnts(plane, v[uniq[i]], v[uniq[j]], v[uniq[k]], tol) == 0)
+		    return 0;
+	    }
+	}
+    }
+
+    return -1;
+}
+
+
+static int
+arb_face_is_coplanar(const point_t v[8], const int face[4], const struct bn_tol *tol)
+{
+    point_t pts[4] = {VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO};
+    int npts = 0;
+
+    for (int i = 0; i < 4; i++) {
+	if (face[i] < 0)
+	    continue;
+	VMOVE(pts[npts], v[face[i]]);
+	npts++;
+    }
+
+    return bg_coplanar_pts((const point_t *)pts, npts, tol);
+}
+
+
+static int
+arb_face_unique(int uniq[4], const point_t v[8], const int face[4], const struct bn_tol *tol)
+{
+    int nuniq = 0;
+
+    for (int i = 0; i < 4; i++) {
+	int dup = 0;
+
+	if (face[i] < 0)
+	    continue;
+
+	for (int j = 0; j < nuniq; j++) {
+	    if (VNEAR_EQUAL(v[face[i]], v[uniq[j]], tol->dist)) {
+		dup = 1;
+		break;
+	    }
+	}
+
+	if (!dup)
+	    uniq[nuniq++] = face[i];
+    }
+
+    return nuniq;
+}
+
+
+static int
+arb_faces_share_edge(const int *f1, int n1, const int *f2, int n2)
+{
+    int shared = 0;
+
+    for (int i = 0; i < n1; i++) {
+	for (int j = 0; j < n2; j++) {
+	    if (f1[i] == f2[j])
+		shared++;
+	}
+    }
+
+    return shared >= 2;
+}
+
+
+static int
+arb_tri_uses_shared_vertex(const int t1[3], const int t2[3])
+{
+    for (int i = 0; i < 3; i++) {
+	for (int j = 0; j < 3; j++) {
+	    if (t1[i] == t2[j])
+		return 1;
+	}
+    }
+
+    return 0;
+}
+
+
+static int
+arb_add_face_tris(int tris[12][3], int tcnt, const int face[4], int nface)
+{
+    if (nface == 3) {
+	tris[tcnt][0] = face[0];
+	tris[tcnt][1] = face[1];
+	tris[tcnt][2] = face[2];
+	return tcnt + 1;
+    }
+
+    tris[tcnt][0] = face[0];
+    tris[tcnt][1] = face[1];
+    tris[tcnt][2] = face[2];
+    tcnt++;
+
+    tris[tcnt][0] = face[0];
+    tris[tcnt][1] = face[2];
+    tris[tcnt][2] = face[3];
+    return tcnt + 1;
+}
+
+
+static int
+arb_face_cycle_is_twisted(const point_t v[8], const int face[4], const struct bn_tol *tol)
+{
+    int uniq[4];
+    int nuniq = arb_face_unique(uniq, v, face, tol);
+
+    if (nuniq < 4)
+	return 0;
+
+    return bg_tri_tri_isect_coplanar((fastf_t *)v[uniq[0]], (fastf_t *)v[uniq[1]], (fastf_t *)v[uniq[2]],
+				     (fastf_t *)v[uniq[0]], (fastf_t *)v[uniq[2]], (fastf_t *)v[uniq[3]], 1) ? 0 :
+	bg_tri_tri_isect_coplanar((fastf_t *)v[uniq[0]], (fastf_t *)v[uniq[1]], (fastf_t *)v[uniq[3]],
+				  (fastf_t *)v[uniq[1]], (fastf_t *)v[uniq[2]], (fastf_t *)v[uniq[3]], 1);
+}
+
+
+static int
+arb_is_twisted(const struct rt_arb_internal *arb, int cgtype, const struct bn_tol *tol)
+{
+    const int arb_faces[5][24] = rt_arb_faces;
+    const point_t *v = arb->pt;
+    int face_verts[6][4];
+    int face_vert_cnt[6];
+    int tris[12][3];
+    int tri_faces[12];
+    int tcnt = 0;
+    int nfaces = 0;
+    int type = cgtype - ARB4;
+
+    for (int i = 0; i < 6; i++) {
+	const int *face = &arb_faces[type][i*4];
+	plane_t plane;
+	int ntcnt;
+
+	if (face[0] == -1)
+	    break;
+	if (arb_face_plane(plane, v, face, tol) < 0)
+	    return 1;
+
+	face_vert_cnt[nfaces] = arb_face_unique(face_verts[nfaces], v, face, tol);
+	if (face_vert_cnt[nfaces] < 3)
+	    return 1;
+	if (arb_face_cycle_is_twisted(v, face, tol))
+	    return 1;
+
+	ntcnt = arb_add_face_tris(tris, tcnt, face_verts[nfaces], face_vert_cnt[nfaces]);
+	for (int t = tcnt; t < ntcnt; t++)
+	    tri_faces[t] = nfaces;
+	tcnt = ntcnt;
+	nfaces++;
+    }
+
+    for (int i = 0; i < tcnt; i++) {
+	for (int j = i + 1; j < tcnt; j++) {
+	    int fi = tri_faces[i];
+	    int fj = tri_faces[j];
+
+	    if (fi == fj)
+		continue;
+	    if (arb_faces_share_edge(face_verts[fi], face_vert_cnt[fi], face_verts[fj], face_vert_cnt[fj]))
+		continue;
+	    if (arb_tri_uses_shared_vertex(tris[i], tris[j]))
+		continue;
+	    if (bg_tri_tri_isect((fastf_t *)v[tris[i][0]], (fastf_t *)v[tris[i][1]], (fastf_t *)v[tris[i][2]],
+				 (fastf_t *)v[tris[j][0]], (fastf_t *)v[tris[j][1]], (fastf_t *)v[tris[j][2]])) {
+		return 1;
+	    }
+	}
+    }
+
+    return 0;
+}
+
+
+int
+rt_arb_functab_validate(struct bu_vls *error_msg, const struct rt_db_internal *ip, const struct bn_tol *tol)
+{
+    struct rt_arb_internal *arb;
+    int issues = 0;
+    struct bu_vls arb_log = BU_VLS_INIT_ZERO;
+
+    RT_CK_DB_INTERNAL(ip);
+    arb = (struct rt_arb_internal *)ip->idb_ptr;
+    RT_ARB_CK_MAGIC(arb);
+
+    if (rt_arb_validate(&arb_log, arb, tol, &issues) == 0) {
+        bu_vls_free(&arb_log);
+        return 0; // valid
+    }
+
+    const char *comma = "";
+    bu_vls_printf(error_msg, "[");
+    if (issues & RT_ARB_VALIDATE_NONSTANDARD) {
+        bu_vls_printf(error_msg, "%s{\"problem_type\":\"non_standard_ordering\"}", comma);
+        comma = ",";
+    }
+    if (issues & RT_ARB_VALIDATE_NONCOPLANAR) {
+        bu_vls_printf(error_msg, "%s{\"problem_type\":\"non_coplanar_face\"}", comma);
+        comma = ",";
+    }
+    if (issues & RT_ARB_VALIDATE_CONCAVE) {
+        bu_vls_printf(error_msg, "%s{\"problem_type\":\"concave\"}", comma);
+        comma = ",";
+    }
+    if (issues & RT_ARB_VALIDATE_TWISTED) {
+        bu_vls_printf(error_msg, "%s{\"problem_type\":\"twisted\"}", comma);
+        comma = ",";
+    }
+    bu_vls_printf(error_msg, "]");
+
+    bu_vls_free(&arb_log);
+    return issues;
+}
+
+int
+rt_arb_validate(struct bu_vls *error_msg_ret, const struct rt_arb_internal *arb, const struct bn_tol *tol, int *issues)
+{
+    const int arb_faces[5][24] = rt_arb_faces;
+    int ret = 0;
+    int nonplanar_faces[6] = {0, 0, 0, 0, 0, 0};
+    static const struct bn_tol default_tol = BN_TOL_INIT_TOL;
+    struct rt_arb_internal arb_copy;
+    int uvec[8], svec[11];
+    int cgtype = 0;
+    int type = 0;
+
+    RT_ARB_CK_MAGIC(arb);
+
+    if (!tol)
+	tol = &default_tol;
+    BN_CK_TOL(tol);
+
+    memcpy(&arb_copy, arb, sizeof(struct rt_arb_internal));
+    if (rt_arb_get_cgtype(&cgtype, &arb_copy, tol, uvec, svec) == 0) {
+	ret |= RT_ARB_VALIDATE_TWISTED;
+	if (error_msg_ret)
+	    bu_vls_printf(error_msg_ret, "invalid ARB vertex equivalence pattern\n");
+	if (issues)
+	    *issues = ret;
+	return ret;
+    }
+    type = cgtype - ARB4;
+
+    if (rt_arb_nonstandard_encoding(arb, tol->dist_sq)) {
+	ret |= RT_ARB_VALIDATE_NONSTANDARD;
+	if (error_msg_ret)
+	    bu_vls_printf(error_msg_ret, "non-standard vertex ordering/encoding\n");
+	if (issues)
+	    *issues = ret;
+	return ret;
+    }
+
+    for (int f = 0; f < 6; f++) {
+	const int *face = &arb_faces[type][f*4];
+
+	if (face[0] == -1)
+	    break;
+	if (!arb_face_is_coplanar(arb->pt, face, tol)) {
+	    ret |= RT_ARB_VALIDATE_NONCOPLANAR;
+	    nonplanar_faces[f] = 1;
+	}
+    }
+
+    if (ret & RT_ARB_VALIDATE_NONCOPLANAR) {
+	if (error_msg_ret) {
+	    int first = 1;
+	    bu_vls_printf(error_msg_ret, "non-coplanar face(s):");
+	    for (int f = 0; f < 6; f++) {
+		const int *face = &arb_faces[type][f*4];
+		struct bu_vls label = BU_VLS_INIT_ZERO;
+
+		if (face[0] == -1)
+		    break;
+		if (!nonplanar_faces[f])
+		    continue;
+		if (arb_face_label(&label, face) == 0)
+		    bu_vls_printf(error_msg_ret, "%s %s", first ? "" : ",", bu_vls_cstr(&label));
+		bu_vls_free(&label);
+		first = 0;
+	    }
+	    bu_vls_printf(error_msg_ret, "\n");
+	}
+    }
+
+    if (!(ret & RT_ARB_VALIDATE_NONCOPLANAR) && cgtype == ARB8 && arb_is_concave(arb, tol)) {
+	ret |= RT_ARB_VALIDATE_CONCAVE;
+	if (error_msg_ret)
+	    bu_vls_printf(error_msg_ret, "concave ARB volume\n");
+    }
+
+    if (arb_is_twisted(arb, cgtype, tol)) {
+	ret |= RT_ARB_VALIDATE_TWISTED;
+	if (error_msg_ret)
+	    bu_vls_printf(error_msg_ret, "twisted/self-intersecting ARB face definition\n");
+    }
+
+    if (issues)
+	*issues = ret;
+
+    return ret;
 }
 
 
@@ -1011,7 +1419,7 @@ rt_arb_setup(struct soltab *stp, struct rt_arb_internal *aip, struct rt_i *rtip,
 	}
     }
 
-    if (pa.pa_faces == 6 && arb_is_concave(aip)) {
+    if (pa.pa_faces == 6 && arb_is_concave(aip, rtip ? &rtip->rti_tol : NULL)) {
 	if (UNLIKELY(RT_G_DEBUG & RT_DEBUG_ARB8)) {
 	    bu_log("ARB8(%s) IS CONCAVE\n", stp->st_dp?stp->st_name:"_unnamed_");
 	    rt_arb_print(stp);
@@ -1071,7 +1479,7 @@ rt_arb_setup(struct soltab *stp, struct rt_arb_internal *aip, struct rt_i *rtip,
  * 0 OK
  * !0 failure
  */
-int
+C_DECL int
 rt_arb_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_arb_internal *aip;
@@ -1097,7 +1505,7 @@ rt_arb_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
  * 0 MISS
  * >0 HIT
  */
-int
+C_DECL int
 rt_arb_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
     struct arb_specific *arbp = (struct arb_specific *)stp->st_specific;
@@ -1189,7 +1597,7 @@ rt_arb_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 /**
  * This is the Becker vector version
  */
-void
+C_DECL void
 rt_arb_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
 /* An array of solid pointers */
 /* An array of ray pointers */
@@ -1276,7 +1684,7 @@ rt_arb_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 /**
  * Given ONE ray distance, return the normal and entry/exit point.
  */
-void
+C_DECL void
 rt_arb_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
 {
     register struct arb_specific *arbp =
@@ -1293,7 +1701,7 @@ rt_arb_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
  * Return the "curvature" of the ARB face.  Pick a principle direction
  * orthogonal to normal, and indicate no curvature.
  */
-void
+C_DECL void
 rt_arb_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
 {
     if (stp) RT_CK_SOLTAB(stp);
@@ -1310,7 +1718,7 @@ rt_arb_curve(register struct curvature *cvp, register struct hit *hitp, struct s
  * u extends along the arb_U direction defined by B-A,
  * v extends along the arb_V direction defined by Nx(B-A).
  */
-void
+C_DECL void
 rt_arb_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
 {
     register struct arb_specific *arbp =
@@ -1329,7 +1737,7 @@ rt_arb_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 	struct rt_db_internal intern;
 	struct rt_arb_internal *aip;
 
-	if (rt_db_get_internal(&intern, stp->st_dp, ap->a_rt_i->rti_dbip, stp->st_matp, ap->a_resource) < 0) {
+	if (rt_db_get_internal(&intern, stp->st_dp, ap->a_rt_i->rti_dbip, stp->st_matp) < 0) {
 	    bu_log("rt_arb_uv(%s) rt_db_get_internal failure\n",
 		   stp->st_name);
 	    return;
@@ -1394,7 +1802,7 @@ rt_arb_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 }
 
 
-void
+C_DECL void
 rt_arb_free(register struct soltab *stp)
 {
     register struct arb_specific *arbp =
@@ -1418,7 +1826,7 @@ rt_arb_free(register struct soltab *stp)
  *
  * TODO: does not currently optimize for arb7/6/5/4, but should.
  */
-int
+C_DECL int
 rt_arb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     point_t *pts;
@@ -1440,8 +1848,8 @@ rt_arb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     return 0;
 }
 
-int
-rt_arb_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max, const struct bn_tol *tol)
+C_DECL int
+rt_arb_class(const struct soltab *stp, const vect_t min, const vect_t max, const struct bn_tol *tol)
 {
     register struct arb_specific *arbp = (struct arb_specific *)stp->st_specific;
     register int i;
@@ -1471,7 +1879,7 @@ rt_arb_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max, c
  * Convert from vector to point notation by rotating each vector and
  * adding in the base vector.
  */
-int
+C_DECL int
 rt_arb_import4(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_arb_internal *aip;
@@ -1500,7 +1908,7 @@ rt_arb_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
     aip->magic = RT_ARB_INTERNAL_MAGIC;
 
     /* Convert from database to internal format */
-    int cflag = (dbip && dbip->dbi_version < 0) ? 1 : 0;
+    int cflag = (dbip && dbip->i->dbi_version < 0) ? 1 : 0;
     flip_fastf_float(vec, rp->s.s_values, 8, cflag);
 
     /*
@@ -1517,7 +1925,7 @@ rt_arb_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
 }
 
 
-int
+C_DECL int
 rt_arb_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_arb_internal *aip;
@@ -1548,7 +1956,7 @@ rt_arb_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     return 0;
 }
 
-int
+C_DECL int
 rt_arb_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
 {
     if (!rop || !ip || !mat)
@@ -1574,7 +1982,7 @@ rt_arb_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
  * structure.  Code duplicated from rt_arb_import4() with db5 help from
  * g_ell.c
  */
-int
+C_DECL int
 rt_arb_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_arb_internal *aip;
@@ -1608,7 +2016,7 @@ rt_arb_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 }
 
 
-int
+C_DECL int
 rt_arb_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_arb_internal *aip;
@@ -1640,7 +2048,7 @@ rt_arb_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
  */
-int
+C_DECL int
 rt_arb_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
     struct rt_arb_internal *aip = NULL;
@@ -1750,15 +2158,839 @@ rt_arb_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 
 
 /**
+ * Create a default arb at point 'origin', scaled by 'scale'.
+ * 'variants' are stored as ID_ARB8; the variant switch selects which points
+ *   are collapsed.
+ */
+C_DECL int
+rt_arb_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char *variant, const point_t origin, double scale)
+{
+    struct rt_arb_internal *arb_ip;
+    size_t i;
+
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern->idb_type = ID_ARB8;
+    BU_ASSERT(&OBJ[intern->idb_type] == ftp);
+    intern->idb_meth = ftp;
+
+    BU_ALLOC(arb_ip, struct rt_arb_internal);
+    intern->idb_ptr = (void *)arb_ip;
+    arb_ip->magic = RT_ARB_INTERNAL_MAGIC;
+
+    VSET(arb_ip->pt[0],
+	 origin[X] + 0.5*scale,
+	 origin[Y] - 0.5*scale,
+	 origin[Z] - 0.5*scale);
+    for (i = 1; i < 8; i++)
+	VMOVE(arb_ip->pt[i], arb_ip->pt[0]);
+
+    /* switch on variant type */
+    if (BU_STR_EQUAL(variant, "arb7")) {
+	/* NOTE: for some reason we scale origin[Z] by .25 instead of .5 like
+	 * everything else. But this dates back to commit 58501018 */
+	VSET(arb_ip->pt[0],
+	     origin[X] + 0.5*scale,
+	     origin[Y] - 0.5*scale,
+	     origin[Z] - 0.25*scale);
+	for (i = 1; i < 8; i++)
+	    VMOVE(arb_ip->pt[i], arb_ip->pt[0]);
+	arb_ip->pt[1][Y] += scale;
+	arb_ip->pt[2][Y] += scale;
+	arb_ip->pt[2][Z] += scale;
+	arb_ip->pt[3][Z] += 0.5*scale;
+	for (i = 4; i < 8; i++)
+	    arb_ip->pt[i][X] -= scale;
+	arb_ip->pt[5][Y] += scale;
+	arb_ip->pt[6][Y] += scale;
+	arb_ip->pt[6][Z] += 0.5*scale;
+    } else if (BU_STR_EQUAL(variant, "arb6")) {
+	arb_ip->pt[1][Y] += scale;
+	arb_ip->pt[2][Y] += scale;
+	arb_ip->pt[2][Z] += scale;
+	arb_ip->pt[3][Z] += scale;
+	for (i = 4; i < 8; i++)
+	    arb_ip->pt[i][X] -= scale;
+	arb_ip->pt[4][Y] += 0.5*scale;
+	arb_ip->pt[5][Y] += 0.5*scale;
+	arb_ip->pt[6][Y] += 0.5*scale;
+	arb_ip->pt[6][Z] += scale;
+	arb_ip->pt[7][Y] += 0.5*scale;
+	arb_ip->pt[7][Z] += scale;
+    } else if (BU_STR_EQUAL(variant, "arb5")) {
+	arb_ip->pt[1][Y] += scale;
+	arb_ip->pt[2][Y] += scale;
+	arb_ip->pt[2][Z] += scale;
+	arb_ip->pt[3][Z] += scale;
+	for (i = 4; i < 8; i++)
+	{
+	    arb_ip->pt[i][X] -= scale;
+	    arb_ip->pt[i][Y] += 0.5*scale;
+	    arb_ip->pt[i][Z] += 0.5*scale;
+	}
+    } else if (BU_STR_EQUAL(variant, "arb4")) {
+	arb_ip->pt[1][Y] += scale;
+	arb_ip->pt[2][Y] += scale;
+	arb_ip->pt[2][Z] += scale;
+	arb_ip->pt[3][Y] += scale;
+	arb_ip->pt[3][Z] += scale;
+	for (i = 4; i < 8; i++)
+	{
+	    arb_ip->pt[i][X] -= scale;
+	    arb_ip->pt[i][Y] += scale;
+	}
+    } else {
+	/* default arb8 - also silently catches rpp / NULL / (unknown) */
+	arb_ip->pt[1][Y] += scale;
+	arb_ip->pt[2][Y] += scale;
+	arb_ip->pt[2][Z] += scale;
+	arb_ip->pt[3][Z] += scale;
+	for (i = 4; i < 8; i++)
+	    arb_ip->pt[i][X] -= scale;
+	arb_ip->pt[5][Y] += scale;
+	arb_ip->pt[6][Y] += scale;
+	arb_ip->pt[6][Z] += scale;
+	arb_ip->pt[7][Z] += scale;
+    }
+
+    return BRLCAD_OK;
+}
+
+
+/**
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
-void
+C_DECL void
 rt_arb_ifree(struct rt_db_internal *ip)
 {
     RT_CK_DB_INTERNAL(ip);
     bu_free(ip->idb_ptr, "arb ifree");
     ip->idb_ptr = (void *)NULL;
+}
+
+
+/*
+ * Build the equiv_pts[] map for an ARB: maps each of the 8 encoded vertex
+ * indices to the lowest-numbered index whose vertex is within tol_sq of it.
+ */
+static void
+arb_build_equiv_pts(const struct rt_arb_internal *arb, fastf_t tol_sq, int equiv_pts[8])
+{
+    int i, j;
+    equiv_pts[0] = 0;
+    for (i = 1; i < 8; i++) {
+	vect_t work;
+	equiv_pts[i] = i;
+	for (j = i - 1; j >= 0; j--) {
+	    VSUB2(work, arb->pt[i], arb->pt[j]);
+	    if (MAGSQ(work) < tol_sq) {
+		equiv_pts[i] = equiv_pts[j];
+		break;
+	    }
+	}
+    }
+}
+
+
+/*
+ * Return non-zero when the ARB has a non-canonical encoding.
+ *
+ * The canonical ARB encoding stores duplicate vertices in the "top" group
+ * (indices 4–7).  A non-canonical encoding occurs when any "top" vertex
+ * (index 4–7) is a duplicate of a "bottom" vertex (index 0–3), or when a
+ * "bottom" vertex duplicates another "bottom" vertex in a way that is NOT
+ * the standard ARB4 tetrahedron encoding.
+ *
+ * The canonical ARB4 encoding stored in BRL-CAD databases has:
+ *   pt[0], pt[1]       — two unique base vertices
+ *   pt[2] == pt[3]     — third base vertex (duplicate pair in the bottom group)
+ *   pt[4..7]           — all coincident at the apex (top group)
+ *
+ * This produces equiv_pts[3] == 2 (a bottom-to-bottom alias), which the naive
+ * check would flag as non-canonical.  However, the standard rt_arb_mk_planes
+ * face construction handles this encoding correctly: the deduplication logic
+ * collapses face "1234" to the base triangle, and the three side faces are
+ * built properly.  Such an ARB has exactly 4 unique spatial vertices (a valid
+ * tetrahedron) and must not be routed to the hull fallback.
+ */
+int
+rt_arb_nonstandard_encoding(const struct rt_arb_internal *arb, fastf_t tol_sq)
+{
+    int equiv_pts[8];
+    int i;
+
+    arb_build_equiv_pts(arb, tol_sq, equiv_pts);
+
+    /* Check whether any top vertex (4–7) maps to a bottom vertex (0–3).
+     * This always indicates a non-canonical (mis-encoded) ARB. */
+    for (i = 4; i < 8; i++) {
+	if (equiv_pts[i] < 4)
+	    return 1;
+    }
+
+    /* Check whether any bottom vertex (0–3) duplicates an earlier bottom vertex.
+     * This fires for the canonical ARB4 encoding (pt[2]==pt[3]), but also for
+     * genuinely mis-encoded ARBs.  Distinguish by counting unique spatial
+     * vertices: only the ARB4 tetrahedron (exactly 4 unique vertices) is valid
+     * here; anything else is a non-canonical encoding. */
+    {
+	int has_bottom_dup = 0;
+	for (i = 1; i < 4; i++) {
+	    if (equiv_pts[i] != i) {
+		has_bottom_dup = 1;
+		break;
+	    }
+	}
+	if (has_bottom_dup) {
+	    int n_unique = 0;
+	    int j;
+	    for (j = 0; j < 8; j++) {
+		if (equiv_pts[j] == j) n_unique++;
+	    }
+	    return (n_unique == 4) ? 0 : 1;
+	}
+    }
+
+    /* For ARB6 (exactly 6 unique vertices from 8 points), verify that the
+     * duplicate pairs among the top vertices follow the canonical adjacent
+     * pattern: pt[4]==pt[5] and pt[6]==pt[7].  Any other pairing — such as
+     * the diagonal encoding pt[4]==pt[7] and pt[5]==pt[6] — causes the
+     * standard face table to misidentify degenerate triangles as quads,
+     * producing an incorrect surface area / volume.  Route such cases to
+     * the convex-hull path. */
+    {
+	int n_unique = 0;
+	int j;
+	for (j = 0; j < 8; j++)
+	    if (equiv_pts[j] == j) n_unique++;
+	if (n_unique == 6) {
+	    if (!(equiv_pts[5] == 4 && equiv_pts[7] == 6))
+		return 1;
+	}
+    }
+
+    return 0;
+}
+
+
+/*
+ * Compute the 3-D convex hull of the unique vertices in an ARB.
+ *
+ * Unique vertices are extracted via equiv_pts mapping.  bg_3d_chull is called
+ * to produce a triangulated hull.  Each input unique vertex is then verified
+ * to lie on the hull surface (not strictly interior); if any is strictly
+ * inside all hull face half-spaces, the ARB is concave/invalid.
+ *
+ * Returns:
+ *   0  on success; *out_faces, *out_verts, *out_num_faces, *out_num_verts set.
+ *  -1  hull computation failed or degenerate (caller should fall back gracefully).
+ *  -2  at least one input vertex is interior to the hull (invalid concave ARB).
+ *
+ * On success the caller is responsible for bu_free(*out_faces) and
+ * bu_free(*out_verts).
+ */
+static int
+arb_chull_compute(const struct rt_arb_internal *arb, fastf_t tol_sq,
+		  int **out_faces, int *out_num_faces,
+		  point_t **out_verts, int *out_num_verts)
+{
+    int equiv_pts[8];
+    point_t unique_pts[8];
+    int num_unique = 0;
+    int i, dim;
+    fastf_t tol_dist;
+
+    *out_faces = NULL;
+    *out_verts = NULL;
+    *out_num_faces = 0;
+    *out_num_verts = 0;
+
+    arb_build_equiv_pts(arb, tol_sq, equiv_pts);
+
+    /* Collect one copy of each geometrically-distinct vertex.
+     * NOTE: the index must be captured before incrementing num_unique so
+     * that VMOVE (which evaluates its first argument once per component)
+     * always writes to the same array slot. */
+    for (i = 0; i < 8; i++) {
+	if (equiv_pts[i] == i) {
+	    VMOVE(unique_pts[num_unique], arb->pt[i]);
+	    num_unique++;
+	}
+    }
+
+    if (num_unique < 4) {
+	bu_log("arb: too few unique vertices (%d) for convex hull\n", num_unique);
+	return -1;
+    }
+
+    dim = bg_3d_chull(out_faces, out_num_faces, out_verts, out_num_verts,
+		      (const point_t *)unique_pts, num_unique);
+
+    if (dim < 3 || !(*out_faces) || !(*out_verts) || *out_num_faces <= 0) {
+	bu_log("arb: convex hull computation failed or degenerate\n");
+	bu_free(*out_faces, "arb chull faces");
+	bu_free(*out_verts, "arb chull verts");
+	*out_faces = NULL;
+	*out_verts = NULL;
+	return -1;
+    }
+
+    /* Verify every unique input vertex lies on the hull surface (not interior).
+     *
+     * A vertex is "on the hull" if there exists at least one hull face whose
+     * outward half-plane contains it (signed distance d >= -tol).  A vertex
+     * that is strictly interior would be on the negative side of every face
+     * plane.  This plane-based test is more robust than coordinate matching
+     * against the hull vertex buffer, because it tolerates small floating-point
+     * differences without requiring the hull library to return exact copies of
+     * the input coordinates. */
+    tol_dist = sqrt(tol_sq);
+    for (i = 0; i < num_unique; i++) {
+	int fi;
+	int on_hull = 0;
+
+	for (fi = 0; fi < *out_num_faces && !on_hull; fi++) {
+	    point_t *fv0 = &(*out_verts)[(*out_faces)[3*fi+0]];
+	    point_t *fv1 = &(*out_verts)[(*out_faces)[3*fi+1]];
+	    point_t *fv2 = &(*out_verts)[(*out_faces)[3*fi+2]];
+	    vect_t e1, e2, n, diff;
+	    fastf_t nmag, d;
+
+	    VSUB2(e1, *fv1, *fv0);
+	    VSUB2(e2, *fv2, *fv0);
+	    VCROSS(n, e1, e2);   /* outward normal (CCW winding) */
+	    nmag = MAGNITUDE(n);
+	    if (nmag <= 0.0) continue;
+
+	    VSUB2(diff, unique_pts[i], *fv0);
+	    d = VDOT(n, diff);
+
+	    /* d / nmag is the signed distance from the face plane.
+	     * Positive means outside (outward side), zero means on the plane.
+	     * Use -tol_dist as the threshold to absorb rounding errors. */
+	    if (d >= -tol_dist * nmag)
+		on_hull = 1;
+	}
+
+	if (!on_hull) {
+	    bu_log("arb: non-standard encoding has interior vertex — invalid ARB shape\n");
+	    bu_free(*out_faces, "arb chull faces");
+	    bu_free(*out_verts, "arb chull verts");
+	    *out_faces = NULL;
+	    *out_verts = NULL;
+	    return -2;
+	}
+    }
+
+    return 0;
+}
+
+
+static int
+arb_collect_unique_points(const struct rt_arb_internal *arb, fastf_t tol_sq, point_t unique_pts[8])
+{
+    int equiv_pts[8];
+    int num_unique = 0;
+
+    arb_build_equiv_pts(arb, tol_sq, equiv_pts);
+
+    for (int i = 0; i < 8; i++) {
+	if (equiv_pts[i] == i) {
+	    VMOVE(unique_pts[num_unique], arb->pt[i]);
+	    num_unique++;
+	}
+    }
+
+    return num_unique;
+}
+
+
+static void
+arb_make_candidate(struct rt_arb_internal *candidate, const point_t src[8], int nsrc, const int perm[8])
+{
+    candidate->magic = RT_ARB_INTERNAL_MAGIC;
+
+    switch (nsrc) {
+	case 4:
+	    VMOVE(candidate->pt[0], src[perm[0]]);
+	    VMOVE(candidate->pt[1], src[perm[1]]);
+	    VMOVE(candidate->pt[2], src[perm[2]]);
+	    VMOVE(candidate->pt[3], src[perm[0]]);
+	    VMOVE(candidate->pt[4], src[perm[3]]);
+	    VMOVE(candidate->pt[5], src[perm[3]]);
+	    VMOVE(candidate->pt[6], src[perm[3]]);
+	    VMOVE(candidate->pt[7], src[perm[3]]);
+	    break;
+	case 5:
+	    for (int i = 0; i < 5; i++)
+		VMOVE(candidate->pt[i], src[perm[i]]);
+	    VMOVE(candidate->pt[5], src[perm[4]]);
+	    VMOVE(candidate->pt[6], src[perm[4]]);
+	    VMOVE(candidate->pt[7], src[perm[4]]);
+	    break;
+	case 6:
+	    VMOVE(candidate->pt[0], src[perm[0]]);
+	    VMOVE(candidate->pt[1], src[perm[1]]);
+	    VMOVE(candidate->pt[2], src[perm[2]]);
+	    VMOVE(candidate->pt[3], src[perm[3]]);
+	    VMOVE(candidate->pt[4], src[perm[4]]);
+	    VMOVE(candidate->pt[5], src[perm[4]]);
+	    VMOVE(candidate->pt[6], src[perm[5]]);
+	    VMOVE(candidate->pt[7], src[perm[5]]);
+	    break;
+	case 7:
+	    for (int i = 0; i < 7; i++)
+		VMOVE(candidate->pt[i], src[perm[i]]);
+	    VMOVE(candidate->pt[7], src[perm[4]]);
+	    break;
+	case 8:
+	    for (int i = 0; i < 8; i++)
+		VMOVE(candidate->pt[i], src[perm[i]]);
+	    break;
+	default:
+	    break;
+    }
+}
+
+
+static fastf_t
+arb_repair_score(const struct rt_arb_internal *candidate, const struct rt_arb_internal *arb)
+{
+    fastf_t score = 0.0;
+
+    for (int i = 0; i < 8; i++) {
+	vect_t diff;
+	VSUB2(diff, candidate->pt[i], arb->pt[i]);
+	score += MAGSQ(diff);
+    }
+
+    return score;
+}
+
+
+static int
+arb_try_permutations(struct rt_arb_internal *best_arb, fastf_t *best_score,
+		     const point_t src[8], int nsrc, const struct rt_arb_internal *arb,
+		     const struct bn_tol *tol, int depth, int used[8], int perm[8])
+{
+    int found = 0;
+
+    if (depth == nsrc) {
+	struct rt_arb_internal candidate;
+	int issues = 0;
+
+	arb_make_candidate(&candidate, src, nsrc, perm);
+	(void)rt_arb_validate(NULL, &candidate, tol, &issues);
+	if (!issues) {
+	    fastf_t score = arb_repair_score(&candidate, arb);
+	    if (score < *best_score) {
+		memcpy(best_arb, &candidate, sizeof(struct rt_arb_internal));
+		*best_score = score;
+	    }
+	    return 1;
+	}
+	return 0;
+    }
+
+    for (int i = 0; i < nsrc; i++) {
+	if (used[i])
+	    continue;
+	used[i] = 1;
+	perm[depth] = i;
+	if (arb_try_permutations(best_arb, best_score, src, nsrc, arb, tol, depth + 1, used, perm))
+	    found = 1;
+	used[i] = 0;
+    }
+
+    return found;
+}
+
+
+static int
+arb_try_repair_points(struct rt_arb_internal *out_arb, const point_t src[8], int nsrc,
+		      const struct rt_arb_internal *arb, const struct bn_tol *tol)
+{
+    int used[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+    int perm[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+    fastf_t best_score = INFINITY;
+
+    if (nsrc < 4 || nsrc > 8)
+	return -1;
+
+    if (!arb_try_permutations(out_arb, &best_score, src, nsrc, arb, tol, 0, used, perm))
+	return -1;
+
+    return nsrc;
+}
+
+
+static fastf_t
+arb_point_span(const point_t pts[8], int npts)
+{
+    point_t min, max;
+
+    if (npts <= 0)
+	return 0.0;
+
+    VMOVE(min, pts[0]);
+    VMOVE(max, pts[0]);
+    for (int i = 1; i < npts; i++)
+	VMINMAX(min, max, pts[i]);
+
+    return DIST_PNT_PNT(min, max);
+}
+
+
+static int
+arb_hull_volume_points(fastf_t *volume, const point_t pts[8], int npts, fastf_t tol_sq)
+{
+    int *faces = NULL;
+    int num_faces = 0;
+    point_t *verts = NULL;
+    int num_verts = 0;
+    fastf_t signed_vol = 0.0;
+    int dim;
+
+    *volume = 0.0;
+
+    if (npts < 4 || npts > 8)
+	return -1;
+
+    dim = bg_3d_chull(&faces, &num_faces, &verts, &num_verts, (const point_t *)pts, npts);
+    if (dim < 3 || !faces || !verts || num_faces <= 0 || num_verts < 4) {
+	bu_free(faces, "arb repair volume hull faces");
+	bu_free(verts, "arb repair volume hull verts");
+	return -1;
+    }
+
+    for (int fi = 0; fi < num_faces; fi++) {
+	vect_t cross;
+	VCROSS(cross, verts[faces[3*fi+1]], verts[faces[3*fi+2]]);
+	signed_vol += VDOT(verts[faces[3*fi+0]], cross);
+    }
+
+    *volume = fabs(signed_vol) / 6.0;
+
+    bu_free(faces, "arb repair volume hull faces");
+    bu_free(verts, "arb repair volume hull verts");
+
+    if (*volume <= sqrt(tol_sq) * sqrt(tol_sq) * sqrt(tol_sq))
+	return -1;
+
+    return 0;
+}
+
+
+static int
+arb_fit_candidate_planes(plane_t planes[6], const struct rt_arb_internal *candidate, int cgtype, const struct bn_tol *tol)
+{
+    const int arb_faces[5][24] = rt_arb_faces;
+    int type = cgtype - ARB4;
+
+    if (type < 0 || type > 4)
+	return -1;
+
+    for (int f = 0; f < 6; f++) {
+	const int *face = &arb_faces[type][f*4];
+	point_t pts[4];
+	point_t center;
+	vect_t normal;
+	int npts = 0;
+
+	if (face[0] == -1)
+	    break;
+
+	for (int i = 0; i < 4; i++) {
+	    int dup = 0;
+	    if (face[i] < 0)
+		continue;
+	    for (int j = 0; j < npts; j++) {
+		if (VNEAR_EQUAL(candidate->pt[face[i]], pts[j], tol->dist)) {
+		    dup = 1;
+		    break;
+		}
+	    }
+	    if (!dup) {
+		VMOVE(pts[npts], candidate->pt[face[i]]);
+		npts++;
+	    }
+	}
+
+	if (npts < 3)
+	    return -1;
+
+	if (npts == 3) {
+	    if (bg_make_plane_3pnts(planes[f], pts[0], pts[1], pts[2], tol) < 0)
+		return -1;
+	    continue;
+	}
+
+	if (bg_fit_plane(&center, &normal, npts, pts) < 0)
+	    return -1;
+	if (MAGNITUDE(normal) <= SMALL_FASTF)
+	    return -1;
+	VUNITIZE(normal);
+	VMOVE(planes[f], normal);
+	planes[f][W] = VDOT(normal, center);
+    }
+
+    return 0;
+}
+
+
+static int
+arb_calc_points_quiet(struct rt_arb_internal *arb, int cgtype, const plane_t planes[6], const struct bn_tol *tol)
+{
+    point_t pt[8];
+
+    for (int i = 0; i < 8; i++) {
+	if (rt_arb_3face_intersect(pt[i], planes, cgtype, i*3) < 0)
+	    return -1;
+
+	for (int j = 0; j < 3; j++) {
+	    int pidx = rt_arb_planes[cgtype - ARB4][i*3 + j];
+	    if (!NEAR_ZERO(DIST_PNT_PLANE(pt[i], planes[pidx]), tol->dist * 100.0))
+		return -1;
+	}
+    }
+
+    for (int i = 0; i < 8; i++)
+	VMOVE(arb->pt[i], pt[i]);
+
+    if (rt_arb_check_points(arb, cgtype, tol) < 0)
+	return -1;
+
+    return 0;
+}
+
+
+static void
+arb_candidate_unique_points(point_t unique_pts[8], int *num_unique, const struct rt_arb_internal *arb, fastf_t tol_sq)
+{
+    int equiv_pts[8];
+
+    *num_unique = 0;
+    arb_build_equiv_pts(arb, tol_sq, equiv_pts);
+    for (int i = 0; i < 8; i++) {
+	if (equiv_pts[i] == i) {
+	    VMOVE(unique_pts[*num_unique], arb->pt[i]);
+	    (*num_unique)++;
+	}
+    }
+}
+
+
+static int
+arb_snap_candidate(struct rt_arb_internal *snapped, const struct rt_arb_internal *candidate,
+		   const struct rt_arb_internal *source, int cgtype,
+		   fastf_t source_volume, fastf_t source_span, const struct bn_tol *tol,
+		   fastf_t *score)
+{
+    plane_t planes[6];
+    point_t snapped_unique[8];
+    fastf_t snapped_volume = 0.0;
+    fastf_t max_move = 0.0;
+    fastf_t max_allowed_move;
+    fastf_t rel_volume_delta;
+    int num_snapped_unique = 0;
+    int issues = 0;
+
+    if (arb_fit_candidate_planes(planes, candidate, cgtype, tol) < 0)
+	return -1;
+
+    memcpy(snapped, candidate, sizeof(struct rt_arb_internal));
+    if (arb_calc_points_quiet(snapped, cgtype, (const plane_t *)planes, tol) < 0)
+	return -1;
+
+    (void)rt_arb_validate(NULL, snapped, tol, &issues);
+    if (issues)
+	return -1;
+
+    for (int i = 0; i < 8; i++) {
+	fastf_t move = DIST_PNT_PNT(snapped->pt[i], source->pt[i]);
+	if (move > max_move)
+	    max_move = move;
+    }
+
+    max_allowed_move = source_span * 0.05;
+    if (tol->dist * 100.0 > max_allowed_move)
+	max_allowed_move = tol->dist * 100.0;
+    if (max_move > max_allowed_move)
+	return -1;
+
+    arb_candidate_unique_points(snapped_unique, &num_snapped_unique, snapped, tol->dist_sq);
+    if (arb_hull_volume_points(&snapped_volume, (const point_t *)snapped_unique, num_snapped_unique, tol->dist_sq) < 0)
+	return -1;
+
+    rel_volume_delta = fabs(snapped_volume - source_volume) / source_volume;
+    if (rel_volume_delta > 0.02)
+	return -1;
+
+    *score = max_move + rel_volume_delta * source_span;
+    return 0;
+}
+
+
+static int
+arb_try_snap_permutations(struct rt_arb_internal *best_arb, fastf_t *best_score,
+			  const point_t src[8], int nsrc, const struct rt_arb_internal *arb,
+			  fastf_t source_volume, fastf_t source_span, const struct bn_tol *tol,
+			  int depth, int used[8], int perm[8])
+{
+    int found = 0;
+
+    if (depth == nsrc) {
+	struct rt_arb_internal candidate;
+	struct rt_arb_internal snapped;
+	fastf_t score = INFINITY;
+
+	arb_make_candidate(&candidate, src, nsrc, perm);
+	if (arb_snap_candidate(&snapped, &candidate, arb, nsrc, source_volume, source_span, tol, &score) == 0) {
+	    if (score < *best_score) {
+		memcpy(best_arb, &snapped, sizeof(struct rt_arb_internal));
+		*best_score = score;
+	    }
+	    return 1;
+	}
+	return 0;
+    }
+
+    for (int i = 0; i < nsrc; i++) {
+	if (used[i])
+	    continue;
+	used[i] = 1;
+	perm[depth] = i;
+	if (arb_try_snap_permutations(best_arb, best_score, src, nsrc, arb,
+				      source_volume, source_span, tol, depth + 1, used, perm))
+	    found = 1;
+	used[i] = 0;
+    }
+
+    return found;
+}
+
+
+static int
+arb_try_snap_points(struct rt_arb_internal *out_arb, const point_t src[8], int nsrc,
+		    const struct rt_arb_internal *arb, fastf_t source_volume,
+		    fastf_t source_span, const struct bn_tol *tol)
+{
+    int used[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+    int perm[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+    fastf_t best_score = INFINITY;
+
+    if (nsrc < 4 || nsrc > 8)
+	return -1;
+
+    if (!arb_try_snap_permutations(out_arb, &best_score, src, nsrc, arb,
+				   source_volume, source_span, tol, 0, used, perm))
+	return -1;
+
+    return nsrc;
+}
+
+
+static int
+arb_collect_hull_points(point_t hull_pts[8], const point_t src[8], int nsrc, fastf_t tol_sq)
+{
+    int *faces = NULL;
+    int num_faces = 0;
+    point_t *verts = NULL;
+    int num_verts = 0;
+    int nhull = 0;
+    int dim;
+
+    dim = bg_3d_chull(&faces, &num_faces, &verts, &num_verts, (const point_t *)src, nsrc);
+    if (dim < 3 || !verts || num_verts < 4 || num_verts > 8) {
+	bu_free(faces, "arb repair hull faces");
+	bu_free(verts, "arb repair hull verts");
+	return -1;
+    }
+
+    for (int i = 0; i < num_verts; i++) {
+	int dup = 0;
+	for (int j = 0; j < nhull; j++) {
+	    vect_t diff;
+	    VSUB2(diff, hull_pts[j], verts[i]);
+	    if (MAGSQ(diff) < tol_sq) {
+		dup = 1;
+		break;
+	    }
+	}
+	if (!dup) {
+	    VMOVE(hull_pts[nhull], verts[i]);
+	    nhull++;
+	}
+    }
+
+    bu_free(faces, "arb repair hull faces");
+    bu_free(verts, "arb repair hull verts");
+
+    return nhull;
+}
+
+
+int
+rt_arb_repair(struct rt_arb_internal *out_arb, const struct rt_arb_internal *arb, const struct bn_tol *tol, int flags)
+{
+    static const struct bn_tol default_tol = BN_TOL_INIT_TOL;
+    point_t unique_pts[8];
+    point_t hull_pts[8];
+    fastf_t source_volume = 0.0;
+    fastf_t source_span = 0.0;
+    int issues = 0;
+    int nsrc;
+    int unique_count;
+    int repaired_type;
+
+    if (!out_arb || !arb)
+	return -1;
+
+    RT_ARB_CK_MAGIC(arb);
+
+    if (!tol)
+	tol = &default_tol;
+    BN_CK_TOL(tol);
+
+    (void)rt_arb_validate(NULL, arb, tol, &issues);
+    if (!issues) {
+	memcpy(out_arb, arb, sizeof(struct rt_arb_internal));
+	return 0;
+    }
+
+    nsrc = arb_collect_unique_points(arb, tol->dist_sq, unique_pts);
+    unique_count = nsrc;
+    repaired_type = arb_try_repair_points(out_arb, (const point_t *)unique_pts, nsrc, arb, tol);
+    if (repaired_type > 0)
+	return repaired_type;
+
+    if (flags & RT_ARB_REPAIR_SNAP_VERTICES) {
+	source_span = arb_point_span((const point_t *)unique_pts, unique_count);
+	if (source_span > tol->dist && arb_hull_volume_points(&source_volume, (const point_t *)unique_pts, unique_count, tol->dist_sq) == 0) {
+	    repaired_type = arb_try_snap_points(out_arb, (const point_t *)unique_pts, nsrc, arb,
+						source_volume, source_span, tol);
+	    if (repaired_type > 0)
+		return repaired_type;
+	}
+    }
+
+    nsrc = arb_collect_hull_points(hull_pts, (const point_t *)unique_pts, nsrc, tol->dist_sq);
+    repaired_type = arb_try_repair_points(out_arb, (const point_t *)hull_pts, nsrc, arb, tol);
+    if (repaired_type > 0)
+	return repaired_type;
+
+    if (flags & RT_ARB_REPAIR_SNAP_VERTICES) {
+	if (source_volume <= 0.0 && arb_hull_volume_points(&source_volume, (const point_t *)unique_pts, unique_count, tol->dist_sq) < 0)
+	    return -1;
+	if (source_span <= 0.0)
+	    source_span = arb_point_span((const point_t *)unique_pts, unique_count);
+	repaired_type = arb_try_snap_points(out_arb, (const point_t *)hull_pts, nsrc, arb,
+					    source_volume, source_span, tol);
+	if (repaired_type > 0)
+	    return repaired_type;
+    }
+
+    return -1;
 }
 
 
@@ -1770,7 +3002,7 @@ rt_arb_ifree(struct rt_db_internal *ip)
  * -1 failure
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
-int
+C_DECL int
 rt_arb_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *tol)
 {
     struct rt_arb_internal *aip;
@@ -1785,6 +3017,67 @@ rt_arb_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     RT_CK_DB_INTERNAL(ip);
     aip = (struct rt_arb_internal *)ip->idb_ptr;
     RT_ARB_CK_MAGIC(aip);
+
+    /* Non-canonical encoding fallback: when the ARB has duplicate vertex
+     * pairs at unexpected positions the normal rt_arb_info face table
+     * produces non-planar quads.  Build the convex hull of the unique
+     * vertices and tessellate that instead. */
+    if (rt_arb_nonstandard_encoding(aip, tol->dist_sq)) {
+	int *hull_faces = NULL;
+	int  hull_nf   = 0;
+	point_t *hull_verts = NULL;
+	int  hull_nv   = 0;
+	int  rc;
+
+	rc = arb_chull_compute(aip, tol->dist_sq,
+			       &hull_faces, &hull_nf,
+			       &hull_verts, &hull_nv);
+	if (rc == 0) {
+	    struct vertex **hvp;
+	    struct vertex ***hvpp;
+	    struct faceuse **hfu;
+	    int fi;
+
+	    hvp  = (struct vertex **)bu_calloc(hull_nv, sizeof(struct vertex *),
+					       "arb chull verts nmg");
+	    hvpp = (struct vertex ***)bu_calloc(3, sizeof(struct vertex **),
+					       "arb chull vertp");
+	    hfu  = (struct faceuse **)bu_calloc(hull_nf, sizeof(struct faceuse *),
+					       "arb chull fu");
+
+	    *r = nmg_mrsv(m);
+	    s  = BU_LIST_FIRST(shell, &(*r)->s_hd);
+
+	    for (fi = 0; fi < hull_nf; fi++) {
+		hvpp[0] = &hvp[hull_faces[3*fi+0]];
+		hvpp[1] = &hvp[hull_faces[3*fi+1]];
+		hvpp[2] = &hvp[hull_faces[3*fi+2]];
+		hfu[fi] = nmg_cmface(s, hvpp, 3);
+	    }
+
+	    for (i = 0; i < hull_nv; i++)
+		if (hvp[i])
+		    nmg_vertex_gv(hvp[i], hull_verts[i]);
+
+	    for (fi = 0; fi < hull_nf; fi++)
+		if (hfu[fi])
+		    (void)nmg_fu_planeeqn(hfu[fi], tol);
+
+	    nmg_fix_normals(s, vlfree, tol);
+	    (void)nmg_mark_edges_real(&s->l.magic, vlfree);
+	    nmg_region_a(*r, tol);
+
+	    bu_free(hvp,  "arb chull verts nmg");
+	    bu_free(hvpp, "arb chull vertp");
+	    bu_free(hfu,  "arb chull fu");
+	    bu_free(hull_faces, "arb chull faces");
+	    bu_free(hull_verts, "arb chull verts");
+	    return 0;
+	}
+	/* Hull failed — fall through to standard path (best effort) */
+	bu_free(hull_faces, "arb chull faces");
+	bu_free(hull_verts, "arb chull verts");
+    }
 
     memset((char *)&pa, 0, sizeof(pa));
     pa.pa_doopt = 0;		/* no UV stuff */
@@ -1876,7 +3169,7 @@ static const int rt_arb_vert_index_scramble[4] = { 0, 1, 3, 2 };
  * -1 failure
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
-int
+C_DECL int
 rt_arb_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bn_tol *tol)
 {
     struct rt_arb_internal *aip;
@@ -2124,14 +3417,27 @@ rt_arb_3face_intersect(
 {
     int j;
     int i1, i2, i3;
+    int ret;
 
-    j = type - 4;
+    j = type - ARB4;
+    if (j < 0 || j > 4 || loc < 0 || loc + 2 >= 24)
+	return -1;
 
     i1 = rt_arb_planes[j][loc];
     i2 = rt_arb_planes[j][loc+1];
     i3 = rt_arb_planes[j][loc+2];
 
-    return bg_make_pnt_3planes(point, planes[i1], planes[i2], planes[i3]);
+    if (i1 < 0 || i1 >= 6 || i2 < 0 || i2 >= 6 || i3 < 0 || i3 >= 6)
+	return -1;
+
+    ret = bg_make_pnt_3planes(point, planes[i1], planes[i2], planes[i3]);
+    if (ret < 0)
+	return ret;
+
+    if (!isfinite(point[X]) || !isfinite(point[Y]) || !isfinite(point[Z]))
+	return -1;
+
+    return 0;
 }
 
 
@@ -2175,270 +3481,7 @@ rt_arb_calc_planes(struct bu_vls *error_msg_ret,
 }
 
 
-int
-rt_arb_move_edge(struct bu_vls *error_msg_ret,
-		 struct rt_arb_internal *arb,
-		 vect_t thru,
-		 int bp1,
-		 int bp2,
-		 int end1,
-		 int end2,
-		 const vect_t dir,
-		 plane_t planes[6],
-		 const struct bn_tol *tol)
-{
-    fastf_t t1, t2;
-
-    if (bg_isect_line3_plane(&t1, thru, dir, planes[bp1], tol) < 0 ||
-	bg_isect_line3_plane(&t2, thru, dir, planes[bp2], tol) < 0) {
-	bu_vls_printf(error_msg_ret, "edge (direction) parallel to face normal\n");
-	return 1;
-    }
-
-    RT_ARB_CK_MAGIC(arb);
-
-    VJOIN1(arb->pt[end1], thru, t1, dir);
-    VJOIN1(arb->pt[end2], thru, t2, dir);
-
-    return 0;
-}
-
-
-#define RT_ARB_EDIT_EDGE 0
-#define RT_ARB_EDIT_POINT 1
-#define RT_ARB7_MOVE_POINT_5 11
-#define RT_ARB6_MOVE_POINT_5 8
-#define RT_ARB6_MOVE_POINT_6 9
-#define RT_ARB5_MOVE_POINT_5 8
-#define RT_ARB4_MOVE_POINT_4 3
-
-int
-rt_arb_edit(struct bu_vls *error_msg_ret,
-	    struct rt_arb_internal *arb,
-	    int arb_type,
-	    int edit_type,
-	    vect_t pos_model,
-	    plane_t planes[6],
-	    const struct bn_tol *tol)
-{
-    int pt1 = 0, pt2 = 0, bp1, bp2, newp, p1, p2, p3;
-    const short *edptr;		/* pointer to arb edit array */
-    const short *final;		/* location of points to redo */
-    int i;
-    const int *iptr;
-    int edit_class = RT_ARB_EDIT_EDGE;
-    const short earb8[12][18] = earb8_edit_array;
-    const short earb7[12][18] = earb7_edit_array;
-    const short earb6[10][18] = earb6_edit_array;
-    const short earb5[9][18] = earb5_edit_array;
-    const short earb4[5][18] = earb4_edit_array;
-
-    RT_ARB_CK_MAGIC(arb);
-
-    /* set the pointer */
-    switch (arb_type) {
-	case ARB4:
-	    edptr = &earb4[edit_type][0];
-	    final = &earb4[edit_type][16];
-
-	    if (edit_type == RT_ARB4_MOVE_POINT_4)
-		edit_type = 4;
-
-	    edit_class = RT_ARB_EDIT_POINT;
-
-	    break;
-	case ARB5:
-	    edptr = &earb5[edit_type][0];
-	    final = &earb5[edit_type][16];
-
-	    if (edit_type == RT_ARB5_MOVE_POINT_5) {
-		edit_class = RT_ARB_EDIT_POINT;
-		edit_type = 4;
-	    }
-
-	    if (edit_class == RT_ARB_EDIT_POINT) {
-		edptr = &earb5[8][0];
-		final = &earb5[8][16];
-	    }
-
-	    break;
-	case ARB6:
-	    edptr = &earb6[edit_type][0];
-	    final = &earb6[edit_type][16];
-
-	    if (edit_type == RT_ARB6_MOVE_POINT_5) {
-		edit_class = RT_ARB_EDIT_POINT;
-		edit_type = 4;
-	    } else if (edit_type == RT_ARB6_MOVE_POINT_6) {
-		edit_class = RT_ARB_EDIT_POINT;
-		edit_type = 6;
-	    }
-
-	    if (edit_class == RT_ARB_EDIT_POINT) {
-		i = 9;
-		if (edit_type == 4)
-		    i = 8;
-		edptr = &earb6[i][0];
-		final = &earb6[i][16];
-	    }
-
-	    break;
-	case ARB7:
-	    edptr = &earb7[edit_type][0];
-	    final = &earb7[edit_type][16];
-
-	    if (edit_type == RT_ARB7_MOVE_POINT_5) {
-		edit_class = RT_ARB_EDIT_POINT;
-		edit_type = 4;
-	    }
-
-	    if (edit_class == RT_ARB_EDIT_POINT) {
-		edptr = &earb7[11][0];
-		final = &earb7[11][16];
-	    }
-
-	    break;
-	case ARB8:
-	    edptr = &earb8[edit_type][0];
-	    final = &earb8[edit_type][16];
-
-	    break;
-	default:
-	    bu_vls_printf(error_msg_ret, "rt_arb_edit: unknown ARB type\n");
-
-	    return 1;
-    }
-
-    /* do the arb editing */
-    if (edit_class == RT_ARB_EDIT_POINT) {
-	/* moving a point - not an edge */
-	VMOVE(arb->pt[edit_type], pos_model);
-	edptr += 4;
-    } else if (edit_class == RT_ARB_EDIT_EDGE) {
-	vect_t edge_dir;
-
-	/* moving an edge */
-	pt1 = *edptr++;
-	pt2 = *edptr++;
-
-	/* calculate edge direction */
-	VSUB2(edge_dir, arb->pt[pt2], arb->pt[pt1]);
-
-	if (ZERO(MAGNITUDE(edge_dir)))
-	    goto err;
-
-	/* bounding planes bp1, bp2 */
-	bp1 = *edptr++;
-	bp2 = *edptr++;
-
-	/* move the edge */
-	if (rt_arb_move_edge(error_msg_ret, arb, pos_model, bp1, bp2, pt1, pt2,
-			     edge_dir, planes, tol))
-	    goto err;
-    }
-
-    /* editing is done - insure planar faces */
-    /* redo plane eqns that changed */
-    newp = *edptr++; 	/* plane to redo */
-
-    if (newp == 9)	/* special flag --> redo all the planes */
-	if (rt_arb_calc_planes(error_msg_ret, arb, arb_type, planes, tol))
-	    goto err;
-
-    if (newp >= 0 && newp < 6) {
-	for (i = 0; i < 3; i++) {
-	    /* redo this plane (newp), use points p1, p2, p3 */
-	    p1 = *edptr++;
-	    p2 = *edptr++;
-	    p3 = *edptr++;
-
-	    if (bg_make_plane_3pnts(planes[newp], arb->pt[p1], arb->pt[p2],
-				 arb->pt[p3], tol))
-		goto err;
-
-	    /* next plane */
-	    if ((newp = *edptr++) == -1 || newp == 8)
-		break;
-	}
-    }
-
-    if (newp == 8) {
-	/* special...redo next planes using pts defined in faces */
-	const int arb_faces[5][24] = rt_arb_faces;
-	for (i = 0; i < 3; i++) {
-	    if ((newp = *edptr++) == -1)
-		break;
-
-	    iptr = &arb_faces[arb_type-4][4*newp];
-	    p1 = *iptr++;
-	    p2 = *iptr++;
-	    p3 = *iptr++;
-
-	    if (bg_make_plane_3pnts(planes[newp], arb->pt[p1], arb->pt[p2],
-				 arb->pt[p3], tol))
-		goto err;
-	}
-    }
-
-    /* the changed planes are all redone
-     * push necessary points back into the planes
-     */
-    edptr = final;	/* point to the correct location */
-    for (i = 0; i < 2; i++) {
-	const plane_t *c_planes = (const plane_t *)planes;
-
-	if ((p1 = *edptr++) == -1)
-	    break;
-
-	/* intersect proper planes to define vertex p1 */
-
-	if (rt_arb_3face_intersect(arb->pt[p1], c_planes, arb_type, p1*3))
-	    goto err;
-    }
-
-    /* Special case for ARB7: move point 5 .... must
-     * recalculate plane 2 = 456
-     */
-    if (arb_type == ARB7 && edit_class == RT_ARB_EDIT_POINT) {
-	if (bg_make_plane_3pnts(planes[2], arb->pt[4], arb->pt[5], arb->pt[6], tol))
-	    goto err;
-    }
-
-    /* carry along any like points */
-    switch (arb_type) {
-	case ARB8:
-	    break;
-	case ARB7:
-	    VMOVE(arb->pt[7], arb->pt[4]);
-	    break;
-	case ARB6:
-	    VMOVE(arb->pt[5], arb->pt[4]);
-	    VMOVE(arb->pt[7], arb->pt[6]);
-	    break;
-	case ARB5:
-	    for (i=5; i<8; i++)
-		VMOVE(arb->pt[i], arb->pt[4]);
-	    break;
-	case ARB4:
-	    VMOVE(arb->pt[3], arb->pt[0]);
-	    for (i=5; i<8; i++)
-		VMOVE(arb->pt[i], arb->pt[4]);
-	    break;
-    }
-
-    if (rt_arb_check_points(arb, arb_type, tol) < 0)
-	goto err;
-
-    return 0;		/* OK */
-
-err:
-    /* Error handling */
-    bu_vls_printf(error_msg_ret, "cannot move edge: %d%d\n", pt1+1, pt2+1);
-    return 1;		/* BAD */
-}
-
-
-int
+C_DECL int
 rt_arb_params(struct pc_pc_set * UNUSED(ps), const struct rt_db_internal *ip)
 {
     RT_CK_DB_INTERNAL(ip);
@@ -2451,58 +3494,149 @@ rt_arb_params(struct pc_pc_set * UNUSED(ps), const struct rt_db_internal *ip)
  * compute surface area of an arb8 by dividing it into
  * it's component faces and summing the face areas.
  */
-void
+C_DECL void
 rt_arb_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
-    const int arb_faces[5][24] = rt_arb_faces;
-    int i, a, b, c;
-    int type = 0;
-    vect_t b_a, c_a, area_;
-    plane_t plane;
-    struct bn_tol tmp_tol, tol;
-    struct rt_arb_internal *aip = (struct rt_arb_internal *)ip->idb_ptr;
-    RT_ARB_CK_MAGIC(aip);
+    struct rt_arb_internal *arb = (struct rt_arb_internal *)ip->idb_ptr;
+    RT_ARB_CK_MAGIC(arb);
 
-    /* set up tolerance for rt_arb_std_type */
+    *area = 0.0;
+
+    /* set up tolerance */
+    struct bn_tol tol;
     tol.magic = BN_TOL_MAGIC;
     tol.dist = 0.0001; /* to get old behavior of rt_arb_std_type() */
     tol.dist_sq = tol.dist * tol.dist;
     tol.perp = 1e-5;
     tol.para = 1 - tol.perp;
 
-    type = rt_arb_std_type(ip, &tol);
-    if (type < 4)
+    /* Non-canonical encoding: use convex hull triangle areas */
+    if (rt_arb_nonstandard_encoding(arb, tol.dist_sq)) {
+	int *hull_faces = NULL;
+	int  hull_nf   = 0;
+	point_t *hull_verts = NULL;
+	int  hull_nv   = 0;
+
+	if (arb_chull_compute(arb, tol.dist_sq,
+			      &hull_faces, &hull_nf,
+			      &hull_verts, &hull_nv) == 0) {
+	    fastf_t tot = 0.0;
+	    int fi;
+	    for (fi = 0; fi < hull_nf; fi++) {
+		vect_t e1, e2, cross;
+		VSUB2(e1, hull_verts[hull_faces[3*fi+1]], hull_verts[hull_faces[3*fi+0]]);
+		VSUB2(e2, hull_verts[hull_faces[3*fi+2]], hull_verts[hull_faces[3*fi+0]]);
+		VCROSS(cross, e1, e2);
+		tot += 0.5 * MAGNITUDE(cross);
+	    }
+	    *area += tot;
+	    bu_free(hull_faces, "arb chull faces");
+	    bu_free(hull_verts, "arb chull verts");
+	    return;
+	}
+	bu_free(hull_faces, "arb chull faces");
+	bu_free(hull_verts, "arb chull verts");
+	/* fall through to standard path on failure */
+    }
+
+    int cgtype, type;
+    /* find the specific arb type, in GIFT order. */
+    if ((cgtype = rt_arb_std_type(ip, &tol)) == 0)
 	return;
-    type = type - 4;
 
-    /* tol struct needed for bg_make_plane_3pnts,
-     * can't be passed to the function since it
-     * must fit into the rt_functab interface */
-    tmp_tol.magic = BN_TOL_MAGIC;
-    tmp_tol.dist = RT_LEN_TOL;
-    tmp_tol.dist_sq = tmp_tol.dist * tmp_tol.dist;
+    type = cgtype - 4;
 
+    /* Build equiv_pts[] so that coincident vertices are mapped to the
+     * lowest-numbered equivalent vertex.  This handles non-canonical ARB
+     * encodings where the coincident pairs are not at the positions assumed
+     * by rt_arb_faces (e.g. an ARB6 with pt[1]==pt[2] instead of the
+     * canonical pt[4]==pt[5] and pt[6]==pt[7]).  Without this, faces whose
+     * three bg_make_plane_3pnts points happen to be duplicates get silently
+     * skipped, giving a badly underestimated surface area. */
+    int equiv_pts[8];
+    fastf_t dist_sq = tol.dist * tol.dist;
+    equiv_pts[0] = 0;
+    for (int ei = 1; ei < 8; ei++) {
+	int found = 0;
+	for (int ej = ei-1; ej >= 0; ej--) {
+	    vect_t work;
+	    VSUB2(work, arb->pt[ei], arb->pt[ej]);
+	    if (MAGSQ(work) < dist_sq) {
+		equiv_pts[ei] = equiv_pts[ej];
+		found = 1;
+		break;
+	    }
+	}
+	if (!found)
+	    equiv_pts[ei] = ei;
+    }
+
+    fastf_t tot_area = 0.0;
+    int i;
+    const int arb_faces[5][24] = rt_arb_faces;
     for (i = 0; i < 6; i++) {
-	if (arb_faces[type][i*4] == -1)
-	    break;	/* faces are done */
+        int raw[4]; /* raw face vertex indices from table */
+        int uniq[4]; /* deduplicated indices */
+        int nuniq = 0;
 
-	/* a, b, c = face of the GENARB8 */
-	a = arb_faces[type][i*4];
-	b = arb_faces[type][i*4+1];
-	c = arb_faces[type][i*4+2];
+        raw[0] = arb_faces[type][i*4+0];
+        raw[1] = arb_faces[type][i*4+1];
+        raw[2] = arb_faces[type][i*4+2];
+        raw[3] = arb_faces[type][i*4+3];
+        if (raw[0] == -1)
+            continue;
 
-	/* create a plane from a, b, c */
-	if (bg_make_plane_3pnts(plane, aip->pt[a], aip->pt[b], aip->pt[c], &tmp_tol) < 0) {
-	    continue;
+	/* Apply equiv_pts and collect unique vertex indices for this face */
+	for (int ri = 0; ri < 4; ri++) {
+	    int idx;
+	    int dup;
+	    int ui;
+
+	    if (raw[ri] < 0)
+		continue;
+	    idx = equiv_pts[raw[ri]];
+
+	    /* check for duplicate */
+	    dup = 0;
+	    for (ui = 0; ui < nuniq; ui++) {
+		if (uniq[ui] == idx) { dup = 1; break; }
+	    }
+	    if (!dup)
+		uniq[nuniq++] = idx;
 	}
 
-	/* calculate area of the face */
-	VSUB2(b_a, aip->pt[b], aip->pt[a]);
-	VSUB2(c_a, aip->pt[c], aip->pt[a]);
-	VCROSS(area_, b_a, c_a);
+	if (nuniq < 3)
+	    continue; /* degenerate face - skip */
 
-	*area += MAGNITUDE(area_);
+        /* validate: ensure first 3 unique points are non-collinear */
+        plane_t face_plane;
+        if (bg_make_plane_3pnts(face_plane, arb->pt[uniq[0]], arb->pt[uniq[1]], arb->pt[uniq[2]], &tol) < 0)
+            continue;
+
+	/* Compute face area by a triangle fan from uniq[0].
+	 *
+	 * The previous approach (bg_3d_polygon_sort_ccw + bg_3d_polygon_area)
+	 * was buggy for faces whose vertices are symmetric about the origin:
+	 * sort_ccw_3d sorts by cross-product against the origin, so when two
+	 * opposite face vertices V_i and V_j satisfy VDOT(normal, V_i × V_j)
+	 * == 0, they compare as "equal", producing a non-transitive ordering.
+	 * A sort with such a comparator may yield a "bowtie" arrangement where
+	 * the quadrilateral diagonal formula gives zero area.  Replacing the
+	 * sort with a triangle fan avoids this entirely: the fan always gives
+	 * the correct (unsigned) area for a convex planar polygon, independent
+	 * of vertex ordering relative to the origin.                         */
+	fastf_t face_area = 0.0;
+	for (int k = 1; k < nuniq - 1; k++) {
+	    vect_t e1, e2, cross;
+	    VSUB2(e1, arb->pt[uniq[k]],   arb->pt[uniq[0]]);
+	    VSUB2(e2, arb->pt[uniq[k+1]], arb->pt[uniq[0]]);
+	    VCROSS(cross, e1, e2);
+	    face_area += 0.5 * MAGNITUDE(cross);
+	}
+        tot_area += face_area;
     }
+
+    *area += fabs(tot_area);
 }
 
 
@@ -2510,7 +3644,7 @@ rt_arb_surf_area(fastf_t *area, const struct rt_db_internal *ip)
  * compute volume of an arb8 by dividing it into
  * 6 arb4 and summing the volumes.
  */
-void
+C_DECL void
 rt_arb_volume(fastf_t *vol, const struct rt_db_internal *ip)
 {
     int i, a, b, c, d;
@@ -2527,6 +3661,38 @@ rt_arb_volume(fastf_t *vol, const struct rt_db_internal *ip)
     tmp_tol.magic = BN_TOL_MAGIC;
     tmp_tol.dist = RT_LEN_TOL;
     tmp_tol.dist_sq = tmp_tol.dist * tmp_tol.dist;
+
+    /* Non-canonical encoding: use convex hull and the divergence theorem */
+    if (rt_arb_nonstandard_encoding(aip, tmp_tol.dist_sq)) {
+	int *hull_faces = NULL;
+	int  hull_nf   = 0;
+	point_t *hull_verts = NULL;
+	int  hull_nv   = 0;
+
+	if (arb_chull_compute(aip, tmp_tol.dist_sq,
+			      &hull_faces, &hull_nf,
+			      &hull_verts, &hull_nv) == 0) {
+	    /* Signed volume via divergence theorem:
+	     *   V = (1/6) |sum_triangles  v0 . (v1 x v2)|
+	     * Works for any orientation of the hull triangles. */
+	    fastf_t signed_vol = 0.0;
+	    int fi;
+	    for (fi = 0; fi < hull_nf; fi++) {
+		vect_t cross;
+		VCROSS(cross,
+		       hull_verts[hull_faces[3*fi+1]],
+		       hull_verts[hull_faces[3*fi+2]]);
+		signed_vol += VDOT(hull_verts[hull_faces[3*fi+0]], cross);
+	    }
+	    *vol = fabs(signed_vol) / 6.0;
+	    bu_free(hull_faces, "arb chull faces");
+	    bu_free(hull_verts, "arb chull verts");
+	    return;
+	}
+	bu_free(hull_faces, "arb chull faces");
+	bu_free(hull_verts, "arb chull verts");
+	/* fall through to standard path on failure */
+    }
 
     *vol = 0.0;
     for (i = 0; i < 6; i++) {
@@ -2731,7 +3897,7 @@ rt_arb_find_e_nearest_pt2(int *edge,
     return 0;
 }
 
-int
+C_DECL int
 rt_arb_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const struct rt_db_internal *ip, const struct bn_tol *utol)
 {
     if (!pl || pl_max < 8 || !ip)
@@ -2792,7 +3958,7 @@ rt_arb_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const s
     }
 }
 
-int
+C_DECL int
 rt_arb_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int UNUSED(planar_only), fastf_t val)
 {
     if (NEAR_ZERO(val, SMALL_FASTF))
@@ -2889,7 +4055,7 @@ rt_arb_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int
     return BRLCAD_OK;
 }
 
-const char *
+C_DECL const char *
 rt_arb_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     if (!pt || !ip)

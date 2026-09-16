@@ -1,7 +1,7 @@
 /*                       P C A . C P P
  * BRL-CAD
  *
- * Copyright (c) 2004-2025 United States Government as represented by
+ * Copyright (c) 2004-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -53,7 +53,7 @@
 
 // Use SVD algorithm from Soderkvist to fit a plane to vertex points
 extern "C" int
-bg_pca(point_t *c, vect_t *xa, vect_t *ya, vect_t *za, size_t npnts, point_t *pnts)
+bg_pca(point_t *c, vect_t *xa, vect_t *ya, vect_t *za, size_t npnts, const point_t *pnts)
 {
     if (!c || !xa || !ya || !za || npnts == 0 || !pnts)
 	return BRLCAD_ERROR;

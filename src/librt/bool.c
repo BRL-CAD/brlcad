@@ -1,7 +1,7 @@
 /*                          B O O L . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2025 United States Government as represented by
+ * Copyright (c) 1985-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,8 +36,11 @@
 
 #include "common.h"
 
+#include <limits.h>
 #include <string.h>
 #include "bio.h"
+
+#include "./librt_private.h"
 
 #include "bu/defines.h"
 #include "bu/parallel.h"
@@ -48,7 +51,8 @@
 /* Boolean values.  Not easy to change, but defined symbolically */
 #define BOOL_FALSE 0
 #define BOOL_TRUE 1
-
+#define BOOL_FILTER_BIT(_bit) \
+    (UINT64_C(1) << ((size_t)(_bit) % (sizeof(uint64_t) * CHAR_BIT)))
 
 /**
  * If a zero thickness segment abuts another partition, it will be
@@ -196,7 +200,7 @@ rt_boolweave(struct seg *out_hd, struct seg *in_hd, struct partition *PartHdp, s
 	if (stp)
 	    RT_CK_SOLTAB(stp);
 
-	if (stp && (size_t)stp->st_bit >= rtip->nsolids)
+	if (stp && (size_t)stp->st_bit >= rtip->stats.nsolids)
 	    bu_bomb("rt_boolweave: st_bit greater than nsolids");
 
 	BU_LIST_DEQUEUE(&(segp->l));
@@ -1237,7 +1241,7 @@ bool_partition_eligible(register const struct bu_ptbl *regiontable, register con
 
 
 void
-rt_bool_growstack(register struct resource *resp)
+_bool_growstack(register struct resource *resp)
 {
     if (resp->re_boolstack == (union tree **)0 || resp->re_boolslen <= 0) {
 	resp->re_boolslen = 128;	/* default len */
@@ -1246,6 +1250,12 @@ rt_bool_growstack(register struct resource *resp)
 	resp->re_boolslen <<= 1;
 	resp->re_boolstack = (union tree **)bu_realloc((char *)resp->re_boolstack, sizeof(union tree *) * resp->re_boolslen, "extend boolstack");
     }
+}
+
+void
+rt_bool_growstack(register struct resource *resp)
+{
+    _bool_growstack(resp);
 }
 
 
@@ -1262,10 +1272,11 @@ rt_bool_growstack(register struct resource *resp)
  * -1 tree is in error (GUARD)
  */
 static int
-bool_eval(register union tree *treep, struct partition *partp, struct resource *resp)
+bool_eval(register union tree *treep, struct partition *partp, struct resource *resp, uint64_t solid_filter)
 /* Tree to evaluate */
 /* Partition to evaluate */
 /* resource pointer for this CPU */
+/* Fast rejection filter for solids not in the partition */
 {
     static union tree tree_not[MAX_PSW];	/* for OP_NOT nodes */
     static union tree tree_guard[MAX_PSW];	/* for OP_GUARD nodes */
@@ -1279,7 +1290,7 @@ bool_eval(register union tree *treep, struct partition *partp, struct resource *
     RT_CK_RESOURCE(resp);
 
     while ((sp = resp->re_boolstack) == (union tree **)0)
-	rt_bool_growstack(resp);
+	_bool_growstack(resp);
     stackend = &(resp->re_boolstack[resp->re_boolslen]);
     *sp++ = TREE_NULL;
 stack:
@@ -1291,6 +1302,11 @@ stack:
 	    {
 		register struct soltab *seek_stp = treep->tr_a.tu_stp;
 		register struct seg **segpp;
+
+		if (!(solid_filter & BOOL_FILTER_BIT(seek_stp->st_bit))) {
+		    ret = 0;
+		    goto pop;
+		}
 		for (BU_PTBL_FOR(segpp, (struct seg **), &partp->pt_seglist)) {
 		    if ((*segpp)->seg_stp == seek_stp) {
 			ret = 1;
@@ -1307,7 +1323,7 @@ stack:
 	    *sp++ = treep;
 	    if (sp >= stackend) {
 		register int off = sp - resp->re_boolstack;
-		rt_bool_growstack(resp);
+		_bool_growstack(resp);
 		sp = &(resp->re_boolstack[off]);
 		stackend = &(resp->re_boolstack[resp->re_boolslen]);
 	    }
@@ -1413,8 +1429,9 @@ rt_boolfinal(struct partition *InputHdp, struct partition *FinalHdp, fastf_t sta
     int hits_needed;
     int ret = 0;
     int indefinite_outpt = 0;
-    char *reason = (char *)NULL;
+    const char *reason = NULL;
     fastf_t diff;
+    uint64_t solid_filter = 0;
 
 #define HITS_TODO (hits_needed - hits_avail)
 
@@ -1594,6 +1611,7 @@ rt_boolfinal(struct partition *InputHdp, struct partition *FinalHdp, fastf_t sta
 
 	/* Start with a clean slate when evaluating this partition */
 	bu_ptbl_reset(regiontable);
+	solid_filter = 0;
 
 	/* For each segment's solid that lies in this partition, add
 	 * the list of regions that refer to that solid into the
@@ -1607,6 +1625,7 @@ rt_boolfinal(struct partition *InputHdp, struct partition *FinalHdp, fastf_t sta
 	    for (BU_PTBL_FOR(segpp, (struct seg **), &pp->pt_seglist)) {
 		struct soltab *stp = (*segpp)->seg_stp;
 		RT_CK_SOLTAB(stp);
+		solid_filter |= BOOL_FILTER_BIT(stp->st_bit);
 		bu_ptbl_cat_uniq(regiontable, &stp->st_regions);
 	    }
 	}
@@ -1660,7 +1679,7 @@ rt_boolfinal(struct partition *InputHdp, struct partition *FinalHdp, fastf_t sta
 		    lastregion = regp;
 		    continue;
 		}
-		if (bool_eval(regp->reg_treetop, pp, ap->a_resource) == BOOL_FALSE) {
+		if (bool_eval(regp->reg_treetop, pp, ap->a_resource, solid_filter) == BOOL_FALSE) {
 		    if (RT_G_DEBUG&RT_DEBUG_PARTITION)
 			bu_log("BOOL_FALSE\n");
 		    /* Null out non-claiming region's pointer */

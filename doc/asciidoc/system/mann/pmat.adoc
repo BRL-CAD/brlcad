@@ -1,0 +1,66 @@
+= PMAT(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+pmat - get or set the perspective projection matrix
+
+== SYNOPSIS
+
+[source]
+----
+pmat
+pmat "m0 m1 m2 ... m15"
+----
+
+[[description]]
+== DESCRIPTION
+
+The *pmat* command gets or sets the perspective projection matrix for the current view.
+
+* *No arguments*: Returns the current projection matrix as a 16-element space-separated floating-point string representing the 4×4 matrix in row-major order. This matrix controls perspective rendering.
+
+* *One argument*: Sets the projection matrix from a provided 16-element space-separated string. The string must contain exactly 16 floating-point values. The view is updated immediately after the change.
+
+The perspective matrix is normally managed automatically by the `perspective` command, which sets it from a field-of-view angle. Use *pmat* to inspect the current matrix or to provide a custom projection matrix directly.
+
+When perspective is disabled (`perspective 0`), the projection matrix is the identity and *pmat* returns: `1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1`.
+
+[[examples]]
+== EXAMPLES
+
+.Retrieve the current perspective matrix
+[example]
+====
+mged> **pmat**
+
+Returns the current perspective projection matrix as 16 numbers. When perspective is active (e.g. after `perspective 45`), this will be a non-identity matrix; when orthographic, it will be the identity.
+====
+
+.Inspect the matrix after setting perspective
+[example]
+====
+mged> **perspective 60**
+mged> **pmat**
+
+Sets the perspective angle to 60° and then retrieves the resulting projection matrix to examine the constructed values.
+====
+
+.Set the perspective matrix explicitly
+[example]
+====
+mged> **pmat "1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1"**
+
+Sets the projection matrix to the identity, equivalent to `perspective 0`. The quoted string must contain exactly 16 space-separated values.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

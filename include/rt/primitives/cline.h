@@ -1,7 +1,7 @@
 /*                      C L I N E . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2025 United States Government as represented by
+ * Copyright (c) 1993-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,14 +29,6 @@
 #include "rt/defines.h"
 
 __BEGIN_DECLS
-
-/**
- * radius of a FASTGEN cline element.
- *
- * shared with rt/do.c
- */
-RT_EXPORT extern fastf_t rt_cline_radius;
-
 
 __END_DECLS
 

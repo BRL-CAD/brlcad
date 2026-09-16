@@ -1,0 +1,91 @@
+= RTSCALE(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+rtscale - plot a measuring scale for an rt/rthide UNIX-Plot image
+
+== SYNOPSIS
+
+[source]
+----
+rtscale _width_ _units_ _intervals_ _file.log_ [_string_] > scale.plot3
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*rtscale* generates a UNIX-Plot (see *plot3*(5)) of a labeled measuring
+scale that can be overlaid onto a raytraced image to allow accurate
+measurement of geometry. It is most often paired with *rthide*(1): *rthide*
+produces a hidden-line plot of the geometry, and *rtscale* produces a
+matching plot containing only a scale. Concatenating the two files, with the
+scale first, yields a finished plot complete with a scale.
+
+*rtscale* reads the RT log file written by the *rt*(1)-family run and uses the
+view, orientation, eye position, and size recorded there to build the
+view-to-model matrix. The scale is laid out in view coordinates, drawn as a
+line with tick marks ending on a "nice" rounded value, and placed in the lower
+left corner of the image. An optional descriptive string is drawn beneath the
+scale to identify the view or model.
+
+The positional arguments are:
+
+_width_::
+  length of the scale expressed in _units_.
+_units_::
+  unit name passed to *bu_units_conversion*; any metric or English unit
+  is accepted (for example mm, cm, m, in, ft).
+_intervals_::
+  number of tick-mark intervals along the scale.
+_file.log_::
+  RT log file from which the view2model matrix is computed.
+_string_::
+  optional descriptive label drawn under the scale.
+
+[[examples]]
+== EXAMPLES
+
+.Scale a hidden-line rendering and view it
+====
+[source,bash]
+----
+rthide -o model.plot3 model.g component 2> rt.log
+rtscale 30 mm 10 rt.log "UH-60 a90 e0" > scale.plot3
+cat scale.plot3 model.plot3 > model.w.scale.plot3
+plot3rot -a35 -e25 -g model.w.scale.plot3 | plot3-fb
+----
+*rthide* renders the geometry and records the view in rt.log. *rtscale* then
+emits a 30 mm scale with ten intervals and a descriptive label. The scale must
+be concatenated ahead of the model plot so it survives rotation; *plot3rot*(1)
+reorients the combined plot and *plot3-fb*(1) displays it on a framebuffer.
+Descriptive strings longer than 28 characters are truncated by *plot3-fb*(1).
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *mged*(1), *plot3rot*(1), *plot3-fb*(1), *rt*(1), *rthide*(1), *librt*(3), *libbv*(3), *plot3*(5), *ray*(5V)
+
+[[diagnostics]]
+== DIAGNOSTICS
+
+Numerous error conditions are possible, usually due to errors in the geometry
+database or RT log file. Descriptive messages are printed on standard error.
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1991-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,7 +1,7 @@
 /*                D B I _ S T A T E . C P P
  * BRL-CAD
  *
- * Copyright (c) 1990-2025 United States Government as represented by
+ * Copyright (c) 1990-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -157,6 +157,10 @@ dbi_cache_open(const char *name)
 	if (disk_format_version != CACHE_CURRENT_FORMAT) {
 	    bu_log("Old GED drawing info cache (%zd) found - clearing\n", disk_format_version);
 	    dbi_cache_clear(c);
+	    /* Delete the stale format file before recursing.  Without this
+	     * the recursive call reads the same wrong version and recurses
+	     * indefinitely, causing a stack overflow / segfault. */
+	    bu_file_delete(dir);
 	    mdb_env_close(c->env);
 	    bu_vls_free(&fname);
 	    bu_vls_free(c->fname);
@@ -436,12 +440,10 @@ DbiState::DbiState(struct ged *ged_p)
     // Set up cache
     dcache = dbi_cache_open(dbip->dbi_filename);
 
-    for (int i = 0; i < RT_DBNHASH; i++) {
-	struct directory *dp;
-	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-	    update_dp(dp, 0);
-	}
-    }
+    struct directory *dp;
+    FOR_ALL_DIRECTORY_START(dp, dbip)
+	update_dp(dp, 0);
+    FOR_ALL_DIRECTORY_END;
 }
 
 
@@ -479,7 +481,7 @@ DbiState::populate_maps(struct directory *dp, unsigned long long phash, int rese
 	    pv_it->second.clear();
 	}
 	struct rt_db_internal in;
-	if (rt_db_get_internal(&in, dp, dbip, NULL, res) < 0)
+	if (rt_db_get_internal(&in, dp, dbip, NULL) < 0)
 	    return;
 	struct rt_comb_internal *comb = (struct rt_comb_internal *)in.idb_ptr;
 	if (!comb->tree)
@@ -941,7 +943,7 @@ DbiState::update_dp(struct directory *dp, int reset)
 	    db5_get_attributes(dbip, &c_avs, dp);
 	    loaded_avs = true;
 	}
-	// Color (note that the rt_material_head colors and a region_id may
+	// Color (note that the db_mater_head colors and a region_id may
 	// override this, as might a parent comb with color and the inherit
 	// flag both set.
 	rgb.erase(hash);
@@ -989,9 +991,9 @@ DbiState::path_color(struct bu_color *c, std::vector<unsigned long long> &elemen
 {
     // This may not be how we'll always want to do this, but at least for the
     // moment (to duplicate observed MGED behavior) the first region_id seen
-    // along the path with an active color in rt_material_head trumps all other
-    // color values set by any other means.
-    if (rt_material_head() != MATER_NULL) {
+    // along the path with an active color in the database material table trumps
+    // all other color values set by any other means.
+    if (dbip && db_mater_head(dbip) != MATER_NULL) {
 	std::unordered_map<unsigned long long, int>::iterator r_it;
 	int path_region_id;
 	for (size_t i = 0; i < elements.size(); i++) {
@@ -1000,7 +1002,7 @@ DbiState::path_color(struct bu_color *c, std::vector<unsigned long long> &elemen
 		continue;
 	    path_region_id = r_it->second;
 	    const struct mater *mp;
-	    for (mp = rt_material_head(); mp != MATER_NULL; mp = mp->mt_forw) {
+	    for (mp = db_mater_head(dbip); mp != MATER_NULL; mp = mp->mt_forw) {
 		if (path_region_id > mp->mt_high || path_region_id < mp->mt_low)
 		    continue;
 		unsigned char mt[3];
@@ -1301,7 +1303,7 @@ DbiState::get_bbox(point_t *bbmin, point_t *bbmax, matp_t curr_mat, unsigned lon
 	struct bn_tol tol = BN_TOL_INIT_TOL;
 	mat_t m;
 	MAT_IDN(m);
-	int bret = rt_bound_instance(&bmin, &bmax, dp, dbip, &ttol, &tol, &m, res);
+	int bret = rt_bound_instance(&bmin, &bmax, dp, dbip, &ttol, &tol, &m);
 	if (bret != -1) {
 	    have_bbox = true;
 
@@ -1491,7 +1493,7 @@ DbiState::tops(bool show_cyclic)
     std::vector<unsigned long long> ret;
     // First, get the standard tops results
     struct directory **all_paths = NULL;
-    db_update_nref(gedp->dbip, &rt_uniresource);
+    db_update_nref(gedp->dbip);
     int tops_cnt = db_ls(gedp->dbip, DB_LS_TOPS, NULL, &all_paths);
     if (all_paths) {
 	bu_sort(all_paths, tops_cnt, sizeof(struct directory *), alphanum_sort, NULL);
@@ -1541,7 +1543,7 @@ DbiState::update()
     std::unordered_set<struct directory *>::iterator g_it;
 
     if (need_update_nref) {
-	db_update_nref(dbip, res);
+	db_update_nref(dbip);
 	need_update_nref = false;
     }
 
@@ -2319,7 +2321,6 @@ BViewState::scene_obj(
     ud->dbip = dbis->gedp->dbip;
     ud->tol = &wdbp->wdb_tol;
     ud->ttol = &wdbp->wdb_ttol;
-    ud->res = &rt_uniresource; // TODO - at some point this may be from the app or view... local_res is temporary, don't use it here
     ud->mesh_c = dbis->gedp->ged_lod;
     sp->dp = dp;
     sp->s_i_data = (void *)ud;
@@ -2363,6 +2364,17 @@ BViewState::scene_obj(
     if (vs && !vs->draw_solid_lines_only) {
 	bool is_subtract = dbis->path_is_subtraction(path_hashes);
 	sp->s_soldash = (is_subtract) ? 1 : 0;
+    }
+
+    // Align with vs draw_non_subtract_only settings
+    if (vs->s_dmode == curr_mode) {
+        if (sp->s_soldash && vs->draw_non_subtract_only) {
+            if (sp->s_flag != DOWN)
+                sp->s_flag = DOWN;
+        } else {
+            if (sp->s_flag != UP)
+                sp->s_flag = UP;
+        }
     }
 
     // Set line width, if the user specified a non-default value

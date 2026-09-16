@@ -1,7 +1,7 @@
 /*                         P I X 2 G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2025 United States Government as represented by
+ * Copyright (c) 2004-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -42,7 +42,7 @@
 int done=0;
 int ncpu=1;
 
-char *progname ="pix2g";
+const char *progname ="pix2g";
 
 /* procedure variable start */
 struct rt_wdb *db_fp;

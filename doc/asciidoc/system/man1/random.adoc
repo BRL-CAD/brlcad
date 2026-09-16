@@ -1,0 +1,87 @@
+= RANDOM(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+random - generate a random integer between two values
+
+== SYNOPSIS
+
+[source]
+----
+random [-u] [-g [-c center]] [-s seed] [-v] low high
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*random* prints a single random integer between _low_ and _high_ (inclusive bounds) to standard output. Both _low_ and _high_ are required integer arguments.
+
+By default, or when *-u* is given, the value is drawn from a uniform distribution across the range. When *-g* is given, the value is instead drawn from a gaussian distribution centered on the midpoint of the range, or on an explicit *-c* _center_, and clamped to the _low_-to_high_ range. The uniform and gaussian modes are mutually exclusive.
+
+The random sequence is seeded from the process ID unless a fixed *-s* _seed_ is supplied, making a run reproducible.
+
+[[options]]
+== OPTIONS
+
+*-u*::
+  Draw from a uniform distribution across the range. This is the default when neither *-u* nor *-g* is given.
+
+*-g*::
+  Draw from a gaussian distribution centered on the range midpoint (or on *-c* _center_) and clamped to _low_ and _high_.
+
+*-c* _center_::
+  Set the gaussian center to the given (possibly fractional) value instead of the range midpoint. Only meaningful with *-g*.
+
+*-s* _seed_::
+  Use the given integer to seed the random number generator. The same seed yields the same value, allowing reproducible runs. Defaults to the process ID.
+
+*-v*::
+  Print verbose diagnostics (seed, mode, and parameters) to standard error before the result.
+
+*-h*, *-?*::
+  Print a usage message and exit.
+
+[[examples]]
+== EXAMPLES
+
+.Pick a uniform roll and capture it in a shell variable
+====
+[source,bash]
+----
+roll=$(random 1 6)
+echo "you rolled a $roll"
+----
+Emulates a six-sided die by selecting a uniform integer between 1 and 6.
+====
+
+.Reproducible gaussian value clustered near a chosen center
+====
+[source,bash]
+----
+random -g -c 50 -s 42 0 100
+----
+Draws a value between 0 and 100 from a gaussian distribution centered on 50. The fixed seed of 42 makes the result repeatable, which is useful for deterministic tests or scripted scenes.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *loop*(1), *gencolor*(1)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

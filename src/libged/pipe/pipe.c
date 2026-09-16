@@ -1,7 +1,7 @@
 /*                        E D P I P E . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2025 United States Government as represented by
+ * Copyright (c) 1995-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -139,7 +139,7 @@ _ged_pipe_append_pnt_common(struct ged *gedp, int argc, const char *argv[], stru
 	    VMOVE(curr_ps->pp_coord, curr_pt);
 	}
 
-	GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, BRLCAD_ERROR);
+	GED_DB_PUT_INTERN(gedp, dp, &intern, BRLCAD_ERROR);
     }
 
     rt_db_free_internal(&intern);
@@ -202,7 +202,7 @@ ged_pipe_delete_pnt_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "%s: failed to get internal for %s", argv[0], argv[1]);
 	return BRLCAD_ERROR;
     }
@@ -228,7 +228,7 @@ ged_pipe_delete_pnt_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_PUT_INTERN(gedp, dp, &intern, BRLCAD_ERROR);
 
     rt_db_free_internal(&intern);
     return BRLCAD_OK;
@@ -427,7 +427,7 @@ ged_pipe_move_pnt_core(struct ged *gedp, int argc, const char *argv[])
 	    VMOVE(curr_ps->pp_coord, curr_pt);
 	}
 
-	GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, BRLCAD_ERROR);
+	GED_DB_PUT_INTERN(gedp, dp, &intern, BRLCAD_ERROR);
     }
 
     rt_db_free_internal(&intern);
@@ -441,52 +441,21 @@ ged_pipe_prepend_pnt_core(struct ged *gedp, int argc, const char *argv[])
     return _ged_pipe_append_pnt_common(gedp, argc, argv, rt_pipe_ins_pnt);
 }
 
-#ifdef GED_PLUGIN
+
 #include "../include/plugin.h"
-struct ged_cmd_impl find_pipe_pnt_cmd_impl = {"find_pipe_pnt", ged_find_pipe_pnt_nearest_pnt_core, GED_CMD_DEFAULT};
-const struct ged_cmd find_pipe_pnt_cmd = { &find_pipe_pnt_cmd_impl };
 
-struct ged_cmd_impl pipe_move_pnt_cmd_impl = {"pipe_move_pnt", ged_pipe_move_pnt_core, GED_CMD_DEFAULT};
-const struct ged_cmd pipe_move_pnt_cmd = { &pipe_move_pnt_cmd_impl };
+#define GED_PIPE_COMMANDS(X, XID) \
+    X(find_pipe_pnt, ged_find_pipe_pnt_nearest_pnt_core, GED_CMD_DEFAULT) \
+    X(pipe_move_pnt, ged_pipe_move_pnt_core, GED_CMD_DEFAULT) \
+    X(pipe_append_pnt, ged_pipe_append_pnt_core, GED_CMD_DEFAULT) \
+    X(pipe_prepend_pnt, ged_pipe_prepend_pnt_core, GED_CMD_DEFAULT) \
+    X(pipe_delete_pnt, ged_pipe_delete_pnt_core, GED_CMD_DEFAULT) \
+    X(mouse_move_pipe_pnt, ged_pipe_move_pnt_core, GED_CMD_DEFAULT) \
+    X(mouse_append_pipe_pnt, ged_pipe_append_pnt_core, GED_CMD_DEFAULT) \
+    X(mouse_prepend_pipe_pnt, ged_pipe_prepend_pnt_core, GED_CMD_DEFAULT) \
 
-struct ged_cmd_impl pipe_append_pnt_cmd_impl = {"pipe_append_pnt", ged_pipe_append_pnt_core, GED_CMD_DEFAULT};
-const struct ged_cmd pipe_append_pnt_cmd = { &pipe_append_pnt_cmd_impl };
-
-struct ged_cmd_impl pipe_prepend_pnt_cmd_impl = {"pipe_prepend_pnt", ged_pipe_prepend_pnt_core, GED_CMD_DEFAULT};
-const struct ged_cmd pipe_prepend_pnt_cmd = { &pipe_prepend_pnt_cmd_impl };
-
-struct ged_cmd_impl pipe_delete_pnt_cmd_impl = {"pipe_delete_pnt", ged_pipe_delete_pnt_core, GED_CMD_DEFAULT};
-const struct ged_cmd pipe_delete_pnt_cmd = { &pipe_delete_pnt_cmd_impl };
-
-struct ged_cmd_impl mouse_pipe_move_pnt_cmd_impl = {"mouse_move_pipe_pnt", ged_pipe_move_pnt_core, GED_CMD_DEFAULT};
-const struct ged_cmd mouse_pipe_move_pnt_cmd = { &mouse_pipe_move_pnt_cmd_impl };
-
-struct ged_cmd_impl mouse_pipe_append_pnt_cmd_impl = {"mouse_append_pipe_pnt", ged_pipe_append_pnt_core, GED_CMD_DEFAULT};
-const struct ged_cmd mouse_pipe_append_pnt_cmd = { &mouse_pipe_append_pnt_cmd_impl };
-
-struct ged_cmd_impl mouse_pipe_prepend_pnt_cmd_impl = {"mouse_prepend_pipe_pnt", ged_pipe_prepend_pnt_core, GED_CMD_DEFAULT};
-const struct ged_cmd mouse_pipe_prepend_pnt_cmd = { &mouse_pipe_prepend_pnt_cmd_impl };
-
-
-const struct ged_cmd *pipe_cmds[] = {
-    &find_pipe_pnt_cmd,
-    &pipe_move_pnt_cmd,
-    &pipe_append_pnt_cmd,
-    &pipe_prepend_pnt_cmd,
-    &pipe_delete_pnt_cmd,
-    &mouse_pipe_move_pnt_cmd,
-    &mouse_pipe_append_pnt_cmd,
-    &mouse_pipe_prepend_pnt_cmd,
-    NULL };
-
-static const struct ged_plugin pinfo = { GED_API,  pipe_cmds, 8 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
-
+GED_DECLARE_COMMAND_SET(GED_PIPE_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_pipe", 1, GED_PIPE_COMMANDS)
 
 /*
  * Local Variables:

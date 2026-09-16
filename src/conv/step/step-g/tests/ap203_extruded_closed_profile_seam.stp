@@ -1,0 +1,68 @@
+ISO-10303-21;
+HEADER;
+FILE_DESCRIPTION(('BRL-CAD AP203 closed-profile extrusion seam fixture'),'2;1');
+FILE_NAME('ap203_extruded_closed_profile_seam.stp','2026-07-26T00:00:00',('BRL-CAD'),('BRL-CAD'),'','','');
+FILE_SCHEMA(('CONFIG_CONTROL_DESIGN'));
+ENDSEC;
+DATA;
+#1=CARTESIAN_POINT('',(0.,0.,0.));
+#2=DIRECTION('',(0.,0.,1.));
+#3=DIRECTION('',(1.,0.,0.));
+#4=AXIS2_PLACEMENT_3D('',#1,#2,#3);
+#5=CIRCLE('',#4,10.);
+#6=VECTOR('',#2,1.);
+#7=SURFACE_OF_LINEAR_EXTRUSION('',#5,#6);
+#8=CIRCLE('',#4,10.);
+
+#10=CARTESIAN_POINT('',(8.775825618903728,-4.794255386042030,0.));
+#11=CARTESIAN_POINT('',(8.775825618903728,-4.794255386042030,10.));
+#12=CARTESIAN_POINT('',(8.775825618903728,4.794255386042030,10.));
+#13=CARTESIAN_POINT('',(8.775825618903728,4.794255386042030,0.));
+#14=VERTEX_POINT('',#10);
+#15=VERTEX_POINT('',#11);
+#16=VERTEX_POINT('',#12);
+#17=VERTEX_POINT('',#13);
+
+#20=LINE('',#10,#6);
+#21=EDGE_CURVE('',#14,#15,#20,.T.);
+#22=CARTESIAN_POINT('',(0.,0.,10.));
+#23=AXIS2_PLACEMENT_3D('',#22,#2,#3);
+#24=CIRCLE('',#23,10.);
+#25=EDGE_CURVE('',#15,#16,#24,.T.);
+#26=LINE('',#13,#6);
+#27=EDGE_CURVE('',#17,#16,#26,.T.);
+#28=EDGE_CURVE('',#14,#17,#8,.T.);
+
+#30=ORIENTED_EDGE('',*,*,#21,.T.);
+#31=ORIENTED_EDGE('',*,*,#25,.T.);
+#32=ORIENTED_EDGE('',*,*,#27,.F.);
+#33=ORIENTED_EDGE('',*,*,#28,.F.);
+#34=EDGE_LOOP('',(#30,#31,#32,#33));
+#35=FACE_OUTER_BOUND('',#34,.T.);
+#36=ADVANCED_FACE('',(#35),#7,.T.);
+#37=OPEN_SHELL('closed-profile extrusion boundary crossing its native seam',(#36));
+#38=SHELL_BASED_SURFACE_MODEL('closed-profile extrusion seam surface',(#37));
+
+#40=DIMENSIONAL_EXPONENTS(1.,0.,0.,0.,0.,0.,0.);
+#41=(LENGTH_UNIT()NAMED_UNIT(*)SI_UNIT(.MILLI.,.METRE.));
+#42=(NAMED_UNIT(*)PLANE_ANGLE_UNIT()SI_UNIT($,.RADIAN.));
+#43=(NAMED_UNIT(*)SI_UNIT($,.STERADIAN.)SOLID_ANGLE_UNIT());
+#44=UNCERTAINTY_MEASURE_WITH_UNIT(LENGTH_MEASURE(1.E-6),#41,'distance_accuracy_value','maximum gap value');
+#45=(GEOMETRIC_REPRESENTATION_CONTEXT(3)
+  GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT((#44))
+  GLOBAL_UNIT_ASSIGNED_CONTEXT((#41,#42,#43))
+  REPRESENTATION_CONTEXT('fixture','3D'));
+#50=APPLICATION_CONTEXT('configuration controlled 3d designs of mechanical parts and assemblies');
+#51=APPLICATION_PROTOCOL_DEFINITION('international standard','config_control_design',1994,#50);
+#52=MECHANICAL_CONTEXT('',#50,'mechanical');
+#53=DESIGN_CONTEXT('',#50,'design');
+#54=PRODUCT('extruded_closed_profile_seam','AP203 Extruded Closed Profile Seam','exact ordinary boundary across a private extrusion seam',(#52));
+#55=PRODUCT_DEFINITION_FORMATION_WITH_SPECIFIED_SOURCE('1','initial revision',#54,.MADE.);
+#56=PRODUCT_DEFINITION('design','fixture product definition',#55,#53);
+#57=PRODUCT_DEFINITION_SHAPE('','',#56);
+#58=SHAPE_REPRESENTATION('',(#4),#45);
+#59=SHAPE_DEFINITION_REPRESENTATION(#57,#58);
+#60=MANIFOLD_SURFACE_SHAPE_REPRESENTATION('',(#4,#38),#45);
+#61=SHAPE_REPRESENTATION_RELATIONSHIP('','',#58,#60);
+ENDSEC;
+END-ISO-10303-21;

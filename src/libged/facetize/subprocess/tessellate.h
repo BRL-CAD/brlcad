@@ -1,7 +1,7 @@
 /*                  T E S S E L L A T E . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -43,9 +43,6 @@ class tess_opts {
 	nmg_opts nmg_options;
 	cm_opts cm_options;
 	spsr_opts spsr_options;
-#ifdef USE_GEOGRAM
-	co3ne_opts co3ne_options;
-#endif
 
 	int overwrite_obj = 0;
 	sample_opts pnt_options; // Values used by sample.cpp
@@ -57,20 +54,21 @@ _tess_facetize_decimate(struct rt_bot_internal *bot, fastf_t feature_size);
 extern int
 _tess_facetize_write_bot(struct db_i *dbip, struct rt_bot_internal *bot, const char *name, const char *method);
 
+extern void
+_tess_facetize_free_bot(struct rt_bot_internal *bot);
+
 extern struct rt_pnts_internal *
 _tess_pnts_sample(const char *oname, struct db_i *dbip, tess_opts *s);
 
 extern int
-_brep_csg_tessellate(struct ged *gedp, struct directory *dp, tess_opts *s);
+_brep_csg_tessellate(struct rt_bot_internal **obot, struct ged *gedp,
+	struct directory *dp, tess_opts *s);
 
 extern int
 _nmg_tessellate(struct rt_bot_internal **nbot, struct rt_db_internal *intern, tess_opts *s);
 
 extern int
 continuation_mesh(struct rt_bot_internal **obot, struct db_i *dbip, const char *objname, tess_opts *s, point_t seed);
-
-extern int
-co3ne_mesh(struct rt_bot_internal **obot, struct db_i *dbip, struct rt_pnts_internal *pnts, tess_opts *s);
 
 extern int
 spsr_mesh(struct rt_bot_internal **obot, struct db_i *dbip, struct rt_pnts_internal *pnts, tess_opts *s);

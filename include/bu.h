@@ -1,7 +1,7 @@
 /*                            B U . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2025 United States Government as represented by
+ * Copyright (c) 2004-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -69,6 +69,7 @@
 #include "./bu/cmd.h"
 #include "./bu/color.h"
 #include "./bu/cv.h"
+#include "./bu/datetime.h"
 #include "./bu/debug.h"
 #include "./bu/dylib.h"
 #include "./bu/endian.h"
@@ -86,6 +87,7 @@
 #include "./bu/malloc.h"
 #include "./bu/mapped_file.h"
 #include "./bu/mime.h"
+#include "./bu/num.h"
 #include "./bu/observer.h"
 #include "./bu/opt.h"
 #include "./bu/parallel.h"
@@ -93,12 +95,10 @@
 #include "./bu/path.h"
 #include "./bu/process.h"
 #include "./bu/ptbl.h"
-#include "./bu/redblack.h"
 #include "./bu/simd.h"
 #include "./bu/snooze.h"
 #include "./bu/sort.h"
 #include "./bu/str.h"
-#include "./bu/time.h"
 #include "./bu/units.h"
 #include "./bu/vfont.h"
 #include "./bu/vlb.h"

@@ -1,0 +1,70 @@
+= PRINT(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+print - print a summary of the current view parameters
+
+== SYNOPSIS
+
+[source]
+----
+print
+----
+
+[[description]]
+== DESCRIPTION
+
+The *print* command displays a formatted summary of five core view parameters for the current view.
+
+The intended usage is with no arguments. Internally, the same argument list is forwarded unmodified to each of the five underlying view parameter functions (`ae`, `viewdir`, `center`, `eye`, and `size`) in sequence. With no arguments, each function returns its current value, and the results are assembled into the combined output. If arguments are provided, each sub-function will interpret them independently — which can produce inconsistent results, since each command has a different argument syntax: for example, `ae` expects azimuth and elevation, `size` expects a single scalar, and `eye` expects three coordinates. Passing any argument set that satisfies one function's setter syntax may silently modify that view parameter while causing the others to report errors.
+
+The output format is:
+
+----
+    ae: <azimuth> <elevation>
+    dir: <<dx> <dy> <dz>>
+    center: (<cx> <cy> <cz>)
+    eye: (<ex> <ey> <ez>)
+    size: <view_size>
+----
+
+Where:
+
+* *ae* — the current azimuth and elevation angles (in degrees).
+* *dir* — the view direction vector.
+* *center* — the model-space coordinates of the view center.
+* *eye* — the model-space coordinates of the eye point.
+* *size* — the current view size in local units.
+
+To inspect or set individual parameters independently, use the dedicated commands: `ae`, `center`, `eye`, `size`, and `viewdir`.
+
+[[examples]]
+== EXAMPLES
+
+.Print current view parameters
+[example]
+====
+mged> **print**
+
+----
+    ae: 35 25
+    dir: <-0.573576 -0.462910 0.675590>
+    center: (0 0 0)
+    eye: (305.267 246.784 359.713)
+    size: 649.519
+----
+
+Displays the azimuth/elevation, view direction vector, center point, eye position, and view size for the current view.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

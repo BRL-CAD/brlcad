@@ -1,7 +1,7 @@
 /*                       P I X - P P M . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2025 United States Government as represented by
+ * Copyright (c) 2004-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,6 +27,8 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 
 #include "bio.h"
@@ -34,6 +36,7 @@
 #include "vmath.h"
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bn.h"
@@ -43,11 +46,25 @@
 static int autosize = 0;		/* !0 to autosize input */
 
 static int fileinput = 0;		/* file of pipe on input? */
-static char *file_name = (char *)NULL;
+static const char *file_name = (char *)NULL;
 static FILE *infp = (FILE *)NULL;
 static FILE *outfp = (FILE *)NULL;
 
 static int pixbytes = 3;
+
+static int
+parse_pixbytes_arg(const char *arg, int *value)
+{
+    if (!bu_opt_scan_int_range(arg, value, 1, INT_MAX, "bytes per pixel"))
+	return 0;
+
+    if (*value != 1 && *value != 3) {
+	bu_log("%s: bytes-per-pixel must be 1 or 3, got '%s'\n", bu_getprogname(), arg);
+	return 0;
+    }
+
+    return 1;
+}
 
 
 int
@@ -58,22 +75,27 @@ get_args(int argc, char *argv[], long *width, long *height)
     while ((c = bu_getopt(argc, argv, "a#:s:w:n:o:h?")) != -1) {
 	switch (c) {
 	    case '#':
-		pixbytes = atoi(bu_optarg);
+		if (!parse_pixbytes_arg(bu_optarg, &pixbytes))
+		    return 0;
 		break;
 	    case 'a':
 		autosize = 1;
 		break;
 	    case 's':
 		/* square file size */
-		*height = *width = atol(bu_optarg);
+		if (!bu_opt_scan_long_range(bu_optarg, width, 1, LONG_MAX, "input size"))
+		    return 0;
+		*height = *width;
 		autosize = 0;
 		break;
 	    case 'w':
-		*width = atol(bu_optarg);
+		if (!bu_opt_scan_long_range(bu_optarg, width, 1, LONG_MAX, "input width"))
+		    return 0;
 		autosize = 0;
 		break;
 	    case 'n':
-		*height = atol(bu_optarg);
+		if (!bu_opt_scan_long_range(bu_optarg, height, 1, LONG_MAX, "input height"))
+		    return 0;
 		autosize = 0;
 		break;
 	    case 'o': {
@@ -95,6 +117,11 @@ get_args(int argc, char *argv[], long *width, long *height)
 	file_name = "-";
     } else {
 	file_name = argv[bu_optind];
+	bu_optind++;
+	if (argc > bu_optind) {
+	    bu_log("%s: excess argument(s) not supported\n", bu_getprogname());
+	    return 0;
+	}
 	if ((infp = fopen(file_name, "rb")) == NULL) {
 	    perror(file_name);
 	    bu_exit(1, "%s: cannot open \"%s\" for reading\n", bu_getprogname(), file_name);
@@ -116,8 +143,10 @@ get_args(int argc, char *argv[], long *width, long *height)
     if (isatty(fileno(outfp))) {
 	bu_exit(0, "ERROR: %s will not write ppm data to a tty\n", bu_getprogname());
     }
-    if (argc > ++bu_optind)
-	bu_log("%s: excess argument(s) ignored\n", bu_getprogname());
+    if (argc > bu_optind) {
+	bu_log("%s: excess argument(s) not supported\n", bu_getprogname());
+	return 0;
+    }
 
     return 1;		/* OK */
 }
@@ -188,6 +217,9 @@ main(int argc, char *argv[])
     if (!get_args(argc, argv, &file_width, &file_height)) {
 	bu_exit (1, "%s\n", usage);
     }
+
+    if (!infp)
+	bu_exit (1, "pix-ppm: null infp\n");
 
     size = file_width * file_height * pixbytes;
 

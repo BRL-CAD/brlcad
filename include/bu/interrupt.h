@@ -1,7 +1,7 @@
 /*                    I N T E R R U P T . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2025 United States Government as represented by
+ * Copyright (c) 2004-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,6 +22,18 @@
 #define BU_INTERRUPT_H
 
 #include "common.h"
+
+/* signal.h is problematic on certain versions of Xcode.  It uses but doesn't
+ * define NSIG. We do the include here with the workaround and reuse this
+ * header in BRL-CAD code that needs signal.h */
+#if defined(__APPLE__) && !defined(NSIG)
+#  define NSIG 32
+#endif
+#ifdef __cplusplus
+#include <csignal>
+#else
+#include <signal.h>
+#endif
 
 #include "bu/defines.h"
 

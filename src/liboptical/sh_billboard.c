@@ -1,7 +1,7 @@
 /*                  S H _ B I L L B O A R D . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2025 United States Government as represented by
+ * Copyright (c) 2004-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -97,8 +97,7 @@ struct bbd_specific bbd_defaults = {
 };
 
 
-#define SHDR_NULL ((struct bbd_specific *)0)
-#define SHDR_O(m) bu_offsetof(struct bbd_specific, m)
+#define BILLBOARD_SHDR_O(m) bu_offsetof(struct bbd_specific, m)
 
 /* local sp_hook function */
 void new_image(const struct bu_structparse *, const char *, void *, const char *, void *);
@@ -109,11 +108,11 @@ void new_image(const struct bu_structparse *, const char *, void *, const char *
  * structure above
  */
 struct bu_structparse bbd_print_tab[] = {
-    {"%ld",  1, "w",	SHDR_O(img_width),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%ld",  1, "n",	SHDR_O(img_height),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%d",  1, "t",	SHDR_O(img_threshold),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%g",  1, "h",	SHDR_O(img_scale),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%V",  1, "f",	SHDR_O(img_filename),	new_image, NULL, NULL },
+    {"%ld",  1, "w",	BILLBOARD_SHDR_O(img_width),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%ld",  1, "n",	BILLBOARD_SHDR_O(img_height),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",  1, "t",	BILLBOARD_SHDR_O(img_threshold),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g",  1, "h",	BILLBOARD_SHDR_O(img_scale),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%V",  1, "f",	BILLBOARD_SHDR_O(img_filename),	new_image, NULL, NULL },
     {"",    0, (char *)0, 0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 struct bu_structparse bbd_parse_tab[] = {
@@ -227,7 +226,7 @@ bbd_setup(struct region *rp, struct bu_vls *matparm, void **dpp, const struct mf
     MAT_IDN(mat);
     RT_DB_INTERNAL_INIT(&intern);
     s = rt_db_get_internal(&intern, rp->reg_treetop->tr_a.tu_stp->st_dp, rtip->rti_dbip,
-			   mat, &rt_uniresource);
+			   mat);
 
     if (intern.idb_minor_type != ID_TGC &&
 	intern.idb_minor_type != ID_REC) {

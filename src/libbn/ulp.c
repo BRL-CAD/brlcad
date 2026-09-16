@@ -1,7 +1,7 @@
 /*                           U L P . C
  * BRL-CAD
  *
- * Copyright (c) 2010-2025 United States Government as represented by
+ * Copyright (c) 2010-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -45,11 +45,12 @@
 #  define HAVE_IEEE754 1
 #endif
 
-#if defined(HAVE_ISNAN) && !defined(HAVE_DECL_ISNAN) && !defined(isnan)
+__BEGIN_DECLS
+#if defined(HAVE_ISNAN) && !defined(HAVE_DECL_ISNAN) && !defined(isnan) && !defined(__cplusplus)
 extern int isnan(double x);
 #endif
 
-#if defined(HAVE_ISINF) && !defined(HAVE_DECL_ISINF) && !defined(isinf)
+#if defined(HAVE_ISINF) && !defined(HAVE_DECL_ISINF) && !defined(isinf) && !defined(__cplusplus)
 extern int isinf(double x);
 #endif
 
@@ -64,7 +65,7 @@ extern float nextafterf(float x, float y);
 #if defined(HAVE_FPCLASSIFY) && !defined(HAVE_DECL_FPCLASSIFY) && !defined(fpclassify)
 extern int fpclassify(double x);
 #endif
-
+__END_DECLS
 
 /* tag‑type unions for bit‑punning */
 union dbl_bits {
@@ -253,7 +254,7 @@ double
 bn_nextafter_up(double val)
 {
 #ifdef HAVE_NEXTAFTER
-    return nextafter(val, val+1.0);
+    return nextafter(val, INFINITY);
 #else
     union dbl_bits bits;
     int type = fpclassify(val);
@@ -278,7 +279,7 @@ double
 bn_nextafter_dn(double val)
 {
 #ifdef HAVE_NEXTAFTER
-    return nextafter(val, val-1.0);
+    return nextafter(val, -INFINITY);
 #else
     union dbl_bits bits;
     int type = fpclassify(val);
@@ -304,7 +305,7 @@ float
 bn_nextafterf_up(float val)
 {
 #ifdef HAVE_NEXTAFTERF
-    return nextafterf(val, val+1.0f);
+    return nextafterf(val, INFINITY);
 #else
     union flt_bits bits;
     int type = fpclassify(val);
@@ -328,7 +329,7 @@ float
 bn_nextafterf_dn(float val)
 {
 #ifdef HAVE_NEXTAFTERF
-    return nextafterf(val, val-1.0f);
+    return nextafterf(val, -INFINITY);
 #else
     union flt_bits bits;
     int type = fpclassify(val);
@@ -353,36 +354,26 @@ bn_nextafterf_dn(float val)
 double
 bn_ulp(double val)
 {
-    union dbl_bits bits;
-    int type = fpclassify(val);
+    double up;
 
-    if (type == FP_NAN || type == FP_INFINITE)
+    if (isnan(val) || isinf(val))
 	return val;
 
-    bits.d = val;
-    bits.u++; /* next "bigger" val */
-    if (type == FP_ZERO || val > 0.0) {
-	return bits.d - val;
-    }
-    return -bits.d + val;
+    up = bn_nextafter_up(val);
+    return fabs(up - val);
 }
 
 
 float
 bn_ulpf(float val)
 {
-    union flt_bits bits;
-    int type = fpclassify(val);
+    float up;
 
-    if (type == FP_NAN || type == FP_INFINITE)
+    if (isnan(val) || isinf(val))
 	return val;
 
-    bits.f = val;
-    bits.i++; /* next "bigger" val */
-    if (type == FP_ZERO || val > 0.0f) {
-	return bits.f - val;
-    }
-    return -bits.f + val;
+    up = bn_nextafterf_up(val);
+    return fabsf(up - val);
 }
 
 

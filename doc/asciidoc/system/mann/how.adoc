@@ -1,0 +1,44 @@
+= HOW(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+how - returns how an object is being displayed
+
+== SYNOPSIS
+
+[source]
+----
+how [-b] object
+----
+
+[[description]]
+== DESCRIPTION
+
+The *how* command queries the display list to determine how the specified `object` is currently being drawn in the display. 
+
+It returns a numerical code representing the object's current display mode (e.g., wireframe, shaded, hidden-line, etc.). If the specified `object` is not currently displayed, the command returns `-1`.
+
+If the *-b* ("both") flag is provided, the command returns two space-separated values: the numerical display mode and the object's floating-point transparency value.
+
+[[examples]]
+== EXAMPLES
+
+.Determine an object's display mode and transparency
+[example]
+====
+mged> **how -b my_region.r**
+
+Returns output similar to `2 0.5`, indicating that `my_region.r` is drawn with display mode 2 and a transparency of 0.5. If the object was not displayed, it would return `-1`.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,7 +1,7 @@
 /*                         M A G I C . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2025 United States Government as represented by
+ * Copyright (c) 2004-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -282,6 +282,8 @@ bu_identify_magic(register uint32_t magic)
 	    return "librt animate";
 	case ANN_TSEG_MAGIC:
 	    return "ann_tseg";
+	case ANN_FSEG_MAGIC:
+	    return "ann_fseg";
 	case CURVE_BEZIER_MAGIC:
 	    return "curve_bezier";
 	case CURVE_CARC_MAGIC:

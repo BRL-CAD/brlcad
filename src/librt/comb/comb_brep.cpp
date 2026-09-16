@@ -1,7 +1,7 @@
 /*                    C O M B _ B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2013-2025 United States Government as represented by
+ * Copyright (c) 2013-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,6 +26,7 @@
 #include "common.h"
 
 #include "raytrace.h"
+#include "bn/mat.h"
 #include "rt/geom.h"
 #include "rt/comb.h"
 #include "nmg.h"
@@ -112,7 +113,7 @@ conv_tree(ON_Brep **b, const union tree *t, const struct db_i *dbip)
 		dir = db_lookup(dbip, name, LOOKUP_QUIET);
 		if (dir != RT_DIR_NULL) {
 		    rt_db_internal intern;
-		    rt_db_get_internal(&intern, dir, dbip, bn_mat_identity, &rt_uniresource);
+		    rt_db_get_internal(&intern, dir, dbip, bn_mat_identity);
 		    RT_CK_DB_INTERNAL(&intern);
 		    ret = single_conversion(&intern, b, dbip);
 		    if (ret == 0 && *b != NULL) {
@@ -120,6 +121,8 @@ conv_tree(ON_Brep **b, const union tree *t, const struct db_i *dbip)
 			    ON_Xform xform(t->tr_l.tl_mat);
 			    ret = -1;
 			    if ((*b)->Transform(xform)) {
+				if (bn_mat_det3(t->tr_l.tl_mat) < 0.0)
+				    (*b)->Flip();
 				ret = 0;
 			    }
 			}

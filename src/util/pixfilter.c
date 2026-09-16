@@ -1,7 +1,7 @@
 /*                     P I X F I L T E R . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2025 United States Government as represented by
+ * Copyright (c) 1986-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,12 +27,15 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include "bio.h"
 
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/str.h"
 #include "bu/exit.h"
 
@@ -95,20 +98,26 @@ get_args(int argc, char **argv)
 		break;
 	    case 'd':
 		dflag++;
-		kerndiv = atoi(bu_optarg);
+		if (!bu_opt_scan_int(bu_optarg, &kerndiv, "divisor") || kerndiv == 0)
+		    return 0;
 		break;
 	    case 'o':
 		oflag++;
-		kernoffset = atoi(bu_optarg);
+		if (!bu_opt_scan_int(bu_optarg, &kernoffset, "offset"))
+		    return 0;
 		break;
 	    case 'w':
-		width = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &width, 1, INT_MAX, "width"))
+		    return 0;
 		break;
 	    case 'n':
-		height = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &height, 1, INT_MAX, "height"))
+		    return 0;
 		break;
 	    case 's':
-		width = height = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &width, 1, INT_MAX, "size"))
+		    return 0;
+		height = width;
 		break;
 	    default:		/* 'h' '?' */
 		return 0;
@@ -133,8 +142,10 @@ get_args(int argc, char **argv)
     if (isatty(fileno(stdout)))
 	return 0;
 
-    if (argc > ++bu_optind)
-	fprintf(stderr, "pixfilter: excess argument(s) ignored\n");
+    if (argc > ++bu_optind) {
+	fprintf(stderr, "pixfilter: excess argument(s) not supported\n");
+	return 0;
+    }
 
     return 1;		/* OK */
 }

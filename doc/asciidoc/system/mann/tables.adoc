@@ -1,0 +1,58 @@
+= TABLES(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+tables - region/solid summary table commands (see idents, regions, solids)
+
+== SYNOPSIS
+
+[source]
+----
+idents file object(s)
+regions file object(s)
+solids file object(s)
+----
+
+
+[[description]]
+== DESCRIPTION
+
+The *tables* command is the shared implementation entry point for three region and solid summary commands: `idents`, `regions`, and `solids`. All three commands are registered as separate names and share the same underlying `ged_tables_core` function; the specific command name (`argv[0]`) determines which level of output detail is produced.
+
+Invoking `tables` directly by name is *not valid* — it falls through to an error: `tables: input error`. Use one of the three named commands instead:
+
+[cols="1,4"]
+|===
+|Command |Description
+
+|`idents`
+|Writes a region identity table: region count, ident number, air code, material code, LOS, and path. The output is sorted by region ID and written twice (encounter order then sorted). See *idents*(nged).
+
+|`regions`
+|Writes a region and Boolean member table: same region fields as `idents`, plus the Boolean formula showing each member primitive by name and operator. See *regions*(nged).
+
+|`solids`
+|Writes a full primitive parameter table: same as `regions`, plus the evaluated geometric parameters of each primitive with accumulated transformation matrices applied. See *solids*(nged).
+
+|===
+
+All three commands write their output to a file (not to standard output). The file is overwritten if it already exists. A header block is written containing the database filename, username, database title, model units, and the list of input objects.
+
+[[see_also]]
+== SEE ALSO
+
+*idents*(nged), *regions*(nged), *solids*(nged)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

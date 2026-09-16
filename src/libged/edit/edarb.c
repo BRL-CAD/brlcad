@@ -1,7 +1,7 @@
 /*                         E D A R B . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2025 United States Government as represented by
+ * Copyright (c) 1985-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -55,7 +55,7 @@ editarb(struct ged *gedp, struct rt_arb_internal *arb, int type, int edge, vect_
 	return BRLCAD_ERROR;
     }
     bu_vls_free(&error_msg);
-    ret = arb_edit(arb, peqn, edge, newedge, pos_model, &wdbp->wdb_tol);
+    ret = rt_arb_edit(gedp->ged_result_str, arb, NULL, type, edge, newedge ? RT_ARB_EDIT_EDGE_DIR : RT_ARB_EDIT_DEFAULT, pos_model, (plane_t *)peqn, &wdbp->wdb_tol);
     if (!ret) {
 	return BRLCAD_OK;
     } else {
@@ -94,7 +94,7 @@ edarb_extrude(void *data, int argc, const char *argv[])
     }
 
     GED_DB_LOOKUP(gedp, dp, (char *)argv[2], LOOKUP_QUIET, BRLCAD_ERROR);
-    GED_DB_GET_INTERNAL(gedp, &intern, dp, (matp_t)NULL, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_GET_INTERN(gedp, &intern, dp, (matp_t)NULL, BRLCAD_ERROR);
 
     if (intern.idb_type != ID_ARB8) {
 	bu_vls_printf(gedp->ged_result_str, "%s %s: solid type must be ARB\n", argv[0], argv[1]);
@@ -126,7 +126,7 @@ edarb_extrude(void *data, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_PUT_INTERN(gedp, dp, &intern, BRLCAD_ERROR);
     rt_db_free_internal(&intern);
 
     return BRLCAD_OK;
@@ -159,7 +159,7 @@ edarb_mirface(void *data, int argc, const char *argv[])
     }
 
     GED_DB_LOOKUP(gedp, dp, (char *)argv[2], LOOKUP_QUIET, BRLCAD_ERROR);
-    GED_DB_GET_INTERNAL(gedp, &intern, dp, (matp_t)NULL, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_GET_INTERN(gedp, &intern, dp, (matp_t)NULL, BRLCAD_ERROR);
 
     if (intern.idb_type != ID_ARB8) {
 	bu_vls_printf(gedp->ged_result_str, "%s %s: solid type must be ARB\n", argv[0], argv[1]);
@@ -178,7 +178,7 @@ edarb_mirface(void *data, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_PUT_INTERN(gedp, dp, &intern, BRLCAD_ERROR);
     rt_db_free_internal(&intern);
 
     return BRLCAD_OK;
@@ -222,7 +222,7 @@ edarb_edgedir(void *data, int argc, const char *argv[])
     edge -= 1;
 
     GED_DB_LOOKUP(gedp, dp, (char *)argv[2], LOOKUP_QUIET, BRLCAD_ERROR);
-    GED_DB_GET_INTERNAL(gedp, &intern, dp, (matp_t)NULL, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_GET_INTERN(gedp, &intern, dp, (matp_t)NULL, BRLCAD_ERROR);
 
     if (intern.idb_type != ID_ARB8) {
 	bu_vls_printf(gedp->ged_result_str, "%s %s: solid type must be ARB\n", argv[0], argv[1]);
@@ -259,7 +259,7 @@ edarb_edgedir(void *data, int argc, const char *argv[])
 
     ret = editarb(gedp, arb, type, edge, slope, 1);
     if (ret == BRLCAD_OK) {
-	GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, BRLCAD_ERROR);
+	GED_DB_PUT_INTERN(gedp, dp, &intern, BRLCAD_ERROR);
     }
 
     rt_db_free_internal(&intern);
@@ -306,7 +306,7 @@ edarb_permute(void *data, int argc, const char *argv[])
     }
 
     GED_DB_LOOKUP(gedp, dp, (char *)argv[2], LOOKUP_QUIET, BRLCAD_ERROR);
-    GED_DB_GET_INTERNAL(gedp, &intern, dp, (matp_t)NULL, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_GET_INTERN(gedp, &intern, dp, (matp_t)NULL, BRLCAD_ERROR);
 
     if (intern.idb_type != ID_ARB8) {
 	bu_vls_printf(gedp->ged_result_str, "%s %s: solid type must be ARB\n", argv[0], argv[1]);
@@ -323,7 +323,7 @@ edarb_permute(void *data, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_PUT_INTERN(gedp, dp, &intern, BRLCAD_ERROR);
     rt_db_free_internal(&intern);
 
     return BRLCAD_OK;

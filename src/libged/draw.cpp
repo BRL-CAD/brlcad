@@ -1,7 +1,7 @@
 /*                         D R A W . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -46,7 +46,7 @@
 #include "rt/view.h"
 
 #include "ged/view.h"
-#include "./alphanum.h"
+#include "../librt/librt_private.h"
 #include "./ged_private.h"
 
 static int
@@ -164,7 +164,7 @@ csg_wireframe_update(struct bv_scene_obj *vo, struct bview *v, int flag)
     struct rt_db_internal dbintern;
     RT_DB_INTERNAL_INIT(&dbintern);
     struct rt_db_internal *ip = &dbintern;
-    int ret = rt_db_get_internal(ip, dp, dbip, NULL, d->res);
+    int ret = rt_db_get_internal(ip, dp, dbip, NULL);
     if (ret < 0)
 	return 0;
 
@@ -180,7 +180,6 @@ csg_wireframe_update(struct bv_scene_obj *vo, struct bview *v, int flag)
 struct ged_full_detail_clbk_data {
     struct db_i *dbip;
     struct directory *dp;
-    struct resource *res;
     struct rt_db_internal *intern;
 };
 
@@ -198,7 +197,7 @@ bot_mesh_info_clbk(struct bv_mesh_lod *lod, void *cb_data)
     BU_GET(cd->intern, struct rt_db_internal);
     RT_DB_INTERNAL_INIT(cd->intern);
     struct rt_db_internal *ip = cd->intern;
-    int ret = rt_db_get_internal(ip, dp, dbip, NULL, cd->res);
+    int ret = rt_db_get_internal(ip, dp, dbip, NULL);
     if (ret < 0) {
 	BU_PUT(cd->intern, struct rt_db_internal);
 	return -1;
@@ -284,7 +283,7 @@ bot_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
 	    struct rt_db_internal dbintern;
 	    RT_DB_INTERNAL_INIT(&dbintern);
 	    struct rt_db_internal *ip = &dbintern;
-	    int ret = rt_db_get_internal(ip, dp, dbip, NULL, d->res);
+	    int ret = rt_db_get_internal(ip, dp, dbip, NULL);
 	    if (ret < 0)
 		return;
 	    struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
@@ -308,7 +307,7 @@ bot_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
 	    struct rt_db_internal dbintern;
 	    RT_DB_INTERNAL_INIT(&dbintern);
 	    struct rt_db_internal *ip = &dbintern;
-	    int ret = rt_db_get_internal(ip, dp, dbip, NULL, d->res);
+	    int ret = rt_db_get_internal(ip, dp, dbip, NULL);
 	    if (ret < 0)
 		return;
 	    struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
@@ -358,7 +357,6 @@ bot_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
 	BU_GET(cbd, ged_full_detail_clbk_data);
 	cbd->dbip = dbip;
 	cbd->dp = dp;
-	cbd->res = &rt_uniresource;
 	cbd->intern = NULL;
 	bv_mesh_lod_detail_setup_clbk(lod, &bot_mesh_info_clbk, (void *)cbd);
 	bv_mesh_lod_detail_clear_clbk(lod, &bot_mesh_info_clear_clbk);
@@ -439,7 +437,7 @@ brep_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
 		struct rt_db_internal dbintern;
 		RT_DB_INTERNAL_INIT(&dbintern);
 		struct rt_db_internal *ip = &dbintern;
-		int ret = rt_db_get_internal(ip, dp, dbip, NULL, d->res);
+		int ret = rt_db_get_internal(ip, dp, dbip, NULL);
 		if (ret < 0)
 		    return;
 		struct rt_brep_internal *bi = (struct rt_brep_internal *)ip->idb_ptr;
@@ -509,7 +507,6 @@ brep_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
 	BU_GET(cbd, ged_full_detail_clbk_data);
 	cbd->dbip = dbip;
 	cbd->dp = dp;
-	cbd->res = &rt_uniresource;
 	cbd->intern = NULL;
 	bv_mesh_lod_detail_setup_clbk(lod, &bot_mesh_info_clbk, (void *)cbd);
 	bv_mesh_lod_detail_clear_clbk(lod, &bot_mesh_info_clear_clbk);
@@ -571,7 +568,6 @@ wireframe_plot(struct bv_scene_obj *s, struct bview *v, struct rt_db_internal *i
 	    ld->tol = d->tol;
 	    ld->ttol = d->ttol;
 	    ld->mesh_c = d->mesh_c;
-	    ld->res = d->res;
 	    vo->s_i_data= (void *)ld;
 
 	    // We're adaptive - have to plot when the view changes.  Set the
@@ -690,7 +686,7 @@ draw_scene(struct bv_scene_obj *s, struct bview *v)
     struct rt_db_internal dbintern;
     RT_DB_INTERNAL_INIT(&dbintern);
     struct rt_db_internal *ip = &dbintern;
-    int ret = rt_db_get_internal(ip, dp, dbip, s->s_mat, d->res);
+    int ret = rt_db_get_internal(ip, dp, dbip, s->s_mat);
     if (ret < 0)
 	return;
 
@@ -806,7 +802,7 @@ tree_color(struct directory *dp, struct draw_data_t *dd)
     db5_get_attributes(dd->dbip, &c_avs, dp);
 
     // No inherit.  Do we have a region material table?
-    if (rt_material_head() != MATER_NULL) {
+    if (db_mater_head(dd->dbip) != MATER_NULL) {
 	// If we do, do we have a region id?
 	int region_id = -1;
 	const char *region_id_val = bu_avs_get(&c_avs, "region_id");
@@ -820,7 +816,7 @@ tree_color(struct directory *dp, struct draw_data_t *dd)
 	if (region_id >= 0) {
 	    const struct mater *mp;
 	    int material_color = 0;
-	    for (mp = rt_material_head(); mp != MATER_NULL; mp = mp->mt_forw) {
+	    for (mp = db_mater_head(dd->dbip); mp != MATER_NULL; mp = mp->mt_forw) {
 		if (region_id > mp->mt_high || region_id < mp->mt_low) {
 		    continue;
 		}
@@ -898,7 +894,7 @@ draw_walk_tree(struct db_full_path *path, union tree *tp, mat_t *curr_mat,
 	    draw_walk_tree(path, tp->tr_b.tb_right, curr_mat, traverse_func, client_data, comb_inst_map);
 	    break;
 	case OP_DB_LEAF:
-	    if (UNLIKELY(dd->dbip->dbi_use_comb_instance_ids && cinst_map))
+	    if (UNLIKELY(dd->dbip->i->dbi_use_comb_instance_ids && cinst_map))
 		(*cinst_map)[std::string(tp->tr_l.tl_name)]++;
 	    if ((dp=db_lookup(dd->dbip, tp->tr_l.tl_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
 		return;
@@ -930,7 +926,7 @@ draw_walk_tree(struct db_full_path *path, union tree *tp, mat_t *curr_mat,
 		if (!(dp->d_flags & RT_DIR_HIDDEN)) {
 		    db_add_node_to_full_path(path, dp);
 		    DB_FULL_PATH_SET_CUR_BOOL(path, tp->tr_op);
-		    if (UNLIKELY(dd->dbip->dbi_use_comb_instance_ids && cinst_map))
+		    if (UNLIKELY(dd->dbip->i->dbi_use_comb_instance_ids && cinst_map))
 			DB_FULL_PATH_SET_CUR_COMB_INST(path, (*cinst_map)[std::string(tp->tr_l.tl_name)]-1);
 		    if (!db_full_path_cyclic(path, NULL, 0)) {
 			/* Keep going */
@@ -986,11 +982,11 @@ draw_gather_paths(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	struct rt_db_internal in;
 	struct rt_comb_internal *comb;
 
-	if (rt_db_get_internal(&in, dp, dd->dbip, NULL, &rt_uniresource) < 0)
+	if (rt_db_get_internal(&in, dp, dd->dbip, NULL) < 0)
 	    return;
 
 	comb = (struct rt_comb_internal *)in.idb_ptr;
-	if (UNLIKELY(dd->dbip->dbi_use_comb_instance_ids)) {
+	if (UNLIKELY(dd->dbip->i->dbi_use_comb_instance_ids)) {
 	    std::unordered_map<std::string, int> cinst_map;
 	    draw_walk_tree(path, comb->tree, curr_mat, draw_gather_paths, client_data, (void *)&cinst_map);
 	} else {
@@ -1033,7 +1029,6 @@ draw_gather_paths(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	ud->tol = dd->tol;
 	ud->ttol = dd->ttol;
 	ud->mesh_c = dd->mesh_c;
-	ud->res = &rt_uniresource; // TODO - at some point this may be from the app or view.  dd->res is temporary, so we don't use it here
 	s->s_i_data = (void *)ud;
 	s->s_free_callback = &draw_free_data;
 

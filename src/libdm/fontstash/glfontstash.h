@@ -36,18 +36,26 @@ typedef struct GLFONScontext GLFONScontext;
 static int glfons__renderCreate(void* userPtr, int width, int height)
 {
 	GLFONScontext* gl = (GLFONScontext*)userPtr;
-	// Create may be called multiple times, delete existing texture.
-	if (gl->tex != 0) {
+	GLuint texture = 0;
+	GLint maximum = 0;
+	if (!gl || width < 2 || height < 2) return 0;
+	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maximum);
+	if (maximum > 0 && (width > maximum || height > maximum)) return 0;
+	/* Create the replacement before releasing a usable existing texture. */
+	glGenTextures(1, &texture);
+	if (!texture) return 0;
+	glBindTexture(GL_TEXTURE_2D, texture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, width, height, 0,
+		     GL_ALPHA, GL_UNSIGNED_BYTE, 0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	if (gl->tex != 0)
 		glDeleteTextures(1, &gl->tex);
-		gl->tex = 0;
-	}
-	glGenTextures(1, &gl->tex);
-	if (!gl->tex) return 0;
+	gl->tex = texture;
 	gl->width = width;
 	gl->height = height;
-	glBindTexture(GL_TEXTURE_2D, gl->tex);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, gl->width, gl->height, 0, GL_ALPHA, GL_UNSIGNED_BYTE, 0);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	return 1;
 }
 
@@ -60,6 +68,10 @@ static int glfons__renderResize(void* userPtr, int width, int height)
 static void glfons__renderUpdate(void* userPtr, int* rect, const unsigned char* data)
 {
 	GLFONScontext* gl = (GLFONScontext*)userPtr;
+	if (!gl || !rect || !data || rect[0] < 0 || rect[1] < 0 ||
+	    rect[2] > gl->width || rect[3] > gl->height ||
+	    rect[0] >= rect[2] || rect[1] >= rect[3])
+		return;
 	int w = rect[2] - rect[0];
 	int h = rect[3] - rect[1];
 
@@ -77,7 +89,9 @@ static void glfons__renderUpdate(void* userPtr, int* rect, const unsigned char* 
 static void glfons__renderDraw(void* userPtr, const float* verts, const float* tcoords, const unsigned int* colors, int nverts)
 {
 	GLFONScontext* gl = (GLFONScontext*)userPtr;
-	if (gl->tex == 0) return;
+	if (!gl || !verts || !tcoords || !colors || nverts <= 0 ||
+	    gl->tex == 0)
+		return;
 	glBindTexture(GL_TEXTURE_2D, gl->tex);
 	glEnable(GL_TEXTURE_2D);
 	glEnableClientState(GL_VERTEX_ARRAY);
@@ -99,61 +113,77 @@ static void glfons__renderDraw(void* userPtr, const float* verts, const float* t
 static void glfons__renderDelete(void* userPtr)
 {
 	GLFONScontext* gl = (GLFONScontext*)userPtr;
-        if (gl) {
-          if (gl->tex != 0) {
-            glDeleteTextures(1, &gl->tex);
-          }
-          gl->tex = 0;
-          free(gl);
-        }
+	if (gl) {
+		if (gl->tex != 0)
+			glDeleteTextures(1, &gl->tex);
+		gl->tex = 0;
+		free(gl);
+	}
+}
+
+static void glfons__handleError(void* userPtr, int error, int value)
+{
+	FONScontext* stash = (FONScontext*)userPtr;
+	GLint maximum = 0;
+	int width, height, nextWidth, nextHeight;
+	if (!stash || error != FONS_ATLAS_FULL) return;
+	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maximum);
+	if (maximum < 2) return;
+	fonsGetAtlasSize(stash, &width, &height);
+	nextWidth = width;
+	nextHeight = height;
+	if (value > width || value > height) {
+		while (nextWidth < value && nextWidth <= maximum/2)
+			nextWidth *= 2;
+		while (nextHeight < value && nextHeight <= maximum/2)
+			nextHeight *= 2;
+	} else if (width <= height && width <= maximum/2) {
+		nextWidth *= 2;
+	} else if (height <= maximum/2) {
+		nextHeight *= 2;
+	}
+	if (nextWidth <= maximum && nextHeight <= maximum &&
+	    (nextWidth != width || nextHeight != height))
+		(void)fonsExpandAtlas(stash, nextWidth, nextHeight);
 }
 
 
 FONScontext* glfonsCreate(int width, int height, int flags)
 {
 	GLFONScontext* gl = (GLFONScontext*)calloc(1, sizeof(GLFONScontext));
-	FONSparams *params = (FONSparams *)calloc(1, sizeof(FONSparams));
-	FONScontext *ctx = NULL;
-	if (gl == NULL) goto cerror;
-	if (params == NULL) goto cerror;
+	FONSparams params;
+	FONScontext* stash;
+	if (!gl) return NULL;
+	memset(&params, 0, sizeof(params));
+	params.width = width;
+	params.height = height;
+	params.flags = (unsigned char)flags;
+	params.renderCreate = glfons__renderCreate;
+	params.renderResize = glfons__renderResize;
+	params.renderUpdate = glfons__renderUpdate;
+	params.renderDraw = glfons__renderDraw;
+	params.renderDelete = glfons__renderDelete;
+	params.userPtr = gl;
 
-	params->width = width;
-	params->height = height;
-	params->flags = (unsigned char)flags;
-	params->renderCreate = glfons__renderCreate;
-	params->renderResize = glfons__renderResize;
-	params->renderUpdate = glfons__renderUpdate;
-	params->renderDraw = glfons__renderDraw;
-	params->renderDelete = glfons__renderDelete;
-	params->userPtr = gl;
-
-	ctx = fonsCreateInternal(params);
-	if (ctx)
-	   return ctx;
-
-cerror:
-	if (params != NULL) free(params);
-	if (gl != NULL) free(gl);
-	return NULL;
+	/* fonsCreateInternal owns the renderer object, even on failure. */
+	stash = fonsCreateInternal(&params);
+	if (stash)
+		fonsSetErrorCallback(stash, glfons__handleError, stash);
+	return stash;
 }
 
 void glfonsDelete(FONScontext* ctx)
 {
-        if (!ctx)
-          return;
+	if (!ctx)
+		return;
 
-	if (ctx->params && ctx->params->userPtr) {
-          free(ctx->params->userPtr);
-	}
-	if (ctx->params) {
-          free(ctx->params);
-	}
 	fonsDeleteInternal(ctx);
 }
 
 unsigned int glfonsRGBA(unsigned char r, unsigned char g, unsigned char b, unsigned char a)
 {
-	return (r) | (g << 8) | (b << 16) | (a << 24);
+	return (unsigned int)r | ((unsigned int)g << 8) |
+	       ((unsigned int)b << 16) | ((unsigned int)a << 24);
 }
 
 #endif

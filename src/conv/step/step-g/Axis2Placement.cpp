@@ -1,7 +1,7 @@
 /*                 Axis2Placement.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2025 United States Government as represented by
+ * Copyright (c) 1994-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -25,6 +25,8 @@
  */
 
 #include "STEPWrapper.h"
+#include "STEPGeneratedAPI.h"
+#include "ap_schema.h"
 #include "Factory.h"
 
 #include "Axis2Placement2D.h"
@@ -93,16 +95,15 @@ Axis2Placement::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     step = sw;
 
     if (value == NULL) {
-	SdaiAxis2_placement *v = (SdaiAxis2_placement *)sse;
+	SDAI_Select *v = reinterpret_cast<SDAI_Select *>(sse);
+	SDAI_Application_instance *selected = brlcad::step::SelectedEntity(v);
 
-	if (v->IsAxis2_placement_2d()) {
-	    SdaiAxis2_placement_2d *a2 = *v;
+	if (selected && sw->IsSchemaEntity(selected, "AXIS2_PLACEMENT_2D")) {
 	    type = Axis2Placement::AXIS2_PLACEMENT_2D;
-	    value = dynamic_cast<Placement *>(Factory::CreateObject(sw, (SDAI_Application_instance *)a2));
-	} else if (v->IsAxis2_placement_3d()) {
-	    SdaiAxis2_placement_3d *a3 = *v;
+	    value = dynamic_cast<Placement *>(Factory::CreateObject(sw, selected));
+	} else if (selected && sw->IsSchemaEntity(selected, "AXIS2_PLACEMENT_3D")) {
 	    type = Axis2Placement::AXIS2_PLACEMENT_3D;
-	    value = dynamic_cast<Placement *>(Factory::CreateObject(sw, (SDAI_Application_instance *)a3));
+	    value = dynamic_cast<Placement *>(Factory::CreateObject(sw, selected));
 	} else {
 	    type = Axis2Placement::AXIS2_PLACEMENT_UNKNOWN;
 	}

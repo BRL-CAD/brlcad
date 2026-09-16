@@ -1,7 +1,7 @@
 /*                      A A B B _ R A Y . C
  * BRL-CAD
  *
- * Copyright (c) 2020-2025 United States Government as represented by
+ * Copyright (c) 2020-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,7 +29,7 @@
 #include "bg/aabb_ray.h"
 
 void
-bg_ray_invdir(vect_t *invdir, vect_t dir)
+bg_ray_invdir(vect_t *invdir, const vect_t dir)
 {
     if (UNLIKELY(!invdir))
 	return;
@@ -40,7 +40,6 @@ bg_ray_invdir(vect_t *invdir, vect_t dir)
     } else if (dir[X] > SQRT_SMALL_FASTF) {
 	(*invdir)[X]=1.0/dir[X];
     } else {
-	dir[X] = 0.0;
 	(*invdir)[X] = INFINITY;
     }
     if (dir[Y] < -SQRT_SMALL_FASTF) {
@@ -61,14 +60,14 @@ bg_ray_invdir(vect_t *invdir, vect_t dir)
 
 int
 bg_isect_aabb_ray(fastf_t *r_min, fastf_t *r_max,
-	point_t opt,
+	const point_t opt,
 	const fastf_t *invdir, /* inverses of dir[] */
 	const fastf_t *aabb_min,
 	const fastf_t *aabb_max)
 {
     register const fastf_t *pt = &opt[0];
-    register fastf_t sv;
-#define st sv                   /* reuse the register */
+    register fastf_t aabb_sv;
+#define aabb_st aabb_sv                   /* reuse the register */
     register fastf_t rmin = -MAX_FASTF;
     register fastf_t rmax =  MAX_FASTF;
 
@@ -78,17 +77,17 @@ bg_isect_aabb_ray(fastf_t *r_min, fastf_t *r_max,
     if (*invdir < -SMALL_FASTF && *invdir > -INFINITY) {
 	/* Heading towards smaller numbers */
 	/* if (*aabb_min > *pt) miss */
-	if (rmax > (sv = (*aabb_min - *pt) * *invdir))
-	    rmax = sv;
-	if (rmin < (st = (*aabb_max - *pt) * *invdir))
-	    rmin = st;
+	if (rmax > (aabb_sv = (*aabb_min - *pt) * *invdir))
+	    rmax = aabb_sv;
+	if (rmin < (aabb_st = (*aabb_max - *pt) * *invdir))
+	    rmin = aabb_st;
     }  else if (*invdir > SMALL_FASTF && *invdir < INFINITY) {
 	/* Heading towards larger numbers */
 	/* if (*max < *pt) miss */
-	if (rmax > (st = (*aabb_max - *pt) * *invdir))
-	    rmax = st;
-	if (rmin < ((sv = (*aabb_min - *pt) * *invdir)))
-	    rmin = sv;
+	if (rmax > (aabb_st = (*aabb_max - *pt) * *invdir))
+	    rmax = aabb_st;
+	if (rmin < ((aabb_sv = (*aabb_min - *pt) * *invdir)))
+	    rmin = aabb_sv;
     } else {
 	/*
 	 * Direction cosines along this axis is NEAR 0,
@@ -102,15 +101,15 @@ bg_isect_aabb_ray(fastf_t *r_min, fastf_t *r_max,
     /* Y axis */
     pt++; invdir++; aabb_max++; aabb_min++;
     if (*invdir < -SMALL_FASTF && *invdir > -INFINITY) {
-	if (rmax > (sv = (*aabb_min - *pt) * *invdir))
-	    rmax = sv;
-	if (rmin < (st = (*aabb_max - *pt) * *invdir))
-	    rmin = st;
+	if (rmax > (aabb_sv = (*aabb_min - *pt) * *invdir))
+	    rmax = aabb_sv;
+	if (rmin < (aabb_st = (*aabb_max - *pt) * *invdir))
+	    rmin = aabb_st;
     }  else if (*invdir > SMALL_FASTF && *invdir < INFINITY) {
-	if (rmax > (st = (*aabb_max - *pt) * *invdir))
-	    rmax = st;
-	if (rmin < ((sv = (*aabb_min - *pt) * *invdir)))
-	    rmin = sv;
+	if (rmax > (aabb_st = (*aabb_max - *pt) * *invdir))
+	    rmax = aabb_st;
+	if (rmin < ((aabb_sv = (*aabb_min - *pt) * *invdir)))
+	    rmin = aabb_sv;
     } else {
 	if ((*aabb_min > *pt) || (*aabb_max < *pt))
 	    return 0;   /* MISS */
@@ -119,15 +118,15 @@ bg_isect_aabb_ray(fastf_t *r_min, fastf_t *r_max,
     /* Z axis */
     pt++; invdir++; aabb_max++; aabb_min++;
     if (*invdir < -SMALL_FASTF && *invdir > -INFINITY) {
-	if (rmax > (sv = (*aabb_min - *pt) * *invdir))
-	    rmax = sv;
-	if (rmin < (st = (*aabb_max - *pt) * *invdir))
-	    rmin = st;
+	if (rmax > (aabb_sv = (*aabb_min - *pt) * *invdir))
+	    rmax = aabb_sv;
+	if (rmin < (aabb_st = (*aabb_max - *pt) * *invdir))
+	    rmin = aabb_st;
     }  else if (*invdir > SMALL_FASTF && *invdir < INFINITY) {
-	if (rmax > (st = (*aabb_max - *pt) * *invdir))
-	    rmax = st;
-	if (rmin < ((sv = (*aabb_min - *pt) * *invdir)))
-	    rmin = sv;
+	if (rmax > (aabb_st = (*aabb_max - *pt) * *invdir))
+	    rmax = aabb_st;
+	if (rmin < ((aabb_sv = (*aabb_min - *pt) * *invdir)))
+	    rmin = aabb_sv;
     } else {
 	if ((*aabb_min > *pt) || (*aabb_max < *pt))
 	    return 0;   /* MISS */

@@ -1,7 +1,7 @@
 #                         M G E D . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2025 United States Government as represented by
+# Copyright (c) 2004-2026 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -116,7 +116,7 @@ proc add_test {cmdname {testfilerootname ""}} {
 	set testfilename [format ./%s_test.%s $testfilerootname $test_binary_name]
      }
      set testfile [open $testfilename a]
-     puts $testfile "source [format %s/regress/%s/regression_resources.tcl $top_srcdir $test_binary_name]"
+     puts $testfile "source [list [file join $top_srcdir regress $test_binary_name regression_resources.tcl]]"
      set inputtestfile [open [format %s/regress/%s/%s.%s $top_srcdir $test_binary_name $cmdname $test_binary_name] r]
      while {[gets $inputtestfile line] >= 0} {
 	puts $testfile $line

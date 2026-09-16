@@ -1,7 +1,7 @@
 /*                        S H A D E R . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -48,7 +48,7 @@ ged_shader_core(struct ged *gedp, int argc, const char *argv[])
 
     GED_DB_LOOKUP(gedp, dp, argv[1], LOOKUP_NOISY, BRLCAD_ERROR);
     GED_CHECK_COMB(gedp, dp, BRLCAD_ERROR);
-    GED_DB_GET_INTERNAL(gedp, &intern, dp, (fastf_t *)NULL, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_GET_INTERN(gedp, &intern, dp, (fastf_t *)NULL, BRLCAD_ERROR);
 
     comb = (struct rt_comb_internal *)intern.idb_ptr;
     RT_CK_COMB(comb);
@@ -71,7 +71,7 @@ ged_shader_core(struct ged *gedp, int argc, const char *argv[])
 	/* Bunch up the rest of the args, space separated */
 	bu_vls_from_argv(&comb->shader, argc-2, (const char **)argv+2);
 
-	GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, BRLCAD_ERROR);
+	GED_DB_PUT_INTERN(gedp, dp, &intern, BRLCAD_ERROR);
 	/* Internal representation has been freed by rt_db_put_internal */
     }
 
@@ -79,24 +79,13 @@ ged_shader_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl shader_cmd_impl = {
-    "shader",
-    ged_shader_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd shader_cmd = { &shader_cmd_impl };
-const struct ged_cmd *shader_cmds[] = { &shader_cmd, NULL };
+#define GED_SHADER_COMMANDS(X, XID) \
+    X(shader, ged_shader_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  shader_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_SHADER_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_shader", 1, GED_SHADER_COMMANDS)
 
 /*
  * Local Variables:

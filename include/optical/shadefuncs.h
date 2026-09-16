@@ -1,7 +1,7 @@
 /*			S H A D E F U N C S . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2025 United States Government as represented by
+ * Copyright (c) 1993-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -40,7 +40,7 @@
  */
 struct mfuncs {
     uint32_t mf_magic;		/**< @brief To validate structure */
-    char *mf_name;		/**< @brief Keyword for material */
+    const char *mf_name;		/**< @brief Keyword for material */
     struct mfuncs *mf_forw;	/**< @brief Forward link */
     int mf_inputs;		/**< @brief shadework inputs needed */
     int mf_flags;		/**< @brief Flags describing shader */

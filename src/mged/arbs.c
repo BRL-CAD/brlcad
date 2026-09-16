@@ -1,7 +1,7 @@
 /*                          A R B S . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2025 United States Government as represented by
+ * Copyright (c) 1986-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -21,7 +21,6 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <signal.h>
 #include <string.h>
 #include <math.h>
 
@@ -287,7 +286,7 @@ f_rfarb(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	return TCL_ERROR;
     }
 
-    if (rt_db_put_internal(dp, s->dbip, &internal, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(dp, s->dbip, &internal) < 0) {
 	rt_db_free_internal(&internal);
     	Tcl_AppendResult(s->interp, "Database write error, aborting.\n", (char *)NULL);
 	Tcl_AppendResult(s->interp, ERROR_RECOVERY_SUGGESTION, (char *)NULL);

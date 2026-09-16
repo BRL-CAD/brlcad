@@ -1,7 +1,7 @@
 /*                         A S C 2 G . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2025 United States Government as represented by
+ * Copyright (c) 1985-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -37,6 +37,7 @@
 #include "bu/app.h"
 #include "bu/cv.h"
 #include "bu/debug.h"
+#include "bu/file.h"
 #include "bu/vls.h"
 #include "bu/units.h"
 #include "bn.h"
@@ -71,16 +72,15 @@ static size_t ars_curve = 0;
 static size_t ars_pt = 0;
 static char *ars_name = NULL;
 static fastf_t **ars_curves = NULL;
-static char *slave_name = "safe_interp";
-static char *db_name = "_db";
+static const char *slave_name = "safe_interp";
+static const char *db_name = "_db";
 
-static int linecnt = 0;
 static char usage[] = "\
 Usage: asc2g file.asc file.g\n\
  Convert an ASCII BRL-CAD database to binary form\n\
 ";
 
-char *aliases[] = {
+const char *aliases[] = {
     "attr",
     "color",
     "put",
@@ -496,7 +496,7 @@ nmgbld(void)
 
     /* Next, import this disk record into memory */
     RT_DB_INTERNAL_INIT(&intern);
-    if (OBJ[ID_NMG].ft_import5(&intern, &ext, bn_mat_identity, ofp->dbip, &rt_uniresource) < 0)
+    if (OBJ[ID_NMG].ft_import5(&intern, &ext, bn_mat_identity, ofp->dbip) < 0)
 	bu_exit(-1, "ft_import5 failed on NMG %s\n", name);
     bu_free_external(&ext);
 
@@ -1118,7 +1118,7 @@ polyhbld(void)
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
 
-    if (rt_pg_to_bot(&intern, &tol, &rt_uniresource) < 0)
+    if (rt_pg_to_bot(&intern, &tol) < 0)
 	bu_exit(1, "Failed to convert [%s] polysolid object to triangle mesh\n", name);
     /* The polysolid is freed by the converter */
 
@@ -1157,7 +1157,7 @@ materbld(void)
     b = (unsigned char)atoi(cp);
 
     /* Put it on a linked list for output later */
-    rt_color_addrec(low, hi, r, g, b, -1L);
+    db_mater_add(ofp->dbip, low, hi, r, g, b, -1L);
 }
 
 
@@ -1435,85 +1435,6 @@ arbnbld(void)
 }
 
 
-/**
- * This routine checks the last character in the string to see if it matches the
- * specified character. Used by gettclblock() to check for an escaped return.
- *
- */
-int
-endswith(char *line, char ch)
-{
-    if (*(line+strlen(line)-1) == ch) {
-	return 1;
-    }
-    return 0;
-}
-/**
- * This routine counts the number of open braces and is used to determine whether a Tcl
- * command is complete.
- *
- */
-int
-bracecnt(char *line)
-{
-    char *start;
-    int cnt = 0;
-
-    start = line;
-    while (*start != '\0') {
-	if (*start == '{') {
-	    cnt++;
-	} else if (*start == '}') {
-	    cnt--;
-	}
-	start++;
-    }
-    return cnt;
-}
-/**
- * This routine reads the next block of Tcl commands. This block is expected to be a Tcl
- * command script and will be fed to an interpreter using Tcl_Eval(). Any escaped returns
- * or open braces are parsed through and concatenated ensuring Tcl commands are complete.
- *
- * SIZE is used as the approximate blocking size allowing to grow past this to close the
- * command line.
- */
-int
-gettclblock(struct bu_vls *line, FILE *fp)
-{
-    int ret = 0;
-    struct bu_vls tmp = BU_VLS_INIT_ZERO;
-
-    if ((ret=bu_vls_gets(line, fp)) >= 0) {
-	int bcnt = 0;
-	int escapedcr = 0;
-
-	linecnt++;
-	escapedcr = endswith(bu_vls_addr(line), '\\');
-	bcnt = bracecnt(bu_vls_addr(line));
-	while ((ret >= 0) && ((bu_vls_strlen(line) < SIZE) || (escapedcr) || (bcnt != 0))) {
-	    linecnt++;
-	    if (escapedcr) {
-		bu_vls_trunc(line, (int)bu_vls_strlen(line)-1);
-	    }
-	    if ((ret=bu_vls_gets(&tmp, fp)) > 0) {
-		escapedcr = endswith(bu_vls_addr(&tmp), '\\');
-		bcnt = bcnt + bracecnt(bu_vls_addr(&tmp));
-		bu_vls_putc(line, '\n');
-		bu_vls_strcat(line, bu_vls_addr(&tmp));
-		bu_vls_trunc(&tmp, 0);
-	    } else {
-		escapedcr = 0;
-	    }
-	}
-	ret = (int)bu_vls_strlen(line);
-    }
-    bu_vls_free(&tmp);
-
-    return ret;
-}
-
-
 int
 main(int argc, char *argv[])
 {
@@ -1533,6 +1454,9 @@ main(int argc, char *argv[])
     bu_debug = BU_DEBUG_COREDUMP;
 
     Tcl_FindExecutable(argv[0]);
+
+    if (bu_file_same(argv[1], argv[2]))
+	bu_exit(1, "asc2g: input and output are the same file.");
 
     ifp = fopen(argv[1], "rb");
     if (!ifp) perror(argv[1]);
@@ -1576,7 +1500,6 @@ main(int argc, char *argv[])
     if (!bu_vls_strncmp(&line, &str_title, 5) || !bu_vls_strncmp(&line, &str_put, 4)) {
 	Tcl_Interp *interp;
 	Tcl_Interp *safe_interp;
-	struct bu_vls msg = BU_VLS_INIT_ZERO;
 	int tret = 0;
 
 	/* this is a Tcl script */
@@ -1585,11 +1508,13 @@ main(int argc, char *argv[])
 	bu_vls_trunc(&line, 0);
 
 	interp = Tcl_CreateInterp();
-	tret = tclcad_init(interp, 0, &msg);
+	tret = Ged_Init(interp);
 	if (tret == TCL_ERROR) {
-	    bu_log("tclcad_init error: %s\n", bu_vls_cstr(&msg));
+	    bu_log("Ged_Init error: %s\n", Tcl_GetStringResult(interp));
+	    fclose(ifp);
+	    db_close(ofp->dbip);
+	    Tcl_Exit(1);
 	}
-	bu_vls_free(&msg);
 	db_close(ofp->dbip);
 
 	{
@@ -1632,14 +1557,27 @@ main(int argc, char *argv[])
 	    Tcl_CreateAlias(safe_interp, "find", interp, db_name, ac, av);
 	}
 
-	while ((gettclblock(&line, ifp)) >= 0) {
-	    if (Tcl_Eval(safe_interp, (const char *)bu_vls_addr(&line)) != TCL_OK) {
-		fclose(ifp);
-		bu_log("Failed to process input file (%s)!\n", argv[1]);
-		bu_log("%s\n", Tcl_GetStringResult(safe_interp));
-		Tcl_Exit(1);
+	/* Slurp the entire script into memory using block I/O, then hand it
+	 * to Tcl in one shot.  Reading a byte at a time (the previous
+	 * bu_vls_gets()/gettclblock() approach) can be pathologically slow for
+	 * databases containing very large single-line objects - e.g. a BoT
+	 * with millions of vertices serialized onto one 'put' line.  Tcl
+	 * splits the buffer into complete commands itself, so there is no
+	 * need to track brace/line continuations here. */
+	{
+	    char rbuf[BUFSIZ + 1];
+	    size_t nread;
+	    while ((nread = fread(rbuf, 1, sizeof(rbuf) - 1, ifp)) > 0) {
+		rbuf[nread] = '\0';
+		bu_vls_strncat(&line, rbuf, nread);
 	    }
-	    bu_vls_trunc(&line, 0);
+	}
+
+	if (Tcl_Eval(safe_interp, (const char *)bu_vls_addr(&line)) != TCL_OK) {
+	    fclose(ifp);
+	    bu_log("Failed to process input file (%s)!\n", argv[1]);
+	    bu_log("%s\n", Tcl_GetStringResult(safe_interp));
+	    Tcl_Exit(1);
 	}
 
 	/* free up our resources */

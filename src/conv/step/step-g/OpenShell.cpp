@@ -1,7 +1,7 @@
 /*                 OpenShell.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2025 United States Government as represented by
+ * Copyright (c) 1994-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -98,7 +98,10 @@ bool
 OpenShell::LoadONBrep(ON_Brep *brep)
 {
     if (!brep || !ConnectedFaceSet::LoadONBrep(brep)) {
-	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
+	if (step)
+	    step->RecordDiagnostic(brlcad::step::DiagnosticSeverity::Error,
+		id, "OPEN_SHELL", "openNURBS",
+		"could not load an exact OpenNURBS BREP");
 	return false;
     }
     return true;

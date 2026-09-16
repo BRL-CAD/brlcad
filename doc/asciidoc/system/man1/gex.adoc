@@ -1,0 +1,115 @@
+= GEX(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+gex - examine, summarize, and compress a BRL-CAD geometry database
+
+== SYNOPSIS
+
+[source]
+----
+gex [-h] [-f] [-c] [-d _objectname_] input.g [output.g]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*gex* reads a BRL-CAD V5 geometry database (a *.g* file) and reports
+statistics about its contents.  For each stored object it prints the
+DLI (H-flag) category, the major and minor type codes, and the object
+name, noting which objects carry attributes and which combinations are
+regions.  A summary then tallies the number of free-storage, named, and
+other objects, the counts for each DLI/major/minor type, and the total
+amount of unused free space accumulated in the file.
+
+The input database is opened read-only and is never modified.
+
+With the *-c* option, *gex* writes a compacted copy of the database to
+_output.g_, omitting the free-storage blocks that build up as objects are
+created and deleted during modeling.  If _output.g_ is not given, the copy
+is written to _input.g_*.compressed.g*.  This is a lossless alternative
+to round-tripping a model through *g2asc*(1) and *asc2g*(1), which can
+introduce numerical error.
+
+The *-d* option hex-dumps the raw bytes of a single named object, which is
+useful for low-level inspection of how an object is encoded on disk.
+
+[[options]]
+== OPTIONS
+
+*-h*, *--help*::
+  Print a usage message and exit.
+
+*-f*, *--force*::
+  Allow an existing _output.g_ file to be overwritten.  Without this
+  option, *gex* refuses to clobber an existing output file.
+
+*-c*, *--compress*::
+  Write a copy of the database to _output.g_ with all free-storage
+  blocks removed.  If no output file is named, the copy is written to
+  _input.g_*.compressed.g*.
+
+*-d* _objectname_, *--dump* _objectname_::
+  Print a canonical hexadecimal dump of the raw on-disk bytes of the
+  object named _objectname_.
+
+[[examples]]
+== EXAMPLES
+
+.Report database statistics
+====
+[source,bash]
+----
+gex model.g
+----
+Summarizes every object in _model.g_, listing DLI/major/minor types,
+combinations, regions, attributed objects, and the total free space in
+the file.
+====
+
+.Reclaim free space accumulated during modeling
+====
+[source,bash]
+----
+gex -c -f model.g model-clean.g
+----
+Writes a compacted copy of _model.g_ to _model-clean.g_ with unused
+free-storage blocks removed, overwriting _model-clean.g_ if it already
+exists.  Databases that have had many objects created and killed can
+shrink dramatically; for example a file bloated to tens of megabytes by
+repeated edits can collapse to a small fraction of its size with no loss
+of geometry.
+====
+
+.Hex-dump a single object
+====
+[source,bash]
+----
+gex -d sph1.s model.g
+----
+Prints a canonical hexadecimal dump of the raw bytes of the object named
+*sph1.s*, in addition to the usual database summary.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *asc2g*(1), *g2asc*(1), *gqa*(1), *mged*(1)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

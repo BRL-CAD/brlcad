@@ -1,7 +1,7 @@
 /*                      T I K Z . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -62,7 +62,7 @@ tikz_tree(struct ged *gedp, struct bu_vls *tikz, const union tree *oldtree, stru
 			struct rt_db_internal bintern;
 			struct rt_brep_internal *b_ip = NULL;
 			RT_DB_INTERNAL_INIT(&bintern)
-			if (rt_db_get_internal(&bintern, dir, gedp->dbip, NULL, &rt_uniresource) < 0) {
+			if (rt_db_get_internal(&bintern, dir, gedp->dbip, NULL) < 0) {
 			    return BRLCAD_ERROR;
 			}
 			if (bintern.idb_minor_type == DB5_MINORTYPE_BRLCAD_BREP) {
@@ -98,7 +98,7 @@ tikz_comb(struct ged *gedp, struct bu_vls *tikz, struct directory *dp, struct bu
 
     RT_DB_INTERNAL_INIT(&intern)
 
-    if (rt_db_get_internal(&intern, dp, gedp->dbip, NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dp, gedp->dbip, NULL) < 0) {
 	return;
     }
 
@@ -150,14 +150,14 @@ brep_tikz(struct _ged_brep_info *gb, const char *outfile)
     ON_MinMaxInit(&(bbox.m_min), &(bbox.m_max));
     struct bu_ptbl breps = BU_PTBL_INIT_ZERO;
     const char *brep_search = "-type brep";
-    db_update_nref(gedp->dbip, &rt_uniresource);
+    db_update_nref(gedp->dbip);
     (void)db_search(&breps, DB_SEARCH_TREE|DB_SEARCH_RETURN_UNIQ_DP, brep_search, 1, &gb->dp, gedp->dbip, NULL, NULL, NULL);
     for(size_t i = 0; i < BU_PTBL_LEN(&breps); i++) {
 	struct rt_db_internal bintern;
 	struct rt_brep_internal *b_ip = NULL;
 	RT_DB_INTERNAL_INIT(&bintern)
 	struct directory *d = (struct directory *)BU_PTBL_GET(&breps, i);
-	if (rt_db_get_internal(&bintern, d, gedp->dbip, NULL, &rt_uniresource) < 0) {
+	if (rt_db_get_internal(&bintern, d, gedp->dbip, NULL) < 0) {
 	    return BRLCAD_ERROR;
 	}
 	b_ip = (struct rt_brep_internal *)bintern.idb_ptr;

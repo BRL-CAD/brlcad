@@ -1,7 +1,7 @@
 /*                          L O W P . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2025 United States Government as represented by
+ * Copyright (c) 2004-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -25,6 +25,8 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include "bio.h"
@@ -34,6 +36,7 @@
 #include "bu/malloc.h"
 #include "bu/exit.h"
 #include "bu/log.h"
+#include "bu/opt.h"
 
 
 #define MAX_LINE 10000		/* Max pixels/line */
@@ -72,7 +75,7 @@ main(int argc, char **argv)
 
     bu_setprogname(argv[0]);
 
-    if (argc < 2) {
+    if (argc != 4 && argc != 5) {
 	fprintf(stderr, "%s", usage);
 	bu_exit (1, NULL);
     }
@@ -108,7 +111,8 @@ main(int argc, char **argv)
     bu_free(ifname, "ifname alloc from bu_file_realpath");
 
     if (argc == 5) {
-	nlines = atoi(argv[4]);
+	if (!bu_opt_scan_int_range(argv[4], &nlines, 1, INT_MAX, "width"))
+	    bu_exit(1, "%s", usage);
     }
 
     pix_line = nlines;	/* Square pictures */

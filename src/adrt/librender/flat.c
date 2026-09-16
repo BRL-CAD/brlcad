@@ -1,7 +1,7 @@
 /*                          F L A T . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2025 United States Government as represented by
+ * Copyright (c) 2007-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,6 +19,9 @@
  */
 /** @file librender/flat.c
  *
+ * Flat render shader: colors each hit pixel with the mesh's base
+ * material color, applying its texture if one is present.
+ *
  */
 
 #include "adrt_struct.h"
@@ -32,12 +35,12 @@ render_flat_free(render_t *UNUSED(render))
 
 
 void
-render_flat_work(render_t *UNUSED(render), struct tie_s *tie, struct tie_ray_s *ray, vect_t *pixel)
+render_flat_work(render_t *UNUSED(render), struct tie_s *tieptr, struct tie_ray_s *ray, vect_t *pixel)
 {
     struct tie_id_s id;
     adrt_mesh_t *mesh;
 
-    if ((mesh = (adrt_mesh_t *)TIE_WORK(tie, ray, &id, render_hit, NULL))) {
+    if ((mesh = (adrt_mesh_t *)TIE_WORK(tieptr, ray, &id, render_hit, NULL))) {
 	VMOVE(*pixel, mesh->attributes->color.v);
 	if (mesh->texture)
 	    mesh->texture->work(mesh->texture, mesh, ray, &id, pixel);

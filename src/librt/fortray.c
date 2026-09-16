@@ -1,7 +1,7 @@
 /*                       F O R T R A Y . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2025 United States Government as represented by
+ * Copyright (c) 1986-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,7 +34,7 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-
+#include "./librt_private.h"
 
 static struct partition fr_global_head;
 
@@ -305,7 +305,7 @@ BU_FORTRAN(frnorm, FRNORM)(double *normal,	/* output only */
 void
 BU_FORTRAN(frnreg, FRNREG)(int *nreg, struct rt_i **rtip)
 {
-    *nreg = (*rtip)->nregions;
+    *nreg = (*rtip)->stats.nregions;
 }
 
 
@@ -329,9 +329,9 @@ BU_FORTRAN(frname, FRNAME)(char *fbuf,
     char buf[512];
 
     rnum = *region_num-1;
-    if (rnum > (*rtip)->nregions) {
+    if (rnum > (*rtip)->stats.nregions) {
 	sprintf(buf, "Region id %d out of range, max=%ld",
-		*region_num, (long)((*rtip)->nregions));
+		*region_num, (long)((*rtip)->stats.nregions));
 	fr_string_c2f(fbuf, buf, fbuflen);
 	return;
     }

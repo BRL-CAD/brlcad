@@ -1,7 +1,7 @@
 /*                          D M - W G L . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2025 United States Government as represented by
+ * Copyright (c) 1993-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,9 +29,7 @@
 
 #include "common.h"
 
-#ifdef HAVE_GL_GL_H
-#  include <GL/gl.h>
-#endif
+#include "../dm-gl.h"
 
 #include "tk.h"
 #define HAVE_X11_TYPES 1

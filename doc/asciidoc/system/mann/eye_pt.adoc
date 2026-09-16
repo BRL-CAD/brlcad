@@ -1,0 +1,60 @@
+= EYE_PT(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+eye_pt - Positions the _eye point_ to the given _x, y,_ and _z_ coordinates. Without arguments, returns the current eye point.
+
+== SYNOPSIS
+
+[source]
+----
+eye_pt
+eye_pt mx my mz
+eye_pt "mx my mz"
+----
+
+[[description]]
+== DESCRIPTION
+
+The *eye_pt* command is an alias for the *eye* command. It positions the view's "eye" point (the camera location) at the specified model coordinates. 
+
+The command supports three modes of operation:
+* If no arguments are provided, it returns the current model coordinates of the eye point.
+* If three numerical arguments (`mx my mz`) are provided, the eye point is translated to those exact coordinates.
+* If a single string containing three space-separated numbers (`"mx my mz"`) is provided, it parses the string and moves the eye point to those coordinates.
+
+[[examples]]
+== EXAMPLES
+
+.Query the current eye location
+[example]
+====
+mged> **eye_pt**
+
+Returns the current X, Y, and Z model coordinates of the eye point.
+====
+
+.Move the eye to a specific coordinate
+[example]
+====
+mged> **eye_pt 100 0 0**
+
+Positions the camera eye point precisely at the model's (100, 0, 0) coordinates.
+====
+[[see_also]]
+== SEE ALSO
+
+*view*(nged)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

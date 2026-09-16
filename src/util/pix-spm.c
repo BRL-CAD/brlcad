@@ -1,7 +1,7 @@
 /*                       P I X - S P M . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2025 United States Government as represented by
+ * Copyright (c) 2004-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -25,11 +25,15 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 #include "bu/app.h"
 #include "bu/exit.h"
+#include "bu/log.h"
+#include "bu/opt.h"
 #include "bn/spm.h"
 #include "dm.h"
 
@@ -46,7 +50,9 @@ main(int argc, char **argv)
 	bu_exit(1, "Usage: pix-spm file.pix size > file.spm\n");
     }
 
-    size = atoi(argv[2]);
+    if (!bu_opt_scan_int_range(argv[2], &size, 1, INT_MAX, "size")) {
+	return 1;
+    }
     mp = bn_spm_init(size, sizeof(RGBpixel));
     bn_spm_pix_load(mp, argv[1], size, size);
     bn_spm_save(mp, "-");

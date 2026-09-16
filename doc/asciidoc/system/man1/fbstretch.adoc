@@ -1,0 +1,132 @@
+= FBSTRETCH(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+fbstretch - stretch a frame buffer image
+
+== SYNOPSIS
+
+[source]
+----
+fbstretch [-a] [-v] [-s _size_] [-w _width_] [-n _height_] [-f _in_fb_]
+          [-x _x_scale_] [-y _y_scale_]
+          [-S _size_] [-W _width_] [-N _height_] [[-F] _out_fb_]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*fbstretch* expands or compresses a frame buffer image, in either or both the horizontal and vertical directions. The image scaling origin (fixed point) is the lower left-hand corner of the display. When expanding (scale factor greater than 1), pixels are simply replicated; when compressing (scale factor less than 1), pixel averaging is performed unless sampling is explicitly requested by the _-a_ option.
+
+The default input image size is 512 by 512. Explicitly specified sizes override the default, and if actual input image size is smaller than requested, the actual size will be used. If not specified, requested output frame buffer size will be the stretched revised input size. If there are margins within the requested output beyond the stretched image, they will be cleared to background; if the stretched image would extend beyond the requested output size, it will be clipped to fit, even if there is room for it in the actual frame buffer. Actual sizes depend on details of specific frame buffers.
+
+[[options]]
+== OPTIONS
+
+
+*-f* _input_image_name_::
+Inputs the image to be displayed from the specified frame buffer or *pix*(5) file, instead of modifying the output frame buffer in place. This option may not work if input and output frame buffers are the same device.
+
+
+*-s* _input_square_size_::
+Specifies input image width and height.
+
+
+*-w* _input_width_::
+Specifies input image width.
+
+
+*-n* _input_height_::
+Specifies input image height.
+
+
+*-a*::
+(no averaging) Specifies that output pixels will be sampled from the input, instead of being computed by averaging RGB values.
+
+
+*-v*::
+(verbose) Causes actual sizes and scale factors used to be printed on the standard error output.
+
+
+*-x* _horizontal_scale_factor_::
+Scales the image by the specified factor in the horizontal direction; the default is the ratio of requested output to input widths, if specified, otherwise 1.
+
+
+*-y* _vertical_scale_factor_::
+Scales the image by the specified factor in the vertical direction; the default is the ratio of requested output to input heights, if specified, otherwise 1.
+
+
+*-S* _output_square_size_::
+Specifies output frame buffer width and height.
+
+
+*-W* _output_width_::
+Specifies output frame buffer width.
+
+
+*-N* _output_height_::
+Specifies output frame buffer height.
+
+
+*-F* _output_frame_buffer_name_::
+Outputs to the specified framebuffer instead of the one specified
+by the `FB_FILE` environment variable. If this is the last option,
+the *-F* prefix is optional.
+
+*-h, -?*::
+Print a usage message and exit.
+
+
+
+
+
+[[discussion]]
+== DISCUSSION
+
+Pixel averaging may be meaningless for some images or color maps, in which case sampling should be specified. Images of the Mandelbrot set are a good example of this.
+
+
+[[examples]]
+== EXAMPLES
+
+.Enlarge a 320x200 image to fill a 1280x1024 framebuffer
+====
+[source,bash]
+----
+$ gif-fb image.gif
+$ fbstretch -w 320 -n 200 -W 1280 -N 1024
+----
+====
+
+
+[[see_also]]
+== SEE ALSO
+
+*gif-fb*(1), *pixscale*(1), *libdm*(3), *pix*(5)
+
+
+[[diagnostics]]
+== DIAGNOSTICS
+
+Error messages are intended to be self-explanatory.
+
+
+[[author]]
+== AUTHOR
+
+Douglas A. Gwyn, BRL/VLD-VMB
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

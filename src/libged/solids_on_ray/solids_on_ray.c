@@ -1,7 +1,7 @@
 /*                         S O L I D S _ O N _ R A Y . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -130,13 +130,12 @@ skewer_solids(struct ged *gedp, int argc, const char **argv, fastf_t *ray_orig, 
     }
 
     /* .inmem rt_gettrees .rt -i -u [who] */
-    rtip = rt_new_rti(gedp->dbip);
+    rtip = rt_i_create(gedp->dbip);
     rtip->useair = 1;
     rtip->rti_dont_instance = 1;	/* full paths to solids, too. */
     if (rt_gettrees(rtip, argc, argv, 1) == -1) {
 	bu_vls_printf(gedp->ged_result_str, "rt_gettrees() failed\n");
-	rt_clean(rtip);
-	bu_free((void *)rtip, "struct rt_i");
+	rt_i_destroy(rtip);
 	return (char **) 0;
     }
 
@@ -167,8 +166,7 @@ skewer_solids(struct ged *gedp, int argc, const char **argv, fastf_t *ray_orig, 
 
     (void) rt_shootray(&ap);
 
-    rt_clean(rtip);
-    bu_free((void *)rtip, "struct rt_i");
+    rt_i_destroy(rtip);
 
     return (char **) ap.a_uptr;
 }
@@ -293,24 +291,13 @@ ged_solids_on_ray_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl solids_on_ray_cmd_impl = {
-    "solids_on_ray",
-    ged_solids_on_ray_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd solids_on_ray_cmd = { &solids_on_ray_cmd_impl };
-const struct ged_cmd *solids_on_ray_cmds[] = { &solids_on_ray_cmd, NULL };
+#define GED_SOLIDS_ON_RAY_COMMANDS(X, XID) \
+    X(solids_on_ray, ged_solids_on_ray_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  solids_on_ray_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_SOLIDS_ON_RAY_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_solids_on_ray", 1, GED_SOLIDS_ON_RAY_COMMANDS)
 
 /*
  * Local Variables:

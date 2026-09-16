@@ -1,7 +1,7 @@
 /*      F I N D _ S U B T R A C T E D _ S H A P E S . C P P
  * BRL-CAD
  *
- * Copyright (c) 2015-2025 United States Government as represented by
+ * Copyright (c) 2015-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -404,7 +404,7 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct rt_wdb *wdbp, co
     // diff validation processing, but that needs more thought
     ccomb_vars = (struct rt_gen_worker_vars *)bu_calloc(ncpus+1, sizeof(struct rt_gen_worker_vars ), "ccomb state");
     ccomb_resp = (struct resource *)bu_calloc(ncpus+1, sizeof(struct resource), "ccomb resources");
-    ccomb_rtip = rt_new_rti(wdbp->dbip);
+    ccomb_rtip = rt_i_create(wdbp->dbip);
     for (i = 0; i < ncpus+1; i++) {
 	ccomb_vars[i].rtip = ccomb_rtip;
 	ccomb_vars[i].resp = &ccomb_resp[i];
@@ -560,7 +560,7 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct rt_wdb *wdbp, co
 	    // Set up some resources
 	    candidate_vars = (struct rt_gen_worker_vars *)bu_calloc(ncpus+1, sizeof(struct rt_gen_worker_vars ), "candidate state");
 	    candidate_resp = (struct resource *)bu_calloc(ncpus+1, sizeof(struct resource), "candidate resources");
-	    candidate_rtip = rt_new_rti(wdbp->dbip);
+	    candidate_rtip = rt_i_create(wdbp->dbip);
 	    for (size_t k = 0; k < ncpus+1; k++) {
 		candidate_vars[k].rtip = candidate_rtip;
 		candidate_vars[k].resp = &candidate_resp[k];
@@ -621,19 +621,19 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct rt_wdb *wdbp, co
 	    size_t node_count;
 	    size_t actual_count;
 	    size_t curr_count;
-	    if (rt_db_get_internal(&intern, cdp, wdbp->dbip, NULL, &rt_uniresource) < 0) {
+	    if (rt_db_get_internal(&intern, cdp, wdbp->dbip, NULL) < 0) {
 		bu_log("error getting subtraction internal\n");
 	    }
 	    comb = (struct rt_comb_internal *)intern.idb_ptr;
 	    RT_CK_COMB(comb);
 	    if (comb->tree && db_ck_v4gift_tree(comb->tree) < 0) {
-		db_non_union_push(comb->tree, &rt_uniresource);
+		db_non_union_push(comb->tree);
 	    }
 	    curr_count = db_tree_nleaves(comb->tree);
 	    node_count = curr_count + BU_PTBL_LEN(&to_subtract);
 	    tree_list = (struct rt_tree_array *)bu_calloc(node_count, sizeof(struct rt_tree_array), "tree list");
 	    if (comb->tree) {
-		actual_count = BU_PTBL_LEN(&to_subtract) + (struct rt_tree_array *)db_flatten_tree(tree_list, comb->tree, OP_UNION, 1, &rt_uniresource) - tree_list;
+		actual_count = BU_PTBL_LEN(&to_subtract) + (struct rt_tree_array *)db_flatten_tree(tree_list, comb->tree, OP_UNION, 1) - tree_list;
 		BU_ASSERT(actual_count == node_count);
 		comb->tree = TREE_NULL;
 	    }
@@ -649,8 +649,8 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct rt_wdb *wdbp, co
 
 		++curr_count;
 	    }
-	    comb->tree = (union tree *)db_mkgift_tree(tree_list, node_count, &rt_uniresource);
-	    if (rt_db_put_internal(cdp, wdbp->dbip, &intern, &rt_uniresource) < 0) {
+	    comb->tree = (union tree *)db_mkgift_tree(tree_list, node_count);
+	    if (rt_db_put_internal(cdp, wdbp->dbip, &intern) < 0) {
 		bu_log("error writing out subtraction comb\n");
 	    }
 	}

@@ -1,7 +1,7 @@
 /*                      D B _ M A T C H . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2025 United States Government as represented by
+ * Copyright (c) 1994-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -49,7 +49,7 @@ db_count_refs(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb
 	++dp->d_nref;
     }
 
-    if (BU_PTBL_IS_INITIALIZED(&dbip->dbi_update_nref_clbks)) {
+    if (BU_PTBL_IS_INITIALIZED(&dbip->i->dbi_update_nref_clbks)) {
 	db_op_t op = DB_OP_UNION;
 	if (comb_leaf->tr_l.tl_op == OP_SUBTRACT) {
 	    op = DB_OP_SUBTRACT;
@@ -57,38 +57,35 @@ db_count_refs(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb
 	if (comb_leaf->tr_l.tl_op == OP_INTERSECT) {
 	    op = DB_OP_INTERSECT;
 	}
-	for (size_t i = 0; i < BU_PTBL_LEN(&dbip->dbi_update_nref_clbks); i++) {
-	    struct dbi_update_nref_clbk *cb = (struct dbi_update_nref_clbk *)BU_PTBL_GET(&dbip->dbi_update_nref_clbks, i);
+	for (size_t i = 0; i < BU_PTBL_LEN(&dbip->i->dbi_update_nref_clbks); i++) {
+	    struct dbi_update_nref_clbk *cb = (struct dbi_update_nref_clbk *)BU_PTBL_GET(&dbip->i->dbi_update_nref_clbks, i);
 	    (*cb->f)(dbip, parent_dp, dp, comb_leaf->tr_l.tl_name, op, comb_leaf->tr_l.tl_mat, cb->u_data);
 	}
     }
 }
 
 void
-db_update_nref(struct db_i *dbip, struct resource *resp)
+db_update_nref(struct db_i *dbip)
 {
-    register int i;
     register struct directory *dp;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
 
     RT_CK_DBI(dbip);
-    RT_CK_RESOURCE(resp);
 
     /* First, clear any existing counts */
-    for (i = 0; i < RT_DBNHASH; i++)
-	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw)
-	    dp->d_nref = 0;
+    FOR_ALL_DIRECTORY_START(dp, dbip)
+	dp->d_nref = 0;
+    FOR_ALL_DIRECTORY_END;
 
     /* Do a NULL + union callback to indicate the start of an update cycle */
-    for (size_t j = 0; j < BU_PTBL_LEN(&dbip->dbi_update_nref_clbks); j++) {
-	struct dbi_update_nref_clbk *cb = (struct dbi_update_nref_clbk *)BU_PTBL_GET(&dbip->dbi_update_nref_clbks, j);
+    for (size_t j = 0; j < BU_PTBL_LEN(&dbip->i->dbi_update_nref_clbks); j++) {
+	struct dbi_update_nref_clbk *cb = (struct dbi_update_nref_clbk *)BU_PTBL_GET(&dbip->i->dbi_update_nref_clbks, j);
 	(*cb->f)(dbip, NULL, NULL, NULL, DB_OP_UNION, NULL, cb->u_data);
     }
 
     /* Examine all COMB nodes */
-    for (i = 0; i < RT_DBNHASH; i++) {
-	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+    FOR_ALL_DIRECTORY_START(dp, dbip)
 
 	    /* handle non-combination objects that reference other objects */
 	    if (dp->d_major_type == DB5_MAJORTYPE_BRLCAD) {
@@ -100,7 +97,7 @@ db_update_nref(struct db_i *dbip, struct resource *resp)
 		if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_EXTRUDE) {
 		    struct rt_extrude_internal *extr;
 
-		    if (rt_db_get_internal(&intern, dp, dbip, NULL, resp) < 0)
+		    if (rt_db_get_internal(&intern, dp, dbip, NULL) < 0)
 			continue;
 		    extr = (struct rt_extrude_internal *)intern.idb_ptr;
 		    RT_EXTRUDE_CK_MAGIC(extr);
@@ -111,9 +108,9 @@ db_update_nref(struct db_i *dbip, struct resource *resp)
 			}
 
 			// Do callbacks
-			if (BU_PTBL_IS_INITIALIZED(&dbip->dbi_update_nref_clbks)) {
-			    for (size_t j = 0; j < BU_PTBL_LEN(&dbip->dbi_update_nref_clbks); j++) {
-				struct dbi_update_nref_clbk *cb = (struct dbi_update_nref_clbk *)BU_PTBL_GET(&dbip->dbi_update_nref_clbks, j);
+			if (BU_PTBL_IS_INITIALIZED(&dbip->i->dbi_update_nref_clbks)) {
+			    for (size_t j = 0; j < BU_PTBL_LEN(&dbip->i->dbi_update_nref_clbks); j++) {
+				struct dbi_update_nref_clbk *cb = (struct dbi_update_nref_clbk *)BU_PTBL_GET(&dbip->i->dbi_update_nref_clbks, j);
 				(*cb->f)(dbip, dp, dp2, extr->sketch_name, DB_OP_UNION, NULL, cb->u_data);
 			    }
 			}
@@ -122,7 +119,7 @@ db_update_nref(struct db_i *dbip, struct resource *resp)
 		} else if (dp->d_minor_type ==  DB5_MINORTYPE_BRLCAD_REVOLVE) {
 		    struct rt_revolve_internal *revolve;
 
-		    if (rt_db_get_internal(&intern, dp, dbip, NULL, resp) < 0)
+		    if (rt_db_get_internal(&intern, dp, dbip, NULL) < 0)
 			continue;
 		    revolve = (struct rt_revolve_internal *)intern.idb_ptr;
 		    RT_REVOLVE_CK_MAGIC(revolve);
@@ -133,9 +130,9 @@ db_update_nref(struct db_i *dbip, struct resource *resp)
 			}
 
 			// Do callbacks
-			if (BU_PTBL_IS_INITIALIZED(&dbip->dbi_update_nref_clbks)) {
-			    for (size_t j = 0; j < BU_PTBL_LEN(&dbip->dbi_update_nref_clbks); j++) {
-				struct dbi_update_nref_clbk *cb = (struct dbi_update_nref_clbk *)BU_PTBL_GET(&dbip->dbi_update_nref_clbks, j);
+			if (BU_PTBL_IS_INITIALIZED(&dbip->i->dbi_update_nref_clbks)) {
+			    for (size_t j = 0; j < BU_PTBL_LEN(&dbip->i->dbi_update_nref_clbks); j++) {
+				struct dbi_update_nref_clbk *cb = (struct dbi_update_nref_clbk *)BU_PTBL_GET(&dbip->i->dbi_update_nref_clbks, j);
 				(*cb->f)(dbip, dp, dp2, bu_vls_cstr(&revolve->sketch_name), DB_OP_UNION, NULL, cb->u_data);
 			    }
 			}
@@ -144,7 +141,7 @@ db_update_nref(struct db_i *dbip, struct resource *resp)
 		} else if (dp->d_minor_type ==  DB5_MINORTYPE_BRLCAD_DSP) {
 		    struct rt_dsp_internal *dsp;
 
-		    if (rt_db_get_internal(&intern, dp, dbip, NULL, resp) < 0)
+		    if (rt_db_get_internal(&intern, dp, dbip, NULL) < 0)
 			continue;
 		    dsp = (struct rt_dsp_internal *)intern.idb_ptr;
 		    RT_DSP_CK_MAGIC(dsp);
@@ -154,9 +151,9 @@ db_update_nref(struct db_i *dbip, struct resource *resp)
 			    dp2->d_nref++;
 			}
 			// Do callbacks
-			if (BU_PTBL_IS_INITIALIZED(&dbip->dbi_update_nref_clbks)) {
-			    for (size_t j = 0; j < BU_PTBL_LEN(&dbip->dbi_update_nref_clbks); j++) {
-				struct dbi_update_nref_clbk *cb = (struct dbi_update_nref_clbk *)BU_PTBL_GET(&dbip->dbi_update_nref_clbks, j);
+			if (BU_PTBL_IS_INITIALIZED(&dbip->i->dbi_update_nref_clbks)) {
+			    for (size_t j = 0; j < BU_PTBL_LEN(&dbip->i->dbi_update_nref_clbks); j++) {
+				struct dbi_update_nref_clbk *cb = (struct dbi_update_nref_clbk *)BU_PTBL_GET(&dbip->i->dbi_update_nref_clbks, j);
 				(*cb->f)(dbip, dp, dp2, bu_vls_cstr(&dsp->dsp_name), DB_OP_UNION, NULL, cb->u_data);
 			    }
 			}
@@ -166,7 +163,7 @@ db_update_nref(struct db_i *dbip, struct resource *resp)
 	    }
 	    if (!(dp->d_flags & RT_DIR_COMB))
 		continue;
-	    if (rt_db_get_internal(&intern, dp, dbip, NULL, resp) < 0)
+	    if (rt_db_get_internal(&intern, dp, dbip, NULL) < 0)
 		continue;
 	    if (intern.idb_type != ID_COMBINATION) {
 		bu_log("NOTICE: %s was marked a combination, but isn't one?  Clearing flag\n",
@@ -180,12 +177,11 @@ db_update_nref(struct db_i *dbip, struct resource *resp)
 			     db_count_refs, (void *)dp,
 			     (void *)NULL, (void *)NULL, (void *)NULL);
 	    rt_db_free_internal(&intern);
-	}
-    }
+    FOR_ALL_DIRECTORY_END;
 
     /* Do a NULL + subtraction callback to indicate the end of an update cycle */
-    for (size_t j = 0; j < BU_PTBL_LEN(&dbip->dbi_update_nref_clbks); j++) {
-	struct dbi_update_nref_clbk *cb = (struct dbi_update_nref_clbk *)BU_PTBL_GET(&dbip->dbi_update_nref_clbks, j);
+    for (size_t j = 0; j < BU_PTBL_LEN(&dbip->i->dbi_update_nref_clbks); j++) {
+	struct dbi_update_nref_clbk *cb = (struct dbi_update_nref_clbk *)BU_PTBL_GET(&dbip->i->dbi_update_nref_clbks, j);
 	(*cb->f)(dbip, NULL, NULL, NULL, DB_OP_SUBTRACT, NULL, cb->u_data);
     }
 

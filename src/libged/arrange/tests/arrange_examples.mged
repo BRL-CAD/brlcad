@@ -1,0 +1,51 @@
+# Demonstration geometry for arrange nest.  Run with:
+#   mged -c arrange-examples.g < arrange_examples.mged
+
+units mm
+title "arrange nest rendered examples"
+
+# An L-shaped planar permitted area, also used as a backing plate in the render.
+in tray-horizontal.s rpp 0 80 0 24 -2 0
+in tray-vertical.s rpp 0 24 24 60 -2 0
+r tray.r u tray-horizontal.s u tray-vertical.s
+mater tray.r "plastic sh=20 sp=.3" 185 190 198 0
+
+# Source parts live away from the tray; arrange writes transformed instances.
+in panel.s rpp 100 130 0 18 2 5
+r panel.r u panel.s
+mater panel.r "plastic sh=80 sp=.7" 219 75 67 0
+
+in tab-a.s rpp 140 160 0 8 2 6
+in tab-b.s rpp 140 148 8 22 2 6
+r bracket.r u tab-a.s u tab-b.s
+mater bracket.r "plastic sh=80 sp=.7" 64 126 201 0
+
+in disk.s rcc 180 10 2 0 0 4 9
+r disk.r u disk.s
+mater disk.r "plastic sh=80 sp=.7" 235 176 53 0
+
+arrange nest -d 2 -a z -s 2 -q balanced packed-2d.c tray.r panel.r bracket.r bracket.r disk.r disk.r
+g scene-2d.c tray.r packed-2d.c
+
+# A non-box permitted 3D volume with a thin exterior shell to make it visible.
+in volume.s ell 0 0 0 48 0 0 0 42 0 0 0 36
+in volume-outer.s ell 0 0 0 50 0 0 0 44 0 0 0 38
+r volume-shell.r u volume-outer.s - volume.s
+mater volume-shell.r "plastic tr=.75 sh=30 sp=.4" 190 205 222 0
+
+in block-a.s rpp 100 122 -8 6 -6 6
+r block-a.r u block-a.s
+mater block-a.r "plastic sh=80 sp=.7" 221 79 93 0
+
+in block-b.s rpp 130 146 -7 7 -9 9
+r block-b.r u block-b.s
+mater block-b.r "plastic sh=80 sp=.7" 77 160 103 0
+
+in cylinder.s rcc 160 0 -10 0 0 20 7
+r cylinder.r u cylinder.s
+mater cylinder.r "plastic sh=80 sp=.7" 65 125 211 0
+
+arrange nest -d 3 -s 3 -c 1 -o orthogonal -g 0,0,-1 -q balanced packed-3d.c volume.s block-a.r block-a.r block-b.r block-b.r cylinder.r cylinder.r cylinder.r
+g scene-3d.c volume-shell.r packed-3d.c
+
+q

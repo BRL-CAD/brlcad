@@ -1,0 +1,617 @@
+/*            A P 2 1 4 P R E S E N T A T I O N . C P P
+ * BRL-CAD
+ *
+ * Copyright (c) 2026 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ */
+
+#include "common.h"
+
+#include "AP214Presentation.h"
+#include "STEPGeneratedAPI.h"
+#include "STEPString.h"
+#include "STEPWrapper.h"
+#include "ap_schema.h"
+
+#include <algorithm>
+#include <cctype>
+#include <cstdlib>
+#include <deque>
+#include <set>
+#include <string>
+#include <vector>
+
+namespace {
+
+using brlcad::step::Layer;
+using brlcad::step::Style;
+
+std::string
+trim_ascii(const std::string &value)
+{
+    size_t begin = 0;
+    while (begin < value.size() &&
+	std::isspace(static_cast<unsigned char>(value[begin]))) ++begin;
+    size_t end = value.size();
+    while (end > begin &&
+	std::isspace(static_cast<unsigned char>(value[end - 1]))) --end;
+    return value.substr(begin, end - begin);
+}
+
+/* Split the outer argument list of a simple Part 21 entity.  Strings, doubled
+ * apostrophes, comments, typed values, and nested aggregates are retained
+ * verbatim.  Presentation extraction only needs the top-level boundaries. */
+std::vector<std::string>
+source_arguments(const std::string &source)
+{
+    std::vector<std::string> result;
+    const size_t equal = source.find('=');
+    const size_t open = equal == std::string::npos ? std::string::npos :
+	source.find('(', equal + 1);
+    if (open == std::string::npos) return result;
+
+    size_t argument = open + 1;
+    int depth = 1;
+    bool string = false;
+    bool comment = false;
+    for (size_t i = open + 1; i < source.size(); ++i) {
+	const char c = source[i];
+	if (comment) {
+	    if (c == '*' && i + 1 < source.size() && source[i + 1] == '/') {
+		comment = false;
+		++i;
+	    }
+	    continue;
+	}
+	if (string) {
+	    if (c != '\'') continue;
+	    if (i + 1 < source.size() && source[i + 1] == '\'') {
+		++i;
+		continue;
+	    }
+	    string = false;
+	    continue;
+	}
+	if (c == '/' && i + 1 < source.size() && source[i + 1] == '*') {
+	    comment = true;
+	    ++i;
+	    continue;
+	}
+	if (c == '\'') {
+	    string = true;
+	    continue;
+	}
+	if (c == '(') {
+	    ++depth;
+	    continue;
+	}
+	if (c == ')') {
+	    if (--depth == 0) {
+		result.push_back(trim_ascii(source.substr(argument, i - argument)));
+		break;
+	    }
+	    continue;
+	}
+	if (c == ',' && depth == 1) {
+	    result.push_back(trim_ascii(source.substr(argument, i - argument)));
+	    argument = i + 1;
+	}
+    }
+    return result;
+}
+
+std::vector<uint64_t>
+source_references(const std::string &value)
+{
+    std::vector<uint64_t> result;
+    bool string = false;
+    bool comment = false;
+    for (size_t i = 0; i < value.size(); ++i) {
+	const char c = value[i];
+	if (comment) {
+	    if (c == '*' && i + 1 < value.size() && value[i + 1] == '/') {
+		comment = false;
+		++i;
+	    }
+	    continue;
+	}
+	if (string) {
+	    if (c == '\'' && i + 1 < value.size() && value[i + 1] == '\'') ++i;
+	    else if (c == '\'') string = false;
+	    continue;
+	}
+	if (c == '/' && i + 1 < value.size() && value[i + 1] == '*') {
+	    comment = true;
+	    ++i;
+	    continue;
+	}
+	if (c == '\'') {
+	    string = true;
+	    continue;
+	}
+	if (c != '#' || i + 1 >= value.size() ||
+	    !std::isdigit(static_cast<unsigned char>(value[i + 1]))) continue;
+	char *end = NULL;
+	const unsigned long long id = std::strtoull(value.c_str() + i + 1, &end, 10);
+	if (end && end != value.c_str() + i + 1) {
+	    result.push_back(static_cast<uint64_t>(id));
+	    i = static_cast<size_t>(end - value.c_str()) - 1;
+	}
+    }
+    return result;
+}
+
+bool
+source_real(const std::string &value, double &result)
+{
+    const std::string text = trim_ascii(value);
+    if (text.empty()) return false;
+    char *end = NULL;
+    result = std::strtod(text.c_str(), &end);
+    while (end && *end && std::isspace(static_cast<unsigned char>(*end))) ++end;
+    return end && end != text.c_str() && *end == '\0';
+}
+
+bool
+is_presentation_graph_type(const std::string &type)
+{
+    return type.find("STYLE") != std::string::npos ||
+	type.find("COLOUR") != std::string::npos ||
+	type == "PRESENTATION_STYLE_ASSIGNMENT";
+}
+
+int64_t
+lazy_styled_target(STEPWrapper &wrapper, uint64_t styled_id)
+{
+    const std::vector<std::string> arguments =
+	source_arguments(wrapper.LazySourceRecord(styled_id));
+    if (arguments.size() < 3) return 0;
+    const std::vector<uint64_t> targets = source_references(arguments[2]);
+    return targets.empty() ? 0 : static_cast<int64_t>(targets.front());
+}
+
+void
+append_id(Style &style, const SDAI_Application_instance *entity)
+{
+    if (!entity || entity->STEPfile_id <= 0)
+	return;
+    const int64_t id = entity->STEPfile_id;
+    if (std::find(style.source_entity_ids.begin(), style.source_entity_ids.end(), id) ==
+	style.source_entity_ids.end())
+	style.source_entity_ids.push_back(id);
+}
+
+void
+append_id(Style &style, int64_t id)
+{
+    if (id <= 0) return;
+    if (std::find(style.source_entity_ids.begin(), style.source_entity_ids.end(), id) ==
+	style.source_entity_ids.end())
+	style.source_entity_ids.push_back(id);
+}
+
+void
+append_layer(Style &style, const std::string &name)
+{
+    if (std::find(style.layers.begin(), style.layers.end(), name) == style.layers.end())
+	style.layers.push_back(name);
+}
+
+std::string
+lower_ascii(std::string value)
+{
+    std::transform(value.begin(), value.end(), value.begin(), [](unsigned char c) {
+	return static_cast<char>(std::tolower(c));
+    });
+    return value;
+}
+
+bool
+set_predefined_colour(const std::string &input, Style &style)
+{
+    const std::string name = lower_ascii(brlcad::step::decode_string(input));
+    struct NamedColour { const char *name; double r; double g; double b; };
+    static const NamedColour colours[] = {
+	{"black", 0.0, 0.0, 0.0}, {"red", 1.0, 0.0, 0.0},
+	{"green", 0.0, 1.0, 0.0}, {"blue", 0.0, 0.0, 1.0},
+	{"yellow", 1.0, 1.0, 0.0}, {"magenta", 1.0, 0.0, 1.0},
+	{"cyan", 0.0, 1.0, 1.0}, {"white", 1.0, 1.0, 1.0},
+	{"grey", 0.5, 0.5, 0.5}, {"gray", 0.5, 0.5, 0.5}
+    };
+    for (const NamedColour &colour : colours) {
+	if (name != colour.name)
+	    continue;
+	style.has_rgb = true;
+	style.rgb[0] = colour.r;
+	style.rgb[1] = colour.g;
+	style.rgb[2] = colour.b;
+	return true;
+    }
+    return false;
+}
+
+bool
+extract_colour(STEPWrapper &wrapper, SDAI_Application_instance *colour, Style &style)
+{
+    if (!colour)
+	return false;
+    append_id(style, colour);
+    if (wrapper.IsSchemaEntity(colour, "COLOUR_RGB")) {
+	style.has_rgb = true;
+	style.rgb[0] = wrapper.getRealAttribute(colour, "red");
+	style.rgb[1] = wrapper.getRealAttribute(colour, "green");
+	style.rgb[2] = wrapper.getRealAttribute(colour, "blue");
+	return true;
+    }
+    if (wrapper.IsSchemaEntity(colour, "PRE_DEFINED_COLOUR"))
+	return set_predefined_colour(wrapper.getStringAttribute(colour, "name"), style);
+    return false;
+}
+
+void
+extract_rendering_properties(STEPWrapper &wrapper, STEPentity *rendering,
+    Style &style)
+{
+    if (!rendering || !wrapper.IsSchemaEntity(rendering,
+	    "SURFACE_STYLE_RENDERING_WITH_PROPERTIES")) return;
+    const std::vector<SDAI_Application_instance *> properties =
+	brlcad::step::Entities(rendering, "properties");
+    for (std::vector<SDAI_Application_instance *>::const_iterator i =
+	    properties.begin(); i != properties.end(); ++i) {
+	STEPentity *transparent = dynamic_cast<STEPentity *>(*i);
+	if (transparent && wrapper.IsSchemaEntity(transparent,
+		"SURFACE_STYLE_TRANSPARENT")) {
+	    append_id(style, transparent);
+	    style.has_transparency = true;
+	    style.transparency = wrapper.getRealAttribute(transparent, "transparency");
+	    if (style.transparency < 0.0) style.transparency = 0.0;
+	    if (style.transparency > 1.0) style.transparency = 1.0;
+	}
+    }
+}
+
+void
+extract_fill_area(STEPWrapper &wrapper, STEPentity *fill_area, Style &style)
+{
+    if (!fill_area) return;
+    append_id(style, fill_area);
+    const std::vector<SDAI_Application_instance *> fills =
+	brlcad::step::Entities(fill_area, "fill_styles");
+    for (std::vector<SDAI_Application_instance *>::const_iterator i = fills.begin();
+	 i != fills.end(); ++i) {
+	STEPentity *area_colour = dynamic_cast<STEPentity *>(*i);
+	if (area_colour && wrapper.IsSchemaEntity(area_colour,
+		"FILL_AREA_STYLE_COLOUR")) {
+	    append_id(style, area_colour);
+	    extract_colour(wrapper, wrapper.getEntityAttribute(area_colour, "fill_colour"), style);
+	}
+    }
+}
+
+void
+extract_surface_side(STEPWrapper &wrapper, STEPentity *side, Style &style)
+{
+    if (!side) return;
+    append_id(style, side);
+	const std::vector<SDAI_Application_instance *> styles =
+	    brlcad::step::Entities(side, "styles");
+    for (std::vector<SDAI_Application_instance *>::const_iterator i = styles.begin();
+	 i != styles.end(); ++i) {
+	STEPentity *element = dynamic_cast<STEPentity *>(*i);
+	if (element && wrapper.IsSchemaEntity(element, "SURFACE_STYLE_FILL_AREA")) {
+	    STEPentity *fill = element;
+	    append_id(style, fill);
+	    extract_fill_area(wrapper, dynamic_cast<STEPentity *>(
+		brlcad::step::Entity(fill, "fill_area")), style);
+	} else if (element && wrapper.IsSchemaEntity(element,
+		"SURFACE_STYLE_RENDERING")) {
+	    STEPentity *rendering = element;
+	    append_id(style, rendering);
+	    extract_colour(wrapper, wrapper.getEntityAttribute(rendering, "surface_colour"), style);
+	    extract_rendering_properties(wrapper, rendering, style);
+	}
+    }
+}
+
+void
+extract_assignment(STEPWrapper &wrapper, STEPentity *assignment, Style &style)
+{
+    if (!assignment) return;
+    append_id(style, assignment);
+	const std::vector<SDAI_Application_instance *> styles =
+	    brlcad::step::Entities(assignment, "styles");
+    for (std::vector<SDAI_Application_instance *>::const_iterator i = styles.begin();
+	 i != styles.end(); ++i) {
+	STEPentity *presentation = dynamic_cast<STEPentity *>(*i);
+	if (presentation && wrapper.IsSchemaEntity(presentation,
+		"SURFACE_STYLE_USAGE")) {
+	    STEPentity *usage = presentation;
+	    append_id(style, usage);
+	    STEPentity *side = dynamic_cast<STEPentity *>(
+		brlcad::step::Entity(usage, "style"));
+	    if (side) extract_surface_side(wrapper, side, style);
+	} else if (presentation && wrapper.IsSchemaEntity(presentation,
+		"FILL_AREA_STYLE")) {
+	    STEPentity *fill_area = presentation;
+	    extract_fill_area(wrapper, fill_area, style);
+	} else if (presentation && wrapper.IsSchemaEntity(presentation, "CURVE_STYLE")) {
+	    STEPentity *curve = presentation;
+	    append_id(style, curve);
+	    extract_colour(wrapper, wrapper.getEntityAttribute(curve, "curve_colour"), style);
+	} else if (presentation && wrapper.IsSchemaEntity(presentation, "POINT_STYLE")) {
+	    STEPentity *point = presentation;
+	    append_id(style, point);
+	    extract_colour(wrapper, wrapper.getEntityAttribute(point, "marker_colour"), style);
+	}
+    }
+}
+
+void
+extract_styled_item(STEPWrapper &wrapper, SDAI_Application_instance *instance)
+{
+    STEPentity *styled = dynamic_cast<STEPentity *>(instance);
+    STEPentity *styled_item = dynamic_cast<STEPentity *>(
+	brlcad::step::Entity(styled, "item"));
+    if (!styled || !styled_item) return;
+	const int64_t item_id = styled_item->STEPfile_id;
+    if (item_id <= 0)
+	return;
+
+    Style &style = wrapper.Document().styles[item_id];
+    style.item_entity_id = item_id;
+    append_id(style, styled);
+    const std::string name = brlcad::step::decode_string(wrapper.getStringAttribute(styled, "name"));
+    if (!name.empty()) style.name = name;
+
+    const std::vector<SDAI_Application_instance *> assignments =
+	brlcad::step::Entities(styled, "styles");
+    for (std::vector<SDAI_Application_instance *>::const_iterator i =
+	    assignments.begin(); i != assignments.end(); ++i)
+	extract_assignment(wrapper, dynamic_cast<STEPentity *>(*i), style);
+}
+
+void
+extract_layer(STEPWrapper &wrapper, SDAI_Application_instance *instance)
+{
+    STEPentity *assignment = dynamic_cast<STEPentity *>(instance);
+    if (!assignment) return;
+
+    Layer &layer = wrapper.Document().layers[instance->STEPfile_id];
+    layer.entity_id = instance->STEPfile_id;
+    layer.name = brlcad::step::decode_string(wrapper.getStringAttribute(instance, "name"));
+    layer.description = brlcad::step::decode_string(wrapper.getStringAttribute(instance, "description"));
+
+	const std::vector<SDAI_Application_instance *> assigned =
+	    brlcad::step::Entities(assignment, "assigned_items");
+    for (std::vector<SDAI_Application_instance *>::const_iterator i = assigned.begin();
+	 i != assigned.end(); ++i) {
+	SDAI_Application_instance *entity = *i;
+	if (entity && entity->STEPfile_id > 0) {
+	    const int64_t id = entity->STEPfile_id;
+	    if (std::find(layer.item_entity_ids.begin(), layer.item_entity_ids.end(), id) ==
+		layer.item_entity_ids.end())
+		layer.item_entity_ids.push_back(id);
+	    Style &style = wrapper.Document().styles[id];
+	    style.item_entity_id = id;
+	    append_layer(style, layer.name);
+	}
+    }
+}
+
+void
+extract_lazy_style_graph(STEPWrapper &wrapper,
+    const std::vector<uint64_t> &roots, Style &style)
+{
+    std::set<uint64_t> visited;
+    std::deque<uint64_t> pending(roots.begin(), roots.end());
+    while (!pending.empty()) {
+	if (wrapper.CancellationRequested()) return;
+	const uint64_t id = pending.front();
+	pending.pop_front();
+	if (!visited.insert(id).second) continue;
+	const std::string type = wrapper.LazyTypeName(id);
+	if (!is_presentation_graph_type(type)) continue;
+	append_id(style, static_cast<int64_t>(id));
+
+	const std::vector<std::string> arguments =
+	    source_arguments(wrapper.LazySourceRecord(id));
+	if (type == "COLOUR_RGB" && arguments.size() >= 4) {
+	    double rgb[3] = {0.0, 0.0, 0.0};
+	    if (source_real(arguments[1], rgb[0]) &&
+		source_real(arguments[2], rgb[1]) &&
+		source_real(arguments[3], rgb[2])) {
+		style.has_rgb = true;
+		for (size_t component = 0; component < 3; ++component)
+		    style.rgb[component] = std::max(0.0, std::min(1.0, rgb[component]));
+	    }
+	} else if (type.find("PRE_DEFINED_COLOUR") != std::string::npos &&
+	!arguments.empty()) {
+	    set_predefined_colour(arguments.front(), style);
+	} else if (type == "SURFACE_STYLE_TRANSPARENT" && !arguments.empty()) {
+	    double transparency = 0.0;
+	    if (source_real(arguments.front(), transparency)) {
+		style.has_transparency = true;
+		style.transparency = std::max(0.0, std::min(1.0, transparency));
+	    }
+	}
+
+	const std::vector<uint64_t> references = wrapper.LazyForwardReferences(id);
+	for (std::vector<uint64_t>::const_iterator reference = references.begin();
+	     reference != references.end(); ++reference) {
+	    if (is_presentation_graph_type(wrapper.LazyTypeName(*reference)))
+		pending.push_back(*reference);
+	}
+    }
+}
+
+void
+extract_lazy_styled_item(STEPWrapper &wrapper, uint64_t id)
+{
+    const std::vector<std::string> arguments =
+	source_arguments(wrapper.LazySourceRecord(id));
+    if (arguments.size() < 3) return;
+    const std::vector<uint64_t> targets = source_references(arguments[2]);
+    if (targets.empty() || targets.front() == 0) return;
+
+    Style &style = wrapper.Document().styles[static_cast<int64_t>(targets.front())];
+    style.item_entity_id = static_cast<int64_t>(targets.front());
+    append_id(style, static_cast<int64_t>(id));
+    const std::string name = brlcad::step::decode_string(arguments.front());
+    if (!name.empty()) style.name = name;
+
+    std::vector<uint64_t> assignments = source_references(arguments[1]);
+    if (assignments.empty()) {
+	const std::vector<uint64_t> references = wrapper.LazyForwardReferences(id);
+	for (std::vector<uint64_t>::const_iterator reference = references.begin();
+	     reference != references.end(); ++reference) {
+	    if (wrapper.LazyTypeName(*reference) == "PRESENTATION_STYLE_ASSIGNMENT")
+		assignments.push_back(*reference);
+	}
+    }
+    extract_lazy_style_graph(wrapper, assignments, style);
+}
+
+void
+extract_lazy_layer(STEPWrapper &wrapper, uint64_t id)
+{
+    const std::vector<std::string> arguments =
+	source_arguments(wrapper.LazySourceRecord(id));
+    if (arguments.size() < 3) return;
+
+    Layer &layer = wrapper.Document().layers[static_cast<int64_t>(id)];
+    layer.entity_id = static_cast<int64_t>(id);
+    layer.name = brlcad::step::decode_string(arguments[0]);
+    layer.description = brlcad::step::decode_string(arguments[1]);
+    const std::vector<uint64_t> assigned = source_references(arguments[2]);
+    for (std::vector<uint64_t>::const_iterator item = assigned.begin();
+	 item != assigned.end(); ++item) {
+	if (*item == 0) continue;
+	const int64_t source_id = static_cast<int64_t>(*item);
+	if (std::find(layer.item_entity_ids.begin(), layer.item_entity_ids.end(), source_id) ==
+	    layer.item_entity_ids.end())
+	    layer.item_entity_ids.push_back(source_id);
+
+	/* Some exporters assign the layer to a STYLED_ITEM rather than directly
+	 * to its representation item.  Preserve the assigned ID in the layer,
+	 * but attach the renderable layer attribute to the styled target. */
+	int64_t effective_id = source_id;
+	const std::string type = wrapper.LazyTypeName(*item);
+	if (type == "STYLED_ITEM" || type == "OVER_RIDING_STYLED_ITEM") {
+	    const int64_t target = lazy_styled_target(wrapper, *item);
+	    if (target > 0) effective_id = target;
+	}
+	Style &style = wrapper.Document().styles[effective_id];
+	style.item_entity_id = effective_id;
+	append_layer(style, layer.name);
+    }
+}
+
+void
+extract_lazy_presentation(STEPWrapper &wrapper,
+    const std::vector<uint64_t> &selected)
+{
+    std::vector<uint64_t> ids = selected;
+    if (ids.empty() && wrapper.ImportOptions().selected_entity_ids.empty()) {
+	const char *types[] = {"STYLED_ITEM", "OVER_RIDING_STYLED_ITEM",
+	    "PRESENTATION_LAYER_ASSIGNMENT"};
+	std::set<uint64_t> all;
+	for (size_t type = 0; type < sizeof(types) / sizeof(types[0]); ++type) {
+	    const std::vector<uint64_t> found = wrapper.LazyInstancesByType(types[type]);
+	    all.insert(found.begin(), found.end());
+	}
+	ids.assign(all.begin(), all.end());
+    }
+
+    wrapper.SetProgress("extracting AP214 presentation metadata", 0, ids.size());
+    for (size_t i = 0; i < ids.size(); ++i) {
+	if (wrapper.CancellationRequested()) return;
+	if ((i % 32) == 0)
+	    wrapper.SetProgress("extracting AP214 presentation metadata", i, ids.size());
+	const std::string type = wrapper.LazyTypeName(ids[i]);
+	if (type == "STYLED_ITEM" || type == "OVER_RIDING_STYLED_ITEM")
+	    extract_lazy_styled_item(wrapper, ids[i]);
+	else if (type == "PRESENTATION_LAYER_ASSIGNMENT")
+	    extract_lazy_layer(wrapper, ids[i]);
+    }
+    wrapper.SetProgress("AP214 presentation metadata extracted", ids.size(), ids.size());
+}
+
+} // namespace
+
+static std::vector<uint64_t>
+selected_presentation_ids(STEPWrapper &wrapper)
+{
+    const std::set<int64_t> &roots = wrapper.ImportOptions().selected_entity_ids;
+    if (roots.empty() || !wrapper.HasLazyIndex())
+	return std::vector<uint64_t>();
+
+    /* A style is an inverse relationship: the STYLED_ITEM points at geometry,
+     * rather than being in the geometry root's forward dependency closure.
+     * Build that closure without materializing SDAI objects, then retain only
+     * presentation roots that refer to something in it.  This preserves face,
+     * edge, and solid styles for targeted conversion without loading every
+     * style in a million-instance assembly. */
+    std::set<uint64_t> closure;
+    std::vector<uint64_t> pending;
+    for (std::set<int64_t>::const_iterator root = roots.begin(); root != roots.end(); ++root) {
+	if (*root <= 0) continue;
+	const uint64_t id = static_cast<uint64_t>(*root);
+	if (closure.insert(id).second) pending.push_back(id);
+    }
+    for (size_t i = 0; i < pending.size(); ++i) {
+	const std::vector<uint64_t> references = wrapper.LazyForwardReferences(pending[i]);
+	for (std::vector<uint64_t>::const_iterator reference = references.begin();
+	     reference != references.end(); ++reference) {
+	    if (closure.insert(*reference).second) pending.push_back(*reference);
+	}
+    }
+
+    std::set<uint64_t> presentation;
+    const char *types[] = {"STYLED_ITEM", "OVER_RIDING_STYLED_ITEM",
+	"PRESENTATION_LAYER_ASSIGNMENT"};
+    for (size_t t = 0; t < sizeof(types) / sizeof(types[0]); ++t) {
+	const std::vector<uint64_t> ids = wrapper.LazyInstancesByType(types[t]);
+	for (std::vector<uint64_t>::const_iterator id = ids.begin(); id != ids.end(); ++id) {
+	    const std::vector<uint64_t> references = wrapper.LazyForwardReferences(*id);
+	for (std::vector<uint64_t>::const_iterator reference = references.begin();
+	     reference != references.end(); ++reference) {
+		if (closure.find(*reference) == closure.end()) continue;
+		presentation.insert(*id);
+		closure.insert(*id);
+		break;
+	    }
+	}
+    }
+    return std::vector<uint64_t>(presentation.begin(), presentation.end());
+}
+
+void
+ExtractAP214Presentation(STEPWrapper &wrapper)
+{
+    wrapper.Document().styles.clear();
+    wrapper.Document().layers.clear();
+    const std::vector<uint64_t> selected = selected_presentation_ids(wrapper);
+    if (wrapper.HasLazyIndex()) {
+	extract_lazy_presentation(wrapper, selected);
+	wrapper.Statistics().styles_extracted = wrapper.Document().styles.size();
+	wrapper.Statistics().layers_extracted = wrapper.Document().layers.size();
+	return;
+    }
+    if (!wrapper.ImportOptions().selected_entity_ids.empty() && wrapper.HasLazyIndex())
+	wrapper.SetInstanceIds(selected);
+    else
+	wrapper.SetInstanceTypes({"STYLED_ITEM", "OVER_RIDING_STYLED_ITEM",
+	    "PRESENTATION_LAYER_ASSIGNMENT"});
+    for (int i = 0; i < wrapper.InstanceCount(); ++i) {
+	SDAI_Application_instance *instance = wrapper.InstanceAt(i);
+	if (!instance || instance->STEPfile_id <= 0)
+	    continue;
+	if (wrapper.IsSchemaEntity(instance, "STYLED_ITEM"))
+	    extract_styled_item(wrapper, instance);
+	if (wrapper.IsSchemaEntity(instance, "PRESENTATION_LAYER_ASSIGNMENT"))
+	    extract_layer(wrapper, instance);
+    }
+    wrapper.Statistics().styles_extracted = wrapper.Document().styles.size();
+    wrapper.Statistics().layers_extracted = wrapper.Document().layers.size();
+    wrapper.ResetInstanceTypes();
+}

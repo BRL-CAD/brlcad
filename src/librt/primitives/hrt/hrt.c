@@ -1,7 +1,7 @@
 /*                         H R T . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2025 United States Government as represented by
+ * Copyright (c) 2013-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -125,7 +125,7 @@
 #include "../../librt_private.h"
 
 
-const struct bu_structparse rt_hrt_parse[] = {
+EXTERNCPP const struct bu_structparse rt_hrt_parse[] = {
     { "%f", 3, "V", bu_offsetofarray(struct rt_hrt_internal, v, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 3, "X", bu_offsetofarray(struct rt_hrt_internal, xdir, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 3, "Y", bu_offsetofarray(struct rt_hrt_internal, ydir, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -175,7 +175,7 @@ clt_hrt_pack(struct bu_pool *pool, struct soltab *stp)
 /**
  * Compute the bounding RPP for a heart.
  */
-int
+C_DECL int
 rt_hrt_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol))
 {
     struct rt_hrt_internal *hip;
@@ -247,7 +247,7 @@ rt_hrt_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
  * A struct hrt_specific is created, and its address is stored in
  * stp->st_specific for use by rt_hrt_shot().
  */
-int
+C_DECL int
 rt_hrt_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     register struct hrt_specific *hrt;
@@ -364,7 +364,7 @@ rt_hrt_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-void
+C_DECL void
 rt_hrt_print(register const struct soltab *stp)
 {
     register struct hrt_specific *hrt =
@@ -414,7 +414,7 @@ rt_hrt_print(register const struct soltab *stp)
  * 0 MISS
  * >0 HIT
  */
-int
+C_DECL int
 rt_hrt_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
     register struct hrt_specific *hrt =
@@ -531,7 +531,7 @@ rt_hrt_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	    bn_pr_roots(stp->st_name, complex, i);
 	} else if (i < 0) {
 	    static int reported = 0;
-	    bu_log("The root solver failed to converge on a solution for %s\n", stp->st_dp->d_namep);
+	    bu_log("LIBRT: The root solver failed to converge on a solution for %s\n", stp->st_dp->d_namep);
 	    if (!reported) {
 		VPRINT("while shooting from:\t", rp->r_pt);
 		VPRINT("while shooting at:\t", rp->r_dir);
@@ -660,7 +660,7 @@ rt_hrt_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 /**
  * This is the Becker vector version
  */
-void
+C_DECL void
 rt_hrt_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
 {
     register struct hrt_specific *hrt;
@@ -797,7 +797,7 @@ rt_hrt_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	    bn_pr_roots("hrt", complex[i], num_roots);
 	} else if (num_roots < 0) {
 	    static int reported = 0;
-	    bu_log("The root solver failed to converge on a solution for %s\n", stp[i]->st_dp->d_namep);
+	    bu_log("LIBRT: The root solver failed to converge on a solution for %s\n", stp[i]->st_dp->d_namep);
 	    if (!reported) {
 		VPRINT("while shooting from: \t", rp[i]->r_pt);
 		VPRINT("while shooting at:\t", rp[i]->r_dir);
@@ -964,7 +964,7 @@ rt_hrt_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
  * Since we rescale the gradient (normal) to unity, we divide the
  * above equations by six here.
  */
-void
+C_DECL void
 rt_hrt_norm(struct hit *hitp, struct soltab *UNUSED(stp), struct xray *rp)
 {
 
@@ -983,7 +983,7 @@ rt_hrt_norm(struct hit *hitp, struct soltab *UNUSED(stp), struct xray *rp)
 }
 
 
-void
+C_DECL void
 rt_hrt_free(struct soltab *stp)
 {
     struct hrt_specific *hrt =
@@ -1045,11 +1045,12 @@ rt_hrt_24pts(fastf_t *ov, fastf_t *V, fastf_t *A, fastf_t *B)
 }
 
 
-int
+C_DECL int
 rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     struct bu_list *vlfree = &rt_vlfree;
-    fastf_t c, dtol, mag_h, ntol = M_PI, r1, r2, **ellipses, theta_prev, theta_new;
+    fastf_t c, dtol, mag_h, ntol = M_PI, r1, r2, **ellipses;
+    fastf_t min_abs;
     int *pts_dbl;
     int nseg; /* The number of line segments in a particular ellipse */
     int j, k, jj, na, nb;
@@ -1057,7 +1058,6 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct bg_tes
     int recalc_b, i, ellipse_below, ellipse_above;
     mat_t R;
     mat_t invR;
-    point_t p1;
     struct rt_pnt_node *pos_a, *pos_b, *pts_a, *pts_b;
     vect_t A, Au, B, Bu, Cu;
     vect_t V, Work;
@@ -1152,6 +1152,25 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct bg_tes
     VSET(ydir4_left, 0, v1_left[Z] * 0.01, 0 );
     VSET(ydir4_right, 0, v1_right[Z] * 0.01, 0 );
     VSET(upper_cusp_xdir, 0 , v3_left[Z] * 0.01 , 0 );
+
+    /* The above top-lobe/cusp centers are computed relative to the
+     * origin; offset them by the vertex so the top of the heart
+     * translates with V (The lower body below already adds hip->v
+     * explicitly). This must happen after the relative sizes derived
+     * from their [Z]/[X] components have been computed above
+     */
+    VADD2(top01_center, top01_center, hip->v);
+    VADD2(top02_center, top02_center, hip->v);
+    VADD2(top1_center, top1_center, hip->v);
+    VADD2(v1_left, v1_left, hip->v);
+    VADD2(v1_right, v1_right, hip->v);
+    VADD2(v2_left, v2_left, hip->v);
+    VADD2(v2_right, v2_right, hip->v);
+    VADD2(v3_left, v3_left, hip->v);
+    VADD2(v3_right, v3_right, hip->v);
+    VADD2(highest_point_left, highest_point_left, hip->v);
+    VADD2(highest_point_right, highest_point_right, hip->v);
+    VADD2(upper_cusp, upper_cusp, hip->v);
 
     rt_hrt_24pts(top, hip->v, top_xdir, top_ydir);
     rt_hrt_24pts(top01, top01_center, top01_xdir, top01_ydir );
@@ -1310,6 +1329,7 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct bg_tes
     bn_mat_trn(invR, R);			/* inv of rot mat is trn */
 
     dtol = primitive_get_absolute_tolerance(ttol, r2 * 2.00);
+    min_abs = prim_min_abs_tol();
 
     /*
      * build ehy from 2 hyperbolas
@@ -1325,7 +1345,7 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct bg_tes
     /* 2 endpoints in 1st approximation */
     nb = 2;
     /* recursively break segment 'til within error tolerances */
-    nb += rt_mk_hyperbola(pts_b, mag_h/3, mag_h, c, dtol, ntol);
+    nb += _rt_mk_hyperbola(pts_b, mag_h/3, mag_h, c, dtol, ntol, min_abs);
     nell = nb - 1;	/* Number of ellipses needed */
 
     /*
@@ -1357,7 +1377,7 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct bg_tes
     recalc_b = 0;
     pos_a = pts_a;
     while (pos_a->next) {
-	na = rt_mk_hyperbola(pos_a, r1, mag_h, c, dtol, ntol);
+	na = _rt_mk_hyperbola(pos_a, r1, mag_h, c, dtol, ntol, min_abs);
 	if (na != 0) {
 	    recalc_b = 1;
 	    nell += na;
@@ -1405,10 +1425,19 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct bg_tes
     /* keep track of whether pts in each ellipse are doubled or not */
     pts_dbl = (int *)bu_malloc(nell * sizeof(int), "dbl ints");
 
+    /* Compute circumferential segment count from the largest cross-section
+     * (r1) using the chord-error formula.  See rt_epa_plot() for the rationale
+     * (ell_angle + doubling causes infinite recursion and exponential nseg). */
+    nseg = rt_num_circular_segments(dtol, r1);
+    if (ntol < M_PI) {
+	int nseg_ntol = (int)(M_2PI / ntol) + 1;
+	if (nseg_ntol > nseg)
+	    nseg = nseg_ntol;
+    }
+    if (nseg < 6) nseg = 6;
+
     /* make ellipses at different levels in the +Z direction */
     i = 0;
-    nseg = 0;
-    theta_prev = M_2PI;
     pos_a = pts_a->next;	/* skip over lower cusp of heart ( at pts_a ) */
     pos_b = pts_b->next;
     while (pos_a) {
@@ -1416,17 +1445,8 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct bg_tes
 	VSCALE(B, Bu, pos_b->p[Y] * 0.80);	/* semiminor axis */
 	VJOIN1(V, hip->v, pos_a->p[Z], Cu);
 
-	VSET(p1, 0.00, pos_b->p[Y], 0.00);
-	theta_new = ell_angle(p1, pos_a->p[Y], pos_b->p[Y], dtol, ntol);
-	if (nseg == 0) {
-	    nseg = (int)(M_2PI / theta_new) + 1;
-	    pts_dbl[i] = 0;
-	} else if (theta_new < theta_prev) {
-	    nseg *= 2;
-	    pts_dbl[i] = 1;
-	} else
-	    pts_dbl[i] = 0;
-	theta_prev = theta_new;
+	/* All rings use the same segment count (no per-ring doubling) */
+	pts_dbl[i] = 0;
 
 	ellipses[i] = (fastf_t *)bu_malloc(3*(nseg+1)*sizeof(fastf_t),"pts ell");
 	rt_ell(ellipses[i], V, A, B, nseg);
@@ -1511,7 +1531,7 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct bg_tes
  * Ydir vector
  * Zdir vector
  */
-int
+C_DECL int
 rt_hrt_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_hrt_internal *hip;
@@ -1543,7 +1563,7 @@ rt_hrt_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     return 0;
 }
 
-int
+C_DECL int
 rt_hrt_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
 {
     if (!rop || !ip || !mat)
@@ -1561,9 +1581,9 @@ rt_hrt_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
     VMOVE(zdir, tip->zdir);
 
     MAT4X3PNT(top->v, mat, v);
-    MAT4X3PNT(top->xdir, mat, xdir);
-    MAT4X3PNT(top->ydir, mat, ydir);
-    MAT4X3PNT(top->zdir, mat, zdir);
+    MAT4X3VEC(top->xdir, mat, xdir);
+    MAT4X3VEC(top->ydir, mat, ydir);
+    MAT4X3VEC(top->zdir, mat, zdir);
 
     return BRLCAD_OK;
 }
@@ -1572,7 +1592,7 @@ rt_hrt_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
  * Import a heart from the database format to the internal format.
  *
  */
-int
+C_DECL int
 rt_hrt_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_hrt_internal *hip;
@@ -1616,7 +1636,7 @@ rt_hrt_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
  */
-int
+C_DECL int
 rt_hrt_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
     struct rt_hrt_internal *hip =
@@ -1685,7 +1705,7 @@ rt_hrt_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
-void
+C_DECL void
 rt_hrt_ifree(struct rt_db_internal *ip)
 {
     register struct rt_hrt_internal *hip;
@@ -1700,7 +1720,7 @@ rt_hrt_ifree(struct rt_db_internal *ip)
 }
 
 
-int
+C_DECL int
 rt_hrt_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
     if (ip) RT_CK_DB_INTERNAL(ip);
@@ -1709,7 +1729,7 @@ rt_hrt_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 }
 
 
-void
+C_DECL void
 rt_hrt_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     fastf_t area_hrt_YZ_plane;
@@ -1729,12 +1749,59 @@ rt_hrt_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 /**
  * Computes centroid of a heart
  */
-void
+C_DECL void
 rt_hrt_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
     struct rt_hrt_internal *hip = (struct rt_hrt_internal *)ip->idb_ptr;
     RT_HRT_CK_MAGIC(hip);
     VSET(*cent, hip->xdir[X], hip->ydir[Y], hip->zdir[Z] * 0.125);
+}
+
+
+C_DECL int
+rt_hrt_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int UNUSED(planar_only), fastf_t val)
+{
+    if (NEAR_ZERO(val, SMALL_FASTF))
+	return BRLCAD_OK;
+
+    if (!oip || !ip)
+	return BRLCAD_ERROR;
+
+    struct rt_hrt_internal *ohrt = (struct rt_hrt_internal *)ip->idb_ptr;
+    RT_HRT_CK_MAGIC(ohrt);
+
+    struct rt_db_internal *nip;
+    BU_GET(nip, struct rt_db_internal);
+    RT_DB_INTERNAL_INIT(nip);
+    nip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    nip->idb_type = ID_HRT;
+    nip->idb_meth = &OBJ[ID_HRT];
+    struct rt_hrt_internal *hrt = NULL;
+    BU_ALLOC(hrt, struct rt_hrt_internal);
+    nip->idb_ptr = hrt;
+    hrt->hrt_magic = RT_HRT_INTERNAL_MAGIC;
+    VMOVE(hrt->v,    ohrt->v);
+    VMOVE(hrt->xdir, ohrt->xdir);
+    VMOVE(hrt->ydir, ohrt->ydir);
+    VMOVE(hrt->zdir, ohrt->zdir);
+    hrt->d = ohrt->d;
+
+    /* Scale each axis outward, and push the cusp distance by val.  The heart
+     * has no flat faces, so planar_only is not applicable. */
+    vect_t mvec;
+    VMOVE(mvec, hrt->xdir); VUNITIZE(mvec); VSCALE(mvec, mvec, val);
+    VADD2(hrt->xdir, hrt->xdir, mvec);
+
+    VMOVE(mvec, hrt->ydir); VUNITIZE(mvec); VSCALE(mvec, mvec, val);
+    VADD2(hrt->ydir, hrt->ydir, mvec);
+
+    VMOVE(mvec, hrt->zdir); VUNITIZE(mvec); VSCALE(mvec, mvec, val);
+    VADD2(hrt->zdir, hrt->zdir, mvec);
+
+    hrt->d += val;
+
+    *oip = nip;
+    return BRLCAD_OK;
 }
 
 

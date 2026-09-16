@@ -1,7 +1,7 @@
 /*                         D S P . C
  * BRL-CAD
  *
- * Copyright (c) 2017-2025 United States Government as represented by
+ * Copyright (c) 2017-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -67,7 +67,7 @@ ged_dsp_core(struct ged *gedp, int argc, const char *argv[])
     /* get dsp */
     primitive = argv[1];
     GED_DB_LOOKUP(gedp, dsp_dp, primitive, LOOKUP_NOISY, BRLCAD_ERROR & GED_QUIET);
-    GED_DB_GET_INTERNAL(gedp, &intern, dsp_dp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_GET_INTERN(gedp, &intern, dsp_dp, bn_mat_identity, BRLCAD_ERROR);
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_DSP) {
 	bu_vls_printf(gedp->ged_result_str, "%s: %s is not a DSP solid!", cmd, primitive);
@@ -107,7 +107,7 @@ ged_dsp_core(struct ged *gedp, int argc, const char *argv[])
 	    return BRLCAD_ERROR;
 	}
 	GED_DB_LOOKUP(gedp, dsp_dp2, argv[3], LOOKUP_NOISY, BRLCAD_ERROR & GED_QUIET);
-	GED_DB_GET_INTERNAL(gedp, &intern2, dsp_dp2, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
+	GED_DB_GET_INTERN(gedp, &intern2, dsp_dp2, bn_mat_identity, BRLCAD_ERROR);
 
 	if (intern2.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern2.idb_minor_type != DB5_MINORTYPE_BRLCAD_DSP) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: %s is not a DSP solid!", cmd, argv[3]);
@@ -148,25 +148,13 @@ ged_dsp_core(struct ged *gedp, int argc, const char *argv[])
     return BRLCAD_ERROR;
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl dsp_cmd_impl = {
-    "dsp",
-    ged_dsp_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd dsp_cmd = { &dsp_cmd_impl };
-const struct ged_cmd *dsp_cmds[] = { &dsp_cmd, NULL };
+#define GED_DSP_COMMANDS(X, XID) \
+    X(dsp, ged_dsp_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  dsp_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_DSP_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_dsp", 1, GED_DSP_COMMANDS)
 
 /*
  * Local Variables:
@@ -177,3 +165,4 @@ COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+

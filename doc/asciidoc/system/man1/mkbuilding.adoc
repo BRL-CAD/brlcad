@@ -1,0 +1,177 @@
+= MKBUILDING(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+
+mkbuilding - generate parametric buildings and building parts
+
+== SYNOPSIS
+
+[source]
+----
+mkbuilding [options] [output.g]
+----
+
+== DESCRIPTION
+
+*mkbuilding* creates physically dimensioned BRL-CAD building geometry from
+archetype presets, a native JSON specification, OpenStreetMap (OSM) data, or
+OGC CityJSON 2.x data. Lengths are interpreted as metres unless the input
+schema declares another unit.
+
+The generated model separates walls, slabs and foundations, roofs, opening
+frames and panels, structural columns and beams, and installations into
+material-bearing regions. Exterior walls use Boolean subtraction for doors,
+windows, and unfilled openings. Floor slabs, closed roof solids, and
+structural members use the requested physical thicknesses and cross sections.
+Building parts are generated recursively.
+
+The native schema is JSON Schema draft 2020-12. It covers identity and
+classification; arbitrary or rectangular footprints; above- and below-ground
+storeys; skipped lower storeys; envelope dimensions and materials; roofs;
+doors, windows, and openings; column and beam grids; installations; nested
+building parts; OSM tags; CityGML attributes; and extension metadata. Print
+the schema with *--schema*. Example files are installed with the source under
+_src/shapes/building/examples_.
+
+OSM GeoJSON Feature and FeatureCollection inputs accept Polygon geometry and
+either direct OSM properties or a nested _tags_ object. Overpass JSON ways
+with inline _geometry_ are also accepted. All tags are retained as
+_osm::key_ database attributes. The Simple 3D Buildings tags for height,
+minimum height, storeys, minimum storey, material, colour, roof geometry, and
+building parts are interpreted. Documented _building=_ taxonomy values select
+an appropriate physical archetype; unknown values are retained and use a
+conservative house-like realization.
+
+CityJSON 2.x Building and BuildingPart objects are accepted. Classification,
+function, usage, roof type, measured height, storey counts and heights,
+children, transforms, extents, and referenced geometry bounds are mapped into
+the generator. Source attributes remain available as _cityjson::key_
+database attributes. CityJSON input is currently converted to a procedural
+building envelope derived from its bounds; its original boundary surfaces are
+not copied verbatim.
+
+== OPTIONS
+
+*-o* _file.g_, *--output* _file.g_::
+  Write the output database to _file.g_. The default is _mkbuilding.g_. A
+  single positional output filename is accepted for compatibility.
+
+*-s* _file.json_, *--spec* _file.json_::
+  Read a native JSON, OSM GeoJSON, Overpass JSON, or CityJSON specification.
+
+*-p* _name_, *--preset* _name_::
+  Start from _house_, _apartments_, _office_, _warehouse_, _church_, _barn_,
+  _garage_, _parking_, _greenhouse_, _sports_hall_, _silo_, _tower_, _civic_,
+  _carport_, _shed_, or _service_. An OSM _building=_ value may also be used.
+
+*-t* _value_, *--type* _value_::
+  Set the OSM-compatible building type stored on the generated object.
+
+*-n* _name_, *--name* _name_::
+  Set the top-level object name.
+
+*-L* _count_, *--levels* _count_::
+  Set the number of above-ground storeys.
+
+*-W* _metres_, *--width* _metres_::
+  Set the rectangular footprint width. Must be used with *--depth*.
+
+*-D* _metres_, *--depth* _metres_::
+  Set the rectangular footprint depth. Must be used with *--width*.
+
+*-H* _metres_, *--floor-height* _metres_::
+  Set a uniform floor-to-floor height.
+
+*-R* _shape_, *--roof-shape* _shape_::
+  Set an OSM-compatible _roof:shape_. Use *--list-roofs* to show the
+  implemented values.
+
+*--roof-height* _metres_::
+  Set roof height above the facade.
+
+*--wall-thickness* _metres_::
+  Set exterior wall thickness.
+
+*--structure* _system_::
+  Enable a structural column-and-beam grid and record its system name.
+
+*--no-auto-openings*::
+  Suppress automatically placed exterior doors and windows.
+
+*-f*, *--force*::
+  Replace an existing output database.
+
+*-j*, *--append*::
+  Append generated objects to an existing database.
+
+*--validate-only*::
+  Parse, normalize, and validate the input without writing geometry.
+
+*--effective-spec* _file.json_::
+  Write the fully resolved native specification after imports and command-line
+  overrides.
+
+*--demo-file* _file.g_::
+  Generate a catalog containing at least 50 distinct building types and a
+  nested building-part example. Generation fails if two catalog entries differ
+  only in classification or appearance but have identical shape and structure.
+
+*--schema*::
+  Print the native JSON Schema and exit.
+
+*--list-types*::
+  List the covered OSM building taxonomy and exit.
+
+*--list-roofs*::
+  List supported OSM roof shapes and exit.
+
+*-h*, *-?*, *--help*::
+  Print usage information and exit.
+
+== EXAMPLES
+
+.Generate a three-storey framed house
+====
+[source,bash]
+----
+mkbuilding --preset house --levels 3 --structure wood_frame -o house.g
+----
+====
+
+.Validate and generate an OSM GeoJSON building
+====
+[source,bash]
+----
+mkbuilding --validate-only --spec building.geojson
+mkbuilding --spec building.geojson -o building.g
+----
+====
+
+.Generate a broad taxonomy catalog
+====
+[source,bash]
+----
+mkbuilding --demo-file buildings.g
+----
+====
+
+== SEE ALSO
+
+*art*(1), *mged*(1), *rt*(1), *gqa*(1)
+
+== AUTHOR
+
+BRL-CAD Team
+
+== COPYRIGHT
+
+This software is Copyright (c) 2026 by the United States Government as
+represented by U.S. Army Research Laboratory.
+
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to
+devs@brlcad.org

@@ -1,0 +1,152 @@
+= PLOT3ROT(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+plot3rot - rotate, translate, or scale a UnixPlot file
+
+== SYNOPSIS
+
+[source]
+----
+plot3rot [-x _angle_] [-y _angle_] [-z _angle_] [-X _dist_] [-Y _dist_] [-Z _dist_] [-s _factor_] [-a _az_] [-e _el_] [-g] [-M] [-m _matrix_] [-S _space_] [-v] [_file_ ...] > unix_plot
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*plot3rot* rotates, translates, and/or scales a UnixPlot file (see
+*plot3*(5)).  Input is read from the named _file_ arguments (a _file_ of
+*-* means standard input), or from standard input if no files are given,
+and the transformed plot is written to standard output.
+
+Any number of transformation options may be given.  Each operation is
+applied left to right in the order it appears on the command line, and
+the operations are concatenated into a single transform.  Because
+rotations are not commutative, the order in which they are specified
+matters.  Invoking the command with no arguments prints a usage summary.
+
+The lower case *-x*, *-y*, and *-z* options rotate about the X, Y, and Z
+axes respectively by the given number of degrees; a positive value is a
+right handed rotation.  The upper case *-X*, *-Y*, and *-Z* options
+translate along those axes in whatever units the plot file uses.  The
+*-s* option applies a scale factor, up (> 1) or down (< 1).
+
+The *-a* and *-e* options are azimuth and elevation about the center
+point.  They are shorthand for a positive Z axis and a negative X axis
+rotation respectively, and should be given in that order for the proper
+combined effect.  They also cause the plot to be auto-centered based on
+the "space" command found in the input, with the new "space" command
+shrunk to fit the rotated plot as tightly as possible.  (This differs
+from *-M*, which instead fits a sphere to the space; see below.)
+
+The *-M* option auto-centers the plot on its "space" command in much the
+same way that the *rt*(1) ray tracer treats a model bounding box: a
+sphere is fit to the space, and the diameter and center of that sphere
+are used as the width and center of the plot in all three dimensions.
+This keeps the entire model in view from any angle and is invariant with
+respect to viewing direction, but the "space" is enlarged on every
+cascaded pass through *plot3rot* in which *-M* is used.
+
+The *-g* option is a convenient shorthand to transform azimuths and
+elevations expressed in *gift*/MGED front-view notation (degrees off the
+-X view) into the UnixPlot screen coordinate system, where X increases to
+the right and Y increases up.  It should usually appear last, because it
+modifies the rotation already established, and is exactly equivalent to
+giving *-z* -90 *-x* -90 in the same place.  Do not combine *-m* with
+*-a*, *-e*, or *-g*.
+
+[[options]]
+== OPTIONS
+
+*-x* _angle_::
+  Rotate _angle_ degrees about the X axis.
+
+*-y* _angle_::
+  Rotate _angle_ degrees about the Y axis.
+
+*-z* _angle_::
+  Rotate _angle_ degrees about the Z axis.
+
+*-X* _dist_::
+  Translate _dist_ units along the X axis.
+
+*-Y* _dist_::
+  Translate _dist_ units along the Y axis.
+
+*-Z* _dist_::
+  Translate _dist_ units along the Z axis.
+
+*-s* _factor_::
+  Scale by _factor_ (> 1 enlarges, < 1 shrinks).  A factor of zero is rejected.
+
+*-a* _az_::
+  Apply azimuth _az_, a positive Z axis rotation.  Auto-centers the plot and re-bounds the "space" tightly to the rotated plot; should precede *-e*.
+
+*-e* _el_::
+  Apply elevation _el_, a negative X axis rotation.  Auto-centers the plot and re-bounds the "space" tightly to the rotated plot.
+
+*-g*::
+  Convert *gift*/MGED front-view azimuth and elevation into UnixPlot display coordinates.  Equivalent to *-z* -90 *-x* -90; usually given last.
+
+*-M*::
+  Auto-center the "space" command like the *rt*(1) model RPP, fitting a sphere so the model stays in view from any angle.
+
+*-m* _matrix_::
+  Apply the 4x4 transformation matrix given as a quoted string of 16 floating point numbers (see h/vmath.h).  Do not combine with *-a*, *-e*, or *-g*.
+
+*-S* _space_::
+  Force the output "space" to a quoted string of six floats ("min_x min_y min_z max_x max_y max_z").  This is emitted immediately and overrides any space derived from the input or other options.
+
+*-v*::
+  Verbose mode.  Print the initial transformation matrix, and for every "space" command encountered print the old and new bounding RPP.
+
+[[examples]]
+== EXAMPLES
+
+.Rotate a plot about two axes
+====
+[source,bash]
+----
+plot3rot -z 30 -x 20 < file.plot3 > file2.plot3
+----
+Performs a 30 degree positive rotation about the Z axis (counter
+clockwise as viewed from the top), then a 20 degree rotation about the
+already-rotated X axis.  Reversing the order of the options would not
+produce the same result, since rotations do not commute.
+====
+
+.View a model as a ray tracer would, then frame buffer display it
+====
+[source,bash]
+----
+rthide -a 35 -e 25 -o file.plot3 model.g component
+plot3rot -a 35 -e 25 -g < file.plot3 | plot3-fb
+----
+*rthide*(1) renders a hidden-line plot at azimuth 35 and elevation 25.
+The trailing *-g* converts that *gift*-style azimuth/elevation into the
+conventional UnixPlot screen coordinate system before *plot3-fb*(1)
+displays it on a frame buffer.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *plot3-plot3*(1), *plot3-fb*(1), *plot3line2*(1), *plot3stat*(1), *rt*(1), *plot3*(5)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

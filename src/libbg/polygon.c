@@ -1,7 +1,7 @@
 /*                     P O L Y G O N . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2025 United States Government as represented by
+ * Copyright (c) 2013-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,10 +22,13 @@
 
 #include <bio.h>
 
+#include "bn/mat.h"
 #include "bu/malloc.h"
 #include "bu/sort.h"
 #include "bg/plane.h"
-#define PLOT_PREFIX_STR bg_plot3_
+#ifndef PLOT_PREFIX_STR
+#  define PLOT_PREFIX_STR bg_plot3_
+#endif
 #include "bv/plot3.h"
 #include "bn/tol.h"
 #include "bg/polygon.h"
@@ -202,6 +205,25 @@ bg_3d_polygon_centroid(point_t *cent, size_t npts, const point_t *pts)
 }
 
 
+static int
+append_plane_point(size_t *count, point_t *points, size_t capacity,
+	const point_t point)
+{
+    size_t i;
+
+    for (i = 0; i < *count; i++) {
+	if (VNEAR_EQUAL(points[i], point, BN_TOL_DIST))
+	    return 0;
+    }
+    if (*count >= capacity)
+	return 1;
+
+    VMOVE(points[*count], point);
+    (*count)++;
+    return 0;
+}
+
+
 int
 bg_3d_polygon_make_pnts_planes(size_t *npts, point_t **pts, size_t neqs, const plane_t *eqs)
 {
@@ -227,9 +249,11 @@ bg_3d_polygon_make_pnts_planes(size_t *npts, point_t **pts, size_t neqs, const p
 		}
 		/* found a good point, add it to each of the intersecting faces */
 		if (keep_point) {
-		    VMOVE(pts[i][npts[i]], (pt)); npts[i]++;
-		    VMOVE(pts[j][npts[j]], (pt)); npts[j]++;
-		    VMOVE(pts[k][npts[k]], (pt)); npts[k]++;
+		    size_t capacity = neqs - 1;
+		    if (append_plane_point(&npts[i], pts[i], capacity, pt) ||
+			    append_plane_point(&npts[j], pts[j], capacity, pt) ||
+			    append_plane_point(&npts[k], pts[k], capacity, pt))
+			return 1;
 		}
 	    }
 	}
@@ -238,21 +262,71 @@ bg_3d_polygon_make_pnts_planes(size_t *npts, point_t **pts, size_t neqs, const p
 }
 
 
+struct sort_ccw_data {
+    vect_t x_axis;
+    vect_t y_axis;
+};
+
+
 static int
-sort_ccw_3d(const void *x, const void *y, void *cmp)
+sort_ccw_3d(const void *left, const void *right, void *context)
 {
-    vect_t tmp;
-    VCROSS(tmp, ((fastf_t *)x), ((fastf_t *)y));
-    return VDOT(*((point_t *)cmp), tmp);
+    const struct sort_ccw_data *data = (const struct sort_ccw_data *)context;
+    const fastf_t *left_point = (const fastf_t *)left;
+    const fastf_t *right_point = (const fastf_t *)right;
+    double left_angle = atan2(VDOT(left_point, data->y_axis),
+	    VDOT(left_point, data->x_axis));
+    double right_angle = atan2(VDOT(right_point, data->y_axis),
+	    VDOT(right_point, data->x_axis));
+
+    if (left_angle < right_angle)
+	return -1;
+    if (left_angle > right_angle)
+	return 1;
+
+    double left_radius = MAGSQ(left_point);
+    double right_radius = MAGSQ(right_point);
+    if (left_radius < right_radius)
+	return -1;
+    if (left_radius > right_radius)
+	return 1;
+    return 0;
 }
 
 
 int
 bg_3d_polygon_sort_ccw(size_t npts, point_t *pts, plane_t cmp)
 {
+    size_t i;
+    point_t centroid;
+    vect_t normal;
+    struct sort_ccw_data data;
+
     if (!pts || npts < 3)
 	return 1;
-    bu_sort(pts, npts, sizeof(point_t), sort_ccw_3d, &cmp);
+    if (MAGNITUDE(cmp) < VDIVIDE_TOL)
+	return 1;
+
+    VMOVE(normal, cmp);
+    VUNITIZE(normal);
+    bn_vec_ortho(data.x_axis, normal);
+    VCROSS(data.y_axis, normal, data.x_axis);
+
+    /* Angular ordering is about the polygon center, not the model origin.
+     * Translate temporarily so the comparator only needs the plane axes. */
+    VSETALL(centroid, 0.0);
+    for (i = 0; i < npts; i++)
+	VADD2(centroid, centroid, pts[i]);
+    VSCALE(centroid, centroid, 1.0 / (double)npts);
+
+    for (i = 0; i < npts; i++)
+	VSUB2(pts[i], pts[i], centroid);
+
+    bu_sort(pts, npts, sizeof(point_t), sort_ccw_3d, &data);
+
+    for (i = 0; i < npts; i++)
+	VADD2(pts[i], pts[i], centroid);
+
     return 0;
 }
 

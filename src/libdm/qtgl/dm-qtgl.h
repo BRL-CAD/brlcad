@@ -1,7 +1,7 @@
 /*                          D M - O G L . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2025 United States Government as represented by
+ * Copyright (c) 1993-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,9 +33,7 @@
 // OSX has deprecated OpenGL since version 10.14
 #define GL_SILENCE_DEPRECATION 1
 
-#ifdef HAVE_GL_GL_H
-#  include <GL/gl.h>
-#endif
+#include "../dm-gl.h"
 
 #ifdef __cplusplus
 #  include <QtGlobal>

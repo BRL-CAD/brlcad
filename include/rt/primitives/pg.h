@@ -1,7 +1,7 @@
 /*                        P G . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2025 United States Government as represented by
+ * Copyright (c) 1993-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,8 +33,7 @@
 __BEGIN_DECLS
 
 RT_EXPORT extern int rt_pg_to_bot(struct rt_db_internal *ip,
-				  const struct bn_tol *tol,
-				  struct resource *resp0);
+				  const struct bn_tol *tol);
 RT_EXPORT extern int rt_pg_plot(struct bu_list          *vhead,
 				struct rt_db_internal   *ip,
 				const struct bg_tess_tol *ttol,

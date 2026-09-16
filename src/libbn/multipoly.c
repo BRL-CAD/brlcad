@@ -1,7 +1,7 @@
 /*                         M U L T I P O L Y . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2025 United States Government as represented by
+ * Copyright (c) 2004-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,8 +30,8 @@
 
 #include <stdio.h>
 #include <math.h>
-#include <signal.h>
 
+#include "bu/interrupt.h"
 #include "bu/malloc.h"
 #include "vmath.h"
 #include "bn/multipoly.h"

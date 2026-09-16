@@ -1,0 +1,56 @@
+= DEBUGLIB(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+debuglib - Allows the user to set or check the debug flags used by _librt_.
+
+== SYNOPSIS
+
+[source]
+----
+debuglib [hex_code]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Allows the user to set or check the debug flags used by _librt_. With no arguments, the *debuglib* command displays all the possible settings for the _librt_ debug flag and the current value. When a __hex_code__ is supplied, that value is used as the new value for the flag. Similar debug commands for other _BRL-CAD_ libraries are *debugbu* for _libbu_ and *debugnmg* for the NMG portion of _librt_.
+
+
+[[examples]]
+== EXAMPLES
+
+The first example shows the use of the *debuglib* command (without an argument) to list the available debug values for _librt_ and the current value. The second example shows the use of the *debuglib* command with a hex code, which sets the _librt_ debug flag to that value.
+
+.List available debug values for _librt_ and the current value.
+[example]
+====
+mged>**debuglib**
+
+Lists available debug values for _librt_ and the current value.
+
+====
+
+.Set the _librt_ debug flag to a specific value.
+[example]
+====
+mged>**debuglib 1**
+
+Sets the _librt_ debug flag to <DEBUG_ALLRAYS> (prints info about rays).
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,0 +1,50 @@
+= FIND_ARB_EDGE(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+find_arb_edge - find and identify an ARB (Arbitrary Polyhedron) edge
+
+== SYNOPSIS
+
+[source]
+----
+find_arb_edge arb "view_x view_y view_z" ptol
+----
+
+[[description]]
+== DESCRIPTION
+
+The *find_arb_edge* command searches an ARB (Arbitrary Polyhedron) primitive and identifies the edge that is closest to a given view coordinate within a specified pick tolerance (`ptol`). 
+
+If successful, the command returns three integers:
+1. The numeric ID of the closest edge.
+2. The numeric ID of the first vertex (`vi1`) forming the edge.
+3. The numeric ID of the second vertex (`vi2`) forming the edge.
+
+The arguments are:
+* *arb* : The name of the ARB primitive to search.
+* *"view_x view_y view_z"* : A single quoted string containing the X, Y, and Z coordinates (in view space) to test against.
+* *ptol* : The pick tolerance (a floating point value).
+
+[[examples]]
+== EXAMPLES
+
+.Identify an ARB edge near a view coordinate
+[example]
+====
+mged> **find_arb_edge arb8.s "0 0 1" 0.5**
+
+Searches `arb8.s` for an edge that is within `0.5` units of the view coordinate `(0, 0, 1)` and returns the edge ID and its two vertex IDs.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

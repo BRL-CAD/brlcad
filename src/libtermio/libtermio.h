@@ -955,6 +955,11 @@ void termio_debug_shutdown(void){}
 
 #include <termios.h>
 #include <sys/ioctl.h>
+// Workaround broken macOS/Xcode signal.h that
+// uses but doesn't define NSIG
+#if defined(__APPLE__) && !defined(NSIG)
+#define NSIG 32
+#endif
 #include <signal.h>
 #ifdef HAVE_SYS_SIGNAL_H
 #  include "sys/signal.h" // for SIGWINCH

@@ -1,7 +1,7 @@
 /*                         V I E W . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2025 United States Government as represented by
+ * Copyright (c) 1993-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -70,10 +70,10 @@ DM_EXPORT extern void dm_draw_faceplate(struct bview *v);
 #include "rt/wdb.h"
 
 DM_EXPORT extern void dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *d);
+#endif /* DM_NO_RT */
 
 /* Stripped down form of dm_draw_viewobjs that does just what's needed for the new setup */
 DM_EXPORT extern void dm_draw_objs(struct bview *v, void (*dm_draw_custom)(struct bview *, void *), void *u_data);
-#endif /* DM_NO_RT */
 
 __END_DECLS
 

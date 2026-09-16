@@ -1,7 +1,7 @@
 /*                         R T S R V . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2025 United States Government as represented by
+ * Copyright (c) 1985-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -46,6 +46,8 @@
 #include "bsocket.h"
 
 #include "bu/app.h"
+#include "bu/file.h"
+/* bu/ipc.h removed - transport handled by libpkg */
 #include "bu/str.h"
 #include "bu/process.h"
 #include "bu/snooze.h"
@@ -54,6 +56,7 @@
 #include "bn.h"
 #include "raytrace.h"
 #include "optical/debug.h"
+#include "optical/light.h"
 #include "pkg.h"
 #include "dm.h"
 #include "icv.h"
@@ -61,7 +64,12 @@
 #include "../rt/rtuif.h"
 #include "../rt/ext.h"
 #include "./protocol.h"
+#include "./auth.h"
+/* Enable TLS client-side functions */
+#define REMRT_TLS_IMPL
+#include "./tls_wrap.h"
 
+__BEGIN_DECLS
 
 struct bu_list WorkHead;
 
@@ -84,15 +92,13 @@ unsigned char *scanbuf = NULL;
 extern int grid_setup(struct bu_vls *err);
 extern void worker(int, void *);
 extern void application_init(void);
+/* light_cleanup() is declared in optical/light.h */
 
 /***** variables shared with worker() ******/
 struct application APP;
 int report_progress = 0;	/* !0 = user wants progress report */
 /***** end variables shared with worker() *****/
 
-/* Variables shared elsewhere */
-extern fastf_t rt_dist_tol;	/* Value for rti_tol.dist */
-extern fastf_t rt_perp_tol;	/* Value for rti_tol.perp */
 static char idbuf[132] = {0};		/* First ID record info */
 
 /* State flags */
@@ -100,10 +106,18 @@ static int seen_dirbuild = 0;
 static int seen_gettrees = 0;
 static int seen_matrix = 0;
 
+/* Set to 1 when the remrt connection is lost mid-render so the main loop
+ * can break cleanly rather than calling bu_exit() from a hook function.  */
+static volatile int rtsrv_connection_lost = 0;
+
+/* Frame number for which grid vectors and lighting have been initialized.
+ * Set to -1 by prepare() and ph_matrix() to force re-setup on the next
+ * ph_lines() call (mimicking rt's do_frame() order: do_prep -> grid_setup
+ * -> view_2init -> do_run). */
+static int last_setup_frame = -1;
+
 static char *title_file = NULL;
 static char *title_obj = NULL;	/* name of file and first object */
-
-#define MAX_WIDTH (16*1024)
 
 static size_t avail_cpus = 0;	/* # of cpus avail on this system */
 
@@ -151,13 +165,29 @@ char *control_host;	/* name of host running controller */
 char *tcp_port;		/* TCP port on control_host */
 int debug = 0;		/* 0=off, 1=debug, 2=verbose */
 
-char srv_usage[] = "Usage: rtsrv [-d] control-host tcp-port [cmd]\n";
+/*
+ * Session authentication token, supplied via "-S <token>" on the
+ * command line when remrt auto-launches this process via SSH.
+ * An empty string means no authentication (passive/manual start).
+ */
+static char srv_auth_token[REMRT_AUTH_TOKEN_LEN + 1] = {0};
 
+char srv_usage[] = "Usage: rtsrv [-d] [-S token] [-I ipc-addr] control-host tcp-port [cmd]\n"
+		   "       rtsrv [-d] [-S token]  -I ipc-addr\n";
+
+/* forward declarations for log/bomb hook helpers defined later in this file */
+static int rtsrv_log_hook(void *clientdata, void *str);
+static int rtsrv_bomb_hook(void *clientdata, void *str);
+static void rtsrv_install_log_hook(void);
+
+__END_DECLS
 
 int
 main(int argc, char **argv)
 {
     int n;
+    pkg_mux_t *input_mux = NULL;
+    const char *ipc_addr = NULL;   /* set by -I flag; enables IPC mode */
 
     bu_setprogname(argv[0]);
 
@@ -167,7 +197,7 @@ main(int argc, char **argv)
     }
     original_argc = argc;
     original_argv = bu_argv_dup(argc, (const char **)argv);
-    while (argv[1][0] == '-') {
+    while (argc > 1 && argv[1][0] == '-') {
 	if (BU_STR_EQUAL(argv[1], "-d")) {
 	    debug++;
 	} else if (BU_STR_EQUAL(argv[1], "-x")) {
@@ -176,32 +206,116 @@ main(int argc, char **argv)
 	} else if (BU_STR_EQUAL(argv[1], "-X")) {
 	    sscanf(argv[2], "%x", (unsigned int *)&optical_debug);
 	    argc--; argv++;
+	} else if (BU_STR_EQUAL(argv[1], "-S")) {
+	    /* Session authentication token from remrt */
+	    if (argc < 3) {
+		fprintf(stderr, "%s", srv_usage);
+		return 3;
+	    }
+	    bu_strlcpy(srv_auth_token, argv[2],
+		       sizeof(srv_auth_token));
+	    argc--; argv++;
+	} else if (BU_STR_EQUAL(argv[1], "-I")) {
+	    /* IPC connection address supplied by remrt via -I <addr>.
+	     * When present, no host/port positional args are needed.  */
+	    if (argc < 3) {
+		fprintf(stderr, "%s", srv_usage);
+		return 3;
+	    }
+	    ipc_addr = argv[2];
+	    argc--; argv++;
 	} else {
 	    fprintf(stderr, "%s", srv_usage);
 	    return 3;
 	}
 	argc--; argv++;
     }
-    if (argc != 3 && argc != 4) {
-	fprintf(stderr, "%s", srv_usage);
-	return 2;
+
+    /* Determine IPC mode: -I flag takes explicit precedence; fall back to
+     * the PKG_ADDR environment variable (PKG_ADDR_ENVVAR) set by
+     * the parent before fork() (see add_host_local() in remrt.c).         */
+    {
+	if (ipc_addr) {
+	    pcsrv = pkg_connect_addr(ipc_addr, pkgswitch, NULL);
+	    if (pcsrv == PKC_ERROR || pcsrv == PKC_NULL) {
+		fprintf(stderr, "rtsrv: pkg_connect_addr(%s) failed\n", ipc_addr);
+		return 1;
+	    }
+	} else {
+	    pcsrv = pkg_connect_env(pkgswitch, NULL);
+	}
+
+	if (pcsrv != PKC_ERROR && pcsrv != PKC_NULL) {
+	    /* IPC mode: remrt created a socketpair, moved the child-end fd
+	     * above the close(3..19) sweep in bu_process_create(), and
+	     * advertised it via -I or PKG_ADDR (PKG_ADDR_ENVVAR).
+	     * pkg_connect_addr/env wraps the already-inherited fd into a
+	     * pkg_conn so the rest of the code is transport-agnostic. */
+	    if (debug) {
+		const char *active_addr = ipc_addr ? ipc_addr : getenv(PKG_ADDR_ENVVAR);
+		fprintf(stderr, "rtsrv: IPC mode active (addr=%s)\n",
+			active_addr ? active_addr : "unknown");
+	    }
+	} else {
+	    /* Normal TCP mode */
+	    if (argc != 3 && argc != 4) {
+		fprintf(stderr, "%s", srv_usage);
+		return 2;
+	    }
+
+	    control_host = argv[1];
+	    tcp_port = argv[2];
+
+	    /* Note that the LIBPKG error logger can not be
+	     * "bu_log", as that can cause bu_log to be entered recursively.
+	     * Given the special version of bu_log in use here,
+	     * that will result in a deadlock in bu_semaphore_acquire(res_syscall)!
+	     * libpkg will default to stderr via pkg_errlog(), which is fine.
+	     */
+	    pcsrv = pkg_open(control_host, tcp_port, "tcp", "", "", pkgswitch, NULL);
+	    if (pcsrv == PKC_ERROR) {
+		fprintf(stderr, "rtsrv: unable to contact %s, port %s\n",
+			control_host, tcp_port);
+		return 1;
+	    }
+	}
     }
 
-    control_host = argv[1];
-    tcp_port = argv[2];
-
-    /* Note that the LIBPKG error logger can not be
-     * "bu_log", as that can cause bu_log to be entered recursively.
-     * Given the special version of bu_log in use here,
-     * that will result in a deadlock in bu_semaphore_acquire(res_syscall)!
-     * libpkg will default to stderr via pkg_errlog(), which is fine.
-     */
-    pcsrv = pkg_open(control_host, tcp_port, "tcp", "", "", pkgswitch, NULL);
-    if (pcsrv == PKC_ERROR) {
-	fprintf(stderr, "rtsrv: unable to contact %s, port %s\n",
-		control_host, tcp_port);
-	return 1;
+#ifdef HAVE_OPENSSL_SSL_H
+    /* Attempt TLS handshake with the remrt dispatcher.  If remrt was
+     * built with TLS support it will do SSL_accept() on its side;
+     * if not (or the handshake fails) we continue as plaintext for
+     * backward compatibility.
+     * Skip TLS in IPC mode — the libpkg ipc transport runs on the same
+     * machine and the shared-memory or socketpair channel does not
+     * need encryption.                                               */
+    if (control_host) {
+	SSL_CTX *tls_ctx = remrt_tls_client_ctx();
+	if (tls_ctx) {
+	    if (remrt_tls_connect(tls_ctx, pcsrv) == REMRT_TLS_OK) {
+		if (debug)
+		    fprintf(stderr, "rtsrv: TLS established with %s\n",
+			    control_host);
+	    } else {
+		fprintf(stderr, "rtsrv: TLS handshake failed; "
+			"continuing as plaintext\n");
+	    }
+	    SSL_CTX_free(tls_ctx);
+	}
     }
+#endif
+
+    /* Redirect bu_log() and bu_bomb() through the package connection so
+     * all log output is forwarded to the remrt dispatcher instead of
+     * going to stderr.  Must be done after pcsrv is open. */
+    rtsrv_install_log_hook();
+
+#ifdef SIGPIPE
+    /* Ignore SIGPIPE so that a broken remrt connection causes pkg_send()
+     * to return EPIPE rather than killing this process with a signal.
+     * The main loop already handles negative pkg_send returns gracefully. */
+    (void)signal(SIGPIPE, SIG_IGN);
+#endif
 
     if (argc == 4) {
 	/* Slip one command to dispatcher */
@@ -216,46 +330,46 @@ main(int argc, char **argv)
 
 #ifdef SO_SNDBUF
     /* increase the default send buffer size to 32k since we're
-     * sending pixels more than likely.
+     * sending pixels more than likely.  No-op for pipe transports.
      */
-    {
-	int val = 32767;
-	n = setsockopt(pcsrv->pkc_fd, SOL_SOCKET, SO_SNDBUF, (const void *)&val, sizeof(val));
-	if (n < 0)
-	    perror("setsockopt: SO_SNDBUF");
-    }
+    pkg_set_send_buffer(pcsrv, 32767);
 #endif
 
     if (!debug) {
-	int i;
 	FILE *fp;
 
 	/* DAEMONIZE */
 
-	/* Get a fresh process */
-	i = fork();
-	if (i < 0)
-	    perror("fork");
-	else if (i)
-	    return 0;
+#ifdef HAVE_FORK
+	{
+	    int i;
+
+	    /* Get a fresh process */
+	    i = fork();
+	    if (i < 0)
+		perror("fork");
+	    else if (i)
+		return 0;
+	}
 
 	/* Go into our own process group */
 	n = bu_pid();
-#ifdef HAVE_SETPGID
+#  ifdef HAVE_SETPGID
 	if (setpgid(n, n) < 0)
 	    perror("setpgid");
-#else
+#  else
 	/* SysV uses setpgrp with no args and it can't fail,
 	 * obsoleted by setpgid.
 	 */
 	setpgrp();
-#endif
+#  endif
 
 	/* Create our own session */
-#ifdef HAVE_SETSID
+#  ifdef HAVE_SETSID
 	if (setsid() < 0)
-	    perror("setpgid");
-#endif
+	    perror("setsid");
+#  endif
+#endif /* HAVE_FORK */
 
 	/* TODO: need to change directory (e.g., to TEMP) so we don't
 	 * make the initial working directory unlinkable on some OS.
@@ -268,41 +382,52 @@ main(int argc, char **argv)
 
 	/* Close off the world */
 
-#ifdef HAVE_WINDOWS_H
-#  define DEVNULL "\\\\.\\NUL"
-#else
-#  define DEVNULL "/dev/null"
-#endif
-
-	fp = freopen(DEVNULL, "r", stdin);
+	fp = freopen(bu_file_null(), "r", stdin);
 	if (fp == NULL)
 	    perror("freopen STDIN");
 
-	fp = freopen(DEVNULL, "w", stdout);
+	fp = freopen(bu_file_null(), "w", stdout);
 	if (fp == NULL)
 	    perror("freopen STDOUT");
 
 #if defined(HAVE_SYS_IOCTL_H) && defined(TIOCNOTTY)
 	fp = freopen("/dev/tty", "a", stderr);
-	if (fp == NULL)
+	if (fp == NULL) {
 	    perror("freopen(/dev/tty) STDERR");
-
-	(void)ioctl(fileno(fp), TIOCNOTTY, 0);
-	(void)fclose(fp);
+	} else {
+	    (void)ioctl(fileno(fp), TIOCNOTTY, 0);
+	    (void)fclose(fp);
+	}
 #endif
 
-	fp = freopen(DEVNULL, "w", stderr);
+	fp = freopen(bu_file_null(), "w", stderr);
 	if (fp == NULL)
 	    perror("freopen STDERR");
     }
 
-    /* Send our version string */
-    if (pkg_send(MSG_VERSION, PROTOCOL_VERSION, strlen(PROTOCOL_VERSION)+1, pcsrv) < 0) {
-	fprintf(stderr, "pkg_send MSG_VERSION error\n");
-	return 1;
+    /* Send our version string, optionally including the session token.
+     * Format: PROTOCOL_VERSION REMRT_AUTH_TOKEN_PREFIX <hex-token>
+     * The token is only appended when one was supplied on the command
+     * line (i.e., this process was auto-launched by remrt via SSH).
+     */
+    {
+	struct bu_vls ver = BU_VLS_INIT_ZERO;
+	bu_vls_strcat(&ver, PROTOCOL_VERSION);
+	if (srv_auth_token[0] != '\0') {
+	    bu_vls_strcat(&ver, REMRT_AUTH_TOKEN_PREFIX);
+	    bu_vls_strcat(&ver, srv_auth_token);
+	}
+	if (pkg_send(MSG_VERSION,
+		     bu_vls_addr(&ver), bu_vls_strlen(&ver) + 1,
+		     pcsrv) < 0) {
+	    fprintf(stderr, "pkg_send MSG_VERSION error\n");
+	    bu_vls_free(&ver);
+	    return 1;
+	}
+	if (debug)
+	    fprintf(stderr, "PROTOCOL_VERSION='%s'\n", bu_vls_addr(&ver));
+	bu_vls_free(&ver);
     }
-    if (debug)
-	fprintf(stderr, "PROTOCOL_VERSION='%s'\n", PROTOCOL_VERSION);
 
     /*
      * Now that the fork() has been done, it is safe to initialize
@@ -324,10 +449,24 @@ main(int argc, char **argv)
 
     BU_LIST_INIT(&WorkHead);
 
+    /* Do not use select() here.  On Windows the local transport uses an
+     * anonymous pipe, and Winsock select() only accepts sockets.  The libpkg
+     * multiplexer knows how to wait for each supported transport. */
+    input_mux = pkg_mux_create();
+    if (!input_mux || pkg_mux_add_conn(input_mux, pcsrv) < 0) {
+	bu_log("unable to create libpkg input multiplexer\n");
+	pkg_mux_destroy(input_mux);
+	return 1;
+    }
+
     for (;;) {
 	struct pkg_queue *lp;
-	fd_set ifds;
-	struct timeval tv;
+
+	/* Exit cleanly if the log hook detected a broken connection. */
+	if (rtsrv_connection_lost) {
+	    fprintf(stderr, "rtsrv: connection to remrt lost, exiting\n");
+	    break;
+	}
 
 	/* First, process any packages in library buffers */
 	if (pkg_process(pcsrv) < 0) {
@@ -335,22 +474,26 @@ main(int argc, char **argv)
 	    break;
 	}
 
-	/* Second, see if any input to read */
-	FD_ZERO(&ifds);
-	FD_SET(pcsrv->pkc_fd, &ifds);
-	tv.tv_sec = BU_LIST_NON_EMPTY(&WorkHead) ? 0L : 9999L;
-	tv.tv_usec = 0L;
+	/* Second, see if any input is ready on the active transport. */
+	{
+	    int wait_ms = BU_LIST_NON_EMPTY(&WorkHead) ? 0 : 9999000;
+	    int wait_ret = pkg_mux_wait(input_mux, wait_ms);
+	    if (wait_ret < 0) {
+		bu_log("pkg_mux_wait error\n");
+		break;
+	    }
 
-	if (select(pcsrv->pkc_fd+1, &ifds, (fd_set *)0, (fd_set *)0, &tv) != 0) {
-	    n = pkg_suckin(pcsrv);
-	    if (n < 0) {
-		bu_log("pkg_suckin error\n");
-		break;
-	    } else if (n == 0) {
-		/* EOF detected */
-		break;
-	    } else {
-		/* All is well */
+	    if (wait_ret > 0 && pkg_mux_is_ready_conn(input_mux, pcsrv)) {
+		n = pkg_suckin(pcsrv);
+		if (n < 0) {
+		    bu_log("pkg_suckin error\n");
+		    break;
+		} else if (n == 0) {
+		    /* EOF detected */
+		    break;
+		} else {
+		    /* All is well */
+		}
 	    }
 	}
 
@@ -379,12 +522,14 @@ main(int argc, char **argv)
 		    break;
 		default:
 		    bu_log("bad list element, type=%d\n", lp->type);
+		    pkg_mux_destroy(input_mux);
 		    return 33;
 	    }
 	    BU_PUT(lp, struct pkg_queue);
 	}
     }
 
+    pkg_mux_destroy(input_mux);
     return 0;		/* bu_exit(0, NULL) */
 }
 
@@ -413,6 +558,12 @@ ph_enqueue(struct pkg_conn *pc, char *buf)
 void
 ph_cd(struct pkg_conn *UNUSED(pc), char *buf)
 {
+    /* Strip any trailing whitespace to guard against newlines in the path */
+    {
+	char *p = buf + strlen(buf);
+	while (p > buf && isspace((unsigned char)p[-1]))
+	    *--p = '\0';
+    }
     if (debug)
 	fprintf(stderr, "ph_cd %s\n", buf);
     if (chdir(buf) < 0)
@@ -473,8 +624,16 @@ ph_dirbuild(struct pkg_conn *UNUSED(pc), char *buf)
     bu_free(argv, "free argv");
 
     /* Build directory of GED database */
-    if ((rtip=rt_dirbuild(title_file, idbuf, sizeof(idbuf))) == RTI_NULL)
-	bu_exit(2, "ph_dirbuild:  rt_dirbuild(%s) failure\n", title_file);
+    if ((rtip=rt_dirbuild(title_file, idbuf, sizeof(idbuf))) == RTI_NULL) {
+	/* Log via bu_log so the message is forwarded to remrt over the pkg
+	 * connection before we exit, then signal the main loop to exit
+	 * cleanly (matching the ph_lines pattern).  Using bu_exit() here
+	 * races against the MSG_PRINT flush since the process terminates
+	 * immediately after all hooks return.                            */
+	bu_log("ph_dirbuild:  rt_dirbuild(%s) failure\n", title_file);
+	rtsrv_connection_lost = 1;
+	return;
+    }
     APP.a_rt_i = rtip;
     seen_dirbuild = 1;
 
@@ -541,7 +700,7 @@ ph_gettrees(struct pkg_conn *UNUSED(pc), char *buf)
 
     /* Load the desired portion of the model */
     if (rt_gettrees(rtip, argc, (const char **)argv, npsw) < 0)
-	fprintf(stderr, "rt_gettrees(%s) FAILED\n", argv[0]);
+	bu_log("rt_gettrees(%s) FAILED\n", argv[0]);
     bu_free(argv, "free argv");
 
     seen_gettrees = 1;
@@ -562,8 +721,6 @@ process_cmd(char *buf)
     char *sp;
     char *ep;
     int len;
-    extern struct command_tab rt_do_tab[];	/* from do.c */
-
     /* Parse the string */
     len = strlen(buf);
     ep = buf+len;
@@ -627,6 +784,9 @@ ph_matrix(struct pkg_conn *UNUSED(pc), char *buf)
 
     /* Start options in a known state */
     AmbientIntensity = 0.4;
+    /* 0/0/1 background -- must match rt's initialize_option_defaults() */
+    background[0] = background[1] = 0.0;
+    background[2] = 1.0/255.0; /* slightly non-black */
     hypersample = 0;
     jitter = 0;
     rt_perspective = 0;
@@ -643,8 +803,11 @@ ph_matrix(struct pkg_conn *UNUSED(pc), char *buf)
 
     process_cmd(buf);
     free(buf);
-
     seen_matrix = 1;
+    /* New view parameters arrived: force grid+lighting re-setup on the
+     * next ph_lines() so that grid_setup() uses the updated viewsize,
+     * eye_model, and Viewrotscale values. */
+    last_setup_frame = -1;
 }
 
 
@@ -666,26 +829,31 @@ prepare(void)
 
     do_prep(rtip);
 
-    if (rtip->nsolids <= 0)
+    if (rtip->stats.nsolids <= 0)
 	bu_exit(3, "ph_matrix: No solids remain after prep.\n");
 
-    {
-	struct bu_vls err = BU_VLS_INIT_ZERO;
-	int ret = grid_setup(&err);
-	if (ret)
-	    bu_exit(BRLCAD_ERROR, "%s\n", bu_vls_cstr(&err));
-    }
+    /*
+     * Do NOT call grid_setup() or view_2init() here.  These are
+     * deferred to ph_lines() so that the initialization order matches
+     * rt's do_frame() exactly:
+     *
+     *   do_prep() -> grid_setup() -> view_2init() -> do_run()
+     *
+     * Calling view_2init() (which invokes light_maker() using the
+     * current view2model) in the same stack frame as grid_setup()
+     * guarantees that the light positions and the ray-origin grid are
+     * built from the identical view2model matrix, achieving pixel-exact
+     * parity with standalone rt.
+     */
+    last_setup_frame = -1;  /* trigger grid+lighting setup in ph_lines() */
 
-    /* initialize lighting */
-    view_2init(&APP, NULL);
-
-    rtip->nshots = 0;
-    rtip->nmiss_model = 0;
-    rtip->nmiss_tree = 0;
-    rtip->nmiss_solid = 0;
-    rtip->nmiss = 0;
-    rtip->nhits = 0;
-    rtip->rti_nrays = 0;
+    rtip->stats.nshots = 0;
+    rtip->stats.nmiss_model = 0;
+    rtip->stats.nmiss_tree = 0;
+    rtip->stats.nmiss_solid = 0;
+    rtip->stats.nmiss = 0;
+    rtip->stats.nhits = 0;
+    rtip->stats.rti_nrays = 0;
 
 }
 
@@ -732,14 +900,61 @@ ph_lines(struct pkg_conn *UNUSED(pc), char *buf)
     if (b-a+1 > srv_scanlen)
 	b = a + srv_scanlen - 1;
 
-    rtip->rti_nrays = 0;
+    rtip->stats.rti_nrays = 0;
     info.li_startpix = a;
     info.li_endpix = b;
     info.li_frame = fr;
 
+    /* Set up grid vectors and lighting on the first MSG_LINES for each
+     * frame (identified by the frame number 'fr').  This mirrors the
+     * order used by rt's do_frame():
+     *
+     *   do_prep() [called in prepare()] -> grid_setup() -> view_2init()
+     *   -> do_run()
+     *
+     * Doing grid_setup() and view_2init() here — immediately before
+     * do_run() — guarantees that both the light positions (set by
+     * light_maker() inside view_2init()) and the per-pixel ray origins
+     * (computed by do_run() using viewbase_model / dx_model / dy_model)
+     * are derived from the same view2model matrix, producing pixel-exact
+     * parity with standalone rt.
+     *
+     * For multi-frame animations the light list carries over from the
+     * previous frame when the geometry has not changed (no new
+     * MSG_GETTREES / prepare() call).  light_cleanup() discards the
+     * stale lights so that view_2init() recreates them with the
+     * updated view2model.
+     */
+    if (fr != last_setup_frame) {
+	struct bu_vls err = BU_VLS_INIT_ZERO;
+	int setup;
+
+	/* Discard lights from any previous frame so light_maker() inside
+	 * view_2init() will build fresh ones from the current view2model.
+	 * light_cleanup() is safe to call even when LightHead is empty. */
+	light_cleanup();
+
+	setup = grid_setup(&err);
+	if (setup) {
+	    bu_log("ph_lines: grid_setup failed: %s\n", bu_vls_cstr(&err));
+	    bu_vls_free(&err);
+	    free(buf);
+	    /* Signal the main loop to exit so that remrt detects the
+	     * dropped connection and requeues the pixel range to
+	     * fr_todo, rather than waiting indefinitely for a
+	     * MSG_PIXELS reply that will never arrive.              */
+	    rtsrv_connection_lost = 1;
+	    return;
+	}
+	bu_vls_free(&err);
+
+	view_2init(&APP, NULL);
+	last_setup_frame = fr;
+    }
+
     rt_prep_timer();
     do_run(a, b);
-    info.li_nrays = rtip->rti_nrays;
+    info.li_nrays = rtip->stats.rti_nrays;
     info.li_cpusec = rt_read_timer((char *)0, 0);
     info.li_percent = 42.0;	/* for now */
 
@@ -780,96 +995,83 @@ ph_loglvl(struct pkg_conn *UNUSED(pc), char *buf)
 }
 
 
-/**** Other replacement routines from libbu/log.c ****/
-int bu_log_indent_cur_level = 0; /* formerly RTG.rtg_logindent */
 /*
- * Change indent level by indicated number of characters.  Call with a
- * large negative number to cancel all indentation.
+ * bu_log hook: forwards formatted log strings to the remrt dispatcher
+ * over the package connection.  Replaces the old bu_log() override that
+ * caused LNK2005 multiply-defined-symbol errors on Windows (where the
+ * DLL export from libbu cannot be silently overridden by an object file).
  */
-void
-bu_log_indent_delta(int delta)
+static int
+rtsrv_log_hook(void *clientdata, void *str)
 {
-    if ((bu_log_indent_cur_level += delta) < 0)
-	bu_log_indent_cur_level = 0;
-}
-
-
-/*
- * For multi-line vls generators, honor logindent level like bu_log()
- * does, and prefix the proper number of spaces.  Should be called at
- * the front of each new line.
- */
-void
-bu_log_indent_vls(struct bu_vls *v)
-{
-    bu_vls_spaces(v, bu_log_indent_cur_level);
-}
-
-
-/*
- * Log an error.  This version buffers a full line, to save network
- * traffic.
- */
-int
-bu_log(const char *fmt, ...)
-{
-    va_list vap;
-    char buf[512];		/* a generous output line.  Must be AUTO, else non-PARALLEL. */
-    int ret = 0;
+    int ret;
+    (void)clientdata;
 
     if (print_on == 0)
 	return 0;
 
-    bu_semaphore_acquire(BU_SEM_SYSCALL);
-    va_start(vap, fmt);
-    ret = vsprintf(buf, fmt, vap);
-    va_end(vap);
-
     if (pcsrv == PKC_NULL || pcsrv == PKC_ERROR) {
-	fprintf(stderr, "%s", buf);
-	bu_semaphore_release(BU_SEM_SYSCALL);
-	return ret;
+	fprintf(stderr, "%s", (const char *)str);
+	return 0;
     }
 
     if (debug)
-	fprintf(stderr, "%s", buf);
+	fprintf(stderr, "%s", (const char *)str);
 
-    ret = pkg_send(MSG_PRINT, buf, strlen(buf)+1, pcsrv);
+    ret = pkg_send(MSG_PRINT, (const char *)str, strlen((const char *)str)+1, pcsrv);
     if (ret < 0) {
 	fprintf(stderr, "pkg_send MSG_PRINT failed\n");
-	bu_exit(12, NULL);
+	/* Mark the connection as lost; the main loop will break cleanly.
+	 * Do NOT call bu_exit() here — this hook may be invoked from inside
+	 * a parallel rendering thread, and bu_exit() from such a context is
+	 * not safe.                                                          */
+	rtsrv_connection_lost = 1;
     }
-
-    bu_semaphore_release(BU_SEM_SYSCALL);
-    return ret;
+    return 0;
 }
 
 
-/* override libbu's bu_bomb() function.
- *
- * FIXME: should register a bu_bomb() handler instead of this hack.
+/*
+ * bu_bomb hook: forwards the bomb string to the remrt dispatcher before
+ * bu_bomb() terminates the process.
  */
-void
-bu_bomb(const char *str)
+static int
+rtsrv_bomb_hook(void *clientdata, void *str)
 {
-    char *bomb = "RTSRV terminated by bu_bomb()\n";
+    static const char *bomb_msg = "RTSRV terminated by bu_bomb()\n";
     int ret;
+    (void)clientdata;
 
-    ret = pkg_send(MSG_PRINT, (char *)str, strlen(str)+1, pcsrv);
-    if (ret < 0) {
-	fprintf(stderr, "bu_bomb MSG_PRINT failed\n");
-    }
+    if (pcsrv != PKC_NULL && pcsrv != PKC_ERROR) {
+	ret = pkg_send(MSG_PRINT, (const char *)str, strlen((const char *)str)+1, pcsrv);
+	if (ret < 0)
+	    fprintf(stderr, "bu_bomb MSG_PRINT failed\n");
 
-    ret = pkg_send(MSG_PRINT, bomb, strlen(bomb)+1, pcsrv);
-    if (ret < 0) {
-	fprintf(stderr, "bu_bomb MSG_PRINT failed\n");
+	ret = pkg_send(MSG_PRINT, bomb_msg, strlen(bomb_msg)+1, pcsrv);
+	if (ret < 0)
+	    fprintf(stderr, "bu_bomb MSG_PRINT failed\n");
     }
 
     if (debug)
-	fprintf(stderr, "\n%s\n", str);
+	fprintf(stderr, "\n%s\n", (const char *)str);
     fflush(stderr);
 
-    bu_exit(12, NULL);
+    /* bu_bomb() will terminate the process after all hooks return */
+    return 0;
+}
+
+
+/*
+ * Install the log and bomb hooks once the package connection (pcsrv) is
+ * open.  This suppresses the default stderr output from bu_log() so that
+ * all logging goes over the network to the remrt dispatcher instead.
+ */
+static void
+rtsrv_install_log_hook(void)
+{
+    bu_log_hook_delete_all();
+    bu_log_add_hook(rtsrv_log_hook, NULL);
+    bu_bomb_add_hook(rtsrv_bomb_hook, NULL);
 }
 
 

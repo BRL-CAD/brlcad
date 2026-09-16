@@ -1,7 +1,7 @@
 /*                         T O R . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2025 United States Government as represented by
+ * Copyright (c) 1985-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -135,14 +135,13 @@
  *
  */
 
-const struct bu_structparse rt_tor_parse[] = {
+EXTERNCPP const struct bu_structparse rt_tor_parse[] = {
     {"%f", 3, "V",   bu_offsetofarray(struct rt_tor_internal, v, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%f", 3, "H",   bu_offsetofarray(struct rt_tor_internal, h, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%f", 1, "r_a", bu_offsetof(struct rt_tor_internal, r_a),  BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%f", 1, "r_h", bu_offsetof(struct rt_tor_internal, r_h),  BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {{'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL}
 };
-
 
 struct tor_specific {
     fastf_t tor_alpha;	/* 0 < (R2/R1) <= 1 */
@@ -188,7 +187,7 @@ clt_tor_pack(struct bu_pool *pool, struct soltab *stp)
 /**
  * Compute the bounding RPP for a circular torus.
  */
-int
+C_DECL int
 rt_tor_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
     vect_t P, w1;	/* for RPP calculation */
     fastf_t f;
@@ -247,7 +246,7 @@ rt_tor_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
  * A struct tor_specific is created, and its address is stored in
  * stp->st_specific for use by rt_tor_shot().
  */
-int
+C_DECL int
 rt_tor_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     register struct tor_specific *tor;
@@ -333,7 +332,7 @@ rt_tor_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-void
+C_DECL void
 rt_tor_print(register const struct soltab *stp)
 {
     register const struct tor_specific *tor =
@@ -399,7 +398,7 @@ inside_overlapping_region(struct tor_specific *tor, point_t hp)
  * 0 MISS
  * >0 HIT
  */
-int
+C_DECL int
 rt_tor_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
     register struct tor_specific *tor =
@@ -492,7 +491,7 @@ rt_tor_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	    bn_pr_roots(stp->st_name, val, i);
 	} else if (i < 0) {
 	    static int reported=0;
-	    bu_log("The root solver failed to converge on a solution for %s\n", stp->st_dp->d_namep);
+	    bu_log("LIBRT: The root solver failed to converge on a solution for %s\n", stp->st_dp->d_namep);
 	    if (!reported) {
 		VPRINT("while shooting from:\t", rp->r_pt);
 		VPRINT("while shooting at:\t", rp->r_dir);
@@ -603,7 +602,7 @@ rt_tor_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 /**
  * This is the Becker vector version
  */
-void
+C_DECL void
 rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
     /* An array of solid pointers */
     /* An array of ray pointers */
@@ -738,7 +737,7 @@ rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 		bn_pr_roots("tor", val[i], num_roots);
 	    } else if (num_roots < 0) {
 		static int reported=0;
-		bu_log("The root solver failed to converge on a solution for %s\n", stp[i]->st_dp->d_namep);
+		bu_log("LIBRT: The root solver failed to converge on a solution for %s\n", stp[i]->st_dp->d_namep);
 		if (!reported) {
 		    VPRINT("while shooting from:\t", rp[i]->r_pt);
 		    VPRINT("while shooting at:\t", rp[i]->r_dir);
@@ -875,7 +874,7 @@ rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
  * Since we rescale the gradient (normal) to unity, we divide the
  * above equations by four here.
  */
-void
+C_DECL void
 rt_tor_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
 {
     register struct tor_specific *tor =
@@ -902,7 +901,7 @@ rt_tor_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 /**
  * Return the curvature of the torus.
  */
-void
+C_DECL void
 rt_tor_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
 {
     register struct tor_specific *tor =
@@ -945,7 +944,7 @@ rt_tor_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 }
 
 
-void
+C_DECL void
 rt_tor_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
     struct tor_specific *tor = (struct tor_specific *) stp->st_specific;
@@ -976,7 +975,7 @@ rt_tor_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 }
 
 
-void
+C_DECL void
 rt_tor_free(struct soltab *stp)
 {
     register struct tor_specific *tor =
@@ -1059,7 +1058,7 @@ tor_ellipse_points(
     return circumference / point_spacing;
 }
 
-int
+C_DECL int
 rt_tor_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *tol, const struct bview *v, fastf_t s_size)
 {
     vect_t a, b, tor_a, tor_b, tor_h, center;
@@ -1154,7 +1153,7 @@ rt_tor_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
  * ti.h Radius Vector, Normal to plane of torus
  * ti.a, ti.b perpendicular, to CENTER of torus (for top, bottom)
  */
-int
+C_DECL int
 rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     fastf_t alpha;
@@ -1179,50 +1178,29 @@ rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     tip = (struct rt_tor_internal *)ip->idb_ptr;
     RT_TOR_CK_MAGIC(tip);
 
-    if (ttol->rel <= 0.0 || ttol->rel >= 1.0) {
-	rel = 0.0;		/* none */
-    } else {
-	/* Convert relative tolerance to absolute tolerance
-	 * by scaling w.r.t. the torus diameter.
-	 */
-	rel = ttol->rel * 2 * (tip->r_a+tip->r_h);
+    /* Use abs(r_h) so negative r_h (same surface, opposite orientation)
+     * yields the correct segment count. */
+    {
+	fastf_t r_h_abs = fabs(tip->r_h);
 
-	// TODO - should we be using this instead of the above?
-	// rel = primitive_get_absolute_tolerance(ttol, 2.0 * (tip->r_a + tip->r_h));
-    }
-    /* Take tighter of two (absolute) tolerances */
-    if (ttol->abs <= 0.0) {
-	/* No absolute tolerance given */
-	if (rel <= 0.0) {
-	    /* User has no tolerance for this kind of drink */
-	    nw = 8;
-	    nlen = 16;
-	} else {
-	    /* Use the absolute-ized relative tolerance */
-	    nlen = rt_num_circular_segments(rel, tip->r_a);
-	    nw = rt_num_circular_segments(rel, tip->r_h);
-	}
-    } else {
-	/* Absolute tolerance was given */
-	if (rel <= 0.0 || rel > ttol->abs)
-	    rel = ttol->abs;
+	/* Uniformly select the tighter of abs/rel tolerance, falling back to
+	 * 10 % of the outer torus diameter when neither is specified.
+	 * This matches the behaviour of all other curved primitives. */
+	rel = primitive_get_absolute_tolerance(ttol, 2.0 * (tip->r_a + r_h_abs));
 	nlen = rt_num_circular_segments(rel, tip->r_a);
-	nw = rt_num_circular_segments(rel, tip->r_h);
-    }
+	nw   = rt_num_circular_segments(rel, r_h_abs);
 
-    /* Implement surface-normal tolerance, if given:
-     *
-     * nseg = (2 * pi) / (2 * tol)
-     *
-     * For a facet which subtends angle theta, surface normal is exact
-     * in the center, and off by theta/2 at the edges.  Note: 1 degree
-     * tolerance requires 180*180 tessellation!
-     */
-    if (ttol->norm > 0.0) {
-	register int nseg;
-	nseg = (M_PI / ttol->norm) + 0.99;
-	if (nseg > nlen) nlen = nseg;
-	if (nseg > nw) nw = nseg;
+	/* Apply surface-normal tolerance if it demands more segments.
+	 * For a facet subtending angle theta the normal deviates by theta/2
+	 * at the edges; note 1-degree tolerance requires ~180 segs/circle. */
+	if (ttol->norm > 0.0) {
+	    register int nseg;
+	    fastf_t min_ntol = prim_min_norm_tol();
+	    fastf_t ntol_eff = (ttol->norm < min_ntol) ? min_ntol : ttol->norm;
+	    nseg = (int)(M_PI / ntol_eff + 0.99);
+	    if (nseg > nlen) nlen = nseg;
+	    if (nseg > nw)   nw   = nseg;
+	}
     }
 
     /* Compute the points on the surface of the torus */
@@ -1273,7 +1251,175 @@ rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 }
 
 
-int
+/**
+ * Tessellate the OUTER surface of a spindle torus (r_h > r_a).
+ *
+ * When the tube radius r_h exceeds the ring radius r_a the tube passes
+ * through the torus symmetry axis and the surface self-intersects.  The
+ * OUTER portion of that surface – i.e. the part where the radial distance
+ * from the axis is non-negative – is itself a closed, genus-0 manifold
+ * (sphere topology).  It spans the alpha range [-alpha_max, +alpha_max]
+ * where alpha_max = acos(-r_a/r_h), and terminates at two "pinch-point"
+ * poles on the symmetry axis.
+ */
+static int
+rt_tor_spindle_tess(struct nmgregion **r, struct model *m,
+		    const struct rt_tor_internal *tip, fastf_t r_h,
+		    int nw, int nlen, const struct bn_tol *tol)
+{
+    int w, len, i, nfaces;
+    fastf_t alpha, beta, cos_alpha, sin_alpha, cos_beta, sin_beta;
+    fastf_t r_a = tip->r_a;
+    fastf_t alpha_max, sin_alpha_max, pole_z, alpha_step, dist_to_rim;
+    vect_t G, radius, edge;
+    fastf_t *pts, *norms;
+    point_t pole_bot_pt, pole_top_pt;
+    struct vertex *vpole_bot = NULL, *vpole_top = NULL;
+    struct vertex **verts;
+    struct faceuse **faces;
+    struct shell *s;
+    struct vertex **vertp3[3];
+    struct vertex **vertp4[4];
+    int nfaces_max;
+
+    /* Alpha range of the outer surface */
+    alpha_max = acos(-r_a / r_h);
+    sin_alpha_max = sqrt(1.0 - (r_a / r_h) * (r_a / r_h));
+    pole_z = r_h * sin_alpha_max;	/* = sqrt(r_h^2 - r_a^2) */
+    dist_to_rim = r_h / r_a;	/* scale factor: G = dist_to_rim * radius (same as normal torus) */
+
+    /* Pole positions on the torus symmetry axis */
+    VJOIN1(pole_bot_pt, tip->v, -pole_z, tip->h);
+    VJOIN1(pole_top_pt, tip->v, +pole_z, tip->h);
+
+    /* Allocate point/normal storage for nw x nlen grid (no poles in array) */
+    pts   = (fastf_t *)bu_malloc(nw * nlen * sizeof(point_t), "spindle pts");
+    norms = (fastf_t *)bu_malloc(nw * nlen * sizeof(vect_t),  "spindle norms");
+
+/* Index into grid (alpha row w, beta column len). beta wraps around. */
+#define SPTS(ww, ll)   (((ww) * nlen) + ((ll) % nlen))
+#define SPTA(ww, ll)   (&pts[SPTS(ww, ll) * 3])
+#define SNORM(ww, ll)  (&norms[SPTS(ww, ll) * 3])
+
+    /* alpha rows span (-alpha_max, +alpha_max) exclusive of poles */
+    alpha_step = 2.0 * alpha_max / (nw + 1);
+    for (w = 0; w < nw; w++) {
+	alpha = -alpha_max + (w + 1) * alpha_step;
+	cos_alpha = cos(alpha);
+	sin_alpha = sin(alpha);
+	for (len = 0; len < nlen; len++) {
+	    beta = M_2PI * len / nlen;
+	    cos_beta = cos(beta);
+	    sin_beta = sin(beta);
+	    VCOMB2(radius, cos_beta, tip->a, sin_beta, tip->b);
+	    VSCALE(G, radius, dist_to_rim);
+	    VCOMB2(edge, cos_alpha, G, sin_alpha * r_h, tip->h);
+	    VADD3(SPTA(w, len), tip->v, edge, radius);
+	    VMOVE(SNORM(w, len), edge);
+	    VUNITIZE(SNORM(w, len));
+	}
+    }
+
+    /* Build NMG model */
+    *r = nmg_mrsv(m);
+    s  = BU_LIST_FIRST(shell, &(*r)->s_hd);
+
+    verts = (struct vertex **)bu_calloc(nw * nlen, sizeof(struct vertex *),
+					"spindle verts");
+    nfaces_max = 2 * nlen + (nw - 1) * nlen;   /* 2 fans + middle quads */
+    faces = (struct faceuse **)bu_calloc(nfaces_max, sizeof(struct faceuse *),
+					 "spindle faces");
+    nfaces = 0;
+
+    /* Bottom fan: pole_bot → ring 0
+     * winding (pole, ring[j+1], ring[j]) gives outward (downward) normal */
+    for (len = 0; len < nlen; len++) {
+	vertp3[0] = &vpole_bot;
+	vertp3[1] = &verts[SPTS(0, len + 1)];
+	vertp3[2] = &verts[SPTS(0, len)];
+	if ((faces[nfaces++] = nmg_cmface(s, vertp3, 3)) == (struct faceuse *)0) {
+	    bu_log("rt_tor_spindle_tess: nmg_cmface failed (bottom fan len=%d)\n", len);
+	    nfaces--;
+	}
+    }
+
+    /* Middle quads: same winding convention as the normal torus */
+    for (w = 0; w < nw - 1; w++) {
+	for (len = 0; len < nlen; len++) {
+	    vertp4[0] = &verts[SPTS(w,     len)];
+	    vertp4[1] = &verts[SPTS(w,     len + 1)];
+	    vertp4[2] = &verts[SPTS(w + 1, len + 1)];
+	    vertp4[3] = &verts[SPTS(w + 1, len)];
+	    if ((faces[nfaces++] = nmg_cmface(s, vertp4, 4)) == (struct faceuse *)0) {
+		bu_log("rt_tor_spindle_tess: nmg_cmface failed (mid w=%d len=%d)\n", w, len);
+		nfaces--;
+	    }
+	}
+    }
+
+    /* Top fan: ring nw-1 → pole_top
+     * winding (pole, ring[j], ring[j+1]) gives outward (upward) normal */
+    for (len = 0; len < nlen; len++) {
+	vertp3[0] = &vpole_top;
+	vertp3[1] = &verts[SPTS(nw - 1, len)];
+	vertp3[2] = &verts[SPTS(nw - 1, len + 1)];
+	if ((faces[nfaces++] = nmg_cmface(s, vertp3, 3)) == (struct faceuse *)0) {
+	    bu_log("rt_tor_spindle_tess: nmg_cmface failed (top fan len=%d)\n", len);
+	    nfaces--;
+	}
+    }
+
+    /* Assign vertex geometry */
+    nmg_vertex_gv(vpole_bot, pole_bot_pt);
+    nmg_vertex_gv(vpole_top, pole_top_pt);
+    for (w = 0; w < nw; w++)
+	for (len = 0; len < nlen; len++)
+	    nmg_vertex_gv(verts[SPTS(w, len)], SPTA(w, len));
+
+    /* Compute plane equations for all faces */
+    for (i = 0; i < nfaces; i++) {
+	if (nmg_fu_planeeqn(faces[i], tol) < 0) {
+	    bu_free((char *)pts,   "spindle pts");
+	    bu_free((char *)norms, "spindle norms");
+	    bu_free((char *)verts, "spindle verts");
+	    bu_free((char *)faces, "spindle faces");
+	    return -1;
+	}
+    }
+
+    /* Assign vertexuse normals for grid vertices */
+    for (w = 0; w < nw; w++) {
+	for (len = 0; len < nlen; len++) {
+	    struct vertexuse *vu;
+	    vect_t rev_norm;
+	    VREVERSE(rev_norm, SNORM(w, len));
+	    for (BU_LIST_FOR(vu, vertexuse, &verts[SPTS(w, len)]->vu_hd)) {
+		struct faceuse *fu = nmg_find_fu_of_vu(vu);
+		NMG_CK_FACEUSE(fu);
+		if (fu->orientation == OT_SAME)
+		    nmg_vertexuse_nv(vu, SNORM(w, len));
+		else if (fu->orientation == OT_OPPOSITE)
+		    nmg_vertexuse_nv(vu, rev_norm);
+	    }
+	}
+    }
+
+#undef SPTS
+#undef SPTA
+#undef SNORM
+
+    nmg_keu_zl(s, tol);
+    nmg_region_a(*r, tol);
+
+    bu_free((char *)pts,   "spindle pts");
+    bu_free((char *)norms, "spindle norms");
+    bu_free((char *)verts, "spindle verts");
+    bu_free((char *)faces, "spindle faces");
+    return 0;
+}
+
+
+C_DECL int
 rt_tor_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
 {
     fastf_t alpha;
@@ -1281,6 +1427,7 @@ rt_tor_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     fastf_t cos_alpha, sin_alpha;
     fastf_t cos_beta, sin_beta;
     fastf_t dist_to_rim;
+    fastf_t r_h_eff;	/**< @brief effective tube radius (absolute value of r_h) */
     struct rt_tor_internal *tip;
     int w;
     int nw = 6;
@@ -1297,57 +1444,81 @@ rt_tor_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     struct vertex **vertp[4];
     int nfaces;
     int i;
-    fastf_t rel;
 
     RT_CK_DB_INTERNAL(ip);
+    BG_CK_TESS_TOL(ttol);
+    BN_CK_TOL(tol);
     tip = (struct rt_tor_internal *)ip->idb_ptr;
     RT_TOR_CK_MAGIC(tip);
 
-    if (ttol->rel <= 0.0 || ttol->rel >= 1.0) {
-	rel = 0.0;		/* none */
-    } else {
-	/* Convert relative tolerance to absolute tolerance by scaling
-	 * w.r.t. the torus diameter.
-	 */
-	rel = ttol->rel * 2 * (tip->r_a+tip->r_h);
-    }
-    /* Take tighter of two (absolute) tolerances */
-    if (ttol->abs <= 0.0) {
-	/* No absolute tolerance given */
-	if (rel <= 0.0) {
-	    /* User has no tolerance for this kind of drink */
-	    nw = 8;
-	    nlen = 16;
-	} else {
-	    /* Use the absolute-ized relative tolerance */
-	    nlen = rt_num_circular_segments(rel, tip->r_a);
-	    nw = rt_num_circular_segments(rel, tip->r_h);
-	}
-    } else {
-	/* Absolute tolerance was given */
-	if (rel <= 0.0 || rel > ttol->abs)
-	    rel = ttol->abs;
-	nlen = rt_num_circular_segments(rel, tip->r_a);
-	nw = rt_num_circular_segments(rel, tip->r_h);
+    /* validate r_a */
+    if (tip->r_a <= 0.0) {
+	bu_log("rt_tor_tess: r1 (r_a=%g) must be > 0\n", tip->r_a);
+	return -1;
     }
 
-    /* Implement surface-normal tolerance, if given
-     *
-     * nseg = (2 * pi) / (2 * tol)
-     *
-     * For a facet which subtends angle theta, surface normal is exact
-     * in the center, and off by theta/2 at the edges.  Note: 1 degree
-     * tolerance requires 180*180 tessellation!
-     */
+    /* Accept negative r_h by using its absolute value: the resulting surface
+     * is geometrically identical to |r_h| (the parametric surface is the same
+     * shape regardless of sign, since the tube sweeps a full 2*pi).      */
+    r_h_eff = tip->r_h;
+    if (r_h_eff < 0.0) {
+	bu_log("rt_tor_tess: r_h (%g) is negative; using |r_h| = %g\n",
+	       tip->r_h, -tip->r_h);
+	r_h_eff = -tip->r_h;
+    }
+    if (r_h_eff <= 0.0) {
+	bu_log("rt_tor_tess: r2 (r_h=%g) must be != 0\n", tip->r_h);
+	return -1;
+    }
+
+    /* A tube radius below the calculational tolerance is a zero-volume object.
+     * Return an empty (zero-face) mesh so that CSG facetization can treat this
+     * primitive as a no-op and keep going rather than failing. */
+    if (r_h_eff < tol->dist) {
+	bu_log("rt_tor_tess: tube radius (%g) smaller than calculational tolerance (%g); returning empty mesh\n",
+	       r_h_eff, tol->dist);
+	*r = nmg_mrsv(m);
+	return 0;
+    }
+
+    /* Compute segment counts for the major circle (nlen, radius r_a) and the
+     * minor circle (nw, radius r_h_eff) independently, using each circle's
+     * own radius as the characteristic length.  Using the full bbox diameter
+     * for both underestimates nw for thin tori (r_a >> r_h), which leads to
+     * coarse tessellation and large SA errors at typical tolerances.       */
+    {
+	fastf_t abs_len = primitive_get_absolute_tolerance(ttol, 2.0 * tip->r_a);
+	fastf_t abs_w   = primitive_get_absolute_tolerance(ttol, 2.0 * r_h_eff);
+	fastf_t ntol_dummy = M_PI;
+	fastf_t bbox_diag  = 2.0 * (tip->r_a + r_h_eff);
+	primitive_clamp_tess_tol(&abs_len, &ntol_dummy, bbox_diag);
+	ntol_dummy = M_PI;
+	primitive_clamp_tess_tol(&abs_w,   &ntol_dummy, bbox_diag);
+	nlen = rt_num_circular_segments(abs_len, tip->r_a);
+	nw   = rt_num_circular_segments(abs_w,   r_h_eff);
+    }
+
+    /* Apply surface-normal tolerance if it demands more segments.
+     * For a facet subtending angle theta the normal deviates by theta/2
+     * at the edges; note 1-degree tolerance requires ~180 segs/circle. */
     if (ttol->norm > 0.0) {
 	register int nseg;
-	nseg = (M_PI / ttol->norm) + 0.99;
+	fastf_t min_ntol = prim_min_norm_tol();
+	fastf_t ntol_eff = (ttol->norm < min_ntol) ? min_ntol : ttol->norm;
+	nseg = (int)(M_PI / ntol_eff) + 1;
 	if (nseg > nlen) nlen = nseg;
-	if (nseg > nw) nw = nseg;
+	if (nseg > nw)   nw   = nseg;
+    }
+
+    /* Spindle torus: r_h > r_a means the tube passes through the symmetry
+     * axis.  Produce the OUTER surface as a closed manifold (sphere topology)
+     * rather than the self-intersecting full tube. */
+    if (r_h_eff > tip->r_a) {
+	return rt_tor_spindle_tess(r, m, tip, r_h_eff, nw, nlen, tol);
     }
 
     /* Compute the points on the surface of the torus */
-    dist_to_rim = tip->r_h/tip->r_a;
+    dist_to_rim = r_h_eff / tip->r_a;
     pts = (fastf_t *)bu_malloc(nw * nlen * sizeof(point_t),
 			       "rt_tor_tess pts[]");
     norms = (fastf_t *)bu_malloc(nw * nlen * sizeof(vect_t), "rt_tor_tess: norms[]");
@@ -1364,7 +1535,7 @@ rt_tor_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    alpha = M_2PI * w / nw;
 	    cos_alpha = cos(alpha);
 	    sin_alpha = sin(alpha);
-	    VCOMB2(edge, cos_alpha, G, sin_alpha*tip->r_h, tip->h);
+	    VCOMB2(edge, cos_alpha, G, sin_alpha * r_h_eff, tip->h);
 	    VADD3(TOR_PTA(w, len), tip->v, edge, radius);
 
 	    VMOVE(TOR_NORM_A(w, len), edge);
@@ -1452,7 +1623,7 @@ rt_tor_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
  * Import a torus from the database format to the internal format.
  * Apply modeling transformations at the same time.
  */
-int
+C_DECL int
 rt_tor_import4(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_tor_internal *tip;
@@ -1481,7 +1652,7 @@ rt_tor_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
     tip->magic = RT_TOR_INTERNAL_MAGIC;
 
     /* Convert from database to internal format */
-    flip_fastf_float(vec, rp->s.s_values, 4, (dbip && dbip->dbi_version < 0) ? 1 : 0);
+    flip_fastf_float(vec, rp->s.s_values, 4, (dbip && dbip->i->dbi_version < 0) ? 1 : 0);
 
     /* Apply modeling transformations */
     if (mat == NULL) mat = bn_mat_identity;
@@ -1513,7 +1684,7 @@ rt_tor_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
 }
 
 
-int
+C_DECL int
 rt_tor_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_tor_internal *tip;
@@ -1548,7 +1719,7 @@ rt_tor_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 /**
  * The name will be added by the caller.
  */
-int
+C_DECL int
 rt_tor_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_tor_internal *tip;
@@ -1630,7 +1801,7 @@ rt_tor_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     return 0;
 }
 
-int
+C_DECL int
 rt_tor_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
 {
     if (!rop || !ip || !mat)
@@ -1681,7 +1852,7 @@ rt_tor_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
  * ring unit vector 1
  * ring unit vector 2
  */
-int
+C_DECL int
 rt_tor_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_tor_internal *tip;
@@ -1732,7 +1903,7 @@ rt_tor_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
  */
-int
+C_DECL int
 rt_tor_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
     register struct rt_tor_internal *tip =
@@ -1786,7 +1957,7 @@ rt_tor_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
-void
+C_DECL void
 rt_tor_ifree(struct rt_db_internal *ip)
 {
     register struct rt_tor_internal *tip;
@@ -1801,7 +1972,33 @@ rt_tor_ifree(struct rt_db_internal *ip)
 }
 
 
-int
+C_DECL int
+rt_tor_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char* UNUSED(variant), const point_t origin, double scale)
+{
+    struct rt_tor_internal *tor_ip;
+
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern->idb_type = ID_TOR;
+    BU_ASSERT(&OBJ[intern->idb_type] == ftp);
+    intern->idb_meth = ftp;
+
+    BU_ALLOC(tor_ip, struct rt_tor_internal);
+    intern->idb_ptr = (void *)tor_ip;
+    tor_ip->magic = RT_TOR_INTERNAL_MAGIC;
+
+    VSET(tor_ip->v, origin[X], origin[Y], origin[Z]);
+    VSET(tor_ip->h, 1.0, 0.0, 0.0);	/* unit normal */
+    tor_ip->r_h = 0.1 * scale;
+    tor_ip->r_a = 0.4 * scale;
+    tor_ip->r_b = tor_ip->r_a;
+    VSET(tor_ip->a, 0.0, 1, 0.0);
+    VSET(tor_ip->b, 0.0, 0.0, 1);
+
+    return BRLCAD_OK;
+}
+
+
+C_DECL int
 rt_tor_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
     if (ip) RT_CK_DB_INTERNAL(ip);
@@ -1810,11 +2007,24 @@ rt_tor_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 }
 
 
-void
+C_DECL void
 rt_tor_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     struct rt_tor_internal *tip = (struct rt_tor_internal *)ip->idb_ptr;
     RT_TOR_CK_MAGIC(tip);
+
+    /* For spindle tori (r_h > r_a) the tube self-intersects and
+     * rt_tor_spindle_tess / the raytracer only produce the outer
+     * envelope.  The mathematical 4π²r_a·r_h formula counts the
+     * full self-intersecting surface area, which does not match the
+     * tessellation.  Use Crofton to estimate the raytrace-visible SA. */
+    if (tip->r_h > tip->r_a) {
+	struct rt_db_internal ip_meth = *ip;
+	ip_meth.idb_meth = &OBJ[ID_TOR];
+	do { static const struct rt_crofton_params _p = {50000u, 0.0, 0.0}; rt_crofton_sample(area, NULL, &ip_meth, &_p); } while (0);
+	return;
+    }
+
     /* r_h: radius of torus tube
      * r_a: radius from axis of rotation to center of tube
      */
@@ -1822,16 +2032,25 @@ rt_tor_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 }
 
 
-void
+C_DECL void
 rt_tor_volume(fastf_t *vol, const struct rt_db_internal *ip)
 {
     struct rt_tor_internal *tip = (struct rt_tor_internal *)ip->idb_ptr;
     RT_TOR_CK_MAGIC(tip);
+
+    /* For spindle tori use Crofton to match the raytraced volume. */
+    if (tip->r_h > tip->r_a) {
+	struct rt_db_internal ip_meth = *ip;
+	ip_meth.idb_meth = &OBJ[ID_TOR];
+	do { static const struct rt_crofton_params _p = {50000u, 0.0, 0.0}; rt_crofton_sample(NULL, vol, &ip_meth, &_p); } while (0);
+	return;
+    }
+
     *vol = 2.0 * M_PI * M_PI * (tip->r_h * tip->r_h) * tip->r_a;
 }
 
 
-void
+C_DECL void
 rt_tor_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
     struct rt_tor_internal *tip = (struct rt_tor_internal *)ip->idb_ptr;
@@ -1839,7 +2058,7 @@ rt_tor_centroid(point_t *cent, const struct rt_db_internal *ip)
     VMOVE(*cent,tip->v);
 }
 
-int
+C_DECL int
 rt_tor_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     int lcnt = 4;
@@ -1882,7 +2101,7 @@ rt_tor_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const s
     return lcnt;
 }
 
-const char *
+C_DECL const char *
 rt_tor_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     if (!pt || !ip)
@@ -1908,6 +2127,46 @@ tor_kpt_end:
     MAT4X3PNT(*pt, mat, mpt);
 
     return k;
+}
+
+
+/**
+ * Perturb a torus by expanding both the major radius @a r_a and the minor
+ * radius @a r_h by @a val.  This moves all surface points uniformly outward,
+ * breaking exact coplanarity with adjacent solids.  @a planar_only is ignored
+ * because a torus has no planar faces.
+ */
+C_DECL int
+rt_tor_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip,
+	       int UNUSED(planar_only), fastf_t val)
+{
+    if (NEAR_ZERO(val, SMALL_FASTF))
+	return BRLCAD_OK;
+
+    if (!oip || !ip)
+	return BRLCAD_ERROR;
+
+    struct rt_tor_internal *otor = (struct rt_tor_internal *)ip->idb_ptr;
+    RT_TOR_CK_MAGIC(otor);
+
+    struct rt_db_internal *nip;
+    BU_GET(nip, struct rt_db_internal);
+    RT_DB_INTERNAL_INIT(nip);
+    nip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    nip->idb_type = ID_TOR;
+    nip->idb_meth = &OBJ[ID_TOR];
+
+    struct rt_tor_internal *tor = NULL;
+    BU_ALLOC(tor, struct rt_tor_internal);
+    nip->idb_ptr = tor;
+    tor->magic = RT_TOR_INTERNAL_MAGIC;
+    VMOVE(tor->v, otor->v);
+    VMOVE(tor->h, otor->h);
+    tor->r_a = otor->r_a + val;
+    tor->r_h = otor->r_h + val;
+
+    *oip = nip;
+    return BRLCAD_OK;
 }
 
 

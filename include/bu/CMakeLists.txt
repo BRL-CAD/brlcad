@@ -8,6 +8,7 @@ set(
   cmd.h
   color.h
   cv.h
+  datetime.h
   debug.h
   defines.h
   dylib.h
@@ -27,6 +28,7 @@ set(
   malloc.h
   mapped_file.h
   mime.h
+  num.h
   observer.h
   opt.h
   parallel.h
@@ -34,13 +36,11 @@ set(
   path.h
   process.h
   ptbl.h
-  redblack.h
   simd.h
   snooze.h
   sort.h
   str.h
   tc.h
-  time.h
   units.h
   user.h
   uuid.h

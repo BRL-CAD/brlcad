@@ -1,7 +1,7 @@
 /*                 CurveBoundedSurface.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2025 United States Government as represented by
+ * Copyright (c) 1994-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -51,6 +51,9 @@ public:
     CurveBoundedSurface(STEPWrapper *sw, int step_id);
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
     virtual bool LoadONBrep(ON_Brep *brep);
+    Surface *BasisSurface() const { return basis_surface; }
+    const LIST_OF_BOUNDARIES &Boundaries() const { return boundaries; }
+    Boolean ImplicitOuter() const { return implicit_outer; }
     virtual void Print(int level);
 
     //static methods

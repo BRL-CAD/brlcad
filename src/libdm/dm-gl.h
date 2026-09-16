@@ -1,7 +1,7 @@
 /*                          D M - G L . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2025 United States Government as represented by
+ * Copyright (c) 1993-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -41,11 +41,9 @@
 #ifdef OSMESA
 #  include "OSMesa/gl.h"
 #else
-#  ifdef HAVE_GL_GL_H
+#  if defined(HAVE_GL_GL_H)
 #    include <GL/gl.h>
-#  endif
-
-#  ifdef HAVE_OPENGL_GL_H
+#  elif defined(HAVE_OPENGL_GL_H)
 #    include <OpenGL/gl.h>
 #  endif
 #endif
@@ -114,6 +112,8 @@ struct gl_vars {
     int zclipping_on;
     int zbuffer_on;
     int lighting_on;
+    int fast_wireframe;
+    int fast_wireframe_active;
     int transparency_on;
     int fastfog;
     double fogdensity;
@@ -124,6 +124,10 @@ struct gl_vars {
     struct bu_vls log;
     double bound;
     int boundFlag;
+    int adaptive_zclip;
+    double adaptive_zclip_factor;
+    double adaptive_zclip_min;
+    double adaptive_zclip_max;
     struct gl_internal_vars i;
 };
 
@@ -131,6 +135,7 @@ struct gl_vars {
 /* For debugging - print specified string, and additional state
  * information depending on dm_debugLevel settings (such as
  * GL_MODELVIEW and GL_PROJECTION matrices) */
+__BEGIN_DECLS
 DMGL_EXPORT extern void gl_debug_print(struct dm *dmp, const char *title, int lvl);
 
 DMGL_EXPORT extern struct bu_structparse gl_vparse[];
@@ -202,8 +207,9 @@ DMGL_EXPORT extern void gl_printmat(struct bu_vls *tmp_vls, fastf_t *mat);
 DMGL_EXPORT extern void gl_transparency_hook(const struct bu_structparse *sdp, const char *name, void *base, const char *value, void *data);
 DMGL_EXPORT extern void gl_zbuffer_hook(const struct bu_structparse *sdp, const char *name, void *base, const char *value, void *data);
 DMGL_EXPORT extern void gl_zclip_hook(const struct bu_structparse *sdp, const char *name, void *base, const char *value, void *data);
+__END_DECLS
 
-#endif /* DM_OGL_H */
+#endif /* DM_GL_H */
 
 /** @} */
 /*

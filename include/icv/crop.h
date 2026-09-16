@@ -1,7 +1,7 @@
 /*                           C R O P . H
  * BRL-CAD
  *
- * Copyright (c) 2011-2025 United States Government as represented by
+ * Copyright (c) 2011-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -49,16 +49,23 @@ __BEGIN_DECLS
  * data in horizontal direction.
  * @param ynum Length of the output image to be extracted from input
  * data in vertical direction.
- * @return 0 on success.
+ * @return 0 on success, -1 on invalid input.
  */
-ICV_EXPORT extern int icv_rect(icv_image_t *img, size_t xorig, size_t yorig, size_t xnum, size_t ynum);
+ICV_EXPORT extern int icv_crop_rect(icv_image_t *img, size_t xorig, size_t yorig, size_t xnum, size_t ynum);
+
+/**
+ * @deprecated Use icv_crop_rect.
+ */
+DEPRECATED ICV_EXPORT extern int icv_rect(icv_image_t *img, size_t xorig, size_t yorig, size_t xnum, size_t ynum);
 
 /**
  * This function crops an input image.
  *
  * This can do a skewed cropping, i.e. given any four points of
  * quadrilateral in an image, map it to a rectangle of xnumXynum
- * dimension.
+ * dimension. Source coordinates are interpolated in double precision,
+ * sampled bilinearly, and clamped to the nearest source edge when the
+ * requested quadrilateral reaches outside the image.
  *
  * @verbatim
  *        (ulx,uly)         (urx,ury)

@@ -1,0 +1,69 @@
+= DCONV(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+dconv - fast FFT-based convolution of a double-precision data stream
+
+== SYNOPSIS
+
+[source]
+----
+dconv filterfile < doubles > doubles
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*dconv* convolves a continuous stream of double-precision floating-point
+numbers, read from standard input, with the filter kernel (impulse response)
+stored in _filterfile_, writing the convolved stream to standard output. Both
+the input data and the kernel file are raw, host-order, double-precision values
+(see *d-f*(1) and *f-d*(1) for converting between double and float streams).
+
+The convolution is computed with a fast Fourier transform (FFT) using the
+overlap-save method, which yields a true linear convolution rather than the
+circular convolution produced by a naive block FFT. Because both standard input
+and standard output must be redirected, *dconv* refuses to run when either is a
+terminal.
+
+The number of kernel elements in _filterfile_ must be one less than a power of
+two (2^i - 1, e.g. 127, 255, 511). The kernel may contain at most BU_PAGE_SIZE
+elements.
+
+[[examples]]
+== EXAMPLES
+
+.Low-pass filter a sampled signal
+====
+[source,bash]
+----
+dconv lowpass.kernel < signal.d > filtered.d
+----
+Convolves the double stream in _signal.d_ with the 2^i - 1 element kernel in
+_lowpass.kernel_, producing the smoothed result in _filtered.d_. A float-format
+recording can be filtered in a single pipeline by converting on the fly:
+*f-d*(1) ` < signal.f | dconv lowpass.kernel | ` *d-f*(1) ` > filtered.f`.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *dfft*(1), *dmod*(1), *dstats*(1), *d-f*(1), *f-d*(1)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

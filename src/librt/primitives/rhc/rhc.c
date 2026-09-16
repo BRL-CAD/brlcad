@@ -1,7 +1,7 @@
 /*                           R H C . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2025 United States Government as represented by
+ * Copyright (c) 1990-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -225,7 +225,7 @@ clt_rhc_pack(struct bu_pool *pool, struct soltab *stp)
 
 #endif /* USE_OPENCL */
 
-const struct bu_structparse rt_rhc_parse[] = {
+EXTERNCPP const struct bu_structparse rt_rhc_parse[] = {
     { "%f", 3, "V", bu_offsetofarray(struct rt_rhc_internal, rhc_V, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 3, "H", bu_offsetofarray(struct rt_rhc_internal, rhc_H, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 3, "B", bu_offsetofarray(struct rt_rhc_internal, rhc_B, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -238,7 +238,7 @@ const struct bu_structparse rt_rhc_parse[] = {
 /**
  * Calculate the bounding RPP for an RHC
  */
-int
+C_DECL int
 rt_rhc_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol))
 {
 
@@ -302,7 +302,7 @@ rt_rhc_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
  * A struct rhc_specific is created, and its address is stored in
  * stp->st_specific for use by rhc_shot().
  */
-int
+C_DECL int
 rt_rhc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_rhc_internal *xip;
@@ -383,7 +383,7 @@ rt_rhc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-void
+C_DECL void
 rt_rhc_print(const struct soltab *stp)
 {
     const struct rhc_specific *rhc =
@@ -413,7 +413,7 @@ rt_rhc_print(const struct soltab *stp)
  * 0 MISS
  * >0 HIT
  */
-int
+C_DECL int
 rt_rhc_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
     struct rhc_specific *rhc =
@@ -592,9 +592,204 @@ check_plates:
 
 
 /**
+ * Vectorized counterpart to rt_rhc_shot().
+ *
+ * Intersect a batch of n rays, each against its own rhc soltab, writing
+ * exactly one seg per ray into the caller-supplied flat segp[] array.  A
+ * miss is flagged with segp[i].seg_stp == NULL; stp[i] == NULL signals a
+ * ray to skip.
+ *
+ * Unlike the scalar shot, no seg is acquired from the resource free list
+ * and no seg-list linkage is performed: results stream directly into the
+ * contiguous segp[] array.  Eliminating that per-hit allocation and list
+ * traffic is the data-coherency benefit of batching.  The per-ray
+ * arithmetic is a verbatim copy of rt_rhc_shot() so the two paths agree
+ * to the bit; hit_vpriv/hit_surfno are preserved for rt_rhc_norm().
+ */
+C_DECL void
+rt_rhc_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
+/* An array of solid pointers */
+/* An array of ray pointers */
+/* array of segs (results returned) */
+/* Number of ray/object pairs */
+{
+    int i;
+
+    if (ap) RT_CK_APPLICATION(ap);
+
+    for (i = 0; i < n; i++) {
+	struct rhc_specific *rhc;
+	vect_t dprime;		/* D' */
+	vect_t pprime;		/* P' */
+	fastf_t k1, k2;		/* distance constants of solution */
+	fastf_t x;
+	vect_t xlated;		/* translated vector */
+	struct hit hits[3];	/* 2 potential hit points */
+	struct hit *hitp;	/* pointer to hit point */
+
+	if (stp[i] == 0) continue;		/* skip this ray */
+	segp[i].seg_stp = (struct soltab *)0;	/* assume MISS */
+
+	rhc = (struct rhc_specific *)stp[i]->st_specific;
+	hitp = &hits[0];
+
+	/* out, Mat, vect */
+	MAT4X3VEC(dprime, rhc->rhc_SoR, rp[i]->r_dir);
+	VSUB2(xlated, rp[i]->r_pt, rhc->rhc_V);
+	MAT4X3VEC(pprime, rhc->rhc_SoR, xlated);
+
+	x = rhc->rhc_cprime;
+
+	if (ZERO(dprime[Y]) && ZERO(dprime[Z])) {
+	    goto check_plates;
+	}
+
+	/* Find roots of the equation, using formula for quadratic */
+	{
+	    fastf_t a, b, c;	/* coeffs of polynomial */
+	    fastf_t disc;	/* disc of radical */
+
+	    a = dprime[Z] * dprime[Z] - dprime[Y] * dprime[Y] * (1 + 2 * x);
+	    b = 2 * ((pprime[Z] + x + 1) * dprime[Z]
+		     - (2 * x + 1) * dprime[Y] * pprime[Y]);
+	    c = (pprime[Z] + x + 1) * (pprime[Z] + x + 1)
+		- (2 * x + 1) * pprime[Y] * pprime[Y] - x * x;
+
+	    if (!NEAR_ZERO(a, RT_PCOEF_TOL)) {
+		disc = b * b - 4 * a * c;
+
+		if (disc <= 0) {
+		    goto check_plates;
+		}
+
+		disc = sqrt(disc);
+
+		k1 = (-b + disc) / (2.0 * a);
+		k2 = (-b - disc) / (2.0 * a);
+
+		/*
+		 * k1 and k2 are potential solutions to intersection with side.
+		 * See if they fall in range.
+		 */
+		VJOIN1(hitp->hit_vpriv, pprime, k1, dprime);		/* hit' */
+
+		if (hitp->hit_vpriv[X] >= -1.0
+		    && hitp->hit_vpriv[X] <= 0.0
+		    && hitp->hit_vpriv[Z] >= -1.0
+		    && hitp->hit_vpriv[Z] <= 0.0) {
+		    hitp->hit_magic = RT_HIT_MAGIC;
+		    hitp->hit_dist = k1;
+		    hitp->hit_surfno = RHC_NORM_BODY;	/* compute N */
+		    hitp++;
+		}
+
+		VJOIN1(hitp->hit_vpriv, pprime, k2, dprime);		/* hit' */
+
+		if (hitp->hit_vpriv[X] >= -1.0
+		    && hitp->hit_vpriv[X] <= 0.0
+		    && hitp->hit_vpriv[Z] >= -1.0
+		    && hitp->hit_vpriv[Z] <= 0.0) {
+		    hitp->hit_magic = RT_HIT_MAGIC;
+		    hitp->hit_dist = k2;
+		    hitp->hit_surfno = RHC_NORM_BODY;	/* compute N */
+		    hitp++;
+		}
+	    } else if (!NEAR_ZERO(b, RT_PCOEF_TOL)) {
+		k1 = -c / b;
+		VJOIN1(hitp->hit_vpriv, pprime, k1, dprime);		/* hit' */
+
+		if (hitp->hit_vpriv[X] >= -1.0
+		    && hitp->hit_vpriv[X] <= 0.0
+		    && hitp->hit_vpriv[Z] >= -1.0
+		    && hitp->hit_vpriv[Z] <= 0.0) {
+		    hitp->hit_magic = RT_HIT_MAGIC;
+		    hitp->hit_dist = k1;
+		    hitp->hit_surfno = RHC_NORM_BODY;	/* compute N */
+		    hitp++;
+		}
+	    }
+	}
+
+
+	/*
+	 * Check for hitting the top and end plates.
+	 */
+    check_plates:
+
+	/* check front and back plates */
+	if (hitp < &hits[2]  &&  !ZERO(dprime[X])) {
+	    /* 0 or 1 hits so far, this is worthwhile */
+	    k1 = -pprime[X] / dprime[X];		/* front plate */
+	    k2 = (-1.0 - pprime[X]) / dprime[X];	/* back plate */
+
+	    VJOIN1(hitp->hit_vpriv, pprime, k1, dprime);	/* hit' */
+
+	    if ((hitp->hit_vpriv[Z] + x + 1.0)
+		* (hitp->hit_vpriv[Z] + x + 1.0)
+		- hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y]
+		* (1.0 + 2 * x) >= x * x
+		&& hitp->hit_vpriv[Z] >= -1.0
+		&& hitp->hit_vpriv[Z] <= 0.0) {
+		hitp->hit_magic = RT_HIT_MAGIC;
+		hitp->hit_dist = k1;
+		hitp->hit_surfno = RHC_NORM_FRT;	/* -H */
+		hitp++;
+	    }
+
+	    VJOIN1(hitp->hit_vpriv, pprime, k2, dprime);	/* hit' */
+
+	    if ((hitp->hit_vpriv[Z] + x + 1.0)
+		* (hitp->hit_vpriv[Z] + x + 1.0)
+		- hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y]
+		* (1.0 + 2 * x) >= x * x
+		&& hitp->hit_vpriv[Z] >= -1.0
+		&& hitp->hit_vpriv[Z] <= 0.0) {
+		hitp->hit_magic = RT_HIT_MAGIC;
+		hitp->hit_dist = k2;
+		hitp->hit_surfno = RHC_NORM_BACK;	/* +H */
+		hitp++;
+	    }
+	}
+
+	/* check top plate */
+	if (hitp == &hits[1]  &&  !ZERO(dprime[Z])) {
+	    /* 0 or 1 hits so far, this is worthwhile */
+	    k1 = -pprime[Z] / dprime[Z];		/* top plate */
+
+	    VJOIN1(hitp->hit_vpriv, pprime, k1, dprime);	/* hit' */
+
+	    if (hitp->hit_vpriv[X] >= -1.0 &&  hitp->hit_vpriv[X] <= 0.0
+		&& hitp->hit_vpriv[Y] >= -1.0
+		&& hitp->hit_vpriv[Y] <= 1.0) {
+		hitp->hit_magic = RT_HIT_MAGIC;
+		hitp->hit_dist = k1;
+		hitp->hit_surfno = RHC_NORM_TOP;	/* -B */
+		hitp++;
+	    }
+	}
+
+	if (hitp != &hits[2]) {
+	    continue;    /* MISS */
+	}
+
+	segp[i].seg_stp = stp[i];
+	if (hits[0].hit_dist < hits[1].hit_dist) {
+	    /* entry is [0], exit is [1] */
+	    segp[i].seg_in = hits[0];		/* struct copy */
+	    segp[i].seg_out = hits[1];		/* struct copy */
+	} else {
+	    /* entry is [1], exit is [0] */
+	    segp[i].seg_in = hits[1];		/* struct copy */
+	    segp[i].seg_out = hits[0];		/* struct copy */
+	}
+    }
+}
+
+
+/**
  * Given ONE ray distance, return the normal and entry/exit point.
  */
-void
+C_DECL void
 rt_rhc_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
     fastf_t c;
@@ -637,7 +832,7 @@ rt_rhc_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 /**
  * Return the curvature of the rhc.
  */
-void
+C_DECL void
 rt_rhc_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
     fastf_t b, c, rsq, y;
@@ -678,7 +873,7 @@ rt_rhc_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
  * u = azimuth
  * v = elevation
  */
-void
+C_DECL void
 rt_rhc_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
     struct rhc_specific *rhc = (struct rhc_specific *)stp->st_specific;
@@ -725,7 +920,7 @@ rt_rhc_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 }
 
 
-void
+C_DECL void
 rt_rhc_free(struct soltab *stp)
 {
     struct rhc_specific *rhc =
@@ -946,7 +1141,7 @@ rhc_curve_points(
 }
 
 
-int
+C_DECL int
 rt_rhc_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *tol, const struct bview *v, fastf_t s_size)
 {
     point_t p;
@@ -1015,12 +1210,12 @@ rt_rhc_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 }
 
 
-int
+C_DECL int
 rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     int i, n;
     fastf_t b, c, *back, *front, rh;
-    fastf_t dtol, ntol;
+    fastf_t dtol, ntol, min_abs;
     vect_t Bu, Hu, Ru;
     mat_t R;
     mat_t invR;
@@ -1062,12 +1257,18 @@ rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     }
 
     /* To ensure normal tolerance, remain below this angle */
-    if (ttol->norm > 0.0) {
+    if (ttol->norm > 0.0)
 	ntol = ttol->norm;
-    } else {
+    else
 	/* tolerate everything */
 	ntol = M_PI;
+
+    /* Clamp to prevent excessively dense meshes. */
+    {
+	fastf_t bbox_diag = 2.0 * (rh > b ? rh : b);
+	primitive_clamp_tess_tol(&dtol, &ntol, bbox_diag);
     }
+    min_abs = prim_min_abs_tol();
 
     /* initial hyperbola approximation is a single segment */
     BU_ALLOC(pts, struct rt_pnt_node);
@@ -1079,7 +1280,7 @@ rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     /* 2 endpoints in 1st approximation */
     n = 2;
     /* recursively break segment 'til within error tolerances */
-    n += rt_mk_hyperbola(pts, rh, b, c, dtol, ntol);
+    n += _rt_mk_hyperbola(pts, rh, b, c, dtol, ntol, min_abs);
 
     /* get mem for arrays */
     front = (fastf_t *)bu_malloc(3 * n * sizeof(fastf_t), "fast_t");
@@ -1135,9 +1336,12 @@ rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
   r: rectangular halfwidth
   b: breadth
   c: distance to asymptote origin
+
+  Internal version: takes an explicit min_abs floor so the caller can
+  read the env-var override once and propagate it through all recursion.
 */
 int
-rt_mk_hyperbola(struct rt_pnt_node *pts, fastf_t r, fastf_t b, fastf_t c, fastf_t dtol, fastf_t ntol)
+_rt_mk_hyperbola(struct rt_pnt_node *pts, fastf_t r, fastf_t b, fastf_t c, fastf_t dtol, fastf_t ntol, fastf_t min_abs)
 {
     fastf_t A, B, C, discr, dist, intr, j, k, m, theta0, theta1, z0;
     int n;
@@ -1185,6 +1389,19 @@ rt_mk_hyperbola(struct rt_pnt_node *pts, fastf_t r, fastf_t b, fastf_t c, fastf_
 	mpt[Y] = -mpt[Y];
     }
 
+    /* Guard: if mpt[Y] is not-finite (NaN/Inf from sqrt of negative when the
+     * RHC formula places z0 outside the valid hyperbola range) or if mpt[Y]
+     * falls outside the interval [min(p0Y,p1Y), max(p0Y,p1Y)] (formula gives
+     * a "midpoint" coincident with an endpoint → infinite recursion), stop
+     * subdividing.  The chord approximation is already as tight as this
+     * formula can achieve. */
+    {
+	fastf_t ylo = p0[Y] < p1[Y] ? p0[Y] : p1[Y];
+	fastf_t yhi = p0[Y] < p1[Y] ? p1[Y] : p0[Y];
+	if (!isfinite(mpt[Y]) || mpt[Y] <= ylo || mpt[Y] >= yhi)
+	    return 0;
+    }
+
     /* max distance between that point and line */
     dist = fabs(m * mpt[Y] - mpt[Z] + intr) / sqrt(m * m + 1);
     /* angles between normal of line and of hyperbola at line endpoints */
@@ -1199,6 +1416,24 @@ rt_mk_hyperbola(struct rt_pnt_node *pts, fastf_t r, fastf_t b, fastf_t c, fastf_
 
     /* split segment at widest point if not within error tolerances */
     if (dist > dtol || theta0 > ntol || theta1 > ntol) {
+	/* Stop subdividing when the segment Y-span is much smaller than both
+	 * the dtol floor and the ntol-equivalent floor.  For the hyperbola
+	 * the maximum curvature (at the apex) is approximately b*(b+2c)/(r^2*c),
+	 * so the ntol-equivalent minimum span is ntol*r^2*c/(b*(b+2c)).  Clamp
+	 * to PRIM_MIN_ABS_TOL for consistency with the dtol floor.
+	 * Use min(dtol, ntol_equiv)*0.1 so we stop only when the segment is
+	 * already much smaller than the tightest applicable tolerance. */
+	fastf_t span = fabs(p1[Y] - p0[Y]);
+	{
+	    fastf_t ntol_equiv = (ntol < M_PI)
+		? ntol * r * r * c / (b * (b + 2.0 * c))
+		: dtol;
+	    if (ntol_equiv < min_abs) ntol_equiv = min_abs;
+	    fastf_t span_floor = (ntol_equiv < dtol ? ntol_equiv : dtol) * 0.1;
+	    if (span < span_floor)
+		return 0;
+	}
+
 	/* split segment */
 	BU_ALLOC(newpt, struct rt_pnt_node);
 	VMOVE(newpt->p, mpt);
@@ -1207,9 +1442,9 @@ rt_mk_hyperbola(struct rt_pnt_node *pts, fastf_t r, fastf_t b, fastf_t c, fastf_
 	/* keep track of number of pts added */
 	n = 1;
 	/* recurse on first new segment */
-	n += rt_mk_hyperbola(pts, r, b, c, dtol, ntol);
+	n += _rt_mk_hyperbola(pts, r, b, c, dtol, ntol, min_abs);
 	/* recurse on second new segment */
-	n += rt_mk_hyperbola(newpt, r, b, c, dtol, ntol);
+	n += _rt_mk_hyperbola(newpt, r, b, c, dtol, ntol, min_abs);
     } else {
 	n  = 0;
     }
@@ -1219,16 +1454,61 @@ rt_mk_hyperbola(struct rt_pnt_node *pts, fastf_t r, fastf_t b, fastf_t c, fastf_
 
 
 /**
+ * Deprecated compatibility wrapper for _rt_mk_hyperbola.  Uses SMALL_FASTF as
+ * the minimum absolute subdivision span, preserving the original behavior of
+ * unconditionally honoring whatever dtol/ntol the caller passes (no sanity
+ * floor).  New code should call rt_mk_hyperbola() with an explicit min_abs.
+ *
+ * @deprecated use rt_mk_hyperbola() with an explicit min_abs argument.
+ */
+int
+rt_mk_hyperbola_old(struct rt_pnt_node *pts, fastf_t r, fastf_t b, fastf_t c, fastf_t dtol, fastf_t ntol)
+{
+    return _rt_mk_hyperbola(pts, r, b, c, dtol, ntol, SMALL_FASTF);
+}
+
+
+/**
+ * Approximate a hyperbola with line segments, with caller-controlled minimum
+ * subdivision span.
+ *
+ * @param pts   Linked list of points; must have at least two nodes on entry.
+ * @param r     Rectangular half-width of the hyperbola.
+ * @param b     Breadth (half-height) of the hyperbola.
+ * @param c     Distance from the apex to the asymptote origin.
+ * @param dtol  Maximum allowable chord-to-curve distance (mm).
+ * @param ntol  Maximum allowable normal-deviation angle (radians); pass M_PI
+ *              to ignore normal tolerance.
+ * @param min_abs  Minimum absolute span (mm) below which subdivision stops,
+ *              preventing runaway recursion.  Recommended values:
+ *              - 0.05 mm is the librt default and suits typical CAD geometry.
+ *              - Smaller values (e.g., 0.005 mm) produce finer curves but can
+ *                increase polygon counts dramatically near tight radii.
+ *              - SMALL_FASTF (~1e-37) disables the floor entirely, matching
+ *                the original rt_mk_hyperbola_old() behavior; use only when
+ *                you know the geometry cannot trigger unbounded recursion.
+ *              Decreasing min_abs below dtol has no effect until dtol itself
+ *              drives subdivision to spans smaller than min_abs.
+ * @return Number of additional points inserted.
+ */
+int
+rt_mk_hyperbola(struct rt_pnt_node *pts, fastf_t r, fastf_t b, fastf_t c, fastf_t dtol, fastf_t ntol, fastf_t min_abs)
+{
+    return _rt_mk_hyperbola(pts, r, b, c, dtol, ntol, min_abs);
+}
+
+
+/**
  * Returns -
  * -1 failure
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
-int
+C_DECL int
 rt_rhc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
 {
     int i, j, n;
     fastf_t b, c, *back, *front, rh;
-    fastf_t dtol, ntol;
+    fastf_t dtol, ntol, min_abs;
     vect_t Bu, Hu, Ru;
     mat_t R;
     mat_t invR;
@@ -1279,13 +1559,19 @@ rt_rhc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     /* To ensure normal tolerance, remain below this angle */
-    if (ttol->norm > 0.0) {
+    if (ttol->norm > 0.0)
 	ntol = ttol->norm;
-    } else {
+    else
 	/* tolerate everything */
 	ntol = M_PI;
+
+    /* Clamp to prevent excessively dense meshes. */
+    {
+	fastf_t bbox_diag = 2.0 * (rh > b ? rh : b);
+	primitive_clamp_tess_tol(&dtol, &ntol, bbox_diag);
     }
 
+    min_abs = prim_min_abs_tol();
     /* initial hyperbola approximation is a single segment */
     BU_ALLOC(pts, struct rt_pnt_node);
     BU_ALLOC(pts->next, struct rt_pnt_node);
@@ -1296,7 +1582,33 @@ rt_rhc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     /* 2 endpoints in 1st approximation */
     n = 2;
     /* recursively break segment 'til within error tolerances */
-    n += rt_mk_hyperbola(pts, rh, b, c, dtol, ntol);
+    n += _rt_mk_hyperbola(pts, rh, b, c, dtol, ntol, min_abs);
+
+    /* Post-process: remove profile points too close (in 3D) to their predecessor.
+     * With tight normal tolerances the hyperbola subdivision can produce many
+     * closely-spaced points near the apex (y=0) where dZ/dY → 0.  Adjacent
+     * profile points within 2*tol->dist of each other create degenerate
+     * rectangular side faces that cause nmg_fu_planeeqn to fail with
+     * "Cannot find three distinct vertices". */
+    {
+	fastf_t min_sep_sq = 4.0 * tol->dist * tol->dist;
+	struct rt_pnt_node *prev_kept = pts;
+	struct rt_pnt_node *cur = pts->next;
+	while (cur) {
+	    fastf_t dY = cur->p[Y] - prev_kept->p[Y];
+	    fastf_t dZ = cur->p[Z] - prev_kept->p[Z];
+	    if (dY*dY + dZ*dZ < min_sep_sq) {
+		struct rt_pnt_node *to_free = cur;
+		prev_kept->next = cur->next;
+		cur = cur->next;
+		bu_free(to_free, "rt_pnt_node");
+		n--;
+	    } else {
+		prev_kept = cur;
+		cur = cur->next;
+	    }
+	}
+    }
 
     /* get mem for arrays */
     front = (fastf_t *)bu_malloc(3 * n * sizeof(fastf_t), "fastf_t");
@@ -1477,7 +1789,7 @@ fail:
  * Import an RHC from the database format to the internal format.
  * Apply modeling transformations as well.
  */
-int
+C_DECL int
 rt_rhc_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_rhc_internal *xip;
@@ -1511,7 +1823,7 @@ rt_rhc_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	mat = bn_mat_identity;
     }
 
-    if (dbip && dbip->dbi_version < 0) {
+    if (dbip && dbip->i->dbi_version < 0) {
 	flip_fastf_float(v1, &rp->s.s_values[0 * 3], 1, 1);
 	flip_fastf_float(v2, &rp->s.s_values[1 * 3], 1, 1);
 	flip_fastf_float(v3, &rp->s.s_values[2 * 3], 1, 1);
@@ -1525,7 +1837,7 @@ rt_rhc_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     MAT4X3VEC(xip->rhc_H, mat, v2);
     MAT4X3VEC(xip->rhc_B, mat, v3);
 
-    if (dbip && dbip->dbi_version < 0) {
+    if (dbip && dbip->i->dbi_version < 0) {
 	v1[X] = flip_dbfloat(rp->s.s_values[3 * 3 + 0]);
 	v1[Y] = flip_dbfloat(rp->s.s_values[3 * 3 + 1]);
     } else {
@@ -1534,7 +1846,7 @@ rt_rhc_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     }
 
     xip->rhc_r = v1[X] / mat[15];
-    xip->rhc_c = v2[Y] / mat[15];
+    xip->rhc_c = v1[Y] / mat[15];
 
     if (xip->rhc_r <= SMALL_FASTF || xip->rhc_c <= SMALL_FASTF) {
 	bu_log("rt_rhc_import4: r or c are zero\n");
@@ -1549,7 +1861,7 @@ rt_rhc_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 /**
  * The name is added by the caller, in the usual place.
  */
-int
+C_DECL int
 rt_rhc_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_rhc_internal *xip;
@@ -1588,7 +1900,7 @@ rt_rhc_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     return 0;
 }
 
-int
+C_DECL int
 rt_rhc_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
 {
     if (!rop || !ip || !mat)
@@ -1624,7 +1936,7 @@ rt_rhc_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
  * Import an RHC from the database format to the internal format.
  * Apply modeling transformations as well.
  */
-int
+C_DECL int
 rt_rhc_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_rhc_internal *xip;
@@ -1679,7 +1991,7 @@ rt_rhc_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 /**
  * The name is added by the caller, in the usual place.
  */
-int
+C_DECL int
 rt_rhc_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_rhc_internal *xip;
@@ -1725,7 +2037,7 @@ rt_rhc_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
  * First line describes type of solid.
  * Additional lines are indented one tab, and give parameter values.
  */
-int
+C_DECL int
 rt_rhc_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
     struct rt_rhc_internal *xip =
@@ -1772,7 +2084,7 @@ rt_rhc_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 /**
  * Free the storage associated with the rt_db_internal version of this solid.
  */
-void
+C_DECL void
 rt_rhc_ifree(struct rt_db_internal *ip)
 {
     struct rt_rhc_internal *xip;
@@ -1787,8 +2099,8 @@ rt_rhc_ifree(struct rt_db_internal *ip)
     ip->idb_ptr = ((void *)0);	/* sanity */
 }
 
-void
-rt_rhc_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
+C_DECL int
+rt_rhc_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char* UNUSED(variant), const point_t origin, double scale)
 {
     struct rt_rhc_internal* rhc_ip;
 
@@ -1802,15 +2114,16 @@ rt_rhc_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
     intern->idb_ptr = (void *)rhc_ip;
 
     rhc_ip->rhc_magic = RT_RHC_INTERNAL_MAGIC;
-    VSETALL(rhc_ip->rhc_V, 0);
-    VSET(rhc_ip->rhc_H, 0.0, 0.0, 1.0);
-    VSET(rhc_ip->rhc_B, 0.0, 1.0, 0.0);
-    rhc_ip->rhc_r = 1.0;
-    rhc_ip->rhc_c = 1.0;
+    VSET(rhc_ip->rhc_V, origin[X], origin[Y]-0.25*scale, origin[Z]-0.25*scale);
+    VSET(rhc_ip->rhc_H, 0.0, 0.0, 0.5*scale);
+    VSET(rhc_ip->rhc_B, 0.0, 0.5*scale, 0.0);
+    rhc_ip->rhc_r = scale*0.25;
+    rhc_ip->rhc_c = scale*0.10;
+    return BRLCAD_OK;
 }
 
 
-int
+C_DECL int
 rt_rhc_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
     if (ip) {
@@ -1850,7 +2163,7 @@ rhc_is_valid(struct rt_rhc_internal *rhc)
 }
 
 
-void
+C_DECL void
 rt_rhc_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     struct rt_rhc_internal *rip;
@@ -1912,7 +2225,7 @@ rt_rhc_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 /**
  * Computer volume of a right hyperbolic cylinder
  */
-void
+C_DECL void
 rt_rhc_volume(fastf_t *volume, const struct rt_db_internal *ip)
 {
     struct rt_rhc_internal *rip;
@@ -1940,7 +2253,7 @@ rt_rhc_volume(fastf_t *volume, const struct rt_db_internal *ip)
 /**
  * Computes centroid of a right hyperbolic cylinder
  */
-void
+C_DECL void
 rt_rhc_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
     if (cent != NULL && ip != NULL) {
@@ -1988,7 +2301,7 @@ rt_rhc_centroid(point_t *cent, const struct rt_db_internal *ip)
     }
 }
 
-int
+C_DECL int
 rt_rhc_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     int lcnt = 5;
@@ -2037,7 +2350,7 @@ rt_rhc_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const s
     return lcnt;
 }
 
-const char *
+C_DECL const char *
 rt_rhc_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     if (!pt || !ip)
@@ -2065,6 +2378,120 @@ rhc_kpt_end:
     return k;
 }
 
+
+C_DECL int
+rt_rhc_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int planar_only, fastf_t val)
+{
+    if (NEAR_ZERO(val, SMALL_FASTF))
+	return BRLCAD_OK;
+
+    if (!oip || !ip)
+	return BRLCAD_ERROR;
+
+    struct rt_rhc_internal *orhc = (struct rt_rhc_internal *)ip->idb_ptr;
+    RT_RHC_CK_MAGIC(orhc);
+
+    struct rt_db_internal *nip;
+    BU_GET(nip, struct rt_db_internal);
+    RT_DB_INTERNAL_INIT(nip);
+    nip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    nip->idb_type = ID_RHC;
+    nip->idb_meth = &OBJ[ID_RHC];
+    struct rt_rhc_internal *rhc = NULL;
+    BU_ALLOC(rhc, struct rt_rhc_internal);
+    nip->idb_ptr = rhc;
+    rhc->rhc_magic = RT_RHC_INTERNAL_MAGIC;
+    VMOVE(rhc->rhc_V, orhc->rhc_V);
+    VMOVE(rhc->rhc_H, orhc->rhc_H);
+    VMOVE(rhc->rhc_B, orhc->rhc_B);
+    rhc->rhc_r = orhc->rhc_r;
+    rhc->rhc_c = orhc->rhc_c;
+
+    /* Extend H (and move V back) to push the flat rectangular faces apart. */
+    vect_t hvec, hback;
+    VMOVE(hvec, rhc->rhc_H);
+    VUNITIZE(hvec);
+    VREVERSE(hback, hvec);
+    VSCALE(hback, hback, val);
+    VADD2(rhc->rhc_V, rhc->rhc_V, hback);
+    vect_t hext;
+    VSCALE(hext, hvec, 2.0 * val);
+    VADD2(rhc->rhc_H, rhc->rhc_H, hext);
+
+    if (planar_only) {
+	*oip = nip;
+	return BRLCAD_OK;
+    }
+
+    /* Also expand the breadth vector, half-width, and asymptote distance. */
+    vect_t bvec;
+    VMOVE(bvec, rhc->rhc_B);
+    VUNITIZE(bvec);
+    VSCALE(bvec, bvec, val);
+    VADD2(rhc->rhc_B, rhc->rhc_B, bvec);
+    rhc->rhc_r += val;
+    rhc->rhc_c += val;
+
+    *oip = nip;
+    return BRLCAD_OK;
+}
+
+int
+rt_rhc_functab_validate(struct bu_vls *error_msg, const struct rt_db_internal *ip, const struct bn_tol *tol)
+{
+    struct rt_rhc_internal *rhc;
+    fastf_t mag_b, mag_h;
+    fastf_t f;
+    int issues = 0;
+    const char *comma = "";
+
+    RT_CK_DB_INTERNAL(ip);
+    rhc = (struct rt_rhc_internal *)ip->idb_ptr;
+    RT_RHC_CK_MAGIC(rhc);
+
+    if (!tol) {
+        static const struct bn_tol default_tol = BN_TOL_INIT_TOL;
+        tol = &default_tol;
+    }
+
+    mag_b = MAGNITUDE(rhc->rhc_B);
+    mag_h = MAGNITUDE(rhc->rhc_H);
+
+    bu_vls_printf(error_msg, "[");
+
+    if (NEAR_ZERO(mag_h, tol->dist)) {
+        bu_vls_printf(error_msg, "%s{\"problem_type\":\"zero_length_h_vector\"}", comma);
+        comma = ",";
+        issues++;
+    }
+    if (NEAR_ZERO(mag_b, tol->dist)) {
+        bu_vls_printf(error_msg, "%s{\"problem_type\":\"zero_length_b_vector\"}", comma);
+        comma = ",";
+        issues++;
+    }
+    if (NEAR_ZERO(rhc->rhc_r, tol->dist)) {
+        bu_vls_printf(error_msg, "%s{\"problem_type\":\"zero_length_r_value\"}", comma);
+        comma = ",";
+        issues++;
+    }
+    if (NEAR_ZERO(rhc->rhc_c, tol->dist)) {
+        bu_vls_printf(error_msg, "%s{\"problem_type\":\"zero_length_c_value\"}", comma);
+        comma = ",";
+        issues++;
+    }
+
+    if (mag_b > SQRT_SMALL_FASTF && mag_h > SQRT_SMALL_FASTF) {
+        f = VDOT(rhc->rhc_B, rhc->rhc_H) / (mag_b * mag_h);
+        if (!NEAR_ZERO(f, tol->perp)) {
+            bu_vls_printf(error_msg, "%s{\"problem_type\":\"b_not_perp_h\"}", comma);
+            comma = ",";
+            issues++;
+        }
+    }
+
+    bu_vls_printf(error_msg, "]");
+    return issues;
+}
 
 /*
  * Local Variables:

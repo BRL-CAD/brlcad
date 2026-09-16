@@ -1,7 +1,7 @@
 /*                      P L O T 3 - F B . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2025 United States Government as represented by
+ * Copyright (c) 1986-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -73,7 +73,6 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <signal.h>
 #include <string.h>
 #include <ctype.h>
 
@@ -83,6 +82,7 @@
 #include "bu/color.h"
 #include "bu/cv.h"
 #include "bu/getopt.h"
+#include "bu/interrupt.h"
 #include "bu/process.h"
 #include "bu/exit.h"
 #include "dm.h"
@@ -282,7 +282,7 @@ static struct vectorchar {
 static int Nscanlines = 512;
 static int Npixels = 512;
 static char *framebuffer = NULL;
-static char *filename = NULL;
+static const char *filename = NULL;
 
 struct band {
     stroke *first;

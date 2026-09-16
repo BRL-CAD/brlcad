@@ -1,7 +1,7 @@
 /*                F A C T S H A N D L E R . C P P
  * BRL-CAD
  *
- * Copyright (c) 2023-2025 United States Government as represented by
+ * Copyright (c) 2023-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -20,6 +20,39 @@
 
 #include "FactsHandler.h"
 #include "RenderHandler.h"
+#include "bu/path.h"
+
+static std::string
+fitHierarchyLabel(IFPainter& img, int textHeight, int width, const std::string& text, int flags)
+{
+    if (width <= 0 || img.getTextWidth(textHeight, width, text, flags) <= width) {
+	return text;
+    }
+
+    std::string fitted = text + " ...";
+    while (fitted.length() >= 5 && img.getTextWidth(textHeight, width, fitted, flags) > width) {
+	fitted.erase(fitted.length() - 5, 1);
+	while (fitted.length() >= 5 && fitted[fitted.length() - 5] == ' ') {
+	    fitted.erase(fitted.length() - 5, 1);
+	}
+    }
+
+    return fitted;
+}
+
+static std::string
+hierarchyDisplayLabel(const std::string& component)
+{
+    struct bu_vls basename = BU_VLS_INIT_ZERO;
+    std::string label = component;
+
+    if (bu_path_component(&basename, component.c_str(), BU_PATH_BASENAME)) {
+	label = bu_vls_addr(&basename);
+    }
+    bu_vls_free(&basename);
+
+    return label;
+}
 
 void
 makeTopSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height)
@@ -39,6 +72,8 @@ makeTopSection(IFPainter& img, InformationGatherer& info, int offsetX, int offse
 
     int textHeight = 3 * height / 8;
     int textYOffset = (height - textHeight) / 2;
+    constexpr double fileSizeSuffixFontScale = 0.65;
+    const std::string fileSizeSuffix = " [" + info.getInfo("fileSize") + "] ";
     std::vector<std::string> text;
     std::vector<std::string> text2;
 
@@ -47,13 +82,13 @@ makeTopSection(IFPainter& img, InformationGatherer& info, int offsetX, int offse
 	text.push_back("MD5 Checksum: " + info.getInfo("checksum"));
 	text2.push_back("Last Updated: " + info.getInfo("lastUpdate"));
 	text2.push_back("Source File: " + info.getInfo("file"));
-	img.justifyWithCenterWord(offsetX, offsetY + textYOffset, textHeight, width, info.getInfo("classification"), text, text2, TO_WHITE);
+	img.justifyWithCenterWord(offsetX, offsetY + textYOffset, textHeight, width, info.getInfo("classification"), text, text2, TO_WHITE, fileSizeSuffix, fileSizeSuffixFontScale);
     } else {
 	text.push_back("Owner: " + info.getInfo("owner"));
 	text.push_back("MD5 Checksum: " + info.getInfo("checksum"));
 	text.push_back("Last Updated: " + info.getInfo("lastUpdate"));
 	text.push_back("Source File: " + info.getInfo("file"));
-	img.justify(offsetX, offsetY + textYOffset, textHeight, width, text, TO_WHITE);
+	img.justify(offsetX, offsetY + textYOffset, textHeight, width, text, TO_WHITE, fileSizeSuffix, fileSizeSuffixFontScale);
     }
 }
 
@@ -146,12 +181,14 @@ makeHierarchySection(IFPainter& img, InformationGatherer& info, int offsetX, int
     int offX = offsetX + 5;
     int imgH = height / 2.6;
     int imgW = (width - 5*fmin(N, info.largestComponents.size()-1)) / fmin(N, info.largestComponents.size()-1);
+    int hierarchyLabelWidth = std::max(imgW - 20, textHeight * 4);
 
     int centerPt = offX + imgW/2 + (fmin(N-1, info.largestComponents.size()-2)*imgW) / 2;
 
     // main component
     //img.drawImageFitted(offX + width/10, offsetY + textHeight/3, imgW, imgH, render);
-    img.drawTextCentered(offsetX + width / 2, offY - 180, textHeight, width, info.largestComponents[0].name, TO_BOLD);
+    std::string mainLabel = fitHierarchyLabel(img, textHeight, width - 20, info.largestComponents[0].name, TO_BOLD);
+    img.drawTextCentered(offsetX + width / 2, offY - 180, textHeight, width - 20, mainLabel, TO_BOLD);
 
     img.drawLine(offX + imgW/2, offY - 100, offX + fmin(N-1, info.largestComponents.size()-2)*imgW + imgW/2, offY - 100, 3, cv::Scalar(94, 58, 32));
     img.drawLine(centerPt, offY-100, centerPt, offY-130, 3, cv::Scalar(94, 58, 32));
@@ -175,7 +212,8 @@ makeHierarchySection(IFPainter& img, InformationGatherer& info, int offsetX, int
 	render = renderPerspective(GHOST, opt, info.largestComponents[i].name, info.largestComponents[0].name);
 	// std::cout << "INSIDE factshandler DBG: " << render << std::endl;
 	img.drawImageTransparentFitted(offX + (i-1)*imgW, offY, imgW, imgH, render);
-	img.drawTextCentered(offX + (i-1)*imgW + imgW/2, offY-70, textHeight, width, info.largestComponents[i].name, TO_BOLD);
+	std::string childLabel = fitHierarchyLabel(img, textHeight, hierarchyLabelWidth, hierarchyDisplayLabel(info.largestComponents[i].name), TO_BOLD);
+	img.drawTextCentered(offX + (i-1)*imgW + imgW/2, offY-70, textHeight, hierarchyLabelWidth, childLabel, TO_BOLD);
 	img.drawLine(offX + (i-1)*imgW + imgW/2, offY-100, offX + (i-1)*imgW + imgW/2, offY-70, 3, cv::Scalar(94, 58, 32));
 	img.drawCirc(offX + (i-1)*imgW + imgW/2, offY-70, 7, -1, cv::Scalar(94, 58, 32));
 	// img.drawCirc(offX + (i-1)*imgW + imgW/2, offY+10, 20, 3, cv::Scalar(94, 58, 32));
@@ -184,13 +222,22 @@ makeHierarchySection(IFPainter& img, InformationGatherer& info, int offsetX, int
 
     if (info.largestComponents.size() > (size_t)N) {
 	// render the smaller sub components all in one
+	size_t omitted_components = info.largestComponents.size() - N;
 	std::string subcomponents = "";
 	for (size_t i = N; i < info.largestComponents.size(); i++) {
 	    subcomponents += info.largestComponents[i].name + " ";
 	}
+	subcomponents.pop_back();   // pop trailing space
+
+	std::string omitted_label;
+	if (omitted_components == 1)	// we just have one - print the name
+	    omitted_label = fitHierarchyLabel(img, textHeight, hierarchyLabelWidth, hierarchyDisplayLabel(subcomponents), TO_BOLD);
+	else
+	    omitted_label = std::to_string(omitted_components) + " more";
+
 	render = renderPerspective(GHOST, opt, subcomponents, info.largestComponents[0].name);
 	img.drawImageTransparentFitted(offX + (N-1)*imgW, offY, imgW, imgH, render);
-	img.drawTextCentered(offX + (N-1)*imgW + imgW/2, offY-70, textHeight, width, "...", TO_BOLD);
+	img.drawTextCentered(offX + (N-1)*imgW + imgW/2, offY-70, textHeight, hierarchyLabelWidth, omitted_label, TO_BOLD);
 	img.drawLine(offX + (N-1)*imgW + imgW/2, offY-100, offX + (N-1)*imgW + imgW/2, offY-70, 3, cv::Scalar(94, 58, 32));
 	img.drawCirc(offX + (N-1)*imgW + imgW/2, offY-70, 7, -1, cv::Scalar(94, 58, 32));
 	// img.drawCirc(offX + (N-1)*imgW + imgW/2, offY+10, 20, 3, cv::Scalar(94, 58, 32));

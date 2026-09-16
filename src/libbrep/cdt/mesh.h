@@ -1,7 +1,7 @@
 /*                      C D T _ M E S H . H
  * BRL-CAD
  *
- * Copyright (c) 2019-2025 United States Government as represented by
+ * Copyright (c) 2019-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -40,7 +40,7 @@
 #include <vector>
 #include <set>
 #include <map>
-#include "RTree.h"
+#include "../../libbg/RTree.h"
 #include "bu/color.h"
 #include "bg/polygon.h"
 #include "bg/tri_tri.h"
@@ -816,7 +816,16 @@ private:
     bool grow_loop_failure_ok;
 
     bool best_fit_plane_reproject(cpolygon_t *polygon);
+    bool lscm_reproject(cpolygon_t *polygon);
     void best_fit_plane_plot(point_t *center, vect_t *norm, const char *fname);
+
+    // Return the best available surface normal for vertex vi.
+    // For singularity vertices (sv members) this uses the averaged normal
+    // stored in singular_vert_to_norms (accessed via p_cdt) rather than
+    // the degenerate directly-evaluated normal at the singularity.
+    // For ordinary vertices this returns normals[nmap[vi]].
+    // m_bRev is applied in both cases.
+    ON_3dVector vert_norm(long vi);
 
 
     bool oriented_polycdt(cpolygon_t *polygon, bool reproject);

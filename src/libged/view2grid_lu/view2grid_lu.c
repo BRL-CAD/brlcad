@@ -1,7 +1,7 @@
 /*                         V I E W 2 G R I D _ L U . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -75,24 +75,13 @@ bad:
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl view2grid_lu_cmd_impl = {
-    "view2grid_lu",
-    ged_view2grid_lu_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd view2grid_lu_cmd = { &view2grid_lu_cmd_impl };
-const struct ged_cmd *view2grid_lu_cmds[] = { &view2grid_lu_cmd, NULL };
+#define GED_VIEW2GRID_LU_COMMANDS(X, XID) \
+    X(view2grid_lu, ged_view2grid_lu_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  view2grid_lu_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_VIEW2GRID_LU_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_view2grid_lu", 1, GED_VIEW2GRID_LU_COMMANDS)
 
 /*
  * Local Variables:

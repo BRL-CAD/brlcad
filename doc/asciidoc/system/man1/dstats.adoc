@@ -1,0 +1,73 @@
+= DSTATS(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+dstats - compute basic statistics of a stream of doubles
+
+== SYNOPSIS
+
+[source]
+----
+dstats [-h] [file.doubles]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*dstats* reads a stream of raw, host-format double-precision floating-point
+numbers and computes basic statistics over the values. If a _file.doubles_
+argument is given, *dstats* reads from that file; otherwise it reads from
+standard input. The values are interpreted as packed binary doubles (as
+produced by tools such as *a-d*(1) or *dmod*(1)), not as ASCII text.
+
+The following statistics are written to standard output in a human-readable
+text format: the number of values read (with its square root shown twice, a
+convenience for data representing a square image or matrix), the minimum,
+maximum, arithmetic mean, standard deviation, and variance.
+
+The unsigned-char and short-integer analogues are *ustats*(1) and *istats*(1).
+
+[[options]]
+== OPTIONS
+
+*-h*::
+  Print a usage message and exit. The synonym *-?* is also accepted.
+
+[[examples]]
+== EXAMPLES
+
+.Inspect the range of converted sample data
+====
+[source,bash]
+----
+a-d < data.txt | dstats
+----
+Convert ASCII sample data to raw doubles with *a-d*(1) and pipe the
+result into *dstats* to quickly check the value range, mean, and variance of a
+signal before further processing. Reviewing the reported minimum and maximum is
+a fast way to confirm a stream is scaled as expected before feeding it to
+*dmod*(1) or *dfft*(1).
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *a-d*(1), *dmod*(1), *dfft*(1), *istats*(1), *ustats*(1)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

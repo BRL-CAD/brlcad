@@ -1,7 +1,7 @@
 /*                        R E N D E R . H
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2025 United States Government as represented by
+ * Copyright (c) 2007-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,12 +19,17 @@
  */
 /** @file librender/render.h
  *
+ * Public interface declaring the per-shader init functions and the
+ * ray hit callback for the ADRT renderer.
+ *
  */
 
 #ifndef ADRT_LIBRENDER_RENDER_H
 #define ADRT_LIBRENDER_RENDER_H
 
 #include "render_internal.h"
+
+__BEGIN_DECLS
 
 RENDER_EXPORT extern int render_component_init(render_t *, const char *);
 RENDER_EXPORT extern int render_cut_init(render_t *, const char *);
@@ -40,6 +45,7 @@ RENDER_EXPORT extern int render_surfel_init(render_t *, const char *);
 
 RENDER_EXPORT void* render_hit(struct tie_ray_s *ray, struct tie_id_s *id, struct tie_tri_s *tri, void *ptr);
 
+__END_DECLS
 #endif
 
 /*

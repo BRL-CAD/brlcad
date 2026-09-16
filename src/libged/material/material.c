@@ -1,7 +1,7 @@
 /*                         M A T E R I A L . C
  * BRL-CAD
  *
- * Copyright (c) 2021-2025 United States Government as represented by
+ * Copyright (c) 2021-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -47,7 +47,7 @@ typedef enum {
     ATTR_UNKNOWN
 } material_cmd_t;
 
-static const char *usage = " help \n\n"
+static const char *material_usage = " help \n\n"
     "material create {objectName} {materialName}\n\n"
     "material destroy {object}\n\n"
     "material assign {object} {materialName}\n\n"
@@ -404,7 +404,7 @@ destroy_material(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* Update references. */
-    db_update_nref(gedp->dbip, &rt_uniresource);
+    db_update_nref(gedp->dbip);
 
     return BRLCAD_OK;
 }
@@ -428,7 +428,7 @@ get_material(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     if ((dp = db_lookup(gedp->dbip,  argv[2], 0)) != RT_DIR_NULL) {
-        GED_DB_GET_INTERNAL(gedp, &intern, dp, (matp_t)NULL, &rt_uniresource, BRLCAD_ERROR);
+        GED_DB_GET_INTERN(gedp, &intern, dp, (matp_t)NULL, BRLCAD_ERROR);
 
         struct rt_material_internal *material = (struct rt_material_internal *)intern.idb_ptr;
 
@@ -482,7 +482,7 @@ set_material(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     if ((dp = db_lookup(gedp->dbip,  argv[2], 0)) != RT_DIR_NULL) {
-        GED_DB_GET_INTERNAL(gedp, &intern, dp, (matp_t)NULL, &rt_uniresource, BRLCAD_ERROR);
+        GED_DB_GET_INTERN(gedp, &intern, dp, (matp_t)NULL, BRLCAD_ERROR);
 
         struct rt_material_internal *material = (struct rt_material_internal *)intern.idb_ptr;
 
@@ -542,7 +542,7 @@ remove_material(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     if ((dp = db_lookup(gedp->dbip,  argv[2], 0)) != RT_DIR_NULL) {
-        GED_DB_GET_INTERNAL(gedp, &intern, dp, (matp_t)NULL, &rt_uniresource, BRLCAD_ERROR);
+        GED_DB_GET_INTERN(gedp, &intern, dp, (matp_t)NULL, BRLCAD_ERROR);
 
         struct rt_material_internal *material = (struct rt_material_internal *)intern.idb_ptr;
 
@@ -593,7 +593,7 @@ ged_material_core(struct ged *gedp, int argc, const char *argv[])
 
     /* incorrect arguments */
     if (argc < 2) {
-        bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+        bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], material_usage);
         return GED_HELP;
     }
 
@@ -615,7 +615,7 @@ ged_material_core(struct ged *gedp, int argc, const char *argv[])
         // get routine
         get_material(gedp, argc, argv);
     } else if (scmd == MATERIAL_HELP) {
-        bu_vls_printf(gedp->ged_result_str, "Usage: %s %s\n\n\n", argv[0], usage);
+        bu_vls_printf(gedp->ged_result_str, "Usage: %s %s\n\n\n", argv[0], material_usage);
         bu_vls_printf(gedp->ged_result_str, "%s", possibleProperties);
     }
     else if (scmd == MATERIAL_REMOVE) {
@@ -627,35 +627,19 @@ ged_material_core(struct ged *gedp, int argc, const char *argv[])
         set_material(gedp, argc, argv);
     } else {
         bu_vls_printf(gedp->ged_result_str, "Error: %s is not a valid subcommand.\n", argv[1]);
-        bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+        bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], material_usage);
     }
 
     return 0;
 }
 
-
-#ifdef GED_PLUGIN
-
 #include "../include/plugin.h"
-struct ged_cmd_impl material_cmd_impl = {
-    "material",
-    ged_material_core,
-    GED_CMD_DEFAULT
-};
 
+#define GED_MATERIAL_COMMANDS(X, XID) \
+    X(material, ged_material_core, GED_CMD_DEFAULT) \
 
-const struct ged_cmd material_cmd = { &material_cmd_impl };
-const struct ged_cmd *material_cmds[] = { &material_cmd, NULL };
-
-static const struct ged_plugin pinfo = { GED_API,  material_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-
-
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_MATERIAL_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_material", 1, GED_MATERIAL_COMMANDS)
 
 /*
  * Local Variables:

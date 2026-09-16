@@ -5,5 +5,8 @@ comb_all rot
 Z
 rot_all_prims rot 15 20 -12
 
+puts "--- Testing 'orot' command (object edit rotation) for all primitives ---"
+orot_all_combs rot 15 20 -12
+
 
 puts "*** 'rot' edit mode testing completed ***"

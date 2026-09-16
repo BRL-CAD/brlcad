@@ -1,0 +1,165 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://brlcad.org/schemas/building-1.json",
+  "title": "BRL-CAD Procedural Building Specification",
+  "type": "object",
+  "required": ["version"],
+  "properties": {
+    "$schema": {"type": "string"},
+    "version": {"const": 1},
+    "id": {"type": "string", "minLength": 1},
+    "name": {"type": "string", "minLength": 1},
+    "units": {"enum": ["m", "mm", "cm", "ft", "in"]},
+    "preset": {"type": "string"},
+    "type": {"type": "string"},
+    "class": {"type": "string"},
+    "function": {"oneOf": [{"type": "string"}, {"type": "array", "items": {"type": "string"}}]},
+    "usage": {"oneOf": [{"type": "string"}, {"type": "array", "items": {"type": "string"}}]},
+    "origin": {"$ref": "#/$defs/point3"},
+    "footprint": {"$ref": "#/$defs/footprint"},
+    "dimensions": {
+      "type": "object",
+      "required": ["width", "depth"],
+      "properties": {
+        "width": {"type": "number", "exclusiveMinimum": 0},
+        "depth": {"type": "number", "exclusiveMinimum": 0}
+      },
+      "additionalProperties": false
+    },
+    "levels": {
+      "type": "object",
+      "properties": {
+        "above_ground": {"type": "integer", "minimum": 0, "maximum": 200},
+        "below_ground": {"type": "integer", "minimum": 0, "maximum": 200},
+        "min_level": {"type": "integer", "minimum": 0},
+        "floor_height": {"type": "number", "exclusiveMinimum": 0},
+        "floor_heights": {"type": "array", "items": {"type": "number", "exclusiveMinimum": 0}},
+        "basement_height": {"type": "number", "exclusiveMinimum": 0},
+        "basement_heights": {"type": "array", "items": {"type": "number", "exclusiveMinimum": 0}},
+        "non_existent": {"type": "array", "items": {"type": "integer"}}
+      },
+      "additionalProperties": false
+    },
+    "envelope": {
+      "type": "object",
+      "properties": {
+        "height": {"type": "number", "exclusiveMinimum": 0},
+        "min_height": {"type": "number", "minimum": 0},
+        "walls": {"type": "boolean"},
+        "wall_indices": {"type": "array", "items": {"type": "integer", "minimum": 0}},
+        "wall_thickness": {"type": "number", "exclusiveMinimum": 0},
+        "slab_thickness": {"type": "number", "exclusiveMinimum": 0},
+        "foundation_thickness": {"type": "number", "exclusiveMinimum": 0},
+        "material": {"type": "string"},
+        "color": {"$ref": "#/$defs/color"}
+      },
+      "additionalProperties": false
+    },
+    "roof": {
+      "type": "object",
+      "properties": {
+        "shape": {"type": "string"},
+        "height": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Vertical roof rise above the facade; for flat and many roofs this is the full roof assembly depth."
+        },
+        "angle": {"type": "number", "exclusiveMinimum": 0, "maximum": 89},
+        "levels": {"type": "integer", "minimum": 0},
+        "orientation": {"enum": ["along", "across"]},
+        "direction": {"type": "number", "minimum": 0, "exclusiveMaximum": 360},
+        "overhang": {"type": "number", "minimum": 0},
+        "thickness": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Roof shell thickness. Flat and many roofs use the greater of height and thickness as their assembly depth."
+        },
+        "material": {"type": "string"},
+        "color": {"$ref": "#/$defs/color"}
+      },
+      "additionalProperties": false
+    },
+    "auto_openings": {"type": "boolean"},
+    "openings": {"type": "array", "items": {"$ref": "#/$defs/opening"}},
+    "structure": {"$ref": "#/$defs/structure"},
+    "installations": {"type": "array", "items": {"$ref": "#/$defs/installation"}},
+    "parts": {"type": "array", "items": {"type": "object"}},
+    "osm": {
+      "type": "object",
+      "properties": {
+        "id": {"type": ["string", "integer"]},
+        "type": {"type": "string"},
+        "tags": {"type": "object", "additionalProperties": {"type": ["string", "number", "integer", "boolean"]}}
+      },
+      "additionalProperties": false
+    },
+    "citygml": {"type": "object"},
+    "metadata": {"type": "object"}
+  },
+  "$defs": {
+    "point2": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": "number"}},
+    "point3": {"type": "array", "minItems": 3, "maxItems": 3, "items": {"type": "number"}},
+    "footprint": {"type": "array", "minItems": 3, "maxItems": 512, "items": {"$ref": "#/$defs/point2"}},
+    "color": {
+      "oneOf": [
+        {"type": "string"},
+        {"type": "array", "minItems": 3, "maxItems": 3, "items": {"type": "integer", "minimum": 0, "maximum": 255}}
+      ]
+    },
+    "opening": {
+      "type": "object",
+      "required": ["kind", "wall", "offset", "width", "height"],
+      "properties": {
+        "id": {"type": "string"},
+        "kind": {"enum": ["door", "window", "opening"]},
+        "type": {"type": "string"},
+        "wall": {"type": "integer", "minimum": 0},
+        "level": {"type": "integer"},
+        "offset": {"type": "number", "minimum": 0},
+        "width": {"type": "number", "exclusiveMinimum": 0},
+        "height": {"type": "number", "exclusiveMinimum": 0},
+        "sill": {"type": "number", "minimum": 0},
+        "count": {"type": "integer", "minimum": 1},
+        "spacing": {"type": "number", "minimum": 0},
+        "frame_width": {"type": "number", "exclusiveMinimum": 0},
+        "frame_depth": {"type": "number", "exclusiveMinimum": 0},
+        "material": {"type": "string"},
+        "color": {"$ref": "#/$defs/color"},
+        "osm": {"type": "object"}
+      },
+      "additionalProperties": false
+    },
+    "structure": {
+      "type": "object",
+      "properties": {
+        "enabled": {"type": "boolean"},
+        "system": {"type": "string"},
+        "grid": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": "number", "exclusiveMinimum": 0}},
+        "column_shape": {"enum": ["rectangular", "round"]},
+        "column_width": {"type": "number", "exclusiveMinimum": 0},
+        "column_depth": {"type": "number", "exclusiveMinimum": 0},
+        "column_diameter": {"type": "number", "exclusiveMinimum": 0},
+        "beam_width": {"type": "number", "exclusiveMinimum": 0},
+        "beam_depth": {"type": "number", "exclusiveMinimum": 0},
+        "material": {"type": "string"},
+        "color": {"$ref": "#/$defs/color"}
+      },
+      "additionalProperties": false
+    },
+    "installation": {
+      "type": "object",
+      "properties": {
+        "id": {"type": "string"},
+        "kind": {"type": "string"},
+        "shape": {"enum": ["box", "cylinder"]},
+        "position": {"$ref": "#/$defs/point3"},
+        "size": {"$ref": "#/$defs/point3"},
+        "material": {"type": "string"},
+        "color": {"$ref": "#/$defs/color"},
+        "attributes": {"type": "object"}
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

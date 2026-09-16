@@ -1,7 +1,7 @@
 /*                      P I X E M B E D . C
  * BRL-CAD
  *
- * Copyright (c) 1992-2025 United States Government as represented by
+ * Copyright (c) 1992-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -26,11 +26,14 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include "bio.h"
 
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/malloc.h"
 #include "bu/exit.h"
 
@@ -68,27 +71,36 @@ get_args(int argc, char **argv)
     while ((c = bu_getopt(argc, argv, "b:s:w:n:S:W:N:h?")) != -1) {
 	switch (c) {
 	    case 'b':
-		border_inset = atoi(bu_optarg);
+		if (!bu_opt_scan_size_t_range(bu_optarg, &border_inset, 0, SIZE_MAX, "border inset"))
+		    return 0;
 		break;
 	    case 'S':
 		/* square size */
-		xout = yout = atoi(bu_optarg);
+		if (!bu_opt_scan_size_t_range(bu_optarg, &xout, 1, SIZE_MAX, "output size"))
+		    return 0;
+		yout = xout;
 		break;
 	    case 's':
 		/* square size */
-		xin = yin = atoi(bu_optarg);
+		if (!bu_opt_scan_size_t_range(bu_optarg, &xin, 1, SIZE_MAX, "input size"))
+		    return 0;
+		yin = xin;
 		break;
 	    case 'W':
-		xout = atoi(bu_optarg);
+		if (!bu_opt_scan_size_t_range(bu_optarg, &xout, 1, SIZE_MAX, "output width"))
+		    return 0;
 		break;
 	    case 'w':
-		xin = atoi(bu_optarg);
+		if (!bu_opt_scan_size_t_range(bu_optarg, &xin, 1, SIZE_MAX, "input width"))
+		    return 0;
 		break;
 	    case 'N':
-		yout = atoi(bu_optarg);
+		if (!bu_opt_scan_size_t_range(bu_optarg, &yout, 1, SIZE_MAX, "output height"))
+		    return 0;
 		break;
 	    case 'n':
-		yin = atoi(bu_optarg);
+		if (!bu_opt_scan_size_t_range(bu_optarg, &yin, 1, SIZE_MAX, "input height"))
+		    return 0;
 		break;
 
 	    default:		/* 'h' '?' */
@@ -103,6 +115,11 @@ get_args(int argc, char **argv)
 	buffp = stdin;
     } else {
 	file_name = argv[bu_optind];
+	bu_optind++;
+	if (argc > bu_optind) {
+	    fprintf(stderr, "pixembed: excess argument(s) not supported\n");
+	    return 0;
+	}
 	if ((buffp = fopen(file_name, "rb")) == NULL) {
 	    fprintf(stderr,
 		    "pixembed: cannot open \"%s\" for reading\n",
@@ -111,8 +128,10 @@ get_args(int argc, char **argv)
 	}
     }
 
-    if (argc > ++bu_optind)
-	fprintf(stderr, "pixembed: excess argument(s) ignored\n");
+    if (argc > bu_optind) {
+	fprintf(stderr, "pixembed: excess argument(s) not supported\n");
+	return 0;
+    }
 
     return 1;		/* OK */
 }
@@ -121,7 +140,9 @@ get_args(int argc, char **argv)
 int
 main(int argc, char **argv)
 {
-    size_t ydup;
+    size_t bottom_margin;
+    size_t interior_rows;
+    size_t top_margin;
     size_t i;
     size_t y;
 
@@ -135,40 +156,40 @@ main(int argc, char **argv)
 	bu_exit (1, NULL);
     }
 
-    if (xin <= 0 || yin <= 0 || xout <= 0 || yout <= 0) {
-	fprintf(stderr, "pixembed: sizes must be positive\n");
-	bu_exit (2, NULL);
-    }
     if (xout < xin || yout < yin) {
-	fprintf(stderr, "pixembed: output size must exceed input size\n");
+	fprintf(stderr, "pixembed: output size must be at least the input size\n");
 	bu_exit (3, NULL);
     }
 
-    if (border_inset >= xin) {
-	fprintf(stderr, "pixembed: border inset out of range\n");
+    if (border_inset > (xin - 1) / 2 || border_inset > (yin - 1) / 2) {
+	fprintf(stderr, "pixembed: border inset must leave at least one input row and column\n");
 	bu_exit (4, NULL);
     }
 
     inbase = (xout - xin) / 2;
+    bottom_margin = (yout - yin) / 2;
+    top_margin = yout - yin - bottom_margin;
+    interior_rows = yin - 2 * border_inset;
 
     /* Allocate storage for one output line */
     scanlen = 3*xout;
     obuf = (unsigned char *)bu_malloc(scanlen, "obuf");
 
-    /* Pre-fetch the first line (after skipping) */
-    for (i= 0; i<border_inset; i++) load_buffer();
+    /* Discard suspect border rows, then replicate the first usable row. */
+    for (i = 0; i < border_inset; i++)
+	load_buffer();
+    load_buffer();
 
-    /* Write out duplicates of 1st line */
-    ydup = (yout - yin) / 2 - border_inset;
-    for (y = 0; y < ydup; y++) write_buffer();
+    for (y = 0; y < bottom_margin + border_inset + 1; y++)
+	write_buffer();
 
-    for (y = 0; y < yin; y++) {
+    for (y = 1; y < interior_rows; y++) {
 	load_buffer();
 	write_buffer();
     }
 
-    /* For the remaining lines, Write out duplicates of last line read */
-    for (y = 0; y < ydup; y++)
+    /* Replicate the last usable row through the discarded edge and margin. */
+    for (y = 0; y < top_margin + border_inset; y++)
 	write_buffer();
 
     bu_free(obuf, "obuf");

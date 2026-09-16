@@ -1,7 +1,7 @@
 /*                    D M - G E N E R I C . C
  * BRL-CAD
  *
- * Copyright (c) 1999-2025 United States Government as represented by
+ * Copyright (c) 1999-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,7 +31,7 @@
 #include "bu/hash.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
-#include "bu/time.h"
+#include "bu/datetime.h"
 #include "bv/defines.h"
 #include "dm.h"
 #include "./include/private.h"
@@ -64,6 +64,53 @@ dm_set_udata(struct dm *dmp, void *udata)
     if (UNLIKELY(!dmp)) return;
     dmp->i->dm_udata = udata;
 }
+
+
+/* --- Dlist sensor API --- */
+
+int
+dm_register_dlist_sensor(struct dm *dmp,
+			 struct bv_scene_obj *s,
+			 void (*callback)(struct bv_scene_obj *, void *),
+			 void *data)
+{
+    if (UNLIKELY(!dmp) || !callback) return -1;
+
+    struct dm_dlist_sensor *sensor;
+    BU_GET(sensor, struct dm_dlist_sensor);
+    sensor->s        = s;
+    sensor->callback = callback;
+    sensor->data     = data;
+    sensor->next     = dmp->i->dm_dlist_sensors;
+    dmp->i->dm_dlist_sensors = sensor;
+    return 0;
+}
+
+void
+dm_fire_dlist_sensors(struct dm *dmp)
+{
+    if (UNLIKELY(!dmp)) return;
+    struct dm_dlist_sensor *cur = dmp->i->dm_dlist_sensors;
+    while (cur) {
+	cur->callback(cur->s, cur->data);
+	cur = cur->next;
+    }
+}
+
+void
+dm_dlist_sensors_clear(struct dm *dmp)
+{
+    if (UNLIKELY(!dmp)) return;
+    struct dm_dlist_sensor *cur = dmp->i->dm_dlist_sensors;
+    while (cur) {
+	struct dm_dlist_sensor *next = cur->next;
+	BU_PUT(cur, struct dm_dlist_sensor);
+	cur = next;
+    }
+    dmp->i->dm_dlist_sensors = NULL;
+}
+
+/* --- end dlist sensor API --- */
 
 
 void
@@ -257,6 +304,8 @@ int
 dm_close(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return 0;
+    /* Free any registered dlist sensors before the backend tears down. */
+    dm_dlist_sensors_clear(dmp);
     return dmp->i->dm_close(dmp);
 }
 

@@ -1,0 +1,96 @@
+= I-F(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+i-f - convert 16-bit short integers to floats
+
+== SYNOPSIS
+
+[source]
+----
+i-f [-n | scale] < shorts > floats
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*i-f* reads a stream of native, machine-format 16-bit signed short
+integers from standard input, multiplies each value by a scale factor,
+and writes the results to standard output as native single-precision
+floating point numbers.
+
+The optional single argument selects the scaling:
+
+If a numeric _scale_ is given, each input value is multiplied by it.
+If *-n* is given, the scale is set to 1/32768, so that the full short
+integer range maps onto data in the range -1.0 to +1.0.  With no
+argument the scale defaults to 1.0 and each short is simply widened to
+a float.
+
+A scale of 0.0 is rejected as an error, as is reading from an
+interactive terminal.
+
+This command is deprecated and scheduled for removal; it prints a
+deprecation warning on startup.  It is the inverse of *f-i*(1), and is
+typically used in pipelines with other BRL-CAD signal-processing tools
+such as *dmod*(1) and *dconv*(1).
+
+[[options]]
+== OPTIONS
+
+*-n*::
+  Normalize: use a scale of 1/32768 so that full-range 16-bit signed
+  input is mapped onto the range -1.0 to +1.0.  Mutually exclusive with
+  a numeric _scale_ argument.
+
+*scale*::
+  A floating point multiplier applied to every input sample during
+  conversion.  A scale of 0.0 is rejected as an error.
+
+[[examples]]
+== EXAMPLES
+
+.Normalize full-scale audio samples to unit-range floats
+====
+[source,bash]
+----
+i-f -n < signal.pcm > signal.f
+----
+Treats the values in `signal.pcm` as full-range 16-bit signed samples
+and rescales them to the range -1.0 to +1.0, producing a stream of
+floats in `signal.f` suitable for further floating point processing.
+====
+
+.Apply an explicit gain in a processing pipeline
+====
+[source,bash]
+----
+i-f 0.01 < input.shorts | dconv > output.f
+----
+Scales each short sample by 0.01 while converting to float, then feeds
+the resulting float stream into *dconv*(1) for further signal
+processing.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *f-i*(1), *i-d*(1), *i-a*(1), *dconv*(1), *dmod*(1)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

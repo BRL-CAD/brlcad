@@ -1,7 +1,7 @@
 /*                   D E C I M A T E  . C P P
  * BRL-CAD
  *
- * Copyright (c) 2022-2025 United States Government as represented by
+ * Copyright (c) 2022-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,6 +35,7 @@
 #include "rt/db_internal.h"
 #include "rt/db_io.h"
 #include "rt/geom.h"
+#include "rt/primitives/bot.h"
 #include "rt/wdb.h"
 
 #include "ged/commands.h"
@@ -123,7 +124,6 @@ _bot_cmd_decimate(void* bs, int argc, const char** argv)
     }
 
     GED_CHECK_EXISTS(gedp, bu_vls_cstr(&output_bot_name), LOOKUP_QUIET, BRLCAD_ERROR);
-    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     struct rt_bot_internal *input_bot = (struct rt_bot_internal*)gb->intern->idb_ptr;
     RT_BOT_CK_MAGIC(input_bot);
@@ -151,7 +151,7 @@ _bot_cmd_decimate(void* bs, int argc, const char** argv)
 	}
 	bu_vls_free(&output_bot_name);
 
-	if (rt_db_put_internal(dp, dbip, gb->intern, &rt_uniresource) < 0) {
+	if (rt_db_put_internal(dp, dbip, gb->intern) < 0) {
 	    bu_log("Failed to write %s to database\n", bu_vls_cstr(&output_bot_name));
 	    return BRLCAD_ERROR;
 	}
@@ -165,54 +165,35 @@ _bot_cmd_decimate(void* bs, int argc, const char** argv)
 	bu_log("INPUT BoT has %zu vertices and %zu faces, merge_tol = %f\n", input_bot->num_vertices, input_bot->num_faces, merge_tol);
 
 	int *ofaces = NULL;
+	int *face_sources = NULL;
 	int n_ofaces = 0;
 	struct bg_trimesh_decimation_settings s= BG_TRIMESH_DECIMATION_SETTINGS_INIT;
 	s.feature_size = merge_tol;
-	int ret = bg_trimesh_decimate(&ofaces, &n_ofaces, input_bot->faces, (int)input_bot->num_faces, (point_t *)input_bot->vertices, (int)input_bot->num_vertices, &s);
+	int ret = bg_trimesh_run_decimater(&ofaces, &face_sources,
+	    &n_ofaces, input_bot->faces, (int)input_bot->num_faces,
+	    (point_t *)input_bot->vertices, (int)input_bot->num_vertices, &s);
 	if (bu_vls_strlen(&s.msgs)) {
 	    bu_log("%s", bu_vls_cstr(&s.msgs));
 	}
 	bu_vls_free(&s.msgs);
 	if (ret != BRLCAD_OK) {
 	    bu_free(ofaces, "ofaces");
-	    return BRLCAD_ERROR;
-	}
-
-	int *gcfaces = NULL;
-	point_t *opnts = NULL;
-	int n_opnts;
-
-	// Trim out any unused points
-	int n_gcfaces = bg_trimesh_3d_gc(&gcfaces, &opnts, &n_opnts, ofaces, n_ofaces, (point_t *)input_bot->vertices);
-	if (n_gcfaces != n_ofaces) {
-	    bu_free(gcfaces, "gcfaces");
-	    bu_free(opnts , "opnts");
-	    bu_free(ofaces, "ofaces");
+	    bu_free(face_sources, "decimated face sources");
 	    bu_vls_free(&output_bot_name);
 	    return BRLCAD_ERROR;
 	}
 
-	bu_log("OUTPUT BoT has %d vertices and %d faces, merge_tol = %f\n", n_opnts, n_gcfaces, s.feature_size);
-
-	// Indices may be updated after gc, so the old array is obsolete
+	struct rt_bot_internal *nbot = rt_bot_gc(input_bot, ofaces,
+	    face_sources, (size_t)n_ofaces);
 	bu_free(ofaces, "ofaces");
+	bu_free(face_sources, "decimated face sources");
+	if (!nbot) {
+	    bu_vls_free(&output_bot_name);
+	    return BRLCAD_ERROR;
+	}
 
-	// New bot time
-	struct rt_bot_internal *nbot;
-	BU_ALLOC(nbot, struct rt_bot_internal);
-	nbot->magic = RT_BOT_INTERNAL_MAGIC;
-	nbot->mode = input_bot->mode;
-	// We're not mapping plate mode thickness info at the moment, so we
-	// can't persist a plate mode type
-	if (nbot->mode == RT_BOT_PLATE || nbot->mode == RT_BOT_PLATE_NOCOS)
-	    nbot->mode = RT_BOT_SURFACE;
-	nbot->orientation = input_bot->orientation;
-	nbot->thickness = NULL; // TODO
-	nbot->face_mode = NULL; // TODO
-	nbot->num_faces = n_ofaces;
-	nbot->num_vertices = n_opnts;
-	nbot->faces = gcfaces;
-	nbot->vertices = (fastf_t *)opnts;
+	bu_log("OUTPUT BoT has %zu vertices and %zu faces, merge_tol = %f\n",
+	    nbot->num_vertices, nbot->num_faces, s.feature_size);
 
 	struct rt_db_internal intern;
 	RT_DB_INTERNAL_INIT(&intern);
@@ -220,24 +201,23 @@ _bot_cmd_decimate(void* bs, int argc, const char** argv)
 	intern.idb_type = ID_BOT;
 	intern.idb_meth = &OBJ[ID_BOT];
 	intern.idb_ptr = (void *)nbot;
+	bu_avs_merge(&intern.idb_avs, &gb->intern->idb_avs);
 
 	struct directory *dp = db_diradd(dbip, bu_vls_cstr(&output_bot_name), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&gb->intern->idb_type);
 	if (dp == RT_DIR_NULL) {
-	    bu_free(gcfaces, "gcfaces");
-	    bu_free(opnts , "opnts");
-	    bu_vls_free(&output_bot_name);
-	    return BRLCAD_ERROR;
-	}
-	bu_vls_free(&output_bot_name);
-
-	if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
-	    bu_free(gcfaces, "gcfaces");
-	    bu_free(opnts , "opnts");
-	    bu_log("Failed to write %s to database\n", bu_vls_cstr(&output_bot_name));
 	    rt_db_free_internal(&intern);
 	    bu_vls_free(&output_bot_name);
 	    return BRLCAD_ERROR;
 	}
+
+	if (rt_db_put_internal(dp, dbip, &intern) < 0) {
+	    bu_log("Failed to write %s to database\n", bu_vls_cstr(&output_bot_name));
+	    (void)db_delete(dbip, dp);
+	    (void)db_dirdelete(dbip, dp);
+	    bu_vls_free(&output_bot_name);
+	    return BRLCAD_ERROR;
+	}
+	bu_vls_free(&output_bot_name);
 
 	return BRLCAD_OK;
     }
@@ -251,12 +231,12 @@ _bot_cmd_decimate(void* bs, int argc, const char** argv)
     }
     bu_vls_free(&output_bot_name);
 
-    if (rt_db_put_internal(dp, dbip, gb->intern, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(dp, dbip, gb->intern) < 0) {
 	return BRLCAD_ERROR;
     }
     struct rt_db_internal intern;
     RT_DB_INTERNAL_INIT(&intern);
-    GED_DB_GET_INTERNAL(gedp, &intern, dp, NULL, wdbp->wdb_resp, BRLCAD_ERROR);
+    GED_DB_GET_INTERN(gedp, &intern, dp, NULL, BRLCAD_ERROR);
     struct rt_bot_internal *obot = (struct rt_bot_internal*)intern.idb_ptr;
 
     // Decimate with GCT
@@ -266,7 +246,7 @@ _bot_cmd_decimate(void* bs, int argc, const char** argv)
     bu_log("[GCT] OUTPUT BoT has %zu vertices and %zu faces (%zu edges removed)\n", obot->num_vertices, obot->num_faces, edges_removed);
 
     // Write decimation to disk
-    if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(dp, dbip, &intern) < 0) {
 	rt_db_free_internal(&intern);
 	return BRLCAD_ERROR;
     }
@@ -283,4 +263,3 @@ _bot_cmd_decimate(void* bs, int argc, const char** argv)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

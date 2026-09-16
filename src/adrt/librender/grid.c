@@ -1,7 +1,7 @@
 /*                          G R I D . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2025 United States Government as represented by
+ * Copyright (c) 2007-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -18,6 +18,9 @@
  * information.
  */
 /** @file librender/grid.c
+ *
+ * Renderer that overlays a reference grid on hit surfaces, shading
+ * grid lines and interstitial regions by the surface-to-eye angle.
  *
  */
 
@@ -43,15 +46,15 @@ render_grid_work(render_t *UNUSED(render), struct tie_s *tie, struct tie_ray_s *
 
 
     if (TIE_WORK(tie, ray, &id, render_hit, NULL) != NULL) {
-	/* if X or Y lie in the grid paint it white else make it gray */
+	/* paint grid lines (where X or Y falls on a line) light, everything else dark */
 	if (fabs(GRID*id.pos[0] - (int)(GRID*id.pos[0])) < 0.2*LINE || fabs(GRID*id.pos[1] - (int)(GRID*id.pos[1])) < 0.2*LINE) {
-	    *pixel[0] = (TFLOAT)0.9;
-	    *pixel[1] = (TFLOAT)0.9;
-	    *pixel[2] = (TFLOAT)0.9;
+	    (*pixel)[0] = (TFLOAT)0.9;
+	    (*pixel)[1] = (TFLOAT)0.9;
+	    (*pixel)[2] = (TFLOAT)0.9;
 	} else {
-	    *pixel[0] = (TFLOAT)0.1;
-	    *pixel[1] = (TFLOAT)0.1;
-	    *pixel[2] = (TFLOAT)0.1;
+	    (*pixel)[0] = (TFLOAT)0.1;
+	    (*pixel)[1] = (TFLOAT)0.1;
+	    (*pixel)[2] = (TFLOAT)0.1;
 	}
     } else {
 	return;
@@ -62,9 +65,9 @@ render_grid_work(render_t *UNUSED(render), struct tie_s *tie, struct tie_ray_s *
     angle = VDOT(vec, id.norm);
     VSCALE(*pixel, *pixel, (angle*0.9));
 
-    *pixel[0] += (TFLOAT)0.1;
-    *pixel[1] += (TFLOAT)0.1;
-    *pixel[2] += (TFLOAT)0.1;
+    (*pixel)[0] += (TFLOAT)0.1;
+    (*pixel)[1] += (TFLOAT)0.1;
+    (*pixel)[2] += (TFLOAT)0.1;
 }
 
 

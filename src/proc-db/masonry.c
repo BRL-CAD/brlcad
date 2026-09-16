@@ -2,7 +2,7 @@
 /*                       M A S O N R Y . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2025 United States Government as represented by
+ * Copyright (c) 2004-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -36,21 +36,23 @@
 #include "vmath.h"
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/path.h"
 #include "bu/units.h"
+#include "bu/vls.h"
 #include "raytrace.h"
 #include "wdb.h"
 
 
 /* declarations to support use of bu_getopt() system call */
-char *options = "w:o:n:t:b:u:c:rldm:T:R:h?";
+const char *options = "w:o:n:t:b:u:c:rldm:T:R:h?";
 
 int debug = 0;
-char *progname = "masonry";
-char *obj_name = "wall";
+const char *progname = "masonry";
+const char *obj_name = "wall";
 char sol_name[64];
 int sol_num = 0;
-char *type = "frame";
-char *units = "mm";
+const char *type = "frame";
+const char *units = "mm";
 double unit_conv = 1.0;
 matp_t trans_matrix = (matp_t)NULL;
 
@@ -81,7 +83,7 @@ double stud_spacing = 16.0 * 25.4; /* spacing between vertical studs */
 unsigned char sheetrock_color[3] = { 200, 200, 200 };
 unsigned char stud_color[3] = { 250, 178, 108 };
 
-char *stud_properties[] = { "plastic", "sh=10 di=0.7 sp=0.3" };
+const char *stud_properties[] = { "plastic", "sh=10 di=0.7 sp=0.3" };
 
 struct opening {
     struct bu_list l;
@@ -104,7 +106,7 @@ struct boardseg {
 /**
  * tell user how to invoke this program, then exit
  */
-void usage(char *s)
+void usage(const char *s)
 {
     if (s)
 	bu_log("%s\n", s);
@@ -223,10 +225,21 @@ parse_args(int ac, char **av)
     int units_lock=0;
     FILE *logfile;
 
-    if (! (progname=strrchr(*av, '/')))
-	progname = *av;
-    else
-	++progname;
+    {
+	/* derive the program's basename without any directory or
+	 * extension, so a full path (or a Windows ".exe" suffix) does not
+	 * leak into the output filename.  bu_path_component() handles both
+	 * '/' and '\' separators (and drive letters) portably.
+	 */
+	static char base_buf[64];
+	struct bu_vls base = BU_VLS_INIT_ZERO;
+
+	bu_path_component(&base, *av, BU_PATH_BASENAME_EXTLESS);
+	bu_strlcpy(base_buf, bu_vls_cstr(&base), sizeof(base_buf));
+	bu_vls_free(&base);
+
+	progname = base_buf;
+    }
 
 
     BU_LIST_INIT(&ol_hd.l);
@@ -798,6 +811,8 @@ sheetrock(struct rt_wdb *fd)
     if (!color)
 	color = sheetrock_color;
 
+    mk_id(fd, "A sheetrock wall");
+
     BU_LIST_INIT(&wm_hd.l);
 
     /* now add the sheetrock */
@@ -845,6 +860,10 @@ mortar_brick(struct rt_wdb *fd)
     point_t pts[8];
 
     bu_log("WARNING: the mortar brick type option is untested\n");
+
+    BU_LIST_INIT(&wm_hd.l);
+
+    mk_id(fd, "A brick wall");
 
     horiz_bricks = (WALL_WIDTH-brick_depth) / (brick_width + min_mortar);
 
@@ -915,7 +934,7 @@ mortar_brick(struct rt_wdb *fd)
     VSET(pts[6], -mortar_width, brick_depth, mortar_height+brick_height);
     VSET(pts[7], -mortar_width, 0.0,	 mortar_height+brick_height);
 
-    snprintf(sol_name, 64, "s.%s.vm", obj_name);
+    snprintf(sol_name, 64, "s.%s.hm", obj_name);
     mk_arb8(fd, sol_name, &pts[0][X]);
 
     (void)mk_addmember(sol_name, &wm_hd.l, NULL, WMOP_UNION);
@@ -934,10 +953,16 @@ brick(struct rt_wdb *fd)
 
     bu_log("WARNING: the brick type option is untested\n");
 
+    mk_id(fd, "A brick wall");
+
     if (!color)
 	color = brick_color;
 
     mortar_height = 0.0;
+
+    /* initialize the member list head (WMEMBER_INIT_ZERO leaves the
+     * bu_list pointers NULL, which makes mk_addmember assert) */
+    BU_LIST_INIT(&wm_hd.l);
 
     /* make prototype brick */
 

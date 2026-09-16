@@ -1,7 +1,7 @@
 /*                 ShapeRepresentationRelationship.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2025 United States Government as represented by
+ * Copyright (c) 1994-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -60,7 +60,6 @@ bool ShapeRepresentationRelationship::Load(STEPWrapper *sw, SDAI_Application_ins
     id = sse->STEPfile_id;
 
     if (!RepresentationRelationship::Load(step, sse)) {
-	std::cout << CLASSNAME << ":Error loading base class ::RepresentationRelationship." << std::endl;
 	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }

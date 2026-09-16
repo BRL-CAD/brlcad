@@ -1,7 +1,7 @@
 /*                          L A B E L S . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2025 United States Government as represented by
+ * Copyright (c) 1998-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -572,7 +572,6 @@ dm_draw_prim_labels(struct dm *dmp,
     db_full_path_init(&path);
     ts = wdbp->wdb_initial_tree_state;     /* struct copy */
     ts.ts_dbip = wdbp->dbip;
-    ts.ts_resp = &rt_uniresource;
     MAT_IDN(ts.ts_mat);
 
     if (db_follow_path_for_state(&ts, &path, name, 0)) {
@@ -582,7 +581,7 @@ dm_draw_prim_labels(struct dm *dmp,
 
     dp = DB_FULL_PATH_CUR_DIR(&path);
 
-    if (rt_db_get_internal(&intern, dp, wdbp->dbip, ts.ts_mat, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dp, wdbp->dbip, ts.ts_mat) < 0) {
 	db_free_full_path(&path);
 	return BRLCAD_ERROR;
     }

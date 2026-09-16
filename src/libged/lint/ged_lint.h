@@ -1,7 +1,7 @@
 /*                    G E D _ L I N T . H
  * BRL-CAD
  *
- * Copyright (c) 2024-2025 United States Government as represented by
+ * Copyright (c) 2024-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,12 +32,13 @@
 #include <string>
 #include <map>
 #include <time.h>
-#include "json.hpp"
+#include "../libbu/json.hpp"
 
 extern "C" {
 #include "bu/ptbl.h"
 #include "bu/vls.h"
 #include "raytrace.h"
+#include "rt/primitives/arb8.h"
 #include "rt/primitives/bot.h"
 }
 #include "../ged_private.h"
@@ -68,12 +69,19 @@ class lint_data {
 	struct bu_list *vlfree;
 
 	std::map<std::string, std::set<std::string>> im_techniques;
+
+	/* Raytrace validation mode (lint --raytrace) */
+	bool do_raytrace = false;
+	bool rt_do_perturb = false;  /**< when true, facetize without --no-perturb (tests default facetize behavior) */
+	double rt_tol_pct = 0.10;    /**< fractional tolerance for SA/vol comparison (0.10 = 10%) */
+	size_t rt_crofton_rays = 0;  /**< 0 = convergence-based (recommended); >0 = fixed ray count */
 };
 
 extern void bot_checks(lint_data *cdata, struct directory *dp, struct rt_bot_internal *bot);
 extern int _ged_cyclic_check(lint_data *cdata);
 extern int _ged_invalid_shape_check(lint_data *ldata);
 extern int _ged_missing_check(lint_data *mdata);
+extern int _ged_raytrace_check(lint_data *ldata);
 
 #endif /* LIBGED_LINT_GED_PRIVATE_H */
 

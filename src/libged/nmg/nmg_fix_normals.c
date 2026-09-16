@@ -1,7 +1,7 @@
 /*                  N M G _ F I X _ N O R M A L S . C
  * BRL-CAD
  *
- * Copyright (c) 2009-2025 United States Government as represented by
+ * Copyright (c) 2009-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -72,7 +72,7 @@ ged_nmg_fix_normals_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if (rt_db_get_internal(&nmg_intern, dp, gedp->dbip, bn_mat_identity, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&nmg_intern, dp, gedp->dbip, bn_mat_identity) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "rt_db_get_internal() error\n");
 	return BRLCAD_ERROR;
     }

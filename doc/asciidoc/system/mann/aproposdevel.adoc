@@ -1,0 +1,56 @@
+= APROPOSDEVEL(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+aproposdevel - Searches through the one-line usage messages for specified _mged developer_ commands and displays all those containing a match.
+
+== SYNOPSIS
+
+[source]
+----
+aproposdevel {keyword}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+The *aproposdevel* command searches through the one-line usage messages for each _mged developer_ command and displays the name of each command where a match is found.
+
+
+[[examples]]
+== EXAMPLES
+
+The example demonstrates the use of the *aproposdevel* command to search for a particular _mged developer_ command in one-line usage messages.
+
+.Using aproposdevel to search for specified developer commands containing "region."
+[example]
+====
+mged>**aproposdevel region**
+
+
+
+
+....
+
+get_regions
+       
+....
+
+
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

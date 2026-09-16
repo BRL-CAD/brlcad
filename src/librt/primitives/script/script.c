@@ -1,7 +1,7 @@
 /*                        S C R I P T . C
  * BRL-CAD
  *
- * Copyright (c) 2017-2025 United States Government as represented by
+ * Copyright (c) 2017-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,6 +39,7 @@
 #include "bu/debug.h"
 #include "bu/cv.h"
 #include "bu/opt.h"
+#include "bu/str.h"
 #include "rt/db4.h"
 #include "nmg.h"
 #include "rt/geom.h"
@@ -57,7 +58,7 @@
  * !0 Error in description
  *
  */
-int
+C_DECL int
 rt_script_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     if (!stp)
@@ -71,7 +72,7 @@ rt_script_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-void
+C_DECL void
 rt_script_print(const struct soltab *stp)
 {
     if (stp) RT_CK_SOLTAB(stp);
@@ -86,7 +87,7 @@ rt_script_print(const struct soltab *stp)
  * 0 MISS
  * >0 HIT
  */
-int
+C_DECL int
 rt_script_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
     if (!stp || !rp || !ap || !seghead)
@@ -106,7 +107,7 @@ rt_script_shot(struct soltab *stp, struct xray *rp, struct application *ap, stru
 /**
  * Given ONE ray distance, return the normal and entry/exit point.
  */
-void
+C_DECL void
 rt_script_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
     if (!hitp || !rp)
@@ -123,7 +124,7 @@ rt_script_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 /**
  * Return the curvature of the script.
  */
-void
+C_DECL void
 rt_script_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
     if (!cvp || !hitp)
@@ -138,7 +139,7 @@ rt_script_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 }
 
 
-void
+C_DECL void
 rt_script_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
     if (ap) RT_CK_APPLICATION(ap);
@@ -149,14 +150,14 @@ rt_script_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struc
 }
 
 
-void
+C_DECL void
 rt_script_free(struct soltab *stp)
 {
     if (stp) RT_CK_SOLTAB(stp);
 }
 
 
-int
+C_DECL int
 rt_script_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     struct rt_script_internal *script_ip;
@@ -166,7 +167,7 @@ rt_script_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg
     script_ip = (struct rt_script_internal *)ip->idb_ptr;
     RT_SCRIPT_CK_MAGIC(script_ip);
 
-    if (bu_vls_addr(&script_ip->s_type)) {
+    if (bu_vls_strlen(&script_ip->s_type) == 0) {
 	bu_log("Script data not found or not specified\n");
     }
 
@@ -177,7 +178,7 @@ rt_script_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg
 /**
  * Import a script from the database format to the internal format.
  */
-int
+C_DECL int
 rt_script_import4(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *UNUSED(mat), const struct db_i *dbip)
 {
     if (ip) RT_CK_DB_INTERNAL(ip);
@@ -191,7 +192,7 @@ rt_script_import4(struct rt_db_internal *ip, const struct bu_external *ep, regis
 /**
  * The name is added by the caller, in the usual place.
  */
-int
+C_DECL int
 rt_script_export4(struct bu_external *ep, const struct rt_db_internal *ip, double UNUSED(local2mm), const struct db_i *dbip)
 {
     if (ep) BU_CK_EXTERNAL(ep);
@@ -205,11 +206,10 @@ rt_script_export4(struct bu_external *ep, const struct rt_db_internal *ip, doubl
 /**
  * Import a script from the database format to the internal format.
  */
-int
+C_DECL int
 rt_script_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *UNUSED(mat), const struct db_i *UNUSED(dbip))
 {
     struct rt_script_internal *script_ip;
-    unsigned char *ptr;
 
     BU_CK_EXTERNAL(ep);
     RT_CK_DB_INTERNAL(ip);
@@ -220,14 +220,11 @@ rt_script_import5(struct rt_db_internal *ip, const struct bu_external *ep, const
     BU_ALLOC(ip->idb_ptr, struct rt_script_internal);
 
     script_ip = (struct rt_script_internal *)ip->idb_ptr;
-    BU_VLS_INIT(&script_ip->s_type);
     script_ip->script_magic = RT_SCRIPT_INTERNAL_MAGIC;
+    BU_VLS_INIT(&script_ip->s_type);
 
-    ptr = ep->ext_buf;
-
-    bu_vls_init(&script_ip->s_type);
-    bu_vls_strncpy(&script_ip->s_type, (char *)ptr,
-	   ep->ext_nbytes - (ptr - (unsigned char *)ep->ext_buf));
+    /* the body is just the NUL-terminated type string */
+    bu_vls_strncpy(&script_ip->s_type, (char *)ep->ext_buf, ep->ext_nbytes);
 
     return 0;			/* OK */
 }
@@ -236,14 +233,10 @@ rt_script_import5(struct rt_db_internal *ip, const struct bu_external *ep, const
 /**
  * The name is added by the caller, in the usual place.
  */
-int
+C_DECL int
 rt_script_export5(struct bu_external *ep, const struct rt_db_internal *ip, double UNUSED(local2mm), const struct db_i *dbip)
 {
     struct rt_script_internal *script_ip;
-    unsigned char *cp;
-    size_t rem;
-
-    rem = ep->ext_nbytes;
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -254,17 +247,10 @@ rt_script_export5(struct bu_external *ep, const struct rt_db_internal *ip, doubl
 
     BU_CK_EXTERNAL(ep);
 
-    /* tally up size of buffer needed */
-    ep->ext_nbytes = SIZEOF_NETWORK_LONG + bu_vls_strlen(&script_ip->s_type) + 1;
-
+    /* the body is just the NUL-terminated type string */
+    ep->ext_nbytes = bu_vls_strlen(&script_ip->s_type) + 1;
     ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "script external");
-
-    cp = (unsigned char *)ep->ext_buf;
-
-    *(uint32_t *)cp = htonl(RT_SCRIPT_INTERNAL_MAGIC);
-    cp += SIZEOF_NETWORK_LONG;
-
-    bu_strlcpy((char *)cp, bu_vls_addr(&script_ip->s_type), rem);
+    bu_strlcpy((char *)ep->ext_buf, bu_vls_addr(&script_ip->s_type), ep->ext_nbytes);
 
     return 0;
 }
@@ -275,21 +261,17 @@ rt_script_export5(struct bu_external *ep, const struct rt_db_internal *ip, doubl
  * line describes type of primitive. Additional lines are indented one
  * tab, and give parameter values.
  */
-int
+C_DECL int
 rt_script_describe(struct bu_vls *str, const struct rt_db_internal *ip, int UNUSED(verbose), double UNUSED(mm2local))
 {
-    char buf[256];
-    struct rt_script_internal *script_ip =
-	(struct rt_script_internal *)ip->idb_ptr;
+    struct rt_script_internal *script_ip;
 
+    RT_CK_DB_INTERNAL(ip);
+    script_ip = (struct rt_script_internal *)ip->idb_ptr;
     RT_SCRIPT_CK_MAGIC(script_ip);
+
     bu_vls_strcat(str, "Script \n");
-
-
-    sprintf(buf, "\tScript type: %s\n", bu_vls_addr(&script_ip->s_type));
-    bu_vls_strcat(str, buf);
-    bu_vls_strcat(str, "\n");
-
+    bu_vls_printf(str, "\tScript type: %s\n\n", bu_vls_addr(&script_ip->s_type));
 
     return 0;
 }
@@ -299,7 +281,7 @@ rt_script_describe(struct bu_vls *str, const struct rt_db_internal *ip, int UNUS
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
-void
+C_DECL void
 rt_script_ifree(struct rt_db_internal *ip)
 {
     struct rt_script_internal *script_ip;
@@ -318,28 +300,34 @@ rt_script_ifree(struct rt_db_internal *ip)
 }
 
 
-int
+C_DECL int
 rt_script_form(struct bu_vls *logstr, const struct rt_functab *ftp)
 {
     BU_CK_VLS(logstr);
     RT_CK_FUNCTAB(ftp);
 
-    bu_vls_printf(logstr, " script type");
+    /* attribute/format pairs */
+    bu_vls_printf(logstr, "type %%s");
 
     return BRLCAD_OK;
 }
 
 
-int
+C_DECL int
 rt_script_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr)
 {
-    struct rt_script_internal *script_ip=(struct rt_script_internal *)intern->idb_ptr;
+    struct rt_script_internal *script_ip;
 
     BU_CK_VLS(logstr);
+    RT_CK_DB_INTERNAL(intern);
+    script_ip = (struct rt_script_internal *)intern->idb_ptr;
     RT_SCRIPT_CK_MAGIC(script_ip);
 
     if (attr == (char *)NULL) {
-	bu_vls_strcpy(logstr, "script");
+	/* full description (just 'script type VAL' for now) */
+	bu_vls_printf(logstr, "script type %s", bu_vls_addr(&script_ip->s_type));
+    } else if (BU_STR_EQUAL(attr, "type")) {
+	bu_vls_printf(logstr, "%s", bu_vls_addr(&script_ip->s_type));
     } else {
 	/* unrecognized attribute */
 	bu_vls_printf(logstr, "ERROR: Unknown attribute\n");
@@ -349,8 +337,8 @@ rt_script_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const 
     return BRLCAD_OK;
 }
 
-void
-rt_script_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
+C_DECL int
+rt_script_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char *UNUSED(variant), const point_t UNUSED(origin), double UNUSED(scale))
 {
     struct rt_script_internal* ip;
 
@@ -365,11 +353,12 @@ rt_script_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
 
     ip->script_magic = RT_SCRIPT_INTERNAL_MAGIC;
     BU_VLS_INIT(&ip->s_type);
+    return BRLCAD_OK;
 }
 
 
-int
-rt_script_adjust(struct bu_vls *UNUSED(logstr), struct rt_db_internal *intern, int UNUSED(argc), const char **UNUSED(argv))
+C_DECL int
+rt_script_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)
 {
     struct rt_script_internal *script_ip;
 
@@ -377,13 +366,23 @@ rt_script_adjust(struct bu_vls *UNUSED(logstr), struct rt_db_internal *intern, i
     script_ip = (struct rt_script_internal *)intern->idb_ptr;
     RT_SCRIPT_CK_MAGIC(script_ip);
 
-    /* stub */
+    /* consume "type <value>" */
+    while (argc >= 2) {
+	if (BU_STR_EQUAL(argv[0], "type")) {
+	    bu_vls_strcpy(&script_ip->s_type, argv[1]);
+	} else {
+	    bu_vls_printf(logstr, "ERROR: Unknown attribute '%s', choices are type\n", argv[0]);
+	    return BRLCAD_ERROR;
+	}
+	argc -= 2;
+	argv += 2;
+    }
 
     return BRLCAD_OK;
 }
 
 
-int
+C_DECL int
 rt_script_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
     if (ip) RT_CK_DB_INTERNAL(ip);

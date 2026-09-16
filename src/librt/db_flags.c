@@ -1,7 +1,7 @@
 /*                     D B _ F L A G S . C
  * BRL-CAD
  *
- * Copyright (c) 2006-2025 United States Government as represented by
+ * Copyright (c) 2006-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -45,6 +45,9 @@ db_flags_internal(const struct rt_db_internal *intern)
     const struct rt_comb_internal *comb;
 
     RT_CK_DB_INTERNAL(intern);
+
+    if (intern->idb_major_type & DB5_MAJORTYPE_BINARY_MASK)
+	return RT_DIR_NON_GEOM;
 
     if (intern->idb_type != ID_COMBINATION)
 	return RT_DIR_SOLID;

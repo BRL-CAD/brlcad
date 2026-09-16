@@ -1,7 +1,7 @@
 /*                     D I R E C T O R Y . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2025 United States Government as represented by
+ * Copyright (c) 1993-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -97,12 +97,6 @@ struct directory {
 #define LOOKUP_NOISY    1
 #define LOOKUP_QUIET    0
 
-#define FOR_ALL_DIRECTORY_START(_dp, _dbip) { int _i; \
-    for (_i = RT_DBNHASH-1; _i >= 0; _i--) { \
-    for ((_dp) = (_dbip)->dbi_Head[_i]; (_dp); (_dp) = (_dp)->d_forw) {
-
-#define FOR_ALL_DIRECTORY_END   }}}
-
 #define RT_DIR_SET_NAMEP(_dp, _name) { \
 	if (strlen(_name) < sizeof((_dp)->d_shortname)) {\
 	    bu_strlcpy((_dp)->d_shortname, (_name), sizeof((_dp)->d_shortname)); \
@@ -125,6 +119,9 @@ struct directory {
 /**
  * allocate and link in a new directory entry to the resource
  * structure's freelist
+ *
+ * DEPRECATED in favor of RT_GET_DIR, which operates on the
+ * db_i container
  */
 #define RT_GET_DIRECTORY(_p, _res) { \
 	while (((_p) = (_res)->re_directory_hd) == NULL) \
@@ -132,6 +129,16 @@ struct directory {
 	(_res)->re_directory_hd = (_p)->d_forw; \
 	(_p)->d_forw = NULL; }
 
+
+/**
+ * allocate and link in a new directory entry to the resource
+ * structure's freelist
+ */
+#define RT_GET_DIR(_p, _dbip) { \
+	while (((_p) = (_dbip)->i->dbi_directory_hd) == NULL) \
+	    db_alloc_dir_block(_dbip); \
+	(_dbip)->i->dbi_directory_hd = (_p)->d_forw; \
+	(_p)->d_forw = NULL; }
 
 /**
  * convert an argv list of names to a directory pointer array.

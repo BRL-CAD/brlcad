@@ -1,7 +1,7 @@
 /*                       F B F R A M E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2025 United States Government as represented by
+ * Copyright (c) 1986-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,6 +27,8 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 
 #include "bio.h"
@@ -34,11 +36,12 @@
 #include "bu/app.h"
 #include "bu/color.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/exit.h"
 #include "bu/malloc.h"
 #include "dm.h"
 
-char *Usage="[-F framebuffer] [-s|S squareframesize] [-w|W frame_width] [-n|N frame_height]\n";
+const char *Usage="[-F framebuffer] [-s|S squareframesize] [-w|W frame_width] [-n|N frame_height]\n";
 
 #define USAGE_EXIT(p) { fprintf(stderr, "Usage: %s %s\n", (p), Usage); \
 	bu_exit(-1, NULL); }
@@ -69,21 +72,21 @@ main(int argc, char **argv)
 	    case 's':
 	    case 'S':
 		/* square file size */
-		if ((len=atoi(bu_optarg)) > 0)
+		if (bu_opt_scan_int_range(bu_optarg, &len, 1, INT_MAX, "square frame size"))
 		    xsize = ysize = len;
 		else
 		    USAGE_EXIT(*argv);
 		break;
 	    case 'w':
 	    case 'W':
-		if ((len=atoi(bu_optarg)) > 0)
+		if (bu_opt_scan_int_range(bu_optarg, &len, 1, INT_MAX, "frame width"))
 		    xsize = len;
 		else
 		    USAGE_EXIT(*argv);
 		break;
 	    case 'n':
 	    case 'N':
-		if ((len=atoi(bu_optarg)) > 0)
+		if (bu_opt_scan_int_range(bu_optarg, &len, 1, INT_MAX, "frame height"))
 		    ysize = len;
 		else
 		    USAGE_EXIT(*argv);
@@ -96,6 +99,10 @@ main(int argc, char **argv)
 
     if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)))
 	USAGE_EXIT(*argv);
+    if (argc > bu_optind) {
+	fprintf(stderr, "%s: excess argument(s) not supported\n", bu_getprogname());
+	USAGE_EXIT(*argv);
+    }
 
     if ((fbp = fb_open(framebuffer, xsize, ysize)) == FB_NULL)
 	bu_exit(1, NULL);

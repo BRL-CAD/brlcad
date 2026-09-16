@@ -1,0 +1,111 @@
+= PIX-PS(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+pix-ps - convert a color pix file to PostScript
+
+== SYNOPSIS
+
+[source]
+----
+pix-ps [-e] [-c|-l] [-L] [-s _input_squaresize_] [-w _input_width_] [-n _input_height_] [-S _inches_square_] [-W _inches_width_] [-N _inches_height_] [_input.pix_] > _output.ps_
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*pix-ps* reads a color *pix*(5) format image and writes a 24-bit color PostScript image to standard output. The input may be named on the command line or supplied on standard input.
+
+The *-w* and *-n* options set the input width and number of scan lines in pixels; *-s* sets both at once. If no input size is given, defaults of 512 are assumed.
+
+By default the output is a 6.75 inch square centered on an 8.5 x 11 inch page. The *-S*, *-W*, and *-N* options change the output size in inches, analogous to the input options. The *-l* option places the image in the lower-left corner instead of centering it, and *-L* selects landscape orientation. An Encapsulated PostScript file, sized in pixels rather than inches, can be produced with *-e*.
+
+[[options]]
+== OPTIONS
+
+*-e*::
+  Produce an Encapsulated PostScript (EPS) file. The bounding box is sized in pixels and the page placement options (*-c*, *-l*, *-L*) are ignored.
+
+*-c*::
+  Center the image on an 8.5 x 11 inch page. This is the default.
+
+*-l*::
+  Place the image in the lower-left corner of the page rather than centering it.
+
+*-L*::
+  Landscape orientation; rotate the output image ninety degrees.
+
+*-s* _input_squaresize_::
+  Set both the input width and height to _input_squaresize_ pixels.
+
+*-w* _input_width_::
+  Set the input width to _input_width_ pixels (default 512).
+
+*-n* _input_height_::
+  Set the number of input scan lines to _input_height_ pixels (default 512).
+
+*-S* _inches_square_::
+  Set both the output width and height to _inches_square_ inches.
+
+*-W* _inches_width_::
+  Set the output width to _inches_width_ inches (default 6.75).
+
+*-N* _inches_height_::
+  Set the output height to _inches_height_ inches (default 6.75).
+
+[[examples]]
+== EXAMPLES
+
+.Center a default image on a page
+====
+[source,bash]
+----
+pix-ps image.pix > image.ps
+----
+Produces a 6.75 inch PostScript image from a 512x512 input and centers it on an 8.5 x 11 inch page, ready to send to a PostScript printer.
+====
+
+.Render a region of geometry directly to PostScript
+====
+[source,bash]
+----
+rt -s 1024 -o /dev/stdout share/db/moss.g all.g | pix-ps -w 1024 -n 1024 -L -S 7 > moss.ps
+----
+Ray traces the *moss.g* model at 1024x1024, pipes the resulting *pix*(5) data into *pix-ps*, and writes a 7 inch square landscape PostScript image.
+====
+
+.Generate an Encapsulated PostScript figure
+====
+[source,bash]
+----
+pix-ps -e -w 800 -n 600 plot.pix > plot.eps
+----
+Creates an Encapsulated PostScript version of an 800x600 image, suitable for inclusion as a figure in a larger document.
+====
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *bw-ps*(1), *rt*(1), *pix*(5)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

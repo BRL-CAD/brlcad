@@ -1,7 +1,7 @@
 /*                     T R A N S F O R M . C
  * BRL-CAD
  *
- * Copyright (c) 2006-2025 United States Government as represented by
+ * Copyright (c) 2006-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,13 +26,12 @@
 
 
 int
-rt_matrix_transform(struct rt_db_internal *output, const mat_t matrix, struct rt_db_internal *input, int freeflag, struct db_i *dbip, struct resource *UNUSED(resource))
+rt_matrix_transform(struct rt_db_internal *output, const mat_t matrix, struct rt_db_internal *input, int freeflag, struct db_i *dbip)
 {
     int ret;
 
     RT_CK_DB_INTERNAL(output);
     RT_CK_DB_INTERNAL(input);
-    RT_CK_DBI(dbip);
 
     ret = -1;
     if (OBJ[input->idb_type].ft_xform) {

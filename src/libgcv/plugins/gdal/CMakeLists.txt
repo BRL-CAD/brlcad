@@ -1,6 +1,10 @@
 if(BRLCAD_ENABLE_GDAL)
   set(CMAKE_FIND_FRAMEWORK LAST) # bundled first
-  brlcad_find_package(GDAL REQUIRED)
+  brlcad_find_package(GDAL)
+  if (NOT GDAL_LIBRARY)
+    message("BRLCAD_ENABLE_GDAL is on, but GDAL not found - disabling.")
+    set(BRLCAD_ENABLE_GDAL OFF)
+  endif()
 endif(BRLCAD_ENABLE_GDAL)
 
 set(GDAL_SRCS gdal.cpp gdal_ll.cpp)

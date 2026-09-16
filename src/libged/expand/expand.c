@@ -1,7 +1,7 @@
 /*                         E X P A N D . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -59,7 +59,7 @@ ged_expand_core(struct ged *gedp, int argc, const char *argv[])
 {
     char *pattern;
     struct directory *dp;
-    int i, whicharg;
+    int whicharg;
     int regexp, nummatch, backslashed;
     static const char *usage = "expression";
 
@@ -112,42 +112,28 @@ ged_expand_core(struct ged *gedp, int argc, const char *argv[])
 	 */
 
 	pattern = (char *)argv[whicharg];
-	for (i = 0; i < RT_DBNHASH; i++) {
-	    for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-		if (bu_path_match(pattern, dp->d_namep, 0) != 0)
-		    continue;
-		/* Successful match */
-		if (nummatch == 0)
-		    bu_vls_printf(gedp->ged_result_str, "%s", dp->d_namep);
-		else
-		    bu_vls_printf(gedp->ged_result_str, " %s", dp->d_namep);
-		++nummatch;
-	    }
-	}
+	FOR_ALL_DIRECTORY_START(dp, gedp->dbip)
+	    if (bu_path_match(pattern, dp->d_namep, 0) != 0)
+		continue;
+	    /* Successful match */
+	    if (nummatch == 0)
+		bu_vls_printf(gedp->ged_result_str, "%s", dp->d_namep);
+	    else
+		bu_vls_printf(gedp->ged_result_str, " %s", dp->d_namep);
+	    ++nummatch;
+	FOR_ALL_DIRECTORY_END;
     }
 
     return BRLCAD_OK;
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl expand_cmd_impl = {
-    "expand",
-    ged_expand_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd expand_cmd = { &expand_cmd_impl };
-const struct ged_cmd *expand_cmds[] = { &expand_cmd, NULL };
+#define GED_EXPAND_COMMANDS(X, XID) \
+    X(expand, ged_expand_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  expand_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_EXPAND_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_expand", 1, GED_EXPAND_COMMANDS)
 
 /*
  * Local Variables:

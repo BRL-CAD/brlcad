@@ -1,7 +1,7 @@
 /*                   B O T _ F A C E _ S O R T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -43,7 +43,6 @@ ged_bot_face_sort_core(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
-    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -78,7 +77,7 @@ ged_bot_face_sort_core(struct ged *gedp, int argc, const char *argv[])
 	    continue;
 	}
 
-	GED_DB_GET_INTERNAL(gedp, &intern, dp, bn_mat_identity, wdbp->wdb_resp, BRLCAD_ERROR);
+	GED_DB_GET_INTERN(gedp, &intern, dp, bn_mat_identity, BRLCAD_ERROR);
 
 	if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
 	    rt_db_free_internal(&intern);
@@ -101,7 +100,7 @@ ged_bot_face_sort_core(struct ged *gedp, int argc, const char *argv[])
 	    continue;
 	}
 
-	GED_DB_PUT_INTERNAL(gedp, dp, &intern, wdbp->wdb_resp, BRLCAD_ERROR);
+	GED_DB_PUT_INTERN(gedp, dp, &intern, BRLCAD_ERROR);
     }
 
     return BRLCAD_OK;

@@ -1,7 +1,7 @@
 /*                 BrepWithVoids.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2025 United States Government as represented by
+ * Copyright (c) 1994-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -26,6 +26,7 @@
 
 #include "STEPWrapper.h"
 #include "Factory.h"
+#include "brep/pullback.h"
 
 #include "BrepWithVoids.h"
 #include "OrientedClosedShell.h"
@@ -134,18 +135,32 @@ BrepWithVoids::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
 bool BrepWithVoids::LoadONBrep(ON_Brep *brep)
 {
     if (!ManifoldSolidBrep::LoadONBrep(brep)) {
-	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
+	if (step && step->Verbose())
+	    std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
 	return false;
     }
 
     LIST_OF_ORIENTED_CLOSED_SHELLS::iterator i;
     for (i = voids.begin(); i != voids.end(); ++i) {
+	if (brlcad::PullbackWorkCancelled()) return false;
 	if (!(*i)->LoadONBrep(brep)) {
-	    std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
+	    if (step && step->Verbose())
+		std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
 	    return false;
 	}
     }
     return true;
+}
+
+
+size_t
+BrepWithVoids::FaceCount() const
+{
+    size_t count = ManifoldSolidBrep::FaceCount();
+    for (LIST_OF_ORIENTED_CLOSED_SHELLS::const_iterator i = voids.begin();
+	 i != voids.end(); ++i)
+	count += *i ? (*i)->FaceCount() : 0;
+    return count;
 }
 
 // Local Variables:

@@ -1,7 +1,7 @@
 /*                      C O N S T R A I N T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,7 +39,7 @@
 #include "raytrace.h"
 
 
-const struct bu_structparse rt_constraint_parse[] = {
+EXTERNCPP const struct bu_structparse rt_constraint_parse[] = {
     {"%d", 1, "ID", bu_offsetof(struct rt_constraint_internal, id), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%d", 1, "N", bu_offsetof(struct rt_constraint_internal, type), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%V", 1, "Ex", bu_offsetof(struct rt_constraint_internal, expression), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
@@ -51,7 +51,7 @@ const struct bu_structparse rt_constraint_parse[] = {
  * Free the storage associated with the rt_db_internal version of
  * constraint object.
  */
-void
+C_DECL void
 rt_constraint_ifree(struct rt_db_internal *ip)
 {
     register struct rt_constraint_internal *constraint;
@@ -71,7 +71,7 @@ rt_constraint_ifree(struct rt_db_internal *ip)
 /**
  * Import a constraint from the database format to the internal format.
  */
-int
+C_DECL int
 rt_constraint_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *UNUSED(mat), const struct db_i *dbip)
 {
     struct rt_constraint_internal* cip;
@@ -107,7 +107,7 @@ rt_constraint_import5(struct rt_db_internal *ip, const struct bu_external *ep, c
 }
 
 
-int
+C_DECL int
 rt_constraint_export5(struct bu_external *ep, const struct rt_db_internal *ip, double UNUSED(local2mm), const struct db_i *UNUSED(dbip))
 {
     struct rt_constraint_internal *cip;
@@ -138,7 +138,7 @@ rt_constraint_export5(struct bu_external *ep, const struct rt_db_internal *ip, d
  * First line describes type of solid.
  * Additional lines are indented one tab, and give parameter values.
  */
-int
+C_DECL int
 rt_constraint_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double UNUSED(mm2local))
 {
     struct rt_constraint_internal *cip = (struct rt_constraint_internal *)ip->idb_ptr;
@@ -157,8 +157,8 @@ rt_constraint_describe(struct bu_vls *str, const struct rt_db_internal *ip, int 
     return 0;
 }
 
-void
-rt_constraint_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
+C_DECL int
+rt_constraint_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char *UNUSED(variant), const point_t UNUSED(origin), double UNUSED(scale))
 {
     struct rt_constraint_internal* ip;
 
@@ -175,6 +175,7 @@ rt_constraint_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
     ip->id = 1;
     ip->type = 0;
     BU_VLS_INIT(&ip->expression);
+    return BRLCAD_OK;
 }
 
 

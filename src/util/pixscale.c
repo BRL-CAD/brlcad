@@ -1,7 +1,7 @@
 /*                      P I X S C A L E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2025 United States Government as represented by
+ * Copyright (c) 1986-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -35,11 +35,15 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
+#include <string.h>
 #include "bio.h"
 
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/malloc.h"
 #include "bu/log.h"
 #include "bu/file.h"
@@ -52,6 +56,7 @@ unsigned char *buffer;
 ssize_t scanlen;		/* length of infile (and buffer) scanlines */
 ssize_t buflines;		/* Number of lines held in buffer */
 b_off_t buf_start = -1000;	/* First line in buffer */
+static b_off_t next_input_line = 0;
 
 ssize_t bufy;				/* y coordinate in buffer */
 FILE *buffp;
@@ -81,31 +86,53 @@ Usage: pixscale [-r] [-s squareinsize] [-w inwidth] [-n inheight]\n\
  * Load the buffer with scan lines centered around
  * the given y coordinate.
  */
-void
+static void
 fill_buffer(int y)
 {
-    static b_off_t file_pos = 0;
+    b_off_t new_start;
+    size_t retained = 0;
     size_t ret;
 
-    buf_start = y - buflines/2;
-    if (buf_start < 0)
-	buf_start = 0;
+    new_start = y - buflines/2;
+    if (new_start < 0)
+	new_start = 0;
 
-    /* bu_log("filepos is %zu, buf_start is %zu, scanlen is %zu\n", (size_t)file_pos, (size_t)buf_start, (size_t)scanlen); */
-
-    if (file_pos != buf_start * scanlen) {
-	if (bu_fseek(buffp, buf_start * scanlen, 0) < 0) {
+    /* Scaling visits rows in order.  Preserve the overlapping portion of the
+     * current window so large inputs can stream through a non-seekable stdin. */
+    if (buf_start >= 0 && new_start >= buf_start &&
+	new_start < next_input_line) {
+	retained = (size_t)(next_input_line - new_start);
+	memmove(buffer, buffer + (new_start - buf_start) * scanlen,
+		retained * scanlen);
+    } else if (next_input_line != new_start) {
+	if (bu_fseek(buffp, new_start * scanlen, 0) == 0) {
+	    next_input_line = new_start;
+	} else if (new_start > next_input_line) {
+	    clearerr(buffp);
+	    while (next_input_line < new_start) {
+		size_t skip = (size_t)(new_start - next_input_line);
+		if (skip > (size_t)buflines)
+		    skip = (size_t)buflines;
+		ret = fread(buffer, scanlen, skip, buffp);
+		next_input_line += (b_off_t)ret;
+		if (ret != skip)
+		    bu_exit(3, "pixscale: Short read while advancing input\n");
+	    }
+	} else {
 	    bu_exit(3, "pixscale: Can't seek to input pixel! y=%d\n", y);
 	}
-	file_pos = buf_start * scanlen;
     }
-    ret = fread(buffer, scanlen, buflines, buffp);
-    if (ret < (size_t)buflines && ferror(buffp))
+
+    buf_start = new_start;
+    ret = fread(buffer + retained * scanlen, scanlen,
+	(size_t)buflines - retained, buffp);
+    if (ret < (size_t)buflines - retained && ferror(buffp))
 	perror("fread");
     else if (feof(buffp))
-	bu_log("WARNING: Short read (%zu < %zu)", ret, buflines);
+	bu_log("WARNING: Short read (%zu < %zu)", ret,
+		(size_t)buflines - retained);
 
-    file_pos += buflines * scanlen;
+    next_input_line = new_start + (b_off_t)retained + (b_off_t)ret;
 }
 
 
@@ -361,23 +388,31 @@ get_args(int argc, char **argv)
 		break;
 	    case 'S':
 		/* square size */
-		outx = outy = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &outx, 1, INT_MAX, "output size"))
+		    return 0;
+		outy = outx;
 		break;
 	    case 's':
 		/* square size */
-		inx = iny = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &inx, 1, INT_MAX, "input size"))
+		    return 0;
+		iny = inx;
 		break;
 	    case 'W':
-		outx = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &outx, 1, INT_MAX, "output width"))
+		    return 0;
 		break;
 	    case 'w':
-		inx = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &inx, 1, INT_MAX, "input width"))
+		    return 0;
 		break;
 	    case 'N':
-		outy = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &outy, 1, INT_MAX, "output height"))
+		    return 0;
 		break;
 	    case 'n':
-		iny = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &iny, 1, INT_MAX, "input height"))
+		    return 0;
 		break;
 
 	    default:		/* 'h' , '?' */
@@ -392,10 +427,14 @@ get_args(int argc, char **argv)
 	    bu_log("pixscale: cannot open \"%s\" for reading\n", file_name);
 	    return 0;
 	}
-	inx = atoi(argv[bu_optind++]);
-	iny = atoi(argv[bu_optind++]);
-	outx = atoi(argv[bu_optind++]);
-	outy = atoi(argv[bu_optind++]);
+	if (!bu_opt_scan_int_range(argv[bu_optind++], &inx, 1, INT_MAX, "input width"))
+	    return 0;
+	if (!bu_opt_scan_int_range(argv[bu_optind++], &iny, 1, INT_MAX, "input height"))
+	    return 0;
+	if (!bu_opt_scan_int_range(argv[bu_optind++], &outx, 1, INT_MAX, "output width"))
+	    return 0;
+	if (!bu_opt_scan_int_range(argv[bu_optind++], &outy, 1, INT_MAX, "output height"))
+	    return 0;
 	return 1;
     }
     if (bu_optind >= argc) {
@@ -405,14 +444,21 @@ get_args(int argc, char **argv)
 	buffp = stdin;
     } else {
 	file_name = argv[bu_optind];
+	bu_optind++;
+	if (argc > bu_optind) {
+	    bu_log("pixscale: excess argument(s) not supported\n");
+	    return 0;
+	}
 	if ((buffp = fopen(file_name, "rb")) == NULL) {
 	    bu_log("pixscale: cannot open \"%s\" for reading\n", file_name);
 	    return 0;
 	}
     }
 
-    if (argc > ++bu_optind)
-	bu_log("pixscale: excess argument(s) ignored\n");
+    if (argc > bu_optind) {
+	bu_log("pixscale: excess argument(s) not supported\n");
+	return 0;
+    }
 
     return 1;		/* OK */
 }

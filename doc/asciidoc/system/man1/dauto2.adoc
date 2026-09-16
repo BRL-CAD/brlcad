@@ -1,0 +1,75 @@
+= DAUTO2(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+dauto2 - compute the center-clipped autocorrelation function of doubles
+
+== SYNOPSIS
+
+[source]
+----
+dauto2 [window_size] < input.doubles > output.doubles
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*dauto2* reads a stream of double-precision floating-point numbers from
+standard input, computes an estimate of the autocorrelation function using
+center-clipping, and writes the resulting double-precision values to
+standard output.
+
+The data is processed one window at a time, _window_size_ samples per
+window (default 512); a short final window is zero-padded. Before the
+autocorrelation lags are computed, *dauto2* applies center-clipping to
+suppress formants for pitch extraction: the clipping threshold is set to
+60% of the smaller of the peak magnitudes found in the first half and the
+last third of the window, and each sample is quantized to -1, 0, or +1.
+
+Like *dauto*(1), this filter operates on raw 64-bit host-order doubles such
+as those produced by other tools in the BRL-CAD signal-processing suite.
+
+[[options]]
+== OPTIONS
+
+*window_size*::
+  Number of samples per processing window (default 512). Given as a single
+  optional positional argument; *dauto2* takes no flag options.
+
+[[examples]]
+== EXAMPLES
+
+.Estimate pitch periodicity of a speech signal
+====
+[source,bash]
+----
+dauto2 1024 < voice.doubles > voice.autocor.doubles
+----
+Computes the center-clipped autocorrelation of _voice.doubles_ using a
+1024-sample window. The center-clipping suppresses the strong formant
+structure of voiced speech, so peaks in the output correspond to the pitch
+period, which can then be plotted or tracked downstream.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *dauto*(1), *damdf*(1)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

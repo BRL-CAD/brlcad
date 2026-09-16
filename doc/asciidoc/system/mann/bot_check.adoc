@@ -1,0 +1,98 @@
+= BOT_CHECK(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+bot_check - Test a BoT to determine if it satisfies validity criteria.
+
+== SYNOPSIS
+
+[source]
+----
+bot check [degen_faces] [extra_edges] [flipped_edges] [manifold] [open_edges] [solid] {input_bot}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+One of the more common problems a modeler faces when working with triangle based mesh geometry is whether or not the triangles form a closed volume in space - i.e. whether they properly define an inside and an outside, without holes or gaps. This question is more involved than it might seem at first glance - even if individual triangles are positioned correctly in space, the definitions of the mesh topology may not properly tie them together to form a closed mesh.
+
+To help recognize when this is happening, the *bot check* provides users with a variety of routines to look for problems. By default _all_ checks are applied (the _solid_ test). If a "1" is returned, all tests passed and the mesh is a valid solid, defining an inside and an outside. Otherwise, a "0" is returned to indicate failure.
+
+If more specific information is needed, subcommands can be added to individually run specific checks, returning the same "1" and "0" results as the full solidity test.
+
+
+[[bot_check_subcommands]]
+== Specific Test Subcommands
+
+
+*degen_faces*::
+Look for faces that have zero surface area (for example, if a triangle is specified using the same point for both vertices on one of the edges.)
+
+
+
+
+*extra_edges*::
+Look for an edge that is not part of a triangle, or duplicates an already defined edge.
+
+
+
+
+*flipped_edges*::
+Look for an edge that is ordered incorrectly for its local context.
+
+
+
+
+*manifold*::
+Report if the Manifold library considers the mesh to define a proper manifold.
+
+
+
+
+*open_edges*::
+Look for unmated edges, which should not exist in a proper manifold mesh.
+
+
+
+
+*solid*::
+Run all of the checks, passing only if each individual check is successful.
+
+
+
+
+[[examples]]
+== EXAMPLES
+
+.Basic example
+[example]
+====
+mged>**bot check input.bot**
+
+Run all checks on _input.bot_. Returns "1" if successful, and "0" if a problem was found.
+
+====
+
+.Specific test
+[example]
+====
+mged>**bot check open_edges input.bot**
+
+Run just the __open_edges__ test on input.bot, reporting "1" if everything looks valid and "0" if one or more open edges are found.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

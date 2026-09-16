@@ -1,7 +1,7 @@
 /*                     A S C - P L O T 3 . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2025 United States Government as represented by
+ * Copyright (c) 1990-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -65,7 +65,7 @@ main (int argc, char **argv)
     char *bp = NULL;
     char buf[BUF_LEN] = {'\0'};
     char sarg[BUF_LEN] = {'\0'};
-    static char *fm[] = { "rb", "wb" };
+    static const char *fm[] = { "rb", "wb" };
     double darg[6] = {0.0};
     static FILE *fp[2];
     int i =0;

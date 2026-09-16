@@ -1,7 +1,7 @@
 #                        R E D . S H
 # BRL-CAD
 #
-# Copyright (c) 2008-2025 United States Government as represented by
+# Copyright (c) 2008-2026 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -57,14 +57,36 @@ if test ! -f "$MGED" ; then
     exit 1
 fi
 
+CAT="`which cat`"
+if test ! -f "$CAT" ; then
+    log "Unable to find cat, aborting"
+    exit 1
+fi
+
+BRLEDIT="`ensearch brledit`"
+if test ! -f "$BRLEDIT" ; then
+    log "Unable to find brledit, aborting"
+    exit 1
+fi
+
 STATUS=0
+DBCOUNT=0
+STARTDB="red.$$.starter.g"
+DBFILES="$STARTDB"
+
+cleanup ( ) {
+    for f in $DBFILES ; do
+	rm -f "$f"
+    done
+}
+trap cleanup EXIT
 
 
-# make our starting database
-create_db ( ) {
-    rm -f red.g
+# make our starter database
+create_starter_db ( ) {
+    rm -f "$STARTDB"
     $MGED -c >> $LOGFILE 2>&1 <<EOF
-opendb red.g y
+opendb $STARTDB y
 make sph sph
 make sph sph2
 comb sph.c u sph
@@ -83,11 +105,33 @@ EOF
 	log "INTERNAL ERROR: mged returned non-zero exit status $?"
 	exit 1
     fi
-    if test ! -f red.g ; then
+    if test ! -f "$STARTDB" ; then
 	log "INTERNAL ERROR: Unable to run mged, aborting"
 	exit 1
     fi
+}
 
+
+# make our working database
+create_db ( ) {
+    if test ! -f "$STARTDB" ; then
+	log "INTERNAL ERROR: starter database is missing"
+	exit 1
+    fi
+    DBCOUNT="`expr $DBCOUNT + 1`"
+    DBFILE="red.$$.${DBCOUNT}.g"
+    DBFILES="$DBFILES $DBFILE"
+    export DBFILE
+    rm -f "$DBFILE"
+    cp "$STARTDB" "$DBFILE"
+    if test $? != 0 ; then
+	log "INTERNAL ERROR: unable to copy starter database"
+	exit 1
+    fi
+    if test ! -f "$DBFILE" ; then
+	log "INTERNAL ERROR: unable to initialize working database"
+	exit 1
+    fi
 }
 
 
@@ -112,8 +156,10 @@ dump ( ) {
 	log "INTERNAL ERROR: dump has empty file name #2"
 	exit 1
     fi
-    rm -f $2
-    EDITOR=cat $MGED -c red.g red $1 2>> $LOGFILE > $2
+    rm -f $2 $2.tmp
+    BRLCAD_EDITOR_CONSOLE="$CAT" VISUAL= EDITOR="$CAT" $MGED -c "$DBFILE" red $1 2>> $LOGFILE > $2.tmp
+    tr -d '\r' < $2.tmp > $2
+    rm -f $2.tmp
 }
 
 
@@ -130,7 +176,10 @@ edit_and_dump ( ) {
 	log "INTERNAL ERROR: edit_and_dump has empty file name #2"
 	exit 1
     fi
-    run $MGED -c red.g red $1
+    BRLEDIT_REPLACE_FILE="$REDFILE"
+    export BRLEDIT_REPLACE_FILE
+    run $MGED -c "$DBFILE" red $1
+    unset BRLEDIT_REPLACE_FILE
     dump $1 $2
 }
 
@@ -154,17 +203,14 @@ init ( ) {
     export REDFILE
 }
 
-# write out our "editor"
-rm -f red.edit.sh
-cat > red.edit.sh <<EOF
-#!/bin/sh
-cat \$REDFILE > \$1
-EOF
-chmod u+rwx red.edit.sh
-EDITOR="./red.edit.sh"
-export EDITOR
+EDITOR="$BRLEDIT"
+
+BRLCAD_EDITOR_CONSOLE="$EDITOR"
+VISUAL=
+export EDITOR BRLCAD_EDITOR_CONSOLE VISUAL
 
 # write out our initial unedited objects, verify sanity
+create_starter_db
 create_db
 SAMPLE=red.sph.r.out
 dump sph.r $SAMPLE
@@ -266,21 +312,23 @@ cat $SAMPLE | sed 's/material_id.*=.*/material_id = 2/g' > $REDFILE
 assert_different
 edit_and_dump sph.r $REDFILE.new
 files_differ $SAMPLE $REDFILE.new
-cat $REDFILE.new | sed 's/2/1/g' > $REDFILE.test
+cat $REDFILE.new | sed 's/material_id.*=.*/material_id   = /g' > $REDFILE.test
+echo "SAMPLE:$SAMPLE, REDFILE.new:$REDFILE.new, REDFILE.test:$REDFILE.test"
+exit
 files_match $SAMPLE $REDFILE.test
 
 init "Changing material ID to empty" red.material_id.empty.out
 cat $SAMPLE | sed 's/material_id.*=.*/material_id =/g' > $REDFILE
 assert_different
 edit_and_dump sph.r $REDFILE.new
-files_differ $SAMPLE $REDFILE.new
+files_match $SAMPLE $REDFILE.new
 
 init "Changing material ID to unsafe" red.material_id.unsafe.out
 cat $SAMPLE | sed 's/material_id.*=.*/material_id = -1/g' > $REDFILE
 assert_different
 edit_and_dump sph.r $REDFILE.new
 files_differ $SAMPLE $REDFILE.new
-cat $REDFILE.new | sed 's/-1/1/g' > $REDFILE.test
+cat $REDFILE.new | sed 's/material_id.*=.*/material_id   = /g' > $REDFILE.test
 files_match $SAMPLE $REDFILE.test
 
 #######

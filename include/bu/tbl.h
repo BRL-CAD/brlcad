@@ -1,7 +1,7 @@
 /*                           T B L . H
  * BRL-CAD
  *
- * Copyright (c) 2020-2025 United States Government as represented by
+ * Copyright (c) 2020-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -213,6 +213,12 @@ bu_tbl_go_to(struct bu_tbl *, size_t row, size_t col);
  */
 BU_EXPORT extern struct bu_tbl *
 bu_tbl_printf(struct bu_tbl *, const char *fmt, ...);
+
+/**
+ * write a single cell value at the current insertion point.
+ */
+BU_EXPORT extern struct bu_tbl *
+bu_tbl_write(struct bu_tbl *, const char *str);
 
 
 /**

@@ -1,7 +1,7 @@
 /*                        N M G . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2025 United States Government as represented by
+ * Copyright (c) 1993-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -42,6 +42,8 @@ struct rt_nmg_edit {
     plane_t lu_pl;              /* plane equation for loop to be extruded */
     struct shell *es_s;         /* Shell where extrusion is to end up */
     point_t lu_keypoint;        /* keypoint of lu_copy for extrusion */
+    struct vertex *es_v;        /* Currently selected NMG vertex (ECMD_NMG_VPICK) */
+    struct faceuse *es_fu;      /* Currently selected NMG faceuse (ECMD_NMG_FPICK) */
 };
 
 RT_EXPORT extern int

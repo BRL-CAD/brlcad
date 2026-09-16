@@ -1,0 +1,110 @@
+= PIXMORPH(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+pixmorph - feature-based morph between two pix(5) images
+
+== SYNOPSIS
+
+[source]
+----
+pixmorph [-w _width_] [-n _height_] _picA.pix_ _picB.pix_ _linesfile_ _warpfrac_ _dissolvefrac_ > _out.pix_
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*pixmorph* performs feature-based image metamorphosis between two
+*pix*(5) images, _picA.pix_ and _picB.pix_, writing the resulting image
+to standard output. The two images must have the same dimensions; the
+size is taken from _picA.pix_ automatically unless overridden with *-w*
+and/or *-n*.
+
+The morph is controlled by _linesfile_, which holds pairs of directed
+line segments that match corresponding features in the two images (for
+example, a segment along the nose in _picA.pix_ paired with the
+corresponding segment in _picB.pix_). Such a file can be produced with a
+utility such as _morphedit.tcl_.
+
+Two scalars in the range [0, 1] drive the result. _warpfrac_ controls
+how far the features of each image are warped toward the other;
+_dissolvefrac_ controls how much cross-dissolve is blended between the
+two warped images. Typically the user sets _warpfrac_ = _dissolvefrac_,
+and produces a morph animation as a sequence of frames with steadily
+increasing values.
+
+The _linesfile_ begins with header constants _a_, _b_, _p_, and the line
+count _n_, followed by _n_ segment pairs (each segment is four reals in
+unit-square coordinates). The constants weight each segment's influence
+by ((length ^p^) / (a + dist)) ^b^; in practice _a_ = 0.1, _b_ = 2.0,
+_p_ = 0.2 work well. For a full description of the algorithm see
+T. Beier and S. Neely, "Feature-Based Image Metamorphosis", SIGGRAPH
+1992 Computer Graphics Proceedings (volume 26 number 2), pp 35-42.
+
+
+[[options]]
+== OPTIONS
+
+*-w* _width_::
+  Set the width, in pixels, of the input images. Disables autosizing.
+
+*-n* _height_::
+  Set the height, in pixels, of the input images. Disables autosizing.
+
+
+[[examples]]
+== EXAMPLES
+
+.Generate a six-frame morph animation
+====
+[source,bash]
+----
+for i in 0 1 2 3 4 5; do
+    f=$(echo "$i / 5" | bc -l)
+    pixmorph face1.pix face2.pix lines.txt $f $f > frame$i.pix
+done
+----
+Produces a sequence of frames morphing _face1.pix_ into _face2.pix_.
+Because _warpfrac_ = _dissolvefrac_ runs from 0.0 to 1.0, _frame0.pix_
+equals _face1.pix_ and _frame5.pix_ equals _face2.pix_, with the
+intermediate frames blending feature warp and cross-dissolve together.
+====
+
+.Warp without cross-dissolving
+====
+[source,bash]
+----
+pixmorph face1.pix face2.pix lines.txt 0.5 0.0 > out.pix
+----
+With _dissolvefrac_ = 0 the contribution of _face2.pix_ is ignored at
+the dissolve stage, so _out.pix_ consists entirely of _face1.pix_ warped
+50% toward _face2.pix_ according to _lines.txt_. Conversely, setting
+_warpfrac_ = 0 yields a plain 50% cross-dissolve with no warping.
+====
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *pixblend*(1), *pix*(5)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1996-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

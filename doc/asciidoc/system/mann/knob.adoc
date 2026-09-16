@@ -1,0 +1,70 @@
+= KNOB(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+knob - Provides a method for simulating knob input. With no options, it will display the current values for the knobs.
+
+== SYNOPSIS
+
+[source]
+----
+knob [-e -i -m -v] [[-o] | [v] | [m] | [e] | [k]] [[zap] | [zero] | [id [val]]]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*The *knob* command is used internally by MGED in the processing of knob input devices and is not recommended for users.* The *knob* command provides a method for simulating knob input. With no options, it will display the current values for the knobs. With the *zap or zero* command provided, all the knob values will be reset to zero. If an _id_ and _value_ are provided, the specified knob setting will be simulated. If the _-i_ option is specified, then the value provided will be used as an increment to be applied to the indicated knob. The knobs have different functions depending on the current mode. For example, if in primitive or matrix edit mode and a rotation or translation function is selected, the knob effects are applied to the edited object by default. However, the _-v_ (view coordinates) and _-m_ (model coordinates) options may be used to adjust the view without modifying primitives or matrices. The _-e_ option allows the knob effects to be applied to the edited object when they would normally be applied to the view. The _-o_ option allows the origin of rotation to be specified with _v, m, e,_ and _k_, indicating view, model, eye, and keypoint, respectively. The units for _value_ are degrees for rotation and local units for translation. The available _knob ids_ are:
+
+
+* *x* -- rate-based rotation about horizontal axis.
+* *y* -- rate-based rotation about vertical axis.
+* *z* -- rate-based rotation about axis normal to screen.
+* *X* -- rate-based translation in horizontal direction.
+* *Y* -- rate-based translation in vertical direction.
+* *Z* -- rate-based translation in direction normal to screen.
+* *S* -- rate-based Scale or Zoom.
+* *ax* -- absolute rotation about horizontal axis.
+* *ay* -- absolute rotation about vertical axis.
+* *az* -- absolute rotation about axis normal to screen.
+* *aX* -- absolute translation in horizontal direction.
+* *aY* -- absolute translation in vertical direction.
+* *aZ* -- absolute translation in direction normal to screen.
+* *aS* -- absolute Scale or Zoom.
+* *xadc* -- absolute translation of adc in horizontal direction (screen coordinates -2048 to +2048).
+* *yadc* -- absolute translation of adc in vertical direction (screen coordinates -2048 to +2048).
+* *ang1* -- absolute rotation of adc angle1 (degrees).
+* *ang2* -- absolute rotation of adc angle2 (degrees).
+* *distadc* -- distance setting of the adc (screen coordinates -2048 to +2048).
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *knob* command with the _y_ option to rotate a view about the vertical axis.
+
+.Rotate a view about the vertical axis.
+[example]
+====
+
+mged> **knob y 1**::
+Starts the view rotating about the vertical axis.
+
+
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -2,7 +2,7 @@
 /*                         R T S U R F . C
  * BRL-CAD
  *
- * Copyright (c) 2024-2025 United States Government as represented by
+ * Copyright (c) 2024-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -41,23 +41,23 @@
  * = Examples =
  *
  * # Calculate area within 0.1% convergence (after 3+ iterations):
- * rtsurf file.g object
+ * rtsurf file.g [object]
  *
  * # Calculate area using precisely 1M samples (1 iteration only):
- * rtsurf -n 1000000 file.g object
+ * rtsurf -n 1000000 file.g [object]
  *
  * # Sets of 1M samples to within 0.001% convergence (3+ iters):
  * rtsurf -t 0.001 -n 1000000
  *
  * # Sets of 1k, 0.1% convergence, saving geometry script to file:
- * rtsurf -n 1000 -o file.g object > file.mged
+ * rtsurf -n 1000 -o file.g [object] > file.mged
  * mged -c file.g source file.mged
  *
  * # Areas per exterior material encountered, output saved to file:
- * rtsurf -m density.txt file.g object
+ * rtsurf -m density.txt file.g [object]
  *
  * # Print summary of areas per region and per group to file:
- * rtsurf -r -g file.g object 2> rtsurf.log
+ * rtsurf -r -g file.g [object] 2> rtsurf.log
  *
  * = Citations =
  *
@@ -143,7 +143,7 @@ struct material_callback_data {
 
 
 static int
-hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs))
+r_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs))
 {
     double radius = ap->a_user;
     int makeGeometry = ap->a_flag;
@@ -210,7 +210,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
 
 
 static int
-miss(struct application *ap)
+r_miss(struct application *ap)
 {
     void *context = ap->a_uptr;
 
@@ -252,6 +252,7 @@ initialize(struct application *ap, const char *db, const char *obj[])
 {
     struct rt_i *rtip = NULL;
     struct resource *resources = NULL;
+    const char *default_objv[2] = {NULL, NULL};
 
     char title[4096] = {'\0'};
 
@@ -267,8 +268,22 @@ initialize(struct application *ap, const char *db, const char *obj[])
 	bu_log("Title:\n%s\n", title);
     }
 
+    if (!obj || !obj[0] || obj[0][0] == '\0') {
+	struct bu_vls msg = BU_VLS_INIT_ZERO;
+	struct directory *dp = RT_DIR_NULL;
+	int ret = db_default_object(rtip->rti_dbip, &dp, &msg);
+
+	if (ret == 1) {
+	    default_objv[0] = dp->d_namep;
+	    obj = default_objv;
+	} else if (bu_vls_strlen(&msg)) {
+	    bu_log("%s", bu_vls_cstr(&msg));
+	}
+	bu_vls_free(&msg);
+    }
+
     size_t loaded = 0;
-    while (*obj && *obj[0] != '\0') {
+    while (obj && *obj && *obj[0] != '\0') {
 	if (rt_gettree(rtip, obj[0]) < 0) {
 	    bu_log("Loading the geometry for [%s] FAILED\n", obj[0]);
 	} else {
@@ -286,8 +301,8 @@ initialize(struct application *ap, const char *db, const char *obj[])
 
     RT_APPLICATION_INIT(ap);
     ap->a_rt_i = rtip;
-    ap->a_hit = hit;
-    ap->a_miss = miss;
+    ap->a_hit = r_hit;
+    ap->a_miss = r_miss;
     ap->a_overlap = NULL;
     ap->a_multioverlap = NULL;
     ap->a_logoverlap = rt_silent_logoverlap;
@@ -353,6 +368,9 @@ rays_from_points_to_center(struct ray *rays, size_t count, const point_t pnts[],
 static void
 shuffle_points(point_t *points, size_t n)
 {
+    if (n < 2)
+	return;
+
     for (size_t i = n - 1; i > 0; i--) {
         size_t j = rand() % (i + 1);
 
@@ -696,14 +714,14 @@ estimate_surface_area(const char *db, const char *obj[], struct options *opts)
     if (opts->printRegions) {
 	/* print out all regions */
 	bu_log("Area Estimate By Region:\n");
-	struct region_callback_data rdata = {opts->samples, radius};
+	struct region_callback_data rdata = {(double)opts->samples, radius};
 	rtsurf_iterate_regions(context, &regions_callback, &rdata);
     }
 
     if (opts->printGroups) {
 	/* print out all combs above regions */
 	bu_log("Area Estimate By Combination:\n");
-	struct region_callback_data rdata = {opts->samples, radius};
+	struct region_callback_data rdata = {(double)opts->samples, radius};
 	rtsurf_iterate_groups(context, &regions_callback, &rdata);
     }
 
@@ -723,14 +741,14 @@ estimate_surface_area(const char *db, const char *obj[], struct options *opts)
 	    bu_close_mapped_file(dfile);
 	}
 
-	struct material_callback_data mdata = {densities, opts->samples, radius};
+	struct material_callback_data mdata = {densities, (double)opts->samples, radius};
 	rtsurf_iterate_materials(context, &materials_callback, &mdata);
 	analyze_densities_destroy(densities);
     }
 
     /* release our raytracing instance and counters */
     rtsurf_context_destroy(context);
-    rt_free_rti(ap.a_rt_i);
+    rt_i_destroy(ap.a_rt_i);
     ap.a_rt_i = NULL;
 
     return area;
@@ -740,18 +758,10 @@ estimate_surface_area(const char *db, const char *obj[], struct options *opts)
 static void
 get_options(int argc, char *argv[], struct options *opts)
 {
-    static const char *usage = "Usage: %s [-g] [-r] [-n #samples] [-t %%threshold] [-m density.txt] [-o] model.g objects...\n";
+    static const char *usage = "Usage: %s [-g] [-r] [-n #samples] [-t %%threshold] [-m density.txt] [-o] model.g [objects...]\n";
 
     const char *argv0 = argv[0];
     const char *db = NULL;
-    const char **obj = NULL;
-
-    /* Make sure we have at least a geometry file and one geometry
-     * object on the command line, number of samples optional.
-     */
-    if (argc < 3) {
-	bu_exit(1, usage, argv0);
-    }
 
     bu_optind = 1;
 
@@ -808,14 +818,10 @@ get_options(int argc, char *argv[], struct options *opts)
     argv += bu_optind;
 
     db = argv[0];
-    obj = (const char **)(argv+1);
 
     /* final sanity checks */
     if (!db || !bu_file_exists(db, NULL)) {
 	bu_exit(EXIT_FAILURE, "ERROR: database %s not found\n", (db)?db:"[]");
-    }
-    if (!obj) {
-	bu_exit(EXIT_FAILURE, "ERROR: object(s) not specified\n");
     }
 }
 
@@ -842,7 +848,7 @@ main(int argc, char *argv[])
     obj = argv + bu_optind + 1;
 
     bu_log(" db is %s\n", db);
-    bu_log(" obj[0] is %s\n", obj[0]);
+    bu_log(" obj[0] is %s\n", (obj && obj[0]) ? obj[0] : "(automatic default)");
 
     double estimate = estimate_surface_area(db, (const char **)obj, &opts);
 

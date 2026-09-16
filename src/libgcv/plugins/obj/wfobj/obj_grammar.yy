@@ -1,7 +1,7 @@
 /*                  O B J _ G R A M M A R . Y Y
  * BRL-CAD
  *
- * Copyright (c) 2010-2025 United States Government as represented by
+ * Copyright (c) 2010-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,7 +21,7 @@
 /*                  O B J _ G R A M M A R . Y Y
  * BRL-CAD
  *
- * Copyright (c) 2010-2025 United States Government as represented by
+ * Copyright (c) 2010-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -868,6 +868,12 @@ face ::= FACE f_tnv_reference_list(A).
 
 group ::= GROUP id_list.
 {
+    obj::set_working_groupset(obj::get_extra(scanner));
+}
+group ::= GROUP.
+{
+    obj::get_state(scanner).working_stringset.clear();
+    obj::get_state(scanner).working_stringset.insert("default");
     obj::set_working_groupset(obj::get_extra(scanner));
 }
 

@@ -1,7 +1,7 @@
 /*                        A R B 8 . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2025 United States Government as represented by
+ * Copyright (c) 1993-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -474,8 +474,7 @@ arb_mirror_face_axis(struct rt_arb_internal *arb, fastf_t peqn[7][4], const int 
  * affected points are calculated by intersecting planes.  This keeps
  * ALL faces planar.
  */
-RT_EXPORT extern int
-arb_edit(struct rt_arb_internal *arb, fastf_t peqn[7][4], int edge, int newedge, vect_t pos_model, const struct bn_tol *tol);
+struct rt_edit;
 
 
 
@@ -547,6 +546,65 @@ RT_EXPORT extern int rt_arb_check_points(struct rt_arb_internal *arb,
 					 int cgtype,
 					 const struct bn_tol *tol);
 
+/**
+ * Return non-zero if an ARB uses a non-standard vertex ordering/encoding.
+ *
+ * @param arb ARB primitive internals
+ * @param tol_sq squared distance tolerance used when identifying duplicate points
+ */
+RT_EXPORT extern int rt_arb_nonstandard_encoding(const struct rt_arb_internal *arb,
+						 fastf_t tol_sq);
+
+/**
+ * ARB validation issue flags returned by rt_arb_validate().
+ */
+#define RT_ARB_VALIDATE_NONSTANDARD 0x1 /**< Non-standard vertex ordering/encoding */
+#define RT_ARB_VALIDATE_NONCOPLANAR 0x2 /**< One or more faces are non-coplanar */
+#define RT_ARB_VALIDATE_CONCAVE     0x4 /**< Planar faces form a concave ARB volume */
+#define RT_ARB_VALIDATE_TWISTED     0x8 /**< Vertex ordering causes face self-intersection */
+
+/**
+ * ARB repair behavior flags.
+ */
+#define RT_ARB_REPAIR_SNAP_VERTICES 0x1 /**< Try best-fit face planes and snap vertices to plane intersections */
+
+/**
+ * Check an ARB for invalid shape conditions.
+ *
+ * If issues is non-NULL, it will be set to a bitwise OR of RT_ARB_VALIDATE_*
+ * flags.  If error_msg_ret is non-NULL, a short diagnostic is appended for
+ * each detected condition.
+ *
+ * Returns -
+ * 0 no issues detected
+ * non-zero one or more RT_ARB_VALIDATE_* issues detected
+ */
+RT_EXPORT extern int rt_arb_validate(struct bu_vls *error_msg_ret,
+				     const struct rt_arb_internal *arb,
+				     const struct bn_tol *tol,
+				     int *issues);
+
+/**
+ * Attempt to repair an invalid or non-canonical ARB by reassembling its input
+ * points into a standard ARB4-ARB8 vertex ordering.
+ *
+ * The repair is intentionally conservative: it succeeds only if a candidate
+ * rebuilt ARB validates cleanly with rt_arb_validate().  On success, out_arb is
+ * filled with the repaired ARB and the returned value is its ARB type (4..8).
+ * If RT_ARB_REPAIR_SNAP_VERTICES is set, repair may also fit planes to
+ * recoverable non-coplanar candidate faces and snap vertices to their plane
+ * intersections when the convex hull volume is preserved.
+ *
+ * Returns -
+ * 4..8 repaired ARB type
+ * 0    no repair was necessary; out_arb is a copy of arb
+ * -1   repair failed or no valid ARB4-ARB8 candidate was found
+ */
+RT_EXPORT extern int rt_arb_repair(struct rt_arb_internal *out_arb,
+				   const struct rt_arb_internal *arb,
+				   const struct bn_tol *tol,
+				   int flags);
+
 
 /**
  * Finds the intersection point of three faces of an ARB.
@@ -606,12 +664,17 @@ RT_EXPORT extern int rt_arb_move_edge(struct bu_vls             *error_msg_ret,
 				      const struct bn_tol       *tol);
 
 
+#define RT_ARB_EDIT_DEFAULT 0x0
+#define RT_ARB_EDIT_EDGE_DIR 0x1 /**< Treat pos_model as an edge direction, not a point. */
+
 RT_EXPORT extern int rt_arb_edit(struct bu_vls          *error_msg_ret,
 				 struct rt_arb_internal *arb,
+				 struct rt_edit         *s,
 				 int                    arb_type,
 				 int                    edit_type,
+				 int                    flags,
 				 vect_t                 pos_model,
-				 plane_t                        planes[6],
+				 plane_t                planes[6],
 				 const struct bn_tol    *tol);
 RT_EXPORT extern int rt_arb_find_e_nearest_pt2(int *edge, int *vert1, int *vert2, const struct rt_db_internal *ip, const point_t pt2, const mat_t mat, fastf_t ptol);
 

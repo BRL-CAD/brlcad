@@ -1,7 +1,7 @@
 /*                         Q G M O D E L . C P P
  * BRL-CAD
  *
- * Copyright (c) 2014-2025 United States Government as represented by
+ * Copyright (c) 2014-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -70,6 +70,7 @@
 #include "qtcad/QgModel.h"
 #include "qtcad/QgUtil.h"
 #include "qtcad/QgSignalFlags.h"
+#include "../librt/librt_private.h"
 
 struct QgItem_cmp {
     inline bool operator() (const QgItem *i1, const QgItem *i2)
@@ -441,7 +442,7 @@ QgModel::g_update(struct db_i *n_dbip)
 {
 
     // In case we have opened a completely new .g file, set the callbacks
-    if (n_dbip && !BU_PTBL_LEN(&n_dbip->dbi_changed_clbks)) {
+    if (n_dbip && !BU_PTBL_LEN(&n_dbip->i->dbi_changed_clbks)) {
 	// Primary driver of model updates is when individual objects are changed
 	db_add_changed_clbk(n_dbip, &qgmodel_changed_callback, (void *)this);
 
@@ -868,7 +869,7 @@ QgModel::run_cmd(struct bu_vls *msg, int argc, const char **argv)
     // the nref updates (can that happen?).
     if (gedp->dbip && need_update_nref) {
 	// bu_log("missing callback in librt?\n");
-	db_update_nref(gedp->dbip, &rt_uniresource);
+	db_update_nref(gedp->dbip);
     }
 
     // If we have a new .g file, set the changed flag

@@ -1,7 +1,7 @@
 /*                         T R A C K . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2025 United States Government as represented by
+ * Copyright (c) 1994-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -26,7 +26,6 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <signal.h>
 #include <math.h>
 #include <string.h>
 
@@ -71,9 +70,12 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     MGED_CK_CMD(ctp);
     struct mged_state *s = ctp->s;
 
-    int item_default = 1000;	/* GIFT region ID */
-    int mat_default = 1;	/* GIFT material code */
-    int los_default = 100;	/* Line-of-sight estimate */
+    // TODO - need to confirm the actual intent of this code is to have the
+    // assignments to default made in subsequent function logic persist beyond
+    // one call to f_amtrack.
+    static int item_default = 1000;	/* GIFT region ID */
+    static int mat_default = 1;	/* GIFT material code */
+    static int los_default = 100;	/* Line-of-sight estimate */
 
     fastf_t fw[3], lw[3], iw[3], dw[3], tr[3];
     char solname[12], regname[12], grpname[9], oper[3];
@@ -642,7 +644,7 @@ wrobj(struct mged_state *s, char name[], int flags)
 	return -1;
     }
 
-    if (rt_db_put_internal(tdp, s->dbip, &intern, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(tdp, s->dbip, &intern) < 0) {
 	rt_db_free_internal(&intern);
 	Tcl_AppendResult(s->interp, "wrobj(", name, "):  write error\n", (char *)NULL);
 	Tcl_AppendResult(s->interp, ERROR_RECOVERY_SUGGESTION, (char *)NULL);

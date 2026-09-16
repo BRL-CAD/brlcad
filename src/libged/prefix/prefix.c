@@ -1,7 +1,7 @@
 /*                         P R E F I X . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -135,13 +135,13 @@ ged_prefix_core(struct ged *gedp, int argc, const char *argv[])
 	    return BRLCAD_ERROR;
 	}
 
-	if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+	if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
 	    return BRLCAD_ERROR;
 	}
 
 	/* Change object name on disk. */
-	if (rt_db_put_internal(dp, gedp->dbip, &intern, &rt_uniresource)) {
+	if (rt_db_put_internal(dp, gedp->dbip, &intern)) {
 	    bu_vls_printf(gedp->ged_result_str, "Database write error, aborting");
 	    return BRLCAD_ERROR;
 	}
@@ -155,7 +155,7 @@ ged_prefix_core(struct ged *gedp, int argc, const char *argv[])
 	if (!(dp->d_flags & RT_DIR_COMB))
 	    continue;
 
-	if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+	if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
 	    return BRLCAD_ERROR;
 	}
@@ -164,7 +164,7 @@ ged_prefix_core(struct ged *gedp, int argc, const char *argv[])
 	for (k = 2; k < argc; k++)
 	    db_tree_funcleaf(gedp->dbip, comb, comb->tree, prefix_do,
 			     (void *)argv[1], (void *)argv[k], (void *)NULL, (void *)NULL);
-	if (rt_db_put_internal(dp, gedp->dbip, &intern, &rt_uniresource)) {
+	if (rt_db_put_internal(dp, gedp->dbip, &intern)) {
 	    bu_vls_printf(gedp->ged_result_str, "Database write error, aborting");
 	    return BRLCAD_ERROR;
 	}
@@ -174,24 +174,13 @@ ged_prefix_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl prefix_cmd_impl = {
-    "prefix",
-    ged_prefix_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd prefix_cmd = { &prefix_cmd_impl };
-const struct ged_cmd *prefix_cmds[] = { &prefix_cmd, NULL };
+#define GED_PREFIX_COMMANDS(X, XID) \
+    X(prefix, ged_prefix_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  prefix_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_PREFIX_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_prefix", 1, GED_PREFIX_COMMANDS)
 
 /*
  * Local Variables:

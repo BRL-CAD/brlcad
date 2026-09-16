@@ -1,7 +1,7 @@
 /*                            D M . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,6 +29,7 @@
 #include <ctype.h>
 #include <string.h>
 #include "bu/cmd.h"
+#include "bu/log.h"
 #include "bu/opt.h"
 #include "bu/vls.h"
 #include "dm.h"
@@ -50,6 +51,41 @@ struct _ged_dm_info {
     const struct bu_cmdtab *cmds;
     struct bu_opt_desc *gopts;
 };
+
+static void
+_dm_cmd_during_clbk(struct _ged_dm_info *gd, int argc, const char **argv)
+{
+    if (!gd || !gd->gedp || argc < 1 || !argv)
+        return;
+
+    bu_clbk_t clbk = NULL;
+    void *u2 = NULL;
+    if (ged_clbk_get(&clbk, &u2, gd->gedp, "dm", BU_CLBK_DURING) != BRLCAD_OK || !clbk)
+        return;
+
+    const char *dbg = getenv("GED_DM_DURING_DEBUG");
+    if (dbg && BU_STR_EQUAL(dbg, "1")) {
+        bu_log("ged dm during callback: ");
+        for (int i = 0; i < argc; i++) {
+            bu_log("%s%s", argv[i], (i + 1 < argc) ? " " : "\n");
+        }
+    }
+
+    int cbret = ged_clbk_exec(gd->gedp->ged_result_str, gd->gedp, GED_CMD_RECURSION_LIMIT, clbk, argc, argv, (void *)gd->gedp, u2);
+    if (cbret != BRLCAD_OK) {
+        bu_vls_printf(gd->gedp->ged_result_str, "\nwarning: dm during callback returned %d", cbret);
+    }
+}
+
+static int
+_ged_dm_log_to_vls(void *data, void *str)
+{
+    struct bu_vls *v = (struct bu_vls *)data;
+    if (!v || !str)
+        return 0;
+    bu_vls_printf(v, "%s", (const char *)str);
+    return 0;
+}
 
 static int
 _dm_cmd_msgs(void *bs, int argc, const char **argv, const char *us, const char *ps)
@@ -196,6 +232,9 @@ _dm_cmd_bg(void *ds, int argc, const char **argv)
     }
 
     dm_set_bg(cdmp, n_bg1[0], n_bg1[1], n_bg1[2], n_bg2[0], n_bg2[1], n_bg2[2]);
+
+    const char *cbav[4] = {"dm", "bg", argv[0], NULL};
+    _dm_cmd_during_clbk(gd, 3, cbav);
 
     return BRLCAD_OK;
 }
@@ -430,11 +469,6 @@ _dm_cmd_set(void *ds, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    if (ac != 2) {
-	bu_vls_printf(gd->gedp->ged_result_str, ": invalid argument count - need key and value");
-	return BRLCAD_ERROR;
-    }
-
     struct bu_structparse *dmparse = dm_get_vparse(cdmp);
     void *mvars = dm_get_mvars(cdmp);
     if (!dmparse || !mvars) {
@@ -443,15 +477,51 @@ _dm_cmd_set(void *ds, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
-    int ret;
-    bu_vls_printf(&tmp_vls, "%s=\"%s\"", argv[0], argv[1]);
-    ret = bu_struct_parse(&tmp_vls, dmparse, (char *)mvars, NULL);
-    bu_vls_free(&tmp_vls);
-    if (ret < 0) {
-	bu_vls_printf(gd->gedp->ged_result_str, ": unable to set %s", argv[0]);
+    if (!ac) {
+	/* MGED-compatible behavior: "dm set" reports all current values. */
+	struct bu_vls rstr = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&rstr, "Display Manager %s (type %s) internal variables", bu_vls_cstr(dm_get_pathname(cdmp)), dm_get_dm_name(cdmp));
+	bu_vls_struct_print2(gd->gedp->ged_result_str, bu_vls_addr(&rstr), dmparse, (const char *)mvars);
+	bu_vls_free(&rstr);
+	return BRLCAD_OK;
+    }
+
+    if (ac == 1) {
+	/* MGED-compatible behavior: "dm set <key>" reports current value. */
+	bu_vls_struct_item_named(gd->gedp->ged_result_str, dmparse, argv[0], (const char *)mvars, COMMA);
+	return BRLCAD_OK;
+    }
+
+    if (ac != 2) {
+	bu_vls_printf(gd->gedp->ged_result_str, ": invalid argument count - need key and value");
 	return BRLCAD_ERROR;
     }
+
+    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
+    struct bu_vls parse_msgs = BU_VLS_INIT_ZERO;
+    struct bu_hook_list saved_log_hooks = BU_HOOK_LIST_INIT_ZERO;
+    int ret;
+    bu_vls_printf(&tmp_vls, "%s=\"%s\"", argv[0], argv[1]);
+
+    bu_log_hook_save_all(&saved_log_hooks);
+    bu_log_hook_delete_all();
+    bu_log_add_hook(_ged_dm_log_to_vls, (void *)&parse_msgs);
+
+    ret = bu_struct_parse(&tmp_vls, dmparse, (char *)mvars, NULL);
+
+    bu_log_hook_delete_all();
+    bu_log_hook_restore_all(&saved_log_hooks);
+
+    bu_vls_free(&tmp_vls);
+    if (ret < 0) {
+	if (bu_vls_strlen(&parse_msgs)) {
+	    bu_vls_printf(gd->gedp->ged_result_str, "%s", bu_vls_cstr(&parse_msgs));
+	}
+	bu_vls_printf(gd->gedp->ged_result_str, ": unable to set %s", argv[0]);
+	bu_vls_free(&parse_msgs);
+	return BRLCAD_ERROR;
+    }
+    bu_vls_free(&parse_msgs);
 
     if (gd->verbosity) {
 	if (gd->verbosity > 1) {
@@ -461,6 +531,9 @@ _dm_cmd_set(void *ds, int argc, const char **argv)
 	    bu_vls_struct_item_named(gd->gedp->ged_result_str, dmparse, argv[0], (const char *)mvars, COMMA);
 	}
     }
+
+    const char *cbav[4] = {"dm", "set", argv[0], argv[1]};
+    _dm_cmd_during_clbk(gd, 4, cbav);
 
     return BRLCAD_OK;
 }
@@ -630,6 +703,9 @@ _dm_cmd_attach(void *ds, int argc, const char **argv)
     // We have the dmp - let the view know
     target_view->dmp = dmp;
 
+    const char *cbav[4] = {"dm", "attach", argv[0], bu_vls_cstr(&dm_name)};
+    _dm_cmd_during_clbk(gd, 4, cbav);
+
     bu_vls_free(&dm_name);
     bu_vls_free(&view_name);
 
@@ -743,31 +819,20 @@ ged_dm_core(struct ged *gedp, int argc, const char *argv[])
     return BRLCAD_ERROR;
 }
 
-#ifdef GED_PLUGIN
+
 #include "../include/plugin.h"
 
 extern int ged_ert_core(struct ged *gedp, int argc, const char *argv[]);
-struct ged_cmd_impl ert_cmd_impl = {"ert", ged_ert_core, GED_CMD_DEFAULT};
-const struct ged_cmd ert_cmd = { &ert_cmd_impl };
-
 extern int ged_screen_grab_core(struct ged *gedp, int argc, const char *argv[]);
-struct ged_cmd_impl screen_grab_cmd_impl = {"screen_grab", ged_screen_grab_core, GED_CMD_DEFAULT};
-const struct ged_cmd screen_grab_cmd = { &screen_grab_cmd_impl };
-struct ged_cmd_impl screengrab_cmd_impl = {"screengrab", ged_screen_grab_core, GED_CMD_DEFAULT};
-const struct ged_cmd screengrab_cmd = { &screengrab_cmd_impl };
 
-struct ged_cmd_impl dm_cmd_impl = {"dm", ged_dm_core, GED_CMD_DEFAULT};
-const struct ged_cmd dm_cmd = { &dm_cmd_impl };
+#define GED_DM_COMMANDS(X, XID) \
+    X(ert, ged_ert_core, GED_CMD_DEFAULT) \
+    X(dm, ged_dm_core, GED_CMD_DEFAULT) \
+    X(screen_grab, ged_screen_grab_core, GED_CMD_DEFAULT) \
+    X(screengrab, ged_screen_grab_core, GED_CMD_DEFAULT) \
 
-const struct ged_cmd *dm_cmds[] = { &screen_grab_cmd, &screengrab_cmd, &dm_cmd, &ert_cmd, NULL };
-
-static const struct ged_plugin pinfo = { GED_API,  dm_cmds, 4 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_DM_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_dm", 1, GED_DM_COMMANDS)
 
 /*
  * Local Variables:

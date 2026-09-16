@@ -1,7 +1,7 @@
 /*                     C L O S E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -44,13 +44,15 @@ ged_close_core(struct ged *gedp, int UNUSED(argc), const char **UNUSED(argv))
     /* set result while we still have the info */
     bu_vls_sprintf(gedp->ged_result_str, "closed %s", gedp->dbip->dbi_filename);
 
-    rt_new_material_head(MATER_NULL);
-
     /* Clear any geometry displayed in application views.
      * TODO - properly speaking, we should only be zapping geometry data here
      * and not clearing all scene objects... */
     const char *av[1] = {"zap"};
     ged_exec_zap(gedp, 1, (const char **)av);
+
+    /* Stop callbacks and children before dismantling database state they may
+     * still reference. */
+    ged_subprocesses_terminate(gedp);
 
     /* close current database */
     if (gedp->dbip)
@@ -65,46 +67,17 @@ ged_close_core(struct ged *gedp, int UNUSED(argc), const char **UNUSED(argv))
 	bv_mesh_lod_context_destroy(gedp->ged_lod);
     gedp->ged_lod = NULL;
 
-    /* Terminate any ged subprocesses */
-    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_subp); i++) {
-	struct ged_subprocess *rrp = (struct ged_subprocess *)BU_PTBL_GET(&gedp->ged_subp, i);
-	if (gedp->ged_delete_io_handler) {
-	    (*gedp->ged_delete_io_handler)(rrp, BU_PROCESS_STDIN);
-	    (*gedp->ged_delete_io_handler)(rrp, BU_PROCESS_STDOUT);
-	    (*gedp->ged_delete_io_handler)(rrp, BU_PROCESS_STDERR);
-	}
-	if (!rrp->aborted) {
-	    bu_pid_terminate(bu_process_pid(rrp->p));
-	    rrp->aborted = 1;
-	}
-	bu_ptbl_rm(&gedp->ged_subp, (long *)rrp);
-	    BU_PUT(rrp, struct ged_subprocess);
-    }
-    bu_ptbl_reset(&gedp->ged_subp);
-
     return BRLCAD_OK;
 }
 
-extern "C" {
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
 
-struct ged_cmd_impl closedb_cmd_impl = {"closedb", ged_close_core, GED_CMD_DEFAULT};
-const struct ged_cmd closedb_cmd = { &closedb_cmd_impl };
+#define GED_CLOSE_COMMANDS(X, XID) \
+    X(closedb, ged_close_core, GED_CMD_DEFAULT) \
+    X(close, ged_close_core, GED_CMD_DEFAULT) \
 
-struct ged_cmd_impl close_cmd_impl = {"close", ged_close_core, GED_CMD_DEFAULT};
-const struct ged_cmd close_cmd = { &close_cmd_impl };
-
-const struct ged_cmd *close_cmds[] = { &closedb_cmd, &close_cmd, NULL };
-
-static const struct ged_plugin pinfo = { GED_API,  close_cmds, 2 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
-}
+GED_DECLARE_COMMAND_SET(GED_CLOSE_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_close", 1, GED_CLOSE_COMMANDS)
 
 // Local Variables:
 // tab-width: 8
@@ -114,4 +87,3 @@ COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

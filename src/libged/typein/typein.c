@@ -1,7 +1,7 @@
 /*                        T Y P E I N . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2025 United States Government as represented by
+ * Copyright (c) 1985-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -718,6 +718,8 @@ booleanize(const char *answer)
 static int
 binunif_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern, const char *name)
 {
+    long requested_count;
+    size_t max_count;
     unsigned int minor_type;
 
     intern->idb_ptr = NULL;
@@ -762,8 +764,10 @@ binunif_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *inte
 	    bu_log("Unrecognized minor type (%c)\n", *cmd_argvs[3]);
 	    return BRLCAD_ERROR;
     }
+    requested_count = atol(cmd_argvs[5]);
+    max_count = requested_count > 0 ? (size_t)requested_count : 0;
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-    if (rt_mk_binunif(wdbp, name, cmd_argvs[4], minor_type, atol(cmd_argvs[5]))) {
+    if (rt_mk_binunif(wdbp, name, cmd_argvs[4], minor_type, max_count)) {
 	bu_vls_printf(gedp->ged_result_str,
 		      "Failed to create binary object %s from file %s\n",
 		      name, cmd_argvs[4]);
@@ -832,6 +836,7 @@ submodel_in(struct ged *UNUSED(gedp), const char **cmd_argvs, struct rt_db_inter
     sip->meth = atoi(cmd_argvs[4]);
     bu_vls_init(&sip->file);
     bu_vls_strcpy(&sip->file, cmd_argvs[5]);
+    MAT_IDN(sip->root2leaf);
 
     return BRLCAD_OK;
 }
@@ -2552,7 +2557,7 @@ extrude_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *inte
 	return BRLCAD_ERROR;
     }
 
-    if (rt_db_get_internal(&tmp_ip, dp, gedp->dbip, bn_mat_identity, &rt_uniresource) != ID_SKETCH) {
+    if (rt_db_get_internal(&tmp_ip, dp, gedp->dbip, bn_mat_identity) != ID_SKETCH) {
 	bu_vls_printf(gedp->ged_result_str, "Cannot import sketch (%s) for extrusion (%s)\n",
 		      eip->sketch_name, cmd_argvs[1]);
 	eip->skt = (struct rt_sketch_internal *)NULL;
@@ -2606,7 +2611,7 @@ revolve_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *inte
 	return BRLCAD_ERROR;
     }
 
-    if (rt_db_get_internal(&tmp_ip, dp, gedp->dbip, bn_mat_identity, &rt_uniresource) != ID_SKETCH) {
+    if (rt_db_get_internal(&tmp_ip, dp, gedp->dbip, bn_mat_identity) != ID_SKETCH) {
 	bu_vls_printf(gedp->ged_result_str, "Cannot import sketch (%s) for revolve (%s)\n",
 		      bu_vls_addr(&rip->sketch_name), cmd_argvs[1]);
 	rip->skt = (struct rt_sketch_internal *)NULL;
@@ -2762,8 +2767,8 @@ metaball_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal
 	metaball_pnt->coord[0] = atof(argv[i]) * gedp->dbip->dbi_local2base;
 	metaball_pnt->coord[1] = atof(argv[i+1]) * gedp->dbip->dbi_local2base;
 	metaball_pnt->coord[2] = atof(argv[i+2]) * gedp->dbip->dbi_local2base;
-	metaball_pnt->fldstr = atof(argv[i+3]) * gedp->dbip->dbi_local2base;
-	metaball_pnt->sweat = 1.0;
+	metaball_pnt->field_strength = atof(argv[i+3]) * gedp->dbip->dbi_local2base;
+	metaball_pnt->blobbiness = 1.0;
 
 	BU_LIST_INSERT(&metaball->metaball_ctrl_head, &metaball_pnt->l);
     }
@@ -3719,7 +3724,7 @@ do_new_update:
 	    bu_vls_printf(gedp->ged_result_str, "%s: Cannot add '%s' to directory\n", argv[0], name);
 	    return BRLCAD_ERROR;
 	}
-	if (rt_db_put_internal(dp, gedp->dbip, &internal, &rt_uniresource) < 0) {
+	if (rt_db_put_internal(dp, gedp->dbip, &internal) < 0) {
 	    rt_db_free_internal(&internal);
 	    bu_vls_printf(gedp->ged_result_str, "%s: Database write error, aborting\n", argv[0]);
 	    return BRLCAD_ERROR;
@@ -3731,24 +3736,13 @@ do_new_update:
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl typein_cmd_impl = {
-    "in",
-    ged_in_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd typein_cmd = { &typein_cmd_impl };
-const struct ged_cmd *typein_cmds[] = { &typein_cmd, NULL };
+#define GED_TYPEIN_COMMANDS(X, XID) \
+    X(in, ged_in_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  typein_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_TYPEIN_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_typein", 1, GED_TYPEIN_COMMANDS)
 
 /*
  * Local Variables:

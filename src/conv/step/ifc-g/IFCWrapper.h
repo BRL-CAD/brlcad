@@ -1,7 +1,7 @@
 /*                   I F C W R A P P E R . H
  * BRL-CAD
  *
- * Copyright (c) 1994-2025 United States Government as represented by
+ * Copyright (c) 1994-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -47,6 +47,7 @@
 #include <STEPcomplex.h>
 #include <STEPfile.h>
 
+#include "schema.h"
 #include "SdaiIFC4.h"
 
 #define IFC_LOADED 1

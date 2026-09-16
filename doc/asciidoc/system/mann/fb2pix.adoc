@@ -1,0 +1,51 @@
+= FB2PIX(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+fb2pix - write a framebuffer image to a .pix file
+
+== SYNOPSIS
+
+[source]
+----
+fb2pix [-h -i -c] [-s squaresize] [-w width] [-n height] [file.pix]
+----
+
+[[description]]
+== DESCRIPTION
+
+The *fb2pix* command captures the current framebuffer image from the display manager and writes it out as a raw `.pix` (RGB) file. If no output file is provided and the standard output is not a terminal, the image data will be written to standard output. 
+
+The available options are:
+
+* *-c* : Crunch the colormap (apply colormap to pixel values).
+* *-i* : Inverse mapping (draws the image upside down).
+* *-s squaresize* : Sets both the output width and height to the specified `squaresize`.
+* *-w width* : Sets the output width.
+* *-n height* : Sets the output height.
+* *-h* or *-?* : Prints the command usage and exits.
+
+If size parameters are omitted, it defaults to capturing a 512x512 region.
+
+[[examples]]
+== EXAMPLES
+
+.Save the framebuffer to a PIX file
+[example]
+====
+mged> **fb2pix -s 1024 output.pix**
+
+Captures a 1024x1024 region of the active framebuffer and saves it to `output.pix`.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

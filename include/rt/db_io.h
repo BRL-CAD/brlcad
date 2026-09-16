@@ -1,7 +1,7 @@
 /*                      D B _ I O . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2025 United States Government as represented by
+ * Copyright (c) 1993-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,13 +32,18 @@
 /* interface headers */
 #include "vmath.h"
 #include "bu/avs.h"
+#include "bu/vls.h"
 #include "rt/db5.h"
 #include "rt/defines.h"
+#include "rt/resource.h"
 
 __BEGIN_DECLS
 
 
 struct rt_db_internal; /* forward declaration */
+struct db_i;           /* forward declaration */
+struct directory;      /* forward declaration */
+struct rt_wdb;         /* forward declaration */
 
 
 /* db_open.c */
@@ -172,13 +177,20 @@ RT_EXPORT extern void db5_export_object3(struct bu_external *out,
  * 0 OK
  * -1 FAIL
  */
-RT_EXPORT extern int rt_db_cvt_to_external5(struct bu_external *ext,
+RT_EXPORT extern int rt_db_cvt_to_ext5(struct bu_external *ext,
 					    const char *name,
 					    const struct rt_db_internal *ip,
 					    double conv2mm,
 					    struct db_i *dbip,
-					    struct resource *resp,
 					    const int major);
+
+DEPRECATED RT_EXPORT extern int rt_db_cvt_to_external5(struct bu_external *ext,
+                                            const char *name,
+                                            const struct rt_db_internal *ip,
+                                            double conv2mm,
+                                            struct db_i *dbip,
+                                            struct resource *resp,
+                                            const int major);
 
 
 /*
@@ -202,8 +214,7 @@ rt_db_external5_to_internal5(
     const struct bu_external *ep,
     const char *name,
     const struct db_i *dbip,
-    const mat_t mat,
-    struct resource *resp);
+    const mat_t mat);
 
 /**
  * Get an object from the database, and convert it into its internal
@@ -219,8 +230,7 @@ rt_db_external5_to_internal5(
 RT_EXPORT extern int rt_db_get_internal5(struct rt_db_internal *ip,
 					 const struct directory *dp,
 					 const struct db_i *dbip,
-					 const mat_t mat,
-					 struct resource *resp);
+					 const mat_t mat);
 
 
 /**
@@ -236,11 +246,22 @@ RT_EXPORT extern int rt_db_get_internal5(struct rt_db_internal *ip,
  * Returns -
  * <0 error
  * 0 success
+ *
+ * NOTE - since resp isn't the last parameter, we're leaving this but
+ * putting deprecated on it - use rt_db_put_internal_v5 until the
+ * deprecation is complete.  At that point we'll rename back to
+ * rt_db_put_internal5 as a minimally impacting change.
  */
-RT_EXPORT extern int rt_db_put_internal5(struct directory *dp,
+DEPRECATED RT_EXPORT extern int rt_db_put_internal5(struct directory *dp,
 					 struct db_i *dbip,
 					 struct rt_db_internal *ip,
 					 struct resource *resp,
+					 const int major);
+
+
+RT_EXPORT extern int rt_db_put_internal_v5(struct directory *dp,
+					 struct db_i *dbip,
+					 struct rt_db_internal *ip,
 					 const int major);
 
 
@@ -305,7 +326,7 @@ RT_EXPORT extern void decode_binary_attribute(const size_t len,
 RT_EXPORT extern int db5_select_length_encoding(size_t len);
 
 
-RT_EXPORT extern void db5_import_color_table(char *cp);
+RT_EXPORT extern void db5_import_color_table(struct db_i *dbip, char *cp);
 
 /**
  * Given a value and a variable-width format spec, store it in network
@@ -688,6 +709,25 @@ RT_EXPORT extern void db_inmem(struct directory *dp,
 			       int flags,
 			       struct db_i *dbip);
 
+/* db_name.c */
+
+/**
+ * Convert a UTF-8 string into a conservative BRL-CAD database object name.
+ * ASCII letters and digits are retained, common Latin characters are
+ * transliterated, and runs of other characters become underscores.  Unicode
+ * characters without a transliteration are represented by their hexadecimal
+ * code point so distinct source names are not silently made identical.
+ *
+ * This routine only produces a name candidate.  Callers writing a database
+ * must still resolve collisions with existing and previously allocated names.
+ * An empty input produces an empty output so the caller can select a
+ * format-appropriate fallback name.
+ *
+ * Returns 0 on success and -1 for invalid arguments.
+ */
+RT_EXPORT extern int db_sanitize_name(struct bu_vls *output,
+				       const char *input);
+
 /* db_lookup.c */
 
 /**
@@ -843,8 +883,7 @@ RT_EXPORT extern int db_rename(struct db_i *,
  * entry is referenced by a COMBination in the database).
  *
  */
-RT_EXPORT extern void db_update_nref(struct db_i *dbip,
-				     struct resource *resp);
+RT_EXPORT extern void db_update_nref(struct db_i *dbip);
 
 
 /* db_flags.c */
@@ -882,12 +921,23 @@ RT_EXPORT extern int db_zapper(struct db_i *,
 			       struct directory *dp,
 			       size_t start);
 
+
 /**
  * This routine is called by the RT_GET_DIRECTORY macro when the
  * freelist is exhausted.  Rather than simply getting one additional
  * structure, we get a whole batch, saving overhead.
+ *
+ * DEPRECATED in favor of db_alloc_dir_block, which operates on the db_i
  */
-RT_EXPORT extern void db_alloc_directory_block(struct resource *resp);
+DEPRECATED RT_EXPORT extern void db_alloc_directory_block(struct resource *res);
+
+
+/**
+ * This routine is called by the RT_GET_DIR macro when the
+ * freelist is exhausted.  Rather than simply getting one additional
+ * structure, we get a whole batch, saving overhead.
+ */
+RT_EXPORT extern void db_alloc_dir_block(struct db_i *dbip);
 
 /**
  * This routine is called by the GET_SEG macro when the freelist is
@@ -898,7 +948,6 @@ RT_EXPORT extern void db_alloc_directory_block(struct resource *resp);
  */
 RT_EXPORT extern void rt_alloc_seg_block(struct resource *res);
 
-
 /**
  * Read named MGED db, build toc.
  */
@@ -907,17 +956,17 @@ RT_EXPORT extern struct rt_i *rt_dirbuild_inmem(const void *data, b_off_t data_s
 
 
 /* db5_types.c */
-RT_EXPORT extern int db5_type_tag_from_major(char **tag,
+RT_EXPORT extern int db5_type_tag_from_major(const char **tag,
 					     const int major);
 
-RT_EXPORT extern int db5_type_descrip_from_major(char **descrip,
+RT_EXPORT extern int db5_type_descrip_from_major(const char **descrip,
 						 const int major);
 
-RT_EXPORT extern int db5_type_tag_from_codes(char **tag,
+RT_EXPORT extern int db5_type_tag_from_codes(const char **tag,
 					     const int major,
 					     const int minor);
 
-RT_EXPORT extern int db5_type_descrip_from_codes(char **descrip,
+RT_EXPORT extern int db5_type_descrip_from_codes(const char **descrip,
 						 const int major,
 						 const int minor);
 

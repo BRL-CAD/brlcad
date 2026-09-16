@@ -1,7 +1,7 @@
 /*                        A N N O T . H
  * BRL-CAD
  *
- * Copyright (c) 2017-2025 United States Government as represented by
+ * Copyright (c) 2017-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,6 +34,11 @@
 __BEGIN_DECLS
 
 RT_EXPORT extern struct rt_annot_internal *rt_copy_annot(const struct rt_annot_internal *annot_ip);
+
+/** Validate annotation topology, model-space placement, and optional segment
+ * presentation data.  Returns zero when valid. */
+RT_EXPORT extern int rt_annot_validate(const struct rt_annot_internal *annot_ip,
+	struct bu_vls *messages);
 
 __END_DECLS
 

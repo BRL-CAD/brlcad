@@ -1,7 +1,7 @@
 /*                           L S . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2025 United States Government as represented by
+ * Copyright (c) 2013-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,6 +33,7 @@
 #include "rt/db4.h"
 #include "rt/search.h"
 #include "raytrace.h"
+#include "librt_private.h"
 
 static int
 dp_eval_flags(struct directory *dp, const struct db_i *dbip, int flags)
@@ -70,27 +71,23 @@ db_ls(const struct db_i *dbip, int flags, const char *pattern, struct directory 
     RT_CK_DBI(dbip);
 
     int max_size = 0;
-    for (int i = 0; i < RT_DBNHASH; i++) {
-	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-	    max_size++;
-	}
-    }
+    FOR_ALL_DIRECTORY_START(dp, dbip)
+	max_size++;
+    FOR_ALL_DIRECTORY_END;
 
     struct directory **matches = NULL;
     if (dpv)
 	matches = (struct directory **)bu_malloc(sizeof(struct directory *) * (max_size + 1), "directory pointer array");
 
-    for (int i = 0; i < RT_DBNHASH; i++) {
-	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-	    if (dp_eval_flags(dp, dbip, flags)) {
-		if (!pattern || !bu_path_match(pattern, dp->d_namep, 0)) {
-		    if (matches)
-			matches[objcount] = dp;
-		    objcount++;
-		}
+    FOR_ALL_DIRECTORY_START(dp, dbip)
+	if (dp_eval_flags(dp, dbip, flags)) {
+	    if (!pattern || !bu_path_match(pattern, dp->d_namep, 0)) {
+		if (matches)
+		    matches[objcount] = dp;
+		objcount++;
 	    }
 	}
-    }
+    FOR_ALL_DIRECTORY_END;
 
     if (objcount > 0 && dpv) {
 	(*dpv) = (struct directory **)bu_calloc(sizeof(struct directory *), (objcount + 1), "directory pointer array");

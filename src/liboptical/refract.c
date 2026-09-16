@@ -1,7 +1,7 @@
 /*                       R E F R A C T . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2025 United States Government as represented by
+ * Copyright (c) 1985-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -50,8 +50,6 @@ int max_bounces = 5;	/* Maximum recursion level */
 
 #define AIR_GAP_TOL 0.01		/* Max permitted air gap for RI tracking */
 
-
-extern vect_t background;
 
 static int
 rr_miss(struct application *ap)

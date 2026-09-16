@@ -1,0 +1,120 @@
+= QRAY(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+qray - Gets/sets _query ray_ characteristics.
+
+== SYNOPSIS
+
+[source]
+----
+qray [subcommand]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Gets/sets _query ray_ characteristics. Without a subcommand, the usage message is printed. The _qray_ command accepts the following subcommands:
+
+
+*vars*::
+Prints a list of all query ray variables.
+
+
+*basename* [_str_]::
+If _str_ is specified, then set basename to _str_. Otherwise, return the basename. Note that the basename is the name used to create the fake shape names corresponding to the query ray. There will be one fake shape for every color used along the ray.
+
+
+*effects*[_t|g|b_]::
+Set or get the type of _effects_ that will occur when firing a query ray. The effects of firing a ray can be either _t_ for textual output, _g_ for graphical output, or _b_ for both textual and graphical.
+
+
+*echo* [_0|1_]::
+Sets or gets the value of _echo_. If set to 1, the actual *nirt* command used will be echoed to the screen.
+
+
+*oddcolor* [_r g b_]::
+Sets or gets the color of odd partitions.
+
+
+*evencolor* [_r g b_]::
+Sets or gets the color of even partitions.
+
+
+*voidcolor* [_r g b_]::
+Sets or gets the color of areas where the ray passes through nothing.
+
+
+*overlapcolor* [_r g b_]::
+Sets or gets the color of areas that overlap.
+
+
+*fmt* [_r|h|p|f|m|o_ [_str_]]::
+Sets or gets the format string(s). See the _man_ page of *nirt* for more details.
+
+
+*script* [_str_]::
+Sets or gets the *nirt* script string.
+
+
+*help*::
+Prints the usage message.
+
+
+
+
+[[examples]]
+== EXAMPLES
+
+The four examples show the use of the *qray* command without a subcommand and with three of the listed subcommands.
+
+.Print the usage message.
+[example]
+====
+mged>**qray**
+
+Prints the usage message.
+
+====
+
+.Return the overlap format string.
+[example]
+====
+mged>**qray fmt o**
+
+Returns the overlap format string.
+
+====
+
+.Return the rgb color used to color odd partitions.
+[example]
+====
+mged>**qray oddcolor**
+
+Returns the rgb color used to color odd partitions.
+
+====
+
+.Set the odd partition color to red.
+[example]
+====
+mged>**qray oddcolor 255 0 0**
+
+Sets the odd partition color to red.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

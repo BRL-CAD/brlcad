@@ -29,7 +29,7 @@ dylib_load_plugins(struct bu_ptbl *plugins, struct bu_ptbl *dl_handles)
     if (!plugins || !dl_handles)
 	return -1;
 
-    const char *ppath = bu_dir(NULL, 0, BU_DIR_LIBEXEC, "dylib", NULL);
+    const char *ppath = bu_dir(NULL, 0, BU_DIR_LIBEXEC, "dylib", (const char *)NULL);
     char **filenames;
     const char *psymbol = "dylib_plugin_info";
     struct bu_vls plugin_pattern = BU_VLS_INIT_ZERO;
@@ -37,7 +37,7 @@ dylib_load_plugins(struct bu_ptbl *plugins, struct bu_ptbl *dl_handles)
     size_t nfiles = bu_file_list(ppath, bu_vls_cstr(&plugin_pattern), &filenames);
     for (size_t i = 0; i < nfiles; i++) {
 	char pfile[MAXPATHLEN] = {0};
-	bu_dir(pfile, MAXPATHLEN, BU_DIR_LIBEXEC, "dylib", filenames[i], NULL);
+	bu_dir(pfile, MAXPATHLEN, BU_DIR_LIBEXEC, "dylib", filenames[i], (const char *)NULL);
 	void *dl_handle, *info_val;
 	if (!(dl_handle = bu_dlopen(pfile, BU_RTLD_NOW))) {
 	    const char * const error_msg = bu_dlerror();

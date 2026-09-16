@@ -1,7 +1,7 @@
 /*                       C H E C K . C P P
  * BRL-CAD
  *
- * Copyright (c) 2020-2025 United States Government as represented by
+ * Copyright (c) 2020-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -648,7 +648,7 @@ _bot_cmd_solid(void *bs, int argc, const char **argv)
     not_solid = bg_trimesh_solid2(num_vertices, num_faces, bot->vertices, bot->faces, gib->gb->visualize ? &errors : NULL);
     bu_vls_printf(gib->vls, "%d", (not_solid || not_manifold) ? 0 : 1);
 
-    if (not_solid != not_manifold)
+    if ((not_solid != 0) != not_manifold)
 	bu_log("Warning - bg_trimesh_solid2(%d) and Manifold(%d) disagree\n", (int)!not_solid, (int)!not_manifold);
 
     if (not_solid && gib->gb->visualize) {
@@ -805,8 +805,6 @@ _bot_cmd_check(void *bs, int argc, const char **argv)
     }
     return BRLCAD_ERROR;
 }
-
-
 
 // Local Variables:
 // tab-width: 8

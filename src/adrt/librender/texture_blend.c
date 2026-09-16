@@ -1,7 +1,7 @@
 /*                     T E X T U R E _ B L E N D . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2002-2025 United States Government as represented by
+ * Copyright (c) 2002-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -41,10 +41,10 @@ texture_blend_work(struct texture_s *texture, void *UNUSED(mesh), struct tie_ray
 
     sd = (struct texture_blend_s *)texture->data;
 
-    coef = *pixel[0];
-    *pixel[0] = (1.0 - coef)*sd->color1[0] + coef*sd->color2[0];
-    *pixel[1] = (1.0 - coef)*sd->color1[1] + coef*sd->color2[1];
-    *pixel[2] = (1.0 - coef)*sd->color1[2] + coef*sd->color2[2];
+    coef = (*pixel)[0];
+    (*pixel)[0] = (1.0 - coef)*sd->color1[0] + coef*sd->color2[0];
+    (*pixel)[1] = (1.0 - coef)*sd->color1[1] + coef*sd->color2[1];
+    (*pixel)[2] = (1.0 - coef)*sd->color1[2] + coef*sd->color2[2];
 }
 
 

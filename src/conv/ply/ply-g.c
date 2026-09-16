@@ -1,7 +1,7 @@
 /*                         P L Y - G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2025 United States Government as represented by
+ * Copyright (c) 2004-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -32,7 +32,7 @@
 #include "bu/getopt.h"
 #include "gcv/api.h"
 
-static char* usage="Usage:\n\tply-g [-s scale_factor] [-d] [-v] input_file.ply output_file.g";
+static const char* usage="Usage:\n\tply-g [-s scale_factor] [-d] [-v] input_file.ply output_file.g";
 
 int
 main(int argc, char *argv[])
@@ -44,7 +44,7 @@ main(int argc, char *argv[])
     const char *output_path = NULL;
     const char *input_path;
     int c;
-    char* scale_factor = "1000.0";      // scale factor gets passed as a string, no sense converting
+    const char* scale_factor = "1000.0";      // scale factor gets passed as a string, no sense converting
 
     bu_setprogname(argv[0]);
     gcv_opts_default(&gcv_options);

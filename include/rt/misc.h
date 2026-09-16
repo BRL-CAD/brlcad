@@ -1,7 +1,7 @@
 /*                      M I S C . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2025 United States Government as represented by
+ * Copyright (c) 1993-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,19 +27,23 @@
 
 #include "common.h"
 #include "vmath.h"
+#include "bu/ptbl.h"
 #include "rt/defines.h"
 #include "rt/resource.h"
 
 __BEGIN_DECLS
 
+/**
+ * Append every database path from @p start to @p end to an initialized
+ * @p paths table.  Combination trees, including region combinations, are
+ * traversed.  The caller owns the returned db_full_path objects.
+ */
 RT_EXPORT extern int rt_find_paths(struct db_i *dbip,
 				   struct directory *start,
 				   struct directory *end,
-				   struct bu_ptbl *paths,
-				   struct resource *resp);
+				   struct bu_ptbl *paths);
 
-RT_EXPORT extern struct bu_bitv *rt_get_solidbitv(size_t nbits,
-						  struct resource *resp);
+RT_EXPORT extern struct bu_bitv *rt_get_solidbitv(size_t nbits, struct resource *resp);
 
 /* table.c */
 RT_EXPORT extern int rt_id_solid(struct bu_external *ep);

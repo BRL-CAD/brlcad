@@ -1,7 +1,7 @@
 /*                      R A Y T R A C E . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2025 United States Government as represented by
+ * Copyright (c) 1993-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -71,6 +71,8 @@ __BEGIN_DECLS
 #include "./rt/db_fullpath.h"
 
 #include "./rt/debug.h"
+
+#include "./rt/default.h"
 
 #include "./rt/tol.h"
 
@@ -151,6 +153,7 @@ __BEGIN_DECLS
 #include "./rt/primitives/rpc.h"
 #include "./rt/primitives/pg.h"
 #include "./rt/primitives/hf.h"
+#include "./rt/primitives/bspline.h"
 #include "./rt/primitives/dsp.h"
 #include "./rt/primitives/ell.h"
 #include "./rt/primitives/tgc.h"

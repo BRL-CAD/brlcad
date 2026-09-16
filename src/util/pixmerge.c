@@ -1,7 +1,7 @@
 /*                      P I X M E R G E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2025 United States Government as represented by
+ * Copyright (c) 1986-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -32,12 +32,15 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include "bio.h"
 
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
 #include "bu/exit.h"
@@ -75,6 +78,46 @@ Usage: pixmerge [-g -l -e -n] [-w bytes_wide] [-C r/g/b]\n\
 	foreground.pix [background.pix] > out.pix\n\
 	(stdout must go to a file or pipe)\n";
 
+static int
+parse_const_arg(const char *arg, int component_count, unsigned char *out_values)
+{
+    int i = 0;
+    const char *cp = arg;
+
+    for (i = 0; i < component_count; i++) {
+	char *end = NULL;
+	long int value;
+
+	if (*cp == '\0') {
+	    fprintf(stderr, "pixmerge: constant requires %d component(s)\n", component_count);
+	    return 0;
+	}
+
+	errno = 0;
+	value = strtol(cp, &end, 10);
+	if (errno != 0 || end == cp || value < 0 || value > UCHAR_MAX) {
+	    fprintf(stderr, "pixmerge: invalid constant component '%s'\n", cp);
+	    return 0;
+	}
+	out_values[i] = (unsigned char)value;
+
+	if (i == component_count - 1) {
+	    if (*end != '\0') {
+		fprintf(stderr, "pixmerge: invalid constant '%s'\n", arg);
+		return 0;
+	    }
+	} else {
+	    if (*end != '/') {
+		fprintf(stderr, "pixmerge: constant requires %d component(s)\n", component_count);
+		return 0;
+	    }
+	    cp = end + 1;
+	}
+    }
+
+    return 1;
+}
+
 int
 get_args(int argc, char **argv)
 {
@@ -100,7 +143,10 @@ get_args(int argc, char **argv)
 		seen_formula = 1;
 		break;
 	    case 'w':
-		width = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &width, 1, INT_MAX, "element width")) {
+		    (void)fputs(usage, stderr);
+		    bu_exit(1, NULL);
+		}
 		if (width < 1 || width >= EL_WIDTH){
 		    (void)fputs("pixmerge: illegal width specified\n",stderr);
 		    (void)fputs(usage, stderr);
@@ -110,15 +156,8 @@ get_args(int argc, char **argv)
 	    case 'C':
 	    case 'c':	/* backward compatibility */
 		{
-		    char *cp = bu_optarg;
-		    unsigned char *conp = pconst;
-
-		    /* premature null => atoi gives zeros */
-		    for (c=0; c < width; c++) {
-			*conp++ = atoi(cp);
-			while (*cp && *cp++ != '/')
-			    ;
-		    }
+		    if (!parse_const_arg(bu_optarg, width, pconst))
+			return 0;
 		}
 		seen_const = 1;
 		break;
@@ -162,8 +201,10 @@ get_args(int argc, char **argv)
 	}
     }
 
-    if (argc > bu_optind)
-	fprintf(stderr, "pixmerge: excess argument(s) ignored\n");
+    if (argc > bu_optind) {
+	fprintf(stderr, "pixmerge: excess argument(s) not supported\n");
+	return 0;
+    }
 
     return 1;		/* OK */
 }

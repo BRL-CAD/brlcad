@@ -1,7 +1,7 @@
 /*                       B W S C A L E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2025 United States Government as represented by
+ * Copyright (c) 1986-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,12 +33,15 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include "bio.h"
 
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/malloc.h"
 #include "bu/log.h"
 #include "bu/file.h"
@@ -329,23 +332,31 @@ get_args(int argc, char **argv)
 		break;
 	    case 'S':
 		/* square size */
-		outx = outy = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &outx, 1, INT_MAX, "output size"))
+		    return 0;
+		outy = outx;
 		break;
 	    case 's':
 		/* square size */
-		inx = iny = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &inx, 1, INT_MAX, "input size"))
+		    return 0;
+		iny = inx;
 		break;
 	    case 'W':
-		outx = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &outx, 1, INT_MAX, "output width"))
+		    return 0;
 		break;
 	    case 'w':
-		inx = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &inx, 1, INT_MAX, "input width"))
+		    return 0;
 		break;
 	    case 'N':
-		outy = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &outy, 1, INT_MAX, "output height"))
+		    return 0;
 		break;
 	    case 'n':
-		iny = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &iny, 1, INT_MAX, "input height"))
+		    return 0;
 		break;
 
 	    default:		/* 'h' , '?' */
@@ -360,10 +371,14 @@ get_args(int argc, char **argv)
 	    bu_log("bwscale: cannot open \"%s\" for reading\n",file_name);
 	    return 0;
 	}
-	inx = atoi(argv[bu_optind++]);
-	iny = atoi(argv[bu_optind++]);
-	outx = atoi(argv[bu_optind++]);
-	outy = atoi(argv[bu_optind++]);
+	if (!bu_opt_scan_int_range(argv[bu_optind++], &inx, 1, INT_MAX, "input width"))
+	    return 0;
+	if (!bu_opt_scan_int_range(argv[bu_optind++], &iny, 1, INT_MAX, "input height"))
+	    return 0;
+	if (!bu_opt_scan_int_range(argv[bu_optind++], &outx, 1, INT_MAX, "output width"))
+	    return 0;
+	if (!bu_opt_scan_int_range(argv[bu_optind++], &outy, 1, INT_MAX, "output height"))
+	    return 0;
 	return 1;
     }
     if ((bu_optind >= argc) ||
@@ -377,14 +392,21 @@ get_args(int argc, char **argv)
 	buffp = stdin;
     } else {
 	file_name = argv[bu_optind];
+	bu_optind++;
+	if (argc > bu_optind) {
+	    fprintf(stderr, "bwscale: excess argument(s) not supported\n");
+	    return 0;
+	}
 	if ((buffp = fopen(file_name, "rb")) == NULL) {
 	    bu_log("bwscale: cannot open \"%s\" for reading\n", file_name);
 	    return 0;
 	}
     }
 
-    if (argc > ++bu_optind)
-	fprintf(stderr, "bwscale: excess argument(s) ignored\n");
+    if (argc > bu_optind) {
+	fprintf(stderr, "bwscale: excess argument(s) not supported\n");
+	return 0;
+    }
 
     return 1;		/* OK */
 }

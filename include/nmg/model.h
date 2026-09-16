@@ -1,7 +1,7 @@
 /*                        M O D E L . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2025 United States Government as represented by
+ * Copyright (c) 2004-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -78,10 +78,6 @@ NMG_EXPORT extern void nmg_dump_model(struct model *m);
 NMG_EXPORT extern char *nmg_manifolds(struct model *m);
 NMG_EXPORT extern int nmg_model_face_fuse(struct model *m,struct bu_list *vlfree,
                                           const struct bn_tol *tol);
-/* DEPRECATED: use nmg_break_e_on_v */
-NMG_EXPORT extern int nmg_model_break_e_on_v(const uint32_t *magic_p,
-                                             struct bu_list *vlfree,
-                                             const struct bn_tol *tol);
 NMG_EXPORT extern int nmg_model_fuse(struct model *m,
                                      struct bu_list *vlfree,
                                      const struct bn_tol *tol);

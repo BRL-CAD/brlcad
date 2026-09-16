@@ -1,7 +1,7 @@
 /*                         G R O U P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2014-2025 United States Government as represented by
+ * Copyright (c) 2014-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -587,7 +587,7 @@ std::string content_hash(struct db_i *dbip, bool use_names, bool use_geometry, i
     if (!dbip)
 	return std::string();
 
-    db_update_nref(dbip, &rt_uniresource);
+    db_update_nref(dbip);
     tlsh::Tlsh hasher;
 
     if (use_names) {

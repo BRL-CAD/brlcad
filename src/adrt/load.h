@@ -1,7 +1,7 @@
 /*                         L O A D . H
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2025 United States Government as represented by
+ * Copyright (c) 2007-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,6 +19,9 @@
  */
 /** @file load.h
  *
+ * Interface for the ADRT slave loader: message dispatch entry point and the
+ * loaded mesh list shared with the rest of the slave.
+ *
  */
 
 #ifndef ADRT_LOAD_H
@@ -27,12 +30,10 @@
 #include "adrt.h"
 #include "adrt_struct.h"
 
-RENDER_EXPORT extern int slave_load(struct tie_s *tie, void *);
+RENDER_EXPORT extern int slave_load(struct tie_s *tie, void *, size_t);
 
 RENDER_EXPORT extern uint32_t slave_load_mesh_num;
 RENDER_EXPORT extern adrt_mesh_t *slave_load_mesh_list;
-
-RENDER_EXPORT extern int slave_load_g (struct tie_s *tie, char *data);
 
 #endif
 

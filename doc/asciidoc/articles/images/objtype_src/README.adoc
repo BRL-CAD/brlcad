@@ -1,0 +1,74 @@
+= Object-type catalog figure generator
+
+This directory generates the figures used by
+`doc/asciidoc/articles/object_types.adoc`.  The `objtype_*.png` images in the
+parent `images/` directory are a *committed snapshot*: the documentation build
+consumes them like any other image, and this generator is the developer tool
+that refreshes them from the actual built BRL-CAD tools.
+
+Every pixel of every figure -- the shaded solids, the edge lines, and all the
+on-image text -- is produced by BRL-CAD tools.  No image-drawing library is
+used.
+
+== Pipeline
+
+For each object the generator:
+
+1. probes the object with `rt` (autoview) to learn the view and how much of the
+   frame the object fills, then picks a `viewsize` so it fills ~80% of the frame;
+2. ray traces the shaded solid with `rt` into a disk framebuffer;
+3. overlays silhouette + crease edges with `rtedge` (`overlay`,
+   `detect_distance`, `detect_normals`) so every shape reads clearly;
+4. draws the parameter callouts (arrows, vectors, dimensions, labels) with
+   `fbline` and `fblabel`;
+5. grabs the framebuffer to PNG with `fb-png`.
+
+Variety montages render each cell the same way (with a `fblabel` caption burned
+in) and then tile the finished cells into a grid.
+
+Python is used only to orchestrate the tools, to project 3D parameter points to
+2D pixels (reconstructed from the exact view `rt` reports, so callouts land on
+the geometry), and for image I/O (measuring the object extent, tiling montage
+cells).
+
+== Files
+
+* `objtype_lib.py` -- tool drivers, the projection/`View` helper, the
+  framebuffer drawing primitives, and `render` / `render_cell` / `montage`.
+* `gen_object_types.py` -- one builder per object type plus a registry.
+
+== Requirements
+
+* A built BRL-CAD (`rt`, `rtedge`, `mged`, `fbline`, `fblabel`, `fb-png`,
+  `png-pix`, ...).
+* Python 3 with `numpy` and `Pillow` (measurement / montage tiling only).
+
+== Usage
+
+[source,bash]
+----
+BRLCAD_BIN=/path/to/brlcad/bin python gen_object_types.py            # rebuild all
+BRLCAD_BIN=/path/to/brlcad/bin python gen_object_types.py ell tor    # rebuild some
+----
+
+If `BRLCAD_BIN` is unset the script looks for a build under `out/build/...` or
+`build/` relative to the repository root.
+
+== Platform notes
+
+* The disk framebuffer only behaves at dimensions >= 512, so cells are rendered
+  at 512 and downsampled.
+* A framebuffer device name is always a bare relative name (a `D:\...` path is
+  misread as `host:port`), and the tools are run with their working directory
+  set to this scratch directory; data files (`dsp`, `ebm`, `vol`) are likewise
+  referenced by bare basename.
+* `nmg` is a real facetize -n solid, ray traced single-threaded (`-P1`): the
+  NMG hitmiss freelist (`re_nmgfree`) is a process-global that is not
+  thread-safe, so parallel shooting races.  Two libnmg init fixes
+  (`src/libnmg/isect.c`, in `nmg_isect_ray_model`) make the single-threaded
+  path correct.
+* `submodel` is a real instanced submodel; a librt path-resolution fix
+  (`src/librt/primitives/submodel/submodel.c`, `rt_submodel_resolve_path`)
+  lets it find a relative `file=` next to the parent `.g`.
+* `cline` is built with `put` (its tcl keys are `V H R T`).
+* Scratch files (`_*`) are temporary and are not committed.

@@ -1,0 +1,60 @@
+= LIBNMG(3)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+libnmg - non-manifold geometry (NMG) library for BRL-CAD
+
+== SYNOPSIS
+
+[source,c]
+----
+#include <nmg.h>
+----
+
+Link with *-lnmg*.
+
+The public interface is organized across the headers included by
+_nmg.h_, including _nmg/defines.h_, _nmg/model.h_, _nmg/region.h_,
+_nmg/shell.h_, _nmg/face.h_, _nmg/loop.h_, _nmg/edge.h_,
+_nmg/vertex.h_, _nmg/topology.h_, _nmg/isect.h_, _nmg/nurb.h_,
+_nmg/io.h_, and _nmg/plot.h_.
+
+== DESCRIPTION
+
+LIBNMG implements "Non-Manifold Geometry" (NMG), BRL-CAD's primary
+mechanism for storing and manipulating planar (faceted) mesh geometry.
+The data structures follow the radial-edge boundary representation
+developed by Kevin J. Weiler, which is capable of representing both
+manifold and non-manifold topology within a single, uniform model.
+
+The library defines a hierarchy of topological entities -- model,
+region, shell, face, loop, edge, and vertex -- together with the
+operators needed to build, traverse, validate, and modify them.
+Facilities include geometric intersection and boolean evaluation of NMG
+solids, tessellation support, plotting, and import/export of NMG data.
+
+The complete API, including data structures and function signatures, is
+documented in the headers noted above and in the Doxygen-generated
+reference for the LIBNMG module. Background on BRL-CAD's implementation
+is described in the published literature referenced from _nmg.h_.
+
+== SEE ALSO
+
+*brlcad*(1), *librt*(3), *libbrep*(3), *libbg*(3), *libbn*(3)
+
+The BRL-CAD Doxygen API reference provides the authoritative,
+up-to-date description of all public LIBNMG routines.
+
+== AUTHOR
+
+BRL-CAD Team
+
+== COPYRIGHT
+
+This software is Copyright (c) 2004-2026 United States Government as represented by the U.S. Army Research Laboratory.
+
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

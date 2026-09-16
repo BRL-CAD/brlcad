@@ -1,7 +1,7 @@
 /*                         E D E L L . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2025 United States Government as represented by
+ * Copyright (c) 1996-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,6 +28,7 @@
 
 #include "vmath.h"
 #include "nmg.h"
+#include "bu/opt.h"
 #include "raytrace.h"
 #include "rt/geom.h"
 #include "wdb.h"
@@ -39,7 +40,7 @@
 #define ECMD_ELL_SCALE_C	3041
 #define ECMD_ELL_SCALE_ABC	3042
 
-void
+C_DECL void
 rt_edit_ell_set_edit_mode(struct rt_edit *s, int mode)
 {
     rt_edit_set_edflag(s, mode);
@@ -79,15 +80,171 @@ struct rt_edit_menu_item ell_menu[] = {
     { "", NULL, 0 }
 };
 
-struct rt_edit_menu_item *
+C_DECL struct rt_edit_menu_item *
 rt_edit_ell_menu_item(const struct bn_tol *UNUSED(tol))
 {
     return ell_menu;
 }
 
+/* ft_edit_desc descriptor for the Ellipsoid primitive               */
+/* ------------------------------------------------------------------ */
+
+static const struct rt_edit_param_desc ell_a_params[] = {
+    {
+	"a",                  /* name         */
+	"Semi-Axis A",        /* label        */
+	RT_EDIT_PARAM_SCALAR, /* type         */
+	0,                    /* index        */
+	1e-10,                /* range_min    */
+	RT_EDIT_PARAM_NO_LIMIT, /* range_max  */
+	"length",             /* units        */
+	0, NULL, NULL,        /* enum (unused) */
+	NULL                  /* prim_field   */
+    }
+};
+
+static const struct rt_edit_param_desc ell_b_params[] = {
+    {
+	"b",                  /* name         */
+	"Semi-Axis B",        /* label        */
+	RT_EDIT_PARAM_SCALAR, /* type         */
+	0,                    /* index        */
+	1e-10,                /* range_min    */
+	RT_EDIT_PARAM_NO_LIMIT, /* range_max  */
+	"length",             /* units        */
+	0, NULL, NULL,        /* enum (unused) */
+	NULL                  /* prim_field   */
+    }
+};
+
+static const struct rt_edit_param_desc ell_c_params[] = {
+    {
+	"c",                  /* name         */
+	"Semi-Axis C",        /* label        */
+	RT_EDIT_PARAM_SCALAR, /* type         */
+	0,                    /* index        */
+	1e-10,                /* range_min    */
+	RT_EDIT_PARAM_NO_LIMIT, /* range_max  */
+	"length",             /* units        */
+	0, NULL, NULL,        /* enum (unused) */
+	NULL                  /* prim_field   */
+    }
+};
+
+static const struct rt_edit_param_desc ell_abc_params[] = {
+    {
+	"abc",                /* name         */
+	"Uniform Radius",     /* label        */
+	RT_EDIT_PARAM_SCALAR, /* type         */
+	0,                    /* index        */
+	1e-10,                /* range_min    */
+	RT_EDIT_PARAM_NO_LIMIT, /* range_max  */
+	"length",             /* units        */
+	0, NULL, NULL,        /* enum (unused) */
+	NULL                  /* prim_field   */
+    }
+};
+
+static const struct rt_edit_cmd_desc ell_cmds[] = {
+    {
+	ECMD_ELL_SCALE_A,     /* cmd_id       */
+	"Set A",              /* label        */
+	"geometry",           /* category     */
+	1,                    /* nparam       */
+	ell_a_params,         /* params       */
+	1,                    /* interactive  */
+	10,                   /* display_order */
+	"ell"                 /* req_types */
+    },
+    {
+	ECMD_ELL_SCALE_B,     /* cmd_id       */
+	"Set B",              /* label        */
+	"geometry",           /* category     */
+	1,                    /* nparam       */
+	ell_b_params,         /* params       */
+	1,                    /* interactive  */
+	20,                   /* display_order */
+	"ell"                 /* req_types */
+    },
+    {
+	ECMD_ELL_SCALE_C,     /* cmd_id       */
+	"Set C",              /* label        */
+	"geometry",           /* category     */
+	1,                    /* nparam       */
+	ell_c_params,         /* params       */
+	1,                    /* interactive  */
+	30,                   /* display_order */
+	"ell"                 /* req_types */
+    },
+    {
+	ECMD_ELL_SCALE_ABC,   /* cmd_id       */
+	"Set A,B,C",          /* label        */
+	"geometry",           /* category     */
+	1,                    /* nparam       */
+	ell_abc_params,       /* params       */
+	1,                    /* interactive  */
+	40,                   /* display_order */
+	"ell,sph"             /* req_types */
+    }
+};
+
+static const struct rt_edit_opt_desc ell_opts[] = {
+    {
+	"type",
+	"Geometry Type",
+	"Force treatment as a specific ellipsoid type (ell or sph)",
+	RT_EDIT_PARAM_STRING
+    }
+};
+
+static const struct rt_edit_prim_desc ell_prim_desc = {
+    "ell",                /* prim_type    */
+    "Ellipsoid",          /* prim_label   */
+    4,                    /* ncmd         */
+    ell_cmds              /* cmds         */,
+    1,                    /* nopt         */
+    ell_opts              /* opts         */
+};
+
+C_DECL const struct rt_edit_prim_desc *
+rt_edit_ell_edit_desc(void)
+{
+    return &ell_prim_desc;
+}
+
+C_DECL int
+rt_edit_ell_get_params(struct rt_edit *s, int cmd_id, fastf_t *vals)
+{
+    struct rt_ell_internal *ell;
+
+    if (!s || !vals)
+	return -1;
+
+    ell = (struct rt_ell_internal *)s->es_int.idb_ptr;
+    RT_ELL_CK_MAGIC(ell);
+
+    switch (cmd_id) {
+	case ECMD_ELL_SCALE_A:
+	    vals[0] = MAGNITUDE(ell->a) * s->base2local;
+	    return 1;
+	case ECMD_ELL_SCALE_B:
+	    vals[0] = MAGNITUDE(ell->b) * s->base2local;
+	    return 1;
+	case ECMD_ELL_SCALE_C:
+	    vals[0] = MAGNITUDE(ell->c) * s->base2local;
+	    return 1;
+	case ECMD_ELL_SCALE_ABC:
+	    /* Return the current A magnitude as the uniform scale value. */
+	    vals[0] = MAGNITUDE(ell->a) * s->base2local;
+	    return 1;
+	default:
+	    return 0;
+    }
+}
+
 #define V3BASE2LOCAL(_pt) (_pt)[X]*base2local, (_pt)[Y]*base2local, (_pt)[Z]*base2local
 
-void
+C_DECL void
 rt_edit_ell_write_params(
 	struct bu_vls *p,
        	const struct rt_db_internal *ip,
@@ -113,7 +270,7 @@ rt_edit_ell_write_params(
     if (ln) *ln = '\0'; \
     while (lc && strchr(lc, ':')) lc++
 
-int
+C_DECL int
 rt_edit_ell_read_params(
 	struct rt_db_internal *ip,
 	const char *fc,
@@ -287,7 +444,7 @@ rt_edit_ell_pscale(struct rt_edit *s)
     return 0;
 }
 
-int
+C_DECL int
 rt_edit_ell_edit(struct rt_edit *s)
 {
     switch (s->edit_flag) {
@@ -302,23 +459,28 @@ rt_edit_ell_edit(struct rt_edit *s)
 	    /* rot solid about vertex */
 	    edit_srot(s);
 	    break;
-	default:
+	case ECMD_ELL_SCALE_A:
+	case ECMD_ELL_SCALE_B:
+	case ECMD_ELL_SCALE_C:
+	case ECMD_ELL_SCALE_ABC:
 	    return rt_edit_ell_pscale(s);
+	default:
+	    /* Generic/matrix edit operations (RT_MATRIX_EDIT_*) are not
+	     * ELL-specific; forward to edit_generic so they are handled
+	     * correctly for all primitives. */
+	    return edit_generic(s);
     }
 
     return 0;
 }
 
-int
+C_DECL int
 rt_edit_ell_edit_xy(
         struct rt_edit *s,
         const vect_t mousevec
         )
 {
     vect_t pos_view = VINIT_ZERO;       /* Unrotated view space pos */
-    struct rt_db_internal *ip = &s->es_int;
-    bu_clbk_t f = NULL;
-    void *d = NULL;
 
     switch (s->edit_flag) {
         case RT_PARAMS_EDIT_SCALE:
@@ -333,20 +495,102 @@ rt_edit_ell_edit_xy(
             edit_abs_tra(s, pos_view);
             return 0;
         case RT_PARAMS_EDIT_ROT:
-            bu_vls_printf(s->log_str, "RT_PARAMS_EDIT_ROT XY editing setup unimplemented in %s_edit_xy callback\n", EDOBJ[ip->idb_type].ft_label);
-            rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-            if (f)
-                (*f)(0, NULL, d, NULL);
-            return BRLCAD_ERROR;
+	    /* Delegate to edit_generic_xy which now handles XY rotation
+	     * via edit_mrot_xy / rt_knob_edit_rot. */
+	    return edit_generic_xy(s, mousevec);
         default:
-            bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", EDOBJ[ip->idb_type].ft_label, s->edit_flag);
-            rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-            if (f)
-                (*f)(0, NULL, d, NULL);
-            return BRLCAD_ERROR;
+	    /* Forward generic/matrix ops (RT_MATRIX_EDIT_*) to edit_generic_xy. */
+            return edit_generic_xy(s, mousevec);
     }
 }
 
+int
+rt_edit_ell_repair(struct bu_vls *log_str, struct rt_db_internal *ip, const struct bn_tol *tol, int argc, const char **argv)
+{
+    struct rt_ell_internal *eip;
+    fastf_t mag_a, mag_b, mag_c;
+    int repaired = 0;
+    int options_json = 0;
+    int print_help = 0;
+
+    struct bu_opt_desc d[3];
+    BU_OPT(d[0], "h", "help", "", NULL, &print_help, "Print help");
+    BU_OPT(d[1], "", "options-json", "", NULL, &options_json, "Return JSON of supported options");
+    BU_OPT_NULL(d[2]);
+
+    if (argc > 0 && argv) {
+        bu_opt_parse(NULL, argc, argv, d);
+    }
+
+    if (options_json) {
+        if (log_str) {
+            bu_vls_printf(log_str, "{\"options\":[]}");
+        }
+        return 1;
+    }
+
+    if (print_help) {
+        if (log_str) {
+            char *option_help = bu_opt_describe(d, NULL);
+            bu_vls_printf(log_str, "{\"status\":\"help\",\"message\":\"Options:\\n%s\"}", option_help ? option_help : "");
+            if (option_help) bu_free(option_help, "help str");
+        }
+        return -1;
+    }
+
+    RT_CK_DB_INTERNAL(ip);
+    eip = (struct rt_ell_internal *)ip->idb_ptr;
+    RT_ELL_CK_MAGIC(eip);
+
+    if (!tol) {
+        static const struct bn_tol default_tol = BN_TOL_INIT_TOL;
+        tol = &default_tol;
+    }
+
+    mag_a = MAGNITUDE(eip->a);
+    mag_b = MAGNITUDE(eip->b);
+    mag_c = MAGNITUDE(eip->c);
+
+    if (mag_a > SQRT_SMALL_FASTF && mag_b > SQRT_SMALL_FASTF) {
+        fastf_t f = VDOT(eip->a, eip->b) / (mag_a * mag_b);
+        if (!NEAR_ZERO(f, tol->perp)) {
+            vect_t proj;
+            VSCALE(proj, eip->a, VDOT(eip->b, eip->a) / MAGSQ(eip->a));
+            VSUB2(eip->b, eip->b, proj);
+            /* Restore length */
+            VSCALE(eip->b, eip->b, mag_b / MAGNITUDE(eip->b));
+            repaired++;
+        }
+    }
+
+    if (mag_a > SQRT_SMALL_FASTF && mag_c > SQRT_SMALL_FASTF) {
+        fastf_t f1 = VDOT(eip->a, eip->c) / (mag_a * mag_c);
+        fastf_t f2 = 0;
+        if (mag_b > SQRT_SMALL_FASTF) {
+            f2 = VDOT(eip->b, eip->c) / (MAGNITUDE(eip->b) * mag_c);
+        }
+        if (!NEAR_ZERO(f1, tol->perp) || (mag_b > SQRT_SMALL_FASTF && !NEAR_ZERO(f2, tol->perp))) {
+            vect_t proj_a, proj_b;
+            VSCALE(proj_a, eip->a, VDOT(eip->c, eip->a) / MAGSQ(eip->a));
+            if (mag_b > SQRT_SMALL_FASTF) {
+                VSCALE(proj_b, eip->b, VDOT(eip->c, eip->b) / MAGSQ(eip->b));
+            } else {
+                VSETALL(proj_b, 0.0);
+            }
+            VSUB2(eip->c, eip->c, proj_a);
+            VSUB2(eip->c, eip->c, proj_b);
+            /* Restore length */
+            VSCALE(eip->c, eip->c, mag_c / MAGNITUDE(eip->c));
+            repaired++;
+        }
+    }
+
+    if (repaired > 0 && log_str) {
+        bu_vls_printf(log_str, "{\"status\":\"success\",\"message\":\"Successfully repaired ELL\"}");
+    }
+
+    return repaired > 0 ? 0 : -1;
+}
 
 /*
  * Local Variables:

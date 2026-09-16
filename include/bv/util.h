@@ -1,7 +1,7 @@
 /*                      B V I E W _ U T I L . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2025 United States Government as represented by
+ * Copyright (c) 1993-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -54,8 +54,53 @@ BV_EXPORT extern void bv_settings_init(struct bview_settings *s);
  */
 BV_EXPORT extern void bv_autoview(struct bview *v, fastf_t scale, int all_view_objs);
 
+/**
+ * Set up the view (center and size) to frame the supplied bounding box.
+ * Pass BV_AUTOVIEW_SCALE_DEFAULT as the scale argument to use the
+ * default scaling factor.  This is the back end bv_autoview() uses once
+ * a bounding box has been determined.
+ */
+BV_EXPORT extern void bv_autoview_bounds(struct bview *v, fastf_t scale, const point_t min, const point_t max);
+
 /* Copy the size and camera info (deliberately not a full copy of all view state) */
 BV_EXPORT extern void bv_sync(struct bview *dest, struct bview *src);
+
+
+
+/* Camera accessor functions
+ *
+ * These replace direct writes to gv_scale / gv_size / gv_isize / gv_perspective /
+ * gv_aet / gv_rotation / gv_center, ensuring derived fields are kept consistent
+ * and view-policy decisions stay above the scene-data layer.
+ *
+ * Size and scale are linked: size == 2 * scale; isize == 1 / size.
+ * Setters maintain all three automatically. */
+BV_EXPORT extern fastf_t bv_view_get_scale(const struct bview *v);
+BV_EXPORT extern void    bv_view_set_scale(struct bview *v, fastf_t scale);
+BV_EXPORT extern fastf_t bv_view_get_size(const struct bview *v);
+BV_EXPORT extern void    bv_view_set_size(struct bview *v, fastf_t size);
+
+/* Perspective angle (degrees; 0 means orthographic). */
+BV_EXPORT extern fastf_t bv_view_get_perspective(const struct bview *v);
+BV_EXPORT extern void    bv_view_set_perspective(struct bview *v, fastf_t perspective);
+
+/* Azimuth / Elevation / Twist.  bv_view_set_aet recomputes gv_rotation. */
+BV_EXPORT extern void bv_view_get_aet(const struct bview *v, vect_t aet);
+BV_EXPORT extern void bv_view_set_aet(struct bview *v, const vect_t aet);
+
+/* Raw rotation matrix.  Prefer bv_view_set_aet when the AET representation is
+ * available; use this accessor only when restoring saved matrix state (e.g.
+ * loadview). */
+BV_EXPORT extern void bv_view_get_rotation(const struct bview *v, mat_t rot);
+BV_EXPORT extern void bv_view_set_rotation(struct bview *v, const mat_t rot);
+
+/* View center expressed as a point (positive = model origin offset).
+ * get extracts the translation from gv_center; set stores it via
+ * MAT_DELTAS_VEC_NEG so gv_center holds the negated translation. */
+BV_EXPORT extern void bv_view_get_center_vec(const struct bview *v, point_t center);
+BV_EXPORT extern void bv_view_set_center_vec(struct bview *v, const point_t center);
+
+
 
 /* Copy settings (potentially) common to the view and scene objects.
  * Return 0 if no changes were made to dest.  If dest did have one

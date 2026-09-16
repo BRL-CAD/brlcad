@@ -1,7 +1,7 @@
 /*                 LocalUnits.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2025 United States Government as represented by
+ * Copyright (c) 1994-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -25,9 +25,11 @@
 
 #include "LocalUnits.h"
 
-double LocalUnits::length = 1.0;
-double LocalUnits::planeangle = 1.0;
-double LocalUnits::solidangle = 1.0;
+thread_local double LocalUnits::length = 1.0;
+thread_local double LocalUnits::planeangle = 1.0;
+thread_local double LocalUnits::solidangle = 1.0;
+thread_local double LocalUnits::tolerance = 1.0e-6;
+thread_local double LocalUnits::representation_tolerance = 1.0e-6;
 
 LocalUnits::LocalUnits()
 {

@@ -1,0 +1,60 @@
+# Values set at CMake configure time
+set(CBDIR "@CMAKE_CURRENT_BINARY_DIR@")
+set(CSDIR "@CMAKE_CURRENT_SOURCE_DIR@")
+set(LOGFILE "${CBDIR}/regress-ged_lint_raytrace.log")
+
+set(BU_DIR_CACHE ${CBDIR}/cache_lint_raytrace)
+set(LIBRT_CACHE ${CBDIR}/rtcache_lint_raytrace)
+set(ENV{BU_DIR_CACHE} ${BU_DIR_CACHE})
+set(ENV{LIBRT_CACHE} ${LIBRT_CACHE})
+file(REMOVE_RECURSE "${BU_DIR_CACHE}")
+file(REMOVE_RECURSE "${LIBRT_CACHE}")
+file(MAKE_DIRECTORY "${BU_DIR_CACHE}")
+file(MAKE_DIRECTORY "${LIBRT_CACHE}")
+
+set(TMPDIR "${CBDIR}/lint_raytrace_regress_tmp")
+file(REMOVE_RECURSE "${TMPDIR}")
+file(MAKE_DIRECTORY "${TMPDIR}")
+
+file(WRITE "${LOGFILE}" "Starting lint --raytrace regression test run\n")
+
+# The executable location isn't known at CMake configure time, so it is passed
+# in via the EXEC variable at runtime by a generator expression in the parent
+# build.  De-quote it and assign it to the appropriate variable.
+string(REPLACE "\\" "" LINT_RAYTRACE_EXEC "${EXEC}")
+if(NOT EXISTS "${LINT_RAYTRACE_EXEC}")
+  file(WRITE "${LOGFILE}" "lint_raytrace regression program not found at location \"${LINT_RAYTRACE_EXEC}\" - aborting\n")
+  file(READ "${LOGFILE}" LOG)
+  message(FATAL_ERROR "Unable to find lint_raytrace regression program, aborting.\nSee ${LOGFILE} for more details.\n${LOG}")
+endif(NOT EXISTS "${LINT_RAYTRACE_EXEC}")
+
+# Run the raytrace validation test cases
+file(APPEND "${LOGFILE}" "Running ${LINT_RAYTRACE_EXEC}\n")
+execute_process(
+  COMMAND "${LINT_RAYTRACE_EXEC}"
+  RESULT_VARIABLE lint_raytrace_result
+  OUTPUT_VARIABLE lint_raytrace_log
+  ERROR_VARIABLE lint_raytrace_log
+  WORKING_DIRECTORY "${TMPDIR}"
+)
+file(APPEND "${LOGFILE}" "${lint_raytrace_log}")
+if(lint_raytrace_result)
+  file(READ "${LOGFILE}" LOG)
+  message(FATAL_ERROR "[regress-ged_lint_raytrace] Failure: ${lint_raytrace_result}. See ${LOGFILE} for more info.\n${LOG}")
+endif(lint_raytrace_result)
+
+# Clean up
+file(REMOVE_RECURSE "${TMPDIR}")
+execute_process(
+  COMMAND "@CMAKE_COMMAND@" -E rm -rf "${BU_DIR_CACHE}"
+)
+execute_process(
+  COMMAND "@CMAKE_COMMAND@" -E rm -rf "${LIBRT_CACHE}"
+)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

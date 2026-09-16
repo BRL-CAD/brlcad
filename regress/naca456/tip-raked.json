@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "style": "raked",
+  "extension": 120.0,
+  "rake_offset": 80.0,
+  "terminal_chord": 70.0,
+  "terminal_airfoil": "0008",
+  "twist_delta": -1.5,
+  "segments": 5,
+  "cap_style": "flat"
+}

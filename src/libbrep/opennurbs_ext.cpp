@@ -1,7 +1,7 @@
 /*               O P E N N U R B S _ E X T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2007-2025 United States Government as represented by
+ * Copyright (c) 2007-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,14 +26,15 @@
 #include "common.h"
 
 #include "bio.h"
+#include <algorithm>
 #include <assert.h>
+#include <cmath>
 #include <vector>
 
 #include "vmath.h"
 
 #include "bu/log.h"
 #include "bu/malloc.h"
-#include "bu/parallel.h"
 #include "brep/defines.h"
 #include "brep/curvetree.h"
 #include "brep/surfacetree.h"
@@ -185,50 +186,33 @@ ON_Brep_Report_Faces(struct bu_vls *log, void *bp, const vect_t center, const ve
 }
 
 
-/* Implement the closest point on curve algorithm from
- * https://github.com/pboyer/verb - specifically:
- *
- * verb/src/verb/eval/Tess.hx 
- * verb/src/verb/eval/Analyze.hx 
- */
-
-struct curve_search_args {
-    const ON_NurbsCurve *nc;
-    ON_3dPoint tp;
-};
-
-int
-curve_closest_search_func(void *farg, double t, double *ft, double *dft)
-{
-    struct curve_search_args *cargs = (struct curve_search_args *)farg;
-    const ON_NurbsCurve *nc = cargs->nc;
-    ON_3dPoint tp = cargs->tp;
-    ON_3dPoint crv_pnt;
-    ON_3dVector crv_d1;
-    ON_3dVector crv_d2;
-    if (!nc->Ev2Der(t, crv_pnt, crv_d1, crv_d2)) return -1;
-    ON_3dVector fparam2 = crv_pnt - tp;
-    *ft = ON_DotProduct(crv_d1, fparam2);
-    *dft = ON_DotProduct(crv_d2, fparam2) + ON_DotProduct(crv_d1, crv_d1);
-
-    if (*ft < ON_ZERO_TOLERANCE) return 1;
-    return 0;
-}
+/* A closest-point bracket is selected from a linear scan, then refined with
+ * a bounded derivative-free search.  This avoids the legacy Newton fallback's
+ * false convergence at a bracket endpoint while retaining linear complexity
+ * in the number of NURBS control points. */
+static const size_t curve_closest_minimum_samples = 16;
+static const size_t curve_closest_samples_per_control_degree = 2;
+static const int curve_closest_refinement_iterations = 80;
 
 bool
 ON_NurbsCurve_GetClosestPoint(
 	double *t,
 	const ON_NurbsCurve *nc,
 	const ON_3dPoint &p,
-	double maximum_distance = 0.0,
-	const ON_Interval *sub_domain = NULL
+	double maximum_distance,
+	const ON_Interval *sub_domain
 	)
 {
-    if (!t || !nc) return false;
+    if (!t || !nc || !nc->IsValid() || !p.IsValid()) return false;
 
     ON_Interval domain = (sub_domain) ? *sub_domain : nc->Domain();
-    size_t init_sample_cnt = nc->CVCount() * nc->Degree();
-    double span = 1.0/(double)(init_sample_cnt);
+    if (!domain.IsIncreasing()) return false;
+    const size_t control_degree_samples = static_cast<size_t>(nc->CVCount()) *
+	static_cast<size_t>(nc->Degree()) *
+	curve_closest_samples_per_control_degree;
+    const size_t init_sample_cnt = std::max(curve_closest_minimum_samples,
+	control_degree_samples);
+    const double span = 1.0 / static_cast<double>(init_sample_cnt);
 
     // Get an initial sampling of uniform points along the active
     // curve domain
@@ -241,67 +225,77 @@ ON_NurbsCurve_GetClosestPoint(
     // Find an initial domain subset based on the breakdown into segments
     double d1 = domain.Min();
     double d2 = domain.Max();
-    double vmin = DBL_MAX;
-    for (size_t i = 0; i < pnts.size() - 1; i++) {
-	ON_Line l(pnts[i], pnts[i+1]);
-	double lt;
-	l.ClosestPointTo(p, &lt);
-	ON_3dPoint pl = l.PointAt(lt);
-	if ((lt < 0 || NEAR_ZERO(lt, ON_ZERO_TOLERANCE))) {
-	    pl = l.PointAt(0);
+    double minimum_distance_squared = DBL_MAX;
+    bool have_bracket = false;
+    for (size_t i = 0; i + 1 < pnts.size(); ++i) {
+	if (!pnts[i].IsValid() || !pnts[i + 1].IsValid())
+	    continue;
+	ON_Line segment(pnts[i], pnts[i + 1]);
+	double line_parameter = 0.0;
+	if (!segment.ClosestPointTo(p, &line_parameter) ||
+		!std::isfinite(line_parameter))
+	    continue;
+	line_parameter = std::max(0.0, std::min(1.0, line_parameter));
+	const double distance_squared =
+	    (segment.PointAt(line_parameter) - p).LengthSquared();
+	if (distance_squared < minimum_distance_squared) {
+	    minimum_distance_squared = distance_squared;
+	    d1 = domain.ParameterAt(i * span);
+	    d2 = domain.ParameterAt((i + 1) * span);
+	    have_bracket = true;
 	}
-	if ((lt > 1 || NEAR_EQUAL(lt, 1, ON_ZERO_TOLERANCE))) {
-	    pl = l.PointAt(1);
-	}
-	if (pl.DistanceTo(p) < vmin) {
-	    vmin = pl.DistanceTo(p);
-	    d1 = domain.ParameterAt(i*span);
-	    d2 = domain.ParameterAt((i+1)*span);
+    }
+    if (!have_bracket)
+	return false;
+
+    const double golden_ratio_conjugate = 0.5 * (sqrt(5.0) - 1.0);
+    const auto distance_squared = [nc, &p](double parameter) {
+	const ON_3dPoint point = nc->PointAt(parameter);
+	return point.IsValid() ? (point - p).LengthSquared() : DBL_MAX;
+    };
+
+    double left = d1;
+    double right = d2;
+    double left_interior = right -
+	golden_ratio_conjugate * (right - left);
+    double right_interior = left +
+	golden_ratio_conjugate * (right - left);
+    double left_distance = distance_squared(left_interior);
+    double right_distance = distance_squared(right_interior);
+    for (int iteration = 0; iteration < curve_closest_refinement_iterations;
+	    ++iteration) {
+	if (left_distance > right_distance) {
+	    left = left_interior;
+	    left_interior = right_interior;
+	    left_distance = right_distance;
+	    right_interior = left +
+		golden_ratio_conjugate * (right - left);
+	    right_distance = distance_squared(right_interior);
+	} else {
+	    right = right_interior;
+	    right_interior = left_interior;
+	    right_distance = left_distance;
+	    left_interior = right -
+		golden_ratio_conjugate * (right - left);
+	    left_distance = distance_squared(left_interior);
 	}
     }
 
-    // Iterate to find the closest point
-    double vdist = DBL_MAX;
-    double u = (d1 + d2) * 0.5;
-    struct curve_search_args cargs;
-    cargs.nc = nc;
-    cargs.tp = p;
-    double st;
-    int osearch = 0;
-
-    if (!nc->IsLinear(TOL2)) {
-	osearch = ON_FindLocalMinimum(curve_closest_search_func, &cargs, d1, u, d2, ON_EPSILON, 0.5*ON_ZERO_TOLERANCE, 100, &st);
-    }
-
-    if (osearch == 1) {
-
-	(*t) = st;
-	vdist = (p.DistanceTo(nc->PointAt(st)));
-
-    } else {
-
-	// ON_FindLocalMinimum failed, fall back on binary search
-	double vmin_delta = DBL_MAX;
-	ON_3dPoint p1 = nc->PointAt(d1);
-	ON_3dPoint p2 = nc->PointAt(d2);
-	double vmin_prev = (p1.DistanceTo(p) > p2.DistanceTo(p)) ? p1.DistanceTo(p) : p2.DistanceTo(p);
-	while (vmin_delta > ON_ZERO_TOLERANCE) {
-	    u = (d1 + d2) * 0.5;
-	    if (p1.DistanceTo(p) < p2.DistanceTo(p)) {
-		d2 = u;
-		p2 = nc->PointAt(u);
-	    } else {
-		d1 = u;
-		p1 = nc->PointAt(u);
-	    }
-	    vdist = (p.DistanceTo(nc->PointAt(u)));
-	    vmin_delta = fabs(vmin_prev - vdist);
-	    vmin_prev = vdist;
+    double best_parameter = left_distance <= right_distance ?
+	left_interior : right_interior;
+    double best_distance_squared = std::min(left_distance, right_distance);
+    const double endpoint_parameters[] = {d1, d2};
+    for (double endpoint : endpoint_parameters) {
+	const double endpoint_distance = distance_squared(endpoint);
+	if (endpoint_distance < best_distance_squared) {
+	    best_parameter = endpoint;
+	    best_distance_squared = endpoint_distance;
 	}
-
-	(*t) = u;
-
     }
+    if (!std::isfinite(best_distance_squared))
+	return false;
+    *t = best_parameter;
+    const double vdist = sqrt(best_distance_squared);
 
     if (maximum_distance > 0 && vdist > maximum_distance) return false;
 
@@ -1128,12 +1122,20 @@ CurveTree::isLinear(const ON_Curve* curve, double min, double max) const
 
 //--------------------------------------------------------------------------------
 // SurfaceTree
+struct SurfaceSplitCache {
+    const ON_Surface *surface = NULL;
+    ON_Interval domain[2];
+    std::vector<double> spans[2];
+};
+
+
 SurfaceTree::SurfaceTree(const ON_BrepFace* face, bool removeTrimmed, int depthLimit, double within_distance_tol) :
     m_ctree(NULL),
     m_removeTrimmed(removeTrimmed),
     m_face(face),
     m_root(NULL),
-    m_f_queue(new std::queue<ON_Plane *>)
+    m_f_queue(new std::queue<ON_Plane *>),
+    m_split_cache(new SurfaceSplitCache)
 {
     // build the surface bounding volume hierarchy
     const ON_Surface* surf = face->SurfaceOf();
@@ -1216,6 +1218,7 @@ SurfaceTree::~SurfaceTree()
     delete m_ctree;
     delete m_root;
     delete m_f_queue;
+    delete m_split_cache;
 }
 
 
@@ -1487,41 +1490,27 @@ initialBBox(const CurveTree* ctree, const ON_Surface* surf, const ON_Interval& u
 }
 
 
-// Cache surface information as file static to ensure initialization once;
-static const ON_Surface *prev_surf[MAX_PSW] = {NULL};
-static ON_Interval dom[MAX_PSW][2];
-static int span_cnt[MAX_PSW][2] = {{0, 0}};
-static double *span[MAX_PSW][2] = {{NULL, NULL}};
-
 bool
-hasSplit(const ON_Surface *surf, const int dir, const ON_Interval& interval, double &split)
+SurfaceTree::hasSplit(const ON_Surface *surf, const int dir,
+    const ON_Interval& interval, double &split) const
 {
-    int p = bu_parallel_id();
-    if (surf == NULL) {
-	// clean up statics and return
-	prev_surf[p] = NULL;
-	for(int i=0; i<2; i++) {
-	    span_cnt[p][i] = 0;
-	    if (span[p][i])
-		bu_free(span[p][i], "surface span vector");
-	    span[p][i] = NULL;
-	    dom[p][i] = ON_Interval::EmptyInterval;
-	}
-
+    if (!surf || !m_split_cache)
 	return false;
-    }
-    if (prev_surf[p] != surf) {
-	// load new surf info
-	for(int i=0; i<2; i++) {
-	    dom[p][i] = surf->Domain(i);
-	    span_cnt[p][i] = surf->SpanCount(i);
-	    if (span[p][i])
-		bu_free(span[p][i], "surface span vector");
-	    span[p][i] = (double *)bu_malloc((unsigned)(span_cnt[p][i]+1) * sizeof(double), "surface span vector");
-	    surf->GetSpanVector(i, span[p][i]);
-	}
 
-	prev_surf[p] = surf;
+    /* Keep knot data with the tree that consumes it.  The old file-static
+     * cache was keyed by bu_parallel_id(), which is not unique for the C++
+     * worker threads used by the STEP converters.  It also retained dangling
+     * surface pointers after a tree was destroyed, so allocator address reuse
+     * could select stale knot data while processing a later solid. */
+    SurfaceSplitCache &cache = *m_split_cache;
+    if (cache.surface != surf) {
+	for(int i=0; i<2; i++) {
+	    cache.domain[i] = surf->Domain(i);
+	    const int span_count = surf->SpanCount(i);
+	    cache.spans[i].resize((size_t)span_count + 1);
+	    surf->GetSpanVector(i, cache.spans[i].data());
+	}
+	cache.surface = surf;
     }
 
     // find direction split based on setting of 'dir'
@@ -1529,28 +1518,29 @@ hasSplit(const ON_Surface *surf, const int dir, const ON_Interval& interval, dou
     // first, if closed in 'dir' check to see if it extends over seam and use that as split
     if (surf->IsClosed(dir)) {
 	bool testOpen = true;
-	if (interval.Includes(dom[p][dir].m_t[0], testOpen)) { //crosses lower boundary
-	    split = dom[p][dir].m_t[0];
+	if (interval.Includes(cache.domain[dir].m_t[0], testOpen)) { //crosses lower boundary
+	    split = cache.domain[dir].m_t[0];
 	    return true;
-	} else if (interval.Includes(dom[p][dir].m_t[1], testOpen)) { //crosses upper boundary
-	    split = dom[p][dir].m_t[1];
+	} else if (interval.Includes(cache.domain[dir].m_t[1], testOpen)) { //crosses upper boundary
+	    split = cache.domain[dir].m_t[1];
 	    return true;
 	}
     }
 
     // next lets see if we have a knots in interval, if so split on middle knot
-    if (span_cnt[p][dir] > 1) {
+    const int span_count = (int)cache.spans[dir].size() - 1;
+    if (span_count > 1) {
 	int sum = 0;
 	int cnt = 0;
-	for(int i=0; i<span_cnt[p][dir]+1; i++) {
+	for(int i=0; i<span_count+1; i++) {
 	    bool testOpen = true;
-	    if (interval.Includes((span[p][dir])[i], testOpen)) { //crosses lower boundary
+	    if (interval.Includes(cache.spans[dir][i], testOpen)) { //crosses lower boundary
 		sum = sum + i;
 		cnt++;
 	    }
 	}
 	if (cnt > 0) {
-	    split = (span[p][dir])[sum/cnt];
+	    split = cache.spans[dir][sum/cnt];
 	    return true;
 	}
     }

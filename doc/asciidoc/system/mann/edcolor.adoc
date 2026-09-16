@@ -1,0 +1,49 @@
+= EDCOLOR(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+edcolor - Puts the user into an editor to edit a file that has been filled with the ident-based color lookup table.
+
+== SYNOPSIS
+
+[source]
+----
+edcolor [] []
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Puts the user into an editor to edit a file that has been filled with the ident-based color lookup table. The entire table may be seen with the *prcolor* command, and entries may be added using the color command. The editor used is whatever the user has set in the environment variable _EDITOR_. If _EDITOR_ is not set, then _/bin/ed_ is used.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *edcolor* command to edit the color table.
+
+.Edit the color table.
+[example]
+====
+
+mged> **edcolor**::
+The user can now edit the color table.
+
+
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

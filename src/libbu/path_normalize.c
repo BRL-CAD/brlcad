@@ -47,7 +47,7 @@ bu_path_normalize(const char *path)
     static char resolved[MAXPATHLEN] = {0};
     const char *q;
     char *p;
-    if (!path) return (NULL);
+    if (!path) return ((const char *)NULL);
 
     /*
      * `p' is where we'll put a new component with prepending
@@ -55,7 +55,7 @@ bu_path_normalize(const char *path)
      */
     p = resolved;
 
-    if (*path == 0) return (NULL);
+    if (*path == 0) return ((const char *)NULL);
 
 loop:
     /* Skip any slash. */
@@ -96,7 +96,7 @@ loop:
 	if (p == resolved)
 	    *p++ = '/';
 	*p = 0;
-	return (NULL);
+	return ((const char *)NULL);
     }
     p[0] = '/';
     memcpy(&p[1], path,

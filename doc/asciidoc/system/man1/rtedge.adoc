@@ -1,0 +1,399 @@
+= RTEDGE(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+rtedge - ray-trace a model and render an edge (hidden-line) image
+
+== SYNOPSIS
+
+[source]
+----
+rtedge [options] model.g [objects...]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*rtedge* ray-traces the listed _objects_ in the BRL-CAD database _model.g_
+and produces an edge (hidden-line) image rather than a shaded rendering.
+By default it writes white edges on a near-black background to a framebuffer;
+with *-o* it writes a *pix*(5) or *png* image file instead.
+
+If no _objects_ are listed, *rtedge* uses the same automatic default-object
+selection described in *rt*(1).  If no single usable default can be resolved,
+it aborts before rendering.
+
+An edge is drawn wherever adjacent rays differ enough in one of four
+detectable properties: region id (*detect_ids*, on), line-of-sight hit
+distance (*detect_distance*, on), surface normal (*detect_normals*, on), or
+region membership (*detect_regions*, off). Each detector is toggled with the
+*-c* configuration option (see below), allowing the recognition of
+silhouettes, occluding contours, pits, protrusions, and changes in
+curvature. *rtedge* replaced the obsolete *lgt* utility.
+
+The view may be specified two ways. With *-a* and *-e* the model is
+autosized and a grid is centered on the model so the rays span the selected
+object set.
+Alternatively, with *-M*, a model-to-view matrix (and optional animation
+script) is read from standard input; this is the form produced by the *mged*(1)
+_saveview_ command, with the grid size set by *-s*. *-M* conflicts with
+*-a*/*-e*.
+
+*rtedge* is a front end to *librt*(3) and shares its large option set with
+*rt*(1). Beyond plain edges, it can use region colors, overlay edges onto an
+existing framebuffer image, and perform occlusion checking between two object
+sets (see ADDITIONAL OPTIONS and OCCLUSION CHECKING).
+
+[[options]]
+== OPTIONS
+
+*-o* _output.pix_::
+  Write the image to a *pix*(5) or *png* file instead of a framebuffer.
+  *pix-fb*(1) can later display ".pix" files. Using *-o* disables overlay and
+  blend modes and forces serial processing.
+
+*-O* _output.dpix_::
+  Write a double-precision floating-point image; convert later with
+  *dpix-pix*(1).
+
+*-F* _framebuffer_::
+  Send output to the named framebuffer. Required (instead of *-o*) for overlay
+  and occlusion renderings.
+
+*-s* _#_::
+  Square grid size: fire _#_ rays in X and Y (default 512, i.e. 512x512).
+
+*-w* _#_::
+  Image width in pixels.
+
+*-n* _#_::
+  Image height in scanlines.
+
+*-g* _#_::
+  Grid cell width in millimeters. If set without *-G*, cell height defaults to
+  the same value. Use *-g25.4* for exactly 1-inch ray spacing.
+
+*-G* _#_::
+  Grid cell height in millimeters. If set without *-g*, cell width defaults to
+  the same value.
+
+*-a* _deg_::
+  Auto-size and set view azimuth in degrees. Used with *-e*; conflicts with *-M*.
+
+*-e* _deg_::
+  Auto-size and set view elevation in degrees. Used with *-a*; conflicts with *-M*.
+
+*-p* _deg_::
+  Perspective angle in degrees, 0 <= deg < 180 (0 means orthographic).
+
+*-E* _#_::
+  Distance from the eye point to the center of the model RPP (default sqrt(2)).
+  Only meaningful with auto-sizing; conflicts with *-M*.
+
+*-V* _#[:#]_::
+  View aspect ratio, width over height, as a fraction or colon ratio
+  (e.g. *-V1.33* or *-V4:3*).
+
+*-M*::
+  Read the model2view matrix and any animation script from standard input.
+  Conflicts with *-a* and *-e*.
+
+*-j* _xmin,ymin,xmax,ymax_::
+  Ray-trace only the sub-rectangle bounded by the given lower-left and
+  upper-right pixel corners (both inclusive). Used by *mged*(1) to sweep out
+  a portion of the view.
+
+*-k* _xdir,ydir,zdir,dist_ | _x,y,z,nx,ny,nz_ | _x,y,z_::
+  Apply a cutting plane, approximating subtraction of a halfspace from the
+  scene (faster than an actual subtraction). The plane may be given as a
+  normal plus signed distance, a point plus a normal, or a single point whose
+  coordinates serve as both. Explicit lights still cast shadows from cut-away
+  geometry.
+
+*-A* _#_::
+  Ambient light intensity as a fraction 0.0-1.0.
+
+*-l* _#[,args]_::
+  Select the lighting model (default 0). Model 0 is full lighting; 1 and 3 are
+  diffuse debugging models; 2 displays surface normals as colors; 4 and 5 are
+  curvature debugging displays; 6 displays the UV parameterization; 7 enables
+  photon-mapped global illumination. Photon-map arguments are appended to
+  *-l7*, for example *-l7,16384,0,10,60.0,0,0,0,0,1.0,scene.pm*; light sources
+  must be defined explicitly with lumens.
+
+*-m* _density,r,g,b_::
+  Exponential shading of the void between the eye and first hit, cheaply
+  simulating atmospheric haze: color = color*f + haze*(1-f) where
+  f = e^(-distance*density). The RGB triple is optional (default .8 .9 .99).
+  Example: *-m 2.5e-8,.75,.95,.99*.
+
+*-i*::
+  Incremental (progressive-style) rendering: rays are fired at recursively
+  subdivided resolutions until the full grid is reached. Assumes a square image.
+
+*-t*::
+  Render top-to-bottom (default is bottom-up).
+
+*-S*::
+  Stereo viewing: the left-eye image is drawn in red, the right-eye in blue.
+
+*-H* _#_::
+  Hypersample: fire _#_ extra rays per pixel and average them. Automatically
+  enables *-J 1*.
+
+*-J* _#_::
+  Jitter bit vector. 1 randomizes each ray origin by +/- half a pixel;
+  2 shifts the output frame origin along a circular path each frame; 3 does both.
+
+*-u* _units_::
+  Display units; "model" uses the database's local model units.
+
+*-U* _#_::
+  Set the librt _use_air_ flag (default 0 ignores air-coded regions).
+
+*-T* _#[/#]_ or _#[,#]_::
+  Calculation tolerances: distance, optionally followed by perpendicularity
+  (separated by "/" or ","). Defaults are 0.005mm distance and 1e-6
+  perpendicular, i.e. *-T0.005/1e-6*.
+
+*-z* _#_::
+  Enable OpenCL-accelerated ray-tracing (only if compiled in).
+
+*-c* _command_::
+  Execute an *rt* script command before ray-tracing. *rtedge* makes heavy use
+  of *-c* "set ..." to configure its behavior; see ADDITIONAL OPTIONS.
+
+*-d* _file_::
+  Density definitions file.
+
+*-D* _#_::
+  Starting (desired) frame number for animation scripts; pair with *-K*.
+
+*-K* _#_::
+  Ending (kill-after) frame number for animation scripts; pair with *-D*.
+
+*-b* _index|"x y"_::
+  Fire a single debug ray at a linear pixel index or at pixel (x, y), and
+  force serial execution. Coordinate pairs must be combined into one quoted
+  argument. Best used with debugging options, and must follow any viewing
+  parameters.
+
+*-Q* _x,y_::
+  Compute the full image but enable debug flags only for the pixel (x, y).
+  Unlike *-b*, the whole image is still rendered.
+
+*-I* _file_::
+  Read object names from a text file, one per line, instead of the command line.
+
+*-C* _#/#/#_::
+  Background color as R/G/B, each 0-255 or 0.0-1.0. Non-background colors are
+  dithered away from this value.
+
+*-W*::
+  Use a white background (1.0/1.0/1.0) and swap the foreground and background
+  colors, producing black edges on white.
+
+*-r*::
+  Report overlapping region names (on by default); opposite of *-R*.
+
+*-R*::
+  Suppress overlap region name reports; opposite of *-r*.
+
+*-B*::
+  Benchmark mode: disable all intentional randomness (ray dither, color
+  dither, etc.) for reproducible timing and result comparison.
+
+*-P* _#_::
+  Maximum number of processor cores to use (default is all available; a
+  negative value means use all except that many).
+
+*-+* _t_::
+  Output mode modifier; *-+ t* selects non-binary (text) output. Output is
+  binary by default.
+
+*-v* _[#]_::
+  Set verbosity. Repeat the letter (e.g. *-vvvv*) to raise the level, or give a
+  specific hexadecimal mask (e.g. *-v 0xff010030*) to enable message categories.
+
+*-x* _#_::
+  Set librt debug flags to the given hexadecimal bit vector (see raytrace.h).
+
+*-X* _#_::
+  Set rt optical/program debug flags to the given hexadecimal bit vector.
+
+*-N* _#_::
+  Set libnmg debug flags to the given hexadecimal bit vector (see nmg.h).
+
+*-!* _#_::
+  Set libbu debug flags to the given hexadecimal bit vector (see bu.h).
+  *-!1* causes *bu_bomb()* to dump core for use with *gdb*(1).
+
+*-q* _#_::
+  Size of the random-number half-table.
+
+*-,* _#_::
+  Space-partition algorithm selector. Temporarily disabled; *rtedge* exits with
+  an error if used.
+
+*-h* or *-?*::
+  Print help and exit.
+
+[[additional_options]]
+== ADDITIONAL OPTIONS
+
+In addition to plain white-on-black (or black-on-white) edges, *rtedge*
+supports arbitrary colors, rendering into an existing framebuffer, and
+occlusion detection. These behaviors are configured through the *-c* "set ..."
+mechanism because *librt*(3) has consumed nearly the entire single-letter
+option space. Each variable has a long and short name and accepts settings of
+the form *-c "set name=value"*; multiple settings may be combined in one
+quoted *-c* argument.
+
+*-c "set foreground=#,#,#"* (or *fg*)::
+  Edge color as an r,g,b triple (each 0-255 or 0.0-1.0). Default white
+  (255/255/255).
+
+*-c "set background=#,#,#"* (or *bg*)::
+  Background color as an r,g,b triple. Default near-black (0,0,1).
+
+*-c "set region_color=#"* (or *rc*)::
+  Use each object's material color as its edge color: 1 (on) or 0 (off,
+  default). Overrides any foreground color.
+
+*-c "set detect_regions=#"* (or *dr*)::
+  Treat the boundary between two BRL-CAD regions as an edge: 1 or 0 (default 0).
+
+*-c "set detect_distance=#"* (or *dd*)::
+  Treat a difference in hit distance between adjacent pixels as an edge: 1
+  (default) or 0.
+
+*-c "set detect_normals=#"* (or *dn*)::
+  Treat a difference in surface normals between adjacent pixels as an edge: 1
+  (default) or 0.
+
+*-c "set detect_ids=#"* (or *di*)::
+  Treat a difference in region id numbers between adjacent pixels as an edge:
+  1 (default) or 0.
+
+*-c "set overlay=#"* (or *ov*)::
+  Overlay mode (1 on, 0 off): write only edge pixels into the existing
+  framebuffer specified with *-F*.
+
+*-c "set blend=#"* (or *bl*)::
+  Blend edge pixels with the existing framebuffer image using HSV
+  manipulation (1 on, 0 off).
+
+*-c "set max_dist=#"* (or *md*)::
+  Override the maximum neighboring hit-distance difference before a pixel is
+  declared an edge. The default is computed from the image size.
+
+*-c "set antialias=#"* (or *aa*)::
+  Sub-pixel antialiasing of edges: 1 on, 0 off (default).
+
+*-c "set both_sides=#"* (or *bs*)::
+  Render both sides of an edge, giving edges twice the thickness; works well
+  with antialiasing. 1 on, 0 off (default).
+
+*-c "set draw_axes=#"* (or *da*)::
+  Draw labeled, axis-aligned X/Y/Z axes at the model origin (for front, top,
+  and left views): 1 on, 0 off (default).
+
+[[occlusion_checking]]
+== OCCLUSION CHECKING
+
+*rtedge* can perform occlusion checking between two sets of objects from the
+same database, determining which set is closer to the eye and should be drawn.
+The first set is the object list on the command line (rendered as edges); the
+second is given via *-c*. This is most useful for compositing *rtedge* output
+with *rt*(1) renderings.
+
+*-c "set occlusion_objects=\"obj1 obj2 ... objN\""* (or *oo*)::
+  Specify the second (occluding) set of geometry.
+
+*-c "set occlusion_mode=#"* (or *om*)::
+  How occlusion is handled. *Mode 1 (EDGES)* draws only first-set edge pixels
+  not occluded by the second set. *Mode 2 (ALL HITS, default)* draws all
+  first-set hits not occluded, edges in foreground color and non-edges in
+  background color. *Mode 3 (DITHER)* is like mode 2 but dithers non-edge
+  pixels so the exterior geometry appears semi-transparent.
+
+[[examples]]
+== EXAMPLES
+
+.Plain edge image to a file
+====
+[source,bash]
+----
+rtedge -s 1024 -o havoc.pix havoc.g havoc
+----
+Produces a 1024x1024 image of white edges on a black background for the
+_havoc_ object in havoc.g. Edges appear where there are differences in region
+id, hit distance, or surface normal, or between hits and misses.
+====
+
+.Colored edges using region colors
+====
+[source,bash]
+----
+rtedge -s 1024 -o havoc.pix -c "set rc=1 dr=1" havoc.g havoc
+----
+Enables region-boundary detection and colors each edge with its region's
+material color instead of the default white.
+====
+
+.Overlaying edges on a shaded rt rendering with occlusion
+====
+[source,bash]
+----
+#!/bin/sh
+# First render the weapons in full color to a framebuffer file.
+rt -M -s1280 -F new.pix -C255/255/255 havoc.g weapons 2>> ex.log << EOF
+viewsize 8.000e+03;
+orientation 2.4809e-01 4.7650e-01 7.4809e-01 3.8943e-01;
+eye_pt 2.2146e+04 7.1103e+03 7.1913e+03;
+start 0; clean; end;
+EOF
+
+# Then overlay black edges of the airframe, dithering occluded non-edges.
+rtedge -M -s1280 -F new.pix \
+    -c "set dr=1 dn=1 om=3" \
+    -c "set fg=0,0,0 bg=200,200,200" \
+    -c "set oo=\"weapons\"" \
+    havoc.g havoc_front havoc_middle havoc_tail landing_gear main_rotor \
+    2>> ex.log << EOF
+viewsize 8.000e+03;
+orientation 2.4809e-01 4.7650e-01 7.4809e-01 3.8943e-01;
+eye_pt 2.2146e+04 7.1103e+03 7.1913e+03;
+start 0; clean; end;
+EOF
+----
+Composites *rtedge* and *rt*(1) into one image: the weapons are shown in full
+color while the rest of the aircraft is rendered as black edges, with occluded
+non-edge pixels dithered to look semi-transparent. Using matched *saveview*
+matrices on stdin (*-M*) keeps the two passes aligned, and *-F* (not *-o*) is
+required for overlay and occlusion modes.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *rt*(1), *mged*(1), *pix-fb*(1), *dpix-pix*(1), *fbserv*(1),
+*pix*(5), *librt*(3)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,0 +1,42 @@
+= NMG_MM(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+nmg_mm - create a new empty NMG model
+
+== SYNOPSIS
+
+[source]
+----
+nmg_mm name
+----
+
+[[description]]
+== DESCRIPTION
+
+The *nmg_mm* command creates a new, empty NMG (Non-Manifold Geometry) model structure in the database under the given `name`. The resulting object contains an initialized model with no regions, shells, faces, edges, or vertices — it is the starting point for building NMG geometry programmatically with subsequent `nmg_cmface` or `nmg make V` operations.
+
+The *nmg_mm* command is the standalone form of the `nmg <object> mm` subcommand.
+
+[[examples]]
+== EXAMPLES
+
+.Create an empty NMG model
+[example]
+====
+mged> **nmg_mm my_nmg.s**
+
+Creates an empty NMG model named `my_nmg.s` in the database, ready to have faces and vertices added.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

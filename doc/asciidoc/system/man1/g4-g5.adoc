@@ -1,0 +1,74 @@
+= G4-G5(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+g4-g5 - convert a BRL-CAD version 4 geometry database to version 5
+
+== SYNOPSIS
+
+[source]
+----
+g4-g5 v4.g v5.g
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*g4-g5* reads the objects stored in a version 4 ("v4") BRL-CAD geometry
+database and writes out the equivalent objects in the current version 5
+("v5") ".g" format. Every object in the input database is read into its
+in-memory representation and re-exported to the output database.
+
+During conversion a few object types are updated to their modern
+equivalents:
+
+* the *plastic* shader name found in combination shader strings is
+  rewritten as *phong*;
+* height-field (HF) solids are converted to displacement-map (DSP)
+  solids;
+* polysolids (POLY) are converted to bags of triangles (BOT).
+
+Both _v4.g_ (the input) and _v5.g_ (the output) file names are required
+and must name different files. The input must be a version 4 database;
+*g4-g5* aborts if it is given a database of any other version. Objects
+that cannot be read or written are skipped, and the number of objects
+that failed to convert is reported on standard error when the run
+completes.
+
+The related program *dbupgrade*(1) provides a more general database
+upgrade path and is the recommended tool for routine version upgrades.
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *g5-g4*(1), *dbupgrade*(1), *mged*(1)
+
+
+[[diagnostics]]
+== DIAGNOSTICS
+
+Descriptive messages are printed on standard error. The name of each
+object is echoed as it is processed, and objects that fail to convert are
+reported individually before a final count of failures is printed.
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 2004-2026 United States Government as represented by the U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

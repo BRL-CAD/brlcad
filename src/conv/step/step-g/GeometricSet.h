@@ -1,7 +1,7 @@
 /*                 GeometricSet.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2025 United States Government as represented by
+ * Copyright (c) 1994-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -40,6 +40,7 @@ class GeometricSet: public GeometricRepresentationItem
 {
 private:
     static string entityname;
+    static string curve_entityname;
     static EntityInstanceFunc GetInstance;
 
 protected:

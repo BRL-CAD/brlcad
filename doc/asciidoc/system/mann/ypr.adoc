@@ -1,0 +1,81 @@
+= YPR(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+ypr - get or set the view orientation as yaw, pitch, and roll angles
+
+== SYNOPSIS
+
+[source]
+----
+ypr
+ypr yaw pitch roll
+----
+
+
+[[description]]
+== DESCRIPTION
+
+The *ypr* command gets or sets the current view orientation expressed as yaw, pitch, and roll angles in degrees.
+
+With no arguments, *ypr* returns the current view orientation as three space-separated floating-point values: `yaw pitch roll`, in degrees.
+
+With three arguments, *ypr* sets the view rotation to the specified yaw, pitch, and roll values and updates the display.
+
+Angles are in degrees:
+
+* *Yaw* — rotation about the vertical (Z) axis. Positive yaw rotates the view to the right.
+* *Pitch* — rotation about the lateral (Y) axis. Positive pitch tilts the view upward.
+* *Roll* — rotation about the depth (X) axis. Positive roll rotates the view clockwise.
+
+Any number of arguments other than 0 or 3 returns a usage error.
+
+This command is also accessible as a subcommand of *view_func*: `view_func ypr [yaw pitch roll]`.
+
+[[examples]]
+== EXAMPLES
+
+.Get the current view orientation
+[example]
+====
+mged> **ypr**
+
+Returns the current view yaw, pitch, and roll in degrees, for example: `35.0 25.0 0.0`.
+====
+
+.Set the view to a specific yaw/pitch/roll
+[example]
+====
+mged> **ypr 45 30 0**
+
+Sets the view to a yaw of 45°, pitch of 30°, and roll of 0°.
+====
+
+.Save and restore view orientation
+[example]
+====
+mged> **set orientation [ypr]**
+mged> **ypr 90 0 0**
+mged> **ypr {*}$orientation**
+
+Saves the current orientation, applies a temporary 90° yaw, then restores the original orientation.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*aet*(nged), *quat*(nged), *view_func*(nged)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

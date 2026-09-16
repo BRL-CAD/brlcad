@@ -1,7 +1,7 @@
 /*                         P A R S E R . H
  * BRL-CAD
  *
- * Copyright (c) 2015-2025 United States Government as represented by
+ * Copyright (c) 2015-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -73,5 +73,5 @@ class PARSER
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:
- * ex: shiftwidth=4 tabstop=8
+ * ex: shiftwidth=4 tabstop=8 cino=N-s
  */

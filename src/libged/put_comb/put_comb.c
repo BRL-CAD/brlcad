@@ -1,7 +1,7 @@
 /*                         P U T _ C O M B . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -50,7 +50,7 @@ make_tree(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp,
     union tree *final_tree;
 
     if (tree_index)
-	final_tree = (union tree *)db_mkgift_tree(rt_tree_array, node_count, &rt_uniresource);
+	final_tree = (union tree *)db_mkgift_tree(rt_tree_array, node_count);
     else
 	final_tree = (union tree *)NULL;
 
@@ -91,7 +91,7 @@ make_tree(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp,
     else
 	dp->d_flags &= ~RT_DIR_REGION;
 
-    if (rt_db_put_internal(dp, gedp->dbip, &intern, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(dp, gedp->dbip, &intern) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "make_tree: Unable to write combination to database.\n");
 	return BRLCAD_ERROR;
     }
@@ -150,7 +150,7 @@ save_comb(struct ged *gedp, struct directory *dpold)
     /* Make a temp name */
     const char *name = mktemp_comb(gedp, tmpcomb);
 
-    if (rt_db_get_internal(&intern, dpold, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dpold, gedp->dbip, (fastf_t *)NULL) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "save_comb: Database read error, aborting\n");
 	return NULL;
     }
@@ -161,7 +161,7 @@ save_comb(struct ged *gedp, struct directory *dpold)
 	return NULL;
     }
 
-    if (rt_db_put_internal(dp, gedp->dbip, &intern, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(dp, gedp->dbip, &intern) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "save_comb: Cannot save copy of %s, no changed made\n", dpold->d_namep);
 	return NULL;
     }
@@ -521,7 +521,7 @@ ged_put_comb_core(struct ged *gedp, int argc, const char *argv[])
 	    return BRLCAD_ERROR;
 	}
 
-	if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+	if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: Database read error, aborting\n", cmd_name);
 	    return BRLCAD_ERROR;
 	}
@@ -533,7 +533,7 @@ ged_put_comb_core(struct ged *gedp, int argc, const char *argv[])
 
     /* empty the existing combination */
     if (comb) {
-	db_free_tree(comb->tree, &rt_uniresource);
+	db_free_tree(comb->tree);
 	comb->tree = NULL;
     } else {
 	/* make an empty combination structure */
@@ -593,24 +593,13 @@ ged_put_comb_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl put_comb_cmd_impl = {
-    "put_comb",
-    ged_put_comb_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd put_comb_cmd = { &put_comb_cmd_impl };
-const struct ged_cmd *put_comb_cmds[] = { &put_comb_cmd, NULL };
+#define GED_PUT_COMB_COMMANDS(X, XID) \
+    X(put_comb, ged_put_comb_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  put_comb_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_PUT_COMB_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_put_comb", 1, GED_PUT_COMB_COMMANDS)
 
 /*
  * Local Variables:

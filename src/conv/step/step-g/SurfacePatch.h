@@ -1,7 +1,7 @@
 /*                 SurfacePatch.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2025 United States Government as represented by
+ * Copyright (c) 1994-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -39,8 +39,8 @@ private:
 
 protected:
     BoundedSurface *parent_surface;
-    Transition_code u_transition;
-    Transition_code v_transition;
+    int u_transition;
+    int v_transition;
     Boolean u_sense;
     Boolean v_sense;
 

@@ -1,0 +1,70 @@
+= LIBBU(3)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+libbu - BRL-CAD utility library
+
+== SYNOPSIS
+
+[source,c]
+----
+#include <bu.h>
+----
+
+Link with *-lbu*.
+
+The public interface is organized across the headers included by
+_bu.h_, including _bu/app.h_, _bu/avs.h_, _bu/bitv.h_, _bu/cmd.h_,
+_bu/color.h_, _bu/list.h_, _bu/log.h_, _bu/malloc.h_, _bu/opt.h_,
+_bu/parallel.h_, _bu/ptbl.h_, _bu/str.h_, and _bu/vls.h_, among others.
+
+== DESCRIPTION
+
+LIBBU is BRL-CAD's utility library; the two letters "BU" stand for
+"BRL-CAD" and "Utility". It provides several layers of low-level utility
+routines that make cross-platform coding easier, serving as a general
+extension to the data types offered by the C language and to the basic C
+runtime provided by the system C library.
+
+Facilities provided by the library include parallel-processing support
+(threads, semaphores, and parallel-safe memory allocation), consolidated
+logging and error handling (_bu_log()_, _bu_exit()_, and _bu_bomb()_),
+dynamic memory management (_bu_malloc()_ and related routines),
+variable-length strings (_struct bu_vls_), linked lists, pointer and
+bit vectors, attribute/value sets, command dispatch, option parsing, and
+numerous string and path helpers. All routines in LIBBU are designed to
+be parallel-safe (thread-safe) to ease development for multiprocessor
+systems.
+
+By design, none of the routines in this library depend on data types
+defined in other BRL-CAD headers such as _vmath.h_; numerical routines
+that build on those types are found in libbn. All truly fatal errors
+detected by the library use _bu_bomb()_ to exit with a status of 12, and
+the LIBBU variants of system calls (for example _bu_malloc()_) do not
+return to the caller unless they succeed, sparing the programmer from
+constant NULL checks.
+
+The complete API, including data structures and function signatures, is
+documented in the headers noted above and in the Doxygen-generated
+reference for the LIBBU module.
+
+== SEE ALSO
+
+*brlcad*(1), *libbn*(3), *libbg*(3), *librt*(3)
+
+The BRL-CAD Doxygen API reference provides the authoritative,
+up-to-date description of all public LIBBU routines.
+
+== AUTHOR
+
+BRL-CAD Team
+
+== COPYRIGHT
+
+This software is Copyright (c) 2004-2026 United States Government as represented by the U.S. Army Research Laboratory.
+
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

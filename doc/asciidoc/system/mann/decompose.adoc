@@ -1,0 +1,47 @@
+= DECOMPOSE(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+decompose - Processes an NMG shape and produces a series of new _NMG_ shapes consisting of each maximally connected shell in the original _NMG_ shape.
+
+== SYNOPSIS
+
+[source]
+----
+decompose {NMG_shape} [prefix]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Processes an NMG shape and produces a series of new _NMG_ shapes consisting of each maximally connected shell in the original _NMG_ shape. If an optional prefix is supplied, the resulting _NMG_ shapes will be named by using the prefix and adding an underscore character and a number to make the name unique. If no prefix is supplied, the default prefix "sh" will be used.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *decompose* command (with an optional prefix) to decompose an NMG shape into shells, which are then put into separate, uniquely named NMG shapes.
+
+.Decompose an NMG shape into shells, which are then put into separate, uniquely named NMG shapes.
+[example]
+====
+mged>**decompose shape.nmg part**
+
+Decomposes the _NMG_ shape named _shape.nmg_ into maximally connected shells and puts each resulting shell into a separate _NMG_ shape named __part_1, part_2, ....__
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

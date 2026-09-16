@@ -1,7 +1,7 @@
 /*                        B O T . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2025 United States Government as represented by
+ * Copyright (c) 1993-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -126,8 +126,44 @@ RT_EXPORT extern int rt_bot_smooth(struct rt_bot_internal *bot,
 				   fastf_t normal_tolerance_angle);
 RT_EXPORT extern int rt_bot_flip(struct rt_bot_internal *bot);
 RT_EXPORT extern int rt_bot_sync(struct rt_bot_internal *bot);
+
+/**
+ * Build a compact BOT from replacement faces whose vertex indices reference
+ * the source BOT.  face_sources maps every replacement face to its original
+ * source face, allowing thickness, face mode, normals, and texture UVs to be
+ * preserved.  Replacement triangles must retain the corner ordering of their
+ * source faces; face_sources identifies faces but does not describe a separate
+ * corner permutation.  The caller owns the returned BOT.
+ *
+ * Returns NULL for malformed input or an invalid vertex or face reference.
+ */
+RT_EXPORT extern struct rt_bot_internal *rt_bot_gc(
+	const struct rt_bot_internal *bot, const int *faces,
+	const int *face_sources, size_t face_count);
+
+/**
+ * Build a compact BOT from selected input faces.  face_indices identifies the
+ * original faces, in output order, so all per-face and per-corner data can be
+ * preserved and remapped along with the referenced vertices.  This is the
+ * convenience form of rt_bot_gc for unchanged source faces.  The caller owns
+ * the returned BOT.
+ *
+ * Returns NULL for malformed input or an invalid face reference.
+ */
+RT_EXPORT extern struct rt_bot_internal *rt_bot_subset(
+	const struct rt_bot_internal *bot, const int *face_indices,
+	size_t face_count);
+
+/**
+ * Split a BOT into edge-connected triangle components.  A connected BOT
+ * returns an allocated empty list.  On success with multiple components, each
+ * list entry owns a compact BOT preserving all source face-indexed data.
+ * Returns NULL on malformed input or another processing failure.
+ */
 RT_EXPORT extern struct rt_bot_list * rt_bot_split(struct rt_bot_internal *bot);
 RT_EXPORT extern struct rt_bot_list * rt_bot_patches(struct rt_bot_internal *bot);
+
+/** Free a BOT list.  If fbflag is non-zero, also free each contained BOT. */
 RT_EXPORT extern void rt_bot_list_free(struct rt_bot_list *headRblp,
 				       int fbflag);
 
@@ -167,11 +203,15 @@ RT_EXPORT extern int rt_bot_decimate(struct rt_bot_internal *bot,
  * geometry and fine features. In essence, feature_size acts as a filter for
  * the geometric fidelity of the simplified mesh.
  *
- * Note that feature_size is NOT a direct geometric measure, but is transformed
- * internally into a collapse cost threshold.  The detailed geometric
- * consequences of the feature_size parameter on the output are an
- * implementation detail, so calling codes may see differences in output meshes
- * between different library versions for the same feature_size parameter.
+ * feature_size is transformed internally into a collapse cost threshold, so
+ * it does not directly specify the output triangle size.  As a safety
+ * postcondition, every referenced output vertex is nevertheless required to
+ * lie within feature_size of the original surface.  A candidate that violates
+ * that limit is rejected and the input BOT is left unchanged.  The detailed
+ * output topology remains an implementation detail, so calling codes may see
+ * different meshes between library versions for the same feature_size.
+ * Face provenance is retained through the operation so plate thickness, face
+ * mode, normals, and texture UVs remain associated with their source faces.
  */
 RT_EXPORT extern size_t rt_bot_decimate_gct(struct rt_bot_internal *bot, fastf_t feature_size);
 
@@ -190,7 +230,16 @@ struct rt_bot_repair_info {
     fastf_t max_hole_area;
     fastf_t max_hole_area_percent;
     int strict;
+
+    // Info about generated output
+    int output_nonmanifold;
+    int output_lint_fail;
+    fastf_t output_volume;
+    unsigned int output_data_loss;
 };
+
+#define RT_BOT_REPAIR_LOST_NORMALS 0x01
+#define RT_BOT_REPAIR_LOST_UVS     0x02
 
 /* For now the default upper hole size limit will be 5 percent of the mesh
  * area, but calling codes should not rely on that value to remain consistent
@@ -200,12 +249,15 @@ struct rt_bot_repair_info {
  * tests.  This isn't always desirable - sometimes manifold is enough even if
  * the mesh is not otherwise well behaved - so it is an user settable param.
  */
-#define RT_BOT_REPAIR_INFO_INIT {0.0, 5.0, 1};
+#define RT_BOT_REPAIR_INFO_INIT {0.0, 5.0, 1, 0, 0, 0.0, 0};
 
 /* Function to attempt repairing a non-manifold BoT.  Returns 1 if ibot was
  * already manifold (obot will contain NULL), 0 if a manifold BoT was created
  * (*obot will be the new manifold BoT) and -1 for other cases to indicate
- * error.
+ * error.  Only RT_BOT_SOLID inputs are accepted.  Merge-only repairs preserve
+ * source normals and texture UVs.  Repairs that create or alter faces cannot
+ * in general map that data to the result; output_data_loss reports which data
+ * was cleared in those cases.
  */
 RT_EXPORT extern int rt_bot_repair(struct rt_bot_internal **obot, struct rt_bot_internal *ibot, struct rt_bot_repair_info *i);
 
@@ -227,6 +279,25 @@ RT_EXPORT extern int rt_bot_inside_out(struct rt_bot_internal *bot);
  * Returns 1 if a problem is found, else 0.  If ofaces is non-NULL, store the
  * indices of the specific faces found to be problematic. */
 RT_EXPORT extern int rt_bot_thin_check(struct bu_ptbl *ofaces, struct rt_bot_internal *bot, struct rt_i *rtip, fastf_t tol, int verbose);
+
+/* Test whether a solid BoT has faces that produce raytrace segments with
+ * thickness in the range [VUNITIZE_TOL, BN_TOL_DIST).  Such segments are
+ * returned by the BoT raytracer but would be discarded by the CSG boolweave
+ * tolerance filter, indicating a potential divergence between the BoT and
+ * the original CSG description (the CSG raytracer would report MISS while
+ * the BoT solid reports HIT).
+ *
+ * The typical cause is a subtractor primitive that protrudes just a sub-
+ * tolerance distance past a base face, creating a phantom thin cap in the
+ * facetized mesh that is too thin to survive the CSG boolweave.
+ *
+ * Faces already flagged by rt_bot_thin_check (segment thickness < VUNITIZE_TOL,
+ * i.e. true mesh degeneracies) are in a disjoint thickness range and are not
+ * reported here.
+ *
+ * Returns 1 if a problem is found, else 0.  If ofaces is non-NULL, store the
+ * indices of the specific faces found to be problematic. */
+RT_EXPORT extern int rt_bot_csg_miss_check(struct bu_ptbl *ofaces, struct rt_bot_internal *bot, struct rt_i *rtip, int verbose);
 
 /* Function to remove a set of faces from a BoT and produce a new BoT */
 RT_EXPORT struct rt_bot_internal *

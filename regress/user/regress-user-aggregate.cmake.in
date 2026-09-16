@@ -1,0 +1,38 @@
+# Values set at CMake configure time
+set(LOGFILE "@LOG_FILE@")
+
+file(WRITE "${LOGFILE}" "Starting aggregate BRL-CAD library user simulation run\n")
+
+# The executable location is not known at CMake configure time, so it must be
+# passed in via the EXEC variable at runtime.  De-quote it and assign it to the
+# appropriate variable.
+string(REPLACE "\\" "" USER_EXEC "${EXEC}")
+if(NOT EXISTS "${USER_EXEC}")
+  file(WRITE "${LOGFILE}" "cad_user_aggregate not found at location \"${USER_EXEC}\" - aborting\n")
+  file(READ "${LOGFILE}" LOG)
+  message(FATAL_ERROR "Unable to find cad_user_aggregate, aborting.\nSee ${LOGFILE} for more details.\n${LOG}")
+endif(NOT EXISTS "${USER_EXEC}")
+
+set(TEST_DIR "@CMAKE_CURRENT_BINARY_DIR@/aggregate-user")
+file(MAKE_DIRECTORY "${TEST_DIR}")
+
+file(APPEND "${LOGFILE}" "Running ${USER_EXEC} ${TEST_DIR}:\n")
+execute_process(
+  COMMAND "${USER_EXEC}" "${TEST_DIR}"
+  RESULT_VARIABLE user_result
+  OUTPUT_VARIABLE user_log
+  ERROR_VARIABLE user_log
+)
+file(APPEND "${LOGFILE}" "${user_log}")
+if(user_result)
+  file(APPEND "${LOGFILE}" "Failure: ${user_result}")
+  file(READ "${LOGFILE}" LOG)
+  message(FATAL_ERROR "Aggregate BRL-CAD library user simulation run failed, aborting.\nSee ${LOGFILE} for more details.\n${LOG}")
+endif(user_result)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

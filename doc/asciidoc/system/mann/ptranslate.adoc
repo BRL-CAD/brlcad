@@ -1,0 +1,81 @@
+= PTRANSLATE(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+ptranslate - translate a vector attribute of a primitive
+
+== SYNOPSIS
+
+[source]
+----
+ptranslate [-r] obj attribute "tx ty tz"
+----
+
+[[description]]
+== DESCRIPTION
+
+The *ptranslate* command displaces a specific vector attribute of the BRL-CAD primitive `obj` by the translation vector `(tx, ty, tz)`. The attribute is identified by a single letter or two-letter code. The modified object is written back to the database.
+
+The arguments are:
+
+* *-r* — Optional. Relative mode: the translation vector is added to the current attribute value. Without `-r`, the attribute is set to the given vector directly.
+* *obj* — Name of the primitive to edit. Path prefixes (e.g. `comb/part.s`) are accepted; the trailing component name is used.
+* *attribute* — A letter or two-letter code selecting which vector attribute of the primitive to translate (see table below).
+* *"tx ty tz"* — The translation vector as a single quoted space-separated string of three floating-point values in local units.
+
+=== Supported primitives and attributes
+
+[cols="1,1,3"]
+|===
+|Primitive |Attribute |Description
+
+|TGC (Truncated General Cone)
+|`h` or `H`
+|Translate the height vector. The cross-section vectors (A, B, C, D) are recomputed to remain perpendicular to the new height.
+
+|TGC
+|`hr` or `HR`
+|Translate the height vector and redefine the reference vertex so the base stays fixed.
+
+|EXTRUDE
+|`h` or `H`
+|Translate the extrusion direction vector. The sketch reference vectors (u_vec, v_vec) are recomputed to remain perpendicular to the new height.
+
+|EXTRUDE
+|`hr` or `HR`
+|Translate the extrusion direction vector and redefine the reference vertex.
+
+|===
+
+Only TGC and EXTRUDE are currently supported. Other primitive types return an error.
+
+[[examples]]
+== EXAMPLES
+
+.Translate the height vector of a TGC
+[example]
+====
+mged> **ptranslate cone.s h "0 0 100"**
+
+Displaces the height vector of the TGC primitive `cone.s` by 100 units in the Z direction (absolute). Cross-section axes are recomputed to remain perpendicular to the new height.
+====
+
+.Relatively translate an extrusion direction
+[example]
+====
+mged> **ptranslate -r wall.s h "10 0 0"**
+
+Adds (10, 0, 0) to the current extrusion direction vector of the EXTRUDE primitive `wall.s`.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,0 +1,114 @@
+= DOUBLE-ASC(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+double-asc - convert a stream of IEEE doubles to ASCII text
+
+== SYNOPSIS
+
+[source]
+----
+double-asc [-a] [-c] [-f format] [-s squaresize] [-w width] [-n height] [-# depth] [file.d]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*double-asc* reads a stream of binary, network-order (big-endian) IEEE
+double-precision floating-point values and writes them out as
+human-readable ASCII text, one logical sample per line.  Input is read
+from the named _file.d_ or, if no file is given, from standard input;
+the formatted text is written to standard output.
+
+By default each line holds a single value formatted with " %g".  The
+*-#* option groups several doubles together as one multi-column sample
+(for example, a 3-tuple per pixel), and the *-f* option overrides the
+output format string.  The image-size options (*-a*, *-s*, *-w*, *-n*)
+exist so that, with *-c*, each sample can be labelled with its column
+and row coordinates within an image of the given dimensions.
+
+This command is the inverse companion of tools that emit raw IEEE
+double data and is useful for inspecting or post-processing such
+streams with text utilities.
+
+NOTE: *double-asc* is deprecated and scheduled for removal.  Contact
+the developers if you rely on it.
+
+[[options]]
+== OPTIONS
+
+*-a*::
+  Autosize the input.  When reading from a file, attempt to infer the
+  image width and height from the file size.
+
+*-c*::
+  Prepend the column and row cell coordinates to each output line.  The
+  coordinates wrap according to the configured image width.
+
+*-f* _format_::
+  Set the *printf*(3)-style format string applied to each double.  The
+  default is " %g".
+
+*-s* _squaresize_::
+  Set both the input width and height to _squaresize_ pixels.
+
+*-w* _width_::
+  Set the input width in pixels (default 512).
+
+*-n* _height_::
+  Set the input height in pixels (default 512).
+
+*-#* _depth_::
+  Set the number of doubles per logical sample (output line).  The
+  default is 1.
+
+*-h*, *-?*::
+  Print a usage message and exit.
+
+[[examples]]
+== EXAMPLES
+
+.Inspect a raw double-precision data file as text
+====
+[source,bash]
+----
+double-asc samples.d | head
+----
+Dumps the contents of a binary IEEE-double file as plain numbers so the
+first few values can be eyed quickly.
+====
+
+.Label each pixel of a 256x256 three-channel double image
+====
+[source,bash]
+----
+double-asc -c -w 256 -n 256 -# 3 image.d > image.txt
+----
+Treats the input as a 256-wide by 256-high image with three doubles per
+pixel and writes, for every pixel, its column and row followed by the
+three component values.  The result is easy to filter with *awk*(1) or
+load into a plotting tool.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *asc2dsp*(1), *printf*(3)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

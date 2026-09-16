@@ -1,7 +1,7 @@
 #                  D B F I N D T R E E . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2025 United States Government as represented by
+# Copyright (c) 2004-2026 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -71,7 +71,7 @@ proc dbfindtree {args} {
 	    set token [lindex $i 0]
 
 	    # find where it's used
-	    set search_result [dbfind $token]
+	    set search_result [db find $token]
 
 	    # if it is used, create path(s)
 	    if { [llength $search_result] } {

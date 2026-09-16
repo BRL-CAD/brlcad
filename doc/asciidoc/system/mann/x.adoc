@@ -1,0 +1,92 @@
+= X(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+x - report the currently displayed solids and vector list information
+
+== SYNOPSIS
+
+[source]
+----
+x [level]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+The *x* command (also available as *solid_report*) reports information about the solid objects currently drawn in the display. It is equivalent to `who solids [level]`.
+
+The optional `level` argument controls how much detail is shown:
+
+[cols="1,4"]
+|===
+|Level |Output
+
+|`-2` or less
+|Primitive names only.
+
+|`-1`
+|Full paths to each drawn primitive.
+
+|`0` (default)
+|Full paths plus illumination state.
+
+|`1`
+|Adds per-solid center, size, region flag, and color information.
+
+|`2`
+|Adds vector-list counts.
+
+|`3` or greater
+|Adds the actual vector-list commands.
+
+|===
+
+If `level` is omitted, the default level `0` is used.
+
+[[examples]]
+== EXAMPLES
+
+.List currently drawn primitives with default detail
+[example]
+====
+mged> **x**
+
+Lists all currently drawn primitives with their full paths and illumination state (level 0).
+====
+
+.List primitives with per-solid color and size information
+[example]
+====
+mged> **x 1**
+
+Lists all drawn primitives with center, size, region flag, and color information.
+====
+
+.List primitive names only
+[example]
+====
+mged> **x -2**
+
+Lists just the names of currently drawn primitives, with no path or extra detail.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*who*(nged), *solid_report*(nged)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

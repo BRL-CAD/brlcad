@@ -2,7 +2,7 @@
 #                      L I B R A R Y . S H
 # BRL-CAD
 #
-# Copyright (c) 2010-2025 United States Government as represented by
+# Copyright (c) 2010-2026 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -34,6 +34,10 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 ###
+
+# Non-login shells on Windows may inherit a PATH without their POSIX tools.
+PATH="$PATH:/usr/bin:/bin"
+export PATH
 
 # save the precious args
 ARGS="$*"
@@ -92,7 +96,7 @@ run ( ) {
     ret=$?
     case "x$STATUS" in
 	'x'|*[!0-9]*)
-	    break;;
+	    :;;
 	*)
 	    if test $ret -ne 0 ; then
 		STATUS="`expr $STATUS + 1`"

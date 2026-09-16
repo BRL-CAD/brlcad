@@ -1,0 +1,22 @@
+= File Formats & Specifications
+:doctype: article
+:toc: left
+:toclevels: 2
+
+== File Format Man Pages
+
+* link:man5/STEP.html[STEP]
+* link:man5/attributes.html[attributes]
+* link:man5/benchmark.html[benchmark]
+* link:man5/bw.html[bw]
+* link:man5/cmap.html[cmap]
+* link:man5/dsp.html[dsp]
+* link:man5/idents.html[idents]
+* link:man5/nirt_formatting.html[nirt_formatting]
+* link:man5/pix.html[pix]
+* link:man5/plot3.html[plot3]
+
+== Database Format Specifications
+
+* link:specifications/BRL_CAD_g_format_V6.html[BRL-CAD .g Database Format (V6, current)]
+* link:specifications/BRL_CAD_g_format_V5.html[BRL-CAD .g Database Format (V5, superseded)]

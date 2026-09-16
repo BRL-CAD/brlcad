@@ -1,7 +1,7 @@
 /*                         M O V E _ A L L . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -38,7 +38,6 @@
 static int
 move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new_name)
 {
-    int i;
     struct display_list *gdlp;
     struct directory *dp;
     struct rt_db_internal intern;
@@ -47,6 +46,15 @@ move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new
     size_t moved = 0;
 
     /* check the old_name source and new_name target */
+
+    /* The destination is an object name, not a path - reject slashes so
+     * we don't end up creating an object whose name contains the path
+     * separator (which produces broken, unlistable hierarchies).
+     */
+    if (strchr(new_name, '/') != NULL) {
+	bu_vls_printf(gedp->ged_result_str, "%s: destination name may not contain slashes", new_name);
+	return BRLCAD_ERROR;
+    }
 
     dp = db_lookup(gedp->dbip, old_name, LOOKUP_NOISY);
 
@@ -68,8 +76,7 @@ move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new
     {
 	struct directory *dirp;
 
-	for (i = 0; i < RT_DBNHASH; i++) {
-	    for (dirp = gedp->dbip->dbi_Head[i]; dirp != RT_DIR_NULL; dirp = dirp->d_forw) {
+	FOR_ALL_DIRECTORY_START(dirp, gedp->dbip)
 		struct rt_extrude_internal *extrude;
 
 		if (dirp->d_major_type != DB5_MAJORTYPE_BRLCAD || \
@@ -77,7 +84,7 @@ move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new
 		    continue;
 		}
 
-		if (rt_db_get_internal(&intern, dirp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+		if (rt_db_get_internal(&intern, dirp, gedp->dbip, (fastf_t *)NULL) < 0) {
 		    bu_log("WARNING: Can't get extrude %s?\n", dirp->d_namep);
 		    continue;
 		}
@@ -99,14 +106,13 @@ move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new
 		bu_free(extrude->sketch_name, "sketch name");
 		extrude->sketch_name = bu_strdup(new_name);
 
-		if (rt_db_put_internal(dirp, gedp->dbip, &intern, &rt_uniresource) < 0) {
+		if (rt_db_put_internal(dirp, gedp->dbip, &intern) < 0) {
 		    bu_log("INTERNAL ERROR: unable to write sketch [%s] during mvall\n", new_name);
 		} else {
 		    moved++;
 		}
 		rt_db_free_internal(&intern);
-	    }
-	}
+	FOR_ALL_DIRECTORY_END;
     }
 
     if (!nflag && dp) {
@@ -117,12 +123,12 @@ move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new
 	}
 
 	/* Change object name on disk */
-	if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+	if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
 	    return BRLCAD_ERROR;
 	}
 
-	if (rt_db_put_internal(dp, gedp->dbip, &intern, &rt_uniresource) < 0) {
+	if (rt_db_put_internal(dp, gedp->dbip, &intern) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "Database write error, aborting");
 	    return BRLCAD_ERROR;
 	}
@@ -132,14 +138,13 @@ move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new
     bu_ptbl_init(&stack, 64, "combination stack for wdb_mvall_cmd");
 
     /* Examine all COMB nodes */
-    for (i = 0; i < RT_DBNHASH; i++) {
-	for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+    FOR_ALL_DIRECTORY_START(dp, gedp->dbip)
 	    if (nflag) {
 		union tree *comb_leaf;
 
 		if (!(dp->d_flags & RT_DIR_COMB))
 		    continue;
-		if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0)
+		if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL) < 0)
 		    continue;
 
 		comb = (struct rt_comb_internal *)intern.idb_ptr;
@@ -180,8 +185,7 @@ move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new
 		}
 	    }
 	    moved++;
-	}
-    }
+    FOR_ALL_DIRECTORY_END;
 
     bu_ptbl_free(&stack);
 
@@ -332,23 +336,14 @@ ged_move_all_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl move_all_cmd_impl = {"move_all", ged_move_all_core, GED_CMD_DEFAULT};
-const struct ged_cmd move_all_cmd = { &move_all_cmd_impl };
 
-struct ged_cmd_impl mvall_cmd_impl = {"mvall", ged_move_all_core, GED_CMD_DEFAULT};
-const struct ged_cmd mvall_cmd = { &mvall_cmd_impl };
+#define GED_MOVE_ALL_COMMANDS(X, XID) \
+    X(move_all, ged_move_all_core, GED_CMD_DEFAULT) \
+    X(mvall, ged_move_all_core, GED_CMD_DEFAULT) \
 
-const struct ged_cmd *move_all_cmds[] = { &move_all_cmd, &mvall_cmd, NULL };
-
-static const struct ged_plugin pinfo = { GED_API,  move_all_cmds, 2 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_MOVE_ALL_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_move_all", 1, GED_MOVE_ALL_COMMANDS)
 
 /*
  * Local Variables:

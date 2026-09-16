@@ -1,0 +1,129 @@
+= IMGDIFF(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+
+imgdiff - compare two images and report or visualize their differences
+
+== SYNOPSIS
+
+[source]
+----
+imgdiff [options] img1 img2 [output]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*imgdiff* compares two images, _img1_ and _img2_, on a per-channel,
+per-pixel basis and reports how many channels match exactly, differ by one
+unit, or differ by more than one unit.  Input images are read through the
+*libicv* image library, so any format *libicv* understands (such as
+*pix*(5), *bw*(5), and PNG) may be compared, and the two inputs need not
+share the same format.
+
+The image format is normally inferred from each file's extension.  For raw
+formats that carry no embedded dimensions (*pix*(5) and *bw*(5)), *imgdiff*
+attempts to deduce the width and height from the file size; when that fails,
+the dimensions must be supplied explicitly.
+
+If an output path is given (either with *-o* or as a third positional
+argument) and the images differ, a difference image is written highlighting
+the disagreeing pixels.  When PNG render metadata is present, *imgdiff* can
+additionally compare that metadata and emit *nirt*(1) shotline scripts that
+re-trace the differing pixels for debugging renders.
+
+[[options]]
+== OPTIONS
+
+*-h*, *--help*, *-?*::
+  Print a usage summary and exit.
+
+*-o* _file_, *--output* _file_::
+  Write the difference image to _file_.  The file must not already exist.
+  Equivalent to supplying _output_ as a third positional argument.
+
+*-n* _prefix_, *--nirt-output* _prefix_::
+  Write *nirt*(1) shotline scripts for the differing pixels.  One file is
+  produced per image that carries PNG render metadata: _prefix_\_img1.nirt
+  and/or _prefix_\_img2.nirt.
+
+*--width-img1* _#_::
+  Width in pixels of the first image (for raw formats lacking embedded size).
+
+*--height-img1* _#_::
+  Height in pixels of the first image.
+
+*--width-img2* _#_::
+  Width in pixels of the second image.
+
+*--height-img2* _#_::
+  Height in pixels of the second image.
+
+*--format-img1* _format_::
+  Override the auto-detected file format of the first input image.
+
+*--format-img2* _format_::
+  Override the auto-detected file format of the second input image.
+
+*--output-format* _format_::
+  Override the auto-detected file format of the output image.
+
+*-A*, *--approximate*::
+  Instead of the per-channel report, compute an approximate perceptual
+  difference metric and print the Hamming distance between the two images.
+
+*-m*, *--metadata*::
+  Compare embedded render metadata (PNG only) and report whether it is
+  identical or differs.
+
+[[examples]]
+== EXAMPLES
+
+.Visualize the difference between two renders
+====
+[source,bash]
+----
+imgdiff -o changed.png baseline.png current.png
+----
+Compares two PNG renders pixel by pixel, prints how many channels match or
+differ, and, if they differ, writes _changed.png_ highlighting exactly which
+pixels changed -- useful for spotting regressions in *rt*(1) output.
+====
+
+.Compare raw pix images of known size and trace differing pixels
+====
+[source,bash]
+----
+imgdiff --width-img1 512 --height-img1 512 \
+        --width-img2 512 --height-img2 512 \
+        -n shots ref.pix new.pix
+----
+Compares two 512x512 *pix*(5) images whose dimensions cannot be inferred from
+the file, and, for any image carrying render metadata, writes *nirt*(1)
+shotline scripts (_shots_img1.nirt_, _shots_img2.nirt_) that re-fire rays
+through the differing pixels.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *nirt*(1), *rt*(1), *pix-png*(1), *pixdiff*(1), *pix*(5), *bw*(5)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

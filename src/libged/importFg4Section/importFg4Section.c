@@ -1,7 +1,7 @@
 /*              I M P O R T F G 4 S E C T I O N . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2025 United States Government as represented by
+ * Copyright (c) 1994-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -60,24 +60,13 @@ ged_importFg4Section_core(struct ged *gedp, int argc, const char *argv[])
 }
 /** @} */
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl importFg4Section_cmd_impl = {
-    "importFg4Section",
-    ged_importFg4Section_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd importFg4Section_cmd = { &importFg4Section_cmd_impl };
-const struct ged_cmd *importFg4Section_cmds[] = { &importFg4Section_cmd, NULL };
+#define GED_IMPORTFG4SECTION_COMMANDS(X, XID) \
+    X(importFg4Section, ged_importFg4Section_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  importFg4Section_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_IMPORTFG4SECTION_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_importFg4Section", 1, GED_IMPORTFG4SECTION_COMMANDS)
 
 /*
  * Local Variables:

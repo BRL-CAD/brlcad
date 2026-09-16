@@ -1,7 +1,7 @@
 /*                            B U . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2025 United States Government as represented by
+ * Copyright (c) 2004-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,10 +27,6 @@
 #include "common.h"
 
 #define RESOURCE_INCLUDED 1
-#include <tcl.h>
-#ifdef HAVE_TK
-#  include <tk.h>
-#endif
 
 #include "string.h" /* for strchr */
 
@@ -39,6 +35,12 @@
 #include "vmath.h"
 #include "tclcad.h"
 
+// tclcad.h pulls in OpenNURBS in C++ compilation mode, which defines None,
+// which will conflict with Tk.h's Xlib None if we include tk.h before tclcad.h
+#include "tcl.h"
+#ifdef HAVE_TK
+#  include "tk.h"
+#endif
 
 /* Private headers */
 #include "brlcad_version.h"
@@ -348,6 +350,29 @@ tcl_bu_dir(void *clientData,
 }
 
 /**
+ * A wrapper for bu_file_null.
+ *
+ * @param clientData	- associated data/state
+ * @param argc		- number of elements in argv
+ * @param UNUSED_argv	- command name and arguments
+ *
+ * @return BRLCAD_OK if successful, otherwise, BRLCAD_ERROR.
+ */
+static int
+tcl_bu_file_null(void *clientData,
+		 int argc,
+		 const char **UNUSED(argv))
+{
+    Tcl_Interp *interp = (Tcl_Interp *)clientData;
+    if (argc != 1) {
+	bu_log("Usage: bu_file_null\n");
+	return BRLCAD_ERROR;
+    }
+    Tcl_AppendResult(interp, bu_file_null(), NULL);
+    return BRLCAD_OK;
+}
+
+/**
  * A wrapper for bu_units_conversion.
  *
  * @param clientData	- associated data/state
@@ -394,12 +419,13 @@ register_cmds(Tcl_Interp *interp, struct bu_cmdtab *cmds)
 }
 
 
-int
+TCLCAD_EXPORT int
 Bu_Init(Tcl_Interp *interp)
 {
     static struct bu_cmdtab cmds[] = {
 	{"bu_units_conversion",		tcl_bu_units_conversion},
 	{"bu_dir",		        tcl_bu_dir},
+	{"bu_file_null",		tcl_bu_file_null},
 	{"bu_get_value_by_keyword",	tcl_bu_get_value_by_keyword},
 	{"bu_rgb_to_hsv",		tcl_bu_rgb_to_hsv},
 	{"bu_hsv_to_rgb",		tcl_bu_hsv_to_rgb},

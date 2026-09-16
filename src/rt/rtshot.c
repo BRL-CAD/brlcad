@@ -1,7 +1,7 @@
 /*                        R T S H O T . C
  * BRL-CAD
  *
- * Copyright (c) 1987-2025 United States Government as represented by
+ * Copyright (c) 1987-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -80,7 +80,7 @@ inv_mat_clbk(struct rt_i *rtip, struct db_tree_state *tsp, struct region *rp)
 void
 usage(const char *argv0)
 {
-    bu_log("Usage:  %s {-p|-d|-a} # # # {-p|-d|-a} # # # [options] model.g objects...\n\n", argv0);
+    bu_log("Usage:  %s {-p|-d|-a} # # # {-p|-d|-a} # # # [options] model.g [objects...]\n\n", argv0);
     bu_log(" Shot options, must set two:\n");
     bu_log(" -p # # #		Set starting point\n");
     bu_log(" -d # # #		Set direction vector\n");
@@ -117,8 +117,8 @@ int rays_per_ring = 0;
 int num_rings = 0;
 fastf_t bundle_radius = 0.0;
 
-extern int hit(struct application *ap, struct partition *PartHeadp, struct seg *segp);
-extern int miss(register struct application *ap);
+extern int r_hit(struct application *ap, struct partition *PartHeadp, struct seg *segp);
+extern int r_miss(register struct application *ap);
 
 int bundle_hit(register struct application_bundle *bundle, struct partition_bundle *PartBundlep);
 int bundle_miss(register struct application_bundle *bundle);
@@ -342,7 +342,7 @@ main(int argc, char **argv)
 		return 1;
 	}
     }
-    if (argc < 2) {
+    if (argc < 1) {
 	usage(argv0);
 	bu_exit(1, "%s: BRL-CAD geometry database not specified\n", argv0);
     }
@@ -381,6 +381,29 @@ main(int argc, char **argv)
     fprintf(stderr, "db title:  %s\n", idbuf);
     rtip->useair = set_air;
 
+    const char *default_objv[2] = {NULL, NULL};
+    const char **tree_argv = (const char **)argv;
+    int tree_argc = argc;
+    if (tree_argc <= 0) {
+	struct bu_vls msg = BU_VLS_INIT_ZERO;
+	struct directory *dp = RT_DIR_NULL;
+	int dret = db_default_object(rtip->rti_dbip, &dp, &msg);
+
+	if (dret == 1) {
+	    default_objv[0] = dp->d_namep;
+	    tree_argv = default_objv;
+	    tree_argc = 1;
+	} else {
+	    if (bu_vls_strlen(&msg))
+		bu_log("%s", bu_vls_cstr(&msg));
+	    bu_vls_free(&msg);
+	    bu_vls_free(&attr_key);
+	    rt_i_destroy(rtip);
+	    bu_exit(1, "rtshot: no objects specified\n");
+	}
+	bu_vls_free(&msg);
+    }
+
     /* Set up rti_getrees_clbk data */
     struct inv_mat_data *imd;
     BU_GET(imd, struct inv_mat_data);
@@ -390,7 +413,7 @@ main(int argc, char **argv)
     rtip->rti_gettrees_clbk = &inv_mat_clbk;
 
     /* Walk trees */
-    if (rt_gettrees_and_attrs(rtip, (const char **)attrs, argc, (const char **)argv, 1)) {
+    if (rt_gettrees_and_attrs(rtip, (const char **)attrs, tree_argc, tree_argv, 1)) {
 	bu_vls_free(&attr_key);
 	bu_hash_destroy(imd->tbl);
 	BU_PUT(imd, struct inv_mat_data);
@@ -446,8 +469,8 @@ main(int argc, char **argv)
 
     /* Shoot Ray */
     ap.a_purpose = "main ray";
-    ap.a_hit = hit;
-    ap.a_miss = miss;
+    ap.a_hit = r_hit;
+    ap.a_miss = r_miss;
 
     if (rays_per_ring) {
 	vect_t avec, bvec;
@@ -513,7 +536,7 @@ main(int argc, char **argv)
 }
 
 
-int hit(register struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segp))
+int r_hit(register struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segp))
 {
     register struct partition *pp;
     register struct soltab *stp;
@@ -646,7 +669,7 @@ int hit(register struct application *ap, struct partition *PartHeadp, struct seg
 }
 
 
-int miss(register struct application *ap)
+int r_miss(register struct application *ap)
 {
     bu_log("missed\n");
     if (OPTICAL_DEBUG&OPTICAL_DEBUG_RAYPLOT) {

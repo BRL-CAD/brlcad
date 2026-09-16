@@ -1,7 +1,7 @@
 /*                      B N E T W O R K . H
  * BRL-CAD
  *
- * Copyright (c) 2011-2025 United States Government as represented by
+ * Copyright (c) 2011-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -41,6 +41,11 @@
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
 #  ifndef _WINSOCKAPI_
+/* Prevent windows.h (pulled in by winsock2.h) from defining min/max macros,
+ * which would conflict with C++ template min/max */
+#    ifndef NOMINMAX
+#      define NOMINMAX
+#    endif
 #    include <winsock2.h> /* link against ws2_32 library */
 #    include <ws2tcpip.h> /* provides extensions */
 #    undef rad1 /* Win32 radio button 1 */
@@ -58,6 +63,20 @@
 extern uint32_t htonl(uint32_t);
 extern uint32_t ntohl(uint32_t);
 #  endif
+#endif
+
+/* INADDR_* constants come from <netinet/in.h> on POSIX and <winsock2.h> on
+ * Windows.  Some strict-mode builds or Unity-build ordering issues can leave
+ * them undefined even when the underlying header was nominally processed;
+ * provide safe fallbacks so callers that include bnetwork.h always have them. */
+#ifndef INADDR_ANY
+#  define INADDR_ANY       ((uint32_t)0x00000000)
+#endif
+#ifndef INADDR_LOOPBACK
+#  define INADDR_LOOPBACK  ((uint32_t)0x7f000001)
+#endif
+#ifndef INADDR_BROADCAST
+#  define INADDR_BROADCAST ((uint32_t)0xffffffff)
 #endif
 
 #endif /* BNETWORK_H */

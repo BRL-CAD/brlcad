@@ -1,7 +1,7 @@
 /*                 OffsetCurve3D.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2025 United States Government as represented by
+ * Copyright (c) 1994-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -55,6 +55,7 @@ public:
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
     virtual const double *PointAtEnd();
     virtual const double *PointAtStart();
+    virtual bool LoadONBrep(ON_Brep *brep);
     virtual void Print(int level);
 
     //static methods

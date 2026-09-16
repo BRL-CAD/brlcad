@@ -1,7 +1,7 @@
 /*                  G E D _ B O T _ D U M P . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -62,10 +62,7 @@ struct bot_dump_obj {
     struct bu_vls obj_materials_file;
     FILE *obj_materials_fp;
     int num_obj_materials;
-    int curr_obj_red;
-    int curr_obj_green;
-    int curr_obj_blue;
-    fastf_t curr_obj_alpha;
+    int mtllib_written;
     int v_offset;
 };
 
@@ -94,6 +91,11 @@ struct _ged_bot_dump_client_data {
     int using_dbot_dump;
     int view_data;
     int material_info;
+    int curr_obj_color_valid;
+    int curr_obj_red;
+    int curr_obj_green;
+    int curr_obj_blue;
+    fastf_t curr_obj_alpha;
 
     enum otype output_type;
     int binary;
@@ -115,6 +117,7 @@ extern int dxf_setup(struct _ged_bot_dump_client_data *d, const char *fname, con
 extern int dxf_finish(struct _ged_bot_dump_client_data *d);
 extern void dxf_write_bot(struct _ged_bot_dump_client_data *d, struct rt_bot_internal *bot, FILE *fp, char *name);
 
+extern int gltf_validate_options(struct _ged_bot_dump_client_data *d);
 extern int gltf_setup(struct _ged_bot_dump_client_data *d, const char *fname);
 extern int gltf_finish(struct _ged_bot_dump_client_data *d);
 extern void gltf_write_bot(struct _ged_bot_dump_client_data *d, struct rt_bot_internal *bot, char *name);

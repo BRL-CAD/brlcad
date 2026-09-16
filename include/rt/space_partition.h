@@ -1,7 +1,7 @@
 /*                 S P A C E _ P A R T I T I O N . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2025 United States Government as represented by
+ * Copyright (c) 1993-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -38,6 +38,11 @@ struct rt_piecelist;  /* forward declaration */
 
 /**
  * Structures for space subdivision.
+ *
+ * RT_PART_NUBSPT uses CUT_CUTNODE interior nodes and CUT_BOXNODE leaves.
+ * RT_PART_NULL intentionally uses one CUT_BOXNODE leaf covering the whole
+ * model so the ray shooting path can evaluate a no-op spatial partitioning
+ * baseline without a separate primitive-list traversal.
  *
  * cut_type is an integer for efficiency of access in rt_shootray() on
  * non-word addressing machines.
@@ -97,10 +102,17 @@ RT_EXPORT extern void remove_from_bsp(struct soltab *stp,
 				      struct bn_tol *tol);
 RT_EXPORT extern void insert_in_bsp(struct soltab *stp,
 				    union cutter *cutp);
-RT_EXPORT extern void fill_out_bsp(struct rt_i *rtip,
+
+DEPRECATED RT_EXPORT extern void fill_out_bsp(struct rt_i *rtip,
 				   union cutter *cutp,
 				   struct resource *resp,
 				   fastf_t bb[6]);
+
+RT_EXPORT extern void nfill_out_bsp(struct rt_i *rtip,
+				   union cutter *cutp,
+				   fastf_t bb[6]);
+
+
 
 /**
  * Add a solid into a given boxnode, extending the lists there.  This

@@ -1,0 +1,47 @@
+= RTCHECK(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD MGED Commands
+
+== NAME
+rtcheck - Executes the BRL-CAD _rtcheck_ program with the default options of "-s50 M."
+
+== SYNOPSIS
+
+[source]
+----
+rtcheck [options]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Executes the BRL-CAD _rtcheck_ program with the default options of "-s50 M." The -M option tells _rtcheck_ to read the viewing parameters from standard input so that rays are only fired from the current view. The current database name and the list of currently displayed objects are added to the end of the _rtcheck_ command line. The _rtcheck_ program is written such that options may be repeated, and the last occurrence of an option will override any earlier occurrences. This allows the user to specify other _size (-s)_ options. The *rrt* command performs a similar function, but may be used to execute other programs as well. The _rtcheck_ program uses raytracing to check for overlapping regions in the list of objects passed on the command line. When invoked from within MGED, any discovered overlaps along a ray are represented as yellow lines that extend only in the areas of overlap. Details and a count of overlaps are also reported. Note that overlaps of less than 0.1 mm are currently ignored by _rtcheck_. The default option of _-s50_ indicates that the checking rays should be fired from a uniform square grid with 50 rays on a side. This is very coarse and may miss significant overlaps. It is recommended that the user select appropriate options for the _rtcheck_ program and execute it for a variety viewing aspects to perform a thorough check. The granularity of the grid may be controlled with the _-s, -w, -n, -g,_ and _-G_ options. See the _man1_ page on _rtcheck_ for details.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *rtcheck* command to run the _rtcheck_ program with rays fired from a uniform grid with the rays spaced every 10 mm.
+
+.Run the _rtcheck_ program to fire rays from a uniform grid with the rays spaced a specified distance apart.
+[example]
+====
+mged>**rtcheck -g10 -G10**
+
+Runs the _rtcheck_ program with rays fired from a uniform grid with the rays spaced every 10 mm.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,7 +1,7 @@
 /*                       P N T S . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -181,7 +181,7 @@ _pnts_write_bot_mesh(struct ged *gedp, const char *bot_name, int *faces, int nfa
     bot_ip->face_uvs = NULL;
 
     GED_DB_DIRADD(gedp, dp, bot_name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type, BRLCAD_ERROR);
-    GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_PUT_INTERN(gedp, dp, &internal, BRLCAD_ERROR);
     return BRLCAD_OK;
 }
 
@@ -236,7 +236,7 @@ _ged_pnts_tri_cmd_unit(void *bs, int argc, const char **argv)
 
     /* get pnt */
     GED_DB_LOOKUP(gedp, pnt_dp, pnt_prim, LOOKUP_NOISY, BRLCAD_ERROR & GED_QUIET);
-    GED_DB_GET_INTERNAL(gedp, &intern, pnt_dp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_GET_INTERN(gedp, &intern, pnt_dp, bn_mat_identity, BRLCAD_ERROR);
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_PNTS) {
 	bu_vls_printf(gedp->ged_result_str, "pnts tri: %s is not a pnts object!", pnt_prim);
@@ -334,7 +334,7 @@ _ged_pnts_tri_cmd_unit(void *bs, int argc, const char **argv)
 
     struct directory *dp = NULL;
     GED_DB_DIRADD(gedp, dp, bot_name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type, BRLCAD_ERROR);
-    GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_PUT_INTERN(gedp, dp, &internal, BRLCAD_ERROR);
 
     bu_vls_printf(gedp->ged_result_str, "Generated BoT object %s with %d triangles", bot_name, ncnt);
 
@@ -420,7 +420,7 @@ _ged_pnts_tri_cmd_ballpivot(void *bs, int argc, const char **argv)
     struct rt_db_internal intern;
     struct directory *dp = NULL;
     GED_DB_LOOKUP(gedp, dp, pnt_prim, LOOKUP_NOISY, BRLCAD_ERROR & GED_QUIET);
-    GED_DB_GET_INTERNAL(gedp, &intern, dp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_GET_INTERN(gedp, &intern, dp, bn_mat_identity, BRLCAD_ERROR);
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_PNTS) {
 	bu_vls_printf(gedp->ged_result_str, "%s: %s is not a PNTS primitive", __func__, pnt_prim);
 	rt_db_free_internal(&intern);
@@ -555,7 +555,7 @@ _ged_pnts_tri_cmd_spsr(void *bs, int argc, const char **argv)
     struct rt_db_internal intern;
     struct directory *dp = NULL;
     GED_DB_LOOKUP(gedp, dp, pnt_prim, LOOKUP_NOISY, BRLCAD_ERROR & GED_QUIET);
-    GED_DB_GET_INTERNAL(gedp, &intern, dp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_GET_INTERN(gedp, &intern, dp, bn_mat_identity, BRLCAD_ERROR);
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_PNTS) {
 	bu_vls_printf(gedp->ged_result_str, "%s: %s is not a PNTS primitive", __func__, pnt_prim);
 	rt_db_free_internal(&intern);
@@ -608,7 +608,6 @@ _ged_pnts_tri_cmd_spsr(void *bs, int argc, const char **argv)
     rt_db_free_internal(&intern);
     return wret;
 }
-
 
 
 static const struct bu_cmdtab _pnts_tri_cmds[] = {
@@ -696,7 +695,6 @@ _ged_pnts_cmd_tri(void *bs, int argc, const char **argv)
     _pnts_tri_show_help(gedp);
     return BRLCAD_ERROR;
 }
-
 
 
 static int
@@ -815,7 +813,7 @@ _ged_pnts_cmd_gen(void *bs, int argc, const char **argv)
     bu_vls_printf(gedp->ged_result_str, "Generated pnts object %s with %ld points, avg. partition thickness %g", pnt_prim, pnts->count, avg_thickness);
 
     GED_DB_DIRADD(gedp, dp, pnt_prim, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type, BRLCAD_ERROR);
-    GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_PUT_INTERN(gedp, dp, &internal, BRLCAD_ERROR);
 
     return BRLCAD_OK;
 }
@@ -1023,7 +1021,7 @@ _ged_pnts_cmd_read(void *bs, int argc, const char **argv)
 	    return BRLCAD_ERROR;
 	}
 
-	_pnt_read(pnts, numcnt, (const char **)nums, bu_vls_addr(&fmt), conv_factor); 
+	_pnt_read(pnts, numcnt, (const char **)nums, bu_vls_addr(&fmt), conv_factor);
 	pnts_cnt++;
 	bu_vls_trunc(&fl, 0);
 	bu_free(input, "input cpy");
@@ -1035,7 +1033,7 @@ _ged_pnts_cmd_read(void *bs, int argc, const char **argv)
     bu_vls_printf(gedp->ged_result_str, "Generated pnts object %s with %ld points", pnt_prim, pnts->count);
 
     GED_DB_DIRADD(gedp, dp, pnt_prim, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type, BRLCAD_ERROR);
-    GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_PUT_INTERN(gedp, dp, &internal, BRLCAD_ERROR);
 
     bu_vls_free(&fmt);
     if (nums) bu_free(nums, "free old nums array");
@@ -1056,19 +1054,22 @@ _ged_pnts_cmd_write(void *bs, int argc, const char **argv)
     struct bu_vls pnt_str = BU_VLS_INIT_ZERO;
     const char *pnt_prim = NULL;
     const char *filename = NULL;
-    const char *usage = "Usage: pnts write [options] <pnts_obj> <output_file>\n\nWrites out data based on the point type, one row per point, using a format of x y z [i j k] [scale] [R G B] (bracketed groups may or may not be present depending on point type.)\n\n";
-    struct bu_opt_desc d[4];
+    const char *usage = "Usage: pnts write [options] <pnts_obj> <output_file>\n\nWrites out data based on the point type, one row per point, using a format of x y z [i j k] [scale] [R G B] (bracketed groups may or may not be present depending on point type.)  Use -f/--format to restrict the output fields (currently \"xyz\" is supported for XYZ-only output).\n\n";
+    struct bu_vls fmt = BU_VLS_INIT_ZERO;
+    struct bu_opt_desc d[5];
     int precis = 0;
-    BU_OPT(d[0], "h", "help",      "",   NULL,         &print_help,   "Print help and exit");
-    BU_OPT(d[1], "p", "precision", "#",  &bu_opt_int,  &precis,       "Number of digits after decimal to use when printing out numbers (default 17)");
-    BU_OPT(d[2], "",  "ply",       "",   NULL,         &ply_out,      "Write output using PLY format instead of x y z [i j k] [scale] [R G B] text file");
-    BU_OPT_NULL(d[3]);
+    BU_OPT(d[0], "h", "help",      "",     NULL,         &print_help,   "Print help and exit");
+    BU_OPT(d[1], "p", "precision", "#",    &bu_opt_int,  &precis,       "Number of digits after decimal to use when printing out numbers (default 17)");
+    BU_OPT(d[2], "",  "ply",       "",     NULL,         &ply_out,      "Write output using PLY format instead of x y z [i j k] [scale] [R G B] text file");
+    BU_OPT(d[3], "f", "format",    "[xyz]", &bu_opt_vls, &fmt,          "Format of output data (currently supports xyz for XYZ-only output)");
+    BU_OPT_NULL(d[4]);
 
     argc-=(argc>0); argv+=(argc>0); /* skip command name argv[0] */
 
     /* must be wanting help */
     if (argc < 1) {
 	_ged_cmd_help(gedp, usage, d);
+	bu_vls_free(&fmt);
 	return BRLCAD_OK;
     }
 
@@ -1077,6 +1078,7 @@ _ged_pnts_cmd_write(void *bs, int argc, const char **argv)
 
     if (print_help) {
 	_ged_cmd_help(gedp, usage, d);
+	bu_vls_free(&fmt);
 	return BRLCAD_OK;
     }
 
@@ -1085,6 +1087,7 @@ _ged_pnts_cmd_write(void *bs, int argc, const char **argv)
 
     if (argc != 2) {
 	_ged_cmd_help(gedp, usage, d);
+	bu_vls_free(&fmt);
 	return BRLCAD_ERROR;
     }
 
@@ -1093,16 +1096,18 @@ _ged_pnts_cmd_write(void *bs, int argc, const char **argv)
 
     if (bu_file_exists(filename, NULL)) {
 	bu_vls_sprintf(gedp->ged_result_str, "Error: file %s already exists\n", filename);
+	bu_vls_free(&fmt);
 	return BRLCAD_ERROR;
     }
 
     /* get pnt */
     GED_DB_LOOKUP(gedp, pnt_dp, pnt_prim, LOOKUP_NOISY, BRLCAD_ERROR & GED_QUIET);
-    GED_DB_GET_INTERNAL(gedp, &intern, pnt_dp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_GET_INTERN(gedp, &intern, pnt_dp, bn_mat_identity, BRLCAD_ERROR);
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_PNTS) {
 	bu_vls_printf(gedp->ged_result_str, "pnts write: %s is not a pnts object!", pnt_prim);
 	rt_db_free_internal(&intern);
+	bu_vls_free(&fmt);
 	return BRLCAD_ERROR;
     }
 
@@ -1112,8 +1117,83 @@ _ged_pnts_cmd_write(void *bs, int argc, const char **argv)
     if (pnts->type == RT_PNT_UNKNOWN) {
 	bu_vls_sprintf(gedp->ged_result_str, "Error: unknown pnts type\n");
 	rt_db_free_internal(&intern);
+	bu_vls_free(&fmt);
 	return BRLCAD_ERROR;
     }
+
+    /* If an output format was requested, validate it against the object's
+     * available fields and, for the XYZ-only case, short-circuit the per-type
+     * branches below.  This keeps the default (no -f) path byte-for-byte
+     * identical to the historical behavior. */
+    if (bu_vls_strlen(&fmt)) {
+	const char *fc = bu_vls_addr(&fmt);
+	int req_pnt = (strchr(fc, 'x') || strchr(fc, 'y') || strchr(fc, 'z'));
+	int req_nrm = (strchr(fc, 'i') || strchr(fc, 'j') || strchr(fc, 'k'));
+	int req_sca = (strchr(fc, 's') != NULL);
+	int req_col = (strchr(fc, 'r') || strchr(fc, 'g') || strchr(fc, 'b'));
+	int obj_has_nrm = (pnts->type == RT_PNT_TYPE_NRM || pnts->type == RT_PNT_TYPE_SCA_NRM
+			   || pnts->type == RT_PNT_TYPE_COL_NRM || pnts->type == RT_PNT_TYPE_COL_SCA_NRM);
+	int obj_has_sca = (pnts->type == RT_PNT_TYPE_SCA || pnts->type == RT_PNT_TYPE_SCA_NRM
+			   || pnts->type == RT_PNT_TYPE_COL_SCA || pnts->type == RT_PNT_TYPE_COL_SCA_NRM);
+	int obj_has_col = (pnts->type == RT_PNT_TYPE_COL || pnts->type == RT_PNT_TYPE_COL_SCA
+			   || pnts->type == RT_PNT_TYPE_COL_NRM || pnts->type == RT_PNT_TYPE_COL_SCA_NRM);
+
+	if (ply_out) {
+	    bu_vls_sprintf(gedp->ged_result_str, "Error: -f/--format cannot be combined with --ply\n");
+	    rt_db_free_internal(&intern);
+	    bu_vls_free(&fmt);
+	    return BRLCAD_ERROR;
+	}
+
+	/* Reject requests for fields the object does not carry. */
+	if ((req_nrm && !obj_has_nrm) || (req_sca && !obj_has_sca) || (req_col && !obj_has_col)) {
+	    bu_vls_sprintf(gedp->ged_result_str, "Error: requested format \"%s\" includes fields not present in pnts object %s\n", fc, pnt_prim);
+	    rt_db_free_internal(&intern);
+	    bu_vls_free(&fmt);
+	    return BRLCAD_ERROR;
+	}
+
+	/* Currently only XYZ-only output is supported (i/j/k, scale and rgb
+	 * selective output is deferred).  Anything beyond xyz is unsupported. */
+	if (!req_pnt || req_nrm || req_sca || req_col) {
+	    bu_vls_sprintf(gedp->ged_result_str, "Error: unsupported format \"%s\" (currently only \"xyz\" is supported for output)\n", fc);
+	    rt_db_free_internal(&intern);
+	    bu_vls_free(&fmt);
+	    return BRLCAD_ERROR;
+	}
+
+	/* XYZ-only: all pnt structs share (struct bu_list l; point_t v;) as
+	 * their leading members, so we can treat any point type as a plain
+	 * struct pnt for the purpose of emitting v[0..2]. */
+	fp = fopen(filename, "wb+");
+	if (fp == NULL) {
+	    bu_vls_sprintf(gedp->ged_result_str, "Error: cannot open file %s for writing\n", filename);
+	    rt_db_free_internal(&intern);
+	    bu_vls_free(&fmt);
+	    return BRLCAD_ERROR;
+	}
+	{
+	    struct pnt *pn = NULL;
+	    struct pnt *pl = (struct pnt *)pnts->point;
+	    for (BU_LIST_FOR(pn, pnt, &(pl->l))) {
+		int i = 0;
+		for (i = 0; i < 3; i++) {
+		    _pnts_fastf_t_to_vls(&pnt_str, pn->v[i], precis);
+		    if (i != 2) {
+			fprintf(fp, "%s ", bu_vls_addr(&pnt_str));
+		    } else {
+			fprintf(fp, "%s\n", bu_vls_addr(&pnt_str));
+		    }
+		}
+	    }
+	}
+	rt_db_free_internal(&intern);
+	fclose(fp);
+	bu_vls_free(&fmt);
+	return BRLCAD_OK;
+    }
+
+    bu_vls_free(&fmt);
 
     /* Write points */
     fp = fopen(filename, "wb+");
@@ -1461,7 +1541,7 @@ ged_pnts_core(struct ged *gedp, int argc, const char *argv[])
  * argv[5] default size of each point
  */
 int
-ged_make_pnts_core(struct ged *gedp, int argc, const char *argv[]) 
+ged_make_pnts_core(struct ged *gedp, int argc, const char *argv[])
 {
     double conv_factor = -1.0;
     double psize = -1.0;
@@ -1561,26 +1641,14 @@ ged_make_pnts_core(struct ged *gedp, int argc, const char *argv[])
     return ged_exec_pnts(gedp, 10, (const char **)nargv);
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-extern "C" {
-struct ged_cmd_impl pnts_cmd_impl = { "pnts", ged_pnts_core, GED_CMD_DEFAULT };
-const struct ged_cmd pnts_cmd = { &pnts_cmd_impl };
 
-struct ged_cmd_impl make_pnts_cmd_impl = { "make_pnts", ged_make_pnts_core, GED_CMD_DEFAULT };
-const struct ged_cmd make_pnts_cmd = { &make_pnts_cmd_impl };
+#define GED_PNTS_COMMANDS(X, XID) \
+    X(make_pnts, ged_make_pnts_core, GED_CMD_DEFAULT) \
+    X(pnts, ged_pnts_core, GED_CMD_DEFAULT) \
 
-const struct ged_cmd *pnts_cmds[] = { &make_pnts_cmd,  &pnts_cmd, NULL };
-
-static const struct ged_plugin pinfo = { GED_API,  pnts_cmds, 2 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-}
-#endif
+GED_DECLARE_COMMAND_SET(GED_PNTS_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_pnts", 1, GED_PNTS_COMMANDS)
 
 // Local Variables:
 // tab-width: 8
@@ -1590,4 +1658,3 @@ COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

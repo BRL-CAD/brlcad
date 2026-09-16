@@ -1,7 +1,7 @@
 /*                 PropertyDefinitionRepresentation.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2025 United States Government as represented by
+ * Copyright (c) 1994-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,12 +33,10 @@
 
 // forward declaration of class
 class ON_Brep;
-#ifdef AP203e
-class RepresentedDefinition;
-#else
 class PropertyDefinition;
-#endif
 class Representation;
+class ShapeRepresentation;
+class AdvancedBrepShapeRepresentation;
 
 class PropertyDefinitionRepresentation: virtual public STEPEntity {
 private:
@@ -46,11 +44,7 @@ private:
     static EntityInstanceFunc GetInstance;
 
 protected:
-#ifdef AP203e
-    RepresentedDefinition *definition;
-#else
     PropertyDefinition *definition;
-#endif
     Representation *used_representation;
 
 public:
@@ -64,6 +58,8 @@ public:
     string Description();
     string GetProductName();
     int GetProductId();
+    virtual AdvancedBrepShapeRepresentation *GetAdvancedBrepShapeRepresentation();
+    virtual ShapeRepresentation *GetShapeRepresentation();
     virtual void Print(int level);
 
     //static methods

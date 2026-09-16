@@ -1,10 +1,4 @@
-include_directories(
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  ${BRLCAD_BINARY_DIR}/include
-  ${BRLCAD_SOURCE_DIR}/include
-  ${BU_INCLUDE_DIRS}
-  ${GED_INCLUDE_DIRS}
-)
+set(PLUGIN_LIBS libged libbu)
 
 set(
   VIEW_SRCS
@@ -15,9 +9,9 @@ set(
   axes.c
   center.cpp
   eye.c
-  faceplate/axes.c
   faceplate/faceplate.c
-  faceplate/grid.c
+  faceplate/faceplate_axes.c
+  faceplate/faceplate_grid.c
   faceplate/interactive_rect.c
   gobjs.cpp
   knob.c
@@ -37,12 +31,14 @@ set(
   ypr.c
 )
 
-ged_plugin_library(ged-view ${VIEW_SRCS})
-target_link_libraries(ged-view libged libbu)
+ged_plugin_library(ged-view
+  ${VIEW_SRCS}
+  INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}
+  LIBS ${PLUGIN_LIBS}
+)
 
 cmakefiles(
   CMakeLists.txt
-  ${VIEW_SRCS}
   ged_view.h
   faceplate/faceplate.h
 )

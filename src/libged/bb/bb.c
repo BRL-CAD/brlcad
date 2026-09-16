@@ -1,7 +1,7 @@
 /*                         B B . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -41,7 +41,6 @@ int
 ged_bb_core(struct ged *gedp, int argc, const char *argv[])
 {
     point_t rpp_min, rpp_max;
-    point_t obj_min, obj_max;
     int c;
     int use_air = 1;
     int print_header = 1;
@@ -51,20 +50,19 @@ ged_bb_core(struct ged *gedp, int argc, const char *argv[])
     int print_vol = 0;
     int make_bb = 0;
     int oriented_bb = 0;
+    int tight_bb = 0;
     int i;
-    static const char *usage = "[options] object1 [object2 object3 ...]";
+    static const char *usage = "[-c name] [-d] [-m] [-e] [-q] [-u] [-v] [-o] [-t] object1 [object2 object3 ...]";
     const char *str;
     double xlen;
     double ylen;
     double zlen;
     double vol;
-    double oriented_bbox_tol = BN_TOL_DIST;
     char bbname[64];
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
-    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -76,7 +74,7 @@ ged_bb_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     bu_optind = 1;      /* re-init bu_getopt() */
-    while ((c = bu_getopt(argc, (char * const *)argv, "c:dmequvo")) != -1) {
+    while ((c = bu_getopt(argc, (char * const *)argv, "c:dmequvot")) != -1) {
 	switch (c) {
 	    case 'c':
 		make_bb = 1;
@@ -104,6 +102,9 @@ ged_bb_core(struct ged *gedp, int argc, const char *argv[])
 	    case 'o':
 		oriented_bb = 1;
 		break;
+	    case 't':
+		tight_bb = 1;
+		break;
 	    default:
 		bu_vls_printf(gedp->ged_result_str, "Unrecognized option - %c", c);
 		return BRLCAD_ERROR;
@@ -127,15 +128,13 @@ ged_bb_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (!oriented_bb) {
-
-	VSETALL(rpp_min, INFINITY);
-	VSETALL(rpp_max, -INFINITY);
-	for (i = 0; i < argc; i++) {
-	    if (rt_obj_bounds(gedp->ged_result_str, gedp->dbip, argc - i, (const char **)argv+i, use_air, obj_min, obj_max) & BRLCAD_ERROR)
-		return BRLCAD_ERROR;
-	    VMINMAX(rpp_min, rpp_max, (double *)obj_min);
-	    VMINMAX(rpp_min, rpp_max, (double *)obj_max);
-	}
+	const int bounds_ret = tight_bb ?
+	    _ged_obj_tight_bounds(gedp, argc, (const char **)argv, use_air,
+		rpp_min, rpp_max) :
+	    rt_obj_bounds(gedp->ged_result_str, gedp->dbip, argc,
+		(const char **)argv, use_air, rpp_min, rpp_max);
+	if (bounds_ret & BRLCAD_ERROR)
+	    return BRLCAD_ERROR;
 
 	/* Report Bounding Box Information */
 	str = bu_units_string(gedp->dbip->dbi_local2base);
@@ -207,44 +206,15 @@ ged_bb_core(struct ged *gedp, int argc, const char *argv[])
 		return BRLCAD_ERROR;
 	    }
 
-	    if (rt_db_put_internal(dp, gedp->dbip, &new_intern, wdbp->wdb_resp) < 0) {
+	    if (rt_db_put_internal(dp, gedp->dbip, &new_intern) < 0) {
 		rt_db_free_internal(&new_intern);
 		bu_vls_printf(gedp->ged_result_str, "Database write error, aborting.\n");
 	    }
 	}
     } else {
-	/* basic test - BoT only at the moment */
 	struct directory *dp;
-	struct db_full_path path;
-	struct directory *obj_dp;
-	struct rt_db_internal intern;
 	struct rt_arb_internal *arb;
 	struct rt_db_internal new_intern;
-
-	db_full_path_init(&path);
-	if (db_string_to_path(&path, gedp->dbip, argv[0]) || !DB_FULL_PATH_CUR_DIR(&path)) {
-	    bu_vls_printf(gedp->ged_result_str, "db_string_to_path failed for %s\n", argv[0]);
-	    db_free_full_path(&path);
-	    return BRLCAD_ERROR;
-	}
-
-	obj_dp = db_lookup(gedp->dbip, DB_FULL_PATH_CUR_DIR(&path)->d_namep, LOOKUP_QUIET);
-	if (obj_dp == RT_DIR_NULL) {
-	    bu_vls_printf(gedp->ged_result_str, "db_lookup failed for %s\n", DB_FULL_PATH_CUR_DIR(&path)->d_namep);
-	    db_free_full_path(&path);
-	    return BRLCAD_ERROR;
-	}
-	if (rt_db_get_internal(&intern, obj_dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
-	    bu_vls_printf(gedp->ged_result_str, "get_internal failed for %s\n", DB_FULL_PATH_CUR_DIR(&path)->d_namep);
-	    db_free_full_path(&path);
-	    return BRLCAD_ERROR;
-	}
-	if (intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
-	    bu_vls_printf(gedp->ged_result_str, "Error: Oriented bounding box calculation is currently supported only for BoT objects\n");
-	    rt_db_free_internal(&intern);
-	    db_free_full_path(&path);
-	    return BRLCAD_ERROR;
-	}
 
 	BU_ALLOC(arb, struct rt_arb_internal);
 	arb->magic = RT_ARB_INTERNAL_MAGIC;
@@ -256,13 +226,12 @@ ged_bb_core(struct ged *gedp, int argc, const char *argv[])
 	new_intern.idb_meth = &OBJ[ID_ARB8];
 	new_intern.idb_ptr = (void *)arb;
 
-	if (intern.idb_meth->ft_oriented_bbox) {
-	    if (intern.idb_meth->ft_oriented_bbox(arb, &intern, oriented_bbox_tol) < 0) {
-		bu_vls_printf(gedp->ged_result_str, "Error: Oriented bounding box calculation failed.\n");
-		rt_db_free_internal(&intern);
-		db_free_full_path(&path);
-		return BRLCAD_ERROR;
-	    }
+	if (_ged_obj_oriented_bounds(gedp, argc, (const char **)argv, use_air,
+		tight_bb, arb->pt) != BRLCAD_OK) {
+	    bu_vls_printf(gedp->ged_result_str,
+		"Error: Oriented bounding box calculation failed.\n");
+	    rt_db_free_internal(&new_intern);
+	    return BRLCAD_ERROR;
 	}
 
 
@@ -281,7 +250,9 @@ ged_bb_core(struct ged *gedp, int argc, const char *argv[])
 
 	/* Print rpp */
 	if (print_rpp == 1) {
-	    bu_vls_printf(gedp->ged_result_str, "Point 1: %f, %f, %f\n", arb->pt[0][0], arb->pt[0][1], arb->pt[0][2]);
+	    for (i = 0; i < 8; ++i)
+		bu_vls_printf(gedp->ged_result_str, "Point %d: %f, %f, %f\n",
+		    i + 1, V3ARGS(arb->pt[i]));
 	}
 
 	/* Print dim info */
@@ -290,6 +261,13 @@ ged_bb_core(struct ged *gedp, int argc, const char *argv[])
 	    ylen = DIST_PNT_PNT(arb->pt[0], arb->pt[1])*gedp->dbip->dbi_base2local;
 	    zlen = DIST_PNT_PNT(arb->pt[0], arb->pt[3])*gedp->dbip->dbi_base2local;
 	    bu_vls_printf(gedp->ged_result_str, "Length: %g %s\nWidth: %g %s\nHeight: %g %s\n", xlen, str, ylen, str, zlen, str);
+	}
+
+	if (print_midpt == 1) {
+	    point_t midpt;
+	    VADD2SCALE(midpt, arb->pt[0], arb->pt[6], 0.5);
+	    bu_vls_printf(gedp->ged_result_str, "Mid Point: (%f %f %f)\n",
+		V3ARGS(midpt));
 	}
 
 	if (print_vol == 1) {
@@ -310,7 +288,7 @@ ged_bb_core(struct ged *gedp, int argc, const char *argv[])
 		return BRLCAD_ERROR;
 	    }
 
-	    if (rt_db_put_internal(dp, gedp->dbip, &new_intern, wdbp->wdb_resp) < 0) {
+	    if (rt_db_put_internal(dp, gedp->dbip, &new_intern) < 0) {
 		rt_db_free_internal(&new_intern);
 		bu_vls_printf(gedp->ged_result_str, "Database write error, aborting.\n");
 		return BRLCAD_ERROR;
@@ -323,25 +301,13 @@ ged_bb_core(struct ged *gedp, int argc, const char *argv[])
     return BRLCAD_OK;
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl bb_cmd_impl = {
-    "bb",
-    ged_bb_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd bb_cmd = { &bb_cmd_impl };
-const struct ged_cmd *bb_cmds[] = { &bb_cmd, NULL };
+#define GED_BB_COMMANDS(X, XID) \
+    X(bb, ged_bb_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  bb_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_BB_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_bb", 1, GED_BB_COMMANDS)
 
 /*
  * Local Variables:

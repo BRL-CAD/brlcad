@@ -1,0 +1,92 @@
+= FBFRAME(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+fbframe - draw a colored border around a framebuffer
+
+== SYNOPSIS
+
+[source]
+----
+fbframe [-F framebuffer] [-s|-S squareframesize] [-w|-W frame_width] [-n|-N frame_height]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*fbframe* draws a single-pixel-wide colored border around the edge of
+a framebuffer. The border is drawn counter-clockwise starting from the
+bottom: red along the bottom, green up the right side, blue across the
+top, and white down the left side. It is useful for verifying the
+displayable area and alignment of a framebuffer.
+
+The *-w*/*-W* and *-n*/*-N* options set the width and height of the
+region that *fbframe* opens and frames (not the thickness of the
+border, which is always one pixel). If no size is given, the
+dimensions are taken from the opened framebuffer.
+
+The *-F* option selects the framebuffer; if omitted, the *FB_FILE*
+environment variable is consulted (see *brlcad*(1)).
+
+[[options]]
+== OPTIONS
+
+*-F* _framebuffer_::
+  Specify the framebuffer device to use. If omitted, the *FB_FILE*
+  environment variable or the default framebuffer is used.
+
+*-s* _squareframesize_::
+*-S* _squareframesize_::
+  Set both the width and height of the framed region to the given
+  number of pixels.
+
+*-w* _frame_width_::
+*-W* _frame_width_::
+  Set the width (in pixels) of the framed region.
+
+*-n* _frame_height_::
+*-N* _frame_height_::
+  Set the height (in scanlines) of the framed region.
+
+*-h*, *-?*::
+  Print a usage message and exit.
+
+[[examples]]
+== EXAMPLES
+
+.Frame a 1024x1024 region and verify it visually
+====
+[source,bash]
+----
+fbframe -F /tmp/test.pix -s 1024
+fb-png -F /tmp/test.pix -s 1024 > frame.png
+----
+Opens a 1024x1024 framebuffer (here a memory-mapped *pix*(5) file),
+draws the colored border, then captures the result to a PNG with
+*fb-png*(1). The red/green/blue/white edges make it easy to confirm
+that the full displayable area is being rendered and that no rows or
+columns are being clipped.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *fbgrid*(1), *fbcbars*(1), *fbclear*(1), *fb-png*(1)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,7 +1,7 @@
 /*                      P I X B L E N D . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2025 United States Government as represented by
+ * Copyright (c) 1995-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,6 +34,8 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>
@@ -44,6 +46,7 @@
 
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/str.h"
 #include "bu/exit.h"
 
@@ -86,24 +89,27 @@ get_args(int argc, char **argv)
 	    case 'r':
 		if (iflg)
 		    return 0;
-		value = atof(bu_optarg);
+		if (!bu_opt_scan_double(bu_optarg, &value, "blend value"))
+		    return 0;
 		++rflg;
 		break;
 	    case 'i':
 		if (rflg)
 		    return 0;
-    		if (gflg) {
-			fprintf(stderr, "The -g and -i options do not make sense together.\n");
-			return 0;
+		if (gflg) {
+		    fprintf(stderr, "The -g and -i options do not make sense together.\n");
+		    return 0;
 		}
-		value = atof(bu_optarg);
+		if (!bu_opt_scan_double(bu_optarg, &value, "interpolate value"))
+		    return 0;
 		++iflg;
 		break;
 	    case 'S':
 		seed = timeseed();
 		break;
 	    case 's':
-		seed = atoi(bu_optarg);
+		if (!bu_opt_scan_int(bu_optarg, &seed, "seed"))
+		    return 0;
 		break;
 	    case 'g':
 		if (iflg) {
@@ -111,7 +117,8 @@ get_args(int argc, char **argv)
 		    return 0;
 		}
 		++gflg;
-		gvalue = atof(bu_optarg);
+		if (!bu_opt_scan_double(bu_optarg, &gvalue, "glitter value"))
+		    return 0;
 		break;
 	    default:		/* 'h' '?' */
 		return 0;
@@ -120,6 +127,10 @@ get_args(int argc, char **argv)
 
     if (bu_optind+2 > argc)
 	return 0;
+    if (bu_optind+2 < argc) {
+	fprintf(stderr, "pixblend: excess argument(s) not supported\n");
+	return 0;
+    }
 
     f1_name = argv[bu_optind++];
     if (BU_STR_EQUAL(f1_name, "-"))
@@ -142,9 +153,6 @@ get_args(int argc, char **argv)
 		f2_name);
 	return 0;
     }
-
-    if (argc > bu_optind)
-	fprintf(stderr, "pixblend: excess argument(s) ignored\n");
 
     /* Adjust value upwards if glitterize option is used */
     value += gvalue * (1 - value);

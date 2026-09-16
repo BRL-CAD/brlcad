@@ -1,7 +1,7 @@
 /*                        M I R R O R . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -52,7 +52,6 @@ ged_mirror_core(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
-    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -168,7 +167,7 @@ ged_mirror_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* get object being mirrored */
-    ret = rt_db_get_internal(&internal, dp, gedp->dbip, NULL, wdbp->wdb_resp);
+    ret = rt_db_get_internal(&internal, dp, gedp->dbip, NULL);
     if (ret < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Unable to load solid [%s]\n", argv[bu_optind]);
 	return BRLCAD_ERROR;
@@ -182,8 +181,7 @@ ged_mirror_core(struct ged *gedp, int argc, const char *argv[])
     ip = rt_mirror(gedp->dbip,
 		   &internal,
 		   mirror_pt,
-		   mirror_dir,
-		   wdbp->wdb_resp);
+		   mirror_dir);
     if (ip == NULL) {
 	bu_vls_printf(gedp->ged_result_str, "Unable to mirror [%s]", argv[bu_optind]);
 	return BRLCAD_ERROR;
@@ -196,7 +194,7 @@ ged_mirror_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
     /* save the mirrored object to disk */
-    if (rt_db_put_internal(dp, gedp->dbip, ip, wdbp->wdb_resp) < 0) {
+    if (rt_db_put_internal(dp, gedp->dbip, ip) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Unable to store [%s] to the database", argv[bu_optind+1]);
 	return BRLCAD_ERROR;
     }
@@ -213,25 +211,13 @@ ged_mirror_core(struct ged *gedp, int argc, const char *argv[])
     return BRLCAD_OK;
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl mirror_cmd_impl = {
-    "mirror",
-    ged_mirror_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd mirror_cmd = { &mirror_cmd_impl };
-const struct ged_cmd *mirror_cmds[] = { &mirror_cmd, NULL };
+#define GED_MIRROR_COMMANDS(X, XID) \
+    X(mirror, ged_mirror_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  mirror_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_MIRROR_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_mirror", 1, GED_MIRROR_COMMANDS)
 
 /*
  * Local Variables:

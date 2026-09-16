@@ -1,7 +1,7 @@
 /*                      J O I N T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2025 United States Government as represented by
+ * Copyright (c) 2004-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -233,7 +233,6 @@ static struct db_tree_state mesh_initial_tree_state = {
     NULL,		/* ts_tol */
     NULL,		/* ts_m */
     NULL,		/* ts_rtip */
-    NULL		/* ts_resp */
 };
 
 
@@ -527,7 +526,7 @@ hold_point_location(struct ged *gedp, fastf_t *loc, struct hold_point *hp)
 	    return 1;
 	case ID_GRIP:
 	    if (hp->flag & HOLD_PT_GOOD) {
-		db_path_to_mat(gedp->dbip, &hp->path, mat, hp->path.fp_len-2, &rt_uniresource);
+		db_path_to_mat(gedp->dbip, &hp->path, mat, hp->path.fp_len-2);
 		MAT4X3PNT(loc, mat, hp->point);
 		return 1;
 	    }
@@ -535,7 +534,7 @@ hold_point_location(struct ged *gedp, fastf_t *loc, struct hold_point *hp)
 		bu_vls_printf(gedp->ged_result_str, "hold_point_location: null pointer! '%s' not found!\n", "hp->path.fp_names");
 		bu_bomb("this shouldn't happen\n");
 	    }
-	    if (rt_db_get_internal(&intern, hp->path.fp_names[hp->path.fp_len-1], gedp->dbip, NULL, &rt_uniresource) < 0)
+	    if (rt_db_get_internal(&intern, hp->path.fp_names[hp->path.fp_len-1], gedp->dbip, NULL) < 0)
 		return 0;
 
 	    RT_CK_DB_INTERNAL(&intern);
@@ -546,11 +545,11 @@ hold_point_location(struct ged *gedp, fastf_t *loc, struct hold_point *hp)
 	    hp->flag |= HOLD_PT_GOOD;
 	    rt_db_free_internal(&intern);
 
-	    db_path_to_mat(gedp->dbip, &hp->path, mat, hp->path.fp_len-2, &rt_uniresource);
+	    db_path_to_mat(gedp->dbip, &hp->path, mat, hp->path.fp_len-2);
 	    MAT4X3PNT(loc, mat, hp->point);
 	    return 1;
 	case ID_JOINT:
-	    db_path_to_mat(gedp->dbip, &hp->path, mat, hp->path.fp_len-3, &rt_uniresource);
+	    db_path_to_mat(gedp->dbip, &hp->path, mat, hp->path.fp_len-3);
 	    if (hp->flag & HOLD_PT_GOOD) {
 		MAT4X3VEC(loc, mat, hp->point);
 		return 1;
@@ -3578,25 +3577,13 @@ struct funtab joint_tab[] = {
      NULL, 0, 0, FALSE}
 };
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl joint_cmd_impl = {
-    "joint",
-    ged_joint_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd joint_pcmd = { &joint_cmd_impl };
-const struct ged_cmd *joint_cmds[] = { &joint_pcmd, NULL };
+#define GED_JOINT_COMMANDS(X, XID) \
+    X(joint, ged_joint_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  joint_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_JOINT_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_joint", 1, GED_JOINT_COMMANDS)
 
 /*
  * Local Variables:

@@ -1,7 +1,7 @@
 /*                      B O O L W E A V E . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2025 United States Government as represented by
+ * Copyright (c) 1993-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,7 +31,6 @@
 #include "bu/bitv.h"
 #include "bu/ptbl.h"
 #include "rt/application.h"
-#include "rt/resource.h"
 #include "rt/seg.h"
 #include "rt/ray_partition.h"
 
@@ -166,8 +165,13 @@ RT_EXPORT extern int rt_boolfinal(struct partition *InputHdp,
  * when the size is increased.
  *
  * Return the new pointer for what was previously the last element.
+ *
+ * NOTE - this is DEPRECATED as a public facing header.  Resource
+ * management is librt's responsibility, and this level of detail
+ * exposure needs to go away.
  */
-RT_EXPORT extern void rt_bool_growstack(struct resource *res);
+DEPRECATED RT_EXPORT extern void rt_bool_growstack(struct resource *res);
+
 
 __END_DECLS
 

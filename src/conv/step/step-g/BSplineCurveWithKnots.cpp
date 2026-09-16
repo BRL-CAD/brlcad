@@ -1,7 +1,7 @@
 /*                 BSplineCurveWithKnots.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2025 United States Government as represented by
+ * Copyright (c) 1994-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,26 +34,27 @@
 #define ENTITYNAME "B_Spline_Curve_With_Knots"
 string BSplineCurveWithKnots::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)BSplineCurveWithKnots::Create);
 
-static const char *Knot_type_string[] = {
+static const char *BSplineCurve_Knot_type_string[] = {
     "uniform_knots",
     "unspecified",
     "quasi_uniform_knots",
     "piecewise_bezier_knots",
     "unset"
 };
+static const int STEP_KNOT_TYPE_UNSET = 4;
 
 BSplineCurveWithKnots::BSplineCurveWithKnots()
 {
     step = NULL;
     id = 0;
-    knot_spec = Knot_type_unset;
+    knot_spec = STEP_KNOT_TYPE_UNSET;
 }
 
 BSplineCurveWithKnots::BSplineCurveWithKnots(STEPWrapper *sw, int step_id)
 {
     step = sw;
     id = step_id;
-    knot_spec = Knot_type_unset;
+    knot_spec = STEP_KNOT_TYPE_UNSET;
 }
 
 BSplineCurveWithKnots::~BSplineCurveWithKnots()
@@ -113,8 +114,10 @@ BSplineCurveWithKnots::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	}
     }
 
-    knot_spec = (Knot_type)step->getEnumAttribute(sse, "knot_spec");
-    V_MIN(knot_spec, Knot_type_unset);
+    knot_spec = step->getEnumAttributeIndex(sse, "knot_spec",
+	BSplineCurve_Knot_type_string,
+	sizeof(BSplineCurve_Knot_type_string) / sizeof(BSplineCurve_Knot_type_string[0]),
+	STEP_KNOT_TYPE_UNSET);
 
     sw->entity_status[id] = STEP_LOADED;
     return true;
@@ -149,7 +152,7 @@ BSplineCurveWithKnots::Print(int level)
     std::cout << std::endl;
 
     TAB(level + 1);
-    std::cout << "knot_spec:" << Knot_type_string[knot_spec] << std::endl;
+    std::cout << "knot_spec:" << BSplineCurve_Knot_type_string[knot_spec] << std::endl;
 
     TAB(level);
     std::cout << "Inherited Attributes:" << std::endl;

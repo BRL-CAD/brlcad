@@ -11,10 +11,10 @@ set(
   brlcad.menu
   brlcad.postinst
   brlcad.postrm
+  brlcad.prerm
   brlcad.sh
   brlcad.xml
   changelog
-  compat
   control
   copyright
   icons/128x128/archer.png

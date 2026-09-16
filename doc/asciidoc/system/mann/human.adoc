@@ -1,0 +1,62 @@
+= HUMAN(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+human - generate human models based on parameters like height
+
+== SYNOPSIS
+
+[source]
+----
+human [options]
+----
+
+[[description]]
+== DESCRIPTION
+
+The *human* command generates proportional, articulated human geometric models (comprised of primitives like spheres, truncated general cones, and cylinders) inside the BRL-CAD database. 
+
+It calculates body proportions based on target height, percentile, and stance/pose parameters. It can generate a single human or an entire grid-based "army" of human models. By default, it generates a 50th-percentile male standing at 68 inches (5 foot 8 inches) tall named `Body.c`.
+
+=== Supported Options:
+
+* *-A* : Auto mode. Automatically generates a 50th-percentile human model.
+* *-b* : Bounding boxes. In addition to the human geometry, generates a set of corresponding bounding boxes (useful for collision and clearance testing).
+* *-H height* : Specifies the total height of the generated human in inches (default: 68.0).
+* *-n name* : Specifies the root combination name for the generated human (default: `Body.c`).
+* *-N num* : Army generation. Generates a square grid of humans. The total number of humans generated will be `num` squared (e.g., `-N 4` creates an army of 16 humans).
+* *-p percent* : Specifies the percentile scaling (1 to 99) for the human's proportions (default: 50).
+* *-s pose* : Specifies an integer stance/pose ID.
+* *-t / -T* : Output (-t) or input (-T) a text file containing bounding box measurements.
+* *-v / -V* : Output (-v) or input (-V) a verbose text file containing all human measurements.
+
+[[examples]]
+== EXAMPLES
+
+.Generate a custom human model
+[example]
+====
+mged> **human -H 72 -n TallGuy.c -p 90**
+
+Generates a 90th-percentile human model that is 72 inches (6 feet) tall under the root combination name `TallGuy.c`.
+====
+
+.Generate an army of bounding boxes
+[example]
+====
+mged> **human -b -N 4 -n Soldier.c**
+
+Generates a 4x4 grid (16 total) of default 5-foot-8 humans with their respective bounding boxes, prefixed with the name `Soldier`.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

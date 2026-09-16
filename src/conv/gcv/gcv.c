@@ -1,7 +1,7 @@
 /*                           G C V . C P P
  * BRL-CAD
  *
- * Copyright (c) 2015-2025 United States Government as represented by
+ * Copyright (c) 2015-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -71,12 +71,20 @@ fmt_fun(struct bu_vls *UNUSED(msgs), size_t argc, const char **argv, void *set_v
 
     for (i = 0; i < argc; i++) {
 	struct bu_vls cmp_arg = BU_VLS_INIT_ZERO;
-	const char *arg = argv[i]+1;
+	const char *arg = argv[i];
 	const char *equal_pos;
 	int d_ind = 0;
 	int in_desc = 0;
 	struct bu_opt_desc *d = &(gfo->ds[d_ind]);
 
+	/* Values such as "0" are filter arguments, not an empty spelling of
+	 * a top-level option.  Strip dashes only from actual option tokens. */
+	if (arg[0] != '-' || arg[1] == '\0') {
+	    bu_ptbl_ins(gfo->args, (long *)argv[i]);
+	    args_used++;
+	    continue;
+	}
+	arg++;
 	if (arg[0] == '-')
 	    arg++;
 	equal_pos = strchr(arg, '=');
@@ -114,7 +122,7 @@ extract_path(struct bu_vls *path, const char *input)
 {
     int ret = 0;
     struct bu_vls wpath = BU_VLS_INIT_ZERO;
-    char *colon_pos = NULL;
+    const char *colon_pos = NULL;
 
     if (UNLIKELY(!input))
 	return 0;
@@ -557,13 +565,13 @@ main(int ac, const char **av)
 
     /* If not specified explicitly with -i or -o, the input and output paths must always
      * be the last arguments supplied */
-    if (in_str && !out_str) {
+    if (in_str && !out_str && ac > 0) {
 	bu_vls_sprintf(&out_path_raw, "%s", av[ac - 1]);
 	av[ac - 1] = NULL;
 	ac--;
 	unknown_ac--;
     }
-    if (!in_str && out_str) {
+    if (!in_str && out_str && ac > 0) {
 	bu_vls_sprintf(&in_path_raw, "%s", av[ac - 1]);
 	av[ac - 1] = NULL;
 	ac--;

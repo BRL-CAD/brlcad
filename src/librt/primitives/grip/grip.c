@@ -1,7 +1,7 @@
 /*                          G R I P . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2025 United States Government as represented by
+ * Copyright (c) 1993-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -57,7 +57,7 @@ struct grip_specific {
 };
 #define GRIP_NULL ((struct grip_specific *)0)
 
-const struct bu_structparse rt_grp_parse[] = {
+EXTERNCPP const struct bu_structparse rt_grp_parse[] = {
     { "%f", 3, "V", bu_offsetofarray(struct rt_grip_internal, center, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 3, "N", bu_offsetofarray(struct rt_grip_internal, normal, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 1, "L", bu_offsetof(struct rt_grip_internal, mag), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -65,7 +65,7 @@ const struct bu_structparse rt_grp_parse[] = {
 };
 
 
-int
+C_DECL int
 rt_grp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_grip_internal *gip;
@@ -93,7 +93,7 @@ rt_grp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-void
+C_DECL void
 rt_grp_print(const struct soltab *stp)
 {
     const struct grip_specific *gripp = (struct grip_specific *)stp->st_specific;
@@ -119,7 +119,7 @@ rt_grp_print(const struct soltab *stp)
  * 0 MISS
  * >0 HIT
  */
-int
+C_DECL int
 rt_grp_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *UNUSED(seghead))
 {
     if (stp) RT_CK_SOLTAB(stp);
@@ -133,10 +133,27 @@ rt_grp_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 
 
 /**
+ * Vectorized rt_grp_shot(): a grip carries no solid geometry, so every
+ * ray in the batch misses.  Provided so ID_GRIP dispatches through a
+ * real ft_vshot instead of the generic per-ray stub.
+ */
+C_DECL void
+rt_grp_vshot(struct soltab **stp, struct xray **UNUSED(rp), struct seg *segp, int n, struct application *ap)
+{
+    int i;
+    if (ap) RT_CK_APPLICATION(ap);
+    for (i = 0; i < n; i++) {
+	if (stp[i] == 0) continue;		/* skip this ray */
+	segp[i].seg_stp = (struct soltab *)0;	/* always MISS */
+    }
+}
+
+
+/**
  * Given ONE ray distance, return the normal and entry/exit point.
  * The normal is already filled in.
  */
-void
+C_DECL void
 rt_grp_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
     if (hitp) RT_CK_HIT(hitp);
@@ -150,7 +167,7 @@ rt_grp_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 /**
  * Return the "curvature" of the grip.
  */
-void
+C_DECL void
 rt_grp_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
     if (!cvp) return;
@@ -168,7 +185,7 @@ rt_grp_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
  * "toroidal" map is established, varying each from 0 up to 1 and then
  * back down to 0 again.
  */
-void
+C_DECL void
 rt_grp_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
     if (ap) RT_CK_APPLICATION(ap);
@@ -180,7 +197,7 @@ rt_grp_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 }
 
 
-void
+C_DECL void
 rt_grp_free(struct soltab *stp)
 {
     struct grip_specific *gripp = (struct grip_specific *)stp->st_specific;
@@ -196,7 +213,7 @@ rt_grp_free(struct soltab *stp)
  * to the tip. 1/4 of the width is the length of a base side.
  *
  */
-int
+C_DECL int
 rt_grp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     struct rt_grip_internal *gip;
@@ -250,7 +267,7 @@ rt_grp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
  * -1 failure
  * 0 success
  */
-int
+C_DECL int
 rt_grp_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_grip_internal *gip;
@@ -277,7 +294,7 @@ rt_grp_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     gip = (struct rt_grip_internal *)ip->idb_ptr;
     gip->magic = RT_GRIP_INTERNAL_MAGIC;
 
-    flip_fastf_float(orig_eqn, rp->s.s_values, 3, (dbip && dbip->dbi_version < 0) ? 1 : 0);	/* 2 floats to many */
+    flip_fastf_float(orig_eqn, rp->s.s_values, 3, (dbip && dbip->i->dbi_version < 0) ? 1 : 0);	/* 2 floats to many */
 
     /* Transform the point, and the normal */
     if (mat == NULL) mat = bn_mat_identity;
@@ -290,7 +307,7 @@ rt_grp_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
     /* Verify that normal has unit length */
     f = MAGNITUDE(gip->normal);
-    if (f <= SMALL) {
+    if (f <= SQRT_SMALL_FASTF) {
 	bu_log("rt_grp_import4:  bad normal, len=%g\n", f);
 	return -1;		/* BAD */
     }
@@ -304,7 +321,7 @@ rt_grp_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 }
 
 
-int
+C_DECL int
 rt_grp_export4(struct bu_external *ep, const struct rt_db_internal *ip, double UNUSED(local2mm), const struct db_i *dbip)
 {
     struct rt_grip_internal *gip;
@@ -331,7 +348,7 @@ rt_grp_export4(struct bu_external *ep, const struct rt_db_internal *ip, double U
     return 0;
 }
 
-int
+C_DECL int
 rt_grp_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
 {
     if (!rop || !ip || !mat)
@@ -359,7 +376,7 @@ rt_grp_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
 
     /* Verify that normal has unit length */
     double f = MAGNITUDE(top->normal);
-    if (f <= SMALL) {
+    if (f <= SQRT_SMALL_FASTF) {
 	bu_log("rt_grp_mat:  bad normal, len=%g\n", f);
 	return -1;		/* BAD */
     }
@@ -375,7 +392,7 @@ rt_grp_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
 }
 
 
-int
+C_DECL int
 rt_grp_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_grip_internal *gip;
@@ -418,7 +435,7 @@ rt_grp_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 }
 
 
-int
+C_DECL int
 rt_grp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_grip_internal *gip;
@@ -453,7 +470,7 @@ rt_grp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
  */
-int
+C_DECL int
 rt_grp_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
     struct rt_grip_internal *gip = (struct rt_grip_internal *)ip->idb_ptr;
@@ -485,7 +502,7 @@ rt_grp_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
-void
+C_DECL void
 rt_grp_ifree(struct rt_db_internal *ip)
 {
     RT_CK_DB_INTERNAL(ip);
@@ -495,7 +512,7 @@ rt_grp_ifree(struct rt_db_internal *ip)
 }
 
 
-int
+C_DECL int
 rt_grp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     struct rt_grip_internal *gip;
@@ -512,7 +529,29 @@ rt_grp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 }
 
 
-int
+C_DECL int
+rt_grp_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char* UNUSED(variant), const point_t origin, double scale)
+{
+    struct rt_grip_internal *grp_ip;
+
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern->idb_type = ID_GRIP;
+    BU_ASSERT(&OBJ[intern->idb_type] == ftp);
+    intern->idb_meth = ftp;
+
+    BU_ALLOC(grp_ip, struct rt_grip_internal);
+    intern->idb_ptr = (void *)grp_ip;
+    grp_ip->magic = RT_GRIP_INTERNAL_MAGIC;
+
+    VSET(grp_ip->center, origin[X], origin[Y], origin[Z]);
+    VSET(grp_ip->normal, 1.0, 0.0, 0.0);
+    grp_ip->mag = 0.375 * scale;
+
+    return BRLCAD_OK;
+}
+
+
+C_DECL int
 rt_grp_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
     if (ip) RT_CK_DB_INTERNAL(ip);
@@ -520,7 +559,7 @@ rt_grp_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
     return 0;			/* OK */
 }
 
-const char *
+C_DECL const char *
 rt_grp_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     if (!pt || !ip)

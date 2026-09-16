@@ -1,7 +1,7 @@
 /*                        B W R E C T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2025 United States Government as represented by
+ * Copyright (c) 1986-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -25,11 +25,14 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include "bio.h"
 
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/log.h"
 #include "bu/mime.h"
 
@@ -44,39 +47,49 @@ char *in_file = NULL;
 
 char usage[] = "\
 Usage:  bwrect [-s squaresize] [-w width] [-n height] [-S out_squaresize] [-W out_width] [-N out_height]\n\
-			[-x xorig] [-y yorig] [-o out_file.bw] [file.bw] > [out_file.bw]\n";
-
+			[-x xorig] [-y yorig] [-o out_file.bw] [file.bw] [> out_file.bw]\n";
 
 static int
 get_args(int argc, char **argv)
 {
     int c;
+    int remaining = 0;
 
     while ((c = bu_getopt(argc, argv, "s:w:n:S:W:N:x:y:o:h?")) != -1) {
 	switch (c) {
 	    case 's':
-		inx = iny = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &inx, 1, INT_MAX, "input size"))
+		    return 0;
+		iny = inx;
 		break;
 	    case 'w':
-		inx = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &inx, 1, INT_MAX, "input width"))
+		    return 0;
 		break;
 	    case 'n':
-		iny = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &iny, 1, INT_MAX, "input height"))
+		    return 0;
 		break;
 	    case 'S':
-		outy = outx = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &outx, 1, INT_MAX, "output size"))
+		    return 0;
+		outy = outx;
 		break;
 	    case 'W':
-		outx = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &outx, 1, INT_MAX, "output width"))
+		    return 0;
 		break;
 	    case 'N':
-		outy = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &outy, 1, INT_MAX, "output height"))
+		    return 0;
 		break;
 	    case 'x':
-		xorig = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &xorig, 0, INT_MAX, "x origin"))
+		    return 0;
 		break;
 	    case 'y':
-		yorig = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &yorig, 0, INT_MAX, "y origin"))
+		    return 0;
 		break;
 	    case 'o':
 		out_file = bu_optarg;
@@ -92,16 +105,12 @@ get_args(int argc, char **argv)
     } else {
 	in_file = argv[bu_optind];
 	bu_optind++;
-	return 1;
     }
 
-
-    if (!isatty(fileno(stdout)) && out_file!=NULL) {
+    remaining = argc - bu_optind;
+    if (remaining != 0) {
+	bu_log("bwrect: excess argument(s) not supported\n");
 	return 0;
-    }
-
-    if (argc > ++bu_optind) {
-	bu_log("bwrect: excess argument(s) ignored\n");
     }
 
     return 1;
@@ -123,8 +132,14 @@ main(int argc, char **argv)
     img = icv_read(in_file, BU_MIME_IMAGE_BW, inx, iny);
     if (img == NULL)
 	return 1;
-    icv_rect(img, xorig, yorig, outx, outy);
+    if (icv_crop_rect(img, xorig, yorig, outx, outy) != 0) {
+	icv_destroy(img);
+	return 1;
+    }
     icv_write(img, out_file, BU_MIME_IMAGE_BW);
+    if (!isatty(fileno(stdout)) && out_file != NULL) {
+	icv_write(img, NULL, BU_MIME_IMAGE_BW);
+    }
 
     icv_destroy(img);
     return 0;

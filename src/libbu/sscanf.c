@@ -1,7 +1,7 @@
 /*                        S S C A N F . C
  * BRL-CAD
  *
- * Copyright (c) 2012-2025 United States Government as represented by
+ * Copyright (c) 2012-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * Copyright (c) 1990, 1993 The Regents of the University of California.
@@ -68,7 +68,7 @@
 #define SIZET		0x02000	/* z: size_t */
 #define SHORTSHORT	0x04000	/* hh: char */
 #define UNSIGNED	0x08000	/* %[oupxX] conversions */
-#define ALTERNATE	0x40000	/* # flag for alternate behavior */
+#define ALTERNATE_B	0x40000	/* # flag for alternate behavior */
 
 /*
  * The following are used in integral conversions only:
@@ -137,7 +137,7 @@ bu_vsscanf(const char *src, const char *fmt0, va_list ap)
 
 #define EXIT_DUE_TO_INPUT_FAILURE \
     FREE_FORMAT_PART; \
-    if (numFieldsAssigned == 0) { \
+    if (numCharsConsumed == 0) { \
 	return EOF; \
     } \
     return numFieldsAssigned;
@@ -216,7 +216,7 @@ bu_vsscanf(const char *src, const char *fmt0, va_list ap)
 		flags |= SUPPRESS;
 		goto again;
 	    case '#':
-		flags |= ALTERNATE;
+		flags |= ALTERNATE_B;
 		goto again;
 	    case 'j':
 		flags |= INTMAXT;
@@ -478,7 +478,7 @@ bu_vsscanf(const char *src, const char *fmt0, va_list ap)
 		     * conversion specification is preceded by at least one whitespace
 		     * character.
 		     */
-		    if (isspace((int)(*bu_vls_addr(&partFmt))) || flags & ALTERNATE) {
+		    if (isspace((int)(*bu_vls_addr(&partFmt))) || flags & ALTERNATE_B) {
 			while (1) {
 			    c = src[numCharsConsumed];
 			    if (c == '\0' || !isspace(c)) {
@@ -509,7 +509,7 @@ bu_vsscanf(const char *src, const char *fmt0, va_list ap)
 			    if (c == '\0') {
 				break;
 			    }
-			    if ((flags & ALTERNATE) && isspace(c)) {
+			    if ((flags & ALTERNATE_B) && isspace(c)) {
 				break;
 			    }
 			    ++partConsumed;
@@ -523,7 +523,7 @@ bu_vsscanf(const char *src, const char *fmt0, va_list ap)
 			    if (c == '\0') {
 				break;
 			    }
-			    if ((flags & ALTERNATE) && isspace(c)) {
+			    if ((flags & ALTERNATE_B) && isspace(c)) {
 				break;
 			    }
 
@@ -690,6 +690,45 @@ bu_sscanf(const char *src, const char *fmt, ...)
 
     return ret;
 }
+
+
+/* Undefine all local macros to prevent leakage into subsequent files in
+ * Unity/jumbo builds.  LONG, SHORT, and LONGLONG conflict with Windows SDK
+ * type names in winnt.h and must be cleaned up. */
+#undef LONG
+#undef LONGDBL
+#undef SHORT
+#undef SUPPRESS
+#undef POINTER
+#undef NOSKIP
+#undef LONGLONG
+#undef INTMAXT
+#undef PTRDIFFT
+#undef SIZET
+#undef SHORTSHORT
+#undef UNSIGNED
+#undef ALTERNATE_B
+#undef SIGNOK
+#undef NDIGITS
+#undef PFXOK
+#undef NZDIGITS
+#undef HAVESIGN
+#undef HAVEWIDTH
+#undef CT_CHAR
+#undef CT_CCL
+#undef CT_STRING
+#undef CT_INT
+#undef CT_FLOAT
+#undef CT_VLS
+#undef UPDATE_COUNTS
+#undef FREE_FORMAT_PART
+#undef GET_FORMAT_PART
+#undef EXIT_DUE_TO_INPUT_FAILURE
+#undef EXIT_DUE_TO_MATCH_FAILURE
+#undef EXIT_DUE_TO_MISC_ERROR
+#undef NUMERIC_CHAR_TO_INT
+#undef SSCANF_TYPE
+#undef SSCANF_SIGNED_UNSIGNED
 
 
 /*

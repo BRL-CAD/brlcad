@@ -1,7 +1,7 @@
 /*                       S H _ C O O K . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2025 United States Government as represented by
+ * Copyright (c) 1985-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,9 +37,6 @@
 #include "optical/light.h"
 
 
-/* from view.c */
-extern double AmbientIntensity;
-
 /* Local information */
 struct cook_specific {
     double m;		/* rms slope - should be a vector of these XXX*/
@@ -54,22 +51,21 @@ struct cook_specific {
     double n[3];		/* "effective" RGB refract index */
     double rd[3];		/* Diffuse reflection coefficient */
 };
-#define CK_NULL ((struct cook_specific *)0)
-#define CL_O(m) bu_offsetof(struct cook_specific, m)
+#define COOK_O(m) bu_offsetof(struct cook_specific, m)
 
 struct bu_structparse cook_parse[] = {
-    {"%g", 1, "m",		CL_O(m),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%g", 1, "specular",	CL_O(wgt_specular),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%g", 1, "sp",		CL_O(wgt_specular),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%g", 1, "diffuse",	CL_O(wgt_diffuse),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%g", 1, "di",		CL_O(wgt_diffuse),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%g", 1, "transmit",	CL_O(transmit),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%g", 1, "tr",		CL_O(transmit),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%g", 1, "reflect",	CL_O(reflect),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%g", 1, "re",		CL_O(reflect),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%g", 1, "ri",		CL_O(refrac_index),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%g", 1, "extinction",	CL_O(extinction),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%g", 1, "ex",		CL_O(extinction),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "m",		COOK_O(m),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "specular",	COOK_O(wgt_specular),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "sp",		COOK_O(wgt_specular),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "diffuse",	COOK_O(wgt_diffuse),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "di",		COOK_O(wgt_diffuse),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "transmit",	COOK_O(transmit),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "tr",		COOK_O(transmit),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "reflect",	COOK_O(reflect),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "re",		COOK_O(reflect),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "ri",		COOK_O(refrac_index),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "extinction",	COOK_O(extinction),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "ex",		COOK_O(extinction),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",   0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 

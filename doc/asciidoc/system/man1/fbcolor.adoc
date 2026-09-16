@@ -1,0 +1,113 @@
+= FBCOLOR(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+fbcolor - interactively pick a color on a framebuffer
+
+== SYNOPSIS
+
+[source]
+----
+fbcolor [-F framebuffer] [-s|-S squaresize] [-w|-W width] [-n|-N height] [-h]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*fbcolor* is an interactive color picking facility. It draws a set of
+red, green, and blue color bars in the lower-left corner of a
+framebuffer, fills the remainder of the display with the current color,
+then reads single-character commands from standard input to edit that
+color. Editing is done by manipulating the framebuffer color map, so
+the display updates instantly as parameters change. The chosen color
+may be adjusted in either RGB (red, green, blue) or HSV (hue,
+saturation, value) space.
+
+As the color is edited, *fbcolor* prints the current RGB and HSV values
+on the terminal so they can be recorded for later use with tools such as
+*fbclear*(1).
+
+The interactive commands fall into two groups: those that select which
+parameter to edit, and those that change the value of the selected
+parameter.
+
+The keys *r*, *g*, and *b* select the red, green, or blue channel, while
+*h*, *s*, and *v* (or *i*) select the hue, saturation, or value. The */*
+key steps through the parameters in that order.
+
+*+* and *.* increment the selected parameter by one; *-* and *,*
+decrement by one; *>* and *<* change it by 16. Values range from 0 to
+255 and wrap in both directions. Typing *?* prints a command summary,
+and *q*, *Q*, or a carriage return / line feed exits the program,
+restoring the original color map.
+
+[[options]]
+== OPTIONS
+
+*-F* _framebuffer_::
+  Specifies the framebuffer device to use. If not given, the environment
+  variable *FB_FILE* is used to select the display device (see
+  *brlcad*(1)). If *FB_FILE* has not been set, the default device for
+  your system is used.
+
+*-s* _squaresize_::
+  Sets both the width and height of the framebuffer window to
+  _squaresize_ pixels.
+
+*-S* _squaresize_::
+  Same as *-s*.
+
+*-w* _width_::
+  Sets the width of the framebuffer window to _width_ pixels.
+
+*-W* _width_::
+  Same as *-w*.
+
+*-n* _height_::
+  Sets the height of the framebuffer window to _height_ pixels.
+
+*-N* _height_::
+  Same as *-n*.
+
+*-h*::
+  Prints a usage summary and exits.
+
+[[examples]]
+== EXAMPLES
+
+.Pick a color, then paint the whole framebuffer with it
+====
+[source,bash]
+----
+fbcolor -F /tmp/myfb -s 512
+fbclear -F /tmp/myfb 200 100 50
+----
+Open a 512x512 framebuffer file and interactively dial in a color,
+reading the printed RGB triple from the terminal (for example
++rgb=200, 100, 50+). Once a pleasing value is found, the recorded RGB
+values are passed to *fbclear*(1) to flood the same framebuffer with
+that exact color.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *fbclear*(1), *fbcmap*(1), *fbgrid*(1)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

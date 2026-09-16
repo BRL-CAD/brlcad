@@ -1,7 +1,7 @@
 /*                  S I M U L A T I O N . H P P
  * BRL-CAD
  *
- * Copyright (c) 2014-2025 United States Government as represented by
+ * Copyright (c) 2014-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,6 +30,8 @@
 
 #include "common.h"
 
+#include <string>
+
 #include "rt_debug_draw.hpp"
 #include "rt_instance.hpp"
 
@@ -51,22 +53,40 @@ public:
     };
 
 
-    explicit Simulation(db_i &db, const db_full_path &path);
+    explicit Simulation(db_i &db, const db_full_path &path,
+		       bool use_saved_state = false);
     ~Simulation();
 
     void step(fastf_t seconds, DebugMode debug_mode);
+
+    // Save current body velocities to the database as simulate::state_* attributes
+    // so the simulation can be resumed later with --resume.
+    void saveState();
+
+    // Write a .pl wireframe plot file showing the current AABB of each body.
+    // Dynamic bodies are drawn in green; static bodies are drawn in red.
+    void writePlotFile(const std::string &filename) const;
 
 
 private:
     class Region;
 
+    void updateRoiProxies(fastf_t seconds);
+
+    // ROI update constants
+    static const btScalar ROI_MAX_PREDICTION_TIME; // Maximum time horizon for prediction
+    static const btScalar ROI_PADDING; // Padding around dynamic bodies in meters
+    static const btScalar ROI_MIN_SIZE; // Minimum ROI size in meters
+    static const btScalar ROI_CHANGE_THRESHOLD; // Minimum change to trigger broadphase update
+
+    db_i &m_db;
     RtDebugDraw m_debug_draw;
     btDbvtBroadphase m_broadphase;
     btDefaultCollisionConfiguration m_collision_config;
     btCollisionDispatcher m_collision_dispatcher;
     btSequentialImpulseConstraintSolver m_constraint_solver;
     btDiscreteDynamicsWorld m_world;
-    std::vector<const Region *> m_regions;
+    std::vector<Region *> m_regions;
     const RtInstance m_rt_instance;
 };
 

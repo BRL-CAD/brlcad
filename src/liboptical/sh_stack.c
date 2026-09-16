@@ -1,7 +1,7 @@
 /*                      S H _ S T A C K . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2025 United States Government as represented by
+ * Copyright (c) 1986-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -51,7 +51,6 @@ struct stk_specific {
     struct mfuncs *mfuncs[16];
     void *udata[16];
 };
-#define STK_NULL ((struct stk_specific *)0)
 #define STK_O(m) bu_offsetof(struct stk_specific, m)
 
 struct bu_structparse stk_parse[] = {

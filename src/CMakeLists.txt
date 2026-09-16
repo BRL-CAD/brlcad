@@ -32,17 +32,10 @@ else(BRLCAD_COMPONENTS)
   endforeach(od ${ordered_dirs})
 endif(BRLCAD_COMPONENTS)
 
-# This corresponds roughly to the libbrlcad originally defined in BRL-CAD
-# autotools build.
-if(BRLCAD_ENABLE_BRLCAD_LIBRARY AND USE_OBJECT_LIBS)
-  foreach(llib ${ordered_dirs})
-    if(TARGET ${llib}-obj)
-      set(libbrlcad_objs ${libbrlcad_objs} $<TARGET_OBJECTS:${llib}-obj>)
-    endif(TARGET ${llib}-obj)
-  endforeach(llib ${ordered_dirs})
-  add_library(libbrlcad SHARED ${libbrlcad_objs})
-  add_library(libbrlcad-static STATIC ${libbrlcad_objs})
-endif(BRLCAD_ENABLE_BRLCAD_LIBRARY AND USE_OBJECT_LIBS)
+# Optional monolithic brlcad shared library.  Its contents are registered by
+# BRLCAD_ADDLIB as library targets are defined, so additions, removals, and
+# renames automatically follow the normal CMake build.
+brlcad_add_aggregate_library()
 
 cmakefiles(
   CMakeLists.txt

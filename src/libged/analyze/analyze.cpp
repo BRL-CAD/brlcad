@@ -1,7 +1,7 @@
 /*                      A N A L Y Z E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2020-2025 United States Government as represented by
+ * Copyright (c) 2020-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -325,7 +325,7 @@ _analyze_cmd_summarize(void *bs, int argc, const char **argv)
 	if (ndp == RT_DIR_NULL)
 	    continue;
 
-	GED_DB_GET_INTERNAL(gedp, &intern, ndp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
+	GED_DB_GET_INTERN(gedp, &intern, ndp, bn_mat_identity, BRLCAD_ERROR);
 
 	_ged_do_list(gedp, ndp, 1);
 	analyze_do_summary(gedp, &intern);
@@ -791,23 +791,13 @@ ged_analyze_core(struct ged *gedp, int argc, const char *argv[])
     return BRLCAD_ERROR;
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-extern "C" {
-struct ged_cmd_impl analyze_cmd_impl = { "analyze", ged_analyze_core, GED_CMD_DEFAULT };
-const struct ged_cmd analyze_cmd = { &analyze_cmd_impl };
 
-const struct ged_cmd *analyze_cmds[] = { &analyze_cmd, NULL };
+#define GED_ANALYZE_COMMANDS(X, XID) \
+    X(analyze,  ged_analyze_core,   GED_CMD_DEFAULT)
 
-static const struct ged_plugin pinfo = { GED_API,  analyze_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-}
-#endif
+GED_DECLARE_COMMAND_SET(GED_ANALYZE_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_analyze", 1, GED_ANALYZE_COMMANDS)
 
 // Local Variables:
 // tab-width: 8
@@ -817,4 +807,3 @@ COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

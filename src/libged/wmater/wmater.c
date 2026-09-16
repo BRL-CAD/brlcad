@@ -1,7 +1,7 @@
 /*                        W M A T E R . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -73,7 +73,7 @@ ged_wmater_core(struct ged *gedp, int argc, const char *argv[])
 	    status = BRLCAD_ERROR;
 	    continue;
 	}
-	if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+	if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: Unable to read %s from database", argv[0], argv[i]);
 	    status = BRLCAD_ERROR;
 	    continue;
@@ -94,24 +94,13 @@ ged_wmater_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl wmater_cmd_impl = {
-    "wmater",
-    ged_wmater_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd wmater_cmd = { &wmater_cmd_impl };
-const struct ged_cmd *wmater_cmds[] = { &wmater_cmd, NULL };
+#define GED_WMATER_COMMANDS(X, XID) \
+    X(wmater, ged_wmater_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  wmater_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_WMATER_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_wmater", 1, GED_WMATER_COMMANDS)
 
 /*
  * Local Variables:

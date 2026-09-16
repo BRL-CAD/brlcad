@@ -1,7 +1,7 @@
 /*                           N M G . C
  * BRL-CAD
  *
- * Copyright (c) 2005-2025 United States Government as represented by
+ * Copyright (c) 2005-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -40,6 +40,7 @@
 #include "nmg.h"
 #include "rt/db4.h"
 #include "rt/conv.h"
+#include "rt/primitives/bot.h"
 #include "rt/primitives/nmg.h"
 #include "raytrace.h"
 #include "../../librt_private.h"
@@ -48,6 +49,8 @@
 
 #define NMG_SPEC_START_MAGIC 6014061
 #define NMG_SPEC_END_MAGIC 7013061
+/* A collinear ray records both endpoint subhits plus the edge subhit. */
+#define NMG_MAX_HITMISS_PER_EDGE 3
 
 #define ERR_MSG "INTERNAL ERROR:  Probably bad geometry.  Trying to continue."
 
@@ -55,7 +58,9 @@
 	bu_log("%s[line:%d]: Bad seg_p pointer\n", __FILE__, __LINE__); \
 	segs_error(ERR_MSG); }
 
-static jmp_buf nmg_longjump_env;
+/* Per-thread: rt_shootray() runs rt_nmg_shot() concurrently on N worker
+ * threads, each with its own nmg_ray_segs() setjmp/segs_error() longjmp pair */
+static THREADLOCAL jmp_buf nmg_longjump_env;
 
 /* EDGE-FACE correlation data
  * used in edge_hit() for 3manifold case
@@ -79,8 +84,20 @@ struct nmg_specific {
     uint32_t nmg_smagic;	/* STRUCT START magic number */
     struct model *nmg_model;
     char *manifolds;		/* structure 1-3manifold table */
-    vect_t nmg_invdir;
+    struct bot_specific *bot;	/* prep-time ray tracing accelerator */
+    struct nmg_shot_scratch *scratch;
+    size_t scratch_count;
     uint32_t nmg_emagic;	/* STRUCT END magic number */
+};
+
+
+struct nmg_shot_scratch {
+    int in_use;
+    struct hitmiss **hitmiss;
+    struct hitmiss *hitmiss_pool;
+    struct bu_list hitmiss_free;
+    struct nmg_class_scratch *class_scratch;
+    struct bu_ptbl hitstate[2];
 };
 
 
@@ -90,10 +107,257 @@ struct tmp_v {
 };
 
 
+/* from g_bot.c */
+__BEGIN_DECLS
+extern int rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip);
+extern void rt_bot_ifree(struct rt_db_internal *ip);
+extern void rt_bot_free(struct soltab *stp);
+__END_DECLS
+
+
+/* A solid, planar NMG has the same ray intersection semantics as its BoT
+ * representation.  Other NMG topology must continue through libnmg's general
+ * classifier. */
+static int
+nmg_bot_accel_eligible(const struct model *m, const char *manifolds, const struct bn_tol *tol)
+{
+    const struct nmgregion *r;
+    size_t face_count = 0;
+
+    NMG_CK_MODEL(m);
+    BN_CK_TOL(tol);
+
+    if (!manifolds)
+	return 0;
+
+    for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
+	const struct shell *s;
+
+	for (BU_LIST_FOR(s, shell, &r->s_hd)) {
+	    const struct faceuse *fu;
+	    size_t shell_face_count = 0;
+
+	    if (BU_LIST_NON_EMPTY(&s->lu_hd) ||
+		BU_LIST_NON_EMPTY(&s->eu_hd) || s->vu_p)
+		return 0;
+
+	    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
+		if (fu->orientation != OT_SAME)
+		    continue;
+
+		NMG_CK_FACEUSE(fu);
+		NMG_CK_FACE(fu->f_p);
+		if (!fu->f_p->g.magic_p ||
+		    *fu->f_p->g.magic_p != NMG_FACE_G_PLANE_MAGIC ||
+		    !(NMG_MANIFOLDS(manifolds, fu) & NMG_3MANIFOLD))
+		    return 0;
+
+		shell_face_count++;
+	    }
+
+	    if (shell_face_count && nmg_check_closed_shell(s, tol))
+		return 0;
+
+	    face_count += shell_face_count;
+	}
+    }
+
+    return face_count > 0;
+}
+
+
+static size_t
+nmg_max_face_elements(const struct model *m)
+{
+    const struct nmgregion *r;
+    size_t max_elements = 0;
+
+    for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
+	const struct shell *s;
+
+	for (BU_LIST_FOR(s, shell, &r->s_hd)) {
+	    const struct faceuse *fu;
+
+	    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
+		const struct loopuse *lu;
+		size_t face_elements = 0;
+
+		if (fu->orientation != OT_SAME)
+		    continue;
+
+		for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
+		    const struct edgeuse *eu;
+
+		    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {
+			for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd))
+			    face_elements++;
+		    } else if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) {
+			face_elements++;
+		    }
+		}
+
+		if (max_elements < face_elements)
+		    max_elements = face_elements;
+	    }
+	}
+    }
+
+    return max_elements;
+}
+
+
+static void
+nmg_shot_scratch_destroy(struct nmg_shot_scratch *scratch)
+{
+    if (!scratch)
+	return;
+
+    nmg_class_scratch_destroy(scratch->class_scratch);
+    bu_ptbl_free(&scratch->hitstate[0]);
+    bu_ptbl_free(&scratch->hitstate[1]);
+    bu_free(scratch->hitmiss_pool, "NMG hitmiss scratch");
+    bu_free(scratch->hitmiss, "NMG hitmiss table scratch");
+}
+
+
+static void
+nmg_shot_scratch_prep(struct nmg_specific *nmg)
+{
+    struct nmg_struct_counts counts;
+    uint32_t **structs;
+    size_t edge_hitmiss_capacity;
+    size_t hitmiss_capacity;
+    size_t max_face_elements;
+
+    structs = nmg_m_struct_count(&counts, nmg->nmg_model);
+    bu_free(structs, "nmg_m_struct_count");
+
+    if ((size_t)counts.edge > SIZE_MAX / NMG_MAX_HITMISS_PER_EDGE)
+	bu_bomb("NMG hitmiss scratch size overflow\n");
+    edge_hitmiss_capacity = NMG_MAX_HITMISS_PER_EDGE * (size_t)counts.edge;
+    if ((size_t)counts.face > SIZE_MAX - edge_hitmiss_capacity)
+	bu_bomb("NMG hitmiss scratch size overflow\n");
+    hitmiss_capacity = (size_t)counts.face + edge_hitmiss_capacity;
+    if ((size_t)counts.vertex > SIZE_MAX - hitmiss_capacity)
+	bu_bomb("NMG hitmiss scratch size overflow\n");
+    hitmiss_capacity += (size_t)counts.vertex;
+    if (hitmiss_capacity == 0)
+	hitmiss_capacity = 1;
+    max_face_elements = nmg_max_face_elements(nmg->nmg_model);
+
+    nmg->scratch_count = bu_avail_cpus();
+    if (nmg->scratch_count > MAX_PSW)
+	nmg->scratch_count = MAX_PSW;
+    nmg->scratch = (struct nmg_shot_scratch *)bu_calloc(
+	nmg->scratch_count, sizeof(struct nmg_shot_scratch), "NMG shot scratch");
+
+    for (size_t cpu = 0; cpu < nmg->scratch_count; cpu++) {
+	struct nmg_shot_scratch *scratch = &nmg->scratch[cpu];
+
+	scratch->hitmiss = (struct hitmiss **)bu_calloc(
+	    (size_t)nmg->nmg_model->maxindex, sizeof(struct hitmiss *),
+	    "NMG hitmiss table scratch");
+	scratch->hitmiss_pool = (struct hitmiss *)bu_calloc(
+	    hitmiss_capacity, sizeof(struct hitmiss), "NMG hitmiss scratch");
+	BU_LIST_INIT(&scratch->hitmiss_free);
+	for (size_t i = 0; i < hitmiss_capacity; i++) {
+	    BU_LIST_MAGIC_SET(&scratch->hitmiss_pool[i].l, NMG_RT_MISS_MAGIC);
+	    BU_LIST_APPEND(&scratch->hitmiss_free, &scratch->hitmiss_pool[i].l);
+	}
+	scratch->class_scratch = nmg_class_scratch_create(max_face_elements);
+	bu_ptbl_init(&scratch->hitstate[0], hitmiss_capacity, "NMG hitstate scratch 0");
+	bu_ptbl_init(&scratch->hitstate[1], hitmiss_capacity, "NMG hitstate scratch 1");
+    }
+}
+
+
+static struct nmg_shot_scratch *
+nmg_shot_scratch_acquire(struct nmg_specific *nmg)
+{
+    struct nmg_shot_scratch *scratch = NULL;
+
+    /* gettrees declares the maximum concurrent worker count.  A serial
+     * application cannot contend for its only slot. */
+    if (nmg->scratch_count == 1)
+	return &nmg->scratch[0];
+
+    bu_semaphore_acquire(BU_SEM_GENERAL);
+    for (size_t i = 0; i < nmg->scratch_count; i++) {
+	if (!nmg->scratch[i].in_use) {
+	    nmg->scratch[i].in_use = 1;
+	    scratch = &nmg->scratch[i];
+	    break;
+	}
+    }
+    bu_semaphore_release(BU_SEM_GENERAL);
+
+    return scratch;
+}
+
+
+static void
+nmg_shot_scratch_release(struct nmg_specific *nmg, struct nmg_shot_scratch *scratch)
+{
+    if (!scratch)
+	return;
+
+    if (nmg->scratch_count == 1)
+	return;
+
+    bu_semaphore_acquire(BU_SEM_GENERAL);
+    scratch->in_use = 0;
+    bu_semaphore_release(BU_SEM_GENERAL);
+}
+
+
+static struct bot_specific *
+nmg_bot_accel_prep(struct soltab *stp, const struct model *m, struct rt_i *rtip)
+{
+    struct rt_bot_internal *bot;
+    struct rt_db_internal intern;
+    struct model *copy;
+    struct soltab bot_stp = *stp;
+    struct bot_specific *specific = NULL;
+    struct bu_list *vlfree = &rt_vlfree;
+
+    copy = nmg_clone_model(m);
+    if (!copy)
+	return NULL;
+
+    bot = nmg_mdl_to_bot(copy, vlfree, &rtip->rti_tol);
+    nmg_km(copy);
+    if (!bot)
+	return NULL;
+
+    intern.idb_magic = RT_DB_INTERNAL_MAGIC;
+    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern.idb_minor_type = ID_BOT;
+    intern.idb_meth = &OBJ[ID_BOT];
+    intern.idb_ptr = (void *)bot;
+    bu_avs_init(&intern.idb_avs, 0, "NMG BoT accelerator prep");
+
+    bot_stp.st_specific = NULL;
+    if (rt_bot_prep(&bot_stp, &intern, rtip) == 0) {
+	specific = (struct bot_specific *)bot_stp.st_specific;
+	VMOVE(stp->st_min, bot_stp.st_min);
+	VMOVE(stp->st_max, bot_stp.st_max);
+	VMOVE(stp->st_center, bot_stp.st_center);
+	stp->st_aradius = bot_stp.st_aradius;
+	stp->st_bradius = bot_stp.st_bradius;
+    } else if (bot_stp.st_specific) {
+	rt_bot_free(&bot_stp);
+    }
+
+    rt_bot_ifree(&intern);
+    bu_avs_free(&intern.idb_avs);
+    return specific;
+}
+
+
 /**
  * Calculate the bounding box for an N-Manifold Geometry
  */
-int
+C_DECL int
 rt_nmg_bbox(struct rt_db_internal *ip, point_t *min, point_t * max, const struct bn_tol *UNUSED(tol)) {
     struct model *m;
 
@@ -116,7 +380,7 @@ rt_nmg_bbox(struct rt_db_internal *ip, point_t *min, point_t * max, const struct
  * implicit return - a struct nmg_specific is created, and its
  * address is stored in stp->st_specific for use by nmg_shot().
  */
-int
+C_DECL int
 rt_nmg_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct model *m;
@@ -139,24 +403,35 @@ rt_nmg_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     ip->idb_ptr = (void *)NULL;
     nmg_s->nmg_smagic = NMG_SPEC_START_MAGIC;
     nmg_s->nmg_emagic = NMG_SPEC_END_MAGIC;
+    nmg_s->bot = NULL;
+    nmg_s->scratch = NULL;
+    nmg_s->scratch_count = 0;
 
     /* build table indicating the manifold level of each sub-element
      * of NMG solid
      */
-    nmg_s->manifolds = nmg_manifolds(m);
+    if (!m->manifolds)
+	m->manifolds = nmg_manifolds(m);
+    nmg_s->manifolds = m->manifolds;
+
+    if (nmg_bot_accel_eligible(m, nmg_s->manifolds, &rtip->rti_tol))
+	nmg_s->bot = nmg_bot_accel_prep(stp, m, rtip);
+
+    if (!nmg_s->bot)
+	nmg_shot_scratch_prep(nmg_s);
 
     return 0;
 }
 
 
-void
+C_DECL void
 rt_nmg_print(const struct soltab *stp)
 {
-    struct model *m =
-	(struct model *)stp->st_specific;
+    const struct nmg_specific *nmg =
+	(const struct nmg_specific *)stp->st_specific;
 
-    NMG_CK_MODEL(m);
-    nmg_pr_m(m);
+    NMG_CK_MODEL(nmg->nmg_model);
+    nmg_pr_m(nmg->nmg_model);
 }
 
 static void
@@ -164,6 +439,7 @@ visitor(uint32_t *l_p, void *tbl, int UNUSED(unused))
 {
     (void)bu_ptbl_ins_unique((struct bu_ptbl *)tbl, (long *)l_p);
 }
+
 
 /**
  * Add an element provided by nmg_visit to a bu_ptbl struct.
@@ -393,6 +669,7 @@ check_hitstate(struct bu_list *hd, struct ray_data *rd, struct bu_list *vlfree)
     struct bu_ptbl *a_tbl = (struct bu_ptbl *)NULL;
     struct bu_ptbl *next_tbl = (struct bu_ptbl *)NULL;
     struct bu_ptbl *tbl_p = (struct bu_ptbl *)NULL;
+    int scratch_tables = 0;
     long *long_ptr;
 
     BU_CK_LIST_HEAD(hd);
@@ -425,11 +702,19 @@ check_hitstate(struct bu_list *hd, struct ray_data *rd, struct bu_list *vlfree)
     }
     if (BU_LIST_IS_HEAD(a_hit, hd)) return 1;
 
-    BU_ALLOC(a_tbl, struct bu_ptbl);
-    bu_ptbl_init(a_tbl, 64, "a_tbl");
+    if (rd->hitstate[0] && rd->hitstate[1]) {
+	a_tbl = rd->hitstate[0];
+	next_tbl = rd->hitstate[1];
+	bu_ptbl_reset(a_tbl);
+	bu_ptbl_reset(next_tbl);
+	scratch_tables = 1;
+    } else {
+	BU_ALLOC(a_tbl, struct bu_ptbl);
+	bu_ptbl_init(a_tbl, 64, "a_tbl");
 
-    BU_ALLOC(next_tbl, struct bu_ptbl);
-    bu_ptbl_init(next_tbl, 64, "next_tbl");
+	BU_ALLOC(next_tbl, struct bu_ptbl);
+	bu_ptbl_init(next_tbl, 64, "next_tbl");
+    }
 
     /* check the state transition on the rest of the hit points */
     while (BU_LIST_NOT_HEAD((next_hit = BU_LIST_PNEXT(hitmiss, &a_hit->l)), hd)) {
@@ -484,10 +769,15 @@ check_hitstate(struct bu_list *hd, struct ray_data *rd, struct bu_list *vlfree)
 	a_hit = next_hit;
     }
 
-    bu_ptbl_free(next_tbl);
-    bu_ptbl_free(a_tbl);
-    (void)bu_free((char *)a_tbl, "a_tbl");
-    (void)bu_free((char *)next_tbl, "next_tbl");
+    if (scratch_tables) {
+	bu_ptbl_reset(next_tbl);
+	bu_ptbl_reset(a_tbl);
+    } else {
+	bu_ptbl_free(next_tbl);
+	bu_ptbl_free(a_tbl);
+	(void)bu_free((char *)a_tbl, "a_tbl");
+	(void)bu_free((char *)next_tbl, "next_tbl");
+    }
 
     return 0;
 }
@@ -496,7 +786,7 @@ check_hitstate(struct bu_list *hd, struct ray_data *rd, struct bu_list *vlfree)
 
 
 static void
-print_seg_list(struct seg *seghead, int seg_count, char *s)
+print_seg_list(struct seg *seghead, int seg_count, const char *s)
 {
     struct seg *seg_p;
 
@@ -1240,6 +1530,11 @@ nmg_ray_segs(struct ray_data *rd, struct bu_list *vlfree)
     static int last_miss=0;
 
     if (setjmp(nmg_longjump_env) != 0) {
+	/* segs_error() longjmp'd out of the state machine; the hitmiss
+	 * structs are still linked on rd_hit/rd_miss.  Return them to the
+	 * freelist (as the non-error exits below do) */
+	NMG_FREE_HITLIST_RD(rd, &rd->rd_hit);
+	NMG_FREE_HITLIST_RD(rd, &rd->rd_miss);
 	return 0;
     }
 
@@ -1247,7 +1542,7 @@ nmg_ray_segs(struct ray_data *rd, struct bu_list *vlfree)
 
     if (BU_LIST_IS_EMPTY(&rd->rd_hit)) {
 
-	NMG_FREE_HITLIST(&rd->rd_miss);
+	NMG_FREE_HITLIST_RD(rd, &rd->rd_miss);
 
 	if (nmg_debug & NMG_DEBUG_RT_SEGS) {
 	    if (last_miss) bu_log(".");
@@ -1257,7 +1552,6 @@ nmg_ray_segs(struct ray_data *rd, struct bu_list *vlfree)
 	return 0;			/* MISS */
     } else if (nmg_debug & NMG_DEBUG_RT_SEGS) {
 	int seg_count=0;
-
 	print_seg_list(rd->seghead, seg_count, "before");
 
 	bu_log("\n\nnmg_ray_segs(rd)\nsorted nmg/ray hit list\n");
@@ -1269,8 +1563,8 @@ nmg_ray_segs(struct ray_data *rd, struct bu_list *vlfree)
     last_miss = 0;
 
     if (check_hitstate(&rd->rd_hit, rd, vlfree)) {
-	NMG_FREE_HITLIST(&rd->rd_hit);
-	NMG_FREE_HITLIST(&rd->rd_miss);
+	NMG_FREE_HITLIST_RD(rd, &rd->rd_hit);
+	NMG_FREE_HITLIST_RD(rd, &rd->rd_miss);
 	return 0;
     }
 
@@ -1286,8 +1580,8 @@ nmg_ray_segs(struct ray_data *rd, struct bu_list *vlfree)
 	int seg_count = nmg_bsegs(rd, rd->ap, rd->seghead, rd->stp);
 
 
-	NMG_FREE_HITLIST(&rd->rd_hit);
-	NMG_FREE_HITLIST(&rd->rd_miss);
+	NMG_FREE_HITLIST_RD(rd, &rd->rd_hit);
+	NMG_FREE_HITLIST_RD(rd, &rd->rd_miss);
 
 
 	if (nmg_debug & NMG_DEBUG_RT_SEGS) {
@@ -1307,7 +1601,7 @@ nmg_ray_segs(struct ray_data *rd, struct bu_list *vlfree)
  * 0 MISS
  * >0 HIT
  */
-int
+C_DECL int
 rt_nmg_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 
 /* info about the ray */
@@ -1316,6 +1610,7 @@ rt_nmg_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 {
     struct bu_list *vlfree = &rt_vlfree;
     struct ray_data rd;
+    struct nmg_shot_scratch *scratch = NULL;
     int status;
     struct nmg_specific *nmg =
 	(struct nmg_specific *)stp->st_specific;
@@ -1332,30 +1627,36 @@ rt_nmg_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     if (nmg->nmg_emagic != NMG_SPEC_END_MAGIC)
 	bu_bomb("end of NMG st_specific structure corrupted\n");
 
-    /* Compute the inverse of the direction cosines */
+    if (nmg->bot)
+	return rt_bot_shot_specific(nmg->bot, stp, rp, ap, seghead);
+
+    scratch = nmg_shot_scratch_acquire(nmg);
+
+    /* Compute the inverse of the direction cosines.  This is per-ray scratch,
+     * so it must live in the per-thread ray_data (rd) -- NOT in the shared
+     * per-solid stp->st_specific, which every worker thread sees at once. */
     if (!ZERO(rp->r_dir[X])) {
-	nmg->nmg_invdir[X]=1.0/rp->r_dir[X];
+	rd.rd_invdir[X]=1.0/rp->r_dir[X];
     } else {
-	nmg->nmg_invdir[X] = INFINITY;
+	rd.rd_invdir[X] = INFINITY;
 	rp->r_dir[X] = 0.0;
     }
     if (!ZERO(rp->r_dir[Y])) {
-	nmg->nmg_invdir[Y]=1.0/rp->r_dir[Y];
+	rd.rd_invdir[Y]=1.0/rp->r_dir[Y];
     } else {
-	nmg->nmg_invdir[Y] = INFINITY;
+	rd.rd_invdir[Y] = INFINITY;
 	rp->r_dir[Y] = 0.0;
     }
     if (!ZERO(rp->r_dir[Z])) {
-	nmg->nmg_invdir[Z]=1.0/rp->r_dir[Z];
+	rd.rd_invdir[Z]=1.0/rp->r_dir[Z];
     } else {
-	nmg->nmg_invdir[Z] = INFINITY;
+	rd.rd_invdir[Z] = INFINITY;
 	rp->r_dir[Z] = 0.0;
     }
 
     /* build the NMG per-ray data structure */
     rd.rd_m = nmg->nmg_model;
     rd.manifolds = nmg->manifolds;
-    VMOVE(rd.rd_invdir, nmg->nmg_invdir);
     rd.rp = rp;
     rd.tol = &ap->a_rt_i->rti_tol;
     rd.ap = ap;
@@ -1363,13 +1664,16 @@ rt_nmg_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     rd.seghead = seghead;
     rd.classifying_ray = 0;
 
-    /* create a table to keep track of which elements have been
-     * processed before and which haven't.  Elements in this table
-     * will either be (NULL) if item not previously processed or a
-     * hitmiss ptr if item was previously processed
-     */
-    rd.hitmiss = (struct hitmiss **)bu_calloc(rd.rd_m->maxindex,
-					      sizeof(struct hitmiss *), "nmg geom hit list");
+    if (LIKELY(scratch != NULL)) {
+	rd.hitmiss = scratch->hitmiss;
+	memset(rd.hitmiss, 0, (size_t)rd.rd_m->maxindex * sizeof(struct hitmiss *));
+	rd.hitmiss_free = &scratch->hitmiss_free;
+	rd.class_scratch = scratch->class_scratch;
+	rd.hitstate[0] = &scratch->hitstate[0];
+	rd.hitstate[1] = &scratch->hitstate[1];
+    } else {
+	bu_bomb("NMG shot scratch exhausted: concurrent shots exceed the gettrees worker count\n");
+    }
 
     /* initialize the lists of things that have been hit/missed */
     BU_LIST_INIT(&rd.rd_hit);
@@ -1382,17 +1686,31 @@ rt_nmg_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     /* build the sebgent lists */
     status = nmg_ray_segs(&rd, vlfree);
 
-    /* free the hitmiss table */
-    bu_free((char *)rd.hitmiss, "free nmg geom hit list");
+    nmg_shot_scratch_release(nmg, scratch);
 
     return status;
 }
 
 
 /**
+ * Baseline flat-array vshot: delegates to the scalar shot via rt_vshot_via_shot().
+ */
+C_DECL void
+rt_nmg_vshot(struct soltab *stp[], struct xray *rp[], struct seg *segp, int n, struct application *ap)
+/* An array of solids */
+/* An array of rays */
+/* array of segs (results returned) */
+/* Number of ray/object pairs */
+
+{
+    rt_vshot_via_shot(rt_nmg_shot, stp, rp, segp, n, ap);
+}
+
+
+/**
  * Given ONE ray distance, return the normal and entry/exit point.
  */
-void
+C_DECL void
 rt_nmg_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
     if (!hitp || !rp)
@@ -1409,7 +1727,7 @@ rt_nmg_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 /**
  * Return the curvature of the nmg.
  */
-void
+C_DECL void
 rt_nmg_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
     if (!cvp || !hitp)
@@ -1432,7 +1750,7 @@ rt_nmg_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
  * u = azimuth
  * v = elevation
  */
-void
+C_DECL void
 rt_nmg_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
     if (ap) RT_CK_APPLICATION(ap);
@@ -1442,11 +1760,26 @@ rt_nmg_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 }
 
 
-void
+C_DECL void
 rt_nmg_free(struct soltab *stp)
 {
     struct nmg_specific *nmg =
 	(struct nmg_specific *)stp->st_specific;
+
+    if (nmg->bot) {
+	struct soltab bot_stp = *stp;
+	bot_stp.st_specific = (void *)nmg->bot;
+	rt_bot_free(&bot_stp);
+	nmg->bot = NULL;
+    }
+
+    if (nmg->scratch) {
+	for (size_t cpu = 0; cpu < nmg->scratch_count; cpu++)
+	    nmg_shot_scratch_destroy(&nmg->scratch[cpu]);
+	bu_free(nmg->scratch, "NMG shot scratch");
+	nmg->scratch = NULL;
+	nmg->scratch_count = 0;
+    }
 
     nmg_km(nmg->nmg_model);
     BU_PUT(nmg, struct nmg_specific);
@@ -1454,7 +1787,7 @@ rt_nmg_free(struct soltab *stp)
 }
 
 
-int
+C_DECL int
 rt_nmg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     struct bu_list *vlfree = &rt_vlfree;
@@ -1481,7 +1814,7 @@ rt_nmg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
  * -1 failure
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
-int
+C_DECL int
 rt_nmg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *tol)
 {
     struct model *lm;
@@ -1578,7 +1911,7 @@ rt_nmg_import4_internal(struct rt_db_internal *ip, const struct bu_external *ep,
  * Import an NMG from the database format to the internal format.
  * Apply modeling transformations as well.
  */
-int
+C_DECL int
 rt_nmg_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct model *m;
@@ -1606,7 +1939,7 @@ rt_nmg_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     return 0;			/* OK */
 }
 
-int
+C_DECL int
 rt_nmg_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
 {
     if (!rop || !mat)
@@ -1643,9 +1976,9 @@ rt_nmg_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
 }
 
 
-int
+C_DECL int
 rt_nmg_import5(struct rt_db_internal *ip,
-	       struct bu_external *ep,
+	       const struct bu_external *ep,
 	       const mat_t mat,
 	       const struct db_i *dbip)
 {
@@ -1672,7 +2005,7 @@ rt_nmg_import5(struct rt_db_internal *ip,
 /**
  * The name is added by the caller, in the usual place.
  */
-int
+C_DECL int
 rt_nmg_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct model *m;
@@ -1692,7 +2025,7 @@ rt_nmg_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 }
 
 
-int
+C_DECL int
 rt_nmg_export5(
     struct bu_external *ep,
     const struct rt_db_internal *ip,
@@ -1717,7 +2050,7 @@ rt_nmg_export5(
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
  */
-int
+C_DECL int
 rt_nmg_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double UNUSED(mm2local))
 {
     struct model *m =
@@ -1737,7 +2070,7 @@ rt_nmg_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
-void
+C_DECL void
 rt_nmg_ifree(struct rt_db_internal *ip)
 {
     struct model *m;
@@ -1753,7 +2086,7 @@ rt_nmg_ifree(struct rt_db_internal *ip)
 }
 
 
-int
+C_DECL int
 rt_nmg_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr)
 {
     struct model *m=(struct model *)intern->idb_ptr;
@@ -1862,7 +2195,7 @@ rt_nmg_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
 }
 
 
-int
+C_DECL int
 rt_nmg_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)
 {
     struct model *m;
@@ -2013,20 +2346,28 @@ rt_nmg_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 }
 
 
-void
-rt_nmg_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
+C_DECL int
+rt_nmg_make(const struct rt_functab* ftp, struct rt_db_internal* intern, const char* UNUSED(variant), const point_t origin, double UNUSED(scale))
 {
     struct model *m;
+    struct nmgregion *r;
+    struct shell *s;
 
     m = nmg_mm();
-    intern->idb_ptr = (void *)m;
+    r = nmg_mrsv(m);
+    s = BU_LIST_FIRST(shell, &r->s_hd);
+    nmg_vertex_gv(s->vu_p->v_p, origin);
+    (void)nmg_meonvu(s->vu_p);
+    (void)nmg_ml(s);
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_NMG;
     intern->idb_meth = ftp;
+    intern->idb_ptr = (void *)m;
+    return BRLCAD_OK;
 }
 
 
-int
+C_DECL int
 rt_nmg_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
     if (ip) RT_CK_DB_INTERNAL(ip);
@@ -2083,7 +2424,7 @@ rt_nmg_faces_area(struct poly_face* faces, struct shell* s, struct bu_list *vlfr
 }
 
 
-void
+C_DECL void
 rt_nmg_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     struct model *m;
@@ -2122,7 +2463,7 @@ rt_nmg_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 }
 
 
-void
+C_DECL void
 rt_nmg_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
     struct model *m = NULL;
@@ -2192,7 +2533,7 @@ rt_nmg_centroid(point_t *cent, const struct rt_db_internal *ip)
 }
 
 
-void
+C_DECL void
 rt_nmg_volume(fastf_t *volume, const struct rt_db_internal *ip)
 {
     struct model *m;
@@ -2238,7 +2579,7 @@ rt_nmg_volume(fastf_t *volume, const struct rt_db_internal *ip)
  * Store an NMG model as a separate .g file, for later examination.
  * Don't free the model, as the caller may still have uses for it.
  *
- * NON-PARALLEL because of rt_uniresource.
+ * NON-PARALLEL because of rt_uniresource. TODO - is this still true?
  */
 void
 nmg_stash_model_to_file(const char *filename, const struct model *m, const char *title)
@@ -2247,7 +2588,7 @@ nmg_stash_model_to_file(const char *filename, const struct model *m, const char 
     struct rt_db_internal intern;
     struct bu_external ext;
     int flags;
-    char *name="error.s";
+    const char *name="error.s";
 
     bu_log("nmg_stash_model_to_file('%s', %p, %s)\n", filename, (void *)m, title);
 
@@ -2267,7 +2608,7 @@ nmg_stash_model_to_file(const char *filename, const struct model *m, const char 
 
     if (db_version(fp->dbip) < 5) {
 	BU_EXTERNAL_INIT(&ext);
-	int ret = intern.idb_meth->ft_export4(&ext, &intern, 1.0, fp->dbip, &rt_uniresource);
+	int ret = intern.idb_meth->ft_export4(&ext, &intern, 1.0, fp->dbip);
 	if (ret < 0) {
 	    bu_log("rt_db_put_internal(%s):  solid export failure\n",
 		   name);
@@ -2275,7 +2616,7 @@ nmg_stash_model_to_file(const char *filename, const struct model *m, const char 
 	}
 	db_wrap_v4_external(&ext, name);
     } else {
-	if (rt_db_cvt_to_external5(&ext, name, &intern, 1.0, fp->dbip, &rt_uniresource, intern.idb_major_type) < 0) {
+	if (rt_db_cvt_to_ext5(&ext, name, &intern, 1.0, fp->dbip, intern.idb_major_type) < 0) {
 	    bu_log("wdb_export4(%s): solid export failure\n",
 		   name);
 	    goto out;
@@ -2322,7 +2663,6 @@ nmg_booltree_leaf_tnurb(struct db_tree_state *tsp, const struct db_full_path *pa
     BN_CK_TOL(tsp->ts_tol);
     BG_CK_TESS_TOL(tsp->ts_ttol);
     RT_CK_DB_INTERNAL(ip);
-    RT_CK_RESOURCE(tsp->ts_resp);
 
     RT_CK_FULL_PATH(pathp);
     dp = DB_FULL_PATH_CUR_DIR(pathp);
@@ -2360,7 +2700,7 @@ int nmg_bool_eval_silent=0;
  *
  * Typical calls will be of this form:
  * (void)nmg_model_fuse(m, tol);
- * curtree = rt_booltree_evaluate(curtree, vlfree, tol, resp, &rt_nmg_do_bool, 0, NULL);
+ * curtree = rt_booltree_eval(curtree, vlfree, tol, &rt_nmg_do_bool, 0, NULL);
  */
 int
 rt_nmg_do_bool(
@@ -2395,10 +2735,12 @@ rt_nmg_do_bool(
     nmg_r_radial_check(tl->tr_d.td_r, vlfree, tol);
 
     if (nmg_debug & NMG_DEBUG_BOOL) {
+	char *estr = bu_strdup("");
 	bu_log("Before model fuse\nShell A:\n");
-	nmg_pr_s_briefly(BU_LIST_FIRST(shell, &tl->tr_d.td_r->s_hd), "");
+	nmg_pr_s_briefly(BU_LIST_FIRST(shell, &tl->tr_d.td_r->s_hd), estr);
 	bu_log("Shell B:\n");
-	nmg_pr_s_briefly(BU_LIST_FIRST(shell, &tr->tr_d.td_r->s_hd), "");
+	nmg_pr_s_briefly(BU_LIST_FIRST(shell, &tr->tr_d.td_r->s_hd), estr);
+	bu_free(estr, "estr");
     }
 
     /* move operands into the same model */
@@ -2424,9 +2766,9 @@ rt_nmg_do_bool(
 }
 
 union tree *
-nmg_booltree_evaluate(register union tree *tp, struct bu_list *vlfree, const struct bn_tol *tol, struct resource *resp)
+nmg_booltree_evaluate(register union tree *tp, struct bu_list *vlfree, const struct bn_tol *tol)
 {
-    return rt_booltree_evaluate(tp, vlfree, tol, resp, &rt_nmg_do_bool, nmg_bool_eval_silent, NULL);
+    return rt_booltree_eval(tp, vlfree, tol, &rt_nmg_do_bool, nmg_bool_eval_silent, NULL);
 }
 
 #if 0
@@ -2526,7 +2868,7 @@ nmg_perturb_tree(union tree *tp)
  * typically with db_free_tree(tp);
  */
 int
-nmg_boolean(union tree *tp, struct model *m, struct bu_list *vlfree, const struct bn_tol *tol, struct resource *resp)
+nmg_boolean(union tree *tp, struct model *m, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     union tree *result;
     int ret;
@@ -2534,7 +2876,6 @@ nmg_boolean(union tree *tp, struct model *m, struct bu_list *vlfree, const struc
     RT_CK_TREE(tp);
     NMG_CK_MODEL(m);
     BN_CK_TOL(tol);
-    RT_CK_RESOURCE(resp);
 
     if (nmg_debug & (NMG_DEBUG_BOOL|NMG_DEBUG_BASIC)) {
 	bu_log("\n\nnmg_boolean(tp=%p, m=%p) START\n",
@@ -2545,7 +2886,7 @@ nmg_boolean(union tree *tp, struct model *m, struct bu_list *vlfree, const struc
      * Evaluate the nodes of the boolean tree one at a time, until
      * only a single region remains.
      */
-    result = rt_booltree_evaluate(tp, vlfree, tol, resp, &rt_nmg_do_bool, nmg_bool_eval_silent, NULL);
+    result = rt_booltree_eval(tp, vlfree, tol, &rt_nmg_do_bool, nmg_bool_eval_silent, NULL);
 
     if (result == TREE_NULL) {
 	bu_log("nmg_boolean(): result of nmg_booltree_evaluate() is NULL\n");
@@ -3741,6 +4082,152 @@ vh_lookup(const struct vhash *h, const struct vertex *v)
     }
 }
 
+/* Assemble a BoT from an NMG model that is already a pure triangle mesh.
+ * Caller MUST ensure nmg_model_all_triangles(m) is true first.
+ * Returns NULL on allocation/lookup failure.
+ */
+static struct rt_bot_internal *
+nmg_to_bot_all_tri(struct model *m, struct bu_list *vlfree)
+{
+    struct nmgregion *r;
+    struct shell *s;
+    struct rt_bot_internal *bot;
+    struct bu_ptbl verts = BU_PTBL_INIT_ZERO;
+    size_t vcount = 0;
+    size_t tri_count = 0;
+    size_t fno = 0;
+    struct vhash vh = VHASH_INIT_ZERO;
+    int hash_ok = 0;
+
+    nmg_vertex_tabulate(&verts, &m->magic, vlfree);
+    vcount = BU_PTBL_LEN(&verts);
+
+    /* Count triangles */
+    for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
+	for (BU_LIST_FOR(s, shell, &r->s_hd)) {
+	    struct faceuse *fu;
+	    if (BU_LIST_IS_EMPTY(&s->fu_hd))
+		continue;
+	    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
+		struct loopuse *lu;
+		if (fu->orientation != OT_SAME)
+		    continue;
+		for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
+		    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC)
+			tri_count++;
+		}
+	    }
+	}
+    }
+
+    /* If there are no faces there are no referenced vertices either
+     * (any vertices present are orphans with no geometry).  Treat both
+     * counts as zero so we produce a valid empty BoT without crashing. */
+    if (tri_count == 0)
+	vcount = 0;
+
+    BU_ALLOC(bot, struct rt_bot_internal);
+    bot->magic = RT_BOT_INTERNAL_MAGIC;
+    bot->mode = RT_BOT_SOLID;
+    bot->orientation = RT_BOT_CCW;
+    bot->bot_flags = 0;
+    bot->num_vertices = vcount;
+    bot->num_faces = tri_count;
+    bot->vertices = (vcount > 0) ? (fastf_t *)bu_calloc(vcount * 3, sizeof(fastf_t), "bot fast vertices") : NULL;
+    bot->faces = (tri_count > 0) ? (int *)bu_calloc(tri_count * 3, sizeof(int), "bot fast faces") : NULL;
+    bot->thickness = NULL;
+    bot->face_mode = NULL;
+
+    /* Copy vertices */
+    {
+	size_t vi;
+	for (vi = 0; vi < vcount; vi++) {
+	    struct vertex *v = (struct vertex *)BU_PTBL_GET(&verts, vi);
+	    struct vertex_g *vg;
+	    NMG_CK_VERTEX(v);
+	    vg = v->vg_p;
+	    NMG_CK_VERTEX_G(vg);
+	    bot->vertices[3*vi+0] = vg->coord[0];
+	    bot->vertices[3*vi+1] = vg->coord[1];
+	    bot->vertices[3*vi+2] = vg->coord[2];
+	}
+    }
+
+    /* Build hash (size *2 to keep load factor <= 0.5).
+     * When vcount is zero the model has no triangles; skip hash init so the
+     * hash is left in its safe VHASH_INIT_ZERO state (vh_free handles NULL
+     * slots gracefully). */
+    if (vcount == 0) {
+	hash_ok = 1; /* empty model, nothing to index */
+    } else if (vh_init(&vh, (vcount < 4) ? 4 : (vcount * 2))) {
+	size_t vi;
+	hash_ok = 1;
+	for (vi = 0; vi < vcount; vi++) {
+	    struct vertex *v = (struct vertex *)BU_PTBL_GET(&verts, vi);
+	    if (!vh_insert(&vh, v, (int)vi)) {
+		hash_ok = 0;
+		break;
+	    }
+	}
+    }
+    if (!hash_ok) {
+	bu_log("nmg_mdl_to_bot fast path: hash init failed\n");
+	bu_ptbl_free(&verts);
+	if (bot->vertices) bu_free(bot->vertices, "bot fast vertices");
+	if (bot->faces) bu_free(bot->faces, "bot fast faces");
+	bu_free(bot, "bot fast");
+	return NULL;
+    }
+
+    /* Emit faces using hash lookups */
+    for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
+	for (BU_LIST_FOR(s, shell, &r->s_hd)) {
+	    struct faceuse *fu;
+	    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
+		struct loopuse *lu;
+		if (fu->orientation != OT_SAME)
+		    continue;
+		for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
+		    struct edgeuse *eu;
+		    int tri_idx = 0;
+		    int face_indices[3];
+		    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
+			continue;
+		    for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+			struct vertex *tv = eu->vu_p->v_p;
+			int idx = vh_lookup(&vh, tv);
+			if (idx < 0) {
+			    bu_log("nmg_mdl_to_bot fast path: vertex index missing\n");
+			    vh_free(&vh);
+			    bu_ptbl_free(&verts);
+			    if (bot->vertices) bu_free(bot->vertices, "bot fast vertices");
+			    if (bot->faces) bu_free(bot->faces, "bot fast faces");
+			    bu_free(bot, "bot fast");
+			    return NULL;
+			}
+			face_indices[tri_idx++] = idx;
+		    }
+		    if (tri_idx == 3) {
+			bot->faces[3*fno+0] = face_indices[0];
+			bot->faces[3*fno+1] = face_indices[1];
+			bot->faces[3*fno+2] = face_indices[2];
+			fno++;
+		    } else if (UNLIKELY(tri_idx != 0)) {
+			/* Caller must guarantee all-triangles; reaching here
+			 * means the precondition was violated. */
+			bu_log("nmg_to_bot_all_tri: loop has %d edges (expected 3); skipping\n", tri_idx);
+		    }
+		}
+	    }
+	}
+    }
+
+    vh_free(&vh);
+    bu_ptbl_free(&verts);
+    return bot;
+}
+
+
 /**
  * Convert all shells of an NMG to a BOT solid
  */
@@ -3759,131 +4246,63 @@ nmg_mdl_to_bot(struct model *m, struct bu_list *vlfree, const struct bn_tol *tol
     BN_CK_TOL(tol);
     NMG_CK_MODEL(m);
 
-    /* Fast path: if already pure triangles, skip triangulation+tabulation */
+    /* Fast path: if already pure triangles, skip triangulation entirely */
     if (nmg_model_all_triangles(m)) {
-	struct bu_ptbl verts = BU_PTBL_INIT_ZERO;
-	size_t vcount = 0;
-	size_t tri_count = 0;
-	size_t fno = 0;
-	struct vhash vh = VHASH_INIT_ZERO;
-	int hash_ok = 0;
-
-	nmg_vertex_tabulate(&verts, &m->magic, vlfree);
-	vcount = BU_PTBL_LEN(&verts);
-
-	/* Count triangles */
-	for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
-	    for (BU_LIST_FOR(s, shell, &r->s_hd)) {
-		struct faceuse *fu;
-		if (BU_LIST_IS_EMPTY(&s->fu_hd))
-		    continue;
-		for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
-		    struct loopuse *lu;
-		    if (fu->orientation != OT_SAME)
-			continue;
-		    for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
-			if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC)
-			    tri_count++;
-		    }
-		}
-	    }
-	}
-
-	BU_ALLOC(bot, struct rt_bot_internal);
-	bot->magic = RT_BOT_INTERNAL_MAGIC;
-	bot->mode = RT_BOT_SOLID;
-	bot->orientation = RT_BOT_CCW;
-	bot->bot_flags = 0;
-	bot->num_vertices = vcount;
-	bot->num_faces = tri_count;
-	bot->vertices = (fastf_t *)bu_calloc(vcount * 3, sizeof(fastf_t), "bot fast vertices");
-	bot->faces = (int *)bu_calloc(tri_count * 3, sizeof(int), "bot fast faces");
-	bot->thickness = NULL;
-	bot->face_mode = NULL;
-
-	/* Copy vertices */
-	{
-	    size_t vi;
-	    for (vi = 0; vi < vcount; vi++) {
-		struct vertex *v = (struct vertex *)BU_PTBL_GET(&verts, vi);
-		struct vertex_g *vg;
-		NMG_CK_VERTEX(v);
-		vg = v->vg_p;
-		NMG_CK_VERTEX_G(vg);
-		bot->vertices[3*vi+0] = vg->coord[0];
-		bot->vertices[3*vi+1] = vg->coord[1];
-		bot->vertices[3*vi+2] = vg->coord[2];
-	    }
-	}
-
-	/* Build hash (size *2 to keep load factor <= 0.5) */
-	if (vcount == 0 || vh_init(&vh, (vcount < 4) ? 4 : (vcount * 2))) {
-	    hash_ok = 1;
-	    if (vcount > 0) {
-		size_t vi;
-		for (vi = 0; vi < vcount; vi++) {
-		    struct vertex *v = (struct vertex *)BU_PTBL_GET(&verts, vi);
-		    if (!vh_insert(&vh, v, (int)vi)) {
-			hash_ok = 0;
-			break;
-		    }
-		}
-	    }
-	}
-	if (!hash_ok) {
-	    bu_log("nmg_mdl_to_bot fast path: hash init failed\n");
-	    bu_ptbl_free(&verts);
-	    if (bot->vertices) bu_free(bot->vertices, "bot fast vertices");
-	    if (bot->faces) bu_free(bot->faces, "bot fast faces");
-	    bu_free(bot, "bot fast");
-	    return NULL;
-	}
-
-	/* Emit faces using hash lookups */
-	for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
-	    for (BU_LIST_FOR(s, shell, &r->s_hd)) {
-		struct faceuse *fu;
-		for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
-		    struct loopuse *lu;
-		    if (fu->orientation != OT_SAME)
-			continue;
-		    for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
-			struct edgeuse *eu;
-			int tri_idx = 0;
-			int face_indices[3];
-			if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
-			    continue;
-			for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-			    struct vertex *tv = eu->vu_p->v_p;
-			    int idx = vh_lookup(&vh, tv);
-			    if (idx < 0) {
-				bu_log("nmg_mdl_to_bot fast path: vertex index missing\n");
-				vh_free(&vh);
-				bu_ptbl_free(&verts);
-				if (bot->vertices) bu_free(bot->vertices, "bot fast vertices");
-				if (bot->faces) bu_free(bot->faces, "bot fast faces");
-				bu_free(bot, "bot fast");
-				return NULL;
-			    }
-			    face_indices[tri_idx++] = idx;
-			}
-			if (tri_idx == 3) {
-			    bot->faces[3*fno+0] = face_indices[0];
-			    bot->faces[3*fno+1] = face_indices[1];
-			    bot->faces[3*fno+2] = face_indices[2];
-			    fno++;
-			}
-		    }
-		}
-	    }
-	}
-
-	vh_free(&vh);
-	bu_ptbl_free(&verts);
-	return bot;
+	return nmg_to_bot_all_tri(m, vlfree);
     }
 
-    /* first convert the NMG to triangles */
+    /* Intermediate path: triangulate non-tri faces directly, bypassing the
+     * expensive nmg_edge_g_fuse / nmg_unbreak_region_edges / nmg_vsshell
+     * steps in nmg_triangulate_model().
+     *
+     * nmg_triangulate_fu() operates on individual faces and does not require
+     * fused edge geometries.  The fusion/unbreak preprocessing is needed only
+     * for NMG models produced by Boolean evaluation (where edges may be
+     * geometrically duplicated or collinearly broken).  For freshly
+     * tessellated primitives the topology is already clean, making these
+     * steps unnecessary overhead.
+     *
+     * If the direct path leaves any non-triangular faces (indicating a
+     * degenerate input that the per-face triangulator could not handle),
+     * we fall through to the full nmg_triangulate_model() pipeline. */
+    {
+	for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
+	    for (BU_LIST_FOR(s, shell, &r->s_hd)) {
+		struct faceuse *fu, *fu_next;
+		fu = BU_LIST_FIRST(faceuse, &s->fu_hd);
+		while (BU_LIST_NOT_HEAD(fu, &s->fu_hd)) {
+		    NMG_CK_FACEUSE(fu);
+		    fu_next = BU_LIST_PNEXT(faceuse, &fu->l);
+		    if (fu->orientation == OT_SAME) {
+			if (fu_next == fu->fumate_p)
+			    fu_next = BU_LIST_PNEXT(faceuse, &fu_next->l);
+			if (nmg_triangulate_fu(fu, vlfree, tol)) {
+			    /* faceuse is empty/degenerate - remove it */
+			    if (nmg_kfu(fu))
+				break; /* shell is now empty, move on */
+			}
+		    }
+		    fu = fu_next;
+		}
+	    }
+	}
+
+	/* Optional structural validation in debug builds */
+	if (UNLIKELY(nmg_debug)) {
+	    for (BU_LIST_FOR(r, nmgregion, &m->r_hd))
+		for (BU_LIST_FOR(s, shell, &r->s_hd))
+		    nmg_vsshell(s, r);
+	}
+
+	if (nmg_model_all_triangles(m)) {
+	    return nmg_to_bot_all_tri(m, vlfree);
+	}
+
+	/* Degenerate input: direct triangulation incomplete, use full pipeline */
+	bu_log("nmg_mdl_to_bot: direct triangulation incomplete, using full pipeline\n");
+    }
+
+    /* Full triangulation pipeline fallback for degenerate NMG models */
     nmg_triangulate_model(m, vlfree, tol);
 
     /* For each shell, tabulate faces and vertices */
@@ -3915,9 +4334,9 @@ nmg_mdl_to_bot(struct model *m, struct bu_list *vlfree, const struct bn_tol *tol
     bot->bot_flags = 0;
 
     bot->num_vertices = vert_cnt;
-    bot->vertices = (fastf_t *)bu_calloc(bot->num_vertices * 3, sizeof(fastf_t), "BOT vertices");
+    bot->vertices = (vert_cnt > 0) ? (fastf_t *)bu_calloc(vert_cnt * 3, sizeof(fastf_t), "BOT vertices") : NULL;
     bot->num_faces = face_cnt;
-    bot->faces = (int *)bu_calloc(bot->num_faces * 3, sizeof(int), "BOT faces");
+    bot->faces = (face_cnt > 0) ? (int *)bu_calloc(face_cnt * 3, sizeof(int), "BOT faces") : NULL;
 
     bot->thickness = (fastf_t *)NULL;
     bot->face_mode = (struct bu_bitv *)NULL;

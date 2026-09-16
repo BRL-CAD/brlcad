@@ -61,7 +61,7 @@ jobs:
           sudo apt-get clean
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Build Directory setup
         run: |
@@ -69,12 +69,12 @@ jobs:
 
       - name: Configure
         run: |
-          export PATH=$ENV{GITHUB_WORKSPACE}:$PATH
+          export PATH=$GITHUB_WORKSPACE:$PATH
           cmake -S . -G Ninja -B build_linux -DBRLCAD_EXT_PARALLEL=1 -DBRLCAD_COMPONENTS=libged -DBRLCAD_EXTRADOCS=OFF
 
       - name: Build
         run: |
-          export PATH=$ENV{GITHUB_WORKSPACE}:$PATH
+          export PATH=$GITHUB_WORKSPACE:$PATH
           cmake --build build_linux --config Release --target check
 
       - name: Debugging - tmate session

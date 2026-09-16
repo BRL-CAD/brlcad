@@ -1,0 +1,118 @@
+= GSH(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+gsh - BRL-CAD geometry shell for interacting with .g database files
+
+== SYNOPSIS
+
+[source]
+----
+gsh [options] [model.g] [command [args ...]]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*gsh* (the BRL-CAD Geometry SHell) is a low level, terminal based
+environment for interacting with BRL-CAD geometry database (*.g*) files
+through the LIBGED command set. Any command understood by LIBGED, the
+same command library that powers *mged*(1) and *archer*(1), may be issued
+to *gsh*.
+
+*gsh* operates in one of several modes depending on its arguments:
+
+* With no command arguments, *gsh* launches an interactive prompt (`g> `)
+  with command history and line editing. If a _model.g_ file is given it
+  is opened first; otherwise a database may be created or opened from the
+  prompt with the *opendb* command.
+
+* With a _model.g_ file followed by one or more command arguments, *gsh*
+  opens the database, executes the single command, prints its result, and
+  exits. This non-interactive form is convenient for scripting.
+
+* When standard input is not a terminal, *gsh* reads and executes commands
+  from stdin with no prompt, allowing command streams to be piped in.
+
+Long running LIBGED commands that spawn subprocesses are monitored on
+separate threads so their output is interleaved with the interactive
+prompt. Unlike *mged*(1) and *archer*(1), *gsh* provides no graphical
+display window of its own.
+
+[[options]]
+== OPTIONS
+
+*-h*, *-?*, *--help*::
+  Print a usage message and exit.
+
+*-v*, *--version*::
+  Report the BRL-CAD release and component library versions, then exit.
+
+*--new-cmds*::
+  Use the new (qged style) LIBGED command forms and DbiState based display
+  update logic instead of the traditional command set. Primarily of use for
+  development and testing of the next-generation command behavior.
+
+[[examples]]
+== EXAMPLES
+
+.Run a single command non-interactively
+====
+[source,bash]
+----
+gsh moss.g tops
+----
+Opens the database `moss.g`, runs the *tops* command to list the top level
+(non-referenced) objects, prints the result, and exits without entering the
+interactive prompt. This form is well suited to shell scripts and makefiles.
+====
+
+.Pipe a sequence of commands from stdin
+====
+[source,bash]
+----
+printf 'title\nls\nsummary\n' | gsh moss.g
+----
+Feeds several LIBGED commands into *gsh* on standard input. Because stdin is
+not a terminal, *gsh* executes each line in turn with no prompt, reporting the
+database title, an object listing, and a summary of the contents of `moss.g`.
+====
+
+.Inspect and modify geometry interactively
+====
+[source,bash]
+----
+gsh
+g> opendb sample.g y
+g> in box.s rpp 0 10 0 10 0 10
+g> r box.r u box.s
+g> tops
+g> quit
+----
+Starts an interactive session, creates a new database, builds an RPP primitive
+and wraps it in a region, then lists the resulting top level objects. The same
+LIBGED commands available here are shared with *mged*(1) and *archer*(1).
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *mged*(1), *archer*(1), *btclsh*(1)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

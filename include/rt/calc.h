@@ -1,7 +1,7 @@
 /*                      C A L C . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2025 United States Government as represented by
+ * Copyright (c) 1993-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,6 +37,8 @@
 #include "bu/vls.h"
 #include "bn/poly.h"
 #include "rt/defines.h"
+#include "rt/db_instance.h"
+#include "rt/rt_instance.h"
 
 __BEGIN_DECLS
 
@@ -48,7 +50,7 @@ __BEGIN_DECLS
  *
  * returns zero if matrix transform was applied, non-zero on failure.
  */
-RT_EXPORT extern int rt_matrix_transform(struct rt_db_internal *output, const mat_t matrix, struct rt_db_internal *input, int free_input, struct db_i *dbip, struct resource *resource);
+RT_EXPORT extern int rt_matrix_transform(struct rt_db_internal *output, const mat_t matrix, struct rt_db_internal *input, int free_input, struct db_i *dbip);
 
 /* find RPP of one region */
 
@@ -107,6 +109,12 @@ RT_EXPORT extern int rt_in_rpp(struct xray *rp,
  * * to return the BB properly without getting stuck during tree
  * traversal in rt_bound_tree()
  *
+ * NOTE: this computes a LOOSE axis-aligned RPP.  Subtracted (OP_SUBTRACT /
+ * negative) members are recursed into but their RPP is discarded, so the
+ * returned box IGNORES carved-away material and never shrinks to reflect it.
+ * For a bound that accounts for subtractions, evaluate the geometry (e.g. the
+ * ray-traced evaluated-geometry path exposed by the "bb -t" command).
+ *
  * Returns -
  *  0 success
  * -1 failure, the model bounds could not be got
@@ -128,13 +136,19 @@ rt_bound_instance(point_t *bmin, point_t *bmax,
 	struct db_i *dbip,
 	const struct bg_tess_tol *ttol,
 	const struct bn_tol *tol,
-	mat_t *s_mat,
-	struct resource *res
+	mat_t *s_mat
 	);
 
 /**
  * Given an argc/argv list of objects, calculate their collective
- * bounding box */
+ * bounding box.
+ *
+ * NOTE: this returns a LOOSE axis-aligned RPP (it is built on rt_bound_tree()).
+ * Subtracted (OP_SUBTRACT / negative) members do NOT tighten the result -- the
+ * box reflects only the positive/union geometry and never shrinks to account
+ * for carved-away material.  Callers needing a subtraction-aware bound must
+ * evaluate the geometry (e.g. via the "bb -t" command, which bounds the
+ * ray-traced boolean-evaluated geometry). */
 RT_EXPORT extern int
 rt_obj_bounds(struct bu_vls *msgs,
                     struct db_i *dbip,
@@ -162,22 +176,18 @@ RT_EXPORT extern int rt_shader_mat(mat_t                        model_to_shader,
 				   const struct rt_i    *rtip,
 				   const struct region  *rp,
 				   point_t                      p_min,  /* input/output: shader/region min point */
-				   point_t                      p_max,  /* input/output: shader/region max point */
-				   struct resource              *resp);
+				   point_t                      p_max); /* input/output: shader/region max point */
 
 /* mirror.c */
 RT_EXPORT extern struct rt_db_internal *rt_mirror(struct db_i *dpip,
 						  struct rt_db_internal *ip,
 						  point_t mirror_pt,
-						  vect_t mirror_dir,
-						  struct resource *resp);
+						  vect_t mirror_dir);
 
 
 RT_EXPORT extern void rt_plot_all_bboxes(FILE *fp,
 					 struct rt_i *rtip);
-RT_EXPORT extern void rt_plot_all_solids(FILE           *fp,
-					 struct rt_i    *rtip,
-					 struct resource        *resp);
+RT_EXPORT extern void rt_plot_all_solids(FILE *fp, struct rt_i *rtip);
 
 
 /* pr.c */

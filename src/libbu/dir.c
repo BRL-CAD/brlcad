@@ -1,7 +1,7 @@
 /*                           D I R . C
  * BRL-CAD
  *
- * Copyright (c) 2018-2025 United States Government as represented by
+ * Copyright (c) 2018-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -725,7 +725,7 @@ bu_dirclear(const char *d)
 	    if (BU_STR_EQUAL(filenames[i], ".."))
 		continue;
 	    char cdir[MAXPATHLEN] = {0};
-	    bu_dir(cdir, MAXPATHLEN, d, filenames[i], NULL);
+	    bu_dir(cdir, MAXPATHLEN, d, filenames[i], (const char *)NULL);
 	    bu_dirclear((const char *)cdir);
 	}
 	bu_argv_free(nfiles, filenames);

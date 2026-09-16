@@ -1,0 +1,141 @@
+= WAVELET(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+wavelet - perform a Haar wavelet decomposition or reconstruction
+
+== SYNOPSIS
+
+[source]
+----
+wavelet {-d | -r} [-1 | -2] [-t _datatype_] [-# _channels_] [-w _width_] [-n _scanlines_] [-s _squaresize_] [-W _out_size_] [-S _out_size_] [-R _avg_size_] [-D _level_] < datastream > wavelets
+----
+
+
+[[description]]
+== DESCRIPTION
+
+The *wavelet* command performs a Haar wavelet transform on a raw binary
+dataset read from standard input, writing the transformed result to
+standard output.  It can either *decompose* a signal into successively
+coarser "average" terms plus "detail" coefficients, or *reconstruct* the
+original signal from such a decomposition.  Decomposition and
+reconstruction are inverse operations.
+
+The transform operates on interleaved, fixed-width samples, so it works
+directly on image formats such as *pix*(5) and *bw*(5) by treating each
+pixel as one sample with the appropriate number of channels.  A
+two-dimensional transform requires a square dataset.
+
+Because the Haar transform sums and differences sample values, results
+can overflow narrow integer types.  For lossless decomposition and
+reconstruction, convert the data to the next larger data type (via the
+*-t* option) before processing.
+
+[[options]]
+== OPTIONS
+
+*-d*::
+  Perform a decomposition.
+
+*-r*::
+  Perform a reconstruction.
+
+*-1*::
+  Perform a one-dimensional (per-scanline horizontal) transform.  This is
+  the default.
+
+*-2*::
+  Perform a two-dimensional transform (interleaved horizontal and
+  vertical).  The dataset must be square.
+
+*-t* _datatype_::
+  Specify the data type of the samples, which is also the type used for
+  the wavelet arithmetic.  The letter is the first character of the C
+  type: *c* (char), *s* (short), *i* (int), *l* (long), *f* (float), *d*
+  (double).  The default is char.
+
+*-#* _channels_::
+  Number of values per sample point.  For example, use *-# 3* to transform
+  a *pix*(5) file so the red, green, and blue channels are transformed
+  individually.  The default is 3.
+
+*-w* _width_::
+  Number of samples per scanline.  The default is 512.
+
+*-n* _scanlines_::
+  Number of scanlines in the dataset.  The default is 512.
+
+*-s* _squaresize_::
+  Set the width and number of scanlines simultaneously to the same value
+  (a square dataset).
+
+*-W* _out_size_::
+  Width of the average image in the output.  Normally a full decomposition
+  reduces this to 1; specify a power-of-two value at which decomposition
+  or reconstruction should stop.  The output then holds an averaged image
+  of the given size with the remaining data stored as detail
+  coefficients.
+
+*-S* _out_size_::
+  Same as *-W*, expressed as the square size of a two-dimensional
+  transform limit.
+
+*-R* _avg_size_::
+  Resume a transform from a decomposition that left off with an average
+  image of _avg_size_.
+
+*-D* _level_::
+  Set the debug output level.  Diagnostic information about data type,
+  channels, width, height, and limit is written to standard error.
+
+[[examples]]
+== EXAMPLES
+
+.Display a horizontal decomposition
+====
+[source,bash]
+----
+wavelet -d -# 3 -s 512 < img.pix | pix-fb
+----
+Decomposes each scanline of a 512x512 color *pix*(5) image and displays
+the result on a framebuffer with *pix-fb*(1).  Each scanline shows a
+shrinking "average" toward the left with detail coefficients to the right.
+====
+
+.Two-dimensional decomposition with a stopping size
+====
+[source,bash]
+----
+wavelet -d -2 -# 3 -s 1024 -S 64 < img.pix > img.wlt
+----
+Performs a 2D decomposition of a 1024x1024 color image, stopping once the
+average has been reduced to 64x64.  The output image holds a 64x64 version
+of the original in the lower-left corner with detail terms filling the
+remainder, ready to be inverted with *wavelet -r -2 -s 1024 -R 64*.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *pix-fb*(1), *pix*(5), *bw*(5)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1999-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

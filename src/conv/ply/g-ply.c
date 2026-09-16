@@ -1,7 +1,7 @@
 /*                  G - P L Y . C
  * BRL-CAD
  *
- * Copyright (c) 2003-2025 United States Government as represented by
+ * Copyright (c) 2003-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -48,7 +48,7 @@ main(int argc, char **argv)
     const char *output_path = NULL;
     const char *input_path = NULL;
     int separate = 0;
-    char* type = "de";
+    const char* type = "de";
     int c;
 
     bu_setprogname(argv[0]);

@@ -1,7 +1,7 @@
 /*                           A P I . C
  * BRL-CAD
  *
- * Copyright (c) 2015-2025 United States Government as represented by
+ * Copyright (c) 2015-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -542,7 +542,7 @@ densities_from_database(struct current_state *state, struct rt_i *rtip)
 	return ANALYZE_ERROR;
     }
 
-    if (rt_db_get_internal(&intern, dp, rtip->rti_dbip, NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dp, rtip->rti_dbip, NULL) < 0) {
 	bu_log("could not import %s\n", dp->d_namep);
 	return ANALYZE_ERROR;
     }
@@ -1021,7 +1021,7 @@ allocate_region_data(struct current_state *state, char *av[])
 	return;
     }
 
-    if (rtip->nregions == 0) {
+    if (rtip->stats.nregions == 0) {
 	/* dammit! */
 	bu_log("WARNING: No regions remaining.\n");
 	return;
@@ -1052,7 +1052,7 @@ allocate_region_data(struct current_state *state, char *av[])
     }
 
     /* build objects for each region */
-    state->reg_tbl = (struct per_region_data *)bu_calloc(rtip->nregions, sizeof(struct per_region_data), "per_region_data");
+    state->reg_tbl = (struct per_region_data *)bu_calloc(rtip->stats.nregions, sizeof(struct per_region_data), "per_region_data");
 
 
     for (i = 0, BU_LIST_FOR (regp, region, &(rtip->HeadRegion)), i++) {
@@ -1189,12 +1189,12 @@ analyze_setup_ae(struct current_state *state)
 	return ANALYZE_ERROR;
     }
 
-    if (rtip->nsolids <= 0) {
+    if (rtip->stats.nsolids <= 0) {
 	bu_log("ERROR: no primitives active\n");
 	return ANALYZE_ERROR;
     }
 
-    if (rtip->nregions <= 0) {
+    if (rtip->stats.nregions <= 0) {
 	bu_log("ERROR: no regions active\n");
 	return ANALYZE_ERROR;
     }
@@ -1312,7 +1312,7 @@ perform_raytracing(struct current_state *state, struct db_i *dbip, char *names[]
     state->analysis_flags = flags;
 
     /* Get raytracing instance */
-    rtip = rt_new_rti(dbip);
+    rtip = rt_i_create(dbip);
     rtip->useair = state->use_air;
 
     memset(resp, 0, sizeof(resp));
@@ -1328,7 +1328,7 @@ perform_raytracing(struct current_state *state, struct db_i *dbip, char *names[]
     for(i = 0; i < state->num_objects; i++) {
 	if(rt_gettree(rtip, names[i]) < 0) {
 	    bu_log("Loading geometry for [%s] FAILED", names[i]);
-	    rt_free_rti(rtip);
+	    rt_i_destroy(rtip);
 	    rtip = NULL;
 	    return ANALYZE_ERROR;
 	}
@@ -1339,7 +1339,7 @@ perform_raytracing(struct current_state *state, struct db_i *dbip, char *names[]
     /* setup azimuth and elevation angles in case of single grid */
     if (state->use_single_grid && !state->use_view_information) {
 	if (analyze_setup_ae(state)) {
-	    rt_free_rti(rtip);
+	    rt_i_destroy(rtip);
 	    rtip = NULL;
 	    return ANALYZE_ERROR;
 	}
@@ -1459,7 +1459,7 @@ perform_raytracing(struct current_state *state, struct db_i *dbip, char *names[]
 	state->densities = NULL;
     }
 
-    rt_free_rti(rtip);
+    rt_i_destroy(rtip);
     return ANALYZE_OK;
 }
 

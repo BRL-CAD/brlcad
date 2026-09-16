@@ -1,7 +1,7 @@
 /*                 Q G M E A S U R E F I L T E R . C P P
  * BRL-CAD
  *
- * Copyright (c) 2021-2025 United States Government as represented by
+ * Copyright (c) 2021-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -343,7 +343,7 @@ QMeasure3DFilter::get_point()
 	return false;
     }
 
-    bool need_prep = (!ap || !rtip || !resp) ? true : false;
+    bool need_prep = (!ap || !rtip) ? true : false;
     if (need_prep || prev_cnt != scnt || scnt != (int)BU_PTBL_LEN(&scene_obj_set)) {
 	// Something changed - need to reset the raytrace data
 	bu_ptbl_reset(&scene_obj_set);
@@ -376,14 +376,11 @@ QMeasure3DFilter::get_point()
 	    ap->a_logoverlap = NULL;
 	}
 	if (rtip) {
-	    rt_free_rti(rtip);
+	    rt_i_destroy(rtip);
 	    rtip = NULL;
 	}
-	rtip = rt_new_rti(dbip);
-	if (resp) {
-	    // TODO - do we need more here?
-	    BU_PUT(resp, struct resource);
-	}
+	rtip = rt_i_create(dbip);
+	struct resource *resp = NULL;
 	BU_GET(resp, struct resource);
 	rt_init_resource(resp, 0, rtip);
 	ap->a_resource = resp;
@@ -396,10 +393,9 @@ QMeasure3DFilter::get_point()
 	}
 	if (rt_gettrees_and_attrs(rtip, NULL, scnt, objs, 1)) {
 	    bu_free(objs, "objs");
-	    rt_free_rti(rtip);
+	    rt_i_destroy(rtip);
 	    rtip = NULL;
 	    BU_PUT(resp, struct resource);
-	    resp = NULL;
 	    bu_ptbl_free(&sset);
 	    return false;
 	}

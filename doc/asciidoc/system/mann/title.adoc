@@ -1,0 +1,47 @@
+= TITLE(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD MGED Commands
+
+== NAME
+title - Returns the title string for the current database or, if used with an argument, renames the database.
+
+== SYNOPSIS
+
+[source]
+----
+title [string]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Returns the title string for the current database or, if used with an argument, renames the database. Quotation marks must be doubly escaped.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *title* command with an argument to rename the current database.
+
+.Rename the current database.
+[example]
+====
+mged>**title This is my \\"database\\"**
+
+Sets the title of the current database to _This is my "database."_
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

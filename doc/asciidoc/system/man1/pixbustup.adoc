@@ -1,0 +1,68 @@
+= PIXBUSTUP(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+pixbustup - break up concatenated pix images into separate files
+
+== SYNOPSIS
+
+[source]
+----
+pixbustup basename width [image_offset] [first_number] < input.pix
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*pixbustup* takes input consisting of a concatenated collection of *pix*(5) format files and breaks them up into separate files. The output file names will be of the form _basename.num_, where _basename_ is given on the command line, and _num_ is a consecutive series of integers. By default the first image will be made number " 0 ", but an alternate __first_number__ can be given. The images must be square and the width (and height) is given by _width_. The program keeps reading these small files until end of file is reached. If one does not wish to extract from the beginning of the input file, an __image_offset__ can be given which will skip that number of images before beginning.
+
+This program is mostly a holdover from the days when *rt*(1) wrote animations into one huge file, but it is still sometimes useful.
+
+
+[[examples]]
+== EXAMPLES
+
+.Split an animation into per-frame files
+====
+[source,bash]
+----
+pixbustup frame 512 < anim.pix
+----
+Break a concatenated stream of 512x512 *pix*(5) images in _anim.pix_ into individual files _frame.0_, _frame.1_, _frame.2_, and so on, one per frame.
+====
+
+.Extract a numbered subset of frames
+====
+[source,bash]
+----
+pixbustup frame 512 100 100 < anim.pix
+----
+Skip the first 100 images in _anim.pix_, then write the remaining 512x512 frames starting at _frame.100_ so the output file names match the original frame numbering. The resulting files can be converted for viewing with *pix-png*(1).
+====
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *rt*(1), *pix-png*(1), *pix*(5)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

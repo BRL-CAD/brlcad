@@ -1,0 +1,2637 @@
+/*                         C S G - G . C
+ * BRL-CAD
+ *
+ * Copyright (c) 2025 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ *
+ */
+/** @file csg-g.c
+ *
+ * Convert OpenSCAD .csg format files to BRL-CAD .g binary format.
+ *
+ * The .csg format is OpenSCAD's evaluated CSG tree output, produced
+ * by running: openscad -o file.csg input.scad
+ *
+ * All variables, modules, loops, and conditionals are already resolved
+ * in this format, leaving only primitives, boolean operations, and
+ * transformations.
+ *
+ */
+
+#include "common.h"
+
+#include <stdlib.h>
+#include <math.h>
+#include <string.h>
+#include <ctype.h>
+#include <errno.h>
+
+#include "bu/app.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/path.h"
+#include "bu/str.h"
+#include "bu/vls.h"
+#include "vmath.h"
+#include "rt/geom.h"
+#include "raytrace.h"
+#include "wdb.h"
+
+
+static char *input_file;	/* name of the input file */
+static char *brlcad_file;	/* name of output file */
+static FILE *fd_in;		/* input file */
+static struct rt_wdb *fd_out;	/* output BRL-CAD file */
+static int debug = 0;		/* debug flag */
+static int solid_count = 0;	/* count of solids converted */
+static int comb_count = 0;	/* count of combinations created */
+static struct wmember all_head;	/* top-level group */
+
+/* Input buffer */
+static char *buf = NULL;	/* file contents */
+static size_t buf_len = 0;	/* buffer length */
+static size_t pos = 0;		/* current parse position */
+
+
+/*
+ * Generate a unique solid name like s.1, s.2, ...
+ */
+static void
+make_solid_name(struct bu_vls *name)
+{
+    bu_vls_sprintf(name, "s.%d", ++solid_count);
+}
+
+
+/*
+ * Generate a unique combination name like c.1, c.2, ...
+ */
+static void
+make_comb_name(struct bu_vls *name)
+{
+    bu_vls_sprintf(name, "c.%d", ++comb_count);
+}
+
+
+/*
+ * Skip whitespace and comments in the input buffer.
+ */
+static void
+skip_ws(void)
+{
+    while (pos < buf_len) {
+	if (isspace((int)buf[pos])) {
+	    pos++;
+	} else if (pos + 1 < buf_len && buf[pos] == '/' && buf[pos+1] == '/') {
+	    /* line comment */
+	    while (pos < buf_len && buf[pos] != '\n')
+		pos++;
+	} else if (pos + 1 < buf_len && buf[pos] == '/' && buf[pos+1] == '*') {
+	    /* block comment */
+	    pos += 2;
+	    while (pos + 1 < buf_len && !(buf[pos] == '*' && buf[pos+1] == '/'))
+		pos++;
+	    if (pos + 1 < buf_len)
+		pos += 2;
+	} else {
+	    break;
+	}
+    }
+}
+
+
+/*
+ * Check if the current position matches a keyword, followed by '(' or '{'.
+ * Does not advance the position.
+ */
+static int
+looking_at(const char *kw)
+{
+    size_t len = strlen(kw);
+    if (pos + len > buf_len)
+	return 0;
+    if (bu_strncmp(&buf[pos], kw, len) != 0)
+	return 0;
+    /* keyword must be followed by '(' or whitespace then '(' */
+    size_t p = pos + len;
+    while (p < buf_len && isspace((int)buf[p]))
+	p++;
+    if (p < buf_len && buf[p] == '(')
+	return 1;
+    return 0;
+}
+
+
+/*
+ * Consume a keyword and advance past it.
+ */
+static void
+consume(const char *kw)
+{
+    pos += strlen(kw);
+}
+
+
+/*
+ * Expect and consume a specific character.
+ */
+static int
+expect_char(char c)
+{
+    skip_ws();
+    if (pos < buf_len && buf[pos] == c) {
+	pos++;
+	return 1;
+    }
+    bu_log("csg-g: expected '%c' at position %zu, got '%c'\n",
+	   c, pos, (pos < buf_len) ? buf[pos] : '?');
+    return 0;
+}
+
+
+/*
+ * Parse a floating point number from the buffer.
+ */
+static double
+parse_double(void)
+{
+    skip_ws();
+    char *end;
+    double val = strtod(&buf[pos], &end);
+    pos = end - buf;
+    return val;
+}
+
+
+/*
+ * Look for a named parameter in the parameter list.
+ * Returns 1 and sets *val if found, 0 otherwise.
+ * Call before consuming the parameter list.
+ */
+static int
+find_param_double(const char *name, double *val)
+{
+    size_t save = pos;
+    size_t namelen = strlen(name);
+
+    while (pos < buf_len && buf[pos] != ')') {
+	skip_ws();
+	if (pos + namelen < buf_len && bu_strncmp(&buf[pos], name, namelen) == 0) {
+	    size_t p = pos + namelen;
+	    while (p < buf_len && isspace((int)buf[p])) p++;
+	    if (p < buf_len && buf[p] == '=') {
+		p++;
+		pos = p;
+		*val = parse_double();
+		pos = save;
+		return 1;
+	    }
+	}
+	/* advance to next comma or end */
+	while (pos < buf_len && buf[pos] != ',' && buf[pos] != ')')
+	    pos++;
+	if (pos < buf_len && buf[pos] == ',')
+	    pos++;
+    }
+    pos = save;
+    return 0;
+}
+
+
+/*
+ * Look for a named array parameter like size = [x, y, z].
+ * Returns 1 and fills vals (up to maxn entries) if found.
+ */
+static int
+find_param_array(const char *name, double *vals, int maxn, int *countp)
+{
+    size_t save = pos;
+    size_t namelen = strlen(name);
+    int count = 0;
+
+    while (pos < buf_len && buf[pos] != ')') {
+	skip_ws();
+	if (pos + namelen < buf_len && bu_strncmp(&buf[pos], name, namelen) == 0) {
+	    size_t p = pos + namelen;
+	    while (p < buf_len && isspace((int)buf[p])) p++;
+	    if (p < buf_len && buf[p] == '=') {
+		p++;
+		while (p < buf_len && isspace((int)buf[p])) p++;
+		if (p < buf_len && buf[p] == '[') {
+		    p++;
+		    pos = p;
+		    while (count < maxn) {
+			skip_ws();
+			if (pos < buf_len && buf[pos] == ']')
+			    break;
+			vals[count++] = parse_double();
+			skip_ws();
+			if (pos < buf_len && buf[pos] == ',')
+			    pos++;
+		    }
+		    if (countp) *countp = count;
+		    pos = save;
+		    return 1;
+		}
+	    }
+	}
+	while (pos < buf_len && buf[pos] != ',' && buf[pos] != ')')
+	    pos++;
+	if (pos < buf_len && buf[pos] == ',')
+	    pos++;
+    }
+    pos = save;
+    return 0;
+}
+
+
+/*
+ * Look for a boolean parameter like center = true/false.
+ */
+static int
+find_param_bool(const char *name, int *val)
+{
+    size_t save = pos;
+    size_t namelen = strlen(name);
+
+    while (pos < buf_len && buf[pos] != ')') {
+	skip_ws();
+	if (pos + namelen < buf_len && bu_strncmp(&buf[pos], name, namelen) == 0) {
+	    size_t p = pos + namelen;
+	    while (p < buf_len && isspace((int)buf[p])) p++;
+	    if (p < buf_len && buf[p] == '=') {
+		p++;
+		while (p < buf_len && isspace((int)buf[p])) p++;
+		if (p + 4 <= buf_len && bu_strncmp(&buf[p], "true", 4) == 0) {
+		    *val = 1;
+		    pos = save;
+		    return 1;
+		} else if (p + 5 <= buf_len && bu_strncmp(&buf[p], "false", 5) == 0) {
+		    *val = 0;
+		    pos = save;
+		    return 1;
+		}
+	    }
+	}
+	while (pos < buf_len && buf[pos] != ',' && buf[pos] != ')')
+	    pos++;
+	if (pos < buf_len && buf[pos] == ',')
+	    pos++;
+    }
+    pos = save;
+    return 0;
+}
+
+
+/*
+ * Skip everything inside parentheses (the parameter list).
+ */
+static void
+skip_params(void)
+{
+    skip_ws();
+    if (pos < buf_len && buf[pos] == '(') {
+	int depth = 1;
+	pos++;
+	while (pos < buf_len && depth > 0) {
+	    if (buf[pos] == '(') depth++;
+	    else if (buf[pos] == ')') depth--;
+	    pos++;
+	}
+    }
+}
+
+
+/* Forward declaration */
+static int parse_node(struct bu_vls *out_name, mat_t xform);
+
+
+/*
+ * Parse the children inside a { } block, collecting their names and
+ * applying a boolean operation.  Returns the name of the resulting
+ * combination in out_name.
+ */
+static int
+parse_boolean(const char *op_name, int wmop, struct bu_vls *out_name, mat_t parent_xform)
+{
+    struct wmember head;
+    struct bu_vls child_name = BU_VLS_INIT_ZERO;
+    struct bu_vls cname = BU_VLS_INIT_ZERO;
+    int child_count = 0;
+    int first = 1;
+
+    BU_LIST_INIT(&head.l);
+
+    skip_params();
+    skip_ws();
+
+    if (!expect_char('{'))
+	return 0;
+
+    while (1) {
+	skip_ws();
+	if (pos >= buf_len || buf[pos] == '}')
+	    break;
+
+	bu_vls_trunc(&child_name, 0);
+	if (parse_node(&child_name, parent_xform)) {
+	    int op;
+	    if (first) {
+		op = WMOP_UNION;
+		first = 0;
+	    } else {
+		op = wmop;
+	    }
+	    mk_addmember(bu_vls_cstr(&child_name), &head.l, NULL, op);
+	    child_count++;
+	}
+    }
+
+    expect_char('}');
+
+    if (child_count == 0) {
+	bu_vls_free(&child_name);
+	bu_vls_free(&cname);
+	return 0;
+    }
+
+    /* If only one child in a group/union, just pass through its name */
+    if (child_count == 1 && wmop == WMOP_UNION) {
+	bu_vls_vlscat(out_name, &child_name);
+	bu_vls_free(&child_name);
+	bu_vls_free(&cname);
+	return 1;
+    }
+
+    make_comb_name(&cname);
+    mk_lcomb(fd_out, bu_vls_cstr(&cname), &head, 0,
+	     (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
+
+    if (debug)
+	bu_log("  %s: %s (%d children)\n", op_name, bu_vls_cstr(&cname), child_count);
+
+    bu_vls_vlscat(out_name, &cname);
+    bu_vls_free(&child_name);
+    bu_vls_free(&cname);
+    return 1;
+}
+
+
+/*
+ * Parse a multmatrix node.  The matrix is a 4x4 array of doubles.
+ * Applies the matrix to the child node's transform.
+ */
+static int
+parse_multmatrix(struct bu_vls *out_name, mat_t parent_xform)
+{
+    mat_t local_mat;
+    mat_t combined;
+    double vals[16];
+    int i;
+
+    skip_ws();
+    if (!expect_char('('))
+	return 0;
+
+    /* Parse [[a,b,c,d],[e,f,g,h],[i,j,k,l],[m,n,o,p]] */
+    skip_ws();
+    if (!expect_char('['))
+	return 0;
+
+    for (i = 0; i < 4; i++) {
+	skip_ws();
+	if (i > 0) {
+	    skip_ws();
+	    if (pos < buf_len && buf[pos] == ',')
+		pos++;
+	}
+	skip_ws();
+	if (!expect_char('['))
+	    return 0;
+	vals[i*4+0] = parse_double(); skip_ws(); expect_char(',');
+	vals[i*4+1] = parse_double(); skip_ws(); expect_char(',');
+	vals[i*4+2] = parse_double(); skip_ws(); expect_char(',');
+	vals[i*4+3] = parse_double(); skip_ws();
+	if (!expect_char(']'))
+	    return 0;
+    }
+
+    skip_ws();
+    expect_char(']');
+    skip_ws();
+    expect_char(')');
+
+    /*
+     * OpenSCAD uses row-major order:
+     *   [[r00, r01, r02, tx],
+     *    [r10, r11, r12, ty],
+     *    [r20, r21, r22, tz],
+     *    [  0,   0,   0,  1]]
+     *
+     * BRL-CAD uses a transposed column-major layout.
+     */
+    MAT_ZERO(local_mat);
+    local_mat[ 0] = vals[ 0]; local_mat[ 1] = vals[ 4]; local_mat[ 2] = vals[ 8]; local_mat[ 3] = vals[12];
+    local_mat[ 4] = vals[ 1]; local_mat[ 5] = vals[ 5]; local_mat[ 6] = vals[ 9]; local_mat[ 7] = vals[13];
+    local_mat[ 8] = vals[ 2]; local_mat[ 9] = vals[ 6]; local_mat[10] = vals[10]; local_mat[11] = vals[14];
+    local_mat[12] = vals[ 3]; local_mat[13] = vals[ 7]; local_mat[14] = vals[11]; local_mat[15] = vals[15];
+
+    bn_mat_mul(combined, parent_xform, local_mat);
+
+    skip_ws();
+    if (!expect_char('{'))
+	return 0;
+
+    /* Parse the single child */
+    skip_ws();
+    if (!parse_node(out_name, combined)) {
+	/* skip to closing brace */
+	while (pos < buf_len && buf[pos] != '}')
+	    pos++;
+    }
+
+    expect_char('}');
+    return (bu_vls_strlen(out_name) > 0) ? 1 : 0;
+}
+
+
+/*
+ * Parse a cube primitive: cube(size = [x, y, z], center = false)
+ */
+static int
+parse_cube(struct bu_vls *out_name, mat_t xform)
+{
+    struct bu_vls sname = BU_VLS_INIT_ZERO;
+    double size[3] = {1.0, 1.0, 1.0};
+    int centered = 0;
+    int n = 0;
+    point_t min_pt, max_pt;
+
+    skip_ws();
+    if (!expect_char('('))
+	return 0;
+
+    find_param_array("size", size, 3, &n);
+    find_param_bool("center", &centered);
+    skip_params(); /* consume rest - pos is past ')' since skip_params
+		    * was called but we already consumed '(' */
+
+    /* Rewind: skip_params expects to see '(' but we already consumed it.
+     * Instead, just skip to closing ')'. */
+    /* Actually, we need to skip to ')' */
+    while (pos < buf_len && buf[pos] != ')')
+	pos++;
+    if (pos < buf_len) pos++;
+
+    if (centered) {
+	VSET(min_pt, -size[0]/2.0, -size[1]/2.0, -size[2]/2.0);
+	VSET(max_pt,  size[0]/2.0,  size[1]/2.0,  size[2]/2.0);
+    } else {
+	VSET(min_pt, 0.0, 0.0, 0.0);
+	VSET(max_pt, size[0], size[1], size[2]);
+    }
+
+    /* Apply transform to the RPP by creating it with a matrix */
+    make_solid_name(&sname);
+
+    if (bn_mat_is_identity(xform)) {
+	mk_rpp(fd_out, bu_vls_cstr(&sname), min_pt, max_pt);
+    } else {
+	/* Create the RPP at identity, then wrap in a combination with the matrix */
+	struct bu_vls raw = BU_VLS_INIT_ZERO;
+	struct wmember head;
+
+	bu_vls_sprintf(&raw, "s.raw.%d", solid_count);
+	mk_rpp(fd_out, bu_vls_cstr(&raw), min_pt, max_pt);
+
+	BU_LIST_INIT(&head.l);
+	mk_addmember(bu_vls_cstr(&raw), &head.l, xform, WMOP_UNION);
+	mk_lcomb(fd_out, bu_vls_cstr(&sname), &head, 0,
+		 (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
+	bu_vls_free(&raw);
+    }
+
+    if (debug)
+	bu_log("  cube: %s [%.3f, %.3f, %.3f]\n",
+	       bu_vls_cstr(&sname), size[0], size[1], size[2]);
+
+    bu_vls_vlscat(out_name, &sname);
+    bu_vls_free(&sname);
+
+    skip_ws();
+    if (pos < buf_len && buf[pos] == ';')
+	pos++;
+
+    return 1;
+}
+
+
+/*
+ * Parse a sphere primitive: sphere($fn = N, $fa = N, $fs = N, r = R)
+ */
+static int
+parse_sphere(struct bu_vls *out_name, mat_t xform)
+{
+    struct bu_vls sname = BU_VLS_INIT_ZERO;
+    double r = 1.0;
+    point_t center;
+
+    skip_ws();
+    if (!expect_char('('))
+	return 0;
+
+    find_param_double("r", &r);
+
+    while (pos < buf_len && buf[pos] != ')')
+	pos++;
+    if (pos < buf_len) pos++;
+
+    VSET(center, 0.0, 0.0, 0.0);
+
+    make_solid_name(&sname);
+
+    if (bn_mat_is_identity(xform)) {
+	mk_sph(fd_out, bu_vls_cstr(&sname), center, r);
+    } else {
+	struct bu_vls raw = BU_VLS_INIT_ZERO;
+	struct wmember head;
+
+	bu_vls_sprintf(&raw, "s.raw.%d", solid_count);
+	mk_sph(fd_out, bu_vls_cstr(&raw), center, r);
+
+	BU_LIST_INIT(&head.l);
+	mk_addmember(bu_vls_cstr(&raw), &head.l, xform, WMOP_UNION);
+	mk_lcomb(fd_out, bu_vls_cstr(&sname), &head, 0,
+		 (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
+	bu_vls_free(&raw);
+    }
+
+    if (debug)
+	bu_log("  sphere: %s r=%.3f\n", bu_vls_cstr(&sname), r);
+
+    bu_vls_vlscat(out_name, &sname);
+    bu_vls_free(&sname);
+
+    skip_ws();
+    if (pos < buf_len && buf[pos] == ';')
+	pos++;
+
+    return 1;
+}
+
+
+/*
+ * Parse a cylinder primitive:
+ *   cylinder($fn=N, $fa=N, $fs=N, h=H, r1=R1, r2=R2, center=false)
+ */
+static int
+parse_cylinder(struct bu_vls *out_name, mat_t xform)
+{
+    struct bu_vls sname = BU_VLS_INIT_ZERO;
+    double h = 1.0, r1 = 1.0, r2 = 1.0;
+    int centered = 0;
+    point_t base;
+    vect_t height_vec, a_vec, b_vec;
+
+    skip_ws();
+    if (!expect_char('('))
+	return 0;
+
+    find_param_double("h", &h);
+    find_param_double("r1", &r1);
+    find_param_double("r2", &r2);
+    find_param_bool("center", &centered);
+
+    while (pos < buf_len && buf[pos] != ')')
+	pos++;
+    if (pos < buf_len) pos++;
+
+    if (centered) {
+	VSET(base, 0.0, 0.0, -h/2.0);
+    } else {
+	VSET(base, 0.0, 0.0, 0.0);
+    }
+    VSET(height_vec, 0.0, 0.0, h);
+
+    make_solid_name(&sname);
+
+    if (bn_mat_is_identity(xform)) {
+	/* TGC: base, height, A, B, C, D vectors */
+	VSET(a_vec, r1, 0.0, 0.0);
+	VSET(b_vec, 0.0, r1, 0.0);
+	vect_t c_vec, d_vec;
+	VSET(c_vec, r2, 0.0, 0.0);
+	VSET(d_vec, 0.0, r2, 0.0);
+	mk_tgc(fd_out, bu_vls_cstr(&sname), base, height_vec,
+		a_vec, b_vec, c_vec, d_vec);
+    } else {
+	struct bu_vls raw = BU_VLS_INIT_ZERO;
+	struct wmember head;
+	vect_t c_vec, d_vec;
+
+	bu_vls_sprintf(&raw, "s.raw.%d", solid_count);
+	VSET(a_vec, r1, 0.0, 0.0);
+	VSET(b_vec, 0.0, r1, 0.0);
+	VSET(c_vec, r2, 0.0, 0.0);
+	VSET(d_vec, 0.0, r2, 0.0);
+	mk_tgc(fd_out, bu_vls_cstr(&raw), base, height_vec,
+		a_vec, b_vec, c_vec, d_vec);
+
+	BU_LIST_INIT(&head.l);
+	mk_addmember(bu_vls_cstr(&raw), &head.l, xform, WMOP_UNION);
+	mk_lcomb(fd_out, bu_vls_cstr(&sname), &head, 0,
+		 (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
+	bu_vls_free(&raw);
+    }
+
+    if (debug)
+	bu_log("  cylinder: %s h=%.3f r1=%.3f r2=%.3f\n",
+	       bu_vls_cstr(&sname), h, r1, r2);
+
+    bu_vls_vlscat(out_name, &sname);
+    bu_vls_free(&sname);
+
+    skip_ws();
+    if (pos < buf_len && buf[pos] == ';')
+	pos++;
+
+    return 1;
+}
+
+
+/*
+ * Maximum polyhedron size we handle for ARB detection.  Polyhedra
+ * with more vertices or faces go straight to BOT.
+ */
+#define MAX_POLY_VERTS 256
+#define MAX_POLY_FACES 256
+#define MAX_FACE_VERTS 8
+
+
+/*
+ * Test whether a polyhedron is convex.  For each face, compute the
+ * plane normal from the first three vertices, then verify every
+ * other vertex lies on the same side of that plane.  The winding
+ * order (and thus normal direction) is not assumed — we just check
+ * that all non-face vertices agree on which side they are on.
+ *
+ * Returns 1 if convex, 0 if not.
+ */
+static int
+poly_is_convex(double verts[][3], int nv,
+	       int faces[][MAX_FACE_VERTS], int face_sizes[], int nf)
+{
+    int f, v;
+    double tol_dist = 1.0e-6;
+
+    for (f = 0; f < nf; f++) {
+	vect_t e1, e2, normal;
+	double d;
+	int v0, v1, v2;
+	int sign = 0; /* 0=unknown, 1=positive side, -1=negative side */
+
+	if (face_sizes[f] < 3)
+	    return 0;
+
+	v0 = faces[f][0];
+	v1 = faces[f][1];
+	v2 = faces[f][2];
+
+	VSUB2(e1, verts[v1], verts[v0]);
+	VSUB2(e2, verts[v2], verts[v0]);
+	VCROSS(normal, e1, e2);
+
+	/* Plane equation: normal . X = d */
+	d = VDOT(normal, verts[v0]);
+
+	/* All non-face vertices must be on the same side of this plane */
+	for (v = 0; v < nv; v++) {
+	    double dist;
+	    int on_face = 0;
+	    int k;
+	    for (k = 0; k < face_sizes[f]; k++) {
+		if (faces[f][k] == v) {
+		    on_face = 1;
+		    break;
+		}
+	    }
+	    if (on_face)
+		continue;
+
+	    dist = VDOT(normal, verts[v]) - d;
+	    if (dist > tol_dist) {
+		if (sign < 0) return 0;
+		sign = 1;
+	    } else if (dist < -tol_dist) {
+		if (sign > 0) return 0;
+		sign = -1;
+	    }
+	}
+    }
+    return 1;
+}
+
+
+/*
+ * Try to match a polyhedron to an ARB8.  The polyhedron must have
+ * exactly 8 vertices and 6 quadrilateral faces.  We find two
+ * opposing quad faces and order the vertices so that face 0
+ * (bottom) has vertices 0-3 and face 1 (top) has vertices 4-7,
+ * with edges connecting 0-4, 1-5, 2-6, 3-7.
+ *
+ * Returns 1 on success with pts filled (8 points * 3 coords).
+ */
+static int
+try_arb8(double verts[][3], int nv,
+	 int faces[][MAX_FACE_VERTS], int face_sizes[], int nf,
+	 fastf_t *pts)
+{
+    int i, j, k;
+    int bot_face = -1, top_face = -1;
+    int bot_idx[4], top_idx[4];
+    int used_verts[8];
+
+    if (nv != 8 || nf != 6)
+	return 0;
+
+    /* All faces must be quads */
+    for (i = 0; i < 6; i++) {
+	if (face_sizes[i] != 4)
+	    return 0;
+    }
+
+    /*
+     * Find two opposing faces.  Two quad faces are "opposing" if
+     * they share no vertices.  Pick the first such pair.
+     */
+    for (i = 0; i < 6 && bot_face < 0; i++) {
+	for (j = i + 1; j < 6; j++) {
+	    int shared = 0;
+	    for (k = 0; k < 4 && !shared; k++) {
+		int m;
+		for (m = 0; m < 4; m++) {
+		    if (faces[i][k] == faces[j][m]) {
+			shared = 1;
+			break;
+		    }
+		}
+	    }
+	    if (!shared) {
+		bot_face = i;
+		top_face = j;
+		break;
+	    }
+	}
+    }
+
+    if (bot_face < 0)
+	return 0;
+
+    /* Copy bottom face vertex indices */
+    for (i = 0; i < 4; i++)
+	bot_idx[i] = faces[bot_face][i];
+
+    /*
+     * For each bottom vertex, find the connected top vertex.
+     * Two vertices are connected if they share an edge — i.e.,
+     * they appear together on one of the 4 side faces.
+     */
+    memset(used_verts, 0, sizeof(used_verts));
+    for (i = 0; i < 4; i++) {
+	int found = 0;
+	for (j = 0; j < 6 && !found; j++) {
+	    if (j == bot_face || j == top_face)
+		continue;
+	    /* Check if this side face contains bot_idx[i] */
+	    int has_bot = 0, bot_pos = -1;
+	    for (k = 0; k < face_sizes[j]; k++) {
+		if (faces[j][k] == bot_idx[i]) {
+		    has_bot = 1;
+		    bot_pos = k;
+		    break;
+		}
+	    }
+	    if (!has_bot)
+		continue;
+	    /* Find adjacent vertex on this face that is a top vertex */
+	    int prev = (bot_pos + face_sizes[j] - 1) % face_sizes[j];
+	    int next = (bot_pos + 1) % face_sizes[j];
+	    int candidates[2] = { faces[j][prev], faces[j][next] };
+	    int c;
+	    for (c = 0; c < 2; c++) {
+		int m;
+		for (m = 0; m < 4; m++) {
+		    if (candidates[c] == faces[top_face][m] && !used_verts[candidates[c]]) {
+			top_idx[i] = candidates[c];
+			used_verts[candidates[c]] = 1;
+			found = 1;
+			break;
+		    }
+		}
+		if (found) break;
+	    }
+	}
+	if (!found)
+	    return 0;
+    }
+
+    /* Fill pts array: bottom 0-3, top 4-7 */
+    for (i = 0; i < 4; i++) {
+	VMOVE(&pts[i*3], verts[bot_idx[i]]);
+    }
+    for (i = 0; i < 4; i++) {
+	VMOVE(&pts[(i+4)*3], verts[top_idx[i]]);
+    }
+
+    return 1;
+}
+
+
+/*
+ * Try to match a polyhedron to an ARB4 (tetrahedron).
+ * Must have 4 vertices and 4 triangular faces.
+ */
+static int
+try_arb4(double verts[][3], int nv,
+	 int UNUSED(faces[][MAX_FACE_VERTS]), int face_sizes[], int nf,
+	 fastf_t *pts)
+{
+    int i;
+
+    if (nv != 4 || nf != 4)
+	return 0;
+
+    for (i = 0; i < 4; i++) {
+	if (face_sizes[i] != 3)
+	    return 0;
+    }
+
+    for (i = 0; i < 4; i++) {
+	VMOVE(&pts[i*3], verts[i]);
+    }
+
+    return 1;
+}
+
+
+/*
+ * Try to match a polyhedron to an ARB5 (pyramid with quad base).
+ * Must have 5 vertices and 5 faces: 1 quad + 4 triangles.
+ */
+static int
+try_arb5(double verts[][3], int nv,
+	 int faces[][MAX_FACE_VERTS], int face_sizes[], int nf,
+	 fastf_t *pts)
+{
+    int i;
+    int quad_face = -1;
+    int apex = -1;
+    int on_quad[5] = {0, 0, 0, 0, 0};
+
+    if (nv != 5 || nf != 5)
+	return 0;
+
+    /* Find the single quad face */
+    for (i = 0; i < 5; i++) {
+	if (face_sizes[i] == 4) {
+	    if (quad_face >= 0) return 0; /* two quads */
+	    quad_face = i;
+	} else if (face_sizes[i] != 3) {
+	    return 0;
+	}
+    }
+    if (quad_face < 0)
+	return 0;
+
+    /* Mark vertices on the quad face */
+    for (i = 0; i < 4; i++)
+	on_quad[faces[quad_face][i]] = 1;
+
+    /* The apex is the vertex not on the quad face */
+    for (i = 0; i < 5; i++) {
+	if (!on_quad[i]) {
+	    apex = i;
+	    break;
+	}
+    }
+    if (apex < 0) return 0;
+
+    /* pts: base quad (0-3), then apex (4) */
+    for (i = 0; i < 4; i++)
+	VMOVE(&pts[i*3], verts[faces[quad_face][i]]);
+    VMOVE(&pts[4*3], verts[apex]);
+
+    return 1;
+}
+
+
+/*
+ * Try to match a polyhedron to an ARB6 (wedge / triangular prism).
+ * Must have 6 vertices, 5 faces: 2 triangles + 3 quads.
+ * The two triangle faces must share no vertices (they are the
+ * opposing ends of the prism).
+ *
+ * mk_arb6 layout: bottom quad (0,1,2,3), top edge (4,5)
+ * where pt8[4]=pt8[5] and pt8[6]=pt8[7].
+ *
+ * We find the two opposing triangles, pick one as bottom and
+ * pair its vertices with the top triangle's vertices via shared
+ * side faces.
+ */
+static int
+try_arb6(double verts[][3], int nv,
+	 int faces[][MAX_FACE_VERTS], int face_sizes[], int nf,
+	 fastf_t *pts)
+{
+    int i, j, k;
+    int tri_faces[2], tri_count = 0;
+    int quad_count = 0;
+    int bot_tri, top_tri;
+    int bot_verts[3], top_verts[3];
+    int paired[3]; /* top vertex paired with each bottom vertex */
+
+    if (nv != 6 || nf != 5)
+	return 0;
+
+    /* Must have exactly 2 triangles and 3 quads */
+    for (i = 0; i < 5; i++) {
+	if (face_sizes[i] == 3) {
+	    if (tri_count >= 2) return 0;
+	    tri_faces[tri_count++] = i;
+	} else if (face_sizes[i] == 4) {
+	    quad_count++;
+	} else {
+	    return 0;
+	}
+    }
+    if (tri_count != 2 || quad_count != 3)
+	return 0;
+
+    /* The two triangles must share no vertices */
+    for (j = 0; j < 3; j++)
+	for (k = 0; k < 3; k++)
+	    if (faces[tri_faces[0]][j] == faces[tri_faces[1]][k])
+		return 0;
+
+    bot_tri = tri_faces[0];
+    top_tri = tri_faces[1];
+
+    for (i = 0; i < 3; i++) {
+	bot_verts[i] = faces[bot_tri][i];
+	top_verts[i] = faces[top_tri][i];
+    }
+
+    /* Pair each bottom vertex with a top vertex via shared quad faces */
+    for (i = 0; i < 3; i++) {
+	int found = 0;
+	for (j = 0; j < 5 && !found; j++) {
+	    if (j == bot_tri || j == top_tri)
+		continue;
+	    if (face_sizes[j] != 4)
+		continue;
+	    /* Does this quad contain bot_verts[i]? */
+	    int has_bot = 0;
+	    for (k = 0; k < 4; k++) {
+		if (faces[j][k] == bot_verts[i]) {
+		    has_bot = 1;
+		    break;
+		}
+	    }
+	    if (!has_bot)
+		continue;
+	    /* Find which top vertex is on this quad */
+	    int m;
+	    for (m = 0; m < 3; m++) {
+		int n;
+		for (n = 0; n < 4; n++) {
+		    if (faces[j][n] == top_verts[m]) {
+			paired[i] = top_verts[m];
+			found = 1;
+			break;
+		    }
+		}
+		if (found) break;
+	    }
+	}
+	if (!found)
+	    return 0;
+    }
+
+    /*
+     * mk_arb6 expects 6 points:
+     * 0,1,2,3 = bottom quad (but we have a triangle, so one pair
+     * of adjacent bottom verts maps to two arb6 slots).
+     * 4,5 = top edge (two of the three top verts that form the
+     * collapsed top quad).
+     *
+     * Actually, arb6 is: pt8[0-3] = one quad face,
+     * pt8[4]=pt8[5] = one top point, pt8[6]=pt8[7] = other top point.
+     * So the "bottom" is a quad and "top" is an edge.
+     *
+     * For a triangular prism, we need to identify which pair of
+     * bottom triangle edges aligns with which top vertex to form
+     * the quad face.  The quad faces each connect one bottom edge
+     * to one top edge.
+     *
+     * Simpler: the bottom triangle has 3 verts (B0, B1, B2) and
+     * the top triangle has 3 (T0, T1, T2) with pairing
+     * B0-T(paired[0]), B1-T(paired[1]), B2-T(paired[2]).
+     *
+     * arb6 pts: 0=B0, 1=B1, 2=B2, 3=B2 (degenerate), 4=T(paired[0]), 5=T(paired[1])
+     * Wait, that's not right. Let me look at the arb8 face layout again.
+     *
+     * arb6 as arb8: pt[0-3] = bottom, pt[4]=pt[5], pt[6]=pt[7]
+     * Faces: 0123 (bottom quad), 4567 (top - degenerate edge),
+     * 0347, 1265, 0154, 2376
+     *
+     * For a tri prism: bottom=B0,B1,B2 top=T0,T1,T2
+     * Map: pt0=B0, pt1=B1, pt2=B2, pt3=B0 (degenerate)
+     *       pt4=T(p0), pt5=T(p0) (degenerate), pt6=T(p2), pt7=T(p2) (degenerate)
+     *
+     * Hmm, that doesn't work for a general prism. Let me just use
+     * the face connectivity to build the mapping properly.
+     */
+
+    /* For arb6: two of the three top vertices become the top edge,
+     * the third top vertex gets paired with two bottom vertices to
+     * form a triangular "end" that maps to a degenerate quad.
+     *
+     * Actually the simplest correct mapping:
+     * pts[0] = B0, pts[1] = B1, pts[2] = paired_top_of_B1,
+     * pts[3] = paired_top_of_B0, pts[4] = B2, pts[5] = paired_top_of_B2
+     */
+    VMOVE(&pts[0*3], verts[bot_verts[0]]);
+    VMOVE(&pts[1*3], verts[bot_verts[1]]);
+    VMOVE(&pts[2*3], verts[paired[1]]);
+    VMOVE(&pts[3*3], verts[paired[0]]);
+    VMOVE(&pts[4*3], verts[bot_verts[2]]);
+    VMOVE(&pts[5*3], verts[paired[2]]);
+
+    return 1;
+}
+
+
+/*
+ * Try to match a polyhedron to an ARB7.
+ * Must have 7 vertices, 6 faces: at least one triangle
+ * (the degenerate quad from the collapsed vertex).
+ *
+ * ARB7 is an ARB8 with pt[4]=pt[7] — one corner of the top
+ * face collapsed.  This gives 6 faces: the bottom quad, a
+ * triangle (where the collapse happened), and 4 quads.
+ *
+ * We find the single triangle face, identify which vertex is
+ * NOT on it (the opposite "bottom" face vertex), then order
+ * everything to match the arb8 layout.
+ */
+static int
+try_arb7(double verts[][3], int nv,
+	 int faces[][MAX_FACE_VERTS], int face_sizes[], int nf,
+	 fastf_t *pts)
+{
+    int i, j, k;
+    int tri_count = 0;
+    int quad_count = 0;
+
+    if (nv != 7 || nf != 6)
+	return 0;
+
+    /* Count face types: expect exactly 1 triangle and 5 quads,
+     * OR 2 triangles and 4 quads (if a quad degenerates) */
+    for (i = 0; i < 6; i++) {
+	if (face_sizes[i] == 3) {
+	    tri_count++;
+	} else if (face_sizes[i] == 4) {
+	    quad_count++;
+	} else {
+	    return 0;
+	}
+    }
+
+    /* Expect 2 triangles + 4 quads (collapsing one arb8 vertex
+     * degenerates two adjacent quad faces into triangles) */
+    if (tri_count != 2 || quad_count != 4)
+	return 0;
+
+    /*
+     * The two triangles share exactly one vertex — the collapsed
+     * corner.  One triangle has 3 top vertices (degenerate top quad),
+     * the other has 2 bottom + 1 top (degenerate side quad).
+     *
+     * Find the bottom quad face (the only quad that opposes one of
+     * the triangles — shares no vertices with it).
+     */
+    {
+	int tri_a = -1, tri_b = -1;
+	int bot_face = -1;
+	int bot_idx[4];
+	int on_bot[7];
+	int tc = 0;
+
+	for (i = 0; i < 6; i++) {
+	    if (face_sizes[i] == 3) {
+		if (tc == 0) tri_a = i;
+		else tri_b = i;
+		tc++;
+	    }
+	}
+
+	/* Try each quad to see if it opposes one of the triangles */
+	for (i = 0; i < 6; i++) {
+	    if (face_sizes[i] != 4)
+		continue;
+	    /* Check against tri_a */
+	    int shared = 0;
+	    for (j = 0; j < 4 && !shared; j++)
+		for (k = 0; k < 3; k++)
+		    if (faces[i][j] == faces[tri_a][k]) { shared = 1; break; }
+	    if (!shared) { bot_face = i; break; }
+	    /* Check against tri_b */
+	    shared = 0;
+	    for (j = 0; j < 4 && !shared; j++)
+		for (k = 0; k < 3; k++)
+		    if (faces[i][j] == faces[tri_b][k]) { shared = 1; break; }
+	    if (!shared) { bot_face = i; break; }
+	}
+	if (bot_face < 0)
+	    return 0;
+
+	for (i = 0; i < 4; i++)
+	    bot_idx[i] = faces[bot_face][i];
+
+	/* Identify top vs bottom vertices */
+	memset(on_bot, 0, sizeof(on_bot));
+	for (i = 0; i < 4; i++)
+	    on_bot[bot_idx[i]] = 1;
+
+	/* Pair each bottom vertex with a top vertex via side faces */
+	int top_for_bot[4];
+	for (i = 0; i < 4; i++)
+	    top_for_bot[i] = -1;
+
+	for (i = 0; i < 4; i++) {
+	    for (j = 0; j < 6; j++) {
+		if (j == bot_face)
+		    continue;
+		/* Does this face contain bot_idx[i]? */
+		int has_bot = 0, bot_pos = -1;
+		int fs = face_sizes[j];
+		for (k = 0; k < fs; k++) {
+		    if (faces[j][k] == bot_idx[i]) {
+			has_bot = 1;
+			bot_pos = k;
+			break;
+		    }
+		}
+		if (!has_bot)
+		    continue;
+		/* Find adjacent vertex that is a top vertex */
+		int prev = (bot_pos + fs - 1) % fs;
+		int next = (bot_pos + 1) % fs;
+		int candidates[2];
+		candidates[0] = faces[j][prev];
+		candidates[1] = faces[j][next];
+		int c;
+		for (c = 0; c < 2; c++) {
+		    if (!on_bot[candidates[c]]) {
+			top_for_bot[i] = candidates[c];
+			break;
+		    }
+		}
+		if (top_for_bot[i] >= 0)
+		    break;
+	    }
+	    if (top_for_bot[i] < 0)
+		return 0;
+	}
+
+	/* mk_arb7: 7 points, pt8[7]=pt8[4] internally */
+	VMOVE(&pts[0*3], verts[bot_idx[0]]);
+	VMOVE(&pts[1*3], verts[bot_idx[1]]);
+	VMOVE(&pts[2*3], verts[bot_idx[2]]);
+	VMOVE(&pts[3*3], verts[bot_idx[3]]);
+	VMOVE(&pts[4*3], verts[top_for_bot[0]]);
+	VMOVE(&pts[5*3], verts[top_for_bot[1]]);
+	VMOVE(&pts[6*3], verts[top_for_bot[2]]);
+    }
+    return 1;
+}
+
+
+/*
+ * Create a BOT (Bag of Triangles) from a polyhedron.
+ * Triangulates any non-triangular faces using a simple fan.
+ */
+static void
+make_bot_from_poly(const char *name,
+		   double verts[][3], int nv,
+		   int faces[][MAX_FACE_VERTS], int face_sizes[], int nf)
+{
+    int i, j;
+    int tri_count = 0;
+    int *bot_faces_arr;
+    fastf_t *bot_verts;
+    int fi;
+
+    /* Count triangles after fan triangulation */
+    for (i = 0; i < nf; i++)
+	tri_count += face_sizes[i] - 2;
+
+    bot_verts = (fastf_t *)bu_calloc(nv * 3, sizeof(fastf_t), "bot verts");
+    bot_faces_arr = (int *)bu_calloc(tri_count * 3, sizeof(int), "bot faces");
+
+    for (i = 0; i < nv; i++) {
+	bot_verts[i*3+0] = verts[i][0];
+	bot_verts[i*3+1] = verts[i][1];
+	bot_verts[i*3+2] = verts[i][2];
+    }
+
+    fi = 0;
+    for (i = 0; i < nf; i++) {
+	/* Fan triangulation from first vertex of each face */
+	for (j = 1; j < face_sizes[i] - 1; j++) {
+	    bot_faces_arr[fi*3+0] = faces[i][0];
+	    bot_faces_arr[fi*3+1] = faces[i][j];
+	    bot_faces_arr[fi*3+2] = faces[i][j+1];
+	    fi++;
+	}
+    }
+
+    mk_bot(fd_out, name, RT_BOT_SOLID, RT_BOT_UNORIENTED, 0,
+	   nv, tri_count, bot_verts, bot_faces_arr, NULL, NULL);
+
+    bu_free(bot_verts, "bot verts");
+    bu_free(bot_faces_arr, "bot faces");
+}
+
+
+/*
+ * Parse a polyhedron:
+ *   polyhedron(points = [[x,y,z], ...], faces = [[i,j,k,...], ...], convexity = N)
+ *
+ * First tries to match ARB4/5/8.  Falls back to BOT.
+ */
+static int
+parse_polyhedron(struct bu_vls *out_name, mat_t xform)
+{
+    struct bu_vls sname = BU_VLS_INIT_ZERO;
+    double verts[MAX_POLY_VERTS][3];
+    int faces[MAX_POLY_FACES][MAX_FACE_VERTS];
+    int face_sizes[MAX_POLY_FACES];
+    int nv = 0, nf = 0;
+    size_t save_pos;
+    fastf_t arb_pts[8*3];
+
+    skip_ws();
+    if (!expect_char('('))
+	return 0;
+
+    /* We need to parse points and faces manually since they are
+     * nested arrays.  Save position and scan for each parameter.
+     */
+    save_pos = pos;
+
+    /* Find "points = [[...]]" */
+    while (pos < buf_len && buf[pos] != ')') {
+	skip_ws();
+	if (pos + 6 < buf_len && bu_strncmp(&buf[pos], "points", 6) == 0) {
+	    pos += 6;
+	    skip_ws();
+	    if (pos < buf_len && buf[pos] == '=') {
+		pos++;
+		skip_ws();
+		if (!expect_char('['))
+		    break;
+		while (nv < MAX_POLY_VERTS) {
+		    skip_ws();
+		    if (pos < buf_len && buf[pos] == ']')
+			break;
+		    if (nv > 0) {
+			skip_ws();
+			if (pos < buf_len && buf[pos] == ',')
+			    pos++;
+		    }
+		    skip_ws();
+		    if (!expect_char('['))
+			break;
+		    verts[nv][0] = parse_double(); skip_ws(); expect_char(',');
+		    verts[nv][1] = parse_double(); skip_ws(); expect_char(',');
+		    verts[nv][2] = parse_double(); skip_ws();
+		    if (!expect_char(']'))
+			break;
+		    nv++;
+		}
+		skip_ws();
+		if (pos < buf_len && buf[pos] == ']')
+		    pos++;
+	    }
+	    break;
+	}
+	pos++;
+    }
+
+    /* Find "faces = [[...]]" */
+    pos = save_pos;
+    while (pos < buf_len && buf[pos] != ')') {
+	skip_ws();
+	if (pos + 5 < buf_len && bu_strncmp(&buf[pos], "faces", 5) == 0) {
+	    size_t p = pos + 5;
+	    while (p < buf_len && isspace((int)buf[p])) p++;
+	    if (p < buf_len && buf[p] == '=') {
+		pos = p + 1;
+		skip_ws();
+		if (!expect_char('['))
+		    break;
+		while (nf < MAX_POLY_FACES) {
+		    int fv = 0;
+		    skip_ws();
+		    if (pos < buf_len && buf[pos] == ']')
+			break;
+		    if (nf > 0) {
+			skip_ws();
+			if (pos < buf_len && buf[pos] == ',')
+			    pos++;
+		    }
+		    skip_ws();
+		    if (!expect_char('['))
+			break;
+		    while (fv < MAX_FACE_VERTS) {
+			skip_ws();
+			if (pos < buf_len && buf[pos] == ']')
+			    break;
+			if (fv > 0) {
+			    skip_ws();
+			    if (pos < buf_len && buf[pos] == ',')
+				pos++;
+			}
+			double fval = parse_double();
+			faces[nf][fv] = (int)fval;
+			fv++;
+		    }
+		    face_sizes[nf] = fv;
+		    skip_ws();
+		    if (pos < buf_len && buf[pos] == ']')
+			pos++;
+		    nf++;
+		}
+		skip_ws();
+		if (pos < buf_len && buf[pos] == ']')
+		    pos++;
+	    }
+	    break;
+	}
+	pos++;
+    }
+
+    /* Skip to end of params */
+    while (pos < buf_len && buf[pos] != ')')
+	pos++;
+    if (pos < buf_len) pos++;
+
+    if (nv == 0 || nf == 0) {
+	bu_log("WARNING: polyhedron with no points or faces, skipping\n");
+	return 0;
+    }
+
+    make_solid_name(&sname);
+
+    /* arb4 is always convex; try it first without a convexity check */
+    if (try_arb4(verts, nv, faces, face_sizes, nf, arb_pts)) {
+	if (debug)
+	    bu_log("  polyhedron: %s matched arb4 (%d verts, %d faces)\n",
+		   bu_vls_cstr(&sname), nv, nf);
+	if (bn_mat_is_identity(xform)) {
+	    mk_arb4(fd_out, bu_vls_cstr(&sname), arb_pts);
+	} else {
+	    struct bu_vls raw = BU_VLS_INIT_ZERO;
+	    struct wmember head;
+	    bu_vls_sprintf(&raw, "s.raw.%d", solid_count);
+	    mk_arb4(fd_out, bu_vls_cstr(&raw), arb_pts);
+	    BU_LIST_INIT(&head.l);
+	    mk_addmember(bu_vls_cstr(&raw), &head.l, xform, WMOP_UNION);
+	    mk_lcomb(fd_out, bu_vls_cstr(&sname), &head, 0,
+		     (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
+	    bu_vls_free(&raw);
+	}
+	goto done;
+    }
+
+    /* Remaining ARB types require convexity */
+    if (!poly_is_convex(verts, nv, faces, face_sizes, nf)) {
+	if (debug)
+	    bu_log("  polyhedron: %s is non-convex, using bot (%d verts, %d faces)\n",
+		   bu_vls_cstr(&sname), nv, nf);
+	goto use_bot;
+    }
+
+    if (try_arb8(verts, nv, faces, face_sizes, nf, arb_pts)) {
+	if (debug)
+	    bu_log("  polyhedron: %s matched arb8 (%d verts, %d faces)\n",
+		   bu_vls_cstr(&sname), nv, nf);
+	if (bn_mat_is_identity(xform)) {
+	    mk_arb8(fd_out, bu_vls_cstr(&sname), arb_pts);
+	} else {
+	    struct bu_vls raw = BU_VLS_INIT_ZERO;
+	    struct wmember head;
+	    bu_vls_sprintf(&raw, "s.raw.%d", solid_count);
+	    mk_arb8(fd_out, bu_vls_cstr(&raw), arb_pts);
+	    BU_LIST_INIT(&head.l);
+	    mk_addmember(bu_vls_cstr(&raw), &head.l, xform, WMOP_UNION);
+	    mk_lcomb(fd_out, bu_vls_cstr(&sname), &head, 0,
+		     (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
+	    bu_vls_free(&raw);
+	}
+    } else if (try_arb5(verts, nv, faces, face_sizes, nf, arb_pts)) {
+	if (debug)
+	    bu_log("  polyhedron: %s matched arb5 (%d verts, %d faces)\n",
+		   bu_vls_cstr(&sname), nv, nf);
+	if (bn_mat_is_identity(xform)) {
+	    mk_arb5(fd_out, bu_vls_cstr(&sname), arb_pts);
+	} else {
+	    struct bu_vls raw = BU_VLS_INIT_ZERO;
+	    struct wmember head;
+	    bu_vls_sprintf(&raw, "s.raw.%d", solid_count);
+	    mk_arb5(fd_out, bu_vls_cstr(&raw), arb_pts);
+	    BU_LIST_INIT(&head.l);
+	    mk_addmember(bu_vls_cstr(&raw), &head.l, xform, WMOP_UNION);
+	    mk_lcomb(fd_out, bu_vls_cstr(&sname), &head, 0,
+		     (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
+	    bu_vls_free(&raw);
+	}
+    } else if (try_arb6(verts, nv, faces, face_sizes, nf, arb_pts)) {
+	if (debug)
+	    bu_log("  polyhedron: %s matched arb6 (%d verts, %d faces)\n",
+		   bu_vls_cstr(&sname), nv, nf);
+	if (bn_mat_is_identity(xform)) {
+	    mk_arb6(fd_out, bu_vls_cstr(&sname), arb_pts);
+	} else {
+	    struct bu_vls raw = BU_VLS_INIT_ZERO;
+	    struct wmember head;
+	    bu_vls_sprintf(&raw, "s.raw.%d", solid_count);
+	    mk_arb6(fd_out, bu_vls_cstr(&raw), arb_pts);
+	    BU_LIST_INIT(&head.l);
+	    mk_addmember(bu_vls_cstr(&raw), &head.l, xform, WMOP_UNION);
+	    mk_lcomb(fd_out, bu_vls_cstr(&sname), &head, 0,
+		     (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
+	    bu_vls_free(&raw);
+	}
+    } else if (try_arb7(verts, nv, faces, face_sizes, nf, arb_pts)) {
+	if (debug)
+	    bu_log("  polyhedron: %s matched arb7 (%d verts, %d faces)\n",
+		   bu_vls_cstr(&sname), nv, nf);
+	if (bn_mat_is_identity(xform)) {
+	    mk_arb7(fd_out, bu_vls_cstr(&sname), arb_pts);
+	} else {
+	    struct bu_vls raw = BU_VLS_INIT_ZERO;
+	    struct wmember head;
+	    bu_vls_sprintf(&raw, "s.raw.%d", solid_count);
+	    mk_arb7(fd_out, bu_vls_cstr(&raw), arb_pts);
+	    BU_LIST_INIT(&head.l);
+	    mk_addmember(bu_vls_cstr(&raw), &head.l, xform, WMOP_UNION);
+	    mk_lcomb(fd_out, bu_vls_cstr(&sname), &head, 0,
+		     (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
+	    bu_vls_free(&raw);
+	}
+    } else {
+    use_bot:
+	/* Fall back to BOT */
+	if (debug)
+	    bu_log("  polyhedron: %s as bot (%d verts, %d faces)\n",
+		   bu_vls_cstr(&sname), nv, nf);
+	if (bn_mat_is_identity(xform)) {
+	    make_bot_from_poly(bu_vls_cstr(&sname), verts, nv, faces, face_sizes, nf);
+	} else {
+	    struct bu_vls raw = BU_VLS_INIT_ZERO;
+	    struct wmember head;
+	    bu_vls_sprintf(&raw, "s.raw.%d", solid_count);
+	    make_bot_from_poly(bu_vls_cstr(&raw), verts, nv, faces, face_sizes, nf);
+	    BU_LIST_INIT(&head.l);
+	    mk_addmember(bu_vls_cstr(&raw), &head.l, xform, WMOP_UNION);
+	    mk_lcomb(fd_out, bu_vls_cstr(&sname), &head, 0,
+		     (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
+	    bu_vls_free(&raw);
+	}
+    }
+
+done:
+    bu_vls_vlscat(out_name, &sname);
+    bu_vls_free(&sname);
+
+    skip_ws();
+    if (pos < buf_len && buf[pos] == ';')
+	pos++;
+
+    return 1;
+}
+
+
+/*
+ * Parse a circle node: circle($fn=N, $fa=N, $fs=N, r=R)
+ * Only meaningful as a child of rotate_extrude or linear_extrude.
+ * Stores radius in *r_out and returns 1 if found.
+ */
+static int
+parse_circle_2d(double *r_out)
+{
+    skip_ws();
+    if (!expect_char('('))
+	return 0;
+
+    find_param_double("r", r_out);
+
+    while (pos < buf_len && buf[pos] != ')')
+	pos++;
+    if (pos < buf_len) pos++;
+
+    skip_ws();
+    if (pos < buf_len && buf[pos] == ';')
+	pos++;
+
+    return 1;
+}
+
+
+/*
+ * Parse a square node: square(size=[x,y], center=false)
+ * Stores dimensions in size_out and centered flag.
+ */
+static int
+parse_square_2d(double size_out[2], int *centered)
+{
+    size_out[0] = 1.0;
+    size_out[1] = 1.0;
+    *centered = 0;
+
+    skip_ws();
+    if (!expect_char('('))
+	return 0;
+
+    find_param_array("size", size_out, 2, NULL);
+    find_param_bool("center", centered);
+
+    while (pos < buf_len && buf[pos] != ')')
+	pos++;
+    if (pos < buf_len) pos++;
+
+    skip_ws();
+    if (pos < buf_len && buf[pos] == ';')
+	pos++;
+
+    return 1;
+}
+
+
+/*
+ * Parse rotate_extrude() { child }
+ *
+ * The common pattern from BRL-CAD torus export is:
+ *   rotate_extrude(angle=360, ...) {
+ *     multmatrix([[1,0,0,R_major],...]) {  // translate([R_major,0,0])
+ *       circle(r=R_minor);
+ *     }
+ *   }
+ *
+ * This maps directly to mk_tor().
+ */
+static int
+parse_rotate_extrude(struct bu_vls *out_name, mat_t xform)
+{
+    struct bu_vls sname = BU_VLS_INIT_ZERO;
+    double angle = 360.0;
+    double circle_r = 0;
+    double major_r = 0;
+
+    skip_ws();
+    if (!expect_char('('))
+	return 0;
+
+    find_param_double("angle", &angle);
+
+    while (pos < buf_len && buf[pos] != ')')
+	pos++;
+    if (pos < buf_len) pos++;
+
+    skip_ws();
+    if (!expect_char('{'))
+	return 0;
+
+    /*
+     * Try to match the torus pattern:
+     *   multmatrix(translate) { circle(r) }
+     * or just: circle(r) with major_r = 0
+     */
+    skip_ws();
+
+    if (looking_at("multmatrix")) {
+	/* Parse the multmatrix to get the translation (major radius) */
+	double vals[16];
+	int i;
+
+	consume("multmatrix");
+	skip_ws();
+	if (!expect_char('('))
+	    goto fallback;
+	skip_ws();
+	if (!expect_char('['))
+	    goto fallback;
+
+	for (i = 0; i < 4; i++) {
+	    skip_ws();
+	    if (i > 0) { skip_ws(); if (pos < buf_len && buf[pos] == ',') pos++; }
+	    skip_ws();
+	    if (!expect_char('['))
+		goto fallback;
+	    vals[i*4+0] = parse_double(); skip_ws(); expect_char(',');
+	    vals[i*4+1] = parse_double(); skip_ws(); expect_char(',');
+	    vals[i*4+2] = parse_double(); skip_ws(); expect_char(',');
+	    vals[i*4+3] = parse_double(); skip_ws();
+	    if (!expect_char(']'))
+		goto fallback;
+	}
+	skip_ws(); expect_char(']'); skip_ws(); expect_char(')');
+
+	/* The X translation is the major radius */
+	major_r = vals[3];  /* row 0, col 3 = tx */
+
+	skip_ws();
+	if (!expect_char('{'))
+	    goto fallback;
+
+	skip_ws();
+	if (looking_at("circle")) {
+	    consume("circle");
+	    if (!parse_circle_2d(&circle_r))
+		goto fallback;
+	}
+
+	skip_ws();
+	expect_char('}'); /* close multmatrix block */
+    } else if (looking_at("circle")) {
+	consume("circle");
+	if (!parse_circle_2d(&circle_r))
+	    goto fallback;
+    } else {
+	goto fallback;
+    }
+
+    skip_ws();
+    expect_char('}'); /* close rotate_extrude block */
+
+    if (circle_r <= 0 || (NEAR_EQUAL(angle, 360.0, 0.01) && major_r <= 0)) {
+	bu_log("WARNING: rotate_extrude with unsupported parameters, skipping\n");
+	return 0;
+    }
+
+    /* Create torus: center at origin, normal along Z, major_r, minor_r = circle_r */
+    {
+	point_t center;
+	vect_t normal;
+
+	VSET(center, 0.0, 0.0, 0.0);
+	VSET(normal, 0.0, 0.0, 1.0);
+
+	make_solid_name(&sname);
+
+	if (bn_mat_is_identity(xform)) {
+	    mk_tor(fd_out, bu_vls_cstr(&sname), center, normal, major_r, circle_r);
+	} else {
+	    struct bu_vls raw = BU_VLS_INIT_ZERO;
+	    struct wmember head;
+
+	    bu_vls_sprintf(&raw, "s.raw.%d", solid_count);
+	    mk_tor(fd_out, bu_vls_cstr(&raw), center, normal, major_r, circle_r);
+
+	    BU_LIST_INIT(&head.l);
+	    mk_addmember(bu_vls_cstr(&raw), &head.l, xform, WMOP_UNION);
+	    mk_lcomb(fd_out, bu_vls_cstr(&sname), &head, 0,
+		     (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
+	    bu_vls_free(&raw);
+	}
+
+	if (debug)
+	    bu_log("  torus: %s R=%g r=%g\n", bu_vls_cstr(&sname), major_r, circle_r);
+
+	bu_vls_vlscat(out_name, &sname);
+	bu_vls_free(&sname);
+	return 1;
+    }
+
+fallback:
+    /* Can't match a known pattern — skip the rest */
+    bu_log("WARNING: rotate_extrude with unsupported child, skipping\n");
+    while (pos < buf_len && buf[pos] != '}')
+	pos++;
+    if (pos < buf_len) pos++;
+    bu_vls_free(&sname);
+    return 0;
+}
+
+
+/*
+ * Parse linear_extrude(height=H, ...) { child }
+ *
+ * Special cases:
+ *   linear_extrude { square(size=[x,y]) }  →  mk_rpp (box)
+ *   linear_extrude { circle(r=R) }         →  mk_tgc (cylinder)
+ *
+ * Other children are unsupported (warn and skip).
+ */
+static int
+parse_linear_extrude(struct bu_vls *out_name, mat_t xform)
+{
+    struct bu_vls sname = BU_VLS_INIT_ZERO;
+    double height = 1.0;
+    int centered = 0;
+    double scale_arr[2] = {1.0, 1.0};
+
+    skip_ws();
+    if (!expect_char('('))
+	return 0;
+
+    find_param_double("height", &height);
+    find_param_bool("center", &centered);
+    find_param_array("scale", scale_arr, 2, NULL);
+
+    while (pos < buf_len && buf[pos] != ')')
+	pos++;
+    if (pos < buf_len) pos++;
+
+    skip_ws();
+    if (!expect_char('{'))
+	return 0;
+
+    skip_ws();
+
+    if (looking_at("square")) {
+	double sq_size[2];
+	int sq_centered = 0;
+	point_t min_pt, max_pt;
+
+	consume("square");
+	if (!parse_square_2d(sq_size, &sq_centered))
+	    goto fallback;
+
+	skip_ws();
+	expect_char('}');
+
+	/* Build RPP */
+	if (sq_centered) {
+	    VSET(min_pt, -sq_size[0]/2.0, -sq_size[1]/2.0, centered ? -height/2.0 : 0.0);
+	    VSET(max_pt,  sq_size[0]/2.0,  sq_size[1]/2.0, centered ? height/2.0 : height);
+	} else {
+	    VSET(min_pt, 0.0, 0.0, centered ? -height/2.0 : 0.0);
+	    VSET(max_pt, sq_size[0], sq_size[1], centered ? height/2.0 : height);
+	}
+
+	make_solid_name(&sname);
+
+	if (bn_mat_is_identity(xform)) {
+	    mk_rpp(fd_out, bu_vls_cstr(&sname), min_pt, max_pt);
+	} else {
+	    struct bu_vls raw = BU_VLS_INIT_ZERO;
+	    struct wmember head;
+
+	    bu_vls_sprintf(&raw, "s.raw.%d", solid_count);
+	    mk_rpp(fd_out, bu_vls_cstr(&raw), min_pt, max_pt);
+
+	    BU_LIST_INIT(&head.l);
+	    mk_addmember(bu_vls_cstr(&raw), &head.l, xform, WMOP_UNION);
+	    mk_lcomb(fd_out, bu_vls_cstr(&sname), &head, 0,
+		     (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
+	    bu_vls_free(&raw);
+	}
+
+	if (debug)
+	    bu_log("  linear_extrude(square): %s [%g, %g] h=%g\n",
+		   bu_vls_cstr(&sname), sq_size[0], sq_size[1], height);
+
+	bu_vls_vlscat(out_name, &sname);
+	bu_vls_free(&sname);
+	return 1;
+
+    } else if (looking_at("circle")) {
+	double r = 1.0;
+	point_t base;
+	vect_t hvec, avec, bvec, cvec, dvec;
+
+	consume("circle");
+	if (!parse_circle_2d(&r))
+	    goto fallback;
+
+	skip_ws();
+	expect_char('}');
+
+	double z0 = centered ? -height/2.0 : 0.0;
+
+	VSET(base, 0.0, 0.0, z0);
+	VSET(hvec, 0.0, 0.0, height);
+	VSET(avec, r, 0.0, 0.0);
+	VSET(bvec, 0.0, r, 0.0);
+	/* Scale affects top radius */
+	double r_top = r * scale_arr[0];
+	VSET(cvec, r_top, 0.0, 0.0);
+	VSET(dvec, 0.0, r_top, 0.0);
+
+	make_solid_name(&sname);
+
+	if (bn_mat_is_identity(xform)) {
+	    mk_tgc(fd_out, bu_vls_cstr(&sname), base, hvec,
+		    avec, bvec, cvec, dvec);
+	} else {
+	    struct bu_vls raw = BU_VLS_INIT_ZERO;
+	    struct wmember head;
+
+	    bu_vls_sprintf(&raw, "s.raw.%d", solid_count);
+	    mk_tgc(fd_out, bu_vls_cstr(&raw), base, hvec,
+		    avec, bvec, cvec, dvec);
+
+	    BU_LIST_INIT(&head.l);
+	    mk_addmember(bu_vls_cstr(&raw), &head.l, xform, WMOP_UNION);
+	    mk_lcomb(fd_out, bu_vls_cstr(&sname), &head, 0,
+		     (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
+	    bu_vls_free(&raw);
+	}
+
+	if (debug)
+	    bu_log("  linear_extrude(circle): %s r=%g h=%g\n",
+		   bu_vls_cstr(&sname), r, height);
+
+	bu_vls_vlscat(out_name, &sname);
+	bu_vls_free(&sname);
+	return 1;
+
+    } else if (looking_at("polygon")) {
+	/*
+	 * polygon(points=[[x,y],...], paths=[[i,j,...]])
+	 * Build a sketch from the polygon vertices and line segments,
+	 * then extrude it along Z.
+	 */
+	double poly_pts[MAX_POLY_VERTS][2];
+	int poly_paths[MAX_POLY_FACES][MAX_FACE_VERTS];
+	int path_sizes[MAX_POLY_FACES];
+	int npv = 0, npa = 0;
+	size_t poly_save;
+
+	consume("polygon");
+	skip_ws();
+	if (!expect_char('('))
+	    goto fallback;
+
+	poly_save = pos;
+
+	/* Parse points = [[x,y], ...] */
+	while (pos < buf_len && buf[pos] != ')') {
+	    skip_ws();
+	    if (pos + 6 < buf_len && bu_strncmp(&buf[pos], "points", 6) == 0) {
+		size_t p = pos + 6;
+		while (p < buf_len && isspace((int)buf[p])) p++;
+		if (p < buf_len && buf[p] == '=') {
+		    p++;
+		    while (p < buf_len && isspace((int)buf[p])) p++;
+		    if (p < buf_len && buf[p] == '[') {
+			pos = p + 1;
+			while (npv < MAX_POLY_VERTS) {
+			    skip_ws();
+			    if (pos < buf_len && buf[pos] == ']') break;
+			    if (npv > 0) { skip_ws(); if (pos < buf_len && buf[pos] == ',') pos++; }
+			    skip_ws();
+			    if (!expect_char('[')) break;
+			    poly_pts[npv][0] = parse_double(); skip_ws(); expect_char(',');
+			    poly_pts[npv][1] = parse_double(); skip_ws();
+			    if (!expect_char(']')) break;
+			    npv++;
+			}
+			skip_ws();
+			if (pos < buf_len && buf[pos] == ']') pos++;
+		    }
+		}
+		break;
+	    }
+	    pos++;
+	}
+
+	/* Parse paths = [[i,j,...], ...] (optional) */
+	pos = poly_save;
+	while (pos < buf_len && buf[pos] != ')') {
+	    skip_ws();
+	    if (pos + 5 < buf_len && bu_strncmp(&buf[pos], "paths", 5) == 0) {
+		size_t p = pos + 5;
+		while (p < buf_len && isspace((int)buf[p])) p++;
+		if (p < buf_len && buf[p] == '=') {
+		    p++;
+		    while (p < buf_len && isspace((int)buf[p])) p++;
+		    if (p < buf_len && buf[p] == '[') {
+			pos = p + 1;
+			while (npa < MAX_POLY_FACES) {
+			    int pv = 0;
+			    skip_ws();
+			    if (pos < buf_len && buf[pos] == ']') break;
+			    if (npa > 0) { skip_ws(); if (pos < buf_len && buf[pos] == ',') pos++; }
+			    skip_ws();
+			    if (!expect_char('[')) break;
+			    while (pv < MAX_FACE_VERTS) {
+				double fval;
+				skip_ws();
+				if (pos < buf_len && buf[pos] == ']') break;
+				if (pv > 0) { skip_ws(); if (pos < buf_len && buf[pos] == ',') pos++; }
+				fval = parse_double();
+				poly_paths[npa][pv] = (int)fval;
+				pv++;
+			    }
+			    path_sizes[npa] = pv;
+			    skip_ws();
+			    if (pos < buf_len && buf[pos] == ']') pos++;
+			    npa++;
+			}
+			skip_ws();
+			if (pos < buf_len && buf[pos] == ']') pos++;
+		    }
+		}
+		break;
+	    }
+	    pos++;
+	}
+
+	/* Skip to end of polygon params */
+	while (pos < buf_len && buf[pos] != ')')
+	    pos++;
+	if (pos < buf_len) pos++;
+	skip_ws();
+	if (pos < buf_len && buf[pos] == ';') pos++;
+
+	skip_ws();
+	expect_char('}'); /* close linear_extrude block */
+
+	if (npv < 3) {
+	    bu_log("WARNING: polygon with < 3 vertices, skipping\n");
+	    bu_vls_free(&sname);
+	    return 0;
+	}
+
+	/* If no paths provided, default path is all vertices in order */
+	if (npa == 0) {
+	    int vi;
+	    npa = 1;
+	    path_sizes[0] = npv;
+	    for (vi = 0; vi < npv; vi++)
+		poly_paths[0][vi] = vi;
+	}
+
+	/* Build sketch + extrusion */
+	{
+	    struct rt_sketch_internal skt;
+	    struct bu_vls skt_name = BU_VLS_INIT_ZERO;
+	    struct line_seg *lsegs;
+	    int *reverses;
+	    void **segs;
+	    point2d_t *verts2d;
+	    int nseg = 0;
+	    int pi, si;
+	    point_t ext_V;
+	    vect_t ext_h, ext_u, ext_v;
+
+	    /* Count total segments across all paths */
+	    for (pi = 0; pi < npa; pi++)
+		nseg += path_sizes[pi];
+
+	    verts2d = (point2d_t *)bu_calloc(npv, sizeof(point2d_t), "sketch verts");
+	    lsegs = (struct line_seg *)bu_calloc(nseg, sizeof(struct line_seg), "sketch segs");
+	    reverses = (int *)bu_calloc(nseg, sizeof(int), "sketch reverse");
+	    segs = (void **)bu_calloc(nseg, sizeof(void *), "sketch seg ptrs");
+
+	    for (si = 0; si < npv; si++) {
+		verts2d[si][0] = poly_pts[si][0];
+		verts2d[si][1] = poly_pts[si][1];
+	    }
+
+	    si = 0;
+	    for (pi = 0; pi < npa; pi++) {
+		int vi;
+		for (vi = 0; vi < path_sizes[pi]; vi++) {
+		    lsegs[si].magic = CURVE_LSEG_MAGIC;
+		    lsegs[si].start = poly_paths[pi][vi];
+		    lsegs[si].end = poly_paths[pi][(vi + 1) % path_sizes[pi]];
+		    reverses[si] = 0;
+		    segs[si] = (void *)&lsegs[si];
+		    si++;
+		}
+	    }
+
+	    skt.magic = RT_SKETCH_INTERNAL_MAGIC;
+	    VSET(ext_V, 0.0, 0.0, centered ? -height/2.0 : 0.0);
+	    VSET(ext_u, 1.0, 0.0, 0.0);
+	    VSET(ext_v, 0.0, 1.0, 0.0);
+	    VMOVE(skt.V, ext_V);
+	    VMOVE(skt.u_vec, ext_u);
+	    VMOVE(skt.v_vec, ext_v);
+	    skt.vert_count = npv;
+	    skt.verts = verts2d;
+	    skt.curve.count = nseg;
+	    skt.curve.reverse = reverses;
+	    skt.curve.segment = segs;
+
+	    make_solid_name(&sname);
+	    bu_vls_sprintf(&skt_name, "%s.sketch", bu_vls_cstr(&sname));
+
+	    mk_sketch(fd_out, bu_vls_cstr(&skt_name), &skt);
+
+	    VSET(ext_h, 0.0, 0.0, height);
+	    mk_extrusion(fd_out, bu_vls_cstr(&sname),
+			 bu_vls_cstr(&skt_name), ext_V, ext_h,
+			 ext_u, ext_v, 0);
+
+	    if (!bn_mat_is_identity(xform)) {
+		struct bu_vls wrapper = BU_VLS_INIT_ZERO;
+		struct wmember head_w;
+		bu_vls_sprintf(&wrapper, "%s.x", bu_vls_cstr(&sname));
+		BU_LIST_INIT(&head_w.l);
+		mk_addmember(bu_vls_cstr(&sname), &head_w.l, xform, WMOP_UNION);
+		mk_lcomb(fd_out, bu_vls_cstr(&wrapper), &head_w, 0,
+			 (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
+		bu_vls_vlscat(out_name, &wrapper);
+		bu_vls_free(&wrapper);
+	    } else {
+		bu_vls_vlscat(out_name, &sname);
+	    }
+
+	    if (debug)
+		bu_log("  linear_extrude(polygon): %s (%d verts, %d paths, h=%g)\n",
+		       bu_vls_cstr(&sname), npv, npa, height);
+
+	    bu_free(verts2d, "sketch verts");
+	    bu_free(lsegs, "sketch segs");
+	    bu_free(reverses, "sketch reverse");
+	    bu_free(segs, "sketch seg ptrs");
+	    bu_vls_free(&skt_name);
+	    bu_vls_free(&sname);
+	    return 1;
+	}
+    }
+
+fallback:
+    bu_log("WARNING: linear_extrude with unsupported child, skipping\n");
+    /* Skip to closing brace */
+    {
+	int depth = 1;
+	while (pos < buf_len && depth > 0) {
+	    if (buf[pos] == '{') depth++;
+	    else if (buf[pos] == '}') depth--;
+	    pos++;
+	}
+    }
+    bu_vls_free(&sname);
+    return 0;
+}
+
+
+/*
+ * Parse an import() node by reading the referenced file (STL/OFF)
+ * and creating a BOT.  The file is resolved relative to the input
+ * .csg file's directory.
+ *
+ * Format: import(file = "foo.stl", layer = "", ...)
+ */
+static int
+parse_import(struct bu_vls *out_name, mat_t xform)
+{
+    struct bu_vls sname = BU_VLS_INIT_ZERO;
+    struct bu_vls filepath = BU_VLS_INIT_ZERO;
+    struct bu_vls filename = BU_VLS_INIT_ZERO;
+    size_t save_pos;
+    FILE *stl_fp;
+
+    skip_ws();
+    if (!expect_char('('))
+	return 0;
+
+    /* Find file = "..." parameter */
+    save_pos = pos;
+    while (pos < buf_len && buf[pos] != ')') {
+	skip_ws();
+	if (pos + 4 < buf_len && bu_strncmp(&buf[pos], "file", 4) == 0) {
+	    size_t p = pos + 4;
+	    while (p < buf_len && isspace((int)buf[p])) p++;
+	    if (p < buf_len && buf[p] == '=') {
+		p++;
+		while (p < buf_len && isspace((int)buf[p])) p++;
+		if (p < buf_len && buf[p] == '"') {
+		    size_t start;
+		    p++;
+		    start = p;
+		    while (p < buf_len && buf[p] != '"')
+			p++;
+		    bu_vls_strncpy(&filename, &buf[start], p - start);
+		    break;
+		}
+	    }
+	}
+	pos++;
+    }
+
+    /* Skip to end of params */
+    pos = save_pos;
+    while (pos < buf_len && buf[pos] != ')')
+	pos++;
+    if (pos < buf_len) pos++;
+
+    skip_ws();
+    if (pos < buf_len && buf[pos] == ';')
+	pos++;
+
+    if (bu_vls_strlen(&filename) == 0) {
+	bu_log("WARNING: import() with no file parameter, skipping\n");
+	bu_vls_free(&filename);
+	bu_vls_free(&filepath);
+	return 0;
+    }
+
+    /* Resolve path relative to input file directory */
+    {
+	struct bu_vls input_dir = BU_VLS_INIT_ZERO;
+	char *slash = strrchr(input_file, '/');
+	if (slash) {
+	    bu_vls_strncpy(&input_dir, input_file, slash - input_file + 1);
+	}
+	bu_vls_vlscat(&filepath, &input_dir);
+	bu_vls_vlscat(&filepath, &filename);
+	bu_vls_free(&input_dir);
+    }
+
+    /* Try the resolved path, then the filename as-is */
+    stl_fp = fopen(bu_vls_cstr(&filepath), "r");
+    if (!stl_fp)
+	stl_fp = fopen(bu_vls_cstr(&filename), "r");
+    if (!stl_fp) {
+	bu_log("WARNING: import() cannot open '%s', skipping\n",
+	       bu_vls_cstr(&filepath));
+	bu_vls_free(&filename);
+	bu_vls_free(&filepath);
+	return 0;
+    }
+
+    /* Read ASCII STL */
+    {
+	char line[512];
+	fastf_t *verts = NULL;
+	int *faces = NULL;
+	int nv = 0, nf = 0;
+	int verts_alloc = 0, faces_alloc = 0;
+	int tri_vi = 0;
+
+	while (bu_fgets(line, sizeof(line), stl_fp)) {
+	    char *p = line;
+	    while (*p && isspace((int)*p)) p++;
+
+	    if (bu_strncmp(p, "vertex", 6) == 0) {
+		double x, y, z;
+		if (sscanf(p + 6, "%lf %lf %lf", &x, &y, &z) == 3) {
+		    if (nv >= verts_alloc) {
+			verts_alloc = verts_alloc ? verts_alloc * 2 : 256;
+			verts = (fastf_t *)bu_realloc(verts,
+				    verts_alloc * 3 * sizeof(fastf_t), "stl verts");
+		    }
+		    verts[nv*3+0] = x;
+		    verts[nv*3+1] = y;
+		    verts[nv*3+2] = z;
+		    tri_vi++;
+		    nv++;
+
+		    if (tri_vi == 3) {
+			if (nf >= faces_alloc) {
+			    faces_alloc = faces_alloc ? faces_alloc * 2 : 256;
+			    faces = (int *)bu_realloc(faces,
+					faces_alloc * 3 * sizeof(int), "stl faces");
+			}
+			faces[nf*3+0] = nv - 3;
+			faces[nf*3+1] = nv - 2;
+			faces[nf*3+2] = nv - 1;
+			nf++;
+			tri_vi = 0;
+		    }
+		}
+	    }
+	}
+	fclose(stl_fp);
+
+	if (nv == 0 || nf == 0) {
+	    bu_log("WARNING: import() read 0 triangles from '%s', skipping\n",
+		   bu_vls_cstr(&filename));
+	    if (verts) bu_free(verts, "stl verts");
+	    if (faces) bu_free(faces, "stl faces");
+	    bu_vls_free(&filename);
+	    bu_vls_free(&filepath);
+	    return 0;
+	}
+
+	make_solid_name(&sname);
+
+	if (bn_mat_is_identity(xform)) {
+	    mk_bot(fd_out, bu_vls_cstr(&sname), RT_BOT_SOLID,
+		   RT_BOT_UNORIENTED, 0, nv, nf, verts, faces, NULL, NULL);
+	} else {
+	    struct bu_vls raw = BU_VLS_INIT_ZERO;
+	    struct wmember head;
+
+	    bu_vls_sprintf(&raw, "s.raw.%d", solid_count);
+	    mk_bot(fd_out, bu_vls_cstr(&raw), RT_BOT_SOLID,
+		   RT_BOT_UNORIENTED, 0, nv, nf, verts, faces, NULL, NULL);
+
+	    BU_LIST_INIT(&head.l);
+	    mk_addmember(bu_vls_cstr(&raw), &head.l, xform, WMOP_UNION);
+	    mk_lcomb(fd_out, bu_vls_cstr(&sname), &head, 0,
+		     (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
+	    bu_vls_free(&raw);
+	}
+
+	if (debug)
+	    bu_log("  import(%s): %s (%d verts, %d faces)\n",
+		   bu_vls_cstr(&filename), bu_vls_cstr(&sname), nv, nf);
+
+	bu_free(verts, "stl verts");
+	bu_free(faces, "stl faces");
+    }
+
+    bu_vls_vlscat(out_name, &sname);
+    bu_vls_free(&sname);
+    bu_vls_free(&filename);
+    bu_vls_free(&filepath);
+    return 1;
+}
+
+
+/*
+ * Skip an unrecognized node: consume identifier, params, and
+ * optional { children } block.
+ */
+static void
+skip_node(void)
+{
+    /* skip identifier */
+    while (pos < buf_len && !isspace((int)buf[pos]) && buf[pos] != '(' && buf[pos] != '{')
+	pos++;
+    skip_params();
+    skip_ws();
+    if (pos < buf_len && buf[pos] == '{') {
+	int depth = 1;
+	pos++;
+	while (pos < buf_len && depth > 0) {
+	    if (buf[pos] == '{') depth++;
+	    else if (buf[pos] == '}') depth--;
+	    pos++;
+	}
+    }
+    skip_ws();
+    if (pos < buf_len && buf[pos] == ';')
+	pos++;
+}
+
+
+/*
+ * Parse a color() wrapper: color([r, g, b, a]) { child }
+ * Applies the color as attributes on the child object.
+ */
+static int
+parse_color(struct bu_vls *out_name, mat_t xform)
+{
+    double rgba[4] = {-1, -1, -1, 1.0};
+    int n = 0;
+
+    skip_ws();
+    if (!expect_char('('))
+	return 0;
+
+    /* color params are just ([r, g, b, a]) — a bare array */
+    skip_ws();
+    if (pos < buf_len && buf[pos] == '[') {
+	pos++;
+	while (n < 4) {
+	    skip_ws();
+	    if (pos < buf_len && buf[pos] == ']')
+		break;
+	    if (n > 0) {
+		skip_ws();
+		if (pos < buf_len && buf[pos] == ',')
+		    pos++;
+	    }
+	    rgba[n++] = parse_double();
+	}
+	skip_ws();
+	if (pos < buf_len && buf[pos] == ']')
+	    pos++;
+    }
+
+    /* Skip to closing ')' */
+    while (pos < buf_len && buf[pos] != ')')
+	pos++;
+    if (pos < buf_len) pos++;
+
+    skip_ws();
+    if (!expect_char('{'))
+	return 0;
+
+    skip_ws();
+    if (!parse_node(out_name, xform)) {
+	while (pos < buf_len && buf[pos] != '}')
+	    pos++;
+    }
+
+    expect_char('}');
+
+    /* Apply color attributes to the child object */
+    if (bu_vls_strlen(out_name) > 0 && rgba[0] >= 0) {
+	struct bu_vls colorstr = BU_VLS_INIT_ZERO;
+	int r = (int)(rgba[0] * 255.0 + 0.5);
+	int g = (int)(rgba[1] * 255.0 + 0.5);
+	int b = (int)(rgba[2] * 255.0 + 0.5);
+
+	if (r > 255) r = 255;
+	if (g > 255) g = 255;
+	if (b > 255) b = 255;
+
+	bu_vls_sprintf(&colorstr, "%d/%d/%d", r, g, b);
+	db5_update_attribute(bu_vls_cstr(out_name), "color",
+			     bu_vls_cstr(&colorstr), fd_out->dbip);
+
+	if (n >= 4 && rgba[3] < 1.0) {
+	    struct bu_vls alphastr = BU_VLS_INIT_ZERO;
+	    bu_vls_sprintf(&alphastr, "%.3f", rgba[3]);
+	    db5_update_attribute(bu_vls_cstr(out_name), "alpha",
+				bu_vls_cstr(&alphastr), fd_out->dbip);
+	    bu_vls_free(&alphastr);
+	}
+
+	if (debug)
+	    bu_log("  color: %s = %d/%d/%d\n",
+		   bu_vls_cstr(out_name), r, g, b);
+
+	bu_vls_free(&colorstr);
+    }
+
+    return (bu_vls_strlen(out_name) > 0) ? 1 : 0;
+}
+
+
+/*
+ * Parse a single CSG node.  This is the main recursive dispatch.
+ * Returns the name of the created object in out_name.
+ */
+static int
+parse_node(struct bu_vls *out_name, mat_t xform)
+{
+    skip_ws();
+
+    if (pos >= buf_len)
+	return 0;
+
+    /* Boolean operations */
+    if (looking_at("difference")) {
+	consume("difference");
+	return parse_boolean("difference", WMOP_SUBTRACT, out_name, xform);
+    }
+    if (looking_at("union")) {
+	consume("union");
+	return parse_boolean("union", WMOP_UNION, out_name, xform);
+    }
+    if (looking_at("intersection")) {
+	consume("intersection");
+	return parse_boolean("intersection", WMOP_INTERSECT, out_name, xform);
+    }
+    if (looking_at("group")) {
+	consume("group");
+	return parse_boolean("group", WMOP_UNION, out_name, xform);
+    }
+
+    /* Transform */
+    if (looking_at("multmatrix")) {
+	consume("multmatrix");
+	return parse_multmatrix(out_name, xform);
+    }
+
+    /* Color (pass through to child) */
+    if (looking_at("color")) {
+	consume("color");
+	return parse_color(out_name, xform);
+    }
+
+    /* Primitives */
+    if (looking_at("cube")) {
+	consume("cube");
+	return parse_cube(out_name, xform);
+    }
+    if (looking_at("sphere")) {
+	consume("sphere");
+	return parse_sphere(out_name, xform);
+    }
+    if (looking_at("cylinder")) {
+	consume("cylinder");
+	return parse_cylinder(out_name, xform);
+    }
+    if (looking_at("polyhedron")) {
+	consume("polyhedron");
+	return parse_polyhedron(out_name, xform);
+    }
+    if (looking_at("rotate_extrude")) {
+	consume("rotate_extrude");
+	return parse_rotate_extrude(out_name, xform);
+    }
+    if (looking_at("linear_extrude")) {
+	consume("linear_extrude");
+	return parse_linear_extrude(out_name, xform);
+    }
+
+    if (looking_at("import")) {
+	consume("import");
+	return parse_import(out_name, xform);
+    }
+    if (looking_at("render")) {
+	/* render() is just a wrapper — pass through to child */
+	consume("render");
+	skip_params();
+	skip_ws();
+	if (!expect_char('{'))
+	    return 0;
+	skip_ws();
+	if (!parse_node(out_name, xform)) {
+	    while (pos < buf_len && buf[pos] != '}')
+		pos++;
+	}
+	expect_char('}');
+	return (bu_vls_strlen(out_name) > 0) ? 1 : 0;
+    }
+
+    /* Unsupported nodes: warn and skip */
+    if (looking_at("hull") || looking_at("minkowski") ||
+	looking_at("polygon")) {
+	size_t start = pos;
+	size_t end = pos;
+	while (end < buf_len && buf[end] != '(' && !isspace((int)buf[end]))
+	    end++;
+	bu_log("WARNING: unsupported node '%.*s' at position %zu, skipping\n",
+	       (int)(end - start), &buf[start], pos);
+	skip_node();
+	return 0;
+    }
+
+    /* Unknown node */
+    if (isalpha((int)buf[pos]) || buf[pos] == '_') {
+	size_t start = pos;
+	size_t end = pos;
+	while (end < buf_len && buf[end] != '(' && !isspace((int)buf[end]))
+	    end++;
+	if (debug)
+	    bu_log("  skipping unknown node '%.*s'\n",
+		   (int)(end - start), &buf[start]);
+	skip_node();
+	return 0;
+    }
+
+    /* If we get here, something unexpected */
+    bu_log("csg-g: unexpected character '%c' at position %zu\n",
+	   buf[pos], pos);
+    pos++;
+    return 0;
+}
+
+
+static void
+Convert_input(void)
+{
+    mat_t identity;
+
+    MAT_IDN(identity);
+
+    while (pos < buf_len) {
+	struct bu_vls name = BU_VLS_INIT_ZERO;
+
+	skip_ws();
+	if (pos >= buf_len)
+	    break;
+
+	if (parse_node(&name, identity)) {
+	    mk_addmember(bu_vls_cstr(&name), &all_head.l, NULL, WMOP_UNION);
+	}
+
+	bu_vls_free(&name);
+    }
+}
+
+
+static void
+usage(const char *argv0)
+{
+    bu_log("Usage: %s [-d] input.csg output.g\n", argv0);
+    bu_log("	where input.csg is an OpenSCAD CSG export file\n");
+    bu_log("	(produced by: openscad -o file.csg input.scad)\n");
+    bu_log("	and output.g is the name of a BRL-CAD database file to receive the conversion.\n");
+    bu_log("	The -d option prints additional debugging information.\n");
+}
+
+
+int
+main(int argc, char *argv[])
+{
+    int c;
+    long file_size;
+
+    bu_setprogname(argv[0]);
+
+    if (argc < 2) {
+	usage(argv[0]);
+	bu_exit(1, NULL);
+    }
+
+    while ((c = bu_getopt(argc, argv, "d")) != -1) {
+	switch (c) {
+	    case 'd':
+		debug = 1;
+		break;
+	    default:
+		usage(argv[0]);
+		bu_exit(1, NULL);
+		break;
+	}
+    }
+
+    if (bu_optind + 1 >= argc) {
+	usage(argv[0]);
+	bu_exit(1, "csg-g: need input and output file names\n");
+    }
+
+    input_file = argv[bu_optind];
+    brlcad_file = argv[bu_optind + 1];
+
+    /* Open input file and read entire contents */
+    if ((fd_in = fopen(input_file, "r")) == NULL) {
+	bu_log("Cannot open input file (%s)\n", input_file);
+	perror("csg-g");
+	bu_exit(1, NULL);
+    }
+
+    fseek(fd_in, 0, SEEK_END);
+    file_size = ftell(fd_in);
+    fseek(fd_in, 0, SEEK_SET);
+
+    buf = (char *)bu_malloc(file_size + 1, "input buffer");
+    if (fread(buf, 1, file_size, fd_in) != (size_t)file_size) {
+	bu_log("Error reading input file (%s)\n", input_file);
+	perror("csg-g");
+	bu_exit(1, NULL);
+    }
+    buf[file_size] = '\0';
+    buf_len = file_size;
+    fclose(fd_in);
+
+    /* Open output */
+    if ((fd_out = wdb_fopen(brlcad_file)) == NULL) {
+	bu_log("Cannot open BRL-CAD file (%s)\n", brlcad_file);
+	perror("csg-g");
+	bu_exit(1, NULL);
+    }
+
+    mk_id_units(fd_out, "Conversion from OpenSCAD CSG format", "mm");
+
+    BU_LIST_INIT(&all_head.l);
+
+    bu_log("Converting OpenSCAD CSG file: %s\n", input_file);
+
+    Convert_input();
+
+    /* Make a top level group */
+    if (BU_LIST_NON_EMPTY(&all_head.l)) {
+	mk_lcomb(fd_out, "all", &all_head, 0,
+		 (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
+    }
+
+    bu_log("Conversion complete: %d solids, %d combinations\n",
+	   solid_count, comb_count);
+
+    bu_free(buf, "input buffer");
+    db_close(fd_out->dbip);
+
+    return 0;
+}
+
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

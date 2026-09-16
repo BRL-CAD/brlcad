@@ -1,0 +1,102 @@
+= BOT_REPAIR(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+bot_repair - Given an existing BoT object as input, try to generate a manifold solid mesh.
+
+== SYNOPSIS
+
+[source]
+----
+bot repair [-h] [-a #] [-p #] [-o output_obj] {input_bot}...
+----
+
+
+[[description]]
+== DESCRIPTION
+
+It is quite common in CAD modeling to encounter a triangle mesh (a Bag of Triangles or "BoT" object in BRL-CAD terms) that does not define an enclosed volume in space. Sometimes this is intentional (such as "plate mode" meshes whose volume is implicitly defined) but more commonly it represents a modeling error - i.e. the _intent_ was to define a closed volume in space, but the mesh elements as defined do not successfully do so.
+
+In the fully general case it is impossible to repair such a mesh without manual intervention - if a huge majority of a spherical mesh is cut away, for example, there is no way to know automatically if the original modeling intent was to define the whole sphere or to define (say) a lens shape. However, in many cases the flaws are small compared to the overall shape, and there are simply "holes" in the mesh that can be filled in to produce a valid manifold. There are also even more basic categories of problem where the geoemtry itself does (or rather, _can_) define a closed volume, but the topology of the mesh itself is incorrect.
+
+For those cases which may be suitable for automatic repair, the *bot repair* command attempts to produce valid manifold solid meshes automatically using mesh repair algorithms. By default, topological repairs and hole filling for holes with a size up to five percent of the overall mesh area are the techniques that *bot repair* will attempt to employ. There are also options to adjust the hole sizes considered viable for repair attempts. However, be aware that attempting to repair holes that are _very_ large may produce unexpected results - an output may be closed and manifold, but end up changing the shape of a mesh. Parts of the mesh that are intended to be separate may end up being connected to "close" the shape, losing concave features. Outputs should be inspected - _particularly_ when large hole sizes are specified - to insure the new shape is true to the original intent as well as topologically valid.
+
+A "repaired" mesh may either be output as an overwrite of the input mesh (an "in-place" repair) or (if only one input mesh is specified) written to a user-specified object name as a new mesh. Note that in-place repair _is_ destructive - the original mesh is lost - but that method of repair is _very_ useful when correcting large numbers of meshes in a hierarchical model.
+
+If an input mesh is already a valid solid, no work is done. If a repair cannot be successfully made, an error is returned.
+
+A number of checks are made on a repaired mesh to try and ensure the processing results are valid - in particular, if the bounding box size changes or the surface area of the mesh decreases that is interpreted as an error.
+
+Note that this command will _not_ (currently) perform any work on plate mode or surface mode BoTs. If a user is not aware that they have those types of BoT objects in a database, they may be surprised at *bot repair* not operating on those objects. To verify the type of an individual bot, use the command *bot get type objname*. To find all plate mode bots in a database the command *search -type bot -type plate* may be used and to find all surface mode BoTs the command *search -type bot ! -type plate ! -type solid* will work. If a BoT is _incorrectly_ identified as surface, its type may be changed with the command *bot set type objname solid*. Note, however, that changing a BoT's type and repairing it when it is _intended_ to be plate mode or surface may result in incorrect geometry per modeling intent, even if the result ends up topologically valid.
+
+
+[[search_options]]
+== OPTIONS
+
+
+*-a #*::
+Specify an absolute maximum area in mm for a hole size on which repair will be attempted. Unset by default. Overrides the *p* if specified.
+
+
+*-h*::
+Print command help.
+
+
+*-p #*::
+Specify the largest viable hole size for repair as a percentage (0-100) of the mesh area. By default the limit is set to 5 percent. 0 and 100 are interpreted as attempting to fill all holes, which may produce unexpected results. If the *a* is specified it overrides this option.
+
+
+
+
+[[examples]]
+== EXAMPLES
+
+.In-Place Repair
+[example]
+====
+mged>**bot repair input.bot**
+
+If a repair is needed, input.bot will be replaced by a new input.bot primitive with the repairs applied.
+
+====
+
+.Outputting Repaired Mesh to Another Object.
+[example]
+====
+mged>**bot repair -o output.bot input.bot**
+
+If a repair was needed, output.bot holds the altered mesh. The input.bot original is unaltered.
+
+====
+
+.Try Repairing Larger Holes.
+[example]
+====
+mged>**bot repair -p 10.2 input.bot output.bot**
+
+Attempt repairing holes with area up to 10.2 percent of the mesh area.
+
+====
+
+.Repair all BoT Solids in Database
+[example]
+====
+mged>**bot repair ***
+
+Attempt in-place repair of all BoT solids. Any object matching the pattern that is not of the appropriate type is ignored. This option is useful when batch processing large numbers of objects. Output for the user is a list of repaired BoTs, as well as any attempted repairs that failed.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

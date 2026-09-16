@@ -1,0 +1,49 @@
+= HISTORY(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+history - Displays the list of commands executed during the current MGED session.
+
+== SYNOPSIS
+
+[source]
+----
+history [-delays]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Displays the list of commands executed during the current MGED session. The one exception is the *hist_add* command, which can add a command to the history list without executing it. If the _-delays_ option is used, then the delays between commands will also be displayed.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *history* command to display the command history list for the current MGED session.
+
+.Display the command history list for the current MGED session.
+[example]
+====
+
+mged> **history**::
+Displays the command history list for the current MGED session.
+
+
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

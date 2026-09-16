@@ -1,7 +1,7 @@
 /*                        Q G G L . H
  * BRL-CAD
  *
- * Copyright (c) 2021-2025 United States Government as represented by
+ * Copyright (c) 2021-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -87,7 +87,6 @@ class QTCAD_EXPORT QgGL : public QOpenGLWidget, protected QOpenGLFunctions
     protected:
 	void paintGL() override;
 	void resizeGL(int w, int h) override;
-	void resizeEvent(QResizeEvent *e) override;
 
 	void keyPressEvent(QKeyEvent *k) override;
 	void mouseMoveEvent(QMouseEvent *e) override;
@@ -122,4 +121,3 @@ class QTCAD_EXPORT QgGL : public QOpenGLWidget, protected QOpenGLFunctions
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

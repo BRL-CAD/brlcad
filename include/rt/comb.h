@@ -1,7 +1,7 @@
 /*                      C O M B . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2025 United States Government as represented by
+ * Copyright (c) 1993-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -67,14 +67,12 @@ RT_EXPORT extern int rt_shader_to_key_eq(const char *in, struct bu_vls *vls);
 RT_EXPORT extern int rt_comb_import4(struct rt_db_internal      *ip,
 				     const struct bu_external   *ep,
 				     const mat_t                matrix,         /* NULL if identity */
-				     const struct db_i          *dbip,
-				     struct resource            *resp);
+				     const struct db_i          *dbip);
 
 RT_EXPORT extern int rt_comb_export4(struct bu_external                 *ep,
 				     const struct rt_db_internal        *ip,
 				     double                             local2mm,
-				     const struct db_i                  *dbip,
-				     struct resource                    *resp);
+				     const struct db_i                  *dbip);
 
 
 RT_EXPORT extern void db_comb_describe(struct bu_vls    *str,
@@ -98,7 +96,7 @@ RT_EXPORT extern int rt_comb_describe(struct bu_vls     *str,
  * that is set on some higher-level parent combination.
  *
  */
-RT_EXPORT extern int rt_comb_get_color(unsigned char rgb[3], const struct rt_comb_internal *comb);
+RT_EXPORT extern int rt_comb_get_color(struct db_i *dbip, unsigned char rgb[3], const struct rt_comb_internal *comb);
 
 
 /**
@@ -129,7 +127,7 @@ RT_EXPORT extern int db_comb_mvall(struct directory *dp,
  * 0 OK
  * -1 FAIL
  */
-RT_EXPORT extern int rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp);
+RT_EXPORT extern int rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip);
 
 /**
  * Return a RT_DIR_NULL terminated array of directory pointers that

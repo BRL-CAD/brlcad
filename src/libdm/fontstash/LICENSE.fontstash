@@ -49,6 +49,7 @@ public domain.
 
 
 
-Fontstash uses stb_truetype.h from Sean Barrett for handling
-TrueType files (https://github.com/nothings/stb) which is placed in the
-public domain.
+BRL-CAD's Fontstash integration uses the size-aware struetype fork for
+handling TrueType files (https://github.com/starseeker/struetype).  Its
+license and source location are recorded in
+doc/legal/embedded/struetype.txt.

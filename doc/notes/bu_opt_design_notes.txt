@@ -70,7 +70,7 @@ TODOs for bu_opt help routines:
 Maybe have help as a default subcommand rather than a default option, to allow for fancy
 stuff without bastardizing the help option?
 
-* define a built-in bu_help to support docbook, json, etc. specification which
+* define a built-in bu_help to support AsciiDoc, json, etc. specification which
   can be used by commands not wanting to define their own, more complex options.
 
 * need a routine to generate a POSIX compliant one-line description of the
@@ -79,7 +79,7 @@ stuff without bastardizing the help option?
 * need built-in help (option or subcommand, maybe both?) that is available for
   commands not wanting to define their own help, but can be over-ridden by an
   explicit specification of help in the options.  We will need some "smart" help
-  options for JSON, DocBook, etc as well as subcommand listing (--help cmds
+  options for JSON, AsciiDoc, etc as well as subcommand listing (--help cmds
   maybe?) so a calling script can systematically and automatically generate
   documentation for all commands.
 

@@ -1,7 +1,7 @@
 /*                      F B S E R V . C P P
  * BRL-CAD
  *
- * Copyright (c) 2004-2025 United States Government as represented by
+ * Copyright (c) 2004-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,12 +33,15 @@
 
 #include "common.h"
 
+/* bu/ipc.h removed - transport handled by libpkg */
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/vls.h"
 #include "dm.h"
 #include "./fbserv.h"
-#include "qtcad/QgGL.h"
+#ifdef BRLCAD_OPENGL
+#  include "qtcad/QgGL.h"
+#endif
 #include "qtcad/QgSW.h"
 
 void
@@ -128,23 +131,20 @@ QFBServer::on_Connect()
 
     int fd = tcps->socketDescriptor();
     bu_log("fd: %d\n", fd);
-    struct pkg_conn *pc;
-    BU_GET(pc, struct pkg_conn);
-    pc->pkc_magic = PKG_MAGIC;
-    pc->pkc_fd = fd;
-    pc->pkc_switch = fbs_pkg_switch();
-    pc->pkc_errlog = 0;
-    pc->pkc_left = -1;
-    pc->pkc_buf = (char *)0;
-    pc->pkc_curpos = (char *)0;
-    pc->pkc_strpos = 0;
-    pc->pkc_incur = pc->pkc_inend = 0;
+    struct pkg_conn *pc = pkg_adopt_socket(fd, fbs_pkg_switch(), 0);
+    if (pc == PKC_ERROR) {
+	bu_log("new connection failed (pkg_adopt_socket)");
+	tcps->close();
+	delete fs;
+	return;
+    }
 
     fs->ind = fbs_new_client(fbsp, pc, (void *)fs);
     if (fs->ind == -1) {
 	bu_log("new connection failed");
-	BU_PUT(pc, struct pkg_conn);
+	pkg_close(pc);
 	tcps->close();
+	delete fs;
     }
 }
 
@@ -243,6 +243,117 @@ qdm_close_client_handler(struct fbserv_obj *fbsp, int i)
     delete s;
 }
 
+
+/* -----------------------------------------------------------------------
+ * Phase 5: IPC client handler for qged (pipe/socketpair instead of TCP).
+ *
+ * QFBIPCSocket registers the pre-connected raw file descriptor from libpkg
+ * ipc with Qt's event loop via QSocketNotifier.  When the fd is readable,
+ * ipc_handler() reads one message frame from the pkg_conn and dispatches it
+ * via pkg_process().
+ *
+ * This avoids QTcpSocket entirely for the local rt→framebuffer data path.
+ * ----------------------------------------------------------------------- */
+
+void
+QFBIPCSocket::ipc_handler()
+{
+    QTCAD_SLOT("QFBIPCSocket::ipc_handler", 1);
+
+    struct fbserv_client *fbsc = &fbsp->fbs_clients[ind];
+    if (!fbsc->fbsc_pkg || !notifier)
+	return;
+
+    /* Handle readiness inline and keep the notifier disabled while libpkg
+     * drains the descriptor.  A queued connection leaves the descriptor
+     * readable until this slot eventually runs, allowing Qt to queue the
+     * slot more than once.  The first invocation drains the descriptor and
+     * a later invocation then blocks in pkg_suckin(), freezing the GUI event
+     * loop. */
+    notifier->setEnabled(false);
+
+    /* Use libdm's client handler so EOF and deferred-drop requests close the
+     * pkg connection and unregister this notifier.  Merely setting
+     * fbsc_pending_drop here leaves an EOF descriptor permanently readable,
+     * producing an event storm and preventing other process cleanup events
+     * from running. */
+    fbs_existing_client_handler((void *)fbsc, 0);
+
+    /* Notify the display widget that pixels may have changed */
+    emit updated();
+
+    /* Processing may have dropped the client and scheduled this object for
+     * deletion.  Only resume notifications if this is still the live channel
+     * for the connection. */
+    if (fbsc->fbsc_pkg && fbsc->fbsc_chan == (void *)this)
+	notifier->setEnabled(true);
+}
+
+
+#ifdef BRLCAD_OPENGL
+void
+qdm_open_ipc_client_handler(struct fbserv_obj *fbsp, int i, void *UNUSED(data))
+{
+    bu_log("open_ipc_client_handler (GL)\n");
+
+    QFBIPCSocket *s = new QFBIPCSocket;
+    s->ind  = i;
+    s->fbsp = fbsp;
+    s->notifier = new QSocketNotifier(fbsp->fbs_clients[i].fbsc_fd,
+				      QSocketNotifier::Read, s);
+    fbsp->fbs_clients[i].fbsc_chan = (void *)s;
+
+    QObject::connect(s->notifier, &QSocketNotifier::activated,
+		     s, &QFBIPCSocket::ipc_handler, Qt::DirectConnection);
+
+    QgGL *ctx = (QgGL *)dm_get_ctx(fb_get_dm(fbsp->fbs_fbp));
+    if (ctx) {
+	QObject::connect(s, &QFBIPCSocket::updated,
+			 ctx, &QgGL::need_update, Qt::QueuedConnection);
+    }
+}
+#endif
+
+void
+qdm_open_ipc_sw_client_handler(struct fbserv_obj *fbsp, int i, void *UNUSED(data))
+{
+    bu_log("open_ipc_client_handler (SW)\n");
+
+    QFBIPCSocket *s = new QFBIPCSocket;
+    s->ind  = i;
+    s->fbsp = fbsp;
+    s->notifier = new QSocketNotifier(fbsp->fbs_clients[i].fbsc_fd,
+				      QSocketNotifier::Read, s);
+    fbsp->fbs_clients[i].fbsc_chan = (void *)s;
+
+    QObject::connect(s->notifier, &QSocketNotifier::activated,
+		     s, &QFBIPCSocket::ipc_handler, Qt::DirectConnection);
+
+    QgSW *ctx = (QgSW *)dm_get_udata(fb_get_dm(fbsp->fbs_fbp));
+    if (ctx) {
+	QObject::connect(s, &QFBIPCSocket::updated,
+			 ctx, &QgSW::need_update, Qt::QueuedConnection);
+    }
+}
+
+void
+qdm_close_ipc_client_handler(struct fbserv_obj *fbsp, int i)
+{
+    bu_log("close_ipc_client_handler\n");
+    QFBIPCSocket *s = (QFBIPCSocket *)fbsp->fbs_clients[i].fbsc_chan;
+    fbsp->fbs_clients[i].fbsc_chan = NULL;
+    if (!s)
+	return;
+
+    /* drop_client may reach us from QFBIPCSocket::ipc_handler.  Disable the
+     * notifier immediately, but defer object destruction until that slot has
+     * returned. */
+    if (s->notifier)
+	s->notifier->setEnabled(false);
+    s->deleteLater();
+}
+
+
 // Local Variables:
 // tab-width: 8
 // mode: C++
@@ -251,4 +362,3 @@ qdm_close_client_handler(struct fbserv_obj *fbsp, int i)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

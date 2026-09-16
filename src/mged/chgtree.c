@@ -1,7 +1,7 @@
 /*                       C H G T R E E . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2025 United States Government as represented by
+ * Copyright (c) 1985-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -26,7 +26,6 @@
 
 #include "common.h"
 
-#include <signal.h>
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
@@ -36,6 +35,7 @@
 #include "vmath.h"
 #include "bn.h"
 #include "wdb.h"
+#include "rt/calc.h"
 #include "rt/geom.h"
 
 #include "./sedit.h"
@@ -83,7 +83,7 @@ f_copy_inv(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv
 	return TCL_ERROR;
     }
 
-    if ((id = rt_db_get_internal(&internal, proto, s->dbip, (fastf_t *)NULL, &rt_uniresource)) < 0) {
+    if ((id = rt_db_get_internal(&internal, proto, s->dbip, (fastf_t *)NULL)) < 0) {
 	Tcl_AppendResult(s->interp, "Database read error, aborting\n", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -108,7 +108,7 @@ f_copy_inv(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv
 	return TCL_ERROR;
     }
 
-    if (rt_db_put_internal(dp, s->dbip, &internal, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(dp, s->dbip, &internal) < 0) {
 	Tcl_AppendResult(s->interp, "Database write error, aborting.\n", (char *)NULL);
 	Tcl_AppendResult(s->interp, ERROR_RECOVERY_SUGGESTION, (char *)NULL);
 	return TCL_ERROR;
@@ -182,6 +182,32 @@ find_solid_with_path(struct mged_state *s, struct db_full_path *pathp)
 }
 
 
+static struct bv_scene_obj *
+find_solid_below_path(struct mged_state *s, struct db_full_path *pathp)
+{
+    struct display_list *gdlp;
+    struct bv_scene_obj *sp;
+
+    RT_CK_FULL_PATH(pathp);
+
+    for (BU_LIST_FOR(gdlp, display_list, (struct bu_list *)ged_dl(s->gedp))) {
+	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
+	    if (!sp->s_u_data)
+		continue;
+	    struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
+
+	    if (!db_full_path_match_top(pathp, &bdata->s_fullpath))
+		continue;
+
+	    illum_gdlp = gdlp;
+	    return sp;
+	}
+    }
+
+    return NULL;
+}
+
+
 /**
  * Transition from VIEW state to OBJECT EDIT state in a single
  * command, rather than requiring "press oill", "ill leaf", "matpick
@@ -203,11 +229,14 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     struct db_full_path lhs;
     struct db_full_path rhs;
     struct db_full_path both;
+    point_t bbmin = VINIT_ZERO;
+    point_t bbmax = VINIT_ZERO;
+    int one_path = (argc == 2);
     int is_empty = 1;
 
     CHECK_DBI_NULL;
 
-    if (argc < 3 || 3 < argc) {
+    if (argc < 2 || 3 < argc) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	bu_vls_printf(&vls, "help oed");
@@ -238,29 +267,61 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	return TCL_ERROR;
     }
 
+    db_full_path_init(&lhs);
+    db_full_path_init(&rhs);
+    db_full_path_init(&both);
+
     if (db_string_to_path(&lhs, s->dbip, argv[1]) < 0) {
 	Tcl_AppendResult(interp, "bad lhs path", (char *)NULL);
 	return TCL_ERROR;
     }
-    if (db_string_to_path(&rhs, s->dbip, argv[2]) < 0) {
+    if (one_path && lhs.fp_len == 0) {
 	db_free_full_path(&lhs);
-	Tcl_AppendResult(interp, "bad rhs path", (char *)NULL);
+	Tcl_AppendResult(interp, "lhs must name an object", (char *)NULL);
 	return TCL_ERROR;
     }
-    if (rhs.fp_len <= 0) {
+
+    if (one_path) {
+	if (rt_obj_bounds(NULL, s->dbip, 1, &argv[1], 0, bbmin, bbmax) != BRLCAD_OK) {
+	    db_free_full_path(&lhs);
+	    Tcl_AppendResult(interp, "unable to find lhs bounds", (char *)NULL);
+	    return TCL_ERROR;
+	}
+	illump = find_solid_below_path(s, &lhs);
+	if (illump && illump->s_u_data) {
+	    struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
+	    db_dup_full_path(&both, &bdata->s_fullpath);
+	}
+    } else {
+	if (db_string_to_path(&rhs, s->dbip, argv[2]) < 0) {
+	    db_free_full_path(&lhs);
+	    Tcl_AppendResult(interp, "bad rhs path", (char *)NULL);
+	    return TCL_ERROR;
+	}
+	if (rhs.fp_len <= 0) {
+	    db_free_full_path(&lhs);
+	    db_free_full_path(&rhs);
+	    Tcl_AppendResult(interp, "rhs must not be null", (char *)NULL);
+	    return TCL_ERROR;
+	}
+
+	db_dup_full_path(&both, &lhs);
+	db_append_full_path(&both, &rhs);
+	illump = find_solid_with_path(s, &both);
+    }
+
+    if (!illump || !illump->s_u_data) {
 	db_free_full_path(&lhs);
 	db_free_full_path(&rhs);
-	Tcl_AppendResult(interp, "rhs must not be null", (char *)NULL);
+	db_free_full_path(&both);
+	Tcl_AppendResult(interp, "Unable to find solid matching path", (char *)NULL);
+	illum_gdlp = GED_DISPLAY_LIST_NULL;
+	illump = 0;
 	return TCL_ERROR;
     }
 
-    db_full_path_init(&both);
-    db_dup_full_path(&both, &lhs);
-    db_append_full_path(&both, &rhs);
-
-    /* Patterned after ill_common() ... */
-    illum_gdlp = gdlp;
-    illump = BU_LIST_NEXT(bv_scene_obj, &gdlp->dl_head_scene_obj);/* any valid solid would do */
+    /* Patterned after ill_common().  matpick/init_oedit reloads the selected
+     * leaf into MGED's persistent rt_edit state once the arc is known. */
     edobj = 0;		/* sanity */
     movedir = 0;		/* No edit modes set */
     MAT_IDN(MEDIT(s)->model_changes);	/* No changes yet */
@@ -269,23 +330,14 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     MEDIT(s)->acc_sc[0] = MEDIT(s)->acc_sc[1] = MEDIT(s)->acc_sc[2] = 1.0;
     new_mats(s);
 
-    /* Find the one solid, set s_iflag UP, point illump at it */
-    illump = find_solid_with_path(s, &both);
-    if (!illump) {
-	db_free_full_path(&lhs);
-	db_free_full_path(&rhs);
-	db_free_full_path(&both);
-	Tcl_AppendResult(interp, "Unable to find solid matching path", (char *)NULL);
-	illum_gdlp = GED_DISPLAY_LIST_NULL;
-	illump = 0;
-	(void)chg_state(s, ST_O_PICK, ST_VIEW, "error recovery");
-	return TCL_ERROR;
-    }
+    /* The target solid is illuminated and determines the editable path. */
     (void)chg_state(s, ST_O_PICK, ST_O_PATH, "internal change of state");
+
 
     /* Select the matrix */
     struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;
-    bu_vls_printf(&tcl_cmd, "matpick %lu", (long unsigned)lhs.fp_len);
+    size_t matpick_pos = one_path ? lhs.fp_len - 1 : lhs.fp_len;
+    bu_vls_printf(&tcl_cmd, "matpick %lu", (long unsigned)matpick_pos);
     if (Tcl_Eval(interp, bu_vls_cstr(&tcl_cmd)) != TCL_OK) {
 	db_free_full_path(&lhs);
 	db_free_full_path(&rhs);
@@ -301,6 +353,9 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	db_free_full_path(&both);
 	Tcl_AppendResult(interp, "MGED state did not advance to Object EDIT", (char *)NULL);
 	return TCL_ERROR;
+    }
+    if (one_path) {
+	(void)set_oedit_bbox_keypoint(s);
     }
     db_free_full_path(&lhs);
     db_free_full_path(&rhs);

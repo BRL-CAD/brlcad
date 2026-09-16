@@ -1,7 +1,7 @@
 /*                           E L L . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2025 United States Government as represented by
+ * Copyright (c) 1985-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -41,11 +41,12 @@
 
 #include "../../librt_private.h"
 
-
+__BEGIN_DECLS
 extern int rt_sph_prep(struct soltab *stp, struct rt_db_internal *ip,
 		       struct rt_i *rtip);
+__END_DECLS
 
-const struct bu_structparse rt_ell_parse[] = {
+EXTERNCPP const struct bu_structparse rt_ell_parse[] = {
     { "%f", 3, "V", bu_offsetofarray(struct rt_ell_internal, v, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 3, "A", bu_offsetofarray(struct rt_ell_internal, a, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 3, "B", bu_offsetofarray(struct rt_ell_internal, b, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -190,11 +191,34 @@ clt_ell_pack(struct bu_pool *pool, struct soltab *stp)
 
 #endif /* USE_OPENCL */
 
+/**
+ * Consider an ell a sph if magnitude A, B and C are equal
+ */
+int
+rt_ell_is_sph(const struct rt_db_internal* ip) {
+    const struct rt_ell_internal *eip;
+    fastf_t magsq_a, magsq_b, magsq_c;
+
+    RT_CK_DB_INTERNAL(ip);
+    if (ip->idb_type != ID_ELL) {
+	/* not an ell */
+	return 0;
+    }
+
+    eip = (struct rt_ell_internal *)ip->idb_ptr;
+    RT_ELL_CK_MAGIC(eip);
+
+    magsq_a = MAGSQ(eip->a);
+    magsq_b = MAGSQ(eip->b);
+    magsq_c = MAGSQ(eip->c);
+
+    return (EQUAL(magsq_a, magsq_b) && EQUAL(magsq_b, magsq_c));
+}
 
 /**
  * Compute the bounding RPP for an ellipsoid
  */
-int
+C_DECL int
 rt_ell_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
     vect_t w1, w2, P;
     vect_t Au, Bu, Cu;	/* A, B, C with unit length */
@@ -279,7 +303,7 @@ rt_ell_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
  * A struct ell_specific is created, and its address is stored in
  * stp->st_specific for use by rt_ell_shot().
  */
-int
+C_DECL int
 rt_ell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     register struct ell_specific *ell;
@@ -390,7 +414,7 @@ rt_ell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-void
+C_DECL void
 rt_ell_print(register const struct soltab *stp)
 {
     register struct ell_specific *ell =
@@ -411,7 +435,7 @@ rt_ell_print(register const struct soltab *stp)
  * 0 MISS
  * >0 HIT
  */
-int
+C_DECL int
 rt_ell_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
     register struct ell_specific *ell =
@@ -459,7 +483,7 @@ rt_ell_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 /**
  * This is the Becker vector version.
  */
-void
+C_DECL void
 rt_ell_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
 /* An array of solid pointers */
 /* An array of ray pointers */
@@ -518,7 +542,7 @@ rt_ell_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 /**
  * Given ONE ray distance, return the normal and entry/exit point.
  */
-void
+C_DECL void
 rt_ell_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
 {
     register struct ell_specific *ell =
@@ -540,7 +564,7 @@ rt_ell_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 /**
  * Return the curvature of the ellipsoid.
  */
-void
+C_DECL void
 rt_ell_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
 {
     register struct ell_specific *ell =
@@ -580,7 +604,7 @@ rt_ell_curve(register struct curvature *cvp, register struct hit *hitp, struct s
  * u = azimuth
  * v = elevation
  */
-void
+C_DECL void
 rt_ell_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
 {
     register struct ell_specific *ell =
@@ -614,7 +638,7 @@ rt_ell_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 }
 
 
-void
+C_DECL void
 rt_ell_free(register struct soltab *stp)
 {
     register struct ell_specific *ell =
@@ -773,7 +797,7 @@ ell_ellipse_points(
     return avg_circumference / point_spacing;
 }
 
-int
+C_DECL int
 rt_ell_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *tol, const struct bview *v, fastf_t s_size)
 {
     struct ell_draw_configuration config;
@@ -820,7 +844,7 @@ rt_ell_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
     return 0;
 }
 
-int
+C_DECL int
 rt_ell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     register int i;
@@ -924,7 +948,7 @@ struct ell_vert_strip {
  * -1 failure
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
-int
+C_DECL int
 rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
 {
     mat_t R;
@@ -953,6 +977,8 @@ rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     fastf_t dtol;	/* Absolutized relative tolerance */
 
     RT_CK_DB_INTERNAL(ip);
+    BG_CK_TESS_TOL(ttol);
+    BN_CK_TOL(tol);
     state.eip = (struct rt_ell_internal *)ip->idb_ptr;
     RT_ELL_CK_MAGIC(state.eip);
 
@@ -1033,6 +1059,12 @@ rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
     dtol = primitive_get_absolute_tolerance(ttol, radius);
 
+    /* Clamp to prevent excessively dense meshes; bbox diagonal ≈ 2*radius. */
+    {
+	fastf_t ntol_dummy = M_PI;
+	primitive_clamp_tess_tol(&dtol, &ntol_dummy, 2.0 * radius);
+    }
+
     if (dtol > radius) {
 	dtol = radius;
     }
@@ -1043,8 +1075,32 @@ rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     state.theta_tol = 2 * acos(1.0 - dtol / radius);
 
     /* To ensure normal tolerance, remain below this angle */
-    if (ttol->norm > 0.0 && ttol->norm < state.theta_tol) {
-	state.theta_tol = ttol->norm;
+    if (ttol->norm > 0.0) {
+	fastf_t min_ntol = prim_min_norm_tol();
+	fastf_t ntol_eff = (ttol->norm < min_ntol) ? min_ntol : ttol->norm;
+	if (ntol_eff < state.theta_tol)
+	    state.theta_tol = ntol_eff;
+    }
+
+    /* Clamp theta_tol from below so that no chord is shorter than the minimum
+     * meaningful length.  Uses prim_min_abs_tol() (overridable via the
+     * RT_PRIM_MIN_ABS_TOL env var) for normal-size shapes, and 1% of the
+     * bounding-box diagonal for very small shapes (bbox_diag < 1 mm).
+     * This matches the logic in primitive_clamp_tess_tol().
+     * theta_min = 2·asin(min_chord / (2·radius)) */
+    {
+	fastf_t bbox_diag_ell = 2.0 * radius;
+	fastf_t min_chord;
+	fastf_t theta_min;
+	if (bbox_diag_ell > SMALL_FASTF && bbox_diag_ell < 1.0)
+	    min_chord = bbox_diag_ell * 0.01;
+	else
+	    min_chord = prim_min_abs_tol();
+	if (min_chord < BN_TOL_DIST)
+	    min_chord = BN_TOL_DIST;
+	theta_min = 2.0 * asin(fmin(1.0, min_chord / (2.0 * radius)));
+	if (state.theta_tol < theta_min)
+	    state.theta_tol = theta_min;
     }
 
     *r = nmg_mrsv(m);	/* Make region, empty shell, vertex */
@@ -1272,7 +1328,7 @@ fail:
  * Import an ellipsoid/sphere from the database format to the internal
  * structure.  Apply modeling transformations as well.
  */
-int
+C_DECL int
 rt_ell_import4(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_ell_internal *eip;
@@ -1299,7 +1355,7 @@ rt_ell_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
     eip->magic = RT_ELL_INTERNAL_MAGIC;
 
     /* Convert from database to internal format */
-    flip_fastf_float(vec, rp->s.s_values, 4, (dbip && dbip->dbi_version < 0) ? 1 : 0);
+    flip_fastf_float(vec, rp->s.s_values, 4, (dbip && dbip->i->dbi_version < 0) ? 1 : 0);
 
     /* Apply modeling transformations */
     if (mat == NULL) mat = bn_mat_identity;
@@ -1312,7 +1368,7 @@ rt_ell_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
 }
 
 
-int
+C_DECL int
 rt_ell_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_ell_internal *tip;
@@ -1342,7 +1398,7 @@ rt_ell_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     return 0;
 }
 
-int
+C_DECL int
 rt_ell_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
 {
     if (!rop || !ip || !mat)
@@ -1371,7 +1427,7 @@ rt_ell_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
  * Import an ellipsoid/sphere from the database format to the internal
  * structure.  Apply modeling transformations as well.
  */
-int
+C_DECL int
 rt_ell_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_ell_internal *eip;
@@ -1414,7 +1470,7 @@ rt_ell_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
  * B vector
  * C vector
  */
-int
+C_DECL int
 rt_ell_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_ell_internal *eip;
@@ -1451,7 +1507,7 @@ rt_ell_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
  */
-int
+C_DECL int
 rt_ell_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
     register struct rt_ell_internal *tip =
@@ -1517,7 +1573,7 @@ rt_ell_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
-void
+C_DECL void
 rt_ell_ifree(struct rt_db_internal *ip)
 {
     RT_CK_DB_INTERNAL(ip);
@@ -1539,7 +1595,7 @@ static const fastf_t rt_ell_uvw[5*ELEMENTS_PER_VECT] = {
 };
 
 
-int
+C_DECL int
 rt_ell_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bn_tol *tol)
 {
     mat_t R;
@@ -1828,10 +1884,48 @@ nmg_sphere_face_snurb(struct faceuse *fu, const matp_t m)
  * @return 0 on success
  * @return -1 on failure
  */
-int
+C_DECL int
 rt_ell_params(struct pc_pc_set *UNUSED(pcs), const struct rt_db_internal *UNUSED(ip))
 {
     return -1;			/* FAIL */
+}
+
+
+/**
+ * Create a default ellipsoid, at point 'origin', scaled by 'scale'
+ * 'variants' are stored as ID_ELL; variant switch selects which axis
+ *   are equal (ell: a,b,c | ell1: a,b=c | sph: a=b=c)
+ */
+C_DECL int
+rt_ell_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char *variant, const point_t origin, double scale)
+{
+    struct rt_ell_internal *ell_ip;
+
+    /* default ellipse */
+    fastf_t a = 0.5, b = 0.25, c = 0.125;
+    /* switch on variant (silently ignore NULL / (unknown) */
+    if (BU_STR_EQUAL(variant, "sph")) {
+	b = a;
+	c = a;
+    } else if (BU_STR_EQUAL(variant, "ell1")) {
+	c = b;
+    }
+
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern->idb_type = ID_ELL;
+    BU_ASSERT(&OBJ[intern->idb_type] == ftp);
+    intern->idb_meth = ftp;
+
+    BU_ALLOC(ell_ip, struct rt_ell_internal);
+    intern->idb_ptr = (void *)ell_ip;
+    ell_ip->magic = RT_ELL_INTERNAL_MAGIC;
+
+    VSET(ell_ip->v, origin[X], origin[Y], origin[Z]);
+    VSET(ell_ip->a, a * scale, 0.0, 0.0);	/* A */
+    VSET(ell_ip->b, 0.0, b * scale, 0.0);	/* B */
+    VSET(ell_ip->c, 0.0, 0.0, c * scale);	/* C */
+
+    return BRLCAD_OK;
 }
 
 
@@ -1846,6 +1940,21 @@ ell_angle(fastf_t *p1, fastf_t a, fastf_t b, fastf_t dtol, fastf_t ntol)
     vect_t norm_line, norm_ell;
 
     VSET(p0, a, 0., 0.);
+
+    /* Guard against infinite recursion.  When p0 is the major-axis endpoint
+     * (a, 0) the ellipse normal there points in +X.  As the arc from p0 to p1
+     * shrinks, the chord direction rotates to become nearly perpendicular to
+     * the normal, so the chord-normal angle at p0 converges toward π – not 0.
+     * This means the condition theta0 > ntol can be permanently true no matter
+     * how short the arc is.  Stop once the chord is negligibly small relative
+     * to the ellipse, and return the arc angle directly. */
+    {
+	fastf_t scale2 = a * a + b * b;
+	fastf_t dx = p1[X] - p0[X], dy = p1[Y] - p0[Y];
+	if (dx * dx + dy * dy < scale2 * 1.0e-10)
+	    return acos(VDOT(p0, p1) / (MAGNITUDE(p0) * MAGNITUDE(p1)));
+    }
+
     /* slope and intercept of segment */
     m = (p1[Y] - p0[Y]) / (p1[X] - p0[X]);
     intr = p0[Y] - m * p0[X];
@@ -1877,7 +1986,7 @@ ell_angle(fastf_t *p1, fastf_t a, fastf_t b, fastf_t dtol, fastf_t ntol)
 /**
  * Computes volume of a ellipsoid.
  */
-void
+C_DECL void
 rt_ell_volume(fastf_t *volume, const struct rt_db_internal *ip)
 {
     fastf_t mag_a, mag_b, mag_c;
@@ -1894,7 +2003,7 @@ rt_ell_volume(fastf_t *volume, const struct rt_db_internal *ip)
 /**
  * Computes centroid of an ellipsoid
  */
-void
+C_DECL void
 rt_ell_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
     struct rt_ell_internal *eip = (struct rt_ell_internal *)ip->idb_ptr;
@@ -1909,7 +2018,7 @@ rt_ell_centroid(point_t *cent, const struct rt_db_internal *ip)
  */
 #define PROLATE 1
 #define OBLATE 2
-void
+C_DECL void
 rt_ell_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     fastf_t mag_a, mag_b, mag_c;
@@ -1939,25 +2048,25 @@ rt_ell_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 
     if (EQUAL(mag_a, mag_b)) {
 	if (mag_a > mag_c) {
-	    /* case: prolate spheroid */
-	    ell_type = PROLATE;
+	    /* case: oblate spheroid (equatorial radius a=b, polar radius c < a) */
+	    ell_type = OBLATE;
 	    major = mag_a;
 	    minor = mag_c;
 	} else {
-	    /* case: oblate spheroid */
-	    ell_type = OBLATE;
+	    /* case: prolate spheroid (major axis c, minor radius a=b < c) */
+	    ell_type = PROLATE;
 	    major = mag_c;
 	    minor = mag_a;
 	}
     } else if (EQUAL(mag_a, mag_c)) {
 	if (mag_a > mag_b) {
-	    /* case: prolate spheroid */
-	    ell_type = PROLATE;
+	    /* case: oblate spheroid (equatorial radius a=c, polar radius b < a) */
+	    ell_type = OBLATE;
 	    major = mag_a;
 	    minor = mag_b;
 	} else {
-	    /* case: oblate spheroid */
-	    ell_type = OBLATE;
+	    /* case: prolate spheroid (major axis b, minor radius a=c < b) */
+	    ell_type = PROLATE;
 	    major = mag_b;
 	    minor = mag_a;
 	}
@@ -1987,11 +2096,14 @@ rt_ell_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 	*area = (M_2PI * major2) + (M_PI * minor2 / ecc) * log((1.0 + ecc) / (1.0 - ecc));
 	break;
     default:
-	bu_log("rt_ell_surf_area(): triaxial ellipsoid, cannot find surface area");
+	/* General triaxial ellipsoid: no closed-form solution exists.
+	 * Fall back to the Cauchy-Crofton ray-sampling estimator. */
+	do { static const struct rt_crofton_params _p = {50000u, 0.0, 0.0}; rt_crofton_sample(area, NULL, ip, &_p); } while (0);
+	break;
     }
 }
 
-int
+C_DECL int
 rt_ell_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     int lcnt = 4;
@@ -2027,7 +2139,7 @@ rt_ell_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const s
     return lcnt;
 }
 
-const char *
+C_DECL const char *
 rt_ell_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     if (!pt || !ip)
@@ -2068,7 +2180,130 @@ ell_kpt_end:
 }
 
 
+/**
+ * Perturb an ellipsoid (or sphere) by expanding each semi-axis outward by
+ * @a val.  Works for both ID_ELL and ID_SPH since they share the same internal
+ * structure; the output preserves the input idb_type.  @a planar_only is
+ * ignored because an ellipsoid has no planar faces.
+ */
+C_DECL int
+rt_ell_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip,
+	       int UNUSED(planar_only), fastf_t val)
+{
+    if (NEAR_ZERO(val, SMALL_FASTF))
+	return BRLCAD_OK;
+
+    if (!oip || !ip)
+	return BRLCAD_ERROR;
+
+    struct rt_ell_internal *oell = (struct rt_ell_internal *)ip->idb_ptr;
+    RT_ELL_CK_MAGIC(oell);
+
+    struct rt_db_internal *nip;
+    BU_GET(nip, struct rt_db_internal);
+    RT_DB_INTERNAL_INIT(nip);
+    nip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    nip->idb_type = ip->idb_type;   /* preserve ELL vs SPH */
+    nip->idb_meth = &OBJ[ip->idb_type];
+
+    struct rt_ell_internal *ell = NULL;
+    BU_ALLOC(ell, struct rt_ell_internal);
+    nip->idb_ptr = ell;
+    ell->magic = RT_ELL_INTERNAL_MAGIC;
+    VMOVE(ell->v, oell->v);
+    VMOVE(ell->a, oell->a);
+    VMOVE(ell->b, oell->b);
+    VMOVE(ell->c, oell->c);
+
+    /* Scale each semi-axis outward by val so all surface faces move away from
+     * the original position, breaking exact coplanarity with adjacent solids. */
+    vect_t mvec;
+    VMOVE(mvec, ell->a); VUNITIZE(mvec); VSCALE(mvec, mvec, val);
+    VADD2(ell->a, ell->a, mvec);
+
+    VMOVE(mvec, ell->b); VUNITIZE(mvec); VSCALE(mvec, mvec, val);
+    VADD2(ell->b, ell->b, mvec);
+
+    VMOVE(mvec, ell->c); VUNITIZE(mvec); VSCALE(mvec, mvec, val);
+    VADD2(ell->c, ell->c, mvec);
+
+    *oip = nip;
+    return BRLCAD_OK;
+}
+
+
 /** @} */
+
+int
+rt_ell_functab_validate(struct bu_vls *error_msg, const struct rt_db_internal *ip, const struct bn_tol *tol)
+{
+    struct rt_ell_internal *eip;
+    fastf_t mag_a, mag_b, mag_c;
+    fastf_t f;
+    int issues = 0;
+    const char *comma = "";
+
+    RT_CK_DB_INTERNAL(ip);
+    eip = (struct rt_ell_internal *)ip->idb_ptr;
+    RT_ELL_CK_MAGIC(eip);
+
+    if (!tol) {
+        static const struct bn_tol default_tol = BN_TOL_INIT_TOL;
+        tol = &default_tol;
+    }
+
+    mag_a = MAGNITUDE(eip->a);
+    mag_b = MAGNITUDE(eip->b);
+    mag_c = MAGNITUDE(eip->c);
+
+    bu_vls_printf(error_msg, "[");
+
+    if (NEAR_ZERO(mag_a, tol->dist)) {
+        bu_vls_printf(error_msg, "%s{\"problem_type\":\"zero_length_a_vector\"}", comma);
+        comma = ",";
+        issues++;
+    }
+    if (NEAR_ZERO(mag_b, tol->dist)) {
+        bu_vls_printf(error_msg, "%s{\"problem_type\":\"zero_length_b_vector\"}", comma);
+        comma = ",";
+        issues++;
+    }
+    if (NEAR_ZERO(mag_c, tol->dist)) {
+        bu_vls_printf(error_msg, "%s{\"problem_type\":\"zero_length_c_vector\"}", comma);
+        comma = ",";
+        issues++;
+    }
+
+    if (mag_a > SQRT_SMALL_FASTF && mag_b > SQRT_SMALL_FASTF) {
+        f = VDOT(eip->a, eip->b) / (mag_a * mag_b);
+        if (!NEAR_ZERO(f, tol->perp)) {
+            bu_vls_printf(error_msg, "%s{\"problem_type\":\"a_not_perp_b\"}", comma);
+            comma = ",";
+            issues++;
+        }
+    }
+    if (mag_b > SQRT_SMALL_FASTF && mag_c > SQRT_SMALL_FASTF) {
+        f = VDOT(eip->b, eip->c) / (mag_b * mag_c);
+        if (!NEAR_ZERO(f, tol->perp)) {
+            bu_vls_printf(error_msg, "%s{\"problem_type\":\"b_not_perp_c\"}", comma);
+            comma = ",";
+            issues++;
+        }
+    }
+    if (mag_a > SQRT_SMALL_FASTF && mag_c > SQRT_SMALL_FASTF) {
+        f = VDOT(eip->a, eip->c) / (mag_a * mag_c);
+        if (!NEAR_ZERO(f, tol->perp)) {
+            bu_vls_printf(error_msg, "%s{\"problem_type\":\"a_not_perp_c\"}", comma);
+            comma = ",";
+            issues++;
+        }
+    }
+
+    bu_vls_printf(error_msg, "]");
+
+    return issues;
+}
+
 /*
  * Local Variables:
  * mode: C

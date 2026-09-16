@@ -1,7 +1,7 @@
 /*                           R E C . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2025 United States Government as represented by
+ * Copyright (c) 1985-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -190,7 +190,7 @@ clt_rec_pack(struct bu_pool *pool, struct soltab *stp)
 /**
  * Calculate the RPP for an REC
  */
-int
+C_DECL int
 rt_rec_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
     mat_t R;
     vect_t P, w1;
@@ -226,7 +226,7 @@ rt_rec_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
     MAT3X3VEC(w1, R, P);		/* map plane into local coord syst */
     /* 1st end ellipse (no Z part) */
     tmp = magsq_a * w1[X] * w1[X] + magsq_b * w1[Y] * w1[Y];
-    if (tmp > SMALL)
+    if (tmp > SQRT_SMALL_FASTF)
 	f = sqrt(tmp);		/* XY part */
     else
 	f = 0;
@@ -235,7 +235,7 @@ rt_rec_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
     /* 2nd end ellipse */
     z = w1[Z] * mag_h;		/* Z part */
     tmp = magsq_c * w1[X] * w1[X] + magsq_d * w1[Y] * w1[Y];
-    if (tmp > SMALL)
+    if (tmp > SQRT_SMALL_FASTF)
 	f = sqrt(tmp);		/* XY part */
     else
 	f = 0;
@@ -249,7 +249,7 @@ rt_rec_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
     MAT3X3VEC(w1, R, P);		/* map plane into local coord syst */
     /* 1st end ellipse (no Z part) */
     tmp = magsq_a * w1[X] * w1[X] + magsq_b * w1[Y] * w1[Y];
-    if (tmp > SMALL)
+    if (tmp > SQRT_SMALL_FASTF)
 	f = sqrt(tmp);		/* XY part */
     else
 	f = 0;
@@ -258,7 +258,7 @@ rt_rec_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
     /* 2nd end ellipse */
     z = w1[Z] * mag_h;		/* Z part */
     tmp = magsq_c * w1[X] * w1[X] + magsq_d * w1[Y] * w1[Y];
-    if (tmp > SMALL)
+    if (tmp > SQRT_SMALL_FASTF)
 	f = sqrt(tmp);		/* XY part */
     else
 	f = 0;
@@ -272,7 +272,7 @@ rt_rec_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
     MAT3X3VEC(w1, R, P);		/* map plane into local coord syst */
     /* 1st end ellipse (no Z part) */
     tmp = magsq_a * w1[X] * w1[X] + magsq_b * w1[Y] * w1[Y];
-    if (tmp > SMALL)
+    if (tmp > SQRT_SMALL_FASTF)
 	f = sqrt(tmp);		/* XY part */
     else
 	f = 0;
@@ -281,7 +281,7 @@ rt_rec_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
     /* 2nd end ellipse */
     z = w1[Z] * mag_h;		/* Z part */
     tmp = magsq_c * w1[X] * w1[X] + magsq_d * w1[Y] * w1[Y];
-    if (tmp > SMALL)
+    if (tmp > SQRT_SMALL_FASTF)
 	f = sqrt(tmp);		/* XY part */
     else
 	f = 0;
@@ -306,7 +306,7 @@ rt_rec_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
  * address is stored in stp->st_specific for use by rt_rec_shot().  If
  * the TGC is really an REC, stp->st_id is modified to ID_REC.
  */
-int
+C_DECL int
 rt_rec_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_tgc_internal *tip;
@@ -430,7 +430,7 @@ rt_rec_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-void
+C_DECL void
 rt_rec_print(const struct soltab *stp)
 {
     const struct rec_specific *rec =
@@ -459,7 +459,7 @@ rt_rec_print(const struct soltab *stp)
  * 0 MISS
  * >0 HIT
  */
-int
+C_DECL int
 rt_rec_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
     struct rec_specific *rec;
@@ -659,7 +659,7 @@ rt_rec_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 /**
  * This is the Becker vector version
  */
-void
+C_DECL void
 rt_rec_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
     /* An array of solid pointers */
     /* An array of ray pointers */
@@ -787,7 +787,7 @@ rt_rec_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
  * Given ONE ray distance, return the normal and entry/exit point.
  * hit_surfno is a flag indicating if normal needs to be computed or not.
  */
-void
+C_DECL void
 rt_rec_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
     struct rec_specific *rec =
@@ -821,7 +821,7 @@ rt_rec_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
  * indicate no curvature.  Otherwise, compute curvature.
  * Normal must have been computed before calling this routine.
  */
-void
+C_DECL void
 rt_rec_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
     struct rec_specific *rec =
@@ -861,7 +861,7 @@ rt_rec_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
  * u is the rotation around the cylinder, and
  * v is the displacement along H.
  */
-void
+C_DECL void
 rt_rec_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
     struct rec_specific *rec =
@@ -928,7 +928,7 @@ rt_rec_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 }
 
 
-int
+C_DECL int
 rt_rec_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
     if (ip) RT_CK_DB_INTERNAL(ip);
@@ -937,7 +937,7 @@ rt_rec_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 }
 
 
-void
+C_DECL void
 rt_rec_free(struct soltab *stp)
 {
     struct rec_specific *rec =

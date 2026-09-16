@@ -1,7 +1,7 @@
 #               P I C T U R E T Y P E F . I T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2025 United States Government as represented by
+# Copyright (c) 2004-2026 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -187,17 +187,8 @@ namespace eval RtWizard {
 	#
 	set perspective [$::mgedObj gedCmd perspective]
 
-	if {$::tcl_platform(platform) == "windows"} {
-	    set pid_filename "NUL"
-	} else {
-	    set pid_filename "/dev/null"
-	}
-
-	if {$::tcl_platform(platform) == "windows"} {
-	    set log_file "NUL"
-	} else {
-	    set log_file "/dev/null"
-	}
+	set pid_filename [bu_file_null]
+	set log_file [bu_file_null]
 
         set rtimage_dict [dict create \
 	    _dbfile $::RtWizard::wizard_state(dbFile) \
@@ -217,7 +208,10 @@ namespace eval RtWizard {
 	    _ghost_objects $ghost_objects \
 	    _edge_objects $line_objects \
            _pid_filename $pid_filename \
-           _log_file $log_file]
+           _log_file $log_file \
+	   _animate 1 \
+	   _ao_samples $::RtWizard::wizard_state(ao_samples) \
+	   _ao_radius $::RtWizard::wizard_state(ao_radius)]
 
 	::cadwidgets::rtimage $rtimage_dict
 
@@ -225,7 +219,7 @@ namespace eval RtWizard {
 	# the in-memory fbserv
 	if {[info exists filename]} {
 	   if {[string length $filename] > 0 } {
-	       set output_generated 0
+	       set output_generated [expr {[info exists ::RtWizard::wizard_state(make_animation)] && $::RtWizard::wizard_state(make_animation)}]
 	       if {[file extension $filename] == ".png"} {
 		  if { [catch {exec [file join [bu_dir bin] fb-png] -w $w -n $h -F $fb $filename}] } {
 		      set output_generated 0

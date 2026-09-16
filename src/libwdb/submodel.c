@@ -1,7 +1,7 @@
 /*                       S U B M O D E L . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2025 United States Government as represented by
+ * Copyright (c) 1994-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -42,6 +42,7 @@ mk_submodel(struct rt_wdb *fp, const char *name, const char *file, const char *t
     bu_vls_init(&in->treetop);
     bu_vls_strcpy(&in->treetop, treetop);
     in->meth = meth;
+    MAT_IDN(in->root2leaf);
 
     return wdb_export(fp, name, (void *)in, ID_SUBMODEL, mk_conv2mm);
 }

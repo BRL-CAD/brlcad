@@ -1,7 +1,7 @@
 /*                         D X F - G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2025 United States Government as represented by
+ * Copyright (c) 2004-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -212,7 +212,7 @@ static int invisible = 0;
 #define MAX_LINE_SIZE 2050
 char line[MAX_LINE_SIZE];
 
-static char *usage="Usage: dxf-g [-c] [-d] [-v] [-t tolerance] [-s scale_factor] input_file.dxf output_file.g\n";
+static const char *usage="Usage: dxf-g [-c] [-d] [-v] [-t tolerance] [-s scale_factor] input_file.dxf output_file.g\n";
 
 static FILE *dxf;
 static struct rt_wdb *out_fp;
@@ -3399,7 +3399,7 @@ main(int argc, char *argv[])
 	    tmp_rgb = &rgb[layers[i]->color_number*3];
 	    bu_vls_printf(&comb_name, "%s.c.%d", layers[i]->name, i);
 	    if (mk_comb(out_fp, bu_vls_addr(&comb_name), &head, 1, NULL, NULL,
-			tmp_rgb, 1, 0, 1, 100, 0, 0, 0)) {
+			tmp_rgb, 1, 0, 0, 100, 0, 0, 0)) {
 		bu_log("Failed to make region %s\n", layers[i]->name);
 	    } else {
 		(void)mk_addmember(bu_vls_addr(&comb_name), &head_all, NULL, WMOP_UNION);

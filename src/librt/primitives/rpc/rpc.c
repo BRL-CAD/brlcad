@@ -1,7 +1,7 @@
 /*                           R P C . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2025 United States Government as represented by
+ * Copyright (c) 1990-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -223,7 +223,7 @@ clt_rpc_pack(struct bu_pool *pool, struct soltab *stp)
 
 #endif /* USE_OPENCL */
 
-const struct bu_structparse rt_rpc_parse[] = {
+EXTERNCPP const struct bu_structparse rt_rpc_parse[] = {
     { "%f", 3, "V", bu_offsetofarray(struct rt_rpc_internal, rpc_V, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 3, "H", bu_offsetofarray(struct rt_rpc_internal, rpc_H, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 3, "B", bu_offsetofarray(struct rt_rpc_internal, rpc_B, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -234,7 +234,7 @@ const struct bu_structparse rt_rpc_parse[] = {
 /**
  * Calculate the RPP for an RPC
  */
-int
+C_DECL int
 rt_rpc_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
     struct rt_rpc_internal *xip;
     vect_t rinv, rvect, rv2, working;
@@ -295,7 +295,7 @@ rt_rpc_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
  * A struct rpc_specific is created, and its address is stored in
  * stp->st_specific for use by rpc_shot().
  */
-int
+C_DECL int
 rt_rpc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_rpc_internal *xip;
@@ -371,7 +371,7 @@ rt_rpc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-void
+C_DECL void
 rt_rpc_print(const struct soltab *stp)
 {
     const struct rpc_specific *rpc =
@@ -401,7 +401,7 @@ rt_rpc_print(const struct soltab *stp)
  * 0 MISS
  * >0 HIT
  */
-int
+C_DECL int
 rt_rpc_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
     struct rpc_specific *rpc =
@@ -544,9 +544,168 @@ rt_rpc_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 
 
 /**
+ * Vectorized counterpart to rt_rpc_shot().
+ *
+ * Intersect a batch of n rays, each against its own rpc soltab, writing
+ * exactly one seg per ray into the caller-supplied flat segp[] array.  A
+ * miss is flagged with segp[i].seg_stp == NULL; stp[i] == NULL signals a
+ * ray to skip.
+ *
+ * Unlike the scalar shot, no seg is acquired from the resource free list
+ * and no seg-list linkage is performed: results stream directly into the
+ * contiguous segp[] array.  Eliminating that per-hit allocation and list
+ * traffic is the data-coherency benefit of batching.  The per-ray
+ * arithmetic is a verbatim copy of rt_rpc_shot() so the two paths agree
+ * to the bit; hit_vpriv/hit_surfno are preserved for rt_rpc_norm().
+ */
+C_DECL void
+rt_rpc_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
+/* An array of solid pointers */
+/* An array of ray pointers */
+/* array of segs (results returned) */
+/* Number of ray/object pairs */
+{
+    int i;
+
+    if (ap) RT_CK_APPLICATION(ap);
+
+    for (i = 0; i < n; i++) {
+	struct rpc_specific *rpc;
+	vect_t dprime;		/* D' */
+	vect_t pprime;		/* P' */
+	fastf_t k1, k2;		/* distance constants of solution */
+	vect_t xlated;		/* translated vector */
+	struct hit hits[3];	/* 2 potential hit points */
+	struct hit *hitp;	/* pointer to hit point */
+
+	if (stp[i] == 0) continue;		/* skip this ray */
+	segp[i].seg_stp = (struct soltab *)0;	/* assume MISS */
+
+	rpc = (struct rpc_specific *)stp[i]->st_specific;
+	hitp = &hits[0];
+
+	/* out, Mat, vect */
+	MAT4X3VEC(dprime, rpc->rpc_SoR, rp[i]->r_dir);
+	VSUB2(xlated, rp[i]->r_pt, rpc->rpc_V);
+	MAT4X3VEC(pprime, rpc->rpc_SoR, xlated);
+
+	/* Find roots of the equation, using formula for quadratic */
+	if (!NEAR_ZERO(dprime[Y], RT_PCOEF_TOL)) {
+	    fastf_t a, b, c;	/* coeffs of polynomial */
+	    fastf_t disc;		/* disc of radical */
+
+	    a = dprime[Y] * dprime[Y];
+	    b = 2.0 * dprime[Y] * pprime[Y] - dprime[Z];
+	    c = pprime[Y] * pprime[Y] - pprime[Z] - 1.0;
+	    disc = b*b - 4.0 * a * c;
+	    if (disc > 0) {
+		disc = sqrt(disc);
+
+		k1 = (-b + disc) / (2.0 * a);
+		k2 = (-b - disc) / (2.0 * a);
+
+		/*
+		 * k1 and k2 are potential solutions to intersection with
+		 * side.  See if they fall in range.
+		 */
+		VJOIN1(hitp->hit_vpriv, pprime, k1, dprime);	/* hit' */
+		if (hitp->hit_vpriv[X] >= -1.0 && hitp->hit_vpriv[X] <= 0.0
+		    && hitp->hit_vpriv[Z] <= 0.0) {
+		    hitp->hit_magic = RT_HIT_MAGIC;
+		    hitp->hit_dist = k1;
+		    hitp->hit_surfno = RPC_NORM_BODY;	/* compute N */
+		    hitp++;
+		}
+
+		VJOIN1(hitp->hit_vpriv, pprime, k2, dprime);	/* hit' */
+		if (hitp->hit_vpriv[X] >= -1.0 && hitp->hit_vpriv[X] <= 0.0
+		    && hitp->hit_vpriv[Z] <= 0.0) {
+		    hitp->hit_magic = RT_HIT_MAGIC;
+		    hitp->hit_dist = k2;
+		    hitp->hit_surfno = RPC_NORM_BODY;	/* compute N */
+		    hitp++;
+		}
+	    }
+	} else if (!NEAR_ZERO(dprime[Z], RT_PCOEF_TOL)) {
+	    k1 = (pprime[Y] * pprime[Y] - pprime[Z] - 1.0) / dprime[Z];
+	    VJOIN1(hitp->hit_vpriv, pprime, k1, dprime);	/* hit' */
+	    if (hitp->hit_vpriv[X] >= -1.0 && hitp->hit_vpriv[X] <= 0.0
+		&& hitp->hit_vpriv[Z] <= 0.0) {
+		hitp->hit_magic = RT_HIT_MAGIC;
+		hitp->hit_dist = k1;
+		hitp->hit_surfno = RPC_NORM_BODY;	/* compute N */
+		hitp++;
+	    }
+	}
+
+	/*
+	 * Check for hitting the end plates.
+	 */
+
+	/* check front and back plates */
+	if (hitp < &hits[2]  &&  !NEAR_ZERO(dprime[X], RT_PCOEF_TOL)) {
+	    /* 0 or 1 hits so far, this is worthwhile */
+	    k1 = -pprime[X] / dprime[X];		/* front plate */
+	    k2 = (-1.0 - pprime[X]) / dprime[X];	/* back plate */
+
+	    VJOIN1(hitp->hit_vpriv, pprime, k1, dprime);	/* hit' */
+	    if (hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y]
+		- hitp->hit_vpriv[Z] <= 1.0
+		&& hitp->hit_vpriv[Z] <= 0.0) {
+		hitp->hit_magic = RT_HIT_MAGIC;
+		hitp->hit_dist = k1;
+		hitp->hit_surfno = RPC_NORM_FRT;	/* -H */
+		hitp++;
+	    }
+
+	    VJOIN1(hitp->hit_vpriv, pprime, k2, dprime);	/* hit' */
+	    if (hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y]
+		- hitp->hit_vpriv[Z] <= 1.0
+		&& hitp->hit_vpriv[Z] <= 0.0) {
+		hitp->hit_magic = RT_HIT_MAGIC;
+		hitp->hit_dist = k2;
+		hitp->hit_surfno = RPC_NORM_BACK;	/* +H */
+		hitp++;
+	    }
+	}
+
+	/* check top plate */
+	if (hitp == &hits[1]  &&  !NEAR_ZERO(dprime[Z], RT_PCOEF_TOL)) {
+	    /* 1 hit so far, this is worthwhile */
+	    k1 = -pprime[Z] / dprime[Z];		/* top plate */
+
+	    VJOIN1(hitp->hit_vpriv, pprime, k1, dprime);	/* hit' */
+	    if (hitp->hit_vpriv[X] >= -1.0 &&  hitp->hit_vpriv[X] <= 0.0
+		&& hitp->hit_vpriv[Y] >= -1.0
+		&& hitp->hit_vpriv[Y] <= 1.0) {
+		hitp->hit_magic = RT_HIT_MAGIC;
+		hitp->hit_dist = k1;
+		hitp->hit_surfno = RPC_NORM_TOP;	/* -B */
+		hitp++;
+	    }
+	}
+
+	if (hitp != &hits[2])
+	    continue;		/* MISS */
+
+	segp[i].seg_stp = stp[i];
+	if (hits[0].hit_dist < hits[1].hit_dist) {
+	    /* entry is [0], exit is [1] */
+	    segp[i].seg_in = hits[0];		/* struct copy */
+	    segp[i].seg_out = hits[1];		/* struct copy */
+	} else {
+	    /* entry is [1], exit is [0] */
+	    segp[i].seg_in = hits[1];		/* struct copy */
+	    segp[i].seg_out = hits[0];		/* struct copy */
+	}
+    }
+}
+
+
+/**
  * Given ONE ray distance, return the normal and entry/exit point.
  */
-void
+C_DECL void
 rt_rpc_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
     vect_t can_normal;	/* normal to canonical rpc */
@@ -579,7 +738,7 @@ rt_rpc_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 /**
  * Return the curvature of the rpc.
  */
-void
+C_DECL void
 rt_rpc_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
     fastf_t zp1, zp2;	/* 1st & 2nd derivatives */
@@ -613,7 +772,7 @@ rt_rpc_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
  * u = azimuth
  * v = elevation
  */
-void
+C_DECL void
 rt_rpc_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
     struct rpc_specific *rpc = (struct rpc_specific *)stp->st_specific;
@@ -658,7 +817,7 @@ rt_rpc_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 }
 
 
-void
+C_DECL void
 rt_rpc_free(struct soltab *stp)
 {
     struct rpc_specific *rpc =
@@ -864,7 +1023,7 @@ rpc_curve_points(
     return est_curve_length / point_spacing;
 }
 
-int
+C_DECL int
 rt_rpc_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *tol, const struct bview *v, fastf_t s_size)
 {
     point_t p;
@@ -931,13 +1090,14 @@ rt_rpc_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
     return 0;
 }
 
-int
+C_DECL int
 rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     struct rt_rpc_internal *xip;
     fastf_t *front;
     fastf_t *back;
     fastf_t b, dtol, ntol, rh;
+    fastf_t min_abs;
     int i, n;
     struct rt_pnt_node *old, *pos, *pts;
     vect_t Bu, Hu, Ru, B, R;
@@ -975,6 +1135,13 @@ rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 	/* tolerate everything */
 	ntol = M_PI;
 
+    /* Clamp to prevent excessively dense meshes. */
+    {
+	fastf_t bbox_diag = 2.0 * (rh > b ? rh : b);
+	primitive_clamp_tess_tol(&dtol, &ntol, bbox_diag);
+    }
+    min_abs = prim_min_abs_tol();
+
     /* initial parabola approximation is a single segment */
     BU_ALLOC(pts, struct rt_pnt_node);
     BU_ALLOC(pts->next, struct rt_pnt_node);
@@ -985,7 +1152,7 @@ rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     /* 2 endpoints in 1st approximation */
     n = 2;
     /* recursively break segment 'til within error tolerances */
-    n += rt_mk_parabola(pts, rh, b, dtol, ntol);
+    n += _rt_mk_parabola(pts, rh, b, dtol, ntol, min_abs);
 
     /* get mem for arrays */
     front = (fastf_t *)bu_malloc(3*n * sizeof(fastf_t), "fastf_t");
@@ -1045,9 +1212,13 @@ rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
  * that point is not already within the distance and normal error
  * tolerances.  The two resulting segments are passed recursively
  * to this routine until each segment is within tolerance.
+ *
+ * Internal version: takes an explicit min_abs floor so the caller can
+ * read the env-var override once and propagate it through all recursion
+ * without repeated getenv() calls.
  */
 int
-rt_mk_parabola(struct rt_pnt_node *pts, fastf_t r, fastf_t b, fastf_t dtol, fastf_t ntol)
+_rt_mk_parabola(struct rt_pnt_node *pts, fastf_t r, fastf_t b, fastf_t dtol, fastf_t ntol, fastf_t min_abs)
 {
     fastf_t dist, intr, m, theta0, theta1;
     int n;
@@ -1083,6 +1254,23 @@ rt_mk_parabola(struct rt_pnt_node *pts, fastf_t r, fastf_t b, fastf_t dtol, fast
     theta1 = fabs(acos(VDOT(norm_line, norm_parab)));
     /* split segment at widest point if not within error tolerances */
     if (dist > dtol || theta0 > ntol || theta1 > ntol) {
+	/* Stop subdividing when the segment Y-span is much smaller than both
+	 * the dtol floor and the ntol-equivalent floor.  For a parabola the
+	 * normal angle change over a span s is approximately s*(2b/r^2) (the
+	 * maximum curvature at the apex), so the ntol-equivalent minimum span
+	 * is ntol*r^2/(2b).  Clamp that to min_abs so the floor stays
+	 * consistent with the dtol floor used by primitive_clamp_tess_tol.
+	 * Use min(dtol, ntol_equiv)*0.1 so we stop only when the segment is
+	 * already much smaller than the tightest applicable tolerance. */
+	fastf_t span = fabs(p1[Y] - p0[Y]);
+	{
+	    fastf_t ntol_equiv = (ntol < M_PI) ? ntol * r * r / (2.0 * b) : dtol;
+	    if (ntol_equiv < min_abs) ntol_equiv = min_abs;
+	    fastf_t span_floor = (ntol_equiv < dtol ? ntol_equiv : dtol) * 0.1;
+	    if (span < span_floor)
+		return 0;
+	}
+
 	/* split segment */
 	BU_ALLOC(newpt, struct rt_pnt_node);
 	VMOVE(newpt->p, mpt);
@@ -1091,12 +1279,56 @@ rt_mk_parabola(struct rt_pnt_node *pts, fastf_t r, fastf_t b, fastf_t dtol, fast
 	/* keep track of number of pts added */
 	n = 1;
 	/* recurse on first new segment */
-	n += rt_mk_parabola(pts, r, b, dtol, ntol);
+	n += _rt_mk_parabola(pts, r, b, dtol, ntol, min_abs);
 	/* recurse on second new segment */
-	n += rt_mk_parabola(newpt, r, b, dtol, ntol);
+	n += _rt_mk_parabola(newpt, r, b, dtol, ntol, min_abs);
     } else
 	n  = 0;
     return n;
+}
+
+
+/**
+ * Deprecated compatibility wrapper for _rt_mk_parabola.  Uses SMALL_FASTF as
+ * the minimum absolute subdivision span, preserving the original behavior of
+ * unconditionally honoring whatever dtol/ntol the caller passes (no sanity
+ * floor).  New code should call rt_mk_parabola() with an explicit min_abs.
+ *
+ * @deprecated use rt_mk_parabola() with an explicit min_abs argument.
+ */
+int
+rt_mk_parabola_old(struct rt_pnt_node *pts, fastf_t r, fastf_t b, fastf_t dtol, fastf_t ntol)
+{
+    return _rt_mk_parabola(pts, r, b, dtol, ntol, SMALL_FASTF);
+}
+
+
+/**
+ * Approximate a parabola with line segments, with caller-controlled minimum
+ * subdivision span.
+ *
+ * @param pts   Linked list of points; must have at least two nodes on entry.
+ * @param r     Rectangular half-width of the parabola.
+ * @param b     Breadth (half-height) of the parabola.
+ * @param dtol  Maximum allowable chord-to-curve distance (mm).
+ * @param ntol  Maximum allowable normal-deviation angle (radians); pass M_PI
+ *              to ignore normal tolerance.
+ * @param min_abs  Minimum absolute span (mm) below which subdivision stops,
+ *              preventing runaway recursion.  Recommended values:
+ *              - 0.05 mm is the librt default and suits typical CAD geometry.
+ *              - Smaller values (e.g., 0.005 mm) produce finer curves but can
+ *                increase polygon counts dramatically near tight radii.
+ *              - SMALL_FASTF (~1e-37) disables the floor entirely, matching
+ *                the original rt_mk_parabola_old() behavior; use only when
+ *                you know the geometry cannot trigger unbounded recursion.
+ *              Decreasing min_abs below dtol has no effect until dtol itself
+ *              drives subdivision to spans smaller than min_abs.
+ * @return Number of additional points inserted.
+ */
+int
+rt_mk_parabola(struct rt_pnt_node *pts, fastf_t r, fastf_t b, fastf_t dtol, fastf_t ntol, fastf_t min_abs)
+{
+    return _rt_mk_parabola(pts, r, b, dtol, ntol, min_abs);
 }
 
 
@@ -1105,12 +1337,12 @@ rt_mk_parabola(struct rt_pnt_node *pts, fastf_t r, fastf_t b, fastf_t dtol, fast
  * -1 failure
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
-int
+C_DECL int
 rt_rpc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
 {
     int i, j, n;
     fastf_t b, *back, *front, rh;
-    fastf_t dtol, ntol;
+    fastf_t dtol, ntol, min_abs;
     vect_t Bu, Hu, Ru;
     mat_t R;
     mat_t invR;
@@ -1165,6 +1397,13 @@ rt_rpc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	/* tolerate everything */
 	ntol = M_PI;
 
+    /* Clamp to prevent excessively dense meshes. */
+    {
+	fastf_t bbox_diag = 2.0 * (rh > b ? rh : b);
+	primitive_clamp_tess_tol(&dtol, &ntol, bbox_diag);
+    }
+    min_abs = prim_min_abs_tol();
+
     /* initial parabola approximation is a single segment */
     BU_ALLOC(pts, struct rt_pnt_node);
     BU_ALLOC(pts->next, struct rt_pnt_node);
@@ -1175,7 +1414,7 @@ rt_rpc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     /* 2 endpoints in 1st approximation */
     n = 2;
     /* recursively break segment 'til within error tolerances */
-    n += rt_mk_parabola(pts, rh, b, dtol, ntol);
+    n += _rt_mk_parabola(pts, rh, b, dtol, ntol, min_abs);
 
     /* get mem for arrays */
     front = (fastf_t *)bu_malloc(3*n * sizeof(fastf_t), "fastf_t");
@@ -1340,7 +1579,7 @@ rt_rpc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
  * Import an RPC from the database format to the internal format.
  * Apply modeling transformations as well.
  */
-int
+C_DECL int
 rt_rpc_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_rpc_internal *xip;
@@ -1369,7 +1608,7 @@ rt_rpc_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     /* Warning:  type conversion */
     if (mat == NULL) mat = bn_mat_identity;
 
-    if (dbip && dbip->dbi_version < 0) {
+    if (dbip && dbip->i->dbi_version < 0) {
 	flip_fastf_float(v1, &rp->s.s_values[0*3], 1, 1);
 	flip_fastf_float(v2, &rp->s.s_values[1*3], 1, 1);
 	flip_fastf_float(v3, &rp->s.s_values[2*3], 1, 1);
@@ -1383,7 +1622,7 @@ rt_rpc_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     MAT4X3VEC(xip->rpc_H, mat, v2);
     MAT4X3VEC(xip->rpc_B, mat, v3);
 
-    if (dbip && dbip->dbi_version < 0) {
+    if (dbip && dbip->i->dbi_version < 0) {
 	v1[X] = flip_dbfloat(rp->s.s_values[3*3+0]);
     } else {
 	v1[X] = rp->s.s_values[3*3+0];
@@ -1404,7 +1643,7 @@ rt_rpc_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 /**
  * The name is added by the caller, in the usual place.
  */
-int
+C_DECL int
 rt_rpc_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_rpc_internal *xip;
@@ -1449,7 +1688,7 @@ rt_rpc_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     return 0;
 }
 
-int
+C_DECL int
 rt_rpc_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
 {
     if (!rop || !ip || !mat)
@@ -1484,7 +1723,7 @@ rt_rpc_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
  * Import an RPC from the database format to the internal format.
  * Apply modeling transformations as well.
  */
-int
+C_DECL int
 rt_rpc_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_rpc_internal *xip;
@@ -1532,7 +1771,7 @@ rt_rpc_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 /**
  * The name is added by the caller, in the usual place.
  */
-int
+C_DECL int
 rt_rpc_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_rpc_internal *xip;
@@ -1584,7 +1823,7 @@ rt_rpc_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
  * First line describes type of solid.
  * Additional lines are indented one tab, and give parameter values.
  */
-int
+C_DECL int
 rt_rpc_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
     struct rt_rpc_internal *xip =
@@ -1627,7 +1866,7 @@ rt_rpc_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 /**
  * Free the storage associated with the rt_db_internal version of this solid.
  */
-void
+C_DECL void
 rt_rpc_ifree(struct rt_db_internal *ip)
 {
     struct rt_rpc_internal *xip;
@@ -1642,8 +1881,8 @@ rt_rpc_ifree(struct rt_db_internal *ip)
     ip->idb_ptr = ((void *)0);	/* sanity */
 }
 
-void
-rt_rpc_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
+C_DECL int
+rt_rpc_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char* UNUSED(variant), const point_t origin, double scale)
 {
     struct rt_rpc_internal* rpc_ip;
 
@@ -1657,15 +1896,16 @@ rt_rpc_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
     intern->idb_ptr = (void *)rpc_ip;
 
     rpc_ip->rpc_magic = RT_RPC_INTERNAL_MAGIC;
-    VSETALL(rpc_ip->rpc_V, 0);
-    VSET(rpc_ip->rpc_H, 0.0, 0.0, 1.0);
-    VSET(rpc_ip->rpc_B, 0.0, 1.0, 0.0);
-    rpc_ip->rpc_r = 1.0;
+    VSET(rpc_ip->rpc_V, origin[X], origin[Y]-scale*0.25, origin[Z]-scale*0.5);
+    VSET(rpc_ip->rpc_H, 0.0, 0.0, scale);
+    VSET(rpc_ip->rpc_B, 0.0, (scale*0.5), 0.0);
+    rpc_ip->rpc_r = scale*0.25;
 
+    return BRLCAD_OK;
 }
 
 
-int
+C_DECL int
 rt_rpc_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
     if (ip) RT_CK_DB_INTERNAL(ip);
@@ -1674,7 +1914,7 @@ rt_rpc_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 }
 
 
-void
+C_DECL void
 rt_rpc_volume(fastf_t *vol, const struct rt_db_internal *ip)
 {
     fastf_t mag_h, mag_b, mag_r;
@@ -1689,7 +1929,7 @@ rt_rpc_volume(fastf_t *vol, const struct rt_db_internal *ip)
 }
 
 
-void
+C_DECL void
 rt_rpc_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
     struct rt_rpc_internal *xip = (struct rt_rpc_internal *)ip->idb_ptr;
@@ -1707,7 +1947,7 @@ rt_rpc_centroid(point_t *cent, const struct rt_db_internal *ip)
 }
 
 
-void
+C_DECL void
 rt_rpc_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     fastf_t area_base, area_shell, area_rect;
@@ -1726,7 +1966,7 @@ rt_rpc_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 
     area_shell = 0.5 * sqrt(magsq_r + 4.0 * magsq_b) + 0.25 * magsq_r /
 	mag_b * asinh(2.0 * mag_b / mag_r);
-    area_shell *= 2.0;
+    area_shell *= 2.0 * mag_h;
 
     area_rect = 2.0 * mag_r * mag_h;
 
@@ -1764,7 +2004,7 @@ rpc_is_valid(struct rt_rpc_internal *rpc)
     return 1;
 }
 
-int
+C_DECL int
 rt_rpc_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     int lcnt = 4;
@@ -1804,7 +2044,7 @@ rt_rpc_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const s
     return lcnt;
 }
 
-const char *
+C_DECL const char *
 rt_rpc_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     if (!pt || !ip)
@@ -1832,6 +2072,113 @@ rpc_kpt_end:
     return k;
 }
 
+
+C_DECL int
+rt_rpc_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int planar_only, fastf_t val)
+{
+    if (NEAR_ZERO(val, SMALL_FASTF))
+	return BRLCAD_OK;
+
+    if (!oip || !ip)
+	return BRLCAD_ERROR;
+
+    struct rt_rpc_internal *orpc = (struct rt_rpc_internal *)ip->idb_ptr;
+    RT_RPC_CK_MAGIC(orpc);
+
+    struct rt_db_internal *nip;
+    BU_GET(nip, struct rt_db_internal);
+    RT_DB_INTERNAL_INIT(nip);
+    nip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    nip->idb_type = ID_RPC;
+    nip->idb_meth = &OBJ[ID_RPC];
+    struct rt_rpc_internal *rpc = NULL;
+    BU_ALLOC(rpc, struct rt_rpc_internal);
+    nip->idb_ptr = rpc;
+    rpc->rpc_magic = RT_RPC_INTERNAL_MAGIC;
+    VMOVE(rpc->rpc_V, orpc->rpc_V);
+    VMOVE(rpc->rpc_H, orpc->rpc_H);
+    VMOVE(rpc->rpc_B, orpc->rpc_B);
+    rpc->rpc_r = orpc->rpc_r;
+
+    /* Extend H (and move V back) to push the flat rectangular faces apart. */
+    vect_t hvec, hback;
+    VMOVE(hvec, rpc->rpc_H);
+    VUNITIZE(hvec);
+    VREVERSE(hback, hvec);
+    VSCALE(hback, hback, val);
+    VADD2(rpc->rpc_V, rpc->rpc_V, hback);
+    vect_t hext;
+    VSCALE(hext, hvec, 2.0 * val);
+    VADD2(rpc->rpc_H, rpc->rpc_H, hext);
+
+    if (planar_only) {
+	*oip = nip;
+	return BRLCAD_OK;
+    }
+
+    /* Also expand the breadth vector and half-width. */
+    vect_t bvec;
+    VMOVE(bvec, rpc->rpc_B);
+    VUNITIZE(bvec);
+    VSCALE(bvec, bvec, val);
+    VADD2(rpc->rpc_B, rpc->rpc_B, bvec);
+    rpc->rpc_r += val;
+
+    *oip = nip;
+    return BRLCAD_OK;
+}
+
+int
+rt_rpc_functab_validate(struct bu_vls *error_msg, const struct rt_db_internal *ip, const struct bn_tol *tol)
+{
+    struct rt_rpc_internal *rpc;
+    fastf_t mag_b, mag_h;
+    fastf_t f;
+    int issues = 0;
+    const char *comma = "";
+
+    RT_CK_DB_INTERNAL(ip);
+    rpc = (struct rt_rpc_internal *)ip->idb_ptr;
+    RT_RPC_CK_MAGIC(rpc);
+
+    if (!tol) {
+        static const struct bn_tol default_tol = BN_TOL_INIT_TOL;
+        tol = &default_tol;
+    }
+
+    mag_b = MAGNITUDE(rpc->rpc_B);
+    mag_h = MAGNITUDE(rpc->rpc_H);
+
+    bu_vls_printf(error_msg, "[");
+
+    if (NEAR_ZERO(mag_h, tol->dist)) {
+        bu_vls_printf(error_msg, "%s{\"problem_type\":\"zero_length_h_vector\"}", comma);
+        comma = ",";
+        issues++;
+    }
+    if (NEAR_ZERO(mag_b, tol->dist)) {
+        bu_vls_printf(error_msg, "%s{\"problem_type\":\"zero_length_b_vector\"}", comma);
+        comma = ",";
+        issues++;
+    }
+    if (NEAR_ZERO(rpc->rpc_r, tol->dist)) {
+        bu_vls_printf(error_msg, "%s{\"problem_type\":\"zero_length_r_value\"}", comma);
+        comma = ",";
+        issues++;
+    }
+
+    if (mag_b > SQRT_SMALL_FASTF && mag_h > SQRT_SMALL_FASTF) {
+        f = VDOT(rpc->rpc_B, rpc->rpc_H) / (mag_b * mag_h);
+        if (!NEAR_ZERO(f, tol->perp)) {
+            bu_vls_printf(error_msg, "%s{\"problem_type\":\"b_not_perp_h\"}", comma);
+            comma = ",";
+            issues++;
+        }
+    }
+
+    bu_vls_printf(error_msg, "]");
+    return issues;
+}
 
 /*
  * Local Variables:

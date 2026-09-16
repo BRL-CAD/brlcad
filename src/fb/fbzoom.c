@@ -1,7 +1,7 @@
 /*                        F B Z O O M . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2025 United States Government as represented by
+ * Copyright (c) 1986-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,12 +27,15 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 
 #include "bio.h"
 
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/log.h"
 #include "vmath.h"
 
@@ -69,24 +72,41 @@ static struct fb *fbp;
 
 static char usage[] = "\
 Usage: fbzoom [-T] [-F framebuffer]\n\
-	[-{sS} squarescrsize] [-{wW} scr_width] [-{nN} scr_height]\n";
+	[-{sS} squarescrsize] [-{wW} scr_width] [-{nN} scr_height]\n\
+	[xPan yPan xZoom yZoom]\n";
 
 int
 main(int argc, char **argv)
 {
+    int remaining = 0;
+
     bu_setprogname(argv[0]);
     if (! pars_Argv(argc, argv)) {
 	(void)fputs(usage, stderr);
 	bu_exit(1, NULL);
     }
+
+    remaining = argc - bu_optind;
+    if (remaining != 0 && remaining != 4) {
+	bu_log("%s: expected either 0 or 4 positional arguments, got %d\n", bu_getprogname(), remaining);
+	(void)fputs(usage, stderr);
+	bu_exit(1, NULL);
+    }
+
+    if (remaining == 4) {
+	if (!bu_opt_scan_int(argv[bu_optind+0], &xPan, "x pan")
+	    || !bu_opt_scan_int(argv[bu_optind+1], &yPan, "y pan")
+	    || !bu_opt_scan_int_range(argv[bu_optind+2], &xZoom, 1, INT_MAX, "x zoom")
+	    || !bu_opt_scan_int_range(argv[bu_optind+3], &yZoom, 1, INT_MAX, "y zoom")) {
+	    (void)fputs(usage, stderr);
+	    bu_exit(1, NULL);
+	}
+    }
+
     if ((fbp = fb_open(framebuffer, scr_width, scr_height)) == NULL)
 	bu_exit(1, NULL);
 
-    if (bu_optind+4 == argc) {
-	xPan = atoi(argv[bu_optind+0]);
-	yPan = atoi(argv[bu_optind+1]);
-	xZoom = atoi(argv[bu_optind+2]);
-	yZoom = atoi(argv[bu_optind+3]);
+    if (remaining == 4) {
 	fb_view(fbp, xPan, yPan, xZoom, yZoom);
     }
 
@@ -315,15 +335,19 @@ pars_Argv(int argc, char **argv)
 		break;
 	    case 's':
 	    case 'S':
-		scr_height = scr_width = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &scr_width, 1, INT_MAX, "screen size"))
+		    return 0;
+		scr_height = scr_width;
 		break;
 	    case 'w':
 	    case 'W':
-		scr_width = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &scr_width, 1, INT_MAX, "screen width"))
+		    return 0;
 		break;
 	    case 'n':
 	    case 'N':
-		scr_height = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &scr_height, 1, INT_MAX, "screen height"))
+		    return 0;
 		break;
 
 	    default:		/* '?' 'h' */

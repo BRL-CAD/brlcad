@@ -1,7 +1,7 @@
 /*                       G E D _ U T I L . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2025 United States Government as represented by
+ * Copyright (c) 2000-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -302,6 +302,7 @@ _ged_results_init(struct ged_results *results)
 	return BRLCAD_ERROR;
     BU_ALLOC(results->results_tbl, struct bu_ptbl);
     BU_PTBL_INIT(results->results_tbl);
+    results->ret = BRLCAD_ERROR;
     return BRLCAD_OK;
 }
 
@@ -325,6 +326,14 @@ _ged_results_add(struct ged_results *results, const char *result_string)
     bu_ptbl_ins(results->results_tbl, (long *)bu_strdup(result_string));
 
     return BRLCAD_OK;
+}
+
+int
+ged_results_ret(struct ged_results *results)
+{
+    if (!results)
+	return BRLCAD_ERROR;
+    return results->ret;
 }
 
 size_t
@@ -518,17 +527,6 @@ _ged_cmd_help(struct ged *gedp, const char *usage, struct bu_opt_desc *d)
     bu_vls_free(&str);
 }
 
-// TODO - replace with bu_opt_incr_long
-int
-_ged_vopt(struct bu_vls *UNUSED(msg), size_t UNUSED(argc), const char **UNUSED(argv), void *set_var)
-{
-    int *v_set = (int *)set_var;
-    if (v_set) {
-	(*v_set) = (*v_set) + 1;
-    }
-    return 0;
-}
-
 /* Sort the argv array to list existing objects first and everything else at
  * the end.  Returns the number of argv entries where db_lookup failed */
 int
@@ -668,7 +666,7 @@ _ged_read_densities(struct analyze_densities **dens, char **den_src, struct ged 
 
 	if (dp != (struct directory *)NULL) {
 
-	    if (rt_db_get_internal(&intern, dp, gedp->dbip, NULL, &rt_uniresource) < 0) {
+	    if (rt_db_get_internal(&intern, dp, gedp->dbip, NULL) < 0) {
 		bu_vls_printf(gedp->ged_result_str, "could not import %s\n", dp->d_namep);
 		return BRLCAD_ERROR;
 	    }
@@ -810,8 +808,8 @@ ged_dbcopy(struct ged *from_gedp, struct ged *to_gedp, const char *from, const c
 	}
 
 	if ((val = bu_avs_get(&avs, "regionid_colortable")) != NULL) {
-	    rt_color_free();
-	    db5_import_color_table((char *)val);
+	    db_mater_free(to_gedp->dbip);
+	    db5_import_color_table(to_gedp->dbip, (char *)val);
 	}
 
 	bu_avs_free(&avs);
@@ -1199,7 +1197,7 @@ _ged_do_list(struct ged *gedp, struct directory *dp, int verbose)
     } else {
 
 	if ((id = rt_db_get_internal(&intern, dp, gedp->dbip,
-				     (fastf_t *)NULL, &rt_uniresource)) < 0) {
+				     (fastf_t *)NULL)) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "rt_db_get_internal(%s) failure\n", dp->d_namep);
 	    rt_db_free_internal(&intern);
 	    return;
@@ -2144,7 +2142,7 @@ _ged_combadd(struct ged *gedp,
 	return RT_DIR_NULL;
 
     /* Done changing stuff - update nref. */
-    db_update_nref(gedp->dbip, &rt_uniresource);
+    db_update_nref(gedp->dbip);
 
     return db_lookup(gedp->dbip, combname, LOOKUP_QUIET);
 }
@@ -2230,7 +2228,7 @@ _ged_combadd2(struct ged *gedp,
     }
 
     /* combination exists, add a new member */
-    GED_DB_GET_INTERNAL(gedp, &intern, dp, (fastf_t *)NULL, &rt_uniresource, 0);
+    GED_DB_GET_INTERN(gedp, &intern, dp, (fastf_t *)NULL, 0);
 
     comb = (struct rt_comb_internal *)intern.idb_ptr;
     RT_CK_COMB(comb);
@@ -2242,7 +2240,7 @@ _ged_combadd2(struct ged *gedp,
 
 addmembers:
     if (comb->tree && db_ck_v4gift_tree(comb->tree) < 0) {
-	db_non_union_push(comb->tree, &rt_uniresource);
+	db_non_union_push(comb->tree);
 	if (db_ck_v4gift_tree(comb->tree) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "Cannot flatten tree for editing\n");
 	    rt_db_free_internal(&intern);
@@ -2257,7 +2255,7 @@ addmembers:
 
     /* flatten tree */
     if (comb->tree) {
-	actual_count = argc + (struct rt_tree_array *)db_flatten_tree(tree_list, comb->tree, OP_UNION, 1, &rt_uniresource) - tree_list;
+	actual_count = argc + (struct rt_tree_array *)db_flatten_tree(tree_list, comb->tree, OP_UNION, 1) - tree_list;
 	BU_ASSERT(actual_count == node_count);
 	comb->tree = TREE_NULL;
     }
@@ -2304,15 +2302,15 @@ addmembers:
     }
 
     /* rebuild the tree */
-    comb->tree = (union tree *)db_mkgift_tree(tree_list, node_count, &rt_uniresource);
+    comb->tree = (union tree *)db_mkgift_tree(tree_list, node_count);
 
     /* and finally, write it out */
-    GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, 0);
+    GED_DB_PUT_INTERN(gedp, dp, &intern, 0);
 
     bu_free((char *)tree_list, "combadd: tree_list");
 
     /* Done changing stuff - update nref. */
-    db_update_nref(gedp->dbip, &rt_uniresource);
+    db_update_nref(gedp->dbip);
 
     return BRLCAD_OK;
 }
@@ -2425,15 +2423,14 @@ struct directory **
 _ged_dir_getspace(struct db_i *dbip,
 		  size_t num_entries)
 {
-    size_t i;
     struct directory **dir_basep;
     struct directory *dp;
 
     if (num_entries == 0) {
 	/* Set num_entries to the number of entries */
-	for (i = 0; i < RT_DBNHASH; i++)
-	    for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw)
-		num_entries++;
+	FOR_ALL_DIRECTORY_START(dp, dbip)
+	    num_entries++;
+	FOR_ALL_DIRECTORY_END;
     }
 
     /* Allocate and cast num_entries worth of pointers */

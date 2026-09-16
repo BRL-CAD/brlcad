@@ -1,7 +1,7 @@
 /*                           D V E C . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -157,12 +157,12 @@ struct fvec_internal {
 };
 
 template<int LEN>
-inline dvec<LEN>::dvec(double s)
+inline dvec<LEN>::dvec(double dv_s)
 {
     double t[LEN] VEC_ALIGN;
     for (int i = 0; i < LEN/2; i++) {
-	t[i*2]   = s;
-	t[i*2+1] = s;
+	t[i*2]   = dv_s;
+	t[i*2+1] = dv_s;
 	data.v[i] = _mm_load_pd(&t[i*2]);
     }
 }

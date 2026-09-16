@@ -1,7 +1,7 @@
 /*                 L I B R T _ P R I V A T E . H
  * BRL-CAD
  *
- * Copyright (c) 2011-2025 United States Government as represented by
+ * Copyright (c) 2011-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -38,10 +38,12 @@
 #include "rt/db4.h"
 #include "raytrace.h"
 
-/* approximation formula for the circumference of an ellipse */
+/* Ramanujan approximation for the circumference of an ellipse with semi-axes a, b.
+ * Formula: pi*(a+b) * [1 + 3*h / (10 + sqrt(4 - 3*h))]  where h = ((a-b)/(a+b))^2
+ * Note: only the 3*h term is divided by (10+sqrt(...)), NOT the whole (1+3*h). */
 #define ELL_CIRCUMFERENCE(a, b) M_PI * ((a) + (b)) * \
-    (1.0 + (3.0 * ((((a) - b))/((a) + (b))) * ((((a) - b))/((a) + (b))))) \
-    / (10.0 + sqrt(4.0 - 3.0 * ((((a) - b))/((a) + (b))) * ((((a) - b))/((a) + (b)))))
+    (1.0 + (3.0 * ((((a) - b))/((a) + (b))) * ((((a) - b))/((a) + (b)))) \
+    / (10.0 + sqrt(4.0 - 3.0 * ((((a) - b))/((a) + (b))) * ((((a) - b))/((a) + (b))))))
 
 /* logic to ensure bboxes are not degenerate in any dimension - zero thickness
  * bounding boxes will get missed by the raytracer */
@@ -63,11 +65,6 @@
 
 __BEGIN_DECLS
 
-// TODO - eventually, all the "LIBRT ONLY" elements in db_i should move here.
-// The librt prep caching container should also go here.
-//
-// At the moment, it is just an experiment to put drawing related object data
-// caches in the db_i.
 struct db_i_internal {
     uint32_t dbi_magic;
 
@@ -80,10 +77,91 @@ struct db_i_internal {
     // in here and add a pointer slot to it for rt_db_internal
     // so the librt point generation routines can take advantage
     // of cached prep even if they're using an inmem db...
+
+    /* Per-database region-id color table (replaces former material_head global) */
+    struct mater *material_head;
+
+    /* PRIVATE fields previously in struct db_i (LIBRT ONLY, MAY CHANGE) */
+    struct directory * dbi_Head[RT_DBNHASH]; /**< @brief object hash table */
+    FILE * dbi_fp;                      /**< @brief standard file pointer */
+    b_off_t dbi_eof;                    /**< @brief End+1 pos after db_scan() */
+    size_t dbi_nrec;                    /**< @brief # records after db_scan() */
+    int dbi_dir_built;                  /**< @brief set to 1 when db_dirbuild() has completed */
+    int dbi_uses;                       /**< @brief # of uses of this struct */
+    struct mem_map * dbi_freep;         /**< @brief map of free granules */
+    void *dbi_inmem;                    /**< @brief ptr to in-memory copy */
+    struct animate * dbi_anroot;        /**< @brief heads list of anim at root lvl */
+    struct bu_mapped_file * dbi_mf;     /**< @brief Only in read-only mode */
+    struct bu_ptbl dbi_clients;         /**< @brief List of rtip's using this db_i */
+    int dbi_version;                    /**< @brief use db_version(); negative for flipped v4 */
+    struct rt_wdb * dbi_wdbp;           /**< @brief disk rt_wdb */
+    struct rt_wdb * dbi_wdbp_a;         /**< @brief disk append-only rt_wdb */
+    struct rt_wdb * dbi_wdbp_inmem;     /**< @brief inmem rt_wdb */
+    struct rt_wdb * dbi_wdbp_inmem_a;   /**< @brief inmem append-only rt_wdb */
+    struct bu_ptbl dbi_changed_clbks;     /**< @brief dbi_changed_t callbacks */
+    struct bu_ptbl dbi_update_nref_clbks; /**< @brief dbi_update_nref_t callbacks */
+    int dbi_use_comb_instance_ids;        /**< @brief flag for comb instance tracking */
+
+    struct directory *dbi_directory_hd;         /**< @brief directory entry freelist */
+    struct bu_ptbl   dbi_directory_blocks;      /**< @brief Table of malloc'ed blocks */
 };
 
 struct db_i_internal * db_i_internal_create(void);
 void db_i_internal_destroy(struct db_i_internal *i);
+
+
+/**
+ * Private internal state for struct rt_i.  All fields listed under
+ * "THESE ITEMS SHOULD BE CONSIDERED OPAQUE" in rt_instance.h that
+ * have no external consumers are stored here.  Only librt code should
+ * ever touch this struct directly.
+ */
+struct rt_i_internal {
+    /* Space-partitioning / BSP internals */
+    union cutter        rti_inf_box;            /**< @brief  List of infinite solids */
+    union cutter        rti_CutHead;    	/**< @brief  Head of cut tree */
+    union cutter *      rti_CutFree;            /**< @brief  cut Freelist */
+    struct bu_ptbl      rti_busy_cutter_nodes;  /**< @brief  List of "cutter" mallocs */
+    struct bu_ptbl      rti_cuts_waiting;       /**< @brief  nodes awaiting partitioning */
+    size_t              rti_cutlen;             /**< @brief  goal for # solids per boxnode */
+    size_t              rti_cutdepth;           /**< @brief  goal for depth of NUBSPT cut tree */
+
+    /* Per-type solid tables (filled during prep) */
+    struct soltab **    rti_sol_by_type[ID_MAX_SOLID+1];
+    size_t              rti_nsol_by_type[ID_MAX_SOLID+1];
+    size_t              rti_maxsol_by_type;
+    struct soltab **    rti_Solids;     	/**< @brief  ptrs to soltab [st_bit] */
+
+    /* Active solid hash table */
+    struct bu_list      rti_solidheads[RT_DBNHASH]; /**< @brief  active solid lists */
+
+    /* Diagnostic histograms */
+    struct bu_hist      rti_hist_cellsize;      /**< @brief  occupancy of cut cells */
+    struct bu_hist      rti_hist_cell_pieces;   /**< @brief  solid pieces per cell */
+    struct bu_hist      rti_hist_cutdepth;      /**< @brief  depth of cut tree */
+
+    /* Counters */
+    size_t              rti_air_discards;       /**< @brief  # of air regions discarded */
+    size_t              rti_nsolids_with_pieces; /**< @brief  # solids using pieces */
+
+    /* rt_submodel parameters */
+    char *              rti_treetop;            /**< @brief  bu_strduped, for rt_submodel rti's only */
+    size_t              rti_uses;               /**< @brief  for rt_submodel */
+    struct resource *   rti_submodel_resources[MAX_PSW]; /**< @brief private per-cpu resources for rt_submodel */
+    size_t              rti_submodel_resource_refs;       /**< @brief number of rt_submodel users sharing the resource cache */
+
+    /* Dynamic geometry */
+    int                 rti_add_to_new_solids_list;
+    struct bu_ptbl      rti_new_solids;
+
+    /* Region info */
+    struct region **    Regions;        	/**< @brief  ptrs to regions [reg_bit] */
+    struct bu_ptbl      delete_regs;    /**< @brief  list of region pointers to delete after light_init() */
+
+};
+
+struct rt_i_internal * rt_i_internal_create(void);
+void rt_i_internal_destroy(struct rt_i_internal *i);
 
 
 /* Used by sketch extrude revolve */
@@ -143,7 +221,7 @@ extern const union cutter *rt_advance_to_next_cell(struct rt_shootray_status *ss
  * used by rt_shootray_bundle()
  * FIXME: non-public API shouldn't be using rt_ prefix
  */
-extern void rt_plot_cell(const union cutter *cutp, struct rt_shootray_status *ssp, struct bu_list *waiting_segs_hd, struct rt_i *rtip);
+extern void rt_plot_cell(const union cutter *cutp, const struct rt_shootray_status *ssp, struct bu_list *waiting_segs_hd, struct rt_i *rtip);
 
 /* db_fullpath.c */
 
@@ -178,7 +256,6 @@ struct dbi_update_nref_clbk {
     void *u_data;
 };
 
-extern int db_read(const struct db_i *dbip, void *addr, size_t count, b_off_t offset);
 
 /* db5_io.c */
 #define DB_SIZE_OBJ 0x1
@@ -212,11 +289,49 @@ extern const char *rt_binunif_type_to_string(int type);
 
 /* primitive_util.c */
 
+/**
+ * Minimum absolute tessellation tolerance (mm).  Tessellations finer than
+ * this provide no practical benefit: BRL-CAD's own intersection/collision
+ * tolerance floor is ~0.005 mm and display fidelity tops out at ~0.05 mm.
+ * We go one order below the tolerance floor.
+ * May be overridden with RT_PRIM_MIN_ABS_TOL env variable.
+ */
+#define PRIM_MIN_ABS_TOL 0.0005
+
+/**
+ * Minimum normal (angle) tessellation tolerance (radians).  π/360 ≈ 0.00873 rad
+ * (0.5°).  At this angle a full circle requires 720 segments — already very
+ * dense - we go one order below that.
+ * May be overridden with RT_PRIM_MIN_NORM_TOL env variable.
+ */
+#define PRIM_MIN_NORM_TOL (M_PI / 360.0) * 0.1
+
 extern void primitive_hitsort(struct hit h[], int nh);
+
+extern fastf_t prim_min_abs_tol(void);
+extern fastf_t prim_min_norm_tol(void);
+
+/* Parameterized internal versions of the public rt_mk_parabola /
+ * rt_mk_hyperbola helpers.  The extra min_abs argument lets the
+ * caller supply a tolerance floor that was read once per tessellation
+ * via prim_min_abs_tol(), avoiding repeated getenv() calls inside the
+ * recursive subdivision.  The public API (rt_mk_parabola / rt_mk_hyperbola
+ * in rpc.c / rhc.c) simply delegates to these with the caller's min_abs;
+ * the deprecated _old wrappers pass SMALL_FASTF to preserve original
+ * behavior. */
+extern int _rt_mk_parabola(struct rt_pnt_node *pts, fastf_t r, fastf_t b,
+	fastf_t dtol, fastf_t ntol, fastf_t min_abs);
+extern int _rt_mk_hyperbola(struct rt_pnt_node *pts, fastf_t r, fastf_t b,
+	fastf_t c, fastf_t dtol, fastf_t ntol, fastf_t min_abs);
 
 extern fastf_t primitive_get_absolute_tolerance(
 	const struct bg_tess_tol *ttol,
 	fastf_t rel_to_abs);
+
+extern void primitive_clamp_tess_tol(
+	fastf_t *dtol,
+	fastf_t *ntol,
+	fastf_t bbox_diag);
 
 extern fastf_t primitive_diagonal_samples(
 	struct rt_db_internal *ip,
@@ -295,6 +410,49 @@ CLT_DECLARE_INTERFACE(hyp);
 
 extern size_t clt_bot_pack(struct bu_pool *pool, struct soltab *stp);
 #endif
+
+/**
+ * Increase the size of re_boolstack to double the previous size.
+ * Depend on bu_realloc() to copy the previous data to the new area
+ * when the size is increased.
+ */
+RT_EXPORT extern void _bool_growstack(struct resource *res);
+
+/**
+ * Release the per-processor state variables needed to support
+ * rt_shootray()'s use of 'solid pieces'.
+ */
+RT_EXPORT extern void _res_pieces_clean(struct resource *resp,
+					  struct rt_i *rtip);
+
+/**
+ * Allocate the per-processor state variables needed to support
+ * rt_shootray()'s use of 'solid pieces'.
+ */
+RT_EXPORT extern void _res_pieces_init(struct resource *resp,
+					 struct rt_i *rtip);
+
+
+/**
+ * Generic flat-array ft_vshot() built on a scalar ft_shot().
+ *
+ * For each ray, calls shotfn() into a temporary seg list and writes the
+ * OUTER SPAN (nearest in, farthest out) into segp[i], matching the
+ * single-seg vshot convention.  Provides a correct (parity) vshot for
+ * primitives whose intersection core is not (yet) vectorized; a
+ * primitive's rt_X_vshot() can be a one-line call to this with rt_X_shot.
+ */
+RT_EXPORT extern void rt_vshot_via_shot(
+    int (*shotfn)(struct soltab *, struct xray *, struct application *, struct seg *),
+    struct soltab **stp, struct xray **rp, struct seg *segp, int n,
+    struct application *ap);
+
+/* Shoot a BoT using prep state owned by another primitive. */
+struct bot_specific;
+RT_EXPORT extern int rt_bot_shot_specific(
+    struct bot_specific *bot, struct soltab *stp, struct xray *rp,
+    struct application *ap, struct seg *seghead);
+
 
 __END_DECLS
 

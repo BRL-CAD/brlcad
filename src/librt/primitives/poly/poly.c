@@ -1,7 +1,7 @@
 /*                            P O L Y . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2025 United States Government as represented by
+ * Copyright (c) 1985-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -50,7 +50,7 @@ static int rt_pgface(struct soltab *stp, fastf_t *ap, fastf_t *bp, fastf_t *cp, 
 /**
  * Calculate the bounding RPP for a poly
  */
-int
+C_DECL int
 rt_pg_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol))
 {
     struct rt_pg_internal *pgp;
@@ -93,7 +93,7 @@ rt_pg_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct b
  * from the first point to the remaining points.
  *
  */
-int
+C_DECL int
 rt_pg_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_pg_internal *pgp;
@@ -197,7 +197,7 @@ rt_pgface(struct soltab *stp, fastf_t *ap, fastf_t *bp, fastf_t *cp, const struc
 }
 
 
-void
+C_DECL void
 rt_pg_print(const struct soltab *stp)
 {
     const struct tri_specific *trip =
@@ -228,7 +228,7 @@ rt_pg_print(const struct soltab *stp)
  * 0 MISS
  * >0 HIT
  */
-int
+C_DECL int
 rt_pg_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
     struct tri_specific *trip =
@@ -442,7 +442,21 @@ rt_pg_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 }
 
 
-void
+/**
+ * Baseline flat-array vshot: delegates to the scalar shot via rt_vshot_via_shot().
+ */
+C_DECL void
+rt_pg_vshot(struct soltab *stp[], struct xray *rp[], struct seg *segp, int n, struct application *ap)
+/* An array of solid pointers */
+/* An array of ray pointers */
+/* array of segs (results returned) */
+/* Number of ray/object pairs */
+{
+    rt_vshot_via_shot(rt_pg_shot, stp, rp, segp, n, ap);
+}
+
+
+C_DECL void
 rt_pg_free(struct soltab *stp)
 {
     struct tri_specific *trip =
@@ -457,7 +471,7 @@ rt_pg_free(struct soltab *stp)
 }
 
 
-void
+C_DECL void
 rt_pg_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
     if (!hitp || !stp || !rp)
@@ -470,7 +484,7 @@ rt_pg_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 }
 
 
-void
+C_DECL void
 rt_pg_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
     if (ap) RT_CK_APPLICATION(ap);
@@ -552,7 +566,7 @@ rt_pg_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct b
 }
 
 
-void
+C_DECL void
 rt_pg_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
     if (!cvp || !hitp)
@@ -565,7 +579,7 @@ rt_pg_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 }
 
 
-int
+C_DECL int
 rt_pg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *tol)
 {
     size_t i;
@@ -616,9 +630,11 @@ rt_pg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, con
 
 	/* Associate face geometry */
 	if (nmg_calc_face_g(fu, vlfree)) {
-	    nmg_pr_fu_briefly(fu, "");
+	    char *estr = bu_strdup("");
+	    nmg_pr_fu_briefly(fu, estr);
 	    bu_free((char *)verts, "pg_tess verts[]");
 	    bu_free((char *)vertp, "pg_tess vertp[]");
+	    bu_free(estr, "estr");
 	    return -1;			/* FAIL */
 	}
     }
@@ -642,7 +658,7 @@ rt_pg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, con
  * The caller is responsible for freeing the dynamic memory.
  * (vid rt_pg_ifree).
  */
-int
+C_DECL int
 rt_pg_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_pg_internal *pgp;
@@ -697,7 +713,7 @@ rt_pg_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 	    point_t pnt;
 	    vect_t vec;
 
-	    if (dbip && dbip->dbi_version < 0) {
+	    if (dbip && dbip->i->dbi_version < 0) {
 		flip_fastf_float(pnt, rp[rno].q.q_verts[i], 1, 1);
 		flip_fastf_float(vec, rp[rno].q.q_norms[i], 1, 1);
 	    } else {
@@ -724,7 +740,7 @@ rt_pg_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fas
  * The name will be added by the caller.
  * Generally, only libwdb will set conv2mm != 1.0
  */
-int
+C_DECL int
 rt_pg_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_pg_internal *pgp;
@@ -810,7 +826,7 @@ rt_pg_export5(struct bu_external *ep, const struct rt_db_internal *ip, double UN
  * First line describes type of solid.
  * Additional lines are indented one tab, and give parameter values.
  */
-int
+C_DECL int
 rt_pg_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
     size_t i, j;
@@ -865,7 +881,7 @@ rt_pg_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose,
 /**
  * Free the storage associated with the rt_db_internal version of this solid.
  */
-void
+C_DECL void
 rt_pg_ifree(struct rt_db_internal *ip)
 {
     struct rt_pg_internal *pgp;
@@ -890,7 +906,80 @@ rt_pg_ifree(struct rt_db_internal *ip)
     bu_free((char *)pgp, "pg ifree");
     ip->idb_ptr = ((void *)0);	/* sanity */
 }
-int
+/**
+ * Computes the volume of a polysolid using fan-triangulation and the
+ * divergence theorem.  Each polygon face is decomposed into triangles
+ * anchored at its first vertex, and the signed tetrahedral contribution
+ * a · (b × c) / 6 is accumulated.
+ */
+C_DECL void
+rt_pg_volume(fastf_t *volume, const struct rt_db_internal *ip)
+{
+    struct rt_pg_internal *pgp;
+    size_t i, j;
+    double vol = 0.0;
+
+    RT_CK_DB_INTERNAL(ip);
+    pgp = (struct rt_pg_internal *)ip->idb_ptr;
+    RT_PG_CK_MAGIC(pgp);
+
+    /* Fan-triangulate each polygon face and accumulate the signed
+     * tetrahedral volume contribution using the divergence theorem.
+     *
+     * For a triangle (a, b, c) the signed volume of the tetrahedron
+     * formed with the origin is a · (b × c) / 6.
+     */
+    for (i = 0; i < pgp->npoly; i++) {
+	struct rt_pg_face_internal *pp = &pgp->poly[i];
+	for (j = 1; j + 1 < pp->npts; j++) {
+	    vect_t a, b, c, cross_bc;
+	    VMOVE(a, &pp->verts[0 * 3]);
+	    VMOVE(b, &pp->verts[j * 3]);
+	    VMOVE(c, &pp->verts[(j + 1) * 3]);
+	    VCROSS(cross_bc, b, c);
+	    vol += VDOT(a, cross_bc);
+	}
+    }
+
+    *volume = fabs(vol) / 6.0;
+}
+
+
+/**
+ * Computes the surface area of a polysolid by summing the areas of all
+ * polygon faces.  Each face is decomposed into triangles via fan-
+ * triangulation, and each triangle's area is half the magnitude of the
+ * cross product of its two edge vectors.
+ */
+C_DECL void
+rt_pg_surf_area(fastf_t *area, const struct rt_db_internal *ip)
+{
+    struct rt_pg_internal *pgp;
+    size_t i, j;
+
+    RT_CK_DB_INTERNAL(ip);
+    pgp = (struct rt_pg_internal *)ip->idb_ptr;
+    RT_PG_CK_MAGIC(pgp);
+
+    /* Sum the area of every polygon face by fan-triangulation. */
+    *area = 0.0;
+    for (i = 0; i < pgp->npoly; i++) {
+	struct rt_pg_face_internal *pp = &pgp->poly[i];
+	for (j = 1; j + 1 < pp->npts; j++) {
+	    vect_t a, b, c, e1, e2, cross;
+	    VMOVE(a, &pp->verts[0 * 3]);
+	    VMOVE(b, &pp->verts[j * 3]);
+	    VMOVE(c, &pp->verts[(j + 1) * 3]);
+	    VSUB2(e1, b, a);
+	    VSUB2(e2, c, a);
+	    VCROSS(cross, e1, e2);
+	    *area += 0.5 * MAGNITUDE(cross);
+	}
+    }
+}
+
+
+C_DECL int
 rt_pg_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
     if (ip) RT_CK_DB_INTERNAL(ip);
@@ -910,7 +999,7 @@ rt_pg_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
  * 0 OK
  */
 int
-rt_pg_to_bot(struct rt_db_internal *ip, const struct bn_tol *tol, struct resource *resp)
+rt_pg_to_bot(struct rt_db_internal *ip, const struct bn_tol *tol)
 {
     struct rt_pg_internal *ip_pg;
     struct rt_bot_internal *ip_bot;
@@ -921,7 +1010,6 @@ rt_pg_to_bot(struct rt_db_internal *ip, const struct bn_tol *tol, struct resourc
 
     RT_CK_DB_INTERNAL(ip);
     BN_CK_TOL(tol);
-    RT_CK_RESOURCE(resp);
 
     if (ip->idb_type != ID_POLY) {
 	bu_log("ERROR: rt_pt_to_bot() called with a non-polysolid!!!\n");
@@ -1021,7 +1109,7 @@ rt_pg_to_bot(struct rt_db_internal *ip, const struct bn_tol *tol, struct resourc
     return 0;
 }
 
-const char *
+C_DECL const char *
 rt_pg_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     if (!pt || !ip)

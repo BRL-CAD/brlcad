@@ -1,7 +1,7 @@
 /*                         P U L L . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2025 United States Government as represented by
+ * Copyright (c) 2013-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -94,7 +94,7 @@ pull_comb(struct db_i *dbip,
 
     if (dp->d_flags & RT_DIR_SOLID)
 	return;
-    if (rt_db_get_internal(&intern, dp, dbip, m, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dp, dbip, m) < 0) {
 	bu_log("Database read error, aborting\n");
 	return;
     }
@@ -115,7 +115,7 @@ pull_comb(struct db_i *dbip,
 	db_tree_funcleaf(dbip, comb, comb->tree, pull_comb_mat,
 			 &m, (void *)NULL, (void *)NULL, (void *)NULL);
 
-	if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
+	if (rt_db_put_internal(dp, dbip, &intern) < 0) {
 	    bu_log("Cannot write modified combination (%s) to database\n", dp->d_namep);
 	    return;
 	}
@@ -179,7 +179,7 @@ pull_leaf(struct db_i *dbip, struct directory *dp, void *mp)
 
     if (!(dp->d_flags & RT_DIR_SOLID))
 	return;
-    if (rt_db_get_internal(&intern, dp, dbip, mat, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dp, dbip, mat) < 0) {
 	bu_vls_printf((struct bu_vls *)mp, "Database read error, aborting\n");
 	return;
     }
@@ -263,31 +263,22 @@ ged_pull_core(struct ged *gedp, int argc, const char *argv[])
      * right to the the head of the tree pulling objects.
      * All new changes are immediately written to database
      */
-    db_functree(gedp->dbip, dp, pull_comb, pull_leaf, &rt_uniresource, &mat);
+    db_treewalk_basic(gedp->dbip, dp, pull_comb, pull_leaf, &mat);
 
    return  BRLCAD_OK;
 }
 
 
 /** @} */
-#ifdef GED_PLUGIN
+
+
 #include "../include/plugin.h"
-struct ged_cmd_impl pull_cmd_impl = {
-    "pull",
-    ged_pull_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd pull_cmd = { &pull_cmd_impl };
-const struct ged_cmd *pull_cmds[] = { &pull_cmd, NULL };
+#define GED_PULL_COMMANDS(X, XID) \
+    X(pull, ged_pull_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  pull_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_PULL_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_pull", 1, GED_PULL_COMMANDS)
 
 /*
  * Local Variables:

@@ -1,7 +1,7 @@
 #             F I N D S H E L L D E P S . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2011-2025 United States Government as represented by
+# Copyright (c) 2011-2026 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -42,10 +42,32 @@
 # MV_EXEC
 # RM_EXEC
 
-find_program(SH_EXEC NAMES sh dash bash DOC "path to shell executable")
-find_program(MV_EXEC NAMES mv DOC "path to move executable")
-find_program(CP_EXEC NAMES cp DOC "path to copy executable")
-find_program(RM_EXEC NAMES rm DOC "path to remove executable")
+set(_SHELL_PROGRAM_HINTS)
+set(_SHELL_EXEC_HINTS)
+if(WIN32)
+  # Git for Windows is a common source of POSIX command-line tools on Windows.
+  # Search its default install locations when the tools are not already on PATH.
+  # Prefer Git's bin/sh.exe shim for SH_EXEC: when invoked directly it sets up a
+  # usable PATH for the rest of Git's POSIX tools.
+  list(
+    APPEND
+    _SHELL_EXEC_HINTS
+    "$ENV{ProgramFiles}/Git/bin"
+    "$ENV{ProgramFiles\(x86\)}/Git/bin"
+  )
+  list(APPEND _SHELL_PROGRAM_HINTS ${_SHELL_EXEC_HINTS})
+  list(
+    APPEND
+    _SHELL_PROGRAM_HINTS
+    "$ENV{ProgramFiles}/Git/usr/bin"
+    "$ENV{ProgramFiles\(x86\)}/Git/usr/bin"
+  )
+endif(WIN32)
+
+find_program(SH_EXEC NAMES sh dash bash HINTS ${_SHELL_EXEC_HINTS} ${_SHELL_PROGRAM_HINTS} DOC "path to shell executable")
+find_program(MV_EXEC NAMES mv HINTS ${_SHELL_PROGRAM_HINTS} DOC "path to move executable")
+find_program(CP_EXEC NAMES cp HINTS ${_SHELL_PROGRAM_HINTS} DOC "path to copy executable")
+find_program(RM_EXEC NAMES rm HINTS ${_SHELL_PROGRAM_HINTS} DOC "path to remove executable")
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(

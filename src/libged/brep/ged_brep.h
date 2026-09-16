@@ -1,7 +1,7 @@
 /*                   G E D _ B R E P . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -93,6 +93,9 @@ struct _ged_brep_info {
 
 int
 _brep_indices(std::set<int> &elements, struct bu_vls *vls, int argc, const char **argv);
+
+/* Preserve attributes, including invalid-solid intent, on in-place edits. */
+int _brep_write_edit(struct _ged_brep_info *gb);
 
 extern int _ged_brep_to_csg(struct ged *gedp, const char *obj_name, int verify);
 

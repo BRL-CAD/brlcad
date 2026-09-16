@@ -1,7 +1,7 @@
 /*                         T A B L E S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,6 +37,7 @@
 
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/sort.h"
 #include "bu/units.h"
 #include "../ged_private.h"
@@ -226,7 +227,7 @@ tables_new(struct ged *gedp, struct bu_ptbl *tabptr, struct directory *dp, struc
     if (!(dp->d_flags & RT_DIR_COMB))
 	return;
 
-    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Database read error, aborting\n");
 	return;
     }
@@ -235,7 +236,7 @@ tables_new(struct ged *gedp, struct bu_ptbl *tabptr, struct directory *dp, struc
     RT_CK_COMB(comb);
 
     if (comb->tree && db_ck_v4gift_tree(comb->tree) < 0) {
-	db_non_union_push(comb->tree, &rt_uniresource);
+	db_non_union_push(comb->tree);
 	if (db_ck_v4gift_tree(comb->tree) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "Cannot flatten tree for editing\n");
 	    intern.idb_meth->ft_ifree(&intern);
@@ -255,7 +256,7 @@ tables_new(struct ged *gedp, struct bu_ptbl *tabptr, struct directory *dp, struc
 
     /* flatten tree */
     actual_count = (struct rt_tree_array *)db_flatten_tree(tree_list,
-							   comb->tree, OP_UNION, 0, &rt_uniresource) - tree_list;
+							   comb->tree, OP_UNION, 0) - tree_list;
     BU_ASSERT(actual_count == node_count);
 
     if (dp->d_flags & RT_DIR_REGION) {
@@ -334,7 +335,7 @@ tables_new(struct ged *gedp, struct bu_ptbl *tabptr, struct directory *dp, struc
 		    } else {
 			MAT_COPY(temp_mat, old_mat);
 		    }
-		    if (rt_db_get_internal(&sol_intern, sol_dp, gedp->dbip, temp_mat, &rt_uniresource) < 0) {
+		    if (rt_db_get_internal(&sol_intern, sol_dp, gedp->dbip, temp_mat) < 0) {
 			bu_log("Could not import %s\n", tree_list[i].tl_tree->tr_l.tl_name);
 		    }
 		    nsoltemp = tables_sol_number((matp_t)temp_mat, tree_list[i].tl_tree->tr_l.tl_name, &old, numsol);
@@ -467,6 +468,8 @@ ged_tables_core(struct ged *gedp, int argc, const char *argv[])
 
     FILE *ftabvls = NULL;
     FILE *test_f = NULL;
+    FILE *discr_fp = NULL;
+    char discr_file[MAXPATHLEN] = {0};
     char *timep;
     int flag;
     int status;
@@ -529,14 +532,26 @@ ged_tables_core(struct ged *gedp, int argc, const char *argv[])
     fclose(test_f);
 
     if (flag == SOL_TABLE || flag == REG_TABLE) {
-	/* temp file for discrimination of solids */
-	/* !!! this needs to be a bu_temp_file() */
-	if ((idfd = creat("/tmp/mged_discr", 0600)) < 0) {
-	    perror("/tmp/mged_discr");
+	/* Temp file for discrimination of solids.  bu_temp_file() may
+	 * arrange for the file to be removed as soon as its last open
+	 * handle is closed (see bu/app.h), so we must keep discr_fp
+	 * open for the duration rather than closing it and reopening by
+	 * path (which could race with the file's removal).  Obtain the
+	 * read and write descriptors by duplicating the descriptor
+	 * underlying discr_fp; both users re-seek before every read and
+	 * write, so sharing the file offset is harmless here.
+	 */
+	discr_fp = bu_temp_file(discr_file, MAXPATHLEN);
+	if (discr_fp == NULL) {
+	    bu_vls_printf(gedp->ged_result_str, "%s:  Can't create temporary file\n", argv[0]);
 	    status = BRLCAD_ERROR;
 	    goto end;
 	}
-	rd_idfd = open("/tmp/mged_discr", 2);
+	if ((idfd = dup(fileno(discr_fp))) < 0 || (rd_idfd = dup(fileno(discr_fp))) < 0) {
+	    bu_vls_printf(gedp->ged_result_str, "%s:  Can't duplicate temporary file handle\n", argv[0]);
+	    status = BRLCAD_ERROR;
+	    goto end;
+	}
     }
 
     (void)time(&now);
@@ -592,6 +607,23 @@ ged_tables_core(struct ged *gedp, int argc, const char *argv[])
     (void)fclose(ftabvls);
 
 end:
+    /* Close the duplicated descriptors first, then the keeper handle -
+     * closing discr_fp last is what permits bu_temp_file()'s file to be
+     * removed.  Reset the static descriptors so a later invocation that
+     * does not use a temp file (e.g. "idents") won't close stale fds. */
+    if (idfd > 0) {
+	(void)close(idfd);
+	idfd = 0;
+    }
+    if (rd_idfd > 0) {
+	(void)close(rd_idfd);
+	rd_idfd = 0;
+    }
+    if (discr_fp != NULL) {
+	(void)fclose(discr_fp);
+	discr_fp = NULL;
+    }
+
     bu_vls_free(&cmd);
     bu_vls_free(&tmp_vls);
     bu_vls_free(&tabvls);
@@ -617,30 +649,16 @@ end:
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
 
-struct ged_cmd_impl tables_cmd_impl = {"tables", ged_tables_core, GED_CMD_DEFAULT};
-const struct ged_cmd tables_cmd = { &tables_cmd_impl };
+#define GED_TABLES_COMMANDS(X, XID) \
+    X(idents, ged_tables_core, GED_CMD_DEFAULT) \
+    X(regions, ged_tables_core, GED_CMD_DEFAULT) \
+    X(solids, ged_tables_core, GED_CMD_DEFAULT) \
+    X(tables, ged_tables_core, GED_CMD_DEFAULT) \
 
-struct ged_cmd_impl idents_cmd_impl = {"idents", ged_tables_core, GED_CMD_DEFAULT};
-const struct ged_cmd idents_cmd = { &idents_cmd_impl };
-
-struct ged_cmd_impl regions_cmd_impl = {"regions", ged_tables_core, GED_CMD_DEFAULT};
-const struct ged_cmd regions_cmd = { &regions_cmd_impl };
-
-struct ged_cmd_impl solids_cmd_impl = {"solids", ged_tables_core, GED_CMD_DEFAULT};
-const struct ged_cmd solids_cmd = { &solids_cmd_impl };
-
-const struct ged_cmd *tables_cmds[] = { &tables_cmd, &idents_cmd, &regions_cmd, &solids_cmd, NULL };
-
-static const struct ged_plugin pinfo = { GED_API,  tables_cmds, 4 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_TABLES_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_tables", 1, GED_TABLES_COMMANDS)
 
 /*
  * Local Variables:

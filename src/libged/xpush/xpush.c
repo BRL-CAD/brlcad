@@ -1,7 +1,7 @@
 /*                         X P U S H . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,6 +28,7 @@
 #include <string.h>
 
 #include "bu/cmd.h"
+#include "../../librt/librt_private.h"
 
 #include "../ged_private.h"
 
@@ -68,7 +69,7 @@ Free_uses(struct db_i *dbip)
 	struct directory *dp, *nextdp;
 	struct object_use *use;
 
-	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL;) {
+	for (dp = dbip->i->dbi_Head[i]; dp != RT_DIR_NULL;) {
 	    nextdp = dp->d_forw;
 
 	    if (!(dp->d_flags & (RT_DIR_SOLID | RT_DIR_COMB))) {
@@ -262,9 +263,9 @@ Copy_solid(struct ged *gedp,
     RT_CK_DIR(dp);
 
     /*
-    struct rt_i *rtip = rt_new_rti(gedp->dbip);
+    struct rt_i *rtip = rt_i_create(gedp->dbip);
     if (rt_gettree(rtip, dp->d_namep) < 0) return NULL;
-    rt_free_rti(rtip);
+    rt_i_destroy(rtip);
     */
 
     if (!(dp->d_flags & RT_DIR_SOLID)) {
@@ -314,13 +315,13 @@ Copy_solid(struct ged *gedp,
 	return RT_DIR_NULL;
     }
 
-    if (rt_db_get_internal(&sol_int, dp, gedp->dbip, xform, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&sol_int, dp, gedp->dbip, xform) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Cannot import solid %s\n", dp->d_namep);
 	return RT_DIR_NULL;
     }
 
     RT_CK_DB_INTERNAL(&sol_int);
-    if (rt_db_put_internal(found, gedp->dbip, &sol_int, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(found, gedp->dbip, &sol_int) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Cannot write copy solid (%s) to database\n", found->d_namep);
 	return RT_DIR_NULL;
     }
@@ -352,7 +353,7 @@ Copy_comb(struct ged *gedp,
     }
 
     /* if we can't get records for this combination, just leave it alone */
-    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0)
+    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL) < 0)
 	return dp;
     comb = (struct rt_comb_internal *)intern.idb_ptr;
 
@@ -383,7 +384,7 @@ Copy_comb(struct ged *gedp,
 	return RT_DIR_NULL;
     }
 
-    if (rt_db_put_internal(found, gedp->dbip, &intern, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(found, gedp->dbip, &intern) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "rt_db_put_internal failed for %s\n", dp->d_namep);
 	rt_db_free_internal(&intern);
 	return RT_DIR_NULL;
@@ -463,71 +464,67 @@ ged_xpush_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* Initialize use and reference counts of all directory entries */
-    for (i = 0; i < RT_DBNHASH; i++) {
-	struct directory *dp;
+    {
+    struct directory *dp;
+    FOR_ALL_DIRECTORY_START(dp, gedp->dbip)
+	if (!(dp->d_flags & (RT_DIR_SOLID | RT_DIR_COMB)))
+	    continue;
 
-	for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-	    if (!(dp->d_flags & (RT_DIR_SOLID | RT_DIR_COMB)))
-		continue;
-
-	    dp->d_uses = 0;
-	    dp->d_nref = 0;
-	}
+	dp->d_uses = 0;
+	dp->d_nref = 0;
+    FOR_ALL_DIRECTORY_END;
     }
 
     /* Count uses in the tree being pushed (updates dp->d_uses) */
-    db_functree(gedp->dbip, old_dp, increment_uses, increment_uses, &rt_uniresource, NULL);
+    db_treewalk_basic(gedp->dbip, old_dp, increment_uses, increment_uses, NULL);
 
     /* Do a simple reference count to find top level objects */
-    for (i = 0; i < RT_DBNHASH; i++) {
-	struct directory *dp;
+    {
+    struct directory *dp;
+    FOR_ALL_DIRECTORY_START(dp, gedp->dbip)
+	if (dp->d_flags & RT_DIR_SOLID)
+	    continue;
 
-	for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-	    if (dp->d_flags & RT_DIR_SOLID)
-		continue;
+	if (!(dp->d_flags & (RT_DIR_SOLID | RT_DIR_COMB)))
+	    continue;
 
-	    if (!(dp->d_flags & (RT_DIR_SOLID | RT_DIR_COMB)))
-		continue;
-
-	    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
-		bu_vls_printf(gedp->ged_result_str, "Database read error, aborting.\n");
-		return BRLCAD_ERROR;
-	    }
-	    comb = (struct rt_comb_internal *)intern.idb_ptr;
-	    if (comb->tree)
-		db_tree_funcleaf(gedp->dbip, comb, comb->tree, Do_ref_incr,
-				 (void *)NULL, (void *)NULL, (void *)NULL, (void *)NULL);
-	    rt_db_free_internal(&intern);
+	if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL) < 0) {
+	    bu_vls_printf(gedp->ged_result_str, "Database read error, aborting.\n");
+	    return BRLCAD_ERROR;
 	}
+	comb = (struct rt_comb_internal *)intern.idb_ptr;
+	if (comb->tree)
+	    db_tree_funcleaf(gedp->dbip, comb, comb->tree, Do_ref_incr,
+			     (void *)NULL, (void *)NULL, (void *)NULL, (void *)NULL);
+	rt_db_free_internal(&intern);
+    FOR_ALL_DIRECTORY_END;
     }
 
     /* anything with zero references is a tree top */
     bu_ptbl_init(&tops, 0, "tops for xpush");
-    for (i = 0; i < RT_DBNHASH; i++) {
-	struct directory *dp;
+    {
+    struct directory *dp;
+    FOR_ALL_DIRECTORY_START(dp, gedp->dbip)
+	if (dp->d_flags & RT_DIR_SOLID)
+	    continue;
 
-	for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-	    if (dp->d_flags & RT_DIR_SOLID)
-		continue;
+	if (!(dp->d_flags & (RT_DIR_SOLID | RT_DIR_COMB)))
+	    continue;
 
-	    if (!(dp->d_flags & (RT_DIR_SOLID | RT_DIR_COMB)))
-		continue;
-
-	    if (dp->d_nref == 0)
-		bu_ptbl_ins(&tops, (long *)dp);
-	}
+	if (dp->d_nref == 0)
+	    bu_ptbl_ins(&tops, (long *)dp);
+    FOR_ALL_DIRECTORY_END;
     }
 
     /* now re-zero the reference counts */
-    for (i = 0; i < RT_DBNHASH; i++) {
-	struct directory *dp;
+    {
+    struct directory *dp;
+    FOR_ALL_DIRECTORY_START(dp, gedp->dbip)
+	if (!(dp->d_flags & (RT_DIR_SOLID | RT_DIR_COMB)))
+	    continue;
 
-	for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-	    if (!(dp->d_flags & (RT_DIR_SOLID | RT_DIR_COMB)))
-		continue;
-
-	    dp->d_nref = 0;
-	}
+	dp->d_nref = 0;
+    FOR_ALL_DIRECTORY_END;
     }
 
     /* accurately count references in entire model */
@@ -535,19 +532,19 @@ ged_xpush_core(struct ged *gedp, int argc, const char *argv[])
 	struct directory *dp;
 
 	dp = (struct directory *)BU_PTBL_GET(&tops, i);
-	db_functree(gedp->dbip, dp, increment_nrefs, increment_nrefs, &rt_uniresource, NULL);
+	db_treewalk_basic(gedp->dbip, dp, increment_nrefs, increment_nrefs, NULL);
     }
 
     /* Free list of tree-tops */
     bu_ptbl_free(&tops);
 
     /* Make new names */
-    db_functree(gedp->dbip, old_dp, Make_new_name, Make_new_name, &rt_uniresource, (void *)gedp);
+    db_treewalk_basic(gedp->dbip, old_dp, Make_new_name, Make_new_name, (void *)gedp);
 
     MAT_IDN(xform);
 
     /* Make new objects */
-    if (rt_db_get_internal(&intern, old_dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, old_dp, gedp->dbip, (fastf_t *)NULL) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: cannot load %s feom the database!!!\n", old_dp->d_namep);
 	bu_vls_printf(gedp->ged_result_str, "\tNothing has been changed!!\n");
 	Free_uses(gedp->dbip);
@@ -563,7 +560,7 @@ ged_xpush_core(struct ged *gedp, int argc, const char *argv[])
     db_tree_funcleaf(gedp->dbip, comb, comb->tree, Do_copy_membs,
 		     (void *)xform, (void *)gedp, (void *)0, (void *)NULL);
 
-    if (rt_db_put_internal(old_dp, gedp->dbip, &intern, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(old_dp, gedp->dbip, &intern) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "rt_db_put_internal failed for %s\n", old_dp->d_namep);
 	rt_db_free_internal(&intern);
 	Free_uses(gedp->dbip);
@@ -576,24 +573,13 @@ ged_xpush_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl xpush_cmd_impl = {
-    "xpush",
-    ged_xpush_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd xpush_cmd = { &xpush_cmd_impl };
-const struct ged_cmd *xpush_cmds[] = { &xpush_cmd, NULL };
+#define GED_XPUSH_COMMANDS(X, XID) \
+    X(xpush, ged_xpush_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  xpush_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_XPUSH_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_xpush", 1, GED_XPUSH_COMMANDS)
 
 /*
  * Local Variables:

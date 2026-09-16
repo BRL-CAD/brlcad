@@ -1,7 +1,7 @@
 /*                      B W F I L T E R . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2025 United States Government as represented by
+ * Copyright (c) 1986-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,12 +27,15 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include "bio.h"
 
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/malloc.h"
 #include "bu/mime.h"
 #include "bu/log.h"
@@ -43,8 +46,8 @@
 
 /* The filter kernels */
 struct kernels {
-    char *name;
-    char *uname;		/* What is needed to recognize it */
+    const char *name;
+    const char *uname;		/* What is needed to recognize it */
     int kern[9];
     int kerndiv;	/* Divisor for kernel */
     int kernoffset;	/* To be added to result */
@@ -70,11 +73,11 @@ int verbose = 0;
 int dflag = 0;	/* Different divisor specified */
 int oflag = 0;	/* Different offset specified */
 
-void select_filter(char *str), dousage(void);
+void select_filter(const char *str), dousage(void);
 
 char usage[] = "\
 Usage: bwfilter [-f type] [-v] [-d div] [-O offset]\n\
-	[-s squaresize] [-w width] [-n height] [-o out_file.bw] [file.bw] > out_file.bw\n";
+	[-s squaresize] [-w width] [-n height] [-o out_file.bw] [file.bw] [> out_file.bw]\n";
 
 char *in_file = NULL;
 char *out_file = NULL;
@@ -84,7 +87,7 @@ char *out_file = NULL;
  * based on it.
  */
 void
-select_filter(char *str)
+select_filter(const char *str)
 {
     kernel_index = 0;
     while (kernel[kernel_index].name != NULL) {
@@ -121,7 +124,7 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "vf:d:O:w:n:s:h?")) != -1) {
+    while ((c = bu_getopt(argc, argv, "vf:d:O:w:n:s:o:h?")) != -1) {
 	switch (c) {
 	    case 'v':
 		verbose++;
@@ -131,27 +134,29 @@ get_args(int argc, char **argv)
 		break;
 	    case 'd':
 		dflag++;
-		kerndiv = atoi(bu_optarg);
-		if (ZERO(kerndiv)) {
-		    bu_log("Bad argument for kerndiv\n");
-		    return 1;
-		}
+		if (!bu_opt_scan_int(bu_optarg, &kerndiv, "divisor") || kerndiv == 0)
+		    return 0;
 		break;
 	    case 'O':
 		oflag++;
-		kernoffset = atoi(bu_optarg);
+		if (!bu_opt_scan_int(bu_optarg, &kernoffset, "offset"))
+		    return 0;
 		break;
 	    case 'w':
-		inx = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &inx, 1, INT_MAX, "width"))
+		    return 0;
 		break;
 	    case 'o':
 		out_file = bu_optarg;
 		break;
 	    case 'n':
-		iny = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &iny, 1, INT_MAX, "height"))
+		    return 0;
 		break;
 	    case 's':
-		inx = iny = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &inx, 1, INT_MAX, "size"))
+		    return 0;
+		iny = inx;
 		break;
 	    default:		/* 'h' '?' */
 		return 0;
@@ -164,15 +169,11 @@ get_args(int argc, char **argv)
     } else {
 	in_file = argv[bu_optind];
 	bu_optind++;
-	return 1;
     }
 
-    if (!isatty(fileno(stdout)) && out_file!=NULL) {
+    if (argc > bu_optind) {
+	bu_log("bwfilter: excess argument(s) not supported\n");
 	return 0;
-    }
-
-    if (argc > ++bu_optind) {
-	bu_log("bwrfilter: excess argument(s) ignored\n");
     }
 
     return 1;
@@ -231,6 +232,12 @@ main(int argc, char **argv)
     bu_free(max_d, "min values");
 
     icv_write(img, out_file, BU_MIME_IMAGE_BW);
+
+    /* If stdout is non-interactive as well as -o being specified, emit to both. */
+    if (!isatty(fileno(stdout)) && out_file != NULL) {
+	icv_write(img, NULL, BU_MIME_IMAGE_BW);
+    }
+
     return 0;
 }
 

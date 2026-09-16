@@ -1,7 +1,7 @@
 /*                        S K E T C H . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2025 United States Government as represented by
+ * Copyright (c) 1993-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,6 +35,15 @@
 #include "rt/db_instance.h"
 
 __BEGIN_DECLS
+
+/* SKETCH specific editing info */
+struct rt_sketch_edit {
+    int curr_vert;  /* index of the currently selected vertex (-1 = none) */
+    int curr_seg;   /* index of the currently selected curve segment (-1 = none) */
+    /* Mouse-proximity pick: ft_edit_xy stores cursor here; ft_edit reads it */
+    point_t v_pos;      /* view-space cursor position set by ft_edit_xy */
+    int v_pos_valid;    /* non-zero when v_pos holds a pending proximity query */
+};
 
 RT_EXPORT extern int rt_check_curve(const struct rt_curve *crv,
 				    const struct rt_sketch_internal *skt,

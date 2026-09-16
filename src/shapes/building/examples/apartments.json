@@ -1,0 +1,63 @@
+{
+  "$schema": "../building.schema.json",
+  "version": 1,
+  "id": "apartments",
+  "units": "m",
+  "type": "apartments",
+  "class": "habitation",
+  "function": ["residential"],
+  "usage": ["apartments", "ground-floor retail"],
+  "dimensions": {"width": 27, "depth": 18},
+  "levels": {
+    "above_ground": 7,
+    "below_ground": 1,
+    "floor_heights": [4.2, 3.1, 3.1, 3.1, 3.1, 3.1, 3.1],
+    "basement_heights": [3.2]
+  },
+  "envelope": {
+    "wall_thickness": 0.28,
+    "slab_thickness": 0.22,
+    "foundation_thickness": 0.45,
+    "material": "brick",
+    "color": "#b98a68"
+  },
+  "roof": {
+    "shape": "flat",
+    "height": 0.45,
+    "thickness": 0.25,
+    "material": "concrete",
+    "color": [120, 120, 115]
+  },
+  "openings": [
+    {"id": "main", "kind": "door", "type": "main", "wall": 0, "level": 0, "offset": 12.7, "width": 1.6, "height": 2.5, "sill": 0},
+    {"id": "storefront", "kind": "window", "wall": 0, "level": 0, "offset": 2, "width": 2.4, "height": 2.7, "sill": 0.45, "count": 4, "spacing": 3.0},
+    {"id": "upper_windows", "kind": "window", "wall": 0, "level": 1, "offset": 1.5, "width": 1.4, "height": 1.5, "sill": 0.85, "count": 8, "spacing": 3.2}
+  ],
+  "structure": {
+    "enabled": true,
+    "system": "reinforced_concrete_frame",
+    "grid": [6.75, 6],
+    "column_width": 0.45,
+    "column_depth": 0.45,
+    "beam_width": 0.35,
+    "beam_depth": 0.65,
+    "material": "reinforced_concrete"
+  },
+  "installations": [
+    {"id": "lift_overrun", "kind": "BuildingInstallation", "shape": "box", "position": [11, 7, 23.8], "size": [5, 4, 2.8], "material": "concrete"}
+  ],
+  "osm": {
+    "tags": {
+      "building": "apartments",
+      "building:levels": "7",
+      "building:levels:underground": "1",
+      "building:flats": "48",
+      "building:material": "brick",
+      "building:colour": "#b98a68",
+      "building:fireproof": "yes",
+      "building:soft_storey": "reinforced",
+      "roof:shape": "flat",
+      "start_date": "2018"
+    }
+  }
+}

@@ -1,0 +1,58 @@
+= E_ID(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+e_id - Draws objects whose region IDs are in the given range.
+
+== SYNOPSIS
+
+[source]
+----
+e_id {lower_bound} [upper_bound]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Draws all objects whose region ID falls within the given bounds. If only one input is given, *e_id* will draw objects with that region ID.
+
+
+[[examples]]
+== EXAMPLES
+
+Draw all regions with a single region ID.
+
+.Draw all regions with regionID 1000
+[example]
+====
+
+mged> **e_id 1000**::
+Draws all regions whose region ID is 1000.
+
+
+
+====
+
+.Draw all regions whose region IDs are in the 2000s
+[example]
+====
+mged>**e_id 2000-2999**
+
+Draws all regions who regions IDs fall between 2000 and 2999 inclusively.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

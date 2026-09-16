@@ -1,7 +1,7 @@
 /*                 ConnectedFaceSet.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2025 United States Government as represented by
+ * Copyright (c) 1994-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -50,6 +50,9 @@ public:
     virtual bool LoadONBrep(ON_Brep *brep);
     virtual void Print(int level);
     virtual void ReverseFaceSet();
+    virtual size_t FaceCount() const { return cfs_faces.size(); }
+    const LIST_OF_FACES &Faces() const { return cfs_faces; }
+    size_t MaximumPullbackSpanEstimate() const;
 
     //static methods
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);

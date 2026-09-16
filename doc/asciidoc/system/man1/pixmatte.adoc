@@ -1,0 +1,141 @@
+= PIXMATTE(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+pixmatte - matte (merge) two pix(5) or bw(5) images by a formula
+
+== SYNOPSIS
+
+[source]
+----
+pixmatte [-w _width_in_bytes_] {-g -l -e -n -a} _in1_ _in2_ _true_out_ _false_out_ > _output_
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Given four streams of data elements, where each element is of arbitrary
+width (typically *pix*(5) or *bw*(5) images), *pixmatte* outputs a stream of
+the same number of data elements. The value of the output stream is
+determined element-by-element by comparing the first (foreground) input
+stream _in1_ with the second (background, or matte) input stream _in2_. If the
+formula holds true, the element from the _true_out_ stream is written;
+otherwise the element from the _false_out_ stream is written. This routine
+operates element-by-element and is thus independent of image resolution.
+
+Each of the four streams comes from a file or is given as a constant. A
+single file may feed more than one stream (for example, the foreground file
+may also be the true-output file), and the name '-' specifies stdin. A
+constant is specified instead of a filename when the first character is an
+equal sign (=); the value is a slash-separated string of _width_in_bytes_
+decimal numbers with no separating white space (e.g. =255/0/0). If both _in1_
+and _in2_ are constants, the output is bounded to a 512 x 512 image.
+
+The comparison formula is built from *-g* (greater than), *-l* (less than),
+*-e* (equal to), and *-n* (not equal to), which may be combined: *-ge*
+specifies in1 greater than or equal to in2. The condition must hold for every
+byte of the element for the true output to be selected.
+
+
+[[options]]
+== OPTIONS
+
+*-g*::
+  Select the true output where _in1_ is greater than _in2_.
+
+*-l*::
+  Select the true output where _in1_ is less than _in2_.
+
+*-e*::
+  Select the true output where _in1_ is equal to _in2_.
+
+*-n*::
+  Select the true output where _in1_ is not equal to _in2_.
+
+*-a*::
+  Approximate matching: bytes are treated as equal when they match within
+  plus or minus one, useful for matting dithered backgrounds. When combined
+  with *-e* or *-n* it yields approximately-equal or approximately-not-equal.
+  When combined with *-g* and/or *-l* it excludes the elements that meet the
+  approximately-equal criterion. *-a* is a modifier only; at least one of
+  *-g*, *-l*, *-e*, or *-n* must also be given.
+
+*-w* _width_in_bytes_::
+  Set the width in bytes of each element. The default is 3 (the *pix*(5)
+  format); use 1 to process *bw*(5) files. The width must be between 1 and 31.
+
+*-h*, *-?*::
+  Print a usage message and exit.
+
+
+[[examples]]
+== EXAMPLES
+
+.Composite a foreground over a generated background
+====
+[source,bash]
+----
+pixbackgnd -t0 160 200 | pixmatte -n fg.pix =63/0/127 fg.pix - | pix-fb
+----
+Keeps every foreground pixel that is not equal to the chroma-key color
+63/0/127 and replaces matching pixels with a *pixbackgnd*(1) gradient read
+from stdin, displaying the result with *pix-fb*(1). This is a common way to
+drop an *rt*(1) image over a nicer background.
+====
+
+.Threshold against a constant
+====
+[source,bash]
+----
+pixmatte -g fg.pix =20/20/20 fg.pix =200/0/200 > out.pix
+----
+Keeps foreground pixels whose bytes are all greater than 20/20/20 and
+replaces the rest with the constant magenta 200/0/200.
+====
+
+.Build a black-and-white stencil matte
+====
+[source,bash]
+----
+pixmatte -n fg.pix bg.pix =255/255/255 =0/0/0 > matte.pix
+----
+Produces a stencil that is white where _fg.pix_ and _bg.pix_ differ and black
+where they match, for further compositing.
+====
+
+.Match a dithered background approximately
+====
+[source,bash]
+----
+pixmatte -a -e fg.pix bg.pix =0/0/0 fg.pix > out.pix
+----
+Sets to black all foreground pixels that match _bg.pix_ to within plus or
+minus one per byte, preserving everything else.
+====
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *gencolor*(1), *pixbackgnd*(1), *pixmerge*(1), *pix-fb*(1), *pix*(5), *bw*(5)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

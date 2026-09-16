@@ -1,7 +1,7 @@
 /*                           C M D . C
  * BRL-CAD
  *
- * Copyright (c) 1987-2025 United States Government as represented by
+ * Copyright (c) 1987-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -265,7 +265,7 @@ rt_cmd_color(struct bu_vls *msg, struct db_i *dbip, int argc, const char **argv)
 
     if (db_version(dbip) < 5) {
 	/* Delete all color records from the database */
-	struct mater *mp = rt_material_head();
+	struct mater *mp = db_mater_head(dbip);
 	struct mater *newp;
 	struct mater *next_mater;
 	while (mp != MATER_NULL) {
@@ -284,10 +284,10 @@ rt_cmd_color(struct bu_vls *msg, struct db_i *dbip, int argc, const char **argv)
 	newp->mt_daddr = MATER_NO_ADDR;         /* not in database yet */
 
 	/* Insert new color record in the in-memory list */
-	rt_insert_color(newp);
+	db_mater_insert(dbip, newp);
 
 	/* Write new color records for all colors in the list */
-	mp = rt_material_head();
+	mp = db_mater_head(dbip);
 	while (mp != MATER_NULL) {
 	    next_mater = mp->mt_forw;
 	    _rt_color_putrec(msg, dbip, mp);
@@ -307,12 +307,12 @@ rt_cmd_color(struct bu_vls *msg, struct db_i *dbip, int argc, const char **argv)
 	newp->mt_daddr = MATER_NO_ADDR;         /* not in database yet */
 
 	/* Insert new color record in the in-memory list */
-	rt_insert_color(newp);
+	db_mater_insert(dbip, newp);
 	/*
 	 * Gather color records from the in-memory list to build
 	 * the _GLOBAL objects regionid_colortable attribute.
 	 */
-	rt_vls_color_map(&colors);
+	db_mater_to_vls(&colors, dbip);
 
 	db5_update_attribute("_GLOBAL", "regionid_colortable", bu_vls_addr(&colors), dbip);
 	bu_vls_free(&colors);
@@ -369,7 +369,8 @@ rt_cmd_put(struct bu_vls *msg, struct rt_wdb *wdbp, int argc, const char **argv)
     RT_DB_INTERNAL_INIT(&intern);
 
     if (ftp->ft_make) {
-	ftp->ft_make(ftp, &intern);
+	point_t origin = {0.0, 0.0, 0.0};
+	ftp->ft_make(ftp, &intern, NULL, origin, 1.0);
     } else {
 	rt_generic_make(ftp, &intern);
     }

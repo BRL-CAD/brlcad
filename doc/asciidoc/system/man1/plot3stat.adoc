@@ -1,0 +1,80 @@
+= PLOT3STAT(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+plot3stat - print statistics about a plot3 format file
+
+== SYNOPSIS
+
+[source]
+----
+plot3stat [-v] [unix_plot.plot3]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*plot3stat* reads a BRL-CAD 3D UNIX plot file (*plot3*(5), typically with a
+`.plot3` or `.plot` extension) and tallies how many times each drawing command
+occurs. It prints a summary to standard error listing the human-readable command
+name (for example `3line`, `color`, or `d_3move`) and its count.
+
+If no file is given on the command line, *plot3stat* reads the plot3 stream from
+standard input.
+
+[[options]]
+== OPTIONS
+
+*-v*::
+  Verbose. As the file is parsed, print the name of each plot command
+  encountered, in order, to standard output. The statistical summary is still
+  written to standard error.
+
+[[examples]]
+== EXAMPLES
+
+.Summarize the commands in a plot3 file
+====
+[source,bash]
+----
+plot3stat model.plot3
+----
+Reads _model.plot3_ and prints a per-command frequency summary to standard
+error, revealing which drawing primitives (lines, points, color changes, etc.)
+make up the file.
+====
+
+.Profile a pipeline that generates plot3 on the fly
+====
+[source,bash]
+----
+plot3rot -z 45 < model.plot3 | plot3stat -v 2>summary.txt >commands.txt
+----
+Rotates _model.plot3_ with *plot3rot*(1) and pipes the result into *plot3stat*.
+The verbose stream of command names is captured in _commands.txt_ while the count
+summary lands in _summary.txt_, letting you confirm the rotation preserved the
+geometry without writing an intermediate file.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *plot3-asc*(1), *plot3rot*(1), *plot3color*(1), *plot3line2*(1), *plot3*(5)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1990-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

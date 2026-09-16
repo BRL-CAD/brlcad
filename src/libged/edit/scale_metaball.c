@@ -1,7 +1,7 @@
 /*                 S C A L E _  M E T A B A L L . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -61,7 +61,7 @@ _ged_scale_metaball(struct ged *gedp, struct rt_metaball_internal *mbip, const c
 		return BRLCAD_ERROR;
 
 	    BU_CKMAG(mbpp, WDB_METABALLPT_MAGIC, "wdb_metaball_pnt");
-	    GED_METABALL_SCALE(mbpp->fldstr, sf);
+	    GED_METABALL_SCALE(mbpp->field_strength, sf);
 
 	    break;
 	case 's':
@@ -73,7 +73,7 @@ _ged_scale_metaball(struct ged *gedp, struct rt_metaball_internal *mbip, const c
 		return BRLCAD_ERROR;
 
 	    BU_CKMAG(mbpp, WDB_METABALLPT_MAGIC, "wdb_metaball_pnt");
-	    GED_METABALL_SCALE(mbpp->sweat, sf);
+	    GED_METABALL_SCALE(mbpp->blobbiness, sf);
 
 	    break;
 	default:

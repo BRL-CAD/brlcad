@@ -1,7 +1,7 @@
 /*                  D M _ P L U G I N S . C P P
  * BRL-CAD
  *
- * Copyright (c) 2020-2025 United States Government as represented by
+ * Copyright (c) 2020-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -109,7 +109,7 @@ dm_graphics_system(const char *dmtype)
 }
 
 
-static const char *priority_list[] = {"wgl", "ogl", "X", NULL};
+static const char *priority_list[] = {"wgl", "ogl", "tkswrast", "X", NULL};
 
 
 extern "C" void
@@ -382,6 +382,33 @@ fb_totally_numeric(const char *s)
 }
 
 
+/**
+ * True if s starts with a Windows drive letter prefix.
+ */
+static int
+fb_windows_drive_path(const char *s)
+{
+#ifdef HAVE_WINDOWS_H
+    if (!s || s[0] == '\0')
+	return 0;
+
+    return std::isalpha(static_cast<unsigned char>(s[0])) && s[1] == ':';
+#else
+    (void)s;
+    return 0;
+#endif
+}
+
+
+static int
+fb_standard_stream_path(const char *path)
+{
+    return BU_STR_EQUAL(path, "-")
+	|| BU_STR_EQUAL(path, "/dev/stdout")
+	|| BU_STR_EQUAL(path, "/dev/stderr");
+}
+
+
 struct fb *
 fb_open(const char *file, int width, int height)
 {
@@ -415,6 +442,12 @@ fb_open(const char *file, int width, int height)
 	    while (priority_list[i]) {
 		f_it = fmb->find(std::string(b));
 		if (f_it == fmb->end()) {
+		    i++;
+		    snprintf(device, sizeof(device), "/dev/%s", priority_list[i]);
+		    b = device;
+		    continue;
+		}
+		if (dm_valid_type(priority_list[i], NULL) != 1) {
 		    i++;
 		    snprintf(device, sizeof(device), "/dev/%s", priority_list[i]);
 		    b = device;
@@ -456,13 +489,14 @@ fb_open(const char *file, int width, int height)
 
     /* Not in list, check special interfaces or disk files */
     /* "/dev/" protection! */
-    if (bu_strncmp(file, "/dev/", 5) == 0) {
+    if (bu_strncmp(file, "/dev/", 5) == 0 && !fb_standard_stream_path(file)) {
         fb_log("fb_open: no such device \"%s\".\n", file);
         free((void *) ifp);
         return FB_NULL;
     }
 
-    if (fb_totally_numeric(file) || strchr(file, ':') != NULL) {
+    if (fb_totally_numeric(file) ||
+	(!fb_windows_drive_path(file) && strchr(file, ':') != NULL)) {
         /* We have a remote file name of the form <host>:<file>
          * or a port number (which assumes localhost) */
         *ifp->i = *remote_interface.i;
@@ -536,4 +570,3 @@ fb_genhelp(void)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

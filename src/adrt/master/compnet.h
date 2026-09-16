@@ -1,7 +1,7 @@
 /*                       C O M P N E T . H
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2025 United States Government as represented by
+ * Copyright (c) 2007-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -18,6 +18,8 @@
  * information.
  */
 /** @file compnet.h
+ *
+ * Interface to the ADRT component networking routines.
  *
  */
 

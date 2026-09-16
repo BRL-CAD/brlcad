@@ -1,7 +1,7 @@
 /*                     G - V A R . C
  * BRL-CAD
  *
- * Copyright (c) 2002-2025 United States Government as represented by
+ * Copyright (c) 2002-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -89,7 +89,7 @@ void mesh_tracker(struct db_i *dbip, struct directory *dp, void *UNUSED(ptr))
     }
 
     /* solid must be a bot */
-    if (rt_db_get_internal(&internal, dp, dbip, NULL, &rt_uniresource) != ID_BOT) {
+    if (rt_db_get_internal(&internal, dp, dbip, NULL) != ID_BOT) {
 	fprintf(stderr, "warning: '%s' is not a bot! (not processed)\n", dp->d_namep);
 	return;
     }
@@ -468,14 +468,14 @@ int main(int argc, char *argv[])
     }
 
     /* find requested object */
-    db_update_nref(dbip, &rt_uniresource);
+    db_update_nref(dbip);
 
     dp = db_lookup(dbip, object, 0);
     if (dp == RT_DIR_NULL)
 	bu_exit(1, "Object %s not found in database!\n", object);
 
     /* generate mesh list */
-    db_functree(dbip, dp, NULL, mesh_tracker, &rt_uniresource, NULL);
+    db_treewalk_basic(dbip, dp, NULL, mesh_tracker, NULL);
     if (verbose)
 	fprintf(stderr, ">> mesh count: %d\n", mesh_count);
 

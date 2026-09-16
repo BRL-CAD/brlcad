@@ -1,7 +1,7 @@
 /*                     T E X T U R E _ C A M O . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2002-2025 United States Government as represented by
+ * Copyright (c) 2002-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file librender/texture.h
+/** @file librender/texture_camo.c
  *
  * Comments -
  * Texture Library - Applies a 3 color camouflage

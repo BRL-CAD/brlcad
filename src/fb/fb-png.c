@@ -1,7 +1,7 @@
 /*                        F B - P N G . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2025 United States Government as represented by
+ * Copyright (c) 1998-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,6 +27,8 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <sys/stat.h>
 #include "png.h"
@@ -35,6 +37,7 @@
 
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "vmath.h"
@@ -57,6 +60,19 @@ double out_gamma = -1.0;	/* Gamma the image was created at */
 char *framebuffer = NULL;
 FILE *outfp;
 
+static int
+parse_pixbytes_arg(const char *arg, int *value)
+{
+    if (!bu_opt_scan_int_range(arg, value, 1, INT_MAX, "bytes per pixel"))
+	return 0;
+    if (*value != 1 && *value != 3) {
+	bu_log("fb-png: only able to handle 1 and 3 byte pixels, got '%s'\n", arg);
+	return 0;
+    }
+
+    return 1;
+}
+
 
 int
 get_args(int argc, char **argv)
@@ -77,21 +93,24 @@ get_args(int argc, char **argv)
 		break;
 	    case 's':
 		/* square size */
-		screen_height = screen_width = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &screen_width, 1, INT_MAX, "screen size"))
+		    return 0;
+		screen_height = screen_width;
 		break;
 	    case 'w':
-		screen_width = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &screen_width, 1, INT_MAX, "screen width"))
+		    return 0;
 		break;
 	    case 'n':
-		screen_height = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &screen_height, 1, INT_MAX, "screen height"))
+		    return 0;
 		break;
 	    case 'g':
 		out_gamma = atof(bu_optarg);
 		break;
 	    case '#':
-		pixbytes = atoi(bu_optarg);
-		if (pixbytes != 1 && pixbytes != 3)
-		    bu_exit(EXIT_FAILURE, "fb-png: Only able to handle 1 and 3 byte pixels\n");
+		if (!parse_pixbytes_arg(bu_optarg, &pixbytes))
+		    return 0;
 		break;
 
 	    default:		/* '?' 'h' */
@@ -113,8 +132,10 @@ get_args(int argc, char **argv)
 	(void)bu_fchmod(fileno(outfp), 0444);
     }
 
-    if (argc > ++bu_optind)
-	bu_log("fb-png: excess argument(s) ignored\n");
+    if (argc > ++bu_optind) {
+	bu_log("fb-png: excess argument(s) not supported\n");
+	return 0;
+    }
 
     return 1;		/* OK */
 }

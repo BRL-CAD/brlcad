@@ -1,0 +1,49 @@
+= KEYPOINT(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+keypoint - Without any options, *keypoint* displays the current keypoint setting. If a point is specified, then that point becomes the _keypoint_ . If _reset_ is specified, then the default _keypoint_ is restored.
+
+== SYNOPSIS
+
+[source]
+----
+keypoint [xyz] [reset]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Without any options, *keypoint* displays the current keypoint setting. If a point is specified, then that point becomes the _keypoint_. If _reset_ is specified, then the default _keypoint_ is restored. The _keypoint_ is used as the center of rotation and scaling in primitive edit or matrix edit (formerly known as object edit) modes. This command has no effect when used in nonediting modes.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *keypoint* command to set the keypoint in model units.
+
+.Set the keypoint.
+[example]
+====
+
+mged> **keypoint 10 20 30**::
+Sets the _keypoint_ to the point (10 20 30) in model units.
+
+
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

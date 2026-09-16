@@ -1,0 +1,75 @@
+= CD(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+cd - Changes the directory to the given path.
+
+== SYNOPSIS
+
+[source]
+----
+cd {path}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Change the directory to the given path. This can change to a given folder in the current directory or change to a full path. Double periods (..) can also be used to go up one level. See also the *pwd* command.
+
+
+[[examples]]
+== EXAMPLES
+
+Change directory to the given folder located in the current directory.
+
+.Use *cd* to change the directory.
+[example]
+====
+
+mged> **cd test_folder**::
+Changes the current directroy to a folder named test_folder that is located within the current directory.
+
+
+
+====
+
+Change directory to the given folder using the full path.
+
+.Use *cd* to change the directory.
+[example]
+====
+
+mged> **cd C:/geometry/test_folder**::
+Changes the current directroy to a folder named test_folder located at C:/geometry/test_folder.
+
+
+
+====
+
+Change directory to the folder above the current folder.
+
+.Use *cd* to change the directory.
+[example]
+====
+
+mged> **cd ..**::
+Changes the current directroy to the folder above the current folder.
+
+
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

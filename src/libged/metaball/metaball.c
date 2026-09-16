@@ -1,7 +1,7 @@
 /*                         E D I T _ M E T A B A L L . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -184,8 +184,8 @@ _ged_metaball_add_pnt(struct rt_metaball_internal *mbip, struct wdb_metaball_pnt
 	if (last->l.magic == BU_LIST_HEAD_MAGIC) {
 	    BU_GET(newmbp, struct wdb_metaball_pnt);
 	    newmbp->l.magic = WDB_METABALLPT_MAGIC;
-	    newmbp->fldstr = 1.0;
-	    newmbp->sweat = 1.0;
+	    newmbp->field_strength = 1.0;
+	    newmbp->blobbiness = 1.0;
 	    VMOVE(newmbp->coord, new_pt);
 	    BU_LIST_INSERT(&mbip->metaball_ctrl_head, &newmbp->l);
 	    return newmbp;
@@ -195,8 +195,8 @@ _ged_metaball_add_pnt(struct rt_metaball_internal *mbip, struct wdb_metaball_pnt
     /* build new point */
     BU_GET(newmbp, struct wdb_metaball_pnt);
     newmbp->l.magic = WDB_METABALLPT_MAGIC;
-    newmbp->fldstr = 1.0;
-    newmbp->sweat = 1.0;
+    newmbp->field_strength = 1.0;
+    newmbp->blobbiness = 1.0;
     VMOVE(newmbp->coord, new_pt);
 
     if (mbp) {
@@ -306,7 +306,7 @@ ged_metaball_add_pnt_core(struct ged *gedp, int argc, const char *argv[])
 	    VMOVE(curr_mbp->coord, curr_pt);
 	}
 
-	GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, BRLCAD_ERROR);
+	GED_DB_PUT_INTERN(gedp, dp, &intern, BRLCAD_ERROR);
     }
 
     rt_db_free_internal(&intern);
@@ -401,7 +401,7 @@ ged_metaball_delete_pnt_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "%s: failed to get internal for %s", argv[0], argv[1]);
 	return BRLCAD_ERROR;
     }
@@ -427,7 +427,7 @@ ged_metaball_delete_pnt_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_PUT_INTERN(gedp, dp, &intern, BRLCAD_ERROR);
 
     rt_db_free_internal(&intern);
     return BRLCAD_OK;
@@ -438,7 +438,7 @@ int
 ged_metaball_move_pnt_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
-    static const char *usage = "[-r] metaball seg_i pt";
+    static const char *usage = "[-r] metaball seg_i pt  |  -S metaball scale_factor";
     struct rt_db_internal intern;
     struct wdb_metaball_pnt *mbp;
     struct rt_metaball_internal *mbip;
@@ -459,6 +459,92 @@ ged_metaball_move_pnt_core(struct ged *gedp, int argc, const char *argv[])
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
+    }
+
+    /* whole-object uniform scale mode: "-S metaball scale_factor".
+     * This is a self-contained branch that scales every control point about
+     * the metaball centroid and scales each point's field_strength; it does
+     * not fall through to the point-move logic below.
+     *
+     * TODO: this and the others need to be proper subcommands of a
+     * metaball command.
+     */
+    if (argc >= 2 && BU_STR_EQUAL(argv[1], "-S")) {
+	struct wdb_metaball_pnt *mbpp;
+	double sf;
+	point_t sum = VINIT_ZERO;
+	point_t centroid = VINIT_ZERO;
+	point_t d;
+	long count = 0;
+
+	if (argc != 4) {
+	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	    return BRLCAD_ERROR;
+	}
+
+	if (sscanf(argv[3], "%lf", &sf) != 1 || sf <= SQRT_SMALL_FASTF) {
+	    bu_vls_printf(gedp->ged_result_str, "%s: bad scale factor - %s", argv[0], argv[3]);
+	    return BRLCAD_ERROR;
+	}
+
+	if ((last = strrchr(argv[2], '/')) == NULL)
+	    last = argv[2];
+	else
+	    ++last;
+
+	if (last[0] == '\0') {
+	    bu_vls_printf(gedp->ged_result_str, "%s: illegal input - %s", argv[0], argv[2]);
+	    return BRLCAD_ERROR;
+	}
+
+	dp = db_lookup(gedp->dbip, last, LOOKUP_QUIET);
+	if (dp == RT_DIR_NULL) {
+	    bu_vls_printf(gedp->ged_result_str, "%s: failed to find %s", argv[0], argv[2]);
+	    return BRLCAD_ERROR;
+	}
+
+	if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL) < 0) {
+	    bu_vls_printf(gedp->ged_result_str, "%s: failed to get internal for %s", argv[0], argv[2]);
+	    return BRLCAD_ERROR;
+	}
+
+	if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD ||
+	    intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_METABALL) {
+	    bu_vls_printf(gedp->ged_result_str, "%s is not a METABALL", argv[2]);
+	    rt_db_free_internal(&intern);
+	    return BRLCAD_ERROR;
+	}
+
+	mbip = (struct rt_metaball_internal *)intern.idb_ptr;
+
+	/* first pass: accumulate centroid (mean of all control-point coords) */
+	for (BU_LIST_FOR(mbpp, wdb_metaball_pnt, &mbip->metaball_ctrl_head)) {
+	    VADD2(sum, sum, mbpp->coord);
+	    ++count;
+	}
+
+	if (count <= 0) {
+	    bu_vls_printf(gedp->ged_result_str, "%s: metaball %s has no control points", argv[0], argv[2]);
+	    rt_db_free_internal(&intern);
+	    return BRLCAD_ERROR;
+	}
+
+	VSCALE(centroid, sum, 1.0 / (fastf_t)count);
+
+	/* second pass: uniformly scale each coord about the centroid and scale
+	 * field_strength; threshold, blobbiness and coord2 are left unchanged.
+	 */
+	for (BU_LIST_FOR(mbpp, wdb_metaball_pnt, &mbip->metaball_ctrl_head)) {
+	    VSUB2(d, mbpp->coord, centroid);
+	    VSCALE(d, d, sf);
+	    VADD2(mbpp->coord, centroid, d);
+	    mbpp->field_strength *= sf;
+	}
+
+	GED_DB_PUT_INTERN(gedp, dp, &intern, BRLCAD_ERROR);
+
+	rt_db_free_internal(&intern);
+	return BRLCAD_OK;
     }
 
     if (argc < 4 || 5 < argc) {
@@ -541,36 +627,24 @@ ged_metaball_move_pnt_core(struct ged *gedp, int argc, const char *argv[])
 	    VMOVE(curr_mbp->coord, curr_pt);
 	}
 
-	GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, BRLCAD_ERROR);
+	GED_DB_PUT_INTERN(gedp, dp, &intern, BRLCAD_ERROR);
     }
 
     rt_db_free_internal(&intern);
     return BRLCAD_OK;
 }
 
-#ifdef GED_PLUGIN
+
 #include "../include/plugin.h"
-struct ged_cmd_impl metaball_delete_pnt_cmd_impl = {"metaball_delete_pnt", ged_metaball_delete_pnt_core, GED_CMD_DEFAULT};
-const struct ged_cmd metaball_delete_pnt_cmd = { &metaball_delete_pnt_cmd_impl };
 
-struct ged_cmd_impl metaball_move_pnt_cmd_impl = {"metaball_move_pnt", ged_metaball_move_pnt_core, GED_CMD_DEFAULT};
-const struct ged_cmd metaball_move_pnt_cmd = { &metaball_move_pnt_cmd_impl };
+#define GED_METABALL_COMMANDS(X, XID) \
+    X(metaball_delete_pnt, ged_metaball_delete_pnt_core, GED_CMD_DEFAULT) \
+    X(metaball_move_pnt, ged_metaball_move_pnt_core, GED_CMD_DEFAULT) \
+    X(mouse_move_metaball_pnt, ged_metaball_move_pnt_core, GED_CMD_DEFAULT) \
+    X(mouse_add_metaball_pnt, ged_metaball_add_pnt_core, GED_CMD_DEFAULT) \
 
-struct ged_cmd_impl metaball_mouse_move_pnt_cmd_impl = {"mouse_move_metaball_pnt", ged_metaball_move_pnt_core, GED_CMD_DEFAULT};
-const struct ged_cmd metaball_mouse_move_pnt_cmd = { &metaball_mouse_move_pnt_cmd_impl };
-
-struct ged_cmd_impl metaball_add_pnt_cmd_impl = {"mouse_add_metaball_pnt", ged_metaball_add_pnt_core, GED_CMD_DEFAULT};
-const struct ged_cmd metaball_add_pnt_cmd = { &metaball_add_pnt_cmd_impl };
-
-const struct ged_cmd *metaball_cmds[] = { &metaball_delete_pnt_cmd, &metaball_mouse_move_pnt_cmd, &metaball_move_pnt_cmd, &metaball_add_pnt_cmd, NULL };
-
-static const struct ged_plugin pinfo = { GED_API,  metaball_cmds, 4 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_METABALL_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_metaball", 1, GED_METABALL_COMMANDS)
 
 /*
  * Local Variables:

@@ -1,7 +1,7 @@
 /*                    A T T R I B U T E S . C
  * BRL-CAD
  *
- * Copyright (c) 2010-2025 United States Government as represented by
+ * Copyright (c) 2010-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,6 +24,7 @@
 
 #include "bu/debug.h"
 #include "raytrace.h"
+#include "librt_private.h"
 
 
 int
@@ -246,7 +247,7 @@ db5_replace_attributes(struct directory *dp, struct bu_attribute_value_set *avsp
 	return -1;
     }
 
-    BU_ASSERT(dbip->dbi_version == 5);
+    BU_ASSERT(dbip->i->dbi_version == 5);
 
     if (db_get_external(&ext, dp, dbip) < 0)
 	return -2;		/* FAIL */
@@ -309,7 +310,7 @@ db5_update_attributes(struct directory *dp, struct bu_attribute_value_set *avsp,
 	return -1;
     }
 
-    BU_ASSERT(dbip->dbi_version == 5);
+    BU_ASSERT(dbip->i->dbi_version == 5);
 
     if (db_get_external(&ext, dp, dbip) < 0)
 	return -2;		/* FAIL */
@@ -343,7 +344,7 @@ db5_update_attributes(struct directory *dp, struct bu_attribute_value_set *avsp,
 	if (material_dp != RT_DIR_NULL) {
 	    struct rt_db_internal intern;
 	    struct rt_material_internal *material_ip;
-	    if (rt_db_get_internal(&intern, material_dp, dbip, NULL, NULL) >= 0) {
+	    if (rt_db_get_internal(&intern, material_dp, dbip, NULL) >= 0) {
 		if (intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_MATERIAL) {
 		    material_ip = (struct rt_material_internal *) intern.idb_ptr;
 		    const char *id_string = bu_avs_get(&material_ip->physicalProperties, "id");

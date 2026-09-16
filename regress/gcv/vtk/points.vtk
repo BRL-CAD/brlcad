@@ -1,0 +1,24 @@
+# vtk DataFile Version 3.0
+BRL-CAD VTK regress: points with scalar mass and velocity vector
+ASCII
+DATASET POLYDATA
+POINTS 5 float
+0.0 0.0 0.0
+1.0 0.0 0.0
+1.0 1.0 0.0
+0.0 1.0 0.0
+0.5 0.5 1.0
+POINT_DATA 5
+SCALARS mass float
+LOOKUP_TABLE default
+1.0
+2.0
+3.0
+4.0
+5.0
+VECTORS vel float
+1.0 0.0 0.0
+0.0 1.0 0.0
+0.0 0.0 1.0
+1.0 1.0 0.0
+0.0 1.0 1.0

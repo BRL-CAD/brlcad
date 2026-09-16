@@ -1,7 +1,7 @@
 /*                       P A T C H - G . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2025 United States Government as represented by
+ * Copyright (c) 2004-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -108,15 +108,16 @@ char space[2];
 int numobj = 0;
 int nflg = 1;
 int num_unions = 5;			/* number of unions per region */
-char *title = "patch-g conversion";	/* database title */
-char *top_level = "all";		/* top-level node name in the database */
+const char *title = "patch-g conversion";	/* database title */
+const char *top_level = "all";		/* top-level node name in the database */
 int rev_norms = 0;			/* reverse normals for plate mode triangles */
 int polysolid = 0;			/* convert triangle-facetted objects to polysolids */
 int arb6 = 0;				/* flag: convert plate-mode objects to arb6s */
 
-char *patchfile = NULL;
+const char *patchfile = NULL;
 char *labelfile = NULL;
 char *matfile = NULL;
+char *jtypefile = NULL;
 
 struct patches *list = NULL;
 fastf_t *XVAL = NULL;
@@ -128,6 +129,10 @@ size_t nthicks;				/* number of unique plate thicknesses
 					   for a single plate mode solid */
 fastf_t *RADIUS = NULL;
 fastf_t *thk = NULL;
+
+fastf_t *jtype = NULL;			/* per-component-code plate thickness
+					   override (mm), indexed by cc; from
+					   JTYPE file via -j */
 
 int *mirror = NULL;
 

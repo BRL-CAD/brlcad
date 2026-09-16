@@ -1,7 +1,7 @@
 /*                           R E G . C
  * BRL-CAD
  *
- * Copyright (c) 1987-2025 United States Government as represented by
+ * Copyright (c) 1987-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -43,48 +43,118 @@
  * boolean operations in the given sequence.  No GIFT semantics or
  * precedence is provided.  For that, use mk_tree_gift().
  */
+static union tree *
+mk_tree_pure_leaf(const struct wmember *wp)
+{
+    union tree *leafp;
+
+    WDB_CK_WMEMBER(wp);
+    BU_ALLOC(leafp, union tree);
+    RT_TREE_INIT(leafp);
+    leafp->tr_l.tl_op = OP_DB_LEAF;
+    leafp->tr_l.tl_name = bu_strdup(wp->wm_name);
+    if (!bn_mat_is_identity(wp->wm_mat)) {
+	leafp->tr_l.tl_mat = bn_mat_dup(wp->wm_mat);
+    }
+
+    return leafp;
+}
+
+
+static union tree *
+mk_tree_pure_node(int op, union tree *left, union tree *right)
+{
+    union tree *nodep;
+
+    BU_ALLOC(nodep, union tree);
+    RT_TREE_INIT(nodep);
+    nodep->tr_b.tb_op = op;
+    nodep->tr_b.tb_left = left;
+    nodep->tr_b.tb_right = right;
+
+    return nodep;
+}
+
+
+static union tree *
+mk_tree_pure_balanced(union tree **trees, size_t count, int op)
+{
+    size_t middle;
+
+    BU_ASSERT(count > 0);
+    if (count == 1) {
+	return trees[0];
+    }
+
+    middle = count / 2;
+    return mk_tree_pure_node(op,
+	mk_tree_pure_balanced(trees, middle, op),
+	mk_tree_pure_balanced(trees + middle, count - middle, op));
+}
+
+
 void
 mk_tree_pure(struct rt_comb_internal *comb, struct bu_list *member_hd)
 {
     struct wmember *wp;
+    union tree **trees;
+    size_t tree_capacity;
 
-    for (BU_LIST_FOR(wp, wmember, member_hd)) {
-	union tree *leafp, *nodep;
+    tree_capacity = (size_t)bu_list_len(member_hd);
+    if (tree_capacity == 0) {
+	return;
+    }
+    trees = (union tree **)bu_calloc(tree_capacity, sizeof(*trees), "pure tree leaves");
+
+    wp = BU_LIST_FIRST(wmember, member_hd);
+    while (BU_LIST_NOT_HEAD(wp, member_hd)) {
+	int op;
+	size_t tree_count = 0;
 
 	WDB_CK_WMEMBER(wp);
-
-	BU_ALLOC(leafp, union tree);
-	RT_TREE_INIT(leafp);
-	leafp->tr_l.tl_op = OP_DB_LEAF;
-	leafp->tr_l.tl_name = bu_strdup(wp->wm_name);
-	if (!bn_mat_is_identity(wp->wm_mat)) {
-	    leafp->tr_l.tl_mat = bn_mat_dup(wp->wm_mat);
-	}
-
 	if (!comb->tree) {
-	    comb->tree = leafp;
+	    comb->tree = mk_tree_pure_leaf(wp);
+	    wp = BU_LIST_NEXT(wmember, &wp->l);
 	    continue;
 	}
-	/* Build a left-heavy tree */
-	BU_ALLOC(nodep, union tree);
-	RT_TREE_INIT(nodep);
+
 	switch (wp->wm_op) {
 	    case WMOP_UNION:
-		nodep->tr_b.tb_op = OP_UNION;
+		op = OP_UNION;
 		break;
 	    case WMOP_INTERSECT:
-		nodep->tr_b.tb_op = OP_INTERSECT;
+		op = OP_INTERSECT;
 		break;
 	    case WMOP_SUBTRACT:
-		nodep->tr_b.tb_op = OP_SUBTRACT;
+		op = OP_SUBTRACT;
 		break;
 	    default:
 		bu_bomb("mk_tree_pure() bad wm_op");
 	}
-	nodep->tr_b.tb_left = comb->tree;
-	nodep->tr_b.tb_right = leafp;
-	comb->tree = nodep;
+
+	/*
+	 * Union and intersection are associative.  Grouping each run keeps
+	 * the specified left-to-right evaluation while avoiding an O(n)-deep
+	 * tree for the common case of a large union combination.
+	 */
+	if (op == OP_UNION || op == OP_INTERSECT) {
+	    do {
+		trees[tree_count++] = mk_tree_pure_leaf(wp);
+		wp = BU_LIST_NEXT(wmember, &wp->l);
+	    } while (BU_LIST_NOT_HEAD(wp, member_hd) &&
+		     ((op == OP_UNION && wp->wm_op == WMOP_UNION) ||
+		      (op == OP_INTERSECT && wp->wm_op == WMOP_INTERSECT)));
+
+	    comb->tree = mk_tree_pure_node(op, comb->tree,
+		mk_tree_pure_balanced(trees, tree_count, op));
+	    continue;
+	}
+
+	comb->tree = mk_tree_pure_node(op, comb->tree, mk_tree_pure_leaf(wp));
+	wp = BU_LIST_NEXT(wmember, &wp->l);
     }
+
+    bu_free(trees, "pure tree leaves");
 }
 
 
@@ -92,7 +162,7 @@ mk_tree_pure(struct rt_comb_internal *comb, struct bu_list *member_hd)
  * Add some nodes to a new or existing combination's tree, with GIFT
  * precedence and semantics.
  *
- * NON-PARALLEL due to rt_uniresource
+ * NON-PARALLEL due to rt_uniresource.  TODO - is this still true?
  *
  * Returns -
  * -1 ERROR
@@ -113,7 +183,7 @@ mk_tree_gift(struct rt_comb_internal *comb, struct bu_list *member_hd)
 	return 0;	/* OK, nothing to do */
 
     if (comb->tree && db_ck_v4gift_tree(comb->tree) < 0) {
-	db_non_union_push(comb->tree, &rt_uniresource);
+	db_non_union_push(comb->tree);
 	if (db_ck_v4gift_tree(comb->tree) < 0) {
 	    bu_log("mk_tree_gift() Cannot flatten tree for editing\n");
 	    return -1;
@@ -128,7 +198,7 @@ mk_tree_gift(struct rt_comb_internal *comb, struct bu_list *member_hd)
     /* flatten tree */
     if (comb->tree) {
 	/* Release storage for non-leaf nodes, steal leaves */
-	actual_count = (struct rt_tree_array *)db_flatten_tree(tree_list, comb->tree, OP_UNION, 1, &rt_uniresource) - tree_list;
+	actual_count = (struct rt_tree_array *)db_flatten_tree(tree_list, comb->tree, OP_UNION, 1) - tree_list;
 	BU_ASSERT(actual_count == node_count);
 	comb->tree = TREE_NULL;
     } else {
@@ -169,7 +239,7 @@ mk_tree_gift(struct rt_comb_internal *comb, struct bu_list *member_hd)
     BU_ASSERT(node_count == actual_count + (size_t)new_nodes);
 
     /* rebuild the tree with GIFT semantics */
-    comb->tree = (union tree *)db_mkgift_tree(tree_list, node_count, &rt_uniresource);
+    comb->tree = (union tree *)db_mkgift_tree(tree_list, node_count);
 
     bu_free((char *)tree_list, "mk_tree_gift: tree_list");
 

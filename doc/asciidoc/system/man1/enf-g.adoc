@@ -1,0 +1,90 @@
+= ENF-G(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+enf-g - convert an Elysium Neutral File (ENF) to a BRL-CAD database
+
+== SYNOPSIS
+
+[source]
+----
+enf-g [-v] [-i starting_ident] [-t tolerance] [-l name_length_limit] [-n part_name_file] input_facets_file output.g
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*enf-g* converts a tessellated _input_facets_file_ in the Elysium
+Neutral File (ENF) format into a BRL-CAD _output.g_ database. The input
+is expected to be the ASCII facet output produced by the Elysium
+_enf2mxp_ tessellator. Each ENF part is written as a BOT primitive
+wrapped in a region, and the ENF assembly hierarchy is reproduced using
+combinations. When a part name mapping file is supplied, the original
+ENF part number is also recorded as a *Part_No* attribute on the
+resulting region or combination.
+
+[[options]]
+== OPTIONS
+
+*-v*::
+  Enable verbose output, reporting each solid, region, and assembly as
+  it is written.
+
+*-i* _starting_ident_::
+  Set the ident number assigned to the first region created. Each
+  subsequent region's ident is incremented by one. The default is 1000.
+
+*-t* _tolerance_::
+  Set the maximum distance (in mm) at which two vertices are treated as
+  the same vertex. Must be greater than 0.0. The default is the BRL-CAD
+  standard distance tolerance.
+
+*-l* _name_length_limit_::
+  Truncate generated BRL-CAD object names to at most this many
+  characters. The value must be at least 5.
+
+*-n* _part_name_file_::
+  Read a part-number-to-name mapping from the named file. Each line
+  holds a part number and a legal BRL-CAD object name separated by
+  whitespace. Matching objects are renamed accordingly, while unmatched
+  objects keep their ENF part number and trigger a warning. When this
+  option is given, every resulting region and combination is tagged with
+  its original ENF part number in a *Part_No* attribute.
+
+[[examples]]
+== EXAMPLES
+
+.Convert an ENF facet file with a custom ident range and name mapping
+====
+[source,bash]
+----
+enf-g -v -i 2000 -l 32 -n parts.map widget.enf widget.g
+----
+Converts _widget.enf_ into _widget.g_, starting region idents at 2000,
+limiting object names to 32 characters, and renaming parts via the
+_parts.map_ lookup table. The resulting database can then be inspected
+with *mged*(1) or rendered with *rt*(1).
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *mged*(1), *rt*(1), *stl-g*(1), *obj-g*(1)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

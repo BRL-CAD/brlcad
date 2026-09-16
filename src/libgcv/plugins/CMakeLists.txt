@@ -8,6 +8,9 @@ set_target_properties(gcv_plugins_sentinel PROPERTIES FOLDER "BRL-CAD Plugins/gc
 function(gcv_plugin_library name)
   add_library(${name} ${ARGN})
   add_dependencies(gcv_plugins_sentinel ${name})
+  # On some platforms distclean has additional cleanup to do
+  distclean("${CMAKE_BINARY_DIR}/${LIBEXEC_DIR}/gcv/${name}.exp") 
+  distclean("${CMAKE_BINARY_DIR}/${LIBEXEC_DIR}/gcv/${name}.pdb") 
 endfunction(gcv_plugin_library name)
 
 # This target is supplied so applications wanting to run gcv commands at build
@@ -22,12 +25,16 @@ add_subdirectory(decimate)
 add_subdirectory(fastgen4)
 add_subdirectory(gdal)
 add_subdirectory(gltf)
+add_subdirectory(iges)
+add_subdirectory(jt)
 add_subdirectory(obj)
 add_subdirectory(ply)
 add_subdirectory(rhino)
+add_subdirectory(scad)
 add_subdirectory(stl)
 add_subdirectory(vol)
 add_subdirectory(vrml)
+add_subdirectory(vtk)
 
 cmakefiles(
   CMakeLists.txt

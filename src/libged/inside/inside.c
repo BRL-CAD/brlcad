@@ -1,7 +1,7 @@
 /*                        I N S I D E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -66,7 +66,7 @@ ged_inside_core(struct ged *gedp, int argc, const char *argv[])
     }
     ++arg;
 
-    if (rt_db_get_internal(&intern, outdp, gedp->dbip, bn_mat_identity, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, outdp, gedp->dbip, bn_mat_identity) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
 	return BRLCAD_ERROR;
     }
@@ -74,25 +74,13 @@ ged_inside_core(struct ged *gedp, int argc, const char *argv[])
     return ged_inside_internal(gedp, &intern, argc, argv, arg, outdp->d_namep);
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl inside_cmd_impl = {
-    "inside",
-    ged_inside_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd inside_cmd = { &inside_cmd_impl };
-const struct ged_cmd *inside_cmds[] = { &inside_cmd, NULL };
+#define GED_INSIDE_COMMANDS(X, XID) \
+    X(inside, ged_inside_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  inside_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_INSIDE_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_inside", 1, GED_INSIDE_COMMANDS)
 
 /*
  * Local Variables:

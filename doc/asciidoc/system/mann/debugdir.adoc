@@ -1,0 +1,61 @@
+= DEBUGDIR(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+debugdir - Displays a dump of the in-memory directory for the current database file.
+
+== SYNOPSIS
+
+[source]
+----
+debugdir
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Displays a dump of the in-memory directory for the current database file. The information listed for each directory entry includes:
+
+
+
+
+* memory address of the directory structure.
+* name of the object.
+* "d_addr" for objects on disk, or "ptr" for objects in memory.
+* "SOL," "REG," or "COM" if the object is a shape, region, or combination, respectively.
+* file offset (for objects on disk) or memory pointer (for objects in memory).
+* number of instances referencing this object (not normally filled in).
+* number of database granules used by this object.
+* number of times this object is used as a member in combinations (not normally filled in).
+
+
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *debugdir* command to get a dump of the in-memory directory.
+
+.Get a dump of the in-memory directory.
+[example]
+====
+mged>**debugdir**
+
+Gets a dump of the in-memory directory.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

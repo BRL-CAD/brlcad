@@ -1,0 +1,61 @@
+= LIBDM(3)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+libdm - display manager library for BRL-CAD
+
+== SYNOPSIS
+
+[source,c]
+----
+#include <dm.h>
+----
+
+Link with *-ldm*.
+
+The public interface is organized across the headers included by
+_dm.h_, namely _dm/defines.h_, _dm/fbserv.h_, _dm/util.h_, and
+_dm/view.h_.
+
+== DESCRIPTION
+
+LIBDM provides BRL-CAD's display manager API. A display manager can be
+thought of as a configurable drawing machine: it consumes generic,
+device-independent drawing commands -- primarily vector lists (vlists)
+that describe points, lines, and polygons in three dimensions, along
+with two-dimensional points, lines, and text -- and translates them into
+the drawing operations of a specific output device or window system.
+
+The library abstracts the underlying rendering target behind a common
+_struct dm_ interface, so that applications can draw the same geometry to
+any supported backend without change. Backends provided with BRL-CAD
+include X11, OpenGL (via GLX on X11 and WGL on Windows), a Qt/OpenGL
+target, a software rasterizer, PostScript output, UNIX plot output, a
+text backend, and a null device. LIBDM also integrates with the BRL-CAD
+framebuffer facilities, including the framebuffer server support in
+_dm/fbserv.h_.
+
+The complete API, including data structures and function signatures, is
+documented in the headers noted above and in the Doxygen-generated
+reference for the LIBDM module.
+
+== SEE ALSO
+
+*brlcad*(1), *mged*(1), *archer*(1), *libbv*(3), *libged*(3), *libicv*(3)
+
+The BRL-CAD Doxygen API reference provides the authoritative,
+up-to-date description of all public LIBDM routines.
+
+== AUTHOR
+
+BRL-CAD Team
+
+== COPYRIGHT
+
+This software is Copyright (c) 1993-2026 United States Government as represented by the U.S. Army Research Laboratory.
+
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

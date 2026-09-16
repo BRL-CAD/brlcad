@@ -1,7 +1,7 @@
 /*                    S T E P E N T I T Y . H
  * BRL-CAD
  *
- * Copyright (c) 2009-2025 United States Government as represented by
+ * Copyright (c) 2009-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,6 +25,7 @@
 
 /* system headers */
 #include <iostream>
+#include <unordered_map>
 
 #include "STEPWrapper.h"
 
@@ -56,6 +57,21 @@ protected:
 	const char *classname);
 
 public:
+    typedef std::unordered_map<const STEPEntity *, int> ONStateMap;
+
+    /** Select a caller-owned OpenNURBS index map for this thread.  Standalone
+     * face jobs use one map per face so immutable STEP entities can be shared
+     * while their destination-BREP indices remain independent. */
+    class ONStateScope {
+    public:
+	explicit ONStateScope(ONStateMap *state);
+	~ONStateScope();
+	ONStateScope(const ONStateScope &) = delete;
+	ONStateScope &operator=(const ONStateScope &) = delete;
+    private:
+	ONStateMap *previous;
+    };
+
     STEPEntity();
     virtual ~STEPEntity();
 
@@ -65,12 +81,9 @@ public:
     void SetId(int nid) {
 	id = nid;
     }
-    int GetONId() {
-	return ON_id;
-    }
-    void SetONId(int on_id) {
-	ON_id = on_id;
-    }
+    int GetONId() const;
+    void SetONId(int on_id);
+    virtual void ResetONState();
     int STEPid();
     STEPWrapper *Step();
     virtual bool Load(STEPWrapper *UNUSED(sw), SDAI_Application_instance *UNUSED(sse)) {

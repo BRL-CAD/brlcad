@@ -1,7 +1,7 @@
 /*                         M A T C H . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -51,21 +51,19 @@ ged_match_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     for (++argv; *argv != NULL; ++argv) {
-	register int i, num;
-	register struct directory *dp;
-	for (i = num = 0; i < RT_DBNHASH; i++) {
-	    for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-		if (bu_path_match(*argv, dp->d_namep, 0) != 0)
-		    continue;
-		if (num == 0)
-		    bu_vls_strcat(gedp->ged_result_str, dp->d_namep);
-		else {
-		    bu_vls_strcat(gedp->ged_result_str, " ");
-		    bu_vls_strcat(gedp->ged_result_str, dp->d_namep);
-		}
-		++num;
+	int num = 0;
+	struct directory *dp;
+	FOR_ALL_DIRECTORY_START(dp, gedp->dbip)
+	    if (bu_path_match(*argv, dp->d_namep, 0) != 0)
+		continue;
+	    if (num == 0)
+		bu_vls_strcat(gedp->ged_result_str, dp->d_namep);
+	    else {
+		bu_vls_strcat(gedp->ged_result_str, " ");
+		bu_vls_strcat(gedp->ged_result_str, dp->d_namep);
 	    }
-	}
+	    ++num;
+	FOR_ALL_DIRECTORY_END;
 
 	if (num > 0)
 	    bu_vls_strcat(gedp->ged_result_str, " ");
@@ -75,25 +73,13 @@ ged_match_core(struct ged *gedp, int argc, const char *argv[])
     return BRLCAD_OK;
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl match_cmd_impl = {
-    "match",
-    ged_match_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd match_cmd = { &match_cmd_impl };
-const struct ged_cmd *match_cmds[] = { &match_cmd, NULL };
+#define GED_MATCH_COMMANDS(X, XID) \
+    X(match, ged_match_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  match_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_MATCH_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_match", 1, GED_MATCH_COMMANDS)
 
 /*
  * Local Variables:

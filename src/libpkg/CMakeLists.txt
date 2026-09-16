@@ -1,4 +1,4 @@
-set(LIBPKG_SOURCES pkg.c vers.c)
+set(LIBPKG_SOURCES pkg.c pkg_transport.cpp vers.c)
 
 # Note - libpkg_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
 set(PKG_LIBS
@@ -6,7 +6,9 @@ set(PKG_LIBS
   ${WINSOCK_LIB}
   )
 
-brlcad_addlib(libpkg "${LIBPKG_SOURCES}" "${PKG_LIBS}" "" "")
+brlcad_addlib(libpkg "${LIBPKG_SOURCES}" "" ""
+  PRIVATE_LIBS ${PKG_LIBS}
+)
 set_target_properties(libpkg PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 brlcad_adddata(tpkg.c sample_applications)
@@ -16,7 +18,10 @@ endif()
 
 add_subdirectory(example)
 add_subdirectory(example_qt)
-cmakefiles(CMakeLists.txt)
+cmakefiles(
+  CMakeLists.txt
+  libpkg_architecture.adoc
+)
 
 # Local Variables:
 # tab-width: 8

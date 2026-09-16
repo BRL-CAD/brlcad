@@ -1,7 +1,7 @@
 /*                        S H _ P R J . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2025 United States Government as represented by
+ * Copyright (c) 2004-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -148,7 +148,7 @@ img_load_datasource(struct img_specific *image, struct db_i *dbInstance, const s
 	    RT_CK_DIR(dirEntry);
 
 	    /* the object was in the directory, so go get it */
-	    if (rt_db_get_internal(dbip, dirEntry, dbInstance, NULL, NULL) <= 0) {
+	    if (rt_db_get_internal(dbip, dirEntry, dbInstance, NULL) <= 0) {
 		/* unable to load/create the image database record object */
 		return -1;
 	    }
@@ -562,7 +562,7 @@ prj_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const 
      *
      * Non-PARALLEL, which is OK, because shaders are prepped serially.
      */
-    db_region_mat(prj_sp->prj_m_to_sh, rtip->rti_dbip, rp->reg_name, &rt_uniresource);
+    db_region_mat(prj_sp->prj_m_to_sh, rtip->rti_dbip, rp->reg_name);
 
 
     if (optical_debug&OPTICAL_DEBUG_SHADE) {

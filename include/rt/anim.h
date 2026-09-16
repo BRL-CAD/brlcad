@@ -1,7 +1,7 @@
 /*                          A N I M . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2025 United States Government as represented by
+ * Copyright (c) 1993-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -94,8 +94,6 @@ struct animate {
 #define ANIM_NULL       ((struct animate *)0)
 #define RT_CK_ANIMATE(_p) BU_CKMAG((_p), ANIMATE_MAGIC, "animate")
 
-__END_DECLS
-
 /* db_anim.c */
 RT_EXPORT extern struct animate *db_parse_1anim(struct db_i     *dbip,
 						int             argc,
@@ -185,6 +183,8 @@ RT_EXPORT extern void db_apply_anims(struct db_full_path *pathp,
 				     mat_t arc,
 				     struct mater_info *materp);
 
+
+__END_DECLS
 
 #endif /* RT_ANIM_H */
 

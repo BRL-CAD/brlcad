@@ -1,7 +1,7 @@
 /*                     R T _ I N I T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2019-2025 United States Government as represented by
+ * Copyright (c) 2019-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -60,7 +60,7 @@ librt_init(void)
     BU_LIST_INIT(&rt_vlfree);
     rt_init_resource(&rt_uniresource, 0, NULL);
 
-    // NOTE - rt_new_rti used to do this, checking if the rtg_vlfree list was
+    // NOTE - rt_i_create used to do this, checking if the rtg_vlfree list was
     // initialized.  Since we're doing that initialization in this routine,
     // handle reading LIBRT_DEBUG here as well.
     const char *debug_flags = getenv("LIBRT_DEBUG");

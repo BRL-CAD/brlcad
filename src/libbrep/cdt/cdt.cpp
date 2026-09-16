@@ -1,7 +1,7 @@
 /*                        C D T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2007-2025 United States Government as represented by
+ * Copyright (c) 2007-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -171,6 +171,7 @@ do_triangulation(struct ON_Brep_CDT_State *s_cdt, int fi)
     fmesh->m_bRev = face.m_bRev;
 
     if (!fmesh->cdt()) {
+	bu_log("Face %d: initial CDT (fmesh->cdt) FAILED\n", face.m_face_index);
 	return false;
     }
 
@@ -358,7 +359,7 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
     ON_TextLog vout(wonstr);
     if (!s_cdt->orig_brep->IsValid(&vout)) {
 	bu_log("brep is NOT valid, cannot produce watertight mesh\n");
-	//return -1;
+	return -1;
     }
 
     // For now, edges must have 2 and only 2 trims for this to work.
@@ -814,4 +815,3 @@ CDT_Audit(struct ON_Brep_CDT_State *s_cdt)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

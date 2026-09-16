@@ -48,6 +48,6 @@ https://github.com/openbsd/src/blob/master/lib/libc/gen/fnmatch.c
 
 file:/src/libbu/fnmatch.c
 file:/src/libbu/charclass.h
-file:/src/libbu/tests/path_match.cpp
+file:/src/libbu/tests/test_path_match.cpp
 file:/src/libbu/tests/path_match.in
 

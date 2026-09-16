@@ -1,7 +1,7 @@
 #                          D B . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2025 United States Government as represented by
+# Copyright (c) 1998-2026 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -618,7 +618,7 @@
     $help add push	{{object[s]} {pushes object's path transformations to solids}}
     $help add put	{{object data} {creates an object}}
     $help add r		{{region <operation solid>} {create or extend a Region combination}}
-    $help add rm	{{comb <members>} {remove members from comb}}
+    $help add rm	{{[options] <object-or-path>...} {delete database objects or remove a child path}}
     $help add rmap	{{} {returns a region ids to region(s) mapping}}
     $help add rmater	{{file} {read material properties from a file}}
     $help add rt_gettrees      {{} {}}

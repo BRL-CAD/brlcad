@@ -1,7 +1,7 @@
 /*                    P L A N E _ P T . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2025 United States Government as represented by
+ * Copyright (c) 2013-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -20,6 +20,7 @@
 
 #include "common.h"
 
+#include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -85,8 +86,8 @@ test_bg_3pnts_distinct(int argc, char **argv)
 static int
 test_bg_distsq_line3_pnt3(int argc, char **argv)
 {
-    float expected_result = 0;
-    float actual_result = 0;
+    fastf_t expected_result = 0;
+    fastf_t actual_result = 0;
     point_t pt = VINIT_ZERO;
     vect_t dir = VINIT_ZERO;
     point_t a = VINIT_ZERO;
@@ -98,13 +99,13 @@ test_bg_distsq_line3_pnt3(int argc, char **argv)
     sscanf(argv[2], "%lf,%lf,%lf", &pt[X], &pt[Y], &pt[Z]);
     sscanf(argv[3], "%lf,%lf,%lf", &dir[X], &dir[Y], &dir[Z]);
     sscanf(argv[4], "%lf,%lf,%lf", &a[X], &a[Y], &a[Z]);
-    sscanf(argv[5], "%f", &expected_result);
+    sscanf(argv[5], "%lf", &expected_result);
 
     actual_result = bg_distsq_line3_pnt3(pt, dir, a);
 
-    bu_log("result: %f\n", actual_result);
+    bu_log("result: %g\n", actual_result);
 
-    return !EQUAL(expected_result, actual_result);
+    return !NEAR_EQUAL(expected_result, actual_result, BN_TOL_DIST);
 }
 
 
@@ -243,12 +244,72 @@ test_bg_coplanar_pts(int argc, char **argv)
     return 0;
 }
 
+
+static int
+test_bg_make_pnt_3planes(void)
+{
+    int failures = 0;
+    point_t pt;
+    point_t expected = {123, 456, 789};
+    plane_t x123 = {1, 0, 0, 123};
+    plane_t y456 = {0, 1, 0, 456};
+    plane_t z789 = {0, 0, 1, 789};
+    plane_t y0 = {0, 1, 0, 0};
+    plane_t y1 = {0, 1, 0, 1};
+    plane_t bad = {NAN, 0, 0, 0};
+    fastf_t eps = 1.0e-8;
+    fastf_t nmag = sqrt(1.0 + eps * eps);
+    plane_t near_yz = {0, 1.0 / nmag, eps / nmag, (456.0 + eps * 789.0) / nmag};
+    fastf_t fallback_eps = 1.0e-11;
+    fastf_t fallback_nmag = sqrt(1.0 + fallback_eps * fallback_eps);
+    plane_t svd_yz = {0, 1.0 / fallback_nmag, fallback_eps / fallback_nmag, (456.0 + fallback_eps * 789.0) / fallback_nmag};
+    fastf_t tiny_eps = 1.0e-16;
+    fastf_t tiny_nmag = sqrt(1.0 + tiny_eps * tiny_eps);
+    plane_t near_singular = {0, 1.0 / tiny_nmag, tiny_eps / tiny_nmag, (456.0 + tiny_eps * 789.0) / tiny_nmag};
+
+    if (bg_make_pnt_3planes(pt, x123, y456, z789) < 0 ||
+	!VNEAR_EQUAL(pt, expected, 1.0e-9)) {
+	bu_log("orthogonal plane intersection failed: %.17g %.17g %.17g\n", V3ARGS(pt));
+	failures++;
+    }
+
+    if (bg_make_pnt_3planes(pt, x123, y0, y1) >= 0) {
+	bu_log("parallel plane intersection was accepted\n");
+	failures++;
+    }
+
+    if (bg_make_pnt_3planes(pt, x123, y456, near_yz) < 0 ||
+	DIST_PNT_PNT(pt, expected) > 1.0e-4) {
+	bu_log("near-singular solvable plane intersection failed: %.17g %.17g %.17g\n", V3ARGS(pt));
+	failures++;
+    }
+
+    if (bg_make_pnt_3planes(pt, x123, y456, svd_yz) < 0 ||
+	DIST_PNT_PNT(pt, expected) > 1.0e-2) {
+	bu_log("SVD fallback plane intersection failed: %.17g %.17g %.17g\n", V3ARGS(pt));
+	failures++;
+    }
+
+    if (bg_make_pnt_3planes(pt, x123, y456, near_singular) >= 0) {
+	bu_log("ill-conditioned plane intersection was accepted\n");
+	failures++;
+    }
+
+    if (bg_make_pnt_3planes(pt, bad, y456, z789) >= 0) {
+	bu_log("non-finite plane input was accepted\n");
+	failures++;
+    }
+
+    return failures;
+}
+
+
 int
 plane_pt_main(int argc, char *argv[])
 {
     int function_num = 0;
 
-    if (argc < 3) {
+    if (argc < 2) {
 	bu_exit(1, "ERROR: input format is function_num function_test_args [%s]\n", argv[0]);
     }
 
@@ -269,6 +330,8 @@ plane_pt_main(int argc, char *argv[])
 	    return test_bg_plane_closest_pt(argc, argv);
 	case 7:
 	    return test_bg_coplanar_pts(argc, argv);
+	case 8:
+	    return test_bg_make_pnt_3planes();
 	default:
 	    return 1;
 

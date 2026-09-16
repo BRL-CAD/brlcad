@@ -1,0 +1,121 @@
+= G-RAW(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+
+g-raw - convert BRL-CAD geometry to RAW triangle facet format
+
+== SYNOPSIS
+
+[source]
+----
+g-raw [-vi8] [-x _rt_debug_] [-X _nmg_debug_] [-a _abs_tol_] [-r _rel_tol_] [-n _norm_tol_] [-D _dist_tol_] [-o _output_file.raw_ | -m _output_directory_] _database.g_ _object_...
+----
+
+[[description]]
+== DESCRIPTION
+
+*g-raw* converts the named _object(s)_ from a BRL-CAD _database.g_ file into
+the RAW triangle facet format. Each specified region is tessellated using
+the NMG boolean evaluator and written as a list of triangle vertex
+coordinates.
+
+By default all converted geometry is written as a single stream to standard
+output. With *-o* the output is written to a named file, and with *-m* each
+region is written to its own file inside a directory; the two are mutually
+exclusive. When writing to a directory, file names are derived from the
+region's full path name with "/" replaced by "@" and spaces and periods
+replaced by "_".
+
+Coordinates are emitted in millimeters unless *-i* requests inches.
+
+[[options]]
+== OPTIONS
+
+*-v*::
+  Enable verbose output, reporting the objects processed and the
+  tessellation and calculation tolerances in effect.
+
+*-i*::
+  Emit vertex coordinates in inches instead of the default millimeters.
+
+*-8*::
+  Tessellate using the marching cubes algorithm instead of the standard
+  NMG boolean evaluation.
+
+*-o* _output_file.raw_::
+  Write all output to the named file rather than standard output.
+  Mutually exclusive with *-m*.
+
+*-m* _output_directory_::
+  Write each converted region to a separate ".raw" file within the named
+  directory. Mutually exclusive with *-o*.
+
+*-a* _abs_tol_::
+  Set the absolute tessellation tolerance in millimeters. Specifying this
+  disables the relative tolerance.
+
+*-r* _rel_tol_::
+  Set the relative tessellation tolerance (fraction of bounding box size).
+  The default is 0.01.
+
+*-n* _norm_tol_::
+  Set the surface-normal tessellation tolerance in degrees. Specifying this
+  disables the relative tolerance.
+
+*-D* _dist_tol_::
+  Set the calculation distance tolerance in millimeters used to decide
+  whether two vertices are coincident. The default is 0.0005.
+
+*-x* _rt_debug_::
+  Set the librt debug flags, given as a hexadecimal value.
+
+*-X* _nmg_debug_::
+  Set the libnmg debug flags, given as a hexadecimal value.
+
+[[examples]]
+== EXAMPLES
+
+.Convert selected regions to a single RAW file
+====
+[source,bash]
+----
+g-raw -o engine.raw engine.g block piston
+----
+Tessellates the regions named "block" and "piston" from engine.g and
+writes both as triangles into engine.raw.
+====
+
+.Export every region to its own file in inches
+====
+[source,bash]
+----
+mkdir parts
+g-raw -i -m parts -a 0.1 model.g top_assembly
+----
+Walks the "top_assembly" tree in model.g, tessellating each region with an
+absolute tolerance of 0.1 mm, and writes a separate ".raw" file per region
+into the "parts" directory with coordinates expressed in inches.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *g-stl*(1), *g-obj*(1), *mged*(1)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

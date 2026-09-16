@@ -1,7 +1,7 @@
 /*                         R T A B O R T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -66,7 +66,7 @@ ged_rtabort_core(struct ged *gedp, int argc, const char *argv[])
 	    if (BU_STR_EQUAL(bu_vls_cstr(&cmdroot), "rt") ||
 		    BU_STR_EQUAL(bu_vls_cstr(&cmdroot), "rtwizard") || BU_STR_EQUAL(bu_vls_cstr(&cmdroot), "art") ||
 		    BU_STR_EQUAL(bu_vls_cstr(&cmdroot), "rtcheck"))  {
-		bu_pid_terminate(bu_process_pid(rrp->p));
+		(void)bu_process_terminate(rrp->p);
 		rrp->aborted = 1;
 	    }
 	}
@@ -77,24 +77,13 @@ ged_rtabort_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl rtabort_cmd_impl = {
-    "rtabort",
-    ged_rtabort_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd rtabort_cmd = { &rtabort_cmd_impl };
-const struct ged_cmd *rtabort_cmds[] = { &rtabort_cmd, NULL };
+#define GED_RTABORT_COMMANDS(X, XID) \
+    X(rtabort, ged_rtabort_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  rtabort_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_RTABORT_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_rtabort", 1, GED_RTABORT_COMMANDS)
 
 /*
  * Local Variables:

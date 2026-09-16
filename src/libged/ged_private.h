@@ -1,7 +1,7 @@
 /*                   G E D _ P R I V A T E . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -41,12 +41,17 @@
 #include "bv/defines.h"
 #include "bv/util.h"
 #include "ged.h"
+#include "include/plugin.h"
 
 #ifdef __cplusplus
 
 #include <map>
 #include <stack>
 #include <string>
+#include <unordered_map>
+
+#include "rt/edit.h"
+#include "rt/db_fullpath.h"
 
 #endif
 
@@ -96,6 +101,8 @@ struct ged_drawable {
 
 class Ged_Internal {
     public:
+	~Ged_Internal();
+
 	struct ged *gedp;
 	std::map<ged_func_ptr, std::pair<bu_clbk_t, void *>> cmd_prerun_clbk;
 	std::map<ged_func_ptr, std::pair<bu_clbk_t, void *>> cmd_during_clbk;
@@ -113,6 +120,16 @@ class Ged_Internal {
 	// commands and subcommands.
 	vect_t ged_eye_model = VINIT_ZERO;
 	mat_t ged_viewrot = MAT_INIT_ZERO;
+
+	// Temporary edit buffer: maps a path string to an in-progress rt_edit.
+	// Survives across command invocations within a session.
+	// Entries are promoted (written to disk) on explicit flush or abandoned
+	// on session close.
+	struct ged_edit_buf_entry {
+	    struct db_full_path dfp;
+	    struct rt_edit *s;
+	};
+	std::unordered_map<std::string, ged_edit_buf_entry> edit_buf;
 };
 
 #else
@@ -210,7 +227,6 @@ struct draw_data_t {
     struct bu_color c;
     int color_inherit;
     int bool_op;
-    struct resource *res;
     struct bv_mesh_lod_context *mesh_c;
 
     /* To avoid the need for multiple subtree walking
@@ -257,10 +273,11 @@ GED_EXPORT extern int _ged_combadd2(struct ged *gedp,
 /* defined in display_list.c */
 GED_EXPORT extern void _dl_eraseAllNamesFromDisplay(struct ged *gedp, const char *name, const int skip_first);
 GED_EXPORT extern void _dl_eraseAllPathsFromDisplay(struct ged *gedp, const char *path, const int skip_first);
+GED_EXPORT extern void _ged_erase_legacy_overlap_plot(struct ged *gedp);
 extern void _dl_freeDisplayListItem(struct ged *gedp, struct display_list *gdlp);
 GED_EXPORT extern int dl_bounding_sph(struct bu_list *hdlp, vect_t *min, vect_t *max, int pflag);
 
-GED_EXPORT extern void color_soltab(struct bv_scene_obj *sp);
+GED_EXPORT extern void color_soltab(struct db_i *dbip, struct bv_scene_obj *sp);
 
 /* defined in draw.c */
 GED_EXPORT extern void _ged_cvt_vlblock_to_solids(struct ged *gedp,
@@ -279,6 +296,28 @@ GED_EXPORT extern int _ged_get_obj_bounds2(struct ged *gedp,
 				struct _ged_trace_data *gtdp,
 				point_t rpp_min,
 				point_t rpp_max);
+
+/* defined in get_obj_bounds.c: "tight" AABB that accounts for subtracted
+ * (OP_SUBTRACT) material by bounding a Cauchy-Crofton-converged point set from
+ * the ray-traced, boolean-evaluated geometry.  Unlike
+ * rt_obj_bounds()/rt_bound_tree(), which discard the RPP of
+ * negative members and therefore never shrink to reflect carved-away material,
+ * this contracts the box to the evaluated geometry (approximate, to the ray
+ * sampling resolution).  Falls back to the loose bound on any failure. */
+GED_EXPORT extern int _ged_obj_tight_bounds(struct ged *gedp,
+				int argc,
+				const char *argv[],
+				int use_air,
+				point_t rpp_min,
+				point_t rpp_max);
+
+/* Boolean-evaluated oriented bounding box.  Corners use ARB8 ordering. */
+GED_EXPORT extern int _ged_obj_oriented_bounds(struct ged *gedp,
+				int argc,
+				const char *argv[],
+				int use_air,
+				int evaluated,
+				point_t corners[8]);
 
 /*  defined in get_solid_kp.c */
 GED_EXPORT extern int _ged_get_solid_keypoint(struct ged *const gedp,
@@ -344,7 +383,8 @@ GED_EXPORT extern int _ged_do_tra(struct ged *gedp,
  * the real definition of the struct goes here.  The public
  * header has only the notion of a ged_results structure.*/
 struct ged_results {
-	struct bu_ptbl *results_tbl;
+    int ret;
+    struct bu_ptbl *results_tbl;
 };
 
 /* defined in ged_util.c */
@@ -412,9 +452,6 @@ _ged_characterize_path_spec(struct bu_vls *normalized,
  */
 GED_EXPORT extern void _ged_cmd_help(struct ged *gedp, const char *usage, struct bu_opt_desc *d);
 
-/* Option for verbosity variable setting */
-GED_EXPORT extern int _ged_vopt(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
-
 /* Function to read in density information, either from a file or from the
  * database itself. Implements the following priority order:
  *
@@ -444,6 +481,8 @@ _ged_sort_existing_objs(struct db_i *dbip, int argc, const char *argv[], struct 
 
 
 GED_EXPORT extern int ged_view_data_lines(struct ged *gedp, int argc, const char *argv[]);
+
+GED_EXPORT extern int ged_repair(struct ged *gedp, int argc, const char **argv);
 
 
 GED_EXPORT extern void ged_push_scene_obj(struct ged *gedp, struct bv_scene_obj *sp);
@@ -480,6 +519,26 @@ GED_EXPORT extern int
 _ged_subcmd2_help(struct ged *gedp, struct bu_opt_desc *gopts, std::map<std::string, ged_subcmd *> &subcmds, const char *cmdname, const char *cmdargs, int argc, const char **argv);
 
 #endif
+
+/* Temporary edit buffer API (defined in edit_buf.cpp).
+ *
+ * Maintains a per-gedp map of db_full_path → rt_edit * that survives across
+ * command invocations within a session.  Use this for multi-step interactive
+ * CLI edits that should not write to disk at each step.
+ *
+ * All functions are no-ops when gedp, dfp, or s is NULL.
+ *
+ * ged_edit_buf_get    - look up entry by path; returns NULL if not found
+ * ged_edit_buf_set    - store/replace entry (takes ownership of s)
+ * ged_edit_buf_promote- serialise es_int to disk, remove entry; returns OK/ERROR
+ * ged_edit_buf_abandon- call rt_edit_destroy(), remove entry (no disk write)
+ * ged_edit_buf_flush  - promote ALL entries to disk (call before db close)
+ */
+GED_EXPORT extern struct rt_edit *ged_edit_buf_get(struct ged *gedp, const struct db_full_path *dfp);
+GED_EXPORT extern void            ged_edit_buf_set(struct ged *gedp, const struct db_full_path *dfp, struct rt_edit *s);
+GED_EXPORT extern int             ged_edit_buf_promote(struct ged *gedp, const struct db_full_path *dfp);
+GED_EXPORT extern void            ged_edit_buf_abandon(struct ged *gedp, const struct db_full_path *dfp);
+GED_EXPORT extern void            ged_edit_buf_flush(struct ged *gedp);
 
 __END_DECLS
 

@@ -1,7 +1,7 @@
 /*                    T E S T _ S E L E C T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2018-2025 United States Government as represented by
+ * Copyright (c) 2018-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -43,6 +43,13 @@ main(int ac, char *av[]) {
 	printf("ERROR: [%s] does not exist, expecting .g file\n", av[1]);
 	return 2;
     }
+
+    /* Use a local working-directory cache so we do not pollute the user's
+     * real BRL-CAD cache and so the test is fully self-contained. */
+    char lcache[MAXPATHLEN] = {0};
+    bu_dir(lcache, MAXPATHLEN, BU_DIR_CURR, "ged_select_test_cache", NULL);
+    bu_mkdir(lcache);
+    bu_setenv("BU_DIR_CACHE", lcache, 1);
 
     gedp = ged_open("db", av[1], 1);
 

@@ -1,0 +1,47 @@
+= OROT(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+orot - Performs a rotation of an object during matrix edit.
+
+== SYNOPSIS
+
+[source]
+----
+orot [-i] {xdeg ydeg zdeg}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Performs a rotation of an object during matrix edit. The rotation is performed, in order: _xdeg_ about the _x_ axis, then _ydeg_ about the _y_ axis, and finally _zdeg_ about the _z_ axis. If the _-i_ flag is given, then the angles are interpreted as increments to the last object rotation. The *rotobj* command is a synonym for _orot._
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *orot* command to rotate a currently edited object.
+
+.Rotate a currently edited object.
+[example]
+====
+mged>**orot 0 0 35**
+
+Rotates currently edited object by 35° about the Z-axis from the original orientation.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

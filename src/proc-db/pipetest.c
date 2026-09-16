@@ -1,7 +1,7 @@
 /*                      P I P E T E S T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2025 United States Government as represented by
+ * Copyright (c) 2004-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,7 +34,7 @@
 #include "wdb.h"
 
 
-void do_bending(struct rt_wdb *fp, char *name, point_t (*pts), int npts, double bend, double od);
+void do_bending(struct rt_wdb *fp, const char *name, point_t (*pts), int npts, double bend, double od);
 void pr_pipe(const char *name, struct wdb_pipe_pnt *head);
 
 struct wdb_pipe_pnt pipeA[] = {
@@ -151,7 +151,7 @@ main(int argc, char **argv)
 
 
 void
-do_bending(struct rt_wdb *fp, char *name, point_t (*pts), int npts, double bend, double od)
+do_bending(struct rt_wdb *fp, const char *name, point_t (*pts), int npts, double bend, double od)
 {
     struct bu_list head;
     int i;

@@ -1,7 +1,7 @@
 /*                    P I X B A C K G N D . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2025 United States Government as represented by
+ * Copyright (c) 1986-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,6 +28,8 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <math.h>
 #include "bio.h"
@@ -35,6 +37,7 @@
 #include "vmath.h"
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/malloc.h"
 #include "bu/exit.h"
 
@@ -170,6 +173,7 @@ static int
 get_args(int argc, char **argv)
 {
     int c;
+    int remaining;
 
     while ((c = bu_getopt(argc, argv, "His:w:n:t:a:b:h?")) != -1) {
 	switch (c) {
@@ -183,47 +187,57 @@ get_args(int argc, char **argv)
 		break;
 	    case 's':
 		/* square file size */
-		file_height = file_width = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &file_width, 1, INT_MAX, "size"))
+		    return 0;
+		file_height = file_width;
 		break;
 	    case 'w':
-		file_width = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &file_width, 1, INT_MAX, "width"))
+		    return 0;
 		break;
 	    case 'n':
-		file_height = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &file_height, 1, INT_MAX, "height"))
+		    return 0;
 		break;
 	    case 't':
 		/* Title area size */
-		title_height = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &title_height, 1, INT_MAX, "title height"))
+		    return 0;
 		break;
 	    case 'a':
-		h_start = atoi(bu_optarg); /* top_inten, in the Usage and in the man page */
+		if (!bu_opt_scan_int(bu_optarg, &h_start, "top intensity"))
+		    return 0;
 		break;
 	    case 'b':
-		h_end = atoi(bu_optarg); /* bottom_inten, in the Usage and in the man page */
+		if (!bu_opt_scan_int(bu_optarg, &h_end, "bottom intensity"))
+		    return 0;
 		break;
 
 	    default:		/* '?' 'h' */
 		return 0;
 	}
     }
-    /* when bu_optind >= argc, we have run out of args */
-    if (bu_optind+1 >= argc)
-	return 0;		/* only 0 or 1 args */
-    if (bu_optind+2 == argc) {
+    remaining = argc - bu_optind;
+    if (remaining == 2) {
 	/* Parameters are H S */
-	HSV[0] = atof(argv[bu_optind++]);
-	HSV[1] = atof(argv[bu_optind]);
+	if (!bu_opt_scan_double(argv[bu_optind++], &HSV[0], "hue") ||
+	    !bu_opt_scan_double(argv[bu_optind], &HSV[1], "saturation"))
+	    return 0;
 	HSV[2] = h_start;
 
 	hsvrgb(HSV, RGB);
-    } else {
+    } else if (remaining == 3) {
 	/* parameters are R G B */
-	RGB[0] = atof(argv[bu_optind++]);
-	RGB[1] = atof(argv[bu_optind++]);
-	RGB[2] = atof(argv[bu_optind++]);
+	if (!bu_opt_scan_double(argv[bu_optind++], &RGB[0], "red") ||
+	    !bu_opt_scan_double(argv[bu_optind++], &RGB[1], "green") ||
+	    !bu_opt_scan_double(argv[bu_optind++], &RGB[2], "blue"))
+	    return 0;
 
 	rgbhsv(RGB, HSV);
 	HSV[2] = h_start;	/* Change given RGB to starting inten */
+    } else {
+	fprintf(stderr, "pixbackgnd: expected either 2 HSV values or 3 RGB values\n");
+	return 0;
     }
     return 1;			/* OK */
 }

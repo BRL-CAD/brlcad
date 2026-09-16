@@ -1,7 +1,7 @@
 /*                         M O V E _ A R B _ F A C E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -237,31 +237,20 @@ if (face_idx > max_idx) { \
 	    VMOVE(arb->pt[i], arb_pt);
 	}
 
-	GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, BRLCAD_ERROR);
+	GED_DB_PUT_INTERN(gedp, dp, &intern, BRLCAD_ERROR);
     }
 
     return BRLCAD_OK;
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl move_arb_face_cmd_impl = {
-    "move_arb_face",
-    ged_move_arb_face_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd move_arb_face_cmd = { &move_arb_face_cmd_impl };
-const struct ged_cmd *move_arb_face_cmds[] = { &move_arb_face_cmd, NULL };
+#define GED_MOVE_ARB_FACE_COMMANDS(X, XID) \
+    X(move_arb_face, ged_move_arb_face_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  move_arb_face_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_MOVE_ARB_FACE_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_move_arb_face", 1, GED_MOVE_ARB_FACE_COMMANDS)
 
 /*
  * Local Variables:

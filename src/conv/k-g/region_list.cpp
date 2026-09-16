@@ -1,7 +1,7 @@
 /*                 R E G I O N _ L I S T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2024-2025 United States Government as represented by
+ * Copyright (c) 2024-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -71,7 +71,7 @@ static void  write_attributes
 	return;
     }
 
-    if (rt_db_get_internal(&region_internal, dp, dbip, NULL, &rt_uniresource) >= 0) {
+    if (rt_db_get_internal(&region_internal, dp, dbip, NULL) >= 0) {
 	bu_attribute_value_set* avs = &region_internal.idb_avs;
 
 	for (std::map<std::string, std::string>::const_iterator it = attributes.begin(); it != attributes.end(); it++)

@@ -1,7 +1,7 @@
 /*             R T _ M O T I O N _ S T A T E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2014-2025 United States Government as represented by
+ * Copyright (c) 2014-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,7 +29,7 @@
 
 #ifdef HAVE_BULLET
 
-
+#include "rt/tree.h"
 #include "rt_motion_state.hpp"
 #include "utility.hpp"
 
@@ -71,7 +71,7 @@ path_to_matrix(db_i &db, const db_full_path &path, fastf_t * const result)
     db_full_path_init(&temp);
     db_dup_full_path(&temp, &path);
 
-    if (1 != db_path_to_mat(&db, &temp, result, 0, &rt_uniresource))
+    if (1 != db_path_to_mat(&db, &temp, result, 0))
 	throw std::runtime_error("db_path_to_mat() failed");
 }
 
@@ -114,8 +114,7 @@ apply_tree_matrix(db_i &db, const db_full_path &path,
 	&parent_internal);
     RT_DB_INTERNAL_INIT(&parent_internal);
 
-    if (0 > rt_db_get_internal(&parent_internal, &parent_dir, &db, bn_mat_identity,
-			      &rt_uniresource))
+    if (0 > rt_db_get_internal(&parent_internal, &parent_dir, &db, bn_mat_identity))
 	bu_bomb("rt_db_get_internal() failed");
 
     rt_comb_internal &comb = *static_cast<rt_comb_internal *>
@@ -135,7 +134,7 @@ apply_tree_matrix(db_i &db, const db_full_path &path,
 
     bn_mat_mul2(matrix, leaf->tr_l.tl_mat);
 
-    if (0 > rt_db_put_internal(&parent_dir, &db, &parent_internal, &rt_uniresource))
+    if (0 > rt_db_put_internal(&parent_dir, &db, &parent_internal))
 	bu_bomb("rt_db_put_internal() failed");
 }
 

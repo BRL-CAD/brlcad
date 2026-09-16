@@ -1,0 +1,100 @@
+= BOLT(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+bolt - create a BRL-CAD geometry database containing bolts
+
+== SYNOPSIS
+
+[source]
+----
+bolt [-o_#_] [-f_name.g_] [-n_#_] [-hd_#_] [-hh_#_] [-wd_#_] [-wh_#_] [-sd_#_] [-sh_#_]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*bolt* creates a BRL-CAD geometry database (.g) containing one of four
+kinds of bolt: a bare bolt head, a head with washer, a head with washer
+and stem, or a head with stem. The bolt head is modeled as a hexagonal
+prism (two *arb8* solids); the washer and stem are modeled as right
+circular cylinders (*rcc* solids). Up to 256 identical bolts may be
+created per run, each as its own region and group. All dimensions are
+in millimeters.
+
+If invoked with no arguments, *bolt* runs interactively and prompts for
+the bolt type, output file name, count, and each required dimension.
+Otherwise every parameter is taken from the command line. Each option
+letter is immediately followed by its value with no intervening space
+(for example, *-hd30*, not *-hd 30*).
+
+[[options]]
+== OPTIONS
+
+*-o*_#_::
+  Type of bolt: 1 = head only; 2 = head and washer; 3 = head, washer,
+  and stem; 4 = head and stem.
+
+*-f*_name.g_::
+  Name of the output .g database file (default bolt.g in interactive
+  mode). The value follows *-f* directly, e.g. *-fbolt.g*.
+
+*-n*_#_::
+  Number of bolts to create, from 1 to 256.
+
+*-hd*_#_::
+  Diameter of the bolt head, measured flat edge to flat edge.
+
+*-hh*_#_::
+  Height of the bolt head.
+
+*-wd*_#_::
+  Diameter of the washer (types 2 and 3).
+
+*-wh*_#_::
+  Height of the washer (types 2 and 3).
+
+*-sd*_#_::
+  Diameter of the bolt stem (types 3 and 4).
+
+*-sh*_#_::
+  Height of the bolt stem (types 3 and 4).
+
+[[examples]]
+== EXAMPLES
+
+.Generate a hex-head bolt with washer and stem, then raytrace it
+====
+[source,bash]
+----
+bolt -o3 -fbolt.g -n1 -hd30 -hh10 -wd40 -wh3 -sd12 -sh80
+rt -o bolt.png bolt.g bolta
+----
+This creates a single complete bolt (option 3: head, washer, and stem)
+in bolt.g with a 30 mm hex head 10 mm tall, a 40 mm washer 3 mm thick,
+and a 12 mm stem 80 mm long, then renders the resulting group "bolta"
+to an image with *rt*(1).
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *handle*(1), *gastank*(1), *window*(1), *window_frame*(1), *rt*(1), *mged*(1)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

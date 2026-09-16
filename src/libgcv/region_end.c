@@ -1,7 +1,7 @@
 /*                    R E G I O N _ E N D . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -45,12 +45,41 @@ _gcv_cleanup(int state, union tree *tp)
      * point to adding _another_ message to our output, so we need to
      * cons up an OP_NOP node to return.
      */
-    db_free_tree(tp, &rt_uniresource); /* Does an nmg_kr() */
+    db_free_tree(tp); /* Does an nmg_kr() */
 
     BU_ALLOC(tp, union tree);
     RT_TREE_INIT(tp);
     tp->tr_op = OP_NOP;
     return tp;
+}
+
+
+static void
+_gcv_clear_region_ref(union tree *tp, const struct nmgregion *r)
+{
+    if (!tp || !r)
+	return;
+
+    switch (tp->tr_op) {
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+	case OP_XOR:
+	    _gcv_clear_region_ref(tp->tr_b.tb_left, r);
+	    _gcv_clear_region_ref(tp->tr_b.tb_right, r);
+	    break;
+	case OP_NOT:
+	case OP_GUARD:
+	case OP_XNOP:
+	    _gcv_clear_region_ref(tp->tr_b.tb_left, r);
+	    break;
+	case OP_TESS:
+	    if (tp->tr_d.td_r == r)
+		tp->tr_d.td_r = (struct nmgregion *)NULL;
+	    break;
+	default:
+	    break;
+    }
 }
 
 
@@ -95,13 +124,13 @@ gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
     /* get a copy to play with as the parameters might get clobbered
      * by a longjmp.  FIXME: db_dup_subtree() doesn't create real copies
      */
-    tp = db_dup_subtree(curtree, &rt_uniresource);
+    tp = db_dup_subtree(curtree);
 
     /* FIXME: we can't free curtree until we get a "real" copy form
      * db_dup_subtree().  right now we get a fake copy just so we can
      * keep the compiler quiet about clobbering curtree during longjmp
      */
-    /* db_free_tree(curtree, &rt_uniresource); */
+    /* db_free_tree(curtree); */
 
     /* Sometimes the NMG library adds debugging bits when it detects
      * an internal error, before bombing.  Stash.
@@ -114,7 +143,7 @@ gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 	 * curtree to an evaluated result and returns it if the evaluation
 	 * is successful.
 	 */
-	ret_tree = nmg_booltree_evaluate(tp, vlfree, tsp->ts_tol, &rt_uniresource);
+	ret_tree = nmg_booltree_evaluate(tp, vlfree, tsp->ts_tol);
     } else {
 	/* catch */
 	/* Error, bail out */
@@ -204,6 +233,7 @@ gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
     } BU_UNSETJUMP; /* Relinquish bomb protection */
 
     nmg_kr(r);
+    _gcv_clear_region_ref(tp, r);
 
     return _gcv_cleanup(NMG_debug_state, tp);
 }

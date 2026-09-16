@@ -1,7 +1,7 @@
 /*                        S H _ F B M . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2025 United States Government as represented by
+ * Copyright (c) 1997-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -56,7 +56,6 @@ static struct fbm_specific fbm_defaults = {
 };
 
 
-#define FBM_NULL ((struct fbm_specific *)0)
 #define FBM_O(m) bu_offsetof(struct fbm_specific, m)
 
 struct bu_structparse fbm_parse[] = {

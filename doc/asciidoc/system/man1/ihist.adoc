@@ -1,0 +1,83 @@
+= IHIST(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+ihist - compute a histogram and bit statistics for a stream of short integers
+
+== SYNOPSIS
+
+[source]
+----
+ihist [-v] < input.shorts > output.txt
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*ihist* reads a stream of 16-bit signed short integers from standard input and
+writes statistics about the data to standard output. It reports the total
+number of values read, the minimum and maximum values encountered, and a
+per-bit tally showing how often each of the 16 bits was set across the entire
+stream (with each count expressed as a fraction of the total). It also reports
+the number of distinct levels (unique values) seen out of the 65,536 possible,
+as a percentage.
+
+The companion tool *istats*(1) reports running statistical moments (mean,
+variance, and so on) for the same short integer stream, while *imod*(1)
+applies arithmetic operations to it.
+
+[[options]]
+== OPTIONS
+
+*-v*::
+  Verbose. In addition to the summary statistics, print the full histogram as
+  one "value count" pair per line for every distinct value that occurred.
+
+[[examples]]
+== EXAMPLES
+
+.Inspect the dynamic range of sampled audio
+====
+[source,bash]
+----
+ihist < samples.shorts
+----
+Reports the min/max range, the per-bit usage, and the percentage of the 65,536
+possible levels actually present in _samples.shorts_, which is a quick way to
+tell whether a 16-bit sample stream is using its full dynamic range or only a
+narrow band of values.
+====
+
+.Produce a full histogram for plotting
+====
+[source,bash]
+----
+ihist -v < samples.shorts | tail -n +22 > histogram.dat
+----
+Generates a complete "value count" listing and skips the leading summary lines
+so that _histogram.dat_ contains only the per-value frequency pairs, ready to
+be fed to a plotting program.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *istats*(1), *imod*(1), *ustats*(1), *bw-d*(1)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

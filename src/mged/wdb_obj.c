@@ -1,7 +1,7 @@
 /*                       W D B _ O B J . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2025 United States Government as represented by
+ * Copyright (c) 2000-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -56,10 +56,12 @@
 #include "tclcad.h"
 #include "./mged_wdb.h"
 
+#ifndef ERROR_RECOVERY_SUGGESTION
 #define ERROR_RECOVERY_SUGGESTION "\
   The in-memory table of contents may not match the status of the on-disk\n\
   database.  The on-disk database should still be intact.  For safety, \n\
   you should exit MGED now, and resolve the I/O problem, before continuing.\n"
+#endif
 
 #define WDB_TCL_CHECK_READ_ONLY \
     if ((Tcl_Interp *)wdbp->wdb_interp) { \
@@ -188,7 +190,7 @@ wdb_find_cmd(struct rt_wdb *wdbp,
 	     int argc,
 	     const char *argv[])
 {
-    int i, k;
+    int k;
     struct directory *dp;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb=(struct rt_comb_internal *)NULL;
@@ -222,35 +224,32 @@ wdb_find_cmd(struct rt_wdb *wdbp,
     argv += (bu_optind - 1);
 
     /* Examine all COMB nodes */
-    for (i = 0; i < RT_DBNHASH; i++) {
-	for (dp = wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-	    if (!(dp->d_flags & RT_DIR_COMB) ||
-		(!aflag && (dp->d_flags & RT_DIR_HIDDEN)))
-		continue;
+    FOR_ALL_DIRECTORY_START(dp, wdbp->dbip)
+	if (!(dp->d_flags & RT_DIR_COMB) ||
+	    (!aflag && (dp->d_flags & RT_DIR_HIDDEN)))
+	    continue;
 
-	    if (rt_db_get_internal(&intern,
-				   dp,
-				   wdbp->dbip,
-				   (fastf_t *)NULL,
-				   &rt_uniresource) < 0) {
-		Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, "Database read error, aborting", (char *)NULL);
-		return TCL_ERROR;
-	    }
-
-	    comb = (struct rt_comb_internal *)intern.idb_ptr;
-	    for (k = 1; k < argc; k++)
-		db_tree_funcleaf(wdbp->dbip,
-				 comb,
-				 comb->tree,
-				 wdb_find_ref,
-				 (void *)argv[k],
-				 (void *)dp->d_namep,
-				 (void *)wdbp->wdb_interp,
-				 (void *)NULL);
-
-	    rt_db_free_internal(&intern);
+	if (rt_db_get_internal(&intern,
+			       dp,
+			       wdbp->dbip,
+			       (fastf_t *)NULL) < 0) {
+	    Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, "Database read error, aborting", (char *)NULL);
+	    return TCL_ERROR;
 	}
-    }
+
+	comb = (struct rt_comb_internal *)intern.idb_ptr;
+	for (k = 1; k < argc; k++)
+	    db_tree_funcleaf(wdbp->dbip,
+			     comb,
+			     comb->tree,
+			     wdb_find_ref,
+			     (void *)argv[k],
+			     (void *)dp->d_namep,
+			     (void *)wdbp->wdb_interp,
+			     (void *)NULL);
+
+	rt_db_free_internal(&intern);
+    FOR_ALL_DIRECTORY_END;
 
     return TCL_OK;
 }
@@ -373,7 +372,7 @@ wdb_make_bb_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    if (rt_db_put_internal(dp, wdbp->dbip, &new_intern, wdbp->wdb_resp) < 0) {
+    if (rt_db_put_internal(dp, wdbp->dbip, &new_intern) < 0) {
 	rt_db_free_internal(&new_intern);
 	Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, "Database write error, aborting.\n", (char *)NULL);
 
@@ -529,7 +528,7 @@ wdb_move_arb_edge_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    if (rt_arb_edit(&error_msg, arb, arb_type, edge, pt, planes, &wdbp->wdb_tol)) {
+    if (rt_arb_edit(&error_msg, arb, NULL, arb_type, edge, RT_ARB_EDIT_DEFAULT, pt, planes, &wdbp->wdb_tol)) {
 	Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, bu_vls_addr(&error_msg), (char *)0);
 	rt_db_free_internal(&intern);
 	bu_vls_free(&error_msg);
@@ -772,7 +771,7 @@ wdb_nmg_collapse_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    if (rt_db_get_internal(&intern, dp, wdbp->dbip, (matp_t)NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dp, wdbp->dbip, (matp_t)NULL) < 0) {
 	Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, "Failed to get internal form of ", argv[1], "!!!!\n", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -825,7 +824,7 @@ wdb_nmg_collapse_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    if (rt_db_put_internal(dp, wdbp->dbip, &intern, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(dp, wdbp->dbip, &intern) < 0) {
 	rt_db_free_internal(&intern);
 	Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, "Database write error, aborting.\n", (char *)NULL);
 	Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, ERROR_RECOVERY_SUGGESTION, (char *)NULL);
@@ -963,7 +962,6 @@ wdb_rmap_cmd(struct rt_wdb *wdbp,
 	     int argc,
 	     const char *argv[])
 {
-    int i;
     struct directory *dp;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
@@ -991,57 +989,55 @@ wdb_rmap_cmd(struct rt_wdb *wdbp,
     BU_LIST_INIT(&headIdName.l);
 
     /* For all regions not hidden */
-    for (i = 0; i < RT_DBNHASH; i++) {
-	for (dp = wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-	    int found = 0;
+    FOR_ALL_DIRECTORY_START(dp, wdbp->dbip)
+	int found = 0;
 
-	    if (!(dp->d_flags & RT_DIR_REGION) ||
-		(dp->d_flags & RT_DIR_HIDDEN))
-		continue;
+	if (!(dp->d_flags & RT_DIR_REGION) ||
+	    (dp->d_flags & RT_DIR_HIDDEN))
+	    continue;
 
-	    if (rt_db_get_internal(&intern, dp, wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
-		bu_vls_init(&vls);
-		bu_vls_strcat(&vls, "Database read error, aborting");
-		Tcl_SetResult((Tcl_Interp *)wdbp->wdb_interp, bu_vls_addr(&vls), TCL_VOLATILE);
-		bu_vls_free(&vls);
-		return TCL_ERROR;
-	    }
+	if (rt_db_get_internal(&intern, dp, wdbp->dbip, (fastf_t *)NULL) < 0) {
+	    bu_vls_init(&vls);
+	    bu_vls_strcat(&vls, "Database read error, aborting");
+	    Tcl_SetResult((Tcl_Interp *)wdbp->wdb_interp, bu_vls_addr(&vls), TCL_VOLATILE);
+	    bu_vls_free(&vls);
+	    return TCL_ERROR;
+	}
 
-	    comb = (struct rt_comb_internal *)intern.idb_ptr;
-	    /* check to see if the region id or air code matches one in our list */
-	    for (BU_LIST_FOR (itnp, wdb_id_to_names, &headIdName.l)) {
-		if ((comb->region_id == itnp->id) ||
-		    (comb->aircode != 0 && -comb->aircode == itnp->id)) {
-		    /* add region name to our name list for this region */
-		    BU_ALLOC(inp, struct wdb_id_names);
-		    bu_vls_init(&inp->name);
-		    bu_vls_strcpy(&inp->name, dp->d_namep);
-		    BU_LIST_INSERT(&itnp->headName.l, &inp->l);
-		    found = 1;
-		    break;
-		}
-	    }
-
-	    if (!found) {
-		/* create new id_to_names node */
-		BU_ALLOC(itnp, struct wdb_id_to_names);
-		if (0 < comb->region_id)
-		    itnp->id = comb->region_id;
-		else
-		    itnp->id = -comb->aircode;
-		BU_LIST_INSERT(&headIdName.l, &itnp->l);
-		BU_LIST_INIT(&itnp->headName.l);
-
+	comb = (struct rt_comb_internal *)intern.idb_ptr;
+	/* check to see if the region id or air code matches one in our list */
+	for (BU_LIST_FOR (itnp, wdb_id_to_names, &headIdName.l)) {
+	    if ((comb->region_id == itnp->id) ||
+		(comb->aircode != 0 && -comb->aircode == itnp->id)) {
 		/* add region name to our name list for this region */
 		BU_ALLOC(inp, struct wdb_id_names);
 		bu_vls_init(&inp->name);
 		bu_vls_strcpy(&inp->name, dp->d_namep);
 		BU_LIST_INSERT(&itnp->headName.l, &inp->l);
+		found = 1;
+		break;
 	    }
-
-	    rt_db_free_internal(&intern);
 	}
-    }
+
+	if (!found) {
+	    /* create new id_to_names node */
+	    BU_ALLOC(itnp, struct wdb_id_to_names);
+	    if (0 < comb->region_id)
+		itnp->id = comb->region_id;
+	    else
+		itnp->id = -comb->aircode;
+	    BU_LIST_INSERT(&headIdName.l, &itnp->l);
+	    BU_LIST_INIT(&itnp->headName.l);
+
+	    /* add region name to our name list for this region */
+	    BU_ALLOC(inp, struct wdb_id_names);
+	    bu_vls_init(&inp->name);
+	    bu_vls_strcpy(&inp->name, dp->d_namep);
+	    BU_LIST_INSERT(&itnp->headName.l, &inp->l);
+	}
+
+	rt_db_free_internal(&intern);
+    FOR_ALL_DIRECTORY_END;
 
     bu_vls_init(&vls);
 
@@ -1305,7 +1301,7 @@ wdb_deleteProc_rt(void *clientData)
     rtip = ap->a_rt_i;
     RT_CK_RTI(rtip);
 
-    rt_free_rti(rtip);
+    rt_i_destroy(rtip);
     ap->a_rt_i = (struct rt_i *)NULL;
 
     bu_free((void *)ap, "struct application");
@@ -1334,7 +1330,7 @@ wdb_rt_gettrees_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    rtip = rt_new_rti(wdbp->dbip);
+    rtip = rt_i_create(wdbp->dbip);
     newprocname = argv[1];
 
     /* Delete previous proc (if any) to release all that memory, first */
@@ -1365,7 +1361,7 @@ wdb_rt_gettrees_cmd(struct rt_wdb *wdbp,
     if (rt_gettrees(rtip, argc-2, (const char **)&argv[2], 1) < 0) {
 	Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp,
 			 "rt_gettrees() returned error", (char *)NULL);
-	rt_free_rti(rtip);
+	rt_i_destroy(rtip);
 	return TCL_ERROR;
     }
 
@@ -1376,9 +1372,11 @@ wdb_rt_gettrees_cmd(struct rt_wdb *wdbp,
      * In case of multiple instances of the library, make sure that
      * each instance has a separate resource structure,
      * because the bit vector lengths depend on # of solids.
+     *
      * And the "overwrite" sequence in Tcl is to create the new
      * proc before running the Tcl_CmdDeleteProc on the old one,
-     * which in this case would trash rt_uniresource.
+     * which in this case would trash rt_uniresource. (TODO - is rt_uniresource still involved here?)
+     *
      * Once on the rti_resources list, rt_clean() will clean 'em up.
      */
     rt_init_resource(&resp, 0, rtip);
@@ -1909,6 +1907,23 @@ static struct bu_cmdtab wdb_cmds[] = {
     {"version",          wdb_version_tcl},
     {(const char *)NULL, BU_CMD_NULL}
 };
+
+
+int
+mged_wdb_db_cmd(struct rt_wdb *wdbp, int argc, const char **argv)
+{
+    if (!wdbp || argc < 2 || !argv)
+	return BRLCAD_ERROR | GED_UNKNOWN;
+
+    if (BU_STR_EQUAL(argv[1], "make_bb"))
+	return wdb_make_bb_cmd(wdbp, argc - 1, argv + 1);
+    if (BU_STR_EQUAL(argv[1], "observer"))
+	return wdb_observer_cmd(wdbp, argc - 1, argv + 1);
+    if (BU_STR_EQUAL(argv[1], "rt_gettrees"))
+	return wdb_rt_gettrees_cmd(wdbp, argc - 1, argv + 1);
+
+    return BRLCAD_ERROR | GED_UNKNOWN;
+}
 
 
 /* used to suppress bu_log() output */

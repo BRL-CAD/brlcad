@@ -1,7 +1,7 @@
 /*                 FaceOuterBound.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2025 United States Government as represented by
+ * Copyright (c) 1994-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,12 +38,14 @@ FaceOuterBound::FaceOuterBound()
 {
     step = NULL;
     id = 0;
+    SetOuter();
 }
 
 FaceOuterBound::FaceOuterBound(STEPWrapper *sw, int step_id)
 {
     step = sw;
     id = step_id;
+    SetOuter();
 }
 
 FaceOuterBound::~FaceOuterBound()

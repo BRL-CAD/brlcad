@@ -1,7 +1,7 @@
 /*                      P A R A L L E L . H
  * BRL-CAD
  *
- * Copyright (c) 2013-2025 United States Government as represented by
+ * Copyright (c) 2013-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,6 +21,10 @@
 #ifndef LIBBU_PARALLEL_H
 #define LIBBU_PARALLEL_H
 
+#include "common.h"
+
+#define BU_SEMAPHORE_MAX 1024
+
 /**
  * Set affinity mask of current thread to the CPU set it is currently
  * running on. If it is not running on any CPUs in the set, it is
@@ -31,10 +35,14 @@
  * -1 on Failure
  *
  */
+__BEGIN_DECLS
+
 extern int parallel_set_affinity(int cpu);
 
 extern void thread_set_cpu(int cpu);
 extern int thread_get_cpu(void);
+
+__END_DECLS
 
 #endif /* LIBBU_PARALLEL_H */
 

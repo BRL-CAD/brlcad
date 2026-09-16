@@ -1,7 +1,7 @@
 /*                        F B L I N E . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2025 United States Government as represented by
+ * Copyright (c) 1988-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,12 +28,15 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <ctype.h>
 
 #include "bu/app.h"
 #include "bu/color.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/exit.h"
 #include "vmath.h"
 #include "dm.h"
@@ -75,6 +78,7 @@ static char usage[] = "\
 Usage: fbline [-c ] [-F framebuffer]\n\
 	[-S squaresize] [-W screen_width] [-N screen_height]\n\
 	[-r red] [-g green] [-b blue] x1 y1 x2 y2\n";
+
 
 
 /*
@@ -182,15 +186,19 @@ get_args(int argc, char **argv)
 	switch (c) {
 	    case 'S':
 	    case 's':
-		screen_width = screen_height = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &screen_width, 1, INT_MAX, "screen size"))
+		    return 0;
+		screen_height = screen_width;
 		break;
 	    case 'W':
 	    case 'w':
-		screen_width = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &screen_width, 1, INT_MAX, "screen width"))
+		    return 0;
 		break;
 	    case 'N':
 	    case 'n':
-		screen_height = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &screen_height, 1, INT_MAX, "screen height"))
+		    return 0;
 		break;
 	    case 'c':
 		clear = 1;
@@ -199,28 +207,29 @@ get_args(int argc, char **argv)
 		framebuffer = bu_optarg;
 		break;
 	    case 'r':
-		pixcolor[RED] = atoi(bu_optarg);
+		if (!bu_opt_scan_uchar(bu_optarg, &pixcolor[RED], "red value"))
+		    return 0;
 		break;
 	    case 'g':
-		pixcolor[GRN] = atoi(bu_optarg);
+		if (!bu_opt_scan_uchar(bu_optarg, &pixcolor[GRN], "green value"))
+		    return 0;
 		break;
 	    case 'b':
-		pixcolor[BLU] = atoi(bu_optarg);
+		if (!bu_opt_scan_uchar(bu_optarg, &pixcolor[BLU], "blue value"))
+		    return 0;
 		break;
 	    default:		/* '?' */
 		return 0;
 	}
     }
 
-    if (bu_optind+4 > argc)
+    if (argc - bu_optind != 4)
 	return 0;		/* BAD */
-    fbx1 = atoi(argv[bu_optind++]);
-    fby1 = atoi(argv[bu_optind++]);
-    fbx2 = atoi(argv[bu_optind++]);
-    fby2 = atoi(argv[bu_optind++]);
-
-    if (argc > bu_optind)
-	fprintf(stderr, "fbline: excess argument(s) ignored\n");
+    if (!bu_opt_scan_int_range(argv[bu_optind++], &fbx1, SHRT_MIN, SHRT_MAX, "x1")
+	|| !bu_opt_scan_int_range(argv[bu_optind++], &fby1, SHRT_MIN, SHRT_MAX, "y1")
+	|| !bu_opt_scan_int_range(argv[bu_optind++], &fbx2, SHRT_MIN, SHRT_MAX, "x2")
+	|| !bu_opt_scan_int_range(argv[bu_optind++], &fby2, SHRT_MIN, SHRT_MAX, "y2"))
+	return 0;
 
     return 1;		/* OK */
 }

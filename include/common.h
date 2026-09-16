@@ -1,7 +1,7 @@
 /*                        C O M M O N . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2025 United States Government as represented by
+ * Copyright (c) 2004-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -97,16 +97,22 @@ double rint(double x);
 #   endif
 # endif
 
-/* Make sure THREADLOCAL is defined, only usable on C "POD" types */
+/* Make sure THREADLOCAL is defined, only usable on C "POD" types.
+ *
+ * Apparently MSVC doesn't set the __cplusplus version correctly unless a
+ * compiler flag is passed.   Check the _MSVC_LANG variable as well to
+ * correctly use thread_local in that context.  Since THREADLOCAL is defined as
+ * usable only with POD the declspec form will also work, but we want to use
+ * the standardized version when available.*/
 #ifndef THREADLOCAL
-#  if defined(__cplusplus) && __cplusplus >= 201103L
+#  if (defined(__cplusplus) && __cplusplus >= 201103L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 201103L)
 #    define THREADLOCAL thread_local // C++11 or newer: thread_local is standard
 #  elif !defined(__cplusplus) && defined(__STDC_VERSION__) && __STDC_VERSION__ >= 202311L
 #    define THREADLOCAL thread_local // C23: thread_local is standard
 #  elif !defined(__cplusplus) && defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
 #    define THREADLOCAL _Thread_local // C11: _Thread_local is standard
 #  elif defined(HAVE_WINDOWS_H)
-#    define THREADLOCAL __declspec(thread)
+#    define THREADLOCAL __declspec(thread) // NOTE:  POD only. thread_local is more capable
 #  elif defined(__GNUC__) || defined(__clang__)
 #    define THREADLOCAL __thread
 #  else
@@ -132,6 +138,21 @@ extern int snprintf(char *str, size_t size, const char *format, ...);
 #    define __END_DECLS   /**< if C++, set to } */
 #  endif
 #endif
+
+/* Because extern "C" doesn't work if we are compiling in C, if we want to
+ * specifically denote individual functions for C symbol export in both C and
+ * C++ compilation we need a conditional expression.  __BEGIN_DECLS normally
+ * serves this purpose in BRL-CAD code, but for function signatures its bracket
+ * syntax isn't appropriate.  We therefore define a second utility for the
+ * function declaration case: */
+#ifndef C_DECL
+#  ifdef __cplusplus
+#    define C_DECL   extern "C" /**< if C++, set to extern "C" */
+#  else
+#    define C_DECL              /**< if C define empty */
+#  endif
+#endif
+
 
 /* ANSI c89 does not allow the 'inline' keyword, check if GNU inline
  * rules are in effect.
@@ -556,11 +577,15 @@ typedef _TCHAR TCHAR;
  * extern qualifier:
  *
  *   extern const int var = 10;
+ *
+ * In a lot of situations you can just use "extern" for both C and
+ * C++, but there are some trickier cases (src/rt is one example)
+ * where it is simpler to do things this way.
  */
 #if defined(__cplusplus)
-#  define EXTERNVARINIT extern
+#  define EXTERNCPP extern
 #else
-#  define EXTERNVARINIT
+#  define EXTERNCPP
 #endif
 
 /**

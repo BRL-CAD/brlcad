@@ -1,7 +1,7 @@
 /*                         S C A L E _ T O R . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -49,8 +49,8 @@ _ged_scale_tor(struct ged *gedp, struct rt_tor_internal *tor, const char *attrib
 	    else
 		newrad = sf;
 
-	    if (newrad < SMALL)
-		newrad = 4*SMALL;
+	    if (newrad < SQRT_SMALL_FASTF)
+		newrad = 4*SQRT_SMALL_FASTF;
 	    if (tor->r_h <= newrad)
 		tor->r_a = newrad;
 	    break;
@@ -61,8 +61,8 @@ _ged_scale_tor(struct ged *gedp, struct rt_tor_internal *tor, const char *attrib
 	    else
 		newrad = sf;
 
-	    if (newrad < SMALL)
-		newrad = 4*SMALL;
+	    if (newrad < SQRT_SMALL_FASTF)
+		newrad = 4*SQRT_SMALL_FASTF;
 	    if (newrad <= tor->r_a)
 		tor->r_h = newrad;
 	    break;

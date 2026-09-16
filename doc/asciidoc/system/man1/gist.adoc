@@ -1,0 +1,185 @@
+= GIST(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+
+gist - generate a one-page visual and textual summary of a geometry database
+
+== SYNOPSIS
+
+[source]
+----
+gist [options] (-F _model/dir_ | _model.g_)
+----
+
+
+[[description]]
+== DESCRIPTION
+
+The Geometric Information Summary Tool (*gist*) produces a high-level,
+one-page report describing a BRL-CAD database (*.g*) file. The report
+is rendered to a PNG image that combines orthographic and perspective
+views of the geometry with computed properties such as bounding
+dimensions, surface area, volume, and mass, alongside the database's
+top-level structure and report metadata (preparer, owner,
+classification, and notes).
+
+*gist* drives *rt*(1) and *rtwizard*(1) to produce its renders; the
+directory holding those executables is located automatically or set
+with *-T*. Intermediate renders are cached in a *.working* directory so
+that subsequent runs can be re-used with *-Z*. If neither an output
+file (*-o*) nor a folder of inputs (*-F*) is given, the report is shown
+in a pop-up window instead of being saved.
+
+A single database is summarized by naming it on the command line (or
+with *-i*). Passing *-F* with a directory processes every *.g* file in
+that directory, writing one report per model into an export folder.
+
+[[options]]
+== OPTIONS
+
+*-i* _filename.g_::
+  Input BRL-CAD database file. A bare *.g* path given as the final
+  argument is treated the same way.
+
+*-o* _filename.png_::
+  Output PNG file name. A *.png* extension is required (and appended if
+  omitted). When absent and not in folder mode, the report is displayed
+  in a pop-up window.
+
+*-F* _folder_::
+  Process every BRL-CAD database in the given folder, generating one
+  report per model.
+
+*-e* _dir_name_::
+  Name of the export folder used for reports in folder mode (default
+  is a *GIST_REPORTS* directory inside the input folder).
+
+*-g*::
+  Display the generated report in a pop-up window.
+
+*-f*::
+  Force overwrite of an existing output report or export directory.
+
+*-Z*::
+  Reuse renders found in an existing *.working* directory, greatly
+  reducing processing time.
+
+*-t* _component_::
+  Name of the primary database object to feature in the report.
+
+*-m* _path/to/image_::
+  Path to a custom logo image to include in the report.
+
+*-p* _ppi_::
+  Output resolution in pixels per inch (default 300).
+
+*-n* _preparer_::
+  Name of the person preparing the report.
+
+*-r* _owner_::
+  Name of the model's owner.
+
+*-T* _path/to/rt_::
+  Directory containing the BRL-CAD *rt*(1) and *rtwizard*(1)
+  executables. Located automatically if not given.
+
+*-c* _classification_::
+  Classification text (e.g. UNCLASSIFIED) shown in the top and bottom
+  banners of the report.
+
+*-N* _notes_::
+  Additional textual notes to include in the report.
+
+*-L*::
+  Use a left-handed coordinate system (default is right-handed).
+
+*-A*::
+  Orient geometry with +Y up (default is +Z up).
+
+*-d* _density_file_::
+  Density file to use for material mass calculations, or *0* to skip
+  density and mass calculations.
+
+*-l* _len_units_::
+  Length units to use in the report.
+
+*-w* _wt_units_::
+  Weight (mass) units to use in the report.
+
+*-a* _path/to/dir_::
+  Directory in which to write cached rendering work (defaults to a
+  *.working* directory derived from the input name).
+
+*-P* _ncpu_::
+  Number of CPUs to use. A non-positive value is added to the number of
+  available cores; the default uses all available cores.
+
+*-Q*, *--preview*::
+  Generate a fast, low-resolution preview. The report retains the standard
+  page layout, using reduced-quality renderings and marking the omitted
+  surface-area, volume, and mass verification values as unavailable.
+
+*-v*::
+  Enable verbose output.
+
+*-h*, *--help*, *-?*::
+  Print a usage summary and exit.
+
+[[examples]]
+== EXAMPLES
+
+.Summarize a single model
+====
+[source,bash]
+----
+gist -i ktank.g -o ktank.png -t tank -n "J. Doe" -c UNCLASSIFIED
+----
+Renders a report for the *ktank.g* database, featuring the *tank*
+component, naming the preparer and stamping the report banners as
+UNCLASSIFIED, and saves it to *ktank.png*.
+====
+
+.Re-run quickly after tweaking metadata
+====
+[source,bash]
+----
+gist -Z -i ktank.g -o ktank_v2.png -N "revised mass properties"
+----
+Reuses the cached renders left in the *.working* directory from a
+previous run (*-Z*), so only the report layout is regenerated with the
+added notes rather than re-rendering all of the views.
+====
+
+.Batch-process a directory of models
+====
+[source,bash]
+----
+gist -F models/ -e reports -p 600 -w lbs -l in
+----
+Generates a 600 ppi report for every *.g* file in *models/*, writing
+them into a *reports* export folder and presenting weights in pounds
+and lengths in inches.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *mged*(1), *rt*(1), *rtwizard*(1), *gqa*(1)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

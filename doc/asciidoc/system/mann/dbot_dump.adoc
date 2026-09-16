@@ -1,0 +1,93 @@
+= DBOT_DUMP(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+dbot_dump - export currently displayed BOT objects to a mesh file format
+
+== SYNOPSIS
+
+[source]
+----
+dbot_dump [-b] [-n|--normals] [-F|--full-precision]
+          [-m|--output-directory dir] [-o|--output-file file]
+          [-t dxf|glb|gltf|obj|sat|stl] [-u unit]
+          [--no-materials]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+The *dbot_dump* command exports the currently *displayed* BOT (Bag-of-Triangles) objects to an external mesh file. Unlike *bot_dump*, which takes explicit object names or operates on all BOTs in the database, *dbot_dump* operates on the set of objects currently drawn in the MGED display.
+
+It automatically passes `--displayed`, `--viewdata`, and `--materials` to the underlying bot_dump implementation:
+
+* *--displayed* — restricts export to currently drawn objects.
+* *--viewdata* — writes view-related metadata alongside the geometry output.
+* *--materials* — includes displayed color/material information in the output.
+
+No BOT names are taken as arguments; the set of objects to export is determined by the display list.
+
+All other options are identical to *bot_dump*, including `--no-materials` to explicitly suppress color/material export.
+
+=== Options
+
+*-b*::
+Write output in binary format where supported.
+
+*-n*, *--normals*::
+Write per-vertex normals if the output format supports them.
+
+*-F*, *--full-precision*::
+Write full floating-point precision for coordinate values.
+
+*-m dir*, *--output-directory dir*::
+Write each BOT to a separate file in the specified directory `dir`. Mutually exclusive with `-o`.
+
+*-o file*, *--output-file file*::
+Write all output to the single specified `file`. Mutually exclusive with `-m`.
+
+*-t fmt*::
+Specify the output format type: `dxf`, `glb`, `gltf`, `obj`, `sat`, or `stl` (default: `stl`).
+
+*-u unit*::
+Output coordinate units (e.g., `mm`, `cm`, `in`, `ft`).
+
+[[examples]]
+== EXAMPLES
+
+.Export all currently displayed BOTs to STL
+[example]
+====
+mged> **draw hull.bot turret.bot**
+mged> **dbot_dump -o displayed.stl**
+
+Draws two BOTs, then exports them both (with view data and displayed color/material info) to `displayed.stl`.
+====
+
+.Export displayed geometry to OBJ format
+[example]
+====
+mged> **dbot_dump -t obj -o scene.obj**
+
+Exports all currently drawn BOT objects to Wavefront OBJ format, including displayed color/material properties.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*bot_dump*(nged), *who*(nged), *draw*(nged)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

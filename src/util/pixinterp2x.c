@@ -1,7 +1,7 @@
 /*                   P I X I N T E R P 2 X . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2025 United States Government as represented by
+ * Copyright (c) 1986-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -26,11 +26,14 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include "bio.h"
 
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/malloc.h"
 #include "bu/exit.h"
 
@@ -60,13 +63,17 @@ get_args(int argc, char **argv)
 	switch (c) {
 	    case 's':
 		/* square file size */
-		file_height = file_width = atoi(bu_optarg);
+		if (!bu_opt_scan_size_t_range(bu_optarg, &file_width, 1, SIZE_MAX, "input size"))
+		    return 0;
+		file_height = file_width;
 		break;
 	    case 'w':
-		file_width = atoi(bu_optarg);
+		if (!bu_opt_scan_size_t_range(bu_optarg, &file_width, 1, SIZE_MAX, "input width"))
+		    return 0;
 		break;
 	    case 'n':
-		file_height = atoi(bu_optarg);
+		if (!bu_opt_scan_size_t_range(bu_optarg, &file_height, 1, SIZE_MAX, "input height"))
+		    return 0;
 		break;
 	    default:
 		return 0;
@@ -79,8 +86,10 @@ get_args(int argc, char **argv)
 	}
 	bu_optind++;
     }
-    if (argc > ++bu_optind)
-	(void) fprintf(stderr, "Excess arguments ignored\n");
+    if (argc > ++bu_optind) {
+	(void) fprintf(stderr, "pixinterp2x: excess argument(s) not supported\n");
+	return 0;
+    }
 
     if (isatty(fileno(infp)) || isatty(fileno(stdout)))
 	return 0;

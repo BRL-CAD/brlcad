@@ -1,0 +1,233 @@
+= EDIT TRANSLATE(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+edit translate, edit tra - Translate (move) one or more objects in the database.
+
+== SYNOPSIS
+
+[source]
+----
+edit [options] geometry translate [-a|-r] [-x|-y|-z] [-k FROM] TO
+edit [options] geometry translate [-a|-r] [-x|-y|-z] [-k FROM]
+    {x [y [z]]} | {OBJECT}
+edit [options] geometry tra X Y Z
+----
+
+where a *TO* or *FROM* argument has the form:
+
+[source]
+----
+{x [y [z]]} | OBJECT_NAME | "."
+----
+
+== DESCRIPTION
+
+Used to move one or more instances of primitive or combination
+objects to a new position.  OBJECTs are translated by a vector from
+FROM to TO.
+
+OFFSET_DIST is always a relative distance from the object's current
+position.  TO_POS may be either an absolute position (`-a`) or a
+relative distance (`-r`) from FROM.  When no `-k` FROM is given, the
+relative mode operates directly on the object's current keypoint
+(bounding-box center by default).
+
+Any `*_OBJECT` argument may be set to `.`, which causes each
+individual OBJECT to be used in its place (a batch operation if there
+is more than one OBJECT is supplied on the command line).
+
+The alias *tra* is a shorthand for `translate -r` and accepts exactly
+three coordinate values `X Y Z` with no flags.
+
+Global options (`-S`, `-f`, `-F`, `-i`) are described in
+*edit*(nged).
+
+== OPTIONS
+
+*-a*::
+  Interpret *TO* as an absolute position in model space.  Required if
+  *TO* is an object name rather than a coordinate vector.  This is the
+  default when `-k FROM_OBJECT` is given (i.e., the object is moved so
+  that its FROM keypoint coincides with the TO position).
+
+*-r*::
+  Interpret *TO* as a relative delta from the current keypoint or FROM
+  position.  This is the default when no `-k` is given.
+
+*-x*, *-y*, *-z*::
+  Restrict the translation to the specified axis only.  Only the
+  nominated axis coordinate of *TO* is applied; the remaining axes
+  stay at their current values.  Multiple axis flags may be combined.
+
+*-k* FROM_COORDS | FROM_OBJECT::
+  Set the reference keypoint (FROM position).  *FROM* accepts:
+
+  * A numeric coordinate triple `x y z` (1 or 2 values are broadcast
+    to a 3-vector).
+  * An object name — its bounding-box center is used.
+  * The batch marker `.` — causes each target object to use its own
+    current keypoint as FROM.  Useful for per-object relative moves:
+    `translate -k . -a target.s` aligns each object individually.
++
+  When `-k` is supplied together with a TO reference, the delta
+  FROM→TO is applied to the target object (rather than moving it to
+  an absolute position directly).
+
+*-n*::
+  Use the natural origin of `*_FROM_OBJECT` or `*_TO_OBJECT` rather
+  than the default bounding-box center.
+
+*TO*::
+  The destination.  May be:
++
+  * A coordinate triple `x y z` (absolute if `-a`, relative if `-r`).
+  * A single scalar combined with an axis flag (e.g., `-a -z 7.8`).
+  * An object name (moves to that object's keypoint; use `-a` for clarity).
+  * The batch marker `.` — each target object uses its own current
+    keypoint as TO.  Combined with `-k FROM_COORDS`, this computes a
+    per-object delta of (own_keypoint − FROM_COORDS), enabling an
+    explosion-from-point effect.
+
+== EXAMPLES
+
+.Translate sph.s to absolute position (15, 0, 0)
+[example]
+====
+  mged> **edit sph.s translate -a 15 0 0**
+====
+
+.Move sph.s by a relative delta of (+5, 0, 0)
+[example]
+====
+  mged> **edit sph.s translate -r 5 0 0**
+
+Using the *tra* alias (always relative):
+
+  mged> **edit sph.s tra 5 0 0**
+====
+
+.Move sph.s from its center to other.s's center (object-name form)
+[example]
+====
+The `-k sph.s -a other.s` form computes the delta between the two
+keypoints and applies it:
+
+  mged> **edit sph.s translate -k sph.s -a other.s**
+
+The same delta can also be specified with coordinate positions for `-k`:
+
+  mged> **edit sph.s translate -k 10 0 0 -a other.s**
+
+Or with an explicit coordinate destination:
+
+  mged> **edit sph.s translate -k 10 0 0 -a 20 0 0**
+====
+
+.Align only the Z coordinate of obj to a target elevation of 7.8
+[example]
+====
+  mged> **edit obj translate -a -z 7.8**
+====
+
+.Align several objects to the same Z elevation — using a reference object
+[example]
+====
+Set the Z coordinate of obj1 and obj2 to ref.s's Z elevation while
+leaving X and Y unchanged:
+
+  mged> **edit obj1 translate -a -z ref.s**
+  mged> **edit obj2 translate -a -z ref.s**
+
+The `-a -z OBJ` form extracts the Z component of ref.s's keypoint
+(its bounding-box center) and applies it absolutely, keeping the
+target's own X and Y.  Multiple axis flags can be combined:
+
+  mged> **edit obj1 translate -a -x -z ref.s**
+
+This copies both the X and Z of ref.s into obj1, leaving Y unchanged.
+====
+
+.Move a pair of objects away from the origin (explosion effect)
+[example]
+====
+Each object is moved by a delta equal to its own current position
+vector, doubling its distance from the origin.  Use the `.` batch
+marker as TO and `0 0 0` as FROM:
+
+  mged> **edit sph.s translate -k 0 0 0 .**
+  mged> **edit other.s translate -k 0 0 0 .**
+
+For sph.s at (10,0,0): FROM=(0,0,0), TO=own_keypoint=(10,0,0),
+delta=(10,0,0), result=(20,0,0) — doubled distance from origin.
+
+Equivalently with explicit deltas (when positions are known):
+
+  mged> **edit sph.s translate -r 10 0 0**
+  mged> **edit other.s translate -r 20 0 0**
+====
+
+.Move a set of objects so that the assembly origin aligns with target.s
+[example]
+====
+  mged> **edit assembly translate -k assembly -a target.s**
+====
+
+.Translate along a path (move a subpart without disturbing the parent)
+[example]
+====
+Using a slash-separated path to name the instance:
+
+  mged> **edit assembly/subpart/sph.s translate -r 0 0 10**
+====
+
+.Use the intermediate buffer: translate tentatively, then revert if unsatisfied
+[example]
+====
+Create a checkpoint (snapshot to revert to):
+
+  mged> **edit tor.s checkpoint**
+
+Apply a tentative translation (stays in buffer only):
+
+  mged> **edit -i tor.s translate -r 5 0 0**
+
+If satisfied, write to disk:
+
+  mged> **edit tor.s translate -r 0 0 0**
+
+If not satisfied, roll back to the checkpoint:
+
+  mged> **edit tor.s revert**
+====
+
+.Operate on the active selection instead of naming objects explicitly
+[example]
+====
+With objects already selected in the viewer:
+
+  mged> **edit translate -a 10 0 0**
+
+Force the command-line specifier to override the selection:
+
+  mged> **edit -f sph.s translate -a 10 0 0**
+====
+
+== SEE ALSO
+
+*edit*(nged), *edit rotate*(nged), *edit scale*(nged),
+*translate*(nged), *ptranslate*(nged)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org
+

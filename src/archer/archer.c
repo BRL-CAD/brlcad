@@ -1,7 +1,7 @@
 /*                       A R C H E R  . C
  * BRL-CAD
  *
- * Copyright (c) 2005-2025 United States Government as represented by
+ * Copyright (c) 2005-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,13 +31,15 @@
 #include "bio.h"
 
 #include "tcl.h"
-#ifdef HAVE_TK
-#  include "tk.h"
-#endif
 
 #include "bu.h"
 #include "tclcad.h"
 
+// Tclcad pulls in OpenNURBS in C++ compilation mode, which defines None, which
+// will conflict with Tk.h's Xlib None if we include tk.h before tclcad.h
+#ifdef HAVE_TK
+#  include "tk.h"
+#endif
 
 #ifdef HAVE_WINDOWS_H
 int APIENTRY
@@ -79,6 +81,25 @@ main(int argc, const char **argv)
 	if (strlen(argv[i]) > 0) {
 	    av[ac] = argv[i];
 	    ac++;
+	}
+    }
+
+    /* Handle -h/--help/-? before any Tcl/Tk initialization.  Archer is a
+     * GUI launcher, so without this a help request would forward "-h" into
+     * Tk and either halt with a Tk_Init error or try to load "-h" as a .g
+     * geometry file.  Short-circuit here so help works headlessly too. */
+    for (int i = 1; i < ac; i++) {
+	if (BU_STR_EQUAL(av[i], "-h") || BU_STR_EQUAL(av[i], "--help") || BU_STR_EQUAL(av[i], "-?")) {
+	    const char *pname = bu_getprogname();
+	    if (!pname || strlen(pname) == 0)
+		pname = "archer";
+	    printf("%s - BRL-CAD geometry editor\n", pname);
+	    printf("Usage: archer [options] [file.g]\n");
+	    printf("\n");
+	    printf("Options:\n");
+	    printf("  -h, --help    print this help and exit\n");
+	    bu_free((void *)av, "argv cpy");
+	    return 0;
 	}
     }
 

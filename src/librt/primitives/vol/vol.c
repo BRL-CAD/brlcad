@@ -1,7 +1,7 @@
 /*                           V O L . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2025 United States Government as represented by
+ * Copyright (c) 1989-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -43,6 +43,7 @@
 #include "raytrace.h"
 
 #include "../fixpt.h"
+#include "../../librt_private.h"
 
 
 /*
@@ -64,7 +65,7 @@ struct rt_vol_specific {
 
 #define VOL_O(m) bu_offsetof(struct rt_vol_internal, m)
 
-const struct bu_structparse rt_vol_parse[] = {
+EXTERNCPP const struct bu_structparse rt_vol_parse[] = {
     {"%s", RT_VOL_NAME_LEN, "file", bu_offsetof(struct rt_vol_internal, name), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%s", RT_VOL_NAME_LEN, "name", bu_offsetof(struct rt_vol_internal, name), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%c", 1, "src",	VOL_O(datasrc),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -78,11 +79,13 @@ const struct bu_structparse rt_vol_parse[] = {
     {"", 0, (char *)0, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
-
+__BEGIN_DECLS
 extern void rt_vol_plate(point_t a, point_t b, point_t c, point_t d,
 			 mat_t mat, struct bu_list *vlfree, struct bu_list *vhead, struct rt_vol_internal *vip);
 extern int rt_retrieve_binunif(struct rt_db_internal *intern, const struct db_i *dbip, const char *name);
 extern int rt_binunif_describe(struct bu_vls  *str, const struct rt_db_internal *ip, int verbose, double mm2local);
+__END_DECLS
+
 /*
  * Codes to represent surface normals.
  * In a bitmap, there are only 4 possible normals.
@@ -124,7 +127,7 @@ static int rt_vol_normtab[3] = { NORM_XPOS, NORM_YPOS, NORM_ZPOS };
  * Return intersection segments.
  *
  */
-int
+C_DECL int
 rt_vol_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
     register struct rt_vol_specific *volp =
@@ -423,23 +426,146 @@ rt_vol_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 }
 
 
+static size_t
+vol_from_file(const struct bu_mapped_file* mfile, size_t xdim, size_t ydim, size_t zdim, unsigned char **map)
+{
+    size_t y;
+    size_t z;
+    size_t ret = 0;
+    size_t nbytes;
+
+    /* Get bit map from .bw(5) file */
+    nbytes = (xdim+VOL_XWIDEN*2)*
+	(ydim+VOL_YWIDEN*2)*
+	(zdim+VOL_ZWIDEN*2);
+    *map = (unsigned char *)bu_calloc(1, nbytes, "vol_import4 bitmap");
+
+    /* Because of in-memory padding, read each scanline separately */
+    const unsigned char* cp = (const unsigned char*)mfile->buf;
+    for (z = 0; z < zdim; z++) {
+	for (y = 0; y < ydim; y++) {
+	    void *data = &VOLMAP(*map, xdim, ydim, 0, y, z);
+
+	    /* copy from file buf */
+	    memcpy(data, cp, xdim);
+	    cp += xdim;
+
+	    /* track read */
+	    ret += xdim;
+	}
+    }
+
+    return ret;
+}
+
+
+static int
+vol_file_path(struct bu_vls *path, const char *filename,
+	const struct db_i *dbip)
+{
+    if (!path || !filename)
+	return 0;
+
+    if (bu_file_readable(filename)) {
+	bu_vls_strcpy(path, filename);
+	return 1;
+    }
+
+    if (!dbip || !dbip->dbi_filepath)
+	return 0;
+
+    for (char * const *prefix = dbip->dbi_filepath; *prefix; prefix++) {
+	bu_vls_sprintf(path, "%s%c%s", *prefix, BU_DIR_SEPARATOR, filename);
+	if (bu_file_readable(bu_vls_cstr(path)))
+	    return 1;
+    }
+
+    bu_vls_trunc(path, 0);
+    return 0;
+}
+
+
+/**
+ * Read VOL data from external file
+ * Returns :
+ * 0 success
+ * !0 fail
+ */
+static int
+vol_file_data(struct rt_vol_internal *vip, const struct db_i *dbip)
+{
+    size_t nbytes;
+    struct bu_mapped_file* mfile = NULL;
+    const char* filename = vip->name;
+    struct bu_vls filepath = BU_VLS_INIT_ZERO;
+
+    /* Callers decide whether unavailable data is fatal. */
+    if (!vol_file_path(&filepath, filename, dbip)) {
+	bu_vls_free(&filepath);
+	return 1;
+    }
+
+    mfile = bu_open_mapped_file(bu_vls_cstr(&filepath), "vol");
+    bu_vls_free(&filepath);
+    if (!mfile) {
+	bu_log("ERROR: unable to open data file: '%s'\n", filename);
+	return 1;
+    }
+
+    /* quick check: file buff should be atleast as big as dimensions */
+    size_t expected = (size_t)vip->xdim * vip->ydim * vip->zdim;
+    if (mfile->buflen < expected) {
+	bu_log("ERROR: data file '%s' too small (%zu bytes, need %zu)\n", filename, mfile->buflen, expected);
+
+	bu_close_mapped_file(mfile);
+	return 1;
+    }
+
+    /* extract vol from the file */
+    nbytes = vol_from_file(mfile, vip->xdim, vip->ydim, vip->zdim, &vip->map);
+    if (nbytes != expected) {
+	bu_log("ERROR: unexpected VOL bytes (read %zu, expected %zu) in %s\n", nbytes, expected, vip->name);
+
+	bu_close_mapped_file(mfile);
+	return 1;
+    }
+
+    /* NOTE: bu_close_mapped_file does not free the memory associated. To not effect any other primitives
+     *  accidentally (ebm, dsp, hf, etc.) we don't call it either with the assumption that this is being run
+     *  through normal db operations (bu_close calls bu_free_mapped_files()).
+     */
+    bu_close_mapped_file(mfile);
+    return 0;
+}
+
+
+/**
+ * Baseline flat-array vshot: delegates to the scalar shot via rt_vshot_via_shot().
+ */
+C_DECL void
+rt_vol_vshot(struct soltab *stp[], struct xray *rp[], struct seg *segp, int n, struct application *ap)
+/* An array of solids */
+/* An array of rays */
+/* array of segs (results returned) */
+/* Number of ray/object pairs */
+
+{
+    rt_vshot_via_shot(rt_vol_shot, stp, rp, segp, n, ap);
+}
+
+
 /**
  * Read in the information from the string solid record.
  * Then, as a service to the application, read in the bitmap
  * and set up some of the associated internal variables.
  */
-int
+C_DECL int
 rt_vol_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     union record *rp;
     register struct rt_vol_internal *vip;
     struct bu_vls str = BU_VLS_INIT_ZERO;
-    FILE *fp;
-    int nbytes;
-    size_t y;
-    size_t z;
     mat_t tmat;
-    size_t ret;
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -491,40 +617,11 @@ rt_vol_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     bn_mat_mul(tmat, mat, vip->mat);
     MAT_COPY(vip->mat, tmat);
 
-    /* Get bit map from .bw(5) file */
-    nbytes = (vip->xdim+VOL_XWIDEN*2)*
-	(vip->ydim+VOL_YWIDEN*2)*
-	(vip->zdim+VOL_ZWIDEN*2);
-    vip->map = (unsigned char *)bu_calloc(1, nbytes, "vol_import4 bitmap");
-
-    bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
-    if ((fp = fopen(vip->name, "rb")) == NULL) {
-	perror(vip->name);
-	bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
+    /* extract data from file */
+    if (vol_file_data(vip, dbip)) {
 	return -1;
     }
-    bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
 
-    /* Because of in-memory padding, read each scanline separately */
-    for (z = 0; z < vip->zdim; z++) {
-	for (y = 0; y < vip->ydim; y++) {
-	    void *data = &VOLMAP(vip->map, vip->xdim, vip->ydim, 0, y, z);
-	    bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
-	    ret = fread(data, vip->xdim, 1, fp); /* res_syscall */
-	    bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
-	    if (ret < 1) {
-		bu_log("rt_vol_import4(%s): Unable to read whole VOL, y=%zu, z=%zu\n",
-		       vip->name, y, z);
-		bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
-		fclose(fp);
-		bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
-		return -1;
-	    }
-	}
-    }
-    bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
-    fclose(fp);
-    bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
     return 0;
 }
 
@@ -532,7 +629,7 @@ rt_vol_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 /**
  * The name will be added by the caller.
  */
-int
+C_DECL int
 rt_vol_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_vol_internal *vip;
@@ -564,77 +661,6 @@ rt_vol_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     bu_vls_free(&str);
 
     return 0;
-}
-
-
-static size_t
-vol_from_file(const char *file, size_t xdim, size_t ydim, size_t zdim, unsigned char **map)
-{
-    size_t y;
-    size_t z;
-    size_t ret = 0;
-    size_t nbytes;
-    FILE *fp;
-
-    /* Get bit map from .bw(5) file */
-    nbytes = (xdim+VOL_XWIDEN*2)*
-	(ydim+VOL_YWIDEN*2)*
-	(zdim+VOL_ZWIDEN*2);
-    *map = (unsigned char *)bu_calloc(1, nbytes, "vol_import4 bitmap");
-
-    bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
-    if ((fp = fopen(file, "rb")) == NULL) {
-	perror(file);
-	bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
-	return 0;
-    }
-    bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
-
-    /* Because of in-memory padding, read each scanline separately */
-    for (z = 0; z < zdim; z++) {
-	for (y = 0; y < ydim; y++) {
-	    size_t fret;
-	    void *data = &VOLMAP(*map, xdim, ydim, 0, y, z);
-
-	    bu_semaphore_acquire(BU_SEM_SYSCALL);	/* lock */
-	    fret = fread(data, xdim, 1, fp);		/* res_syscall */
-	    bu_semaphore_release(BU_SEM_SYSCALL);	/* unlock */
-	    if (fret < 1) {
-		bu_log("rt_vol_import4(%s): Unable to read whole VOL, y=%zu, z=%zu\n", file, y, z);
-		bu_semaphore_acquire(BU_SEM_SYSCALL);	/* lock */
-		fclose(fp);
-		bu_semaphore_release(BU_SEM_SYSCALL);	/* unlock */
-		return 0;
-	    }
-	    ret += xdim;
-	}
-    }
-    bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
-    fclose(fp);
-    bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
-
-    return ret;
-}
-
-
-/**
- * Read VOL data from external file
- * Returns :
- * 0 success
- * !0 fail
- */
-static int
-vol_file_data(struct rt_vol_internal *vip)
-{
-   size_t nbytes;
-
-   size_t bytes = vip->xdim * vip->ydim * vip->zdim;
-	nbytes = vol_from_file(vip->name, vip->xdim, vip->ydim, vip->zdim, &vip->map);
-	if (nbytes != bytes) {
-	    bu_log("WARNING: unexpected VOL bytes (read %zu, expected %zu) in %s\n", nbytes, bytes, vip->name);
-	}
-
-   return 0;
 }
 
 
@@ -736,7 +762,7 @@ get_vol_data(struct rt_vol_internal *vip, const struct db_i *dbip)
 	    if (RT_G_DEBUG & RT_DEBUG_HF)
 		bu_log("getting data from file \"%s\"\n", vip->name);
 
-	    if(vol_file_data(vip) != 0) {
+	    if (vol_file_data(vip, dbip) != 0) {
 		return 1;
 	    }
 	    else {
@@ -764,10 +790,10 @@ get_vol_data(struct rt_vol_internal *vip, const struct db_i *dbip)
 
     if (dbip)
 	bu_log("%s", dbip->dbi_filename);
-    return 0; //temporary
+    return 1;
 }
 
-int
+C_DECL int
 rt_vol_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
 {
     if (!rop || !ip || !mat)
@@ -791,7 +817,7 @@ rt_vol_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
  * Then, as a service to the application, read in the bitmap
  * and set up some of the associated internal variables.
  */
-int
+C_DECL int
 rt_vol_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     register struct rt_vol_internal *vip;
@@ -842,8 +868,9 @@ rt_vol_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     /* Apply any modeling transforms to get final matrix */
     rt_vol_mat(ip, mat, ip);
 
-    if (get_vol_data(vip, dbip) == 1)
-	bu_log("Couldn't find the associated file/object %s",vip->name);
+    /* Loading is best effort.  Prep retries and reports an unavailable
+     * source, allowing a VOL to become usable if its data appears later. */
+    (void)get_vol_data(vip, dbip);
 
     return 0;
 }
@@ -852,7 +879,7 @@ rt_vol_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 /**
  * The name will be added by the caller.
  */
-int
+C_DECL int
 rt_vol_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_vol_internal *vip;
@@ -873,7 +900,7 @@ rt_vol_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     BU_CK_EXTERNAL(ep);
 
     bu_vls_struct_print(&str, rt_vol_parse, (char *)&vol);
-    ep->ext_nbytes = bu_vls_strlen(&str);
+    ep->ext_nbytes = bu_vls_strlen(&str) + 1;
     ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "vol external");
 
     bu_strlcpy((char *)ep->ext_buf, bu_vls_addr(&str), ep->ext_nbytes);
@@ -888,7 +915,7 @@ rt_vol_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
  * First line describes type of solid.
  * Additional lines are indented one tab, and give parameter values.
  */
-int
+C_DECL int
 rt_vol_describe(struct bu_vls *str, const struct rt_db_internal *ip, int UNUSED(verbose), double mm2local)
 {
     struct rt_vol_internal *vip = (struct rt_vol_internal *)ip->idb_ptr;
@@ -935,7 +962,7 @@ rt_vol_describe(struct bu_vls *str, const struct rt_db_internal *ip, int UNUSED(
 /**
  * Free the storage associated with the rt_db_internal version of this solid.
  */
-void
+C_DECL void
 rt_vol_ifree(struct rt_db_internal *ip)
 {
     register struct rt_vol_internal *vip;
@@ -959,7 +986,7 @@ rt_vol_ifree(struct rt_db_internal *ip)
 /**
  * Calculate bounding RPP for vol
  */
-int
+C_DECL int
 rt_vol_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol))
 {
     register struct rt_vol_internal *vip;
@@ -986,7 +1013,7 @@ rt_vol_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
  * A struct rt_vol_specific is created, and its address is stored
  * in stp->st_specific for use by rt_vol_shot().
  */
-int
+C_DECL int
 rt_vol_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_vol_internal *vip;
@@ -1001,6 +1028,14 @@ rt_vol_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     vip = (struct rt_vol_internal *)ip->idb_ptr;
     RT_VOL_CK_MAGIC(vip);
+
+    if (!vip->map &&
+	(get_vol_data(vip, rtip ? rtip->rti_dbip : NULL) != 0 || !vip->map))
+    {
+	bu_log("vol(%s): data source '%s' is unavailable\n", stp->st_name,
+		vip->name);
+	return 1;
+    }
 
     BU_GET(volp, struct rt_vol_specific);
     volp->vol_i = *vip;		/* struct copy */
@@ -1037,7 +1072,7 @@ rt_vol_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-void
+C_DECL void
 rt_vol_print(register const struct soltab *stp)
 {
     register const struct rt_vol_specific *volp =
@@ -1058,7 +1093,7 @@ rt_vol_print(register const struct soltab *stp)
  * This is mostly a matter of translating the stored
  * code into the proper normal.
  */
-void
+C_DECL void
 rt_vol_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
 {
     register struct rt_vol_specific *volp =
@@ -1100,7 +1135,7 @@ rt_vol_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 /**
  * Everything has sharp edges.  This makes things easy.
  */
-void
+C_DECL void
 rt_vol_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
 {
     if (!cvp || !hitp)
@@ -1117,7 +1152,7 @@ rt_vol_curve(register struct curvature *cvp, register struct hit *hitp, struct s
  * Map the hit point in 2-D into the range 0..1
  * untransformed X becomes U, and Y becomes V.
  */
-void
+C_DECL void
 rt_vol_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
 {
     if (ap) RT_CK_APPLICATION(ap);
@@ -1130,7 +1165,7 @@ rt_vol_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 }
 
 
-void
+C_DECL void
 rt_vol_free(struct soltab *stp)
 {
     register struct rt_vol_specific *volp =
@@ -1145,7 +1180,7 @@ rt_vol_free(struct soltab *stp)
 }
 
 
-int
+C_DECL int
 rt_vol_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     register struct rt_vol_internal *vip;
@@ -1273,14 +1308,63 @@ rt_vol_plate(point_t a, point_t b, point_t c, point_t d, register mat_t mat, str
 }
 
 
-int
+/*
+ * vol_span_face - emit one NMG boundary face for a rectangular patch.
+ *
+ * The four corner coordinates (v[0..3]) are passed in ideal voxel space;
+ * they are scaled by cellsize and transformed by mat before being assigned
+ * to NMG vertex geometry.
+ *
+ * Returns 0 on success, non-zero on nmg_fu_planeeqn failure.
+ */
+static int
+vol_span_face(struct shell *s, const struct rt_vol_internal *vip,
+	      const struct bn_tol *tol,
+	      fastf_t v0x, fastf_t v0y, fastf_t v0z,
+	      fastf_t v1x, fastf_t v1y, fastf_t v1z,
+	      fastf_t v2x, fastf_t v2y, fastf_t v2z,
+	      fastf_t v3x, fastf_t v3y, fastf_t v3z)
+{
+    struct vertex *verts[4];
+    struct faceuse *fu;
+    point_t pt, pt1;
+    int i;
+
+    for (i = 0; i < 4; i++)
+	verts[i] = (struct vertex *)NULL;
+    fu = nmg_cface(s, verts, 4);
+
+    VSET(pt, v0x, v0y, v0z); VELMUL(pt1, vip->cellsize, pt); MAT4X3PNT(pt, vip->mat, pt1); nmg_vertex_gv(verts[0], pt);
+    VSET(pt, v1x, v1y, v1z); VELMUL(pt1, vip->cellsize, pt); MAT4X3PNT(pt, vip->mat, pt1); nmg_vertex_gv(verts[1], pt);
+    VSET(pt, v2x, v2y, v2z); VELMUL(pt1, vip->cellsize, pt); MAT4X3PNT(pt, vip->mat, pt1); nmg_vertex_gv(verts[2], pt);
+    VSET(pt, v3x, v3y, v3z); VELMUL(pt1, vip->cellsize, pt); MAT4X3PNT(pt, vip->mat, pt1); nmg_vertex_gv(verts[3], pt);
+
+    return nmg_fu_planeeqn(fu, tol);
+}
+
+
+/*
+ * vol_patch_rect - active rectangle for 2D coherent-patch merging.
+ *
+ * Tracks one contiguous rectangular region: spans [a0..b0] along the
+ * "inner span" axis, starting at row_start along the "row" axis.
+ * The rectangle is extended to each new row as long as the identical
+ * [a0, b0] boundaries reappear in consecutive rows.
+ */
+struct vol_patch_rect {
+    size_t a0;        /* span start (inclusive) */
+    size_t b0;        /* span end   (inclusive) */
+    size_t row_start; /* first row included in this rectangle */
+};
+
+
+C_DECL int
 rt_vol_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
 {
     struct rt_vol_internal *vip;
-    register size_t x, y, z;
-    int i;
+    size_t x, y, z;
+    int failed = 0;
     struct shell *s;
-    struct vertex *verts[4];
     struct faceuse *fu;
     struct model *m_tmp;
     struct nmgregion *r_tmp;
@@ -1299,194 +1383,224 @@ rt_vol_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     r_tmp = nmg_mrsv(m_tmp);
     s = BU_LIST_FIRST(shell, &r_tmp->s_hd);
 
-    for (x = 0; x < vip->xdim; x++) {
-	for (y = 0; y < vip->ydim; y++) {
-	    for (z = 0; z < vip->zdim; z++) {
-		point_t pt, pt1;
+    /*
+     * Build boundary faces using 2D coherent-patch merging, extending the
+     * DSP/TerraScape technique from 1D row-spans to full 2D rectangles.
+     *
+     * For each face direction we iterate over outer slices.  Within each
+     * slice, a set of "active rectangles" is maintained across consecutive
+     * rows.  A 1D span [a0,b0] in the current row is matched against the
+     * active list:
+     *
+     *   - Exact match (same a0 AND b0): the rectangle is extended by one
+     *     row — no face is emitted yet.
+     *   - No match: the unmatched active rectangle is emitted as a single
+     *     NMG face covering its full [a0..b0] × [row_start..row-1] extent,
+     *     and the new span starts a fresh rectangle.
+     *
+     * A span from row r is extended to row r+1 ONLY when the exact same
+     * boundaries appear again: this is the "coherent flat patch" condition.
+     * Any boundary change (wider, narrower, shifted, or absent) breaks the
+     * rectangle, ensuring each emitted face is a maximal grid-aligned rect
+     * within a single connected flat region.
+     *
+     * For an N×M flat surface this reduces the initial face count from
+     * N×M unit quads (original) → M row-span quads (previous 1D approach)
+     * → 1 patch rectangle (2D approach), making nmg_shell_coplanar_face_merge
+     * trivial for that surface.
+     *
+     * After all faces are created, nmg_model_fuse calls nmg_break_all_es_on_v
+     * to resolve any T-junctions that can arise at patch boundaries for
+     * non-rectangular exposed regions, before the coplanar merge step.
+     *
+     * Boundary layout (max active rectangles per outer-slice pass):
+     *   z±, y± faces: span axis = X → at most xdim/2+1 active per row
+     *   x±     faces: span axis = Z → at most zdim/2+1 active per row
+     */
 
-		/* skip empty cells */
-		if (!OK(vip, VOL(vip, x, y, z)))
-		    continue;
-
-		/* check neighboring cells, make a face where needed */
-
-		/* check z+1 */
-		if (!OK(vip, VOL(vip, x, y, z+1))) {
-		    for (i = 0; i < 4; i++)
-			verts[i] = (struct vertex *)NULL;
-
-		    fu = nmg_cface(s, verts, 4);
-
-		    VSET(pt, x+.5, y-.5, z+.5);
-		    VELMUL(pt1, vip->cellsize, pt);
-		    MAT4X3PNT(pt, vip->mat, pt1);
-		    nmg_vertex_gv(verts[0], pt);
-		    VSET(pt, x+.5, y+.5, z+.5);
-		    VELMUL(pt1, vip->cellsize, pt);
-		    MAT4X3PNT(pt, vip->mat, pt1);
-		    nmg_vertex_gv(verts[1], pt);
-		    VSET(pt, x-.5, y+.5, z+.5);
-		    VELMUL(pt1, vip->cellsize, pt);
-		    MAT4X3PNT(pt, vip->mat, pt1);
-		    nmg_vertex_gv(verts[2], pt);
-		    VSET(pt, x-.5, y-.5, z+.5);
-		    VELMUL(pt1, vip->cellsize, pt);
-		    MAT4X3PNT(pt, vip->mat, pt1);
-		    nmg_vertex_gv(verts[3], pt);
-
-		    if (nmg_fu_planeeqn(fu, tol))
-			goto fail;
-		}
-
-		/* check z-1 */
-		if (!OK(vip, VOL(vip, x, y, z-1))) {
-		    for (i = 0; i < 4; i++)
-			verts[i] = (struct vertex *)NULL;
-
-		    fu = nmg_cface(s, verts, 4);
-
-		    VSET(pt, x+.5, y-.5, z-.5);
-		    VELMUL(pt1, vip->cellsize, pt);
-		    MAT4X3PNT(pt, vip->mat, pt1);
-		    nmg_vertex_gv(verts[3], pt);
-		    VSET(pt, x+.5, y+.5, z-.5);
-		    VELMUL(pt1, vip->cellsize, pt);
-		    MAT4X3PNT(pt, vip->mat, pt1);
-		    nmg_vertex_gv(verts[2], pt);
-		    VSET(pt, x-.5, y+.5, z-.5);
-		    VELMUL(pt1, vip->cellsize, pt);
-		    MAT4X3PNT(pt, vip->mat, pt1);
-		    nmg_vertex_gv(verts[1], pt);
-		    VSET(pt, x-.5, y-.5, z-.5);
-		    VELMUL(pt1, vip->cellsize, pt);
-		    MAT4X3PNT(pt, vip->mat, pt1);
-		    nmg_vertex_gv(verts[0], pt);
-
-		    if (nmg_fu_planeeqn(fu, tol))
-			goto fail;
-		}
-
-		/* check y+1 */
-		if (!OK(vip, VOL(vip, x, y+1, z))) {
-		    for (i = 0; i < 4; i++)
-			verts[i] = (struct vertex *)NULL;
-
-		    fu = nmg_cface(s, verts, 4);
-
-		    VSET(pt, x+.5, y+.5, z+.5);
-		    VELMUL(pt1, vip->cellsize, pt);
-		    MAT4X3PNT(pt, vip->mat, pt1);
-		    nmg_vertex_gv(verts[0], pt);
-		    VSET(pt, x+.5, y+.5, z-.5);
-		    VELMUL(pt1, vip->cellsize, pt);
-		    MAT4X3PNT(pt, vip->mat, pt1);
-		    nmg_vertex_gv(verts[1], pt);
-		    VSET(pt, x-.5, y+.5, z-.5);
-		    VELMUL(pt1, vip->cellsize, pt);
-		    MAT4X3PNT(pt, vip->mat, pt1);
-		    nmg_vertex_gv(verts[2], pt);
-		    VSET(pt, x-.5, y+.5, z+.5);
-		    VELMUL(pt1, vip->cellsize, pt);
-		    MAT4X3PNT(pt, vip->mat, pt1);
-		    nmg_vertex_gv(verts[3], pt);
-
-		    if (nmg_fu_planeeqn(fu, tol))
-			goto fail;
-		}
-
-		/* check y-1 */
-		if (!OK(vip, VOL(vip, x, y-1, z))) {
-		    for (i = 0; i < 4; i++)
-			verts[i] = (struct vertex *)NULL;
-
-		    fu = nmg_cface(s, verts, 4);
-
-		    VSET(pt, x+.5, y-.5, z+.5);
-		    VELMUL(pt1, vip->cellsize, pt);
-		    MAT4X3PNT(pt, vip->mat, pt1);
-		    nmg_vertex_gv(verts[3], pt);
-		    VSET(pt, x+.5, y-.5, z-.5);
-		    VELMUL(pt1, vip->cellsize, pt);
-		    MAT4X3PNT(pt, vip->mat, pt1);
-		    nmg_vertex_gv(verts[2], pt);
-		    VSET(pt, x-.5, y-.5, z-.5);
-		    VELMUL(pt1, vip->cellsize, pt);
-		    MAT4X3PNT(pt, vip->mat, pt1);
-		    nmg_vertex_gv(verts[1], pt);
-		    VSET(pt, x-.5, y-.5, z+.5);
-		    VELMUL(pt1, vip->cellsize, pt);
-		    MAT4X3PNT(pt, vip->mat, pt1);
-		    nmg_vertex_gv(verts[0], pt);
-
-		    if (nmg_fu_planeeqn(fu, tol))
-			goto fail;
-		}
-
-		/* check x+1 */
-		if (!OK(vip, VOL(vip, x+1, y, z))) {
-		    for (i = 0; i < 4; i++)
-			verts[i] = (struct vertex *)NULL;
-
-		    fu = nmg_cface(s, verts, 4);
-
-		    VSET(pt, x+.5, y-.5, z-.5);
-		    VELMUL(pt1, vip->cellsize, pt);
-		    MAT4X3PNT(pt, vip->mat, pt1);
-		    nmg_vertex_gv(verts[0], pt);
-		    VSET(pt, x+.5, y+.5, z-.5);
-		    VELMUL(pt1, vip->cellsize, pt);
-		    MAT4X3PNT(pt, vip->mat, pt1);
-		    nmg_vertex_gv(verts[1], pt);
-		    VSET(pt, x+.5, y+.5, z+.5);
-		    VELMUL(pt1, vip->cellsize, pt);
-		    MAT4X3PNT(pt, vip->mat, pt1);
-		    nmg_vertex_gv(verts[2], pt);
-		    VSET(pt, x+.5, y-.5, z+.5);
-		    VELMUL(pt1, vip->cellsize, pt);
-		    MAT4X3PNT(pt, vip->mat, pt1);
-		    nmg_vertex_gv(verts[3], pt);
-
-		    if (nmg_fu_planeeqn(fu, tol))
-			goto fail;
-		}
-
-		/* check x-1 */
-		if (!OK(vip, VOL(vip, x-1, y, z))) {
-		    for (i = 0; i < 4; i++)
-			verts[i] = (struct vertex *)NULL;
-
-		    fu = nmg_cface(s, verts, 4);
-
-		    VSET(pt, x-.5, y-.5, z-.5);
-		    VELMUL(pt1, vip->cellsize, pt);
-		    MAT4X3PNT(pt, vip->mat, pt1);
-		    nmg_vertex_gv(verts[3], pt);
-		    VSET(pt, x-.5, y+.5, z-.5);
-		    VELMUL(pt1, vip->cellsize, pt);
-		    MAT4X3PNT(pt, vip->mat, pt1);
-		    nmg_vertex_gv(verts[2], pt);
-		    VSET(pt, x-.5, y+.5, z+.5);
-		    VELMUL(pt1, vip->cellsize, pt);
-		    MAT4X3PNT(pt, vip->mat, pt1);
-		    nmg_vertex_gv(verts[1], pt);
-		    VSET(pt, x-.5, y-.5, z+.5);
-		    VELMUL(pt1, vip->cellsize, pt);
-		    MAT4X3PNT(pt, vip->mat, pt1);
-		    nmg_vertex_gv(verts[0], pt);
-
-		    if (nmg_fu_planeeqn(fu, tol))
-			goto fail;
-		}
-	    }
-	}
+/* -----------------------------------------------------------------------
+ * VOL_PATCH_LOOP: 2D coherent-patch face-emission macro.
+ *
+ * Parameters (must be #defined before invoking):
+ *   OUTER_VAR / OUTER_LIM       outer loop variable and limit
+ *   ROW_VAR   / ROW_LIM         row variable and limit (inclusive sentinel)
+ *   SPAN_VAR  / SPAN_LIM        span variable and limit
+ *   EXPOSED_COND                boolean expression: is cell exposed?
+ *   EMIT_FACE(a0,b0,rs,re)      emit one face for span [a0..b0], rows [rs..re]
+ *   MAX_PR_EXPR                 upper bound on concurrent active rects
+ *
+ * The macro manages heap-allocated active-rectangle arrays and sets
+ * `failed` on any nmg_fu_planeeqn error.
+ * ----------------------------------------------------------------------- */
+#define VOL_PATCH_LOOP(OUTER_VAR, OUTER_LIM,				\
+		       ROW_VAR, ROW_LIM,				\
+		       SPAN_VAR, SPAN_LIM,				\
+		       EXPOSED_COND,					\
+		       EMIT_FACE,					\
+		       MAX_PR_EXPR)					\
+    for (OUTER_VAR = 0; OUTER_VAR < (OUTER_LIM) && !failed; OUTER_VAR++) { \
+	size_t _max_pr = (MAX_PR_EXPR);					\
+	struct vol_patch_rect *_pr =					\
+	    (struct vol_patch_rect *)bu_calloc(_max_pr,			\
+		sizeof(struct vol_patch_rect), "vol_pr");		\
+	int *_pr_live = (int *)bu_calloc(_max_pr, sizeof(int), "vol_pr_live"); \
+	size_t _n_pr = 0;						\
+	for (ROW_VAR = 0; ROW_VAR <= (ROW_LIM) && !failed; ROW_VAR++) { \
+	    size_t _i;							\
+	    for (_i = 0; _i < _n_pr; _i++) _pr_live[_i] = 0;		\
+	    if (ROW_VAR < (ROW_LIM)) {					\
+		size_t _a0 = 0;						\
+		int _in = 0;						\
+		for (SPAN_VAR = 0; SPAN_VAR <= (SPAN_LIM); SPAN_VAR++) { \
+		    int _exp = (SPAN_VAR < (SPAN_LIM)) && (EXPOSED_COND); \
+		    if (_exp && !_in) { _a0 = SPAN_VAR; _in = 1; }	\
+		    else if (!_exp && _in) {				\
+			size_t _b0 = SPAN_VAR - 1; _in = 0;		\
+			int _matched = 0;				\
+			for (_i = 0; _i < _n_pr; _i++) {		\
+			    if (!_pr_live[_i]				\
+				&& _pr[_i].a0 == _a0			\
+				&& _pr[_i].b0 == _b0) {			\
+				_pr_live[_i] = 1; _matched = 1; break;	\
+			    }						\
+			}						\
+			if (!_matched && _n_pr < _max_pr) {		\
+			    _pr[_n_pr].a0 = _a0;			\
+			    _pr[_n_pr].b0 = _b0;			\
+			    _pr[_n_pr].row_start = ROW_VAR;		\
+			    _pr_live[_n_pr] = 1;			\
+			    _n_pr++;					\
+			}						\
+		    }							\
+		}							\
+	    }								\
+	    /* emit rects that did not continue and compact */		\
+	    size_t _j = 0;						\
+	    for (_i = 0; _i < _n_pr; _i++) {				\
+		if (!_pr_live[_i]) {					\
+		    size_t _a0e = _pr[_i].a0, _b0e = _pr[_i].b0;	\
+		    size_t _rse = _pr[_i].row_start;			\
+		    size_t _ree = ROW_VAR - 1;				\
+		    if (EMIT_FACE(_a0e, _b0e, _rse, _ree)) {		\
+			failed = 1; break;				\
+		    }							\
+		} else {						\
+		    _pr[_j] = _pr[_i];					\
+		    _pr_live[_j] = 1;					\
+		    _j++;						\
+		}							\
+	    }								\
+	    _n_pr = _j;							\
+	}								\
+	bu_free(_pr,      "vol_pr");					\
+	bu_free(_pr_live, "vol_pr_live");				\
     }
+
+    /* z+ faces (CCW from above, +z normal).
+     * outer=z, row=y, span=x.
+     * 2D rect: x=[a0..b0], y=[row_start..row_end] at z+0.5 */
+#define VOL_EMIT_ZP(a0, b0, rs, re)					\
+    vol_span_face(s, vip, tol,						\
+		  (fastf_t)(b0)+.5, (fastf_t)(rs)-.5, (fastf_t)z+.5,	\
+		  (fastf_t)(b0)+.5, (fastf_t)(re)+.5, (fastf_t)z+.5,	\
+		  (fastf_t)(a0)-.5, (fastf_t)(re)+.5, (fastf_t)z+.5,	\
+		  (fastf_t)(a0)-.5, (fastf_t)(rs)-.5, (fastf_t)z+.5)
+    VOL_PATCH_LOOP(z, vip->zdim, y, vip->ydim, x, vip->xdim,
+		   OK(vip, VOL(vip, x, y, z)) && !OK(vip, VOL(vip, x, y, z+1)),
+		   VOL_EMIT_ZP,
+		   vip->xdim / 2 + 2)
+#undef VOL_EMIT_ZP
+
+    /* z- faces (CCW from below, -z normal).
+     * outer=z, row=y, span=x.
+     * 2D rect: x=[a0..b0], y=[row_start..row_end] at z-0.5 */
+#define VOL_EMIT_ZM(a0, b0, rs, re)					\
+    vol_span_face(s, vip, tol,						\
+		  (fastf_t)(a0)-.5, (fastf_t)(rs)-.5, (fastf_t)z-.5,	\
+		  (fastf_t)(a0)-.5, (fastf_t)(re)+.5, (fastf_t)z-.5,	\
+		  (fastf_t)(b0)+.5, (fastf_t)(re)+.5, (fastf_t)z-.5,	\
+		  (fastf_t)(b0)+.5, (fastf_t)(rs)-.5, (fastf_t)z-.5)
+    VOL_PATCH_LOOP(z, vip->zdim, y, vip->ydim, x, vip->xdim,
+		   OK(vip, VOL(vip, x, y, z)) && !OK(vip, VOL(vip, x, y, z-1)),
+		   VOL_EMIT_ZM,
+		   vip->xdim / 2 + 2)
+#undef VOL_EMIT_ZM
+
+    /* y+ faces (CCW from outside, +y normal).
+     * outer=y, row=z, span=x.
+     * 2D rect: x=[a0..b0], z=[row_start..row_end] at y+0.5 */
+#define VOL_EMIT_YP(a0, b0, rs, re)					\
+    vol_span_face(s, vip, tol,						\
+		  (fastf_t)(b0)+.5, (fastf_t)y+.5, (fastf_t)(re)+.5,	\
+		  (fastf_t)(b0)+.5, (fastf_t)y+.5, (fastf_t)(rs)-.5,	\
+		  (fastf_t)(a0)-.5, (fastf_t)y+.5, (fastf_t)(rs)-.5,	\
+		  (fastf_t)(a0)-.5, (fastf_t)y+.5, (fastf_t)(re)+.5)
+    VOL_PATCH_LOOP(y, vip->ydim, z, vip->zdim, x, vip->xdim,
+		   OK(vip, VOL(vip, x, y, z)) && !OK(vip, VOL(vip, x, y+1, z)),
+		   VOL_EMIT_YP,
+		   vip->xdim / 2 + 2)
+#undef VOL_EMIT_YP
+
+    /* y- faces (CCW from outside, -y normal).
+     * outer=y, row=z, span=x.
+     * 2D rect: x=[a0..b0], z=[row_start..row_end] at y-0.5 */
+#define VOL_EMIT_YM(a0, b0, rs, re)					\
+    vol_span_face(s, vip, tol,						\
+		  (fastf_t)(a0)-.5, (fastf_t)y-.5, (fastf_t)(re)+.5,	\
+		  (fastf_t)(a0)-.5, (fastf_t)y-.5, (fastf_t)(rs)-.5,	\
+		  (fastf_t)(b0)+.5, (fastf_t)y-.5, (fastf_t)(rs)-.5,	\
+		  (fastf_t)(b0)+.5, (fastf_t)y-.5, (fastf_t)(re)+.5)
+    VOL_PATCH_LOOP(y, vip->ydim, z, vip->zdim, x, vip->xdim,
+		   OK(vip, VOL(vip, x, y, z)) && !OK(vip, VOL(vip, x, y-1, z)),
+		   VOL_EMIT_YM,
+		   vip->xdim / 2 + 2)
+#undef VOL_EMIT_YM
+
+    /* x+ faces (CCW from outside, +x normal).
+     * outer=x, row=y, span=z.
+     * 2D rect: z=[a0..b0], y=[row_start..row_end] at x+0.5 */
+#define VOL_EMIT_XP(a0, b0, rs, re)					\
+    vol_span_face(s, vip, tol,						\
+		  (fastf_t)x+.5, (fastf_t)(rs)-.5, (fastf_t)(a0)-.5,	\
+		  (fastf_t)x+.5, (fastf_t)(re)+.5, (fastf_t)(a0)-.5,	\
+		  (fastf_t)x+.5, (fastf_t)(re)+.5, (fastf_t)(b0)+.5,	\
+		  (fastf_t)x+.5, (fastf_t)(rs)-.5, (fastf_t)(b0)+.5)
+    VOL_PATCH_LOOP(x, vip->xdim, y, vip->ydim, z, vip->zdim,
+		   OK(vip, VOL(vip, x, y, z)) && !OK(vip, VOL(vip, x+1, y, z)),
+		   VOL_EMIT_XP,
+		   vip->zdim / 2 + 2)
+#undef VOL_EMIT_XP
+
+    /* x- faces (CCW from outside, -x normal).
+     * outer=x, row=y, span=z.
+     * 2D rect: z=[a0..b0], y=[row_start..row_end] at x-0.5 */
+#define VOL_EMIT_XM(a0, b0, rs, re)					\
+    vol_span_face(s, vip, tol,						\
+		  (fastf_t)x-.5, (fastf_t)(rs)-.5, (fastf_t)(b0)+.5,	\
+		  (fastf_t)x-.5, (fastf_t)(re)+.5, (fastf_t)(b0)+.5,	\
+		  (fastf_t)x-.5, (fastf_t)(re)+.5, (fastf_t)(a0)-.5,	\
+		  (fastf_t)x-.5, (fastf_t)(rs)-.5, (fastf_t)(a0)-.5)
+    VOL_PATCH_LOOP(x, vip->xdim, y, vip->ydim, z, vip->zdim,
+		   OK(vip, VOL(vip, x, y, z)) && !OK(vip, VOL(vip, x-1, y, z)),
+		   VOL_EMIT_XM,
+		   vip->zdim / 2 + 2)
+#undef VOL_EMIT_XM
+
+#undef VOL_PATCH_LOOP
+
+    if (failed)
+	goto fail;
 
     nmg_region_a(r_tmp, tol);
 
-    /* fuse model */
+    /* fuse model: nmg_model_fuse calls nmg_break_all_es_on_v which resolves
+     * any T-junctions that arise when patch boundaries from different face
+     * directions do not align (e.g. non-rectangular exposed regions). */
     nmg_model_fuse(m_tmp, vlfree, tol);
 
-    /* simplify shell */
+    /* simplify shell: merge any remaining coplanar patch quads that share
+     * boundaries (e.g. when a non-rectangular exposed region was split into
+     * two or more rectangles). */
     nmg_shell_coplanar_face_merge(s, tol, 1, vlfree);
 
     /* kill snakes */
@@ -1519,7 +1633,7 @@ fail:
 }
 
 
-int
+C_DECL int
 rt_vol_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
     if (ip) RT_CK_DB_INTERNAL(ip);
@@ -1528,7 +1642,7 @@ rt_vol_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 }
 
 
-void
+C_DECL void
 rt_vol_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
     register struct rt_vol_internal *vip;
@@ -1570,7 +1684,7 @@ rt_vol_centroid(point_t *cent, const struct rt_db_internal *ip)
  * the matrix and then summing the area of the faces of each cell necessary.
  * The vertices are numbered from left to right, front to back, bottom to top.
  */
-void
+C_DECL void
 rt_vol_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     struct rt_vol_internal *vip;
@@ -1670,7 +1784,7 @@ rt_vol_surf_area(fastf_t *area, const struct rt_db_internal *ip)
  * The eight vertices are calculated, then transformed by the matrix and the
  * volume calculated from that.
  */
-void
+C_DECL void
 rt_vol_volume(fastf_t *volume, const struct rt_db_internal *ip)
 {
     struct rt_vol_internal *vip;
@@ -1738,7 +1852,7 @@ rt_vol_volume(fastf_t *volume, const struct rt_db_internal *ip)
     *volume = fabs(_vol);
 }
 
-const char *
+C_DECL const char *
 rt_vol_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     if (!pt || !ip)

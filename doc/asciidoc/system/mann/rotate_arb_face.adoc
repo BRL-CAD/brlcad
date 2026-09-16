@@ -1,0 +1,65 @@
+= ROTATE_ARB_FACE(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+rotate_arb_face - rotate a face of an ARB primitive about a fixed vertex
+
+== SYNOPSIS
+
+[source]
+----
+rotate_arb_face arb face pt "rx ry rz"
+----
+
+[[description]]
+== DESCRIPTION
+
+The *rotate_arb_face* command rotates a specified face of an ARB (arbitrary polyhedron) primitive by applying Euler rotation angles to the face's plane normal, while keeping the face anchored at a specified vertex. The modified ARB is written back to the database.
+
+The command requires exactly four arguments:
+
+* *arb* — The name of the ARB primitive to modify. Path prefixes are accepted; the trailing component name is used. The object must be an ARB type (ARB4–ARB8).
+* *face* — The face index to rotate, given as an integer from 1 to 6 (valid range depends on ARB type).
+* *pt* — The vertex index that serves as the fixed anchor point for the rotation, given as an integer from 1 to 8. The face's plane is rotated about this vertex so it remains fixed in space.
+* *"rx ry rz"* — A single quoted string of three floating-point rotation angles in degrees (X, Y, Z Euler angles). The face normal is rotated by this amount using `bn_mat_angles`, and the face's plane equation is then re-anchored at the fixed vertex.
+
+=== ARB type constraints and special cases
+
+The command accepts all standard ARB types (ARB4, ARB5, ARB6, ARB7, ARB8). The face index and vertex index must be valid for the specific ARB type in use. There are special vertex remapping rules for degenerate ARB types:
+
+* *ARB4*: vertex indices ≥ 3 (1-indexed) are remapped to index 4 internally.
+* *ARB6*: vertex indices ≥ 5 are remapped to index 6 internally.
+* *ARB7*: if the specified face contains vertex 5, the anchor is automatically forced to vertex 5 regardless of the provided index.
+
+After the face plane is rotated and re-anchored, all ARB vertices are recomputed from the new set of plane equations.
+
+[[examples]]
+== EXAMPLES
+
+.Rotate face 1 of an ARB8 by 10° about vertex 1
+[example]
+====
+mged> **rotate_arb_face arb8.s 1 1 "10 0 0"**
+
+Rotates face 1 of `arb8.s` by 10° about the X axis, anchored at vertex 1. The face's plane normal is rotated and re-anchored, and all other ARB vertices are recomputed.
+====
+
+.Tilt a face of an ARB6
+[example]
+====
+mged> **rotate_arb_face wedge.s 2 3 "0 15 0"**
+
+Rotates face 2 of the ARB6 primitive `wedge.s` by 15° about the Y axis, keeping vertex 3 fixed.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,7 +1,7 @@
 /*                         O V E R L A Y . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,7 +35,7 @@
 #include "../ged_private.h"
 
 static int
-image_mime(struct bu_vls *msg, size_t argc, const char **argv, void *set_mime)
+overlay_image_mime(struct bu_vls *msg, size_t argc, const char **argv, void *set_mime)
 {
     int type_int;
     bu_mime_image_t type = BU_MIME_IMAGE_UNKNOWN;
@@ -95,7 +95,7 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[10],  "w", "width",          "#",    &bu_opt_int,     &width,            "[Fb]   image width");
     BU_OPT(d[11], "n", "height",         "#",    &bu_opt_int,     &height,           "[Fb]   image height");
     BU_OPT(d[12], "S", "square",         "#",    &bu_opt_int,     &square,           "[Fb]   image width/height (for square image)");
-    BU_OPT(d[13], "",  "format",         "fmt",  &image_mime,     &type,             "[Fb]   image file format");
+    BU_OPT(d[13], "",  "format",         "fmt",  &overlay_image_mime,     &type,             "[Fb]   image file format");
     BU_OPT_NULL(d[14]);
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
@@ -325,24 +325,13 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl overlay_cmd_impl = {
-    "overlay",
-    ged_overlay_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd overlay_cmd = { &overlay_cmd_impl };
-const struct ged_cmd *overlay_cmds[] = { &overlay_cmd, NULL };
+#define GED_OVERLAY_COMMANDS(X, XID) \
+    X(overlay, ged_overlay_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  overlay_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_OVERLAY_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_overlay", 1, GED_OVERLAY_COMMANDS)
 
 /*
  * Local Variables:

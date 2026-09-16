@@ -1,0 +1,86 @@
+= ISST(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+isst - interactive ray-traced geometry viewer
+
+== SYNOPSIS
+
+[source]
+----
+isst [file.g [object]]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*isst* is an interactive, Tcl/Tk and OpenGL based viewer built on the
+Advanced Distributed Ray Tracer (ADRT) and its *tie* ray-tracing engine.
+It renders BRL-CAD geometry in real time so that a model can be inspected
+and navigated as it is ray traced.
+
+If a geometry database _file.g_ is given together with an _object_, that
+object is loaded and rendered immediately. If only _file.g_ is given, a
+dialog is presented for selecting one or more objects from the database to
+view. With no arguments, the viewer opens empty and a database can be
+loaded from the *File* menu.
+
+Once a view is up, the geometry window is controlled interactively:
+
+* *1*, *2*, *3* switch the render mode to phong, surface normals, and depth.
+* *0* resets the view to its initial orientation.
+* *w*, *s*, *a*, *d* walk forward and backward and strafe left and right.
+* *-* and *=* decrease and increase render resolution; *Ctrl-* and *Ctrl-=* jump to lowest and full resolution.
+* Dragging with the left mouse button aims the view; dragging with the right mouse button orbits the geometry.
+* *F5* toggles fullscreen, and *Esc* exits.
+
+The keyboard navigation keys act only while the pointer is over the
+geometry window.
+
+[[examples]]
+== EXAMPLES
+
+.View a single object directly
+====
+[source,bash]
+----
+isst havoc.g havoc
+----
+Opens _havoc.g_, loads the _havoc_ object, and begins ray tracing it in an
+interactive window where it can be walked through and rotated.
+====
+
+.Choose objects from a database
+====
+[source,bash]
+----
+isst moss.g
+----
+Opens _moss.g_ and presents a list of its objects; the selected objects are
+loaded together into the interactive viewer. This is convenient with the
+shipped sample database to browse what a _.g_ file contains before
+committing to a full *rt*(1) render.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *mged*(1), *rt*(1), *rtedge*(1)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,7 +1,7 @@
 /*         S H A P E _ R E P R E S E N T A T I O N . H
  * BRL-CAD
  *
- * Copyright (c) 2013-2025 United States Government as represented by
+ * Copyright (c) 2013-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,8 +26,8 @@
 
 #include "AP_Common.h"
 
-SdaiRepresentation *
-Add_Shape_Representation(AP203_Contents *sc, SdaiRepresentation_context *context);
+STEPentity *
+Add_Shape_Representation(AP203_Contents *sc, STEPentity *context);
 
 #endif /*SHAPE_REPRESENTATION_H*/
 

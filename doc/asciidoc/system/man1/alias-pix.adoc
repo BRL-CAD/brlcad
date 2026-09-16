@@ -1,0 +1,83 @@
+= ALIAS-PIX(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+alias-pix - convert an Alias(tm) pix image to a BRL-CAD PIX(5) image
+
+== SYNOPSIS
+
+[source]
+----
+alias-pix [-v] < ALIASpixfile > BRLpixfile
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*alias-pix* reads a run-length encoded 24-bit Alias(tm) pix format image from
+standard input and writes the corresponding uncompressed *pix*(5) image to
+standard output. The Alias header is decoded in an architecture-independent
+manner, the run-length packed scanlines are expanded to RGB triples, and the
+scanline order is flipped to match the bottom-to-top origin convention used by
+BRL-CAD. Only 24 bits-per-pixel input is supported; any other pixel depth is
+rejected. Input may not be read from a terminal.
+
+
+[[options]]
+== OPTIONS
+
+*-v*::
+  Print a summary of the Alias pix file header (image dimensions, X and Y
+  offsets, and bits per pixel) to standard error.
+
+
+[[examples]]
+== EXAMPLES
+
+.Convert an Alias pix file and display the result
+====
+[source,bash]
+----
+alias-pix < image.alias > image.pix
+pix-fb -w 1024 -n 1024 image.pix
+----
+Converts the Alias image `image.alias` to a BRL-CAD *pix*(5) file and then
+displays it on a framebuffer with *pix-fb*(1), giving a one-step preview of the
+converted image.
+====
+
+.Inspect the image dimensions during conversion
+====
+[source,bash]
+----
+alias-pix -v < image.alias > image.pix
+----
+Converts the image while printing its width, height, and pixel offsets to
+standard error, which is useful for discovering the dimensions needed by later
+tools such as *pix-fb*(1) or *pixscale*(1).
+====
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *pix-fb*(1), *pixscale*(1), *pix*(5)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,7 +1,7 @@
 /*                        F L O S . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2025 United States Government as represented by
+ * Copyright (c) 2007-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -18,6 +18,10 @@
  * information.
  */
 /** @file librender/flos.c
+ *
+ * Fragment line-of-sight render shader: shades geometry green, then
+ * marks points that have a direct line of sight to a given fragment
+ * position red.
  *
  */
 
@@ -41,7 +45,7 @@ render_flos_free(render_t *UNUSED(render)) {
 
 
 void
-render_flos_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, vect_t *pixel) {
+render_flos_work(render_t *render, struct tie_s *tieptr, struct tie_ray_s *ray, vect_t *pixel) {
     struct tie_id_s id, tid;
     vect_t vec;
     fastf_t angle;
@@ -49,7 +53,7 @@ render_flos_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, vec
 
     rd = (struct render_flos_s *)render->data;
 
-    if (TIE_WORK(tie, ray, &id, render_hit, NULL) != NULL) {
+    if (TIE_WORK(tieptr, ray, &id, render_hit, NULL) != NULL) {
 	VSET(*pixel, 0.0, 0.5, 0.0);
     } else
 	return;
@@ -63,7 +67,7 @@ render_flos_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, vec
     VSUB2(ray->dir, id.pos, rd->frag_pos);
     VUNITIZE(ray->dir);
 
-    if (TIE_WORK(tie, ray, &tid, render_hit, NULL)) {
+    if (TIE_WORK(tieptr, ray, &tid, render_hit, NULL)) {
 	if (fabs (id.pos[0] - tid.pos[0]) < TIE_PREC
 	    && fabs (id.pos[1] - tid.pos[1]) < TIE_PREC
 	    && fabs (id.pos[2] - tid.pos[2]) < TIE_PREC)

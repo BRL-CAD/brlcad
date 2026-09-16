@@ -1,7 +1,7 @@
 /*               R E N D E R _ I N T E R N A L . H
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2025 United States Government as represented by
+ * Copyright (c) 2007-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -18,6 +18,9 @@
  * information.
  */
 /** @file librender/render_internal.h
+ *
+ * Internal render definitions shared by the ADRT renderer: export
+ * macros, render method identifiers, and the render_t work structure.
  *
  */
 
@@ -57,6 +60,8 @@
 
 
 #define RENDER_MAX_DEPTH	24
+#define RENDER_PATH_DEFAULT_SAMPLES	12
+#define RENDER_PATH_MAX_SAMPLES	4096
 
 
 struct render_s;

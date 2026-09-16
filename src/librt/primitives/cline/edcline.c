@@ -1,7 +1,7 @@
 /*                         E D C L I N E . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2025 United States Government as represented by
+ * Copyright (c) 1996-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -39,7 +39,7 @@
 #define ECMD_CLINE_SCALE_R	29079	/* scale radius */
 #define ECMD_CLINE_SCALE_T	29080	/* scale thickness */
 
-void
+C_DECL void
 rt_edit_cline_set_edit_mode(struct rt_edit *s, int mode)
 {
     rt_edit_set_edflag(s, mode);
@@ -75,13 +75,53 @@ struct rt_edit_menu_item cline_menu[] = {
     { "", NULL, 0 }
 };
 
-struct rt_edit_menu_item *
+C_DECL struct rt_edit_menu_item *
 rt_edit_cline_menu_item(const struct bn_tol *UNUSED(tol))
 {
     return cline_menu;
 }
 
-void
+/* ft_edit_desc descriptor for the CLINE primitive */
+
+static const struct rt_edit_param_desc cline_h_params[] = {
+    { "h", "Height (magnitude)", RT_EDIT_PARAM_SCALAR, 0, 1e-10, RT_EDIT_PARAM_NO_LIMIT,
+      "length", 0, NULL, NULL, NULL }
+};
+static const struct rt_edit_param_desc cline_r_params[] = {
+    { "r", "Radius", RT_EDIT_PARAM_SCALAR, 0, 1e-10, RT_EDIT_PARAM_NO_LIMIT,
+      "length", 0, NULL, NULL, NULL }
+};
+static const struct rt_edit_param_desc cline_t_params[] = {
+    { "t", "Plate Thickness", RT_EDIT_PARAM_SCALAR, 0, 1e-10, RT_EDIT_PARAM_NO_LIMIT,
+      "length", 0, NULL, NULL, NULL }
+};
+static const struct rt_edit_param_desc cline_mv_h_params[] = {
+    { "endpoint", "New Endpoint (X Y Z)", RT_EDIT_PARAM_POINT, 0,
+      RT_EDIT_PARAM_NO_LIMIT, RT_EDIT_PARAM_NO_LIMIT,
+      "length", 0, NULL, NULL, NULL }
+};
+
+static const struct rt_edit_cmd_desc cline_cmds[] = {
+    { ECMD_CLINE_SCALE_H, "Set H",               "geometry", 1, cline_h_params,    1, 10, NULL },
+    { ECMD_CLINE_SCALE_R, "Set R",               "geometry", 1, cline_r_params,    1, 20, NULL },
+    { ECMD_CLINE_SCALE_T, "Set plate thickness", "geometry", 1, cline_t_params,    1, 30, NULL },
+    { ECMD_CLINE_MOVE_H,  "Move End H",          "move",     1, cline_mv_h_params, 1, 40, NULL },
+};
+
+static const struct rt_edit_prim_desc cline_prim_desc = {
+    "cline", "CLINE", 4, cline_cmds,
+    0,                    /* nopt         */
+    NULL                  /* opts         */
+};
+
+C_DECL const struct rt_edit_prim_desc *
+rt_edit_cline_edit_desc(void)
+{
+    return &cline_prim_desc;
+}
+
+
+C_DECL void
 rt_edit_cline_e_axes_pos(
 	struct rt_edit *s,
 	const struct rt_db_internal *ip,
@@ -108,22 +148,16 @@ rt_edit_cline_e_axes_pos(
 int
 ecmd_cline_scale_h(struct rt_edit *s)
 {
-    if (s->e_inpara != 1) {
+    if (!s->e_inpara && s->es_scale <= 0.0) {
+	bu_vls_printf(s->log_str, "ERROR: one argument needed\n");
+	s->e_inpara = 0;
+	return BRLCAD_ERROR;
+    }
+    if (s->e_inpara > 1) {
 	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
 	s->e_inpara = 0;
 	return BRLCAD_ERROR;
     }
-
-    if (s->e_para[0] <= 0.0) {
-	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
-	s->e_inpara = 0;
-	return BRLCAD_ERROR;
-    }
-
-    /* must convert to base units */
-    s->e_para[0] *= s->local2base;
-    s->e_para[1] *= s->local2base;
-    s->e_para[2] *= s->local2base;
 
     struct rt_cline_internal *cli =
 	(struct rt_cline_internal *)s->es_int.idb_ptr;
@@ -131,6 +165,15 @@ ecmd_cline_scale_h(struct rt_edit *s)
     RT_CLINE_CK_MAGIC(cli);
 
     if (s->e_inpara) {
+	if (s->e_para[0] <= 0.0) {
+	    bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
+	    s->e_inpara = 0;
+	    return BRLCAD_ERROR;
+	}
+
+	/* convert e_para[0] to base units */
+	s->e_para[0] *= s->local2base;
+
 	s->e_para[0] *= s->e_mat[15];
 	s->es_scale = s->e_para[0] / MAGNITUDE(cli->h);
 	VSCALE(cli->h, cli->h, s->es_scale);
@@ -148,19 +191,13 @@ ecmd_cline_scale_h(struct rt_edit *s)
 int
 ecmd_cline_scale_r(struct rt_edit *s)
 {
-    if (s->e_inpara != 1) {
-	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
+    if (!s->e_inpara && s->es_scale <= 0.0) {
+	bu_vls_printf(s->log_str, "ERROR: one argument needed\n");
 	s->e_inpara = 0;
 	return BRLCAD_ERROR;
     }
-
-    /* must convert to base units */
-    s->e_para[0] *= s->local2base;
-    s->e_para[1] *= s->local2base;
-    s->e_para[2] *= s->local2base;
-
-    if (s->e_para[0] <= 0.0) {
-	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
+    if (s->e_inpara > 1) {
+	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
 	s->e_inpara = 0;
 	return BRLCAD_ERROR;
     }
@@ -170,9 +207,17 @@ ecmd_cline_scale_r(struct rt_edit *s)
 
     RT_CLINE_CK_MAGIC(cli);
 
-    if (s->e_inpara)
+    if (s->e_inpara) {
+	/* convert e_para[0] to base units */
+	s->e_para[0] *= s->local2base;
+
+	if (s->e_para[0] <= 0.0) {
+	    bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
+	    s->e_inpara = 0;
+	    return BRLCAD_ERROR;
+	}
 	cli->radius = s->e_para[0];
-    else if (s->es_scale > 0.0) {
+    } else if (s->es_scale > 0.0) {
 	cli->radius *= s->es_scale;
 	s->es_scale = 0.0;
     }
@@ -186,31 +231,34 @@ ecmd_cline_scale_r(struct rt_edit *s)
 int
 ecmd_cline_scale_t(struct rt_edit *s)
 {
-    if (s->e_inpara != 1) {
+    if (!s->e_inpara && s->es_scale <= 0.0) {
+	bu_vls_printf(s->log_str, "ERROR: one argument needed\n");
+	s->e_inpara = 0;
+	return BRLCAD_ERROR;
+    }
+    if (s->e_inpara > 1) {
 	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
 	s->e_inpara = 0;
 	return BRLCAD_ERROR;
     }
-
-    if (s->e_para[0] <= 0.0) {
-	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
-	s->e_inpara = 0;
-	return BRLCAD_ERROR;
-    }
-
-    /* must convert to base units */
-    s->e_para[0] *= s->local2base;
-    s->e_para[1] *= s->local2base;
-    s->e_para[2] *= s->local2base;
 
     struct rt_cline_internal *cli =
 	(struct rt_cline_internal *)s->es_int.idb_ptr;
 
     RT_CLINE_CK_MAGIC(cli);
 
-    if (s->e_inpara)
+    if (s->e_inpara) {
+	if (s->e_para[0] <= 0.0) {
+	    bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
+	    s->e_inpara = 0;
+	    return BRLCAD_ERROR;
+	}
+
+	/* convert e_para[0] to base units */
+	s->e_para[0] *= s->local2base;
+
 	cli->thickness = s->e_para[0];
-    else if (s->es_scale > 0.0) {
+    } else if (s->es_scale > 0.0) {
 	cli->thickness *= s->es_scale;
 	s->es_scale = 0.0;
     }
@@ -239,7 +287,7 @@ ecmd_cline_move_h(struct rt_edit *s)
 	    return BRLCAD_ERROR;
 	}
 
-	/* must convert to base units */
+	/* convert e_para[0] to base units */
 	s->e_para[0] *= s->local2base;
 	s->e_para[1] *= s->local2base;
 	s->e_para[2] *= s->local2base;
@@ -283,7 +331,7 @@ ecmd_cline_move_h_mousevec(struct rt_edit *s, const vect_t mousevec)
     VSUB2(cli->h, tr_temp, cli->v);
 }
 
-int
+C_DECL int
 rt_edit_cline_edit(struct rt_edit *s)
 {
     switch (s->edit_flag) {
@@ -306,21 +354,20 @@ rt_edit_cline_edit(struct rt_edit *s)
 	    return ecmd_cline_scale_t(s);
 	case ECMD_CLINE_MOVE_H:
 	    return ecmd_cline_move_h(s);
+	default:
+	    return edit_generic(s);
     }
 
     return 0;
 }
 
-int
+C_DECL int
 rt_edit_cline_edit_xy(
 	struct rt_edit *s,
 	const vect_t mousevec
 	)
 {
     vect_t pos_view = VINIT_ZERO;       /* Unrotated view space pos */
-    struct rt_db_internal *ip = &s->es_int;
-    bu_clbk_t f = NULL;
-    void *d = NULL;
 
     switch (s->edit_flag) {
 	case RT_PARAMS_EDIT_SCALE:
@@ -335,18 +382,8 @@ rt_edit_cline_edit_xy(
 	case ECMD_CLINE_MOVE_H:
 	    ecmd_cline_move_h_mousevec(s, mousevec);
 	    break;
-        case RT_PARAMS_EDIT_ROT:
-            bu_vls_printf(s->log_str, "RT_PARAMS_EDIT_ROT XY editing setup unimplemented in %s_edit_xy callback\n", EDOBJ[ip->idb_type].ft_label);
-            rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-            if (f)
-                (*f)(0, NULL, d, NULL);
-            return BRLCAD_ERROR;
 	default:
-	    bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", EDOBJ[ip->idb_type].ft_label, s->edit_flag);
-	    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-	    if (f)
-		(*f)(0, NULL, d, NULL);
-	    return BRLCAD_ERROR;
+	    return edit_generic_xy(s, mousevec);
     }
 
     edit_abs_tra(s, pos_view);

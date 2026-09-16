@@ -1,7 +1,7 @@
 #                          G E D . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2025 United States Government as represented by
+# Copyright (c) 1998-2026 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -195,6 +195,7 @@ package provide cadwidgets::Ged 1.0
 	method data_pick {args}
 	method data_scale_mode {args}
 	method data_vZ {args}
+	method db {args}
 	method dbconcat {args}
 	method dbfind {args}
 	method dbip {args}
@@ -939,14 +940,15 @@ package provide cadwidgets::Ged 1.0
 ::itcl::body cadwidgets::Ged::constructor {_gedOrFile args} {
     global tcl_platform
 
-    if {[catch {$_gedOrFile ls}]} {
-	set mGedFile $_gedOrFile
-	set mGed [subst $this]_ged
-	go_open $mGed db $mGedFile
-    } else {
+    if {[llength [info commands ::go_open]] &&
+	[lsearch -exact [::go_open] $_gedOrFile] != -1} {
 	set mGedFile ""
 	set mGed $_gedOrFile
 	set mSharedGed 1
+    } else {
+	set mGedFile $_gedOrFile
+	set mGed [subst $this]_ged
+	go_open $mGed db $mGedFile
     }
     iwidgets::Panedwindow::add upper
     iwidgets::Panedwindow::add lower
@@ -1565,6 +1567,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::data_vZ {args} {
     eval $mGed data_vZ $itk_component($itk_option(-pane)) $args
+}
+
+::itcl::body cadwidgets::Ged::db {args} {
+    eval $mGed db $args
 }
 
 ::itcl::body cadwidgets::Ged::dbconcat {args} {
@@ -2531,7 +2537,7 @@ package provide cadwidgets::Ged 1.0
 ::itcl::body cadwidgets::Ged::open {args} {
     catch {rename $mRay ""}
     set mRayNeedGettrees 1
-    set $mGedFile [eval $mGed open $args]
+    set mGedFile [eval $mGed open $args]
 }
 
 ::itcl::body cadwidgets::Ged::opendb {args} {
@@ -6201,7 +6207,7 @@ package provide cadwidgets::Ged 1.0
 			Only uniform array binary objects (major_type=u) are currently supported}}
     $help add bot_condense	{{new_bot old_bot} {create a new bot by condensing the old bot}}
     $help add bot_decimate	{{[options] new_bot old_bot} {create a new bot by decimating the old bot}}
-    $help add bot_dump	{{[-b] [-m directory] [-o file] [-t dxf|obj|sat|stl] [-u units] [bot1 bot2 ...]\n} {dump the specified bots}}
+    $help add bot_dump	{{[-b] [-n] [-F] [-m directory] [-o file] [-t dxf|glb|gltf|obj|sat|stl] [-u units] [--materials|--no-materials] [bot1 bot2 ...]\n} {dump the specified bots}}
     $help add bot_face_fuse	{{new_bot old_bot} {eliminate duplicate faces in a BOT}}
     $help add bot_face_sort	{{triangles_per_piece bot_solid1 [bot_solid2 bot_solid3 ...]} {sort the facelist of BOT solids to optimize ray trace performance for a particular number of triangles per raytrace piece}}
     $help add bot_fuse		{{new_bot old_bot} {eliminate duplicate points in a BOT}}
@@ -6239,10 +6245,11 @@ package provide cadwidgets::Ged 1.0
     $help add copymat		{{a/b c/d}	{copy matrix from one combination's arc to another's}}
     $help add cp		{{from to} {copy [duplicate] object}}
     $help add cpi		{{from to}	{copy cylinder and position at end of original cylinder}}
+    $help add db		{{subcommand [args]} {dispatch a database-oriented libged subcommand}}
     $help add dbconcat		{{[-L] [-O] [-t] [-u] [-c] [-s|-p] file [prefix]} {concatenate 'file' onto end of present database.  Run 'dup file' first.}}
     $help add dbfind		{{[-s] <objects>} {find all references to objects}}
     $help add dbip		{{} {get dbip}}
-    $help add dbot_dump	{{[-b] [-m directory] [-o file] [-t dxf|obj|sat|stl] [-u units] \n} {dump the displayed bots}}
+    $help add dbot_dump	{{[-b] [-n] [-F] [-m directory] [-o file] [-t dxf|glb|gltf|obj|sat|stl] [-u units] [--materials|--no-materials]\n} {dump the displayed bots}}
     $help add dbversion		{{} {return the database version}}
     $help add debug  		{{[args]} {control BRL-CAD library debugging}}
     $help add debugbu		{{[hex_code]} {activate libbu debugging}}
@@ -6402,7 +6409,7 @@ package provide cadwidgets::Ged 1.0
     $help add regdef		{{item air los mat} {get/set region defaults}}
     $help add regions		{{file object(s)} {returns an ascii summary of regions}}
     $help add rfarb		{{} {makes an arb given a point, 2 coords of 3 points, rot, fb and thickness}}
-    $help add rm		{{comb <members>} {remove members from comb}}
+    $help add rm		{{[options] <object-or-path>...} {delete database objects or remove a child path}}
     $help add rmap		{{} {returns a region ids to region(s) mapping}}
     $help add rmat		{{} {get/set the rotation matrix}}
     $help add rmater		{{file} {read material properties from a file}}

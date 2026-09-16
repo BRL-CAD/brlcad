@@ -1,0 +1,74 @@
+= G5-G4(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+g5-g4 - convert a BRL-CAD version 5 geometry database to version 4
+
+== SYNOPSIS
+
+[source]
+----
+g5-g4 v5.g v4.g
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*g5-g4* reads the objects stored in a current version 5 ("v5") BRL-CAD
+geometry database and writes out the equivalent objects in the legacy
+version 4 ("v4") ".g" format. It is the inverse of *g4-g5*(1) and is
+provided chiefly for interoperability with older tools that only
+understand the v4 format.
+
+Not every v5 object can be represented in a v4 database. Objects whose
+major type is not native BRL-CAD geometry are not supported in v4
+databases and are skipped rather than converted. For the objects that
+are converted, a few types are adjusted as they are written:
+
+* the *plastic* shader name found in combination shader strings is
+  rewritten as *phong*;
+* height-field (HF) solids are converted to displacement-map (DSP)
+  solids;
+* polysolids (POLY) are converted to bags of triangles (BOT).
+
+Both _v5.g_ (the input) and _v4.g_ (the output) file names are required.
+The input must be a version 5 database; *g5-g4* aborts if it is given a
+database of any other version. When the run completes, the number of
+v5-specific objects that were skipped and the number of attempted objects
+that failed to convert are reported on standard error.
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *g4-g5*(1), *dbupgrade*(1), *mged*(1)
+
+
+[[diagnostics]]
+== DIAGNOSTICS
+
+Descriptive messages are printed on standard error. The name of each
+object is echoed as it is processed. Objects that cannot be stored in a
+v4 database are reported as unsupported, and objects that fail to convert
+are reported individually before final counts are printed.
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 2004-2026 United States Government as represented by the U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

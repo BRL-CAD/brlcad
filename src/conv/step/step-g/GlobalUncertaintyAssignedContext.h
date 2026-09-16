@@ -1,7 +1,7 @@
 /*                 GlobalUncertaintyAssignedContext.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2025 United States Government as represented by
+ * Copyright (c) 1994-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -46,6 +46,7 @@ public:
     virtual ~GlobalUncertaintyAssignedContext();
     GlobalUncertaintyAssignedContext(STEPWrapper *sw, int step_id);
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    double GetLengthUncertainty() const;
     virtual void Print(int level);
 
     //static methods

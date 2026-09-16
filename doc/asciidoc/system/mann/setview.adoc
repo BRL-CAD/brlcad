@@ -1,0 +1,47 @@
+= SETVIEW(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+setview - Sets the current view in MGED by specifying rotation angles (in degrees) about the _x, y,_ and _z_ axes.
+
+== SYNOPSIS
+
+[source]
+----
+setview {x-angle y-angle z-angle}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Sets the current view in MGED by specifying rotation angles (in degrees) about the _x, y,_ and _z_ axes. The rotations are performed about the _z_ axis first, then the _y_ axis, then the _x_ axis. The *setview 0 0 0* command is a synonym for *press top.*
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *setview* command to set the current view according to specified rotation angles.
+
+.Set the current view in MGED.
+[example]
+====
+mged>**setview 90 180 90**
+
+Sets the current view to that set by *ae 0 0*.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

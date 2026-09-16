@@ -1,7 +1,7 @@
 /*                 SurfaceCurve.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2025 United States Government as represented by
+ * Copyright (c) 1994-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -44,7 +44,7 @@ private:
 protected:
     Curve *curve_3d;
     LIST_OF_PCURVE_OR_SURFACE associated_geometry;
-    Preferred_surface_curve_representation master_representation;
+    int master_representation;
 
 public:
     SurfaceCurve();
@@ -55,8 +55,13 @@ public:
 	return SURFACE_CURVE;
     };
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    virtual bool LoadONBrep(ON_Brep *brep);
     virtual const double *PointAtEnd();
     virtual const double *PointAtStart();
+    Curve *Curve3D() const { return curve_3d; }
+    const LIST_OF_PCURVE_OR_SURFACE &AssociatedGeometry() const {
+	return associated_geometry;
+    }
     virtual void Print(int level);
 
     //static methods

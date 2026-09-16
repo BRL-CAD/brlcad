@@ -1,0 +1,67 @@
+= DAMDF(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+damdf - compute the average magnitude difference function of a stream of doubles
+
+== SYNOPSIS
+
+[source]
+----
+damdf [window_size] < input.doubles > output.doubles
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*damdf* reads double-precision floating-point samples from standard input,
+computes the Average Magnitude Difference Function (AMDF) over successive
+windows, and writes the resulting doubles to standard output. The AMDF is an
+experimental measure used for pitch extraction: for each lag it accumulates the
+sum of absolute differences between a window and a lag-shifted copy of itself,
+then outputs 1024 minus that sum so that strong periodicities appear as peaks.
+
+Input is processed in fixed blocks of _window_size_ samples (default 512). A
+final partial block is zero-padded to a full window. Each block produces
+_window_size_ output values. Because both streams are raw binary doubles,
+*damdf* refuses to run if either standard input or standard output is a
+terminal. It does not take any option flags; the only argument is the optional
+positional _window_size_.
+
+[[examples]]
+== EXAMPLES
+
+.Estimate pitch periodicity of a sampled signal
+====
+[source,bash]
+----
+damdf 1024 < signal.doubles > amdf.doubles
+dpeak < amdf.doubles
+----
+Computes the AMDF of a stream of doubles over 1024-sample windows, then locates
+the dominant peaks with *dpeak*(1); the lag of the largest peak corresponds to
+the estimated pitch period.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *dauto*(1), *dfft*(1), *dpeak*(1), *dmod*(1)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

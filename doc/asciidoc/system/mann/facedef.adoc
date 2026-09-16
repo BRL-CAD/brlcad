@@ -1,0 +1,82 @@
+= FACEDEF(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+facedef - Allows the user to redefine any face of an ARB8 shape.
+
+== SYNOPSIS
+
+[source]
+----
+facedef {####} [[a] | [b] | [c] | [d] | [parameters]]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Allows the user to redefine any face of an ARB8 shape. The user must be in Primitive Edit Mode with an _ARB_ selected for editing. The optional parameters may be omitted, and MGED will prompt for the missing values. The options are as follows:
+
+
+_a_::
+Specify the new location of this face by providing coefficients for its plane equation: stem:[Ax + By + Cz = D]
+
+
+_b_::
+Specify the new location of this face using three points.
+
+
+_c_::
+Specify the new location of this face using rotation and fallback angles.
+
+
+_d_::
+Specify the new location of this face by changing the _D_ value in the plane equation.
+
+
+_q_::
+Return to MGED prompt.
+
+
+
+
+[[examples]]
+== EXAMPLES
+
+The first example shows the use of the *facedef* command with the _a_ option to redefine a specified face so that it is in another plane. The second example shows the use of the *facedef* command with the _b_ option to redefine a face so that it is in another plane formed by three points.
+
+.Moving a specified face so that it is in another plane.
+[example]
+====
+
+mged> **facedef 1234 a 1 0 0 20**::
+Moves face 1234 such that it is in the _yz_ plane at _x_= 20.
+
+
+
+====
+
+.Moving a specified face so that it is in another plane formed by three points.
+[example]
+====
+
+mged> **facedef 5678 b 0 0 10 10 0 10 10 10 10**::
+Moves face 5678 such that it is in the plane formed by the three points (0 0 10), (10 0 10), and (10 10 10).
+
+
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

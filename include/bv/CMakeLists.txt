@@ -9,9 +9,7 @@ set(
   polygon.h
   snap.h
   tcl_data.h
-  tig.h
   util.h
-  vectfont.h
   vlist.h
   view_sets.h
 )

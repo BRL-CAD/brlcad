@@ -1,19 +1,14 @@
-include_directories(
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  ${BRLCAD_BINARY_DIR}/include
-  ${BRLCAD_SOURCE_DIR}/include
-  ${BU_INCLUDE_DIRS}
-  ${GED_INCLUDE_DIRS}
+set(PLUGIN_LIBS libged libbu)
+
+set(arb_srcs arb.cpp repair.cpp rotate_arb_face.c)
+ged_plugin_library(ged-arb
+  ${arb_srcs}
+  LIBS ${PLUGIN_LIBS}
 )
-
-set(arb_srcs arb.c rotate_arb_face.c)
-
-ged_plugin_library(ged-arb ${arb_srcs})
-target_link_libraries(ged-arb libged libbu)
 
 cmakefiles(
   CMakeLists.txt
-  ${arb_srcs}
+  ged_arb.h
 )
 
 # Local Variables:

@@ -1,6 +1,6 @@
 add_definitions(-D_CONSOLE -DBRLCAD_DLL)
 
-brlcad_addexec(asc2dsp asc2dsp.c libbu FOLDER Conv)
+brlcad_addexec(asc2dsp asc2dsp.c "libbu;${WINSOCK_LIB}" FOLDER Conv)
 
 # With BRLCAD_ADDEXEC enabling the man page, we need to
 # set the man page source property before adding the exec

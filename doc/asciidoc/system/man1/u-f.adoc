@@ -1,0 +1,92 @@
+= U-F(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+
+u-f - convert binary unsigned shorts to floats
+
+== SYNOPSIS
+
+[source]
+----
+u-f [-n | scale] < shorts > floats
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*u-f* reads a stream of machine-native 16-bit unsigned short integers
+from standard input, converts each value to a single-precision
+floating point number, and writes the resulting binary floats to
+standard output.
+
+By default each sample is converted as-is (a scale factor of 1.0).  An
+optional scale factor may be supplied as the only argument to multiply
+every sample, or the *-n* flag may be used to normalize the data.
+Reading from a terminal, supplying more than one argument, or a scale
+factor of zero is treated as an error and prints a usage message.
+
+This command is *deprecated* and is scheduled for removal; it prints a
+deprecation warning on startup.  Related converters that read the same
+binary unsigned-short stream include *u-a*(1), *u-bw*(1), and *u-d*(1).
+
+[[options]]
+== OPTIONS
+
+*-n*::
+  Normalize the data, scaling every sample by 1/65536 so that the
+  output values fall roughly between 0.0 and 1.0.
+
+*scale*::
+  A floating point scale factor multiplied into every sample before it
+  is written.  Mutually exclusive with *-n*.  Defaults to 1.0 (no
+  scaling) when omitted.
+
+[[examples]]
+== EXAMPLES
+
+.Normalize raw 16-bit samples to floating point
+====
+[source,bash]
+----
+u-f -n < samples.u > samples.f
+----
+Reads the binary unsigned-short stream in samples.u and writes
+normalized single-precision floats (scaled by 1/65536) to samples.f,
+producing values in the 0.0 to 1.0 range suitable for further
+floating-point signal processing.
+====
+
+.Scale and analyze a sample stream
+====
+[source,bash]
+----
+u-f 0.5 < signal.u | dstats
+----
+Halves every unsigned-short sample, converts it to floating point, and
+pipes the result to *dstats*(1) to report the minimum, maximum, mean,
+and other descriptive statistics of the scaled data.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *u-a*(1), *u-bw*(1), *u-d*(1), *f-d*(1), *dstats*(1)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,0 +1,65 @@
+= I-A(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+
+i-a - convert binary short integers to ASCII
+
+== SYNOPSIS
+
+[source]
+----
+i-a < shorts > ascii
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*i-a* reads a stream of machine-native 16-bit signed short integers from
+standard input and writes each value as a decimal number in ASCII text,
+one value per line, to standard output.
+
+The command takes no options or arguments; it operates purely as a
+filter between standard input and standard output.  Related converters
+include *i-d*(1) and *i-f*(1), which turn short integers into binary
+doubles and floats respectively.
+
+This command is *deprecated* and is scheduled for removal; it prints a
+deprecation warning on startup.
+
+[[examples]]
+== EXAMPLES
+
+.Inspect the integer samples in a binary file
+====
+[source,bash]
+----
+i-a < samples.i | head
+----
+Decodes the 16-bit integers stored in samples.i and prints the first ten
+values as human-readable decimal numbers, one per line, which is useful
+for spot-checking raw signal or sample data.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *i-d*(1), *i-f*(1)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

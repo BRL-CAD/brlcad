@@ -5,101 +5,264 @@ brlcad_find_package(LMDB REQUIRED)
 brlcad_find_package(PNG REQUIRED)
 brlcad_find_package(REGEX REQUIRED)
 
+# If we're re-running CMake, we can't trust old scanner results - something
+# may have been changed or added.  Remove the sentinel files
+set(GED_PLUGINS_SENTINEL "${CMAKE_BINARY_DIR}/CMakeTmp/ged_plugins.sentinel")
+set(GED_SUBPROCESS_SENTINEL "${CMAKE_BINARY_DIR}/CMakeTmp/ged_subprocesses.sentinel")
+file(REMOVE "${GED_PLUGINS_SENTINEL}")
+file(REMOVE "${GED_SUBPROCESS_SENTINEL}")
+
 add_custom_command(
-  OUTPUT "${CMAKE_BINARY_DIR}/CMakeTmp/ged_plugins.sentinel"
-  COMMAND ${CMAKE_COMMAND} -E touch "${CMAKE_BINARY_DIR}/CMakeTmp/ged_plugins.sentinel"
+  OUTPUT "${GED_PLUGINS_SENTINEL}"
+  COMMAND ${CMAKE_COMMAND} -E touch "${GED_PLUGINS_SENTINEL}"
 )
-add_custom_target(ged_plugins_sentinel DEPENDS ${CMAKE_BINARY_DIR}/CMakeTmp/ged_plugins.sentinel)
+add_custom_target(ged_plugins_sentinel DEPENDS ${GED_PLUGINS_SENTINEL})
 set_target_properties(ged_plugins_sentinel PROPERTIES FOLDER "BRL-CAD Plugins/ged")
 
-# Utility program
-set(GED_HDR_SCANNER ${CMAKE_BINARY_DIR}/CMakeTmp/ged_cmd_scanner${CMAKE_EXECUTABLE_SUFFIX})
-try_compile(
-  ged_hdr_scanner
-  "${CMAKE_BINARY_DIR}/CMakeTmp"
-  SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/ged_cmd_scanner.cpp"
-  OUTPUT_VARIABLE GED_SCANNER_BLD_OUT
-  COPY_FILE "${GED_HDR_SCANNER}"
-  )
-if (NOT EXISTS ${GED_HDR_SCANNER})
-  message(FATAL_ERROR "Unable to build ged command scanner: ${GED_SCANNER_BLD_OUT}")
-endif()
+# Utility program for finding and setting up GED commands
+set(GED_CMD_SCANNER_SRC "${CMAKE_CURRENT_SOURCE_DIR}/ged_cmd_scanner.cpp")
+set(GED_CMD_SCANNER_TARGET ged_cmd_scanner)
+add_executable(${GED_CMD_SCANNER_TARGET} EXCLUDE_FROM_ALL "${GED_CMD_SCANNER_SRC}")
+set_target_properties(${GED_CMD_SCANNER_TARGET} PROPERTIES FOLDER "BRL-CAD Build Utilities")
+set(GED_CMD_SCANNER "$<TARGET_FILE:${GED_CMD_SCANNER_TARGET}>")
 set(GED_CMD_LIST ${CMAKE_CURRENT_BINARY_DIR}/../ged_cmds.txt)
 file(REMOVE ${GED_CMD_LIST})
 
-# Primary function for adding a LIBGED plugin
+# ============================================================================
+#                             static-core mode
+#
+# Dynamic loading of GED commands carries a runtime overhead, so by default we
+# build most (but not all) of the core command set into libged proper via a
+# static registration mechanism.
+# ============================================================================
+option(LIBGED_STATIC_CORE "Statically register most ged commands into libged" ON)
+
+# If static core is enabled, make the compile definition visible so REGISTER_GED_COMMAND works.
+if(LIBGED_STATIC_CORE)
+  add_compile_definitions(LIBGED_STATIC_CORE)
+endif()
+
+# We'll need to supply find_package results from plugins being
+# built statically to libged itself - use an interface library
+# to collect them.
+add_library(libged_plugin_deps INTERFACE)
+
+
+# Define global accumulation properties (if not already defined)
+define_property(GLOBAL PROPERTY GED_COMMAND_STATIC_SRCS BRIEF_DOCS "libged static command sources" FULL_DOCS "")
+define_property(GLOBAL PROPERTY GED_COMMAND_ALL_SRCS BRIEF_DOCS "all libged command sources" FULL_DOCS "")
+
+# Helper function for collecting info onto properties
+function(_libged_accumulate_global prop)
+  set(items ${ARGN})
+  if(NOT items)
+    return()
+  endif()
+  get_property(curr GLOBAL PROPERTY ${prop})
+  if(NOT curr)
+    set(curr "")
+  endif()
+  foreach(it IN LISTS items)
+    # For source list properties
+    if("${prop}" MATCHES "^GED_COMMAND_.*_SRCS$")
+      if(IS_ABSOLUTE "${it}")
+        set(abs_it "${it}")
+      elseif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${it}")
+        get_filename_component(abs_it "${CMAKE_CURRENT_SOURCE_DIR}/${it}" ABSOLUTE)
+      else()
+        get_filename_component(abs_it "${it}" ABSOLUTE)
+      endif()
+      set(val "${abs_it}")
+    # For library lists (i.e., things to go in target_link_libraries)
+    else()
+      set(val "${it}")
+      # Not a target, might be library path; expand
+      if(NOT TARGET "${it}" AND NOT IS_ABSOLUTE "${it}")
+	if (EXISTS "${it}")
+	  get_filename_component(abs_it "${it}" ABSOLUTE)
+	  set(val "${abs_it}")
+	elseif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${it}")
+	  get_filename_component(abs_it "${CMAKE_CURRENT_SOURCE_DIR}/${it}" ABSOLUTE)
+	  set(val "${abs_it}")
+	endif()
+      endif()
+    endif()
+    if(val)
+      list(FIND curr "${val}" _idx)
+      if(_idx EQUAL -1)
+        list(APPEND curr "${val}")
+      endif()
+    endif()
+  endforeach()
+  set_property(GLOBAL PROPERTY ${prop} "${curr}")
+endfunction()
+
+
+
+# ============================================================================
+# ged_plugin_library:
+#   Arguments:
+#     <name> <sources...>
+#     INCLUDES <dirs...>
+#     SYSTEM_INCLUDES <dirs...>
+#     LIBS <libs...>
+#     DEFINITIONS <defs...>
+#     COMPILE_OPTIONS <opts...>
+#     [PLUGIN_ONLY] [FORCE_STATIC]
+#
+# This is the core function used to define the build logic for a LIBGED plugin
+# - except in extraordinary circumstances, you should always use this function
+# when adding a new plugin to the LIBGED framework.
+# ============================================================================
 function(ged_plugin_library name)
-  add_library(${name} SHARED ${ARGN})
-  target_compile_definitions(${name} PRIVATE GED_PLUGIN BRLCADBUILD HAVE_CONFIG_H)
-  set(dep_includes ${CMAKE_CURRENT_BINARY_DIR})
-  foreach(ll ${libslist})
-    if(TARGET ${ll})
-      get_target_property(IDIRS ${ll} INTERFACE_INCLUDE_DIRECTORIES)
-      if(IDIRS)
-        list(APPEND dep_includes ${IDIRS})
-      endif(IDIRS)
-    endif(TARGET ${ll})
-  endforeach(ll ${libslist})
-  brlcad_include_dirs(${name} dep_includes PRIVATE)
-  add_dependencies(ged_plugins_sentinel ${name})
-  validate_style(${name} ${ARGN})
-  plugin_setup(${name} ged)
-  # Scan plugin files to build up cmd list.
+  set(options PLUGIN_ONLY FORCE_STATIC)
+  set(oneValueArgs "")
+  set(multiValueArgs INCLUDES SYSTEM_INCLUDES LIBS DEFINITIONS COMPILE_OPTIONS)
+  cmake_parse_arguments(GEDPL "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
-  # TODO:  Note that to be strictly correct, we should be making CMake
-  # reconfigure every time one of the plugin files changes to avoid the
-  # function definitions being out of sync.  The lines below that are commented
-  # out should do that, but it also means any editing of libged plugins will
-  # force a reconfigure.  That seems a little excessive, since actual breaking
-  # cases will likely be rare...  If it's a problem we could also try to make
-  # the generation of the libged input files a build-time activity.  That's
-  # almost certainly possible - the current approach was chosen for
-  # implementation simplicity during initial testing.
-  foreach(sf ${ARGN})
-    if (EXISTS ${sf})
-      #set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${sf})
-      execute_process(COMMAND ${GED_HDR_SCANNER} ${sf} OUTPUT_VARIABLE CMD_NAMES)
-    elseif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${sf})
-      #set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${sf})
-      execute_process(COMMAND ${GED_HDR_SCANNER} ${CMAKE_CURRENT_SOURCE_DIR}/${sf} OUTPUT_VARIABLE CMD_NAMES)
-    endif (EXISTS ${sf})
-    file(APPEND ${GED_CMD_LIST} ${CMD_NAMES})
-  endforeach(sf ${ARGN})
-endfunction(ged_plugin_library name)
+  set(plugin_sources ${GEDPL_UNPARSED_ARGUMENTS})
+  if(NOT plugin_sources)
+    message(FATAL_ERROR "ged_plugin_library(${name}) called with no source files")
+  endif()
 
-# This target is supplied so applications wanting to run libged
-# commands at build time can depend on the plugins being built as well as
-# libged itself (otherwise LIBGED commands might fail due to their plugins not
-# yet having been built.)
+  # Decide static vs plugin
+  set(DO_STATIC FALSE)
+  if(LIBGED_STATIC_CORE)
+    if(GEDPL_PLUGIN_ONLY AND NOT GEDPL_FORCE_STATIC)
+      set(DO_STATIC FALSE)
+    else()
+      set(DO_STATIC TRUE)
+    endif()
+  else()
+    set(DO_STATIC FALSE)
+  endif()
+
+  foreach(sf ${plugin_sources})
+    set(wsf ${sf})
+    if(NOT EXISTS ${wsf})
+      if(NOT IS_ABSOLUTE "${wsf}")
+	set(wsf ${CMAKE_CURRENT_SOURCE_DIR}/${sf})
+	file(REAL_PATH ${wsf} wsfr)
+	set(wsf ${wsfr})
+      endif()
+    endif()
+    if (EXISTS ${wsf})
+      # The GENERATED property is authoritative for in-source builds, where
+      # source and binary paths are necessarily the same.  Retain the path
+      # check as a fallback for out-of-source generated inputs that do not
+      # carry the property.
+      set(_wsf_is_generated FALSE)
+      get_source_file_property(_wsf_source_generated "${wsf}" GENERATED)
+      if(_wsf_source_generated)
+	set(_wsf_is_generated TRUE)
+      elseif(NOT "${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
+	string(FIND "${wsf}" "${PROJECT_BINARY_DIR}/" _wsf_in_binary_dir)
+	if(NOT _wsf_in_binary_dir EQUAL -1)
+	  set(_wsf_is_generated TRUE)
+	endif()
+      endif()
+      # Only files that exist at configure time can define libged commands for
+      # the purposes of static inclusion or API definition.  Anything
+      # dynamically generated will be limited to dynamic loading.
+
+      if(NOT _wsf_is_generated AND DO_STATIC)
+	_libged_accumulate_global(GED_COMMAND_STATIC_SRCS "${wsf}")
+      endif()
+      if(NOT _wsf_is_generated)
+	_libged_accumulate_global(GED_COMMAND_ALL_SRCS "${wsf}")
+      endif()
+
+      # If it exists, tell CMake about it
+      cmakefiles(${sf})
+    endif()
+  endforeach()
+
+  if(DO_STATIC)
+    target_sources(libged PRIVATE ${plugin_sources})
+    if (TARGET libged-static)
+      target_sources(libged-static PRIVATE ${plugin_sources})
+    endif()
+    if (TARGET libged-brlcad-obj)
+      target_sources(libged-brlcad-obj PRIVATE ${plugin_sources})
+    endif()
+
+    if(GEDPL_INCLUDES)
+      target_include_directories(libged_plugin_deps INTERFACE ${GEDPL_INCLUDES})
+    endif()
+    if(GEDPL_SYSTEM_INCLUDES)
+      target_include_directories(libged_plugin_deps SYSTEM INTERFACE ${GEDPL_SYSTEM_INCLUDES})
+    endif()
+    list(APPEND GEDPL_LIBS ${DL_LIBRARY})
+    if(GEDPL_LIBS)
+      list(REMOVE_ITEM GEDPL_LIBS libged)
+      target_link_libraries(libged_plugin_deps INTERFACE ${GEDPL_LIBS})
+    endif()
+    if(GEDPL_DEFINITIONS)
+      target_compile_definitions(libged_plugin_deps INTERFACE ${GEDPL_DEFINITIONS})
+    endif()
+    if(GEDPL_COMPILE_OPTIONS)
+      target_compile_options(libged_plugin_deps INTERFACE ${GEDPL_COMPILE_OPTIONS})
+    endif()
+
+    # Find package calls will need to be repeated at the parent scope,
+    # so pass the info up
+    get_property(local_calls DIRECTORY PROPERTY BRLCAD_LOCAL_PACKAGE_CALLS)
+    if(local_calls)
+      set_property(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/.." APPEND PROPERTY BRLCAD_LOCAL_PACKAGE_CALLS ${local_calls})
+    endif()
+  else()
+    add_library(${name} SHARED ${plugin_sources})
+    target_compile_definitions(${name} PRIVATE GED_PLUGIN BRLCADBUILD HAVE_CONFIG_H)
+    plugin_setup(${name} ged)
+    validate_style(${name} ${plugin_sources})
+    add_dependencies(ged_plugins_sentinel ${name})
+
+    if(GEDPL_INCLUDES)
+      brlcad_include_dirs(${name} GEDPL_INCLUDES PRIVATE)
+    endif()
+    if(GEDPL_SYSTEM_INCLUDES)
+      brlcad_include_dirs(${name} GEDPL_SYSTEM_INCLUDES PRIVATE)
+    endif()
+    list(APPEND GEDPL_LIBS ${DL_LIBRARY})
+    if(GEDPL_LIBS)
+      target_link_libraries(${name} ${GEDPL_LIBS})
+    endif()
+    if(GEDPL_DEFINITIONS)
+      target_compile_definitions(${name} PRIVATE ${GEDPL_DEFINITIONS})
+    endif()
+    if(GEDPL_COMPILE_OPTIONS)
+      target_compile_options(${name} PRIVATE ${GEDPL_COMPILE_OPTIONS})
+    endif()
+
+    # On some platforms distclean has additional cleanup to do
+    distclean("${CMAKE_BINARY_DIR}/${LIBEXEC_DIR}/ged/${name}.exp") 
+    distclean("${CMAKE_BINARY_DIR}/${LIBEXEC_DIR}/ged/${name}.pdb") 
+
+  endif()
+endfunction()
+
+
+# =========================================================================
+# This target is supplied so applications wanting to run libged commands at
+# build time can depend on the plugins being built as well as libged itself
+# (otherwise LIBGED commands might fail due to their plugins not yet having
+# been built.)
+# =========================================================================
 add_custom_target(ged_plugins ALL DEPENDS ged_plugins_sentinel)
 set_target_properties(ged_plugins PROPERTIES FOLDER "BRL-CAD Plugins")
 
+# =========================================================================
 # In addition to the standard command plugins, there are plugins for the
 # ged_exec subprocess executable, which are run as independent processes
 # to allow them to be terminated by the parent command without bringing
 # down the parent application
+# =========================================================================
 add_custom_command(
-  OUTPUT "${CMAKE_BINARY_DIR}/ged_subprocesses.sentinel"
-  COMMAND ${CMAKE_COMMAND} -E touch "${CMAKE_BINARY_DIR}/ged_subprocesses.sentinel"
+  OUTPUT "${GED_SUBPROCESS_SENTINEL}"
+  COMMAND ${CMAKE_COMMAND} -E touch "${GED_SUBPROCESS_SENTINEL}"
 )
-add_custom_target(ged_subprocesses_sentinel DEPENDS ${CMAKE_BINARY_DIR}/ged_subprocesses.sentinel)
+add_custom_target(ged_subprocesses_sentinel DEPENDS ${GED_SUBPROCESS_SENTINEL})
 set_target_properties(ged_subprocesses_sentinel PROPERTIES FOLDER "BRL-CAD Plugins/ged_process")
-
-function(ged_subprocess_library name)
-  add_library(${name} ${ARGN})
-  set_target_properties(${name} PROPERTIES PREFIX "")
-  set(dep_includes)
-  foreach(ll ${libslist})
-    if(TARGET ${ll})
-      get_target_property(IDIRS ${ll} INTERFACE_INCLUDE_DIRECTORIES)
-      if(IDIRS)
-        list(APPEND dep_includes ${IDIRS})
-      endif(IDIRS)
-    endif(TARGET ${ll})
-  endforeach(ll ${libslist})
-  brlcad_include_dirs(${name} dep_includes PRIVATE)
-  add_dependencies(ged_subprocesses_sentinel ${name})
-endfunction(ged_subprocess_library name)
 
 # This target is supplied so applications wanting to run libged
 # commands at build time can depend on the subprocesses being built as well as
@@ -108,22 +271,64 @@ endfunction(ged_subprocess_library name)
 add_custom_target(ged_subprocesses ALL DEPENDS ged_subprocesses_sentinel)
 set_target_properties(ged_subprocesses PROPERTIES FOLDER "BRL-CAD Plugins")
 
-# Set up the basic files for the plugin functions.  Specific command
-# contents will be added after we've defined the plugins.
+# The subprocess libraries have slightly different handling than standard
+# BRL-CAD libraries or plugins, so we encapsulate that logic here.
+function(ged_subprocess_library name)
+  set(oneValueArgs "")
+  set(multiValueArgs INCLUDES SYSTEM_INCLUDES LIBS DEFINITIONS COMPILE_OPTIONS)
+  cmake_parse_arguments(GEDSP "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  set(subp_sources ${GEDSP_UNPARSED_ARGUMENTS})
+
+  add_library(${name} ${subp_sources})
+  target_compile_definitions(${name} PRIVATE GED_PLUGIN BRLCADBUILD HAVE_CONFIG_H)
+  set_target_properties(${name} PROPERTIES PREFIX "")
+  validate_style(${name} ${subp_sources})
+  plugin_setup(${name} ged_exec)
+
+  if(GEDSP_INCLUDES)
+    brlcad_include_dirs(${name} GEDSP_INCLUDES PRIVATE)
+  endif()
+  if(GEDSP_SYSTEM_INCLUDES)
+    brlcad_include_dirs(${name} GEDSP_SYSTEM_INCLUDES PRIVATE)
+  endif()
+  if(GEDSP_LIBS)
+    target_link_libraries(${name} ${GEDSP_LIBS})
+  endif()
+  if(GEDSP_DEFINITIONS)
+    target_compile_definitions(${name} PRIVATE ${GEDSP_DEFINITIONS})
+  endif()
+  if(GEDSP_COMPILE_OPTIONS)
+    target_compile_options(${name} PRIVATE ${GEDSP_COMPILE_OPTIONS})
+  endif()
+
+  add_dependencies(ged_subprocesses_sentinel ${name})
+
+  # On some platforms distclean has additional cleanup to do
+  distclean("${CMAKE_BINARY_DIR}/${LIBEXEC_DIR}/ged_exec/${name}.exp") 
+  distclean("${CMAKE_BINARY_DIR}/${LIBEXEC_DIR}/ged_exec/${name}.pdb") 
+
+endfunction(ged_subprocess_library name)
+
+# =========================================================================
+# We need to define a couple of generated filenames here so the libged library
+# will know to include them
+# =========================================================================
 set(GED_HDR_DIR ${PROJECT_BINARY_DIR}/${INCLUDE_DIR}/brlcad/ged)
 file(MAKE_DIRECTORY ${GED_HDR_DIR})
 set(GED_CMD_HDR ${GED_HDR_DIR}/ged_cmds.h)
-set(GED_CMD_SRC ${CMAKE_CURRENT_BINARY_DIR}/ged_cmds.cpp)
-# cmds header
-file(COPY ged_cmds.h DESTINATION ${GED_HDR_DIR})
 distclean("${GED_CMD_HDR}")
-# cmds source file
-file(WRITE  ${GED_CMD_SRC} "#include \"ged/ged_cmds.h\"\n")
+set(GED_CMD_SRC ${CMAKE_CURRENT_BINARY_DIR}/ged_cmds.cpp)
 distclean("${GED_CMD_SRC}")
+set(GED_STATIC_REGISTRATION_CPP ${CMAKE_CURRENT_BINARY_DIR}/ged_static_registration.cpp)
+distclean("${GED_STATIC_REGISTRATION_CPP}")
+set_source_files_properties(${GED_CMD_HDR} ${GED_CMD_SRC} ${GED_STATIC_REGISTRATION_CPP} PROPERTIES GENERATED TRUE)
+set_source_files_properties(${GED_CMD_HDR} PROPERTIES HEADER_FILE_ONLY TRUE)
 
 set(
   LIBGED_SOURCES
   ${GED_CMD_SRC}
+  ${GED_STATIC_REGISTRATION_CPP}
+  edit_buf.cpp
   exec.cpp
   ged_init.cpp
   columns.c
@@ -131,10 +336,11 @@ set(
   display_list.c
   draw.cpp
   ged.cpp
+  ged_inside.c
+  ged_track.c
   ged_util.cpp
   get_obj_bounds.c
   get_solid_kp.c
-  inside.c
   path.c
   pnts_util.c
   points_eval.c
@@ -142,7 +348,6 @@ set(
   qray.cpp
   tab_complete.cpp
   trace.c
-  track.c
   vers.c
   vutil.c
   view/data_lines.c
@@ -157,14 +362,15 @@ set_property(
 )
 
 # Note - libged_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
+set(GED_PUBLIC_LIBS ${libged_deps})
 set(
-  GED_LIBS
-  ${libged_deps}
-  ${PNG_LIBRARIES}
-  ${LMDB_LIBRARIES}
-  ${REGEX_LIBRARIES}
+  GED_PRIVATE_LIBS
+  PNG::PNG
+  LMDB::LMDB
+  REGEX::REGEX
   ${WINSOCK_LIB}
   ${M_LIBRARY}
+  ${DL_LIBRARY}
 )
 
 # Local include directories
@@ -175,11 +381,38 @@ set(
   ${REGEX_INCLUDE_DIRS}
   ${LMDB_INCLUDE_DIRS}
   ${CMAKE_CURRENT_SOURCE_DIR}/../libbg
+  ${CMAKE_CURRENT_SOURCE_DIR}/include
   ${CMAKE_CURRENT_BINARY_DIR}
 )
 
-brlcad_addlib(libged "${LIBGED_SOURCES}" "${GED_LIBS}" "" "${GED_LOCAL_INCLUDE_DIRS}")
+brlcad_addlib(libged "${LIBGED_SOURCES}" "" "${GED_LOCAL_INCLUDE_DIRS}"
+  PUBLIC_LIBS ${GED_PUBLIC_LIBS}
+  PRIVATE_LIBS ${GED_PRIVATE_LIBS}
+  UNITY_BUILD_SKIP ged_init.cpp
+  # The full static library link is too large for some testing environments -
+  # disable this test
+  NO_STATIC_LINK_TEST
+)
 set_target_properties(libged PROPERTIES VERSION 20.0.1 SOVERSION 20)
+if (LIBGED_STATIC_CORE)
+  target_link_libraries(libged PRIVATE libged_plugin_deps)
+  if (TARGET libged-static)
+    target_link_libraries(libged-static PRIVATE libged_plugin_deps)
+  endif()
+  if (TARGET libged-brlcad-obj)
+    target_link_libraries(libged-brlcad-obj PRIVATE libged_plugin_deps)
+  endif()
+
+
+  # On Windows, prevent the linker from stripping "unused" static command
+  # registration symbols
+  if(HAVE_WINDOWS_H)
+    target_link_options(libged PRIVATE "/OPT:NOREF")
+    if (TARGET libged-static)
+      target_link_options(libged-static PRIVATE "/OPT:NOREF")
+    endif()
+  endif()
+endif()
 
 # This executable is used to launch processes from LIBGED commands that may
 # need to be terminated due to excessive runtime length or infinite looping.
@@ -188,7 +421,6 @@ set_target_properties(libged PROPERTIES VERSION 20.0.1 SOVERSION 20)
 brlcad_addexec(ged_exec ged_exec.cpp libged NO_MAN)
 
 add_subdirectory(tests)
-add_subdirectory(simulate/tests)
 
 brlcad_addexec(test_help help/test_help.c libged TEST)
 
@@ -202,6 +434,7 @@ add_subdirectory(annotate)
 add_subdirectory(arb)
 add_subdirectory(arced)
 add_subdirectory(arot)
+add_subdirectory(arrange)
 add_subdirectory(attr)
 add_subdirectory(bb)
 add_subdirectory(bev)
@@ -227,6 +460,7 @@ add_subdirectory(copy)
 add_subdirectory(copyeval)
 add_subdirectory(copymat)
 add_subdirectory(cpi)
+add_subdirectory(db)
 add_subdirectory(dbip)
 add_subdirectory(debug)
 add_subdirectory(debugbu)
@@ -256,7 +490,6 @@ add_subdirectory(eye_pos)
 add_subdirectory(facetize)
 add_subdirectory(fb2pix)
 add_subdirectory(fbclear)
-add_subdirectory(find)
 add_subdirectory(form)
 add_subdirectory(fracture)
 add_subdirectory(garbage_collect)
@@ -356,7 +589,8 @@ add_subdirectory(rect)
 add_subdirectory(red)
 add_subdirectory(regdef)
 add_subdirectory(region)
-add_subdirectory(remove)
+add_subdirectory(rm)
+add_subdirectory(repair)
 add_subdirectory(rfarb)
 add_subdirectory(rmap)
 add_subdirectory(rmat)
@@ -379,6 +613,7 @@ add_subdirectory(setview)
 add_subdirectory(shaded_mode)
 add_subdirectory(shader)
 add_subdirectory(shells)
+add_subdirectory(shrinkwrap)
 add_subdirectory(showmats)
 add_subdirectory(simulate)
 add_subdirectory(slew)
@@ -401,7 +636,6 @@ add_subdirectory(unhide)
 add_subdirectory(units)
 add_subdirectory(v2m_point)
 add_subdirectory(vdraw)
-add_subdirectory(version)
 add_subdirectory(view)
 add_subdirectory(view2grid_lu)
 add_subdirectory(view2model)
@@ -419,21 +653,100 @@ add_subdirectory(xpush)
 add_subdirectory(zap)
 add_subdirectory(zoom)
 
+
+#############################################
 # Plugins defined - now generate the wrappers
-file(STRINGS ${GED_CMD_LIST} GED_CMDS)
-list(SORT GED_CMDS)
-foreach(gc ${GED_CMDS})
-  file(APPEND ${GED_CMD_HDR} "GED_EXPORT extern int ged_exec_${gc}(struct ged *, int, const char **);\n")
-  file(APPEND ${GED_CMD_SRC} "int ged_exec_${gc}(struct ged *gedp, int argc, const char **argv) {\n")
-  # Allow the caller to optionally avoid setting argv[0] if they don't need to,
-  # since the function name has that info...
-  file(APPEND ${GED_CMD_SRC} "    static const char *cmdname = \"${gc}\";\n")
-  file(APPEND ${GED_CMD_SRC} "    if (!argv[0]) argv[0] = cmdname;\n")
-  file(APPEND ${GED_CMD_SRC} "    return ged_exec(gedp, argc, argv);\n")
-  file(APPEND ${GED_CMD_SRC} "}\n")
-endforeach()
-file(APPEND ${GED_CMD_HDR} "__END_DECLS\n")
-file(REMOVE ${GED_CMD_LIST})
+message("Adding plugin wrapper generation rules...")
+
+# We'll need to write input files with source lists
+# for the scanner
+function(write_list_to_file list_var out_filename)
+  # Expand the output to a full path if needed
+  get_filename_component(abs_out_filename "${out_filename}" ABSOLUTE)
+  set(_list_contents)
+  foreach(abs_item IN LISTS ${list_var})
+    if(EXISTS "${abs_item}")
+      string(APPEND _list_contents "${abs_item}\n")
+    else()
+      message(WARNING "Skipping non-existent source file: ${abs_item}")
+    endif()
+  endforeach()
+  file(GENERATE OUTPUT "${abs_out_filename}" CONTENT "${_list_contents}")
+endfunction()
+
+# For pre-defined commands (static or plugin) we generate a C API and wrapper
+# functions to allow our internal code to call ged_exec_<cmdname> rather than
+# just raw ged_exec.  This is a minimal measure to sanity check that code is at
+# least calling ged_exec for commands that exist at build time - it does not
+# validate option usage, but will at least catch one category of breakage
+# (using completely removed commands) at build time rather than run time.
+get_property(GED_COMMAND_ALL_SRCS GLOBAL PROPERTY GED_COMMAND_ALL_SRCS)
+set(ged_plugins_all_srcs "${CMAKE_BINARY_DIR}/CMakeTmp/ged_plugins_all_sources.txt")
+write_list_to_file(GED_COMMAND_ALL_SRCS ${ged_plugins_all_srcs})
+add_custom_command(
+  OUTPUT ${GED_CMD_SRC} ${GED_CMD_HDR}
+  COMMAND ${CMAKE_COMMAND} -E make_directory "${GED_HDR_DIR}"
+  COMMAND ${BRLCAD_SANITIZER_BUILD_TOOL_LAUNCHER} ${GED_CMD_SCANNER}
+    --input-list ${ged_plugins_all_srcs} --gen-exec-api-cpp ${GED_CMD_SRC}
+    --gen-exec-api-hdr ${GED_CMD_HDR}
+  COMMENT "[GED_CMD_SCANNER] Generating plugin exec wrappers"
+  DEPENDS ${GED_CMD_SCANNER_TARGET} ${ged_plugins_all_srcs} ${GED_COMMAND_ALL_SRCS}
+  VERBATIM
+)
+
+# For static plugins bundled with libged, we generate a forced registration
+# file to make sure they are not optimized out and are known to the libged
+# command loading mechanism.
+get_property(GED_COMMAND_STATIC_SRCS GLOBAL PROPERTY GED_COMMAND_STATIC_SRCS)
+set(ged_plugins_static_srcs "${CMAKE_BINARY_DIR}/CMakeTmp/ged_plugins_static_sources.txt")
+write_list_to_file(GED_COMMAND_STATIC_SRCS ${ged_plugins_static_srcs})
+add_custom_command(
+  OUTPUT ${GED_STATIC_REGISTRATION_CPP}
+  COMMAND ${BRLCAD_SANITIZER_BUILD_TOOL_LAUNCHER} ${GED_CMD_SCANNER}
+    --input-list ${ged_plugins_static_srcs}
+    --gen-force-cpp ${GED_STATIC_REGISTRATION_CPP}
+  COMMENT "[GED_CMD_SCANNER] Generating static plugin registration"
+  DEPENDS ${GED_CMD_SCANNER_TARGET} ${ged_plugins_static_srcs} ${GED_COMMAND_STATIC_SRCS}
+  VERBATIM
+)
+
+message("Adding plugin wrapper generation rules... done.")
+
+
+if(LIBGED_STATIC_CORE)
+  # Static libged exposes libged_plugin_deps through its exported link closure.
+  # Keep the helper target exportable, but avoid leaking build-tree include dirs
+  # into installed package metadata.  Do this after plugin subdirectories have
+  # finished accumulating their requirements.
+  set_target_properties(libged_plugin_deps PROPERTIES EXPORT_NAME ged_plugin_deps)
+  get_target_property(_ged_plugin_iface_dirs libged_plugin_deps INTERFACE_INCLUDE_DIRECTORIES)
+  if(_ged_plugin_iface_dirs)
+    set_property(TARGET libged_plugin_deps PROPERTY INTERFACE_INCLUDE_DIRECTORIES)
+    foreach(_dir ${_ged_plugin_iface_dirs})
+      if(NOT _dir MATCHES "^\$<")
+        set_property(TARGET libged_plugin_deps APPEND PROPERTY
+          INTERFACE_INCLUDE_DIRECTORIES "$<BUILD_INTERFACE:${_dir}>")
+      else()
+        set_property(TARGET libged_plugin_deps APPEND PROPERTY
+          INTERFACE_INCLUDE_DIRECTORIES "${_dir}")
+      endif()
+    endforeach()
+  endif()
+  get_target_property(_ged_plugin_sys_dirs libged_plugin_deps INTERFACE_SYSTEM_INCLUDE_DIRECTORIES)
+  if(_ged_plugin_sys_dirs)
+    set_property(TARGET libged_plugin_deps PROPERTY INTERFACE_SYSTEM_INCLUDE_DIRECTORIES)
+    foreach(_sdir ${_ged_plugin_sys_dirs})
+      if(NOT _sdir MATCHES "^\$<")
+        set_property(TARGET libged_plugin_deps APPEND PROPERTY
+          INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "$<BUILD_INTERFACE:${_sdir}>")
+      else()
+        set_property(TARGET libged_plugin_deps APPEND PROPERTY
+          INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${_sdir}")
+      endif()
+    endforeach()
+  endif()
+  install(TARGETS libged_plugin_deps EXPORT BRLCADStaticTargets)
+endif()
 
 set(
   ged_ignore_files
@@ -447,21 +760,12 @@ set(
   check/check_private.h
   dbi.h
   ged_cmd_scanner.cpp
-  ged_cmds.h
   ged_private.h
   include/plugin.h
   joint/joint.h
   osg.cpp
   pnts_util.h
   qray.h
-  simulate/NOTES
-  simulate/rt_collision_algorithm.hpp
-  simulate/rt_collision_shape.hpp
-  simulate/rt_debug_draw.hpp
-  simulate/rt_instance.hpp
-  simulate/rt_motion_state.hpp
-  simulate/simulation.hpp
-  simulate/utility.hpp
 )
 cmakefiles(${ged_ignore_files})
 

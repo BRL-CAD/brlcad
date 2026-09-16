@@ -1,7 +1,7 @@
 /*                        B U N D L E . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2025 United States Government as represented by
+ * Copyright (c) 1985-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -111,7 +111,6 @@ rt_shootray_bundle(struct application *ap, struct xray *rays, int nrays)
     RT_CK_RTI(rtip);
     resp = ap->a_resource;
     RT_CK_RESOURCE(resp);
-    ss.resp = resp;
 
     if (RT_G_DEBUG&(RT_DEBUG_ALLRAYS|RT_DEBUG_SHOOT|RT_DEBUG_PARTITION|RT_DEBUG_ALLHITS)) {
 	bu_log_indent_delta(2);
@@ -156,7 +155,7 @@ rt_shootray_bundle(struct application *ap, struct xray *rays, int nrays)
 	BU_ASSERT(BU_PTBL_GET(&rtip->rti_resources, resp->re_cpu) != NULL);
     }
 
-    solidbits = rt_get_solidbitv(rtip->nsolids, resp);
+    solidbits = rt_get_solidbitv(rtip->stats.nsolids, resp);
 
     if (BU_LIST_IS_EMPTY(&resp->re_region_ptbl)) {
 	BU_ALLOC(regionbits, struct bu_ptbl);
@@ -260,7 +259,7 @@ rt_shootray_bundle(struct application *ap, struct xray *rays, int nrays)
 
     ss.lastcut = CUTTER_NULL;
     ss.old_status = (struct rt_shootray_status *)NULL;
-    ss.curcut = &ap->a_rt_i->rti_CutHead;
+    ss.curcut = &ap->a_rt_i->i->rti_CutHead;
 
     if (ss.curcut->cut_type == CUT_CUTNODE || ss.curcut->cut_type == CUT_BOXNODE) {
 	ss.lastcell = ss.curcut;

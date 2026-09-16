@@ -1,7 +1,7 @@
 /*                          R E C T . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2025 United States Government as represented by
+ * Copyright (c) 1998-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -35,7 +35,7 @@
 
 
 static void
-usage(struct ged *gedp, const char *argv0)
+rect_usage(struct ged *gedp, const char *argv0)
 {
     bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", argv0);
     bu_vls_printf(gedp->ged_result_str, " rect vname bg [r g b]		set or get the background color\n");
@@ -293,7 +293,7 @@ ged_rect_core(struct ged *gedp,
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (argc < 2 || 5 < argc) {
-	usage(gedp, argv[0]);
+	rect_usage(gedp, argv[0]);
 	return BRLCAD_ERROR;
     }
 
@@ -318,7 +318,7 @@ ged_rect_core(struct ged *gedp,
 	double scan;
 
 	if (sscanf(argp[i], "%lf", &scan) != 1) {
-	    usage(gedp, argv[0]);
+	    rect_usage(gedp, argv[0]);
 	    return BRLCAD_ERROR;
 	}
 
@@ -500,35 +500,24 @@ ged_rect_core(struct ged *gedp,
     }
 
     if (BU_STR_EQUAL(parameter, "help")) {
-	usage(gedp, command);
+	rect_usage(gedp, command);
 	return GED_HELP;
     }
 
     bu_vls_printf(gedp->ged_result_str, "%s: unrecognized command '%s'\n", command, parameter);
-    usage(gedp, command);
+    rect_usage(gedp, command);
 
     return BRLCAD_ERROR;
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl rect_cmd_impl = {
-    "rect",
-    ged_rect_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd rect_cmd = { &rect_cmd_impl };
-const struct ged_cmd *rect_cmds[] = { &rect_cmd, NULL };
+#define GED_RECT_COMMANDS(X, XID) \
+    X(rect, ged_rect_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  rect_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_RECT_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_rect", 1, GED_RECT_COMMANDS)
 
 /*
  * Local Variables:

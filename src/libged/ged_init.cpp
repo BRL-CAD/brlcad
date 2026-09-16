@@ -1,7 +1,7 @@
 /*                     G E D _ I N I T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2019-2025 United States Government as represented by
+ * Copyright (c) 2019-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,10 +19,14 @@
  */
 /** @file init.c
  *
- * NOTE: as this init is global to ALL applications before main(),
- * care must be taken to not write to STDOUT or STDERR or app output
- * may be corrupted, signals can be raised, or worse.
+ * NOTE: as this init is global to ALL applications before main(), care must be
+ * taken to not write to STDOUT or STDERR or app output may be corrupted,
+ * signals can be raised, or worse.
  *
+ * Static constructors (REGISTER_GED_COMMAND) call ged_register_command before libged_init()
+ * ordering isn't guaranteed across TUs, so ged_register_command is fully lazy-initializing.
+ *
+ * libged_init() performs a one-time plugin scan unless GED_NO_PLUGIN_SCAN=1.
  */
 
 #include "common.h"
@@ -32,8 +36,9 @@
 #include <map>
 #include <set>
 #include <string>
+#include <unordered_map>
+#include <vector>
 
-#include "bu/defines.h"
 #include "bu/app.h"
 #include "bu/dylib.h"
 #include "bu/file.h"
@@ -41,337 +46,244 @@
 #include "bu/vls.h"
 #include "ged.h"
 
+#define BU_PLUGIN_IMPLEMENTATION
 #include "./include/plugin.h"
 
-static char **cmd_list = NULL;
-static size_t cmd_list_len = 0;
-
-// Meyers singletons
-static std::map<std::string, const struct ged_cmd *> &get_cmd_map() {
-    static std::map<std::string, const struct ged_cmd *> ged_cmd_map;
-    return ged_cmd_map;
-}
-static std::set<void *> &get_cmd_funcs() {
-    static std::set<void *> ged_cmd_funcs;
-    return ged_cmd_funcs;
-}
-
 static struct bu_vls init_msgs = BU_VLS_INIT_ZERO;
-void *ged_cmds;
 
-extern "C" void libged_init(void);
+/* Optional: thread safety (add bu_mutex if needed in future) */
 
+/* -------------------------------------------------------------------------- */
+/* Public Registry API                                                        */
+/* -------------------------------------------------------------------------- */
 
-const char *
-ged_init_msgs()
+extern "C" int
+ged_register_command(const struct ged_cmd *cmd)
 {
-    return bu_vls_cstr(&init_msgs);
+    if (!cmd || !cmd->i || !cmd->i->cname || !cmd->i->cmd) return -1;
+
+    std::string key(cmd->i->cname);
+
+    /* First-wins: ignore duplicate */
+    if (bu_plugin_cmd_exists(key.c_str())) {
+	return 1;
+    }
+
+    /* Register name and historical _mged_ alias in generalized registry */
+    (void)bu_plugin_cmd_register(key.c_str(), cmd->i->cmd);
+    std::string mged_key = std::string("_mged_") + key;
+    (void)bu_plugin_cmd_register(mged_key.c_str(), cmd->i->cmd);
+
+    return 0;
 }
 
-int
-ged_cmd_exists(const char *cmd)
+extern "C" int
+ged_command_exists(const char *name)
 {
-    if (!cmd)
+    if (!name)
 	return 0;
 
-    // On OpenBSD, if the executable was launched in a way that requires
-    // bu_setprogname to find the BRL-CAD root directory the initial libged
-    // initialization would have failed.  If we have no ged_cmds at all this is
-    // probably what happened, so call libged_init again here.  By the time we
-    // are calling ged_cmd_exists bu_setprogname should be set and we should be
-    // ready to actually find the commands.
-    if (!get_cmd_map().size())
-	libged_init();
-
-    std::string scmd(cmd);
-    std::map<std::string, const struct ged_cmd *>::iterator cmd_it = get_cmd_map().find(scmd);
-    if (cmd_it != get_cmd_map().end())
-	return 1;
-
-    return 0;
+    ged_ensure_initialized();
+    return bu_plugin_cmd_exists(name);
 }
 
-int
-ged_cmd_same(const char *cmd1, const char *cmd2)
+extern "C" size_t
+ged_registered_count(void)
 {
-    // If one or both of the inputs are null, we're
-    // not mapping to function pointers
-    if (!cmd1 || !cmd2)
-	return 0;
-
-    // If the strings are the same, trivial yes
-    if (cmd1 == cmd2|| BU_STR_EQUAL(cmd1, cmd2))
-	return 1;
-
-    // On OpenBSD, if the executable was launched in a way that requires
-    // bu_setprogname to find the BRL-CAD root directory the initial libged
-    // initialization would have failed.  If we have no ged_cmds at all this is
-    // probably what happened, so call libged_init again here.  By the time we
-    // are calling ged_cmd_same bu_setprogname should be set and we should be
-    // ready to actually find the commands.
-    if (!get_cmd_map().size()) {
-	libged_init();
-    }
-
-    ged_func_ptr c1 = NULL;
-    ged_func_ptr c2 = NULL;
-
-    {
-	std::string scmd1(cmd1);
-	std::map<std::string, const struct ged_cmd *>::iterator cmd1_it = get_cmd_map().find(scmd1);
-	// If we can't map to a GED command, this is a no-go
-	if (cmd1_it == get_cmd_map().end())
-	    return 0;
-	c1 = cmd1_it->second->i->cmd;
-    }
-
-    {
-	std::string scmd2(cmd2);
-	std::map<std::string, const struct ged_cmd *>::iterator cmd2_it = get_cmd_map().find(scmd2);
-	// If we can't map to a GED command, this is a no-go
-	if (cmd2_it == get_cmd_map().end())
-	    return 0;
-	c2 = cmd2_it->second->i->cmd;
-    }
-
-    // If they're both the same function pointer, cmd1 and cmd2 are the same
-    if (c1 == c2)
-	return 1;
-
-    return 0;
+    ged_ensure_initialized();
+    return bu_plugin_cmd_count();
 }
-
-
-
-/* If func is NULL, just see if the string has a get_cmd_map() entry.
- * If func is defined, see if a) func and cmd have get_cmd_map() entries and
- * b) if they both do, whether they map to the same function.
- * DEPRECATED - used ged_cmd_exists and ged_cmd_same instead */
-int
-ged_cmd_valid(const char *cmd, const char *func)
-{
-    if (!cmd) {
-	return 1;
-    }
-    int cmd_invalid = 1;
-
-    // On OpenBSD, if the executable was launched in a way that requires
-    // bu_setprogname to find the BRL-CAD root directory the initial libged
-    // initialization would have failed.  If we have no ged_cmds at all this is
-    // probably what happened, so call libged_init again here.  By the time we
-    // are calling ged_cmd_valid bu_setprogname should be set and we should be
-    // ready to actually find the commands.
-    if (!get_cmd_map().size()) {
-	libged_init();
-    }
-
-    std::string scmd(cmd);
-    std::map<std::string, const struct ged_cmd *>::iterator cmd_it = get_cmd_map().find(scmd);
-    if (cmd_it != get_cmd_map().end()) {
-	cmd_invalid = 0;
-    }
-    if (cmd_invalid) {
-	return cmd_invalid;
-    }
-
-    if (func) {
-	ged_func_ptr c1 = cmd_it->second->i->cmd;
-	std::map<std::string, const struct ged_cmd *>::iterator func_it = get_cmd_map().find(std::string(func));
-	if (func_it == get_cmd_map().end()) {
-	    // func not in table, nothing to validate against - return invalid
-	    return 1;
-	}
-	ged_func_ptr c2 = func_it->second->i->cmd;
-	int mismatched_functions = 2;
-	if (c1 == c2) {
-	    mismatched_functions = 0;
-	}
-	return mismatched_functions;
-    }
-
-    return 0;
-}
-
-
-/* Use bu_editdist to see if there is a command name similar to cmd
- * defined.  Return the closest match and the edit distance.  (0 indicates
- * an exact match, -1 an error) */
-int
-ged_cmd_lookup(const char **ncmd, const char *cmd)
-{
-    if (!cmd || !ncmd) {
-	return -1;
-    }
-    size_t min_dist = LONG_MAX;
-
-    // On OpenBSD, if the executable was launched in a way that requires
-    // bu_setprogname to find the BRL-CAD root directory the initial libged
-    // initialization would have failed.  If we have no ged_cmds at all this is
-    // probably what happened, so call libged_init again here.  By the time we
-    // are calling ged_cmd_lookup bu_setprogname should be set and we should be
-    // ready to actually find the commands.
-    if (!get_cmd_map().size()) {
-	libged_init();
-    }
-
-    const char *ccmd = NULL;
-    std::string scmd(cmd);
-    std::map<std::string, const struct ged_cmd *>::iterator cmd_it;
-    for (cmd_it = get_cmd_map().begin(); cmd_it != get_cmd_map().end(); cmd_it++) {
-	size_t edist = bu_editdist(cmd, cmd_it->first.c_str());
-	if (edist < min_dist) {
-	    ccmd = (*cmd_it).first.c_str();
-	    min_dist = edist;
-	}
-    }
-
-    (*ncmd) = ccmd;
-    return (int)min_dist;
-}
-
-
-size_t
-ged_cmd_list(const char * const **cl)
-{
-    if (cmd_list) {
-	bu_argv_free(cmd_list_len, (char **)cmd_list);
-	cmd_list_len = 0;
-	cmd_list = NULL;
-    }
-    cmd_list = (char **)bu_calloc(get_cmd_map().size(), sizeof(char *), "ged cmd argv");
-    std::map<std::string, const struct ged_cmd *>::iterator m_it;
-    for (m_it = get_cmd_map().begin(); m_it != get_cmd_map().end(); m_it++) {
-	const char *str = m_it->first.c_str();
-	cmd_list[cmd_list_len] = bu_strdup(str);
-	cmd_list_len++;
-    }
-    (*cl) = (const char * const *)cmd_list;
-    return cmd_list_len;
-}
-
 
 extern "C" void
-libged_init(void)
+ged_list_command_names(struct bu_vls *out_csv)
 {
+    ged_ensure_initialized();
+    if (!out_csv) return;
+    bu_vls_trunc(out_csv, 0);
+    auto cb = [](const char *name, bu_plugin_cmd_impl impl, void *ud) -> int {
+	(void)impl;
+	struct bu_vls *v = (struct bu_vls *)ud;
+	if (!name) return 0;
+	if (bu_strncmp(name, "_mged_", 6) == 0) return 0; /* skip synthetic aliases */
+	if (bu_vls_strlen(v) > 0) bu_vls_printf(v, ",");
+	bu_vls_printf(v, "%s", name);
+	return 0;
+    };
+    /* Iterate sorted names via generalized registry */
+    bu_plugin_cmd_foreach(cb, (void *)out_csv);
+}
+
+extern "C" void
+ged_list_command_array(const char * const **cl, size_t *cnt)
+{
+    ged_ensure_initialized();
+    if (!cl || !cnt) return;
+    std::vector<std::string> names;
+    auto cb = [](const char *name, bu_plugin_cmd_impl impl, void *ud) -> int {
+	(void)impl;
+	if (!name) return 0;
+	if (bu_strncmp(name, "_mged_", 6) == 0) return 0;
+	std::vector<std::string> *v = (std::vector<std::string> *)ud;
+	v->push_back(std::string(name));
+	return 0;
+    };
+    bu_plugin_cmd_foreach(cb, (void *)&names);
+    char **alist = (char **)bu_calloc(names.size(), sizeof(char *), "ged cmd argv");
+    size_t len = 0;
+    for (auto &n : names) {
+	alist[len++] = bu_strdup(n.c_str());
+    }
+    *cl = (const char * const *)alist;
+    *cnt = len;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Plugin Loading                                                             */
+/* -------------------------------------------------------------------------- */
+
+static void
+scan_plugins(void)
+{
+    const char *env_block = getenv("GED_NO_PLUGIN_SCAN");
+    if (env_block && BU_STR_EQUAL(env_block, "1")) {
+	return;
+    }
+
     const char *ppath = bu_dir(NULL, 0, BU_DIR_LIBEXEC, "ged", NULL);
-    char **ged_filenames;
-    struct bu_vls plugin_pattern = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&plugin_pattern, "*%s", GED_PLUGIN_SUFFIX);
-    size_t ged_nfiles = bu_file_list(ppath, bu_vls_cstr(&plugin_pattern), &ged_filenames);
+    if (!ppath) {
+	return;
+    }
+
+    struct bu_vls pattern = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&pattern, "*%s", GED_PLUGIN_SUFFIX);
+    char **ged_filenames = NULL;
+    size_t ged_nfiles = bu_file_list(ppath, bu_vls_cstr(&pattern), &ged_filenames);
 
     for (size_t i = 0; i < ged_nfiles; i++) {
 	char pfile[MAXPATHLEN] = {0};
 	bu_dir(pfile, MAXPATHLEN, BU_DIR_LIBEXEC, "ged", ged_filenames[i], NULL);
-	void *dl_handle;
 
-	dl_handle = bu_dlopen(pfile, BU_RTLD_NOW);
-	if (!dl_handle) {
-	    const char * const error_msg = bu_dlerror();
-	    if (error_msg)
-		bu_vls_printf(&init_msgs, "%s\n", error_msg);
-
-	    bu_vls_printf(&init_msgs, "Unable to dynamically load '%s' (skipping)\n", pfile);
-	    continue;
-	}
-
-	{
-	    const char *psymbol = "ged_plugin_info";
-	    void *info_val = bu_dlsym(dl_handle, psymbol);
-	    const struct ged_plugin *(*plugin_info)() = (const struct ged_plugin *(*)())(intptr_t)info_val;
-	    if (!plugin_info) {
-		const char * const error_msg = bu_dlerror();
-
-		if (error_msg)
-		    bu_vls_printf(&init_msgs, "%s\n", error_msg);
-
-		bu_vls_printf(&init_msgs, "Unable to load symbols from '%s' (skipping)\n", pfile);
-		bu_vls_printf(&init_msgs, "Could not find '%s' symbol in plugin\n", psymbol);
-		bu_dlclose(dl_handle);
-		continue;
-	    }
-
-	    const struct ged_plugin *plugin = plugin_info();
-
-	    if (!plugin) {
-		bu_vls_printf(&init_msgs, "Invalid plugin file '%s' encountered (skipping)\n", pfile);
-		bu_dlclose(dl_handle);
-		continue;
-	    }
-
-	    if (*((const uint32_t *)(plugin)) != (uint32_t)  (GED_API)) {
-		bu_vls_printf(&init_msgs, "Plugin version %d of '%s' differs from %d (skipping)\n", *((const uint32_t *)(plugin)), pfile, GED_API);
-		bu_dlclose(dl_handle);
-		continue;
-	    }
-
-	    if (!plugin->cmds) {
-		bu_vls_printf(&init_msgs, "Invalid plugin file '%s' encountered (skipping)\n", pfile);
-		bu_dlclose(dl_handle);
-		continue;
-	    }
-
-	    if (!plugin->cmd_cnt) {
-		bu_vls_printf(&init_msgs, "Plugin '%s' contains no commands, (skipping)\n", pfile);
-		bu_dlclose(dl_handle);
-		continue;
-	    }
-
-	    const struct ged_cmd **cmds = plugin->cmds;
-	    for (int c = 0; c < plugin->cmd_cnt; c++) {
-		const struct ged_cmd *cmd = cmds[c];
-		if (!cmd)
-		    break;
-		std::string key(cmd->i->cname);
-		if (get_cmd_map().find(key) != get_cmd_map().end()) {
-		    bu_vls_printf(&init_msgs, "Warning - plugin '%s' provides command '%s' but that command has already been loaded, skipping\n", pfile, cmd->i->cname);
-		    continue;
-		}
-		get_cmd_map()[key] = cmd;
-
-		// MGED calls many of these commands with an _mged_ prefix - allow for that
-		std::string mged_key = std::string("_mged_") + key;
-		get_cmd_map()[mged_key] = cmd;
-	    }
-	    get_cmd_funcs().insert(dl_handle);
-	}
+	/* Phase 4: load plugins exclusively via generalized loader */
+	(void)bu_plugin_load(pfile);
     }
-    bu_argv_free(ged_nfiles, ged_filenames);
-    bu_vls_free(&plugin_pattern);
 
-    ged_cmds = (void *)&get_cmd_map();
+    bu_vls_free(&pattern);
+    bu_argv_free(ged_nfiles, ged_filenames);
 }
 
+/* -------------------------------------------------------------------------- */
+/* Initialization & Shutdown                                                  */
+/* -------------------------------------------------------------------------- */
+extern "C" void ged_force_static_registration(void);
+
+/* Phase 0: logger to funnel bu_plugin messages into init_msgs (avoid stdout/stderr) */
+static void _ged_plugin_logger(int level, const char *msg)
+{
+    (void)level;
+    if (msg) bu_vls_printf(&init_msgs, "%s\n", msg);
+}
 
 static void
-libged_clear(void)
+libged_init(void)
 {
-    get_cmd_map().clear();
-    std::set<void *>::reverse_iterator h_it;
-    /* unload in reverse in case symbols are referential */
-    for (h_it = get_cmd_funcs().rbegin(); h_it != get_cmd_funcs().rend(); h_it++) {
-	void *handle = *h_it;
-	bu_dlclose(handle);
-    }
-    get_cmd_funcs().clear();
+    /* Bootstrap generalized registry and set logger */
+    bu_plugin_set_logger(_ged_plugin_logger);
+    (void)bu_plugin_init();
+
+#if defined(LIBGED_STATIC_CORE)
+    ged_force_static_registration();
+#endif
+
+    /* At this point, static constructors may or may not have run for all TUs.
+     * Any that have will have already populated the registry through ged_register_command.
+     * We proceed to scan plugins once to add plugin-only and user-provided commands.
+     */
+    scan_plugins();
+}
+
+static std::once_flag g_init_once;
+
+extern "C" void ged_ensure_initialized()
+{
+    std::call_once(g_init_once, [](){
+        // Safe early init + full init path
+        libged_init();  // sets logger, initializes plugin core, does static reg (if enabled) and scans plugins once
+    });
+}
+
+extern "C" void
+libged_shutdown(void)
+{
+    /* Generalized registry teardown */
+    bu_plugin_shutdown();
 
     bu_vls_free(&init_msgs);
 }
 
+/* Provide existing init message accessor */
+extern "C" const char *
+ged_init_msgs()
+{
+    ged_ensure_initialized();
+    return bu_vls_cstr(&init_msgs);
+}
 
-struct libged_initializer {
-    /* constructor */
-    libged_initializer() {
-	libged_init();
-    }
-    /* destructor */
-    ~libged_initializer() {
-	libged_clear();
-    }
-};
+/* Backwards compatibility wrappers for old APIs (if needed) */
 
+extern "C" int
+ged_cmd_exists(const char *cmd)
+{
+    ged_ensure_initialized();
+    return bu_plugin_cmd_exists(cmd);
+}
 
-static libged_initializer LIBGED;
+extern "C" int
+ged_cmd_same(const char *cmd1, const char *cmd2)
+{
+    ged_ensure_initialized();
+    bu_plugin_cmd_impl c1 = bu_plugin_cmd_get(cmd1);
+    bu_plugin_cmd_impl c2 = bu_plugin_cmd_get(cmd2);
+    if (!c1 || !c2) return 0;
+    return (c1 == c2) ? 1 : 0;
+}
 
+/* Edit distance lookup retained for help suggestions */
+extern "C" int
+ged_cmd_lookup(const char **ncmd, const char *cmd)
+{
+    if (!ncmd || !cmd) return -1;
+    ged_ensure_initialized();
+    size_t min_dist = (size_t)LONG_MAX;
+    const char *closest = NULL;
+    auto cb = [](const char *name, bu_plugin_cmd_impl impl, void *ud) -> int {
+	(void)impl;
+	struct {
+	    const char *target;
+	    size_t *min_dist;
+	    const char **closest;
+	} *ctx = (decltype(ctx))ud;
+	if (!name) return 0;
+	size_t edist = bu_editdist(ctx->target, name);
+	if (edist < *(ctx->min_dist)) {
+	    *(ctx->min_dist) = edist;
+	    *(ctx->closest) = name;
+	}
+	return 0;
+    };
+    struct { const char *target; size_t *min_dist; const char **closest; } ctx = { cmd, &min_dist, &closest };
+    bu_plugin_cmd_foreach(cb, (void *)&ctx);
+    *ncmd = closest;
+    return (int)min_dist;
+}
+
+extern "C" size_t
+ged_cmd_list(const char * const **cl)
+{
+    ged_ensure_initialized();
+    size_t cnt = 0;
+    ged_list_command_array(cl, &cnt);
+    return cnt;
+}
 
 // Local Variables:
 // tab-width: 8

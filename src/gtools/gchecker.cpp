@@ -1,7 +1,7 @@
 /*                    G C H E C K E R . C P P
  * BRL-CAD
  *
- * Copyright (c) 2020-2025 United States Government as represented by
+ * Copyright (c) 2020-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -176,7 +176,7 @@ main(int argc, const char **argv)
 
     // Make sure our reference counts are up to date, so we can tell
     // which objects are top level
-    db_update_nref(gedp->dbip, &rt_uniresource);
+    db_update_nref(gedp->dbip);
 
     std::vector<struct directory *> objs;
     if (argc > 1) {

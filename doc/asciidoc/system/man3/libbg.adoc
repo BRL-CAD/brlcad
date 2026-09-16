@@ -1,0 +1,61 @@
+= LIBBG(3)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+libbg - geometry algorithms library for BRL-CAD
+
+== SYNOPSIS
+
+[source,c]
+----
+#include <bg.h>
+----
+
+Link with *-lbg*.
+
+The public interface is organized across the headers included by
+_bg.h_, including _bg/chull.h_, _bg/clip.h_, _bg/lseg.h_, _bg/obr.h_,
+_bg/plane.h_, _bg/polygon.h_, _bg/sat.h_, _bg/spsr.h_, _bg/tri_pt.h_,
+_bg/tri_ray.h_, _bg/tri_tri.h_, and _bg/trimesh.h_.
+
+== DESCRIPTION
+
+LIBBG is BRL-CAD's geometry library, intended for generic computational
+geometry algorithms. Typical operations include point-in-polygon testing,
+line/sphere and triangle intersection tests, convex hull computation,
+oriented bounding box fitting, polygon triangulation (for example, ear
+clipping), surface reconstruction, and triangle mesh processing.
+
+The library occupies a deliberate layer in the BRL-CAD stack. Algorithms
+in LIBBG do not require solid ray tracing of the BRL-CAD constructive
+solid geometry (CSG) boolean hierarchy; routines that need those
+high-level constructs belong in libanalyze instead, which uses librt to
+perform the necessary ray tracing. LIBBG is lower level and depends only
+on the numerics library (libbn) and the utility library (libbu). Strictly
+numerical algorithms that do not involve three-dimensional geometry
+concepts belong in libbn rather than here.
+
+The complete API, including data structures and function signatures, is
+documented in the headers noted above and in the Doxygen-generated
+reference for the LIBBG module.
+
+== SEE ALSO
+
+*brlcad*(1), *libbn*(3), *libbu*(3), *libanalyze*(3), *librt*(3)
+
+The BRL-CAD Doxygen API reference provides the authoritative,
+up-to-date description of all public LIBBG routines.
+
+== AUTHOR
+
+BRL-CAD Team
+
+== COPYRIGHT
+
+This software is Copyright (c) 2015-2026 United States Government as represented by the U.S. Army Research Laboratory.
+
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,7 +1,7 @@
 /*                         O C E N T E R . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -114,32 +114,20 @@ ged_ocenter_core(struct ged *gedp, int argc, const char *argv[])
     bn_mat_mul(tmpMat, invXform, dmat);
     bn_mat_mul(emat, tmpMat, gtd.gtd_xform);
 
-    GED_DB_GET_INTERNAL(gedp, &intern, dp, emat, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_GET_INTERN(gedp, &intern, dp, emat, BRLCAD_ERROR);
     RT_CK_DB_INTERNAL(&intern);
-    GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_PUT_INTERN(gedp, dp, &intern, BRLCAD_ERROR);
 
     return BRLCAD_OK;
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl ocenter_cmd_impl = {
-    "ocenter",
-    ged_ocenter_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd ocenter_cmd = { &ocenter_cmd_impl };
-const struct ged_cmd *ocenter_cmds[] = { &ocenter_cmd, NULL };
+#define GED_OCENTER_COMMANDS(X, XID) \
+    X(ocenter, ged_ocenter_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  ocenter_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_OCENTER_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_ocenter", 1, GED_OCENTER_COMMANDS)
 
 /*
  * Local Variables:

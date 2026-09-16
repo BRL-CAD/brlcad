@@ -1,7 +1,7 @@
 /*                      P I X S U B S T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2025 United States Government as represented by
+ * Copyright (c) 2004-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,6 +29,7 @@
 
 #include "bu/app.h"
 #include "bu/log.h"
+#include "bu/opt.h"
 
 
 int
@@ -50,19 +51,25 @@ main(int argc, char **argv)
 
     if (argc == 7) {
 	argv++;
-	pixin[0] = '\0' + atoi(*argv);
+	if (!bu_opt_scan_uchar(*argv, &pixin[0], "input red value"))
+	    bu_exit(1, NULL);
 	argv++;
-	pixin[1] = '\0' + atoi(*argv);
+	if (!bu_opt_scan_uchar(*argv, &pixin[1], "input green value"))
+	    bu_exit(1, NULL);
 	argv++;
-	pixin[2] = '\0' + atoi(*argv);
+	if (!bu_opt_scan_uchar(*argv, &pixin[2], "input blue value"))
+	    bu_exit(1, NULL);
     }
 
     argv++;
-    pixout[0] = '\0' + atoi(*argv);
+    if (!bu_opt_scan_uchar(*argv, &pixout[0], "output red value"))
+	bu_exit(1, NULL);
     argv++;
-    pixout[1] = '\0' + atoi(*argv);
+    if (!bu_opt_scan_uchar(*argv, &pixout[1], "output green value"))
+	bu_exit(1, NULL);
     argv++;
-    pixout[2] = '\0' + atoi(*argv);
+    if (!bu_opt_scan_uchar(*argv, &pixout[2], "output blue value"))
+	bu_exit(1, NULL);
 
     if (argc == 4) {
 	if ((npixels=fread(pixin, sizeof(unsigned char), 3, stdin)) != 3) {

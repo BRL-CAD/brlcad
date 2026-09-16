@@ -1,7 +1,7 @@
 /*                     V I E W D E P T H . C
  * BRL-CAD
  *
- * Copyright (c) 2022-2025 United States Government as represented by
+ * Copyright (c) 2022-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -48,10 +48,6 @@
 #include "./ext.h"
 
 
-extern	struct fb *fbp;
-extern	FILE	*outfp;
-extern	fastf_t	viewsize;
-
 unsigned char *scanbuf;
 static int pixsize = 0;		/* bytes per pixel in scanbuf */
 
@@ -63,7 +59,7 @@ struct bu_structparse view_parse[] = {
     {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL}
 };
 
-const char title[] = "RT Depth";
+EXTERNCPP const char title[] = "RT Depth";
 
 /*
  *  Called at the start of a run.
@@ -244,7 +240,7 @@ depthmiss(register struct application *ap)
 	return 0; /* report miss to main routine */
 }
 
-void
+C_DECL void
 application_init (void)
 {
     option("", "-o file.bw", "Output black & white image filename", 0);

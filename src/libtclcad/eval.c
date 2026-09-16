@@ -1,7 +1,7 @@
 /*                          E V A L . C
  * BRL-CAD
  *
- * Copyright (c) 2014-2025 United States Government as represented by
+ * Copyright (c) 2014-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,7 +29,7 @@
 #include <tcl.h>
 
 
-int
+C_DECL int
 tclcad_eval(Tcl_Interp *interp, const char *command, size_t num_args,
 	    const char * const *args)
 {
@@ -50,7 +50,7 @@ tclcad_eval(Tcl_Interp *interp, const char *command, size_t num_args,
 }
 
 
-int
+C_DECL int
 tclcad_eval_noresult(Tcl_Interp *interp, const char *command, size_t num_args,
 		     const char * const *args)
 {

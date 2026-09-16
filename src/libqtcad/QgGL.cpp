@@ -1,7 +1,7 @@
 /*                      Q G G L . C P P
  * BRL-CAD
  *
- * Copyright (c) 2021-2025 United States Government as represented by
+ * Copyright (c) 2021-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -128,9 +128,9 @@ void QgGL::paintGL()
 	    // Let the view know it now has an associated display manager
 	    v->dmp = dmp;
 
-	    // Set the view width and height to match the dm
-	    v->gv_width = dm_get_width(dmp);
-	    v->gv_height = dm_get_height(dmp);
+	    // View interaction coordinates use Qt's device-independent pixels.
+	    v->gv_width = width();
+	    v->gv_height = height();
 	}
 
 	// If we have a ptbl defining the current dm set and/or an unset
@@ -165,29 +165,10 @@ void QgGL::resizeGL(int, int)
     if (!dmp || !v)
 	return;
     dm_configure_win(dmp, 0);
-    v->gv_width = dm_get_width(dmp);
-    v->gv_height = dm_get_height(dmp);
-    if (ifp) {
-	fb_configure_window(ifp, v->gv_width, v->gv_height);
-    }
-    if (dmp)
-	dm_set_dirty(dmp, 1);
-    emit changed();
-}
-
-void QgGL::resizeEvent(QResizeEvent *e)
-{
-    QOpenGLWidget::resizeEvent(e);
-    if (!dmp || !v)
-
-               return;
-    dm_set_width(dmp, width());
-    dm_set_height(dmp, height());
     v->gv_width = width();
     v->gv_height = height();
-    dm_configure_win(dmp, 0);
     if (ifp) {
-	fb_configure_window(ifp, v->gv_width, v->gv_height);
+	fb_configure_window(ifp, dm_get_width(dmp), dm_get_height(dmp));
     }
     if (dmp)
 	dm_set_dirty(dmp, 1);
@@ -288,20 +269,23 @@ void QgGL::mouseMoveEvent(QMouseEvent *e)
     v->gv_width = width();
     v->gv_height = height();
 
-    if (CADmouseMoveEvent(v, x_prev, y_prev, e, lmouse_mode)) {
+    int mret = CADmouseMoveEvent(v, x_prev, y_prev, e, lmouse_mode);
+    if (mret > 0) {
 	dm_set_dirty(dmp, 1);
 	update();
 	emit changed();
     }
 
     // Current positions are the new previous positions
+    if (mret != -1) {
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-    x_prev = e->x();
-    y_prev = e->y();
+        x_prev = e->x();
+        y_prev = e->y();
 #else
-    x_prev = e->position().x();
-    y_prev = e->position().y();
+        x_prev = e->position().x();
+        y_prev = e->position().y();
 #endif
+    }
 
     QOpenGLWidget::mouseMoveEvent(e);
 }
@@ -444,4 +428,3 @@ QgGL::set_lmouse_move_default(int mm)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

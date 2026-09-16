@@ -1,7 +1,7 @@
 /*                        D B _ D I F F . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2025 United States Government as represented by
+ * Copyright (c) 1998-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,6 +38,7 @@
 #include "rt/geom.h"
 #include "raytrace.h"
 #include "rt/db_diff.h"
+#include "./librt_private.h"
 
 /* Exposed as private function to librt, but not (currently) beyond librt -
  * see librt_private.h */
@@ -326,7 +327,7 @@ get_diff_components(struct diff_elements *el, const struct db_i *dbip, const str
     /* Now deal with more normal objects */
     BU_GET(el->intern, struct rt_db_internal);
     RT_DB_INTERNAL_INIT(el->intern);
-    if (rt_db_get_internal(el->intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(el->intern, dp, dbip, (fastf_t *)NULL) < 0) {
 	/* Arrgh - No internal representation */
 	rt_db_free_internal(el->intern);
 	BU_PUT(el->intern, struct rt_db_internal);

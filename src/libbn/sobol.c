@@ -334,10 +334,7 @@ bn_sobol_skip(struct bn_soboldata *s, unsigned n)
     if (!s)
 	return;
 
-    unsigned int k = 1;
-    while (k*2 < n)
-	k *= 2;
-    while (k-- > 0)
+    while (n-- > 0)
 	sobol_gen(s, s->cvec);
 }
 

@@ -4,7 +4,9 @@ brlcad_addexec(ganalyze ganalyze.cpp "libanalyze;librt;libbu;libpkg;${LINENOISE_
 target_include_directories(ganalyze BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../libtermio)
 
 brlcad_addexec(gchecker gchecker.cpp "libged;librt;libbu")
-add_dependencies(gchecker ged-check)
+if (TARGET ged-check)
+  add_dependencies(gchecker ged-check)
+endif()
 brlcad_addexec(gex "gex.cpp" "libbu;librt")
 brlcad_addexec(glint glint.cpp "librt;${M_LIBRARY}")
 brlcad_addexec(gqa gqa.c "libged;librt")

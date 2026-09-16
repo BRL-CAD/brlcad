@@ -1,7 +1,7 @@
 /*                           W D B . H
  * BRL-CAD
  *
- * Copyright (c) 1988-2025 United States Government as represented by
+ * Copyright (c) 1988-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -328,7 +328,7 @@ WDB_EXPORT int mk_metaball(
     const size_t nctlpt,	/* number of control points */
     const int method,		/* metaball rendering method */
     const fastf_t threshold,
-    const fastf_t *verts[5]);	/* X, Y, Z, fldstr, goo/Beta */
+    const fastf_t *verts[5]);	/* X, Y, Z, field_strength, blobbiness */
 
 /**
  * Caller is responsible for freeing eqn[]
@@ -405,6 +405,15 @@ typedef enum {
     WDB_BINUNIF_FILE_UINT64
 } wdb_binunif;
 
+/** Base wdb_binunif value bits. */
+#define WDB_BINUNIF_TYPE_MASK 0x00ffu
+
+/**
+ * File data has network byte order.  File data is assumed to have host byte
+ * order when this flag is absent.  In-memory data must have host byte order.
+ */
+#define WDB_BINUNIF_NETWORK_ORDER 0x0100u
+
 
 /**
  * Make a uniform binary data object from an array or a data file.
@@ -415,7 +424,14 @@ typedef enum {
  *
  * Files can use a non-positive 'count' to mean "read the whole file",
  * pre-loaded data, however, must provide a positive 'count' otherwise
- * an empty binunif will be created.
+ * an empty binunif will be created.  File input is assumed to have host byte
+ * order unless WDB_BINUNIF_NETWORK_ORDER is combined with a file data type.
+ * In-memory input is always host order.  C++ callers must cast a combined
+ * type and flag back to wdb_binunif.  BINUNIF database objects are always
+ * serialized in network byte order.
+ *
+ * Example: (wdb_binunif)(WDB_BINUNIF_FILE_UINT16 |
+ *                         WDB_BINUNIF_NETWORK_ORDER)
  */
 WDB_EXPORT extern int mk_binunif(struct rt_wdb *fp, const char *name, const void *data, wdb_binunif data_type, long count);
 
@@ -637,6 +653,30 @@ WDB_EXPORT void mk_add_pipe_pnt(
  */
 WDB_EXPORT void mk_pipe_init(struct bu_list *headp);
 
+/**
+ * Make a point set (pnts) primitive of the given rt_pnt_type from count
+ * points.  verts is count*3 coordinates; colors (count*3 unsigned char
+ * RGB), scales (count), and normals (count*3) are required iff the type
+ * carries that attribute, else NULL.  scale sets the default display scale.
+ *
+ * @return <0 error, 0 success
+ */
+WDB_EXPORT int mk_pnts(struct rt_wdb *fp, const char *name, rt_pnt_type type,
+		       double scale, size_t count, const fastf_t *verts,
+		       const unsigned char *colors, const fastf_t *scales,
+		       const fastf_t *normals);
+
+/**
+ * Make a datum object from a caller-built, NULL-terminated next-linked
+ * chain of rt_datum_internal elements (point: dir=0,w=0; line: pnt+dir,w=0;
+ * plane: w!=0).  The chain is duplicated internally; the caller retains
+ * ownership of head.
+ *
+ * @return <0 error, 0 success
+ */
+WDB_EXPORT int mk_datums(struct rt_wdb *fp, const char *name,
+			 struct rt_datum_internal *head);
+
 
 /**
  * Displacement map primitive.
@@ -645,10 +685,24 @@ WDB_EXPORT extern int mk_dsp(struct rt_wdb *fp, const char *name, const char *fi
 			     size_t xdim, size_t ydim, const matp_t mat);
 
 /**
+ * Displacement map primitive sourced from an in-database BINUNIF object
+ * (created via mk_binunif) rather than an external file.
+ */
+WDB_EXPORT extern int mk_dsp_obj(struct rt_wdb *fp, const char *name, const char *binunif,
+				 size_t xcnt, size_t ycnt, const matp_t stom);
+
+/**
  * Extruded bitmap primitive.
  */
 WDB_EXPORT extern int mk_ebm(struct rt_wdb *fp, const char *name, const char *file,
 			     size_t xdim, size_t ydim, fastf_t tallness, const matp_t mat);
+
+/**
+ * Extruded bitmap primitive sourced from an in-database BINUNIF object
+ * (created via mk_binunif) rather than an external file.
+ */
+WDB_EXPORT extern int mk_ebm_obj(struct rt_wdb *fp, const char *name, const char *binunif,
+				 size_t xdim, size_t ydim, fastf_t tallness, const matp_t mat);
 
 /**
  * Heart primitive.
@@ -675,7 +729,7 @@ WDB_EXPORT extern int mk_submodel(struct rt_wdb *fp, const char *name, const cha
 /**
  * Interface for writing region-id-based color tables to the database.
  * Given that the color table has been built up by successive calls to
- * rt_color_addrec(), write it into the database.
+ * db_mater_add(), write it into the database.
  *
  */
 WDB_EXPORT int mk_write_color_table(struct rt_wdb *ofp);
@@ -773,7 +827,7 @@ WDB_EXPORT int mk_region1(
  *
  * @return -1 error, 0 OK
  */
-WDB_EXPORT extern int mk_conversion(char *units_string);
+WDB_EXPORT extern int mk_conversion(const char *units_string);
 
 /**
  * Establish a new conversion factor for LIBWDB routines.

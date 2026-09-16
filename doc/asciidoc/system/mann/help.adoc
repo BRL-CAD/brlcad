@@ -1,0 +1,49 @@
+= HELP(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+help - Returns a list of available MGED commands along with a one-line usage message for each. If a command is supplied as an argument, the one-line usage message for that command is returned.
+
+== SYNOPSIS
+
+[source]
+----
+help [command]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Returns a list of available MGED commands along with a one-line usage message for each. If a command is supplied as an argument, the one-line usage message for that command is returned. The *helpdevel, helplib, ?, ?devel,* and *?lib* commands provide additional information on available commands.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *help* command to display a one-line usage message for a specific command.
+
+.Display a one-line usage message for a command.
+[example]
+====
+
+mged> **help ae**::
+Displays a one-line usage message for the *ae* command.
+
+
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

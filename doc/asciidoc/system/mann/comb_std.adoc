@@ -1,0 +1,67 @@
+= COMB_STD(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+comb_std, c - create or modify a combination using standard Boolean notation
+
+== SYNOPSIS
+
+[source]
+----
+comb_std comb_name [op1 object1 [op2 object2 ...]]
+c comb_name [op1 object1 [op2 object2 ...]]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+The *comb_std* command (also available as *c*) creates or modifies a combination using standard Boolean operators. The combination `comb_name` is created if it does not exist; if it does exist, the new members are appended to it.
+
+Each member is specified as an operator-object pair:
+
+* `u` or `+` — union
+* `-` — subtraction
+* `+` — intersection (use `+` only in contexts where it is unambiguous)
+
+Members are listed in order: the first operator applies between the combination and the first object; subsequent operators apply between successive objects.
+
+The *comb_std* command (alias *c*) is a simplified alternative to *comb* that uses infix Boolean expression parsing similar to traditional MGED syntax.
+
+[[examples]]
+== EXAMPLES
+
+.Create a combination with union and subtraction
+[example]
+====
+mged> **c vehicle.c u hull.r u engine.r - hole.r**
+
+Creates `vehicle.c` with `hull.r` and `engine.r` unioned, then `hole.r` subtracted.
+====
+
+.Use the c alias
+[example]
+====
+mged> **c plate.c u top.s u bottom.s**
+
+Creates `plate.c` as the union of `top.s` and `bottom.s` using the short alias.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*comb*(nged), *group*(nged), *region*(nged)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,7 +1,7 @@
 /*                           I C V . H
  * BRL-CAD
  *
- * Copyright (c) 2011-2025 United States Government as represented by
+ * Copyright (c) 2011-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -164,12 +164,15 @@ typedef enum {
  *  shrinks the image with a factor of 2.
  *
  * c) ICV_RESIZE_NINTERP : This interpolates using nearest neighbor
- * method.
+ * method. Output endpoints map to input endpoints; a one-pixel output
+ * maps to source coordinate zero.
  * e.g. icv_resize(bif, ICV_RESIZE_NINTERP,1024,1024,0);
  *  interpolates the output image to have the size of 1024X1024.
  *
  * d) ICV_RESIZE_BINTERP : This interpolates using bilinear
- * Interpolation Method.
+ * Interpolation Method. Output endpoints map to input endpoints; a
+ * one-pixel output maps to source coordinate zero. Stretching one
+ * dimension while shrinking the other is supported.
  * e.g. icv_resize(bif, ICV_RESIZE_BINTERP,1024,1024,0);
  *  interpolates the output image to have the size of 1024X1024.
  *
@@ -196,12 +199,27 @@ ICV_EXPORT extern int icv_rot(size_t argc, const char *argv[]);
  * Compare two images and report pixel differences.  Return code is 1 if there
  * are any differences, else 0.  For more detailed reporting, pass non-null
  * integer pointers to the matching, off_by_1, and/or off_by_many parameters.
+ *
+ * Counts are per-channel (matching pixdiff "bytes" semantics):
+ *  - matching   = number of channel bytes with identical values across both images
+ *  - off_by_1   = number of channel bytes differing by exactly 1
+ *  - off_by_many = number of channel bytes differing by more than 1
  */
 ICV_EXPORT extern int icv_diff(int *matching, int *off_by_1, int *off_by_many, icv_image_t *img1, icv_image_t *img2);
 
 /**
  * Generate a visual representation of the differences between two images.
  * (At least for now, images must be the same size.)
+ *
+ * For pixels that match, a half-intensity greyscale representation is output.
+ * For pixels that differ, each channel is independently highlighted:
+ *   - channel byte values differ by exactly 1  → 0xC0 for that channel
+ *   - channel byte values differ by more than 1 → 0xFF for that channel
+ *   - channel byte values are equal             → 0x00 for that channel
+ *
+ * This means a pixel that differs only in the red channel appears as a pure
+ * red highlight, green-only difference as pure green, etc. – matching the
+ * traditional pixdiff output convention.
  *
  * Returns NULL if there is an error.
  */
@@ -211,7 +229,57 @@ ICV_EXPORT extern icv_image_t *icv_diffimg(icv_image_t *img1, icv_image_t *img2)
  * Compare two images using perceptual image hashing and report the Hamming
  * distance between them.  Useful for approximate image comparisons.
  */
-ICV_EXPORT extern uint32_t icv_pdiff(icv_image_t *img1, icv_image_t *img2);
+DEPRECATED ICV_EXPORT extern uint32_t icv_pdiff(icv_image_t *img1, icv_image_t *img2);
+
+/**
+ * Compare two images using approximate techniques.
+ */
+#define ICV_DIFF_PHASH 0
+#define ICV_DIFF_SSIM 1
+ICV_EXPORT extern fastf_t icv_adiff(icv_image_t *img1, icv_image_t *img2, int m);
+
+/**
+ * Compare the embedded render metadata (icv_render_info) of two images.
+ *
+ * Writes a human-readable report to @p out_msgs describing any differences
+ * found in the db filename, object list, and camera parameters.
+ *
+ * Returns 0 if the metadata in both images is identical (or both absent),
+ * 1 if they differ, and -1 if neither image carries any metadata.
+ *
+ * @param img1     First image (may be NULL – treated as having no metadata)
+ * @param img2     Second image (may be NULL – treated as having no metadata)
+ * @param out_msgs bu_vls to receive the human-readable comparison report; may be NULL
+ */
+ICV_EXPORT extern int icv_diff_render_info(const icv_image_t *img1, const icv_image_t *img2, struct bu_vls *out_msgs);
+
+/**
+ * Generate nirt shotline commands for every pixel that differs between
+ * @p img1 and @p img2.
+ *
+ * A separate nirt script is written for each image that has render_info
+ * attached.  Both scripts encode shotlines for the same set of differing
+ * pixels; they differ only in the camera parameters used to reconstruct the
+ * rays and in the scene header comment.  This allows the caller to
+ * interrogate either scene independently even when the images were rendered
+ * from different .g files or with different object sets.
+ *
+ * Ray reconstruction mirrors BRL-CAD rt/grid.c grid_setup() for the
+ * orthographic case (rt_perspective == 0).  Perspective is also handled.
+ *
+ * Either output file pointer may be NULL to suppress that output.  If an
+ * image has no render_info the corresponding output is silently skipped.
+ *
+ * @param img1       First image
+ * @param img2       Second image
+ * @param nirt_out1  Open FILE* to write img1's nirt script (may be NULL)
+ * @param nirt_out2  Open FILE* to write img2's nirt script (may be NULL)
+ *
+ * Returns the number of differing pixels for which shots were written, or -1
+ * on error (e.g., neither active output has render metadata, mismatched sizes).
+ */
+ICV_EXPORT extern int icv_diff_nirt_shots(const icv_image_t *img1, const icv_image_t *img2,
+					  FILE *nirt_out1, FILE *nirt_out2);
 
 /**
  * Fit an image to suggested dimensions.

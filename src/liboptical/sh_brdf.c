@@ -1,7 +1,7 @@
 /*                       S H _ B R D F . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2025 United States Government as represented by
+ * Copyright (c) 1996-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -42,9 +42,6 @@
 #include "optical.h"
 #include "optical/light.h"
 
-/* from view.c */
-extern double AmbientIntensity;
-
 /* Local information */
 struct brdf_specific {
     uint32_t magic;
@@ -59,7 +56,6 @@ struct brdf_specific {
     double extinction;
 };
 #define BRDF_MAGIC 0xbeef00d
-#define BRDF_NULL ((struct brdf_specific *)0)
 #define BRDF_O(m) bu_offsetof(struct brdf_specific, m)
 
 struct bu_structparse brdf_parse[] = {

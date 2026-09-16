@@ -1,7 +1,7 @@
 /*                       O P T I O N S . H
  * BRL-CAD
  *
- * Copyright (c) 2023-2025 United States Government as represented by
+ * Copyright (c) 2023-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,6 +31,10 @@
 class Options
 {
 public:
+    static constexpr int DEFAULT_REPORT_PPI = 300;
+    static constexpr int CANONICAL_REPORT_WIDTH = 3508;
+    static constexpr int CANONICAL_REPORT_LENGTH = 2480;
+
     Options();
     ~Options();
 
@@ -62,6 +66,7 @@ public:
     void setUnitLength(std::string l);
     void setUnitMass(std::string m);
     void setNCPU(int ncpu);
+    void setDensityFile(std::string filename);
 
 
     //Getter functions
@@ -90,6 +95,8 @@ public:
     std::string getUnitLength();
     std::string getUnitMass();
     size_t getNCPU();
+    std::string getDensityFile();
+    bool getPreviewMode();
 
     bool isOriginalUnitsLength();
     bool isOriginalUnitsMass();
@@ -148,6 +155,13 @@ private:
 
     // max number of CPUs to use
     int ncpu;
+
+    // string path to density file (lexically normalized)
+    std::string densityFile;
+
+    // Fast report mode: use lower-resolution renders and omit costly
+    // numerical verification passes (rtarea/gqa).
+    int previewMode;
 
     // print verbose status messages
     int verbosePrint;

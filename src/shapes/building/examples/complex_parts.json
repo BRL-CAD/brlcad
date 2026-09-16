@@ -1,0 +1,38 @@
+{
+  "version": 1,
+  "id": "civic_complex",
+  "units": "m",
+  "preset": "civic",
+  "type": "government",
+  "dimensions": {"width": 34, "depth": 22},
+  "levels": {"above_ground": 3, "floor_height": 4.2},
+  "roof": {"shape": "hipped", "height": 3.8},
+  "parts": [
+    {
+      "id": "clock_tower",
+      "preset": "tower",
+      "type": "clock_tower",
+      "origin": [11, 6, 12.6],
+      "dimensions": {"width": 10, "depth": 10},
+      "levels": {"above_ground": 4, "floor_height": 3.6},
+      "roof": {"shape": "pyramidal", "height": 7}
+    },
+    {
+      "id": "entrance_canopy",
+      "preset": "carport",
+      "type": "roof",
+      "origin": [12, -5, 0],
+      "dimensions": {"width": 10, "depth": 6},
+      "roof": {"shape": "skillion", "height": 1.0}
+    }
+  ],
+  "osm": {
+    "tags": {
+      "building": "government",
+      "building:levels": "3",
+      "building:architecture": "classical",
+      "building:material": "stone",
+      "roof:shape": "hipped"
+    }
+  }
+}

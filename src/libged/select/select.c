@@ -1,7 +1,7 @@
 /*                         S E L E C T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -104,7 +104,6 @@ _ged_select_botpts(struct ged *gedp, struct rt_bot_internal *botip, double vx, d
 
     return BRLCAD_OK;
 }
-
 
 
 int
@@ -342,7 +341,6 @@ dl_select_partial(struct bu_list *hdlp, mat_t model2view, struct bu_vls *vls, do
 
     return BRLCAD_OK;
 }
-
 
 
 /*
@@ -593,23 +591,15 @@ ged_rselect_core(struct ged *gedp, int argc, const char *argv[])
     }
 }
 
-#ifdef GED_PLUGIN
+
 #include "../include/plugin.h"
-struct ged_cmd_impl select_cmd_impl = {"select", ged_select_core, GED_CMD_DEFAULT};
-const struct ged_cmd select_cmd = { &select_cmd_impl };
 
-struct ged_cmd_impl rselect_cmd_impl = {"rselect", ged_rselect_core, GED_CMD_DEFAULT};
-const struct ged_cmd rselect_cmd = { &rselect_cmd_impl };
+#define GED_SELECT_COMMANDS(X, XID) \
+    X(select, ged_select_core, GED_CMD_DEFAULT) \
+    X(rselect, ged_rselect_core, GED_CMD_DEFAULT) \
 
-const struct ged_cmd *select_cmds[] = { &select_cmd, &rselect_cmd, NULL };
-
-static const struct ged_plugin pinfo = { GED_API,  select_cmds, 2 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_SELECT_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_select", 1, GED_SELECT_COMMANDS)
 
 /*
  * Local Variables:

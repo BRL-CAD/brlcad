@@ -24,10 +24,8 @@
 
 #include "PImgHash.h"
 
-#include <fstream>
-#include <cstdio>
-#include <bitset>
 #include <algorithm>
+#include <bitset>
 
 #ifdef max
 #undef max
@@ -43,27 +41,10 @@ template<> uint8_t convert_pix<uint8_t>(uint8_t p)
 {
     return p;
 }
-template<> uint16_t convert_pix<uint16_t>(uint8_t p)
-{
-    return static_cast<uint16_t>(p << 8);
-}
 template<> float convert_pix<float>(uint8_t p)
 {
     return static_cast<float>(p) / 255.0f;
 }
-template<> uint16_t convert_pix<uint16_t>(uint16_t p)
-{
-    return p;
-}
-template<> uint8_t convert_pix<uint8_t>(uint16_t p)
-{
-    return static_cast<uint8_t>(p >> 8);
-}
-template<> float convert_pix<float>(uint16_t p)
-{
-    return static_cast<float>(p) / 65535.0f;
-}
-
 template<> float convert_pix<float>(float p)
 {
     return p;
@@ -71,29 +52,6 @@ template<> float convert_pix<float>(float p)
 template<> uint8_t convert_pix<uint8_t>(float p)
 {
     return static_cast<uint8_t>(p * 255.9999f); //we could use nextafter(256, 0) but it might not be optimized away
-}
-template<> uint16_t convert_pix<uint16_t>(float p)
-{
-    return static_cast<uint16_t>(p * 65535.9999f); //we could use nextafter(65536, 0) but it might not be optimized away
-}
-
-void save(const std::string& fname, const Image<float>& img, float vmax)
-{
-
-    std::ofstream out(fname, std::ios::out | std::ios::binary);
-    if (img.channels == 1) {
-	out << "P5\n";
-    } else if (img.channels == 3) {
-	out << "P6\n";
-    }
-    out << img.width << " " << img.height << " " << 255 << "\n";
-    float scale = nextafter(256.0f, 0.0f)/vmax;
-    for (size_t y = 0, i = 0; y < img.height; ++y, i += img.row_size) {
-	for (size_t x = 0, j = i; x < img.width*img.channels; ++x, ++j) {
-	    uint8_t p = static_cast<uint8_t>(img[j] * scale);
-	    out.put(p);
-	}
-    }
 }
 
 Hasher::Hasher() : bytes(), bi(8) {}
@@ -116,21 +74,8 @@ void Hasher::append_bit(bool b)
     ++bi;
 }
 
-bool Hasher::equal(const hash_type& h1, const hash_type& h2)
-{
-    return h1.size() == h2.size() && Hasher::match(h1, h2);
-}
-
-bool Hasher::match(const hash_type& h1, const hash_type& h2)
-{
-    size_t n = std::min(h1.size(), h2.size());
-    return std::equal(h1.begin(), h1.begin() + n, h2.begin(), h2.begin() + n);
-}
-
 uint32_t Hasher::hamming_distance(const hash_type& h1, const hash_type& h2)
 {
-    //TODO: use span to avoid copies
-
     //NB we only look at bytes in common
     size_t n = std::min(h1.size(), h2.size());
     size_t d = 0;
@@ -139,68 +84,12 @@ uint32_t Hasher::hamming_distance(const hash_type& h1, const hash_type& h2)
     }
     return static_cast<uint32_t>(d);
 }
-uint32_t Hasher::distance(const hash_type& h1, const hash_type& h2)
-{
-    return hamming_distance(h1, h2);
-}
-
-std::vector<uint8_t> BlockHasher::apply(const Image<float>& image)
-{
-    const size_t N = 8;
-    const size_t M = N + 2;
-    Image<float> tmp(2*M, 2*M);
-    resize(image, tmp);
-
-    //fold the 4 quadrants into the top left
-    for (size_t y = 0, i = 0, im = tmp.index(2*M-1,0,0);
-	 y < M;
-	 ++y, i += tmp.row_size, im -= tmp.row_size) {
-	for (size_t x = 0, xm = tmp.index(0,2*M-1,0);
-	     x < M;
-	     ++x, --xm) {
-	    tmp[i + x] += tmp[i + xm] + tmp[im + x] + tmp[im + xm];
-	}
-    }
-
-    clear();
-    bytes.reserve(8);
-    size_t i0 = 0;
-    size_t i1 = tmp.row_size;
-    size_t i2 = 2*tmp.row_size;
-    for (size_t y = 0; y < N; ++y) {
-	for (size_t x = 0;  x < N; ++x) {
-	    //we want the rank of the pixel in the center of the 3x3 neighborhood
-	    float p = tmp[i1 + x + 1];
-
-	    //get the surrounding 8 pixels
-	    auto p00 = tmp[i0 + x];
-	    auto p01 = tmp[i0 + x + 1];
-	    auto p02 = tmp[i0 + x + 2];
-	    auto p10 = tmp[i1 + x];
-	    auto p12 = tmp[i1 + x + 2];
-	    auto p20 = tmp[i2 + x];
-	    auto p21 = tmp[i2 + x + 1];
-	    auto p22 = tmp[i2 + x + 2];
-	    //calculate the rank by comparing
-	    int rank = (p > p00) + (p > p01) + (p > p02) + (p > p10);
-	    rank += (p > p12) + (p > p20) + (p > p21) + (p > p22);
-	    //the bit is set if p is greater than half the others
-	    append_bit(rank >= 4);
-	}
-	i0 = i1;
-	i1 = i2;
-	i2 += tmp.row_size;
-    }
-    return bytes;
-}
 
 DCTHasher::DCTHasher(unsigned M, bool even)
     : N_(128), M_(M), even_(even), m_(mat(N_, M_, even_))
 {
     //nothing to do
 }
-
-DCTHasher::DCTHasher() : DCTHasher(8, false) {}
 
 std::vector<float> DCTHasher::mat(unsigned N, unsigned M)
 {
@@ -247,9 +136,19 @@ std::vector<uint8_t> DCTHasher::apply(const Image<float>& image)
 	N_ = static_cast<unsigned>(image.width);
 	m_ = mat(N_, M_, even_);
     }
+    unsigned M = M_;
+    if (even_) {
+	if (M > N_ / 2) M = N_ / 2;
+    } else if (M > N_) {
+	M = N_;
+    }
+    if (M <= 1) {
+	clear();
+	return bytes;
+    }
 
     /* Phase 1: Apply DCT across rows */
-    Image<float> dct_1(image.height, M_);
+    Image<float> dct_1(image.height, M);
 
     //iterate over image rows
     for (size_t y = 0, ti = 0, di = 0;
@@ -273,14 +172,14 @@ std::vector<uint8_t> DCTHasher::apply(const Image<float>& image)
     }
 
     /* Phase 2: Apply DCT along columns */
-    Image<float> dct(M_, M_);
+    Image<float> dct(M, M);
     //iterate over vertical spatial frequencies
-    for (size_t v = 0, i = 0; v < M_; ++v, i += dct.row_size) {
+    for (size_t v = 0, i = 0; v < M; ++v, i += dct.row_size) {
 	//iterate over horizontal spatial frequencies
-	for (size_t u = 0, j = i; u < M_; ++u, ++j) {
+	for (size_t u = 0, j = i; u < M; ++u, ++j) {
 	    //reduce over image rows
 	    float dct_uv = 0.0f;
-	    for (size_t y = 0, k = v, di = u; y < N_; ++y, k += M_, di += M_) {
+	    for (size_t y = 0, k = v, di = u; y < N_; ++y, k += M, di += M) {
 		dct_uv += m_[k] * dct_1[di];
 	    }
 	    dct[j] = dct_uv;
@@ -289,7 +188,7 @@ std::vector<uint8_t> DCTHasher::apply(const Image<float>& image)
 
     /* Phase 3: Compute hash */
     clear();
-    bytes.reserve((size_t(M_) * M_ + 7) / 8);
+    bytes.reserve((size_t(M) * M + 7) / 8);
     //iterate over the DCT so that we always output the bits in the same order, no matter the size
     // we will start in the corner, and then build up in square shells:
     // 0 1 4
@@ -297,7 +196,7 @@ std::vector<uint8_t> DCTHasher::apply(const Image<float>& image)
     // 6 7 8
 
     //iterate across the first row
-    for (size_t u = 0; u < M_; ++u) {
+    for (size_t u = 0; u < M; ++u) {
 	//iterate down the column at u, to the (u-1) row
 	size_t i = 0;
 	for (size_t v = 0; v < u; ++v, i += dct.row_size) {
@@ -333,11 +232,6 @@ std::vector<size_t> tile_size(size_t a, size_t b)
 
 Preprocess::Preprocess(size_t w, size_t h)
     : img(h,w,3), hist(), y(0), i(0), ty(0), in_w(0), in_h(0), in_c(0)
-{
-    //nothing else to do
-}
-
-Preprocess::Preprocess() : Preprocess(0, 0)
 {
     //nothing else to do
 }
@@ -397,13 +291,6 @@ Image<float> Preprocess::stop()
 	}
     }
     return out;
-}
-
-Image<float> Preprocess::apply(const Image<uint8_t>& input)
-{
-    start(input.height, input.width, input.channels);
-    for (const uint8_t* row = (const uint8_t*)input.data->data(); add_row(row); row += input.row_size);
-    return stop();
 }
 
 }

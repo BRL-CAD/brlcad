@@ -1,7 +1,7 @@
 /*                 R T _ I N S T A N C E . H P P
  * BRL-CAD
  *
- * Copyright (c) 2014-2025 United States Government as represented by
+ * Copyright (c) 2014-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,7 +33,39 @@
 #include "rt/db_instance.h"
 #include "rt/xray.h"
 
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic push
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic push
+#endif
+#if defined(__GNUC__) && !defined(__clang__)
+#  if (__GNUC__ < 13)
+     // There seems to be a problem with multiple pragma diagnostic
+     // calls in GCC 12... try https://stackoverflow.com/a/56887760
+#    if GCC_PREREQ(8,0)
+#      pragma GCC system_header
+#    endif
+#  else
+#    pragma GCC diagnostic ignored "-Wfloat-equal"
+#    pragma GCC diagnostic ignored "-Wundef"
+#  endif
+#endif
+#if defined(__clang__)
+#    pragma clang diagnostic ignored "-Wfloat-equal"
+#    pragma clang diagnostic ignored "-Wundef"
+#    pragma clang diagnostic ignored "-Wdocumentation"
+#endif
+
 #include <btBulletDynamicsCommon.h>
+
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic pop
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic pop
+#endif
+
 
 #include <vector>
 

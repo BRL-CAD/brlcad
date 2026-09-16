@@ -1,0 +1,48 @@
+= FIND(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+find - find all references to objects
+
+== SYNOPSIS
+
+[source]
+----
+find [-a] <objects>
+----
+
+[[description]]
+== DESCRIPTION
+
+The *find* command searches the BRL-CAD database and displays a list of all combination objects (regions, assemblies, etc.) that have any of the specified _objects_ as a member.
+
+Note that this command only searches through non-hidden combination nodes unless the `-a` option is used. The *dbfind* command is an exact alias of this command.
+
+[[options]]
+== OPTIONS
+
+*-a*::
+Include hidden objects in the search.
+
+[[examples]]
+== EXAMPLES
+
+.Find all references to a specific object
+[example]
+====
+mged> **find shapea**
+
+Lists the names of all non-hidden combinations that refer to _shapea_ as a member.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

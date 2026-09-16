@@ -1,0 +1,77 @@
+= FBFREE(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+fbfree - free resources associated with a frame buffer
+
+== SYNOPSIS
+
+[source]
+----
+fbfree [-F _framebuffer_]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*fbfree* opens the specified frame buffer and immediately releases any
+resources associated with it. Its most common use is to shut down an
+*fbserv*(1) process and free the shared memory or display resources it
+holds. Internally the command simply calls the *fb_free*() routine after
+opening the frame buffer.
+
+If no frame buffer is given with *-F*, the default is used, normally
+taken from the *FB_FILE* environment variable.
+
+[[options]]
+== OPTIONS
+
+*-F* _framebuffer_::
+  Specify the frame buffer to free. If omitted, the default frame buffer
+  (typically the value of the *FB_FILE* environment variable) is used.
+
+*-h*, *-?*::
+  Print a usage message and exit.
+
+[[examples]]
+== EXAMPLES
+
+.Shut down a remote frame buffer server
+====
+[source,bash]
+----
+fbserv -S 1024 0 /dev/X &
+export FB_FILE=:0
+pix-fb image.pix
+fbfree
+----
+Start an *fbserv*(1) listening on port 0, point *FB_FILE* at it, display
+a *pix*(5) image into it with *pix-fb*(1), then release the frame buffer
+and tear down the server with *fbfree* once you are finished viewing.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *fbserv*(1), *fbclear*(1), *fb-fb*(1), *libdm*(3)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

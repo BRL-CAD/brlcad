@@ -1,0 +1,106 @@
+= PNG-BW(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+png-bw - convert a PNG (Portable Network Graphics) file to a BW (black and white) file
+
+== SYNOPSIS
+
+[source]
+----
+png-bw [-v] [-ntsc] [-crt] [-R[#]] [-G[#]] [-B[#]] [in.png] > out.bw
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*png-bw* reads a _PNG_ image from the named file (or from standard input
+if no file is given) and writes a single-channel *bw*(5) image to standard
+output. If the input is already grayscale the data is passed through
+directly; if the input is a color image it is reduced to black and white.
+
+By default all three color planes are weighted equally. The *-ntsc* flag
+applies the standard NTSC luminance weights based on the NTSC primaries and
+the D6500 white. The *-crt* flag applies weights for typical CRT phosphor
+chromaticities and the D6500 white.
+
+Individual color planes can be selected with the *-R*, *-G*, and *-B* flags.
+If a flag is immediately followed by a value, that value is used as the
+weight applied to that plane. A selected plane with no explicit weight is
+implicitly given a weight of 1.0 divided by the number of selected planes.
+
+[[options]]
+== OPTIONS
+
+*-v*::
+  Verbose. Report the color type, bit depth, image dimensions, gamma,
+  background color, interlacing, and any text or timestamp metadata to
+  standard error.
+
+*-ntsc*::
+  Use NTSC luminance weights (red 0.30, green 0.59, blue 0.11).
+
+*-crt*::
+  Use typical CRT phosphor weights (red 0.26, green 0.66, blue 0.08).
+
+*-R*_[#]_::
+  Select the red plane, optionally with an explicit weight (e.g. *-R0.30*).
+
+*-G*_[#]_::
+  Select the green plane, optionally with an explicit weight (e.g. *-G0.59*).
+
+*-B*_[#]_::
+  Select the blue plane, optionally with an explicit weight (e.g. *-B0.11*).
+
+[[examples]]
+== EXAMPLES
+
+.Convert a color rendering to grayscale and view it
+====
+[source,bash]
+----
+png-bw -ntsc render.png > render.bw
+bw-pix render.bw | pix-fb -w 512 -n 512
+----
+Reduces a color _PNG_ to a perceptually weighted grayscale *bw*(5) image
+using NTSC luminance weights, then converts it back to *pix*(5) and displays
+it on a framebuffer with *pix-fb*(1).
+====
+
+.Blend selected color planes with custom weights
+====
+[source,bash]
+----
+png-bw -R0.30 -G0.59 -B0.11 file.png > file.bw
+----
+Combines the red, green, and blue planes with the given weights; this
+produces the same result as the *-ntsc* flag. Selecting planes without
+weights, as in *png-bw -R -B file.png*, blends those planes equally.
+====
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *png-pix*(1), *bw-png*(1), *pix-png*(1), *bw-pix*(1), *pix*(5), *bw*(5)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1998-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

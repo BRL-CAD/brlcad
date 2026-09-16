@@ -1,7 +1,7 @@
 /*                    B O M B A R D I E R . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2025 United States Government as represented by
+ * Copyright (c) 2007-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,10 +34,14 @@
 #include <ctype.h>
 
 #include "tcl.h"
-#include "tk.h"
 
 #include "bu/app.h"
 #include "tclcad.h"
+
+// Tclcad pulls in OpenNURBS in C++, which defines None, which
+// conflicts with Tk's Xlib None.  Including tk.h after tclcad.h
+// to avoid the issue.
+#include "tk.h"
 
 #include "./bombardier.h"
 

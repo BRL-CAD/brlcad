@@ -1,0 +1,96 @@
+= TREE(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD MGED Commands
+
+== NAME
+tree - Lists the contents of the specified _objects_ in a tree-like format that displays the hierarchical structure of the objects, and all objects referenced by them, down to the primitive shape level.
+
+== SYNOPSIS
+
+[source]
+----
+tree {objects(s)} [-a] [-c] [-d#] [-i#] [-ooutfile]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Lists the contents of the specified _objects_ in a tree-like format that displays the hierarchical structure of the objects, and all objects referenced by them, down to the primitive shape level.
+
+
+*-a*::
+The _-a_ option adds a list of all attributes for each object. Attributes are shown with a leading "@ " and are followed by their values.
+
+
+*-c*::
+If _-c_ is given, only combinations will be printed (i.e., not primitive shapes).
+
+
+*-d #*::
+The _-d #_ option prints out the hierarchy to a specified depth.
+
+
+*-i #*::
+The _-i #_ option allows the user to set the number of spaces to indent.
+
+
+*-o filename*::
+The _-o_ option prints results to the specified _filename_.
+
+
+
+
+[[examples]]
+== EXAMPLES
+
+The first example shows the use of the *tree* command to list the contents of specified objects hierarchically. The second and third examples show the use of the *tree* command with arguments.
+
+.Show the structure of an object down to the primitive shape level.
+[example]
+====
+mged>**tree group1**
+
+Shows the structure of the tree rooted at _group1_ down to the primitive shape level.
+
+====
+
+.Specify the amount of indentation in the tree.
+[example]
+====
+mged>**tree -i2 group1**
+
+Uses two spaces for each level of indentation.
+
+====
+
+.Specify that no shapes are to be printed.
+[example]
+====
+mged>**tree -c group1**
+
+No shapes are printed.
+
+====
+
+.Specify that attributes are listed for each object printed.
+[example]
+====
+mged>**tree -a -c group1**
+
+No shapes are printed, but attributes are shown for the printed objects.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

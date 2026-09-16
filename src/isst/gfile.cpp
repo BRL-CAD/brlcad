@@ -1,7 +1,7 @@
 /*                      G F I L E . C P P
  * BRL-ISST
  *
- * Copyright (c) 2014-2025 United States Government as represented by
+ * Copyright (c) 2014-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -150,7 +150,7 @@ nmg_to_adrt_regstart(struct db_tree_state *ts, const struct db_full_path *path, 
     }
     if (dir->d_minor_type != ID_BOT && dir->d_minor_type != ID_NMG)
 	return 0;
-    if (rt_db_get_internal(&intern, dir, d->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dir, d->dbip, (fastf_t *)NULL) < 0) {
 	printf("Failed to load\n");
 	return 0;
     }
@@ -169,7 +169,7 @@ nmg_to_adrt_regstart(struct db_tree_state *ts, const struct db_full_path *path, 
     BU_ALLOC(mesh->attributes, struct adrt_mesh_attributes_s);
     mesh->matid = ts->ts_gmater;
 
-    rt_comb_get_color(rgb, rci);
+    rt_comb_get_color(d->dbip, rgb, rci);
     VSCALE(mesh->attributes->color.v, rgb, 1.0/256.0);
 
     bu_strlcpy(mesh->name, db_path_to_string(path), sizeof(mesh->name));

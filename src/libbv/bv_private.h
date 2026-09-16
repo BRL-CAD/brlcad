@@ -1,7 +1,7 @@
 /*                    B V _ P R I V A T E . h
  * BRL-CAD
  *
- * Copyright (c) 2020-2025 United States Government as represented by
+ * Copyright (c) 2020-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,6 +23,9 @@
  *
  */
 
+#ifndef LIBBV_BV_PRIVATE_H
+#define LIBBV_BV_PRIVATE_H
+
 #include "common.h"
 #include "bu/list.h"
 #include "bu/ptbl.h"
@@ -41,6 +44,8 @@ struct bview_set_internal {
 struct bv_scene_obj_internal {
     std::unordered_map<struct bview *, struct bv_scene_obj *> vobjs;
 };
+
+#endif /* LIBBV_BV_PRIVATE_H */
 
 // Local Variables:
 // tab-width: 8

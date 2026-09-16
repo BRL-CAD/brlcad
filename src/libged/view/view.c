@@ -1,7 +1,7 @@
 /*                         V I E W . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -80,6 +80,28 @@ _view_cmd_center(void *bs, int argc, const char **argv)
     struct bview *cv = gd->gedp->ged_gvp;
     gd->gedp->ged_gvp = gd->cv;
     int ret = ged_center_core(gd->gedp, argc, argv);
+    gd->gedp->ged_gvp = cv;
+    return ret;
+}
+
+int
+_view_cmd_dir(void *bs, int argc, const char **argv)
+{
+    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
+    const char *usage_string = "view [options] dir [-i] [x y z [twist]]";
+    const char *purpose_string = "get/set view direction and optional twist";
+    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return BRLCAD_OK;
+    }
+
+    /* A direction query is viewdir; a supplied vector and optional twist are
+     * qvrot.  Both use the eye-from-center convention, and -i consistently
+     * selects its inverse. */
+    struct bview *cv = gd->gedp->ged_gvp;
+    gd->gedp->ged_gvp = gd->cv;
+    int ret = (argc < 4) ?
+	ged_viewdir_core(gd->gedp, argc, argv) :
+	ged_qvrot_core(gd->gedp, argc, argv);
     gd->gedp->ged_gvp = cv;
     return ret;
 }
@@ -619,6 +641,63 @@ _view_cmd_print(struct ged *gedp, int argc, const char **argv)
     return BRLCAD_OK;
 }
 
+typedef int (*view_core_func_t)(struct ged *, int, const char **);
+
+static int
+_view_cmd_core(void *bs, int argc, const char **argv, view_core_func_t func)
+{
+    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
+    struct bview *cv = gd->gedp->ged_gvp;
+    gd->gedp->ged_gvp = gd->cv;
+    int ret = func(gd->gedp, argc, argv);
+    gd->gedp->ged_gvp = cv;
+    return ret;
+}
+
+static int
+_view_cmd_auto(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "view [options] auto [options] [object ...]";
+    const char *purpose_string = "size and center the view to frame geometry";
+    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
+	return BRLCAD_OK;
+
+    return _view_cmd_core(bs, argc, argv, ged_autoview_core);
+}
+
+static int
+_view_cmd_lookat(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "view [options] lookat x y z";
+    const char *purpose_string = "point the view at model coordinates";
+    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
+	return BRLCAD_OK;
+
+    return _view_cmd_core(bs, argc, argv, ged_lookat_core);
+}
+
+static int
+_view_cmd_print_subcmd(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "view [options] print";
+    const char *purpose_string = "print the current view parameters";
+    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
+	return BRLCAD_OK;
+
+    return _view_cmd_core(bs, argc, argv, _view_cmd_print);
+}
+
+static int
+_view_cmd_save(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "view [options] save [-e command] [-i input] [-l log] [-o output] file [args]";
+    const char *purpose_string = "save the current view as a raytrace script";
+    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
+	return BRLCAD_OK;
+
+    return _view_cmd_core(bs, argc, argv, ged_saveview_core);
+}
+
 int
 _view_cmd_knob(void *bs, int argc, const char **argv)
 {
@@ -639,7 +718,10 @@ _view_cmd_knob(void *bs, int argc, const char **argv)
 const struct bu_cmdtab _view_cmds[] = {
     { "ae",         _view_cmd_aet},
     { "aet",        _view_cmd_aet},
+    { "auto",       _view_cmd_auto},
+    { "autoview",   _view_cmd_auto},
     { "center",     _view_cmd_center},
+    { "dir",        _view_cmd_dir},
     { "eye",        _view_cmd_eye},
     { "faceplate",  _view_cmd_faceplate},
     { "gobjs",      _view_cmd_gobjs},
@@ -648,9 +730,13 @@ const struct bu_cmdtab _view_cmds[] = {
     { "knob",       _view_cmd_knob},
     { "list",       _view_cmd_list},
     { "lod",        _view_cmd_lod},
+    { "lookat",     _view_cmd_lookat},
     { "obj",        _view_cmd_objs},
     { "objs",       _view_cmd_objs},
+    { "print",      _view_cmd_print_subcmd},
     { "quat",       _view_cmd_quat},
+    { "save",       _view_cmd_save},
+    { "saveview",   _view_cmd_save},
     { "selections", _view_cmd_selections},
     { "size",       _view_cmd_size},
     { "snap",       _view_cmd_snap},
@@ -864,97 +950,31 @@ ged_view_func_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
 
-struct ged_cmd_impl view_func_cmd_impl = {"view_func", ged_view_func_core, GED_CMD_DEFAULT};
-const struct ged_cmd view_func_cmd = { &view_func_cmd_impl };
+#define GED_VIEW_COMMANDS(X, XID) \
+    X(ae, ged_aet_core, GED_CMD_DEFAULT) \
+    X(aet, ged_aet_core, GED_CMD_DEFAULT) \
+    X(autoview, ged_autoview_core, GED_CMD_DEFAULT) \
+    X(center, ged_center_core, GED_CMD_DEFAULT) \
+    X(data_lines, ged_view_data_lines, GED_CMD_DEFAULT) \
+    X(eye, ged_eye_core, GED_CMD_DEFAULT) \
+    X(eye_pt, ged_eye_core, GED_CMD_DEFAULT) \
+    X(lookat, ged_lookat_core, GED_CMD_DEFAULT) \
+    X(print, _view_cmd_print, GED_CMD_DEFAULT) \
+    X(quat, ged_quat_core, GED_CMD_DEFAULT) \
+    X(qvrot, ged_qvrot_core, GED_CMD_DEFAULT) \
+    X(saveview, ged_saveview_core, GED_CMD_DEFAULT) \
+    X(sdata_lines, ged_view_data_lines, GED_CMD_DEFAULT) \
+    X(size, ged_size_core, GED_CMD_DEFAULT) \
+    X(view, ged_view_core, GED_CMD_DEFAULT) \
+    X(view2, ged_view_core, GED_CMD_DEFAULT) \
+    X(view_func, ged_view_func_core, GED_CMD_DEFAULT) \
+    X(viewdir, ged_viewdir_core, GED_CMD_DEFAULT) \
+    X(ypr, ged_ypr_core, GED_CMD_DEFAULT) \
 
-struct ged_cmd_impl view_cmd_impl = {"view", ged_view_func_core, GED_CMD_DEFAULT};
-const struct ged_cmd view_cmd = { &view_cmd_impl };
-
-struct ged_cmd_impl view2_cmd_impl = {"view2", ged_view_core, GED_CMD_DEFAULT};
-const struct ged_cmd view2_cmd = { &view2_cmd_impl };
-
-struct ged_cmd_impl ae_cmd_impl = {"ae", ged_aet_core, GED_CMD_DEFAULT};
-const struct ged_cmd ae_cmd = { &ae_cmd_impl };
-
-struct ged_cmd_impl aet_cmd_impl = {"aet", ged_aet_core, GED_CMD_DEFAULT};
-const struct ged_cmd aet_cmd = { &aet_cmd_impl };
-
-struct ged_cmd_impl autoview_cmd_impl = { "autoview", ged_autoview_core, GED_CMD_DEFAULT };
-const struct ged_cmd autoview_cmd = { &autoview_cmd_impl };
-
-struct ged_cmd_impl center_cmd_impl = {"center", ged_center_core, GED_CMD_DEFAULT};
-const struct ged_cmd center_cmd = { &center_cmd_impl };
-
-struct ged_cmd_impl data_lines_cmd_impl = {"data_lines", ged_view_data_lines, GED_CMD_DEFAULT};
-const struct ged_cmd data_lines_cmd = { &data_lines_cmd_impl };
-
-struct ged_cmd_impl eye_cmd_impl = {"eye", ged_eye_core, GED_CMD_DEFAULT};
-const struct ged_cmd eye_cmd = { &eye_cmd_impl };
-
-struct ged_cmd_impl eye_pt_cmd_impl = {"eye_pt", ged_eye_core, GED_CMD_DEFAULT};
-const struct ged_cmd eye_pt_cmd = { &eye_pt_cmd_impl };
-
-struct ged_cmd_impl lookat_cmd_impl = {"lookat", ged_lookat_core, GED_CMD_DEFAULT};
-const struct ged_cmd lookat_cmd = { &lookat_cmd_impl };
-
-struct ged_cmd_impl print_cmd_impl = {"print", _view_cmd_print, GED_CMD_DEFAULT};
-const struct ged_cmd print_cmd = { &print_cmd_impl };
-
-struct ged_cmd_impl quat_cmd_impl = {"quat", ged_quat_core, GED_CMD_DEFAULT};
-const struct ged_cmd quat_cmd = { &quat_cmd_impl };
-
-struct ged_cmd_impl qvrot_cmd_impl = {"qvrot", ged_qvrot_core, GED_CMD_DEFAULT};
-const struct ged_cmd qvrot_cmd = { &qvrot_cmd_impl };
-
-struct ged_cmd_impl saveview_cmd_impl = {"saveview", ged_saveview_core, GED_CMD_DEFAULT};
-const struct ged_cmd saveview_cmd = { &saveview_cmd_impl };
-
-struct ged_cmd_impl sdata_lines_cmd_impl = {"sdata_lines", ged_view_data_lines, GED_CMD_DEFAULT};
-const struct ged_cmd sdata_lines_cmd = { &sdata_lines_cmd_impl };
-
-struct ged_cmd_impl size_cmd_impl = {"size", ged_size_core, GED_CMD_DEFAULT};
-const struct ged_cmd size_cmd = { &size_cmd_impl };
-
-struct ged_cmd_impl viewdir_cmd_impl = {"viewdir", ged_viewdir_core, GED_CMD_DEFAULT};
-const struct ged_cmd viewdir_cmd = { &viewdir_cmd_impl };
-
-struct ged_cmd_impl ypr_cmd_impl = {"ypr", ged_ypr_core, GED_CMD_DEFAULT};
-const struct ged_cmd ypr_cmd = { &ypr_cmd_impl };
-
-const struct ged_cmd *view_cmds[] = {
-    &view_func_cmd,
-    &view_cmd,
-    &view2_cmd,
-    &ae_cmd,
-    &aet_cmd,
-    &autoview_cmd,
-    &center_cmd,
-    &data_lines_cmd,
-    &eye_cmd,
-    &eye_pt_cmd,
-    &lookat_cmd,
-    &print_cmd,
-    &quat_cmd,
-    &qvrot_cmd,
-    &saveview_cmd,
-    &sdata_lines_cmd,
-    &size_cmd,
-    &viewdir_cmd,
-    &ypr_cmd,
-    NULL
-};
-
-static const struct ged_plugin pinfo = { GED_API,  view_cmds, 19 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_VIEW_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_view", 1, GED_VIEW_COMMANDS)
 
 /*
  * Local Variables:

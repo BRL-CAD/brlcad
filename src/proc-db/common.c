@@ -1,7 +1,7 @@
 /*                        C O M M O N . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2025 United States Government as represented by
+ * Copyright (c) 2004-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,7 +34,7 @@
 extern struct rt_wdb *outfp;
 
 struct colors {
-    char *name;
+    const char *name;
     unsigned char c_pixel[3];
 }colortab[] = {
     {"black",	{20, 20, 20}},
@@ -75,7 +75,7 @@ get_rgb(unsigned char *rgb)
 
 
 void
-do_light(char *name, fastf_t *pos, fastf_t *dir_at, int da_flag, double r, unsigned char *rgb, struct wmember *headp)
+do_light(const char *name, fastf_t *pos, fastf_t *dir_at, int da_flag, double r, unsigned char *rgb, struct wmember *headp)
 
 
 /* direction or aim point */

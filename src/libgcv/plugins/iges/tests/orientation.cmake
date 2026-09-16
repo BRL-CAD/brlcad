@@ -1,0 +1,87 @@
+file(MAKE_DIRECTORY "${WORK_DIR}")
+execute_process(COMMAND "${TEST_ORIENTATION}" "${WORK_DIR}/source.g" "${WORK_DIR}/source.igs"
+  RESULT_VARIABLE result OUTPUT_VARIABLE output ERROR_VARIABLE error)
+if(NOT result EQUAL 0)
+  message(FATAL_ERROR "Could not prepare orientation fixtures: ${output}${error}")
+endif()
+file(SHA256 "${WORK_DIR}/source.g" original_hash)
+execute_process(COMMAND "${IGES_G}" --check-orientation "${WORK_DIR}/source.g" --report "${WORK_DIR}/check.json"
+  RESULT_VARIABLE result ERROR_VARIABLE error)
+if(NOT result EQUAL 0)
+  message(FATAL_ERROR "Read-only orientation check failed: ${error}")
+endif()
+file(READ "${WORK_DIR}/check.json" report)
+string(JSON inward GET "${report}" statistics isolated_inward)
+string(JSON reversal_count LENGTH "${report}" objects 0 shells 0 face_reversals)
+string(JSON unchecked GET "${report}" statistics unchecked_objects)
+if(NOT inward EQUAL 1 OR NOT reversal_count EQUAL 6 OR NOT unchecked EQUAL 1)
+  message(FATAL_ERROR "Read-only check failed to identify the inward shell: ${report}")
+endif()
+file(SHA256 "${WORK_DIR}/source.g" checked_hash)
+if(NOT original_hash STREQUAL checked_hash)
+  message(FATAL_ERROR "Read-only orientation check modified the database")
+endif()
+execute_process(COMMAND "${IGES_G}" --check-orientation "${WORK_DIR}/source.g" --report "${WORK_DIR}/source.g"
+  RESULT_VARIABLE result ERROR_VARIABLE error)
+if(result EQUAL 0)
+  message(FATAL_ERROR "Orientation report was allowed to overwrite its source")
+endif()
+foreach(mode default exact none)
+  set(options)
+  if(mode STREQUAL exact)
+    set(options --exact)
+  elseif(mode STREQUAL none)
+    set(options --repair none)
+  endif()
+  execute_process(COMMAND "${IGES_G}" ${options} --report "${WORK_DIR}/${mode}.json"
+    "${WORK_DIR}/source.igs" "${WORK_DIR}/${mode}.g" RESULT_VARIABLE result ERROR_VARIABLE error)
+  if(NOT result EQUAL 0)
+    message(FATAL_ERROR "Orientation ${mode} import failed: ${error}")
+  endif()
+  file(READ "${WORK_DIR}/${mode}.json" report)
+  string(JSON corrected GET "${report}" statistics orientation_faces_reversed)
+  if(mode STREQUAL default AND NOT corrected EQUAL 6)
+    message(FATAL_ERROR "Default import did not correct inward box: ${report}")
+  elseif(NOT mode STREQUAL default AND NOT corrected EQUAL 0)
+    message(FATAL_ERROR "No-repair import changed orientation: ${report}")
+  endif()
+  execute_process(COMMAND "${IGES_G}" --check-orientation "${WORK_DIR}/${mode}.g" --report "${WORK_DIR}/post-${mode}.json"
+    RESULT_VARIABLE result ERROR_VARIABLE error)
+  if(NOT result EQUAL 0)
+    message(FATAL_ERROR "Cannot check imported orientation: ${error}")
+  endif()
+  file(READ "${WORK_DIR}/post-${mode}.json" report)
+  string(JSON inward GET "${report}" statistics isolated_inward)
+  if((mode STREQUAL default AND NOT inward EQUAL 0) OR (NOT mode STREQUAL default AND NOT inward EQUAL 1))
+    message(FATAL_ERROR "Written geometry does not match ${mode} repair policy: ${report}")
+  endif()
+endforeach()
+execute_process(COMMAND "${IGES_G}" --strict "${WORK_DIR}/source.igs" "${WORK_DIR}/strict.g"
+  RESULT_VARIABLE result ERROR_VARIABLE error)
+if(result EQUAL 0)
+  message(FATAL_ERROR "Strict import accepted an orientation repair requirement")
+endif()
+# The generic .g writer appends to existing databases.
+file(REMOVE "${WORK_DIR}/plugin.g")
+execute_process(COMMAND "${GCV}" -i "${WORK_DIR}/source.igs" -o "${WORK_DIR}/plugin.g"
+  RESULT_VARIABLE result ERROR_VARIABLE error)
+if(NOT result EQUAL 0)
+  message(FATAL_ERROR "Plugin orientation repair failed: ${error}")
+endif()
+execute_process(COMMAND "${IGES_G}" --check-orientation "${WORK_DIR}/plugin.g" --report "${WORK_DIR}/plugin.json"
+  RESULT_VARIABLE result ERROR_VARIABLE error)
+if(NOT result EQUAL 0)
+  message(FATAL_ERROR "Cannot check plugin output: ${error}")
+endif()
+file(READ "${WORK_DIR}/plugin.json" report)
+string(JSON outward GET "${report}" statistics outward)
+if(NOT outward EQUAL 1)
+  message(FATAL_ERROR "Plugin failed to write an outward shell: ${report}")
+endif()
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

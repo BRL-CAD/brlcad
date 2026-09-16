@@ -1,0 +1,142 @@
+= RTCHECK(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+rtcheck - raytrace a model to detect and plot overlapping geometry
+
+== SYNOPSIS
+
+[source]
+----
+rtcheck [options] model.g [objects...] > overlaps.plot3
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*rtcheck* fires a grid of rays at the listed _objects_ in the BRL-CAD
+database _model.g_ to locate places where two regions occupy the same
+space (overlaps).  Each overlapping ray segment is written to standard
+output as a 3-D BRL-CAD *plot3*(5) file (in millimeters) that can be
+overlaid on the geometry for visualization, and a textual summary of the
+overlapping region pairs and their maximum depths is written to standard
+error.  Overlaps shallower than 0.1mm are ignored.
+
+If no _objects_ are listed, *rtcheck* uses the same automatic default-object
+selection described in *rt*(1).  If no single usable default can be resolved,
+it aborts before checking overlaps.
+
+The orientation of the rays may be set with the *-a* and *-e* options, in
+which case the model is autosized, the grid is centered on the model
+centroid, and ray spacing is chosen to span the selected object set.  Alternatively,
+with *-M* a model-to-view matrix is read from standard input; the grid then
+ranges from -1.0 to +1.0 in view space and its resolution is set with *-s*.
+The *-M* form is what *mged*(1) uses when it invokes the *rtcheck* command
+internally.
+
+*rtcheck* is a front-end to *librt*(3) and accepts the full *rt*(1) option
+set (non-square views, perspective, multiprocessing, etc.); only the
+options most relevant to overlap checking are listed below.
+
+[[options]]
+== OPTIONS
+
+*-s* _#_::
+  Number of rays to fire in X and Y (square grid).  The default is 512,
+  yielding a 512x512 grid.
+
+*-g* _mm_::
+  Grid cell width in millimeters, overriding the value derived from the
+  view size and grid resolution.
+
+*-G* _mm_::
+  Grid cell height in millimeters.
+
+*-a* _deg_::
+  View azimuth in degrees.  Triggers autosizing; used with *-e* and
+  conflicts with *-M*.
+
+*-e* _deg_::
+  View elevation in degrees.  Triggers autosizing; used with *-a* and
+  conflicts with *-M*.
+
+*-M*::
+  Read the model-to-view matrix (and optional animation script) from
+  standard input.  Conflicts with *-a* and *-e*.
+
+*-o* _file.plot3_::
+  Write the plot output to _file.plot3_ instead of standard output.
+
+*-r*::
+  Report unique overlapping region pairs (the default).  At the end of the
+  run a list of unique region pairs, the count per pair, and the maximum
+  overlap depth is printed.
+
+*-R*::
+  Suppress the unique-pair summary; instead print every individual overlap
+  segment as it is found.
+
+*-P* _#_::
+  Maximum number of processor cores to use.  The default is all available
+  cores; a negative value means use all but that many.
+
+*-p* _deg_::
+  Perspective angle in degrees (0 <= deg < 180; 0 selects an orthographic
+  view).
+
+*-U* _#_::
+  Whether *librt*(3) retains air-coded regions (0 = discard air, the
+  default; 1 = keep air).
+
+*-+ t*::
+  Emit the plot data in ASCII text format rather than the default binary
+  *plot3*(5) encoding.
+
+[[examples]]
+== EXAMPLES
+
+.Check a subassembly for overlaps and view the result
+====
+[source,bash]
+----
+rtcheck -s 1024 -a 35 -e 25 truck.g chassis > overlaps.plot3
+overlay overlaps.plot3
+----
+Fires a 1024x1024 grid from azimuth 35, elevation 25 degrees at the
+_chassis_ in _truck.g_, capturing every overlapping ray segment in
+_overlaps.plot3_.  The summary of offending region pairs is printed to the
+terminal, and the resulting plot can be loaded over the geometry in
+*mged*(1) with the *overlay* command (or piped to *plot3-fb*(1)) to see
+exactly where the interferences occur.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *mged*(1), *rt*(1), *rtarea*(1), *plot3-fb*(1), *librt*(3), *plot3*(5)
+
+
+[[diagnostics]]
+== DIAGNOSTICS
+
+Numerous error conditions are possible.  Descriptive messages are printed
+on standard error (file descriptor 2).
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

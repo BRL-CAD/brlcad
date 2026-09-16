@@ -1,0 +1,67 @@
+= RMAT(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+rmat - get or set the view rotation matrix
+
+== SYNOPSIS
+
+[source]
+----
+rmat
+rmat "m0 m1 m2 ... m15"
+----
+
+[[description]]
+== DESCRIPTION
+
+The *rmat* command gets or sets the current view rotation matrix as a 16-element space-separated floating-point string.
+
+* *No arguments*: Returns the current view rotation as a 16-element string representing the 4×4 rotation matrix in row-major order.
+
+* *One argument*: Sets the view rotation from the provided 16-element space-separated string. The string must decode to exactly 16 values. The view is updated immediately after the change.
+
+The rotation matrix controls how model space is oriented in the view — which direction is "up", "forward", etc. It is the same rotation used by `quat` and `ae`, but expressed directly as a matrix rather than as a quaternion or azimuth/elevation angles. Use this command to inspect the raw matrix or to set a custom rotation that was computed externally.
+
+The set form accepts the matrix as a single quoted string. Providing more than one argument returns a usage error.
+
+[[examples]]
+== EXAMPLES
+
+.Retrieve the current rotation matrix
+[example]
+====
+mged> **rmat**
+
+Returns the current 16-element view rotation matrix, e.g. `1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1` for the identity (no rotation).
+====
+
+.Round-trip: capture and restore rotation
+[example]
+====
+mged> **set m [rmat]**
+mged> **ae 35 25**
+mged> **rmat $m**
+
+Saves the current rotation matrix, changes to a 35/25 azimuth-elevation view, then restores the original matrix directly.
+====
+
+.Set the identity rotation (front view)
+[example]
+====
+mged> **rmat "1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1"**
+
+Sets the view rotation to the identity matrix — the default front-facing orientation with no rotation applied.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

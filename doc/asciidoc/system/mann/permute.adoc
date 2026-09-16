@@ -1,0 +1,47 @@
+= PERMUTE(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+permute - Permutes the vertex labels for the face of an ARB shape that is currently being edited.
+
+== SYNOPSIS
+
+[source]
+----
+permute {tuple}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Permutes the vertex labels for the face of an ARB shape that is currently being edited. The _tuple_ indicates which face is affected and also indicates the desired result. The tuple is formed by concatenating the list of vertex numbers for the face in the order desired such that the first vertex listed will become vertex number one (and therefore the default keypoint). Only a sufficient number of vertices to disambiguate need be included in the tuple. Note that this has no effect on the geometry of the ARB, but may affect any texture mapping involving this shape.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *permute* command to rearrange the vertices of the ARB being edited according to the specified tuple.
+
+.Rearrange the vertices of an ARB being edited.
+[example]
+====
+mged>**permute 321**
+
+Rearranges the vertices of the currently edited ARB such that vertex 3 becomes vertex 1, vertex 2 remains 2, and vertex 1 becomes 3.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

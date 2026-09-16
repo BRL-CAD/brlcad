@@ -1,7 +1,7 @@
 /*                         G Q A . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -44,6 +44,7 @@
 #include "bu/parallel.h"
 #include "bu/getopt.h"
 #include "vmath.h"
+#include "bn/mat.h"
 #include "raytrace.h"
 #include "bv/plot3.h"
 #include "analyze.h"
@@ -82,6 +83,7 @@ static int multiple_analyses;
 
 static double azimuth_deg;
 static double elevation_deg;
+static int azel_requested; /* set when -a and/or -e supplied */
 static char *densityFileName;
 static double gridSpacing;
 static double gridSpacingLimit;
@@ -152,9 +154,23 @@ struct cstate {
     double *m_weight;
     unsigned long *shots;
     int first;     /* this is the first time we've computed a set of views */
+    int have_previous_estimates;
 
     vect_t u_dir;  /* direction of U vector for "current view" */
     vect_t v_dir;  /* direction of V vector for "current view" */
+
+    /* arbitrary azimuth/elevation view support.  When use_azel is nonzero (set
+     * only when -a and/or -e were supplied on the command line), gqa shoots a
+     * single oblique view whose ray direction (azel_dir) and grid basis
+     * (azel_u, azel_v) are derived from a bn_mat_ae() azimuth/elevation
+     * rotation instead of the default axis-aligned scheme.  All three are unit
+     * vectors.
+     */
+    int use_azel;
+    vect_t azel_dir; /* ray/invariant direction for the oblique view */
+    vect_t azel_u;   /* U (grid column) basis vector for the oblique view */
+    vect_t azel_v;   /* V (grid row) basis vector for the oblique view */
+
     struct rt_i *rtip;
     long steps[3]; /* this is per-dimension, not per-view */
     vect_t span;   /* How much space does the geometry span in each of X, Y, Z directions */
@@ -180,6 +196,8 @@ static struct per_obj_data {
     double *o_lenDensity;
     double *o_volume;
     double *o_weight;
+    double *o_prev_volume;
+    double *o_prev_weight;
     fastf_t *o_lenTorque; /* torque vector for each view */
     fastf_t *o_moi;       /* one vector per view for collecting the partial moments of inertia calculation */
     fastf_t *o_poi;       /* one vector per view for collecting the partial products of inertia calculation */
@@ -566,18 +584,20 @@ parse_args(struct ged *gedp, int ac, char *av[])
 		    break;
 		}
 	    case 'a':
-		bu_vls_printf(gedp->ged_result_str, "azimuth not implemented\n");
 		if (bn_decode_angle(&azimuth_deg,bu_optarg) == 0) {
 		    bu_vls_printf(gedp->ged_result_str, "error parsing azimuth \"%s\"\n", bu_optarg);
 		    return -1;
 		}
+		/* -a is honored; flag that an oblique az/el view was requested */
+		azel_requested = 1;
 		break;
 	    case 'e':
-		bu_vls_printf(gedp->ged_result_str, "elevation not implemented\n");
 		if (bn_decode_angle(&elevation_deg,bu_optarg) == 0) {
 		    bu_vls_printf(gedp->ged_result_str, "error parsing elevation \"%s\"\n", bu_optarg);
 		    return -1;
 		}
+		/* -e is honored; flag that an oblique az/el view was requested */
+		azel_requested = 1;
 		break;
 	    case 'd': debug = 1; break;
 
@@ -795,13 +815,6 @@ _gqa_overlap(struct application *ap,
 
     VJOIN1(ihit, rp->r_pt, ihitp->hit_dist, rp->r_dir);
     VJOIN1(ohit, rp->r_pt, ohitp->hit_dist, rp->r_dir);
-
-    if (plot_overlaps) {
-	bu_semaphore_acquire(state->sem_plot);
-	pl_color(plot_overlaps, V3ARGS(overlap_color));
-	pdv_3line(plot_overlaps, ihit, ohit);
-	bu_semaphore_release(state->sem_plot);
-    }
 
     if (analysis_flags & ANALYSIS_PLOT_OVERLAPS) {
 	bu_semaphore_acquire(state->sem_worker);
@@ -1282,6 +1295,7 @@ plane_worker(int cpu, void *ptr)
     struct cstate *state = (struct cstate *)ptr;
     unsigned long shot_cnt;
     struct ged *gedp = state->gedp;
+    point_t azel_origin = VINIT_ZERO; /* back-plane corner for oblique grid */
 
     if (aborted)
 	return;
@@ -1296,9 +1310,44 @@ plane_worker(int cpu, void *ptr)
     ap.A_LENDEN = 0.0; /* really the cumulative length*density for weight computation*/
     ap.A_LEN = 0.0;    /* really the cumulative length for volume computation */
 
-    /* gross hack */
-    ap.a_ray.r_dir[state->u_axis] = ap.a_ray.r_dir[state->v_axis] = 0.0;
-    ap.a_ray.r_dir[state->i_axis] = 1.0;
+    if (state->use_azel) {
+	/* fire along the oblique az/el direction */
+	VMOVE(ap.a_ray.r_dir, state->azel_dir);
+
+	/* Grid origin: start at the model bounding-box center and back
+	 * off along -azel_dir by the full bounding-box diagonal so the
+	 * ray start plane is guaranteed to be clear of the geometry.
+	 * The grid is then laid out from a corner (center minus half
+	 * the u/v extent) in the azel_u/azel_v plane.  Loop bounds reuse
+	 * steps[u_axis]/steps[v_axis], a conservative superset of the
+	 * oblique footprint; rays that miss are handled by _gqa_miss.
+	 */
+	{
+	    point_t bb_center;
+	    vect_t diag, backoff;
+	    fastf_t diag_len;
+	    fastf_t u_half, v_half;
+
+	    VADD2SCALE(bb_center, ap.a_rt_i->mdl_min, ap.a_rt_i->mdl_max, 0.5);
+	    VSUB2(diag, ap.a_rt_i->mdl_max, ap.a_rt_i->mdl_min);
+	    diag_len = MAGNITUDE(diag);
+
+	    VSCALE(backoff, state->azel_dir, -diag_len);
+
+	    u_half = 0.5 * (state->steps[state->u_axis]) * gridSpacing;
+	    v_half = 0.5 * (state->steps[state->v_axis]) * gridSpacing;
+
+	    VMOVE(azel_origin, bb_center);
+	    VADD2(azel_origin, azel_origin, backoff);
+	    VJOIN2(azel_origin, azel_origin,
+		   -u_half, state->azel_u,
+		   -v_half, state->azel_v);
+	}
+    } else {
+	/* gross hack */
+	ap.a_ray.r_dir[state->u_axis] = ap.a_ray.r_dir[state->v_axis] = 0.0;
+	ap.a_ray.r_dir[state->i_axis] = 1.0;
+    }
 
     ap.A_STATE = ptr; /* really copying the state ptr to the a_uptr */
 
@@ -1322,9 +1371,16 @@ plane_worker(int cpu, void *ptr)
 	     * numbered row in a grid refinement
 	     */
 	    for (u=1; u < state->steps[state->u_axis]; u++) {
-		ap.a_ray.r_pt[state->u_axis] = ap.a_rt_i->mdl_min[state->u_axis] + u*gridSpacing;
-		ap.a_ray.r_pt[state->v_axis] = ap.a_rt_i->mdl_min[state->v_axis] + v_coord;
-		ap.a_ray.r_pt[state->i_axis] = ap.a_rt_i->mdl_min[state->i_axis];
+		if (state->use_azel) {
+		    /* oblique grid point in the azel_u/azel_v plane */
+		    VJOIN2(ap.a_ray.r_pt, azel_origin,
+			   u*gridSpacing, state->azel_u,
+			   v_coord, state->azel_v);
+		} else {
+		    ap.a_ray.r_pt[state->u_axis] = ap.a_rt_i->mdl_min[state->u_axis] + u*gridSpacing;
+		    ap.a_ray.r_pt[state->v_axis] = ap.a_rt_i->mdl_min[state->v_axis] + v_coord;
+		    ap.a_ray.r_pt[state->i_axis] = ap.a_rt_i->mdl_min[state->i_axis];
+		}
 
 		if (debug) {
 		    bu_semaphore_acquire(state->sem_worker);
@@ -1345,9 +1401,16 @@ plane_worker(int cpu, void *ptr)
 	     * them have been computed in a previous iteration.
 	     */
 	    for (u=1; u < state->steps[state->u_axis]; u+=2) {
-		ap.a_ray.r_pt[state->u_axis] = ap.a_rt_i->mdl_min[state->u_axis] + u*gridSpacing;
-		ap.a_ray.r_pt[state->v_axis] = ap.a_rt_i->mdl_min[state->v_axis] + v_coord;
-		ap.a_ray.r_pt[state->i_axis] = ap.a_rt_i->mdl_min[state->i_axis];
+		if (state->use_azel) {
+		    /* oblique grid point in the azel_u/azel_v plane */
+		    VJOIN2(ap.a_ray.r_pt, azel_origin,
+			   u*gridSpacing, state->azel_u,
+			   v_coord, state->azel_v);
+		} else {
+		    ap.a_ray.r_pt[state->u_axis] = ap.a_rt_i->mdl_min[state->u_axis] + u*gridSpacing;
+		    ap.a_ray.r_pt[state->v_axis] = ap.a_rt_i->mdl_min[state->v_axis] + v_coord;
+		    ap.a_ray.r_pt[state->i_axis] = ap.a_rt_i->mdl_min[state->i_axis];
+		}
 
 		if (debug) {
 		    bu_semaphore_acquire(state->sem_worker);
@@ -1456,7 +1519,7 @@ allocate_per_region_data(struct ged *gedp, struct cstate *state, int start, int 
 	return;
     }
 
-    if (rtip->nregions == 0) {
+    if (rtip->stats.nregions == 0) {
 	/* dammit! */
 	bu_log("WARNING: No regions remaining.\n");
 	return;
@@ -1481,13 +1544,15 @@ allocate_per_region_data(struct ged *gedp, struct cstate *state, int start, int 
 	obj_tbl[i].o_lenDensity = (double *)bu_calloc(num_views, sizeof(double), "o_lenDensity");
 	obj_tbl[i].o_volume = (double *)bu_calloc(num_views, sizeof(double), "o_volume");
 	obj_tbl[i].o_weight = (double *)bu_calloc(num_views, sizeof(double), "o_weight");
+	obj_tbl[i].o_prev_volume = (double *)bu_calloc(num_views, sizeof(double), "o_prev_volume");
+	obj_tbl[i].o_prev_weight = (double *)bu_calloc(num_views, sizeof(double), "o_prev_weight");
 	obj_tbl[i].o_lenTorque = (fastf_t *)bu_calloc(num_views, sizeof(vect_t), "lenTorque");
 	obj_tbl[i].o_moi = (fastf_t *)bu_calloc(num_views, sizeof(vect_t), "moments of inertia");
 	obj_tbl[i].o_poi = (fastf_t *)bu_calloc(num_views, sizeof(vect_t), "products of inertia");
     }
 
     /* build objects for each region */
-    reg_tbl = (struct per_region_data *)bu_calloc(rtip->nregions, sizeof(struct per_region_data), "per_region_data");
+    reg_tbl = (struct per_region_data *)bu_calloc(rtip->stats.nregions, sizeof(struct per_region_data), "per_region_data");
 
 
     for (i = 0, BU_LIST_FOR (regp, region, &(rtip->HeadRegion)), i++) {
@@ -1565,12 +1630,12 @@ options_prep(struct ged *gedp, struct rt_i *UNUSED(rtip), vect_t span)
 	    }
 	}
 	// iterate through the db and find all materials
-	for (int i = 0; i < RT_DBNHASH; i++) {
-	    struct directory *dp = gedp->dbip->dbi_Head[i];
-	    if (dp != NULL) {
+	{
+	    struct directory *dp;
+	    FOR_ALL_DIRECTORY_START(dp, gedp->dbip)
 		struct rt_db_internal intern;
 		struct rt_material_internal *material_ip;
-		if (rt_db_get_internal(&intern, dp, gedp->dbip, NULL, &rt_uniresource) >= 0) {
+		if (rt_db_get_internal(&intern, dp, gedp->dbip, NULL) >= 0) {
 		    if (intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_MATERIAL) {
 			// if the material has an id and density, add it to the density table
 			material_ip = (struct rt_material_internal *)intern.idb_ptr;
@@ -1599,7 +1664,7 @@ options_prep(struct ged *gedp, struct rt_i *UNUSED(rtip), vect_t span)
 			bu_vls_free(&result_str);
 		    }
 		}
-	    }
+	    FOR_ALL_DIRECTORY_END;
 	}
     }
     /* refine the grid spacing if the user has set a lower bound on
@@ -1753,13 +1818,13 @@ densities_prep(struct ged *gedp, struct rt_i *rtip)
 
 	// iterate through the db and find all materials
 	int next_available_id = MAX_MATERIAL_ID - 1;
-	for (int i = 0; i < RT_DBNHASH; i++) {
-	    struct directory *dp = rtip->rti_dbip->dbi_Head[i];
-	    if (dp != NULL) {
+	{
+	    struct directory *dp;
+	    FOR_ALL_DIRECTORY_START(dp, rtip->rti_dbip)
 		struct rt_db_internal intern;
 		struct rt_material_internal *material_ip;
 		if (dp->d_major_type == DB5_MAJORTYPE_BRLCAD) {
-		    if (rt_db_get_internal(&intern, dp, rtip->rti_dbip, NULL, &rt_uniresource) >= 0) {
+		    if (rt_db_get_internal(&intern, dp, rtip->rti_dbip, NULL) >= 0) {
 			if (intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_MATERIAL) {
 			    // if the material has a density, add it to the density table
 			    material_ip = (struct rt_material_internal *) intern.idb_ptr;
@@ -1796,7 +1861,7 @@ densities_prep(struct ged *gedp, struct rt_i *rtip)
 			}
 		    }
 		}
-	    }
+	    FOR_ALL_DIRECTORY_END;
 	}
 
 	if (!found_densities) {
@@ -1807,9 +1872,9 @@ densities_prep(struct ged *gedp, struct rt_i *rtip)
 
 	// look for objects with material_name set and set the material_id
 	// analyze_densities_get
-	for (int i = 0; i < RT_DBNHASH; i++) {
-	    struct directory *dp = rtip->rti_dbip->dbi_Head[i];
-	    if (dp != NULL) {
+	{
+	    struct directory *dp;
+	    FOR_ALL_DIRECTORY_START(dp, rtip->rti_dbip)
 		if (dp->d_major_type == DB5_MAJORTYPE_BRLCAD) {
 		    struct bu_attribute_value_set avs = BU_AVS_INIT_ZERO;
 
@@ -1822,7 +1887,7 @@ densities_prep(struct ged *gedp, struct rt_i *rtip)
 			    if (material_dp != NULL) {
 				struct rt_db_internal material_intern;
 				struct rt_material_internal *material_ip;
-				if (rt_db_get_internal(&material_intern, material_dp, rtip->rti_dbip, NULL, &rt_uniresource) >= 0) {
+				if (rt_db_get_internal(&material_intern, material_dp, rtip->rti_dbip, NULL) >= 0) {
 				    if (material_intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_MATERIAL) {
 					// the material_ip->name field is the name in the density table
 					// not just the material_name (they could be different)
@@ -1859,7 +1924,7 @@ densities_prep(struct ged *gedp, struct rt_i *rtip)
 			return BRLCAD_ERROR;
 		    }
 		}
-	    }
+	    FOR_ALL_DIRECTORY_END;
 	}
     }
 
@@ -1933,6 +1998,7 @@ weight_volume_terminate(struct ged *gedp, struct cstate *state)
      * are done.
      */
     int can_terminate = 1;
+    int have_previous_estimates = state->have_previous_estimates;
 
     double low, hi, val, delta;
 
@@ -1943,6 +2009,7 @@ weight_volume_terminate(struct ged *gedp, struct cstate *state)
 	for (obj = 0; obj < num_objects; obj++) {
 	    int view;
 	    double tmp;
+	    double refinement_delta = 0.0;
 
 	    if (verbose)
 		bu_vls_printf(gedp->ged_result_str, "object %d\n", obj);
@@ -1954,6 +2021,12 @@ weight_volume_terminate(struct ged *gedp, struct cstate *state)
 	    for (view = 0; view < num_views; view++) {
 		val = obj_tbl[obj].o_weight[view] =
 		obj_tbl[obj].o_lenDensity[view] * (state->area[view] / state->shots[view]);
+		if (have_previous_estimates) {
+		    double view_delta = fabs(val - obj_tbl[obj].o_prev_weight[view]);
+		    if (view_delta > refinement_delta)
+			refinement_delta = view_delta;
+		}
+		obj_tbl[obj].o_prev_weight[view] = val;
 		V_MIN(low, val);
 		V_MAX(hi, val);
 		tmp += val;
@@ -1979,6 +2052,22 @@ weight_volume_terminate(struct ged *gedp, struct cstate *state)
 		    bu_vls_printf(gedp->ged_result_str, "\t%s differs too much in weight per view.\n",
 				  obj_tbl[obj].o_name);
 	    }
+	    if (!have_previous_estimates || refinement_delta > weight_tolerance) {
+		can_terminate = 0;
+		if (verbose) {
+		    if (have_previous_estimates) {
+			bu_vls_printf(gedp->ged_result_str,
+				      "\t%s differs too much in weight from previous grid (%g %s).\n",
+				      obj_tbl[obj].o_name,
+				      refinement_delta / units[WGT]->val,
+				      units[WGT]->name);
+		    } else {
+			bu_vls_printf(gedp->ged_result_str,
+				      "\t%s needs another weight grid refinement.\n",
+				      obj_tbl[obj].o_name);
+		    }
+		}
+	    }
 	}
 	if (can_terminate) {
 	    if (verbose)
@@ -1994,6 +2083,7 @@ weight_volume_terminate(struct ged *gedp, struct cstate *state)
 	for (obj = 0; obj < num_objects; obj++) {
 	    int view;
 	    double tmp;
+	    double refinement_delta = 0.0;
 
 	    /* compute volume of object for given view */
 	    low = INFINITY;
@@ -2002,6 +2092,12 @@ weight_volume_terminate(struct ged *gedp, struct cstate *state)
 	    for (view = 0; view < num_views; view++) {
 		val = obj_tbl[obj].o_volume[view] =
 		obj_tbl[obj].o_len[view] * (state->area[view] / state->shots[view]);
+		if (have_previous_estimates) {
+		    double view_delta = fabs(val - obj_tbl[obj].o_prev_volume[view]);
+		    if (view_delta > refinement_delta)
+			refinement_delta = view_delta;
+		}
+		obj_tbl[obj].o_prev_volume[view] = val;
 		V_MIN(low, val);
 		V_MAX(hi, val);
 		tmp += val;
@@ -2024,10 +2120,27 @@ weight_volume_terminate(struct ged *gedp, struct cstate *state)
 		if (verbose)
 		    bu_vls_printf(gedp->ged_result_str, "\tvolume tol not met on %s.  Refine grid\n",
 				  obj_tbl[obj].o_name);
-		break;
+	    }
+	    if (!have_previous_estimates || refinement_delta > volume_tolerance) {
+		can_terminate = 0;
+		if (verbose) {
+		    if (have_previous_estimates) {
+			bu_vls_printf(gedp->ged_result_str,
+				      "\t%s differs too much in volume from previous grid (%g %s).\n",
+				      obj_tbl[obj].o_name,
+				      refinement_delta / units[VOL]->val,
+				      units[VOL]->name);
+		    } else {
+			bu_vls_printf(gedp->ged_result_str,
+				      "\t%s needs another volume grid refinement.\n",
+				      obj_tbl[obj].o_name);
+		    }
+		}
 	    }
 	}
     }
+
+    state->have_previous_estimates = 1;
 
     if (can_terminate) {
 	return 0; /* signal we don't want to go onward */
@@ -2516,6 +2629,7 @@ ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
     multiple_analyses = 1;
     azimuth_deg = 0.0;
     elevation_deg = 0.0;
+    azel_requested = 0;
     densityFileName = (char *)0;
 
     /* FIXME: this is completely arbitrary, should probably be based
@@ -2542,6 +2656,7 @@ ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
     use_air = 1;
     num_objects = 0;
     num_views = 3;
+    state.use_azel = 0;
     verbose = 0;
     quiet_missed_report = 0;
     plot_prefix = NULL;
@@ -2561,12 +2676,44 @@ ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
+    /* If the user supplied -a and/or -e, shoot a single oblique view whose
+     * direction and grid basis come from an azimuth/elevation rotation, rather
+     * than the default 3 axis-aligned views.  bn_mat_ae() builds a rotation
+     * where azimuth is about +Z and elevation lifts from the XY plane (azimuth
+     * +X, elevation +Z, degrees).  We view INTO the model, so the
+     * ray/invariant direction is the -X column of the ae matrix (the direction
+     * the viewer looks along); azel_u/azel_v are the +Y and +Z columns and
+     * span the grid plane.  All three are unitized.
+     */
+    if (azel_requested) {
+	mat_t ae_rot;
+	vect_t view_x, view_y, view_z;
+
+	bn_mat_ae(ae_rot, azimuth_deg, elevation_deg);
+
+	/* columns of the rotation: image of the world +X, +Y, +Z axes */
+	VSET(view_x, ae_rot[0], ae_rot[4], ae_rot[8]);
+	VSET(view_y, ae_rot[1], ae_rot[5], ae_rot[9]);
+	VSET(view_z, ae_rot[2], ae_rot[6], ae_rot[10]);
+
+	/* ray travels INTO the geometry along -view_x */
+	VREVERSE(state.azel_dir, view_x);
+	VMOVE(state.azel_u, view_y);
+	VMOVE(state.azel_v, view_z);
+	VUNITIZE(state.azel_dir);
+	VUNITIZE(state.azel_u);
+	VUNITIZE(state.azel_v);
+
+	state.use_azel = 1;
+	num_views = 1;
+    }
+
     if (analysis_flags & ANALYSIS_PLOT_OVERLAPS) {
 	ged_gqa_plot.vbp = bv_vlblock_init(vlfree, 32);
 	ged_gqa_plot.vhead = bv_vlblock_find(ged_gqa_plot.vbp, 0xFF, 0xFF, 0x00);
     }
 
-    rtip = rt_new_rti(gedp->dbip);
+    rtip = rt_i_create(gedp->dbip);
     rtip->useair = use_air;
 
     start_objs = arg_count;
@@ -2651,6 +2798,7 @@ ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
     state.sem_plot = bu_semaphore_register("gqa_sem_plot");
     state.rtip = rtip;
     state.first = 1;
+    state.have_previous_estimates = 0;
     allocate_per_region_data(gedp, &state, start_objs, argc, argv);
 
     /* compute */
@@ -2676,22 +2824,42 @@ ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
 	    if (verbose)
 		bu_vls_printf(gedp->ged_result_str, "  view %d\n", view);
 
-	    /* gross hack.  By assuming we have <= 3 views, we can let
-	     * the view # indicate a coordinate axis.  Note this is
-	     * used as an index into state.area[]
-	     */
-	    state.i_axis = state.curr_view = view;
-	    state.u_axis = (state.curr_view+1) % 3;
-	    state.v_axis = (state.curr_view+2) % 3;
+	    if (state.use_azel) {
+		/* Single oblique az/el view.  The axis-index scheme is
+		 * retained only so the shared bookkeeping (state.area[],
+		 * state.steps[], and the _gqa_hit switch) still has valid
+		 * indices; the actual ray direction and grid layout come from
+		 * state.azel_* in plane_worker.  Use a fixed default basis
+		 * (invariant Z, U along X, V along Y).  Area/mass figures for
+		 * the oblique view are approximate in this release (documented
+		 * limitation).
+		 */
+		state.i_axis = 2;
+		state.curr_view = 0;
+		state.u_axis = 0;
+		state.v_axis = 1;
 
-	    state.u_dir[state.u_axis] = 1;
-	    state.u_dir[state.v_axis] = 0;
-	    state.u_dir[state.i_axis] = 0;
+		VMOVE(state.u_dir, state.azel_u);
+		VMOVE(state.v_dir, state.azel_v);
+		state.v = 1;
+	    } else {
+		/* gross hack.  By assuming we have <= 3 views, we can let
+		 * the view # indicate a coordinate axis.  Note this is
+		 * used as an index into state.area[]
+		 */
+		state.i_axis = state.curr_view = view;
+		state.u_axis = (state.curr_view+1) % 3;
+		state.v_axis = (state.curr_view+2) % 3;
 
-	    state.v_dir[state.u_axis] = 0;
-	    state.v_dir[state.v_axis] = 1;
-	    state.v_dir[state.i_axis] = 0;
-	    state.v = 1;
+		state.u_dir[state.u_axis] = 1;
+		state.u_dir[state.v_axis] = 0;
+		state.u_dir[state.i_axis] = 0;
+
+		state.v_dir[state.u_axis] = 0;
+		state.v_dir[state.v_axis] = 1;
+		state.v_dir[state.i_axis] = 0;
+		state.v = 1;
+	    }
 
 	    bu_parallel(plane_worker, ncpu, (void *)&state);
 
@@ -2726,6 +2894,10 @@ aborted:
 		struct bview *view = gedp->ged_gvp;
 		bv_vlblock_obj(ged_gqa_plot.vbp, view, "gqa::overlaps");
 	    } else {
+		/* The legacy converter only replaces colors present in the new
+		 * vlblock.  Remove the previous yellow plot explicitly so an empty
+		 * result clears stale overlap lines as well. */
+		_ged_erase_legacy_overlap_plot(gedp);
 		_ged_cvt_vlblock_to_solids(gedp, ged_gqa_plot.vbp, "OVERLAPS", 0);
 	    }
 	}
@@ -2768,6 +2940,8 @@ aborted:
 	bu_free(obj_tbl[i].o_lenDensity, "o_lenDensity");
 	bu_free(obj_tbl[i].o_volume, "o_volume");
 	bu_free(obj_tbl[i].o_weight, "o_weight");
+	bu_free(obj_tbl[i].o_prev_volume, "o_prev_volume");
+	bu_free(obj_tbl[i].o_prev_weight, "o_prev_weight");
 	bu_free(obj_tbl[i].o_lenTorque, "o_lenTorque");
 	bu_free(obj_tbl[i].o_moi, "o_moi");
 	bu_free(obj_tbl[i].o_poi, "o_poi");
@@ -2794,32 +2968,18 @@ aborted:
 	_gd_densities_source = NULL;
     }
 
-    rt_free_rti(rtip);
+    rt_i_destroy(rtip);
 
     return BRLCAD_OK;
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-extern "C" {
-struct ged_cmd_impl gqa_cmd_impl = {
-    "gqa",
-    ged_gqa_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd gqa_cmd = { &gqa_cmd_impl };
-const struct ged_cmd *gqa_cmds[] = { &gqa_cmd, NULL };
+#define GED_GQA_COMMANDS(X, XID) \
+    X(gqa, ged_gqa_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  gqa_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_GQA_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_gqa", 1, GED_GQA_COMMANDS)
 
 // Local Variables:
 // tab-width: 8
@@ -2829,4 +2989,3 @@ COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

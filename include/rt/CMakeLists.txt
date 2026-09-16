@@ -19,6 +19,7 @@ set(
   db_internal.h
   db_io.h
   debug.h
+  default.h
   defines.h
   directory.h
   dspline.h

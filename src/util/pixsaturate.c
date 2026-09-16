@@ -1,7 +1,7 @@
 /*                   P I X S A T U R A T E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2025 United States Government as represented by
+ * Copyright (c) 2004-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -32,11 +32,14 @@
 
 #include "common.h"
 
+#include <errno.h>
 #include <stdlib.h>
 #include <math.h>
 #include "bio.h"
 
 #include "bu/app.h"
+#include "bu/log.h"
+#include "bu/opt.h"
 #include "bu/str.h"
 #include "bu/exit.h"
 
@@ -82,7 +85,13 @@ main(int argc, char **argv)
     	fprintf(stderr,"pixsaturate: need pipes for stdin and stdout\n");
 	printusage ();
     }
-    sat = atof(argv[1]);
+    if (!bu_opt_scan_double(argv[1], &sat, "saturation")) {
+	return 1;
+    }
+    if (sat < 0.0) {
+	bu_log("pixsaturate: saturation must be non-negative, got '%s'\n", argv[1]);
+	return 1;
+    }
 
     rwgt = RINTLUM*(1.0-sat);
     gwgt = GINTLUM*(1.0-sat);

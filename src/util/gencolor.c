@@ -1,7 +1,7 @@
 /*                      G E N C O L O R . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2025 United States Government as represented by
+ * Copyright (c) 1986-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,6 +27,8 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
@@ -35,6 +37,7 @@
 #include "bu/log.h"
 #include "bu/str.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 
 #define MAX_BYTES (128*1024)
 
@@ -51,6 +54,18 @@ int typeselected = 0 ; /* set to 1 if any option other than -r appears */
 int setrcount = 0; /* set to 1 if -r is detected */
 
 unsigned char buf[MAX_BYTES];
+
+static int
+parse_nonnegative_int32_arg(const char *arg, int32_t *out_value, const char *label)
+{
+    int value;
+
+    if (!bu_opt_scan_int_range(arg, &value, 0, INT32_MAX, label))
+	return 0;
+
+    *out_value = (int32_t)value;
+    return 1;
+}
 
 void
 printusage(int i)
@@ -72,9 +87,8 @@ get_args(int argc, char **argv)
     while ((c = bu_getopt(argc, argv, "r:pbs:S:n:N:w:W:h?")) != -1) {
 	switch (c) {
 	    case 'r':
-		count = atoi(bu_optarg);
-		if (count > INT32_MAX)
-		    count = INT32_MAX;
+		if (!parse_nonnegative_int32_arg(bu_optarg, &count, "repeat count"))
+		    printusage(0);
 		setrcount = 1;
 		break;
 	    case 'p':
@@ -87,17 +101,21 @@ get_args(int argc, char **argv)
 		break;
 	    case 's':
 	    case 'S':
-		height = width = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &width, 1, INT_MAX, "size"))
+		    printusage(0);
+		height = width;
 		typeselected = 1;
 		break;
 	    case 'n':
 	    case 'N':
-		height = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &height, 1, INT_MAX, "height"))
+		    printusage(0);
 		typeselected = 1;
 		break;
 	    case 'w':
 	    case 'W':
-		width = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &width, 1, INT_MAX, "width"))
+		    printusage(0);
 		typeselected = 1;
 		break;
 	    default:		/* 'h' '?' */
@@ -133,7 +151,8 @@ main(int argc, char **argv)
 	/* get values from the command line */
 	i = 0;
 	while (argc > 1 && i < MAX_BYTES - 1) {
-	    buf[i] = atoi(argv[i+1]);
+	    if (!bu_opt_scan_uchar(argv[i+1], &buf[i], "byte value"))
+		return 1;
 	    argc--;
 	    i++;
 	}

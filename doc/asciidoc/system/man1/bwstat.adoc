@@ -1,0 +1,92 @@
+= BWSTAT(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+bwstat - display statistics of a black and white image
+
+== SYNOPSIS
+
+[source]
+----
+bwstat [-v] [file.bw]
+----
+
+
+
+[[description]]
+== DESCRIPTION
+
+*bwstat* reads a *bw*(5) format file (or standard input) and computes statistics of its pixel intensities. These include the total number of pixels, the file dimensions (assuming the image is square), minimum and maximum values, mean, median, mode (and its pixel count), variance, standard deviation, and skew.
+
+
+[[options]]
+== OPTIONS
+
+*-v*::
+  Verbose mode. After the statistics, print the full histogram of pixel
+  values: each intensity from 0 to 255, its pixel count, and its percentage
+  of the total.
+
+*-h*, *-?*::
+  Print a usage message and exit.
+
+_file.bw_::
+  Optional input file. If not provided, *bwstat* reads from standard input.
+
+
+[[examples]]
+== EXAMPLES
+
+.Summarize the intensity distribution of an image
+====
+[source,bash]
+----
+bwstat moss.bw
+----
+Reports the pixel count, inferred square dimensions, minimum, maximum,
+mode, median, mean, standard deviation, variance, and skew for the
+intensities in `moss.bw`.
+====
+
+.Inspect a histogram piped from another tool
+====
+[source,bash]
+----
+pix-bw scene.pix | bwstat -v
+----
+Converts a color *pix*(5) image to black and white with *pix-bw*(1) and
+pipes it straight into *bwstat*, which prints the statistics followed by
+the complete 0-255 histogram without writing an intermediate file.
+====
+
+
+[[method]]
+== METHOD
+
+Since the pixel values are quantized (have discrete values from 0 to 255), the statistics can be computed from "lump sums" after building a histogram of the input. This results in a significant savings in computation while also making a single pass over the input file sufficient.
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *bwhist*(1), *pix-bw*(1), *pixstat*(1), *bw*(5)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

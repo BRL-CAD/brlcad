@@ -1,7 +1,7 @@
 /*                     B E N C H M A R K . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2025 United States Government as represented by
+ * Copyright (c) 2011-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -67,7 +67,7 @@
 int bu_exec(const char *program, void *data, struct bu_vls *out, struct bu_vls *err) {if (!program || !out || !err || !data) return 1; return 0;}
 int bu_grep(const char *pattern, const char *input, int(*callback)(const char *line, void *data), void *data) {if (!pattern || !input || !data) return 1; if (!callback) bu_log("TODO: need default callback!!!\n"); return 0;}
 int bu_file_glob(const char *pattern, char **paths) {if (!pattern || !paths) return 1; return 0;}
-char *format_elapsed(double elapsed) {if (elapsed > 0) return "0 1 2"; return "-0 -1 -2";}
+const char *format_elapsed(double elapsed) {if (elapsed > 0) return "0 1 2"; return "-0 -1 -2";}
 int perf(const struct bu_vls *vp, const char *items, const char *args[]) {if (!vp || !items || !args) return -1; return 0;}
 double calculate_vgr(const struct bu_vls *summary) {if (!summary) return -0.0; return 0.0;}
 extern int bench(const char *cmd);
@@ -237,7 +237,7 @@ set_if_unset(void (*echo)(const char *, ...), void (*verbose)(const char *, ...)
     }
 
     setval = getenv(var);
-    echo("Using [%s] for %s\n", setval, var);
+    echo("Using [%s] for %s\n", setval ? setval : "", var);
 }
 
 
@@ -589,6 +589,7 @@ main(int ac, char *av[])
     {
 	struct bu_vls v = BU_VLS_INIT_ZERO;
 	char rfc2822[1024] = {0};
+	const char *logfile = getenv("LOGFILE");
 #ifdef HAVE_SYS_UTSNAME_H
 	struct utsname n;
 	time_t t = time(NULL);
@@ -604,7 +605,7 @@ main(int ac, char *av[])
 	echo("B R L - C A D   B E N C H M A R K\n");
 	echo("=================================\n");
 	echo("Running %s on %s\n", av[0], rfc2822);
-	echo("Logging output to %s\n", getenv("LOGFILE"));
+	echo("Logging output to %s\n", logfile ? logfile : "disabled");
 	echo("%s\n\n", bu_vls_addr(&v));
     }
 
@@ -653,6 +654,7 @@ main(int ac, char *av[])
 	bu_setenv("PIX", bu_path_dirname(getenv("PIX")), 1);
     }
 
+    const char *pix_env = getenv("PIX");
     bu_vls_printf(&vp,
 		  "%s "
 		  "%s "
@@ -661,7 +663,7 @@ main(int ac, char *av[])
 		  "%s/../../pix "
 		  "%s/../../../pix "
 		  "./pix",
-		  getenv("PIX"), pix, thisp, thisp, thisp, thisp);
+		  pix_env ? pix_env : "", pix, thisp, thisp, thisp, thisp);
     bu_argv_from_string(argv, 32, bu_vls_addr(&vp));
     look_for(verbose_echo, directory, "a benchmark reference log directory", "LOG", (const char **)argv);
     bu_vls_trunc(&vp, 0);

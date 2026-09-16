@@ -1,7 +1,7 @@
 /*                        F B - P I X . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2025 United States Government as represented by
+ * Copyright (c) 1986-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -26,6 +26,8 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <sys/stat.h>
 
@@ -33,6 +35,7 @@
 
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/exit.h"
 #include "bu/malloc.h"
 #include "vmath.h"
@@ -42,7 +45,7 @@
 
 
 char *framebuffer = NULL;
-char *file_name;
+const char *file_name;
 FILE *outfp;
 
 static int crunch = 0;		/* Color map crunch? */
@@ -52,7 +55,6 @@ int screen_width;			/* input width */
 
 /* in cmap-crunch.c */
 extern void cmap_crunch(RGBpixel (*scan_buf), int pixel_ct, ColorMap *colormap);
-
 
 int
 get_args(int argc, char **argv)
@@ -72,13 +74,17 @@ get_args(int argc, char **argv)
 		break;
 	    case 's':
 		/* square size */
-		screen_height = screen_width = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &screen_width, 1, INT_MAX, "screen size"))
+		    return 0;
+		screen_height = screen_width;
 		break;
 	    case 'w':
-		screen_width = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &screen_width, 1, INT_MAX, "screen width"))
+		    return 0;
 		break;
 	    case 'n':
-		screen_height = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &screen_height, 1, INT_MAX, "screen height"))
+		    return 0;
 		break;
 
 	    default:		/* '?' */
@@ -103,8 +109,10 @@ get_args(int argc, char **argv)
 	(void)bu_fchmod(fileno(outfp), 0444);
     }
 
-    if (argc > ++bu_optind)
-	fprintf(stderr, "fb-pix: excess argument(s) ignored\n");
+    if (argc > ++bu_optind) {
+	fprintf(stderr, "fb-pix: excess argument(s) not supported\n");
+	return 0;
+    }
 
     return 1;		/* OK */
 }

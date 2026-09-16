@@ -1,7 +1,7 @@
 /*                  C O M B _ S T D . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -60,7 +60,7 @@ free_tokens(struct bu_list *hp)
     while (BU_LIST_WHILE(tok, tokens, hp)) {
 	BU_LIST_DEQUEUE(&tok->l);
 	if (tok->type == TOK_TREE) {
-	    db_free_tree(tok->tp, &rt_uniresource);
+	    db_free_tree(tok->tp);
 	}
     }
 }
@@ -500,7 +500,7 @@ ged_comb_std_core(struct ged *gedp, int argc, const char *argv[])
 	    return BRLCAD_ERROR;
 	}
 
-	GED_DB_GET_INTERNAL(gedp, &intern, dp, (fastf_t *)NULL, &rt_uniresource, BRLCAD_ERROR);
+	GED_DB_GET_INTERN(gedp, &intern, dp, (fastf_t *)NULL, BRLCAD_ERROR);
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 	RT_CK_COMB(comb);
 
@@ -517,7 +517,7 @@ ged_comb_std_core(struct ged *gedp, int argc, const char *argv[])
 	} else
 	    comb->region_flag = 0;
 
-	GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, BRLCAD_ERROR);
+	GED_DB_PUT_INTERN(gedp, dp, &intern, BRLCAD_ERROR);
 
 	return BRLCAD_OK;
     }
@@ -649,30 +649,20 @@ ged_comb_std_core(struct ged *gedp, int argc, const char *argv[])
 	intern.idb_ptr = (void *)comb;
 
 	GED_DB_DIRADD(gedp, dp, comb_name, RT_DIR_PHONY_ADDR, 0, flags, (void *)&intern.idb_type, BRLCAD_ERROR);
-	GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, BRLCAD_ERROR);
+	GED_DB_PUT_INTERN(gedp, dp, &intern, BRLCAD_ERROR);
     }
 
     return BRLCAD_OK;
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl comb_std_cmd_impl = {"comb_std", ged_comb_std_core, GED_CMD_DEFAULT};
-const struct ged_cmd comb_std_cmd = { &comb_std_cmd_impl };
 
-struct ged_cmd_impl c_std_cmd_impl = {"c", ged_comb_std_core, GED_CMD_DEFAULT};
-const struct ged_cmd c_std_cmd = { &c_std_cmd_impl };
+#define GED_COMB_STD_COMMANDS(X, XID) \
+    X(c, ged_comb_std_core, GED_CMD_DEFAULT) \
+    X(comb_std, ged_comb_std_core, GED_CMD_DEFAULT) \
 
-const struct ged_cmd *comb_std_cmds[] = { &comb_std_cmd, &c_std_cmd, NULL };
-
-static const struct ged_plugin pinfo = { GED_API,  comb_std_cmds, 2 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_COMB_STD_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_comb_std", 1, GED_COMB_STD_COMMANDS)
 
 /*
  * Local Variables:

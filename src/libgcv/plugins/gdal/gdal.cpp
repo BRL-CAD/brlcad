@@ -2,7 +2,7 @@
  * BRL-CAD
  *
  * Copyright (c) 2013 Tom Browder
- * Copyright (c) 2017-2025 United States Government as represented by the U.S. Army
+ * Copyright (c) 2017-2026 United States Government as represented by the U.S. Army
  * Research Laboratory.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -52,7 +52,6 @@
 #include "vrtdataset.h"
 
 #include "bu/app.h"
-#include "bu/cv.h"
 #include "bu/env.h"
 #include "bu/path.h"
 #include "bu/units.h"
@@ -191,10 +190,11 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     /* If the environment is identifying a PROJ_LIB directory use it,
      * else set it to the correct one for BRL-CAD */
     if (!getenv("PROJ_LIB")) {
-	const char *pjenv = NULL;
-	bu_setenv("PROJ_LIB", bu_dir(NULL, 0, BU_DIR_DATA, "proj", NULL), 1);
-	pjenv = getenv("PROJ_LIB");
-	bu_log("Setting PROJ_LIB to %s\n", pjenv);
+	const char *proj_dir = bu_dir(NULL, 0, BU_DIR_DATA, "proj", NULL);
+	if (bu_setenv("PROJ_LIB", proj_dir, 1) == 0)
+	    bu_log("Setting PROJ_LIB to %s\n", proj_dir);
+	else
+	    bu_log("Unable to set PROJ_LIB\n");
     }
 
     GDALAllRegister();
@@ -289,18 +289,6 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
 	    continue;
 	} else {
 	    bu_log("GDAL read error for band scanline %d\n", i);
-	}
-    }
-
-    /* Convert the data before writing it so the DSP get_obj_data
-     * routine sees what it expects */
-    int in_cookie = bu_cv_cookie("hus");
-    int out_cookie = bu_cv_cookie("nus"); /* data is network unsigned short */
-    if (bu_cv_optimize(in_cookie) != bu_cv_optimize(out_cookie)) {
-	size_t got = bu_cv_w_cookie(uint16_array, out_cookie, count * sizeof(unsigned short), uint16_array, in_cookie, count);
-	if (got != count) {
-	    bu_log("got %zu != count %zu", got, count);
-	    bu_bomb("\n");
 	}
     }
 

@@ -1,7 +1,7 @@
 /*                          J O I N T . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2025 United States Government as represented by
+ * Copyright (c) 1985-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -64,7 +64,7 @@ struct joint_specific {
 #define JOINT_NULL ((struct joint_specific *)0)
 #define JOINT_FLOAT_SIZE 10
 
-const struct bu_structparse rt_joint_parse[] = {
+EXTERNCPP const struct bu_structparse rt_joint_parse[] = {
     { "%f", 3, "V", bu_offsetofarray(struct rt_joint_internal, location, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%V", 1, "RP1", bu_offsetof(struct rt_joint_internal, reference_path_1), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%V", 1, "RP2", bu_offsetof(struct rt_joint_internal, reference_path_2), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -75,7 +75,7 @@ const struct bu_structparse rt_joint_parse[] = {
 };
 
 
-int
+C_DECL int
 rt_joint_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_joint_internal *jip;
@@ -107,7 +107,7 @@ rt_joint_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-void
+C_DECL void
 rt_joint_print(const struct soltab *stp)
 {
     const struct joint_specific *jointp = (struct joint_specific *)stp->st_specific;
@@ -136,7 +136,7 @@ rt_joint_print(const struct soltab *stp)
  * 0 MISS
  * >0 HIT
  */
-int
+C_DECL int
 rt_joint_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *UNUSED(seghead))
 {
     if (stp) RT_CK_SOLTAB(stp);
@@ -150,10 +150,26 @@ rt_joint_shot(struct soltab *stp, struct xray *rp, struct application *ap, struc
 
 
 /**
+ * Vectorized rt_joint_shot(): joints are not solid geometry, so every
+ * ray in the batch misses.
+ */
+C_DECL void
+rt_joint_vshot(struct soltab **stp, struct xray **UNUSED(rp), struct seg *segp, int n, struct application *ap)
+{
+    int i;
+    if (ap) RT_CK_APPLICATION(ap);
+    for (i = 0; i < n; i++) {
+	if (stp[i] == 0) continue;		/* skip this ray */
+	segp[i].seg_stp = (struct soltab *)0;	/* always MISS */
+    }
+}
+
+
+/**
  * Given ONE ray distance, return the normal and entry/exit point.
  * The normal is already filled in.
  */
-void
+C_DECL void
 rt_joint_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
     if (hitp) RT_CK_HIT(hitp);
@@ -167,7 +183,7 @@ rt_joint_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 /**
  * Return the "curvature" of the joint.
  */
-void
+C_DECL void
 rt_joint_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
     if (!cvp) return;
@@ -185,7 +201,7 @@ rt_joint_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
  * "toroidal" map is established, varying each from 0 up to 1 and then
  * back down to 0 again.
  */
-void
+C_DECL void
 rt_joint_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
     if (ap) RT_CK_APPLICATION(ap);
@@ -197,7 +213,7 @@ rt_joint_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct
 }
 
 
-void
+C_DECL void
 rt_joint_free(struct soltab *stp)
 {
     struct joint_specific *jointp = (struct joint_specific *)stp->st_specific;
@@ -222,7 +238,7 @@ rt_joint_free(struct soltab *stp)
  * be.
  */
 #define LOCATION_RADIUS 5
-int
+C_DECL int
 rt_joint_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     struct rt_joint_internal *jip;
@@ -269,7 +285,7 @@ rt_joint_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_
  * -1 failure
  * 0 success
  */
-int
+C_DECL int
 rt_joint_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *UNUSED(mat), const struct db_i *dbip)
 {
     if (ip) RT_CK_DB_INTERNAL(ip);
@@ -285,7 +301,7 @@ rt_joint_import4(struct rt_db_internal *ip, const struct bu_external *ep, const 
  * -1 failure
  * 0 success
  */
-int
+C_DECL int
 rt_joint_export4(struct bu_external *ep, const struct rt_db_internal *ip, double UNUSED(local2mm), const struct db_i *dbip)
 {
     if (ep) BU_CK_EXTERNAL(ep);
@@ -295,7 +311,32 @@ rt_joint_export4(struct bu_external *ep, const struct rt_db_internal *ip, double
     return -1;
 }
 
-int
+C_DECL const char *
+rt_joint_keypoint(point_t *pt, const char *keystr, const mat_t mat,
+		  const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
+{
+    if (!pt || !ip)
+	return NULL;
+
+    struct rt_joint_internal *jip = (struct rt_joint_internal *)ip->idb_ptr;
+    RT_JOINT_CK_MAGIC(jip);
+
+    static const char *default_keystr = "V";
+    const char *k = (keystr) ? keystr : default_keystr;
+
+    /* The joint location is the natural keypoint */
+    if (BU_STR_EQUAL(k, default_keystr)) {
+	point_t mpt;
+	VMOVE(mpt, jip->location);
+	MAT4X3PNT(*pt, mat, mpt);
+	return k;
+    }
+
+    return NULL;
+}
+
+
+C_DECL int
 rt_joint_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
 {
     if (!rop || !ip || !mat)
@@ -313,7 +354,7 @@ rt_joint_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_int
 
     /* Verify that vector1 has unit length */
     double f = MAGNITUDE(jv1);
-    if (f <= SMALL) {
+    if (f <= SQRT_SMALL_FASTF) {
 	bu_log("rt_joint_mat:  bad vector1, len=%g\n", f);
 	return -1;		/* BAD */
     }
@@ -325,7 +366,7 @@ rt_joint_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_int
     }
     /* Verify that vector2 has unit length */
     f = MAGNITUDE(jv2);
-    if (f <= SMALL) {
+    if (f <= SQRT_SMALL_FASTF) {
 	bu_log("rt_joint_mat:  bad vector2, len=%g\n", f);
 	return -1;		/* BAD */
     }
@@ -345,7 +386,7 @@ rt_joint_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_int
 }
 
 
-int
+C_DECL int
 rt_joint_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_joint_internal *jip;
@@ -392,7 +433,7 @@ rt_joint_import5(struct rt_db_internal *ip, const struct bu_external *ep, const 
 }
 
 
-int
+C_DECL int
 rt_joint_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_joint_internal *jip;
@@ -438,7 +479,7 @@ rt_joint_export5(struct bu_external *ep, const struct rt_db_internal *ip, double
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
  */
-int
+C_DECL int
 rt_joint_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
     struct rt_joint_internal *jip = (struct rt_joint_internal *)ip->idb_ptr;
@@ -475,7 +516,7 @@ rt_joint_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbo
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
-void
+C_DECL void
 rt_joint_ifree(struct rt_db_internal *ip)
 {
     RT_CK_DB_INTERNAL(ip);
@@ -485,7 +526,7 @@ rt_joint_ifree(struct rt_db_internal *ip)
 }
 
 
-int
+C_DECL int
 rt_joint_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     struct rt_joint_internal *jip;
@@ -501,8 +542,8 @@ rt_joint_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
     return -1;
 }
 
-void
-rt_joint_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
+C_DECL int
+rt_joint_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char *UNUSED(variant), const point_t origin, double UNUSED(scale))
 {
     struct rt_joint_internal* ip;
 
@@ -516,15 +557,17 @@ rt_joint_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
     intern->idb_ptr = (void *)ip;
 
     ip->magic = RT_JOINT_INTERNAL_MAGIC;
+    VMOVE(ip->location, origin);
     struct bu_vls empty = BU_VLS_INIT_ZERO;
     ip->reference_path_1 = empty;
     ip->reference_path_2 = empty;
     VSET(ip->vector1, 0.0, 1.0, 0.0);
     VSET(ip->vector2, 0.0, 1.0, 0.0);
+    return BRLCAD_OK;
 }
 
 
-int
+C_DECL int
 rt_joint_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
     if (ip) RT_CK_DB_INTERNAL(ip);
@@ -556,7 +599,7 @@ joint_free_selection(struct rt_selection *s)
     BU_FREE(s, struct rt_selection);
 }
 
-struct rt_selection_set *
+C_DECL struct rt_selection_set *
 rt_joint_find_selections(
     const struct rt_db_internal *ip,
     const struct rt_selection_query *query)
@@ -686,7 +729,7 @@ db_path_to_inverse_mat(struct db_i *dbip, const struct db_full_path *fpath, mat_
 	mat_t sub_mat, new_mat, new_mat_inv, comp;
 
 	sub_path.fp_len = i;
-	db_path_to_mat(dbip, &sub_path, sub_mat, 0, NULL);
+	db_path_to_mat(dbip, &sub_path, sub_mat, 0);
 
 	/* isolate to just the mat of the leaf directory */
 	bn_mat_mul(new_mat, inverse_mat, sub_mat);
@@ -698,7 +741,7 @@ db_path_to_inverse_mat(struct db_i *dbip, const struct db_full_path *fpath, mat_
     }
 }
 
-int
+C_DECL int
 rt_joint_process_selection(
     struct rt_db_internal *ip,
     struct db_i *dbip,
@@ -792,7 +835,7 @@ rt_joint_process_selection(
 	union tree *comb_tree, *member;
 	mat_t combined_mat;
 
-	rt_db_get_internal(&path_ip, dp, dbip, NULL, NULL);
+	rt_db_get_internal(&path_ip, dp, dbip, NULL);
 	comb_ip = (struct rt_comb_internal *)path_ip.idb_ptr;
 	comb_tree = comb_ip->tree;
 
@@ -813,11 +856,11 @@ rt_joint_process_selection(
 	bn_mat_mul(combined_mat, member->tr_l.tl_mat, rmat);
 	MAT_COPY(member->tr_l.tl_mat, combined_mat);
     } else {
-	rt_db_get_internal(&path_ip, dp, dbip, rmat, NULL);
+	rt_db_get_internal(&path_ip, dp, dbip, rmat);
     }
 
     /* write changes */
-    rt_db_put_internal(dp, dbip, &path_ip, NULL);
+    rt_db_put_internal(dp, dbip, &path_ip);
 
     VMOVE(js->start, end);
     db_free_full_path(&fpath);

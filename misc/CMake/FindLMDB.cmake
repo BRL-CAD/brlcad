@@ -48,6 +48,10 @@ if(LMDB_ROOT)
   list(APPEND _LMDB_SEARCHES _LMDB_SEARCH_ROOT)
 endif()
 
+# Fall back to default system paths
+set(_LMDB_SEARCH_NORMAL)
+list(APPEND _LMDB_SEARCHES _LMDB_SEARCH_NORMAL)
+
 set(LMDB_NAMES lmdb lmdbd)
 
 # Try each search configuration.
@@ -68,7 +72,7 @@ if(LMDB_FOUND)
   set(LMDB_LIBRARIES ${LMDB_LIBRARY})
 
   if(NOT TARGET LMDB::LMDB)
-    add_library(LMDB::LMDB UNKNOWN IMPORTED)
+    add_library(LMDB::LMDB UNKNOWN IMPORTED GLOBAL)
     set_target_properties(
       LMDB::LMDB
       PROPERTIES IMPORTED_LOCATION "${LMDB_LIBRARY}" INTERFACE_INCLUDE_DIRECTORIES "${LMDB_INCLUDE_DIRS}"

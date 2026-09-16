@@ -1,0 +1,57 @@
+= BOT_SPLIT(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+bot_split - Split a single BOT primitive, containing disjoint groups of facets, into multiple BOT primitives, one BOT per disjoint group.
+
+== SYNOPSIS
+
+[source]
+----
+bot_split {bot} [bot2 bot3]...
+----
+
+
+[[description]]
+== DESCRIPTION
+
+The *bot_split* command is deprecated; use *bot split* for new scripts and
+interactive workflows. The modern command groups its results under a new
+combination by default and supports *--grp* to name that combination; this
+deprecated command retains its original top-level output behavior.
+
+Split a BOT primitive containing edge-disconnected groups of facets into
+multiple BOT primitives, one BOT per group. Facets that meet only at a vertex
+remain separate; facets sharing an edge belong to the same output, including
+when more than two facets share that edge. For example, if a model contains a
+single BOT with separate geometry for each of four tires, the command produces
+one BOT for each tire. The resulting BOTs retain the source mode, orientation,
+flags, plate thickness and face mode, normals, and texture UV data. Their names
+are based on the original BOT name with an available sequential suffix. Object
+attributes are copied to every result, and the result names are listed when
+the command completes.
+
+[[examples]]
+== EXAMPLES
+
+.Split one disjoint BoT into separate named pieces.
+[example]
+====
+mged>**bot_split tires.bot**
+
+Breaks _tires.bot_ into one BoT per disconnected facet island, which is useful when imported mesh data contains several logically separate parts in a single primitive.
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

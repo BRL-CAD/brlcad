@@ -1,7 +1,7 @@
 #                        T E X T . T C L
 # BRL-CAD
 #
-# Copyright (c) 1995-2025 United States Government as represented by
+# Copyright (c) 1995-2026 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -1584,7 +1584,13 @@ proc text_paste { w } {
     global mged_gui
 
     if {!$mged_gui($w,moveView)} {
-	catch {$w insert insert [selection get -displayof $w]}
+	set paste_status [catch {$w insert insert [selection get -displayof $w]}]
+	if {$paste_status == 0} {
+	    # Text insertion can leave the hlt tag attached to the character
+	    # that was under the cursor before the paste.  Re-anchor it at the
+	    # insertion mark so pasted text cannot capture the cursor box.
+	    cursor_highlight $w
+	}
 	$w see insert
     }
 
@@ -1743,10 +1749,10 @@ proc tab_expansion { line } {
     if { $len > 1 } {
 	# already have complete command, so do object expansion
 
-	# check if we have an open db
-	set dbCommand [info command db]
-	if { [string length $dbCommand] == 0 } {
-	    # no db command means no db is open, cannot expand
+	# The libged db dispatcher exists even when no database is open, so test
+	# an operation that requires a database rather than command existence.
+	if {[catch {db version}]} {
+	    # no open database means object expansion is unavailable
 	    return [list $line {}]
 	}
 

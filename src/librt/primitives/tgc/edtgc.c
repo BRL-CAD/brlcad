@@ -1,7 +1,7 @@
 /*                         E D T G C . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2025 United States Government as represented by
+ * Copyright (c) 1996-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,8 +28,11 @@
 
 #include "vmath.h"
 #include "nmg.h"
+#include "bu/opt.h"
 #include "raytrace.h"
+#include "rt/db4.h"
 #include "rt/geom.h"
+#include "rt/primitives/tgc.h"
 #include "wdb.h"
 
 #include "../edit_private.h"
@@ -52,7 +55,7 @@
 #define ECMD_TGC_SCALE_H_V	2028
 #define ECMD_TGC_SCALE_H_V_AB	2112
 
-void
+C_DECL void
 rt_edit_tgc_set_edit_mode(struct rt_edit *s, int mode)
 {
     // Most of the commands are scale, so set those flags by default.  That
@@ -112,13 +115,334 @@ struct rt_edit_menu_item tgc_menu[] = {
     { "", NULL, 0 }
 };
 
-struct rt_edit_menu_item *
+C_DECL struct rt_edit_menu_item *
 rt_edit_tgc_menu_item(const struct bn_tol *UNUSED(tol))
 {
     return tgc_menu;
 }
 
-void
+/* ------------------------------------------------------------------ */
+/* ft_edit_desc descriptor for the Truncated General Cone primitive   */
+/* ------------------------------------------------------------------ */
+
+static const struct rt_edit_param_desc tgc_h_params[] = {
+    {
+	"h",                  /* name         */
+	"Height (magnitude)", /* label        */
+	RT_EDIT_PARAM_SCALAR, /* type         */
+	0,                    /* index        */
+	1e-10,                /* range_min    */
+	RT_EDIT_PARAM_NO_LIMIT, /* range_max  */
+	"length",             /* units        */
+	0, NULL, NULL,        /* enum (unused) */
+	NULL                  /* prim_field   */
+    }
+};
+
+static const struct rt_edit_param_desc tgc_a_params[] = {
+    {
+	"a",                  /* name         */
+	"Semi-Axis A",        /* label        */
+	RT_EDIT_PARAM_SCALAR, /* type         */
+	0,                    /* index        */
+	1e-10,                /* range_min    */
+	RT_EDIT_PARAM_NO_LIMIT, /* range_max  */
+	"length",             /* units        */
+	0, NULL, NULL,        /* enum (unused) */
+	NULL                  /* prim_field   */
+    }
+};
+
+static const struct rt_edit_param_desc tgc_b_params[] = {
+    {
+	"b",                  /* name         */
+	"Semi-Axis B",        /* label        */
+	RT_EDIT_PARAM_SCALAR, /* type         */
+	0,                    /* index        */
+	1e-10,                /* range_min    */
+	RT_EDIT_PARAM_NO_LIMIT, /* range_max  */
+	"length",             /* units        */
+	0, NULL, NULL,        /* enum (unused) */
+	NULL                  /* prim_field   */
+    }
+};
+
+static const struct rt_edit_param_desc tgc_c_params[] = {
+    {
+	"c",                  /* name         */
+	"Semi-Axis C (top)",  /* label        */
+	RT_EDIT_PARAM_SCALAR, /* type         */
+	0,                    /* index        */
+	1e-10,                /* range_min    */
+	RT_EDIT_PARAM_NO_LIMIT, /* range_max  */
+	"length",             /* units        */
+	0, NULL, NULL,        /* enum (unused) */
+	NULL                  /* prim_field   */
+    }
+};
+
+static const struct rt_edit_param_desc tgc_d_params[] = {
+    {
+	"d",                  /* name         */
+	"Semi-Axis D (top)",  /* label        */
+	RT_EDIT_PARAM_SCALAR, /* type         */
+	0,                    /* index        */
+	1e-10,                /* range_min    */
+	RT_EDIT_PARAM_NO_LIMIT, /* range_max  */
+	"length",             /* units        */
+	0, NULL, NULL,        /* enum (unused) */
+	NULL                  /* prim_field   */
+    }
+};
+
+static const struct rt_edit_param_desc tgc_ab_params[] = {
+    {
+	"ab",                 /* name         */
+	"A = B",              /* label        */
+	RT_EDIT_PARAM_SCALAR, /* type         */
+	0,                    /* index        */
+	1e-10,                /* range_min    */
+	RT_EDIT_PARAM_NO_LIMIT, /* range_max  */
+	"length",             /* units        */
+	0, NULL, NULL,        /* enum (unused) */
+	NULL                  /* prim_field   */
+    }
+};
+
+static const struct rt_edit_param_desc tgc_cd_params[] = {
+    {
+	"cd",                 /* name         */
+	"C = D",              /* label        */
+	RT_EDIT_PARAM_SCALAR, /* type         */
+	0,                    /* index        */
+	1e-10,                /* range_min    */
+	RT_EDIT_PARAM_NO_LIMIT, /* range_max  */
+	"length",             /* units        */
+	0, NULL, NULL,        /* enum (unused) */
+	NULL                  /* prim_field   */
+    }
+};
+
+static const struct rt_edit_param_desc tgc_abcd_params[] = {
+    {
+	"abcd",               /* name         */
+	"A = B = C = D",      /* label        */
+	RT_EDIT_PARAM_SCALAR, /* type         */
+	0,                    /* index        */
+	1e-10,                /* range_min    */
+	RT_EDIT_PARAM_NO_LIMIT, /* range_max  */
+	"length",             /* units        */
+	0, NULL, NULL,        /* enum (unused) */
+	NULL                  /* prim_field   */
+    }
+};
+
+/* New endpoint position (absolute, in local units) — used by all MV_H* ops */
+static const struct rt_edit_param_desc tgc_endpoint_params[] = {
+    {
+	"endpoint",           /* name         */
+	"New Endpoint (X Y Z)", /* label      */
+	RT_EDIT_PARAM_POINT,  /* type         */
+	0,                    /* index (uses e_para[0..2]) */
+	RT_EDIT_PARAM_NO_LIMIT, /* range_min  */
+	RT_EDIT_PARAM_NO_LIMIT, /* range_max  */
+	"length",             /* units        */
+	0, NULL, NULL,        /* enum (unused) */
+	NULL                  /* prim_field   */
+    }
+};
+
+/* Absolute rotation in degrees about X, Y, Z — used by ROT_H and ROT_AB */
+static const struct rt_edit_param_desc tgc_rot_deg_params[] = {
+    {
+	"rot_xyz",            /* name         */
+	"Rotation X Y Z (deg)", /* label      */
+	RT_EDIT_PARAM_VECTOR, /* type         */
+	0,                    /* index (uses e_para[0..2]) */
+	RT_EDIT_PARAM_NO_LIMIT, /* range_min  */
+	RT_EDIT_PARAM_NO_LIMIT, /* range_max  */
+	"degrees",            /* units        */
+	0, NULL, NULL,        /* enum (unused) */
+	NULL                  /* prim_field   */
+    }
+};
+
+static const struct rt_edit_cmd_desc tgc_cmds[] = {
+    {
+	ECMD_TGC_SCALE_H,     /* cmd_id       */
+	"Set H",              /* label        */
+	"geometry",           /* category     */
+	1,                    /* nparam       */
+	tgc_h_params,         /* params       */
+	1,                    /* interactive  */
+	10 /* display_order */, "tgc,trc,tec,rec,rcc" /* req_types */
+    },
+    {
+	ECMD_TGC_SCALE_H_V,   /* cmd_id       */
+	"Set H (move V)",     /* label        */
+	"geometry",           /* category     */
+	1,                    /* nparam       */
+	tgc_h_params,         /* params       */
+	1,                    /* interactive  */
+	20 /* display_order */, "tgc,trc,tec,rec,rcc" /* req_types */
+    },
+    {
+	ECMD_TGC_SCALE_H_CD,  /* cmd_id       */
+	"Set H (adj C,D)",    /* label        */
+	"geometry",           /* category     */
+	1,                    /* nparam       */
+	tgc_h_params,         /* params       */
+	1,                    /* interactive  */
+	30 /* display_order */, "tgc,trc,tec,rec,rcc" /* req_types */
+    },
+    {
+	ECMD_TGC_SCALE_H_V_AB, /* cmd_id      */
+	"Set H (move V, adj A,B)", /* label   */
+	"geometry",           /* category     */
+	1,                    /* nparam       */
+	tgc_h_params,         /* params       */
+	1,                    /* interactive  */
+	40 /* display_order */, "tgc,trc,tec,rec,rcc" /* req_types */
+    },
+    {
+	ECMD_TGC_SCALE_A,     /* cmd_id       */
+	"Set A",              /* label        */
+	"geometry",           /* category     */
+	1,                    /* nparam       */
+	tgc_a_params,         /* params       */
+	1,                    /* interactive  */
+	50 /* display_order */, "tgc,tec,rec" /* req_types */
+    },
+    {
+	ECMD_TGC_SCALE_B,     /* cmd_id       */
+	"Set B",              /* label        */
+	"geometry",           /* category     */
+	1,                    /* nparam       */
+	tgc_b_params,         /* params       */
+	1,                    /* interactive  */
+	60 /* display_order */, "tgc,tec,rec" /* req_types */
+    },
+    {
+	ECMD_TGC_SCALE_C,     /* cmd_id       */
+	"Set C",              /* label        */
+	"geometry",           /* category     */
+	1,                    /* nparam       */
+	tgc_c_params,         /* params       */
+	1,                    /* interactive  */
+	70 /* display_order */, "tgc,tec" /* req_types */
+    },
+    {
+	ECMD_TGC_SCALE_D,     /* cmd_id       */
+	"Set D",              /* label        */
+	"geometry",           /* category     */
+	1,                    /* nparam       */
+	tgc_d_params,         /* params       */
+	1,                    /* interactive  */
+	80 /* display_order */, "tgc,tec" /* req_types */
+    },
+    {
+	ECMD_TGC_SCALE_AB,    /* cmd_id       */
+	"Set A,B",            /* label        */
+	"geometry",           /* category     */
+	1,                    /* nparam       */
+	tgc_ab_params,        /* params       */
+	1,                    /* interactive  */
+	90 /* display_order */, "tgc,trc,tec,rec,rcc" /* req_types */
+    },
+    {
+	ECMD_TGC_SCALE_CD,    /* cmd_id       */
+	"Set C,D",            /* label        */
+	"geometry",           /* category     */
+	1,                    /* nparam       */
+	tgc_cd_params,        /* params       */
+	1,                    /* interactive  */
+	100 /* display_order */, "tgc,trc,tec" /* req_types */
+    },
+    {
+	ECMD_TGC_SCALE_ABCD,  /* cmd_id       */
+	"Set A,B,C,D",        /* label        */
+	"geometry",           /* category     */
+	1,                    /* nparam       */
+	tgc_abcd_params,      /* params       */
+	1,                    /* interactive  */
+	110 /* display_order */, "tgc,trc,tec,rec,rcc" /* req_types */
+    },
+    {
+	ECMD_TGC_MV_H,        /* cmd_id       */
+	"Move End H(rt)",     /* label        */
+	"move",               /* category     */
+	1,                    /* nparam       */
+	tgc_endpoint_params,  /* params       */
+	1,                    /* interactive  */
+	120 /* display_order */, "tgc,trc,tec,rec,rcc" /* req_types */
+    },
+    {
+	ECMD_TGC_MV_HH,       /* cmd_id       */
+	"Move End H",         /* label        */
+	"move",               /* category     */
+	1,                    /* nparam       */
+	tgc_endpoint_params,  /* params       */
+	1,                    /* interactive  */
+	130 /* display_order */, "tgc,trc,tec,rec,rcc" /* req_types */
+    },
+    {
+	ECMD_TGC_MV_H_CD,     /* cmd_id       */
+	"Move End H (adj C,D)", /* label      */
+	"move",               /* category     */
+	1,                    /* nparam       */
+	tgc_endpoint_params,  /* params       */
+	1,                    /* interactive  */
+	140 /* display_order */, "tgc,trc,tec,rec,rcc" /* req_types */
+    },
+    {
+	ECMD_TGC_MV_H_V_AB,   /* cmd_id       */
+	"Move End H (move V, adj A,B)", /* label */
+	"move",               /* category     */
+	1,                    /* nparam       */
+	tgc_endpoint_params,  /* params       */
+	1,                    /* interactive  */
+	150 /* display_order */, "tgc,trc,tec,rec,rcc" /* req_types */
+    },
+    {
+	ECMD_TGC_ROT_H,       /* cmd_id       */
+	"Rotate H",           /* label        */
+	"rotation",           /* category     */
+	1,                    /* nparam       */
+	tgc_rot_deg_params,   /* params       */
+	1,                    /* interactive  */
+	160 /* display_order */, "tgc,trc,tec,rec,rcc" /* req_types */
+    },
+    {
+	ECMD_TGC_ROT_AB,      /* cmd_id       */
+	"Rotate AxB",         /* label        */
+	"rotation",           /* category     */
+	1,                    /* nparam       */
+	tgc_rot_deg_params,   /* params       */
+	1,                    /* interactive  */
+	170 /* display_order */, "tgc,trc,tec,rec,rcc" /* req_types */
+    }
+};
+
+static const struct rt_edit_opt_desc tgc_opts[] = {
+    { "type", "Type Override", "Set primitive type override (e.g. type=rcc)", RT_EDIT_PARAM_STRING }
+};
+
+static const struct rt_edit_prim_desc tgc_prim_desc = {
+    "tgc",                /* prim_type    */
+    "Truncated General Cone", /* prim_label */
+    17,                   /* ncmd         */
+    tgc_cmds,             /* cmds         */
+    1,                    /* nopt         */
+    tgc_opts              /* opts         */
+};
+
+C_DECL const struct rt_edit_prim_desc *
+rt_edit_tgc_edit_desc(void)
+{
+    return &tgc_prim_desc;
+}
+
+C_DECL void
 rt_edit_tgc_e_axes_pos(
 	struct rt_edit *s,
 	const struct rt_db_internal *ip,
@@ -140,7 +464,7 @@ rt_edit_tgc_e_axes_pos(
 
 #define V3BASE2LOCAL(_pt) (_pt)[X]*base2local, (_pt)[Y]*base2local, (_pt)[Z]*base2local
 
-void
+C_DECL void
 rt_edit_tgc_write_params(
 	struct bu_vls *p,
        	const struct rt_db_internal *ip,
@@ -168,7 +492,7 @@ rt_edit_tgc_write_params(
     if (ln) *ln = '\0'; \
     while (lc && strchr(lc, ':')) lc++
 
-int
+C_DECL int
 rt_edit_tgc_read_params(
 	struct rt_db_internal *ip,
 	const char *fc,
@@ -657,9 +981,14 @@ ecmd_tgc_rot_h(struct rt_edit *s)
 	 */
 	bn_mat_mul(mat1, edit, s->e_mat);
 	bn_mat_mul(mat, s->e_invmat, mat1);
-	MAT4X3VEC(tgc->h, mat, tgc->h);
+	/* Use a temp to avoid MAT4X3VEC output/input aliasing */
+	vect_t h_tmp;
+	MAT4X3VEC(h_tmp, mat, tgc->h);
+	VMOVE(tgc->h, h_tmp);
     } else {
-	MAT4X3VEC(tgc->h, s->incr_change, tgc->h);
+	vect_t h_tmp;
+	MAT4X3VEC(h_tmp, s->incr_change, tgc->h);
+	VMOVE(tgc->h, h_tmp);
     }
 
     MAT_IDN(s->incr_change);
@@ -722,15 +1051,26 @@ ecmd_tgc_rot_ab(struct rt_edit *s)
 	 */
 	bn_mat_mul(mat1, edit, s->e_mat);
 	bn_mat_mul(mat, s->e_invmat, mat1);
-	MAT4X3VEC(tgc->a, mat, tgc->a);
-	MAT4X3VEC(tgc->b, mat, tgc->b);
-	MAT4X3VEC(tgc->c, mat, tgc->c);
-	MAT4X3VEC(tgc->d, mat, tgc->d);
+	/* Use temps to avoid MAT4X3VEC output/input aliasing */
+	vect_t a_tmp, b_tmp, c_tmp, d_tmp;
+	MAT4X3VEC(a_tmp, mat, tgc->a);
+	MAT4X3VEC(b_tmp, mat, tgc->b);
+	MAT4X3VEC(c_tmp, mat, tgc->c);
+	MAT4X3VEC(d_tmp, mat, tgc->d);
+	VMOVE(tgc->a, a_tmp);
+	VMOVE(tgc->b, b_tmp);
+	VMOVE(tgc->c, c_tmp);
+	VMOVE(tgc->d, d_tmp);
     } else {
-	MAT4X3VEC(tgc->a, s->incr_change, tgc->a);
-	MAT4X3VEC(tgc->b, s->incr_change, tgc->b);
-	MAT4X3VEC(tgc->c, s->incr_change, tgc->c);
-	MAT4X3VEC(tgc->d, s->incr_change, tgc->d);
+	vect_t a_tmp, b_tmp, c_tmp, d_tmp;
+	MAT4X3VEC(a_tmp, s->incr_change, tgc->a);
+	MAT4X3VEC(b_tmp, s->incr_change, tgc->b);
+	MAT4X3VEC(c_tmp, s->incr_change, tgc->c);
+	MAT4X3VEC(d_tmp, s->incr_change, tgc->d);
+	VMOVE(tgc->a, a_tmp);
+	VMOVE(tgc->b, b_tmp);
+	VMOVE(tgc->c, c_tmp);
+	VMOVE(tgc->d, d_tmp);
     }
     MAT_IDN(s->incr_change);
 
@@ -818,24 +1158,12 @@ rt_edit_tgc_pscale(struct rt_edit *s)
     return 0;
 }
 
-int
+C_DECL int
 rt_edit_tgc_edit(struct rt_edit *s)
 {
     int ret = 0;
 
     switch (s->edit_flag) {
-	case RT_PARAMS_EDIT_SCALE:
-	    /* scale the solid uniformly about its vertex point */
-	    ret = edit_sscale(s);
-	    break;
-	case RT_PARAMS_EDIT_TRANS:
-	    /* translate solid */
-	    edit_stra(s);
-	    break;
-	case RT_PARAMS_EDIT_ROT:
-	    /* rot solid about vertex */
-	    edit_srot(s);
-	    break;
 	case ECMD_TGC_MV_H:
 	    ret = ecmd_tgc_mv_h(s);
 	    break;
@@ -848,8 +1176,22 @@ rt_edit_tgc_edit(struct rt_edit *s)
 	case ECMD_TGC_ROT_AB:
 	    ret = ecmd_tgc_rot_ab(s);
 	    break;
-	default:
+	case ECMD_TGC_SCALE_H:
+	case ECMD_TGC_SCALE_H_V:
+	case ECMD_TGC_SCALE_H_CD:
+	case ECMD_TGC_SCALE_H_V_AB:
+	case ECMD_TGC_SCALE_A:
+	case ECMD_TGC_SCALE_B:
+	case ECMD_TGC_SCALE_C:
+	case ECMD_TGC_SCALE_D:
+	case ECMD_TGC_SCALE_AB:
+	case ECMD_TGC_SCALE_CD:
+	case ECMD_TGC_SCALE_ABCD:
 	    ret = rt_edit_tgc_pscale(s);
+	    break;
+	default:
+	    ret = edit_generic(s);
+	    break;
     }
 
     bu_clbk_t f = NULL;
@@ -861,7 +1203,7 @@ rt_edit_tgc_edit(struct rt_edit *s)
     return ret;
 }
 
-int
+C_DECL int
 rt_edit_tgc_edit_xy(
 	struct rt_edit *s,
 	const vect_t mousevec
@@ -874,8 +1216,9 @@ rt_edit_tgc_edit_xy(
 
     switch (s->edit_flag) {
 	case RT_PARAMS_EDIT_SCALE:
+	case ECMD_TGC_SCALE_A:
 	case ECMD_TGC_SCALE_AB:
-	case ECMD_TGC_SCALE_ABCD:  
+	case ECMD_TGC_SCALE_ABCD:
 	case ECMD_TGC_SCALE_B:
 	case ECMD_TGC_SCALE_C:
 	case ECMD_TGC_SCALE_CD:
@@ -902,21 +1245,127 @@ rt_edit_tgc_edit_xy(
 	    if (f)
 		(*f)(0, NULL, d, NULL);
 	    return BRLCAD_ERROR;
-        case RT_PARAMS_EDIT_ROT:
-            bu_vls_printf(s->log_str, "RT_PARAMS_EDIT_ROT XY editing setup unimplemented in %s_edit_xy callback\n", EDOBJ[ip->idb_type].ft_label);
-            rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-            if (f)
-                (*f)(0, NULL, d, NULL);
-            return BRLCAD_ERROR;
 	default:
-	    // Everything else should be a scale
-	    edit_sscale_xy(s, mousevec);
-	    return 0;
+	    return edit_generic_xy(s, mousevec);
     }
 
     edit_abs_tra(s, pos_view);
 
     return 0;
+}
+
+
+
+int
+rt_edit_tgc_repair(struct bu_vls *log_str, struct rt_db_internal *ip, const struct bn_tol *tol, int argc, const char **argv)
+{
+    struct rt_tgc_internal *tip;
+    fastf_t mag_a, mag_b, mag_c, mag_d;
+    int repaired = 0;
+    int options_json = 0;
+    int print_help = 0;
+
+    struct bu_opt_desc d[3];
+    BU_OPT(d[0], "h", "help", "", NULL, &print_help, "Print help");
+    BU_OPT(d[1], "", "options-json", "", NULL, &options_json, "Return JSON of supported options");
+    BU_OPT_NULL(d[2]);
+
+    if (argc > 0 && argv) {
+        bu_opt_parse(NULL, argc, argv, d);
+    }
+
+    if (options_json) {
+        if (log_str) {
+            bu_vls_printf(log_str, "{\"options\":[]}");
+        }
+        return 1;
+    }
+
+    if (print_help) {
+        if (log_str) {
+            char *option_help = bu_opt_describe(d, NULL);
+            bu_vls_printf(log_str, "{\"status\":\"help\",\"message\":\"Options:\\n%s\"}", option_help ? option_help : "");
+            if (option_help) bu_free(option_help, "help str");
+        }
+        return -1;
+    }
+
+    RT_CK_DB_INTERNAL(ip);
+    tip = (struct rt_tgc_internal *)ip->idb_ptr;
+    RT_TGC_CK_MAGIC(tip);
+
+    if (!tol) {
+        static const struct bn_tol default_tol = BN_TOL_INIT_TOL;
+        tol = &default_tol;
+    }
+
+    mag_a = MAGNITUDE(tip->a);
+    mag_b = MAGNITUDE(tip->b);
+    mag_c = MAGNITUDE(tip->c);
+    mag_d = MAGNITUDE(tip->d);
+
+    fastf_t mag_h = MAGNITUDE(tip->h);
+
+    if (mag_h < tol->dist) {
+        vect_t cross;
+        fastf_t new_len;
+        VCROSS(cross, tip->a, tip->b);
+        if (MAGSQ(cross) > SQRT_SMALL_FASTF) {
+            new_len = (mag_a + mag_b) * 0.5;
+            if (new_len < SQRT_SMALL_FASTF) new_len = 1.0;
+            VUNITIZE(cross);
+            VSCALE(tip->h, cross, new_len);
+            repaired++;
+        } else {
+            VCROSS(cross, tip->c, tip->d);
+            if (MAGSQ(cross) > SQRT_SMALL_FASTF) {
+                new_len = (mag_c + mag_d) * 0.5;
+                if (new_len < SQRT_SMALL_FASTF) new_len = 1.0;
+                VUNITIZE(cross);
+                VSCALE(tip->h, cross, new_len);
+                repaired++;
+            } else {
+                VSET(tip->h, 0.0, 0.0, 1.0);
+                repaired++;
+            }
+        }
+    }
+
+    if (mag_a > SQRT_SMALL_FASTF && mag_b > SQRT_SMALL_FASTF) {
+        fastf_t f = VDOT(tip->a, tip->b) / (mag_a * mag_b);
+        if (!NEAR_ZERO(f, tol->perp)) {
+            vect_t proj;
+            VSCALE(proj, tip->a, VDOT(tip->b, tip->a) / MAGSQ(tip->a));
+            VSUB2(tip->b, tip->b, proj);
+            /* Restore length */
+            VSCALE(tip->b, tip->b, mag_b / MAGNITUDE(tip->b));
+            repaired++;
+        }
+    }
+
+    if (mag_a > SQRT_SMALL_FASTF && mag_c > SQRT_SMALL_FASTF) {
+        fastf_t f = 1.0 - VDOT(tip->a, tip->c) / (mag_a * mag_c);
+        if (!NEAR_ZERO(f, tol->perp)) {
+            fastf_t sign = (VDOT(tip->a, tip->c) >= 0.0) ? 1.0 : -1.0;
+            VSCALE(tip->c, tip->a, sign * mag_c / mag_a);
+            repaired++;
+        }
+    }
+
+    if (mag_b > SQRT_SMALL_FASTF && mag_d > SQRT_SMALL_FASTF) {
+        fastf_t f = 1.0 - VDOT(tip->b, tip->d) / (mag_b * mag_d);
+        if (!NEAR_ZERO(f, tol->perp)) {
+            fastf_t sign = (VDOT(tip->b, tip->d) >= 0.0) ? 1.0 : -1.0;
+            VSCALE(tip->d, tip->b, sign * mag_d / mag_b);
+            repaired++;
+        }
+    }
+
+    if (repaired > 0 && log_str) {
+        bu_vls_printf(log_str, "{\"status\":\"success\",\"message\":\"Successfully repaired TGC\"}");
+    }
+
+    return repaired > 0 ? 0 : -1;
 }
 
 /*
@@ -928,3 +1377,24 @@ rt_edit_tgc_edit_xy(
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+
+RT_EXPORT int
+rt_tgc_std_type(const struct rt_db_internal *ip, const struct bn_tol *tol)
+{
+    struct rt_tgc_internal *tgc = (struct rt_tgc_internal *)ip->idb_ptr;
+    int nat_type = TGC;
+    double a = MAGNITUDE(tgc->a);
+    double b = MAGNITUDE(tgc->b);
+    double c = MAGNITUDE(tgc->c);
+    double d = MAGNITUDE(tgc->d);
+    
+    if (NEAR_EQUAL(a, b, tol->dist) && NEAR_EQUAL(c, d, tol->dist)) {
+        if (NEAR_EQUAL(a, c, tol->dist)) nat_type = RCC;
+        else nat_type = TRC;
+    } else {
+        if (NEAR_EQUAL(a, c, tol->dist) && NEAR_EQUAL(b, d, tol->dist)) nat_type = REC;
+        else nat_type = TEC;
+    }
+
+    return nat_type;
+}

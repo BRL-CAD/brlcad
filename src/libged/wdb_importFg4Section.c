@@ -1,7 +1,7 @@
 /*              I M P O R T F G 4 S E C T I O N . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2025 United States Government as represented by
+ * Copyright (c) 1994-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -55,7 +55,7 @@ static int group_id=(-1);	/* Group identification number from SECTION card */
 static int comp_id=(-1);	/* Component identification number from SECTION card */
 static int region_id=0;		/* Region id number (group id no X 1000 + component id no) */
 static char field[9];		/* Space for storing one field from an input line */
-static int bot=0;		/* Flag: >0 -> There are BOT's in current component */
+static int bot_id=0;		/* Flag: >0 -> There are BOT's in current component */
 static int debug=0;		/* Debug flag */
 
 static int *FACES=NULL;		/* one triplet per face indexing three grid points */
@@ -137,10 +137,12 @@ rt_mk_bot_w_normals(
     botip->faces = (int *)bu_calloc(num_faces * 3, sizeof(int), "botip->faces");
     for (i = 0; i < num_faces * 3; i++)
 	botip->faces[i] = faces[i];
-    if (botmode == RT_BOT_PLATE) {
+    if (botmode == RT_BOT_PLATE || botmode == RT_BOT_PLATE_NOCOS) {
 	botip->thickness = (fastf_t *)bu_calloc(num_faces, sizeof(fastf_t), "botip->thickness");
-	for (i = 0; i < num_faces; i++)
-	    botip->thickness[i] = thickness[i];
+	if (thickness != NULL) {
+	    for (i = 0; i < num_faces; i++)
+		botip->thickness[i] = thickness[i];
+	}
 	botip->face_mode = bu_bitv_dup(face_mode);
     } else {
 	botip->thickness = (fastf_t *)NULL;
@@ -282,8 +284,8 @@ do_tri(char *line)
     bu_strlcpy(field,  &line[8], sizeof(field));
     element_id = atoi(field);
 
-    if (!bot)
-	bot = element_id;
+    if (!bot_id)
+	bot_id = element_id;
 
     if (FACES == NULL) {
 	FACES = (int *)bu_malloc(GRID_BLOCK*3*sizeof(int), "faces");
@@ -337,8 +339,8 @@ do_quad(const char *line)
     if (debug)
 	bu_log("do_quad: %s\n", line);
 
-    if (!bot)
-	bot = element_id;
+    if (!bot_id)
+	bot_id = element_id;
 
     if (FACES == NULL) {
 	FACES = (int *)bu_malloc(GRID_BLOCK*3*sizeof(int), "faces");

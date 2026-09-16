@@ -1,7 +1,7 @@
 /*                       G E D . C P P
  * BRL-CAD
  *
- * Copyright (c) 2000-2025 United States Government as represented by
+ * Copyright (c) 2000-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -60,10 +60,43 @@ extern "C" {
 
 
 void
+ged_subprocesses_terminate(struct ged *gedp)
+{
+    if (gedp == GED_NULL)
+	return;
+
+    /* Detach application event-loop handlers before freeing their ClientData,
+     * then terminate every subprocess.  Removing from the end avoids skipping
+     * entries as the table shrinks. */
+    while (BU_PTBL_LEN(&gedp->ged_subp)) {
+	size_t i = BU_PTBL_LEN(&gedp->ged_subp) - 1;
+	struct ged_subprocess *rrp = (struct ged_subprocess *)BU_PTBL_GET(&gedp->ged_subp, i);
+	if (gedp->ged_delete_io_handler) {
+	    (*gedp->ged_delete_io_handler)(rrp, BU_PROCESS_STDIN);
+	    (*gedp->ged_delete_io_handler)(rrp, BU_PROCESS_STDOUT);
+	    (*gedp->ged_delete_io_handler)(rrp, BU_PROCESS_STDERR);
+	}
+	if (!rrp->aborted) {
+	    (void)bu_process_terminate(rrp->p);
+	    rrp->aborted = 1;
+	}
+	(void)bu_process_wait_n(&rrp->p, 0);
+	bu_ptbl_rm(&gedp->ged_subp, (long *)rrp);
+	BU_PUT(rrp, struct ged_subprocess);
+    }
+    bu_ptbl_reset(&gedp->ged_subp);
+}
+
+
+void
 ged_close(struct ged *gedp)
 {
     if (gedp == GED_NULL)
 	return;
+
+    /* Children and their callbacks must quiesce before either displayed
+     * resources or the database they reference are dismantled. */
+    ged_subprocesses_terminate(gedp);
 
     if (gedp->dbip) {
 	db_close(gedp->dbip);
@@ -72,20 +105,6 @@ ged_close(struct ged *gedp)
 
     if (gedp->ged_lod)
 	bv_mesh_lod_context_destroy(gedp->ged_lod);
-
-    /* Terminate any ged subprocesses */
-    if (gedp != GED_NULL) {
-	for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_subp); i++) {
-	    struct ged_subprocess *rrp = (struct ged_subprocess *)BU_PTBL_GET(&gedp->ged_subp, i);
-	    if (!rrp->aborted) {
-		bu_pid_terminate(bu_process_pid(rrp->p));
-		rrp->aborted = 1;
-	    }
-	    bu_ptbl_rm(&gedp->ged_subp, (long *)rrp);
-	    BU_PUT(rrp, struct ged_subprocess);
-	}
-	bu_ptbl_reset(&gedp->ged_subp);
-    }
 
     ged_destroy(gedp);
     gedp = NULL;
@@ -176,6 +195,7 @@ ged_init(struct ged *gedp)
     /* ? */
     gedp->ged_output_script = NULL;
     gedp->ged_internal_call = 0;
+    gedp->ged_skip_clbks = 0;
 
     gedp->dbi_state = NULL;
 
@@ -283,21 +303,14 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
 {
     struct ged *gedp = NULL;
     struct rt_wdb *wdbp = NULL;
-    struct mater *save_materp = MATER_NULL;
 
     if (filename == NULL)
       return GED_NULL;
-
-    save_materp = rt_material_head();
-    rt_new_material_head(MATER_NULL);
 
     if (BU_STR_EQUAL(dbtype, "db")) {
 	struct db_i *dbip;
 
 	if ((dbip = _ged_open_dbip(filename, existing_only)) == DBI_NULL) {
-	    /* Restore RT's material head */
-	    rt_new_material_head(save_materp);
-
 	    return GED_NULL;
 	}
 
@@ -313,44 +326,11 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
 	 * strings indicates a failure in design and lazy coding.
 	 */
 	if (sscanf(filename, "%p", (void **)&dbip) != 1) {
-	    /* Restore RT's material head */
-	    rt_new_material_head(save_materp);
-
 	    return GED_NULL;
 	}
 
 	if (dbip == DBI_NULL) {
-	    int i;
-
-	    BU_ALLOC(dbip, struct db_i);
-	    dbip->dbi_eof = (b_off_t)-1L;
-	    dbip->dbi_fp = NULL;
-	    dbip->dbi_mf = NULL;
-	    dbip->dbi_read_only = 0;
-
-	    /* Initialize fields */
-	    for (i = 0; i <RT_DBNHASH; i++) {
-		dbip->dbi_Head[i] = RT_DIR_NULL;
-	    }
-
-	    dbip->dbi_local2base = 1.0;		/* mm */
-	    dbip->dbi_base2local = 1.0;
-	    dbip->dbi_title = bu_strdup("Untitled BRL-CAD Database");
-	    dbip->dbi_uses = 1;
-	    dbip->dbi_filename = NULL;
-	    dbip->dbi_filepath = NULL;
-	    dbip->dbi_version = 5;
-
-	    bu_ptbl_init(&dbip->dbi_clients, 128, "dbi_clients[]");
-	    bu_ptbl_init(&dbip->dbi_changed_clbks , 8, "dbi_changed_clbks]");
-	    bu_ptbl_init(&dbip->dbi_update_nref_clbks, 8, "dbi_update_nref_clbks");
-
-	    dbip->dbi_use_comb_instance_ids = 0;
-	    const char *need_comb_inst = getenv("LIBRT_USE_COMB_INSTANCE_SPECIFIERS");
-	    if (BU_STR_EQUAL(need_comb_inst, "1")) {
-		dbip->dbi_use_comb_instance_ids = 1;
-	    }
-	    dbip->dbi_magic = DBI_MAGIC;		/* Now it's valid */
+	    dbip = db_open_inmem();
 	}
 
 	/* Could core dump */
@@ -365,9 +345,6 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
 	else if (BU_STR_EQUAL(dbtype, "inmem_append"))
 	    wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_INMEM_APPEND_ONLY);
 	else {
-	    /* Restore RT's material head */
-	    rt_new_material_head(save_materp);
-
 	    bu_log("wdb_open %s target type not recognized", dbtype);
 	    return GED_NULL;
 	}
@@ -376,7 +353,7 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
     gedp = ged_create();
     gedp->dbip = wdbp->dbip;
 
-    db_update_nref(gedp->dbip, &rt_uniresource);
+    db_update_nref(gedp->dbip);
 
     gedp->ged_lod = NULL;
 
@@ -440,6 +417,7 @@ ged_clbk_exec(struct bu_vls *log, struct ged *gedp, int limit, bu_clbk_t f, int 
     Ged_Internal *gedip = gedp->i->i;
     int rlimit = (limit > 0) ? limit : 1;
 
+    // check depth count before we run clbk
     gedip->clbk_recursion_depth_cnt[f]++;
 
     if (gedip->clbk_recursion_depth_cnt[f] > rlimit) {
@@ -460,7 +438,8 @@ ged_clbk_exec(struct bu_vls *log, struct ged *gedp, int limit, bu_clbk_t f, int 
     // Checks complete - actually run the callback
     int ret = (*f)(ac, av, u1, u2);
 
-    gedip->clbk_recursion_depth_cnt[f]++;
+    // clbk has returned, pop the depth count
+    gedip->clbk_recursion_depth_cnt[f]--;
 
     return ret;
 }
@@ -535,30 +514,28 @@ ged_clbk_set(struct ged *gedp, const char *cmd_str, int mode, bu_clbk_t f, void 
 {
     int ret = BRLCAD_OK;
     if (!gedp || !cmd_str)
-	return BRLCAD_ERROR;
+        return BRLCAD_ERROR;
 
     GED_CK_MAGIC(gedp);
     Ged_Internal *gedip = gedp->i->i;
 
-    // Translate the string to a ged pointer.  Commands can have multiple strings
-    // associated with the same function - we want to use the cmd pointer as the
-    // lookup key, since it will be the same regardless of the string.
-    std::map<std::string, const struct ged_cmd *> *cmap = (std::map<std::string, const struct ged_cmd *> *)ged_cmds;
-    if (!cmap->size())
-	libged_init();
-    std::string scmd = std::string(cmd_str);
-    std::map<std::string, const struct ged_cmd *>::iterator cm_it = cmap->find(scmd);
-    if (cm_it == cmap->end())
+    /* Resolve command by name via registry */
+    ged_ensure_initialized();
+    bu_plugin_cmd_impl cmd = bu_plugin_cmd_get(cmd_str);
+    if (!cmd)
 	return (BRLCAD_ERROR | GED_UNKNOWN);
-    const struct ged_cmd *cmd = cm_it->second;
 
-    std::map<ged_func_ptr, std::pair<bu_clbk_t, void *>> *cm = (mode == BU_CLBK_PRE) ? &gedip->cmd_prerun_clbk : &gedip->cmd_postrun_clbk;
-    cm = (mode == BU_CLBK_DURING) ? &gedip->cmd_during_clbk : cm;
-    cm = (mode == BU_CLBK_LINGER) ? &gedip->cmd_linger_clbk : cm;
-    std::map<ged_func_ptr, std::pair<bu_clbk_t, void *>>::iterator c_it = cm->find(cmd->i->cmd);
+    std::map<ged_func_ptr, std::pair<bu_clbk_t, void *>> *cm =
+        (mode == BU_CLBK_PRE) ? &gedip->cmd_prerun_clbk :
+        (mode == BU_CLBK_POST) ? &gedip->cmd_postrun_clbk :
+        (mode == BU_CLBK_DURING) ? &gedip->cmd_during_clbk :
+        &gedip->cmd_linger_clbk;
+
+    auto c_it = cm->find(cmd);
     if (c_it != cm->end())
-	ret |= GED_OVERRIDE;
-    (*cm)[cmd->i->cmd] = std::make_pair(f, d);
+        ret |= GED_OVERRIDE;
+
+    (*cm)[cmd] = std::make_pair(f, d);
     return ret;
 }
 
@@ -566,32 +543,30 @@ int
 ged_clbk_get(bu_clbk_t *f, void **d, struct ged *gedp, const char *cmd_str, int mode)
 {
     if (!gedp || !cmd_str || !f || !d)
-	return BRLCAD_ERROR;
+        return BRLCAD_ERROR;
+
     GED_CK_MAGIC(gedp);
     Ged_Internal *gedip = gedp->i->i;
 
-    // Translate the string to a ged pointer.  Commands can have multiple strings
-    // associated with the same function - we want to use the cmd pointer as the
-    // lookup key, since it will be the same regardless of the string.
-    std::map<std::string, const struct ged_cmd *> *cmap = (std::map<std::string, const struct ged_cmd *> *)ged_cmds;
-    if (!cmap->size())
-	libged_init();
-    std::string scmd = std::string(cmd_str);
-    std::map<std::string, const struct ged_cmd *>::iterator cm_it = cmap->find(scmd);
-    if (cm_it == cmap->end())
-	return (BRLCAD_ERROR | GED_UNKNOWN);
-    const struct ged_cmd *cmd = cm_it->second;
+    /* Resolve command by name via registry */
+    ged_ensure_initialized();
+    bu_plugin_cmd_impl cmd = bu_plugin_cmd_get(cmd_str);
+    if (!cmd)
+        return (BRLCAD_ERROR | GED_UNKNOWN);
 
-    std::map<ged_func_ptr, std::pair<bu_clbk_t, void *>> *cm = (mode == BU_CLBK_PRE) ? &gedip->cmd_prerun_clbk : &gedip->cmd_postrun_clbk;
-    cm = (mode == BU_CLBK_DURING) ? &gedip->cmd_during_clbk : cm;
-    cm = (mode == BU_CLBK_LINGER) ? &gedip->cmd_linger_clbk : cm;
-    std::map<ged_func_ptr, std::pair<bu_clbk_t, void *>>::iterator c_it = cm->find(cmd->i->cmd);
+    std::map<ged_func_ptr, std::pair<bu_clbk_t, void *>> *cm =
+        (mode == BU_CLBK_PRE) ? &gedip->cmd_prerun_clbk :
+        (mode == BU_CLBK_POST) ? &gedip->cmd_postrun_clbk :
+        (mode == BU_CLBK_DURING) ? &gedip->cmd_during_clbk :
+        &gedip->cmd_linger_clbk;
+
+    auto c_it = cm->find(cmd);
     if (c_it == cm->end()) {
-	// Nothing set, which is fine - return NULL
-	(*f) = NULL;
-	(*d) = NULL;
-	return BRLCAD_OK;
+        (*f) = NULL;
+        (*d) = NULL;
+        return BRLCAD_OK;
     }
+
     (*f) = c_it->second.first;
     (*d) = c_it->second.second;
     return BRLCAD_OK;
@@ -630,4 +605,3 @@ ged_dm_ctx_get(struct ged *gedp, const char *dm_type)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

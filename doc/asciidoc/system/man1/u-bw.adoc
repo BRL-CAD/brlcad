@@ -1,0 +1,86 @@
+= U-BW(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+u-bw - convert unsigned shorts to unsigned chars (8-bit bw data)
+
+== SYNOPSIS
+
+[source]
+----
+u-bw [-l] < u_shorts > bwfile
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*u-bw* reads a stream of 16-bit unsigned short integers from standard
+input and writes a stream of 8-bit unsigned chars to standard output,
+producing data suitable for use as a *bw*(5) black and white image or
+any other unsigned char data stream.
+
+By default each unsigned short is reduced to a single byte by taking the
+high-order byte (a right shift of 8 bits), which scales the
+full 0-65535 range down to 0-255. With the *-l* option the low-order
+byte is kept instead, effectively taking each value modulo 256.
+
+Both standard input and standard output must be redirected; if either is
+a terminal *u-bw* prints a usage message and exits. Data is processed in
+blocks of 512 values, so the byte ordering of the shorts is that of the
+host machine.
+
+[[options]]
+== OPTIONS
+
+*-l*::
+  Keep the low-order (least significant) byte of each unsigned short
+  rather than the default high-order byte. This is equivalent to taking
+  each input value modulo 256.
+
+[[examples]]
+== EXAMPLES
+
+.Down-scale 16-bit samples to an 8-bit bw image
+====
+[source,bash]
+----
+u-bw < heightfield.shorts > heightfield.bw
+pix-fb -F /dev/X heightfield.bw
+----
+Convert a file of unsigned shorts (for example a 16-bit elevation or
+sensor grid) into 8-bit *bw*(5) data by taking the high byte of each
+sample, then display the result on a framebuffer with *pix-fb*(1).
+====
+
+.Keep the low byte to inspect fine detail
+====
+[source,bash]
+----
+u-bw -l < data.shorts > low.bw
+----
+Retain the least significant byte of each short instead of the high
+byte, useful for examining the low-order bits of the source values.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *u-a*(1), *u-d*(1), *u-f*(1), *bw-d*(1), *bw*(5)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

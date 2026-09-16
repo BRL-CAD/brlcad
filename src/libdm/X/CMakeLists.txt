@@ -1,6 +1,7 @@
 set(X_SRCS dm-X.c color.c if_X24.c)
 
 if(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK)
+
   find_package(X11)
 
   set(TCL_ENABLE_TK ON)
@@ -12,6 +13,7 @@ if(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK)
       ${BRLCAD_BINARY_DIR}/include
       ${BRLCAD_SOURCE_DIR}/include
       SYSTEM
+      ${PNG_INCLUDE_DIRS}
       ${X11_INCLUDE_DIR}
       ${TCL_INCLUDE_PATH}
       ${TK_INCLUDE_PATH}
@@ -31,6 +33,7 @@ if(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK)
       dm-X
       libdm
       libbu
+      PNG::PNG
       ${TCL_LIBRARY}
       ${TK_LIBRARY}
       ${X11_LIBRARIES}

@@ -1,7 +1,7 @@
 /*                     Q G V I E W . C P P
  * BRL-CAD
  *
- * Copyright (c) 2021-2025 United States Government as represented by
+ * Copyright (c) 2021-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,7 +29,6 @@
 
 #include "bu/app.h"
 #include "bu/log.h"
-#include "../../libged/alphanum.h"
 #include  <QApplication>
 #include "qtcad/QgModel.h"
 #include "qtcad/QgTreeView.h"

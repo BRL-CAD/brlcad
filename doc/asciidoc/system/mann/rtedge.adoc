@@ -1,0 +1,56 @@
+= RTEDGE(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD MGED Commands
+
+== NAME
+rtedge - Executes the BRL-CAD _rtedge_ program with the default options of "-s512 -M."
+
+== SYNOPSIS
+
+[source]
+----
+rtedge [options] [-- objects]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Executes the BRL-CAD _rtedge_ program with the default options of "-s512 -M." If perspective is turned on, then the _-p_ option will be included with the value of the perspective angle. The current database name is added to the end of the *rtedge* command line along with either the specified _objects_ or, if none is specified, the list of currently displayed objects. The _rtedge_ program is written such that options may be repeated, and the last occurrence of an option will override any earlier occurrences. This allows the user to specify other _size (-s)_ options. The _-M_ option tells _rtedge_ to read the viewing parameters from standard input. See the _man1_ page on _rtedge_ for details.
+
+
+[[examples]]
+== EXAMPLES
+
+The first example shows the use of the *rtedge* command to run the _rtedge_ program to produce an edge image of the current view. The second example shows the use of the *rtedge* command to produce an edge image of an object using MGED's current viewing parameters.
+
+.Run the _rtedge_ program to produce an edge image of the current view in MGED.
+[example]
+====
+mged>**rtedge -s1024**
+
+Runs the _rtedge_ program to produce an edge image of the current view in the MGED display. The image will be white lines on a black background and will be 1024 pixels square.
+
+====
+
+.Run the _rtedge_ program to produce an edge image with black lines on a white background.
+[example]
+====
+mged>**rt -W**
+
+Runs the _rtedge_ program to produce an edge image of the currently drawn objects using MGED's current viewing parameters. The image will have black lines on a white background.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

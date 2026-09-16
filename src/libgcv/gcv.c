@@ -1,7 +1,7 @@
 /*                           G C V . C
  * BRL-CAD
  *
- * Copyright (c) 2015-2025 United States Government as represented by
+ * Copyright (c) 2015-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -106,11 +106,21 @@ _gcv_brlcad_write(struct gcv_context *context,
 	}
     } else {
 	dbip = db_open(dest_path, DB_OPEN_READWRITE);
-	if (!out_wdbp) {
+	if (!dbip) {
 	    bu_log("db_open() failed for '%s'\n", dest_path);
 	    return 0;
 	}
+	if (db_dirbuild(dbip)) {
+	    bu_log("db_dirbuild() failed for '%s'\n", dest_path);
+	    db_close(dbip);
+	    return 0;
+	}
 	out_wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK_APPEND_ONLY);
+	if (!out_wdbp) {
+	    bu_log("wdb_dbopen() failed for '%s'\n", dest_path);
+	    db_close(dbip);
+	    return 0;
+	}
     }
 
     int ret = 1;
@@ -442,11 +452,14 @@ gcv_context_destroy(struct gcv_context *context)
     }
     bu_ptbl_free(context->i->handles);
     BU_PUT(context->i->handles, struct bu_ptbl);
-    BU_PUT(context->i, struct gcv_context_internal);
+    context->i->handles = NULL;
 
-    // TODO - clean up the inmem db so db_close will
-    // do the job correctly here...
     bu_avs_free(&context->messages);
+    db_close(context->dbip);
+    context->dbip = NULL;
+
+    BU_PUT(context->i, struct gcv_context_internal);
+    context->i = NULL;
 }
 
 
@@ -559,7 +572,7 @@ gcv_execute(struct gcv_context *context, const struct gcv_filter *filter,
 	size_t num_objects;
 	struct directory **toplevel_dirs;
 
-	db_update_nref(context->dbip, &rt_uniresource);
+	db_update_nref(context->dbip);
 	num_objects = db_ls(context->dbip, DB_LS_TOPS, NULL, &toplevel_dirs);
 
 	if (num_objects) {

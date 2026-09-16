@@ -1,7 +1,7 @@
 /*                    F B _ G E N E R I C . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2025 United States Government as represented by
+ * Copyright (c) 1986-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -256,6 +256,52 @@ long fb_poll_rate(struct fb *ifp)
     if (!ifp)
 	return 0;
     return ifp->i->if_poll_refresh_rate;
+}
+
+void fb_set_interactive(struct fb *ifp, int on)
+{
+    if (!ifp)
+	return;
+    ifp->i->if_interactive = (on) ? 1 : 0;
+}
+
+int fb_get_interactive(const struct fb *ifp)
+{
+    if (!ifp)
+	return 0;
+    return ifp->i->if_interactive;
+}
+
+void fb_enqueue_event(struct fb *ifp, const struct fb_event *e)
+{
+    int next;
+    if (!ifp || !e)
+	return;
+    if (!ifp->i->if_interactive)
+	return;
+    next = (ifp->i->if_ehead + 1) % FB_EVENT_QUEUE_MAX;
+    if (next == ifp->i->if_etail) {
+	/* queue full - drop the oldest event to make room for the newest */
+	ifp->i->if_etail = (ifp->i->if_etail + 1) % FB_EVENT_QUEUE_MAX;
+    }
+    ifp->i->if_equeue[ifp->i->if_ehead] = *e;
+    ifp->i->if_ehead = next;
+}
+
+int fb_next_event(struct fb *ifp, struct fb_event *e)
+{
+    if (!ifp || !e)
+	return 0;
+    if (!ifp->i->if_interactive)
+	return 0;
+    /* Pump the backend's OS event loop so newly-arrived events are queued. */
+    if (ifp->i->if_poll)
+	(void)(*ifp->i->if_poll)(ifp);
+    if (ifp->i->if_ehead == ifp->i->if_etail)
+	return 0;
+    *e = ifp->i->if_equeue[ifp->i->if_etail];
+    ifp->i->if_etail = (ifp->i->if_etail + 1) % FB_EVENT_QUEUE_MAX;
+    return 1;
 }
 
 int fb_help(struct fb *ifp)
@@ -766,6 +812,11 @@ fb_read_icv(struct fb *ifp, icv_image_t *img_in, int file_xoff_in, int file_yoff
 
     /* Make a copy so we can edit if the options require */
     icv_image_t *img = icv_create(img_in->width, img_in->height, img_in->color_space);
+    if (!img) {
+	if (result)
+	    bu_vls_printf(result, "failed to create image copy");
+	return BRLCAD_ERROR;
+    }
     memcpy(img->data, img_in->data, img_in->width * img_in->height * img_in->channels * sizeof(double));
 
     int file_xoff = file_xoff_in;
@@ -777,7 +828,12 @@ fb_read_icv(struct fb *ifp, icv_image_t *img_in, int file_xoff_in, int file_yoff
     if (file_xoff || file_yoff || file_maxwidth || file_maxheight) {
 	file_maxwidth = (file_maxwidth) ? file_maxwidth : (int)img->width - file_xoff;
 	file_maxheight = (file_maxheight) ? file_maxheight : (int)img->height - file_yoff;
-	icv_rect(img, file_xoff, file_yoff, file_maxwidth, file_maxheight);
+	if (icv_crop_rect(img, file_xoff, file_yoff, file_maxwidth, file_maxheight) != 0) {
+	    if (result)
+		bu_vls_printf(result, "failed to crop image");
+	    icv_destroy(img);
+	    return BRLCAD_ERROR;
+	}
 	// After resize, file offsets are zero. TODO - simplify below logic
 	// to eliminate references to these variables, they should no longer
 	// be needed...
@@ -913,13 +969,20 @@ icv_image_t *
 fb_write_icv(struct fb *ifp, int UNUSED(scr_xoff), int UNUSED(scr_yoff), int UNUSED(width), int UNUSED(height))
 {
     icv_image_t *fbimg = icv_create(fb_getwidth(ifp), fb_getheight(ifp), ICV_COLOR_SPACE_RGB);
+    if (!fbimg)
+	return NULL;
 
     unsigned char *scanline = (unsigned char *)bu_calloc(3 * fb_getwidth(ifp), sizeof(char), "raw image");
     for (int y=0; y < fb_getheight(ifp); y++) {
 	fb_read(ifp, 0, y, scanline, fb_getwidth(ifp));
-	icv_writeline(fbimg, y, scanline, ICV_DATA_UCHAR);
+	if (icv_writeline(fbimg, y, scanline, ICV_DATA_UCHAR) != 0) {
+	    bu_free(scanline, "raw image");
+	    icv_destroy(fbimg);
+	    return NULL;
+	}
     }
 
+    bu_free(scanline, "raw image");
     return fbimg;
 }
 

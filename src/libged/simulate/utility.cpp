@@ -1,7 +1,7 @@
 /*                     U T I L I T Y . C P P
  * BRL-CAD
  *
- * Copyright (c) 2014-2025 United States Government as represented by
+ * Copyright (c) 2014-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -38,6 +38,18 @@
 
 namespace
 {
+
+
+static directory &
+current_dir(const db_full_path &path)
+{
+    RT_CK_FULL_PATH(&path);
+
+    if (path.fp_len <= 0)
+	bu_bomb("empty simulation path");
+
+    return *DB_FULL_PATH_CUR_DIR(&path);
+}
 
 
 static void
@@ -88,7 +100,7 @@ namespace simulate
 TemporaryRegionHandle::TemporaryRegionHandle(db_i &db,
 					     const db_full_path &path) :
     m_db(db),
-    m_dir(*DB_FULL_PATH_CUR_DIR(&path)),
+    m_dir(current_dir(path)),
     m_dir_modified(false),
     m_parent_regions()
 {
@@ -113,9 +125,8 @@ TemporaryRegionHandle::~TemporaryRegionHandle()
     if (m_dir_modified)
 	set_region(m_db, m_dir, false);
 
-    for (std::vector<directory *>::const_iterator it = m_parent_regions.begin();
-	 it != m_parent_regions.end(); ++it)
-	set_region(m_db, **it, true);
+    for (directory * const parent_dir : m_parent_regions)
+	set_region(m_db, *parent_dir, true);
 }
 
 

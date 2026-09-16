@@ -1,7 +1,7 @@
 /*                  S H _ T R E E T H E R M . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2025 United States Government as represented by
+ * Copyright (c) 2004-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -128,17 +128,16 @@ struct tthrm_specific {
 
 
 /* The default values for the variables in the shader specific structure */
-#define SHDR_NULL ((struct tthrm_specific *)0)
-#define SHDR_O(m) bu_offsetof(struct tthrm_specific, m)
+#define TREETHERM_SHDR_O(m) bu_offsetof(struct tthrm_specific, m)
 
 /* description of how to parse/print the arguments to the shader
  * There is at least one line here for each variable in the shader specific
  * structure above
  */
 struct bu_structparse tthrm_parse[] = {
-    {"%f",	1, "l",			SHDR_O(tt_min_temp),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	1, "h", 		SHDR_O(tt_max_temp),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%s",	64, "file",		SHDR_O(tt_name),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "l",			TREETHERM_SHDR_O(tt_min_temp),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "h", 		TREETHERM_SHDR_O(tt_max_temp),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%s",	64, "file",		TREETHERM_SHDR_O(tt_name),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
@@ -439,7 +438,7 @@ tthrm_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, cons
      *
      * Shading is done in "region coordinates":
      */
-    db_region_mat(tthrm_sp->tthrm_m_to_sh, rtip->rti_dbip, rp->reg_name, &rt_uniresource);
+    db_region_mat(tthrm_sp->tthrm_m_to_sh, rtip->rti_dbip, rp->reg_name);
 
     if (optical_debug&OPTICAL_DEBUG_SHADE) {
 	bu_log("min_temp: %17.14e  max_temp %17.14e temp_scale: %17.14e\n",

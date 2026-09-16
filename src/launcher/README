@@ -1,0 +1,194 @@
+BRL-CAD Launcher
+================
+
+A lightweight, cross-platform application launcher intended to serve as the
+"main" BRL-CAD application on platforms (macOS, Windows) where users expect a
+single clickable application that presents the suite of GUI programs (mged,
+archer, rtwizard, ...) and a command shell as a menu of choices.
+
+The launcher is written entirely against existing BRL-CAD libraries.  It does
+NOT depend on Tcl/Tk or Qt.  It draws its window with libfb and libbu, and
+spawns the selected program with libbu's cross-platform sub-process API.
+
+
+Motivation
+----------
+
+BRL-CAD ships hundreds of command-line tools and a handful of GUI programs.
+On UNIX these are launched from a shell; but on macOS and Windows there is a
+strong platform convention that a package installs a single "main" application
+that the user double-clicks.  Historically BRL-CAD had no such front door.
+
+This launcher fills that gap with a small, dependency-light program that:
+
+  * shows a rendered, BRL-CAD-relevant splash image,
+  * presents the available GUI applications and a CLI shell as a menu,
+  * discovers the menu contents dynamically at run time (nothing hard-coded),
+  * launches the chosen program as an independent process, and
+  * runs the same way on every platform BRL-CAD supports.
+
+
+Why libfb (and not libdm / Tk / Qt)
+-----------------------------------
+
+The task constraint is to avoid Tcl/Tk and Qt and to build on BRL-CAD's own
+libraries.  Investigation of the display stack established the following:
+
+  * Every *interactive* libdm backend (wgl, X, glx, tkswrast) is implemented on
+    top of Tk: dm_open() takes a Tcl_Interp*, the backends call
+    Tk_MainWindow(interp) and embed into a Tk widget hierarchy, and they rely
+    on Tk's event loop.  They therefore cannot be used Tk-free.
+
+  * libfb, by contrast, opens a *standalone* native OS window that needs no
+    Tcl interpreter.  fbserv proves this: it calls fb_open() with no interp.
+    The X11 backend (if_X24.c) is entirely Tk-free; the Windows backend
+    (if_wgl.c) uses the native Win32 API and touches Tk only through a trivial
+    Tk_GetHINSTANCE() convenience call.
+
+  * The libfb call table already exposes an event/poll interface (if_poll,
+    if_getcursor, if_selfd) and each windowed backend already runs its own OS
+    event loop.  What was missing was a way to surface those input events (mouse
+    button, motion, key, window-close) to the *application*: the stock handlers
+    consumed button presses internally (e.g. print RGB, close window).
+
+So the launcher is built on libfb, and this work adds a small, opt-in input
+event surface to libfb (see below) so an application can drive an interactive
+framebuffer window without Tk.
+
+Text is drawn with the existing libbu vector-font facility (bu/vfont.h), the
+same font machinery used by the classic "fblabel" tool; rectangles and rules
+are drawn by writing pixel spans with fb_write().  Nothing platform-specific is
+introduced in the launcher itself -- libfb abstracts the platform, exactly as
+it does for the rest of BRL-CAD.
+
+
+New libfb capability: application input events
+----------------------------------------------
+
+A minimal, backward-compatible input-event API is added to libfb (declared in
+include/dm.h, implemented in src/libdm/fb_generic.c):
+
+    typedef enum {
+        FB_EVENT_NONE, FB_EVENT_EXPOSE, FB_EVENT_RESIZE, FB_EVENT_MOTION,
+        FB_EVENT_BUTTON_PRESS, FB_EVENT_BUTTON_RELEASE,
+        FB_EVENT_KEY_PRESS, FB_EVENT_CLOSE
+    } fb_event_type_t;
+
+    struct fb_event { fb_event_type_t type; int x, y; int button; int keycode; int state; };
+
+    void fb_set_interactive(struct fb *ifp, int on);   /* opt in */
+    int  fb_get_interactive(const struct fb *ifp);
+    int  fb_next_event(struct fb *ifp, struct fb_event *e);  /* poll + dequeue */
+
+Design points:
+
+  * Opt-in.  A window only reports events after fb_set_interactive(ifp, 1).
+    When interactive mode is off (the default) the backends behave exactly as
+    before, so fbserv, fbpoint, pix-fb, and every other libfb client are
+    unaffected.
+
+  * Coordinates are reported in libfb convention (origin at lower-left, y up),
+    matching fb_write(), so hit-testing against what was drawn is direct.
+
+  * fb_next_event() drains the backend's OS event queue (if_poll) into a small
+    ring buffer stored on the fb instance, then returns the next event, or 0 if
+    none are pending.  Callers poll at fb_poll_rate() and sleep with bu_snooze()
+    in between.
+
+  * Backends wired: wgl (Win32) and X24 (X11) -- the two Tk-free windowed
+    backends.  Other backends simply never enqueue events (fb_next_event()
+    returns 0), and the launcher then falls back to its console menu.
+
+
+Dynamic application registry
+----------------------------
+
+Menu contents are NOT compiled into the launcher.  At start-up the launcher
+scans a data directory for small manifest files and builds the menu from
+whatever it finds, following the same discover-at-runtime pattern that libgcv
+uses for its converter plugins.
+
+  * Location: BU_DIR_DATA/brlcad/launcher/apps/  (resolved with bu_dir()).
+  * One "*.app" manifest per entry, a simple key = value text format:
+
+        name        = MGED
+        exec        = mged
+        description = Interactive geometry editor
+        category    = Modeling
+        order       = 10
+        console     = 1        # launch attached to a terminal
+        icon        = mged.png # optional, relative to the apps dir
+
+  * Discovery: bu_file_list(dir, "*.app", &files); each file is parsed with the
+    libbu key/value parser.  An entry is shown only if its executable resolves
+    under BU_DIR_BIN (bu_dir + bu_file_exists), so a manifest for an
+    un-installed component is silently skipped.
+
+  * Ordering: by the numeric "order" field, then by name.
+
+Because entries are files installed alongside each application, new GUI programs
+appear in the launcher merely by installing a manifest -- no launcher change and
+no rebuild required.  The stock manifests (mged.app, archer.app, rtwizard.app,
+and a "shell" entry) are installed by this directory's CMakeLists via
+BRLCAD_ADDDATA.
+
+
+Launching
+---------
+
+The selected program is started with libbu's cross-platform process API:
+
+    bu_dir(path, MAXPATHLEN, BU_DIR_BIN, exec, BU_DIR_EXT, NULL);
+    const char *argv[] = { path, NULL };
+    bu_process_create(&p, argv, BU_PROCESS_DEFAULT);
+
+The child runs independently; the launcher stays up so the user can start more
+programs, and exits on the Quit entry or when its window is closed.
+
+
+Splash image
+------------
+
+The splash is a BRL-CAD-relevant *rendered* image.  It is produced by
+raytracing one of the bundled sample databases (e.g. share/db/moss.g) with the
+already-built "rt" tool and committing the resulting PNG as a build asset under
+assets/.  At run time it is loaded with icv_read() and blitted to the window
+with fb_write().  If the asset is missing, the launcher falls back to the
+bundled BRL-CAD logo, and failing that, to a solid background -- it never hard
+errors on a missing image.
+
+
+Console fallback
+----------------
+
+If no windowed framebuffer can be opened (headless session, null backend, or a
+platform whose only libfb window would require Tk), the launcher prints the same
+dynamically-discovered menu to the terminal and reads a numeric/keyboard
+selection.  This guarantees the launcher always runs, everywhere.
+
+
+Files
+-----
+
+    README            this document
+    CMakeLists.txt    build + manifest/asset installation
+    launcher.h        shared declarations (registry + UI entry points)
+    launcher.c        entry point, arg handling, GUI/text selection
+    registry.c        manifest discovery + parsing (dynamic registry)
+    launch.c          process spawning (bu_process) + shell entry
+    fbtext.c/.h       anti-aliased VFONT text rendering into a framebuffer
+    ui_fb.c           libfb windowed UI (splash, menu, event loop)
+    ui_text.c         console fallback UI
+    apps/*.app        stock application manifests (installed as data)
+    assets/splash.png rendered splash image (installed as data)
+
+
+Cross-platform notes
+--------------------
+
+The launcher source contains no #ifdef per-OS logic.  Platform differences are
+handled where they belong: inside libfb (window creation and event pumping),
+inside libbu (bu_dir path resolution, bu_process sub-process creation,
+bu_file_list directory scanning), and inside libicv (image loading).  The libfb
+input-event wiring itself lives in the per-backend files (if_wgl.c, if_X24.c),
+which are already the correct home for platform-specific windowing code.

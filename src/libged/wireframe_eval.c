@@ -1,7 +1,7 @@
 /*                 W I R E F R A M E _ E V A L . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2025 United States Government as represented by
+ * Copyright (c) 1997-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -139,7 +139,7 @@ add_solid(const struct directory *dp,
     BU_ALLOC(eptr, union E_tree);
     eptr->magic = E_TREE_MAGIC;
 
-    id = rt_db_get_internal(&intern, dp, dgcdp->dbip, mat, &rt_uniresource);
+    id = rt_db_get_internal(&intern, dp, dgcdp->dbip, mat);
     if (id < 0) {
 	eptr->l.m = (struct model *)NULL;
 	return eptr;
@@ -1791,7 +1791,7 @@ fix_halfs(struct bigE_data *dgcdp)
 }
 
 
-int
+C_DECL int
 draw_m3(struct bv_scene_obj *s)
 {
 
@@ -1815,7 +1815,7 @@ draw_m3(struct bv_scene_obj *s)
 
     bu_ptbl_init(&dgcdp.leaf_list, 8, "leaf_list");
 
-    dgcdp.rtip = rt_new_rti(dgcdp.dbip);
+    dgcdp.rtip = rt_i_create(dgcdp.dbip);
     dgcdp.rtip->rti_tol = *dgcdp.tol;	/* struct copy */
     dgcdp.rtip->useair = 1;
     dgcdp.ap->a_rt_i = dgcdp.rtip;
@@ -1833,9 +1833,7 @@ draw_m3(struct bv_scene_obj *s)
     if (!path || rt_gettrees(dgcdp.rtip, 1, (const char **)&path, 1)) {
 	bu_ptbl_free(&dgcdp.leaf_list);
 
-	/* do not do an rt_free_rti() (closes the database!!!!) */
-	rt_clean(dgcdp.rtip);
-	bu_free((char *)dgcdp.rtip, "rt_i structure for 'E'");
+	rt_i_destroy(dgcdp.rtip);
 	return BRLCAD_ERROR;
     }
 
@@ -1854,9 +1852,7 @@ draw_m3(struct bv_scene_obj *s)
 	bu_ptbl_reset(&dgcdp.leaf_list);
     }
 
-    /* do not do an rt_free_rti() (closes the database!!!!) */
-    rt_clean(dgcdp.rtip);
-    bu_free((char *)dgcdp.rtip, "rt_i structure for 'E'");
+    rt_i_destroy(dgcdp.rtip);
 
     /* free leaf_list */
     bu_ptbl_free(&dgcdp.leaf_list);

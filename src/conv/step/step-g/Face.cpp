@@ -1,7 +1,7 @@
 /*                 Face.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2025 United States Government as represented by
+ * Copyright (c) 1994-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -25,6 +25,8 @@
  */
 #include "STEPWrapper.h"
 #include "Factory.h"
+
+#include <sstream>
 
 #include "Face.h"
 #include "QuasiUniformSurface.h"
@@ -96,6 +98,32 @@ Face::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	}
 	l->clear();
 	delete l;
+    }
+    size_t outer_bound_count = 0;
+    std::ostringstream outer_bound_ids;
+    for (LIST_OF_FACE_BOUNDS::const_iterator bound = bounds.begin();
+	    bound != bounds.end(); ++bound) {
+	FaceOuterBound *outer = dynamic_cast<FaceOuterBound *>(*bound);
+	if (!outer) continue;
+	if (outer_bound_count) outer_bound_ids << ',';
+	outer_bound_ids << '#' << outer->STEPid();
+	++outer_bound_count;
+    }
+    if (outer_bound_count > 1) {
+	std::ostringstream message;
+	message << "source face violates FACE.wr2: at most one "
+	    "FACE_OUTER_BOUND is permitted, but " << outer_bound_count
+	    << " were supplied";
+	sw->RecordDiagnostic(brlcad::step::DiagnosticSeverity::Warning, id,
+	    "FACE", "bounds", message.str());
+	/* Keep the per-face bound identities available for an explicit diagnostic
+	 * run without making every instance's message text unique.  Large authored
+	 * assemblies can contain the same violation on scores of faces;
+	 * stable text lets the ordinary report aggregate those warnings into one
+	 * representative and count instead of obscuring other conversion output. */
+	if (sw->Verbose())
+	    std::cerr << "FACE #" << id << " supplied FACE_OUTER_BOUND entities "
+		<< outer_bound_ids.str() << std::endl;
     }
     sw->entity_status[id] = STEP_LOADED;
     return true;

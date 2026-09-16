@@ -20,6 +20,102 @@ system's code paths.
 
 
 Tests to set up:
-
-multiple shared and independent attached dms, with view independent drawing
 (eventually) embedded framebuffer raytracing
+
+
+==============================================================================
+APNG Control Images - Usage Guide
+
+This directory uses Animated PNG (APNG) files to store sequences of control
+images for pixel-perfect testing. By packing multiple individual frames into a
+single `.apng` file, we avoid cluttering the repository with hundreds of
+individual `.png` files.
+==============================================================================
+
+The `icv anim` subcommand is used to manage these animations.
+
+---
+Managing APNG Files with `icv anim`
+---
+
+1. Creating or Adding Images to an APNG
+---------------------------------------
+To create a new APNG or append frames to an existing one, use the `add`
+command:
+  $ icv anim add <apng_file> <png_file1> [png_file2 ...]
+
+Example:
+  $ icv anim add my_test.apng my_test_001_ctrl.png my_test_002_ctrl.png
+
+This will either create `my_test.apng` containing the two frames, or append
+them to the end if `my_test.apng` already exists.
+
+2. Extracting Images from an APNG
+---------------------------------
+To extract the individual frames for inspection or manual updates, use the
+`extract` command:
+  $ icv anim extract <apng_file> <out_prefix>
+
+Example:
+  $ icv anim extract my_test.apng "my_test_"
+
+This will generate `my_test_001_ctrl.png`, `my_test_002_ctrl.png`, etc., based
+on the frames inside the APNG.
+
+3. Replacing an Image
+---------------------
+To replace a specific frame (e.g., if a test's expected output has legitimately
+changed), use the `replace` command:
+  $ icv anim replace <apng_file> <index> <new_png_file>
+
+Example (Note: <index> is 1-based):
+  $ icv anim replace my_test.apng 3 updated_frame.png
+
+This replaces the 3rd frame of `my_test.apng` with `updated_frame.png`.
+
+4. Inserting an Image
+---------------------
+To insert a new frame before a specific index, use the `insert` command:
+  $ icv anim insert <apng_file> <index> <new_png_file>
+
+Example:
+  $ icv anim insert my_test.apng 2 new_frame.png
+
+This inserts `new_frame.png` so it becomes the new 2nd frame, pushing all
+subsequent frames back by one.
+
+5. Removing an Image
+--------------------
+To remove an image from the sequence, use the `remove` command:
+  $ icv anim remove <apng_file> <index>
+
+Example:
+  $ icv anim remove my_test.apng 2
+This will remove the 2nd frame from the animation and shift subsequent frames forward.
+
+6. Adjusting Playback Speed
+---------------------------
+To change the global playback speed for the entire animation (Frames Per
+Second), use the `set-fps` command:
+  $ icv anim set-fps <apng_file> <fps>
+
+To change the delay for a specific frame, use the `set-delay` command (where
+delay is in microseconds):
+  $ icv anim set-delay <apng_file> <index> <delay_usec>
+
+Example:
+  $ icv anim set-delay my_test.apng 3 500000
+
+This sets the delay for the 3rd frame to 500,000 microseconds (0.5 seconds).
+
+-------------------------------
+Note on APNG Animation Playback
+-------------------------------
+Some test sequences (such as `aet`) include frames of differing sizes (e.g.,
+512x512 followed by 600x600) to test viewport stability. When you view these
+`.apng` files natively in a web browser or image viewer, the application uses a
+global canvas size (e.g., 600x600). The smaller frames will not stretch to fill
+the canvas, causing the viewer to flash a default background (like transparent
+or white) in the unfilled space. This is a purely visual artifact of the
+viewer. The `icv anim extract` tool natively extracts the frames with their
+precise original dimensions, completely ignoring the global canvas.

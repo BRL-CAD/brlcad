@@ -1,7 +1,7 @@
 /*                 BSplineCurveWithKnots.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2025 United States Government as represented by
+ * Copyright (c) 1994-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -43,7 +43,7 @@ protected:
     LIST_OF_REALS knots;
 
 
-    Knot_type knot_spec;
+    int knot_spec;
 
 public:
     BSplineCurveWithKnots();

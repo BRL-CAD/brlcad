@@ -1,0 +1,132 @@
+= JOINT(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+joint - manage kinematic joint and constraint data for articulated models
+
+== SYNOPSIS
+
+[source]
+----
+joint subcommand [args]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+The *joint* command manages kinematic joint and constraint data used to describe articulated geometry models. Joints define degrees of freedom between parts, and constraints restrict that motion.
+
+=== Subcommands
+
+[cols="1,2,3"]
+|===
+|Subcommand |Arguments |Description
+
+|`?`
+|[commands]
+|List available subcommands.
+
+|`accept`
+|[joints]
+|Accept (commit) a series of joint moves.
+
+|`debug`
+|[hex code]
+|Show or set the debugging bit vector.
+
+|`help`
+|[commands]
+|Print usage information for the specified subcommands.
+
+|`holds`
+|[names]
+|List the currently loaded constraint holds.
+
+|`list`
+|[names]
+|List the currently loaded joint objects.
+
+|`load`
+|file_name
+|Load joint and constraint definitions from a file.
+
+|`mesh`
+|
+|Build the kinematic grip mesh from loaded joints.
+
+|`move`
+|joint_name p1 [p2 ... p6]
+|Manually adjust a joint by specifying one or more parameter values.
+
+|`reject`
+|[joint_names]
+|Reject (undo) joint position changes.
+
+|`save`
+|file_name
+|Save current joint and constraint definitions to a file.
+
+|`solve`
+|constraint
+|Solve one or all loaded constraints.
+
+|`unload`
+|
+|Unload all joints and constraints from memory.
+
+|===
+
+[[examples]]
+== EXAMPLES
+
+.Load a joint file
+[example]
+====
+mged> **joint load arm_joints.jnt**
+
+Loads joint definitions from `arm_joints.jnt`.
+====
+
+.List joints
+[example]
+====
+mged> **joint list**
+
+Lists all currently loaded joints.
+====
+
+.Move a joint
+[example]
+====
+mged> **joint move elbow_joint 45**
+
+Sets the `elbow_joint` position parameter to 45.
+====
+
+.Accept the current joint positions
+[example]
+====
+mged> **joint accept**
+
+Commits all pending joint moves to the model.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*constraint*(nged)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

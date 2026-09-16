@@ -1,7 +1,7 @@
 /*                       C Y C L I C . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2025 United States Government as represented by
+ * Copyright (c) 2013-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -46,7 +46,7 @@ main(int argc, char *argv[])
 	bu_exit(1, "ERROR: Unable to read from %s\n", argv[1]);
     }
 
-    db_update_nref(dbip, &rt_uniresource);
+    db_update_nref(dbip);
 
     int tops_cnt_expected = 3;
     int tops_cnt = db_ls(dbip, DB_LS_TOPS, NULL, NULL);

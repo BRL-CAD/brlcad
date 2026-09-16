@@ -1,7 +1,7 @@
 /*                      P I X M A T T E . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2025 United States Government as represented by
+ * Copyright (c) 1989-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -42,6 +42,7 @@
 
 #include "common.h"
 
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include "bio.h"
@@ -94,21 +95,43 @@ usage(const char *s, int n)
     bu_exit(n, "%s", usage_msg);
 }
 
+static int
+parse_constant_bytes(const char *arg, unsigned char *out_values, int component_count)
+{
+    int i;
+    const char *component = arg;
+    char *end = NULL;
+    long int value;
+
+    for (i = 0; i < component_count; i++) {
+	errno = 0;
+	value = strtol(component, &end, 10);
+	if (errno != 0 || end == component || value < 0 || value > 255)
+	    return 0;
+	out_values[i] = (unsigned char)value;
+
+	if (i == component_count - 1) {
+	    if (*end != '\0')
+		return 0;
+	} else {
+	    if (*end != '/')
+		return 0;
+	    component = end + 1;
+	}
+    }
+
+    return 1;
+}
+
 
 int
 open_file(int i, char *name)
 {
     if (name[0] == '=') {
 	/* Parse constant */
-	char *cp = name+1;
-	unsigned char *conp = &f_const[i][0];
-	int j;
-
-	/* premature null => atoi gives zeros */
-	for (j=0; j < width; j++) {
-	    *conp++ = atoi(cp);
-	    while (*cp && *cp++ != '/')
-		;
+	if (!parse_constant_bytes(name + 1, &f_const[i][0], width)) {
+	    bu_log("pixmatte: invalid constant '%s'\n", name);
+	    return -1;
 	}
 
 	file_name[i] = name+1;	/* skip '=' */
@@ -144,6 +167,8 @@ get_args(int argc, char **argv)
     int c;
     int seen_formula = 0;
     int i;
+    char *end = NULL;
+    long parsed_width = 0;
 
     while ((c = bu_getopt(argc, argv, "glenaw:h?")) != -1) {
 	switch (c) {
@@ -170,7 +195,12 @@ get_args(int argc, char **argv)
                  */
 		break;
 	    case 'w':
-		width = atoi(bu_optarg);
+		errno = 0;
+		end = NULL;
+		parsed_width = strtol(bu_optarg, &end, 10);
+		if (bu_optarg[0] == '\0' || end == bu_optarg || *end != '\0' || errno != 0)
+		    usage("pixmatte: illegal width specified\n", 1);
+		width = (int)parsed_width;
 		if (width < 1 || width >= EL_WIDTH)
 		    usage("pixmatte: illegal width specified\n", 1);
 		break;
@@ -187,6 +217,8 @@ get_args(int argc, char **argv)
 
     if (bu_optind+NFILES > argc)
 	usage("insufficient number of input/output channels\n", 1);
+    if (bu_optind+NFILES < argc)
+	usage("pixmatte: excess argument(s) not supported\n", 1);
 
 
     for (i=0; i < NFILES; i++) {
@@ -200,10 +232,6 @@ get_args(int argc, char **argv)
  * in loop).
  */
     twoconstants = (fp[0] == NULL && fp[1] == NULL);
-
-    if (argc > bu_optind)
-	bu_log("pixmatte: excess argument(s) ignored\n");
-
 }
 
 

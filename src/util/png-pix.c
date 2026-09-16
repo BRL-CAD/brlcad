@@ -1,7 +1,7 @@
 /*                       P N G - P I X . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2025 United States Government as represented by
+ * Copyright (c) 1998-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -82,6 +82,10 @@ main(int argc, char **argv)
 	}
 	fp_in = stdin;
     } else {
+	if (argc > bu_optind + 1) {
+	    fprintf(stderr, "png-pix: excess argument(s) not supported\n");
+	    return 1;
+	}
 	if ((fp_in = fopen(argv[bu_optind], "rb")) == NULL) {
 	    perror(argv[bu_optind]);
 	    fprintf(stderr,
@@ -89,13 +93,11 @@ main(int argc, char **argv)
 		    argv[bu_optind]);
 	    return 1;
 	}
+	bu_optind++;
     }
 
-    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(fp_in), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
-
-    if (argc > ++bu_optind)
-	fprintf(stderr, "png-pix: excess argument(s) ignored\n");
 
     if (fread(header, 8, 1, fp_in) != 1)
 	bu_exit(EXIT_FAILURE, "png-pix: ERROR: Failed while reading file header!!!\n");

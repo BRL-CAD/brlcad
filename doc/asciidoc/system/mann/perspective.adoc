@@ -1,0 +1,73 @@
+= PERSPECTIVE(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+perspective - get or set the view perspective angle
+
+== SYNOPSIS
+
+[source]
+----
+perspective
+perspective angle
+----
+
+[[description]]
+== DESCRIPTION
+
+The *perspective* command gets or sets the perspective (field-of-view) angle for the current view.
+
+* *No arguments*: Returns the current value of `gv_perspective` as a floating-point number. A value of 0 (or any value ≤ `SMALL_FASTF`) indicates orthographic (parallel) projection.
+
+* *One argument `angle`*: Sets `gv_perspective` to the given value (in degrees). The behavior depends on the magnitude of the angle:
+** If `angle > SMALL_FASTF` (i.e. a positive, non-trivial value): A perspective projection matrix is constructed via `persp_mat` with aspect ratio 1.0, near clip at 0.01, and far clip at 1×10^10^. This matrix is stored in `gv_pmat` and the view is updated via `bv_update`.
+** If `angle ≤ SMALL_FASTF` (zero or negative): The perspective matrix `gv_pmat` is reset to the identity matrix, effectively switching to orthographic projection.
+
+Typical useful perspective angles range from about 15° (narrow, telephoto-like) to 90° (wide, distorted). Values above 90° produce strongly distorted views. Setting the angle to 0 disables perspective entirely.
+
+[[examples]]
+== EXAMPLES
+
+.Query the current perspective angle
+[example]
+====
+mged> **perspective**
+
+Returns the current perspective angle, e.g. `0` when orthographic projection is active.
+====
+
+.Enable a standard perspective view
+[example]
+====
+mged> **perspective 45**
+
+Sets the field of view to 45°. Objects farther from the viewer will appear smaller relative to nearby objects.
+====
+
+.Use a narrow telephoto-style perspective
+[example]
+====
+mged> **perspective 15**
+
+Sets a narrow 15° field of view, compressing depth and making distant objects appear proportionally larger.
+====
+
+.Disable perspective (return to orthographic)
+[example]
+====
+mged> **perspective 0**
+
+Resets `gv_pmat` to the identity matrix, switching the view back to orthographic (parallel) projection.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

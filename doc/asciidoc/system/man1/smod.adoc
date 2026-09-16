@@ -1,0 +1,108 @@
+= SMOD(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+smod - modify intensities in a stream of 16-bit signed short integers
+
+== SYNOPSIS
+
+[source]
+----
+smod [-a add] [-s sub] [-m mult] [-d div] [-A] [-e exp] [-r root] [file.s] > output.s
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*smod* reads a stream of 16-bit signed short integers, applies a sequence of
+arithmetic operations to each value, and writes the modified stream to standard
+output. It is typically used to scale or bias signal data such as that produced
+by *d-i*(1) or consumed by the other *sig* utilities.
+
+Any number of operations may be given and they are applied in the exact order
+in which they appear on the command line. For efficiency, *smod* precomputes a
+lookup table covering every possible input value (-32768 to 32767) before
+processing the stream.
+
+If an operation produces a result outside the representable range of a 16-bit
+signed short, the value is clamped to 32767 or -32768. The count of values
+clipped high and low is reported on standard error when processing finishes.
+
+If _file.s_ is not given, *smod* reads from standard input. Both input and
+output must be redirected; *smod* refuses to read from or write to a terminal.
+
+[[options]]
+== OPTIONS
+
+*-a* _add_::
+  Add _add_ to each value.
+
+*-s* _sub_::
+  Subtract _sub_ from each value.
+
+*-m* _mult_::
+  Multiply each value by _mult_.
+
+*-d* _div_::
+  Divide each value by _div_. A divisor of zero is an error.
+
+*-A*::
+  Replace each value with its absolute value.
+
+*-e* _exp_::
+  Raise each value to the power _exp_.
+
+*-r* _root_::
+  Take the _root_ root of each value (equivalent to raising to the power
+  1/_root_). A root of zero is an error.
+
+*-h*, *-?*::
+  Print a usage message and exit.
+
+[[examples]]
+== EXAMPLES
+
+.Bias and scale a signal
+====
+[source,bash]
+----
+smod -a 100 -m 2 data.s > scaled.s
+----
+Reads short integers from _data.s_, adds 100 to each value, then doubles the
+result, writing the modified stream to _scaled.s_. Operations are applied
+left to right, so the bias is added before the scaling.
+====
+
+.Compute signal magnitude in a pipeline
+====
+[source,bash]
+----
+d-i < samples.d | smod -A -m 0.5 > half_magnitude.s
+----
+Converts double-precision samples to shorts with *d-i*(1), takes the absolute
+value of each sample, and halves it before writing the result. Any value that
+would exceed the short range is clipped and counted on standard error.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *d-i*(1), *dmod*(1), *imod*(1), *umod*(1), *istats*(1)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

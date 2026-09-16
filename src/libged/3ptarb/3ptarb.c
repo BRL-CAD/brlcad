@@ -1,7 +1,7 @@
 /*                         3 P T A R B . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -250,30 +250,18 @@ ged_3ptarb_core(struct ged *gedp, int argc, const char *argv[])
 
     GED_DB_DIRADD(gedp, dp, argv[1], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type, BRLCAD_ERROR);
 
-    GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_PUT_INTERN(gedp, dp, &internal, BRLCAD_ERROR);
 
     return BRLCAD_OK;
 }
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl threeptarb_cmd_impl = {
-    "3ptarb",
-    ged_3ptarb_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd threeptarb_cmd = { &threeptarb_cmd_impl };
-const struct ged_cmd *threeptarb_cmds[] = { &threeptarb_cmd, NULL };
+#define GED_3PTARB_COMMANDS(X, XID) \
+    XID(threeptarb, "3ptarb", ged_3ptarb_core,  GED_CMD_DEFAULT)
 
-static const struct ged_plugin pinfo = { GED_API,  threeptarb_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
-
+GED_DECLARE_COMMAND_SET(GED_3PTARB_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_3ptarb", 1, GED_3PTARB_COMMANDS)
 
 /*
  * Local Variables:

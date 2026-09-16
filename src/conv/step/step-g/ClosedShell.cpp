@@ -1,7 +1,7 @@
 /*                 ClosedShell.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2025 United States Government as represented by
+ * Copyright (c) 1994-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -98,7 +98,8 @@ bool
 ClosedShell::LoadONBrep(ON_Brep *brep)
 {
     if (!brep || !ConnectedFaceSet::LoadONBrep(brep)) {
-	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
+	if (step && step->Verbose())
+	    std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
 	return false;
     }
     return true;

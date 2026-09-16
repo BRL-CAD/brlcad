@@ -1,7 +1,7 @@
 /*                         T O P S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,7 +37,6 @@ int
 ged_tops_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
-    int i;
     struct directory **dirp;
     struct directory **dirp0 = (struct directory **)NULL;
     int c;
@@ -78,7 +77,7 @@ ged_tops_core(struct ged *gedp, int argc, const char *argv[])
 
     /* Can this be executed only sometimes?
        Perhaps a "dirty bit" on the database? */
-    db_update_nref(gedp->dbip, &rt_uniresource);
+    db_update_nref(gedp->dbip);
 
     /*
      * Find number of possible entries and allocate memory
@@ -87,16 +86,12 @@ ged_tops_core(struct ged *gedp, int argc, const char *argv[])
     dirp0 = dirp;
 
     if (db_version(gedp->dbip) < 5) {
-	for (i = 0; i < RT_DBNHASH; i++)
-	    for (dp = gedp->dbip->dbi_Head[i];
-		 dp != RT_DIR_NULL;
-		 dp = dp->d_forw) {
-		if (dp->d_nref == 0)
-		    *dirp++ = dp;
-	    }
+	FOR_ALL_DIRECTORY_START(dp, gedp->dbip)
+	    if (dp->d_nref == 0)
+		*dirp++ = dp;
+	FOR_ALL_DIRECTORY_END;
     } else {
-	for (i = 0; i < RT_DBNHASH; i++)
-	    for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	FOR_ALL_DIRECTORY_START(dp, gedp->dbip)
 
 		if (dp->d_nref != 0) {
 		    continue;
@@ -117,7 +112,7 @@ ged_tops_core(struct ged *gedp, int argc, const char *argv[])
 		    *dirp++ = dp;
 
 		}
-	    }
+	    FOR_ALL_DIRECTORY_END;
     }
 
     _ged_vls_col_pr4v(gedp->ged_result_str, dirp0, (int)(dirp - dirp0), no_decorate, 0);
@@ -127,24 +122,13 @@ ged_tops_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl tops_cmd_impl = {
-    "tops",
-    ged_tops_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd tops_cmd = { &tops_cmd_impl };
-const struct ged_cmd *tops_cmds[] = { &tops_cmd, NULL };
+#define GED_TOPS_COMMANDS(X, XID) \
+    X(tops, ged_tops_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  tops_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_TOPS_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_tops", 1, GED_TOPS_COMMANDS)
 
 /*
  * Local Variables:

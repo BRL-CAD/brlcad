@@ -1,7 +1,7 @@
 /*                 Product.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2025 United States Government as represented by
+ * Copyright (c) 1994-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -43,6 +43,7 @@ private:
     static EntityInstanceFunc GetInstance;
 
 protected:
+    string ident;
     string name;
     string description;
     LIST_OF_PRODUCT_CONTEXT frame_of_reference;
@@ -54,6 +55,7 @@ public:
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
     virtual bool LoadONBrep(ON_Brep *brep);
     string ClassName();
+    string Ident();
     string Name();
     string Description();
     virtual void Print(int level);

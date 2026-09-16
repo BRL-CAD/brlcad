@@ -1,0 +1,98 @@
+= JACK-G(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+
+jack-g - convert a Jack Psurf file to a BRL-CAD database
+
+== SYNOPSIS
+
+[source]
+----
+jack-g [-r region] [-g group] [jack_db] [brlcad_db]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*jack-g* converts a Jack Psurf (`.pss`) file into a BRL-CAD database
+(`.g`).  The polygonal surface geometry in the Psurf file is read into
+an n-Manifold Geometry (NMG) model, which is then written out as a
+BOT (Bag of Triangles) object wrapped in a region.  Coordinates
+are scaled from centimeters to millimeters during conversion.
+
+Jack, originally from the University of Pennsylvania's Computer
+Graphics Research Laboratory, is a package for human figure animation
+and ergonomic analysis (later developed commercially as Tecnomatix
+Jack).
+
+The Jack Psurf file is read from _jack_db_, or from standard input if
+no input file is given (or if _jack_db_ is given as `-`).  The
+resulting geometry is written to the BRL-CAD database named
+_brlcad_db_, which is required.  For each surface a solid named
+`s.`_region_, a region named `r.`_region_, and optionally a group are
+created.
+
+[[options]]
+== OPTIONS
+
+*-r* _region_::
+  Name the BRL-CAD region created for the converted surface.  If not
+  specified, the region name is derived from the input file name (with
+  any leading path and trailing `.pss` extension removed).
+
+*-g* _group_::
+  Add the converted region to a BRL-CAD group of this name, creating
+  the group if necessary.
+
+*-h*, *-?*::
+  Print a usage message and exit.
+
+[[examples]]
+== EXAMPLES
+
+.Convert a Jack human figure into a named region and group
+====
+[source,bash]
+----
+jack-g -r torso -g body torso.pss model.g
+----
+Reads the Jack Psurf file `torso.pss`, writes a BOT solid `s.torso`
+inside region `r.torso` into `model.g`, and adds that region to the
+group `body`.  The resulting `model.g` can then be raytraced with
+*rt*(1) or inspected interactively with *mged*(1).
+====
+
+.Convert geometry piped from standard input
+====
+[source,bash]
+----
+cat figure.pss | jack-g -r figure model.g
+----
+Reads the Psurf data from standard input, which is useful when the
+geometry is produced by another tool in a pipeline rather than stored
+on disk.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *mged*(1), *rt*(1), *g-jack*(1)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

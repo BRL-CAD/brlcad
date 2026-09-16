@@ -1,7 +1,7 @@
 /*                     C S G B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2004-2025 United States Government as represented by
+ * Copyright (c) 2004-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -48,7 +48,7 @@ write_out(struct rt_wdb* fp, struct rt_db_internal *ip, const char *name, struct
 
     /* write the object in implicit form */
     struct bu_external ext;
-    int ret = rt_db_cvt_to_external5(&ext, name, ip, 1.0, fp->dbip, &rt_uniresource, ip->idb_major_type);
+    int ret = rt_db_cvt_to_ext5(&ext, name, ip, 1.0, fp->dbip, ip->idb_major_type);
     if (ret) {
 	bu_log("ERROR: failure converting [%s] to external format\n", name);
 	return;
@@ -208,6 +208,16 @@ main(int argc, char** argv)
     write_out(outfp, &tmp_internal, "arbn", &tol);
     bu_free(arbn.eqn, "free arbn eqn");
 
+    /* FIXME: This NMG case is disabled because the nmg object it produces
+     * (an ARB8 tessellated to an NMG, then written via rt_nmg_brep)
+     * currently triggers a BU_ASSERT in libnmg during raytrace
+     * (src/libnmg/isect.c), which breaks rendering of the gallery scene.
+     * This case SHOULD work -- and historically DID work -- so it is left
+     * here under #if 0 as a ready-made reproducer/debug opportunity rather
+     * than deleted.  Re-enable it once the libnmg raytrace regression is
+     * fixed.
+     */
+#if 0
     // This routine does explicitly what is done
     // by the previous ARB8 brep call internally.
     // Ideally a more general NMG will be created
@@ -243,6 +253,7 @@ main(int argc, char** argv)
     tmp_internal.idb_meth = &OBJ[ID_NMG];
     write_out(outfp, &tmp_internal, "nmg", &tol);
     FREE_MODEL(m);
+#endif
 
     bu_log("SPH\n");
     struct rt_ell_internal sph;
@@ -507,6 +518,45 @@ main(int argc, char** argv)
     tmp_internal.idb_minor_type = ID_REVOLVE;
     tmp_internal.idb_meth = &OBJ[ID_REVOLVE];
     write_out(outfp, &tmp_internal, "revolve", &tol);
+
+    /* Gather everything written above into top-level groups so the
+     * database renders as a single coherent scene.  write_out() emits
+     * each object twice: once in implicit form under its bare name and
+     * once in brep form under "<name>.brep".  We collect the implicit
+     * forms into "csg.g", the brep forms into "brep.g", and place the
+     * implicit group under "all.g" as the default top-level object to
+     * render (the implicit and brep forms occupy the same space, so
+     * drawing both at once would just overlap).
+     */
+    {
+	static const char * const obj_names[] = {
+	    "arb4", "arb5", "arb6", "arb7", "arb8", "arbn",
+	    "sph", "ell", "rhc", "rpc", "epa", "ehy", "hyp",
+	    "tgc", "tor", "eto", "pipe", "sketch", "extrude", "revolve"
+	};
+	int nobj = sizeof(obj_names) / sizeof(obj_names[0]);
+	struct wmember csg_head;
+	struct wmember brep_head;
+	struct wmember all_head;
+	std::string bname;
+	int i;
+
+	BU_LIST_INIT(&csg_head.l);
+	BU_LIST_INIT(&brep_head.l);
+	BU_LIST_INIT(&all_head.l);
+
+	for (i = 0; i < nobj; i++) {
+	    mk_addmember(obj_names[i], &csg_head.l, NULL, WMOP_UNION);
+	    bname = obj_names[i];
+	    bname += ".brep";
+	    mk_addmember(bname.c_str(), &brep_head.l, NULL, WMOP_UNION);
+	}
+	mk_lcomb(outfp, "csg.g", &csg_head, 0, NULL, NULL, NULL, 0);
+	mk_lcomb(outfp, "brep.g", &brep_head, 0, NULL, NULL, NULL, 0);
+
+	mk_addmember("csg.g", &all_head.l, NULL, WMOP_UNION);
+	mk_lcomb(outfp, "all.g", &all_head, 0, NULL, NULL, NULL, 0);
+    }
 
 /*
   bu_log("DSP\n");

@@ -1,7 +1,7 @@
 /*                         S H O O T . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2025 United States Government as represented by
+ * Copyright (c) 2000-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,6 +29,7 @@
 
 #include "raytrace.h"
 #include "bv/plot3.h"
+#include "librt_private.h"
 
 
 #define V3PT_DEPARTING_RPP(_step, _lo, _hi, _pt)			\
@@ -53,33 +54,21 @@ shoot_setup_status(struct rt_shootray_status *ss, struct application *ap)
 
 
 void
-rt_res_pieces_init(struct resource *resp, struct rt_i *rtip)
+_res_pieces_init(struct resource *resp, struct rt_i *rtip)
 {
-    struct rt_piecestate *psptab;
-    struct rt_piecestate *psp;
-    struct soltab *stp;
-
     RT_CK_RESOURCE(resp);
     RT_CK_RTI(rtip);
-
-    psptab = (struct rt_piecestate *)bu_calloc(rtip->rti_nsolids_with_pieces, sizeof(struct rt_piecestate), "re_pieces[]");
-    resp->re_pieces = psptab;
-
-    RT_VISIT_ALL_SOLTABS_START(stp, rtip) {
-	RT_CK_SOLTAB(stp);
-	if (stp->st_npieces <= 1) continue;
-	psp = &psptab[stp->st_piecestate_num];
-	psp->magic = RT_PIECESTATE_MAGIC;
-	psp->stp = stp;
-	psp->shot = bu_bitv_new(stp->st_npieces);
-	rt_htbl_init(&psp->htab, 8, "psp->htab");
-	psp->cutp = CUTTER_NULL;
-    } RT_VISIT_ALL_SOLTABS_END
-	  }
-
+    resp->re_pieces = NULL;
+}
 
 void
-rt_res_pieces_clean(struct resource *resp, struct rt_i *rtip)
+rt_res_pieces_init(struct resource *resp, struct rt_i *rtip)
+{
+    _res_pieces_init(resp, rtip);
+}
+
+void
+_res_pieces_clean(struct resource *resp, struct rt_i *rtip)
 {
     struct rt_piecestate *psp;
     int i;
@@ -95,14 +84,14 @@ rt_res_pieces_clean(struct resource *resp, struct rt_i *rtip)
     if (!resp->re_pieces) {
 	/* no pieces allocated, nothing to do */
 	if (rtip) {
-	    rtip->rti_nsolids_with_pieces = 0;
+	    rtip->i->rti_nsolids_with_pieces = 0;
 	}
 	return;
     }
 
     /* pieces allocated, need to clean up */
     if (rtip) {
-	for (i = rtip->rti_nsolids_with_pieces-1; i >= 0; i--) {
+	for (i = rtip->i->rti_nsolids_with_pieces-1; i >= 0; i--) {
 	    psp = &resp->re_pieces[i];
 
 	    /*
@@ -110,7 +99,7 @@ rt_res_pieces_clean(struct resource *resp, struct rt_i *rtip)
 	     *
 	     * Doing this until we figure out why all "struct
 	     * rt_piecestate" array members are NOT getting
-	     * initialized in rt_res_pieces_init() above.  Initial
+	     * initialized in _res_pieces_init() above.  Initial
 	     * glance looks like tree.c/rt_gettrees_muves() can be
 	     * called in such a way as to assign
 	     * stp->st_piecestate_num multiple times, each time with a
@@ -129,12 +118,17 @@ rt_res_pieces_clean(struct resource *resp, struct rt_i *rtip)
 	    psp->magic = 0;
 	}
 
-	rtip->rti_nsolids_with_pieces = 0;
+	rtip->i->rti_nsolids_with_pieces = 0;
     }
     bu_free((char *)resp->re_pieces, "re_pieces[]");
     resp->re_pieces = NULL;
 }
 
+void
+rt_res_pieces_clean(struct resource *resp, struct rt_i *rtip)
+{
+    _res_pieces_clean(resp, rtip);
+}
 
 _BU_ATTR_FLATTEN const union cutter *
 rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
@@ -148,7 +142,7 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 
     ssp->box_num++;
 
-    if (curcut == &ssp->ap->a_rt_i->rti_inf_box) {
+    if (curcut == &ssp->ap->a_rt_i->i->rti_inf_box) {
 	/* Last pass did the infinite solids, there is nothing more */
 	ssp->curcut = CUTTER_NULL;
 	return CUTTER_NULL;
@@ -425,118 +419,11 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
      * the caller to process.
      */
 escaped_from_model:
-    curcut = &ssp->ap->a_rt_i->rti_inf_box;
+    curcut = &ssp->ap->a_rt_i->i->rti_inf_box;
     if (curcut->bn.bn_len <= 0 && curcut->bn.bn_piecelen <= 0)
 	curcut = CUTTER_NULL;
     ssp->curcut = curcut;
     return curcut;
-}
-
-
-/**
- * This routine traces a ray from its start point to model exit
- * through the space partitioning tree.  The objective is to find all
- * primitives that use "pieces" and also have a bounding box that
- * extends behind the ray start point. The minimum (most negative)
- * intersection with such a bounding box is returned. The "backbits"
- * bit vector (provided by the caller) gets a bit set for every
- * primitive that meets the above criteria.  No primitive
- * intersections are performed.
- */
-_BU_ATTR_FLATTEN fastf_t
-rt_find_backing_dist(struct rt_shootray_status *ss, struct bu_bitv *backbits) {
-    fastf_t min_backing_dist = BACKING_DIST;
-    fastf_t prev_dist = -1.0;
-    fastf_t curr_dist = 0.0;
-    point_t curr_pt;
-    union cutter *cutp;
-    struct bu_bitv *solidbits;
-    struct xray ray;
-    struct resource *resp;
-    struct rt_i *rtip;
-    size_t i;
-
-    resp = ss->ap->a_resource;
-    rtip = ss->ap->a_rt_i;
-
-    /* get a bit vector of our own to avoid duplicate bounding box
-     * intersection calculations
-     */
-    solidbits = rt_get_solidbitv(rtip->nsolids, resp);
-
-    ray = ss->ap->a_ray;	/* struct copy, don't mess with the original */
-
-    VMOVE(curr_pt, ss->ap->a_ray.r_pt);
-
-    /* curr_dist keeps track of where we are along the ray.  stop when
-     * curr_dist reaches far intersection of ray and model bounding box
-     */
-    while (curr_dist <= ss->ap->a_ray.r_max && !EQUAL(curr_dist, prev_dist)) {
-
-	/* descend into the space partitioning tree based on this
-	 * point.
-	 */
-	cutp = &ss->ap->a_rt_i->rti_CutHead;
-	while (cutp->cut_type == CUT_CUTNODE) {
-	    if (curr_pt[cutp->cn.cn_axis] >= cutp->cn.cn_point) {
-		cutp=cutp->cn.cn_r;
-	    } else {
-		cutp=cutp->cn.cn_l;
-	    }
-	}
-
-	/* we are now at the box node for the current point */
-	/* check if the ray intersects this box */
-	if (!rt_in_rpp(&ray, ss->inv_dir, cutp->bn.bn_min, cutp->bn.bn_max)) {
-	    /* ray does not intersect this cell
-	     * one of two situations must exist:
-	     * 1. ray starts outside model bounding box (no need for these calculations)
-	     * 2. we have proceeded beyond end of model bounding box (we are done)
-	     * in either case, we are finished
-	     */
-	    goto done;
-	} else {
-	    /* increment curr_dist into next cell for next execution of this loop */
-	    prev_dist = curr_dist;
-	    curr_dist = ray.r_max + ss->ap->a_rt_i->rti_tol.dist;
-	}
-
-	/* process this box node (look at all the pieces) */
-	for (i=0; i<cutp->bn.bn_piecelen; i++) {
-	    struct rt_piecelist *plp=&cutp->bn.bn_piecelist[i];
-
-	    if (BU_BITTEST(solidbits, plp->stp->st_bit) == 0) {
-		/* we haven't looked at this primitive before */
-		if (rt_in_rpp(&ray, ss->inv_dir, plp->stp->st_min, plp->stp->st_max)) {
-		    /* ray intersects this primitive bounding box */
-
-		    if (ray.r_min < BACKING_DIST) {
-			if (ray.r_min < min_backing_dist) {
-			    /* move our backing distance back to catch this one */
-			    min_backing_dist = ray.r_min;
-			}
-
-			/* add this one to our list of primitives to check */
-			BU_BITSET(backbits, plp->stp->st_bit);
-		    }
-		}
-		/* set bit so we don't repeat this calculation */
-		BU_BITSET(solidbits, plp->stp->st_bit);
-	    }
-	}
-
-	/* calculate the next point along the ray */
-	VJOIN1(curr_pt, ss->ap->a_ray.r_pt, curr_dist, ss->ap->a_ray.r_dir);
-
-    }
-
-done:
-    /* put our bit vector on the resource list */
-    BU_CK_BITV(solidbits);
-    BU_LIST_APPEND(&resp->re_solid_bitv, &solidbits->l);
-
-    /* return our minimum backing distance */
-    return min_backing_dist;
 }
 
 
@@ -606,7 +493,7 @@ rt_plot_cell(const union cutter *cutp, const struct rt_shootray_status *ssp, str
 	for (; stpp >= cutp->bn.bn_list; stpp--) {
 	  register struct soltab *stp = *stpp;
 
-	  rt_plot_solid(fp, rtip, stp, ap->a_resource);
+	  rt_plot_solid(fp, rtip, stp);
 	}
       }
 
@@ -649,10 +536,8 @@ rt_shootray(register struct application *ap)
     struct seg finished_segs;	/* processed by rt_boolweave() */
     fastf_t last_bool_start;
     struct bu_bitv *solidbits;	/* bits for all solids shot so far */
-    struct bu_bitv *backbits=NULL;	/* bits for all solids using pieces that need to be intersected behind
-					   the ray start point */
     struct bu_ptbl *regionbits;	/* table of all involved regions */
-    char *status;
+    const char *status;
     struct partition InitialPart;	/* Head of Initial Partitions */
     struct partition FinalPart;	/* Head of Final Partitions */
     struct soltab **stpp;
@@ -684,7 +569,6 @@ rt_shootray(register struct application *ap)
     RT_CK_RTI(rtip);
     resp = ap->a_resource;
     RT_CK_RESOURCE(resp);
-    ss.resp = resp;
 
     if (RT_G_DEBUG) {
 	/* only test extensively if something in run-time debug is enabled */
@@ -732,7 +616,7 @@ rt_shootray(register struct application *ap)
     if (resp != &rt_uniresource)
 	BU_ASSERT(BU_PTBL_GET(&rtip->rti_resources, resp->re_cpu) != NULL);
 
-    solidbits = rt_get_solidbitv(rtip->nsolids, resp);
+    solidbits = rt_get_solidbitv(rtip->stats.nsolids, resp);
 
     if (BU_LIST_IS_EMPTY(&resp->re_region_ptbl)) {
 	BU_ALLOC(regionbits, struct bu_ptbl);
@@ -743,30 +627,40 @@ rt_shootray(register struct application *ap)
 	BU_CK_PTBL(regionbits);
     }
 
-    if (!resp->re_pieces && rtip->rti_nsolids_with_pieces > 0) {
-	/* Initialize this processors 'solid pieces' state */
-	rt_res_pieces_init(resp, rtip);
-    }
-    if (UNLIKELY(!BU_LIST_MAGIC_EQUAL(&resp->re_pieces_pending.l, BU_PTBL_MAGIC))) {
-	/* only happens first time through */
-	bu_ptbl_init(&resp->re_pieces_pending, 100, "re_pieces_pending");
-    }
-    bu_ptbl_reset(&resp->re_pieces_pending);
-
-    /* Verify that direction vector has unit length */
+    /* Verify that the direction vector is well-formed (always-on).
+     * A zero-length or non-finite (NaN/Inf) direction is a malformed
+     * ray that would otherwise fail opaquely downstream.
+     * Report the source pixel/level/pt/dir so the origin can be
+     * located, then bomb as the historical guard did.
+     */
     if (RT_G_DEBUG) {
-	fastf_t f, diff;
+	fastf_t f;
 
 	f = MAGSQ(ap->a_ray.r_dir);
-	if (NEAR_ZERO(f, ap->a_rt_i->rti_tol.dist)) {
-	    bu_bomb("rt_shootray:  zero length dir vector\n");
+	if (NEAR_ZERO(f, ap->a_rt_i->rti_tol.dist)
+	    || !isfinite(ap->a_ray.r_dir[X])
+	    || !isfinite(ap->a_ray.r_dir[Y])
+	    || !isfinite(ap->a_ray.r_dir[Z])
+	    || !isfinite(f))
+	{
+	    bu_log("rt_shootray(): bad ray (x%d y%d lvl%d) "
+		   "pt=(%g %g %g) dir=(%g %g %g)\n",
+		   ap->a_x, ap->a_y, ap->a_level,
+		   V3ARGS(ap->a_ray.r_pt), V3ARGS(ap->a_ray.r_dir));
+	    bu_bomb("rt_shootray(): bad ray\n");
 	}
-	diff = f - 1;
-	if (!NEAR_ZERO(diff, ap->a_rt_i->rti_tol.dist)) {
-	    bu_log("rt_shootray: non-unit dir vect (x%d y%d lvl%d)\n",
-		   ap->a_x, ap->a_y, ap->a_level);
-	    f = 1/f;
-	    VSCALE(ap->a_ray.r_dir, ap->a_ray.r_dir, f);
+
+	/* Auto-normalize non-unit (but valid) rays only under debug,
+	 * preserving the historical RT_G_DEBUG behavior.
+	 */
+	{
+	    fastf_t diff = f - 1;
+	    if (!NEAR_ZERO(diff, ap->a_rt_i->rti_tol.dist)) {
+		bu_log("rt_shootray: non-unit dir vect (x%d y%d lvl%d)\n",
+		       ap->a_x, ap->a_y, ap->a_level);
+		f = 1/f;
+		VSCALE(ap->a_ray.r_dir, ap->a_ray.r_dir, f);
+	    }
 	}
     }
 
@@ -817,7 +711,7 @@ rt_shootray(register struct application *ap)
      */
     if (!rt_in_rpp(&ap->a_ray, ss.inv_dir, rtip->mdl_min, rtip->mdl_max)  ||
 	ap->a_ray.r_max < 0.0) {
-	cutp = &ap->a_rt_i->rti_inf_box;
+	cutp = &ap->a_rt_i->i->rti_inf_box;
 	if (cutp->bn.bn_len > 0) {
 	    /* Model has infinite solids, need to fire at them. */
 	    ss.box_start = BACKING_DIST;
@@ -861,34 +755,6 @@ rt_shootray(register struct application *ap)
      * leaving from should probably back their own start-point up,
      * rather than depending on it here, but it isn't much trouble
      * here.
-     *
-     * Modification by JRA for pieces methodology:
-     *
-     * The original algorithm here assumed that if we encountered any
-     * primitive along the positive direction of the ray, ALL its
-     * intersections would be calculated.  With pieces, we may see
-     * only an exit hit if the entrance piece is in a space partition
-     * cell that is more than "BACKING_DIST" behind the ray start
-     * point (leading to incorrect results).  I have modified the
-     * setting of "ss.box_start" (when pieces are present and the ray
-     * start point is inside the model bounding box) as follows (see
-     * rt_find_backing_dist()):
-     *
-     * - The ray is traced through the space partitioning tree.
-     *
-     * - The ray is intersected with the bounding box of each
-     * primitive using pieces in each cell
-     *
-     * - The minimum of all these intersections is set as the initial
-     * "ss.box_start".
-     *
-     * - The "backbits" bit vector has a bit set for each of the
-     * primitives using pieces that have bounding boxes that extend
-     * behind the ray start point
-     *
-     * Further below (in the "pieces" loop), I have added code to
-     * ignore primitives that do not have a bit set in the backbits
-     * vector when we are behind the ray start point.
      */
 
     /* these two values set the point where the ray tracing actually
@@ -897,35 +763,12 @@ rt_shootray(register struct application *ap)
     ss.box_start = ss.model_start = ap->a_ray.r_min;
     ss.box_end = ss.model_end = ap->a_ray.r_max;
 
-    if (ap->a_rt_i->rti_nsolids_with_pieces > 0) {
-	/* pieces are present */
-	if (ss.box_start < BACKING_DIST) {
-	    /* the first ray intersection with the model bounding box
-	     * is more than BACKING_DIST behind the ray start point
-	     */
-
-	    /* get a bit vector to keep track of which primitives need
-	     * to be intersected behind the ray start point (those
-	     * having bounding boxes extending behind the ray start
-	     * point and using pieces)
-	     */
-	    backbits = rt_get_solidbitv(rtip->nsolids, resp);
-
-	    /* call "rt_find_backing_dist()" to calculate the required
-	     * start point for calculation, and to fill in the
-	     * "backbits" bit vector
-	     */
-	    ss.box_start = rt_find_backing_dist(&ss, backbits);
-	}
-    } else {
-	/* no pieces present, use the old scheme */
-	if (ss.box_start < BACKING_DIST)
-	    ss.box_start = BACKING_DIST; /* Only look a little bit behind */
-    }
+    if (ss.box_start < BACKING_DIST)
+	ss.box_start = BACKING_DIST; /* Only look a little bit behind */
 
     ss.lastcut = CUTTER_NULL;
     ss.old_status = (struct rt_shootray_status *)NULL;
-    ss.curcut = &ap->a_rt_i->rti_CutHead;
+    ss.curcut = &ap->a_rt_i->i->rti_CutHead;
 
     if (ss.curcut->cut_type == CUT_CUTNODE || ss.curcut->cut_type == CUT_BOXNODE) {
 	ss.lastcell = ss.curcut;
@@ -950,117 +793,14 @@ rt_shootray(register struct application *ap)
 	    rt_pr_cut(cutp, 0);
 	}
 
-	if (cutp->bn.bn_len <= 0 && cutp->bn.bn_piecelen <= 0) {
+	if (cutp->bn.bn_len <= 0) {
 	    /* Push ray onwards to next box */
 	    ss.box_start = ss.box_end;
 	    resp->re_nempty_cells++;
 	    continue;
 	}
 
-	/* Consider all "pieces" of all solids within the box */
 	pending_hit = ss.box_end;
-	if (cutp->bn.bn_piecelen > 0) {
-	    register struct rt_piecelist *plp;
-
-	    plp = &(cutp->bn.bn_piecelist[cutp->bn.bn_piecelen-1]);
-	    for (; plp >= cutp->bn.bn_piecelist; plp--) {
-		struct rt_piecestate *psp;
-		struct soltab *stp;
-		int ret;
-		int had_hits_before;
-
-		RT_CK_PIECELIST(plp);
-
-		/* Consider all pieces of this one solid in this
-		 * cell.
-		 */
-		stp = plp->stp;
-		RT_CK_SOLTAB(stp);
-
-		if (backbits && ss.box_end < BACKING_DIST && BU_BITTEST(backbits, stp->st_bit) == 0) {
-		    /* we are behind the ray start point and this
-		     * primitive is not one that we need to intersect
-		     * back here.
-		     */
-		    continue;
-		}
-
-		psp = &(resp->re_pieces[stp->st_piecestate_num]);
-		RT_CK_PIECESTATE(psp);
-		if (psp->ray_seqno != resp->re_nshootray) {
-		    /* state is from an earlier ray, scrub */
-		    BU_BITV_ZEROALL(psp->shot);
-		    psp->ray_seqno = resp->re_nshootray;
-		    rt_htbl_reset(&psp->htab);
-
-		    /* Compute ray entry and exit to entire solid's
-		     * bounding box.
-		     */
-		    if (!rt_in_rpp(&ss.newray, ss.inv_dir,
-				   stp->st_min, stp->st_max)) {
-			if (debug_shoot)bu_log("rpp miss %s (all pieces)\n", stp->st_name);
-			resp->re_prune_solrpp++;
-			BU_BITSET(solidbits, stp->st_bit);
-			continue;	/* MISS */
-		    }
-		    psp->mindist = ss.newray.r_min + ss.dist_corr;
-		    psp->maxdist = ss.newray.r_max + ss.dist_corr;
-		    if (debug_shoot) bu_log("%s mindist=%g, maxdist=%g\n", stp->st_name, psp->mindist, psp->maxdist);
-		    had_hits_before = 0;
-		} else {
-		    if (BU_BITTEST(solidbits, stp->st_bit)) {
-			/* we missed the solid RPP in an earlier cell */
-			resp->re_ndup++;
-			continue;	/* already shot */
-		    }
-		    had_hits_before = psp->htab.end;
-		}
-
-		/*
-		 * Allow this solid to shoot at all of its 'pieces' in
-		 * this cell, all at once.  'newray' has been
-		 * transformed to be near to this cell, and
-		 * 'dist_corr' is the additive correction factor that
-		 * ft_piece_shot() must apply to hits calculated using
-		 * 'newray'.
-		 */
-		resp->re_piece_shots++;
-		psp->cutp = cutp;
-
-		ret = -1;
-		if (stp->st_meth->ft_piece_shot) {
-		    ret = stp->st_meth->ft_piece_shot(psp, plp, ss.dist_corr, &ss.newray, ap, &waiting_segs);
-		}
-		if (ret <= 0) {
-		    /* No hits at all */
-		    resp->re_piece_shot_miss++;
-		} else {
-		    resp->re_piece_shot_hit++;
-		}
-		if (debug_shoot)bu_log("shooting %s pieces, nhit=%d\n", stp->st_name, ret);
-
-		/* See if this solid has been fully processed yet.  If
-		 * ray has passed through bounding volume, we're done.
-		 * ft_piece_hitsegs() will only be called once per
-		 * ray.
-		 */
-		if (ss.box_end > psp->maxdist && psp->htab.end > 0) {
-		    /* Convert hits into segs */
-		    if (debug_shoot)bu_log("shooting %s pieces complete, making segs\n", stp->st_name);
-		    /* Distance correction was handled in ft_piece_shot */
-		    if (stp->st_meth->ft_piece_hitsegs)
-			stp->st_meth->ft_piece_hitsegs(psp, &waiting_segs, ap);
-		    rt_htbl_reset(&psp->htab);
-		    BU_BITSET(solidbits, stp->st_bit);
-
-		    if (had_hits_before)
-			bu_ptbl_rm(&resp->re_pieces_pending, (long *)psp);
-		} else {
-		    if (!had_hits_before)
-			bu_ptbl_ins_unique(&resp->re_pieces_pending, (long *)psp);
-		}
-	    }
-	}
 
 	/* Consider all solids within the box */
 	if (cutp->bn.bn_len > 0 && ss.box_end >= BACKING_DIST) {
@@ -1153,24 +893,6 @@ rt_shootray(register struct application *ap)
 		/* Weave these segments into partition list */
 		rt_boolweave(&finished_segs, &waiting_segs, &InitialPart, ap);
 
-		if (BU_PTBL_LEN(&resp->re_pieces_pending) > 0) {
-
-		    /* Find the lowest pending mindist, that's as far
-		     * as boolfinal can progress to.
-		     */
-		    struct rt_piecestate **psp;
-		    for (BU_PTBL_FOR(psp, (struct rt_piecestate **), &resp->re_pieces_pending)) {
-			register fastf_t dist;
-
-			dist = (*psp)->mindist;
-			BU_ASSERT(dist < INFINITY);
-			if (dist < pending_hit) {
-			    pending_hit = dist;
-			    if (debug_shoot) bu_log("pending_hit lowered to %g by %s\n", pending_hit, (*psp)->stp->st_name);
-			}
-		    }
-		}
-
 		/* Evaluate regions up to end of good segs */
 		if (ss.box_end < pending_hit) pending_hit = ss.box_end;
 		done = rt_boolfinal(&InitialPart, &FinalPart,
@@ -1198,21 +920,6 @@ rt_shootray(register struct application *ap)
 weave:
     if (RT_G_DEBUG&RT_DEBUG_ADVANCE)
 	bu_log("rt_shootray: ray has left known space\n");
-
-    /* Process any pending hits into segs */
-    if (BU_PTBL_LEN(&resp->re_pieces_pending) > 0) {
-	struct rt_piecestate **psp;
-	for (BU_PTBL_FOR(psp, (struct rt_piecestate **), &resp->re_pieces_pending)) {
-	    if ((*psp)->htab.end > 0) {
-		/* Convert any pending hits into segs */
-		/* Distance correction was handled in ft_piece_shot */
-		(*psp)->stp->st_meth->ft_piece_hitsegs(*psp, &waiting_segs, ap);
-		rt_htbl_reset(&(*psp)->htab);
-	    }
-	    *psp = NULL;
-	}
-	bu_ptbl_reset(&resp->re_pieces_pending);
-    }
 
     if (BU_LIST_NON_EMPTY(&(waiting_segs.l))) {
 	rt_boolweave(&finished_segs, &waiting_segs, &InitialPart, ap);
@@ -1282,22 +989,8 @@ out:
     /* Return dynamic resources to their freelists.  */
     BU_CK_BITV(solidbits);
     BU_LIST_APPEND(&resp->re_solid_bitv, &solidbits->l);
-    if (backbits) {
-	BU_CK_BITV(backbits);
-	BU_LIST_APPEND(&resp->re_solid_bitv, &backbits->l);
-    }
     BU_CK_PTBL(regionbits);
     BU_LIST_APPEND(&resp->re_region_ptbl, &regionbits->l);
-
-    /* Clean up any pending hits */
-    if (BU_PTBL_LEN(&resp->re_pieces_pending) > 0) {
-	struct rt_piecestate **psp;
-	for (BU_PTBL_FOR(psp, (struct rt_piecestate **), &resp->re_pieces_pending)) {
-	    if ((*psp)->htab.end > 0)
-		rt_htbl_reset(&(*psp)->htab);
-	}
-	bu_ptbl_reset(&resp->re_pieces_pending);
-    }
 
     /* Terminate any logging */
     if (RT_G_DEBUG&(RT_DEBUG_ALLRAYS|RT_DEBUG_SHOOT|RT_DEBUG_PARTITION|RT_DEBUG_ALLHITS)) {
@@ -1346,7 +1039,6 @@ rt_cell_n_on_ray(register struct application *ap, int n)
     RT_CK_RTI(rtip);
     resp = ap->a_resource;
     RT_CK_RESOURCE(resp);
-    ss.resp = resp;
 
     if (RT_G_DEBUG&(RT_DEBUG_ALLRAYS|RT_DEBUG_SHOOT|RT_DEBUG_PARTITION|RT_DEBUG_ALLHITS)) {
 	bu_log_indent_delta(2);
@@ -1379,20 +1071,40 @@ rt_cell_n_on_ray(register struct application *ap, int n)
     /* Ensure that this CPU's resource structure is registered */
     BU_ASSERT(BU_PTBL_GET(&rtip->rti_resources, resp->re_cpu) != NULL);
 
-    /* Verify that direction vector has unit length */
+    /* Verify that the direction vector is well-formed (always-on).
+     * A zero-length or non-finite (NaN/Inf) direction is a malformed
+     * ray that would otherwise fail opaquely downstream.
+     * Report the source pixel/level/pt/dir so the origin can be
+     * located, then bomb as the historical guard did.
+     */
     if (RT_G_DEBUG) {
-	fastf_t f, diff;
+	fastf_t f;
 
 	f = MAGSQ(ap->a_ray.r_dir);
-	if (NEAR_ZERO(f, ap->a_rt_i->rti_tol.dist)) {
-	    bu_bomb("rt_cell_n_on_ray:  zero length dir vector\n");
+	if (NEAR_ZERO(f, ap->a_rt_i->rti_tol.dist)
+	    || !isfinite(ap->a_ray.r_dir[X])
+	    || !isfinite(ap->a_ray.r_dir[Y])
+	    || !isfinite(ap->a_ray.r_dir[Z])
+	    || !isfinite(f))
+	{
+	    bu_log("rt_cell_n_on_ray(): bad ray (x%d y%d lvl%d) "
+		   "pt=(%g %g %g) dir=(%g %g %g)\n",
+		   ap->a_x, ap->a_y, ap->a_level,
+		   V3ARGS(ap->a_ray.r_pt), V3ARGS(ap->a_ray.r_dir));
+	    bu_bomb("rt_cell_n_on_ray(): bad ray\n");
 	}
-	diff = f - 1;
-	if (!NEAR_ZERO(diff, ap->a_rt_i->rti_tol.dist)) {
-	    bu_log("rt_cell_n_on_ray: non-unit dir vect (x%d y%d lvl%d)\n",
-		   ap->a_x, ap->a_y, ap->a_level);
-	    f = 1/f;
-	    VSCALE(ap->a_ray.r_dir, ap->a_ray.r_dir, f);
+
+	/* Auto-normalize non-unit (but valid) rays only under debug,
+	 * preserving the historical RT_G_DEBUG behavior.
+	 */
+	{
+	    fastf_t diff = f - 1;
+	    if (!NEAR_ZERO(diff, ap->a_rt_i->rti_tol.dist)) {
+		bu_log("rt_cell_n_on_ray: non-unit dir vect (x%d y%d lvl%d)\n",
+		       ap->a_x, ap->a_y, ap->a_level);
+		f = 1/f;
+		VSCALE(ap->a_ray.r_dir, ap->a_ray.r_dir, f);
+	    }
 	}
     }
 
@@ -1437,7 +1149,7 @@ rt_cell_n_on_ray(register struct application *ap, int n)
      */
     if (!rt_in_rpp(&ap->a_ray, ss.inv_dir, rtip->mdl_min, rtip->mdl_max)  ||
 	ap->a_ray.r_max < 0.0) {
-	cutp = &ap->a_rt_i->rti_inf_box;
+	cutp = &ap->a_rt_i->i->rti_inf_box;
 	if (cutp->bn.bn_len > 0) {
 	    if (n == 0) return cutp;
 	}
@@ -1472,7 +1184,7 @@ rt_cell_n_on_ray(register struct application *ap, int n)
 
     ss.lastcut = CUTTER_NULL;
     ss.old_status = (struct rt_shootray_status *)NULL;
-    ss.curcut = &ap->a_rt_i->rti_CutHead;
+    ss.curcut = &ap->a_rt_i->i->rti_CutHead;
 
     if (ss.curcut->cut_type == CUT_CUTNODE || ss.curcut->cut_type == CUT_BOXNODE) {
 	ss.lastcell = ss.curcut;
@@ -1536,17 +1248,17 @@ rt_add_res_stats(register struct rt_i *rtip, register struct resource *resp)
     }
     RT_CK_RESOURCE(resp);
 
-    rtip->rti_nrays += resp->re_nshootray;
-    rtip->nmiss_model += resp->re_nmiss_model;
+    rtip->stats.rti_nrays += resp->re_nshootray;
+    rtip->stats.nmiss_model += resp->re_nmiss_model;
 
-    rtip->nshots += resp->re_shots + resp->re_piece_shots;
-    rtip->nhits += resp->re_shot_hit + resp->re_piece_shot_hit;
-    rtip->nmiss += resp->re_shot_miss + resp->re_piece_shot_miss;
+    rtip->stats.nshots += resp->re_shots + resp->re_piece_shots;
+    rtip->stats.nhits += resp->re_shot_hit + resp->re_piece_shot_hit;
+    rtip->stats.nmiss += resp->re_shot_miss + resp->re_piece_shot_miss;
 
-    rtip->nmiss_solid += resp->re_prune_solrpp;
+    rtip->stats.nmiss_solid += resp->re_prune_solrpp;
 
-    rtip->ndup += resp->re_ndup + resp->re_piece_ndup;
-    rtip->nempty_cells += resp->re_nempty_cells;
+    rtip->stats.ndup += resp->re_ndup + resp->re_piece_ndup;
+    rtip->stats.nempty_cells += resp->re_nempty_cells;
 
     /* Zero out resource totals, so repeated calls are not harmful */
     rt_zero_res_stats(resp);

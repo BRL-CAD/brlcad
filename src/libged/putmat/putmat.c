@@ -1,7 +1,7 @@
 /*                         P U T M A T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -105,7 +105,7 @@ _getmat(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if (rt_db_get_internal(&intern, dp, gedp->dbip, (matp_t)NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dp, gedp->dbip, (matp_t)NULL) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
 	bu_vls_free(&name1);
 	bu_vls_free(&name2);
@@ -248,24 +248,13 @@ ged_putmat_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl putmat_cmd_impl = {
-    "putmat",
-    ged_putmat_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd putmat_cmd = { &putmat_cmd_impl };
-const struct ged_cmd *putmat_cmds[] = { &putmat_cmd, NULL };
+#define GED_PUTMAT_COMMANDS(X, XID) \
+    X(putmat, ged_putmat_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  putmat_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_PUTMAT_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_putmat", 1, GED_PUTMAT_COMMANDS)
 
 /*
  * Local Variables:

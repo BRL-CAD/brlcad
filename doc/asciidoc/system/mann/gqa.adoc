@@ -1,0 +1,292 @@
+= GQA(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD MGED Commands
+
+== NAME
+gqa - analyze the currently open geometry database
+
+== SYNOPSIS
+
+[source]
+----
+gqa [options] [object ...]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+The *gqa* command performs quantitative analyses on geometry in MGED's open
+database.  It can report volume, weight, centroids, moments of inertia,
+bounding-box dimensions, overlaps, gaps, exposed air, and adjacent air.
+
+If one or more _objects_ are specified, only those objects are analyzed.  If
+none are specified, *gqa* analyzes the objects currently drawn in the active
+view.  Unlike the standalone utility, the MGED command therefore needs neither
+a database filename nor an object list when the desired geometry is already
+displayed.
+
+The MGED command and the standalone *gqa*(1) utility use the same analysis
+engine and accept the same analysis and refinement options.  This page covers
+the options most useful during an MGED session and the behavior unique to
+MGED.  Options not listed here are still accepted; see *gqa*(1) for the
+complete option reference and detailed descriptions of the analyses.
+
+Weight, centroid, and moment results require valid density data for every
+region.  Overlaps and other geometry errors invalidate reported volume and
+mass properties.
+
+
+[[how_gqa_works]]
+== HOW GQA WORKS
+
+*gqa* estimates properties by shooting grids of rays through the selected
+geometry from the three model-axis directions.  These directions do not depend
+on MGED's current viewing orientation; the active view determines the default
+object selection only.
+
+For volume and weight calculations, the estimates from the three directions
+are compared and the ray grid is progressively refined until they agree within
+the requested tolerance or the minimum grid spacing is reached.  Error and
+interface analyses, such as overlap and gap detection, refine until an error is
+found or the spacing limit is reached.  When several analyses are requested,
+*gqa* performs the refinement required by the most demanding one.
+
+The results are sampled estimates rather than exact analytic measurements.
+Finer grids improve the chance of sampling small or thin features, but require
+more rays and more processing time.  The *-g* option is the principal
+accuracy-versus-runtime control.  Use *-A* to request only the analyses needed;
+in particular, *-Av* and *-Ao* perform volume-only and overlap-only runs without
+requiring density data.
+
+
+[[density_information]]
+== DENSITY INFORMATION
+
+Weight, centroid, and moment analyses need a density for every region.  Each
+region's _material_id_ attribute (historically named _GIFTmater_) selects an
+entry in a density table.
+
+A density file is a plain-text file with one material per line and three
+whitespace-separated fields:
+
+_Material ID_::
+A nonnegative integer referenced by region _material_id_ attributes.
+
+_Density_::
+A nonnegative value in grams per cubic centimeter (g/cm^3^).
+
+_Material name_::
+The remainder of the line.  Names may contain spaces.
+
+Blank lines and text following a `#` character are ignored.  For example, a
+file named _vehicle.density_ might contain:
+
+[source]
+----
+# ID  density (g/cm^3)  material name
+2     7.82              Carbon Tool Steel
+3     2.70              Aluminum, 6061-T6
+5     8.96              Copper, pure
+7     8.03              Stainless Steel, 18Cr-8Ni
+----
+
+To validate and then import this table into the open database, run:
+
+[source]
+----
+mged> mater -d validate vehicle.density
+mged> mater -d import vehicle.density
+mged> mater -d get *
+----
+
+The first command checks the file without changing the database.  Importing
+replaces any density table already embedded in the database, and the final
+command lists the newly stored entries.  The imported table is stored as the
+*_DENSITIES* object.  Use *mater -d set* to add or update individual entries
+without replacing the table.
+
+Importing the table does not assign materials to regions.  Assign the matching
+ID to each region, for example:
+
+[source]
+----
+mged> attr set wheel.r material_id 3
+mged> gqa -Aw wheel.r
+----
+
+This assigns the aluminum entry above to _wheel.r_ and then computes its
+weight.  The *edcodes* and *adjust* commands may also be used to set material
+IDs.
+
+Unless *-f* is used, *gqa* searches for density information in this order:
+
+. the *_DENSITIES* object in the open database;
+. a _.density_ file in the directory containing the database;
+. _$HOME/.density_.
+
+An explicit *-f* _filename_ takes precedence over all of these sources and
+allows a density file to be used without importing it.  See *mater*(nged) for
+additional density-table inspection, editing, export, and mapping commands.
+
+
+[[options]]
+== OPTIONS
+
+*-A* __analysis_flags__::
+Selects one or more analyses.  Combine flags without separators:
++
+
+[cols="2*"]
+|===
+|Flag
+|Analysis
+
+|A
+|All reports (does not enable overlap visualization)
+|a
+|Adjacent regions having different air codes
+|b
+|Bounding-box dimensions
+|c
+|Weight and mass-weighted centroids
+|e
+|Exposed air
+|g
+|Gaps or voids
+|m
+|Weight, centroids, and moments of inertia
+|o
+|Overlaps
+|p
+|Overlaps, drawn as yellow lines in the active view
+|v
+|Volume
+|w
+|Weight
+|===
+
++
+If *-A* is omitted, *gqa* computes adjacent air, exposed air, gaps, overlaps,
+volume, weight, centroids, and moments of inertia.  Bounding-box reporting is
+not enabled by default.  Use *-AA* for every report, or select only the needed
+analyses to reduce work and avoid requiring densities for non-mass analyses.
+
+*-f* _filename_::
+Reads density values from _filename_ instead of using the normal density-source
+search.
+
+*-g* [__initial_spacing__`,`]__minimum_spacing__::
+Sets the finest permitted ray-grid spacing and, optionally, its initial
+spacing.  A hyphen may replace the comma.  Values accept units, as in
+*-g 1cm,1mm*.  Refinement halves the spacing at each step.  See *gqa*(1) for
+the full refinement rules and defaults.
+
+*-n* __minimum_hits__::
+Continues weight or volume refinement until every region has at least this many
+ray intersections, subject to the minimum grid spacing.
+
+*-p* __plot_prefix__::
+Writes analysis results to plot files whose names begin with _plot_prefix_.
+This is distinct from *-Ap*, which draws overlap segments directly in MGED.
+Plot files may be loaded later with *overlay*.
+
+*-P* __ncpus__::
+Limits the number of processor cores used.  By default, all available cores
+are used.
+
+*-q*::
+Suppresses reports for regions not intersected by a ray.
+
+*-r*::
+Reports per-region weight and volume in addition to per-object totals.
+
+*-t* __overlap_tolerance__::
+Ignores overlaps smaller than the specified nonnegative distance.  Units may
+be included, as in *-t 0.1mm*.
+
+*-U* __use_air__::
+Controls whether air regions participate in raytracing.  Set _use_air_ to _0_
+or _1_; the default is _1_.  Air must remain enabled for exposed-air and
+adjacent-air analyses.
+
+*-u* __distance_units,volume_units,weight_units__::
+Sets report units, in that order.  Empty fields preserve defaults; for example,
+*-u ,,kg* changes only weight units.  Quote the entire value when a unit name
+contains a space, as in *-u "cm,cu ft,kg"*.
+
+*-v*::
+Reports refinement progress and the constraints causing further computation.
+
+*-V* __volume_tolerance__::
+Sets the maximum permitted difference among volume estimates from the three
+ray directions.
+
+*-W* __weight_tolerance__::
+Sets the corresponding tolerance for weight estimates.
+
+
+[[examples]]
+== EXAMPLES
+
+.Analyze displayed geometry
+[example]
+====
+mged> **gqa -Av**
+
+Computes the volume of the objects currently drawn in the active view.  No
+density table is needed because only volume was requested.
+====
+
+.Analyze named objects
+[example]
+====
+mged> **gqa -Aoe -g 1cm,1mm hull turret suspension**
+
+Checks the three named objects for overlaps and exposed air, refining the grid
+from 1 cm to no finer than 1 mm.
+====
+
+.Compute centroids and moments of inertia
+[example]
+====
+mged> **gqa -Am -u cm,cc,kg vehicle**
+
+Reports weight, centroid, and inertia results for _vehicle_ using the open
+database's density information.
+====
+
+.Visualize overlaps
+[example]
+====
+mged> **gqa -Ap -t 0.1mm**
+
+Checks the displayed geometry and draws detected overlap segments as yellow
+lines in the active view, ignoring overlaps thinner than 0.1 mm.
+====
+
+
+[[see_also]]
+== SEE ALSO
+
+*gqa*(1), *mater*(nged), *overlay*(nged), *rtweight*(nged)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as
+represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

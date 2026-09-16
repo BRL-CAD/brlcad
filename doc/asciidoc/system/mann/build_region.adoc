@@ -1,0 +1,57 @@
+= BUILD_REGION(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+build_region - Builds a region from existing solids that have specifically formatted names based on the provided tags and numbers.
+
+== SYNOPSIS
+
+[source]
+----
+build_region [-a region_num] {tag start_num end_num}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Builds a region from existing solids that have specifically formatted names based on the provided tags and numbers. The created region will be named "tag.rx," where "x" is the first number (starting from 1) that produces an unused region name. If the _-a_ option is used, then the specified "region_num" will be used for "x." If that region already exists, this operation will append the new geometry to the existing region definition. If that region does not exist, a new one will be created. The solids that will be involved in this operation are those with names of the form "tag.s#" or "tag.s#o@," where "#" is a number between __start_num__ and __end_num__ inclusive, "o" is either "u," "-," or "+," and "@" is any number. The operators and numbers coded into the solid names are used to build the region.
+
+
+[[examples]]
+== EXAMPLES
+
+The example demonstrates how to use the *build_region* command to build a region from existing solids.
+
+.Build a region from existing solids
+[example]
+====
+
+mged> **build_region abc 1 2**::
+Creates a region named "abc.r1" consisting of:
+
+
+* u abc.s1
+* u abc.s2
+* + abc.s2+1
+* - abc.s2-1
+
+provided that the above shapes already exist in the database.
+
+
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

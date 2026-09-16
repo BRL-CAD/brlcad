@@ -1,7 +1,7 @@
 /*                         E D C O D E S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -106,7 +106,7 @@ edcodes_collect_regnames(struct ged *gedp, struct directory *dp, int pathpos)
     if (!(dp->d_flags & RT_DIR_COMB))
 	return EDCODES_OK;
 
-    id = rt_db_get_internal(&intern, dp, gedp->dbip, (matp_t)NULL, &rt_uniresource);
+    id = rt_db_get_internal(&intern, dp, gedp->dbip, (matp_t)NULL);
     if (id < 0) {
 	bu_vls_printf(gedp->ged_result_str,
 		      "Cannot get records for %s\n", dp->d_namep);
@@ -293,24 +293,13 @@ ged_edcodes_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl edcodes_cmd_impl = {
-    "edcodes",
-    ged_edcodes_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd edcodes_cmd = { &edcodes_cmd_impl };
-const struct ged_cmd *edcodes_cmds[] = { &edcodes_cmd, NULL };
+#define GED_EDCODES_COMMANDS(X, XID) \
+    X(edcodes, ged_edcodes_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  edcodes_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_EDCODES_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_edcodes", 1, GED_EDCODES_COMMANDS)
 
 /*
  * Local Variables:

@@ -1,7 +1,7 @@
 /*                        B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2020-2025 United States Government as represented by
+ * Copyright (c) 2020-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -193,7 +193,7 @@ _brep_cmd_boolean(void *bs, int argc, const char **argv)
 	}
     }
     struct rt_db_internal intern2;
-    GED_DB_GET_INTERNAL(gedp, &intern2, dp2, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_GET_INTERN(gedp, &intern2, dp2, bn_mat_identity, BRLCAD_ERROR);
     RT_CK_DB_INTERNAL(&intern2);
 
     db_op_t op = DB_OP_NULL;
@@ -344,7 +344,7 @@ _brep_cmd_bots(void *bs, int argc, const char **argv)
 	    bu_vls_printf(gedp->ged_result_str, "Error: %s is not a solid or does not exist in database", obj_names[i]);
 	    return BRLCAD_ERROR;
 	}
-	GED_DB_GET_INTERNAL(gedp, &intern, dp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
+	GED_DB_GET_INTERN(gedp, &intern, dp, bn_mat_identity, BRLCAD_ERROR);
 	RT_CK_DB_INTERNAL(&intern);
 	bi = (struct rt_brep_internal*)intern.idb_ptr;
 	if (!RT_BREP_TEST_MAGIC(bi)) {
@@ -465,7 +465,7 @@ _brep_cmd_brep(void *bs, int argc, const char **argv)
 	// brep_conversion_comb frees the intern, so make a new copy specifically for it to avoid
 	// a double-free with the top level cleanup of gb->intern
 	struct rt_db_internal intern;
-	GED_DB_GET_INTERNAL(gedp, &intern, gb->dp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
+	GED_DB_GET_INTERN(gedp, &intern, gb->dp, bn_mat_identity, BRLCAD_ERROR);
 	RT_CK_DB_INTERNAL(&intern);
 
 	struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
@@ -574,18 +574,18 @@ _brep_cmd_dump(void *bs, int argc, const char **argv)
     // Find all brep paths
     struct bu_ptbl breps = BU_PTBL_INIT_ZERO;
     const char *brep_search = "-type brep";
-    db_update_nref(gedp->dbip, &rt_uniresource);
+    db_update_nref(gedp->dbip);
     (void)db_search(&breps, DB_SEARCH_TREE, brep_search, 1, &gb->dp, gedp->dbip, NULL, NULL, NULL);
     for (size_t i = 0; i < BU_PTBL_LEN(&breps); i++) {
 	struct db_full_path *fp = (struct db_full_path *)BU_PTBL_GET(&breps, i);
 	mat_t m;
 	struct bu_color c;
 	MAT_IDN(m);
-	db_path_to_mat(gedp->dbip, fp, m, 0, &rt_uniresource);
-	db_full_path_color(&c, fp, gedp->dbip, &rt_uniresource);
+	db_path_to_mat(gedp->dbip, fp, m, 0);
+	db_full_path_color(&c, fp, gedp->dbip);
 	struct directory *dp = DB_FULL_PATH_CUR_DIR(fp);
 	struct rt_db_internal intern;
-	if (rt_db_get_internal(&intern, dp, gedp->dbip, m, &rt_uniresource) < 0) {
+	if (rt_db_get_internal(&intern, dp, gedp->dbip, m) < 0) {
 	    bu_log("Error - unable to get internal of %s\n", dp->d_namep);
 	    continue;
 	}
@@ -636,12 +636,7 @@ _brep_cmd_flip(void *bs, int argc, const char **argv)
 
     b_ip->brep->Flip();
 
-    // Make the new one
-    struct rt_wdb *wdbp = wdb_dbopen(gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-    if (mk_brep(wdbp, gb->solid_name.c_str(), (void *)b_ip->brep)) {
-	return BRLCAD_ERROR;
-    }
-    return BRLCAD_OK;
+    return _brep_write_edit(gb);
 }
 
 extern "C" int
@@ -661,6 +656,16 @@ _brep_cmd_geo(void *bs, int argc, const char **argv)
 	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not of type brep\n", gb->solid_name.c_str());
 	return BRLCAD_ERROR;
     }
+
+    /* Deprecation notice: NURBS surface CV editing is now available via the
+     * 'edit' command (e.g. "edit <obj> select_surface_cv <face> <i> <j>" and
+     * "edit <obj> move_surface_cv <dx> <dy> <dz>").  The 'brep geo' sub-command
+     * is preserved for backward compatibility but may be removed in a future
+     * release.  Please migrate to 'edit' for CV manipulation. */
+    bu_vls_printf(gb->gedp->ged_result_str,
+	    "NOTE: 'brep geo' is deprecated for CV editing. "
+	    "Use 'edit <obj> select_surface_cv / move_surface_cv / "
+	    "set_surface_cv_position' instead.\n");
 
     argc--; argv++;
 
@@ -758,7 +763,7 @@ _brep_cmd_intersect(void *bs, int argc, const char **argv)
 	}
     }
     struct rt_db_internal intern2;
-    GED_DB_GET_INTERNAL(gedp, &intern2, dp2, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_GET_INTERN(gedp, &intern2, dp2, bn_mat_identity, BRLCAD_ERROR);
     RT_CK_DB_INTERNAL(&intern2);
 
 
@@ -1086,7 +1091,7 @@ _brep_cmd_selection(void *bs, int argc, const char **argv)
 		return BRLCAD_ERROR;
 	    }
 	}
-	GED_DB_PUT_INTERNAL(gedp, gb->dp, &gb->intern, &rt_uniresource, BRLCAD_ERROR);
+	GED_DB_PUT_INTERN(gedp, gb->dp, &gb->intern, BRLCAD_ERROR);
     }
     return BRLCAD_OK;
 }
@@ -1136,9 +1141,15 @@ _brep_cmd_shrink_surfaces(void *bs, int argc, const char **argv)
 
     b_ip->brep->ShrinkSurfaces();
 
-    // Make the new one
-    struct rt_wdb *wdbp = wdb_dbopen(gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-    if (mk_brep(wdbp, gb->solid_name.c_str(), (void *)b_ip->brep)) {
+    return _brep_write_edit(gb);
+}
+
+int
+_brep_write_edit(struct _ged_brep_info *gb)
+{
+    if (rt_db_put_internal(gb->dp, gb->gedp->dbip, &gb->intern) < 0) {
+	bu_vls_printf(gb->gedp->ged_result_str, "Could not write edited BRep %s\n",
+	    gb->solid_name.c_str());
 	return BRLCAD_ERROR;
     }
     return BRLCAD_OK;
@@ -1558,7 +1569,7 @@ ged_brep_core(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    GED_DB_GET_INTERNAL(gedp, &gb.intern, gb.dp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_GET_INTERN(gedp, &gb.intern, gb.dp, bn_mat_identity, BRLCAD_ERROR);
     RT_CK_DB_INTERNAL(&gb.intern);
 
     gb.vbp = bv_vlblock_init(vlfree, 32);
@@ -1583,24 +1594,14 @@ ged_brep_core(struct ged *gedp, int argc, const char *argv[])
     return BRLCAD_ERROR;
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-extern "C" {
-struct ged_cmd_impl brep_cmd_impl = { "brep", ged_brep_core, GED_CMD_DEFAULT };
-const struct ged_cmd brep_cmd = { &brep_cmd_impl };
-struct ged_cmd_impl dplot_cmd_impl = { "dplot", ged_dplot_core, GED_CMD_DEFAULT };
-const struct ged_cmd dplot_cmd = { &dplot_cmd_impl };
-const struct ged_cmd *brep_cmds[] = { &brep_cmd, &dplot_cmd, NULL };
 
-static const struct ged_plugin pinfo = { GED_API,  brep_cmds, 2 };
+#define GED_BREP_COMMANDS(X, XID) \
+    X(brep,   ged_brep_core,   GED_CMD_DEFAULT) \
+    X(dplot,  ged_dplot_core,  GED_CMD_DEFAULT)
 
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-}
-#endif
+GED_DECLARE_COMMAND_SET(GED_BREP_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_brep", 1, GED_BREP_COMMANDS)
 
 // Local Variables:
 // tab-width: 8
@@ -1610,4 +1611,3 @@ COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

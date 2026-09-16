@@ -1,7 +1,7 @@
 /*                   T C L C A D / S E T U P . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2025 United States Government as represented by
+ * Copyright (c) 2004-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -50,6 +50,12 @@ TCLCAD_EXPORT extern void tclcad_bn_setup(Tcl_Interp *interp);
  * "load /usr/brlcad/lib/librt.so"
  */
 TCLCAD_EXPORT extern int Rt_Init(Tcl_Interp *interp);
+TCLCAD_EXPORT extern int Bu_Init(Tcl_Interp *interp);
+TCLCAD_EXPORT extern int Bn_Init(Tcl_Interp *interp);
+TCLCAD_EXPORT extern int Dm_Init(Tcl_Interp *interp);
+TCLCAD_EXPORT extern int Dmo_Init(Tcl_Interp *interp);
+TCLCAD_EXPORT extern int Fbo_Init(Tcl_Interp *interp);
+TCLCAD_EXPORT extern int Ged_Init(Tcl_Interp *interp);
 
 
 /* defined in cmdhist_obj.c */

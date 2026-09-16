@@ -1,0 +1,49 @@
+= BEV(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+bev - Performs the operations indicated in the __Boolean_formula__ and stores the result in __new_obj__.
+
+== SYNOPSIS
+
+[source]
+----
+bev [-t] [-P#] {new_obj} {Boolean_formula}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Performs the operations indicated in the __Boolean_formula__ and stores the result in __new_obj__. The __new_obj__ will be stored as an NMG shape (it may be converted to a polysolid by using the *nmg_simplify* command). If the -t option is specified, then the resulting object will consist entirely of triangular facets. The default is to allow facets of any complexity, including holes. The _-P_ option specifies the number of CPUs to use for the calculation (however, this is currently ignored). Only simple __Boolean_formulas__ are allowed. No parentheses are allowed and the operations are performed from left to right with no precedence. More complex expressions must be expressed as BRL-CAD objects using the *r*, *g*, or *c* commands and evaluated using the *facetize* or *ev* commands.
+
+
+[[examples]]
+== EXAMPLES
+
+The example demonstrates the use of the *bev* command with the _-t_ option to create a triangulated object.
+
+.Creating a triangulated object by intersecting two objects
+[example]
+====
+
+mged> **bev -t triangulated_lens sphere1 + sphere2**::
+Creates a triangulated object by intersecting objects _sphere1_ and _sphere2_
+
+
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

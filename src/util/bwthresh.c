@@ -1,7 +1,7 @@
 /*                      B W T H R E S H . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2025 United States Government as represented by
+ * Copyright (c) 1990-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -30,6 +30,8 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -37,10 +39,17 @@
 #include "bu/app.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
+#include "bu/opt.h"
 #include "bu/str.h"
 
 
 #define USAGE "Usage: bwthresh values ...\n"
+
+static int
+parse_threshold_arg(const char *arg, int *out_value)
+{
+    return bu_opt_scan_int_range(arg, out_value, 0, 255, "threshold");
+}
 
 
 int
@@ -54,7 +63,7 @@ main (int argc, char **argv)
 
     bu_setprogname(argv[0]);
 
-    if ((BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?")) && argc == 2)
+    if (argc == 2 && (BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?")))
 	bu_exit(1, "%s", USAGE);
     if ((nm_threshs = argc - 1) < 1)
 	bu_exit(1, "%s", USAGE);
@@ -66,7 +75,7 @@ main (int argc, char **argv)
     bin_color = (unsigned char *)bu_malloc((unsigned) ((nm_threshs + 1) * sizeof(int)), "bin_color");
 
     for (i = 0; i < nm_threshs; ++i) {
-	if (sscanf(*++argv, "%d", thresh_val + i) != 1) {
+	if (!parse_threshold_arg(*++argv, thresh_val + i)) {
 	    bu_log("bwthresh: Illegal threshold value: '%s'\n", *argv);
 	    bu_exit(1, "%s", USAGE);
 	}

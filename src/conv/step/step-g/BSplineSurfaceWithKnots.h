@@ -1,7 +1,7 @@
 /*                 BSplineCurveWithKnots.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2025 United States Government as represented by
+ * Copyright (c) 1994-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -43,7 +43,7 @@ protected:
     LIST_OF_INTEGERS v_multiplicities;
     LIST_OF_REALS u_knots;
     LIST_OF_REALS v_knots;
-    Knot_type knot_spec;
+    int knot_spec;
 
 
 public:
@@ -54,6 +54,7 @@ public:
     ON_Brep *GetONBrep();
     virtual bool LoadONBrep(ON_Brep *brep);
     virtual void Print(int level);
+    virtual size_t PullbackSpanEstimate() const;
 
     //static methods
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);

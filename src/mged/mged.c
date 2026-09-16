@@ -1,7 +1,7 @@
 /*                           M G E D . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2025 United States Government as represented by
+ * Copyright (c) 1993-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -30,7 +30,6 @@
 #include <string.h>
 #include <locale.h>
 #include <ctype.h>
-#include <signal.h>
 #include <time.h>
 #include <limits.h>
 #ifdef HAVE_SYS_TYPES_H
@@ -58,19 +57,18 @@
 #endif
 
 #include "bu/app.h"
-#include "bu/getopt.h"
+#include "bu/color.h"
+#include "bu/opt.h"
 #include "bu/debug.h"
 #include "bu/units.h"
 #include "bu/version.h"
-#include "bu/time.h"
+#include "bu/datetime.h"
 #include "bu/snooze.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
-#ifndef HAVE_WINDOWS_H
-#  define LIBTERMIO_IMPLEMENTATION
-#  include "libtermio.h"
-#endif
+#define LIBTERMIO_IMPLEMENTATION
+#include "libtermio.h"
 #include "bv/util.h"
 #include "ged.h"
 #include "tclcad.h"
@@ -96,11 +94,11 @@ extern void draw_m_axes(struct mged_state *);
 extern void draw_v_axes(struct mged_state *);
 
 /* defined in chgmodel.c */
-extern void set_localunit_TclVar(void);
+extern void set_localunit_TclVar(struct mged_state *s);
 
 /* defined in history.c */
 extern struct bu_vls *history_prev(const char *);
-extern struct bu_vls *history_cur(const char *);
+extern struct bu_vls *history_cur(void);
 extern struct bu_vls *history_next(const char *);
 
 // FIXME: Globals
@@ -123,22 +121,24 @@ extern struct _axes_state default_axes_state;
 /* defined in rect.c */
 extern struct _rubber_band default_rubber_band;
 
-#ifndef USE_TCL_CHAN
+#ifdef HAVE_PIPE
 /* these two file descriptors are where we store fileno(stdout) and
  * fileno(stderr) during graphical startup so that we may restore them
  * when we're done (which is needed so atexit() calls to bu_log() will
  * still work).
  */
 // FIXME: Global
-static int stdfd[2] = {1, 2};
+static int stdfd[2] = {-1, -1};
 #endif
 
 /* Container for passing I/O data through Tcl callbacks */
 struct stdio_data {
-    long fd;
     Tcl_Channel chan;
     struct mged_state *s;
 };
+
+void stdin_input(ClientData clientData, int mask);
+void std_out_or_err(ClientData clientData, int mask);
 
 struct mged_state *MGED_STATE = NULL;
 
@@ -150,6 +150,182 @@ double frametime;	/* time needed to draw last frame */
 struct rt_wdb rtg_headwdb;  /* head of database object list */
 
 void (*cur_sigint)(int);	/* Current SIGINT status */
+
+
+int
+mged_shutting_down(struct mged_state *s)
+{
+    return !s || s->shutdown_state >= MGED_SHUTDOWN_REQUESTED;
+}
+
+
+void
+mged_request_shutdown(struct mged_state *s, int exitcode)
+{
+    if (!s || s->shutdown_state >= MGED_SHUTDOWN_REQUESTED)
+	return;
+
+    s->shutdown_state = MGED_SHUTDOWN_REQUESTED;
+    s->shutdown_exitcode = exitcode;
+    if (s->interp) {
+	Tcl_SetVar(s->interp, "mged_shutting_down", "1", TCL_GLOBAL_ONLY);
+	(void)Tcl_Eval(s->interp, "catch {foreach id [after info] {after cancel $id}}");
+    }
+}
+
+
+static void
+mged_quiesce_tcl(struct mged_state *s)
+{
+    if (!s)
+	return;
+
+    s->shutdown_state = MGED_SHUTDOWN_IN_PROGRESS;
+    if (s->interp) {
+	Tcl_SetVar(s->interp, "mged_shutting_down", "1", TCL_GLOBAL_ONLY);
+	(void)Tcl_Eval(s->interp, "catch {foreach id [after info] {after cancel $id}}");
+    }
+
+    mged_stop_log_drain_timer(s);
+
+#ifdef HAVE_TK
+    /* This handler is process-global in Tk and retains s as ClientData.  It
+     * must be removed explicitly: destroying individual Tk windows removes
+     * their window handlers, but not a generic handler. */
+    if (s->tk_generic_handler_active) {
+	Tk_DeleteGenericHandler(doEvent, (ClientData)s);
+	s->tk_generic_handler_active = 0;
+    }
+#endif
+
+    if (s->stdin_chan && s->stdin_data) {
+	Tcl_DeleteChannelHandler(s->stdin_chan, stdin_input, (ClientData)s->stdin_data);
+	BU_PUT(s->stdin_data, struct stdio_data);
+	s->stdin_data = NULL;
+	s->stdin_chan = NULL;
+    }
+    if (s->stdout_chan) {
+	Tcl_DeleteChannelHandler(s->stdout_chan, std_out_or_err, (ClientData)s->stdout_chan);
+	s->stdout_chan = NULL;
+    }
+    if (s->stderr_chan) {
+	Tcl_DeleteChannelHandler(s->stderr_chan, std_out_or_err, (ClientData)s->stderr_chan);
+	s->stderr_chan = NULL;
+    }
+}
+
+
+#ifdef HAVE_PIPE
+/*
+ * Make a Tcl channel which owns a duplicate of fd.  In particular, do not
+ * give Tcl the HANDLE owned by a Windows CRT descriptor: closing that channel
+ * would leave the CRT descriptor referring to an invalid native handle.
+ */
+static Tcl_Channel
+mged_dup_file_channel(int fd, int mode)
+{
+#ifdef HAVE_WINDOWS_H
+    HANDLE source = (HANDLE)_get_osfhandle(fd);
+    HANDLE duplicate = INVALID_HANDLE_VALUE;
+
+    if (source == INVALID_HANDLE_VALUE ||
+	!DuplicateHandle(GetCurrentProcess(), source, GetCurrentProcess(),
+		&duplicate, 0, FALSE, DUPLICATE_SAME_ACCESS))
+	return NULL;
+
+    Tcl_Channel channel = Tcl_MakeFileChannel((ClientData)duplicate, mode);
+    if (!channel)
+	CloseHandle(duplicate);
+    return channel;
+#else
+    int duplicate = dup(fd);
+    if (duplicate == -1)
+	return NULL;
+
+    Tcl_Channel channel = Tcl_MakeFileChannel((ClientData)(size_t)duplicate, mode);
+    if (!channel)
+	(void)close(duplicate);
+    return channel;
+#endif
+}
+
+
+/*
+ * Move Tcl's standard channel to its own duplicate of the saved descriptor.
+ * This lets dup2 restore the C runtime descriptor without invalidating a
+ * channel which Tcl_Finalize will subsequently flush and close.
+ */
+static int
+mged_rebind_std_channel(struct mged_state *s, int fd, int type)
+{
+    Tcl_Channel old_channel;
+    Tcl_Channel new_channel;
+
+    if (!s || !s->interp || fd < 0)
+	return 0;
+
+    old_channel = Tcl_GetStdChannel(type);
+    new_channel = mged_dup_file_channel(fd, TCL_WRITABLE);
+    if (!new_channel)
+	return 0;
+
+    (void)Tcl_SetChannelOption(s->interp, new_channel, "-buffering", "line");
+    Tcl_RegisterChannel(s->interp, new_channel);
+    Tcl_SetStdChannel(new_channel, type);
+
+    if (old_channel && old_channel != new_channel &&
+	Tcl_IsChannelRegistered(s->interp, old_channel))
+	(void)Tcl_UnregisterChannel(s->interp, old_channel);
+
+    return 1;
+}
+
+
+/*
+ * Restore stdout and stderr without leaving Tcl holding channels backed by
+ * descriptors/handles which dup2 has replaced.  A failed rebind is deferred
+ * until after Tcl_Finalize, when no Tcl channel can refer to the descriptor.
+ */
+static void
+mged_restore_stdio(struct mged_state *s, int force_restore)
+{
+    static const int types[2] = {TCL_STDOUT, TCL_STDERR};
+    FILE *streams[2] = {stdout, stderr};
+
+    for (size_t i = 0; i < 2; i++) {
+	int can_restore = force_restore;
+	if (stdfd[i] < 0)
+	    continue;
+
+	if (!can_restore)
+	    can_restore = mged_rebind_std_channel(s, stdfd[i], types[i]);
+	if (!can_restore)
+	    continue;
+
+	if (dup2(stdfd[i], fileno(streams[i])) == -1)
+	    perror("dup2");
+	(void)close(stdfd[i]);
+	stdfd[i] = -1;
+    }
+}
+#endif
+
+
+static void
+mged_rename_tcl_cmd(Tcl_Interp *interp, const char *cmd)
+{
+    Tcl_CmdInfo info;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
+
+    if (!interp || !cmd || !Tcl_GetCommandInfo(interp, cmd, &info))
+	return;
+
+    bu_vls_printf(&vls, "rename %s \"\"", cmd);
+    if (Tcl_Eval(interp, bu_vls_cstr(&vls)) != TCL_OK)
+	bu_log("mged shutdown: failed to rename Tcl command \"%s\": %s\n",
+	       cmd, Tcl_GetStringResult(interp));
+    bu_vls_free(&vls);
+}
 
 // FIXME: Global
 int cbreak_mode = 0;    /* >0 means in cbreak_mode */
@@ -193,6 +369,7 @@ notify_parent_done(int parent) {
 }
 
 
+#if defined(HAVE_WINDOWS_H)
 void
 mgedInvalidParameterHandler(const wchar_t* UNUSED(expression),
 			    const wchar_t* UNUSED(function),
@@ -204,6 +381,7 @@ mgedInvalidParameterHandler(const wchar_t* UNUSED(expression),
  * Windows, I think you're number one!
  */
 }
+#endif
 
 
 void
@@ -219,14 +397,6 @@ pr_beep(void)
 {
     bu_log("%c", 7);
 }
-
-
-/* so the Windows-specific calls blend in */
-#if !defined(_WIN32) || defined(__CYGWIN__)
-void _set_invalid_parameter_handler(void (*callback)(const wchar_t*, const wchar_t*, const wchar_t*, unsigned int, uintptr_t)) { if (callback) return; }
-#endif
-
-
 
 
 /*
@@ -353,6 +523,247 @@ new_mats(struct mged_state *s)
     bv_update(view_state->vs_gvp);
 }
 
+static int
+mged_dm_during_clbk(int ac, const char **av, void *UNUSED(u1), void *u2)
+{
+    struct mged_state *s = (struct mged_state *)u2;
+    if (!s || ac < 2 || !av)
+        return BRLCAD_OK;
+
+    const char *dbg = getenv("GED_DM_DURING_DEBUG");
+    if (dbg && BU_STR_EQUAL(dbg, "1")) {
+        bu_log("mged dm during callback: ");
+        for (int i = 0; i < ac; i++) {
+            bu_log("%s%s", av[i], (i + 1 < ac) ? " " : "\n");
+        }
+    }
+
+    if (BU_STR_EQUAL(av[1], "set")) {
+        if (ac > 2 && BU_STR_EQUAL(av[2], "zclip") && DMP && view_state && view_state->vs_gvp && view_state->vs_gvp->gv_s) {
+            view_state->vs_gvp->gv_s->gv_zclip = dm_get_zclip(DMP);
+        }
+        if (view_state)
+            view_state->vs_flag = 1;
+        DMP_dirty = 1;
+        if (DMP)
+            dm_set_dirty(DMP, 1);
+        return BRLCAD_OK;
+    }
+
+    if (BU_STR_EQUAL(av[1], "bg") || BU_STR_EQUAL(av[1], "attach")) {
+        if (view_state)
+            view_state->vs_flag = 1;
+        DMP_dirty = 1;
+        if (DMP)
+            dm_set_dirty(DMP, 1);
+    }
+
+    return BRLCAD_OK;
+}
+
+
+/*
+ * Sentinel values used by struct mged_cli_overrides to distinguish "not
+ * specified on command line" from a legitimate zero or negative value.
+ * INT_MIN is safe for all int settings (no setting takes that value).
+ * The DBL sentinel is a large negative number no geometric value would use.
+ */
+#define MGED_CLI_UNSET_INT  INT_MIN
+#define MGED_CLI_UNSET_DBL  (-1.0e+38)
+
+
+/*
+ * Helper struct for colour options that use bu_opt_color.  The .set flag
+ * distinguishes "not supplied on command line" from an explicit black (0 0 0).
+ * Defined here so it can be embedded in struct mged_cli_overrides below.
+ */
+struct mged_color_opt {
+    struct bu_color color;  /* populated by bu_opt_color */
+    int set;                /* 1 once the option has been parsed */
+};
+
+
+/*
+ * Holds every value parsed from the MGED command line.  Fields that were not
+ * supplied by the user keep their sentinel initial values so that
+ * apply_cli_overrides() can distinguish "not set" from an explicit zero.
+ *
+ * Two usage phases:
+ *   (a) Early options (attach, classic_mged, …) are applied immediately
+ *       after bu_opt_parse returns, before Tcl/DM initialisation.
+ *   (b) Deferred options (mged_variables, grid, colours, …) are applied by
+ *       apply_cli_overrides() after do_rc() so that CLI flags always win
+ *       over any .mgedrc settings.
+ */
+struct mged_cli_overrides {
+    /* --- Phase (a): applied immediately after bu_opt_parse() --- */
+    const char *attach;         /* -a / --attach */
+    const char *dpy_string;     /* -d / --display */
+    int classic_mode;           /* -c / --classic  (set to 1 when given) */
+    int gui_mode;               /* -C / --gui      (set to 1 when given) */
+    int read_only;              /* -r / --read-only */
+    int pipe_mode;              /* -p / --pipe */
+    int background;             /* -b / --background (run in background) */
+    int print_version;          /* -v / --version */
+    int print_help;             /* -h / --help / -? */
+    int old_gui_flag;           /* -o developer option */
+    unsigned int rt_debug_val;  /* -x / --rt-debug (hex uint) */
+    int rt_debug_set;           /* 1 if -x was given */
+    unsigned int bu_debug_val;  /* -X / --bu-debug (hex uint) */
+    int bu_debug_set;           /* 1 if -X was given */
+
+    /* --- rc file control (applied before phase-b) --- */
+    const char *rcfile;         /* --rcfile: use this file instead of .mgedrc */
+    int skip_rc;                /* --no-rc: skip all rc processing */
+
+    /* --- Phase (b): applied by apply_cli_overrides() after do_rc() ---
+     *
+     * All int fields: MGED_CLI_UNSET_INT  means "not given".
+     * For boolean on/off pairs (--use-air / --no-use-air) the int is
+     * initialised to MGED_CLI_UNSET_INT; --X sets it to 1, --no-X sets it to 0.
+     *
+     * All double fields: MGED_CLI_UNSET_DBL means "not given".
+     *
+     * All char fields: '\0' means "not given".
+     *
+     * All pointer fields: NULL means "not given".
+     */
+
+    /* mged_variables (rset var / set <name>) */
+    int use_air;            /* --use-air / --no-use-air */
+    int dlist;              /* --dlist   / --no-dlist   */
+    int faceplate;          /* --faceplate / --no-faceplate */
+    int orig_gui;           /* MGED_CLI_UNSET_INT / 0 / 1 */
+    int linewidth;          /* --linewidth #  (pixels, >=1) */
+    int port;               /* --port #       (0-65535) */
+    int listen;             /* MGED_CLI_UNSET_INT / 0 / 1 */
+    int fb;                 /* MGED_CLI_UNSET_INT / 0 / 1 */
+    int fb_all;             /* MGED_CLI_UNSET_INT / 0 / 1 */
+    int fb_overlay;         /* --fb-overlay 0|1|2 */
+    int predictor;          /* --predictor / --no-predictor */
+    int hot_key;            /* MGED_CLI_UNSET_INT / keycode */
+    int context;            /* MGED_CLI_UNSET_INT / 0 / 1 */
+    int sliders;            /* MGED_CLI_UNSET_INT / 0 / 1 */
+    int perspective_mode;   /* MGED_CLI_UNSET_INT / 0 / 1 */
+    char linestyle;         /* --linestyle s|d  ('\0' = not set) */
+    char mouse_behavior;    /* --mouse-behavior v|a|e */
+    char coords;            /* --coords m|v */
+    char rotate_about;      /* --rotate-about m|v|e */
+    char transform;         /* --transform v|a|e */
+    double perspective;     /* --perspective #  (degrees, MGED_CLI_UNSET_DBL = not set) */
+    double predictor_advance;   /* --predictor-advance # */
+    double predictor_length;    /* --predictor-length # */
+    double nmg_eu_dist;         /* --nmg-eu-dist # */
+    double eye_sep_dist;        /* --eye-sep-dist # (mm, 0 = mono) */
+
+    /* Tcl mged_default array entries */
+    const char *dm_type;    /* --dm-type type */
+    const char *geom;       /* --geom WxH+X+Y (command window) */
+    const char *ggeom;      /* --ggeom WxH+X+Y (graphics window) */
+
+    /* grid (rset g …) */
+    int grid_draw;          /* --grid-draw 0|1 */
+    int grid_snap;          /* --grid-snap 0|1 */
+    int grid_mrh;           /* --grid-mrh # */
+    int grid_mrv;           /* --grid-mrv # */
+    double grid_rh;         /* --grid-rh # */
+    double grid_rv;         /* --grid-rv # */
+
+    /* colour scheme subset (rset cs …) */
+    struct mged_color_opt bg_color;      /* --bg  (bg_color.set = 0 means not given) */
+    struct mged_color_opt geo_def_color; /* --geo-color */
+
+    /* general escape hatches */
+    struct bu_ptbl set_pairs;   /* --set VAR=VALUE  (strings in argv) */
+    struct bu_ptbl rset_pairs;  /* --rset ARGS      (strings in argv) */
+};
+
+
+/* ---------------------------------------------------------------------------
+ * bu_opt helper: set the pointed-to int to 0 (used by --no-X boolean flags).
+ * Returns 0 (no argv element consumed).
+ * -------------------------------------------------------------------------- */
+static int
+flag_set_zero(struct bu_vls *UNUSED(msg), size_t UNUSED(argc),
+	      const char **UNUSED(argv), void *set_var)
+{
+    *(int *)set_var = 0;
+    return 0;
+}
+
+
+/* ---------------------------------------------------------------------------
+ * bu_opt helper: parse a hex unsigned int (for -x / -X debug flags).
+ * Consumes one argv element.
+ * -------------------------------------------------------------------------- */
+static int
+parse_debug_uint(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
+{
+    unsigned int *val = (unsigned int *)set_var;
+    BU_OPT_CHECK_ARGV0(msg, argc, argv, "hex value");
+    if (sscanf(argv[0], "%x", val) != 1) {
+	if (msg)
+	    bu_vls_printf(msg, "ERROR: expected hex integer, got \"%s\"\n", argv[0]);
+	return -1;
+    }
+    return 1;
+}
+
+
+/* ---------------------------------------------------------------------------
+ * bu_opt_color wrapper: stores the parsed colour in a struct that also holds
+ * a "was this option given?" flag.  Used for --bg and --geo-color so that
+ * apply_cli_overrides() can reliably distinguish "not supplied" from an
+ * explicit black (0 0 0).
+ * struct mged_color_opt is defined above (before mged_cli_overrides).
+ * -------------------------------------------------------------------------- */
+static int
+parse_opt_color(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
+{
+    struct mged_color_opt *co = (struct mged_color_opt *)set_var;
+    int ret = bu_opt_color(msg, argc, argv, &co->color);
+    if (ret > 0)
+	co->set = 1;
+    return ret;
+}
+
+
+/* ---------------------------------------------------------------------------
+ * bu_opt helper: collect a --set VAR=VALUE string into a bu_ptbl.
+ * Validates the '=' separator; stores the original argv pointer (valid for
+ * the duration of main()).  Consumes one argv element.
+ * -------------------------------------------------------------------------- */
+static int
+parse_mged_set(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
+{
+    struct bu_ptbl *t = (struct bu_ptbl *)set_var;
+    BU_OPT_CHECK_ARGV0(msg, argc, argv, "VAR=VALUE");
+    if (!strchr(argv[0], '=')) {
+	if (msg)
+	    bu_vls_printf(msg, "ERROR: --set requires VAR=VALUE format (no '=' in \"%s\")\n",
+			  argv[0]);
+	return -1;
+    }
+    bu_ptbl_ins(t, (long *)argv[0]);
+    return 1;
+}
+
+
+/* ---------------------------------------------------------------------------
+ * bu_opt helper: collect a --rset ARGS string into a bu_ptbl.
+ * The ARGS string should contain everything that would follow "rset " on the
+ * MGED command line, e.g. "g snap 1" or "ax model_draw 1".
+ * Consumes one argv element.
+ * -------------------------------------------------------------------------- */
+static int
+parse_rset(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
+{
+    struct bu_ptbl *t = (struct bu_ptbl *)set_var;
+    BU_OPT_CHECK_ARGV0(msg, argc, argv, "ARGS");
+    bu_ptbl_ins(t, (long *)argv[0]);
+    return 1;
+}
+
 
 /**
  * If an mgedrc file exists, open it and process the commands within.
@@ -364,7 +775,7 @@ new_mats(struct mged_state *s)
  *  0 OK
  */
 static int
-do_rc(struct mged_state *s)
+do_rc(struct mged_state *s, int skip_rc, const char *rcfile_override)
 {
     FILE *fp = NULL;
     char *path;
@@ -374,33 +785,47 @@ do_rc(struct mged_state *s)
 #define ENVRC	"MGED_RCFILE"
 #define RCFILE	".mgedrc"
 
-    if ((path = getenv(ENVRC)) != (char *)NULL) {
-	if ((fp = fopen(path, "r")) != NULL) {
-	    bu_vls_strcpy(&str, path);
+    /* --no-rc: skip all rc processing */
+    if (skip_rc)
+	return 0;
+
+    /* --rcfile FILE: use the specified file directly */
+    if (rcfile_override) {
+	if ((fp = fopen(rcfile_override, "r")) == NULL) {
+	    bu_log("mged: cannot open --rcfile \"%s\": %s\n",
+		   rcfile_override, strerror(errno));
+	    return -1;
 	}
-    }
-
-    if (!fp) {
-	if ((path = getenv("HOME")) != (char *)NULL) {
-	    bu_vls_strcpy(&str, path);
-	    bu_vls_strcat(&str, "/");
-	    bu_vls_strcat(&str, RCFILE);
-
-	    fp = fopen(bu_vls_addr(&str), "r");
+	bu_vls_strcpy(&str, rcfile_override);
+    } else {
+	/* Standard search: MGED_RCFILE env, then $HOME/.mgedrc, then ./.mgedrc */
+	if ((path = getenv(ENVRC)) != (char *)NULL) {
+	    if ((fp = fopen(path, "r")) != NULL) {
+		bu_vls_strcpy(&str, path);
+	    }
 	}
-    }
 
-    if (!fp) {
-	if ((fp = fopen(RCFILE, "r")) != NULL) {
-	    bu_vls_strcpy(&str, RCFILE);
+	if (!fp) {
+	    if ((path = getenv("HOME")) != (char *)NULL) {
+		bu_vls_strcpy(&str, path);
+		bu_vls_strcat(&str, "/");
+		bu_vls_strcat(&str, RCFILE);
+
+		fp = fopen(bu_vls_addr(&str), "r");
+	    }
 	}
-    }
 
-    /* At this point, if none of the above attempts panned out, give up. */
+	if (!fp) {
+	    if ((fp = fopen(RCFILE, "r")) != NULL) {
+		bu_vls_strcpy(&str, RCFILE);
+	    }
+	}
 
-    if (!fp) {
-	bu_vls_free(&str);
-	return -1;
+	/* At this point, if none of the above attempts panned out, give up. */
+	if (!fp) {
+	    bu_vls_free(&str);
+	    return -1;
+	}
     }
 
     bogus = 0;
@@ -425,7 +850,7 @@ do_rc(struct mged_state *s)
 	bu_log("need to change those\ncommands.\n\n");
     }
     if (Tcl_EvalFile(s->interp, bu_vls_addr(&str)) != TCL_OK) {
-	bu_log("Error reading %s:\n%s\n", RCFILE,
+	bu_log("Error reading %s:\n%s\n", bu_vls_cstr(&str),
 	       Tcl_GetVar(s->interp, "errorInfo", TCL_GLOBAL_ONLY));
     }
 
@@ -591,10 +1016,6 @@ mged_process_char(struct mged_state *s, char ch)
 	     * parser is concerned) then execute it.
 	     */
 
-#ifdef USE_TCL_CHAN
-	    /*XXX Nothing yet */
-	    bu_log("WARNING: not running cmdline(%s)\n", bu_vls_cstr(&s->input_str_prefix));
-#else
 	    if (Tcl_CommandComplete(bu_vls_addr(&s->input_str_prefix))) {
 		curr_cmd_list = &head_cmd_list;
 		if (curr_cmd_list->cl_tie)
@@ -627,7 +1048,6 @@ mged_process_char(struct mged_state *s, char ch)
 		/* Allow the user to hit ^C */
 		(void)signal(SIGINT, sig2);
 	    }
-#endif
 	    pr_prompt(s); /* Print prompt for more input */
 	    s->input_str_index = 0;
 	    freshline = 1;
@@ -987,6 +1407,9 @@ event_check(struct mged_state *s, int non_blocking)
     struct mged_dm *save_dm_list;
     int save_edflag;
 
+    if (mged_shutting_down(s))
+	return -1;
+
     /* Let cool Tk event handler do most of the work */
 
     if (non_blocking) {
@@ -996,16 +1419,21 @@ event_check(struct mged_state *s, int non_blocking)
 	 * keypresses, redraw events, etc...
 	 */
 
-	while (Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT)) {
+	while (!mged_shutting_down(s) && Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT)) {
 	}
     } else {
 	/* Wait for an event, then handle it */
 	Tcl_DoOneEvent(TCL_ALL_EVENTS);
+	if (mged_shutting_down(s))
+	    return -1;
 
 	/* Handle any other events in the queue */
-	while (Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT)) {
+	while (!mged_shutting_down(s) && Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT)) {
 	}
     }
+
+    if (mged_shutting_down(s))
+	return -1;
 
     non_blocking = 0;
 
@@ -1027,7 +1455,7 @@ event_check(struct mged_state *s, int non_blocking)
 	if (s->global_editing_state == ST_S_EDIT) {
 	    save_edflag = MEDIT(s)->edit_flag;
 	    if (!SEDIT_ROTATE)
-		MEDIT(s)->edit_flag = SROT;
+		MEDIT(s)->edit_flag = RT_PARAMS_EDIT_ROT;
 	} else {
 	    save_edflag = edobj;
 	    edobj = BE_O_ROTATE;
@@ -1061,7 +1489,7 @@ event_check(struct mged_state *s, int non_blocking)
 	if (s->global_editing_state == ST_S_EDIT) {
 	    save_edflag = MEDIT(s)->edit_flag;
 	    if (!SEDIT_ROTATE)
-		MEDIT(s)->edit_flag = SROT;
+		MEDIT(s)->edit_flag = RT_PARAMS_EDIT_ROT;
 	} else {
 	    save_edflag = edobj;
 	    edobj = BE_O_ROTATE;
@@ -1095,7 +1523,7 @@ event_check(struct mged_state *s, int non_blocking)
 	if (s->global_editing_state == ST_S_EDIT) {
 	    save_edflag = MEDIT(s)->edit_flag;
 	    if (!SEDIT_ROTATE)
-		MEDIT(s)->edit_flag = SROT;
+		MEDIT(s)->edit_flag = RT_PARAMS_EDIT_ROT;
 	} else {
 	    save_edflag = edobj;
 	    edobj = BE_O_ROTATE;
@@ -1129,7 +1557,7 @@ event_check(struct mged_state *s, int non_blocking)
 	if (s->global_editing_state == ST_S_EDIT) {
 	    save_edflag = MEDIT(s)->edit_flag;
 	    if (!SEDIT_TRAN)
-		MEDIT(s)->edit_flag = STRANS;
+		MEDIT(s)->edit_flag = RT_PARAMS_EDIT_TRANS;
 	} else {
 	    save_edflag = edobj;
 	    edobj = BE_O_XY;
@@ -1162,7 +1590,7 @@ event_check(struct mged_state *s, int non_blocking)
 	if (s->global_editing_state == ST_S_EDIT) {
 	    save_edflag = MEDIT(s)->edit_flag;
 	    if (!SEDIT_TRAN)
-		MEDIT(s)->edit_flag = STRANS;
+		MEDIT(s)->edit_flag = RT_PARAMS_EDIT_TRANS;
 	} else {
 	    save_edflag = edobj;
 	    edobj = BE_O_XY;
@@ -1190,7 +1618,7 @@ event_check(struct mged_state *s, int non_blocking)
 	if (s->global_editing_state == ST_S_EDIT) {
 	    save_edflag = MEDIT(s)->edit_flag;
 	    if (!SEDIT_SCALE)
-		MEDIT(s)->edit_flag = SSCALE;
+		MEDIT(s)->edit_flag = RT_PARAMS_EDIT_SCALE;
 	} else {
 	    save_edflag = edobj;
 	    if (!OEDIT_SCALE)
@@ -1286,10 +1714,11 @@ event_check(struct mged_state *s, int non_blocking)
  * standard input handling
  *
  * When the Tk event handler sees input on standard input, it calls
- * the routine "stdin_input" (registered with the
- * Tcl_CreateFileHandler call).  This routine simply appends the new
+ * the routine "stdin_input" (registered via Tcl_CreateChannelHandler
+ * on the stdin channel returned by Tcl_GetStdChannel(TCL_STDIN)).
+ * This routine simply appends the new
  * input to a growing string until the command is complete (it is
- * assumed that the routine gets a fill line.)
+ * assumed that the routine gets a full line.)
  *
  * If the command is incomplete, then allow the user to hit ^C to
  * start over, by setting up the multi_line_sig routine as the SIGINT
@@ -1306,10 +1735,13 @@ void
 stdin_input(ClientData clientData, int UNUSED(mask))
 {
     int count;
-    char ch;
-    struct bu_vls temp = BU_VLS_INIT_ZERO;
+    int to_read;
+    char buf[BU_PAGE_SIZE];
     struct stdio_data *sd = (struct stdio_data *)clientData;
     struct mged_state *s = sd->s;
+
+    if (mged_shutting_down(s))
+	return;
 
     /* When not in cbreak mode, just process an entire line of input,
      * and don't do any command-line manipulation.
@@ -1317,26 +1749,55 @@ stdin_input(ClientData clientData, int UNUSED(mask))
 
     if (!cbreak_mode) {
 
-#ifdef USE_TCL_CHAN
+	/* Read a line from stdin via the Tcl channel — this is the correct
+	 * approach when inside a Tcl_CreateChannelHandler callback, and works
+	 * on all platforms (POSIX and Windows).
+	 */
 	Tcl_DString ds;
 	Tcl_DStringInit(&ds);
 	count = Tcl_Gets(sd->chan, &ds);
 
 	if (count < 0) {
-	    BU_PUT(sd, struct stdio_data);
-	    quit(s); /* does not return */
+	    /* On a non-blocking channel, Tcl_Gets returns -1 with no EOF
+	     * flag when no complete line is yet available (EAGAIN).  Only
+	     * treat a negative return as fatal when it signals true EOF. */
+	    if (!Tcl_Eof(sd->chan)) {
+		Tcl_DStringFree(&ds);
+		return;
+	    }
+	    mged_request_shutdown(s, 0);
+	    return;
+	}
+
+	/* If a GED command is already executing in a worker thread, consume the
+	 * line so the channel does not remain readable, but replace input_str
+	 * with it (rather than appending) so the user sees only their latest
+	 * pending command, not a concatenation of all commands typed while
+	 * the previous one was running.  Print a brief notice, re-show the
+	 * prompt, then re-echo input_str so the user can see what they had
+	 * typed and press Enter again once the running command finishes. */
+	if (s->cmd_running) {
+	    /* Replace (not append) so only the most-recently typed pending
+	     * command is kept.  If the new line is empty, keep whatever is
+	     * already in input_str unchanged so existing partial input is
+	     * preserved. */
+	    if (Tcl_DStringLength(&ds) > 0) {
+		bu_vls_trunc(&s->input_str, 0);
+		bu_vls_strcat(&s->input_str, Tcl_DStringValue(&ds));
+	    }
+	    Tcl_DStringFree(&ds);
+	    s->input_str_index = bu_vls_strlen(&s->input_str);
+
+	    bu_log("\nmged: command already running, please wait\n");
+	    pr_prompt(s);
+	    /* Re-echo so the user can see what they had typed */
+	    if (bu_vls_strlen(&s->input_str))
+		bu_log("%s", bu_vls_addr(&s->input_str));
+	    return;
 	}
 
 	bu_vls_strcat(&s->input_str, Tcl_DStringValue(&ds));
 	Tcl_DStringFree(&ds);
-#else
-	/* Get line from stdin */
-	if (bu_vls_gets(&temp, stdin) < 0) {
-	    BU_PUT(sd, struct stdio_data);
-	    quit(s);				/* does not return */
-	}
-	bu_vls_vlscat(&s->input_str, &temp);
-#endif
 
 	/* If there are any characters already in the command string
 	 * (left over from a CMD_MORE), then prepend them to the new
@@ -1358,11 +1819,13 @@ stdin_input(ClientData clientData, int UNUSED(mask))
 	/* If a complete line was entered, attempt to execute command. */
 
 	if (Tcl_CommandComplete(bu_vls_addr(&s->input_str_prefix))) {
+	    int cmd_status;
 	    curr_cmd_list = &head_cmd_list;
 	    if (curr_cmd_list->cl_tie)
 		set_curr_dm(s, curr_cmd_list->cl_tie);
 
-	    if (cmdline(s, &s->input_str_prefix, 1) == CMD_MORE) {
+	    cmd_status = cmdline(s, &s->input_str_prefix, 1);
+	    if (cmd_status == CMD_MORE) {
 		/* Remove newline */
 		bu_vls_trunc(&s->input_str_prefix,
 			     bu_vls_strlen(&s->input_str_prefix)-1);
@@ -1376,109 +1839,112 @@ stdin_input(ClientData clientData, int UNUSED(mask))
 	    }
 	    pr_prompt(s);
 	    s->input_str_index = 0;
+
+	    /* In pipe mode, emit a machine-readable completion sentinel so
+	     * that a parent process driving MGED via stdin/stdout can detect
+	     * when a command has finished, even if the command produced no
+	     * output.  The sentinel is written directly to stdout (not via
+	     * bu_log) so it is never swallowed by the Tcl log-redirect
+	     * machinery.  The numeric status lets the parent distinguish
+	     * CMD_OK (919), CMD_BAD (920), and CMD_MORE (921). */
+	    if (s->pipe_mode) {
+		fprintf(stdout, "MGED_CMD_DONE %d\n", cmd_status);
+		fflush(stdout);
+	    }
 	} else {
 	    bu_vls_trunc(&s->input_str, 0);
 	    /* Allow the user to hit ^C. */
 	    (void)signal(SIGINT, sig2);
 	}
 
-	bu_vls_free(&temp);
 	return;
     }
 
-    /*XXXXX*/
-#define TRY_STDIN_INPUT_HACK
-#ifdef TRY_STDIN_INPUT_HACK
-    /* Grab everything --- assuming everything is <= page size */
-    {
-	char buf[BU_PAGE_SIZE];
+    /* Tcl_Read on a blocking channel waits to satisfy its entire request.
+     * Read one byte first, which a readable-channel notification guarantees
+     * is available.  Then drain only input Tcl has already buffered; this
+     * preserves paste performance without risking another blocking read.
+     *
+     * Keeping the canonical stdin channel blocking is important: changing
+     * it to non-blocking can also change stdout/stderr when a terminal
+     * supplied all three descriptors from the same open file description.
+     */
+    to_read = 1;
+    for (;;) {
 	int idx;
-#  ifdef USE_TCL_CHAN
-	count = Tcl_Read(sd->chan, buf, BU_PAGE_SIZE);
-#  else
-	count = read((int)sd->fd, (void *)buf, BU_PAGE_SIZE);
-#  endif
-
-#else
-	/* Grab single character from stdin */
-	count = read((int)sd->fd, (void *)&ch, 1);
-#endif
+	count = Tcl_Read(sd->chan, buf, to_read);
 
 	if (count < 0)
 	    perror("READ ERROR");
 
-	if (count <= 0 && feof(stdin))
-	    Tcl_Eval(s->interp, "q");
+	if (count <= 0 && Tcl_Eof(sd->chan)) {
+	    mged_request_shutdown(s, 0);
+	    return;
+	}
+
+	if (count <= 0)
+	    return;
 
 	if (buf[0] == '\0')
 	    bu_bomb("Read a buf with a 0 starting it?\n");
 
-#ifdef TRY_STDIN_INPUT_HACK
-	/* Process everything in buf */
-	for (idx = 0, ch = buf[idx]; idx < count; ch = buf[++idx]) {
-	    int c = ch;
+	for (idx = 0; idx < count; idx++) {
+	    int c = buf[idx];
 
-	    /* explicit input sanitization */
+	    /* Preserve the legacy line editor's byte sanitization. */
 	    if (c < 0)
 		c = 0;
 	    if (c > CHAR_MAX)
 		c = CHAR_MAX;
-#endif
 	    mged_process_char(s, c);
-#ifdef TRY_STDIN_INPUT_HACK
 	}
+
+	to_read = Tcl_InputBuffered(sd->chan);
+	if (to_read <= 0)
+	    break;
+	if (to_read > BU_PAGE_SIZE)
+	    to_read = BU_PAGE_SIZE;
     }
-#endif
 }
 
 void
 std_out_or_err(ClientData clientData, int UNUSED(mask))
 {
-    // TODO - we're already using clientData for something else, and experience
-    // with fbserv makes me wary of trying to change what is being passed
-    // through clientData with an fd - for now, just punt and use the overall
-    // state global.
     struct mged_state *s = MGED_STATE;
 
-#ifdef USE_TCL_CHAN
+    if (mged_shutting_down(s))
+	return;
+
+    /* clientData is the Tcl_Channel wrapping the pipe read end.  We read via
+     * the Tcl channel API so this works correctly on all platforms.  On
+     * Windows, Tcl_MakeFileChannel creates a channel backed by a native
+     * HANDLE with its own internal reader thread; data arrives in Tcl's
+     * channel buffer and must be consumed with Tcl_Read, not read(). */
     Tcl_Channel chan = (Tcl_Channel)clientData;
-    Tcl_DString ds;
-#else
-    int fd = (int)((long)clientData & 0xFFFF);	/* fd's will be small */
-#endif
     int count;
-    struct bu_vls vls = BU_VLS_INIT_ZERO;
     char line[RT_MAXLINE+1] = {0};
+    Tcl_DString tclcommand;
     Tcl_Obj *save_result;
 
-    /* Get data from stdout or stderr */
+    count = Tcl_Read(chan, line, RT_MAXLINE);
 
-#ifdef USE_TCL_CHAN
-    Tcl_DStringInit(&ds);
-    count = Tcl_Gets(chan, &ds);
-    bu_strlcpy(line, Tcl_DStringValue(&ds), RT_MAXLINE);
-#else
-    count = read((int)fd, line, RT_MAXLINE);
-#endif
-
-    if (count <= 0) {
-	if (count < 0) {
-	    perror("READ ERROR");
-	}
+    if (count <= 0)
 	return;
-    }
 
     line[count] = '\0';
 
+    /* Treat bytes read from the pipe as one Tcl argument.  Constructing this
+     * as "output_callback {%s}" breaks on unmatched braces in program output. */
+    Tcl_DStringInit(&tclcommand);
+    (void)Tcl_DStringAppendElement(&tclcommand, "output_callback");
+    (void)Tcl_DStringAppendElement(&tclcommand, line);
+
     save_result = Tcl_GetObjResult(s->interp);
     Tcl_IncrRefCount(save_result);
-
-    bu_vls_printf(&vls, "output_callback {%s}", line);
-    (void)Tcl_Eval(s->interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-
+    (void)Tcl_Eval(s->interp, Tcl_DStringValue(&tclcommand));
     Tcl_SetObjResult(s->interp, save_result);
     Tcl_DecrRefCount(save_result);
+    Tcl_DStringFree(&tclcommand);
 }
 
 
@@ -1505,10 +1971,12 @@ refresh(struct mged_state *s)
     int64_t elapsed_time, start_time = bu_gettime();
     int do_time = 0;
 
-    /* Print any text output that has accumulated to the command prompt
-     * TODO - this is currently a no-op because the gui_output callback
-     * is still in the old form of trying to immediately print the bu_log
-     * output to the interp. */
+    if (mged_shutting_down(s))
+	return;
+
+    /* Flush any accumulated bu_log output to the command prompt.
+     * The log-drain timer handles live streaming during long commands;
+     * this call catches anything produced between timer ticks. */
     mged_pr_output(s->interp);
 
     /* Display Manager / Views */
@@ -1541,7 +2009,8 @@ refresh(struct mged_state *s)
 	 * Otherwise, we are happy with the view we have
 	 */
 	set_curr_dm(s, p);
-	if (mapped && DMP_dirty) {
+	(void)dm_configure_win(DMP, 0);
+	if (curr_dm_mapped && DMP_dirty) {
 	    int restore_zbuffer = 0;
 
 	    if (mged_variables->mv_fb &&
@@ -1696,106 +2165,149 @@ mged_finish(struct mged_state *s, int exitcode)
 {
     char place[64];
     struct cmd_list *c;
-    int ret;
+    int finalize_tcl = (getenv("TCL_FINALIZE_ON_EXIT") != NULL);
+
+    if (!s)
+	exit(exitcode);
+
+    if (s->shutdown_state == MGED_SHUTDOWN_FINALIZED)
+	exit(exitcode);
+
+    mged_quiesce_tcl(s);
+
+    /* Subprocess completion callbacks may reference the active display.
+     * Stop and reap them before releasing any display manager; ged_close()
+     * repeats this operation as an idempotent final safeguard. */
+    if (s->gedp)
+	ged_subprocesses_terminate(s->gedp);
+
+    /* No Tcl trace may retain or access a display resource after this point. */
+    mged_variable_teardown(s);
+    mged_global_variable_teardown(s);
 
     (void)sprintf(place, "exit_status=%d", exitcode);
+    size_t active_dm_cnt;
 
-    /* If we're in script mode, wait for subprocesses to finish before we
-     * wrap up */
-    if (s->gedp && !s->interactive) {
-	struct bu_ptbl rmp = BU_PTBL_INIT_ZERO;
-	while (BU_PTBL_LEN(&s->gedp->ged_subp)) {
-	    for (size_t i = 0; i < BU_PTBL_LEN(&s->gedp->ged_subp); i++) {
-		struct ged_subprocess *rrp = (struct ged_subprocess *)BU_PTBL_GET(&s->gedp->ged_subp, i);
-		if (!bu_process_wait_n(&rrp->p, 1)) {
-		    bu_ptbl_ins(&rmp, (long *)rrp);
-		}
-	    }
-	    for (size_t i = 0; i < BU_PTBL_LEN(&rmp); i++) {
-		struct ged_subprocess *rrp = (struct ged_subprocess *)BU_PTBL_GET(&s->gedp->ged_subp, i);
-		bu_ptbl_rm(&s->gedp->ged_subp, (long *)rrp);
-		BU_PUT(rrp, struct ged_subprocess);
-	    }
-	    bu_ptbl_reset(&rmp);
-	}
-    }
+    /* Release all displays. */
+    active_dm_cnt = BU_PTBL_LEN(&active_dm_set);
+    while (active_dm_cnt > 0) {
+	struct mged_dm *p;
 
-    /* Release all displays */
-    for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
-	struct mged_dm *p = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
+	active_dm_cnt--;
+	p = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, active_dm_cnt);
 
 	bu_ptbl_rm(&active_dm_set, (long *)p);
 
-	if (p && p->dm_dmp) {
-	    dm_close(p->dm_dmp);
+	if (p) {
+	    if (p->dm_dmp)
+		dm_close(p->dm_dmp);
 	    BV_FREE_VLIST(s->vlfree, &p->dm_p_vlist);
 	    mged_slider_free_vls(p);
+	    free_all_resources(p);
+	    if (p->dm_dlist_state && !--p->dm_dlist_state->dl_rc)
+		bu_free(p->dm_dlist_state, "mged_finish: dlist_state");
 	    bu_free(p, "release: mged_curr_dm");
 	}
 
 	set_curr_dm(s, MGED_DM_NULL);
     }
     bu_ptbl_free(&active_dm_set);
+    mged_dm_init_state = MGED_DM_NULL;
 
-    for (BU_LIST_FOR (c, cmd_list, &head_cmd_list.l)) {
+    history_cleanup();
+    while (BU_LIST_NON_EMPTY(&head_cmd_list.l)) {
+	c = BU_LIST_FIRST(cmd_list, &head_cmd_list.l);
+	BU_LIST_DEQUEUE(&c->l);
 	bu_vls_free(&c->cl_name);
 	bu_vls_free(&c->cl_more_default);
+	bu_free(c, "mged_finish: cmd_list");
     }
+    bu_vls_free(&head_cmd_list.cl_name);
+    bu_vls_free(&head_cmd_list.cl_more_default);
 
     /* no longer send bu_log() output to Tcl */
     bu_log_delete_hook(gui_output, (void *)s);
+    mged_output_cleanup();
 
-#ifndef USE_TCL_CHAN
-    /* restore stdout/stderr just in case anyone tries to write before
-     * we finally exit (e.g., an atexit() callback).
+    /* Delete the in-memory Tcl database object while its C backing object is
+     * still valid.  Its delete callback closes a cloned database reference.
+     * The libged-backed db command is not a database object and remains valid
+     * until the interpreter itself is deleted.
      */
-    ret = dup2(stdfd[0], fileno(stdout));
-    if (ret == -1)
-	perror("dup2");
-    ret = dup2(stdfd[1], fileno(stderr));
-    if (ret == -1)
-	perror("dup2");
-#endif
+    if (s->interp) {
+	Tcl_Preserve((ClientData)s->interp);
+	if (s->wdbp)
+	    bu_observer_free(&s->wdbp->wdb_observers);
+	/* Rename only commands that still exist, and log unexpected failures
+	 * instead of letting Tcl errors interrupt staged shutdown. */
+	mged_rename_tcl_cmd(s->interp, ".inmem");
+	Tcl_Release((ClientData)s->interp);
+    }
 
-    /* Be certain to close the database cleanly before exiting */
-    Tcl_Preserve((ClientData)s->interp);
-    Tcl_Eval(s->interp, "rename " MGED_DB_NAME " \"\"; rename .inmem \"\"");
-    Tcl_Release((ClientData)s->interp);
-
-    struct tclcad_io_data *giod = (struct tclcad_io_data *)s->gedp->ged_io_data;
-    ged_close(s->gedp);
-    s->gedp = GED_NULL;
-    if (giod) {
-	tclcad_destroy_io_data(giod);
+    /* ged_close may invoke the application's Tcl file/channel deletion
+     * callbacks.  It must therefore run before Tcl_DeleteInterp. */
+    if (s->gedp) {
+	struct tclcad_io_data *giod = (struct tclcad_io_data *)s->gedp->ged_io_data;
+	ged_close(s->gedp);
+	s->gedp = GED_NULL;
+	if (giod) {
+	    tclcad_destroy_io_data(giod);
+	}
     }
 
     s->wdbp = RT_WDB_NULL;
     s->dbip = DBI_NULL;
 
+#ifdef HAVE_PIPE
+    /* Rebind Tcl's standard channels before restoring the CRT descriptors.
+     * This is the critical ordering that prevents Tcl finalization from
+     * touching handles already invalidated by dup2. */
+    mged_restore_stdio(s, 0);
+#endif
+
+    if (s->interp) {
+	Tcl_DeleteInterp(s->interp);
+	s->interp = NULL;
+    }
+
+    /* This is the final Tcl/Tk operation.  Tcl normally reserves its
+     * process-wide allocations for fast exit; honor Tcl's documented opt-in
+     * environment variable only after all application callbacks and
+     * interpreters are gone.  MGED_STATE and its backing allocation remain
+     * valid until Tcl's process/thread exit handlers have completed. */
+    if (finalize_tcl)
+	Tcl_Finalize();
+
+#ifdef HAVE_PIPE
+    /* If a Tcl standard-channel rebind failed, it is safe to restore the raw
+     * descriptor after finalization.  Without finalization this is still the
+     * last action before process exit and no Tcl code will run again. */
+    mged_restore_stdio(NULL, 1);
+#endif
+
     /* XXX should deallocate libbu semaphores */
 
-    mged_global_variable_teardown(s);
-
-    s->magic = 0; // make sure anything trying to use this after free gets a magic failure
+    s->shutdown_state = MGED_SHUTDOWN_FINALIZED;
+    /* Make sure anything trying to use this after free gets a magic failure. */
+    s->magic = 0;
     bu_vls_free(&s->input_str);
     bu_vls_free(&s->input_str_prefix);
     bu_vls_free(&s->scratchline);
     bu_vls_free(&s-> mged_prompt);
     rt_edit_destroy(s->s_edit->e);
     BU_PUT(s->s_edit, struct mged_edit_state);
+    mged_state_destroy_internals(s);
     BU_PUT(s, struct mged_state);
-    MGED_STATE = NULL; // sanity
+    MGED_STATE = NULL;
 
-    /* 8.5 seems to have some bugs in their reference counting */
-    /* Tcl_DeleteInterp(INTERP); */
-
-#ifndef USE_TCL_CHAN
+#ifndef HAVE_WINDOWS_H
     if (cbreak_mode > 0) {
 	reset_Tty(fileno(stdin));
     }
 #endif
 
-    Tcl_Exit(exitcode);
+    /* Tcl has been finalized in a controlled order when explicitly requested. */
+    exit(exitcode);
 }
 
 /*
@@ -1804,9 +2316,185 @@ mged_finish(struct mged_state *s, int exitcode)
 void
 quit(struct mged_state *s)
 {
-    mged_finish(s, 0);
-    /* NOTREACHED */
+    mged_request_shutdown(s, 0);
 }
+
+/*
+ * apply_cli_overrides -- called after do_rc() so that command-line flags
+ * always take precedence over .mgedrc settings.
+ *
+ * For mged_variables the Tcl variable write-traces installed by
+ * mged_variable_setup() fire automatically when Tcl_SetVar() is called,
+ * ensuring the same hooks (set_dirty_flag, set_perspective, etc.) execute
+ * as if the user had typed the equivalent "set" command interactively.
+ *
+ * For rset resources (grid, colour scheme, etc.) a "rset …" Tcl command
+ * string is constructed and evaluated directly.
+ *
+ * Double fields in mged_cli_overrides use MGED_CLI_UNSET_DBL as a "not
+ * given" sentinel.  We compare with memcmp to avoid -Werror=float-equal.
+ */
+
+/* File-scope sentinel value used by cli_dbl_is_set() — initialised once
+ * rather than per call, to avoid repeated redundant initialisation. */
+static const double mged_cli_dbl_sentinel = MGED_CLI_UNSET_DBL;
+
+static int
+cli_dbl_is_set(double v)
+{
+    /* Compare bit-for-bit against the sentinel value to avoid
+     * floating-point equality comparison (-Werror=float-equal). */
+    return memcmp(&v, &mged_cli_dbl_sentinel, sizeof(double)) != 0;
+}
+
+
+static void
+apply_cli_overrides(struct mged_state *s, struct mged_cli_overrides *cl)
+{
+    struct bu_vls cmd = BU_VLS_INIT_ZERO;
+
+    /* Helper macro: set a Tcl global variable to an integer value string. */
+#define CLI_SETVAR_INT(name, val) do { \
+    char _vbuf[32]; \
+    snprintf(_vbuf, sizeof(_vbuf), "%d", (int)(val)); \
+    Tcl_SetVar(s->interp, (name), _vbuf, TCL_GLOBAL_ONLY); \
+} while (0)
+
+    /* Helper macro: set a Tcl global variable to a double value string. */
+#define CLI_SETVAR_DBL(name, val) do { \
+    char _vbuf[64]; \
+    snprintf(_vbuf, sizeof(_vbuf), "%g", (double)(val)); \
+    Tcl_SetVar(s->interp, (name), _vbuf, TCL_GLOBAL_ONLY); \
+} while (0)
+
+    /* Helper macro: set a Tcl global variable to a single-char string. */
+#define CLI_SETVAR_CHAR(name, ch) do { \
+    char _vbuf[2]; _vbuf[0] = (ch); _vbuf[1] = '\0'; \
+    Tcl_SetVar(s->interp, (name), _vbuf, TCL_GLOBAL_ONLY); \
+} while (0)
+
+    /* --- mged_variables -------------------------------------------------- */
+    if (cl->use_air        != MGED_CLI_UNSET_INT) CLI_SETVAR_INT("use_air",        cl->use_air);
+    if (cl->dlist          != MGED_CLI_UNSET_INT) CLI_SETVAR_INT("dlist",          cl->dlist);
+    if (cl->faceplate      != MGED_CLI_UNSET_INT) CLI_SETVAR_INT("faceplate",      cl->faceplate);
+    if (cl->orig_gui       != MGED_CLI_UNSET_INT) CLI_SETVAR_INT("orig_gui",       cl->orig_gui);
+    if (cl->linewidth      != MGED_CLI_UNSET_INT) CLI_SETVAR_INT("linewidth",      cl->linewidth);
+    if (cl->port           != MGED_CLI_UNSET_INT) CLI_SETVAR_INT("port",           cl->port);
+    if (cl->listen         != MGED_CLI_UNSET_INT) CLI_SETVAR_INT("listen",         cl->listen);
+    if (cl->fb             != MGED_CLI_UNSET_INT) CLI_SETVAR_INT("fb",             cl->fb);
+    if (cl->fb_all         != MGED_CLI_UNSET_INT) CLI_SETVAR_INT("fb_all",         cl->fb_all);
+    if (cl->fb_overlay     != MGED_CLI_UNSET_INT) CLI_SETVAR_INT("fb_overlay",     cl->fb_overlay);
+    if (cl->predictor      != MGED_CLI_UNSET_INT) CLI_SETVAR_INT("predictor",      cl->predictor);
+    if (cl->hot_key        != MGED_CLI_UNSET_INT) CLI_SETVAR_INT("hot_key",        cl->hot_key);
+    if (cl->context        != MGED_CLI_UNSET_INT) CLI_SETVAR_INT("context",        cl->context);
+    if (cl->sliders        != MGED_CLI_UNSET_INT) CLI_SETVAR_INT("sliders",        cl->sliders);
+    if (cl->perspective_mode != MGED_CLI_UNSET_INT) CLI_SETVAR_INT("perspective_mode", cl->perspective_mode);
+    if (cl->linestyle      != '\0')               CLI_SETVAR_CHAR("linestyle",     cl->linestyle);
+    if (cl->mouse_behavior != '\0')               CLI_SETVAR_CHAR("mouse_behavior", cl->mouse_behavior);
+    if (cl->coords         != '\0')               CLI_SETVAR_CHAR("coords",        cl->coords);
+    if (cl->rotate_about   != '\0')               CLI_SETVAR_CHAR("rotate_about",  cl->rotate_about);
+    if (cl->transform      != '\0')               CLI_SETVAR_CHAR("transform",     cl->transform);
+    if (cli_dbl_is_set(cl->perspective))         CLI_SETVAR_DBL("perspective",    cl->perspective);
+    if (cli_dbl_is_set(cl->predictor_advance))   CLI_SETVAR_DBL("predictor_advance", cl->predictor_advance);
+    if (cli_dbl_is_set(cl->predictor_length))    CLI_SETVAR_DBL("predictor_length",  cl->predictor_length);
+    if (cli_dbl_is_set(cl->nmg_eu_dist))         CLI_SETVAR_DBL("nmg_eu_dist",    cl->nmg_eu_dist);
+    if (cli_dbl_is_set(cl->eye_sep_dist))        CLI_SETVAR_DBL("eye_sep_dist",   cl->eye_sep_dist);
+
+    /* --- Tcl mged_default array entries ---------------------------------- */
+    if (cl->dm_type)
+	Tcl_SetVar2(s->interp, "mged_default", "dm_type", cl->dm_type,  TCL_GLOBAL_ONLY);
+    if (cl->geom)
+	Tcl_SetVar2(s->interp, "mged_default", "geom",    cl->geom,     TCL_GLOBAL_ONLY);
+    if (cl->ggeom)
+	Tcl_SetVar2(s->interp, "mged_default", "ggeom",   cl->ggeom,    TCL_GLOBAL_ONLY);
+
+    /* --- grid (rset g …) ------------------------------------------------- */
+    if (cl->grid_draw != MGED_CLI_UNSET_INT) {
+	bu_vls_printf(&cmd, "rset g draw %d", cl->grid_draw);
+	if (Tcl_Eval(s->interp, bu_vls_cstr(&cmd)) != TCL_OK)
+	    bu_log("mged: --grid-draw: %s\n", Tcl_GetStringResult(s->interp));
+	bu_vls_trunc(&cmd, 0);
+    }
+    if (cl->grid_snap != MGED_CLI_UNSET_INT) {
+	bu_vls_printf(&cmd, "rset g snap %d", cl->grid_snap);
+	if (Tcl_Eval(s->interp, bu_vls_cstr(&cmd)) != TCL_OK)
+	    bu_log("mged: --grid-snap: %s\n", Tcl_GetStringResult(s->interp));
+	bu_vls_trunc(&cmd, 0);
+    }
+    if (cli_dbl_is_set(cl->grid_rh)) {
+	bu_vls_printf(&cmd, "rset g rh %g", cl->grid_rh);
+	if (Tcl_Eval(s->interp, bu_vls_cstr(&cmd)) != TCL_OK)
+	    bu_log("mged: --grid-rh: %s\n", Tcl_GetStringResult(s->interp));
+	bu_vls_trunc(&cmd, 0);
+    }
+    if (cli_dbl_is_set(cl->grid_rv)) {
+	bu_vls_printf(&cmd, "rset g rv %g", cl->grid_rv);
+	if (Tcl_Eval(s->interp, bu_vls_cstr(&cmd)) != TCL_OK)
+	    bu_log("mged: --grid-rv: %s\n", Tcl_GetStringResult(s->interp));
+	bu_vls_trunc(&cmd, 0);
+    }
+    if (cl->grid_mrh != MGED_CLI_UNSET_INT) {
+	bu_vls_printf(&cmd, "rset g mrh %d", cl->grid_mrh);
+	if (Tcl_Eval(s->interp, bu_vls_cstr(&cmd)) != TCL_OK)
+	    bu_log("mged: --grid-mrh: %s\n", Tcl_GetStringResult(s->interp));
+	bu_vls_trunc(&cmd, 0);
+    }
+    if (cl->grid_mrv != MGED_CLI_UNSET_INT) {
+	bu_vls_printf(&cmd, "rset g mrv %d", cl->grid_mrv);
+	if (Tcl_Eval(s->interp, bu_vls_cstr(&cmd)) != TCL_OK)
+	    bu_log("mged: --grid-mrv: %s\n", Tcl_GetStringResult(s->interp));
+	bu_vls_trunc(&cmd, 0);
+    }
+
+    /* --- colour scheme subset (rset cs …) -------------------------------- */
+    if (cl->bg_color.set) {
+	int r = 0, g = 0, b = 0;
+	bu_color_to_rgb_ints(&cl->bg_color.color, &r, &g, &b);
+	bu_vls_printf(&cmd, "rset cs bg %d %d %d", r, g, b);
+	if (Tcl_Eval(s->interp, bu_vls_cstr(&cmd)) != TCL_OK)
+	    bu_log("mged: --bg: %s\n", Tcl_GetStringResult(s->interp));
+	bu_vls_trunc(&cmd, 0);
+    }
+    if (cl->geo_def_color.set) {
+	int r = 0, g = 0, b = 0;
+	bu_color_to_rgb_ints(&cl->geo_def_color.color, &r, &g, &b);
+	bu_vls_printf(&cmd, "rset cs geo_def %d %d %d", r, g, b);
+	if (Tcl_Eval(s->interp, bu_vls_cstr(&cmd)) != TCL_OK)
+	    bu_log("mged: --geo-color: %s\n", Tcl_GetStringResult(s->interp));
+	bu_vls_trunc(&cmd, 0);
+    }
+
+    /* --- --set VAR=VALUE escape hatch ------------------------------------ */
+    for (size_t si = 0; si < BU_PTBL_LEN(&cl->set_pairs); si++) {
+	const char *pair = (const char *)BU_PTBL_GET(&cl->set_pairs, si);
+	const char *eq = strchr(pair, '=');
+	if (!eq) continue;  /* validated in parse_mged_set; shouldn't happen */
+	/* Split on the first '=' and set the Tcl variable.  The write-trace
+	 * installed by mged_variable_setup() will call bu_struct_parse and
+	 * fire any associated hook functions. */
+	size_t klen = (size_t)(eq - pair);
+	char *key = (char *)bu_malloc(klen + 1, "cli_set_key");
+	bu_strlcpy(key, pair, klen + 1);
+	Tcl_SetVar(s->interp, key, eq + 1, TCL_GLOBAL_ONLY);
+	bu_free(key, "cli_set_key");
+    }
+
+    /* --- --rset ARGS escape hatch ---------------------------------------- */
+    for (size_t ri = 0; ri < BU_PTBL_LEN(&cl->rset_pairs); ri++) {
+	const char *args = (const char *)BU_PTBL_GET(&cl->rset_pairs, ri);
+	bu_vls_printf(&cmd, "rset %s", args);
+	if (Tcl_Eval(s->interp, bu_vls_cstr(&cmd)) != TCL_OK)
+	    bu_log("mged: --rset \"%s\": %s\n", args, Tcl_GetStringResult(s->interp));
+	bu_vls_trunc(&cmd, 0);
+    }
+
+#undef CLI_SETVAR_INT
+#undef CLI_SETVAR_DBL
+#undef CLI_SETVAR_CHAR
+
+    bu_vls_free(&cmd);
+}
+
 
 int
 main(int argc, char *argv[])
@@ -1820,16 +2508,19 @@ main(int argc, char *argv[])
 #endif
 
     int rateflag = 0;
-    int c;
     int read_only_flag=0;
 
     int parent_pipe[2] = {0, 0};
     int use_pipe = 0;
     int run_in_foreground=1;
 
-#ifndef USE_TCL_CHAN
-    fd_set read_set;
+#ifdef HAVE_PIPE
     int result;
+#  ifndef HAVE_WINDOWS_H
+    /* fd_set is used by select() in the fork-based backgrounding path,
+     * which is POSIX-only (fork() and select()-on-pipes unavailable on Windows). */
+    fd_set read_set;
+#  endif
 #endif
 
     BU_GET(MGED_STATE, struct mged_state);
@@ -1847,6 +2538,24 @@ main(int argc, char *argv[])
     bu_vls_init(&s->scratchline);
     bu_vls_init(&s->mged_prompt);
     s->dpy_string = NULL;
+    s->cmd_running = 0;
+    s->log_drain_timer = NULL;
+    s->gui_thread_id = NULL;
+    s->shutdown_state = MGED_SHUTDOWN_RUNNING;
+    s->shutdown_exitcode = 0;
+    s->stdin_chan = NULL;
+    s->stdout_chan = NULL;
+    s->stderr_chan = NULL;
+    s->stdin_data = NULL;
+#ifdef HAVE_TK
+    s->tk_generic_handler_active = 0;
+#endif
+    s->pipe_mode = 0;
+
+    /* Initialize s->i (MGED_Internal C++ callback map) and register all
+     * default callbacks.  This must happen before any solid/object editing
+     * is attempted so that mged_edit_clbk_sync() has valid maps to copy. */
+    mged_state_init_internals(s);
 
     /* Set up linked lists */
     s->vlfree = &rt_vlfree;
@@ -1867,7 +2576,9 @@ main(int argc, char *argv[])
     setmode(fileno(stdout), O_BINARY);
     setmode(fileno(stderr), O_BINARY);
 
+#if defined(HAVE_WINDOWS_H)
     (void)_set_invalid_parameter_handler(mgedInvalidParameterHandler);
+#endif
 
     bu_setprogname(argv[0]);
 
@@ -1877,73 +2588,236 @@ main(int argc, char *argv[])
     }
 #endif
 
-    bu_optind = 1;
-    while ((c = bu_getopt(argc, argv, "a:d:hbcCorx:X:v?")) != -1) {
-	if (bu_optopt == '?') c='h';
-	switch (c) {
-	    case 'a':
-		attach = bu_optarg;
-		break;
-	    case 'd':
-		s->dpy_string = bu_optarg;
-		break;
-	    case 'r':
-		read_only_flag = 1;
-		break;
-	    case 'c':
-		s->classic_mged = 2; // >1 to indicate requested
-		break;
-	    case 'C':
-		s->classic_mged = 0;
-		s->interactive = 2; // >1 to indicate requested
-		break;
-	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_debug);
-		break;
-	    case 'X':
-		sscanf(bu_optarg, "%x", (unsigned int *)&bu_debug);
-		break;
-	    case 'b':
-		run_in_foreground = 0;  /* run in background */
-		break;
-	    case 'v':	/* print a lot of version information */
-		printf("%s%s%s%s%s%s\n",
-		       brlcad_ident("MGED Geometry Editor"),
-		       dm_version(),
-		       fb_version(),
-		       rt_version(),
-		       bn_version(),
-		       bu_version());
-		return EXIT_SUCCESS;
-		break;
-	    case 'o':
-		/* Eventually this will be used for the old mged gui.
-		 * I'm temporarily hijacking it for the new gui until
-		 * it becomes the default.
-		 */
-		bu_log("WARNING: -o is a developer option and subject to change.  Do not use.\n");
-		old_mged_gui = 0;
-		break;
-	    default:
-		bu_log("Unrecognized option (%c)\n", bu_optopt);
-		/* fall through */
-	    case 'h':
-		bu_exit(1, "Usage:  %s [-a attach] [-b] [-c|-C] [-f] [-d display] [-h|?] [-r] [-x#] [-X#] [-v] [database [command]]\n", argv[0]);
-	}
+    /*
+     * Parse command-line options using bu_opt.  All values are collected into
+     * the mged_cli_overrides struct; "early" options (that affect behaviour
+     * before Tcl/DM initialisation) are applied immediately below, while
+     * "deferred" options (mged_variables, grid, colour) are applied after
+     * do_rc() via apply_cli_overrides() so that CLI flags always win.
+     */
+
+    struct mged_cli_overrides cl;
+    memset(&cl, 0, sizeof(cl));
+
+    /* Initialise all int fields to MGED_CLI_UNSET_INT ("not given") */
+    cl.use_air          = MGED_CLI_UNSET_INT;
+    cl.dlist            = MGED_CLI_UNSET_INT;
+    cl.faceplate        = MGED_CLI_UNSET_INT;
+    cl.orig_gui         = MGED_CLI_UNSET_INT;
+    cl.linewidth        = MGED_CLI_UNSET_INT;
+    cl.port             = MGED_CLI_UNSET_INT;
+    cl.listen           = MGED_CLI_UNSET_INT;
+    cl.fb               = MGED_CLI_UNSET_INT;
+    cl.fb_all           = MGED_CLI_UNSET_INT;
+    cl.fb_overlay       = MGED_CLI_UNSET_INT;
+    cl.predictor        = MGED_CLI_UNSET_INT;
+    cl.hot_key          = MGED_CLI_UNSET_INT;
+    cl.context          = MGED_CLI_UNSET_INT;
+    cl.sliders          = MGED_CLI_UNSET_INT;
+    cl.perspective_mode = MGED_CLI_UNSET_INT;
+    cl.grid_draw        = MGED_CLI_UNSET_INT;
+    cl.grid_snap        = MGED_CLI_UNSET_INT;
+    cl.grid_mrh         = MGED_CLI_UNSET_INT;
+    cl.grid_mrv         = MGED_CLI_UNSET_INT;
+    /* bg_color and geo_def_color: memset-zero means .set == 0, which is
+     * the correct "not given" initial state — no extra init needed. */
+
+    /* Initialise double fields to MGED_CLI_UNSET_DBL ("not given") */
+    cl.perspective        = MGED_CLI_UNSET_DBL;
+    cl.predictor_advance  = MGED_CLI_UNSET_DBL;
+    cl.predictor_length   = MGED_CLI_UNSET_DBL;
+    cl.nmg_eu_dist        = MGED_CLI_UNSET_DBL;
+    cl.eye_sep_dist       = MGED_CLI_UNSET_DBL;
+    cl.grid_rh            = MGED_CLI_UNSET_DBL;
+    cl.grid_rv            = MGED_CLI_UNSET_DBL;
+
+    /* Initialise debug fields to the current global values so that an
+     * unconditional copy back after parsing is a no-op when the user
+     * does not supply -x/-X on the command line. */
+    cl.rt_debug_val = (unsigned int)rt_debug;
+    cl.bu_debug_val = (unsigned int)bu_debug;
+
+    bu_ptbl_init(&cl.set_pairs,  8, "mged_cli_set_pairs");
+    bu_ptbl_init(&cl.rset_pairs, 8, "mged_cli_rset_pairs");
+
+    struct bu_vls parse_msgs = BU_VLS_INIT_ZERO;
+
+    /* Option table: the BU_OPT macro takes (slot, shortopt, longopt, arghelp,
+     * argprocess, set_var, help) — 7 arguments.  Long-only options use NULL for
+     * shortopt.  No-argument options use "" for arghelp and NULL for argprocess. */
+    struct bu_opt_desc opt_defs[54];
+    /* ---- Existing short options, now with long aliases ---- */
+    BU_OPT(opt_defs[0],  "a", "attach",           "type",    bu_opt_str,      &cl.attach,           "display manager attach target");
+    BU_OPT(opt_defs[1],  "d", "display",           "string",  bu_opt_str,      &cl.dpy_string,       "X display string");
+    BU_OPT(opt_defs[2],  "r", "read-only",         "",        NULL,            &cl.read_only,        "open database read-only");
+    BU_OPT(opt_defs[3],  "p", "pipe",              "",        NULL,            &cl.pipe_mode,        "pipe mode (emit CMD_DONE sentinels)");
+    BU_OPT(opt_defs[4],  "c", "classic",           "",        NULL,            &cl.classic_mode,     "classic text-only mode");
+    BU_OPT(opt_defs[5],  "C", "gui",               "",        NULL,            &cl.gui_mode,         "GUI (non-classic) mode");
+    BU_OPT(opt_defs[6],  "b", "background",        "",        NULL,            &cl.background,       "run in background (fork)");
+    BU_OPT(opt_defs[7],  "x", "rt-debug",          "hex",     parse_debug_uint,&cl.rt_debug_val,     "set librt debug flags (hex)");
+    BU_OPT(opt_defs[8],  "X", "bu-debug",          "hex",     parse_debug_uint,&cl.bu_debug_val,     "set libbu debug flags (hex)");
+    BU_OPT(opt_defs[9],  "v", "version",           "",        NULL,            &cl.print_version,    "print version info and exit");
+    BU_OPT(opt_defs[10], "h", "help",              "",        NULL,            &cl.print_help,       "print help and exit");
+    BU_OPT(opt_defs[11], "?", NULL,                "",        NULL,            &cl.print_help,       "print help and exit");
+    /* -o is a developer option: preserved but not promoted with a long alias */
+    BU_OPT(opt_defs[12], "o", NULL,                "",        NULL,            &cl.old_gui_flag,     "[developer] use old GUI");
+    /* ---- rc file control ---- */
+    BU_OPT(opt_defs[13], NULL, "rcfile",           "file",    bu_opt_str,      &cl.rcfile,           "use FILE instead of .mgedrc");
+    BU_OPT(opt_defs[14], NULL, "no-rc",            "",        NULL,            &cl.skip_rc,          "skip loading any .mgedrc file");
+    /* ---- general escape hatches ---- */
+    BU_OPT(opt_defs[15], NULL, "set",              "VAR=VALUE",parse_mged_set, &cl.set_pairs,
+	   "set an mged variable (e.g. --set use_air=1); applied after .mgedrc");
+    BU_OPT(opt_defs[16], NULL, "rset",             "ARGS",    parse_rset,      &cl.rset_pairs,
+	   "set an rset resource (e.g. --rset \"g snap 1\"); applied after .mgedrc");
+    /* ---- mged_variables: boolean on/off pairs ---- */
+    BU_OPT(opt_defs[17], NULL, "use-air",          "",        NULL,            &cl.use_air,          "enable use_air");
+    BU_OPT(opt_defs[18], NULL, "no-use-air",       "",        flag_set_zero,   &cl.use_air,          "disable use_air");
+    BU_OPT(opt_defs[19], NULL, "dlist",            "",        NULL,            &cl.dlist,            "enable display lists");
+    BU_OPT(opt_defs[20], NULL, "no-dlist",         "",        flag_set_zero,   &cl.dlist,            "disable display lists");
+    BU_OPT(opt_defs[21], NULL, "faceplate",        "",        NULL,            &cl.faceplate,        "show faceplate overlay");
+    BU_OPT(opt_defs[22], NULL, "no-faceplate",     "",        flag_set_zero,   &cl.faceplate,        "hide faceplate overlay");
+    BU_OPT(opt_defs[23], NULL, "predictor",        "",        NULL,            &cl.predictor,        "enable view predictor");
+    BU_OPT(opt_defs[24], NULL, "no-predictor",     "",        flag_set_zero,   &cl.predictor,        "disable view predictor");
+    /* ---- mged_variables: valued options ---- */
+    BU_OPT(opt_defs[25], NULL, "linewidth",        "#",       bu_opt_int,      &cl.linewidth,        "wireframe line width (pixels, >=1)");
+    BU_OPT(opt_defs[26], NULL, "linestyle",        "s|d",     bu_opt_char,     &cl.linestyle,        "line style: s=solid, d=dashed");
+    BU_OPT(opt_defs[27], NULL, "perspective",      "#",       bu_opt_fastf_t,  &cl.perspective,      "perspective angle in degrees (-1=off)");
+    BU_OPT(opt_defs[28], NULL, "eye-sep-dist",     "#",       bu_opt_fastf_t,  &cl.eye_sep_dist,     "stereo eye separation (mm, 0=mono)");
+    BU_OPT(opt_defs[29], NULL, "port",             "#",       bu_opt_int,      &cl.port,             "framebuffer server listen port (0-65535)");
+    BU_OPT(opt_defs[30], NULL, "coords",           "m|v",     bu_opt_char,     &cl.coords,           "constraint coords: m=model v=view");
+    BU_OPT(opt_defs[31], NULL, "rotate-about",     "m|v|e",   bu_opt_char,     &cl.rotate_about,     "rotate center: m=model v=view e=eye");
+    BU_OPT(opt_defs[32], NULL, "transform",        "v|a|e",   bu_opt_char,     &cl.transform,        "mouse transform: v=view a=adc e=edit");
+    BU_OPT(opt_defs[33], NULL, "nmg-eu-dist",      "#",       bu_opt_fastf_t,  &cl.nmg_eu_dist,      "NMG edge-use distance tolerance");
+    BU_OPT(opt_defs[34], NULL, "mouse-behavior",   "v|a|e",   bu_opt_char,     &cl.mouse_behavior,   "mouse behavior mode");
+    BU_OPT(opt_defs[35], NULL, "predictor-advance","#",       bu_opt_fastf_t,  &cl.predictor_advance,"predictor advance time (s)");
+    BU_OPT(opt_defs[36], NULL, "predictor-length", "#",       bu_opt_fastf_t,  &cl.predictor_length, "predictor trail length (s)");
+    BU_OPT(opt_defs[37], NULL, "perspective-mode", "0|1",     bu_opt_int,      &cl.perspective_mode, "enable/disable perspective mode");
+    BU_OPT(opt_defs[38], NULL, "context",          "0|1",     bu_opt_int,      &cl.context,          "context mode (0=off)");
+    BU_OPT(opt_defs[39], NULL, "sliders",          "0|1",     bu_opt_int,      &cl.sliders,          "show sliders");
+    BU_OPT(opt_defs[40], NULL, "hot-key",          "#",       bu_opt_int,      &cl.hot_key,          "hot key character code");
+    BU_OPT(opt_defs[41], NULL, "fb-overlay",       "0|1|2",   bu_opt_int,      &cl.fb_overlay,       "framebuffer overlay: 0=under 1=inter 2=over");
+    /* ---- window/display (Tcl mged_default array) ---- */
+    BU_OPT(opt_defs[42], NULL, "dm-type",          "type",    bu_opt_str,      &cl.dm_type,          "display manager type (e.g. ogl, swrast)");
+    BU_OPT(opt_defs[43], NULL, "geom",             "WxH+X+Y", bu_opt_str,      &cl.geom,             "command window geometry");
+    BU_OPT(opt_defs[44], NULL, "ggeom",            "WxH+X+Y", bu_opt_str,      &cl.ggeom,            "graphics window geometry");
+    /* ---- grid (rset g …) ---- */
+    BU_OPT(opt_defs[45], NULL, "grid-draw",        "0|1",     bu_opt_int,      &cl.grid_draw,        "show/hide grid");
+    BU_OPT(opt_defs[46], NULL, "grid-snap",        "0|1",     bu_opt_int,      &cl.grid_snap,        "enable/disable grid snap");
+    BU_OPT(opt_defs[47], NULL, "grid-rh",          "#",       bu_opt_fastf_t,  &cl.grid_rh,          "horizontal grid resolution");
+    BU_OPT(opt_defs[48], NULL, "grid-rv",          "#",       bu_opt_fastf_t,  &cl.grid_rv,          "vertical grid resolution");
+    BU_OPT(opt_defs[49], NULL, "grid-mrh",         "#",       bu_opt_int,      &cl.grid_mrh,         "horizontal major grid interval");
+    BU_OPT(opt_defs[50], NULL, "grid-mrv",         "#",       bu_opt_int,      &cl.grid_mrv,         "vertical major grid interval");
+    /* ---- colour scheme subset (rset cs …) ---- */
+    BU_OPT(opt_defs[51], NULL, "bg",               "R G B",   parse_opt_color, &cl.bg_color,         "background colour (0-255 per component, or #RRGGBB)");
+    BU_OPT(opt_defs[52], NULL, "geo-color",        "R G B",   parse_opt_color, &cl.geo_def_color,    "default geometry wireframe colour");
+    BU_OPT_NULL(opt_defs[53]);
+
+    /* bu_opt_parse does not consume argv[0] (the program name).
+     * Skip it manually so that the remaining args match what the
+     * original bu_getopt-based code expected after optind adjustment. */
+    int orig_argc = argc;
+    argc--;
+    argv++;
+    argc = bu_opt_parse(&parse_msgs, (size_t)argc, (const char **)argv, opt_defs);
+
+    if (bu_vls_strlen(&parse_msgs) > 0) {
+	/* Print any warnings/errors from the parser */
+	bu_log("%s", bu_vls_cstr(&parse_msgs));
+    }
+    bu_vls_free(&parse_msgs);
+
+    if (argc < 0) {
+	/* Fatal parse error */
+	bu_exit(1, "Usage:  mged [options] [database [command]]\n"
+		   "Run 'mged --help' for a full option list.\n");
     }
 
-    /* Change the working directory to BU_DIR_HOME if we are invoking
-     * without any arguments. */
-    if (argc == 1) {
+    /* ---- Apply early options immediately --------------------------------- */
+
+    /* -v / --version */
+    if (cl.print_version) {
+	printf("%s%s%s%s%s%s\n",
+	       brlcad_ident("MGED Geometry Editor"),
+	       dm_version(),
+	       fb_version(),
+	       rt_version(),
+	       bn_version(),
+	       bu_version());
+	return EXIT_SUCCESS;
+    }
+
+    /* -h / --help / -? */
+    if (cl.print_help) {
+	struct bu_vls usage = BU_VLS_INIT_ZERO;
+	bu_vls_printf(&usage, "Usage:  mged [options] [database [command]]\n\n");
+	char *help_str = bu_opt_describe(opt_defs, NULL);
+	if (help_str) {
+	    bu_vls_printf(&usage, "Options:\n%s", help_str);
+	    bu_free(help_str, "bu_opt_describe");
+	}
+	bu_exit(1, "%s\n", bu_vls_cstr(&usage));
+    }
+
+    /* -o (developer option: use old GUI) */
+    if (cl.old_gui_flag) {
+	bu_log("WARNING: -o is a developer option and subject to change.  Do not use.\n");
+	old_mged_gui = 0;
+    }
+
+    /* -x / --rt-debug  and  -X / --bu-debug: parse_debug_uint() stores the
+     * parsed hex value in cl.rt_debug_val / cl.bu_debug_val.  Both fields
+     * were initialised to the current values of rt_debug / bu_debug (see
+     * below) so an unconditional copy here is safe: if the user did not
+     * supply -x/-X the value is unchanged. */
+    rt_debug = (int)cl.rt_debug_val;
+    bu_debug = (unsigned int)cl.bu_debug_val;
+
+    /* -a / --attach */
+    if (cl.attach)
+	attach = (char *)cl.attach;
+
+    /*
+     * In classic mode, -a directly controls the attach target.
+     * In GUI mode, the startup scripts choose the DM from
+     * mged_default(dm_type), so mirror -a into dm_type unless the
+     * user explicitly supplied --dm-type.
+     */
+    if (cl.attach && !cl.dm_type)
+	cl.dm_type = cl.attach;
+
+    /* -d / --display */
+    if (cl.dpy_string)
+	s->dpy_string = (char *)cl.dpy_string;
+
+    /* -r / --read-only */
+    if (cl.read_only)
+	read_only_flag = 1;
+
+    /* -p / --pipe */
+    if (cl.pipe_mode)
+	s->pipe_mode = 1;
+
+    /* -b / --background */
+    if (cl.background)
+	run_in_foreground = 0;
+
+    /* -c / --classic and -C / --gui (mutually exclusive; last one wins) */
+    if (cl.classic_mode) {
+	s->classic_mged = 2; /* >1 to indicate explicitly requested */
+    }
+    if (cl.gui_mode) {
+	s->classic_mged = 0;
+	s->interactive = 2;  /* >1 to indicate explicitly requested */
+    }
+
+    /* Change the working directory to BU_DIR_HOME if invoked with no
+     * arguments at all (not even options). */
+    if (orig_argc == 1) {
 	const char *homed = bu_dir(NULL, 0, BU_DIR_HOME, NULL);
 	if (homed && chdir(homed)) {
 	    bu_exit(1, "Failed to change working directory to \"%s\" ", homed);
 	}
     }
-
-    /* skip the args and invocation name */
-    argc -= bu_optind;
-    argv += bu_optind;
 
     if (argc > 1) {
 	/* if there is more than a file name remaining, mged is not interactive */
@@ -1972,7 +2846,9 @@ main(int argc, char *argv[])
     (void)signal(SIGINT, cur_sigint);		/* restore */
 #endif /* SIGPIPE && SIGINT */
 
-#ifdef HAVE_PIPE
+#if defined(HAVE_PIPE) && !defined(HAVE_WINDOWS_H)
+    /* fork()-based background detach: POSIX only. fork() and select() on
+     * pipe file descriptors are not available on Windows. */
     if (!s->classic_mged && !run_in_foreground) {
 	pid_t pid;
 
@@ -2019,7 +2895,7 @@ main(int argc, char *argv[])
 	    bu_exit(0, NULL);
 	}
     }
-#endif /* HAVE_PIPE */
+#endif /* HAVE_PIPE && !HAVE_WINDOWS_H */
 
     memset((void *)&head_cmd_list, 0, sizeof(struct cmd_list));
     BU_LIST_INIT(&head_cmd_list.l);
@@ -2081,7 +2957,7 @@ main(int argc, char *argv[])
     MAT_IDN(view_state->vs_ModelDelta);
 
     am_mode = AMM_IDLE;
-    owner = 1;
+    mged_dm_owner = 1;
     frametime = 1;
 
     MAT_IDN(MEDIT(s)->model_changes);
@@ -2090,7 +2966,7 @@ main(int argc, char *argv[])
     s->global_editing_state = ST_VIEW;
     MEDIT(s)->edit_flag = -1;
     s->s_edit->es_edclass = EDIT_CLASS_NULL;
-    MEDIT(s)->e_inpara = newedge = 0;
+    MEDIT(s)->e_inpara = 0;
 
     /* These values match old GED.  Use 'tol' command to change them. */
     s->tol.tol.magic = BN_TOL_MAGIC;
@@ -2111,10 +2987,11 @@ main(int argc, char *argv[])
     /* prepare mged, adjust our path, get set up to use Tcl */
 
     mged_setup(s);
+    (void)ged_clbk_set(s->gedp, "dm", BU_CLBK_DURING, mged_dm_during_clbk, (void *)s);
     new_mats(s);
 
     mmenu_init(s);
-    btn_head_menu(s, 0, 0, 0);
+    btn_head_menu(MEDIT(s), 0, 0, 0, s);
     mged_link_vars(s->mged_curr_dm);
 
     bu_vls_printf(&s->input_str, "set version \"%s\"", brlcad_ident("Geometry Editor (MGED)"));
@@ -2133,7 +3010,7 @@ main(int argc, char *argv[])
 
 	    bu_log("%s\n", brlcad_ident("Geometry Editor (MGED)"));
 
-#ifndef USE_TCL_CHAN
+#ifndef HAVE_WINDOWS_H
 	    if (isatty(fileno(stdin)) && isatty(fileno(stdout))) {
 		/* Set up for character-at-a-time terminal IO. */
 		cbreak_mode = COMMAND_LINE_EDITING;
@@ -2179,11 +3056,12 @@ main(int argc, char *argv[])
     if (!s->interactive || s->classic_mged || old_mged_gui) {
 	/* Open the database */
 	if (argc >= 1) {
-	    const char *av[3];
+	    const char *av[4];
 
 	    av[0] = "opendb";
-	    av[1] = argv[0];
-	    av[2] = NULL;
+	    av[1] = "-c";
+	    av[2] = argv[0];
+	    av[3] = NULL;
 
 	    /* Command line may have more than 2 args, opendb only wants 2
 	     * expecting second to be the file name.
@@ -2192,7 +3070,7 @@ main(int argc, char *argv[])
 	     * to allow mged to process args after the db as a command
 	     */
 	    struct cmdtab ec = {MGED_CMD_MAGIC, NULL, NULL, NULL, s};
-	    if (f_opendb(&ec, s->interp, 2, av) == TCL_ERROR) {
+	    if (f_opendb(&ec, s->interp, 3, av) == TCL_ERROR) {
 		if (!run_in_foreground && use_pipe) {
 		    notify_parent_done(parent_pipe[1]);
 		}
@@ -2216,8 +3094,12 @@ main(int argc, char *argv[])
     /* --- Now safe to process commands. --- */
     if (s->interactive) {
 
-	/* This is an interactive mged, process .mgedrc */
-	do_rc(s);
+	/* This is an interactive mged, process .mgedrc (unless --no-rc or
+	 * --rcfile overrides the default search logic). */
+	do_rc(s, cl.skip_rc, cl.rcfile);
+
+	/* Apply CLI overrides AFTER .mgedrc so command-line flags always win. */
+	apply_cli_overrides(s, &cl);
 
 	/*
 	 * Initialize variables here in case the user specified changes
@@ -2243,7 +3125,16 @@ main(int argc, char *argv[])
 #endif
 
 	    if (old_mged_gui) {
-		bu_vls_strcpy(&vls, "gui");
+		if (attach && strlen(attach) > 0) {
+		    Tcl_SetVar2(s->interp, "mged_default", "dm_type", attach, TCL_GLOBAL_ONLY);
+		    if (BU_STR_EQUAL(attach, "tkswrast")) {
+			bu_vls_printf(&vls, "gui -dt %s -config g", attach);
+		    } else {
+			bu_vls_printf(&vls, "gui -dt %s", attach);
+		    }
+		} else {
+		    bu_vls_strcpy(&vls, "gui");
+		}
 		status = Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	    } else {
 		Tcl_DString temp;
@@ -2277,7 +3168,7 @@ main(int argc, char *argv[])
 		bu_log("%s\nMGED unable to initialize gui, reverting to classic mode.\n", Tcl_GetStringResult(s->interp));
 		s->classic_mged = 1;
 
-#ifndef USE_TCL_CHAN
+#ifndef HAVE_WINDOWS_H
 		cbreak_mode = COMMAND_LINE_EDITING;
 		save_Tty(fileno(stdin));
 #endif
@@ -2304,13 +3195,19 @@ main(int argc, char *argv[])
 	} /* classic */
 
     } else {
-	/* !interactive */
+	/* !interactive: no .mgedrc is processed, but CLI overrides still apply */
+	apply_cli_overrides(s, &cl);
 
 	if (!run_in_foreground && use_pipe) {
 	    notify_parent_done(parent_pipe[1]);
 	}
 
     } /* interactive */
+
+    /* All entries point into argv and are non-owning; only the tables need
+     * releasing once the deferred overrides have been applied. */
+    bu_ptbl_free(&cl.set_pairs);
+    bu_ptbl_free(&cl.rset_pairs);
 
     /* XXX total hack that fixes a dm init issue on Mac OS X where the
      * dm first opens filled with garbage.
@@ -2327,6 +3224,30 @@ main(int argc, char *argv[])
 	    get_attached(s);
 	} else {
 	    attach_display_manager(s->interp, attach, s->dpy_string);
+	}
+
+	/* In GUI mode, openw.tcl's init_mged_gui applies mged_default(ggeom)
+	 * to set the DM window size and position.  Classic mode bypasses that
+	 * code path entirely, so honour the same preference here.  A user sets
+	 * this in their .mgedrc before the attach happens, e.g.:
+	 *   set mged_default(ggeom) 512x512+0+0
+	 */
+	if (DMP && dm_graphical(DMP)) {
+	    struct bu_vls *pn = dm_get_pathname(DMP);
+	    const char *ggeom = Tcl_GetVar(s->interp, "mged_default(ggeom)", TCL_GLOBAL_ONLY);
+	    if (pn && bu_vls_strlen(pn) && ggeom && strlen(ggeom)) {
+		struct bu_vls geom_cmd = BU_VLS_INIT_ZERO;
+		/* Brace the geometry string so Tcl does not interpret any
+		 * special characters that might appear in a user's .mgedrc. */
+		bu_vls_printf(&geom_cmd, "wm geometry %s {%s}", bu_vls_cstr(pn), ggeom);
+		if (Tcl_Eval(s->interp, bu_vls_cstr(&geom_cmd)) != TCL_OK)
+		    bu_log("mged: failed to apply mged_default(ggeom) \"%s\": %s\n",
+			   ggeom, Tcl_GetStringResult(s->interp));
+		bu_vls_free(&geom_cmd);
+		/* Flush pending Tk events so the resize takes effect before
+		 * the main event loop starts. */
+		(void)Tcl_Eval(s->interp, "update");
+	    }
 	}
     }
 
@@ -2350,6 +3271,8 @@ main(int argc, char *argv[])
 	}
 
 	Tcl_Eval(s->interp, "q");
+	if (mged_shutting_down(s))
+	    mged_finish(s, s->shutdown_exitcode);
 	/* NOTREACHED */
     }
 
@@ -2358,14 +3281,27 @@ main(int argc, char *argv[])
 	BU_GET(sd, struct stdio_data);
 	sd->s = s;
 
-#ifdef USE_TCL_CHAN
-	sd->chan = Tcl_MakeFileChannel(GetStdHandle(STD_INPUT_HANDLE), TCL_READABLE);
+	/* Use Tcl's canonical stdin channel — Tcl_GetStdChannel works on all
+	 * platforms (POSIX and Windows) and avoids mixing Tcl's channel
+	 * buffering with a separately-created file channel. */
+	sd->chan = Tcl_GetStdChannel(TCL_STDIN);
+	if (sd->chan == NULL) {
+	    bu_log("mged: unable to get stdin channel\n");
+	    BU_PUT(sd, struct stdio_data);
+	    mged_finish(s, 1);
+	}
+
+	s->stdin_chan = sd->chan;
+	s->stdin_data = sd;
+	/* Tcl_Gets needs a non-blocking channel in the non-cbreak path: a
+	 * readable pipe may contain only a partial line, and Tcl_Gets otherwise
+	 * waits for its newline from inside the event callback.  Cbreak input
+	 * instead reads one guaranteed-ready byte, so leave its terminal channel
+	 * blocking; changing terminal status flags here can also affect its
+	 * stdout/stderr descriptors. */
+	if (!cbreak_mode)
+	    Tcl_SetChannelOption(NULL, sd->chan, "-blocking", "0");
 	Tcl_CreateChannelHandler(sd->chan, TCL_READABLE, stdin_input, sd);
-#else
-	sd->fd = STDIN_FILENO;
-	sd->chan = Tcl_MakeFileChannel(STDIN_FILENO, TCL_READABLE);
-	Tcl_CreateChannelHandler(sd->chan, TCL_READABLE, stdin_input, sd);
-#endif
 
 #ifdef SIGINT
 	(void)signal(SIGINT, SIG_IGN);
@@ -2374,7 +3310,7 @@ main(int argc, char *argv[])
 	bu_vls_strcpy(&s->mged_prompt, MGED_PROMPT);
 	pr_prompt(s);
 
-#ifndef USE_TCL_CHAN
+#ifndef HAVE_WINDOWS_H
 	if (cbreak_mode) {
 	    set_Cbreak(fileno(stdin));
 	    clr_Echo(fileno(stdin));
@@ -2385,13 +3321,12 @@ main(int argc, char *argv[])
 	int sout = fileno(stdout);
 	int serr = fileno(stderr);
 
-#ifndef USE_TCL_CHAN
-	/* stash stdout */
+#ifdef HAVE_PIPE
+	/* stash stdout and stderr so we can restore them at exit */
 	stdfd[0] = dup(sout);
 	if (stdfd[0] == -1)
 	    perror("dup");
 
-	/* stash stderr */
 	stdfd[1] = dup(serr);
 	if (stdfd[1] == -1)
 	    perror("dup");
@@ -2401,82 +3336,131 @@ main(int argc, char *argv[])
 	Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
-/* FIXME: windows has dup() and dup2(), so this should work there too */
-#ifndef USE_TCL_CHAN
+	/* Redirect stdout/stderr into POSIX pipes so that any C-level output
+	 * (printf, write(1,...), bu_log, etc.) is captured by the GUI.
+	 * Windows supports pipe()/dup()/dup2() through its CRT, so this
+	 * approach works on all platforms when HAVE_PIPE is available.
+	 * NOTE: Tcl_MakeFileChannel on Windows requires a native HANDLE (via
+	 * _get_osfhandle), not the raw CRT fd — see the fix below. */
+#ifdef HAVE_PIPE
 	{
-	    ClientData outpipe, errpipe;
-
-	    (void)close(fileno(stdout));
-
-	    /* since we just closed stdout, fd 1 is what dup() should return */
-	    result = dup(pipe_out[1]);
+	    result = dup2(pipe_out[1], fileno(stdout));
 	    if (result == -1)
-		perror("dup");
+		perror("dup2");
 	    (void)close(pipe_out[1]); /* only a write pipe */
 
-	    (void)close(fileno(stderr));
-
-	    /* since we just closed stderr, fd 2 is what dup() should return */
-	    result = dup(pipe_err[1]);
+	    result = dup2(pipe_err[1], fileno(stderr));
 	    if (result == -1)
-		perror("dup");
+		perror("dup2");
 	    (void)close(pipe_err[1]); /* only a write pipe */
 
-	    Tcl_Channel chan;
+#ifdef HAVE_WINDOWS_H
+	    /* On Windows, Tcl's stdout/stderr channels are backed by the native
+	     * Windows HANDLEs that Tcl captured at startup.  In a GUI-only
+	     * process those are typically INVALID_HANDLE_VALUE (no console), so
+	     * any attempt by Tcl to write to them — including `puts test` — fails
+	     * with "error writing 'stdout': invalid argument".
+	     *
+	     * After the dup2() calls above, CRT fd 1/fd 2 now point to the write
+	     * ends of our pipes.  Create new Tcl writable channels from those
+	     * HANDLEs and install them as Tcl's stdout/stderr so that `puts`
+	     * writes into the pipe (and thus reaches std_out_or_err below).
+	     *
+	     * Order matters: register the new channel and set it as the std
+	     * channel BEFORE unregistering the old one.  Tcl_GetChannel(interp,
+	     * "stdout", ...) — used by `puts stdout ...` — checks the
+	     * interpreter's channel hash table first; the old channel is
+	     * registered there as "stdout" and would be returned instead of the
+	     * new pipe channel.  Unregistering it causes the lookup to fall
+	     * through to Tcl_GetStdChannel, which by then returns the new
+	     * channel.
+	     *
+	     * This ordering also avoids the write-thread race that existed in
+	     * the old Windows-only code path: that code called
+	     * Tcl_UnregisterChannel BEFORE Tcl_MakeFileChannel, so the old
+	     * channel's I/O completion-port threads could still be running when
+	     * new ones were spawned, causing intermittent corruption.  A
+	     * `puts ""` sync-point was needed as a workaround.  Here the new
+	     * channel is fully created and its threads are running BEFORE the
+	     * old channel begins tearing down, so no such sync is required.
+	     * The old channel was also backed by INVALID_HANDLE_VALUE (no
+	     * console), so no I/O threads were ever successfully dispatched on
+	     * it.
+	     *
+	     * Critically, the new channel must own its OWN duplicate of the
+	     * pipe-write handle rather than the native HANDLE already owned by
+	     * CRT fd 1/2.  If Tcl were handed the CRT's handle directly, both
+	     * Tcl (on channel teardown) and the CRT (when mged_restore_stdio's
+	     * dup2 replaces the descriptor at exit) would CloseHandle the same
+	     * handle — a double close that intermittently corrupts whatever
+	     * handle Windows has since recycled into that slot, trashing the
+	     * stdout stream on quit.  mged_dup_file_channel() performs the
+	     * DuplicateHandle so ownership stays separate, matching the
+	     * discipline mged_restore_stdio() relies on. */
+	    {
+		Tcl_Channel old_out = Tcl_GetStdChannel(TCL_STDOUT);
+		Tcl_Channel wout = mged_dup_file_channel(fileno(stdout), TCL_WRITABLE);
+		if (wout) {
+		    Tcl_SetChannelOption(s->interp, wout, "-blocking", "false");
+		    Tcl_SetChannelOption(s->interp, wout, "-buffering", "line");
+		    Tcl_RegisterChannel(s->interp, wout);
+		    Tcl_SetStdChannel(wout, TCL_STDOUT);
+		    if (old_out)
+			Tcl_UnregisterChannel(s->interp, old_out);
+		} else {
+		    bu_log("mged: failed to create Tcl channel for stdout pipe\n");
+		}
 
-	    outpipe = (ClientData)(size_t)pipe_out[0];
-	    chan = Tcl_MakeFileChannel(outpipe, TCL_READABLE);
-	    Tcl_CreateChannelHandler(chan, TCL_READABLE, std_out_or_err, outpipe);
+		Tcl_Channel old_err = Tcl_GetStdChannel(TCL_STDERR);
+		Tcl_Channel werr = mged_dup_file_channel(fileno(stderr), TCL_WRITABLE);
+		if (werr) {
+		    Tcl_SetChannelOption(s->interp, werr, "-blocking", "false");
+		    Tcl_SetChannelOption(s->interp, werr, "-buffering", "line");
+		    Tcl_RegisterChannel(s->interp, werr);
+		    Tcl_SetStdChannel(werr, TCL_STDERR);
+		    if (old_err)
+			Tcl_UnregisterChannel(s->interp, old_err);
+		} else {
+		    bu_log("mged: failed to create Tcl channel for stderr pipe\n");
+		}
+	    }
+#endif /* HAVE_WINDOWS_H */
 
-	    errpipe = (ClientData)(size_t)pipe_err[0];
-	    chan = Tcl_MakeFileChannel(errpipe, TCL_READABLE);
-	    Tcl_CreateChannelHandler(chan, TCL_READABLE, std_out_or_err, errpipe);
-	}
+	    Tcl_Channel out_chan, err_chan;
+
+	    /* On Windows, Tcl_MakeFileChannel expects a native Windows HANDLE,
+	     * not a CRT integer file descriptor.  Passing a raw CRT fd as a
+	     * HANDLE produces an invalid channel whose error state causes Tcl's
+	     * event loop to spin continuously, freezing the GUI.  Use
+	     * _get_osfhandle() to obtain the correct Windows HANDLE from the
+	     * CRT fd.  On POSIX the fd is cast directly, as before. */
+#ifdef HAVE_WINDOWS_H
+	    out_chan = Tcl_MakeFileChannel((ClientData)_get_osfhandle(pipe_out[0]), TCL_READABLE);
+	    err_chan = Tcl_MakeFileChannel((ClientData)_get_osfhandle(pipe_err[0]), TCL_READABLE);
 #else
-	{
-	    HANDLE handle[2];
-	    SECURITY_ATTRIBUTES saAttr;
-
-	    saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
-	    saAttr.bInheritHandle = 0;
-	    saAttr.lpSecurityDescriptor = NULL;
-
-	    Tcl_Channel chan;
-
-	    if (CreatePipe(&handle[0], &handle[1], &saAttr, 0)) {
-		chan = Tcl_GetStdChannel(TCL_STDOUT);
-		Tcl_UnregisterChannel(s->interp, chan);
-		chan = Tcl_MakeFileChannel(handle[1], TCL_WRITABLE);
-		Tcl_RegisterChannel(s->interp, chan);
-		Tcl_SetChannelOption(s->interp, chan, "-blocking", "false");
-		Tcl_SetChannelOption(s->interp, chan, "-buffering", "line");
-		chan = Tcl_MakeFileChannel(handle[0], TCL_READABLE);
-		/* intermittently, the process of Tcl_UnregisterChannel does not
-		 * finish cleaning up the write threads before we spawn new
-		 * ones with Tcl_MakeFileChannel. This error prematurely invokes the
-		 * new threads when the old ones finally signal which breaks all 'puts'
-		 * from the channel. Calling puts with an empty string here
-		 * *appears* to force a sync and resolve the issue.
-		 */
-		if (Tcl_Eval(s->interp, "puts \"\"") != TCL_OK)
-		    perror("STDOUT chan broken");
-		Tcl_CreateChannelHandler(chan, TCL_READABLE, std_out_or_err, chan);
-	    }
-
-	    if (CreatePipe(&handle[0], &handle[1], &saAttr, 0)) {
-		chan = Tcl_GetStdChannel(TCL_STDERR);
-		Tcl_UnregisterChannel(s->interp, chan);
-		chan = Tcl_MakeFileChannel(handle[1], TCL_WRITABLE);
-		Tcl_RegisterChannel(s->interp, chan);
-		Tcl_SetChannelOption(s->interp, chan, "-blocking", "false");
-		Tcl_SetChannelOption(s->interp, chan, "-buffering", "line");
-		chan = Tcl_MakeFileChannel(handle[0], TCL_READABLE);
-		if (Tcl_Eval(s->interp, "puts stderr \"\"") != TCL_OK)
-		    perror("STDERR chan broken");
-		Tcl_CreateChannelHandler(chan, TCL_READABLE, std_out_or_err, chan);
-	    }
-	}
+	    out_chan = Tcl_MakeFileChannel((ClientData)(size_t)pipe_out[0], TCL_READABLE);
+	    err_chan = Tcl_MakeFileChannel((ClientData)(size_t)pipe_err[0], TCL_READABLE);
 #endif
+
+	    /* Register channels with the interpreter so they are tracked and
+	     * kept alive until the interpreter is deleted. */
+	    /* Non-blocking mode is essential: Tcl_Read on a blocking channel
+	     * uses DoRead(allowShortReads=0), which loops calling read() until
+	     * the full requested byte count is accumulated.  For a pipe that
+	     * delivers only a few bytes ("test\n"), this causes read() to block
+	     * on the empty pipe waiting for more data.  Non-blocking mode makes
+	     * Tcl_Read return whatever bytes are currently available. */
+	    Tcl_SetChannelOption(s->interp, out_chan, "-blocking", "0");
+	    Tcl_RegisterChannel(s->interp, out_chan);
+	    s->stdout_chan = out_chan;
+	    Tcl_CreateChannelHandler(out_chan, TCL_READABLE, std_out_or_err, out_chan);
+
+	    Tcl_SetChannelOption(s->interp, err_chan, "-blocking", "0");
+	    Tcl_RegisterChannel(s->interp, err_chan);
+	    s->stderr_chan = err_chan;
+	    Tcl_CreateChannelHandler(err_chan, TCL_READABLE, std_out_or_err, err_chan);
+	}
+#endif /* HAVE_PIPE */
     }
 
     mged_global_db_ctx.init_flag = 0; /* all done with initialization */
@@ -2488,6 +3472,8 @@ main(int argc, char *argv[])
 	 */
 	if ((rateflag = event_check(s, rateflag)) < 0)
 	    break;
+	if (mged_shutting_down(s))
+	    break;
 
 	/*
 	 * Cause the control portion of the displaylist to be updated
@@ -2495,6 +3481,8 @@ main(int argc, char *argv[])
 	 */
 	refresh(s);
     }
+    if (mged_shutting_down(s))
+	mged_finish(s, s->shutdown_exitcode);
     return 0;
 }
 

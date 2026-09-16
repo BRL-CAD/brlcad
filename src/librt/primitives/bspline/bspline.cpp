@@ -1,7 +1,7 @@
 /*                        B S P L I N E . C P P
  * BRL-CAD
  *
- * Copyright (c) 1991-2025 United States Government as represented by
+ * Copyright (c) 1991-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -438,6 +438,20 @@ rt_nurb_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 }
 
 
+/**
+ * Baseline flat-array vshot: delegates to the scalar shot via rt_vshot_via_shot().
+ */
+void
+rt_nurb_vshot(struct soltab *stp[], struct xray *rp[], struct seg *segp, int n, struct application *ap)
+/* An array of solid pointers */
+/* An array of ray pointers */
+/* array of segs (results returned) */
+/* Number of ray/object pairs */
+{
+    rt_vshot_via_shot(rt_nurb_shot, stp, rp, segp, n, ap);
+}
+
+
 #define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;
 
 
@@ -719,7 +733,7 @@ rt_nurb_import4(struct rt_db_internal *ip, const struct bu_external *ep, const f
     sip = (struct rt_nurb_internal *)ip->idb_ptr;
     sip->magic = RT_NURB_INTERNAL_MAGIC;
 
-    if (dbip && dbip->dbi_version < 0) {
+    if (dbip && dbip->i->dbi_version < 0) {
 	sip->nsrf = flip_short(rp->B.B_nsurf);
     } else {
 	sip->nsrf = rp->B.B_nsurf;
@@ -747,7 +761,7 @@ rt_nurb_import4(struct rt_db_internal *ip, const struct bu_external *ep, const f
 
 	/* fix endianness */
 	d.d.d_id = rp->d.d_id;
-	if (dbip && dbip->dbi_version < 0) {
+	if (dbip && dbip->i->dbi_version < 0) {
 	    d.d.d_order[0] = flip_short(rp->d.d_order[0]);
 	    d.d.d_order[1] = flip_short(rp->d.d_order[1]);
 	    d.d.d_kv_size[0] = flip_short(rp->d.d_kv_size[0]);
@@ -777,7 +791,7 @@ rt_nurb_import4(struct rt_db_internal *ip, const struct bu_external *ep, const f
 
 	vp = (dbfloat_t *) &rp[1];
 
-	if (dbip && dbip->dbi_version < 0) {
+	if (dbip && dbip->i->dbi_version < 0) {
 	    for (i = 0; i < d.d.d_kv_size[0]; i++) {
 		sip->srfs[s]->u.knots[i] = flip_dbfloat(*vp++);
 	    }
@@ -808,7 +822,7 @@ rt_nurb_import4(struct rt_db_internal *ip, const struct bu_external *ep, const f
 	    for (; i> 0; i--) {
 		vect_t f;
 
-		if (dbip && dbip->dbi_version < 0) {
+		if (dbip && dbip->i->dbi_version < 0) {
 		    f[0] = flip_dbfloat(vp[0]);
 		    f[1] = flip_dbfloat(vp[1]);
 		    f[2] = flip_dbfloat(vp[2]);
@@ -824,7 +838,7 @@ rt_nurb_import4(struct rt_db_internal *ip, const struct bu_external *ep, const f
 	    for (; i> 0; i--) {
 		hvect_t f;
 
-		if (dbip && dbip->dbi_version < 0) {
+		if (dbip && dbip->i->dbi_version < 0) {
 		    f[0] = flip_dbfloat(vp[0]);
 		    f[1] = flip_dbfloat(vp[1]);
 		    f[2] = flip_dbfloat(vp[2]);

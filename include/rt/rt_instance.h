@@ -1,7 +1,7 @@
 /*                    R T _ I N S T A N C E . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2025 United States Government as represented by
+ * Copyright (c) 1993-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,7 +30,6 @@
 #include "common.h"
 #include "vmath.h"
 #include "bu/list.h"
-#include "bu/hist.h"
 #include "bu/ptbl.h"
 #include "bn/tol.h"
 #include "rt/defines.h"
@@ -46,6 +45,47 @@ __BEGIN_DECLS
 // libbu's callback type isn't quite right for this case, so we might as well
 // be specific.
 typedef void(*rti_clbk_t)(struct rt_i *rtip, struct db_tree_state *tsp, struct region *r);
+
+/**
+ * Callback type for rt_iterate_regions().  Return 0 to continue
+ * iteration; return non-zero to stop early.
+ */
+typedef int (*rt_region_callback_t)(struct region *regp, void *udata);
+
+struct rt_i_internal; /* forward declaration for private state */
+
+/**
+ * Read-only statistics counters for a ray-trace instance.
+ *
+ * This sub-struct groups all scalar performance and geometry counters
+ * that are maintained by librt during prep and ray-shooting.
+ * Applications may freely read any field; all writes are performed
+ * internally by librt.
+ *
+ * Access pattern:  rtip->stats.nregions,  rtip->stats.rti_nrays, etc.
+ */
+struct rt_i_stats {
+    /* Geometry counts (set during rt_prep) */
+    size_t  nregions;       /**< @brief  total # of regions participating */
+    size_t  nsolids;        /**< @brief  total # of solids participating */
+
+    /* Ray-shooting counters (accumulated during rt_shootray / rt_shootrays) */
+    size_t  rti_nrays;      /**< @brief  # calls to rt_shootray() */
+    size_t  nmiss_model;    /**< @brief  rays missed model RPP */
+    size_t  nshots;         /**< @brief  # of calls to ft_shot() */
+    size_t  nmiss;          /**< @brief  solid ft_shot() returned a miss */
+    size_t  nhits;          /**< @brief  solid ft_shot() returned a hit */
+    size_t  nmiss_tree;     /**< @brief  shots missed sub-tree RPP */
+    size_t  nmiss_solid;    /**< @brief  shots missed solid RPP */
+    size_t  ndup;           /**< @brief  duplicate shots at a given solid */
+    size_t  nempty_cells;   /**< @brief  number of empty spatial partition cells passed through */
+
+    /* Space-partition (cut tree) statistics (set during rt_cut_it) */
+    size_t  rti_cut_maxlen;             /**< @brief  max len RPP list in 1 cut bin */
+    size_t  rti_ncut_by_type[CUT_MAXIMUM+1]; /**< @brief  number of cuts by type */
+    size_t  rti_cut_totobj;             /**< @brief  # objs in all bins, total */
+    size_t  rti_cut_maxdepth;           /**< @brief  max depth of cut tree */
+};
 
 /**
  * This structure keeps track of almost everything for ray-tracing
@@ -76,7 +116,7 @@ struct rt_i {
     struct bn_tol       rti_tol;        /**< @brief  Math tolerances for this model */
     struct bg_tess_tol  rti_ttol;       /**< @brief  Tessellation tolerance defaults */
     fastf_t             rti_max_beam_radius; /**< @brief  Max threat radius for FASTGEN cline solid */
-    rti_clbk_t          rti_gettrees_clbk;  /**< @brief  Optional user clbk function called during rt_gettrees_and_attrs */
+    rti_clbk_t          rti_gettrees_clbk;  /**< @brief  Optional user clbk function called after each region tree is finalized by rt_gettrees_and_attrs */
     void *              rti_udata;      /**< @brief  ptr for user data. */
     /* THESE ITEMS ARE AVAILABLE FOR APPLICATIONS TO READ */
     point_t             mdl_min;        /**< @brief  min corner of model bounding RPP */
@@ -85,52 +125,15 @@ struct rt_i {
     point_t             rti_pmax;       /**< @brief  for plotting, max RPP */
     double              rti_radius;     /**< @brief  radius of model bounding sphere */
     struct db_i *       rti_dbip;       /**< @brief  prt to Database instance struct */
-    /* THESE ITEMS SHOULD BE CONSIDERED OPAQUE, AND SUBJECT TO CHANGE */
     int                 needprep;       /**< @brief  needs rt_prep */
-    struct region **    Regions;        /**< @brief  ptrs to regions [reg_bit] */
+    struct rt_i_stats   stats;          /**< @brief  geometry counts and ray-shooting counters */
+
+    /* THESE ITEMS SHOULD BE CONSIDERED OPAQUE, AND SUBJECT TO CHANGE */
     struct bu_list      HeadRegion;     /**< @brief  ptr of list of regions in model */
-    struct bu_ptbl      delete_regs;    /**< @brief  list of region pointers to delete after light_init() */
-    /* Ray-tracing statistics */
-    size_t              nregions;       /**< @brief  total # of regions participating */
-    size_t              nsolids;        /**< @brief  total # of solids participating */
-    size_t              rti_nrays;      /**< @brief  # calls to rt_shootray() */
-    size_t              nmiss_model;    /**< @brief  rays missed model RPP */
-    size_t              nshots;         /**< @brief  # of calls to ft_shot() */
-    size_t              nmiss;          /**< @brief  solid ft_shot() returned a miss */
-    size_t              nhits;          /**< @brief  solid ft_shot() returned a hit */
-    size_t              nmiss_tree;     /**< @brief  shots missed sub-tree RPP */
-    size_t              nmiss_solid;    /**< @brief  shots missed solid RPP */
-    size_t              ndup;           /**< @brief  duplicate shots at a given solid */
-    size_t              nempty_cells;   /**< @brief  number of empty spatial partition cells passed through */
-    union cutter        rti_CutHead;    /**< @brief  Head of cut tree */
-    union cutter        rti_inf_box;    /**< @brief  List of infinite solids */
-    union cutter *      rti_CutFree;    /**< @brief  cut Freelist */
-    struct bu_ptbl      rti_busy_cutter_nodes; /**< @brief  List of "cutter" mallocs */
-    struct bu_ptbl      rti_cuts_waiting;
-    size_t              rti_cut_maxlen; /**< @brief  max len RPP list in 1 cut bin */
-    size_t              rti_ncut_by_type[CUT_MAXIMUM+1];        /**< @brief  number of cuts by type */
-    size_t              rti_cut_totobj; /**< @brief  # objs in all bins, total */
-    size_t              rti_cut_maxdepth; /**< @brief  max depth of cut tree */
-    struct soltab **    rti_sol_by_type[ID_MAX_SOLID+1];
-    size_t              rti_nsol_by_type[ID_MAX_SOLID+1];
-    size_t              rti_maxsol_by_type;
-    size_t              rti_air_discards; /**< @brief  # of air regions discarded */
-    struct bu_hist      rti_hist_cellsize; /**< @brief  occupancy of cut cells */
-    struct bu_hist      rti_hist_cell_pieces; /**< @brief  solid pieces per cell */
-    struct bu_hist      rti_hist_cutdepth; /**< @brief  depth of cut tree */
-    struct soltab **    rti_Solids;     /**< @brief  ptrs to soltab [st_bit] */
-    struct bu_list      rti_solidheads[RT_DBNHASH]; /**< @brief  active solid lists */
     struct bu_ptbl      rti_resources;  /**< @brief  list of 'struct resource's encountered */
-    size_t              rti_cutlen;     /**< @brief  goal for # solids per boxnode */
-    size_t              rti_cutdepth;   /**< @brief  goal for depth of NUBSPT cut tree */
-    /* Parameters required for rt_submodel */
-    char *              rti_treetop;    /**< @brief  bu_strduped, for rt_submodel rti's only */
-    size_t              rti_uses;       /**< @brief  for rt_submodel */
-    /* Parameters for accelerating "pieces" of solids */
-    size_t              rti_nsolids_with_pieces; /**< @brief  # solids using pieces */
-    /* Parameters for dynamic geometry */
-    int                 rti_add_to_new_solids_list;
-    struct bu_ptbl      rti_new_solids;
+
+    /* PRIVATE librt-internal state; see src/librt/librt_private.h */
+    struct rt_i_internal *i;
 };
 
 
@@ -147,23 +150,42 @@ struct rt_i {
  * } RT_VISIT_ALL_SOLTABS_END
  */
 #define RT_VISIT_ALL_SOLTABS_START(_s, _rti) { \
-    struct bu_list *_head = &((_rti)->rti_solidheads[0]); \
-    for (; _head < &((_rti)->rti_solidheads[RT_DBNHASH]); _head++) \
+    int _i; \
+    for (_i = 0; _i < RT_DBNHASH; _i++) { \
+	struct bu_list *_head = rt_solidhead_ptr((_rti), _i); \
 	for (BU_LIST_FOR(_s, soltab, _head)) {
 
-#define RT_VISIT_ALL_SOLTABS_END        } }
+#define RT_VISIT_ALL_SOLTABS_END        } } }
 
 /**************************/
 /* Applications interface */
 /**************************/
 
-/* Prepare for raytracing */
+RT_EXPORT extern struct rt_i *rt_i_create(struct db_i *dbip);
+RT_EXPORT extern void rt_i_destroy(struct rt_i *rtip);
 
-RT_EXPORT extern struct rt_i *rt_new_rti(struct db_i *dbip);
-RT_EXPORT extern void rt_free_rti(struct rt_i *rtip);
+/* Use these if working with an rt_i not being managed by the
+ * rt_i_create/rt_i_destroy pairing. */
+RT_EXPORT extern void rt_i_init(struct rt_i *rtip, struct db_i *dbip);
+RT_EXPORT extern void rt_i_clear(struct rt_i *rtip);
+
+// Old names - use rt_i_create and rt_i_destroy instead.
+DEPRECATED RT_EXPORT extern struct rt_i *rt_new_rti(struct db_i *dbip);
+DEPRECATED RT_EXPORT extern void rt_free_rti(struct rt_i *rtip);
+
+
+/* Prepare for raytracing */
 RT_EXPORT extern void rt_prep(struct rt_i *rtip);
 RT_EXPORT extern void rt_prep_parallel(struct rt_i *rtip,
 				       int ncpu);
+
+/**
+ * Return a pointer to the idx-th active-solid list head in rtip.
+ * Used by the RT_VISIT_ALL_SOLTABS_START macro and any code that
+ * needs to iterate over all prepared solids without accessing the
+ * private rt_i_internal struct directly.
+ */
+RT_EXPORT extern struct bu_list *rt_solidhead_ptr(struct rt_i *rtip, int idx);
 
 
 /* Get expr tree for object */
@@ -191,12 +213,13 @@ RT_EXPORT extern int rt_gettrees(struct rt_i *rtip,
  * information in rti_udata. (stashed in the rt_i structure).
  *
  * This function may run in parallel, but is not multiply re-entrant itself,
- * because db_walk_tree() isn't multiply re-entrant.  Note that callback
- * implementations should protect any data writes to a shared structure with
- * the RT_SEM_RESULTS semaphore.
+ * because db_walk_tree() isn't multiply re-entrant.  The optional callback is
+ * invoked serially after dead-solid cleanup and subtractor pruning.  It may
+ * therefore inspect the final region tree and reg_all_unions value without
+ * observing nodes or soltabs that the finishing pass will subsequently free.
  *
  * Semaphores used for critical sections in parallel mode:
- * RT_SEM_TREE ====> protects rti_solidheads[] lists, d_uses(solids)
+ * RT_SEM_TREE ====> protects rtip->i->rti_solidheads[] lists, d_uses(solids)
  * RT_SEM_RESULTS => protects HeadRegion, mdl_min/max, d_uses(reg), nregions
  * RT_SEM_WORKER ==> (db_walk_dispatcher, from db_walk_tree)
  * RT_SEM_STATS ===> nsolids
@@ -262,7 +285,8 @@ RT_EXPORT extern void rt_clean_resource_basic(struct rt_i *rtip,
 					struct resource *resp);
 RT_EXPORT extern void rt_clean_resource(struct rt_i *rtip,
 					struct resource *resp);
-RT_EXPORT extern void rt_clean_resource_complete(struct rt_i *rtip,
+/* Deprecated - use rt_clean_resource_basic */
+DEPRECATED RT_EXPORT extern void rt_clean_resource_complete(struct rt_i *rtip,
 						 struct resource *resp);
 
 
@@ -270,14 +294,40 @@ RT_EXPORT extern void rt_clean_resource_complete(struct rt_i *rtip,
 int rt_plot_solid(
     FILE                *fp,
     struct rt_i         *rtip,
-    const struct soltab *stp,
-    struct resource     *resp);
+    const struct soltab *stp);
 
 /* Release storage assoc with rt_i */
 RT_EXPORT extern void rt_clean(struct rt_i *rtip);
 RT_EXPORT extern int rt_del_regtree(struct rt_i *rtip,
-				    struct region *delregp,
-				    struct resource *resp);
+				    struct region *delregp);
+
+/**
+ * Iterate over all regions in the rt_i, calling @p callback for each one.
+ * Iteration stops early if @p callback returns non-zero.
+ * This API hides the internal bu_list representation of the region list.
+ */
+RT_EXPORT extern void rt_iterate_regions(struct rt_i *rtip,
+					 rt_region_callback_t callback,
+					 void *udata);
+
+/**
+ * Mark a region for deletion after light_init() completes.
+ * This hides the internal delete_regs bu_ptbl storage.
+ */
+RT_EXPORT extern void rt_mark_region_deleted(struct rt_i *rtip,
+					     struct region *regp);
+
+/**
+ * Report count of delete_regs (used by src/rt.view.c)
+ */
+RT_EXPORT extern size_t rt_deleted_regions_cnt(struct rt_i *rtip);
+
+/**
+ * Get deleted region n
+ */
+RT_EXPORT extern struct region * rt_deleted_region_get(struct rt_i *rtip, size_t n);
+
+
 /* Check in-memory data structures */
 RT_EXPORT extern void rt_ck(struct rt_i *rtip);
 

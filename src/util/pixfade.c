@@ -1,7 +1,7 @@
 /*                       P I X F A D E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2025 United States Government as represented by
+ * Copyright (c) 2004-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -47,12 +47,16 @@
  */
 #include "common.h"
 
+#include <errno.h>
 #include <stdlib.h>
+#include <limits.h>
+#include <float.h>
 
 #include "bio.h"
 
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/log.h"
 #include "bu/mime.h"
 
@@ -65,7 +69,7 @@ char *in_file = NULL;
 
 char usage[] = "\
 Usage: pixfade [-p percentage] [-f fraction] [-m max] [-s squaresize] [-w width] [-n height] \n\
-                [-o out_file.pix] [file.pix] > [out_file.pix]\n";
+                [-o out_file.pix] [file.pix] [> out_file.pix]\n";
 
 double multiplier = 0.5;
 int max = -1;
@@ -78,33 +82,39 @@ get_args(int argc, char **argv)
     while ((c = bu_getopt(argc, argv, "p:f:s:w:n:o:m:h?")) != -1) {
 	switch (c) {
             case 'p':
-		multiplier = atof(bu_optarg) / 100.0;
-		if (multiplier < 0.0) {
-		    bu_log("pixfade: percent is negative");
-		    bu_exit (1, NULL);
+		if (!bu_opt_scan_double_range(bu_optarg, &multiplier, 0.0, DBL_MAX, "percentage")) {
+		    bu_exit(1, NULL);
 		}
+		multiplier /= 100.0;
 		break;
 	    case 'f':
-		multiplier = atof(bu_optarg);
-		if (multiplier < 0.0) {
-		    bu_log("pixfade: fraction is negative");
-		    bu_exit (1, NULL);
+		if (!bu_opt_scan_double_range(bu_optarg, &multiplier, 0.0, DBL_MAX, "fraction")) {
+		    bu_exit(1, NULL);
 		}
 		break;
     	    case 's':
-		inx = iny = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &inx, 1, INT_MAX, "input size")) {
+		    bu_exit(1, NULL);
+		}
+		iny = inx;
 		break;
 	    case 'w':
-		inx = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &inx, 1, INT_MAX, "input width")) {
+		    bu_exit(1, NULL);
+		}
 		break;
 	    case 'n':
-		iny = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &iny, 1, INT_MAX, "input height")) {
+		    bu_exit(1, NULL);
+		}
 		break;
 	    case 'o':
 		out_file = bu_optarg;
 		break;
 	    case 'm':
-		max = atoi(bu_optarg);
+		if (!bu_opt_scan_int(bu_optarg, &max, "max value")) {
+		    bu_exit(1, NULL);
+		}
 		if (max < 0 )
 		    max = 0;
 		else if (max > 255)
@@ -123,6 +133,10 @@ get_args(int argc, char **argv)
 
     in_file = argv[bu_optind];
     bu_optind++;
+    if (bu_optind < argc) {
+	bu_log("pixfade: excess argument(s) not supported\n");
+	return 0;
+    }
     return 1;		/* OK */
 
 }
@@ -170,6 +184,9 @@ main(int argc, char **argv)
     else
 	icv_ceiling(img, max);
     icv_write(img, out_file, BU_MIME_IMAGE_PIX);
+    if (!isatty(fileno(stdout)) && out_file != NULL) {
+	icv_write(img, NULL, BU_MIME_IMAGE_PIX);
+    }
 
     icv_destroy(img);
     return 0;

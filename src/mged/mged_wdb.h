@@ -1,7 +1,7 @@
 /*                     M G E D _ W D B . H
  * BRL-CAD
  *
- * Copyright (c) 2024-2025 United States Government as represented by
+ * Copyright (c) 2024-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,6 +38,9 @@
 
 // FIXME: Global
 extern struct rt_wdb rtg_headwdb;
+
+/* Dispatch the MGED-only remnants of the historical Tcl database object. */
+extern int mged_wdb_db_cmd(struct rt_wdb *wdbp, int argc, const char **argv);
 
 #endif  /* MGED_MGED_WDB_H */
 

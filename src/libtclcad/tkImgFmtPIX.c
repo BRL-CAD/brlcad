@@ -1,7 +1,7 @@
 /*                   T K I M G F M T P I X . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2025 United States Government as represented by
+ * Copyright (c) 1994-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -64,9 +64,15 @@
 #include "bu/malloc.h"
 #include "bn.h"
 #include "dm.h"
-#include "tk.h"
 
 #include "tclcad.h"
+
+// tclcad.h pulls in OpenNURBS in C++ compilation mode, which defines None,
+// which will conflict with Tk.h's Xlib None if we include tk.h before tclcad.h
+#include "tcl.h"
+#ifdef HAVE_TK
+#  include "tk.h"
+#endif
 
 /* we need tk version numbers for compatibility compilation */
 #if !defined(TK_MAJOR_VERSION) || (TK_MAJOR_VERSION != 8)

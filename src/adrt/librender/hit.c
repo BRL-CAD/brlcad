@@ -1,7 +1,7 @@
 /*                           H I T . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2025 United States Government as represented by
+ * Copyright (c) 2007-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -18,6 +18,9 @@
  * information.
  */
 /** @file librender/hit.c
+ *
+ * Shared ray-hit callback that returns the intersected mesh and flips
+ * the surface normal to face the incoming ray.
  *
  */
 

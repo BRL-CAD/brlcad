@@ -1,7 +1,7 @@
 /*                      N M G _ F U S E . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2025 United States Government as represented by
+ * Copyright (c) 1993-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1871,13 +1871,6 @@ nmg_break_e_on_v(const uint32_t *magic_p, struct bu_list *vlfree, const struct b
     return count;
 }
 
-
-/* DEPRECATED: use nmg_break_e_on_v() */
-int
-nmg_model_break_e_on_v(const uint32_t *magic_p, struct bu_list *vlfree, const struct bn_tol *tol)
-{
-    return nmg_break_e_on_v(magic_p, vlfree, tol);
-}
 
 /**
  * This is the primary application interface to the geometry fusing support.

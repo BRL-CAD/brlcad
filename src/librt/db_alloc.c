@@ -1,7 +1,7 @@
 /*                      D B _ A L L O C . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2025 United States Government as represented by
+ * Copyright (c) 1988-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,6 +33,7 @@
 #include "vmath.h"
 #include "rt/db4.h"
 #include "raytrace.h"
+#include "librt_private.h"
 
 
 /**
@@ -73,16 +74,16 @@ db_alloc(register struct db_i *dbip, register struct directory *dp, size_t count
 	return -1;
     }
     while (1) {
-	len = rt_memalloc(&(dbip->dbi_freep), (unsigned)count);
+	len = rt_memalloc(&(dbip->i->dbi_freep), (unsigned)count);
 	if (len == 0L) {
 	    /* No contiguous free block, append to file */
-	    if ((dp->d_addr = dbip->dbi_eof) == RT_DIR_PHONY_ADDR) {
+	    if ((dp->d_addr = dbip->i->dbi_eof) == RT_DIR_PHONY_ADDR) {
 		bu_log("db_alloc: bad EOF\n");
 		return -1;
 	    }
 	    dp->d_len = count;
-	    dbip->dbi_eof += (b_off_t)(count * sizeof(union record));
-	    dbip->dbi_nrec += count;
+	    dbip->i->dbi_eof += (b_off_t)(count * sizeof(union record));
+	    dbip->i->dbi_nrec += count;
 	    break;
 	}
 	dp->d_addr = (b_off_t)(len * sizeof(union record));
@@ -147,10 +148,10 @@ db_delete(struct db_i *dbip, struct directory *dp)
 
     if (db_version(dbip) == 4) {
 	i = db_zapper(dbip, dp, 0);
-	rt_memfree(&(dbip->dbi_freep), (unsigned)dp->d_len, dp->d_addr/(sizeof(union record)));
+	rt_memfree(&(dbip->i->dbi_freep), (unsigned)dp->d_len, dp->d_addr/(sizeof(union record)));
     } else if (db_version(dbip) == 5) {
 	i = db5_write_free(dbip, dp, dp->d_len);
-	rt_memfree(&(dbip->dbi_freep), dp->d_len, dp->d_addr);
+	rt_memfree(&(dbip->i->dbi_freep), dp->d_len, dp->d_addr);
     } else {
 	bu_bomb("db_delete() unsupported database version\n");
     }
@@ -206,34 +207,37 @@ db_zapper(struct db_i *dbip, struct directory *dp, size_t start)
     return ret;
 }
 
+void
+db_alloc_directory_block(struct resource *UNUSED(resp))
+{
+}
 
 void
-db_alloc_directory_block(struct resource *resp)
+db_alloc_dir_block(struct db_i *dbip)
 {
     struct directory *dp;
     size_t bytes;
 
-    RT_CK_RESOURCE(resp);
-    BU_CK_PTBL(&resp->re_directory_blocks);
+    RT_CK_DBI(dbip);
+    BU_CK_PTBL(&dbip->i->dbi_directory_blocks);
 
-    BU_ASSERT(resp->re_directory_hd == NULL);
+    BU_ASSERT(dbip->i->dbi_directory_hd == NULL);
 
     /* Get a BIG block */
     bytes = (size_t)bu_malloc_len_roundup(1024*sizeof(struct directory));
-    dp = (struct directory *)bu_calloc(1, bytes, "re_directory_blocks from db_alloc_directory_block() " CPP_FILELINE);
+    dp = (struct directory *)bu_calloc(1, bytes, "dbi_directory_blocks from db_alloc_dir_block() " CPP_FILELINE);
 
     /* Record storage for later */
-    bu_ptbl_ins(&resp->re_directory_blocks, (long *)dp);
+    bu_ptbl_ins(&dbip->i->dbi_directory_blocks, (long *)dp);
 
     while (bytes >= sizeof(struct directory)) {
 	dp->d_magic = RT_DIR_MAGIC;
-	dp->d_forw = resp->re_directory_hd;
-	resp->re_directory_hd = dp;
+	dp->d_forw = dbip->i->dbi_directory_hd;
+	dbip->i->dbi_directory_hd = dp;
 	dp++;
 	bytes -= sizeof(struct directory);
     }
 }
-
 
 void
 rt_alloc_seg_block(register struct resource *res)

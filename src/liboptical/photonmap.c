@@ -1,7 +1,7 @@
 /*                     P H O T O N M A P . C
  * BRL-CAD
  *
- * Copyright (c) 2002-2025 United States Government as represented by
+ * Copyright (c) 2002-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,12 +32,9 @@
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
 #endif
-#ifdef HAVE_ALARM
-#  include <signal.h>
-#endif
-
+#include "bu/interrupt.h"
 #include "bu/parallel.h"
-#include "photonmap.h"
+#include "optical/photonmap.h"
 
 #if defined(HAVE_SRAND48) && !defined(HAVE_DECL_SRAND48)
 extern void srand48(long int seedval);
@@ -65,7 +62,6 @@ int GPM_WIDTH;
 int GPM_HEIGHT;
 int GPM_RAYS;			/* Number of Sample Rays for each Direction in Irradiance Hemi */
 double GPM_ATOL;		/* Angular Tolerance for Photon Gathering */
-struct resource GPM_RTAB[MAX_PSW];	/* Resource Table for Multi-threading */
 int HitG, HitB;
 
 
@@ -350,7 +346,7 @@ Refract(vect_t I, vect_t N, fastf_t n1, fastf_t n2)
 
 
 int
-CheckMaterial(char *cmp, char *MS)
+CheckMaterial(const char *cmp, char *MS)
 {
     size_t i;
 
@@ -453,15 +449,33 @@ MaxFloat(fastf_t a, fastf_t b, fastf_t c)
 
 /* break PHit <-> HitRef cycle */
 int PHit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(finished_segs));
+int PMiss(struct application *ap);
+
+static int
+ShootPhotonRay(struct application *ap, point_t pt, vect_t dir, int (*hit)(struct application *, struct partition *, struct seg *), const char *purpose)
+{
+    struct application sub_ap = *ap;
+
+    VMOVE(sub_ap.a_ray.r_pt, pt);
+    VMOVE(sub_ap.a_ray.r_dir, dir);
+    sub_ap.a_ray.magic = RT_RAY_MAGIC;
+    sub_ap.a_hit = hit;
+    sub_ap.a_miss = PMiss;
+    sub_ap.a_logoverlap = rt_silent_logoverlap;
+    sub_ap.a_onehit = 0;
+    sub_ap.a_level = ap->a_level + 1;
+    sub_ap.a_purpose = purpose;
+
+    return rt_shootray(&sub_ap);
+}
 
 int
 HitRef(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(finished_segs))
 {
     struct partition *part;
-    vect_t pt, normal, spec;
+    vect_t pt, normal, spec, dir;
     fastf_t refi, transmit;
 
-    ap->a_hit = PHit;
     part = PartHeadp->pt_forw;
 
     /* Compute Intersection Point, Pt = o + td */
@@ -472,29 +486,23 @@ HitRef(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(f
     /* RT_HIT_NORMAL(normal, part->pt_outhit, part->pt_inseg->seg_stp, &(ap->a_ray), part->pt_inflip);*/
     /* RT_HIT_NORMAL(normal, part->pt_outhit, part->pt_outseg->seg_stp, &(ap->a_ray), part->pt_outflip);*/
 
-    /* Assign pt */
-    ap->a_ray.r_pt[0] = pt[0];
-    ap->a_ray.r_pt[1] = pt[1];
-    ap->a_ray.r_pt[2] = pt[2];
-
-
     /* Fetch Material */
     GetMaterial(part->pt_regionp->reg_mater.ma_shader, spec, &refi, &transmit);
 
 
-    if (Refract(ap->a_ray.r_dir, normal, refi, 1.0)) {
+    VMOVE(dir, ap->a_ray.r_dir);
+    if (Refract(dir, normal, refi, 1.0)) {
 	/*
 	  bu_log("1D: %d, [%.3f, %.3f, %.3f], [%.3f, %.3f, %.3f], [%.3f, %.3f, %.3f]\n", Depth, pt[0], pt[1], pt[2], ap->a_ray.r_dir[0], ap->a_ray.r_dir[1], ap->a_ray.r_dir[2], normal[0], normal[1], normal[2]);
 	  bu_log("p1: [%.3f, %.3f, %.3f]\n", part->pt_inhit->hit_point[0], part->pt_inhit->hit_point[1], part->pt_inhit->hit_point[2]);
 	  bu_log("p2: [%.3f, %.3f, %.3f]\n", part->pt_outhit->hit_point[0], part->pt_outhit->hit_point[1], part->pt_outhit->hit_point[2]);
 	*/
 	Depth++;
-	rt_shootray(ap);
+	ShootPhotonRay(ap, pt, dir, PHit, "photon leaving refractive material");
     } else {
 	bu_log("TIF\n");
     }
 
-    ap->a_onehit = 0;
     return 1;
 }
 
@@ -504,7 +512,7 @@ int
 PHit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(finished_segs))
 {
     struct partition *part;
-    vect_t pt, normal, color, spec, power;
+    vect_t pt, normal, color, spec, power, dir;
     fastf_t refi, transmit, prob, prob_diff, prob_spec, prob_ref;
 #ifdef PHIT_DEBUG
     int hit;
@@ -607,17 +615,12 @@ PHit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(fin
 	    /* Store Photon */
 	    Store(pt, ap->a_ray.r_dir, normal, PType);
 
-	    /* Assign diffuse reflection direction */
-	    DiffuseReflect(normal, ap->a_ray.r_dir);
-
-	    /* Assign pt */
-	    ap->a_ray.r_pt[0] = pt[0];
-	    ap->a_ray.r_pt[1] = pt[1];
-	    ap->a_ray.r_pt[2] = pt[2];
+	    VMOVE(dir, ap->a_ray.r_dir);
+	    DiffuseReflect(normal, dir);
 
 	    if (PType != PM_CAUSTIC) {
 		Depth++;
-		rt_shootray(ap);
+		ShootPhotonRay(ap, pt, dir, PHit, "photon diffuse bounce");
 	    }
 	} else if (prob >= prob_diff && prob < prob_diff + prob_spec) {
 	    /* Store power of incident Photon */
@@ -630,18 +633,13 @@ PHit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(fin
 	    CurPh.Power[1] = power[1]*spec[1]/prob_spec;
 	    CurPh.Power[2] = power[2]*spec[2]/prob_spec;
 
-	    /* Reflective */
-	    SpecularReflect(normal, ap->a_ray.r_dir);
-
-	    /* Assign pt */
-	    ap->a_ray.r_pt[0] = pt[0];
-	    ap->a_ray.r_pt[1] = pt[1];
-	    ap->a_ray.r_pt[2] = pt[2];
+	    VMOVE(dir, ap->a_ray.r_dir);
+	    SpecularReflect(normal, dir);
 
 	    if (PType != PM_IMPORTANCE)
 		PType = PM_CAUSTIC;
 	    Depth++;
-	    rt_shootray(ap);
+	    ShootPhotonRay(ap, pt, dir, PHit, "photon specular bounce");
 	} else {
 	    /* Store Photon */
 	    Store(pt, ap->a_ray.r_dir, normal, PType);
@@ -667,10 +665,9 @@ PHit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(fin
 		CurPh.Power[1] = power[1];
 		CurPh.Power[2] = power[2];
 
-		if (!Refract(ap->a_ray.r_dir, normal, 1.0, refi))
+		VMOVE(dir, ap->a_ray.r_dir);
+		if (!Refract(dir, normal, 1.0, refi))
 		    printf("TIF0\n");
-
-		ap->a_hit = HitRef;
 
 		/*
 		  bu_log("dir: [%.3f, %.3f, %.3f]\n", ap->a_ray.r_dir[0], ap->a_ray.r_dir[1], ap->a_ray.r_dir[2]);
@@ -678,19 +675,14 @@ PHit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(fin
 		  bu_log("nor: [%.3f, %.3f, %.3f]\n", normal[0], normal[1], normal[2]);
 		  bu_log("p0: [%.3f, %.3f, %.3f], [%.3f, %.3f, %.3f]\n", pt[0], pt[1], pt[2], ap->a_ray.r_dir[0], ap->a_ray.r_dir[1], ap->a_ray.r_dir[2]);
 		*/
-		ap->a_onehit = 0;
 	    } else {
-		SpecularReflect(normal, ap->a_ray.r_dir);
+		VMOVE(dir, ap->a_ray.r_dir);
+		SpecularReflect(normal, dir);
 	    }
-
-	    /* Assign pt */
-	    ap->a_ray.r_pt[0] = pt[0];
-	    ap->a_ray.r_pt[1] = pt[1];
-	    ap->a_ray.r_pt[2] = pt[2];
 
 	    /* bu_log("2D: %d, [%.3f, %.3f, %.3f], [%.3f, %.3f, %.3f], [%.3f, %.3f, %.3f]\n", Depth, pt[0], pt[1], pt[2], ap->a_ray.r_dir[0], ap->a_ray.r_dir[1], ap->a_ray.r_dir[2], normal[0], normal[1], normal[2]);*/
 	    Depth++;
-	    rt_shootray(ap);
+	    ShootPhotonRay(ap, pt, dir, refi > 1.0 && prob < transmit ? HitRef : PHit, "photon refractive/specular bounce");
 	}
     }
     return 1;
@@ -714,6 +706,9 @@ void
 ScalePhotonPower(int map)
 {
     int i;
+
+    if (EPS[map] <= 0)
+	return;
 
     for (i = 0; i < PMap[map]->StoredPhotons; i++) {
 	Emit[map][i].Power[0] *= ScaleFactor/(double)EPS[map];
@@ -756,7 +751,7 @@ EmitImportonsRandom(struct application *ap, point_t eye_pos)
 
 	Depth = 0;
 	PType = PM_IMPORTANCE;
-	rt_shootray(ap);
+	ShootPhotonRay(ap, ap->a_ray.r_pt, ap->a_ray.r_dir, PHit, "photon importon");
     }
 }
 
@@ -814,7 +809,7 @@ EmitPhotonsRandom(struct application *ap, double ScaleIndirect)
 		if (PMap[i]->StoredPhotons < PMap[i]->MaxPhotons)
 		    EPS[i]++;
 
-	    rt_shootray(ap);
+	    ShootPhotonRay(ap, ap->a_ray.r_pt, ap->a_ray.r_dir, PHit, "photon emission");
 	    /* bu_log("1: %d, 2: %d\n", PMap[PM_GLOBAL]->StoredPhotons, PMap[PM_CAUSTIC]->StoredPhotons);*/
 	}
     }
@@ -1037,7 +1032,9 @@ Irradiance(int pid, struct Photon *P, struct application *ap)
     lap->a_rt_i = ap->a_rt_i;
     lap->a_hit = ap->a_hit;
     lap->a_miss = ap->a_miss;
-    lap->a_resource = &GPM_RTAB[pid];
+    lap->a_resource = (struct resource *)BU_PTBL_GET(&ap->a_rt_i->rti_resources, pid);
+    if (lap->a_resource == RESOURCE_NULL)
+	lap->a_resource = ap->a_resource;
     lap->a_logoverlap = ap->a_logoverlap;
 
     M = N = GPM_RAYS;
@@ -1084,13 +1081,9 @@ Irradiance(int pid, struct Photon *P, struct application *ap)
  * Go through each photon and use it for the position of the hemisphere
  * and then determine whether that should be included as a Cache Pt.
  */
-void
-BuildIrradianceCache(int pid, struct PNode *Node, struct application *ap)
+static void
+build_irradiance_cache(int pid, struct PNode *Node, struct application *ap, int sem_photonmap)
 {
-    static int sem_photonmap = 0;
-    if (!sem_photonmap)
-	sem_photonmap = bu_semaphore_register("sem_photonmap");
-
     if (!Node)
 	return;
 
@@ -1109,8 +1102,17 @@ BuildIrradianceCache(int pid, struct PNode *Node, struct application *ap)
 	bu_semaphore_release(sem_photonmap);
     }
 
-    BuildIrradianceCache(pid, Node->L, ap);
-    BuildIrradianceCache(pid, Node->R, ap);
+    build_irradiance_cache(pid, Node->L, ap, sem_photonmap);
+    build_irradiance_cache(pid, Node->R, ap, sem_photonmap);
+}
+
+
+void
+BuildIrradianceCache(int pid, struct PNode *Node, struct application *ap)
+{
+    const int sem_photonmap = bu_semaphore_register("sem_photonmap");
+
+    build_irradiance_cache(pid, Node, ap, sem_photonmap);
 }
 
 
@@ -1129,7 +1131,7 @@ alarmhandler(int sig)
     bu_log("    Irradiance Cache Progress: %d%%  Approximate time left: %f%f",
 	   (int)(100.0*p), (1.0/p-1.0)*(float)t, (float)t*1.0/p);
 #define BAH(s, w) if (tl > (s)) { float d = floor(tl / (((s) == 0)?1.0:(float)(s))); \
-	tl -= d * (s); bu_log("%d "w, (int)d, d>1?"s":""); }
+	tl -= d * (s); bu_log("%d " w, (int)d, d>1?"s":""); }
     BAH(60*60*24, "day%s, ");
     BAH(60*60, "hour%s, ");
     BAH(60, "minute%s, ");
@@ -1157,16 +1159,63 @@ IrradianceThread(int pid, void *arg)
 }
 
 
+static void
+FreePhotonTree(struct PNode *Root)
+{
+    if (!Root)
+	return;
+
+    FreePhotonTree(Root->L);
+    FreePhotonTree(Root->R);
+    bu_free(Root, "PNode");
+}
+
+
+static void
+FreePhotonMap(int MAP)
+{
+    if (Emit[MAP]) {
+	bu_free(Emit[MAP], "Photons");
+	Emit[MAP] = NULL;
+    }
+
+    if (PMap[MAP]) {
+	FreePhotonTree(PMap[MAP]->Root);
+	bu_free(PMap[MAP], "PhotonMap");
+	PMap[MAP] = NULL;
+    }
+}
+
+
+static void
+FreePhotonMaps(void)
+{
+    int i;
+
+    for (i = 0; i < PM_MAPS; i++)
+	FreePhotonMap(i);
+}
+
+
 void
 Initialize(int MAP, int MapSize)
 {
+    if (MapSize < 0)
+	MapSize = 0;
+
+    FreePhotonMap(MAP);
+
     BU_ALLOC(PMap[MAP], struct PhotonMap);
     PMap[MAP]->MaxPhotons = MapSize;
 
-    BU_ALLOC(PMap[MAP]->Root, struct PNode);
+    if (MapSize > 0)
+	BU_ALLOC(PMap[MAP]->Root, struct PNode);
+    else
+	PMap[MAP]->Root = NULL;
+
     PMap[MAP]->StoredPhotons = 0;
     if (MapSize > 0)
-	BU_ALLOC(Emit[MAP], struct Photon);
+	Emit[MAP] = (struct Photon *)bu_calloc((size_t)MapSize, sizeof(struct Photon), "Photons");
     else
 	Emit[MAP] = NULL;
 }
@@ -1176,51 +1225,54 @@ int
 LoadFile(char *pmfile)
 {
     size_t ret;
-    FILE *FH;
+    FILE *FH = NULL;
     int I1 = 0, i;
     short S1;
     char C1;
 
+    if (!pmfile || !pmfile[0])
+	return 0;
+
     FH = fopen(pmfile, "rb");
     if (FH) {
+	FreePhotonMaps();
 	bu_log("  Reading Irradiance Cache File...\n");
 	ret = fread(&S1, sizeof(short), 1, FH);
 	if (ret != 1) {
-	    fclose(FH);
 	    bu_log("Error reading irradiance cache file (endian)\n");
-	    return 0;
+	    goto fail;
 	}
 
 	bu_log("endian: %d\n", S1);
 
 	ret = fread(&S1, sizeof(short), 1, FH);
 	if (ret != 1) {
-	    fclose(FH);
 	    bu_log("Error reading irradiance cache file (revision)\n");
-	    return 0;
+	    goto fail;
 	}
 	bu_log("revision: %d\n", S1);
 
 	ret = fread(&ScaleFactor, sizeof(double), 1, FH);
 	if (ret != 1) {
-	    fclose(FH);
 	    bu_log("Error reading irradiance cache file (scale factor)\n");
-	    return 0;
+	    goto fail;
 	}
 	bu_log("Scale Factor: %.3f\n", ScaleFactor);
 
 	/* Read in Map Type */
 	ret = fread(&C1, sizeof(char), 1, FH);
 	if (ret != 1) {
-	    fclose(FH);
 	    bu_log("Error reading irradiance cache file (map type)\n");
-	    return 0;
+	    goto fail;
+	}
+	if (C1 != PM_GLOBAL) {
+	    bu_log("Error reading irradiance cache file (expected global map)\n");
+	    goto fail;
 	}
 	ret = fread(&I1, sizeof(int), 1, FH);
 	if (ret != 1 || I1 < 0 || I1 > INT_MAX) {
-	    fclose(FH);
 	    bu_log("Error reading irradiance cache file (map type)\n");
-	    return 0;
+	    goto fail;
 	}
 
 	Initialize(PM_GLOBAL, I1);
@@ -1228,26 +1280,27 @@ LoadFile(char *pmfile)
 	for (i = 0; i < I1; i++) {
 	    ret = fread(&Emit[PM_GLOBAL][i], sizeof(struct Photon), 1, FH);
 	    if (ret != 1) {
-		fclose(FH);
 		bu_log("Error reading irradiance cache file (global)\n");
 	    /* bu_log("Pos: [%.3f, %.3f, %.3f], Power: [%.3f, %.3f, %.3f]\n", Emit[PM_GLOBAL][i].Pos[0], Emit[PM_GLOBAL][i].Pos[1], Emit[PM_GLOBAL][i].Pos[2], Emit[PM_GLOBAL][i].Power[0], Emit[PM_GLOBAL][i].Power[1], Emit[PM_GLOBAL][i].Power[2]);*/
 	    /* bu_log("Pos: [%.3f, %.3f, %.3f], Irrad: [%.3f, %.3f, %.3f]\n", Emit[PM_GLOBAL][i].Pos[0], Emit[PM_GLOBAL][i].Pos[1], Emit[PM_GLOBAL][i].Pos[2], Emit[PM_GLOBAL][i].Irrad[0], Emit[PM_GLOBAL][i].Irrad[1], Emit[PM_GLOBAL][i].Irrad[2]);*/
-		return 0;
+		goto fail;
 	    }
 	}
 
 	ret = fread(&C1, sizeof(char), 1, FH);
 	if (ret != 1) {
-	    fclose(FH);
 	    bu_log("Error reading irradiance cache file (C1)\n");
-	    return 0;
+	    goto fail;
+	}
+	if (C1 != PM_CAUSTIC) {
+	    bu_log("Error reading irradiance cache file (expected caustic map)\n");
+	    goto fail;
 	}
 
 	ret = fread(&I1, sizeof(int), 1, FH);
 	if (ret != 1 || I1 < 0 || I1 > INT_MAX) {
-	    fclose(FH);
 	    bu_log("Error reading irradiance cache file (l1)\n");
-	    return 0;
+	    goto fail;
 	}
 
 	Initialize(PM_CAUSTIC, I1);
@@ -1255,21 +1308,34 @@ LoadFile(char *pmfile)
 	for (i = 0; i < I1; i++) {
 	    ret = fread(&Emit[PM_CAUSTIC][i], sizeof(struct Photon), 1, FH);
 	    if (ret != 1) {
-		fclose(FH);
 		bu_log("Error reading irradiance cache file (caustic)\n");
-		return 0;
+		goto fail;
 	    }
 	}
 
 	PMap[PM_GLOBAL]->StoredPhotons = PMap[PM_GLOBAL]->MaxPhotons;
-	BuildTree(Emit[PM_GLOBAL], PMap[PM_GLOBAL]->StoredPhotons, PMap[PM_GLOBAL]->Root);
+	if (PMap[PM_GLOBAL]->StoredPhotons)
+	    BuildTree(Emit[PM_GLOBAL], PMap[PM_GLOBAL]->StoredPhotons, PMap[PM_GLOBAL]->Root);
 
 	PMap[PM_CAUSTIC]->StoredPhotons = PMap[PM_CAUSTIC]->MaxPhotons;
-	BuildTree(Emit[PM_CAUSTIC], PMap[PM_CAUSTIC]->StoredPhotons, PMap[PM_CAUSTIC]->Root);
+	if (PMap[PM_CAUSTIC]->StoredPhotons)
+	    BuildTree(Emit[PM_CAUSTIC], PMap[PM_CAUSTIC]->StoredPhotons, PMap[PM_CAUSTIC]->Root);
 	fclose(FH);
+	if (Emit[PM_GLOBAL])
+	    bu_free(Emit[PM_GLOBAL], "Photons");
+	if (Emit[PM_CAUSTIC])
+	    bu_free(Emit[PM_CAUSTIC], "Photons");
+	Emit[PM_GLOBAL] = NULL;
+	Emit[PM_CAUSTIC] = NULL;
 	return 1;
     }
 
+    return 0;
+
+fail:
+    if (FH)
+	fclose(FH);
+    FreePhotonMaps();
     return 0;
 }
 
@@ -1297,6 +1363,9 @@ WritePhotonFile(char *pmfile)
     short S1;
     char C1;
     size_t ret;
+
+    if (!pmfile || !pmfile[0])
+	return;
 
     FH = fopen(pmfile, "wb");
     if (FH) {
@@ -1367,6 +1436,8 @@ BuildPhotonMap(struct application *ap, point_t eye_pos, int cpus, int width, int
     GPM_IH = IrradianceHypersampling;
     GPM_WIDTH = width;
     GPM_HEIGHT = height;
+    GPM_RAYS = Rays;
+    GPM_ATOL = cos(AngularTolerance*DEG2RAD);
 
     /* If the user has specified a cache file then first check to see if there is any valid data within it,
        otherwise utilize the file to push the resulting irradiance cache data into for future use. */
@@ -1376,10 +1447,6 @@ BuildPhotonMap(struct application *ap, point_t eye_pos, int cpus, int width, int
 	  bu_log("I, V, Imp, H: %.3f, %d, %d, %d\n", LightIntensity, VisualizeIrradiance, ImportanceMapping, IrradianceHypersampling);
 	*/
 	bu_log("Building Photon Map:\n");
-
-
-	GPM_RAYS = Rays;
-	GPM_ATOL = cos(AngularTolerance*DEG2RAD);
 
 	PInit = 1;
 
@@ -1427,7 +1494,8 @@ BuildPhotonMap(struct application *ap, point_t eye_pos, int cpus, int width, int
 	if (ImportanceMapping) {
 	    bu_log("  Building Importance Map...\n");
 	    EmitImportonsRandom(ap, eye_pos);
-	    BuildTree(Emit[PM_IMPORTANCE], PMap[PM_IMPORTANCE]->StoredPhotons, PMap[PM_IMPORTANCE]->Root);
+	    if (PMap[PM_IMPORTANCE]->StoredPhotons)
+		BuildTree(Emit[PM_IMPORTANCE], PMap[PM_IMPORTANCE]->StoredPhotons, PMap[PM_IMPORTANCE]->Root);
 	    ScaleFactor = MaxFloat(BBMax[0]-BBMin[0], BBMax[1]-BBMin[1], BBMax[2]-BBMin[2]);
 	}
 
@@ -1441,7 +1509,7 @@ BuildPhotonMap(struct application *ap, point_t eye_pos, int cpus, int width, int
 
 	bu_log("HitGB: %d, %d\n", HitG, HitB);
 	bu_log("Scale Factor: %.3f\n", ScaleFactor);
-	ratio = (double)HitG/((double)(HitG+HitB));
+	ratio = (HitG + HitB) ? (double)HitG/((double)(HitG+HitB)) : 1.0;
 	bu_log("EPL: %d, Adjusted EPL: %d\n", (int)EPL, (int)(EPL*ratio));
 	EPS[PM_GLOBAL] *= ratio;
 	EPS[PM_CAUSTIC] *= ratio;
@@ -1473,11 +1541,8 @@ BuildPhotonMap(struct application *ap, point_t eye_pos, int cpus, int width, int
 	ICSize = 0;
 
 	if (cpus > 1) {
-	    memset(GPM_RTAB, 0, sizeof(GPM_RTAB));
-	    for (i = 0; i < MAX_PSW; i++) {
-		rt_init_resource(&GPM_RTAB[i], i, ap->a_rt_i);
-	    }
-	    bu_parallel(IrradianceThread, cpus, ap);
+	    int workers = cpus > MAX_PSW ? MAX_PSW : cpus;
+	    bu_parallel(IrradianceThread, workers, ap);
 	} else {
 	    /* This will allow profiling for single threaded rendering */
 	    IrradianceThread(0, ap);
@@ -1503,7 +1568,8 @@ BuildPhotonMap(struct application *ap, point_t eye_pos, int cpus, int width, int
 	WritePhotonFile(pmfile);
 
 	for (i = 0; i < PM_MAPS; i++) {
-	    bu_free(Emit[i], "Photons");
+	    if (Emit[i])
+		bu_free(Emit[i], "Photons");
 	    Emit[i] = NULL;
 	}
 

@@ -1,0 +1,126 @@
+= TTCP(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+ttcp - test TCP/UDP connection throughput between two hosts
+
+== SYNOPSIS
+
+[source]
+----
+ttcp -t [options] _host_ < _in_
+ttcp -r [options] > _out_
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*ttcp* is a simple network benchmark that measures the throughput of a TCP
+(or, with *-u*, UDP) connection between two hosts.  It is run in two
+cooperating instances: a receiver started first with *-t* omitted (*-r*),
+and a transmitter started with *-t* that names the receiving _host_.
+
+In transmit mode (*-t*) *ttcp* connects to _host_ on the chosen port and
+either copies data read from standard input to the network, or, in
+sink/source mode (*-s*), sends a generated pattern of *-n* buffers.  In
+receive mode (*-r*) *ttcp* listens on the port, accepts a connection, and
+either copies the received data to standard output or discards it
+(*-s*).  When the transfer completes, *ttcp* prints timing and throughput
+statistics (bytes processed, CPU seconds, and KB/sec and Kbits/sec rates)
+to standard error.
+
+Both sides must agree on the port (*-p*), the protocol (TCP or *-u* UDP),
+and the buffer length (*-l*).  The default port is 2000 and the default
+buffer length is 1024 bytes.
+
+[[options]]
+== OPTIONS
+
+*-t*::
+  Transmit mode.  Requires a _host_ argument naming the receiver.
+
+*-r*::
+  Receive mode (the default).  Listens for an incoming connection.
+
+*-l* _length_::
+  Length in bytes of the buffers written to or read from the network
+  (default 1024).
+
+*-n* _count_::
+  Number of buffers to send in source mode (*-t -s* only, default 1024).
+
+*-s*::
+  Sink/source mode.  When transmitting, source a generated pattern instead
+  of reading standard input; when receiving, sink (discard) all data
+  instead of writing standard output.
+
+*-p* _port_::
+  TCP/UDP port number to send to or listen on, 0-65535 (default 2000).
+
+*-u*::
+  Use UDP instead of TCP.
+
+*-B*::
+  Receive only full blocks of the size given by *-l*, accumulating partial
+  network reads (useful when feeding fixed-block consumers such as *tar*).
+
+*-d*::
+  Enable the SO_DEBUG socket option on the connection, if supported by the
+  platform.
+
+[[examples]]
+== EXAMPLES
+
+.Measure raw TCP throughput between two hosts
+====
+[source,bash]
+----
+# on the receiving host (e.g. server.example.com):
+ttcp -r -s -l65536
+
+# on the sending host:
+ttcp -t -s -l65536 -n4096 server.example.com
+----
+The receiver discards everything it gets while the transmitter sources
+4096 buffers of 65536 bytes each.  Both report the achieved throughput on
+standard error, giving a quick measure of the network path's bandwidth
+without needing a real data set.
+====
+
+.Transfer an actual file (and verify the pipe)
+====
+[source,bash]
+----
+# on the receiving host:
+ttcp -r -p3000 > received.dat
+
+# on the sending host:
+ttcp -t -p3000 server.example.com < model.g
+----
+Here *ttcp* is used as a plain copy: a BRL-CAD *.g* geometry database is
+piped from the transmitter's standard input to the receiver's standard
+output over port 3000, reproducing the file on the far end.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

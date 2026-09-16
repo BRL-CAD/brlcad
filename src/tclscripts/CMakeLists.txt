@@ -4,26 +4,60 @@ file(
   WRITE
   "${CMAKE_BINARY_DIR}/CMakeTmp/auto_mkindex.tcl"
   "
-foreach arg $argv {
+set arg [lindex $argv 0]
+set files [lrange $argv 1 end]
 puts \"Generating tclIndex in $arg\"
-catch {auto_mkindex $arg *.tcl *.itcl *.itk *.sh} errout
+catch {auto_mkindex $arg {*}$files} errout
 if {![file exists \"$arg/tclIndex\"]} {
 puts \"$errout\"
 return -code 1
-}
 }"
 )
 file(
   WRITE
   "${CMAKE_BINARY_DIR}/CMakeTmp/pkg_mkIndex.tcl"
   "
-foreach arg $argv {
+rename glob __brlcad_orig_glob
+proc glob {args} {
+set dpos [lsearch -exact $args -directory]
+set dash [lsearch -exact $args --]
+if {$dpos >= 0 && $dash >= 0} {
+set dir [lindex $args [expr {$dpos + 1}]]
+set patterns [lrange $args [expr {$dash + 1}] end]
+set opts [lrange $args 0 [expr {$dash - 1}]]
+set tails [expr {[lsearch -exact $opts -tails] >= 0}]
+set filtered {}
+for {set i 0} {$i < [llength $opts]} {incr i} {
+set opt [lindex $opts $i]
+if {$opt eq \"-directory\"} {
+incr i
+continue
+}
+if {$opt eq \"-tails\"} {
+continue
+}
+lappend filtered $opt
+}
+set out {}
+foreach pat $patterns {
+if {[catch {__brlcad_orig_glob {*}$filtered -- [file join $dir $pat]} matches]} {
+continue
+}
+foreach match $matches {
+lappend out [expr {$tails ? [file tail $match] : $match}]
+}
+}
+return $out
+}
+return [__brlcad_orig_glob {*}$args]
+}
+set arg [lindex $argv 0]
+set files [lrange $argv 1 end]
 puts \"Generating pkgIndex.tcl in $arg\"
-catch {pkg_mkIndex -verbose $arg *.tcl *.itcl *.itk *.sh} errout
+catch {pkg_mkIndex -verbose $arg {*}$files} errout
 if {![file exists \"$arg/pkgIndex.tcl\"]} {
 puts \"$errout\"
 return -code 1
-}
 }"
 )
 
@@ -46,10 +80,16 @@ macro(general_tcl_index_BUILD cmd outfile targetdir)
   brlcad_get_dir_list_contents(DATA_TARGETS "${CMAKE_CURRENT_BINARY_DIR}" data_target_list)
   set_property(GLOBAL APPEND PROPERTY index_cpy_targets ${data_target_list})
 
-  # We want to be out of date if any of the tcl files in the current directory
+  # We want to be out of date if any of the Tcl-ish files in the current directory
   # change, since both pkgIndex and tclIndex are going to scan the directory
-  file(GLOB tcl_files "*.tcl")
+  file(GLOB tcl_files "*.tcl" "*.itcl" "*.itk" "*.sh")
   set_property(GLOBAL APPEND PROPERTY index_depends_files ${tcl_files})
+
+  set(tclindex_file_args)
+  foreach(tcl_file ${tcl_files})
+    get_filename_component(tcl_file_name "${tcl_file}" NAME)
+    string(APPEND tclindex_file_args " \"${tcl_file_name}\"")
+  endforeach()
 
   # Command that builds the index when the dependency is resolved.  We need
   # to use btclsh here to generate files correctly for Archer, but btclsh
@@ -62,7 +102,7 @@ macro(general_tcl_index_BUILD cmd outfile targetdir)
   file(
     APPEND
     "${index_cmds_file}"
-    "execute_process(COMMAND \${BTCLSH} \"${CMAKE_BINARY_DIR}/CMakeTmp/${cmd}.tcl\" \"${tclindex_outdir}\" RESULT_VARIABLE BRES)\nif(BRES)\n  message(FATAL_ERROR \"Failed to process ${tclindex_outdir}\")\nendif()\n"
+    "execute_process(COMMAND \${BTCLSH} \"${CMAKE_BINARY_DIR}/CMakeTmp/${cmd}.tcl\" \"${tclindex_outdir}\"${tclindex_file_args} RESULT_VARIABLE BRES)\nif(BRES)\n  message(FATAL_ERROR \"Failed to process ${tclindex_outdir}\")\nendif()\n"
   )
 
   set_property(GLOBAL APPEND PROPERTY index_install_files ${targetdir}/${outfile})
@@ -98,6 +138,7 @@ add_subdirectory(misc)
 
 set(
   tclscripts_TCLSCRIPTS
+  alias.tcl
   cad_clrpick.tcl
   cad_dialog.tcl
   chkexterns.tcl
@@ -129,17 +170,21 @@ if(TARGET btclsh)
   get_property(index_depends_files GLOBAL PROPERTY index_depends_files)
   get_property(index_install_files GLOBAL PROPERTY index_install_files)
 
+  # Save Tcl processing messages to log file
+  set(TCLINDEXBLD_LOG "${CMAKE_CURRENT_BINARY_DIR}/tclindexbld.log")
+  distclean(${TCLINDEXBLD_LOG})
+
   # We've collected all the commands - now add add a single command
   # to run all of them at once.
   add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/tclindexbld.sentinel
-    COMMAND ${CMAKE_COMMAND} -DBTCLSH=$<TARGET_FILE:btclsh> -P ${index_cmds_file}
+    COMMAND ${CMAKE_COMMAND} -DBTCLSH=$<TARGET_FILE:btclsh> -P ${index_cmds_file} > "${TCLINDEXBLD_LOG}" 2>&1
     COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/tclindexbld.sentinel
     DEPENDS ${index_depends_files} ${index_cpy_targets}
+    VERBATIM
   )
   add_custom_target(TclIndexBld ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/tclindexbld.sentinel)
   distclean(${CMAKE_CURRENT_BINARY_DIR}/tclindexbld.sentinel)
-  set_target_properties(perm_test PROPERTIES FOLDER "Compilation Utilities")
 
   foreach(ifile ${index_install_files})
     # Install logic for index file.

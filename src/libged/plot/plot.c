@@ -1,7 +1,7 @@
 /*                         P L O T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -191,7 +191,6 @@ dl_plot(struct bu_list *hdlp, FILE *fp, mat_t model2view, int floating, mat_t ce
 }
 
 
-
 /*
  * plot file [opts]
  * potential options might include:
@@ -205,7 +204,7 @@ ged_plot_core(struct ged *gedp, int argc, const char *argv[])
     int Z_clip;			/* Z clipping */
     int floating;			/* 3-D floating point plot */
     int is_pipe = 0;
-    static const char *usage = "file [2|3] [f] [g] [z]";
+    static const char *plot_usage = "file [2|3] [f] [g] [z]";
 
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
     GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
@@ -216,7 +215,7 @@ ged_plot_core(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], plot_usage);
 	return GED_HELP;
     }
 
@@ -293,24 +292,13 @@ ged_plot_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl plot_cmd_impl = {
-    "plot",
-    ged_plot_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd plot_cmd = { &plot_cmd_impl };
-const struct ged_cmd *plot_cmds[] = { &plot_cmd, NULL };
+#define GED_PLOT_COMMANDS(X, XID) \
+    X(plot, ged_plot_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  plot_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_PLOT_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_plot", 1, GED_PLOT_COMMANDS)
 
 /*
  * Local Variables:

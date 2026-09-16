@@ -1,0 +1,54 @@
+= ZOOM(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD MGED Commands
+
+== NAME
+zoom - zoom the view in or out by a scale factor
+
+== SYNOPSIS
+
+[source]
+----
+zoom scale_factor
+----
+
+
+[[description]]
+== DESCRIPTION
+
+The *zoom* command multiplies the apparent size of displayed objects by dividing the current view scale by the given `scale_factor`.
+
+* A `scale_factor` *greater than 1* zooms **in** — objects appear larger.
+* A `scale_factor` *between 0 and 1* zooms **out** — objects appear smaller.
+
+The view scale is clamped at a minimum value to prevent the view from collapsing to zero. `scale_factor` must be a positive, finite number; values that are zero, negative, or infinite return an error.
+
+Exactly one argument is required.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *zoom* command to reduce the size of the viewing cube by half.
+
+.Reduce the size of the viewing cube by half.
+[example]
+====
+mged>**zoom 2**
+
+Reduces the size of the current viewing cube by half (effectively doubling the size of objects in the display).
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

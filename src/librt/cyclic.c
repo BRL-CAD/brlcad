@@ -1,7 +1,7 @@
 /*                        C Y C L I C . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -43,6 +43,7 @@
 #include "rt/directory.h"
 #include "rt/nongeom.h"
 #include "rt/search.h"
+#include "librt_private.h"
 
 /* Search client data container */
 struct cyclic_client_data_t {
@@ -158,7 +159,7 @@ db_fullpath_cyclic(struct db_full_path *path, void *client_data)
 	struct rt_db_internal in;
 	struct rt_comb_internal *comb;
 
-	if (rt_db_get_internal(&in, dp, ccd->dbip, NULL, &rt_uniresource) < 0)
+	if (rt_db_get_internal(&in, dp, ccd->dbip, NULL) < 0)
 	    return;
 
 	comb = (struct rt_comb_internal *)in.idb_ptr;
@@ -202,19 +203,17 @@ db_cyclic_paths(struct bu_ptbl *cyclic_paths, const struct db_i *dbip, struct di
 
     // No specific dp specified - check them all
     struct directory *dp;
-    for (int i = 0; i < RT_DBNHASH; i++) {
-	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-	    if (!(dp->d_flags & RT_DIR_COMB))
-		continue;
-	    struct db_full_path *start_path = NULL;
-	    BU_ALLOC(start_path, struct db_full_path);
-	    db_full_path_init(start_path);
-	    db_add_node_to_full_path(start_path, dp);
-	    db_fullpath_cyclic(start_path, (void **)&ccd);
-	    db_free_full_path(start_path);
-	    bu_free(start_path, "start_path");
-	}
-    }
+    FOR_ALL_DIRECTORY_START(dp, dbip)
+	if (!(dp->d_flags & RT_DIR_COMB))
+	    continue;
+	struct db_full_path *start_path = NULL;
+	BU_ALLOC(start_path, struct db_full_path);
+	db_full_path_init(start_path);
+	db_add_node_to_full_path(start_path, dp);
+	db_fullpath_cyclic(start_path, (void **)&ccd);
+	db_free_full_path(start_path);
+	bu_free(start_path, "start_path");
+    FOR_ALL_DIRECTORY_END;
 
     return ccd.cnt;
 }

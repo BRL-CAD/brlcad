@@ -1,7 +1,7 @@
 /*                     S H _ P O I N T S . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2025 United States Government as represented by
+ * Copyright (c) 1989-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -50,7 +50,6 @@ struct points_specific {
     int pt_size;	/* number of bins around equator */
     bn_spm_map_t *pt_map;	/* stuff */
 };
-#define POINTS_NULL ((struct points_specific *)0)
 #define POINTS_O(m) bu_offsetof(struct points_specific, m)
 
 struct bu_structparse points_parse[] = {

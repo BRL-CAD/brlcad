@@ -1,52 +1,53 @@
 set(
   cmake_ignore_files
+  AsciiDoc.cmake
   BRLCAD_API_Flag.cmake
   BRLCAD_Build_Types.cmake
   BRLCAD_CPack.cmake
   BRLCAD_CPackOptions.cmake.in
   BRLCAD_CheckFunctions.cmake
+  BRLCAD_Copy_Files.cmake.in
   BRLCAD_Environment_Setup.cmake
   BRLCAD_EXT_Setup.cmake
   BRLCAD_ExternalDeps.cmake
   BRLCAD_Find_Package.cmake
   BRLCAD_Install_Prefix.cmake
   BRLCAD_Options.cmake
+  BRLCAD_Probe_Validation.cmake
   BRLCAD_Regress_Util.cmake
   BRLCAD_Summary.cmake
   BRLCAD_Targets.cmake
   BRLCAD_Test_Wrappers.cmake
   BRLCAD_User_Options.cmake
   BRLCAD_Util.cmake
+  BRLCADConfig.cmake.in
   CMakeLists.txt
   CheckCInline.cmake
   CheckCSourceRuns.cmake
   CheckStructHasMember.cmake
   CompilerFlags.cmake
   Distcheck.cmake
-  DocBook.cmake
   Doxygen.cmake
   FindASTYLE.cmake
   FindAdaptagrams.cmake
   FindAppleseed.cmake
   FindBlosc.cmake
-  FindBRLCAD.cmake
   FindBSON.cmake
   FindGECODE.cmake
-  FindGeogram.cmake
   FindGTE.cmake
   FindIlmBase.cmake
   FindLEMON.cmake
   FindLMDB.cmake
   FindLibUV.cmake
+  FindMANIFOLD.cmake
+  FindMMESH.cmake
   FindNETPBM.cmake
   FindNSIS.cmake
-  FindOpenMesh.cmake
   FindOPENNURBS.cmake
   FindOSL.cmake
   FindOSMESA.cmake
   FindOpenCL.cmake
   FindOpenCV.cmake
-  FindOpenGL.cmake
   FindOpenVDB.cmake
   FindPERPLEX.cmake
   FindPkgMacros.cmake
@@ -54,18 +55,15 @@ set(
   FindPROJ4.cmake
   FindRE2C.cmake
   FindREGEX.cmake
-  FindSCL.cmake
   FindSPSR.cmake
   FindSTL.cmake
   FindShellDeps.cmake
   FindSTEPCODE.cmake
   FindTBB.cmake
   FindTCL.cmake
-  FindUTAHRLE.cmake
   FindUUID.cmake
   FindWix.cmake
   FindXMLLINT.cmake
-  FindXSLTPROC.cmake
   FindZLIB.cmake
   NSIS.template.in
   NSIS_silent.template.in
@@ -74,6 +72,7 @@ set(
   RPath_Setup.cmake
   ResetCache.cmake
   TrackFiles.cmake
+  static_link_test_main.cpp
   compat/README
   compat/README.compat
   compat/README.compat.c99
@@ -104,9 +103,11 @@ set(
   distcheck_repo_verify.cmake.in
   distcheck_target.cmake.in
   distclean.cmake.in
-  docbook.cmake.in
   source_archive_setup.cmake.in
   tcltest.tcl.in
+  probe_validation/README.md
+  probe_validation/CMakeLists.txt
+  probe_validation/probe_validation.cpp
   scripts/printtime.cmake
   scripts/tcl_mkindex.cmake
   scripts/timestamp.cmake

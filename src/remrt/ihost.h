@@ -1,7 +1,7 @@
 /*                         I H O S T . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2025 United States Government as represented by
+ * Copyright (c) 2004-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,6 +31,7 @@
 #ifdef HAVE_NETDB_H
 #  include <netdb.h>
 #endif
+#include "bnetwork.h"
 
 
 /* Internal Host table */
@@ -55,7 +56,8 @@ struct ihost {
 #define HT_CONVERT	2		/* cd to ht_path, asc2g database */
 #define HT_USE		3		/* cd to ht_path, use asc database */
 					/* best of cd and convert */
-    char		*ht_path;	/* remote directory to run in */
+#define HT_LOCAL	4		/* spawn rtsrv directly on this machine via pkg IPC (no SSH) */
+    const char		*ht_path;	/* remote directory to run in */
 };
 #define IHOST_MAGIC	0x69486f73
 #define CK_IHOST(_p)	BU_CKMAG(_p, IHOST_MAGIC, "ihost")
@@ -64,10 +66,9 @@ extern struct bu_list	HostHead;
 
 #define IHOST_NULL	((struct ihost *)0)
 
-extern struct ihost	*host_lookup_by_name(const char* name, int enter);
-extern struct ihost	*host_lookup_by_addr(const struct sockaddr_in * from, int enter);
-extern struct ihost	*host_lookup_by_hostent(const struct hostent * addr, int enter);
-extern struct ihost	*make_default_host(const char* name);
+extern struct ihost	*host_lookup_by_name(const char *name, int enter);
+extern struct ihost	*host_lookup_by_addr(const struct sockaddr_in *from, int enter);
+extern struct ihost	*make_default_host(const char *name);
 extern char		*get_our_hostname(void);
 extern struct ihost	*host_lookup_of_fd(int fd);
 

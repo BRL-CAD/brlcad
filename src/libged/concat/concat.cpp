@@ -1,7 +1,7 @@
 /*                         C O N C A T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,6 +35,7 @@
 #include "bu/opt.h"
 #include "bu/getopt.h"
 #include "rt/geom.h"
+#include "../../librt/librt_private.h"
 
 #include "../ged_private.h"
 
@@ -232,7 +233,7 @@ copy_object(struct ged *gedp,
     struct directory* oride_dp = NULL;
     std::string owrite_backup;
 
-    if (rt_db_get_internal(&ip, input_dp, cc_data->incoming_dbip, NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&ip, input_dp, cc_data->incoming_dbip, NULL) < 0) {
 	bu_vls_printf(gedp->ged_result_str,
 		"Failed to get internal form of object (%s) - aborting!!!\n",
 		input_dp->d_namep);
@@ -314,7 +315,7 @@ copy_object(struct ged *gedp,
      * make sure they match. */
     new_dp->d_major_type = input_dp->d_major_type;
 
-    if (rt_db_put_internal(new_dp, cc_data->target_dbip, &ip, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(new_dp, cc_data->target_dbip, &ip) < 0) {
 	bu_vls_printf(gedp->ged_result_str,
 		"Failed to write new object (%s) to database - aborting!!\n",
 		new_name.c_str());
@@ -330,7 +331,7 @@ copy_object(struct ged *gedp,
 	    bu_vls_printf(gedp->ged_result_str, "an error occurred while deleting %s\n", owrite_backup.c_str());
 	    return BRLCAD_ERROR;
 	}
-	db_update_nref(gedp->dbip, &rt_uniresource);
+	db_update_nref(gedp->dbip);
 	cc_data->overwritten++;
     }
 
@@ -466,7 +467,7 @@ ged_concat_core(struct ged *gedp, int argc, const char *argv[])
 	    struct bu_attribute_value_set t_avs = BU_AVS_INIT_ZERO;
 	    db5_get_attributes(t_dbip, &t_avs, tglobal_dp);
 	    bu_avs_add(&t_avs, "regionid_colortable", colorTab);
-	    db5_import_color_table(colorTab);
+	    db5_import_color_table(gedp->dbip, colorTab);
 	    db5_update_attributes(tglobal_dp, &t_avs, gedp->dbip);
 	    bu_free(colorTab, "colorTab");
 	    bu_avs_free(&g_avs);
@@ -481,7 +482,7 @@ ged_concat_core(struct ged *gedp, int argc, const char *argv[])
 	copy_object(gedp, dp, &cc_data);
     } FOR_ALL_DIRECTORY_END;
 
-    rt_mempurge(&(cc_data.incoming_dbip->dbi_freep));
+    rt_mempurge(&(cc_data.incoming_dbip->i->dbi_freep));
 
     /* Free all the directory entries, and close the incoming database */
     db_close(cc_data.incoming_dbip);
@@ -494,32 +495,19 @@ ged_concat_core(struct ged *gedp, int argc, const char *argv[])
     db_sync(cc_data.target_dbip);
 
     /* Update references. */
-    db_update_nref(gedp->dbip, &rt_uniresource);
+    db_update_nref(gedp->dbip);
 
     return BRLCAD_OK;
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-extern "C" {
-    struct ged_cmd_impl concat_cmd_impl = { "concat", ged_concat_core, GED_CMD_DEFAULT };
-    const struct ged_cmd concat_cmd = { &concat_cmd_impl };
 
-    struct ged_cmd_impl dbconcat_cmd_impl = { "dbconcat", ged_concat_core, GED_CMD_DEFAULT };
-    const struct ged_cmd dbconcat_cmd = { &dbconcat_cmd_impl };
+#define GED_CONCAT_COMMANDS(X, XID) \
+    X(concat, ged_concat_core, GED_CMD_DEFAULT) \
+    X(dbconcat, ged_concat_core, GED_CMD_DEFAULT) \
 
-
-    const struct ged_cmd *concat_cmds[] = { &concat_cmd,  &dbconcat_cmd, NULL };
-
-    static const struct ged_plugin pinfo = { GED_API,  concat_cmds, 2 };
-
-    COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-    {
-	return &pinfo;
-    }
-}
-#endif
+GED_DECLARE_COMMAND_SET(GED_CONCAT_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_concat", 1, GED_CONCAT_COMMANDS)
 
 // Local Variables:
 // tab-width: 8
@@ -529,4 +517,3 @@ extern "C" {
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

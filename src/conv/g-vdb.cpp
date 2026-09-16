@@ -1,7 +1,7 @@
 /*                           G - V D B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2025 United States Government as represented by
+ * Copyright (c) 2004-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -23,6 +23,7 @@
 #include <openvdb/tools/SignedFloodFill.h>
 #include <iostream>
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "analyze.h"
 
@@ -163,7 +164,7 @@ main(int argc, char **argv)
 	/* work horse */
 	voxelize(rtip, dataValues.voxelSize, levelOfDetail, printToFile, callBackData);
     }
-    rt_free_rti(rtip);
+    rt_i_destroy(rtip);
 
     openvdb::tools::signedFloodFill(grid->tree());
     grid->setTransform(openvdb::math::Transform::createLinearTransform(0.5));

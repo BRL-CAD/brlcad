@@ -1,7 +1,7 @@
 /*                      V I E W E D G E . C
  * BRL-CAD
  *
- * Copyright (c) 2001-2025 United States Government as represented by
+ * Copyright (c) 2001-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -111,13 +111,6 @@
 #  define Abs(x) ((x) < 0 ? -(x) : (x))                  /* UNSAFE */
 #endif
 
-
-extern struct fb *fbp;	/* Framebuffer handle */
-extern fastf_t viewsize;
-extern int lightmodel;
-extern size_t width, height;
-extern int per_processor_chunk;
-extern int default_background;
 
 static int pixsize = 0;	/* bytes per pixel in scanline */
 
@@ -278,7 +271,7 @@ struct bu_structparse view_parse[] = {
 };
 
 
-const char title[] = "RT Hidden-Line Renderer";
+EXTERNCPP const char title[] = "RT Hidden-Line Renderer";
 
 
 int handle_main_ray(struct application *ap, register struct partition *PartHeadp, struct seg *segp);
@@ -462,7 +455,7 @@ view_init(struct application *ap, char *file, char *UNUSED(obj), int minus_o, in
 	    bu_exit(EXIT_FAILURE, "rtedge: could not read database.\n");
 #endif
 
-	occlusion_rtip = rt_new_rti(dbip); /* clones dbip */
+	occlusion_rtip = rt_i_create(dbip); /* clones dbip */
 
 	memset(occlusion_resources, 0, sizeof(occlusion_resources));
 	for (i=0; i < MAX_PSW; i++) {
@@ -497,7 +490,7 @@ view_init(struct application *ap, char *file, char *UNUSED(obj), int minus_o, in
 	    RT_APPLICATION_INIT(occlusion_apps[i]);
 
 	    occlusion_apps[i]->a_rt_i = occlusion_rtip;
-	    occlusion_apps[i]->a_resource = (struct resource *)BU_PTBL_GET(&occlusion_rtip->rti_resources, i);
+	    occlusion_apps[i]->a_resource = &occlusion_resources[i];
 	    occlusion_apps[i]->a_onehit = 1;
 	    occlusion_apps[i]->a_hit = occlusion_hit;
 	    occlusion_apps[i]->a_miss = occlusion_miss;
@@ -1039,6 +1032,34 @@ raymiss2(register struct application *ap)
 }
 
 
+/**
+ * Set a ray at a pixel-relative offset from ap.  Orthographic rays are
+ * parallel and can be translated on the emanation plane.  Perspective rays
+ * all originate at the eye, so their directions must be recomputed through
+ * the corresponding point on the view plane.
+ */
+static void
+set_offset_ray(struct application *ray_ap, const struct application *ap,
+               fastf_t x_offset, fastf_t y_offset)
+{
+    if (rt_perspective > 0.0) {
+        point_t point;
+
+        VJOIN2(point, viewbase_model,
+               (fastf_t)ap->a_x + x_offset, dx_model,
+               (fastf_t)ap->a_y + y_offset, dy_model);
+        VMOVE(ray_ap->a_ray.r_pt, eye_model);
+        VSUB2(ray_ap->a_ray.r_dir, point, eye_model);
+        VUNITIZE(ray_ap->a_ray.r_dir);
+        return;
+    }
+
+    VJOIN2(ray_ap->a_ray.r_pt, ap->a_ray.r_pt,
+           x_offset, dx_model, y_offset, dy_model);
+    VMOVE(ray_ap->a_ray.r_dir, ap->a_ray.r_dir);
+}
+
+
 /* get_intensity() calls is_edge() unfortunately.  cycle. */
 static int
 is_edge(double *intensity, struct application *ap, const struct cell *here,
@@ -1052,7 +1073,6 @@ is_edge(double *intensity, struct application *ap, const struct cell *here,
 static void
 get_intensity(double *intensity, struct application *ap, const struct cell *UNUSED(here), const struct cell *left, const struct cell *below, const struct cell *right, const struct cell *above)
 {
-    vect_t dy, dx, dy3, dx3;
     struct application aaap;
     struct cell grid[4][4];
 
@@ -1086,14 +1106,6 @@ get_intensity(double *intensity, struct application *ap, const struct cell *UNUS
     RT_APPLICATION_INIT(&aaap);
     memset(&grid, 0, sizeof(struct cell) * 16);
 
-    /* 4x4 sub-pixel grid, dx gets to inner cells */
-    VSCALE(dy, dy_model, 0.125);
-    VSCALE(dx, dx_model, 0.125);
-
-    /* 4x4 sub-pixel grid, dx*3 gets to outer cells */
-    VSCALE(dy3, dy_model, 0.375);
-    VSCALE(dx3, dx_model, 0.375);
-
     /* setup */
     aaap.a_hit = rayhit2;
     aaap.a_miss = raymiss2;
@@ -1104,9 +1116,7 @@ get_intensity(double *intensity, struct application *ap, const struct cell *UNUS
 
     /* Above Left */
     aaap.a_uptr = (void *)AL;
-    VADD2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy3);
-    VSUB2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx);
-    VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
+    set_offset_ray(&aaap, ap, -0.125, 0.375);
     rt_shootray(&aaap);
 
 #ifdef VEDEBUG
@@ -1115,9 +1125,7 @@ get_intensity(double *intensity, struct application *ap, const struct cell *UNUS
 
     /* Above Right */
     aaap.a_uptr = (void *)AR;
-    VADD2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy3);
-    VADD2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx);
-    VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
+    set_offset_ray(&aaap, ap, 0.125, 0.375);
     rt_shootray(&aaap);
 
 #ifdef VEDEBUG
@@ -1126,9 +1134,7 @@ get_intensity(double *intensity, struct application *ap, const struct cell *UNUS
 
     /* Top Left */
     aaap.a_uptr = (void *)TL;
-    VADD2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy);
-    VSUB2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx3);
-    VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
+    set_offset_ray(&aaap, ap, -0.375, 0.125);
     rt_shootray(&aaap);
 
 #ifdef VEDEBUG
@@ -1137,9 +1143,7 @@ get_intensity(double *intensity, struct application *ap, const struct cell *UNUS
 
     /* Upper Left */
     aaap.a_uptr = (void *)UL;
-    VADD2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy);
-    VSUB2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx);
-    VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
+    set_offset_ray(&aaap, ap, -0.125, 0.125);
     rt_shootray(&aaap);
 
 #ifdef VEDEBUG
@@ -1148,9 +1152,7 @@ get_intensity(double *intensity, struct application *ap, const struct cell *UNUS
 
     /* Upper Right */
     aaap.a_uptr = (void *)UR;
-    VADD2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy);
-    VADD2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx);
-    VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
+    set_offset_ray(&aaap, ap, 0.125, 0.125);
     rt_shootray(&aaap);
 
 #ifdef VEDEBUG
@@ -1159,9 +1161,7 @@ get_intensity(double *intensity, struct application *ap, const struct cell *UNUS
 
     /* Top Right */
     aaap.a_uptr = (void *)TR;
-    VADD2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy);
-    VADD2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx3);
-    VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
+    set_offset_ray(&aaap, ap, 0.375, 0.125);
     rt_shootray(&aaap);
 
 #ifdef VEDEBUG
@@ -1170,9 +1170,7 @@ get_intensity(double *intensity, struct application *ap, const struct cell *UNUS
 
     /* Bottom Left */
     aaap.a_uptr = (void *)BL;
-    VSUB2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy);
-    VSUB2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx3);
-    VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
+    set_offset_ray(&aaap, ap, -0.375, -0.125);
     rt_shootray(&aaap);
 
 #ifdef VEDEBUG
@@ -1181,9 +1179,7 @@ get_intensity(double *intensity, struct application *ap, const struct cell *UNUS
 
     /* Lower Left */
     aaap.a_uptr = (void *)LL;
-    VSUB2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy);
-    VSUB2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx);
-    VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
+    set_offset_ray(&aaap, ap, -0.125, -0.125);
     rt_shootray(&aaap);
 
 #ifdef VEDEBUG
@@ -1192,9 +1188,7 @@ get_intensity(double *intensity, struct application *ap, const struct cell *UNUS
 
     /* Lower Right */
     aaap.a_uptr = (void *)LR;
-    VSUB2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy);
-    VADD2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx);
-    VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
+    set_offset_ray(&aaap, ap, 0.125, -0.125);
     rt_shootray(&aaap);
 
 #ifdef VEDEBUG
@@ -1203,9 +1197,7 @@ get_intensity(double *intensity, struct application *ap, const struct cell *UNUS
 
     /* Bottom Right */
     aaap.a_uptr = (void *)BR;
-    VSUB2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy);
-    VADD2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx3);
-    VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
+    set_offset_ray(&aaap, ap, 0.375, -0.125);
     rt_shootray(&aaap);
 
 #ifdef VEDEBUG
@@ -1214,9 +1206,7 @@ get_intensity(double *intensity, struct application *ap, const struct cell *UNUS
 
     /* Debajo Left */
     aaap.a_uptr = (void *)DL;
-    VSUB2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy3);
-    VSUB2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx);
-    VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
+    set_offset_ray(&aaap, ap, -0.125, -0.375);
     rt_shootray(&aaap);
 
 #ifdef VEDEBUG
@@ -1225,9 +1215,7 @@ get_intensity(double *intensity, struct application *ap, const struct cell *UNUS
 
     /* Debajo Right */
     aaap.a_uptr = (void *)DR;
-    VSUB2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy3);
-    VADD2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx);
-    VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
+    set_offset_ray(&aaap, ap, 0.125, -0.375);
     rt_shootray(&aaap);
 
 #ifdef VEDEBUG
@@ -1419,8 +1407,7 @@ handle_main_ray(struct application *ap, register struct partition *PartHeadp,
     a2.a_resource = ap->a_resource;
     a2.a_logoverlap = ap->a_logoverlap;
 
-    VSUB2(a2.a_ray.r_pt, ap->a_ray.r_pt, dy_model); /* below */
-    VMOVE(a2.a_ray.r_dir, ap->a_ray.r_dir);
+    set_offset_ray(&a2, ap, 0.0, -1.0); /* below */
     a2.a_uptr = (void *)&below;
     rt_shootray(&a2);
 
@@ -1431,8 +1418,7 @@ handle_main_ray(struct application *ap, register struct partition *PartHeadp,
 	 * info to be used as the left side cell info for the
 	 * following pixel
 	 */
-	VSUB2(a2.a_ray.r_pt, ap->a_ray.r_pt, dx_model); /* left */
-	VMOVE(a2.a_ray.r_dir, ap->a_ray.r_dir);
+	set_offset_ray(&a2, ap, -1.0, 0.0); /* left */
 	a2.a_uptr = (void *)&left;
 	rt_shootray(&a2);
     } else {
@@ -1446,13 +1432,11 @@ handle_main_ray(struct application *ap, register struct partition *PartHeadp,
     }
 
     if (both_sides) {
-	VADD2(a2.a_ray.r_pt, ap->a_ray.r_pt, dy_model); /* above */
-	VMOVE(a2.a_ray.r_dir, ap->a_ray.r_dir);
+	set_offset_ray(&a2, ap, 0.0, 1.0); /* above */
 	a2.a_uptr = (void *)&above;
 	rt_shootray(&a2);
 
-	VADD2(a2.a_ray.r_pt, ap->a_ray.r_pt, dx_model); /* right */
-	VMOVE(a2.a_ray.r_dir, ap->a_ray.r_dir);
+	set_offset_ray(&a2, ap, 1.0, 0.0); /* right */
 	a2.a_uptr = (void *)&right;
 	rt_shootray(&a2);
     }
@@ -1542,7 +1526,8 @@ handle_main_ray(struct application *ap, register struct partition *PartHeadp,
 }
 
 
-void application_init(void) {
+C_DECL void
+application_init(void) {
     bu_vls_trunc(&occlusion_objects, 0);
 
     /* Set the byte offsets at run time */

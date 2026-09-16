@@ -1,7 +1,7 @@
 /*                      U T I L . C P P
  * BRL-CAD
  *
- * Copyright (c) 2020-2025 United States Government as represented by
+ * Copyright (c) 2020-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -443,14 +443,11 @@ _bound_objs_view(int *is_empty, vect_t min, vect_t max, struct bu_ptbl *so, stru
 
 
 void
-bv_autoview(struct bview *v, double factor, int all_view_objs)
+bv_autoview_bounds(struct bview *v, double factor, const point_t min, const point_t max)
 {
-    vect_t min, max;
     vect_t center = VINIT_ZERO;
     vect_t radial;
     vect_t sqrt_small;
-    int is_empty = 1;
-    int have_geom_objs = 0;
 
     /* set the default if unset or insane */
     if (factor < SQRT_SMALL_FASTF) {
@@ -458,6 +455,34 @@ bv_autoview(struct bview *v, double factor, int all_view_objs)
     }
 
     VSETALL(sqrt_small, SQRT_SMALL_FASTF);
+
+    VADD2SCALE(center, max, min, 0.5);
+    VSUB2(radial, max, center);
+
+    /* make sure it's not inverted */
+    VMAX(radial, sqrt_small);
+
+    /* make sure it's not too small */
+    if (VNEAR_ZERO(radial, SQRT_SMALL_FASTF))
+	VSETALL(radial, 1.0);
+
+    MAT_IDN(v->gv_center);
+    MAT_DELTAS_VEC_NEG(v->gv_center, center);
+    v->gv_scale = radial[X];
+    V_MAX(v->gv_scale, radial[Y]);
+    V_MAX(v->gv_scale, radial[Z]);
+
+    v->gv_size = factor * v->gv_scale;
+    v->gv_isize = 1.0 / v->gv_size;
+    bv_update(v);
+}
+
+void
+bv_autoview(struct bview *v, double factor, int all_view_objs)
+{
+    vect_t min, max;
+    int is_empty = 1;
+    int have_geom_objs = 0;
 
     /* calculate the bounding for all solids and polygons being displayed */
     VSETALL(min,  INFINITY);
@@ -489,29 +514,13 @@ bv_autoview(struct bview *v, double factor, int all_view_objs)
     }
 
     if (is_empty) {
-	/* Nothing is in view */
-	VSETALL(radial, 1000.0);
-    } else {
-	VADD2SCALE(center, max, min, 0.5);
-	VSUB2(radial, max, center);
+	/* Nothing is in view - frame a default region centered on the
+	 * origin (equivalent to the historical radial extent of 1000). */
+	VSETALL(min, -1000.0);
+	VSETALL(max,  1000.0);
     }
 
-    /* make sure it's not inverted */
-    VMAX(radial, sqrt_small);
-
-    /* make sure it's not too small */
-    if (VNEAR_ZERO(radial, SQRT_SMALL_FASTF))
-	VSETALL(radial, 1.0);
-
-    MAT_IDN(v->gv_center);
-    MAT_DELTAS_VEC_NEG(v->gv_center, center);
-    v->gv_scale = radial[X];
-    V_MAX(v->gv_scale, radial[Y]);
-    V_MAX(v->gv_scale, radial[Z]);
-
-    v->gv_size = factor * v->gv_scale;
-    v->gv_isize = 1.0 / v->gv_size;
-    bv_update(v);
+    bv_autoview_bounds(v, factor, min, max);
 }
 
 /**
@@ -537,6 +546,99 @@ bv_mat_aet(struct bview *v)
     bn_mat_zrot(tmat, s_twist, c_twist);
     bn_mat_mul2(tmat, v->gv_rotation);
 }
+
+/* --- Camera accessor implementations --- */
+
+fastf_t
+bv_view_get_scale(const struct bview *v)
+{
+    if (!v) return 0.0;
+    return v->gv_scale;
+}
+
+void
+bv_view_set_scale(struct bview *v, fastf_t scale)
+{
+    if (!v) return;
+    v->gv_scale = scale;
+    v->gv_size  = scale * 2.0;
+    v->gv_isize = (v->gv_size > 0.0) ? 1.0 / v->gv_size : 0.0;
+}
+
+fastf_t
+bv_view_get_size(const struct bview *v)
+{
+    if (!v) return 0.0;
+    return v->gv_size;
+}
+
+void
+bv_view_set_size(struct bview *v, fastf_t size)
+{
+    if (!v) return;
+    v->gv_size  = size;
+    v->gv_scale = size * 0.5;
+    v->gv_isize = (size > 0.0) ? 1.0 / size : 0.0;
+}
+
+fastf_t
+bv_view_get_perspective(const struct bview *v)
+{
+    if (!v) return 0.0;
+    return v->gv_perspective;
+}
+
+void
+bv_view_set_perspective(struct bview *v, fastf_t perspective)
+{
+    if (!v) return;
+    v->gv_perspective = perspective;
+}
+
+void
+bv_view_get_aet(const struct bview *v, vect_t aet)
+{
+    if (!v) { VSETALL(aet, 0.0); return; }
+    VMOVE(aet, v->gv_aet);
+}
+
+void
+bv_view_set_aet(struct bview *v, const vect_t aet)
+{
+    if (!v) return;
+    VMOVE(v->gv_aet, aet);
+    bv_mat_aet(v);
+}
+
+void
+bv_view_get_rotation(const struct bview *v, mat_t rot)
+{
+    if (!v) { MAT_IDN(rot); return; }
+    MAT_COPY(rot, v->gv_rotation);
+}
+
+void
+bv_view_set_rotation(struct bview *v, const mat_t rot)
+{
+    if (!v) return;
+    MAT_COPY(v->gv_rotation, rot);
+}
+
+void
+bv_view_get_center_vec(const struct bview *v, point_t center)
+{
+    if (!v) { VSETALL(center, 0.0); return; }
+    MAT_DELTAS_GET_NEG(center, v->gv_center);
+}
+
+void
+bv_view_set_center_vec(struct bview *v, const point_t center)
+{
+    if (!v) return;
+    MAT_DELTAS_VEC_NEG(v->gv_center, center);
+}
+
+/* --- end camera accessors --- */
 
 void
 bv_settings_init(struct bview_settings *s)
@@ -784,14 +886,6 @@ bv_update_selected(struct bview *gvp)
     int ret = 0;
     if (!gvp)
 	return 0;
-#if 0
-    for(size_t i = 0; i < BU_PTBL_LEN(gvp->gv_selected); i++) {
-	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(gvp->gv_selected, i);
-	if (s->s_update_callback) {
-	    ret += (*s->s_update_callback)(s);
-	}
-    }
-#endif
     return (ret > 0) ? 1 : 0;
 }
 

@@ -1,0 +1,47 @@
+= RCC-TGC(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+rcc-tgc - Creates a TGC shape with the specified apex (_x y z_) at one end (base [_b_] or top [_t_]) of the specified RCC.
+
+== SYNOPSIS
+
+[source]
+----
+rcc-tgc {rccname newname xyz} [b] [t]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Creates a TGC shape with the specified apex (_x y z_) at one end (base [_b_] or top [_t_]) of the specified RCC. The default end is the base.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *rcc-tgc* command to create a TGC shape with the specified apex at the base of the specified RCC.
+
+.Create a TGC shape with a specified apex at the base of a specified RCC.
+[example]
+====
+mged>**rcc-tgc rcc.s tgc.s 0 2 4**
+
+Creates a TGC shape named _tgc.s_ with an apex at (0 2 4) from the base of _rcc.s_.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

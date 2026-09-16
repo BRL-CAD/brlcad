@@ -1,7 +1,7 @@
 /*                          C O I L . C
  * BRL-CAD
  *
- * Copyright (c) 2009-2025 United States Government as represented by
+ * Copyright (c) 2009-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -313,7 +313,7 @@ make_coil(struct rt_wdb (*file), char *prefix, struct bu_list *sections, int sta
 
 
 static void
-usage(struct ged *gedp)
+coil_usage(struct ged *gedp)
 {
     bu_vls_printf(gedp->ged_result_str, "Usage: coil [-d mean_outer_diameter] [-w wire_diameter] [-H helix_angle] [-p pitch]\n");
     bu_vls_printf(gedp->ged_result_str, "            [-n number_of_turns] [-s start_cap_type] [-e end_cap_type]\n");
@@ -391,7 +391,7 @@ ReadArgs(struct ged *gedp, int argc, const char *argv[], struct bu_vls *name, st
 		BU_LIST_INSERT(&(*sections), &((*coil_data).l));
 		break;
 	    default:
-		usage(gedp);
+		coil_usage(gedp);
 		return BRLCAD_ERROR;
 	}
     }
@@ -555,25 +555,13 @@ ged_coil_core(struct ged *gedp, int argc, const char *argv[])
     return BRLCAD_OK;
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl coil_cmd_impl = {
-    "coil",
-    ged_coil_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd coil_cmd = { &coil_cmd_impl };
-const struct ged_cmd *coil_cmds[] = { &coil_cmd, NULL };
+#define GED_COIL_COMMANDS(X, XID) \
+    X(coil, ged_coil_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  coil_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_COIL_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_coil", 1, GED_COIL_COMMANDS)
 
 /*
  * Local Variables:

@@ -1,0 +1,63 @@
+= PNG(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+png - Writes the current display to a PNG image file.
+
+== SYNOPSIS
+
+[source]
+----
+png [-c r/g/b] [-s size] file
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Writes the current GED display to the specified PNG _file_.
+
+The implementation supports the following options:
+
+* *-c r/g/b* - Set the background color using RGB values separated by non-numeric delimiters.
+* *-s size* - Set the output image size in pixels. The implementation requires a size of at least 50.
+
+Without options, the command writes a 512x512 PNG image with a white background.
+
+
+[[examples]]
+== EXAMPLES
+
+The examples show common uses of *png*.
+
+.Write the current display to a PNG file.
+[example]
+====
+mged>**png view.png**
+
+Writes the current display to _view.png_.
+
+====
+
+.Write a larger PNG with a black background.
+[example]
+====
+mged>**png -c 0/0/0 -s 1024 view.png**
+
+Writes a 1024x1024 PNG image using a black background.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

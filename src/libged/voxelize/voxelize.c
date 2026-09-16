@@ -1,7 +1,7 @@
 /*                         V O X E L I Z E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -82,8 +82,17 @@ create_boxes(void *callBackData, int x, int y, int z, const char *a, fastf_t fil
 	    max[2] = (dataValues->bbMin)[2] + ( (z + 1.0) * (dataValues->sizeVoxel)[2]);
 
 	    nameDestination = bu_vls_strgrab(vp);
-	    mk_rpp(dataValues->wdbp,nameDestination, min, max);
-	    mk_addmember(nameDestination, &dataValues->content.l, 0, WMOP_UNION);
+
+	    /* guard against duplicate rpp's
+	     *	voxelize() calls this once per region - NOT once per voxel. So overlapping
+	     *	regions can/will create duplicate solids in the tree
+	     */
+	    if (db_lookup(dataValues->wdbp->dbip, nameDestination, LOOKUP_QUIET) == RT_DIR_NULL) {
+		mk_rpp(dataValues->wdbp, nameDestination, min, max);
+		mk_addmember(nameDestination, &dataValues->content.l, 0, WMOP_UNION);
+	    }
+
+	    bu_free(nameDestination, "free nameDestination strgrab");
 	}
     }
     /* else this voxel is air */
@@ -180,7 +189,7 @@ ged_voxelize_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    rtip = rt_new_rti(gedp->dbip);
+    rtip = rt_i_create(gedp->dbip);
     rtip->useair = 1;
 
     /* Walk trees.  Here we identify any object trees in the database
@@ -214,30 +223,19 @@ ged_voxelize_core(struct ged *gedp, int argc, const char *argv[])
     mk_comb(wdbp, voxDat.newname, &voxDat.content.l, 1, "plastic", "sh=4 sp=0.5 di=0.5 re=0.1", 0, 1000, 0, 0, 100, 0, 0, 0);
 
     mk_freemembers(&voxDat.content.l);
-    rt_free_rti(rtip);
+    rt_i_destroy(rtip);
 
     return BRLCAD_OK;
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl voxelize_cmd_impl = {
-    "voxelize",
-    ged_voxelize_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd voxelize_cmd = { &voxelize_cmd_impl };
-const struct ged_cmd *voxelize_cmds[] = { &voxelize_cmd, NULL };
+#define GED_VOXELIZE_COMMANDS(X, XID) \
+    X(voxelize, ged_voxelize_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  voxelize_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_VOXELIZE_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_voxelize", 1, GED_VOXELIZE_COMMANDS)
 
 /*
  * Local Variables:

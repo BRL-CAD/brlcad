@@ -1,7 +1,7 @@
 /*                       D B _ A N I M . C
  * BRL-CAD
  *
- * Copyright (c) 1987-2025 United States Government as represented by
+ * Copyright (c) 1987-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,6 +35,7 @@
 #include "vmath.h"
 
 #include "raytrace.h"
+#include "librt_private.h"
 
 int
 db_add_anim(struct db_i *dbip, register struct animate *anp, int root)
@@ -53,7 +54,7 @@ db_add_anim(struct db_i *dbip, register struct animate *anp, int root)
 	if (!dbip)
 	    bu_bomb("Unexpected NULL dbip encountered in db_add_anim\n");
 
-	headp = &(dbip->dbi_anroot);
+	headp = &(dbip->i->dbi_anroot);
     } else {
 	dp = DB_FULL_PATH_CUR_DIR(&anp->an_path);
 	if (!dp)
@@ -74,7 +75,7 @@ db_add_anim(struct db_i *dbip, register struct animate *anp, int root)
 }
 
 
-static char *db_anim_matrix_strings[] = {
+static const char *db_anim_matrix_strings[] = {
     "(nope)",
     "ANM_RSTACK",
     "ANM_RARC",
@@ -224,13 +225,12 @@ db_free_anim(struct db_i *dbip)
 {
     register struct animate *anp;
     register struct directory *dp;
-    register int i;
 
     if (!dbip)
 	return;
 
     /* Rooted animations */
-    for (anp = dbip->dbi_anroot; anp != ANIM_NULL;) {
+    for (anp = dbip->i->dbi_anroot; anp != ANIM_NULL;) {
 	register struct animate *nextanp;
 	RT_CK_ANIMATE(anp);
 	nextanp = anp->an_forw;
@@ -238,23 +238,20 @@ db_free_anim(struct db_i *dbip)
 	db_free_1anim(anp);
 	anp = nextanp;
     }
-    dbip->dbi_anroot = ANIM_NULL;
+    dbip->i->dbi_anroot = ANIM_NULL;
 
     /* Node animations */
-    for (i=0; i < RT_DBNHASH; i++) {
-	dp = dbip->dbi_Head[i];
-	for (; dp != RT_DIR_NULL; dp = dp->d_forw) {
-	    for (anp = dp->d_animate; anp != ANIM_NULL;) {
-		register struct animate *nextanp;
-		RT_CK_ANIMATE(anp);
-		nextanp = anp->an_forw;
+    FOR_ALL_DIRECTORY_START(dp, dbip)
+	for (anp = dp->d_animate; anp != ANIM_NULL;) {
+	    register struct animate *nextanp;
+	    RT_CK_ANIMATE(anp);
+	    nextanp = anp->an_forw;
 
-		db_free_1anim(anp);
-		anp = nextanp;
-	    }
-	    dp->d_animate = ANIM_NULL;
+	    db_free_1anim(anp);
+	    anp = nextanp;
 	}
-    }
+	dp->d_animate = ANIM_NULL;
+    FOR_ALL_DIRECTORY_END;
 }
 
 
@@ -276,7 +273,7 @@ db_parse_1anim(struct db_i *dbip, int argc, const char *argv[])
     BU_ALLOC(anp, struct animate);
     anp->magic = ANIMATE_MAGIC;
 
-    db_init_db_tree_state(&ts, dbip, &rt_uniresource);
+    db_init_db_tree_state(&ts, dbip);
     db_full_path_init(&anp->an_path);
     if (db_follow_path_for_state(&ts, &(anp->an_path), argv[1], LOOKUP_NOISY) < 0)
 	goto bad;

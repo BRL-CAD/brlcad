@@ -1,0 +1,44 @@
+= GRID2VIEW_LU(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+grid2view_lu - convert grid xy to view coordinates (local units)
+
+== SYNOPSIS
+
+[source]
+----
+grid2view_lu u v
+----
+
+[[description]]
+== DESCRIPTION
+
+The *grid2view_lu* command converts a 2D grid offset (in local units) into 3D view-space coordinates (also in local units). The two arguments `u` and `v` are the horizontal and vertical pixel-like grid offsets from the projected model origin. The Z component is treated as 0.
+
+The command projects the model origin into view space, scales it by the current view scale and unit conversion factors, then adds the grid offset to produce a 3D view-space vector. The result is returned as a space-separated 3-element vector.
+
+The inverse operation is `view2grid_lu`.
+
+[[examples]]
+== EXAMPLES
+
+.Convert a grid offset to view coordinates
+[example]
+====
+mged> **grid2view_lu 50 25**
+
+Returns the 3D view-space coordinates corresponding to a 2D grid offset of (50, 25) local units from the projected model origin.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

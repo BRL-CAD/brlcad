@@ -1,0 +1,99 @@
+= BW-PIX(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+bw-pix - convert a black and white image, or three color channels, to a color pix image
+
+== SYNOPSIS
+
+[source]
+----
+bw-pix [-h] [-o _out.pix_] [_file.bw_ [_out.pix_]]
+bw-pix [-h] [-o _out.pix_] _red.bw_ _green.bw_ _blue.bw_ [_out.pix_]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*bw-pix* converts one or more black and white *bw*(5) files into a color
+*pix*(5) file. It operates in two modes depending on how many input files
+are given.
+
+With a single input file (or when reading from standard input), each input
+value is replicated three times so that all three RGB planes hold the same
+value, producing a grayscale image stored in *pix* format.
+
+With three input files, they are read concurrently and treated as the red,
+green, and blue channels (in that order) and their bytes are interleaved
+into a single color *pix* image. Channels of unequal length are zero-padded
+to the length of the longest.
+
+Output is written to the file named by *-o*, or to a final positional
+filename, or to standard output if neither is given. When an output file is
+named and standard output is also redirected, the result is written to both.
+With no input file, input is read from standard input.
+
+
+[[options]]
+== OPTIONS
+
+*-o* _out.pix_::
+  Write the color *pix* output to _out.pix_. May also be supplied as the
+  final positional argument instead. If standard output is simultaneously
+  redirected or piped, the same data is written to both destinations.
+
+*-h*, *--help*::
+  Print a usage message and exit.
+
+
+[[examples]]
+== EXAMPLES
+
+.Convert a grayscale image to pix
+====
+[source,bash]
+----
+bw-pix moon.bw moon.pix
+----
+Converts the grayscale image _moon.bw_ into _moon.pix_, with the grayscale
+value copied into each of the red, green, and blue planes.
+====
+
+.Recombine separated color channels into a viewable image
+====
+[source,bash]
+----
+bw-pix red.bw green.bw blue.bw | pix-fb
+----
+Merges the three single-channel *bw*(5) files _red.bw_, _green.bw_, and
+_blue.bw_ into a color *pix*(5) image and displays it on a framebuffer with
+*pix-fb*(1). This is useful when filtering individual color channels (for
+example with *bwmod*(1)) before recombining them.
+====
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *pix-bw*(1), *bwmod*(1), *pix-fb*(1), *pix*(5), *bw*(5)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,0 +1,62 @@
+= APROPOSLIB(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+aproposlib - Searches through the one-line usage messages for a specified BRL-CAD library interface command and displays the name of each command where a match is found.
+
+== SYNOPSIS
+
+[source]
+----
+aproposlib {keyword}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+The *aproposlib* command searches through the one-line usage messages for a specified BRL-CAD library interface command and displays the name of each command where a match is found.
+
+
+[[examples]]
+== EXAMPLES
+
+The example demonstrates the use of the *aproposlib* command to search the one-line usage messages for a particular BRL-CAD library interface command.
+
+.Using the *aproposlib* command to search the one-line usage messages for a particular BRL-CAD library interface command containing "mat."
+[example]
+====
+mged>**aproposlib mat**
+
+
+
+
+....
+
+dgo_rtweight dm_drawDataAxes dm_drawModelAxes dm_drawViewAxes dm_loadmat mat_ae
+mat_ae_vec mat_aet_vec mat_angles mat_arb_rot mat_eigen2x2 mat_fromto mat_inv
+mat_lookat mat_mul mat_scale_about_pt mat_trn mat_vec_ortho mat_vec_perp
+mat_xform_about_pt mat_xrot mat_yrot mat_zrot quat_mat2quat quat_quat2mat
+vo_model2view vo_pmat vo_pmodel2view vo_rmat vo_view2model wdb_attr wdb_bot_decimate
+wdb_list wdb_match wdb_nmg_collapse wdb_paths wdb_pull wdb_push wdb_search wdb_showmats
+wdb_xpush
+	
+....
+
+
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

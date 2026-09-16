@@ -1,7 +1,7 @@
 /*                         O S C A L E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -122,32 +122,21 @@ ged_oscale_core(struct ged *gedp, int argc, const char *argv[])
     bn_mat_mul(tmpMat, invXform, smat);
     bn_mat_mul(emat, tmpMat, gtd.gtd_xform);
 
-    GED_DB_GET_INTERNAL(gedp, &intern, dp, emat, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_GET_INTERN(gedp, &intern, dp, emat, BRLCAD_ERROR);
     RT_CK_DB_INTERNAL(&intern);
-    GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_PUT_INTERN(gedp, dp, &intern, BRLCAD_ERROR);
 
     return BRLCAD_OK;
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl oscale_cmd_impl = {
-    "oscale",
-    ged_oscale_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd oscale_cmd = { &oscale_cmd_impl };
-const struct ged_cmd *oscale_cmds[] = { &oscale_cmd, NULL };
+#define GED_OSCALE_COMMANDS(X, XID) \
+    X(oscale, ged_oscale_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  oscale_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_OSCALE_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_oscale", 1, GED_OSCALE_COMMANDS)
 
 /*
  * Local Variables:

@@ -1,0 +1,198 @@
+= Getting Started as a BRL-CAD Contributor
+:doctype: article
+:toc: left
+:toclevels: 3
+:sectlinks:
+:sectanchors:
+
+This guide is a practical, end-to-end walkthrough for making your first
+contribution to BRL-CAD.  It covers acquiring the source, configuring and
+building it, running the test suite, finding an appropriate first task, and
+submitting your work for review.
+
+BRL-CAD is a large, cross-platform, open-source solid modeling system with a
+long history.  You do not need to understand all of it to contribute
+effectively.  Most first contributions touch a single tool, library function,
+document, or test, and this guide is written with that scope in mind.
+
+For a deeper treatment of coding standards, project conventions, and internal
+architecture, consult the canonical contributor reference,
+link:../books/HACKING_BRL-CAD.html[HACKING BRL-CAD].
+
+== Prerequisites
+
+Before you begin, make sure you have the following available on your system:
+
+* *Git* for cloning the repository and managing your changes.
+* *CMake* version 3.22 or newer, which drives the entire build.
+* A *C11* and *C++17* capable toolchain (for example, GCC, Clang, or the
+  Microsoft Visual C++ compiler).
+* Enough free disk space for the source tree, its external dependencies, and a
+  full build.  A complete build is sizable; budget several gigabytes.
+
+BRL-CAD manages most of its third-party dependencies through a bundled external
+dependency system, so you generally do not need to install libraries by hand.
+Platform-specific requirements and any optional prerequisites are documented in
+the top-level `INSTALL` file, which is the authoritative source for build
+requirements.
+
+== Getting the source
+
+Clone the official repository from GitHub:
+
+[source,sh]
+----
+git clone https://github.com/BRL-CAD/brlcad
+cd brlcad
+----
+
+The default branch is `main`, which is where active development takes place.
+When you start work on a change, create a topic branch off `main` so your work
+stays isolated and easy to review:
+
+[source,sh]
+----
+git switch -c my-first-change
+----
+
+== Configuring and building
+
+BRL-CAD uses an out-of-source CMake build.  Create a separate build directory
+so generated files never mix with the source tree:
+
+[source,sh]
+----
+cmake -S . -B build
+cmake --build build
+----
+
+The first configure step will also stage and build the bundled external
+dependencies, so the initial run takes noticeably longer than subsequent
+builds.
+
+The top-level `INSTALL` file describes the supported generators, useful
+configuration options, and platform-specific notes.  Read it before your first
+build; it is the definitive reference for how to configure BRL-CAD on your
+platform.
+
+=== Building the documentation
+
+The documentation, including this guide, is only generated when the build is
+configured with the `BRLCAD_EXTRADOCS` option enabled:
+
+[source,sh]
+----
+cmake -S . -B build -DBRLCAD_EXTRADOCS=ON
+cmake --build build
+----
+
+If you are contributing documentation, enable this option so you can build and
+review your changes locally before submitting them.  For the C/C++ API
+reference generated from source comments, see
+link:api_reference.html[The BRL-CAD API Reference].
+
+== Running the test suite
+
+BRL-CAD's automated tests are driven by CTest.  After building, run the suite
+from your build directory:
+
+[source,sh]
+----
+ctest --test-dir build
+----
+
+Useful options while iterating:
+
+* `ctest --test-dir build -N` lists the available tests without running them.
+* `ctest --test-dir build -R <pattern>` runs only tests whose names match a
+  regular expression, which is handy when you are working on one area.
+* `ctest --test-dir build --output-on-failure` prints the output of any test
+  that fails, which is essential for diagnosing problems.
+
+Run the relevant tests before and after your change so you can confirm you have
+not introduced a regression.  If your contribution adds or fixes behavior,
+consider adding a test that exercises it.
+
+== Finding a good first issue
+
+Open tasks are tracked as GitHub issues:
+
+* Issue tracker (bugs and feature requests):
+  https://github.com/BRL-CAD/brlcad/issues
+
+Browse the open issues for something small and self-contained.  Documentation
+fixes, small tool improvements, and well-described bugs make excellent first
+contributions because their scope is clear.  If an issue is unclear, ask a
+question on the issue itself before investing significant effort.
+
+If you would like to discuss ideas or ask for guidance before picking a task,
+use the project's communication channels described below.
+
+== Submitting a pull request
+
+BRL-CAD accepts contributions as pull requests against the `main` branch of the
+GitHub repository.  A typical workflow is:
+
+. Fork the repository on GitHub and add your fork as a remote, or push your
+  topic branch to a branch you have permission to push.
+. Commit your work in logical, self-contained commits with clear messages that
+  explain *why* the change is being made, not only *what* changed.
+. Push your topic branch and open a pull request against
+  https://github.com/BRL-CAD/brlcad targeting `main`.
+. In the pull request description, summarize the change, reference any related
+  issue, and note how you verified it (for example, which tests you ran).
+
+Keep each pull request focused on a single logical change.  Smaller, focused
+pull requests are reviewed faster and merged more easily than large ones that
+mix unrelated changes.
+
+== The review process
+
+Once your pull request is open, maintainers and other contributors will review
+it.  Reviews are a normal, collaborative part of the process, and it is common
+for even experienced contributors to be asked for revisions.
+
+During review you can expect:
+
+* Feedback on correctness, style, and adherence to project conventions.  The
+  conventions are documented in
+  link:../books/HACKING_BRL-CAD.html[HACKING BRL-CAD].
+* Requests to add or adjust tests, or to split a change into smaller pieces.
+* Automated checks that build the project and run tests against your change.
+
+Respond to review comments by updating your topic branch and pushing new
+commits; the pull request updates automatically.  Be patient and courteous;
+maintainers are volunteers and reviewers, and clear, responsive communication
+helps your contribution land.
+
+== Communicating with the community
+
+The BRL-CAD community uses the following channels:
+
+* *Chat (Zulip):* https://brlcad.zulipchat.com — the primary place for
+  real-time discussion, questions, and coordination.
+* *Q&A and longer discussions (GitHub Discussions):*
+  https://github.com/BRL-CAD/brlcad/discussions — for questions and topics that
+  benefit from a durable, searchable thread.
+* *Bugs and feature requests (GitHub Issues):*
+  https://github.com/BRL-CAD/brlcad/issues
+
+A secondary, legacy IRC channel also exists at `#brlcad` on
+`irc.libera.chat`, but Zulip and GitHub Discussions are the recommended
+channels for new contributors.
+
+== Next steps
+
+Once you are comfortable with the build-and-test loop, the following resources
+will help you go deeper:
+
+* link:../books/HACKING_BRL-CAD.html[HACKING BRL-CAD] — coding standards,
+  conventions, and internals.
+* link:raytracing_pipeline.html[The librt Ray Tracing Pipeline] — how the core
+  ray tracing library works end to end.
+* link:libged_command_authoring.html[Authoring a New libged Command] — how to
+  add a new geometry-editing command.
+* link:api_reference.html[The BRL-CAD API Reference] — the Doxygen-generated
+  C/C++ API documentation.
+
+Welcome to BRL-CAD.  We look forward to your contributions.

@@ -1,7 +1,7 @@
 /*                            S T L . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,7 +24,9 @@
  */
 
 #include "common.h"
-
+#ifdef HAVE_SYS_STAT_H
+#  include <sys/stat.h>
+#endif
 #include <string.h>
 
 #include "./ged_bot_dump.h"

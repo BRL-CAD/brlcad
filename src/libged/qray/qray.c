@@ -1,7 +1,7 @@
 /*                          Q R A Y . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2025 United States Government as represented by
+ * Copyright (c) 1998-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,7 +36,7 @@ static int qray_get_fmt_index(struct ged *gedp, char c);
 
 
 static void
-usage(struct ged *gedp, const char *argv0)
+qray_usage(struct ged *gedp, const char *argv0)
 {
     bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", argv0);
     bu_vls_printf(gedp->ged_result_str, " qray vars			print a list of all variables (i.e. var = val)\n");
@@ -111,7 +111,7 @@ ged_qray_core(struct ged *gedp,
 
     /* must be wanting help */
     if (argc == 1) {
-	usage(gedp, argv[0]);
+	qray_usage(gedp, argv[0]);
 	return GED_HELP;
     }
 
@@ -132,7 +132,7 @@ ged_qray_core(struct ged *gedp,
     }
 
     if (argc > 6) {
-	usage(gedp, argv[0]);
+	qray_usage(gedp, argv[0]);
 	return BRLCAD_ERROR;
     }
 
@@ -147,7 +147,7 @@ ged_qray_core(struct ged *gedp,
 	    /* get particular format string */
 	    if ((i = qray_get_fmt_index(gedp, *argv[2])) < 0) {
 		bu_vls_printf(gedp->ged_result_str, "qray: unrecognized format type: '%s'\n", argv[2]);
-		usage(gedp, argv[0]);
+		qray_usage(gedp, argv[0]);
 
 		return BRLCAD_ERROR;
 	    }
@@ -158,7 +158,7 @@ ged_qray_core(struct ged *gedp,
 	    /* set value */
 	    if ((i = qray_get_fmt_index(gedp, *argv[2])) < 0) {
 		bu_vls_printf(gedp->ged_result_str, "qray: unrecognized format type: '%s'\n", argv[2]);
-		usage(gedp, argv[0]);
+		qray_usage(gedp, argv[0]);
 
 		return BRLCAD_ERROR;
 	    }
@@ -404,35 +404,26 @@ ged_qray_core(struct ged *gedp,
     }
 
     if (BU_STR_EQUAL(argv[1], "help")) {
-	usage(gedp, argv[0]);
+	qray_usage(gedp, argv[0]);
 	return GED_HELP;
     }
 
     bu_vls_printf(gedp->ged_result_str, "qray: unrecognized command: '%s'\n", argv[1]);
-    usage(gedp, argv[0]);
+    qray_usage(gedp, argv[0]);
 
     return BRLCAD_ERROR;
 }
 
 /** @} */
-#ifdef GED_PLUGIN
+
+
 #include "../include/plugin.h"
-struct ged_cmd_impl qray_cmd_impl = {
-    "qray",
-    ged_qray_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd qray_cmd = { &qray_cmd_impl };
-const struct ged_cmd *qray_cmds[] = { &qray_cmd, NULL };
+#define GED_QRAY_COMMANDS(X, XID) \
+    X(qray, ged_qray_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  qray_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_QRAY_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_qray", 1, GED_QRAY_COMMANDS)
 
 /*
  * Local Variables:

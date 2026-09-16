@@ -1,7 +1,7 @@
 /*                        S P M - F B . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2025 United States Government as represented by
+ * Copyright (c) 1986-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -24,6 +24,8 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <math.h>
 
@@ -32,6 +34,7 @@
 #include "bu/app.h"
 #include "bu/exit.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "dm.h"
 #include "bn/spm.h"
 
@@ -42,7 +45,7 @@ static char *framebuffer = NULL;
 static int scr_width = 0;
 static int scr_height = 0;
 
-static char *file_name;
+static const char *file_name;
 static int square = 0;
 static int vsize;
 
@@ -50,7 +53,6 @@ static char usage[] = "\
 Usage: spm-fb [-s] [-F framebuffer]\n\
 	[-S squarescrsize] [-W scr_width] [-N scr_height]\n\
 	vsize [filename]\n";
-
 
 int
 get_args(int argc, char **argv)
@@ -66,13 +68,17 @@ get_args(int argc, char **argv)
 		square = 1;
 		break;
 	    case 'S':
-		scr_height = scr_width = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &scr_width, 1, INT_MAX, "screen size"))
+		    return 0;
+		scr_height = scr_width;
 		break;
 	    case 'W':
-		scr_width = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &scr_width, 1, INT_MAX, "screen width"))
+		    return 0;
 		break;
 	    case 'N':
-		scr_height = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &scr_height, 1, INT_MAX, "screen height"))
+		    return 0;
 		break;
 
 	    default:		/* '?' 'h' */
@@ -82,7 +88,8 @@ get_args(int argc, char **argv)
 
     if (bu_optind >= argc)
 	return 0;		/* missing positional arg */
-    vsize = atoi(argv[bu_optind++]);
+    if (!bu_opt_scan_int_range(argv[bu_optind++], &vsize, 1, INT_MAX, "vsize"))
+	return 0;
 
     if (bu_optind >= argc) {
 	if (isatty(fileno(stdin)))
@@ -92,8 +99,10 @@ get_args(int argc, char **argv)
 	file_name = argv[bu_optind];
     }
 
-    if (argc > ++bu_optind)
-	fprintf(stderr, "spm-fb: excess argument(s) ignored\n");
+    if (argc > ++bu_optind) {
+	fprintf(stderr, "spm-fb: excess argument(s) not supported\n");
+	return 0;
+    }
 
     return 1;		/* OK */
 }

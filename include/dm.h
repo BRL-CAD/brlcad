@@ -1,7 +1,7 @@
 /*                          D M . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2025 United States Government as represented by
+ * Copyright (c) 1993-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -271,6 +271,23 @@ DM_EXPORT extern void dm_set_bound_flag(struct dm *dmp, int bound);
 
 DM_EXPORT extern int dm_draw_obj(struct dm *dmp, struct bv_scene_obj *s);
 
+/* Dlist sensor API
+ *
+ * Sensors provide a push-based notification when a display list has been
+ * regenerated, replacing per-frame polling of bv_scene_obj::s_dlist_stale.
+ *
+ * dm_register_dlist_sensor  - attach a callback to be invoked whenever
+ *                             dm_fire_dlist_sensors() is called on this dm.
+ * dm_fire_dlist_sensors     - invoke all registered sensor callbacks; call
+ *                             this after regenerating any display list.
+ * dm_dlist_sensors_clear    - free all sensors registered on this dm. */
+DM_EXPORT extern int  dm_register_dlist_sensor(struct dm *dmp,
+					       struct bv_scene_obj *s,
+					       void (*callback)(struct bv_scene_obj *, void *),
+					       void *data);
+DM_EXPORT extern void dm_fire_dlist_sensors(struct dm *dmp);
+DM_EXPORT extern void dm_dlist_sensors_clear(struct dm *dmp);
+
 
 /* Rather low level exposure of display list concepts.  Needed for MGED
  * and libtclcad, but we want to get to a point where the use (or not)
@@ -376,6 +393,57 @@ typedef struct {
  * assert the integrity of a framebuffer struct.
  */
 #define FB_CK_FB(_p) BU_CKMAG(_p, FB_MAGIC, "FB")
+
+
+/**
+ * Application-facing input events for interactive framebuffer windows.
+ *
+ * Windowed libfb backends (e.g. wgl, X) run their own OS event loop.  By
+ * default those events are consumed internally (pan/zoom/refresh/close).  An
+ * application that wants to drive an interactive window without Tcl/Tk or Qt
+ * can opt in with fb_set_interactive() and then pump events with
+ * fb_next_event().  Event coordinates use the libfb convention: the origin is
+ * the lower-left corner and y increases upward, matching fb_write().
+ */
+typedef enum {
+    FB_EVENT_NONE = 0,       /**< @brief no event */
+    FB_EVENT_EXPOSE,         /**< @brief window needs redraw */
+    FB_EVENT_RESIZE,         /**< @brief window size changed (x,y = new w,h) */
+    FB_EVENT_MOTION,         /**< @brief pointer moved (x,y = position) */
+    FB_EVENT_BUTTON_PRESS,   /**< @brief mouse button pressed */
+    FB_EVENT_BUTTON_RELEASE, /**< @brief mouse button released */
+    FB_EVENT_KEY_PRESS,      /**< @brief key pressed (keycode = ASCII if printable) */
+    FB_EVENT_CLOSE           /**< @brief window close was requested */
+} fb_event_type_t;
+
+struct fb_event {
+    fb_event_type_t type;
+    int x;        /**< @brief pointer x, or new width for FB_EVENT_RESIZE */
+    int y;        /**< @brief pointer y, or new height for FB_EVENT_RESIZE */
+    int button;   /**< @brief 1=left, 2=middle, 3=right for button events */
+    int keycode;  /**< @brief ASCII value for FB_EVENT_KEY_PRESS (0 if non-printable) */
+    int state;    /**< @brief modifier state bitmask (implementation defined) */
+};
+
+/**
+ * Enable or disable application-facing input event reporting for a windowed
+ * framebuffer.  When disabled (the default) backends behave exactly as before,
+ * so existing libfb clients are unaffected.
+ */
+DM_EXPORT extern void fb_set_interactive(struct fb *ifp, int on);
+
+/**
+ * Return nonzero if input event reporting is enabled for this framebuffer.
+ */
+DM_EXPORT extern int fb_get_interactive(const struct fb *ifp);
+
+/**
+ * Drain any pending OS window events and return the next application input
+ * event.  Returns 1 and fills in *e if an event was available, otherwise
+ * returns 0.  Has no effect (returns 0) unless fb_set_interactive() was called.
+ */
+DM_EXPORT extern int fb_next_event(struct fb *ifp, struct fb_event *e);
+
 
 /* Library entry points */
 
@@ -523,6 +591,7 @@ typedef struct fb_internal FBIO;
 #define MSG_FBSETCURSOR   31            /**< @brief NEW in Release 4.4 */
 #define MSG_FBBWREADRECT  32            /**< @brief NEW in Release 4.6 */
 #define MSG_FBBWWRITERECT 33            /**< @brief NEW in Release 4.6 */
+#define MSG_FBAUTH        34            /**< @brief Session token authentication */
 
 #define MSG_DATA          20
 #define MSG_RETURN        21

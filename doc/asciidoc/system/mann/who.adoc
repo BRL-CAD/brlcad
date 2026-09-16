@@ -1,0 +1,59 @@
+= WHO(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD MGED Commands
+
+== NAME
+who - Lists the top-level objects that are currently displayed.
+
+== SYNOPSIS
+
+[source]
+----
+who [[real] | [phony] | [both]]
+who solids [level]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Lists the top-level objects that are currently displayed. The _phony_ flag asks for just _phony_ objects. _Phony_ objects are typically objects that are drawn in the MGED display, but are not actual database objects. Some _phony_ objects are drawings from the *vdraw* command and the edgeuses drawn by the *ev -u* command. The _real_ flag asks for just _real_ objects, and the _both_ flag asks for both _real_ and _phony_ objects. The default is just _real_ objects. Any of the flags may be abbreviated by its first letter.
+
+The *solids* subcommand reports the fully expanded set of displayed solids. The optional _level_ controls how much detail is shown. A _level_ of `-2` or less prints only primitive names, `-1` prints full paths, `0` adds illumination state, `1` adds center/size/region/color information, `2` adds vector-list counts, and `3` or greater adds the vector-list commands themselves. The *solid_report* and *x* commands remain available as compatibility aliases for this detailed report.
+
+
+[[examples]]
+== EXAMPLES
+
+The examples show a typical discovery flow: start with *who* to see which top-level objects are drawn, then switch to *who solids* when you need the expanded solid paths and per-solid details.
+
+.List the top-level objects that are currently displayed.
+[example]
+====
+mged>**who**
+
+Lists the top-level displayed database objects.
+
+====
+
+.List the displayed solids with path and per-solid detail information.
+[example]
+====
+mged>**who solids 1**
+
+Lists each displayed solid path and reports center, size, region, and color data.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

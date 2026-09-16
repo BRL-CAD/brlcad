@@ -5,6 +5,10 @@ if(TARGET gcv-assetimport)
   distclean("${CMAKE_CURRENT_BINARY_DIR}/conv-tetra.bin")
 endif(TARGET gcv-assetimport)
 
+if(TARGET gcv-gltf)
+  gcv_regress_util("gltf_native" "tetra-gltf2.0.gltf;tetra-glb2.0.glb" DEPS "gcv;gcv-gltf" GCV_OPTIONS "--input-format=gltf")
+endif(TARGET gcv-gltf)
+
 cmakefiles(
   CMakeLists.txt
   tetra-gltf2.0.gltf

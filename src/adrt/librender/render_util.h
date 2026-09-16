@@ -1,7 +1,7 @@
 /*                   R E N D E R _ U T I L . H
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2025 United States Government as represented by
+ * Copyright (c) 2007-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -18,6 +18,9 @@
  * information.
  */
 /** @file librender/render_util.h
+ *
+ * Utility routines for the ADRT renderer: shotline and spall ray
+ * traversal helpers.
  *
  */
 

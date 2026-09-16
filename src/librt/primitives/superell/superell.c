@@ -1,7 +1,7 @@
 /*                      S U P E R E L L . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2025 United States Government as represented by
+ * Copyright (c) 1985-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -49,7 +49,7 @@
 extern double tgamma(double x);
 #endif
 
-const struct bu_structparse rt_superell_parse[] = {
+EXTERNCPP const struct bu_structparse rt_superell_parse[] = {
     { "%f", 3, "V", bu_offsetofarray(struct rt_superell_internal, v, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 3, "A", bu_offsetofarray(struct rt_superell_internal, a, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 3, "B", bu_offsetofarray(struct rt_superell_internal, b, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -208,7 +208,7 @@ clt_superell_pack(struct bu_pool *pool, struct soltab *stp)
 /**
  * Calculate a bounding RPP for a superell
  */
-int
+C_DECL int
 rt_superell_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
 
     struct rt_superell_internal *eip;
@@ -285,7 +285,7 @@ rt_superell_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const st
  * Implicit return - A struct superell_specific is created, and its
  * address is stored in stp->st_specific for use by rt_superell_shot()
  */
-int
+C_DECL int
 rt_superell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
 
@@ -403,7 +403,7 @@ rt_superell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 }
 
 
-void
+C_DECL void
 rt_superell_print(const struct soltab *stp)
 {
     struct superell_specific *superell =
@@ -427,7 +427,7 @@ rt_superell_print(const struct soltab *stp)
  * 0 MISS
  * >0 HIT
  */
-int
+C_DECL int
 rt_superell_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
     static int counter=10;
@@ -487,7 +487,7 @@ rt_superell_shot(struct soltab *stp, struct xray *rp, struct application *ap, st
 	    bn_pr_roots(stp->st_name, complexRoot, i);
 	} else if (i < 0) {
 	    static int reported=0;
-	    bu_log("rt_superell_shot():  The root solver failed to converge on a solution for %s\n", stp->st_dp->d_namep);
+	    bu_log("LIBRT: rt_superell_shot():  The root solver failed to converge on a solution for %s\n", stp->st_dp->d_namep);
 	    if (!reported) {
 		VPRINT("while shooting from:\t", rp->r_pt);
 		VPRINT("while shooting at:\t", rp->r_dir);
@@ -595,9 +595,96 @@ rt_superell_shot(struct soltab *stp, struct xray *rp, struct application *ap, st
 
 
 /**
- * Given ONE ray distance, return the normal and entry/exit point.
+ * Vectorized counterpart to rt_superell_shot().
+ *
+ * Batch-intersect n rays, one seg per ray into the flat segp[] array
+ * (no seg-list allocation).  As in the scalar shot, the intersection
+ * polynomial is degree 2 (the current superell shot approximates with
+ * the ellipsoid quadric), so at most one segment is produced.  The
+ * per-ray arithmetic mirrors rt_superell_shot() exactly so hit_dist
+ * values agree; the diagnostic root-count logging is omitted.
  */
 void
+rt_superell_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
+/* An array of solid pointers */
+/* An array of ray pointers */
+/* array of segs (results returned) */
+/* Number of ray/object pairs */
+{
+    int idx;
+
+    if (ap) RT_CK_APPLICATION(ap);
+
+    for (idx = 0; idx < n; idx++) {
+	struct superell_specific *superell;
+	bn_poly_t equation;		/* equation of superell to be solved */
+	vect_t translated;		/* translated shot vector */
+	vect_t newShotPoint;		/* P' */
+	vect_t newShotDir;		/* D' */
+	bn_complex_t complexRoot[4];	/* roots returned from poly solver */
+	double realRoot[4];		/* real ray distance values */
+	int i, j;
+
+	if (stp[idx] == 0) continue;			/* skip this ray */
+	segp[idx].seg_stp = (struct soltab *)0;		/* assume MISS */
+
+	superell = (struct superell_specific *)stp[idx]->st_specific;
+
+	/* translate ray point */
+	translated[X] = rp[idx]->r_pt[X] - superell->superell_V[X];
+	translated[Y] = rp[idx]->r_pt[Y] - superell->superell_V[Y];
+	translated[Z] = rp[idx]->r_pt[Z] - superell->superell_V[Z];
+
+	/* scale and rotate point to get P' */
+	newShotPoint[X] = (superell->superell_SoR[0]*translated[X] + superell->superell_SoR[1]*translated[Y] + superell->superell_SoR[ 2]*translated[Z]) * 1.0/(superell->superell_SoR[15]);
+	newShotPoint[Y] = (superell->superell_SoR[4]*translated[X] + superell->superell_SoR[5]*translated[Y] + superell->superell_SoR[ 6]*translated[Z]) * 1.0/(superell->superell_SoR[15]);
+	newShotPoint[Z] = (superell->superell_SoR[8]*translated[X] + superell->superell_SoR[9]*translated[Y] + superell->superell_SoR[10]*translated[Z]) * 1.0/(superell->superell_SoR[15]);
+
+	/* translate ray direction vector */
+	MAT4X3VEC(newShotDir, superell->superell_SoR, rp[idx]->r_dir);
+	VUNITIZE(newShotDir);
+
+	/* Now generate the polynomial equation for passing to the root finder */
+	equation.dgr = 2;
+	equation.cf[0] = newShotPoint[X] * newShotPoint[X] * superell->superell_invmsAu + newShotPoint[Y] * newShotPoint[Y] * superell->superell_invmsBu + newShotPoint[Z] * newShotPoint[Z] * superell->superell_invmsCu - 1;
+	equation.cf[1] = 2 * newShotDir[X] * newShotPoint[X] * superell->superell_invmsAu + 2 * newShotDir[Y] * newShotPoint[Y] * superell->superell_invmsBu + 2 * newShotDir[Z] * newShotPoint[Z] * superell->superell_invmsCu;
+	equation.cf[2] = newShotDir[X] * newShotDir[X] * superell->superell_invmsAu + newShotDir[Y] * newShotDir[Y] * superell->superell_invmsBu + newShotDir[Z] * newShotDir[Z] * superell->superell_invmsCu;
+
+	if ((i = rt_poly_roots(&equation, complexRoot, stp[idx]->st_dp->d_namep)) != 2)
+	    continue;		/* MISS */
+
+	/* Only real roots indicate an intersection in real space. */
+	for (j = 0, i = 0; j < 2; j++) {
+	    if (NEAR_ZERO(complexRoot[j].im, 0.001))
+		realRoot[i++] = complexRoot[j].re;
+	}
+
+	if (i != 2)
+	    continue;		/* MISS */
+
+	/* Sort most distant to least distant. */
+	if (realRoot[0] < realRoot[1]) {
+	    fastf_t u = realRoot[0];
+	    realRoot[0] = realRoot[1];
+	    realRoot[1] = u;
+	}
+
+	/* realRoot[1] is entry point, realRoot[0] is exit point */
+	segp[idx].seg_stp = stp[idx];
+	segp[idx].seg_in.hit_magic = RT_HIT_MAGIC;
+	segp[idx].seg_in.hit_dist = realRoot[1];
+	segp[idx].seg_in.hit_surfno = 0;
+	segp[idx].seg_out.hit_magic = RT_HIT_MAGIC;
+	segp[idx].seg_out.hit_dist = realRoot[0];
+	segp[idx].seg_out.hit_surfno = 0;
+    }
+}
+
+
+/**
+ * Given ONE ray distance, return the normal and entry/exit point.
+ */
+C_DECL void
 rt_superell_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
     struct superell_specific *superell =
@@ -619,7 +706,7 @@ rt_superell_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 /**
  * Return the curvature of the superellipsoid.
  */
-void
+C_DECL void
 rt_superell_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
     if (!cvp || !hitp || !stp)
@@ -638,7 +725,7 @@ rt_superell_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
  * u = azimuth
  * v = elevation
  */
-void
+C_DECL void
 rt_superell_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
     if (ap) RT_CK_APPLICATION(ap);
@@ -652,7 +739,7 @@ rt_superell_uv(struct application *ap, struct soltab *stp, struct hit *hitp, str
 }
 
 
-void
+C_DECL void
 rt_superell_free(struct soltab *stp)
 {
     struct superell_specific *superell =
@@ -705,7 +792,7 @@ rt_superell_16pts(fastf_t *ov,
 }
 
 
-int
+C_DECL int
 rt_superell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     int i;
@@ -790,7 +877,7 @@ struct superell_vert_strip {
  * -1 failure
  * 0 OK.  *r points to nmgregion that holds this tesssuperellation.
  */
-int
+C_DECL int
 rt_superell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     if (r) NMG_CK_REGION(*r);
@@ -806,7 +893,7 @@ rt_superell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
  * Import an superellipsoid/sphere from the database format to the
  * internal structure.  Apply modeling transformations as wsuperell.
  */
-int
+C_DECL int
 rt_superell_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_superell_internal *eip;
@@ -833,7 +920,7 @@ rt_superell_import4(struct rt_db_internal *ip, const struct bu_external *ep, con
     eip->magic = RT_SUPERELL_INTERNAL_MAGIC;
 
     /* Convert from database to internal format */
-    flip_fastf_float(vec, rp->s.s_values, 4, (dbip && dbip->dbi_version < 0) ? 1 : 0);
+    flip_fastf_float(vec, rp->s.s_values, 4, (dbip && dbip->i->dbi_version < 0) ? 1 : 0);
 
     /* Apply modeling transformations */
     if (mat == NULL) mat = bn_mat_identity;
@@ -842,7 +929,7 @@ rt_superell_import4(struct rt_db_internal *ip, const struct bu_external *ep, con
     MAT4X3VEC(eip->b, mat, &vec[2*3]);
     MAT4X3VEC(eip->c, mat, &vec[3*3]);
 
-    if (dbip && dbip->dbi_version < 0) {
+    if (dbip && dbip->i->dbi_version < 0) {
 	eip->n = flip_dbfloat(rp->s.s_values[12]);
 	eip->e = flip_dbfloat(rp->s.s_values[13]);
     } else {
@@ -854,7 +941,7 @@ rt_superell_import4(struct rt_db_internal *ip, const struct bu_external *ep, con
 }
 
 
-int
+C_DECL int
 rt_superell_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_superell_internal *tip;
@@ -889,7 +976,7 @@ rt_superell_export4(struct bu_external *ep, const struct rt_db_internal *ip, dou
     return 0;
 }
 
-int
+C_DECL int
 rt_superell_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
 {
     if (!rop || !ip || !mat)
@@ -920,7 +1007,7 @@ rt_superell_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_
  * Import an superellipsoid/sphere from the database format to the
  * internal structure.  Apply modeling transformations as wsuperell.
  */
-int
+C_DECL int
 rt_superell_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_superell_internal *eip;
@@ -967,7 +1054,7 @@ rt_superell_import5(struct rt_db_internal *ip, const struct bu_external *ep, con
  * B vector
  * C vector
  */
-int
+C_DECL int
 rt_superell_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_superell_internal *eip;
@@ -1007,7 +1094,7 @@ rt_superell_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
  */
-int
+C_DECL int
 rt_superell_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
     struct rt_superell_internal *tip =
@@ -1076,7 +1163,7 @@ rt_superell_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ve
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
-void
+C_DECL void
 rt_superell_ifree(struct rt_db_internal *ip)
 {
     RT_CK_DB_INTERNAL(ip);
@@ -1099,7 +1186,32 @@ static const fastf_t rt_superell_uvw[5*ELEMENTS_PER_VECT] = {
 };
 */
 
-int
+C_DECL int
+rt_superell_make(const struct rt_functab* ftp, struct rt_db_internal* intern, const char* UNUSED(variant), const point_t origin, double scale)
+{
+    struct rt_superell_internal *superell_ip;
+
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern->idb_type = ID_SUPERELL;
+    BU_ASSERT(&OBJ[intern->idb_type] == ftp);
+    intern->idb_meth = ftp;
+
+    BU_ALLOC(superell_ip, struct rt_superell_internal);
+    intern->idb_ptr = (void *)superell_ip;
+    superell_ip->magic = RT_SUPERELL_INTERNAL_MAGIC;
+
+    VSET(superell_ip->v, origin[X], origin[Y], origin[Z]);
+    VSET(superell_ip->a, 0.5*scale, 0.0, 0.0);	    /* A */
+    VSET(superell_ip->b, 0.0, 0.25*scale, 0.0);	    /* B */
+    VSET(superell_ip->c, 0.0, 0.0, 0.125*scale);    /* C */
+    superell_ip->n = 1.0;
+    superell_ip->e = 1.0;
+
+    return BRLCAD_OK;
+}
+
+
+C_DECL int
 rt_superell_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
     if (ip) RT_CK_DB_INTERNAL(ip);
@@ -1114,28 +1226,26 @@ rt_superell_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip
  * Volume equation from http://lrv.fri.uni-lj.si/~franc/SRSbook/geometry.pdf
  * which also includes a derivation on page 32.
  */
-void
+C_DECL void
 rt_superell_volume(fastf_t *volume, const struct rt_db_internal *ip)
 {
-#ifdef HAVE_TGAMMA
-    struct rt_superell_internal *sip;
-    double mag_a, mag_b, mag_c;
-#endif
-
     if (volume == NULL || ip == NULL) {
 	return;
     }
 
 #ifdef HAVE_TGAMMA
     RT_CK_DB_INTERNAL(ip);
-    sip = (struct rt_superell_internal *)ip->idb_ptr;
+    struct rt_superell_internal *sip = (struct rt_superell_internal *)ip->idb_ptr;
     RT_SUPERELL_CK_MAGIC(sip);
 
-    mag_a = MAGNITUDE(sip->a);
-    mag_b = MAGNITUDE(sip->b);
-    mag_c = MAGNITUDE(sip->c);
+    double mag_a = MAGNITUDE(sip->a);
+    double mag_b = MAGNITUDE(sip->b);
+    double mag_c = MAGNITUDE(sip->c);
 
     *volume = 2.0 * mag_a * mag_b * mag_c * sip->e * sip->n * (tgamma(sip->n/2.0 + 1.0) * tgamma(sip->n) / tgamma(3.0 * sip->n/2.0 + 1.0)) * (tgamma(sip->e / 2.0) * tgamma(sip->e / 2.0) / tgamma(sip->e));
+#else
+    /* tgamma unavailable: fall back to Cauchy-Crofton estimation */
+    do { static const struct rt_crofton_params _p = {50000u, 0.0, 0.0}; rt_crofton_sample(NULL, volume, ip, &_p); } while (0);
 #endif
 }
 
@@ -1268,7 +1378,7 @@ superell_surf_area_general(const struct rt_superell_internal *sip, vect_t mags, 
 }
 
 
-void
+C_DECL void
 rt_superell_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     struct rt_superell_internal *sip;
@@ -1320,7 +1430,7 @@ rt_superell_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     }
 }
 
-int
+C_DECL int
 rt_superell_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     int lcnt = 4;
@@ -1356,7 +1466,7 @@ rt_superell_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, co
     return lcnt;
 }
 
-const char *
+C_DECL const char *
 rt_superell_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     if (!pt || !ip)
@@ -1394,6 +1504,52 @@ superell_kpt_end:
     MAT4X3PNT(*pt, mat, mpt);
 
     return k;
+}
+
+
+C_DECL int
+rt_superell_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int UNUSED(planar_only), fastf_t val)
+{
+    if (NEAR_ZERO(val, SMALL_FASTF))
+	return BRLCAD_OK;
+
+    if (!oip || !ip)
+	return BRLCAD_ERROR;
+
+    struct rt_superell_internal *osuper = (struct rt_superell_internal *)ip->idb_ptr;
+    RT_SUPERELL_CK_MAGIC(osuper);
+
+    struct rt_db_internal *nip;
+    BU_GET(nip, struct rt_db_internal);
+    RT_DB_INTERNAL_INIT(nip);
+    nip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    nip->idb_type = ID_SUPERELL;
+    nip->idb_meth = &OBJ[ID_SUPERELL];
+    struct rt_superell_internal *super = NULL;
+    BU_ALLOC(super, struct rt_superell_internal);
+    nip->idb_ptr = super;
+    super->magic = RT_SUPERELL_INTERNAL_MAGIC;
+    VMOVE(super->v, osuper->v);
+    VMOVE(super->a, osuper->a);
+    VMOVE(super->b, osuper->b);
+    VMOVE(super->c, osuper->c);
+    super->n = osuper->n;
+    super->e = osuper->e;
+
+    /* Scale each semi-axis outward.  The exponents n and e are preserved;
+     * planar_only is not applicable since face planarity varies with n/e. */
+    vect_t mvec;
+    VMOVE(mvec, super->a); VUNITIZE(mvec); VSCALE(mvec, mvec, val);
+    VADD2(super->a, super->a, mvec);
+
+    VMOVE(mvec, super->b); VUNITIZE(mvec); VSCALE(mvec, mvec, val);
+    VADD2(super->b, super->b, mvec);
+
+    VMOVE(mvec, super->c); VUNITIZE(mvec); VSCALE(mvec, mvec, val);
+    VADD2(super->c, super->c, mvec);
+
+    *oip = nip;
+    return BRLCAD_OK;
 }
 
 

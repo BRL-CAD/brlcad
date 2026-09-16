@@ -1,0 +1,56 @@
+= LIBTERMIO(3)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+libtermio - minimal cross-platform terminal I/O library for BRL-CAD
+
+== SYNOPSIS
+
+[source,c]
+----
+#define LIBTERMIO_IMPLEMENTATION
+#include "libtermio.h"
+----
+
+== DESCRIPTION
+
+LIBTERMIO provides minimal, cross-platform terminal I/O for BRL-CAD,
+supplying the essential terminal-handling functions needed by
+interactive text tools on both Windows and POSIX platforms. It is
+distributed as a single header (_libtermio.h_); defining
+_LIBTERMIO_IMPLEMENTATION_ before including the header pulls in the
+implementation.
+
+The library offers two tiers of interface. The first tier is a small set
+of functions that wrap the basic operations most BRL-CAD utilities need
+-- saving, setting raw mode, and restoring the controlling terminal, and
+reading input a character at a time -- kept deliberately simple so they
+work on as many platforms as possible. The second tier is a richer,
+more capable interface used by BRL-CAD's minimalist interactive text
+editor (a fallback used when no suitable console editor is available),
+including support for editor interactions across the various Windows
+consoles.
+
+Optional helper routines are provided for querying and sanitizing the
+runtime terminal environment and for enabling debug logging. Debug
+support is inert unless the library is built with
+_LIBTERMIO_ENABLE_DEBUG_ defined. The complete API is documented in
+_libtermio.h_.
+
+== SEE ALSO
+
+*brlcad*(1), *libbu*(3)
+
+== AUTHOR
+
+BRL-CAD Team
+
+== COPYRIGHT
+
+Published in 1986-2025 by the United States Government. This work is in the public domain.
+
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

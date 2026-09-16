@@ -1,7 +1,7 @@
 /*              C A D V I E W M E A S U R E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2023-2025 United States Government as represented by
+ * Copyright (c) 2023-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -59,7 +59,11 @@ CADViewMeasure::CADViewMeasure(QWidget *)
 
     report_radians = new QCheckBox("Report angle in radians");
     wl->addWidget(report_radians);
+#if QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
     QObject::connect(report_radians, &QCheckBox::stateChanged, this, &CADViewMeasure::adjust_text);
+#else
+    QObject::connect(report_radians, &QCheckBox::checkStateChanged, this, &CADViewMeasure::adjust_text);
+#endif
 
     ma_label = new QLabel("Measured Angle (deg):");
     angle_report = new QLineEdit();

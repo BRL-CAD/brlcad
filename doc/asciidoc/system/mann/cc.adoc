@@ -1,0 +1,64 @@
+= CC(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+cc - create a new constraint object in the database
+
+== SYNOPSIS
+
+[source]
+----
+cc name constraint_expression
+----
+
+
+[[description]]
+== DESCRIPTION
+
+The *cc* command (create constraint) creates a new constraint object named `name` in the database, storing `constraint_expression` as its parametric expression. Constraint objects are non-geometry database objects of type `ID_CONSTRAINT`.
+
+Exactly two arguments are required: the name for the new constraint object and the constraint expression string. The command fails if either `name` or `constraint_expression` already exists as an object name in the database — both are checked against existing object names before creation proceeds. On success, the message `Constraint saved` is printed.
+
+The constraint expression is stored within the new object and can later be retrieved or evaluated using the *constraint* command.
+
+NOTE: *cc* requires a writable (non-read-only) database and requires the database to be open.
+
+NOTE: *cc* is a low-level object creator. For the full constraint management interface — including setting attributes on existing constraint objects, querying, displaying, and evaluating — use the *constraint* command instead.
+
+[[examples]]
+== EXAMPLES
+
+.Create a constraint object with a formula expression
+[example]
+====
+mged> **cc p0 "formula ell.R[0]=10.0"**
+
+Creates a new constraint object named `p0` storing the expression `formula ell.R[0]=10.0`. Fails if either `p0` or `formula ell.R[0]=10.0` already exists as an object name.
+====
+
+.Create a geometric constraint
+[example]
+====
+mged> **cc c1 "coincident ell.V arb8.P[4]"**
+
+Creates a new constraint object `c1` with a coincident point constraint expression.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*constraint*(nged)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

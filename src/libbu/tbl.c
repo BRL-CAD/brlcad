@@ -1,7 +1,7 @@
 /*                           T B L . C
  * BRL-CAD
  *
- * Copyright (c) 2020-2025 United States Government as represented by
+ * Copyright (c) 2020-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -429,6 +429,24 @@ bu_tbl_printf(struct bu_tbl *tbl, const char *fmt, ...)
     while (zeros--) {
 	TBL_WRITE(tbl, "");
     }
+
+    return tbl;
+}
+
+struct bu_tbl *
+bu_tbl_write(struct bu_tbl *tbl, const char *str)
+{
+    if (!str)
+	return tbl;
+
+    BU_ASSERT(tbl);
+    BU_ASSERT(tbl->t);
+
+#ifdef FT_HAVE_UTF8
+    ft_u8nwrite(tbl->t, 1, str);
+#else
+    ft_nwrite(tbl->t, 1, str);
+#endif
 
     return tbl;
 }

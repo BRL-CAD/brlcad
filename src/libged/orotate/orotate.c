@@ -1,7 +1,7 @@
 /*                         O R O T A T E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -132,32 +132,21 @@ ged_orotate_core(struct ged *gedp, int argc, const char *argv[])
     bn_mat_mul(tmpMat, invXform, pmat);
     bn_mat_mul(emat, tmpMat, gtd.gtd_xform);
 
-    GED_DB_GET_INTERNAL(gedp, &intern, dp, emat, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_GET_INTERN(gedp, &intern, dp, emat, BRLCAD_ERROR);
     RT_CK_DB_INTERNAL(&intern);
-    GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_PUT_INTERN(gedp, dp, &intern, BRLCAD_ERROR);
 
     return BRLCAD_OK;
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl orotate_cmd_impl = {
-    "orotate",
-    ged_orotate_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd orotate_cmd = { &orotate_cmd_impl };
-const struct ged_cmd *orotate_cmds[] = { &orotate_cmd, NULL };
+#define GED_OROTATE_COMMANDS(X, XID) \
+    X(orotate, ged_orotate_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  orotate_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_OROTATE_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_orotate", 1, GED_OROTATE_COMMANDS)
 
 /*
  * Local Variables:

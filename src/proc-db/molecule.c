@@ -1,7 +1,7 @@
 /*                      M O L E C U L E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2025 United States Government as represented by
+ * Copyright (c) 2004-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -59,8 +59,8 @@ struct atoms  {
 #define MAX_ATOMS 50
 struct atoms atom_list[MAX_ATOMS];
 
-char * matname = "plastic";
-char * matparm = "shine=100.0 diffuse=.8 specular=.2";
+const char * matname = "plastic";
+const char * matparm = "shine=100.0 diffuse=.8 specular=.2";
 
 void read_data(void), process_sphere(int id, fastf_t *center, double rad, int sph_type);
 int make_bond(int sp1, int sp2);

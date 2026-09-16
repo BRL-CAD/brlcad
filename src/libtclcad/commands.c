@@ -1,7 +1,7 @@
 /*                     C O M M A N D S . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2025 United States Government as represented by
+ * Copyright (c) 2000-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -41,9 +41,6 @@
 #include "png.h"
 
 #include "tcl.h"
-#ifdef HAVE_TK
-#  include "tk.h"
-#endif
 
 #include "bio.h"
 
@@ -60,6 +57,13 @@
 #include "ged.h"
 #include "tclcad.h"
 
+// tclcad.h pulls in OpenNURBS in C++ compilation mode, which defines None,
+// which will conflict with Tk.h's Xlib None if we include tk.h before tclcad.h
+#include "tcl.h"
+#ifdef HAVE_TK
+#  include "tk.h"
+#endif
+
 #include "bv/defines.h"
 #include "dm.h"
 #include "bv/util.h"
@@ -69,10 +73,6 @@
 #include "icv/ops.h"
 #include "icv/crop.h"
 #include "dm.h"
-
-#ifdef HAVE_GL_GL_H
-#  include <GL/gl.h>
-#endif
 
 /* For the moment call internal libged functions - a cleaner
  * solution will be needed eventually */
@@ -374,7 +374,6 @@ static int to_paint_rect_area(struct ged *gedp,
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-#ifdef HAVE_GL_GL_H
 static int to_pix(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -387,7 +386,6 @@ static int to_png(struct ged *gedp,
 	ged_func_ptr func,
 	const char *usage,
 	int maxargs);
-#endif
 static int to_rect_mode(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -586,6 +584,7 @@ static struct to_cmdtab ged_cmds[] = {
     {"copymat",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec_copymat},
     {"cpi",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec_cpi},
     {"d",	(char *)0, TO_UNLIMITED, to_pass_through_and_refresh_func, ged_exec_d},
+    {"db",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec_db},
     {"dbconcat",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec_dbconcat},
     {"dbfind",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec_dbfind},
     {"dbip",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec_dbip}, // TODO - this needs to go away
@@ -904,10 +903,8 @@ struct to_cmdtab to_cmds[] = {
     {"otranslate_mode",	"obj x y", TO_UNLIMITED, to_otranslate_mode, GED_FUNC_PTR_NULL},
     {"paint_rect_area",	"vname", TO_UNLIMITED, to_paint_rect_area, GED_FUNC_PTR_NULL},
     {"pipe_pnt_mode",	"obj seg_i mx my", TO_UNLIMITED, to_pipe_move_pnt_mode, GED_FUNC_PTR_NULL},
-#ifdef HAVE_GL_GL_H
     {"pix",	"file", TO_UNLIMITED, to_pix, GED_FUNC_PTR_NULL},
     {"png",	"file", TO_UNLIMITED, to_png, GED_FUNC_PTR_NULL},
-#endif
     {"poly_circ_mode",	"x y", TO_UNLIMITED, to_poly_circ_mode, GED_FUNC_PTR_NULL},
     {"poly_cont_build",	"x y", TO_UNLIMITED, to_poly_cont_build, GED_FUNC_PTR_NULL},
     {"poly_cont_build_end",	"y", TO_UNLIMITED, to_poly_cont_build_end, GED_FUNC_PTR_NULL},
@@ -955,7 +952,7 @@ struct to_cmdtab to_cmds[] = {
  * @brief create the Tcl command for to_open
  *
  */
-int
+TCLCAD_EXPORT int
 Ged_Init(Tcl_Interp *interp)
 {
 
@@ -4786,7 +4783,6 @@ to_paint_rect_area(struct ged *gedp,
 }
 
 
-#ifdef HAVE_GL_GL_H
 static int
 to_pix(struct ged *gedp,
 	int argc,
@@ -4973,8 +4969,6 @@ to_png(struct ged *gedp,
 
     return BRLCAD_OK;
 }
-#endif
-
 
 static int
 to_rect_mode(struct ged *gedp,
@@ -5193,7 +5187,7 @@ to_deleteProc_rt(ClientData clientData)
     rtip = ap->a_rt_i;
     RT_CK_RTI(rtip);
 
-    rt_free_rti(rtip);
+    rt_i_destroy(rtip);
     ap->a_rt_i = (struct rt_i *)NULL;
 
     bu_free((void *)ap, "struct application");
@@ -6521,7 +6515,7 @@ to_rt_gettrees_application(struct ged *gedp,
 	return RT_APPLICATION_NULL;
     }
 
-    rtip = rt_new_rti(gedp->dbip);
+    rtip = rt_i_create(gedp->dbip);
 
     while (0 < argc && argv[0][0] == '-') {
 	if (BU_STR_EQUAL(argv[0], "-i")) {
@@ -6541,7 +6535,7 @@ to_rt_gettrees_application(struct ged *gedp,
 
     if (rt_gettrees(rtip, argc, (const char **)&argv[0], 1) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "rt_gettrees() returned error");
-	rt_free_rti(rtip);
+	rt_i_destroy(rtip);
 	return RT_APPLICATION_NULL;
     }
 

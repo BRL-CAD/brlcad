@@ -1,7 +1,7 @@
 /*                 R E N D E R H A N D L E R . H
  * BRL-CAD
  *
- * Copyright (c) 2023-2025 United States Government as represented by
+ * Copyright (c) 2023-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -110,6 +110,7 @@ public:
     void initCoordinates(int secWidth, int secHeight, double modelLength, double modelDepth, double modelHeight);
 
     std::vector<int> getCoordinates(int mapIndex);
+    bool centerAmbientImage();
 
     int getMapSize();
     char getMapChar(int index);

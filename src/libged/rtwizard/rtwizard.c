@@ -1,7 +1,7 @@
 /*                         R T W I Z A R D . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,6 +34,7 @@
 
 #include "bu/app.h"
 #include "bu/process.h"
+#include "bu/str.h"
 
 
 #include "../ged_private.h"
@@ -44,7 +45,9 @@ _ged_run_rtwizard(struct ged *gedp, int cmd_len, const char **gd_rt_cmd)
     struct ged_subprocess *run_rtp;
     struct bu_process *p;
 
-    bu_process_create(&p, (const char **)gd_rt_cmd, BU_PROCESS_DEFAULT);
+    /* rtwizard reports progress on stderr, but merging also prevents an
+     * unobserved stdout pipe from filling while the event loop watches it. */
+    bu_process_create(&p, (const char **)gd_rt_cmd, BU_PROCESS_OUT_EQ_ERR);
 
     if (bu_process_pid(p) == -1) {
 	bu_vls_printf(gedp->ged_result_str, "\nunable to successfully launch subprocess: ");
@@ -90,6 +93,7 @@ ged_rtwizard_core(struct ged *gedp, int argc, const char *argv[])
     char **gd_rt_cmd = NULL;
     int gd_rt_cmd_len = 0;
     int ret = BRLCAD_OK;
+    int default_objs = 1;
 
     const char *bin;
     char rtscript[256] = {0};
@@ -102,12 +106,32 @@ ged_rtwizard_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
+    /* Unlike the standalone application, a libged invocation has a natural
+     * object default: the geometry in the active view.  Explicit role lists
+     * continue to take precedence. */
+    for (i = 1; i < argc; i++) {
+	if (BU_STR_EQUAL(argv[i], "-c") || BU_STR_EQUAL(argv[i], "--color-objects") ||
+	    BU_STR_EQUAL(argv[i], "-l") || BU_STR_EQUAL(argv[i], "--line-objects") ||
+	    BU_STR_EQUAL(argv[i], "-g") || BU_STR_EQUAL(argv[i], "--ghost-objects") ||
+	    bu_strncmp(argv[i], "--color-objects=", 16) == 0 ||
+	    bu_strncmp(argv[i], "--line-objects=", 15) == 0 ||
+	    bu_strncmp(argv[i], "--ghost-objects=", 16) == 0) {
+	    default_objs = 0;
+	    break;
+	}
+    }
+
+    if (default_objs && !ged_who_argc(gedp)) {
+	bu_vls_printf(gedp->ged_result_str, "no objects displayed\n");
+	return BRLCAD_ERROR;
+    }
+
     if (gedp->ged_gvp->gv_perspective > 0)
 	/* rtwizard --no_gui -perspective p -i db.g --viewsize size --orientation "A B C D" --eye_pt "X Y Z" */
-	args = argc + 1 + 1 + 1 + 2 + 2 + 2 + 2 + 2;
+	args = argc + 1 + 1 + 1 + 2 + 2 + 2 + 2 + 2 + (default_objs ? (int)ged_who_argc(gedp) : 0);
     else
 	/* rtwizard --no_gui -i db.g --viewsize size --orientation "A B C D" --eye_pt "X Y Z" */
-	args = argc + 1 + 1 + 1 + 2 + 2 + 2 + 2;
+	args = argc + 1 + 1 + 1 + 2 + 2 + 2 + 2 + (default_objs ? (int)ged_who_argc(gedp) : 0);
 
     gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
 
@@ -147,6 +171,11 @@ ged_rtwizard_core(struct ged *gedp, int argc, const char *argv[])
     /* Append all args */
     for (i = 1; i < argc; i++)
 	*vp++ = (char *)argv[i];
+
+    if (default_objs) {
+	int objcnt = ged_who_argv(gedp, vp, (const char **)&gd_rt_cmd[args]);
+	vp += objcnt;
+    }
     *vp = 0;
 
     /*
@@ -172,24 +201,13 @@ ged_rtwizard_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl rtwizard_cmd_impl = {
-    "rtwizard",
-    ged_rtwizard_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd rtwizard_cmd = { &rtwizard_cmd_impl };
-const struct ged_cmd *rtwizard_cmds[] = { &rtwizard_cmd, NULL };
+#define GED_RTWIZARD_COMMANDS(X, XID) \
+    X(rtwizard, ged_rtwizard_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  rtwizard_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_RTWIZARD_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_rtwizard", 1, GED_RTWIZARD_COMMANDS)
 
 /*
  * Local Variables:

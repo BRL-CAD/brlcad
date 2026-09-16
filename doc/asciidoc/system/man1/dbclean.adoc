@@ -1,0 +1,65 @@
+= DBCLEAN(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+dbclean - compact an mged database by removing dead space
+
+== SYNOPSIS
+
+[source]
+----
+dbclean in_model.g out_model.g
+----
+
+[[description]]
+== DESCRIPTION
+
+*dbclean* compacts the input database _in_model.g_ by converting it
+to ASCII via *g2asc*(1) and back to binary via *asc2g*(1), writing
+the result to _out_model.g_. This removes gaps left by the
+*kill*/*killall* commands in *mged*(1).
+
+If either converter skips objects it cannot handle, the conversion
+still completes and _out_model.g_ is written without those objects.
+
+[[examples]]
+== EXAMPLES
+
+.Compact a database to reclaim dead space
+====
+[source,bash]
+----
+$ dbclean original.g compacted.g
+----
+Reads `original.g`, removes internal gaps, and writes a smaller
+`compacted.g`.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*mged*(1), *g2asc*(1), *asc2g*(1)
+
+[[diagnostics]]
+== DIAGNOSTICS
+
+Numerous error conditions are possible, usually due to errors in
+the geometry database. Descriptive messages are printed on standard
+error (file descriptor 2).
+
+[[author]]
+== AUTHOR
+
+*BRL-CAD Team*
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1991-2026 United States Government as represented by the U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

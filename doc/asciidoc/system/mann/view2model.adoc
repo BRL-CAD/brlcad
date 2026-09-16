@@ -1,0 +1,57 @@
+= VIEW2MODEL(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+view2model - convert view xyz to model coordinates (vec)
+
+== SYNOPSIS
+
+[source]
+----
+view2model
+----
+
+[[description]]
+== DESCRIPTION
+
+The *view2model* command returns the current view-to-model transformation matrix (`gv_view2model`) as a 16-element space-separated floating-point string (encoded by `bn_encode_mat`). The matrix transforms points from normalized view space into model space (in millimeters).
+
+This command takes no arguments. It is a pure matrix accessor — it does not perform a point transformation. To convert an individual point from view space to model space with local-unit scaling, use `v2m_point` (normalized) or `view2model_lu` (local units).
+
+The matrix returned is the mathematical inverse of the `model2view` matrix. Together they define the current view orientation and zoom in BRL-CAD's view system.
+
+[[examples]]
+== EXAMPLES
+
+.Retrieve the current view-to-model matrix
+[example]
+====
+mged> **view2model**
+
+Returns the 16-element view-to-model matrix, for example:
+
+`1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1`
+
+(when the view is in the default front-facing orientation with no rotation.)
+====
+
+.Capture the matrix for scripting
+[example]
+====
+mged> **set v2m [view2model]**
+mged> **mat4x3pnt $v2m "0 0 0"**
+
+Retrieves the current view-to-model matrix and then applies it to the view origin (0, 0, 0) via `mat4x3pnt`, yielding the model-space position of the view center.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

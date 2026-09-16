@@ -1,7 +1,7 @@
 /*                          C L I P . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2025 United States Government as represented by
+ * Copyright (c) 2004-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,7 +32,7 @@
    #define ANGLE_EPSILON 0.0001
    #define CLIP_DISTANCE 1000000000.0
 */
-#define EPSILON 0.0001
+#define CLIP_EPSILON 0.0001
 #define CLIP_DISTANCE 100000000.0
 
 static int
@@ -111,7 +111,7 @@ bg_lseg_clip(fastf_t *xp1, fastf_t *yp1, fastf_t *xp2, fastf_t *yp2, fastf_t cli
 
 
 int
-bg_ray_vclip(point_t a, point_t b, fastf_t *min_pt, fastf_t *max_pt)
+bg_ray_vclip(point_t a, point_t b, const fastf_t *min_pt, const fastf_t *max_pt)
 {
     static vect_t diff;
     static double sv;
@@ -126,7 +126,7 @@ bg_ray_vclip(point_t a, point_t b, fastf_t *min_pt, fastf_t *max_pt)
     VSUB2(diff, b, a);
 
     for (i = 0; i < 3; i++, pt++, dir++, max_pt++, min_pt++) {
-	if (*dir < -EPSILON) {
+	if (*dir < -CLIP_EPSILON) {
 	    sv = (*min_pt - *pt) / *dir;
 	    if (sv < 0.0)
 		return 0;       /* MISS */
@@ -135,7 +135,7 @@ bg_ray_vclip(point_t a, point_t b, fastf_t *min_pt, fastf_t *max_pt)
 	    V_MAX(mindist, st);
 	    V_MIN(maxdist, sv);
 
-	}  else if (*dir > EPSILON) {
+	}  else if (*dir > CLIP_EPSILON) {
 	    st = (*max_pt - *pt) / *dir;
 	    if (st < 0.0)
 		return 0;       /* MISS */

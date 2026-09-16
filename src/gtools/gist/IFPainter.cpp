@@ -1,7 +1,7 @@
 /*                   I F P A I N T E R . C P P
  * BRL-CAD
  *
- * Copyright (c) 2023-2025 United States Government as represented by
+ * Copyright (c) 2023-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,12 +39,22 @@ IFPainter::~IFPainter()
 std::pair<int, int>
 IFPainter::getCroppedImageDims(std::string imgPath)
 {
+    if (imgPath.empty()) {
+	return std::pair<int, int>(0, 0);
+    }
+
     cv::Mat imageRaw = imread(imgPath, cv::IMREAD_UNCHANGED); // Load color image
+    if (imageRaw.empty()) {
+	return std::pair<int, int>(0, 0);
+    }
     // Convert the image to grayscale for creating the mask
     cv::Mat gray_image;
     cv::cvtColor(imageRaw, gray_image, cv::COLOR_BGR2GRAY);
     // Create a mask of non-white pixels
     cv::Mat mask = gray_image < 255;
+    if (cv::countNonZero(mask) == 0) {
+	return std::pair<int, int>(0, 0);
+    }
     // Find the bounding rectangle of non-white pixels
     cv::Rect bounding_rect = boundingRect(mask);
     // Crop the image to the bounding rectangle
@@ -60,7 +70,14 @@ IFPainter::getCroppedImageDims(std::string imgPath)
 void
 IFPainter::drawImage(int x, int y, int width, int height, std::string imgPath)
 {
+    if (imgPath.empty()) {
+	return;
+    }
+
     cv::Mat lilImage = imread(imgPath, cv::IMREAD_UNCHANGED);
+    if (lilImage.empty()) {
+	return;
+    }
     cv::Mat resized_image;
     resize(lilImage, resized_image, cv::Size(width, height), cv::INTER_LINEAR);
 
@@ -78,6 +95,10 @@ IFPainter::drawImage(int x, int y, int width, int height, std::string imgPath)
 void
 IFPainter::drawTransparentImage(int x, int y, int width, int height, std::string imgPath, int threshold)
 {
+    if (imgPath.empty()) {
+	return;
+    }
+
     cv::Mat imageRaw = cv::imread(imgPath, cv::IMREAD_UNCHANGED);
     if (imageRaw.empty()) {
 	// read error
@@ -91,6 +112,9 @@ IFPainter::drawTransparentImage(int x, int y, int width, int height, std::string
     // threshold gray image to create mask
     cv::Mat mask;
     cv::threshold(gray_image, mask, threshold, 255, cv::THRESH_BINARY_INV);
+    if (cv::countNonZero(mask) == 0) {
+	return;
+    }
 
     // if image doesn't have alpha, manually try to mask out background
     cv::Mat alphaRaw(imageRaw.rows, imageRaw.cols, CV_8UC4);
@@ -159,12 +183,22 @@ IFPainter::drawTransparentImage(int x, int y, int width, int height, std::string
 void
 IFPainter::drawImageFitted(int x, int y, int width, int height, std::string imgPath)
 {
+    if (imgPath.empty()) {
+	return;
+    }
+
     cv::Mat imageRaw = imread(imgPath, cv::IMREAD_UNCHANGED); // Load color image
+    if (imageRaw.empty()) {
+	return;
+    }
     // Convert the image to grayscale for creating the mask
     cv::Mat gray_image;
     cv::cvtColor(imageRaw, gray_image, cv::COLOR_BGR2GRAY);
     // Create a mask of non-white pixels
     cv::Mat mask = gray_image < 255;
+    if (cv::countNonZero(mask) == 0) {
+	return;
+    }
     // Find the bounding rectangle of non-white pixels
     cv::Rect bounding_rect = boundingRect(mask);
     // Crop the image to the bounding rectangle
@@ -213,16 +247,48 @@ IFPainter::drawImageTransparentFitted(int x, int y, int width, int height, std::
 }
 
 int
-IFPainter::drawDiagramFitted(int x, int y, int width, int height, std::string imgPath, std::string text)
+IFPainter::getFontSizeFromHeight(int height)
 {
+    if (heightToFontSizeMap.find(height) != heightToFontSizeMap.end()) {
+	return heightToFontSizeMap[height];
+    }
+
+    int fontSize = 1;
+    while (getTextSize("I", cv::FONT_HERSHEY_DUPLEX, fontSize, standardTextWeight, 0).height < height) {
+	fontSize++;
+    }
+    fontSize--;
+
+    heightToFontSizeMap[height] = fontSize;
+    return fontSize;
+}
+
+int
+IFPainter::drawDiagramFitted(int x, int y, int width, int height, std::string imgPath, std::string text, bool centerImage)
+{
+    const int titleHeight = 50;
+    const double maxTitleFontShrinkFrac = 0.10;
+    const double titleFontShrinkStepFrac = 0.025;
+    const int titleWidth = width;
+    const int titleCenterX = x + titleWidth / 2;
     y += 65;
     height -= 65;
+    if (imgPath.empty()) {
+	return static_cast<int>(text.length());
+    }
+
     cv::Mat imageRaw = imread(imgPath, cv::IMREAD_UNCHANGED); // Load color image
+    if (imageRaw.empty()) {
+	return static_cast<int>(text.length());
+    }
     // Convert the image to grayscale for creating the mask
     cv::Mat gray_image;
     cv::cvtColor(imageRaw, gray_image, cv::COLOR_BGR2GRAY);
     // Create a mask of non-white pixels
     cv::Mat mask = gray_image < 255;
+    if (cv::countNonZero(mask) == 0) {
+	return static_cast<int>(text.length());
+    }
     // Find the bounding rectangle of non-white pixels
     cv::Rect bounding_rect = boundingRect(mask);
     // Crop the image to the bounding rectangle
@@ -243,10 +309,11 @@ IFPainter::drawDiagramFitted(int x, int y, int width, int height, std::string im
 	// image height is too large; bound on height
 	int newWidth = (int)(height * (double)imgWidth / imgHeight);
 	widthOffset = (width - newWidth) / 2;
-	widthOffset /= 2.5;
+	if (!centerImage) {
+	    widthOffset /= 2.5;
+	}
 	width = newWidth;
     }
-
     cv::Mat resized_image;
     resize(lilImage, resized_image, cv::Size(width, height), cv::INTER_LINEAR);
 
@@ -260,26 +327,54 @@ IFPainter::drawDiagramFitted(int x, int y, int width, int height, std::string im
     }
     resized_image.copyTo(destRoi);
 
-    // truncate title until it fits on line
-    int countCharDisplayedText = text.length();
-    getTextWidth(50, width, text, TO_BOLD); // needed for while loop to run correctly
-    while (getTextWidth(50, width, text, TO_BOLD) > width) {
-	if ((size_t)countCharDisplayedText == text.length()) {
-	    text = text + " ...";
+    double titleFontSize = static_cast<double>(getFontSizeFromHeight(titleHeight));
+    auto titlePixelWidth = [&](double fontSize, const std::string& titleText) {
+	return getTextSize(titleText, cv::FONT_HERSHEY_DUPLEX, fontSize, boldTextWeight, 0).width;
+    };
+
+    bool fitsWithNudge = false;
+    double nudgedFontSize = titleFontSize;
+    for (double shrinkFrac = 0.0; shrinkFrac <= maxTitleFontShrinkFrac + 0.001; shrinkFrac += titleFontShrinkStepFrac) {
+	double candidateFontSize = titleFontSize * (1.0 - shrinkFrac);
+	if (candidateFontSize <= 0.0) {
+	    break;
 	}
-	if (text.length() >= 5) {
-	    text.erase(text.length() - 5, 1);
-	    countCharDisplayedText--;
-	}
-	while (text.length() >= 5 && text[text.length() - 5] == ' ') {
-	    // Remove the fifth-to-last character (if it is a space)
-	    text.erase(text.length() - 5, 1);
-	    countCharDisplayedText--;
+	if (titlePixelWidth(candidateFontSize, text) <= titleWidth) {
+	    fitsWithNudge = true;
+	    nudgedFontSize = candidateFontSize;
+	    break;
 	}
     }
+
+    std::string titleText = text;
+    int countCharDisplayedText = text.length();
+    if (!fitsWithNudge) {
+	while (titlePixelWidth(titleFontSize, titleText) > titleWidth) {
+	    if ((size_t)countCharDisplayedText == text.length()) {
+		titleText = text + " ...";
+	    }
+	    if (titleText.length() >= 5) {
+		titleText.erase(titleText.length() - 5, 1);
+		countCharDisplayedText--;
+	    }
+	    while (titleText.length() >= 5 && titleText[titleText.length() - 5] == ' ') {
+		titleText.erase(titleText.length() - 5, 1);
+		countCharDisplayedText--;
+	    }
+	}
+	nudgedFontSize = titleFontSize;
+    }
+
     // now, draw text and line
-    this->drawLine(x + widthOffset, y + heightOffset - 5, x + widthOffset + width, y + heightOffset - 5, 5, cv::Scalar(0, 0, 0));
-    this->drawTextCentered(x + widthOffset + width / 2, y + heightOffset - 65, 50, width, text, TO_BOLD);
+    this->drawLine(x, y + heightOffset - 5, x + titleWidth, y + heightOffset - 5, 5, cv::Scalar(0, 0, 0));
+    int centeredTextWidth = titlePixelWidth(nudgedFontSize, titleText);
+    cv::putText(img,
+		titleText,
+		cv::Point(titleCenterX - centeredTextWidth / 2, y + heightOffset - 65 + titleHeight),
+		cv::FONT_HERSHEY_DUPLEX,
+		nudgedFontSize,
+		cv::Scalar(0, 0, 0),
+		boldTextWeight);
 
     return countCharDisplayedText;
 }
@@ -295,19 +390,16 @@ IFPainter::getTextWidth(int height, int width, std::string text, int flags)
 }
 
 int
+IFPainter::getTextWidthAtScale(double fontScale, std::string text, int flags)
+{
+    int fontWeight = (flags & TO_BOLD) ? boldTextWeight : standardTextWeight;
+    return getTextSize(text, cv::FONT_HERSHEY_DUPLEX, fontScale, fontWeight, 0).width;
+}
+
+int
 IFPainter::getFontSizeFromHeightAndWidth(int height, int width, std::string text)
 {
-    if (heightToFontSizeMap.find(height) != heightToFontSizeMap.end()) {
-	return heightToFontSizeMap[height];
-    }
-
-    int fontSize = 1;
-    while (getTextSize("I", cv::FONT_HERSHEY_DUPLEX, fontSize, standardTextWeight, 0).height < height) {
-	fontSize++;
-    }
-    fontSize--;
-
-    heightToFontSizeMap[height] = fontSize;
+    int fontSize = getFontSizeFromHeight(height);
     while (getTextSize(text, cv::FONT_HERSHEY_DUPLEX, fontSize, standardTextWeight, 0).width > width) {
 	fontSize--;
     }
@@ -346,6 +438,14 @@ IFPainter::drawText(int x, int y, int height, int width, std::string text, int f
 	// Draw the line using the same color as the text
 	cv::line(img, cv::Point(underlineX1, underlineY), cv::Point(underlineX2, underlineY), color, 1);
     }
+}
+
+void
+IFPainter::drawTextAtScale(int x, int baselineY, double fontScale, std::string text, int flags)
+{
+    int fontWeight = (flags & TO_BOLD) ? boldTextWeight : standardTextWeight;
+    cv::Scalar color = (flags & TO_WHITE) ? cv::Scalar(255, 255, 255) : (flags & TO_BLUE ? cv::Scalar(160, 0, 0) : cv::Scalar(0, 0, 0));
+    cv::putText(img, text, cv::Point(x, baselineY), cv::FONT_HERSHEY_DUPLEX, fontScale, color, fontWeight);
 }
 
 void
@@ -428,12 +528,15 @@ IFPainter::drawTextRightAligned(int x, int y, int height, int width, std::string
  * how many words there are
  */
 int
-IFPainter::justify(int x, int y, int height, int width, std::vector<std::string> text, int flags)
+IFPainter::justify(int x, int y, int height, int width, std::vector<std::string> text, int flags, std::string suffix, double suffixFontScale)
 {
     int totalTextWidth = 0;
     for (size_t i = 0; i < text.size(); i++) {
 	totalTextWidth += getTextWidth(height, width, text[i], flags);
     }
+    bool hasSuffix = !suffix.empty() && suffixFontScale > 0.0;
+    int suffixWidth = hasSuffix ? getTextWidthAtScale(suffixFontScale, suffix, flags & ~TO_BOLD) : 0;
+    totalTextWidth += suffixWidth;
     if (totalTextWidth >= width) {
 	throw std::invalid_argument("Text is larger than the bounding box");
 	return -1;
@@ -445,7 +548,12 @@ IFPainter::justify(int x, int y, int height, int width, std::vector<std::string>
     for (size_t i = 0; i < text.size(); i++) {
 	int fontSize = getFontSizeFromHeightAndWidth(height, width, text[i]);
 	cv::putText(img, text[i], cv::Point(xPosition, y + height), cv::FONT_HERSHEY_DUPLEX, fontSize, color, fontWeight);
-	xPosition += spacing + getTextWidth(height, width, text[i], flags);
+	xPosition += getTextWidth(height, width, text[i], flags);
+	if (hasSuffix && i == text.size() - 1) {
+	    drawTextAtScale(xPosition, y + height, suffixFontScale, suffix, flags & ~TO_BOLD);
+	    xPosition += suffixWidth;
+	}
+	xPosition += spacing;
     }
     return xPosition-spacing;	//end of text xPosition
 }
@@ -459,7 +567,7 @@ IFPainter::justify(int x, int y, int height, int width, std::vector<std::string>
  * between the words.
  */
 void
-IFPainter::justifyWithCenterWord(int UNUSED(x), int y, int height, int width, std::string centerWord, std::vector<std::string> leftText, std::vector<std::string> rightText, int flags)
+IFPainter::justifyWithCenterWord(int UNUSED(x), int y, int height, int width, std::string centerWord, std::vector<std::string> leftText, std::vector<std::string> rightText, int flags, std::string suffix, double suffixFontScale)
 {
     int confidentialWidth = getTextWidth(height, width, centerWord, flags | TO_BOLD);
     drawTextCentered(width / 2, y, height, width, centerWord, flags | TO_BOLD);
@@ -468,9 +576,12 @@ IFPainter::justifyWithCenterWord(int UNUSED(x), int y, int height, int width, st
 	totalLeftWidth += getTextWidth(height, width, leftText[i], flags);
     }
     int totalRightWidth = 0;
-    for (size_t i = 0; i < leftText.size(); i++) {
+    for (size_t i = 0; i < rightText.size(); i++) {
 	totalRightWidth += getTextWidth(height, width, rightText[i], flags);
     }
+    bool hasSuffix = !suffix.empty() && suffixFontScale > 0.0;
+    int suffixWidth = hasSuffix ? getTextWidthAtScale(suffixFontScale, suffix, flags & ~TO_BOLD) : 0;
+    totalRightWidth += suffixWidth;
     if (totalLeftWidth >= (width / 2) - (confidentialWidth / 2) || totalRightWidth >= (width / 2) - (confidentialWidth / 2)) {
 	throw std::invalid_argument("Text is larger than either the left or right side");
 	return;
@@ -497,7 +608,12 @@ IFPainter::justifyWithCenterWord(int UNUSED(x), int y, int height, int width, st
     for (size_t i = 0; i < rightText.size(); i++) {
 	int fontSize = getFontSizeFromHeightAndWidth(height, width, rightText[i]);
 	cv::putText(img, rightText[i], cv::Point(xPosition, y + height), cv::FONT_HERSHEY_DUPLEX, fontSize, color, fontWeight);
-	xPosition = xPosition + spacing + getTextWidth(height, width, rightText[i], flags);
+	xPosition += getTextWidth(height, width, rightText[i], flags);
+	if (hasSuffix && i == rightText.size() - 1) {
+	    drawTextAtScale(xPosition, y + height, suffixFontScale, suffix, flags & ~TO_BOLD);
+	    xPosition += suffixWidth;
+	}
+	xPosition += spacing;
     }
 }
 
@@ -614,6 +730,19 @@ IFPainter::drawCirc(int x, int y, int radius, int width, cv::Scalar color)
 // }
 
 void
+IFPainter::scaleTo(int width, int height)
+{
+    if (width <= 0 || height <= 0 || (width == img.cols && height == img.rows)) {
+	return;
+    }
+
+    cv::Mat scaled;
+    const int interpolation = (width < img.cols || height < img.rows) ? cv::INTER_AREA : cv::INTER_CUBIC;
+    cv::resize(img, scaled, cv::Size(width, height), 0.0, 0.0, interpolation);
+    img = scaled;
+}
+
+void
 IFPainter::openInGUI()
 {
     cv::String win_name("Report Preview");
@@ -644,4 +773,3 @@ IFPainter::exportToFile(std::string filePath)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

@@ -1,7 +1,7 @@
 /*                      C H G M O D E L . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2025 United States Government as represented by
+ * Copyright (c) 1985-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,7 +27,6 @@
 
 #include "common.h"
 
-#include <signal.h>
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
@@ -106,7 +105,8 @@ f_make(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	av[2] = argv[argc-2];
 	av[3] = NULL;
 	edit_com(s, 3, av);
-    } else {
+    } else if (ret != GED_HELP) {
+	/* not OK and not help */
 	return TCL_ERROR;
     }
 
@@ -184,6 +184,15 @@ f_rot_obj(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 
     int iflag = 0;
     vect_t argvect;
+
+    /* "rotobj" is a deprecated synonym for "orot"; warn once per session */
+    if (argc > 0 && BU_STR_EQUAL(argv[0], "rotobj")) {
+	static int rotobj_warned = 0;
+	if (!rotobj_warned) {
+	    bu_log("DEPRECATION WARNING: command 'rotobj' is deprecated; please use 'rot' instead.\n");
+	    rotobj_warned = 1;
+	}
+    }
 
     CHECK_DBI_NULL;
     CHECK_READ_ONLY;

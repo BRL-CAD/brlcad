@@ -1,0 +1,72 @@
+= PIX2ASC(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+pix2asc - encode a binary color pixel file as portable ASCII
+
+== SYNOPSIS
+
+[source]
+----
+pix2asc < file.pix > file.asc
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*pix2asc* is a simple filter that converts a color *pix*(5) file from its
+binary form into a portable ASCII form. It reads the binary image from
+standard input and writes the ASCII representation to standard output.
+The companion tool *asc2pix*(1) performs the reverse conversion.
+
+The binary input consists of a sequence of three-byte tuples of unsigned
+chars representing the red, green, and blue intensities of each pixel. The
+ASCII output has one RGB pixel per newline-terminated line, with each pixel
+written as six uppercase hexadecimal digits (two per color channel).
+
+This conversion is useful when transporting images to non-UNIX machines
+where a raw byte stream may not survive intact.
+
+*pix2asc* takes no options.
+
+[[examples]]
+== EXAMPLES
+
+.Convert a rendered image to ASCII for safe transport
+====
+[source,bash]
+----
+rt -s 512 -o moss.pix moss.g all.g
+pix2asc < moss.pix > moss.asc
+----
+Render a 512x512 image of the _all.g_ object with *rt*(1), then encode the
+resulting binary *pix*(5) file as ASCII so it can be safely moved across
+systems that might corrupt a raw byte stream. Restore the binary image
+later with `asc2pix < moss.asc > moss.pix`.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *asc2pix*(1), *rt*(1), *pix*(5), *bw*(5)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

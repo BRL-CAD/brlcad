@@ -1,7 +1,7 @@
 /*                      E X T R U D E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2020-2025 United States Government as represented by
+ * Copyright (c) 2020-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -49,7 +49,7 @@
 
 extern "C" {
 #include "vmath.h"
-#include "bu/time.h"
+#include "bu/datetime.h"
 #include "bg/trimesh.h"
 #include "brep.h"
 #include "rt/primitives/bot.h"
@@ -255,7 +255,7 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
 	    }
 	}
 
-	if (rt_db_put_internal(dp, gb->gedp->dbip, &intern, &rt_uniresource) < 0) {
+	if (rt_db_put_internal(dp, gb->gedp->dbip, &intern) < 0) {
 	    if (!quiet_mode)
 		bu_vls_printf(gb->gedp->ged_result_str, "Failed to write out new BoT %s", rname);
 	    return BRLCAD_ERROR;

@@ -1,7 +1,7 @@
 /*                             A R T . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2025 United States Government as represented by
+ * Copyright (c) 2004-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -121,7 +121,7 @@ public:
 	const asf::Ray3d& obj_inst_ray,
 	asf::Vector3d& obj_inst_front_point,
 	asf::Vector3d& obj_inst_back_point,
-	asf::Vector3d& obj_inst_geo_normal) const;
+	asf::Vector3d& obj_inst_geo_normal) const override;
 
 private:
     /* Object attributes */

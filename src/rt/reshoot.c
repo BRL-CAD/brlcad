@@ -1,7 +1,7 @@
 /*                       R E S H O O T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2025 United States Government as represented by
+ * Copyright (c) 2004-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -62,7 +62,7 @@
  * where the line beginning with "region" may be repeated any number of times, representing each
  * region encountered along the ray.
  * now run this program as follows: @verbatim
- reshoot geom.g obj [obj...] < inputfile
+ reshoot geom.g [obj...] < inputfile
  @endverbatim
  * and this  will re-shoot all of the rays that the original program
  * shot, and compare the results.
@@ -91,7 +91,7 @@
 #include "./rtuif.h"
 
 
-char *progname = "(noname)";
+const char *progname = "(noname)";
 
 /**
  * @struct shot
@@ -138,10 +138,10 @@ static const struct bu_structparse reg_sp[] = {
 
 
 void
-usage(char *s)
+usage(const char *s)
 {
     if (s) (void)fputs(s, stderr);
-    bu_exit(1, "Usage: %s geom.g obj [obj...] < rayfile \n", progname);
+    bu_exit(1, "Usage: %s geom.g [obj...] < rayfile \n", progname);
 }
 
 
@@ -156,7 +156,7 @@ usage(char *s)
  *	integer value, typically 1.  This value becomes the return value to rtshootray()
  */
 int
-hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs))
+r_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs))
 {
     /* see raytrace.h for all of these guys */
     register struct partition *pp;
@@ -245,7 +245,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
  *	Typically 0, and becomes the return value from rt_shootray()
  */
 int
-miss(register struct application *UNUSED(ap))
+r_miss(register struct application *UNUSED(ap))
 {
     return 0;
 }
@@ -285,8 +285,8 @@ do_shot(struct shot *sh, struct application *ap)
     VMOVE(ap->a_ray.r_dir, sh->dir);
     ap->a_uptr = (void *)sh;
 
-    ap->a_hit = hit;
-    ap->a_miss = miss;
+    ap->a_hit = r_hit;
+    ap->a_miss = r_miss;
     status = rt_shootray( ap );	/* do it */
 
     /* clean up */
@@ -317,11 +317,15 @@ main(int argc, char **argv)
     int status = 0;
     struct bu_vls buf = BU_VLS_INIT_ZERO;
     struct shot sh;
+    const char *default_objv[2] = {NULL, NULL};
+    const char **tree_argv = (const char **)argv + 2;
+    int tree_argc = argc - 2;
+    int i;
 
     bu_setprogname(argv[0]);
     progname = argv[0];
 
-    if (argc < 3) {
+    if (argc < 2) {
 	usage("insufficient args\n");
     }
 
@@ -341,15 +345,32 @@ main(int argc, char **argv)
 
     ap.a_rt_i = rtip;	/* your application uses this instance */
 
+    if (tree_argc <= 0) {
+	struct bu_vls msg = BU_VLS_INIT_ZERO;
+	struct directory *dp = RT_DIR_NULL;
+	int ret = db_default_object(rtip->rti_dbip, &dp, &msg);
+
+	if (ret == 1) {
+	    default_objv[0] = dp->d_namep;
+	    tree_argv = default_objv;
+	    tree_argc = 1;
+	} else {
+	    if (bu_vls_strlen(&msg))
+		bu_log("%s", bu_vls_cstr(&msg));
+	    bu_vls_free(&msg);
+	    rt_i_destroy(rtip);
+	    bu_exit(1, "reshoot: no objects specified\n");
+	}
+	bu_vls_free(&msg);
+    }
+
     /* Walk trees.
      * Here you identify any object trees in the database that you
      * want included in the ray trace.
      */
-    while (argc > 2) {
-	if ( rt_gettree(rtip, argv[2]) < 0 )
-	    fprintf(stderr, "rt_gettree(%s) FAILED\n", argv[0]);
-	argc--;
-	argv++;
+    for (i = 0; i < tree_argc; i++) {
+	if (rt_gettree(rtip, tree_argv[i]) < 0)
+	    fprintf(stderr, "rt_gettree(%s) FAILED\n", tree_argv[i]);
     }
     /*
      * This next call gets the database ready for ray tracing.
@@ -404,7 +425,9 @@ main(int argc, char **argv)
 	}
 	bu_vls_trunc(&buf, 0);
     }
-    status |= do_shot(&sh, &ap);
+    if (BU_LIST_NON_EMPTY(&sh.regions)) {
+	status |= do_shot(&sh, &ap);
+    }
 
 
     return status;

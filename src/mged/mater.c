@@ -1,7 +1,7 @@
 /*                         M A T E R . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2025 United States Government as represented by
+ * Copyright (c) 1985-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -49,7 +49,7 @@
 void
 mged_color_soltab(struct mged_state *s)
 {
-    dl_color_soltab((struct bu_list *)ged_dl(s->gedp));
+    dl_color_soltab((struct bu_list *)ged_dl(s->gedp), s->gedp->dbip);
     s->update_views = 1;		/* re-write control list with new colors */
     dm_set_dirty(DMP, 1);
 }

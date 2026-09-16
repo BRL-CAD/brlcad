@@ -1,7 +1,7 @@
 #                     C M A K E L I S T S . T X T
 # BRL-CAD
 #
-# Copyright (c) 2010-2025 United States Government as represented by
+# Copyright (c) 2010-2026 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -231,7 +231,7 @@ set(CMAKE_FIND_USE_PACKAGE_REGISTRY FALSE)
 # Prepare to manage and build BRL-CAD's external dependencies. Specifies a
 # specific commit hash to use in the 'bext' repository.
 include(BRLCAD_ExternalDeps)
-brlcad_bext_init(228201d3e1656981fbef8d4a6cfaff93aa9cb6b0)
+brlcad_bext_init(82945d86be9e9377549cb3a86e6b3184e3e9bbb4)
 
 #---------------------------------------------------------------------
 # Define various utilities.
@@ -288,7 +288,7 @@ include(Path_Setup)
 # For cleaning files as part of the distclean command, CMake needs
 # to be aware of what various generators will (or might) write out
 # in each build directory.
-set(DISTCLEAN_OUTFILES CTestTestfile.cmake Testing/Temporary/CTestCostData.txt Testing/Temporary/LastTest.log)
+set(DISTCLEAN_OUTFILES CTestTestfile.cmake Testing/Temporary/CTestCostData.txt Testing/Temporary/LastTest.log Testing/Temporary/LastTestsFailed.log)
 if("${CMAKE_GENERATOR}" MATCHES "Make")
   set(DISTCLEAN_OUTFILES ${DISTCLEAN_OUTFILES} Makefile)
 endif("${CMAKE_GENERATOR}" MATCHES "Make")
@@ -456,6 +456,12 @@ define_property(
   BRIEF_DOCS "config.h.in contents"
   FULL_DOCS "config.h.in contents for BRL-CAD project"
 )
+define_property(
+  GLOBAL
+  PROPERTY BRLCAD_CONFIG_H_DEFERRED_DEFINES
+  BRIEF_DOCS "Deferred config.h simple #define entries"
+  FULL_DOCS "Simple config.h '#define NAME VALUE' entries to emit in sorted order"
+)
 if(NOT COMMAND CONFIG_H_APPEND)
   function(CONFIG_H_APPEND PROJECT_NAME NEW_CONTENTS)
     if(PROJECT_NAME)
@@ -465,6 +471,12 @@ if(NOT COMMAND CONFIG_H_APPEND)
     endif(PROJECT_NAME)
   endfunction(CONFIG_H_APPEND NEW_CONTENTS)
 endif(NOT COMMAND CONFIG_H_APPEND)
+
+function(brlcad_deferred_define LINE)
+  get_property(_brlcad_deferred_defines GLOBAL PROPERTY BRLCAD_CONFIG_H_DEFERRED_DEFINES)
+  list(APPEND _brlcad_deferred_defines "${LINE}")
+  set_property(GLOBAL PROPERTY BRLCAD_CONFIG_H_DEFERRED_DEFINES "${_brlcad_deferred_defines}")
+endfunction(brlcad_deferred_define)
 
 config_h_append(BRLCAD "/**** Define statements for CMake ****/\n")
 config_h_append(BRLCAD "#if !defined(BRLCADBUILD)\n")
@@ -496,6 +508,18 @@ endif(BRLCAD_PRINT_MSGS)
 
 include(BRLCAD_User_Options)
 
+# The aggregate brlcad shared library is built from object library targets.
+# Enable object libraries even on platforms where they are not the default.
+# cmake_dependent_option sets a plain (non-cache) local variable when its
+# condition is false (e.g. MSVC), which shadows any cache value.  We must
+# explicitly set the plain variable here as well to make the override visible
+# in the current scope and all subdirectory scopes that inherit from it.
+if(BRLCAD_ENABLE_BRLCAD_LIBRARY AND NOT USE_OBJECT_LIBS)
+  set(USE_OBJECT_LIBS ON CACHE BOOL "Use OBJECT libraries" FORCE)
+  set(USE_OBJECT_LIBS ON)
+  set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
+endif()
+
 # global msvc-specific configuration setup
 if("${CMAKE_GENERATOR}" MATCHES "Visual Studio")
   # Auto-reconfiguration - by default, a CMake generated build system
@@ -525,6 +549,10 @@ endif(BRLCAD_PRINT_MSGS)
 # Load various wrapper macros for checking libraries, headers and
 # functions
 include(BRLCAD_CheckFunctions)
+
+# Differential-validation support for the configure probe system (opt-in via
+# BRLCAD_PROBE_SNAPSHOT_FILE - see misc/CMake/probe_validation/).
+include(BRLCAD_Probe_Validation)
 
 # A variety of tools, such as the benchmark utilities, need
 # a Bourne shell and other commands - check for them.
@@ -583,6 +611,48 @@ clear_build_flags()
 set(CMAKE_C_FLAGS "${C_STANDARD_FLAGS}")
 set(CMAKE_CXX_FLAGS "${CXX_STANDARD_FLAGS}")
 
+# Pre-warm the compiler-flag cache with one batched parallel build so the
+# individual check_c_flag/check_cxx_flag calls below resolve from cache instead
+# of each spawning a serial try_compile.  This was previously gated to non-MSVC
+# because the batch judged success by artifact existence alone, which is wrong
+# on MSVC (an unknown flag still compiles, emitting only command-line warning
+# D9002).  _brlcad_run_flag_batch now scans for those diagnostics and matches
+# check_compiler_flag exactly (validated via misc/CMake/probe_validation/), so
+# the batch is safe - and most valuable - on MSVC.
+if(BRLCAD_ENABLE_PARALLEL_CONFIG_PROBES)
+  foreach(_brlcad_early_flag IN ITEMS
+      pipe
+      fvisibility=hidden
+      fno-strict-aliasing
+      fno-common
+      fexceptions
+    )
+    _brlcad_register_flag_probe(C "${_brlcad_early_flag}")
+    _brlcad_register_flag_probe(CXX "${_brlcad_early_flag}")
+  endforeach()
+  _brlcad_register_flag_probe(CXX ftemplate-depth-128)
+
+  if(${CMAKE_WORD_SIZE} MATCHES "64BIT" AND NOT CMAKE_CL_64)
+    foreach(_brlcad_word_flag IN ITEMS m64 "arch x86_64" 64 "mabi=64" q64)
+      _brlcad_register_flag_probe(C "${_brlcad_word_flag}")
+    endforeach()
+  endif()
+  if(${CMAKE_WORD_SIZE} MATCHES "32BIT" AND NOT ${BRLCAD_WORD_SIZE} MATCHES "AUTO")
+    foreach(_brlcad_word_flag IN ITEMS m32 "arch i686" 32 "mabi=32" q32)
+      _brlcad_register_flag_probe(C "${_brlcad_word_flag}")
+    endforeach()
+  endif()
+  if(BRLCAD_DEBUGGING)
+    foreach(_brlcad_debug_flag IN ITEMS g ggdb3)
+      _brlcad_register_flag_probe(C "${_brlcad_debug_flag}")
+      _brlcad_register_flag_probe(CXX "${_brlcad_debug_flag}")
+    endforeach()
+  endif()
+
+  _brlcad_run_flag_batch(C)
+  _brlcad_run_flag_batch(CXX)
+endif()
+
 # try to use -pipe to speed up the compiles
 check_c_flag(pipe)
 check_cxx_flag(pipe)
@@ -603,6 +673,36 @@ if(MSVC)
   set(HIDE_INTERNAL_SYMBOLS 1)
   set(HIDE_INTERNAL_SYMBOLS_EXT 1)
 endif(MSVC)
+
+# Link-time checks used by BRL-CAD library validation.  These must be probed
+# before use so platforms without GNU/LLVM-style linker options are skipped.
+brlcad_check_linker_flag(C "LINKER:--no-undefined" BRLCAD_LINKER_NO_UNDEFINED_C_FLAG_FOUND)
+brlcad_check_linker_flag(CXX "LINKER:--no-undefined" BRLCAD_LINKER_NO_UNDEFINED_CXX_FLAG_FOUND)
+if(BRLCAD_LINKER_NO_UNDEFINED_C_FLAG_FOUND AND BRLCAD_LINKER_NO_UNDEFINED_CXX_FLAG_FOUND)
+  set(BRLCAD_LINKER_NO_UNDEFINED_FLAG "LINKER:--no-undefined" CACHE STRING "Linker flag requiring resolved shared library symbols" FORCE)
+endif()
+brlcad_check_linker_flags(C BRLCAD_LINKER_WHOLE_ARCHIVE_GROUP_C_FLAG_FOUND "LINKER:--whole-archive" "LINKER:--no-whole-archive")
+brlcad_check_linker_flags(CXX BRLCAD_LINKER_WHOLE_ARCHIVE_GROUP_CXX_FLAG_FOUND "LINKER:--whole-archive" "LINKER:--no-whole-archive")
+if(
+  BRLCAD_LINKER_WHOLE_ARCHIVE_GROUP_C_FLAG_FOUND
+  AND BRLCAD_LINKER_WHOLE_ARCHIVE_GROUP_CXX_FLAG_FOUND
+  AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang"
+)
+  # BRL-CAD's minimum CMake version is 3.22; CMake introduced
+  # LINK_LIBRARY:WHOLE_ARCHIVE in 3.24.  The option group is probed with
+  # CMake's LINKER: spelling above, but stored as raw link items so
+  # BRLCAD_ADDLIB can bracket one static archive on an executable link line.
+  # This branch is deliberately guarded to GNU/LLVM drivers, where LINKER:
+  # expands to -Wl, arguments.  When BRL-CAD raises its minimum CMake to 3.24+,
+  # this should be replaced with LINK_LIBRARY:WHOLE_ARCHIVE.
+  set(BRLCAD_LINKER_WHOLE_ARCHIVE_LINK_ITEM "-Wl,--whole-archive" CACHE STRING "Link item enabling whole-archive resolution" FORCE)
+  set(BRLCAD_LINKER_NO_WHOLE_ARCHIVE_LINK_ITEM "-Wl,--no-whole-archive" CACHE STRING "Link item disabling whole-archive resolution" FORCE)
+endif()
+mark_as_advanced(
+  BRLCAD_LINKER_NO_UNDEFINED_FLAG
+  BRLCAD_LINKER_WHOLE_ARCHIVE_LINK_ITEM
+  BRLCAD_LINKER_NO_WHOLE_ARCHIVE_LINK_ITEM
+)
 
 # check for -fno-strict-aliasing
 # XXX - THIS FLAG IS REQUIRED if any level of optimization is
@@ -696,6 +796,7 @@ endif(APPLE AND "${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND "$ENV{MACOSX_DEPLOY
 # the C inline issue - BRL-CAD needs a fine-grained approach.
 # C and C++ sources require different treatment for the same build
 # target, since C++11 doesn't allow inline to be re-defined.
+include(CheckCInline)
 check_c_inline(C_INLINE)
 if(NOT HAVE_INLINE_KEYWORD AND HAVE___INLINE_KEYWORD)
   config_h_append(BRLCAD "#ifndef __cplusplus\n")
@@ -736,159 +837,405 @@ if(ERROR_FLAG)
 endif(ERROR_FLAG)
 
 # Check whether the compiler supports __attribute__((format (__printf__, 1, 2)))
-check_c_source_compiles(
+_brlcad_srccompile_probe(HAVE_PRINTF12_ATTRIBUTE
   "int pf(const char *f, ...) __attribute__((format (__printf__, 1, 2))); int pf(const char *f, ...){return 1;} int main(int argc, char *argv[]) {return pf(\"%c\",'a');}"
-  HAVE_PRINTF12_ATTRIBUTE
 )
-if(HAVE_PRINTF12_ATTRIBUTE)
-  config_h_append(BRLCAD "#define HAVE_PRINTF12_ATTRIBUTE 1\n")
-endif(HAVE_PRINTF12_ATTRIBUTE)
 
 # Check whether the compiler supports __attribute__((format (__printf__, 2, 3)))
-check_c_source_compiles(
+_brlcad_srccompile_probe(HAVE_PRINTF23_ATTRIBUTE
   "int pf(void *o, const char *f, ...) __attribute__((format (__printf__, 2, 3))); int pf(void *o, const char *f, ...){return 1;} int main(int argc, char *argv[]) {return pf((void *)0, \"%c\",'a');}"
-  HAVE_PRINTF23_ATTRIBUTE
 )
-if(HAVE_PRINTF23_ATTRIBUTE)
-  config_h_append(BRLCAD "#define HAVE_PRINTF23_ATTRIBUTE 1\n")
-endif(HAVE_PRINTF23_ATTRIBUTE)
 
 # Check whether the compiler supports __attribute__((format (__scanf__, 2, 3)))
-check_c_source_compiles(
+_brlcad_srccompile_probe(HAVE_SCANF23_ATTRIBUTE
   "int sf(void *o, const char *f, ...) __attribute__((format (__scanf__, 2, 3))); int sf(void *o, const char *f, ...){return 1;} int main(int argc, char *argv[]) {int i = 1; return sf((void *)0, \"%d\", &i);}"
-  HAVE_SCANF23_ATTRIBUTE
 )
-if(HAVE_SCANF23_ATTRIBUTE)
-  config_h_append(BRLCAD "#define HAVE_SCANF23_ATTRIBUTE 1\n")
-endif(HAVE_SCANF23_ATTRIBUTE)
 
 # Check whether the compiler supports __attribute__((deprecated))
-check_c_source_compiles(
+_brlcad_srccompile_probe(HAVE_DEPRECATED_ATTRIBUTE
   "__attribute__((deprecated)) void func(void); void func(void){} void func2(void){} int main(int argc, char *argv[]) {func2(); return 0;}"
-  HAVE_DEPRECATED_ATTRIBUTE
 )
-if(HAVE_DEPRECATED_ATTRIBUTE)
-  config_h_append(BRLCAD "#define HAVE_DEPRECATED_ATTRIBUTE 1\n")
-endif(HAVE_DEPRECATED_ATTRIBUTE)
 
 # Check whether the compiler supports __declspec(deprecated())
-check_c_source_compiles(
+_brlcad_srccompile_probe(HAVE_DEPRECATED_DECLSPEC
   "__declspec(deprecated(\"DEPRECATED\")) void func(void); void func(void){} void func2(void){} int main(int argc, char *argv[]) {func2(); return 0;}"
-  HAVE_DEPRECATED_DECLSPEC
 )
-if(HAVE_DEPRECATED_DECLSPEC)
-  config_h_append(BRLCAD "#define HAVE_DEPRECATED_DECLSPEC 1\n")
-endif(HAVE_DEPRECATED_DECLSPEC)
 
 # Check whether the compiler supports __attribute__((__noreturn__))
-check_c_source_compiles(
+_brlcad_srccompile_probe(HAVE_NORETURN_ATTRIBUTE
   "#include <stdlib.h>
 __attribute__((__noreturn__)) void noret(void); void noret(void){exit(1);} int main(int argc, char *argv[]) {noret(); return 0;}"
-  HAVE_NORETURN_ATTRIBUTE
 )
-if(HAVE_NORETURN_ATTRIBUTE)
-  config_h_append(BRLCAD "#define HAVE_NORETURN_ATTRIBUTE 1\n")
-endif(HAVE_NORETURN_ATTRIBUTE)
 
 # Check whether the compiler supports __declspec(noreturn)
-check_c_source_compiles(
+_brlcad_srccompile_probe(HAVE_NORETURN_DECLSPEC
   "#include <stdlib.h>
 __declspec(noreturn) void noret(void) {exit(1);} int main(int argc, char *argv[]) {noret(); return 0;}"
-  HAVE_NORETURN_DECLSPEC
 )
-if(HAVE_NORETURN_DECLSPEC)
-  config_h_append(BRLCAD "#define HAVE_NORETURN_DECLSPEC 1\n")
-endif(HAVE_NORETURN_DECLSPEC)
 
 # Check whether the compiler supports __attribute__((analyzer_noreturn))
-check_c_source_compiles(
+_brlcad_srccompile_probe(HAVE_ANALYZER_NORETURN_ATTRIBUTE
   "__attribute__((analyzer_noreturn)) void anoret(void); void anoret(void){return;} int main(int argc, char *argv[]) {anoret(); return 0;}"
-  HAVE_ANALYZER_NORETURN_ATTRIBUTE
 )
-if(HAVE_ANALYZER_NORETURN_ATTRIBUTE)
-  config_h_append(BRLCAD "#define HAVE_ANALYZER_NORETURN_ATTRIBUTE 1\n")
-endif(HAVE_ANALYZER_NORETURN_ATTRIBUTE)
 
 # Check whether the compiler supports __attribute__((always_inline))
-check_c_source_compiles(
+_brlcad_srccompile_probe(HAVE_ALWAYS_INLINE_ATTRIBUTE
   "__attribute__((always_inline)) inline void always_inline(void); inline void always_inline(void){return;} int main(int argc, char *argv[]) {always_inline(); return 0;}"
-  HAVE_ALWAYS_INLINE_ATTRIBUTE
 )
-if(HAVE_ALWAYS_INLINE_ATTRIBUTE)
-  config_h_append(BRLCAD "#define HAVE_ALWAYS_INLINE_ATTRIBUTE 1\n")
-endif(HAVE_ALWAYS_INLINE_ATTRIBUTE)
 
 # Check whether the compiler supports __forceinline
-check_c_source_compiles(
+_brlcad_srccompile_probe(HAVE_FORCEINLINE
   "__forceinline inline void always_inline(void); inline void always_inline(void){return;} int main(int argc, char *argv[]) {always_inline(); return 0;}"
-  HAVE_FORCEINLINE
 )
-if(HAVE_FORCEINLINE)
-  config_h_append(BRLCAD "#define HAVE_FORCEINLINE 1\n")
-endif(HAVE_FORCEINLINE)
 
 # Check whether the compiler supports __attribute__((const))
-check_c_source_compiles(
+_brlcad_srccompile_probe(HAVE_CONST_ATTRIBUTE
   "__attribute__((const)) void func(void); void func(void){return;} int main(int argc, char *argv[]) {func(); return 0;}"
-  HAVE_CONST_ATTRIBUTE
 )
-if(HAVE_CONST_ATTRIBUTE)
-  config_h_append(BRLCAD "#define HAVE_CONST_ATTRIBUTE 1\n")
-endif(HAVE_CONST_ATTRIBUTE)
 
 # Check whether the compiler supports __attribute__((pure))
-check_c_source_compiles(
+_brlcad_srccompile_probe(HAVE_PURE_ATTRIBUTE
   "__attribute__((pure)) void func(void); void func(void){return;} int main(int argc, char *argv[]) {func(); return 0;}"
-  HAVE_PURE_ATTRIBUTE
 )
-if(HAVE_PURE_ATTRIBUTE)
-  config_h_append(BRLCAD "#define HAVE_PURE_ATTRIBUTE 1\n")
-endif(HAVE_PURE_ATTRIBUTE)
 
 # Check whether the compiler supports __attribute__((cold))
-check_c_source_compiles(
+_brlcad_srccompile_probe(HAVE_COLD_ATTRIBUTE
   "__attribute__((cold)) void func(void); void func(void){return;} int main(int argc, char *argv[]) {func(); return 0;}"
-  HAVE_COLD_ATTRIBUTE
 )
-if(HAVE_COLD_ATTRIBUTE)
-  config_h_append(BRLCAD "#define HAVE_COLD_ATTRIBUTE 1\n")
-endif(HAVE_COLD_ATTRIBUTE)
 
 # Check whether the compiler supports __attribute__((hot))
-check_c_source_compiles(
+_brlcad_srccompile_probe(HAVE_HOT_ATTRIBUTE
   "__attribute__((hot)) void func(void); void func(void){return;} int main(int argc, char *argv[]) {func(); return 0;}"
-  HAVE_HOT_ATTRIBUTE
 )
-if(HAVE_HOT_ATTRIBUTE)
-  config_h_append(BRLCAD "#define HAVE_HOT_ATTRIBUTE 1\n")
-endif(HAVE_HOT_ATTRIBUTE)
 
 # Check whether the compiler supports __attribute__((nonnull))
-check_c_source_compiles(
+_brlcad_srccompile_probe(HAVE_NONNULL_ATTRIBUTE
   "__attribute__((nonnull)) int *func(int *); int *func(int *v){(*v)-=1; return v;} int main(int argc, char *argv[]) {int v = 1; int *vp = func(&v); return *vp;}"
-  HAVE_NONNULL_ATTRIBUTE
 )
-if(HAVE_NONNULL_ATTRIBUTE)
-  config_h_append(BRLCAD "#define HAVE_NONNULL_ATTRIBUTE 1\n")
-endif(HAVE_NONNULL_ATTRIBUTE)
 
 # Check whether the compiler supports __attribute__((warn_unused_result))
-check_c_source_compiles(
+_brlcad_srccompile_probe(HAVE_WARN_UNUSED_RESULT_ATTRIBUTE
   "__attribute__((warn_unused_result)) int *func(int *); int *func(int *v){(*v)-=1; return v;} int main(int argc, char *argv[]) {int v = 1; int *vp = func(&v); return *vp;}"
-  HAVE_WARN_UNUSED_RESULT_ATTRIBUTE
 )
-if(HAVE_WARN_UNUSED_RESULT_ATTRIBUTE)
-  config_h_append(BRLCAD "#define HAVE_WARN_UNUSED_RESULT_ATTRIBUTE 1\n")
-endif(HAVE_WARN_UNUSED_RESULT_ATTRIBUTE)
 
 # Check whether the compiler supports __attribute__((flatten))
-check_c_source_compiles(
+_brlcad_srccompile_probe(HAVE_FLATTEN_ATTRIBUTE
   "__attribute__((flatten)) int *func(int *v){(*v)-=1; return v;} __attribute((flatten)) int main(int argc, char *argv[]) {int v = 1; int *vp = func(&v); return *vp;}"
-  HAVE_FLATTEN_ATTRIBUTE
 )
-if(HAVE_FLATTEN_ATTRIBUTE)
-  config_h_append(BRLCAD "#define HAVE_FLATTEN_ATTRIBUTE 1\n")
-endif(HAVE_FLATTEN_ATTRIBUTE)
+
+# Run the batched source-compile probes registered above (the attribute/keyword
+# checks).  Each probe carries its own -Werror context (captured from
+# CMAKE_REQUIRED_FLAGS), so an ignored attribute is a hard failure rather than a
+# warning.  No-op when parallel probes are disabled (each probe already ran
+# serially).
+_brlcad_run_probe_batch(SRCCOMPILE)
+
+# Return compiler flags to try, in preference order, for the selected LTO
+# mode.  GCC's "auto" controls parallel LTRANS jobs and still performs its
+# full-program LTO pipeline; Clang's identically named mode means Full LTO, so
+# AUTO prefers ThinLTO before falling back to Full LTO.
+macro(_BRLCAD_LTO_FLAG_CANDIDATES _language _output)
+  set(${_output})
+  set(_brlcad_lto_compiler_id "${CMAKE_${_language}_COMPILER_ID}")
+  set(_brlcad_lto_compiler_version "${CMAKE_${_language}_COMPILER_VERSION}")
+
+  if(BRLCAD_LTO_MODE MATCHES "^OFF$")
+    # No LTO compiler flag requested.
+  elseif(_brlcad_lto_compiler_id STREQUAL "GNU")
+    if(_brlcad_lto_compiler_version VERSION_LESS 4.9)
+      if(NOT BRLCAD_LTO_MODE MATCHES "^AUTO$")
+        message(
+          FATAL_ERROR
+          "BRLCAD_LTO_MODE=${BRLCAD_LTO_MODE} is not supported by GCC ${_brlcad_lto_compiler_version}; GCC versions before 4.9 have known BRL-CAD LTO failures."
+        )
+      endif()
+    elseif(BRLCAD_LTO_MODE MATCHES "^THIN$")
+      message(FATAL_ERROR "BRLCAD_LTO_MODE=THIN requires a Clang-family compiler; GCC does not implement LLVM ThinLTO.")
+    else()
+      # GCC LTO is full-program LTO.  Prefer automatic jobserver/CPU-count
+      # parallelism, retaining plain -flto as a compatibility fallback.
+      set(${_output} flto=auto flto)
+    endif()
+  elseif(_brlcad_lto_compiler_id MATCHES "Clang")
+    if(BRLCAD_LTO_MODE MATCHES "^AUTO$")
+      set(${_output} flto=thin flto=full flto)
+    elseif(BRLCAD_LTO_MODE MATCHES "^THIN$")
+      set(${_output} flto=thin)
+    else()
+      set(${_output} flto=full flto)
+    endif()
+  elseif(BRLCAD_LTO_MODE MATCHES "^THIN$")
+    set(${_output} flto=thin)
+  elseif(BRLCAD_LTO_MODE MATCHES "^FULL$")
+    set(${_output} flto=full flto)
+  else()
+    set(${_output} flto=auto flto)
+  endif()
+
+  unset(_brlcad_lto_compiler_id)
+  unset(_brlcad_lto_compiler_version)
+endmacro()
+
+# Test the complete LTO pipeline used by BRL-CAD: compile an archive member,
+# create and index a static library with the configured archiver tools, and
+# link a consumer that must extract that member.  A compile-only flag check or
+# a single-object executable does not detect incompatible ar/ranlib tooling.
+function(_BRLCAD_CHECK_LTO_FLAG _language _candidate _output)
+  string(TOUPPER "${_candidate}" _brlcad_lto_probe_name)
+  string(REGEX REPLACE "[^a-zA-Z0-9]" "_" _brlcad_lto_probe_name "${_brlcad_lto_probe_name}")
+  set(_brlcad_lto_probe_var "BRLCAD_LTO_${_brlcad_lto_probe_name}_${_language}_PIPELINE_WORKS")
+
+  if(NOT DEFINED ${_brlcad_lto_probe_var})
+    if("${_language}" STREQUAL "C")
+      set(_brlcad_lto_source_extension "c")
+    elseif("${_language}" STREQUAL "CXX")
+      set(_brlcad_lto_source_extension "cpp")
+    else()
+      message(FATAL_ERROR "Unsupported LTO probe language: ${_language}")
+    endif()
+
+    set(_brlcad_lto_source_dir "${CMAKE_BINARY_DIR}/CMakeTmp/LTO_${_language}_${_brlcad_lto_probe_name}_sources")
+    set(_brlcad_lto_build_dir "${CMAKE_BINARY_DIR}/CMakeTmp/LTO_${_language}_${_brlcad_lto_probe_name}_build")
+    file(MAKE_DIRECTORY "${_brlcad_lto_source_dir}")
+    file(REMOVE_RECURSE "${_brlcad_lto_build_dir}")
+    file(WRITE "${_brlcad_lto_source_dir}/archive.${_brlcad_lto_source_extension}"
+      "int brlcad_lto_archive_value(void) { return 0; }\n"
+    )
+    file(WRITE "${_brlcad_lto_source_dir}/main.${_brlcad_lto_source_extension}"
+      "int brlcad_lto_archive_value(void);\n"
+      "int main(void) { return brlcad_lto_archive_value(); }\n"
+    )
+    file(WRITE "${_brlcad_lto_source_dir}/CMakeLists.txt"
+      "cmake_minimum_required(VERSION ${CMAKE_MINIMUM_REQUIRED_VERSION})\n"
+      "if(BRLCAD_LTO_AR)\n"
+      "  set(CMAKE_AR \"\${BRLCAD_LTO_AR}\" CACHE FILEPATH \"Archiver used by the LTO probe\" FORCE)\n"
+      "endif()\n"
+      "if(BRLCAD_LTO_RANLIB)\n"
+      "  set(CMAKE_RANLIB \"\${BRLCAD_LTO_RANLIB}\" CACHE FILEPATH \"Ranlib used by the LTO probe\" FORCE)\n"
+      "endif()\n"
+      "project(BRLCADLTOProbe LANGUAGES ${_language})\n"
+      "if(BRLCAD_LTO_AR)\n"
+      "  set(CMAKE_AR \"\${BRLCAD_LTO_AR}\")\n"
+      "endif()\n"
+      "if(BRLCAD_LTO_RANLIB)\n"
+      "  set(CMAKE_RANLIB \"\${BRLCAD_LTO_RANLIB}\")\n"
+      "endif()\n"
+      "set(CMAKE_VERBOSE_MAKEFILE ON)\n"
+      "add_library(brlcad_lto_archive STATIC archive.${_brlcad_lto_source_extension})\n"
+      "target_compile_options(brlcad_lto_archive PRIVATE -${_candidate})\n"
+      "add_executable(brlcad_lto_executable main.${_brlcad_lto_source_extension})\n"
+      "target_compile_options(brlcad_lto_executable PRIVATE -${_candidate})\n"
+      "target_link_options(brlcad_lto_executable PRIVATE -${_candidate})\n"
+      "target_link_libraries(brlcad_lto_executable PRIVATE brlcad_lto_archive)\n"
+    )
+
+    set(
+      _brlcad_lto_forward_vars
+      CMAKE_${_language}_COMPILER
+      CMAKE_${_language}_COMPILER_AR
+      CMAKE_${_language}_COMPILER_RANLIB
+      CMAKE_${_language}_COMPILER_EXTERNAL_TOOLCHAIN
+      CMAKE_${_language}_COMPILER_TARGET
+      CMAKE_${_language}_FLAGS
+      CMAKE_BUILD_TYPE
+      CMAKE_EXE_LINKER_FLAGS
+      CMAKE_FIND_ROOT_PATH
+      CMAKE_OSX_ARCHITECTURES
+      CMAKE_OSX_DEPLOYMENT_TARGET
+      CMAKE_OSX_SYSROOT
+      CMAKE_POSITION_INDEPENDENT_CODE
+      CMAKE_STATIC_LINKER_FLAGS
+      CMAKE_SYSROOT
+      CMAKE_SYSROOT_COMPILE
+      CMAKE_SYSROOT_LINK
+      CMAKE_SYSTEM_NAME
+      CMAKE_SYSTEM_PROCESSOR
+      CMAKE_TOOLCHAIN_FILE
+    )
+    if(CMAKE_BUILD_TYPE)
+      string(TOUPPER "${CMAKE_BUILD_TYPE}" _brlcad_lto_build_type)
+      list(APPEND _brlcad_lto_forward_vars
+        CMAKE_${_language}_FLAGS_${_brlcad_lto_build_type}
+        CMAKE_EXE_LINKER_FLAGS_${_brlcad_lto_build_type}
+        CMAKE_STATIC_LINKER_FLAGS_${_brlcad_lto_build_type}
+      )
+    endif()
+
+    set(_brlcad_lto_cmake_flags)
+    foreach(_brlcad_lto_forward_var IN LISTS _brlcad_lto_forward_vars)
+      if(DEFINED ${_brlcad_lto_forward_var})
+        string(REPLACE ";" "\\;" _brlcad_lto_forward_value "${${_brlcad_lto_forward_var}}")
+        list(APPEND _brlcad_lto_cmake_flags "-D${_brlcad_lto_forward_var}:STRING=${_brlcad_lto_forward_value}")
+      endif()
+    endforeach()
+    foreach(_brlcad_lto_tool IN ITEMS AR RANLIB)
+      if(CMAKE_${_brlcad_lto_tool})
+        string(REPLACE ";" "\\;" _brlcad_lto_tool_value "${CMAKE_${_brlcad_lto_tool}}")
+        list(APPEND _brlcad_lto_cmake_flags "-DBRLCAD_LTO_${_brlcad_lto_tool}:FILEPATH=${_brlcad_lto_tool_value}")
+      endif()
+    endforeach()
+
+    message(STATUS "Performing Test ${_brlcad_lto_probe_var}")
+    try_compile(
+      ${_brlcad_lto_probe_var}
+      "${_brlcad_lto_build_dir}"
+      "${_brlcad_lto_source_dir}"
+      BRLCADLTOProbe
+      brlcad_lto_executable
+      CMAKE_FLAGS ${_brlcad_lto_cmake_flags}
+      OUTPUT_VARIABLE _brlcad_lto_probe_output
+    )
+    set(
+      ${_brlcad_lto_probe_var} "${${_brlcad_lto_probe_var}}"
+      CACHE INTERNAL "LTO archive pipeline test for -${_candidate} with ${_language}" FORCE
+    )
+    if(${_brlcad_lto_probe_var})
+      message(STATUS "Performing Test ${_brlcad_lto_probe_var} - Success")
+    else()
+      message(STATUS "Performing Test ${_brlcad_lto_probe_var} - Failed")
+      file(APPEND "${CMAKE_BINARY_DIR}/CMakeFiles/CMakeError.log"
+        "=== LTO ARCHIVE PIPELINE TEST: ${_language} -${_candidate} ===\n${_brlcad_lto_probe_output}\n"
+      )
+    endif()
+    _brlcad_probe_diagnostic(
+      "LTO_${_language}_${_brlcad_lto_probe_name}"
+      "=== LTO ARCHIVE PIPELINE TEST: ${_language} -${_candidate} ===\n${_brlcad_lto_probe_output}\n"
+    )
+  endif()
+
+  set(${_output} "${${_brlcad_lto_probe_var}}" PARENT_SCOPE)
+endfunction()
+
+# Select the first supported flag and append only that flag to the requested
+# optimization group.  Explicit modes fail rather than silently producing a
+# non-LTO build when the compiler, archiver, and linker cannot honor the
+# request.
+macro(_BRLCAD_ENABLE_LTO_FLAG _language _flag_group)
+  _brlcad_lto_flag_candidates(${_language} _brlcad_lto_candidates)
+  if(_brlcad_lto_candidates)
+    string(JOIN ", " _brlcad_lto_candidates_report ${_brlcad_lto_candidates})
+    set(_brlcad_lto_flag_found FALSE)
+    foreach(_brlcad_lto_candidate IN LISTS _brlcad_lto_candidates)
+      if(NOT _brlcad_lto_flag_found)
+        set(_brlcad_lto_flag "-${_brlcad_lto_candidate}")
+        _brlcad_check_lto_flag(${_language} "${_brlcad_lto_candidate}" _brlcad_lto_candidate_works)
+        if(_brlcad_lto_candidate_works)
+          if(${_flag_group})
+            set(${_flag_group} "${${_flag_group}} ${_brlcad_lto_flag}")
+          else()
+            set(${_flag_group} "${_brlcad_lto_flag}")
+          endif()
+          set(_brlcad_lto_flag_found TRUE)
+        endif()
+      endif()
+    endforeach()
+    if(NOT _brlcad_lto_flag_found)
+      if(BRLCAD_LTO_MODE MATCHES "^AUTO$")
+        message(
+          STATUS
+          "LTO is unsupported by the ${_language} toolchain; continuing without it. Tried: ${_brlcad_lto_candidates_report}"
+        )
+      else()
+        message(
+          FATAL_ERROR
+          "BRLCAD_LTO_MODE=${BRLCAD_LTO_MODE} is unsupported by the ${_language} toolchain. Tried: ${_brlcad_lto_candidates_report}"
+        )
+      endif()
+    endif()
+  endif()
+  unset(_brlcad_lto_flag)
+  unset(_brlcad_lto_candidate)
+  unset(_brlcad_lto_candidate_works)
+  unset(_brlcad_lto_candidates)
+  unset(_brlcad_lto_candidates_report)
+  unset(_brlcad_lto_flag_found)
+endmacro()
+
+# Second flag-batch pre-warm (optimization and warning flags).
+# Unlike the first batch, every consumer of these flags lives under the
+# "if(NOT MSVC)" optimization/warning blocks below, so on MSVC the reference
+# build never tests them.  Keep this batch gated to non-MSVC to match that -
+# pre-warming them on MSVC would test flags nothing consumes and diverge from
+# the reference (caught by misc/CMake/probe_validation/).
+if(BRLCAD_ENABLE_PARALLEL_CONFIG_PROBES AND NOT MSVC)
+  _brlcad_register_flag_probe(C Qunused-arguments)
+  _brlcad_register_flag_probe(CXX Qunused-arguments)
+
+  if(${BRLCAD_OPTIMIZED} MATCHES "ON")
+    foreach(_brlcad_opt_flag IN ITEMS
+        O3
+        fipa-pta
+        fstrength-reduce
+        fexpensive-optimizations
+        finline-functions
+      )
+      _brlcad_register_flag_probe(C "${_brlcad_opt_flag}")
+      _brlcad_register_flag_probe(CXX "${_brlcad_opt_flag}")
+    endforeach()
+
+    # LTO candidates are intentionally checked separately because the batch
+    # compiler-flag probes do not apply their options during linking.
+    if(NOT BRLCAD_PROFILING AND NOT BRLCAD_DEBUGGING)
+      _brlcad_register_flag_probe(C fomit-frame-pointer)
+      _brlcad_register_flag_probe(CXX fomit-frame-pointer)
+    else()
+      _brlcad_register_flag_probe(C fno-omit-frame-pointer)
+      _brlcad_register_flag_probe(CXX fno-omit-frame-pointer)
+    endif()
+  endif()
+
+  if(${BRLCAD_OPTIMIZED} MATCHES "OFF" AND BRLCAD_DEBUGGING)
+    foreach(_brlcad_stack_flag IN ITEMS fstack-protector-all qstackprotect)
+      _brlcad_register_flag_probe(C "${_brlcad_stack_flag}")
+      _brlcad_register_flag_probe(CXX "${_brlcad_stack_flag}")
+    endforeach()
+  endif()
+
+  if(BRLCAD_WARNINGS OR BRLCAD_ENABLE_STRICT)
+    foreach(_brlcad_warning_flag IN ITEMS
+        pedantic
+        Wall
+        Wextra
+        Wundef
+        Wfloat-equal
+        Wshadow
+        Wbad-function-cast
+        Wdocumentation
+      )
+      _brlcad_register_flag_probe(C "${_brlcad_warning_flag}")
+      _brlcad_register_flag_probe(CXX "${_brlcad_warning_flag}")
+    endforeach()
+    _brlcad_register_flag_probe(C "Wc++-compat")
+    _brlcad_register_flag_probe(C Winline)
+    if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+      _brlcad_register_flag_probe(CXX Wno-inline)
+    else()
+      _brlcad_register_flag_probe(CXX Winline)
+    endif()
+    foreach(_brlcad_wno_flag IN ITEMS
+        Wno-error=long-long
+        Wno-long-long
+        Wno-error=variadic-macros
+        Wno-variadic-macros
+      )
+      _brlcad_register_flag_probe(C "${_brlcad_wno_flag}")
+      _brlcad_register_flag_probe(CXX "${_brlcad_wno_flag}")
+    endforeach()
+  endif()
+
+  if(BRLCAD_ENABLE_COVERAGE)
+    _brlcad_register_flag_probe(C ftest-coverage)
+    _brlcad_register_flag_probe(CXX ftest-coverage)
+  endif()
+
+  if(BRLCAD_ENABLE_STRICT)
+    _brlcad_register_flag_probe(C Werror)
+    _brlcad_register_flag_probe(CXX Werror)
+  endif()
+
+  _brlcad_run_flag_batch(C WERROR "${ERROR_FLAG}")
+  _brlcad_run_flag_batch(CXX WERROR "${ERROR_FLAG}")
+endif()
 
 # Silence check for unused arguments (used to silence clang warnings about
 # unused options on the command line). By default clang generates a lot of
@@ -897,6 +1244,93 @@ check_c_flag(Qunused-arguments)
 check_cxx_flag(Qunused-arguments)
 
 cmake_pop_check_state()
+
+# *******************************************************************
+# Compiler feature checks used by embedded geogram (libbg)
+# *******************************************************************
+
+# Check whether the compiler supports __restrict__ (GCC/Clang form)
+check_c_source_compiles(
+  "int main(int argc, char *argv[]) { int * __restrict__ p = (int *)0; (void)p; (void)argc; (void)argv; return 0; }"
+  HAVE_RESTRICT__
+)
+if(HAVE_RESTRICT__)
+  brlcad_deferred_define("HAVE_RESTRICT__ 1")
+endif(HAVE_RESTRICT__)
+
+# Check whether the compiler supports __restrict (MSVC / other single-underscore form).
+# GCC and Clang also accept __restrict, but HAVE_RESTRICT__ above is preferred.
+# This check is here so that memory.h can fall back to __restrict on MSVC.
+if(NOT HAVE_RESTRICT__)
+  check_c_source_compiles(
+    "int main(int argc, char *argv[]) { int * __restrict p = (int *)0; (void)p; (void)argc; (void)argv; return 0; }"
+    HAVE_RESTRICT
+  )
+  if(HAVE_RESTRICT)
+    brlcad_deferred_define("HAVE_RESTRICT 1")
+  endif(HAVE_RESTRICT)
+endif()
+
+# Check whether the compiler supports __builtin_assume_aligned (GCC/Clang)
+check_c_source_compiles(
+  "int main(int argc, char *argv[]) { void *p = (void *)0; p = __builtin_assume_aligned(p, 64); (void)p; (void)argc; (void)argv; return 0; }"
+  HAVE_BUILTIN_ASSUME_ALIGNED
+)
+if(HAVE_BUILTIN_ASSUME_ALIGNED)
+  brlcad_deferred_define("HAVE_BUILTIN_ASSUME_ALIGNED 1")
+endif(HAVE_BUILTIN_ASSUME_ALIGNED)
+
+# Check whether the compiler supports __debugbreak() (MSVC/Windows)
+check_c_source_compiles(
+  "int main(int argc, char *argv[]) { __debugbreak(); (void)argc; (void)argv; return 0; }"
+  HAVE_DEBUGBREAK
+)
+if(HAVE_DEBUGBREAK)
+  brlcad_deferred_define("HAVE_DEBUGBREAK 1")
+endif(HAVE_DEBUGBREAK)
+
+# Check whether #pragma fp_contract(off) is accepted without warnings (MSVC only).
+# GCC/Clang only warn about this unknown pragma; the test must be run with
+# -Werror so that unsupported compilers cause the test to fail.
+cmake_push_check_state()
+if(NOT MSVC)
+  set(CMAKE_REQUIRED_FLAGS "-Werror=unknown-pragmas")
+endif()
+check_c_source_compiles(
+  "#pragma fp_contract(off)\nint main(int argc, char *argv[]) { (void)argc; (void)argv; return 0; }"
+  HAVE_PRAGMA_FP_CONTRACT
+)
+cmake_pop_check_state()
+if(HAVE_PRAGMA_FP_CONTRACT)
+  brlcad_deferred_define("HAVE_PRAGMA_FP_CONTRACT 1")
+endif(HAVE_PRAGMA_FP_CONTRACT)
+
+# Check for _mm_pause (x86/x86_64 spinlock hint via Intel intrinsics)
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64|x86|i[36789]86")
+  check_c_source_compiles(
+    "#include <immintrin.h>\nint main(int argc, char *argv[]) { _mm_pause(); (void)argc; (void)argv; return 0; }"
+    HAVE_MM_PAUSE
+  )
+  if(HAVE_MM_PAUSE)
+    brlcad_deferred_define("HAVE_MM_PAUSE 1")
+  endif(HAVE_MM_PAUSE)
+endif()
+
+# Check for _aligned_malloc / _aligned_free (Windows-specific)
+check_c_source_compiles(
+  "#include <malloc.h>\nint main(int argc, char *argv[]) { void *p = _aligned_malloc(64, 64); _aligned_free(p); (void)argc; (void)argv; return 0; }"
+  HAVE_ALIGNED_MALLOC
+)
+if(HAVE_ALIGNED_MALLOC)
+  brlcad_deferred_define("HAVE_ALIGNED_MALLOC 1")
+endif(HAVE_ALIGNED_MALLOC)
+
+# On Linux the default thread stack is 8-10 MB (vs 1 MB on Windows, 512 KB on
+# macOS).  geogram's exact-arithmetic predicates use this to allocate
+# multi-precision temporaries on the stack for performance.
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  brlcad_deferred_define("BRLCAD_HAS_BIG_STACK 1")
+endif()
 
 # The following tests are almost entirely for gcc/llvm style flags, so
 # we don't unnecessarily slow down the Windows build.
@@ -1031,22 +1465,30 @@ if(NOT MSVC)
   # CHECK_C_FLAG("finline-limit=10000 --param inline-unit-growth=300 --param large-function-growth=300" GROUPS OPTIMIZE_C_FLAGS)
   # CHECK_CXX_FLAG("finline-limit=10000 --param inline-unit-growth=300 --param large-function-growth=300" GROUPS OPTIMIZE_CXX_FLAGS)
 
-  # link-time optimization (LTO) results in slower linking, more
-  # warnings, and better optimization, but requires newer versions of
-  # compilers to avoid common bugs.
-  if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" AND CMAKE_C_COMPILER_VERSION VERSION_LESS 4.9)
-    # LTO bug in GCC 4.8.5 (__fread_chk_warn)
-  else()
-    # Try flto=auto first to avoid lto-wrapper serial compilation warnings
-    # https://stackoverflow.com/questions/72218980/gcc-v12-1-warning-about-serial-compilation
-    check_c_flag("flto=auto" GROUPS OPTIMIZE_C_FLAGS VARS flto_auto_c_flag_found)
-    if (NOT flto_auto_c_flag_found)
-      check_c_flag(flto GROUPS OPTIMIZE_C_FLAGS)
-    endif()
-    check_cxx_flag("flto=auto" GROUPS OPTIMIZE_CXX_FLAGS VARS flto_auto_cxx_flag_found)
-    if (NOT flto_auto_cxx_flag_found)
-      check_cxx_flag(flto GROUPS OPTIMIZE_CXX_FLAGS)
-    endif()
+  # GCC LTO objects require ar/ranlib wrappers or explicit plugin support.
+  # Select the wrappers before probing LTO so the archive pipeline test uses
+  # the same tools as the real build.
+  if(CMAKE_C_COMPILER_ID MATCHES "GNU" AND CMAKE_C_COMPILER_VERSION VERSION_GREATER 4.8)
+    find_program(GCC_AR_LTO ${CMAKE_C_COMPILER}-ar NAMES gcc-ar DOC "GNU ARchiver wrapper with LTO support")
+    if(GCC_AR_LTO)
+      set(CMAKE_AR "${GCC_AR_LTO}")
+      set(CMAKE_AR "${GCC_AR_LTO}" CACHE FILEPATH "Archiver" FORCE)
+    endif(GCC_AR_LTO)
+    find_program(GCC_RANLIB_LTO ${CMAKE_C_COMPILER}-ranlib NAMES gcc-ranlib DOC "GNU Ranlib wrapper with LTO support")
+    if(GCC_RANLIB_LTO)
+      set(CMAKE_RANLIB "${GCC_RANLIB_LTO}")
+      set(CMAKE_RANLIB "${GCC_RANLIB_LTO}" CACHE FILEPATH "Ranlib" FORCE)
+    endif(GCC_RANLIB_LTO)
+  endif(CMAKE_C_COMPILER_ID MATCHES "GNU" AND CMAKE_C_COMPILER_VERSION VERSION_GREATER 4.8)
+  mark_as_advanced(GCC_AR_LTO)
+  mark_as_advanced(GCC_RANLIB_LTO)
+
+  # Link-time optimization is selected independently from the other release
+  # flags, permitting optimized builds without LTO.  Probe it only when the
+  # optimization flag group will actually be used.
+  if(BRLCAD_OPTIMIZED)
+    _brlcad_enable_lto_flag(C OPTIMIZE_C_FLAGS)
+    _brlcad_enable_lto_flag(CXX OPTIMIZE_CXX_FLAGS)
 
     # When compiling with O3 + flto, GCC 6.3 (e.g. on Debian x64, and maybe
     # others, but I haven't tested) fails to link executables using libbrep.
@@ -1069,24 +1511,7 @@ if(NOT MSVC)
     # which switched to C++98 from C++11.
     #
     # CHECK_CXX_FLAG(fno-inline-small-functions GROUPS OPTIMIZE_CXX_FLAGS)
-  endif("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" AND CMAKE_C_COMPILER_VERSION VERSION_LESS 4.9)
-
-  # GCC 4.9+ introduced "thin" LTO object files that require special
-  # ar/ranlib handling via wrappers or plugin specification.  These
-  # wrappers work fine even if we're not using LTO, so just use them
-  # if found.
-  if(CMAKE_C_COMPILER_ID MATCHES "GNU" AND CMAKE_C_COMPILER_VERSION VERSION_GREATER 4.8)
-    find_program(GCC_AR_LTO ${CMAKE_C_COMPILER}-ar NAMES gcc-ar DOC "GNU ARchiver wrapper with LTO support")
-    if(GCC_AR_LTO)
-      set(CMAKE_AR "${GCC_AR_LTO}" CACHE FILEPATH "Archiver" FORCE)
-    endif(GCC_AR_LTO)
-    find_program(GCC_RANLIB_LTO ${CMAKE_C_COMPILER}-ranlib NAMES gcc-ranlib DOC "GNU Ranlib wrapper with LTO support")
-    if(GCC_RANLIB_LTO)
-      set(CMAKE_RANLIB "${GCC_RANLIB_LTO}" CACHE FILEPATH "Ranlib" FORCE)
-    endif(GCC_RANLIB_LTO)
-  endif(CMAKE_C_COMPILER_ID MATCHES "GNU" AND CMAKE_C_COMPILER_VERSION VERSION_GREATER 4.8)
-  mark_as_advanced(GCC_AR_LTO)
-  mark_as_advanced(GCC_RANLIB_LTO)
+  endif()
 
   # only omit the frame pointer if we have no interest in profiling or
   # debugging.
@@ -1121,29 +1546,6 @@ if(NOT MSVC)
     check_c_flag(qstackprotect)
     check_cxx_flag(qstackprotect)
   endif(${BRLCAD_OPTIMIZED} MATCHES "OFF" AND BRLCAD_DEBUGGING)
-
-  # Similarly, enable the AddressSanitizer memory address sanitizer.
-  # See https://code.google.com/p/address-sanitizer/ for more info.
-  # This typically is reported to cause a 2x slowdown.
-  if(BRLCAD_ENABLE_ADDRESS_SANITIZER AND ${BRLCAD_OPTIMIZED} MATCHES "OFF" AND BRLCAD_DEBUGGING)
-    set(CMAKE_REQUIRED_LINK_OPTIONS "${CMAKE_REQUIRED_LINK_OPTIONS};-lasan")
-    check_c_flag(fsanitize=address)
-    check_c_flag(fsanitize-address-use-after-return=always)
-    check_c_flag(fsanitize-address-use-after-scope)
-    check_c_flag(fno-omit-frame-pointer)
-    check_cxx_flag(fsanitize=address)
-    check_cxx_flag(fsanitize-address-use-after-return=always)
-    check_cxx_flag(fsanitize-address-use-after-scope)
-    check_cxx_flag(fno-omit-frame-pointer)
-  endif(BRLCAD_ENABLE_ADDRESS_SANITIZER AND ${BRLCAD_OPTIMIZED} MATCHES "OFF" AND BRLCAD_DEBUGGING)
-
-  # Differently, enable the ThreadSanitizer race condition detector
-  # only as requested since it can incur a 5x-15x slowdown.  See
-  # https://code.google.com/p/thread-sanitizer/ for more info.
-  if(BRLCAD_SANITIZE_THREAD)
-    check_c_flag(fsanitize=thread)
-    check_cxx_flag(fsanitize=thread)
-  endif(BRLCAD_SANITIZE_THREAD)
 
   # verbose warning flags.  we intentionally try to turn on as many as
   # possible.  adding more is encouraged (as long as all issues are
@@ -1335,6 +1737,27 @@ else()
   add_link_options(/DEBUG)
 endif(NOT MSVC)
 
+if(BRLCAD_LINKER_FAST)
+  # If specifically requested, see if we can use a faster linker.  This is not
+  # well tested, which is why it's hidden behind a non-publicized variable
+  # rather than a proper option.  In particular, lld has a problem with lto
+  # when using gcc, which is why we try gold as a fallback.
+  include(CheckLinkerFlag)
+  check_linker_flag(CXX "-fuse-ld=lld" HAS_LLD)
+  if(HAS_LLD)
+    add_link_options(
+      "$<$<NOT:$<PLATFORM_ID:Darwin>>:-fuse-ld=lld>"
+    )
+  else()
+    check_linker_flag(CXX "-fuse-ld=gold" HAS_GOLD)
+    if(HAS_GOLD)
+      add_link_options(
+	"$<$<NOT:$<PLATFORM_ID:Darwin>>:-fuse-ld=gold>"
+      )
+    endif()
+  endif()
+endif()
+
 # *******************************************************************
 if(BRLCAD_PRINT_MSGS)
   message("***********************************************************")
@@ -1386,12 +1809,12 @@ if(BRLCAD_ENABLE_X11)
   message("X11 detected and enabled")
   if(X11_Xlib_INCLUDE_PATH)
     set(HAVE_X11_XLIB_H 1)
-    config_h_append(BRLCAD "#cmakedefine HAVE_X11_XLIB_H 1\n")
+    brlcad_deferred_define("HAVE_X11_XLIB_H 1")
     # message("Defining HAVE_X11_XLIB_H")
   endif(X11_Xlib_INCLUDE_PATH)
   if(X11_Xi_INCLUDE_PATH)
     set(HAVE_X11_EXTENSIONS_XINPUT_H 1)
-    config_h_append(BRLCAD "#cmakedefine HAVE_X11_EXTENSIONS_XINPUT_H 1\n")
+    brlcad_deferred_define("HAVE_X11_EXTENSIONS_XINPUT_H 1")
     # message("Defining HAVE_X11_EXTENSIONS_XINPUT_H")
   endif(X11_Xi_INCLUDE_PATH)
 endif(BRLCAD_ENABLE_X11)
@@ -1477,114 +1900,116 @@ endif(BRLCAD_PRINT_MSGS)
 # Because libtclcad, bwish and mged include Tcl headers, we need to define
 # STDC_HEADERS here - the Tcl headers do need the definition.  Just
 # define it - we require C89, so the test itself is not needed.
-config_h_append(BRLCAD "#define STDC_HEADERS 1\n")
+brlcad_deferred_define("STDC_HEADERS 1")
 
 # AC_HEADER_SYS_WAIT
 brlcad_header_sys_wait()
 
 # dirent.h is POSIX.1, but not present on Windows (grr)
-# so we need to check for it
-brlcad_include_file(dirent.h HAVE_DIRENT_H)
+# so we need to check for it.  Register straightforward C header probes in one
+# batch; custom and C++ checks stay separate.
+_brlcad_include_probe(dirent.h HAVE_DIRENT_H)
 
-brlcad_include_file(conio.h HAVE_CONIO_H)
-brlcad_include_file(direct.h HAVE_DIRECT_H)
-brlcad_include_file(dlfcn.h HAVE_DLFCN_H)
-brlcad_include_file(dslib.h HAVE_DSLIB_H)
-brlcad_include_file(emmintrin.h HAVE_EMMINTRIN_H)
-brlcad_include_file(getopt.h HAVE_GETOPT_H)
-brlcad_include_file(GL/gl.h HAVE_GL_GL_H)
-brlcad_include_file(gl/device.h HAVE_GL_DEVICE_H)
-brlcad_include_file(gl/glext.h HAVE_GL_GLEXT_H)
-brlcad_include_file(gl/wglext.h HAVE_GL_WGLEXT_H)
-brlcad_include_file(glob.h HAVE_GLOB_H)
-brlcad_include_file(grp.h HAVE_GRP_H)
-brlcad_include_file(inttypes.h HAVE_INTTYPES_H)
-brlcad_include_file(io.h HAVE_IO_H)
-brlcad_include_file(libgen.h HAVE_LIBGEN_H)
+_brlcad_include_probe(arpa/inet.h HAVE_ARPA_INET_H)
+_brlcad_include_probe(conio.h HAVE_CONIO_H)
+_brlcad_include_probe(direct.h HAVE_DIRECT_H)
+_brlcad_include_probe(dlfcn.h HAVE_DLFCN_H)
+_brlcad_include_probe(dslib.h HAVE_DSLIB_H)
+_brlcad_include_probe(emmintrin.h HAVE_EMMINTRIN_H)
+_brlcad_include_probe(getopt.h HAVE_GETOPT_H)
+_brlcad_include_probe(glob.h HAVE_GLOB_H)
+_brlcad_include_probe(grp.h HAVE_GRP_H)
+_brlcad_include_probe(inttypes.h HAVE_INTTYPES_H)
+_brlcad_include_probe(io.h HAVE_IO_H)
+_brlcad_include_probe(libgen.h HAVE_LIBGEN_H)
 # BRLCAD_INCLUDE_FILE(libproc.h HAVE_LIBPROC_H) - see below
-brlcad_include_file(mach/host_info.h HAVE_MACH_HOST_INFO_H)
-brlcad_include_file(mach/mach_host.h HAVE_MACH_MACH_HOST_H)
-brlcad_include_file(mach/thread_policy.h HAVE_MACH_THREAD_POLICY_H)
-brlcad_include_file(memory.h HAVE_MEMORY_H)
-brlcad_include_file(netdb.h HAVE_NETDB_H)
-brlcad_include_file(netinet/in.h HAVE_NETINET_IN_H)
-brlcad_include_file(poll.h HAVE_POLL_H)
-brlcad_include_file(process.h HAVE_PROCESS_H)
-brlcad_include_file(pthread.h HAVE_PTHREAD_H)
-brlcad_include_file(pthread_np.h HAVE_PTHREAD_NP_H)
-brlcad_include_file(pwd.h HAVE_PWD_H)
-brlcad_include_file(sched.h HAVE_SCHED_H)
-brlcad_include_file(sgtty.h HAVE_SGTTY_H)
-brlcad_include_file(signal.h HAVE_SIGNAL_H)
-brlcad_include_file(stdint.h HAVE_STDINT_H)
-brlcad_include_file(stdlib.h HAVE_STDLIB_H)
-brlcad_include_file(string.h HAVE_STRING_H)
-brlcad_include_file(strings.h HAVE_STRINGS_H)
-brlcad_include_file(strsafe.h HAVE_STRSAFE_H)
+_brlcad_include_probe(mach/host_info.h HAVE_MACH_HOST_INFO_H)
+_brlcad_include_probe(mach/mach.h HAVE_MACH_MACH_H)
+_brlcad_include_probe(mach/mach_host.h HAVE_MACH_MACH_HOST_H)
+_brlcad_include_probe(mach/thread_info.h HAVE_MACH_THREAD_INFO_H)
+_brlcad_include_probe(mach/thread_policy.h HAVE_MACH_THREAD_POLICY_H)
+_brlcad_include_probe(memory.h HAVE_MEMORY_H)
+_brlcad_include_probe(netdb.h HAVE_NETDB_H)
+_brlcad_include_probe(netinet/in.h HAVE_NETINET_IN_H)
+_brlcad_include_probe(poll.h HAVE_POLL_H)
+_brlcad_include_probe(process.h HAVE_PROCESS_H)
+_brlcad_include_probe(pthread.h HAVE_PTHREAD_H)
+_brlcad_include_probe(pthread_np.h HAVE_PTHREAD_NP_H)
+_brlcad_include_probe(pwd.h HAVE_PWD_H)
+_brlcad_include_probe(sched.h HAVE_SCHED_H)
+_brlcad_include_probe(sgtty.h HAVE_SGTTY_H)
+_brlcad_include_probe(signal.h HAVE_SIGNAL_H)
+_brlcad_include_probe(stdint.h HAVE_STDINT_H)
+_brlcad_include_probe(stdlib.h HAVE_STDLIB_H)
+_brlcad_include_probe(string.h HAVE_STRING_H)
+_brlcad_include_probe(strings.h HAVE_STRINGS_H)
+_brlcad_include_probe(strsafe.h HAVE_STRSAFE_H)
 
 # FIXME: fails freebsd due to non-encapsulated header (__BEGIN_DECLS undecl)
-brlcad_include_file(sys/cpuset.h HAVE_SYS_CPUSET_H)
+_brlcad_include_probe(sys/cpuset.h HAVE_SYS_CPUSET_H)
 
-brlcad_include_file(sys/file.h HAVE_SYS_FILE_H)
-brlcad_include_file(sys/ioctl.h HAVE_SYS_IOCTL_H)
-brlcad_include_file(sys/ioctl_compat.h HAVE_SYS_IOCTL_COMPAT_H)
-brlcad_include_file(sys/ipc.h HAVE_SYS_IPC_H)
-brlcad_include_file(sys/machd.h HAVE_SYS_MACHD_H)
-brlcad_include_file(sys/mman.h HAVE_SYS_MMAN_H)
-brlcad_include_file(sys/mount.h HAVE_SYS_MOUNT_H)
-brlcad_include_file(sys/param.h HAVE_SYS_PARAM_H)
-brlcad_include_file(sys/prctl.h HAVE_SYS_PRCTL_H)
-brlcad_include_file(sys/resource.h HAVE_SYS_RESOURCE_H)
-brlcad_include_file(sys/sched.h HAVE_SYS_SCHED_H)
-brlcad_include_file(sys/select.h HAVE_SYS_SELECT_H)
-brlcad_include_file(sys/shm.h HAVE_SYS_SHM_H)
-brlcad_include_file(sys/signal.h HAVE_SYS_SIGNAL_H)
-brlcad_include_file(sys/socket.h HAVE_SYS_SOCKET_H)
-brlcad_include_file(sys/stat.h HAVE_SYS_STAT_H)
-brlcad_include_file(sys/syscall.h HAVE_SYS_SYSCALL_H)
-brlcad_include_file(sys/sysctl.h HAVE_SYS_SYSCTL_H)
-brlcad_include_file(sys/sysinfo.h HAVE_SYS_SYSINFO_H)
-brlcad_include_file(sys/sysmp.h HAVE_SYS_SYSMP_H)
-brlcad_include_file(sys/time.h HAVE_SYS_TIME_H)
-brlcad_include_file(sys/times.h HAVE_SYS_TIMES_H)
-brlcad_include_file(sys/types.h HAVE_SYS_TYPES_H)
-brlcad_include_file(sys/uio.h HAVE_SYS_UIO_H)
-brlcad_include_file(sys/un.h HAVE_SYS_UN_H)
-brlcad_include_file(sys/utsname.h HAVE_SYS_UTSNAME_H)
-brlcad_include_file(sys/wait.h HAVE_SYS_WAIT_H)
-brlcad_include_file(syslog.h HAVE_SYSLOG_H)
-brlcad_include_file(ulocks.h HAVE_ULOCKS_H)
-brlcad_include_file(uuid.h HAVE_UUID_H) # for uuid_generate() on BSD
-brlcad_include_file(unistd.h HAVE_UNISTD_H)
-brlcad_include_file(uuid/uuid.h HAVE_UUID_UUID_H) # for uuid_generate() on Mac & Linux
+_brlcad_include_probe(sys/file.h HAVE_SYS_FILE_H)
+_brlcad_include_probe(sys/ioctl.h HAVE_SYS_IOCTL_H)
+_brlcad_include_probe(sys/ioctl_compat.h HAVE_SYS_IOCTL_COMPAT_H)
+_brlcad_include_probe(sys/ipc.h HAVE_SYS_IPC_H)
+_brlcad_include_probe(sys/kinfo.h HAVE_SYS_KINFO_H)
+_brlcad_include_probe(sys/machd.h HAVE_SYS_MACHD_H)
+_brlcad_include_probe(sys/mman.h HAVE_SYS_MMAN_H)
+_brlcad_include_probe(sys/mount.h HAVE_SYS_MOUNT_H)
+_brlcad_include_probe(sys/param.h HAVE_SYS_PARAM_H)
+_brlcad_include_probe(sys/prctl.h HAVE_SYS_PRCTL_H)
+_brlcad_include_probe(sys/resource.h HAVE_SYS_RESOURCE_H)
+_brlcad_include_probe(sys/sched.h HAVE_SYS_SCHED_H)
+_brlcad_include_probe(sys/select.h HAVE_SYS_SELECT_H)
+_brlcad_include_probe(sys/shm.h HAVE_SYS_SHM_H)
+_brlcad_include_probe(sys/signal.h HAVE_SYS_SIGNAL_H)
+_brlcad_include_probe(sys/socket.h HAVE_SYS_SOCKET_H)
+_brlcad_include_probe(sys/stat.h HAVE_SYS_STAT_H)
+_brlcad_include_probe(sys/syscall.h HAVE_SYS_SYSCALL_H)
+_brlcad_include_probe(sys/sysinfo.h HAVE_SYS_SYSINFO_H)
+_brlcad_include_probe(sys/sysmp.h HAVE_SYS_SYSMP_H)
+_brlcad_include_probe(sys/time.h HAVE_SYS_TIME_H)
+_brlcad_include_probe(sys/times.h HAVE_SYS_TIMES_H)
+_brlcad_include_probe(sys/types.h HAVE_SYS_TYPES_H)
+_brlcad_include_probe(sys/uio.h HAVE_SYS_UIO_H)
+_brlcad_include_probe(sys/un.h HAVE_SYS_UN_H)
+_brlcad_include_probe(sys/user.h HAVE_SYS_USER_H)
+_brlcad_include_probe(sys/utsname.h HAVE_SYS_UTSNAME_H)
+_brlcad_include_probe(sys/wait.h HAVE_SYS_WAIT_H)
+_brlcad_include_probe(syslog.h HAVE_SYSLOG_H)
+_brlcad_include_probe(ulocks.h HAVE_ULOCKS_H)
+_brlcad_include_probe(uuid.h HAVE_UUID_H) # for uuid_generate() on BSD
+_brlcad_include_probe(unistd.h HAVE_UNISTD_H)
+_brlcad_include_probe(uuid/uuid.h HAVE_UUID_UUID_H) # for uuid_generate() on Mac & Linux
 
 # TODO - this test is failing on the github runner???
 #BRLCAD_INCLUDE_FILE(windows.h HAVE_WINDOWS_H) # for QueryPerformanceCounter() on Windows
 if(MSVC)
-  config_h_append(BRLCAD "#define HAVE_WINDOWS_H 1\n")
+  brlcad_deferred_define("HAVE_WINDOWS_H 1")
   set(HAVE_WINDOWS_H 1)
 endif(MSVC)
 
 # custom sys/sysctl.h test due to BSDisms when compiling
-check_c_source_compiles(
+_brlcad_srccompile_probe(HAVE_SYS_SYSCTL_H
   "typedef void *rusage_info_t;\ntypedef unsigned char u_char;\ntypedef unsigned int u_int;\ntypedef unsigned long u_long;\ntypedef unsigned short u_short;\n#define SOCK_MAXADDRLEN 255\n#include <sys/types.h>\n#include <sys/sysctl.h>\nint main(void) { return 0; }"
-  HAVE_SYS_SYSCTL_H
+  SRCCOMPILE_HDR
 )
-if(HAVE_SYS_SYSCTL_H)
-  config_h_append(BRLCAD "#define HAVE_SYS_SYSCTL_H 1\n")
-endif(HAVE_SYS_SYSCTL_H)
 
 # custom libproc.h test due to BSDisms when compiling
-check_c_source_compiles(
+_brlcad_srccompile_probe(HAVE_LIBPROC_H
   "typedef void *rusage_info_t;\ntypedef unsigned char u_char;\ntypedef unsigned int u_int;\ntypedef unsigned long u_long;\ntypedef unsigned short u_short;\n#define SOCK_MAXADDRLEN 255\n#include <sys/types.h>\n#include <libproc.h>\nint main(void) { return 0; }"
-  HAVE_LIBPROC_H
+  SRCCOMPILE_HDR
 )
-if(HAVE_LIBPROC_H)
-  config_h_append(BRLCAD "#define HAVE_LIBPROC_H 1\n")
-endif(HAVE_LIBPROC_H)
 
-brlcad_include_file(termios.h HAVE_TERMIOS_H)
-brlcad_include_file(termio.h HAVE_TERMIO_H)
+# Resolve the header source-compile probes now: HAVE_SYS_SYSCTL_H feeds the
+# standard-header cppflags used by later function probes, so it must be set
+# before the function-checking stage.
+_brlcad_run_probe_batch(SRCCOMPILE_HDR)
+
+_brlcad_include_probe(termios.h HAVE_TERMIOS_H)
+_brlcad_include_probe(termio.h HAVE_TERMIO_H)
+
+_brlcad_run_probe_batch(INCLUDE_PROBE C_FLAGS "${C_STANDARD_FLAGS}")
 
 # C++
 brlcad_include_file_cxx(istream HAVE_ISTREAM)
@@ -1594,25 +2019,11 @@ brlcad_include_file_cxx(limits HAVE_LIMITS)
 brlcad_check_basename()
 brlcad_check_dirname()
 
-# OpenGL headers
-if(BRLCAD_ENABLE_OPENGL)
-  find_package(OpenGL)
-  if(OPENGL_INCLUDE_DIR_GL)
-    config_h_append(BRLCAD "#define HAVE_GL_GL_H 1\n")
-  endif(OPENGL_INCLUDE_DIR_GL)
-  if(OPENGL_INCLUDE_DIR_GLX)
-    config_h_append(BRLCAD "#define HAVE_GL_GLX_H 1\n")
-  endif(OPENGL_INCLUDE_DIR_GLX)
-  if(OPENGL_USING_FRAMEWORK)
-    config_h_append(BRLCAD "#define HAVE_OPENGL_GL_H 1\n")
-  endif(OPENGL_USING_FRAMEWORK)
-endif(BRLCAD_ENABLE_OPENGL)
-
 # may have the header, but ensure it works in pedantic mode (gcc bug)
 if(HAVE_EMMINTRIN_H)
   check_c_source_compiles("#include <emmintrin.h>\nint main(void) { return 0; }" HAVE_EMMINTRIN)
   if(HAVE_EMMINTRIN)
-    config_h_append(BRLCAD "#define HAVE_EMMINTRIN 1\n")
+    brlcad_deferred_define("HAVE_EMMINTRIN 1")
   endif(HAVE_EMMINTRIN)
 endif(HAVE_EMMINTRIN_H)
 
@@ -1623,9 +2034,10 @@ if(BRLCAD_PRINT_MSGS)
   message("***********************************************************")
 endif(BRLCAD_PRINT_MSGS)
 
-brlcad_struct_member("struct stat" st_blksize sys/stat.h STRUCT_STAT_ST_BLKSIZE)
-brlcad_struct_member("struct stat" st_blocks sys/stat.h STRUCT_STAT_ST_BLOCKS)
-brlcad_struct_member("struct stat" st_rdev sys/stat.h STRUCT_STAT_ST_RDEV)
+_brlcad_struct_probe(STRUCT "struct stat" MEMBER st_blksize HEADER sys/stat.h VAR STRUCT_STAT_ST_BLKSIZE)
+_brlcad_struct_probe(STRUCT "struct stat" MEMBER st_blocks HEADER sys/stat.h VAR STRUCT_STAT_ST_BLOCKS)
+_brlcad_struct_probe(STRUCT "struct stat" MEMBER st_rdev HEADER sys/stat.h VAR STRUCT_STAT_ST_RDEV)
+_brlcad_run_probe_batch(STRUCT_PROBE C_FLAGS "${C_STANDARD_FLAGS}")
 
 # timespec can come in through sys/select.h
 if(HAVE_SYS_SELECT_H)
@@ -1653,7 +2065,6 @@ brlcad_type_size("size_t" "")
 brlcad_type_size("ssize_t" "")
 brlcad_type_size("uint64_t" "")
 brlcad_type_size("uintptr_t" "")
-brlcad_type_size("sig_t" "signal.h")
 
 # see if compile settings disable historic unsigned bsd types.
 # typically disabled on posix conformant systems.
@@ -1662,7 +2073,7 @@ brlcad_type_size("u_int" "sys/types.h")
 brlcad_type_size("u_long" "sys/types.h")
 brlcad_type_size("u_short" "sys/types.h")
 if(HAVE_U_CHAR AND HAVE_U_INT AND HAVE_U_LONG AND HAVE_U_SHORT)
-  config_h_append(BRLCAD "#define HAVE_U_TYPES 1\n")
+  brlcad_deferred_define("HAVE_U_TYPES 1")
 endif(HAVE_U_CHAR AND HAVE_U_INT AND HAVE_U_LONG AND HAVE_U_SHORT)
 
 # If we have an off_t that's too small, we'll need to deal with that in order to
@@ -1672,24 +2083,24 @@ if(CMAKE_SIZEOF_VOID_P AND HAVE_OFF_T)
     if(NOT DEFINED OFF_T_SIZE_MISMATCH)
       message("Note: platform void pointer size (${CMAKE_SIZEOF_VOID_P}) is greater than off_t size (${HAVE_OFF_T})")
     endif(NOT DEFINED OFF_T_SIZE_MISMATCH)
-    config_h_append(BRLCAD "#define OFF_T_SIZE_MISMATCH 1\n")
+    brlcad_deferred_define("OFF_T_SIZE_MISMATCH 1")
     set(OFF_T_SIZE_MISMATCH 1 CACHE INTERNAL "Have off_t that is too small for platform.")
   endif(${CMAKE_SIZEOF_VOID_P} GREATER ${HAVE_OFF_T})
   if(CMAKE_WORD_SIZE STREQUAL "64BIT")
-    config_h_append(BRLCAD "#define HAVE_OFF_T_64BIT 1\n")
+    brlcad_deferred_define("HAVE_OFF_T_64BIT 1")
   endif(CMAKE_WORD_SIZE STREQUAL "64BIT")
 endif(CMAKE_SIZEOF_VOID_P AND HAVE_OFF_T)
 
 # see if we have a TLS intrinsic, first check C++11 compliance
 check_cxx_source_compiles("static thread_local int i = 0; int main(void) { return i; }" HAVE_THREAD_LOCAL)
 if(HAVE_THREAD_LOCAL)
-  config_h_append(BRLCAD "#define HAVE_THREAD_LOCAL 1\n")
+  brlcad_deferred_define("HAVE_THREAD_LOCAL 1")
 else(HAVE_THREAD_LOCAL)
   # try GCC except Mac OS X
   include(CheckCXXSourceRuns)
   check_cxx_source_runs("static __thread int i = 0; int main(void) { return i; }" HAVE___THREAD)
   if(HAVE___THREAD)
-    config_h_append(BRLCAD "#define HAVE___THREAD 1\n")
+    brlcad_deferred_define("HAVE___THREAD 1")
   else(HAVE___THREAD)
     # try Windows
     check_cxx_source_compiles(
@@ -1697,7 +2108,7 @@ else(HAVE_THREAD_LOCAL)
       HAVE___DECLSPEC_THREAD
     )
     if(HAVE___DECLSPEC_THREAD)
-      config_h_append(BRLCAD "#define HAVE___DECLSPEC_THREAD 1\n")
+      brlcad_deferred_define("HAVE___DECLSPEC_THREAD 1")
     endif(HAVE___DECLSPEC_THREAD)
   endif(HAVE___THREAD)
 endif(HAVE_THREAD_LOCAL)
@@ -1720,116 +2131,213 @@ endif(BRLCAD_PRINT_MSGS)
 
 include(CheckSymbolExists)
 
-brlcad_function_exists(XQueryExtension)
-brlcad_function_exists(_putenv_s)
-brlcad_function_exists(_splitpath)
-brlcad_function_exists(_strtoi64)
-brlcad_function_exists(alarm)
-brlcad_function_exists(asinh REQUIRED_LIBS ${M_LIBRARY})
-brlcad_function_exists(confstr) # darwin/mac/linux
-brlcad_function_exists(dlopen)
-brlcad_function_exists(dladdr)
-brlcad_function_exists(drand48)
-brlcad_function_exists(fchmod)
-brlcad_function_exists(fdopen)
-brlcad_function_exists(fmemopen)
-brlcad_function_exists(fpclassify REQUIRED_LIBS ${M_LIBRARY})
-brlcad_function_exists(fseeko) # implies ftello
-brlcad_function_exists(fsync)
-brlcad_function_exists(funopen)
-brlcad_function_exists(getcwd)
-brlcad_function_exists(getegid)
-brlcad_function_exists(getenv_s)
-brlcad_function_exists(geteuid)
-brlcad_function_exists(gethostname)
-brlcad_function_exists(getloadavg)
-brlcad_function_exists(getopt_long)
-brlcad_function_exists(getpid)
-brlcad_function_exists(getprogname)
-brlcad_function_exists(gettimeofday)
-brlcad_function_exists(htonl)
-brlcad_function_exists(htonll)
-brlcad_function_exists(hypot REQUIRED_LIBS ${M_LIBRARY})
-brlcad_function_exists(isascii)
-brlcad_function_exists(isinf REQUIRED_LIBS ${M_LIBRARY})
-brlcad_function_exists(isnan REQUIRED_LIBS ${M_LIBRARY})
-brlcad_function_exists(logb REQUIRED_LIBS ${M_LIBRARY})
-brlcad_function_exists(lrand48)
-brlcad_function_exists(lseek)
-brlcad_function_exists(mkstemp)
-brlcad_function_exists(modff REQUIRED_LIBS ${M_LIBRARY})
-brlcad_function_exists(nextafter REQUIRED_LIBS ${M_LIBRARY})
-brlcad_function_exists(nextafterf REQUIRED_LIBS ${M_LIBRARY})
-brlcad_function_exists(ntohll)
-brlcad_function_exists(pipe)
-brlcad_function_exists(popen) # implies pclose
-brlcad_function_exists(posix_memalign) # IEEE Std 1003.1-2001
-brlcad_function_exists(proc_pidpath) # Mac OS X
-brlcad_function_exists(program_invocation_name)
-brlcad_function_exists(random)
-brlcad_function_exists(realpath)
-brlcad_function_exists(rint REQUIRED_LIBS ${M_LIBRARY})
-brlcad_function_exists(setenv)
-brlcad_function_exists(setpgid)
-brlcad_function_exists(setpriority)
-brlcad_function_exists(setsid)
-brlcad_function_exists(shmat)
-brlcad_function_exists(shmctl)
-brlcad_function_exists(shmdt)
-brlcad_function_exists(shmget)
-brlcad_function_exists(snprintf)
-brlcad_function_exists(srand48)
-brlcad_function_exists(strcasecmp)
-brlcad_function_exists(strdup)
-brlcad_function_exists(strlcat)
-brlcad_function_exists(strlcpy)
-brlcad_function_exists(strncasecmp)
-brlcad_function_exists(strtoll)
-brlcad_function_exists(sync)
-brlcad_function_exists(syscall)
-brlcad_function_exists(sysctl)
-brlcad_function_exists(sysmp)
-brlcad_function_exists(time)
-brlcad_function_exists(toascii)
-brlcad_function_exists(tzset)
-brlcad_function_exists(uname)
-brlcad_function_exists(vfork)
-brlcad_function_exists(vsnprintf)
-brlcad_function_exists(vsscanf)
-brlcad_function_exists(wait)
-brlcad_function_exists(writev)
-
-# ALLOCA test - based on AC_FUNC_ALLOCA
-brlcad_alloca()
+_brlcad_func_probe(FUNC XQueryExtension VAR HAVE_XQUERYEXTENSION)
+_brlcad_func_probe(FUNC _putenv_s VAR HAVE__PUTENV_S)
+_brlcad_func_probe(FUNC _splitpath VAR HAVE__SPLITPATH)
+_brlcad_func_probe(FUNC _strtoi64 VAR HAVE__STRTOI64)
+_brlcad_func_probe(FUNC alarm VAR HAVE_ALARM)
+_brlcad_func_probe(FUNC asinh VAR HAVE_ASINH LIBS ${M_LIBRARY})
+_brlcad_func_probe(FUNC confstr VAR HAVE_CONFSTR) # darwin/mac/linux
+_brlcad_func_probe(FUNC dlopen VAR HAVE_DLOPEN)
+_brlcad_func_probe(FUNC dladdr VAR HAVE_DLADDR)
+_brlcad_func_probe(FUNC drand48 VAR HAVE_DRAND48)
+_brlcad_func_probe(FUNC fchmod VAR HAVE_FCHMOD)
+_brlcad_func_probe(FUNC fdopen VAR HAVE_FDOPEN)
+_brlcad_func_probe(FUNC fmemopen VAR HAVE_FMEMOPEN)
+_brlcad_func_probe(FUNC fpclassify VAR HAVE_FPCLASSIFY LIBS ${M_LIBRARY})
+_brlcad_func_probe(FUNC fseeko VAR HAVE_FSEEKO) # implies ftello
+_brlcad_func_probe(FUNC fsync VAR HAVE_FSYNC)
+_brlcad_func_probe(FUNC funopen VAR HAVE_FUNOPEN)
+_brlcad_func_probe(FUNC getcwd VAR HAVE_GETCWD)
+_brlcad_func_probe(FUNC getegid VAR HAVE_GETEGID)
+_brlcad_func_probe(FUNC getenv_s VAR HAVE_GETENV_S)
+_brlcad_func_probe(FUNC geteuid VAR HAVE_GETEUID)
+_brlcad_func_probe(FUNC gethostname VAR HAVE_GETHOSTNAME)
+_brlcad_func_probe(FUNC getloadavg VAR HAVE_GETLOADAVG)
+_brlcad_func_probe(FUNC getopt_long VAR HAVE_GETOPT_LONG)
+_brlcad_func_probe(FUNC getpid VAR HAVE_GETPID)
+_brlcad_func_probe(FUNC getprogname VAR HAVE_GETPROGNAME)
+_brlcad_func_probe(FUNC gettimeofday VAR HAVE_GETTIMEOFDAY)
+_brlcad_func_probe(FUNC htonl VAR HAVE_HTONL)
+_brlcad_func_probe(FUNC htonll VAR HAVE_HTONLL)
+_brlcad_func_probe(FUNC hypot VAR HAVE_HYPOT LIBS ${M_LIBRARY})
+_brlcad_func_probe(FUNC isascii VAR HAVE_ISASCII)
+_brlcad_func_probe(FUNC isinf VAR HAVE_ISINF LIBS ${M_LIBRARY})
+_brlcad_func_probe(FUNC isnan VAR HAVE_ISNAN LIBS ${M_LIBRARY})
+_brlcad_func_probe(FUNC logb VAR HAVE_LOGB LIBS ${M_LIBRARY})
+_brlcad_func_probe(FUNC lrand48 VAR HAVE_LRAND48)
+_brlcad_func_probe(FUNC lseek VAR HAVE_LSEEK)
+_brlcad_func_probe(FUNC mkstemp VAR HAVE_MKSTEMP)
+_brlcad_func_probe(FUNC modff VAR HAVE_MODFF LIBS ${M_LIBRARY})
+_brlcad_func_probe(FUNC nextafter VAR HAVE_NEXTAFTER LIBS ${M_LIBRARY})
+_brlcad_func_probe(FUNC nextafterf VAR HAVE_NEXTAFTERF LIBS ${M_LIBRARY})
+_brlcad_func_probe(FUNC ntohll VAR HAVE_NTOHLL)
+_brlcad_func_probe(FUNC pipe VAR HAVE_PIPE)
+_brlcad_func_probe(FUNC _pipe VAR HAVE__PIPE)
+_brlcad_func_probe(FUNC popen VAR HAVE_POPEN) # implies pclose
+_brlcad_func_probe(FUNC posix_memalign VAR HAVE_POSIX_MEMALIGN) # IEEE Std 1003.1-2001
+_brlcad_func_probe(FUNC proc_pidpath VAR HAVE_PROC_PIDPATH) # Mac OS X
+_brlcad_func_probe(FUNC program_invocation_name VAR HAVE_PROGRAM_INVOCATION_NAME)
+_brlcad_func_probe(FUNC random VAR HAVE_RANDOM)
+_brlcad_func_probe(FUNC realpath VAR HAVE_REALPATH)
+_brlcad_func_probe(FUNC rint VAR HAVE_RINT LIBS ${M_LIBRARY})
+_brlcad_func_probe(FUNC setenv VAR HAVE_SETENV)
+_brlcad_func_probe(FUNC setpgid VAR HAVE_SETPGID)
+_brlcad_func_probe(FUNC setpriority VAR HAVE_SETPRIORITY)
+_brlcad_func_probe(FUNC setsid VAR HAVE_SETSID)
+_brlcad_func_probe(FUNC shmat VAR HAVE_SHMAT)
+_brlcad_func_probe(FUNC shmctl VAR HAVE_SHMCTL)
+_brlcad_func_probe(FUNC shmdt VAR HAVE_SHMDT)
+_brlcad_func_probe(FUNC shmget VAR HAVE_SHMGET)
+_brlcad_func_probe(FUNC snprintf VAR HAVE_SNPRINTF)
+_brlcad_func_probe(FUNC srand48 VAR HAVE_SRAND48)
+_brlcad_func_probe(FUNC strcasecmp VAR HAVE_STRCASECMP)
+_brlcad_func_probe(FUNC strdup VAR HAVE_STRDUP)
+_brlcad_func_probe(FUNC strlcat VAR HAVE_STRLCAT)
+_brlcad_func_probe(FUNC strlcpy VAR HAVE_STRLCPY)
+_brlcad_func_probe(FUNC strncasecmp VAR HAVE_STRNCASECMP)
+_brlcad_func_probe(FUNC strtoll VAR HAVE_STRTOLL)
+_brlcad_func_probe(FUNC sync VAR HAVE_SYNC)
+_brlcad_func_probe(FUNC syscall VAR HAVE_SYSCALL)
+_brlcad_func_probe(FUNC sysctl VAR HAVE_SYSCTL)
+_brlcad_func_probe(FUNC sysmp VAR HAVE_SYSMP)
+_brlcad_func_probe(FUNC time VAR HAVE_TIME)
+_brlcad_func_probe(FUNC toascii VAR HAVE_TOASCII)
+_brlcad_func_probe(FUNC tzset VAR HAVE_TZSET)
+_brlcad_func_probe(FUNC uname VAR HAVE_UNAME)
+_brlcad_func_probe(FUNC vfork VAR HAVE_VFORK)
+_brlcad_func_probe(FUNC vsnprintf VAR HAVE_VSNPRINTF)
+_brlcad_func_probe(FUNC vsscanf VAR HAVE_VSSCANF)
+_brlcad_func_probe(FUNC wait VAR HAVE_WAIT)
+_brlcad_func_probe(FUNC writev VAR HAVE_WRITEV)
 
 # We may want access to some POSIX functions even when compiling in strict
 # mode, if they are present. For those cases, we need to record the DECL
 # test result.
-brlcad_function_exists(kill)
-brlcad_function_exists(fileno)
+_brlcad_func_probe(FUNC kill VAR HAVE_KILL)
+_brlcad_func_probe(FUNC fileno VAR HAVE_FILENO)
 
 # test for daemon(), which is deprecated on Mac OS X 10.5+
-brlcad_function_exists(daemon)
+_brlcad_func_probe(FUNC daemon VAR HAVE_DAEMON)
+
+# sysconf may not always define everything we want on various
+# systems - do some extra checks
+_brlcad_func_probe(FUNC sysconf VAR HAVE_SYSCONF)
+
+_brlcad_run_probe_batch(FUNC_EXISTS)
+
+if(BRLCAD_ENABLE_PARALLEL_CONFIG_PROBES)
+  if(NOT MSVC)
+    standard_header_cppflags(_decl_hdr_flags)
+    set(_decl_src_dir "${CMAKE_BINARY_DIR}/CMakeTmp/FUNC_DECL_sources")
+    file(MAKE_DIRECTORY "${_decl_src_dir}")
+    get_property(_func_batch_vars GLOBAL PROPERTY "BRLCAD_PROBE_BATCH_FUNC_EXISTS")
+    foreach(_fvar IN LISTS _func_batch_vars)
+      if(${_fvar})
+        string(REGEX REPLACE "^HAVE_" "" _func_uc "${_fvar}")
+        string(TOLOWER "${_func_uc}" _func_lc)
+        get_property(_func_libs GLOBAL PROPERTY "BRLCAD_PROBE_FUNC_EXISTS_${_fvar}_LIBS")
+        get_property(_func_includes GLOBAL PROPERTY "BRLCAD_PROBE_FUNC_EXISTS_${_fvar}_INCLUDES")
+        get_property(_func_defs GLOBAL PROPERTY "BRLCAD_PROBE_FUNC_EXISTS_${_fvar}_DEFINITIONS")
+        get_property(_func_flags GLOBAL PROPERTY "BRLCAD_PROBE_FUNC_EXISTS_${_fvar}_FLAGS")
+        set(_decl_defs ${_func_defs})
+        if(_decl_hdr_flags)
+          separate_arguments(_decl_hdr_def_list NATIVE_COMMAND "${_decl_hdr_flags}")
+          list(APPEND _decl_defs ${_decl_hdr_def_list})
+        endif()
+        list(REMOVE_DUPLICATES _decl_defs)
+        file(WRITE "${_decl_src_dir}/HAVE_DECL_${_func_uc}.c"
+          "${standard_header_template}\nint main(void) { (void)${_func_lc}; return 0; }\n"
+        )
+        if(_func_libs)
+          _brlcad_register_probe(
+            BATCH FUNC_DECL
+            VAR "HAVE_DECL_${_func_uc}"
+            LIBS ${_func_libs}
+            INCLUDES ${_func_includes}
+            DEFINITIONS ${_decl_defs}
+            FLAGS ${_func_flags}
+          )
+        else()
+          _brlcad_register_probe(
+            BATCH FUNC_DECL
+            VAR "HAVE_DECL_${_func_uc}"
+            INCLUDES ${_func_includes}
+            DEFINITIONS ${_decl_defs}
+            FLAGS ${_func_flags}
+          )
+        endif()
+      endif()
+    endforeach()
+    unset(_fvar)
+    unset(_func_uc)
+    unset(_func_lc)
+    unset(_func_libs)
+    unset(_func_includes)
+    unset(_func_defs)
+    unset(_func_flags)
+    unset(_decl_defs)
+    unset(_decl_hdr_def_list)
+    unset(_decl_src_dir)
+    _brlcad_run_probe_batch(FUNC_DECL C_FLAGS "${C_STANDARD_FLAGS}")
+    get_property(_decl_batch_vars GLOBAL PROPERTY "BRLCAD_PROBE_BATCH_FUNC_DECL")
+    foreach(_dvar IN LISTS _decl_batch_vars)
+      set(${_dvar} "${${_dvar}}" CACHE BOOL "Cache decl test result" FORCE)
+      mark_as_advanced(${_dvar})
+    endforeach()
+    unset(_dvar)
+    unset(_decl_batch_vars)
+    unset(_decl_hdr_flags)
+    unset(_func_batch_vars)
+  else()
+    get_property(_func_batch_vars GLOBAL PROPERTY "BRLCAD_PROBE_BATCH_FUNC_EXISTS")
+    foreach(_fvar IN LISTS _func_batch_vars)
+      if(${_fvar})
+        string(REGEX REPLACE "^HAVE_" "" _func_uc "${_fvar}")
+        set("HAVE_DECL_${_func_uc}" 1 CACHE BOOL "Have decl for ${_func_uc}" FORCE)
+        mark_as_advanced("HAVE_DECL_${_func_uc}")
+        if(CONFIG_H_FILE)
+          brlcad_deferred_define("HAVE_DECL_${_func_uc} 1")
+        endif()
+      endif()
+    endforeach()
+    unset(_fvar)
+    unset(_func_uc)
+    unset(_func_batch_vars)
+  endif()
+endif()
+
+# On Windows, pipe() is not a real CRT symbol; it is a macro in config_win.h
+# that wraps _pipe().  check_function_exists tests for a linkable symbol and
+# therefore misses the macro.  If _pipe was found but pipe was not, treat
+# pipe as available because the config_win.h wrapper makes it usable.
+if(NOT HAVE_PIPE AND HAVE__PIPE)
+  set(HAVE_PIPE 1 CACHE INTERNAL "pipe available via config_win.h macro wrapper")
+  if(CONFIG_H_FILE)
+    brlcad_deferred_define("HAVE_PIPE 1")
+  endif()
+endif()
+
+# ALLOCA test - based on AC_FUNC_ALLOCA
+brlcad_alloca()
+
 if(HAVE_DAEMON)
   check_c_source_compiles(
     "#include <stdlib.h>\nint main(void) { (void)daemon; return 0; }"
     HAVE_WORKING_DAEMON_FUNCTION
   )
   if(HAVE_WORKING_DAEMON_FUNCTION)
-    config_h_append(BRLCAD "#define HAVE_WORKING_DAEMON_FUNCTION 1\n")
+    brlcad_deferred_define("HAVE_WORKING_DAEMON_FUNCTION 1")
   endif(HAVE_WORKING_DAEMON_FUNCTION)
 endif(HAVE_DAEMON)
 
-# sysconf may not always define everything we want on various
-# systems - do some extra checks
-brlcad_function_exists(sysconf)
 if(HAVE_SYSCONF)
   check_c_source_compiles(
     "#include <unistd.h>\nint main(void) { (void)sysconf(_SC_AVPHYS_PAGES); return 0; }"
     HAVE_SYSCONF_AVPHYS
   )
   if(HAVE_SYSCONF_AVPHYS)
-    config_h_append(BRLCAD "#define HAVE_SYSCONF_AVPHYS 1\n")
+    brlcad_deferred_define("HAVE_SYSCONF_AVPHYS 1")
   endif(HAVE_SYSCONF_AVPHYS)
 endif(HAVE_SYSCONF)
 
@@ -1838,14 +2346,14 @@ if("${HAVE_NTOHLL}" STREQUAL "")
   check_symbol_exists(ntohll "sys/_endian.h" HAVE_NTOHLL_SYS__ENDIAN)
   if(HAVE_NTOHLL_SYS__ENDIAN)
     set(HAVE_NTOHLL 1 CACHE INTERNAL "Have function NTOHLL")
-    config_h_append(BRLCAD "#cmakedefine HAVE_NTOHLL 1\n")
+    brlcad_deferred_define("HAVE_NTOHLL 1")
   endif(HAVE_NTOHLL_SYS__ENDIAN)
 endif("${HAVE_NTOHLL}" STREQUAL "")
 if("${HAVE_HTONLL}" STREQUAL "")
   check_symbol_exists(htonll "sys/_endian.h" HAVE_HTONLL_SYS__ENDIAN)
   if(HAVE_HTONLL_SYS__ENDIAN)
     set(HAVE_HTONLL 1 CACHE INTERNAL "Have function HTONLL")
-    config_h_append(BRLCAD "#cmakedefine HAVE_HTONLL 1\n")
+    brlcad_deferred_define("HAVE_HTONLL 1")
   endif(HAVE_HTONLL_SYS__ENDIAN)
 endif("${HAVE_HTONLL}" STREQUAL "")
 
@@ -1862,13 +2370,13 @@ if(HAVE_REALPATH AND NOT HAVE_WORKING_REALPATH)
     "#include<limits.h>\n#include <stdlib.h>\nint main(void) { char dir[PATH_MAX]; const char *d = \"/tmp/REALPATH_TEST_PATH\"; d = (const char *)realpath(d, dir); return 0; }"
     HAVE_WORKING_REALPATH
   )
-  if(HAVE_WORKING_REALPATH)
-    config_h_append(BRLCAD "#define HAVE_WORKING_REALPATH 1\n")
-  endif(HAVE_WORKING_REALPATH)
 endif(HAVE_REALPATH AND NOT HAVE_WORKING_REALPATH)
+if(HAVE_WORKING_REALPATH)
+  brlcad_deferred_define("HAVE_WORKING_REALPATH 1")
+endif(HAVE_WORKING_REALPATH)
 
 # GetFullPathName
-check_c_source_compiles(
+_brlcad_srccompile_probe(HAVE_GETFULLPATHNAME
   "
 #include <windows.h>
 int main(void) {
@@ -1878,15 +2386,12 @@ char *resolved_path;
 return 0;
 }
 "
-  HAVE_GETFULLPATHNAME
+  SRCCOMPILE_WIN
 )
-if(HAVE_GETFULLPATHNAME)
-  config_h_append(BRLCAD "#define HAVE_GETFULLPATHNAME 1\n")
-endif(HAVE_GETFULLPATHNAME)
 
-# If we have GetProcessTimes, we need it instead of clock() for CPU time.
+# If we have GetProcessTimes, use it instead of clock() for Windows CPU time.
 # https://docs.microsoft.com/en-us/cpp/c-runtime-library/reference/clock
-check_c_source_compiles(
+_brlcad_srccompile_probe(HAVE_GETPROCESSTIMES
   "
 #include <windows.h>
 int main(void) {
@@ -1895,14 +2400,43 @@ FILETIME a,b,c,d;
 return 0;
 }
 "
-  HAVE_GETPROCESSTIMES
+  SRCCOMPILE_WIN
 )
-if(HAVE_GETPROCESSTIMES)
-  config_h_append(BRLCAD "#define HAVE_GETPROCESSTIMES 1\n")
-endif(HAVE_GETPROCESSTIMES)
+
+# Current-thread CPU time on Windows.
+_brlcad_srccompile_probe(HAVE_GETTHREADTIMES
+  "
+#include <windows.h>
+int main(void) {
+FILETIME a,b,c,d;
+(void)GetThreadTimes(GetCurrentThread(),&a,&b,&c,&d);
+return 0;
+}
+"
+  SRCCOMPILE_WIN
+)
+
+if(HAVE_MACH_MACH_H AND HAVE_MACH_THREAD_INFO_H)
+  # Current-thread CPU time on macOS when POSIX thread CPU timers are unavailable.
+  _brlcad_srccompile_probe(HAVE_MACH_THREAD_CPUTIME
+    "
+#include <mach/mach.h>
+#include <mach/thread_info.h>
+int main(void) {
+thread_t thread = mach_thread_self();
+thread_basic_info_data_t info;
+mach_msg_type_number_t count = THREAD_BASIC_INFO_COUNT;
+(void)thread_info(thread, THREAD_BASIC_INFO, (thread_info_t)&info, &count);
+(void)mach_port_deallocate(mach_task_self(), thread);
+return 0;
+}
+"
+    SRCCOMPILE_MACH
+  )
+endif()
 
 # GetCurrentProcessId
-check_c_source_compiles(
+_brlcad_srccompile_probe(HAVE_GETCURRENTPROCESSID
   "
 #include <windows.h>
 int main(void) {
@@ -1910,11 +2444,35 @@ DWORD cpid = GetCurrentProcessId();
 return 0;
 }
 "
-  HAVE_GETCURRENTPROCESSID
+  SRCCOMPILE_WIN
 )
-if(HAVE_GETCURRENTPROCESSID)
-  config_h_append(BRLCAD "#define HAVE_GETCURRENTPROCESSID 1\n")
-endif(HAVE_GETCURRENTPROCESSID)
+
+# Resolve the Windows-API source-compile probes registered above.
+_brlcad_run_probe_batch(SRCCOMPILE_WIN)
+if(HAVE_MACH_MACH_H AND HAVE_MACH_THREAD_INFO_H)
+  _brlcad_run_probe_batch(SRCCOMPILE_MACH)
+endif()
+
+
+if(HAVE_NETDB_H)
+  check_c_source_compiles("
+#include <stddef.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+
+int main(void) {
+struct addrinfo hints = {0};
+hints.ai_family = AF_UNSPEC;
+hints.ai_socktype = SOCK_STREAM;
+struct addrinfo *res = NULL;
+return getaddrinfo(\"localhost\", NULL, &hints, &res);
+}
+  " HAVE_GETADDRINFO)
+  if(HAVE_GETADDRINFO)
+    brlcad_deferred_define("HAVE_GETADDRINFO 1")
+  endif(HAVE_GETADDRINFO)
+endif()
 
 # functionality tests for lrint
 set(lrint_test "long int lrint(double); int main(void) {return lrint(3.14);}")
@@ -1926,7 +2484,7 @@ brlcad_function_exists(lrint DECL_TEST_SRCS lrint_decl_test
   REQUIRED_LIBS ${M_LIBRARY}
 )
 if(HAVE_DECL_LRINT)
-  config_h_append(BRLCAD "#cmakedefine HAVE_DECL_LRINT 1\n")
+  brlcad_deferred_define("HAVE_DECL_LRINT 1")
 endif(HAVE_DECL_LRINT)
 if(NOT HAVE_LRINT AND NOT DEFINED HAVE_WORKING_LRINT_MACRO)
   cmake_push_check_state(RESET)
@@ -1938,7 +2496,7 @@ if(NOT HAVE_LRINT AND NOT DEFINED HAVE_WORKING_LRINT_MACRO)
   )
 endif(NOT HAVE_LRINT AND NOT DEFINED HAVE_WORKING_LRINT_MACRO)
 if(HAVE_WORKING_LRINT_MACRO)
-  config_h_append(BRLCAD "#cmakedefine HAVE_WORKING_LRINT_MACRO 1\n")
+  brlcad_deferred_define("HAVE_WORKING_LRINT_MACRO 1")
 endif(HAVE_WORKING_LRINT_MACRO)
 
 # test for tgamma
@@ -1957,7 +2515,9 @@ brlcad_function_exists(gethostbyname DECL_TEST_SRCS gethostbyname_test REQUIRED_
 
 # Check for logb in C++
 check_cxx_source_compiles("#include <cmath>\nint main(void) {return logb(3.14);}" HAVE_CXX_LOGB)
-config_h_append(BRLCAD "#cmakedefine HAVE_CXX_LOGB 1\n")
+if(HAVE_CXX_LOGB)
+  brlcad_deferred_define("HAVE_CXX_LOGB 1")
+endif(HAVE_CXX_LOGB)
 
 #-----------------------------------------------------------------------
 
@@ -1981,11 +2541,11 @@ if(WIN32)
 
   check_symbol_exists(isnan "math.h" HAVE_ISNAN)
   if(HAVE_ISNAN)
-    config_h_append(BRLCAD "#define HAVE_ISNAN 1\n")
+    brlcad_deferred_define("HAVE_ISNAN 1")
   else(HAVE_ISNAN)
     check_symbol_exists(_isnan "float.h" HAVE__ISNAN)
     if(HAVE__ISNAN)
-      config_h_append(BRLCAD "#define HAVE__ISNAN 1\n")
+      brlcad_deferred_define("HAVE__ISNAN 1")
     endif(HAVE__ISNAN)
   endif(HAVE_ISNAN)
 
@@ -2068,6 +2628,204 @@ if(MSVC)
   set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} /STACK:10000000 /NOLOGO")
 endif(MSVC)
 
+# Enable sanitizers only after the configure-time platform tests have run.
+# Instrumenting try_run executables can make otherwise valid feature checks
+# fail when configuring under a debugger, tracer, or restricted runtime where
+# sanitizer runtimes cannot inspect the process.
+if(BRLCAD_ENABLE_THREAD_SANITIZER AND
+   (BRLCAD_ENABLE_ADDRESS_SANITIZER OR BRLCAD_ENABLE_UNDEFINED_SANITIZER))
+  message(FATAL_ERROR
+    "BRLCAD_ENABLE_THREAD_SANITIZER must use a separate build from "
+    "AddressSanitizer and UndefinedBehaviorSanitizer"
+  )
+endif()
+
+if(BRLCAD_ENABLE_ADDRESS_SANITIZER)
+  if(MSVC)
+    message(FATAL_ERROR "BRLCAD_ENABLE_ADDRESS_SANITIZER is not yet supported with MSVC")
+  endif()
+  if(BRLCAD_OPTIMIZED OR NOT BRLCAD_DEBUGGING)
+    message(FATAL_ERROR "BRLCAD_ENABLE_ADDRESS_SANITIZER requires BRLCAD_OPTIMIZED=OFF and BRLCAD_DEBUGGING=ON")
+  endif()
+
+  # The compiler driver flag must also be present during the probe link:
+  # putting -lasan directly in CMAKE_REQUIRED_LINK_OPTIONS places the library
+  # before the try-compile object and makes a working toolchain appear broken.
+  cmake_push_check_state()
+  set(CMAKE_REQUIRED_FLAGS "-fsanitize=address")
+  list(APPEND CMAKE_REQUIRED_LINK_OPTIONS "-fsanitize=address")
+  check_c_compiler_flag("-fsanitize=address" BRLCAD_ASAN_C_SUPPORTED)
+  check_cxx_compiler_flag("-fsanitize=address" BRLCAD_ASAN_CXX_SUPPORTED)
+  check_c_compiler_flag("-fsanitize-address-use-after-return=always" BRLCAD_ASAN_C_USE_AFTER_RETURN_SUPPORTED)
+  check_cxx_compiler_flag("-fsanitize-address-use-after-return=always" BRLCAD_ASAN_CXX_USE_AFTER_RETURN_SUPPORTED)
+  check_c_compiler_flag("-fsanitize-address-use-after-scope" BRLCAD_ASAN_C_USE_AFTER_SCOPE_SUPPORTED)
+  check_cxx_compiler_flag("-fsanitize-address-use-after-scope" BRLCAD_ASAN_CXX_USE_AFTER_SCOPE_SUPPORTED)
+  check_c_compiler_flag("-fno-omit-frame-pointer" BRLCAD_ASAN_C_FRAME_POINTER_SUPPORTED)
+  check_cxx_compiler_flag("-fno-omit-frame-pointer" BRLCAD_ASAN_CXX_FRAME_POINTER_SUPPORTED)
+  cmake_pop_check_state()
+
+  if(NOT BRLCAD_ASAN_C_SUPPORTED OR NOT BRLCAD_ASAN_CXX_SUPPORTED)
+    message(FATAL_ERROR "BRLCAD_ENABLE_ADDRESS_SANITIZER was requested, but the C/C++ compiler and linker do not support -fsanitize=address")
+  endif()
+
+  # Directory options instrument build targets without contaminating any
+  # try_compile/try_run checks performed by nested CMake logic.
+  add_compile_options(-fsanitize=address)
+  add_link_options(-fsanitize=address)
+  if(BRLCAD_ASAN_C_USE_AFTER_RETURN_SUPPORTED)
+    add_compile_options($<$<COMPILE_LANGUAGE:C>:-fsanitize-address-use-after-return=always>)
+  endif()
+  if(BRLCAD_ASAN_CXX_USE_AFTER_RETURN_SUPPORTED)
+    add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-fsanitize-address-use-after-return=always>)
+  endif()
+  if(BRLCAD_ASAN_C_USE_AFTER_SCOPE_SUPPORTED)
+    add_compile_options($<$<COMPILE_LANGUAGE:C>:-fsanitize-address-use-after-scope>)
+  endif()
+  if(BRLCAD_ASAN_CXX_USE_AFTER_SCOPE_SUPPORTED)
+    add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-fsanitize-address-use-after-scope>)
+  endif()
+  if(BRLCAD_ASAN_C_FRAME_POINTER_SUPPORTED)
+    add_compile_options($<$<COMPILE_LANGUAGE:C>:-fno-omit-frame-pointer>)
+  endif()
+  if(BRLCAD_ASAN_CXX_FRAME_POINTER_SUPPORTED)
+    add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-fno-omit-frame-pointer>)
+  endif()
+endif()
+
+if(BRLCAD_ENABLE_UNDEFINED_SANITIZER)
+  if(MSVC)
+    message(FATAL_ERROR "BRLCAD_ENABLE_UNDEFINED_SANITIZER is not yet supported with MSVC")
+  endif()
+  if(BRLCAD_OPTIMIZED OR NOT BRLCAD_DEBUGGING)
+    message(FATAL_ERROR "BRLCAD_ENABLE_UNDEFINED_SANITIZER requires BRLCAD_OPTIMIZED=OFF and BRLCAD_DEBUGGING=ON")
+  endif()
+
+  cmake_push_check_state()
+  set(CMAKE_REQUIRED_FLAGS "-fsanitize=undefined")
+  list(APPEND CMAKE_REQUIRED_LINK_OPTIONS "-fsanitize=undefined")
+  check_c_compiler_flag("-fsanitize=undefined" BRLCAD_UBSAN_C_SUPPORTED)
+  check_cxx_compiler_flag("-fsanitize=undefined" BRLCAD_UBSAN_CXX_SUPPORTED)
+  check_c_compiler_flag("-fno-sanitize-recover=undefined" BRLCAD_UBSAN_C_NO_RECOVER_SUPPORTED)
+  check_cxx_compiler_flag("-fno-sanitize-recover=undefined" BRLCAD_UBSAN_CXX_NO_RECOVER_SUPPORTED)
+  check_c_compiler_flag("-fno-omit-frame-pointer" BRLCAD_UBSAN_C_FRAME_POINTER_SUPPORTED)
+  check_cxx_compiler_flag("-fno-omit-frame-pointer" BRLCAD_UBSAN_CXX_FRAME_POINTER_SUPPORTED)
+  cmake_pop_check_state()
+
+  if(NOT BRLCAD_UBSAN_C_SUPPORTED OR NOT BRLCAD_UBSAN_CXX_SUPPORTED)
+    message(FATAL_ERROR "BRLCAD_ENABLE_UNDEFINED_SANITIZER was requested, but the C/C++ compiler and linker do not support -fsanitize=undefined")
+  endif()
+  if(NOT BRLCAD_UBSAN_C_NO_RECOVER_SUPPORTED OR NOT BRLCAD_UBSAN_CXX_NO_RECOVER_SUPPORTED)
+    message(FATAL_ERROR "BRLCAD_ENABLE_UNDEFINED_SANITIZER requires C/C++ support for -fno-sanitize-recover=undefined")
+  endif()
+
+  add_compile_options(-fsanitize=undefined)
+  add_link_options(-fsanitize=undefined)
+  add_compile_options($<$<COMPILE_LANGUAGE:C>:-fno-sanitize-recover=undefined>)
+  add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-fno-sanitize-recover=undefined>)
+  if(BRLCAD_UBSAN_C_FRAME_POINTER_SUPPORTED)
+    add_compile_options($<$<COMPILE_LANGUAGE:C>:-fno-omit-frame-pointer>)
+  endif()
+  if(BRLCAD_UBSAN_CXX_FRAME_POINTER_SUPPORTED)
+    add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-fno-omit-frame-pointer>)
+  endif()
+endif()
+
+if(BRLCAD_ENABLE_THREAD_SANITIZER)
+  if(MSVC)
+    message(FATAL_ERROR "BRLCAD_ENABLE_THREAD_SANITIZER is not yet supported with MSVC")
+  endif()
+  if(BRLCAD_OPTIMIZED OR NOT BRLCAD_DEBUGGING)
+    message(FATAL_ERROR "BRLCAD_ENABLE_THREAD_SANITIZER requires BRLCAD_OPTIMIZED=OFF and BRLCAD_DEBUGGING=ON")
+  endif()
+
+  cmake_push_check_state()
+  set(CMAKE_REQUIRED_FLAGS "-fsanitize=thread")
+  list(APPEND CMAKE_REQUIRED_LINK_OPTIONS "-fsanitize=thread")
+  check_c_compiler_flag("-fsanitize=thread" BRLCAD_TSAN_C_SUPPORTED)
+  check_cxx_compiler_flag("-fsanitize=thread" BRLCAD_TSAN_CXX_SUPPORTED)
+  check_c_compiler_flag("-fno-omit-frame-pointer" BRLCAD_TSAN_C_FRAME_POINTER_SUPPORTED)
+  check_cxx_compiler_flag("-fno-omit-frame-pointer" BRLCAD_TSAN_CXX_FRAME_POINTER_SUPPORTED)
+  check_c_compiler_flag("-Wno-error=tsan" BRLCAD_TSAN_C_NO_ERROR_SUPPORTED)
+  check_cxx_compiler_flag("-Wno-error=tsan" BRLCAD_TSAN_CXX_NO_ERROR_SUPPORTED)
+  cmake_pop_check_state()
+
+  if(NOT BRLCAD_TSAN_C_SUPPORTED OR NOT BRLCAD_TSAN_CXX_SUPPORTED)
+    message(FATAL_ERROR "BRLCAD_ENABLE_THREAD_SANITIZER was requested, but the C/C++ compiler and linker do not support -fsanitize=thread")
+  endif()
+
+  add_compile_options(-fsanitize=thread)
+  add_link_options(-fsanitize=thread)
+  if(BRLCAD_TSAN_C_FRAME_POINTER_SUPPORTED)
+    add_compile_options($<$<COMPILE_LANGUAGE:C>:-fno-omit-frame-pointer>)
+  endif()
+  if(BRLCAD_TSAN_CXX_FRAME_POINTER_SUPPORTED)
+    add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-fno-omit-frame-pointer>)
+  endif()
+  # GCC warns that ThreadSanitizer does not model atomic_thread_fence.  Keep
+  # that warning visible, but do not let BRL-CAD's global -Werror prevent a
+  # TSan build from reaching the runtime tests which characterize the impact.
+  if(BRLCAD_TSAN_C_NO_ERROR_SUPPORTED)
+    add_compile_options($<$<COMPILE_LANGUAGE:C>:-Wno-error=tsan>)
+  endif()
+  if(BRLCAD_TSAN_CXX_NO_ERROR_SUPPORTED)
+    add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-Wno-error=tsan>)
+  endif()
+endif()
+
+# Instrumented executables can be substantially slower, especially when a
+# test drives geometry work through nested execute_process calls whose timeout
+# is not managed by CTest.  Supply a common multiplier for those scripts while
+# permitting CI and developers to tune it for their host.
+if(BRLCAD_ENABLE_ADDRESS_SANITIZER OR
+   BRLCAD_ENABLE_UNDEFINED_SANITIZER OR
+   BRLCAD_ENABLE_THREAD_SANITIZER)
+  set(_brlcad_test_timeout_scale_default 4)
+else()
+  set(_brlcad_test_timeout_scale_default 1)
+endif()
+set(
+  BRLCAD_TEST_TIMEOUT_SCALE "${_brlcad_test_timeout_scale_default}"
+  CACHE STRING "Multiplier for test-script subprocess timeouts"
+)
+mark_as_advanced(BRLCAD_TEST_TIMEOUT_SCALE)
+if(NOT BRLCAD_TEST_TIMEOUT_SCALE MATCHES "^[1-9][0-9]*$")
+  message(FATAL_ERROR "BRLCAD_TEST_TIMEOUT_SCALE must be a positive integer")
+endif()
+unset(_brlcad_test_timeout_scale_default)
+
+# Build-time scanners are implementation tools, not leak-test subjects.  An
+# instrumented scanner still needs to run while building, including under
+# ptrace-based CI/sandbox environments where LeakSanitizer cannot initialize.
+# GCC ThreadSanitizer on x86-64 Linux likewise needs address randomization
+# disabled before process startup to reserve its shadow address range.
+set(BRLCAD_SANITIZER_BUILD_TOOL_LAUNCHER)
+set(BRLCAD_SANITIZER_TEST_LAUNCHER)
+if(BRLCAD_ENABLE_ADDRESS_SANITIZER)
+  set(
+    BRLCAD_SANITIZER_BUILD_TOOL_LAUNCHER
+    ${CMAKE_COMMAND} -E env ASAN_OPTIONS=detect_leaks=0
+  )
+endif()
+if(BRLCAD_ENABLE_THREAD_SANITIZER AND CMAKE_SYSTEM_NAME STREQUAL "Linux" AND
+   CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|amd64|AMD64)$")
+  find_program(BRLCAD_SETARCH_EXECUTABLE NAMES setarch)
+  if(BRLCAD_SETARCH_EXECUTABLE)
+    set(
+      BRLCAD_SANITIZER_BUILD_TOOL_LAUNCHER
+      ${BRLCAD_SETARCH_EXECUTABLE} x86_64 -R
+    )
+    set(
+      BRLCAD_SANITIZER_TEST_LAUNCHER
+      ${BRLCAD_SETARCH_EXECUTABLE} x86_64 -R
+    )
+  else()
+    message(WARNING
+      "ThreadSanitizer build tools and tests may need to be run with "
+      "address randomization disabled, but setarch was not found"
+    )
+  endif()
+endif()
+
 #-----------------------------------------------------------------------------
 # Add misc/tools for tools that are used in BRL-CAD's build process or for
 # maintenance activities.
@@ -2131,86 +2889,10 @@ if(BRLCAD_PRINT_MSGS)
   message("***********************************************************")
 endif(BRLCAD_PRINT_MSGS)
 
-# If we're building Docbook documentation, we need to prepare
-# some settings before the BRLCAD_ADDEXEC targets are defined
+# If we're building AsciiDoc documentation, we need to define
+# some logic before the BRLCAD_ADDEXEC targets are defined
 if(BRLCAD_EXTRADOCS)
-  # Define a build target that builds a no-op executable, so we can ensure
-  # a target for generator expression use regardless of other changes elsewhere
-  # in the build system
-  add_executable(db_dir_info doc/docbook/db_dir_info.c)
-  set_target_properties(db_dir_info PROPERTIES FOLDER "DocBook")
-
-  # Most of the Docbook resources we need are defined here
-  add_subdirectory(doc/docbook/resources)
-
-  # Rework CMake binary and source paths for DocBook templates - if we
-  # have spaces in the paths, they will cause a problem.
-  string(REPLACE " " "%20" DOCBOOK_BINARY_DIR "${CMAKE_BINARY_DIR}")
-  string(REPLACE " " "%20" DOCBOOK_SOURCE_DIR "${CMAKE_SOURCE_DIR}")
-
-  # Files for PDF products
-  if(BRLCAD_EXTRADOCS_PDF)
-    # Apache FOP needs a couple of config files set up
-    set(srcdir ${CMAKE_CURRENT_SOURCE_DIR}/doc/docbook)
-    configure_file(${CMAKE_SOURCE_DIR}/doc/docbook/fop.xconf.in ${CMAKE_BINARY_DIR}/doc/docbook/fop.xconf)
-    distclean("${CMAKE_BINARY_DIR}/doc/docbook/fop.xconf")
-  endif(BRLCAD_EXTRADOCS_PDF)
-
-  # For the html files, we need brlcad.css
-  add_custom_command(
-    OUTPUT ${CMAKE_BINARY_DIR}/doc/docbook/brlcad_css-done
-    COMMAND
-      "${CMAKE_COMMAND}" -E copy_if_different ${CMAKE_SOURCE_DIR}/doc/docbook/css/brlcad.css
-      $<TARGET_FILE_DIR:db_dir_info>/${RBIN_DIR}/${DOC_DIR}/html/css/brlcad.css
-    COMMAND "${CMAKE_COMMAND}" -E touch ${CMAKE_BINARY_DIR}/doc/docbook/brlcad_css-done
-    DEPENDS ${CMAKE_SOURCE_DIR}/doc/docbook/css/brlcad.css
-  )
-  add_custom_target(brlcad_css DEPENDS ${CMAKE_BINARY_DIR}/doc/docbook/brlcad_css-done)
-  set_target_properties(brlcad_css PROPERTIES FOLDER "DocBook")
-  install(FILES ${CMAKE_SOURCE_DIR}/doc/docbook/css/brlcad.css DESTINATION ${DOC_DIR}/html/css)
-  distclean(${DOC_DIR}/html/css/brlcad.css)
-
-  # Include CMake macros for DocBook.
-  include(DocBook)
-
-  # The system man pages are the ones build targets might generate, so
-  # make sure to set their stylesheet resources up front
-
-  # Style sheet for XSLT transformation to HTML pages
-  set(D_RDIR ${CMAKE_SOURCE_DIR}/doc/docbook/resources/brlcad)
-  set(D_BRDIR ${CMAKE_BINARY_DIR}/doc/docbook/resources/brlcad)
-  if(BRLCAD_EXTRADOCS_HTML)
-    configure_file(${D_RDIR}/brlcad-man-xhtml-stylesheet.xsl.in ${D_BRDIR}/brlcad-man-xhtml-stylesheet.xsl)
-    distclean("${D_BRDIR}/brlcad-man-xhtml-stylesheet.xsl")
-  endif(BRLCAD_EXTRADOCS_HTML)
-
-  if(BRLCAD_EXTRADOCS_PHP)
-    configure_file(${D_RDIR}/brlcad-man-xhtml-stylesheet.xsl.in ${D_BRDIR}/brlcad-man-xhtml-stylesheet.xsl)
-    distclean("${D_BRDIR}/brlcad-man-xhtml-stylesheet.xsl")
-  endif(BRLCAD_EXTRADOCS_PHP)
-
-  # Style sheet for XSLT transformation to manual pages
-  if(BRLCAD_EXTRADOCS_MAN)
-    configure_file(${D_RDIR}/brlcad-man-stylesheet.xsl.in ${D_BRDIR}/brlcad-man-stylesheet.xsl)
-    distclean("${D_BRDIR}/brlcad-man-stylesheet.xsl")
-  endif(BRLCAD_EXTRADOCS_MAN)
-
-  # Files for PDF
-  if(BRLCAD_EXTRADOCS_PDF)
-    configure_file(${D_RDIR}/brlcad-man-fo-stylesheet.xsl.in ${D_BRDIR}/brlcad-man-fo-stylesheet.xsl)
-    distclean("${D_BRDIR}/brlcad-man-fo-stylesheet.xsl")
-  endif(BRLCAD_EXTRADOCS_PDF)
-
-  # For HTML, MAN and FO (FO is an intermediate file used in the
-  # XML->PDF transformation) we use variables to hold the full
-  # stylesheet path. In the case we need to further
-  # customize FO stylesheets we can have separate CMake logic in
-  # appropriate directories to handle the customization (e.g., the
-  # BRL-CAD manuals in books/en/CMakeLists.txt).
-  set(XSL_PHP_STYLESHEET "${D_BRDIR}/wordpress.xsl")
-  set(XSL_HTML_STYLESHEET "${D_BRDIR}/brlcad-man-xhtml-stylesheet.xsl")
-  set(XSL_MAN_STYLESHEET "${D_BRDIR}/brlcad-man-stylesheet.xsl")
-  set(XSL_FO_STYLESHEET "${D_BRDIR}/brlcad-man-fo-stylesheet.xsl")
+  include(AsciiDoc)
 endif(BRLCAD_EXTRADOCS)
 
 # CTest Testing support (ON by default, may be controlled with BUILD_TESTING
@@ -2234,15 +2916,15 @@ verbose_add_subdirectory("" src)
 # library targets are active.
 verbose_add_subdirectory("" include)
 
+# require geometry conversion tools
+verbose_add_subdirectory("" db)
+
 # scripts that primarily require rendering
 if(TARGET rt)
   verbose_add_subdirectory("" sh)
-  verbose_add_subdirectory("" regress)
   verbose_add_subdirectory("" bench)
+  verbose_add_subdirectory("" regress)
 endif(TARGET rt)
-
-# require geometry conversion tools
-verbose_add_subdirectory("" db)
 
 # docs after we're all done with build tasks
 # NOTE: doc/docbook/resources is added separately (earlier)
@@ -2253,9 +2935,185 @@ verbose_add_subdirectory("" doc)
 # NOTE: misc/tools is added separately (earlier)
 verbose_add_subdirectory("" misc)
 
+#------------------------------------------------------------------------------
+# CMake package configuration files for modern find_package(BRLCAD CONFIG)
+#
+# BRLCAD_ADDLIB() attaches installed public library targets to the BRLCADTargets
+# and BRLCADStaticTargets export sets.  Generate the package files after all
+# subdirectories have had a chance to define their targets.
+include(CMakePackageConfigHelpers)
+
+set(BRLCAD_CMAKE_INSTALL_DIR "${LIB_DIR}/cmake/BRLCAD")
+set(BRLCAD_MODULE_INSTALL_DIR "${BRLCAD_CMAKE_INSTALL_DIR}/modules")
+set(BRLCAD_BUILD_MODULE_DIR "${BRLCAD_BINARY_DIR}/modules")
+
+set(
+  BRLCAD_PACKAGE_MODULE_FILES
+  "${BRLCAD_CMAKE_DIR}/FindLMDB.cmake"
+  "${BRLCAD_CMAKE_DIR}/FindMANIFOLD.cmake"
+  "${BRLCAD_CMAKE_DIR}/FindMMESH.cmake"
+  "${BRLCAD_CMAKE_DIR}/FindNETPBM.cmake"
+  "${BRLCAD_CMAKE_DIR}/FindOPENNURBS.cmake"
+  "${BRLCAD_CMAKE_DIR}/FindPNG.cmake"
+  "${BRLCAD_CMAKE_DIR}/FindREGEX.cmake"
+  "${BRLCAD_CMAKE_DIR}/FindTCL.cmake"
+  "${BRLCAD_CMAKE_DIR}/FindZLIB.cmake"
+)
+
+foreach(_brlcad_dep ZLIB LMDB MANIFOLD MMESH REGEX PNG NETPBM OPENNURBS)
+  if("${${_brlcad_dep}_STATUS}" STREQUAL "Bundled")
+    set(BRLCAD_FIND_DEP_${_brlcad_dep} "find_dependency(${_brlcad_dep} MODULE)")
+  else()
+    set(BRLCAD_FIND_DEP_${_brlcad_dep} "find_dependency(${_brlcad_dep})")
+  endif()
+endforeach()
+
+set(BRLCAD_FIND_DEP_JPEG "find_dependency(JPEG)")
+
+set(BRLCAD_HAVE_TCL FALSE)
+if(BRLCAD_ENABLE_TCL)
+  set(BRLCAD_HAVE_TCL TRUE)
+endif()
+
+set(BRLCAD_HAVE_QT FALSE)
+if(BRLCAD_ENABLE_QT)
+  set(BRLCAD_HAVE_QT TRUE)
+  # Qt creates deployment support files while configuring the build tree.
+  distclean("${BRLCAD_BINARY_DIR}/.qt")
+endif()
+
+set(BRLCAD_HAVE_STEP FALSE)
+if(BRLCAD_ENABLE_STEP)
+  set(BRLCAD_HAVE_STEP TRUE)
+endif()
+
+set(BRLCAD_HAVE_GDAL FALSE)
+if(BRLCAD_ENABLE_GDAL)
+  set(BRLCAD_HAVE_GDAL TRUE)
+endif()
+
+set(BRLCAD_HAVE_OPENCL FALSE)
+if(BRLCAD_ENABLE_OPENCL)
+  set(BRLCAD_HAVE_OPENCL TRUE)
+endif()
+
+set(BRLCAD_HAVE_OPENGL FALSE)
+if(BRLCAD_ENABLE_OPENGL)
+  set(BRLCAD_HAVE_OPENGL TRUE)
+endif()
+
+set(BRLCAD_HAVE_OSMESA FALSE)
+if(BRLCAD_ENABLE_OSMESA)
+  set(BRLCAD_HAVE_OSMESA TRUE)
+endif()
+
+# Build-tree package files support BRLCAD_DIR=<build_dir> consumers.
+set(BRLCAD_INCLUDE_INSTALL_DIR "${BRLCAD_BINARY_DIR}/${INCLUDE_DIR}")
+set(BRLCAD_LIB_INSTALL_DIR "${BRLCAD_BINARY_DIR}/${LIB_DIR}")
+set(BRLCAD_DATA_INSTALL_DIR "${BRLCAD_BINARY_DIR}/${DATA_DIR}")
+configure_package_config_file(
+  "${BRLCAD_CMAKE_DIR}/BRLCADConfig.cmake.in"
+  "${BRLCAD_BINARY_DIR}/BRLCADConfig.cmake"
+  INSTALL_PREFIX "${BRLCAD_BINARY_DIR}"
+  INSTALL_DESTINATION "."
+  PATH_VARS
+    BRLCAD_INCLUDE_INSTALL_DIR
+    BRLCAD_LIB_INSTALL_DIR
+    BRLCAD_DATA_INSTALL_DIR
+)
+distclean("${BRLCAD_BINARY_DIR}/BRLCADConfig.cmake")
+
+write_basic_package_version_file(
+  "${BRLCAD_BINARY_DIR}/BRLCADConfigVersion.cmake"
+  VERSION "${BRLCAD_VERSION}"
+  COMPATIBILITY SameMajorVersion
+)
+distclean("${BRLCAD_BINARY_DIR}/BRLCADConfigVersion.cmake")
+
+file(MAKE_DIRECTORY "${BRLCAD_BUILD_MODULE_DIR}")
+foreach(_brlcad_module_file ${BRLCAD_PACKAGE_MODULE_FILES})
+  get_filename_component(_brlcad_module_name "${_brlcad_module_file}" NAME)
+  configure_file(
+    "${_brlcad_module_file}"
+    "${BRLCAD_BUILD_MODULE_DIR}/${_brlcad_module_name}"
+    COPYONLY
+  )
+endforeach()
+distclean("${BRLCAD_BUILD_MODULE_DIR}")
+
+export(
+  EXPORT BRLCADTargets
+  NAMESPACE BRLCAD::
+  FILE "${BRLCAD_BINARY_DIR}/BRLCADTargets.cmake"
+)
+distclean("${BRLCAD_BINARY_DIR}/BRLCADTargets.cmake")
+if(BUILD_STATIC_LIBS)
+  export(
+    EXPORT BRLCADStaticTargets
+    NAMESPACE BRLCAD::
+    FILE "${BRLCAD_BINARY_DIR}/BRLCADStaticTargets.cmake"
+  )
+  distclean("${BRLCAD_BINARY_DIR}/BRLCADStaticTargets.cmake")
+endif()
+
+# Install-tree package files use the final installation prefix.
+set(BRLCAD_INCLUDE_INSTALL_DIR "${INCLUDE_DIR}")
+set(BRLCAD_LIB_INSTALL_DIR "${LIB_DIR}")
+set(BRLCAD_DATA_INSTALL_DIR "${DATA_DIR}")
+configure_package_config_file(
+  "${BRLCAD_CMAKE_DIR}/BRLCADConfig.cmake.in"
+  "${BRLCAD_BINARY_DIR}/CMakeFiles/BRLCADConfig.cmake"
+  INSTALL_DESTINATION "${BRLCAD_CMAKE_INSTALL_DIR}"
+  PATH_VARS
+    BRLCAD_INCLUDE_INSTALL_DIR
+    BRLCAD_LIB_INSTALL_DIR
+    BRLCAD_DATA_INSTALL_DIR
+)
+
+install(
+  FILES
+    "${BRLCAD_BINARY_DIR}/CMakeFiles/BRLCADConfig.cmake"
+    "${BRLCAD_BINARY_DIR}/BRLCADConfigVersion.cmake"
+  DESTINATION "${BRLCAD_CMAKE_INSTALL_DIR}"
+)
+
+install(
+  EXPORT BRLCADTargets
+  NAMESPACE BRLCAD::
+  FILE BRLCADTargets.cmake
+  DESTINATION "${BRLCAD_CMAKE_INSTALL_DIR}"
+)
+
+if(BUILD_STATIC_LIBS)
+  install(
+    EXPORT BRLCADStaticTargets
+    NAMESPACE BRLCAD::
+    FILE BRLCADStaticTargets.cmake
+    DESTINATION "${BRLCAD_CMAKE_INSTALL_DIR}"
+  )
+endif()
+
+install(
+  FILES ${BRLCAD_PACKAGE_MODULE_FILES}
+  DESTINATION "${BRLCAD_MODULE_INSTALL_DIR}"
+)
 
 # Make sure we have the target dir
 file(MAKE_DIRECTORY "${BRLCAD_BINARY_DIR}/${DATA_DIR}/data")
+
+# Emit simple feature-test defines in sorted order.  Keeping these entries out
+# of the immediate append stream makes brlcad_config.h deterministic when
+# independent platform probes are evaluated in a different order.
+get_property(_brlcad_deferred_defines GLOBAL PROPERTY BRLCAD_CONFIG_H_DEFERRED_DEFINES)
+if(_brlcad_deferred_defines)
+  list(SORT _brlcad_deferred_defines)
+  list(REMOVE_DUPLICATES _brlcad_deferred_defines)
+  foreach(_brlcad_def ${_brlcad_deferred_defines})
+    config_h_append(BRLCAD "#define ${_brlcad_def}\n")
+  endforeach()
+endif()
+unset(_brlcad_def)
+unset(_brlcad_deferred_defines)
 
 # If we're building on Windows with MSVC, use config_win.h file
 if(MSVC)
@@ -2274,14 +3132,25 @@ build_cfg_hdr(${CONFIG_H_FILE} ${INCLUDE_DIR}/brlcad)
 set(
   toplevel_DOCFILES
   AUTHORS
-  CHANGES
+  CHANGES.adoc
   COPYING
   HACKING
   INSTALL
+  ISSUES.adoc
   NEWS
   README
 )
 brlcad_adddata(toplevel_DOCFILES ".")
+
+get_property(_brlcad_missing_manpages GLOBAL PROPERTY BRLCAD_EXEC_MISSING_MANPAGES)
+if(_brlcad_missing_manpages)
+  list(REMOVE_DUPLICATES _brlcad_missing_manpages)
+  list(SORT _brlcad_missing_manpages)
+  list(LENGTH _brlcad_missing_manpages _brlcad_missing_manpages_count)
+  message("No man pages defined for ${_brlcad_missing_manpages_count} executables:")
+  string(REPLACE ";" "\n" _brlcad_missing_manpages_list "${_brlcad_missing_manpages}")
+  message("${_brlcad_missing_manpages_list}")
+endif(_brlcad_missing_manpages)
 
 # Now that everything is configured, print a summary of the build
 # settings.
@@ -2363,7 +3232,7 @@ endforeach(ad ${ALL_DIRS})
 foreach(ctarget ${ALL_TARGETS})
   if(NOT ${ctarget} MATCHES "timestamp")
     add_dependencies(${ctarget} timestamp)
-    if(NOT ${ctarget} MATCHES "managed_files" AND NOT ${ctarget} MATCHES ".*_cp$")
+    if(NOT ${ctarget} MATCHES "managed_files" AND NOT ${ctarget} MATCHES ".*_cp$" AND NOT ${ctarget} MATCHES "asciiquack" AND NOT ${ctarget} MATCHES ".*asciidoc.*")
       add_dependencies(${ctarget} managed_files)
     endif()
   endif(NOT ${ctarget} MATCHES "timestamp")
@@ -2399,8 +3268,8 @@ include(BRLCAD_CPack)
 
 # Some files to ignore for distcheck.  The files and directories prefixed with
 # a "." character are "hidden" and may not be present, so check for them first.
-set(
-  hidden_files
+set(hidden_files
+  .github/actions/prepare-bext/action.yml
   .github/workflows/distcheck.yml
   .github/workflows/linux_interactive.yml
   .github/workflows/push.yml
@@ -2414,8 +3283,8 @@ foreach(hf ${hidden_files})
   endif(EXISTS ${CMAKE_SOURCE_DIR}/${hf})
 endforeach(hf ${hidden_files})
 
-set(
-  toplevel_ignore_files
+set(toplevel_ignore_files
+  AGENTS.md
   BUGS
   CMakeLists.txt
   ChangeLog
@@ -2502,6 +3371,15 @@ execute_process(COMMAND "${CMAKE_BINARY_DIR}/CMakeTmp/dreport" "Elapsed configur
 
 # Write out the Doxygen feature list
 doxygen_feature_summary("${BRLCAD_BINARY_DIR}/CMakeTmp/features.dox")
+
+# If requested, emit a snapshot of all configure test results.  This runs
+# last so it captures every probe outcome, and is used to differentially
+# validate that batched (and, later, Ninja-driven) probes produce results
+# identical to the reference try_compile path.  See
+# misc/CMake/probe_validation/ for the comparison tooling.
+if(BRLCAD_PROBE_SNAPSHOT_FILE)
+  brlcad_write_probe_snapshot("${BRLCAD_PROBE_SNAPSHOT_FILE}")
+endif(BRLCAD_PROBE_SNAPSHOT_FILE)
 
 add_custom_target(
   print-warning-message

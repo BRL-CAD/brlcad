@@ -1,0 +1,47 @@
+= NMG_COLLAPSE(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+nmg_collapse - Simplifies an existing __nmg_shape__ by a process of edge decimation.
+
+== SYNOPSIS
+
+[source]
+----
+nmg_collapse {old_nmg_shape new_nmg_shape maximum_error_dist} [minimum_angle]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Simplifies an existing __nmg_shape__ by a process of edge decimation. Each edge in the __old_nmg_shape__ is considered; if it can be deleted without creating an error greater than the specified __maximum_error_dist,__ then that edge is deleted. If a __minimum_angle__ is specified (degrees), then the edge will not be deleted if it would create a triangle with an angle less than __minimum_angle__. The resulting shape is saved in __new_nmg_shape__. The __old_nmg_shape__ must have been triangulated previous to using the *nmg_collapse* command. The resulting shape consists of all triangular faces.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *nmg_collapse* command to simplify an existing nmg shape by decimating its edges. The new nmg shape will be within a maximum error distribution and will not have any triangles with angles less than a given minimum.
+
+.Create a new nmg shape by decimating the edges of an existing nmg shape.
+[example]
+====
+mged>**nmg_collapse nmg_old nmg_new 1.0 10.0**
+
+Decimates edges in __nmg_old__ to produce an NMG with an error no greater than 1.0 units. The process will not create any triangles with an angle less than 10°. The new NMG shape will be named __nmg_new__.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

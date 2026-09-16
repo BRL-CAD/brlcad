@@ -1,0 +1,81 @@
+= D2-C(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+
+d2-c - merge two double files into one complex file
+
+== SYNOPSIS
+
+[source]
+----
+d2-c _real_file_ _imag_file_ > _complex_
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*d2-c* interleaves two streams of double-precision floating point values
+into a single stream of complex numbers, writing the result to standard
+output.  Values are read in parallel from _real_file_ and _imag_file_ and
+emitted as alternating real/imaginary pairs, so the output is suitable as
+input to tools that expect complex data such as *dfft*(1).
+
+If one input is shorter than the other, the missing values are padded with
+zeros until both inputs are exhausted.  The output is binary, so standard
+output must be redirected to a file or a pipe (the program refuses to run
+when standard output is a terminal).  It is the inverse of *c-d*(1).
+
+Either input name may be given as a single dash (*-*) to read from standard
+input, or as a single period (*.*) to supply an all-zero (null) stream,
+which is useful for building a purely real or purely imaginary complex
+signal.
+
+This command is deprecated and scheduled for removal; contact the
+developers if you depend on it.
+
+[[examples]]
+== EXAMPLES
+
+.Build a complex signal from separate real and imaginary files
+====
+[source,bash]
+----
+d2-c real.d imag.d > signal.c
+----
+Reads matching real and imaginary sample streams and writes the interleaved
+complex result to signal.c, ready for spectral analysis with *dfft*(1).
+====
+
+.Promote a purely real signal to complex form
+====
+[source,bash]
+----
+d2-c real.d . > signal.c
+----
+Pairs each real sample with a zero imaginary part by using the *.* null
+stream, producing a complex file with no imaginary component.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *c-d*(1), *dconv*(1), *dfft*(1)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

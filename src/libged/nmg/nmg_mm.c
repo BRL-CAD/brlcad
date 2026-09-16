@@ -1,7 +1,7 @@
 /*                         N M G _ M M . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,10 +25,10 @@
 
 #include "common.h"
 
-#include <signal.h>
 #include <string.h>
 
 #include "bu/cmd.h"
+#include "bu/interrupt.h"
 #include "rt/geom.h"
 
 #include "../ged_private.h"
@@ -69,7 +69,7 @@ ged_nmg_mm_core(struct ged *gedp, int argc, const char *argv[])
 
     /* add model to database */
     GED_DB_DIRADD(gedp, dp, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type, BRLCAD_ERROR);
-    GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_PUT_INTERN(gedp, dp, &internal, BRLCAD_ERROR);
 
     return BRLCAD_OK;
 }

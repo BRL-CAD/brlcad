@@ -1,7 +1,7 @@
 /*                      S E A R C H . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -192,7 +192,7 @@ db_fullpath_list_subtree(struct db_full_path *path, int curr_bool, union tree *t
 	    db_fullpath_list_subtree(path, bool_val, tp->tr_b.tb_right, traverse_func, cmap, client_data);
 	    break;
 	case OP_DB_LEAF:
-	    if (UNLIKELY(lcd->dbip->dbi_use_comb_instance_ids && c_inst_map))
+	    if (UNLIKELY(lcd->dbip->i->dbi_use_comb_instance_ids && c_inst_map))
 		(*c_inst_map)[std::string(tp->tr_l.tl_name)]++;
 	    if ((dp=db_lookup(lcd->dbip, tp->tr_l.tl_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
 		return;
@@ -203,7 +203,7 @@ db_fullpath_list_subtree(struct db_full_path *path, int curr_bool, union tree *t
 		    struct db_full_path *newpath;
 		    db_add_node_to_full_path(path, dp);
 		    DB_FULL_PATH_SET_CUR_BOOL(path, bool_val);
-		    if (UNLIKELY(lcd->dbip->dbi_use_comb_instance_ids && c_inst_map))
+		    if (UNLIKELY(lcd->dbip->i->dbi_use_comb_instance_ids && c_inst_map))
 			DB_FULL_PATH_SET_CUR_COMB_INST(path, (*c_inst_map)[std::string(tp->tr_l.tl_name)]-1);
 		    BU_ALLOC(newpath, struct db_full_path);
 		    db_full_path_init(newpath);
@@ -252,7 +252,7 @@ db_fullpath_list(struct db_full_path *path, void *client_data)
 	struct rt_db_internal in;
 	struct rt_comb_internal *comb;
 
-	if (rt_db_get_internal(&in, dp, lcd->dbip, NULL, &rt_uniresource) < 0)
+	if (rt_db_get_internal(&in, dp, lcd->dbip, NULL) < 0)
 	    return;
 
 	std::unordered_map<std::string, int> c_inst_map;
@@ -826,7 +826,7 @@ f_objparam(struct db_plan_old_t *plan, struct db_node_old_t *db_node, struct db_
     }
 
     RT_DB_INTERNAL_INIT(&in);
-    if (rt_db_get_internal(&in, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&in, dp, dbip, (fastf_t *)NULL) < 0) {
 	rt_db_free_internal(&in);
 	db_node->matched_filters = 0;
 	return 0;
@@ -1066,7 +1066,7 @@ f_type(struct db_plan_old_t *plan, struct db_node_old_t *db_node, struct db_i *d
 
     }
 
-    if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0)
+    if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL) < 0)
 	return 0;
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD) {
 	rt_db_free_internal(&intern);
@@ -1654,7 +1654,7 @@ f_matrix(struct db_plan_old_t *plan, struct db_node_old_t *db_node, struct db_i 
 
 	if (dp->d_flags & RT_DIR_COMB) {
 	    struct rt_db_internal intern;
-	    if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) > 0) {
+	    if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL) > 0) {
 		struct rt_comb_internal *comb = (struct rt_comb_internal *)intern.idb_ptr;
 		if (comb->tree != NULL) {
 		    child_matrix(comb->tree, cdp->d_namep, &mat);
@@ -1751,7 +1751,7 @@ f_nnodes(struct db_plan_old_t *plan, struct db_node_old_t *db_node, struct db_i 
     }
 
     if (dp->d_flags & RT_DIR_COMB) {
-	rt_db_get_internal(&in, dp, dbip, (fastf_t *)NULL, &rt_uniresource);
+	rt_db_get_internal(&in, dp, dbip, (fastf_t *)NULL);
 	comb = (struct rt_comb_internal *)in.idb_ptr;
 	if (comb->tree == NULL) {
 	    node_count = 0;

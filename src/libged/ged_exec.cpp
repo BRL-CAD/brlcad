@@ -1,7 +1,7 @@
 /*                  G E D _ E X E C . C P P
  * BRL-CAD
  *
- * Copyright (c) 2020-2025 United States Government as represented by
+ * Copyright (c) 2020-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -38,7 +38,7 @@
 #include "ged.h"
 #include "./include/plugin.h"
 
-extern "C" int
+int
 main(int argc, const char *argv[])
 {
     bu_setprogname(argv[0]);

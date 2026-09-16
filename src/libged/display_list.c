@@ -1,7 +1,7 @@
 /*                  D I S P L A Y _ L I S T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -54,7 +54,7 @@ dl_addToDisplay(struct bu_list *hdlp, struct db_i *dbip,
 {
     struct directory *dp = NULL;
     struct display_list *gdlp = NULL;
-    char *cp = NULL;
+    const char *cp = NULL;
     int found_namepath = 0;
     struct db_full_path namepath;
 
@@ -327,6 +327,26 @@ dl_erasePathFromDisplay(struct ged *gedp, const char *path, int allow_split)
 }
 
 
+void
+_ged_erase_legacy_overlap_plot(struct ged *gedp)
+{
+    /* _ged_cvt_vlblock_to_solids appends the yellow RGB value to its root
+     * name.  Check for its phony directory entry so identically named user
+     * geometry is not erased. */
+    const char *overlap_plot = "OVERLAPSffff00";
+    struct directory *dp;
+
+    if (!gedp || !gedp->dbip)
+	return;
+
+    dp = db_lookup(gedp->dbip, overlap_plot, LOOKUP_QUIET);
+    if (dp == RT_DIR_NULL || dp->d_addr != RT_DIR_PHONY_ADDR)
+	return;
+
+    dl_erasePathFromDisplay(gedp, overlap_plot, 0);
+}
+
+
 static void
 eraseAllSubpathsFromSolidList(struct ged *gedp, struct display_list *gdlp,
 			      struct db_full_path *subpath,
@@ -565,10 +585,28 @@ _dl_freeDisplayListItem (struct ged *gedp, struct display_list *gdlp)
 }
 
 
-void
-color_soltab(struct bv_scene_obj *sp)
+static int
+scene_obj_is_annotation(const struct bv_scene_obj *sp)
 {
+    const struct ged_bv_data *bdata;
+    const struct directory *dp;
+
+    if (!sp || !sp->s_u_data)
+	return 0;
+    bdata = (const struct ged_bv_data *)sp->s_u_data;
+    if (!bdata->s_fullpath.fp_len)
+	return 0;
+    dp = DB_FULL_PATH_CUR_DIR(&bdata->s_fullpath);
+    return dp && dp->d_minor_type == ID_ANNOT;
+}
+
+
+void
+color_soltab(struct db_i *dbip, struct bv_scene_obj *sp)
+{
+    static const unsigned char default_annotation_color[3] = {255, 255, 255};
     const struct mater *mp;
+    const int is_annotation = scene_obj_is_annotation(sp);
 
     sp->s_old.s_cflag = 0;
 
@@ -581,14 +619,25 @@ color_soltab(struct bv_scene_obj *sp)
 	return;
     }
 
-    for (mp = rt_material_head(); mp != MATER_NULL; mp = mp->mt_forw) {
-	if (sp->s_old.s_regionid <= mp->mt_high &&
-	    sp->s_old.s_regionid >= mp->mt_low) {
-	    sp->s_color[0] = mp->mt_r;
-	    sp->s_color[1] = mp->mt_g;
-	    sp->s_color[2] = mp->mt_b;
+    /* Region-ID colors describe regions, not annotation leaves.  An
+     * annotation without a supplied or inherited color has its own white
+     * default instead of the legacy red placeholder in s_basecolor. */
+    if (is_annotation && sp->s_old.s_dflag) {
+	memcpy(sp->s_color, default_annotation_color,
+	    sizeof(default_annotation_color));
+	return;
+    }
 
-	    return;
+    if (dbip && !is_annotation) {
+	for (mp = db_mater_head(dbip); mp != MATER_NULL; mp = mp->mt_forw) {
+	    if (sp->s_old.s_regionid <= mp->mt_high &&
+		sp->s_old.s_regionid >= mp->mt_low) {
+		sp->s_color[0] = mp->mt_r;
+		sp->s_color[1] = mp->mt_g;
+		sp->s_color[2] = mp->mt_b;
+
+		return;
+	    }
 	}
     }
 
@@ -616,7 +665,7 @@ color_soltab(struct bv_scene_obj *sp)
  * mater structure.
  */
 void
-dl_color_soltab(struct bu_list *hdlp)
+dl_color_soltab(struct bu_list *hdlp, struct db_i *dbip)
 {
     if (!hdlp)
 	return;
@@ -630,7 +679,7 @@ dl_color_soltab(struct bu_list *hdlp)
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
-	    color_soltab(sp);
+	    color_soltab(dbip, sp);
 	}
 
 	gdlp = next_gdlp;
@@ -737,7 +786,7 @@ int invent_solid(struct ged *gedp, char *name, struct bu_list *vhead, long int r
     BU_LIST_APPEND(gdlp->dl_head_scene_obj.back, &sp->l);
 
     if (csoltab)
-	color_soltab(sp);
+	color_soltab(gedp->dbip, sp);
 
     ged_create_vlist_solid_cb(gedp, sp);
 

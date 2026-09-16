@@ -1,7 +1,7 @@
 /*                       H I S T O R Y . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2025 United States Government as represented by
+ * Copyright (c) 1995-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -24,7 +24,6 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <signal.h>
 #include <string.h>
 #include <time.h>
 
@@ -399,6 +398,26 @@ history_setup(void)
     mged_hist_head.mh_start = mged_hist_head.mh_finish = 0LL;
     mged_hist_head.mh_status = CMD_OK;
     journalfp = NULL;
+}
+
+
+void
+history_cleanup(void)
+{
+    struct mged_hist *hp;
+
+    if (journalfp) {
+	fclose(journalfp);
+	journalfp = NULL;
+    }
+
+    while (BU_LIST_NON_EMPTY(&mged_hist_head.l)) {
+	hp = BU_LIST_FIRST(mged_hist, &mged_hist_head.l);
+	BU_LIST_DEQUEUE(&hp->l);
+	bu_vls_free(&hp->mh_command);
+	bu_free(hp, "history_cleanup: hp");
+    }
+    bu_vls_free(&mged_hist_head.mh_command);
 }
 
 

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<X3D profile="Full" version="3.3">
+  <Scene>
+    <Shape DEF="nurbs_patch">
+      <Appearance>
+        <Material diffuseColor="0.1 0.7 0.8"/>
+      </Appearance>
+      <NurbsPatchSurface uDimension="3" vDimension="3" uOrder="3" vOrder="3" uKnot="0 0 0 1 1 1" vKnot="0 0 0 1 1 1">
+        <Coordinate point="0 0 0 5 0 2 10 0 0 0 5 1 5 5 4 10 5 1 0 10 0 5 10 2 10 10 0"/>
+      </NurbsPatchSurface>
+    </Shape>
+  </Scene>
+</X3D>

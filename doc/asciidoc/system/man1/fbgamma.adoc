@@ -1,0 +1,159 @@
+= FBGAMMA(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+fbgamma - load a gamma correcting colormap
+
+== SYNOPSIS
+
+[source]
+----
+fbgamma [-H] [-o] [-i] [-F framebuffer] val [gval bval]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*fbgamma* loads a gamma correcting colormap into a framebuffer. If a
+single value is given, that number is used for all three color
+channels. If three values are specified, they will be applied to the
+red, green, and blue channels respectively.
+
+Gamma values larger than one will boost dim pixels with respect to
+bright ones. Values less than one will exaggerate the difference in
+brightness. The former has the effect of desaturating the displayed
+colors ("washing them out"), the latter will saturate the colors. An
+uncorrected monitor is usually too saturated.
+
+Note that since this program is intended for gamma _correction_, the
+exponent to which pixel values are raised is the inverse of the given
+value. To linearize a display then, the given value will be equal to
+the gamma of the display (typically 2.0-3.0, see below). If you wish
+to directly apply an exponent to a picture (rather than its inverse),
+this can be done by giving a negative value (which means reciprocal
+in the usual mathematical sense).
+
+[[options]]
+== OPTIONS
+
+*-F* _framebuffer_::
+Specify the framebuffer device to use.
+
+*-H*::
+Sets the default framebuffer size to 1024x1024 instead of 512x512.
+This size distinction is important for devices like the Adage
+framebuffers which have different operating modes based on the display
+size.
+
+*-i*::
+Display a standard gamma calibration image on the framebuffer. This
+image consists of intensity ramps with patches of solid color, and
+vertically adjacent patches containing alternating black and colored
+scanlines. Adjust gamma values until vertically adjacent ramps of
+the same color appear equal in intensity for all patches.
+
+*-o*::
+Overlay mode. Reads the current colormap from the framebuffer and
+applies the gamma correction to it, instead of starting from a
+linear ramp. Useful for saturating or desaturating an arbitrary
+colormap.
+
+*-h* or *-?*::
+Print usage information and exit.
+
+
+[[theory]]
+== THEORY
+
+The response of a typical monitor is non-linear with respect to input
+voltage. To a fairly high degree of accuracy, the response can be
+expressed as:
+
+....
+display_intensity = input_voltage ^ gamma
+....
+
+where gamma will usually lie in the 2.0 to 3.0 range (2.2 is the
+NTSC standard gamma, 2.5 is a commonly used "typical" value). Most
+of the time, pixel values of images have been computed assuming a
+linear mapping between pixel value and displayed intensity. This
+linear mapping can be approximated by loading a colormap into the
+display which raises the pixel values to the inverse gamma power.
+
+It should be noted that getting the gamma values "right" involves
+careful calibration and measurement of your display device. The
+values are likely to be different for each color channel, and will
+depend on the brightness setting, etc.
+
+A gamma value greater than unity will saturate colors by pushing them
+away from the white point and closer to the primaries. A gamma less
+than unity will desaturate colors by moving them closer to the white
+point.
+
+
+[[examples]]
+== EXAMPLES
+
+.Calibrate a framebuffer interactively
+====
+[source,bash]
+----
+fbgamma -i 2.2
+----
+Display the calibration image and load a gamma 2.2 correcting
+colormap. Adjust the value (re-running *fbgamma* with the image still
+on screen) until vertically adjacent ramps of the same color match in
+intensity across all patches. Once matched, that value is the display
+gamma to use for the session.
+====
+
+.Display a pix image with proper gamma correction
+====
+[source,bash]
+----
+fbgamma 2.2
+pix-fb render.pix
+----
+Load a gamma 2.2 correcting colormap into the default framebuffer,
+then send a *pix*(5) image to it with *pix-fb*(1). The image, which
+was computed assuming a linear intensity mapping, is now displayed
+correctly on a non-linear monitor without modifying the pixel data.
+====
+
+.Apply separate per-channel gamma to a named device
+====
+[source,bash]
+----
+fbgamma -F /dev/X 2.3 2.1 2.4
+----
+Load independent red, green, and blue gamma values into the X11
+framebuffer, compensating for a display whose channels respond
+differently.
+====
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *fbcmap*(1), *fbcbars*(1), *pix-fb*(1)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1987-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org.

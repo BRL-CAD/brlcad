@@ -1,7 +1,7 @@
 /*                    P O P U L A T I O N . H
  * BRL-CAD
  *
- * Copyright (c) 2007-2025 United States Government as represented by
+ * Copyright (c) 2007-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -73,9 +73,8 @@ fastf_t pop_rand    (void);
 int pop_find_nodes(union tree *tp);
 
 void pop_gop(int gop, char *parent1, char *parent2, char * child1, char *child2,  struct db_i *dbi_p,
-	     struct db_i *dbi_c, struct resource *resp);
-int pop_put_internal(const char *n, struct directory *dp, struct db_i *dbip, struct rt_db_internal *ip,
-		     struct resource *resp);
+	     struct db_i *dbi_c);
+int pop_put_internal(const char *n, struct directory *dp, struct db_i *dbip, struct rt_db_internal *ip);
 
 
 #endif /* GTOOLS_BESET_POPULATION_H */

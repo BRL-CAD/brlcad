@@ -1,0 +1,214 @@
+= rt Ray-Tracing Performance: Optimization Ideas
+:doctype: article
+:toc:
+:toclevels: 2
+
+== Background
+
+These suggestions come from CPU sampling profiles (ETW, 4 kHz, all cores) of the
+six standard `benchmark` frames -- `moss world star bldg391 m35 sphflake` --
+rendered by `rt` from `librt`. Aggregated, equal-weighted self-time:
+
+[cols="1,4",options="header"]
+|===
+| Self-time | Function
+| 21.6%     | `librt!rt_shootray`            (per-ray dispatch + partition list management)
+| 16.6%     | `librt!rt_advance_to_next_cell` (space-partition traversal stepper)
+| 10.2%     | `librt!rt_boolfinal`           (per-partition boolean tree evaluation)
+|  7.8%     | `librt!rt_boolweave`           (segment-to-partition weaving)
+|  4.4%     | `librt!_bool_growstack`        (per-ray boolean stack reallocation)
+|  4.3%     | `librt!rt_in_rpp`              (ray/axis-aligned-box clip)
+| ~9%       | primitive intersection (`rt_sph_shot`, `rt_arb_shot`, `rt_tor_shot`, `bn_poly_*_roots`)
+| ~6%       | shading (`liboptical` `viewshade`, `light_obs`, `cloud_texture`)
+| ~4%       | per-ray bookkeeping (`bu_ptbl_*`, `bu_bitv_clear`)
+|===
+
+Two structural facts drive the ranking below:
+
+* *Acceleration-structure traversal is the universal tax.* `rt_advance_to_next_cell`
+  is 12-25% self-time in *every* scene. Every primary, shadow, and reflection ray
+  pays it before doing any useful work.
+* *Boolean (CSG) evaluation is the scene-dependent tax.* `rt_boolweave` +
+  `rt_boolfinal` + `_bool_growstack` is 31-43% inclusive on CSG-dense models
+  (world, star, bldg391, m35) but only ~8% on moss.
+
+Items are ordered by *impact ceiling* (potential speedup), not by effort. Effort and
+risk are tagged per item; cheap quick-wins therefore appear lower in the list -- see
+<<sequencing>> for a recommended execution order.
+
+NOTE: All file names and line numbers below are a rough approximation captured at the
+time of writing. They are meant only as starting points for navigation and will go
+out of date quickly as the source changes -- search for the named functions rather
+than trusting the line numbers.
+
+== Optimization ideas, by impact
+
+=== 1. Heterogeneous (GPU / SYCL) offload -- finish OpenCL, add a SYCL path
+Impact: very high (order-of-magnitude when a GPU is present; meaningful on CPU too).
+Effort: high. Risk: high.
+
+Ray tracing is embarrassingly parallel per pixel, yet `rt` is CPU-only today.
+OpenCL kernels already exist in-tree (`src/librt/primitives/*.cl`, `rt.cl`) but the
+path is disabled (`BRLCAD_ENABLE_OPENCL=OFF`) and incomplete -- primitive
+intersection kernels are present, but the space-partition traversal kernel is not.
+
+Two complementary directions:
+
+* *Finish and enable the OpenCL path*: port the traversal loop to a kernel so whole
+  frames run on the GPU. Highest absolute throughput where hardware is available.
+* *Add a SYCL path*: single-source C++ that targets CPU (SIMD + cache-coherent
+  work-group scheduling) and GPU from one codebase. This captures the cache-locality
+  win on machines with no usable GPU while keeping one implementation to maintain,
+  and avoids OpenCL's separate-kernel-language maintenance burden.
+
+Prerequisite: a GPU-friendly acceleration structure (item 2) and packed,
+alias-clean data layouts (items 4, 5) -- a pointer-chasing BSP tree does not map to
+either backend.
+
+=== 2. Replace the non-uniform grid with a SAH-BVH (activate the dormant HLBVH)
+Impact: very high (attacks the universal 16.6% traversal cost plus much of the
+21.6% in `rt_shootray`). Effort: high. Risk: high.
+
+The CPU renderer traverses a legacy non-uniform BSP grid; `cut.c` dispatches only
+`RT_PART_NUBSPT` and `RT_PART_NULL`. A modern surface-area-heuristic BVH builder
+(`src/librt/cut_hlbvh.c`, `hlbvh_create`) *already exists and is proven* -- but only
+for BoT triangle meshes (`bot.c`) and the OpenCL path. It is not wired in as a
+top-level CPU space partition.
+
+A BVH performs far fewer node visits and box tests per ray than grid DDA stepping,
+which is exactly what `rt_advance_to_next_cell` does on every cell boundary.
+
+This is *not* a config flip: the existing HLBVH node layout (`clt_linear_bvh_node`)
+was designed for GPU/BoT use, so it needs a new CPU stack-based traversal loop and
+re-integration with the per-ray `solidbits`/`soltab`/segment machinery in
+`shoot.c`. Gate the decision on the measurement in item 11.
+
+=== 3. SIMD ray-packet traversal and intersection
+Impact: high (amortizes traversal and vectorizes the per-ray math industry-wide).
+Effort: high. Risk: medium-high.
+
+`vshoot.c` and `bundle.c` define a multi-ray API (`rt_shootray_bundle`,
+`rt_vshootray`) but are scalar stubs -- they loop and call the single-ray path
+(`vshoot.c` `vshot_stub`). Tracing a coherent packet (8-16 rays from neighboring
+pixels) lets one traversal decision serve the whole packet and lets ray-box and
+ray-primitive tests run as SSE/AVX lanes. Per-ray direction reciprocals
+(`shoot.c:652-686`) are nearly constant across a tile and can be computed once per
+packet. Pairs naturally with items 2 and 4.
+
+=== 4. Make data alias-clean to unlock compiler auto-vectorization
+Impact: high (lifts every scalar hot loop -- `rt_in_rpp`, primitive shots, boolean
+inner loops). Effort: medium-high. Risk: medium.
+
+The build currently compiles with strict aliasing *disabled* for correctness (the
+`benchmark` man page even documents this requirement). That choice blocks the
+compiler's auto-vectorizer, because the type-punning between `vect_t`/`fastf_t`
+arrays and structs means the compiler must assume arbitrary overlap.
+
+Course of action: refactor the hot structures (rays, segments, partitions, hit
+points) to be alias-clean -- distinct types, `restrict`-qualified pointers, and no
+reinterpret-style punning -- then re-enable strict aliasing and add
+`/arch:AVX2` (or `/arch:AVX512`) on MSVC and `-O3 -march=native -ftree-vectorize`
+on GCC/Clang. This is foundational: without it, items 3, 5, and 7 must hand-roll
+intrinsics; with it, the compiler vectorizes the regular loops for free.
+
+=== 5. Boolean weave/finalization overhaul -- cache-coherent, stall-free, packed
+Impact: high on CSG-dense scenes (the 31-43% boolean band). Effort: medium-high.
+Risk: medium.
+
+This stage is memory-churn- and stall-bound, not compute-bound. A full overhaul:
+
+* *Eliminate per-ray reallocation.* `_bool_growstack` (`bool.c:1242-1251`) starts the
+  evaluation stack at NULL and doubles via `bu_realloc` on the hot path -- 13%
+  self-time on the `world` scene. Pre-size the stack once per `struct resource` from
+  the maximum region-tree depth computed at prep time.
+* *Pack and align the working set.* Store partition and segment records in
+  contiguous, cache-line-aligned arrays (structure-of-arrays where it helps SIMD)
+  instead of linked lists, so weaving streams memory predictably and prefetches well.
+* *Branch-lean evaluation.* Keep the iterative (non-recursive) `boolfinal` path and
+  remove data-dependent branches that mispredict on irregular partition orders.
+* *O(1) de-duplication.* Replace the O(n) linear scans in `bu_ptbl_ins_unique` /
+  `bu_ptbl_cat_uniq` (`ptbl.c`) used during weaving with the `solidbits`
+  bitvector that is already maintained per ray (see item 8).
+
+The stack pre-size alone is a few lines and a confirmed double-digit win on one
+scene; treat it as the cheap first increment of this larger effort.
+
+=== 6. Ray-primitive mailboxing
+Impact: medium-high (universal). Effort: medium. Risk: medium.
+
+A solid spanning several grid cells is intersected again each time a ray enters a new
+cell containing it. A per-ray "mailbox" (last-tested ray id stamped on each solid)
+skips the redundant intersection. See the per-cell intersection loop around
+`shoot.c:792-807`. Becomes less relevant if item 2 lands (a BVH largely removes the
+duplicate-cell problem), so sequence accordingly.
+
+=== 7. Branch-lean / SIMD ray-box test (`rt_in_rpp`)
+Impact: medium (4.3% self-time, universal). Effort: medium-high. Risk: medium.
+
+`rt_in_rpp` (`bbox.c:163-242`) unrolls three axes with several sign/INFINITY
+branches per axis that mispredict on incoherent ray directions. Use the ray-direction
+sign masks already computed at `shoot.c:653-685` to select a branchless slab test, or
+test four boxes at once with AVX. Largely subsumed by items 3-4 if those land first.
+
+=== 8. Bitvector-backed de-duplication
+Impact: medium (scales with CSG density). Effort: medium. Risk: medium.
+
+The per-ray solid/region uniqueness checks use O(n) table scans
+(`bu_ptbl_ins_unique`, `bu_ptbl_cat_uniq`) even though a `solidbits` bitvector
+already gives O(1) membership. Route dedup through the bitvector. (Closely related to
+item 5's dedup point; can be done independently and first.)
+
+=== 9. Resource-cached per-ray scratch, reset in place
+Impact: low-medium (universal; hundreds of millions of operations on large frames).
+Effort: medium. Risk: medium (thread-safety).
+
+`solidbits` and `regionbits` are pulled from a free-list and pushed back on every
+ray (`shoot.c:619-628, 970-973`). Cache them in `struct resource` and clear in place
+(`memset` the bitvector) instead of allocate/free per ray.
+
+=== 10. Shadow-ray early termination
+Impact: medium on light-heavy scenes. Effort: medium. Risk: medium (light leaks if
+mis-applied).
+
+Light-occlusion tests in `light_obs` cast visibility rays that re-traverse the tree
+from the root with `a_onehit = -2` (`sh_light.c:1406,1418`), i.e. no early-out. For
+opaque occluders an any-hit query (stop at the first intersection) is sufficient and
+much cheaper; reserve the full traversal for transparent/filter-glass paths.
+
+=== 11. Acceleration-structure parameter sweep + NULL baseline (diagnostic)
+Impact: medium (per-scene tuning gains; bounds the ceiling for item 2).
+Effort: low. Risk: none.
+
+Pure configuration, no recompile. `LIBRT_SPACE_PARTITION=null` (`cut.c`) renders with
+no partitioning, directly measuring how much the current grid is buying. Adding
+`getenv` overrides for `rti_cutdepth`/`rti_cutlen` (`cut_nubsp.c:107-111`, currently a
+fixed `log(nsolids)` formula clamped to [12,24]) exposes the build to tuning. The
+(method x cutdepth x cutlen) x 6-scene grid is small and *brute-forceable* -- sweep
+it exhaustively, pick per-model-class winners, and use the NULL-vs-grid delta to
+decide whether the BVH project (item 2) is worth it.
+
+=== 12. Local quick-wins
+Impact: low. Effort: low. Risk: low.
+
+* *Single-region fast-path* in `rt_boolfinal` (~`bool.c:1650`): when a partition maps
+  to exactly one region, skip the boolean tree walk and overlap handling.
+* *`bu_ptbl` hygiene* (`ptbl.c`): `bu_ptbl_reset` clears only the active length, and
+  `cat_uniq` grows multiplicatively -- minor constant-factor cleanups on the per-ray
+  path.
+
+[[sequencing]]
+== Recommended sequencing
+
+Because impact and effort diverge, a practical order is:
+
+1. *Now, cheap, measurable*: item 11 (sweep + NULL baseline), the stack pre-size from
+   item 5, and item 12. Low risk, immediate feedback, and item 11 produces the data
+   needed to justify the big bets.
+2. *Foundational*: item 4 (alias-clean data) -- it is a prerequisite that multiplies
+   the value of items 3, 5, and 7.
+3. *Mid-tier universal gains*: items 6, 7, 8, 9 (no architecture rewrite).
+4. *Architectural bets, gated on step 1's measurements*: item 2 (BVH), then item 3
+   (packets), then item 1 (GPU/SYCL) on top of the BVH + packed data.
+
+Items 4, 7, 8, 10, and 12 touch largely disjoint files and can proceed in parallel
+across contributors.

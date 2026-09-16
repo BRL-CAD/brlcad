@@ -1,7 +1,7 @@
 /*                      R T _ F U N C T A B . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2025 United States Government as represented by
+ * Copyright (c) 1993-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -47,7 +47,6 @@
 #include "rt/edit.h"
 #include "rt/hit.h"
 #include "rt/misc.h"
-#include "rt/resource.h"
 #include "rt/rt_instance.h"
 #include "rt/seg.h"
 #include "rt/soltab.h"
@@ -60,6 +59,8 @@
 
 
 __BEGIN_DECLS
+
+struct rt_piecestate; /* forward declaration for ft_piece_shot / ft_piece_hitsegs */
 
 /**
  * This needs to be at the end of the raytrace.h header file, so that
@@ -167,30 +168,26 @@ struct rt_functab {
     int (*ft_import5)(struct rt_db_internal * /*ip*/,
 		      const struct bu_external * /*ep*/,
 		      const mat_t /*mat*/,
-		      const struct db_i * /*dbip*/,
-		      struct resource * /*resp*/);
-#define RTFUNCTAB_FUNC_IMPORT5_CAST(_func) ((int (*)(struct rt_db_internal *, const struct bu_external *, const mat_t, const struct db_i *, struct resource *))((void (*)(void))_func))
+		      const struct db_i * /*dbip*/);
+#define RTFUNCTAB_FUNC_IMPORT5_CAST(_func) ((int (*)(struct rt_db_internal *, const struct bu_external *, const mat_t, const struct db_i *))((void (*)(void))_func))
 
     int (*ft_export5)(struct bu_external * /*ep*/,
 		      const struct rt_db_internal * /*ip*/,
 		      double /*local2mm*/,
-		      const struct db_i * /*dbip*/,
-		      struct resource * /*resp*/);
-#define RTFUNCTAB_FUNC_EXPORT5_CAST(_func) ((int (*)(struct bu_external *, const struct rt_db_internal *, double, const struct db_i *, struct resource *))((void (*)(void))_func))
+		      const struct db_i * /*dbip*/);
+#define RTFUNCTAB_FUNC_EXPORT5_CAST(_func) ((int (*)(struct bu_external *, const struct rt_db_internal *, double, const struct db_i *))((void (*)(void))_func))
 
     int (*ft_import4)(struct rt_db_internal * /*ip*/,
 		      const struct bu_external * /*ep*/,
 		      const mat_t /*mat*/,
-		      const struct db_i * /*dbip*/,
-		      struct resource * /*resp*/);
-#define RTFUNCTAB_FUNC_IMPORT4_CAST(_func) ((int (*)(struct rt_db_internal *, const struct bu_external *, const mat_t, const struct db_i *, struct resource *))((void (*)(void))_func))
+		      const struct db_i * /*dbip*/);
+#define RTFUNCTAB_FUNC_IMPORT4_CAST(_func) ((int (*)(struct rt_db_internal *, const struct bu_external *, const mat_t, const struct db_i *))((void (*)(void))_func))
 
     int (*ft_export4)(struct bu_external * /*ep*/,
 		      const struct rt_db_internal * /*ip*/,
 		      double /*local2mm*/,
-		      const struct db_i * /*dbip*/,
-		      struct resource * /*resp*/);
-#define RTFUNCTAB_FUNC_EXPORT4_CAST(_func) ((int (*)(struct bu_external *, const struct rt_db_internal *, double, const struct db_i *, struct resource *))((void (*)(void))_func))
+		      const struct db_i * /*dbip*/);
+#define RTFUNCTAB_FUNC_EXPORT4_CAST(_func) ((int (*)(struct bu_external *, const struct rt_db_internal *, double, const struct db_i *))((void (*)(void))_func))
 
     void (*ft_ifree)(struct rt_db_internal * /*ip*/);
 #define RTFUNCTAB_FUNC_IFREE_CAST(_func) ((void (*)(struct rt_db_internal *))((void (*)(void))_func))
@@ -219,8 +216,9 @@ struct rt_functab {
     int (*ft_form)(struct bu_vls *, const struct rt_functab *);
 #define RTFUNCTAB_FUNC_FORM_CAST(_func) ((int (*)(struct bu_vls *, const struct rt_functab *))((void (*)(void))_func))
 
-    void (*ft_make)(const struct rt_functab *, struct rt_db_internal * /*ip*/);
-#define RTFUNCTAB_FUNC_MAKE_CAST(_func) ((void (*)(const struct rt_functab *, struct rt_db_internal *))((void (*)(void))_func))
+    int (*ft_make)(const struct rt_functab *, struct rt_db_internal * /*ip*/,
+		   const char * /*variant*/, const point_t /*origin*/, double /*scale*/);
+#define RTFUNCTAB_FUNC_MAKE_CAST(_func) ((int (*)(const struct rt_functab *, struct rt_db_internal *, const char *, const point_t, double))((void (*)(void))_func))
 
     int (*ft_params)(struct pc_pc_set *, const struct rt_db_internal * /*ip*/);
 #define RTFUNCTAB_FUNC_PARAMS_CAST(_func) ((int (*)(struct pc_pc_set *, const struct rt_db_internal *))((void (*)(void))_func))
@@ -326,6 +324,14 @@ struct rt_functab {
 		   const struct bview * /*v*/);
 #define RTFUNCTAB_FUNC_SCENE_OBJ_CAST(_func) ((int (*)(struct bv_scene_obj *, struct directory *, struct db_i *, const struct bg_tess_tol *, const struct bn_tol *, const struct bview *))((void (*)(void))_func))
 
+    /**
+     * Validate the geometry of a primitive.
+     * Returns 0 if the primitive is valid, or > 0 if invalid.
+     * Appends human-readable JSON descriptions of any issues to error_msg.
+     */
+    int (*ft_validate)(struct bu_vls *error_msg, const struct rt_db_internal *ip, const struct bn_tol *tol);
+#define RTFUNCTAB_FUNC_VALIDATE_CAST(_func) ((int (*)(struct bu_vls *, const struct rt_db_internal *, const struct bn_tol *))((void (*)(void))_func))
+
 };
 
 /**
@@ -426,6 +432,38 @@ struct rt_edit_functab {
 
     struct rt_edit_menu_item *(*ft_menu_item)(const struct bn_tol *tol);
 #define EDFUNCTAB_FUNC_MENU_ITEM_CAST(_func) ((struct rt_edit_menu_item *(*)(const struct bn_tol *))((void (*)(void))_func))
+
+    /** Return static metadata describing all edit operations for this
+     *  primitive.  Returns NULL if the primitive does not (yet) provide a
+     *  structured descriptor (e.g. NMG, BREP, SKETCH for complex ops).
+     *  Use rt_edit_prim_desc_to_json() to serialise the result to JSON. */
+    const struct rt_edit_prim_desc *(*ft_edit_desc)(void);
+#define EDFUNCTAB_FUNC_EDIT_DESC_CAST(_func) ((const struct rt_edit_prim_desc *(*)(void))((void (*)(void))_func))
+
+    /**
+     * Pre-read current primitive parameter values into vals[].
+     *
+     * For each parameter of @p cmd_id, writes the current value (in local
+     * units) to vals[param.index], following the same index convention as
+     * s->e_para[].  For POINT/VECTOR params three consecutive slots starting
+     * at param.index are filled.  STRING params are not represented here.
+     *
+     * @param s       Active rt_edit session (es_int must be valid).
+     * @param cmd_id  Which command's parameters to read.
+     * @param vals    Caller-provided array; caller must ensure it is at least
+     *                RT_EDIT_MAXPARA elements long.
+     * @return  Number of scalar slots written (>= 0), or -1 on error.
+     *          Returns 0 if cmd_id is not recognised by this primitive.
+     */
+    int (*ft_edit_get_params)(struct rt_edit *s, int cmd_id, fastf_t *vals);
+#define EDFUNCTAB_FUNC_GET_PARAMS_CAST(_func) ((int(*)(struct rt_edit *, int, fastf_t *))((void (*)(void))_func))
+
+    /**
+     * Attempt to repair an invalid primitive.
+     * Returns 0 on success, < 0 on failure.
+     */
+    int (*ft_repair)(struct bu_vls *log_str, struct rt_db_internal *ip, const struct bn_tol *tol, int argc, const char **argv);
+#define EDFUNCTAB_FUNC_REPAIR_CAST(_func) ((int (*)(struct bu_vls *, struct rt_db_internal *, const struct bn_tol *, int, const char **))((void (*)(void))_func))
 
 };
 

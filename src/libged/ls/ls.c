@@ -1,7 +1,7 @@
 /*                         L S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -80,7 +80,7 @@ vls_long_dpp(struct ged *gedp,
 	else if (dp->d_flags & RT_DIR_SOLID) {
 	    struct rt_db_internal intern;
 	    len = 9; /* "primitive" */
-	    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) >= 0) {
+	    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL) >= 0) {
 		len = strlen(intern.idb_meth->ft_label);
 		rt_db_free_internal(&intern);
 	    }
@@ -121,7 +121,7 @@ vls_long_dpp(struct ged *gedp,
 	} else if (dp->d_flags & RT_DIR_SOLID) {
 	    struct rt_db_internal intern;
 	    type = "primitive";
-	    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) >= 0) {
+	    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL) >= 0) {
 		type = intern.idb_meth->ft_label;
 		rt_db_free_internal(&intern);
 	    }
@@ -354,7 +354,6 @@ _ged_ls_data_init(struct _ged_ls_data *d)
 int
 ged_ls_core(struct ged *gedp, int argc, const char *argv[])
 {
-    int i;
     int ret_ac = 0;
     struct directory *dp;
     struct directory **dirp0 = (struct directory **)NULL;
@@ -442,14 +441,12 @@ ged_ls_core(struct ged *gedp, int argc, const char *argv[])
 	    /* No guidance at all - just list all names. Walk the directory
 	     * list adding pointers (to the directory entries) to the tbl.
 	     */
-	    for (i = 0; i < RT_DBNHASH; i++) {
-		for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-		    if (!ls.aflag && (dp->d_flags & RT_DIR_HIDDEN)) continue;
-		    if (((dp->d_flags & ls.dir_flags) != 0)) {
-			bu_ptbl_ins(ls.results_obj, (long *)dp);
-		    }
+	    FOR_ALL_DIRECTORY_START(dp, gedp->dbip)
+		if (!ls.aflag && (dp->d_flags & RT_DIR_HIDDEN)) continue;
+		if (((dp->d_flags & ls.dir_flags) != 0)) {
+		    bu_ptbl_ins(ls.results_obj, (long *)dp);
 		}
-	    }
+	    FOR_ALL_DIRECTORY_END;
 	}
     }
 
@@ -476,24 +473,14 @@ ged_ls_core(struct ged *gedp, int argc, const char *argv[])
     return BRLCAD_OK;
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl ls_cmd_impl = {"ls", ged_ls_core, GED_CMD_DEFAULT};
-const struct ged_cmd ls_cmd = { &ls_cmd_impl };
 
-struct ged_cmd_impl t_cmd_impl = {"t", ged_ls_core, GED_CMD_DEFAULT};
-const struct ged_cmd t_cmd = { &t_cmd_impl };
+#define GED_LS_COMMANDS(X, XID) \
+    X(ls,  ged_ls_core,   GED_CMD_DEFAULT) \
+    X(t,   ged_ls_core,   GED_CMD_DEFAULT)
 
-const struct ged_cmd *ls_cmds[] = { &ls_cmd, &t_cmd, NULL };
-
-static const struct ged_plugin pinfo = { GED_API,  ls_cmds, 2 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_LS_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_ls", 1, GED_LS_COMMANDS)
 
 /*
  * Local Variables:

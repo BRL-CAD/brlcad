@@ -1,0 +1,61 @@
+= E(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+E - Display objects in evaluated form.
+
+== SYNOPSIS
+
+[source]
+----
+E [-C r/g/b] [-s] object(s)
+----
+
+
+[[description]]
+== DESCRIPTION
+
+The *E* command draws one or more objects using Boolean evaluation. Unlike *draw* (which displays each primitive as a wireframe regardless of Boolean operators), *E* evaluates the Boolean tree of the object hierarchy using NMG (Non-Manifold Geometry) operations and displays only the resulting evaluated solid regions. This makes *E* significantly more computationally intensive than *draw* for complex hierarchies.
+
+=== Options
+
+*-C r/g/b*::
+Override the display color for all drawn objects using the specified RGB values (each 0–255), separated by `/`.
+
+*-s*::
+Enable shading on the evaluated result display.
+
+NOTE: *E* is distinct from the lowercase *e* command (which erases objects from the display). On case-insensitive filesystems this page is stored as `bigE.adoc` to avoid collision with `e.adoc`.
+
+
+[[examples]]
+== EXAMPLES
+
+.Display the evaluated result of a region tree.
+[example]
+====
+mged> **E -s suspension.r**
+
+Evaluates the booleans in _suspension.r_ and displays a more accurate faceted
+approximation of the resulting volume.
+====
+
+
+[[see_also]]
+== SEE ALSO
+
+*draw*(nged), *e*(nged), *ev*(nged)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

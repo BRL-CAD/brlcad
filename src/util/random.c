@@ -1,7 +1,7 @@
 /*                        R A N D O M . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2025 United States Government as represented by
+ * Copyright (c) 2004-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,6 +27,8 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <math.h>
 #include "bio.h"
@@ -34,6 +36,7 @@
 #include "vmath.h"
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/process.h"
 #include "bu/log.h"
 #include "bn.h"
@@ -66,10 +69,14 @@ main(int argc, char *argv[])
     while ((c = bu_getopt(argc, argv, "vugs:c:h?")) != -1) {
 	switch (c) {
 	    case 's':
-		seed = atoi(bu_optarg);
+		if (!bu_opt_scan_int(bu_optarg, &seed, "seed")) {
+		    bu_exit(1, NULL);
+		}
 		break;
 	    case 'c':
-		center = atoi(bu_optarg);
+		if (!bu_opt_scan_double(bu_optarg, &center, "center")) {
+		    bu_exit(1, NULL);
+		}
 		cdone = 1;
 		break;
 	    case 'g':
@@ -99,8 +106,10 @@ main(int argc, char *argv[])
     }
     if (gauss == 0 && uniform == 0)
 	uniform = 1;
-    low = atoi(argv[bu_optind]);
-    high = atoi(argv[bu_optind+1]);
+    if (!bu_opt_scan_int(argv[bu_optind], &low, "low value") ||
+	!bu_opt_scan_int(argv[bu_optind+1], &high, "high value")) {
+	bu_exit(1, NULL);
+    }
     if (!cdone) {
 	center = ((double)(high + low)) / 2.0;
     }

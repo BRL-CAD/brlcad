@@ -1,0 +1,47 @@
+= D(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+d - Deletes the specified list of objects from the _mged_ display.
+
+== SYNOPSIS
+
+[source]
+----
+d {objects}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Deletes the specified list of objects from the _mged_ display. This is a synonym for the *erase* command. Only objects that have been explicitly displayed may be deleted with the *d* command (use the *who* command to see a list of explicitly displayed objects). Objects that are displayed as members of explicitly displayed combinations cannot be deleted from the display with this command (see *erase -r*). Note that this has no effect on the _BRL-CAD_ database itself. To actually remove objects from the database, use the *kill* command.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *d* command to delete a region and a shape from the _mged_ display.
+
+.Delete a region and a shape from the _mged_ display.
+[example]
+====
+mged>**d region1 shapea**
+
+Deletes _region1_ and _shapea_ from the _mged_ display.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

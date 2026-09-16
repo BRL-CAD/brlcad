@@ -1,0 +1,55 @@
+= SPHGROUP(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+sphgroup - create a group of all regions whose centers fall inside a sphere
+
+== SYNOPSIS
+
+[source]
+----
+sphgroup gname target_sphere.s
+----
+
+[[description]]
+== DESCRIPTION
+
+The *sphgroup* command creates a new combination `gname` containing all regions in the database whose bounding-box *center point* lies within the bounding sphere defined by `target_sphere.s`. The sphere argument must be an existing ELL or SPH primitive in the database.
+
+The command scans all regions in the database (objects flagged as regions) and computes each region's axis-aligned bounding box. A region is included in `gname` if the center of its bounding box is within or on the surface of `target_sphere.s` — specifically, if the distance from the bounding-box center to the sphere's center vertex is less than or equal to the sphere's radius. Non-region objects, hidden objects, and the sphere primitive itself are skipped.
+
+All qualifying regions are added to `gname` as union (`u`) members with no item ID or air code set. If `gname` does not already exist it is created; if it does exist, the new members are appended to it.
+
+NOTE: The containment test uses the *center* of each region's bounding box, not all eight corners. A region whose center is outside the sphere is excluded even if part of its geometry overlaps the sphere.
+
+[[examples]]
+== EXAMPLES
+
+.Group all regions centered inside a sphere primitive
+[example]
+====
+mged> **sphgroup cluster.c search_sphere.s**
+
+Creates the combination `cluster.c` containing all regions whose bounding-box centers lie within the sphere primitive `search_sphere.s`. The sphere `search_sphere.s` must already exist in the database and must be an ELL or SPH primitive.
+====
+
+.First create the bounding sphere, then group
+[example]
+====
+mged> **make search_sphere.s sph**
+mged> **sphgroup nearby.c search_sphere.s**
+
+Creates a unit sphere at the origin with `make`, then groups all regions centered within it into `nearby.c`.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

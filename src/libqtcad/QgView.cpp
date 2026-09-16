@@ -1,7 +1,7 @@
 /*                      Q G V I E W . C P P
  * BRL-CAD
  *
- * Copyright (c) 2021-2025 United States Government as represented by
+ * Copyright (c) 2021-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -128,6 +128,22 @@ QgView::save_image(int UNUSED(quad))
 }
 
 void
+QgView::render_to_file(const QString &filename)
+{
+    if (canvas_sw)
+	canvas_sw->render_to_file(filename);
+}
+
+void
+QgView::get_viewport_image(QImage &img)
+{
+    if (canvas_sw)
+	canvas_sw->get_viewport_image(img);
+    else
+	img = QImage();
+}
+
+void
 QgView::do_view_changed()
 {
     QTCAD_SLOT("QgView::do_view_changed", 1);
@@ -200,8 +216,8 @@ QgView::set_view(struct bview *nv)
 	    canvas_gl->v->dmp = canvas_gl->dmp;
 	    struct dm *dmp = (struct dm *)canvas_gl->dmp;
 	    dm_configure_win(dmp, 0);
-	    canvas_gl->v->gv_width = dm_get_width(dmp);
-	    canvas_gl->v->gv_height = dm_get_height(dmp);
+	    canvas_gl->v->gv_width = canvas_gl->width();
+	    canvas_gl->v->gv_height = canvas_gl->height();
 	}
     }
 #endif

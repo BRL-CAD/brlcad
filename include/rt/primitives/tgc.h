@@ -1,7 +1,7 @@
 /*                        T G C . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2025 United States Government as represented by
+ * Copyright (c) 1993-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,6 +34,11 @@ __BEGIN_DECLS
 RT_EXPORT extern void rt_pnt_sort(fastf_t t[],
 				 int npts);
 
+RT_EXPORT extern void rt_tgc_move_pt(struct rt_tgc_internal *tgc,
+				     int point_num,
+				     const fastf_t *new_pos);
+
+RT_EXPORT extern int rt_tgc_std_type(const struct rt_db_internal *ip, const struct bn_tol *tol);
 
 __END_DECLS
 

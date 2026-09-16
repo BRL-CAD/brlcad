@@ -1,7 +1,7 @@
 /*                           R O T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2025 United States Government as represented by
+ * Copyright (c) 1986-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -49,9 +49,12 @@
 #include "bu/malloc.h"
 #include "bn.h"
 
-/* TODO: Yuck... why are we using globals for all this?? */
+/* interface header, needed to export properly */
+#include "icv/ops.h"
 
-ssize_t buflines, scanbytes;
+
+ssize_t buflines;
+ssize_t scanbytes;
 ssize_t firsty = -1;	/* first "y" scanline in buffer */
 ssize_t lasty = -1;	/* last "y" scanline in buffer */
 unsigned char *bp;
@@ -71,8 +74,10 @@ get_args(size_t argc, const char **argv, FILE **ifp, FILE **ofp, double *angle)
     const char *in_file_name = NULL;
     const char *out_file_name = NULL;
 
-    if (!ifp || !ofp || !angle)
-	bu_exit(1, "internal error processing arguments\n");
+    if (!ifp || !ofp || !angle) {
+	bu_log("internal error processing arguments\n");
+	return 0;
+    }
 
     bu_optind = bu_opterr = 1; /* skip the command name */
     while ((c = bu_getopt(argc, (char *const*)argv, "fbri#:a:s:o:w:n:S:W:N:h?")) != -1) {
@@ -219,8 +224,8 @@ reverse_buffer(unsigned char *buf)
  * dx' = -sin(a)
  * dy' = cos(a)
  */
-static void
-arbrot(double a, FILE *ifp, unsigned char *buf)
+static int
+arbrot(double a, FILE *ifp, FILE *ofp, unsigned char *buf)
 {
 #define DtoR(x)	((x)*DEG2RAD)
     size_t x, y;				/* working coord */
@@ -232,8 +237,8 @@ arbrot(double a, FILE *ifp, unsigned char *buf)
 
     if (buflines != nyin) {
 	/* I won't all fit in the buffer */
-	fprintf(stderr, "Sorry but I can't do an arbitrary rotate of an image this large\n");
-	bu_exit (1, NULL);
+	bu_log("Sorry but I can't do an arbitrary rotate of an image this large\n");
+	return -1;
     }
     if (buflines > nyin)
 	buflines = nyin;
@@ -264,23 +269,40 @@ arbrot(double a, FILE *ifp, unsigned char *buf)
 	x2 = x_min * cosa - y * sina + x_goop;
 	y2 = x_min * sina + y * cosa + y_goop;
 	for (x = x_min; x < x_max; x++) {
+	    const double coord_eps = 1.0e-9;
+	    double sx = x2;
+	    double sy = y2;
+	    double sx_round = floor(sx + 0.5);
+	    double sy_round = floor(sy + 0.5);
+
+	    if (fabs(sx - sx_round) < coord_eps)
+		sx = sx_round;
+	    if (fabs(sy - sy_round) < coord_eps)
+		sy = sy_round;
+	    if (sx > -coord_eps && sx < 0.0)
+		sx = 0.0;
+	    if (sy > -coord_eps && sy < 0.0)
+		sy = 0.0;
+
 	    /* check for in bounds */
-	    if (x2 > 0.0
-		&& ZERO(x2)
-		&& x2 < (double)nxin
-		&& y2 > 0.0
-		&& ZERO(y2)
-		&& y2 < (double)nyin)
-	    {
-		putchar(buf[(int)y2*nyin + (int)x2]);
+	    if (sx >= 0.0
+		&& sx < (double)nxin
+		&& sy >= 0.0
+		&& sy < (double)nyin) {
+		for (size_t j = 0; j < pixbytes; j++) {
+		    putc(buf[((int)sy*(int)nxin + (int)sx)*pixbytes + j], ofp);
+		}
 	    } else {
-		putchar(0);	/* XXX - settable color? */
+		for (size_t j = 0; j < pixbytes; j++) {
+		    putc(0, ofp);	/* XXX - settable color? */
+		}
 	    }
 	    /* "forward difference" our coordinates */
 	    x2 += cosa;
 	    y2 += sina;
 	}
     }
+    return 0;
 }
 
 
@@ -299,18 +321,36 @@ icv_rot(size_t argc, const char *argv[])
     double angle = 0.0;
     ssize_t wrote = 0;
 
+    buflines = scanbytes = 0;
+    firsty = lasty = -1;
+    bp = obp = NULL;
+    nxin = nyin = 512;
+    yin = xout = yout = 0;
+    plus90 = minus90 = reverse = rot_invert = 0;
+    pixbytes = 1;
+
     ifp = stdin;
     ofp = stdout;
     bu_setprogname(argv[0]);
 
     if (!get_args(argc, argv, &ifp, &ofp, &angle)) {
-	bu_exit(1, "Usage: %s [-rifb | -a angle] [-# bytes] [-s squaresize] [-w width] [-n height] [-o outputfile] inputfile [> outputfile]\n", argv[0]);
+	bu_log("Usage: %s [-rifb | -a angle] [-# bytes] [-s squaresize] [-w width] [-n height] [-o outputfile] inputfile [> outputfile]\n", argv[0]);
+	ret = 1;
+	goto early_done;
+    }
+
+    if (nxin <= 0 || nyin <= 0 || (size_t)nxin > MAXPIXELS || (size_t)nyin > MAXPIXELS) {
+	bu_log("ERROR: %s invalid dimensions (must be > 0)\n", argv[0]);
+	ret = 1;
+	goto early_done;
     }
 
     scanbytes = nxin * pixbytes;
     buflines = MAXPIXELS / nxin;
     if (buflines <= 0) {
-	bu_exit(1, "ERROR: %s is not compiled to handle a scanline that long!\n", argv[0]);
+	bu_log("ERROR: %s is not compiled to handle a scanline that long!\n", argv[0]);
+	ret = 1;
+	goto early_done;
     }
     if (buflines > nyin)
 	buflines = nyin;
@@ -321,7 +361,7 @@ icv_rot(size_t argc, const char *argv[])
      * Break out to added arbitrary angle routine
      */
     if (angle > 0.0) {
-	arbrot(angle, ifp, buffer);
+	ret = arbrot(angle, ifp, ofp, buffer);
 	goto done;
     }
 
@@ -343,7 +383,7 @@ icv_rot(size_t argc, const char *argv[])
 	if (plus90) {
 	    for (x = 0; x < nxin; x++) {
 		obp = obuf;
-		bp = &buffer[ (lasty-firsty)*scanbytes + x*pixbytes ];
+		bp = &buffer[(lasty-firsty)*scanbytes + x*pixbytes ];
 		for (y = lasty+1; y > yin; y--) {
 		    /* firsty? */
 		    for (j = 0; j < pixbytes; j++)
@@ -374,8 +414,8 @@ icv_rot(size_t argc, const char *argv[])
 	} else if (minus90) {
 	    for (x = nxin; x > 0; x--) {
 		obp = obuf;
-		bp = &buffer[ (x-1)*pixbytes ];
-		for (y = firsty+1; (ssize_t)y < lasty; y++) {
+		bp = &buffer[(x-1)*pixbytes ];
+		for (y = 0; y < buflines; y++) {
 		    for (j = 0; j < pixbytes; j++)
 			*obp++ = *bp++;
 		    bp += scanbytes - pixbytes;
@@ -440,10 +480,20 @@ icv_rot(size_t argc, const char *argv[])
     }
 
 done:
-    fclose(ifp);
+    if (ifp && ifp != stdin)
+	fclose(ifp);
+    if (ofp && ofp != stdout)
+	fclose(ofp);
     bu_free(buffer, "buffer");
     bu_free(obuf, "obuf");
 
+    return ret;
+
+early_done:
+    if (ifp && ifp != stdin)
+	fclose(ifp);
+    if (ofp && ofp != stdout)
+	fclose(ofp);
     return ret;
 }
 

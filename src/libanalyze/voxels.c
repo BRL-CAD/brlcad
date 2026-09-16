@@ -1,7 +1,7 @@
 /*                    V O X E L S . C
  * BRL-CAD
  *
- * Copyright (c) 2009-2025 United States Government as represented by
+ * Copyright (c) 2009-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -88,6 +88,7 @@ hit_voxelize(struct application *ap, struct partition *PartHeadp, struct seg *UN
     struct rayInfo   *voxelHits     = (struct rayInfo*) ap->a_uptr;
     fastf_t           sizeVoxel     = voxelHits->sizeVoxel;
     fastf_t          *fillDistances = voxelHits->fillDistances;
+    fastf_t           gridDistance  = ap->a_user * sizeVoxel;
 
     while (pp != PartHeadp) {
 	/**
@@ -102,11 +103,29 @@ hit_voxelize(struct application *ap, struct partition *PartHeadp, struct seg *UN
 	struct hit *hitOutp     = pp->pt_outhit;
 	fastf_t     hitDistIn   = hitInp->hit_dist - 1.;
 	fastf_t     hitDistOut  = hitOutp->hit_dist - 1.;
-	int         voxelNumIn  = (int)(hitDistIn / sizeVoxel);
-	int         voxelNumOut = (int)(hitDistOut / sizeVoxel);
+	int         voxelNumIn;
+	int         voxelNumOut;
+
+	/* Ray-trace tolerances may place a hit just outside the model bounds. */
+	if (hitDistOut <= 0. || hitDistIn >= gridDistance) {
+	    pp = pp->pt_forw;
+	    continue;
+	}
+	CLAMP(hitDistIn, 0., gridDistance);
+	CLAMP(hitDistOut, 0., gridDistance);
+	if (hitDistOut <= hitDistIn) {
+	    pp = pp->pt_forw;
+	    continue;
+	}
+
+	voxelNumIn = (int)(hitDistIn / sizeVoxel);
+	voxelNumOut = (int)(hitDistOut / sizeVoxel);
 
 	if (EQUAL((hitDistOut / sizeVoxel), floor(hitDistOut / sizeVoxel)))
 	    voxelNumOut = FMAX(voxelNumIn, voxelNumOut - 1);
+
+	CLAMP(voxelNumIn, 0, ap->a_user - 1);
+	CLAMP(voxelNumOut, voxelNumIn, ap->a_user - 1);
 
 	/**
 	 * If voxel entered and voxel exited are same then nothing can
@@ -156,7 +175,8 @@ voxelize(struct rt_i *rtip, fastf_t sizeVoxel[3], int levelOfDetail, void (*crea
     fastf_t        effectiveDistance;
 
     /* get bounding box values etc. */
-    rt_prep_parallel(rtip, 1);
+    if (rtip->needprep)
+	rt_prep_parallel(rtip, 1);
 
     /* calculate number of voxels in each dimension */
     numVoxel[0] = (int)(((rtip->mdl_max)[0] - (rtip->mdl_min)[0])/sizeVoxel[0]) + 1;
@@ -204,6 +224,7 @@ voxelize(struct rt_i *rtip, fastf_t sizeVoxel[3], int levelOfDetail, void (*crea
 	    ap.a_hit  = hit_voxelize;
 	    ap.a_miss = NULL;
 	    ap.a_uptr = &voxelHits;
+	    ap.a_user = numVoxel[0];
 
 	    voxelHits.fillDistances = voxelArray;
 

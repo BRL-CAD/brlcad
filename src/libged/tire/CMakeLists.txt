@@ -1,17 +1,24 @@
-include_directories(
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  ${BRLCAD_BINARY_DIR}/include
-  ${BRLCAD_SOURCE_DIR}/include
-  ${BU_INCLUDE_DIRS}
-  ${GED_INCLUDE_DIRS}
-)
+find_package_eigen(REQUIRED)
 
-ged_plugin_library(ged-tire tire.c)
-target_link_libraries(ged-tire libged libbu)
+set(PLUGIN_LIBS libged libbu)
+
+ged_plugin_library(ged-tire
+  tire.cpp
+  tire_conic.cpp
+  tire_csg.cpp
+  tire_surface.cpp
+  tire_tread.cpp
+  tire_tread_def.cpp
+  tire_tread_profile.cpp
+  tire_wheel.cpp
+  SYSTEM_INCLUDES ${EIGEN3_INCLUDE_DIR}
+  LIBS ${PLUGIN_LIBS}
+  DEFINITIONS "EIGEN_DONT_VECTORIZE"
+)
 
 cmakefiles(
   CMakeLists.txt
-  tire.c
+  tire_private.h
 )
 
 # Local Variables:

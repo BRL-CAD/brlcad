@@ -1,7 +1,7 @@
 /*                              R T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2025 United States Government as represented by
+ * Copyright (c) 2004-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -60,7 +60,7 @@ static int tclcad_rt_set(ClientData clientData, Tcl_Interp *interp, int argc, co
  ************************************************************************/
 
 struct dbcmdstruct {
-    char *cmdname;
+    const char *cmdname;
     int (*cmdfunc)(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv);
 };
 
@@ -483,16 +483,18 @@ tclcad_rt_prep(ClientData clientData, Tcl_Interp *interp, int argc, const char *
 
     bu_vls_printf(&str, " space_partition_type %s n_cutnode %zu n_boxnode %zu n_empty %zu",
 		  rtip->rti_space_partition == RT_PART_NUBSPT ?
-		  "NUBSP" : "unknown",
-		  rtip->rti_ncut_by_type[CUT_CUTNODE],
-		  rtip->rti_ncut_by_type[CUT_BOXNODE],
-		  rtip->nempty_cells);
+		  "NUBSP" :
+		  rtip->rti_space_partition == RT_PART_NULL ?
+		  "NULL" : "unknown",
+		  rtip->stats.rti_ncut_by_type[CUT_CUTNODE],
+		  rtip->stats.rti_ncut_by_type[CUT_BOXNODE],
+		  rtip->stats.nempty_cells);
     bu_vls_printf(&str, " maxdepth %zu maxlen %zu",
-		  rtip->rti_cut_maxdepth,
-		  rtip->rti_cut_maxlen);
-    if (rtip->rti_ncut_by_type[CUT_BOXNODE]) bu_vls_printf(&str, " avglen %g",
-							   ((double)rtip->rti_cut_totobj) /
-							   rtip->rti_ncut_by_type[CUT_BOXNODE]);
+		  rtip->stats.rti_cut_maxdepth,
+		  rtip->stats.rti_cut_maxlen);
+    if (rtip->stats.rti_ncut_by_type[CUT_BOXNODE]) bu_vls_printf(&str, " avglen %g",
+							   ((double)rtip->stats.rti_cut_totobj) /
+							   rtip->stats.rti_ncut_by_type[CUT_BOXNODE]);
 
     Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
     bu_vls_free(&str);
@@ -644,7 +646,7 @@ tclcad_rt_import_from_path(Tcl_Interp *interp, struct rt_db_internal *ip, const 
 	struct directory *dp_curr;
 	int ret;
 
-	db_init_db_tree_state(&ts, dbip, &rt_uniresource);
+	db_init_db_tree_state(&ts, dbip);
 	db_full_path_init(&old_path);
 	db_full_path_init(&new_path);
 

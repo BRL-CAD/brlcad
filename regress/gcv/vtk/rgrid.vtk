@@ -1,0 +1,18 @@
+# vtk DataFile Version 3.0
+BRL-CAD VTK regress: rectilinear grid with non-uniform coordinates
+ASCII
+DATASET RECTILINEAR_GRID
+DIMENSIONS 3 3 2
+X_COORDINATES 3 float
+0.0 1.0 3.0
+Y_COORDINATES 3 float
+0.0 0.5 2.0
+Z_COORDINATES 2 float
+0.0 1.5
+CELL_DATA 4
+SCALARS density float
+LOOKUP_TABLE default
+1.0
+2.0
+3.0
+4.0

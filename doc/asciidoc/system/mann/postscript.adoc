@@ -1,0 +1,82 @@
+= POSTSCRIPT(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+postscript - Temporarily attaches the _Postscript_ display manager and outputs the current MGED display to the specified __output_file__ in _PostScript_ format.
+
+== SYNOPSIS
+
+[source]
+----
+postscript [-f font] [-t title] [-c creator] [-s size_in_inches] [-l line_width] {output_file}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Temporarily attaches the _PostScript_ display manager and outputs the current
+MGED display to the specified __output_file__ in _PostScript_ format. The
+following options control the generated output:
+
+*-a* _author_::
+Set the PostScript creator/author string.
+
+*-b*::
+Draw a border around the output.
+
+*-c* _r/g/b_::
+Set the border color.
+
+*-f* _font_::
+Set the PostScript font.
+
+*-s* _size_in_inches_::
+Set the drawing size in inches.
+
+*-t* _title_::
+Set the PostScript title string.
+
+*-x* _offset_::
+Set the X offset in inches.
+
+*-y* _offset_::
+Set the Y offset in inches.
+
+
+[[examples]]
+== EXAMPLES
+
+The first example shows the use of the *postscript* command to place a _PostScript_ version of the current MGED display in a specified file and give it a particular title. The second example is much like the first except that a line width is specified and the title and output file names are different.
+
+.Place a _PostScript_ version of the current MGED display in a specified file.
+[example]
+====
+mged>**postscript -t "Test Title" test.ps**
+
+Places a _PostScript_ version of the current MGED display in a file named _test.ps_ and titles it Test Title.
+
+====
+
+.Specify the line width of a _PostScript_ version of the current MGED display in a specified file.
+[example]
+====
+mged>**postscript -l 10 -t "Test Fat Lines" fat_lines.ps**
+
+Places a _PostScript_ version of the current MGED display with fat lines in a file named __fat_lines.ps__ and titles it Test Fat Lines.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

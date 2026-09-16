@@ -1,7 +1,7 @@
 /*                       F A C E D E F . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2025 United States Government as represented by
+ * Copyright (c) 1986-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -25,10 +25,10 @@
 
 #include <stdlib.h>
 #include <math.h>
-#include <signal.h>
 
 
 #include "vmath.h"
+#include "bu/interrupt.h"
 #include "rt/geom.h"
 #include "raytrace.h"
 #include "../ged_private.h"
@@ -191,7 +191,7 @@ edarb_facedef(void *data, int argc, const char *argv[])
     }
 
     GED_DB_LOOKUP(gedp, dp, (char *)argv[2], LOOKUP_QUIET, BRLCAD_ERROR);
-    GED_DB_GET_INTERNAL(gedp, &intern, dp, (matp_t)NULL, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_GET_INTERN(gedp, &intern, dp, (matp_t)NULL, BRLCAD_ERROR);
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     if (intern.idb_type != ID_ARB8) {
@@ -372,7 +372,7 @@ Enter form of new face definition: ");
 	return BRLCAD_ERROR;
     }
 
-    GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_PUT_INTERN(gedp, dp, &intern, BRLCAD_ERROR);
     rt_db_free_internal(&intern);
 
     return BRLCAD_OK;

@@ -1,0 +1,140 @@
+= FBCMAP(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+fbcmap - load a built-in color map onto a framebuffer
+
+== SYNOPSIS
+
+[source]
+----
+fbcmap [-h] [-F framebuffer] [-{sS} squarescrsize] [-{wW} scr_width] [-{nN} scr_height] [map_number]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*fbcmap* writes one of several built-in color maps to a framebuffer.
+When invoked with no _map_number_ argument, or with a _map_number_ of 0,
+the standard linear (identity) color map is loaded.  Other map numbers
+select alternative mappings such as a photographic negative, film
+correction, gamma correction, or solid calibration fields.
+
+Note that *fbcmap* is deprecated and scheduled for removal; for general
+gamma correction use *fbgamma*(1) instead.
+
+[[options]]
+== OPTIONS
+
+*-h*::
+  Print a usage summary listing the available maps, then exit.
+
+*-F* _framebuffer_::
+  Specify the framebuffer device.  If not given, the *FB_FILE*
+  environment variable is used (see *brlcad*(1)); if that is unset the
+  default device for the system is used.
+
+*-s* _squarescrsize_::
+  Set both the width and height of the framebuffer to _squarescrsize_
+  pixels.
+
+*-S* _squarescrsize_::
+  Same as *-s*.
+
+*-w* _scr_width_::
+  Set the framebuffer display width to _scr_width_ pixels.
+
+*-W* _scr_width_::
+  Same as *-w*.
+
+*-n* _scr_height_::
+  Set the framebuffer display height to _scr_height_ pixels.
+
+*-N* _scr_height_::
+  Same as *-n*.
+
+If no size options are given, the requested framebuffer size is the
+default for the selected device (typically 512x512 pixels).
+
+The optional _map_number_ argument selects the color map to load:
+
+0::
+  Linear (identity) color map (default).
+1::
+  Reverse-linear (photographic negative) map.
+2::
+  Corrected for Polaroid 809/891 print film.
+3::
+  Linear map with the low 100 entries set to black.
+4::
+  Middle range amplified (shifted up by 64) to boost dim pictures;
+  entry 0 stays black and the top entries clamp to full intensity.
+5::
+  Gamma-correcting map from the University of Utah Alpha_1 project.
+6::
+  Color deltas: mostly black, with full-intensity colors at multiples
+  of 32 (white 0, magenta 32, red 64, yellow 96, green 128, cyan 160,
+  blue 192).
+8::
+  Ikcmap 8 false-color map.
+9::
+  Ikcmap 9 false-color map.
+10::
+  Solid black.
+11::
+  Solid white.
+12::
+  18% neutral grey.
+
+Maps 10 through 12 are useful for adjusting a camera to a uniform field
+without disturbing image memory.
+
+[[examples]]
+== EXAMPLES
+
+.Display a negative of an existing image
+====
+[source,bash]
+----
+pix-fb -F /dev/fb0 moss.pix
+fbcmap -F /dev/fb0 1
+----
+Load an image onto a framebuffer with *pix-fb*(1), then load map 1 so
+the displayed pixels appear as a photographic negative without altering
+the stored pixel values.  Loading map 0 afterward restores normal
+appearance.
+====
+
+.Calibrate against a uniform 18% grey field
+====
+[source,bash]
+----
+fbcmap -s 1024 12
+----
+Open (or size) the framebuffer to 1024x1024 and remap every pixel to
+18% neutral grey, a common reference value when adjusting a camera or
+monitor.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *fbgamma*(1), *pix-fb*(1), *fbclear*(1)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

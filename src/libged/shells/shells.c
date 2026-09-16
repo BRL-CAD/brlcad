@@ -1,7 +1,7 @@
 /*                         S H E L L S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -68,7 +68,7 @@ ged_shells_core(struct ged *gedp, int argc, const char *argv[])
     if ((old_dp = db_lookup(gedp->dbip,  argv[1], LOOKUP_NOISY)) == RT_DIR_NULL)
 	return BRLCAD_ERROR;
 
-    if (rt_db_get_internal(&old_intern, old_dp, gedp->dbip, bn_mat_identity, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&old_intern, old_dp, gedp->dbip, bn_mat_identity) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "rt_db_get_internal() error\n");
 	return BRLCAD_ERROR;
     }
@@ -118,7 +118,7 @@ ged_shells_core(struct ged *gedp, int argc, const char *argv[])
 	    /* make sure the geometry/bounding boxes are up to date */
 	    nmg_rebound(m_tmp, &wdbp->wdb_tol);
 
-	    if (rt_db_put_internal(new_dp, gedp->dbip, &new_intern, &rt_uniresource) < 0) {
+	    if (rt_db_put_internal(new_dp, gedp->dbip, &new_intern) < 0) {
 		/* Free memory */
 		nmg_km(m_tmp);
 		bu_vls_printf(gedp->ged_result_str, "rt_db_put_internal() failure\n");
@@ -134,24 +134,13 @@ ged_shells_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl shells_cmd_impl = {
-    "shells",
-    ged_shells_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd shells_cmd = { &shells_cmd_impl };
-const struct ged_cmd *shells_cmds[] = { &shells_cmd, NULL };
+#define GED_SHELLS_COMMANDS(X, XID) \
+    X(shells, ged_shells_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  shells_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_SHELLS_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_shells", 1, GED_SHELLS_COMMANDS)
 
 /*
  * Local Variables:

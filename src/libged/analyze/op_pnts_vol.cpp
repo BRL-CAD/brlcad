@@ -1,7 +1,7 @@
 /*                 O P _ P N T S _ V O L . C P P
  * BRL-CAD
  *
- * Copyright (c) 2020-2025 United States Government as represented by
+ * Copyright (c) 2020-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -208,7 +208,7 @@ op_pnts_vol(
     // Unpack the points object
     struct directory *dp = db_lookup(gedp->dbip, pnts_obj, LOOKUP_QUIET);
     struct rt_db_internal tpnts_intern;
-    GED_DB_GET_INTERNAL(gedp, &tpnts_intern, dp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_GET_INTERN(gedp, &tpnts_intern, dp, bn_mat_identity, BRLCAD_ERROR);
     if (tpnts_intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_PNTS) {
 	bu_vls_printf(gedp->ged_result_str, "%s is not a pnts object, aborting", pnts_obj);
 	rt_db_free_internal(&tpnts_intern);
@@ -257,7 +257,7 @@ op_pnts_vol(
     BU_GET(ap, struct application);
     RT_APPLICATION_INIT(ap);
     BU_GET(resp, struct resource);
-    rtip = rt_new_rti(gedp->dbip);
+    rtip = rt_i_create(gedp->dbip);
     rt_init_resource(resp, 0, rtip);
     ap->a_rt_i = rtip;
     ap->a_resource = resp;
@@ -402,14 +402,14 @@ op_pnts_vol(
     if (output_pnts_obj) {
 	opnts->count = pntcnt;
 	GED_DB_DIRADD(gedp, dp, output_pnts_obj, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type, BRLCAD_ERROR);
-	GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, BRLCAD_ERROR);
+	GED_DB_PUT_INTERN(gedp, dp, &internal, BRLCAD_ERROR);
 
 	bu_vls_printf(gedp->ged_result_str, "Generated pnts object %s\n", output_pnts_obj);
     }
 
 pnts_internal_memfree:
     rt_clean_resource(rtip, resp);
-    rt_free_rti(rtip);
+    rt_i_destroy(rtip);
     rt_db_free_internal(&tpnts_intern);
     BU_PUT(resp, struct resource);
     BU_PUT(ap, struct application);
@@ -436,7 +436,7 @@ pnt_inside_vol(
     BU_GET(ap, struct application);
     RT_APPLICATION_INIT(ap);
     BU_GET(resp, struct resource);
-    rtip = rt_new_rti(gedp->dbip);
+    rtip = rt_i_create(gedp->dbip);
     rt_init_resource(resp, 0, rtip);
     ap->a_rt_i = rtip;
     ap->a_resource = resp;
@@ -454,7 +454,7 @@ pnt_inside_vol(
     int ret = _pnt_in_vol(p, ap);
 
     rt_clean_resource(rtip, resp);
-    rt_free_rti(rtip);
+    rt_i_destroy(rtip);
     BU_PUT(resp, struct resource);
     BU_PUT(ap, struct application);
 

@@ -1,7 +1,7 @@
 /*      R T _ C O L L I S I O N _ A L G O R I T H M . C P P
  * BRL-CAD
  *
- * Copyright (c) 2014-2025 United States Government as represented by
+ * Copyright (c) 2014-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -199,11 +199,10 @@ calculate_contact_points(btManifoldResult &result,
     rt_instance.get_overlaps(body_a_path, body_b_path, *rays.ptr);
     const btVector3 normal_world_on_b(V3ARGS(rays.ptr->ray.r_dir));
 
-    for (std::vector<std::pair<btVector3, btVector3> >::const_iterator it =
-	 overlaps.begin(); it != overlaps.end(); ++it) {
-	const btScalar depth = -(it->first - it->second).length();
+    for (const std::pair<btVector3, btVector3> &overlap : overlaps) {
+	const btScalar depth = -(overlap.first - overlap.second).length();
 	result.addContactPoint(normal_world_on_b,
-			       it->second / simulate::world_to_application,
+			       overlap.second / simulate::world_to_application,
 			       depth / simulate::world_to_application);
     }
 

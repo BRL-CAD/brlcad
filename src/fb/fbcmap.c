@@ -1,7 +1,7 @@
 /*                        F B C M A P . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2025 United States Government as represented by
+ * Copyright (c) 1986-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,12 +28,15 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 
 #include "bio.h"
 
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/log.h"
 #include "bu/snooze.h"
 #include "dm.h"
@@ -587,11 +590,11 @@ unsigned char utah9[256*3] = {
     255, 255, 255,
 };
 
-
 static int
 pars_Argv(int argc, char **argv)
 {
     int c;
+    int remaining = 0;
 
     while ((c = bu_getopt(argc, argv, "F:s:S:w:W:n:N:h?")) != -1) {
 	switch (c) {
@@ -601,22 +604,33 @@ pars_Argv(int argc, char **argv)
 	    case 'S':
 	    case 's':
 		/* square file size */
-		scr_height = scr_width = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &scr_width, 0, INT_MAX, "screen size"))
+		    return 0;
+		scr_height = scr_width;
 		break;
 	    case 'w':
 	    case 'W':
-		scr_width = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &scr_width, 0, INT_MAX, "screen width"))
+		    return 0;
 		break;
 	    case 'n':
 	    case 'N':
-		scr_height = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &scr_height, 0, INT_MAX, "screen height"))
+		    return 0;
 		break;
 	    default :
 		return 0;
 	}
     }
-    if (argv[bu_optind] != NULL)
-	flavor = atoi(argv[bu_optind]);
+    remaining = argc - bu_optind;
+    if (remaining > 1) {
+	fprintf(stderr, "fbcmap: excess argument(s) not supported\n");
+	return 0;
+    }
+    if (remaining == 1) {
+	if (!bu_opt_scan_int_range(argv[bu_optind], &flavor, 0, INT_MAX, "map number"))
+	    return 0;
+    }
     return 1;
 }
 

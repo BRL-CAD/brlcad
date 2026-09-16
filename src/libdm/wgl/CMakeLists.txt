@@ -1,7 +1,6 @@
 set(WGL_SRCS dm-wgl.c if_wgl.c)
 
-if(WIN32 AND BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
-  find_package(OpenGL)
+if(WIN32 AND BRLCAD_ENABLE_OPENGL AND OPENGL_TARGETS AND BRLCAD_ENABLE_TK)
 
   set(TCL_ENABLE_TK ON)
   find_package_tcl(TCL)
@@ -11,7 +10,6 @@ if(WIN32 AND BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
       ${CMAKE_CURRENT_SOURCE_DIR}
       ${BRLCAD_BINARY_DIR}/include
       ${BRLCAD_SOURCE_DIR}/include
-      ${OPENGL_INCLUDE_DIR_GL}
       ${TCL_INCLUDE_PATH}
       ${TK_INCLUDE_PATH}
       # Private Tk headers needed for the internal Tk function TkWinGetHWND
@@ -23,13 +21,6 @@ if(WIN32 AND BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
 
     add_definitions(-DDM_PLUGIN)
 
-    if(OPENGL_opengl_LIBRARY)
-      set(OPENGL_LIBS ${OPENGL_opengl_LIBRARY})
-    endif(OPENGL_opengl_LIBRARY)
-    if(OPENGL_gl_LIBRARY)
-      set(OPENGL_LIBS ${OPENGL_gl_LIBRARY})
-    endif(OPENGL_gl_LIBRARY)
-
     dm_plugin_library(dm-wgl SHARED ${WGL_SRCS})
     target_link_libraries(
       dm-wgl
@@ -38,15 +29,14 @@ if(WIN32 AND BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
       libbu
       ${TCL_LIBRARY}
       ${TK_LIBRARY}
-      ${OPENGL32_LIBRARY}
-      ${OPENGL_LIBS}
+      ${OPENGL_TARGETS}
     )
     set_property(TARGET dm-wgl APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
     validate_style(dm-wgl "${WGL_SRCS}")
 
     plugin_setup(dm-wgl dm)
   endif(TCL_FOUND AND TK_FOUND)
-endif(WIN32 AND BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
+endif()
 
 cmakefiles(
   CMakeLists.txt

@@ -1,7 +1,7 @@
 /*                      D P I X - P I X . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2025 United States Government as represented by
+ * Copyright (c) 1990-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -36,7 +36,9 @@
 
 #include "vmath.h"
 #include "bu/app.h"
+#include "bu/cv.h"
 #include "bu/file.h"
+#include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/exit.h"
 
@@ -44,14 +46,37 @@
 #define NUM (1024 * 16)	/* Note the powers of 2 -- v. efficient */
 
 
+static ssize_t
+read_dpix(int fd, unsigned char *encoded, double *decoded)
+{
+    const size_t encoded_size = NUM * SIZEOF_NETWORK_DOUBLE;
+    long int bytes_read;
+    size_t count;
+
+    bytes_read = bu_mread(fd, encoded, (long int)encoded_size);
+    if (bytes_read <= 0)
+	return (ssize_t)bytes_read;
+    if ((size_t)bytes_read % SIZEOF_NETWORK_DOUBLE != 0) {
+	bu_log("dpix-pix: incomplete double at end of input\n");
+	return -1;
+    }
+
+    count = (size_t)bytes_read / SIZEOF_NETWORK_DOUBLE;
+    bu_cv_ntohd((unsigned char *)decoded, encoded, count);
+
+    return (ssize_t)count;
+}
+
+
 int
 main(int argc, char **argv)
 {
     double doub[NUM];
+    unsigned char encoded[NUM * SIZEOF_NETWORK_DOUBLE];
     unsigned char cha[NUM];
 
     size_t count;			/* count of items */
-    ssize_t got;			/* count of bytes */
+    ssize_t got;			/* count of items */
     int fd;			/* UNIX file descriptor */
     double *dp;			/* ptr to d */
     double *ep;
@@ -86,14 +111,13 @@ main(int argc, char **argv)
     max = -INFINITY;
 
     while (1) {
-	got = read(fd, (char *)&doub[0], NUM*sizeof(doub[0]));
+	got = read_dpix(fd, encoded, doub);
 	if (got <= 0) {
-	    if (got < 0) {
-		perror("dpix-pix READ ERROR");
-	    }
+	    if (got < 0)
+		bu_exit(1, "dpix-pix: error reading DPIX input\n");
 	    break;
 	}
-	count = got / sizeof(doub[0]);
+	count = (size_t)got;
 	ep = &doub[count];
 	for (dp = &doub[0]; dp < ep;) {
 	    double val = *dp++;
@@ -125,14 +149,13 @@ main(int argc, char **argv)
 	mm = m;
 	bb = b;
 
-	got = read(fd, (char *)&doub[0], NUM*sizeof(doub[0]));
+	got = read_dpix(fd, encoded, doub);
 	if (got <=  0) {
-	    if (got < 0) {
-		perror("dpix-pix READ ERROR");
-	    }
+	    if (got < 0)
+		bu_exit(1, "dpix-pix: error reading DPIX input\n");
 	    break;
 	}
-	count = got / sizeof(doub[0]);
+	count = (size_t)got;
 	ep = &doub[count];
 	cp = (char *)&cha[0];
 	for (dp = &doub[0]; dp < ep;) {

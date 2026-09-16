@@ -1,7 +1,7 @@
 /*                       G L O B A L S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -56,20 +56,6 @@ size_t bu_n_realloc = 0;
  * not necessarily thread-safe and is thus only an estimate.
  */
 size_t bu_n_free = 0;
-
-/**
- * used by malloc and vls as the bu_malloc/bu_free debug string.
- *
- * NOT published in a public header.
- */
-EXTERNVARINIT const char bu_vls_message[] = "bu_vls_str";
-
-/**
- * used by malloc and vls as the bu_strdup debug string.
- *
- * NOT published in a public header.
- */
-EXTERNVARINIT const char bu_strdup_message[] = "bu_strdup string";
 
 /**
  * Marker for knowing if an exception handler is set.  bu_setjmp_valid

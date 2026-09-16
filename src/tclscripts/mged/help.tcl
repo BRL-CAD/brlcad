@@ -1,7 +1,7 @@
 #                        H E L P . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2025 United States Government as represented by
+# Copyright (c) 2004-2026 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -40,7 +40,7 @@ set mged_help_data(adjust)	$helplib_data(wdb_adjust)
 set mged_help_data(ae)		$helplib_data(vo_aet)
 set mged_help_data(ae2dir)	{{[-i] az el}	{return direction vector using inputted azimuth and elevation}}	
 set mged_help_data(analyze)	{{[arbname]}	{analyze faces of ARB}}
-set mged_help_data(apropos)	{{keyword}	{finds commands whose descriptions contain the given keyword}}
+set mged_help_data(apropos)	{{[-k|-K] keyword}	{finds commands whose descriptions or manual pages contain the given keyword}}
 set mged_help_data(aproposdevel)	{{keyword}	{finds commands used for development whose descriptions
     contain the given keyword}}
 set mged_help_data(aproposlib)	{{keyword}	{finds library commands whose descriptions contain the given keyword}}
@@ -254,7 +254,7 @@ set mged_help_data(nmg_collapse)	$helplib_data(wdb_nmg_collapse)
 set mged_help_data(nmg_fix_normals)	{{NMG object} {Attempt to fix the normals of an NMG object.}}
 set mged_help_data(nmg_simplify)	$helplib_data(wdb_nmg_simplify)
 set mged_help_data(npush)	{{[-h][-?][-v][-f][-x][-r][-s][-d #] object}	{push/move matrices in the tree hierarchy}}
-set mged_help_data(oed)		{{path_lhs path_rhs}	{go from view to object_edit of path_lhs/path_rhs}}
+set mged_help_data(oed)		{{path_lhs ?path_rhs?}	{go from view to object edit; use the lhs bounding-box center when path_rhs is omitted}}
 set mged_help_data(opendb)	{{[-f] [database.g] [y|n]}	{close any currently open .g file and open the specified database.g file, or return the name of the currently open geometry database.  A trailing 'y' or 'n' indicates whether to create a new database if one does not already exist.  A -f option specifies that binary-incompatible v4 files should have their endianness flipped.}}
 set mged_help_data(orientation)	$helplib_data(vo_orient)
 set mged_help_data(orot)	{{[-i] xdeg ydeg zdeg}	{rotate object being edited}}
@@ -305,7 +305,7 @@ set mged_help_data(relos)	{{comb los%}	{assign same line-of-sight thickness perc
 set mged_help_data(remat)	{{comb materialID}	{assign the same material ID number to all regions under a given combination}}
 set mged_help_data(reset)	{{}	{Reset view to top (270, 90) and reset view size such that all solids can be seen}}
 set mged_help_data(rfarb)	{{}	{makes arb given point, 2 coord of 3 pts, rot, fb, thickness}}
-set mged_help_data(rm)		$helplib_data(wdb_remove)
+set mged_help_data(rm)		$helplib_data(wdb_rm)
 set mged_help_data(rmater)	{{filename}	{read combination materials from filename}}
 set mged_help_data(rmats)	{{file}	{load view(s) from 'savekey' file}}
 set mged_help_data(rot)		$helplib_data(vo_rot)
@@ -406,8 +406,38 @@ proc ? {} {
     return [?_comm mged_help_data 20 4]
 }
 
-proc apropos key {
+proc apropos {args} {
     global mged_help_data
+
+    set mode short
+    set query {}
+
+    foreach arg $args {
+	switch -- $arg {
+	    -k {
+		set mode short
+	    }
+	    -K {
+		set mode full
+	    }
+	    -h - --help {
+		return "Usage: apropos ?-k|-K? keyword\n\t-k searches names, synopses, and brief descriptions\n\t-K searches full manual page text"
+	    }
+	    default {
+		lappend query $arg
+	    }
+	}
+    }
+
+    if {[llength $query] == 0} {
+	error "Usage: apropos ?-k|-K? keyword"
+    }
+
+    set key [join $query " "]
+    set results [manpage_search $key -mode $mode -sections {mann} -format names]
+    if {$results != "" || $mode == "full"} {
+	return $results
+    }
 
     return [apropos_comm mged_help_data $key]
 }

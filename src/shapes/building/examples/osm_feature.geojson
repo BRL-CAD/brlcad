@@ -1,0 +1,28 @@
+{
+  "type": "Feature",
+  "id": "way/123456",
+  "properties": {
+    "name": "Mapped Farm Building",
+    "building": "barn",
+    "building:levels": "1",
+    "height": "8.5",
+    "building:material": "wood",
+    "building:colour": "brown",
+    "roof:shape": "gambrel",
+    "roof:height": "3.5",
+    "roof:direction": "90",
+    "roof:material": "metal",
+    "roof:colour": "gray",
+    "start_date": "1920"
+  },
+  "geometry": {
+    "type": "Polygon",
+    "coordinates": [[
+      [-77.0000000, 38.9000000],
+      [-76.9996600, 38.9000000],
+      [-76.9996600, 38.9001800],
+      [-77.0000000, 38.9001800],
+      [-77.0000000, 38.9000000]
+    ]]
+  }
+}

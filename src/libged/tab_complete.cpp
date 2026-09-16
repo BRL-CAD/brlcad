@@ -1,7 +1,7 @@
 /*                  T A B _ C O M P L E T E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2022-2025 United States Government as represented by
+ * Copyright (c) 2022-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,12 +28,10 @@
 #include <map>
 #include <string>
 
-#define ALPHANUM_IMPL
 #include "./alphanum.h"
-
 #include "bu/path.h"
 #include "bu/sort.h"
-#include "bu/time.h"
+#include "bu/datetime.h"
 #include "bu/vls.h"
 #include "bu/str.h"
 #include "ged.h"
@@ -95,7 +93,7 @@ path_match(const char ***completions, struct bu_vls *prefix, struct db_i *dbip, 
 	    bu_vls_sprintf(prefix, "%s", seed.c_str());
 	}
 	// Empty context - we need the tops list
-	db_update_nref(dbip, &rt_uniresource);
+	db_update_nref(dbip);
 	struct directory **all_paths;
 	int tops_cnt = db_ls(dbip, DB_LS_TOPS, NULL, &all_paths);
 	bu_sort(all_paths, tops_cnt, sizeof(struct directory *), alphanum_cmp, NULL);
@@ -112,7 +110,7 @@ path_match(const char ***completions, struct bu_vls *prefix, struct db_i *dbip, 
 	return BRLCAD_ERROR;
 
     struct rt_db_internal in;
-    if (rt_db_get_internal(&in, cdp, dbip, NULL, &rt_uniresource) < 0)
+    if (rt_db_get_internal(&in, cdp, dbip, NULL) < 0)
 	return BRLCAD_ERROR;
     struct rt_comb_internal *comb = (struct rt_comb_internal *)in.idb_ptr;
     if (!comb) {
@@ -162,16 +160,14 @@ obj_match(const char ***completions, struct db_i *dbip, const char *seed)
 
     // all active directory pointers
     struct bu_ptbl fdps = BU_PTBL_INIT_ZERO;
-    for (int i = 0; i < RT_DBNHASH; i++) {
-	struct directory *dp;
-	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-	    bu_ptbl_ins(&fdps, (long *)dp);
-	}
-    }
+    struct directory *dp;
+    FOR_ALL_DIRECTORY_START(dp, dbip)
+	bu_ptbl_ins(&fdps, (long *)dp);
+    FOR_ALL_DIRECTORY_END;
     bu_sort(BU_PTBL_BASEADDR(&fdps), BU_PTBL_LEN(&fdps), sizeof(struct directory *), alphanum_cmp, NULL);
     for (size_t i = 0; i < BU_PTBL_LEN(&fdps); i++) {
-	struct directory *dp = (struct directory *)BU_PTBL_GET(&fdps, i);
-	dps.push_back(dp);
+	struct directory *fdp = (struct directory *)BU_PTBL_GET(&fdps, i);
+	dps.push_back(fdp);
     }
     bu_ptbl_free(&fdps);
 

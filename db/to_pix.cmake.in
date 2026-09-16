@@ -1,0 +1,27 @@
+# Make sure the converter executable exists.
+string(REPLACE "\\" "" CONV_EXEC "${EXEC}")
+if(NOT EXISTS "${CONV_EXEC}")
+  message(FATAL_ERROR "Invalid pix converter executable specified: ${CONV_EXEC}")
+endif(NOT EXISTS "${CONV_EXEC}")
+
+set(IN_FILE "@PIX_INPUT@")
+set(OUT_FILE "@PIX_OUTPUT@")
+set(CONV_LABEL "@PIX_LABEL@")
+
+execute_process(
+  COMMAND "${CONV_EXEC}" "${IN_FILE}"
+  RESULT_VARIABLE conv_result
+  OUTPUT_FILE "${OUT_FILE}"
+  ERROR_VARIABLE conv_log
+)
+
+if(conv_result)
+  message(FATAL_ERROR "[${CONV_LABEL}] Failure: ${conv_result}\n${CONV_EXEC} ${IN_FILE} > ${OUT_FILE}\n\n${conv_log}")
+endif(conv_result)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

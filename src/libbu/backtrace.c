@@ -1,7 +1,7 @@
 /*                     B A C K T R A C E . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2025 United States Government as represented by
+ * Copyright (c) 2007-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,7 +21,6 @@
 #include "common.h"
 
 /* system headers */
-#include <signal.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <time.h>
@@ -41,18 +40,29 @@
 #ifdef HAVE_PROCESS_H
 #  include <process.h>
 #endif
+#if defined(__has_include)
+#  if __has_include(<execinfo.h>)
+#    include <execinfo.h>
+#    define BU_HAVE_EXECINFO_BACKTRACE 1
+#  endif
+#endif
+#if !defined(BU_HAVE_EXECINFO_BACKTRACE) && (defined(__APPLE__) || defined(__linux__) || defined(__GLIBC__) || defined(__FreeBSD__))
+#  include <execinfo.h>
+#  define BU_HAVE_EXECINFO_BACKTRACE 1
+#endif
 #include "bsocket.h"
 #include "bio.h"
 
 /* common headers */
 #include "bu/app.h"
 #include "bu/debug.h"
+#include "bu/interrupt.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/process.h"
 #include "bu/snooze.h"
 #include "bu/str.h"
-#include "bu/time.h"
+#include "bu/datetime.h"
 
 /* strict c99 doesn't declare kill() (but POSIX does) */
 #if !defined(HAVE_DECL_KILL) && !defined(kill)
@@ -99,6 +109,207 @@ static const char *locate_debugger = NULL;
 static int have_gdb = 0, have_lldb = 0;
 
 
+#ifdef HAVE_WINDOWS_H
+/* windows.h is pulled in above via bio.h; dbghelp.h needs it and supplies the
+ * SYMBOL_INFO / IMAGEHLP_* definitions (dbghelp itself is loaded at run time,
+ * never linked - see windows_backtrace). */
+#  include <dbghelp.h>
+
+/* DbgHelp entry points we resolve at run time (see windows_backtrace). */
+typedef DWORD (WINAPI *pfn_SymSetOptions)(DWORD);
+typedef DWORD (WINAPI *pfn_SymGetOptions)(VOID);
+typedef BOOL  (WINAPI *pfn_SymInitialize)(HANDLE, PCSTR, BOOL);
+typedef BOOL  (WINAPI *pfn_SymCleanup)(HANDLE);
+typedef BOOL  (WINAPI *pfn_SymFromAddr)(HANDLE, DWORD64, PDWORD64, PSYMBOL_INFO);
+typedef BOOL  (WINAPI *pfn_SymGetLineFromAddr64)(HANDLE, DWORD64, PDWORD, PIMAGEHLP_LINE64);
+typedef BOOL  (WINAPI *pfn_SymGetModuleInfo64)(HANDLE, DWORD64, PIMAGEHLP_MODULE64);
+
+/* Windows backtrace.
+ *
+ * Two independent steps:
+ *
+ *   1. Capturing the frames needs no symbols and no DbgHelp at all - on x64
+ *      the unwind tables live in each PE module, so CaptureStackBackTrace()
+ *      always yields correct return addresses even in a fully stripped build.
+ *
+ *   2. Turning an address into name+file:line is a best-effort *upgrade* that
+ *      needs DbgHelp plus symbol data (a PDB, or at least the module's export
+ *      table).  When no symbols are available we still emit "module+offset",
+ *      which a developer can resolve later against archived PDBs.
+ */
+static int
+windows_backtrace(FILE *fp)
+{
+    HANDLE proc;
+    void *frames[128];
+    USHORT nframes, i;
+    /* The union guarantees SYMBOL_INFO's alignment for the trailing name
+     * storage (a bare char[] cast to SYMBOL_INFO* would not). */
+    union {
+	SYMBOL_INFO si;
+	char buf[sizeof(SYMBOL_INFO) + MAX_SYM_NAME];
+    } symbuf;
+    SYMBOL_INFO *sym = &symbuf.si;
+    HMODULE hdbg = NULL;
+    pfn_SymSetOptions p_SymSetOptions = NULL;
+    pfn_SymGetOptions p_SymGetOptions = NULL;
+    pfn_SymInitialize p_SymInitialize = NULL;
+    pfn_SymCleanup p_SymCleanup = NULL;
+    pfn_SymFromAddr p_SymFromAddr = NULL;
+    pfn_SymGetLineFromAddr64 p_SymGetLineFromAddr64 = NULL;
+    pfn_SymGetModuleInfo64 p_SymGetModuleInfo64 = NULL;
+    int have_syms = 0;
+
+    if (!fp)
+	fp = stdout;
+
+    proc = GetCurrentProcess();
+
+    nframes = CaptureStackBackTrace(0, 128, frames, NULL);
+    if (!nframes)
+	return 0;
+
+    /*
+     * DbgHelp is loaded ON DEMAND (only when a backtrace is actually
+     * requested, i.e. essentially only when crashing) and STRICTLY from the
+     * Windows system directory.  dbghelp.dll / symsrv.dll are classic
+     * DLL-hijack targets and the default search order checks the application
+     * directory first; loading with LOAD_LIBRARY_SEARCH_SYSTEM32 avoids that.
+     * We deliberately do NOT implicitly link dbghelp, so a normal run never
+     * loads or depends on it.
+     *
+     * NOTE: the DbgHelp symbol engine is single-threaded; concurrent Sym*
+     * calls are not safe.  This is intended as a crash-time diagnostic, so we
+     * deliberately do not serialize with a lock - taking one here could
+     * deadlock a crashing thread that already holds it.  Callers using it as a
+     * general (non-crash) facility from multiple threads must serialize
+     * externally. */
+    hdbg = LoadLibraryExW(L"dbghelp.dll", NULL, LOAD_LIBRARY_SEARCH_SYSTEM32);
+    if (hdbg) {
+	p_SymSetOptions = (pfn_SymSetOptions)(void(*)(void))GetProcAddress(hdbg, "SymSetOptions");
+	p_SymGetOptions = (pfn_SymGetOptions)(void(*)(void))GetProcAddress(hdbg, "SymGetOptions");
+	p_SymInitialize = (pfn_SymInitialize)(void(*)(void))GetProcAddress(hdbg, "SymInitialize");
+	p_SymCleanup = (pfn_SymCleanup)(void(*)(void))GetProcAddress(hdbg, "SymCleanup");
+	p_SymFromAddr = (pfn_SymFromAddr)(void(*)(void))GetProcAddress(hdbg, "SymFromAddr");
+	p_SymGetLineFromAddr64 = (pfn_SymGetLineFromAddr64)(void(*)(void))GetProcAddress(hdbg, "SymGetLineFromAddr64");
+	p_SymGetModuleInfo64 = (pfn_SymGetModuleInfo64)(void(*)(void))GetProcAddress(hdbg, "SymGetModuleInfo64");
+	if (p_SymInitialize && p_SymFromAddr) {
+	    if (p_SymSetOptions && p_SymGetOptions)
+		p_SymSetOptions(p_SymGetOptions() | SYMOPT_LOAD_LINES | SYMOPT_DEFERRED_LOADS
+				| SYMOPT_UNDNAME | SYMOPT_FAIL_CRITICAL_ERRORS | SYMOPT_NO_PROMPTS);
+	    /* TRUE => invade process, auto-loading available module symbols. */
+	    if (p_SymInitialize(proc, NULL, TRUE))
+		have_syms = 1;
+	}
+    }
+
+    memset(&symbuf, 0, sizeof(symbuf));
+    sym->SizeOfStruct = sizeof(SYMBOL_INFO);
+    sym->MaxNameLen = MAX_SYM_NAME;
+
+    for (i = 0; i < nframes; i++) {
+	DWORD64 addr = (DWORD64)(uintptr_t)frames[i];
+	int printed = 0;
+
+	if (have_syms) {
+	    DWORD64 disp = 0;
+	    DWORD ldisp = 0;
+	    IMAGEHLP_MODULE64 mod;
+	    IMAGEHLP_LINE64 line;
+	    const char *modname = "";
+
+	    memset(&mod, 0, sizeof(mod));
+	    mod.SizeOfStruct = sizeof(mod);
+	    if (p_SymGetModuleInfo64 && p_SymGetModuleInfo64(proc, addr, &mod))
+		modname = mod.ModuleName;
+
+	    memset(&line, 0, sizeof(line));
+	    line.SizeOfStruct = sizeof(line);
+
+	    if (p_SymFromAddr(proc, addr, &disp, sym)) {
+		if (p_SymGetLineFromAddr64 && p_SymGetLineFromAddr64(proc, addr, &ldisp, &line))
+		    fprintf(fp, "%2u  %s!%s+0x%llx  (%s:%lu)\n", (unsigned)i, modname,
+			    sym->Name, (unsigned long long)disp, line.FileName,
+			    (unsigned long)line.LineNumber);
+		else
+		    fprintf(fp, "%2u  %s!%s+0x%llx\n", (unsigned)i, modname, sym->Name,
+			    (unsigned long long)disp);
+		printed = 1;
+	    }
+	}
+
+	if (!printed) {
+	    /* No symbols: emit "module+offset" using only the loader. */
+	    HMODULE hmod = NULL;
+	    if (GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+				   (LPCSTR)frames[i], &hmod) && hmod) {
+		char path[MAX_PATH];
+		const char *base = "";
+		if (GetModuleFileNameA(hmod, path, sizeof(path))) {
+		    char *s = strrchr(path, '\\');
+		    base = s ? s + 1 : path;
+		}
+		fprintf(fp, "%2u  %s+0x%llx\n", (unsigned)i, base,
+			(unsigned long long)(addr - (DWORD64)(uintptr_t)hmod));
+	    } else {
+		fprintf(fp, "%2u  0x%llx\n", (unsigned)i, (unsigned long long)addr);
+	    }
+	}
+    }
+
+    if (have_syms && p_SymCleanup)
+	p_SymCleanup(proc);
+    if (hdbg)
+	FreeLibrary(hdbg);
+
+    fflush(fp);
+    return 1;
+}
+#endif /* HAVE_WINDOWS_H */
+
+static int
+execinfo_backtrace(FILE *fp)
+{
+#ifdef BU_HAVE_EXECINFO_BACKTRACE
+    void *frames[64] = {0};
+    int frame_cnt = 0;
+    int fd = -1;
+
+    if (!fp) {
+	fp = stdout;
+    }
+
+    frame_cnt = backtrace(frames, (int)(sizeof(frames) / sizeof(frames[0])));
+    if (frame_cnt <= 1) {
+	return 0;
+    }
+
+    fd = fileno(fp);
+    if (fd >= 0) {
+	backtrace_symbols_fd(frames + 1, frame_cnt - 1, fd);
+	fflush(fp);
+	return 1;
+    }
+
+    {
+	char **symbols = backtrace_symbols(frames + 1, frame_cnt - 1);
+	if (!symbols) {
+	    return 0;
+	}
+	for (int i = 0; i < frame_cnt - 1; i++) {
+	    fprintf(fp, "%s\n", symbols[i]);
+	}
+	free(symbols);
+    }
+    fflush(fp);
+    return 1;
+#else
+    (void)fp;
+    return 0;
+#endif
+}
+
+
 /* SIGINT+SIGCHLD handler for backtrace() */
 static void
 backtrace_interrupt(int UNUSED(signum))
@@ -111,7 +322,7 @@ backtrace_interrupt(int UNUSED(signum))
  * backtrace from the output.
  */
 static void
-backtrace(int processid, char args[][MAXPATHLEN], int fd)
+debugger_backtrace(int processid, char args[][MAXPATHLEN], int fd)
 {
     if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
 	bu_log("[BACKTRACE] Invoking debugger: %s %s %s\n\n", args[0], args[1], args[2]);
@@ -126,7 +337,7 @@ backtrace(int processid, char args[][MAXPATHLEN], int fd)
 
     /* capture our sub process PID pre-fork */
     if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
-	bu_log("[BACKTRACE] backtrace() parent is %d\n", bu_pid());
+	bu_log("[BACKTRACE] debugger_backtrace() parent is %d\n", bu_pid());
     }
 
     pid2 = fork();
@@ -183,7 +394,7 @@ backtrace(int processid, char args[][MAXPATHLEN], int fd)
     bu_snooze(BU_SEC2USEC(1));
 
     if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
-	bu_log("[BACKTRACE] backtrace() sending debugger commands\n");
+	bu_log("[BACKTRACE] debugger_backtrace() sending debugger commands\n");
     }
 
     {
@@ -353,7 +564,7 @@ backtrace(int processid, char args[][MAXPATHLEN], int fd)
 #    ifdef SIGKILL
 	/* kill the debugger forcibly */
 	if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
-	    bu_log("[BACKTRACE] backtrace() sending KILL to debugger %d\n", pid2);
+	bu_log("[BACKTRACE] debugger_backtrace() sending KILL to debugger %d\n", pid2);
 	}
 	kill(pid2, SIGKILL);
 	bu_snooze(BU_SEC2USEC(1));
@@ -362,14 +573,14 @@ backtrace(int processid, char args[][MAXPATHLEN], int fd)
 #    ifdef SIGCHLD
 	/* preemptively send a SIGCHLD to parent */
 	if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
-	    bu_log("[BACKTRACE] backtrace() sending CHLD to parent %d\n", getppid());
+	    bu_log("[BACKTRACE] debugger_backtrace() sending CHLD to parent %d\n", getppid());
 	}
 	kill(getppid(), SIGCHLD);
 #    endif
 #    ifdef SIGINT
 	/* for good measure */
 	if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
-	    bu_log("[BACKTRACE] backtrace() sending INT to parent %d\n", getppid());
+	    bu_log("[BACKTRACE] debugger_backtrace() sending INT to parent %d\n", getppid());
 	}
 	kill(getppid(), SIGINT);
 #    endif
@@ -379,14 +590,14 @@ backtrace(int processid, char args[][MAXPATHLEN], int fd)
     }
 
     if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
-	bu_log("[BACKTRACE] backtrace() waiting for debugger %d to exit\n", pid2);
+	bu_log("[BACKTRACE] debugger_backtrace() waiting for debugger %d to exit\n", pid2);
     }
 #ifndef _WINSOCKAPI_
     wait(NULL);
 #endif
 
     if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
-	bu_log("[BACKTRACE] backtrace() complete\n");
+	bu_log("[BACKTRACE] debugger_backtrace() complete\n");
     }
 
     exit(0);
@@ -400,6 +611,16 @@ bu_backtrace_app(FILE *fp, const char *argv0)
 	fp = stdout;
     }
     fflush(fp); /* sanity */
+
+#ifdef HAVE_WINDOWS_H
+    if (windows_backtrace(fp)) {
+	return 1;
+    }
+#endif
+
+    if (execinfo_backtrace(fp)) {
+	return 1;
+    }
 
     /* check if GNU debugger (gdb) exists */
     if ((locate_debugger = bu_which("gdb"))) {
@@ -469,7 +690,7 @@ bu_backtrace_app(FILE *fp, const char *argv0)
     pid = fork();
     if (pid == 0) {
 	/* child */
-	backtrace(process, debugger_args, fileno(fp));
+	debugger_backtrace(process, debugger_args, fileno(fp));
 	exit(0);
     } else if (pid == (pid_t) -1) {
 	/* failure */

@@ -1,7 +1,7 @@
 /*                 Line.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2025 United States Government as represented by
+ * Copyright (c) 1994-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -58,6 +58,18 @@ Line::~Line()
 {
 }
 
+const double *
+Line::GetOrigin() const
+{
+    return pnt ? pnt->Point3d() : NULL;
+}
+
+const double *
+Line::GetDirection() const
+{
+    return dir ? dir->Orientation() : NULL;
+}
+
 void
 Line::StartPoint(double *p)
 {
@@ -89,7 +101,7 @@ Line::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	return false;
     }
 
-    // need to do this for local attributes to makes sure we have
+    // need to do this for local attributes to make sure we have
     // the actual entity and not a complex/supertype parent
     sse = step->getEntity(sse, ENTITYNAME);
 
@@ -116,20 +128,6 @@ Line::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     sw->entity_status[id] = STEP_LOADED;
     return true;
 }
-/*TODO: remove
-
-const double *
-Line::PointAtEnd() {
-std::cerr << CLASSNAME << ": Error: virtual function PointAtEnd() not implemented for this type of curve.";
-return NULL;
-}
-
-const double *
-Line::PointAtStart() {
-std::cerr << CLASSNAME << ": Error: virtual function PointAtStart() not implemented for this type of curve.";
-return NULL;
-}
-*/
 
 void
 Line::Print(int level)

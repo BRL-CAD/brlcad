@@ -1,7 +1,7 @@
 /*                      B O T _ E D G E . H
  * BRL-CAD
  *
- * Copyright (c) 1999-2025 United States Government as represented by
+ * Copyright (c) 1999-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,6 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+#ifndef LIBRT_BOT_EDGE_H
+#define LIBRT_BOT_EDGE_H
 
 #include "common.h"
 
@@ -51,3 +54,5 @@ bot_edge_table(struct rt_bot_internal *bot, struct bot_edge ***edges);
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+
+#endif /* LIBRT_BOT_EDGE_H */

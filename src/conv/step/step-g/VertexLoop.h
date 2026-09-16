@@ -1,7 +1,7 @@
 /*                 VertexLoop.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2025 United States Government as represented by
+ * Copyright (c) 1994-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -47,6 +47,7 @@ public:
     VertexLoop(STEPWrapper *sw, int step_id);
     //ON_BoundingBox *GetEdgeBounds(ON_Brep *brep);
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    Vertex *LoopVertex() const { return loop_vertex; }
     virtual bool LoadONBrep(ON_Brep *brep);
     virtual void Print(int level);
 

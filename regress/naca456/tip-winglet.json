@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "style": "winglet",
+  "height": 180.0,
+  "cant_angle": 82.0,
+  "toe_angle": 2.0,
+  "sweep_offset": 28.0,
+  "chord": 82.0,
+  "taper": 0.62,
+  "airfoil": "0010",
+  "twist_delta": -1.5,
+  "segments": 8,
+  "cap_style": "flat",
+  "side": "up"
+}

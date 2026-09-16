@@ -1,0 +1,108 @@
+= FBFADE(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+fbfade - fade a frame buffer image in or out
+
+== SYNOPSIS
+
+[source]
+----
+fbfade [-H] [-s _size_] [-w _width_] [-n _height_] [-f _in_fb_file_] [-S _size_] [-W _width_] [-N _height_] [[-F] _out_fb_file_]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*fbfade* paints a frame buffer one pixel at a time in a random order,
+producing a dissolve effect. If an input image is given with *-f*, that
+image is faded in; otherwise the output is painted black, fading out
+whatever is currently displayed.
+
+The output frame buffer is selected by *-F* (or as a trailing argument),
+falling back to the *FB_FILE* environment variable or the default frame
+buffer. The effective area is clamped to the smaller of the requested
+size, the actual frame buffer size, and the input image size.
+
+The dissolve uses a shuffled-index algorithm, so the effect is best on a
+frame buffer with fast single-pixel writes.
+
+[[options]]
+== OPTIONS
+
+*-H*::
+  Use 1024x1024 as the default input size instead of 512x512. Explicitly
+  specified sizes override this default.
+
+*-s* _size_::
+  Set both the width and height of the input image.
+
+*-w* _width_::
+  Set the input image width.
+
+*-n* _height_::
+  Set the input image height.
+
+*-f* _in_fb_file_::
+  Read the image to fade in from the named frame buffer. Without this
+  option, the output fades to black.
+
+*-S* _size_::
+  Set both the width and height of the output frame buffer.
+
+*-W* _width_::
+  Set the output frame buffer width.
+
+*-N* _height_::
+  Set the output frame buffer height.
+
+*-F* _out_fb_file_::
+  Write to the named frame buffer instead of the one given by the
+  *FB_FILE* environment variable (or the default). When given as the
+  last argument, the *-F* flag may be omitted.
+
+*-h*, *-?*::
+  Print a usage message and exit.
+
+[[examples]]
+== EXAMPLES
+
+.Slide show with fade transitions
+====
+[source,bash]
+----
+fbclear
+for i in *.pix; do
+    pix-fb "$i"
+    fbfade -f /dev/mem
+    sleep 5
+    fbfade
+done
+----
+Display each PIX image in the current directory with *pix-fb*(1), dissolve
+it into view from the in-memory frame buffer, pause, then fade it back to
+black before the next image.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *fbclear*(1), *fb-fb*(1), *pix-fb*(1), *pix*(5)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

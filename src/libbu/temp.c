@@ -1,7 +1,7 @@
 /*                           T E M P . C
  * BRL-CAD
  *
- * Copyright (c) 2001-2025 United States Government as represented by
+ * Copyright (c) 2001-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -38,7 +38,7 @@
 #include "bu/file.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
-#include "bu/time.h"
+#include "bu/datetime.h"
 #include "bu/vls.h"
 #include "bu/str.h"
 #include "bu/parallel.h"
@@ -159,7 +159,7 @@ bu_temp_file_name(char* filename, size_t len)
     memset(buf, 0, MAX_FILELEN);
 
     /* create name in form of prefix_procID_threadID */
-    char* prefix = (filename && filename[0]) ? filename : PACKAGE_NAME;
+    const char* prefix = (filename && filename[0]) ? filename : PACKAGE_NAME;
     int procID = bu_pid();
     int threadID = bu_thread_id();
     snprintf(buf, MAX_FILELEN, "%s_%d_%d", prefix, procID, threadID);
@@ -210,7 +210,7 @@ mkstemp(char *file_template)
 	for (i=(int)start; i>=(int)end; i--) {
 	    file_template[i] = replace[(int)(replacelen * ((double)rand() / (double)RAND_MAX))];
 	}
-	fd = open(file_template, O_CREAT | O_EXCL | O_TRUNC | O_RDWR | O_TEMPORARY, S_IRUSR | S_IWUSR);
+	fd = open(file_template, O_CREAT | O_EXCL | O_TRUNC | O_RDWR, S_IRUSR | S_IWUSR);
     } while ((fd == -1) && (counter++ < 1000));
 
     return fd;

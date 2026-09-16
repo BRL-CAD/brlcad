@@ -1,7 +1,7 @@
 /*                         D E C O M P O S E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -85,7 +85,7 @@ ged_decompose_core(struct ged *gedp, int argc, const char *argv[])
     if (dp == RT_DIR_NULL)
 	return BRLCAD_ERROR;
 
-    if (rt_db_get_internal(&nmg_intern, dp, gedp->dbip, bn_mat_identity, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&nmg_intern, dp, gedp->dbip, bn_mat_identity) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "%s: rt_db_get_internal(%s) error\n", argv[0], nmg_solid_name);
 	return BRLCAD_ERROR;
     }
@@ -182,7 +182,7 @@ ged_decompose_core(struct ged *gedp, int argc, const char *argv[])
 		    return BRLCAD_ERROR;
 		}
 
-		if (rt_db_put_internal(new_dp, gedp->dbip, &new_intern, &rt_uniresource) < 0) {
+		if (rt_db_put_internal(new_dp, gedp->dbip, &new_intern) < 0) {
 		    (void)nmg_km(new_m);
 		    bu_vls_printf(gedp->ged_result_str, "%s: rt_db_put_internal(%s) failure\n",
 				  argv[0], bu_vls_addr(&solid_name));
@@ -202,25 +202,13 @@ ged_decompose_core(struct ged *gedp, int argc, const char *argv[])
     return BRLCAD_OK;
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl decompose_cmd_impl = {
-    "decompose",
-    ged_decompose_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd decompose_cmd = { &decompose_cmd_impl };
-const struct ged_cmd *decompose_cmds[] = { &decompose_cmd, NULL };
+#define GED_DECOMPOSE_COMMANDS(X, XID) \
+    X(decompose, ged_decompose_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  decompose_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_DECOMPOSE_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_decompose", 1, GED_DECOMPOSE_COMMANDS)
 
 /*
  * Local Variables:

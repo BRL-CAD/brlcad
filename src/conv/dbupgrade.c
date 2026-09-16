@@ -1,7 +1,7 @@
 /*                    D B U P G R A D E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2025 United States Government as represented by
+ * Copyright (c) 2004-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -162,8 +162,8 @@ main(int argc, char **argv)
     db_update_ident(fp->dbip, dbip->dbi_title, dbip->dbi_local2base);
 
     /* set regionid color table */
-    if (rt_material_head() != MATER_NULL) {
-	rt_vls_color_map(&colortab);
+    if (db_mater_head(dbip) != MATER_NULL) {
+	db_mater_to_vls(&colortab, dbip);
 
 	db5_update_attribute("_GLOBAL", "regionid_colortable", bu_vls_addr(&colortab), fp->dbip);
 	bu_vls_free(&colortab);
@@ -181,7 +181,7 @@ main(int argc, char **argv)
 		   dp->d_namep);
 	    continue;
 	}
-	id = rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource);
+	id = rt_db_get_internal(&intern, dp, dbip, NULL);
 	if (id < 0) {
 	    fprintf(stderr,
 		    "%s: rt_db_get_internal(%s) failure, skipping\n",
@@ -221,12 +221,20 @@ main(int argc, char **argv)
 	}
 	if (id == ID_POLY)
 	{
-	    if (rt_pg_to_bot(&intern, &tol, &rt_uniresource))
+	    if (rt_pg_to_bot(&intern, &tol))
 	    {
 		fprintf(stderr, "%s: Conversion from polysolid to BOT failed for solid %s\n",
 			argv[0], dp->d_namep);
 		errors++;
 		continue;
+	    }
+	}
+	if (id == ID_BSPLINE) {
+	    if (rt_nurb_to_brep(&intern)) {
+		fprintf(stderr,
+			"%s: Conversion from BSPLINE to BREP failed for solid %s, keeping original\n",
+			argv[0], dp->d_namep);
+		/* Non-fatal: fall through and write the original BSPLINE */
 	    }
 	}
 

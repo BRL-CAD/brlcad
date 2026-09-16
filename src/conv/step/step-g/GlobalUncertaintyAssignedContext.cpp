@@ -1,7 +1,7 @@
 /*                 GlobalUncertaintyAssignedContext.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2025 United States Government as represented by
+ * Copyright (c) 1994-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -93,6 +93,19 @@ GlobalUncertaintyAssignedContext::Load(STEPWrapper *sw, SDAI_Application_instanc
     }
     sw->entity_status[id] = STEP_LOADED;
     return true;
+}
+
+
+double
+GlobalUncertaintyAssignedContext::GetLengthUncertainty() const
+{
+    double result = 0.0;
+    for (LIST_OF_UNCERTAINTY_MEASURE_WITH_UNIT::const_iterator i = uncertainty.begin(); i != uncertainty.end(); ++i) {
+	if (!*i) continue;
+	double value = (*i)->GetLengthConversionFactor();
+	if (value > 0.0 && (result <= 0.0 || value < result)) result = value;
+    }
+    return result;
 }
 
 void

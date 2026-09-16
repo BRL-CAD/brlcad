@@ -1,0 +1,1056 @@
+/*                  T E S T _ P R O C E S S . C
+ * BRL-CAD
+ *
+ * Copyright (c) 2013-2026 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following
+ * disclaimer in the documentation and/or other materials provided
+ * with the distribution.
+ *
+ * 3. The name of the author may not be used to endorse or promote
+ * products derived from this software without specific prior written
+ * permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+ * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+/** @file test_process.c
+ *
+ * Minimal test of the libbu subprocess API
+ *
+ */
+
+#include "common.h"
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <time.h>
+
+#include "bu.h"
+
+
+// Tests requiring non-blocking reading behavior - THEY WILL INF LOOP
+// IN CURRENT FORM
+#define BU_PROCESS_ASYNC 0
+
+#define PROCESS_ERROR 100
+#define PROCESS_FAIL  1
+#define PROCESS_PASS  0
+
+static const int64_t PROCESS_POLL_INTERVAL_USEC = 1000;
+static const int64_t PROCESS_COMPLETION_TIMEOUT_USEC = 5000000;
+static const int64_t PROCESS_NONBLOCKING_CALL_LIMIT_USEC = 1000000;
+
+
+static int
+process_poll_until_complete(struct bu_process *process, int *exit_status)
+{
+    int64_t deadline = bu_gettime() + PROCESS_COMPLETION_TIMEOUT_USEC;
+    int poll_result = 0;
+
+    while ((poll_result = bu_process_poll(process, exit_status)) == 0 &&
+	    bu_gettime() < deadline)
+	(void)bu_snooze(PROCESS_POLL_INTERVAL_USEC);
+
+    return poll_result;
+}
+
+
+#ifndef _WIN32
+struct process_func_test_data {
+    const char *out;
+    const char *err;
+    int ret;
+    int sleep_ms;
+    int do_abort;
+};
+
+static int
+process_write_all(int fd, const char *buf)
+{
+    size_t len = strlen(buf);
+    while (len > 0) {
+       ssize_t nw = write(fd, buf, len);
+       if (nw < 0)
+           return -1;
+       if (nw == 0)
+           return -1;
+       buf += nw;
+       len -= (size_t)nw;
+    }
+
+    return 0;
+}
+
+
+static int
+process_func_callback(void *data)
+{
+    struct process_func_test_data *tdata = (struct process_func_test_data *)data;
+
+    if (tdata->out && process_write_all(BU_PROCESS_STDOUT, tdata->out) != 0)
+	return tdata->ret;
+    if (tdata->err && process_write_all(BU_PROCESS_STDERR, tdata->err) != 0)
+	return tdata->ret;
+    if (tdata->sleep_ms > 0)
+	(void)bu_snooze((int64_t)tdata->sleep_ms * 1000);
+    if (tdata->do_abort)
+	abort();
+
+    return tdata->ret;
+}
+#endif
+
+
+/* tests:   single stdout and stderr reads - BLOCKING READS
+ *  bu_process_read() [stdout and stderr]
+ * also relies on:
+ *  bu_process_create()
+ *  bu_process_wait()
+ */
+static int
+test_read(const char* cmd)
+{
+    struct bu_process* p;
+    const char* run_av[3] = {cmd, "output", NULL};
+    char line[100] = {0};
+
+    bu_process_create(&p, (const char**)run_av, BU_PROCESS_DEFAULT);
+
+    if (bu_process_read_n(p, BU_PROCESS_STDOUT, 100, (char *)line) <= 0) {
+	fprintf(stderr, "bu_process_test[\"read\"] stdin read failed\n");
+	return PROCESS_FAIL;
+    }
+    if (bu_process_read_n(p, BU_PROCESS_STDERR, 100, (char *)line) <= 0) {
+	fprintf(stderr, "bu_process_test[\"read\"] stdout read failed\n");
+	return PROCESS_FAIL;
+    }
+
+    if (bu_process_wait_n(&p, 0)) {
+	fprintf(stderr, "bu_process_test[\"read\"] - wait failed\n");
+	return PROCESS_FAIL;
+    }
+
+    return PROCESS_PASS;
+}
+
+
+static int
+test_func_capture(const char *cmd)
+{
+    (void)cmd;
+#ifdef _WIN32
+    return PROCESS_PASS;
+#else
+    struct bu_vls out = BU_VLS_INIT_ZERO;
+    struct bu_vls err = BU_VLS_INIT_ZERO;
+    struct bu_process_func_info info = {-1, 0, 0, 0, &out, &err};
+    struct process_func_test_data data = {"Howdy stdout!\n", "Howdy stderr!\n", 7, 0, 0};
+    int ret = bu_process_func(&info, process_func_callback, &data, 0, BU_PROCESS_DEFAULT);
+
+    if (ret != 7 || info.exit_code != 7 || info.signaled || info.signal_num || info.timed_out) {
+	fprintf(stderr, "bu_process_test[\"func_capture\"] - bad status information\n");
+	bu_vls_free(&out);
+	bu_vls_free(&err);
+	return PROCESS_FAIL;
+    }
+    if (!BU_STR_EQUAL(bu_vls_addr(&out), "Howdy stdout!\n")) {
+	fprintf(stderr, "bu_process_test[\"func_capture\"] - stdout capture mismatch\n");
+	bu_vls_free(&out);
+	bu_vls_free(&err);
+	return PROCESS_FAIL;
+    }
+    if (!BU_STR_EQUAL(bu_vls_addr(&err), "Howdy stderr!\n")) {
+	fprintf(stderr, "bu_process_test[\"func_capture\"] - stderr capture mismatch\n");
+	bu_vls_free(&out);
+	bu_vls_free(&err);
+	return PROCESS_FAIL;
+    }
+
+    bu_vls_free(&out);
+    bu_vls_free(&err);
+    return PROCESS_PASS;
+#endif
+}
+
+
+static int
+test_func_merge(const char *cmd)
+{
+    (void)cmd;
+#ifdef _WIN32
+    return PROCESS_PASS;
+#else
+    struct bu_vls out = BU_VLS_INIT_ZERO;
+    struct bu_process_func_info info = {-1, 0, 0, 0, &out, NULL};
+    struct process_func_test_data data = {"Howdy stdout!\n", "Howdy stderr!\n", 0, 0, 0};
+    int ret = bu_process_func(&info, process_func_callback, &data, 0, BU_PROCESS_OUT_EQ_ERR);
+
+    if (ret != 0 || info.exit_code != 0 || info.signaled || info.signal_num || info.timed_out) {
+	fprintf(stderr, "bu_process_test[\"func_merge\"] - bad status information\n");
+	bu_vls_free(&out);
+	return PROCESS_FAIL;
+    }
+    if (!BU_STR_EQUAL(bu_vls_addr(&out), "Howdy stdout!\nHowdy stderr!\n")) {
+	fprintf(stderr, "bu_process_test[\"func_merge\"] - merged capture mismatch\n");
+	bu_vls_free(&out);
+	return PROCESS_FAIL;
+    }
+
+    bu_vls_free(&out);
+    return PROCESS_PASS;
+#endif
+}
+
+
+static int
+test_func_abort(const char *cmd)
+{
+    (void)cmd;
+#ifdef _WIN32
+    return PROCESS_PASS;
+#else
+    struct bu_process_func_info info = {-1, 0, 0, 0, NULL, NULL};
+    struct process_func_test_data data = {NULL, NULL, 0, 0, 1};
+    int ret = bu_process_func(&info, process_func_callback, &data, 0, BU_PROCESS_DEFAULT);
+
+    if (ret != ERROR_PROCESS_ABORTED || !info.signaled || info.timed_out) {
+	fprintf(stderr, "bu_process_test[\"func_abort\"] - abort was not reported correctly\n");
+	return PROCESS_FAIL;
+    }
+
+    return PROCESS_PASS;
+#endif
+}
+
+
+static int
+test_func_timeout(const char *cmd)
+{
+    (void)cmd;
+#ifdef _WIN32
+    return PROCESS_PASS;
+#else
+    struct bu_process_func_info info = {-1, 0, 0, 0, NULL, NULL};
+    struct process_func_test_data data = {NULL, NULL, 9, 250, 0};
+    int ret = bu_process_func(&info, process_func_callback, &data, 25, BU_PROCESS_DEFAULT);
+
+    if (ret != ERROR_PROCESS_ABORTED || !info.timed_out) {
+	fprintf(stderr, "bu_process_test[\"func_timeout\"] - timeout was not reported correctly\n");
+	return PROCESS_FAIL;
+    }
+
+    return PROCESS_PASS;
+#endif
+}
+
+
+/* tests:   reads with lots of output; equal distribution - BLOCKING READS
+ *  bu_process_read() [stdout and stderr]
+ * also relies on:
+ *  bu_process_create()
+ *  bu_process_wait()
+ */
+static int
+test_read_flood(const char* cmd)
+{
+    struct bu_process* p;
+    const char* run_av[3] = {cmd, "flood", NULL};
+    char line[100] = {0};
+    int stdout_done = 0, stderr_done = 0;   // NOTE: this would be better checked with 'alive' function
+
+    bu_process_create(&p, (const char**)run_av, BU_PROCESS_DEFAULT);
+
+    while (!stdout_done || !stderr_done) {
+	if (!stdout_done && bu_process_read_n(p, BU_PROCESS_STDOUT, 100, (char *)line) <= 0)
+	    stdout_done = 1;
+
+	if (!stderr_done && bu_process_read_n(p, BU_PROCESS_STDERR, 100, (char *)line) <= 0)
+	    stderr_done = 1;
+    }
+
+    if (bu_process_wait_n(&p, 0)) {
+	fprintf(stderr, "bu_process_test[\"read_flood\"] - wait failed\n");
+	return PROCESS_FAIL;
+    }
+
+    return PROCESS_PASS;
+}
+
+
+/* tests:   basic process execution and wait
+ *  bu_process_create()
+ *  bu_process_wait()
+ */
+static int
+test_exec_wait(const char* cmd)
+{
+    struct bu_process* p;
+    const char* run_av[3] = {cmd, "basic", NULL};
+
+    bu_process_create(&p, (const char**)run_av, BU_PROCESS_DEFAULT);
+
+    if (bu_process_wait_n(&p, 0)) {
+	fprintf(stderr, "bu_process_test[\"exec_wait\"] - wait failed\n");
+	return PROCESS_FAIL;
+    }
+
+    return PROCESS_PASS;
+}
+
+
+/* tests:   process creation with options
+ *  bu_process_create() [bu_process_opts]
+ * also relies on
+ *  bu_process_read()
+ *  bu_process_wait()
+ */
+static int
+test_create_opts(const char* cmd)
+{
+    struct bu_process* p;
+    const char* run_av[3] = {cmd, "output", NULL};
+    char output[100] = {0};
+    size_t output_len = 0;
+    int read_count = 0;
+
+    /*** out = stderr ***/
+    bu_process_create(&p, (const char**)run_av, BU_PROCESS_OUT_EQ_ERR);
+
+    /* Both child streams share the stdout read descriptor.  Drain the merged
+     * pipe before waiting so a buffered child write cannot receive SIGPIPE
+     * when bu_process_wait_n releases the descriptor. */
+    while (output_len < sizeof(output) - 1 &&
+	    (read_count = bu_process_read_n(p, BU_PROCESS_STDOUT,
+	    (int)(sizeof(output) - output_len - 1), output + output_len)) > 0)
+	output_len += (size_t)read_count;
+    if (!output_len || read_count < 0) {
+	fprintf(stderr, "bu_process_test[\"create_opts\"] stdout read failed\n");
+	return PROCESS_FAIL;
+    }
+    if (!strstr(output, "Howdy from stdout!") || !strstr(output, "Howdy from stderr!")) {
+	fprintf(stderr,
+		"bu_process_test[\"create_opts\"] - OUT_EQ_ERR fail\n"
+		"  Expected output from both merged streams\n  Got: %s\n", output);
+	return PROCESS_FAIL;
+    }
+
+    if (bu_process_wait_n(&p, 0)) {
+	fprintf(stderr, "bu_process_test[\"create_opts\"] - wait failed\n");
+	return PROCESS_FAIL;
+    }
+
+    /*** TODO: (Windows) Hide Window? ***/
+
+    return PROCESS_PASS;
+}
+
+
+/* tests:   process creation with timeout
+ *  bu_process_create()
+ * also relies on
+ *  bu_process_wait()
+ */
+static int
+test_create_timeout(const char* cmd)
+{
+    struct bu_process* p;
+    const char* run_av[3] = {cmd, "timeout", NULL};
+
+    bu_process_create(&p, (const char**)run_av, BU_PROCESS_DEFAULT);
+    int child_pid = bu_process_pid(p);
+
+    int64_t start_time = bu_gettime();
+    if (bu_process_wait_n(&p, 25) != ERROR_PROCESS_ABORTED) {
+	fprintf(stderr, "bu_process_test[\"create_timeout\"] - timeout was not reported\n");
+	return PROCESS_FAIL;
+    }
+
+    /* NOTE: this time is mostly arbitrary, as execution time is variable
+     * but bu_subprocess 'timeout' sleep time is 10000ms */
+    if ((bu_gettime() - start_time) > BU_SEC2USEC(.2)) {
+	fprintf(stderr, "bu_process_test[\"create_timeout\"] - took too long\n");
+	return PROCESS_FAIL;
+    }
+
+    if (bu_pid_alive(child_pid)) {
+	fprintf(stderr, "bu_process_test[\"create_timeout\"] - timed-out subprocess is still alive\n");
+	return PROCESS_FAIL;
+    }
+
+    return PROCESS_PASS;
+}
+
+
+/* tests:   current process id, and running subprocess id
+ *  bu_process_id()
+ *  bu_process_pid()
+ * also relies on
+ *  bu_process_create()
+ *  bu_process_wait()
+ */
+static int
+test_ids(const char* cmd)
+{
+    struct bu_process* p = NULL;
+    const char* run_av[3] = {cmd, "basic", NULL};
+
+    bu_process_create(&p, (const char**)run_av, BU_PROCESS_DEFAULT);
+
+    int curr_id = bu_pid();
+    int process_id = bu_process_pid(p);
+
+    if (curr_id <= 0) {
+	fprintf(stderr, "bu_process_test[\"ids\"] bu_pid() should not be 0");
+	return PROCESS_FAIL;
+    }
+    if (process_id <= 0) {
+	fprintf(stderr, "bu_process_test[\"ids\"] bu_process_pid() should not be 0");
+	return PROCESS_FAIL;
+    }
+    if (curr_id == process_id) {
+	fprintf(stderr, "bu_process_test[\"ids\"] bu_process_pid() should not equal bu_pid()");
+	return PROCESS_FAIL;
+    }
+
+    if (bu_process_wait_n(&p, 0)) {
+	fprintf(stderr, "bu_process_test[\"ids\"] - wait failed\n");
+	return PROCESS_FAIL;
+    }
+
+    return PROCESS_PASS;
+}
+
+
+/* tests: open/close stdin, stdout, stderr; test pending information
+ * on stream using fileno
+ *
+ *  bu_process_open(),
+ *  bu_process_close(),
+ *  bu_process_fileno(),
+ *  bu_process_pending()
+ * also relies on:
+ *  bu_process_create(),
+ *  bu_process_wait()
+ */
+static int
+test_streams(const char* cmd)
+{
+    struct bu_process* p = NULL;
+    const char* run_av[3] = {cmd, "echo", NULL};
+
+    if (bu_process_pending(-1)) {
+	fprintf(stderr, "bu_process_test[\"streams\"] - invalid descriptor reported pending\n");
+	return PROCESS_FAIL;
+    }
+
+    bu_process_create(&p, (const char**)run_av, BU_PROCESS_DEFAULT);
+
+    FILE* f_in = bu_process_file_open(p, BU_PROCESS_STDIN);
+    int fd_out = bu_process_fileno(p, BU_PROCESS_STDOUT);
+    int64_t pending_start = bu_gettime();
+    (void)bu_process_pending(fd_out);
+    if ((bu_gettime() - pending_start) > PROCESS_NONBLOCKING_CALL_LIMIT_USEC) {
+	fprintf(stderr, "bu_process_test[\"streams\"] - process_pending blocked\n");
+	return PROCESS_FAIL;
+    }
+
+    // send a test line through stdin
+    char line[10] = "echo_test";
+    fputs(line, f_in);
+    // subprocess is using cin.get() -> need to send newline and flush
+    // so it'll move on
+    fputs("\n", f_in);	fflush(f_in);
+
+    // subprocess should echo on stdout and stderr
+    char out_read[10], err_read[10];
+    FILE* f_out = bu_process_file_open(p, BU_PROCESS_STDOUT);
+    FILE* f_err = bu_process_file_open(p, BU_PROCESS_STDERR);
+    int fd_err = bu_process_fileno(p, BU_PROCESS_STDERR);
+
+    // give up to 5 seconds for process_pending to get the echo
+    int64_t start = bu_gettime();
+    while (!bu_process_pending(fd_out) || !bu_process_pending(fd_err)) {
+	if ((bu_gettime() - start) > PROCESS_COMPLETION_TIMEOUT_USEC) {
+	    fprintf(stderr, "bu_process_test[\"streams\"] - process_pending check failed\n");
+	    return PROCESS_FAIL;
+	}
+	(void)bu_snooze(PROCESS_POLL_INTERVAL_USEC);
+    }
+
+    if (!bu_process_pending(fd_out) || (bu_fgets(out_read, 10, f_out) == NULL)) {
+	fprintf(stderr, "bu_process_test[\"streams\"] - expected pending data on stdout\n");
+	return PROCESS_FAIL;
+    }
+
+    if (!bu_process_pending(fd_err) || (bu_fgets(err_read, 10, f_err) == NULL)) {
+	fprintf(stderr, "bu_process_test[\"streams\"] - expected pending data on stderr\n");
+	return PROCESS_FAIL;
+    }
+
+    // verify echo's were correct
+    if (bu_strncmp(out_read, err_read, 10) || bu_strncmp(out_read, line, 10)) {
+	fprintf(stderr, "bu_process_test[\"streams\"] - bad echo data\n");
+	return PROCESS_FAIL;
+    }
+
+    bu_process_file_close(p, BU_PROCESS_STDIN);
+    bu_process_file_close(p, BU_PROCESS_STDOUT);
+    bu_process_file_close(p, BU_PROCESS_STDERR);
+
+    if (bu_process_wait_n(&p, 0)) {
+	fprintf(stderr, "bu_process_test[\"streams\"] - wait failed\n");
+	return PROCESS_FAIL;
+    }
+
+    return PROCESS_PASS;
+}
+
+
+/* tests:   forcefully terminate a running process
+ *  bu_pid_terminate()
+ * also relies on:
+ *  bu_process_create()
+ *  bu_process_pid()
+ *  bu_process_wait()
+ */
+static int
+test_abort(const char* cmd)
+{
+    const int64_t MAX_TIMEOUT = BU_SEC2USEC(15);
+    int terminate_successful = 0;
+    struct bu_process* p = NULL;
+    const char* run_av[3] = {cmd, "timeout", NULL};
+
+    bu_process_create(&p, (const char**)run_av, BU_PROCESS_DEFAULT);
+
+    /* process starting can be finicky.. keep trying until it's able to be terminated - or time out */
+    int64_t start_time = bu_gettime();
+    while (!(terminate_successful = bu_pid_terminate(bu_process_pid(p))) && (bu_gettime() - start_time < MAX_TIMEOUT))
+	;
+
+    if (!terminate_successful) {
+	fprintf(stderr, "bu_process_test[\"abort\"] - subprocess could not be terminated\n");
+	return PROCESS_FAIL;
+    }
+
+    int wait_status = bu_process_wait_n(&p, 0);
+    if (wait_status != ERROR_PROCESS_ABORTED) {
+	fprintf(stderr, "bu_process_test[\"abort\"] - wait should have reported abort code\n");
+	return PROCESS_FAIL;
+    }
+
+    return PROCESS_PASS;
+}
+
+
+/* tests:   process args storage and retrieval
+ *  bu_process_args()
+ * also relies on:
+ *  bu_process_create()
+ *  bu_process_wait()
+ */
+static int
+test_all_args(const char* cmd)
+{
+    struct bu_process* p;
+    const char* run_av[3] = {cmd, "basic", NULL};
+    int ck_argc;
+    const char* ck_cmd;
+    const char* const* ck_argv;
+
+    bu_process_create(&p, (const char**)run_av, BU_PROCESS_DEFAULT);
+
+    ck_argc = bu_process_args_n(p, &ck_cmd, &ck_argv);
+
+    if (ck_argc != 2) {
+	fprintf(stderr, "bu_process_test[\"args\"] - ck_argc got (%d), expected (%d)\n", ck_argc, 2);
+	return PROCESS_FAIL;
+    }
+
+    if (bu_strncmp(cmd, ck_cmd, 100)) {
+	fprintf(stderr, "bu_process_test[\"args\"] - ck_cmd got (%s), expected (%s)\n", ck_cmd, cmd);
+	return PROCESS_FAIL;
+    }
+
+    for (int i = 0; i < ck_argc; i++) {
+	if (bu_strncmp(run_av[i], ck_argv[i], 100)) {
+	    fprintf(stderr, "bu_process_test[\"args\"] - ck_argv idx (%d) got (%s), expected (%s)\n", i, ck_cmd, run_av[i]);
+	    return PROCESS_FAIL;
+	}
+    }
+
+    if (bu_process_wait_n(&p, 0)) {
+	fprintf(stderr, "bu_process_test[\"args\"] - wait failed\n");
+	return PROCESS_FAIL;
+    }
+
+    return PROCESS_PASS;
+}
+
+
+static int
+test_argument_roundtrip(const char *cmd)
+{
+    const char *run_av[] = {
+	cmd,
+	"arguments",
+	"plain",
+	"two words",
+	" leading and trailing ",
+	"tab\tinside",
+	"quote\"inside",
+	"trailing\\",
+	"slashes" "\\\\" "\"" "before quote", /* two backslashes before quote */
+	"",
+	NULL
+    };
+    struct bu_vls expected = BU_VLS_INIT_ZERO;
+    struct bu_vls actual = BU_VLS_INIT_ZERO;
+    for (size_t i = 2; run_av[i]; i++)
+	bu_vls_printf(&expected, "%s\n", run_av[i]);
+
+    struct bu_process *p = NULL;
+    bu_process_create(&p, run_av, BU_PROCESS_DEFAULT);
+    if (!p) {
+	bu_vls_free(&expected);
+	bu_vls_free(&actual);
+	return PROCESS_FAIL;
+    }
+
+    char buffer[BUFSIZ];
+    int count = 0;
+    while ((count = bu_process_read_n(p, BU_PROCESS_STDOUT,
+		    (int)sizeof(buffer), buffer)) > 0)
+	bu_vls_strncat(&actual, buffer, (size_t)count);
+
+    int status = bu_process_wait_n(&p, 0);
+    int result = PROCESS_PASS;
+    if (status != 0 || !BU_STR_EQUAL(bu_vls_cstr(&actual),
+		    bu_vls_cstr(&expected))) {
+	fprintf(stderr,
+		"bu_process_test[\"argument_roundtrip\"] - argument mismatch\n"
+		"  Expected: [%s]\n  Got: [%s]\n",
+		bu_vls_cstr(&expected), bu_vls_cstr(&actual));
+	result = PROCESS_FAIL;
+    }
+
+    bu_vls_free(&expected);
+    bu_vls_free(&actual);
+    return result;
+}
+
+
+/* tests:   process reports alive
+ *  bu_process_alive()
+ *  bu_pid_alive()
+ * also relies on:
+ *  bu_process_pid()
+ *  bu_process_create()
+ *  bu_process_wait()
+ */
+static int
+test_alive(const char* cmd)
+{
+    struct bu_process* p;
+    const char* run_av[3] = {cmd, "alive", NULL};
+    int pid = -1;
+
+    /* test alive status with wait */
+    bu_process_create(&p, (const char**)run_av, BU_PROCESS_DEFAULT);
+    pid = bu_process_pid(p);
+
+    if (!bu_process_alive(p)) {	// should be alive
+	fprintf(stderr, "bu_process_test[\"alive\"] alive check (p) failed\n");
+	return PROCESS_FAIL;
+    }
+    if (!bu_pid_alive(pid)) {	// should be alive
+	fprintf(stderr, "bu_process_test[\"alive\"] alive check (pid) failed\n");
+	return PROCESS_FAIL;
+    }
+
+    if (bu_process_wait_n(&p, 0)) {
+	fprintf(stderr, "bu_process_test[\"alive\"] - wait failed\n");
+	return PROCESS_FAIL;
+    }
+
+    if (bu_process_alive(p)) {	// should be dead
+	fprintf(stderr, "bu_process_test[\"alive\"] alive check (p) failed after wait\n");
+	return PROCESS_FAIL;
+    }
+    if (bu_pid_alive(pid)) {	// should be dead
+	fprintf(stderr, "bu_process_test[\"alive\"] alive check (pid) failed after wait\n");
+	return PROCESS_FAIL;
+    }
+
+
+    /* test alive status with termination */
+    bu_process_create(&p, (const char**)run_av, BU_PROCESS_DEFAULT);
+    pid = bu_process_pid(p);
+
+    if (!bu_process_alive(p)) {	// should be alive
+	fprintf(stderr, "bu_process_test[\"alive\"] alive1 check failed\n");
+	return PROCESS_FAIL;
+    }
+    if (!bu_pid_alive(pid)) {	// should be alive
+	fprintf(stderr, "bu_process_test[\"alive\"] alive1 check (pid) failed\n");
+	return PROCESS_FAIL;
+    }
+
+    const int64_t MAX_TIMEOUT = BU_SEC2USEC(15);
+    int64_t start_time = bu_gettime();
+    if (!bu_pid_terminate(bu_process_pid(p))) {
+	if ((start_time - bu_gettime()) > MAX_TIMEOUT) {
+	    fprintf(stderr, "bu_process_test[\"alive\"] - terminate failed\n");
+	    return PROCESS_FAIL;
+	}
+    }
+
+    (void)bu_process_wait_n(&p, 0);      // reap terminated process
+
+    if (bu_process_alive(p)) {	// should be dead
+	fprintf(stderr, "bu_process_test[\"alive\"] alive check (p) failed after terminate\n");
+	return PROCESS_FAIL;
+    }
+    if (bu_pid_alive(pid)) {	// should be dead
+	fprintf(stderr, "bu_process_test[\"alive\"] alive1 check (pid) failed after terminate\n");
+	return PROCESS_FAIL;
+    }
+
+    return PROCESS_PASS;
+}
+
+
+static int
+test_poll_status(const char *cmd)
+{
+    struct bu_process *p = NULL;
+    const char *run_av[3] = {cmd, "exit7", NULL};
+    int exit_status = -1;
+
+    bu_process_create(&p, run_av, BU_PROCESS_DEFAULT);
+    int poll_status = process_poll_until_complete(p, &exit_status);
+    if (poll_status != 1 || exit_status != 7) {
+	fprintf(stderr, "bu_process_test[\"poll_status\"] - expected exit status 7, got poll=%d status=%d\n",
+		poll_status, exit_status);
+	if (p)
+	    (void)bu_process_terminate(p);
+	if (p)
+	    (void)bu_process_wait_n(&p, 0);
+	return PROCESS_FAIL;
+    }
+
+    exit_status = -1;
+    if (bu_process_poll(p, &exit_status) != 1 || exit_status != 7) {
+	fprintf(stderr, "bu_process_test[\"poll_status\"] - repeated poll did not preserve exit status\n");
+	(void)bu_process_wait_n(&p, 0);
+	return PROCESS_FAIL;
+    }
+
+    if (bu_process_wait_n(&p, 0) != 7) {
+	fprintf(stderr, "bu_process_test[\"poll_status\"] - wait did not preserve exit status\n");
+	return PROCESS_FAIL;
+    }
+
+    return PROCESS_PASS;
+}
+
+
+static int
+test_wait_status(const char *cmd)
+{
+    struct bu_process *p = NULL;
+    const char *run_av[3] = {cmd, "exit7", NULL};
+
+    bu_process_create(&p, run_av, BU_PROCESS_DEFAULT);
+    if (bu_process_wait_n(&p, 0) != 7) {
+	fprintf(stderr, "bu_process_test[\"wait_status\"] - wait did not report exit status 7\n");
+	return PROCESS_FAIL;
+    }
+
+    return PROCESS_PASS;
+}
+
+
+static int
+test_poll_preserves_output(const char *cmd)
+{
+    struct bu_process *p = NULL;
+    const char *run_av[3] = {cmd, "output", NULL};
+    char output[100] = {0};
+
+    bu_process_create(&p, run_av, BU_PROCESS_DEFAULT);
+    if (process_poll_until_complete(p, NULL) != 1) {
+	fprintf(stderr, "bu_process_test[\"poll_output\"] - process did not complete\n");
+	if (p)
+	    (void)bu_process_terminate(p);
+	if (p)
+	    (void)bu_process_wait_n(&p, 0);
+	return PROCESS_FAIL;
+    }
+
+    int count = bu_process_read_n(p, BU_PROCESS_STDOUT,
+	    (int)sizeof(output) - 1, output);
+    if (count <= 0 || !strstr(output, "Howdy from stdout!")) {
+	fprintf(stderr, "bu_process_test[\"poll_output\"] - output was not readable after completion\n");
+	(void)bu_process_wait_n(&p, 0);
+	return PROCESS_FAIL;
+    }
+
+    if (bu_process_wait_n(&p, 0) != 0) {
+	fprintf(stderr, "bu_process_test[\"poll_output\"] - wait failed\n");
+	return PROCESS_FAIL;
+    }
+
+    return PROCESS_PASS;
+}
+
+
+static int
+test_process_terminate(const char *cmd)
+{
+    struct bu_process *p = NULL;
+    const char *run_av[3] = {cmd, "timeout", NULL};
+
+    bu_process_create(&p, run_av, BU_PROCESS_DEFAULT);
+    if (!bu_process_terminate(p)) {
+	fprintf(stderr, "bu_process_test[\"process_terminate\"] - termination failed\n");
+	(void)bu_process_wait_n(&p, 0);
+	return PROCESS_FAIL;
+    }
+
+    if (bu_process_wait_n(&p, 0) != ERROR_PROCESS_ABORTED) {
+	fprintf(stderr, "bu_process_test[\"process_terminate\"] - wait should have reported abort code\n");
+	return PROCESS_FAIL;
+    }
+
+    const char *completed_av[3] = {cmd, "basic", NULL};
+    bu_process_create(&p, completed_av, BU_PROCESS_DEFAULT);
+    if (process_poll_until_complete(p, NULL) != 1 ||
+	    !bu_process_terminate(p)) {
+	fprintf(stderr, "bu_process_test[\"process_terminate\"] - completed process was not handled\n");
+	if (p)
+	    (void)bu_process_wait_n(&p, 0);
+	return PROCESS_FAIL;
+    }
+    if (bu_process_wait_n(&p, 0) != 0) {
+	fprintf(stderr, "bu_process_test[\"process_terminate\"] - completed process status changed\n");
+	return PROCESS_FAIL;
+    }
+
+    return PROCESS_PASS;
+}
+
+
+#if BU_PROCESS_ASYNC
+/* tests:   reads with lots of output; equal stdout and stderr distribution - ASYNC READS
+ *  bu_process_create() ['async' option]
+ *  bu_process_read() [stdout and stderr]
+ * also relies on:
+ *  bu_process_alive()
+ *  bu_terminate()
+ *  bu_process_pid()
+ *  bu_process_wait()
+ */
+static int
+test_async_balanced(const char* cmd)
+{
+    struct bu_process* p;
+    const char* run_av[3] = {cmd, "flood", NULL};
+    int count = 0;
+    char line[100] = {0};
+    int timed_out = 0;
+
+    // subprocess_option_enable_async = 0x4
+    bu_process_create(&p, cmd, 2, (const char**)run_av, 0x4);
+
+    // read for up to 2 seconds
+    int64_t start_time = bu_gettime();
+    while (bu_process_alive(p)) {
+	(void)bu_process_read((char *)line, &count, p, BU_PROCESS_STDOUT, 100);
+	(void)bu_process_read((char *)line, &count, p, BU_PROCESS_STDERR, 100);
+
+	if ((bu_gettime() - start_time) > BU_SEC2USEC(2))
+	    timed_out = 1;
+    }
+
+    if (timed_out) {
+	bu_terminate(bu_process_pid(p));
+	fprintf(stderr, "bu_process_test[\"async_bal\"] - reading failed\n");
+	return PROCESS_FAIL;
+    }
+
+    if (bu_process_wait(NULL, p, 0)) {
+	fprintf(stderr, "bu_process_test[\"async_bal\"] - wait failed\n");
+	return PROCESS_FAIL;
+    }
+
+    return PROCESS_PASS;
+}
+
+
+/* tests: lots of output; unequal stdout and stderr distribution -
+ * ASYNC READS
+ *
+ *  bu_process_create() ['async' option]
+ *  bu_process_read() [stdout and stderr]
+ * also relies on:
+ *  bu_process_alive()
+ *  bu_terminate()
+ *  bu_process_pid()
+ *  bu_process_wait()
+ */
+static int
+test_async_unbalanced(const char* cmd)
+{
+    struct bu_process* p;
+    const char* run_av[3] = {cmd, "flood_unbal", NULL};	    // NOTE: writes to stdout 10x stderr
+    int count = 0;
+    char line[100] = {0};
+    int timed_out = 0;
+
+    // subprocess_option_enable_async = 0x4
+    bu_process_create(&p, cmd, 2, (const char**)run_av, 0x4);
+
+    // read for up to 2 seconds
+    int64_t start_time = bu_gettime();
+    while (bu_process_alive(p)) {
+	(void)bu_process_read((char *)line, &count, p, BU_PROCESS_STDOUT, 100);
+	(void)bu_process_read((char *)line, &count, p, BU_PROCESS_STDERR, 100);
+
+	if ((bu_gettime() - start_time) > BU_SEC2USEC(2))
+	    timed_out = 1;
+    }
+
+    if (timed_out) {
+	bu_terminate(bu_process_pid(p));
+	fprintf(stderr, "bu_process_test[\"async_unbal\"] - reading failed\n");
+	return PROCESS_FAIL;
+    }
+
+    if (bu_process_wait(NULL, p, 0)) {
+	fprintf(stderr, "bu_process_test[\"async_unbal\"] - wait failed\n");
+	return PROCESS_FAIL;
+    }
+
+    return PROCESS_PASS;
+}
+
+
+#endif
+
+
+typedef struct {
+    const char* name;
+    int (*func)(const char*);
+} ProcessTest;
+
+ProcessTest tests[] = {
+    {"exec_wait", test_exec_wait},
+    {"create_opts", test_create_opts},
+    {"create_timeout", test_create_timeout},
+    {"func_capture", test_func_capture},
+    {"func_merge", test_func_merge},
+    {"func_abort", test_func_abort},
+    {"func_timeout", test_func_timeout},
+    {"read", test_read},
+    {"read_flood", test_read_flood},
+    {"ids", test_ids},
+    {"streams", test_streams},
+    {"abort", test_abort},
+    {"args", test_all_args},
+    {"argument_roundtrip", test_argument_roundtrip},
+    {"alive", test_alive},
+    {"poll_status", test_poll_status},
+    {"wait_status", test_wait_status},
+    {"poll_output", test_poll_preserves_output},
+    {"process_terminate", test_process_terminate},
+#if BU_PROCESS_ASYNC
+    {"async_bal", test_async_balanced},
+    {"async_unbal", test_async_unbalanced},
+#endif
+};
+
+
+static int
+run_test(char* av[])
+{
+    int failed = 0;
+    int run = 0;
+
+    int test_all = (BU_STR_EQUAL(av[2], "all")) ? 1 : 0;
+
+    for (size_t i = 0; i < sizeof(tests) / sizeof(tests[0]); i++) {
+	if (test_all || BU_STR_EQUAL(av[2], tests[i].name)) {
+	    // echo what we're about to run
+	    fprintf(stdout, "Running [%s] with \"%s\"\n", tests[i].name, av[1]);
+
+	    failed += tests[i].func(av[1]);
+	    run = 1;
+	}
+    }
+
+    if (!run) {
+	// invalid test was supplied, print available
+	fprintf(stderr, "ERROR: testname '%s' unknown\nAvailable tests:\n", av[2]);
+	for (size_t i = 0; i < sizeof(tests) / sizeof(tests[0]); i++)
+	    fprintf(stderr, "    %s\n", tests[i].name);
+	failed = -1;
+    }
+
+    return failed;
+}
+
+
+int
+main(int ac, char *av[])
+{
+    // Normally this file is part of bu_test, so only set this if it
+    // looks like the program name is still unset.
+    if (bu_getprogname()[0] == '\0')
+	bu_setprogname(av[0]);
+
+    // check usage
+    if (ac != 3) {
+	const char* usage = "subprocess_exe testname";
+	fprintf(stderr, "Usage: %s %s\n", av[0], usage);
+	return PROCESS_ERROR;
+    }
+    // ensure subprocess_executable exists
+    if (!bu_file_exists(av[1], NULL)) {
+	fprintf(stderr, "Program %s not found, cannot run test\n", av[1]);
+	return PROCESS_ERROR;
+    }
+
+    return run_test(av);
+}
+
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8 cino=N-s
+ */

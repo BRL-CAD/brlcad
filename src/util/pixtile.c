@@ -1,7 +1,7 @@
 /*                       P I X T I L E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2025 United States Government as represented by
+ * Copyright (c) 1986-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,12 +27,15 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include "bio.h"
 
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/file.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
@@ -52,7 +55,6 @@ Usage: pixtile [-s squareinsize] [-w file_width] [-n file_height]\n\
 	[-S squareoutsize] [-W out_width] [-N out_height]\n\
 	[-o startframe] basename [file2 ... fileN] >file.pix\n";
 
-
 int
 get_args(int argc, char **argv)
 {
@@ -62,25 +64,34 @@ get_args(int argc, char **argv)
 	switch (c) {
 	    case 's':
 		/* square input file size */
-		file_height = file_width = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &file_width, 1, INT_MAX, "input size"))
+		    return 0;
+		file_height = file_width;
 		break;
 	    case 'w':
-		file_width = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &file_width, 1, INT_MAX, "input width"))
+		    return 0;
 		break;
 	    case 'n':
-		file_height = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &file_height, 1, INT_MAX, "input height"))
+		    return 0;
 		break;
 	    case 'S':
-		scr_height = scr_width = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &scr_width, 1, INT_MAX, "output size"))
+		    return 0;
+		scr_height = scr_width;
 		break;
 	    case 'W':
-		scr_width = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &scr_width, 1, INT_MAX, "output width"))
+		    return 0;
 		break;
 	    case 'N':
-		scr_height = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &scr_height, 1, INT_MAX, "output height"))
+		    return 0;
 		break;
 	    case 'o':
-		framenumber = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &framenumber, 0, INT_MAX, "start frame"))
+		    return 0;
 		break;
 	    default:		/* '?''h' */
 		return 0;	/* Bad, other than option '?' or 'h' */

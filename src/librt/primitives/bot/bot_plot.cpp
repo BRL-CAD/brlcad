@@ -1,7 +1,7 @@
 /*                    B O T _ P L O T . C P P
  * BRL-CAD
  *
- * Copyright (c) 1999-2025 United States Government as represented by
+ * Copyright (c) 1999-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,6 +29,7 @@
 extern "C" {
 #include "vds.h"
 
+#include "bv/vlist.h"
 #include "bg/trimesh.h" // needed for the call in rt_bot_bbox
 #include "bg/tri_ray.h"
 #include "vmath.h"

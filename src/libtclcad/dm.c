@@ -1,7 +1,7 @@
 /*                            D M . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2025 United States Government as represented by
+ * Copyright (c) 2004-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -2771,7 +2771,7 @@ dmo_open_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char *
 }
 
 
-int
+TCLCAD_EXPORT int
 Dmo_Init(Tcl_Interp *interp)
 {
     BU_LIST_INIT(&HeadDMObj.l);
@@ -2869,7 +2869,9 @@ fb_cmd_common_file_size(ClientData clientData, int argc, const char **argv)
     }
 
     /* Signal error */
-    Tcl_SetResult(interp, "0 0", TCL_STATIC);
+    char *zerr = bu_strdup("0 0");
+    Tcl_SetResult(interp, zerr, TCL_STATIC);
+    bu_free(zerr, "zerr");
     return TCL_OK;
 }
 
@@ -2892,7 +2894,7 @@ register_cmds(Tcl_Interp *interp, struct bu_cmdtab *cmds)
 }
 
 
-int
+TCLCAD_EXPORT int
 Dm_Init(Tcl_Interp *interp)
 {
     static struct bu_cmdtab cmdtab[] = {

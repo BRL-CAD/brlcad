@@ -1,0 +1,231 @@
+= CLONE(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD MGED Commands
+
+== NAME
+
+clone - Deep-copy an object (optionally in a geometric pattern) and
+place the copies in the database with automatically generated names.
+
+== SYNOPSIS
+
+[source]
+----
+clone [pattern] [options]... {object}...
+----
+
+The optional positional _pattern_ keyword selects the geometric layout
+of the produced copies:
+
+[horizontal]
+*lin*  :: linear (single-axis) — the default
+*rect* :: rectangular grid
+*sph*  :: spherical pattern
+*cyl*  :: cylindrical pattern
+
+The pattern keyword may appear anywhere on the command line; option
+position relative to it does not matter. Omitting the keyword is
+identical to using *lin*.
+
+== DESCRIPTION
+
+The *clone* command creates new database objects by copying an existing
+object hierarchy and placing the copies in a regular spatial pattern.
+It can produce a simple linear series, a rectangular grid, or radial
+layouts on spherical and cylindrical coordinate systems.
+
+== AXIS-AWARE OPTIONS
+
+Each pattern publishes a fixed list of axes that any of the four
+axis-keyed options below operate on:
+
+[horizontal]
+*lin* :: _step_
+*rect* :: _x_, _y_, _z_
+*sph* :: _az_, _el_, _r_
+*cyl* :: _az_, _r_, _h_
+
+These axis names are the only per-shape vocabulary you have to learn.
+Each of the four options below accepts either a *bare value* (which
+becomes the default for every axis whose attribute is otherwise unset)
+or an *AXIS=value* form (which binds to that axis only). All four are
+repeatable; later occurrences override earlier ones.
+
+*-n, --copies _N_ | _AXIS=N_*::
+Number of copies along the named axis (or every axis when bare).
+
+*-d, --delta _D_ | _AXIS=D_*::
+Step size between copies along the axis. Degrees for _az_ and _el_;
+model-space distance otherwise.
+
+*--start _V_ | _AXIS=V_*::
+Starting value for the named axis. Defaults to 0 for non-angular
+axes; defaults to -90° for the _el_ axis (south pole) so that a single
+elevation produces a layer at the equator only when explicitly set.
+
+*--list _AXIS=v1 v2..._*::
+Provide an explicit list of values for the named axis. Overrides
+*-n*, *-d*, and *--start* for that axis. Only the *AXIS=* form is
+accepted.
+
+== SPATIAL & ORIENTATION OPTIONS
+
+*-O, --origin _x y z_*::
+Pattern origin in model space. Per-pattern interpretation:
++
+*lin*: starting position offset (no-op when 0,0,0). +
+*rect*: grid origin. +
+*sph*: centre of the sphere. +
+*cyl*: centre of the cylinder base.
+
+*-p, --pivot _x y z_*::
+Pivot point baked into each copy when any rotation is applied — that
+is *-r* in *lin*, or *--align* in *sph*/*cyl*. Defaults to the model
+origin (0,0,0). In *lin* mode, this option doubles as the legacy
+rotation centre for *-r* (formerly *--rpoint*).
+
+*--align _KEYS_*::
+Comma-separated list of orientation keys. Each copy is rotated so
+that the listed direction(s) follow its position. Valid keys per
+pattern:
++
+*sph*: *az* (yaw to azimuth), *el* (pitch to elevation). +
+*cyl*: *az* (yaw — also accepts the alias *tan*). +
+*lin*, *rect*: not applicable.
+
+*--dir _AXIS x y z_*::
+Direction vector for the named axis. Defaults:
++
+*rect*: x → (1,0,0), y → (0,1,0), z → (0,0,1). +
+*sph*: az → (1,0,0) reference for azimuth=0. +
+*cyl*: az → (1,0,0); h → (0,0,1) (cylinder axis). +
+*lin*: step axis (overrides the direction implied by *-t*).
+
+== HOUSEKEEPING OPTIONS
+
+*-h, --help*::
+Display help and exit.
+
+*-i, --increment _#_*::
+Increment used when generating copy names. The first numeric run found
+in each source name is incremented by this value; if no number is
+present the increment is appended. Default 100.
+
+*-c, --second-number*::
+Move the naming cursor to the _next_ numeric run in object names. May
+be repeated for the third, fourth, etc. number.
+
+*--depth top|regions|primitives*::
+Controls how deeply the copy hierarchy is constructed. Default is
+*top* for any pattern that produces more than one copy, *primitives*
+for the single-copy linear case.
++
+*top* — wrapper combination, source geometry shared. +
+*regions* — every combination down to (and including) the first region
+copied; primitives shared. +
+*primitives* — full recursive deep copy, placement matrix baked in.
+
+*--xpush*::
+Before producing the final clone, flatten any matrices that hang
+above the combination members of the source object.
+
+*-g, --group _name_*::
+Collect the produced clones into a top-level combination called
+_name_.
+
+*-s, --subs _sstr_ _rstr_*::
+Substitute the first occurrence of _sstr_ with _rstr_ in every
+generated object name.
+
+== LINEAR-ONLY (FROZEN) OPTIONS
+
+The compact short forms below are accepted only in *lin* mode. They
+exist so that any rel-7-42-2 invocation continues to parse identically:
+
+*-t, --translate _x y z_*::
+Per-copy translation vector. Equivalent to *--dir step _x y z_ -d step
+|x y z|*.
+
+*-r, --rotate _x y z_*::
+Per-copy rotation in degrees about the X, Y, Z axes (in that order).
+Replaced by *--align* in pattern modes.
+
+*-a, --atrans _n x y z_*::
+Total translation _x y z_, split over _n_ copies. Equivalent to *-n n
+-t x/n y/n z/n*.
+
+*-b, --arot _n x y z_*::
+Total rotation _x y z_ in degrees, split over _n_ copies.
+
+*-m, --mirror _axis_ _d_*::
+Mirror the source about the plane perpendicular to _axis_ (x, y, or z)
+at distance _d_.
+
+== EXAMPLES
+
+.Clone an object into a rectangular 4x3 array.
+[example]
+====
+mged>**clone rect -n x=4 -d x=9000 -n y=3 -d y=6000 rib.s**
+
+Creates twelve copies of _rib.s_ arranged in a 4 by 3 grid, which is useful for repeated structural parts, bolt patterns, or ribs.
+====
+
+Linear (the original behaviour):
+
+[source]
+----
+clone -n 4 -t 100 0 0 widget        # 4 copies along X, 100 apart
+clone -a 4 100 0 0 widget           # equivalent
+clone -m x 0 widget                 # mirror about the YZ plane
+----
+
+Rectangular grid:
+
+[source]
+----
+clone rect -n 3 -d 100 widget                       # 3×3×3 grid, 100 apart
+clone rect -n x=4 -d x=9000 -n y=3 -d y=6000 widget # 4×3 grid in XY plane
+----
+
+Spherical pattern:
+
+[source]
+----
+clone sph -n az=8 -d az=45 -n el=3 -d el=30 \
+          --start el=-60 -n r=1 -d r=9000 widget
+clone sph -n az=4 -d az=90 -n r=1 -d r=300 --align az widget
+----
+
+Cylindrical pattern:
+
+[source]
+----
+clone cyl -n az=8 -d az=45 -n r=1 -d r=7000 \
+          -n h=3 -d h=7000 widget
+clone cyl -n az=4 -d az=90 -n r=1 -d r=300 \
+          -n h=2 -d h=200 --align az widget
+----
+
+The pattern keyword position is irrelevant:
+
+[source]
+----
+clone -n 4 rect -d 100 widget       # equivalent to:
+clone rect -n 4 -d 100 widget
+----
+
+== AUTHOR
+
+BRL-CAD Team
+
+== COPYRIGHT
+
+This software is Copyright (c) 1995-2025 by the United States
+Government as represented by U.S. Army Research Laboratory.
+
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic
+mail to <devs@brlcad.org>

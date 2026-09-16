@@ -1,0 +1,136 @@
+= BWSCALE(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+bwscale - change the size of a black and white bw image
+
+== SYNOPSIS
+
+[source]
+----
+bwscale [-r] [-s _squareinsize_] [-w _inwidth_] [-n _inheight_] [-S _squareoutsize_] [-W _outwidth_] [-N _outheight_] [_in.bw_] > _out.bw_
+----
+
+[source]
+----
+bwscale _in.bw_ _inwidth_ _inheight_ _outwidth_ _outheight_ > _out.bw_
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*bwscale* reads a black and white *bw*(5) image of given dimensions and writes a
+larger or smaller scaled version to standard output. Input is taken from the
+named file or, if none is given, from standard input. If the input and output
+dimensions are not specified, both default to 512x512.
+
+When scaling up, *bwscale* uses bilinear interpolation (or nearest-neighbor pixel
+replication with *-r*); outer edge pixels are preserved and only interior pixels
+are interpolated. When scaling down, a "square pixel" box filter is used that
+preserves the light energy per unit area, with each input pixel contributing in
+proportion to the fraction of the output pixel it covers. A single invocation
+cannot stretch one axis while compressing the other.
+
+
+[[options]]
+== OPTIONS
+
+*-r*::
+  Scale up by pixel replication (nearest-neighbor) instead of bilinear interpolation.
+
+*-s* _squareinsize_::
+  Set both the input width and height to _squareinsize_ pixels.
+
+*-w* _inwidth_::
+  Set the input width in pixels (default 512).
+
+*-n* _inheight_::
+  Set the input height in pixels (default 512).
+
+*-S* _squareoutsize_::
+  Set both the output width and height to _squareoutsize_ pixels.
+
+*-W* _outwidth_::
+  Set the output width in pixels (default 512).
+
+*-N* _outheight_::
+  Set the output height in pixels (default 512).
+
+*-h*, *-?*::
+  Print a usage message and exit.
+
+As a backward-compatibility convenience, the input file and all four dimensions
+may instead be given as five positional arguments: _in.bw_ _inwidth_ _inheight_
+_outwidth_ _outheight_.
+
+
+[[examples]]
+== EXAMPLES
+
+.Halve the resolution of a 1024x1024 image
+====
+[source,bash]
+----
+bwscale -s 1024 -S 512 hires.bw > thumb.bw
+----
+Down-samples a 1024x1024 image to 512x512 using the box filter, which
+averages the contributing input pixels to avoid aliasing.
+====
+
+.Build a small preview from a streamed image
+====
+[source,bash]
+----
+gencolor -r 1048576 200 | bwscale -s 1024 -S 128 > tiny.bw
+----
+Feeds a 1024x1024 grayscale stream into *bwscale*, producing a 128x128 preview.
+*bwscale* reads the *bw*(5) data from standard input because no file name is
+supplied.
+====
+
+.Enlarge with crisp pixels
+====
+[source,bash]
+----
+bwscale -r -s 64 -S 256 icon.bw | bw-png -s 256 - > icon.png
+----
+Quadruples a 64x64 icon to 256x256 using pixel replication (*-r*) so the result
+stays blocky rather than blurred, then converts it to PNG with *bw-png*(1).
+====
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *bwcrop*(1), *bwrect*(1), *pixscale*(1), *bw-png*(1), *bw*(5)
+
+
+[[bugs]]
+== BUGS
+
+This program cannot scale up in one dimension and down in the other at the same time.
+
+The box filter used for scaling down results in the usual high-frequency ripple.
+
+Optional cubic interpolation would be nice.
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

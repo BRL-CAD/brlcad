@@ -1,7 +1,7 @@
 /*                         W H O . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,23 +26,32 @@
 #include "ged.h"
 
 extern int ged_who2_core(struct ged *gedp, int argc, const char **argv);
+extern int ged_who_solids_core(struct ged *gedp, int argc, const char **argv);
 
 /*
  * List the objects currently prepped for drawing
  *
  * Usage:
  * who [r(eal)|p(hony)|b(oth)]
+ * who solids [level]
  *
  */
 int
 ged_who_core(struct ged *gedp, int argc, const char *argv[])
 {
+    static const char *usage =
+	"Usage:\n"
+	"  who [real|phony|both]\n"
+	"  who solids [level]";
+
+    if (argc > 1 && (BU_STR_EQUAL(argv[1], "solids") || BU_STR_EQUAL(argv[1], "report")))
+	return ged_who_solids_core(gedp, argc, argv);
+
     if (gedp->new_cmd_forms)
 	return ged_who2_core(gedp, argc, argv);
 
     struct display_list *gdlp;
     int skip_real, skip_phony;
-    static const char *usage = "[r(eal)|p(hony)|b(oth)]";
 
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
@@ -50,8 +59,13 @@ ged_who_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
+    if (argc == 2 && (BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "--help") || BU_STR_EQUAL(argv[1], "-?"))) {
+	bu_vls_printf(gedp->ged_result_str, "%s", usage);
+	return GED_HELP;
+    }
+
     if (2 < argc) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "%s", usage);
 	return BRLCAD_ERROR;
     }
 
@@ -72,7 +86,7 @@ ged_who_core(struct ged *gedp, int argc, const char *argv[])
 		skip_phony = 1;
 		break;
 	    default:
-		bu_vls_printf(gedp->ged_result_str, "ged_who_core: argument not understood\n");
+		bu_vls_printf(gedp->ged_result_str, "%s", usage);
 		return BRLCAD_ERROR;
 	}
     }
@@ -91,20 +105,13 @@ ged_who_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl who_cmd_impl = { "who", ged_who_core, GED_CMD_DEFAULT };
-const struct ged_cmd who_cmd = { &who_cmd_impl };
 
-const struct ged_cmd *who_cmds[] = { &who_cmd, NULL };
+#define GED_WHO_COMMANDS(X, XID) \
+    X(who, ged_who_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  who_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_WHO_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_who", 1, GED_WHO_COMMANDS)
 
 /*
  * Local Variables:

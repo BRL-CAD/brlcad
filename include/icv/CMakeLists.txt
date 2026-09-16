@@ -1,5 +1,6 @@
 set(
   icv_headers
+  anim.h
   defines.h
   colorspace.h
   crop.h

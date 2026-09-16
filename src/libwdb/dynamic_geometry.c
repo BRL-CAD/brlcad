@@ -1,7 +1,7 @@
 /*              D Y N A M I C _ G E O M E T R Y . C
  * BRL-CAD
  *
- * Copyright (c) 2003-2025 United States Government as represented by
+ * Copyright (c) 2003-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -118,7 +118,7 @@ make_hole(struct rt_wdb *wdbp,		/* database to be modified */
 	union tree *tree;
 
 	/* get the internal form of the combination */
-	if (rt_db_get_internal(&intern, dp[i], wdbp->dbip, NULL, wdbp->wdb_resp) < 0) {
+	if (rt_db_get_internal(&intern, dp[i], wdbp->dbip, NULL) < 0) {
 	    bu_log("Failed to get %s\n", dp[i]->d_namep);
 	    bu_vls_free(&tmp_name);
 	    return 3;
@@ -199,7 +199,7 @@ make_hole_in_prepped_regions(struct rt_wdb *wdbp,	/* database to be modified */
     }
 
     /* get the internal form of the new RCC */
-    if (rt_db_get_internal(&intern, dp, wdbp->dbip, NULL, wdbp->wdb_resp) < 0) {
+    if (rt_db_get_internal(&intern, dp, wdbp->dbip, NULL) < 0) {
 	bu_log("Failed to get internal form of RCC (%s) just made by make_hole_in_prepped_regions()!!!\n",
 	       bu_vls_addr(&tmp_name));
 	bu_bomb("Failed to get internal form of RCC just made by make_hole_in_prepped_regions()!!!\n");
@@ -211,13 +211,7 @@ make_hole_in_prepped_regions(struct rt_wdb *wdbp,	/* database to be modified */
     stp->l2.magic = RT_SOLTAB2_MAGIC;
     stp->st_uses = 1;
     stp->st_dp = dp;
-    stp->st_bit = rtip->nsolids++;
-
-    /* Add the new soltab structure to the rt_i structure */
-    rtip->rti_Solids = (struct soltab **)bu_realloc(rtip->rti_Solids,
-						    rtip->nsolids * sizeof(struct soltab *),
-						    "new rti_Solids");
-    rtip->rti_Solids[stp->st_bit] = stp;
+    stp->st_bit = rtip->stats.nsolids++;
 
     /* actually prep the new RCC */
     if (intern.idb_meth->ft_prep(stp, &intern, rtip)) {
@@ -266,8 +260,8 @@ make_hole_in_prepped_regions(struct rt_wdb *wdbp,	/* database to be modified */
 	bu_ptbl_ins(&stp->st_regions, (long *)rp);
     }
 
-    /* insert the new RCC soltab structure into the already existing space partitioning tree */
-    insert_in_bsp(stp, &rtip->rti_CutHead);
+    /* Add the new soltab into the rt_i space-partitioning structures. */
+    rt_dynamic_add_solid(rtip, stp);
 
     return 0;
 }

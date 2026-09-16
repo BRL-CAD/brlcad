@@ -32,7 +32,7 @@ Documentation
 10. Publicly visible changes / features are documented?  NEWS entry.
 11. Does referencing documentation reflect interface changes?  Check manpages.
 12. Are new public symbols documented?  Doxygen comment in include/ dir.
-13. Are changed public symbols documented?  CHANGES entry, DEPRECATED comment.
+13. Are changed public symbols documented?  doc/changes entry, DEPRECATED comment.
 14. Is all dead or conditional debugging code documented?  Comment or remove.
 15. Are new numeric constants documented?  Comment or eliminate.
 

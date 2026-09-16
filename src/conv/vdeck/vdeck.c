@@ -1,7 +1,7 @@
 /*                         V D E C K . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2025 United States Government as represented by
+ * Copyright (c) 1990-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -57,7 +57,6 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <signal.h>
 #include <math.h>
 #include <string.h>
 #ifdef HAVE_SYS_TYPES_H
@@ -66,6 +65,7 @@
 #include "bio.h"
 
 #include "bu/app.h"
+#include "bu/interrupt.h"
 #include "bu/parallel.h"
 #include "bu/sort.h"
 #include "bu/units.h"
@@ -78,7 +78,7 @@
 
 int	debug = 0;
 
-char	*cmd[] = {
+const char	*cmd[] = {
     "",
     "C O M M A N D                  D E S C R I P T I O N",
     "",
@@ -99,7 +99,7 @@ char	*cmd[] = {
     0
 };
 
-char	*usage[] = {
+const char	*usage[] = {
     "",
     "v d e c k",
     "Make COMGEOM decks of objects from a \"mged\" file suitable as",
@@ -373,7 +373,7 @@ blank_fill(FILE *fp, size_t count)
  *  Print a non-newline-terminate string, and flush stdout
  */
 void
-prompt(char *fmt)
+prompt(const char *fmt)
 {
     fputs(fmt, stdout);
     fflush(stdout);
@@ -399,7 +399,7 @@ sortFunc(const void *a, const void *b, void *UNUSED(arg))
  * This routine turns a union tree into a flat string.
  */
 void
-flatten_tree(struct bu_vls *vls, union tree *tp, char *op, int neg)
+flatten_tree(struct bu_vls *vls, union tree *tp, const char *op, int neg)
 {
     int	bit;
 
@@ -506,7 +506,7 @@ region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tr
 	bu_vls_strcat(&flat, "");
     } else {
 	/* Rewrite tree so that all unions are at tree top */
-	db_non_union_push(curtree, &rt_uniresource);
+	db_non_union_push(curtree);
 	flatten_tree(&flat, curtree, "  ", 0);
     }
 
@@ -517,7 +517,6 @@ region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tr
 
     do {
 	char *op = obuf;
-	int  op_left = OBUF_SIZE;
 
 	if (first) {
 	    (void) snprintf(obuf, OBUF_SIZE-1, "%5d ", nnr+delreg);
@@ -528,36 +527,30 @@ region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tr
 	    bu_strlcpy(op, "      \0", 7);
 	}
 	op = obuf + 6;
-	op_left -= 6;
 
 	if (left > 9*7) {
 	    bu_strlcpy(op, cp, 9*7+1);
 	    cp += 9*7;
 	    op += 9*7;
-	    op_left -= 9*7;
 	    left -= 9*7;
 	} else {
 	    bu_strlcpy(op, cp, left+1);
 	    op += left;
-	    op_left -= left;
 	    while (left < 9*7) {
 		*op++ = ' ';
-		op_left--;
 		left++;
 	    }
 	    left = 0;
 	}
-	/* copy directory name into op */
-	if (op_left <= 0) {
-	    bu_log("Ran out of buffer space\n");
-	    return NULL;
-	}
-	bu_strlcpy(op, regdp->d_namep, op_left);
-	/* and advance op to after the directory name */
-	op += strlen(op);
-	*op++ = '\n';
-	*op = '\0';
-	ewrite(regfp, obuf, strlen(obuf));
+	/* Write the fixed-column card prefix (region number and boolean
+	 * formula), then write the region name directly.  The name is
+	 * not copied into the fixed-size obuf so that long region names
+	 * are not truncated (and so the trailing newline cannot overflow
+	 * obuf).
+	 */
+	ewrite(regfp, obuf, (size_t)(op - obuf));
+	ewrite(regfp, regdp->d_namep, strlen(regdp->d_namep));
+	ewrite(regfp, LF, 1);
     } while (left > 0);
 
     /*
@@ -1588,9 +1581,9 @@ getcmd(char *args[], int ct)
  * Display menu stored at address 'addr'.
  */
 void
-menu(char **addr)
+menu(const char **addr)
 {
-    char	**sbuf = addr;
+    const char	**sbuf = addr;
     while (*sbuf)
 	(void) printf("%s\n", *sbuf++);
     (void) fflush(stdout);

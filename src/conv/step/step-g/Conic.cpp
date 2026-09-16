@@ -1,7 +1,7 @@
 /*                 Conic.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2025 United States Government as represented by
+ * Copyright (c) 1994-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -91,7 +91,7 @@ Conic::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	return false;
     }
 
-    // need to do this for local attributes to makes sure we have
+    // need to do this for local attributes to make sure we have
     // the actual entity and not a complex/supertype parent
     sse = step->getEntity(sse, ENTITYNAME);
 

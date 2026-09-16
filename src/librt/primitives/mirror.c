@@ -1,7 +1,7 @@
 /*                        M I R R O R . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2025 United States Government as represented by
+ * Copyright (c) 2007-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -68,12 +68,12 @@ RT_DECLARE_MIRROR(superell);
 RT_DECLARE_MIRROR(comb);
 RT_DECLARE_MIRROR(bot);
 RT_DECLARE_MIRROR(nurb);
+RT_DECLARE_MIRROR(brep);
 
 
 /*
   FIXME: missing mirror implementations
 
-  RT_DECLARE_MIRROR(brep);
   RT_DECLARE_MIRROR(cline);
   RT_DECLARE_MIRROR(ehy);
   RT_DECLARE_MIRROR(extrude);
@@ -98,8 +98,7 @@ struct rt_db_internal *
 rt_mirror(struct db_i *dbip,
 	  struct rt_db_internal *ip,
 	  point_t mirror_pt,
-	  vect_t mirror_dir,
-	  struct resource *UNUSED(resp))
+	  vect_t mirror_dir)
 {
     int id;
     int err;
@@ -225,6 +224,10 @@ rt_mirror(struct db_i *dbip,
 	}
 	case ID_BOT: {
 	    err = rt_bot_mirror(ip, plane);
+	    return err ? NULL : ip;
+	}
+	case ID_BREP: {
+	    err = rt_brep_mirror(ip, plane);
 	    return err ? NULL : ip;
 	}
 	default: {

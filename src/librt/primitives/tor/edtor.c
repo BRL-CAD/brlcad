@@ -1,7 +1,7 @@
 /*                         E D T O R . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2025 United States Government as represented by
+ * Copyright (c) 1996-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -37,7 +37,7 @@
 #define ECMD_TOR_R1		1021
 #define ECMD_TOR_R2		1022
 
-void
+C_DECL void
 rt_edit_tor_set_edit_mode(struct rt_edit *s, int mode)
 {
     rt_edit_set_edflag(s, mode);
@@ -75,15 +75,108 @@ struct rt_edit_menu_item tor_menu[] = {
 };
 
 
-struct rt_edit_menu_item *
+C_DECL struct rt_edit_menu_item *
 rt_edit_tor_menu_item(const struct bn_tol *UNUSED(tol))
 {
     return tor_menu;
 }
 
+/* ------------------------------------------------------------------ */
+/* ft_edit_desc descriptor for the Torus primitive                     */
+/* ------------------------------------------------------------------ */
+
+static const struct rt_edit_param_desc tor_r1_params[] = {
+    {
+	"r1",                 /* name         */
+	"Major Radius",       /* label        */
+	RT_EDIT_PARAM_SCALAR, /* type         */
+	0,                    /* index        */
+	1e-10,                /* range_min    */
+	RT_EDIT_PARAM_NO_LIMIT, /* range_max  */
+	"length",             /* units        */
+	0, NULL, NULL,        /* enum (unused) */
+	NULL                  /* prim_field   */
+    }
+};
+
+static const struct rt_edit_param_desc tor_r2_params[] = {
+    {
+	"r2",                 /* name         */
+	"Minor Radius",       /* label        */
+	RT_EDIT_PARAM_SCALAR, /* type         */
+	0,                    /* index        */
+	1e-10,                /* range_min    */
+	RT_EDIT_PARAM_NO_LIMIT, /* range_max  */
+	"length",             /* units        */
+	0, NULL, NULL,        /* enum (unused) */
+	NULL                  /* prim_field   */
+    }
+};
+
+static const struct rt_edit_cmd_desc tor_cmds[] = {
+    {
+	ECMD_TOR_R1,          /* cmd_id       */
+	"Set Radius 1",       /* label        */
+	"radius",             /* category     */
+	1,                    /* nparam       */
+	tor_r1_params,        /* params       */
+	1,                    /* interactive  */
+	10                    /* display_order */,
+	NULL                  /* req_types */
+    },
+    {
+	ECMD_TOR_R2,          /* cmd_id       */
+	"Set Radius 2",       /* label        */
+	"radius",             /* category     */
+	1,                    /* nparam       */
+	tor_r2_params,        /* params       */
+	1,                    /* interactive  */
+	20                    /* display_order */,
+	NULL                  /* req_types */
+    }
+};
+
+static const struct rt_edit_prim_desc tor_prim_desc = {
+    "tor",                /* prim_type    */
+    "Torus",              /* prim_label   */
+    2,                    /* ncmd         */
+    tor_cmds              /* cmds         */,
+    0,                    /* nopt         */
+    NULL                  /* opts         */
+};
+
+C_DECL const struct rt_edit_prim_desc *
+rt_edit_tor_edit_desc(void)
+{
+    return &tor_prim_desc;
+}
+
+C_DECL int
+rt_edit_tor_get_params(struct rt_edit *s, int cmd_id, fastf_t *vals)
+{
+    struct rt_tor_internal *tor;
+
+    if (!s || !vals)
+	return -1;
+
+    tor = (struct rt_tor_internal *)s->es_int.idb_ptr;
+    RT_TOR_CK_MAGIC(tor);
+
+    switch (cmd_id) {
+	case ECMD_TOR_R1:
+	    vals[0] = tor->r_a * s->base2local;
+	    return 1;
+	case ECMD_TOR_R2:
+	    vals[0] = tor->r_h * s->base2local;
+	    return 1;
+	default:
+	    return 0;
+    }
+}
+
 #define V3BASE2LOCAL(_pt) (_pt)[X]*base2local, (_pt)[Y]*base2local, (_pt)[Z]*base2local
 
-void
+C_DECL void
 rt_edit_tor_write_params(
 	struct bu_vls *p,
        	const struct rt_db_internal *ip,
@@ -109,7 +202,7 @@ rt_edit_tor_write_params(
     if (ln) *ln = '\0'; \
     while (lc && strchr(lc, ':')) lc++
 
-int
+C_DECL int
 rt_edit_tor_read_params(
 	struct rt_db_internal *ip,
 	const char *fc,
@@ -194,7 +287,7 @@ ecmd_tor_r1(struct rt_edit *s)
     } else {
 	newrad = tor->r_a * s->es_scale;
     }
-    if (newrad < SMALL) newrad = 4*SMALL;
+    if (newrad < SQRT_SMALL_FASTF) newrad = 4*SQRT_SMALL_FASTF;
     if (tor->r_h <= newrad)
 	tor->r_a = newrad;
 }
@@ -214,7 +307,7 @@ ecmd_tor_r2(struct rt_edit *s)
     } else {
 	newrad = tor->r_h * s->es_scale;
     }
-    if (newrad < SMALL) newrad = 4*SMALL;
+    if (newrad < SQRT_SMALL_FASTF) newrad = 4*SQRT_SMALL_FASTF;
     if (newrad <= tor->r_a)
 	tor->r_h = newrad;
 }
@@ -253,7 +346,7 @@ rt_edit_tor_pscale(struct rt_edit *s)
     return 0;
 }
 
-int
+C_DECL int
 rt_edit_tor_edit(struct rt_edit *s)
 {
     if (!s)
@@ -278,7 +371,7 @@ rt_edit_tor_edit(struct rt_edit *s)
     }
 }
 
-int
+C_DECL int
 rt_edit_tor_edit_xy(
         struct rt_edit *s,
         const vect_t mousevec

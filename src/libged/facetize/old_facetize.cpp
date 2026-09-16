@@ -1,7 +1,7 @@
 /*                  O L D _ F A C E T I Z E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -41,7 +41,7 @@
 #include "bu/hook.h"
 #include "bu/interrupt.h"
 #include "bu/cmd.h"
-#include "bu/time.h"
+#include "bu/datetime.h"
 #include "bn/tol.h"
 #include "bg/spsr.h"
 #include "bg/trimesh.h"
@@ -452,7 +452,7 @@ _ged_facetize_solid_objs(struct ged *gedp, int argc, struct directory **dpa, str
 	struct rt_bot_internal *bot;
 	int not_solid;
 	struct directory *bot_dp = (struct directory *)BU_PTBL_GET(bot_dps, i);
-	GED_DB_GET_INTERNAL(gedp, &intern, bot_dp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
+	GED_DB_GET_INTERN(gedp, &intern, bot_dp, bn_mat_identity, BRLCAD_ERROR);
 	bot = (struct rt_bot_internal *)intern.idb_ptr;
 	RT_BOT_CK_MAGIC(bot);
 	if (bot->mode != RT_BOT_PLATE && bot->mode != RT_BOT_PLATE_NOCOS) {
@@ -562,7 +562,7 @@ _try_nmg_facetize(struct ged *gedp, int argc, const char **argv, int nmg_use_tnu
 
     _old_ged_facetize_log_nmg(o);
 
-    db_init_db_tree_state(&init_state, gedp->dbip, wdbp->wdb_resp);
+    db_init_db_tree_state(&init_state, gedp->dbip);
 
     /* Establish tolerances */
     init_state.ts_ttol = &wdbp->wdb_ttol;
@@ -600,7 +600,7 @@ _try_nmg_facetize(struct ged *gedp, int argc, const char **argv, int nmg_use_tnu
     if (facetize_tree) {
 	if (!BU_SETJUMP) {
 	    /* try */
-	    failed = nmg_boolean(facetize_tree, nmg_model, vlfree, &wdbp->wdb_tol, &rt_uniresource);
+	    failed = nmg_boolean(facetize_tree, nmg_model, vlfree, &wdbp->wdb_tol);
 	} else {
 	    /* catch */
 	    BU_UNSETJUMP;
@@ -618,7 +618,7 @@ _try_nmg_facetize(struct ged *gedp, int argc, const char **argv, int nmg_use_tnu
     }
 
     if (facetize_tree) {
-	db_free_tree(facetize_tree, &rt_uniresource);
+	db_free_tree(facetize_tree);
     }
 
     _old_ged_facetize_log_default(o);
@@ -746,7 +746,7 @@ _write_bot(struct ged *gedp, struct rt_bot_internal *bot, const char *name, stru
 	return BRLCAD_ERROR;
     }
 
-    if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(dp, dbip, &intern) < 0) {
 	if (opts->verbosity) {
 	    bu_log("Failed to write %s to database\n", name);
 	}
@@ -780,7 +780,7 @@ _write_nmg(struct ged *gedp, struct model *nmg_model, const char *name, struct _
 	return BRLCAD_ERROR;
     }
 
-    if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(dp, dbip, &intern) < 0) {
 	if (opts->verbosity) {
 	    bu_log("Failed to write %s to database\n", name);
 	}
@@ -824,7 +824,7 @@ _ged_spsr_obj(struct _ged_facetize_report_info *r, struct ged *gedp, const char 
     /* From here on out, assume success until we fail */
     r->failure_mode = FACETIZE_SUCCESS;
 
-    if (rt_db_get_internal(&in_intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&in_intern, dp, dbip, (fastf_t *)NULL) < 0) {
 	if (opts->verbosity) {
 	    bu_log("Error: could not determine type of object %s, skipping\n", objname);
 	}
@@ -1073,7 +1073,7 @@ _ged_check_plate_mode(struct ged *gedp, struct directory *dp)
 	struct rt_db_internal intern;
 	struct rt_bot_internal *bot;
 	struct directory *bot_dp = (struct directory *)BU_PTBL_GET(bot_dps, i);
-	GED_DB_GET_INTERNAL(gedp, &intern, bot_dp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
+	GED_DB_GET_INTERN(gedp, &intern, bot_dp, bn_mat_identity, BRLCAD_ERROR);
 	bot = (struct rt_bot_internal *)intern.idb_ptr;
 	RT_BOT_CK_MAGIC(bot);
 	if (bot->mode == RT_BOT_PLATE || bot->mode == RT_BOT_PLATE_NOCOS) {
@@ -1134,7 +1134,7 @@ _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, con
     /* From here on out, assume success until we fail */
     r->failure_mode = FACETIZE_SUCCESS;
 
-    if (rt_db_get_internal(&in_intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&in_intern, dp, dbip, (fastf_t *)NULL) < 0) {
 	if (opts->verbosity) {
 	    bu_log("Error: could not determine type of object %s, skipping\n", objname);
 	}
@@ -1229,14 +1229,15 @@ _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, con
     bot->faces = NULL;
     bot->vertices = NULL;
 
-    /* Run the polygonize routine.  Because it is quite simple to accidentally
-     * specify inputs that will take huge amounts of time to run, we will
-     * attempt a series of progressively courser polygonize runs until we
-     * either succeed, or reach a feature size that is greater than 2x the
-     * average thickness according to the raytracer without succeeding. If
-     * max_time has been explicitly set to 0 by the caller this will run
-     * unbounded, but the algorithm is n**2 and we're trying the finest level
-     * first so may run a *very* long time... */
+    /* Run the polygonize routine.  Because it is quite simple to
+     * accidentally specify inputs that will take huge amounts of time
+     * to run, we will attempt a series of progressively courser
+     * polygonize runs until we either succeed, or reach a feature
+     * size that is greater than 2x the average thickness according to
+     * the raytracer without succeeding. If max_time has been
+     * explicitly set to 0 by the caller this will run unbounded, but
+     * the algorithm is n**2 and we're trying the finest level first
+     * so may run a *very* long time... */
     pl = (struct pnt_normal *)pnts->point;
     pn = BU_LIST_PNEXT(pnt_normal, pl);
     if (opts->feature_size > 0) {
@@ -1787,7 +1788,7 @@ _try_manifold_facetize(struct ged *gedp, int argc, const char **argv, struct bu_
 
     struct db_tree_state init_state;
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-    db_init_db_tree_state(&init_state, gedp->dbip, wdbp->wdb_resp);
+    db_init_db_tree_state(&init_state, gedp->dbip);
     /* Establish tolerances */
     init_state.ts_ttol = &wdbp->wdb_ttol;
     init_state.ts_tol = &wdbp->wdb_tol;
@@ -1818,7 +1819,7 @@ _try_manifold_facetize(struct ged *gedp, int argc, const char **argv, struct bu_
     }
 
     if (facetize_tree) {
-	ftree = rt_booltree_evaluate(facetize_tree, vlfree, &wdbp->wdb_tol, &rt_uniresource, &_manifold_do_bool, 0, (void *)o);
+	ftree = rt_booltree_eval(facetize_tree, vlfree, &wdbp->wdb_tol, &_manifold_do_bool, 0, (void *)o);
 	if (!ftree) {
 	    _old_ged_facetize_log_default(o);
 	    return NULL;
@@ -2103,7 +2104,7 @@ _ged_facetize_cpcomb(struct ged *gedp, const char *o, struct _old_ged_facetize_o
     if (dp == RT_DIR_NULL || !(dp->d_flags & RT_DIR_COMB)) return BRLCAD_ERROR;
     bu_avs_init_empty(&avs);
     if (db5_get_attributes(dbip, &avs, dp)) return BRLCAD_ERROR;
-    if (rt_db_get_internal(&ointern, dp, dbip, NULL, &rt_uniresource) < 0) return BRLCAD_ERROR;
+    if (rt_db_get_internal(&ointern, dp, dbip, NULL) < 0) return BRLCAD_ERROR;
     ocomb = (struct rt_comb_internal *)ointern.idb_ptr;
     RT_CK_COMB(ocomb);
     flags = dp->d_flags;
@@ -2128,7 +2129,7 @@ _ged_facetize_cpcomb(struct ged *gedp, const char *o, struct _old_ged_facetize_o
     comb->GIFTmater = ocomb->GIFTmater;
     comb->los = ocomb->los;
     comb->inherit = ocomb->inherit;
-    GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, 0);
+    GED_DB_PUT_INTERN(gedp, dp, &intern, 0);
 
     /* apply attributes to new comb */
     db5_update_attributes(dp, &avs, dbip);
@@ -2564,7 +2565,7 @@ _ged_facetize_regions_resume(struct ged *gedp, int argc, const char **argv, stru
 ged_facetize_regions_resume_memfree:
 
     /* Done changing stuff - update nref. */
-    db_update_nref(gedp->dbip, &rt_uniresource);
+    db_update_nref(gedp->dbip);
 
     if (bu_vls_strlen(opts->nmg_log) && opts->method_flags & FACETIZE_NMGBOOL && opts->verbosity > 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(opts->nmg_log));
@@ -2615,7 +2616,7 @@ _ged_facetize_add_children(struct ged *gedp, struct directory *cdp, struct _old_
 
     RT_DB_INTERNAL_INIT(&intern);
     nparent = bu_avs_get(opts->c_map, cdp->d_namep);
-    if (rt_db_get_internal(&intern, cdp, dbip, NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, cdp, dbip, NULL) < 0) {
 	ret = BRLCAD_ERROR;
 	goto ged_facetize_add_children_memfree;
     }
@@ -3008,7 +3009,7 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct bu_l
 ged_facetize_regions_memfree:
 
     /* Done changing stuff - update nref. */
-    db_update_nref(gedp->dbip, &rt_uniresource);
+    db_update_nref(gedp->dbip);
 
     if (bu_vls_strlen(opts->nmg_log) && opts->method_flags & FACETIZE_NMGBOOL && opts->verbosity > 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(opts->nmg_log));
@@ -3215,7 +3216,7 @@ _nonovlp_brep_facetize(struct ged *gedp, int argc, const char **argv, struct _ol
     for (d_it = brep_objs.begin(); d_it != brep_objs.end(); d_it++) {
 	struct rt_db_internal intern;
 	struct rt_brep_internal* bi;
-	GED_DB_GET_INTERNAL(gedp, &intern, *d_it, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
+	GED_DB_GET_INTERN(gedp, &intern, *d_it, bn_mat_identity, BRLCAD_ERROR);
 	RT_CK_DB_INTERNAL(&intern);
 	bi = (struct rt_brep_internal*)intern.idb_ptr;
 	if (!RT_BREP_TEST_MAGIC(bi)) {
@@ -3296,7 +3297,7 @@ _nonovlp_brep_facetize(struct ged *gedp, int argc, const char **argv, struct _ol
     }
 
     /* Done changing stuff - update nref. */
-    db_update_nref(gedp->dbip, &rt_uniresource);
+    db_update_nref(gedp->dbip);
 
     for (size_t i = 0; i < ss_cdt.size(); i++) {
 	ON_Brep_CDT_Destroy(ss_cdt[i]);
@@ -3315,13 +3316,14 @@ ged_facetize_old_core(struct ged *gedp, int argc, const char *argv[])
     int print_help = 0;
     int need_help = 0;
     int nonovlp_brep = 0;
+    long verbosity = 0;
     struct bu_list *vlfree = &rt_vlfree;
     struct _old_ged_facetize_opts *opts = _old_ged_facetize_opts_create();
     struct bu_opt_desc d[22];
     struct bu_opt_desc pd[4];
 
     BU_OPT(d[0],  "h", "help",          "",  NULL,  &print_help,               "Print help and exit");
-    BU_OPT(d[1],  "v", "verbose",       "",  &_ged_vopt,  &(opts->verbosity),  "Verbose output (multiple flags increase verbosity)");
+    BU_OPT(d[1],  "v", "verbose",       "",  &bu_opt_incr_long,  &verbosity,  "Verbose output (multiple flags increase verbosity)");
     BU_OPT(d[2],  "q", "quiet",         "",  NULL,  &(opts->quiet),            "Suppress all output (overrides verbose flag)");
     BU_OPT(d[3],  "",  "NMG",           "",  NULL,  &(opts->nmgbool),          "Use the standard libnmg boolean mesh evaluation to create output (Default)");
     BU_OPT(d[4],  "",  "CM",            "",  NULL,  &(opts->continuation),     "Use the Continuation Method to sample the object and create output");
@@ -3369,6 +3371,8 @@ ged_facetize_old_core(struct ged *gedp, int argc, const char *argv[])
 	goto ged_facetize_memfree;
     }
     bu_vls_free(&omsg);
+
+    opts->verbosity = (int)verbosity;
 
     /* It is known that libnmg will (as of 2018 anyway) throw a lot of
      * bu_bomb calls during operation. Because we need facetize to run
@@ -3479,22 +3483,14 @@ ged_facetize_memfree:
     return ret;
 }
 
-#ifdef GED_PLUGIN
+
 #include "../include/plugin.h"
-extern "C" {
-struct ged_cmd_impl facetize_old_cmd_impl = { "facetize_old", ged_facetize_old_core, GED_CMD_DEFAULT };
-const struct ged_cmd facetize_old_cmd = { &facetize_old_cmd_impl };
-const struct ged_cmd *facetize_old_cmds[] = { &facetize_old_cmd,  NULL };
 
-static const struct ged_plugin pinfo = { GED_API,  facetize_old_cmds, 1 };
+#define GED_OLD_FACETIZE_COMMANDS(X, XID) \
+    X(facetize_old, ged_facetize_old_core, GED_CMD_DEFAULT) \
 
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-}
-#endif
-
+GED_DECLARE_COMMAND_SET(GED_OLD_FACETIZE_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_facetize_old", 1, GED_OLD_FACETIZE_COMMANDS)
 
 // Local Variables:
 // tab-width: 8
@@ -3504,4 +3500,3 @@ COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

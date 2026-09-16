@@ -1,0 +1,3 @@
+/* Generated from building.schema.json. */
+
+static const char building_schema_json[] = R"BLDG_SCHEMA(@building_schema_json@)BLDG_SCHEMA";

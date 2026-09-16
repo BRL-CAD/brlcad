@@ -1,0 +1,49 @@
+= PS(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+ps - Alternate command name for *postscript*.
+
+== SYNOPSIS
+
+[source]
+----
+ps [-a author] [-b] [-c r/g/b] [-f font] [-s size] [-t title] [-x offset] [-y offset] file
+----
+
+
+[[description]]
+== DESCRIPTION
+
+The *ps* command shares its core implementation with *postscript*.
+It writes the current display to a PostScript output file.
+
+See *postscript* for the detailed behavior and option meanings.
+
+
+[[examples]]
+== EXAMPLES
+
+.Write the current display to a PostScript file using the short command name.
+[example]
+====
+mged> **ps -t "Wheel View" wheel.ps**
+
+Performs the same operation as *postscript* and writes the current display to
+_wheel.ps_.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

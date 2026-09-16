@@ -1,7 +1,7 @@
 /*                         D E P T H . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2025 United States Government as represented by
+ * Copyright (c) 2007-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,6 +19,9 @@
  */
 /** @file librender/depth.c
  *
+ * Depth render shader: visualizes the kd-tree traversal depth of the
+ * ray that produced each pixel.
+ *
  */
 
 #include "adrt_struct.h"
@@ -33,13 +36,13 @@ render_depth_free(render_t *UNUSED(render))
 
 
 void
-render_depth_work(render_t *UNUSED(render), struct tie_s *tie, struct tie_ray_s *ray, vect_t *pixel)
+render_depth_work(render_t *UNUSED(render), struct tie_s *tieptr, struct tie_ray_s *ray, vect_t *pixel)
 {
     struct tie_id_s id;
 
     /* Visualize ray depth, must put ray->depth++ hack into bsp for this to be of any use */
-    if (TIE_WORK(tie, ray, &id, render_hit, NULL) != NULL)
-	*pixel[0] = 0.0075 * ray->kdtree_depth;
+    if (TIE_WORK(tieptr, ray, &id, render_hit, NULL) != NULL)
+	(*pixel)[0] = 0.0075 * ray->kdtree_depth;
 }
 
 

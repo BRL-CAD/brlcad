@@ -1,0 +1,222 @@
+= PROPELLER(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+propeller - generate a procedural marine propeller geometry database
+
+== SYNOPSIS
+
+[source]
+----
+propeller [options] [-o _file.g_]
+propeller --demo-file _file.g_
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*propeller* creates a parametric Wageningen B-Series style marine propeller in a
+BRL-CAD _.g_ database.  The generated model is a top-level combination named by
+*--name* that contains the region _name_`.r`.  The region unions the CSG hub
+assembly _name_`_hub_hollow.c` with one solid per blade.  Blade solids are
+closed Bag of Triangles (BoT) primitives named _name_`_blade_N.s` in the default
+`bot` mode, or smooth BREP primitives named _name_`_blade_N.brep` in `brep`
+mode.  The hub stays CSG in both modes, so its outer casing, tapered shaft bore,
+keyway, and optional aft fairing cap remain editable primitives.
+
+The shaft line is the Z axis with positive Z aft.  Blade pitch is applied as a
+helical transform from the requested tip pitch/diameter ratio; rake translates
+sections along Z and skew sweeps them angularly.  Hub casings may be
+cylindrical, truncated-cone, or convex-barrel, and the shaft bore follows either
+the `iso-1-10` or `sae-1-16` taper convention.  Generated geometry records its
+parameters as `propeller::` attributes on each object and can be inspected with
+*mged*(1) or analyzed with *gqa*(1).
+
+The *--demo-file* option instead writes a sampler database containing a grid of
+varied propellers under a top-level `all` combination.
+
+NOTE: the generated models are intended for procedural geometry, rendering,
+inspection, and BRL-CAD workflow testing.  They are not validated for marine
+engineering design, fabrication, or propulsion performance prediction.
+
+[[options]]
+== OPTIONS
+
+*-h*, *--help*::
+  Print option help and exit.
+
+*-o* _file.g_, *--output* _file.g_::
+  Write the propeller to _file.g_.  The default is `propeller.g`.
+
+*-n* _name_, *--name* _name_::
+  Use _name_ as the base object name.  The default is `propeller`.
+
+*--demo-file* _file.g_::
+  Write a sampler database of varied propellers under an `all` combination, then
+  exit.  Cannot be combined with *--append*.
+
+*--mode* _bot|brep_::
+  Select blade output geometry.  The default is `bot`.
+
+*-D* _length_, *--diameter* _length_::
+  Set total propeller diameter.  The default is 1000.
+
+*-Z* _count_, *--blades* _count_::
+  Set blade count, from 2 through 7.  The default is 4.
+
+*--ae-ao* _ratio_::
+  Set expanded blade area ratio, from 0.30 through 1.20.  The default is 0.65.
+
+*--pd-tip* _ratio_::
+  Set pitch/diameter ratio at the tip.  The default is 1.0.
+
+*--rake* _degrees_::
+  Set rake angle in degrees.  The default is 0.
+
+*--skew* _degrees_::
+  Set maximum angular skew sweep in degrees.  The default is 0.
+
+*--hub-diameter-ratio* _ratio_::
+  Set hub diameter divided by propeller diameter; also sets the nominal blade
+  root radius fraction.  Must be at least 0.05 and less than 0.75.  The default
+  is 0.20.
+
+*--hub-length-ratio* _ratio_::
+  Set hub length divided by propeller diameter.  The default is 0.22.
+
+*--hub-profile* _cylindrical|truncated-cone|convex-barrel_::
+  Select the outer hub casing profile.  The default is `truncated-cone`.
+
+*--hub-forward-diameter* _length_::
+  Set forward casing diameter.  Derived from *--hub-diameter-ratio* if omitted.
+
+*--hub-aft-diameter* _length_::
+  Set aft casing diameter.  Derived from the hub profile if omitted.
+
+*--hub-barrel-swell* _ratio_::
+  Set the convex barrel swell ratio (at least 1.0).  The default is 1.08.  Used
+  only by `convex-barrel` hubs.
+
+*--shaft-standard* _iso-1-10|sae-1-16_::
+  Select the internal shaft taper convention.  The default is `iso-1-10`.
+
+*--shaft-diameter-small* _length_::
+  Set the small-end shaft bore diameter.  Derived from hub diameter if omitted.
+
+*--keyway-width* _length_::
+  Set keyway slot width.  Derived from shaft diameter if omitted.
+
+*--keyway-depth* _length_::
+  Set keyway depth into the hub.  Derived from shaft diameter if omitted.
+
+*--fairing-cap-length* _length_::
+  Set aft fairing cap length.  Derived from propeller diameter if omitted.
+
+*--no-fairing-cap*::
+  Do not add the aft fairing cap.
+
+*--hub-slices* _count_::
+  Set longitudinal slice count for barrel hub BoT shells (at least 3).  The
+  default is 30.
+
+*--hub-segments* _count_::
+  Set angular segment count for barrel hub BoT shells (at least 12).  The
+  default is 72.
+
+*--root-overlap* _ratio_::
+  Set how far the innermost blade station extends inside the nominal hub radius,
+  in `r/R` units.  Must be smaller than *--hub-diameter-ratio*.  The default is
+  0.01.
+
+*--edge-thickness-ratio* _ratio_::
+  Set finite blade edge thickness divided by propeller diameter.  Must be
+  greater than 0 and no more than 0.01.  The default is 0.00075.
+
+*--radial-stations* _count_::
+  Set blade radial section count, excluding the tip apex (at least 4).  The
+  default is 20.
+
+*--chord-points* _count_::
+  Set chordwise samples per upper/lower blade grid (at least 5).  The default is
+  50.
+
+*--x-offset* _distance_, *--y-offset* _distance_, *--z-offset* _distance_::
+  Translate the generated model in database coordinates.  The default is 0.
+
+*-f*, *--force*::
+  Overwrite an existing output file.  Mutually exclusive with *--append*.
+
+*-j*, *--append*::
+  Append objects to an existing output database.  Object name collisions are
+  rejected.  Mutually exclusive with *--force*.
+
+[[examples]]
+== EXAMPLES
+
+.Highly skewed five-blade propeller
+====
+[source,bash]
+----
+propeller -o skewed5.g -f -Z 5 --ae-ao 0.95 --pd-tip 1.18 \
+  --skew 28 --rake 4 --hub-profile truncated-cone --shaft-standard sae-1-16
+----
+Generates a high-area five-blade propeller with 28 degrees of skew and 4 degrees
+of rake on an SAE-tapered truncated-cone hub, overwriting any existing file.
+Open it with `mged skewed5.g` to inspect the result.
+====
+
+.Smooth BREP blades for downstream NURBS work
+====
+[source,bash]
+----
+propeller --mode brep -o prop_brep.g -f
+gqa -g 2mm prop_brep.g propeller.r
+----
+Builds the propeller with smooth BREP blade solids (the hub stays CSG) and then
+runs *gqa*(1) to check the geometry for overlaps and volume.
+====
+
+.Compare two pitches side by side
+====
+[source,bash]
+----
+propeller -o comparison.g -f -n low_pitch  --pd-tip 0.75 --x-offset 0
+propeller -o comparison.g -j -n high_pitch --pd-tip 1.35 --x-offset 1500
+----
+Writes a low-pitch propeller, then appends a high-pitch one offset 1500 units
+away in the same database so the two can be rendered together for comparison.
+====
+
+.Built-in sampler grid
+====
+[source,bash]
+----
+propeller --demo-file propeller_demo.g
+----
+Writes a grid of varied propellers (different blade counts, area ratios, hub
+profiles, and shaft tapers) under a top-level `all` combination, useful as a
+visual reference or for regression testing.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *mged*(1), *gqa*(1), *naca456*(1)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

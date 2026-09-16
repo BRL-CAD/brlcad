@@ -1,7 +1,7 @@
 /*                        U S E P E N . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2025 United States Government as represented by
+ * Copyright (c) 1985-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -325,7 +325,10 @@ f_matpick(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 	chg_l2menu(s, ST_O_EDIT);
 
 	/* begin object editing - initialize */
-	init_oedit(s);
+	if (init_oedit(s) != BRLCAD_OK) {
+	    button(s, BE_REJECT);
+	    return TCL_ERROR;
+	}
     }
 
     s->update_views = 1;
@@ -532,14 +535,18 @@ f_mouse(
 		av[0] = "matpick";
 		av[1] = num;
 		av[2] = (char *)NULL;
-		(void)f_matpick(clientData, interp, 2, av);
 		/* How to record this in the journal file? */
-		return TCL_OK;
+		return f_matpick(clientData, interp, 2, av);
 	    }
 
-	case ST_S_VPICK:
-	    sedit_vpick(s, mousevec);
-	    return TCL_OK;
+	/* ST_S_VPICK was a separate state in vanilla MGED for NURBS vertex
+	 * picking.  In the reworked architecture, VPICK is handled entirely
+	 * within the ft_edit_xy callback (ECMD_SPLINE_VPICK case in
+	 * rt_edit_bspline_edit_xy): it stores the cursor position in b->v_pos
+	 * and then ft_edit calls sedit_vpick() internally.  The ST_S_VPICK
+	 * state is no longer needed and the code below is retained only for
+	 * historical reference. */
+	/* case ST_S_VPICK:  sedit_vpick(MEDIT(s)); return TCL_OK; */
 
 	case ST_O_EDIT:
 	    if ((OEDIT_TRAN || OEDIT_SCALE) && mged_variables->mv_transform == 'e')

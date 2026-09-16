@@ -1,0 +1,47 @@
+= AROT(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+arot - Performs a rotation about the specified axis (_x y z_) using screen units (-2048 to +2048).
+
+== SYNOPSIS
+
+[source]
+----
+arot {x} {y} {z} {angle}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Performs a rotation about the specified axis (_x y z_) using screen units (-2048 to +2048). The amount of rotation is determined by _angle_, which is in degrees. Exactly what is rotated and how it is rotated are dependent on MGED's state as well as the state of the display manager. For example, in normal viewing mode, this command simply rotates the view. However, in primitive edit mode, it rotates the shape being edited.
+
+
+[[examples]]
+== EXAMPLES
+
+The example demonstrates the use of the *arot* command to rotate a view or shape about the z axis.
+
+.Rotating a view or shape 10 degrees about the z axis.
+[example]
+====
+mged>**arot 0 0 1 10**
+
+The view or shape is rotated 10 degrees about the z axis.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

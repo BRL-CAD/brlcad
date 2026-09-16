@@ -1,7 +1,7 @@
 /*                    T E S T _ D I F F . C
  * BRL-CAD
  *
- * Copyright (c) 2014-2025 United States Government as represented by
+ * Copyright (c) 2014-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -106,11 +106,6 @@ main(int argc, char **argv)
 	db_close(dbip1);
 	bu_exit(1, "db_dirbuild failed on geometry database file %s\n", argv[1]);
     }
-
-    /* Reset the material head so we don't get warnings when the global
-     * is overwritten.  This will go away when material_head ceases to
-     * be a librt global.*/
-    rt_new_material_head(MATER_NULL);
 
     if ((dbip2 = db_open(argv[2], DB_OPEN_READONLY)) == DBI_NULL) {
 	bu_exit(1, "Cannot open geometry database file %s\n", argv[2]);

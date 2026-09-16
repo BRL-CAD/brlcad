@@ -1,7 +1,7 @@
 /*                        S H O O T . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2025 United States Government as represented by
+ * Copyright (c) 1993-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -97,6 +97,27 @@ RT_EXPORT extern int rt_shootray(struct application *ap);
 
 /**
  * @brief
+ * EXPERIMENTAL vectorized single-ray shooter.
+ *
+ * A drop-in alternative to rt_shootray() that, instead of walking the
+ * space partitioning and shooting solids one at a time, shoots the ray
+ * against ALL solids of each type in one batched ft_vshot() call (falling
+ * back to the per-ray stub for types lacking a vshot), then weaves the
+ * resulting segments through the normal rt_boolweave()/rt_boolfinal()
+ * pipeline and invokes a_hit()/a_miss() exactly like rt_shootray().
+ *
+ * Intended for exercising and benchmarking the ft_vshot() callbacks from
+ * userland (e.g. toggled by an environment variable in rt).  Because it
+ * forgoes per-solid spatial culling and returns a single (outer-span)
+ * segment per solid, it is best suited to scenes of many convex solids of
+ * the same type; non-convex solids that produce multiple segments are
+ * approximated by their outer span.
+ */
+RT_EXPORT extern int rt_vshootray(struct application *ap);
+
+
+/**
+ * @brief
  * Shoot a bundle of rays
  *
  * Function for shooting a bundle of rays. Iteratively walks list of
@@ -156,16 +177,28 @@ RT_EXPORT extern void rt_add_res_stats(struct rt_i *rtip,
 RT_EXPORT extern void rt_zero_res_stats(struct resource *resp);
 
 
-RT_EXPORT extern void rt_res_pieces_clean(struct resource *resp,
+/**
+ * Release the per-processor state variables needed to support
+ * rt_shootray()'s use of 'solid pieces'.
+ *
+ * Deprecated as a public facing API - this should be an implementation
+ * detail in librt.
+ */
+DEPRECATED RT_EXPORT extern void rt_res_pieces_clean(struct resource *resp,
 					  struct rt_i *rtip);
-
 
 /**
  * Allocate the per-processor state variables needed to support
  * rt_shootray()'s use of 'solid pieces'.
+ *
+ * Deprecated as a public facing API - this should be an implementation
+ * detail in librt.
  */
-RT_EXPORT extern void rt_res_pieces_init(struct resource *resp,
+DEPRECATED RT_EXPORT extern void rt_res_pieces_init(struct resource *resp,
 					 struct rt_i *rtip);
+
+
+
 RT_EXPORT extern void rt_vstub(struct soltab *stp[],
 			       struct xray *rp[],
 			       struct seg segp[],

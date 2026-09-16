@@ -1,7 +1,7 @@
 /*                  Q G M E A S U R E F I L T E R . H
  * BRL-CAD
  *
- * Copyright (c) 2021-2025 United States Government as represented by
+ * Copyright (c) 2021-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -127,7 +127,6 @@ class QTCAD_EXPORT QMeasure3DFilter : public QgMeasureFilter
 	struct bu_ptbl scene_obj_set = BU_PTBL_INIT_ZERO;
 	struct application *ap = NULL;
 	struct rt_i *rtip = NULL;
-	struct resource *resp = NULL;
 };
 
 #endif /* QGMEASUREFILTER_H */

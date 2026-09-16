@@ -2,7 +2,7 @@
 #                    R T W I Z A R D . T C L
 # BRL-CAD
 #
-# Copyright (c) 2006-2025 United States Government as represented by
+# Copyright (c) 2006-2026 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -25,19 +25,11 @@
 #
 
 if {![info exists ::RtWizard::wizard_state(pid_filename)]} {
-    if {$::tcl_platform(platform) == "windows"} {
-	set ::RtWizard::wizard_state(pid_filename) "NUL"
-    } else {
-	set ::RtWizard::wizard_state(pid_filename) "/dev/null"
-    }
+    set ::RtWizard::wizard_state(pid_filename) [bu_file_null]
 }
 
 if {![info exists ::RtWizard::wizard_state(log_file)]} {
-    if {$::tcl_platform(platform) == "windows"} {
-	set ::RtWizard::wizard_state(log_file) "NUL"
-    } else {
-	set ::RtWizard::wizard_state(log_file) "/dev/null"
-    }
+    set ::RtWizard::wizard_state(log_file) [bu_file_null]
 }
 
 # Geometry Database
@@ -64,9 +56,59 @@ if {![info exists ::RtWizard::wizard_state(ghost_intensity)]} { set ::RtWizard::
 if {![info exists ::RtWizard::wizard_state(width)]} { set ::RtWizard::wizard_state(width) 512 }
 # Pix height (number of scan lines)
 if {![info exists ::RtWizard::wizard_state(scanlines)]} { set ::RtWizard::wizard_state(scanlines) 512 }
+# Animation and raytrace enhancement defaults
+if {![info exists ::RtWizard::wizard_state(animation_fps)]} { set ::RtWizard::wizard_state(animation_fps) 10 }
+if {![info exists ::RtWizard::wizard_state(ao_samples)]} { set ::RtWizard::wizard_state(ao_samples) 0 }
+if {![info exists ::RtWizard::wizard_state(ao_radius)]} { set ::RtWizard::wizard_state(ao_radius) 0 }
 
 # Load the package that lets us output images
 package require cadwidgets::RtImage
+
+# Generate a unique 64-hex-character session token for this rtwizard
+# instance.  Seeding Tcl's PRNG with the process ID XOR'd with a high-
+# resolution clock reading gives different tokens across parallel builds
+# (different PIDs) and across rapid sequential runs on the same host.
+proc rtwiz_gen_token {} {
+    expr {srand([pid] ^ [clock clicks])}
+    set tok ""
+    for {set i 0} {$i < 16} {incr i} {
+	append tok [format "%04x" [expr {int(rand() * 65536)}]]
+    }
+    return $tok
+}
+
+# Return 1 if the given logical fbserv port number already has a listener,
+# 0 if it is free.  A simple TCP connect is used — this is non-destructive,
+# unlike fbclear which would clear another instance's framebuffer.
+# fbserv maps logical port numbers < 1024 to (5559 + port).
+proc rtwiz_port_occupied {logical_port} {
+    set tcp_port $logical_port
+    if {$tcp_port < 1024} {
+	set tcp_port [expr {$tcp_port + 5559}]
+    }
+    if {[catch {socket 127.0.0.1 $tcp_port} s]} {
+	return 0
+    }
+    catch {close $s}
+    return 1
+}
+
+# Return the framebuffer target string used by helper tools.
+# In IPC mode this becomes an ipc: URI to an opaque libpkg local address.
+proc rtwiz_fb_target {} {
+    if {[info exists ::RtWizard::wizard_state(fbserv_ipc_addr)]} {
+	return "ipc:$::RtWizard::wizard_state(fbserv_ipc_addr)"
+    }
+    return $::RtWizard::wizard_state(fbserv_port)
+}
+
+# Build the fbserv launch command for the active transport mode.
+proc rtwiz_fbserv_cmd {} {
+    if {[info exists ::RtWizard::wizard_state(fbserv_ipc_addr)]} {
+	return [list [file join [bu_dir bin] fbserv] -A -I $::RtWizard::wizard_state(fbserv_ipc_addr) -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) $::RtWizard::wizard_state(fbserv_device)]
+    }
+    return [list [file join [bu_dir bin] fbserv] -A -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) $::RtWizard::wizard_state(fbserv_port) $::RtWizard::wizard_state(fbserv_device)]
+}
 
 # Set verbosity if not already set
 if {![info exists ::RtWizard::wizard_state(verbose)]} {
@@ -116,32 +158,129 @@ if {[info exists ::use_gui]} {
    } else {
       set port_number_specified 1
    }
+
+   # Generate a unique session token and propagate it to all child
+   # processes via the FBSERV_TOKEN environment variable.  This prevents
+   # parallel rtwizard instances (e.g. simultaneous distcheck builds) from
+   # accidentally connecting to each other's fbserv: every tool (rt,
+   # fbclear, fb-pix, fb-png, fblabel, etc.) that honours FBSERV_TOKEN
+   # will only talk to the fbserv that was started with the matching token.
+   set ::RtWizard::wizard_state(fbserv_token) [rtwiz_gen_token]
+   set ::env(FBSERV_TOKEN) $::RtWizard::wizard_state(fbserv_token)
+   set fbserv_token_prefix {}
+
+   set use_ipc 0
+   if {[info exists ::RtWizard::wizard_state(fbserv_ipc_addr)]} {
+       set use_ipc 1
+   }
+
    # Check whether the framebuffer already exists.  If it does, and if
    # it was specified on the command line, go with it.
-   if { [catch {exec [file join [bu_dir bin] fblabel] -F $::RtWizard::wizard_state(fbserv_port) 1 1 " "} error ] && $error == 12} {
-      catch {exec [file join [bu_dir bin] fbserv] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) $::RtWizard::wizard_state(fbserv_port) $::RtWizard::wizard_state(fbserv_device) &} pid
-      if {[info exists pid]} {
+   if {$use_ipc} {
+      if {[catch {exec {*}[rtwiz_fbserv_cmd] < [bu_file_null] >> $::RtWizard::wizard_state(log_file) 2>@1 &} pid] == 0} {
 	set fbserv_pid $pid
-	# Wait a few milliseconds to make sure fbserv has completed its work and is available
-	while { [catch {exec [file join [bu_dir bin] fblabel] -F $::RtWizard::wizard_state(fbserv_port) 1 1 " "} error] && $error == 12} {after 300}
+	set _fb_wait 0
+	while {[catch {exec [file join [bu_dir bin] fblabel] -F [rtwiz_fb_target] 1 1 " " 2>@1} _fb_err] && $_fb_wait < 30} {
+	    after 100
+	    incr _fb_wait
+	}
+	if {$_fb_wait >= 30} {
+	    error "rtwizard: IPC fbserv did not become ready: $_fb_err"
+	}
+	unset -nocomplain _fb_wait _fb_err
       } else {
-	if {$::RtWizard::wizard_state(verbose)} {puts "fbserv port $::RtWizard::wizard_state(fbserv_port) failed!"}
-	incr ::RtWizard::wizard_state(fbserv_port)
+	if {$::RtWizard::wizard_state(verbose)} {puts "fbserv IPC launch failed: $pid"}
+      }
+   } else {
+      if { [catch {exec {*}$fbserv_token_prefix [file join [bu_dir bin] fblabel] -F [rtwiz_fb_target] 1 1 " " 2>@1} error ] && $error == 12} {
+	 catch {exec {*}[rtwiz_fbserv_cmd] < [bu_file_null] >> $::RtWizard::wizard_state(log_file) 2>@1 &} pid
+	 if {[info exists pid]} {
+	   set fbserv_pid $pid
+	   # Wait for fbserv to become ready.  Poll fblabel: if it fails because fbserv
+	   # has not yet bound to its port ("can't connect"), keep waiting (up to ~9 s).
+	   # Stop early if the failure reason changes to something other than connection-
+	   # refused (e.g. a token mismatch means another instance already owns the port).
+	   set _fb_wait 0
+	   while { [catch {exec {*}$fbserv_token_prefix [file join [bu_dir bin] fblabel] -F [rtwiz_fb_target] 1 1 " " 2>@1} _fb_err] && $_fb_wait < 30 && [string match {*can't connect*} $_fb_err] } {
+	       after 300
+	       incr _fb_wait
+	   }
+	   unset -nocomplain _fb_wait _fb_err
+	 } else {
+	   if {$::RtWizard::wizard_state(verbose)} {puts "fbserv port $::RtWizard::wizard_state(fbserv_port) failed!"}
+	   incr ::RtWizard::wizard_state(fbserv_port)
+	 }
       }
    }
 
-   # If we didn't have a pre-specified port number and the default didn't work, start counting up
-   if { ! $port_number_specified && ! [info exists fbserv_pid] } {
+   # If we didn't have a pre-specified port number and the default didn't work, start counting up.
+   # Wrapped in an outer retry loop to recover from the race condition where two parallel
+   # rtwizard instances both pass the TCP port probe before either fbserv actually binds.
+   # Since fbserv is launched with -A (strict auth), fblabel will fail with a token mismatch
+   # when it connects to another instance's fbserv.  That failure is our signal to advance
+   # to the next candidate port and try again — preventing a silent session failure.
+   if { ! $use_ipc && ! $port_number_specified && ! [info exists fbserv_pid] } {
        incr ::RtWizard::wizard_state(fbserv_port)
-       while { ! [catch {exec [file join [bu_dir bin] fbclear] -F $::RtWizard::wizard_state(fbserv_port) } error ] } {
-	     if {$::RtWizard::wizard_state(verbose)} {puts "fbserv port $::RtWizard::wizard_state(fbserv_port) is already in use."}
-	     incr ::RtWizard::wizard_state(fbserv_port)
+       set fbserv_owned 0
+       set _fbserv_retries 0
+       set _fbserv_max_retries 50
+       while { !$fbserv_owned && $_fbserv_retries < $_fbserv_max_retries } {
+	   incr _fbserv_retries
+	   # Non-destructive TCP port probe to find a candidate free port.  The old
+	   # approach (fbclear -F $port) was destructive — it would clear another
+	   # running rtwizard's framebuffer as a side effect of the probe.
+	   while { [rtwiz_port_occupied $::RtWizard::wizard_state(fbserv_port)] } {
+		if {$::RtWizard::wizard_state(verbose)} {puts "fbserv port $::RtWizard::wizard_state(fbserv_port) is already in use."}
+		incr ::RtWizard::wizard_state(fbserv_port)
+	   }
+	   if {[catch {exec {*}[rtwiz_fbserv_cmd] < [bu_file_null] >> $::RtWizard::wizard_state(log_file) 2>@1 &} pid] == 0} {
+	       set fbserv_pid $pid
+	   } else {
+	       if {$::RtWizard::wizard_state(verbose)} {puts "fbserv launch on port $::RtWizard::wizard_state(fbserv_port) failed: $pid"}
+	   }
+	   # Wait for fbserv to become ready.  Poll fblabel: if it fails because fbserv
+	   # has not yet bound to its port ("can't connect"), keep waiting (up to ~9 s).
+	   # Stop early if the failure reason changes to something other than connection-
+	   # refused — e.g. a token mismatch means another instance already owns the port
+	   # and we should advance to the next candidate immediately.
+	   set _fb_wait 0
+	   while { [catch {exec [file join [bu_dir bin] fblabel] -F [rtwiz_fb_target] 1 1 " " 2>@1} _fb_err] && $_fb_wait < 30 && [string match {*can't connect*} $_fb_err] } {
+	       after 300
+	       incr _fb_wait
+	   }
+	   unset -nocomplain _fb_wait _fb_err
+	   # Verify that we actually own this fbserv: fblabel must succeed with our
+	   # FBSERV_TOKEN.  If it fails, another rtwizard won the race for this port
+	   # and our token was rejected — advance to the next candidate port and retry.
+	   if { [catch {exec {*}$fbserv_token_prefix [file join [bu_dir bin] fblabel] -F [rtwiz_fb_target] 1 1 " " 2>@1}] == 0 } {
+	       set fbserv_owned 1
+	   } else {
+	       if {$::RtWizard::wizard_state(verbose)} {
+		   puts "fbserv port $::RtWizard::wizard_state(fbserv_port): port collision detected, retrying on next port."
+	       }
+	       # Kill the fbserv we launched on this port — we lost the race and
+	       # cannot own it.  Without this kill the orphaned process lingers,
+	       # consuming the port and causing subsequent retries to spin.
+	       if {[info exists fbserv_pid]} {
+		   if {$::tcl_platform(platform) == "windows"} {
+		       catch {exec taskkill /F /PID $fbserv_pid}
+		   } else {
+		       catch {exec kill $fbserv_pid}
+		   }
+	       }
+	       unset -nocomplain fbserv_pid
+	       incr ::RtWizard::wizard_state(fbserv_port)
+	   }
        }
-      catch {exec [file join [bu_dir bin] fbserv] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) $::RtWizard::wizard_state(fbserv_port) $::RtWizard::wizard_state(fbserv_device) &} pid
-      set fbserv_pid $pid
-      # Wait a few milliseconds to make sure fbserv has completed its work and is available
-      while { [catch {exec [file join [bu_dir bin] fblabel] -F $::RtWizard::wizard_state(fbserv_port) 1 1 " "} error] && $error == 12 } {after 300}
+       unset -nocomplain _fbserv_retries
+       if { !$fbserv_owned } {
+	   error "rtwizard: could not acquire a framebuffer port after $_fbserv_max_retries attempts"
+       }
+       unset -nocomplain _fbserv_max_retries
    }
+
+   # Open the database once.  It is used both for view setup and for animation bounds.
+   set db [go_open db db $::RtWizard::wizard_state(dbFile)]
 
    # Either we're using a specified view model, or we're deducing one based on user options
    if {[info exists ::RtWizard::wizard_state(viewsize)] && [info exists ::RtWizard::wizard_state(orientation)] && [info exists ::RtWizard::wizard_state(eye_pt)]} {
@@ -161,7 +300,6 @@ if {[info exists ::use_gui]} {
 	if {! [info exists ::have_eye_pt]} {puts "Error - when specifying view model directly, need eye_pt"}
 	if {[info exists argv]} {exit}
      }
-     set db [go_open db db $::RtWizard::wizard_state(dbFile)]
      db new_view v1 nu
 
      if {[llength $::RtWizard::wizard_state(color_objlist)]} {
@@ -197,7 +335,7 @@ if {[info exists ::use_gui]} {
    # populate a dictionary to pass to rtimage
    set rtimage_dict [dict create \
        _dbfile $::RtWizard::wizard_state(dbFile) \
-       _port $::RtWizard::wizard_state(fbserv_port) \
+       _port [rtwiz_fb_target] \
        _w $::RtWizard::wizard_state(width) \
        _n $::RtWizard::wizard_state(scanlines) \
        _viewsize $viewsize \
@@ -214,20 +352,105 @@ if {[info exists ::use_gui]} {
        _edge_objects  $::RtWizard::wizard_state(line_objlist) \
        _benchmark_mode  $::benchmark_mode \
        _log_file  $::RtWizard::wizard_state(log_file) \
-       _pid_filename $::RtWizard::wizard_state(pid_filename)
+       _pid_filename $::RtWizard::wizard_state(pid_filename) \
+       _cut_plane "" \
+       _ao_samples $::RtWizard::wizard_state(ao_samples) \
+       _ao_radius $::RtWizard::wizard_state(ao_radius)
        ]
 
 
-    ::cadwidgets::rtimage $rtimage_dict
+   if {[info exists ::RtWizard::wizard_state(cut_steps)] && $::RtWizard::wizard_state(cut_steps) >= 2} {
+      set anim_objects [lsort -unique [concat \
+	  $::RtWizard::wizard_state(color_objlist) \
+	  $::RtWizard::wizard_state(line_objlist) \
+	  $::RtWizard::wizard_state(ghost_objlist)]]
+      if {![llength $anim_objects]} {
+	error "rtwizard: no objects available for cutting-plane animation bounds"
+      }
+
+      if {[info exists ::RtWizard::wizard_state(cut_direction)]} {
+	set cut_dir [vunitize $::RtWizard::wizard_state(cut_direction)]
+      } else {
+	# orientation is the model-to-view rotation.  Its third row points
+	# from the model toward the eye, so negate it to march into the view.
+	set omat [quat_quat2mat $orientation]
+	set cut_dir [vunitize [list \
+	    [expr {-[lindex $omat 8]}] \
+	    [expr {-[lindex $omat 9]}] \
+	    [expr {-[lindex $omat 10]}]]]
+      }
+
+      set sweep_bounds [rtwizard_cut_bounds \
+	  $::RtWizard::wizard_state(dbFile) $cut_dir {*}$anim_objects]
+      set sweep_min [lindex $sweep_bounds 0]
+      set sweep_max [lindex $sweep_bounds 1]
+      set sweep_span [expr {$sweep_max - $sweep_min}]
+      if {$sweep_span <= 0.0} {
+	error "rtwizard: rendered objects have degenerate cutting-plane bounds"
+      }
+      # Keep the terminal slice large enough to survive rasterization while
+      # remaining approximately one output-pixel fraction of the sweep.
+      set sweep_eps [expr {max(abs($sweep_span) / double(max(
+	  $::RtWizard::wizard_state(width), $::RtWizard::wizard_state(scanlines))),
+	  abs($sweep_span) * 0.05, 1.0e-9)}]
+      set sweep_first [expr {$sweep_min - $sweep_eps}]
+      set sweep_last [expr {$sweep_max - $sweep_eps}]
+      if {$::RtWizard::wizard_state(verbose)} {
+	puts "Cut sweep: direction=$cut_dir bounds=$sweep_min..$sweep_max margin=$sweep_eps"
+      }
+
+      set animation_frames {}
+      set frame_count $::RtWizard::wizard_state(cut_steps)
+      set frame_dir [file dirname $::RtWizard::wizard_state(output_filename)]
+      try {
+	for {set frame_no 0} {$frame_no < $frame_count} {incr frame_no} {
+	    set fraction [expr {double($frame_no) / double($frame_count - 1)}]
+	    set plane_dist [expr {$sweep_first + $fraction * ($sweep_last - $sweep_first)}]
+	    set plane_pt [vscale $cut_dir $plane_dist]
+	    set cut_plane [format "%.15g,%.15g,%.15g,%.15g,%.15g,%.15g" \
+		[lindex $plane_pt 0] [lindex $plane_pt 1] [lindex $plane_pt 2] \
+		[lindex $cut_dir 0] [lindex $cut_dir 1] [lindex $cut_dir 2]]
+	    dict set rtimage_dict _cut_plane $cut_plane
+
+	    puts "Rendering frame [expr {$frame_no + 1}]/$frame_count"
+	    catch {exec [file join [bu_dir bin] fbclear] -F [rtwiz_fb_target] \
+		[lindex $::RtWizard::wizard_state(bg_color) 0] \
+		[lindex $::RtWizard::wizard_state(bg_color) 1] \
+		[lindex $::RtWizard::wizard_state(bg_color) 2]}
+	    ::cadwidgets::rtimage $rtimage_dict
+
+	    set frame_file [file join $frame_dir [format ".rtwizard-%d-%06d.pix" [pid] $frame_no]]
+	    exec [file join [bu_dir bin] fb-pix] \
+		-w $::RtWizard::wizard_state(width) \
+		-n $::RtWizard::wizard_state(scanlines) \
+		-F [rtwiz_fb_target] $frame_file 2>@1
+	    lappend animation_frames $frame_file
+	}
+
+	rtwizard_anim_write $::RtWizard::wizard_state(output_filename) \
+	    $::RtWizard::wizard_state(width) \
+	    $::RtWizard::wizard_state(scanlines) \
+	    $::RtWizard::wizard_state(animation_fps) {*}$animation_frames
+      } finally {
+	foreach frame_file $animation_frames {
+	    catch {file delete -force $frame_file}
+	}
+      }
+   } else {
+      ::cadwidgets::rtimage $rtimage_dict
+   }
 
    if {[info exists ::RtWizard::wizard_state(output_filename)]} {
       set output_generated 0
-      if {[file extension $::RtWizard::wizard_state(output_filename)] == ".png"} {
-	 exec [file join [bu_dir bin] fb-png] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) -F $::RtWizard::wizard_state(fbserv_port) $::RtWizard::wizard_state(output_filename)
+      if {[info exists ::RtWizard::wizard_state(cut_steps)] && $::RtWizard::wizard_state(cut_steps) >= 2} {
+	 set output_generated 1
+      }
+      if {!$output_generated && [file extension $::RtWizard::wizard_state(output_filename)] == ".png"} {
+	 exec [file join [bu_dir bin] fb-png] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) -F [rtwiz_fb_target] $::RtWizard::wizard_state(output_filename) 2>@1
 	 set output_generated 1
       }
       if {!$output_generated} {
-	 exec [file join [bu_dir bin] fb-pix] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) -F $::RtWizard::wizard_state(fbserv_port) $::RtWizard::wizard_state(output_filename)
+	 exec [file join [bu_dir bin] fb-pix] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) -F [rtwiz_fb_target] $::RtWizard::wizard_state(output_filename) 2>@1
 	 set output_generated 1
       }
 
@@ -236,15 +459,22 @@ if {[info exists ::use_gui]} {
 
    if {$::RtWizard::wizard_state(fbserv_device) == "/dev/mem"} {
        if {[info exists fbserv_pid]} {
+	  catch {exec [file join [bu_dir bin] fbfree] -F [rtwiz_fb_target]}
+	  after 200
 	  if {$::tcl_platform(platform) == "windows"} {
 	      set kill_cmd [auto_execok taskkill]
 	      set kill_args [list $kill_cmd "/F" "/PID" $fbserv_pid]
 	  } else {
-	      set kill_cmd [auto_execok kill]
-	      set kill_args [list $kill_cmd $fbserv_pid]
+	      if {[catch {exec kill -0 $fbserv_pid}]} {
+		  set kill_cmd ""
+		  set kill_args {}
+	      } else {
+		  set kill_cmd [auto_execok kill]
+		  set kill_args [list $kill_cmd $fbserv_pid]
+	      }
 	  }
 	  if {$kill_cmd != ""} {
-	      exec {*}$kill_args
+	      catch {exec {*}$kill_args}
 	  }
       }
    }

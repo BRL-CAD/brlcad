@@ -1,7 +1,7 @@
 /*                         B E V . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -206,7 +206,7 @@ ged_bev_core(struct ged *gedp, int argc, const char *argv[])
 		default: {
 		    bu_vls_printf(gedp->ged_result_str, "%s: Unrecognized operator: (%c)\nAborting\n",
 				  argv[0], opstr[0]);
-		    db_free_tree(bev_facetize_tree, &rt_uniresource);
+		    db_free_tree(bev_facetize_tree);
 		    nmg_km(bev_nmg_model);
 		    return BRLCAD_ERROR;
 		}
@@ -238,14 +238,14 @@ ged_bev_core(struct ged *gedp, int argc, const char *argv[])
 
 	    bu_vls_printf(gedp->ged_result_str, "%s: WARNING: Boolean evaluation failed!!!\n", cmdname);
 	    if (tmp_tree)
-		db_free_tree(tmp_tree, &rt_uniresource);
+		db_free_tree(tmp_tree);
 	    tmp_tree = (union tree *)NULL;
 	    nmg_km(bev_nmg_model);
 	    bev_nmg_model = (struct model *)NULL;
 	    return BRLCAD_ERROR;
 	}
 
-	failed = nmg_boolean(tmp_tree, bev_nmg_model, vlfree, &wdbp->wdb_tol, &rt_uniresource);
+	failed = nmg_boolean(tmp_tree, bev_nmg_model, vlfree, &wdbp->wdb_tol);
 	BU_UNSETJUMP;
     } else
 	failed = 1;
@@ -253,7 +253,7 @@ ged_bev_core(struct ged *gedp, int argc, const char *argv[])
     if (failed) {
 	bu_vls_printf(gedp->ged_result_str, "%s: no resulting region, aborting\n", cmdname);
 	if (tmp_tree)
-	    db_free_tree(tmp_tree, &rt_uniresource);
+	    db_free_tree(tmp_tree);
 	tmp_tree = (union tree *)NULL;
 	nmg_km(bev_nmg_model);
 	bev_nmg_model = (struct model *)NULL;
@@ -272,7 +272,7 @@ ged_bev_core(struct ged *gedp, int argc, const char *argv[])
 	    BU_UNSETJUMP;
 	    bu_vls_printf(gedp->ged_result_str, "%s: WARNING: Triangulation failed!!!\n", cmdname);
 	    if (tmp_tree)
-		db_free_tree(tmp_tree, &rt_uniresource);
+		db_free_tree(tmp_tree);
 	    tmp_tree = (union tree *)NULL;
 	    nmg_km(bev_nmg_model);
 	    bev_nmg_model = (struct model *)NULL;
@@ -293,35 +293,23 @@ ged_bev_core(struct ged *gedp, int argc, const char *argv[])
     bev_nmg_model = (struct model *)NULL;
 
     GED_DB_DIRADD(gedp, dp, newname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type, BRLCAD_ERROR);
-    GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_PUT_INTERN(gedp, dp, &intern, BRLCAD_ERROR);
 
     tmp_tree->tr_d.td_r = (struct nmgregion *)NULL;
 
     /* Free boolean tree, and the regions in it. */
-    db_free_tree(tmp_tree, &rt_uniresource);
+    db_free_tree(tmp_tree);
 
     return BRLCAD_OK;
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl bev_cmd_impl = {
-    "bev",
-    ged_bev_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd bev_cmd = { &bev_cmd_impl };
-const struct ged_cmd *bev_cmds[] = { &bev_cmd, NULL };
+#define GED_BEV_COMMANDS(X, XID) \
+    X(bev, ged_bev_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  bev_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_BEV_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_bev", 1, GED_BEV_COMMANDS)
 
 /*
  * Local Variables:

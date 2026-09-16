@@ -1,7 +1,7 @@
 /*                       S H _ C A M O . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2025 United States Government as represented by
+ * Copyright (c) 2004-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -66,46 +66,45 @@ struct camo_specific {
 };
 #define CK_camo_SP(_p) BU_CKMAG(_p, camo_MAGIC, "camo_specific")
 
-#define SHDR_NULL ((struct camo_specific *)0)
-#define SHDR_O(m) bu_offsetof(struct camo_specific, m)
+#define CAMO_SHDR_O(m) bu_offsetof(struct camo_specific, m)
 
 /* local sp_hook function */
 void color_fix(const struct bu_structparse *, const char *, void *, const char *, void *);
 
 struct bu_structparse camo_print_tab[] = {
-    {"%g", 1, "lacunarity",	SHDR_O(noise_lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%g", 1, "H", 		SHDR_O(noise_h_val),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%g", 1, "octaves", 	SHDR_O(noise_octaves),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%g", 1, "size",		SHDR_O(noise_size),	bu_mm_cvt, NULL, NULL },
-    {"%f", 3, "vscale",		SHDR_O(noise_vscale),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%g", 1, "thresh1",	SHDR_O(t1),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%g", 1, "thresh2",	SHDR_O(t2),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 3, "color1",		SHDR_O(c1),		color_fix, NULL, NULL },
-    {"%f", 3, "color2",		SHDR_O(c2),		color_fix, NULL, NULL },
-    {"%f", 3, "color3",		SHDR_O(c3),		color_fix, NULL, NULL },
-    {"%f", 3, "delta",		SHDR_O(noise_delta),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "lacunarity",	CAMO_SHDR_O(noise_lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "H", 		CAMO_SHDR_O(noise_h_val),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "octaves", 	CAMO_SHDR_O(noise_octaves),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "size",		CAMO_SHDR_O(noise_size),	bu_mm_cvt, NULL, NULL },
+    {"%f", 3, "vscale",		CAMO_SHDR_O(noise_vscale),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "thresh1",	CAMO_SHDR_O(t1),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "thresh2",	CAMO_SHDR_O(t2),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "color1",		CAMO_SHDR_O(c1),		color_fix, NULL, NULL },
+    {"%f", 3, "color2",		CAMO_SHDR_O(c2),		color_fix, NULL, NULL },
+    {"%f", 3, "color3",		CAMO_SHDR_O(c3),		color_fix, NULL, NULL },
+    {"%f", 3, "delta",		CAMO_SHDR_O(noise_delta),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",   0, (char *)0,		0,		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
 struct bu_structparse camo_parse[] = {
-    {"%g", 1, "lacunarity",	SHDR_O(noise_lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%g", 1, "l",		SHDR_O(noise_lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%g", 1, "H", 		SHDR_O(noise_h_val),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%g", 1, "octaves",	SHDR_O(noise_octaves),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%g", 1, "o", 		SHDR_O(noise_octaves),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%g", 1, "t1",		SHDR_O(t1),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%g", 1, "t2",		SHDR_O(t2),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%g", 1, "size",		SHDR_O(noise_size),	bu_mm_cvt, NULL, NULL },
-    {"%g", 1, "s",		SHDR_O(noise_size),	bu_mm_cvt, NULL, NULL },
-    {"%f", 3, "vscale",		SHDR_O(noise_vscale),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 3, "vs",		SHDR_O(noise_vscale),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 3, "v",		SHDR_O(noise_vscale),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 3, "c1",		SHDR_O(c1),		color_fix, NULL, NULL },
-    {"%f", 3, "c2",		SHDR_O(c2),		color_fix, NULL, NULL },
-    {"%f", 3, "c3",		SHDR_O(c3),		color_fix, NULL, NULL },
-    {"%f", 3, "delta",		SHDR_O(noise_delta),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 3, "d",		SHDR_O(noise_delta),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "lacunarity",	CAMO_SHDR_O(noise_lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "l",		CAMO_SHDR_O(noise_lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "H", 		CAMO_SHDR_O(noise_h_val),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "octaves",	CAMO_SHDR_O(noise_octaves),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "o", 		CAMO_SHDR_O(noise_octaves),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "t1",		CAMO_SHDR_O(t1),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "t2",		CAMO_SHDR_O(t2),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "size",		CAMO_SHDR_O(noise_size),	bu_mm_cvt, NULL, NULL },
+    {"%g", 1, "s",		CAMO_SHDR_O(noise_size),	bu_mm_cvt, NULL, NULL },
+    {"%f", 3, "vscale",		CAMO_SHDR_O(noise_vscale),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "vs",		CAMO_SHDR_O(noise_vscale),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "v",		CAMO_SHDR_O(noise_vscale),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "c1",		CAMO_SHDR_O(c1),		color_fix, NULL, NULL },
+    {"%f", 3, "c2",		CAMO_SHDR_O(c2),		color_fix, NULL, NULL },
+    {"%f", 3, "c3",		CAMO_SHDR_O(c3),		color_fix, NULL, NULL },
+    {"%f", 3, "delta",		CAMO_SHDR_O(noise_delta),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "d",		CAMO_SHDR_O(noise_delta),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",   0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
@@ -165,7 +164,7 @@ color_fix(const struct bu_structparse *sdp,
 
 
 static int
-setup(register struct region *rp, struct bu_vls *matparm, void **dpp, struct rt_i *rtip, char *parameters, struct camo_specific *defaults)
+setup(register struct region *rp, struct bu_vls *matparm, void **dpp, struct rt_i *rtip, const char *parameters, struct camo_specific *defaults)
 {
 /* pointer to reg_udata in *rp */
 
@@ -191,7 +190,7 @@ setup(register struct region *rp, struct bu_vls *matparm, void **dpp, struct rt_
     /* Optional:  get the matrix which maps model space into
      * "region" or "shader" space
      */
-    db_region_mat(model_to_region, rtip->rti_dbip, rp->reg_name, &rt_uniresource);
+    db_region_mat(model_to_region, rtip->rti_dbip, rp->reg_name);
 
     /* add the noise-space scaling */
     MAT_IDN(tmp);

@@ -1,7 +1,7 @@
 /*                       F B C O L O R . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2025 United States Government as represented by
+ * Copyright (c) 1986-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,6 +27,8 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
@@ -43,10 +45,12 @@
 #include "bu/app.h"
 #include "bu/color.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/exit.h"
 #include "dm.h"
 
 #define COMMA ','
+#define COLOR_LEVELS 256
 
 
 int curchan = 0;	/* 0=r, 1=g, 2=b */
@@ -108,33 +112,33 @@ main(int argc, char **argv)
 
     /* Note that color 0, 0, 0 is special;  use 1, 1, 1 for black */
     /* Red */
-    for (i=0; i<255; i++) {
+    for (i = 0; i < COLOR_LEVELS; i++) {
 	buf[3*i+RED] = i;
 	buf[3*i+GRN] = 1;
 	buf[3*i+BLU] = 1;
     }
     for (i=0; i<99; i++)
-	fb_write(fbp, 0, i, buf, 256);
+	fb_write(fbp, 0, i, buf, COLOR_LEVELS);
 
     /* Green */
     memset((char *)buf, 0, sizeof(buf));
-    for (i=0; i<255; i++) {
+    for (i = 0; i < COLOR_LEVELS; i++) {
 	buf[3*i+RED] = 1;
 	buf[3*i+GRN] = i;
 	buf[3*i+BLU] = 1;
     }
     for (i=100; i<199; i++)
-	fb_write(fbp, 0, i, buf, 256);
+	fb_write(fbp, 0, i, buf, COLOR_LEVELS);
 
     /* Blue */
     memset((char *)buf, 0, sizeof(buf));
-    for (i=0; i<255; i++) {
+    for (i = 0; i < COLOR_LEVELS; i++) {
 	buf[3*i+RED] = 1;
 	buf[3*i+GRN] = 1;
 	buf[3*i+BLU] = i;
     }
     for (i=200; i<299; i++)
-	fb_write(fbp, 0, i, buf, 256);
+	fb_write(fbp, 0, i, buf, COLOR_LEVELS);
 
     /* Set RAW mode */
 #ifndef HAVE_CONIO_H
@@ -148,17 +152,17 @@ main(int argc, char **argv)
 	memset((char *)&cm, 0, sizeof(cm));
 	for (i=0; i<col[RED]; i++)
 	    cm.cm_red[i] = 0xFFFF;
-	for (; i<255; i++)
+	for (; i < COLOR_LEVELS; i++)
 	    cm.cm_red[i] = 0;
 
 	for (i=0; i<col[GRN]; i++)
 	    cm.cm_green[i] = 0xFFFF;
-	for (; i<255; i++)
+	for (; i < COLOR_LEVELS; i++)
 	    cm.cm_green[i] = 0;
 
 	for (i=0; i<col[BLU]; i++)
 	    cm.cm_blue[i] = 0xFFFF;
-	for (; i<255; i++)
+	for (; i < COLOR_LEVELS; i++)
 	    cm.cm_blue[i] = 0;
 
 	/* 0, 0, 0 is color chosen */
@@ -213,12 +217,16 @@ doKeyPad(void)
     int ch;
 
 #if defined(HAVE_CONIO_H)
-    if ((ch = getch()) == EOF)
-	return 0;		/* done */
+    if (isatty(fileno(stdin))) {
+	ch = getch();
+    } else {
+	ch = getchar();
+    }
 #else
-    if ((ch = getchar()) == EOF)
-	return 0;		/* done */
+    ch = getchar();
 #endif
+    if (ch == EOF)
+	return 0;		/* done */
 
     switch (ch) {
 	default :
@@ -304,6 +312,8 @@ int
 pars_Argv(int argc, char **argv)
 {
     int c;
+    int remaining = 0;
+
     while ((c = bu_getopt(argc, argv, "F:s:S:w:W:n:N:h?")) != -1) {
 	switch (c) {
 	    case 'F':
@@ -311,19 +321,28 @@ pars_Argv(int argc, char **argv)
 		break;
 	    case 's':
 	    case 'S':
-		scr_height = scr_width = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &scr_width, 0, INT_MAX, "screen size"))
+		    return 0;
+		scr_height = scr_width;
 		break;
 	    case 'w':
 	    case 'W':
-		scr_width = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &scr_width, 0, INT_MAX, "screen width"))
+		    return 0;
 		break;
 	    case 'n':
 	    case 'N':
-		scr_height = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &scr_height, 0, INT_MAX, "screen height"))
+		    return 0;
 		break;
 	    default :
 		return 0;
 	}
+    }
+    remaining = argc - bu_optind;
+    if (remaining != 0) {
+	fprintf(stderr, "fbcolor: excess argument(s) not supported\n");
+	return 0;
     }
     return 1;
 }

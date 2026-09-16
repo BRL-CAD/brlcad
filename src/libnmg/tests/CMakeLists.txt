@@ -1,7 +1,7 @@
 # To minimize the number of build targets and binaries that are created, we
 # combine some of the unit tests into a single program.
 
-set(nmg_test_srcs mk.c copy.c)
+set(nmg_test_srcs mk.c copy.c outer_shells.c)
 
 # Generate and assemble the necessary per-test-type source code
 set(NMG_TEST_SRC_INCLUDES)
@@ -31,6 +31,8 @@ brlcad_add_test(NAME nmg_mk COMMAND nmg_test mk)
 
 # nmg_copy testing
 brlcad_add_test(NAME nmg_copy COMMAND nmg_test copy)
+
+brlcad_add_test(NAME nmg_outer_shells COMMAND nmg_test outer_shells)
 
 cmakefiles(
   CMakeLists.txt

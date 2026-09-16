@@ -1,0 +1,97 @@
+= HANDLE(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+handle - create a BRL-CAD .g database containing handle shapes
+
+== SYNOPSIS
+
+[source]
+----
+handle [-h | -?]
+handle [-f _name.g_] [-n _count_] [-l _length_] [-H _height_] [-r1 _torus_radius_] [-r2 _cylinder_radius_]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*handle* creates a BRL-CAD database (*mged*(1) .g file) containing one or
+more handle shapes built with *libwdb*. Each handle is composed of three
+cylinders, two tori, and two arb8s. The base of each handle is centered at
+(0, 0, 0) and the height extends in the positive z-direction. All dimensions
+are in millimeters.
+
+If invoked with no arguments, *handle* enters interactive mode and prompts
+for each parameter. Otherwise the values are taken from the command-line
+options. Between 1 and 256 handles of identical dimensions may be created per
+run; values outside that range are clamped.
+
+
+[[options]]
+== OPTIONS
+
+*-h*, *-?*::
+  Print a usage message and exit.
+
+*-f* _name.g_::
+  Name of the .g database file to create. Defaults to handle.g in
+  interactive mode.
+
+*-n* _count_::
+  Number of handles to create (1 to 256, default 1).
+
+*-l* _length_::
+  Length of the handle in millimeters.
+
+*-H* _height_::
+  Height of the handle in millimeters.
+
+*-r1* _torus_radius_::
+  Radius r1 of the two tori in millimeters (the rounding of the corners).
+
+*-r2* _cylinder_radius_::
+  Radius r2 of the three cylinders in millimeters.
+
+
+[[examples]]
+== EXAMPLES
+
+.Generate handles and raytrace them
+====
+[source,bash]
+----
+handle -fhandle.g -n3 -l200 -H100 -r120 -r210
+rt -s 1024 -o handle.png handle.g hana
+----
+Creates handle.g containing three handles, each 200 mm long and 100 mm tall,
+with a torus rounding radius of 20 mm and a cylinder radius of 10 mm. Note
+that the option value is appended directly to the flag (for example *-l200*
+and *-r120*). The grouped handles can then be rendered with *rt*(1).
+====
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *mged*(1), *rt*(1), *bolt*(1), *gastank*(1), *window*(1), *window_frame*(1)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

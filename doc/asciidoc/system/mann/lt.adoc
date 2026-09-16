@@ -1,0 +1,62 @@
+= LT(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+lt - Generates a list of the child objects of a combination.
+
+== SYNOPSIS
+
+[source]
+----
+lt [char]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+The *lt* command generates a list of the children found in a combination object specified by the user. By default it will print a curly bracket bound set of objects and their boolean flags. If the *-c* option is specified, it will instead use the character supplied to the *-c* option as the separator in the list of objects. In the latter mode the boolean flags will not be printed.
+
+
+[[examples]]
+== EXAMPLES
+
+.Tcl Output
+[example]
+====
+
+....
+
+mged> lt component
+{u bed} {u frame} {u cab} {u suspension} {u misc} {u power.train}
+  
+....
+
+====
+
+.CSV Output
+[example]
+====
+
+....
+
+mged> lt -c , component
+bed,frame,cab,suspension,misc,power.train
+  
+....
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

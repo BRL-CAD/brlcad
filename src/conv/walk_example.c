@@ -1,7 +1,7 @@
 /*                     W A L K _ E X A M P L E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2025 United States Government as represented by
+ * Copyright (c) 2004-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -50,7 +50,7 @@
 
 
 /** list of legal command line options for use with bu_getopt()  */
-char *options = "hd:";
+const char *options = "hd:";
 
 /** flag for printing names of objects as encountered */
 #define DEBUG_NAMES 1

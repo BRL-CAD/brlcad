@@ -1,0 +1,44 @@
+= GLOB(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+glob - returns a list of objects specified by expression
+
+== SYNOPSIS
+
+[source]
+----
+glob "command_string"
+----
+
+[[description]]
+== DESCRIPTION
+
+The *glob* command takes a quoted MGED command string and performs wildcard expansion (globbing) on its arguments against the BRL-CAD database. 
+
+It matches patterns using `*`, `?`, and `[ ]` syntax. Note that the first word of the provided string (typically the command name itself) is explicitly skipped and will not be expanded. The command returns the expanded command string. 
+
+The *glob* command is an exact alias for the *db_glob* command.
+
+[[examples]]
+== EXAMPLES
+
+.Expand a list command with wildcards
+[example]
+====
+mged> **glob "l r23[0-9]"**
+
+Returns a command string where the wildcard is expanded to match database objects, such as: `l r230 r231 r232`.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

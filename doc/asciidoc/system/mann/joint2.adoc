@@ -1,0 +1,54 @@
+= JOINT2(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+joint2 - process animation edit commands for joints
+
+== SYNOPSIS
+
+[source]
+----
+joint2 solid_name selection replace selection_name startx starty startz dirx diry dirz
+joint2 solid_name selection translate selection_name dx dy dz
+----
+
+[[description]]
+== DESCRIPTION
+
+The *joint2* command is an experimental interface for processing selection-based operations on joint primitives within a database. Unlike the legacy `joint` command, `joint2` directly targets a specific `solid_name` and uses a selection querying approach.
+
+It supports the following `selection` operations:
+
+* *replace selection_name startx starty startz dirx diry dirz* : Finds the closest selection on `solid_name` intersecting the ray defined by the start point and direction vector. The matched selection replaces any existing selection stored under `selection_name` for that solid.
+* *translate selection_name dx dy dz* : Translates the components of the existing `selection_name` on `solid_name` by the vector `(dx, dy, dz)`.
+
+[[examples]]
+== EXAMPLES
+
+.Replace a selection using a ray
+[example]
+====
+mged> **joint2 arm.j selection replace my_sel 0 0 0 0 0 1**
+
+Shoots a ray from the origin (0, 0, 0) along the positive Z-axis (0, 0, 1) towards the joint primitive `arm.j`. The closest valid selection is stored as `my_sel`.
+====
+
+.Translate an existing selection
+[example]
+====
+mged> **joint2 arm.j selection translate my_sel 5 0 0**
+
+Translates the previously stored selection `my_sel` on `arm.j` by 5 units along the X-axis.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

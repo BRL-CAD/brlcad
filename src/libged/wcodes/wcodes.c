@@ -1,7 +1,7 @@
 /*                         W C O D E S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -84,7 +84,7 @@ wcodes_printcodes(struct ged *gedp, FILE *fp, struct directory *dp, size_t pathp
     if (!(dp->d_flags & RT_DIR_COMB))
 	return BRLCAD_OK;
 
-    id = rt_db_get_internal(&intern, dp, gedp->dbip, (matp_t)NULL, &rt_uniresource);
+    id = rt_db_get_internal(&intern, dp, gedp->dbip, (matp_t)NULL);
     if (id < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Cannot get records for %s\n", dp->d_namep);
 	return BRLCAD_ERROR;
@@ -179,24 +179,13 @@ ged_wcodes_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl wcodes_cmd_impl = {
-    "wcodes",
-    ged_wcodes_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd wcodes_cmd = { &wcodes_cmd_impl };
-const struct ged_cmd *wcodes_cmds[] = { &wcodes_cmd, NULL };
+#define GED_WCODES_COMMANDS(X, XID) \
+    X(wcodes, ged_wcodes_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  wcodes_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_WCODES_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_wcodes", 1, GED_WCODES_COMMANDS)
 
 /*
  * Local Variables:

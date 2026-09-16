@@ -1,7 +1,7 @@
 /*                             B N . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2025 United States Government as represented by
+ * Copyright (c) 2004-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -1356,7 +1356,7 @@ tclcad_bn_setup(Tcl_Interp *interp)
 }
 
 
-int
+TCLCAD_EXPORT int
 Bn_Init(Tcl_Interp *interp)
 {
     tclcad_bn_setup(interp);

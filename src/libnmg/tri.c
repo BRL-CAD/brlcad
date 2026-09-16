@@ -1,7 +1,7 @@
 /*                       N M G _ T R I . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2025 United States Government as represented by
+ * Copyright (c) 1994-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,6 +37,7 @@
 #include "bu/parallel.h"
 #include "bn/mat.h"
 #include "bg/plane.h"
+#include "bg/polygon.h"
 #include "bv/plot3.h"
 #include "nmg.h"
 
@@ -312,7 +313,8 @@ map_vu_to_2d(struct vertexuse *vu, struct bu_list *tbl2d, fastf_t *mat, struct f
 	if (P_GT_V(p, np)) continue;
 	break;
     }
-    BU_LIST_INSERT(&p->l, &np->l);
+    if (p)
+        BU_LIST_INSERT(&p->l, &np->l);
 
     if (nmg_debug & NMG_DEBUG_TRI && flatten_debug)
 	bu_log("transforming other vertexuses...\n");
@@ -1955,7 +1957,7 @@ nmg_triangulate_rm_holes(struct faceuse *fu, struct bu_list *tbl2d, struct bu_li
      * find an existing vertex.
      */
     if (0) {
-	bu_log("nmg_triangulate_rm_holes(): hole-loopuse lu1 0x%lx no cut found\n", (unsigned long)lu1);
+	bu_log("nmg_triangulate_rm_holes(): hole-loopuse lu1 0x%lx no cut found\n", (unsigned long)(uintptr_t)lu1);
 	for (BU_LIST_FOR(lu_tmp, loopuse, &fu->lu_hd)) {
 	    for (BU_LIST_FOR(eu_tmp, edgeuse, &lu_tmp->down_hd)) {
 		bu_log("nmg_triangulate_rm_holes(): lu_p = 0x%lx lu_orient = %d fu_p = 0x%lx vu_p = 0x%lx eu_p = 0x%lx v_p = 0x%lx vg_p = 0x%lx 3D coord = %g %g %g\n",
@@ -3318,6 +3320,15 @@ nmg_build_loopuse_tree(struct faceuse *fu, struct loopuse_tree_node **root, stru
 }
 
 /*
+ * nmg_tri_fu_bg is defined in tri_bg.cpp (C++17) so that it can use
+ * std::unordered_map for O(1) edge-gluing lookups.
+ */
+__BEGIN_DECLS
+extern int nmg_tri_fu_bg(struct faceuse *fu, struct bu_list *vlfree,
+			 const struct bn_tol *tol);
+__END_DECLS
+
+/*
  * return 1 when faceuse is empty, otherwise return 0.
  *
  */
@@ -3418,6 +3429,17 @@ nmg_triangulate_fu(struct faceuse *fu, struct bu_list *vlfree, const struct bn_t
     if (nmg_debug & NMG_DEBUG_TRI) {
 	bu_log("nmg_triangulate_fu(): proceeding to triangulate face %g %g %g\n", V3ARGS(fu_normal));
     }
+
+    /* Try Constrained Delaunay triangulation via libbg first.
+     * On success, fu has been killed and replaced by triangle faceuses that
+     * are already glued back into the shell – we are done.
+     * On failure fu is untouched and we fall through to the ear-clip path.
+     *
+     * On success, fu has been killed and replaced by triangle faceuses that
+     * are already glued back into the shell – we are done.
+     * On failure fu is untouched and we fall through to the ear-clip path. */
+    if (nmg_tri_fu_bg(fu, vlfree, tol) == 0)
+	goto out2;
 
     /* convert 3D face to face in the X-Y plane */
     tbl2d = nmg_flatten_face(fu, TformMat, tol);

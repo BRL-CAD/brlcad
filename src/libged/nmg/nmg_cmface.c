@@ -1,7 +1,7 @@
 /*                         N M G _ C M F A C E . C
  * BRL-CAD
  *
- * Copyright (c) 2015-2025 United States Government as represented by
+ * Copyright (c) 2015-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,15 +26,15 @@
 #include "common.h"
 #include "nmg.h"
 
-#include <signal.h>
 #include <string.h>
 
 #include "bu/cmd.h"
+#include "bu/interrupt.h"
 #include "rt/geom.h"
 
 #include "../ged_private.h"
 
-struct tmp_v {
+struct cmface_tmp_v {
     point_t pt;
     struct vertex *v;
 };
@@ -48,7 +48,7 @@ ged_nmg_cmface_core(struct ged *gedp, int argc, const char *argv[])
     const char* name;
     struct nmgregion* r;
     struct shell* s;
-    struct tmp_v* verts;
+    struct cmface_tmp_v* verts;
     struct faceuse *fu;
     struct bn_tol tol;
     struct vertex ***face_verts;
@@ -79,7 +79,7 @@ ged_nmg_cmface_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (rt_db_get_internal(&internal, dp, gedp->dbip,
-       bn_mat_identity, &rt_uniresource) < 0) {
+       bn_mat_identity) < 0) {
        bu_vls_printf(gedp->ged_result_str, "rt_db_get_internal() error\n");
        return BRLCAD_ERROR;
     }
@@ -104,9 +104,9 @@ ged_nmg_cmface_core(struct ged *gedp, int argc, const char *argv[])
     NMG_CK_REGION(r);
     NMG_CK_SHELL(s);
 
-    verts = (struct tmp_v *)NULL;
-    verts = (struct tmp_v *)bu_calloc(num_verts,
-				      sizeof(struct tmp_v), "verts");
+    verts = (struct cmface_tmp_v *)NULL;
+    verts = (struct cmface_tmp_v *)bu_calloc(num_verts,
+				      sizeof(struct cmface_tmp_v), "verts");
     face_verts = (struct vertex ***) bu_calloc( num_verts,
 						sizeof(struct vertex **), "face_verts");
 

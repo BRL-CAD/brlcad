@@ -1,7 +1,7 @@
 /*                       R E V O L V E . H
  * BRL-CAD
  *
- * Copyright (c) 2012-2025 United States Government as represented by
+ * Copyright (c) 2012-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -47,7 +47,7 @@ struct revolve_specific {
 };
 
 
-const struct bu_structparse rt_revolve_parse[] = {
+EXTERNCPP const struct bu_structparse rt_revolve_parse[] = {
     { "%f", 3, "V",   bu_offsetofarray(struct rt_revolve_internal, v3d, fastf_t, X),  BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 3, "axis", bu_offsetofarray(struct rt_revolve_internal, axis3d, fastf_t, X),  BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 3, "R",   bu_offsetofarray(struct rt_revolve_internal, r, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },

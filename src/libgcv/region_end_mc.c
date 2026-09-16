@@ -1,7 +1,7 @@
 /*                 R E G I O N _ E N D _ M C . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -79,13 +79,13 @@ gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, u
     /* get a copy to play with as the parameters might get clobbered
      * by a longjmp.  FIXME: db_dup_subtree() doesn't create real copies
      */
-    tp = db_dup_subtree(curtree, &rt_uniresource);
+    tp = db_dup_subtree(curtree);
 
     /* FIXME: we can't free curtree until we get a "real" copy form
      * db_dup_subtree().  right now we get a fake copy just so we can
      * keep the compiler quiet about clobbering curtree during longjmp
      */
-    /* db_free_tree(curtree, &rt_uniresource); */
+    /* db_free_tree(curtree); */
 
     /* Sometimes the NMG library adds debugging bits when it detects
      * an internal error, before bombing.  Stash.
@@ -97,7 +97,7 @@ gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, u
     s = BU_LIST_FIRST(shell, &r->s_hd);
 
     if (tsp->ts_rtip == NULL)
-	tsp->ts_rtip = rt_new_rti(tsp->ts_dbip);
+	tsp->ts_rtip = rt_i_create(tsp->ts_dbip);
 
     count += nmg_mc_evaluate (s, tsp->ts_rtip, pathp, tsp->ts_ttol, tsp->ts_tol);
 

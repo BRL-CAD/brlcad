@@ -1,0 +1,57 @@
+= PMODEL2VIEW(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+pmodel2view - get the perspective-corrected model-to-view matrix
+
+== SYNOPSIS
+
+[source]
+----
+pmodel2view
+----
+
+[[description]]
+== DESCRIPTION
+
+The *pmodel2view* command returns the current perspective-corrected model-to-view transformation matrix as a 16-element space-separated floating-point string.
+
+This matrix combines the standard model-to-view transformation with the perspective projection, making it the complete transform that maps a point from model space into perspective view space in one step. It is a read-only accessor — the matrix is computed and maintained automatically by the view system and cannot be set directly with this command.
+
+This command takes no arguments. Providing any argument returns a usage error.
+
+For the model-to-view matrix without perspective applied, use `model2view`. For the perspective projection matrix alone, use `pmat`.
+
+[[examples]]
+== EXAMPLES
+
+.Retrieve the perspective-corrected model-to-view matrix
+[example]
+====
+mged> **pmodel2view**
+
+Returns the 16-element perspective-corrected model-to-view matrix. When no perspective is active, this is equivalent to the `model2view` matrix.
+====
+
+.Compare with and without perspective
+[example]
+====
+mged> **perspective 0**
+mged> **pmodel2view**
+mged> **perspective 45**
+mged> **pmodel2view**
+
+The first call returns the orthographic model-to-view matrix. After enabling a 45° perspective, the second call returns the same rotation but with perspective distortion applied.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

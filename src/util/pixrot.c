@@ -1,7 +1,7 @@
 /*                        P I X R O T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2025 United States Government as represented by
+ * Copyright (c) 1986-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,19 +34,20 @@
 
 #include "common.h"
 
+#include <limits.h>
 #include <stdlib.h>
 #include "bio.h"
 
 #include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/log.h"
+#include "bu/opt.h"
 #include "bu/file.h"
 
 
 static const char usage[] = "\
 Usage: pixrot [-f -b -r -i -#bytes] [-s squaresize]\n\
 	[-w width] [-n height] [file.pix] > file.pix\n";
-
 
 /* 4 times bigger than typ. screen */
 /*#define MAXBUFBYTES (1280*1024*3*4) */
@@ -93,20 +94,25 @@ get_args(int argc, char **argv)
 		invert++;
 		break;
 	    case '#':
-		pixbytes = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &pixbytes, 1, INT_MAX, "bytes-per-pixel"))
+		    return 0;
 		break;
 	    case 'S':
 	    case 's':
 		/* square size */
-		nxin = nyin = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &nxin, 1, INT_MAX, "input size"))
+		    return 0;
+		nyin = nxin;
 		break;
 	    case 'W':
 	    case 'w':
-		nxin = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &nxin, 1, INT_MAX, "input width"))
+		    return 0;
 		break;
 	    case 'N':
 	    case 'n':
-		nyin = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &nyin, 1, INT_MAX, "input height"))
+		    return 0;
 		break;
 
 	    default:		/* '?' */
@@ -116,8 +122,10 @@ get_args(int argc, char **argv)
 
     /* XXX - backward compatibility hack */
     if (bu_optind+2 == argc) {
-	nxin = atoi(argv[bu_optind++]);
-	nyin = atoi(argv[bu_optind++]);
+	if (!bu_opt_scan_int_range(argv[bu_optind++], &nxin, 1, INT_MAX, "input width"))
+	    return 0;
+	if (!bu_opt_scan_int_range(argv[bu_optind++], &nyin, 1, INT_MAX, "input height"))
+	    return 0;
     }
     if (bu_optind >= argc) {
 	if (isatty(fileno(stdin)))
@@ -126,14 +134,21 @@ get_args(int argc, char **argv)
 	ifp = stdin;
     } else {
 	file_name = argv[bu_optind];
+	bu_optind++;
+	if (argc > bu_optind) {
+	    bu_log("pixrot: excess argument(s) not supported\n");
+	    return 0;
+	}
 	if ((ifp = fopen(file_name, "rb")) == NULL) {
 	    bu_log("pixrot: cannot open \"%s\" for reading\n", file_name);
 	    return 0;
 	}
     }
 
-    if (argc > ++bu_optind)
-	bu_log("pixrot: excess argument(s) ignored\n");
+    if (argc > bu_optind) {
+	bu_log("pixrot: excess argument(s) not supported\n");
+	return 0;
+    }
 
     return 1;		/* OK */
 }

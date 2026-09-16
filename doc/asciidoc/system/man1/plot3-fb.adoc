@@ -1,0 +1,116 @@
+= PLOT3-FB(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+plot3-fb - display a 3-D UNIX plot file on a framebuffer
+
+== SYNOPSIS
+
+[source]
+----
+plot3-fb [-d] [-o|-O] [-i] [-t _thickness_] [-F _framebuffer_] [-s|-S _squaresize_] [-w|-W _width_] [-n|-N _height_] [_file.plot3_]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*plot3-fb* rasterizes a BRL-CAD extended three-dimensional UNIX plot file and
+displays the result on a framebuffer. Because 3-D UNIX plot is a superset of
+the standard UNIX plot format, *plot3-fb* can also display ordinary 2-D plot
+files (see *plot3*(5)).
+
+If _file.plot3_ is omitted, the plot commands are read from standard input.
+The framebuffer is selected with the *-F* option or, failing that, the
+`FB_FILE` environment variable; otherwise the default device for your system is
+used (see *brlcad*(1)).
+
+By default the display is treated as 512x512 pixels. The *-S*/*-s*, *-W*/*-w*,
+and *-N*/*-n* options set the screen size; the plotting space is scaled to fill
+those dimensions, and no attempt is made to preserve the aspect ratio. Strokes
+that fall outside the frame are limited (not clipped) to its edges; pre-process
+with *plot3rot*(1) if true clipping or reorientation is desired.
+
+[[options]]
+== OPTIONS
+
+*-d*::
+  Emit a verbose debugging stream to standard error, listing every UNIX plot
+  command and the resulting framebuffer coordinates. Repeating *-d* increases
+  the verbosity.
+
+*-o*, *-O*::
+  Overlay mode. Rasterize on top of the image already in the framebuffer
+  rather than over a cleared background.
+
+*-i*::
+  Immediate mode. Plot each rasterized pixel as soon as it is computed instead
+  of buffering scanlines into bands. Useful for quick feedback on small plots,
+  but generally more expensive in CPU time.
+
+*-t* _thickness_::
+  Thicken every line perpendicular to its length to _thickness_ pixels
+  (minimum 1). A line is never made wider than it is long. Helpful when
+  recording to video, where single-pixel lines are hard to resolve.
+
+*-F* _framebuffer_::
+  Use the named framebuffer device instead of the one in `FB_FILE`.
+
+*-s* _squaresize_, *-S* _squaresize_::
+  Set both the width and height of the display to _squaresize_ pixels.
+
+*-w* _width_, *-W* _width_::
+  Set the display width to _width_ pixels.
+
+*-n* _height_, *-N* _height_::
+  Set the display height to _height_ pixels.
+
+[[examples]]
+== EXAMPLES
+
+.Render a wireframe of a database object straight to the framebuffer
+====
+[source,bash]
+----
+fbserv -S 1024 0 /dev/X &
+FB_FILE=:0 rt -o /dev/plot3 -s 1024 model.g component.r | plot3-fb -s 1024
+----
+Pipe the 3-D plot output of *rt*(1) for a region into *plot3-fb*, displaying the
+wireframe on a 1024x1024 framebuffer started with *fbserv*(1) without writing an
+intermediate file.
+====
+
+.Overlay thick annotation lines on an existing image
+====
+[source,bash]
+----
+plot3-fb -o -t 3 -F /dev/X labels.plot3
+----
+Draw the strokes from labels.plot3 three pixels thick on top of whatever image
+is already in the X framebuffer, leaving the background untouched.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *fbserv*(1), *rt*(1), *plot3rot*(1), *plot3stat*(1), *pix-fb*(1), *plot3*(5)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

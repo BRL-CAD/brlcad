@@ -1,0 +1,107 @@
+= FBLINE(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+fbline - draw a colored line on a framebuffer
+
+== SYNOPSIS
+
+[source]
+----
+fbline [-c] [-F framebuffer] [-s squaresize] [-w width] [-n height]
+       [-r red] [-g green] [-b blue] x1 y1 x2 y2
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*fbline* draws a single line on the currently selected framebuffer
+between the points (_x1_, _y1_) and (_x2_, _y2_) using a Bresenham
+line algorithm. Endpoints that fall outside the framebuffer are clamped
+to the screen edges. Coordinates are given in framebuffer pixels with
+the origin at the lower-left corner.
+
+The environment variable FB_FILE specifies the framebuffer to use; see
+*brlcad*(1). The framebuffer may instead be named explicitly with the
+*-F* option. By default the requested framebuffer size is 512x512
+pixels and the line color is white (255, 255, 255).
+
+Use *fbpoint*(1) to interactively determine endpoint coordinates.
+
+
+[[options]]
+== OPTIONS
+
+*-c*::
+  Clear the framebuffer before drawing. By default the line is drawn
+  over the existing image.
+
+*-F* _framebuffer_::
+  Explicitly specify the framebuffer device.
+
+*-s* _squaresize_::
+  Set both the width and height of the framebuffer to _squaresize_
+  pixels. Also available as *-S*.
+
+*-w* _width_::
+  Set the framebuffer width in pixels. Also available as *-W*.
+
+*-n* _height_::
+  Set the framebuffer height in pixels. Also available as *-N*.
+
+*-r* _red_::
+  Red component [0..255] of the line color (default 255).
+
+*-g* _green_::
+  Green component [0..255] of the line color (default 255).
+
+*-b* _blue_::
+  Blue component [0..255] of the line color (default 255).
+
+*-h*::
+  Print a usage message and exit. Also available as *-?*.
+
+
+[[examples]]
+== EXAMPLES
+
+.Draw crosshairs over an image on the framebuffer
+====
+[source,bash]
+----
+pix-fb -s 512 image.pix
+fbline -r 255 -g 0 -b 0 256 0 256 511
+fbline -r 255 -g 0 -b 0 0 256 511 256
+----
+Display a 512x512 image with *pix-fb*(1), then overlay a red vertical
+and a red horizontal line through the center to mark the image center.
+Because *fbline* draws over the existing image without clearing it,
+successive invocations accumulate on the same framebuffer.
+====
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *fblabel*(1), *fbpoint*(1), *pix-fb*(1), *plot3-fb*(1), *pix*(5)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,7 +1,7 @@
 #                          R T I M A G E . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2025 United States Government as represented by
+# Copyright (c) 1998-2026 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -43,11 +43,91 @@ proc ::pid_wait { pid } {
 
 namespace eval cadwidgets {
 
+proc rtimage_exec_log {cmd log_file} {
+    if {[catch {exec {*}$cmd >& $log_file} msg]} {
+	return -code error "rtimage command failed: $cmd\n$msg"
+    }
+}
+
+proc rtimage_cut_animation {rtimage_dict} {
+    foreach param [dict keys $rtimage_dict] {
+	set $param [dict get $rtimage_dict $param]
+    }
+    foreach var {_color_objects _ghost_objects _edge_objects} {
+	if {![info exists $var]} { set $var {} }
+    }
+
+    set anim_objects [lsort -unique [concat $_color_objects $_ghost_objects $_edge_objects]]
+    if {![llength $anim_objects]} {
+	return -code error "rtwizard: no objects available for cutting-plane animation bounds"
+    }
+    if {![info exists ::RtWizard::wizard_state(output_filename)] ||
+	$::RtWizard::wizard_state(output_filename) eq ""} {
+	return -code error "rtwizard: cutting-plane animation requires a file output"
+    }
+
+    if {[info exists ::RtWizard::wizard_state(cut_direction)] &&
+	[string trim $::RtWizard::wizard_state(cut_direction)] ne ""} {
+	if {[catch {set cut_dir [vunitize $::RtWizard::wizard_state(cut_direction)]}]} {
+	    return -code error "rtwizard: cutting direction must be a non-zero XYZ vector"
+	}
+    } else {
+	set omat [quat_quat2mat $_orientation]
+	set cut_dir [vunitize [list [expr {-[lindex $omat 8]}] \
+	    [expr {-[lindex $omat 9]}] [expr {-[lindex $omat 10]}]]]
+    }
+
+    set sweep_bounds [rtwizard_cut_bounds $_dbfile $cut_dir {*}$anim_objects]
+    set sweep_min [lindex $sweep_bounds 0]
+    set sweep_max [lindex $sweep_bounds 1]
+    set sweep_span [expr {$sweep_max - $sweep_min}]
+    if {$sweep_span <= 0.0} {
+	return -code error "rtwizard: rendered objects have degenerate cutting-plane bounds"
+    }
+    # Keep the terminal slice large enough to survive rasterization while
+    # remaining approximately one output-pixel fraction of the sweep.
+    set sweep_eps [expr {max(abs($sweep_span) / double(max($_w, $_n)),
+	abs($sweep_span) * 0.05, 1.0e-9)}]
+    set sweep_first [expr {$sweep_min - $sweep_eps}]
+    set sweep_last [expr {$sweep_max - $sweep_eps}]
+    set frame_count $::RtWizard::wizard_state(cut_steps)
+    if {$frame_count < 2} {
+	return -code error "rtwizard: animation frame count must be at least 2"
+    }
+
+    dict set rtimage_dict _animate 0
+    set animation_frames {}
+    set frame_dir [file dirname $::RtWizard::wizard_state(output_filename)]
+    try {
+	for {set frame_no 0} {$frame_no < $frame_count} {incr frame_no} {
+	    set fraction [expr {double($frame_no) / double($frame_count - 1)}]
+	    set plane_dist [expr {$sweep_first + $fraction * ($sweep_last - $sweep_first)}]
+	    set plane_pt [vscale $cut_dir $plane_dist]
+	    dict set rtimage_dict _cut_plane [format "%.15g,%.15g,%.15g,%.15g,%.15g,%.15g" \
+		[lindex $plane_pt 0] [lindex $plane_pt 1] [lindex $plane_pt 2] \
+		[lindex $cut_dir 0] [lindex $cut_dir 1] [lindex $cut_dir 2]]
+	    puts "Rendering frame [expr {$frame_no + 1}]/$frame_count"
+	    catch {exec [file join [bu_dir bin] fbclear] -F $_port \
+		[lindex $_bgcolor 0] [lindex $_bgcolor 1] [lindex $_bgcolor 2]}
+	    rtimage $rtimage_dict
+	    set frame_file [file join $frame_dir [format ".rtwizard-%d-%06d.pix" [pid] $frame_no]]
+	    exec [file join [bu_dir bin] fb-pix] -w $_w -n $_n -F $_port $frame_file 2>@1
+	    lappend animation_frames $frame_file
+	}
+	rtwizard_anim_write $::RtWizard::wizard_state(output_filename) $_w $_n \
+	    $::RtWizard::wizard_state(animation_fps) {*}$animation_frames
+    } finally {
+	foreach frame_file $animation_frames { catch {file delete -force $frame_file} }
+    }
+    return 1
+}
+
 proc rtimage {rtimage_dict} {
     global tcl_platform
     global env
     set necessary_vars [list _dbfile _port _w _n _viewsize _orientation \
-    _eye_pt _perspective _bgcolor _ecolor _necolor _occmode _gamma _benchmark_mode]
+    _eye_pt _perspective _bgcolor _ecolor _necolor _occmode _gamma _benchmark_mode \
+    _cut_plane _ao_samples _ao_radius _animate]
     set necessary_lists [list _color_objects _ghost_objects _edge_objects]
 
     # It's the responsibility of the calling function
@@ -64,6 +144,12 @@ proc rtimage {rtimage_dict} {
     }
     foreach var ${necessary_lists} {
       if {![info exists $var]} { set $var {} }
+    }
+
+    if {$_animate ne "" && $_animate &&
+	[info exists ::RtWizard::wizard_state(make_animation)] &&
+	$::RtWizard::wizard_state(make_animation)} {
+	return [rtimage_cut_animation $rtimage_dict]
     }
 
     set ar [ expr $_w.0 / $_n.0 ]
@@ -95,17 +181,28 @@ proc rtimage {rtimage_dict} {
     if {[llength $_color_objects]} {
 	set have_color_objects 1
 
-	set cmd [concat [list [file join $binpath rt]] -w $_w -n $_n $_benchmark_mode \
-	    -F $_port \
+	set cmd [list [file join $binpath rt] -w $_w -n $_n]
+	if {$_benchmark_mode != ""} {
+	    lappend cmd $_benchmark_mode
+	}
+	if {$_cut_plane != ""} {
+	    lappend cmd -k $_cut_plane
+	}
+	if {$_ao_samples > 0} {
+	    set ao_set "set ambSamples=$_ao_samples"
+	    if {$_ao_radius > 0} { append ao_set " ambRadius=$_ao_radius" }
+	    lappend cmd -c $ao_set
+	}
+	lappend cmd -F $_port \
 	    -V $ar \
 	    -R \
 	    -A 0.9 \
 	    -p $_perspective \
 	    -C [lindex $_bgcolor 0]/[lindex $_bgcolor 1]/[lindex $_bgcolor 2] \
-	    "-c {viewsize $_viewsize}" \
-	    "-c {orientation $_orientation}" \
-	    "-c {eye_pt $_eye_pt}" \
-	    [list $_dbfile]]
+	    -c "viewsize $_viewsize" \
+	    -c "orientation $_orientation" \
+	    -c "eye_pt $_eye_pt" \
+	    $_dbfile
 
 	foreach obj $_color_objects {
 	    lappend cmd $obj
@@ -116,7 +213,7 @@ proc rtimage {rtimage_dict} {
 	#
 	# Run rt to generate the color insert
 	#
-	catch {eval exec $cmd >& $_log_file} curr_pid
+	rtimage_exec_log $cmd $_log_file
 
 	# Look for color objects that also get edges
 	if {[llength $_edge_objects] && [llength $_ecolor] == 3} {
@@ -145,19 +242,25 @@ proc rtimage {rtimage_dict} {
 		if {[llength $ce_objects]} {
 		    set bgMode [list set bg=[lindex $_bgcolor 0],[lindex $_bgcolor 1],[lindex $_bgcolor 2]]
 
-		    set cmd [concat [list [file join $binpath rtedge]] -w $_w -n $_n $_benchmark_mode \
-		                 -F $_port \
-				 -V $ar \
-				 -R \
-				 -A 0.9 \
-				 -p $_perspective \
-				 "-c {$fgMode}" \
-				 "-c {$bgMode}" \
-				 "-c {set ov=1}" \
-				 "-c {viewsize $_viewsize}" \
-				 "-c {orientation $_orientation}" \
-				 "-c {eye_pt $_eye_pt}" \
-				 [list $_dbfile]]
+		    set cmd [list [file join $binpath rtedge] -w $_w -n $_n]
+		    if {$_benchmark_mode != ""} {
+			lappend cmd $_benchmark_mode
+		    }
+		    if {$_cut_plane != ""} {
+			lappend cmd -k $_cut_plane
+		    }
+		    lappend cmd -F $_port \
+			-V $ar \
+			-R \
+			-A 0.9 \
+			-p $_perspective \
+			-c $fgMode \
+			-c $bgMode \
+			-c "set ov=1" \
+			-c "viewsize $_viewsize" \
+			-c "orientation $_orientation" \
+			-c "eye_pt $_eye_pt" \
+			$_dbfile
 
 		    foreach obj $ce_objects {
 			lappend cmd $obj
@@ -170,7 +273,7 @@ proc rtimage {rtimage_dict} {
 		#
 		# Run rtedge to generate the full-color with edges
 		#
-		catch {eval exec $cmd >& $_log_file} curr_pid
+		rtimage_exec_log $cmd $_log_file
 	    }
 	}
 
@@ -178,7 +281,7 @@ proc rtimage {rtimage_dict} {
 	set have_color_objects 0
 
 	# Put a blank image into the framebuffer
-	catch {exec [list [file join $binpath fbclear]] -F $_port [lindex $_bgcolor 0] [lindex $_bgcolor 1] [lindex $_bgcolor 2]}
+	catch {exec [file join $binpath fbclear] -F $_port [lindex $_bgcolor 0] [lindex $_bgcolor 1] [lindex $_bgcolor 2]}
     }
 
     set occlude_objects [lsort -unique [concat $_color_objects $_ghost_objects]]
@@ -189,17 +292,28 @@ proc rtimage {rtimage_dict} {
 	catch {exec [file join $binpath fb-pix] -w $_w -n $_n -F $_port $tfci}
 
 	set have_ghost_objects 1
-	set cmd [concat [list [file join $binpath rt]] -w $_w -n $_n $_benchmark_mode \
-	             -o $tgi \
-		     -V $ar \
-		     -R \
-		     -A 0.9 \
-		     -p $_perspective \
-		     -C [lindex $_bgcolor 0]/[lindex $_bgcolor 1]/[lindex $_bgcolor 2] \
-		     "-c {viewsize $_viewsize}" \
-		     "-c {orientation $_orientation}" \
-		     "-c {eye_pt $_eye_pt}" \
-		     [list $_dbfile]]
+	set cmd [list [file join $binpath rt] -w $_w -n $_n]
+	if {$_benchmark_mode != ""} {
+	    lappend cmd $_benchmark_mode
+	}
+	if {$_cut_plane != ""} {
+	    lappend cmd -k $_cut_plane
+	}
+	if {$_ao_samples > 0} {
+	    set ao_set "set ambSamples=$_ao_samples"
+	    if {$_ao_radius > 0} { append ao_set " ambRadius=$_ao_radius" }
+	    lappend cmd -c $ao_set
+	}
+	lappend cmd -o $tgi \
+	    -V $ar \
+	    -R \
+	    -A 0.9 \
+	    -p $_perspective \
+	    -C [lindex $_bgcolor 0]/[lindex $_bgcolor 1]/[lindex $_bgcolor 2] \
+	    -c "viewsize $_viewsize" \
+	    -c "orientation $_orientation" \
+	    -c "eye_pt $_eye_pt" \
+	    $_dbfile
 
 	foreach obj $_ghost_objects {
 	    lappend cmd $obj
@@ -210,19 +324,30 @@ proc rtimage {rtimage_dict} {
 	#
 	# Run rt to generate the full-color version of the ghost image
 	#
-	catch {eval exec $cmd >& $_log_file} curr_pid
+	rtimage_exec_log $cmd $_log_file
 
-	set cmd [concat [list [file join $binpath rt]] -w $_w -n $_n $_benchmark_mode \
-	             -o $tgfci \
-		     -V $ar \
-		     -R \
-		     -A 0.9 \
-		     -p $_perspective \
-		     -C [lindex $_bgcolor 0]/[lindex $_bgcolor 1]/[lindex $_bgcolor 2] \
-		     "-c {viewsize $_viewsize}" \
-		     "-c {orientation $_orientation}" \
-		     "-c {eye_pt $_eye_pt}" \
-		     [list $_dbfile]]
+	set cmd [list [file join $binpath rt] -w $_w -n $_n]
+	if {$_benchmark_mode != ""} {
+	    lappend cmd $_benchmark_mode
+	}
+	if {$_cut_plane != ""} {
+	    lappend cmd -k $_cut_plane
+	}
+	if {$_ao_samples > 0} {
+	    set ao_set "set ambSamples=$_ao_samples"
+	    if {$_ao_radius > 0} { append ao_set " ambRadius=$_ao_radius" }
+	    lappend cmd -c $ao_set
+	}
+	lappend cmd -o $tgfci \
+	    -V $ar \
+	    -R \
+	    -A 0.9 \
+	    -p $_perspective \
+	    -C [lindex $_bgcolor 0]/[lindex $_bgcolor 1]/[lindex $_bgcolor 2] \
+	    -c "viewsize $_viewsize" \
+	    -c "orientation $_orientation" \
+	    -c "eye_pt $_eye_pt" \
+	    $_dbfile
 
 	foreach obj $occlude_objects {
 	    lappend cmd $obj
@@ -233,7 +358,7 @@ proc rtimage {rtimage_dict} {
 	#
 	# Run rt to generate the full-color version of the occlude_objects (i.e. color and ghost)
 	#
-	catch {eval exec $cmd >& $_log_file} curr_pid
+	rtimage_exec_log $cmd $_log_file
 
 	#
 	# Convert to ghost image
@@ -278,19 +403,28 @@ proc rtimage {rtimage_dict} {
 	    set bgMode [list set bg=[lindex $_bgcolor 0],[lindex $_bgcolor 1],[lindex $_bgcolor 2]]
 	}
 
-	set cmd [concat [list [file join $binpath rtedge]] -w $_w -n $_n $_benchmark_mode \
-	             -F $_port \
-		     -V $ar \
-		     -R \
-		     -A 0.9 \
-		     -p $_perspective \
-		     "-c {$fgMode}" \
-		     "-c {$bgMode}" \
-		     $coMode \
-	             "-c {viewsize $_viewsize}" \
-		     "-c {orientation $_orientation}" \
-		     "-c {eye_pt $_eye_pt}" \
-		     [list $_dbfile]]
+	set cmd [list [file join $binpath rtedge] -w $_w -n $_n]
+	if {$_benchmark_mode != ""} {
+	    lappend cmd $_benchmark_mode
+	}
+	if {$_cut_plane != ""} {
+	    lappend cmd -k $_cut_plane
+	}
+	lappend cmd -F $_port \
+	    -V $ar \
+	    -R \
+	    -A 0.9 \
+	    -p $_perspective \
+	    -c $fgMode \
+	    -c $bgMode
+	if {[llength $occlude_objects]} {
+	    lappend cmd -c "set om=$_occmode" -c "set oo=\"$occlude_objects\""
+	}
+	lappend cmd \
+	    -c "viewsize $_viewsize" \
+	    -c "orientation $_orientation" \
+	    -c "eye_pt $_eye_pt" \
+	    $_dbfile
 	foreach obj $_edge_objects {
 	    lappend cmd $obj
 	}
@@ -300,7 +434,7 @@ proc rtimage {rtimage_dict} {
 	#
 	# Run rtedge to generate the full-color version of the ghost image
 	# !!! manually write an rtedge log
-	catch {eval exec $cmd >& rtedge.log} curr_pid
+	rtimage_exec_log $cmd rtedge.log
     }
 
     catch {file delete -force $tgi}

@@ -1,7 +1,7 @@
 /*                         R M A P . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -45,7 +45,6 @@ struct _ged_id_to_names {
 int
 ged_rmap_core(struct ged *gedp, int argc, const char *argv[])
 {
-    int i;
     struct directory *dp;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
@@ -72,8 +71,7 @@ ged_rmap_core(struct ged *gedp, int argc, const char *argv[])
     BU_LIST_INIT(&headIdName.l);
 
     /* For all regions not hidden */
-    for (i = 0; i < RT_DBNHASH; i++) {
-	for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+    FOR_ALL_DIRECTORY_START(dp, gedp->dbip)
 	    int found = 0;
 
 	    if (!(dp->d_flags & RT_DIR_REGION) ||
@@ -83,8 +81,7 @@ ged_rmap_core(struct ged *gedp, int argc, const char *argv[])
 	    if (rt_db_get_internal(&intern,
 				   dp,
 				   gedp->dbip,
-				   (fastf_t *)NULL,
-				   &rt_uniresource) < 0) {
+				   (fastf_t *)NULL) < 0) {
 		bu_vls_printf(gedp->ged_result_str, "%s: Database read error, aborting", argv[0]);
 		return BRLCAD_ERROR;
 	    }
@@ -122,8 +119,7 @@ ged_rmap_core(struct ged *gedp, int argc, const char *argv[])
 	    }
 
 	    rt_db_free_internal(&intern);
-	}
-    }
+    FOR_ALL_DIRECTORY_END;
 
     /* place data in the result string */
     while (BU_LIST_WHILE(itnp, _ged_id_to_names, &headIdName.l)) {
@@ -150,24 +146,13 @@ ged_rmap_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl rmap_cmd_impl = {
-    "rmap",
-    ged_rmap_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd rmap_cmd = { &rmap_cmd_impl };
-const struct ged_cmd *rmap_cmds[] = { &rmap_cmd, NULL };
+#define GED_RMAP_COMMANDS(X, XID) \
+    X(rmap, ged_rmap_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  rmap_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_RMAP_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_rmap", 1, GED_RMAP_COMMANDS)
 
 /*
  * Local Variables:

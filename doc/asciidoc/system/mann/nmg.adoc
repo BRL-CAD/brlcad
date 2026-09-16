@@ -1,0 +1,90 @@
+= NMG(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+nmg - create and edit NMG (Non-Manifold Geometry) objects
+
+== SYNOPSIS
+
+[source]
+----
+nmg object mm name
+nmg object cmface x0 y0 z0 [x1 y1 z1 ...]
+nmg object kill V x y z
+nmg object kill F id
+nmg object move V x_old y_old z_old x_new y_new z_new
+nmg object make V x0 y0 z0 [x1 y1 z1 ...]
+----
+
+[[description]]
+== DESCRIPTION
+
+The *nmg* command is a dispatcher for creating and editing NMG (Non-Manifold Geometry) solid objects in the database. All invocations require an NMG object name as the first argument, followed by a subcommand.
+
+The available subcommands are:
+
+=== mm _name_
+Creates a new, empty NMG model structure and stores it in the database as `name`. The resulting object contains a model with no regions, shells, faces, or vertices.
+
+=== cmface _x0 y0 z0 [x1 y1 z1 ...]_
+Creates a manifold face in the first shell of the NMG `object`. Each group of three coordinates defines one vertex of the face. At least three vertices (9 coordinate values) must be provided. Vertices are listed in the order that defines the face's winding direction (outward normal by the right-hand rule). The number of coordinate values after the object name must be a multiple of 3.
+
+=== kill V _x y z_
+Removes the vertex at model-space coordinates `(x, y, z)` from the NMG object, along with its vertexuse, vertex geometry, and all higher-order topology that depends on it (edges, faces). Use `labelvert` to identify vertex coordinates before killing.
+
+=== kill F _id_
+Removes the face with the given face index `id` from the NMG object, along with its faceuse and face geometry. Use `labelface` to display face index numbers before killing.
+
+=== move V _x_old y_old z_old x_new y_new z_new_
+Moves an existing vertex from its current position `(x_old, y_old, z_old)` to the new position `(x_new, y_new, z_new)` in model space. Exactly six coordinate values are required. Use `labelvert` to identify vertex coordinates.
+
+=== make V _x0 y0 z0 [x1 y1 z1 ...]_
+Creates one or more new vertices in the NMG `object`. Each group of three coordinates defines one new vertex. At least one vertex (3 coordinate values) must be provided; additional vertices may be specified in the same call. The number of coordinate values must be a multiple of 3.
+
+[[examples]]
+== EXAMPLES
+
+.Create an empty NMG model
+[example]
+====
+mged> **nmg my_nmg.s mm my_nmg.s**
+
+Creates an empty NMG model named `my_nmg.s` in the database.
+====
+
+.Create a triangular face
+[example]
+====
+mged> **nmg my_nmg.s cmface 0 0 0 100 0 0 50 100 0**
+
+Adds a triangular manifold face to `my_nmg.s` with vertices at (0,0,0), (100,0,0), and (50,100,0).
+====
+
+.Move a vertex to a new position
+[example]
+====
+mged> **nmg my_nmg.s move V 50 100 0 50 150 25**
+
+Moves the vertex currently at (50, 100, 0) to the new position (50, 150, 25).
+====
+
+.Kill a face by index
+[example]
+====
+mged> **labelface my_nmg.s**
+mged> **nmg my_nmg.s kill F 2**
+
+First displays face index numbers with `labelface`, then removes face 2 from `my_nmg.s`.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,0 +1,8 @@
+Native CSG report fixture                                               S      1
+,,7Hfixture,11Hnative.iges,6H7.45.0,4Htest,32,38,6,308,15,7Hfixture,1.0,G      1
+2,2HMM,,1.0,15H20260905.000000,0.0005,100000.0,7HUnknown,7HUnknown,11,0,G      2
+15H20260905.000000;                                                     G      3
+     158       1       0       0       0       0       0       0       0D      1
+     158       0       0       1       0       0       0SPHERE         0D      2
+158,10,0,0,0;                                                          1P      1
+S      1G      3D      2P      1                                        T      1

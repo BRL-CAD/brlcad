@@ -1,7 +1,7 @@
 /*                        B W - P I X . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2025 United States Government as represented by
+ * Copyright (c) 1986-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -32,6 +32,7 @@
 #include "bio.h"
 
 #include "bu/app.h"
+#include "bu/file.h"
 #include "bu/getopt.h"
 #include "bu/str.h"
 #include "bu/opt.h"
@@ -47,10 +48,34 @@ open_file(FILE **fp, const char *name)
     if (BU_STR_EQUAL(name, "-")) {
 	*fp = stdin;
     } else if (BU_STR_EQUAL(name, ".")) {
-	*fp = fopen("/dev/null", "rb");
+	*fp = fopen(bu_file_null(), "rb");
     } else if ((*fp = fopen(name, "rb")) == NULL) {
 	bu_exit(2, "bw3-pix: Can't open \"%s\"\n", name);
     }
+}
+
+static int
+duplicate_stdout(const struct bu_vls *out_fname)
+{
+    int fno = fileno(stdout);
+
+    return (bu_vls_strlen(out_fname) > 0 && fno > 0 && !isatty(fno));
+}
+
+static int
+write_output(FILE *outfp, const unsigned char *buf, size_t len, int dup_stdout)
+{
+    if (fwrite(buf, sizeof(char), len, outfp) != len) {
+	perror("fwrite");
+	return 0;
+    }
+
+    if (dup_stdout && fwrite(buf, sizeof(char), len, stdout) != len) {
+	perror("fwrite");
+	return 0;
+    }
+
+    return 1;
 }
 
 int
@@ -160,16 +185,16 @@ main(int argc, char **argv)
 		bu_exit(EXIT_FAILURE, "bw-pix: can't open \"%s\"\n", bu_vls_addr(&out_fname));
 	    }
 	}
+	if (!in_std || !out_std)
+	    bu_exit(EXIT_FAILURE, "%s", usage);
 	while ((num = fread(ibuf, sizeof(char), 1024, in_std)) > 0) {
-	    size_t ret;
+	    int dup_stdout = duplicate_stdout(&out_fname);
 	    for (in = out = 0; in < num; in++, out += 3) {
 		obuf[out] = ibuf[in];
 		obuf[out+1] = ibuf[in];
 		obuf[out+2] = ibuf[in];
 	    }
-	    ret = fwrite(obuf, sizeof(char), 3*num, out_std);
-	    if (ret == 0) {
-		perror("fwrite");
+	    if (!write_output(out_std, obuf, 3*num, dup_stdout)) {
 		break;
 	    }
 	}
@@ -190,11 +215,14 @@ main(int argc, char **argv)
 	open_file(&rfp, rfile);
 	open_file(&gfp, gfile);
 	open_file(&bfp, bfile);
+	if (!out_std)
+	    bu_exit(EXIT_FAILURE, "%s", usage);
 
 	while (1) {
 	    unsigned char obuf[3*1024];
 	    unsigned char red[1024], green[1024], blue[1024];
 	    unsigned char *obufp;
+	    int dup_stdout = duplicate_stdout(&out_fname);
 	    int nr, ng, nb, num, i;
 	    nr = fread(red, sizeof(char), 1024, rfp);
 	    ng = fread(green, sizeof(char), 1024, gfp);
@@ -218,9 +246,7 @@ main(int argc, char **argv)
 		*obufp++ = green[i];
 		*obufp++ = blue[i];
 	    }
-	    num = fwrite(obuf, sizeof(char), num*3, out_std);
-	    if (num <= 0) {
-		perror("fwrite");
+	    if (!write_output(out_std, obuf, (size_t)num*3, dup_stdout)) {
 		break;
 	    }
 	}
@@ -235,6 +261,9 @@ main(int argc, char **argv)
 	return 1;
     icv_gray2rgb(img);
     icv_write(img, bu_vls_addr(&out_fname), BU_MIME_IMAGE_PIX);
+    if (duplicate_stdout(&out_fname)) {
+	icv_write(img, NULL, BU_MIME_IMAGE_PIX);
+    }
     icv_destroy(img);
     return 0;
 }

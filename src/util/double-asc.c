@@ -1,7 +1,7 @@
 /*                    D O U B L E - A S C . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2025 United States Government as represented by
+ * Copyright (c) 1996-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -25,6 +25,8 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -33,9 +35,11 @@
 #include "vmath.h"
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/malloc.h"
 #include "bu/file.h"
 #include "bu/log.h"
+#include "bu/num.h"
 #include "bu/str.h"
 #include "bu/cv.h"
 #include "bu/snooze.h"
@@ -47,7 +51,7 @@
 #define usage1 "Usage: double-asc [-a] [-s squaresize] [-w width] [-n height]\n"
 #define usage2 "                  [-c] [-f format] [-# depth] [file.d]\n"
 
-static char *file_name;
+static const char *file_name;
 static char *format = 0;
 static int infd;
 
@@ -59,7 +63,6 @@ static long int file_height = 512L;	/* default input height */
 
 static int make_cells = 0;		/* Insert cell coords in output? */
 static int d_per_l = 1;		/* doubles per line of output */
-
 
 void
 print_usage(void)
@@ -84,15 +87,19 @@ get_args(int argc, char **argv)
 		break;
 	    case 's':
 		/* square file size */
-		file_height = file_width = atol(bu_optarg);
+		if (!bu_opt_scan_long_range(bu_optarg, &file_width, 1, LONG_MAX, "input size"))
+		    print_usage();
+		file_height = file_width;
 		autosize = 0;
 		break;
 	    case 'n':
-		file_height = atol(bu_optarg);
+		if (!bu_opt_scan_long_range(bu_optarg, &file_height, 1, LONG_MAX, "input height"))
+		    print_usage();
 		autosize = 0;
 		break;
 	    case 'w':
-		file_width = atol(bu_optarg);
+		if (!bu_opt_scan_long_range(bu_optarg, &file_width, 1, LONG_MAX, "input width"))
+		    print_usage();
 		autosize = 0;
 		break;
 		/*
@@ -107,7 +114,8 @@ get_args(int argc, char **argv)
 		bu_strlcpy(format, bu_optarg, strlen(bu_optarg)+1);
 		break;
 	    case '#':
-		d_per_l = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &d_per_l, 1, INT_MAX, "doubles per line"))
+		    print_usage();
 		break;
 	    default:
 		print_usage();
@@ -115,7 +123,7 @@ get_args(int argc, char **argv)
     }
 
     if (format == 0)
-	format = " %g";
+	format = bu_strdup(" %g");
 
     /*
      * Establish the input stream
@@ -159,7 +167,6 @@ main (int argc, char **argv)
     int l_per_b;	/* buffer size (in output lines) */
     int line_nm;	/* number of current line */
     int num;		/* number of bytes read */
-    int i;
     int row, col;	/* coords within input stream */
 
     bu_setprogname(argv[0]);
@@ -201,9 +208,8 @@ main (int argc, char **argv)
 		printf("%d %d", col, row);
 	    bu_cv_ntohd((unsigned char *)value, bp, d_per_l);
 	    bp += d_per_l * 8;
-	    for (i = 0; i < d_per_l; ++i)
-		printf(format, value[i]);
-	    printf("\n");
+	    bu_num_print(value, (size_t)d_per_l, (size_t)d_per_l,
+			 NULL, NULL, format, "", NULL, "\n");
 	    if (++col % file_width == 0) {
 		col = 0;
 		++row;

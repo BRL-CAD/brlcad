@@ -1,5 +1,0 @@
-The libbu and libdm files here are docbook conversions of files
-from elsewhere in the documentation.  They aren't yet proper
-man pages, and they need to be reviewed to see if the information
-they contain is still accurate.  Until then, they are present
-but not built.

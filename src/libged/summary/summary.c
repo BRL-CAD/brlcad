@@ -1,7 +1,7 @@
 /*                         S U M M A R Y . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -65,7 +65,7 @@ static void solid_counter(struct db_i* dbip, struct directory* dp, void* cdata)
     struct summary_specifics* ssp = (struct summary_specifics*)cdata;
 
     struct rt_db_internal intern;
-    if (rt_db_get_internal(&intern, dp, dbip, (fastf_t*)NULL, NULL) < 0)
+    if (rt_db_get_internal(&intern, dp, dbip, (fastf_t*)NULL) < 0)
 	return;
 
     // filter items we care about summarizing
@@ -122,7 +122,7 @@ summary_dir(struct ged *gedp, int flag, struct bu_vls* specific)
 	}
 
 	ss.name = specific_cstr;
-	db_functree(gedp->dbip, specific_dp, comb_counter, solid_counter, NULL, (void*)&ss);
+	db_treewalk_basic(gedp->dbip, specific_dp, comb_counter, solid_counter, (void*)&ss);
 
 	print_counts(gedp->ged_result_str, &ss);
 	return;
@@ -260,24 +260,13 @@ ged_summary_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl summary_cmd_impl = {
-    "summary",
-    ged_summary_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd summary_cmd = { &summary_cmd_impl };
-const struct ged_cmd *summary_cmds[] = { &summary_cmd, NULL };
+#define GED_SUMMARY_COMMANDS(X, XID) \
+    X(summary, ged_summary_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  summary_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_SUMMARY_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_summary", 1, GED_SUMMARY_COMMANDS)
 
 /*
  * Local Variables:

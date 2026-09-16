@@ -1,7 +1,7 @@
 /*                      S H _ L I G H T . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2025 United States Government as represented by
+ * Copyright (c) 1998-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,6 +27,7 @@
 
 #include <stddef.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <math.h>
 
@@ -36,11 +37,15 @@
 #include "optical.h"
 #include "bv/plot3.h"
 #include "optical/light.h"
-#include "photonmap.h"
+#include "optical/photonmap.h"
 
 
 
 #define LIGHT_O(m) bu_offsetof(struct light_specific, m)
+
+/* The shader UI exposes shadows in the range 0..64.  Keep that common
+ * visibility flag working set off the heap during per-pixel shading. */
+#define LIGHT_STACK_FLAG_SAMPLES (SOME_LIGHT_SAMPLES * 64)
 
 
 /** Heads linked list of lights */
@@ -783,8 +788,11 @@ light_init(struct application *ap)
  * lights which will not be cleaned up by mlib_free(): implicitly
  * created lights, because they have no associated region, and
  * invisible lights, because their region was destroyed.
+ *
+ * TODO - used directly by rtsrv - should this be a public feature,
+ * or is some other solution in order?
  */
-void
+C_DECL void
 light_cleanup(void)
 {
     register struct light_specific *lsp, *zaplsp;
@@ -842,7 +850,7 @@ light_hit(struct application *ap, struct partition *PartHeadp, struct seg *finis
     int light_visible = 0;
     int air_sols_seen = 0;
     int is_proc;
-    char *reason = "???";
+    const char *reason = "???";
 
     vect_t filter_color;
 
@@ -1134,6 +1142,54 @@ light_miss(register struct application *ap)
 #define VF_BACKFACE 2
 
 /**
+ * Decide whether shadow (light-visibility) rays may use a cheap any-hit
+ * query (a_onehit = 1, stop at the first solid) instead of the full
+ * tree-to-the-light traversal (a_onehit = -2).
+ *
+ * Any-hit is only valid when every solid the ray could cross before the
+ * light is a fully opaque, light-blocking occluder.  If the model
+ * contains air regions (light passes through air), transmissive regions
+ * (reg_transmit != 0, e.g. glass/filter that attenuates rather than
+ * blocks), or procedural shaders (which may be transparent), the first
+ * hit is not a definitive occlusion answer and we must keep the full
+ * traversal that light_hit() relies on.
+ *
+ * The model is static during a frame, so the answer is computed once and
+ * cached.  Concurrent shadow rays may race to compute it, but all arrive
+ * at the same value and the write is idempotent.  LIBRT_NO_SHADOW_ANYHIT
+ * forces the conservative full-traversal path for debugging/comparison.
+ */
+static int shadow_anyhit_ok = -1;	/* -1 unknown, 0 no, 1 yes */
+
+static int
+shadow_anyhit_safe(struct application *ap)
+{
+    struct region *regp;
+    int ok = 1;
+
+    if (shadow_anyhit_ok >= 0)
+	return shadow_anyhit_ok;
+
+    if (getenv("LIBRT_NO_SHADOW_ANYHIT")) {
+	shadow_anyhit_ok = 0;
+	return 0;
+    }
+
+    RT_CK_RTI(ap->a_rt_i);
+    for (BU_LIST_FOR(regp, region, &(ap->a_rt_i->HeadRegion))) {
+	if (regp->reg_aircode != 0) { ok = 0; break; }	/* light traverses air */
+	if (regp->reg_transmit != 0) { ok = 0; break; }	/* transmissive/glass */
+	if (regp->reg_mfuncs) {
+	    struct mfuncs *mfp = (struct mfuncs *)regp->reg_mfuncs;
+	    if (mfp->mf_flags & MFF_PROC) { ok = 0; break; }	/* shader may transmit */
+	}
+    }
+
+    shadow_anyhit_ok = ok;
+    return ok;
+}
+
+/**
  * Compute 1 light visibility ray from a hit point to the light.
  * Called by light_obs() to determine light visibility.
  */
@@ -1402,7 +1458,15 @@ light_vis(struct light_obs_stuff *los, char *flags)
     sub_ap.a_level = 0;
     /* Will need entry & exit pts, for filter glass ==> 2 */
     /* Continue going through air ==> negative */
-    sub_ap.a_onehit = -2;
+    /* In an all-opaque, air-free, non-procedural model the first solid
+     * hit fully settles occlusion, so an any-hit query is sufficient and
+     * much cheaper than tracing the whole ray to the light.  Otherwise
+     * fall back to the full traversal that handles air/glass/filtering.
+     */
+    if (shadow_anyhit_safe(los->ap))
+	sub_ap.a_onehit = 1;
+    else
+	sub_ap.a_onehit = -2;
 
     VSETALL(sub_ap.a_color, 1);	/* vis intens so far */
     sub_ap.a_purpose = los->lsp->lt_name;	/* name of light shot at */
@@ -1464,8 +1528,7 @@ light_obs(struct application *ap, struct shadework *swp, int have)
     static int rand_idx;
     int flag_size = 0;
 
-    /* use a constant buffer to minimize number of malloc/free calls per ray */
-    char static_flags[SOME_LIGHT_SAMPLES] = {0};
+    char static_flags[LIGHT_STACK_FLAG_SAMPLES];
     char *flags = static_flags;
 
     if (optical_debug & OPTICAL_DEBUG_LIGHT) {
@@ -1483,7 +1546,7 @@ light_obs(struct application *ap, struct shadework *swp, int have)
 	    flag_size = lsp->lt_pt_count;
 	}
     }
-    if (flag_size > SOME_LIGHT_SAMPLES) {
+    if (flag_size > LIGHT_STACK_FLAG_SAMPLES) {
 	flags = (char *)bu_calloc(flag_size, sizeof(char), "callocate flags array");
     }
 
@@ -1644,6 +1707,18 @@ light_maker(int num, mat_t v2m)
 	MAT4X3PNT(lsp->lt_pos, v2m, temp);
 	VMOVE(lsp->lt_vec, lsp->lt_pos);
 	VUNITIZE(lsp->lt_vec);
+
+	/* Diagnostic: print light positions when RT_SETUP_DEBUG is set.
+	 * Comparing this output between rt and rtsrv reveals whether the
+	 * view2model used for lighting matches the one used for ray setup. */
+	{
+	    const char *_dbg = getenv("RT_SETUP_DEBUG");
+	    if (_dbg && _dbg[0] != '0')
+		bu_log("RT_SETUP_DEBUG light_maker i=%d:"
+		       " lt_pos=(%.17g %.17g %.17g)"
+		       " lt_vec=(%.17g %.17g %.17g)\n",
+		       i, V3ARGS(lsp->lt_pos), V3ARGS(lsp->lt_vec));
+	}
 
 	sprintf(name, "Implicit light %d", i);
 	lsp->lt_name = bu_strdup(name);

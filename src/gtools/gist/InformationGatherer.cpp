@@ -1,7 +1,7 @@
 /*         I N F O R M A T I O N G A T H E R E R . C P P
  * BRL-CAD
  *
- * Copyright (c) 2023-2025 United States Government as represented by
+ * Copyright (c) 2023-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,7 +23,7 @@
 #include "InformationGatherer.h"
 #include "bu/log.h"
 
-static std::string getCmdPath(std::string exeDir, const char* cmd) {
+std::string getCmdPath(std::string exeDir, const char* cmd) {
     char buf[MAXPATHLEN] = {0};
     if (!bu_dir(buf, MAXPATHLEN, exeDir.c_str(), cmd, BU_DIR_EXT, NULL))
         bu_exit(BRLCAD_ERROR, "Couldn't find %s, aborting.\n", cmd);
@@ -85,47 +85,57 @@ getSurfaceArea(Options* opt, std::map<std::string, std::string> UNUSED(map), std
     }
 }
 
-static double
-parseVolume(std::string res)
-{
-    double ret = 0;
-    // Extract volume value
-    std::string vol_raw = res.substr(res.find("Average total volume:") + 22);
-    vol_raw = vol_raw.substr(0, vol_raw.find("cu") - 1);
-    if (vol_raw.find("inf") == std::string::npos) {
-        try {
-            ret = stod(vol_raw);
-        } catch (const std::invalid_argument& ia) {
-            bu_exit(BRLCAD_ERROR, "parseVolume got: (%s) %s, aborting.\n", vol_raw.c_str(), ia.what());
-        }
+/* extract a positve number to 'out', from 'text', immediately following 'label' (space-separated)
+ * returns false if label could not be found, or problem converting number
+ * NOTE: "inf" and negative numbers are not considered errors but will return 0.0
+ */
+static bool
+parseLabeledNumber(double &out, const std::string &text, const std::string &label) {
+    out = 0.0;
+
+    const std::size_t label_pos = text.find(label);
+    if (label_pos == std::string::npos) {
+        // couldn't find label
+        return false;
     }
 
-    return ret;
-}
+    std::size_t pos = label_pos + label.size();
+    // skip leading spaces
+    while (pos < text.size() && std::isspace(static_cast<unsigned char>(text[pos]))) {
+        ++pos;
+    }
 
-static double
-parseMass(std::string res)
-{
-    double ret = 0;
-    // Extract mass value
-    std::string weight_raw = res.substr(res.find("Average total weight:") + 22);
-    weight_raw = weight_raw.substr(0, weight_raw.find(" "));
+    // find next space (end of our number)
+    std::size_t end = pos;
+    while (end < text.size()) {
+        const char c = text[end];
+        if (std::isspace(static_cast<unsigned char>(c)))
+            break;
+
+        ++end;
+    }
+
+    // sanity - make sure we got something
+    if (end == pos)
+        return false;
+
+    const std::string token = text.substr(pos, end - pos);
+
+    // inf and negative values are not usable, skip
+    if (token.find("inf") != std::string::npos || token[0] == '-') {
+        // TODO: return true or false here
+        return true;
+    }
+
     try {
-        // weight cannot be inf or negative
-        if (weight_raw.find("inf") == std::string::npos) {
-            if (weight_raw[0] == '-') {
-                weight_raw = weight_raw.substr(1);
-                ret += stod(weight_raw);
-            }
-            else {
-                ret += stod(weight_raw);
-            }
-        }
-    } catch (const std::invalid_argument& ia) {
-        bu_exit(BRLCAD_ERROR, "parseMass got: (%s) %s, aborting.\n", weight_raw.c_str(), ia.what());
+        out = stod(token);
+    } catch (const std::exception& e) {
+        bu_log("WARNING: Failed to parse value for '%s': %s, skipping.\n",
+                label.c_str(), e.what());
+        return false;
     }
 
-    return ret;
+    return true;
 }
 
 static std::string GqaGridSize(std::map<std::string, std::string> map, std::string lUnit) {
@@ -181,6 +191,9 @@ getVerificationData(struct ged* UNUSED(g), Options* opt, std::map<std::string, s
 
     //Get Volume and Mass (using gqa)
     const std::string no_density_msg = "Could not find any density information";
+    const std::string volume_label = "Average total volume:";
+    const std::string weight_label = "Average total weight:";
+    double tmp_val;
     std::string gqa = getCmdPath(opt->getExeDir(), "gqa");
     std::string grid = GqaGridSize(map, lUnit);
     std::string units = lUnit + ",cu " + lUnit + "," + mUnit;
@@ -189,22 +202,35 @@ getVerificationData(struct ged* UNUSED(g), Options* opt, std::map<std::string, s
     char buffer[1024] = {0};
     std::string result = "";
     std::string ncpu(std::to_string(opt->getNCPU()));
+    std::string dFile(opt->getDensityFile());
 
+    // build our gqa argv - use a vector so we can easily set required ordering
+    std::vector<const char*> gqa_av_vec;
+    gqa_av_vec.reserve(14);
+    gqa_av_vec.push_back(gqa.c_str());
     // attempt to get volume and mass in same run
-    const char* gqa_av[12] = {
-	gqa.c_str(),
-	"-Avm", // first position is assumed elsewhere to be -A
-	"-P",
-	ncpu.c_str(),
-	"-q",
-	"-g", grid.c_str(),
-	"-u", units.c_str(),
-	in_file.c_str(),
-	top_comp.c_str(),
-	NULL
-    };
+    gqa_av_vec.push_back("-Avm");       // first position is assumed elsewhere to be -A
+    gqa_av_vec.push_back("-P");
+    gqa_av_vec.push_back(ncpu.c_str());
+    gqa_av_vec.push_back("-q");
+    gqa_av_vec.push_back("-g");
+    gqa_av_vec.push_back(grid.c_str());
+    gqa_av_vec.push_back("-u");
+    gqa_av_vec.push_back(units.c_str());
+    if (!dFile.empty()) {
+        if (dFile == "0")
+            // special case - '0' means intenionally skip mass check
+            gqa_av_vec[1] = "-Av";
+        else {
+            gqa_av_vec.push_back("-f");
+            gqa_av_vec.push_back(dFile.c_str());
+        }
+    }
+    gqa_av_vec.push_back(in_file.c_str());
+    gqa_av_vec.push_back(top_comp.c_str());
+    gqa_av_vec.push_back(nullptr);
 
-    bu_process_create(&p, gqa_av, BU_PROCESS_HIDE_WINDOW | BU_PROCESS_OUT_EQ_ERR);
+    bu_process_create(&p, const_cast<const char**>(gqa_av_vec.data()), BU_PROCESS_HIDE_WINDOW | BU_PROCESS_OUT_EQ_ERR);
 
     if (bu_process_pid(p) <= 0) {
         bu_exit(BRLCAD_ERROR, "Problem in getVerificationData gqa process creation, aborting\n");
@@ -222,15 +248,19 @@ getVerificationData(struct ged* UNUSED(g), Options* opt, std::map<std::string, s
 
     // make sure we did not get 'no density file' error message
     if (result.find(no_density_msg) == std::string::npos) {
-        volume += parseVolume(result);
-        mass += parseMass(result);
+        // NOTE: tmp_val is zeroed at each parseLabeledNumber call
+        if (parseLabeledNumber(tmp_val, result, volume_label))
+            volume += tmp_val;
+        if (parseLabeledNumber(tmp_val, result, weight_label))
+            mass += tmp_val;
+
         return;
     }
 
 
     // no density data found. need to re-run, only getting volume data
-    gqa_av[1] = "-Av"; // FIXME: shouldn't assume -A is as position[1]
-    bu_process_create(&p, gqa_av, BU_PROCESS_HIDE_WINDOW | BU_PROCESS_OUT_EQ_ERR);
+    gqa_av_vec[1] = "-Av"; // FIXME: shouldn't assume -A is as position[1]
+    bu_process_create(&p, const_cast<const char**>(gqa_av_vec.data()), BU_PROCESS_HIDE_WINDOW | BU_PROCESS_OUT_EQ_ERR);
 
     if (bu_process_pid(p) <= 0) {
         bu_exit(BRLCAD_ERROR, "Problem in getVerificationData gqa process creation, aborting\n");
@@ -246,7 +276,8 @@ getVerificationData(struct ged* UNUSED(g), Options* opt, std::map<std::string, s
         bu_exit(BRLCAD_ERROR, "Problem collecting gqa volume, aborting\n");
     }
 
-    volume += parseVolume(result);
+    if (parseLabeledNumber(tmp_val, result, volume_label))
+        volume += tmp_val;
 }
 
 std::string
@@ -259,6 +290,33 @@ formatDouble(double d)
     std::string str = ss.str();
 
     return str;
+}
+
+static std::string
+formatFileSize(long long bytes)
+{
+    if (bytes < 0) {
+	return "N/A";
+    }
+
+    static const char *units[] = {"B", "KiB", "MiB", "GiB", "TiB"};
+    double value = static_cast<double>(bytes);
+    size_t unit = 0;
+
+    while (value >= 1024.0 && unit < (sizeof(units) / sizeof(units[0])) - 1) {
+	value /= 1024.0;
+	unit++;
+    }
+
+    std::stringstream ss;
+    if (unit == 0) {
+	ss << bytes;
+    } else {
+	ss << std::fixed << std::setprecision(value >= 100.0 ? 0 : 1) << value;
+    }
+    ss << " " << units[unit];
+
+    return ss.str();
 }
 
 boundingBox
@@ -394,32 +452,25 @@ InformationGatherer::getEntityData(char* buf)
 void
 InformationGatherer::getSubComp()
 {
-    std::string mged = getCmdPath(opt->getExeDir(), "mged");
-    std::string inFile = opt->getInFile();
-    std::string tclScript = "foreach {s} \\[ lt " + largestComponents[0].name + " \\] { set o \\[lindex \\$s 1\\] ; puts \\\"\\$o \\[llength \\[search \\$o \\] \\] \\\" }";
-    const char* av[5] = {mged.c_str(), "-c", inFile.c_str(), tclScript.c_str(), NULL};
-
-    struct bu_process* p;
-    bu_process_create(&p, av, BU_PROCESS_HIDE_WINDOW);
-
-    int read_cnt = 0;
-    char buf[1024] = {0};
-    std::string result = "";
-    while ((read_cnt = bu_process_read_n(p, BU_PROCESS_STDOUT, 1024-1, buf)) > 0) {
-        buf[read_cnt] = '\0';
-        result += buf;
+    std::string rootPath = largestComponents[0].name;
+    if (!rootPath.empty() && rootPath[0] != '/') {
+	rootPath = "/" + rootPath;
     }
 
-    (void)bu_process_wait_n(&p, 0);
+    const char *cmd[6] = {"search", rootPath.c_str(), "-mindepth", "1", "-maxdepth", "1"};
+    ged_exec_search(g, 6, cmd);
 
-    std::stringstream ss(result);
+    std::stringstream ss(bu_vls_addr(g->ged_result_str));
     std::string comp;
-    int numEntities = 0;
     std::vector<ComponentData> subComps;
 
-    while (ss >> comp >> numEntities) {
-        boundingBox bb = getBBData(comp);
-        subComps.push_back({numEntities, bb, comp});
+    while (std::getline(ss, comp)) {
+	if (comp.empty()) {
+	    continue;
+	}
+	int numEntities = getNumEntities(comp);
+	boundingBox bb = getBBData(comp);
+	subComps.push_back({numEntities, bb, comp});
     }
     sort(subComps.rbegin(), subComps.rend());
     largestComponents.reserve(largestComponents.size() + subComps.size());
@@ -452,9 +503,10 @@ InformationGatherer::gatherInformation(std::string UNUSED(name))
 
 
     //Gather DB Version
-    cmd[0] = "dbversion";
-    cmd[1] = NULL;
-    ged_exec_dbversion(g, 1, cmd);
+    cmd[0] = "db";
+    cmd[1] = "version";
+    cmd[2] = NULL;
+    ged_exec_db(g, 2, cmd);
     infoMap["version"] = bu_vls_addr(g->ged_result_str);
 
     // CHECK
@@ -518,6 +570,10 @@ InformationGatherer::gatherInformation(std::string UNUSED(name))
 
     // load bb dimensions in infoMap and unitsMap
     double convFactor = bu_units_conversion(infoMap["units"].c_str()) / bu_units_conversion(lUnit.c_str());
+    if (INVALID(convFactor)) {
+        bu_log("Could not convert units. Got: units (%s), convFactor (%f), aborting.\n", lUnit.c_str(), convFactor);
+        return false;
+    }
     Unit u1 = {lUnit, 1};
     Unit u3 = {lUnit, 3};
     infoMap["dimX"] = formatDouble(convFactor * largestComponents[0].bb.x);
@@ -573,27 +629,35 @@ InformationGatherer::gatherInformation(std::string UNUSED(name))
     double surfArea00 = 0;
     double surfArea090 = 0;
     double surfArea900 = 0;
-    getVerificationData(g, opt, infoMap, volume, mass, hasDensities, surfArea00, surfArea090, surfArea900, lUnit, mUnit);
-    std::string vol = formatDouble(volume);
+    if (opt->getPreviewMode()) {
+        // Preview reports preserve the standard gist sheet and render views,
+        // but avoid the potentially unbounded rtarea/gqa calculations.
+        hasDensities = false;
+    } else {
+        getVerificationData(g, opt, infoMap, volume, mass, hasDensities, surfArea00, surfArea090, surfArea900, lUnit, mUnit);
+    }
+    const bool previewMode = opt->getPreviewMode();
+    const std::string unavailable = "N/A";
+    std::string vol = previewMode ? unavailable : formatDouble(volume);
     std::string ma = formatDouble(mass);
-    std::string surf00 = formatDouble(surfArea00);
-    std::string surf090 = formatDouble(surfArea090);
-    std::string surf900 = formatDouble(surfArea900);
+    std::string surf00 = previewMode ? unavailable : formatDouble(surfArea00);
+    std::string surf090 = previewMode ? unavailable : formatDouble(surfArea090);
+    std::string surf900 = previewMode ? unavailable : formatDouble(surfArea900);
 
     infoMap.insert(std::pair<std::string, std::string>("volume", vol));
-    Unit u = {lUnit, 3};
+    Unit u = {lUnit, previewMode ? 0 : 3};
     unitsMap["volume"] = u;
 
     infoMap.insert(std::pair<std::string, std::string>("surfaceArea00", surf00));
     infoMap.insert(std::pair<std::string, std::string>("surfaceArea090", surf090));
     infoMap.insert(std::pair<std::string, std::string>("surfaceArea900", surf900));
-    u = {lUnit, 2};
+    u = {lUnit, previewMode ? 0 : 2};
     unitsMap["surfaceArea00"] = u;
     unitsMap["surfaceArea090"] = u;
     unitsMap["surfaceArea900"] = u;
 
     if (!hasDensities) {
-        infoMap.insert(std::pair<std::string, std::string>("mass", "Not Available"));
+	infoMap.insert(std::pair<std::string, std::string>("mass", unavailable));
         u = {mUnit, 0};
         unitsMap["mass"] = u;
     } else {
@@ -687,18 +751,21 @@ InformationGatherer::gatherInformation(std::string UNUSED(name))
     }
 
     //Gather last date updated
-    struct stat info;
-    stat(opt->getInFile().c_str(), &info);
-    std::time_t update = info.st_mtime;
-    tm* ltm = localtime(&update);
-    std::string date = std::to_string(ltm->tm_mon + 1) + "/" + std::to_string(ltm->tm_mday) + "/" + std::to_string(ltm->tm_year + 1900);
-    infoMap.insert(std::pair < std::string, std::string>("lastUpdate", date));
+    struct stat info = {};
+    std::string date;
+    tm* ltm = NULL;
+    if (stat(opt->getInFile().c_str(), &info) == 0) {
+	std::time_t update = info.st_mtime;
+	ltm = localtime(&update);
+	date = std::to_string(ltm->tm_mon + 1) + "/" + std::to_string(ltm->tm_mday) + "/" + std::to_string(ltm->tm_year + 1900);
+	infoMap.insert(std::pair < std::string, std::string>("lastUpdate", date));
+	infoMap["fileSize"] = formatFileSize(static_cast<long long>(info.st_size));
+    } else {
+	infoMap["lastUpdate"] = "N/A";
+	infoMap["fileSize"] = "N/A";
+    }
 
     //Gather source file
-    std::size_t last1 = opt->getInFile().find_last_of("/");
-    std::size_t last2 = opt->getInFile().find_last_of("\\");
-    last = last1 < last2 ? last1 : last2;
-
     std::string file = opt->getInFile();
 
     infoMap.insert(std::pair < std::string, std::string>("file", file));
@@ -800,14 +867,16 @@ InformationGatherer::getFormattedInfo(std::string key)
 {
     // get number, insert commas if long enough
     std::string number = infoMap[key];
-    size_t decimal_pos = number.find_last_of(".");
-    // start from end of whole number
-    size_t start_pos = (decimal_pos != std::string::npos) ? decimal_pos : number.size();
-    // offset 3 for potential first comma
-    start_pos -= 3;
-    // valid start position, start adding commas
-    for (int i = start_pos; i > 0; i -= 3) {
-        number.insert(i, ",");
+    const bool fixedDecimal = number.find_first_not_of("+-0123456789.") == std::string::npos &&
+	std::count(number.begin(), number.end(), '.') <= 1;
+    if (fixedDecimal) {
+	const size_t signLength = (!number.empty() && (number[0] == '+' || number[0] == '-')) ? 1 : 0;
+	const size_t decimalPos = number.find('.');
+	size_t insertionPos = (decimalPos != std::string::npos) ? decimalPos : number.size();
+	while (insertionPos > signLength + 3) {
+	    insertionPos -= 3;
+	    number.insert(insertionPos, ",");
+	}
     }
 
     // add units to string
@@ -871,7 +940,7 @@ void InformationGatherer::correctDefaultUnitsLength()
         const std::string& key = pair.first;
         Unit& unit = pair.second;
 
-        if (key == "mass") {
+        if (key == "mass" || unit.power == 0) {
             continue;
         }
 

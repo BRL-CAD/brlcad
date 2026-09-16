@@ -1,7 +1,7 @@
 /*                 P L O T 3 G E T F R A M E . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2025 United States Government as represented by
+ * Copyright (c) 1988-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -26,11 +26,14 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <string.h>
 #include <stdlib.h>
 #include "bio.h"
 
 #include "bu/app.h"
+#include "bu/opt.h"
 #include "bu/str.h"
 #include "bu/log.h"
 
@@ -112,7 +115,6 @@ struct uplot letters[] = {
 int verbose;
 char buf[8*32];
 
-
 int
 main(int argc, char **argv)
 {
@@ -136,10 +138,12 @@ main(int argc, char **argv)
 	argc--;
 	argv++;
     }
-    if (argc < 2 || isatty(fileno(stdin))) {
+    if (argc != 2 || isatty(fileno(stdin))) {
 	bu_exit(1, "Usage: plot3getframe [-v] desired_frame < unix_plot\n");
     }
-    desired_frame = atoi(argv[1]);
+    if (!bu_opt_scan_int_range(argv[1], &desired_frame, 0, INT_MAX, "desired frame")) {
+	return 1;
+    }
     current_frame = 0;
 
     while ((c = getchar()) != EOF) {

@@ -1,0 +1,69 @@
+= LOADVIEW(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+loadview - Restore a saved MGED view and displayed object list from a saveview-style script.
+
+== SYNOPSIS
+
+[source]
+----
+loadview filename
+----
+
+
+[[description]]
+== DESCRIPTION
+
+The *loadview* command reads a *saveview*-style script and restores the view information it contains into the current MGED session. It is intended for scripts produced by *saveview*.
+
+The command requires an already opened database and an active view. It does not open the database named in the script. Instead, it compares the script's database pathname against the currently opened database and issues a warning if they differ.
+
+When *loadview* reads the script, it:
+
+* resets perspective to off, then reapplies a saved `-p` perspective value if the script contains one;
+* clears the current display with *Z* before loading the saved object list;
+* draws the objects listed in the script into the current display;
+* reads the saved view command block and applies the recognized view settings.
+
+The view-command parser accepts the commands used by *saveview*, including `viewsize`, `eye_pt`, `orientation`, `start`, `clean`, and `end`. It also recognizes `lookat_pt` and `viewrot`. The non-view script commands that *loadview* knows about, such as `start` and `clean`, are accepted and ignored for restoration purposes.
+
+View changes are finalized when the script's `end` command is processed. If a script uses `lookat_pt`, it should specify `eye_pt` first so the view direction can be reconstructed correctly.
+
+
+[[examples]]
+== EXAMPLES
+
+These examples show how *loadview* restores a view from a previously saved script.
+
+.Restore a view saved by *saveview*.
+[example]
+====
+mged>**loadview render.rt**
+
+Clears the current display, draws the objects named in _render.rt_, and restores the saved view parameters from that script.
+
+====
+
+.Reload a saved view script after editing it externally.
+[example]
+====
+mged>**loadview raycast.sh**
+
+Reads the saved view block and object list from _raycast.sh_ and applies the recognized settings to the current MGED session.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

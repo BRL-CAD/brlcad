@@ -1,6 +1,7 @@
 set(
   LIBBN_SOURCES
   anim.c
+  bn_init.cpp
   complex.c
   globals.c
   mat.c
@@ -24,13 +25,17 @@ set(
 set(BN_LOCAL_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR})
 
 # Note - libbn_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
-brlcad_addlib(libbn "${LIBBN_SOURCES}" "${libbn_deps}" "" "${BN_LOCAL_INCLUDE_DIRS}")
+brlcad_addlib(libbn "${LIBBN_SOURCES}" "" "${BN_LOCAL_INCLUDE_DIRS}"
+  PUBLIC_LIBS ${libbn_deps}
+  PRIVATE_LIBS ${M_LIBRARY}
+)
 set_target_properties(libbn PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 add_subdirectory(tests)
 
 cmakefiles(
   CMakeLists.txt
+  bn_init.cpp
   README
   soboldata.h
   numgen.c

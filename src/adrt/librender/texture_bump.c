@@ -1,7 +1,7 @@
 /*                     T E X T U R E _ B U M P . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2002-2025 United States Government as represented by
+ * Copyright (c) 2002-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -42,9 +42,9 @@ texture_bump_work(struct texture_s *texture, void *UNUSED(mesh), struct tie_ray_
 
     sd = (struct texture_bump_s *)texture->data;
 
-    n[0] = id->norm[0] + sd->coef[0]*(2* *pixel[0]-1.0);
-    n[1] = id->norm[1] + sd->coef[1]*(2* *pixel[1]-1.0);
-    n[2] = id->norm[2] + sd->coef[2]*(2* *pixel[2]-1.0);
+    n[0] = id->norm[0] + sd->coef[0]*(2* (*pixel)[0]-1.0);
+    n[1] = id->norm[1] + sd->coef[1]*(2* (*pixel)[1]-1.0);
+    n[2] = id->norm[2] + sd->coef[2]*(2* (*pixel)[2]-1.0);
     VUNITIZE(n);
 
     d = VDOT(n,  id->norm);

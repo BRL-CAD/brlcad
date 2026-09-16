@@ -1,7 +1,7 @@
 /*                        F B C L E A R . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2025 United States Government as represented by
+ * Copyright (c) 1986-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -101,25 +101,13 @@ ged_fbclear_core(struct ged *gedp, int argc, const char *argv[])
     return BRLCAD_OK;
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl fbclear_cmd_impl = {
-    "fbclear",
-    ged_fbclear_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd fbclear_cmd = { &fbclear_cmd_impl };
-const struct ged_cmd *fbclear_cmds[] = { &fbclear_cmd, NULL };
+#define GED_FBCLEAR_COMMANDS(X, XID) \
+    X(fbclear, ged_fbclear_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  fbclear_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_FBCLEAR_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_fbclear", 1, GED_FBCLEAR_COMMANDS)
 
 /*
  * Local Variables:

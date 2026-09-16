@@ -1,7 +1,7 @@
 /*                          D 2 - C . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2025 United States Government as represented by
+ * Copyright (c) 2004-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,6 +29,7 @@
 #include "bio.h"
 
 #include "bu/app.h"
+#include "bu/file.h"
 #include "bu/str.h"
 #include "bu/exit.h"
 #include "bu/snooze.h"
@@ -42,7 +43,7 @@ open_file(FILE **fp, char *name)
 	*fp = stdin;
 	return;
     } else if (BU_STR_EQUAL(name, ".")) {
-	*fp = fopen("/dev/null", "r");
+	*fp = fopen(bu_file_null(), "r");
 	return;
     }
 

@@ -1,0 +1,72 @@
+= COPY(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+copy, cp - copy a database object to a new name
+
+== SYNOPSIS
+
+[source]
+----
+copy from to
+cp from to
+----
+
+
+[[description]]
+== DESCRIPTION
+
+The *copy* command (also available as *cp*) duplicates the database object named `from` and stores the copy under the name `to`. The copy is an exact binary duplicate of the source object, preserving its type, geometry, and all attributes.
+
+Exactly two arguments are required. The source object `from` must exist in the database. The destination name `to` must not already exist — attempting to copy to an existing name returns an error.
+
+All object types can be copied: primitive shapes, combinations, regions, and external objects.
+
+NOTE: *copy* performs a shallow copy. If `from` is a combination, the copy has the same tree structure and references the same member objects. Members themselves are not duplicated. Use *xpush* or manual reconstruction to deep-copy a hierarchy.
+
+[[examples]]
+== EXAMPLES
+
+.Copy a primitive shape
+[example]
+====
+mged> **copy sph.s sph_copy.s**
+
+Creates an exact duplicate of `sph.s` named `sph_copy.s`.
+====
+
+.Copy a combination
+[example]
+====
+mged> **cp vehicle.c vehicle_backup.c**
+
+Duplicates the combination `vehicle.c` as `vehicle_backup.c`. The new combination references the same member objects as the original.
+====
+
+.Copy then modify the copy
+[example]
+====
+mged> **copy hull.r hull_modified.r**
+mged> **sed hull_modified.r**
+
+Copies `hull.r` to `hull_modified.r`, then opens the copy in the solid editor for modification without affecting the original.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*move*(nged), *rename*(nged), *xpush*(nged)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

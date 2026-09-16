@@ -1,7 +1,7 @@
 /*                     P I X - A L I A S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2025 United States Government as represented by
+ * Copyright (c) 2004-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,12 +38,15 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include "bio.h"
 
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/malloc.h"
 #include "bu/exit.h"
 
@@ -62,7 +65,6 @@ struct aliashead {
     short xoff, yoff;	/* offsets of pixels */
     short bitplanes;	/* the number of bits per pixel */
 };
-
 
 /*
  * Main function of program
@@ -164,9 +166,19 @@ main(int ac, char **av)
      */
     while ((c=bu_getopt(ac, av, options)) != -1)
 	switch (c) {
-	    case 'w' : x = atoi(bu_optarg); break;
-	    case 'n' : y = atoi(bu_optarg); break;
-	    case 's' : x = y = atoi(bu_optarg); break;
+	    case 'w' :
+		if (!bu_opt_scan_int_range(bu_optarg, &x, 1, INT_MAX, "input width"))
+		    usage();
+		break;
+	    case 'n' :
+		if (!bu_opt_scan_int_range(bu_optarg, &y, 1, INT_MAX, "input height"))
+		    usage();
+		break;
+	    case 's' :
+		if (!bu_opt_scan_int_range(bu_optarg, &x, 1, INT_MAX, "input size"))
+		    usage();
+		y = x;
+		break;
 	    default	: usage(); break;
 	}
 

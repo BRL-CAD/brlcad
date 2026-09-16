@@ -8,24 +8,24 @@
 
 	<mime-type type="application/brlcad-v4">
 		<comment>BRL-CAD Geometry Database v4</comment>
-		<icon name="brlcad-v4"/>
 		<magic priority="50">
 			<match value="\x49" type="string" offset="0">
 				<match value="\x76\x34" type="string" offset="2"/>
 			</match>
 		</magic>
 		<glob pattern="*.g"/>
+		<generic-icon name="brlcad-v4"/>
 	</mime-type>
 
 	<mime-type type="application/brlcad-v5">
 		<comment>BRL-CAD Geometry Database v5</comment>
-		<icon name="brlcad-v5"/>
 		<magic priority="50">
 			<match value="\x76" type="string" offset="0">
 				<match value="\x35\x76" type="string" offset="7"/>
 			</match>
 		</magic>
 		<glob pattern="*.g"/>
+		<generic-icon name="brlcad-v5"/>
 	</mime-type>
 
 </mime-info>

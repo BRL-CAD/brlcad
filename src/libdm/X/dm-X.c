@@ -1,7 +1,7 @@
 /*                          D M - X . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2025 United States Government as represented by
+ * Copyright (c) 1988-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -77,6 +77,7 @@
 #include "bv/defines.h"
 
 #include "../include/private.h"
+#include "../include/x11_font.h"
 
 #define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */
 
@@ -245,7 +246,7 @@ X_configureWin_guts(struct dm *dmp, int force)
      */
 
     if (dmp->i->dm_width < 582) {
-	if (pubvars->fontstruct->per_char->width != 5) {
+	if (dm_x11_font_width(pubvars->fontstruct) != 5) {
 	    if ((newfontstruct = XLoadQueryFont(pubvars->dpy,
 						FONT5)) != NULL) {
 		XFreeFont(pubvars->dpy,
@@ -257,7 +258,7 @@ X_configureWin_guts(struct dm *dmp, int force)
 	    }
 	}
     } else if (dmp->i->dm_width < 679) {
-	if (pubvars->fontstruct->per_char->width != 6) {
+	if (dm_x11_font_width(pubvars->fontstruct) != 6) {
 	    if ((newfontstruct = XLoadQueryFont(pubvars->dpy,
 						FONT6)) != NULL) {
 		XFreeFont(pubvars->dpy,
@@ -269,7 +270,7 @@ X_configureWin_guts(struct dm *dmp, int force)
 	    }
 	}
     } else if (dmp->i->dm_width < 776) {
-	if (pubvars->fontstruct->per_char->width != 7) {
+	if (dm_x11_font_width(pubvars->fontstruct) != 7) {
 	    if ((newfontstruct = XLoadQueryFont(pubvars->dpy,
 						FONT7)) != NULL) {
 		XFreeFont(pubvars->dpy,
@@ -281,7 +282,7 @@ X_configureWin_guts(struct dm *dmp, int force)
 	    }
 	}
     } else if (dmp->i->dm_width < 873) {
-	if (pubvars->fontstruct->per_char->width != 8) {
+	if (dm_x11_font_width(pubvars->fontstruct) != 8) {
 	    if ((newfontstruct = XLoadQueryFont(pubvars->dpy,
 						FONT8)) != NULL) {
 		XFreeFont(pubvars->dpy,
@@ -293,7 +294,7 @@ X_configureWin_guts(struct dm *dmp, int force)
 	    }
 	}
     } else {
-	if (pubvars->fontstruct->per_char->width != 9) {
+	if (dm_x11_font_width(pubvars->fontstruct) != 9) {
 	    if ((newfontstruct = XLoadQueryFont(pubvars->dpy,
 						FONT9)) != NULL) {
 		XFreeFont(pubvars->dpy,
@@ -1738,7 +1739,10 @@ X_getDisplayImage(struct dm *dmp, unsigned char **image, int flip, int alpha)
 		dbyte2 = dbyte0 + 2;
 
 		*dbyte0 = (pixel & ximage_p->red_mask) >> red_shift;
-		*dbyte1 = (pixel & ximage_p->green_mask) >> green_shift;
+		if (0 <= green_shift)
+		    *dbyte1 = (pixel & ximage_p->green_mask) >> green_shift;
+		else
+		    *dbyte1 = (pixel & ximage_p->green_mask) << -green_shift;
 		*dbyte2 = (pixel & ximage_p->blue_mask) >> blue_shift;
 	    }
 	} else if (bytes_per_pixel == 2) {
@@ -1762,7 +1766,10 @@ X_getDisplayImage(struct dm *dmp, unsigned char **image, int flip, int alpha)
 		else
 		    *dbyte0 = (pixel & ximage_p->red_mask) << -red_shift;
 
-		*dbyte1 = (pixel & ximage_p->green_mask) >> green_shift;
+		if (0 <= green_shift)
+		    *dbyte1 = (pixel & ximage_p->green_mask) >> green_shift;
+		else
+		    *dbyte1 = (pixel & ximage_p->green_mask) << -green_shift;
 
 		if (0 <= blue_shift)
 		    *dbyte2 = (pixel & ximage_p->blue_mask) >> blue_shift;
@@ -1793,7 +1800,7 @@ X_openFb(struct dm *dmp)
     fb_ps = fb_get_platform_specific(FB_X24_MAGIC);
     xfb_ps = (struct X24_fb_info *)fb_ps->data;
     xfb_ps->dpy = pubvars->dpy;
-    xfb_ps->win = privars->pix;
+    xfb_ps->drawable = &privars->pix;
     xfb_ps->cwinp = pubvars->win;
     xfb_ps->cmap = pubvars->cmap;
     xfb_ps->vip = pubvars->vip;
@@ -2044,7 +2051,10 @@ X_write_image(struct bu_vls *msgs, FILE *fp, struct dm *dmp)
 		dbyte3 = dbyte0 + 3;
 
 		*dbyte0 = (pixel & ximage_p->red_mask) >> red_shift;
-		*dbyte1 = (pixel & ximage_p->green_mask) >> green_shift;
+		if (0 <= green_shift)
+		    *dbyte1 = (pixel & ximage_p->green_mask) >> green_shift;
+		else
+		    *dbyte1 = (pixel & ximage_p->green_mask) << -green_shift;
 		*dbyte2 = (pixel & ximage_p->blue_mask) >> blue_shift;
 		*dbyte3 = 255;
 	    }
@@ -2070,7 +2080,10 @@ X_write_image(struct bu_vls *msgs, FILE *fp, struct dm *dmp)
 		else
 		    *dbyte0 = (pixel & ximage_p->red_mask) << -red_shift;
 
-		*dbyte1 = (pixel & ximage_p->green_mask) >> green_shift;
+		if (0 <= green_shift)
+		    *dbyte1 = (pixel & ximage_p->green_mask) >> green_shift;
+		else
+		    *dbyte1 = (pixel & ximage_p->green_mask) << -green_shift;
 
 		if (0 <= blue_shift)
 		    *dbyte2 = (pixel & ximage_p->blue_mask) >> blue_shift;
@@ -2248,7 +2261,8 @@ struct dm_impl dm_X_impl = {
     FB_NULL,
     0,				/* Tcl interpreter */
     NULL,                       /* Drawing context */
-    NULL                        /* App data */
+    NULL,                       /* App data */
+    NULL                        /* dlist sensors */
 };
 
 struct dm dm_X = { DM_MAGIC, &dm_X_impl, 0 };

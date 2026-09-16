@@ -1,0 +1,49 @@
+= ITEM(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+item - Sets the values of ident_number, aircode, material_code, and LOS for the specified region.
+
+== SYNOPSIS
+
+[source]
+----
+item {region_name} {regionID [airID [materialID [los%]]]}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Sets the values of ident_number, aircode, material_code, and LOS for the specified region.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *item* command to set the ident number, air code, material code, and LOS for a specified region.
+
+.Setting the values for a region.
+[example]
+====
+
+mged> **item region_1 1137 0 8 100**::
+Sets the _ident number_ to 1137, _air code_ to 0, _material code_ to 8, and _LOS_ to 100 for __region_1__.
+
+
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

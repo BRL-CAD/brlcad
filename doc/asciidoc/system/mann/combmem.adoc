@@ -1,0 +1,76 @@
+= COMBMEM(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+combmem - get or set combination member transformation matrices in decomposed form
+
+== SYNOPSIS
+
+[source]
+----
+combmem [-i type] [-r type] comb [op1 name1 az1 el1 tw1 x1 y1 z1 sa1 sx1 sy1 sz1 ...]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+The *combmem* command gets or sets the per-member transformation matrices of a combination, expressed in a decomposed form: azimuth (`az`), elevation (`el`), twist (`tw`) rotation angles, translation (`x`, `y`, `z`), and scale factors (uniform `sa`, and per-axis `sx`, `sy`, `sz`).
+
+With only the combination name and no member arguments, *combmem* returns the current transformation for each member in the decomposed form.
+
+With member arguments, it sets the transformation for each listed member, constructing the full 4×4 matrix from the decomposed parameters.
+
+=== Options
+
+*-i type*::
+Set the input format type for interpreting transformation data. Affects how the `az el tw x y z sa sx sy sz` parameters are parsed and assembled into a matrix.
+
+*-r type*::
+Set the representation type for matrix output when reading.
+
+=== Member specification
+
+Each member is described by 12 values following the Boolean operator (`u`, `+`, or `-`) and the member name:
+
+`op name az el tw x y z sa sx sy sz`
+
+where `az`, `el`, `tw` are azimuth, elevation, and twist in degrees; `x`, `y`, `z` are translation; and `sa`, `sx`, `sy`, `sz` are uniform and per-axis scale factors.
+
+[[examples]]
+== EXAMPLES
+
+.Read the transformation of combination members
+[example]
+====
+mged> **combmem vehicle.c**
+
+Returns the Boolean operator, name, and decomposed transformation (az/el/tw, x/y/z, sa/sx/sy/sz) for each member of `vehicle.c`.
+====
+
+.Set member transformations
+[example]
+====
+mged> **combmem vehicle.c u hull.r 0 0 0 100 0 0 1 1 1 1 u turret.r 45 0 0 100 0 200 1 1 1 1**
+
+Sets `hull.r` with no rotation and a translation of (100, 0, 0), and `turret.r` with 45° azimuth rotation, no elevation, and translation of (100, 0, 200).
+====
+
+[[see_also]]
+== SEE ALSO
+
+*comb*(nged), *matrix*(nged), *aet*(nged)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

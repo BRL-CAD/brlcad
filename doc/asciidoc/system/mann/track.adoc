@@ -1,0 +1,62 @@
+= TRACK(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD MGED Commands
+
+== NAME
+track - Builds a simple representation of the linked track of a vehicle such as a tank.
+
+== SYNOPSIS
+
+[source]
+----
+track [parameters>]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Builds a simple representation of the linked track of a vehicle such as a tank. With no command line arguments, the track command will prompt for all the required input. The vehicle is assumed to be axis-aligned with the front in the +_x_ direction. A combination name for the track is built by appending a unique number to the string track. The information about the track may be included on the command line, and is order-dependent. The parameters are (in order):
+
+
+* _x_ coordinate of center of frontmost roadwheel.
+* _x_ coordinate of center of rearmost roadwheel.
+* _z_ coordinate of center of all roadwheels.
+* radius of all roadwheels.
+* _x_ coordinate of center of drive wheel (rear).
+* _z_ coordinate of center of drive wheel (rear).
+* radius of drive wheel.
+* _x_ coordinate of center of idler wheel (front).
+* _z_ coordinate of center of idler wheel (front).
+* radius of idler wheel.
+* _y_ coordinate of right side of track.
+* _y_ coordinate of left side of track.
+* track thickness.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *track* command with arguments to build a simple track.
+
+.Build a simple track.
+[example]
+====
+mged>**track 500 0 10 10 -50 50 10 550 50 10 -50 -20 2**
+
+Builds a simple track using the provided arguments.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

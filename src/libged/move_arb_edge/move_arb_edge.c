@@ -1,7 +1,7 @@
 /*                         M O V E _ A R B _ E D G E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -208,7 +208,7 @@ bad_edge:
 	VADD2(pt, pt, arb->pt[arb_pt_index]);
     }
 
-    if (rt_arb_edit(gedp->ged_result_str, arb, arb_type, edge, pt, planes, &wdbp->wdb_tol)) {
+    if (rt_arb_edit(gedp->ged_result_str, arb, NULL, arb_type, edge, RT_ARB_EDIT_DEFAULT, pt, planes, &wdbp->wdb_tol)) {
 	rt_db_free_internal(&intern);
 
 	return BRLCAD_ERROR;
@@ -227,7 +227,7 @@ bad_edge:
 	    VMOVE(arb->pt[i], arb_pt);
 	}
 
-	GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, BRLCAD_ERROR);
+	GED_DB_PUT_INTERN(gedp, dp, &intern, BRLCAD_ERROR);
     }
 
     return BRLCAD_OK;
@@ -300,31 +300,14 @@ ged_find_arb_edge_nearest_pnt_core(struct ged *gedp, int argc, const char *argv[
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl move_arb_edge_cmd_impl = {
-    "move_arb_edge",
-    ged_move_arb_edge_core,
-    GED_CMD_DEFAULT
-};
-const struct ged_cmd move_arb_edge_cmd = { &move_arb_edge_cmd_impl };
 
-struct ged_cmd_impl find_arb_edge_cmd_impl = {
-    "find_arb_edge",
-    ged_find_arb_edge_nearest_pnt_core,
-    GED_CMD_DEFAULT
-};
-const struct ged_cmd find_arb_edge_cmd = { &find_arb_edge_cmd_impl };
+#define GED_MOVE_ARB_EDGE_COMMANDS(X, XID) \
+    X(move_arb_edge, ged_move_arb_edge_core, GED_CMD_DEFAULT) \
+    X(find_arb_edge, ged_find_arb_edge_nearest_pnt_core, GED_CMD_DEFAULT) \
 
-const struct ged_cmd *move_arb_edge_cmds[] = { &move_arb_edge_cmd, &find_arb_edge_cmd, NULL };
-
-static const struct ged_plugin pinfo = { GED_API,  move_arb_edge_cmds, 2 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_MOVE_ARB_EDGE_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_move_arb_edge", 1, GED_MOVE_ARB_EDGE_COMMANDS)
 
 /*
  * Local Variables:

@@ -1,7 +1,7 @@
 /*                       P I X - S U N . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2025 United States Government as represented by
+ * Copyright (c) 1986-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,6 +27,8 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
@@ -34,6 +36,7 @@
 
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/malloc.h"
 #include "bu/exit.h"
 
@@ -67,7 +70,6 @@ struct rasterfile {
     1,		/* equal RGB color map */
     MAPSIZE*3	/* length (bytes) of RGB colormap */
 };
-
 
 /* The Sun Rasterfile Colormap
  * This colormap has a 6x6x6 color cube, plus 10 extra values for each of
@@ -341,9 +343,19 @@ main(int ac, char **av)
     while ((c=bu_getopt(ac, av, options)) != -1)
 	switch (c) {
 	    case 'd'    : dither = !dither; break;
-	    case 'w'    : ras.ras_width = atoi(bu_optarg); break;
-	    case 'n'    : ras.ras_height = atoi(bu_optarg); break;
-	    case 's'    : ras.ras_width = ras.ras_height = atoi(bu_optarg); break;
+	    case 'w'    :
+		if (!bu_opt_scan_size_t_range(bu_optarg, &ras.ras_width, 1, SIZE_MAX, "input width"))
+		    usage();
+		break;
+	    case 'n'    :
+		if (!bu_opt_scan_size_t_range(bu_optarg, &ras.ras_height, 1, SIZE_MAX, "input height"))
+		    usage();
+		break;
+	    case 's'    :
+		if (!bu_opt_scan_size_t_range(bu_optarg, &ras.ras_width, 1, SIZE_MAX, "input size"))
+		    usage();
+		ras.ras_height = ras.ras_width;
+		break;
 	    default     : usage(); break;
 	}
 

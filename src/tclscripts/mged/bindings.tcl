@@ -1,7 +1,7 @@
 #                    B I N D I N G S . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2025 United States Government as represented by
+# Copyright (c) 2004-2026 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -335,6 +335,7 @@ proc default_mouse_bindings { w } {
     }
 
     bind $w <ButtonRelease> "winset $w; dm idle; break"
+    bind $w <Motion> "winset $w; if {\[dm type\] == \"tkswrast\"} {dm motion %x %y}; break"
     bind $w <KeyRelease-Control_L> "winset $w; dm idle; break"
     bind $w <KeyRelease-Control_R> "winset $w; dm idle; break"
     bind $w <KeyRelease-Shift_L> "winset $w; dm idle; break"

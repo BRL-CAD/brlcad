@@ -1,0 +1,49 @@
+= BOT_VERTEX_FUSE(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+bot_vertex_fuse - Used to eliminate duplicate vertices from a BOT solid.
+
+== SYNOPSIS
+
+[source]
+----
+bot_vertex_fuse {new_bot_solid} {old_bot_primitive>}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Used to eliminate duplicate vertices from a BOT solid. It returns the number of vertices eliminated. No tolerance is used, so the vertices must match exactly to be considered duplicates.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *bot_vertex_fuse* command to eliminate duplicate vertices from a BOT solid and store the result in a new BOT primitive.
+
+.Eliminating duplicate vertices from a primitive and storing the result in a new BOT primitive.
+[example]
+====
+
+mged> **bot_vertex_fuse bot1_fused bot1_original**::
+Eliminates any duplicate vertices from the primitive named __bot1_original__ and stores the result in the new BOT primitive named __bot1_fused__.
+
+
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,0 +1,48 @@
+= T(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+t - Alternate command name for *ls*.
+
+== SYNOPSIS
+
+[source]
+----
+t [-A -o -a -c -r -s -p -l -q -H -S] [objects]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+The *t* command shares its core implementation with *ls* and accepts the same
+arguments and options.
+
+See *ls* for the detailed option descriptions and examples.
+
+
+[[examples]]
+== EXAMPLES
+
+.List all regions matching a name pattern.
+[example]
+====
+mged> **t -r wheel**
+
+Lists regions whose names begin with _wheel_.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

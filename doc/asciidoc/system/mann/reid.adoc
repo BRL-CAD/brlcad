@@ -1,0 +1,71 @@
+= REID(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+reid - Sequentially renumber the 'region_id' attribute of all regions within a group.
+
+== SYNOPSIS
+
+[source]
+----
+reid [-n {num}] {comb} {regionID}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+The 'reid' command sequentially assigns the 'region_id' attribute value for all regions within a specified combination. Optionally, the increment between consecutive 'region_id' can be specified. Once the command is complete, the highest 'region_id' set is reported.
+
+
+[[options]]
+== OPTIONS
+
+
+*-n num*::
+Increment to use between consecutive region identifiers. The default is 1.
+
+
+*comb*::
+Name of the combination to search for regions.
+
+
+*regionID*::
+Region ID to start re-numbering with.
+
+
+[[examples]]
+== EXAMPLES
+
+.Renumber regions below a combination.
+[example]
+====
+mged> **reid vehicle.c 1000**
+
+Sets the first region below _vehicle.c_ to region ID 1000 and increments each following region by 1.
+
+====
+
+.Renumber regions with a larger increment.
+[example]
+====
+mged> **reid -n 10 vehicle.c 2000**
+
+Sets region IDs below _vehicle.c_ beginning at 2000 and incrementing by 10 for each subsequent region.
+
+====
+
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

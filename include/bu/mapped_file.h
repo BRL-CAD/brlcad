@@ -1,7 +1,7 @@
 /*                    M A P P E D _ F I L E . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2025 United States Government as represented by
+ * Copyright (c) 2004-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -149,8 +149,8 @@ BU_EXPORT extern void bu_free_mapped_files(int verbose);
  * locate the file.
  *
  * The search path is specified as a normal C argv array, terminated
- * by a null string pointer.  If the file name begins with a slash
- * ('/') the path is not used.
+ * by a null string pointer.  If the file name is rooted (including a rooted
+ * drive-letter or UNC path on Windows), the search path is not used.
  */
 BU_EXPORT extern struct bu_mapped_file *bu_open_mapped_file_with_path(char * const *path,
 								      const char *name,

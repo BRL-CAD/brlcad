@@ -359,7 +359,6 @@ Infrastructure
 ==============
 benchmark
 bombardier
-brlcad-config
 brlman
 btclsh
 cray.sh

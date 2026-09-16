@@ -1,7 +1,7 @@
 /*                        R E D . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -242,7 +242,7 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls *target_name)
     if (gedp->dbip == DBI_NULL)
 	return BRLCAD_ERROR;
 
-    GED_DB_GET_INTERNAL(gedp, &intern, dp, (fastf_t *)NULL, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_GET_INTERN(gedp, &intern, dp, (fastf_t *)NULL, BRLCAD_ERROR);
     comb = (struct rt_comb_internal *)intern.idb_ptr;
 
     if (comb) {
@@ -541,13 +541,13 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls *target_name)
     }
 
     if (tree_index)
-	tp = (union tree *)db_mkgift_tree(rt_tree_array, node_count, &rt_uniresource);
+	tp = (union tree *)db_mkgift_tree(rt_tree_array, node_count);
     else
 	tp = (union tree *)NULL;
 
     if (comb) {
 	if (comb->tree) {
-	    db_free_tree(comb->tree, &rt_uniresource);
+	    db_free_tree(comb->tree);
 	    comb->tree = NULL;
 	}
 	comb->tree = tp;
@@ -557,7 +557,7 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls *target_name)
 	db5_sync_comb_to_attr(&avs, comb);
     }
 
-    if (rt_db_put_internal(dp, gedp->dbip, &intern, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(dp, gedp->dbip, &intern) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "build_comb %s: Cannot apply tree\n", dp->d_namep);
 	bu_avs_free(&avs);
 	return BRLCAD_ERROR;
@@ -633,7 +633,7 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
     }
 
     if (comb->tree && db_ck_v4gift_tree(comb->tree) < 0) {
-	db_non_union_push(comb->tree, &rt_uniresource);
+	db_non_union_push(comb->tree);
 	if (db_ck_v4gift_tree(comb->tree) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "ERROR: Cannot prepare tree for editing\n");
 	    bu_vls_free(&spacer);
@@ -644,7 +644,7 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
     node_count = db_tree_nleaves(comb->tree);
     if (node_count > 0) {
 	rt_tree_array = (struct rt_tree_array *)bu_calloc(node_count, sizeof(struct rt_tree_array), "tree list");
-	actual_count = (struct rt_tree_array *)db_flatten_tree(rt_tree_array, comb->tree, OP_UNION, 0, &rt_uniresource) - rt_tree_array;
+	actual_count = (struct rt_tree_array *)db_flatten_tree(rt_tree_array, comb->tree, OP_UNION, 0) - rt_tree_array;
 	BU_ASSERT(actual_count == node_count);
     } else {
 	rt_tree_array = (struct rt_tree_array *)NULL;
@@ -810,7 +810,7 @@ ged_red_core(struct ged *gedp, int argc, const char **argv)
 	    return BRLCAD_ERROR;
 	}
 
-	GED_DB_GET_INTERNAL(gedp, &intern, dp, (fastf_t *)NULL, &rt_uniresource, BRLCAD_ERROR);
+	GED_DB_GET_INTERN(gedp, &intern, dp, (fastf_t *)NULL, BRLCAD_ERROR);
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 
     } else {
@@ -860,7 +860,7 @@ ged_red_core(struct ged *gedp, int argc, const char **argv)
 	 */
 
 	if (dp) {
-	    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+	    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL) < 0) {
 		bu_vls_printf(gedp->ged_result_str, "Database read error, aborting\n");
 		goto cleanup;
 	    }
@@ -870,7 +870,7 @@ ged_red_core(struct ged *gedp, int argc, const char **argv)
 		goto cleanup;
 	    }
 
-	    if (rt_db_put_internal(tmp_dp, gedp->dbip, &intern, &rt_uniresource) < 0) {
+	    if (rt_db_put_internal(tmp_dp, gedp->dbip, &intern) < 0) {
 		bu_vls_printf(gedp->ged_result_str, "Cannot save copy of %s, no changed made\n", bu_vls_addr(&temp_name));
 		goto cleanup;
 	    }
@@ -887,7 +887,7 @@ ged_red_core(struct ged *gedp, int argc, const char **argv)
 
 	    intern.idb_ptr = (void *)comb;
 
-	    GED_DB_PUT_INTERNAL(gedp, tmp_dp, &intern, &rt_uniresource, 0);
+	    GED_DB_PUT_INTERN(gedp, tmp_dp, &intern, 0);
 	}
 
 	/* reconstitute the new combination */
@@ -993,24 +993,13 @@ cleanup:
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl red_cmd_impl = {
-    "red",
-    ged_red_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd red_cmd = { &red_cmd_impl };
-const struct ged_cmd *red_cmds[] = { &red_cmd, NULL };
+#define GED_RED_COMMANDS(X, XID) \
+    X(red, ged_red_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  red_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_RED_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_red", 1, GED_RED_COMMANDS)
 
 /*
  * Local Variables:

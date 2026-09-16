@@ -1,7 +1,7 @@
 /*                      P I X C L U M P . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2025 United States Government as represented by
+ * Copyright (c) 1997-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -26,6 +26,7 @@
 
 #include "common.h"
 
+#include <errno.h>
 #include <stdlib.h>
 #include <math.h>
 #include "bio.h"
@@ -70,7 +71,7 @@ static void print_usage (void)
 
 static void print_debug_usage (void)
 {
-    static char *flag_denotation[] = {
+    static const char *flag_denotation[] = {
 	"",
 	"color table",
 	"finding best pixel match",
@@ -84,6 +85,23 @@ static void print_debug_usage (void)
 	bu_log("0x%04x	%s\n", 1 << (i-1), flag_denotation[i]);
 
     print_usage();
+}
+
+static int
+parse_hex_int_arg(const char *arg, int *out_value, const char *label)
+{
+    char *end = NULL;
+    unsigned long int value;
+
+    errno = 0;
+    value = strtoul(arg, &end, 16);
+    if (errno != 0 || end == arg || *end != '\0' || value > INT_MAX) {
+	bu_log("pixclump: invalid %s '%s'\n", label, arg);
+	return 0;
+    }
+
+    *out_value = (int)value;
+    return 1;
 }
 
 
@@ -164,7 +182,7 @@ main (int argc, char **argv)
 {
     char *cf_name = 0;	/* name of color file */
     char *inf_name;		/* name of input stream */
-    char *outf_name = NULL;	/*  "   "  output  "    */
+    const char *outf_name = NULL;	/*  "   "  output  "    */
     unsigned char pixbuf[3];	/* the current input pixel */
     FILE *infp = NULL;	/* input stream */
     FILE *outfp = NULL;	/* output  "    */
@@ -206,8 +224,7 @@ main (int argc, char **argv)
 		next_color = 0;
 		break;
 	    case 'x':
-		if (sscanf(bu_optarg, "%x", (unsigned int *) &debug) != 1) {
-		    bu_log("Invalid debug-flag value: '%s'\n", bu_optarg);
+		if (!parse_hex_int_arg(bu_optarg, &debug, "debug-flag value")) {
 		    print_debug_usage();
 		}
 		break;

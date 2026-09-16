@@ -1,0 +1,114 @@
+= VIEW_FUNC(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+view_func - legacy view control multiplexer
+
+== SYNOPSIS
+
+[source]
+----
+view_func subcommand [args]
+----
+
+[[description]]
+== DESCRIPTION
+
+The *view_func* command is a legacy multiplexer that provides access to various view control operations through a single entry point. It dispatches to separate view commands based on `subcommand`. In modern environments, `view_func` delegates entirely to the *view* command; in compatibility mode it dispatches using a built-in dispatch table.
+
+This command exists primarily for backward compatibility with older MGED scripts. New scripts should use the individual commands directly or the *view* command.
+
+=== Subcommands
+
+[cols="1,3"]
+|===
+|Subcommand |Equivalent / Action
+
+|`ae` or `aet`
+|Delegates to `aet`: get or set the azimuth, elevation, and twist angles.
+
+|`align`
+|Delegates to `align`: align the view to a surface normal.
+
+|`auto` or `autoview`
+|Delegates to `autoview`: automatically fit all displayed objects in the view.
+
+|`center`
+|Delegates to `center`: get or set the view center point.
+
+|`data_lines` or `sdata_lines`
+|Delegates to `data_lines`/`sdata_lines`: manage supplementary data lines drawn in the view.
+
+|`eye`
+|Delegates to `eye`: get or set the eye (camera) position.
+
+|`faceplate`
+|Delegates to `faceplate`: manage faceplate display elements.
+
+|`knob`
+|Delegates to `knob`: simulate dial-box knob input for view adjustments.
+
+|`lookat`
+|Delegates to `lookat`: orient the view to look at a specified point.
+
+|`obj`
+|Delegates to the legacy view object handler.
+
+|`print`
+|Delegates to `print`: print a formatted summary of the current view state.
+
+|`quat`
+|Delegates to `quat`: get or set the view orientation as a quaternion.
+
+|`qvrot` or `dir`
+|Delegates to `viewdir` (get direction) or `qvrot` (set rotation via quaternion and angle), depending on argument count.
+
+|`save` or `saveview`
+|Delegates to `saveview`: save the current view to a file.
+
+|`size`
+|Delegates to `size`: get or set the view size.
+
+|`snap`
+|Delegates to the view snap handler.
+
+|`ypr`
+|Delegates to `ypr`: get or set the view orientation as yaw, pitch, and roll angles.
+
+|===
+
+[[examples]]
+== EXAMPLES
+
+.Set the azimuth/elevation via view_func
+[example]
+====
+mged> **view_func ae 35 25**
+
+Sets the view to azimuth 35°, elevation 25° — equivalent to `aet 35 25`.
+====
+
+.Get the current view center
+[example]
+====
+mged> **view_func center**
+
+Returns the current view center coordinates — equivalent to `center`.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*view*(nged), *aet*(nged), *center*(nged), *eye*(nged), *quat*(nged), *size*(nged), *saveview*(nged), *ypr*(nged)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

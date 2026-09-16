@@ -1,12 +1,12 @@
-# For COMMAND bu_test vls, the input format is as follows:
+# For COMMAND bu_test test_vls, the input format is as follows:
 #
-# COMMAND bu_test vls <function number> <args>
+# COMMAND bu_test test_vls <function number> <args>
 
 # For function #1 (bu_vls_init) there are no arguments
-add_test(NAME bu_vls_init COMMAND bu_test vls 1)
+add_test(NAME bu_vls_init COMMAND bu_test test_vls 1)
 
 # For function #2 (bu_vls_vlsinit) there are no arguments
-add_test(NAME bu_vls_vlsinit COMMAND bu_test vls 2)
+add_test(NAME bu_vls_vlsinit COMMAND bu_test test_vls 2)
 
 # For function #3 (bu_vls_strcpy/bu_vls_addr) the <args> format is as
 # follows:
@@ -16,7 +16,7 @@ add_test(NAME bu_vls_vlsinit COMMAND bu_test vls 2)
 # where string_to_test is a string to be used in testing
 # bu_vls_strcpy/bu_vls_addr.
 
-add_test(NAME bu_vls_access_1 COMMAND bu_test vls 3 "Test 1 2 3")
+add_test(NAME bu_vls_access_1 COMMAND bu_test test_vls 3 "Test 1 2 3")
 
 # For function #4 (bu_vls_strncpy) the <args> format is as follows:
 #
@@ -27,11 +27,11 @@ add_test(NAME bu_vls_access_1 COMMAND bu_test vls 3 "Test 1 2 3")
 
 add_test(
   NAME bu_vls_strncpy_1
-  COMMAND bu_test vls 4 "Test 1" "Test 1 2" 4 "Test"
+  COMMAND bu_test test_vls 4 "Test 1" "Test 1 2" 4 "Test"
 )
 add_test(
   NAME bu_vls_strncpy_2
-  COMMAND bu_test vls 4 "Test 1" "Test 1 2" 8 "Test 1 2"
+  COMMAND bu_test test_vls 4 "Test 1" "Test 1 2" 8 "Test 1 2"
 )
 
 # For function #5 (bu_vls_strdup) the <args> format is as follows:
@@ -41,7 +41,7 @@ add_test(
 # where string_to_test is a string to be used in testing
 # bu_vls_strdup.
 
-add_test(NAME bu_vls_strdup_1 COMMAND bu_test vls 5 "Test 1 2 3")
+add_test(NAME bu_vls_strdup_1 COMMAND bu_test test_vls 5 "Test 1 2 3")
 
 # For function #6 (bu_vls_strlen) the <args> format is as follows:
 #
@@ -49,7 +49,7 @@ add_test(NAME bu_vls_strdup_1 COMMAND bu_test vls 5 "Test 1 2 3")
 #
 # where string_to_test is a string whose length will be checked
 
-add_test(NAME bu_vls_strlen_1 COMMAND bu_test vls 6 "Test 1 2 3")
+add_test(NAME bu_vls_strlen_1 COMMAND bu_test test_vls 6 "Test 1 2 3")
 
 # For function #7 (bu_vls_trunc) the <args> format is as follows:
 #
@@ -60,11 +60,11 @@ add_test(NAME bu_vls_strlen_1 COMMAND bu_test vls 6 "Test 1 2 3")
 
 add_test(
   NAME bu_vls_trunc_1
-  COMMAND bu_test vls 7 "Test 1 2 3" 6 "Test 1"
+  COMMAND bu_test test_vls 7 "Test 1 2 3" 6 "Test 1"
 )
 add_test(
   NAME bu_vls_trunc_2
-  COMMAND bu_test vls 7 "Test 1 2 3" -2 "Test 1 2"
+  COMMAND bu_test test_vls 7 "Test 1 2 3" -2 "Test 1 2"
 )
 
 # For function #9 (bu_vls_nibble) the <args> format is as follows:
@@ -76,7 +76,7 @@ add_test(
 
 add_test(
   NAME bu_vls_nibble_1
-  COMMAND bu_test vls 9 "Test 1 2 3" 4 " 1 2 3"
+  COMMAND bu_test test_vls 9 "Test 1 2 3" 4 " 1 2 3"
 )
 
 # For function #10 (bu_vls_strcat) the <args> format is as follows:
@@ -87,7 +87,7 @@ add_test(
 
 add_test(
   NAME bu_vls_strcat_1
-  COMMAND bu_test vls 10 "Test 1" " 2 3" "Test 1 2 3"
+  COMMAND bu_test test_vls 10 "Test 1" " 2 3" "Test 1 2 3"
 )
 
 # For function #11 (bu_vls_strncat) the <args> format is as follows:
@@ -98,23 +98,23 @@ add_test(
 
 add_test(
   NAME bu_vls_strncat_1
-  COMMAND bu_test vls 11 "Test 1" " 2 3" 4 "Test 1 2 3"
+  COMMAND bu_test test_vls 11 "Test 1" " 2 3" 4 "Test 1 2 3"
 )
 add_test(
   NAME bu_vls_strncat_2
-  COMMAND bu_test vls 11 "Test 1" " 2 3" 2 "Test 1 2"
+  COMMAND bu_test test_vls 11 "Test 1" " 2 3" 2 "Test 1 2"
 )
 add_test(
   NAME bu_vls_strncat_3
-  COMMAND bu_test vls 11 "Test 1" " 2 3" -4 "Test 1 2 3"
+  COMMAND bu_test test_vls 11 "Test 1" " 2 3" -4 "Test 1 2 3"
 )
 add_test(
   NAME bu_vls_strncat_4
-  COMMAND bu_test vls 11 "Test 1" " 2 3" 0 "Test 1"
+  COMMAND bu_test test_vls 11 "Test 1" " 2 3" 0 "Test 1"
 )
 add_test(
   NAME bu_vls_strncat_5
-  COMMAND bu_test vls 11 "Test 1" " 2 3" 5 "Test 1 2 3"
+  COMMAND bu_test test_vls 11 "Test 1" " 2 3" 5 "Test 1 2 3"
 )
 
 # For function #12 (bu_vls_vlscat) the <args> format is as follows:
@@ -125,7 +125,7 @@ add_test(
 
 add_test(
   NAME bu_vls_vlscat_1
-  COMMAND bu_test vls 12 "Test 1" " 2 3" "Test 1 2 3"
+  COMMAND bu_test test_vls 12 "Test 1" " 2 3" "Test 1 2 3"
 )
 
 # For function #13 (bu_vls_strcmp) the <args> format is as follows:
@@ -136,15 +136,15 @@ add_test(
 
 add_test(
   NAME bu_vls_strcmp_equal_1
-  COMMAND bu_test vls 13 "Test 1" "Test 1" 0
+  COMMAND bu_test test_vls 13 "Test 1" "Test 1" 0
 )
 add_test(
   NAME bu_vls_strcmp_lesser_1
-  COMMAND bu_test vls 13 "Test 1" "Test 2" -1
+  COMMAND bu_test test_vls 13 "Test 1" "Test 2" -1
 )
 add_test(
   NAME bu_vls_strcmp_greater_1
-  COMMAND bu_test vls 13 "Test 1" "Test 0" 1
+  COMMAND bu_test test_vls 13 "Test 1" "Test 0" 1
 )
 
 # For function #14 (bu_vls_strcmp) the <args> format is as follows:
@@ -155,27 +155,27 @@ add_test(
 
 add_test(
   NAME bu_vls_strncmp_equal_1
-  COMMAND bu_test vls 14 "Test 1" "Test 1" 6 0
+  COMMAND bu_test test_vls 14 "Test 1" "Test 1" 6 0
 )
 add_test(
   NAME bu_vls_strncmp_lesser_1
-  COMMAND bu_test vls 14 "Test 1" "Test 2" 6 -1
+  COMMAND bu_test test_vls 14 "Test 1" "Test 2" 6 -1
 )
 add_test(
   NAME bu_vls_strncmp_greater_1
-  COMMAND bu_test vls 14 "Test 1" "Test 0" 6 1
+  COMMAND bu_test test_vls 14 "Test 1" "Test 0" 6 1
 )
 add_test(
   NAME bu_vls_strncmp_equal_2
-  COMMAND bu_test vls 14 "Test 1" "Test 1" 4 0
+  COMMAND bu_test test_vls 14 "Test 1" "Test 1" 4 0
 )
 add_test(
   NAME bu_vls_strncmp_equal_3
-  COMMAND bu_test vls 14 "Test 1" "Test 2" 4 0
+  COMMAND bu_test test_vls 14 "Test 1" "Test 2" 4 0
 )
 add_test(
   NAME bu_vls_strncmp_equal_4
-  COMMAND bu_test vls 14 "Test 1" "Test 0" 4 0
+  COMMAND bu_test test_vls 14 "Test 1" "Test 0" 4 0
 )
 
 # For function #15 (bu_vls_from_argv) the <args> format is as follows:
@@ -187,7 +187,7 @@ add_test(
 
 add_test(
   NAME bu_vls_from_argv_1
-  COMMAND bu_test vls 15 Test Test 2 3 4 "Test Test 2 3 4"
+  COMMAND bu_test test_vls 15 Test Test 2 3 4 "Test Test 2 3 4"
 )
 
 # For function #16 (bu_vls_trimspace) the <args> format is as follows:
@@ -199,7 +199,7 @@ add_test(
 
 add_test(
   NAME bu_vls_trimspace_1
-  COMMAND bu_test vls 16 "   Testing1 2   " "Testing1 2"
+  COMMAND bu_test test_vls 16 "   Testing1 2   " "Testing1 2"
 )
 
 # For function #17 (bu_vls_spaces) the <args> format is as follows:
@@ -211,7 +211,7 @@ add_test(
 
 add_test(
   NAME bu_vls_spaces_1
-  COMMAND bu_test vls 17 "Testing1 2" 3 "Testing1 2   "
+  COMMAND bu_test test_vls 17 "Testing1 2" 3 "Testing1 2   "
 )
 
 # For function #18 (bu_vls_detab) the <args> format is as follows:
@@ -223,7 +223,7 @@ add_test(
 
 add_test(
   NAME bu_vls_detab_1
-  COMMAND bu_test vls 18 "Testing	1 2	3" "Testing 1 2     3"
+  COMMAND bu_test test_vls 18 "Testing	1 2	3" "Testing 1 2     3"
 )
 
 # For function #19 (bu_vls_prepend) the <args> format is as follows:
@@ -235,7 +235,7 @@ add_test(
 
 add_test(
   NAME bu_vls_prepend_1
-  COMMAND bu_test vls 19 "2 3" "Test 1 " "Test 1 2 3"
+  COMMAND bu_test test_vls 19 "2 3" "Test 1 " "Test 1 2 3"
 )
 
 # For function #20 (bu_vls_substr) the <args> format is as follows:
@@ -247,49 +247,49 @@ add_test(
 #            "01234567890" <= 11 chars
 add_test(
   NAME bu_vls_substr_01
-  COMMAND bu_test vls 20 "01234567890" 0 5 "01234"
+  COMMAND bu_test test_vls 20 "01234567890" 0 5 "01234"
 )
 add_test(
   NAME bu_vls_substr_02
-  COMMAND bu_test vls 20 "01234567890" -2 5 ""
+  COMMAND bu_test test_vls 20 "01234567890" -2 5 ""
 )
 add_test(
   NAME bu_vls_substr_03
-  COMMAND bu_test vls 20 "01234567890" -2 20 ""
+  COMMAND bu_test test_vls 20 "01234567890" -2 20 ""
 )
 add_test(
   NAME bu_vls_substr_04
-  COMMAND bu_test vls 20 "01234567890" 5 20 "567890"
+  COMMAND bu_test test_vls 20 "01234567890" 5 20 "567890"
 )
 add_test(
   NAME bu_vls_substr_05
-  COMMAND bu_test vls 20 "01234567890" 0 20 "01234567890"
+  COMMAND bu_test test_vls 20 "01234567890" 0 20 "01234567890"
 )
 add_test(
   NAME bu_vls_substr_06
-  COMMAND bu_test vls 20 "01234567890" 2 5 "23456"
+  COMMAND bu_test test_vls 20 "01234567890" 2 5 "23456"
 )
 add_test(
   NAME bu_vls_substr_07
-  COMMAND bu_test vls 20 "01234567890" 20 5 ""
+  COMMAND bu_test test_vls 20 "01234567890" 20 5 ""
 )
 add_test(
   NAME bu_vls_substr_08
-  COMMAND bu_test vls 20 "01234567890" 0 -1 "01234567890"
+  COMMAND bu_test test_vls 20 "01234567890" 0 -1 "01234567890"
 )
 add_test(
   NAME bu_vls_substr_09
-  COMMAND bu_test vls 20 "01234567890" 2 -1 "234567890"
+  COMMAND bu_test test_vls 20 "01234567890" 2 -1 "234567890"
 )
 add_test(
   NAME bu_vls_substr_10
-  COMMAND bu_test vls 20 "01234567890" 0 0 ""
+  COMMAND bu_test test_vls 20 "01234567890" 0 0 ""
 )
 add_test(
   NAME bu_vls_substr_11
-  COMMAND bu_test vls 20 "01234567890" 0 2 "01"
+  COMMAND bu_test test_vls 20 "01234567890" 0 2 "01"
 )
 add_test(
   NAME bu_vls_substr_12
-  COMMAND bu_test vls 20 "01234567890" 11 20 ""
+  COMMAND bu_test test_vls 20 "01234567890" 11 20 ""
 )

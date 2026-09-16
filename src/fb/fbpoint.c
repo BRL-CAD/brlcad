@@ -1,7 +1,7 @@
 /*                       F B P O I N T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2025 United States Government as represented by
+ * Copyright (c) 1986-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -26,6 +26,8 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -36,6 +38,7 @@
 #include "bu/str.h"
 #include "bu/exit.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "vmath.h"
 #include "dm.h"
 #define LIBTERMIO_IMPLEMENTATION
@@ -54,10 +57,10 @@ int Run = 1;		/* Tells when to stop the main loop */
 
 void SimpleInput(void);
 
-char usage[] = "\
+const char usage[] = "\
 Usage: fbpoint [-F framebuffer] [-s squaresize] [-w width] [-n height] [-x[prefix]] [-y[prefix]] [initialx initially]\n";
 
-static char *help = "\
+static const char *help = "\
 Char:   Command:                                                \r\n\
 h B	Left (1)\r\n\
 j N	Down (1)\r\n\
@@ -163,13 +166,26 @@ main(int argc, char **argv)
 		framebuffer = bu_optarg;
 		break;
 	    case 's':
-		width = height = atoi(bu_optarg);
+	    case 'S':
+		if (!bu_opt_scan_int_range(bu_optarg, &width, 1, INT_MAX, "screen size")) {
+		    fprintf(stderr, "%s", usage);
+		    return 1;
+		}
+		height = width;
 		break;
 	    case 'w':
-		width = atoi(bu_optarg);
+	    case 'W':
+		if (!bu_opt_scan_int_range(bu_optarg, &width, 1, INT_MAX, "screen width")) {
+		    fprintf(stderr, "%s", usage);
+		    return 1;
+		}
 		break;
 	    case 'n':
-		height = atoi(bu_optarg);
+	    case 'N':
+		if (!bu_opt_scan_int_range(bu_optarg, &height, 1, INT_MAX, "screen height")) {
+		    fprintf(stderr, "%s", usage);
+		    return 1;
+		}
 		break;
 	    case 'x':
 		xflag++;
@@ -197,18 +213,21 @@ main(int argc, char **argv)
      * Check for optional starting coordinate.
      * Test for bad flags while we're at it.
      */
-    if (argc > 1 && argv[1][0] != '-') {
-	curX = atoi(argv[1]);
-	argc--;
-	argv++;
+    if (argc > 2) {
+	fprintf(stderr, "%s: expected at most 2 positional arguments, got %d\n", bu_getprogname(), argc);
+	bu_exit(1, "%s", usage);
     }
-    if (argc > 1 && argv[1][0] != '-') {
-	curY = atoi(argv[1]);
-	argc--;
-	argv++;
+    if (argc > 0) {
+	if (!bu_opt_scan_int(argv[0], &curX, "initial x")) {
+	    fprintf(stderr, "%s", usage);
+	    return 1;
+	}
     }
     if (argc > 1) {
-	bu_exit(1, "%s", usage);
+	if (!bu_opt_scan_int(argv[1], &curY, "initial y")) {
+	    fprintf(stderr, "%s", usage);
+	    return 1;
+	}
     }
 
     /* fix up pointers for printf */

@@ -1,7 +1,7 @@
 /*                     P I X B U S T U P . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2025 United States Government as represented by
+ * Copyright (c) 1986-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,6 +27,8 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include "bio.h"
 
@@ -34,6 +36,7 @@
 #include "bu/malloc.h"
 #include "bu/log.h"
 #include "bu/file.h"
+#include "bu/opt.h"
 
 int infd;
 unsigned char *in1;
@@ -48,6 +51,16 @@ printUsage(void)
     bu_log("Usage: pixbustup basename width [image_offset] [first_number] <input.pix\n");
 }
 
+static int
+parse_nonnegative_offset_arg(const char *arg, b_off_t *out_value, const char *label)
+{
+    size_t _s;
+    if (!bu_opt_scan_size_t(arg, &_s, label))
+	return 0;
+    *out_value = (b_off_t)_s;
+    return 1;
+}
+
 
 int
 main(int argc, char **argv)
@@ -59,13 +72,16 @@ main(int argc, char **argv)
 
     bu_setprogname(argv[0]);
 
-    if (argc < 3) {
+    if (argc < 3 || argc > 5) {
 	printUsage();
 	return 1;
     }
 
     base_name = argv[1];
-    nlines = atoi(argv[2]);
+    if (!bu_opt_scan_size_t_range(argv[2], &nlines, 1, SIZE_MAX, "width")) {
+	printUsage();
+	return 1;
+    }
 
     if (nlines < 1) {
 	bu_log("ERROR: need width of at least 1 pixel.");
@@ -83,13 +99,20 @@ main(int argc, char **argv)
     in1 = (unsigned char *) malloc(scanbytes);
 
     if (argc == 4) {
-	image_offset = atoi(argv[3]);
+	if (!parse_nonnegative_offset_arg(argv[3], &image_offset, "image offset")) {
+	    printUsage();
+	    return 1;
+	}
 	bu_lseek(0, image_offset*scanbytes, 0);
     }
-    if (argc == 5)
-	framenumber = atoi(argv[4]);
-    else
+    if (argc == 5) {
+	if (!bu_opt_scan_size_t_range(argv[4], &framenumber, 0, SIZE_MAX, "first frame number")) {
+	    printUsage();
+	    return 1;
+	}
+    } else {
 	framenumber = 0;
+    }
 
     for (;; framenumber++) {
 	int fd;

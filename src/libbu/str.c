@@ -1,7 +1,7 @@
 /*                          S T R . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2025 United States Government as represented by
+ * Copyright (c) 2007-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,10 +35,10 @@
 #include "bu/parallel.h"
 #include "bu/str.h"
 
-#ifndef HAVE_DECL_STRLCAT
+#if defined(HAVE_STRLCAT) && !defined(HAVE_DECL_STRLCAT) && !defined(strlcat)
 extern size_t strlcat(char *, const char *, size_t);
 #endif
-#ifndef HAVE_DECL_STRLCPY
+#if defined(HAVE_STRLCPY) && !defined(HAVE_DECL_STRLCPY) && !defined(strlcpy)
 extern size_t strlcpy(char *, const char *, size_t);
 #endif
 
@@ -85,7 +85,13 @@ bu_strlcatm(char *dst, const char *src, size_t size, const char *label)
     /* don't return to ensure consistent null-termination behavior in following */
     (void)strlcat(dst, src, size);
 #else
-    (void)strncat(dst, src, size - dstsize - 1);
+    if (dstsize < size) {
+	size_t avail = size - dstsize - 1;
+	size_t copylen = (srcsize < avail) ? srcsize : avail;
+	if (copylen > 0) {
+	    memcpy(dst + dstsize, src, copylen);
+	}
+    }
 #endif
 
     /* be sure to null-terminate, contrary to strncat behavior */

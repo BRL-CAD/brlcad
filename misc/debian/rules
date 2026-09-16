@@ -25,7 +25,7 @@ build: build-stamp
 build-stamp:
 	dh_testdir
 
-	cmake -DCMAKE_INSTALL_PREFIX=/usr/brlcad -DBRLCAD_ENABLE_STRICT=OFF
+	cmake . -DCMAKE_INSTALL_PREFIX=$(CURDIR)/debian/tmp/usr/brlcad -DBRLCAD_ENABLE_STRICT=OFF -DBRLCAD_BUNDLED_LIBS=ON
 
 	$(MAKE) $(PARALLEL_OPTIONS)
 
@@ -44,7 +44,7 @@ install-stamp: build-stamp
 	dh_prep
 	dh_installdirs
 
-	$(MAKE) install DESTDIR=$(CURDIR)/debian/tmp
+	$(MAKE) install
 
 # Build architecture-dependent files here.
 binary-arch: build install
@@ -52,10 +52,11 @@ binary-arch: build install
 	dh_testroot
 	dh_installdocs -a
 	dh_installchangelogs -a
-	dh_install -a --list-missing
+	dh_install -a
+	dh_missing -a --list-missing
 	dh_compress -a
 	dh_fixperms -a
-#	dh_makeshlibs -a
+	dh_makeshlibs -a
 	dh_installdeb -a
 	dh_shlibdeps -a
 	dh_gencontrol -a

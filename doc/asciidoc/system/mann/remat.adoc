@@ -1,0 +1,47 @@
+= REMAT(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+remat - Sets the material for all regions found in the given group.
+
+== SYNOPSIS
+
+[source]
+----
+remat {assembly} {value}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+The *remat* sets the material for all regions found under the given assembly to the inputted value. If a region is given, it will set the material for just that region.
+
+
+[[examples]]
+== EXAMPLES
+
+Set the material
+
+.Set the material to 5.
+[example]
+====
+mged>**remat example.c 5**
+
+All regions under example.c will have their material code reset to 5.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

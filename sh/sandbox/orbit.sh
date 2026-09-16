@@ -2,7 +2,7 @@
 #                          O R B I T . S H
 # BRL-CAD
 #
-# Copyright (c) 2010-2025 United States Government as represented by
+# Copyright (c) 2010-2026 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -86,7 +86,7 @@ ffmpeg -framerate 25 -pattern_type glob -i "$dir/$base.*.png" -c:v libx264 -pix_
 
 # clean up
 if test -f $base.$$.gif && test -f $base.$$.mp4 ; then
-    echo "Run this to remove intermediate render frames:  rm -rf "$dir"
+    echo "Run this to remove intermediate render frames:  rm -rf \"$dir\""
 fi
 
 echo "---"

@@ -1,0 +1,47 @@
+= TOR-RCC(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD MGED Commands
+
+== NAME
+tor-rcc - Creates an RCC shape that fills in the hole of a specified TOR.
+
+== SYNOPSIS
+
+[source]
+----
+tor-rcc {torname} {newname}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Creates an RCC shape that fills in the hole of a specified TOR.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *tor-rcc* command to create an RCC to fill in the hole of a TOR.
+
+.Create an RCC shape to fill in the hole of a TOR.
+[example]
+====
+mged>**tor-rcc tor.s rcc.s**
+
+Creates an RCC named _rcc.s_ to fill in the hole in the middle of _tor.s_.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

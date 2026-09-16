@@ -1,7 +1,7 @@
 /*                          L E N S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -223,7 +223,7 @@ static int
 ReadArgs(int argc, char **argv, int *lens_1side_2side, fastf_t *ref_ind, fastf_t *diameter, fastf_t *thickness, fastf_t *focal_length)
 {
     int c;
-    char *options="T:r:d:t:f:h?";
+    const char *options="T:r:d:t:f:h?";
     int ltype;
     float refractive, diam, thick, focal;
 

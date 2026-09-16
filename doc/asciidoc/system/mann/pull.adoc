@@ -1,0 +1,47 @@
+= PULL(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+pull - Pulls the effects of all transformation matrices that appear in any combinations or primitives in the trees from the leaves up to the specified _objects_ or node.
+
+== SYNOPSIS
+
+[source]
+----
+pull [objects]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Pulls the effects of all matrix transformations that appear in any combinations or primitives in the tree from the leaves up to the specified _objects_. This will restore the parameters of the _primitive shapes_ if any of the transformation matrices were not identity matrices. All the transformation matrices visited will be set to the current transformation matrix as it moves up the tree. This command will fail, and no changes will be made, if the specified _object_ is a primitive shape referenced by the list of _objects_.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *pull* command to pull the effects of any transformation matrices from leaves(primitive shapes) of a tree up to the specified head objects.
+
+.Pull the effects of any transformation matrices from the leaves(primitive shapes) of the tree up to the specified head nodes(objects).
+[example]
+====
+mged>**pull group1 regiona**
+
+Pulls the effects of any transformation matrices from the primitive shapes in the tree up to the root nodes specified by _group1_ and _regiona_.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

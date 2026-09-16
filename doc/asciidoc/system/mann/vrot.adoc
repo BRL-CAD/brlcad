@@ -1,0 +1,58 @@
+= VROT(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD MGED Commands
+
+== NAME
+vrot - Rotates the view on the current geometry display window.
+
+== SYNOPSIS
+
+[source]
+----
+vrot {xrot yrot zrot}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Rotates the view on the current geometry display window. The parameters _xrot, yrot,_ and _zrot_ are rotations (specified in degrees) about the viewing coordinate axes.
+
+If the display is in rotate-about-center mode, then the rotation will occur about the center of the viewing volume. In rotate-about-eye mode, the view on the display will be rotated about the eye. The *vars* command (or a menu button) allows the user to toggle between the two modes.
+
+
+[[examples]]
+== EXAMPLES
+
+The two examples show the use of the *vrot* command to rotate the view on the current geometry display window about the _x_ axis and _y_ axis, respectively.
+
+.Rotate the view on the geometry display window about the _x_ axis.
+[example]
+====
+mged>**vrot 90 0 0**
+
+Rotates the view 90° about the _x_ axis.
+
+====
+
+.Rotate the view on the geometry display window about the _y_ axis.
+[example]
+====
+mged>**vrot 0 180 0**
+
+Rotates the view 180° about the _y_ axis.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

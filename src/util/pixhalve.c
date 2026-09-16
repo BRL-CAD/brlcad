@@ -1,7 +1,7 @@
 /*                      P I X H A L V E . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2025 United States Government as represented by
+ * Copyright (c) 1995-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -30,6 +30,8 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 
 #include "bio.h"
@@ -37,13 +39,14 @@
 #include "vmath.h"
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/malloc.h"
 #include "bu/exit.h"
 #include "bn.h"
 #include "dm.h"
 
 
-static char *file_name;
+static const char *file_name;
 static FILE *infp;
 
 static int fileinput = 0;	/* file or pipe on input? */
@@ -58,7 +61,6 @@ int *rlines[5];
 int *glines[5];
 int *blines[5];
 
-
 static int
 get_args(int argc, char **argv)
 {
@@ -71,11 +73,13 @@ get_args(int argc, char **argv)
 		break;
 	    case 's':
 		/* square file size */
-		file_width = atol(bu_optarg);
+		if (!bu_opt_scan_size_t_range(bu_optarg, &file_width, 1, SIZE_MAX, "input size"))
+		    return 0;
 		autosize = 0;
 		break;
 	    case 'w':
-		file_width = atol(bu_optarg);
+		if (!bu_opt_scan_size_t_range(bu_optarg, &file_width, 1, SIZE_MAX, "input width"))
+		    return 0;
 		autosize = 0;
 		break;
 	    case 'n':
@@ -94,6 +98,11 @@ get_args(int argc, char **argv)
 	infp = stdin;
     } else {
 	file_name = argv[bu_optind];
+	bu_optind++;
+	if (argc > bu_optind) {
+	    fprintf(stderr, "pixhalve: excess argument(s) not supported\n");
+	    return 0;
+	}
 	if ((infp = fopen(file_name, "rb")) == NULL) {
 	    perror(file_name);
 	    fprintf(stderr,
@@ -104,8 +113,10 @@ get_args(int argc, char **argv)
 	fileinput++;
     }
 
-    if (argc > ++bu_optind)
-	fprintf(stderr, "pixhalve: excess argument(s) ignored\n");
+    if (argc > bu_optind) {
+	fprintf(stderr, "pixhalve: excess argument(s) not supported\n");
+	return 0;
+    }
 
     return 1;		/* OK */
 }

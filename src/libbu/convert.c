@@ -1,7 +1,7 @@
 /*                       C O N V E R T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2025 United States Government as represented by
+ * Copyright (c) 2004-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,6 +24,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <limits.h>
+#include <stdint.h>
 
 #include "bu/cv.h"
 #include "bu/endian.h"
@@ -35,7 +36,7 @@ bu_cv_cookie(const char *in)			/* input format */
 {
     const char *p;
     int collector;
-    int result = 0x0000;	/* zero/one channel, Net, unsigned, char, clip */
+    int result;
     int val;
 
     if (UNLIKELY(!in)) return 0;
@@ -51,7 +52,8 @@ bu_cv_cookie(const char *in)			/* input format */
     } else if (collector == 0) {
 	collector = 1;
     }
-    result = collector;	/* number of channels set '|=' */
+    /* A missing signedness qualifier historically means signed. */
+    result = collector | CV_SIGNED_MASK;
 
     if (!*p) return 0;
 
@@ -64,6 +66,7 @@ bu_cv_cookie(const char *in)			/* input format */
 
     if (!*p) return 0;
     if (*p == 'u') {
+	result &= ~CV_SIGNED_MASK;
 	++p;
     } else if (*p == 's') {
 	/* could be 'signed' or 'short' */
@@ -266,15 +269,22 @@ bu_cv_optimize(register int cookie)
 
     switch (fmt) {
 	case CV_D:
-	    cookie |= CV_HOST_MASK;	/* host uses network fmt */
+	    if (sizeof(double) == SIZEOF_NETWORK_DOUBLE && bu_byteorder() == BU_BIG_ENDIAN)
+		cookie |= CV_HOST_MASK;
 	    return cookie;
 	case CV_8:
 	    return cookie | CV_HOST_MASK;	/* bytes already host format */
 	case CV_16:
-	case CV_32:
-	case CV_64:
 	    /* host is big-endian, so is network */
 	    if (bu_byteorder() == BU_BIG_ENDIAN)
+		cookie |= CV_HOST_MASK;
+	    return cookie;
+	case CV_32:
+	    if (sizeof(int) == sizeof(uint32_t) && bu_byteorder() == BU_BIG_ENDIAN)
+		cookie |= CV_HOST_MASK;
+	    return cookie;
+	case CV_64:
+	    if (sizeof(long) == sizeof(uint64_t) && bu_byteorder() == BU_BIG_ENDIAN)
 		cookie |= CV_HOST_MASK;
 	    return cookie;
     }
@@ -297,6 +307,175 @@ bu_cv_itemlen(register int cookie)
 }
 
 
+static uint64_t
+cv_ntohu_value(const unsigned char *in, size_t width)
+{
+    uint64_t value = 0;
+    size_t i;
+
+    for (i = 0; i < width; i++)
+	value = (value << CHAR_BIT) | in[i];
+
+    return value;
+}
+
+
+static void
+cv_htonu_value(unsigned char *out, uint64_t value, size_t width)
+{
+    size_t i;
+
+    for (i = width; i > 0; i--) {
+	out[i - 1] = (unsigned char)value;
+	value >>= CHAR_BIT;
+    }
+}
+
+
+static int32_t
+cv_ntohs32_value(const unsigned char *in)
+{
+    uint32_t value = (uint32_t)cv_ntohu_value(in, sizeof(uint32_t));
+
+    if (value <= (uint32_t)INT32_MAX)
+	return (int32_t)value;
+
+    return -INT32_C(1) - (int32_t)(UINT32_MAX - value);
+}
+
+
+static size_t
+cv_ntoh32(void *out, size_t size, const void *in, size_t count, int is_signed)
+{
+    unsigned char *out_bytes = (unsigned char *)out;
+    const unsigned char *in_bytes = (const unsigned char *)in;
+    size_t limit = size / sizeof(int);
+    size_t i;
+
+    if (limit < count)
+	count = limit;
+
+    for (i = 0; i < count; i++) {
+	if (is_signed) {
+	    int value = (int)cv_ntohs32_value(in_bytes);
+
+	    memcpy(out_bytes, &value, sizeof(value));
+	} else {
+	    unsigned int value = (unsigned int)cv_ntohu_value(in_bytes, sizeof(uint32_t));
+
+	    memcpy(out_bytes, &value, sizeof(value));
+	}
+	out_bytes += sizeof(int);
+	in_bytes += sizeof(uint32_t);
+    }
+
+    return count;
+}
+
+
+static size_t
+cv_hton32(void *out, size_t size, const void *in, size_t count, int is_signed)
+{
+    unsigned char *out_bytes = (unsigned char *)out;
+    const unsigned char *in_bytes = (const unsigned char *)in;
+    size_t limit = size / sizeof(uint32_t);
+    size_t i;
+
+    if (limit < count)
+	count = limit;
+
+    for (i = 0; i < count; i++) {
+	if (is_signed) {
+	    int value;
+
+	    memcpy(&value, in_bytes, sizeof(value));
+	    cv_htonu_value(out_bytes, (uint32_t)value, sizeof(uint32_t));
+	} else {
+	    unsigned int value;
+
+	    memcpy(&value, in_bytes, sizeof(value));
+	    cv_htonu_value(out_bytes, (uint32_t)value, sizeof(uint32_t));
+	}
+	out_bytes += sizeof(uint32_t);
+	in_bytes += sizeof(int);
+    }
+
+    return count;
+}
+
+
+static int64_t
+cv_ntohs64_value(const unsigned char *in)
+{
+    uint64_t value = cv_ntohu_value(in, sizeof(uint64_t));
+
+    if (value <= (uint64_t)INT64_MAX)
+	return (int64_t)value;
+
+    return -INT64_C(1) - (int64_t)(UINT64_MAX - value);
+}
+
+
+static size_t
+cv_ntoh64(void *out, size_t size, const void *in, size_t count, int is_signed)
+{
+    unsigned char *out_bytes = (unsigned char *)out;
+    const unsigned char *in_bytes = (const unsigned char *)in;
+    size_t limit = size / sizeof(long);
+    size_t i;
+
+    if (limit < count)
+	count = limit;
+
+    for (i = 0; i < count; i++) {
+	if (is_signed) {
+	    long value = (long)cv_ntohs64_value(in_bytes);
+
+	    memcpy(out_bytes, &value, sizeof(value));
+	} else {
+	    unsigned long value = (unsigned long)cv_ntohu_value(in_bytes, sizeof(uint64_t));
+
+	    memcpy(out_bytes, &value, sizeof(value));
+	}
+	out_bytes += sizeof(long);
+	in_bytes += sizeof(uint64_t);
+    }
+
+    return count;
+}
+
+
+static size_t
+cv_hton64(void *out, size_t size, const void *in, size_t count, int is_signed)
+{
+    unsigned char *out_bytes = (unsigned char *)out;
+    const unsigned char *in_bytes = (const unsigned char *)in;
+    size_t limit = size / sizeof(uint64_t);
+    size_t i;
+
+    if (limit < count)
+	count = limit;
+
+    for (i = 0; i < count; i++) {
+	if (is_signed) {
+	    long value;
+
+	    memcpy(&value, in_bytes, sizeof(value));
+	    cv_htonu_value(out_bytes, (uint64_t)value, sizeof(uint64_t));
+	} else {
+	    unsigned long value;
+
+	    memcpy(&value, in_bytes, sizeof(value));
+	    cv_htonu_value(out_bytes, (uint64_t)value, sizeof(uint64_t));
+	}
+	out_bytes += sizeof(uint64_t);
+	in_bytes += sizeof(long);
+    }
+
+    return count;
+}
+
+
 size_t
 bu_cv_ntohss(register short int *out, size_t size, register void *in, size_t count)
 {
@@ -308,12 +487,10 @@ bu_cv_ntohss(register short int *out, size_t size, register void *in, size_t cou
 	count = limit;
 
     for (i=0; i<count; i++) {
-	*out++ = ((signed char *)in)[0] << 8 | ((unsigned char *)in)[1];
-	/* XXX This needs sign extension here for the case of
-	 * XXX a negative 2-byte input on a 4 or 8 byte machine.
-	 * XXX The "signed char" trick isn't enough.
-	 * XXX Use your Cyber trick w/magic numbers or something.
-	 */
+	unsigned int value = ((unsigned int)((unsigned char *)in)[0] << 8) |
+	    (unsigned int)((unsigned char *)in)[1];
+	int signed_value = (value & 0x8000U) ? (int)value - 0x10000 : (int)value;
+	*out++ = (short int)signed_value;
 	in = ((char *)in) + 2;
     }
     return count;
@@ -350,11 +527,14 @@ bu_cv_ntohsl(register long int *out, size_t size, register void *in, size_t coun
 	count = limit;
 
     for (i=0; i<count; i++) {
-	*out++ = ((signed char *)in)[0] << 24 |
-	    ((unsigned char *)in)[1] << 16 |
-	    ((unsigned char *)in)[2] << 8  |
-	    ((unsigned char *)in)[3];
-	/* XXX Sign extension here */
+	unsigned long value =
+	    (unsigned long)((unsigned char *)in)[0] << 24 |
+	    (unsigned long)((unsigned char *)in)[1] << 16 |
+	    (unsigned long)((unsigned char *)in)[2] << 8  |
+	    (unsigned long)((unsigned char *)in)[3];
+	long int signed_value = (value & 0x80000000UL) ?
+	    -1L - (long int)(0xFFFFFFFFUL - value) : (long int)value;
+	*out++ = signed_value;
 	in = ((char *)in) + 4;
     }
 
@@ -519,26 +699,18 @@ bu_cv_w_cookie(void *out, int outcookie, size_t size, void *in, int incookie, si
      * conversion.
      */
     if (infmt == outfmt) {
+	if (count > size / outsize)
+	    count = size / outsize;
 
 	/*
 	 * Input format is the same as output format, do we need to do
 	 * a host/net conversion?
 	 */
 	if (inIsHost == outIsHost) {
-
-	    /*
-	     * No conversion required.  Check the amount of space
-	     * remaining before doing the memmove.
-	     */
-	    if ((unsigned int)count * outsize > size) {
-		number_done = (int)(size / outsize);
-	    } else {
-		number_done = count;
-	    }
-
 	    /*
 	     * This is the simplest case, binary copy and out.
 	     */
+	    number_done = count;
 	    memmove((void *)out, (void *)in, (size_t)number_done * outsize);
 	    return number_done;
 
@@ -557,9 +729,14 @@ bu_cv_w_cookie(void *out, int outcookie, size_t size, void *in, int incookie, si
 		case CV_16:
 		    return bu_cv_ntohus((unsigned short *)out, size, in, count);
 		case CV_SIGNED_MASK | CV_32:
-		    return bu_cv_ntohsl((signed long *)out, size, in, count);
+		    return cv_ntoh32(out, size, in, count, 1);
 		case CV_32:
-		    return bu_cv_ntohul((unsigned long *)out, size, in, count);
+		    return cv_ntoh32(out, size, in, count, 0);
+		case CV_SIGNED_MASK | CV_64:
+		    return cv_ntoh64(out, size, in, count, 1);
+		case CV_64:
+		    return cv_ntoh64(out, size, in, count, 0);
+		case CV_SIGNED_MASK | CV_D:
 		case CV_D:
 		    (void) bu_cv_ntohd((unsigned char *)out, (unsigned char *)in, count);
 		    return count;
@@ -577,9 +754,14 @@ bu_cv_w_cookie(void *out, int outcookie, size_t size, void *in, int incookie, si
 		case CV_16:
 		    return bu_cv_htonus(out, size, (unsigned short *)in, count);
 		case CV_SIGNED_MASK | CV_32:
-		    return bu_cv_htonsl(out, size, (long *)in, count);
+		    return cv_hton32(out, size, in, count, 1);
 		case CV_32:
-		    return bu_cv_htonul(out, size, (unsigned long *)in, count);
+		    return cv_hton32(out, size, in, count, 0);
+		case CV_SIGNED_MASK | CV_64:
+		    return cv_hton64(out, size, in, count, 1);
+		case CV_64:
+		    return cv_hton64(out, size, in, count, 0);
+		case CV_SIGNED_MASK | CV_D:
 		case CV_D:
 		    (void) bu_cv_htond((unsigned char *)out, (unsigned char *)in, count);
 		    return count;
@@ -664,11 +846,18 @@ bu_cv_w_cookie(void *out, int outcookie, size_t size, void *in, int incookie, si
 		    (void) bu_cv_ntohus((unsigned short *)t1, bufsize, from, work_count);
 		    break;
 		case CV_SIGNED_MASK | CV_32:
-		    (void) bu_cv_ntohsl((long *)t1, bufsize, from, work_count);
+		    (void) cv_ntoh32(t1, bufsize, from, work_count, 1);
 		    break;
 		case CV_32:
-		    (void) bu_cv_ntohul((unsigned long *)t1, bufsize, from, work_count);
+		    (void) cv_ntoh32(t1, bufsize, from, work_count, 0);
 		    break;
+		case CV_SIGNED_MASK | CV_64:
+		    (void) cv_ntoh64(t1, bufsize, from, work_count, 1);
+		    break;
+		case CV_64:
+		    (void) cv_ntoh64(t1, bufsize, from, work_count, 0);
+		    break;
+		case CV_SIGNED_MASK | CV_D:
 		case CV_D:
 		    (void) bu_cv_ntohd((unsigned char *)t1, (unsigned char *)from, work_count);
 		    break;
@@ -735,12 +924,26 @@ bu_cv_w_cookie(void *out, int outcookie, size_t size, void *in, int incookie, si
 		    break;
 		case CV_SIGNED_MASK | CV_32:
 		    for (i=0; i < work_count; i++) {
+			*((double *)to) = *((signed int *)from);
+			to = (void *)(((double *)to) + 1);
+			from = (void *)(((signed int *)from) + 1);
+		    }
+		    break;
+		case CV_SIGNED_MASK | CV_64:
+		    for (i=0; i < work_count; i++) {
 			*((double *)to) = *((signed long int *)from);
 			to = (void *)(((double *)to) + 1);
 			from =  (void *)(((signed long int *)from) + 1);
 		    }
 		    break;
 		case CV_32:
+		    for (i=0; i < work_count; i++) {
+			*((double *)to) = *((unsigned int *)from);
+			to = (void *)(((double *)to) + 1);
+			from = (void *)(((unsigned int *)from) + 1);
+		    }
+		    break;
+		case CV_64:
 		    for (i=0; i < work_count; i++) {
 			*((double *)to) = *((unsigned long int *) from);
 			to = (void *)(((double *)to) + 1);
@@ -809,6 +1012,13 @@ bu_cv_w_cookie(void *out, int outcookie, size_t size, void *in, int incookie, si
 		    break;
 		case CV_SIGNED_MASK | CV_32:
 		    for (i=0; i<work_count; i++) {
+			*((signed int *)to) = *((double *)from);
+			to = (void *)(((signed int *)to) + 1);
+			from = (void *)(((double *)from) + 1);
+		    }
+		    break;
+		case CV_SIGNED_MASK | CV_64:
+		    for (i=0; i<work_count; i++) {
 			*((signed long int *)to) =
 			    *((double *)from);
 			to = (void *)(((signed long int *)to) + 1);
@@ -816,6 +1026,13 @@ bu_cv_w_cookie(void *out, int outcookie, size_t size, void *in, int incookie, si
 		    }
 		    break;
 		case CV_32:
+		    for (i=0; i<work_count; i++) {
+			*((unsigned int *)to) = *((double *)from);
+			to = (void *)(((unsigned int *)to) + 1);
+			from = (void *)(((double *)from) + 1);
+		    }
+		    break;
+		case CV_64:
 		    for (i=0; i<work_count; i++) {
 			*((unsigned long int *)to) =
 			    *((double *)from);
@@ -834,13 +1051,9 @@ bu_cv_w_cookie(void *out, int outcookie, size_t size, void *in, int incookie, si
 	     * the requested output format.
 	     */
 
-	    /*
-	     * If the output conversion is network then do a host to
-	     * net call for either 16 or 32 bit values using Host TO
-	     * Network All Short | Long
-	     */
+	    /* Convert the requested host integer type to network format. */
 	    if (outIsHost != CV_HOST_MASK) {
-		switch (outfmt) {
+		switch (outcookie & (CV_SIGNED_MASK | CV_TYPE_MASK)) {
 		    case CV_16 | CV_SIGNED_MASK:
 			(void) bu_cv_htonss(out, bufsize, (short int *)from, work_count);
 			break;
@@ -848,18 +1061,25 @@ bu_cv_w_cookie(void *out, int outcookie, size_t size, void *in, int incookie, si
 			(void) bu_cv_htonus(out, bufsize, (unsigned short int *)from, work_count);
 			break;
 		    case CV_32 | CV_SIGNED_MASK:
-			(void) bu_cv_htonsl(out, bufsize, (long int *)from, work_count);
+			(void) cv_hton32(out, bufsize, from, work_count, 1);
 			break;
 		    case CV_32:
-			(void) bu_cv_htonul(out, bufsize, (unsigned long int *)from, work_count);
+			(void) cv_hton32(out, bufsize, from, work_count, 0);
 			break;
-		    case CV_D:
+		    case CV_64 | CV_SIGNED_MASK:
+			(void) cv_hton64(out, bufsize, from, work_count, 1);
+			break;
+		    case CV_64:
+			(void) cv_hton64(out, bufsize, from, work_count, 0);
+			break;
 		    default:
 			/* do nothing */
 			break;
 		}
 	    }
 
+	} else if (outIsHost != CV_HOST_MASK) {
+	    (void) bu_cv_htond((unsigned char *)out, (unsigned char *)from, work_count);
 	}
 	/*
 	 * move the output pointer.  reduce the amount of space

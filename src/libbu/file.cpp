@@ -1,7 +1,7 @@
 /*                      F I L E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2004-2025 United States Government as represented by
+ * Copyright (c) 2004-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -57,6 +57,17 @@
 #ifndef X_OK
 #  define X_OK 1
 #endif
+
+
+const char *
+bu_file_null(void)
+{
+#if defined(_WIN32) && !defined(__CYGWIN__) && !defined(__MSYS__)
+    return "NUL";
+#else
+    return "/dev/null";
+#endif
+}
 
 
 int
@@ -529,7 +540,11 @@ bu_file_delete(const char *path)
 
     /* Permissions updated (hopefully), try delete again */
 #ifdef HAVE_WINDOWS_H
-    close(fd);  // If we don't close this here, file delete on Windows will fail
+    /* Must close fd before deleting on Windows; track that it is closed so we
+     * do not double-close it later (double-close triggers FAST_FAIL_INVALID_ARG
+     * in the MSVC CRT). */
+    close(fd);
+    fd = -1;
     if (bu_file_directory(path)) {
 	ret = (RemoveDirectory(path)) ? 1 : 0;
     } else {
@@ -561,8 +576,10 @@ bu_file_delete(const char *path)
 	return 0;
     }
 
-#ifdef HAVE_WINDOWS_H
-    close(fd);
+#ifndef HAVE_WINDOWS_H
+    /* On non-Windows the fd has not been closed yet; close it now. */
+    if (fd >= 0)
+	close(fd);
 #endif
 
     return 1;

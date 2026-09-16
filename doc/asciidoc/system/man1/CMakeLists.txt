@@ -1,0 +1,310 @@
+set(
+  man1_EN
+  3dm-g.adoc
+  a-d.adoc
+  adrt.adoc
+  adrt_master.adoc
+  adrt_slave.adoc
+  alias-pix.adoc
+  ap-pix.adoc
+  archer.adoc
+  art.adoc
+  asc-nmg.adoc
+  asc-plot3.adoc
+  asc2dsp.adoc
+  asc2g.adoc
+  beset.adoc
+  bolt.adoc
+  bombardier.adoc
+  bot_dump.adoc
+  brep_simple.adoc
+  brledit.adoc
+  brlcad-launcher.adoc
+  brlman.adoc
+  btclsh.adoc
+  bw-a.adoc
+  bw-d.adoc
+  bw-fb.adoc
+  bw-pix.adoc
+  bw-png.adoc
+  bw-ps.adoc
+  bwcrop.adoc
+  bwdiff.adoc
+  bwfilter.adoc
+  bwhist.adoc
+  bwhisteq.adoc
+  bwish.adoc
+  bwmod.adoc
+  bwrect.adoc
+  bwrot.adoc
+  bwscale.adoc
+  bwshrink.adoc
+  bwstat.adoc
+  bwthresh.adoc
+  c-d.adoc
+  cad_boundp.adoc
+  cad_parea.adoc
+  coil.adoc
+  comgeom-g.adoc
+  conv-vg2g.adoc
+  csg-g.adoc
+  cv.adoc
+  d-a.adoc
+  d-bw.adoc
+  d-f.adoc
+  d-i.adoc
+  d-u.adoc
+  d2-c.adoc
+  damdf.adoc
+  dauto.adoc
+  dauto2.adoc
+  dbupgrade.adoc
+  dconv.adoc
+  ddisp.adoc
+  decimate.adoc
+  dfft.adoc
+  dm_ogl_probe.adoc
+  dmod.adoc
+  double-asc.adoc
+  dpeak.adoc
+  dpix-pix.adoc
+  dsel.adoc
+  dstats.adoc
+  dwin.adoc
+  dxf-g.adoc
+  enf-g.adoc
+  f-d.adoc
+  f-i.adoc
+  fast4-g.adoc
+  fb-bw.adoc
+  fb-fb.adoc
+  fb-pix.adoc
+  fb-png.adoc
+  fbcbars.adoc
+  fbclear.adoc
+  fbcmap.adoc
+  fbcolor.adoc
+  fbfade.adoc
+  fbframe.adoc
+  fbfree.adoc
+  fbgamma.adoc
+  fbgrid.adoc
+  fbhelp.adoc
+  fblabel.adoc
+  fbline.adoc
+  fbpoint.adoc
+  fbserv.adoc
+  fbstretch.adoc
+  fbzoom.adoc
+  fence.adoc
+  g-acad.adoc
+  g-dot.adoc
+  g-dxf.adoc
+  g-egg.adoc
+  g-iges.adoc
+  g-jack.adoc
+  g-nff.adoc
+  g-obj.adoc
+  g-off.adoc
+  g-ply.adoc
+  g-raw.adoc
+  g-scad.adoc
+  g-shell-rect.adoc
+  g-step.adoc
+  g-stl.adoc
+  g-var.adoc
+  g-vdb.adoc
+  g-voxel.adoc
+  g-vrml.adoc
+  g-x3d.adoc
+  g2asc.adoc
+  g4-g5.adoc
+  g5-g4.adoc
+  ganalyze.adoc
+  gastank.adoc
+  gchecker.adoc
+  gcv.adoc
+  gdiff.adoc
+  gencolor.adoc
+  gex.adoc
+  gif-fb.adoc
+  gif2fb.adoc
+  gist.adoc
+  glint.adoc
+  gltf-g.adoc
+  gqa.adoc
+  gsh.adoc
+  gtransfer.adoc
+  halftone.adoc
+  handle.adoc
+  human.adoc
+  i-a.adoc
+  i-d.adoc
+  i-f.adoc
+  icv.adoc
+  ifc-g.adoc
+  iges-g.adoc
+  ihist.adoc
+  imgdiff.adoc
+  imgdims.adoc
+  imod.adoc
+  isst.adoc
+  istats.adoc
+  jack-g.adoc
+  loop.adoc
+  lowp.adoc
+  mac-pix.adoc
+  mged.adoc
+  mkbuilding.adoc
+  naca456.adoc
+  nastran-g.adoc
+  nirt.adoc
+  obj-g.adoc
+  off-g.adoc
+  patch-g.adoc
+  picket_fence.adoc
+  pix-alias.adoc
+  pix-bw.adoc
+  pix-fb.adoc
+  pix-png.adoc
+  pix-ppm.adoc
+  pix-ps.adoc
+  pix-spm.adoc
+  pix-sun.adoc
+  pix2asc.adoc
+  pix3filter.adoc
+  pixautosize.adoc
+  pixbackgnd.adoc
+  pixbgstrip.adoc
+  pixblend.adoc
+  pixborder.adoc
+  pixbustup.adoc
+  pixclump.adoc
+  pixcmp.adoc
+  pixcolors.adoc
+  pixcount.adoc
+  pixcrop.adoc
+  pixdiff.adoc
+  pixelswap.adoc
+  pixembed.adoc
+  pixfade.adoc
+  pixfilter.adoc
+  pixhalve.adoc
+  pixhist.adoc
+  pixhist3d-plot3.adoc
+  pixhist3d.adoc
+  pixinterp2x.adoc
+  pixmatte.adoc
+  pixmerge.adoc
+  pixmorph.adoc
+  pixrect.adoc
+  pixrot.adoc
+  pixsaturate.adoc
+  pixscale.adoc
+  pixshrink.adoc
+  pixstat.adoc
+  pixsubst.adoc
+  pixtile.adoc
+  pixuntile.adoc
+  plot3-asc.adoc
+  plot3-dm.adoc
+  plot3-fb.adoc
+  plot3-plot3.adoc
+  plot3-ps.adoc
+  plot3color.adoc
+  plot3getframe.adoc
+  plot3line2.adoc
+  plot3rot.adoc
+  plot3stat.adoc
+  ply-g.adoc
+  png-bw.adoc
+  png-fb.adoc
+  png-pix.adoc
+  propeller.adoc
+  qisst.adoc
+  random.adoc
+  raw-g.adoc
+  remrt.adoc
+  reshoot.adoc
+  rpatch.adoc
+  rt.adoc
+  rtarea.adoc
+  rtcheck.adoc
+  rtdepth.adoc
+  rtedge.adoc
+  rtexample.adoc
+  rtg3.adoc
+  rthide.adoc
+  rtscale.adoc
+  rtshot.adoc
+  rtsil.adoc
+  rtsrv.adoc
+  rtsurf.adoc
+  rtweight.adoc
+  rtwizard.adoc
+  rtxray.adoc
+  showshot.adoc
+  shp-g.adoc
+  smod.adoc
+  spm-fb.adoc
+  step-g.adoc
+  stl-g.adoc
+  sun-pix.adoc
+  tankill-g.adoc
+  terrain.adoc
+  tgf-g.adoc
+  tire.adoc
+  tree.adoc
+  ttcp.adoc
+  u-a.adoc
+  u-bw.adoc
+  u-d.adoc
+  u-f.adoc
+  ug-g.adoc
+  umod.adoc
+  ustats.adoc
+  vdeck.adoc
+  walk_example.adoc
+  wavelet.adoc
+  wdb_example.adoc
+  window.adoc
+  window_frame.adoc
+  wire.adoc
+)
+
+if(BRLCAD_EXTRADOCS)
+  add_asciidoc("MAN1" benchmark.adoc man1 "" REQUIRED "rt")
+  add_asciidoc("MAN1" brlcad.adoc man1 "" REQUIRED "mged")
+  add_asciidoc("MAN1" dbclean.adoc man1 "" REQUIRED "asc2g")
+
+  # BRLCAD_ADDEXEC takes care of the add_asciidoc call - we just need to warn if
+  # we've got a man page in the list indicating we should have an associated
+  # target but not showing one.  Generally this will be an indication of a tool
+  # not ported to the current platform.  Only do this if we're doing a full build
+  # rather than a subset, since the latter case will likely report many man pages
+  # without associated targets and isn't useful.
+  if(NOT BRLCAD_COMPONENTS)
+    foreach(mp ${man1_EN})
+      get_filename_component(tname ${mp} NAME_WE)
+      if(NOT TARGET ${tname})
+        message("Warning: man1 man page ${tname} has no associated build target")
+      endif(NOT TARGET ${tname})
+    endforeach(mp ${man3_EN})
+  endif(NOT BRLCAD_COMPONENTS)
+endif(BRLCAD_EXTRADOCS)
+
+cmakefiles(
+  ${man1_EN}
+  benchmark.adoc
+  brlcad.adoc
+  dbclean.adoc
+  CMakeLists.txt
+)
+
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

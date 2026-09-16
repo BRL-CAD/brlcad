@@ -1,7 +1,7 @@
 /*                  S A M P L E _ P N T S . C
  * BRL-CAD
  *
- * Copyright (c) 2015-2025 United States Government as represented by
+ * Copyright (c) 2015-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,7 +31,7 @@
 #include "bu/ptbl.h"
 #include "bn/mat.h"
 #include "bn/sobol.h"
-#include "bu/time.h"
+#include "bu/datetime.h"
 #include "raytrace.h"
 
 typedef int (*hitfunc_t)(struct application *, struct partition *, struct seg *);
@@ -212,7 +212,7 @@ struct pnt_normal_thickness {
     fastf_t thickness;
 };
 
-struct pnt_normal_thickness *
+static struct pnt_normal_thickness *
 pnthickness_create() {
     struct pnt_normal_thickness *p;
     BU_GET(p, struct pnt_normal_thickness);
@@ -221,7 +221,7 @@ pnthickness_create() {
 }
 
 /* p->pt may be  used to construct the final pnts object */
-void
+static void
 pnthickness_free(struct pnt_normal_thickness *p, int free_pnt) {
     if (!p) return;
     if (free_pnt) {
@@ -379,7 +379,7 @@ prand_pnt_worker(int cpu, void *ptr)
     }
 }
 
-void
+static void
 get_random_rays(fastf_t *rays, long int craynum, point_t center, fastf_t radius)
 {
     long int i = 0;
@@ -400,7 +400,7 @@ get_random_rays(fastf_t *rays, long int craynum, point_t center, fastf_t radius)
     }
 }
 
-void
+static void
 get_sobol_rays(fastf_t *rays, long int craynum, point_t center, fastf_t radius, struct bn_soboldata *s)
 {
     long int i = 0;
@@ -458,7 +458,7 @@ rt_gen_obj_pnts(struct rt_pnts_internal *rpnts, fastf_t *avg_thickness, struct d
 
     oldtime = bu_gettime();
 
-    rtip = rt_new_rti(dbip);
+    rtip = rt_i_create(dbip);
 
     for (i = 0; i < ncpus+1; i++) {
 	/* standard */
@@ -730,7 +730,7 @@ memfree:
     for (i = 0; i < ncpus+1; i++) {
 	rt_clean_resource(rtip, &resp[i]);
     }
-    rt_free_rti(rtip);
+    rt_i_destroy(rtip);
     bu_free(state, "free state containers");
     bu_free(resp, "free resources array");
     return ret;

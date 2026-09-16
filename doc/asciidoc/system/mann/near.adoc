@@ -1,0 +1,187 @@
+= NEAR(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+near - find regions near a specified object, path or point
+
+== SYNOPSIS
+
+[source]
+----
+near [options] {object | x y z} [distance]
+----
+
+The command may also be invoked with a Tcl list of paths for -scope:
+
+[source]
+----
+near -scope {path1 path2 ...} [options] {object | x y z} [distance]
+----
+
+== DESCRIPTION
+
+The *near* command searches the model for regions that are geometrically
+close to a specified "target". The target may be either:
+
+- an object or path that resolves to one or more regions, or
+- an explicit 3D point specified as three distance tokens (x y z).
+
+When the target is an object, *near* examines all regions in the search
+*scope* (default is the model root "/"), computes bounding boxes for the
+target regions and candidate regions, and then performs a sampling-based
+ray analysis to find region pairs that either overlap/interpenetrate or
+have a small separating gap. When the target is a point, *near* examines
+each candidate region to report regions that contain or lie near that
+point.
+
+Distance tokens accept an explicit unit suffix (for example "5mm",
+"0.25in") or a number in the current local units. Unit conversion uses
+the BRL-CAD units framework and the *units* command for formatting output.
+
+The algorithm works in three stages:
+
+1. Screen all regions in the search scope by bounding-box distance from
+   the target. Regions farther than the requested maximum distance are
+   discarded.
+2. For remaining candidates, sample rays through the combined bbox to
+   detect overlap or measure the minimum separation along world axes.
+3. Report nearby regions with a classification of "overlap" (intersect)
+   or "gap" (separating distance), the measured ray-based distance,
+   the bbox gap, axis of best approach, and an approximate contact
+   point.
+
+The sampling density of rays is controlled by the *-ray_spacing*
+parameter (a distance or the special value "auto"). When set to *auto*
+the implementation computes a spacing based on the diagonal of the
+combined bounding box, and reports the spacing range used. The maximum
+number of samples on each axis is governed by *-max_samples* to avoid
+excessive computation.
+
+The command outputs a human-readable summary when not run in quiet mode
+(-quiet 1). When quiet mode is used the command returns a Tcl list of
+results suitable for programmatic processing.
+
+== OPTIONS
+
+*-scope path*::
+Restrict the search to regions under the given path. The path may be a
+single object path (for example "/world/room") or a Tcl list of paths.
+If omitted the default scope is the model root "/". Paths that do not
+begin with "/" are normalized by prepending "/".
+
+*-ray_spacing distance|"auto"*::
+Spacing between sample rays (in the current local units, or with explicit
+unit suffix). A smaller spacing produces a denser ray sampling and may
+improve accuracy at increased cost. The special value *auto* lets the
+command pick a spacing based on the geometry: it uses the diagonal of
+the combined bounding box of the pair being sampled divided by 100. The
+command reports the spacing values actually used when presenting results.
+
+*-max_samples n*::
+Maximum number of sample points along any sampled axis. The command
+computes a sampling grid and clamps the number of samples to this value
+to avoid excessive work. Must be a positive integer. Default is 100.
+
+*-quiet 0|1*::
+When 0 (default), the command prints a human-readable report. When 1 the
+command returns a Tcl list of result records and prints nothing. Use
+quiet mode for scripting and further post-processing.
+
+== ARGUMENTS
+
+object
+: A single object path or name that resolves to one or more regions.
+  If the object expands to multiple regions, each region is treated as
+  a target and the search reports candidate regions near any of the
+  target regions.
+
+x y z
+: Explicit 3D coordinates expressed as distance tokens (numbers in the
+  current local units or with explicit unit suffixes). When a point is
+  specified, the optional trailing *distance* argument sets the maximum
+  search radius around the point. If omitted, *near* uses 10% of the
+  diagonal of the combined bounding boxes of all candidate regions as
+  the default search radius.
+
+distance
+: Maximum distance (search radius). Accepts a unit suffix or local
+  units. Distances are converted to model base units internally.
+
+== OUTPUT
+
+When run with the default non-quiet mode, *near* prints a compact
+summary that includes:
+
+- The target label (object path or point),
+- The distance searched (formatted with units),
+- The ray spacing used (or the computed auto range),
+- The number of regions checked, and
+- A list of nearby regions with, for each candidate:
+  - whether the relation is *overlap* or *gap*,
+  - the measured ray-based distance (in local units),
+  - the bounding-box gap (coarse filter),
+  - the testing axis (X, Y or Z) that produced the best result, and
+  - an approximate contact point expressed as a comma-separated triple.
+
+When used with *-quiet 1* the command returns a Tcl list where each
+element is a property list describing a result (fields include target,
+candidate, relation, distance, bbox_gap, point, axis). This format is
+intended for programmatic consumption.
+
+== EXAMPLES
+
+.Find regions near an object with default parameters
+[example]
+====
+mged> **near wheel.r**
+
+Target: wheel.r
+Distance: 0.254 m
+Ray spacing: 2.54 mm (auto)
+Regions checked -> bbox candidates -> near: 123 -> 45 -> 3
+
+Nearby regions:
+  /car/axle <-> wheel.s : gap 0.00508 m (bbox 0.00512 m, axis X, point {0.1, 0.0, 0.0})
+  /car/body : overlap/inside 0.00000 m (bbox 0.00000 m, axis Y, point {0.0, 0.0, 0.0})
+  /tools/wrench : gap 0.01270 m (bbox 0.01300 m, axis Z, point {0.0, 0.0, 0.05})
+====
+
+.Find regions within 2.5 centimeters of an explicit point, with denser sampling
+[example]
+====
+mged> **near -ray_spacing 1mm -max_samples 200 0.05m 1.2m 0.0m 2.5cm**
+
+Target: point {0.05, 1.2, 0}
+Distance: 2.5 cm
+Ray spacing: 1.000000 mm
+Regions checked -> bbox candidates -> near: 100 -> 30 -> 2
+
+Nearby regions:
+  /pipe/flange : gap 0.010 m (bbox 0.012 m, axis X, point {0.06, 1.2, 0.01})
+  /ground : overlap/inside 0.000 m (bbox 0.000 m, axis Z, point {0.05, 1.2, 0.0})
+====
+
+.Limit the scope to a subtree and run programmatically (quiet mode)
+[example]
+====
+# return value is a Tcl list of results (suitable for scripts)
+mged> **near -scope {/building/floor1 /building/floor2} -quiet 1 desk.s 10cm**
+
+The command returns a Tcl value like:
+
+{candidate /furniture/leg relation gap distance 0.03 bbox_gap 0.032 point {1.2,0.5,0.75} axis X}
+
+This programmatic output can be parsed by Tcl scripts to make
+automated decisions (for example, to flag geometry that encroaches on
+clearance corridors).
+====
+
+== AUTHOR
+
+BRL-CAD Team
+
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

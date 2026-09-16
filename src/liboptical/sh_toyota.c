@@ -1,7 +1,7 @@
 /*                     S H _ T O Y O T A . C
  * BRL-CAD
  *
- * Copyright (c) 1992-2025 United States Government as represented by
+ * Copyright (c) 1992-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -68,7 +68,6 @@ struct toyota_specific {
     int refl_lines;	/* Lines read from 'material' file.	*/
     int glass;		/* Boolean, is it glass?		*/
 };
-#define CK_NULL ((struct toyota_specific *)0)
 #define CL_O(m) bu_offsetof(struct toyota_specific, m)
 
 struct bu_structparse toyota_parse[] = {

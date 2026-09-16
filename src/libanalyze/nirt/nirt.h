@@ -1,7 +1,7 @@
 /*                          N I R T . H
  * BRL-CAD
  *
- * Copyright (c) 2020-2025 United States Government as represented by
+ * Copyright (c) 2020-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,6 +23,9 @@
  * implementation.
  *
  */
+
+#ifndef LIBANALYZE_NIRT_NIRT_H
+#define LIBANALYZE_NIRT_NIRT_H
 
 /* BRL-CAD includes */
 #include "common.h"
@@ -427,3 +430,5 @@ extern "C" int _nirt_cmd_diff(void *ns, int argc, const char *argv[]);
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
+
+#endif /* LIBANALYZE_NIRT_NIRT_H */

@@ -32,17 +32,21 @@ set(
 cmakefiles(
   ${gist_ignore_files}
   ${GIST_SRCS}
-  TEST.png
 )
 
 find_package_opencv()
+
+# Process the test directory before the early return so its source files are
+# tracked even when OpenCV is unavailable.
+add_subdirectory(tests)
+
 if(NOT OpenCV_FOUND)
   message("OpenCV is DISABLED")
   return()
 endif(NOT OpenCV_FOUND)
 message("Found OpenCV: ${OpenCV_LIBRARIES}")
 
-brlcad_addexec(gist "${GIST_SRCS}"  "libbu;librt;libged;${OpenCV_LIBRARIES};")
+brlcad_addexec(gist "${GIST_SRCS}" "libbu;librt;libged;${OpenCV_LIBRARIES}")
 target_include_directories(gist BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(gist SYSTEM PRIVATE ${OpenCV_INCLUDE_DIRS})
 

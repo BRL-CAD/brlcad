@@ -1,0 +1,87 @@
+= ASC-PLOT3(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+asc-plot3 - produce Plot3 instructions from ASCII representation
+
+== SYNOPSIS
+
+[source]
+----
+asc-plot3 [-h] [-?] [file.in [file.plot3]]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*asc-plot3* reads a stream of ASCII data representing Plot3 instructions and converts it to binary *plot3*(5) format. Standard input is read and standard output is used if file names are not supplied.
+
+The input should consist of lines of the form:
+
+....
+c arg arg ...
+....
+
+where _c_ is one of the single-character Plot3 command names, followed by white-space-separated arguments of appropriate number and type for that command. Optional white space and lines beginning with the comment character `#' are ignored.
+
+
+[[options]]
+== OPTIONS
+
+*-h*, *-?*::
+    Print a usage message and exit.
+
+_file.in_::
+    Input ASCII file containing plot3 instructions. If not specified or if '-' is specified, standard input is read.
+
+_file.plot3_::
+    Output file to write the binary plot3 data. If not specified, standard output is used. Note that *asc-plot3* will refuse to write binary plot data to a terminal.
+
+
+[[examples]]
+== EXAMPLES
+
+.Convert an ASCII plot3 file to binary
+====
+[source,bash]
+----
+asc-plot3 data.asc data.plot3
+----
+Converts the ASCII file `data.asc` into a binary *plot3*(5) file named `data.plot3`.
+====
+
+.Draw a box and view it on a framebuffer
+====
+[source,bash]
+----
+printf 's 0 0 100 100\nm 10 10\nn 90 10\nn 90 90\nn 10 90\nn 10 10\n' | asc-plot3 | plot3-fb
+----
+Sets the drawing space to the square (0,0)-(100,100) with the `s` command, then moves the pen and draws four connected line segments forming a box. The resulting binary plot3 stream is piped directly to *plot3-fb*(1) for display on a framebuffer.
+====
+
+
+[[see_also]]
+== SEE ALSO
+
+*plot3-asc*(1), *plot3-plot3*(1), *plot3rot*(1), *plot3-fb*(1), *libbv*(3), *plot3*(5)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1991-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

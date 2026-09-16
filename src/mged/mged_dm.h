@@ -1,7 +1,7 @@
 /*			M G E D _ D M . H
  * BRL-CAD
  *
- * Copyright (c) 1985-2025 United States Government as represented by
+ * Copyright (c) 1985-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -26,14 +26,18 @@
 #ifndef MGED_MGED_DM_H
 #define MGED_MGED_DM_H
 
+
 #include "common.h"
 
 #include "dm.h"	/* struct dm */
 
 #include "pkg.h" /* struct pkg_conn */
 #include "ged.h"
+#include "menu.h"
 
 #include "mged.h"
+
+__BEGIN_DECLS
 
 struct scroll_item {
     char *scroll_string;
@@ -103,11 +107,11 @@ struct trail {
 
 struct client {
     int			c_fd;
-#ifdef USE_TCL_CHAN
     Tcl_Channel         c_chan;
     Tcl_FileProc        *c_handler;
-#endif
     struct pkg_conn	*c_pkg;
+    int			c_auth_ok;         /**< @brief !0 if client sent a valid MSG_FBAUTH */
+    int			c_pending_drop;    /**< @brief !0 = drop after pkg_process() returns */
 };
 
 
@@ -164,6 +168,12 @@ struct _axes_state {
     int		ax_edit_size2;
     int		ax_edit_linewidth1;
     int		ax_edit_linewidth2;
+    int		ax_model_tick_enable;		/* ticked scale on model axes */
+    fastf_t	ax_model_tick_interval;		/* tick spacing, mm */
+    int		ax_model_ticks_per_major;
+    int		ax_model_tick_length;		/* pixels */
+    int		ax_model_tick_major_length;	/* pixels */
+    int		ax_model_tick_threshold;
 };
 
 
@@ -341,7 +351,7 @@ struct _menu_state {
     int	ms_top;
     int	ms_cur_menu;
     int	ms_cur_item;
-    struct menu_item	*ms_menus[NMENU];    /* base of menu items array */
+    struct rt_edit_menu_item	*ms_menus[NMENU];    /* base of menu items array */
 };
 
 
@@ -349,10 +359,10 @@ struct mged_dm {
     struct dm		*dm_dmp;
     struct fb		*dm_fbp;
     int			dm_netfd;			/* socket used to listen for connections */
-#ifdef USE_TCL_CHAN
     Tcl_Channel		dm_netchan;
-#endif
     struct client	dm_clients[MAX_CLIENTS];
+    char		dm_session_token[65];		/* fbserv auth token (64 hex + NUL); empty = no auth */
+    int			dm_require_auth;		/* !0 = reject unauthenticated fb clients */
     int			dm_dirty;			/* true if received an expose or configuration event */
     int			dm_mapped;
     int			dm_owner;			/* true if owner of the view info */
@@ -406,15 +416,17 @@ struct mged_dm {
 
 /* If we're changing the active DM, use this function so
  * libged also gets the word. */
+__BEGIN_DECLS
 extern void set_curr_dm(struct mged_state *s, struct mged_dm *nl);
+__END_DECLS
 
 #define MGED_DM_NULL ((struct mged_dm *)NULL)
 #define DMP s->mged_curr_dm->dm_dmp
 #define DMP_dirty s->mged_curr_dm->dm_dirty
 #define fbp s->mged_curr_dm->dm_fbp
 #define clients s->mged_curr_dm->dm_clients
-#define mapped s->mged_curr_dm->dm_mapped
-#define owner s->mged_curr_dm->dm_owner
+#define curr_dm_mapped s->mged_curr_dm->dm_mapped
+#define mged_dm_owner s->mged_curr_dm->dm_owner
 #define am_mode s->mged_curr_dm->dm_am_mode
 #define perspective_angle s->mged_curr_dm->dm_perspective_angle
 #define zclip_ptr s->mged_curr_dm->dm_zclip_ptr
@@ -518,6 +530,7 @@ extern void set_curr_dm(struct mged_state *s, struct mged_dm *nl);
     \
 }
 
+/* Ew.  Globals. */
 extern double frametime;		/* defined in mged.c */
 extern int dm_pipe[];			/* defined in mged.c */
 extern int update_views;		/* defined in mged.c */
@@ -536,6 +549,7 @@ extern void dm_var_init(struct mged_state *s, struct mged_dm *target_dm);
 
 /* defined in dm-generic.c */
 extern int common_dm(struct mged_state *s, int argc, const char *argv[]);
+extern int mged_dm_motion(struct mged_state *s, int x, int y);
 extern void view_state_flag_hook(const struct bu_structparse *, const char *, void *,const char *, void *);
 extern void dirty_hook(const struct bu_structparse *, const char *, void *,const char *, void *);
 extern void zclip_hook(const struct bu_structparse *, const char *, void *,const char *, void *);
@@ -559,6 +573,7 @@ extern void *set_hook_data(struct mged_state *s, struct mged_view_hook_state *hs
 
 int dm_commands(int argc, const char *argv[], void *data);
 
+__END_DECLS
 
 #endif /* MGED_MGED_DM_H */
 

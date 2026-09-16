@@ -1,7 +1,7 @@
 /*                         L T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -42,7 +42,7 @@ list_children(struct ged *gedp, struct directory *dp, int c_sep)
     if (!(dp->d_flags & RT_DIR_COMB))
 	return BRLCAD_OK;
 
-    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
 	return BRLCAD_ERROR;
     }
@@ -55,7 +55,7 @@ list_children(struct ged *gedp, struct directory *dp, int c_sep)
 	struct rt_tree_array *rt_tree_array;
 
 	if (db_ck_v4gift_tree(comb->tree) < 0) {
-	    db_non_union_push(comb->tree, &rt_uniresource);
+	    db_non_union_push(comb->tree);
 	    if (db_ck_v4gift_tree(comb->tree) < 0) {
 		bu_vls_printf(gedp->ged_result_str, "Cannot flatten tree for listing");
 		return BRLCAD_ERROR;
@@ -66,8 +66,7 @@ list_children(struct ged *gedp, struct directory *dp, int c_sep)
 	    rt_tree_array = (struct rt_tree_array *)bu_calloc(node_count,
 							      sizeof(struct rt_tree_array), "tree list");
 	    actual_count = (struct rt_tree_array *)db_flatten_tree(
-		rt_tree_array, comb->tree, OP_UNION,
-		1, &rt_uniresource) - rt_tree_array;
+		rt_tree_array, comb->tree, OP_UNION, 1) - rt_tree_array;
 	    BU_ASSERT(actual_count == node_count);
 	    comb->tree = TREE_NULL;
 	} else {
@@ -102,7 +101,7 @@ list_children(struct ged *gedp, struct directory *dp, int c_sep)
 		    bu_vls_printf(gedp->ged_result_str, "%c%s", (char)c_sep, rt_tree_array[i].tl_tree->tr_l.tl_name);
 	    }
 
-	    db_free_tree(rt_tree_array[i].tl_tree, &rt_uniresource);
+	    db_free_tree(rt_tree_array[i].tl_tree);
 	}
 	bu_vls_free(&vls);
 
@@ -164,25 +163,13 @@ ged_lt_core(struct ged *gedp, int argc, const char *argv[])
     return list_children(gedp, dp, c_sep);
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl lt_cmd_impl = {
-    "lt",
-    ged_lt_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd lt_cmd = { &lt_cmd_impl };
-const struct ged_cmd *lt_cmds[] = { &lt_cmd, NULL };
+#define GED_LT_COMMANDS(X, XID) \
+    X(lt, ged_lt_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  lt_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_LT_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_lt", 1, GED_LT_COMMANDS)
 
 /*
  * Local Variables:

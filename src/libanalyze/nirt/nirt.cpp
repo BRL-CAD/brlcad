@@ -1,7 +1,7 @@
 /*                        N I R T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2004-2025 United States Government as represented by
+ * Copyright (c) 2004-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,6 +28,7 @@
 #include "common.h"
 
 #include <algorithm>
+#include "../../librt/librt_private.h"
 
 #include "./nirt.h"
 
@@ -441,10 +442,10 @@ _nirt_get_rtip(struct nirt_state *nss)
 
     if (nss->i->use_air) {
 	if (nss->i->rtip_air == RTI_NULL) {
-	    nss->i->rtip_air = rt_new_rti(nss->i->dbip); /* clones dbip, so we can operate on the copy */
-	    nss->i->rtip_air->rti_dbip->dbi_fp = fopen(nss->i->dbip->dbi_filename, "rb"); /* get read-only fp */
-	    if (nss->i->rtip_air->rti_dbip->dbi_fp == NULL) {
-		rt_free_rti(nss->i->rtip_air);
+	    nss->i->rtip_air = rt_i_create(nss->i->dbip); /* clones dbip, so we can operate on the copy */
+	    nss->i->rtip_air->rti_dbip->i->dbi_fp = fopen(nss->i->dbip->dbi_filename, "rb"); /* get read-only fp */
+	    if (nss->i->rtip_air->rti_dbip->i->dbi_fp == NULL) {
+		rt_i_destroy(nss->i->rtip_air);
 		nss->i->rtip_air = RTI_NULL;
 		return RTI_NULL;
 	    }
@@ -456,10 +457,10 @@ _nirt_get_rtip(struct nirt_state *nss)
     }
 
     if (nss->i->rtip == RTI_NULL) {
-	nss->i->rtip = rt_new_rti(nss->i->dbip); /* clones dbip, so we can operate on the copy */
-	nss->i->rtip->rti_dbip->dbi_fp = fopen(nss->i->dbip->dbi_filename, "rb"); /* get read-only fp */
-	if (nss->i->rtip->rti_dbip->dbi_fp == NULL) {
-	    rt_free_rti(nss->i->rtip);
+	nss->i->rtip = rt_i_create(nss->i->dbip); /* clones dbip, so we can operate on the copy */
+	nss->i->rtip->rti_dbip->i->dbi_fp = fopen(nss->i->dbip->dbi_filename, "rb"); /* get read-only fp */
+	if (nss->i->rtip->rti_dbip->i->dbi_fp == NULL) {
+	    rt_i_destroy(nss->i->rtip);
 	    nss->i->rtip = RTI_NULL;
 	    return RTI_NULL;
 	}
@@ -1334,10 +1335,10 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
 	    const char *key = (*a_it).c_str();
 	    const char *val = bu_avs_get(&part->pt_regionp->attr_values, key);
 	    if (val != NULL) {
+		s->attributes.append(" ");
 		s->attributes.append(key);
 		s->attributes.append("=");
 		s->attributes.append(val);
-		s->attributes.append(" ");
 	    }
 	}
 
@@ -1390,10 +1391,7 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
 		    }
 		    vhead = bv_vlblock_find(nss->i->segs, ovlp_rgb[RED], ovlp_rgb[GRN], ovlp_rgb[BLU]);
 		    BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, op->in_point, BV_VLIST_LINE_MOVE);
-		    BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, op->out_point, BV_VLIST_LINE_DRAW);
-		    seg_ovlps.erase(op);
-		    VMOVE(curr_pnt, op->out_point);
-		    curr_dist = op->out_dist;
+		    BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, curr_pnt, BV_VLIST_LINE_DRAW);
 		    seg_ovlps.erase(op);
 		} else {
 		    // Current distance is not in an overlap.  If op ended up as non-NULL,
@@ -3054,8 +3052,8 @@ nirt_destroy(struct nirt_state *ns)
     bv_vlist_cleanup(&(ns->i->s_vlist));
     bv_vlblock_free(ns->i->segs);
 
-    if (ns->i->rtip != RTI_NULL) rt_free_rti(ns->i->rtip);
-    if (ns->i->rtip_air != RTI_NULL) rt_free_rti(ns->i->rtip_air);
+    if (ns->i->rtip != RTI_NULL) rt_i_destroy(ns->i->rtip);
+    if (ns->i->rtip_air != RTI_NULL) rt_i_destroy(ns->i->rtip_air);
 
     db_close(ns->i->dbip);
 

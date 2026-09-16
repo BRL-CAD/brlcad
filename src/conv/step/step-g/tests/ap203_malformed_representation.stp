@@ -1,0 +1,20 @@
+ISO-10303-21;
+HEADER;
+FILE_DESCRIPTION(('malformed representation coverage'),'2;1');
+FILE_NAME('ap203_malformed_representation.stp','2026-08-01T00:00:00',(''),(''),'BRL-CAD STEP coverage fixture','','');
+FILE_SCHEMA(('CONFIG_CONTROL_DESIGN'));
+ENDSEC;
+DATA;
+#1=APPLICATION_CONTEXT('CONFIGURATION CONTROLLED 3D DESIGNS OF MECHANICAL PARTS AND ASSEMBLIES');
+#2=DESIGN_CONTEXT('',#1,'design');
+#3=SHAPE_DEFINITION_REPRESENTATION(#4,#9);
+#4=PRODUCT_DEFINITION_SHAPE('','',#5);
+#5=PRODUCT_DEFINITION('','',#6,#2);
+#6=PRODUCT_DEFINITION_FORMATION('','',#7);
+#7=PRODUCT('malformed-context','malformed-context','',(#8));
+#8=MECHANICAL_CONTEXT('',#1,'');
+/* #10 is legal as a representation item but not as context_of_items. */
+#9=SHAPE_REPRESENTATION('malformed-context',(#10),#10);
+#10=CARTESIAN_POINT('wrong context type',(1.,2.,3.));
+ENDSEC;
+END-ISO-10303-21;

@@ -1,7 +1,7 @@
 /*                          M A I N . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2025 United States Government as represented by
+ * Copyright (c) 1998-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,9 +29,6 @@
 #include "common.h"
 #include <ctype.h>
 #include "tcl.h"
-#ifdef BWISH
-#include "tk.h"
-#endif
 #include <locale.h>
 #include "bio.h"
 
@@ -47,6 +44,12 @@
 #include "bu/app.h"
 #include "vmath.h"
 #include "tclcad.h"
+
+// Tclcad pulls in OpenNURBS in C++ compilation mode, which defines None, which
+// will conflict with Tk.h's Xlib None if we include tk.h before tclcad.h
+#ifdef BWISH
+#include "tk.h"
+#endif
 
 extern int cmdInit(Tcl_Interp *interp);
 

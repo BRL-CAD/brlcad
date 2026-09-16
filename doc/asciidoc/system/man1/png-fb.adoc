@@ -1,0 +1,143 @@
+= PNG-FB(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+png-fb - display a PNG image file on a framebuffer
+
+== SYNOPSIS
+
+[source]
+----
+png-fb [-H] [-i] [-c] [-v] [-z] [-1] [-m _#lines_] [-F _framebuffer_] [-g _screen_gamma_] [-S _squarescrsize_] [-W _scr_width_] [-N _scr_height_] [-x _file_xoff_] [-y _file_yoff_] [-X _scr_xoff_] [-Y _scr_yoff_] [_file.png_]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*png-fb* reads a Portable Network Graphics (*PNG*) format image from the named
+file, or from standard input if no file is given, and displays it on the
+currently selected framebuffer. The environment variable *FB_FILE* selects the
+default framebuffer (see *brlcad*(1)); the *-F* option overrides it.
+
+If no screen size is requested, the framebuffer is opened to match the size of
+the input image. Grayscale and palette-based images are expanded to RGB, and
+16-bit samples are reduced to 8 bits. The reverse conversion, writing a
+framebuffer image to a PNG file, is performed by *fb-png*(1).
+
+[[options]]
+== OPTIONS
+
+*-H*::
+  Print a single line on standard output giving the image dimensions in a form
+  usable in shell scripts (e.g. `WIDTH=42 HEIGHT=17`) and exit without
+  displaying the image.
+
+*-i*::
+  Invert the image, drawing it upside-down.
+
+*-c*::
+  Clear the framebuffer to black before displaying. By default the new image is
+  written over whatever is already on the screen.
+
+*-v*::
+  Be verbose, reporting the color type, bit depth, image size, gamma, interlace
+  status, and any embedded text or modification-time chunks.
+
+*-z*::
+  Zoom and center the image so it fills the display area, using the framebuffer
+  *fb_view*() routine. Only integer zoom factors are available, so non-square
+  displays may find this of limited use.
+
+*-1*::
+  Force the image to be written one scanline at a time with *fb_write*(3). This
+  is the default and overrides *-m*.
+
+*-m* _#lines_::
+  Write the image in rectangular blocks of _#lines_ scanlines using
+  *fb_writerect*(3) rather than one line at a time. This can be significantly
+  faster on some framebuffers. Block writes are only used when the image is not
+  inverted or zoomed and is no wider than the screen; otherwise display falls
+  back to single-line writes.
+
+*-F* _framebuffer_::
+  Display on the explicitly named _framebuffer_ instead of the one named by
+  *FB_FILE*.
+
+*-g* _screen_gamma_::
+  Additional gamma correction to apply for the display screen (default 1.0,
+  i.e. none). Larger values produce a lighter image.
+
+*-S* _squarescrsize_::
+  Set both the framebuffer width and height to _squarescrsize_ pixels.
+
+*-W* _scr_width_::
+  Set the framebuffer width, in pixels.
+
+*-N* _scr_height_::
+  Set the framebuffer height, in scanlines.
+
+*-x* _file_xoff_::
+  Skip _file_xoff_ pixels into the image horizontally before displaying.
+
+*-y* _file_yoff_::
+  Skip _file_yoff_ pixels into the image vertically before displaying.
+
+*-X* _scr_xoff_::
+  Offset the displayed image _scr_xoff_ pixels horizontally on the screen.
+
+*-Y* _scr_yoff_::
+  Offset the displayed image _scr_yoff_ pixels vertically on the screen.
+
+The coordinate system for the offsets is first quadrant, with the origin at the
+lower left corner of the image.
+
+[[examples]]
+== EXAMPLES
+
+.Render a model and display the result
+====
+[source,bash]
+----
+rt -o render.png -w 1024 -n 1024 havoc.g havoc
+png-fb -c render.png
+----
+Ray-traces a geometry database to a 1024x1024 PNG file with *rt*(1), then
+clears the framebuffer and displays the rendered image.
+====
+
+.Probe an image size from a script
+====
+[source,bash]
+----
+eval $(png-fb -H earth.png)
+echo "image is ${WIDTH} by ${HEIGHT}"
+----
+Uses *-H* to read back the dimensions of a PNG without displaying it, capturing
+them as shell variables for further processing.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *fb-png*(1), *rt*(1), *pix-fb*(1), *pix*(5)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1998-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

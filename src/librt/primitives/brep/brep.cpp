@@ -1,7 +1,7 @@
 /*                     B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2007-2025 United States Government as represented by
+ * Copyright (c) 2007-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,9 +28,12 @@
 
 #include "common.h"
 
+#include <cstdint>
+#include <limits>
 #include <vector>
 #include <list>
 #include <map>
+#include <mutex>
 #include <stack>
 #include <iostream>
 #include <algorithm>
@@ -43,8 +46,9 @@
 
 #include "bu/cv.h"
 #include "bu/opt.h"
-#include "bu/time.h"
+#include "bu/datetime.h"
 #include "brep.h"
+#include "bn/mat.h"
 #include "bn/dvec.h"
 
 #include "raytrace.h"
@@ -66,6 +70,7 @@ extern "C" {
     int rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip);
     void rt_brep_print(const struct soltab *stp);
     int rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead);
+    void rt_brep_vshot(struct soltab *stp[], struct xray *rp[], struct seg *segp, int n, struct application *ap);
     void rt_brep_norm(struct hit *hitp, struct soltab *stp, struct xray *rp);
     void rt_brep_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp);
     void rt_brep_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp);
@@ -77,10 +82,11 @@ extern "C" {
     int rt_brep_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv);
     int rt_brep_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip);
     int rt_brep_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip);
+    int rt_brep_mirror(struct rt_db_internal *ip, const plane_t plane);
     int rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip);
     void rt_brep_ifree(struct rt_db_internal *ip);
     int rt_brep_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local);
-    void rt_brep_make(const struct rt_functab *ftp, struct rt_db_internal *intern);
+    int rt_brep_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char *variant, const point_t origin, double scale);
     int rt_brep_params(struct pc_pc_set *, const struct rt_db_internal *ip);
     RT_EXPORT extern int rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, const struct rt_db_internal *ip2, db_op_t operation);
     struct rt_selection_set *rt_brep_find_selections(const struct rt_db_internal *ip, const struct rt_selection_query *query);
@@ -461,6 +467,13 @@ brep_build_bvh(struct brep_specific* bs)
  * BRL-CAD Primitive interface
  ********************************************************************************/
 
+static bool
+brep_preserves_invalid_solid(const struct rt_db_internal *ip)
+{
+    return ip->idb_avs.magic == BU_AVS_MAGIC &&
+	BU_STR_EQUAL(bu_avs_get(&ip->idb_avs, RT_BREP_INVALID_SOLID_ATTRIBUTE), "1");
+}
+
 /**
  * Calculate a bounding RPP around a BREP.  Unlike the prep
  * routine, which makes use of the full bounding volume hierarchy,
@@ -506,6 +519,10 @@ rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip)
     const struct bn_tol *tol = &rtip->rti_tol;
 
     RT_CK_DB_INTERNAL(ip);
+    if (brep_preserves_invalid_solid(ip)) {
+	bu_log("B-Rep %s preserves an incomplete solid; repair is required before analysis\n", stp->st_name);
+	return -1;
+    }
     bi = (struct rt_brep_internal*)ip->idb_ptr;
     RT_BREP_CK_MAGIC(bi);
 
@@ -1485,6 +1502,16 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 
 
 /**
+ * Baseline flat-array vshot: delegates to the scalar shot via rt_vshot_via_shot().
+ */
+void
+rt_brep_vshot(struct soltab *stp[], struct xray *rp[], struct seg *segp, int n, struct application *ap)
+{
+    rt_vshot_via_shot(rt_brep_shot, stp, rp, segp, n, ap);
+}
+
+
+/**
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
@@ -2139,13 +2166,7 @@ rt_brep_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 }
 
 
-/**
- * XXX In order to facilitate exporting the ON_Brep object without a
- * whole lot of effort, we're going to (for now) extend the
- * ON_BinaryArchive to support an "in-memory" representation of a
- * binary archive. Currently, the openNURBS library only supports
- * file-based archiving operations.
- */
+/* Serialize BREP database objects without temporary files. */
 class RT_MemoryArchive : public ON_BinaryArchive
 {
 public:
@@ -2218,9 +2239,21 @@ RT_MemoryArchive::Internal_CurrentPositionOverride() const
 bool
 RT_MemoryArchive::SeekFromCurrentPosition(int seek_to)
 {
-    if (pos + seek_to > m_buffer.size())
+    if (pos > m_buffer.size())
 	return false;
-    pos += seek_to;
+
+    if (seek_to < 0) {
+	const size_t distance = (size_t)(-(int64_t)seek_to);
+	if (distance > pos)
+	    return false;
+	pos -= distance;
+	return true;
+    }
+
+    const size_t distance = (size_t)seek_to;
+    if (distance > m_buffer.size() - pos)
+	return false;
+    pos += distance;
     return true;
 }
 
@@ -2284,7 +2317,13 @@ RT_MemoryArchive::CreateCopy() const
 size_t
 RT_MemoryArchive::Read(size_t amount, void* buf)
 {
-    const size_t read_amount = (pos + amount > m_buffer.size()) ? m_buffer.size() - pos : amount;
+    if (!amount)
+	return 0;
+    if (!buf || pos > m_buffer.size())
+	return 0;
+
+    const size_t available = m_buffer.size() - pos;
+    const size_t read_amount = std::min(amount, available);
     std::copy(m_buffer.begin() + pos, m_buffer.begin() + pos + read_amount, (char *)buf);
     pos += read_amount;
     return read_amount;
@@ -2294,15 +2333,17 @@ RT_MemoryArchive::Read(size_t amount, void* buf)
 size_t
 RT_MemoryArchive::Write(const size_t amount, const void* buf)
 {
-    // the write can come in at any position!
-    const size_t start = pos;
-    // resize if needed to support new data
-    if (m_buffer.size() < (start + amount)) {
-	m_buffer.resize(start + amount);
-    }
+    if (!amount)
+	return 0;
+    if (!buf || amount > std::numeric_limits<size_t>::max() - pos)
+	return 0;
 
-    std::copy((char *)buf, (char *)buf + amount, m_buffer.begin() + pos);
-    pos += amount;
+    const size_t end = pos + amount;
+    if (m_buffer.size() < end)
+	m_buffer.resize(end);
+
+    std::copy((const char *)buf, (const char *)buf + amount, m_buffer.begin() + pos);
+    pos = end;
     return amount;
 }
 
@@ -2313,7 +2354,54 @@ RT_MemoryArchive::Flush()
     return true;
 }
 
+
+/* ONX_Model deserialization is not reentrant.  In addition to ON::Begin()
+ * modifying process-wide state, model settings construction reaches
+ * openNURBS code that uses the C runtime's process-wide local-time state.
+ * Keep all BREP archive reads behind one narrow serialization point. */
+static std::mutex &
+rt_brep_archive_read_mutex()
+{
+    static std::mutex mutex;
+    return mutex;
+}
+
+
+static ON_Brep *
+brep_read_archive(const void *buffer, size_t buffer_size, ON_TextLog *log)
+{
+    if (!buffer || !buffer_size)
+	return NULL;
+
+    std::lock_guard<std::mutex> archive_guard(rt_brep_archive_read_mutex());
+    ON::Begin();
+
+    RT_MemoryArchive archive(buffer, buffer_size);
+    ONX_Model model;
+    const unsigned int object_filter = ON::brep_object;
+    if (!model.Read(archive, 0, object_filter, log))
+	return NULL;
+
+    const ON_ComponentManifestItem *geometry =
+	model.Manifest().FirstItem(ON_ModelComponent::Type::ModelGeometry);
+    if (!geometry)
+	return NULL;
+
+    if (model.Manifest().NextItem(geometry))
+	bu_log("WARNING: geometry may be getting lost\n");
+
+    ON_ModelComponentReference geometry_ref = model.ModelGeometryFromId(geometry->Id());
+    const ON_ModelGeometryComponent *geometry_component =
+	ON_ModelGeometryComponent::Cast(geometry_ref.ModelComponent());
+    if (!geometry_component)
+	return NULL;
+
+    const ON_Brep *brep = ON_Brep::Cast(geometry_component->Geometry(NULL));
+    return brep ? ON_Brep::New(*brep) : NULL;
+}
+
 #define ON_opennurbs4_id { 0x17b3ecda, 0x17ba, 0x4e45,{ 0x9e, 0x67, 0xa2, 0xb8, 0xd9, 0xbe, 0x52, 0xd } }
+#define ON_brlcad_default_layer_id { 0xc4b29a7d, 0x766e, 0x478f,{ 0xa4, 0xe2, 0x5b, 0x61, 0xd4, 0xaf, 0x23, 0x91 } }
 
 static void
 brep_dbi2on(const struct rt_db_internal *intern, ONX_Model& model)
@@ -2329,7 +2417,21 @@ brep_dbi2on(const struct rt_db_internal *intern, ONX_Model& model)
     model.m_layer_table.Reserve(1);
     model.m_layer_table.Append(default_layer);
 #endif
-    model.AddDefaultLayer(L"Default", ON_Color::UnsetColor);
+    /* ONX_Model::AddDefaultLayer assigns a random component UUID.  A BREP
+     * primitive serializes a self-contained model, so that otherwise makes
+     * identical BRL-CAD databases differ on every write. */
+    const ON_UUID default_layer_id = ON_brlcad_default_layer_id;
+    ON_Layer default_layer;
+    default_layer.SetId(default_layer_id);
+    default_layer.SetIndex(0);
+    default_layer.SetName(L"Default");
+    default_layer.SetColor(ON_Color::UnsetColor);
+    model.AddModelComponent(default_layer, true);
+    /* Keep both forms coherent: SetCurrentLayerId() clears the legacy index,
+     * while SetV5CurrentLayerIndex() preserves the UUID.  BREP primitives are
+     * currently serialized as version 4 archives, which use the index. */
+    model.m_settings.SetCurrentLayerId(default_layer_id);
+    model.m_settings.SetV5CurrentLayerIndex(0);
 
 #if 0
     ON_DimStyle default_style;
@@ -2348,7 +2450,16 @@ brep_dbi2on(const struct rt_db_internal *intern, ONX_Model& model)
     delete gc;
     model.AddModelComponent(ngc);
 
-    model.m_properties.m_RevisionHistory.NewRevision();
+    /* ONX_Model::Write creates a current-time revision when the count is
+     * zero.  BREP primitives do not need an edit history; use a fixed valid
+     * epoch so serialization is reproducible. */
+    ON_3dmRevisionHistory &revision = model.m_properties.m_RevisionHistory;
+    revision = ON_3dmRevisionHistory::Empty;
+    revision.m_revision_count = 1;
+    revision.m_create_time.tm_year = 100;
+    revision.m_create_time.tm_mon = 0;
+    revision.m_create_time.tm_mday = 1;
+    revision.m_last_edit_time = revision.m_create_time;
     model.m_properties.m_Application.m_application_name = "BRL-CAD B-Rep primitive";
     //model.Polish();
 }
@@ -2384,23 +2495,29 @@ extern "C" int
 rt_brep_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)
 {
     struct rt_brep_internal *bi = (struct rt_brep_internal *)intern->idb_ptr;
-    signed char *decoded;
-    ONX_Model model;
-    if (argc == 1 && argv[0]) {
-	int decoded_size = bu_b64_decode(&decoded, (const signed char *)argv[0]);
-	RT_MemoryArchive archive(decoded, decoded_size);
-	ON_wString wonstr;
-	ON_TextLog log(wonstr);
+    if (argc != 1 || !argv[0])
+	return BRLCAD_ERROR;
 
-	RT_BREP_CK_MAGIC(bi);
-	model.Read(archive, &log);
-	bu_vls_printf(logstr, "%s", ON_String(wonstr).Array());
+    RT_BREP_CK_MAGIC(bi);
 
-	ONX_ModelComponentIterator it(model, ON_ModelComponent::Type::ModelGeometry);
-	ON_ModelComponentReference cr = it.FirstComponentReference();
-	const ON_ModelGeometryComponent *mo = ON_ModelGeometryComponent::Cast(cr.ModelComponent());
-	bi->brep = ON_Brep::New(*ON_Brep::Cast(mo->ExclusiveGeometry()));
+    signed char *decoded = NULL;
+    int decoded_size = bu_b64_decode(&decoded, (const signed char *)argv[0]);
+    if (decoded_size <= 0) {
+	if (decoded)
+	    bu_free(decoded, "decoded BREP archive");
+	return BRLCAD_ERROR;
     }
+
+    ON_wString messages;
+    ON_TextLog log(messages);
+    ON_Brep *brep = brep_read_archive(decoded, (size_t)decoded_size, &log);
+    bu_free(decoded, "decoded BREP archive");
+    bu_vls_printf(logstr, "%s", ON_String(messages).Array());
+    if (!brep)
+	return BRLCAD_ERROR;
+
+    delete bi->brep;
+    bi->brep = brep;
     return BRLCAD_OK;
 }
 
@@ -2450,47 +2567,76 @@ rt_brep_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inte
     RT_BREP_CK_MAGIC(bi);
 
     ON_Xform xform(mat);
-    if (!xform.IsIdentity())
+    if (!xform.IsIdentity()) {
 	bi->brep->Transform(xform);
+	if (bn_mat_det3(mat) < 0.0)
+	    bi->brep->Flip();
+    }
 
     return BRLCAD_OK;
 }
 
 int
+rt_brep_mirror(struct rt_db_internal *ip, const plane_t plane)
+{
+    mat_t mirmat;
+    mat_t rmat;
+    mat_t temp;
+    vect_t nvec;
+    vect_t xvec;
+    vect_t mirror_dir;
+    point_t mirror_pt;
+    fastf_t ang;
+
+    static point_t origin = {0.0, 0.0, 0.0};
+
+    RT_CK_DB_INTERNAL(ip);
+
+    MAT_IDN(mirmat);
+
+    VMOVE(mirror_dir, plane);
+    VSCALE(mirror_pt, plane, plane[W]);
+
+    mirmat[0] = -1.0;
+
+    VSET(xvec, 1, 0, 0);
+    VCROSS(nvec, xvec, mirror_dir);
+    VUNITIZE(nvec);
+    ang = -acos(VDOT(xvec, mirror_dir));
+    bn_mat_arb_rot(rmat, origin, nvec, ang*2.0);
+
+    MAT_COPY(temp, mirmat);
+    bn_mat_mul(mirmat, temp, rmat);
+
+    mirmat[3 + X*4] += mirror_pt[X] * mirror_dir[X];
+    mirmat[3 + Y*4] += mirror_pt[Y] * mirror_dir[Y];
+    mirmat[3 + Z*4] += mirror_pt[Z] * mirror_dir[Z];
+
+    return rt_brep_mat(ip, mirmat, NULL);
+}
+
+int
 rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
-    ON::Begin();
     TRACE1("rt_brep_import5");
 
-    struct rt_brep_internal* bi;
     if (dbip) RT_CK_DBI(dbip);
     BU_CK_EXTERNAL(ep);
     RT_CK_DB_INTERNAL(ip);
+
+    ON_TextLog err(stderr);
+    ON_Brep *brep = brep_read_archive(ep->ext_buf, ep->ext_nbytes, &err);
+    if (!brep)
+	return -1;
+
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_BREP;
     ip->idb_meth = &OBJ[ID_BREP];
     BU_ALLOC(ip->idb_ptr, struct rt_brep_internal);
 
-    bi = (struct rt_brep_internal*)ip->idb_ptr;
+    struct rt_brep_internal *bi = (struct rt_brep_internal *)ip->idb_ptr;
     bi->magic = RT_BREP_INTERNAL_MAGIC;
-
-    RT_MemoryArchive archive(ep->ext_buf, ep->ext_nbytes);
-    ONX_Model model;
-    ON_TextLog err(stderr);
-    unsigned int obj_filter = ON::brep_object;
-    model.Read(archive, 0, obj_filter, &err);
-
-    /* grab the first geometry item from the manifest */
-    const ON_ComponentManifestItem* geom = model.Manifest().FirstItem(ON_ModelComponent::Type::ModelGeometry);
-    /* sanity check */
-    if (model.Manifest().NextItem(geom) != nullptr)
-	bu_log("WARNING: geometry may be getting lost\n");
-
-    /* do the necessary API calls to get a usable geometry component from the manifest item */
-    ON_ModelComponentReference geom_ref = model.ModelGeometryFromId(geom->Id());
-    const ON_ModelGeometryComponent* geom_comp = ON_ModelGeometryComponent::Cast(geom_ref.ModelComponent());
-
-    bi->brep = ON_Brep::New(*ON_Brep::Cast(geom_comp->Geometry(NULL)));
+    bi->brep = brep;
 
     /* Apply transform */
     return rt_brep_mat(ip, mat, NULL);
@@ -2507,6 +2653,8 @@ rt_brep_ifree(struct rt_db_internal *ip)
 
     bi = (struct rt_brep_internal*)ip->idb_ptr;
     RT_BREP_CK_MAGIC(bi);
+    delete bi->brep;
+    bi->brep = NULL;
     bu_free(bi, "rt_brep_internal free");
     ip->idb_ptr = ((void *)0);
 }
@@ -2549,8 +2697,8 @@ rt_brep_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbos
     return 0;
 }
 
-void
-rt_brep_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
+int
+rt_brep_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char *UNUSED(variant), const point_t UNUSED(origin), double UNUSED(scale))
 {
     struct rt_brep_internal* ip;
 
@@ -2565,6 +2713,8 @@ rt_brep_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
 
     ip->magic = RT_BREP_INTERNAL_MAGIC;
     ip->brep = (ON_Brep *)brep_create();
+
+    return BRLCAD_OK;
 }
 
 
@@ -2835,8 +2985,8 @@ brep_log(struct bu_vls *log, const char *fmt, ...)
 	BU_CK_VLS(log);
 	va_start(ap, fmt);
 	bu_vls_vprintf(log, fmt, ap);
+	va_end(ap);
     }
-    va_end(ap);
 }
 
 
@@ -2847,6 +2997,11 @@ rt_brep_valid(struct bu_vls *log, struct rt_db_internal *ip, int flags)
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_BREP) {
 	brep_log(log, "Object is not a brep.\n");
+	return 0;
+    }
+    if (brep_preserves_invalid_solid(ip)) {
+	brep_log(log, "Brep represents an unreconstructed solid; repair its topology before clearing %s.\n",
+	    RT_BREP_INVALID_SOLID_ATTRIBUTE);
 	return 0;
     }
     struct rt_brep_internal *bi = (struct rt_brep_internal *)ip->idb_ptr;
@@ -2936,6 +3091,8 @@ rt_brep_plate_mode(const struct rt_db_internal *ip)
     if (ip->idb_type != ID_BREP) {
 	return 0;
     }
+    if (brep_preserves_invalid_solid(ip))
+	return 0;
     struct rt_brep_internal *bi = (struct rt_brep_internal *)ip->idb_ptr;
     if (bi == NULL || bi->brep == NULL) {
 	return 0;
@@ -2962,6 +3119,8 @@ rt_brep_prep_serialize(struct soltab *stp, const struct rt_db_internal *ip, stru
     RT_CK_SOLTAB(stp);
     RT_CK_DB_INTERNAL(ip);
     BU_CK_EXTERNAL(external);
+    if (brep_preserves_invalid_solid(ip))
+	return -1;
 
     const size_t current_version = 0;
 

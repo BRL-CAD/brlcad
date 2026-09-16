@@ -1,7 +1,7 @@
 /*                           L O D . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2025 United States Government as represented by
+ * Copyright (c) 2013-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,7 +22,7 @@
 
 #include "vmath.h"
 #include "bu/app.h"
-#include "bu/time.h"
+#include "bu/datetime.h"
 #include "bu/units.h"
 #include "bg.h"
 #include "bv/lod.h"
@@ -53,7 +53,7 @@ main(int argc, char *argv[])
 	bu_exit(1, "ERROR: Unable to read from %s\n", argv[1]);
     }
 
-    db_update_nref(dbip, &rt_uniresource);
+    db_update_nref(dbip);
 
     dp = db_lookup(dbip, argv[2], LOOKUP_QUIET);
     if (dp == RT_DIR_NULL) {
@@ -64,7 +64,7 @@ main(int argc, char *argv[])
     struct rt_db_internal intern;
     mat_t s_mat;
     MAT_IDN(s_mat);
-    if (rt_db_get_internal(&intern, dp, dbip, s_mat, &rt_uniresource) < 0)
+    if (rt_db_get_internal(&intern, dp, dbip, s_mat) < 0)
 	bu_exit(1, "ERROR: %s internal get failed\n", argv[2]);
 
     struct rt_bot_internal *bot = (struct rt_bot_internal *)intern.idb_ptr;

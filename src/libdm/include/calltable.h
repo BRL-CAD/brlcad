@@ -1,7 +1,7 @@
 /*                    C A L L T A B L E . H
  * BRL-CAD
  *
- * Copyright (c) 2014-2025 United States Government as represented by
+ * Copyright (c) 2014-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -57,6 +57,19 @@ struct dm_vars {
  * variables behind the vparse.  The txt backend, for example, doesn't need
  * Tk information...
  */
+
+/**
+ * Singly-linked list node for the display-list sensor mechanism.
+ * Sensors are fired by dm_fire_dlist_sensors() when a display list is
+ * regenerated, providing a push-based alternative to polling s_dlist_stale.
+ */
+struct dm_dlist_sensor {
+    struct bv_scene_obj *s;                         /**< @brief associated scene object */
+    void (*callback)(struct bv_scene_obj *, void *); /**< @brief notification callback */
+    void *data;                                     /**< @brief caller-provided context */
+    struct dm_dlist_sensor *next;                   /**< @brief intrusive list linkage */
+};
+
 struct dm_impl {
     struct dm *(*dm_open)(void *ctx, void *interp, int argc, const char *argv[]);
     int (*dm_close)(struct dm *dmp);
@@ -162,6 +175,8 @@ struct dm_impl {
     void *dm_interp;		/**< @brief interpreter */
     void *dm_ctx;		/**< @brief drawing context */
     void *dm_udata;		/**< @brief associate general application data here */
+    /** @brief singly-linked list of dlist sensors; NULL when empty */
+    struct dm_dlist_sensor *dm_dlist_sensors;
 };
 
 struct fb_impl {
@@ -229,8 +244,22 @@ struct fb_impl {
         char *p;
         size_t l;
     } u1, u2, u3, u4, u5, u6;
+    /* Application-facing input event queue (see fb_set_interactive).  Keep
+     * this state together at the end of the per-instance data. */
+    int if_interactive;        /**< @brief nonzero to report input events to the application */
+#define FB_EVENT_QUEUE_MAX 128
+    struct fb_event if_equeue[FB_EVENT_QUEUE_MAX]; /**< @brief ring buffer of pending input events */
+    int if_ehead;              /**< @brief event ring buffer head (next slot to write) */
+    int if_etail;              /**< @brief event ring buffer tail (next slot to read) */
 };
 
+
+/**
+ * Internal helper used by windowed backends to push an application-facing input
+ * event onto the framebuffer's event queue.  A no-op unless the framebuffer is
+ * in interactive mode (fb_set_interactive).  Not part of the public API.
+ */
+DM_EXPORT extern void fb_enqueue_event(struct fb *ifp, const struct fb_event *e);
 
 
 __END_DECLS

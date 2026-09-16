@@ -1,7 +1,7 @@
 /*                     V I E W C H E C K . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2025 United States Government as represented by
+ * Copyright (c) 1988-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -49,20 +49,13 @@
 
 #define OVLP_TOL 0.1
 
-extern int rpt_overlap;		/* report overlapping region names */
-extern int output_is_binary;
-
-
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
     {"",	0, (char *)0,	0,		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
-extern FILE *outfp;
-
-
-const char title[] = "RT Check";
+EXTERNCPP const char title[] = "RT Check";
 
 
 static size_t noverlaps;		/* Number of overlaps seen */
@@ -89,7 +82,7 @@ static struct overlap_list *olist=NULL;	/* root of the list */
  */
 /*ARGSUSED*/
 int
-hit(struct application *UNUSED(ap), register struct partition *UNUSED(PartHeadp), struct seg *UNUSED(segHeadp))
+r_hit(struct application *UNUSED(ap), register struct partition *UNUSED(PartHeadp), struct seg *UNUSED(segHeadp))
 {
     return 1;
 }
@@ -100,7 +93,7 @@ hit(struct application *UNUSED(ap), register struct partition *UNUSED(PartHeadp)
  */
 /*ARGSUSED*/
 int
-miss(struct application *UNUSED(ap))
+r_miss(struct application *UNUSED(ap))
 {
     return 0;
 }
@@ -212,8 +205,8 @@ overlap(struct application *ap, struct partition *pp, struct region *reg1, struc
 int
 view_init(register struct application *ap, char *UNUSED(file), char *UNUSED(obj), int minus_o, int UNUSED(minus_F))
 {
-    ap->a_hit = hit;
-    ap->a_miss = miss;
+    ap->a_hit = r_hit;
+    ap->a_miss = r_miss;
     ap->a_overlap = overlap;
     ap->a_logoverlap = rt_silent_logoverlap;
     ap->a_onehit = 0;
@@ -379,7 +372,7 @@ view_end(struct application *UNUSED(ap)) {
 }
 
 
-void
+C_DECL void
 application_init (void)
 {
     option("", "-o file.plot3", "Specify a UNIX-plot output file", 0);

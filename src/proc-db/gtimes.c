@@ -1,7 +1,7 @@
 /*                         G T I M E S . C
  * BRL-CAD
  *
- * Copyright (c) 2016-2025 United States Government as represented by
+ * Copyright (c) 2016-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -90,7 +90,7 @@ main(int ac, char *av[])
 	printf("[%2d] db_dirbuild: %02fs\n", i, (bu_gettime() - timer) / 1000000.0);
 
     timer = bu_gettime();
-    db_update_nref(dbip, &rt_uniresource);
+    db_update_nref(dbip);
     seconds[3] += (bu_gettime() - timer) / 1000000.0;
     if (iterations < SKIP || (i % SKIP == 0))
 	printf("[%2d] db_update_nref: %02fs\n", i, (bu_gettime() - timer) / 1000000.0);

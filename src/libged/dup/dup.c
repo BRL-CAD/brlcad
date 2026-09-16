@@ -1,7 +1,7 @@
 /*                         D U P . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,6 +28,7 @@
 #include <string.h>
 
 #include "bu/cmd.h"
+#include "../../librt/librt_private.h"
 
 #include "../ged_private.h"
 
@@ -240,7 +241,7 @@ ged_dup_core(struct ged *gedp, int argc, const char *argv[])
 	    return BRLCAD_ERROR;
 	}
     }
-    rt_mempurge(&(newdbp->dbi_freep));        /* didn't really build a directory */
+    rt_mempurge(&(newdbp->i->dbi_freep));        /* didn't really build a directory */
 
     _ged_vls_col_pr4v(gedp->ged_result_str, dirp0, (int)(dcs.dup_dirp - dirp0), 0, 0);
     bu_vls_printf(gedp->ged_result_str, "\n -----  %d duplicate names found  -----", wdbp->wdb_num_dups);
@@ -251,24 +252,13 @@ ged_dup_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl dup_cmd_impl = {
-    "dup",
-    ged_dup_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd dup_cmd = { &dup_cmd_impl };
-const struct ged_cmd *dup_cmds[] = { &dup_cmd, NULL };
+#define GED_DUP_COMMANDS(X, XID) \
+    XID(dupcmd, "dup", ged_dup_core,  GED_CMD_DEFAULT)
 
-static const struct ged_plugin pinfo = { GED_API,  dup_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_DUP_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_dup", 1, GED_DUP_COMMANDS)
 
 /*
  * Local Variables:

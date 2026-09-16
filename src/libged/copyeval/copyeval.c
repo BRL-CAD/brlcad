@@ -1,7 +1,7 @@
 /*                         C O P Y E V A L . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -95,7 +95,7 @@ ged_copyeval_core(struct ged *gedp, int argc, const char *argv[])
 
     gtd.gtd_objpos = endpos - 1;
 
-    GED_DB_GET_INTERNAL(gedp, &internal, gtd.gtd_obj[endpos - 1], bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_GET_INTERN(gedp, &internal, gtd.gtd_obj[endpos - 1], bn_mat_identity, BRLCAD_ERROR);
 
     if (endpos > 1) {
 	/* Make sure that final component in path is a solid */
@@ -149,7 +149,7 @@ ged_copyeval_core(struct ged *gedp, int argc, const char *argv[])
     /* should call GED_DB_DIRADD() but need to deal with freeing the
      * internals on failure.
      */
-    if (rt_db_put_internal(dp, gedp->dbip, ip, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(dp, gedp->dbip, ip) < 0) {
 	/* if (ip == &new_int) then new_int gets freed by the rt_db_put_internal above
 	 * regardless of whether it succeeds or not. At this point only internal needs
 	 * to be freed. On the other hand if (ip == &internal), the internal gets freed
@@ -171,24 +171,13 @@ ged_copyeval_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl copyeval_cmd_impl = {
-    "copyeval",
-    ged_copyeval_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd copyeval_cmd = { &copyeval_cmd_impl };
-const struct ged_cmd *copyeval_cmds[] = { &copyeval_cmd, NULL };
+#define GED_COPYEVAL_COMMANDS(X, XID) \
+    X(copyeval, ged_copyeval_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  copyeval_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_COPYEVAL_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_copyeval", 1, GED_COPYEVAL_COMMANDS)
 
 /*
  * Local Variables:

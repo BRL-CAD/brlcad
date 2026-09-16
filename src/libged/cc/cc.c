@@ -1,7 +1,7 @@
 /*                         C C . C
  * BRL-CAD
  *
- * Copyright (c) 2009-2025 United States Government as represented by
+ * Copyright (c) 2009-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -73,31 +73,19 @@ ged_cc_core(struct ged *gedp, int argc, const char *argv[])
     bu_vls_strcat(&(con_ip->expression), argv[2]);
 
     GED_DB_DIRADD(gedp, dp, argv[1], RT_DIR_PHONY_ADDR, 0, RT_DIR_NON_GEOM , (void *)&internal.idb_type, BRLCAD_ERROR);
-    GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_PUT_INTERN(gedp, dp, &internal, BRLCAD_ERROR);
 
     bu_vls_printf(gedp->ged_result_str, "Constraint saved");
     return BRLCAD_OK;
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl cc_cmd_impl = {
-    "cc",
-    ged_cc_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd cc_cmd = { &cc_cmd_impl };
-const struct ged_cmd *cc_cmds[] = { &cc_cmd, NULL };
+#define GED_CC_COMMANDS(X, XID) \
+    X(cc, ged_cc_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  cc_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_CC_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_cc", 1, GED_CC_COMMANDS)
 
 /*
  * Local Variables:

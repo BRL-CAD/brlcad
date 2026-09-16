@@ -1,7 +1,7 @@
 /*                     S A M P L E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,7 +25,7 @@
 #include "common.h"
 
 #include "vmath.h"
-#include "bu/time.h"
+#include "bu/datetime.h"
 #include "bg/trimesh.h"
 #include "raytrace.h"
 #include "analyze/polygonize.h"

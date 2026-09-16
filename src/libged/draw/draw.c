@@ -1,7 +1,7 @@
 /*                         D R A W . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,7 +31,7 @@
 
 #include "bu/getopt.h"
 #include "bu/parallel.h"
-#include "bu/time.h"
+#include "bu/datetime.h"
 #include "raytrace.h"
 
 #include "../ged_private.h"
@@ -39,6 +39,26 @@
 
 /* declare our callbacks used by _ged_drawtrees() */
 static int drawtrees_depth = 0;
+
+static int
+solid_get_color_attribute(const struct rt_db_internal *ip, unsigned char color[3])
+{
+    const int MAX_COLOR_COMPONENT = 255;
+    const char *attribute = bu_avs_get(&ip->idb_avs, db5_standard_attribute(ATTR_COLOR));
+    int components[3];
+    int i;
+
+    /* Preserve wireframe parsing and clamping.  Invalid attributes must
+     * fall through to the inherited material or default color. */
+    if (!attribute ||
+	sscanf(attribute, "%3i%*c%3i%*c%3i", components, components + 1, components + 2) != 3 ||
+	components[0] < 0 || components[1] < 0 || components[2] < 0)
+	return 0;
+
+    for (i = 0; i < 3; ++i)
+	color[i] = (unsigned char)(components[i] > MAX_COLOR_COMPONENT ? MAX_COLOR_COMPONENT : components[i]);
+    return 1;
+}
 
 /* Set solid's basecolor, color, and color flags based on client data and tree
  * state. If user color isn't set in client data, the solid's region id must be
@@ -74,9 +94,8 @@ solid_set_color_info(
     sp->s_old.s_basecolor[GRN] = bcolor[GRN];
     sp->s_old.s_basecolor[BLU] = bcolor[BLU];
 
-    color_soltab(sp);
+    color_soltab(tsp ? tsp->ts_dbip : NULL, sp);
 }
-
 
 
 void
@@ -173,7 +192,7 @@ draw_solid_wireframe(struct bv_scene_obj *sp, struct bview *gvp, struct db_i *db
     struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
 
     ret = rt_db_get_internal(ip, DB_FULL_PATH_CUR_DIR(&bdata->s_fullpath),
-			     dbip, sp->s_mat, &rt_uniresource);
+			     dbip, sp->s_mat);
 
     if (ret < 0) {
 	return -1;
@@ -251,7 +270,6 @@ append_solid_to_display_list(
     RT_CK_DB_INTERNAL(ip);
     BG_CK_TESS_TOL(tsp->ts_ttol);
     BN_CK_TOL(tsp->ts_tol);
-    RT_CK_RESOURCE(tsp->ts_resp);
 
     VSETALL(min, INFINITY);
     VSETALL(max, -INFINITY);
@@ -332,7 +350,7 @@ append_solid_to_display_list(
 	struct bv_vlist *bvv = (struct bv_vlist *)&vhead;
 	sp->s_vlen += bv_vlist_cmd_cnt(bvv);
 	BU_LIST_APPEND_LIST(&(sp->s_vlist), &(bvv->l));
-	
+
 	bv_scene_obj_bound(sp, bv_data->v);
 
         while (BU_LIST_WHILE(vp, bv_vlist, &(sp->s_vlist))) {
@@ -387,26 +405,11 @@ append_solid_to_display_list(
 	    wire_color[BLU] = (unsigned char)bv_data->wireframe_color[BLU];
             solid_set_color_info(sp, wire_color, tsp);
         } else {
-	    const char *attr_color = bu_avs_get(&ip->idb_avs, db5_standard_attribute(ATTR_COLOR));
-	    if (attr_color) {
-		int i;
-		unsigned char obj_color[3];
-		int color[3];
-		int color_cnt = sscanf(attr_color, "%3i%*c%3i%*c%3i", color+0, color+1, color+2);
-		if (color_cnt == 3 && color[0] >= 0 && color[1] >= 0 && color[2] >= 0) {
-		    for (i = 0; i < 3; i++) {
-			if (color[i] > 255) color[i] = 255;
-		    }
-		    obj_color[RED] = (unsigned char)color[RED];
-		    obj_color[GRN] = (unsigned char)color[GRN];
-		    obj_color[BLU] = (unsigned char)color[BLU];
-		    solid_set_color_info(sp, obj_color, tsp);
-		} else {
-		    solid_set_color_info(sp, NULL, tsp);
-		}
-	    } else {
+	    unsigned char obj_color[3];
+	    if (solid_get_color_attribute(ip, obj_color))
+		solid_set_color_info(sp, obj_color, tsp);
+	    else
 		solid_set_color_info(sp, NULL, tsp);
-	    }
 	}
     }
 
@@ -488,7 +491,13 @@ plot_shaded(
 		(void)rt_brep_plot_poly(&vhead, DB_FULL_PATH_CUR_DIR(pathp), ip, tsp->ts_ttol,
 			tsp->ts_tol, NULL);
 	}
-	_ged_drawH_part2(0, &vhead, pathp, tsp, dgcdp);
+	/* Match wireframe colors without changing client data shared with
+	 * sibling leaves.  An explicit draw color still takes precedence. */
+	unsigned char obj_color[3];
+	if (!dgcdp->vs.color_override && solid_get_color_attribute(ip, obj_color))
+	    dl_add_path(0, &vhead, pathp, tsp, obj_color, dgcdp);
+	else
+	    _ged_drawH_part2(0, &vhead, pathp, tsp, dgcdp);
     } else {
 	int ac = 1;
 	const char *av[2];
@@ -564,7 +573,6 @@ get_path_and_state(
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     *tsp = wdbp->wdb_initial_tree_state;
     tsp->ts_dbip = gedp->dbip;
-    tsp->ts_resp = &rt_uniresource;
 
     return db_follow_path_for_state(tsp, pathp, path_name, LOOKUP_QUIET);
 }
@@ -610,11 +618,9 @@ plot_shaded_eval(
 	    struct directory *dp = DB_FULL_PATH_CUR_DIR(&brep_path);
 
 	    if (dp->d_flags & RT_DIR_COMB) {
-		ret = rt_db_get_internal(&brep_intern, dp, ts.ts_dbip, NULL,
-			ts.ts_resp);
+		ret = rt_db_get_internal(&brep_intern, dp, ts.ts_dbip, NULL);
 	    } else {
-		ret = rt_db_get_internal(&brep_intern, dp, ts.ts_dbip, ts.ts_mat,
-			ts.ts_resp);
+		ret = rt_db_get_internal(&brep_intern, dp, ts.ts_dbip, ts.ts_mat);
 	    }
 	    if (ret >= 0) {
 		brep_made = 1;
@@ -686,7 +692,6 @@ draw_nmg_region_start(struct db_tree_state *tsp, const struct db_full_path *path
     }
 
     RT_CK_DBI(tsp->ts_dbip);
-    RT_CK_RESOURCE(tsp->ts_resp);
 
     BU_LIST_INIT(&vhead);
 
@@ -720,7 +725,7 @@ draw_nmg_region_start(struct db_tree_state *tsp, const struct db_full_path *path
 	}
     }
 
-    if (rt_db_get_internal(&intern, dp, tsp->ts_dbip, matp, &rt_uniresource) < 0)
+    if (rt_db_get_internal(&intern, dp, tsp->ts_dbip, matp) < 0)
 	return 0;	/* proceed as usual */
 
     switch (intern.idb_type) {
@@ -796,7 +801,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
     if (!BU_SETJUMP) {
 	/* try */
 
-	result = nmg_boolean(curtree, *tsp->ts_m, vlfree, tsp->ts_tol, tsp->ts_resp);
+	result = nmg_boolean(curtree, *tsp->ts_m, vlfree, tsp->ts_tol);
 
     } else {
 	/* catch */
@@ -852,7 +857,6 @@ draw_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp,
     BG_CK_TESS_TOL(tsp->ts_ttol);
     BN_CK_TOL(tsp->ts_tol);
     NMG_CK_MODEL(*tsp->ts_m);
-    RT_CK_RESOURCE(tsp->ts_resp);
 
     BU_LIST_INIT(&vhead);
 
@@ -874,27 +878,27 @@ draw_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp,
 
 	failed = process_boolean(curtree, tsp, pathp, dgcdp, vlfree);
 	if (failed) {
-	    db_free_tree(curtree, tsp->ts_resp);
+	    db_free_tree(curtree);
 	    return (union tree *)NULL;
 	}
 
     } else if (curtree->tr_op != OP_TESS) {
 	bu_vls_printf(dgcdp->gedp->ged_result_str, "Cannot use '-d' option when Boolean evaluation is required\n");
-	db_free_tree(curtree, tsp->ts_resp);
+	db_free_tree(curtree);
 	return (union tree *)NULL;
     }
     r = curtree->tr_d.td_r;
     NMG_CK_REGION(r);
 
     if (dgcdp->do_not_draw_nmg_solids_during_debugging && r) {
-	db_free_tree(curtree, tsp->ts_resp);
+	db_free_tree(curtree);
 	return (union tree *)NULL;
     }
 
     if (dgcdp->nmg_triangulate) {
 	failed = process_triangulation(tsp, pathp, dgcdp, vlfree);
 	if (failed) {
-	    db_free_tree(curtree, tsp->ts_resp);
+	    db_free_tree(curtree);
 	    return (union tree *)NULL;
 	}
     }
@@ -928,7 +932,7 @@ draw_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp,
 	    nmg_vlblock_r(dgcdp->draw_edge_uses_vbp, r, 1, vlfree);
 	}
 	/* NMG region is no longer necessary, only vlist remains */
-	db_free_tree(curtree, tsp->ts_resp);
+	db_free_tree(curtree);
 	return (union tree *)NULL;
     }
 
@@ -1722,41 +1726,19 @@ ged_redraw_core(struct ged *gedp, int argc, const char *argv[])
     return BRLCAD_OK;
 }
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
 
-struct ged_cmd_impl draw_cmd_impl = {"draw", ged_draw_core, GED_CMD_DEFAULT};
-const struct ged_cmd draw_cmd = { &draw_cmd_impl };
+#define GED_DRAW_COMMANDS(X, XID) \
+    X(draw, ged_draw_core, GED_CMD_DEFAULT) \
+    X(E, ged_E_core, GED_CMD_DEFAULT) \
+    X(e, ged_draw_core, GED_CMD_DEFAULT) \
+    X(ev, ged_ev_core, GED_CMD_DEFAULT) \
+    X(redraw, ged_redraw_core, GED_CMD_DEFAULT) \
+    X(loadview, ged_loadview_core, GED_CMD_DEFAULT) \
+    X(preview, ged_preview_core, GED_CMD_DEFAULT)
 
-struct ged_cmd_impl bigE_cmd_impl = {"E", ged_E_core, GED_CMD_DEFAULT};
-const struct ged_cmd bigE_cmd = { &bigE_cmd_impl };
-
-struct ged_cmd_impl e_cmd_impl = {"e", ged_draw_core, GED_CMD_DEFAULT};
-const struct ged_cmd e_cmd = { &e_cmd_impl };
-
-struct ged_cmd_impl ev_cmd_impl = {"ev", ged_ev_core, GED_CMD_DEFAULT};
-const struct ged_cmd ev_cmd = { &ev_cmd_impl };
-
-struct ged_cmd_impl redraw_cmd_impl = {"redraw", ged_redraw_core, GED_CMD_DEFAULT};
-const struct ged_cmd redraw_cmd = { &redraw_cmd_impl };
-
-extern int ged_loadview_core(struct ged *gedp, int argc, const char *argv[]);
-struct ged_cmd_impl loadview_cmd_impl = {"loadview", ged_loadview_core, GED_CMD_DEFAULT};
-const struct ged_cmd loadview_cmd = { &loadview_cmd_impl };
-
-extern int ged_preview_core(struct ged *gedp, int argc, const char *argv[]);
-struct ged_cmd_impl preview_cmd_impl = {"preview", ged_preview_core, GED_CMD_DEFAULT};
-const struct ged_cmd preview_cmd = { &preview_cmd_impl };
-
-const struct ged_cmd *draw_cmds[] = { &draw_cmd, &bigE_cmd, &e_cmd, &ev_cmd, &redraw_cmd, &loadview_cmd, &preview_cmd, NULL };
-
-static const struct ged_plugin pinfo = { GED_API,  draw_cmds, 7 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_DRAW_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_draw", 1, GED_DRAW_COMMANDS)
 
 /*
  * Local Variables:
@@ -1767,3 +1749,4 @@ COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+

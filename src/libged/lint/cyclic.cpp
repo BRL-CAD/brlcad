@@ -1,7 +1,7 @@
 /*                    C Y C L I C . C P P
  * BRL-CAD
  *
- * Copyright (c) 2014-2025 United States Government as represented by
+ * Copyright (c) 2014-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -112,7 +112,7 @@ cyclic_search(struct db_full_path *fp, void *client_data)
 	struct rt_db_internal in;
 	struct rt_comb_internal *comb;
 
-	if (rt_db_get_internal(&in, dp, gedp->dbip, NULL, &rt_uniresource) < 0) return;
+	if (rt_db_get_internal(&in, dp, gedp->dbip, NULL) < 0) return;
 
 	comb = (struct rt_comb_internal *)in.idb_ptr;
 	cyclic_search_subtree(fp, OP_UNION, comb->tree, cyclic_search, client_data);
@@ -145,13 +145,11 @@ _ged_cyclic_check(lint_data *cdata)
 	/* We can't do db_ls to get a set of tops objects here, because a cyclic
 	 * path can produce a situation where there are no tops objects and/or
 	 * hide the paths we need to report. */
-	for (i = 0; i < RT_DBNHASH; i++) {
-	    for (dp = cdata->gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-		db_add_node_to_full_path(start_path, dp);
-		cyclic_search(start_path, (void *)cdata);
-		DB_FULL_PATH_POP(start_path);
-	    }
-	}
+	FOR_ALL_DIRECTORY_START(dp, cdata->gedp->dbip)
+	    db_add_node_to_full_path(start_path, dp);
+	    cyclic_search(start_path, (void *)cdata);
+	    DB_FULL_PATH_POP(start_path);
+	FOR_ALL_DIRECTORY_END;
     }
 
     db_free_full_path(start_path);

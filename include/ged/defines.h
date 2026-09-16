@@ -1,7 +1,7 @@
 /*                        D E F I N E S . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -210,6 +210,11 @@ struct ged {
      */
     int 			ged_internal_call;
 
+    /* When non-zero, ged_exec will skip running per-command PRE/POST callbacks.
+     * Increment before calling ged_exec in contexts where callbacks must not
+     * fire (e.g. inside a search -exec callback), then decrement afterwards. */
+    int			ged_skip_clbks;
+
 
     /* TODO: hide all callback related symbols, callback typedefs
      * (above), and eventually most if not all of the remaining fields
@@ -310,6 +315,12 @@ GED_EXPORT extern void ged_free(struct ged *gedp);
 // them directly. LINGER is a special case involving commands utilizing long
 // running subprocesses.
 //
+// ged_exec will run post execution callbacks whether or not the command
+// reports success - if callers want to avoid actions on failed commands, they
+// should use ged_results_ret(gedp->ged_results) to get the command return code
+// (which will match what ged_exec will ultimately return) to decide their
+// course of action.
+//
 // Only one function can be registered for each pre/post command slot - an
 // assignment to a command slot that already has an assigned function will
 // result in the previous function pointer being cleared and replaced.  If an
@@ -361,6 +372,7 @@ GED_EXPORT extern void *ged_dm_ctx_get(struct ged *gedp, const char *dm_type);
  * internals of ged_results, which are not guaranteed
  * to stay the same.
  * defined in ged_util.c */
+GED_EXPORT extern int ged_results_ret(struct ged_results *results);
 GED_EXPORT extern size_t ged_results_count(struct ged_results *results);
 GED_EXPORT extern const char *ged_results_get(struct ged_results *results, size_t index);
 GED_EXPORT extern void ged_results_clear(struct ged_results *results);
@@ -376,6 +388,14 @@ GED_EXPORT extern struct ged *ged_open(const char *dbtype,
 				       int existing_only);
 // Note that ged_close frees all memory and deletes the gedp
 GED_EXPORT extern void ged_close(struct ged *gedp);
+
+/**
+ * Stop and reap every subprocess owned by a GED instance while application
+ * event-loop callbacks and display resources are still valid.  Applications
+ * with staged shutdown must call this before tearing down their UI/display
+ * objects; ged_close() also calls it as a final safeguard.
+ */
+GED_EXPORT extern void ged_subprocesses_terminate(struct ged *gedp);
 
 
 /**

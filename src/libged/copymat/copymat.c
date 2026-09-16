@@ -1,7 +1,7 @@
 /*                         C O P Y M A T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -86,7 +86,6 @@ ged_copymat_core(struct ged *gedp, int argc, const char *argv[])
     ts = wdbp->wdb_initial_tree_state;	/* struct copy */
 
     ts.ts_dbip = gedp->dbip;
-    ts.ts_resp = &rt_uniresource;
     MAT_IDN(ts.ts_mat);
     db_full_path_init(&anp.an_path);
     if (child == NULL
@@ -100,7 +99,7 @@ ged_copymat_core(struct ged *gedp, int argc, const char *argv[])
     parent = bu_vls_addr(&pvls);
     sep = strchr(parent, '/') - parent;
     bu_vls_trunc(&pvls, sep);
-    switch (rt_db_lookup_internal(gedp->dbip, parent, &dp, &intern, LOOKUP_NOISY, &rt_uniresource)) {
+    switch (rt_db_lookup_internal(gedp->dbip, parent, &dp, &intern, LOOKUP_NOISY)) {
 	case ID_COMBINATION:
 	    if (dp->d_flags & RT_DIR_COMB)
 		break;
@@ -141,7 +140,7 @@ ged_copymat_core(struct ged *gedp, int argc, const char *argv[])
 	tp->tr_l.tl_mat = (matp_t) 0;
     }
 
-    if (rt_db_put_internal(dp, gedp->dbip, &intern, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(dp, gedp->dbip, &intern) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "%s: Database write error, aborting\n", argv[0]);
 	status = BRLCAD_ERROR;
 	goto wrapup;
@@ -158,24 +157,13 @@ wrapup:
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl copymat_cmd_impl = {
-    "copymat",
-    ged_copymat_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd copymat_cmd = { &copymat_cmd_impl };
-const struct ged_cmd *copymat_cmds[] = { &copymat_cmd, NULL };
+#define GED_COPYMAT_COMMANDS(X, XID) \
+    X(copymat, ged_copymat_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  copymat_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_COPYMAT_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_copymat", 1, GED_COPYMAT_COMMANDS)
 
 /*
  * Local Variables:

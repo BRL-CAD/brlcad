@@ -1,7 +1,7 @@
 /*                        F B _ X . H
  * BRL-CAD
  *
- * Copyright (c) 2014-2025 United States Government as represented by
+ * Copyright (c) 2014-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -43,7 +43,7 @@
 
 struct X24_fb_info {
     Display *dpy;
-    Window win;
+    const Drawable *drawable; /* Indirection follows display-manager pixmap replacement. */
     Window cwinp;
     Colormap cmap;
     XVisualInfo *vip;

@@ -1,0 +1,69 @@
+= PNG-PIX(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+png-pix - convert a PNG image to a BRL-CAD pix image
+
+== SYNOPSIS
+
+[source]
+----
+png-pix [-v] [png_input_file] > pix_output_file
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*png-pix* decodes a Portable Network Graphics (*PNG*) image (such as one saved
+by *fb-png*(1) or *pix-png*(1)) and writes it to standard output as a *pix*(5)
+file of bottom-to-top RGB pixels. If _png_input_file_ is not given, the PNG
+image is read from standard input.
+
+Grayscale images are expanded to RGB (with a warning), palette and low bit-depth
+images are expanded to full 8-bit channels, 16-bit channels are reduced to 8
+bits, and any alpha channel is composited over the image background color.
+
+[[options]]
+== OPTIONS
+
+*-v*::
+  Verbose. Print the PNG color type, bit depth, image dimensions, background
+  color, gamma, interlace status, embedded text chunks, and modification time to
+  standard error.
+
+[[examples]]
+== EXAMPLES
+
+.Display a PNG screenshot on a framebuffer
+====
+[source,bash]
+----
+png-pix tank.png | pix-fb -w 512 -n 512
+----
+Decode the PNG into pix data and pipe it directly to *pix-fb*(1) for display,
+without creating an intermediate file. The width and height must match the
+image (use *png-pix -v tank.png* to discover its dimensions).
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *pix-png*(1), *png-fb*(1), *fb-png*(1), *png-bw*(1), *bw-png*(1), *pix*(5)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,7 +1,7 @@
 /*                            O B J . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,11 +27,14 @@
 
 #include <string.h>
 
+#include "bu/path.h"
+
 #include "./ged_bot_dump.h"
 
 static struct _ged_obj_material *
-obj_get_material(struct bot_dump_obj *o, int red, int green, int blue, fastf_t transparency)
+obj_get_material(struct _ged_bot_dump_client_data *d, FILE *fp, int red, int green, int blue, fastf_t transparency)
 {
+    struct bot_dump_obj *o = &d->obj;
     struct _ged_obj_material *gomp;
 
     for (BU_LIST_FOR(gomp, _ged_obj_material, &o->HeadObjMaterials)) {
@@ -41,6 +44,26 @@ obj_get_material(struct bot_dump_obj *o, int red, int green, int blue, fastf_t t
 	    ZERO(gomp->a - transparency)) {
 	    return gomp;
 	}
+    }
+
+    if (!o->obj_materials_fp) {
+	o->obj_materials_fp = fopen(bu_vls_cstr(&o->obj_materials_file), "wb+");
+	if (o->obj_materials_fp == NULL) {
+	    bu_vls_printf(d->gedp->ged_result_str, "obj_get_material: failed to open %s\n", bu_vls_cstr(&o->obj_materials_file));
+	    return NULL;
+	}
+    }
+
+    if (fp && !o->mtllib_written) {
+	/* The mtllib directive must reference the material file by a name
+	 * resolvable relative to the .obj file (the .mtl is written
+	 * alongside it), not by the absolute output path.  Emitting the
+	 * absolute path produced non-portable .obj files that embedded the
+	 * build machine's directory layout.  Use just the basename. */
+	char mtl_base[MAXPATHLEN] = {0};
+	bu_path_basename(bu_vls_cstr(&o->obj_materials_file), mtl_base);
+	fprintf(fp, "mtllib %s\n", mtl_base);
+	o->mtllib_written = 1;
     }
 
     BU_GET(gomp, struct _ged_obj_material);
@@ -99,18 +122,10 @@ obj_setup(struct _ged_bot_dump_client_data *d, const char *fname, int mtl_only)
 	}
 
 	BU_LIST_INIT(&d->obj.HeadObjMaterials);
-
-	d->obj.obj_materials_fp = fopen(bu_vls_cstr(&d->obj.obj_materials_file), "wb+");
-	if (d->obj.obj_materials_fp == NULL) {
-	    bu_vls_printf(gedp->ged_result_str, "obj_setup: failed to open %s\n", bu_vls_cstr(&d->obj.obj_materials_file));
-	    bu_vls_free(&d->obj.obj_materials_file);
-	    return BRLCAD_ERROR;
-	}
+	d->obj.obj_materials_fp = NULL;
 
 	d->obj.num_obj_materials = 0;
-
-	if (!mtl_only)
-	    fprintf(d->fp, "mtllib %s\n", bu_vls_cstr(&d->obj.obj_materials_file));
+	d->obj.mtllib_written = 0;
     }
 
     d->obj.v_offset = 1;
@@ -131,7 +146,8 @@ obj_finish(struct _ged_bot_dump_client_data *d)
     if (d->material_info) {
 	bu_vls_free(&d->obj.obj_materials_file);
 	obj_free_materials(&d->obj);
-	fclose(d->obj.obj_materials_fp);
+	if (d->obj.obj_materials_fp)
+	    fclose(d->obj.obj_materials_fp);
     }
 
     return BRLCAD_OK;
@@ -165,11 +181,13 @@ obj_write_bot(struct _ged_bot_dump_client_data *d, struct rt_bot_internal *bot, 
     int i, vi;
     struct _ged_obj_material *gomp;
 
-    if (d->using_dbot_dump) {
-	gomp = obj_get_material(&d->obj, d->obj.curr_obj_red,
-				    d->obj.curr_obj_green,
-				    d->obj.curr_obj_blue,
-				    d->obj.curr_obj_alpha);
+    if (d->curr_obj_color_valid) {
+	gomp = obj_get_material(d, fp, d->curr_obj_red,
+				    d->curr_obj_green,
+				    d->curr_obj_blue,
+				    d->curr_obj_alpha);
+	if (!gomp)
+	    return;
 	fprintf(fp, "usemtl %s\n", bu_vls_addr(&gomp->name));
     }
 
@@ -236,10 +254,12 @@ write_data_arrows(struct _ged_bot_dump_client_data *d, struct bv_data_arrow_stat
     if (gdasp->gdas_draw) {
 	struct _ged_obj_material *gomp;
 
-	gomp = obj_get_material(&d->obj, gdasp->gdas_color[0],
+	gomp = obj_get_material(d, fp, gdasp->gdas_color[0],
 				    gdasp->gdas_color[1],
 				    gdasp->gdas_color[2],
 				    1);
+	if (!gomp)
+	    return;
 	fprintf(fp, "usemtl %s\n", bu_vls_addr(&gomp->name));
 
 	if (sflag)
@@ -314,10 +334,12 @@ write_data_axes(struct _ged_bot_dump_client_data *d, struct bv_data_axes_state *
 
 	halfAxesSize = bndasp->size * 0.5;
 
-	gomp = obj_get_material(&d->obj, bndasp->color[0],
+	gomp = obj_get_material(d, fp, bndasp->color[0],
 				    bndasp->color[1],
 				    bndasp->color[2],
 				    1);
+	if (!gomp)
+	    return;
 	fprintf(fp, "usemtl %s\n", bu_vls_addr(&gomp->name));
 
 	if (sflag)
@@ -388,10 +410,12 @@ write_data_lines(struct _ged_bot_dump_client_data *d, struct bv_data_line_state 
     if (gdlsp->gdls_draw) {
 	struct _ged_obj_material *gomp;
 
-	gomp = obj_get_material(&d->obj, gdlsp->gdls_color[0],
+	gomp = obj_get_material(d, fp, gdlsp->gdls_color[0],
 				    gdlsp->gdls_color[1],
 				    gdlsp->gdls_color[2],
 				    1);
+	if (!gomp)
+	    return;
 	fprintf(fp, "usemtl %s\n", bu_vls_addr(&gomp->name));
 
 	if (sflag)

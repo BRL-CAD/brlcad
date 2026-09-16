@@ -1,7 +1,7 @@
 /*                      F B _ W G L . H
  * BRL-CAD
  *
- * Copyright (c) 2014-2025 United States Government as represented by
+ * Copyright (c) 2014-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,16 +30,14 @@
 /** @} */
 
 #ifdef FB_USE_INTERNAL_API
-#  include "common.h"
+#include "common.h"
+#include "bio.h"
 
-#  include "bio.h"
+#include "../dm-gl.h"
 
 /* The wgl interface as currently implemented uses some
  * X11 types, supplied by Tk. */
 #  include <tk.h>
-#  ifdef HAVE_GL_GL_H
-#    include <GL/gl.h>
-#  endif
 
 struct wgl_fb_info {
     Display *dpy;

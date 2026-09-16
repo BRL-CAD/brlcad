@@ -1,0 +1,190 @@
+= RTG3(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+rtg3 - raytrace a model, writing a COVART (GIFT) 3-component shotline file
+
+== SYNOPSIS
+
+[source]
+----
+rtg3 [options] model.g [objects...] > shotlines.cov
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*rtg3* fires a grid of rays at the listed _objects_ in the BRL-CAD database
+_model.g_ and writes a GIFT/COVART shotline file on standard output (or to
+the file named with *-o*).  Each shotline lists up to three components per
+card together with both entrance and exit obliquity angles.  The region ID
+field of each component is the region id of the intersected region.  When a
+ray partition is followed by air, the air code and the line-of-sight
+thickness of that air are recorded on the shotline header card.  The format
+is the one consumed by the JTCG-approved *covart*(1V) vulnerability codes.
+
+If no _objects_ are listed, *rtg3* uses the same automatic default-object
+selection described in *rt*(1).  If no single usable default can be resolved,
+it aborts before writing shotlines.
+
+The ray grid is aimed either by azimuth/elevation or by an explicit matrix:
+
+* With *-a* and *-e* the model is autosized, the grid is centered on the
+  centroid of the selected object set, and ray spacing is chosen to span it.
+* With *-M* a model-to-view matrix is read from standard input, mapping
+  model space into the view-space range -1.0 <= X,Y <= +1.0; the grid
+  resolution is then set with *-s*.  This form is most useful when *rtg3*
+  is launched from a shell script produced by an *mged*(1) _saveview_
+  command.  Do not combine *-M* with *-g* or *-G*, as negative hit
+  distances can result.
+
+Unlike most of the *rt*(1) family, *rtg3* treats air as significant: it
+forces _use_air_ on at startup so that air regions appear in the partition
+lists.  The grid is aligned on one-inch (25.4mm) boundaries by default, or
+on *-g*/*-G* cell boundaries when those are given.
+
+*rtg3* is a front end to *librt*(3) and shares its option parser with the
+rest of the *rt*(1) family; the most commonly used options are listed
+below.
+
+[[options]]
+== OPTIONS
+
+*-s* _#_::
+  Number of rays to fire in each of the X and Y directions (square grid).
+  Default is 512 (a 512x512 grid).
+
+*-a* _deg_::
+  View azimuth in degrees.  Used with *-e*; triggers autosizing and
+  conflicts with *-M*.
+
+*-e* _deg_::
+  View elevation in degrees.  Used with *-a*; triggers autosizing and
+  conflicts with *-M*.
+
+*-M*::
+  Read the model-to-view matrix (and any animation script) from standard
+  input.  Conflicts with *-a*/*-e*.
+
+*-g* _mm_::
+  Grid cell width in millimeters.  Do not use together with *-s*.
+
+*-G* _mm_::
+  Grid cell height in millimeters.  If unspecified, cell height equals cell
+  width.  Do not use together with *-s*.
+
+*-U* _#_::
+  Set the _use_air_ boolean.  Note that *rtg3* unconditionally forces
+  _use_air_ on at startup regardless of this option, so air regions always
+  appear in the partition lists even if *-U0* is given.
+
+*-o* _file_::
+  Write the COVART-format shotlines to _file_ instead of standard output.
+
+*-p* _deg_::
+  Perspective angle in degrees (0 <= deg < 180; 0 selects orthographic,
+  the default).
+
+*-P* _#_::
+  Maximum number of processor cores to use (a negative value means all but
+  that many).
+
+*-T* _dist_[/_perp_]::
+  Set raytracing distance and perpendicular tolerances (default
+  0.0005/0.0).
+
+*-c* _command_::
+  Execute an *rt* script _command_ before raytracing.  The
+  *rtg3*-specific commands are described under SET COMMANDS below.
+
+*-x* _#_::
+  Set *librt*(3) debug flags to the given hexadecimal value.
+
+*-X* _#_::
+  Set the rt optical/program debug flags (hexadecimal).  The
+  ray-plot bit causes a color vector plot of ray-model intersections to be
+  written to _rtg3.plot3_.
+
+*-N* _#_::
+  Set *libnmg* debug flags (hexadecimal).
+
+*-!* _#_::
+  Set *libbu* debug flags (hexadecimal).  As a side effect, *-!1* appends
+  reproducible ray information (*-b*/*-p*/*-d*) to each shotline so the
+  shot can be re-run with *rtshot*(1).
+
+*-r*::
+  Report overlapping region names (on by default).
+
+*-R*::
+  Suppress overlap region-name reporting.
+
+[[set_commands]]
+== SET COMMANDS
+
+The following *-c* "set ..." commands are specific to *rtg3*:
+
+*-c* "set ray_data_file=__name__"::
+  Also write one line of ray data per shotline to _name_: azimuth and
+  elevation; the X, Y, Z of the ray start point; the X, Y, Z of the ray
+  direction; the corresponding line number in the shotline file; and the
+  coordinates of the first hit point along the ray.
+
+*-c* "set rt_cline_radius=__#__"::
+  Use _#_ millimeters as the additional radius added to CLINE solids.
+
+*-c* "set save_overlaps=1"::
+  Reproduce _FASTGEN4_ overlap-handling behavior for regions flagged as
+  FASTGEN regions.
+
+[[examples]]
+== EXAMPLES
+
+.Generate a shotline file at a fixed view
+====
+[source,bash]
+----
+rtg3 -s64 -a 35 -e 25 model.g all.g > all.cov
+----
+Fires a 64x64 grid from azimuth 35, elevation 25 at the _all.g_ assembly,
+autosizing to span the geometry, and writes a COVART shotline file ready to
+hand to *covart*(1V) for a vulnerability analysis.
+====
+
+.Visualize the rays alongside the model bounding boxes
+====
+[source,bash]
+----
+rtg3 -s32 -X 80000000 model.g component.g
+cat rtrpp.plot3 rtg3.plot3 | plot3-fb
+----
+The ray-plot debug bit writes _rtg3.plot3_, coloring ray segments green
+through solids and blue through air.  Combined with the bounding-box plot
+_rtrpp.plot3_, the result is displayed on a framebuffer with *plot3-fb*(1).
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *covart*(1V), *mged*(1), *rt*(1), *rtshot*(1), *plot3-fb*(1),
+*librt*(3), *plot3*(5);
+``_COVART III - User Manual_'', Joint Technical Coordinating Group for
+Munitions Effectiveness.
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

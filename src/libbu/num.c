@@ -1,7 +1,7 @@
 /*                           N U M . C
  * BRL-CAD
  *
- * Copyright (c) 2019-2025 United States Government as represented by
+ * Copyright (c) 2019-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,6 +25,8 @@
 #include <float.h>
 #include <stdio.h>
 #include <math.h>
+
+#include "bu/num.h"
 
 
 static size_t

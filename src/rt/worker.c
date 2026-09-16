@@ -1,7 +1,7 @@
 /*                        W O R K E R . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2025 United States Government as represented by
+ * Copyright (c) 1985-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,6 +31,7 @@
 #include <math.h>
 
 #include "bu/log.h"
+#include "bu/datetime.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
@@ -53,16 +54,8 @@
 #define CRT_BLEND(v)	(0.26*(v)[X] + 0.66*(v)[Y] + 0.08*(v)[Z])
 #define NTSC_BLEND(v)	(0.30*(v)[X] + 0.59*(v)[Y] + 0.11*(v)[Z])
 
-extern fastf_t** timeTable_init(int x, int y);
-extern int timeTable_input(int x, int y, fastf_t t, fastf_t **timeTable);
-
-extern int query_x;
-extern int query_y;
-extern int Query_one_pixel;
-extern int query_optical_debug;
-extern int query_debug;
-
-extern unsigned char *pixmap;	/* pixmap for rerendering of black pixels */
+extern fastf_t** timeTable_init(size_t x, size_t y);
+extern void timeTable_input(int x, int y, fastf_t t, fastf_t **timeTable);
 
 int per_processor_chunk = 0;	/* how many pixels to do at once */
 
@@ -125,24 +118,34 @@ static struct jitter_pattern pt_pats[] = {
  * Compute the origin for this ray, based upon the number of samples
  * per pixel and the number of the current sample.  For certain
  * ray-counts, it is highly advantageous to subdivide the pixel and
- * fire each ray in a specific sub-section of the pixel.
+ * fire each ray in a specific sub-section of the pixel.  A supplied
+ * random state makes sampling independent of worker scheduling.
  */
 static void
-jitter_start_pnt(vect_t point, struct application *a, int samplenum, int pat_num)
+jitter_start_pnt(vect_t point, struct application *a, int samplenum, int pat_num,
+		 float **rand_state)
 {
     fastf_t dx, dy;
+    fastf_t rand_x;
+    fastf_t rand_y;
+
+    if (rand_state) {
+	rand_x = bn_rand_half(*rand_state);
+	rand_y = bn_rand_half(*rand_state);
+    } else {
+	rand_x = bn_rand_half(a->a_resource->re_randptr);
+	rand_y = bn_rand_half(a->a_resource->re_randptr);
+    }
 
     if (pat_num >= 0) {
 	dx = a->a_x + pt_pats[pat_num].coords[samplenum*2] +
-	    (bn_rand_half(a->a_resource->re_randptr) *
-	     pt_pats[pat_num].rand_scale[X]);
+	    (rand_x * pt_pats[pat_num].rand_scale[X]);
 
 	dy = a->a_y + pt_pats[pat_num].coords[samplenum*2 + 1] +
-	    (bn_rand_half(a->a_resource->re_randptr) *
-	     pt_pats[pat_num].rand_scale[Y]);
+	    (rand_y * pt_pats[pat_num].rand_scale[Y]);
     } else {
-	dx = a->a_x + bn_rand_half(a->a_resource->re_randptr);
-	dy = a->a_y + bn_rand_half(a->a_resource->re_randptr);
+	dx = a->a_x + rand_x;
+	dy = a->a_y + rand_y;
     }
     VJOIN2(point, viewbase_model, dx, dx_model, dy, dy_model);
 }
@@ -158,16 +161,26 @@ do_pixel(int cpu, int pat_num, int pixelnum)
     vect_t colorsum = {(fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0};
     int samplenum = 0;
     static const double one_over_255 = 1.0 / 255.0;
+    static const fastf_t usec_per_sec = 1000000.0;
+    static const fastf_t nsec_per_sec = 1000000000.0;
     const int pindex = (pixelnum * sizeof(RGBpixel));
+    int64_t pixel_start = 0;
+    int pixel_timer_thread_cpu = 0;
+    fastf_t pixel_timer_scale = usec_per_sec;
+    float *pixel_rand_state = NULL;
+    float **jitter_rand_state = NULL;
 
     /* for stereo output */
     vect_t left_eye_delta = VINIT_ZERO;
 
     if (lightmodel == 8) {
-	/* Add timer here to start pixel-time for heat
-	 * graph, when asked.
-	 */
-	rt_prep_timer();
+	pixel_start = bu_timer_cpu_thread();
+	if (pixel_start >= 0) {
+	    pixel_timer_thread_cpu = 1;
+	    pixel_timer_scale = nsec_per_sec;
+	} else {
+	    pixel_start = bu_gettime();
+	}
     }
 
     /* Obtain fresh copy of global application struct */
@@ -191,6 +204,21 @@ do_pixel(int cpu, int pat_num, int pixelnum)
 	a.a_y = (int)(pixelnum/width);
 	a.a_x = (int)(pixelnum - (a.a_y * width));
 	/* a.a_x = pixelnum%width; */
+    }
+
+    if (deterministic_jitter && (jitter & JITTER_CELL)) {
+	size_t sample_pass = 0;
+	size_t sample_passes = 1;
+	size_t pixel_seed;
+
+	if (full_incr_mode && full_incr_nsamples > 0) {
+	    sample_passes = full_incr_nsamples;
+	    if (full_incr_sample > 0)
+		sample_pass = full_incr_sample - 1;
+	}
+	pixel_seed = (((size_t)a.a_y * width) + (size_t)a.a_x) * sample_passes + sample_pass;
+	bn_rand_init(pixel_rand_state, pixel_seed);
+	jitter_rand_state = &pixel_rand_state;
     }
 
     if (Query_one_pixel) {
@@ -259,7 +287,7 @@ do_pixel(int cpu, int pat_num, int pixelnum)
 	/****************/
 
 	if (jitter & JITTER_CELL) {
-	    jitter_start_pnt(point, &a, samplenum, pat_num);
+	    jitter_start_pnt(point, &a, samplenum, pat_num, jitter_rand_state);
 	}
 
 	if (a.a_rt_i->rti_prismtrace) {
@@ -344,7 +372,7 @@ do_pixel(int cpu, int pat_num, int pixelnum)
 	    /**********************/
 
 	    if (jitter & JITTER_CELL) {
-		jitter_start_pnt(point, &a, samplenum, pat_num);
+		jitter_start_pnt(point, &a, samplenum, pat_num, jitter_rand_state);
 	    }
 
 	    if (a.a_rt_i->rti_prismtrace) {
@@ -433,8 +461,16 @@ do_pixel(int cpu, int pat_num, int pixelnum)
     if (lightmodel == 8) {
 	fastf_t pixelTime;
 	fastf_t **timeTable;
+	int64_t pixel_end = 0;
 
-	pixelTime = rt_get_timer(NULL,NULL); /* FIXME: needs to use bu_gettime() */
+	if (pixel_timer_thread_cpu)
+	    pixel_end = bu_timer_cpu_thread();
+	else
+	    pixel_end = bu_gettime();
+	if (pixel_end < pixel_start)
+	    pixel_end = pixel_start;
+
+	pixelTime = (fastf_t)(pixel_end - pixel_start) / pixel_timer_scale;
 	/* bu_log("PixelTime = %lf X:%d Y:%d\n", pixelTime, a.a_x, a.a_y); */
 	bu_semaphore_acquire(RT_SEM_RESULTS);
 	timeTable = timeTable_init(width, height);

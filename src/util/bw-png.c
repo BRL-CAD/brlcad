@@ -1,7 +1,7 @@
 /*                        B W - P N G . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2025 United States Government as represented by
+ * Copyright (c) 1998-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -25,6 +25,8 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <math.h>
 #include "png.h"
@@ -34,6 +36,7 @@
 #include "vmath.h"
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/malloc.h"
 #include "bu/exit.h"
 #include "bn.h"
@@ -48,7 +51,7 @@ static long int file_width = 512;		/* default input width */
 static long int file_height = 512;		/* default input height */
 static int autosize = 0;			/* !0 to autosize input */
 static int fileinput = 0;			/* file of pipe on input? */
-static char *file_name;
+static const char *file_name;
 static FILE *infp;
 
 static char usage[] = "Usage: bw-png [-a] [-w file_width] [-n file_height]\n\
@@ -66,15 +69,19 @@ get_args(int argc, char **argv)
 		break;
 	    case 's':
 		/* square file size */
-		file_height = file_width = atol(bu_optarg);
+		if (!bu_opt_scan_long_range(bu_optarg, &file_width, 1, LONG_MAX, "input size"))
+		    return 0;
+		file_height = file_width;
 		autosize = 0;
 		break;
 	    case 'w':
-		file_width = atol(bu_optarg);
+		if (!bu_opt_scan_long_range(bu_optarg, &file_width, 1, LONG_MAX, "input width"))
+		    return 0;
 		autosize = 0;
 		break;
 	    case 'n':
-		file_height = atol(bu_optarg);
+		if (!bu_opt_scan_long_range(bu_optarg, &file_height, 1, LONG_MAX, "input height"))
+		    return 0;
 		autosize = 0;
 		break;
 
@@ -90,6 +97,11 @@ get_args(int argc, char **argv)
 	infp = stdin;
     } else {
 	file_name = argv[bu_optind];
+	bu_optind++;
+	if (argc > bu_optind) {
+	    fprintf(stderr, "bw-png: excess argument(s) not supported\n");
+	    return 0;
+	}
 	if ((infp = fopen(file_name, "rb")) == NULL) {
 	    perror(file_name);
 	    fprintf(stderr,
@@ -100,8 +112,10 @@ get_args(int argc, char **argv)
 	fileinput++;
     }
 
-    if (argc > ++bu_optind)
-	fprintf(stderr, "bw-png: excess argument(s) ignored\n");
+    if (argc > bu_optind) {
+	fprintf(stderr, "bw-png: excess argument(s) not supported\n");
+	return 0;
+    }
 
     return 1;		/* OK */
 }

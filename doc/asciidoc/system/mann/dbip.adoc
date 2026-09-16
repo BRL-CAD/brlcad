@@ -1,0 +1,57 @@
+= DBIP(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+dbip - Print the current database handle pointer.
+
+== SYNOPSIS
+
+[source]
+----
+dbip
+----
+
+
+[[description]]
+== DESCRIPTION
+
+The *dbip* command prints the current GED database pointer as a raw address.
+It is primarily useful for low-level diagnostics or for confirming that two
+operations are still using the same open database instance.
+
+An open database is required.
+
+MGED also accepts the alternate command name *get_dbip*.
+
+
+[[examples]]
+== EXAMPLES
+
+.Inspect the current database handle.
+[example]
+====
+mged> **dbip**
+
+Prints the address of the current `db_i` structure.
+
+====
+
+
+[[see_also]]
+== SEE ALSO
+
+*get_dbip*(nged), *opendb*(nged)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

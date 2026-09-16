@@ -1,7 +1,7 @@
 /*	                  C L O N E . C
  * BRL-CAD
  *
- * Copyright (c) 2005-2025 United States Government as represented by
+ * Copyright (c) 2005-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -50,7 +50,6 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <signal.h>
 #include <math.h>
 #include <string.h>
 
@@ -468,7 +467,7 @@ copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 	bu_free_external(&external);
 
 	/* get the original objects matrix */
-	if (rt_db_get_internal(&intern, dp, _dbip, matrix, &rt_uniresource) < 0) {
+	if (rt_db_get_internal(&intern, dp, _dbip, matrix) < 0) {
 	    bu_log("ERROR: clone internal error copying %s\n", proto->d_namep);
 	    bu_vls_free(name);
 	    return;
@@ -483,7 +482,7 @@ copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 	}
 
 	/* write the new matrix to the new object */
-	if (rt_db_put_internal(dp, s->wdbp->dbip, &intern, &rt_uniresource) < 0)
+	if (rt_db_put_internal(dp, s->wdbp->dbip, &intern) < 0)
 	    bu_log("ERROR: clone internal error copying %s\n", proto->d_namep);
 	rt_db_free_internal(&intern);
     } /* end iteration over each copy */
@@ -673,7 +672,7 @@ copy_v5_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *st
 		bu_vls_free(name);
 		continue;
 	    }
-	    if (rt_db_get_internal(&dbintern, dp, _dbip, bn_mat_identity, &rt_uniresource) < 0) {
+	    if (rt_db_get_internal(&dbintern, dp, _dbip, bn_mat_identity) < 0) {
 		bu_log("ERROR: clone internal error copying %s\n", proto->d_namep);
 		return NULL;
 	    }
@@ -691,7 +690,7 @@ copy_v5_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *st
 	    /* recursively update the tree */
 	    copy_v5_comb_tree(comb->tree, i);
 
-	    if (rt_db_put_internal(dp, s->wdbp->dbip, &dbintern, &rt_uniresource) < 0) {
+	    if (rt_db_put_internal(dp, s->wdbp->dbip, &dbintern) < 0) {
 		bu_log("ERROR: clone internal error copying %s\n", proto->d_namep);
 		bu_vls_free(name);
 		return NULL;
@@ -744,7 +743,7 @@ copy_comb(struct db_i *_dbip, struct directory *proto, void *state)
  * recursively copy a tree of geometry
  */
 static struct directory *
-copy_tree(struct db_i *_dbip, struct directory *dp, struct resource *resp, struct clone_state *state)
+copy_tree(struct db_i *_dbip, struct directory *dp, struct clone_state *state)
 {
     size_t i;
     union record *rp = (union record *)NULL;
@@ -781,7 +780,7 @@ copy_tree(struct db_i *_dbip, struct directory *dp, struct resource *resp, struc
 		    bu_log("WARNING: failed to locate \"%s\"\n", rp[i].M.m_instname);
 		    continue;
 		}
-		copy = copy_tree(_dbip, mdp, resp, state);
+		copy = copy_tree(_dbip, mdp, state);
 		if (!copy) {
 		    errors++;
 		    bu_log("WARNING: unable to fully clone \"%s\"\n", rp[i].M.m_instname);
@@ -796,7 +795,7 @@ copy_tree(struct db_i *_dbip, struct directory *dp, struct resource *resp, struc
 	    copy_comb(_dbip, dp, (void *)state);
 	} else
 	    /* A v5 method of peeking into a combination */
-	    db_functree(_dbip, dp, copy_comb, copy_solid, resp, (void *)state);
+	    db_treewalk_basic(_dbip, dp, copy_comb, copy_solid, (void *)state);
     } else if (dp->d_flags & RT_DIR_SOLID)
 	/* leaf node -- make a copy the object */
 	copy_solid(_dbip, dp, (void *)state);
@@ -828,7 +827,7 @@ copy_tree(struct db_i *_dbip, struct directory *dp, struct resource *resp, struc
  * if it's a combination/region.
  */
 static struct directory *
-copy_object(struct db_i *_dbip, struct resource *resp, struct clone_state *state)
+copy_object(struct db_i *_dbip, struct clone_state *state)
 {
     struct directory *copy = (struct directory *)NULL;
     size_t i, j, idx;
@@ -836,7 +835,7 @@ copy_object(struct db_i *_dbip, struct resource *resp, struct clone_state *state
     init_list(&obj_list, state->n_copies);
 
     /* do the actual copying */
-    copy = copy_tree(_dbip, state->src, resp, state);
+    copy = copy_tree(_dbip, state->src, state);
 
     /* make sure it made what we hope/think it made */
     if (!copy || !is_in_list(obj_list, state->src->d_namep))
@@ -1156,7 +1155,7 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 
 		state.src = dps[j];
 		/* global dbip */
-		dps[j] = copy_object(s->dbip, &rt_uniresource, &state);
+		dps[j] = copy_object(s->dbip, &state);
 
 		if (!no_draw || s->mged_curr_dm != mged_dm_init_state) {
 		    redraw_visible_objects(s);

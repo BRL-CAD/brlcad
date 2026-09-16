@@ -1,7 +1,7 @@
 /*                         B W R O T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2025 United States Government as represented by
+ * Copyright (c) 1986-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -39,6 +39,7 @@
 
 #include "common.h"
 
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include "bio.h"
@@ -66,14 +67,46 @@ size_t pixbytes = 1;
 
 char hyphen[] = "-";
 
+static int
+copy_output_to_stdout(FILE *fp)
+{
+    unsigned char buf[BUFSIZ];
+    size_t nread;
+
+    if (fp == NULL)
+	return 0;
+
+    if (fflush(fp) != 0) {
+	perror("fflush");
+	return 0;
+    }
+    clearerr(fp);
+    if (bu_fseek(fp, 0, SEEK_SET) < 0) {
+	perror("fseek");
+	return 0;
+    }
+
+    while ((nread = fread(buf, 1, sizeof(buf), fp)) > 0) {
+	if (fwrite(buf, 1, nread, stdout) != nread) {
+	    perror("fwrite");
+	    return 0;
+	}
+    }
+
+    return !ferror(fp);
+}
+
 int
-get_args(int argc, char **argv, FILE **ifp, FILE **ofp, double *angle)
+get_args(int argc, char **argv, FILE **ifp, FILE **ofp, double *angle, char **out_file_name)
 {
     int c;
     char *in_file_name = NULL;
-    char *out_file_name = NULL;
+    char *of_name = NULL;
+    char *end = NULL;
+    long parsed_long = 0;
+    double parsed_double = 0.0;
 
-    if (!ifp || !ofp || !angle)
+    if (!ifp || !ofp || !angle || !out_file_name)
 	bu_exit(1, "bwrot: internal error processing arguments\n");
 
     if (isatty(fileno(stdin)) && isatty(fileno(stdout)) && argc == 1)
@@ -94,31 +127,67 @@ get_args(int argc, char **argv, FILE **ifp, FILE **ofp, double *angle)
 		invert++;
 		break;
 	    case '#':
-		pixbytes = atoi(bu_optarg);
+		errno = 0;
+		end = NULL;
+		parsed_long = strtol(bu_optarg, &end, 10);
+		if (bu_optarg[0] == '\0' || end == bu_optarg || *end != '\0' || errno != 0 || parsed_long <= 0) {
+		    bu_log("bwrot: invalid bytes-per-pixel '%s'\n", bu_optarg);
+		    return 0;
+		}
+		pixbytes = (size_t)parsed_long;
 		break;
 	    case 'S':
 	    case 's':
 		/* square size */
-		nxin = nyin = atoi(bu_optarg);
+		errno = 0;
+		end = NULL;
+		parsed_long = strtol(bu_optarg, &end, 10);
+		if (bu_optarg[0] == '\0' || end == bu_optarg || *end != '\0' || errno != 0 || parsed_long <= 0) {
+		    bu_log("bwrot: invalid input size '%s'\n", bu_optarg);
+		    return 0;
+		}
+		nxin = nyin = (ssize_t)parsed_long;
 		break;
 	    case 'W':
 	    case 'w':
-		nxin = atoi(bu_optarg);
+		errno = 0;
+		end = NULL;
+		parsed_long = strtol(bu_optarg, &end, 10);
+		if (bu_optarg[0] == '\0' || end == bu_optarg || *end != '\0' || errno != 0 || parsed_long <= 0) {
+		    bu_log("bwrot: invalid input width '%s'\n", bu_optarg);
+		    return 0;
+		}
+		nxin = (ssize_t)parsed_long;
 		break;
 	    case 'N':
 	    case 'n':
-		nyin = atoi(bu_optarg);
-		break;
-	    case 'a':
-		*angle = atof(bu_optarg);
-		break;
-	    case 'o':
-		out_file_name = bu_optarg;
-		*ofp = fopen(out_file_name, "wb+");
-		if (*ofp == NULL) {
-		    bu_log("ERROR: %s cannot open \"%s\" for writing\n", bu_getprogname(), out_file_name);
+		errno = 0;
+		end = NULL;
+		parsed_long = strtol(bu_optarg, &end, 10);
+		if (bu_optarg[0] == '\0' || end == bu_optarg || *end != '\0' || errno != 0 || parsed_long <= 0) {
+		    bu_log("bwrot: invalid input height '%s'\n", bu_optarg);
 		    return 0;
 		}
+		nyin = (ssize_t)parsed_long;
+		break;
+	    case 'a':
+		errno = 0;
+		end = NULL;
+		parsed_double = strtod(bu_optarg, &end);
+		if (bu_optarg[0] == '\0' || end == bu_optarg || *end != '\0' || errno != 0) {
+		    bu_log("bwrot: invalid angle '%s'\n", bu_optarg);
+		    return 0;
+		}
+		*angle = parsed_double;
+		break;
+	    case 'o':
+		of_name = bu_optarg;
+		*ofp = fopen(of_name, "wb+");
+		if (*ofp == NULL) {
+		    bu_log("ERROR: %s cannot open \"%s\" for writing\n", bu_getprogname(), of_name);
+		    return 0;
+		}
+		*out_file_name = of_name;
 		break;
 
 	    default:		/* '?' */
@@ -130,14 +199,33 @@ get_args(int argc, char **argv, FILE **ifp, FILE **ofp, double *angle)
 
     /* XXX - backward compatibility hack */
     if (bu_optind+2 == argc) {
-	nxin = atoi(argv[bu_optind++]);
-	nyin = atoi(argv[bu_optind++]);
+	errno = 0;
+	end = NULL;
+	parsed_long = strtol(argv[bu_optind++], &end, 10);
+	if (end == NULL || end == argv[bu_optind-1] || *end != '\0' || errno != 0 || parsed_long <= 0) {
+	    bu_log("bwrot: invalid input width '%s'\n", argv[bu_optind-1]);
+	    return 0;
+	}
+	nxin = (ssize_t)parsed_long;
+	errno = 0;
+	end = NULL;
+	parsed_long = strtol(argv[bu_optind++], &end, 10);
+	if (end == NULL || end == argv[bu_optind-1] || *end != '\0' || errno != 0 || parsed_long <= 0) {
+	    bu_log("bwrot: invalid input height '%s'\n", argv[bu_optind-1]);
+	    return 0;
+	}
+	nyin = (ssize_t)parsed_long;
     }
 
     if (bu_optind >= argc) {
 	in_file_name = hyphen;
     } else {
 	in_file_name = argv[bu_optind];
+	bu_optind++;
+	if (argc > bu_optind) {
+	    bu_log("bwrot: excess argument(s) not supported\n");
+	    return 0;
+	}
     }
 
     if (BU_STR_EQUAL(in_file_name, "-")) {
@@ -160,8 +248,9 @@ get_args(int argc, char **argv, FILE **ifp, FILE **ofp, double *angle)
 	return 0;
     }
 
-    if (argc > ++bu_optind) {
-	bu_log("bwrot: excess argument(s) ignored\n");
+    if (argc > bu_optind) {
+	bu_log("bwrot: excess argument(s) not supported\n");
+	return 0;
     }
 
     return 1;		/* OK */
@@ -224,7 +313,7 @@ reverse_buffer(unsigned char *buf)
  * dy' = cos(a)
  */
 static void
-arbrot(double a, FILE *ifp, unsigned char *buf)
+arbrot(double a, FILE *ifp, FILE *ofp, unsigned char *buf)
 {
 #define DtoR(x)	((x) * DEG2RAD)
     size_t x, y;				/* working coord */
@@ -275,9 +364,9 @@ arbrot(double a, FILE *ifp, unsigned char *buf)
 		&& ZERO(y2)
 		&& y2 < (double)nyin)
 	    {
-		putchar(buf[(int)y2*nyin + (int)x2]);
+		fputc(buf[(int)y2*nyin + (int)x2], ofp);
 	    } else {
-		putchar(0);	/* XXX - settable color? */
+		fputc(0, ofp);	/* XXX - settable color? */
 	    }
 	    /* "forward difference" our coordinates */
 	    x2 += cosa;
@@ -302,6 +391,7 @@ main(int argc, char **argv)
     unsigned char *obuf;
     unsigned char *buffer;
     double angle = 0.0;
+    char *out_file_name = NULL;
     ssize_t io;
 
     bu_setprogname(argv[0]);
@@ -311,7 +401,7 @@ main(int argc, char **argv)
     ifp = stdin;
     ofp = stdout;
 
-    if (!get_args(argc, argv, &ifp, &ofp, &angle)) {
+    if (!get_args(argc, argv, &ifp, &ofp, &angle, &out_file_name)) {
 	bu_exit(1, "%s", usage);
     }
 
@@ -328,7 +418,7 @@ main(int argc, char **argv)
      * Break out to added arbitrary angle routine
      */
     if (angle > 0.0) {
-	arbrot(angle, ifp, buffer);
+	arbrot(angle, ifp, ofp, buffer);
 	goto done;
     }
 
@@ -431,6 +521,15 @@ main(int argc, char **argv)
     }
 
 done:
+    if (ret == 0 && out_file_name != NULL && !isatty(fileno(stdout))) {
+	if (!copy_output_to_stdout(ofp))
+	    ret = 1;
+    }
+
+    if (ifp != stdin)
+	fclose(ifp);
+    if (ofp != stdout)
+	fclose(ofp);
     bu_free(buffer, "buffer");
     bu_free(obuf, "obuf");
 

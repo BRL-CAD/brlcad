@@ -1,7 +1,7 @@
 /*                         U N I T S . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2025 United States Government as represented by
+ * Copyright (c) 1990-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -38,7 +38,7 @@ double mk_conv2mm = 1.0;		/* Conversion factor to mm */
 
 
 int
-mk_conversion(char *str)
+mk_conversion(const char *str)
 {
     double d;
 

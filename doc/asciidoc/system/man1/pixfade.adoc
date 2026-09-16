@@ -1,0 +1,111 @@
+= PIXFADE(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+pixfade - darken a pix file
+
+== SYNOPSIS
+
+[source]
+----
+pixfade [-f fraction] [-p percentage] [-m max] [-s squaresize] [-w width] [-n height] [-o out_file.pix] [infile.pix] [> outfile.pix]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*pixfade* darkens a color *pix*(5) image, either by scaling every pixel by a
+fractional amount or by clamping each color channel to a maximum level.
+
+By default *pixfade* operates in scaling mode: the *-f* option gives a
+non-negative fractional multiplier applied to the red, green, and blue values
+of each pixel, and the *-p* option specifies the same multiplier as a
+non-negative percentage. The default is *-f* 0.5 (*-p* 50.0).
+
+The *-m* option selects truncation mode instead, supplying a ceiling pixel
+level (0 - 255). Each channel is replaced by the minimum of the ceiling and
+its original value. When *-m* is given, the *-f* and *-p* options are ignored.
+
+Input is read from _infile.pix_ if given, otherwise from standard input. The
+faded image is written to standard output, and additionally to the *-o* file
+when one is named; if both an output file and a redirected standard output are
+present, the same image is written to each.
+
+
+[[options]]
+== OPTIONS
+
+*-f* _fraction_::
+  Scale every channel of each pixel by _fraction_, a non-negative multiplier
+  (clamped to 0 - 255). Default is 0.5.
+
+*-p* _percentage_::
+  Same as *-f* but expressed as a non-negative percentage; _percentage_ is
+  divided by 100 to form the multiplier. Default is 50.0.
+
+*-m* _max_::
+  Truncation mode: clamp each channel to the ceiling _max_ (0 - 255). Values
+  outside this range are clamped to the nearest bound. Overrides *-f* and *-p*.
+
+*-s* _squaresize_::
+  Set both input width and height to _squaresize_ pixels.
+
+*-w* _width_::
+  Set the input scanline width in pixels. Default is 512.
+
+*-n* _height_::
+  Set the number of input scanlines in pixels. Default is 512.
+
+*-o* _out_file.pix_::
+  Write the faded image to _out_file.pix_ in addition to standard output.
+
+
+[[examples]]
+== EXAMPLES
+
+.Dim an image to a quarter brightness
+====
+[source,bash]
+----
+pixfade -f 0.25 -w 1024 -n 768 scene.pix > dim.pix
+----
+Reads the 1024x768 image _scene.pix_ and scales every channel to 25% of its
+original value, producing a darkened _dim.pix_.
+====
+
+.Clamp highlights and view the result
+====
+[source,bash]
+----
+pixfade -m 200 scene.pix | pix-fb -w 512 -n 512
+----
+Caps each color channel at 200 to tame bright highlights, then pipes the
+result straight to a framebuffer with *pix-fb*(1) for inspection.
+====
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *pix-fb*(1), *pixscale*(1), *pix*(5)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1991-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

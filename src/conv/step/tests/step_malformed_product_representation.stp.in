@@ -1,0 +1,20 @@
+ISO-10303-21;
+HEADER;
+FILE_DESCRIPTION(('@SCHEMA_LABEL@ malformed representation coverage'),'2;1');
+FILE_NAME('@FILE_NAME@','2026-08-01T00:00:00',('BRL-CAD'),('BRL-CAD'),'','','');
+FILE_SCHEMA(('@SCHEMA@'));
+ENDSEC;
+DATA;
+#1=APPLICATION_CONTEXT('@APPLICATION@');
+#2=PRODUCT_DEFINITION_CONTEXT('',#1,'design');
+#3=@ASSOCIATION@(#4,#9);
+#4=PRODUCT_DEFINITION_SHAPE('','',#5);
+#5=PRODUCT_DEFINITION('','',#6,#2);
+#6=PRODUCT_DEFINITION_FORMATION('','',#7);
+#7=PRODUCT('@PRODUCT_ID@','@PRODUCT_NAME@','',(#8));
+#8=PRODUCT_CONTEXT('',#1,'mechanical');
+/* #10 is legal as a representation item but not as context_of_items. */
+#9=SHAPE_REPRESENTATION('@PRODUCT_ID@',(#10),#10);
+#10=CARTESIAN_POINT('wrong context type',(1.,2.,3.));
+ENDSEC;
+END-ISO-10303-21;

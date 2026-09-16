@@ -1,7 +1,7 @@
 /*                          H A L F . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2025 United States Government as represented by
+ * Copyright (c) 1985-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -60,14 +60,14 @@ struct half_specific {
 };
 #define HALF_NULL ((struct half_specific *)0)
 
-const struct bu_structparse rt_hlf_parse[] = {
+EXTERNCPP const struct bu_structparse rt_hlf_parse[] = {
     { "%f", 3, "N", bu_offsetofarray(struct rt_half_internal, eqn, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 1, "d", bu_offsetofarray(struct rt_half_internal, eqn, fastf_t, W), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
-int
+C_DECL int
 rt_hlf_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_half_internal *hip;
@@ -106,7 +106,7 @@ rt_hlf_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-void
+C_DECL void
 rt_hlf_print(register const struct soltab *stp)
 {
     register const struct half_specific *halfp =
@@ -134,7 +134,7 @@ rt_hlf_print(register const struct soltab *stp)
  * 0 MISS
  * >0 HIT
  */
-int
+C_DECL int
 rt_hlf_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
     register struct half_specific *halfp =
@@ -194,7 +194,7 @@ rt_hlf_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 /**
  * This is the Becker vector version
  */
-void
+C_DECL void
 rt_hlf_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
     /* An array of solid pointers */
     /* An array of ray pointers */
@@ -252,7 +252,7 @@ rt_hlf_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
  * Given ONE ray distance, return the normal and entry/exit point.
  * The normal is already filled in.
  */
-void
+C_DECL void
 rt_hlf_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
 {
     struct half_specific *halfp = (struct half_specific *)stp->st_specific;
@@ -285,7 +285,7 @@ rt_hlf_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
  * Return the "curvature" of the halfspace.  Pick a principle
  * direction orthogonal to normal, and indicate no curvature.
  */
-void
+C_DECL void
 rt_hlf_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
     struct half_specific *halfp = (struct half_specific *)stp->st_specific;
@@ -304,7 +304,7 @@ rt_hlf_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
  * "toroidal" map is established, varying each from 0 up to 1 and then
  * back down to 0 again.
  */
-void
+C_DECL void
 rt_hlf_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
 {
     struct half_specific *halfp = (struct half_specific *)stp->st_specific;
@@ -370,7 +370,7 @@ rt_hlf_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 }
 
 
-void
+C_DECL void
 rt_hlf_free(struct soltab *stp)
 {
     register struct half_specific *halfp =
@@ -388,7 +388,7 @@ rt_hlf_free(struct soltab *stp)
  * Drawing the boundary plane is hard enough.  We just make a cross in
  * the plane, with the outward normal drawn shorter.
  */
-int
+C_DECL int
 rt_hlf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     struct rt_half_internal *hip;
@@ -444,7 +444,7 @@ rt_hlf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
  * -1 failure
  * 0 success
  */
-int
+C_DECL int
 rt_hlf_xform(
     struct rt_db_internal *op,
     const mat_t mat,
@@ -501,7 +501,7 @@ rt_hlf_xform(
 
     /* Now some safety.  Verify that the normal has unit length */
     f = MAGNITUDE(hop->eqn);
-    if (f <= SMALL) {
+    if (f <= SQRT_SMALL_FASTF) {
 	bu_log("rt_half_xform: bad normal, len = %g\n", f);
 	return -1;
     }
@@ -521,7 +521,7 @@ rt_hlf_xform(
  * -1 failure
  * 0 success
  */
-int
+C_DECL int
 rt_hlf_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_half_internal *hip;
@@ -549,7 +549,7 @@ rt_hlf_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     hip = (struct rt_half_internal *)ip->idb_ptr;
     hip->magic = RT_HALF_INTERNAL_MAGIC;
 
-    flip_fastf_float(orig_eqn, rp->s.s_values, 2, (dbip && dbip->dbi_version < 0) ? 1 : 0);	/* 2 floats too many */
+    flip_fastf_float(orig_eqn, rp->s.s_values, 2, (dbip && dbip->i->dbi_version < 0) ? 1 : 0);	/* 2 floats too many */
 
     /* Pick a point on the original halfspace */
     VSCALE(orig_pt, orig_eqn, orig_eqn[1*ELEMENTS_PER_VECT]);
@@ -566,7 +566,7 @@ rt_hlf_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
     /* Verify that normal has unit length */
     f = MAGNITUDE(hip->eqn);
-    if (f <= SMALL) {
+    if (f <= SQRT_SMALL_FASTF) {
 	bu_log("rt_hlf_import4:  bad normal, len=%g\n", f);
 	return -1;		/* BAD */
     }
@@ -581,7 +581,7 @@ rt_hlf_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 }
 
 
-int
+C_DECL int
 rt_hlf_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_half_internal *hip;
@@ -608,7 +608,7 @@ rt_hlf_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 }
 
 
-int
+C_DECL int
 rt_hlf_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
 {
     if (!rop || !ip || !mat)
@@ -638,7 +638,7 @@ rt_hlf_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
 
     /* Verify that normal has unit length */
     double f = MAGNITUDE(top->eqn);
-    if (f <= SMALL) {
+    if (f <= SQRT_SMALL_FASTF) {
 	bu_log("rt_hlf_mat:  bad normal, len=%g\n", f);
 	return -1;		/* BAD */
     }
@@ -653,7 +653,7 @@ rt_hlf_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
     return 0;			/* OK */
 }
 
-int
+C_DECL int
 rt_hlf_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
     /* must be double for import and export */
@@ -683,7 +683,7 @@ rt_hlf_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 }
 
 
-int
+C_DECL int
 rt_hlf_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_half_internal *hip;
@@ -725,7 +725,7 @@ rt_hlf_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
  */
-int
+C_DECL int
 rt_hlf_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
     struct rt_half_internal *hip;
@@ -751,7 +751,7 @@ rt_hlf_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
-void
+C_DECL void
 rt_hlf_ifree(struct rt_db_internal *ip)
 {
     RT_CK_DB_INTERNAL(ip);
@@ -761,7 +761,7 @@ rt_hlf_ifree(struct rt_db_internal *ip)
 }
 
 
-int
+C_DECL int
 rt_hlf_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     struct rt_half_internal *vip;
@@ -778,7 +778,28 @@ rt_hlf_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 }
 
 
-int
+C_DECL int
+rt_hlf_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char* UNUSED(variant), const point_t origin, double UNUSED(scale))
+{
+    struct rt_half_internal *half_ip;
+
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern->idb_type = ID_HALF;
+    BU_ASSERT(&OBJ[intern->idb_type] == ftp);
+    intern->idb_meth = ftp;
+
+    BU_ALLOC(half_ip, struct rt_half_internal);
+    intern->idb_ptr = (void *)half_ip;
+    half_ip->magic = RT_HALF_INTERNAL_MAGIC;
+
+    VSET(half_ip->eqn, 0.0, 0.0, 1.0);
+    half_ip->eqn[W] = origin[Z];
+
+    return BRLCAD_OK;
+}
+
+
+C_DECL int
 rt_hlf_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
     if (ip) RT_CK_DB_INTERNAL(ip);
@@ -786,7 +807,7 @@ rt_hlf_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
     return 0;			/* OK */
 }
 
-const char *
+C_DECL const char *
 rt_hlf_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     if (!pt || !ip)
@@ -812,6 +833,39 @@ hlf_kpt_end:
     MAT4X3PNT(*pt, mat, mpt);
 
     return k;
+}
+
+
+C_DECL int
+rt_hlf_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int UNUSED(planar_only), fastf_t val)
+{
+    if (NEAR_ZERO(val, SMALL_FASTF))
+	return BRLCAD_OK;
+
+    if (!oip || !ip)
+	return BRLCAD_ERROR;
+
+    struct rt_half_internal *ohalf = (struct rt_half_internal *)ip->idb_ptr;
+    RT_HALF_CK_MAGIC(ohalf);
+
+    struct rt_db_internal *nip;
+    BU_GET(nip, struct rt_db_internal);
+    RT_DB_INTERNAL_INIT(nip);
+    nip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    nip->idb_type = ID_HALF;
+    nip->idb_meth = &OBJ[ID_HALF];
+    struct rt_half_internal *half = NULL;
+    BU_ALLOC(half, struct rt_half_internal);
+    nip->idb_ptr = half;
+    half->magic = RT_HALF_INTERNAL_MAGIC;
+    HMOVE(half->eqn, ohalf->eqn);
+
+    /* Shift the plane outward (increase d) so the halfspace boundary moves
+     * away from adjacent coplanar faces by val. */
+    half->eqn[W] += val;
+
+    *oip = nip;
+    return BRLCAD_OK;
 }
 
 

@@ -1,7 +1,7 @@
 /*                       U T I L . C
  * BRL-CAD
  *
- * Copyright (c) 2015-2025 United States Government as represented by
+ * Copyright (c) 2015-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -605,7 +605,7 @@ analyze_get_solid_partitions(struct bu_ptbl *results, struct rt_gen_worker_vars 
     if (!pstate) {
 	state = (struct rt_gen_worker_vars *)bu_calloc(ncpus+1, sizeof(struct rt_gen_worker_vars), "state");
 	resp = (struct resource *)bu_calloc(ncpus+1, sizeof(struct resource), "resources");
-	rtip = rt_new_rti(dbip);
+	rtip = rt_i_create(dbip);
     } else {
 	state = pstate;
 	resp = state->resp;

@@ -1,0 +1,265 @@
+/*                        T E S T _ R A N D . C
+ * BRL-CAD
+ *
+ * Copyright (c) 2026 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+
+#include "common.h"
+
+#include "test_util.h"
+
+
+static const double mt_reference[] = {
+    0.8147236920927473,
+    0.13547700413863104,
+    0.9057919343248456,
+    0.8350085899780990,
+    0.12698681189841285
+};
+
+
+static int
+test_rand_table(void)
+{
+    int failures = 0;
+    const char *test = "rand_table";
+    unsigned int i1 = 0;
+    unsigned int i2 = 0;
+    float *p = NULL;
+    int i;
+    int saw_nonzero = 0;
+
+    BN_RANDSEED(i1, 1234);
+    BN_RANDSEED(i2, 1234);
+    for (i = 0; i < 64; i++) {
+	float a = BN_RANDOM(i1);
+	float b = BN_RANDOM(i2);
+	if (!scalar_close((double)a, (double)b, 0.0)) {
+	    report_failure(test, "BN_RANDOM sequence was not repeatable at step %d", i);
+	    failures++;
+	    break;
+	}
+	if (!(a > 0.0f && a < 1.0f)) {
+	    report_failure(test, "BN_RANDOM produced a value outside the open unit interval");
+	    failures++;
+	}
+    }
+
+    bn_rand_init(p, 17);
+    for (i = 0; i < 64; i++) {
+	float v = bn_rand_half(p);
+	if (!scalar_close((double)v, 0.0, 0.0)) {
+	    saw_nonzero = 1;
+	}
+	if (!(v >= -0.5f && v <= 0.5f)) {
+	    report_failure(test, "bn_rand_half produced a value outside [-0.5, 0.5]");
+	    failures++;
+	}
+    }
+    if (!saw_nonzero) {
+	report_failure(test, "bn_rand_half unexpectedly produced only zeros before bn_mathtab_constant");
+	failures++;
+    }
+
+    bn_mathtab_constant();
+
+    bn_rand_init(p, 17);
+    for (i = 0; i < 64; i++) {
+	if (!scalar_close((double)bn_rand_half(p), 0.0, 0.0)) {
+	    report_failure(test, "bn_mathtab_constant did not force bn_rand_half to zero");
+	    failures++;
+	    break;
+	}
+    }
+
+    bn_rand_init(p, 17);
+    for (i = 0; i < 64; i++) {
+	if (!scalar_close((double)bn_rand0to1(p), 0.5, 0.0)) {
+	    report_failure(test, "bn_mathtab_constant did not force bn_rand0to1 to 0.5");
+	    failures++;
+	    break;
+	}
+    }
+
+    return failures;
+}
+
+
+static int
+test_randmt(void)
+{
+    int failures = 0;
+    const char *test = "randmt";
+    double seq[32];
+    double mean = 0.0;
+    size_t j;
+    int i;
+    int differs = 0;
+
+    for (j = 0; j < sizeof(mt_reference) / sizeof(mt_reference[0]); j++) {
+	double v = bn_randmt();
+	if (!scalar_close(v, mt_reference[j], 1.0e-15)) {
+	    report_failure(test, "default-seed reference mismatch at step %zu: got %.17g expected %.17g",
+		j, v, mt_reference[j]);
+	    failures++;
+	}
+    }
+
+    bn_randmt_seed(5489UL);
+    for (j = 0; j < sizeof(mt_reference) / sizeof(mt_reference[0]); j++) {
+	double v = bn_randmt();
+	if (!scalar_close(v, mt_reference[j], 1.0e-15)) {
+	    report_failure(test, "seeded reference mismatch at step %zu: got %.17g expected %.17g",
+		j, v, mt_reference[j]);
+	    failures++;
+	}
+    }
+
+    bn_randmt_seed(12345UL);
+    for (i = 0; i < 32; i++) {
+	seq[i] = bn_randmt();
+	if (!(seq[i] >= 0.0 && seq[i] <= 1.0)) {
+	    report_failure(test, "bn_randmt produced a value outside [0, 1]");
+	    failures++;
+	}
+    }
+
+    bn_randmt_seed(12345UL);
+    for (i = 0; i < 32; i++) {
+	double v = bn_randmt();
+	if (!scalar_close(v, seq[i], 0.0)) {
+	    report_failure(test, "bn_randmt sequence was not repeatable after reseeding");
+	    failures++;
+	    break;
+	}
+    }
+
+    bn_randmt_seed(54321UL);
+    for (i = 0; i < 8; i++) {
+	if (!scalar_close(bn_randmt(), seq[i], 0.0)) {
+	    differs = 1;
+	    break;
+	}
+    }
+    if (!differs) {
+	report_failure(test, "different seeds produced the same initial sequence");
+	failures++;
+    }
+
+    bn_randmt_seed(8675309UL);
+    for (i = 0; i < 4096; i++) {
+	mean += bn_randmt();
+    }
+    mean /= 4096.0;
+    if (fabs(mean - 0.5) > 0.02) {
+	report_failure(test, "bn_randmt sample mean (%g) drifted too far from 0.5", mean);
+	failures++;
+    }
+
+    return failures;
+}
+
+
+static int
+test_rand_sphere(void)
+{
+    int failures = 0;
+    const char *test = "rand_sphere";
+    point_t center = {5.0, -3.0, 2.0};
+    point_t saved = {7.0, 8.0, 9.0};
+    point_t sample = {7.0, 8.0, 9.0};
+    fastf_t radius = 4.5;
+    point_t seq_saved[32];
+    point_t first = VINIT_ZERO;
+    point_t delta;
+    vect_t mean = VINIT_ZERO;
+    int saw_variation = 0;
+    int i;
+
+    bn_rand_sph_sample(sample, center, 0.0);
+    if (!vect_close(sample, saved, 0.0)) {
+	report_failure(test, "zero-radius sampling should leave the output unchanged");
+	failures++;
+    }
+
+    bn_rand_sph_sample(sample, NULL, 1.0);
+    if (!vect_close(sample, saved, 0.0)) {
+	report_failure(test, "NULL-center sampling should leave the output unchanged");
+	failures++;
+    }
+
+    bn_randmt_seed(314159UL);
+    for (i = 0; i < 4096; i++) {
+	bn_rand_sph_sample(sample, center, radius);
+	VSUB2(delta, sample, center);
+	if (!scalar_close(MAGNITUDE(delta), radius, 1.0e-6)) {
+	    report_failure(test, "sample %d was not on the requested sphere", i);
+		failures++;
+		break;
+	}
+	mean[X] += delta[X];
+	mean[Y] += delta[Y];
+	mean[Z] += delta[Z];
+	if (i == 0) {
+	    VMOVE(first, sample);
+	} else if (!vect_close(sample, first, DBL_EPSILON * 8.0)) {
+	    saw_variation = 1;
+	}
+	if (i < 32) {
+	    VMOVE(seq_saved[i], sample);
+	}
+    }
+
+    if (!saw_variation) {
+	report_failure(test, "sphere sampler produced a degenerate constant sequence");
+	failures++;
+    }
+
+    VSCALE(mean, mean, 1.0 / 4096.0);
+    if (MAGNITUDE(mean) > radius * 0.15) {
+	report_failure(test, "sample mean drifted too far from the sphere center");
+	failures++;
+    }
+
+    bn_randmt_seed(314159UL);
+    for (i = 0; i < 32; i++) {
+	bn_rand_sph_sample(sample, center, radius);
+	if (!vect_close(sample, seq_saved[i], DBL_EPSILON * 8.0)) {
+	    report_failure(test, "sphere sampling sequence was not repeatable after reseeding");
+	    failures++;
+	    break;
+	}
+    }
+
+    return failures;
+}
+
+
+static const struct bn_api_case rand_cases[] = {
+    {"table", test_rand_table},
+    {"randmt", test_randmt},
+    {"sphere", test_rand_sphere},
+    {NULL, NULL}
+};
+
+
+int
+main(int argc, char *argv[])
+{
+    bu_setprogname(argv[0]);
+    return bn_api_dispatch(argc, argv, rand_cases);
+}

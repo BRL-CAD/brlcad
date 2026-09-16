@@ -1,0 +1,105 @@
+= FBPOINT(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+fbpoint - point at and identify framebuffer coordinates
+
+== SYNOPSIS
+
+[source]
+----
+fbpoint [-F framebuffer] [-s squaresize] [-w width] [-n height]
+        [-x[prefix]] [-y[prefix]] [initialx [initialy]]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*fbpoint* moves a non-destructive cursor around a framebuffer. As the
+cursor moves, *fbpoint* writes the coordinates of the pixel under the
+cursor, along with its red, green, and blue values, on standard error.
+On exit, it writes the final coordinates on standard output.
+
+The starting position is center-screen unless the optional _initialx_
+and _initialy_ values are given.
+
+The *h*, *j*, *k*, and *l* keys step the cursor one pixel left, down,
+up, or right respectively. The *H*, *J*, *K*, and *L* keys (or *^B*,
+*^N*, *^P*, *^F*) step the cursor in the corresponding directions in
+large increments (one sixteenth of the framebuffer width). A *?* prints
+a short command summary, and *q*, *Q*, or Enter exits the program.
+
+By default both the x and y coordinates are written to standard output,
+which makes *fbpoint* useful for interactively grabbing coordinates via
+command substitution in a shell script. If only *-x* or *-y* is given,
+only that coordinate is written. An optional _prefix_ string may be
+attached to the flag and is prepended to the output coordinate to ease
+passing the result as an argument to another program.
+
+[[options]]
+== OPTIONS
+
+*-F* _framebuffer_::
+  Explicitly specify the framebuffer device to open.
+
+*-s* _squaresize_::
+  Set both the width and height of the framebuffer to _squaresize_
+  pixels (default 512). *-S* is an equivalent synonym.
+
+*-w* _width_::
+  Set the framebuffer width in pixels (default 512). *-W* is an
+  equivalent synonym.
+
+*-n* _height_::
+  Set the framebuffer height in pixels (default 512). *-N* is an
+  equivalent synonym.
+
+*-x*[_prefix_]::
+  Write only the x coordinate on exit. If the optional _prefix_ string
+  is given immediately after the flag, it is prepended to the value.
+
+*-y*[_prefix_]::
+  Write only the y coordinate on exit. If the optional _prefix_ string
+  is given immediately after the flag, it is prepended to the value.
+
+*-h*::
+  Print a usage message and exit. *-?* is an equivalent synonym.
+
+[[examples]]
+== EXAMPLES
+
+.Interactively pick a point and crop a region from an image
+====
+[source,bash]
+----
+pix-fb moss.pix
+pix-fb `fbpoint -x-X -y-Y` moss.pix
+----
+Display an image on the framebuffer, then use *fbpoint* to navigate to a
+point of interest. The *-x-X* and *-y-Y* flags prefix the returned
+coordinates so that command substitution produces *-X<x> -Y<y>*, which
+*pix-fb*(1) reads as the lower-left offset for redisplaying the image.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *fbgrid*(1), *fbzoom*(1), *pix-fb*(1)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1986-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,7 +1,7 @@
 /*                           E P A . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2025 United States Government as represented by
+ * Copyright (c) 1990-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -175,7 +175,7 @@ struct epa_specific {
 };
 
 
-const struct bu_structparse rt_epa_parse[] = {
+EXTERNCPP const struct bu_structparse rt_epa_parse[] = {
     { "%f", 3, "V",   bu_offsetofarray(struct rt_epa_internal, epa_V, fastf_t, X),  BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 3, "H",   bu_offsetofarray(struct rt_epa_internal, epa_H, fastf_t, X),  BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 3, "A",   bu_offsetofarray(struct rt_epa_internal, epa_Au, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -217,7 +217,7 @@ clt_epa_pack(struct bu_pool *pool, struct soltab *stp)
 /**
  * Create a bounding RPP for an epa
  */
-int
+C_DECL int
 rt_epa_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
     struct rt_epa_internal *xip;
     vect_t epa_A, epa_B, epa_An, epa_Bn, epa_H;
@@ -279,7 +279,7 @@ rt_epa_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
  * A struct epa_specific is created, and its address is stored in
  * stp->st_specific for use by epa_shot().
  */
-int
+C_DECL int
 rt_epa_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_epa_internal *xip;
@@ -359,7 +359,7 @@ rt_epa_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-void
+C_DECL void
 rt_epa_print(const struct soltab *stp)
 {
     const struct epa_specific *epa =
@@ -387,7 +387,7 @@ rt_epa_print(const struct soltab *stp)
  * 0 MISS
  * >0 HIT
  */
-int
+C_DECL int
 rt_epa_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
     struct epa_specific *epa =
@@ -502,9 +502,133 @@ rt_epa_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 
 
 /**
+ * Vectorized counterpart to rt_epa_shot().
+ *
+ * Intersect a batch of n rays, each against its own epa soltab, writing
+ * exactly one seg per ray into the caller-supplied flat segp[] array.  A
+ * miss is flagged with segp[i].seg_stp == NULL; stp[i] == NULL signals a
+ * ray to skip.
+ *
+ * Unlike the scalar shot, no seg is acquired from the resource free list
+ * and no seg-list linkage is performed: results stream directly into the
+ * contiguous segp[] array.  Eliminating that per-hit allocation and list
+ * traffic is the data-coherency benefit of batching.  The per-ray
+ * arithmetic is a verbatim copy of rt_epa_shot() so the two paths agree
+ * to the bit; hit_vpriv/hit_surfno are preserved for rt_epa_norm().
+ */
+C_DECL void
+rt_epa_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
+/* An array of solid pointers */
+/* An array of ray pointers */
+/* array of segs (results returned) */
+/* Number of ray/object pairs */
+{
+    int i;
+
+    if (ap) RT_CK_APPLICATION(ap);
+
+    for (i = 0; i < n; i++) {
+	struct epa_specific *epa;
+	vect_t dprime;		/* D' */
+	vect_t pprime;		/* P' */
+	vect_t xlated;		/* translated vector */
+	fastf_t k1, k2;		/* distance constants of solution */
+	struct hit hits[3] = {RT_HIT_INIT_ZERO, RT_HIT_INIT_ZERO, RT_HIT_INIT_ZERO};
+	struct hit *hitp;
+
+	if (stp[i] == 0) continue;		/* skip this ray */
+	segp[i].seg_stp = (struct soltab *)0;	/* assume MISS */
+
+	epa = (struct epa_specific *)stp[i]->st_specific;
+	hitp = &hits[0];
+
+	/* out, Mat, vect */
+	MAT4X3VEC(dprime, epa->epa_SoR, rp[i]->r_dir);
+	VSUB2(xlated, rp[i]->r_pt, epa->epa_V);
+	MAT4X3VEC(pprime, epa->epa_SoR, xlated);
+
+	/* Find roots of the equation, using formula for quadratic */
+	{
+	    fastf_t a, b, c;	/* coeffs of polynomial */
+	    fastf_t disc;	/* disc of radical */
+
+	    a = dprime[X] * dprime[X] + dprime[Y] * dprime[Y];
+	    b = 2*(dprime[X] * pprime[X] + dprime[Y] * pprime[Y])
+		- dprime[Z];
+	    c = pprime[X] * pprime[X]
+		+ pprime[Y] * pprime[Y] - pprime[Z] - 1.0;
+	    if (!NEAR_ZERO(a, RT_PCOEF_TOL)) {
+		disc = b*b - 4 * a * c;
+		if (disc > 0) {
+		    disc = sqrt(disc);
+
+		    k1 = (-b + disc) / (2.0 * a);
+		    k2 = (-b - disc) / (2.0 * a);
+
+		    VJOIN1(hitp->hit_vpriv, pprime, k1, dprime);	/* hit' */
+		    if (hitp->hit_vpriv[Z] <= 0.0) {
+			hitp->hit_magic = RT_HIT_MAGIC;
+			hitp->hit_dist = k1;
+			hitp->hit_surfno = EPA_NORM_BODY;	/* compute N */
+			hitp++;
+		    }
+
+		    VJOIN1(hitp->hit_vpriv, pprime, k2, dprime);	/* hit' */
+		    if (hitp->hit_vpriv[Z] <= 0.0) {
+			hitp->hit_magic = RT_HIT_MAGIC;
+			hitp->hit_dist = k2;
+			hitp->hit_surfno = EPA_NORM_BODY;	/* compute N */
+			hitp++;
+		    }
+		}
+	    } else if (!NEAR_ZERO(b, RT_PCOEF_TOL)) {
+		k1 = -c/b;
+		VJOIN1(hitp->hit_vpriv, pprime, k1, dprime);	/* hit' */
+		if (hitp->hit_vpriv[Z] <= 0.0) {
+		    hitp->hit_magic = RT_HIT_MAGIC;
+		    hitp->hit_dist = k1;
+		    hitp->hit_surfno = EPA_NORM_BODY;	/* compute N */
+		    hitp++;
+		}
+	    }
+	}
+
+	/* Check for hitting the top plate. */
+	if (hitp == &hits[1] && !ZERO(dprime[Z])) {
+	    /* 1 hit so far, this is worthwhile */
+	    k1 = -pprime[Z] / dprime[Z];		/* top plate */
+
+	    VJOIN1(hitp->hit_vpriv, pprime, k1, dprime);	/* hit' */
+	    if (hitp->hit_vpriv[X] * hitp->hit_vpriv[X] +
+		hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y] <= 1.0) {
+		hitp->hit_magic = RT_HIT_MAGIC;
+		hitp->hit_dist = k1;
+		hitp->hit_surfno = EPA_NORM_TOP;	/* -H */
+		hitp++;
+	    }
+	}
+
+	if (hitp != &hits[2])
+	    continue;		/* MISS */
+
+	segp[i].seg_stp = stp[i];
+	if (hits[0].hit_dist < hits[1].hit_dist) {
+	    /* entry is [0], exit is [1] */
+	    segp[i].seg_in = hits[0];		/* struct copy */
+	    segp[i].seg_out = hits[1];		/* struct copy */
+	} else {
+	    /* entry is [1], exit is [0] */
+	    segp[i].seg_in = hits[1];		/* struct copy */
+	    segp[i].seg_out = hits[0];		/* struct copy */
+	}
+    }
+}
+
+
+/**
  * Given ONE ray distance, return the normal and entry/exit point.
  */
-void
+C_DECL void
 rt_epa_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
     fastf_t scale;
@@ -539,7 +663,7 @@ rt_epa_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 /**
  * Return the curvature of the epa.
  */
-void
+C_DECL void
 rt_epa_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
     fastf_t a, b, c, scale;
@@ -594,7 +718,7 @@ rt_epa_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
  * u = azimuth
  * v = elevation
  */
-void
+C_DECL void
 rt_epa_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
     struct epa_specific *epa =
@@ -640,7 +764,7 @@ rt_epa_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 }
 
 
-void
+C_DECL void
 rt_epa_free(struct soltab *stp)
 {
     struct epa_specific *epa =
@@ -825,7 +949,7 @@ epa_ellipse_points(
     return avg_circumference / point_spacing;
 }
 
-int
+C_DECL int
 rt_epa_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol), const struct bview *v, fastf_t s_size)
 {
     vect_t epa_H, Hu, Au, Bu;
@@ -911,19 +1035,19 @@ rt_epa_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
     return 0;
 }
 
-int
+C_DECL int
 rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     struct bu_list *vlfree = &rt_vlfree;
     fastf_t dtol, mag_h, ntol, r1, r2;
-    fastf_t **ellipses, theta_new, theta_prev;
-    int *pts_dbl, i, j, nseg;
+    fastf_t min_abs;
+    fastf_t **ellipses;
+    int *pts_dbl, *segs_per_ell, i, j, nseg;
     int na = 0;
     int jj, nb, nell, recalc_b;
     mat_t R;
     mat_t invR;
     struct rt_epa_internal *xip;
-    point_t p1;
     struct rt_pnt_node *pos_a, *pos_b, *pts_a, *pts_b;
     vect_t A, Au, B, Bu, Hu, V, Work;
 
@@ -962,6 +1086,13 @@ rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 	/* tolerate everything */
 	ntol = M_PI;
 
+    /* Clamp to prevent excessively dense plots. */
+    {
+	fastf_t bbox_diag = sqrt(4.0*r1*r1 + mag_h*mag_h);
+	primitive_clamp_tess_tol(&dtol, &ntol, bbox_diag);
+    }
+    min_abs = prim_min_abs_tol();
+
     /*
      * build epa from 2 parabolas
      */
@@ -977,7 +1108,7 @@ rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     nb = 2;
 
     /* recursively break segment 'til within error tolerances */
-    nb += rt_mk_parabola(pts_b, r2, mag_h, dtol, ntol);
+    nb += _rt_mk_parabola(pts_b, r2, mag_h, dtol, ntol, min_abs);
     nell = nb - 1;	/* # of ellipses needed */
 
     /* construct positive half of parabola along semi-major axis of
@@ -1004,7 +1135,7 @@ rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     recalc_b = 0;
     pos_a = pts_a;
     while (pos_a->next) {
-	na = rt_mk_parabola(pos_a, r1, mag_h, dtol, ntol);
+	na = _rt_mk_parabola(pos_a, r1, mag_h, dtol, ntol, min_abs);
 	if (na != 0) {
 	    recalc_b = 1;
 	    nell += na;
@@ -1048,11 +1179,64 @@ rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     ellipses = (fastf_t **)bu_malloc(nell * sizeof(fastf_t *), "fastf_t ell[]");
     /* keep track of whether pts in each ellipse are doubled or not */
     pts_dbl = (int *)bu_malloc(nell * sizeof(int), "dbl ints");
+    segs_per_ell = (int *)bu_calloc(nell, sizeof(int), "segs_per_ell");
+
+    /* Compute per-ring circumferential segment counts.
+     * The base ring (r1, the widest) drives nseg_base via the chord-error
+     * formula (same as TOR/ETO).  Rings closer to the apex are much smaller
+     * and can use a halved segment count whenever their own tolerance
+     * requirement allows it (exact 2:1 ratio, compatible with pts_dbl
+     * connectivity).  This prevents extreme triangle density at the apex
+     * under tight tolerances while keeping full resolution at the base. */
+    {
+	int nseg_base = rt_num_circular_segments(dtol, r1);
+	int k;
+	fastf_t *ring_r;
+	if (ntol < M_PI) {
+	    int nseg_ntol = (int)(M_PI / ntol) + 1;
+	    if (nseg_ntol > nseg_base) nseg_base = nseg_ntol;
+	}
+	if (nseg_base < 6) nseg_base = 6;
+	if (nseg_base % 2 != 0) nseg_base++;	/* ensure even for halvings */
+
+	/* Collect all ring radii (apex to base order; plot skips no rings) */
+	ring_r = (fastf_t *)bu_malloc(nell * sizeof(fastf_t), "ring radii");
+	k = 0;
+	pos_a = pts_a->next;
+	while (pos_a) {
+	    ring_r[k++] = pos_a->p[Y];
+	    pos_a = pos_a->next;
+	}
+
+	/* Assign segment counts: base ring gets nseg_base; smaller rings
+	 * toward the apex get halved counts whenever the halved value still
+	 * meets the ring's own tolerance requirement and stays >= 6.
+	 * Halving is only applied when the current count is even so the
+	 * 2:1 ratio is always exact (required by the pts_dbl mechanism). */
+	segs_per_ell[nell - 1] = nseg_base;
+	for (k = nell - 2; k >= 0; k--) {
+	    int ns_ideal = rt_num_circular_segments(dtol, ring_r[k]);
+	    int halved;
+	    if (ntol < M_PI) {
+		int ns_ntol = (int)(M_PI / ntol) + 1;
+		if (ns_ntol > ns_ideal) ns_ideal = ns_ntol;
+	    }
+	    if (ns_ideal < 6) ns_ideal = 6;
+	    halved = (segs_per_ell[k + 1] % 2 == 0) ? (segs_per_ell[k + 1] / 2) : 0;
+	    segs_per_ell[k] = (halved >= 6 && halved >= ns_ideal) ? halved : segs_per_ell[k + 1];
+	}
+
+	/* pts_dbl[i] = 1 when ring i has exactly twice the segments of ring i-1 */
+	pts_dbl[0] = 0;
+	for (k = 1; k < nell; k++)
+	    pts_dbl[k] = (segs_per_ell[k] == 2 * segs_per_ell[k - 1]) ? 1 : 0;
+
+	nseg = segs_per_ell[nell - 1];	/* used to draw the top ellipse */
+	bu_free(ring_r, "ring radii");
+    }
 
     /* make ellipses at each z level */
     i = 0;
-    nseg = 0;
-    theta_prev = M_2PI;
     pos_a = pts_a->next;	/* skip over apex of epa */
     pos_b = pts_b->next;
     while (pos_a) {
@@ -1060,21 +1244,9 @@ rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 	VSCALE(B, Bu, pos_b->p[Y]);	/* semiminor axis */
 	VJOIN1(V, xip->epa_V, -pos_a->p[Z], Hu);
 
-	VSET(p1, 0., pos_b->p[Y], 0.);
-	theta_new = ell_angle(p1, pos_a->p[Y], pos_b->p[Y], dtol, ntol);
-	if (nseg == 0) {
-	    nseg = (int)(M_2PI / theta_new) + 1;
-	    pts_dbl[i] = 0;
-	} else if (theta_new < theta_prev) {
-	    nseg *= 2;
-	    pts_dbl[i] = 1;
-	} else
-	    pts_dbl[i] = 0;
-	theta_prev = theta_new;
-
-	ellipses[i] = (fastf_t *)bu_malloc(3*(nseg+1)*sizeof(fastf_t),
+	ellipses[i] = (fastf_t *)bu_malloc(3*(segs_per_ell[i]+1)*sizeof(fastf_t),
 					   "pts ell");
-	rt_ell(ellipses[i], V, A, B, nseg);
+	rt_ell(ellipses[i], V, A, B, segs_per_ell[i]);
 
 	i++;
 	pos_a = pos_a->next;
@@ -1140,6 +1312,7 @@ rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     }
     bu_free((char *)ellipses, "fastf_t ell[]");
     bu_free((char *)pts_dbl, "dbl ints");
+    bu_free((char *)segs_per_ell, "segs_per_ell");
 
     return 0;
 }
@@ -1198,11 +1371,12 @@ rt_ell(fastf_t *ov, const fastf_t *V, const fastf_t *A, const fastf_t *B, int si
  * -1 failure
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
-int
+C_DECL int
 rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
 {
     fastf_t dtol, mag_h, ntol, r1, r2;
-    fastf_t **ellipses, **normals, theta_new, theta_prev;
+    fastf_t min_abs;
+    fastf_t **ellipses, **normals;
     int *pts_dbl, face, i, j, nseg;
     int *segs_per_ell;
     int na = 0;
@@ -1210,7 +1384,6 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     mat_t R;
     mat_t invR;
     struct rt_epa_internal *xip;
-    point_t p1;
     struct rt_pnt_node *pos_a, *pos_b, *pts_a, *pts_b;
     struct shell *s;
     struct faceuse **outfaceuses = NULL;
@@ -1225,6 +1398,8 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     struct bu_list *vlfree = &rt_vlfree;
 
     RT_CK_DB_INTERNAL(ip);
+    BG_CK_TESS_TOL(ttol);
+    BN_CK_TOL(tol);
 
     xip = (struct rt_epa_internal *)ip->idb_ptr;
     if (!epa_is_valid(xip)) {
@@ -1262,6 +1437,15 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	/* tolerate everything */
 	ntol = M_PI;
 
+    /* Clamp tolerances to prevent excessively dense ("triangle-bombed") meshes.
+     * bbox diagonal ~sqrt(4*r1^2+mag_h^2) approximates EPA bbox diagonal for
+     * the small-shape floor scaling. */
+    {
+	fastf_t bbox_diag = sqrt(4.0*r1*r1 + mag_h*mag_h);
+	primitive_clamp_tess_tol(&dtol, &ntol, bbox_diag);
+    }
+
+    min_abs = prim_min_abs_tol();
     /*
      * build epa from 2 parabolas
      */
@@ -1276,7 +1460,7 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     /* 2 endpoints in 1st approximation */
     nb = 2;
     /* recursively break segment 'til within error tolerances */
-    nb += rt_mk_parabola(pts_b, r2, mag_h, dtol, ntol);
+    nb += _rt_mk_parabola(pts_b, r2, mag_h, dtol, ntol, min_abs);
     nell = nb - 1;	/* # of ellipses needed */
 
     /* construct positive half of parabola along semi-major axis of
@@ -1303,7 +1487,7 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     recalc_b = 0;
     pos_a = pts_a;
     while (pos_a->next) {
-	na = rt_mk_parabola(pos_a, r1, mag_h, dtol, ntol);
+	na = _rt_mk_parabola(pos_a, r1, mag_h, dtol, ntol, min_abs);
 	if (na != 0) {
 	    recalc_b = 1;
 	    nell += na;
@@ -1346,56 +1530,126 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     ellipses = (fastf_t **)bu_malloc(nell * sizeof(fastf_t *), "fastf_t ell[]");
     /* keep track of whether pts in each ellipse are doubled or not */
     pts_dbl = (int *)bu_malloc(nell * sizeof(int), "dbl ints");
-    /* I don't understand this pts_dbl, so here is an array containing
-     * the length of each ellipses array
-     */
     segs_per_ell = (int *)bu_calloc(nell, sizeof(int), "rt_epa_tess: segs_per_ell");
 
     /* and an array of normals */
     normals = (fastf_t **)bu_malloc(nell * sizeof(fastf_t *), "fastf_t normals[]");
 
-    /* make ellipses at each z level */
-    i = 0;
-    nseg = 0;
-    theta_prev = M_2PI;
-    pos_a = pts_a->next;	/* skip over apex of epa */
-    pos_b = pts_b->next;
-    while (pos_a) {
-	fastf_t t;
-
-	t = (-pos_a->p[Z] / mag_h);
-	VSCALE(A, Au, pos_a->p[Y]);	/* semimajor axis */
-	VSCALE(B, Bu, pos_b->p[Y]);	/* semiminor axis */
-	VJOIN1(V, xip->epa_V, -pos_a->p[Z], Hu);
-
-	VSET(p1, 0., pos_b->p[Y], 0.);
-	theta_new = ell_angle(p1, pos_a->p[Y], pos_b->p[Y], dtol, ntol);
-	if (nseg == 0) {
-	    nseg = (int)(M_2PI / theta_new) + 1;
-	    pts_dbl[i] = 0;
-	    /* maximum number of faces needed for epa */
-	    face = nseg*(1 + 3*((1 << (nell-1)) - 1));
-	    /* array for each triangular face */
-	    outfaceuses = (struct faceuse **)
-		bu_malloc((face+1) * sizeof(struct faceuse *), "faceuse []");
-	} else if (theta_new < theta_prev) {
-	    nseg *= 2;
-	    pts_dbl[i] = 1;
-	} else {
-	    pts_dbl[i] = 0;
+    /* Compute per-ring circumferential segment counts.
+     * The base ring (r1, the widest cross-section) drives nseg_base via the
+     * chord-error formula (same as TOR/ETO/ELL).  Rings closer to the apex
+     * are much smaller; they are permitted to use a halved segment count
+     * whenever their own tolerance requirement allows it (exact 2:1 ratio,
+     * compatible with the pts_dbl connectivity mechanism).  This prevents
+     * extreme triangle density at the apex under tight tolerances.
+     *
+     * Near-apex rings whose radius is too small to support nseg distinct
+     * vertices (chord < tol->dist) are still skipped entirely. */
+    {
+	int nseg_base = rt_num_circular_segments(dtol, r1);
+	int k, n_valid = 0;
+	fastf_t min_ring_r;
+	fastf_t *ring_r;
+	if (ntol < M_PI) {
+	    int nseg_ntol = (int)(M_PI / ntol) + 1;
+	    if (nseg_ntol > nseg_base) nseg_base = nseg_ntol;
 	}
-	theta_prev = theta_new;
+	if (nseg_base < 6) nseg_base = 6;
+	if (nseg_base % 2 != 0) nseg_base++;	/* ensure even for halvings */
 
-	ellipses[i] = (fastf_t *)bu_malloc(3*(nseg+1)*sizeof(fastf_t),
-					   "pts ell");
-	segs_per_ell[i] = nseg;
-	normals[i] = (fastf_t *)bu_malloc(3*(nseg+1)*sizeof(fastf_t), "rt_epa_tess_ normals");
-	rt_ell(ellipses[i], V, A, B, nseg);
-	rt_ell_norms(normals[i], A_orig, B_orig, xip->epa_H, t, nseg);
+	/* Minimum ring radius: adjacent vertices must be well clear of
+	 * tol->dist or nmg_fu_planeeqn() fails.  Use a 3× safety factor. */
+	min_ring_r = 3.0 * (double)nseg_base * tol->dist / M_2PI;
 
-	i++;
-	pos_a = pos_a->next;
-	pos_b = pos_b->next;
+	/* Pre-pass: count and collect valid ring radii (apex to base order) */
+	pos_a = pts_a->next;
+	while (pos_a) {
+	    if (pos_a->p[Y] >= min_ring_r)
+		n_valid++;
+	    pos_a = pos_a->next;
+	}
+
+	if (n_valid > 0) {
+	    ring_r = (fastf_t *)bu_malloc(n_valid * sizeof(fastf_t), "ring radii");
+	    k = 0;
+	    pos_a = pts_a->next;
+	    while (pos_a) {
+		if (pos_a->p[Y] >= min_ring_r)
+		    ring_r[k++] = pos_a->p[Y];
+		pos_a = pos_a->next;
+	    }
+
+	    /* Assign segment counts: base ring gets nseg_base; rings toward the
+	     * apex get halved counts when the halved value still meets the ring's
+	     * own tolerance requirement and stays >= 6.  Halving is only applied
+	     * when the current count is even, ensuring an exact 2:1 ratio. */
+	    segs_per_ell[n_valid - 1] = nseg_base;
+	    for (k = n_valid - 2; k >= 0; k--) {
+		int ns_ideal = rt_num_circular_segments(dtol, ring_r[k]);
+		int halved;
+		if (ntol < M_PI) {
+		    int ns_ntol = (int)(M_PI / ntol) + 1;
+		    if (ns_ntol > ns_ideal) ns_ideal = ns_ntol;
+		}
+		if (ns_ideal < 6) ns_ideal = 6;
+		halved = (segs_per_ell[k + 1] % 2 == 0) ? (segs_per_ell[k + 1] / 2) : 0;
+		segs_per_ell[k] = (halved >= 6 && halved >= ns_ideal) ? halved : segs_per_ell[k + 1];
+	    }
+	    pts_dbl[0] = 0;
+	    for (k = 1; k < n_valid; k++)
+		pts_dbl[k] = (segs_per_ell[k] == 2 * segs_per_ell[k - 1]) ? 1 : 0;
+
+	    bu_free(ring_r, "ring radii");
+	}
+
+	/* Build ring ellipses using per-ring segment counts */
+	i = 0;
+	pos_a = pts_a->next;
+	pos_b = pts_b->next;
+	while (pos_a) {
+	    fastf_t t;
+
+	    /* Skip rings that are too small to support distinct vertices */
+	    if (pos_a->p[Y] < min_ring_r) {
+		pos_a = pos_a->next;
+		pos_b = pos_b->next;
+		continue;
+	    }
+
+	    t = (-pos_a->p[Z] / mag_h);
+
+	    VSCALE(A, Au, pos_a->p[Y]);	/* semimajor axis */
+	    VSCALE(B, Bu, pos_b->p[Y]);	/* semiminor axis */
+	    VJOIN1(V, xip->epa_V, -pos_a->p[Z], Hu);
+
+	    ellipses[i] = (fastf_t *)bu_malloc(3*(segs_per_ell[i]+1)*sizeof(fastf_t),
+					       "pts ell");
+	    normals[i] = (fastf_t *)bu_malloc(3*(segs_per_ell[i]+1)*sizeof(fastf_t),
+					      "rt_epa_tess_ normals");
+	    rt_ell(ellipses[i], V, A, B, segs_per_ell[i]);
+	    rt_ell_norms(normals[i], A_orig, B_orig, xip->epa_H, t, segs_per_ell[i]);
+
+	    i++;
+	    pos_a = pos_a->next;
+	    pos_b = pos_b->next;
+	}
+	/* i now holds the actual number of rings built (may be < nell). */
+	nell = i;
+    }
+
+    if (nell < 1) {
+	bu_log("rt_epa_tess: nell=%d too small\n", nell);
+	goto fail;
+    }
+    /* Exact face count: 1 top-cap polygon + apex fan + per-ring-pair triangles.
+     * When pts_dbl[top]=1 (top ring has twice the segments of bottom ring),
+     * each bottom segment yields 3 triangles; otherwise 2. */
+    {
+	int f;
+	face = 1 + segs_per_ell[0];	/* top cap + apex fan */
+	for (f = 0; f < nell - 1; f++)
+	    face += segs_per_ell[f] * (pts_dbl[f + 1] ? 3 : 2);
+	if (face < 16) face = 16;
     }
 
     /*
@@ -1405,18 +1659,20 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     *r = nmg_mrsv(m);	/* Make region, empty shell, vertex */
     s = BU_LIST_FIRST(shell, &(*r)->s_hd);
 
-    /* vertices of ellipses of epa */
+    /* array for each triangular face */
+    outfaceuses = (struct faceuse **)
+	bu_malloc((face+1) * sizeof(struct faceuse *), "faceuse []");
+
+    /* vertices of ellipses of epa: allocate per-ring using segs_per_ell */
     vells = (struct vertex ***)
 	bu_malloc(nell*sizeof(struct vertex **), "vertex [][]");
-    j = nseg;
-    for (i = nell-1; i >= 0; i--) {
+    for (i = 0; i < nell; i++) {
 	vells[i] = (struct vertex **)
-	    bu_malloc(j*sizeof(struct vertex *), "vertex []");
-	if (i && pts_dbl[i])
-	    j /= 2;
+	    bu_malloc(segs_per_ell[i]*sizeof(struct vertex *), "vertex []");
     }
 
-    /* top face of epa */
+    /* top face of epa (base ellipse, largest ring) */
+    nseg = segs_per_ell[nell-1];
     for (i = 0; i < nseg; i++)
 	vells[nell-1][i] = (struct vertex *)0;
     face = 0;
@@ -1433,6 +1689,7 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     (void)nmg_mark_edges_real(&outfaceuses[0]->l.magic, vlfree);
 
     /* connect ellipses with triangles */
+    nseg = segs_per_ell[nell-1];	/* start with base ring count */
     for (i = nell-2; i >= 0; i--) {
 	/* skip top ellipse */
 	int bottom, top;
@@ -1520,6 +1777,7 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
     /* connect bottom of ellipse to apex of epa */
     VADD2(V, xip->epa_V, xip->epa_H);
+    nseg = segs_per_ell[0];		/* apex fan uses ring-0 count */
     vertp[0] = (struct vertex *)0;
     vertp[1] = vells[0][1];
     vertp[2] = vells[0][0];
@@ -1589,16 +1847,16 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     /* Compute "geometry" for region and shell */
     nmg_region_a(*r, tol);
 
-    /* XXX just for testing, to make up for loads of triangles ... */
-    nmg_shell_coplanar_face_merge(s, tol, 1, vlfree);
-
     /* free mem */
     bu_free((char *)outfaceuses, "faceuse []");
     for (i = 0; i < nell; i++) {
 	bu_free((char *)ellipses[i], "pts ell");
+	bu_free((char *)normals[i], "normals");
 	bu_free((char *)vells[i], "vertex []");
     }
     bu_free((char *)ellipses, "fastf_t ell[]");
+    bu_free((char *)normals, "fastf_t normals[]");
+    bu_free((char *)segs_per_ell, "segs_per_ell");
     bu_free((char *)pts_dbl, "dbl ints");
     bu_free((char *)vells, "vertex [][]");
 
@@ -1609,9 +1867,12 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     bu_free((char *)outfaceuses, "faceuse []");
     for (i = 0; i < nell; i++) {
 	bu_free((char *)ellipses[i], "pts ell");
+	bu_free((char *)normals[i], "normals");
 	bu_free((char *)vells[i], "vertex []");
     }
     bu_free((char *)ellipses, "fastf_t ell[]");
+    bu_free((char *)normals, "fastf_t normals[]");
+    bu_free((char *)segs_per_ell, "segs_per_ell");
     bu_free((char *)pts_dbl, "dbl ints");
     bu_free((char *)vells, "vertex [][]");
 
@@ -1623,7 +1884,7 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
  * Import an EPA from the database format to the internal format.
  * Apply modeling transformations as well.
  */
-int
+C_DECL int
 rt_epa_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_epa_internal *xip;
@@ -1652,7 +1913,7 @@ rt_epa_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     /* Warning:  type conversion */
     if (mat == NULL) mat = bn_mat_identity;
 
-    if (dbip && dbip->dbi_version < 0) {
+    if (dbip && dbip->i->dbi_version < 0) {
 	flip_fastf_float(v1, &rp->s.s_values[0*3], 1, 1);
 	flip_fastf_float(v2, &rp->s.s_values[1*3], 1, 1);
 	flip_fastf_float(v3, &rp->s.s_values[2*3], 1, 1);
@@ -1668,7 +1929,7 @@ rt_epa_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
     VUNITIZE(xip->epa_Au);
 
-    if (dbip && dbip->dbi_version < 0) {
+    if (dbip && dbip->i->dbi_version < 0) {
 	v1[X] = flip_dbfloat(rp->s.s_values[3*3+0]);
 	v1[Y] = flip_dbfloat(rp->s.s_values[3*3+1]);
     } else {
@@ -1692,7 +1953,7 @@ rt_epa_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 /**
  * The name is added by the caller, in the usual place.
  */
-int
+C_DECL int
 rt_epa_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_epa_internal *xip;
@@ -1748,7 +2009,7 @@ rt_epa_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     return 0;
 }
 
-int
+C_DECL int
 rt_epa_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
 {
     if (!rop || !ip || !mat)
@@ -1787,7 +2048,7 @@ rt_epa_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
  * Import an EPA from the database format to the internal format.
  * Apply modeling transformations as well.
  */
-int
+C_DECL int
 rt_epa_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_epa_internal *xip;
@@ -1851,7 +2112,7 @@ rt_epa_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 /**
  * The name is added by the caller, in the usual place.
  */
-int
+C_DECL int
 rt_epa_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_epa_internal *xip;
@@ -1914,7 +2175,7 @@ rt_epa_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
  */
-int
+C_DECL int
 rt_epa_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
     struct rt_epa_internal *xip = (struct rt_epa_internal *)ip->idb_ptr;
@@ -1953,7 +2214,7 @@ rt_epa_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
-void
+C_DECL void
 rt_epa_ifree(struct rt_db_internal *ip)
 {
     struct rt_epa_internal *xip;
@@ -1968,8 +2229,8 @@ rt_epa_ifree(struct rt_db_internal *ip)
     ip->idb_ptr = ((void *)0);	/* sanity */
 }
 
-void
-rt_epa_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
+C_DECL int
+rt_epa_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char* UNUSED(variant), const point_t origin, double scale)
 {
     struct rt_epa_internal* epa_ip;
 
@@ -1983,15 +2244,16 @@ rt_epa_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
     intern->idb_ptr = (void *)epa_ip;
 
     epa_ip->epa_magic = RT_EPA_INTERNAL_MAGIC;
-    VSETALL(epa_ip->epa_V, 0);
-    VSET(epa_ip->epa_H, 0.0, 0.0, 1.0);
+    VSET(epa_ip->epa_V, origin[X], origin[Y], origin[Z]-scale*0.5);
+    VSET(epa_ip->epa_H, 0.0, 0.0, scale);
     VSET(epa_ip->epa_Au, 0.0, 1.0, 0.0);
-    epa_ip->epa_r1 = 1.0;
-    epa_ip->epa_r2 = 1.0;
+    epa_ip->epa_r1 = scale*0.5;
+    epa_ip->epa_r2 = scale*0.25;
+    return BRLCAD_OK;
 }
 
 
-int
+C_DECL int
 rt_epa_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 {
     if (!ps) return 0;
@@ -2001,7 +2263,7 @@ rt_epa_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 }
 
 
-void
+C_DECL void
 rt_epa_volume(fastf_t *vol, const struct rt_db_internal *ip)
 {
     fastf_t mag_h;
@@ -2013,7 +2275,7 @@ rt_epa_volume(fastf_t *vol, const struct rt_db_internal *ip)
 }
 
 
-void
+C_DECL void
 rt_epa_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
     struct rt_epa_internal *xip = (struct rt_epa_internal *)ip->idb_ptr;
@@ -2022,7 +2284,7 @@ rt_epa_centroid(point_t *cent, const struct rt_db_internal *ip)
 }
 
 
-void
+C_DECL void
 rt_epa_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     fastf_t magsq_h, m;
@@ -2031,7 +2293,9 @@ rt_epa_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 
     magsq_h = MAGSQ(xip->epa_H);
     m = sqrt(1.0 + (4.0 * magsq_h) / (xip->epa_r1 * xip->epa_r2));
-    *area = 2.0/3.0 * M_PI * xip->epa_r1 * xip->epa_r2 * (m + (1.0 / (m + 1.0)));
+    /* Lateral paraboloid surface + elliptical base cap */
+    *area = 2.0/3.0 * M_PI * xip->epa_r1 * xip->epa_r2 * (m + (1.0 / (m + 1.0)))
+	+ M_PI * xip->epa_r1 * xip->epa_r2;
 }
 
 static int
@@ -2071,7 +2335,7 @@ epa_is_valid(struct rt_epa_internal *epa)
     return 1;
 }
 
-int
+C_DECL int
 rt_epa_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     int lcnt = 4;
@@ -2113,7 +2377,7 @@ rt_epa_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const s
     return lcnt;
 }
 
-const char *
+C_DECL const char *
 rt_epa_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     if (!pt || !ip)
@@ -2141,6 +2405,117 @@ epa_kpt_end:
     return k;
 }
 
+
+C_DECL int
+rt_epa_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int planar_only, fastf_t val)
+{
+    if (NEAR_ZERO(val, SMALL_FASTF))
+	return BRLCAD_OK;
+
+    if (!oip || !ip)
+	return BRLCAD_ERROR;
+
+    struct rt_epa_internal *oepa = (struct rt_epa_internal *)ip->idb_ptr;
+    RT_EPA_CK_MAGIC(oepa);
+
+    struct rt_db_internal *nip;
+    BU_GET(nip, struct rt_db_internal);
+    RT_DB_INTERNAL_INIT(nip);
+    nip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    nip->idb_type = ID_EPA;
+    nip->idb_meth = &OBJ[ID_EPA];
+    struct rt_epa_internal *epa = NULL;
+    BU_ALLOC(epa, struct rt_epa_internal);
+    nip->idb_ptr = epa;
+    epa->epa_magic = RT_EPA_INTERNAL_MAGIC;
+    VMOVE(epa->epa_V, oepa->epa_V);
+    VMOVE(epa->epa_H, oepa->epa_H);
+    VMOVE(epa->epa_Au, oepa->epa_Au);
+    epa->epa_r1 = oepa->epa_r1;
+    epa->epa_r2 = oepa->epa_r2;
+
+    /* Extend H to push the flat elliptic base away; also move V back so the
+     * apex shifts symmetrically outward along the axis. */
+    vect_t hvec, hback;
+    VMOVE(hvec, epa->epa_H);
+    VUNITIZE(hvec);
+    VREVERSE(hback, hvec);
+    VSCALE(hback, hback, val);
+    VADD2(epa->epa_V, epa->epa_V, hback);
+    vect_t hext;
+    VSCALE(hext, hvec, 2.0 * val);
+    VADD2(epa->epa_H, epa->epa_H, hext);
+
+    if (planar_only) {
+	*oip = nip;
+	return BRLCAD_OK;
+    }
+
+    /* Also expand the base radii. */
+    epa->epa_r1 += val;
+    epa->epa_r2 += val;
+
+    *oip = nip;
+    return BRLCAD_OK;
+}
+
+int
+rt_epa_functab_validate(struct bu_vls *error_msg, const struct rt_db_internal *ip, const struct bn_tol *tol)
+{
+    struct rt_epa_internal *epa;
+    fastf_t mag_h, f;
+    int issues = 0;
+    const char *comma = "";
+
+    RT_CK_DB_INTERNAL(ip);
+    epa = (struct rt_epa_internal *)ip->idb_ptr;
+    RT_EPA_CK_MAGIC(epa);
+
+    if (!tol) {
+        static const struct bn_tol default_tol = BN_TOL_INIT_TOL;
+        tol = &default_tol;
+    }
+
+    mag_h = MAGNITUDE(epa->epa_H);
+
+    bu_vls_printf(error_msg, "[");
+
+    if (NEAR_ZERO(mag_h, tol->dist)) {
+        bu_vls_printf(error_msg, "%s{\"problem_type\":\"zero_length_h_vector\"}", comma);
+        comma = ",";
+        issues++;
+    }
+
+    if (!NEAR_EQUAL(MAGSQ(epa->epa_Au), 1.0, tol->dist)) {
+        bu_vls_printf(error_msg, "%s{\"problem_type\":\"au_not_unit_length\"}", comma);
+        comma = ",";
+        issues++;
+    }
+
+    if (epa->epa_r1 <= 0.0) {
+        bu_vls_printf(error_msg, "%s{\"problem_type\":\"invalid_r1_value\"}", comma);
+        comma = ",";
+        issues++;
+    }
+
+    if (epa->epa_r2 <= 0.0) {
+        bu_vls_printf(error_msg, "%s{\"problem_type\":\"invalid_r2_value\"}", comma);
+        comma = ",";
+        issues++;
+    }
+
+    if (mag_h > SQRT_SMALL_FASTF) {
+        f = VDOT(epa->epa_Au, epa->epa_H) / mag_h;
+        if (!NEAR_ZERO(f, tol->perp)) {
+            bu_vls_printf(error_msg, "%s{\"problem_type\":\"au_not_perp_h\"}", comma);
+            comma = ",";
+            issues++;
+        }
+    }
+
+    bu_vls_printf(error_msg, "]");
+    return issues;
+}
 
 /** @} */
 /*

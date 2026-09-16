@@ -1,0 +1,132 @@
+= BW-FB(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+bw-fb - display a black and white bw image on a framebuffer
+
+== SYNOPSIS
+
+[source]
+----
+bw-fb [-aiczRGB] [-F framebuffer] [-s squarefilesize] [-w file_width] [-n file_height] [-S squarescrsize] [-W scr_width] [-N scr_height] [-x file_xoff] [-y file_yoff] [-X scr_xoff] [-Y scr_yoff] [infile.bw]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*bw-fb* reads a *bw*(5) format file (from standard input if an input file is not given) and displays the image on the currently selected framebuffer. The environment variable __FB_FILE__ specifies the current framebuffer; see *brlcad*(1). 
+
+
+[[options]]
+== OPTIONS
+
+*-F* _framebuffer_::
+Explicitly specify the framebuffer to use.
+
+*-a*::
+Causes the program to attempt to autosize. A table of common image sizes is consulted, and if any match the size of the input file, then the width and height values associated with that size will be used. By default, the _bw_ file (and, automatically, the requested framebuffer size) is assumed to be 512x512 pixels.
+
+*-i*::
+Output the image from top to bottom. Customarily, _bw_ files are stored bottom to top, so this inverts the image.
+
+*-c*::
+Clear the screen before the image is displayed. The default behavior is to overwrite the current image with the new image without clearing the screen.
+
+*-z*::
+Zoom and center on the image being displayed to make it fill the display area.
+
+*-R*, *-G*, *-B*::
+Select individual color planes (red, green, or blue, respectively) into which the image will be loaded. One or more can be given. By default all three colors are written with the _bw_ pixel value.
+
+*-w* _file_width_::
+Specifies the width of each scanline in the input file, in pixels.
+
+*-n* _file_height_::
+Specifies the height in scanlines of the input file.
+
+*-s* _squarefilesize_::
+Sets both the file width and file height to the given size.
+
+*-W* _scr_width_::
+Specifies the width of the display device.
+
+*-N* _scr_height_::
+Specifies the height of the display device.
+
+*-S* _squarescrsize_::
+Sets both the display width and display height to the given size. If no display dimensions are provided, the display device uses the dimensions of the input file.
+
+*-x* _file_xoff_, *-y* _file_yoff_::
+Offset into the file by the given amounts. The coordinate system for these offsets is first quadrant, with the origin at the lower left corner of the image.
+
+*-X* _scr_xoff_, *-Y* _scr_yoff_::
+Offset onto the screen by the given amounts. The coordinate system for these offsets is first quadrant, with the origin at the lower left corner of the image.
+
+
+[[format]]
+== FORMAT
+
+A *bw*(5) file contains sequences of pixels. Each pixel is stored as one *unsigned char*. The first pixel in a _bw_ file is the lower left corner of the image. The pixels proceed from left-to-right across each scanline, with scanlines being written from the bottom to the top of the image.
+
+
+[[examples]]
+== EXAMPLES
+
+The following examples demonstrate how to display a _bw_ format file on a framebuffer, including displaying a specific size, autosizing, and displaying only a specific color plane.
+
+.Displaying a 1024x1024 _bw_ file
+====
+[source,bash]
+----
+$ bw-fb -s 1024 image.bw
+----
+
+Displays the 1024x1024 file _image.bw_ on the currently selected framebuffer.
+====
+
+.Autosizing and zooming an image
+====
+[source,bash]
+----
+$ bw-fb -a -z image.bw
+----
+
+Attempts to automatically determine the image dimensions from the file size of _image.bw_ and displays it, zooming in and centering it to fill the display area.
+====
+
+.Displaying an image only in the red color plane
+====
+[source,bash]
+----
+$ bw-fb -R image.bw
+----
+
+Displays _image.bw_ in the red color plane of the framebuffer, leaving the green and blue planes unaffected.
+====
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *fb-bw*(1), *pix-fb*(1), *bw*(5)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,7 +1,7 @@
 /*                      U T I L I T Y 1 . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2025 United States Government as represented by
+ * Copyright (c) 1990-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,7 +27,6 @@
 #ifdef HAVE_PWD_H
 #  include <pwd.h>
 #endif
-#include <signal.h>
 #include <math.h>
 #include <time.h>
 #include <string.h>
@@ -206,7 +205,7 @@ printcodes(FILE *fp, struct directory *dp, int pathpos)
     if (!(dp->d_flags & RT_DIR_COMB))
 	return 0;
 
-    if ((id=rt_db_get_internal(&intern, dp, s->dbip, (matp_t)NULL, &rt_uniresource)) < 0) {
+    if ((id=rt_db_get_internal(&intern, dp, s->dbip, (matp_t)NULL)) < 0) {
 	Tcl_AppendResult(s->interp, "printcodes: Cannot get records for ",
 			 dp->d_namep, "\n", (char *)NULL);
 	return TCL_ERROR;

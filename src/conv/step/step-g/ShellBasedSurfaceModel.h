@@ -1,7 +1,7 @@
 /*        S H E L L B A S E D S U R F A C E M O D E L . H
  * BRL-CAD
  *
- * Copyright (c) 2020-2025 United States Government as represented by
+ * Copyright (c) 2020-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,11 +29,11 @@
 #include "GeometricRepresentationItem.h"
 
 // forward declaration of class
-class OpenShell;
+class ConnectedFaceSet;
 class STEPWrapper;
 class ON_Brep;
 
-typedef std::list<OpenShell *> LIST_OF_OPEN_SHELLS;
+typedef std::list<ConnectedFaceSet *> LIST_OF_SHELL_BOUNDARIES;
 
 class ShellBasedSurfaceModel: public GeometricRepresentationItem
 {
@@ -42,7 +42,7 @@ private:
     static EntityInstanceFunc GetInstance;
 
 protected:
-    LIST_OF_OPEN_SHELLS sbsm_boundary;
+    LIST_OF_SHELL_BOUNDARIES sbsm_boundary;
 
 public:
     ShellBasedSurfaceModel();
@@ -52,6 +52,9 @@ public:
     ON_Brep *GetONBrep();
     virtual bool LoadONBrep(ON_Brep *brep);
     virtual void Print(int level);
+    size_t MaximumPullbackSpanEstimate() const;
+    size_t BoundaryCount() const;
+    size_t OpenShellCount() const;
 
     //static methods
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);

@@ -1,7 +1,7 @@
 /*                 D B _ F U L L P A T H . C P P
  * BRL-CAD
  *
- * Copyright (c) 1990-2025 United States Government as represented by
+ * Copyright (c) 1990-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -308,7 +308,7 @@ db_fullpath_to_vls(struct bu_vls *vls, const struct db_full_path *full_path, con
 
 	if ((fp_flags & DB_FP_PRINT_TYPE) && dbip) {
 	    struct rt_db_internal intern;
-	    if (!(rt_db_get_internal(&intern, full_path->fp_names[i], dbip, NULL, &rt_uniresource) < 0)) {
+	    if (!(rt_db_get_internal(&intern, full_path->fp_names[i], dbip, NULL) < 0)) {
 		    bu_vls_putc(vls, '(');
 		    switch (intern.idb_minor_type) {
 			case DB5_MINORTYPE_BRLCAD_ARB8:
@@ -386,7 +386,7 @@ _db_comb_instance(matp_t m, int *icnt, int *bval, int bool_val, const struct db_
 	case OP_DB_LEAF:
 	    if (!BU_STR_EQUAL(cp, tp->tr_l.tl_name))
 		return 0;               /* NO-OP */
-	    if (UNLIKELY(dbip->dbi_use_comb_instance_ids)) {
+	    if (UNLIKELY(dbip->i->dbi_use_comb_instance_ids)) {
 		// Have a name match, is this the right instance
 		if (itarget == *icnt) {
 		    (*bval) = bool_val;
@@ -428,7 +428,7 @@ db_comb_has_instance(int *bval, const struct db_i *dbip, struct directory *cdp, 
 
     struct rt_db_internal in;
     struct rt_comb_internal *comb;
-    if (rt_db_get_internal(&in, cdp, dbip, NULL, &rt_uniresource) < 0)
+    if (rt_db_get_internal(&in, cdp, dbip, NULL) < 0)
 	return 0;
     comb = (struct rt_comb_internal *)in.idb_ptr;
     RT_CK_COMB(comb);
@@ -527,7 +527,7 @@ db_string_to_path(struct db_full_path *pp, const struct db_i *dbip, const char *
 	int bool_op = 2; // default to union
 	int comb_instance_index = 0;
 	dp = db_lookup(dbip, cp, LOOKUP_QUIET);
-	if (UNLIKELY(dbip->dbi_use_comb_instance_ids)) {
+	if (UNLIKELY(dbip->i->dbi_use_comb_instance_ids)) {
 	    if (dp == RT_DIR_NULL)
 		dp = dp_instance(&comb_instance_index, dbip, cp);
 	}
@@ -593,7 +593,7 @@ db_argv_to_path(struct db_full_path *pp, struct db_i *dbip, int argc, const char
 	int bool_op = 2; // default to union
 	int comb_instance_index = 0;
 	dp = db_lookup(dbip, argv[i], LOOKUP_QUIET);
-	if (UNLIKELY(dbip->dbi_use_comb_instance_ids)) {
+	if (UNLIKELY(dbip->i->dbi_use_comb_instance_ids)) {
 	    if (dp == RT_DIR_NULL)
 		dp = dp_instance(&comb_instance_index, dbip, argv[i]);
 	}
@@ -827,7 +827,7 @@ db_full_path_cyclic(const struct db_full_path *fp, const char *lname, int full_c
  * to walk the comb tree to get to that specific matrix.  Reuse
  * the _db_comb_instance logic. */
 static int
-_comb_instance_matrix(matp_t m, const struct db_i *dbip, struct directory *cdp, struct directory *dp, struct resource *resp, int itarget)
+_comb_instance_matrix(matp_t m, const struct db_i *dbip, struct directory *cdp, struct directory *dp, int itarget)
 {
     RT_CK_DBI(dbip);
 
@@ -836,7 +836,7 @@ _comb_instance_matrix(matp_t m, const struct db_i *dbip, struct directory *cdp, 
 
     struct rt_db_internal in;
     struct rt_comb_internal *comb;
-    if (rt_db_get_internal(&in, cdp, dbip, NULL, resp) < 0)
+    if (rt_db_get_internal(&in, cdp, dbip, NULL) < 0)
 	return 0;
     comb = (struct rt_comb_internal *)in.idb_ptr;
     RT_CK_COMB(comb);
@@ -853,10 +853,10 @@ db_path_to_mat(
 	struct db_i *dbip,
 	struct db_full_path *pathp,
 	mat_t mat,          /* result */
-	int depth,          /* number of arcs */
-	struct resource *resp)
+	int depth           /* number of arcs */
+	)
 {
-    if (!pathp || !dbip || depth < 0 || !resp)
+    if (!pathp || !dbip || depth < 0)
 	return 0;
 
     mat_t all_m = MAT_INIT_IDN;
@@ -869,7 +869,7 @@ db_path_to_mat(
 	struct directory *dp = pathp->fp_names[i];
 	if (!cdp || !dp)
 	    return 0;
-	if (!_comb_instance_matrix(cur_m, dbip, cdp, dp, resp, pathp->fp_cinst[i]))
+	if (!_comb_instance_matrix(cur_m, dbip, cdp, dp, pathp->fp_cinst[i]))
 	    return 0;
 	bn_mat_mul(mtmp, all_m, cur_m);
 	MAT_COPY(all_m, mtmp);
@@ -883,7 +883,7 @@ db_path_to_mat(
  * to walk the comb tree to get to that specific matrix.  Reuse
  * the _db_comb_instance logic. */
 static int
-_comb_instance_bool_op(int *bval, const struct db_i *dbip, struct directory *cdp, struct directory *dp, struct resource *resp, int itarget)
+_comb_instance_bool_op(int *bval, const struct db_i *dbip, struct directory *cdp, struct directory *dp, int itarget)
 {
     RT_CK_DBI(dbip);
 
@@ -892,7 +892,7 @@ _comb_instance_bool_op(int *bval, const struct db_i *dbip, struct directory *cdp
 
     struct rt_db_internal in;
     struct rt_comb_internal *comb;
-    if (rt_db_get_internal(&in, cdp, dbip, NULL, resp) < 0)
+    if (rt_db_get_internal(&in, cdp, dbip, NULL) < 0)
 	return 0;
     comb = (struct rt_comb_internal *)in.idb_ptr;
     RT_CK_COMB(comb);
@@ -910,10 +910,9 @@ _comb_instance_bool_op(int *bval, const struct db_i *dbip, struct directory *cdp
 int
 db_fp_op(const struct db_full_path *pp,
 	struct db_i *dbip,
-	int depth,
-	struct resource *resp)
+	int depth)
 {
-    if (!pp || !dbip || depth < 0 || !resp)
+    if (!pp || !dbip || depth < 0)
 	return OP_NOP;
 
     int r_op = OP_UNION;
@@ -925,8 +924,8 @@ db_fp_op(const struct db_full_path *pp,
 	if (!cdp || !dp)
 	    return OP_NOP;
 	int c_op = OP_NOP;
-	if (UNLIKELY(dbip->dbi_use_comb_instance_ids)) {
-	    if (!_comb_instance_bool_op(&c_op, dbip, cdp, dp, resp, pp->fp_cinst[i]))
+	if (UNLIKELY(dbip->i->dbi_use_comb_instance_ids)) {
+	    if (!_comb_instance_bool_op(&c_op, dbip, cdp, dp, pp->fp_cinst[i]))
 		return OP_NOP;
 	}
 	if (c_op == OP_INTERSECT && r_op != OP_SUBTRACT)
@@ -950,8 +949,7 @@ void
 db_full_path_color(
 	struct bu_color *c,
 	struct db_full_path *pathp,
-	struct db_i *dbip,
-	struct resource *UNUSED(resp))
+	struct db_i *dbip)
 {
     RT_CHECK_DBI(dbip);
     RT_CK_FULL_PATH(pathp);
@@ -965,7 +963,7 @@ db_full_path_color(
 
     // Things we have to check for:
     //
-    // 1. region_id attribute (only with region flag?) + rt_material_head table (see color_soltab)
+    // 1. region_id attribute (only with region flag?) + db_mater_head table (see color_soltab)
     // 2. color attribute
     // 3. rgb attribute
     // 4. inherit attribute - if set, children don't override parent
@@ -977,9 +975,9 @@ db_full_path_color(
 	// Inherit flag tells us whether this dp overrides its children
 	int inherit = (BU_STR_EQUAL(bu_avs_get(&c_avs, "inherit"), "1")) ? 1 : 0;
 
-	if (rt_material_head()) {
+	if (db_mater_head(dbip)) {
 	    // TODO - if region_id is set but region flag isn't, do we still
-	    // use rt_material_head to color?
+	    // use db_mater_head to color?
 	    int region_id = -1;
 	    const char *region_id_val = bu_avs_get(&c_avs, "region_id");
 	    if (region_id_val) {
@@ -990,10 +988,10 @@ db_full_path_color(
 		region_id = 0;
 	    }
 	    if (region_id >= 0) {
-		// If we have both a region_id and an rt_material_head table, that is (?) highest precedence
+		// If we have both a region_id and an db_mater_head table, that is (?) highest precedence
 		// for color?
 		const struct mater *mp;
-		for (mp = rt_material_head(); mp != MATER_NULL; mp = mp->mt_forw) {
+		for (mp = db_mater_head(dbip); mp != MATER_NULL; mp = mp->mt_forw) {
 		    if (region_id > mp->mt_high || region_id < mp->mt_low) {
 			continue;
 		    }

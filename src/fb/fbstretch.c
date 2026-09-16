@@ -1,7 +1,7 @@
 /*                     F B S T R E T C H . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2025 United States Government as represented by
+ * Copyright (c) 2004-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -73,7 +73,6 @@
 
 #include <stdlib.h>
 #include <assert.h>
-#include <signal.h>
 #include <string.h>
 #include <stdarg.h>
 
@@ -82,7 +81,7 @@
 #include "bu/app.h"
 #include "bu/color.h"
 #include "bu/getopt.h"
-#include "bu/getopt.h"
+#include "bu/interrupt.h"
 #include "bu/log.h"
 #include "bu/str.h"
 #include "dm.h"			/* BRL-CAD package libfb.a interface */

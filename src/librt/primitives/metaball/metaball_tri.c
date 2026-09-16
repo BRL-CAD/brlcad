@@ -1,7 +1,7 @@
 /*                    M E T A B A L L _ T R I . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2025 United States Government as represented by
+ * Copyright (c) 1985-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -60,7 +60,7 @@
 /**
  * Tessellate a metaball.
  */
-int
+C_DECL int
 rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
 {
     struct rt_metaball_internal *mb;
@@ -88,7 +88,7 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
     /* since this geometry isn't necessarily prepped, we have to figure out the
      * finalstep and bounding box manually. */
     for (BU_LIST_FOR(mbpt, wdb_metaball_pnt, &mb->metaball_ctrl_head))
-	V_MIN(finalstep, mbpt->fldstr);
+	V_MIN(finalstep, mbpt->field_strength);
     finalstep /= (fastf_t)1e5;
 
     radius = rt_metaball_get_bounding_sphere(&center, mb->threshold, mb);

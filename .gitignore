@@ -36,5 +36,6 @@ CMakeLists.txt.user
 
 # Misc
 .clang-format
+*__pycache__*
 
 

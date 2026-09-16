@@ -1,6 +1,11 @@
 BRLCAD_Find_Package(TinyGLTF REQUIRED)
 brlcad_addexec(gltf-g gltf-g.cpp "libwdb;librt;libnmg;libbu;tinygltf::tinygltf" FOLDER Conv NO_ERROR)
-target_include_directories(gltf-g BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(
+  gltf-g
+  BEFORE PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${BRLCAD_SOURCE_DIR}/src/libgcv/plugins/gltf
+)
 
 cmakefiles(
   CMakeLists.txt

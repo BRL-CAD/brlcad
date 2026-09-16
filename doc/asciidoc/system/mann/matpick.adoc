@@ -1,0 +1,47 @@
+= MATPICK(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+matpick - Selects which matrix in the illuminated path should be edited.
+
+== SYNOPSIS
+
+[source]
+----
+matpick [#] [combination/member]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Selects which matrix in the illuminated path should be edited. A number may be specified with 0 being the topmost selection. A _combination/member_ may be specified to indicate that the matrix in _combination_ that corresponds to _member_ is to be edited. This command is only useful in matrix edit mode at the point where the user is selecting which matrix in the illuminated path should be edited. It is used internally by MGED; the user should generally use the mouse to make this selection.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *matpick* command to select the matrix for editing in a particular region and group.
+
+.Select a matrix to be edited in a particular region and group.
+[example]
+====
+mged>**matpick group1/region3**
+
+Selects the matrix for _region3_ in _group1_ for editing.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

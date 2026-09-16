@@ -1,7 +1,7 @@
 /*                 Assembly_Product.h
  * BRL-CAD
  *
- * Copyright (c) 2013-2025 United States Government as represented by
+ * Copyright (c) 2013-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -26,10 +26,12 @@
 
 #include "AP_Common.h"
 
-void Add_Assembly_Product(struct directory *dp,
-                                 struct db_i *dbip,
-                                 struct bu_ptbl *children,
-				 AP203_Contents *sc);
+/** Emit the union-only assembly occurrences represented by dp's exact
+ * combination tree.  Returns false if the tree cannot be represented without
+ * changing its semantics or if any occurrence could not be emitted. */
+bool Add_Assembly_Product(struct directory *dp,
+                          struct db_i *dbip,
+                          AP203_Contents *sc);
 
 #endif /* ASSEMBLY_PRODUCT_H */
 /*

@@ -1,7 +1,7 @@
 /*                           C A C H E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2018-2025 United States Government as represented by
+ * Copyright (c) 2018-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -57,7 +57,7 @@ add_brep_sph(struct db_i *dbip, const char *name, point_t *v, double r, long int
 	rt_db_free_internal(&intern);
 	bu_exit(1, "Test %ld: cannot add %s to directory\n", test_num, name);
     }
-    if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(dp, dbip, &intern) < 0) {
 	rt_db_free_internal(&intern);
 	bu_exit(1, "Test %ld: database write error, aborting\n", test_num);
     }
@@ -119,13 +119,13 @@ add_comb(struct db_i *dbip, const char *name, int obj_argc, const char **obj_arg
 	tp->tr_l.tl_mat = (matp_t)NULL;
 
     }
-    comb->tree = (union tree *)db_mkgift_tree(tree_list, obj_argc, &rt_uniresource);
+    comb->tree = (union tree *)db_mkgift_tree(tree_list, obj_argc);
     dp = db_diradd(dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_COMB, (void *)&intern.idb_type);
     if (dp == RT_DIR_NULL) {
 	rt_db_free_internal(&intern);
 	bu_exit(1, "Test %ld: cannot add %s to directory\n", test_num, name);
     }
-    if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(dp, dbip, &intern) < 0) {
 	rt_db_free_internal(&intern);
 	bu_exit(1, "Test %ld: Database write error creating comb, aborting\n", test_num);
     }
@@ -252,7 +252,7 @@ build_rtip(long int test_num, const char *gfile, const char *objname, int stage_
 	if (rt_gettrees(rtip, 1, (const char **)&objname, ncpus) < 0) {
 	    bu_exit(1, "Test %ld: rt_getrees in stage %d failed\n", test_num, stage_num);
 	}
-	/* We're doing parallel prep, so we can't use rt_uniresource */
+	/* We're doing parallel prep, need one resource per thread */
 	for (int i = 0; i < ncpus; i++) {
 	    rt_init_resource(&resp[i], i, rtip);
 	}
@@ -297,12 +297,12 @@ test_subprocess(int ac, char *av[])
     }
 
     rt_clean(rtip_stage_1);
-    rt_free_rti(rtip_stage_1);
+    rt_i_destroy(rtip_stage_1);
 
     /*** Now, do it again with the cache definitely in place */
     rtip_stage_2 = build_rtip(test_num, gfile, cname, process_num*1000 + 2, 1, (int)ncpus, resp);
     rt_clean(rtip_stage_2);
-    rt_free_rti(rtip_stage_2);
+    rt_i_destroy(rtip_stage_2);
 
     bu_log("Test %ld(process %ld): PASSED\n", test_num, process_num);
 
@@ -351,10 +351,10 @@ subprocess_launcher(int id, void *data)
     sd->result = 0;
 
     struct bu_process *p = NULL;
-    bu_process_create(&p, (const char **)av, BU_PROCESS_DEFAULT);
+    bu_process_create(&p, (const char **)av, BU_PROCESS_OUT_EQ_ERR);
     bu_vls_printf(sd->sd_result, "Test %ld(process %ld): running...\n", sd->test_num, sd->process_num);
 
-    while (bu_process_read_n(p, BU_PROCESS_STDERR, MAXPATHLEN+501, (char *)line) > 0) {
+    while (bu_process_read_n(p, BU_PROCESS_STDOUT, MAXPATHLEN+501, (char *)line) > 0) {
 	bu_vls_printf(sd->sd_result, "%s\n", line);
 	memset(line, 0, MAXPATHLEN+501);
     }
@@ -389,10 +389,12 @@ test_cache(char *rp, long int test_num, long int obj_cnt, int do_parallel, int d
     bu_vls_sprintf(&cache_dir, "%s_dir_%ld_%ld", RTC_PREFIX, test_num, obj_cnt);
     bu_vls_sprintf(&gfile, "%s_%ld_%ld.g", RTC_PREFIX, test_num, obj_cnt);
 
-    bu_setenv("LIBRT_CACHE", bu_dir(NULL, 0, BU_DIR_CURR, bu_vls_cstr(&cache_dir), NULL), 1);
+    const char *cache_path = bu_dir(NULL, 0, BU_DIR_CURR, bu_vls_cstr(&cache_dir), NULL);
+    if (bu_setenv("LIBRT_CACHE", cache_path, 1) != 0)
+	bu_exit(1, "Test %ld: failed to set LIBRT_CACHE\n", test_num);
 
-    if (bu_file_exists(getenv("LIBRT_CACHE"), NULL)) {
-	bu_exit(1, "Test %ld: stale test cache directory %s exists\n", test_num, getenv("LIBRT_CACHE"));
+    if (bu_file_exists(cache_path, NULL)) {
+	bu_exit(1, "Test %ld: stale test cache directory %s exists\n", test_num, cache_path);
     }
 
     dbip = create_test_g_file(test_num, bu_vls_cstr(&gfile));
@@ -474,12 +476,12 @@ test_cache(char *rp, long int test_num, long int obj_cnt, int do_parallel, int d
 	}
 
 	rt_clean(rtip_stage_1);
-	rt_free_rti(rtip_stage_1);
+	rt_i_destroy(rtip_stage_1);
 
 	/*** Now, do it again with the cache in place */
 	rtip_stage_2 = build_rtip(test_num, bu_vls_cstr(&gfile), bu_vls_cstr(&cname), 2, do_parallel, (int)ncpus, resp);
 	rt_clean(rtip_stage_2);
-	rt_free_rti(rtip_stage_2);
+	rt_i_destroy(rtip_stage_2);
 	bu_free(resp, "resp");
     } else {
 	long int expected = (different_content) ? obj_cnt : 1;
@@ -633,4 +635,3 @@ main(int ac, char *av[])
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

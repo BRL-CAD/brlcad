@@ -39,6 +39,15 @@ SOFTWARE.
 #include <stdlib.h>
 #include <stdint.h>
 #include <limits.h>
+#include <wchar.h>
+
+#ifdef __cplusplus
+typedef wchar_t ft_wchar_t;
+#elif defined(__WCHAR_TYPE__)
+typedef __WCHAR_TYPE__ ft_wchar_t;
+#else
+typedef wchar_t ft_wchar_t;
+#endif
 
 /*****************************************************************************
  *               VERSION
@@ -56,7 +65,7 @@ SOFTWARE.
 
 /**
  * libfort configuration macros
- * (to disable wchar_t/UTF-8 support this macros should be defined)
+ * (to disable ft_wchar_t/UTF-8 support this macros should be defined)
  */
 /** #define FT_CONGIG_DISABLE_WCHAR */
 /** #define FT_CONGIG_DISABLE_UTF8 */
@@ -177,7 +186,7 @@ static FT_INLINE int ft_check_if_string_helper(const char *str)
 /**
  * @internal
  */
-static FT_INLINE int ft_check_if_wstring_helper(const wchar_t *str)
+static FT_INLINE int ft_check_if_wstring_helper(const ft_wchar_t *str)
 {
     (void)str;
     return 0;
@@ -992,24 +1001,24 @@ const char *ft_strerror(int error_code);
 #ifdef FT_HAVE_WCHAR
 
 
-int ft_wprintf(ft_table_t *table, const wchar_t *fmt, ...);
-int ft_wprintf_ln(ft_table_t *table, const wchar_t *fmt, ...);
+int ft_wprintf(ft_table_t *table, const ft_wchar_t *fmt, ...);
+int ft_wprintf_ln(ft_table_t *table, const ft_wchar_t *fmt, ...);
 
 
 #define ft_wwrite(table, ...)\
     (0 ? CHECK_IF_ARGS_ARE_WSTRINGS(__VA_ARGS__) : ft_nwwrite(table, FT_PP_NARG_(__VA_ARGS__), __VA_ARGS__))
 #define ft_wwrite_ln(table, ...)\
     (0 ? CHECK_IF_ARGS_ARE_WSTRINGS(__VA_ARGS__) : ft_nwwrite_ln(table, FT_PP_NARG_(__VA_ARGS__), __VA_ARGS__))
-int ft_nwwrite(ft_table_t *table, size_t n, const wchar_t *cell_content, ...);
-int ft_nwwrite_ln(ft_table_t *table, size_t n, const wchar_t *cell_content, ...);
+int ft_nwwrite(ft_table_t *table, size_t n, const ft_wchar_t *cell_content, ...);
+int ft_nwwrite_ln(ft_table_t *table, size_t n, const ft_wchar_t *cell_content, ...);
 
-int ft_row_wwrite(ft_table_t *table, size_t cols, const wchar_t *row_cells[]);
-int ft_row_wwrite_ln(ft_table_t *table, size_t cols, const wchar_t *row_cells[]);
+int ft_row_wwrite(ft_table_t *table, size_t cols, const ft_wchar_t *row_cells[]);
+int ft_row_wwrite_ln(ft_table_t *table, size_t cols, const ft_wchar_t *row_cells[]);
 
-int ft_table_wwrite(ft_table_t *table, size_t rows, size_t cols, const wchar_t *table_cells[]);
-int ft_table_wwrite_ln(ft_table_t *table, size_t rows, size_t cols, const wchar_t *table_cells[]);
+int ft_table_wwrite(ft_table_t *table, size_t rows, size_t cols, const ft_wchar_t *table_cells[]);
+int ft_table_wwrite_ln(ft_table_t *table, size_t rows, size_t cols, const ft_wchar_t *table_cells[]);
 
-const wchar_t *ft_to_wstring(const ft_table_t *table);
+const ft_wchar_t *ft_to_wstring(const ft_table_t *table);
 #endif
 
 

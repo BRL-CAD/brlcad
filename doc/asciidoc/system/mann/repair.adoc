@@ -1,0 +1,49 @@
+= REPAIR(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+repair - Attempts to repair invalid data in the __name__ object.
+
+== SYNOPSIS
+
+[source]
+----
+repair [-o output_obj] {name}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Using the existing __name__ object definition, attempts to repair any flaws.
+This operation is not guaranteed to succeed for all inputs, but can sometimes
+correct "almost" valid shape parameters or otherwise improve them.  The
+specfics of how it works are primitive type dependent.
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *remove* command to repair __name__  and store the repaired output as __new_name__.
+
+.Repair an object.
+[example]
+====
+mged>**repair -o repaired_shape shape**
+
+Fixes _shape_ and saves it as _repaired_shape_.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

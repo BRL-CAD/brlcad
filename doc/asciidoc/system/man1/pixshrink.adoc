@@ -1,0 +1,109 @@
+= PIXSHRINK(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+pixshrink - shrink a color pix file by an integer factor
+
+== SYNOPSIS
+
+[source]
+----
+pixshrink [-u] [-w _in_width_] [-n _in_height_] [-s _squaresize_] [-f _shrink_factor_] [_infile.pix_] > _outfile.pix_
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*pixshrink* reads a color *pix*(5) format image of given dimensions and
+produces a smaller, scaled-down version. The output is reduced by an integer
+_shrink_factor_ in both dimensions, making *pixshrink* the logical opposite of
+*pixinterp2x*(1).
+
+Input is read from _infile.pix_ if given, otherwise from standard input; the
+shrunk image is written to standard output.
+
+The input width and height (in pixels) are specified with *-w* and *-n*. Both
+default to 512 when not given. The entire image is read into memory, then
+scaled. By default *pixshrink* uses boxcar averaging, computing each output
+pixel as the average of a _shrink_factor_ by _shrink_factor_ block of input
+pixels; the *-u* option selects faster undersampling (point sampling) instead.
+
+[[options]]
+== OPTIONS
+
+*-w* _in_width_::
+  Set the input image width in pixels (default 512).
+
+*-n* _in_height_::
+  Set the input image height in scan lines (default 512).
+
+*-s* _squaresize_::
+  Set both the input width and height to _squaresize_ pixels (shorthand for a
+  square image).
+
+*-f* _shrink_factor_::
+  Set the integer scaling factor (default 2). Each output dimension becomes
+  1/_shrink_factor_ of the input. Must be greater than 1.
+
+*-u*::
+  Use image undersampling (point sampling) rather than the default boxcar
+  averaging.
+
+*-h*, *-?*::
+  Print a usage message and exit.
+
+[[examples]]
+== EXAMPLES
+
+.Halve a 1024x1024 image
+====
+[source,bash]
+----
+pixshrink -s 1024 image.pix > thumb.pix
+----
+Reads a 1024x1024 *pix*(5) image and writes a 512x512 version using the
+default shrink factor of 2 and boxcar averaging.
+====
+
+.Generate a quarter-size thumbnail and view it
+====
+[source,bash]
+----
+pixshrink -w 1280 -n 720 -f 4 render.pix | pix-fb -w 320 -n 180
+----
+Shrinks a 1280x720 rendering to 320x180 (factor of 4) and pipes the result
+straight to *pix-fb*(1) for a quick preview on the framebuffer, without
+writing an intermediate file.
+====
+
+[[bugs]]
+== BUGS
+
+If the input dimensions are not evenly divisible by the _shrink_factor_,
+incorrect or garbled output is produced.
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *pixinterp2x*(1), *pixscale*(1), *pixcrop*(1), *pixrect*(1), *pix-fb*(1), *pix*(5)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1990-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,0 +1,161 @@
+= FBZOOM(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+fbzoom - zoom and pan the view of a frame buffer
+
+== SYNOPSIS
+
+[source]
+----
+fbzoom [-T] [-F framebuffer] [-s|-S squarescrsize] [-w|-W scr_width] [-n|-N scr_height] [xPan yPan xZoom yZoom]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*fbzoom* interactively zooms and pans the view of a frame buffer using
+*vi*(1)- and/or *emacs*(1)-like keystrokes on a regular terminal.  It
+changes only the way the frame buffer is viewed; the pixels stored in the
+frame buffer are not modified.
+
+After opening the frame buffer, *fbzoom* displays the current view and
+reads single-character commands from the keyboard, updating the center
+pixel and zoom factor as it goes.  The current center pixel, zoom factor,
+and pan mode are echoed on the status line.
+
+If the four optional positional arguments _xPan_ _yPan_ _xZoom_ _yZoom_
+are supplied, the view is initialized to that center pixel and zoom factor
+before interaction begins.  Either zero or exactly four positional
+arguments must be given; the two zoom values must be positive.
+
+[[options]]
+== OPTIONS
+
+*-T*::
+  Reverse the sense of the pan commands, so that the panning keys move the
+  image rather than the window.  This may also be toggled interactively
+  with the *T* command.
+
+*-F* _framebuffer_::
+  Explicitly specify the frame buffer to open.  Otherwise the environment
+  variable _FB_FILE_ selects the frame buffer; see *brlcad*(1).
+
+*-s* (or *-S*) _squarescrsize_::
+  Open the frame buffer as a square _squarescrsize_ pixels on a side
+  (default is 512).
+
+*-w* (or *-W*) _scr_width_::
+  Open the frame buffer _scr_width_ pixels wide (default is 512).
+
+*-n* (or *-N*) _scr_height_::
+  Open the frame buffer _scr_height_ pixels high (default is 512).
+
+Once running, *fbzoom* responds to the following single-character
+commands (type *?* at any time for this list):
+
+*b* (or *^V*)::
+  zoom bigger, both axes (x2)
+
+*s*::
+  zoom smaller, both axes (x0.5)
+
+*+* (or *=*)::
+  zoom bigger, both axes (+1)
+
+*-*::
+  zoom smaller, both axes (-1)
+
+*>* / *<*::
+  zoom x bigger (x2) / smaller (x0.5)
+
+*.* / *,*::
+  zoom x bigger (+1) / smaller (-1)
+
+*)* / *(*::
+  zoom y bigger (x2) / smaller (x0.5)
+
+*0* / *9*::
+  zoom y bigger (+1) / smaller (-1)
+
+*h* / *l* (or *B* / *F*)::
+  pan left / right by one
+
+*j* / *k* (or *N* / *P*)::
+  pan down / up by one
+
+*H* / *L* (or *^B* / *^F*)::
+  pan left / right by many
+
+*J* / *K* (or *^N* / *^P*)::
+  pan down / up by many
+
+*T*::
+  toggle the sense of the pan commands
+
+*c*::
+  recenter the view (goto center)
+
+*z*::
+  reset the zoom to 1 1
+
+*r*::
+  reset both pan and zoom to normal
+
+*?*::
+  print the command list
+
+*q* (or *RETURN*)::
+  exit
+
+[[examples]]
+== EXAMPLES
+
+.Inspect a rendered image in detail
+====
+[source,bash]
+----
+$ pix-fb -w 1024 -n 1024 render.pix
+$ fbzoom -w 1024 -n 1024
+----
+Loads a 1024x1024 image into the frame buffer with *pix-fb*(1), then runs
+*fbzoom* on the same-sized frame buffer.  Press *b* to magnify, the
+*h*/*j*/*k*/*l* keys to pan around the enlarged image, and *q* to quit.
+====
+
+.Start zoomed in on a region
+====
+[source,bash]
+----
+$ fbzoom 256 256 4 4
+----
+Opens the default frame buffer with the view already centered on pixel
+(256, 256) and magnified 4x in both axes, then enters interactive mode.
+====
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *bw-fb*(1), *fbgrid*(1), *gif-fb*(1), *pix-fb*(1), *plot3-fb*(1)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

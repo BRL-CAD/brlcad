@@ -1,0 +1,108 @@
+= IN(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+in - Allows the user to type in the arguments needed to create a shape with the name __new_shape_name__ of the type __shape_type__. The command may be invoked with no arguments, and it will prompt the user for all needed information.
+
+== SYNOPSIS
+
+[source]
+----
+in [[-f] | [-s]] [new_shape_name] [shape_type] {parameters}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Allows the user to type in the arguments needed to create a shape with the name __new_shape_name__ of the type __shape_type__. The command may be invoked with no arguments, and it will prompt the user for all needed information. The _-s_ option will invoke the primitive edit mode on the new shape immediately after creation. The _-f_ option does not draw the new shape, and therefore the _-s_ option may not be used in conjunction with _-f_. The possible values for __shape_type__ are:
+
+
+* arb8 -- ARB (eight vertices)
+* arb7 -- ARB (seven vertices)
+* arb 6 -- ARB (six vertices)
+* arb 5 -- ARB (five vertices)
+* arb 4 -- ARB (four vertices)
+* arbn -- Arbitrary polyhedron with arbitrary number of vertices (plane equations)
+* bot -- Bag of Triangles
+* dsp -- Displacement Map
+* pipe -- Pipe (run of connected pipe or wire)
+* ebm -- Extruded Bit Map
+* vol -- Voxels
+* hf -- Height Field deprecated, see dsp
+* ars -- Arbitrary Faceted Solid
+* half -- Half Space
+* sph -- Ellipsoid (center and radius)
+* ell -- Ellipsoid (center and three semi-axes)
+* ellg -- Ellipsoid (foci and chord length)
+* ell1 -- Ellipsoid (center, one semi-axis, and a radius of revolution)
+* tor -- Torus
+* tgc -- Truncated General Cone (most general TGC)
+* tec -- TGC (top radii are scaled from base radii)
+* rec -- TGC (right elliptical cylinder)
+* trc -- TGC (truncated right circular cone)
+* rcc -- TGC (right circular cylinder)
+* box -- ARB (vertex and three vectors)
+* raw -- ARB (right angle wedge)
+* rpp -- ARB (axis aligned rectangular parallelepiped)
+* rpc -- Right Parabolic Cylinder
+* rhc -- Right Hyperbolic Cylinder
+* epa -- Elliptical Paraboloid
+* ehy -- Elliptical Hyperboloid
+* eto -- Elliptical Torus
+* part -- Particle
+* ebm -- Extruded Bitmap
+* datum -- Datum Point, Line, Plane
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *in* command to create a shape of a specified type.
+
+.Create a new shape in the form of a right angle wedge.
+[example]
+====
+
+mged> **in new1 raw 0 0 0 0 0 1 1 0 0 0 1 0**::
+Creates an _ARB_ named _new1_ in the form of a right angle wedge.
+
+
+
+====
+
+.Creating ebm from bitmap file
+[example]
+====
+
+mged> **in new1.s ebm f image_name.bw 350 350 20**::
+Creates an _ebm_ named _new1.s_ using file image_name.bw, dimensions of image_name.bw (e.g. '350 350'), and the desired extrusion distance (e.g. '20').
+
+
+
+====
+
+.Creating ebm with database objects
+[example]
+====
+
+mged> **in new1.s ebm o dbobj 350 350 20**::
+Creates an _ebm_ named _new1.s_ using database object dbobj, dimensions of original bitmap image (e.g. '350 350'), and the desired extrusion distance (e.g. '20'). (see 'bo' command for creating database object).
+
+
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

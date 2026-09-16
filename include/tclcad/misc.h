@@ -1,7 +1,7 @@
 /*                   T C L C A D / M I S C . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2025 United States Government as represented by
+ * Copyright (c) 2004-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -160,6 +160,23 @@ TCLCAD_EXPORT extern int to_open_tcl(ClientData UNUSED(clientData),
 TCLCAD_EXPORT extern struct application *to_rt_gettrees_application(struct ged *gedp,
 								    int argc,
 								    const char *argv[]);
+
+/**
+ * Set up an IPC-based framebuffer server on @p fbsp without binding a
+ * TCP port, using platform-appropriate Tcl event notification.
+ *
+ * On POSIX, Tcl_CreateFileHandler is used to watch the pipe fd.
+ * On Windows (USE_TCL_CHAN), a recurring Tcl timer polling
+ * PeekNamedPipe() is used because Tcl's Windows pipe channel driver
+ * consumes data via a background reader thread.
+ *
+ * If @p interp is non-NULL, the PKG_ADDR child-end address string
+ * is stored in the Tcl variable fbserv(ipc_addr).
+ *
+ * @return BRLCAD_OK on success, BRLCAD_ERROR on failure.
+ */
+TCLCAD_EXPORT extern int
+tclcad_listen_ipc(struct fbserv_obj *fbsp, Tcl_Interp *interp);
 
 /**
  * Tcl specific I/O handlers

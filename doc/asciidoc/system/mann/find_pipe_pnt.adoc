@@ -1,0 +1,47 @@
+= FIND_PIPE_PNT(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+find_pipe_pnt - find and identify a PIPE point
+
+== SYNOPSIS
+
+[source]
+----
+find_pipe_pnt pipe "view_x view_y view_z"
+find_pipe_pnt pipe view_x view_y view_z
+----
+
+[[description]]
+== DESCRIPTION
+
+The *find_pipe_pnt* command searches a PIPE primitive and identifies the segment that is closest to a given view coordinate. 
+
+If successful, the command returns a single integer representing the numeric index of the closest pipe segment (`seg_i`).
+
+The arguments are:
+* *pipe* : The name of the PIPE primitive to search.
+* *view_x view_y view_z* : The X, Y, and Z coordinates (in view space) to test against. These can be provided as either three separate numerical arguments or as a single quoted string.
+
+[[examples]]
+== EXAMPLES
+
+.Identify a PIPE segment near a view coordinate
+[example]
+====
+mged> **find_pipe_pnt pipe.s "0 0 1"**
+
+Searches `pipe.s` for a segment that is closest to the view coordinate `(0, 0, 1)` and returns the numeric index of that segment.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

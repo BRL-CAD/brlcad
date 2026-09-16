@@ -1,7 +1,7 @@
 #               B R L C A D _ U T I L . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2011-2025 United States Government as represented by
+# Copyright (c) 2011-2026 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -50,6 +50,72 @@ include(TrackFiles)
 get_filename_component(EXE_EXT "${CMAKE_COMMAND}" EXT)
 
 #-----------------------------------------------------------------------------
+# Cross-platform binary/library text dump helper used for light-weight
+# introspection tasks in Find*.cmake and dependency setup logic.
+function(brlcad_binary_dump out_var bin_path)
+  set(_out "")
+  if(NOT bin_path OR NOT EXISTS "${bin_path}")
+    set(${out_var} "" PARENT_SCOPE)
+    return()
+  endif()
+
+  if(APPLE)
+    find_program(_tool_otool NAMES otool NO_CACHE)
+    if(_tool_otool)
+      execute_process(
+        COMMAND "${_tool_otool}" -L "${bin_path}"
+        OUTPUT_VARIABLE _out
+        ERROR_QUIET
+        OUTPUT_STRIP_TRAILING_WHITESPACE)
+    endif()
+  elseif(WIN32)
+    find_program(_tool_dumpbin NAMES dumpbin NO_CACHE)
+    if(_tool_dumpbin)
+      execute_process(
+        COMMAND "${_tool_dumpbin}" /IMPORTS "${bin_path}"
+        OUTPUT_VARIABLE _out
+        ERROR_QUIET
+        OUTPUT_STRIP_TRAILING_WHITESPACE)
+    else()
+      find_program(_tool_objdump NAMES objdump NO_CACHE)
+      if(_tool_objdump)
+        execute_process(
+          COMMAND "${_tool_objdump}" -p "${bin_path}"
+          OUTPUT_VARIABLE _out
+          ERROR_QUIET
+          OUTPUT_STRIP_TRAILING_WHITESPACE)
+      endif()
+    endif()
+  else()
+    if(CMAKE_NM)
+      execute_process(
+        COMMAND "${CMAKE_NM}" -D "${bin_path}"
+        OUTPUT_VARIABLE _out
+        ERROR_QUIET
+        OUTPUT_STRIP_TRAILING_WHITESPACE)
+      if(NOT _out)
+        execute_process(
+          COMMAND "${CMAKE_NM}" -C "${bin_path}"
+          OUTPUT_VARIABLE _out
+          ERROR_QUIET
+          OUTPUT_STRIP_TRAILING_WHITESPACE)
+      endif()
+    else()
+      find_program(_tool_nm NAMES nm NO_CACHE)
+      if(_tool_nm)
+        execute_process(
+          COMMAND "${_tool_nm}" -D "${bin_path}"
+          OUTPUT_VARIABLE _out
+          ERROR_QUIET
+          OUTPUT_STRIP_TRAILING_WHITESPACE)
+      endif()
+    endif()
+  endif()
+
+  set(${out_var} "${_out}" PARENT_SCOPE)
+endfunction(brlcad_binary_dump)
+
+#-----------------------------------------------------------------------------
 # Use a variation on Fraser's approach for capturing command line args from
 # http://stackoverflow.com/questions/10205986/how-to-capture-cmake-command-line-arguments
 # to log what variables have been passed in from the user via -D arguments - haven't
@@ -93,7 +159,12 @@ function(message)
     OR MessageType STREQUAL SEND_ERROR
     OR MessageType STREQUAL WARNING
     OR MessageType STREQUAL AUTHOR_WARNING
+    OR MessageType STREQUAL DEPRECATION
+    OR MessageType STREQUAL NOTICE
     OR MessageType STREQUAL STATUS
+    OR MessageType STREQUAL VERBOSE
+    OR MessageType STREQUAL DEBUG
+    OR MessageType STREQUAL TRACE
     OR MessageType STREQUAL CHECK_START
     OR MessageType STREQUAL CHECK_PASS
     OR MessageType STREQUAL CHECK_FAIL
@@ -268,58 +339,26 @@ endfunction(NORMALIZE_FILE_LIST)
 function(BRLCAD_ADD_DIR_LIST_ENTRY list_name dir_in list_entry)
   string(REGEX REPLACE "/" "_" currdir_str ${dir_in})
   string(TOUPPER "${currdir_str}" currdir_str)
-  get_property(${list_name}_${currdir_str} GLOBAL PROPERTY DATA_TARGETS_${currdir_str})
-  if(NOT ${list_name}_${currdir_str})
+  set(_brlcad_dir_list_prop "${list_name}_${currdir_str}")
+  get_property(_brlcad_dir_list_set GLOBAL PROPERTY ${_brlcad_dir_list_prop} SET)
+  if(NOT _brlcad_dir_list_set)
     define_property(
       GLOBAL
-      PROPERTY CMAKE_LIBRARY_TARGET_LIST
+      PROPERTY ${_brlcad_dir_list_prop}
       BRIEF_DOCS "${list_name}"
       FULL_DOCS "${list_name} for directory ${dir_in}"
     )
-  endif(NOT ${list_name}_${currdir_str})
-  set_property(GLOBAL APPEND PROPERTY ${list_name}_${currdir_str} ${list_entry})
+  endif(NOT _brlcad_dir_list_set)
+  set_property(GLOBAL APPEND PROPERTY ${_brlcad_dir_list_prop} ${list_entry})
 endfunction(BRLCAD_ADD_DIR_LIST_ENTRY)
 
 function(BRLCAD_GET_DIR_LIST_CONTENTS list_name dir_in outvar)
   string(REGEX REPLACE "/" "_" currdir_str ${dir_in})
   string(TOUPPER "${currdir_str}" currdir_str)
-  get_property(${list_name}_${currdir_str} GLOBAL PROPERTY ${list_name}_${currdir_str})
-  set(${outvar} "${DATA_TARGETS_${currdir_str}}" PARENT_SCOPE)
+  set(_brlcad_dir_list_prop "${list_name}_${currdir_str}")
+  get_property(_brlcad_dir_list_contents GLOBAL PROPERTY ${_brlcad_dir_list_prop})
+  set(${outvar} "${_brlcad_dir_list_contents}" PARENT_SCOPE)
 endfunction(BRLCAD_GET_DIR_LIST_CONTENTS)
-
-#-----------------------------------------------------------------------------
-# Determine whether a list of source files contains all C, all C++, or
-# mixed source types.
-function(SRCS_LANG sourceslist resultvar targetname)
-  # Check whether we have a mixed C/C++ library or just a single language.
-  # If the former, different compilation flag management is needed.
-  set(has_C 0)
-  set(has_CXX 0)
-  foreach(srcfile ${sourceslist})
-    get_property(file_language SOURCE ${srcfile} PROPERTY LANGUAGE)
-    if(NOT file_language)
-      get_filename_component(srcfile_ext ${srcfile} EXT)
-      if(${srcfile_ext} MATCHES ".cxx$" OR ${srcfile_ext} MATCHES ".cpp$" OR ${srcfile_ext} MATCHES ".cc$")
-        set(has_CXX 1)
-        set(file_language CXX)
-      elseif(${srcfile_ext} STREQUAL ".c")
-        set(has_C 1)
-        set(file_language C)
-      endif(${srcfile_ext} MATCHES ".cxx$" OR ${srcfile_ext} MATCHES ".cpp$" OR ${srcfile_ext} MATCHES ".cc$")
-    endif(NOT file_language)
-    if(NOT file_language)
-      message(WARNING "File ${srcfile} listed in the ${targetname} sources list does not appear to be a C or C++ file.")
-    endif(NOT file_language)
-  endforeach(srcfile ${sourceslist})
-  set(${resultvar} "UNKNOWN" PARENT_SCOPE)
-  if(has_C AND has_CXX)
-    set(${resultvar} "MIXED" PARENT_SCOPE)
-  elseif(has_C AND NOT has_CXX)
-    set(${resultvar} "C" PARENT_SCOPE)
-  elseif(NOT has_C AND has_CXX)
-    set(${resultvar} "CXX" PARENT_SCOPE)
-  endif(has_C AND has_CXX)
-endfunction(SRCS_LANG)
 
 #---------------------------------------------------------------------------
 # Add dependencies to a target, but only if they are defined as targets in

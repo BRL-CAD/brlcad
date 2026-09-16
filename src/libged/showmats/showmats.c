@@ -1,7 +1,7 @@
 /*                         S H O W M A T S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -104,7 +104,7 @@ Run_showmats(struct ged *gedp, const char *path, int aflag)
 	    break;
 	}
 
-	if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+	if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "Database read error, aborting.\n");
 	    return BRLCAD_ERROR;
 	}
@@ -180,24 +180,13 @@ ged_showmats_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl showmats_cmd_impl = {
-    "showmats",
-    ged_showmats_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd showmats_cmd = { &showmats_cmd_impl };
-const struct ged_cmd *showmats_cmds[] = { &showmats_cmd, NULL };
+#define GED_SHOWMATS_COMMANDS(X, XID) \
+    X(showmats, ged_showmats_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  showmats_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_SHOWMATS_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_showmats", 1, GED_SHOWMATS_COMMANDS)
 
 /*
  * Local Variables:

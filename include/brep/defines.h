@@ -1,7 +1,7 @@
 /*                      D E F I N E S . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2025 United States Government as represented by
+ * Copyright (c) 2004-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -76,7 +76,9 @@ extern "C++" {
 // not - needed for building with Xcode 16, apparently. My first attempt at a
 // configure time test didn't work - need someone who can debug interactively
 // in OSX.  In the meantime add this as a temporary measure.
-#define _DARWIN_C_SOURCE
+#ifndef _DARWIN_C_SOURCE
+#  define _DARWIN_C_SOURCE
+#endif
 
 #include "opennurbs.h"
 

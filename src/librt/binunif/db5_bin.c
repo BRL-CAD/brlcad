@@ -1,7 +1,7 @@
 /*                       D B 5 _ B I N . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2025 United States Government as represented by
+ * Copyright (c) 2000-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,17 +30,18 @@
 
 #include <stdlib.h>
 #include <math.h>
+#include <stdint.h>
 #include <string.h>
 #include <ctype.h>
 #include "bio.h"
 #include "bnetwork.h"
-
 
 #include "bu/cv.h"
 #include "bu/parse.h"
 #include "vmath.h"
 #include "rt/db5.h"
 #include "rt/geom.h"
+#include "rt/db_instance.h"
 #include "raytrace.h"
 #include "../librt_private.h"
 
@@ -66,6 +67,86 @@ static const int binu_sizes[]={
 };
 
 
+static void
+binunif_network_to_host(unsigned char *dest, const unsigned char *src,
+			size_t count, size_t width)
+{
+    size_t i;
+
+    switch (width) {
+	case 1:
+	    memcpy(dest, src, count);
+	    return;
+	case 2:
+	    for (i = 0; i < count; i++, dest += 2, src += 2) {
+		uint16_t value;
+		memcpy(&value, src, sizeof(value));
+		value = ntohs(value);
+		memcpy(dest, &value, sizeof(value));
+	    }
+	    return;
+	case 4:
+	    for (i = 0; i < count; i++, dest += 4, src += 4) {
+		uint32_t value;
+		memcpy(&value, src, sizeof(value));
+		value = ntohl(value);
+		memcpy(dest, &value, sizeof(value));
+	    }
+	    return;
+	case 8:
+	    for (i = 0; i < count; i++, dest += 8, src += 8) {
+		uint64_t value;
+		memcpy(&value, src, sizeof(value));
+		value = ntohll(value);
+		memcpy(dest, &value, sizeof(value));
+	    }
+	    return;
+    }
+
+    bu_bomb("Unsupported BINUNIF integer width\n");
+}
+
+
+static void
+binunif_host_to_network(unsigned char *dest, const unsigned char *src,
+			size_t count, size_t width)
+{
+    size_t i;
+
+    switch (width) {
+	case 1:
+	    memcpy(dest, src, count);
+	    return;
+	case 2:
+	    for (i = 0; i < count; i++, dest += 2, src += 2) {
+		uint16_t value;
+		memcpy(&value, src, sizeof(value));
+		value = htons(value);
+		memcpy(dest, &value, sizeof(value));
+	    }
+	    return;
+	case 4:
+	    for (i = 0; i < count; i++, dest += 4, src += 4) {
+		uint32_t value;
+		memcpy(&value, src, sizeof(value));
+		value = htonl(value);
+		memcpy(dest, &value, sizeof(value));
+	    }
+	    return;
+	case 8:
+	    for (i = 0; i < count; i++, dest += 8, src += 8) {
+		uint64_t value;
+		memcpy(&value, src, sizeof(value));
+		value = htonll(value);
+		memcpy(dest, &value, sizeof(value));
+	    }
+	    return;
+    }
+
+    bu_bomb("Unsupported BINUNIF integer width\n");
+}
+
+
 
 /**
  * Import a uniform-array binary object from the database format to
@@ -80,11 +161,7 @@ rt_binunif_import5_minor_type(struct rt_db_internal *ip,
 			      int minor_type)
 {
     struct rt_binunif_internal *bip;
-    size_t i;
-    unsigned char *srcp;
-    unsigned long *ldestp;
-    int in_cookie, out_cookie;
-    size_t gotten;
+    size_t width;
 
     BU_CK_EXTERNAL(ep);
     if (dbip) RT_CK_DBI(dbip);
@@ -125,47 +202,20 @@ rt_binunif_import5_minor_type(struct rt_db_internal *ip,
 	    break;
 	case DB5_MINORTYPE_BINU_8BITINT:
 	case DB5_MINORTYPE_BINU_8BITINT_U:
-	    bip->count = ep->ext_nbytes;
-	    bip->u.uint8 = (unsigned char *) bu_malloc(ep->ext_nbytes,
-							"rt_binunif_internal");
-	    memcpy((char *) bip->u.uint8, (char *) ep->ext_buf, ep->ext_nbytes);
-	    break;
 	case DB5_MINORTYPE_BINU_16BITINT:
 	case DB5_MINORTYPE_BINU_16BITINT_U:
-	    bip->count = ep->ext_nbytes/2;
-	    bip->u.uint8 = (unsigned char *) bu_malloc(ep->ext_nbytes,
-							"rt_binunif_internal");
-	    in_cookie = bu_cv_cookie("nus");
-	    out_cookie = bu_cv_cookie("hus");
-	    if (bu_cv_optimize(in_cookie) != bu_cv_optimize(out_cookie)) {
-		gotten =
-		    bu_cv_w_cookie((void *)bip->u.uint8, out_cookie,
-				   ep->ext_nbytes,
-				   ep->ext_buf, in_cookie, bip->count);
-		if (gotten != bip->count) {
-		    bu_log("%s:%d: Tried to convert %zu, did %zu",
-			   __FILE__, __LINE__, bip->count, gotten);
-		    bu_bomb("\n");
-		}
-	    } else
-		memcpy((char *) bip->u.uint8,
-		       (char *) ep->ext_buf,
-		       ep->ext_nbytes);
-	    break;
 	case DB5_MINORTYPE_BINU_32BITINT:
 	case DB5_MINORTYPE_BINU_32BITINT_U:
-	    bip->count = ep->ext_nbytes/4;
-	    bip->u.uint8 = (unsigned char *) bu_malloc(ep->ext_nbytes,
-							"rt_binunif_internal");
-	    srcp = (unsigned char *) ep->ext_buf;
-	    ldestp = (unsigned long *) bip->u.uint8;
-	    for (i = 0; i < bip->count; ++i, ++ldestp, srcp += 4) {
-		*ldestp = ntohl(*(uint32_t *)&srcp[0]);
-	    }
-	    break;
 	case DB5_MINORTYPE_BINU_64BITINT:
 	case DB5_MINORTYPE_BINU_64BITINT_U:
-	    bu_log("rt_binunif_import5_minor_type() Can't handle 64-bit integers yet\n");
+	    width = (size_t)binu_sizes[bip->type];
+	    bip->count = ep->ext_nbytes / width;
+	    bip->u.uint8 = (unsigned char *)bu_malloc(bip->count * width,
+						       "rt_binunif_internal");
+	    binunif_network_to_host(bip->u.uint8, ep->ext_buf, bip->count, width);
+	    break;
+	default:
+	    bu_log("Unrecognized BINUNIF minor type (%d)\n", bip->type);
 	    return -1;
     }
 
@@ -187,22 +237,16 @@ rt_binunif_dump(struct rt_binunif_internal *bip) {
 /**
  * Create the "body" portion of external form
  */
-int
+C_DECL int
 rt_binunif_export5(struct bu_external		*ep,
 		    const struct rt_db_internal	*ip,
 		    double			UNUSED(local2mm), /* we ignore */
-		    const struct db_i		*dbip,
-		    struct resource		*resp)
+		    const struct db_i		*dbip)
 {
     struct rt_binunif_internal	*bip;
-    size_t			i;
-    unsigned char		*destp;
-    unsigned long		*lsrcp;
-    int				in_cookie, out_cookie;
-    size_t			gotten;
+    size_t			width;
 
     if (dbip) RT_CK_DBI(dbip);
-    if (resp) RT_CK_RESOURCE(resp);
 
     RT_CK_DB_INTERNAL(ip);
     bip = (struct rt_binunif_internal *)ip->idb_ptr;
@@ -232,49 +276,24 @@ rt_binunif_export5(struct bu_external		*ep,
 	    break;
 	case DB5_MINORTYPE_BINU_8BITINT:
 	case DB5_MINORTYPE_BINU_8BITINT_U:
-	    ep->ext_nbytes = bip->count;
-	    ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes,
-					      "binunif external");
-	    memcpy((char *)ep->ext_buf, (char *)bip->u.uint8, bip->count);
-	    break;
 	case DB5_MINORTYPE_BINU_16BITINT:
 	case DB5_MINORTYPE_BINU_16BITINT_U:
-	    ep->ext_nbytes = bip->count * 2;
-	    ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "binunif external");
-	    in_cookie = bu_cv_cookie("hus");
-	    out_cookie = bu_cv_cookie("nus");
-	    if (bu_cv_optimize(in_cookie) != bu_cv_optimize(out_cookie)) {
-		gotten =
-		    bu_cv_w_cookie(ep->ext_buf, out_cookie,
-				   ep->ext_nbytes,
-				   (void *) bip->u.uint8, in_cookie,
-				   bip->count);
-
-		if (gotten != bip->count) {
-		    bu_log("%s:%d: Tried to convert %zu, did %zu",
-			   __FILE__, __LINE__, bip->count, gotten);
-		    bu_bomb("\n");
-		}
-	    } else {
-		memcpy((char *) ep->ext_buf,
-		       (char *) bip->u.uint8,
-		       ep->ext_nbytes);
-	    }
-	    break;
 	case DB5_MINORTYPE_BINU_32BITINT:
 	case DB5_MINORTYPE_BINU_32BITINT_U:
-	    ep->ext_nbytes = bip->count * 4;
-	    ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "binunif external");
-
-	    lsrcp = (unsigned long *) bip->u.uint8;
-	    destp = (unsigned char *) ep->ext_buf;
-	    for (i = 0; i < bip->count; ++i, ++destp, ++lsrcp) {
-		*(uint32_t *)&destp[0] = htonl(*lsrcp);
-	    }
-	    break;
 	case DB5_MINORTYPE_BINU_64BITINT:
 	case DB5_MINORTYPE_BINU_64BITINT_U:
-	    bu_log("rt_binunif_export5() Can't handle 64-bit integers yet\n");
+	    width = (size_t)binu_sizes[bip->type];
+	    if (bip->count > SIZE_MAX / width) {
+		bu_log("BINUNIF object is too large to export\n");
+		return -1;
+	    }
+	    ep->ext_nbytes = bip->count * width;
+	    ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "binunif external");
+	    binunif_host_to_network(ep->ext_buf, bip->u.uint8,
+				    bip->count, width);
+	    break;
+	default:
+	    bu_log("Unrecognized BINUNIF minor type (%d)\n", bip->type);
 	    return -1;
     }
 
@@ -286,7 +305,7 @@ rt_binunif_export5(struct bu_external		*ep,
  * line describes type of object.  Additional lines are indented one
  * tab, and give parameter values.
  */
-int
+C_DECL int
 rt_binunif_describe(struct bu_vls *str, const struct rt_db_internal *ip, int UNUSED(verbose), double UNUSED(mm2local))
 {
     register struct rt_binunif_internal *bip;
@@ -350,7 +369,7 @@ rt_binunif_free(struct rt_binunif_internal *bip) {
  * Free the storage associated with the rt_db_internal version of this
  * thing.
  */
-void
+C_DECL void
 rt_binunif_ifree(struct rt_db_internal *ip)
 {
     struct rt_binunif_internal	*bip;
@@ -364,16 +383,16 @@ rt_binunif_ifree(struct rt_db_internal *ip)
 }
 
 
-int
+C_DECL int
 rt_retrieve_binunif(struct rt_db_internal *intern,
-		    struct db_i	*dbip,
-		    char *name)
+		    const struct db_i *dbip,
+		    const char *name)
 {
     register struct directory	*dp;
     struct rt_binunif_internal	*bip;
     struct bu_external		ext;
     struct db5_raw_internal		raw;
-    char				*tmp;
+    const char				*tmp;
 
     /*
      *Find the guy we're told to write
@@ -382,7 +401,7 @@ rt_retrieve_binunif(struct rt_db_internal *intern,
 	return -1;
 
     RT_DB_INTERNAL_INIT(intern);
-    if (rt_db_get_internal5(intern, dp, dbip, NULL, &rt_uniresource)
+    if (rt_db_get_internal5(intern, dp, dbip, NULL)
 	 != ID_BINUNIF     || db_get_external(&ext, dp, dbip) < 0)
 	return -1;
 
@@ -456,8 +475,8 @@ rt_retrieve_binunif(struct rt_db_internal *intern,
     return 0;
 }
 
-void
-rt_binunif_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
+C_DECL int
+rt_binunif_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char *UNUSED(variant), const point_t UNUSED(origin), double UNUSED(scale))
 {
     struct rt_binunif_internal *bip;
 
@@ -473,9 +492,10 @@ rt_binunif_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
     bip->type = DB5_MINORTYPE_BINU_8BITINT;
     bip->count = 0;
     bip->u.int8 = NULL;
+    return BRLCAD_OK;
 }
 
-int
+C_DECL int
 rt_binunif_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr)
 {
     register struct rt_binunif_internal *bip=(struct rt_binunif_internal *)intern->idb_ptr;
@@ -487,7 +507,7 @@ rt_binunif_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const
 
     if (attr == (char *)NULL) {
 	/* export the object to get machine independent form */
-	if (rt_binunif_export5(&ext, intern, 1.0, NULL, NULL)) {
+	if (rt_binunif_export5(&ext, intern, 1.0, NULL)) {
 	    bu_vls_strcpy(logstr, "Failed to export binary object!!\n");
 	    return BRLCAD_ERROR;
 	} else {
@@ -507,7 +527,7 @@ rt_binunif_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const
 	    bu_vls_printf(logstr, "%d", bip->type);
 	} else if (BU_STR_EQUAL(attr, "D")) {
 	    /* export the object to get machine independent form */
-	    if (rt_binunif_export5(&ext, intern, 1.0, NULL, NULL)) {
+	    if (rt_binunif_export5(&ext, intern, 1.0, NULL)) {
 		bu_vls_strcpy(logstr, "Failed to export binary object!!\n");
 		return BRLCAD_ERROR;
 	    } else {
@@ -527,8 +547,8 @@ rt_binunif_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const
     return BRLCAD_OK;
 }
 
-int
-rt_binunif_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv)
+C_DECL int
+rt_binunif_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)
 {
     struct rt_binunif_internal *bip;
     size_t i;
@@ -540,7 +560,7 @@ rt_binunif_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc
     while (argc >= 2) {
 	if (BU_STR_EQUAL(argv[0], "T")) {
 	    int new_type=-1;
-	    char *c;
+	    const char *c;
 	    int type_is_digit=1;
 
 	    c = argv[1];

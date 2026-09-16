@@ -49,11 +49,10 @@ Fontstash's atlas is based on code from Skyline Bin Packer by Jukka Jylänki
 public domain.
 
 
-Fontstash uses stb_truetype.h from Sean Barrett for handling
-TrueType files (https://github.com/nothings/stb) which is placed in the
-public domain.
+BRL-CAD's Fontstash integration uses the size-aware struetype fork for
+handling TrueType files (https://github.com/starseeker/struetype).  Its
+license and source location are recorded separately in struetype.txt.
 
 
 file:/src/libdm/fontstash/fontstash.h
 file:/src/libdm/fontstash/glfontstash.h
-

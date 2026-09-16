@@ -1,7 +1,7 @@
 /*                    P I X B G S T R I P . C
  * BRL-CAD
  *
- * Copyright (c) 1991-2025 United States Government as represented by
+ * Copyright (c) 1991-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -25,6 +25,8 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 
 #include "bio.h"
@@ -32,6 +34,7 @@
 #include "vmath.h"
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/malloc.h"
 #include "bu/exit.h"
 #include "bn.h"
@@ -41,7 +44,7 @@
 static unsigned char *scanline;		/* 1 scanline pixel buffer */
 static size_t scanbytes;		/* # of bytes of scanline */
 
-static char *file_name;
+static const char *file_name;
 static FILE *infp;
 static int fileinput = 0;		/* file of pipe on input? */
 
@@ -69,21 +72,25 @@ get_args(int argc, char **argv)
 		break;
 	    case 's':
 		/* square file size */
-		file_width = atol(bu_optarg);
+		if (!bu_opt_scan_size_t_range(bu_optarg, &file_width, 1, SIZE_MAX, "input size"))
+		    return 0;
 		autosize = 0;
 		break;
 	    case 'w':
-		file_width = atol(bu_optarg);
+		if (!bu_opt_scan_size_t_range(bu_optarg, &file_width, 1, SIZE_MAX, "input width"))
+		    return 0;
 		autosize = 0;
 		break;
 	    case 'n':
 		autosize = 0;
 		break;
 	    case 't':
-		thresh = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &thresh, 0, INT_MAX, "threshold"))
+		    return 0;
 		break;
 	    case 'x':
-		bg_x_offset = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &bg_x_offset, 0, INT_MAX, "background x offset"))
+		    return 0;
 		break;
 
 	    default:		/* '?' , 'h' */
@@ -108,8 +115,10 @@ get_args(int argc, char **argv)
 	fileinput++;
     }
 
-    if (argc > ++bu_optind)
-	fprintf(stderr, "pixbgstrip: excess argument(s) ignored\n");
+    if (argc > ++bu_optind) {
+	fprintf(stderr, "pixbgstrip: excess argument(s) not supported\n");
+	return 0;
+    }
 
     return 1;		/* OK */
 }
@@ -145,6 +154,11 @@ main(int argc, char **argv)
 	} else {
 	    fprintf(stderr, "pixbgstrip: unable to autosize\n");
 	}
+    }
+
+    if ((size_t)bg_x_offset >= file_width) {
+	fprintf(stderr, "pixbgstrip: background x offset %d is outside width %zu\n", bg_x_offset, file_width);
+	bu_exit(1, NULL);
     }
 
     scanbytes = file_width * sizeof(RGBpixel);

@@ -1,7 +1,7 @@
 /*                 SurfaceOfLinearExtrusion.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2025 United States Government as represented by
+ * Copyright (c) 1994-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -45,9 +45,10 @@ public:
     SurfaceOfLinearExtrusion();
     virtual ~SurfaceOfLinearExtrusion();
     SurfaceOfLinearExtrusion(STEPWrapper *sw, int step_id);
-    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
-    virtual bool LoadONBrep(ON_Brep *brep);
-    virtual void Print(int level);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse) override;
+    bool RequiresFaceLocalONSurface() const override { return true; }
+    bool LoadONBrep(ON_Brep *brep) override;
+    void Print(int level) override;
 
     //static methods
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);

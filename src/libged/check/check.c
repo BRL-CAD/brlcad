@@ -1,7 +1,7 @@
 /*                         C H E C K . C
  * BRL-CAD
  *
- * Copyright (c) 2018-2025 United States Government as represented by
+ * Copyright (c) 2018-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -681,24 +681,14 @@ freemem:
     if (options.debug) bu_vls_free(options.debug_str);
     return (error) ? BRLCAD_ERROR : BRLCAD_OK;
 }
-#ifdef GED_PLUGIN
+
 #include "../include/plugin.h"
-struct ged_cmd_impl check_cmd_impl = {
-    "check",
-    ged_check_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd check_cmd = { &check_cmd_impl };
-const struct ged_cmd *check_cmds[] = { &check_cmd, NULL };
+#define GED_CHECK_COMMANDS(X, XID) \
+    X(check, ged_check_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  check_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_CHECK_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_check", 1, GED_CHECK_COMMANDS)
 
 /*
  * Local Variables:

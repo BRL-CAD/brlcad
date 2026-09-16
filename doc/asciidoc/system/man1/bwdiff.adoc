@@ -1,0 +1,94 @@
+= BWDIFF(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+bwdiff - compare two black and white files
+
+== SYNOPSIS
+
+[source]
+----
+bwdiff [-b] [-m | -g | -l | -e | -n] file1 file2
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*bwdiff* compares two black and white *bw*(5) format files and writes the results to standard output. By default, *bwdiff* records the differences as offsets from a neutral, half-intensity grey (128). The written value is brighter than this neutral grey by an amount proportional to the signed difference between the pixels in _file1_ and _file2_. Pixels that are brighter in _file1_ than in _file2_ will be brighter than the neutral grey, while pixels that are dimmer in _file1_ than in _file2_ will be dimmer. This difference is divided by two to fit the 0 to 255 output range.
+
+*bwdiff* accepts ``*-*'' as a synonym for standard input, and ``*.*'' as a synonym for the platform's null device.
+
+Note that this program also produces useful results on color *pix*(5) files.
+
+
+[[options]]
+== OPTIONS
+
+*-m*::
+Calculates the magnitude of the difference. No offset or division is applied. Brighter pixels indicate larger differences in value, and black indicates no difference.
+
+*-g*::
+Greater-than relational operation. Outputs a full-white (255) pixel if the value of the pixel in _file1_ is greater than the corresponding pixel in _file2_. Cannot be combined with other relational flags.
+
+*-l*::
+Less-than relational operation. Outputs a full-white (255) pixel if the value of the pixel in _file1_ is less than the corresponding pixel in _file2_. Cannot be combined with other relational flags.
+
+*-e*::
+Equal-to relational operation. Outputs a full-white (255) pixel if the value of the pixel in _file1_ is equal to the corresponding pixel in _file2_. Cannot be combined with other relational flags.
+
+*-n*::
+Not-equal-to relational operation. Outputs a full-white (255) pixel if the value of the pixel in _file1_ is not equal to the corresponding pixel in _file2_. Cannot be combined with other relational flags.
+
+*-b*::
+Sets the background to the corresponding pixels of _file1_ at a lowered intensity instead of the default black background. This option only applies when using one of the relational operation flags (*-g*, *-l*, *-e*, or *-n*).
+
+
+[[examples]]
+== EXAMPLES
+
+.Basic Difference
+====
+To find the difference between two black and white images:
+
+[source,bash]
+----
+bwdiff image1.bw image2.bw > diff.bw
+----
+====
+
+.Relational Operation on Color Images
+====
+Suppose you ran *pixstat*(1) on a file and found the modes to be red=107, green=93, blue=70. You can display those pixels whose colors are exactly at these values by comparing the file against a solid color stream:
+
+[source,bash]
+----
+gencolor 107 93 70 | bwdiff -e file.pix - | pix-fb
+----
+====
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *pixdiff*(1), *bwstat*(1), *bw*(5), *pix*(5)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

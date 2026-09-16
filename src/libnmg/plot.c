@@ -1,7 +1,7 @@
 /*                      N M G _ P L O T . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2025 United States Government as represented by
+ * Copyright (c) 1993-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -44,10 +44,10 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <signal.h>
 #include "bio.h"
 
 #include "vmath.h"
+#include "bu/interrupt.h"
 #include "bu/malloc.h"
 #include "bv/plot3.h"
 #include "bv/vlist.h"

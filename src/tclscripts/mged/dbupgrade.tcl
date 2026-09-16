@@ -1,7 +1,7 @@
 #                   D B U P G R A D E . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2025 United States Government as represented by
+# Copyright (c) 1998-2026 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -133,7 +133,7 @@ proc dbupgrade {args} {
 	    }
 	}
 
-	if {[dbversion] > 4} {
+	if {[db version] > 4} {
 	    error "[opendb] is already current!"
 	}
 

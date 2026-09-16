@@ -1,7 +1,7 @@
 /*                        S H _ T O O N . C
  * BRL-CAD
  *
- * Copyright (c) 2010-2025 United States Government as represented by
+ * Copyright (c) 2010-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -57,9 +57,6 @@ struct toon_specific toon_defaults = {
     TOON_MAGIC
 };
 
-
-#define SHDR_NULL ((struct toon_specific *)0)
-#define SHDR_O(m) bu_offsetof(struct toon_specific, m)
 
 /* description of how to parse/print the arguments to the shader
  * There is at least one line here for each variable in the shader specific

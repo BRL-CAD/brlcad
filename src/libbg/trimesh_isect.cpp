@@ -1,7 +1,7 @@
 /*               T R I M E S H _ I S E C T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2018-2025 United States Government as represented by
+ * Copyright (c) 2018-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,7 +39,9 @@
 #include <ctype.h>
 #include <time.h>
 
-#define PLOT_PREFIX_STR bg_plot3_
+#ifndef PLOT_PREFIX_STR
+#  define PLOT_PREFIX_STR bg_plot3_
+#endif
 #include "bv/plot3.h"
 #include "bu/log.h"
 #include "bu/malloc.h"

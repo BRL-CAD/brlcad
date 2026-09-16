@@ -1,0 +1,48 @@
+set(
+  devguides_EN
+  adding_new_primitive_superellipsoid.adoc
+  api_reference.adoc
+  bool_eval_development.adoc
+  getting_started_as_contributor.adoc
+  iterate_geometry.adoc
+  libged_command_authoring.adoc
+  raytracing_pipeline.adoc
+)
+
+set(
+  devguides_EN_IMAGES
+  images/primitive_hook_lifecycle.svg
+  images/primitive_registration_flow.svg
+  images/primitive_superell_parameters.svg
+  images/ccx_overlap_event.png
+  images/ssx_transverse_event.png
+  images/ssx_tangent_event.png
+  images/compare_endpoint_style.png
+  images/lcurves_with_shaded_context.png
+  images/ssx_10_vs_13.png
+  images/curve_traversal_directions.png
+  images/axis_X.png
+  images/intermediate_linked_curves.png
+  images/ssx_overlap_event.png
+  images/evaluation_overview.png
+)
+
+if(TARGET mged OR TARGET qged OR TARGET archer)
+  if(BRLCAD_EXTRADOCS)
+    add_doc(devguides_EN_IMAGES html/devguides/images)
+    add_asciidoc("HTML" devguides_EN devguides devguides_EN_IMAGES_cp)
+  endif(BRLCAD_EXTRADOCS)
+endif(TARGET mged OR TARGET qged OR TARGET archer)
+
+cmakefiles(
+  CMakeLists.txt
+  ${devguides_EN}
+  ${devguides_EN_IMAGES}
+)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

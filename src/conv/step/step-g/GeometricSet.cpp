@@ -1,7 +1,7 @@
 /*                 GeometricSet.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2025 United States Government as represented by
+ * Copyright (c) 1994-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,6 +33,10 @@
 #define CLASSNAME "GeometricSet"
 #define ENTITYNAME "Geometric_Set"
 string GeometricSet::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod) GeometricSet::Create);
+/* GEOMETRIC_CURVE_SET only narrows the inherited element select to curves;
+ * its representation and exact wire conversion are otherwise identical. */
+string GeometricSet::curve_entityname = Factory::RegisterClass(
+    "Geometric_Curve_Set", (FactoryMethod) GeometricSet::Create);
 
 GeometricSet::GeometricSet()
 {

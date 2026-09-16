@@ -1,7 +1,7 @@
 /*                       C A C H E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2018-2025 United States Government as represented by
+ * Copyright (c) 2018-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -281,12 +281,12 @@ bu_cache_get(void **data, const char *key, struct bu_cache *c, struct bu_cache_t
     int mkeysize = (mdb_env_get_maxkeysize(c->i->env) < BU_CACHE_KEY_MAXLEN) ? mdb_env_get_maxkeysize(c->i->env) : BU_CACHE_KEY_MAXLEN;
     if (mkeysize <= 0)
 	return 0;
-    if (strlen(key) > (size_t)mkeysize) {
+    if (strlen(key) >= (size_t)mkeysize) {
 	if (mdb_env_get_maxkeysize(c->i->env) >= BU_CACHE_KEY_MAXLEN) {
-	    bu_log("bu_cache_get called with a key string larger than the supported length (%d):\n%s\n", BU_CACHE_KEY_MAXLEN, key);
+	    bu_log("bu_cache_get called with a key string longer than the supported length (%d):\n%s\n", BU_CACHE_KEY_MAXLEN - 1, key);
 	    return 0;
 	} else {
-	    bu_log("ERROR: LMDB backend compiled with max key length (%d) smaller than that supported by libbu API (%d). key should be valid per libbu API but backend support is inadequate (needs to be fixed):\n%s\n", mdb_env_get_maxkeysize(c->i->env), BU_CACHE_KEY_MAXLEN, key);
+	    bu_log("ERROR: LMDB backend compiled with max key length (%d) smaller than that supported by libbu API (%d). key should be valid per libbu API but backend support is inadequate (needs to be fixed):\n%s\n", mdb_env_get_maxkeysize(c->i->env), BU_CACHE_KEY_MAXLEN - 1, key);
 	    return 0;
 	}
     }
@@ -399,8 +399,8 @@ bu_cache_write(void *data, size_t dsize, const char *key, struct bu_cache *c, st
 	return 0;
 
     int rc = 0;
-    int mkeysize = mdb_env_get_maxkeysize(c->i->env);
-    if (mkeysize <= 0 || strlen(key) > (size_t)mkeysize)
+    int mkeysize = (mdb_env_get_maxkeysize(c->i->env) < BU_CACHE_KEY_MAXLEN) ? mdb_env_get_maxkeysize(c->i->env) : BU_CACHE_KEY_MAXLEN;
+    if (mkeysize <= 0 || strlen(key) >= (size_t)mkeysize)
 	return 0;
 
     // Prepare inputs for writing
@@ -515,6 +515,10 @@ void
 bu_cache_clear(const char *key, struct bu_cache *c, struct bu_cache_txn **t)
 {
     if (!key || !c)
+	return;
+
+    int mkeysize = (mdb_env_get_maxkeysize(c->i->env) < BU_CACHE_KEY_MAXLEN) ? mdb_env_get_maxkeysize(c->i->env) : BU_CACHE_KEY_MAXLEN;
+    if (mkeysize <= 0 || strlen(key) >= (size_t)mkeysize)
 	return;
 
     // Construct lookup key

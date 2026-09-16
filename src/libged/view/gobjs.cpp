@@ -1,7 +1,7 @@
 /*                      G O B J S . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -100,7 +100,7 @@ _gobjs_cmd_create(void *bs, int argc, const char **argv)
     }
     mat_t mat;
     MAT_IDN(mat);
-    if (!db_path_to_mat(dbip, fp, mat, fp->fp_len-1, &rt_uniresource)) {
+    if (!db_path_to_mat(dbip, fp, mat, fp->fp_len-1)) {
 	db_free_full_path(fp);
 	BU_PUT(fp, struct db_full_path);
 	bu_vls_printf(gedp->ged_result_str, "Invalid path matrix: %s\n", gd->vobj);
@@ -113,7 +113,7 @@ _gobjs_cmd_create(void *bs, int argc, const char **argv)
     struct rt_db_internal *ip;
     BU_GET(ip, struct rt_db_internal);
     RT_DB_INTERNAL_INIT(ip);
-    ret = rt_db_get_internal(ip, DB_FULL_PATH_CUR_DIR(fp), dbip, mat, &rt_uniresource);
+    ret = rt_db_get_internal(ip, DB_FULL_PATH_CUR_DIR(fp), dbip, mat);
     if (ret < 0) {
 	db_free_full_path(fp);
 	BU_PUT(fp, struct db_full_path);
@@ -148,7 +148,6 @@ _gobjs_cmd_create(void *bs, int argc, const char **argv)
     dd.color_inherit = 0;
     dd.bound_only = 0;
     dd.s_size = &s_size;
-    dd.res = &rt_uniresource;
     bu_color_from_rgb_chars(&dd.c, wcolor);
     dd.vs = &vs;
     dd.g = g;

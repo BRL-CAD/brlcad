@@ -1,7 +1,7 @@
 /*                        C D T . H
  * BRL-CAD
  *
- * Copyright (c) 2007-2025 United States Government as represented by
+ * Copyright (c) 2007-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,6 +25,9 @@
  *
  */
 
+#ifndef LIBBREP_CDT_H
+#define LIBBREP_CDT_H
+
 #include "common.h"
 
 #include <vector>
@@ -36,7 +39,7 @@
 #include <set>
 #include <utility>
 
-#include "RTree.h"
+#include "../../libbg/RTree.h"
 
 #include "assert.h"
 
@@ -45,7 +48,7 @@
 #include "bu/color.h"
 #include "bu/cv.h"
 #include "bu/opt.h"
-#include "bu/time.h"
+#include "bu/datetime.h"
 #include "bn/mat.h"
 #include "bg/plane.h"
 #include "bv/plot3.h"
@@ -180,4 +183,6 @@ bool TRICHECK(triangle_t &tri);
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
+
+#endif /* LIBBREP_CDT_H */
 

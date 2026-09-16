@@ -1,7 +1,7 @@
 /*                        E D C O M B . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -73,7 +73,7 @@ ged_edcomb_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    GED_DB_GET_INTERNAL(gedp, &intern, dp, (fastf_t *)NULL, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_GET_INTERN(gedp, &intern, dp, (fastf_t *)NULL, BRLCAD_ERROR);
     comb = (struct rt_comb_internal *)intern.idb_ptr;
     RT_CK_COMB(comb);
 
@@ -86,30 +86,18 @@ ged_edcomb_core(struct ged *gedp, int argc, const char *argv[])
     comb->aircode = air;
     comb->los = los;
     comb->GIFTmater = mat;
-    GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_PUT_INTERN(gedp, dp, &intern, BRLCAD_ERROR);
 
     return BRLCAD_OK;
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl edcomb_cmd_impl = {
-    "edcomb",
-    ged_edcomb_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd edcomb_cmd = { &edcomb_cmd_impl };
-const struct ged_cmd *edcomb_cmds[] = { &edcomb_cmd, NULL };
+#define GED_EDCOMB_COMMANDS(X, XID) \
+    X(edcomb, ged_edcomb_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  edcomb_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_EDCOMB_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_edcomb", 1, GED_EDCOMB_COMMANDS)
 
 /*
  * Local Variables:

@@ -21,16 +21,6 @@ Recent Bugs
   Something is concatenating EXEPATH and/or fbserv silently fails with
   return codes (e.g., when not specifying -F, only giving the port.)
 
-* rt -H hypersample, -J jitter, and -j# for sub-grid-mode assumes a
-  framebuffer, causing pix data to get written to the -o file (e.g.,
-  even with -o file.png).  See view_pixel() near src/rt/view.c:472 for
-  problem area with -j but there are likely call sites..  Need to
-  scrub all fb_write() and ideally make this a non-issue via icv API.
-
-* obj-g and gcv converters choke and crash on obj with unnamed g line.
-  spec wording on whether that's valid is unclear, but encountered in
-  wild.
-
 * recursive bu_parallel() failure, tbd whether cpp11 or pthread impl,
   likely because IDs are exceeding MAX_PSW, causing mayhem and chaos.
 
@@ -54,6 +44,13 @@ Recent Bugs
   at allocation stack, rt_ct_get() appears to be allocating 10MB
   chunks.
 
+  [HARD] Superlinear growth (3 combs -> 18GB) points at an
+  integer/overflow interaction deep in the space-partitioning cut
+  allocator (rt_ct_get 10MB chunks), intertwined with bu memory.
+  Painful to isolate and validate at scale.
+  [FAN-OUT: poor -- one focused investigator with an allocator/profiler
+  trace; not parallelizable.]
+
 * rt from mged is not outputting overlap log messages or rt summary.
   Stops printing after opendb line. (Observed on Mac)
 
@@ -61,19 +58,11 @@ Recent Bugs
   Backtrace indicates write buffer is full, likely because no output
   is going to terminal. (Observed on Mac)
 
-* gcv on a glTF file (at least a binary .glb) crashes hard with a NULL
-  pointer bomb (workaround: gltf-g succeeds albeit incomplete
-  conversion).  Takes out the entire Terminal app on Mac for some
-  reason (consistently).
-
 * Running"mged -c test.g" exits automatically on default prompt:
   ...
   Create new database (y|n)[n]? 
   Warning: no database is currently open!
   morrison@Miniagua .build %
-
-* TGC tess fails when we have a near-zero c axis and a larger d
-  axis, or vice versa.
 
 * MGED crashes trying to open the repository file
   doc/docbook/resources/other/standard/xsl/images/important.tif
@@ -87,10 +76,6 @@ Recent Bugs
 * running pkgIndex and/or mkIndex during build appears to be randomly
   crashing on Mac using bundled libs
 
-* garbage_collect -c wipes out custom attributes on _GLOBAL
-  > attr set _GLOBAL foo bar
-  > garbage_collect -c
-
 * Visual error when drawing using -S -m1 of a region with the same solid
   subtracted and then unioned.
 
@@ -98,20 +83,6 @@ Recent Bugs
   > r boxes.r u box - box1 u box1
   > e -S -m1 boxes.r
   box1 is not drawn
-
-* When run inside mged, invalid syntax reported on "gqa -p prefix"
-  despite it being documented as the correct form (and working outside
-  mged).  specifying gqa -pprefix appears to be workaround, though
-  unintuitive.  specifying gqa -p"" annoyingly outputs ""exp_air.plot3
-  with quotes embedded in the name.
-
-* rtweight reports nan,nan,nan centroid when density is 0
-
-* rtweight/gqa volumes seem wrong with simple sphere test case, with
-  values consistently and quickly converging less than the actual
-  volume regardless of the grid size.
-
-* gqa manpage has the wrong indentation on the options write-up.
 
 * raytracing a revolved sketch seems to work fine, but rtarea and gqa
   seem to be crashing on that same revolve.  curiously, the brep
@@ -123,19 +94,11 @@ Recent Bugs
 * running archer "" at least on windows results in a file type dialog
   and errors with "can't read "_conv_log": no such variable
 
-* opening a database in archer with the same name as a command doesn't
-  work.
-
 * in mged, running the 'attach' command (confirmed issues with X and
   ogl), closing the window, and then issuing a 'draw' results in mged
   crashing.
 
 * killtree / crashes
-
-* killtree reports spurious db_lookup failures saying object does not
-  exist as it previously deleted it.  should keep track of what it
-  deletes to not output spuriously, or (better) delete transactionally
-  so it only attempts to lookup and delete once per object.
 
 * object names with a / or \ in them make ls or underlying directory
   parsing logic display them incorrectly.
@@ -152,17 +115,8 @@ Recent Bugs
 * fbclear -c appears to hang indefinitely inside pkg_bwaitfor,
   possible protocol mismatch or capability removed/changed in fbserv.
 
-* dbupgrade -r produces an invalid rhc with the default v5 rhc produced
-  by MGED with  "make rhc rhc"
-
 * apparently all four BRL-CAD Tutorial Series volumes are missing from
   our bibliography...
-
-* Tessellating an ETO with a normal tolerance results in stack
-  smashing due to bad logic in recursive algorithm: set norm 2;
-  facetize my.eto my.bot;. Observed infinite recursion in both
-  make_ellipse4() in eto.c and (after adding max recursion test) in
-  paint_face() in manif.c:190
 
 * mater -d information stored in the .g file doesn't survive a
   garbage collection operation.
@@ -179,35 +133,9 @@ Recent Bugs
   still being displayed.  this causes 'rt' to fly into an infinite
   loop, presumably trying to increment rays from the eye position.
 
-* icv dpix support is not cross-platform (it writes out native, reads
-  in assuming same encoding).  regression tests fail on big endian.
-
 * creating an object with a slashes in the name (e.g., cp foo foo/R)
   results in an object that cannot be deleted/renamed.  bad behavior
   presumably extends to any name with path separators.
-
-* mirror command rejects brep solids and turns faces inside-out when
-  mirroring a comb with brep solids below it.
-
-* rtsil command works if do what usage says and redirect output to
-  file, but mentions .pix when data is actually .bw; and using the -o
-  option results in a black image.  it is also inconsistent, writing a
-  black silhouette on a white background, instead of black on white
-  and missing background color options.
-
-* make sph sph
-  clone -i 1 -t 1000 0 0 -n 100 sph
-  kill sph
-  g line sph*
-  clone -i 1 -t 0 1000 0 -n 100 line
-  kill line
-  g square line*
-  clone -i 1 -t 0 0 1000 -n 100 square
-  ... never returns ...
-
-  This should be merely 1M spheres, but something chokes.  Could be
-  somewhere in the Tk layer.  Maybe somewhere in the db layer.  Maybe
-  something is corrupted by clone when it
 
 * If we draw any form, then trace it using rt, then change of database
   (by clicking file>open and selecting another database), badness
@@ -222,30 +150,11 @@ Recent Bugs
   in ann3.s annot 0 0 0 1 10 10 3 1
   # using numbers for a label results in no label
 
-* make eto eto
-  tol norm 1
-  facetize eto.bot eto
-  [crashes due to excessive recursion]
-
-* crash in rt_bot_xform() due to a bot being marked as having face
-  normals, but didn't.  bot probably written wrong via conversion
-  to/from obj or asc.  found importing teapot.
-
 * rtedge with perspective is wrong.  it fills in nearly entire faces,
   vertically in particular.  it's worse on small sized renders, and
   gets better the larger the render size (indicating there's some
   neighbor distance coming into play that is not affected by
   max_dist).  eoes not happen in non-perspective ray-traces.
-
-* a character is (still) sometimes captured by the cursor box.  steps
-  to reproduce:
-    1) write a word on the mged command prompt ("e.g. hello")
-    2) select the word to end of line with mouse
-    3) paste the word (e.g., middle mouse) and press enter
-    4) type "hello" again and press enter
-
-  you should now see an "o" in the yellow cursor box.  sometimes
-  you'll see the "o" after step 3.  running "clear" resets the cursor.
 
 * get_regions tcl command doesn't respond well to situations where
   child object names in combs have dashes (the "-" character) in
@@ -268,13 +177,6 @@ Recent Bugs
 * Recursive submodel predictably goes infinite, need stack-based
   db_walk_tree(): mged> in submodel submodel submodel grid test.g
 
-* running rt -s20 -F file.pix ... does not result in an 20x20 image
-  being written out.  it ends up being 512x512.
-
-* running rt -C255/0/0 -o file.pix ... does not result in the
-  background color getting used.  It does work with -F file.pix, going
-  through libfb instead of libicv.
-
 * ogl display manager and framebuffer are creating windows with
   transparent backgrounds (the glClear color is not being drawn) on
   Linux.  Presumably a driver-related issue, alpha channel, or expose
@@ -283,9 +185,6 @@ Recent Bugs
   private memory -- looks like private memory is not initialized
   (observed on Mac 10.6, Windows, and Ubuntu Linux using 7.26).
 
-* pixdiff on Windows is reporting no differences with a pair of files
-  that pixcmp can see differences in.
-
 * fblabel seems quite busted, at least talking to a /dev/X fbserv, in
   that it only draws the first character and eventually displays
   rem_read() failures when run in -d debug mode.
@@ -293,12 +192,6 @@ Recent Bugs
 * rtedge doesn't refresh a /dev/X fbserv (presumably double-buffered)
   after doing an overlay render.  it does draw, though, as confirmed
   by a forced fb-fb refresh.
-
-* pixborder doesn't account for an edge case where the right edge of
-  an image is expected to be colored (except for one pixel on the top
-  edge).  Example:
-
-  pixborder -b "255 0 0" -t "255 255 255" < pix/moss.pix | pix-fb
 
 * typing 'comb -f -r assembly_name' shuts down mged with the error:
   ERROR: bad pointer 0000000000B4CA50: s/b bu_external(x768dbbd0), was bu_vls(x89333bbb), file ..\..\..\brlcad_src\src\libbu\parse.c, line 2443"
@@ -312,11 +205,6 @@ Recent Bugs
 
 * wgl framebuffer is not lingering on windows (regardless of using
   wgll or default) when it should
-
-* calling "attr set obj key value" should always result in key getting
-  set to value, no matter what, as it is the lowest-level attribute
-  management interface and what the command (correctly) documents.
-  example demonstrated to not work was: attr set obj rgb 123/123/123
 
 * report of LIBBU not working when accessed by a multithreaded
   application on Windows.  reportedly due to some problem with the
@@ -355,17 +243,15 @@ Recent Bugs
 
   rm -f terra.pix && valgrind bin/rt -o terra.pix -P1 -H3 -s1024 share/brlcad/7.21.0/db/terra.g all.g
 
+  [HARD] valgrind-confirmed 8-byte corruption after a build_spec_table()
+  realloc in find_spec_wgt(), where "bookkeeping seems okay" -- i.e.,
+  root cause is non-obvious.  Classic hard-to-pin data race.
+  [FAN-OUT: poor -- a single heisenbug needing one careful
+  investigator, not parallel coverage.]
+
 * mged 'joint' hold command isn't working. looks like the fp_names
   book-keeping is fuxored or the db_lookup is returning NULL (or isn't
   yet performed).
-
-* src/librt/primitives/bot/g_bot_include.c:rt_bot_bbox() routine isn't
-  calculating the bbox correctly
-
-* 'exists' command documentation claims more than has been implemented
-
-* rtxray crashes if you specify a -o *.bw output file due to
-  assumptions in the rt front-end that all output files are .pix
 
 * encountered a crash during rtarea on a (default) facetized version
   of the hyp from the proc-db csgbrep tool.
@@ -380,9 +266,6 @@ Recent Bugs
 
 * torus with a near zero inner diameter results in zero-length edges
   during tessellation.
-
-* bu_log() with a width specifier does not align like printf().
-  Example: bu_log("%24s", str);
 
 * report that "keep" sometimes results in a .g file with unknown units;
   dbconcat also is reported to set the units to unknown if concatting
@@ -410,10 +293,6 @@ Recent Bugs
   to be verified.
 
 * rt -i -s4096 -H16 -F/dev/null boolean-ops.g all
-
-* asc2g of a .asc file containing the first line as a "#" comment
-  results in a bu_malloc(0) bomb.  comment lines should be valid in
-  .asc files.
 
 * compilation reportedly fails when building Tcl if the path to the
   source directory includes a space.
@@ -467,9 +346,6 @@ Recent Bugs
   as well as a variety of others.  see missing entries in
   tclscripts/mged/tclIndex for examples:
   https://sourceforge.net/tracker/?func=detail&atid=640802&aid=2923199&group_id=105292
-
-* vdeck truncates the region names in the 'regions' file, probably
-  wrong bu_strlcpy() length.
 
 * hyp tessellation routine creates bot that does not raytrace
 
@@ -646,16 +522,6 @@ Recent Bugs
 * dsp primitive is going into what seems to be an unbounded memory
   allocation loop during prep, inside dsp_layers().
 
-* crashes during photonmap raytrace of m35 where right node is invalid
-  rt -o test.pix -V 1.0 -P4 -J0 -l7 -A0 ~/Desktop/m35.g all.g box.r sph.r
-
-* libfb cannot utilize standard output/error "device" files without
-  path trickery.  it recognizes the /dev/ prefix and presumes it's a
-  libfb device instead of a filesystem device.
-
-   OK: rt -F/./dev/stdout
-  BAD: rt -F/dev/stdout
-
 * libfb cannot open a file descriptor when piping/redirecting output.
 
    OK: rt -F/./dev/stdout moss.g all.g
@@ -678,8 +544,6 @@ Recent Bugs
 * triangulation of some pipe in toyjeep.g fails (rather reliably) on
   some given bend.  fails in nmg_triangulate model().
 
-* fbhelp sends some of the output to stdout and some to stderr...
-
 * debugbu 2 immediately reports a bu_vls_free() error.. apparently
   been a problem since 4.5 days.  this occurs because
   bu_memdebug_add() is not called unless memory checking is enabled
@@ -695,9 +559,6 @@ Recent Bugs
   accounting bug visited a couple years ago.
 
 * Create menu.. create "part" boo hiss..
-
-* wavelet isn't working correctly on a simple image decomposition &
-  reconstruction.
 
 * fbed is looking for /usr/lib/vfont/nonie.r.12
 
@@ -748,8 +609,6 @@ Recent Bugs
 * mged primitive editor doesn't accept/apply values to disk for
   certain primitives (e.g. sph)
 
-* photon map cache file doesn't work (seems to crash rt on use)
-
 * enabling perspective mode horks shaded mode, also Z clipping
   shouldn't be required to get the shading.
 
@@ -766,34 +625,8 @@ Recent Bugs
 * sketches extruded with non-square AB vectors results in inner sketch
   components not getting scaled properly.
 
-* rtcheck is ignoring fastgen tagged geometry since no multioverlap
-  handler is set.
-
 * bot-bldxf fails in db_walk_tree(), interface may have changed
 
-
-Older Bugs
-----------
-
-* several manpages are missing or out of date for various tools
-
-* X11 framebuffer often fails to display on certain middle bit depth
-  displays. (e.g. 15 or 16 bit depth)
-
-* mk_lcomb fails on large combinations due to mk_tree_pure() building
-  a left-heavy tree and wdb_put_internal() then recursively performing
-  lookup and put calls.
-
-
-Annoyances
-----------
-
-* matrix edits on objects in mged require you to select a primitive
-  for a coordinate system reference.  this can be counterintuitive and
-  confusing.
-
-* there are frequently modality errors when entering edit mode as
-  control and middle mouse rebind to model edit instead of view edit.
 
 ---
 Bugs should be reported to the bug tracker on the project website at

@@ -1,7 +1,7 @@
 /*                        V I E W G 3 . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2025 United States Government as represented by
+ * Copyright (c) 1989-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -62,11 +62,6 @@
 
 void part_compact(register struct application *ap, register struct partition *PartHeadp, fastf_t tolerance);
 
-extern fastf_t gift_grid_rounding;
-extern point_t viewbase_model;
-
-extern int rpt_overlap;
-
 struct bu_vls ray_data_file = BU_VLS_INIT_ZERO;  /* file name for ray data output */
 FILE *shot_fp;				/* FILE pointer for ray data output */
 static long line_num;			/* count of lines output to shotline file */
@@ -81,7 +76,7 @@ struct bu_structparse view_parse[] = {
 static mat_t model2hv;			/* model coords to GIFT h, v in inches */
 static FILE *plotfp;			/* optional plotting file */
 
-const char title[] = "RTG3";
+EXTERNCPP const char title[] = "RTG3";
 
 int rayhit(register struct application *ap, struct partition *PartHeadp, struct seg *segp);
 int raymiss(register struct application *ap);
@@ -776,7 +771,7 @@ part_compact(register struct application *ap, register struct partition *PartHea
 }
 
 
-void
+C_DECL void
 application_init (void)
 {
     option("", "-o model.g3", "Specify output file, GIFT-3 format (default=stdout)", 0);

@@ -1,0 +1,97 @@
+= GIF-FB(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+
+gif-fb - display a GIF image on a frame buffer
+
+== SYNOPSIS
+
+[source]
+----
+gif-fb [-c] [-o] [-v] [-z] [-F _frame_buffer_] [-i _image#_] [_gif_file_]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*gif-fb* decodes a CompuServe GIF (Graphics Interchange Format) image and
+writes it to a frame buffer.  If no _gif_file_ is given, the GIF data is read
+from standard input.  Multi-image GIF files are displayed sequentially unless a
+single image is selected with *-i*.  The requested frame buffer is sized to the
+GIF screen dimensions, and the image is written right-side-up at the bottom of
+the available frame buffer.
+
+[[options]]
+== OPTIONS
+
+*-c*::
+  Force 8 bits of color resolution per R, G, and B channel, overriding the
+  color resolution declared in the GIF file.  Some non-standard GIF writers
+  require this.
+
+*-o*::
+  Overlay mode.  Skip the initial clearing of the frame buffer to the GIF
+  background color, leaving existing frame buffer contents in place.
+
+*-v*::
+  Verbose mode.  Print information about the GIF screen, color maps, and each
+  image to standard error.
+
+*-z*::
+  Zoom the frame buffer to enlarge the image as much as possible while keeping
+  a square pixel aspect ratio.
+
+*-F* _frame_buffer_::
+  Write to the named frame buffer instead of the one given by the *FB_FILE*
+  environment variable (or the default frame buffer if *FB_FILE* is unset).
+
+*-i* _image#_::
+  Display only the given image (1-indexed) from a multi-image GIF, rather than
+  all images.
+
+[[examples]]
+== EXAMPLES
+
+.Convert a GIF to a BRL-CAD pix file
+====
+[source,bash]
+----
+gif-fb -F /dev/mem image.gif && fb-pix -F /dev/mem image.pix
+----
+Decode a GIF into an in-memory frame buffer and capture it with *fb-pix*(1),
+producing a *pix*(5) file for use with the rest of the BRL-CAD image tools.
+====
+
+.View a single frame of an animated GIF, zoomed
+====
+[source,bash]
+----
+gif-fb -z -i 3 animation.gif
+----
+Display only the third image of a multi-image GIF on the default frame buffer,
+zoomed to fill the display while preserving square pixels.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *gif2fb*(1), *fb-pix*(1), *fb-png*(1), *pix-fb*(1), *fbclear*(1), *pix*(5)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

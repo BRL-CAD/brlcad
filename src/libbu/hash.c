@@ -1,7 +1,7 @@
 /*                          H A S H . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2025 United States Government as represented by
+ * Copyright (c) 2004-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -317,7 +317,7 @@ bu_hash_rm(struct bu_hash_tbl *hsh_tbl, const uint8_t *key, size_t key_len)
 
     hsh_entry = hsh_tbl->lists[idx];
     prev_entry = NULL;
-    while (!found) {
+    while (hsh_entry) {
 	/* compare key lengths first for performance */
 	if ((size_t)hsh_entry->key_len != key_len) {
 	    prev_entry = hsh_entry;
@@ -335,7 +335,13 @@ bu_hash_rm(struct bu_hash_tbl *hsh_tbl, const uint8_t *key, size_t key_len)
 	    }
 	    free(hsh_entry->key);
 	    free(hsh_entry);
+	    if (hsh_tbl->num_entries > 0)
+		hsh_tbl->num_entries--;
+	    break;
 	}
+
+	prev_entry = hsh_entry;
+	hsh_entry = hsh_entry->next;
     }
 
     bu_semaphore_release(hsh_tbl->semaphore);
@@ -488,6 +494,73 @@ bu_data_hash_val(struct bu_data_hash_state *s)
     XXH64_hash_t hash_val;
     hash_val = XXH64_digest(s->i->h_state);
     return (unsigned long long)hash_val;
+}
+
+
+/*** 128-bit API (XXH3-128) ***/
+
+bu_h128_t
+bu_data_hash128(const void *data, size_t len)
+{
+    bu_h128_t result = {0};
+    XXH128_hash_t h;
+    if (!data || !len)
+	return result;
+    h = XXH3_128bits(data, len);
+    result.w[0] = h.low64;
+    result.w[1] = h.high64;
+    return result;
+}
+
+struct bu_data_hash128_impl {
+    XXH3_state_t *h_state;
+};
+
+struct bu_data_hash128_state *
+bu_data_hash128_create(void)
+{
+    struct bu_data_hash128_state *s;
+    BU_GET(s, struct bu_data_hash128_state);
+    BU_GET(s->i, struct bu_data_hash128_impl);
+    s->i->h_state = XXH3_createState();
+    XXH3_128bits_reset(s->i->h_state);
+    return s;
+}
+
+void
+bu_data_hash128_destroy(struct bu_data_hash128_state *s)
+{
+    if (!s)
+	return;
+    if (s->i) {
+	if (s->i->h_state)
+	    XXH3_freeState(s->i->h_state);
+	s->i->h_state = NULL;
+	BU_PUT(s->i, struct bu_data_hash128_impl);
+    }
+    s->i = NULL;
+    BU_PUT(s, struct bu_data_hash128_state);
+}
+
+void
+bu_data_hash128_update(struct bu_data_hash128_state *s, const void *data, size_t len)
+{
+    if (!s || !data || !len)
+	return;
+    XXH3_128bits_update(s->i->h_state, data, len);
+}
+
+bu_h128_t
+bu_data_hash128_val(struct bu_data_hash128_state *s)
+{
+    bu_h128_t result = {0};
+    XXH128_hash_t h;
+    if (!s || !s->i || !s->i->h_state)
+	return result;
+    h = XXH3_128bits_digest(s->i->h_state);
+    result.w[0] = h.low64;
+    result.w[1] = h.high64;
+    return result;
 }
 
 

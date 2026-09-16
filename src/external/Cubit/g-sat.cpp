@@ -1,7 +1,7 @@
 /*                       G - S A T . C P P
  * BRL-CAD
  *
- * Copyright (c) 1993-2025 United States Government as represented by
+ * Copyright (c) 1993-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -1068,7 +1068,7 @@ booltree_evaluate(tree *tp, resource *resp)
 	if (tl == 0 || !tl->tr_d.td_r)
 	    return 0;
 	if (op == DB_OP_INTERSECT) {
-	    db_free_tree(tl, resp);
+	    db_free_tree(tl);
 	    tp->tr_b.tb_left = TREE_NULL;
 	    tp->tr_op = OP_NOP;
 	    return 0;
@@ -1091,8 +1091,8 @@ booltree_evaluate(tree *tp, resource *resp)
     snprintf(name, namelen, "(%s %c %s)", tl->tr_d.td_name, op, tr->tr_d.td_name);
 
     /* Clean up child tree nodes (and their names) */
-    db_free_tree(tl, resp);
-    db_free_tree(tr, resp);
+    db_free_tree(tl);
+    db_free_tree(tr);
 
     /* Convert argument binary node into a result node */
     tp->tr_op = OP_DB_LEAF;
@@ -1184,7 +1184,6 @@ main(int argc, char *argv[])
     RT_DBTS_INIT(&init_state);
     init_state.ts_dbip = rtip->rti_dbip;
     init_state.ts_rtip = rtip;
-    init_state.ts_resp = NULL;
     init_state.ts_tol = &tol;
     init_state.ts_ttol = &ttol;
     bu_avs_init(&init_state.ts_attrs, 1, "avs in tree_state");

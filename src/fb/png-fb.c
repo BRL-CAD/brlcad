@@ -1,7 +1,7 @@
 /*                        P N G - F B . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2025 United States Government as represented by
+ * Copyright (c) 1998-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -26,6 +26,8 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 
 #include "bio.h"
@@ -34,6 +36,7 @@
 
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "vmath.h"
@@ -49,7 +52,7 @@ static int scanpix;		/* # of pixels of scanline */
 static int multiple_lines = 0;	/* Streamlined operation */
 
 static char *framebuffer = NULL;
-static char *file_name;
+static const char *file_name;
 static FILE *fp_in;
 
 static int fileinput = 0;		/* file of pipe on input? */
@@ -76,6 +79,20 @@ Usage: png-fb [-H -i -c -v -z -1] [-m #lines] [-F framebuffer]\n\
 	[-x file_xoff] [-y file_yoff] [-X scr_xoff] [-Y scr_yoff]\n\
 	[-S squarescrsize] [-W scr_width] [-N scr_height] [file.png]\n";
 
+static int
+parse_positive_double_arg(const char *arg, double *value, const char *label)
+{
+    double _d;
+    if (!bu_opt_scan_double(arg, &_d, label))
+	return 0;
+    if (_d <= 0.0) {
+	bu_log("%s: %s must be positive '%s'\n", bu_getprogname(), label, arg);
+	return 0;
+    }
+    *value = _d;
+    return 1;
+}
+
 int
 get_args(int argc, char **argv)
 {
@@ -87,10 +104,12 @@ get_args(int argc, char **argv)
 		one_line_only = 1;
 		break;
 	    case 'm':
-		multiple_lines = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &multiple_lines, 0, INT_MAX, "line count"))
+		    return 0;
 		break;
 	    case 'g':
-		def_screen_gamma = atof(bu_optarg);
+		if (!parse_positive_double_arg(bu_optarg, &def_screen_gamma, "screen gamma"))
+		    return 0;
 		break;
 	    case 'H':
 		header_only = 1;
@@ -111,25 +130,33 @@ get_args(int argc, char **argv)
 		framebuffer = bu_optarg;
 		break;
 	    case 'x':
-		file_xoff = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &file_xoff, 0, INT_MAX, "file x offset"))
+		    return 0;
 		break;
 	    case 'y':
-		file_yoff = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &file_yoff, 0, INT_MAX, "file y offset"))
+		    return 0;
 		break;
 	    case 'X':
-		scr_xoff = atoi(bu_optarg);
+		if (!bu_opt_scan_int(bu_optarg, &scr_xoff, "screen x offset"))
+		    return 0;
 		break;
 	    case 'Y':
-		scr_yoff = atoi(bu_optarg);
+		if (!bu_opt_scan_int(bu_optarg, &scr_yoff, "screen y offset"))
+		    return 0;
 		break;
 	    case 'S':
-		scr_height = scr_width = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &scr_width, 0, INT_MAX, "screen size"))
+		    return 0;
+		scr_height = scr_width;
 		break;
 	    case 'W':
-		scr_width = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &scr_width, 0, INT_MAX, "screen width"))
+		    return 0;
 		break;
 	    case 'N':
-		scr_height = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &scr_height, 0, INT_MAX, "screen height"))
+		    return 0;
 		break;
 
 	    default:		/* '?''h' */
@@ -155,8 +182,10 @@ get_args(int argc, char **argv)
 	fileinput++;
     }
 
-    if (argc > ++bu_optind)
-	fprintf(stderr, "png-fb: excess argument(s) ignored\n");
+    if (argc > ++bu_optind) {
+	fprintf(stderr, "png-fb: excess argument(s) not supported\n");
+	return 0;
+    }
 
     return 1;		/* OK */
 }

@@ -1,0 +1,47 @@
+= ROTOBJ(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+rotobj - Rotates the currently edited object by _z_ angle degrees about the _z_ direction, _y_ angle degrees about the _y_ direction, and _x_ angle degrees about the _x_ direction in that order.
+
+== SYNOPSIS
+
+[source]
+----
+rotobj [-i] [x-angle] [y-angle] [z-angle]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Rotates the currently edited object by _z_ angle degrees about the _z_ direction, _y_ angle degrees about the _y_ direction, and _x_ angle degrees about the _x_ direction in that order. If an _-i_ option is included, then the rotations are treated as increments to the previous rotations. MGED must be in the matrix edit mode for this command to be useful. The *p* command provides a similar capability for primitive editing.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *rotobj* command to rotate the currently edited object by a given number of degrees in the _x_, _y_, and _z_ directions.
+
+.Rotate the current object by a specified number of degrees in the _x, y,_ and _z_ directions.
+[example]
+====
+mged>**rotobj 0 0 25**
+
+Rotates the currently edited object by 25° about the _z_ direction from the original orientation.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

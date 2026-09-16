@@ -1,7 +1,7 @@
 /*                       T E A _ N M G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2025 United States Government as represented by
+ * Copyright (c) 2004-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -160,9 +160,9 @@ int
 main(int argc, char **argv)
 {
     struct nmgregion *r;
-    char *id_name = "BRL-CAD t-NURBS NMG Example";
-    char *tea_name = "UtahTeapot";
-    char *uplot_name = "teapot.plot3";
+    const char *id_name = "BRL-CAD t-NURBS NMG Example";
+    const char *tea_name = "UtahTeapot";
+    const char *uplot_name = "teapot.plot3";
     struct bu_list vhead;
     FILE *fp;
     int i;
@@ -209,8 +209,15 @@ main(int argc, char **argv)
 	dump_patch(patches[i]);
     }
 
-    /* Connect up the coincident vertexuses and edges */
-    (void)nmg_model_fuse(m, vlfree, &tol);
+    /* Connect up the coincident vertexuses.  Note that we only fuse
+     * vertices here, not the full model: nmg_model_fuse() also fuses
+     * face geometry, and these faces use t-NURBS (face_g_snurb)
+     * geometry which the face-fusing code cannot handle -- it would
+     * bu_bomb() with "bad pointer ... s/b face_g_plane, was
+     * face_g_snurb".  Vertex fusing is sufficient to stitch the
+     * coincident patch corners together.
+     */
+    (void)nmg_vertex_fuse(&m->magic, vlfree, &tol);
 
     /* write NMG to output file */
     (void)mk_nmg(outfp, tea_name, m);

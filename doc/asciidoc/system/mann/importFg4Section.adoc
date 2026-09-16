@@ -1,0 +1,46 @@
+= IMPORTFG4SECTION(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+importfg4section - create an object by importing the specified section
+
+== SYNOPSIS
+
+[source]
+----
+importfg4section obj "section_data"
+----
+
+[[description]]
+== DESCRIPTION
+
+The *importfg4section* command parses a FASTGEN4 section (provided as a single, multi-line string) and uses it to construct a new BOT (Bag of Triangles) primitive.
+
+The command extracts structural geometry data by parsing `GRID` (vertex coordinates), `CTRI` (triangular face), and `CQUAD` (quadrilateral face) records from the provided string. Any quadrilateral faces (`CQUAD`) are automatically split into two triangular faces. The resulting geometry is saved to the database under the specified `obj` name.
+
+The arguments are:
+* *obj* : The name of the new BOT primitive to create.
+* *"section_data"* : A string containing the raw FASTGEN4 section data to be parsed. 
+
+[[examples]]
+== EXAMPLES
+
+.Importing FASTGEN4 geometry data
+[example]
+====
+mged> **importfg4section wing.bot $fg4_data_string**
+
+Creates a new BOT primitive named `wing.bot` by parsing the raw FASTGEN4 geometry records stored in the variable `$fg4_data_string`.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

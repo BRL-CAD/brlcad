@@ -1,7 +1,7 @@
 /*                         T R I . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,6 +28,7 @@
 #include <set>
 #include <vector>
 #include <algorithm>
+#include <cmath>
 #include <sstream>
 #include <iostream>
 #include <fstream>
@@ -37,26 +38,101 @@
 
 #include "manifold/manifold.h"
 
+#include "bg/trimesh.h"
 #include "bu/app.h"
 #include "bu/path.h"
+#include "bu/process.h"
 #include "bu/snooze.h"
-#include "bu/time.h"
+#include "bu/datetime.h"
 #include "../ged_private.h"
 #include "./ged_facetize.h"
 #include "./tess_opts.h"
-#include "./subprocess.h"
+#include "./worker.h"
+
+static const size_t FACETIZE_EMPTY_CHECK_CROFTON_RAYS = 800u;
+static const double FACETIZE_EMPTY_CHECK_REL_VOL_TOL = 1.0e-9;
+static const double FACETIZE_EMPTY_CHECK_ABS_VOL_TOL = 1.0e-12;
+static const int FACETIZE_METHOD_COMMAND_INDEX = 5;
+static const double FACETIZE_USEC_TO_SEC_DIVISOR = 1.0e6;
+static const double FACETIZE_WRITE_TIMEOUT_FACTOR = 10.0;
+static const double FACETIZE_WRITE_TIMEOUT_MIN_SEC = 5.0;
+static const double FACETIZE_WRITE_TIMEOUT_MAX_SEC = 300.0;
+static const double FACETIZE_IO_PROBE_DURATION_SEC = 1.0;
+static const size_t FACETIZE_MIB_BYTES = 1024u * 1024u;
+static const size_t FACETIZE_IO_PROBE_CHUNK_BYTES = FACETIZE_MIB_BYTES;
+static const size_t FACETIZE_IO_PROBE_MAX_BYTES = 128u * FACETIZE_MIB_BYTES;
+static const size_t FACETIZE_WRITE_RATE_MIN_SAMPLE_BYTES = FACETIZE_MIB_BYTES;
+static const size_t FACETIZE_IO_BUFFER_SIZE = 4096u;
+static const int FACETIZE_POLL_INTERVAL_USEC = 1000;
+static const int FACETIZE_PROGRESS_BATCH_MIN = 100;
+static const int FACETIZE_PROGRESS_INTERVAL_SEC = 5;
+static const int FACETIZE_SHUTDOWN_TIMEOUT_SEC = 5;
+
+enum tess_work_type {
+    TESS_WORK_ORIGINAL_PRIMITIVE,
+    TESS_WORK_PERTURBATION_VARIANT,
+    TESS_WORK_PLATE_MODE_PRIMITIVE
+};
+
+static const char *
+tess_work_description(enum tess_work_type work_type, int count)
+{
+    switch (work_type) {
+	case TESS_WORK_ORIGINAL_PRIMITIVE:
+	    return (count == 1) ? "original primitive" : "original primitives";
+	case TESS_WORK_PERTURBATION_VARIANT:
+	    return (count == 1) ? "perturbation variant" : "perturbation variants";
+	case TESS_WORK_PLATE_MODE_PRIMITIVE:
+	    return (count == 1) ? "plate-mode primitive" : "plate-mode primitives";
+    }
+
+    return (count == 1) ? "input" : "inputs";
+}
+
+static const char *
+bool_op_name(int op)
+{
+    switch (op) {
+	case OP_UNION:
+	    return "UNION";
+	case OP_INTERSECT:
+	    return "INTERSECT";
+	case OP_SUBTRACT:
+	    return "SUBTRACT";
+	default:
+	    return "UNKNOWN";
+    }
+}
+
+static void
+facetize_log_current_failure(struct _ged_facetize_state *s, const char *fallback)
+{
+    const char *msg = fallback ? fallback : "unknown failure";
+    if (s && s->failure_msg && bu_vls_strlen(s->failure_msg))
+	msg = bu_vls_cstr(s->failure_msg);
+
+    facetize_log(s, 0, " failed: %s\n", msg);
+}
 
 static int
-bot_to_manifold(void **out, struct db_tree_state *tsp, struct rt_db_internal *ip, int flip)
+bot_to_manifold(struct _ged_facetize_state *s, void **out, struct db_tree_state *tsp, struct rt_db_internal *ip, int flip, const char *leaf_name)
 {
-    if (!out || !tsp || !ip)
+    if (!out || !tsp || !ip) {
+	facetize_failure(s, "internal error preparing Manifold leaf '%s': missing conversion input", leaf_name ? leaf_name : "(unknown)");
 	return BRLCAD_ERROR;
+    }
 
     // By this point all leaves should be bots
-    if (ip->idb_minor_type != ID_BOT)
+    if (ip->idb_minor_type != ID_BOT) {
+	facetize_failure(s, "leaf '%s' was not converted to a BoT before boolean evaluation (minor type %d)", leaf_name ? leaf_name : "(unknown)", ip->idb_minor_type);
 	return BRLCAD_ERROR;
+    }
 
     struct rt_bot_internal *nbot = (struct rt_bot_internal *)ip->idb_ptr;
+    if (!nbot) {
+	facetize_failure(s, "leaf '%s' has no BoT data after tessellation", leaf_name ? leaf_name : "(unknown)");
+	return BRLCAD_ERROR;
+    }
 
     if (!nbot->num_vertices) {
 	// Trivial case
@@ -74,8 +150,20 @@ bot_to_manifold(void **out, struct db_tree_state *tsp, struct rt_db_internal *ip
 	}
     }
 
-    if (nbot->num_vertices < 3)
+    if (nbot->num_vertices < 3) {
+	facetize_failure(s, "BoT leaf '%s' has only %zu vertices; at least 3 are needed for a manifold mesh", leaf_name ? leaf_name : "(unknown)", nbot->num_vertices);
 	return BRLCAD_ERROR;
+    }
+
+    if (!nbot->num_faces) {
+	facetize_failure(s, "BoT leaf '%s' has %zu vertices but no faces", leaf_name ? leaf_name : "(unknown)", nbot->num_vertices);
+	return BRLCAD_ERROR;
+    }
+
+    if (!nbot->vertices || !nbot->faces) {
+	facetize_failure(s, "BoT leaf '%s' is missing %s array data", leaf_name ? leaf_name : "(unknown)", !nbot->vertices ? "vertex" : "face");
+	return BRLCAD_ERROR;
+    }
 
     // NOTE -  if long-thin-dense triangle fans end up causing super-long
     // evaluation times here the same way we did in plate mode extrusion, we
@@ -84,16 +172,33 @@ bot_to_manifold(void **out, struct db_tree_state *tsp, struct rt_db_internal *ip
     // justify it, since we would have to support the parameters bot extrude
     // needs here as well.
     manifold::MeshGL64 bot_mesh;
-    for (size_t j = 0; j < nbot->num_vertices*3 ; j++)
+    for (size_t j = 0; j < nbot->num_vertices*3 ; j++) {
+	if (!std::isfinite(nbot->vertices[j])) {
+	    facetize_failure(s, "BoT leaf '%s' has a non-finite vertex coordinate at vertex %zu", leaf_name ? leaf_name : "(unknown)", j / 3);
+	    return BRLCAD_ERROR;
+	}
 	bot_mesh.vertProperties.insert(bot_mesh.vertProperties.end(), nbot->vertices[j]);
+    }
     if (nbot->orientation == RT_BOT_CW) {
 	for (size_t j = 0; j < nbot->num_faces; j++) {
+	    for (int k = 0; k < 3; k++) {
+		if (nbot->faces[3*j+k] < 0 || (size_t)nbot->faces[3*j+k] >= nbot->num_vertices) {
+		    facetize_failure(s, "BoT leaf '%s' face %zu references invalid vertex index %d (valid range 0..%zu)", leaf_name ? leaf_name : "(unknown)", j, nbot->faces[3*j+k], nbot->num_vertices - 1);
+		    return BRLCAD_ERROR;
+		}
+	    }
 	    bot_mesh.triVerts.insert(bot_mesh.triVerts.end(), nbot->faces[3*j+0]);
 	    bot_mesh.triVerts.insert(bot_mesh.triVerts.end(), nbot->faces[3*j+2]);
 	    bot_mesh.triVerts.insert(bot_mesh.triVerts.end(), nbot->faces[3*j+1]);
 	}
     } else {
 	for (size_t j = 0; j < nbot->num_faces; j++) {
+	    for (int k = 0; k < 3; k++) {
+		if (nbot->faces[3*j+k] < 0 || (size_t)nbot->faces[3*j+k] >= nbot->num_vertices) {
+		    facetize_failure(s, "BoT leaf '%s' face %zu references invalid vertex index %d (valid range 0..%zu)", leaf_name ? leaf_name : "(unknown)", j, nbot->faces[3*j+k], nbot->num_vertices - 1);
+		    return BRLCAD_ERROR;
+		}
+	    }
 	    bot_mesh.triVerts.insert(bot_mesh.triVerts.end(), nbot->faces[3*j+0]);
 	    bot_mesh.triVerts.insert(bot_mesh.triVerts.end(), nbot->faces[3*j+1]);
 	    bot_mesh.triVerts.insert(bot_mesh.triVerts.end(), nbot->faces[3*j+2]);
@@ -103,6 +208,10 @@ bot_to_manifold(void **out, struct db_tree_state *tsp, struct rt_db_internal *ip
     manifold::Manifold bot_manifold = manifold::Manifold(bot_mesh);
     if (bot_manifold.Status() != manifold::Manifold::Error::NoError) {
 	// Urk - we got a mesh, but it's no good for a Manifold(??)
+	facetize_failure(s, "Manifold rejected BoT leaf '%s': %s (vertices=%zu faces=%zu). Check the primitive with 'bot check' or 'lint'.",
+		leaf_name ? leaf_name : "(unknown)",
+		manifold::ToString(bot_manifold.Status()).c_str(),
+		nbot->num_vertices, nbot->num_faces);
 	return BRLCAD_ERROR;
     }
 
@@ -145,9 +254,68 @@ static int bot_flipped(mat_t *m)
     return 0;
 }
 
+static double
+bot_bbox_volume(const struct rt_bot_internal *bot)
+{
+    if (!bot || !bot->vertices || bot->num_vertices < 1)
+	return 0.0;
+
+    point_t bmin, bmax;
+    VSETALL(bmin, INFINITY);
+    VSETALL(bmax, -INFINITY);
+    for (size_t i = 0; i < bot->num_vertices; i++) {
+	const double *v = &bot->vertices[3*i];
+	if (v[0] < bmin[0]) bmin[0] = v[0];
+	if (v[1] < bmin[1]) bmin[1] = v[1];
+	if (v[2] < bmin[2]) bmin[2] = v[2];
+	if (v[0] > bmax[0]) bmax[0] = v[0];
+	if (v[1] > bmax[1]) bmax[1] = v[1];
+	if (v[2] > bmax[2]) bmax[2] = v[2];
+    }
+
+    vect_t d;
+    VSUB2(d, bmax, bmin);
+    if (d[0] <= 0.0 || d[1] <= 0.0 || d[2] <= 0.0)
+	return 0.0;
+    return d[0] * d[1] * d[2];
+}
+
+static int
+csg_crofton_volume(struct db_i *dbip, const char *obj_name, double *out_vol)
+{
+    if (!dbip || !obj_name || !out_vol)
+	return BRLCAD_ERROR;
+
+    *out_vol = -1.0;
+    point_t focus_min, focus_max;
+    int have_focus = (_ged_facetize_csg_bbox(dbip, obj_name, focus_min, focus_max) == BRLCAD_OK);
+
+    struct rt_i *rtip = rt_i_create(dbip);
+    if (!rtip)
+	return BRLCAD_ERROR;
+    if (rt_gettree(rtip, obj_name) != 0) {
+	rt_i_destroy(rtip);
+	return BRLCAD_ERROR;
+    }
+    rt_prep_parallel(rtip, 1);
+
+    double sa = 0.0, vol = 0.0;
+    struct rt_crofton_params crp = {};
+    crp.n_rays = FACETIZE_EMPTY_CHECK_CROFTON_RAYS;
+    int rc = rt_crofton_shoot(&sa, &vol, NULL, NULL, NULL, NULL, NULL,
+	    rtip, &crp,
+	    have_focus ? focus_min : NULL,
+	    have_focus ? focus_max : NULL);
+    rt_i_destroy(rtip);
+    if (rc < 0)
+	return BRLCAD_ERROR;
+    *out_vol = vol;
+    return BRLCAD_OK;
+}
+
 // Customized version of rt_booltree_leaf_tess for Manifold processing
 static union tree *
-_booltree_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *UNUSED(data))
+_booltree_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *data)
 {
     int ts_status = 0;
     union tree *curtree;
@@ -165,7 +333,6 @@ _booltree_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pathp,
 	NMG_CK_MODEL(*tsp->ts_m);
     BN_CK_TOL(tsp->ts_tol);
     BG_CK_TESS_TOL(tsp->ts_ttol);
-    RT_CK_RESOURCE(tsp->ts_resp);
 
     BU_GET(curtree, union tree);
     RT_TREE_INIT(curtree);
@@ -202,11 +369,71 @@ _booltree_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pathp,
     // to the values in ts_mat, the BoT ends up inside-out when read in.
     int flip = bot_flipped(&tsp->ts_mat);
 
+    // Phase C: variant BoT override.
+    // If a perturbed variant was pre-tessellated for this leaf instance, use
+    // it instead of the original BoT to avoid coplanar face issues.
+    struct rt_db_internal var_intern;
+    RT_DB_INTERNAL_INIT(&var_intern);
+    bool var_loaded = false;
+    struct rt_db_internal *effective_ip = ip;
+    struct _ged_facetize_state *s = (struct _ged_facetize_state *)data;
+    if (s && s->use_variant_plan && s->variant_plan) {
+	FacetizeVariantPlan *vplan = (FacetizeVariantPlan *)s->variant_plan;
+	char *path_str = db_path_to_string(pathp);
+	/* Reconstruct the same role-keyed key used in plan.cpp Phase C:
+	 * TS_SOFAR_MINUS is set when the leaf is on the subtractive side of
+	 * any boolean node encountered above it in the current walk. */
+	bool is_sub_ctx = (tsp->ts_sofar & TS_SOFAR_MINUS) != 0;
+	std::string role_key = std::string(path_str) +
+	    (is_sub_ctx ? "#sub" : "#base");
+	bu_free(path_str, "path_str");
+	auto it = vplan->inst_to_variant.find(role_key);
+	if (it != vplan->inst_to_variant.end()) {
+	    struct directory *vdp =
+		db_lookup(tsp->ts_dbip, it->second.c_str(), LOOKUP_QUIET);
+	    if (vdp && vdp->d_minor_type == ID_BOT) {
+		if (rt_db_get_internal(&var_intern, vdp, tsp->ts_dbip, NULL) >= 0) {
+		    effective_ip = &var_intern;
+		    var_loaded = true;
+		}
+	    }
+	    /* If variant lookup failed (no BoT yet), fall through to original */
+	}
+    }
+
     void *odata = NULL;
-    ts_status = bot_to_manifold(&odata, tsp, ip, flip);
+    ts_status = bot_to_manifold(s, &odata, tsp, effective_ip, flip, dp->d_namep);
+
+    if (var_loaded)
+	rt_db_free_internal(&var_intern);
     if (ts_status < 0) {
-	// If we failed, return TREE_NULL
+	if (s && s->tolerate_failures) {
+	    facetize_tolerated_failure(s, "leaf '%s' omitted during boolean preparation: %s",
+		    dp->d_namep,
+		    (s->failure_msg && bu_vls_strlen(s->failure_msg)) ? bu_vls_cstr(s->failure_msg) : "unable to convert BoT to Manifold");
+	    facetize_failure_clear(s);
+	    return curtree;
+	}
+
+	if (s)
+	    s->error_flag = 1;
 	return TREE_NULL;
+    }
+
+    /* Diagnostic: log leaf name, role, and mesh SA */
+    {
+	bool is_sub_ctx = (tsp->ts_sofar & TS_SOFAR_MINUS) != 0;
+	double leaf_sa = 0.0;
+	if (odata) {
+	    manifold::Manifold *lm = (manifold::Manifold *)odata;
+	    leaf_sa = lm->SurfaceArea();
+	}
+	if (s && s->verbosity > 1) {
+	    bu_log("[LEAF_TESS] name=%-30s  role=%s  mesh_SA=%.6f mm^2\n",
+		   dp->d_namep,
+		   is_sub_ctx ? "SUB " : "BASE",
+		   leaf_sa);
+	}
     }
 
     BU_GET(curtree, union tree);
@@ -217,7 +444,8 @@ _booltree_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pathp,
     curtree->tr_d.td_d = odata;
     curtree->tr_d.td_i = NULL;
 
-    if (RT_G_DEBUG&RT_DEBUG_TREEWALK)
+    bool should_log_treewalk = (s && s->verbosity > 1 && (RT_G_DEBUG & RT_DEBUG_TREEWALK));
+    if (should_log_treewalk)
 	bu_log("_booltree_leaf_tess(%s) OK\n", dp->d_namep);
 
     return curtree;
@@ -285,7 +513,14 @@ manifold_do_bool(
     // If we have a left half space, bail - that's not well defined for producing
     // a Manifold closed volume
     if (tl->tr_d.td_i) {
-	bu_log("Error - internal pointer on left boolean input\n");
+	facetize_failure(s, "unsupported boolean tree: left input '%s' to %s is a halfspace. Halfspaces must be used as right-side subtract/intersect operands for facetize Manifold evaluation.",
+		tl->tr_d.td_name ? tl->tr_d.td_name : "(unknown)", bool_op_name(op));
+	if (!s->tolerate_failures)
+	    s->error_flag = 1;
+	else {
+	    facetize_tolerated_failure(s, "boolean subtree omitted: %s", bu_vls_cstr(s->failure_msg));
+	    facetize_failure_clear(s);
+	}
 	return -1;
     }
 
@@ -301,6 +536,14 @@ manifold_do_bool(
     bool delete_right = false;
     if (tr->tr_d.td_i) {
 	if (tr->tr_d.td_i->idb_minor_type != ID_HALF) {
+	    facetize_failure(s, "unsupported boolean tree: right input '%s' to %s has internal type %d, expected halfspace",
+		    tr->tr_d.td_name ? tr->tr_d.td_name : "(unknown)", bool_op_name(op), tr->tr_d.td_i->idb_minor_type);
+	    if (!s->tolerate_failures)
+		s->error_flag = 1;
+	    else {
+		facetize_tolerated_failure(s, "boolean subtree omitted: %s", bu_vls_cstr(s->failure_msg));
+		facetize_failure_clear(s);
+	    }
 	    return -1;
 	}
 	if (!lm) {
@@ -342,11 +585,23 @@ manifold_do_bool(
 	// We should have valid inputs - proceed
 	facetize_log(s, 1, "Trying boolean op:  %s, %s\n", tl->tr_d.td_name, tr->tr_d.td_name);
 
+	static const char *op_names[] = {"ADD","INTERSECT","SUBTRACT","ADD"};
+	int opidx = (op == OP_INTERSECT) ? 1 : (op == OP_SUBTRACT) ? 2 : 0;
+	if (s->verbosity > 1) {
+	    bu_log("[BOOL_OP] %-8s L=%-30s SA=%.4f  R=%-30s SA=%.4f\n",
+		   op_names[opidx],
+		   tl->tr_d.td_name, lm->SurfaceArea(),
+		   tr->tr_d.td_name, rm->SurfaceArea());
+	}
+
 	manifold::Manifold bool_out;
 	try {
 	    bool_out = lm->Boolean(*rm, manifold_op);
 	} catch (...) {
-	    facetize_log(s, 0, "Manifold boolean library threw failure\n");
+	    facetize_failure(s, "Manifold boolean %s threw an exception for left '%s' and right '%s'",
+		    bool_op_name(op),
+		    tl->tr_d.td_name ? tl->tr_d.td_name : "(unknown)",
+		    tr->tr_d.td_name ? tr->tr_d.td_name : "(unknown)");
 	    // write out the failing inputs to files to aid in debugging
 	    const char *evar = getenv("GED_MANIFOLD_DEBUG");
 	    if (evar && strlen(evar)) {
@@ -361,6 +616,27 @@ manifold_do_bool(
 	    failed = 1;
 	}
 
+	if (!failed) {
+	    if (bool_out.Status() != manifold::Manifold::Error::NoError) {
+		facetize_failure(s, "Manifold boolean %s failed for left '%s' and right '%s': %s",
+			bool_op_name(op),
+			tl->tr_d.td_name ? tl->tr_d.td_name : "(unknown)",
+			tr->tr_d.td_name ? tr->tr_d.td_name : "(unknown)",
+			manifold::ToString(bool_out.Status()).c_str());
+		failed = 1;
+	    }
+	}
+
+	if (!failed) {
+	    if (s->verbosity > 1) {
+		bu_log("[BOOL_OP] %-8s L=%-30s  R=%-30s  result_SA=%.4f\n",
+		       op_names[opidx],
+		       tl->tr_d.td_name, tr->tr_d.td_name,
+		       bool_out.SurfaceArea());
+	    }
+	    result = new manifold::Manifold(bool_out);
+	}
+
 	// If we're debugging and need to capture OBJ meshes for "successful" cases can use GED_MANIFOLD_DEBUG env var.
 	const char *evar = getenv("GED_MANIFOLD_DEBUG");
 	if (evar && strlen(evar)) {
@@ -371,9 +647,6 @@ manifold_do_bool(
 	    lm->WriteOBJ(lofile); rm->WriteOBJ(rofile); bool_out.WriteOBJ(oofile);
 	    lofile.close(); rofile.close(); oofile.close();
 	}
-
-	if (!failed)
-	    result = new manifold::Manifold(bool_out);
     }
 
     // Memory cleanup
@@ -394,6 +667,14 @@ manifold_do_bool(
     }
 
     if (failed) {
+	if (!s->tolerate_failures) {
+	    s->error_flag = 1;
+	} else {
+	    facetize_tolerated_failure(s, "boolean %s subtree omitted: %s",
+		    bool_op_name(op),
+		    (s->failure_msg && bu_vls_strlen(s->failure_msg)) ? bu_vls_cstr(s->failure_msg) : "Manifold boolean evaluation failed");
+	    facetize_failure_clear(s);
+	}
 	tp->tr_d.td_d = NULL;
 	return -1;
     }
@@ -406,31 +687,37 @@ manifold_do_bool(
 std::vector<std::string>
 tess_avail_methods()
 {
-
     // Build up the path to the ged_exec executable
     char tess_exec[MAXPATHLEN];
     bu_dir(tess_exec, MAXPATHLEN, BU_DIR_BIN, "ged_exec", BU_DIR_EXT, NULL);
 
-    const char *tess_cmd[MAXPATHLEN] = {NULL};
+    const char *tess_cmd[4] = {NULL};
     tess_cmd[ 0] = tess_exec;
     tess_cmd[ 1] = "facetize_process";
     tess_cmd[ 2] = "--list-methods";
     tess_cmd[ 3] = NULL;
 
-    struct bu_process* p;
-    bu_process_create(&p, tess_cmd, BU_PROCESS_HIDE_WINDOW);
-
-    char mraw[MAXPATHLEN] = {'\0'};
-    int read_res = bu_process_read_n(p, BU_PROCESS_STDOUT, MAXPATHLEN, mraw);
-
-    if (bu_process_wait_n(&p, 0) || (read_res <= 0)) {
-	// wait error or read error
-	bu_log("%s %s - wait or read error\n", tess_cmd[0], tess_cmd[1]);
-	std::vector<std::string> empty;
-	return empty;
+    struct bu_process *p = NULL;
+    bu_process_create(&p, tess_cmd,
+	    BU_PROCESS_HIDE_WINDOW | BU_PROCESS_OUT_EQ_ERR);
+    if (!p) {
+	bu_log("Unable to start %s %s\n", tess_cmd[0], tess_cmd[1]);
+	return std::vector<std::string>();
     }
 
-    std::string mstr = std::string((const char *)mraw);
+    char buffer[FACETIZE_IO_BUFFER_SIZE];
+    std::string mstr;
+    int read_res = 0;
+    while ((read_res = bu_process_read_n(p, BU_PROCESS_STDOUT,
+		    (int)sizeof(buffer), buffer)) > 0)
+	mstr.append(buffer, (size_t)read_res);
+
+    if (bu_process_wait_n(&p, 0) || mstr.empty()) {
+	// wait error or read error
+	bu_log("%s %s - wait or read error\n", tess_cmd[0], tess_cmd[1]);
+	return std::vector<std::string>();
+    }
+
     std::stringstream mstream(mstr);
     std::string m;
     std::vector<std::string> methods;
@@ -441,187 +728,561 @@ tess_avail_methods()
     return methods;
 }
 
-int
-tess_run(struct _ged_facetize_state *s, const char **tess_cmd, int tess_cmd_cnt, fastf_t max_time, int ocnt)
+static void
+tess_drain_stdout(struct _ged_facetize_state *s, struct bu_process *p,
+	FacetizeWorkerClient &worker_channel, FacetizeWorkerStatus *status)
 {
-    if (!s || !tess_cmd || !tess_cmd[3])
+    char buffer[FACETIZE_IO_BUFFER_SIZE];
+    int fd = bu_process_fileno(p, BU_PROCESS_STDOUT);
+    FacetizeWorkerStatus ignored_status;
+    FacetizeWorkerStatus *output_status = status ? status : &ignored_status;
+    std::vector<std::string> diagnostics;
+    while (fd >= 0 && bu_process_pending(fd)) {
+	int count = bu_process_read_n(p, BU_PROCESS_STDOUT,
+		(int)sizeof(buffer), buffer);
+	if (count <= 0)
+	    break;
+	worker_channel.consume_output(buffer, (size_t)count, *output_status,
+		diagnostics);
+    }
+    for (const std::string &diagnostic : diagnostics)
+	facetize_log(s, 1, "%s\n", diagnostic.c_str());
+}
+
+static void
+tess_drain_stderr(struct _ged_facetize_state *s, struct bu_process *p)
+{
+    char buffer[FACETIZE_IO_BUFFER_SIZE];
+    int fd = bu_process_fileno(p, BU_PROCESS_STDERR);
+    while (fd >= 0 && bu_process_pending(fd)) {
+	int count = bu_process_read_n(p, BU_PROCESS_STDERR,
+		(int)sizeof(buffer), buffer);
+	if (count <= 0)
+	    break;
+	facetize_log(s, 1, "%.*s", count, buffer);
+    }
+}
+
+static double
+tess_write_timeout_seconds(size_t payload_size, double profiled_write_bytes,
+	double profiled_write_usec)
+{
+    if (profiled_write_bytes <= 0.0 || profiled_write_usec <= 0.0)
+	return FACETIZE_WRITE_TIMEOUT_MAX_SEC;
+
+    double bytes_per_second = profiled_write_bytes *
+	FACETIZE_USEC_TO_SEC_DIVISOR / profiled_write_usec;
+    double projected_seconds = (double)payload_size / bytes_per_second;
+    double timeout_seconds = projected_seconds * FACETIZE_WRITE_TIMEOUT_FACTOR;
+    return std::min(FACETIZE_WRITE_TIMEOUT_MAX_SEC,
+	    std::max(FACETIZE_WRITE_TIMEOUT_MIN_SEC, timeout_seconds));
+}
+
+static int
+tess_write_probe(const char *work_file, double *written_bytes,
+	double *write_usec)
+{
+    if (!work_file || !written_bytes || !write_usec)
 	return BRLCAD_ERROR;
 
-    std::string wfile(tess_cmd[3]);
-    std::string wfilebak = wfile + std::string(".bak");
-    {
-	// Before the run, prepare a backup file
-	std::ifstream workfile(wfile, std::ios::binary);
-	std::ofstream bakfile(wfilebak, std::ios::binary);
-	if (!workfile.is_open() || !bakfile.is_open()) {
-	    bu_log("Unable to create backup file %s\n", wfilebak.c_str());
-	    return BRLCAD_ERROR;
-	}
-	bakfile << workfile.rdbuf();
-	workfile.close();
-	bakfile.close();
-    }
+    *written_bytes = 0.0;
+    *write_usec = 0.0;
+    std::string probe_file = std::string(work_file) + ".io_probe";
+    (void)bu_file_delete(probe_file.c_str());
 
-    // Record the actual command being use to trigger the subprocess
-    struct bu_vls cmd = BU_VLS_INIT_ZERO;
-    for (int i = 0; i < tess_cmd_cnt ; i++)
-	bu_vls_printf(&cmd, "%s ", tess_cmd[i]);
-    facetize_log(s, 2, "%s\n", bu_vls_cstr(&cmd));
-    bu_vls_free(&cmd);
+    std::vector<char> probe_data(FACETIZE_IO_PROBE_CHUNK_BYTES, 0);
+    std::ofstream output(probe_file.c_str(),
+	    std::ios::binary | std::ios::trunc);
+    if (!output.is_open())
+	return BRLCAD_ERROR;
 
-    // If we're not being verbose, just report how many objects we're working on
-    if (ocnt == 1)
-	facetize_log(s, 0, "Attempting to triangulate %s...", tess_cmd[tess_cmd_cnt-ocnt]);
-    if (ocnt > 1)
-	facetize_log(s, 0, "Attempting to triangulate %d solids...", ocnt);
-
+    size_t total_written = 0;
     int64_t start = bu_gettime();
-    int64_t elapsed = 0;
-    fastf_t seconds = 0.0;
-    tess_cmd[tess_cmd_cnt] = NULL; // Make sure we're NULL terminated
-    struct subprocess_s p;
-    if (subprocess_create(tess_cmd, subprocess_option_no_window|subprocess_option_enable_async|subprocess_option_inherit_environment, &p)) {
-	// Unable to create subprocess??
-	facetize_log(s, 0, " FAILED.\n");
-	facetize_log(s, 0, "Unable to create subprocess\n");
-
-	return BRLCAD_ERROR;
+    while (total_written < FACETIZE_IO_PROBE_MAX_BYTES) {
+	size_t write_size = std::min(FACETIZE_IO_PROBE_CHUNK_BYTES,
+		FACETIZE_IO_PROBE_MAX_BYTES - total_written);
+	output.write(probe_data.data(), (std::streamsize)write_size);
+	if (!output.good())
+	    break;
+	total_written += write_size;
+	if (bu_gettime() - start >=
+		BU_SEC2USEC(FACETIZE_IO_PROBE_DURATION_SEC))
+	    break;
     }
-    while (subprocess_alive(&p)) {
-	std::this_thread::sleep_for(std::chrono::milliseconds(100));
-	elapsed = bu_gettime() - start;
-	seconds = elapsed / 1000000.0;
+    output.flush();
+    output.close();
+    bool write_ok = output.good();
+    int64_t elapsed = bu_gettime() - start;
+    bool deleted = bu_file_delete(probe_file.c_str());
+    if (!write_ok || !deleted || !total_written || elapsed <= 0)
+	return BRLCAD_ERROR;
 
-	// Check for and pass along intermediate output
-	char curr_out[MAXPATHLEN*10] = {'\0'};
-	subprocess_read_stdout(&p, curr_out, MAXPATHLEN*10);
-	if (strlen(curr_out))
-	    facetize_log(s, 1, "%s", curr_out);
-	char curr_err[MAXPATHLEN*10] = {'\0'};
-	subprocess_read_stderr(&p, curr_err, MAXPATHLEN*10);
-	if (strlen(curr_err))
-	    facetize_log(s, 1, "%s", curr_err);
+    *written_bytes = (double)total_written;
+    *write_usec = (double)elapsed;
+    return BRLCAD_OK;
+}
 
-	if (seconds > max_time) {
-	    // if we timeout, cleanup and return error
-	    subprocess_terminate(&p);
+static int
+tess_file_copy(const char *source, const char *destination)
+{
+    std::ifstream input(source, std::ios::binary);
+    std::ofstream output(destination, std::ios::binary | std::ios::trunc);
+    if (!input.is_open() || !output.is_open())
+	return BRLCAD_ERROR;
 
-	    facetize_log(s, 0, " FAILED.\n");
+    output << input.rdbuf();
+    output.flush();
+    return (!input.bad() && output.good()) ? BRLCAD_OK : BRLCAD_ERROR;
+}
 
-	    facetize_log(s, 0, "tess_run subprocess killed %g %g\n", seconds, max_time);
-	    if (s->verbosity >= 0) {
-		char mraw[MAXPATHLEN*10] = {'\0'};
-		subprocess_read_stdout(&p, mraw, MAXPATHLEN*10);
-		if (strlen(mraw))
-		    facetize_log(s, 0, "%s\n", mraw);
-		char mraw2[MAXPATHLEN*10] = {'\0'};
-		subprocess_read_stderr(&p, mraw2, MAXPATHLEN*10);
-		if (strlen(mraw2))
-		    facetize_log(s, 0, "%s\n", mraw2);
-	    }
-	    subprocess_destroy(&p);
+static int
+tess_process_reap(struct _ged_facetize_state *s, struct bu_process **p,
+	FacetizeWorkerClient &worker_channel, bool terminate)
+{
+    if (!p || !*p)
+	return BRLCAD_ERROR;
+    if (terminate)
+	(void)bu_process_terminate(*p);
 
-	    // Because we had to kill the process, there's no way of knowing
-	    // whether we interrupted I/O in a state that could result in a
-	    // corrupted .g file.  Restore the pre-run state of the .g file -
-	    // we may have to redo some work, but this at least ensures we
-	    // won't have strange garbage corrupting subsequent processing.
-	    std::ifstream bakfile(wfilebak, std::ios::binary);
-	    std::ofstream workfile(wfile, std::ios::binary);
-	    if (!workfile.is_open() || !bakfile.is_open())
-		return BRLCAD_ERROR;
-	    workfile << bakfile.rdbuf();
-	    workfile.close();
-	    bakfile.close();
+    int64_t deadline = bu_gettime() +
+	BU_SEC2USEC(FACETIZE_SHUTDOWN_TIMEOUT_SEC);
+    int poll_result = bu_process_poll(*p, NULL);
+    while (poll_result == 0 && bu_gettime() < deadline) {
+	tess_drain_stdout(s, *p, worker_channel, NULL);
+	tess_drain_stderr(s, *p);
+	(void)bu_snooze(FACETIZE_POLL_INTERVAL_USEC);
+	poll_result = bu_process_poll(*p, NULL);
+    }
+    tess_drain_stdout(s, *p, worker_channel, NULL);
+    tess_drain_stderr(s, *p);
+    if (poll_result != 1)
+	(void)bu_process_terminate(*p);
+    return bu_process_wait_n(p, 0);
+}
 
+static int
+tess_process_stop(struct _ged_facetize_state *s, struct bu_process **p,
+	FILE *&worker_input, FacetizeWorkerClient &worker_channel, bool terminate)
+{
+    int status = tess_process_reap(s, p, worker_channel, terminate);
+    worker_input = NULL;
+    worker_channel.reset(NULL);
+    return status;
+}
 
+static int
+tess_process_start(struct bu_process **p, FILE **worker_input,
+	FacetizeWorkerClient &worker_channel,
+	std::vector<const char *> &worker_cmd)
+{
+    if (!p || !worker_input)
+	return BRLCAD_ERROR;
+
+    *p = NULL;
+    *worker_input = NULL;
+    worker_channel.reset(NULL);
+    bu_process_create(p, worker_cmd.data(), BU_PROCESS_HIDE_WINDOW);
+    if (*p) {
+	*worker_input = bu_process_file_open(*p, BU_PROCESS_STDIN);
+	worker_channel.reset(*worker_input);
+    }
+    return (*p && *worker_input) ? BRLCAD_OK : BRLCAD_ERROR;
+}
+
+static int
+tess_run(struct _ged_facetize_state *s, const char **tess_cmd,
+	int tess_cmd_cnt, fastf_t max_time, int ocnt,
+	std::vector<std::string> *failed_names, enum tess_work_type work_type,
+	bool replay)
+{
+    if (!s || !tess_cmd || !tess_cmd[3] || ocnt <= 0 ||
+	    ocnt > tess_cmd_cnt || !failed_names)
+	return BRLCAD_ERROR;
+    failed_names->clear();
+
+    const int fixed_cnt = tess_cmd_cnt - ocnt;
+    const char *work_file = tess_cmd[3];
+    if (!s->write_profiled) {
+	if (tess_write_probe(work_file, &s->write_profile_bytes,
+		&s->write_profile_usec) != BRLCAD_OK) {
+	    facetize_log(s, 0,
+		    "FACETIZE: unable to profile database writes in the working cache\n");
 	    return BRLCAD_ERROR;
 	}
+	s->write_profiled = 1;
+	double bytes_per_second = s->write_profile_bytes *
+	    FACETIZE_USEC_TO_SEC_DIVISOR / s->write_profile_usec;
+	facetize_log(s, 1,
+		"FACETIZE: measured working-cache write speed: %.1f MiB/s using %.1f MiB\n",
+		bytes_per_second / FACETIZE_MIB_BYTES,
+		s->write_profile_bytes / FACETIZE_MIB_BYTES);
     }
-    int w_rc;
-    if (subprocess_join(&p, &w_rc)) {
-	// Unable to join??
-	facetize_log(s, 0, " FAILED.\n");
-	facetize_log(s, 0, "tess_run subprocess unable to join\n");
-	if (s->verbosity >= 0) {
-	    char mraw[MAXPATHLEN*10] = {'\0'};
-	    subprocess_read_stdout(&p, mraw, MAXPATHLEN*10);
-	    if (strlen(mraw))
-		facetize_log(s, 0, "%s\n", mraw);
-	    char mraw2[MAXPATHLEN*10] = {'\0'};
-	    subprocess_read_stderr(&p, mraw2, MAXPATHLEN*10);
-	    if (strlen(mraw2))
-		facetize_log(s, 0, "%s\n", mraw2);
-	}
+
+    std::string backup_file = std::string(work_file) + ".bak";
+    if (tess_file_copy(work_file, backup_file.c_str()) != BRLCAD_OK) {
+	bu_file_delete(backup_file.c_str());
+	facetize_log(s, 0, "FACETIZE: unable to back up working database %s\n",
+		work_file);
 	return BRLCAD_ERROR;
     }
 
-    bu_file_delete(wfilebak.c_str());
+    std::vector<const char *> worker_cmd;
+    for (int i = 0; i < fixed_cnt; i++)
+	worker_cmd.push_back(tess_cmd[i]);
+    worker_cmd.push_back("--server");
+    worker_cmd.push_back(NULL);
 
-    if (s->verbosity >= 0) {
-	char mraw[MAXPATHLEN*10] = {'\0'};
-	subprocess_read_stdout(&p, mraw, MAXPATHLEN*10);
-	if (strlen(mraw))
-	    facetize_log(s, 0, "%s\n", mraw);
-	char mraw2[MAXPATHLEN*10] = {'\0'};
-	subprocess_read_stderr(&p, mraw2, MAXPATHLEN*10);
-	if (strlen(mraw2))
-	    facetize_log(s, 0, "%s\n", mraw2);
-    }
-
-    // Needed to clean up file handles
-    subprocess_destroy(&p);
-
-    if (w_rc == BRLCAD_OK) {
-	facetize_log(s, 0, " Success.\n");
+    struct bu_process *p = NULL;
+    FILE *worker_input = NULL;
+    const char *method = (tess_cmd_cnt > FACETIZE_METHOD_COMMAND_INDEX &&
+	    tess_cmd[FACETIZE_METHOD_COMMAND_INDEX]) ?
+	tess_cmd[FACETIZE_METHOD_COMMAND_INDEX] : "unknown";
+    int64_t run_start = bu_gettime();
+    int64_t next_progress = run_start +
+	BU_SEC2USEC(FACETIZE_PROGRESS_INTERVAL_SEC);
+    int start_msg_level = (ocnt >= FACETIZE_PROGRESS_BATCH_MIN) ? 0 : 1;
+    const char *work_description = tess_work_description(work_type, ocnt);
+    if (replay) {
+	facetize_log(s, start_msg_level,
+		"FACETIZE: retrying tessellation of %d %s after restoring the working database, using method %s...\n",
+		ocnt, work_description, method);
     } else {
-	facetize_log(s, 0, " FAILED.\n");
+	facetize_log(s, start_msg_level,
+		"FACETIZE: tessellating %d %s with method %s...\n",
+		ocnt, work_description, method);
     }
 
-    return (w_rc ? BRLCAD_ERROR : BRLCAD_OK);
-}
-
-int
-bisect_run(struct _ged_facetize_state *s, std::vector<struct directory *> &bad_dps, std::vector<struct directory *> &inputs, const char **orig_cmd, int cmd_cnt, fastf_t max_time, int ocnt);
-
-int
-bisect_failing_inputs(struct _ged_facetize_state *s, std::vector<struct directory *> &bad_dps, std::vector<struct directory *> &inputs, const char **orig_cmd, int cmd_cnt, fastf_t max_time)
-{
-    std::vector<struct directory *> left_inputs;
-    std::vector<struct directory *> right_inputs;
-    for (size_t i = 0; i < inputs.size()/2; i++)
-	left_inputs.push_back(inputs[i]);
-    for (size_t i =  inputs.size()/2; i < inputs.size(); i++)
-	right_inputs.push_back(inputs[i]);
-
-    int lret = bisect_run(s, bad_dps, left_inputs, orig_cmd, cmd_cnt, max_time, left_inputs.size());
-    int rret = bisect_run(s, bad_dps, right_inputs, orig_cmd, cmd_cnt, max_time, right_inputs.size());
-    return lret + rret;
-}
-
-int
-bisect_run(struct _ged_facetize_state *s, std::vector<struct directory *> &bad_dps, std::vector<struct directory *> &inputs, const char **orig_cmd, int cmd_cnt, fastf_t max_time, int ocnt)
-{
-    const char *tess_cmd[MAXPATHLEN] = {NULL};
-    // The initial part of the re-run is the same.
-    for (int i = 0; i < cmd_cnt; i++) {
-	tess_cmd[i] = orig_cmd[i];
-    }
-    for (size_t i = 0; i < inputs.size(); i++) {
-	tess_cmd[cmd_cnt+i] = inputs[i]->d_namep;
-    }
-
-    int ret = tess_run(s, tess_cmd, cmd_cnt+inputs.size(), max_time, ocnt);
-    if (ret) {
-	if (inputs.size() > 1) {
-	    return bisect_failing_inputs(s, bad_dps, inputs, tess_cmd, cmd_cnt, max_time);
+    bool unsafe_failure = false;
+    FacetizeWorkerClient worker_channel;
+    for (int obj_ind = fixed_cnt; obj_ind < tess_cmd_cnt; obj_ind++) {
+	const char *object_name = tess_cmd[obj_ind];
+	if (p && bu_process_poll(p, NULL) != 0) {
+	    (void)tess_process_stop(s, &p, worker_input, worker_channel,
+		    false);
 	}
-	bad_dps.push_back(inputs[0]);
-	return 1;
+	if (!p && tess_process_start(&p, &worker_input, worker_channel,
+		worker_cmd) !=
+		BRLCAD_OK) {
+	    for (int failed_ind = obj_ind; failed_ind < tess_cmd_cnt;
+		    failed_ind++)
+		failed_names->push_back(tess_cmd[failed_ind]);
+	    (void)tess_process_stop(s, &p, worker_input, worker_channel,
+		    true);
+	    facetize_log(s, 0,
+		    "FACETIZE: unable to start tessellation worker\n");
+	    break;
+	}
+
+	if (!worker_channel.send_request(object_name)) {
+	    facetize_log(s, 0,
+		    "FACETIZE: unable to submit %s to tessellation worker\n",
+		    object_name);
+	    failed_names->push_back(object_name);
+	    (void)tess_process_stop(s, &p, worker_input, worker_channel,
+		    true);
+	    continue;
+	}
+
+	FacetizeWorkerStatus worker_status;
+	bool write_started = false;
+	bool request_interrupted = false;
+	bool tessellation_timed_out = false;
+	bool write_timed_out = false;
+	int64_t request_start = bu_gettime();
+	int64_t write_start = 0;
+	int64_t write_deadline = 0;
+	double write_timeout = 0.0;
+	while (!worker_status.result_received) {
+	    tess_drain_stdout(s, p, worker_channel, &worker_status);
+	    tess_drain_stderr(s, p);
+
+	    int64_t now = bu_gettime();
+	    if (worker_status.write_ready && !write_started) {
+		if (max_time > 0 &&
+			now - request_start >= BU_SEC2USEC(max_time)) {
+		    request_interrupted = true;
+		    tessellation_timed_out = true;
+		    break;
+		}
+		// Sending the acknowledgment may let the worker begin modifying the
+		// database, even if the pipe reports a write error to the parent.
+		write_started = true;
+		write_timeout = tess_write_timeout_seconds(
+			worker_status.payload_size, s->write_profile_bytes,
+			s->write_profile_usec);
+		facetize_log(s, 1,
+			"FACETIZE: worker ready to write %zu bytes for %s (%.1f second limit)\n",
+			worker_status.payload_size, object_name, write_timeout);
+		write_start = now;
+		write_deadline = write_start + BU_SEC2USEC(write_timeout);
+		if (!worker_channel.send_write_proceed()) {
+		    request_interrupted = true;
+		    break;
+		}
+		continue;
+	    }
+	    if (worker_status.result_received) {
+		if (write_started && !worker_status.write_done) {
+		    request_interrupted = true;
+		    break;
+		}
+		if (worker_status.write_done &&
+			worker_status.result == BRLCAD_OK && now > write_start &&
+			worker_status.payload_size >=
+			FACETIZE_WRITE_RATE_MIN_SAMPLE_BYTES) {
+		    s->write_profile_bytes += worker_status.payload_size;
+		    s->write_profile_usec += now - write_start;
+		}
+		break;
+	    }
+	    if (bu_process_poll(p, NULL) != 0) {
+		request_interrupted = true;
+		break;
+	    }
+
+	    if (!write_started && max_time > 0 &&
+		    now - request_start >= BU_SEC2USEC(max_time)) {
+		request_interrupted = true;
+		tessellation_timed_out = true;
+		break;
+	    }
+	    if (write_started && now >= write_deadline) {
+		request_interrupted = true;
+		write_timed_out = true;
+		break;
+	    }
+	    if (now >= next_progress) {
+		if (write_started) {
+		    facetize_log(s, 0,
+			    "FACETIZE: writing tessellation for %s with method %s (%d of %d complete, %.1f seconds elapsed; %.1f second write limit)\n",
+			    object_name, method, obj_ind - fixed_cnt, ocnt,
+			    (now - run_start) / FACETIZE_USEC_TO_SEC_DIVISOR,
+			    write_timeout);
+		} else {
+		    facetize_log(s, 0,
+			    "FACETIZE: tessellating %s with method %s (%d of %d complete, %.1f seconds elapsed)\n",
+			    object_name, method, obj_ind - fixed_cnt, ocnt,
+			    (now - run_start) / FACETIZE_USEC_TO_SEC_DIVISOR);
+		}
+		next_progress = now +
+		    BU_SEC2USEC(FACETIZE_PROGRESS_INTERVAL_SEC);
+	    }
+	    (void)bu_snooze(FACETIZE_POLL_INTERVAL_USEC);
+	}
+
+	if (request_interrupted) {
+	    if (write_timed_out) {
+		facetize_log(s, 0,
+			"FACETIZE: database write timed out after %.1f seconds for %s with method %s\n",
+			write_timeout, object_name, method);
+	    } else if (tessellation_timed_out) {
+		facetize_log(s, 0,
+			"FACETIZE: tessellation timed out after %.1f seconds for %s with method %s\n",
+			max_time, object_name, method);
+	    } else if (write_started) {
+		facetize_log(s, 0,
+			"FACETIZE: tessellation worker failed while writing %s with method %s\n",
+			object_name, method);
+	    } else {
+		facetize_log(s, 0,
+			"FACETIZE: tessellation worker failed while processing %s with method %s\n",
+			object_name, method);
+	    }
+	    failed_names->push_back(object_name);
+	    (void)tess_process_stop(s, &p, worker_input, worker_channel,
+		    true);
+	    if (write_started) {
+		unsafe_failure = true;
+		break;
+	    }
+	    continue;
+	}
+
+	if (worker_status.result != BRLCAD_OK) {
+	    failed_names->push_back(object_name);
+	    if (write_started) {
+		facetize_log(s, 0,
+			"FACETIZE: failed to write tessellation for %s with method %s\n",
+			object_name, method);
+		unsafe_failure = true;
+		break;
+	    }
+
+	    // The worker identified this object precisely; no search or retry is needed.
+	    facetize_log(s, 0,
+		    "FACETIZE: tessellation failed for %s with method %s\n",
+		    object_name, method);
+	}
     }
-    return 0;
+
+    if (p && !unsafe_failure)
+	bu_process_file_close(p, BU_PROCESS_STDIN);
+    int process_status = p ? tess_process_reap(s, &p, worker_channel,
+	    unsafe_failure) :
+	BRLCAD_OK;
+    worker_channel.reset(NULL);
+    if (!unsafe_failure) {
+	if (process_status != BRLCAD_OK)
+	    facetize_log(s, 0,
+		    "FACETIZE: tessellation worker exited abnormally after reporting all object results\n");
+	double elapsed_seconds = (bu_gettime() - run_start) /
+	    FACETIZE_USEC_TO_SEC_DIVISOR;
+	int completion_msg_level = (start_msg_level == 0 ||
+		elapsed_seconds >= FACETIZE_PROGRESS_INTERVAL_SEC) ? 0 : 1;
+	facetize_log(s, completion_msg_level,
+		"FACETIZE: tessellation complete: %d of %d %s succeeded with method %s (%.1f seconds)\n",
+		ocnt - (int)failed_names->size(), ocnt, work_description, method,
+		elapsed_seconds);
+	bu_file_delete(backup_file.c_str());
+	return failed_names->empty() ? BRLCAD_OK : BRLCAD_ERROR;
+    }
+
+    if (tess_file_copy(backup_file.c_str(), work_file) != BRLCAD_OK) {
+	facetize_log(s, 0,
+		"FACETIZE: unable to restore working database %s after tessellation failure\n",
+		work_file);
+	return BRLCAD_ERROR;
+    }
+    bu_file_delete(backup_file.c_str());
+
+    // A killed worker may have interrupted a database write.  Restore the
+    // checkpoint, then replay only names not already tied to a known failure.
+    std::set<std::string> failed_set(failed_names->begin(),
+	    failed_names->end());
+    const char *retry_cmd[MAXPATHLEN] = {NULL};
+    for (int i = 0; i < fixed_cnt; i++)
+	retry_cmd[i] = tess_cmd[i];
+    int retry_cnt = fixed_cnt;
+    for (int obj_ind = fixed_cnt; obj_ind < tess_cmd_cnt; obj_ind++) {
+	if (failed_set.find(tess_cmd[obj_ind]) == failed_set.end())
+	    retry_cmd[retry_cnt++] = tess_cmd[obj_ind];
+    }
+
+    if (retry_cnt > fixed_cnt) {
+	std::vector<std::string> retry_failures;
+	(void)tess_run(s, retry_cmd, retry_cnt, max_time,
+		retry_cnt - fixed_cnt, &retry_failures, work_type, true);
+	failed_names->insert(failed_names->end(), retry_failures.begin(),
+		retry_failures.end());
+    }
+
+    std::sort(failed_names->begin(), failed_names->end());
+    failed_names->erase(std::unique(failed_names->begin(),
+	    failed_names->end()), failed_names->end());
+    return failed_names->empty() ? BRLCAD_OK : BRLCAD_ERROR;
 }
 
+/*
+ * Tessellate variant primitives that were created by _ged_facetize_build_variant_plan().
+ * Processes all names using the NMG method (same fixed command structure as
+ * _ged_facetize_leaves_tri).  Tessellation failures are logged but do not
+ * abort: the booleval will silently fall back to the original (non-variant)
+ * mesh for any variant whose BoT is not available.
+ */
+int
+_ged_facetize_tessellate_variant_names(struct _ged_facetize_state *s,
+				       FacetizeVariantPlan *plan)
+{
+    if (!s || !plan || plan->variant_names.empty())
+	return BRLCAD_OK;
+
+    char tess_exec[MAXPATHLEN];
+    bu_dir(tess_exec, MAXPATHLEN, BU_DIR_BIN, "ged_exec", BU_DIR_EXT, NULL);
+
+    char lcache[MAXPATHLEN] = {0};
+    bu_dir(lcache, MAXPATHLEN, BU_DIR_CACHE, NULL);
+
+    method_options_t *mo = (method_options_t *)s->method_opts;
+    std::string mstrpp("NMG");
+    std::string nmg_opts;
+    fastf_t l_max_time = 30;
+    if (mo) {
+	nmg_opts = mo->method_optstr(mstrpp, s->dbip);
+	l_max_time = (fastf_t)mo->max_time[mstrpp];
+    }
+
+    const char *tess_cmd[MAXPATHLEN] = {NULL};
+    tess_cmd[0] = tess_exec;
+    tess_cmd[1] = "facetize_process";
+    tess_cmd[2] = "-O";
+    tess_cmd[3] = bu_vls_cstr(s->wfile);
+    tess_cmd[4] = "--methods";
+    tess_cmd[5] = "NMG";
+    tess_cmd[6] = "--method-opts";
+
+    struct bu_vls mopts_vls = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&mopts_vls, "%s", nmg_opts.c_str());
+    tess_cmd[7] = bu_vls_cstr(&mopts_vls);
+    tess_cmd[8] = "--cache-dir";
+    tess_cmd[9] = lcache;
+    int cmd_fixed_cnt = 10;
+
+    /* Names travel over stdin, so only the local pointer array bounds a batch. */
+    int fail_cnt = 0;
+    size_t vi = 0;
+    while (vi < plan->variant_names.size()) {
+	std::vector<const char *> batch_names;
+	while (vi < plan->variant_names.size() &&
+	       cmd_fixed_cnt + (int)batch_names.size() < MAXPATHLEN) {
+	    batch_names.push_back(plan->variant_names[vi].c_str());
+	    vi++;
+	}
+
+	if (batch_names.empty())
+	    break;
+
+	for (size_t i = 0; i < batch_names.size(); i++)
+	    tess_cmd[cmd_fixed_cnt + i] = batch_names[i];
+	int total_cnt = cmd_fixed_cnt + (int)batch_names.size();
+
+	std::vector<std::string> batch_failures;
+	int ret = tess_run(s, tess_cmd, total_cnt, l_max_time,
+		(int)batch_names.size(), &batch_failures,
+		TESS_WORK_PERTURBATION_VARIANT, false);
+	if (ret != BRLCAD_OK) {
+	    facetize_log(s, 0,
+			"FACETIZE: variant tessellation failed for %d object(s)\n",
+			(int)batch_failures.size());
+	    fail_cnt += (int)batch_failures.size();
+	}
+
+	/* Clear per-batch name slots */
+	for (size_t i = 0; i < batch_names.size(); i++)
+	    tess_cmd[cmd_fixed_cnt + i] = NULL;
+    }
+
+    bu_vls_free(&mopts_vls);
+    plan->n_variant_tess_failures = fail_cnt;
+    return (fail_cnt == 0) ? BRLCAD_OK : BRLCAD_ERROR;
+}
+
+static int
+tess_run_inputs(struct _ged_facetize_state *s,
+	std::vector<struct directory *> &bad_dps,
+	const std::vector<struct directory *> &inputs, const char **orig_cmd,
+	int cmd_cnt, fastf_t max_time, enum tess_work_type work_type)
+{
+    bad_dps.clear();
+    if (inputs.empty())
+	return 0;
+
+    const char *tess_cmd[MAXPATHLEN] = {NULL};
+    for (int i = 0; i < cmd_cnt; i++)
+	tess_cmd[i] = orig_cmd[i];
+    for (size_t i = 0; i < inputs.size(); i++)
+	tess_cmd[cmd_cnt+i] = inputs[i]->d_namep;
+
+    std::vector<std::string> failed_names;
+    (void)tess_run(s, tess_cmd, cmd_cnt+inputs.size(), max_time,
+	    (int)inputs.size(), &failed_names, work_type, false);
+    std::set<std::string> failed_set(failed_names.begin(),
+	    failed_names.end());
+    for (size_t i = 0; i < inputs.size(); i++) {
+	if (failed_set.find(inputs[i]->d_namep) != failed_set.end())
+	    bad_dps.push_back(inputs[i]);
+    }
+    return (int)bad_dps.size();
+}
 
 
 class DpCompare
@@ -635,14 +1296,40 @@ class DpCompare
 	}
 };
 
-#define CMD_LEN_MAX 8000
+static void
+mark_failed_tessellations(struct _ged_facetize_state *s, const std::vector<std::string> &failed_dps)
+{
+    if (!s || failed_dps.empty())
+	return;
+
+    struct db_i *cdbip = db_open(bu_vls_cstr(s->wfile), DB_OPEN_READWRITE);
+    if (cdbip) {
+	db_dirbuild(cdbip);
+	db_update_nref(cdbip);
+	for (size_t i = 0; i < failed_dps.size(); i++) {
+	    struct directory *dp = db_lookup(cdbip, failed_dps[i].c_str(), LOOKUP_QUIET);
+	    if (!dp)
+		continue;
+	    struct bu_attribute_value_set avs = BU_AVS_INIT_ZERO;
+	    db5_get_attributes(cdbip, &avs, dp);
+	    (void)bu_avs_add(&avs, FACETIZE_METHOD_ATTR, "FAIL");
+	    (void)db5_update_attributes(dp, &avs, cdbip);
+	    bu_avs_free(&avs);
+	}
+	db_close(cdbip);
+    }
+
+    if (s->tolerate_failures) {
+	for (size_t i = 0; i < failed_dps.size(); i++)
+	    facetize_tolerated_failure(s, "primitive tessellation failed for '%s'; leaf will be omitted from boolean evaluation", failed_dps[i].c_str());
+    }
+}
 
 int
 _ged_facetize_leaves_tri(struct _ged_facetize_state *s, struct db_i *dbip, struct bu_ptbl *leaf_dps)
 {
     // Sort dp objects by d_len using a priority queue
     std::priority_queue<struct directory *, std::vector<struct directory *>, DpCompare> pq;
-    std::queue<struct directory *> q_dsp;
     std::priority_queue<struct directory *, std::vector<struct directory *>, DpCompare> q_pbot;
     for (size_t i = 0; i < BU_PTBL_LEN(leaf_dps); i++) {
 	struct directory *ldp = (struct directory *)BU_PTBL_GET(leaf_dps, i);
@@ -659,14 +1346,17 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, struct db_i *dbip, struc
 	if (ldp->d_minor_type == ID_BOT) {
 	    struct rt_db_internal intern;
 	    RT_DB_INTERNAL_INIT(&intern);
-	    if (rt_db_get_internal(&intern, ldp, dbip, NULL, &rt_uniresource) < 0) {
+	    if (rt_db_get_internal(&intern, ldp, dbip, NULL) < 0) {
 		pq.push(ldp);
 		continue;
 	    }
 	    struct rt_bot_internal *bot = (struct rt_bot_internal *)(intern.idb_ptr);
 	    int propVal = (int)rt_bot_propget(bot, "type");
+	    bool is_plate = (propVal == RT_BOT_PLATE ||
+		    propVal == RT_BOT_PLATE_NOCOS);
+	    rt_db_free_internal(&intern);
 	    // Plate mode BoTs need an explicit volume representation
-	    if (propVal == RT_BOT_PLATE || propVal == RT_BOT_PLATE_NOCOS) {
+	    if (is_plate) {
 		q_pbot.push(ldp);
 		continue;
 	    }
@@ -676,7 +1366,7 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, struct db_i *dbip, struc
 	pq.push(ldp);
     }
 
-    if (pq.empty() && q_dsp.empty() && q_pbot.empty()) {
+    if (pq.empty() && q_pbot.empty()) {
 	bu_log("Note: no viable objects for tessellation found.\n");
 	return BRLCAD_OK;
     }
@@ -747,8 +1437,6 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, struct db_i *dbip, struc
     tess_cmd[ 9] = lcache;
     int cmd_fixed_cnt = 10;
     while (!pq.empty()) {
-	int obj_cnt = 0;
-
 	// Starting a new round of object processing - reset method flags
 	method_flags = method_flags_bak;
 
@@ -766,44 +1454,19 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, struct db_i *dbip, struc
 
 	std::vector<struct directory *> dps;
 	std::vector<struct directory *> bad_dps;
-	struct bu_vls cmd = BU_VLS_INIT_ZERO;
-	for (int i = 0; i < cmd_fixed_cnt; i++)
-	    bu_vls_printf(&cmd, "%s ", tess_cmd[i]);
-	while (bu_vls_strlen(&cmd) < CMD_LEN_MAX) {
-	    if (pq.empty() || cmd_fixed_cnt+dps.size() == MAXPATHLEN)
-		break;
+	while (!pq.empty() && cmd_fixed_cnt + dps.size() < MAXPATHLEN) {
 	    struct directory *ldp = pq.top();
-	    if ((bu_vls_strlen(&cmd) + strlen(ldp->d_namep)) > CMD_LEN_MAX) {
-		// This would be too long -  we've listed all we can
-		break;
-	    }
-	    obj_cnt++;
 	    pq.pop();
 	    dps.push_back(ldp);
-	    bu_vls_printf(&cmd, "%s ", ldp->d_namep);
 	}
-	bu_vls_free(&cmd);
 
 	// We have the list of objects to feed the process - now, trigger
 	// the runs with as many methods as it takes to facetize all the
 	// primitives
 	int err_cnt = 0;
 	while (bu_vls_strlen(&method_str)) {
-	    if (BU_STR_EQUAL(bu_vls_cstr(&method_str), "NMG")) {
-		err_cnt = bisect_run(s, bad_dps, dps, tess_cmd, cmd_fixed_cnt, l_max_time, obj_cnt);
-	    } else {
-		// If we're in fallback territory, process individually rather
-		// than doing the bisect - at least for now, those methods are
-		// much more expensive and likely to fail as compared to NMG.
-		for (size_t i = 0; i < dps.size(); i++) {
-		    tess_cmd[cmd_fixed_cnt] = dps[i]->d_namep;
-		    int tess_ret = tess_run(s, tess_cmd, cmd_fixed_cnt + 1, l_max_time, 1);
-		    if (tess_ret != BRLCAD_OK) {
-			bad_dps.push_back(dps[i]);
-			err_cnt++;
-		    }
-		}
-	    }
+	    err_cnt = tess_run_inputs(s, bad_dps, dps, tess_cmd,
+		    cmd_fixed_cnt, l_max_time, TESS_WORK_ORIGINAL_PRIMITIVE);
 
 	    // If we dealt successfully with everything, we're done
 	    if (!err_cnt)
@@ -819,7 +1482,7 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, struct db_i *dbip, struc
 		// Each method has its own default (or possibly user set) time limit
 		l_max_time = mo->max_time[mstrpp];
 		// Get defined options for this particular method
-		bu_vls_sprintf(&method_opts_str, "\"%s\"", mo->method_optstr(mstrpp, dbip).c_str());
+		bu_vls_sprintf(&method_opts_str, "%s", mo->method_optstr(mstrpp, dbip).c_str());
 		tess_cmd[method_opt_ind] = bu_vls_cstr(&method_opts_str);
 		dps = bad_dps;
 		bad_dps.clear();
@@ -840,79 +1503,36 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, struct db_i *dbip, struc
 	}
     }
 
-    while (!q_dsp.empty()) {
-	bu_vls_sprintf(&method_str, "CM");
-	tess_cmd[method_ind] = bu_vls_cstr(&method_str);
-	mstrpp = std::string("CM");
-	l_max_time = mo->max_time[mstrpp];
-	bu_vls_sprintf(&method_opts_str, "\"%s\"", mo->method_optstr(mstrpp, dbip).c_str());
-	tess_cmd[method_opt_ind] = bu_vls_cstr(&method_opts_str);
-	std::vector<struct directory *> dps;
-	struct bu_vls cmd = BU_VLS_INIT_ZERO;
-	for (int i = 0; i < cmd_fixed_cnt; i++)
-	    bu_vls_printf(&cmd, "%s ", tess_cmd[i]);
-	while (bu_vls_strlen(&cmd) < CMD_LEN_MAX) {
-	    if (q_dsp.empty() || cmd_fixed_cnt+dps.size() == MAXPATHLEN)
-		break;
-	    struct directory *ldp = q_dsp.front();
-	    if ((bu_vls_strlen(&cmd) + strlen(ldp->d_namep)) > CMD_LEN_MAX) {
-		// This would be too long -  we've listed all we can
-		break;
-	    }
-	    q_dsp.pop();
-	    dps.push_back(ldp);
-	    bu_vls_printf(&cmd, "%s ", ldp->d_namep);
-	}
-	bu_vls_free(&cmd);
-
-	// We have the list of objects to feed the process - now, trigger
-	// the runs with as many methods as it takes to facetize all the
-	// primitives
-	for (size_t i = 0; i < dps.size(); i++) {
-	    tess_cmd[cmd_fixed_cnt] = dps[i]->d_namep;
-	    int err_cnt = tess_run(s, tess_cmd, cmd_fixed_cnt + 1, l_max_time, 1);
-	    if (err_cnt)
-		failed_dps.push_back(std::string(dps[i]->d_namep));
-	}
-    }
-
     while (!q_pbot.empty()) {
 	bu_vls_sprintf(&method_str, "NMG");
 	tess_cmd[method_ind] = bu_vls_cstr(&method_str);
 	mstrpp = std::string("NMG");
 	l_max_time = mo->plate_max_time;
-	bu_vls_sprintf(&method_opts_str, "\"%s\"", mo->method_optstr(mstrpp, dbip).c_str());
+	bu_vls_sprintf(&method_opts_str, "%s", mo->method_optstr(mstrpp, dbip).c_str());
 	tess_cmd[method_opt_ind] = bu_vls_cstr(&method_opts_str);
 
 
 	std::vector<struct directory *> dps;
 	std::vector<struct directory *> bad_dps;
-	struct bu_vls cmd = BU_VLS_INIT_ZERO;
-	for (int i = 0; i < cmd_fixed_cnt; i++)
-	    bu_vls_printf(&cmd, "%s ", tess_cmd[i]);
-	int obj_cnt = 0;
-	while (bu_vls_strlen(&cmd) < CMD_LEN_MAX) {
-	    if (q_pbot.empty() || cmd_fixed_cnt+dps.size() == MAXPATHLEN)
-		break;
+	while (!q_pbot.empty() && cmd_fixed_cnt + dps.size() < MAXPATHLEN) {
 	    struct directory *ldp = q_pbot.top();
-	    if ((bu_vls_strlen(&cmd) + strlen(ldp->d_namep)) > CMD_LEN_MAX) {
-		// This would be too long -  we've listed all we can
-		break;
-	    }
-	    obj_cnt++;
 	    q_pbot.pop();
 	    dps.push_back(ldp);
-	    bu_vls_printf(&cmd, "%s ", ldp->d_namep);
 	}
-	bu_vls_free(&cmd);
 
 
-	int err_cnt = bisect_run(s, bad_dps, dps, tess_cmd, cmd_fixed_cnt, l_max_time * dps.size(), obj_cnt);
+	int err_cnt = tess_run_inputs(s, bad_dps, dps, tess_cmd,
+		cmd_fixed_cnt, l_max_time, TESS_WORK_PLATE_MODE_PRIMITIVE);
 	if (err_cnt) {
+	    for (size_t i = 0; i < bad_dps.size(); i++)
+		failed_dps.push_back(std::string(bad_dps[i]->d_namep));
 	    // If we couldn't handle the plate mode conversion, we can't do the
-	    // boolean evaluation
-	    facetize_log(s, 0, "Plate mode conversion wasn't able to complete\n");
-	    return BRLCAD_ERROR;
+	    // boolean evaluation unless partial output was explicitly requested.
+	    if (!s->tolerate_failures) {
+		mark_failed_tessellations(s, failed_dps);
+		facetize_log(s, 0, "Plate mode conversion wasn't able to complete\n");
+		return BRLCAD_ERROR;
+	    }
 	}
     }
 
@@ -920,35 +1540,33 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, struct db_i *dbip, struc
 	// As the parent process, we can know when we've run out of options
        // to try.  If we get there, flag the solid in the working copy so
        // the summary knows to report it.
-       struct db_i *cdbip = db_open(bu_vls_cstr(s->wfile), DB_OPEN_READWRITE);
-       if (cdbip) {
-           db_dirbuild(cdbip);
-           db_update_nref(cdbip, &rt_uniresource);
-           for (size_t i = 0; i < failed_dps.size(); i++) {
-	       struct directory *dp = db_lookup(cdbip, failed_dps[i].c_str(), LOOKUP_QUIET);
-	       if (!dp)
-		   continue;
-               struct bu_attribute_value_set avs = BU_AVS_INIT_ZERO;
-               db5_get_attributes(cdbip, &avs, dp);
-               (void)bu_avs_add(&avs, FACETIZE_METHOD_ATTR, "FAIL");
-               (void)db5_update_attributes(dp, &avs, cdbip);
-           }
-           db_close(cdbip);
-       }
-       return BRLCAD_ERROR;
+	mark_failed_tessellations(s, failed_dps);
+	if (s->tolerate_failures)
+	    return BRLCAD_OK;
+	return BRLCAD_ERROR;
     }
 
     return BRLCAD_OK;
 }
 
 int
-_ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, struct rt_wdb *wdbp, int argc, const char **argv, const char *oname, struct bu_list *vlfree, bool output_to_working)
+_ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, struct rt_wdb *wdbp, int argc, const char **argv, const char *oname, struct bu_list *vlfree, bool output_to_working, int curr_cnt, int total_cnt)
 {
     union tree *ftree;
     if (!dbip || !wdbp || !argv || !oname)
 	return BRLCAD_ERROR;
 
-    if (s->verbosity == 0) {
+    if (total_cnt < 0) {
+	facetize_log(s, 0, "Processing %s [%d perturb]...", oname, curr_cnt);
+    } else if (total_cnt == 0) {
+	facetize_log(s, 0, "Processing %s...", oname);
+    } else {
+	facetize_log(s, 0, "Processing %s [%d of %d]...", oname, curr_cnt, total_cnt);
+    }
+    facetize_failure_clear(s);
+
+    /* Per-object booleval status is shown only in verbose mode. */
+    if (s->verbosity >= 1) {
 	if (argc == 1) {
 	    bu_log("%s: evaluating booleans...\n", argv[0]);
 	} else {
@@ -988,7 +1606,7 @@ _ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, str
     if (ac) {
 	s->error_flag = 0;
 	struct db_tree_state init_state;
-	db_init_db_tree_state(&init_state, dbip, wdbp->wdb_resp);
+	db_init_db_tree_state(&init_state, dbip);
 	/* Establish tolerances */
 	init_state.ts_ttol = &wdbp->wdb_ttol;
 	init_state.ts_tol = &wdbp->wdb_tol;
@@ -1015,7 +1633,9 @@ _ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, str
 	// Do not generate a BoT, empty or otherwise.
 	if (i < 0 || s->error_flag) {
 	    bu_free(av, "av");
-	    facetize_log(s, 0, "FAILED.\n");
+	    if (!s->failure_msg || !bu_vls_strlen(s->failure_msg))
+		facetize_failure(s, "database tree walk failed while preparing BoT leaves for Manifold boolean evaluation");
+	    facetize_log_current_failure(s, "database tree walk failed while preparing BoT leaves for Manifold boolean evaluation");
 	    return BRLCAD_ERROR;
 	}
     }
@@ -1038,7 +1658,8 @@ _ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, str
 	bot->vertices = NULL;
 	bot->faces = NULL;
 	if (_ged_facetize_write_bot(odbip, bot, oname, s->verbosity) != BRLCAD_OK) {
-	    facetize_log(s, 0, "FAILED.\n");
+	    facetize_failure(s, "unable to write empty BoT '%s' to the database", oname);
+	    facetize_log_current_failure(s, "unable to write empty BoT to the database");
 	    return BRLCAD_ERROR;
 	}
 	facetize_log(s, 0, " Success.\n");
@@ -1046,8 +1667,15 @@ _ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, str
     }
 
     // Third stage is to execute the boolean operations
-    ftree = rt_booltree_evaluate(s->facetize_tree, vlfree, &wdbp->wdb_tol, &rt_uniresource, &manifold_do_bool, 0, (void *)s);
+    ftree = rt_booltree_eval(s->facetize_tree, vlfree, &wdbp->wdb_tol, &manifold_do_bool, 0, (void *)s);
+    if (s->error_flag && !s->tolerate_failures) {
+	facetize_log_current_failure(s, "Boolean tree evaluation failed");
+	return BRLCAD_ERROR;
+    }
     if (!ftree) {
+	if (s->tolerate_failures && s->tolerated_failures > 0)
+	    facetize_failure(s, "all evaluated components were omitted after tolerated failures; no partial result could be generated");
+	facetize_log_current_failure(s, "Boolean tree evaluation did not produce a result");
 	return BRLCAD_ERROR;
     }
 
@@ -1055,9 +1683,19 @@ _ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, str
 	manifold::Manifold *om = (manifold::Manifold *)ftree->tr_d.td_d;
 	if (om->Status() != manifold::Manifold::Error::NoError) {
 	    // Urk - boolean failure of some sort!
-	    facetize_log(s, 0, "Boolean algorithm FAILED.\n");
+	    facetize_failure(s, "final Manifold result for '%s' is invalid: %s", oname, manifold::ToString(om->Status()).c_str());
+	    facetize_log_current_failure(s, "final Manifold result is invalid");
 	    return BRLCAD_ERROR;
 	}
+
+	if (s->verbosity > 1) {
+	    bu_log("[FINAL_BOOL] obj=%s  final_mesh_SA=%.6f mm^2  num_verts=%zu  num_faces=%zu\n",
+		   (argc > 0 && argv && argv[0]) ? argv[0] : "?",
+		   om->SurfaceArea(),
+		   (size_t)om->GetMeshGL64().vertProperties.size() / 3,
+		   (size_t)om->GetMeshGL64().triVerts.size() / 3);
+	}
+
 	manifold::MeshGL64 rmesh = om->GetMeshGL64();
 	struct rt_bot_internal *bot;
 	BU_GET(bot, struct rt_bot_internal);
@@ -1075,12 +1713,47 @@ _ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, str
 	    bot->vertices[j] = rmesh.vertProperties[j];
 	for (size_t j = 0; j < rmesh.triVerts.size(); j++)
 	    bot->faces[j] = rmesh.triVerts[j];
+
+	/* Guard against near-zero perturb slivers: if the booleval mesh is tiny,
+	 * quickly Crofton-check the original CSG.  If CSG is effectively empty,
+	 * emit an empty BoT to match raytrace behavior. */
+	double bot_vol = 0.0;
+	if (bot->num_faces > 0 && bot->num_vertices > 0) {
+	    bot_vol = std::fabs(bg_trimesh_volume(bot->faces, bot->num_faces,
+						  (const point_t *)bot->vertices,
+						  bot->num_vertices));
+	}
+	double bbox_vol = bot_bbox_volume(bot);
+	bool tiny_bot = (bbox_vol > 0.0) ?
+	    (bot_vol <= bbox_vol * FACETIZE_EMPTY_CHECK_REL_VOL_TOL) :
+	    (bot_vol <= FACETIZE_EMPTY_CHECK_ABS_VOL_TOL);
+	bool is_single_input = (argc == 1 && argv && argv[0]);
+	bool has_csg_context = (s && s->dbip);
+	if (tiny_bot && is_single_input && has_csg_context) {
+	    double csg_vol = -1.0;
+	    if (csg_crofton_volume(s->dbip, argv[0], &csg_vol) == BRLCAD_OK) {
+		double csg_abs = std::fabs(csg_vol);
+		double csg_vtol = (bbox_vol > 0.0) ?
+		    (bbox_vol * FACETIZE_EMPTY_CHECK_REL_VOL_TOL) :
+		    FACETIZE_EMPTY_CHECK_ABS_VOL_TOL;
+		if (csg_abs <= csg_vtol) {
+		    rt_bot_internal_free(bot);
+		    bot->magic = RT_BOT_INTERNAL_MAGIC;
+		    bot->mode = RT_BOT_SOLID;
+		    bot->orientation = RT_BOT_CCW;
+		    bot->thickness = NULL;
+		    bot->face_mode = (struct bu_bitv *)NULL;
+		    bot->bot_flags = 0;
+		}
+	    }
+	}
 	delete om;
 	ftree->tr_d.td_d = NULL;
 
 	// If we have a manifold_mesh, write it out as a bot
 	if (_ged_facetize_write_bot(odbip, bot, oname, s->verbosity) != BRLCAD_OK) {
-	    facetize_log(s, 0, "FAILED.\n");
+	    facetize_failure(s, "unable to write evaluated BoT '%s' to the database", oname);
+	    facetize_log_current_failure(s, "unable to write evaluated BoT to the database");
 	    return BRLCAD_ERROR;
 	}
     } else {
@@ -1100,7 +1773,8 @@ _ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, str
 	    bot->vertices = NULL;
 	    bot->faces = NULL;
 	    if (_ged_facetize_write_bot(odbip, bot, oname, s->verbosity) != BRLCAD_OK) {
-		facetize_log(s, 0, "FAILED.\n");
+		facetize_failure(s, "unable to write empty BoT '%s' to the database", oname);
+		facetize_log_current_failure(s, "unable to write empty BoT to the database");
 		return BRLCAD_ERROR;
 	    }
 	    facetize_log(s, 0, "Success.\n");
@@ -1119,13 +1793,15 @@ _ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, str
 		db_delete(odbip, bot_dp);
 		db_dirdelete(odbip, bot_dp);
 		if (_ged_facetize_write_bot(odbip, nbot, oname, s->verbosity) != BRLCAD_OK) {
-		    facetize_log(s, 0, "FAILED.\n");
+		    facetize_failure(s, "BoT fixup succeeded for '%s' but writing the repaired BoT failed", oname);
+		    facetize_log_current_failure(s, "BoT fixup succeeded but writing the repaired BoT failed");
+		    return BRLCAD_ERROR;
 		}
 	    }
 	}
     }
 
-    facetize_log(s, 0, "Success.\n");
+    facetize_log(s, 0, " Success.\n");
     return BRLCAD_OK;
 }
 
@@ -1156,26 +1832,64 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
     }
 
     /* OK, we have work to do. Set up a working copy of the .g file. */
-    if (_ged_facetize_working_file_setup(s, &leaf_dps) != BRLCAD_OK)
+    if (_ged_facetize_working_file_setup(s, &leaf_dps) != BRLCAD_OK) {
+	facetize_log(s, 0, "FACETIZE: failed to set up working database copy %s\n", bu_vls_cstr(s->wfile));
+	bu_ptbl_free(&leaf_dps);
 	return BRLCAD_ERROR;
+    }
 
-    if (_ged_facetize_leaves_tri(s, dbip, &leaf_dps))
+    /* Direct Manifold booleval keeps the eager perturb path: when enabled,
+     * build and tessellate coplanarity-avoidance variants up front.
+     * Region mode overrides this by validating first and only retrying with
+     * variants on demand. */
+    if (s->variant_plan) {
+	delete (FacetizeVariantPlan *)s->variant_plan;
+	s->variant_plan = NULL;
+    }
+    if (!s->make_nmg && !s->nmg_booleval && !s->no_perturb) {
+	FacetizeVariantPlan *vplan = _ged_facetize_build_variant_plan(s, argc, dpa);
+	s->variant_plan = (void *)vplan;
+    }
+
+    if (_ged_facetize_leaves_tri(s, dbip, &leaf_dps)) {
+	facetize_log(s, 0, "FACETIZE: primitive tessellation failed; BoT boolean evaluation cannot proceed. Check the Primitive tessellation section in the final FACETIZE summary.\n");
+	facetize_collect_primitive_summary(s);
+	bu_ptbl_free(&leaf_dps);
 	return BRLCAD_ERROR;
+    }
+
+    if (s->variant_plan) {
+	FacetizeVariantPlan *vplan = (FacetizeVariantPlan *)s->variant_plan;
+	if (!vplan->variant_names.empty())
+	    _ged_facetize_tessellate_variant_names(s, vplan);
+    }
 
     // Re-open working .g copy after BoTs have replaced CSG solids and perform
     // the tree walk to set up Manifold data.
     struct db_i *wdbip = db_open(bu_vls_cstr(s->wfile), (output_to_working) ? DB_OPEN_READWRITE :  DB_OPEN_READONLY);
     if (!wdbip) {
+	facetize_log(s, 0, "FACETIZE: unable to open working database %s for boolean evaluation\n", bu_vls_cstr(s->wfile));
 	bu_dirclear(s->wdir);
+	bu_ptbl_free(&leaf_dps);
 	return BRLCAD_ERROR;
     }
-    if (db_dirbuild(wdbip) < 0)
+    if (db_dirbuild(wdbip) < 0) {
+	facetize_log(s, 0, "FACETIZE: unable to build directory for working database %s\n", bu_vls_cstr(s->wfile));
+	db_close(wdbip);
+	bu_ptbl_free(&leaf_dps);
 	return BRLCAD_ERROR;
+    }
 
-    db_update_nref(wdbip, &rt_uniresource);
+    db_update_nref(wdbip);
 
     // Need wdbp in the next two stages for tolerances
     wwdbp = wdb_dbopen(wdbip, RT_WDB_TYPE_DB_DEFAULT);
+    if (!wwdbp) {
+	facetize_log(s, 0, "FACETIZE: unable to create writable database handle for %s\n", bu_vls_cstr(s->wfile));
+	db_close(wdbip);
+	bu_ptbl_free(&leaf_dps);
+	return BRLCAD_ERROR;
+    }
 
     /* Second stage is to prepare Manifold versions of the instances of the BoT
      * obj conversions generated by stage 1.  This is where matrix placement
@@ -1186,9 +1900,10 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
 	av[i] = dpa[i]->d_namep;
     }
 
-    if (_ged_facetize_booleval_tri(s, wdbip, wwdbp, argc, av, oname, vlfree, output_to_working) != BRLCAD_OK) {
+    if (_ged_facetize_booleval_tri(s, wdbip, wwdbp, argc, av, oname, vlfree, output_to_working, 1, 1) != BRLCAD_OK) {
+	ret = BRLCAD_ERROR;
 	if (s->verbosity >= 0) {
-	    bu_log("FACETIZE: failed to generate %s\n", oname);
+	    bu_log("FACETIZE: failed to generate %s; see %s for the full facetize log\n", oname, bu_vls_cstr(s->log_file));
 	}
     }
 
@@ -1211,4 +1926,3 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

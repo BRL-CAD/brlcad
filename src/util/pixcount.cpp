@@ -1,7 +1,7 @@
 /*                    P I X C O U N T . C P P
  * BRL-CAD
  *
- * Copyright (c) 1998-2025 United States Government as represented by
+ * Copyright (c) 1998-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,6 +27,8 @@
 
 #include <cstdio>
 #include <cstdlib>
+#include <cerrno>
+#include <climits>
 #include <vector>
 #include <map>
 #include <string>
@@ -42,6 +44,23 @@ static void print_usage()
 {
     static const char usage[] = "Usage: pixcount [-# bytes_per_pixel] [infile.pix [outfile]]\n";
     bu_exit(1, "%s", usage);
+}
+
+static int
+parse_positive_int_arg(const char *arg, int *out_value, const char *label)
+{
+    char *end = nullptr;
+    long int value = 0;
+
+    errno = 0;
+    value = strtol(arg, &end, 10);
+    if (errno != 0 || end == arg || *end != '\0' || value <= 0 || value > INT_MAX) {
+	bu_log("pixcount: invalid %s '%s'\n", label, arg);
+	return 0;
+    }
+
+    *out_value = (int)value;
+    return 1;
 }
 
 int main(int argc, char **argv)
@@ -61,8 +80,7 @@ int main(int argc, char **argv)
     while ((ch = bu_getopt(argc, argv, "#:h?")) != -1) {
 	switch (ch) {
 	    case '#':
-		if (sscanf(bu_optarg, "%d", &pixel_size) != 1) {
-		    bu_log("Invalid pixel size: '%s'\n", bu_optarg);
+		if (!parse_positive_int_arg(bu_optarg, &pixel_size, "pixel size")) {
 		    print_usage();
 		}
 		break;

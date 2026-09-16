@@ -1,0 +1,148 @@
+= ASC-NMG(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+asc-nmg - convert an ASCII NMG description to a BRL-CAD database
+
+== SYNOPSIS
+
+[source]
+----
+asc-nmg [-h | -?] [filein | -] [fileout]
+----
+
+[[description]]
+== DESCRIPTION
+
+*asc-nmg* reads a simple ASCII description of an n-manifold geometry (NMG)
+solid and writes a binary BRL-CAD geometry database (*.g*) containing the
+resulting NMG object. The input is *not* a standard BRL-CAD _.asc_ geometry
+database; it is a line-oriented list of loops and vertices (see below).
+
+If _filein_ is omitted or given as *-*, the description is read from standard
+input. If _fileout_ is omitted, the database is written to a file named
+_nmg.g_ in the current directory. The output database always contains a single
+NMG solid named *s.nmg* inside a region named *r.nmg*.
+
+The ASCII input consists of whitespace-separated tokens of the following forms:
+
+To start a new outer (counter-clockwise) loop for a face:
+....
+l
+....
+
+To start a new "hole" (inner) loop in the current face:
+....
+l hole
+....
+
+To define a vertex and its coordinates in the current loop:
+....
+v# x y z
+....
+where _#_ is an integer vertex number (e.g. *v0* or *v1*) and _x_, _y_, _z_
+are its coordinates.
+
+To reuse a previously defined vertex in the current loop, omit the coordinates:
+....
+v#
+....
+
+To extrude the first face by a vector:
+....
+e x y z
+....
+where _x_, _y_, _z_ form the extrusion vector.
+
+If an extrusion vector is supplied, the first described face is extruded to
+form a solid; this is intended for the case where exactly one face is
+described. Supplying an extrusion vector when more than one face is present may
+produce erroneous results. Otherwise, enough faces must be described to form a
+closed shell. Each run of *asc-nmg* produces a single NMG object.
+
+[[options]]
+== OPTIONS
+
+*-h*, *-?*::
+  Print a usage message and exit. (*asc-nmg* takes no other options; all
+  remaining arguments are interpreted as file names.)
+
+[[examples]]
+== EXAMPLES
+
+.Extruding a face into a solid
+====
+With _filein.txt_ containing a single face plus an extrusion vector:
+
+....
+l
+	e	-1 0 0
+	v0	1 -1 -1
+	v1	1 1 -1
+	v2	1 1 0
+	v3	1 0 0
+	v4	1 0 1
+	v5	1 -1 1
+....
+
+the command:
+
+[source,bash]
+----
+$ asc-nmg filein.txt sample.g
+----
+
+extrudes the 'L'-shaped face along the vector (-1, 0, 0) to build a solid NMG
+object in _sample.g_, which can then be raytraced with *rt*(1) or viewed in
+*mged*(1).
+====
+
+.Creating a face with a hole and converting to facetized geometry
+====
+A square outer loop with a square inner hole loop (inner loop wound opposite
+to the outer loop):
+
+....
+l
+    v0 0 0 0
+    v1 10 0 0
+    v2 10 10 0
+    v3 0 10 0
+l hole
+    v4 2 2 0
+    v5 8 2 0
+    v6 8 8 0
+    v7 2 8 0
+....
+
+[source,bash]
+----
+$ asc-nmg square_with_hole.txt square.g
+$ mged square.g facetize s.nmg bot.nmg
+----
+
+The first command produces a single planar NMG face containing a square hole;
+the second converts that NMG into a BoT primitive for further processing.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *mged*(1), *rt*(1), *g-stl*(1), *asc2g*(1)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

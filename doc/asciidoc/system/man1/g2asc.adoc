@@ -1,0 +1,104 @@
+= G2ASC(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+
+g2asc - convert a BRL-CAD geometry database from binary to ASCII
+
+== SYNOPSIS
+
+[source]
+----
+g2asc [-h] input.g output.asc
+----
+
+[[description]]
+== DESCRIPTION
+
+*g2asc* reads a binary BRL-CAD ".g" geometry database and writes an ASCII
+representation of it. It is the converse of *asc2g*(1); together the two
+programs form a pair of filters for moving geometry between the binary and
+ASCII forms.
+
+The output format depends on the version of the input database. A modern "v5"
+database is exported as a Tcl command script (a sequence of *put*, *attr*, and
+similar commands). An older "v4" database is exported in the legacy one-line
+record format.
+
+The "v5" binary format is already machine independent, so converting to ASCII
+is no longer required merely to transfer a database between differing computer
+architectures; *g2asc* remains useful for inspecting, editing, or
+diff'ing geometry as text.
+
+Both an input and an output file name are required. Either may be given as a
+single dash (*-*) to use standard input or standard output, but a dash is
+rejected for "v5" databases: those must be named regular files. The input and
+output may not refer to the same file.
+
+[[deprecation]]
+== DEPRECATION
+
+*g2asc* is *not* deprecated and remains a supported part of BRL-CAD.
+However, its original purpose -- producing an architecture-independent
+ASCII form of a geometry database for transfer between machines -- has
+been obsoleted by the machine-independent "v5" binary ".g" format, which
+can be moved between systems directly. For that reason, *g2asc* is no
+longer needed for portability. It is still applicable for inspecting,
+editing, or diff'ing geometry as text, after which *asc2g*(1) can convert
+the result back to binary form.
+
+[[options]]
+== OPTIONS
+
+*-h*, *--help*::
+  Print a usage summary and exit. The hidden alias *-?* is also accepted.
+
+[[examples]]
+== EXAMPLES
+
+.Round-trip a database through ASCII to edit it as text
+====
+[source,bash]
+----
+g2asc model.g model.asc
+sed -i 's/old_part/new_part/g' model.asc
+asc2g model.asc model_edited.g
+----
+Export *model.g* to a text file, rename an object with a stream editor, then
+reimport the result with *asc2g*(1). This text round-trip is handy for bulk
+edits or scripted fixups that are awkward inside *mged*(1).
+====
+
+.Inspect what changed between two databases
+====
+[source,bash]
+----
+g2asc before.g before.asc
+g2asc after.g after.asc
+diff before.asc after.asc
+----
+Convert two binary databases to ASCII and *diff* them to see exactly which
+objects and parameters differ, which is impossible directly on the binary form.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*asc2g*(1), *brlcad*(1), *mged*(1)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

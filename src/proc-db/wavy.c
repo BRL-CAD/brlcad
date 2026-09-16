@@ -1,7 +1,7 @@
 /*                          W A V Y . C
  * BRL-CAD
  *
- * Copyright (c) 1991-2025 United States Government as represented by
+ * Copyright (c) 1991-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -68,8 +68,8 @@ printusage(void)
 int
 main(int argc, char **argv)
 {
-    char *id_name = "wavy database";
-    char *nurb_name = "wavy";
+    const char *id_name = "wavy database";
+    const char *nurb_name = "wavy";
     int i, j;
     fastf_t hscale;
     struct rt_wdb *outfp;

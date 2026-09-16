@@ -1,0 +1,109 @@
+= FBCBARS(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+fbcbars - display standard color bars on a framebuffer
+
+== SYNOPSIS
+
+[source]
+----
+fbcbars [-e | -f | -s] [-F framebuffer] [-S squarescrsize] [-W scr_width] [-N scr_height] [-h]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*fbcbars* displays a standard color bar scale on the currently selected framebuffer. By default, or when the *-s* option is provided, SMPTE color bars are displayed. Other supported patterns include FCC/EBU and EIA color bars. If no framebuffer is explicitly specified, the environment variable *FB_FILE* is used (see *brlcad*(1)). Ordinarily, the requested framebuffer size is the device default.
+
+
+[[options]]
+== OPTIONS
+
+*-e*::
+	Display standard EIA color bars, arranged horizontally. The bottom quarter of the screen will be -I, 100% white, Q, black. The upper three-quarters of the screen will be seven colors at 75% intensity: grey, yellow, cyan, green, magenta, red, blue.
+
+*-f*::
+	Display FCC/EBU color bars. The entire screen will contain 8 colors: 100% white, 75% yellow, 75% cyan, 75% green, 75% magenta, 75% red, 75% blue, and black.
+
+*-s*::
+	Display SMPTE color bars (the default). This is the EIA pattern with the upper quarter of the bottom quarter of the screen containing a reversed and shifted version of the upper pattern, which is very useful for aligning color demodulators in monitors. Using a dichroic blue filter, observe the magenta and cyan bars on the NTSC monitor. Adjust the phase of the chroma demodulator until they have visually equal intensity. At this point, all the other color bars will display the correct chroma.
+
+*-F* _framebuffer_::
+	Explicitly specify the framebuffer to use. If this option is not provided, the environment variable *FB_FILE* is used.
+
+*-S* _squarescrsize_::
+	Set both the height and width of the display device to the given size.
+
+*-W* _scr_width_::
+	Specify the width of each output scanline, in pixels.
+
+*-N* _scr_height_::
+	Specify the desired height in scanlines of the display device.
+
+*-h*, *-?*::
+	Print usage information and exit.
+
+
+[[examples]]
+== EXAMPLES
+
+.Capture SMPTE bars to a pix file for later use
+====
+[source,bash]
+----
+fbcbars -s -S 512 -F /tmp/bars.pix
+----
+Opens the in-memory pix(5) file framebuffer `/tmp/bars.pix` at 512x512 and
+writes the default SMPTE color bars into it. The resulting file can be
+inspected with *pix-fb*(1) or converted to PNG with *pix-png*(1), which is a
+convenient way to generate a reference test pattern without a physical display.
+====
+
+.Display FCC/EBU bars at HD resolution on the default framebuffer
+====
+[source,bash]
+----
+FB_FILE=/dev/X fbcbars -f -W 1920 -N 1080
+----
+Displays full-screen FCC/EBU color bars at 1920x1080 on the framebuffer named
+by the *FB_FILE* environment variable, here an X11 display. This is useful for
+checking the color reproduction and geometry of a newly configured display
+device.
+====
+
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *fbclear*(1), *fbgrid*(1), *fbframe*(1), *pix-fb*(1), *pixbackgnd*(1)
+
+
+[[inspirations]]
+== INSPIRATIONS
+
+Mike Pique, University of North Carolina
+
+Doris Kochanek, National Film Board of Canada
+
+
+[[author]]
+== AUTHOR
+
+*BRL-CAD Team*
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,7 +1,7 @@
 /*                        S E A R C H . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -59,6 +59,7 @@
 
 #include <sys/types.h> /* for gid_t */
 
+#include "bu/hash.h"
 #include "bu/ptbl.h"
 #include "raytrace.h"
 
@@ -73,6 +74,11 @@ struct _db_search_ctx {
 struct db_node_t {
     struct db_full_path *path;
     struct bu_ptbl *full_paths;
+    void *unique_dps;              /* C++ unordered_set<directory *>*, when unique output is requested */
+    void *above_passes_map;       /* C++ map<db_plan_t*,unordered_set<bu_h128_t>>*, NULL without -above pre-pass */
+    bu_h128_t above_path_hash;    /* precomputed path hash for above_passes_map lookup */
+    uint64_t below_passes;        /* bit i is set when this path passes cached -below plan i */
+    int below_cache_active;       /* below_passes is valid for this path */
     int flags;
     int matched_filters;
 };
@@ -101,6 +107,8 @@ struct db_plan_t {
 #define F_ATLEAST 1 /* perm */
     int min_depth;
     int max_depth;
+    int below_cache_index;                /* cached -below bit number, or -1 for ancestor-walk fallback */
+    void *compiled_regex;                 /* regex_t *, owned by regex plan nodes */
     mat_t m;
     int flags;				/* private flags */
     enum db_search_ntype type;		/* plan node type */
@@ -152,32 +160,6 @@ typedef struct _option {
 } OPTION;
 
 __BEGIN_DECLS
-
-static int c_attr(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct _db_search_ctx *);
-static int c_objparam(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct _db_search_ctx *);
-static int c_iname(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct _db_search_ctx *);
-static int c_maxdepth(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct _db_search_ctx *);
-static int c_mindepth(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct _db_search_ctx *);
-static int c_depth(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct _db_search_ctx *);
-static int c_name(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct _db_search_ctx *);
-static int c_nnodes(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct _db_search_ctx *);
-static int c_regex(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct _db_search_ctx *);
-static int c_iregex(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct _db_search_ctx *);
-static int c_path(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct _db_search_ctx *);
-static int c_print(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct _db_search_ctx *);
-static int c_stdattr(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct _db_search_ctx *);
-static int c_matrix(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct _db_search_ctx *);
-static int c_type(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct _db_search_ctx *);
-static int c_bool(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct _db_search_ctx *);
-static int c_openparen(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct _db_search_ctx *);
-static int c_closeparen(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct _db_search_ctx *);
-static int c_not(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct _db_search_ctx *);
-static int c_or(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct _db_search_ctx *);
-static int c_above(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct _db_search_ctx *);
-static int c_below(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct _db_search_ctx *);
-static int c_exec(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct _db_search_ctx *);
-static int c_size(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct _db_search_ctx *);
-
 __END_DECLS
 
 #endif /* LIBRT_SEARCH_H */

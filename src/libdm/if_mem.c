@@ -1,7 +1,7 @@
 /*                        I F _ M E M . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2025 United States Government as represented by
+ * Copyright (c) 1989-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -65,7 +65,7 @@ static struct modeflags {
     char c;
     long mask;
     long value;
-    char *help;
+    const char *help;
 } modeflags[] = {
     { 'w',	MODE_1MASK, MODE_1IMMEDIATE,
       "Write thru mode - pass writes directly to attached frame buffer" },
@@ -528,7 +528,11 @@ struct fb_impl memory_interface_impl =  {
     {0}, /* u3 */
     {0}, /* u4 */
     {0}, /* u5 */
-    {0}  /* u6 */
+    {0}, /* u6 */
+    0,   /* if_interactive */
+    {{FB_EVENT_NONE, 0, 0, 0, 0, 0}}, /* if_equeue */
+    0,   /* if_ehead */
+    0    /* if_etail */
 };
 
 struct fb memory_interface =  { &memory_interface_impl };

@@ -1,0 +1,137 @@
+= FBLABEL(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+fblabel - display a text string on a framebuffer
+
+== SYNOPSIS
+
+[source]
+----
+fblabel [-a] [-c] [-d] [-F framebuffer] [-f fontname] [-C r/g/b]
+        [-r red] [-g green] [-b blue]
+        [-s squaresize] [-S squaresize]
+        [-w width] [-W width] [-n height] [-N height]
+        x_position y_position text_string
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*fblabel* writes a text string onto the image of the currently selected
+framebuffer. By default the text is anti-aliased (Gaussian filtered)
+against the existing image, so the label blends with whatever is already
+displayed. The lower-left corner of the text begins at the given
+_x_position_ and _y_position_ (in pixels); use *fbpoint*(1) to
+interactively locate a position.
+
+The environment variable FB_FILE specifies the current framebuffer; see
+*brlcad*(1). The framebuffer may instead be named with the *-F* flag.
+
+The text is drawn using a Berkeley *vfont*-format font. The default font
+is _nonie.r.12_. Fonts are located in BRL-CAD's data directory under
+_vfont/_, falling back to _/usr/lib/vfont_. The default text color is
+white (255/255/255).
+
+
+[[options]]
+== OPTIONS
+
+*-a*::
+  Disable anti-aliasing. Text is rendered with hard edges rather than
+  filtered against the background image.
+
+*-c*::
+  Clear the framebuffer before drawing the text. By default the existing
+  image is preserved.
+
+*-d*::
+  Enable debugging output to standard error.
+
+*-F* _framebuffer_::
+  Use the specified framebuffer device instead of FB_FILE.
+
+*-f* _fontname_::
+  Use the named *vfont*-format font instead of the default _nonie.r.12_.
+
+*-C* _r/g/b_::
+  Set the text color from red, green, and blue values in the range
+  [0..255], separated by slashes. The default is white (255/255/255).
+
+*-r* _red_::
+  Set the red component [0..255] of the text color (backward
+  compatibility; *-C* is preferred).
+
+*-g* _green_::
+  Set the green component [0..255] of the text color (backward
+  compatibility; *-C* is preferred).
+
+*-b* _blue_::
+  Set the blue component [0..255] of the text color (backward
+  compatibility; *-C* is preferred).
+
+*-s* _squaresize_, *-S* _squaresize_::
+  Set both the width and height of the framebuffer to _squaresize_
+  pixels.
+
+*-w* _width_, *-W* _width_::
+  Set the framebuffer width in pixels.
+
+*-n* _height_, *-N* _height_::
+  Set the framebuffer height in pixels.
+
+*-h*, *-?*::
+  Print a usage message.
+
+
+[[examples]]
+== EXAMPLES
+
+.Caption a rendered image
+====
+[source,bash]
+----
+pix-fb moss.pix
+fblabel -C 255/255/0 10 10 "moss scene"
+----
+Display a rendered image with *pix-fb*(1), then stamp a yellow caption in
+the lower-left corner, anti-aliased over the existing pixels.
+====
+
+.Position a label interactively with fbpoint
+====
+[source,bash]
+----
+fblabel -f oldenglish.14 `fbpoint` "Title"
+----
+Use *fbpoint*(1) to click a location on the framebuffer; its emitted
+coordinates become the _x_position_ and _y_position_ for the label, drawn
+here in the oldenglish.14 font.
+====
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *fbpoint*(1), *fbline*(1), *fbclear*(1), *pix-fb*(1)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

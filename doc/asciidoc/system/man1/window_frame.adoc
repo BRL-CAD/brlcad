@@ -1,0 +1,97 @@
+= WINDOW_FRAME(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+window_frame - create a BRL-CAD geometry database of rounded window frames
+
+== SYNOPSIS
+
+[source]
+----
+window_frame [-f_name.g_] [-n_#_] [-H_#_] [-w_#_] [-d_#_] [-r_#_] [-i_#_]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*window_frame* creates a BRL-CAD *.g* geometry database containing one or more
+window frames with rounded edges and corners. Each frame is built from four
+arb8s and eight cylinders. The front face of a frame is centered at the origin
+(0, 0, 0) and the frame extends in the negative X direction by its depth.
+
+Up to 256 identically sized frames may be generated in a single run. All
+dimensions are in millimeters. If invoked with no arguments, *window_frame*
+prints usage information and prompts interactively for each parameter;
+otherwise the values are taken from the command-line options below. Each
+option's value must be attached directly to its flag with no intervening space
+(for example *-H1618*, not *-H 1618*). Unspecified numeric values default to
+zero.
+
+The resulting geometry can be inspected or rendered with the usual BRL-CAD
+tools such as *mged*(1) and *rt*(1).
+
+[[options]]
+== OPTIONS
+
+*-f*_name.g_::
+  Name of the BRL-CAD *.g* database to create (256 characters max).
+
+*-n*_#_::
+  Number of window frames to create (up to 256).
+
+*-H*_#_::
+  Height of the window frame in millimeters.
+
+*-w*_#_::
+  Width of the window frame in millimeters.
+
+*-d*_#_::
+  Depth of the window frame in millimeters.
+
+*-r*_#_::
+  Radius of the rounded corners in millimeters.
+
+*-i*_#_::
+  Actual width of the frame material itself in millimeters.
+
+*-h*, *-?*::
+  Print a help/usage message and exit.
+
+[[examples]]
+== EXAMPLES
+
+.Generate a window frame and raytrace it
+====
+[source,bash]
+----
+window_frame -fwin.g -n1 -H1618 -w1000 -d100 -r50 -i75
+rt -o win.png -s 1024 win.g wfra
+----
+The first command writes *win.g* containing a single 1618 mm by 1000 mm frame,
+100 mm deep, with 50 mm rounded corners and 75 mm of frame material. The second
+command raytraces the generated group *wfra* (the first frame's group) to a
+1024x1024 image *win.png*.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *mged*(1), *rt*(1), *window*(1), *gastank*(1), *handle*(1), *bolt*(1)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

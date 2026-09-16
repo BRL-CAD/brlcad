@@ -1,7 +1,7 @@
 /*                         A E T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2018-2025 United States Government as represented by
+ * Copyright (c) 2018-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,6 +36,7 @@
 
 #include "../../dbi.h"
 
+extern "C" int unpack_apng(const char *src_dir, const char *apng_name, const char *out_dir, const char *prefix);
 void
 dm_refresh(struct ged *gedp, int vnum)
 {
@@ -51,6 +52,11 @@ dm_refresh(struct ged *gedp, int vnum)
     bvs->redraw(NULL, uset, 1);
 
     struct dm *dmp = (struct dm *)v->dmp;
+    /* Ensure rendering goes to this view's DM context, not the last-active one.
+     * With multiple DMs each view has its own OSMesa context; without making the
+     * correct context current here dm_set_bg and dm_draw_objs will operate on
+     * whichever context was last activated, leaving this buffer empty. */
+    dm_make_current(dmp);
     unsigned char *dm_bg1;
     unsigned char *dm_bg2;
     dm_get_bg(&dm_bg1, &dm_bg2, dmp);
@@ -165,6 +171,23 @@ main(int ac, char *av[]) {
     /* Enable all the experimental logic */
     bu_setenv("LIBRT_USE_COMB_INSTANCE_SPECIFIERS", "1", 1);
 
+    /* Use a local working-directory cache so we do not pollute the user's
+     * real BRL-CAD cache and so the test is fully self-contained. */
+    char lcache[MAXPATHLEN] = {0};
+    char runtime_cache[MAXPATHLEN] = {0};
+    bu_dir(lcache, MAXPATHLEN, BU_DIR_CURR, "ged_aet_test_cache", NULL);
+    bu_mkdir(lcache);
+    bu_dir(runtime_cache, MAXPATHLEN, BU_DIR_CURR, "ged_aet_test_cache",
+	   "cache", NULL);
+    bu_mkdir(runtime_cache);
+    /* Runtime cache maintenance must not remove extracted controls. */
+    bu_setenv("BU_DIR_CACHE", runtime_cache, 1);
+
+    unpack_apng(av[1], "aet_00.apng", lcache, "aet_00_");
+    unpack_apng(av[1], "aet_01.apng", lcache, "aet_01_");
+    unpack_apng(av[1], "aet_02.apng", lcache, "aet_02_");
+    unpack_apng(av[1], "aet_03.apng", lcache, "aet_03_");
+
     if (!bu_file_exists(av[1], NULL)) {
 	printf("ERROR: [%s] does not exist, expecting .g file\n", av[1]);
 	return 2;
@@ -272,10 +295,10 @@ main(int ac, char *av[]) {
     ged_exec_draw(gedp, 4, s_av);
 
     // Sanity
-    ret += img_cmp(0, 1, gedp, av[1], soft_fail);
-    ret += img_cmp(1, 1, gedp, av[1], soft_fail);
-    ret += img_cmp(2, 1, gedp, av[1], soft_fail);
-    ret += img_cmp(3, 1, gedp, av[1], soft_fail);
+    ret += img_cmp(0, 1, gedp, lcache, soft_fail);
+    ret += img_cmp(1, 1, gedp, lcache, soft_fail);
+    ret += img_cmp(2, 1, gedp, lcache, soft_fail);
+    ret += img_cmp(3, 1, gedp, lcache, soft_fail);
 
     // Resize dm to larger dimensions
     bu_log("Resize to 600x600...\n");
@@ -291,10 +314,10 @@ main(int ac, char *av[]) {
 	// stable without adjustment.
 	bv_update(views[i]);
     }
-    ret += img_cmp(0, 2, gedp, av[1], soft_fail);
-    ret += img_cmp(1, 2, gedp, av[1], soft_fail);
-    ret += img_cmp(2, 2, gedp, av[1], soft_fail);
-    ret += img_cmp(3, 2, gedp, av[1], soft_fail);
+    ret += img_cmp(0, 2, gedp, lcache, soft_fail);
+    ret += img_cmp(1, 2, gedp, lcache, soft_fail);
+    ret += img_cmp(2, 2, gedp, lcache, soft_fail);
+    ret += img_cmp(3, 2, gedp, lcache, soft_fail);
 
     // Shrink back to default dimensions
     bu_log("Shrink to 512x512...\n");
@@ -310,10 +333,10 @@ main(int ac, char *av[]) {
 	// stable without adjustment.
 	bv_update(views[i]);
     }
-    ret += img_cmp(0, 1, gedp, av[1], soft_fail);
-    ret += img_cmp(1, 1, gedp, av[1], soft_fail);
-    ret += img_cmp(2, 1, gedp, av[1], soft_fail);
-    ret += img_cmp(3, 1, gedp, av[1], soft_fail);
+    ret += img_cmp(0, 1, gedp, lcache, soft_fail);
+    ret += img_cmp(1, 1, gedp, lcache, soft_fail);
+    ret += img_cmp(2, 1, gedp, lcache, soft_fail);
+    ret += img_cmp(3, 1, gedp, lcache, soft_fail);
 
     // Cycle through a bunch of resizes
     bu_log("Cycle through multiple resizes...\n");
@@ -342,10 +365,10 @@ main(int ac, char *av[]) {
 	// stable without adjustment.
 	bv_update(views[i]);
     }
-    ret += img_cmp(0, 1, gedp, av[1], soft_fail);
-    ret += img_cmp(1, 1, gedp, av[1], soft_fail);
-    ret += img_cmp(2, 1, gedp, av[1], soft_fail);
-    ret += img_cmp(3, 1, gedp, av[1], soft_fail);
+    ret += img_cmp(0, 1, gedp, lcache, soft_fail);
+    ret += img_cmp(1, 1, gedp, lcache, soft_fail);
+    ret += img_cmp(2, 1, gedp, lcache, soft_fail);
+    ret += img_cmp(3, 1, gedp, lcache, soft_fail);
 
     ged_close(gedp);
 
@@ -361,4 +384,3 @@ main(int ac, char *av[]) {
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

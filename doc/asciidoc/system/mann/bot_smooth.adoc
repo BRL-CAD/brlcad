@@ -1,0 +1,65 @@
+= BOT_SMOOTH(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+bot_smooth - compute and store surface normals in a BOT mesh
+
+== SYNOPSIS
+
+[source]
+----
+bot_smooth [-t angle_tolerance] new_bot old_bot
+----
+
+
+[[description]]
+== DESCRIPTION
+
+The *bot_smooth* command computes per-vertex surface normals for the BOT (Bag-of-Triangles) primitive named `old_bot` and stores the result as a new BOT named `new_bot`. The original object is not modified.
+
+Normals are computed by averaging the normals of adjacent faces. The `angle_tolerance` controls when neighboring faces are treated as a sharp crease rather than a smooth surface: faces whose normals differ by more than the tolerance angle are not averaged together.
+
+NOTE: This command requires the database to be at the current version with support for BOT surface normals. If the database is too old, use `dbupgrade` first.
+
+=== Options
+
+*-t angle_tolerance*::
+Maximum angle (in degrees) between adjacent face normals for them to be averaged together. Faces separated by a larger angle produce a hard edge in the normal map. Default is `180.0` (all faces smoothed together).
+
+[[examples]]
+== EXAMPLES
+
+.Compute smooth normals for a BOT
+[example]
+====
+mged> **bot_smooth smooth_hull.bot hull.bot**
+
+Computes smooth surface normals for `hull.bot` (using the default 180° tolerance, smoothing all faces) and writes the result to `smooth_hull.bot`.
+====
+
+.Smooth with a crease angle for hard edges
+[example]
+====
+mged> **bot_smooth -t 60 smooth_part.bot rough_part.bot**
+
+Smooths `rough_part.bot` but preserves hard edges between faces whose normals differ by more than 60°.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*bot_fuse*(nged), *bot_merge*(nged)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

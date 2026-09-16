@@ -1,0 +1,81 @@
+= ROT_ABOUT(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+rot_about - get or set the point about which view rotations are performed
+
+== SYNOPSIS
+
+[source]
+----
+rot_about
+rot_about e|k|m|v
+----
+
+[[description]]
+== DESCRIPTION
+
+The *rot_about* command gets or sets the pivot point used when rotating the view. The pivot determines the fixed point in space around which the camera orbits when rotation commands (such as `rot`) are applied.
+
+* *No arguments*: Returns the current rotate-about setting as a single character (`e`, `k`, `m`, or `v`).
+
+* *One argument*: Sets the rotate-about point to the specified single-character mode. The argument must be exactly one character from the set `e`, `k`, `m`, or `v`. Any other value returns a usage error.
+
+=== Rotate-about modes
+
+[cols="1,4"]
+|===
+|Mode |Description
+
+|`e`
+|Eye point — rotate about the eye (camera) position. The scene orbits around the viewer's current location.
+
+|`k`
+|Keypoint — rotate about the current keypoint. The keypoint is typically the center of the last selected or edited object.
+
+|`m`
+|Model origin — rotate about the model coordinate system origin (0, 0, 0).
+
+|`v`
+|View center — rotate about the center of the current view (the point at the center of the display window).
+
+|===
+
+[[examples]]
+== EXAMPLES
+
+.Get the current rotate-about mode
+[example]
+====
+mged> **rot_about**
+
+Returns the current rotate-about mode character, e.g. `v` if rotating about the view center.
+====
+
+.Rotate about the model origin
+[example]
+====
+mged> **rot_about m**
+
+Sets rotations to orbit around the model coordinate origin (0, 0, 0). Subsequent `rot` commands will pivot about that point.
+====
+
+.Rotate about the view center
+[example]
+====
+mged> **rot_about v**
+
+Sets rotations to orbit around the center of the current display window. This is the most common interactive setting.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

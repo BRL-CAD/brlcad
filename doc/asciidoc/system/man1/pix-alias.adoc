@@ -1,0 +1,95 @@
+= PIX-ALIAS(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+pix-alias - convert a BRL-CAD pix image to Alias(tm) pix format
+
+== SYNOPSIS
+
+[source]
+----
+pix-alias [-s _squaresize_] [-w _file_width_] [-n _file_height_] < BRLpixfile > ALIASpixfile
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*pix-alias* reads a BRL-CAD *pix*(5) image (a stream of RGB pixel triples) on
+the standard input and writes an Alias(tm) PIX image on the standard output.
+The Alias format is run-length encoded and stores pixels as count, B, G, R
+runs preceded by a short header describing the image dimensions, offsets, and
+bit depth (24 bits per pixel).
+
+Because *pix*(5) files carry no dimensions, the input size must be supplied on
+the command line; it defaults to 512 by 512 pixels. The output scanlines are
+written bottom-to-top as expected by Alias readers. *pix-alias* refuses to run
+when its standard input is a terminal.
+
+
+[[options]]
+== OPTIONS
+
+*-s* _squaresize_::
+  Set both the width and the height of the input image to _squaresize_ pixels.
+
+*-w* _file_width_::
+  Set the width of the input image to _file_width_ pixels.
+
+*-n* _file_height_::
+  Set the height of the input image to _file_height_ scanlines.
+
+*-h*, *-?*::
+  Print a usage message and exit.
+
+
+[[examples]]
+== EXAMPLES
+
+.Convert a rendered frame to Alias format
+====
+[source,bash]
+----
+rt -s 1024 -o frame.pix model.g component
+pix-alias -s 1024 < frame.pix > frame.alias
+----
+Render a 1024x1024 image with *rt*(1), then convert that *pix*(5) file into an
+Alias PIX file for use with tools that expect the Alias format. The *-s* flag
+tells *pix-alias* the input is square so it allocates the correct buffer.
+====
+
+.Convert a non-square image
+====
+[source,bash]
+----
+pix-alias -w 1280 -n 720 < wide.pix > wide.alias
+----
+Convert a 1280x720 (720p) *pix*(5) file, specifying width and height
+independently with *-w* and *-n*.
+====
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *rt*(1), *pix-png*(1), *pix-bw*(1), *pix*(5)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

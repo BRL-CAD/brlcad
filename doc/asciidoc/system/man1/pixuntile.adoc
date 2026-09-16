@@ -1,0 +1,97 @@
+= PIXUNTILE(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+pixuntile - break image up into separate files
+
+== SYNOPSIS
+
+[source]
+----
+pixuntile [-s _squareinsize_] [-w _in_width_] [-n _in_height_] [-S _squareoutsize_] [-W _out_width_] [-N _out_height_] [-o _startframe_] _basename_ < file.pix
+pixuntile [-s _squareinsize_] [-w _in_width_] [-n _in_height_] [-S _squareoutsize_] [-W _out_width_] [-N _out_height_] _file1_ [_file2_ ... _fileN_] < file.pix
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*pixuntile* performs the inverse operation of *pixtile*(1). It reads a single large image, composed of a grid of smaller sub-images packed from lower-left to upper-right, and writes each sub-image to its own file. Input is read from standard input and all files are in *pix*(5) format. The input image defaults to 512x512 pixels.
+
+The output sub-images default to 64x64 pixels. The *-S* flag sets both dimensions of the output sub-images to _squareoutsize_, while *-W* and *-N* set output width and height independently. For the input image, *-s* sets a square size and *-w* and *-n* set width and height independently.
+
+If a single _basename_ is given, the output files are named _basename.num_, where _num_ is a consecutive series of integers starting at 0 (or at _startframe_ when *-o* is given). If two or more filename arguments are supplied instead, those names are used directly, in order, for the extracted sub-images.
+
+
+[[options]]
+== OPTIONS
+
+*-s* _squareinsize_::
+  Set the input image width and height to _squareinsize_ pixels.
+
+*-w* _in_width_::
+  Set the input image width to _in_width_ pixels (default 512).
+
+*-n* _in_height_::
+  Set the input image height to _in_height_ pixels (default 512).
+
+*-S* _squareoutsize_::
+  Set the output sub-image width and height to _squareoutsize_ pixels.
+
+*-W* _out_width_::
+  Set the output sub-image width to _out_width_ pixels (default 64).
+
+*-N* _out_height_::
+  Set the output sub-image height to _out_height_ pixels (default 64).
+
+*-o* _startframe_::
+  Number the first output file _startframe_ instead of 0, when a single _basename_ is given.
+
+
+[[examples]]
+== EXAMPLES
+
+.Re-split a montage produced by pixtile
+====
+[source,bash]
+----
+pixtile -s 512 -S 128 frame < frames.pix > montage.pix
+pixuntile -s 512 -S 128 out < montage.pix
+----
+*pixtile*(1) packs sixteen 128x128 sub-images into one 512x512 montage; *pixuntile* reverses it, writing the 128x128 chunks back out as _out.0_ through _out.15_ in lower-left to upper-right order.
+====
+
+.Extract sub-images into explicitly named files
+====
+[source,bash]
+----
+pixuntile -s 256 -S 128 bl.pix br.pix tl.pix tr.pix < quad.pix
+----
+Split a 256x256 image holding four 128x128 quadrants into individually named *pix*(5) files. Filenames are consumed in extraction order, which proceeds from the lower-left across each row and then upward: _bl.pix_ and _br.pix_ receive the bottom row, _tl.pix_ and _tr.pix_ the top row.
+====
+
+
+[[see_also]]
+== SEE ALSO
+
+*pixtile*(1), *brlcad*(1), *pix*(5)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1988-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

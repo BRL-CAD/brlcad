@@ -1,0 +1,47 @@
+= EAC(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+eac - Adds all the regions in the current model that have one of the aircodes in the argument list to the display list so that they will appear on the _MGED_ display.
+
+== SYNOPSIS
+
+[source]
+----
+eac {air_code(s)}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Adds all the regions in the current model that have any of the specified aircodes to the display list so that they will appear on the _MGED_ display. Regions that have nonzero region identifiers will not be listed by this command. The *whichair* command performs a similarsearch, but just lists the results.
+
+
+[[examples]]
+== EXAMPLES
+
+.Draw all regions having particular air codes.
+[example]
+====
+
+mged> **eac 1 2 3**::
+Draws all regions with _aircodes_ 1, 2, or 3 in the _MGED_ display.
+
+
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,7 +1,7 @@
 /*                  B R E P _ D E F I N E S . H
  * BRL-CAD
  *
- * Copyright (c) 2014-2025 United States Government as represented by
+ * Copyright (c) 2014-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,6 +22,9 @@
  * Private defines.
  *
  */
+
+#ifndef LIBBREP_BREP_DEFINES_H
+#define LIBBREP_BREP_DEFINES_H
 
 // The maximal depth for subdivision - trade-off between accuracy and
 // performance.
@@ -69,3 +72,5 @@
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+
+#endif /* LIBBREP_BREP_DEFINES_H */

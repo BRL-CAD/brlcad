@@ -1,7 +1,7 @@
 /*                     P L O T 3 L I N E 2 . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2025 United States Government as represented by
+ * Copyright (c) 1986-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -25,6 +25,7 @@
 
 #include "common.h"
 
+#include <errno.h>
 #include <stdlib.h> /* for atof() */
 #include <math.h>
 #include <string.h>
@@ -32,6 +33,8 @@
 
 #include "bu/app.h"
 #include "bu/exit.h"
+#include "bu/log.h"
+#include "bu/opt.h"
 #include "vmath.h"
 #include "bv/plot3.h"
 
@@ -52,7 +55,7 @@ main(int argc, char **argv)
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
 
-    if (argc < 5 || isatty(fileno(stdout))) {
+    if (argc < 5 || argc > 8 || isatty(fileno(stdout))) {
 	bu_exit(1, "%s", usage);
     }
 
@@ -62,17 +65,22 @@ main(int argc, char **argv)
 	    putchar(c);
     }
 
-    x_1 = atof(argv[1]);
-    y_1 = atof(argv[2]);
-    x_2 = atof(argv[3]);
-    y_2 = atof(argv[4]);
+    if (!bu_opt_scan_double(argv[1], &x_1, "x1") ||
+	!bu_opt_scan_double(argv[2], &y_1, "y1") ||
+	!bu_opt_scan_double(argv[3], &x_2, "x2") ||
+	!bu_opt_scan_double(argv[4], &y_2, "y2")) {
+	return 1;
+    }
 
     if (argc > 5)
-	r = atoi(argv[5]);
+	if (!bu_opt_scan_int_range(argv[5], &r, 0, 255, "red component"))
+	    return 1;
     if (argc > 6)
-	g = atoi(argv[6]);
+	if (!bu_opt_scan_int_range(argv[6], &g, 0, 255, "green component"))
+	    return 1;
     if (argc > 7)
-	b = atoi(argv[7]);
+	if (!bu_opt_scan_int_range(argv[7], &b, 0, 255, "blue component"))
+	    return 1;
 
     if (argc > 5)
 	pl_color(stdout, r, g, b);

@@ -1,7 +1,7 @@
 /*                             N M G . C
  * BRL-CAD
  *
- * Copyright (c) 2015-2025 United States Government as represented by
+ * Copyright (c) 2015-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -132,7 +132,7 @@ ged_labelface_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (rt_db_get_internal(&internal, dp, gedp->dbip,
-		bn_mat_identity, &rt_uniresource) < 0) {
+		bn_mat_identity) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "rt_db_get_internal() error\n");
 	return BRLCAD_ERROR;
     }
@@ -182,7 +182,6 @@ ged_labelface_core(struct ged *gedp, int argc, const char *argv[])
 	dm_set_dirty(dmp, 1);
     return BRLCAD_OK;
 }
-
 
 
 extern int ged_nmg_cmface_core(struct ged *gedp, int argc, const char *argv[]);
@@ -283,64 +282,23 @@ ged_nmg_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
 
-struct ged_cmd_impl nmg_cmd_impl = {"nmg", ged_nmg_core, GED_CMD_DEFAULT};
-const struct ged_cmd nmg_cmd = { &nmg_cmd_impl };
+#define GED_NMG_COMMANDS(X, XID) \
+    X(nmg, ged_nmg_core, GED_CMD_DEFAULT) \
+    X(labelface, ged_labelface_core, GED_CMD_DEFAULT) \
+    X(nmg_cmface, ged_nmg_cmface_core, GED_CMD_DEFAULT) \
+    X(nmg_collapse, ged_nmg_collapse_core, GED_CMD_DEFAULT) \
+    X(nmg_fix_normals, ged_nmg_fix_normals_core, GED_CMD_DEFAULT) \
+    X(nmg_kill_f, ged_nmg_kill_f_core, GED_CMD_DEFAULT) \
+    X(nmg_kill_v, ged_nmg_kill_v_core, GED_CMD_DEFAULT) \
+    X(nmg_make_v, ged_nmg_make_v_core, GED_CMD_DEFAULT) \
+    X(nmg_mm, ged_nmg_mm_core, GED_CMD_DEFAULT) \
+    X(nmg_move_v, ged_nmg_move_v_core, GED_CMD_DEFAULT) \
+    X(nmg_simplify, ged_nmg_simplify_core, GED_CMD_DEFAULT) \
 
-struct ged_cmd_impl labelface_cmd_impl = {"labelface", ged_labelface_core, GED_CMD_DEFAULT};
-const struct ged_cmd labelface_cmd = { &labelface_cmd_impl };
-
-struct ged_cmd_impl nmg_cmface_cmd_impl = {"nmg_cmface", ged_nmg_cmface_core, GED_CMD_DEFAULT};
-const struct ged_cmd nmg_cmface_cmd = { &nmg_cmface_cmd_impl };
-
-struct ged_cmd_impl nmg_collapse_cmd_impl = {"nmg_collapse", ged_nmg_collapse_core, GED_CMD_DEFAULT};
-const struct ged_cmd nmg_collapse_cmd = { &nmg_collapse_cmd_impl };
-
-struct ged_cmd_impl nmg_fix_normals_cmd_impl = {"nmg_fix_normals", ged_nmg_fix_normals_core, GED_CMD_DEFAULT};
-const struct ged_cmd nmg_fix_normals_cmd = { &nmg_fix_normals_cmd_impl };
-
-struct ged_cmd_impl nmg_kill_f_cmd_impl = {"nmg_kill_f", ged_nmg_kill_f_core, GED_CMD_DEFAULT};
-const struct ged_cmd nmg_kill_f_cmd = { &nmg_kill_f_cmd_impl };
-
-struct ged_cmd_impl nmg_kill_v_cmd_impl = {"nmg_kill_v", ged_nmg_kill_v_core, GED_CMD_DEFAULT};
-const struct ged_cmd nmg_kill_v_cmd = { &nmg_kill_v_cmd_impl };
-
-struct ged_cmd_impl nmg_make_v_cmd_impl = {"nmg_make_v", ged_nmg_make_v_core, GED_CMD_DEFAULT};
-const struct ged_cmd nmg_make_v_cmd = { &nmg_make_v_cmd_impl };
-
-struct ged_cmd_impl nmg_mm_cmd_impl = {"nmg_mm", ged_nmg_mm_core, GED_CMD_DEFAULT};
-const struct ged_cmd nmg_mm_cmd = { &nmg_mm_cmd_impl };
-
-struct ged_cmd_impl nmg_move_v_cmd_impl = {"nmg_move_v", ged_nmg_move_v_core, GED_CMD_DEFAULT};
-const struct ged_cmd nmg_move_v_cmd = { &nmg_move_v_cmd_impl };
-
-struct ged_cmd_impl nmg_simplify_cmd_impl = {"nmg_simplify", ged_nmg_simplify_core, GED_CMD_DEFAULT};
-const struct ged_cmd nmg_simplify_cmd = { &nmg_simplify_cmd_impl };
-
-const struct ged_cmd *nmg_cmds[] = {
-    &nmg_cmd,
-    &labelface_cmd,
-    &nmg_cmface_cmd,
-    &nmg_collapse_cmd,
-    &nmg_fix_normals_cmd,
-    &nmg_kill_f_cmd,
-    &nmg_kill_v_cmd,
-    &nmg_make_v_cmd,
-    &nmg_mm_cmd,
-    &nmg_move_v_cmd,
-    &nmg_simplify_cmd,
-    NULL
-};
-
-static const struct ged_plugin pinfo = { GED_API,  nmg_cmds, 11 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_NMG_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_nmg", 1, GED_NMG_COMMANDS)
 
 /*
  * Local Variables:

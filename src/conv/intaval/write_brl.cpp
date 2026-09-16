@@ -1,7 +1,7 @@
 /*                  W R I T E _ B R L . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -104,12 +104,12 @@ void smoothBot
     if (dp != RT_DIR_NULL) {
 	rt_db_internal intern;
 
-	if (rt_db_get_internal(&intern, dp, wdbp->dbip, 0, &rt_uniresource) == ID_BOT) {
+	if (rt_db_get_internal(&intern, dp, wdbp->dbip, 0) == ID_BOT) {
 	    rt_bot_internal* bot = static_cast<rt_bot_internal*>(intern.idb_ptr);
 
 	    rt_bot_smooth(bot, name, wdbp->dbip, M_PI_4);
 
-	    if (rt_db_put_internal(dp, wdbp->dbip, &intern, &rt_uniresource) < 0) {
+	    if (rt_db_put_internal(dp, wdbp->dbip, &intern) < 0) {
 		bu_bomb("Database write failure in smoothBot\n");
 	    }
 	}

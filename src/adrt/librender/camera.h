@@ -1,7 +1,7 @@
 /*                        C A M E R A . H
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2025 United States Government as represented by
+ * Copyright (c) 2007-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -18,6 +18,9 @@
  * information.
  */
 /** @file librender/camera.h
+ *
+ * Camera and shader interface for the ADRT renderer: camera setup,
+ * per-scanline threaded rendering, and shader plugin registration.
  *
  */
 
@@ -91,6 +94,7 @@ typedef struct render_camera_thread_data_s
     int sem_tie_worker;
 } render_camera_thread_data_t;
 
+__BEGIN_DECLS
 
 RENDER_EXPORT extern void render_camera_init(render_camera_t *camera, size_t threads);
 RENDER_EXPORT extern void render_camera_free(render_camera_t *camera);
@@ -103,6 +107,7 @@ RENDER_EXPORT extern const char *render_shader_load_plugin(const char *filename)
  * unloaded is in use. */
 RENDER_EXPORT extern int render_shader_unload_plugin(render_t *r, const char *name);
 
+__END_DECLS
 #endif
 
 /*

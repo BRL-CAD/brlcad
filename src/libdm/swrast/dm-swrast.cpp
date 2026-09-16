@@ -1,7 +1,7 @@
 /*                    D M - S W R A S T . C P P
  * BRL-CAD
  *
- * Copyright (c) 1988-2025 United States Government as represented by
+ * Copyright (c) 1988-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -41,6 +41,7 @@ extern "C" {
 #include "bn.h"
 #include "bv/defines.h"
 #include "dm.h"
+#include "dm/util.h"
 #include "../null/dm-Null.h"
 #include "../dm-gl.h"
 }
@@ -154,6 +155,11 @@ int
 swrast_close(struct dm *dmp)
 {
     struct swrast_vars *pv = (struct swrast_vars *)dmp->i->dm_vars.priv_vars;
+    if (pv->fs) {
+	(void)swrast_makeCurrent(dmp);
+	glfonsDelete(pv->fs);
+	pv->fs = NULL;
+    }
     bu_free(pv->os_b, "OSMesa rendering buffer");
     bu_vls_free(&dmp->i->dm_dName);
     bu_vls_free(&dmp->i->dm_tkName);
@@ -212,7 +218,7 @@ swrast_open(void *ctx, void *UNUSED(interp), int argc, const char **argv)
     privars->v = (struct bview *)ctx;
     // Note - for Qt, dealing with GL_RGB data display was something of a pain.  This backend
     // was switched to RGBA to make it easier to display the output
-    privars->ctx = OSMesaCreateContextExt(OSMESA_RGBA, 16, 0, 0, NULL);
+    privars->ctx = OSMesaCreateContextExt(OSMESA_RGBA, 32, 0, 0, NULL);
     int width = (!privars->v->gv_width) ? 512 : privars->v->gv_width;
     int height = (!privars->v->gv_height) ? 512 : privars->v->gv_height;
     privars->v->gv_width = width;
@@ -265,6 +271,8 @@ swrast_open(void *ctx, void *UNUSED(interp), int argc, const char **argv)
     mvars->fastfog = 1;
     mvars->fogdensity = 1.0;
     mvars->lighting_on = 1;
+    mvars->fast_wireframe = 1;
+    mvars->fast_wireframe_active = 1;
     mvars->zbuffer_on = 1;
     mvars->zclipping_on = 0;
     mvars->bound = 1.0;
@@ -529,6 +537,91 @@ swrast_write_image(struct bu_vls *UNUSED(msgs), FILE *UNUSED(fp), struct dm *UNU
     return -1;
 }
 
+/* Override gl_getDisplayImage for OSMesa: gl_getDisplayImage reads GL_FRONT
+ * which is always black when doublebuffer=1 (swrast draws to GL_BACK but
+ * null_SwapBuffers never swaps).  Use OSMesaGetColorBuffer to read the render
+ * buffer (os_b) directly, bypassing the front/back confusion entirely. */
+int
+swrast_getDisplayImage(struct dm *dmp, unsigned char **image, int flip, int alpha)
+{
+    struct swrast_vars *pv = (struct swrast_vars *)dmp->i->dm_vars.priv_vars;
+    if (!pv || !pv->ctx) {
+	bu_log("swrast_getDisplayImage: no context\n");
+	*image = NULL;
+	return BRLCAD_ERROR;
+    }
+
+    /* Save the currently active OSMesa context so we can restore it when done.
+     * This prevents swrast_getDisplayImage from leaving a different context
+     * current as a side-effect visible to the caller (e.g. multi-view setups
+     * where each DM has its own context). */
+    OSMesaContext saved_ctx = OSMesaGetCurrentContext();
+    GLint saved_width = 0, saved_height = 0, saved_format = 0;
+    void *saved_buf = NULL;
+    bool need_restore = false;
+    if (saved_ctx && saved_ctx != pv->ctx) {
+	if (OSMesaGetColorBuffer(saved_ctx, &saved_width, &saved_height, &saved_format, &saved_buf) && saved_buf)
+	    need_restore = true;
+	else
+	    bu_log("swrast_getDisplayImage: could not save current context buffer; context will not be restored\n");
+    }
+
+    /* Ensure this OSMesa context is current before reading its buffer */
+    if (dm_make_current(dmp) != BRLCAD_OK) {
+	bu_log("swrast_getDisplayImage: dm_make_current failed\n");
+	*image = NULL;
+	return BRLCAD_ERROR;
+    }
+
+    int width = dmp->i->dm_width;
+    int height = dmp->i->dm_height;
+
+    /* Get the raw RGBA render buffer directly from OSMesa.  This is the os_b
+     * buffer that OSMesaMakeCurrent was called with, which receives all drawing
+     * commands regardless of the GL_FRONT / GL_BACK distinction. */
+    GLint cbwidth, cbheight, bitsperchannel;
+    void *cbuf = NULL;
+    if (!OSMesaGetColorBuffer(pv->ctx, &cbwidth, &cbheight, &bitsperchannel, &cbuf) || !cbuf) {
+	bu_log("swrast_getDisplayImage: OSMesaGetColorBuffer failed\n");
+	*image = NULL;
+	if (need_restore)
+	    if (!OSMesaMakeCurrent(saved_ctx, saved_buf, GL_UNSIGNED_BYTE, saved_width, saved_height))
+		bu_log("swrast_getDisplayImage: context restore failed after read error\n");
+	return BRLCAD_ERROR;
+    }
+
+    /* cbuf is RGBA unsigned byte, row-major. */
+    unsigned char *src = (unsigned char *)cbuf;
+    if (alpha && !flip) {
+	*image = src;
+    } else {
+	int bytes_per_pixel = alpha ? 4 : 3;
+	unsigned char *idata = (unsigned char *)bu_calloc(height * width * bytes_per_pixel,
+						       sizeof(unsigned char), "swrast image");
+	if (alpha) {
+	    memcpy(idata, src, (size_t)width * height * 4);
+	} else {
+	    for (int i = 0; i < width * height; i++) {
+		idata[i * 3 + 0] = src[i * 4 + 0];
+		idata[i * 3 + 1] = src[i * 4 + 1];
+		idata[i * 3 + 2] = src[i * 4 + 2];
+	    }
+	}
+
+	*image = idata;
+
+	if (flip)
+	    flip_display_image_vertically(*image, width, height, alpha);
+    }
+
+    /* Restore the previously active OSMesa context */
+    if (need_restore)
+	if (!OSMesaMakeCurrent(saved_ctx, saved_buf, GL_UNSIGNED_BYTE, saved_width, saved_height))
+	    bu_log("swrast_getDisplayImage: context restore failed\n");
+
+    return BRLCAD_OK;
+}
+
 int
 swrast_event_cmp(struct dm *dmp, dm_event_t type, int event)
 {
@@ -599,7 +692,7 @@ struct dm_impl dm_swrast_impl = {
     gl_freeDLists,
     gl_genDLists,
     gl_draw_display_list,
-    gl_getDisplayImage, /* display to image function */
+    swrast_getDisplayImage, /* display to image function */
     gl_reshape,
     swrast_makeCurrent,
     null_SwapBuffers,
@@ -653,7 +746,8 @@ struct dm_impl dm_swrast_impl = {
     FB_NULL,
     0,				/* Tcl interpreter */
     NULL,                       /* Drawing context */
-    NULL                        /* App data */
+    NULL,                       /* App data */
+    NULL                        /* dlist sensors */
 };
 
 struct dm dm_swrast = { DM_MAGIC, &dm_swrast_impl, 0 };
@@ -676,4 +770,3 @@ COMPILER_DLLEXPORT const struct dm_plugin *dm_plugin_info(void)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

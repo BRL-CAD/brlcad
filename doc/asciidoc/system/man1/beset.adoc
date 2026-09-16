@@ -1,0 +1,85 @@
+= BESET(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+beset - evolve a BRL-CAD shape to match a source object
+
+== SYNOPSIS
+
+[source]
+----
+beset [options] db.g object
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*beset* ("Ben's Evolutionary Shape Tool") is an experimental,
+evolutionary-algorithm tool that attempts to evolve a population of
+candidate shapes toward a target _object_ contained in the geometry
+database _db.g_. A source model is ray sampled at the requested
+resolution, an initial population of individuals is spawned, and each
+successive generation is scored against the source using a fitness
+measure. The most-fit individuals of each generation are retained and
+combined using genetic operations (reproduction, mutation, and
+crossover) to produce the next generation. Progress and the most-fit
+individual of each generation are reported on standard output.
+
+Both a database file _db.g_ and a target _object_ within it are required.
+
+
+[[options]]
+== OPTIONS
+
+*-p #*::
+  Population size (number of individuals per generation).
+
+*-g #*::
+  Number of generations to evolve.
+
+*-r #*::
+  Ray-sampling resolution used when comparing candidates against the
+  source object.
+
+*-u #*::
+  Upper percentage of individuals to keep unchanged from one generation
+  to the next.
+
+*-l #*::
+  Lower percentage of individuals to kill (discard) each generation.
+
+*-m #*::
+  Mutation rate.
+
+*-c #*::
+  Crossover rate.
+
+*-x #*::
+  Set the *librt*(3) debug flags to the given hexadecimal value.
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *mged*(1), *rt*(1)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 2007-2026 United States Government as represented by the U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

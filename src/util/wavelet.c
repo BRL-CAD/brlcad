@@ -1,7 +1,7 @@
 /*                       W A V E L E T . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2025 United States Government as represented by
+ * Copyright (c) 1998-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -42,13 +42,17 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "bio.h"
 
 #include "vmath.h"
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/malloc.h"
 #include "bu/exit.h"
 #include "bn.h"
@@ -66,9 +70,9 @@
 #define RECONSTRUCT -1
 
 /* declarations to support use of bu_getopt() system call */
-char *options = "W:S:s:w:n:t:#:D:12drR:h?";
+const char *options = "W:S:s:w:n:t:#:D:12drR:h?";
 
-char *progname = "(noname)";
+const char *progname = "(noname)";
 int img_space=1;
 int debug;
 size_t width = 512;
@@ -80,9 +84,15 @@ size_t avg_size = 0;
 size_t limit = 0;
 int decomp_recon;
 
+static int
+parse_size_arg(const char *arg, size_t *out_value, const char *label, int allow_zero)
+{
+    return bu_opt_scan_size_t_range(arg, out_value, allow_zero ? 0 : 1, SIZE_MAX, label);
+}
+
 
 void
-usage(char *s)
+usage(const char *s)
 {
     if (s) (void)fputs(s, stderr);
 
@@ -98,7 +108,6 @@ int
 parse_args(int ac, char **av)
 {
     int c;
-    char *strrchr(const char *, int);
 
     if ((progname=strrchr(*av, '/')))
 	progname++;
@@ -119,9 +128,17 @@ parse_args(int ac, char **av)
 		break;
 	    case 'r': decomp_recon = RECONSTRUCT;
 		break;
-	    case 'D': debug=atoi(bu_optarg); break;
-	    case 'R': avg_size = atoi(bu_optarg); break;
-	    case '#': channels = atoi(bu_optarg);
+	    case 'D':
+		if (!bu_opt_scan_int(bu_optarg, &debug, "debug level"))
+		    usage("");
+		break;
+	    case 'R':
+		if (!parse_size_arg(bu_optarg, &avg_size, "average size", 0))
+		    usage("");
+		break;
+	    case '#':
+		if (!parse_size_arg(bu_optarg, &channels, "channel count", 0))
+		    usage("");
 		break;
 	    case 't':
 		switch (*bu_optarg) {
@@ -145,11 +162,27 @@ parse_args(int ac, char **av)
 			break;
 		}
 		break;
-	    case 'n': height = atoi(bu_optarg); break;
-	    case 'w': width = atoi(bu_optarg); break;
-	    case 's': width = height = atoi(bu_optarg); break;
-	    case 'W': limit = atoi(bu_optarg); break;
-	    case 'S': limit = atoi(bu_optarg); break;
+	    case 'n':
+		if (!parse_size_arg(bu_optarg, &height, "height", 0))
+		    usage("");
+		break;
+	    case 'w':
+		if (!parse_size_arg(bu_optarg, &width, "width", 0))
+		    usage("");
+		break;
+	    case 's':
+		if (!parse_size_arg(bu_optarg, &width, "size", 0))
+		    usage("");
+		height = width;
+		break;
+	    case 'W':
+		if (!parse_size_arg(bu_optarg, &limit, "output limit", 1))
+		    usage("");
+		break;
+	    case 'S':
+		if (!parse_size_arg(bu_optarg, &limit, "transform limit", 1))
+		    usage("");
+		break;
 	    case 'h':
 		usage("");
 		break;
@@ -172,9 +205,6 @@ wlt_decompose_1d(void)
     size_t i, n;
     size_t sample_size;	/* size of data type x #values/sample */
     size_t scanline_size;	/* # bytes in a scanline */
-
-    setmode(fileno(stdin), O_BINARY);
-    setmode(fileno(stdout), O_BINARY);
 
     sample_size = value_size * channels;
     scanline_size = sample_size * width;
@@ -399,10 +429,13 @@ main(int ac, char **av)
 {
     bu_setprogname(av[0]);
 
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
+
     /* parse command flags, and make sure there are arguments
      * left over for processing.
      */
-    if (parse_args(ac, av) < ac) usage("Excess arguments ignored.\n");
+    if (parse_args(ac, av) < ac) usage("Excess arguments not supported.\n");
 
     if (isatty(fileno(stdout))) usage("Redirect input/output\n");
 
@@ -430,6 +463,18 @@ main(int ac, char **av)
     return -1;
 }
 
+
+/* Undefine all local macros in case this file is ever incorporated into
+ * Unity/jumbo builds.  CHAR, SHORT, INT, LONG, FLOAT, and DOUBLE conflict with
+ * Windows SDK type names in winnt.h and must be cleaned up. */
+#undef CHAR
+#undef SHORT
+#undef INT
+#undef LONG
+#undef FLOAT
+#undef DOUBLE
+#undef DECOMPOSE
+#undef RECONSTRUCT
 
 /*
  * Local Variables:

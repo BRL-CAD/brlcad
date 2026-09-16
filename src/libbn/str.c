@@ -1,7 +1,7 @@
 /*                           S T R . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2025 United States Government as represented by
+ * Copyright (c) 1995-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -70,6 +70,7 @@ bn_decode_mat(mat_t mat, const char *str)
 
     if (BU_STR_EQUAL(str, "I")) {
 	MAT_IDN(m);
+	MAT_COPY(mat, m);
 	return 16;
     }
     if (*str == '{') str++;

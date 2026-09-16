@@ -1,7 +1,7 @@
 /*                        B W H I S T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2025 United States Government as represented by
+ * Copyright (c) 1986-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -42,7 +42,7 @@ long bin[256];
 int verbose = 0;
 struct fb *fbp;
 
-static char *Usage = "Usage: bwhist [-v] [file.bw]\n";
+static const char *Usage = "Usage: bwhist [-v] [file.bw]\n";
 
 
 int

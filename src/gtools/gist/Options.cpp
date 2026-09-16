@@ -1,7 +1,7 @@
 /*                     O P T I O N S . C P P
  * BRL-CAD
  *
- * Copyright (c) 2023-2025 United States Government as represented by
+ * Copyright (c) 2023-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,9 +25,9 @@ Options::Options()
     inFile = "";
     exeDir = "";
     workingDir = "";
-    ppi = 300;
-    width = 3508;
-    length = 2480;
+    ppi = DEFAULT_REPORT_PPI;
+    width = CANONICAL_REPORT_WIDTH;
+    length = CANONICAL_REPORT_LENGTH;
     isFolder = false;
     inFolderName = "";
     openGUI = false;
@@ -46,6 +46,7 @@ Options::Options()
     originalUnitsMass = true;
     ncpu = 0; // all available
     verbosePrint = 0;
+    previewMode = 0;
 }
 
 Options::~Options()
@@ -68,40 +69,44 @@ bool Options::readParameters(int argc, const char **argv) {
 
     int print_help = 0;			// user requested help
     int param_overwrite = 0;		// user requested to overwrite existing report
-    int param_ppi = 0;			// user requested ppi
+    int param_ppi = -1;			// user requested ppi
     int param_Lhand = 0;		// user requested left-handed coordinates
     int param_Yup = 0;			// user requested y-up
     std::string param_Ulength = "";	// user requested length units
     std::string param_Umass = "";	// user requested mass units
     std::string param_oFile = "";	// user supplied output file
+    std::string param_densityFile = "";	// user requested density file
     int param_ncpu = 0;			// user requested num CPUs to use
 
-    struct bu_opt_desc d[24];
-    BU_OPT(d[0],  "i", "",     "filename.g",        &_param_set_std_str,     &this->inFile,         "input .g");
-    BU_OPT(d[1],  "o", "",     "filename.png",      &_param_set_std_str,     &param_oFile,          "output file name");
-    BU_OPT(d[2],  "F", "",     "folder",            &_param_set_std_str,     &this->inFolderName,   "folder of .g models to generate");
-    BU_OPT(d[3],  "e", "",     "dir_name",          &_param_set_std_str,     &this->outFolderName,  "set export folder's name");
-    BU_OPT(d[4],  "g", "",     "",                  NULL,                    &this->openGUI,        "display report in popup window");
-    BU_OPT(d[5],  "f", "",     "",                  NULL,                    &param_overwrite,      "overwrite existing report if it exists");
-    BU_OPT(d[6],  "Z", "",     "",                  NULL,                    &this->reuseImages,    "reuse renders if .working directory is found");
-    BU_OPT(d[7],  "t", "",     "component",         &_param_set_std_str,     &this->topComp,        "specify primary component of the report");
-    BU_OPT(d[8],  "m", "",     "path/to/image",     &_param_set_std_str,     &this->logopath,       "path to logo image to be used in report");
-    BU_OPT(d[9],  "p", "",     "#",		    &bu_opt_int,             &param_ppi,            "pixels per inch (default 300ppi)");
-    BU_OPT(d[10], "n", "",     "\"preparer name\"", &_param_set_std_str,     &this->preparer,       "name of preparer, to be used in report");
-    BU_OPT(d[11], "r", "",     "\"owner name\"",    &_param_set_std_str,     &this->owner,          "name of model's owner, to be used in report");
-    BU_OPT(d[12], "T", "",     "path/to/rt",        &_param_set_std_str,     &this->exeDir,         "path to rt and rtwizard executables");
-    BU_OPT(d[13], "c", "",     "classification",    &_param_set_std_str,     &this->classification, "classification displayed in top/bottom banner");
-    BU_OPT(d[14], "N", "",     "\"extra notes\"",   &_param_set_std_str,     &this->notes,          "add additional notes to report");
-    BU_OPT(d[15], "L", "",     "",                  NULL,                    &param_Lhand,          "use left-handed coordinate system");
-    BU_OPT(d[16], "A", "",     "",                  NULL,                    &param_Yup,            "use +Y-up geometry axis (default is +Z-up)");
-    BU_OPT(d[17], "l", "",     "len_units",         &_param_set_std_str,     &param_Ulength,        "specify length units");
-    BU_OPT(d[18], "w", "",     "wt_units",          &_param_set_std_str,     &param_Umass,          "specify weight units");
-    BU_OPT(d[19], "a", "",     "path/to/dir",	    &_param_set_std_str,     &this->workingDir,     "specify dir to write c(a)ched work to");
-    BU_OPT(d[20], "P", "",     "#cpus",             &bu_opt_int,             &param_ncpu,           "number of CPUs to use");
-    BU_OPT(d[21], "v", "",     "",                  NULL,                    &this->verbosePrint,   "verbose printing");
-    BU_OPT(d[22], "h", "help", "",                  NULL,                    &print_help,           "Print help and exit");
-    BU_OPT(d[23], "?", "",     "",                  NULL,                    &print_help,           "");
-    BU_OPT_NULL(d[23]);
+    struct bu_opt_desc options[27] = {
+	{"i", "",     "filename.g",        &_param_set_std_str,     &this->inFile,         "input .g"					    },
+	{"o", "",     "filename.png",      &_param_set_std_str,     &param_oFile,          "output file name"				    },
+	{"F", "",     "folder",            &_param_set_std_str,     &this->inFolderName,   "folder of .g models to generate"		    },
+	{"e", "",     "dir_name",          &_param_set_std_str,     &this->outFolderName,  "set export folder's name"			    },
+	{"g", "",     "",                  NULL,                    &this->openGUI,        "display report in popup window"		    },
+	{"f", "",     "",                  NULL,                    &param_overwrite,      "overwrite existing report if it exists"	    },
+	{"Z", "",     "",                  NULL,                    &this->reuseImages,    "reuse renders if .working directory is found"   },
+	{"t", "",     "component",         &_param_set_std_str,     &this->topComp,        "specify primary component of the report"	    },
+	{"m", "",     "path/to/image",     &_param_set_std_str,     &this->logopath,       "path to logo image to be used in report"	    },
+	{"p", "",     "#",		   &bu_opt_int,             &param_ppi,            "pixels per inch (default 300ppi)"		    },
+	{"n", "",     "\"preparer name\"", &_param_set_std_str,     &this->preparer,       "name of preparer, to be used in report"	    },
+	{"r", "",     "\"owner name\"",    &_param_set_std_str,     &this->owner,          "name of model's owner, to be used in report"    },
+	{"T", "",     "path/to/rt",        &_param_set_std_str,     &this->exeDir,         "path to rt and rtwizard executables"	    },
+	{"c", "",     "classification",    &_param_set_std_str,     &this->classification, "classification displayed in top/bottom banner"  },
+	{"N", "",     "\"extra notes\"",   &_param_set_std_str,     &this->notes,          "add additional notes to report"		    },
+	{"L", "",     "",                  NULL,                    &param_Lhand,          "use left-handed coordinate system"		    },
+	{"A", "",     "",                  NULL,                    &param_Yup,            "use +Y-up geometry axis (default is +Z-up)"	    },
+	{"d", "",     "densityFile",	   &_param_set_std_str,	    &param_densityFile,	   "specify density file for materials (or '0' to skip density calculations)"    },
+	{"l", "",     "len_units",         &_param_set_std_str,     &param_Ulength,        "specify length units"			    },
+	{"w", "",     "wt_units",          &_param_set_std_str,     &param_Umass,          "specify weight units"			    },
+	{"a", "",     "path/to/dir",	   &_param_set_std_str,     &this->workingDir,     "specify dir to write c(a)ched work to"	    },
+	{"P", "",     "#cpus",             &bu_opt_int,             &param_ncpu,           "number of CPUs to use"			    },
+	{"Q", "preview", "",              NULL,                    &this->previewMode,    "fast preview: lower render quality and skip verification"},
+	{"v", "",     "",                  NULL,                    &this->verbosePrint,   "verbose printing"				    },
+	{"h", "help", "",                  NULL,                    &print_help,           "Print help and exit"			    },
+	{"?", "",     "",                  NULL,                    &print_help,           ""						    },
+	BU_OPT_DESC_NULL
+    };
 
     /* set progname and move on */
     const char* cmd_progname = argv[0];
@@ -110,7 +115,7 @@ bool Options::readParameters(int argc, const char **argv) {
 
     /* parse options */
     struct bu_vls msg = BU_VLS_INIT_ZERO;
-    int ret_ac = bu_opt_parse(&msg, argc, argv, d);
+    int ret_ac = bu_opt_parse(&msg, argc, argv, options);
 
     if (ret_ac) {   // assume a leftover option is a .g file
 	setInFile(argv[0]);
@@ -118,14 +123,23 @@ bool Options::readParameters(int argc, const char **argv) {
     }
 
     /* usage help */
-    if (ret_ac != 0) {
-	bu_log("%s\n", bu_vls_cstr(&msg));
+    if (ret_ac < 0) {		// error in parsing
+	bu_log("ERROR: option parsing failed\n");
+	if (msg.vls_len > 0)
+	    bu_log("%s\n", bu_vls_cstr(&msg));
+
+	bu_vls_free(&msg);
+	return false;
+    } else if (ret_ac != 0) {	// extra / bad options
+	bu_log("ERROR: bad / unknown option (%s). Use -h for all options\n", argv[0]);
+	if (msg.vls_len > 0)
+	    bu_log("%s\n", bu_vls_cstr(&msg));
 
 	bu_vls_free(&msg);
 	return false;
     }
     if (print_help) {
-	char *options_help = bu_opt_describe(d, NULL);
+	char *options_help = bu_opt_describe(options, NULL);
 
         bu_log("\nUsage:  %s %s\n", cmd_progname, usage);
         bu_log("\nOptions:\n%s\n", options_help);
@@ -142,8 +156,13 @@ bool Options::readParameters(int argc, const char **argv) {
 	setOpenGUI();
     } else if (!setOutFile(param_oFile))    // out file was supplied, make sure .png
 	return false;
-    if (param_ppi)
+    if (param_ppi != -1) {
+	if (param_ppi <= 0) {
+	    bu_log("ERROR: pixels per inch must be greater than zero\n");
+	    return false;
+	}
 	setPPI(param_ppi);
+    }
     if (param_Lhand)
 	setCoordSystem(LEFT_HAND);
     if (param_Yup)
@@ -159,6 +178,8 @@ bool Options::readParameters(int argc, const char **argv) {
     if (!this->exeDir.empty())
 	setExeDir(this->exeDir);
     setNCPU(param_ncpu);
+    if (!param_densityFile.empty())
+	setDensityFile(param_densityFile);
 
     /* make sure valid input .g or folder is supplied */
     if ((getIsFolder() && !bu_file_directory(this->inFolderName.c_str())) ||
@@ -268,9 +289,10 @@ Options::setLogopath(std::string f)
 
 void Options::setPPI(int p) {
     ppi = p;
-    // TODO: magic numbers?
-    width = int(ppi * 11.69);
-    length = int(ppi * 8.27);
+    width = static_cast<int>(std::lround(
+	static_cast<double>(CANONICAL_REPORT_WIDTH) * ppi / DEFAULT_REPORT_PPI));
+    length = static_cast<int>(std::lround(
+	static_cast<double>(CANONICAL_REPORT_LENGTH) * ppi / DEFAULT_REPORT_PPI));
 }
 
 
@@ -372,6 +394,25 @@ void Options::setUnitMass(std::string m) {
 
 void Options::setNCPU(int cpus) {
     ncpu = cpus;
+}
+
+void Options::setDensityFile(std::string file) {
+    // special case - '0' means we want to skip density calculations (ie dont need to verify file exists)
+    if (file == "0") {
+	densityFile = "0";
+	return;
+    }
+
+    // verify this is a path and it exists
+    std::filesystem::path path = file;
+    if (!std::filesystem::exists(path)) {
+	bu_log("WARNING: density file (%s) not found.\n", file.c_str());
+	return;
+    }
+
+    // TODO: should the setter validate the density file before setting?
+
+    densityFile = path.lexically_normal().string();
 }
 
 
@@ -515,6 +556,14 @@ size_t Options::getNCPU() {
     if (cpus < 1)
 	return 1;
     return cpus;
+}
+
+std::string Options::getDensityFile() {
+    return densityFile;
+}
+
+bool Options::getPreviewMode() {
+    return previewMode;
 }
 
 

@@ -1,7 +1,7 @@
 /*                         A F F I N I T Y . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2025 United States Government as represented by
+ * Copyright (c) 2004-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -50,6 +50,8 @@
 #endif
 
 #include "bu/parallel.h"
+
+#include "./parallel.h"
 
 int
 parallel_set_affinity(int cpu)

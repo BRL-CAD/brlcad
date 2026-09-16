@@ -1,7 +1,7 @@
 /*               T E S T _ N U R B S F I T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2013-2025 United States Government as represented by
+ * Copyright (c) 2013-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -82,7 +82,7 @@ main (int argc, char *argv[])
    }
 
    RT_DB_INTERNAL_INIT(&intern)
-   if (rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource) < 0) {
+   if (rt_db_get_internal(&intern, dp, dbip, NULL) < 0) {
       bu_exit(1, "ERROR: Unable to get internal representation of %s\n", argv[2]);
    }
 

@@ -1,7 +1,7 @@
 /*                           M A T . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2025 United States Government as represented by
+ * Copyright (c) 1996-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1357,7 +1357,7 @@ mike_persp_mat(fastf_t *pmat, const fastf_t *eye)
     mat_t t1, t2;
     point_t sheared_eye;
 
-    if (eye[Z] < SMALL) {
+    if (eye[Z] < SQRT_SMALL_FASTF) {
 	VPRINT("mike_persp_mat(): ERROR, z<0, eye", eye);
 	return;
     }

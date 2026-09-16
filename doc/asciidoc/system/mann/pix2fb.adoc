@@ -1,0 +1,107 @@
+= PIX2FB(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+pix2fb - display a raw pixel file on the framebuffer
+
+== SYNOPSIS
+
+[source]
+----
+pix2fb [options] [file.pix]
+----
+
+[[description]]
+== DESCRIPTION
+
+The *pix2fb* command reads a raw RGB pixel file (bottom-up row order) and sends it to the display manager's framebuffer. If no filename is given and standard input is not a terminal, pixels are read from standard input. The command requires an active display manager with a framebuffer; it will return an error if no framebuffer is available.
+
+=== Options
+
+*Input size*
+
+* *-w width* : Width of the input pixel file in pixels (default 512).
+* *-n height* : Height of the input pixel file in pixels (default 512).
+* *-s size* : Set both input width and height to `size` (square input).
+* *-a* : Autosize the input — attempt to determine dimensions from the file.
+
+*Input region (crop)*
+
+* *-x file_xoff* : Horizontal offset (in pixels) into the input file to start reading from.
+* *-y file_yoff* : Vertical offset (in pixels) into the input file to start reading from.
+
+*Output (framebuffer) size*
+
+* *-W scr_width* : Width of the framebuffer display area in pixels.
+* *-N scr_height* : Height of the framebuffer display area in pixels.
+* *-S scr_size* : Set both framebuffer width and height to `scr_size` (square output).
+
+*Output position*
+
+* *-X scr_xoff* : Horizontal offset into the framebuffer at which to begin writing.
+* *-Y scr_yoff* : Vertical offset into the framebuffer at which to begin writing.
+
+*Display behavior*
+
+* *-c* : Clear the framebuffer to black before writing.
+* *-z* : Zoom to fill the framebuffer with the input image.
+* *-i* : Inverse (upside-down) — draw the image with inverted row order.
+* *-1* : Force single-line writes (one row at a time).
+* *-m lines* : Streamlined multi-line writes; write `lines` rows per call.
+* *-p seconds* : Pause for `seconds` before closing the framebuffer and exiting.
+
+[[examples]]
+== EXAMPLES
+
+.Display a pixel file at native size
+[example]
+====
+mged> **pix2fb render.pix**
+
+Sends the raw pixel file `render.pix` (assumed 512×512) to the framebuffer.
+====
+
+.Display a 1024×768 image and clear first
+[example]
+====
+mged> **pix2fb -w 1024 -n 768 -c scene.pix**
+
+Clears the framebuffer to black and then displays the 1024×768 pixel file `scene.pix`.
+====
+
+.Zoom a small image to fill the display
+[example]
+====
+mged> **pix2fb -s 256 -z thumbnail.pix**
+
+Reads a 256×256 pixel file and zooms it to fill the full framebuffer.
+====
+
+.Display a crop of an input image at an offset
+[example]
+====
+mged> **pix2fb -w 1024 -n 1024 -x 256 -y 256 -W 512 -N 512 large.pix**
+
+Reads the 1024×1024 input `large.pix`, starting from offset (256, 256), and writes a 512×512 region to the framebuffer.
+====
+
+.Display a raytrace result after rendering to file
+[example]
+====
+mged> **rt -w 512 -n 512 -o render.pix model.g obj**
+mged> **pix2fb -w 512 -n 512 render.pix**
+
+First renders `obj` in `model.g` to a pixel file, then displays the result on the framebuffer. Note: the mged prompt is a Tcl interpreter — shell pipes are not available; multi-step workflows use sequential commands.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

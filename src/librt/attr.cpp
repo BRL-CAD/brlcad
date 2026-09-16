@@ -1,7 +1,7 @@
 /*                       A T T R . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -116,7 +116,7 @@ attr_pretty_print(struct bu_vls *msg, struct db_i *dbip, struct directory *dp, c
 	}
     } else if (dp->d_flags & RT_DIR_SOLID) {
 	struct rt_db_internal intern;
-	if (rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource) < 0) {
+	if (rt_db_get_internal(&intern, dp, dbip, NULL) < 0) {
 	    bu_vls_printf(msg, "attr_pretty_print: database read failure.");
 	    return BRLCAD_ERROR;
 	}

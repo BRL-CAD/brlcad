@@ -1,7 +1,7 @@
 /*                         P N G . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -269,7 +269,6 @@ draw_png_solid(fastf_t perspective, unsigned char **image, struct bv_scene_obj *
 }
 
 
-
 static void
 dl_png(struct bu_list *hdlp, mat_t model2view, fastf_t perspective, vect_t eye_pos, size_t size, size_t half_size, unsigned char **image)
 {
@@ -314,7 +313,6 @@ dl_png(struct bu_list *hdlp, mat_t model2view, fastf_t perspective, vect_t eye_p
         gdlp = next_gdlp;
     }
 }
-
 
 
 static int
@@ -394,7 +392,7 @@ ged_png_core(struct ged *gedp, int argc, const char *argv[])
     int k;
     int ret;
     int r, g, b;
-    static const char *usage = "[-c r/g/b] [-s size] file";
+    static const char *png_usage = "[-c r/g/b] [-s size] file";
 
     GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
@@ -405,7 +403,7 @@ ged_png_core(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], png_usage);
 	return GED_HELP;
     }
 
@@ -462,7 +460,7 @@ ged_png_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     if ((argc - bu_optind) != 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], png_usage);
 	return BRLCAD_ERROR;
     }
 
@@ -479,23 +477,14 @@ ged_png_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl png_cmd_impl = {"png", ged_png_core, GED_CMD_DEFAULT};
-const struct ged_cmd png_cmd = { &png_cmd_impl };
 
-struct ged_cmd_impl pngwf_cmd_impl = {"pngwf", ged_png_core, GED_CMD_DEFAULT};
-const struct ged_cmd pngwf_cmd = { &pngwf_cmd_impl };
+#define GED_PNG_COMMANDS(X, XID) \
+    X(png, ged_png_core, GED_CMD_DEFAULT) \
+    X(pngwf, ged_png_core, GED_CMD_DEFAULT) \
 
-const struct ged_cmd *png_cmds[] = { &png_cmd, &pngwf_cmd, NULL };
-
-static const struct ged_plugin pinfo = { GED_API,  png_cmds, 2 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_PNG_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_png", 1, GED_PNG_COMMANDS)
 
 /*
  * Local Variables:

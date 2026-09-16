@@ -1,0 +1,72 @@
+= BWHISTEQ(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+bwhisteq - equalize the histogram of a black and white image
+
+== SYNOPSIS
+
+[source]
+----
+bwhisteq [-v] file.bw > file.equalized
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*bwhisteq* equalizes the histogram of a black and white *bw*(5) format file. It reads the specified input file and writes a remapped version of it to standard output. The values of the histogram are distributed to produce a constant average density while maintaining monotonicity.
+
+[[options]]
+== OPTIONS
+
+*-v*::
+  Print the pixel value mapping to standard error. For each original pixel value (0-255), it displays the corresponding new equalized value as _result[N] = value_.
+
+
+[[examples]]
+== EXAMPLES
+
+.Improving contrast of a low-contrast image
+====
+[source,bash]
+----
+$ bwhisteq image.bw > equalized.bw
+----
+Remaps the pixel values of _image.bw_ to produce a more uniform histogram, spreading out clustered intensities to improve apparent contrast, and saves the result to _equalized.bw_.
+====
+
+.Inspecting the remapping and viewing the result
+====
+[source,bash]
+----
+$ bwhisteq -v image.bw 2> mapping.txt | bw-fb
+----
+Equalizes _image.bw_ while writing the value-to-value mapping table to _mapping.txt_, and pipes the equalized image directly to *bw-fb*(1) for display on a framebuffer.
+====
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *bwhist*(1), *bwstat*(1), *bw-fb*(1), *bw*(5)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

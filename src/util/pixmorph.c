@@ -1,7 +1,7 @@
 /*                      P I X M O R P H . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2025 United States Government as represented by
+ * Copyright (c) 1996-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -37,6 +37,8 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -48,6 +50,7 @@
 #include "bu/app.h"
 #include "bu/color.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/malloc.h"
 #include "bu/exit.h"
 #include "bn.h"
@@ -347,13 +350,13 @@ lines_headerinfo(FILE *fp, double *ap, double *bp, double *pp, long int *np)
     }
 }
 
-
 int
 get_args(int argc, char **argv, char **picAnamep, char **picBnamep, char **linesfilenamep,
 	 double *warpfracp, int *dissolvefracp, long int *autosizep,
 	 size_t *widthp, size_t *heightp)
 {
     long int c;
+    double dissolvefrac = 0.0;
 
     *autosizep = 1;
     *widthp = *heightp = 0;
@@ -361,11 +364,13 @@ get_args(int argc, char **argv, char **picAnamep, char **picBnamep, char **lines
     while ((c = bu_getopt(argc, argv, "w:n:h?")) != -1) {
 	switch (c) {
 	    case 'w':
-		*widthp = atol(bu_optarg);
+		if (!bu_opt_scan_size_t_range(bu_optarg, widthp, 1, SIZE_MAX, "width"))
+		    return 0;
 		*autosizep = 0;
 		break;
 	    case 'n':
-		*heightp = atol(bu_optarg);
+		if (!bu_opt_scan_size_t_range(bu_optarg, heightp, 1, SIZE_MAX, "height"))
+		    return 0;
 		*autosizep = 0;
 		break;
 	    default:
@@ -379,8 +384,11 @@ get_args(int argc, char **argv, char **picAnamep, char **picBnamep, char **lines
     *picAnamep = argv[bu_optind];
     *picBnamep = argv[bu_optind+1];
     *linesfilenamep = argv[bu_optind+2];
-    *warpfracp = atof(argv[bu_optind+3]);
-    *dissolvefracp = (int)(255.0*atof(argv[bu_optind+4])+0.5);
+    if (!bu_opt_scan_double_range(argv[bu_optind+3], warpfracp, 0.0, 1.0, "warpfrac"))
+	return 0;
+    if (!bu_opt_scan_double_range(argv[bu_optind+4], &dissolvefrac, 0.0, 1.0, "dissolvefrac"))
+	return 0;
+    *dissolvefracp = (int)(255.0*dissolvefrac + 0.5);
 
     return 1;
 }
@@ -443,18 +451,8 @@ main(int argc, char **argv)
 	return 1;
     }
 
-    if (warpfrac < 0.0 || warpfrac > 1.0) {
-	fprintf(stderr, "pixmorph: warpfrac must be between 0 and 1\n");
-	return 1;
-    }
-
-    if (dissolvefrac < 0 || dissolvefrac > 255) {
-	fprintf(stderr, "pixmorph: dissolvefrac must be between 0 and 1\n");
-	return 1;
-    }
-
     if (autosize) {
-	if (fb_common_file_size(&pa_width, &pa_height, argv[1], 3) == 0) {
+	if (fb_common_file_size(&pa_width, &pa_height, picAname, 3) == 0) {
 	    fprintf(stderr, "pixmorph: unable to autosize\n");
 	    return 1;
 	}

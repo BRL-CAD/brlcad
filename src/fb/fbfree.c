@@ -1,7 +1,7 @@
 /*                        F B F R E E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2025 United States Government as represented by
+ * Copyright (c) 1986-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -57,8 +57,10 @@ main(int argc, char **argv)
 		return 1;
 	}
     }
-    if (argc > ++bu_optind) {
-	fprintf(stderr, "fbfree: excess argument(s) ignored\n");
+    if (argc > bu_optind) {
+	fprintf(stderr, "fbfree: excess argument(s) not supported\n");
+	(void)fputs(usage, stderr);
+	return 1;
     }
 
     if ((fbp = fb_open(framebuffer, 0, 0)) == FB_NULL) {

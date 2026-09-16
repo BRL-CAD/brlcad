@@ -1,3 +1,7 @@
+set(PLUGIN_LIBS libged libbu)
+
+
+
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_BINARY_DIR}
@@ -16,19 +20,22 @@ distclean(${CMAKE_CURRENT_BINARY_DIR}/debug2c/Makefile)
 set(DEBUG_CMD_CPP "${CMAKE_CURRENT_BINARY_DIR}/debug_cmd.cpp")
 add_custom_command(
   OUTPUT ${DEBUG_CMD_CPP}
-  COMMAND debug2c ${CMAKE_BINARY_DIR}/cmakefiles.cmake ${DEBUG_CMD_CPP}
+  COMMAND ${BRLCAD_SANITIZER_BUILD_TOOL_LAUNCHER}
+    $<TARGET_FILE:debug2c> ${CMAKE_BINARY_DIR}/cmakefiles.cmake ${DEBUG_CMD_CPP}
   DEPENDS debug2c
   COMMENT "[DEBUG2C] Scanning for debugging variables"
 )
 distclean(${DEBUG_CMD_CPP})
 set_source_files_properties(debug.cpp PROPERTIES OBJECT_DEPENDS ${DEBUG_CMD_CPP})
 
-ged_plugin_library(ged-debug debug.cpp)
-target_link_libraries(ged-debug libged libbu)
+ged_plugin_library(ged-debug
+  debug.cpp
+  LIBS ${PLUGIN_LIBS}
+  PLUGIN_ONLY
+)
 
 cmakefiles(
   CMakeLists.txt
-  debug.cpp
 )
 
 # Local Variables:

@@ -1,7 +1,7 @@
 #                       O P E N W . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2025 United States Government as represented by
+# Copyright (c) 1998-2026 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -184,6 +184,16 @@ if {![info exists mged_default(lighting)]} {
     set mged_default(lighting) 1
 }
 
+proc mged_dm_supports {id setting} {
+    global mged_gui
+
+    winset $mged_gui($id,active_dm)
+    if {[catch {dm set $setting} value]} {
+	return 0
+    }
+    return [expr {$value eq "0" || $value eq "1"}]
+}
+
 if {![info exists mged_default(perspective_mode)]} {
     set mged_default(perspective_mode) 0
 }
@@ -260,6 +270,19 @@ if {[namespace exists ::tk]} {
     # Used throughout the GUI as the dialog window name.
     # This helps prevent window clutter.
     set ::tk::Priv(cad_dialog) .mged_dialog
+}
+
+proc mged_open_manual {parent screen} {
+    global mged_browser
+    global mged_html_dir
+
+    set manual_path [file join $mged_html_dir index.html]
+    if {[file readable $manual_path] &&
+	![catch {exec -- $mged_browser $manual_path &}]} {
+	return
+    }
+
+    ia_man $parent $screen
 }
 
 proc gui { args } {
@@ -464,6 +487,7 @@ proc gui { args } {
     }
 
     toplevel .$id -screen $screen -menu .$id.menubar
+    wm withdraw .$id
 
     lappend mged_players $id
     set mged_gui($id,screen) $screen
@@ -486,6 +510,7 @@ proc gui { args } {
 	set mged_gui($id,dmc) $mged_gui($id,top)
 
 	toplevel $mged_gui($id,dmc) -screen $gscreen -relief sunken -borderwidth 2
+	wm withdraw $mged_gui($id,dmc)
 
 	if {[catch { openmv $id $mged_gui($id,top) $mged_gui($id,dmc) $gscreen $dtype } result]} {
 	    gui_destroy $id
@@ -1759,6 +1784,17 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	characteristics can be set by the user." }
 	    { see_also "rset" } }
     .$id.menubar.modes.axes add checkbutton -offvalue 0 -onvalue 1\
+	-variable mged_gui($id,model_tick_enable) -label "Model Axes Ticks" -underline 6\
+	-command "mged_apply $id \"rset ax model_tick_enable \$mged_gui($id,model_tick_enable)\""
+    hoc_register_menu_data "Axes" "Model Axes Ticks" "Model Axes Ticks"\
+	{ { summary "Toggle display of a ticked scale along the model
+	axes. The tick spacing is controlled by
+	'rset ax model_tick_interval' (in mm), with a major
+	tick every 'rset ax model_ticks_per_major' ticks. This
+	provides a measurable scale in the target coordinate
+	system." }
+	    { see_also "rset" } }
+    .$id.menubar.modes.axes add checkbutton -offvalue 0 -onvalue 1\
 	-variable mged_gui($id,edit_draw) -label "Edit" -underline 0\
 	-command "mged_apply $id \"rset ax edit_draw \$mged_gui($id,edit_draw)\""
     hoc_register_menu_data "Axes" "Edit" "Edit Axes"\
@@ -1810,7 +1846,9 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	modify the state of the drawing window) will apply only to the
 	drawing window wherein the user typed. This feature is provided
 	to lessen the need to use the mouse." } }
-    if {$mged_gui($id,dtype) == "ogl" || $mged_gui($id,dtype) == "wgl"} {
+    if {[mged_dm_supports $id depthcue] &&
+	[mged_dm_supports $id zbuffer] &&
+	[mged_dm_supports $id lighting]} {
 	.$id.menubar.misc add checkbutton -offvalue 0 -onvalue 1\
 	    -variable mged_gui($id,depthcue) -label "Depth Cueing" -underline 0\
 	    -command "mged_apply $id \"dm set depthcue \$mged_gui($id,depthcue)\""
@@ -1886,6 +1924,12 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	-command "geometree"
     hoc_register_menu_data "Tools" "Geometry Browser" "Geometry Browser"\
 	{ { summary "Tool for browsing the geometry in a database." } }
+
+    .$id.menubar.tools add command -label "Search Geometry" -underline 0\
+	-command "init_search_gui $id"
+    hoc_register_menu_data "Tools" "Search Geometry" "Search Geometry"\
+	{ { summary "Tool for searching geometry in the current database." }
+	    { see_also "search" } }
 
     .$id.menubar.tools add command -label "LOD Configuration" -underline 0\
 	-command "lodconfig"
@@ -2016,15 +2060,15 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	MGED's commands." }
 	    { see_also "apropos" } }
 
-    if {$::tcl_platform(os) == "Windows NT"} {
-	set web_cmd "exec \$mged_browser \$mged_html_dir/index.html &"
-    } elseif {$::tcl_platform(os) == "Darwin"} {
-	set web_cmd "exec \$mged_browser \$mged_html_dir/index.html"
-    } else {
-	set web_cmd "exec \$mged_browser -display $screen \$mged_html_dir/index.html 2> /dev/null &"
-    }
+    .$id.menubar.help add command -label "Manual Search" -underline 7\
+	-command "ia_man_search .$id $screen"
+    hoc_register_menu_data "Help" "Manual Search" "Manual Search"\
+	{ { summary "Search full MGED command manual pages and open the
+	manual page browser with ranked results." }
+	    { see_also "apropos man" } }
 
-    .$id.menubar.help add command -label "Manual" -underline 0 -command $web_cmd
+    .$id.menubar.help add command -label "Manual" -underline 0\
+	-command "mged_open_manual .$id $screen"
     hoc_register_menu_data "Help" "Manual" "Manual"\
 	{ { summary "Start a tool for browsing the online MGED manual.
 	The web browser that gets started is dependent, first, on the
@@ -2245,7 +2289,7 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
     update_mged_vars $id
     set mged_gui($id,qray_effects) [qray effects]
 
-    if {$mged_gui($id,dtype) == "ogl" || $mged_gui($id,dtype) == "wgl"} {
+    if {[mged_dm_supports $id zbuffer]} {
 	mged_apply_local $id "dm set zbuffer $mged_default(zbuffer)"
     }
 
@@ -2266,6 +2310,10 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
     set dbname [_mged_opendb]
     set_wm_title $id $dbname
 
+    # Finish widget layout before either toplevel is mapped so the window
+    # manager doesn't get a chance to place them before startup geometry is set.
+    update idletasks
+
     # set the size here in case the user didn't specify it in mged_default(ggeom)
     set height [expr [winfo screenheight $mged_gui($id,top)] - 70]
     set width $height
@@ -2279,16 +2327,19 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 
     if { $comb } {
 	if { !$mged_gui($id,show_dm) } {
-	    update
 	    set_dm_win $id
 	}
     } else {
 	wm geometry .$id $mged_default(geom)
-	update
+	update idletasks
+    }
 
-	# Prevent command window from resizing itself as labels change
-	set geometry [wm geometry .$id]
-	wm geometry .$id $geometry
+    if {!$comb && $mged_gui($id,show_dm)} {
+	wm deiconify $mged_gui($id,top)
+    }
+
+    if {$comb || $mged_gui($id,show_cmd)} {
+	wm deiconify .$id
     }
 }
 
@@ -2400,6 +2451,7 @@ proc update_mged_vars { id } {
 	set mged_gui($id,adc_draw) $result
     }
     set mged_gui($id,model_draw) [rset ax model_draw]
+    set mged_gui($id,model_tick_enable) [rset ax model_tick_enable]
     set mged_gui($id,view_draw) [rset ax view_draw]
     set mged_gui($id,edit_draw) [rset ax edit_draw]
     set mged($id,use_air) $use_air
@@ -2417,10 +2469,10 @@ proc update_mged_vars { id } {
     set mged_gui($id,orig_gui) $orig_gui
     set mged_gui($id,forward_keys) $forwarding_key($mged_gui($id,active_dm))
 
-    if {$mged_gui($id,dtype) == "ogl" || $mged_gui($id,dtype) == "ogl"} {
-	set mged_gui($id,depthcue) [dm set depthcue]
-	set mged_gui($id,zbuffer) [dm set zbuffer]
-	set mged_gui($id,lighting) [dm set lighting]
+    foreach setting {depthcue zbuffer lighting} {
+	if {[mged_dm_supports $id $setting]} {
+	    set mged_gui($id,$setting) [dm set $setting]
+	}
     }
 
     set_mged_v_axes_pos $id

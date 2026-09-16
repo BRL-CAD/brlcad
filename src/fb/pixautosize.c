@@ -1,7 +1,7 @@
 /*                   P I X A U T O S I Z E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2025 United States Government as represented by
+ * Copyright (c) 2004-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,11 +29,14 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 
 #include "vmath.h"
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bn.h"
 #include "dm.h"
 
@@ -57,21 +60,25 @@ get_args(int argc, char **argv)
     while ((c = bu_getopt(argc, argv, "b:f:l:h?")) != -1) {
 	switch (c) {
 	    case 'b':
-		bytes_per_sample = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &bytes_per_sample, 1, INT_MAX, "bytes_per_sample"))
+		    return 0;
 		break;
 	    case 'f':
 		file_name = bu_optarg;
 		break;
 	    case 'l':
-		file_length = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &file_length, 1, INT_MAX, "file_length"))
+		    return 0;
 		break;
 	    default:		/* '?' 'h' */
 		return 0;
 	}
     }
 
-    if (argc > ++bu_optind)
-	fprintf(stderr, "pixautosize: excess argument(s) ignored\n");
+    if (argc > bu_optind) {
+	fprintf(stderr, "pixautosize: excess argument(s) not supported\n");
+	return 0;
+    }
 
     return 1;		/* OK */
 }
@@ -84,7 +91,13 @@ main(int argc, char **argv)
     int nsamp;
 
     bu_setprogname(argv[0]);
-    if (!get_args(argc, argv) || bytes_per_sample <= 0) {
+    if (!get_args(argc, argv)) {
+	(void)fputs(usage, stderr);
+	return 1;
+    }
+
+    if (file_name && file_length > 0) {
+	fprintf(stderr, "pixautosize: specify either -f file_name or -l file_length, not both\n");
 	(void)fputs(usage, stderr);
 	return 1;
     }

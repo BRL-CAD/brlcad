@@ -1,0 +1,49 @@
+= EXIT(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+exit - Alternate command name for *quit*.
+
+== SYNOPSIS
+
+[source]
+----
+exit
+----
+
+
+[[description]]
+== DESCRIPTION
+
+The *exit* command shares its core implementation with *quit*.
+It ends the current MGED session.
+
+See *quit* for the detailed behavior.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *exit* command to stop MGED.
+
+.End MGED using the alternate command name.
+[example]
+====
+mged> **exit**
+
+Performs the same operation as *quit*.
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,7 +1,7 @@
 /*                     F B - Q T G L . C P P
  * BRL-CAD
  *
- * Copyright (c) 1989-2025 United States Government as represented by
+ * Copyright (c) 1989-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1010,7 +1010,11 @@ struct fb_impl qtgl_interface_impl =
     {0}, /* u3 */
     {0}, /* u4 */
     {0}, /* u5 */
-    {0}  /* u6 */
+    {0}, /* u6 */
+    0,   /* if_interactive */
+    {{FB_EVENT_NONE, 0, 0, 0, 0, 0}}, /* if_equeue */
+    0,   /* if_ehead */
+    0    /* if_etail */
 };
 
 extern "C" {
@@ -1042,4 +1046,3 @@ COMPILER_DLLEXPORT const struct fb_plugin *fb_plugin_info(void)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

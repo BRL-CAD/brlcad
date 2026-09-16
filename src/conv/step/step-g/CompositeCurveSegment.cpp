@@ -1,7 +1,7 @@
 /*                 CompositeCurveSegment.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2025 United States Government as represented by
+ * Copyright (c) 1994-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -35,20 +35,21 @@
 #define ENTITYNAME "Composite_Curve_Segment"
 string CompositeCurveSegment::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)CompositeCurveSegment::Create);
 
-static const char *Transition_code_string[] = {
+static const char *CompositeCurveSegment_Transition_code_string[] = {
     "discontinuous",
     "continuous",
     "cont_same_gradient",
     "cont_same_gradient_same_curvature",
     "unset"
 };
+static const int STEP_TRANSITION_CODE_UNSET = 4;
 
 CompositeCurveSegment::CompositeCurveSegment()
 {
     step = NULL;
     id = 0;
     parent_curve = NULL;
-    transition = Transition_code_unset;
+    transition = STEP_TRANSITION_CODE_UNSET;
     same_sense = BUnset;
 }
 
@@ -57,7 +58,7 @@ CompositeCurveSegment::CompositeCurveSegment(STEPWrapper *sw, int step_id)
     step = sw;
     id = step_id;
     parent_curve = NULL;
-    transition = Transition_code_unset;
+    transition = STEP_TRANSITION_CODE_UNSET;
     same_sense = BUnset;
 }
 
@@ -92,8 +93,11 @@ CompositeCurveSegment::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	}
     }
 
-    transition = (Transition_code)step->getEnumAttribute(sse, "transition");
-    V_MIN(transition, Transition_code_unset);
+    transition = step->getEnumAttributeIndex(sse, "transition",
+	CompositeCurveSegment_Transition_code_string,
+	sizeof(CompositeCurveSegment_Transition_code_string) /
+	    sizeof(CompositeCurveSegment_Transition_code_string[0]),
+	STEP_TRANSITION_CODE_UNSET);
 
     same_sense = step->getBooleanAttribute(sse, "same_sense");
 
@@ -115,7 +119,7 @@ CompositeCurveSegment::Print(int level)
     std::cout << "parent_curve:" << std::endl;
     parent_curve->Print(level + 1);
     TAB(level + 1);
-    std::cout << "transition:" << Transition_code_string[transition] << std::endl;
+    std::cout << "transition:" << CompositeCurveSegment_Transition_code_string[transition] << std::endl;
     TAB(level + 1);
     std::cout << "same_sense:" << step->getBooleanString(same_sense) << std::endl;
 

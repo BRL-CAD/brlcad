@@ -1,7 +1,7 @@
 /*                  T C L C A D / D E F I N E S . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2025 United States Government as represented by
+ * Copyright (c) 2004-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,6 +30,13 @@
 #define TCLCAD_DEFINES_H
 
 #include "common.h"
+
+/* Tcl_CreateFileHandler is not implemented by every Tcl notifier.  Keep the
+ * platform test here so libtclcad code can select the required event I/O
+ * mechanism by capability instead of scattering OS tests. */
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#  define USE_TCL_CHAN 1
+#endif
 
 __BEGIN_DECLS
 

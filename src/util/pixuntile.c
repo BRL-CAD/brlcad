@@ -1,7 +1,7 @@
 /*                     P I X U N T I L E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2025 United States Government as represented by
+ * Copyright (c) 1986-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,12 +27,15 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include "bio.h"
 
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/str.h"
 #include "bu/exit.h"
 
@@ -59,25 +62,34 @@ get_args(int argc, char **argv)
 	switch (c) {
 	    case 's':
 		/* square input file size */
-		in_height = in_width = atoi(bu_optarg);
+		if (!bu_opt_scan_size_t_range(bu_optarg, &in_width, 1, SIZE_MAX, "input size"))
+		    return 0;
+		in_height = in_width;
 		break;
 	    case 'w':
-		in_width = atoi(bu_optarg);
+		if (!bu_opt_scan_size_t_range(bu_optarg, &in_width, 1, SIZE_MAX, "input width"))
+		    return 0;
 		break;
 	    case 'n':
-		in_height = atoi(bu_optarg);
+		if (!bu_opt_scan_size_t_range(bu_optarg, &in_height, 1, SIZE_MAX, "input height"))
+		    return 0;
 		break;
 	    case 'S':
-		out_height = out_width = atoi(bu_optarg);
+		if (!bu_opt_scan_size_t_range(bu_optarg, &out_width, 1, SIZE_MAX, "output size"))
+		    return 0;
+		out_height = out_width;
 		break;
 	    case 'W':
-		out_width = atoi(bu_optarg);
+		if (!bu_opt_scan_size_t_range(bu_optarg, &out_width, 1, SIZE_MAX, "output width"))
+		    return 0;
 		break;
 	    case 'N':
-		out_height = atoi(bu_optarg);
+		if (!bu_opt_scan_size_t_range(bu_optarg, &out_height, 1, SIZE_MAX, "output height"))
+		    return 0;
 		break;
 	    case 'o':
-		framenumber = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &framenumber, 0, INT_MAX, "start frame"))
+		    return 0;
 		break;
 	    default:		/* '?''h' */
 		return 0;	/* Bad, other than option '?' or 'h' */

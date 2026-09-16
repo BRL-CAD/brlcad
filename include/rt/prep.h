@@ -1,7 +1,7 @@
 /*                         P R E P . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2025 United States Government as represented by
+ * Copyright (c) 1993-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,7 +29,6 @@
 #include "bu/ptbl.h"
 #include "rt/defines.h"
 #include "rt/tree.h"
-#include "rt/resource.h"
 #include "rt/rt_instance.h"
 
 __BEGIN_DECLS
@@ -47,23 +46,31 @@ struct rt_reprep_obj_list {
     struct bu_ptbl paths;       /**< @brief  list of all paths from topobjs to unprepped objects */
     struct db_tree_state **tsp; /**< @brief  tree state used by tree walker in "reprep" routines */
     struct bu_ptbl unprep_regions;      /**< @brief  list of region structures that will be "unprepped" */
-    size_t old_nsolids;         /**< @brief  rtip->nsolids before unprep */
-    size_t old_nregions;        /**< @brief  rtip->nregions before unprep */
+    size_t old_nsolids;         /**< @brief  rtip->stats.nsolids before unprep */
+    size_t old_nregions;        /**< @brief  rtip->stats.nregions before unprep */
     size_t nsolids_unprepped;   /**< @brief  number of soltab structures eliminated by unprep */
     size_t nregions_unprepped;  /**< @brief  number of region structures eliminated by unprep */
 };
 
 /* prep.c */
 RT_EXPORT extern int rt_unprep(struct rt_i *rtip,
-			       struct rt_reprep_obj_list *objs,
-			       struct resource *resp);
+			       struct rt_reprep_obj_list *objs);
 RT_EXPORT extern int rt_reprep(struct rt_i *rtip,
-			       struct rt_reprep_obj_list *objs,
-			       struct resource *resp);
-RT_EXPORT extern int re_prep_solids(struct rt_i *rtip,
-				    int num_solids,
-				    char **solid_names,
-				    struct resource *resp);
+			       struct rt_reprep_obj_list *objs);
+
+/**
+ * Add a pre-prepped soltab into the rt_i space-partitioning structures.
+ *
+ * The caller must have already:
+ *   - allocated and initialised @p stp
+ *   - set stp->st_bit = rtip->stats.nsolids++ (before calling ft_prep)
+ *   - called ft_prep on @p stp
+ *
+ * This function updates rti_Solids and inserts @p stp into rti_CutHead,
+ * hiding those internal rt_i details from callers.
+ */
+RT_EXPORT extern void rt_dynamic_add_solid(struct rt_i *rtip,
+					   struct soltab *stp);
 
 
 __END_DECLS

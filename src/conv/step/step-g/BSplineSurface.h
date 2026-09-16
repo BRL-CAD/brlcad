@@ -1,7 +1,7 @@
 /*                 BSplineSurface.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2025 United States Government as represented by
+ * Copyright (c) 1994-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -47,7 +47,7 @@ protected:
     int u_degree;
     int v_degree;
     LIST_OF_LIST_OF_POINTS *control_points_list;
-    B_spline_surface_form surface_form;
+    int surface_form;
     Logical u_closed;
     Logical v_closed;
     Logical self_intersect;
@@ -59,6 +59,7 @@ public:
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
     virtual bool LoadONBrep(ON_Brep *brep);
     virtual void Print(int level);
+    virtual size_t PullbackSpanEstimate() const;
     string Form();
 
     //static methods

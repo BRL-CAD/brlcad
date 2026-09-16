@@ -1,7 +1,7 @@
 /*                        P I X - B W . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2025 United States Government as represented by
+ * Copyright (c) 1986-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -25,6 +25,8 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
@@ -33,6 +35,7 @@
 #include "vmath.h"
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/str.h"
 #include "bu/log.h"
 #include "bu/mime.h"
@@ -65,6 +68,7 @@ int
 get_args(int argc, char **argv)
 {
     int c;
+    int remaining = 0;
 
     bu_optind = 1;
     while ((c = bu_getopt(argc, argv, "e:s:w:n:R:G:B:o:h?")) != -1) {
@@ -103,27 +107,34 @@ get_args(int argc, char **argv)
 		break;
 	    case 'R' :
 		red++;
-		rweight = atof(bu_optarg);
+		if (!bu_opt_scan_double(bu_optarg, &rweight, "red weight"))
+		    return 0;
 		break;
 	    case 'G' :
 		green++;
-		gweight = atof(bu_optarg);
+		if (!bu_opt_scan_double(bu_optarg, &gweight, "green weight"))
+		    return 0;
 		break;
 	    case 'B' :
 		blue++;
-		bweight = atof(bu_optarg);
+		if (!bu_opt_scan_double(bu_optarg, &bweight, "blue weight"))
+		    return 0;
 		break;
 	    case 'o' :
 		out_file = bu_optarg;
 		break;
             case 's' :
-               inx = iny = atoi(bu_optarg);
+	       if (!bu_opt_scan_size_t_range(bu_optarg, &inx, 1, SIZE_MAX, "input size"))
+		   return 0;
+	       iny = inx;
                break;
             case 'w' :
-               inx = atoi(bu_optarg);
+	       if (!bu_opt_scan_size_t_range(bu_optarg, &inx, 1, SIZE_MAX, "input width"))
+		   return 0;
                break;
             case 'n' :
-               iny = atoi(bu_optarg);
+	       if (!bu_opt_scan_size_t_range(bu_optarg, &iny, 1, SIZE_MAX, "input height"))
+		   return 0;
                break;
 	    default:		/* '?' 'h' */
 		return 0;
@@ -148,14 +159,15 @@ get_args(int argc, char **argv)
     } else {
 	in_file = argv[bu_optind];
 	bu_optind++;
-	if (!in_file || !bu_file_exists(in_file, NULL))
-	    return 0;
-	return 1;
     }
 
-    if (argc > ++bu_optind) {
-	bu_log("pix-bw: excess argument(s) ignored\n");
+    remaining = argc - bu_optind;
+    if (remaining != 0) {
+	bu_log("pix-bw: excess argument(s) not supported\n");
+	return 0;
     }
+    if (in_file != NULL && !bu_file_exists(in_file, NULL))
+	return 0;
 
     return 1;		/* OK */
 }

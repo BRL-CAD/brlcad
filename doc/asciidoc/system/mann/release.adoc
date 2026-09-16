@@ -1,0 +1,56 @@
+= RELEASE(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+release - Closes a display manager.
+
+== SYNOPSIS
+
+[source]
+----
+release [name]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Closes a display manager. If invoked with no arguments, the current display manager is closed. Otherwise, _name_ (i.e., the Tcl/Tk path name of the display manager window)is closed.
+
+
+[[examples]]
+== EXAMPLES
+
+The two examples show the use of the *release* command to close either the current display manager (first example) or the one specified with the command (second example).
+
+.Close the current display manager.
+[example]
+====
+mged>**release**
+
+Closes the current display manager.
+
+====
+
+.Close a specified display manager.
+[example]
+====
+mged>**release .dm_X0**
+
+Closes __.dm_X0__.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

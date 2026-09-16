@@ -1,0 +1,133 @@
+= PATCH-G(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+patch-g - convert a preprocessed FASTGEN target description into a BRL-CAD database
+
+== SYNOPSIS
+
+[source]
+----
+patch-g [options] model.g
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*patch-g* converts FASTGEN target geometry into a BRL-CAD *.g* database.
+FASTGEN is a modeling system used to create military target descriptions,
+whose primitives (triangles in volume and plate mode, wedges, spheres,
+boxes, cylinders, and rods) are reproduced by *patch-g* as NMG solids,
+BoTs (polysolids), or ARB6 solids.
+
+The FASTGEN file must first be passed through the *rpatch*(1) preprocessor,
+which produces the intermediate ".rp" file that *patch-g* consumes. The
+preprocessed input is read from standard input unless the *-f* option names
+a file, and the resulting geometry is written to the *model.g* database named
+as the sole positional argument.
+
+By default solids are written as NMG primitives; *-p* selects BoT (polysolid)
+output, and *-6* converts plate-mode triangles to ARB6 solids. Components are
+grouped into regions with a fixed number of unions each (see *-T* and *-A* for
+the tolerances controlling vertex fusing and face merging). Diagnostic
+messages are emitted when geometry cannot be converted; the *-d* option raises
+the verbosity, with higher levels producing more output.
+
+[[options]]
+== OPTIONS
+
+*-f* _fastgen.rp_::
+  Read the pre-processed (through *rpatch*(1)) FASTGEN file instead of standard input.
+
+*-n*::
+  Process volume mode components as plate mode.
+
+*-u* _number_::
+  Number of union operations per region (default 5).
+
+*-c* _"x y z"_::
+  Center of the object, in inches, used for some plate-mode surface normal
+  calculations. The quotation marks are required to group the three values.
+
+*-t* _title_::
+  Title for the output database (default "patch-g conversion").
+
+*-o* _object_name_::
+  Name of the top-level object, containing no spaces (default "all").
+
+*-p*::
+  Write volume- and plate-mode components as BoT (polysolid) primitives rather than NMG solids.
+
+*-6*::
+  Process plate-mode triangles as ARB6 solids (overrides *-p* for triangles).
+
+*-i* _group.file_::
+  Read group label (region naming) information from the named file.
+
+*-m* _mat.file_::
+  Read material property information from the named file.
+
+*-j* _jtype.file_::
+  Read component JTYPE thickness from the named text file (units: in) for components that have no/zero thickness.
+
+*-r*::
+  Reverse the surface normals for plate-mode triangles.
+
+*-d* _level_::
+  Set the debug (diagnostic verbosity) level. Higher numbers produce more
+  diagnostic output (levels above 3 also write intermediate NMG solids to the
+  database).
+
+*-x* _flag_::
+  Set the _librt_ debugging flags (hexadecimal).
+
+*-X* _flag_::
+  Set the NMG (_librt_) debugging flags (hexadecimal).
+
+*-T* _distance_::
+  Vertex tolerance distance, in inches. Two vertices closer together than this
+  are treated as the same vertex.
+
+*-A* _tolerance_::
+  Perpendicularity tolerance, given as the cosine of an angle (0.0 through 1.0).
+  Two unit vectors whose dot product is less than this value are considered
+  perpendicular.
+
+[[examples]]
+== EXAMPLES
+
+.Convert a FASTGEN target to a polysolid BRL-CAD database
+====
+[source,bash]
+----
+rpatch < tank.fastgen > tank.rp
+patch-g -p -f tank.rp -t "M1 Tank" -o tank tank.g
+----
+First *rpatch*(1) preprocesses the raw FASTGEN file into the intermediate
+*tank.rp*. *patch-g* then converts it, writing BoT (polysolid) geometry under
+a top-level group named *tank*, with a database title of "M1 Tank", into the
+new *tank.g* database that can be opened in *mged*(1).
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *rpatch*(1), *fast4-g*(1), *mged*(1)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

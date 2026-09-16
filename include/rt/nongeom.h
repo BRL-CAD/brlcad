@@ -1,7 +1,7 @@
 /*                      N O N G E O M . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2025 United States Government as represented by
+ * Copyright (c) 1993-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -129,7 +129,9 @@ struct rt_comb_internal {
 
 /**
  * In-memory format for database uniform-array binary object.  Perhaps
- * move to wdb.h or rtgeom.h?
+ * move to wdb.h or rtgeom.h?  Elements are stored in host byte order in this
+ * structure and converted to or from network byte order at the database
+ * serialization boundary.
  */
 struct rt_binunif_internal {
     uint32_t            magic;

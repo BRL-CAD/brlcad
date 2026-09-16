@@ -1,7 +1,7 @@
 /*                     P R O C E S S . C
  * BRL-CAD
  *
- * Copyright (c) 2019-2025 United States Government as represented by
+ * Copyright (c) 2019-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -70,8 +70,12 @@ _ged_process_list(struct ged *gedp)
 	rrp = (struct ged_subprocess *)BU_PTBL_GET(&gedp->ged_subp, i);
 	struct bu_vls pline = BU_VLS_INIT_ZERO;
 	struct bu_vls cmdroot = BU_VLS_INIT_ZERO;
-	const char * const *argv;
+	const char * const *argv = NULL;
 	int argc = bu_process_args_n(rrp->p, NULL, &argv);
+	if (!argc || !argv) {
+	    bu_log("Warning: no arguments for process!\n");
+	    continue;
+	}
 	int pid = bu_process_pid(rrp->p);
 	(void)bu_path_component(&cmdroot, argv[0], BU_PATH_BASENAME_EXTLESS);
 	bu_vls_sprintf(&pline, "%*d %s", longest_pid, pid, bu_vls_cstr(&cmdroot));
@@ -116,7 +120,7 @@ _ged_process_pabort(struct ged *gedp, int argc, const char **argv)
 		return BRLCAD_ERROR;
 	    }
 	    if (ppid == pid) {
-		bu_pid_terminate(bu_process_pid(rrp->p));
+		(void)bu_process_terminate(rrp->p);
 		rrp->aborted = 1;
 		/* terminated it, no need to check other args for
 		 * this process */
@@ -144,7 +148,7 @@ _ged_process_gabort(struct ged *gedp, int argc, const char **argv)
 	if (argcnt > 0 && bu_path_component(&cmdroot, cmd, BU_PATH_BASENAME_EXTLESS)) {
 	    for (int j = 0; j < argc; j++) {
 		if (!bu_path_match(argv[j], bu_vls_cstr(&cmdroot), 0)) {
-		    bu_pid_terminate(bu_process_pid(rrp->p));
+		    (void)bu_process_terminate(rrp->p);
 		    rrp->aborted = 1;
 		    /* terminated it, no need to check other args for
 		     * this process */
@@ -199,24 +203,13 @@ ged_process_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl process_cmd_impl = {
-    "process",
-    ged_process_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd process_cmd = { &process_cmd_impl };
-const struct ged_cmd *process_cmds[] = { &process_cmd, NULL };
+#define GED_PROCESS_COMMANDS(X, XID) \
+    X(process, ged_process_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  process_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_PROCESS_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_process", 1, GED_PROCESS_COMMANDS)
 
 /*
  * Local Variables:

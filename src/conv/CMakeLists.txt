@@ -31,6 +31,10 @@ brlcad_addexec(comgeom-g "${comgeom-g_SRCS}" "libwdb;libbn;libbu;${M_LIBRARY}" F
 
 brlcad_addexec(conv-vg2g conv-vg2g.c "libbu" FOLDER Conv)
 
+brlcad_addexec(csg-g csg/csg-g.c "libwdb;librt;libbu" FOLDER Conv)
+
+brlcad_addexec(g-scad csg/g-scad.c "libwdb;librt;libnmg;libbu;${M_LIBRARY}" FOLDER Conv)
+
 brlcad_addexec(dbupgrade dbupgrade.c "libwdb;librt;libbu" FOLDER Conv)
 
 brlcad_addexec(dxf-g dxf/dxf-g.c "libwdb;librt;libnmg;libbn;libbu;${M_LIBRARY}" FOLDER Conv)
@@ -73,22 +77,23 @@ brlcad_addexec(g5-g4 g5-g4.c "libwdb;librt;libbu" NO_INSTALL)
 
 brlcad_addexec(g-acad g-acad.c "librt;libnmg;libbu" FOLDER Conv)
 
-brlcad_addexec(g-obj g-obj.c "librt;libnmg;libbu" FOLDER Conv)
+brlcad_addexec(g-obj g-obj.c "librt;libnmg;libbu;${M_LIBRARY}" FOLDER Conv)
 
 # TODO - Ugh; need to either merge this into libgcv or remove it in favor of
 # that implementation...
 set(obj-g_SRCS obj-g.c ../libgcv/plugins/obj/tri_face.c)
-brlcad_addexec(obj-g "${obj-g_SRCS}" "libbu;libbn;librt;libnmg;libwdb;libwfobj" FOLDER Conv)
+brlcad_addexec(obj-g "${obj-g_SRCS}" "libbu;libbn;librt;libnmg;libwdb;libwfobj;${M_LIBRARY}" FOLDER Conv)
 target_include_directories(obj-g PRIVATE ${BRLCAD_SOURCE_DIR}/src/libgcv/plugins/obj)
 target_include_directories(obj-g PRIVATE ${BRLCAD_SOURCE_DIR}/src/libgcv/plugins/obj/wfobj)
 
 brlcad_addexec(g-voxel g-voxel.c "librt;libbu;libwdb;libanalyze;" FOLDER Conv)
 
 if(BRLCAD_ENABLE_OPENVDB)
-  brlcad_addexec(g-vdb g-vdb.cpp "librt;libbu;libwdb;libanalyze;${OpenVDB_LIBRARIES};${IlmBase_LIBRARIES};${Tbb_LIBRARIES}" FOLDER Conv)
+  brlcad_addexec(g-vdb g-vdb.cpp "librt;libbu;libwdb;libanalyze;OpenVDB::openvdb;Imath::Imath;${Tbb_LIBRARIES}" FOLDER Conv)
   target_include_directories(g-vdb SYSTEM PRIVATE ${OpenVDB_INCLUDE_DIRS} ${Tbb_INCLUDE_DIRS} ${IlmBase_INCLUDE_DIRS})
   # warnings off due to unfixable errors in boost and Ilmbase/half headers
   set_property(SOURCE g-vdb.cpp APPEND PROPERTY COMPILE_FLAGS "${OpenVDB_DEFINITIONS} -w")
+  target_link_options(g-vdb PRIVATE -Wno-alloc-size-larger-than)
 else(BRLCAD_ENABLE_OPENVDB)
   cmakefiles(g-vdb.cpp)
 endif(BRLCAD_ENABLE_OPENVDB)

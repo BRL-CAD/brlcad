@@ -2,6 +2,7 @@ set(
   brep_headers
   defines.h
   bbnode.h
+  assembly.h
   boolean.h
   brnode.h
   cdt.h
@@ -10,6 +11,7 @@ set(
   edit.h
   intersect.h
   pullback.h
+  quality.h
   ray.h
   surfacetree.h
   util.h

@@ -1,0 +1,117 @@
+= SUN-PIX(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+sun-pix - convert a Sun rasterfile (screendump) into a pix(5) or bw(5) image
+
+== SYNOPSIS
+
+[source]
+----
+sun-pix [-b] [-H] [-i] [-P] [-v] [-C] [sun.bitmap]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*sun-pix* converts a Sun rasterfile, such as one created by Sun's *screendump*(1) command, into a *pix*(5) format image on standard output. If the input file is not given, the rasterfile is read from standard input. The dimensions of the output match those of the input image. *sun-pix* handles 1-bit and 8-bit (color-mapped) rasterfiles in both raw (*RT_STANDARD*) and run-length encoded (*RT_BYTE_ENCODED*) forms; the input must be in Sun ("network", big-endian) byte order regardless of the host.
+
+To avoid corrupting a terminal, *sun-pix* refuses to write binary output to a tty; redirect standard output to a file or pipe it to another tool such as *pix-fb*(1).
+
+[[options]]
+== OPTIONS
+
+*-b*::
+  Write a *bw*(5) (single-channel grayscale) image instead of the default
+  three-channel *pix*(5) image.
+
+*-H*::
+  Print only the image dimensions and exit, without processing the pixel data.
+  The size is printed as a pair of command-line options (e.g. *-w1152 -n900*)
+  suitable for feeding directly to other *brlcad*(1) tools such as *pix-fb*(1).
+  This is the one mode allowed to write to a terminal.
+
+*-i*::
+  Invert the image, exchanging black for white. The default Sun image is black
+  on a white background; *-i* yields white on black, which is often better for
+  overlays composited with *pixmerge*(1) on top of color images.
+
+*-P*::
+  Treat the input as a "pure" 1-bit bitmap with no Sun rasterfile header. The
+  first bit processed is the most significant (left-most) bit of each byte.
+
+*-v*::
+  Verbose. Print all rasterfile header fields to standard error to aid
+  debugging.
+
+*-C*::
+  Output the image color map as text (index and RGB values) instead of the
+  raster image.
+
+[[examples]]
+== EXAMPLES
+
+.Display a screendump on a framebuffer
+====
+[source,bash]
+----
+sun-pix screen.ras | pix-fb -w1152 -n900
+----
+Convert a Sun rasterfile and pipe the resulting *pix*(5) stream straight onto a
+framebuffer with *pix-fb*(1).
+====
+
+.Auto-size the framebuffer from the header
+====
+[source,bash]
+----
+sun-pix screen.ras > screen.pix
+pix-fb $(sun-pix -H screen.ras) screen.pix
+----
+The first command writes the converted image to a file; the second uses *-H* to
+read the image dimensions back out as *-w*/*-n* options so *pix-fb*(1) is sized
+to match without hard-coding the resolution.
+====
+
+.Make a white-on-black overlay
+====
+[source,bash]
+----
+sun-pix -i -b logo.ras > logo.bw
+----
+Invert a 1-bit logo and emit a *bw*(5) image, producing a white-on-black mask
+suitable for compositing over a color image with *pixmerge*(1).
+====
+
+
+[[bugs]]
+== BUGS
+
+24-bit (true color) rasterfiles are not supported.
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *pix-fb*(1), *pixmerge*(1), *pix*(5), *bw*(5)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,0 +1,77 @@
+= BREP INTERSECT(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD MGED User Commands
+
+== NAME
+brep intersect - Intersect components of specified BRep solids.
+
+== SYNOPSIS
+
+[source]
+----
+brep {obj} intersect {obj2} {i} {j} [PP|PC|PS|CC|CS|SS]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Low level routines for intersecting elements of BRep solids and visualizing the results.
+
+
+Visualize intersecting two BREP objects. The last argument specifies what portions of each to intersect; if it is not specified, it defaults to SS:
+
+
+PP::
+Intersect a point from the first object with a point from the second.
+
+
+PC::
+Intersect a point from the first object with a curve from the second.
+
+
+PS::
+Intersect a point from the first object with a surface from the second.
+
+
+CC::
+Intersect a curve from the first object with a curve from of the second.
+
+
+CS::
+Intersect a curve from the first object with a surface from the second
+
+
+SS::
+Intersect a surface from the first object with a surface from the second.
+
+
+[[examples]]
+== EXAMPLES
+
+.Visualize a surface/surface intersection.
+[example]
+====
+mged> **brep hull.brep intersect cutter.brep 0 0 SS**
+
+Intersects surface 0 from _hull.brep_ with surface 0 from _cutter.brep_ and draws the resulting intersection curves.
+
+====
+
+
+
+
+
+
+
+[[author]]
+== AUTHOR
+
+BRLCAD-TEAM
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

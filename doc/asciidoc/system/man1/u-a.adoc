@@ -1,0 +1,78 @@
+= U-A(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+
+u-a - convert binary unsigned shorts to ASCII numbers
+
+== SYNOPSIS
+
+[source]
+----
+u-a < shorts > ascii
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*u-a* reads a stream of machine-native 16-bit unsigned short integers
+from standard input and writes their decimal values, one per line, to
+standard output as ASCII text.  Each value is printed with the *%hd*
+format, so values are rendered as signed short integers (those above
+32767 appear as negative numbers).
+
+The command takes no options and no arguments; all data is passed
+through standard input and standard output.  Related converters that
+read the same binary unsigned-short stream include *u-bw*(1), *u-d*(1),
+and *u-f*(1).
+
+This command is *deprecated* and is scheduled for removal; it prints a
+deprecation warning on startup.
+
+[[examples]]
+== EXAMPLES
+
+.Inspect raw 16-bit sample data as text
+====
+[source,bash]
+----
+u-a < samples.u | head
+----
+Decodes the binary unsigned-short stream in samples.u and shows the
+first ten decimal sample values, a quick way to sanity-check captured
+16-bit data.
+====
+
+.Compute statistics on a binary short stream
+====
+[source,bash]
+----
+u-a < signal.u | dstats
+----
+Converts the binary shorts to ASCII and pipes them to *dstats*(1) to
+report the minimum, maximum, mean, and other descriptive statistics of
+the sample values.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *u-bw*(1), *u-d*(1), *u-f*(1), *a-d*(1), *dstats*(1)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

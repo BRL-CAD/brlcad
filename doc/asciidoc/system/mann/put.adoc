@@ -1,0 +1,93 @@
+= put(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+put - _mged_ command which creates a new object of indicated type with supplied attributes. Similar to the *in* command, but without prompting - making it especially useful for scripting.
+
+== SYNOPSIS
+
+[source]
+----
+put {object type} [attrs]...
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Creates a new _object_ of indicated _type_. Objects attributes are per-object dependent, although there are some similarities among different object types (i.e. both sph and ell have a vertex 'V'). Use the *form* command for possible attributes and correct paramater forming. Possible values for _type_ are:
+
+
+* annot -- 2d annotations
+* arb8 -- ARB (eight vertices)
+* arbn -- ARB (n vertices)
+* ars -- Arbitrary faceted solid
+* binunif -- Uniform-array binary object
+* bot -- bag of triangles
+* brep -- Boundary Representation
+* cline -- Cline element
+* comb -- Combination
+* constrnt -- Constraint
+* datum -- Datum set
+* dsp -- Displacement map
+* ebm -- Extruded bitmap
+* ehy -- Elliptical Hyperboloid
+* ell -- Ellipsoid
+* epa -- Elliptical Paraboloid
+* eto -- Elliptical Torus
+* extrude -- 2d Extrusion
+* grip -- Support for joints
+* half -- Half space
+* hrt -- Heart
+* hyp -- Hyperboloid
+* joint -- Joint
+* material -- Material
+* metaball -- Metaball
+* nmg -- Non-Manifold Geometry
+* part -- Particle
+* pipe -- Pipe
+* pnts -- Collection of points
+* poly -- Polygon
+* rec -- Truncated General Cone (right elliptical cylinder)
+* revolve -- Truncated general revolve
+* rhc -- Right Hyperbolic Cylinder
+* rpc -- Right Parabolic Cylinder
+* script -- Procedural script
+* sketch -- 2d sketch
+* sph -- Ellipsoid (sphere)
+* submodel -- Instanced submodel
+* superell -- Superquadratic Ellipsoid
+* tgc -- Truncated General Cone
+* tor -- Torus
+* vol -- 3d volume
+
+
+[[examples]]
+== EXAMPLES
+
+The following are run from the MGED command prompt.
+
+.Create a sphere.
+[example]
+====
+
+mged> **put ball sph V {0 0 0} A {100 0 0} B {0 100 0} C {0 0 100}**::
+Creates a sphere named "ball", centered at (0,0,0), and with radius 100
+
+
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

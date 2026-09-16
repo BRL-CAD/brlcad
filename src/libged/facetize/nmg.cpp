@@ -1,7 +1,7 @@
 /*                        N M G  . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,6 +29,7 @@
 
 #include "bio.h"
 
+#include "bu/file.h"
 #include "bu/hook.h"
 #include "bu/vls.h"
 #include "bu/log.h"
@@ -81,14 +82,9 @@ _facetize_log_nmg(struct _ged_facetize_state *o)
        return;
 
     /* Seriously, bu_bomb, we don't want you blathering
-     * to stderr... shut down stderr temporarily, assuming
-     * we can find /dev/null or something similar */
+     * to stderr... shut down stderr temporarily. */
     struct _ged_facetize_logging_state *log_s = (struct _ged_facetize_logging_state *)o->log_s;
-    log_s->fnull = open("/dev/null", O_WRONLY);
-    if (log_s->fnull == -1) {
-       /* https://gcc.gnu.org/ml/gcc-patches/2005-05/msg01793.html */
-       log_s->fnull = open("nul", O_WRONLY);
-    }
+    log_s->fnull = open(bu_file_null(), O_WRONLY);
     if (log_s->fnull != -1) {
        log_s->serr = fileno(stderr);
        log_s->stderr_stashed = dup(log_s->serr);
@@ -143,7 +139,8 @@ facetize_region_end(struct db_tree_state *tsp,
     if (tsp) RT_CK_DBTS(tsp);
     if (pathp) RT_CK_FULL_PATH(pathp);
 
-    facetize_tree = (union tree **)client_data;
+    struct _ged_facetize_state *s = (struct _ged_facetize_state *)client_data;
+    facetize_tree = &s->facetize_tree;
 
     if (curtree->tr_op == OP_NOP) return curtree;
 
@@ -162,6 +159,23 @@ facetize_region_end(struct db_tree_state *tsp,
 
     /* Tree has been saved, and will be freed later */
     return TREE_NULL;
+}
+
+
+static union tree *
+facetize_nmg_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *client_data)
+{
+    union tree *ret = rt_booltree_leaf_tess(tsp, pathp, ip, NULL);
+    if (!ret) {
+	struct _ged_facetize_state *s = (struct _ged_facetize_state *)client_data;
+	if (s && s->tolerate_failures && pathp) {
+	    char *path_str = db_path_to_string(pathp);
+	    facetize_tolerated_failure(s, "NMG leaf tessellation failed for '%s'; leaf will be omitted from boolean evaluation", path_str ? path_str : "(unknown)");
+	    if (path_str)
+		bu_free(path_str, "path string");
+	}
+    }
+    return ret;
 }
 
 
@@ -187,13 +201,14 @@ _try_nmg_facetize(struct _ged_facetize_state *s, struct bu_list *vlfree, int arg
 
     _facetize_log_nmg(s);
 
-    db_init_db_tree_state(&init_state, dbip, wdbp->wdb_resp);
+    db_init_db_tree_state(&init_state, dbip);
 
 
     /* Establish tolerances */
     init_state.ts_ttol = &wdbp->wdb_ttol;
     init_state.ts_tol = &wdbp->wdb_tol;
 
+    s->facetize_tree = (union tree *)0;
     facetize_tree = (union tree *)0;
     nmg_model = nmg_mm();
     init_state.ts_m = &nmg_model;
@@ -202,12 +217,12 @@ _try_nmg_facetize(struct _ged_facetize_state *s, struct bu_list *vlfree, int arg
 	/* try */
 	i = db_walk_tree(dbip, argc, (const char **)argv,
 			 1,
-			&init_state,
-			 0,			/* take all regions */
-			 facetize_region_end,
-			 rt_booltree_leaf_tess,
-			 (void *)&facetize_tree
-			);
+				 &init_state,
+				 0,			/* take all regions */
+				 facetize_region_end,
+				 facetize_nmg_leaf_tess,
+				 (void *)s
+				);
     } else {
 	/* catch */
 	BU_UNSETJUMP;
@@ -218,8 +233,14 @@ _try_nmg_facetize(struct _ged_facetize_state *s, struct bu_list *vlfree, int arg
 	BU_PUT(log_s->nmg_log, struct _ged_facetize_logging_state);
 	BU_PUT(log_s, struct _ged_facetize_logging_state);
 	s->log_s = NULL;
+	if (s->facetize_tree) {
+	    db_free_tree(s->facetize_tree);
+	    s->facetize_tree = NULL;
+	}
 	return NULL;
     } BU_UNSETJUMP;
+
+    facetize_tree = s->facetize_tree;
 
     if (i < 0) {
 	/* Destroy NMG */
@@ -230,13 +251,17 @@ _try_nmg_facetize(struct _ged_facetize_state *s, struct bu_list *vlfree, int arg
 	BU_PUT(log_s->nmg_log, struct _ged_facetize_logging_state);
 	BU_PUT(log_s, struct _ged_facetize_logging_state);
 	s->log_s = NULL;
+	if (s->facetize_tree) {
+	    db_free_tree(s->facetize_tree);
+	    s->facetize_tree = NULL;
+	}
 	return NULL;
     }
 
     if (facetize_tree) {
 	if (!BU_SETJUMP) {
 	    /* try */
-	    failed = nmg_boolean(facetize_tree, nmg_model, vlfree, &wdbp->wdb_tol, &rt_uniresource);
+	    failed = nmg_boolean(facetize_tree, nmg_model, vlfree, &wdbp->wdb_tol);
 	} else {
 	    /* catch */
 	    BU_UNSETJUMP;
@@ -247,6 +272,10 @@ _try_nmg_facetize(struct _ged_facetize_state *s, struct bu_list *vlfree, int arg
 	    BU_PUT(log_s->nmg_log, struct _ged_facetize_logging_state);
 	    BU_PUT(log_s, struct _ged_facetize_logging_state);
 	    s->log_s = NULL;
+	    if (s->facetize_tree) {
+		db_free_tree(s->facetize_tree);
+		s->facetize_tree = NULL;
+	    }
 	    return NULL;
 	} BU_UNSETJUMP;
 
@@ -259,8 +288,13 @@ _try_nmg_facetize(struct _ged_facetize_state *s, struct bu_list *vlfree, int arg
 	facetize_tree->tr_d.td_r = (struct nmgregion *)NULL;
     }
 
+    if (failed && s->tolerate_failures) {
+	facetize_tolerated_failure(s, "NMG boolean evaluation failed after leaf tessellation; no partial NMG result could be generated for this tree");
+    }
+
     if (facetize_tree) {
-	db_free_tree(facetize_tree, &rt_uniresource);
+	db_free_tree(facetize_tree);
+	s->facetize_tree = NULL;
     }
 
     _facetize_log_default(s);
@@ -295,7 +329,7 @@ _write_nmg(struct _ged_facetize_state *s, struct model *nmg_model, const char *n
 	return BRLCAD_ERROR;
     }
 
-    if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(dp, dbip, &intern) < 0) {
 	if (s->verbosity > 0) {
 	    bu_log("Failed to write %s to database\n", name);
 	}
@@ -328,7 +362,7 @@ _write_bot(struct _ged_facetize_state *s, struct rt_bot_internal *bot, const cha
 	return BRLCAD_ERROR;
     }
 
-    if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(dp, dbip, &intern) < 0) {
 	if (s->verbosity > 0) {
 	    bu_log("Failed to write %s to database\n", name);
 	}
@@ -394,4 +428,3 @@ ged_nmg_obj_memfree:
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

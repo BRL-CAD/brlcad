@@ -1,7 +1,7 @@
 /*                         L I S T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -113,13 +113,12 @@ ged_list_core(struct ged *gedp, int argc, const char *argv[])
 	    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 	    ts = wdbp->wdb_initial_tree_state;     /* struct copy */
 	    ts.ts_dbip = gedp->dbip;
-	    ts.ts_resp = &rt_uniresource;
 	    MAT_IDN(ts.ts_mat);
 
 	    if (db_follow_path_for_state(&ts, &path, argv[arg], 1))
 		continue;
 
-	    if ((id = rt_db_get_internal(&intern, dp, gedp->dbip, ts.ts_mat, &rt_uniresource)) < 0) {
+	    if ((id = rt_db_get_internal(&intern, dp, gedp->dbip, ts.ts_mat)) < 0) {
 		bu_vls_printf(gedp->ged_result_str, "rt_db_get_internal(%s) failure", dp->d_namep);
 		continue;
 	    }
@@ -146,24 +145,14 @@ ged_list_core(struct ged *gedp, int argc, const char *argv[])
     return BRLCAD_OK;
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl list_cmd_impl = {"list", ged_list_core, GED_CMD_DEFAULT};
-const struct ged_cmd list_cmd = { &list_cmd_impl };
 
-struct ged_cmd_impl l_cmd_impl = {"l", ged_list_core, GED_CMD_DEFAULT};
-const struct ged_cmd l_cmd = { &l_cmd_impl };
+#define GED_LIST_COMMANDS(X, XID) \
+    X(list, ged_list_core, GED_CMD_DEFAULT) \
+    X(l, ged_list_core, GED_CMD_DEFAULT) \
 
-const struct ged_cmd *list_cmds[] = { &list_cmd, &l_cmd, NULL };
-
-static const struct ged_plugin pinfo = { GED_API,  list_cmds, 2 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_LIST_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_list", 1, GED_LIST_COMMANDS)
 
 /*
  * Local Variables:

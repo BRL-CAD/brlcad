@@ -1,7 +1,7 @@
 /*                       F I T N E S S . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2025 United States Government as represented by
+ * Copyright (c) 2007-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -358,13 +358,13 @@ fit_rt(char *obj, struct db_i *db, struct fitness_state *fstate)
      struct directory *dp
      struct rt_db_internal in;
      int n_leaves;
-     if (!rt_db_lookup_internal(db, obj, &dp, &in, LOOKUP_NOISY, &rt_uniresource))
+     if (!rt_db_lookup_internal(db, obj, &dp, &in, LOOKUP_NOISY))
      bu_exit(EXIT_FAILURE, "Failed to read object to raytrace");
      n_leaves = db_count_tree_nodes(((struct rt_comb_internal *)in.idb_ptr)->tree, 0);
      rt_db_free_internal(&in);
     */
 
-    fstate->rtip = rt_new_rti(db);
+    fstate->rtip = rt_i_create(db);
     fstate->row = 0;
 
     if (rt_gettree(fstate->rtip, obj) < 0)
@@ -455,7 +455,7 @@ fit_rt(char *obj, struct db_i *db, struct fitness_state *fstate)
       for (i = 0; i < fstate->max_cpus; i++)
       rt_clean_resource(fstate->rtip, &fstate->resource[i]);
     */
-    rt_free_rti(fstate->rtip);
+    rt_i_destroy(fstate->rtip);
 
 
 }

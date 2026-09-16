@@ -1,7 +1,7 @@
 /*                           E B M . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2025 United States Government as represented by
+ * Copyright (c) 1988-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -45,7 +45,6 @@
 #include "../fixpt.h"
 #include "../../librt_private.h"
 
-
 struct rt_ebm_specific {
     struct rt_ebm_internal ebm_i;
     vect_t ebm_xnorm;	/* local +X norm in model coords */
@@ -62,7 +61,7 @@ struct rt_ebm_specific {
 
 #define RT_EBM_O(m) bu_offsetof(struct rt_ebm_internal, m)
 
-const struct bu_structparse rt_ebm_parse[] = {
+EXTERNCPP const struct bu_structparse rt_ebm_parse[] = {
     {"%s",	RT_EBM_NAME_LEN, "file", bu_offsetof(struct rt_ebm_internal, name), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%s",	RT_EBM_NAME_LEN, "name", bu_offsetof(struct rt_ebm_internal, name), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%c",	1, "src",	RT_EBM_O(datasrc),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -194,7 +193,7 @@ clt_ebm_pack(struct bu_pool *pool, struct soltab *stp)
 /**
  * Computes centroid of an extruded bitmap
  */
-void
+C_DECL void
 rt_ebm_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
     struct rt_ebm_internal *eip;
@@ -599,6 +598,10 @@ get_file_data(struct rt_ebm_internal *eip, const struct db_i *dbip)
     struct bu_mapped_file *mp;
     int nbytes;
 
+    /* bu_open_mapped_file_with_path doesn't handle a NULL filepath gracefully - check */
+    if (!dbip || !dbip->dbi_filepath || !eip)
+	return -1;
+
     /* get file */
     mp = bu_open_mapped_file_with_path(dbip->dbi_filepath, eip->name, "ebm");
     if (!mp) {
@@ -642,10 +645,10 @@ get_file_data(struct rt_ebm_internal *eip, const struct db_i *dbip)
     return 0;
 }
 
-
+__BEGIN_DECLS
 extern int rt_retrieve_binunif(struct rt_db_internal *intern, const struct db_i *dbip, const char *name);
 extern int rt_binunif_describe(struct bu_vls  *str, const struct rt_db_internal *ip, int verbose, double mm2local);
-
+__END_DECLS
 
 /**
  * Retrieve data for EBM from a database object.
@@ -744,7 +747,7 @@ get_obj_data(struct rt_ebm_internal *eip, const struct db_i *dbip)
 static int
 ebm_get_data(struct rt_ebm_internal *eip, const struct db_i *dbip)
 {
-    char *p;
+    const char *p;
 
     p = eip->name;
 
@@ -795,7 +798,7 @@ ebm_get_data(struct rt_ebm_internal *eip, const struct db_i *dbip)
  * service to the application, read in the bitmap and set up some of
  * the associated internal variables.
  */
-int
+C_DECL int
 rt_ebm_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     union record *rp;
@@ -901,7 +904,7 @@ rt_ebm_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 /**
  * The name will be added by the caller.
  */
-int
+C_DECL int
 rt_ebm_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_ebm_internal *eip;
@@ -936,7 +939,7 @@ rt_ebm_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 }
 
 
-int
+C_DECL int
 rt_ebm_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
 {
     if (!rop || !ip || !mat)
@@ -960,7 +963,7 @@ rt_ebm_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
  * service to the application, read in the bitmap and set up some of
  * the associated internal variables.
  */
-int
+C_DECL int
 rt_ebm_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     register struct rt_ebm_internal *eip;
@@ -1020,7 +1023,7 @@ rt_ebm_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 /**
  * The name will be added by the caller.
  */
-int
+C_DECL int
 rt_ebm_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_ebm_internal *eip;
@@ -1057,7 +1060,7 @@ rt_ebm_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
  */
-int
+C_DECL int
 rt_ebm_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
     register struct rt_ebm_internal *eip =
@@ -1094,7 +1097,7 @@ rt_ebm_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
-void
+C_DECL void
 rt_ebm_ifree(struct rt_db_internal *ip)
 {
     register struct rt_ebm_internal *eip;
@@ -1117,7 +1120,7 @@ rt_ebm_ifree(struct rt_db_internal *ip)
 /**
  * Calculate bounding RPP for ebm
  */
-int
+C_DECL int
 rt_ebm_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol))
 {
     register struct rt_ebm_internal *eip;
@@ -1144,7 +1147,7 @@ rt_ebm_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
  * A struct rt_ebm_specific is created, and its address is stored
  * in stp->st_specific for use by rt_ebm_shot().
  */
-int
+C_DECL int
 rt_ebm_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_ebm_internal *eip;
@@ -1197,7 +1200,7 @@ rt_ebm_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-void
+C_DECL void
 rt_ebm_print(register const struct soltab *stp)
 {
     register const struct rt_ebm_specific *ebmp =
@@ -1220,7 +1223,7 @@ rt_ebm_print(register const struct soltab *stp)
  * 0 MISS
  * >0 HIT
  */
-int
+C_DECL int
 rt_ebm_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
     register struct rt_ebm_specific *ebmp =
@@ -1247,11 +1250,21 @@ rt_ebm_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 
 
 /**
+ * Baseline flat-array vshot: delegates to the scalar shot via rt_vshot_via_shot().
+ */
+C_DECL void
+rt_ebm_vshot(struct soltab *stp[], struct xray *rp[], struct seg *segp, int n, struct application *ap)
+{
+    rt_vshot_via_shot(rt_ebm_shot, stp, rp, segp, n, ap);
+}
+
+
+/**
  * Given one ray distance, return the normal and entry/exit point.
  * This is mostly a matter of translating the stored code into the
  * proper normal.
  */
-void
+C_DECL void
 rt_ebm_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
 {
     register struct rt_ebm_specific *ebmp =
@@ -1293,7 +1306,7 @@ rt_ebm_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 /**
  * Everything has sharp edges.  This makes things easy.
  */
-void
+C_DECL void
 rt_ebm_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
 {
     struct rt_ebm_specific *ebmp = (struct rt_ebm_specific *)stp->st_specific;
@@ -1308,7 +1321,7 @@ rt_ebm_curve(register struct curvature *cvp, register struct hit *hitp, struct s
  * Map the hit point in 2-D into the range 0..1 untransformed X
  * becomes U, and Y becomes V.
  */
-void
+C_DECL void
 rt_ebm_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
 {
     if (ap) RT_CK_APPLICATION(ap);
@@ -1323,7 +1336,7 @@ rt_ebm_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 }
 
 
-void
+C_DECL void
 rt_ebm_free(struct soltab *stp)
 {
     register struct rt_ebm_specific *ebmp =
@@ -1363,7 +1376,7 @@ rt_ebm_plate(int x_1, int y_1, int x_2, int y_2, double t, register fastf_t *mat
 }
 
 
-int
+C_DECL int
 rt_ebm_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     register struct rt_ebm_internal *eip;
@@ -1595,7 +1608,7 @@ rt_ebm_sort_edges(struct ebm_edge *edges)
 }
 
 
-int
+C_DECL int
 rt_ebm_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *tol)
 {
     struct rt_ebm_internal *eip;
@@ -1804,7 +1817,7 @@ fail:
  *
  * no parameters requested returns all
  */
-int
+C_DECL int
 rt_ebm_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr)
 {
     register struct rt_ebm_internal *ebm=(struct rt_ebm_internal *)intern->idb_ptr;
@@ -1850,7 +1863,7 @@ rt_ebm_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
  * "H" - height of each cell (mm)
  * "M" - matrix to transform EBM solid into model coordinates
  */
-int
+C_DECL int
 rt_ebm_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)
 {
     struct rt_ebm_internal *ebm;
@@ -1902,7 +1915,7 @@ rt_ebm_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 }
 
 
-int
+C_DECL int
 rt_ebm_form(struct bu_vls *logstr, const struct rt_functab *ftp)
 {
     RT_CK_FUNCTAB(ftp);
@@ -1918,8 +1931,8 @@ rt_ebm_form(struct bu_vls *logstr, const struct rt_functab *ftp)
  * Routine to make a new EBM solid. The only purpose of this routine
  * is to initialize the matrix and height to legal values.
  */
-void
-rt_ebm_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
+C_DECL int
+rt_ebm_make(const struct rt_functab *ftp, struct rt_db_internal *intern, const char *UNUSED(variant), const point_t UNUSED(origin), double UNUSED(scale))
 {
     struct rt_ebm_internal *ebm;
 
@@ -1936,10 +1949,11 @@ rt_ebm_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
     ebm->datasrc = RT_EBM_SRC_FILE;
 
     ebm->tallness = 1.0;
+    return BRLCAD_OK;
 }
 
 
-int
+C_DECL int
 rt_ebm_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 {
     if (!ps) return 0;
@@ -1957,11 +1971,11 @@ rt_ebm_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
  * then calculates the area of the top and bottom faces, then any other
  * necessary faces.
  */
-void
+C_DECL void
 rt_ebm_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     struct rt_ebm_internal *eip;
-    unsigned int x, y;
+    size_t x, y;
     point_t x0, x1, x2, x3, x4, x5, x6, x7;
     point_t _x0, _x1, _x2, _x3, _x4, _x5, _x6, _x7;
     vect_t d3_0, d2_1, d7_4, d6_5;
@@ -2044,7 +2058,7 @@ rt_ebm_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 }
 
 
-const char *
+C_DECL const char *
 rt_ebm_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     if (!pt || !ip)

@@ -1,7 +1,7 @@
 /*                        V I E W . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -67,7 +67,7 @@ struct ged_bv_data {
 
 /* defined in display_list.c */
 GED_EXPORT void dl_set_iflag(struct bu_list *hdlp, int iflag);
-GED_EXPORT extern void dl_color_soltab(struct bu_list *hdlp);
+GED_EXPORT extern void dl_color_soltab(struct bu_list *hdlp, struct db_i *dbip);
 GED_EXPORT extern void dl_erasePathFromDisplay(struct ged *gedp, const char *path, int allow_split);
 GED_EXPORT extern struct display_list *dl_addToDisplay(struct bu_list *hdlp, struct db_i *dbip, const char *name);
 
@@ -213,7 +213,6 @@ struct draw_update_data_t {
     const struct bn_tol *tol;
     const struct bg_tess_tol *ttol;
     struct bv_mesh_lod_context *mesh_c;
-    struct resource *res;
 };
 
 GED_EXPORT extern unsigned long long dl_name_hash(struct ged *gedp);

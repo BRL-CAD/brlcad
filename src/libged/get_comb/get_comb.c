@@ -1,7 +1,7 @@
 /*                         G E T _ C O M B . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -95,7 +95,7 @@ ged_get_comb_core(struct ged *gedp, int argc, const char *argv[])
 	    return BRLCAD_ERROR;
 	}
 
-	if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+	if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "Database read error, aborting\n");
 	    return BRLCAD_ERROR;
 	}
@@ -103,7 +103,7 @@ ged_get_comb_core(struct ged *gedp, int argc, const char *argv[])
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 
 	if (comb->tree && db_ck_v4gift_tree(comb->tree) < 0) {
-	    db_non_union_push(comb->tree, &rt_uniresource);
+	    db_non_union_push(comb->tree);
 	    if (db_ck_v4gift_tree(comb->tree) < 0) {
 		bu_vls_printf(gedp->ged_result_str, "Cannot flatten tree for editing\n");
 		return BRLCAD_ERROR;
@@ -117,9 +117,7 @@ ged_get_comb_core(struct ged *gedp, int argc, const char *argv[])
 							      "tree list");
 	    actual_count = (struct rt_tree_array *)db_flatten_tree(rt_tree_array,
 								   comb->tree,
-								   OP_UNION,
-								   1,
-								   &rt_uniresource) - rt_tree_array;
+								   OP_UNION, 1) - rt_tree_array;
 	    BU_ASSERT(actual_count == node_count);
 	    comb->tree = TREE_NULL;
 	} else {
@@ -164,7 +162,7 @@ ged_get_comb_core(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(gedp->ged_result_str, " %c %s\t", op, rt_tree_array[i].tl_tree->tr_l.tl_name);
 	    get_comb_print_matrix(gedp->ged_result_str, rt_tree_array[i].tl_tree->tr_l.tl_mat);
 	    bu_vls_printf(gedp->ged_result_str, "\n");
-	    db_free_tree(rt_tree_array[i].tl_tree, &rt_uniresource);
+	    db_free_tree(rt_tree_array[i].tl_tree);
 	}
 
 	bu_vls_printf(gedp->ged_result_str, "}");
@@ -189,25 +187,13 @@ ged_get_comb_core(struct ged *gedp, int argc, const char *argv[])
     return BRLCAD_OK;
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl get_comb_cmd_impl = {
-    "get_comb",
-    ged_get_comb_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd get_comb_cmd = { &get_comb_cmd_impl };
-const struct ged_cmd *get_comb_cmds[] = { &get_comb_cmd, NULL };
+#define GED_GET_COMB_COMMANDS(X, XID) \
+    X(get_comb, ged_get_comb_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  get_comb_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_GET_COMB_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_get_comb", 1, GED_GET_COMB_COMMANDS)
 
 /*
  * Local Variables:

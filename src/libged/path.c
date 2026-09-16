@@ -1,7 +1,7 @@
 /*                         P A T H . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -47,7 +47,7 @@ path_validate_recurse(struct ged *gedp, struct db_full_path *path,
 
     /* get comb object */
     if (rt_db_get_internal(&intern, root, gedp->dbip,
-			   (fastf_t *)NULL, &rt_uniresource) < 0) {
+			   (fastf_t *)NULL) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
 	return BRLCAD_ERROR;
     }

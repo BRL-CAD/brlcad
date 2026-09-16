@@ -1,0 +1,47 @@
+= SHOWMATS(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+showmats - Lists the transformation matrices encountered along the specified path and also lists the accumulated matrix at the end of the _path_.
+
+== SYNOPSIS
+
+[source]
+----
+showmats [-a] {path}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Lists the transformation matrices encountered along the specified path and also lists the accumulated matrix at the end of the _path_. If any member occurs more than once in a combination along the path, then a matrix will be listed for each occurrence of that member, and the accumulated matrix will only use the first occurrence. The _-a_ option can be used to return the accumulated matrix as a space delineated list with 6 significant digits (as opposed to the default 3). Related commands are *putmat*, *copymat*, and *listeval*.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *showmats* command to list the transformation matrices along the specified path and the accumulated matrix for the entire path.
+
+.List the transformation matrices along a path and the accumulated matrix for the path.
+[example]
+====
+mged>**showmats head/skull/jaw**
+
+Lists the transformation matrices along the path head/skull/jaw and the accumulated matrix for the entire path.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

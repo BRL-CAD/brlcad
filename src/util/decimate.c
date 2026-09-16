@@ -1,7 +1,7 @@
 /*                      D E C I M A T E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2025 United States Government as represented by
+ * Copyright (c) 2004-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -36,12 +36,15 @@
 
 #include "bio.h" /* for setmode */
 
+#include <errno.h>
 #include <stdlib.h>
+#include <stdint.h> /* for SIZE_MAX */
 #include <limits.h> /* for INT_MAX */
 
 #include "bu/app.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
+#include "bu/opt.h"
 
 static char usage[] = "\
 Usage: decimate nbytes/pixel width height [outwidth outheight]\n\
@@ -76,17 +79,21 @@ main(int argc, char **argv)
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
 
-    if (argc < 4) {
+    if (argc != 4 && argc != 6) {
 	bu_exit (1, "%s", usage);
     }
 
-    nbytes = atoi(argv[1]);
-    iwidth = atoi(argv[2]);
-    iheight = atoi(argv[3]);
+    if (!bu_opt_scan_size_t_range(argv[1], &nbytes, 1, SIZE_MAX, "bytes per pixel") ||
+	!bu_opt_scan_size_t_range(argv[2], &iwidth, 1, SIZE_MAX, "input width") ||
+	!bu_opt_scan_size_t_range(argv[3], &iheight, 1, SIZE_MAX, "input height")) {
+	bu_exit(EXIT_FAILURE, "%s", usage);
+    }
 
     if (argc >= 6) {
-	owidth = atoi(argv[4]);
-	oheight = atoi(argv[5]);
+	if (!bu_opt_scan_size_t_range(argv[4], &owidth, 1, SIZE_MAX, "output width") ||
+	    !bu_opt_scan_size_t_range(argv[5], &oheight, 1, SIZE_MAX, "output height")) {
+	    bu_exit(EXIT_FAILURE, "%s", usage);
+	}
     }
 
     if (nbytes <= 0 || nbytes > INT_MAX) {

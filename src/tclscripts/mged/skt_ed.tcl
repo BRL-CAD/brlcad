@@ -1,7 +1,7 @@
 #                      S K T _ E D . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2025 United States Government as represented by
+# Copyright (c) 2004-2026 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -170,8 +170,8 @@ class Sketch_editor {
 		return
 	    }
 	    if { [lindex $sketch_info 0] != "sketch" } {
-		tk_messageBox -icon error -type ok -title "$name is not a sketch" \
-		    -message "$name is not a sketch"
+		tk_messageBox -icon error -type ok -title "$sketch_name is not a sketch" \
+		    -message "$sketch_name is not a sketch"
 		destroy $itk_component(hull)
 		return
 	    }
@@ -189,8 +189,8 @@ class Sketch_editor {
 		return
 	    }
 	    if { [lindex $sketch_info 0] != "sketch" } {
-		tk_messageBox -icon error -type ok -title "$name is not a sketch" \
-		    -message "$name is not a sketch"
+		tk_messageBox -icon error -type ok -title "$sketch_name is not a sketch" \
+		    -message "$sketch_name is not a sketch"
 		destroy $itk_component(hull)
 		return
 	    }
@@ -735,7 +735,8 @@ class Sketch_editor {
 	    return
 	}
 	if { [lindex $sketch_info 0] != "sketch" } {
-	    tk_messageBox -icon error -type ok -title "$name is not a sketch" -message "$name is not a sketch"
+	    tk_messageBox -icon error -type ok -title "$sketch_name is not a sketch" \
+		-message "$sketch_name is not a sketch"
 	    destroy $itk_component(hull)
 	    return
 	}

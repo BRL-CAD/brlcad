@@ -1,4 +1,4 @@
-# Copyright (c) 2010-2025 United States Government as represented by
+# Copyright (c) 2010-2026 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -51,10 +51,10 @@ if(COMPILER_SUPPORTS_CXX17)
   add_executable(inactvhdrs inactvhdrs.cpp)
   target_compile_features(inactvhdrs PRIVATE cxx_std_17)
   check_cxx_compiler_flag(-O3 O3_COMPILER_FLAG)
-  if(O3_COMPILER_FLAG)
+  if(BRLCAD_OPTIMIZED AND O3_COMPILER_FLAG)
     # If we have the O3 flag, use it
     target_compile_options(inactvhdrs PRIVATE "-O3")
-  endif(O3_COMPILER_FLAG)
+  endif()
 endif(COMPILER_SUPPORTS_CXX17)
 
 if(COMMAND CMAKEFILES)

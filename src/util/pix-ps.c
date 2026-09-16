@@ -1,7 +1,7 @@
 /*                        P I X - P S . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2025 United States Government as represented by
+ * Copyright (c) 1986-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -25,12 +25,15 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h> /* for atof() */
 #include <math.h>
 #include <time.h> /* for ctime() */
 #include "bio.h"
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/exit.h"
 
 
@@ -58,6 +61,22 @@ static char usage[] = "\
 Usage: pix-ps [-e] [-c|-l] [-L]\n\
 	[-s input_squaresize] [-w input_width] [-n input_height]\n\
 	[-S inches_square] [-W inches_width] [-N inches_height] [<] input.pix > output.ps\n";
+
+static int
+parse_positive_double_arg(const char *arg, double *value, const char *label)
+{
+    double _d;
+
+    if (!bu_opt_scan_double(arg, &_d, label))
+	return 0;
+    if (_d <= 0.0) {
+	bu_log("%s: %s must be positive '%s'\n", bu_getprogname(), label, arg);
+	return 0;
+    }
+
+    *value = _d;
+    return 1;
+}
 
 void
 prolog(FILE *fp, char *name, size_t w, size_t h)
@@ -154,23 +173,31 @@ get_args(int argc, char **argv)
 		break;
 	    case 's':
 		/* square file size */
-		height = width = atoi(bu_optarg);
+		if (!bu_opt_scan_size_t_range(bu_optarg, &width, 1, SIZE_MAX, "input size"))
+		    return 0;
+		height = width;
 		break;
 	    case 'w':
-		width = atoi(bu_optarg);
+		if (!bu_opt_scan_size_t_range(bu_optarg, &width, 1, SIZE_MAX, "input width"))
+		    return 0;
 		break;
 	    case 'n':
-		height = atoi(bu_optarg);
+		if (!bu_opt_scan_size_t_range(bu_optarg, &height, 1, SIZE_MAX, "input height"))
+		    return 0;
 		break;
 	    case 'S':
 		/* square file size */
-		outheight = outwidth = atof(bu_optarg);
+		if (!parse_positive_double_arg(bu_optarg, &outwidth, "output size"))
+		    return 0;
+		outheight = outwidth;
 		break;
 	    case 'W':
-		outwidth = atof(bu_optarg);
+		if (!parse_positive_double_arg(bu_optarg, &outwidth, "output width"))
+		    return 0;
 		break;
 	    case 'N':
-		outheight = atof(bu_optarg);
+		if (!parse_positive_double_arg(bu_optarg, &outheight, "output height"))
+		    return 0;
 		break;
 
 	    default:		/* 'h' '?' */
@@ -185,6 +212,11 @@ get_args(int argc, char **argv)
 	infp = stdin;
     } else {
 	file_name = argv[bu_optind];
+	bu_optind++;
+	if (argc > bu_optind) {
+	    fprintf(stderr, "pix-ps: excess argument(s) not supported\n");
+	    return 0;
+	}
 	if ((infp = fopen(file_name, "rb")) == NULL) {
 	    fprintf(stderr,
 		    "pix-ps: cannot open \"%s\" for reading\n",
@@ -194,8 +226,10 @@ get_args(int argc, char **argv)
 	/*fileinput++;*/
     }
 
-    if (argc > ++bu_optind)
-	fprintf(stderr, "pix-ps: excess argument(s) ignored\n");
+    if (argc > bu_optind) {
+	fprintf(stderr, "pix-ps: excess argument(s) not supported\n");
+	return 0;
+    }
 
     return 1;		/* OK */
 }

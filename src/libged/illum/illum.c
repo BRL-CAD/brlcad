@@ -1,7 +1,7 @@
 /*                         I L L U M . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -87,7 +87,6 @@ ged_labelvert_core(struct ged *gedp, int argc, const char *argv[])
 	dm_set_dirty(dmp, 1);
     return BRLCAD_OK;
 }
-
 
 
 static int
@@ -180,35 +179,14 @@ bad:
     return BRLCAD_ERROR;
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl illum_cmd_impl = {
-    "illum",
-    ged_illum_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd illum_cmd = { &illum_cmd_impl };
+#define GED_ILLUM_COMMANDS(X, XID) \
+    X(illum, ged_illum_core, GED_CMD_DEFAULT) \
+    X(labelvert, ged_labelvert_core, GED_CMD_DEFAULT) \
 
-struct ged_cmd_impl labelvert_cmd_impl = {
-    "labelvert",
-    ged_labelvert_core,
-    GED_CMD_DEFAULT
-};
-
-const struct ged_cmd labelvert_cmd = { &labelvert_cmd_impl };
-
-
-const struct ged_cmd *illum_cmds[] = { &illum_cmd, &labelvert_cmd, NULL };
-
-static const struct ged_plugin pinfo = { GED_API,  illum_cmds, 2 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_ILLUM_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_illum", 1, GED_ILLUM_COMMANDS)
 
 /*
  * Local Variables:

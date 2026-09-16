@@ -1,7 +1,7 @@
 /*                          V I E W . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2025 United States Government as represented by
+ * Copyright (c) 2007-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -20,7 +20,7 @@
 
 #include "common.h"
 
-#include "bu/time.h"
+#include "bu/datetime.h"
 #include "bu/units.h"
 #include "bu/vls.h"
 #include "bv/defines.h"

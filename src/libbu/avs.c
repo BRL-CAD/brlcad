@@ -1,7 +1,7 @@
 /*                           A V S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2025 United States Government as represented by
+ * Copyright (c) 2004-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -203,6 +203,7 @@ int
 bu_avs_remove(struct bu_attribute_value_set *avsp, const char *name)
 {
     struct bu_attribute_value_pair *app, *epp;
+    int removed = 0;
 
     BU_CK_AVS(avsp);
 
@@ -233,9 +234,10 @@ bu_avs_remove(struct bu_attribute_value_set *avsp, const char *name)
 	/* sanity */
 	epp->name = NULL;
 	epp->value = NULL;
+	removed = 1;
     }
 
-    return 0;
+    return removed ? 0 : -1;
 }
 
 

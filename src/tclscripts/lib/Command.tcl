@@ -1,7 +1,7 @@
 #                     C O M M A N D . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2025 United States Government as represented by
+# Copyright (c) 1998-2026 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -352,7 +352,7 @@
 	return
     }
 
-    if {[$slaveInterp eval info complete [list $cmd]]} {
+    if {[info complete [list $cmd]]} {
 	set result [catch {$slaveInterp eval uplevel \#0 [list $cmd]} msg]
 
 	if {$result != 0} {

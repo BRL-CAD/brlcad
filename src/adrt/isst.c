@@ -1,7 +1,7 @@
 /*                           I S S T  . C
  * BRL-CAD
  *
- * Copyright (c) 2005-2025 United States Government as represented by
+ * Copyright (c) 2005-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,11 +31,10 @@
 #include <GL/gl.h>
 
 #include "tcl.h"
-#include "tk.h"
 
 #include "bu/app.h"
 #include "bu/parallel.h"
-#include "bu/time.h"
+#include "bu/datetime.h"
 #include "dm.h"
 
 #include "rt/tie.h"
@@ -44,6 +43,10 @@
 #include "camera.h"
 #include "raytrace.h"
 #include "tclcad.h"
+
+// Tclcad pulls in OpenNURBS in C++ compilation mode, which defines None, which
+// will conflict with Tk.h's Xlib None if we include tk.h before tclcad.h
+#include "tk.h"
 
 #ifdef HAVE_STRING_H
 #include <string.h>
@@ -116,7 +119,13 @@ resize_isst(struct isst_s *isstp)
     glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-    isstp->texdata = realloc(isstp->texdata, isstp->camera.w * isstp->camera.h * 3);
+    {
+	/* realloc through a temporary so a failure does not leak (and null out)
+	 * the existing buffer. */
+	void *tmp = realloc(isstp->texdata, isstp->camera.w * isstp->camera.h * 3);
+	if (tmp)
+	    isstp->texdata = tmp;
+    }
     glTexImage2D (GL_TEXTURE_2D, 0, GL_RGB, isstp->camera.w, isstp->camera.h, 0, GL_RGB, GL_UNSIGNED_BYTE, isstp->texdata);
     glDisable(GL_LIGHTING);
 
@@ -188,7 +197,6 @@ list_geometry(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_O
 {
     static struct db_i *dbip;
     struct directory *dp;
-    int i;
     struct bu_vls tclstr = BU_VLS_INIT_ZERO;
 
     if (objc < 3) {
@@ -201,13 +209,11 @@ list_geometry(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_O
 	return TCL_ERROR;
     }
     db_dirbuild(dbip);
-    for (i = 0; i < RT_DBNHASH; i++) {
-	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-	    if (dp->d_flags & RT_DIR_HIDDEN) continue;
-	    bu_vls_sprintf(&tclstr, "set %s [concat $%s [list %s]]", Tcl_GetString(objv[2]), Tcl_GetString(objv[2]), dp->d_namep);
-	    Tcl_Eval(interp, bu_vls_addr(&tclstr));
-	}
-    }
+    FOR_ALL_DIRECTORY_START(dp, dbip)
+	if (dp->d_flags & RT_DIR_HIDDEN) continue;
+	bu_vls_sprintf(&tclstr, "set %s [concat $%s [list %s]]", Tcl_GetString(objv[2]), Tcl_GetString(objv[2]), dp->d_namep);
+	Tcl_Eval(interp, bu_vls_addr(&tclstr));
+    FOR_ALL_DIRECTORY_END;
     db_close(dbip);
     bu_vls_free(&tclstr);
     return TCL_OK;
@@ -276,6 +282,7 @@ set_resolution(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_
     }
 
     CLAMP(resolution, 1, 20);
+    /* gs is the render grid size; 0 means render at full window resolution */
     if (resolution == 20)
 	isst->gs = 0;
     else
@@ -319,6 +326,13 @@ isst_zap(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj *c
 	return TCL_ERROR;
     }
 
+    /* Release the buffers owned directly by the workspace before the struct
+     * itself.  (The tie and mesh list have a more involved lifecycle and are
+     * left for a dedicated teardown.) */
+    TIENET_BUFFER_FREE(isst->buffer_image);
+    if (isst->texdata)
+	free(isst->texdata);
+
     bu_free(isst, "isst free");
     isst = NULL;
 
@@ -340,7 +354,7 @@ render_mode(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj
     if (objc == 4)
 	buf = Tcl_GetString(objv[3]);
 
-    /* pack the 'rest' into buf - probably should use a vls for this*/
+    /* pack the 'rest' into buf - probably should use a vls for this */
     if ( strlen(mode) == 3 && bu_strncmp("cut", mode, 3) == 0 ) {
 	struct adrt_mesh_s *mesh;
 
@@ -377,11 +391,15 @@ zero_view(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(
 
 
 static int
-move_walk(ClientData UNUSED(clientData), Tcl_Interp *interp, int UNUSED(objc), Tcl_Obj *const *objv)
+move_walk(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj *const *objv)
 {
     vect_t vec;
     int flag;
 
+    if (objc < 3) {
+	Tcl_WrongNumArgs(interp, 1, objv, "pathName flag");
+	return TCL_ERROR;
+    }
     if (Tcl_GetIntFromObj(interp, objv[2], &flag) != TCL_OK)
 	return TCL_ERROR;
 
@@ -401,12 +419,16 @@ move_walk(ClientData UNUSED(clientData), Tcl_Interp *interp, int UNUSED(objc), T
 }
 
 static int
-move_strafe(ClientData UNUSED(clientData), Tcl_Interp *interp, int UNUSED(objc), Tcl_Obj *const *objv)
+move_strafe(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj *const *objv)
 {
     vect_t vec, dir, up;
 
     int flag;
 
+    if (objc < 3) {
+	Tcl_WrongNumArgs(interp, 1, objv, "pathName flag");
+	return TCL_ERROR;
+    }
     if (Tcl_GetIntFromObj(interp, objv[2], &flag) != TCL_OK)
 	return TCL_ERROR;
 
@@ -529,10 +551,14 @@ aerotate(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj *c
 	VSCALE(vecdfoc, vecdfoc, mag_focus);
 	VADD2(isst->camera.focus, isst->camera_focus_init, vecdfoc);
     }
-    /* Update the tcl copies of the az/el vars */
+    /* Update the tcl copies of the az/el vars.  Store them in the same units
+     * as isst_load_g (radians via -DEG2RAD); previously aerotate wrote the raw
+     * degrees from bn_ae_vec, leaving the Tcl vars inconsistent after a drag. */
     VSUB2(vec, isst->camera.focus, isst->camera.pos);
     VUNITIZE(vec);
     bn_ae_vec(&az, &el, vec);
+    az = az * -DEG2RAD;
+    el = el * -DEG2RAD;
     bu_vls_sprintf(&tclstr, "%f", az);
     Tcl_SetVar(interp, "az", bu_vls_addr(&tclstr), 0);
     bu_vls_sprintf(&tclstr, "%f", el);
@@ -545,12 +571,12 @@ aerotate(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj *c
 static int
 open_dm(ClientData UNUSED(cdata), Tcl_Interp *interp, int UNUSED(objc), Tcl_Obj *const *UNUSED(objv))
 {
-    char *av[] = { "Ogl_open", "-t", "0", "-n", ".w0", "-W", "800", "-N", "600", NULL };
+    const char *av[] = { "Ogl_open", "-t", "0", "-n", ".w0", "-W", "800", "-N", "600", NULL };
 
     dmp = dm_open(NULL, (void *)interp, dm_default_type(), sizeof(av)/sizeof(void*)-1, (const char **)av);
 
     if (dmp == DM_NULL) {
-	printf("dm failed?\n");
+	printf("Failed to open display manager\n");
 	return TCL_ERROR;
     }
 
@@ -628,7 +654,7 @@ const char *fullname;
     argv = __argv;
 #endif
 
-    /* initialize progname for run-tim resource finding */
+    /* initialize progname for run-time resource finding */
     bu_setprogname(argv[0]);
 
 #ifdef HAVE_WINDOWS_H

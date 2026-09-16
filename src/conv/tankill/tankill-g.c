@@ -1,7 +1,7 @@
 /*                     T A N K I L L - G . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2025 United States Government as represented by
+ * Copyright (c) 1993-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -151,7 +151,7 @@ main(int argc, char **argv)
     struct comp_idents *ptr;
     char name[NAMESIZE+1];
     char input_file[START_ARRAY_SIZE] = {0};				/* input file name */
-    char *output_file = "tankill.g";
+    const char *output_file = "tankill.g";
     FILE *in_fp;					/* input file pointer */
     struct rt_wdb *out_fp;				/* output file pointer */
     int polysolids;					/* flag indicating polysolid output */

@@ -1,0 +1,116 @@
+= PIXBLEND(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+pixblend - blend two pix(5) or bw(5) images
+
+== SYNOPSIS
+
+[source]
+----
+pixblend [-r value | -i value] [-s seed] [-S] [-g gvalue] file1.pix file2.pix > out.pix
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*pixblend* reads two streams of data, typically *pix*(5) or *bw*(5)
+images, and writes a blended output stream of the same size. It
+operates pixel-by-pixel and is therefore independent of image
+resolution. Either input file may be given as *-* to read from
+standard input. With no *-r* or *-i* option, the default is linear
+interpolation with a value of 0.5 (an even mix of the two images).
+
+
+[[options]]
+== OPTIONS
+
+*-r* _value_::
+  Random blending. For each pixel a number is drawn uniformly from
+  [0, 1]; if it exceeds _value_ the pixel from _file1_ is output,
+  otherwise the pixel from _file2_. A _value_ of 0 yields _file1_ and 1
+  yields _file2_. Mutually exclusive with *-i*.
+
+*-i* _value_::
+  Linear interpolation. Each output pixel is
+  (1.0 - _value_) * pixel1 + _value_ * pixel2. A _value_ of 0 yields
+  _file1_ and 1 yields _file2_. Mutually exclusive with *-r*.
+
+*-s* _seed_::
+  Set the random number seed to _seed_ (default 0). Affects *-r*.
+
+*-S*::
+  Seed the random number generator from the system clock instead of a
+  fixed value.
+
+*-g* _gvalue_::
+  Glitterize. When the random draw for a pixel falls below _gvalue_ the
+  output pixel is set to white; otherwise the pixel is chosen as for
+  *-r*. Cannot be combined with *-i*.
+
+*-h*, *-?*::
+  Print a usage message and exit.
+
+
+[[examples]]
+== EXAMPLES
+
+.Cross-fade two images
+====
+[source,bash]
+----
+pixblend -i 0.25 a.pix b.pix > out.pix
+----
+Produces an image that is 75% _a.pix_ and 25% _b.pix_, useful for
+generating intermediate frames of a dissolve between two renderings.
+====
+
+.Animated dissolve sequence
+====
+[source,bash]
+----
+for f in $(seq 0 9); do
+    pixblend -i 0.$f a.pix b.pix > frame$f.pix
+done
+----
+Generates ten frames stepping the interpolation value from 0.0 to 0.9,
+the basis of a smooth cross-dissolve animation that can be fed to
+*pix-fb*(1) or assembled into a movie.
+====
+
+.Reproducible random speckle blend
+====
+[source,bash]
+----
+pixblend -r 0.5 -s 23 a.pix b.pix > out.pix
+----
+Randomly selects each pixel from one of the two images with an even
+probability, using a fixed seed of 23 so the result is repeatable.
+====
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *gencolor*(1), *pix-fb*(1), *pix*(5), *bw*(5)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1995-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

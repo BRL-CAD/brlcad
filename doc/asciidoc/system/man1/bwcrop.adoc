@@ -1,0 +1,83 @@
+= BWCROP(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+bwcrop - crop black and white bw files
+
+== SYNOPSIS
+
+[source]
+----
+bwcrop in.bw out.bw
+----
+
+
+[source]
+----
+bwcrop in.bw out.bw inwidth outwidth outheight ulx uly urx ury lrx lry llx lly
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*bwcrop* extracts a quadrilateral region from an arbitrarily large *bw*(5) input file (_in.bw_), maps that region to a specified output image size, and writes the result to _out.bw_. 
+
+If only the input and output files are provided, *bwcrop* will prompt the user interactively for the remaining parameters. All responses should be pixel counts or first-quadrant coordinates.
+
+Alternatively, all parameters can be provided on the command line for use in scripts. The coordinate names refer to the input file, in clockwise order starting from the upper-left corner. The nearest input pixel is selected for each output pixel; no interpolation is performed.
+
+If an output dimension is one pixel, *bwcrop* samples the midpoint of the
+quadrilateral along that axis.
+
+[[arguments]]
+== ARGUMENTS
+
+*inwidth*::
+	Width of the input image (scanline length).
+
+*outwidth*, *outheight*::
+	Dimensions of the output image.
+
+*ulx*, *uly*, *urx*, *ury*, *lrx*, *lry*, *llx*, *lly*::
+	Coordinates defining the quadrilateral in the input image to be cropped. These correspond to the upper-left (_ulx_, _uly_), upper-right (_urx_, _ury_), lower-right (_lrx_, _lry_), and lower-left (_llx_, _lly_) corners, respectively.
+
+[[examples]]
+== EXAMPLES
+
+.Cropping a tilted region from a 512x512 image into a 100x100 image
+====
+[source,bash]
+----
+$ bwcrop input.bw output.bw 512 100 100 256 512 512 256 256 0 0 256
+----
+
+This command extracts the diamond-shaped region bounded by (256, 512), (512, 256), (256, 0), and (0, 256) from the 512x512 _input.bw_ image, and outputs it as a 100x100 rectangular image in _output.bw_.
+====
+
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *bwrect*(1), *bwscale*(1), *bw*(5)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

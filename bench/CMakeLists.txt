@@ -3,8 +3,14 @@ add_subdirectory(ref)
 add_definitions(-DCONSOLE)
 
 brlcad_addexec(pixcmp pixcmp.c libbu)
+brlcad_add_test(
+  NAME bench_pixcmp_tolerance
+  COMMAND
+    ${CMAKE_COMMAND} "-DPIXCMP=$<TARGET_FILE:pixcmp>" "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}"
+    -P "${CMAKE_CURRENT_SOURCE_DIR}/pixcmp_test.cmake"
+)
 set(BARK_SOURCES benchmark.c compute.c run.c clean.c)
-brlcad_addexec(bark "${BARK_SOURCES}" libbu NO_STRICT NO_INSTALL TEST_USESDATA)
+brlcad_addexec(bark "${BARK_SOURCES}" "libbu;${M_LIBRARY}" NO_STRICT NO_INSTALL TEST_USESDATA)
 
 if(BUILD_TESTING)
   configure_file(run.sh "${CMAKE_CURRENT_BINARY_DIR}/benchmark" COPYONLY)
@@ -38,6 +44,7 @@ file(
 
 cmakefiles(
   CMakeLists.txt
+  pixcmp_test.cmake
   run.sh
   try.sh
   viewdiff.sh

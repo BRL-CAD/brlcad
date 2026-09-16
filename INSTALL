@@ -39,7 +39,7 @@ including instructions for building on Windows.
 
 Required tools:
   - Git must be 2.17 or later
-  - CMake must be 3.20 or later
+  - CMake must be 3.26 or later
   - Compiler must be C++17-compliant
     - If using Visual Studio, version 2019 (16.8+) or later
     - If using GCC/G++, version 7 or later
@@ -111,8 +111,8 @@ path) as described in the Quick Installation section.
 Validating checksums:
 
 The integrity of distributed files can be verified using checksums that are
-published with released files.  Files on SourceForge's file release system can
-be found by clicking the 'i' button at the end of each file's name.  If you
+published with released files.  Released files and their checksums are
+available from the GitHub releases page (https://github.com/BRL-CAD/brlcad/releases).  If you
 re-distribute BRL-CAD, checksums should be retained with the files so others
 can validate origination.
 
@@ -438,13 +438,10 @@ Aliases:  ENABLE_ALL_CXX
 --- BRLCAD_EXTRADOCS ---
 
 The core option that enables and disables building of BRL-CAD's
-DocBook based documentation (includes manuals and man pages for
-commands, among other things).  Defaults to ON, but only HTML and MAN
-formats are enabled by default - PDF must be enabled separately by use
-of this option or one of its aliases.  Note that you may set
-environment variable APACHE_FOP to point to your locally installed fop
-executable file (which on Linux is usually a shell script with 0755
-permissions).
+AsciiDoc based documentation (includes manuals and man pages for
+commands, among other things).  It is built with BRL-CAD's bundled
+asciiquack processor into HTML and man-page (troff) formats.  Defaults
+to ON for a full build and OFF for reduced target sets.
 
-Aliases:  ENABLE_DOCS, ENABLE_EXTRA_DOCS, ENABLE_DOCBOOK
+Aliases:  ENABLE_DOCS, ENABLE_EXTRA_DOCS
 

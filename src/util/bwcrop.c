@@ -1,7 +1,7 @@
 /*                        B W C R O P . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2025 United States Government as represented by
+ * Copyright (c) 1986-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,6 +33,7 @@
 
 #include "common.h"
 
+#include <errno.h>
 #include <stdlib.h>
 #include <limits.h> /* for INT_MAX */
 #include "vmath.h"
@@ -42,15 +43,18 @@
 #include "bu/app.h"
 #include "bu/file.h"
 #include "bu/malloc.h"
+#include "bu/opt.h"
 #include "bu/exit.h"
 
 
 #define round(x) ((int)(x+0.5))
 #define MAXBUFBYTES BU_PAGE_SIZE*BU_PAGE_SIZE	/* max bytes to malloc in buffer space */
+#define SINGLE_SAMPLE_FRACTION 0.5
 
 unsigned char *buffer;
 ssize_t scanlen;			/* length of infile scanlines */
 ssize_t buflines;		/* Number of lines held in buffer */
+ssize_t bufloaded;		/* Number of valid lines currently in buffer */
 b_off_t buf_start = -1000;	/* First line in buffer */
 
 unsigned long xnum, ynum;	/* Number of pixels in new file */
@@ -62,6 +66,38 @@ static const char usage[] = "\
 Usage: bwcrop in.bw out.bw (I prompt!)\n\
    or  bwcrop in.bw out.bw inwidth outwidth outheight\n\
 	ulx uly urx ury lrx lry llx lly\n";
+
+static int
+parse_positive_ssize_arg(const char *arg, ssize_t *out_value, const char *label)
+{
+    size_t _s;
+    if (!bu_opt_scan_size_t_range(arg, &_s, 1, SIZE_MAX, label))
+	return 0;
+    *out_value = (ssize_t)_s;
+    return 1;
+}
+
+static int
+parse_output_dim_arg(const char *arg, unsigned long *out_value, const char *label)
+{
+    size_t _s;
+    if (!bu_opt_scan_size_t_range(arg, &_s, 1, SIZE_MAX, label))
+	return 0;
+    if (_s > (size_t)(INT_MAX - 1))
+	_s = (size_t)(INT_MAX - 1);
+    *out_value = (unsigned long)_s;
+    return 1;
+}
+
+static int
+parse_float_arg(const char *arg, float *out_value, const char *label)
+{
+    double _d;
+    if (!bu_opt_scan_double(arg, &_d, label))
+	return 0;
+    *out_value = (float)_d;
+    return 1;
+}
 
 /*
  * Determine max number of lines to buffer.
@@ -107,8 +143,12 @@ fill_buffer(int y)
 
     bu_fseek(ifp, buf_start * scanlen, 0);
     ret = fread(buffer, scanlen, buflines, ifp);
-    if (ret == 0)
-	perror("fread");
+    bufloaded = (ssize_t)ret;
+    if (ret == 0) {
+	if (ferror(ifp))
+	    perror("bwcrop fread");
+	bu_exit(5, "bwcrop: input does not contain scanline %d\n", y);
+    }
 }
 
 
@@ -116,16 +156,16 @@ int
 main(int argc, char **argv)
 {
     float bx1, by1, bx2, by2, bx, by;
+    fastf_t row_fraction, col_fraction;
     size_t row, col;
+    ssize_t sample_y;
     ssize_t yindex;
     char value;
     size_t ret;
 
-    int atoival;
-
     bu_setprogname(argv[0]);
 
-    if (argc < 3) {
+    if (argc != 3 && argc != 14) {
 	bu_exit(1, "%s", usage);
     }
     if ((ifp = fopen(argv[1], "rb")) == NULL) {
@@ -136,59 +176,18 @@ main(int argc, char **argv)
     }
 
     if (argc == 14) {
-	if (! argv[3])
-	    return 1;
-        scanlen = atoi(argv[3]);
-
-	if (! argv[4])
-	    return 1;
-	atoival = atoi(argv[4]);
-	if (atoival < 0)
-	    atoival = 0;
-	else if (atoival > INT_MAX-1)
-	    atoival = INT_MAX-1;
-        xnum = atoival;
-
-	if (! argv[5])
-	    return 1;
-	atoival = atoi(argv[5]);
-	if (atoival < 0)
-	    atoival = 0;
-	else if (atoival > INT_MAX-1)
-	    atoival = INT_MAX-1;
-	ynum = atoival;
-
-	if (! argv[6])
-	    return 1;
-	ulx = atoi(argv[6]);
-
-	if (! argv[7])
-	    return 1;
-	uly = atoi(argv[7]);
-
-	if (! argv[8])
-	    return 1;
-	urx = atoi(argv[8]);
-
-	if (! argv[9])
-	    return 1;
-	ury = atoi(argv[9]);
-
-	if (! argv[10])
-	    return 1;
-	lrx = atoi(argv[10]);
-
-	if (! argv[11])
-	    return 1;
-	lry = atoi(argv[11]);
-
-	if (! argv[12])
-	    return 1;
-	llx = atoi(argv[12]);
-
-	if (! argv[13])
-	    return 1;
-	lly = atoi(argv[13]);
+	if (!parse_positive_ssize_arg(argv[3], &scanlen, "input width") ||
+	    !parse_output_dim_arg(argv[4], &xnum, "output width") ||
+	    !parse_output_dim_arg(argv[5], &ynum, "output height") ||
+	    !parse_float_arg(argv[6], &ulx, "upper-left x") ||
+	    !parse_float_arg(argv[7], &uly, "upper-left y") ||
+	    !parse_float_arg(argv[8], &urx, "upper-right x") ||
+	    !parse_float_arg(argv[9], &ury, "upper-right y") ||
+	    !parse_float_arg(argv[10], &lrx, "lower-right x") ||
+	    !parse_float_arg(argv[11], &lry, "lower-right y") ||
+	    !parse_float_arg(argv[12], &llx, "lower-left x") ||
+	    !parse_float_arg(argv[13], &lly, "lower-left y"))
+	    bu_exit(1, "%s", usage);
     } else {
 	double xval, yval;
 	unsigned long len;
@@ -255,25 +254,32 @@ main(int argc, char **argv)
 
     /* Move all points */
     for (row = 0; row < ynum; row++) {
+	row_fraction = (ynum > 1) ? (fastf_t)row / (fastf_t)(ynum - 1) : SINGLE_SAMPLE_FRACTION;
+
 	/* calculate left point of row */
-	bx1 = ((ulx-llx)/(fastf_t)(ynum-1)) * (fastf_t)row + llx;
-	by1 = ((uly-lly)/(fastf_t)(ynum-1)) * (fastf_t)row + lly;
+	bx1 = (ulx - llx) * row_fraction + llx;
+	by1 = (uly - lly) * row_fraction + lly;
 	/* calculate right point of row */
-	bx2 = ((urx-lrx)/(fastf_t)(ynum-1)) * (fastf_t)row + lrx;
-	by2 = ((ury-lry)/(fastf_t)(ynum-1)) * (fastf_t)row + lry;
+	bx2 = (urx - lrx) * row_fraction + lrx;
+	by2 = (ury - lry) * row_fraction + lry;
 
 	for (col = 0; col < xnum; col++) {
+	    col_fraction = (xnum > 1) ? (fastf_t)col / (fastf_t)(xnum - 1) : SINGLE_SAMPLE_FRACTION;
+
 	    /* calculate point along row */
-	    bx = ((bx2-bx1)/(fastf_t)(xnum-1)) * (fastf_t)col + bx1;
-	    by = ((by2-by1)/(fastf_t)(xnum-1)) * (fastf_t)col + by1;
+	    bx = (bx2 - bx1) * col_fraction + bx1;
+	    by = (by2 - by1) * col_fraction + by1;
+
+	    if (round(bx) < 0 || round(bx) >= scanlen || round(by) < 0)
+		bu_exit(5, "bwcrop: sample coordinate (%g, %g) is outside the input image\n", bx, by);
 
 	    /* Make sure we are in the buffer */
-	    yindex = round(by) - buf_start;
-	    if (yindex >= buflines) {
-		fill_buffer(round(by));
-		yindex = round(by) - buf_start;
-	    }
-	    yindex = yindex + buf_start;
+	    sample_y = round(by);
+	    if (sample_y < buf_start || sample_y >= buf_start + bufloaded)
+		fill_buffer(sample_y);
+	    yindex = sample_y - buf_start;
+	    if (yindex >= bufloaded)
+		bu_exit(5, "bwcrop: input does not contain scanline %zd\n", sample_y);
 
 	    value = buffer[ yindex * scanlen + round(bx) ];
 	    ret = fwrite(&value, sizeof(value), 1, ofp);

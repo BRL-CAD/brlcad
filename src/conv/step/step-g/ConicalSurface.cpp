@@ -1,7 +1,7 @@
 /*                 ConicalSurface.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2025 United States Government as represented by
+ * Copyright (c) 1994-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -39,6 +39,9 @@ ConicalSurface::ConicalSurface()
     id = 0;
     radius = 0.0;
     semi_angle = 0.0;
+    curve_axis_bounds_valid = false;
+    curve_axis_minimum = 0.0;
+    curve_axis_maximum = 0.0;
 }
 
 ConicalSurface::ConicalSurface(STEPWrapper *sw, int step_id)
@@ -47,6 +50,9 @@ ConicalSurface::ConicalSurface(STEPWrapper *sw, int step_id)
     id = step_id;
     radius = 0.0;
     semi_angle = 0.0;
+    curve_axis_bounds_valid = false;
+    curve_axis_minimum = 0.0;
+    curve_axis_maximum = 0.0;
 }
 
 ConicalSurface::~ConicalSurface()

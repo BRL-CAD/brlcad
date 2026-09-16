@@ -1,0 +1,81 @@
+= WIRE(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+wire - create a BRL-CAD database of wires or fuel lines
+
+== SYNOPSIS
+
+[source]
+----
+wire
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*wire* creates a BRL-CAD geometry database (*.g*) describing a run of
+solid wires or fuel lines.  It runs strictly interactively, taking no
+command-line options or arguments; if any argument is supplied it prints
+a usage message and exits.
+
+The program prompts for the output database name (default *wire.g* if
+left blank), the number of wire segments (1 to 100), and the coordinates
+of the start and end points together with the radius at each point of
+every segment.  Each segment is built as a truncated general cone (the
+*tgc* primitive) so that the radius may taper from one end to the other,
+and adjacent segments are joined with spheres to round the joints.  The
+resulting solids are collected into regions and unioned into a group
+named *wires*.  All values are interpreted in millimeters.
+
+[[examples]]
+== EXAMPLES
+
+.Build a three-segment wire and raytrace it
+====
+[source,bash]
+----
+wire <<EOF
+hose.g
+3
+0 0 0
+.25
+0 5 -3
+.25
+0 10 -3
+.25
+0 12 -2
+.25
+EOF
+
+rt -o hose.png hose.g wires
+----
+Feeding the interactive prompts from a here-document creates
+*hose.g* containing a three-segment wire of constant 0.25 mm radius whose
+segments are joined by spheres, then renders the resulting *wires* group
+to an image with *rt*(1).  Only the first segment requires a starting
+point; each later segment continues from the previous endpoint.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *mged*(1), *rt*(1), *bolt*(1), *gastank*(1), *handle*(1), *window*(1), *window_frame*(1)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,7 +1,7 @@
 /*                           W D B . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2025 United States Government as represented by
+ * Copyright (c) 2000-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,6 +32,7 @@
 #include "rt/geom.h"
 #include "raytrace.h"
 #include "wdb.h"
+#include "librt_private.h"
 
 
 struct rt_wdb *
@@ -64,21 +65,21 @@ wdb_dbopen(struct db_i *dbip, int mode)
 
     switch(mode) {
 	case RT_WDB_TYPE_DB_DEFAULT:
-	    if (!dbip->dbi_wdbp)
-		return dbip->dbi_wdbp_inmem;
-	    return dbip->dbi_wdbp;
+	    if (!dbip->i->dbi_wdbp)
+		return dbip->i->dbi_wdbp_inmem;
+	    return dbip->i->dbi_wdbp;
 	case RT_WDB_TYPE_DB_DEFAULT_APPEND_ONLY:
-	    if (!dbip->dbi_wdbp_a)
-		return dbip->dbi_wdbp_inmem_a;
-	    return dbip->dbi_wdbp_a;
+	    if (!dbip->i->dbi_wdbp_a)
+		return dbip->i->dbi_wdbp_inmem_a;
+	    return dbip->i->dbi_wdbp_a;
 	case RT_WDB_TYPE_DB_DISK:
-	    return dbip->dbi_wdbp;
+	    return dbip->i->dbi_wdbp;
 	case RT_WDB_TYPE_DB_DISK_APPEND_ONLY:
-	    return dbip->dbi_wdbp_a;
+	    return dbip->i->dbi_wdbp_a;
 	case RT_WDB_TYPE_DB_INMEM:
-	    return dbip->dbi_wdbp_inmem;
+	    return dbip->i->dbi_wdbp_inmem;
 	case RT_WDB_TYPE_DB_INMEM_APPEND_ONLY:
-	    return dbip->dbi_wdbp_inmem_a;
+	    return dbip->i->dbi_wdbp_inmem_a;
 	default:
 	    bu_log("wdb_dbopen(%s) mode %d unknown\n",
 		    dbip->dbi_filename, mode);
@@ -96,7 +97,20 @@ wdb_import(struct rt_wdb *wdbp,	struct rt_db_internal *internp,	const char *name
     if (dp  == RT_DIR_NULL)
 	return -4;
 
-    return rt_db_get_internal(internp, dp, wdbp->dbip, mat, &rt_uniresource);
+    return rt_db_get_internal(internp, dp, wdbp->dbip, mat);
+}
+
+
+static void
+wdb_set_directory_type(struct directory *dp, int version,
+		       unsigned char major_type,
+		       unsigned char minor_type)
+{
+    if (version < 5)
+	return;
+
+    dp->d_major_type = major_type;
+    dp->d_minor_type = minor_type;
 }
 
 
@@ -109,6 +123,8 @@ wdb_export_external(
     unsigned char type)
 {
     struct directory *dp;
+    unsigned char major_type = DB5_MAJORTYPE_BRLCAD;
+    unsigned char minor_type = type;
     int version;
 
     RT_CK_WDB(wdbp);
@@ -119,11 +135,20 @@ wdb_export_external(
     if (version < 5) {
 	db_wrap_v4_external(ep, name);
     } else if (version == 5) {
+	struct db5_raw_internal raw;
+
 	if (db_wrap_v5_external(ep, name) < 0) {
 	    bu_log("wdb_export_external(%s): db_wrap_v5_external error\n",
 		   name);
 	    return -4;
 	}
+	if (db5_get_raw_internal_ptr(&raw, (unsigned char *)ep->ext_buf) == NULL) {
+	    bu_log("wdb_export_external(%s): invalid DB5 external object\n",
+		   name);
+	    return -4;
+	}
+	major_type = raw.major_type;
+	minor_type = raw.minor_type;
     } else {
 	bu_log("wdb_export_external(%s): version %d unsupported\n",
 	       name, version);
@@ -134,14 +159,14 @@ wdb_export_external(
     // what we've been given
     int wdb_type = wdbp->type;
     if (wdb_type == RT_WDB_TYPE_DB_DEFAULT) {
-	if (!wdbp->dbip->dbi_wdbp) {
+	if (!wdbp->dbip->i->dbi_wdbp) {
 	    wdb_type = RT_WDB_TYPE_DB_INMEM;
 	} else {
 	    wdb_type = RT_WDB_TYPE_DB_DISK;
 	}
     }
     if (wdb_type == RT_WDB_TYPE_DB_DEFAULT_APPEND_ONLY) {
-	if (!wdbp->dbip->dbi_wdbp_a) {
+	if (!wdbp->dbip->i->dbi_wdbp_a) {
 	    wdb_type = RT_WDB_TYPE_DB_INMEM_APPEND_ONLY;
 	} else {
 	    wdb_type = RT_WDB_TYPE_DB_DISK_APPEND_ONLY;
@@ -163,6 +188,7 @@ wdb_export_external(
 		    return -3;
 		}
 	    }
+	    wdb_set_directory_type(dp, version, major_type, minor_type);
 	    /* keep the caller's flags, except we don't want to
 	     * pretend a disk dp is an inmem dp.  the data is
 	     * read/written differently for both.
@@ -185,6 +211,7 @@ wdb_export_external(
 		bu_log("wdb_export_external(%s): db_diradd error\n", name);
 		return -3;
 	    }
+	    wdb_set_directory_type(dp, version, major_type, minor_type);
 	    if (db_put_external(ep, dp, wdbp->dbip) < 0) {
 		bu_log("wdb_export_external(%s): db_put_external error\n",
 		       name);
@@ -204,6 +231,7 @@ wdb_export_external(
 		       name);
 		return -3;
 	    }
+	    wdb_set_directory_type(dp, version, major_type, minor_type);
 
 	    db_inmem(dp, ep, flags, wdbp->dbip);
 	    /* ep->buf has been stolen, replaced with null. */
@@ -221,6 +249,7 @@ wdb_export_external(
 	    } else {
 		dp->d_flags = (dp->d_flags & ~7) | flags;
 	    }
+	    wdb_set_directory_type(dp, version, major_type, minor_type);
 
 	    db_inmem(dp, ep, flags, wdbp->dbip);
 	    /* ep->buf has been stolen, replaced with null. */
@@ -250,7 +279,7 @@ wdb_put_internal(
 
 	ret = -1;
 	if (ip->idb_meth && ip->idb_meth->ft_export4) {
-	    ret = ip->idb_meth->ft_export4(&ext, ip, local2mm, wdbp->dbip, &rt_uniresource);
+	    ret = ip->idb_meth->ft_export4(&ext, ip, local2mm, wdbp->dbip);
 	}
 	if (ret < 0) {
 	    bu_log("rt_db_put_internal(%s):  solid export failure\n",
@@ -260,7 +289,7 @@ wdb_put_internal(
 	}
 	db_wrap_v4_external(&ext, name);
     } else {
-	if (rt_db_cvt_to_external5(&ext, name, ip, local2mm, wdbp->dbip, &rt_uniresource, ip->idb_major_type) < 0) {
+	if (rt_db_cvt_to_ext5(&ext, name, ip, local2mm, wdbp->dbip, ip->idb_major_type) < 0) {
 	    bu_log("wdb_export(%s): solid export failure\n",
 		   name);
 	    ret = -2;
@@ -330,7 +359,7 @@ wdb_init(struct rt_wdb *wdbp, struct db_i *dbip, int mode)
     /* default region ident codes */
     wdbp->wdb_item_default = 1000;
     wdbp->wdb_air_default = 0;
-    wdbp->wdb_mat_default = 1;
+    wdbp->wdb_mat_default = 0;
     wdbp->wdb_los_default = 100;
 }
 
@@ -364,7 +393,7 @@ wdb_import_from_path2(struct bu_vls *logstr, struct rt_db_internal *ip, const ch
 	struct directory *dp_curr;
 	int ret;
 
-	db_init_db_tree_state(&ts, dbip, &rt_uniresource);
+	db_init_db_tree_state(&ts, dbip);
 	db_full_path_init(&old_path);
 	db_full_path_init(&new_path);
 

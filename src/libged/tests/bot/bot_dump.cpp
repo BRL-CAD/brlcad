@@ -1,7 +1,7 @@
 /*                     B O T _ D U M P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2018-2025 United States Government as represented by
+ * Copyright (c) 2018-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -46,22 +46,32 @@ txt_same(const char *f1, const char *f2)
     if (!s1.is_open() || !s2.is_open())
 	return false;
 
-    // Check line by line
+    // Check line by line.  Ignore generated mtllib paths, which are
+    // build-tree dependent, and version banners, which are expected to vary.
     std::regex version_regex(".*BRL-CAD[(][0-9.]+[)].*");
     std::string l1, l2;
-    while (std::getline(s1, l1) && std::getline(s2, l2)) {
-	// Skip lines with BRL-CAD version in them - differences are expected
-	if (std::regex_match(l1, version_regex) && std::regex_match(l2, version_regex)) {
-	    bu_log("Note - skipping lines with BRL-CAD version present:\n#1: %s\n#2: %s\n", l1.c_str(), l2.c_str());
-	    continue;
+    auto next_line = [&version_regex](std::ifstream &s, std::string &line) -> bool {
+	while (std::getline(s, line)) {
+	    if (std::regex_match(line, version_regex))
+		continue;
+	    if (line.rfind("mtllib ", 0) == 0)
+		continue;
+	    return true;
 	}
+	return false;
+    };
+
+    bool have1 = next_line(s1, l1);
+    bool have2 = next_line(s2, l2);
+    while (have1 && have2) {
         if (l1 != l2)
             return false;
+	have1 = next_line(s1, l1);
+	have2 = next_line(s2, l2);
     }
 
-    // Check if one file has more lines than the other
-    if (std::getline(s1, l1) || std::getline(s2, l2))
-        return false;
+    if (have1 != have2)
+	return false;
 
     // All checks passed - files are the same
     bu_log("%s and %s are the same\n", f1, f2);
@@ -172,9 +182,15 @@ main(int ac, char *av[])
 	bu_log("%s\n", bu_vls_cstr(gedp->ged_result_str));
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    bu_dir(input_file, MAXPATHLEN, av[1], "arb4.obj", NULL);
+    bu_dir(input_file, MAXPATHLEN, av[1], "arb4_color.obj", NULL);
     if (!txt_same(input_file, output_file))
 	bu_exit(EXIT_FAILURE, "Difference found between %s and %s", input_file, output_file);
+    bu_dir(input_file, MAXPATHLEN, av[1], "arb4_color.mtl", NULL);
+    bu_dir(output_file, MAXPATHLEN, BU_DIR_CURR, "arb4_out.mtl", NULL);
+    if (!txt_same(input_file, output_file))
+	bu_exit(EXIT_FAILURE, "Difference found between %s and %s", input_file, output_file);
+    bu_file_delete(output_file);
+    bu_dir(output_file, MAXPATHLEN, BU_DIR_CURR, "arb4_out.obj", NULL);
     bu_file_delete(output_file);
 
 
@@ -284,6 +300,62 @@ main(int ac, char *av[])
 	bu_exit(EXIT_FAILURE, "Difference found between %s and %s", input_file, output_file);
     bu_file_delete(output_file);
 
+    // Add a color attribute and confirm it exports by default to OBJ material data
+    const char *attr_av[5] = {"attr", "set", "arb4.bot", "color", "10/20/30"};
+    if (ged_exec_attr(gedp, 5, attr_av) != BRLCAD_OK)
+	bu_exit(EXIT_FAILURE, "Unable to assign color attribute to arb4.bot");
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    bu_dir(output_file, MAXPATHLEN, BU_DIR_CURR, "arb4_color_out.obj", NULL);
+    s_av[0] = "bot";
+    s_av[1] = "dump";
+    s_av[2] = "-t";
+    s_av[3] = "obj";
+    s_av[4] = "-o";
+    s_av[5] = output_file;
+    s_av[6] = "arb4.bot";
+    ged_exec_bot(gedp, 7, s_av);
+
+    if (bu_vls_strlen(gedp->ged_result_str))
+	bu_log("%s\n", bu_vls_cstr(gedp->ged_result_str));
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    bu_dir(input_file, MAXPATHLEN, av[1], "arb4_color.obj", NULL);
+    if (!txt_same(input_file, output_file))
+	bu_exit(EXIT_FAILURE, "Difference found between %s and %s", input_file, output_file);
+
+    bu_dir(input_file, MAXPATHLEN, av[1], "arb4_color.mtl", NULL);
+    bu_dir(output_file, MAXPATHLEN, BU_DIR_CURR, "arb4_color_out.mtl", NULL);
+    if (!txt_same(input_file, output_file))
+	bu_exit(EXIT_FAILURE, "Difference found between %s and %s", input_file, output_file);
+    bu_file_delete(output_file);
+    bu_dir(output_file, MAXPATHLEN, BU_DIR_CURR, "arb4_color_out.obj", NULL);
+    bu_file_delete(output_file);
+
+    // Opting out should suppress the material sidecar and keep legacy OBJ output
+    bu_dir(output_file, MAXPATHLEN, BU_DIR_CURR, "arb4_nomtl_out.obj", NULL);
+    s_av[0] = "bot";
+    s_av[1] = "dump";
+    s_av[2] = "-t";
+    s_av[3] = "obj";
+    s_av[4] = "--no-materials";
+    s_av[5] = "-o";
+    s_av[6] = output_file;
+    s_av[7] = "arb4.bot";
+    ged_exec_bot(gedp, 8, s_av);
+
+    if (bu_vls_strlen(gedp->ged_result_str))
+	bu_log("%s\n", bu_vls_cstr(gedp->ged_result_str));
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    bu_dir(input_file, MAXPATHLEN, av[1], "arb4.obj", NULL);
+    if (!txt_same(input_file, output_file))
+	bu_exit(EXIT_FAILURE, "Difference found between %s and %s", input_file, output_file);
+    bu_file_delete(output_file);
+    bu_dir(output_file, MAXPATHLEN, BU_DIR_CURR, "arb4_nomtl_out.mtl", NULL);
+    if (bu_file_exists(output_file, NULL))
+	bu_exit(EXIT_FAILURE, "Unexpected material file created for --no-materials export: %s", output_file);
+
     /* Next tests look at output in a directory.  The directory must already be
      * present, so create it up front. */
     const char *odir = "arbs_stl_output";
@@ -358,4 +430,3 @@ main(int ac, char *av[])
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

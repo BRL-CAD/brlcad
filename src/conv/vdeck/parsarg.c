@@ -1,7 +1,7 @@
 /*                       P A R S A R G . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2025 United States Government as represented by
+ * Copyright (c) 1986-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -23,11 +23,11 @@
 
 #include "common.h"
 
-#include <signal.h>
 #include <string.h>
 #include "bio.h"
 
 #include "bu/getopt.h"
+#include "bu/interrupt.h"
 #include "vmath.h"
 #include "raytrace.h"
 

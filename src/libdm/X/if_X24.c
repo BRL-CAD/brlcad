@@ -102,6 +102,7 @@ struct xinfo {
     int xi_usereg;	/* Flag determining whether or not to use regions */
     Colormap xi_cmap;	/* Colormap */
     XImage *xi_image;	/* XImage (size of screen) */
+    const Drawable *xi_drawable; /* Indirection follows display-manager pixmap replacement. */
     Window xi_cwinp;	/* Cursor's Parent Window ID */
     Window xi_cwin;	/* Cursor Window ID */
     unsigned long xi_wp;	/* White pixel */
@@ -170,6 +171,13 @@ struct xinfo {
     int xi_xtp;		/* Y-coord of topmost pixels */
     int xi_xbt;		/* Y-coord of bottommost pixels */
 };
+
+
+static Drawable
+X24_drawable(const struct xinfo *xi)
+{
+    return xi->xi_drawable ? *xi->xi_drawable : xi->xi_win;
+}
 #define XI(ptr) ((struct xinfo *)((ptr)->i->u1.p))
 #define XI_SET(ptr, val) ((ptr)->i->u1.p) = (char *) val;
 
@@ -807,7 +815,8 @@ x24_setup(struct fb *ifp, int width, int height)
     /*
      * Fill in XSetWindowAttributes struct for XCreateWindow.
      */
-    xswa.event_mask = ExposureMask | ButtonPressMask | StructureNotifyMask;
+    xswa.event_mask = ExposureMask | ButtonPressMask | ButtonReleaseMask |
+	PointerMotionMask | KeyPressMask | StructureNotifyMask;
     xswa.background_pixel = xi->xi_bp;
     xswa.border_pixel = xi->xi_wp;
     xswa.bit_gravity = ForgetGravity;
@@ -820,6 +829,13 @@ x24_setup(struct fb *ifp, int width, int height)
 			       CWBorderPixel | CWBitGravity | CWBackingStore | CWColormap,
 			       &xswa);
     xi->xi_cwinp = xi->xi_win;
+
+    /* Ask the window manager to notify us via a ClientMessage on window close
+     * rather than severing the display connection. */
+    {
+	Atom wmDelete = XInternAtom(xi->xi_dpy, "WM_DELETE_WINDOW", False);
+	XSetWMProtocols(xi->xi_dpy, xi->xi_win, &wmDelete, 1);
+    }
 
     if (xi->xi_win == 0) {
 	fb_log("if_X: Can't create window\n");
@@ -891,7 +907,7 @@ x24_setup(struct fb *ifp, int width, int height)
     switch (xi->xi_flags & FLG_VMASK) {
 	case FLG_VD24:
 	case FLG_VT24:
-	    if ((xi->xi_pix = (unsigned char *) calloc(sizeof(uint32_t), sratio*width*height)) == NULL) {
+	    if ((xi->xi_pix = (unsigned char *) calloc(sratio*width*height, sizeof(uint32_t))) == NULL) {
 		fb_log("X24_open: pix24 malloc failed\n");
 		return -1;
 	    }
@@ -904,7 +920,7 @@ x24_setup(struct fb *ifp, int width, int height)
 
 	case FLG_VD16:
 	case FLG_VT16:
-	    if ((xi->xi_pix = (unsigned char *) calloc(sizeof(uint16_t), width*height)) == NULL) {
+	    if ((xi->xi_pix = (unsigned char *) calloc(width*height, sizeof(uint16_t))) == NULL) {
 		fb_log("X24_open: pix16 malloc failed\n");
 		return -1;
 	    }
@@ -1015,6 +1031,7 @@ static void
 X24_blit(struct fb *ifp, int x_1, int y_1, int w, int h, int flags /* BLIT_xxx flags */)
 {
     struct xinfo *xi = XI(ifp);
+    Drawable drawable = X24_drawable(xi);
 
     int x2 = x_1 + w - 1;	/* Convert to rectangle corners */
     int y2 = y_1 + h - 1;
@@ -1210,13 +1227,13 @@ X24_blit(struct fb *ifp, int x_1, int y_1, int w, int h, int flags /* BLIT_xxx f
 			 * X servers red, green and blue masks.
 			 */
 			if (xi->xi_flags & (FLG_XCMAP | FLG_LINCMAP)) {
-			    a_pixel  = (line_irgb[RED] << red_shift) & mask_red;
-			    a_pixel |= (line_irgb[GRN] << green_shift) & mask_green;
-			    a_pixel |= (line_irgb[BLU] << blue_shift) & mask_blue;
+			    a_pixel  = ((red_shift >= 0) ? (line_irgb[RED] << red_shift) : (line_irgb[RED] >> -red_shift)) & mask_red;
+			    a_pixel |= ((green_shift >= 0) ? (line_irgb[GRN] << green_shift) : (line_irgb[GRN] >> -green_shift)) & mask_green;
+			    a_pixel |= ((blue_shift >= 0) ? (line_irgb[BLU] << blue_shift) : (line_irgb[BLU] >> -blue_shift)) & mask_blue;
 			} else {
-			    a_pixel  = (red[line_irgb[RED]] << red_shift) & mask_red;
-			    a_pixel |= (grn[line_irgb[GRN]] << green_shift) & mask_green;
-			    a_pixel |= (blu[line_irgb[BLU]] << blue_shift) & mask_blue;
+			    a_pixel  = ((red_shift >= 0) ? (red[line_irgb[RED]] << red_shift) : (red[line_irgb[RED]] >> -red_shift)) & mask_red;
+			    a_pixel |= ((green_shift >= 0) ? (grn[line_irgb[GRN]] << green_shift) : (grn[line_irgb[GRN]] >> -green_shift)) & mask_green;
+			    a_pixel |= ((blue_shift >= 0) ? (blu[line_irgb[BLU]] << blue_shift) : (blu[line_irgb[BLU]] >> -blue_shift)) & mask_blue;
 			}
 			/* take out the safety put in above. */
 			a_pixel = a_pixel >> 6;
@@ -1824,7 +1841,7 @@ X24_blit(struct fb *ifp, int x_1, int y_1, int w, int h, int flags /* BLIT_xxx f
     /* Blit out changed image */
 
     if (flags & BLIT_DISP) {
-	XPutImage(xi->xi_dpy, xi->xi_win, xi->xi_gc, xi->xi_image,
+	XPutImage(xi->xi_dpy, drawable, xi->xi_gc, xi->xi_image,
 		  ox, oy - xht + 1, ox, oy - xht + 1, xwd, xht);
     }
 
@@ -1850,7 +1867,7 @@ X24_blit(struct fb *ifp, int x_1, int y_1, int w, int h, int flags /* BLIT_xxx f
 	    if (!XEmptyRegion(Creg)) {
 		XSetRegion(xi->xi_dpy, xi->xi_cgc, Creg);
 
-		XFillRectangle(xi->xi_dpy, xi->xi_win,
+		XFillRectangle(xi->xi_dpy, drawable,
 			       xi->xi_cgc, 0, 0, xi->xi_xwidth,
 			       xi->xi_xheight);
 	    }
@@ -2601,7 +2618,7 @@ X24_configureWindow(struct fb *ifp, int width, int height)
 	    XDestroyImage(xi->xi_image);
 
 	    /* Make new buffer and new image */
-	    if ((xi->xi_pix = (unsigned char *)calloc(sizeof(uint32_t), sratio*xi->xi_xwidth*xi->xi_xheight)) == NULL) {
+	    if ((xi->xi_pix = (unsigned char *)calloc(sratio*xi->xi_xwidth*xi->xi_xheight, sizeof(uint32_t))) == NULL) {
 		fb_log("X24: pix24 malloc failed in resize!\n");
 		return 1;
 	    }
@@ -2618,7 +2635,7 @@ X24_configureWindow(struct fb *ifp, int width, int height)
 	    XDestroyImage(xi->xi_image);
 
 	    /* Make new buffer and new image */
-	    if ((xi->xi_pix = (unsigned char *)calloc(sizeof(uint16_t), xi->xi_xwidth*xi->xi_xheight)) == NULL) {
+	    if ((xi->xi_pix = (unsigned char *)calloc(xi->xi_xwidth*xi->xi_xheight, sizeof(uint16_t))) == NULL) {
 		fb_log("X24: pix16 malloc failed in resize!\n");
 		return 1;
 	    }
@@ -2672,7 +2689,7 @@ X24_configureWindow(struct fb *ifp, int width, int height)
 
 
 int
-_X24_open_existing(struct fb *ifp, Display *dpy, Window win, Window cwinp, Colormap cmap, XVisualInfo *vip, int width, int height, GC gc)
+_X24_open_existing(struct fb *ifp, Display *dpy, const Drawable *drawable, Window cwinp, Colormap cmap, XVisualInfo *vip, int width, int height, GC gc)
 {
     struct xinfo *xi;
     int getmem_stat;
@@ -2703,7 +2720,7 @@ _X24_open_existing(struct fb *ifp, Display *dpy, Window win, Window cwinp, Color
     xi->xi_visual = vip->visual;
     xi->xi_depth = vip->depth;
     xi->xi_cmap = cmap;
-    xi->xi_win = win;
+    xi->xi_drawable = drawable;
     xi->xi_cwinp = cwinp;
 
     /*XXX For now use same GC for both */
@@ -2864,7 +2881,7 @@ X24_open_existing(struct fb *ifp, int width, int height, struct fb_platform_spec
 {
     struct X24_fb_info *x24_internal = (struct X24_fb_info *)fb_p->data;
     BU_CKMAG(fb_p, FB_X24_MAGIC, "X24 framebuffer");
-    return _X24_open_existing(ifp, x24_internal->dpy, x24_internal->win,
+    return _X24_open_existing(ifp, x24_internal->dpy, x24_internal->drawable,
 	    x24_internal->cwinp, x24_internal->cmap, x24_internal->vip,
 	    width, height, x24_internal->gc);
 }
@@ -2900,7 +2917,7 @@ X24_handle_event(struct fb *ifp, XEvent *event)
 		    ey2 = xi->xi_xbt;
 
 		if (ex2 >= ex_1 && ey2 >= ey_1)
-		    XPutImage(xi->xi_dpy, xi->xi_win, xi->xi_gc,
+		    XPutImage(xi->xi_dpy, X24_drawable(xi), xi->xi_gc,
 			      xi->xi_image, ex_1, ey_1, ex_1,
 			      ey_1, ex2 - ex_1 + 1, ey2 - ey_1 + 1);
 		break;
@@ -2909,6 +2926,19 @@ X24_handle_event(struct fb *ifp, XEvent *event)
 	    {
 		int button = (int) event->xbutton.button;
 
+		/* In interactive mode, report the event to the application
+		 * rather than consuming it here. */
+		if (fb_get_interactive(ifp)) {
+		    struct fb_event ev;
+		    memset(&ev, 0, sizeof(ev));
+		    ev.type = FB_EVENT_BUTTON_PRESS;
+		    ev.button = button;
+		    ev.x = event->xbutton.x;
+		    ev.y = xi->xi_xheight - event->xbutton.y - 1;
+		    ev.state = (int)event->xbutton.state;
+		    fb_enqueue_event(ifp, &ev);
+		    break;
+		}
 
 		if (button == Button1) {
 		    /* Check for single button mouse remap.
@@ -2972,6 +3002,54 @@ X24_handle_event(struct fb *ifp, XEvent *event)
 		}
 		break;
 	    }
+	case ButtonRelease:
+	    if (fb_get_interactive(ifp)) {
+		struct fb_event ev;
+		memset(&ev, 0, sizeof(ev));
+		ev.type = FB_EVENT_BUTTON_RELEASE;
+		ev.button = (int)event->xbutton.button;
+		ev.x = event->xbutton.x;
+		ev.y = xi->xi_xheight - event->xbutton.y - 1;
+		ev.state = (int)event->xbutton.state;
+		fb_enqueue_event(ifp, &ev);
+	    }
+	    break;
+	case MotionNotify:
+	    if (fb_get_interactive(ifp)) {
+		struct fb_event ev;
+		memset(&ev, 0, sizeof(ev));
+		ev.type = FB_EVENT_MOTION;
+		ev.x = event->xmotion.x;
+		ev.y = xi->xi_xheight - event->xmotion.y - 1;
+		ev.state = (int)event->xmotion.state;
+		fb_enqueue_event(ifp, &ev);
+	    }
+	    break;
+	case KeyPress:
+	    if (fb_get_interactive(ifp)) {
+		struct fb_event ev;
+		char kbuf[8] = {0};
+		KeySym ks;
+		int n;
+		memset(&ev, 0, sizeof(ev));
+		ev.type = FB_EVENT_KEY_PRESS;
+		n = XLookupString(&event->xkey, kbuf, sizeof(kbuf), &ks, NULL);
+		ev.keycode = (n > 0) ? (unsigned char)kbuf[0] : (int)ks;
+		ev.state = (int)event->xkey.state;
+		fb_enqueue_event(ifp, &ev);
+	    }
+	    break;
+	case ClientMessage:
+	    /* Window-manager close request (WM_DELETE_WINDOW). */
+	    if (fb_get_interactive(ifp)) {
+		struct fb_event ev;
+		memset(&ev, 0, sizeof(ev));
+		ev.type = FB_EVENT_CLOSE;
+		fb_enqueue_event(ifp, &ev);
+	    } else {
+		alive = 0;
+	    }
+	    break;
 	case ConfigureNotify:
 	    {
 		XConfigureEvent *conf = (XConfigureEvent *)event;
@@ -3553,7 +3631,11 @@ struct fb_impl X24_interface_impl =  {
     {0}, /* u3 */
     {0}, /* u4 */
     {0}, /* u5 */
-    {0}  /* u6 */
+    {0}, /* u6 */
+    0,   /* if_interactive */
+    {{FB_EVENT_NONE, 0, 0, 0, 0, 0}}, /* if_equeue */
+    0,   /* if_ehead */
+    0    /* if_etail */
 };
 
 struct fb X24_interface =  { &X24_interface_impl };

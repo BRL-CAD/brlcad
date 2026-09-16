@@ -7,14 +7,18 @@ set(
   do.c
   grid.c
   heatgraph.c
-  main.c
   opt.c
   scanline.c
   usage.cpp
   worker.c
 )
 
-brlcad_addlib(librtuif "${LIBRTUIF_SOURCES}" "librt;${M_LIBRARY}" "" "${CMAKE_CURRENT_SOURCE_DIR}" STATIC NO_INSTALL)
+brlcad_addlib(librtuif "${LIBRTUIF_SOURCES}" "" "${CMAKE_CURRENT_SOURCE_DIR}"
+  STATIC NO_INSTALL NO_STATIC_LINK_TEST
+  PRIVATE_LIBS librt ${M_LIBRARY}
+)
+
+list(APPEND LIBRTUIF_SOURCES main.c)
 
 if(BRLCAD_ENABLE_OPENCL)
   set(OPENCL_LIBS ${OPENCL_LIBRARIES})
@@ -76,6 +80,7 @@ set_property(TARGET rthide APPEND PROPERTY COMPILE_DEFINITIONS "RT_TXT_OUTPUT")
 
 brlcad_addexec(rtsil "${LIBRTUIF_SOURCES};viewsil.c" "${RT_STD_LIBS}" FOLDER Rt)
 target_include_directories(rtsil BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+set_property(TARGET rtsil APPEND PROPERTY COMPILE_DEFINITIONS "RT_RAW_OUTPUT")
 add_target_deps(rtxray dm_plugins)
 
 brlcad_addexec(rtsurf "rtsurf.c;rtsurf_hits.cpp" "libanalyze;librt;libdm;liboptical;libicv")
@@ -87,17 +92,21 @@ set_property(TARGET rtweight APPEND PROPERTY COMPILE_DEFINITIONS "RT_TXT_OUTPUT"
 
 brlcad_addexec(rtxray "${LIBRTUIF_SOURCES};viewxray.c" "${RT_STD_LIBS}" FOLDER Rt)
 target_include_directories(rtxray BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+set_property(TARGET rtxray APPEND PROPERTY COMPILE_DEFINITIONS "RT_RAW_OUTPUT")
 add_target_deps(rtxray dm_plugins)
 
 brlcad_addexec(rtdepth "${LIBRTUIF_SOURCES};viewdepth.c" "${RT_STD_LIBS}" FOLDER Rt)
 target_include_directories(rtdepth BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 add_target_deps(rtdepth dm_plugins)
 
+#brlcad_addexec(rtpath "${LIBRTUIF_SOURCES};viewpath.c" "${RT_STD_LIBS}" FOLDER Rt)
+#target_include_directories(rtpath BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+#add_target_deps(rtpath dm_plugins)
+
 set(
   rt_ignore_files
   CMakeLists.txt
   ext.h
-  libfb-dummy.c
   main.c
   rtuif.h
   rtsurf_hits.h
@@ -106,6 +115,41 @@ set(
   viewdummy.c
 )
 cmakefiles(${rt_ignore_files})
+
+# -------------------------------------------------------------------
+# Regression tests for opt.c / get_args()
+#
+# We compile all LIBRTUIF_SOURCES except main.c, plus viewcheck.c as
+# a minimal view stub, plus the test driver.  This avoids duplicating
+# main() while still exercising get_args() directly so that gcov/lcov
+# can measure branch coverage of opt.c.
+# -------------------------------------------------------------------
+
+set(
+  RT_OPT_TEST_SRCS
+  do.c
+  grid.c
+  heatgraph.c
+  opt.c
+  scanline.c
+  usage.cpp
+  worker.c
+  viewcheck.c
+  tests/test_rt_opt.c
+)
+
+brlcad_addexec(test_rt_opt "${RT_OPT_TEST_SRCS}" "${RT_STD_LIBS}" TEST
+  UNITY_BUILD_SKIP tests/test_rt_opt.c
+)
+if(BUILD_TESTING AND TARGET test_rt_opt)
+  target_include_directories(test_rt_opt BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+  set_property(
+    TARGET test_rt_opt
+    APPEND PROPERTY COMPILE_DEFINITIONS "RT_TXT_OUTPUT"
+  )
+endif()
+
+add_subdirectory(tests)
 
 # Local Variables:
 # tab-width: 8

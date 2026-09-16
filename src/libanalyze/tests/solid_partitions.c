@@ -1,7 +1,7 @@
 /*                    R A Y D I F F . C
  * BRL-CAD
  *
- * Copyright (c) 2015-2025 United States Government as represented by
+ * Copyright (c) 2015-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -72,7 +72,7 @@ main(int argc, char **argv)
     /* TODO: call rt_bound_internal instead of prep directly to get
      * the bounding box.
      */
-    rtip = rt_new_rti(dbip);
+    rtip = rt_i_create(dbip);
     state.rtip = rtip;
     state.resp = &resp;
     rt_init_resource(state.resp, 0, rtip);

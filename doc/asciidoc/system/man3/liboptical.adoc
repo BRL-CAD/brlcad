@@ -1,0 +1,59 @@
+= LIBOPTICAL(3)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+liboptical - optical shading library for BRL-CAD
+
+== SYNOPSIS
+
+[source,c]
+----
+#include <optical.h>
+----
+
+Link with *-loptical*.
+
+The public interface is organized across the headers included by
+_optical.h_, including _optical/defines.h_, _optical/shadework.h_,
+_optical/shadefuncs.h_, _optical/light.h_, _optical/plastic.h_, and
+_optical/photonmap.h_.
+
+== DESCRIPTION
+
+LIBOPTICAL provides the material shaders and lighting model used by
+BRL-CAD's optical rendering tools, such as *rt*(1). It defines the
+shader function interface (_struct mfuncs_) and the per-shading working
+context (_struct shadework_) through which shaders compute surface
+color and appearance at ray/geometry intersections.
+
+The library supplies a collection of built-in shaders -- including
+phong/plastic reflectance, textures, and specialized effects -- along
+with lighting, refraction and reflection handling, and photon-map based
+global illumination support. Applications obtain the list of available
+shaders via _optical_shader_init()_ and drive shading through the
+librt ray-tracing pipeline.
+
+The complete API, including data structures and function signatures, is
+documented in the headers noted above and in the Doxygen-generated
+reference for the LIBOPTICAL module.
+
+== SEE ALSO
+
+*brlcad*(1), *rt*(1), *librt*(3), *libbn*(3), *libbu*(3)
+
+The BRL-CAD Doxygen API reference provides the authoritative,
+up-to-date description of all public LIBOPTICAL routines.
+
+== AUTHOR
+
+BRL-CAD Team
+
+== COPYRIGHT
+
+This software is Copyright (c) 2004-2026 United States Government as represented by the U.S. Army Research Laboratory.
+
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

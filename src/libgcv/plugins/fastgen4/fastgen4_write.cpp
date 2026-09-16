@@ -1,7 +1,7 @@
 /*              F A S T G E N 4 _ W R I T E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2015-2025 United States Government as represented by
+ * Copyright (c) 2015-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -238,7 +238,7 @@ DBInternal::load(const db_i &db, const directory &dir)
 	m_valid = false;
     }
 
-    if (0 > rt_db_get_internal(&m_internal, &dir, &db, NULL, &rt_uniresource))
+    if (0 > rt_db_get_internal(&m_internal, &dir, &db, NULL))
 	throw std::runtime_error("rt_db_get_internal() failed");
 
     m_valid = true;
@@ -1304,7 +1304,7 @@ path_to_mat(db_i &db, const db_full_path &path, mat_t &result)
     db_full_path_init(&temp);
     db_dup_full_path(&temp, &path);
 
-    if (!db_path_to_mat(&db, &temp, result, 0, &rt_uniresource))
+    if (!db_path_to_mat(&db, &temp, result, 0))
 	throw std::runtime_error("db_path_to_mat() failed");
 }
 
@@ -1360,7 +1360,6 @@ path_is_subtracted(db_i &db, const db_full_path &path)
 {
     db_tree_state tree_state;
     RT_DBTS_INIT(&tree_state);
-    tree_state.ts_resp = &rt_uniresource;
     tree_state.ts_dbip = &db;
 
     db_full_path end_path;
@@ -1644,11 +1643,7 @@ get_chex1(Section &section, const rt_bot_internal &bot)
 
     if (bot.face_mode) {
 	// check that all faces have a uniform face mode
-	std::size_t count = 0;
-	BU_BITV_LOOP_START(bot.face_mode) {
-	    ++count;
-	}
-	BU_BITV_LOOP_END;
+	std::size_t count = bu_bitv_count_set(bot.face_mode);
 
 	if (hex_grid_centered) {
 	    if (count)

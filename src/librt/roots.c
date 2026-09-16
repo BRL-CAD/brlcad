@@ -1,7 +1,7 @@
 /*                         R O O T S . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2025 United States Government as represented by
+ * Copyright (c) 1985-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -316,7 +316,7 @@ rt_poly_roots(bn_poly_t *eqn,	/* equation to be solved */
 	 * Set initial guess for root to almost zero.
 	 * This method requires a small nudge off the real axis.
 	 */
-	bn_cx_cons(&roots[n], 0.0, SMALL);
+	bn_cx_cons(&roots[n], 0.0, SQRT_SMALL_FASTF);
 	if ((rt_poly_findroot(eqn, &roots[n], name)) < 0)
 	    return n;	/* return those we found, anyways */
 

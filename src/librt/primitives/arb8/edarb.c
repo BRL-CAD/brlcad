@@ -1,7 +1,7 @@
 /*                         E D A R B . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2025 United States Government as represented by
+ * Copyright (c) 1985-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -24,15 +24,18 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <signal.h>
 #include <math.h>
 #include <string.h>
 
 #include "vmath.h"
+#include "bu/interrupt.h"
 #include "bu/str.h"
+#include "bg.h"
 #include "rt/geom.h"
 #include "rt/primitives/arb8.h"
+#include "bu/opt.h"
 #include "rt/db4.h"
+#include "rt/edit.h"
 #include "../edit_private.h"
 
 #define EARB			4009
@@ -44,7 +47,203 @@
 #define ECMD_ARB_ROTATE_FACE	4015
 #define ECMD_ARB_MOVE_EDGE	4036
 
-void *
+/* ------------------------------------------------------------------ */
+/* ft_edit_desc descriptor for the ARB8 primitive                     */
+/* ------------------------------------------------------------------ */
+
+/*
+ * Parameter layout for the combined-index commands:
+ *
+ *   move_face / move_edge / move_vertex:
+ *     e_para[0] = integer index (face 0-5, edge 0-11, or vertex 0-7)
+ *     e_para[1..3] = X Y Z  (point/vector in model coords)
+ *     → total e_inpara = 4
+ *
+ *   rotate_face:
+ *     e_para[0] = integer face index
+ *     e_para[1] = integer fixed-vertex index (fixv)
+ *     e_para[2..4] = Euler rotation angles (X Y Z, degrees)
+ *     → total e_inpara = 5
+ */
+static const struct rt_edit_param_desc arb_move_face_params[] = {
+    {
+	"face",               /* name         */
+	"Face Index",         /* label        */
+	RT_EDIT_PARAM_INTEGER, /* type        */
+	0,                    /* index        */
+	0.0,                  /* range_min    */
+	5.0,                  /* range_max    */
+	NULL,                 /* units        */
+	0, NULL, NULL,        /* enum (unused) */
+	NULL                  /* prim_field   */
+    },
+    {
+	"pt",                 /* name         */
+	"Point X Y Z",        /* label        */
+	RT_EDIT_PARAM_POINT,  /* type         */
+	1,                    /* index        */
+	RT_EDIT_PARAM_NO_LIMIT, /* range_min  */
+	RT_EDIT_PARAM_NO_LIMIT, /* range_max  */
+	"length",             /* units        */
+	0, NULL, NULL,        /* enum (unused) */
+	NULL                  /* prim_field   */
+    }
+};
+
+static const struct rt_edit_param_desc arb_move_edge_params[] = {
+    {
+	"edge",               /* name         */
+	"Edge Index",         /* label        */
+	RT_EDIT_PARAM_INTEGER, /* type        */
+	0,                    /* index        */
+	0.0,                  /* range_min    */
+	11.0,                 /* range_max    */
+	NULL,                 /* units        */
+	0, NULL, NULL,        /* enum (unused) */
+	NULL                  /* prim_field   */
+    },
+    {
+	"pt",                 /* name         */
+	"Endpoint X Y Z",     /* label        */
+	RT_EDIT_PARAM_POINT,  /* type         */
+	1,                    /* index        */
+	RT_EDIT_PARAM_NO_LIMIT, /* range_min  */
+	RT_EDIT_PARAM_NO_LIMIT, /* range_max  */
+	"length",             /* units        */
+	0, NULL, NULL,        /* enum (unused) */
+	NULL                  /* prim_field   */
+    }
+};
+
+static const struct rt_edit_param_desc arb_move_vertex_params[] = {
+    {
+	"vtx",                /* name         */
+	"Vertex Index",       /* label        */
+	RT_EDIT_PARAM_INTEGER, /* type        */
+	0,                    /* index        */
+	0.0,                  /* range_min    */
+	7.0,                  /* range_max    */
+	NULL,                 /* units        */
+	0, NULL, NULL,        /* enum (unused) */
+	NULL                  /* prim_field   */
+    },
+    {
+	"pt",                 /* name         */
+	"New Position X Y Z", /* label        */
+	RT_EDIT_PARAM_POINT,  /* type         */
+	1,                    /* index        */
+	RT_EDIT_PARAM_NO_LIMIT, /* range_min  */
+	RT_EDIT_PARAM_NO_LIMIT, /* range_max  */
+	"length",             /* units        */
+	0, NULL, NULL,        /* enum (unused) */
+	NULL                  /* prim_field   */
+    }
+};
+
+static const struct rt_edit_param_desc arb_rotate_face_params[] = {
+    {
+	"face",               /* name         */
+	"Face Index",         /* label        */
+	RT_EDIT_PARAM_INTEGER, /* type        */
+	0,                    /* index        */
+	0.0,                  /* range_min    */
+	5.0,                  /* range_max    */
+	NULL,                 /* units        */
+	0, NULL, NULL,        /* enum (unused) */
+	NULL                  /* prim_field   */
+    },
+    {
+	"fixv",               /* name         */
+	"Fixed Vertex Index", /* label        */
+	RT_EDIT_PARAM_INTEGER, /* type        */
+	1,                    /* index        */
+	0.0,                  /* range_min    */
+	7.0,                  /* range_max    */
+	NULL,                 /* units        */
+	0, NULL, NULL,        /* enum (unused) */
+	NULL                  /* prim_field   */
+    },
+    {
+	"rot",                /* name         */
+	"Euler Angles X Y Z", /* label        */
+	RT_EDIT_PARAM_VECTOR, /* type         */
+	2,                    /* index        */
+	RT_EDIT_PARAM_NO_LIMIT, /* range_min  */
+	RT_EDIT_PARAM_NO_LIMIT, /* range_max  */
+	"degrees",            /* units        */
+	0, NULL, NULL,        /* enum (unused) */
+	NULL                  /* prim_field   */
+    }
+};
+
+static const struct rt_edit_cmd_desc arb_cmds[] = {
+    {
+	ECMD_ARB_MOVE_FACE,   /* cmd_id       */
+	"Move Face",          /* label        */
+	"geometry",           /* category     */
+	2,                    /* nparam       */
+	arb_move_face_params, /* params       */
+	1,                    /* interactive  */
+	10                    /* display_order */,
+	"arb8"                /* req_types */
+    },
+    {
+	EARB,                 /* cmd_id       */
+	"Move Edge",          /* label        */
+	"geometry",           /* category     */
+	2,                    /* nparam       */
+	arb_move_edge_params, /* params       */
+	1,                    /* interactive  */
+	20                    /* display_order */,
+	"arb8,arb7,arb6,arb5" /* req_types */
+    },
+    {
+	PTARB,                /* cmd_id       */
+	"Move Vertex",        /* label        */
+	"geometry",           /* category     */
+	2,                    /* nparam       */
+	arb_move_vertex_params, /* params     */
+	1,                    /* interactive  */
+	30                    /* display_order */,
+	"arb8,arb7,arb6,arb5,arb4" /* req_types */
+    },
+    {
+	ECMD_ARB_ROTATE_FACE, /* cmd_id       */
+	"Rotate Face",        /* label        */
+	"geometry",           /* category     */
+	3,                    /* nparam       */
+	arb_rotate_face_params, /* params     */
+	1,                    /* interactive  */
+	40                    /* display_order */,
+	"arb8"                /* req_types */
+    }
+};
+
+static const struct rt_edit_opt_desc arb_opts[] = {
+    {
+	"type",               /* name         */
+	"Geometry Type",      /* label        */
+	"Force treatment as a specific arb type (arb4-arb8)", /* desc */
+	RT_EDIT_PARAM_STRING  /* type         */
+    }
+};
+
+static const struct rt_edit_prim_desc arb_prim_desc = {
+    "arb8",               /* prim_type    */
+    "ARB",                /* prim_label   */
+    4,                    /* ncmd         */
+    arb_cmds,             /* cmds         */
+    1,                    /* nopt         */
+    arb_opts              /* opts         */
+};
+
+C_DECL const struct rt_edit_prim_desc *
+rt_edit_arb_edit_desc(void)
+{
+    return &arb_prim_desc;
+}
+
+C_DECL void *
 rt_edit_arb_prim_edit_create(struct rt_edit *UNUSED(s))
 {
     struct rt_arb8_edit *a;
@@ -53,7 +252,7 @@ rt_edit_arb_prim_edit_create(struct rt_edit *UNUSED(s))
     return (void *)a;
 }
 
-void
+C_DECL void
 rt_edit_arb_prim_edit_destroy(struct rt_arb8_edit *a)
 {
     if (!a)
@@ -61,12 +260,14 @@ rt_edit_arb_prim_edit_destroy(struct rt_arb8_edit *a)
     BU_PUT(a, struct rt_arb8_edit);
 }
 
-void
+C_DECL void
 rt_edit_arb_set_edit_mode(struct rt_edit *UNUSED(s), int UNUSED(mode))
 {
-    // TODO - the multiple menu structure of ARB8 will make this callback
-    // tricky.  May actually want to set up ECMDs for all individual faces
-    // and edges so we can adjust how the logic flows for this...
+    /* ARB8 uses its own per-type sub-menus (arb8_edge, arb8_mv_face, etc.)
+     * that directly set edit_flag and edit_menu via their own handlers.
+     * The generic ft_set_edit_mode entry point is intentionally empty here:
+     * mode selection for ARB8 goes through the nested menu hierarchy rather
+     * than through this single callback. */
 }
 
 static void
@@ -113,12 +314,12 @@ arb7_edge(struct rt_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED
     struct rt_arb8_edit *aint = (struct rt_arb8_edit *)s->ipe_ptr;
     aint->edit_menu = arg;
     rt_edit_set_edflag(s, EARB);
-    s->edit_mode = RT_PARAMS_EDIT_TRANS;
     if (arg == 11) {
 	/* move point 5 */
 	rt_edit_set_edflag(s, PTARB);
-	aint->edit_menu = 4;	/* location of point */
+	/* keep edit_menu = 11 (menu-arg) so rt_arb_edit dispatch fires */
     }
+    s->edit_mode = RT_PARAMS_EDIT_TRANS;
     if (arg == 12) {
 	rt_edit_set_edflag(s, ECMD_ARB_MAIN_MENU);
 	rt_edit_process(s);
@@ -154,17 +355,17 @@ arb6_edge(struct rt_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED
     struct rt_arb8_edit *aint = (struct rt_arb8_edit *)s->ipe_ptr;
     aint->edit_menu = arg;
     rt_edit_set_edflag(s, EARB);
-    s->edit_mode = RT_PARAMS_EDIT_TRANS;
     if (arg == 8) {
-	/* move point 5, location = 4 */
+	/* move point 5 */
 	rt_edit_set_edflag(s, PTARB);
-	aint->edit_menu = 4;
+	/* keep edit_menu = 8 (menu-arg) so rt_arb_edit dispatch fires */
     }
     if (arg == 9) {
-	/* move point 6, location = 6 */
+	/* move point 6 */
 	rt_edit_set_edflag(s, PTARB);
-	aint->edit_menu = 6;
+	/* keep edit_menu = 9 (menu-arg) so rt_arb_edit dispatch fires */
     }
+    s->edit_mode = RT_PARAMS_EDIT_TRANS;
     if (arg == 10) {
 	rt_edit_set_edflag(s, ECMD_ARB_MAIN_MENU);
 	rt_edit_process(s);
@@ -198,12 +399,12 @@ arb5_edge(struct rt_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED
     struct rt_arb8_edit *aint = (struct rt_arb8_edit *)s->ipe_ptr;
     aint->edit_menu = arg;
     rt_edit_set_edflag(s, EARB);
-    s->edit_mode = RT_PARAMS_EDIT_TRANS;
     if (arg == 8) {
-	/* move point 5 at location 4 */
+	/* move point 5 */
 	rt_edit_set_edflag(s, PTARB);
-	aint->edit_menu = 4;
+	/* keep edit_menu = 8 (menu-arg) so rt_arb_edit dispatch fires */
     }
+    s->edit_mode = RT_PARAMS_EDIT_TRANS;
     if (arg == 9) {
 	rt_edit_set_edflag(s, ECMD_ARB_MAIN_MENU);
 	rt_edit_process(s);
@@ -553,13 +754,13 @@ struct rt_edit_menu_item *which_menu[] = {
     rot8_menu
 };
 
-struct rt_edit_menu_item *
+C_DECL struct rt_edit_menu_item *
 rt_edit_arb_menu_item(const struct bn_tol *UNUSED(tol))
 {
     return cntrl_menu;
 }
 
-int
+C_DECL int
 rt_edit_arb_menu_str(struct bu_vls *mstr, const struct rt_db_internal *ip, const struct bn_tol *tol)
 {
     if (!mstr || !ip)
@@ -605,7 +806,7 @@ rt_edit_arb_menu_str(struct bu_vls *mstr, const struct rt_db_internal *ip, const
     return BRLCAD_OK;
 }
 
-const char *
+C_DECL const char *
 rt_edit_arb_keypoint(
 	point_t *pt,
 	const char *keystr,
@@ -621,7 +822,7 @@ rt_edit_arb_keypoint(
     return OBJ[ip->idb_type].ft_keypoint(pt, keystr, mat, ip, tol);
 }
 
-void
+C_DECL void
 rt_edit_arb_e_axes_pos(
 	struct rt_edit *s,
 	const struct rt_db_internal *ip,
@@ -671,7 +872,8 @@ rt_edit_arb_e_axes_pos(
 		    i = 4;	/* index for point 5 */
 		    break;
 		case ARB6:
-		    i = a->edit_menu;	/* index for point 5 or 6 */
+		    /* edit_menu holds the menu-arg (8=pt5, 9=pt6); map to location */
+		    i = (a->edit_menu == 9) ? 6 : 4;	/* index for point 5 or 6 */
 		    break;
 		default:
 		    i = 0;
@@ -735,18 +937,19 @@ useThisVertex(int idx, int *uvec, int *svec)
 
 #define V3BASE2LOCAL(_pt) (_pt)[X]*base2local, (_pt)[Y]*base2local, (_pt)[Z]*base2local
 
-void
+C_DECL void
 rt_edit_arb_write_params(
 	struct bu_vls *p,
        	const struct rt_db_internal *ip,
        	const struct bn_tol *tol,
 	fastf_t base2local)
 {
-    // TODO - these really should be stashed in a private arb editing struct so
-    // they can persist until the read_params call...
-    static int uvec[8];
-    static int svec[11];
-    static int cgtype = 8;
+    /* uvec, svec and cgtype are purely local scratch; write_params is only
+     * ever called during a tedit session that immediately reads the file back
+     * via read_params, so there is no need for these to persist across calls. */
+    int uvec[8];
+    int svec[11];
+    int cgtype = 8;
     struct rt_arb_internal *arb = (struct rt_arb_internal *)ip->idb_ptr;
     RT_ARB_CK_MAGIC(arb);
 
@@ -771,7 +974,7 @@ rt_edit_arb_write_params(
     if (ln) *ln = '\0'; \
     while (lc && strchr(lc, ':')) lc++
 
-int
+C_DECL int
 rt_edit_arb_read_params(
 	struct rt_db_internal *ip,
 	const char *fc,
@@ -847,6 +1050,334 @@ rt_edit_arb_read_params(
     return BRLCAD_OK;
 }
 
+#define RT_ARB_EDIT_EDGE 0
+#define RT_ARB_EDIT_POINT 1
+#define RT_ARB7_MOVE_POINT_5 11
+#define RT_ARB6_MOVE_POINT_5 8
+#define RT_ARB6_MOVE_POINT_6 9
+#define RT_ARB5_MOVE_POINT_5 8
+#define RT_ARB4_MOVE_POINT_4 3
+
+int
+rt_arb_move_edge(struct bu_vls *error_msg_ret,
+		 struct rt_arb_internal *arb,
+		 vect_t thru,
+		 int bp1,
+		 int bp2,
+		 int end1,
+		 int end2,
+		 const vect_t dir,
+		 plane_t planes[6],
+		 const struct bn_tol *tol)
+{
+    fastf_t t1, t2;
+
+    if (bg_isect_line3_plane(&t1, thru, dir, planes[bp1], tol) < 0 ||
+	bg_isect_line3_plane(&t2, thru, dir, planes[bp2], tol) < 0) {
+	bu_vls_printf(error_msg_ret, "edge (direction) parallel to face normal\n");
+	return 1;
+    }
+
+    RT_ARB_CK_MAGIC(arb);
+
+    VJOIN1(arb->pt[end1], thru, t1, dir);
+    VJOIN1(arb->pt[end2], thru, t2, dir);
+
+    return 0;
+}
+
+int
+rt_arb_edit_type(struct bu_vls *error_msg_ret,
+		 struct rt_edit *s,
+		 struct rt_arb_internal *arb,
+		 int arb_type,
+		 const struct bn_tol *tol)
+{
+    int nat_type = arb_type;
+
+    if (nat_type <= 0) {
+	if (s) {
+	    nat_type = rt_arb_std_type(&s->es_int, s->tol ? s->tol : tol);
+	} else {
+	    int uvec[8], svec[11];
+	    if (rt_arb_get_cgtype(&nat_type, arb, tol, uvec, svec) == 0)
+		nat_type = 0;
+	}
+    }
+
+    if (s) {
+	const char *type_opt = rt_edit_get_opt(s, "type");
+	if (type_opt) {
+	    int req_type = 0;
+	    if (BU_STR_EQUIV(type_opt, "arb4") || BU_STR_EQUAL(type_opt, "4")) req_type = ARB4;
+	    else if (BU_STR_EQUIV(type_opt, "arb5") || BU_STR_EQUAL(type_opt, "5")) req_type = ARB5;
+	    else if (BU_STR_EQUIV(type_opt, "arb6") || BU_STR_EQUAL(type_opt, "6")) req_type = ARB6;
+	    else if (BU_STR_EQUIV(type_opt, "arb7") || BU_STR_EQUAL(type_opt, "7")) req_type = ARB7;
+	    else if (BU_STR_EQUIV(type_opt, "arb8") || BU_STR_EQUAL(type_opt, "8")) req_type = ARB8;
+
+	    if (req_type > 0) {
+		if (req_type < nat_type) {
+		    if (error_msg_ret)
+			bu_vls_printf(error_msg_ret, "rt_arb_edit: arb type %s requested, but geometry requires at least arb%d\n", type_opt, nat_type);
+		    return 0;
+		}
+		return req_type;
+	    }
+
+	    if (error_msg_ret)
+		bu_vls_printf(error_msg_ret, "rt_arb_edit: unknown arb type option '%s'\n", type_opt);
+	    return 0;
+	}
+    }
+
+    return nat_type;
+}
+
+int
+rt_arb_edit(struct bu_vls *error_msg_ret,
+	    struct rt_arb_internal *arb,
+	    struct rt_edit *s,
+	    int arb_type,
+	    int edit_type,
+	    int flags,
+	    vect_t pos_model,
+	    plane_t planes[6],
+	    const struct bn_tol *tol)
+{
+    int pt1 = 0, pt2 = 0, bp1, bp2, newp, p1, p2, p3;
+    const short *edptr;		/* pointer to arb edit array */
+    const short *final;		/* location of points to redo */
+    int i;
+    const int *iptr;
+    int edit_class = RT_ARB_EDIT_EDGE;
+    const short earb8[12][18] = earb8_edit_array;
+    const short earb7[12][18] = earb7_edit_array;
+    const short earb6[10][18] = earb6_edit_array;
+    const short earb5[9][18] = earb5_edit_array;
+    const short earb4[5][18] = earb4_edit_array;
+
+    RT_ARB_CK_MAGIC(arb);
+
+    arb_type = rt_arb_edit_type(error_msg_ret, s, arb, arb_type, tol);
+    if (arb_type == 0)
+	return 1;
+
+    /* set the pointer */
+    switch (arb_type) {
+	case ARB4:
+	    edptr = &earb4[edit_type][0];
+	    final = &earb4[edit_type][16];
+
+	    if (edit_type == RT_ARB4_MOVE_POINT_4)
+		edit_type = 4;
+
+	    edit_class = RT_ARB_EDIT_POINT;
+
+	    break;
+	case ARB5:
+	    edptr = &earb5[edit_type][0];
+	    final = &earb5[edit_type][16];
+
+	    if (edit_type == RT_ARB5_MOVE_POINT_5) {
+		edit_class = RT_ARB_EDIT_POINT;
+		edit_type = 4;
+	    }
+
+	    if (edit_class == RT_ARB_EDIT_POINT) {
+		edptr = &earb5[8][0];
+		final = &earb5[8][16];
+	    }
+
+	    break;
+	case ARB6:
+	    edptr = &earb6[edit_type][0];
+	    final = &earb6[edit_type][16];
+
+	    if (edit_type == RT_ARB6_MOVE_POINT_5) {
+		edit_class = RT_ARB_EDIT_POINT;
+		edit_type = 4;
+	    } else if (edit_type == RT_ARB6_MOVE_POINT_6) {
+		edit_class = RT_ARB_EDIT_POINT;
+		edit_type = 6;
+	    }
+
+	    if (edit_class == RT_ARB_EDIT_POINT) {
+		i = 9;
+		if (edit_type == 4)
+		    i = 8;
+		edptr = &earb6[i][0];
+		final = &earb6[i][16];
+	    }
+
+	    break;
+	case ARB7:
+	    edptr = &earb7[edit_type][0];
+	    final = &earb7[edit_type][16];
+
+	    if (edit_type == RT_ARB7_MOVE_POINT_5) {
+		edit_class = RT_ARB_EDIT_POINT;
+		edit_type = 4;
+	    }
+
+	    if (edit_class == RT_ARB_EDIT_POINT) {
+		edptr = &earb7[11][0];
+		final = &earb7[11][16];
+	    }
+
+	    break;
+	case ARB8:
+	    edptr = &earb8[edit_type][0];
+	    final = &earb8[edit_type][16];
+
+	    break;
+	default:
+	    bu_vls_printf(error_msg_ret, "rt_arb_edit: unknown ARB type\n");
+
+	    return 1;
+    }
+
+    /* do the arb editing */
+    if (edit_class == RT_ARB_EDIT_POINT) {
+	/* moving a point - not an edge */
+	VMOVE(arb->pt[edit_type], pos_model);
+	edptr += 4;
+    } else if (edit_class == RT_ARB_EDIT_EDGE) {
+	vect_t edge_dir;
+
+	/* moving an edge */
+	pt1 = *edptr++;
+	pt2 = *edptr++;
+
+	if (flags & RT_ARB_EDIT_EDGE_DIR) {
+	    VMOVE(edge_dir, pos_model);
+	    VMOVE(pos_model, arb->pt[pt1]);
+	} else {
+	    /* calculate edge direction */
+	    VSUB2(edge_dir, arb->pt[pt2], arb->pt[pt1]);
+	}
+
+	if (ZERO(MAGNITUDE(edge_dir)))
+	    goto err;
+
+	/* bounding planes bp1, bp2 */
+	bp1 = *edptr++;
+	bp2 = *edptr++;
+
+	/* move the edge */
+	if (rt_arb_move_edge(error_msg_ret, arb, pos_model, bp1, bp2, pt1, pt2,
+			     edge_dir, planes, tol))
+	    goto err;
+    }
+
+    /* editing is done - insure planar faces */
+    /* redo plane eqns that changed */
+    newp = *edptr++; 	/* plane to redo */
+
+    if (newp == 9)	/* special flag --> redo all the planes */
+	if (rt_arb_calc_planes(error_msg_ret, arb, arb_type, planes, tol))
+	    goto err;
+
+    if (newp >= 0 && newp < 6) {
+	for (i = 0; i < 3; i++) {
+	    /* redo this plane (newp), use points p1, p2, p3 */
+	    p1 = *edptr++;
+	    p2 = *edptr++;
+	    p3 = *edptr++;
+
+	    if (bg_make_plane_3pnts(planes[newp], arb->pt[p1], arb->pt[p2],
+				 arb->pt[p3], tol))
+		goto err;
+
+	    /* next plane */
+	    if ((newp = *edptr++) == -1 || newp == 8)
+		break;
+	}
+    }
+
+    if (newp == 8) {
+	/* special...redo next planes using pts defined in faces */
+	const int arb_faces[5][24] = rt_arb_faces;
+	for (i = 0; i < 3; i++) {
+	    if ((newp = *edptr++) == -1)
+		break;
+
+	    iptr = &arb_faces[arb_type-4][4*newp];
+	    p1 = *iptr++;
+	    p2 = *iptr++;
+	    p3 = *iptr++;
+
+	    if (bg_make_plane_3pnts(planes[newp], arb->pt[p1], arb->pt[p2],
+				 arb->pt[p3], tol))
+		goto err;
+	}
+    }
+
+    /* the changed planes are all redone
+     * push necessary points back into the planes
+     */
+    edptr = final;	/* point to the correct location */
+    for (i = 0; i < 2; i++) {
+	const plane_t *c_planes = (const plane_t *)planes;
+
+	if ((p1 = *edptr++) == -1)
+	    break;
+
+	/* intersect proper planes to define vertex p1 */
+
+	if (rt_arb_3face_intersect(arb->pt[p1], c_planes, arb_type, p1*3))
+	    goto err;
+    }
+
+    /* Special case for ARB7: move point 5 .... must
+     * recalculate plane 2 = 456
+     */
+    if (arb_type == ARB7 && edit_class == RT_ARB_EDIT_POINT) {
+	if (bg_make_plane_3pnts(planes[2], arb->pt[4], arb->pt[5], arb->pt[6], tol))
+	    goto err;
+    }
+
+    /* carry along any like points */
+    switch (arb_type) {
+	case ARB8:
+	    break;
+	case ARB7:
+	    VMOVE(arb->pt[7], arb->pt[4]);
+	    break;
+	case ARB6:
+	    VMOVE(arb->pt[5], arb->pt[4]);
+	    VMOVE(arb->pt[7], arb->pt[6]);
+	    break;
+	case ARB5:
+	    for (i=5; i<8; i++)
+		VMOVE(arb->pt[i], arb->pt[4]);
+	    break;
+	case ARB4:
+	    VMOVE(arb->pt[3], arb->pt[0]);
+	    for (i=5; i<8; i++)
+		VMOVE(arb->pt[i], arb->pt[4]);
+	    break;
+    }
+
+    if (s) {
+	struct rt_arb_internal repaired_arb;
+	if (rt_arb_repair(&repaired_arb, arb, tol, RT_ARB_REPAIR_SNAP_VERTICES) < 0) {
+	    bu_vls_printf(error_msg_ret, "rt_arb_edit: edit produced an invalid ARB that could not be repaired\n");
+	    goto err;
+	}
+	memcpy(arb->pt, repaired_arb.pt, sizeof(point_t) * 8);
+    } else {
+	if (rt_arb_check_points(arb, arb_type, tol) < 0)
+	    goto err;
+    }
+
+    return 0;		/* OK */
+
+err:
+    /* Error handling */
+    bu_vls_printf(error_msg_ret, "cannot move edge: %d%d\n", pt1+1, pt2+1);
+    return 1;		/* BAD */
+}
+
 /*
  * An ARB edge is moved by finding the direction of the line
  * containing the edge and the 2 "bounding" planes.  The new edge is
@@ -862,7 +1393,9 @@ editarb(struct rt_edit *s, vect_t pos_model)
     int ret = 0;
     struct rt_arb8_edit *a = (struct rt_arb8_edit *)s->ipe_ptr;
     struct rt_arb_internal *arb = (struct rt_arb_internal *)s->es_int.idb_ptr;
-    int arb_type = rt_arb_std_type(&s->es_int, s->tol);
+    int arb_type = rt_arb_edit_type(s->log_str, s, arb, 0, s->tol);
+    if (arb_type == 0)
+	return BRLCAD_ERROR;
 
     struct bu_vls error_msg = BU_VLS_INIT_ZERO;
     if (rt_arb_calc_planes(&error_msg, arb, arb_type, a->es_peqn, s->tol)) {
@@ -872,9 +1405,9 @@ editarb(struct rt_edit *s, vect_t pos_model)
     }
     bu_vls_free(&error_msg);
 
-    ret = arb_edit(arb, a->es_peqn, a->edit_menu, a->newedge, pos_model, s->tol);
+    ret = rt_arb_edit(s->log_str, arb, s, arb_type, a->edit_menu, a->newedge ? RT_ARB_EDIT_EDGE_DIR : RT_ARB_EDIT_DEFAULT, pos_model, (plane_t *)a->es_peqn, s->tol);
 
-    // arb_edit doesn't zero out our global any more as a library call, so
+    // rt_arb_edit doesn't zero out our global, so
     // reset once operation is complete.
     a->newedge = 0;
 
@@ -906,7 +1439,10 @@ ecmd_arb_specific_menu(struct rt_edit *s)
     /* put up specific arb edit menus */
     bu_clbk_t f = NULL;
     void *d = NULL;
-    int arb_type = rt_arb_std_type(&s->es_int, s->tol);
+    struct rt_arb_internal *arb = (struct rt_arb_internal *)s->es_int.idb_ptr;
+    int arb_type = rt_arb_edit_type(s->log_str, s, arb, 0, s->tol);
+    if (arb_type == 0)
+	return BRLCAD_ERROR;
 
     rt_edit_set_edflag(s, RT_EDIT_IDLE);
     switch (aint->edit_menu) {
@@ -937,6 +1473,45 @@ ecmd_arb_specific_menu(struct rt_edit *s)
     }
 }
 
+/*
+ * arb_unpack_index_param - descriptor-form helper
+ *
+ * When the descriptor passes an index + N further values, the caller
+ * stores them as e_para[0]=index, e_para[1..N]=data.
+ * Unpack: write the index into *idx_out, shift data[0..N-1] down to
+ * e_para[0..N-1], and reduce e_inpara by 1.
+ */
+static void
+arb_unpack_index_param(struct rt_edit *s, int *idx_out)
+{
+    int i;
+    *idx_out = (int)s->e_para[0];
+    for (i = 1; i < s->e_inpara; i++)
+	s->e_para[i - 1] = s->e_para[i];
+    s->e_inpara--;
+}
+
+static int
+edarb_canonicalize(struct rt_edit *s, struct rt_arb_internal *arb)
+{
+    struct rt_arb_internal repaired_arb;
+    int repair_ret;
+
+    /* Attempt to repair the edited points into a valid ARB4-ARB8 */
+    repair_ret = rt_arb_repair(&repaired_arb, arb, s->tol, RT_ARB_REPAIR_SNAP_VERTICES);
+    if (repair_ret < 0) {
+        if (s && s->log_str) {
+            bu_vls_printf(s->log_str, "Error: edit produced an invalid ARB that could not be repaired.\n");
+        }
+        return BRLCAD_ERROR;
+    }
+
+    /* Update points with the repaired/canonicalized ones */
+    memcpy(arb->pt, repaired_arb.pt, sizeof(point_t) * 8);
+
+    return BRLCAD_OK;
+}
+
 int
 ecmd_arb_move_face(struct rt_edit *s)
 {
@@ -944,6 +1519,13 @@ ecmd_arb_move_face(struct rt_edit *s)
 
     /* move face through definite point */
     if (s->e_inpara) {
+
+	/*
+	 * Extended form: 4 parameters → e_para[0]=face_index, e_para[1..3]=point.
+	 * Unpack the face index and shift the coord triple down.
+	 */
+	if (s->e_inpara == 4)
+	    arb_unpack_index_param(s, &a->edit_menu);
 
 	if (s->e_inpara != 3) {
 	    bu_vls_printf(s->log_str, "ERROR: three arguments needed\n");
@@ -970,9 +1552,15 @@ ecmd_arb_move_face(struct rt_edit *s)
 	a->es_peqn[a->edit_menu][W]=VDOT(&a->es_peqn[a->edit_menu][0], work);
 	/* find new vertices, put in record in vector notation */
 
-	int arb_type = rt_arb_std_type(&s->es_int, s->tol);
+	int arb_type = rt_arb_edit_type(s->log_str, s, arb, 0, s->tol);
+	if (arb_type == 0)
+	    return BRLCAD_ERROR;
 
 	(void)rt_arb_calc_points(arb, arb_type, (const plane_t *)a->es_peqn, s->tol);
+	
+	if (edarb_canonicalize(s, arb) != BRLCAD_OK) {
+	    return BRLCAD_ERROR;
+	}
     }
 
     return 0;
@@ -989,8 +1577,19 @@ ecmd_arb_setup_rotface(struct rt_edit *s)
     RT_ARB_CK_MAGIC(arb);
 
     rt_edit_map_clbk_get(&f, &d, s->m, ECMD_ARB_SETUP_ROTFACE, BU_CLBK_DURING);
-    if (f)
+    if (f) {
 	a->fixv = (*f)(0, NULL, d, s);
+    } else if (s->e_inpara >= 1) {
+	/* Non-interactive path: caller supplies the 1-based vertex index
+	 * directly in e_para[0].  This allows programmatic / test use
+	 * without registering an interactive callback. */
+	a->fixv = (int)s->e_para[0];
+	s->e_inpara = 0;
+    } else {
+	bu_vls_printf(s->log_str,
+		"ERROR: ECMD_ARB_SETUP_ROTFACE: no callback and no e_para fixv\n");
+	return;
+    }
 
     a->fixv--;
     rt_edit_set_edflag(s, ECMD_ARB_ROTATE_FACE);
@@ -1022,6 +1621,41 @@ ecmd_arb_rotate_face(struct rt_edit *s)
 
     struct rt_arb_internal *arb = (struct rt_arb_internal *)s->es_int.idb_ptr;
     RT_ARB_CK_MAGIC(arb);
+
+    /*
+     * Extended form (from descriptor): 5 parameters:
+     *   e_para[0] = face index  → a->edit_menu
+     *   e_para[1] = fixv index  → a->fixv
+     *   e_para[2..4] = Euler rotation angles X Y Z (degrees)
+     * Unpack and reduce to the standard 3-param case.
+     */
+    if (s->e_inpara == 5) {
+	/*
+	 * Extended form (from descriptor): 5 parameters:
+	 *   e_para[0] = face index  → a->edit_menu
+	 *   e_para[1] = fixv index  → a->fixv
+	 *   e_para[2..4] = Euler rotation angles X Y Z (degrees)
+	 * Unpack the face index first, then unpack the fixv index.
+	 */
+	arb_unpack_index_param(s, &a->edit_menu);  /* e_inpara now 4 */
+	{
+	    int fixv_tmp;
+	    arb_unpack_index_param(s, &fixv_tmp);   /* e_inpara now 3 */
+	    a->fixv = (short)fixv_tmp;
+	}
+	{
+	    struct bu_vls error_msg = BU_VLS_INIT_ZERO;
+	    int arb_type2 = rt_arb_edit_type(s->log_str, s, arb, 0, s->tol);
+	    if (arb_type2 == 0)
+		return BRLCAD_ERROR;
+	    if (rt_arb_calc_planes(&error_msg, arb, arb_type2, a->es_peqn, s->tol)) {
+		bu_vls_printf(s->log_str, "Cannot calculate plane equations for ARB8\n");
+		bu_vls_free(&error_msg);
+		return BRLCAD_ERROR;
+	    }
+	    bu_vls_free(&error_msg);
+	}
+    }
 
     if (s->e_inpara) {
 
@@ -1117,9 +1751,15 @@ ecmd_arb_rotate_face(struct rt_edit *s)
 	a->es_peqn[a->edit_menu][W]=VDOT(eqp, tempvec);
     }
 
-    int arb_type = rt_arb_std_type(&s->es_int, s->tol);
+    int arb_type = rt_arb_edit_type(s->log_str, s, arb, 0, s->tol);
+    if (arb_type == 0)
+	return BRLCAD_ERROR;
 
     (void)rt_arb_calc_points(arb, arb_type, (const plane_t *)a->es_peqn, s->tol);
+    
+    if (edarb_canonicalize(s, arb) != BRLCAD_OK) {
+	return BRLCAD_ERROR;
+    }
     MAT_IDN(s->incr_change);
 
     /* no need to calc_planes again */
@@ -1136,8 +1776,16 @@ ecmd_arb_rotate_face(struct rt_edit *s)
 int
 edit_arb_element(struct rt_edit *s)
 {
+    struct rt_arb8_edit *a = (struct rt_arb8_edit *)s->ipe_ptr;
 
     if (s->e_inpara) {
+
+	/*
+	 * Extended form: 4 parameters → e_para[0]=index, e_para[1..3]=coords.
+	 * Unpack the element index and shift the coord triple down.
+	 */
+	if (s->e_inpara == 4)
+	    arb_unpack_index_param(s, &a->edit_menu);
 
 	if (s->e_inpara != 3) {
 	    bu_vls_printf(s->log_str, "ERROR: three arguments needed\n");
@@ -1214,13 +1862,20 @@ edarb_move_face_mousevec(struct rt_edit *s, const vect_t mousevec)
 
 	RT_ARB_CK_MAGIC(arb);
 
-	int arb_type = rt_arb_std_type(&s->es_int, s->tol);
+	int arb_type = rt_arb_edit_type(s->log_str, s, arb, 0, s->tol);
+	if (arb_type == 0)
+	    return;
 
 	(void)rt_arb_calc_points(arb, arb_type, (const plane_t *)a->es_peqn, s->tol);
+	
+	if (edarb_canonicalize(s, arb) != BRLCAD_OK) {
+	    /* We don't have a return value for this function, so just return */
+	    return;
+	}
     }
 }
 
-int
+C_DECL int
 rt_edit_arb_edit(struct rt_edit *s)
 {
     struct bu_vls error_msg = BU_VLS_INIT_ZERO;
@@ -1229,7 +1884,9 @@ rt_edit_arb_edit(struct rt_edit *s)
     RT_ARB_CK_MAGIC(arb);
     int ret = 0;
 
-    int arb_type = rt_arb_std_type(&s->es_int, s->tol);
+    int arb_type = rt_arb_edit_type(s->log_str, s, arb, 0, s->tol);
+    if (arb_type == 0)
+	return BRLCAD_ERROR;
     if (rt_arb_calc_planes(&error_msg, arb, arb_type, a->es_peqn, s->tol)) {
 	bu_vls_printf(s->log_str, "\nCannot calculate plane equations for ARB8\n");
 	bu_vls_free(&error_msg);
@@ -1267,16 +1924,27 @@ rt_edit_arb_edit(struct rt_edit *s)
 	    ret = ecmd_arb_rotate_face(s);
 	    if (ret)
 		return ret;
-	    return 1; // TODO - why is this a return rather than a break (skips rt_edit_process finalization)
+	    /* ecmd_arb_rotate_face handles plane calc and replot directly;
+	     * return 1 to signal rt_edit_process to skip its post-dispatch
+	     * switch (avoiding a redundant arb_planecalc and replot). */
+	    return 1;
 	case PTARB:     /* move an ARB point */
 	case EARB:      /* edit an ARB edge */
 	    return edit_arb_element(s);
+	default:
+	    return edit_generic(s);
     }
 
 arb_planecalc:
 
+    if (edarb_canonicalize(s, arb) != BRLCAD_OK) {
+	return BRLCAD_ERROR;
+    }
+
     /* must re-calculate the face plane equations for arbs */
-    arb_type = rt_arb_std_type(&s->es_int, s->tol);
+    arb_type = rt_arb_edit_type(s->log_str, s, arb, 0, s->tol);
+    if (arb_type == 0)
+	return BRLCAD_ERROR;
     if (rt_arb_calc_planes(&error_msg, arb, arb_type, a->es_peqn, s->tol) < 0)
 	bu_vls_printf(s->log_str, "%s", bu_vls_cstr(&error_msg));
     bu_vls_free(&error_msg);
@@ -1284,16 +1952,13 @@ arb_planecalc:
     return ret;
 }
 
-int
+C_DECL int
 rt_edit_arb_edit_xy(
 	struct rt_edit *s,
 	const vect_t mousevec
 	)
 {
     vect_t pos_view = VINIT_ZERO;       /* Unrotated view space pos */
-    struct rt_db_internal *ip = &s->es_int;
-    bu_clbk_t f = NULL;
-    void *d = NULL;
 
     switch (s->edit_flag) {
 	case RT_PARAMS_EDIT_SCALE:
@@ -1313,18 +1978,8 @@ rt_edit_arb_edit_xy(
 	case ECMD_ARB_MOVE_FACE:
 	    edarb_move_face_mousevec(s, mousevec);
 	    break;
-        case RT_PARAMS_EDIT_ROT:
-            bu_vls_printf(s->log_str, "RT_PARAMS_EDIT_ROT XY editing setup unimplemented in %s_edit_xy callback\n", EDOBJ[ip->idb_type].ft_label);
-            rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-            if (f)
-                (*f)(0, NULL, d, NULL);
-            return BRLCAD_ERROR;
 	default:
-	    bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", EDOBJ[ip->idb_type].ft_label, s->edit_flag);
-	    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-	    if (f)
-		(*f)(0, NULL, d, NULL);
-	    return BRLCAD_ERROR;
+	    return edit_generic_xy(s, mousevec);
     }
 
     edit_abs_tra(s, pos_view);
@@ -1364,7 +2019,9 @@ rt_arb_f_eqn(struct rt_edit *s, int argc, const char **argv)
     VMOVE(tempvec, arb->pt[a->fixv]);
     a->es_peqn[a->edit_menu][W]=VDOT(a->es_peqn[a->edit_menu], tempvec);
 
-    int arb_type = rt_arb_std_type(&s->es_int, s->tol);
+    int arb_type = rt_arb_edit_type(s->log_str, s, arb, 0, s->tol);
+    if (arb_type == 0)
+	return BRLCAD_ERROR;
     if (rt_arb_calc_points(arb, arb_type, (const plane_t *)a->es_peqn, s->tol))
 	return BRLCAD_ERROR;
 
@@ -1562,7 +2219,10 @@ arb_extrude(struct rt_arb_internal *arb,
     a4toa6:
 	    ext4to6(pt[0], pt[1], pt[2], &larb, peqn);
 	    type = ARB6;
-	    /* TODO - solid edit menu was called here in MGED - why? */
+	    /* When ARB4→ARB6 extrusion changes the solid type the caller is
+	     * responsible for firing ECMD_MENU_REFRESH so the application can
+	     * reinstall the appropriate editing menu (e.g. via sedit_menu in
+	     * MGED).  The callback is registered and invoked in f_extrude. */
 	    break;
 
 	case 1680:   /* protrude face 5678 */
@@ -1635,7 +2295,7 @@ arb_permute(struct rt_arb_internal *arb, const char *encoded_permutation, const 
     size_t face_size;	/* # vertices in THE face */
     int uvec[8], svec[11];
     int type;
-    char **p;
+    const char **p;
 
     /*
      * The Permutations
@@ -1646,7 +2306,7 @@ arb_permute(struct rt_arb_internal *arb, const char *encoded_permutation, const 
      * Wherever the internal representation of the ARB as an ARB8
      * stores a redundant copy of a vertex, the string contains a '*'.
      */
-    static char *perm4[4][7] = {
+    static const char *perm4[4][7] = {
 	{"123*4***", "124*3***", "132*4***", "134*2***", "142*3***",
 	    "143*2***", 0},
 	{"213*4***", "214*3***", "231*4***", "234*1***", "241*3***",
@@ -1656,14 +2316,14 @@ arb_permute(struct rt_arb_internal *arb, const char *encoded_permutation, const 
 	{"412*3***", "413*2***", "421*3***", "423*1***", "431*2***",
 	    "432*1***", 0}
     };
-    static char *perm5[5][3] = {
+    static const char *perm5[5][3] = {
 	{"12345***", "14325***", 0},
 	{"21435***", "23415***", 0},
 	{"32145***", "34125***", 0},
 	{"41235***", "43215***", 0},
 	{0, 0, 0}
     };
-    static char *perm6[6][3] = {
+    static const char *perm6[6][3] = {
 	{"12345*6*", "15642*3*", 0},
 	{"21435*6*", "25631*4*", 0},
 	{"34126*5*", "36524*1*", 0},
@@ -1671,7 +2331,7 @@ arb_permute(struct rt_arb_internal *arb, const char *encoded_permutation, const 
 	{"51462*3*", "52361*4*", 0},
 	{"63254*1*", "64153*2*", 0}
     };
-    static char *perm7[7][2] = {
+    static const char *perm7[7][2] = {
 	{"1234567*", 0},
 	{0, 0},
 	{0, 0},
@@ -1680,7 +2340,7 @@ arb_permute(struct rt_arb_internal *arb, const char *encoded_permutation, const 
 	{"6237514*", 0},
 	{"7326541*", 0}
     };
-    static char *perm8[8][7] = {
+    static const char *perm8[8][7] = {
 	{"12345678", "12654378", "14325876", "14852376",
 	    "15624873", "15842673", 0},
 	{"21436587", "21563487", "23416785", "23761485",
@@ -1946,194 +2606,69 @@ arb_mirror_face_axis(struct rt_arb_internal *arb, fastf_t peqn[7][4], const int 
 
     /* copy to original */
     memcpy((char *)arb, (char *)&larb, sizeof(struct rt_arb_internal));
-
     return 0;
 }
 
 int
-arb_edit(struct rt_arb_internal *arb, fastf_t peqn[7][4], int edge, int newedge, vect_t pos_model, const struct bn_tol *tol)
+rt_edit_arb_repair(struct bu_vls *log_str, struct rt_db_internal *ip, const struct bn_tol *tol, int argc, const char **argv)
 {
-    int type;
-    int pflag = 0;
-    int uvec[8], svec[11];
-    static int pt1, pt2, bp1, bp2, newp, p1, p2, p3;
-    const short *edptr;		/* pointer to arb edit array */
-    const short *final;		/* location of points to redo */
-    static int i;
-    const int *iptr;
-    const short earb8[12][18] = earb8_edit_array;
-    const short earb7[12][18] = earb7_edit_array;
-    const short earb6[10][18] = earb6_edit_array;
-    const short earb5[9][18] = earb5_edit_array;
-    const short earb4[5][18] = earb4_edit_array;
+    struct rt_arb_internal *arb;
+    struct rt_arb_internal repaired_arb;
+    int ret;
+    int options_json = 0;
+    int print_help = 0;
+    fastf_t ftol = -1.0;
 
+    struct bu_opt_desc d[4];
+    BU_OPT(d[0], "h", "help", "", NULL, &print_help, "Print help");
+    BU_OPT(d[1], "t", "tol", "<#>", bu_opt_fastf_t, &ftol, "Distance tolerance for snapping vertices");
+    BU_OPT(d[2], "", "options-json", "", NULL, &options_json, "Return JSON of supported options");
+    BU_OPT_NULL(d[3]);
+
+    if (argc > 0 && argv) {
+        bu_opt_parse(NULL, argc, argv, d);
+    }
+
+    if (options_json) {
+        if (log_str) {
+            bu_vls_printf(log_str, "{\"options\":[");
+            bu_vls_printf(log_str, "{\"name\":\"tol\",\"type\":\"float\",\"description\":\"Distance tolerance for snapping vertices\"}");
+            bu_vls_printf(log_str, "]}");
+        }
+        return 1;
+    }
+
+    if (print_help) {
+        if (log_str) {
+            char *option_help = bu_opt_describe(d, NULL);
+            bu_vls_printf(log_str, "{\"status\":\"help\",\"message\":\"Options:\\n%s\"}", option_help ? option_help : "");
+            if (option_help) bu_free(option_help, "help str");
+        }
+        return -1;
+    }
+
+    struct bn_tol default_tol = BN_TOL_INIT_TOL;
+    struct bn_tol user_tol = tol ? *tol : default_tol;
+    if (ftol > 0.0) {
+        user_tol.dist = ftol;
+        user_tol.dist_sq = ftol * ftol;
+    }
+
+    RT_CK_DB_INTERNAL(ip);
+    arb = (struct rt_arb_internal *)ip->idb_ptr;
     RT_ARB_CK_MAGIC(arb);
 
-    if (rt_arb_get_cgtype(&type, arb, tol, uvec, svec) == 0) return 1;
-
-    /* set the pointer */
-    switch (type) {
-	case ARB4:
-	    edptr = &earb4[edge][0];
-	    final = &earb4[edge][16];
-	    pflag = 1;
-	    break;
-	case ARB5:
-	    edptr = &earb5[edge][0];
-	    final = &earb5[edge][16];
-	    if (edge == 8)
-		pflag = 1;
-	    break;
-	case ARB6:
-	    edptr = &earb6[edge][0];
-	    final = &earb6[edge][16];
-	    if (edge > 7)
-		pflag = 1;
-	    break;
-	case ARB7:
-	    edptr = &earb7[edge][0];
-	    final = &earb7[edge][16];
-	    if (edge == 11)
-		pflag = 1;
-	    break;
-	case ARB8:
-	    edptr = &earb8[edge][0];
-	    final = &earb8[edge][16];
-	    break;
-	default:
-	    return 1;
+    ret = rt_arb_repair(&repaired_arb, arb, &user_tol, RT_ARB_REPAIR_SNAP_VERTICES);
+    if (ret >= 0) {
+        *arb = repaired_arb;
+        if (log_str) {
+            bu_vls_printf(log_str, "{\"status\":\"success\",\"message\":\"Successfully repaired ARB8\"}");
+        }
+        return 0; /* success */
     }
 
-
-    /* do the arb editing */
-
-    if (pflag) {
-	/* moving a point - not an edge */
-	VMOVE(arb->pt[edge], pos_model);
-	edptr += 4;
-    } else {
-	vect_t edge_dir;
-
-	/* moving an edge */
-	pt1 = *edptr++;
-	pt2 = *edptr++;
-	/* direction of this edge */
-	if (newedge) {
-	    /* edge direction comes from edgedir() in pos_model */
-	    VMOVE(edge_dir, pos_model);
-	    VMOVE(pos_model, arb->pt[pt1]);
-	} else {
-	    /* must calculate edge direction */
-	    VSUB2(edge_dir, arb->pt[pt2], arb->pt[pt1]);
-	}
-	if (ZERO(MAGNITUDE(edge_dir)))
-	    goto err;
-	/* bounding planes bp1, bp2 */
-	bp1 = *edptr++;
-	bp2 = *edptr++;
-
-	/* move the edge */
-	if (mv_edge(arb, pos_model, bp1, bp2, pt1, pt2, edge_dir, tol, peqn)){
-	    goto err;
-	}
-    }
-
-    /* editing is done - insure planar faces */
-    /* redo plane eqns that changed */
-    newp = *edptr++; 	/* plane to redo */
-
-    if (newp == 9) {
-	struct bu_vls error_msg = BU_VLS_INIT_ZERO;
-	int arb_calc_ret = 0;
-	arb_calc_ret = rt_arb_calc_planes(&error_msg, arb, type, peqn, tol);
-	bu_vls_free(&error_msg);
-	if (arb_calc_ret) goto err;
-    }
-
-    if (newp >= 0 && newp < 6) {
-	for (i=0; i<3; i++) {
-	    /* redo this plane (newp), use points p1, p2, p3 */
-	    p1 = *edptr++;
-	    p2 = *edptr++;
-	    p3 = *edptr++;
-	    if (bg_make_plane_3pnts(peqn[newp], arb->pt[p1], arb->pt[p2],
-				 arb->pt[p3], tol))
-		goto err;
-
-	    /* next plane */
-	    if ((newp = *edptr++) == -1 || newp == 8)
-		break;
-	}
-    }
-    if (newp == 8) {
-	/* special...redo next planes using pts defined in faces */
-	const int local_arb_faces[5][24] = rt_arb_faces;
-	for (i=0; i<3; i++) {
-	    if ((newp = *edptr++) == -1)
-		break;
-	    iptr = &local_arb_faces[type-4][4*newp];
-	    p1 = *iptr++;
-	    p2 = *iptr++;
-	    p3 = *iptr++;
-	    if (bg_make_plane_3pnts(peqn[newp], arb->pt[p1], arb->pt[p2],
-				 arb->pt[p3], tol))
-		goto err;
-	}
-    }
-
-    /* the changed planes are all redone push necessary points back
-     * into the planes.
-     */
-    edptr = final;	/* point to the correct location */
-    for (i=0; i<2; i++) {
-	if ((p1 = *edptr++) == -1)
-	    break;
-	/* intersect proper planes to define vertex p1 */
-	if (rt_arb_3face_intersect(arb->pt[p1], (const plane_t *)peqn, type, p1*3))
-	    goto err;
-    }
-
-    /* Special case for ARB7: move point 5 .... must recalculate plane
-     * 2 = 456
-     */
-    if (type == ARB7 && pflag) {
-	if (bg_make_plane_3pnts(peqn[2], arb->pt[4], arb->pt[5], arb->pt[6], tol))
-	    goto err;
-    }
-
-    /* carry along any like points */
-    switch (type) {
-	case ARB8:
-	    break;
-
-	case ARB7:
-	    VMOVE(arb->pt[7], arb->pt[4]);
-	    break;
-
-	case ARB6:
-	    VMOVE(arb->pt[5], arb->pt[4]);
-	    VMOVE(arb->pt[7], arb->pt[6]);
-	    break;
-
-	case ARB5:
-	    for (i=5; i<8; i++)
-		VMOVE(arb->pt[i], arb->pt[4]);
-	    break;
-
-	case ARB4:
-	    VMOVE(arb->pt[3], arb->pt[0]);
-	    for (i=5; i<8; i++)
-		VMOVE(arb->pt[i], arb->pt[4]);
-	    break;
-    }
-
-    return 0;		/* OK */
-
- err:
-    return 1;		/* BAD */
-
+    return -1; /* failure */
 }
-
 
 /*
  * Local Variables:

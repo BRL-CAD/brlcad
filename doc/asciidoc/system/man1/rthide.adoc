@@ -1,0 +1,203 @@
+= RTHIDE(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+rthide - ray-trace a model and write a hidden-line UNIX-Plot file
+
+== SYNOPSIS
+
+[source]
+----
+rthide [options] model.g [objects...] > output.plot3
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*rthide* ray-traces the listed _objects_ in the BRL-CAD database _model.g_ and
+emits a hidden-line-removed UNIX-Plot file (see *plot3*(5)) with bas-relief
+detail.  It draws a boundary line wherever the region ID changes between
+neighboring rays, and additionally portrays abrupt changes in surface curvature
+and surface height.  This lets pits, protrusions, and curvature changes appear
+as relief: the result looks flat when viewed head-on but shows detail when
+rotated.  The plot is written to standard output by default, or to a named file
+with *-o*.
+
+If no _objects_ are listed, *rthide* uses the same automatic default-object
+selection described in *rt*(1).  If no single usable default can be resolved,
+it aborts before rendering.
+
+The view is normally specified with *-a* (azimuth) and *-e* (elevation), in
+which case the model is auto-sized and the grid is centered on its bounding box.
+Alternatively, *-M* reads a model-to-view matrix from standard input, as
+produced by an *mged*(1) _saveview_ script; the grid size is then set with *-s*.
+
+*rthide* is a member of the *rt*(1) family and shares its option set with
+*librt*(3).  Because it produces vector plot output rather than a shaded raster
+image, most raster-oriented options (lighting, framebuffer, hypersampling, and
+similar) have no useful effect; the options most relevant to *rthide* are
+described first below.
+
+[[options]]
+== OPTIONS
+
+*-s* _#_::
+  Number of rays (cells) to fire in each of X and Y, i.e. a square grid.
+  Default is 512 (a 512x512 grid).
+
+*-a* _deg_::
+  View azimuth in degrees.  Used with *-e*; enables auto-sizing.  Conflicts with *-M*.
+
+*-e* _deg_::
+  View elevation in degrees.  Used with *-a*; enables auto-sizing.  Conflicts with *-M*.
+
+*-A* _deg_::
+  Shading angle in degrees.  A boundary is shaded wherever the angle between
+  adjacent surface normals exceeds this value.  Default is 5.0; a large value
+  such as 89.0 shades only steep rises and drops, suppressing curvature
+  cross-hatching.
+
+*-M*::
+  Read a model-to-view (model2view) matrix from standard input instead of using
+  *-a*/*-e*.  Conflicts with *-a* and *-e*.
+
+*-o* _output.plot3_::
+  Write the plot to the named file instead of standard output.
+
+*-g* _mm_::
+  Grid cell width in millimeters.
+
+*-G* _mm_::
+  Grid cell height in millimeters.  If unspecified, cell height equals cell width.
+
+*-w* _#_::
+  Image/grid width in cells (overrides the X dimension set by *-s*).
+
+*-n* _#_::
+  Image/grid height in cells (overrides the Y dimension set by *-s*).
+
+*-V* _#[:#]_::
+  View aspect ratio, width/height (e.g. 1.33 or 4:3).
+
+*-p* _deg_::
+  Perspective angle in degrees (0 <= deg < 180; 0 means orthographic).
+
+*-E* _#_::
+  Distance from the eye to the model center (default sqrt(2)).
+
+*-P* _#_::
+  Maximum number of processor cores to use during prep (a negative value means
+  all but that many).  Ray tracing itself is forced to a single CPU.
+
+*-U* _#_::
+  Set the librt _use_air_ flag: 0 discards air regions (default), non-zero
+  retains them.
+
+*-T* _#[/#]_::
+  Ray-tracing tolerances, dist[/perp] (default 0.0005).
+
+*-r*::
+  Report overlapping region names (on by default).
+
+*-R*::
+  Suppress overlap region-name reports.
+
+*-c* _cmd_::
+  Execute an *rt* script command before ray tracing (may be repeated).
+
+*-I* _file_::
+  Read object names from a text file, one per line, in addition to those on the
+  command line.
+
+*-k* _x,y,z,nx,ny,nz_::
+  Apply a cutting plane, equivalent to subtracting a half-space from the scene.
+  Accepts _xdir,ydir,zdir,dist_, _x,y,z,nx,ny,nz_, or _x,y,z_ forms.
+
+*-j* _xmin,ymin,xmax,ymax_::
+  Ray-trace only the given sub-rectangle of the view.
+
+*-u* _units_::
+  Display units; "model" uses the database's own units.
+
+*-D* _#_::
+  Starting frame number (for animation scripts read via *-M*).
+
+*-K* _#_::
+  Ending (kill-after) frame number.
+
+*-x* _#_::
+  Set librt debug flags to the given hexadecimal value.
+
+*-X* _#_::
+  Set rt program/optical debug flags (hexadecimal).
+
+*-N* _#_::
+  Set libnmg debug flags (hexadecimal).
+
+*-!* _#_::
+  Set libbu debug flags (hexadecimal).
+
+*-v* _[#]_::
+  Increase verbosity; repeat (e.g. -vvvv) or supply a hexadecimal level.
+
+The following options are accepted because *rthide* shares the *rt*(1) command
+parser, but have little or no effect on plot output: *-w* and *-n* aside, the
+raster-only controls *-O*, *-F*, *-C*, *-W*, *-l*, *-m*, *-i*, *-t*, *-S*,
+*-H*, *-J*, *-z*, *-d*, *-b*, *-Q*, *-B*, *-q*, and *-+*.
+
+[[examples]]
+== EXAMPLES
+
+.Bas-relief line drawing of a model
+====
+[source,bash]
+----
+rthide -s512 -a35 -e25 -A89.0 moss.g all.g > moss.plot3
+plot3-fb moss.plot3
+----
+Ray-traces the _all.g_ assembly in _moss.g_ over a 512x512 grid from azimuth
+35deg, elevation 25deg, suppressing curvature cross-hatching with a 89.0deg
+shading angle, then displays the resulting hidden-line plot on a framebuffer
+with *plot3-fb*(1).  The plot can equally be rotated with *plot3rot*(1) or
+overlaid in *mged*(1) with the _overlay_ command.
+====
+
+.Overlaying hidden-line work onto a shaded rt image
+====
+[source,bash]
+----
+AZ=35; EL=25
+rt     -s512 -a$AZ -e$EL moss.g all.g
+rthide -A89.9 -s512 -a$AZ -e$EL -o rthide.plot3 moss.g all.g
+plot3-fb -o rthide.plot3
+----
+Renders a shaded image with *rt*(1) into the framebuffer, traces the matching
+hidden-line plot with *rthide* using the same view and grid size, then overlays
+the line work onto the shaded image with *plot3-fb*(1) (*-o* keeps the existing
+framebuffer contents) for an "edge enhanced" result.  This assumes FB_FILE
+points to a valid framebuffer.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *rt*(1), *rtedge*(1), *mged*(1), *plot3-fb*(1), *plot3rot*(1),
+*rtscale*(1), *librt*(3), *plot3*(5)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,7 +1,7 @@
 /*                         F I L E . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2025 United States Government as represented by
+ * Copyright (c) 2004-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -46,6 +46,13 @@ __BEGIN_DECLS
  */
 /** @{ */
 /** @file bu/file.h */
+
+/**
+ * Return the platform's null device path.
+ *
+ * The returned pointer refers to static storage and must not be freed.
+ */
+BU_EXPORT extern const char *bu_file_null(void);
 
 /**
  * Returns truthfully whether the given file path exists or not.  An

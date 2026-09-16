@@ -1,7 +1,7 @@
 /*                      T R I M E S H . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2025 United States Government as represented by
+ * Copyright (c) 2004-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -156,6 +156,26 @@ BG_EXPORT extern fastf_t
 bg_trimesh_area(const int *faces, size_t num_faces, const point_t *p, size_t num_pnts);
 
 
+/**
+ * Calculate the volume enclosed by a closed, consistently-oriented triangle
+ * mesh using the divergence theorem (signed-tetrahedra method).
+ *
+ * The mesh must be closed and consistently oriented (all face normals pointing
+ * outward or all inward).  Consistent orientation is guaranteed for meshes
+ * that pass bg_trimesh_solid2() with zero unmatched edges.  The function
+ * returns the absolute value of the signed result, so it works correctly
+ * regardless of whether normals point inward or outward.
+ *
+ * @param[in] faces  flat array of triangle indices (3 ints per face)
+ * @param[in] num_faces  number of triangles
+ * @param[in] p  array of vertex positions
+ * @param[in] num_pnts  number of vertices
+ *
+ * @return -1 if inputs are invalid, else volume in cubic millimeters
+ */
+BG_EXPORT extern fastf_t
+bg_trimesh_volume(const int *faces, size_t num_faces, const point_t *p, size_t num_pnts);
+
 /* Structure holding user-adjustable decimation settings */
 struct bg_trimesh_decimation_settings {
     int method;            // Select decimation method to use
@@ -184,8 +204,23 @@ struct bg_trimesh_decimation_settings {
  * bg_trimesh_3d_gc routine with the ofaces set produced by this function.
  *
  * @return -1 if error, 0 if successful */
-BG_EXPORT extern int bg_trimesh_decimate(int **ofaces, int *n_ofaces,
+DEPRECATED BG_EXPORT extern int bg_trimesh_decimate(int **ofaces, int *n_ofaces,
     int *ifaces, int n_ifaces, point_t *p, int n_p, struct bg_trimesh_decimation_settings *s);
+
+/**
+ * Decimate a mesh, returning both its output faces and their input face
+ * provenance.  The caller must free both output arrays with bu_free.
+ * face_sources[i] is the input face index associated with output face i;
+ * callers should use it to carry face-indexed application data through the
+ * operation.
+ *
+ * Like bg_trimesh_decimate, this routine retains the input point indices.  Use
+ * bg_trimesh_3d_gc to produce a compact point array after handling any
+ * application data that uses those indices.
+ */
+BG_EXPORT extern int bg_trimesh_run_decimater(int **ofaces,
+    int **face_sources, int *n_ofaces, int *ifaces, int n_ifaces, point_t *p,
+    int n_p, struct bg_trimesh_decimation_settings *s);
 
 
 /* Make an attempt at a trimesh intersection calculator that returns the sets
@@ -261,7 +296,6 @@ BG_EXPORT extern int bg_trimesh_optimize(
  * of points active in the mesh.
  *
  * @param[out] ofaces faces array for the new output mesh
- * @param[out] n_ofaces length of ofaces array
  * @param[out] opnts points array for the new output mesh
  * @param[out] n_opnts length of opnts array
  * @param[in] ifaces array of input trimesh
@@ -271,7 +305,7 @@ BG_EXPORT extern int bg_trimesh_optimize(
  * @return -1 if error, number of faces in new trimesh if successful (should
  * match the original face count)
  */
-BG_EXPORT extern int bg_trimesh_2d_gc(int **ofaces, int *n_ofaces, point2d_t **opnts, int *n_opnts,
+BG_EXPORT extern int bg_trimesh_2d_gc(int **ofaces, point2d_t **opnts, int *n_opnts,
 	const int *ifaces, int n_ifaces, const point2d_t *ipnts);
 
 /**
@@ -309,8 +343,39 @@ bg_trimesh_sync(int *of, int *f, int fcnt);
 
 /**
  * @brief
- * Return a set of face sets where all topologically connected faces are
- * grouped into common sets.
+ * Group edge-connected triangle components while retaining input face
+ * identity.
+ *
+ * The output uses a compact grouped-index representation.  The original face
+ * indices for component i are stored in the half-open range
+ * [component_offsets[i], component_offsets[i+1]) of face_indices.  Components
+ * and their faces are ordered by their first occurrence in the input.
+ *
+ * To build a self-contained face/point mesh for one component, copy the three
+ * entries from f for each returned face index into a temporary faces array,
+ * then pass that array and the original points to bg_trimesh_3d_gc.
+ *
+ * The caller must free both output arrays with bu_free.
+ *
+ * @param[out] face_indices      input face indices grouped by component
+ * @param[out] component_offsets offsets into face_indices, with one terminal
+ *                               offset; length is the return value plus one
+ * @param[in]  f                 input set of faces
+ * @param[in]  fcnt              input face count
+ *
+ * @return -1 on error, otherwise the number of connected components
+ */
+BG_EXPORT extern int
+bg_trimesh_separate(int **face_indices, int **component_offsets,
+	const int *f, int fcnt);
+
+/**
+ * @brief
+ * Return copied triangle arrays grouped into edge-connected components.
+ *
+ * This interface does not retain the original face indices, so callers cannot
+ * reliably associate face-indexed data with its output.  New code should use
+ * bg_trimesh_separate.
  *
  * @param[out] ofs  array of faces arrays containing the new output face sets.
  * @param[out] ofc  array of face counts for the new output face sets.
@@ -319,7 +384,7 @@ bg_trimesh_sync(int *of, int *f, int fcnt);
  *
  * @return -1 if error, otherwise return the number of face sets created
  */
-BG_EXPORT extern int
+DEPRECATED BG_EXPORT extern int
 bg_trimesh_split(int ***ofs, int **ofc, int *f, int fcnt);
 
 /**
@@ -434,6 +499,105 @@ bg_trimesh_hash(
 	);
 
 
+
+
+/**
+ * Options governing triangle mesh repair operations.
+ *
+ * Repair attempts to produce a closed, consistently-oriented, manifold
+ * mesh from a defective input by colocating near-duplicate vertices,
+ * removing degenerate / duplicate faces, and filling boundary holes up
+ * to the caller-specified size limit.
+ */
+struct bg_trimesh_repair_opts {
+    fastf_t max_hole_area;          /**< Largest hole area (mm^2) eligible for filling; 0 = use percentage */
+    fastf_t max_hole_area_percent;  /**< Largest hole area as percentage of total mesh area; ignored when max_hole_area > 0 */
+};
+
+/** Default repair options: fill holes up to 5% of the total mesh area. */
+#define BG_TRIMESH_REPAIR_OPTS_DEFAULT {0.0, 5.0}
+
+/**
+ * @brief
+ * Attempt to repair a non-manifold triangle mesh so that it becomes a
+ * closed, consistently-oriented solid.
+ *
+ * The function:
+ *  1. Colocates near-duplicate vertices (epsilon derived from bounding-box
+ *     diagonal), removes degenerate and duplicate faces.
+ *  2. Removes small disconnected components (< 3% of total surface area).
+ *  3. Fills boundary holes whose area is at most the limit set in @p opts.
+ *
+ * @param[out] ofaces   output face index array (caller must bu_free)
+ * @param[out] n_ofaces number of faces in @p ofaces
+ * @param[out] opnts    output point array (caller must bu_free)
+ * @param[out] n_opnts  number of points in @p opnts
+ * @param[in]  ifaces   input face index array (3 ints per face)
+ * @param[in]  n_ifaces number of faces in @p ifaces
+ * @param[in]  ipnts    input point array
+ * @param[in]  n_ipnts  number of points in @p ipnts
+ * @param[in]  opts     repair options; NULL uses @c BG_TRIMESH_REPAIR_OPTS_DEFAULT
+ *
+ * @return  1  input mesh was already solid – @p ofaces / @p opnts are not set
+ * @return  0  repair succeeded – caller owns @p ofaces / @p opnts
+ * @return -1  error or repair failed to produce a valid result
+ */
+BG_EXPORT extern int
+bg_trimesh_repair(
+	int **ofaces, int *n_ofaces,
+	point_t **opnts, int *n_opnts,
+	const int *ifaces, int n_ifaces,
+	const point_t *ipnts, int n_ipnts,
+	struct bg_trimesh_repair_opts *opts);
+
+
+/**
+ * Options governing triangle mesh remeshing operations.
+ *
+ * Remeshing regenerates the connectivity of a mesh so that its triangles
+ * are more uniform in size and shape while preserving the overall surface.
+ * The Geogram CVT (Centroidal Voronoi Tessellation) algorithm is used
+ * internally.
+ */
+struct bg_trimesh_remesh_opts {
+    int target_count;           /**< Desired vertex count in output; 0 = use count_multiplier */
+    fastf_t count_multiplier;   /**< Multiply input vertex count by this to obtain target (default 10.0) */
+    fastf_t anisotropy;         /**< Anisotropy weight for surface-normal direction; 0.0 = isotropic remesh (default 0.04) */
+    int lloyd_iters;            /**< Number of Lloyd relaxation iterations (default 5) */
+    int newton_iters;           /**< Number of Newton iterations for CVT optimization (default 30) */
+};
+
+/** Default remesh options: 10× input vertex density, moderate anisotropy. */
+#define BG_TRIMESH_REMESH_OPTS_DEFAULT {0, 10.0, 0.04, 5, 30}
+
+/**
+ * @brief
+ * Remesh a triangle mesh to improve element quality and/or change density.
+ *
+ * A Geogram-based pre-repair pass is run on the input before remeshing so
+ * that degenerate or near-duplicate geometry does not confuse the CVT solver.
+ * The output mesh is a new triangulation of the same surface.
+ *
+ * @param[out] ofaces   output face index array (caller must bu_free)
+ * @param[out] n_ofaces number of faces in @p ofaces
+ * @param[out] opnts    output point array (caller must bu_free)
+ * @param[out] n_opnts  number of points in @p opnts
+ * @param[in]  ifaces   input face index array (3 ints per face)
+ * @param[in]  n_ifaces number of faces in @p ifaces
+ * @param[in]  ipnts    input point array
+ * @param[in]  n_ipnts  number of points in @p ipnts
+ * @param[in]  opts     remesh options; NULL uses @c BG_TRIMESH_REMESH_OPTS_DEFAULT
+ *
+ * @return  0 on success – caller owns @p ofaces / @p opnts
+ * @return -1 on error
+ */
+BG_EXPORT extern int
+bg_trimesh_remesh(
+	int **ofaces, int *n_ofaces,
+	point_t **opnts, int *n_opnts,
+	const int *ifaces, int n_ifaces,
+	const point_t *ipnts, int n_ipnts,
+	struct bg_trimesh_remesh_opts *opts);
 
 
 __END_DECLS

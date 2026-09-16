@@ -1,7 +1,7 @@
 /*                           C V T . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2025 United States Government as represented by
+ * Copyright (c) 1989-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -47,7 +47,7 @@ extern void region_register(int reg_num, int id, int air, int mat, int los);
 extern void group_write(void);
 
 /* defined in read.c */
-extern int get_line(char *cp, int buflen, char *title);
+extern int get_line(char *cp, int buflen, const char *title);
 
 /* defined in solid.c */
 extern void trim_trail_spaces(char *cp);

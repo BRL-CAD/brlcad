@@ -1,7 +1,7 @@
 /*                 SurfacePatch.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2025 United States Government as represented by
+ * Copyright (c) 1994-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -35,21 +35,22 @@
 #define ENTITYNAME "Surface_Patch"
 string SurfacePatch::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)SurfacePatch::Create);
 
-static const char *Transition_code_string[] = {
+static const char *SurfacePatch_Transition_code_string[] = {
     "discontinuous",
     "continuous",
     "cont_same_gradient",
     "cont_same_gradient_same_curvature",
     "unset"
 };
+static const int STEP_TRANSITION_CODE_UNSET = 4;
 
 SurfacePatch::SurfacePatch()
 {
     step = NULL;
     id = 0;
     parent_surface = NULL;
-    u_transition = Transition_code_unset;
-    v_transition = Transition_code_unset;
+    u_transition = STEP_TRANSITION_CODE_UNSET;
+    v_transition = STEP_TRANSITION_CODE_UNSET;
     u_sense = BUnset;
     v_sense = BUnset;
 }
@@ -59,8 +60,8 @@ SurfacePatch::SurfacePatch(STEPWrapper *sw, int step_id)
     step = sw;
     id = step_id;
     parent_surface = NULL;
-    u_transition = Transition_code_unset;
-    v_transition = Transition_code_unset;
+    u_transition = STEP_TRANSITION_CODE_UNSET;
+    v_transition = STEP_TRANSITION_CODE_UNSET;
     u_sense = BUnset;
     v_sense = BUnset;
 }
@@ -98,11 +99,17 @@ SurfacePatch::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	}
     }
 
-    u_transition = (Transition_code)step->getEnumAttribute(sse, "u_transition");
-    V_MIN(u_transition, Transition_code_unset);
+    u_transition = step->getEnumAttributeIndex(sse, "u_transition",
+	SurfacePatch_Transition_code_string,
+	sizeof(SurfacePatch_Transition_code_string) /
+	    sizeof(SurfacePatch_Transition_code_string[0]),
+	STEP_TRANSITION_CODE_UNSET);
 
-    v_transition = (Transition_code)step->getEnumAttribute(sse, "v_transition");
-    V_MIN(v_transition, Transition_code_unset);
+    v_transition = step->getEnumAttributeIndex(sse, "v_transition",
+	SurfacePatch_Transition_code_string,
+	sizeof(SurfacePatch_Transition_code_string) /
+	    sizeof(SurfacePatch_Transition_code_string[0]),
+	STEP_TRANSITION_CODE_UNSET);
 
     u_sense = step->getBooleanAttribute(sse, "u_sense");
     v_sense = step->getBooleanAttribute(sse, "v_sense");
@@ -128,9 +135,9 @@ SurfacePatch::Print(int level)
     std::cout << "parent_surface:" << std::endl;
     parent_surface->Print(level + 1);
     TAB(level + 1);
-    std::cout << "u_transition:" << Transition_code_string[u_transition] << std::endl;
+    std::cout << "u_transition:" << SurfacePatch_Transition_code_string[u_transition] << std::endl;
     TAB(level + 1);
-    std::cout << "v_transition:" << Transition_code_string[v_transition] << std::endl;
+    std::cout << "v_transition:" << SurfacePatch_Transition_code_string[v_transition] << std::endl;
 
     if (step) {
 	TAB(level + 1);

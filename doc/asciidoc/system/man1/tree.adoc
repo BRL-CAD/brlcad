@@ -1,0 +1,144 @@
+= TREE(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+tree - procedurally generate a volumetric tree model as a BRL-CAD database
+
+== SYNOPSIS
+
+[source]
+----
+tree [-f] [-j] [-o output.g] [-n name] [--preset name] [--mode name]
+     [--leaf-mode name] [--detail name] [--seed uint] [--height length]
+     [--trunk-radius length] [--age ratio] [--settings file.json]
+     [--x-offset dist] [--y-offset dist] [--z-offset dist]
+     [--demo-file file.g]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*tree* procedurally generates a solid, volumetric tree model and writes it to a
+BRL-CAD geometry database (*.g*) via libwdb. The trunk, branches, and foliage are
+grown from a deterministic, seeded recursive skeleton, so the same options and
+*--seed* always reproduce the identical model.
+
+Five presets (*broadleaf*, *conifer*, *palm*, *shrub*, and *dead*) supply
+species-appropriate branching, decay, and foliage defaults that may then be
+overridden by individual options. The model is realized in one of three modes:
+*mesh* produces faceted *bot*(5) branch tubes and foliage; *csg* builds the
+branches from constructive solid geometry primitives with solid canopy volumes;
+*analysis* emits a lightweight CSG form suitable for raytrace analysis. The
+resulting geometry is organized into separate bark (wood) and foliage regions
+under a single group named after *-n*, ready for use in *mged*(1) or rendering
+with *rt*(1).
+
+For fine control beyond the command-line options, *--settings* loads a version-1
+JSON file describing the scale, skeleton, canopy, realization, and materials.
+
+[[options]]
+== OPTIONS
+
+*-o*, *--output* _file.g_::
+  Output geometry database to write. Default is _tree.g_.
+
+*-n*, *--name* _name_::
+  Object name prefix for the generated group and regions. Default is _tree_.
+
+*--preset* _name_::
+  Species preset: *broadleaf*, *conifer*, *palm*, *shrub*, or *dead*. Default is *broadleaf*.
+
+*--mode* _name_::
+  Output realization: *mesh*, *csg*, or *analysis*. Default is *mesh*.
+
+*--leaf-mode* _name_::
+  Foliage style: *none*, *simple*, *cluster*, or *canopy*. Default is *simple* (forced to *none* for the *dead* preset).
+
+*--detail* _name_::
+  Detail level: *low*, *medium*, or *high*. Adjusts branch tessellation sides and leaf count. Default is *medium*.
+
+*--seed* _uint_::
+  32-bit unsigned generation seed for deterministic, repeatable output. Default is *1*.
+
+*--height* _length_::
+  Overall tree height in millimeters. Default is *12000*.
+
+*--trunk-radius* _length_::
+  Trunk base radius in millimeters. Default is *420*.
+
+*--age* _ratio_::
+  Relative maturity in the range [0, 1], scaling height and trunk thickness. Default is *1*.
+
+*--settings* _file.json_::
+  Load advanced parameters from a version-1 JSON settings file (scale, skeleton, canopy, realization, and materials). Command-line options take precedence over the file.
+
+*--x-offset* _dist_::
+  Translate the model along X, in millimeters. Default is *0*.
+
+*--y-offset* _dist_::
+  Translate the model along Y, in millimeters. Default is *0*.
+
+*--z-offset* _dist_::
+  Translate the model along Z, in millimeters. Default is *0*.
+
+*--demo-file* _file.g_::
+  Ignore most other options and write a grid of ten sample trees (one per preset, in both mesh and CSG modes) plus an *all* comb. Cannot be combined with *-j*.
+
+*-f*, *--force*::
+  Overwrite the output database if it already exists. Mutually exclusive with *-j*.
+
+*-j*, *--append*::
+  Append the generated objects to an existing output database. Mutually exclusive with *-f*.
+
+*-h*, *--help*::
+  Print a usage message and exit.
+
+[[examples]]
+== EXAMPLES
+
+.Generate a reproducible conifer and raytrace it
+====
+[source,bash]
+----
+tree --preset conifer --seed 42 --height 18000 -o spruce.g
+rt -s 512 -o spruce.png spruce.g tree
+----
+Grows an 18 m conifer with a fixed seed (so the model is reproducible) into
+_spruce.g_, then renders the resulting *tree* group to an image with *rt*(1).
+====
+
+.Build a small forest by appending several trees with offsets
+====
+[source,bash]
+----
+tree --preset broadleaf --seed 1 --x-offset 0     -n oak_a -o forest.g
+tree --preset broadleaf --seed 2 --x-offset 9000  -n oak_b -j -o forest.g
+tree --preset shrub     --seed 3 --x-offset 18000 -n bush  -j -o forest.g
+----
+Writes the first tree into a fresh _forest.g_, then *--append*s two more at
+shifted X positions and with distinct seeds and names, producing a scene of
+varied trees that can be edited together in *mged*(1).
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *mged*(1), *rt*(1), *bot_dump*(1), *bot*(5)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

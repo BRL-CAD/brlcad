@@ -1,0 +1,177 @@
+= RTAREA(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+rtarea - compute exposed and presented surface areas of geometry from a view
+
+== SYNOPSIS
+
+[source]
+----
+rtarea [options] model.g [objects...]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+The *rtarea* program uses *librt*(3) to ray trace the listed _objects_ in
+the database _model.g_ from a single view direction and reports the
+projected surface area of each region, each assembly (combination
+containing regions), and overall totals.  The view is set with the
+*-a* (azimuth) and *-e* (elevation) options, or by feeding a
+model-to-view matrix on standard input with *-M*.  All results are
+written to standard output as text.
+
+If no _objects_ are listed, *rtarea* uses the same automatic default-object
+selection described in *rt*(1).  If no single usable default can be resolved,
+it aborts before computing areas.
+
+Two areas are reported.  The *exposed* area is the occluded 2D
+projection: what an observer would see if every object were opaque, so
+an object hidden behind another contributes only its visible fraction.
+The *presented* area is the unoccluded 2D projection: each region is
+considered in isolation and reports its full silhouette regardless of
+what lies in front.  When totaling presented area for a group, area
+covered by more than one region is counted only once (the union of the
+regions), not the cumulative sum.
+
+Only surfaces whose normal has a component facing back toward the ray
+are counted, so back faces are not reported as presented area.
+
+Accuracy depends on the grid resolution: finer cell spacing (smaller
+*-g*/*-G* or larger *-s*) yields more accurate areas.  Area centers
+are off by default and can be enabled with *-c "set cc=1"*.
+
+[width="100%"]
+....
+
+|----------------| rear region          |----------------| rear region
+|                |                      |****************|
+|        |--------------| front region  |****************-------| front region
+|        |**************|               |***********************|
+|--------|**************|               |--------|**************|
+         |**************|                        |**************|
+         |--------------|                        |--------------|
+
+  exposed = presented area of front       exposed = presented area for groups
+  region (fully visible)                  (e.g. comb of both visible regions)
+....
+
+[width="100%"]
+....
+|----------------| rear region          |----------------| rear region
+|****************|                      |****************|
+|********|--------------| front region  |****************-------| front region
+|********|              |               |****************       |
+|--------|              |               |--------|              |
+         |              |                        |              |
+         |--------------|                        |--------------|
+  exposed area of rear                    presented area of rear
+  region (partially occluded)             region (partically occluded)
+....
+
+WARNING: The terminology and output format of *rtarea* may change in future releases.
+
+[[options]]
+== OPTIONS
+
+*-a* _azimuth_::
+  Set the view azimuth in degrees and enable auto-sizing.  Use with *-e*; conflicts with *-M*.
+
+*-e* _elevation_::
+  Set the view elevation in degrees and enable auto-sizing.  Use with *-a*; conflicts with *-M*.
+
+*-M*::
+  Read a model-to-view transformation matrix (and optional animation script) from standard input instead of using *-a*/*-e*.
+
+*-s* _#_::
+  Set the square grid size to _#_ rays on a side (default 512).  More rays improve area accuracy.
+
+*-w* _#_::
+  Set the grid width in rays.
+
+*-n* _#_::
+  Set the grid height in rays (scanlines).
+
+*-g* _mm_::
+  Set the grid cell width in millimeters.  If set without *-G*, cell height defaults to the same value (e.g. *-g 25.4* gives 1 inch ray spacing).
+
+*-G* _mm_::
+  Set the grid cell height in millimeters.
+
+*-p* _deg_::
+  Set the perspective angle in degrees (0 <= deg < 180; 0 is orthographic, the default).
+
+*-V* _#[:#]_::
+  Set the view aspect ratio width/height (e.g. 1.33 or 4:3).
+
+*-u* _units_::
+  Report areas in the named units (default mm).  Use *-u model* for the database's local units.
+
+*-U* _#_::
+  Set whether air-coded regions are retained (0 = discard, 1 = keep, the default for *rtarea*).
+
+*-P* _#_::
+  Set the maximum number of processor cores to use (negative = all but _#_).
+
+*-c* _command_::
+  Run an *rt* script command before ray tracing; may be repeated.  *rtarea* recognizes *set compute_centers=#* (or the alias *set cc=#*) where 1 enables and 0 disables (default) computation and reporting of area centers.
+
+*-x* _#_::
+  Set *librt* debug flags as a hexadecimal bit vector (see raytrace.h).
+
+*-X* _#_::
+  Set *rt* program/optical debug flags as a hexadecimal bit vector.
+
+*-? or -h*::
+  Print a usage summary and exit.
+
+[[examples]]
+== EXAMPLES
+
+.Areas of a group with centers, in inches
+====
+[source,bash]
+----
+rtarea -u in -a 35 -e 25 -s 1024 -c "set cc=1" model.g all
+----
+Ray traces the group _all_ in _model.g_ from azimuth 35, elevation 25
+degrees on a 1024x1024 grid, reporting exposed and presented areas in
+square inches along with the center of each area.  Increasing the grid
+size and naming explicit units gives a more accurate, readable report
+than the defaults.
+====
+
+.Front-view area from a saved MGED view
+====
+[source,bash]
+----
+rtarea -M model.g component < saveview.rt
+----
+Reuses the camera from an *mged*(1) _saveview_ script (the matrix is
+read from standard input via *-M*) so the area of _component_ is
+measured from exactly the view that was set up interactively.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *mged*(1), *rt*(1), *rtweight*(1), *librt*(3)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

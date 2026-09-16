@@ -1,7 +1,7 @@
 /*                         A R C E D . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -85,8 +85,7 @@ ged_arced_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "%s: not a combination", dp->d_namep);
 	return BRLCAD_ERROR;
     }
-    /* GED_DB_GET_INTERNAL(gedp, &intern, (fastf_t *)NULL, &rt_uniresource, BRLCAD_ERROR); */
-    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL) < 0) {
 	db_free_1anim(anp);
 	bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
 	return BRLCAD_ERROR;
@@ -119,7 +118,7 @@ ged_arced_core(struct ged *gedp, int argc, const char *argv[])
 	tp->tr_l.tl_mat = (matp_t)NULL;
     }
 
-    if (rt_db_put_internal(dp, gedp->dbip, &intern, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(dp, gedp->dbip, &intern) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Database write error, aborting");
 	goto fail;
     }
@@ -132,25 +131,13 @@ fail:
     return BRLCAD_ERROR;
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl arced_cmd_impl = {
-    "arced",
-    ged_arced_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd arced_cmd = { &arced_cmd_impl };
-const struct ged_cmd *arced_cmds[] = { &arced_cmd, NULL };
+#define GED_ARCED_COMMANDS(X, XID) \
+    X(arced, ged_arced_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  arced_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_ARCED_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_arced", 1, GED_ARCED_COMMANDS)
 
 /*
  * Local Variables:

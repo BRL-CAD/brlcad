@@ -1,0 +1,84 @@
+= brep_simple(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+brep_simple - constructs a simple boundary representation (b-rep) twisted cube
+
+== SYNOPSIS
+
+*brep_simple* [\-h] [\-?]
+
+
+[[description]]
+== DESCRIPTION
+
+*brep_simple* demonstrates the construction of a basic boundary representation (B-rep) twisted cube directly using the openNURBS API. The constructed cube is written to a new BRL-CAD geometry database named _brep_simple.g_ using the wdb interface. The object is constructed by first defining the vertices, then the twisted edges via trimming curves, and finally the faces to form the topology illustrated below:
+
+
+....
+
+
+                       H-------e6-------G
+                      /                /|
+                     / |              / |
+                    /  e7            /  e5
+                   /   |            /   |
+                  /                e10  |
+                 /     |          /     |
+                e11    E- - e4- -/- - - F
+               /                /      /
+              /      /         /      /
+             D---------e2-----C      e9
+             |     /          |     /
+             |    e8          |    /
+             e3  /            e1  /
+             |                |  /
+             | /              | /
+             |                |/
+             A-------e0-------B
+        
+....
+
+[[options]]
+== OPTIONS
+
+*-h*, *-?*::
+Print help and exit.
+
+
+[[examples]]
+== EXAMPLES
+
+.Running *brep_simple* and inspecting the output
+====
+[prompt]#brep_simple#::
+Run the command to generate _brep_simple.g_.
+
+[prompt]#mged brep_simple.g l cube.s#::
+List the details of the created boundary representation solid in *mged*.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*mged*(1), *libwdb*(3)
+
+
+[[author]]
+== AUTHORS
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 2004-2026 United States Government as represented by the U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

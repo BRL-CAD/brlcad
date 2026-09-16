@@ -138,7 +138,7 @@ if(ZLIB_FOUND)
     endif()
 
     if(NOT TARGET PNG::PNG)
-      add_library(PNG::PNG UNKNOWN IMPORTED)
+      add_library(PNG::PNG UNKNOWN IMPORTED GLOBAL)
       set_target_properties(
         PNG::PNG
         PROPERTIES

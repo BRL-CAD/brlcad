@@ -1,7 +1,7 @@
 /*                        E L L . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2025 United States Government as represented by
+ * Copyright (c) 1993-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,6 +29,8 @@
 #include "rt/defines.h"
 
 __BEGIN_DECLS
+
+RT_EXPORT extern int rt_ell_is_sph(const struct rt_db_internal* ip);
 
 /* TODO - can this move elsewhere? */
 RT_EXPORT extern void rt_ell_16pnts(fastf_t *ov,

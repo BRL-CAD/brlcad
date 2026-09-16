@@ -1,0 +1,90 @@
+= U-D(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+u-d - convert unsigned shorts to doubles
+
+== SYNOPSIS
+
+[source]
+----
+u-d [-n | scale] < shorts > doubles
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*u-d* reads a stream of 16-bit unsigned short integers from standard
+input and writes a stream of double-precision floating point values to
+standard output. It is the counterpart of *d-u*(1), which converts in
+the opposite direction.
+
+By default each value is copied unchanged (a scale factor of 1.0). If a
+numeric _scale_ argument is supplied, every value is multiplied by that
+factor before being written. A scale of zero is rejected as an error.
+
+Both standard input and standard output must be redirected; if standard
+input is a terminal *u-d* prints a usage message and exits. Data is
+processed in blocks of 512 values, so the byte ordering of the input
+shorts is that of the host machine.
+
+[[options]]
+== OPTIONS
+
+*-n*::
+  Normalize the data. Each unsigned short is multiplied by 1/65536,
+  mapping the full 0-65535 input range into the half-open interval
+  [0.0, 1.0). This is mutually exclusive with an explicit _scale_.
+
+*scale*::
+  A floating point factor by which every input value is multiplied. The
+  default is 1.0 (pass the values through unchanged). A value of 0 is an
+  error.
+
+[[examples]]
+== EXAMPLES
+
+.Normalize 16-bit samples for further processing
+====
+[source,bash]
+----
+u-d -n < heightfield.shorts > heightfield.d
+dstats < heightfield.d
+----
+Convert a file of unsigned shorts (for example a 16-bit elevation grid)
+into normalized doubles in the range [0.0, 1.0), then report statistics
+on the result with *dstats*(1).
+====
+
+.Apply a custom scale factor
+====
+[source,bash]
+----
+u-d 0.01 < sensor.shorts > sensor.d
+----
+Multiply every input sample by 0.01 while converting to doubles, for
+example to rescale raw fixed-point readings into engineering units.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *d-u*(1), *u-a*(1), *u-bw*(1), *u-f*(1)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

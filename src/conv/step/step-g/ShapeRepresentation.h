@@ -1,7 +1,7 @@
 /*                 ShapeRepresentation.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2025 United States Government as represented by
+ * Copyright (c) 1994-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -41,6 +41,7 @@ class ShapeRepresentation : public Representation
 {
 private:
     static std::string entityname;
+    static std::string tessellated_entityname;
     static EntityInstanceFunc GetInstance;
 
 protected:

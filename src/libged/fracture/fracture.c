@@ -1,7 +1,7 @@
 /*                        F R A C T U R E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -71,7 +71,7 @@ fracture_add_nmg_part(struct ged *gedp, char *newname, struct model *m)
     new_intern.idb_meth = &OBJ[ID_NMG];
     new_intern.idb_ptr = (void *)m;
 
-    if (rt_db_put_internal(new_dp, gedp->dbip, &new_intern, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(new_dp, gedp->dbip, &new_intern) < 0) {
 	/* Free memory */
 	nmg_km(m);
 	bu_vls_printf(gedp->ged_result_str, "rt_db_put_internal() failure\n");
@@ -127,7 +127,7 @@ ged_fracture_core(struct ged *gedp, int argc, const char *argv[])
     if ((old_dp = db_lookup(gedp->dbip, argv[1], LOOKUP_NOISY)) == RT_DIR_NULL)
 	return BRLCAD_ERROR;
 
-    if (rt_db_get_internal(&old_intern, old_dp, gedp->dbip, bn_mat_identity, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&old_intern, old_dp, gedp->dbip, bn_mat_identity) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "rt_db_get_internal() error\n");
 	return BRLCAD_ERROR;
     }
@@ -213,24 +213,13 @@ ged_fracture_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl fracture_cmd_impl = {
-    "fracture",
-    ged_fracture_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd fracture_cmd = { &fracture_cmd_impl };
-const struct ged_cmd *fracture_cmds[] = { &fracture_cmd, NULL };
+#define GED_FRACTURE_COMMANDS(X, XID) \
+    X(fracture, ged_fracture_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  fracture_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_FRACTURE_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_fracture", 1, GED_FRACTURE_COMMANDS)
 
 /*
  * Local Variables:

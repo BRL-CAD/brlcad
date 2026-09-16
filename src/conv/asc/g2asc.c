@@ -1,7 +1,7 @@
 /*                         G 2 A S C . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2025 United States Government as represented by
+ * Copyright (c) 1985-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -35,6 +35,7 @@
 
 #include "bu/app.h"
 #include "bu/debug.h"
+#include "bu/file.h"
 #include "bu/opt.h"
 #include "bu/units.h"
 #include "vmath.h"
@@ -46,11 +47,13 @@
 
 const mat_t id_mat = MAT_INIT_IDN; /* identity matrix for pipes */
 
-char *strchop(char *str, size_t len);
+const char *strchop(char *str, size_t len);
 #define CH(x)	strchop(x, sizeof(x))
 
 int	combdump(void);
-void	idendump(void), polyhead(void), polydata(void);
+void	idendump(void);
+void f_polyhead(void);
+void f_polydata(void);
 void	soldump(void), extrdump(void), sketchdump(void);
 void	membdump(union record *rp), arsadump(void), arsbdump(void);
 void	materdump(void), bspldump(void), bsurfdump(void);
@@ -68,7 +71,7 @@ Usage: g2asc file.g file.asc\n\
 
 FILE	*ifp;
 FILE	*ofp;
-char	*iname = "-";
+const char	*iname = "-";
 
 static char *tclified_name=NULL;
 static size_t tclified_name_buffer_len=0;
@@ -169,6 +172,10 @@ main(int argc, char **argv)
 	if (BU_STR_EQUAL(argv[1], "-")) {
 	    ofp = stdout;
 	} else {
+	    if (bu_file_same(iname, argv[1])) {
+		fclose(ifp);
+		bu_exit(1, "g2asc: input and output are the same file.");
+	    }
 	    ofp = fopen(argv[1], "wb");
 	}
 
@@ -299,7 +306,7 @@ main(int argc, char **argv)
 		continue;
 	    }
 
-	    if (rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource) < 0) {
+	    if (rt_db_get_internal(&intern, dp, dbip, NULL) < 0) {
 		bu_log("Unable to read '%s', skipping\n", dp->d_namep);
 		continue;
 	    }
@@ -387,10 +394,10 @@ top:
 		arsadump();
 		continue;
 	    case ID_P_HEAD:
-		polyhead();
+		f_polyhead();
 		continue;
 	    case ID_P_DATA:
-		polydata();
+		f_polydata();
 		continue;
 	    case ID_IDENT:
 		idendump();
@@ -450,8 +457,9 @@ top:
  *  converting unprintable characters to something printable.
  *  Here we deal with names not being null-terminated.
  */
-char *encode_name(char *str)
+const char *encode_name(char *str)
 {
+    static const char *nbuf = "-=NULL=-";
     static char buf[NAMESIZE+1];
     char *ip = str;
     char *op = buf;
@@ -477,9 +485,9 @@ char *encode_name(char *str)
 	/* Null input name */
 	fprintf(stderr,
 		      "g2asc:  NULL object name converted to -=NULL=-\n");
-	return "-=NULL=-";
+	return nbuf;
     }
-    return buf;
+    return (const char *)buf;
 }
 
 
@@ -615,7 +623,7 @@ idendump(void)	/* Print out Ident record information */
 }
 
 void
-polyhead(void)	/* Print out Polyhead record information */
+f_polyhead(void)	/* Print out Polyhead record information */
 {
     fprintf(ofp, "%c ", record.p.p_id);		/* P */
     fprintf(ofp, "%.16s", encode_name(record.p.p_name));	/* unique name */
@@ -623,7 +631,7 @@ polyhead(void)	/* Print out Polyhead record information */
 }
 
 void
-polydata(void)	/* Print out Polydata record information */
+f_polydata(void)	/* Print out Polydata record information */
 {
     int i, j;
 
@@ -674,7 +682,7 @@ cline_dump(void)
 
     /* Hand off to librt's import() routine */
     RT_DB_INTERNAL_INIT(&intern);
-    if ((OBJ[ID_CLINE].ft_import4(&intern, &ext, id_mat, DBI_NULL, &rt_uniresource)) != 0) {
+    if ((OBJ[ID_CLINE].ft_import4(&intern, &ext, id_mat, DBI_NULL)) != 0) {
 	fprintf(stderr, "g2asc: cline import failure\n");
 	bu_exit(-1, NULL);
     }
@@ -709,7 +717,7 @@ bot_dump(void)
 
     /* Hand off to librt's import() routine */
     RT_DB_INTERNAL_INIT(&intern);
-    if ((OBJ[ID_BOT].ft_import4(&intern, &ext, id_mat, DBI_NULL, &rt_uniresource)) != 0) {
+    if ((OBJ[ID_BOT].ft_import4(&intern, &ext, id_mat, DBI_NULL)) != 0) {
 	fprintf(stderr, "g2asc: bot import failure\n");
 	bu_exit(-1, NULL);
     }
@@ -762,7 +770,7 @@ pipe_dump(void)	/* Print out Pipe record information */
 
     /* Hand off to librt's import() routine */
     RT_DB_INTERNAL_INIT(&intern);
-    if ((OBJ[ID_PIPE].ft_import4(&intern, &ext, id_mat, NULL, &rt_uniresource)) != 0) {
+    if ((OBJ[ID_PIPE].ft_import4(&intern, &ext, id_mat, NULL)) != 0) {
 	fprintf(stderr, "g2asc: pipe import failure\n");
 	bu_exit(-1, NULL);
     }
@@ -812,7 +820,7 @@ particle_dump(void)
 
     /* Hand off to librt's import() routine */
     RT_DB_INTERNAL_INIT(&intern);
-    if ((OBJ[ID_PARTICLE].ft_import4(&intern, &ext, id_mat, NULL, &rt_uniresource)) != 0) {
+    if ((OBJ[ID_PARTICLE].ft_import4(&intern, &ext, id_mat, NULL)) != 0) {
 	fprintf(stderr, "g2asc: particle import failure\n");
 	bu_exit(-1, NULL);
     }
@@ -869,7 +877,7 @@ arbn_dump(void)
 
     /* Hand off to librt's import() routine */
     RT_DB_INTERNAL_INIT(&intern);
-    if ((OBJ[ID_ARBN].ft_import4(&intern, &ext, id_mat, NULL, &rt_uniresource)) != 0) {
+    if ((OBJ[ID_ARBN].ft_import4(&intern, &ext, id_mat, NULL)) != 0) {
 	fprintf(stderr, "g2asc: arbn import failure\n");
 	bu_exit(-1, NULL);
     }
@@ -1179,8 +1187,9 @@ bsurfdump(void)	/* Print d-spline surface description record information */
  *  Take a string and a length, and null terminate,
  *  converting unprintable characters to something printable.
  */
-char *strchop(char *str, size_t len)
+const char *strchop(char *str, size_t len)
 {
+    static const char *sbuf = "-=STRING=-";
     static char buf[10000] = {0};
     char *ip = str;
     char *op = buf;
@@ -1210,9 +1219,9 @@ char *strchop(char *str, size_t len)
 	/* Null input name */
 	fprintf(stderr,
 		      "g2asc:  NULL string converted to -=STRING=-\n");
-	return "-=STRING=-";
+	return sbuf;
     }
-    return buf;
+    return (const char *)buf;
 }
 
 void
@@ -1230,7 +1239,7 @@ extrdump(void)
 
     /* Hand off to librt's import() routine */
     RT_DB_INTERNAL_INIT(&intern);
-    if ((OBJ[ID_EXTRUDE].ft_import4(&intern, &ext, id_mat, DBI_NULL, &rt_uniresource)) != 0) {
+    if ((OBJ[ID_EXTRUDE].ft_import4(&intern, &ext, id_mat, DBI_NULL)) != 0) {
 	fprintf(stderr, "g2asc: extrusion import failure\n");
 	bu_exit(-1, NULL);
     }
@@ -1265,7 +1274,7 @@ sketchdump(void)
 
     /* Hand off to librt's import() routine */
     RT_DB_INTERNAL_INIT(&intern);
-    if ((OBJ[ID_SKETCH].ft_import4(&intern, &ext, id_mat, DBI_NULL, &rt_uniresource)) != 0) {
+    if ((OBJ[ID_SKETCH].ft_import4(&intern, &ext, id_mat, DBI_NULL)) != 0) {
 	fprintf(stderr, "g2asc: sketch import failure\n");
 	bu_exit(-1, NULL);
     }

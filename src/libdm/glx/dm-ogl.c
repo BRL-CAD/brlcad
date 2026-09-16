@@ -1,7 +1,7 @@
 /*                        D M - O G L . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2025 United States Government as represented by
+ * Copyright (c) 1988-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -48,54 +48,28 @@
 #  include <X11/extensions/XInput.h>
 #endif /* HAVE_X11_XINPUT_H */
 
-/* glx.h on Mac OS X (and perhaps elsewhere) defines a slew of
- * parameter names that shadow system symbols.  protect the system
- * symbols by redefining the parameters prior to header inclusion.
- */
-#define j1 J1
-#define y1 Y1
-#define read rd
-#define index idx
-#define access acs
-#define remainder rem
-#ifdef HAVE_GL_GLX_H
-#  include <GL/glx.h>
-#  ifdef HAVE_XRENDER
-#    include <X11/extensions/Xrender.h>
-#  endif
-#endif
-#ifdef HAVE_GL_GL_H
-#  include <GL/gl.h>
-#endif
-
-#undef remainder
-#undef access
-#undef index
-#undef read
-#undef y1
-#undef j1
-
 #include "png.h"
-
-#include "tk.h"
 
 #if defined(__clang__)
 #  pragma clang diagnostic pop /* end ignoring warnings */
 #endif
 
-
 #undef VMIN		/* is used in vmath.h, too */
 
 #include "vmath.h"
 #include "bn.h"
+#include "bu/file.h"
+#include "bu/process.h"
 #include "bv/defines.h"
 #include "dm.h"
 #include "../null/dm-Null.h"
-#include "../dm-gl.h"
 #include "./fb_ogl.h"
 #include "./dm-ogl.h"
 
+#include "tk.h"
+
 #include "../include/private.h"
+#include "../include/x11_font.h"
 
 #define ENABLE_POINT_SMOOTH 1
 
@@ -109,6 +83,34 @@
 #define YOFFSET_LEFT	532	/* YSTEREO + YBLANK ? */
 
 static XVisualInfo *ogl_choose_visual(struct dm *dmp, Tk_Window tkwin);
+
+static int
+ogl_runtime_probe(const char *dpy_string)
+{
+#ifdef __APPLE__
+    const char *probe_path = bu_dir(NULL, 0, BU_DIR_BIN, "dm_ogl_probe", BU_DIR_EXT, NULL);
+    const char *probe_av[3] = {NULL, NULL, NULL};
+    struct bu_process *p = NULL;
+    int rc = 0;
+
+    if (!probe_path || !bu_file_executable(probe_path)) {
+	return 0;
+    }
+
+    probe_av[0] = probe_path;
+    if (dpy_string && dpy_string[0] != '\0') {
+	probe_av[1] = dpy_string;
+    }
+
+    bu_process_create(&p, probe_av, BU_PROCESS_DEFAULT);
+    rc = bu_process_wait_n(&p, 3000);
+
+    return (rc == 0) ? 1 : -1;
+#else
+    (void)dpy_string;
+    return 0;
+#endif
+}
 
 /* Display Manager package interface */
 #define IRBOUND 4095.9	/* Max magnification in Rot matrix */
@@ -169,7 +171,7 @@ ogl_configureWin_guts(struct dm *dmp, int force)
     }
 
     if (DM_VALID_FONT_SIZE(dmp->i->dm_fontsize)) {
-	if (pubvars->fontstruct->per_char->width != dmp->i->dm_fontsize) {
+	if (dm_x11_font_width(pubvars->fontstruct) != dmp->i->dm_fontsize) {
 	    if ((newfontstruct = XLoadQueryFont(pubvars->dpy,
 						DM_FONT_SIZE_TO_NAME(dmp->i->dm_fontsize))) != NULL) {
 		XFreeFont(pubvars->dpy,
@@ -184,7 +186,7 @@ ogl_configureWin_guts(struct dm *dmp, int force)
 	 */
 
 	if (dmp->i->dm_width < 582) {
-	    if (pubvars->fontstruct->per_char->width != 5) {
+	    if (dm_x11_font_width(pubvars->fontstruct) != 5) {
 		if ((newfontstruct = XLoadQueryFont(pubvars->dpy,
 						    FONT5)) != NULL) {
 		    XFreeFont(pubvars->dpy,
@@ -195,7 +197,7 @@ ogl_configureWin_guts(struct dm *dmp, int force)
 		}
 	    }
 	} else if (dmp->i->dm_width < 679) {
-	    if (pubvars->fontstruct->per_char->width != 6) {
+	    if (dm_x11_font_width(pubvars->fontstruct) != 6) {
 		if ((newfontstruct = XLoadQueryFont(pubvars->dpy,
 						    FONT6)) != NULL) {
 		    XFreeFont(pubvars->dpy,
@@ -206,7 +208,7 @@ ogl_configureWin_guts(struct dm *dmp, int force)
 		}
 	    }
 	} else if (dmp->i->dm_width < 776) {
-	    if (pubvars->fontstruct->per_char->width != 7) {
+	    if (dm_x11_font_width(pubvars->fontstruct) != 7) {
 		if ((newfontstruct = XLoadQueryFont(pubvars->dpy,
 						    FONT7)) != NULL) {
 		    XFreeFont(pubvars->dpy,
@@ -217,7 +219,7 @@ ogl_configureWin_guts(struct dm *dmp, int force)
 		}
 	    }
 	} else if (dmp->i->dm_width < 873) {
-	    if (pubvars->fontstruct->per_char->width != 8) {
+	    if (dm_x11_font_width(pubvars->fontstruct) != 8) {
 		if ((newfontstruct = XLoadQueryFont(pubvars->dpy,
 						    FONT8)) != NULL) {
 		    XFreeFont(pubvars->dpy,
@@ -228,7 +230,7 @@ ogl_configureWin_guts(struct dm *dmp, int force)
 		}
 	    }
 	} else if (dmp->i->dm_width < 1455) {
-	    if (pubvars->fontstruct->per_char->width != 9) {
+	    if (dm_x11_font_width(pubvars->fontstruct) != 9) {
 		if ((newfontstruct = XLoadQueryFont(pubvars->dpy,
 						    FONT9)) != NULL) {
 		    XFreeFont(pubvars->dpy,
@@ -239,7 +241,7 @@ ogl_configureWin_guts(struct dm *dmp, int force)
 		}
 	    }
 	} else if (dmp->i->dm_width < 2037) {
-	    if (pubvars->fontstruct->per_char->width != 10) {
+	    if (dm_x11_font_width(pubvars->fontstruct) != 10) {
 		if ((newfontstruct = XLoadQueryFont(pubvars->dpy,
 						    FONT10)) != NULL) {
 		    XFreeFont(pubvars->dpy,
@@ -250,7 +252,7 @@ ogl_configureWin_guts(struct dm *dmp, int force)
 		}
 	    }
 	} else {
-	    if (pubvars->fontstruct->per_char->width != 12) {
+	    if (dm_x11_font_width(pubvars->fontstruct) != 12) {
 		if ((newfontstruct = XLoadQueryFont(pubvars->dpy,
 						    FONT12)) != NULL) {
 		    XFreeFont(pubvars->dpy,
@@ -519,6 +521,12 @@ ogl_viable(const char *dpy_string)
 {
     Display *dpy;
     int return_val;
+
+    return_val = ogl_runtime_probe(dpy_string);
+    if (return_val != 0) {
+	return return_val;
+    }
+
     if ((dpy = XOpenDisplay(dpy_string)) != NULL) {
 	if (XQueryExtension(dpy, "GLX", &return_val, &return_val, &return_val)) {
 	    XCloseDisplay(dpy);
@@ -1329,7 +1337,10 @@ ogl_write_image(struct bu_vls *msgs, FILE *fp, struct dm *dmp)
 		dbyte3 = dbyte0 + 3;
 
 		*dbyte0 = (pixel & ximage_p->red_mask) >> red_shift;
-		*dbyte1 = (pixel & ximage_p->green_mask) >> green_shift;
+		if (0 <= green_shift)
+		    *dbyte1 = (pixel & ximage_p->green_mask) >> green_shift;
+		else
+		    *dbyte1 = (pixel & ximage_p->green_mask) << -green_shift;
 		*dbyte2 = (pixel & ximage_p->blue_mask) >> blue_shift;
 		*dbyte3 = 255;
 	    }
@@ -1355,7 +1366,10 @@ ogl_write_image(struct bu_vls *msgs, FILE *fp, struct dm *dmp)
 		else
 		    *dbyte0 = (pixel & ximage_p->red_mask) << -red_shift;
 
-		*dbyte1 = (pixel & ximage_p->green_mask) >> green_shift;
+		if (0 <= green_shift)
+		    *dbyte1 = (pixel & ximage_p->green_mask) >> green_shift;
+		else
+		    *dbyte1 = (pixel & ximage_p->green_mask) << -green_shift;
 
 		if (0 <= blue_shift)
 		    *dbyte2 = (pixel & ximage_p->blue_mask) >> blue_shift;
@@ -1518,7 +1532,8 @@ struct dm_impl dm_ogl_impl = {
     FB_NULL,
     0,				/* Tcl interpreter */
     NULL,                       /* Drawing context */
-    NULL                        /* App data */
+    NULL,                       /* App data */
+    NULL                        /* dlist sensors */
 };
 
 struct dm dm_ogl = { DM_MAGIC, &dm_ogl_impl, 0 };

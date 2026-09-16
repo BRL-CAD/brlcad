@@ -1,0 +1,46 @@
+= NMG_MOVE_V(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+nmg_move_v - move an NMG vertex to a new position
+
+== SYNOPSIS
+
+[source]
+----
+nmg_move_v nmg_name V x_old y_old z_old x_new y_new z_new
+----
+
+[[description]]
+== DESCRIPTION
+
+The *nmg_move_v* command moves an existing vertex in the NMG solid `nmg_name` from its current model-space position `(x_old, y_old, z_old)` to a new position `(x_new, y_new, z_new)`. The literal token `V` must appear as the second argument. Exactly six coordinate values (three for the old position and three for the new position) are required.
+
+The vertex is found by matching its stored coordinates to the `(x_old, y_old, z_old)` values. All edges and faces attached to that vertex are updated in place to reflect the new position.
+
+Use `labelvert nmg_name` to display the current vertex coordinates before running this command.
+
+The *nmg_move_v* command is the standalone form of the `nmg <object> move V` subcommand.
+
+[[examples]]
+== EXAMPLES
+
+.Move a vertex to a new position
+[example]
+====
+mged> **nmg_move_v my_nmg.s V 50 100 0 50 150 25**
+
+Moves the vertex at (50, 100, 0) to the new position (50, 150, 25) in `my_nmg.s`.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

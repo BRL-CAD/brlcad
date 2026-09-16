@@ -1,7 +1,7 @@
 /*                      S H _ G A U S S . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2025 United States Government as represented by
+ * Copyright (c) 1998-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -107,21 +107,20 @@ struct gauss_specific gauss_defaults = {
 };
 
 
-#define SHDR_NULL ((struct gauss_specific *)0)
-#define SHDR_O(m) bu_offsetof(struct gauss_specific, m)
+#define GAUSS_SHDR_O(m) bu_offsetof(struct gauss_specific, m)
 
 /* description of how to parse/print the arguments to the shader
  * There is at least one line here for each variable in the shader specific
  * structure above
  */
 struct bu_structparse gauss_print_tab[] = {
-    {"%g", 1, "sigma",		SHDR_O(gauss_sigma),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "sigma",		GAUSS_SHDR_O(gauss_sigma),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",   0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 
 };
 struct bu_structparse gauss_parse_tab[] = {
     {"%p", 1, "gauss_print_tab", bu_byteoffset(gauss_print_tab[0]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%g", 1, "s",			SHDR_O(gauss_sigma),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "s",			GAUSS_SHDR_O(gauss_sigma),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",   0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
@@ -149,7 +148,7 @@ struct mfuncs gauss_mfuncs[] = {
 
 
 static void
-tree_solids(union tree *tp, struct tree_bark *tb, int op, struct resource *resp)
+tree_solids(union tree *tp, struct tree_bark *tb, int op)
 {
     RT_CK_TREE(tp);
 
@@ -174,7 +173,7 @@ tree_solids(union tree *tp, struct tree_bark *tb, int op, struct resource *resp)
 		mp = (matp_t)bn_mat_identity;
 
 	    /* Get the internal form of this solid & add it to the list */
-	    ret = rt_db_get_internal(&dbint->ip, tp->tr_a.tu_stp->st_dp, tb->dbip, mp, resp);
+	    ret = rt_db_get_internal(&dbint->ip, tp->tr_a.tu_stp->st_dp, tb->dbip, mp);
 	    if (ret < 0) {
 		bu_log("Failure reading %s object from database.\n", OBJ[sol_id].ft_name);
 		return;
@@ -256,18 +255,18 @@ tree_solids(union tree *tp, struct tree_bark *tb, int op, struct resource *resp)
 	    break;
 	}
 	case OP_UNION:
-	    tree_solids(tp->tr_b.tb_left, tb, tp->tr_op, resp);
-	    tree_solids(tp->tr_b.tb_right, tb, tp->tr_op, resp);
+	    tree_solids(tp->tr_b.tb_left, tb, tp->tr_op);
+	    tree_solids(tp->tr_b.tb_right, tb, tp->tr_op);
 	    break;
 
 	case OP_NOT: bu_log("Warning: 'Not' region operator in %s\n", tb->name);
-	    tree_solids(tp->tr_b.tb_left, tb, tp->tr_op, resp);
+	    tree_solids(tp->tr_b.tb_left, tb, tp->tr_op);
 	    break;
 	case OP_GUARD:bu_log("Warning: 'Guard' region operator in %s\n", tb->name);
-	    tree_solids(tp->tr_b.tb_left, tb, tp->tr_op, resp);
+	    tree_solids(tp->tr_b.tb_left, tb, tp->tr_op);
 	    break;
 	case OP_XNOP:bu_log("Warning: 'XNOP' region operator in %s\n", tb->name);
-	    tree_solids(tp->tr_b.tb_left, tb, tp->tr_op, resp);
+	    tree_solids(tp->tr_b.tb_left, tb, tp->tr_op);
 	    break;
 
 	case OP_INTERSECT:
@@ -276,8 +275,8 @@ tree_solids(union tree *tp, struct tree_bark *tb, int op, struct resource *resp)
 	    /* XXX this can get us in trouble if 1 solid is subtracted
 	     * from less than all the "union" solids of the region.
 	     */
-	    tree_solids(tp->tr_b.tb_left, tb, tp->tr_op, resp);
-	    tree_solids(tp->tr_b.tb_right, tb, tp->tr_op, resp);
+	    tree_solids(tp->tr_b.tb_left, tb, tp->tr_op);
+	    tree_solids(tp->tr_b.tb_right, tb, tp->tr_op);
 	    return;
 
 	default:
@@ -340,7 +339,7 @@ gauss_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, cons
     tb.name = rp->reg_name;
     tb.gs = gauss_sp;
 
-    tree_solids (rp->reg_treetop, &tb, OP_UNION, &rt_uniresource);
+    tree_solids(rp->reg_treetop, &tb, OP_UNION);
 
 
     /* XXX If this puppy isn't axis-aligned, we should come up with a

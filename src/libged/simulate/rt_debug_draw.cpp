@@ -1,7 +1,7 @@
 /*               R T _ D E B U G _ D R A W . C P P
  * BRL-CAD
  *
- * Copyright (c) 2014-2025 United States Government as represented by
+ * Copyright (c) 2014-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,6 +29,7 @@
 
 #ifdef HAVE_BULLET
 
+#include <random>
 
 #include "rt_debug_draw.hpp"
 #include "utility.hpp"
@@ -54,8 +55,10 @@ make_name(const db_i &db, const std::string &base)
     std::ostringstream stream;
     stream.exceptions(std::ostream::failbit | std::ostream::badbit);
 
-    unsigned long object_number = static_cast<unsigned long>
-    (drand48() * std::numeric_limits<unsigned long>::max() + 0.5);
+
+    std::mt19937_64 rng(std::random_device{}());
+    std::uniform_int_distribution<unsigned long> dist;
+    unsigned long object_number = dist(rng);
 
     do {
 	stream.str("");
@@ -116,7 +119,6 @@ RtDebugDraw::reportErrorWarning(const char * const message)
 	bu_bomb("missing argument");
 
     bu_log("WARNING: Bullet: %s\n", message);
-    bu_bomb(message);
 }
 
 
@@ -138,12 +140,9 @@ RtDebugDraw::drawLine(const btVector3 &from, const btVector3 &to,
 
 void
 RtDebugDraw::draw3dText(const btVector3 &UNUSED(location),
-			const char * const text)
+			const char * const UNUSED(text))
 {
-    if (!text)
-	bu_bomb("missing argument");
-
-    bu_bomb("not implemented");
+    /* not implemented */
 }
 
 

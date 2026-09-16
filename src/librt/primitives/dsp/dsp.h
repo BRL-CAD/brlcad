@@ -1,7 +1,7 @@
 /*                           D S P . H
  * BRL-CAD
  *
- * Copyright (c) 2011-2025 United States Government as represented by
+ * Copyright (c) 2011-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -43,6 +43,12 @@ rt_dsp_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
 
 extern int
 rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol);
+
+extern int
+rt_dsp_cell_cut(const struct rt_dsp_internal *dsp, size_t cx, size_t cy, size_t xsiz, size_t ysiz);
+
+extern struct rt_dsp_internal *
+rt_dsp_internal_from_ip(const struct rt_db_internal *ip);
 
 __END_DECLS
 

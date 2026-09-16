@@ -33,6 +33,7 @@ set(
   make_pkg.sh
   make_rpm.sh
   news2tracker.sh
+  renderer-showcase.sh
   template.sh
   ws.sh
   sandbox/metaring.sh

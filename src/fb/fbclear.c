@@ -1,7 +1,7 @@
 /*                       F B C L E A R . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2025 United States Government as represented by
+ * Copyright (c) 1986-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,11 +27,14 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 
 #include "bu/app.h"
 #include "bu/color.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/exit.h"
 #include "dm.h"
 #include "pkg.h"
@@ -68,15 +71,19 @@ get_args(int argc, char **argv)
 		break;
 	    case 's':
 	    case 'S':
-		scr_height = scr_width = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &scr_width, 1, INT_MAX, "screen size"))
+		    return 0;
+		scr_height = scr_width;
 		break;
 	    case 'w':
 	    case 'W':
-		scr_width = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &scr_width, 1, INT_MAX, "screen width"))
+		    return 0;
 		break;
 	    case 'n':
 	    case 'N':
-		scr_height = atoi(bu_optarg);
+		if (!bu_opt_scan_int_range(bu_optarg, &scr_height, 1, INT_MAX, "screen height"))
+		    return 0;
 		break;
 
 	    default:		/* '?' 'h' */
@@ -90,8 +97,34 @@ get_args(int argc, char **argv)
 int
 main(int argc, char **argv)
 {
+    static RGBpixel pixel;
+    int remaining = 0;
+    int use_custom_pixel = 0;
+
     bu_setprogname(argv[0]);
     if (!get_args(argc, argv)) {
+	(void)fputs(usage, stderr);
+	bu_exit(1, NULL);
+    }
+
+    remaining = argc - bu_optind;
+    if (remaining == 3) {
+	if (!bu_opt_scan_uchar(argv[bu_optind+0], &pixel[RED], "red value")
+	    || !bu_opt_scan_uchar(argv[bu_optind+1], &pixel[GRN], "green value")
+	    || !bu_opt_scan_uchar(argv[bu_optind+2], &pixel[BLU], "blue value")) {
+	    (void)fputs(usage, stderr);
+	    bu_exit(1, NULL);
+	}
+	use_custom_pixel = 1;
+    } else if (remaining == 1) {
+	if (!bu_opt_scan_uchar(argv[bu_optind+0], &pixel[RED], "gray value")) {
+	    (void)fputs(usage, stderr);
+	    bu_exit(1, NULL);
+	}
+	pixel[GRN] = pixel[BLU] = pixel[RED];
+	use_custom_pixel = 1;
+    } else if (remaining != 0) {
+	fprintf(stderr, "fbclear: expected 0, 1, or 3 color arguments, got %d\n", remaining);
 	(void)fputs(usage, stderr);
 	bu_exit(1, NULL);
     }
@@ -122,20 +155,9 @@ main(int argc, char **argv)
 	}
     }
 
-    if (bu_optind+3 == argc) {
-	static RGBpixel pixel;
-	pixel[RED] = (u_char) atoi(argv[bu_optind+0]);
-	pixel[GRN] = (u_char) atoi(argv[bu_optind+1]);
-	pixel[BLU] = (u_char) atoi(argv[bu_optind+2]);
-	fb_clear(fbp, pixel);
-    } else if (bu_optind+1 == argc) {
-	static RGBpixel pixel;
-	pixel[RED] = pixel[GRN] = pixel[BLU]
-	    = (u_char) atoi(argv[bu_optind+0]);
+    if (use_custom_pixel) {
 	fb_clear(fbp, pixel);
     } else {
-	if (bu_optind != argc)
-	    fprintf(stderr, "fbclear: extra arguments ignored\n");
 	fb_clear(fbp, PIXEL_NULL);
     }
     (void)fb_close(fbp);

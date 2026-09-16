@@ -1,7 +1,7 @@
 /*                    P L O T 3 C O L O R . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2025 United States Government as represented by
+ * Copyright (c) 1986-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -25,11 +25,14 @@
 
 #include "common.h"
 
+#include <errno.h>
 #include <stdlib.h>
 #include "bio.h"
 
 #include "bu/app.h"
 #include "bu/exit.h"
+#include "bu/log.h"
+#include "bu/opt.h"
 #include "vmath.h"
 #include "bv/plot3.h"
 
@@ -57,9 +60,11 @@ main(int argc, char **argv)
 	    putchar(c);
     }
 
-    r = atoi(argv[1]);
-    g = atoi(argv[2]);
-    b = atoi(argv[3]);
+    if (!bu_opt_scan_int_range(argv[1], &r, 0, 255, "red component") ||
+	!bu_opt_scan_int_range(argv[2], &g, 0, 255, "green component") ||
+	!bu_opt_scan_int_range(argv[3], &b, 0, 255, "blue component")) {
+	return 1;
+    }
 
     pl_color(stdout, r, g, b);
     return 0;

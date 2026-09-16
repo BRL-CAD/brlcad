@@ -1,0 +1,59 @@
+= SV(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD MGED Commands
+
+== NAME
+sv - Moves the view center to (_x, y, z_).
+
+== SYNOPSIS
+
+[source]
+----
+sv {x y} [z]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Moves the view center to (_x, y, z_). If _z_ is not provided, then _z_=0 is used. The parameters _x, y, z_ are  values relative to the screen. For example, the center of the screen is (0, 0, 0) and the far right side (half way up) is (1, 0, 0). The y values depend on the shape of the graphics window. If the window is square then the top middle would be (0, 1, 0). If it is a rectangle that is wider than it is tall, then (0, 1, 0) would be off the screen.
+
+
+[[examples]]
+== EXAMPLES
+
+The two examples show the use of the *sv* command to move the view center to a particular location on the screen.
+
+.Keep the view center at the center of the screen.
+[example]
+====
+mged>**sv 0 0 0**
+
+The view is unchanged.
+
+====
+
+.Move the view center half way between the current view center and the right side of the view screen.
+[example]
+====
+mged>**sv .5 0 0**
+
+The view center is moved half way between the current view center and the right side of the view screen.
+
+====
+[[see_also]]
+== SEE ALSO
+
+*view*(nged)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

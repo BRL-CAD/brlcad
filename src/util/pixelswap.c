@@ -1,7 +1,7 @@
 /*                     P I X E L S W A P . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2025 United States Government as represented by
+ * Copyright (c) 2004-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -25,6 +25,8 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -32,6 +34,7 @@
 
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/exit.h"
 #include "dm.h"
 
@@ -46,7 +49,6 @@ unsigned char obuf[32767 * 3];
 #define RGBCMP(a, b) ((a) == (b)[0] && \
 		      (a)[1] == (b)[1] && \
 		      (a)[2] == (b)[2])
-
 
 void
 usage(const char *s)
@@ -73,10 +75,8 @@ parse_args(int ac, char **av)
     while ((c=bu_getopt(ac, av, options)) != -1) {
 	switch (c) {
 	    case 'd':
-		if ((c=atoi(bu_optarg)) > 0)
-		    depth = c;
-		else
-		    fprintf(stderr, "bad # of bytes per pixel (%d)\n", c);
+		if (!bu_opt_scan_int_range(bu_optarg, &depth, 1, INT_MAX, "pixel depth"))
+		    usage("");
 
 		break;
 
@@ -109,18 +109,21 @@ int main(int ac, char **av)
 
     if (i+6 > ac)
 	usage("missing pixel value(s)\n");
+    if (i+6 < ac)
+	usage("excess pixel value(s)\n");
 
     if (isatty(fileno(stdout)) || isatty(fileno(stdin)))
 	usage("Redirect standard input and output\n");
 
     /* get pixel values */
-    r = atoi(av[i++]);
-    g = atoi(av[i++]);
-    b = atoi(av[i++]);
-
-    R = atoi(av[i++]);
-    G = atoi(av[i++]);
-    B = atoi(av[i]);
+    if (!bu_opt_scan_uchar(av[i++], &r, "input red value") ||
+	!bu_opt_scan_uchar(av[i++], &g, "input green value") ||
+	!bu_opt_scan_uchar(av[i++], &b, "input blue value") ||
+	!bu_opt_scan_uchar(av[i++], &R, "output red value") ||
+	!bu_opt_scan_uchar(av[i++], &G, "output green value") ||
+	!bu_opt_scan_uchar(av[i], &B, "output blue value")) {
+	return 1;
+    }
 
     /* process stdin */
     while ((pixels = fread(ibuf, 3, sizeof(ibuf)/3, stdin)) > 0) {

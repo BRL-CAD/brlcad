@@ -1,0 +1,54 @@
+= DBFIND(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+dbfind - Displays all combinations that have any of the _objects_ specified as a member.
+
+== SYNOPSIS
+
+[source]
+----
+dbfind [-a] <objects>
+----
+
+[[description]]
+== DESCRIPTION
+
+The *dbfind* command searches the BRL-CAD database and displays a list of all combination objects (regions, assemblies, etc.) that have any of the specified _objects_ as a member.
+
+Note that this command only searches through non-hidden combination nodes unless the `-a` option is used. The *dbfind* command is an exact alias of the *find* command.
+
+[[options]]
+== OPTIONS
+
+*-a*::
+Include hidden objects in the search.
+
+[[examples]]
+== EXAMPLES
+
+.Display all combinations that refer to a specified object
+[example]
+====
+mged> **dbfind shapea**
+
+Lists the names of all non-hidden combinations that refer to _shapea_ as a member.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*db*(nged), *search*(nged)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

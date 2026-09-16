@@ -1,0 +1,59 @@
+= PIPE_APPEND_PNT(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+pipe_append_pnt - Append a control point to the end of a PIPE primitive.
+
+== SYNOPSIS
+
+[source]
+----
+pipe_append_pnt pipe {x y z}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+The *pipe_append_pnt* command appends a control point to the end of the
+specified PIPE primitive.
+
+The point argument is interpreted in the current view. The command preserves the
+depth of the existing end point and uses the supplied view-space position to
+compute the new model-space location.
+
+The alternate command name *mouse_append_pipe_pnt* is also available.
+
+
+[[examples]]
+== EXAMPLES
+
+.Append a new point to the end of a pipe.
+[example]
+====
+mged> **pipe_append_pnt fuel_line.s {125 40 0}**
+
+Adds a new PIPE point to the end of _fuel_line.s_ using the current view for
+placement.
+
+====
+
+
+[[see_also]]
+== SEE ALSO
+
+*mouse_append_pipe_pnt*(nged), *pipe_move_pnt*(nged), *pipe_prepend_pnt*(nged)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

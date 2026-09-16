@@ -1,0 +1,88 @@
+= ASC2DSP(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+asc2dsp - convert an ASCII displacement map file to BRL-CAD binary dsp format
+
+== SYNOPSIS
+
+[source]
+----
+asc2dsp [-h] file.asc file.dsp
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*asc2dsp* converts ASCII (decimal integer) point data files to the BRL-CAD binary *dsp* (displacement map) format. The input file should contain whitespace-delimited, unsigned decimal integers ranging from 0 to 65535. The output is a *dsp* binary file containing one network unsigned short integer per cell.
+
+When used to create a *dsp* object in *mged*(1), the grid is oriented in the X-Y plane. The first cell defined in the ASCII file becomes the bottom-left cell (X=0, Y=0), with its bottom at Z=0 and its top at Z equal to the input value. Data is read from bottom to top, left to right, similar to the *pix*(5) format. Since whitespace is ignored, you can format the input grid row by row for readability.
+
+To author an input file in a natural top-down viewing order, create it row by row from top to bottom, and then reverse the lines using the *tac*(1) utility before processing with *asc2dsp*.
+
+The total number of input cells must match the product of the width and length intended for the *dsp* object.
+
+
+[[options]]
+== OPTIONS
+
+*-h*, *-?*, *--help*::
+  Print a usage message and exit.
+
+
+[[examples]]
+== EXAMPLES
+
+.Converting an ASCII displacement map to binary dsp
+====
+[source]
+----
+$ asc2dsp terrain.asc terrain.dsp
+----
+
+Converts the ASCII file 'terrain.asc' to the binary displacement map format and saves it as 'terrain.dsp'.
+====
+
+.Creating a dsp file using tac for proper row order
+====
+[source]
+----
+$ tac top_down.asc > bottom_up.asc
+$ asc2dsp bottom_up.asc terrain.dsp
+----
+
+Reverses the row order of 'top_down.asc' to align with the bottom-to-top layout required by *mged*(1), and then converts it to 'terrain.dsp'.
+====
+
+
+[[see_also]]
+== SEE ALSO
+
+*tac*(1), *mged*(1), *dsp*(5), *pix*(5)
+
+
+[[diagnostics]]
+== DIAGNOSTICS
+
+Error conditions include invalid input characters or an input value greater than 65535. Descriptive messages are printed on standard error.
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,0 +1,146 @@
+= COIL(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+coil - generate a coil as a BRL-CAD pipe primitive
+
+== SYNOPSIS
+
+[source]
+----
+coil [-d mean_outer_diameter] [-w wire_diameter] [-H helix_angle] [-p pitch]
+     [-n number_of_turns] [-s start_cap_type] [-e end_cap_type]
+     [-S number_of_turns,mean_outer_diameter,wire_diameter,helix_angle,pitch,winding_direction]
+     [-l overall_length] [-L] [name]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*coil* generates a coil modeled as a BRL-CAD pipe primitive from a set
+of dimensional parameters.  If no parameters are supplied, a default coil
+is created.  All lengths are in millimeters and the helix angle is in degrees.
+
+When run as a standalone program, the coil is written to a new database named
+_coil.g_; *coil* refuses to overwrite an existing file of that name.  When run
+as a command inside a modeling environment such as *mged*(1) or *archer*(1),
+the coil is created in the currently open database.
+
+The created object is named _coil_ by default; an alternate _name_ may be given
+as a trailing argument.  The result is a combination unioning the coil core
+pipe (and, for ground caps, subtracting the capping solids).
+
+
+[[options]]
+== OPTIONS
+
+*-d* _mean_outer_diameter_::
+  Mean outer diameter of the coil in millimeters.
+
+*-w* _wire_diameter_::
+  Diameter of the wire wound into the coil in millimeters.
+
+*-H* _helix_angle_::
+  Helix angle of the coil in degrees.
+
+*-p* _pitch_::
+  Distance, in millimeters, between the center of the wire at the beginning and
+  end of a single turn.  The minimum (and default) value is the wire diameter;
+  a smaller pitch is clamped up to the wire diameter.
+
+*-n* _number_of_turns_::
+  Number of turns in the coil.  Must be a positive integer; fractional turns
+  are not supported.
+
+*-s* _start_cap_type_::
+  Capping style for the start of the coil.  0 (default) applies no special
+  styling, 1 is a squared-off cap, 2 grinds the cap flat in the plane normal to
+  the coiling direction, and 3 both squares off and grinds the cap.  Any
+  non-default cap adds extra turns beyond those requested with *-n*.
+
+*-e* _end_cap_type_::
+  Capping style for the end of the coil.  Values are the same as for *-s*.
+
+*-S* _number_of_turns,mean_outer_diameter,wire_diameter,helix_angle,pitch,winding_direction_::
+  Define one coil section as a comma-delimited list of all six values
+  (_winding_direction_ is 1 for right-handed, anything else for left-handed).
+  Repeat *-S* to build a multi-section coil; sections are stacked from the
+  origin in the order given.  Specifying any *-S* section causes all other
+  dimensional options to be ignored (capping with *-s*/*-e* still applies).
+
+*-l* _overall_length_::
+  Clamp the overall length of the coil to the given value in millimeters.
+  Only effective for uncapped coils with a zero helix angle.  To fit the
+  length, pitch is adjusted first, then turns are removed, and finally wire
+  diameter is reduced.  Length clamping does not apply to *-S* sections.
+
+*-L*::
+  Create a left-handed coil.  The default is right-handed (winding proceeds in
+  +x from the start); *-L* winds in -x.
+
+*-h*, *-?*::
+  Print usage information and exit.
+
+
+[[examples]]
+== EXAMPLES
+
+.Create a named spring with specific dimensions
+====
+[source,bash]
+----
+coil -d 20 -w 2 -p 5 -n 10 my_spring
+----
+Writes _coil.g_ containing a 10-turn coil named _my_spring_ with a 20 mm mean
+outer diameter, 2 mm wire, and 5 mm pitch.
+====
+
+.Create a coil with ground ends and inspect its volume
+====
+[source,bash]
+----
+coil -d 50 -w 5 -n 12 -s 3 -e 3 valve_spring
+mged -c coil.g 'analyze valve_spring'
+----
+Builds a compression-spring-style coil whose ends are squared off and ground
+flat, then opens the database in *mged*(1) to report the part's bounding box
+and volume.
+====
+
+.Build a two-section coil
+====
+[source,bash]
+----
+coil -S 10,1000,50,60,800,1 -S 10,1000,50,0,100,1 stacked_coil
+----
+Stacks a 10-turn section with a 60-degree helix angle and 800 mm pitch on top
+of a tighter 10-turn section, both right-handed, in a single _stacked_coil_
+object.
+====
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *mged*(1), *archer*(1)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

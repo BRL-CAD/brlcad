@@ -1,7 +1,7 @@
 /*                  B O O L E A N . C P P
  * BRL-CAD
  *
- * Copyright (c) 2013-2025 United States Government as represented by
+ * Copyright (c) 2013-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -3320,6 +3320,27 @@ is_point_inside_brep(const ON_3dPoint &pt, const ON_Brep *brep, ON_SimpleArray<S
     }
 
     return pt_no_dup.Count() % 2 != 0;
+}
+
+
+bool
+ON_BrepPointInside(const ON_3dPoint &point, const ON_Brep *brep)
+{
+    if (!brep || !brep->IsValid() || !brep->IsSolid() || point.IsUnset())
+	return false;
+    ON_SimpleArray<Subsurface *> surface_tree;
+    for (int surface = 0; surface < brep->m_S.Count(); ++surface) {
+	if (!brep->m_S[surface]) {
+	    for (int created = 0; created < surface_tree.Count(); ++created)
+		delete surface_tree[created];
+	    return false;
+	}
+	surface_tree.Append(new Subsurface(brep->m_S[surface]->Duplicate()));
+    }
+    const bool inside = is_point_inside_brep(point, brep, surface_tree);
+    for (int surface = 0; surface < surface_tree.Count(); ++surface)
+	delete surface_tree[surface];
+    return inside;
 }
 
 

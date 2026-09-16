@@ -1,7 +1,7 @@
 /*                      B W S H R I N K . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2025 United States Government as represented by
+ * Copyright (c) 2004-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,12 +28,15 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include "bio.h"
 
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/file.h"
 #include "bu/malloc.h"
 #include "bu/log.h"
@@ -102,7 +105,6 @@ int factor = 2;
 #define METH_UNDERSAMPLE 2
 int method = METH_BOXCAR;
 
-
 void
 usage(void)
 {
@@ -125,20 +127,21 @@ parse_args(int ac, char **av)
     while ((c=bu_getopt(ac, av, options)) != -1)
 	switch (c) {
 	    case 'f':
-		if ((c = atoi(bu_optarg)) > 1)
-		    factor = c;
+		if (!bu_opt_scan_int_range(bu_optarg, &factor, 1, INT_MAX, "shrink factor") || factor <= 1)
+		    usage();
 		break;
 	    case 'n':
-		if ((c=atoi(bu_optarg)) > 0)
-		    height = c;
+		if (!bu_opt_scan_int_range(bu_optarg, &height, 1, INT_MAX, "height"))
+		    usage();
 		break;
 	    case 'w':
-		if ((c=atoi(bu_optarg)) > 0)
-		    width = c;
+		if (!bu_opt_scan_int_range(bu_optarg, &width, 1, INT_MAX, "width"))
+		    usage();
 		break;
 	    case 's':
-		if ((c=atoi(bu_optarg)) > 0)
-		    height = width = c;
+		if (!bu_opt_scan_int_range(bu_optarg, &width, 1, INT_MAX, "size"))
+		    usage();
+		height = width;
 		break;
 	    case 'u'
 		: method = METH_UNDERSAMPLE;
@@ -162,8 +165,10 @@ parse_args(int ac, char **av)
 	    filename = av[bu_optind];
 	bu_free(ifname, "ifname alloc from bu_file_realpath");
     }
-    if (bu_optind+1 < ac)
-	fprintf(stderr, "%s: Excess arguments ignored\n", progname);
+    if (bu_optind+1 < ac) {
+	fprintf(stderr, "%s: excess argument(s) not supported\n", progname);
+	usage();
+    }
 
 }
 

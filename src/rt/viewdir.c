@@ -1,7 +1,7 @@
 /*                       V I E W D I R . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2025 United States Government as represented by
+ * Copyright (c) 1993-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -35,9 +35,6 @@
 #include "./rtuif.h"
 #include "./ext.h"
 
-
-extern	int	width;			/* # of pixels in X; picture width */
-extern int	npsw;			/* number of worker PSWs to run */
 
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
@@ -215,7 +212,7 @@ view_end(struct application *ap)
 }
 
 
-void application_init (void) {}
+C_DECL void application_init (void) {}
 
 /*
  * Local Variables:

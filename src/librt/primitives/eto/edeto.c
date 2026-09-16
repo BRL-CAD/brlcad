@@ -1,7 +1,7 @@
 /*                         E D E T O . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2025 United States Government as represented by
+ * Copyright (c) 1996-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -23,6 +23,8 @@
 
 #include "common.h"
 
+#include "bu/opt.h"
+
 #include <math.h>
 #include <string.h>
 
@@ -39,7 +41,7 @@
 #define ECMD_ETO_RD		21058
 #define ECMD_ETO_SCALE_C	21059
 
-void
+C_DECL void
 rt_edit_eto_set_edit_mode(struct rt_edit *s, int mode)
 {
     rt_edit_set_edflag(s, mode);
@@ -79,15 +81,54 @@ struct rt_edit_menu_item eto_menu[] = {
     { "", NULL, 0 }
 };
 
-struct rt_edit_menu_item *
+C_DECL struct rt_edit_menu_item *
 rt_edit_eto_menu_item(const struct bn_tol *UNUSED(tol))
 {
     return eto_menu;
 }
 
+/* ft_edit_desc descriptor for the Elliptical Torus primitive */
+
+static const struct rt_edit_param_desc eto_r_params[] = {
+    { "r", "Major Radius", RT_EDIT_PARAM_SCALAR, 0, 1e-10, RT_EDIT_PARAM_NO_LIMIT,
+      "length", 0, NULL, NULL, NULL }
+};
+static const struct rt_edit_param_desc eto_rd_params[] = {
+    { "rd", "Tube Radius D", RT_EDIT_PARAM_SCALAR, 0, 1e-10, RT_EDIT_PARAM_NO_LIMIT,
+      "length", 0, NULL, NULL, NULL }
+};
+static const struct rt_edit_param_desc eto_c_params[] = {
+    { "c", "Semi-Minor Axis C", RT_EDIT_PARAM_SCALAR, 0, 1e-10, RT_EDIT_PARAM_NO_LIMIT,
+      "length", 0, NULL, NULL, NULL }
+};
+static const struct rt_edit_param_desc eto_rot_deg_params[] = {
+    { "rot_xyz", "Rotation X Y Z (deg)", RT_EDIT_PARAM_VECTOR, 0,
+      RT_EDIT_PARAM_NO_LIMIT, RT_EDIT_PARAM_NO_LIMIT,
+      "degrees", 0, NULL, NULL, NULL }
+};
+
+static const struct rt_edit_cmd_desc eto_cmds[] = {
+    { ECMD_ETO_R,       "Set r",       "geometry", 1, eto_r_params,       1, 10, NULL },
+    { ECMD_ETO_RD,      "Set D",       "geometry", 1, eto_rd_params,      1, 20, NULL },
+    { ECMD_ETO_SCALE_C, "Set C",       "geometry", 1, eto_c_params,       1, 30, NULL },
+    { ECMD_ETO_ROT_C,   "Rotate C",    "rotation", 1, eto_rot_deg_params, 1, 40, NULL },
+};
+
+static const struct rt_edit_prim_desc eto_prim_desc = {
+    "eto", "Elliptical Torus", 4, eto_cmds,
+    0,                    /* nopt         */
+    NULL                  /* opts         */
+};
+
+C_DECL const struct rt_edit_prim_desc *
+rt_edit_eto_edit_desc(void)
+{
+    return &eto_prim_desc;
+}
+
 #define V3BASE2LOCAL(_pt) (_pt)[X]*base2local, (_pt)[Y]*base2local, (_pt)[Z]*base2local
 
-void
+C_DECL void
 rt_edit_eto_write_params(
 	struct bu_vls *p,
        	const struct rt_db_internal *ip,
@@ -114,7 +155,7 @@ rt_edit_eto_write_params(
     if (ln) *ln = '\0'; \
     while (lc && strchr(lc, ':')) lc++
 
-int
+C_DECL int
 rt_edit_eto_read_params(
 	struct rt_db_internal *ip,
 	const char *fc,
@@ -204,7 +245,7 @@ ecmd_eto_r(struct rt_edit *s)
     } else {
 	newrad = eto->eto_r * s->es_scale;
     }
-    if (newrad < SMALL) newrad = 4*SMALL;
+    if (newrad < SQRT_SMALL_FASTF) newrad = 4*SQRT_SMALL_FASTF;
     VMOVE(Nu, eto->eto_N);
     VUNITIZE(Nu);
     /* get horiz and vert components of C and Rd */
@@ -234,7 +275,7 @@ ecmd_eto_rd(struct rt_edit *s)
     } else {
 	newrad = eto->eto_rd * s->es_scale;
     }
-    if (newrad < SMALL) newrad = 4*SMALL;
+    if (newrad < SQRT_SMALL_FASTF) newrad = 4*SQRT_SMALL_FASTF;
     work = MAGNITUDE(eto->eto_C);
     if (newrad <= work) {
 	VMOVE(Nu, eto->eto_N);
@@ -328,9 +369,13 @@ ecmd_eto_rot_c(struct rt_edit *s)
 	bn_mat_mul(mat1, edit, s->e_mat);
 	bn_mat_mul(mat, s->e_invmat, mat1);
 
-	MAT4X3VEC(eto->eto_C, mat, eto->eto_C);
+	vect_t C_tmp;
+	VMOVE(C_tmp, eto->eto_C);
+	MAT4X3VEC(eto->eto_C, mat, C_tmp);
     } else {
-	MAT4X3VEC(eto->eto_C, s->incr_change, eto->eto_C);
+	vect_t C_tmp;
+	VMOVE(C_tmp, eto->eto_C);
+	MAT4X3VEC(eto->eto_C, s->incr_change, C_tmp);
     }
 
     MAT_IDN(s->incr_change);
@@ -375,39 +420,28 @@ rt_edit_eto_pscale(struct rt_edit *s)
     return 0;
 }
 
-int
+C_DECL int
 rt_edit_eto_edit(struct rt_edit *s)
 {
     switch (s->edit_flag) {
-	case RT_PARAMS_EDIT_SCALE:
-	    /* scale the solid uniformly about its vertex point */
-	    return edit_sscale(s);
-	case RT_PARAMS_EDIT_TRANS:
-	    /* translate solid */
-	    edit_stra(s);
-	    break;
-	case RT_PARAMS_EDIT_ROT:
-	    /* rot solid about vertex */
-	    edit_srot(s);
-	    break;
+	case ECMD_ETO_R:
+	case ECMD_ETO_RD:
+	case ECMD_ETO_SCALE_C:
+	    return rt_edit_eto_pscale(s);
 	case ECMD_ETO_ROT_C:
 	    return ecmd_eto_rot_c(s);
 	default:
-	    return rt_edit_eto_pscale(s);
+	    return edit_generic(s);
     }
-    return 0;
 }
 
-int
+C_DECL int
 rt_edit_eto_edit_xy(
         struct rt_edit *s,
         const vect_t mousevec
         )
 {
     vect_t pos_view = VINIT_ZERO;       /* Unrotated view space pos */
-    struct rt_db_internal *ip = &s->es_int;
-    bu_clbk_t f = NULL;
-    void *d = NULL;
 
     switch (s->edit_flag) {
         case RT_PARAMS_EDIT_SCALE:
@@ -421,21 +455,87 @@ rt_edit_eto_edit_xy(
 	    edit_stra_xy(&pos_view, s, mousevec);
 	    edit_abs_tra(s, pos_view);
             return 0;
-        case RT_PARAMS_EDIT_ROT:
-            bu_vls_printf(s->log_str, "RT_PARAMS_EDIT_ROT XY editing setup unimplemented in %s_edit_xy callback\n", EDOBJ[ip->idb_type].ft_label);
-            rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-            if (f)
-                (*f)(0, NULL, d, NULL);
-            return BRLCAD_ERROR;
         default:
-            bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", EDOBJ[ip->idb_type].ft_label, s->edit_flag);
-            rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-            if (f)
-                (*f)(0, NULL, d, NULL);
-            return BRLCAD_ERROR;
+            return edit_generic_xy(s, mousevec);
     }
 }
 
+
+int
+rt_edit_eto_repair(struct bu_vls *log_str, struct rt_db_internal *ip, const struct bn_tol *tol, int argc, const char **argv)
+{
+    struct rt_eto_internal *eto;
+    int repaired = 0;
+    int options_json = 0;
+    int print_help = 0;
+
+    struct bu_opt_desc d[3];
+    BU_OPT(d[0], "h", "help", "", NULL, &print_help, "Print help");
+    BU_OPT(d[1], "", "options-json", "", NULL, &options_json, "Return JSON of supported options");
+    BU_OPT_NULL(d[2]);
+
+    if (argc > 0 && argv) {
+        bu_opt_parse(NULL, argc, argv, d);
+    }
+
+    if (options_json) {
+        if (log_str) {
+            bu_vls_printf(log_str, "{\"options\":[]}");
+        }
+        return 1;
+    }
+
+    if (print_help) {
+        if (log_str) {
+            char *option_help = bu_opt_describe(d, NULL);
+            bu_vls_printf(log_str, "{\"status\":\"help\",\"message\":\"Options:\\n%s\"}", option_help ? option_help : "");
+            if (option_help) bu_free(option_help, "help str");
+        }
+        return -1;
+    }
+
+    RT_CK_DB_INTERNAL(ip);
+    eto = (struct rt_eto_internal *)ip->idb_ptr;
+    RT_ETO_CK_MAGIC(eto);
+
+    if (!tol) {
+        static const struct bn_tol default_tol = BN_TOL_INIT_TOL;
+        tol = &default_tol;
+    }
+
+    if (!NEAR_EQUAL(MAGSQ(eto->eto_N), 1.0, tol->dist)) {
+        fastf_t mag_n = MAGNITUDE(eto->eto_N);
+        if (mag_n > SQRT_SMALL_FASTF) {
+            VSCALE(eto->eto_N, eto->eto_N, 1.0 / mag_n);
+            repaired++;
+        }
+    }
+
+    /* Check if C and N are perpendicular */
+    fastf_t mag_c = MAGNITUDE(eto->eto_C);
+    if (mag_c > SQRT_SMALL_FASTF) {
+        fastf_t f = VDOT(eto->eto_N, eto->eto_C) / mag_c;
+        if (!NEAR_ZERO(f, tol->perp)) {
+            vect_t proj;
+            /* Project C onto the plane defined by normal N */
+            fastf_t dot = VDOT(eto->eto_C, eto->eto_N);
+            VSCALE(proj, eto->eto_N, dot);
+            VSUB2(eto->eto_C, eto->eto_C, proj);
+            /* Restore original magnitude of C */
+            fastf_t new_mag = MAGNITUDE(eto->eto_C);
+            if (new_mag > SQRT_SMALL_FASTF) {
+                VSCALE(eto->eto_C, eto->eto_C, mag_c / new_mag);
+                repaired++;
+            }
+        }
+    }
+
+    if (repaired > 0 && log_str) {
+        bu_vls_printf(log_str, "{\"status\":\"success\",\"message\":\"Successfully repaired ETO\"}");
+    }
+
+    return repaired > 0 ? 0 : -1;
+}
 
 /*
  * Local Variables:

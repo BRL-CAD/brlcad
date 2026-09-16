@@ -1,7 +1,7 @@
 /*                    V I E W W E I G H T . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2025 United States Government as represented by
+ * Copyright (c) 1988-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -52,15 +52,13 @@
 #include "./ext.h"
 
 
-extern struct resource resource[];
-
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
     {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL}
 };
 
 
-const char title[] = "RT Weight";
+EXTERNCPP const char title[] = "RT Weight";
 
 int noverlaps = 0;
 FILE *densityfp;
@@ -78,15 +76,6 @@ struct datapoint {
 };
 
 
-extern int rpt_overlap;     	/* report region verbosely */
-extern fastf_t cell_width;      /* model space grid cell width */
-extern fastf_t cell_height;     /* model space grid cell height */
-extern FILE *outfp;          	/* optional output file */
-extern char *outputfile;     	/* name of base of output file */
-extern char *densityfile;     	/* name of density file */
-extern int output_is_binary;	/* !0 means output is binary */
-
-
 int
 densities_prep(struct rt_i * rtip, int minus_o)
 {
@@ -94,6 +83,7 @@ densities_prep(struct rt_i * rtip, int minus_o)
     struct bu_mapped_file *dfile = NULL;
     char *dbuff = NULL;
     int found_densities = 0;
+    int next_available_id = 0;
 
     if (!minus_o) {
 	outfp = stdout;
@@ -150,7 +140,7 @@ densities_prep(struct rt_i * rtip, int minus_o)
 	    struct rt_db_internal intern = RT_DB_INTERNAL_INIT_ZERO;
 	    struct rt_binunif_internal *bip = NULL;
 	    struct bu_vls msgs = BU_VLS_INIT_ZERO;
-	    if (rt_db_get_internal(&intern, dp, rtip->rti_dbip, NULL, &rt_uniresource) < 0) {
+	    if (rt_db_get_internal(&intern, dp, rtip->rti_dbip, NULL) < 0) {
 		bu_log("Could not import %s\n", dp->d_namep);
 		goto densities_prep_rtweight_fail;
 	    }
@@ -209,14 +199,14 @@ densities_prep(struct rt_i * rtip, int minus_o)
     }
 
     // iterate through the db and find all materials
-    int next_available_id = MAX_MATERIAL_ID - 1;
-    for (int i = 0; i < RT_DBNHASH; i++) {
-	struct directory *dp = rtip->rti_dbip->dbi_Head[i];
-	if (dp != NULL) {
+    next_available_id = MAX_MATERIAL_ID - 1;
+    {
+	struct directory *dp;
+	FOR_ALL_DIRECTORY_START(dp, rtip->rti_dbip)
 	    struct rt_db_internal intern;
 	    struct rt_material_internal *material_ip;
 	    if (dp->d_major_type == DB5_MAJORTYPE_BRLCAD) {
-		if (rt_db_get_internal(&intern, dp, rtip->rti_dbip, NULL, &rt_uniresource) >= 0) {
+		if (rt_db_get_internal(&intern, dp, rtip->rti_dbip, NULL) >= 0) {
 		    if (intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_MATERIAL) {
 			// if the material has a density, add it to
 			// the density table
@@ -255,7 +245,7 @@ densities_prep(struct rt_i * rtip, int minus_o)
 		    }
 		}
 	    }
-	}
+	FOR_ALL_DIRECTORY_END;
     }
 
     if (!found_densities) {
@@ -264,9 +254,9 @@ densities_prep(struct rt_i * rtip, int minus_o)
     }
 
     // look for objects with material_name set and set the material_id
-    for (int i = 0; i < RT_DBNHASH; i++) {
-	struct directory *dp = rtip->rti_dbip->dbi_Head[i];
-	if (dp != NULL) {
+    {
+	struct directory *dp;
+	FOR_ALL_DIRECTORY_START(dp, rtip->rti_dbip)
 	    if (dp->d_major_type == DB5_MAJORTYPE_BRLCAD) {
 		struct bu_attribute_value_set avs = BU_AVS_INIT_ZERO;
 
@@ -279,7 +269,7 @@ densities_prep(struct rt_i * rtip, int minus_o)
 			if (material_dp != NULL) {
 			    struct rt_db_internal material_intern;
 			    struct rt_material_internal *material_ip;
-			    if (rt_db_get_internal(&material_intern, material_dp, rtip->rti_dbip, NULL, &rt_uniresource) >= 0) {
+			    if (rt_db_get_internal(&material_intern, material_dp, rtip->rti_dbip, NULL) >= 0) {
 				if (material_intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_MATERIAL) {
 				    // the material_ip->name field is
 				    // the name in the density table
@@ -337,7 +327,7 @@ densities_prep(struct rt_i * rtip, int minus_o)
 		    goto densities_prep_rtweight_fail;
 		}
 	    }
-	}
+	FOR_ALL_DIRECTORY_END;
     }
 
     bu_vls_free(&pbuff_msgs);
@@ -358,7 +348,7 @@ densities_prep_rtweight_fail:
 
 
 static int
-hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segp))
+r_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segp))
 {
     struct partition *pp;
     register struct xray *rp = &ap->a_ray;
@@ -431,7 +421,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segp
 
 
 static int
-miss(register struct application *UNUSED(ap))
+r_miss(register struct application *UNUSED(ap))
 {
     return 0;
 }
@@ -459,8 +449,8 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int min
 	bu_exit(-1, NULL);
     }
 
-    ap->a_hit = hit;
-    ap->a_miss = miss;
+    ap->a_hit = r_hit;
+    ap->a_miss = r_miss;
     ap->a_overlap = overlap;
     ap->a_onehit = 0;
 
@@ -525,8 +515,8 @@ view_end(struct application *ap)
     struct db_i *dbp = ap->a_rt_i->rti_dbip;
     fastf_t conversion = 1.0;	/* Conversion factor for mass */
     fastf_t volume = 0;
-    char units[128] = {0};
-    char unit2[128] = {0};
+    char wt_units[128] = {0};
+    char wt_unit2[128] = {0};
     int max_item = 0;
     time_t clockval;
     struct tm *locltime;
@@ -540,8 +530,8 @@ view_end(struct application *ap)
     int ridx; /* for region array */
 
     /* default units */
-    bu_strlcpy(units, "grams", sizeof(units));
-    bu_strlcpy(unit2, bu_units_string(dbp->dbi_local2base), sizeof(unit2));
+    bu_strlcpy(wt_units, "grams", sizeof(wt_units));
+    bu_strlcpy(wt_unit2, bu_units_string(dbp->dbi_local2base), sizeof(wt_unit2));
 
     (void)time(&clockval);
     locltime = localtime(&clockval);
@@ -554,25 +544,25 @@ view_end(struct application *ap)
 
     if (ZERO(dbp->dbi_local2base - 304.8)) {
 	/* Feet */
-	bu_strlcpy(units, "grams", sizeof(units));
+	bu_strlcpy(wt_units, "grams", sizeof(wt_units));
     } else if (ZERO(dbp->dbi_local2base - 25.4)) {
 	/* inches */
 	conversion = 0.002204623;  /* lbs./gram */
-	bu_strlcpy(units, "lbs.", sizeof(units));
+	bu_strlcpy(wt_units, "lbs.", sizeof(wt_units));
     } else if (ZERO(dbp->dbi_local2base - 1.0)) {
 	/* mm */
 	conversion = 0.001;  /* kg/gram */
-	bu_strlcpy(units, "kg", sizeof(units));
+	bu_strlcpy(wt_units, "kg", sizeof(wt_units));
     } else if (ZERO(dbp->dbi_local2base - 1000.0)) {
 	/* km */
 	conversion = 0.001;  /* kg/gram */
-	bu_strlcpy(units, "kg", sizeof(units));
+	bu_strlcpy(wt_units, "kg", sizeof(wt_units));
     } else if (ZERO(dbp->dbi_local2base - 0.1)) {
 	/* cm */
-	bu_strlcpy(units, "grams", sizeof(units));
+	bu_strlcpy(wt_units, "grams", sizeof(wt_units));
     } else {
 	bu_log("WARNING: base2mm=%g, using default of %s--%s\n",
-	       dbp->dbi_base2local, units, unit2);
+	       dbp->dbi_base2local, wt_units, wt_unit2);
     }
 
     if (noverlaps)
@@ -666,7 +656,7 @@ view_end(struct application *ap)
 
 	/* WEIGHT BY REGION NAME =============== */
 	/* ^L is char code for FormFeed/NewPage */
-	fprintf(outfp, "Weight by region name (in %s, density given in g/cm^3):\n\n", units);
+	fprintf(outfp, "Weight by region name (in %s, density given in g/cm^3):\n\n", wt_units);
 	fprintf(outfp, " Weight   Matl  LOS  Material Name  Density Name\n");
 	fprintf(outfp, "-------- ------ --- --------------- ------- -------------\n");
 
@@ -704,7 +694,7 @@ view_end(struct application *ap)
 	}
 
 	/* WEIGHT BY REGION ID =============== */
-	fprintf(outfp, "Weight by region ID (in %s):\n\n", units);
+	fprintf(outfp, "Weight by region ID (in %s):\n\n", wt_units);
 	fprintf(outfp, "  ID   Weight  Region Names\n");
 	fprintf(outfp, "----- -------- --------------------\n");
 
@@ -747,18 +737,26 @@ view_end(struct application *ap)
     }
 
     volume *= (dbp->dbi_base2local*dbp->dbi_base2local*dbp->dbi_base2local);
-    sum_x *= (conversion / total_weight) * dbp->dbi_base2local;
-    sum_y *= (conversion / total_weight) * dbp->dbi_base2local;
-    sum_z *= (conversion / total_weight) * dbp->dbi_base2local;
+    if (ZERO(total_weight)) {
+	/* No mass was accumulated (e.g. all densities are zero), so the
+	 * mass-weighted centroid is undefined.  Report a zero centroid
+	 * rather than dividing by zero and printing nan,nan,nan.
+	 */
+	sum_x = sum_y = sum_z = 0.0;
+    } else {
+	sum_x *= (conversion / total_weight) * dbp->dbi_base2local;
+	sum_y *= (conversion / total_weight) * dbp->dbi_base2local;
+	sum_z *= (conversion / total_weight) * dbp->dbi_base2local;
+    }
 
     fprintf(outfp, "RT Weight Program Output:\n");
     fprintf(outfp, "\nDatabase Title: \"%s\"\n", dbp->dbi_title);
     fprintf(outfp, "Time Stamp: %s\n\n", timeptr);
-    fprintf(outfp, "Total volume = %g %s^3\n\n", volume, unit2);
-    fprintf(outfp, "Centroid: X = %g %s\n", sum_x, unit2);
-    fprintf(outfp, "          Y = %g %s\n", sum_y, unit2);
-    fprintf(outfp, "          Z = %g %s\n", sum_z, unit2);
-    fprintf(outfp, "\nTotal mass = %g %s\n\n", total_weight, units);
+    fprintf(outfp, "Total volume = %g %s^3\n\n", volume, wt_unit2);
+    fprintf(outfp, "Centroid: X = %g %s\n", sum_x, wt_unit2);
+    fprintf(outfp, "          Y = %g %s\n", sum_y, wt_unit2);
+    fprintf(outfp, "          Z = %g %s\n", sum_z, wt_unit2);
+    fprintf(outfp, "\nTotal mass = %g %s\n\n", total_weight, wt_units);
 
     /* this frame is done, next could be different densities */
     analyze_densities_destroy(density);
@@ -778,7 +776,7 @@ view_cleanup(struct rt_i *UNUSED(rtip))
 }
 
 
-void
+C_DECL void
 application_init(void)
 {
     option("", "-o file.out", "Weights and Moments output file", 0);

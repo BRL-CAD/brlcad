@@ -1,7 +1,7 @@
 /*                        E X E C . C P P
  * BRL-CAD
  *
- * Copyright (c) 2020-2025 United States Government as represented by
+ * Copyright (c) 2020-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -20,24 +20,24 @@
 
 #include "common.h"
 
-#include <map>
 #include <string>
+#include <mutex>
 
-#include "bu/time.h"
+#include "bu/datetime.h"
 #include "bu/path.h"
 #include "bu/vls.h"
 #include "ged.h"
+#include "./ged_private.h"
 #include "./include/plugin.h"
 
 extern "C" void libged_init(void);
-
 
 extern "C" int
 ged_exec(struct ged *gedp, int argc, const char *argv[])
 {
     int cret = BRLCAD_OK;
 
-    if (!gedp || !argc || !argv) {
+    if (!gedp || !gedp->ged_results || !argc || !argv) {
 	return BRLCAD_ERROR;
     }
 
@@ -54,48 +54,32 @@ ged_exec(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
+    /* Ensure registry is initialized exactly once (thread-safe). */
+    ged_ensure_initialized();
+
     double start = 0.0;
     const char *tstr = getenv("GED_EXEC_TIME");
     if (tstr) {
 	start = bu_gettime();
     }
 
-    // TODO - right now this is the map from the libged load - should probably
-    // use this to initialize a struct ged copy when ged_init is called, so
-    // client codes can add their own commands to their gedp...
-    //
-    // The ged_cmds map should always reflect the original, vanilla state of
-    // libged's command set so we have a clean fallback available if we ever
-    // need it to fall back on/recover with.
-    std::map<std::string, const struct ged_cmd *> *cmap = (std::map<std::string, const struct ged_cmd *> *)ged_cmds;
+    /* Until we are successful, return an error */
+    gedp->ged_results->ret = BRLCAD_ERROR;
 
-    // On OpenBSD, if the executable was launched in a way that requires
-    // bu_setprogname to find the BRL-CAD root directory the initial libged
-    // initialization would have failed.  If we have no ged_cmds at all this is
-    // probably what happened, so call libged_init again here.  By the time we
-    // are calling ged_exec bu_setprogname should be set and we should be ready
-    // to actually find the commands.
-    if (!cmap->size())
-	libged_init();
-
-    /* libged is only concerned with the basename in order for command-line
-     * applications to pass an argv[0]. */
+    /* Normalize command name to basename */
     struct bu_vls cmdvls = BU_VLS_INIT_ZERO;
     bu_path_component(&cmdvls, argv[0], BU_PATH_BASENAME);
     std::string cmdname = bu_vls_cstr(&cmdvls);
     bu_vls_free(&cmdvls);
 
-    // Validate the command name.  If we don't know what this is, we can't run
-    // it successfully and need to bail.
-    std::map<std::string, const struct ged_cmd *>::iterator c_it = cmap->find(cmdname);
-    if (c_it == cmap->end()) {
-	bu_vls_printf(gedp->ged_result_str, "unknown command: %s", cmdname.c_str());
-	return (BRLCAD_ERROR | GED_UNKNOWN);
+    /* Lookup command via generalized registry */
+    bu_plugin_cmd_impl fn = bu_plugin_cmd_get(cmdname.c_str());
+    if (!fn) {
+        bu_vls_printf(gedp->ged_result_str, "unknown command: %s", cmdname.c_str());
+	gedp->ged_results->ret = (BRLCAD_ERROR | GED_UNKNOWN);
+	return gedp->ged_results->ret;
     }
-    const struct ged_cmd *cmd = c_it->second;
 
-
-    // We have a command now - push it onto the stack
     GED_CK_MAGIC(gedp);
     Ged_Internal *gedip = gedp->i->i;
     gedip->exec_stack.push(cmdname);
@@ -108,41 +92,42 @@ ged_exec(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(gedp->ged_result_str, "%s\n", lexec_stack.top().c_str());
 	    lexec_stack.pop();
 	}
-	return BRLCAD_ERROR;
+	gedp->ged_results->ret = BRLCAD_ERROR;
+	return gedp->ged_results->ret;
     }
 
     // Check for a pre-exec callback.
     bu_clbk_t f = NULL;
     void *d = NULL;
-    if ((ged_clbk_get(&f, &d, gedp, cmdname.c_str(), BU_CLBK_PRE) == BRLCAD_OK) && f) {
+    if (!gedp->ged_skip_clbks && (ged_clbk_get(&f, &d, gedp, cmdname.c_str(), BU_CLBK_PRE) == BRLCAD_OK) && f) {
 	cret = ged_clbk_exec(gedp->ged_result_str, gedp, GED_CMD_RECURSION_LIMIT, f, argc, argv, gedp, d);
-	if (cret != BRLCAD_OK)
+	if (cret != BRLCAD_OK) {
 	    bu_log("error running %s pre-execution callback\n", cmdname.c_str());
+	    gedp->ged_results->ret = cret;
+	}
     }
 
     // TODO - if interactive command via cmd->i->interactive, don't execute
     // unless we have the necessary callbacks defined in gedp
 
-    // Preliminaries complete - do the actual command execution call
-    cret = (*cmd->i->cmd)(gedp, argc, argv);
+    // Preliminaries complete - if the setup succeeded or wasn't needed, do the
+    // actual command execution call
+    if (cret == BRLCAD_OK)
+	gedp->ged_results->ret = fn(gedp, argc, argv);
 
-    // If we didn't execute successfully, don't execute the post run hook.  (If
-    // a specific command wants to anyway, it can do so in its own
-    // implementation.)
-    if (cret != BRLCAD_OK) {
-	if (tstr)
-	    bu_log("%s time: %g\n", cmdname.c_str(), (bu_gettime() - start)/1e6);
-
-	gedip->cmd_recursion_depth_cnt[cmdname]--;
-	gedip->exec_stack.pop();
-	return cret;
-    }
-
-    // Command execution complete - check for a post command callback.
-    if ((ged_clbk_get(&f, &d, gedp, cmdname.c_str(), BU_CLBK_POST) == BRLCAD_OK) && f) {
+    // Command execution complete - check for a post command callback.  Note:
+    // even in an error situation, there may be cases where a caller needs to
+    // execute the post run hook.  (Cleanup, etc.)  Because this is application
+    // specific, the responsibility for calling or not calling based on error
+    // codes rests with the application's registered callback function - it can
+    // check the return code with ged_results_ret(gedp->results) to learn what
+    // it is.
+    if (!gedp->ged_skip_clbks && (ged_clbk_get(&f, &d, gedp, cmdname.c_str(), BU_CLBK_POST) == BRLCAD_OK) && f) {
 	cret = ged_clbk_exec(gedp->ged_result_str, gedp, GED_CMD_RECURSION_LIMIT, f, argc, argv, gedp, d);
-	if (cret != BRLCAD_OK)
+	if (cret != BRLCAD_OK) {
 	    bu_log("error running %s post-execution callback\n", cmdname.c_str());
+	    gedp->ged_results->ret = cret;
+	}
     }
 
     if (tstr)
@@ -150,7 +135,7 @@ ged_exec(struct ged *gedp, int argc, const char *argv[])
 
     gedip->cmd_recursion_depth_cnt[cmdname]--;
     gedip->exec_stack.pop();
-    return cret;
+    return gedp->ged_results->ret;
 }
 
 // Local Variables:

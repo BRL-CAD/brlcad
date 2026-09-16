@@ -4,16 +4,73 @@ if(TARGET ged_test_tops)
 endif(TARGET ged_test_tops)
 brlcad_add_test(NAME ged_test_tops_moss COMMAND ged_test_tops "${CMAKE_CURRENT_SOURCE_DIR}/ged_tests.g")
 
+brlcad_addexec(ged_test_rm ged_test_rm.c "libged;libwdb;librt;libbu" TEST)
+if(TARGET ged_test_rm)
+  add_dependencies(ged_test_rm ged_plugins)
+endif(TARGET ged_test_rm)
+brlcad_add_test(NAME ged_test_rm COMMAND ged_test_rm)
+if(TARGET ged_test_rm)
+  set_property(TEST ged_test_rm APPEND PROPERTY ENVIRONMENT BRLCAD_ROOT=${CMAKE_BINARY_DIR})
+endif(TARGET ged_test_rm)
+distclean(${CMAKE_CURRENT_BINARY_DIR}/ged_test_rm.g)
+
+brlcad_addexec(ged_test_bo test_bo.c "libged;libwdb;librt;libbu" TEST)
+if(TARGET ged_test_bo)
+  add_dependencies(ged_test_bo ged_plugins)
+endif(TARGET ged_test_bo)
+brlcad_add_test(NAME ged_test_bo COMMAND ged_test_bo)
+if(TARGET ged_test_bo)
+  set_property(TEST ged_test_bo APPEND PROPERTY ENVIRONMENT BRLCAD_ROOT=${CMAKE_BINARY_DIR})
+endif(TARGET ged_test_bo)
+
+brlcad_addexec(ged_test_bb_tight test_bb_tight.c "libged;libwdb;librt;libbu" TEST)
+if(TARGET ged_test_bb_tight)
+  add_dependencies(ged_test_bb_tight ged_plugins)
+endif(TARGET ged_test_bb_tight)
+brlcad_add_test(NAME ged_test_bb_tight COMMAND ged_test_bb_tight)
+if(TARGET ged_test_bb_tight)
+  set_property(TEST ged_test_bb_tight APPEND PROPERTY ENVIRONMENT BRLCAD_ROOT=${CMAKE_BINARY_DIR})
+endif(TARGET ged_test_bb_tight)
+
+brlcad_addexec(ged_test_tire ged_test_tire.cpp "libged;libwdb;librt;libbu" TEST)
+if(TARGET ged_test_tire)
+  add_dependencies(ged_test_tire ged_plugins)
+endif(TARGET ged_test_tire)
+brlcad_add_test(NAME ged_test_tire COMMAND ged_test_tire)
+if(TARGET ged_test_tire)
+  set_property(TEST ged_test_tire APPEND PROPERTY ENVIRONMENT BRLCAD_ROOT=${CMAKE_BINARY_DIR})
+endif(TARGET ged_test_tire)
+
 brlcad_addexec(ged_test_list test_list.c libged TEST)
 if(TARGET ged_test_list)
   add_dependencies(ged_test_list ged_plugins)
 endif(TARGET ged_test_list)
 brlcad_add_test(NAME ged_test_list COMMAND ged_test_list 2)
 
+brlcad_addexec(ged_test_db test_db.c libged TEST)
+if(TARGET ged_test_db)
+  add_dependencies(ged_test_db ged_plugins)
+endif(TARGET ged_test_db)
+brlcad_add_test(NAME ged_test_db COMMAND ged_test_db "${CMAKE_CURRENT_SOURCE_DIR}/ged_tests.g")
+if(TARGET ged_test_db)
+  set_property(TEST ged_test_db APPEND PROPERTY ENVIRONMENT BRLCAD_ROOT=${CMAKE_BINARY_DIR})
+endif(TARGET ged_test_db)
+
+brlcad_addexec(ged_test_view_dir test_view_dir.c libged TEST)
+brlcad_add_test(NAME ged_test_view_dir COMMAND ged_test_view_dir)
+if(TARGET ged_test_view_dir)
+  set_property(TEST ged_test_view_dir APPEND PROPERTY ENVIRONMENT BRLCAD_ROOT=${CMAKE_BINARY_DIR})
+endif(TARGET ged_test_view_dir)
+
 brlcad_addexec(ged_test_gqa test_gqa.c libged TEST)
 if(TARGET ged_test_gqa)
   add_dependencies(ged_test_gqa ged_plugins)
 endif(TARGET ged_test_gqa)
+brlcad_add_test(NAME ged_test_gqa COMMAND ged_test_gqa "${CMAKE_CURRENT_SOURCE_DIR}/ged_tests.g")
+if(TARGET ged_test_gqa)
+  set_property(TEST ged_test_gqa APPEND PROPERTY ENVIRONMENT BRLCAD_ROOT=${CMAKE_BINARY_DIR})
+endif(TARGET ged_test_gqa)
+distclean(${CMAKE_CURRENT_BINARY_DIR}/gqa_ovlps.plot3)
 
 brlcad_addexec(ged_test_plugins plugins.cpp libged TEST)
 if(TARGET ged_test_plugins)
@@ -53,8 +110,13 @@ if(TARGET ged_check_prim_cmds)
 endif(TARGET ged_check_prim_cmds)
 brlcad_add_test(NAME ged_test_prim_cmds_exist COMMAND ged_check_prim_cmds)
 
+brlcad_addexec(ged_test_mann_docs check_mann_docs.cpp "" TEST)
+brlcad_add_test(NAME ged_test_mann_docs COMMAND ged_test_mann_docs "${CMAKE_SOURCE_DIR}")
+
 add_subdirectory(bot)
+add_subdirectory(create)
 add_subdirectory(draw)
+add_subdirectory(edit)
 
 # Note: it is particularly important that the lint tests in particular are kept
 # in a separate file, since its bad input examples stand an excellent chance of
@@ -66,6 +128,7 @@ cmakefiles(
   obb_tests.g
   ged_tests.g
   pnts_in_out.g
+  test_bo.c
 )
 
 cmakefiles(CMakeLists.txt)

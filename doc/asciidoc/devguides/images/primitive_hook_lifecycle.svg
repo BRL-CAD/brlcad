@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="520" viewBox="0 0 960 520" role="img" aria-labelledby="title desc">
+  <title id="title">Superellipsoid hook lifecycle</title>
+  <desc id="desc">Diagram grouping superellipsoid hooks by database I/O, ray tracing, display, editing, and helper functions.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#38536a"/>
+    </marker>
+    <style>
+      .text { font-family: Arial, Helvetica, sans-serif; fill: #26384a; }
+      .small { font-size: 12px; }
+      .med { font-size: 14px; }
+      .head { font-size: 17px; font-weight: 700; }
+      .panel { fill: #ffffff; stroke: #c6d3df; stroke-width: 1.5; rx: 8; }
+      .core { fill: #e7f4f4; stroke: #2f6f73; stroke-width: 2; rx: 8; }
+      .edit { fill: #f4eff9; stroke: #7357a8; stroke-width: 2; rx: 8; }
+      .arrow { stroke: #38536a; stroke-width: 2; fill: none; marker-end: url(#arrow); }
+    </style>
+  </defs>
+  <rect width="960" height="520" fill="#f8fbfd"/>
+  <text x="42" y="48" class="text" font-size="26" font-weight="700">Superellipsoid hook lifecycle</text>
+  <text x="42" y="76" class="text med">Each hook exists because a different subsystem asks a different question about the same object.</text>
+
+  <rect x="42" y="116" width="190" height="132" class="panel"/>
+  <text x="62" y="146" class="text head">Database I/O</text>
+  <text x="62" y="174" class="text small">import5 / export5</text>
+  <text x="62" y="194" class="text small">import4 / export4</text>
+  <text x="62" y="214" class="text small">ifree</text>
+  <text x="62" y="234" class="text small">describe, parse, get, adjust</text>
+
+  <rect x="282" y="116" width="188" height="132" class="core"/>
+  <text x="302" y="146" class="text head">Raytrace core</text>
+  <text x="302" y="174" class="text small">prep</text>
+  <text x="302" y="194" class="text small">shot</text>
+  <text x="302" y="214" class="text small">norm</text>
+  <text x="302" y="234" class="text small">free</text>
+
+  <rect x="520" y="116" width="188" height="132" class="panel"/>
+  <text x="540" y="146" class="text head">Display</text>
+  <text x="540" y="174" class="text small">plot</text>
+  <text x="540" y="194" class="text small">bbox</text>
+  <text x="540" y="214" class="text small">labels</text>
+  <text x="540" y="234" class="text small">keypoint, scene_obj</text>
+
+  <rect x="758" y="116" width="160" height="132" class="panel"/>
+  <text x="778" y="146" class="text head">Geometry forms</text>
+  <text x="778" y="174" class="text small">brep</text>
+  <text x="778" y="194" class="text small">tessellate stub</text>
+  <text x="778" y="214" class="text small">uv placeholder</text>
+  <text x="778" y="234" class="text small">curve placeholder</text>
+
+  <rect x="162" y="316" width="226" height="132" class="edit"/>
+  <text x="182" y="346" class="text head">Editing</text>
+  <text x="182" y="374" class="text small">set_edit_mode</text>
+  <text x="182" y="394" class="text small">edit, edit_xy</text>
+  <text x="182" y="414" class="text small">write_params, read_params</text>
+  <text x="182" y="434" class="text small">menu_item, edit_desc</text>
+
+  <rect x="454" y="316" width="226" height="132" class="panel"/>
+  <text x="474" y="346" class="text head">Helpers</text>
+  <text x="474" y="374" class="text small">mat</text>
+  <text x="474" y="394" class="text small">volume, surf_area</text>
+  <text x="474" y="414" class="text small">perturb</text>
+  <text x="474" y="434" class="text small">mirror, OpenCL pack</text>
+
+  <path d="M 232 182 L 282 182" class="arrow"/>
+  <path d="M 470 182 L 520 182" class="arrow"/>
+  <path d="M 708 182 L 758 182" class="arrow"/>
+  <path d="M 376 248 L 300 316" class="arrow"/>
+  <path d="M 614 248 L 578 316" class="arrow"/>
+  <path d="M 376 248 L 520 316" class="arrow"/>
+
+  <text x="42" y="491" class="text small">Superellipsoid examples: prep builds cached transforms; plot draws three loops; edit scales A/B/C; brep adjusts ellipsoid NURBS weights.</text>
+</svg>

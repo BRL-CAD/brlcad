@@ -1,7 +1,7 @@
 /*                         K E E P . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -55,7 +55,7 @@ node_write(struct db_i *dbip, struct directory *dp, void *ptr)
     if (dp->d_nref++ > 0)
 	return;		/* already written */
 
-    if (rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dp, dbip, NULL) < 0) {
 	bu_vls_printf(kndp->gedp->ged_result_str, "Database read error, aborting\n");
 	return;
     }
@@ -156,10 +156,9 @@ ged_keep_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* First, clear any existing counts */
-    for (i = 0; i < RT_DBNHASH; i++) {
-	for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw)
-	    dp->d_nref = 0;
-    }
+    FOR_ALL_DIRECTORY_START(dp, gedp->dbip)
+	dp->d_nref = 0;
+    FOR_ALL_DIRECTORY_END;
 
     /* Alert user if named file already exists */
 
@@ -220,7 +219,7 @@ ged_keep_core(struct ged *gedp, int argc, const char *argv[])
 
 	if (!flag_R) {
 	    /* recursively keep objects */
-	    db_functree(gedp->dbip, dp, node_write, node_write, &rt_uniresource, (void *)&knd);
+	    db_treewalk_basic(gedp->dbip, dp, node_write, node_write, (void *)&knd);
 	} else {
 	    /* keep just this object */
 	    node_write(gedp->dbip, dp, (void *)&knd);
@@ -232,25 +231,13 @@ ged_keep_core(struct ged *gedp, int argc, const char *argv[])
     return BRLCAD_OK;
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl keep_cmd_impl = {
-    "keep",
-    ged_keep_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd keep_cmd = { &keep_cmd_impl };
-const struct ged_cmd *keep_cmds[] = { &keep_cmd, NULL };
+#define GED_KEEP_COMMANDS(X, XID) \
+    X(keep, ged_keep_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  keep_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_KEEP_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_keep", 1, GED_KEEP_COMMANDS)
 
 /*
  * Local Variables:

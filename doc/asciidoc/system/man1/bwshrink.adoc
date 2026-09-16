@@ -1,0 +1,97 @@
+= BWSHRINK(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+bwshrink - shrink a black and white bw file
+
+== SYNOPSIS
+
+[source]
+----
+bwshrink [-u] [-w _in_width_] [-n _in_height_] [-s _squaresize_] [-f _shrink_factor_] [_infile.bw_] > _outfile.bw_
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*bwshrink* reads a black and white *bw*(5) format file and produces a scaled-down version. The program reads the entire image into memory and then scales it down to 1/factor of the original size in both dimensions. By default, *bwshrink* uses boxcar averaging to produce the output pixels.
+
+[[options]]
+== OPTIONS
+
+*-u*::
+  Use pixel undersampling (nearest-neighbor decimation) instead of the
+  default boxcar averaging.
+
+*-w* _in_width_::
+  Specify the input file width in pixels. The default is 512.
+
+*-n* _in_height_::
+  Specify the input file height (number of scanlines) in pixels. The
+  default is 512.
+
+*-s* _squaresize_::
+  Set both the input file width and height to the given size in pixels.
+
+*-f* _shrink_factor_::
+  Set the integer scaling factor. Must be greater than 1. The default
+  factor is 2.
+
+*-h*, *-?*::
+  Print a usage message and exit.
+
+[[examples]]
+== EXAMPLES
+
+.Shrinking a 1024x1024 image
+====
+[source,bash]
+----
+bwshrink -s 1024 -f 4 image.bw > image_small.bw
+----
+Shrinks the 1024x1024 input file `image.bw` by a factor of 4, producing a
+256x256 output file named `image_small.bw` using boxcar averaging.
+====
+
+.Generating a thumbnail from a color render
+====
+[source,bash]
+----
+pix-bw -e ntsc -w 2048 -n 1536 render.pix | bwshrink -w 2048 -n 1536 -f 8 -u > thumb.bw
+----
+Converts a 2048x1536 color *pix*(5) render to grayscale with *pix-bw*(1),
+then pipes it to *bwshrink* to produce a 256x192 thumbnail. The *-u* flag
+selects fast nearest-neighbor undersampling instead of averaging.
+====
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *bwcrop*(1), *bwrect*(1), *bwscale*(1), *bw*(5)
+
+
+[[bugs]]
+== BUGS
+
+If the dimensions of the input image are not evenly divisible by the shrink factor, incorrect and bizarre output is generated.
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1991-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

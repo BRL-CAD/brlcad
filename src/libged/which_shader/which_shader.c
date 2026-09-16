@@ -1,7 +1,7 @@
 /*                         W H I C H _ S H A D E R . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,7 +33,7 @@
 
 
 int
-ged_which_core_shader(struct ged *gedp, int argc, const char *argv[])
+ged_which_shader_core(struct ged *gedp, int argc, const char *argv[])
 {
     int j;
     struct directory *dp;
@@ -80,7 +80,7 @@ ged_which_core_shader(struct ged *gedp, int argc, const char *argv[])
 	    if (!(dp->d_flags & RT_DIR_COMB))
 		continue;
 
-	    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+	    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL) < 0) {
 		bu_vls_printf(gedp->ged_result_str, "Database read error, aborting.\n");
 		return BRLCAD_ERROR;
 	    }
@@ -101,24 +101,13 @@ ged_which_core_shader(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl which_shader_cmd_impl = {
-    "which_shader",
-    ged_which_core_shader,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd which_shader_cmd = { &which_shader_cmd_impl };
-const struct ged_cmd *which_shader_cmds[] = { &which_shader_cmd, NULL };
+#define GED_WHICH_SHADER_COMMANDS(X, XID) \
+    X(which_shader, ged_which_shader_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  which_shader_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_WHICH_SHADER_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_which_shader", 1, GED_WHICH_SHADER_COMMANDS)
 
 /*
  * Local Variables:

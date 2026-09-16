@@ -1,7 +1,7 @@
 /*                        I F _ O G L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2025 United States Government as represented by
+ * Copyright (c) 2004-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -45,44 +45,19 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
-#include <signal.h>
 #include <errno.h>
 
-/* glx.h on Mac OS X (and perhaps elsewhere) defines a slew of
- * parameter names that shadow system symbols.  protect the system
- * symbols by redefining the parameters prior to header inclusion.
- */
-#define j1 J1
-#define y1 Y1
-#define read rd
-#define index idx
-#define access acs
-#define remainder rem
-#ifdef HAVE_GL_GLX_H
-#  define class REDEFINE_CLASS_STRING_TO_AVOID_CXX_CONFLICT
-#  include <GL/glx.h>
-#  ifdef HAVE_XRENDER
-#    include <X11/extensions/Xrender.h>
-#  endif
-#endif
-#undef remainder
-#undef access
-#undef index
-#undef read
-#undef y1
-#undef j1
-#ifdef HAVE_GL_GL_H
-#  include <GL/gl.h>
-#endif
 #include "bio.h"
 #include "bresource.h"
 
 #include "bu/color.h"
+#include "bu/interrupt.h"
 #include "bu/malloc.h"
 #include "bu/parallel.h"
 #include "bu/snooze.h"
 #include "bu/str.h"
 #include "../include/private.h"
+
 #include "dm.h"
 #include "./fb_ogl.h"
 
@@ -2399,7 +2374,11 @@ struct fb_impl ogl_interface_impl =  {
     {0}, /* u3 */
     {0}, /* u4 */
     {0}, /* u5 */
-    {0}  /* u6 */
+    {0}, /* u6 */
+    0,   /* if_interactive */
+    {{FB_EVENT_NONE, 0, 0, 0, 0, 0}}, /* if_equeue */
+    0,   /* if_ehead */
+    0    /* if_etail */
 };
 
 

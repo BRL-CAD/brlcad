@@ -1,0 +1,1493 @@
+B-REP TO CSG IMPLICIT CONVERSION AND SUPPORTING BOOLEAN GEOMETRY
+Research findings and implementation plan
+
+Status: design and planning document; no implementation has begun
+Date: 2026-08-01
+
+
+1. PURPOSE AND SCOPE
+
+This document records the current BRL-CAD B-Rep-to-CSG shape-recognition
+implementation, its principal gaps, and a plan to mature it into a reliable
+implicit-primitive and Boolean-tree reconstruction facility.
+
+The primary objective is:
+
+  Given a valid manifold ON_Brep, recognize portions that are exactly or
+  tolerably representable by BRL-CAD implicit primitives, recover their
+  parameters and Boolean relationships, and write a semantically correct CSG
+  hierarchy.
+
+Robust evaluation of arbitrary B-Rep Booleans is not the primary objective.
+It is nevertheless relevant in three places:
+
+  * Surface/surface, curve/surface, and curve/curve intersection routines can
+    provide narrow-phase relationship predicates for CSG reconstruction.
+  * A reconstructed CSG tree may be converted back to a B-Rep for structural
+    verification or export.
+  * Both facilities need the same tolerance policy, bounded-work behavior,
+    overlap handling, diagnostics, and regression geometry.
+
+The implementation should improve those common geometric foundations without
+turning this project into an open-ended attempt to solve all NURBS Boolean
+evaluation.  Recognition and tree inference must not depend on arbitrary
+B-Rep Boolean evaluation becoming universally robust.
+
+This document also preserves the useful technical knowledge found in the
+temporary brlcad_quickiterate "booleans" and
+"copilot/debug-m35-component-conversion" branches.  The descriptions below
+are intended to be sufficient to reimplement the worthwhile ideas even if
+that repository and its branches disappear.  Branch names, URLs, and commit
+identifiers are provenance, not dependencies.
+
+
+2. PRINCIPAL DECISIONS
+
+2.1 Keep recognition separate from Boolean evaluation
+
+There are two opposite operations in play:
+
+  B-Rep -> CSG
+      Analyze an existing boundary without changing it.  Infer canonical
+      surfaces, volumetric features, and a Boolean expression.
+
+  CSG -> B-Rep
+      Convert implicit leaves to B-Reps and evaluate the Boolean expression.
+
+The first operation must never perturb the input B-Rep to make recognition
+easier.  The second may use controlled ft_perturb variants to regularize
+coincident CSG operands, because the unperturbed CSG tree remains the source
+of truth.
+
+2.2 Reconstruct a canonical, explainable tree
+
+A boundary generally does not determine a unique construction history.  Many
+different CSG expressions produce the same regularized solid.  The project
+must therefore recover a deterministic canonical tree, not claim to recover
+the designer's original history.
+
+Candidate trees should be ranked by explicit rules such as:
+
+  * Maximize B-Rep face coverage by recognized implicit surfaces.
+  * Minimize residual B-Rep leaves.
+  * Minimize primitive and Boolean-node count.
+  * Prefer direct primitive support over auxiliary clipping solids.
+  * Prefer local feature groupings supported by observed trim topology.
+  * Reject trees that require unsupported or contradictory classifications.
+
+Every accepted primitive and Boolean relation must retain an evidence record
+so a failure can be diagnosed without reverse engineering the emitted names.
+
+2.3 Use topology first, geometry second, sampling last
+
+Shared B-Rep edges and loops provide stronger evidence than bounding boxes or
+random rays.  Surface type and parameter agreement provide the next level of
+evidence.  Analytic implicit-function tests and SSI provide narrow-phase
+evidence.  Bounding boxes are only a broad phase.  Ray sampling is an
+independent validator and last-resort classifier, not the primary tree
+constructor.
+
+2.4 Resource exhaustion is not nonintersection
+
+Intersection and classification routines must return explicit status.  A
+work limit, failed Newton solve, invalid geometry, coincident overlap, and
+proven absence of intersection are distinct outcomes.  Several temporary
+branch changes incorrectly returned an empty intersection when a candidate
+limit was exceeded.  That pattern must not be repeated.
+
+2.5 Preserve partial success explicitly
+
+Unsupported surface groups may remain residual B-Rep leaves in a hybrid
+result when requested.  A conversion is "fully implicit" only if all
+boundary contributions are represented by implicit primitives and the final
+tree passes verification.  Hybrid, approximate, unverified, and incomplete
+results must be labeled rather than silently accepted.
+
+
+3. CURRENT REPOSITORY STATE
+
+3.1 Public API
+
+include/brep/csg.h exposes:
+
+  struct csg_object_params
+  struct subbrep_shoal_data
+  struct subbrep_island_data
+  brep_to_csg(struct bu_vls *, const ON_Brep *)
+
+The header labels the interface "HIGHLY EXPERIMENTAL" and anticipates a move
+to libanalyze.  The public structures expose extensive working state,
+ownership is unclear, results are returned as a bu_ptbl of internal objects,
+and there is no options, tolerance, status, confidence, or diagnostics
+object.  This is not a suitable long-term API.
+
+3.2 User command and database writer
+
+The user path is the libged command:
+
+  brep [options] object csg
+
+src/libged/brep/brep.cpp dispatches to _ged_brep_to_csg().
+src/libged/brep/csg.cpp calls brep_to_csg(), creates BRL-CAD primitives and
+combinations, and optionally runs analyze_raydiff().
+
+Important current behavior:
+
+  * Primitive and combination objects are written while conversion is still
+    in progress.  Verification failure then attempts to remove the generated
+    tree.  The operation is not transactional.
+  * Existing output names cause conversion to be skipped.
+  * Verification is effectively coupled to the command verbosity value.
+  * The ray-difference distance tolerance is one percent of the input B-Rep
+    bounding-box diagonal.  This is too coarse for small features and has no
+    angular or topology criterion.
+  * The generated top-level combination is not always known to be a region;
+    blindly setting the region flag is wrong when converting an object inside
+    a larger hierarchy.
+  * A hybrid result is possible when at least one island becomes an implicit
+    primitive; if every island remains a B-Rep, conversion reports failure.
+
+3.3 Present recognition pipeline
+
+src/libbrep/shape_recognition currently performs approximately these steps:
+
+  1. Classify each face's underlying surface as planar, spherical,
+     cylindrical, conical, toroidal, or general.
+  2. Partition the shell into topological "islands" using outer and inner
+     loop relationships.
+  3. Group compatible nonplanar loops into "shoals."
+  4. Recover primitive parameters from each shoal's surfaces and edges.
+  5. Infer clipping planes from planar faces or planar edge curves.
+  6. Triangulate remaining planar material and attempt an ARBN or BOT-like
+     planar nucleus.
+  7. Assign positive/negative status using face orientation and point tests.
+  8. Infer island hierarchy from shared-loop parentage and overlapping
+     bounding boxes.
+  9. Emit primitives, auxiliary clipping solids, combinations, and residual
+     B-Rep islands from libged.
+
+The basic decomposition into surface recognition, topology grouping,
+primitive parameter extraction, and output emission is useful.  The current
+"island" and "shoal" data structures should be replaced by a documented
+intermediate representation rather than incrementally exposed as API.
+
+3.4 Currently effective primitive coverage
+
+Planar, cylindrical, and conical recognition code is active.  Planar
+nuclei may be represented using ARBN-style planes or a faceted fallback.
+
+Sphere support exists in sphere.cpp but shoal_csg() explicitly returns before
+using it.  Its implicit-plane and parameter calls are commented out.
+
+Torus support exists as a dormant torus.cpp, but that file is listed only as
+an auxiliary CMake input and is not compiled into libbrep.  shoal_csg()
+explicitly rejects toroidal surfaces.
+
+Ellipsoids, elliptic cylinders/cones, ETO, EPA, EHY, HYP, RPC, RHC, PART,
+SUPERELL and other BRL-CAD implicit types do not have a complete recognition
+path even where OpenNURBS can identify a related analytic surface.
+
+General NURBS surfaces become residual B-Rep content.
+
+3.5 Current positive/negative and hierarchy inference
+
+subbrep_brep_boolean() tests candidate island edge midpoints, and as a
+fallback NURBS control points, against oriented planar mating faces.  Points
+on both sides cause an ambiguity/self-intersection result.  All points on one
+side select union or subtraction.  Nonplanar mating loops are rejected.
+
+find_hierarchy() uses shared inner/outer loop relationships to establish
+immediate ancestry.  It then propagates possible subtraction interactions
+through neighboring islands.  An overlapping AABB is treated as sufficient
+reason to add a subtraction because proving actual interference was thought
+to require ray testing.  This can create incorrect or needlessly expensive
+Boolean trees.
+
+The degenerate planar-nucleus path handles only a narrow mixed-polarity case:
+two cylinders may be ordered by radius and half-cylinder status.  Other
+mixed-polarity shoals are unresolved.
+
+The current recognizer also aborts if obj_cnt exceeds CSG_BREP_MAX_OBJS,
+currently 1500.  This is a useful defense against pathological expansion, but
+it is a count of partially constructed output objects rather than a complete
+work budget.  The new result should report the limit and partial analysis as
+BUDGET_EXCEEDED instead of jumping to a generic cleanup path.
+
+3.6 Existing ray-based fallback work
+
+src/libanalyze/find_subtracted_shapes.cpp is present but commented out of the
+libanalyze source list.  It compares ray partitions of the original B-Rep,
+an assembled combination, and candidate subtraction solids.  Its useful
+ideas are:
+
+  * Represent missing material as per-ray gap intervals.
+  * Associate a candidate with missing intervals by matching entry and exit
+    events, including partial first/last gaps.
+  * Restrict evidence to a candidate's bounding box.
+  * Record diagnostic hit and gap plots.
+
+It also records why the method stalled: a single XYZ sampling tolerance makes
+thin objects prohibitively expensive; grazing rays are unstable; shallow
+surface cuts may not produce an easily sampled complete gap; and an adequate
+ray count is not known a priori.  This file is useful as a validator design
+and test-case source.  It should not be revived as the primary hierarchy
+algorithm.
+
+3.7 Tests
+
+src/libbrep/tests contains nurbs_csg.g, cyl_hole.g, and cyls_holes.g, but its
+CMakeLists.txt does not execute B-Rep-to-CSG recognition tests.  The files are
+data only.
+
+db/m35.asc, db/havoc.asc, db/terra.asc, db/goliath.asc, and db/moss.asc are
+available as broader real-model inputs.  They are valuable stress tests but
+must not replace small, generated, single-purpose regression cases.
+
+There is currently no committed matrix recording:
+
+  * expected recognized primitive parameters;
+  * expected face-to-feature assignments;
+  * acceptable alternative canonical trees;
+  * residual B-Rep coverage;
+  * exact or sampled geometric difference;
+  * topology validity; or
+  * work counts and time limits.
+
+3.8 Current CSG-to-B-Rep evaluator
+
+src/librt/comb/comb_brep.cpp recursively converts leaves through ft_brep and
+calls ON_Boolean at every internal Boolean node.  It has no options object,
+work budget, perturb retry, result validation policy, or diagnostic record.
+
+The current ON_Boolean implementation contains a critical face-intersection
+bug.  It builds the second vector of Subsurface trees in st2, but tests
+surf_tree2.Count() before calling ON_Intersect.  surf_tree2 is not the
+populated vector in that path, so eligible face pairs are skipped.  The
+temporary branch fixed this by checking st2.size().  This one-line defect
+must be corrected before any current-tree Boolean baseline is meaningful.
+
+
+4. TARGET ARCHITECTURE
+
+4.1 Library boundaries
+
+Use the following conceptual layering, adjusting actual library placement to
+avoid dependency cycles:
+
+  libbrep
+      B-Rep topology queries, canonical analytic-surface extraction,
+      SSI/CSI/CCI, pullback, overlap classification, and scale-aware
+      geometric predicates.  No database writes.
+
+  libanalyze
+      Feature attribution graph, candidate generation, relationship and
+      containment analysis, canonical CSG-tree search, scoring, and
+      verification orchestration.
+
+  librt
+      Implicit primitive definitions, parameter validation, CSG tree IR,
+      ft_brep, ft_perturb, and tree evaluation.
+
+  libged
+      Command options, database lookup, naming, transactional output,
+      reporting, and debug artifact requests.
+
+Do not make libbrep depend on GED state, database naming, or raytracing in
+order to answer a surface-recognition question.
+
+4.2 Normalized input record
+
+Before recognizing shapes, construct an immutable input record containing:
+
+  * A validated ON_Brep or an explicit list of validation defects.
+  * Model-space bounding box and characteristic length.
+  * One tolerance context with spatial, angular, parametric, relative, and
+    fitting tolerances.
+  * Stable IDs for faces, loops, trims, edges, vertices, and surfaces.
+  * Face orientation relative to the solid.
+  * Shell/component membership and manifold status.
+  * Cached tight face and edge bounds.
+
+Never compare a UV distance directly to a model-space distance.  Convert a
+spatial tolerance into a local parameter tolerance using surface derivatives
+or a conservative local metric bound.
+
+4.3 Canonical surface records
+
+For every face, attempt to obtain a canonical analytic record independent of
+the source NURBS parameterization:
+
+  plane:       oriented normal and signed offset
+  cylinder:    axis line and radius
+  cone:        apex, axis, half angle, and nappe/orientation
+  sphere:      center and radius
+  torus:       center, axis, major radius, minor radius, and torus class
+  other quadric or BRL-CAD-specific type where supported
+
+Record fit residuals, parameter uncertainty, orientation, periodic seams,
+and whether recognition came from an exact OpenNURBS analytic test or a
+tolerance-based fit.  Canonicalize axis sign and parameter ordering so equal
+surfaces have equal normalized representations.
+
+Faces sharing an analytic support surface should be grouped by canonical
+parameter agreement plus topological connectivity.  Parameter agreement
+alone must not merge disconnected features.
+
+4.4 Attributed adjacency graph
+
+Build an attributed adjacency graph (AAG):
+
+  node attributes
+      face ID, canonical surface, orientation, area, loops, curvature class,
+      and shell/component
+
+  edge attributes
+      shared B-Rep edge IDs, observed 3D curve type, convex/concave/tangent
+      relation, continuity class, endpoint topology, and trim orientation
+
+  higher-order attributes
+      co-axial, concentric, equal radius, common support surface, repeated
+      pattern, and candidate blend network membership
+
+The AAG should replace implicit assumptions scattered through shoal_build(),
+shoal_filter_loop(), and island_nucleus().  It also provides the natural
+place to explain why a group was or was not recognized.
+
+4.5 Primitive and feature candidates
+
+A candidate is more than primitive parameters.  It should contain:
+
+  * primitive type and normalized parameters;
+  * material sense (positive, negative, or unresolved);
+  * covered input face/loop/edge IDs;
+  * required auxiliary clipping primitives;
+  * support-feature relationships;
+  * residual and confidence;
+  * evidence and rejected alternatives; and
+  * an inexpensive conservative bound.
+
+Generate competing candidates where the boundary is ambiguous.  For
+example, a cylindrical patch may be a positive boss, a negative hole, a
+blend surface, or part of a larger clipped cylinder.  Do not make this choice
+inside the low-level cylinder parameter extractor.
+
+4.6 Relationship predicates
+
+Use a staged broad/narrow pipeline:
+
+  1. Tight face/feature AABBs or a BVH reject obvious noninteractions.
+  2. Shared B-Rep topology proves local adjacency and supplies observed
+     intersection curves.
+  3. Analytic implicit-function tests classify points and bounds for planes,
+     spheres, cylinders, cones, and tori where possible.
+  4. Primitive/primitive analytic intersections handle common pairs.
+  5. SSI/CSI/CCI computes unresolved narrow-phase relationships and compares
+     predicted curves with observed trim edges.
+  6. A robust point-in-solid or winding classifier resolves containment when
+     the boundary alone is insufficient.
+  7. Deterministic multi-direction rays are retained for independent
+     verification and explicitly reported fallback, not silent inference.
+
+Every predicate returns a status and evidence:
+
+  DISJOINT
+  TOUCHING
+  PROPER_INTERSECTION
+  A_CONTAINS_B
+  B_CONTAINS_A
+  COINCIDENT_OR_OVERLAPPING
+  INDETERMINATE
+  BUDGET_EXCEEDED
+  INVALID_INPUT
+
+An AABB overlap may enqueue a narrow-phase test.  It must not directly create
+a subtraction node.
+
+4.7 Tree reconstruction
+
+Construct the tree in two levels:
+
+  local feature expressions
+      Rebuild a hole, boss, pocket, clipped cylinder, spherical cap, toroidal
+      section, or blend network from candidates tied together by the AAG.
+
+  global assembly
+      Determine containment and interference among local expressions and
+      assemble components into a canonical union/intersection/subtraction
+      hierarchy.
+
+Represent the proposed result first as an in-memory CSG IR.  Do not write
+database objects during search.  Normalize associative unions and
+intersections, remove duplicate leaves, fold provably redundant operations,
+and use stable ordering for reproducible results.
+
+Tree search may be formulated as a constrained set-cover/graph search:
+
+  * every non-residual boundary face must be explained by at least one
+    selected candidate;
+  * contradictory material senses and incompatible shared-edge predictions
+    are forbidden;
+  * selected candidates must reproduce observed local intersection loops;
+  * the score penalizes residual B-Reps, auxiliary clippers, and tree size.
+
+Do not accept an arbitrary positive shoal as the nucleus merely to obtain a
+tree.  An indeterminate local relation must remain indeterminate or residual.
+
+4.8 Verification
+
+Verification is multi-level and independent of tree construction:
+
+  Level 1: parameter and coverage checks
+      Every recognized input face agrees with its candidate support surface
+      within tolerance.  Every generated boundary contribution has an input
+      explanation or is an intentional internal Boolean surface.
+
+  Level 2: topology checks
+      Closed results are manifold solids with consistent orientation.  Open
+      or hybrid results are explicitly identified.
+
+  Level 3: deterministic classification samples
+      Compare original B-Rep and generated CSG classifications at feature-
+      aware samples: face interiors, both sides of boundaries, trim vertices,
+      extrema, narrow gaps, blend transitions, and an adaptive spatial set.
+
+  Level 4: independent ray differences
+      Use multiple deterministic directions and adaptive sampling.  Report
+      unresolved/grazing rays separately from actual differences.
+
+  Level 5: optional alternate representation
+      Tessellate both results and compare using Manifold or another mesh
+      implementation as an independent approximate oracle.
+
+Exact tree equality is not a useful general assertion because equivalent CSG
+trees are nonunique.  Tests should assert canonical output only for cases
+where the canonicalization rules make it unique, and otherwise assert
+coverage, parameters, semantics, and geometric equivalence.
+
+
+5. PRIMITIVE AND FEATURE MATURATION ORDER
+
+5.1 Planes, ARBs, and ARBNs
+
+First make planar recognition and convex polyhedral reconstruction reliable:
+
+  * merge coplanar connected faces without merging disconnected sheets;
+  * orient planes consistently with material;
+  * distinguish convex ARBN candidates from nonconvex planar assemblies;
+  * recover ARB4 through ARB8 only when their combinatorial and geometric
+    constraints are satisfied;
+  * use BOT only as an explicit approximate/fallback representation, not an
+    implicit success; and
+  * validate thin wedges, slivers, duplicate planes, and near-coplanar faces.
+
+This foundation supplies clipping solids for curved primitives.
+
+5.2 Cylinders and cones
+
+Retain the current useful concepts of grouping co-axial faces and deriving
+end/side clipping planes, but replace midpoint-only decisions with canonical
+surface and observed-edge evidence.
+
+Required cases include full and partial cylinders, through and blind holes,
+bosses, half cylinders, nested co-axial cylinders, truncated cones, cone/
+cylinder transitions, and oblique planar clips.
+
+An edge being planar does not by itself prove that its plane is the correct
+half-space orientation.  Test representative face-interior points and the
+candidate implicit function against all proposed planes.
+
+5.3 Spheres and spherical corner caps
+
+Sphere support should be enabled only after unit tests cover full spheres,
+hemispheres, multiply clipped spherical patches, concave spherical cavities,
+and convex caps.
+
+The old code tried to infer a missing clipping plane from vertices shared by
+two circular edges on different circles.  Useful corrections from the
+temporary branch were:
+
+  * zero candidate edges means there is no implicit plane;
+  * the two IsArc() calls must populate two distinct ON_Arc objects;
+  * circle centers and radii should be compared after both arcs are obtained;
+  * duplicated curve objects must be freed; and
+  * every accepted sphere candidate needs a stable candidate ID.
+
+The earlier requirement that exactly three sphere planes already exist was
+incorrect and should not be restored.
+
+A spherical corner cap is best analyzed as part of a blend network, not as an
+isolated SPH patch.  For a constant-radius rolling-ball corner:
+
+  * recover the sphere center and radius;
+  * identify each adjacent support face and transition curve;
+  * verify tangency to the support surfaces from normals/curvatures;
+  * verify radius agreement with incident cylindrical or toroidal fillets;
+  * determine whether the cap adds or removes material; and
+  * synthesize the full sphere plus justified clipping/support operations.
+
+If the adjacent fillets do not form a consistent constant-radius network,
+retain the cap as residual B-Rep geometry rather than forcing a sphere into an
+incorrect Boolean expression.
+
+5.4 Tori and toroidal fillets
+
+The temporary branch contained a minimal full/planar-clipped TOR conversion.
+Its useful core was:
+
+  * two toroidal faces match when centers, axis directions, major radii, and
+    minor radii agree within the appropriate tolerances;
+  * material sense can be estimated by evaluating a face point and normal,
+    projecting the point to the torus major-circle plane, finding the nearest
+    major-circle point, and taking the dot product between the tube-outward
+    vector and the oriented face normal; and
+  * a complete torus can emit mk_tor directly, while a genuinely planar-
+    clipped section may require a TOR plus a clipping solid.
+
+That code did not solve toroidal fillet recovery.  A trimmed torus is not
+necessarily bounded by planes, and a toroidal patch may represent only the
+corner of a rolling-ball blend.  Proper support requires:
+
+  * ring, horn, and spindle validity/classification as applicable to BRL-CAD
+    TOR constraints;
+  * robust periodic seam handling;
+  * classification of major- and minor-direction trim curves;
+  * association with the two support surfaces tangent to the fillet;
+  * verification that minor radius equals the blend radius;
+  * concave/convex material sense; and
+  * construction of auxiliary clippers only when their boundary surfaces are
+    actually present or analytically implied.
+
+Process connected blend networks together.  The appropriate expression for a
+toroidal edge fillet may depend on adjacent cylinders, spheres, and planar
+parents; processing each torus face independently loses that information.
+
+5.5 Other implicit primitives
+
+After the core plane/cylinder/cone/sphere/torus path is stable, add candidate
+extractors according to observed models and exact representability:
+
+  ELL/SPH, EPA, EHY, HYP, RPC, RHC, ETO, PART, SUPERELL, and relevant TGC
+  specializations.
+
+Each new extractor must provide canonical parameters, material sense,
+coverage/evidence, transform behavior, and generated round-trip tests.  The
+existence of ft_brep for a primitive does not imply that a general trimmed
+surface patch can be uniquely recognized as that primitive.
+
+
+6. PRESERVED KNOWLEDGE FROM THE TEMPORARY BRANCHES
+
+6.1 Provenance snapshot
+
+Repository observed on 2026-08-01:
+
+  https://github.com/starseeker/brlcad_quickiterate
+
+Branches and observed heads:
+
+  booleans
+      ea36c0ef
+
+  copilot/debug-m35-component-conversion
+      aad30fa2
+
+The m35 branch contains/replays most of the booleans work and then adds a
+small sequence of later m35-specific experiments.  Similar changes appear
+under different commit IDs because they were merged or cherry-picked.  The
+algorithm descriptions below, not these identifiers, are the preservation
+record.
+
+6.2 B-Rep-to-CSG changes worth reimplementing carefully
+
+Sphere enablement (booleans c39a3543)
+
+  Useful:
+      The concrete sphere bugs listed in section 5.3; fallback of one
+      unsupported island to a residual B-Rep rather than aborting every other
+      island.
+
+  Unsafe:
+      The branch fallback hard-coded the residual island as a union.  Partial
+      fallback is useful only if the island's material sense and placement in
+      the candidate tree are preserved or explicitly left indeterminate.
+      Choosing an arbitrary positive shoal as a nucleus for an unresolved
+      mixed-polarity island.  That produces a plausible tree without proving
+      it represents the boundary.
+
+Torus enablement (booleans 52688c4c)
+
+  Useful:
+      Canonical center/axis/radii matching, the tube-normal material-sense
+      test, adding torus.cpp to the actual libbrep source list, and an mk_tor
+      emitter.
+
+  Incomplete:
+      It assumes the already collected edge planes are valid clippers and
+      treats any torus with such planes as TOR plus ARBN.  It does not prove
+      trim planarity, recover nonplanar torus sections, or solve blend
+      support semantics.
+
+Degenerate nucleus fallback (booleans 26e0b9f4)
+
+  Observation:
+      The old two-shoal special case is insufficient for real models with
+      more than two mixed-polarity features.
+
+  Recommendation:
+      Preserve that case as a required regression, but replace arbitrary
+      nucleus selection with explicit candidate-tree search and an
+      indeterminate/residual outcome.
+
+Top-level region output (booleans 6b1edfd6)
+
+  Observation:
+      A standalone completed conversion commonly should be a region.
+
+  Recommendation:
+      Region status is an output-context decision.  Do not unconditionally
+      set it inside object conversion; allow the caller to say whether the
+      result is a leaf region or an intermediate combination.
+
+6.3 Intersection candidate growth and N-squared behavior
+
+The branches found several independent performance explosions.  There was
+not one general "N-squared fix."
+
+SSI subdivision ceiling (original m35-line f0ea3737, booleans a8d80ab6)
+
+  Problem:
+      Surface/surface subdivision can produce many thousands of overlapping
+      subpatch pairs.  Large ELL/DSP examples reportedly reached long
+      runtimes on terra.g and havoc.g.
+
+  Branch algorithm:
+      Define MAX_SSI_CANDIDATES = 8000.  After producing the next subdivision
+      level, if its size exceeds the limit, stop subdividing and send the
+      current coarse candidates to the triangle-estimate/Newton stage.
+
+  Assessment:
+      This is the safest of the branch limits because it does not declare an
+      empty intersection.  However, 8000 is an empirical global constant,
+      the vector has already exceeded it, and coarse candidates may reduce
+      accuracy or increase Newton failures.
+
+  Replacement:
+      Use an operation work budget and a bounded best-first queue.  Prioritize
+      candidates by overlap-box size and conditioning, deduplicate parameter
+      boxes, process analytically solvable pairs first, and return
+      BUDGET_EXCEEDED with partial diagnostic data if completeness cannot be
+      guaranteed.
+
+CSI subdivision ceiling (m35-line 6eccd42a, booleans 249fb3ef)
+
+  Problem:
+      A curve lying on or near a surface seam reportedly produced about
+      65,000 curve/subsurface pairs and multi-minute runs.
+
+  Branch algorithm:
+      Define MAX_CSI_CANDIDATES = 8000.  An early version stopped subdivision
+      and processed the current candidates.  A later version returned the
+      existing event count immediately, skipping Newton processing.
+
+  Assessment:
+      Returning zero/newly empty events on overflow is a false-negative bug.
+      Candidate explosion is evidence of coincidence, tangency, degeneracy,
+      high complexity, or poor bounds; it is not proof of no intersection.
+
+  Replacement:
+      Detect and classify curve-on-surface overlap explicitly.  Otherwise use
+      the same bounded best-first processing and BUDGET_EXCEEDED status as
+      SSI.
+
+CCI subdivision ceiling and coextension shortcut
+(m35-line c8d05e49, booleans 47f54d99)
+
+  Problem:
+      Nearly identical or overlapping high-segment curves can cause
+      exponential candidate growth and hundreds of overlap events.
+
+  Branch algorithm:
+      Define MAX_CCI_CANDIDATES = 8000 and return the existing event count on
+      overflow.  In loop_boolean(), precompute all curve-pair CCI events.  If
+      more than 100 events cover at least 90 percent of a curve domain, treat
+      the loops as coextensive and resolve UNION/INTERSECT as the first loop
+      and DIFF as empty.
+
+  Assessment:
+      The overflow return loses real intersections.  Event count is not a
+      sound coextension predicate.  The initial implementation also examined
+      an unrepresentative curve pair, and later area-based guards over-fired
+      on narrow valid slivers.
+
+  Replacement:
+      Add an explicit same-curve/coincident-curve classifier based on
+      canonical analytic curves when available and bidirectional bounded
+      distance plus monotonic parameter correspondence otherwise.  Return
+      overlap intervals, not hundreds of duplicate point events.  Loop-level
+      coextension must include orientation and hole semantics.
+
+Reversed-segment cancellation (m35-line e2ff4edd, booleans 1bb008e2)
+
+  Problem:
+      set_append_segment() linearly scans accumulated segments and runs CCI
+      to confirm each reversed endpoint match.  Large segment sets make this
+      quadratic or worse.
+
+  Branch algorithm:
+      Remove CCI and cancel any segment whose endpoints match in reverse.
+
+  Assessment:
+      Unsafe.  Distinct curved paths can share the same endpoints.
+
+  Replacement:
+      Index candidates by quantized endpoint pair, canonical support-curve
+      identity, parameter interval, and tight bounds.  Run a cached geometric
+      equivalence check only within that small bucket.  This retains the
+      necessary confirmation without all-pairs CCI.
+
+Collinear SSI fast path (m35-line 784030ae, booleans 6c60058c)
+
+  Problem:
+      After SSI sampling, the implementation builds point-neighbor pairs and
+      polylines with quadratic searches.  Planar/prismatic models often
+      produce thousands of collinear samples for a straight intersection.
+
+  Branch algorithm:
+      1. Choose P0 and find the sample farthest from it.
+      2. Use the normalized P0-to-farthest vector as a candidate line.
+      3. Require every point's perpendicular distance to be no more than
+         10 times the intersection tolerance.
+      4. Project all points onto the line and sort in O(N log N).
+      5. Split sorted points wherever consecutive 3D distance exceeds the
+         existing max_dist gap threshold.
+      6. Build 3D polylines and fitted UV curves and emit SSX events directly.
+
+  Assessment:
+      This is a worthwhile optimization.  The original fast path had a
+      use-after-free corrected in a following commit.  Point collinearity
+      alone does not prove one connected intersection, and projection order
+      may be discontinuous across periodic UV seams.
+
+  Replacement:
+      Prefer analytic plane/plane and line/plane intersections before
+      sampling.  For sampled fallback, retain the O(N log N) projection idea
+      but validate 3D connectivity, UV continuity on both surfaces, parameter
+      monotonicity, and emitted-curve residuals.  Add disjoint collinear,
+      seam-crossing, tangent, reversed-surface, and use-after-free regression
+      cases.
+
+Interior-point search cap (m35-line bf2bea4a, booleans d6dcb1e7)
+
+  Problem:
+      Trying a nudge from every one of N loop curves calls an O(N) point-in-
+      loop test each time.  Fixed tiny UV nudges fail on large parameter
+      domains, triggering the quadratic worst case.
+
+  Branch algorithm:
+      NUDGE = max(ON_ZERO_TOLERANCE * 1000,
+                  1e-5 * min(UV_bbox_width, UV_bbox_height)).
+      Test at most the first 12 outer curves, then about 12 more at a stride.
+      For each midpoint, try eight increasing nudges in each normal direction.
+      Test at most 12 curves from each inner loop.
+
+  Assessment:
+      Bounding the attempts is good.  A global 10-parts-per-million UV nudge
+      can still cross a narrow feature, and "first 12" is ordering-dependent.
+
+  Replacement:
+      Choose deterministic, spatially distributed representatives.  Derive a
+      safe local UV step from surface derivatives and nearest-boundary
+      distance.  Use triangulated loop interiors or medial candidates to
+      produce an interior certificate.  Report failure instead of silently
+      classifying a face.
+
+Polygon prefilter and self-intersection cap
+(m35-line 7bd91e24, booleans efa30e6e)
+
+  Problem:
+      Repeated exact NURBS point-in-loop tests are expensive.
+
+  Branch algorithm:
+      Cache a chord-based "inner" polygon and a tangent/midpoint-expanded
+      "outer" polygon.  Reject points outside the outer polygon and accept
+      points inside the inner polygon.  Check the inner polygon for edge
+      self-intersection using O(N^2) only up to 128 edges; for larger polygons
+      mark it unsafe and skip the accepting fast path.
+
+  Assessment:
+      The 128-edge fail-safe is conservative for the inner acceptance path.
+      The claimed geometry is not generally valid: chords of arbitrary NURBS
+      loops are not guaranteed subsets, and tangent/midpoint polygons are not
+      guaranteed supersets.  The outer polygon was used even without an
+      equivalent safety proof.  A later bug showed that a single closed curve
+      produced a one- or two-point polygon and rejected every point.
+
+  Replacement:
+      Use adaptively tessellated UV loops with a certified Hausdorff/error
+      bound.  A conservative offset of that bounded approximation may support
+      safe inside/outside rejection.  Otherwise use it only to prioritize
+      exact tests, never to prove classification.
+
+6.4 SSI/Boolean correctness changes worth retaining as test requirements
+
+The branches identified these real defect classes:
+
+  * ON_Boolean checked surf_tree2.Count() instead of the populated st2 vector,
+    preventing ON_Intersect from running for face pairs.
+  * Stored pointers to entries in a growing overlap-event vector became
+    dangling after reallocation.  Reserving capacity or, preferably, storing
+    stable indices/owning values is required.
+  * Output edge, trim, and vertex tolerances were not recomputed after Boolean
+    assembly.
+  * Coplanar/coincident face pairs generated seam artifacts and duplicate
+    curves.
+  * Boundary joining based on object identity failed when geometrically equal
+    edges were represented by distinct curve objects.
+  * Degenerate trims, periodic seams, closed edges, and reversed 3D/2D trim
+    orientation repeatedly produced non-solid outputs.
+
+Some branch fixes simply skipped coplanar or coincident surface pairs.  That
+may avoid a crash but loses partial-overlap boundaries.  The required design
+is an overlap classifier with explicit same-domain, partial-overlap, tangent,
+and disjoint results.
+
+Post-hoc join_boundary_edges fixes are diagnostic evidence that topology was
+not constructed from a consistent shared intersection graph.  The long-term
+fix is to create common vertices and edges once from intersection events and
+reference them from both faces, with post-assembly joining retained only as a
+validated repair operation.
+
+6.5 Later m35-specific experiments
+
+The m35 branch added eight notable experiments after the common Boolean work.
+Its final two commits were titled "Changes before error encountered," the
+branch left DEBUG_BREP_BOOLEAN enabled, and no automated non-regression matrix
+was completed.  Treat the changes as bug reports, not mergeable code.
+
+Full-domain closed intersection curves
+
+  Observation:
+      Comparing only PointAt(interval.Min()) and PointAt(interval.Max())
+      rejects every full-period closed curve because its endpoints coincide.
+
+  Branch change:
+      Compare the subinterval with the 3D curve's full domain.  If it is the
+      full domain and IsClosed(), keep it unless the curve's 3D bounding-box
+      diagonal is below INTERSECTION_TOL.  Apply this on both surface sides.
+
+  Recommendation:
+      Preserve the full-domain distinction.  Use a scale-aware spatial
+      degeneracy test and a parameter-domain tolerance derived from the
+      domain, not ON_ZERO_TOLERANCE alone.  Test full circles, seam-split
+      circles, tiny real features, and numerical near-closures.
+
+Closed-curve shoelace area
+
+  Observation:
+      Treating a closed NURBS or polycurve as one start-to-end chord gives
+      zero area and falsely labels valid loops degenerate.  Nested
+      ON_PolylineCurve/ON_PolyCurve content also needs expansion.
+
+  Branch change:
+      Sample closed curves and recursively accumulate polycurve/polyline
+      vertices before computing shoelace area.
+
+  Recommendation:
+      Implement a reusable adaptive UV-loop polygonizer with a stated error
+      bound.  Use it for area estimates and diagnostics, but do not infer
+      exact coextension from approximate equal area alone.
+
+Narrow-sliver and coextension thresholds
+
+  Observation:
+      A normalized loop area threshold of 1e-3 rejected a valid sliver with
+      area/bbox_diagonal^2 about 5.86e-4.  A one-percent equal-area guard also
+      treated a real 0.06-percent split as coextensive.
+
+  Branch change:
+      Lower the normalized degeneracy threshold to 1e-10 and the coextension
+      relative area tolerance to 1e-5.
+
+  Recommendation:
+      These revisions demonstrate that fixed empirical thresholds are not a
+      proof.  Degeneracy should combine topology, curve retracing/equivalence,
+      a scale-aware area error bound, and minimum feature tolerance.  Equal
+      area is necessary but not sufficient for coextension.
+
+Planar inner-circle injection
+
+  Observation:
+      A special path intended to inject complete circular boundaries for
+      cylindrical/conical surfaces fired on planar UV domains and replaced a
+      valid open split with a degenerate closed loop.
+
+  Branch change:
+      Skip the injection when the second surface IsPlanar() within 100 times
+      the intersection tolerance.
+
+  Recommendation:
+      Restrict periodic completion by explicit surface class and seam
+      semantics, not a negative IsPlanar test.  Ideally remove special curve
+      injection in favor of a common periodic intersection-graph builder.
+
+Near-duplicate UV crossing points
+
+  Observation:
+      Adjacent subtracting faces may create two crossings at nearly the same
+      outer-loop location, leaving a near-zero trim and naked edge.
+
+  Branch change:
+      After sorting crossing events, remove adjacent events whose UV points
+      are within INTERSECTION_TOL and renumber positions.
+
+  Recommendation:
+      The observation is valid, but INTERSECTION_TOL is a 3D distance and
+      cannot be applied directly in UV.  Cluster events using both 3D
+      coincidence and local surface-metric UV tolerance.  Preserve event
+      multiplicity and incident-curve identity so tangent contacts are not
+      collapsed into crossings.
+
+Skipping residual near-zero trims
+
+  Branch change:
+      Delete and skip a residual degenerate pushup trim, assuming neighboring
+      trims will preserve loop continuity.
+
+  Assessment:
+      Unsafe.  Removing a trim can change topology or leave an unrepresented
+      boundary.
+
+  Replacement:
+      Prevent duplicate events upstream, or explicitly collapse the trim's
+      two vertices/edges under a topology-aware tolerance operation and then
+      validate the entire loop and solid.
+
+6.6 Additional Boolean implementation lessons
+
+The common branch history also contained changes that were not specific to
+candidate limits or m35.  The useful knowledge is as follows.
+
+SSICurve and LinkedCurve ownership (booleans 41b08e66)
+
+  Problem:
+      SSICurve owned a raw ON_Curve pointer but was stored in
+      ON_SimpleArray.  That container did not invoke the needed copy
+      constructors/destructors, so duplicated and gap-closing ON_LineCurve
+      objects leaked and shallow copies risked incorrect ownership.
+
+  Branch change:
+      Give SSICurve a deep-copy constructor, deep-copy assignment, and
+      destructor; use ON_ClassArray<SSICurve>; make LinkedCurve assignment
+      self-assignment safe; and reverse the owning array in place.
+
+  Recommendation:
+      Preserve the ownership diagnosis.  Prefer modern explicit RAII or the
+      OpenNURBS owning container expected by this code, and add copy/move/
+      destruction tests under ASan.  Do not mechanically change the
+      container without auditing every transfer and Duplicate() call.
+
+Tight B-Rep bounds (booleans 30b175ee)
+
+  Problem:
+      ON_Brep::BoundingBox() may include the full untrimmed surface domains.
+      Diamond-trimmed planar support surfaces, for example, can extend far
+      outside the actual solid.  Classification and broad-phase tests then
+      use an unnecessarily loose or misleading box.
+
+  Branch change:
+      Build a tight box from all B-Rep vertices and edge-curve bounds and pad
+      it by the intersection tolerance.  Use it in point-in-B-Rep and
+      face-location prefilters.
+
+  Recommendation:
+      Implement and cache a shared tight trimmed-boundary box routine.  A box
+      based only on vertices is insufficient for curved extrema, so include
+      edge bounds and, where a trimmed face may bulge beyond all edges, a
+      certified trimmed-face bound.  Keep the full support-surface box as a
+      separately named quantity.
+
+Point-on-surface UV reprojection (booleans d40fda5e)
+
+  Problem:
+      A point/surface intersection or closest-point calculation may clamp UV
+      to the support surface domain.  The resulting UV can lie on a trim even
+      though the original 3D query point is far from the face, causing a false
+      ON-surface classification.
+
+  Branch change:
+      Evaluate the surface at the returned UV and require that 3D point to be
+      within INTERSECTION_TOL of the query before testing the trim loop.
+
+  Recommendation:
+      This residual check is required.  Use the operation's scale-aware
+      tolerance and report clamped/out-of-domain solutions distinctly.
+
+Multiple-ray point-in-solid classification (booleans d40fda5e)
+
+  Problem:
+      One B-Rep classifier used a ray along the bounding-box diagonal.  Thin
+      objects can make it nearly parallel to a principal face, and a grazing
+      edge or vertex can change parity.
+
+  Branch change:
+      Fire +X, +Y, and +Z rays, deduplicate hits, and use majority parity.
+
+  Recommendation:
+      Three deterministic directions are a better fallback than one, but a
+      majority vote can turn three unresolved numerical queries into a false
+      certainty.  Each ray must return VALID_PARITY, GRAZING, COINCIDENT, or
+      FAILED.  Vote only among valid rays, generate additional feature-aware
+      directions when necessary, and return INDETERMINATE if independent
+      evidence does not agree.  For recognition, prefer analytic implicit
+      signs and topology before invoking this classifier.
+
+Empty and zero-volume Boolean operands (booleans 5bc6549c)
+
+  Observation:
+      Empty B-Reps need explicit UNION/INTERSECT/DIFF identity handling before
+      face arrays are indexed.  A nonempty face array does not by itself prove
+      nonzero enclosed volume.
+
+  Recommendation:
+      Preserve explicit empty-set algebra in both CSG IR simplification and
+      ON_Boolean.  Define how open sheets and zero-volume closed/degenerate
+      B-Reps are represented and reject them as solid operands when required.
+
+Boundary-edge joining and trim orientation
+
+  Branch experiments:
+      Several commits tried position-based matching of independently created
+      open edges, vertex merging, 3D curve reparameterization after moving an
+      endpoint, rebuilding edge indices after Compact(), and Newell-winding
+      comparisons for closed circular edges.  Other commits adjusted
+      m_bRev3d repeatedly as new m35 cases exposed inverted assumptions.
+
+  Preserved diagnosis:
+      Moving or merging vertices without updating the corresponding 3D edge
+      curve and both 2D trims creates an internally inconsistent B-Rep.
+      Closed periodic edges cannot be oriented reliably from endpoint order.
+      Compact() invalidates cached indices.  A valid shared edge must satisfy
+      all of these simultaneously:
+
+        edge endpoints agree with its 3D curve;
+        both trims reference the same edge and correct vertices;
+        each trim pushup agrees with the 3D edge within tolerance;
+        m_bRev3d reflects the actual trim/edge direction;
+        seam and iso flags are correct on each face; and
+        edge/trim/vertex tolerances bound the measured residuals.
+
+  Recommendation:
+      Construct one shared intersection edge from a common event graph and
+      attach both trims to it.  If a repair/join pass remains necessary, match
+      the complete curve geometry and incident topology, recompute all
+      dependent indices and tolerances, and validate every affected loop.
+      Newell sampling may help diagnose winding of planar closed curves, but
+      it is not a general orientation proof for arbitrary nonplanar curves.
+
+Coplanar and coincident shortcuts (booleans ba2ac7b6 and 97f31261)
+
+  Branch changes:
+      Skip planar face pairs with parallel normals; skip surfaces when a
+      midpoint projects to the other surface with parallel normal; and delete
+      a closed seam curve if its bounding-box diagonal is less than one
+      percent of a larger closed curve whose box contains its center.
+
+  Assessment:
+      These changes suppressed expensive duplicate events in specific
+      co-axial TGC and nested ARB cases.  None is a safe general predicate.
+      Parallel planes may be distinct or partially coplanar; one matching
+      midpoint does not prove coincident surfaces; and relative curve-box size
+      does not prove a seam artifact.
+
+  Replacement:
+      Canonicalize analytic support surfaces, classify their trimmed-domain
+      overlap, and compare curves by geometry and incident topology.  Preserve
+      the reported cases as regressions demonstrating why overlap needs a
+      first-class representation.
+
+Output tolerances (booleans c9ce247a)
+
+  Observation:
+      Boolean assembly changes topology and curve representation, so copied
+      input tolerances do not necessarily describe the output.
+
+  Recommendation:
+      Measure and set edge, trim, and vertex tolerances after final topology
+      construction.  Reject output whose required tolerance exceeds the
+      operation policy; do not inflate tolerances until IsValid() passes.
+
+
+7. CONTROLLED PERTURBATION
+
+7.1 Intended use
+
+Current librt has ft_perturb hooks for TOR, TGC/REC, ELL/SPH, ARB8, HALF,
+ARBN, PART, RPC, RHC, EPA, EHY, ETO, SUPERELL, HYP, and HRT.  The facetize
+planner in src/libged/facetize/plan.cpp already demonstrates creation of
+role-aware perturbed variants for several common primitives.
+
+At the historical baseline of the temporary Boolean work, only HRT and PART
+perturb implementations were visible, so the m35 experiments could not have
+used perturbation on the ARB/TGC/ELL cases that dominated their failures.
+
+7.2 CSG-to-B-Rep policy
+
+Add perturbation above ON_Boolean, while the original primitive and its
+Boolean role are still known:
+
+  1. Evaluate the exact operands first.
+  2. If the operation reports coincident/indeterminate geometry,
+     BUDGET_EXCEEDED due to overlap explosion, or an invalid result, request
+     deterministic role-aware variants of the affected leaves.
+  3. For subtraction, perturb cutter and target in directions consistent with
+     the desired regularized set operation.  For union/intersection, choose
+     variants from an explicitly documented truth table.
+  4. Scale perturbation from the operation tolerance and feature size; never
+     use an unbounded percentage of primitive dimensions.
+  5. Retry only the affected subtree and retain a diagnostic record of every
+     variant.
+  6. Require a valid solid and stable classification across selected variants.
+  7. Compare the result to the original unperturbed CSG semantics using
+     independent feature-aware samples.
+
+Perturbation is a regularization tool, not a way to hide incomplete SSI.  A
+result that changes materially across small admissible variants is
+indeterminate.
+
+7.3 B-Rep-to-CSG policy
+
+Never perturb the source B-Rep during recognition.  Once a candidate CSG tree
+has been synthesized, its leaves may be perturbed solely while evaluating a
+round-trip B-Rep or faceted validation representation.  Such validation must
+still compare against the unchanged source B-Rep.
+
+
+8. MANIFOLD LIBRARY ROLE
+
+The Manifold library does not replace the B-Rep topology graph, analytic
+surface recognition, SSI, or exact implicit parameter recovery.  Its mesh
+representation also cannot prove that a NURBS face is exactly a plane,
+cylinder, sphere, or torus.
+
+It can help as an independent approximate validator:
+
+  * tessellate the source B-Rep with a controlled error;
+  * evaluate the proposed CSG tree through a faceted/Manifold path;
+  * compare manifoldness, connected components, signed volume, bounds, and
+    symmetric-difference mesh; and
+  * localize disagreement regions for diagnostics.
+
+Because both sides are tessellated, agreement is limited by tessellation
+error.  Manifold success must not promote an otherwise unsupported analytic
+candidate to exact status.  It is especially valuable as a different
+implementation that can catch gross Boolean-tree mistakes without sharing
+the NURBS Boolean failure modes.
+
+
+9. TEST AND CORPUS PLAN
+
+9.1 Preserve temporary-branch cases immediately
+
+While the host repository remains available:
+
+  * inventory every changed .g test object in the two branches;
+  * export object listings and relevant geometry to text where possible;
+  * replace opaque hand-edited binary fixtures with small programmatic
+    generators or committed ASCII descriptions;
+  * record the command, object path, expected stage, and observed failure;
+  * capture debug plots only as optional artifacts, not pass criteria; and
+  * record branch commit provenance in each extracted regression.
+
+The current nurbs_csg.g, cyl_hole.g, and cyls_holes.g should also be decoded
+into named semantic cases so future developers do not need to infer the
+purpose of anonymous database objects.
+
+9.2 Generated recognition cases
+
+For every primitive type, generate exact B-Reps through ft_brep and variants
+with:
+
+  * alternate seams and parameter directions;
+  * reversed faces;
+  * one face versus multiple faces on the same support surface;
+  * exact and near-tolerance transforms;
+  * planar and nonplanar trims;
+  * positive and negative material sense;
+  * nested, touching, coincident, and narrowly separated features; and
+  * model scales spanning the supported unit range.
+
+Round-trip generated CSG -> B-Rep -> recognized CSG.  Compare normalized
+primitive parameters and semantics, not generated object names.
+
+9.3 Focused feature cases
+
+At minimum include:
+
+  * ARBN, ARB4-ARB8, thin wedge, duplicate and near-coplanar planes;
+  * through/blind/off-center cylinders and nested co-axial cylinders;
+  * half cylinders and obliquely clipped cylinders;
+  * full/truncated cones and cylinder/cone transitions;
+  * full sphere, hemisphere, spherical cavity, three-plane spherical cap;
+  * spherical corner cap meeting two and three constant-radius fillets;
+  * full torus, planar torus section, periodic-seam torus section;
+  * convex and concave toroidal fillets between plane/plane,
+    plane/cylinder, and cylinder/cylinder supports;
+  * disjoint objects with overlapping AABBs;
+  * protruding cutters affecting more than one positive component;
+  * tangent contact that must not become subtraction;
+  * valid narrow slivers and genuinely retraced zero-area loops; and
+  * full-period closed SSI curves versus tiny degenerate closed curves.
+
+9.4 Intersection and performance cases
+
+Add direct CCI/CSI/SSI unit tests for:
+
+  * collinear planar intersection points, including disconnected intervals;
+  * periodic UV seam crossing;
+  * coincident and partially overlapping curves/surfaces;
+  * tangent contacts;
+  * candidate-count growth beyond the historical 8000 threshold;
+  * deterministic BUDGET_EXCEEDED behavior;
+  * stable overlap-event ownership under container growth; and
+  * reversed-segment candidates with equal endpoints but different paths.
+
+Record work counters in addition to wall time:
+
+  face pairs considered
+  subdivision candidates created and processed
+  Newton attempts and failures
+  overlap intervals/events
+  point-in-loop calls
+  candidate trees explored
+  verification samples and unresolved classifications
+
+Wall-clock limits alone are noisy and do not identify algorithmic regression.
+
+9.5 Real-model progression
+
+Use small tests as the gate, then progressively run:
+
+  moss, primitive collections, m35, goliath, havoc, and terra.
+
+For each real model maintain a component-level matrix.  A top-level "failed"
+result is not enough; record the first unrecognized face group, ambiguous
+relationship, budget overrun, invalid candidate, or verification difference.
+
+
+10. PHASED IMPLEMENTATION PLAN
+
+Phase 0: preserve evidence and establish baselines
+
+  * Extract the temporary-branch test cases and write semantic descriptions.
+  * Add an automated driver for existing B-Rep-to-CSG fixtures.
+  * Capture current recognition, verification, and performance results.
+  * Fix only prerequisite correctness defects, beginning with the st2/surface-
+    tree typo, so the baseline actually exercises SSI.
+  * Add sanitizers to targeted Boolean/intersection tests to expose the
+    pointer-lifetime and ownership defects reported by the branches.
+
+Deliverable: committed fixture corpus, baseline matrix, and reproducible
+commands.  Do not begin broad heuristic porting before this exists.
+
+Phase 1: API and intermediate representation
+
+  * Define a tolerance/options structure and structured status codes.
+  * Define immutable canonical surface records and the AAG.
+  * Define candidate, evidence, residual, and proposed-tree records with clear
+    ownership.
+  * Separate analysis from database emission.
+  * Make libged stage outputs under temporary names and commit atomically only
+    after requested verification succeeds.
+
+Deliverable: the old command can run through the new orchestration while
+initially wrapping existing recognizers.
+
+Phase 2: planar and quadric foundation
+
+  * Implement canonical plane/cylinder/cone/sphere/torus extraction.
+  * Implement scale-aware equality and local UV tolerance conversion.
+  * Build the AAG and migrate shoal grouping to it.
+  * Mature planar nuclei, cylinders, and cones with generated tests.
+  * Enable full and simply clipped spheres only after their tests pass.
+
+Deliverable: deterministic recognition and evidence for the existing useful
+subset, without bounding-box-created Boolean relations.
+
+Phase 3: hierarchy and canonical tree inference
+
+  * Implement staged relationship predicates and explicit indeterminate
+    status.
+  * Replace find_hierarchy() AABB decisions and island_nucleus() type-specific
+    fallbacks with candidate-tree search/scoring.
+  * Support residual B-Rep leaves deliberately.
+  * Normalize trees and make region status a caller option.
+  * Add feature-aware source-versus-tree verification.
+
+Deliverable: correct local and global Boolean assembly for plane/cylinder/
+cone/sphere cases, including protruding cutters and overlapping AABBs.
+
+Phase 4: spherical caps, tori, and blend networks
+
+  * Implement support-surface tangency attributes in the AAG.
+  * Recognize constant-radius cylindrical, spherical, and toroidal blend
+    patches as connected networks.
+  * Recover spherical corner caps from their support relationships.
+  * Implement complete TOR emission and justified clipping expressions.
+  * Add toroidal fillets in increasing support-pair complexity.
+
+Deliverable: tested rounded-corner and fillet families with residual fallback
+for non-constant or inconsistent blends.
+
+Phase 5: shared intersection maturation
+
+  * Add result/status objects and operation work budgets to CCI/CSI/SSI.
+  * Implement analytic and canonical overlap paths.
+  * Implement bounded best-first subdivision and parameter-box deduplication.
+  * Implement the validated O(N log N) collinear fast path.
+  * Replace all-pairs reversed-segment CCI with indexed/cached equivalence.
+  * Build shared intersection topology rather than relying on post-hoc edge
+    joining.
+
+This phase can proceed incrementally alongside phases 2-4 when a recognition
+predicate needs it.  It is not a commitment to complete arbitrary B-Rep
+Boolean evaluation before CSG recognition ships.
+
+Phase 6: controlled CSG-to-B-Rep retries
+
+  * Add evaluator options, statuses, diagnostics, and result validation to
+    rt_comb_brep.
+  * Integrate role-aware ft_perturb retries for coincidence-driven failures.
+  * Require stability across selected admissible variants.
+  * Share the new CCI/CSI/SSI work-budget and overlap infrastructure.
+
+Deliverable: reliable evaluation of the implicit trees produced by this
+project's supported recognition subset, with explicit failure beyond it.
+
+Phase 7: productization
+
+  * Finalize public API placement and retire exposed working structs.
+  * Add command options for full-implicit versus hybrid output, verification
+    level, work budget, report file, debug artifacts, and region context.
+  * Produce concise user diagnostics and a machine-readable analysis report.
+  * Add CI tiers: focused tests per change, broader nightly real-model matrix,
+    and sanitizer jobs.
+
+
+11. PROPOSED API PROPERTIES
+
+The exact C/C++ spelling should follow project conventions, but the API must
+support these concepts:
+
+  brep_csg_options
+      tolerance context, allowed primitive set, full/hybrid policy,
+      verification level, work budget, deterministic seed/version, and
+      debug-artifact controls
+
+  brep_csg_result
+      overall status, normalized in-memory tree, candidates, residuals,
+      face/edge coverage map, verification results, work counters, warnings,
+      and ownership/free routine
+
+  brep_csg_candidate
+      primitive parameters, material sense, supporting input IDs,
+      relationships, residual/confidence, and evidence
+
+  brep_geom_status
+      success, disjoint, overlap, indeterminate, budget exceeded, invalid
+      input, numerical failure, unsupported, and internal error
+
+Analysis must be callable without a database.  Emission should accept an
+already analyzed result and a naming/output context.  A dry-run report must
+not create database objects.
+
+
+12. ACCEPTANCE CRITERIA
+
+The first mature release need not recognize every B-Rep.  It is successful if
+it provides a trustworthy supported subset:
+
+  * No accepted full-implicit result fails its configured independent
+    verification.
+  * Unsupported or ambiguous cases return structured partial/failure results
+    without writing a misleading tree.
+  * Plane, cylinder, cone, sphere, and selected torus cases pass generated
+    scale, seam, orientation, and transform variants.
+  * Spherical caps and toroidal fillets are accepted only when their support
+    network and constant-radius relationships are verified.
+  * AABB overlap alone never establishes a Boolean operation.
+  * Resource limits produce BUDGET_EXCEEDED, never an empty-intersection lie.
+  * Recognition never perturbs the source B-Rep.
+  * CSG-to-B-Rep perturb retries are deterministic, bounded, role-aware, and
+    independently checked.
+  * Focused regression tests and work counters prevent the historical
+    fix-one-model/break-another cycle.
+
+
+13. PRACTICES TO AVOID
+
+Do not:
+
+  * forward-port either temporary branch wholesale;
+  * choose a positive nucleus merely because a tree is required;
+  * treat a candidate-count limit as proof of no intersection;
+  * cancel curved segments solely because endpoints match;
+  * apply 3D tolerances directly in UV space;
+  * infer coextension from event count or approximate equal area alone;
+  * assume a fixed-sample polygon is a conservative NURBS bound;
+  * drop degenerate trims without a topology-aware collapse and validation;
+  * skip all coincident surface pairs without classifying partial overlap;
+  * make raytracing or Manifold agreement the source of analytic identity;
+  * write database objects before analysis and verification are complete; or
+  * report hybrid/approximate output as a fully implicit conversion.
+
+
+14. REFERENCES AND PRIMARY CODE LOCATIONS
+
+Current source:
+
+  include/brep/csg.h
+  src/libbrep/shape_recognition/shape_recognition.cpp
+  src/libbrep/shape_recognition/pipeline.cpp
+  src/libbrep/shape_recognition/planar.cpp
+  src/libbrep/shape_recognition/cylinder.cpp
+  src/libbrep/shape_recognition/cone.cpp
+  src/libbrep/shape_recognition/sphere.cpp
+  src/libbrep/shape_recognition/torus.cpp
+  src/libbrep/shape_recognition/sr_util.cpp
+  src/libbrep/boolean.cpp
+  src/libbrep/intersect.cpp
+  src/libged/brep/csg.cpp
+  src/librt/comb/comb_brep.cpp
+  src/libged/facetize/plan.cpp
+  src/libanalyze/find_subtracted_shapes.cpp
+
+Existing test data:
+
+  src/libbrep/tests/nurbs_csg.g
+  src/libbrep/tests/cyl_hole.g
+  src/libbrep/tests/cyls_holes.g
+  db/m35.asc
+  db/goliath.asc
+  db/havoc.asc
+  db/terra.asc
+  db/moss.asc
+
+Relevant feature-recognition literature:
+
+  S. Joshi and T. C. Chang,
+  "Graph-Based Heuristics for Recognition of Machined Features from a
+  3D Solid Model," Computer-Aided Design 20(2), 1988.
+
+  T. Varady, R. R. Martin, and J. Cox,
+  "Reverse Engineering of Geometric Models - An Introduction,"
+  Computer-Aided Design 29(4), 1997.
+
+  G. Kos, R. R. Martin, and T. Varady,
+  "Methods to Recover Constant Radius Rolling Ball Blends in Reverse
+  Engineering of Solids," Computer Aided Geometric Design 17, 2000.
+
+The attributed-adjacency-graph and blend-recovery literature supplies useful
+organization and predicates, but BRL-CAD's output problem is broader than
+machining-feature recognition.  The canonical tree must also represent
+general unions, intersections, cavities, disconnected components, and hybrid
+residual geometry.

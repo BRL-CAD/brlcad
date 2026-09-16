@@ -1,7 +1,7 @@
 /*                       P I X - P N G . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2025 United States Government as represented by
+ * Copyright (c) 1998-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -25,6 +25,8 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <math.h>
 #ifdef HAVE_SYS_TYPES_H
@@ -41,6 +43,7 @@
 #include "vmath.h"
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bn.h"
@@ -55,7 +58,7 @@ size_t file_width = 512; /* default input width */
 size_t file_height = 512; /* default input height */
 static int autosize = 0;			/* !0 to autosize input */
 static int fileinput = 0;			/* file of pipe on input? */
-static char *file_name = (char *)NULL;
+static const char *file_name = (char *)NULL;
 
 
 /**
@@ -63,7 +66,6 @@ static char *file_name = (char *)NULL;
  * value disables writing a gAMA chunk.
  */
 double out_gamma = -1.0;
-
 
 int
 get_args(int argc, char **argv, size_t *width, size_t *height, FILE **infp, FILE **outfp)
@@ -76,19 +78,24 @@ get_args(int argc, char **argv, size_t *width, size_t *height, FILE **infp, FILE
 		autosize = 1;
 		break;
 	    case 'g':
-		out_gamma = atof(bu_optarg);
+		if (!bu_opt_scan_double(bu_optarg, &out_gamma, "gamma"))
+		    return 0;
 		break;
 	    case 's':
 		/* square file size */
-		*height = *width = atol(bu_optarg);
+		if (!bu_opt_scan_size_t_range(bu_optarg, width, 1, SIZE_MAX, "input size"))
+		    return 0;
+		*height = *width;
 		autosize = 0;
 		break;
 	    case 'w':
-		*width = atol(bu_optarg);
+		if (!bu_opt_scan_size_t_range(bu_optarg, width, 1, SIZE_MAX, "input width"))
+		    return 0;
 		autosize = 0;
 		break;
 	    case 'n':
-		*height = atol(bu_optarg);
+		if (!bu_opt_scan_size_t_range(bu_optarg, height, 1, SIZE_MAX, "input height"))
+		    return 0;
 		autosize = 0;
 		break;
 	    case 'o': {
@@ -109,6 +116,11 @@ get_args(int argc, char **argv, size_t *width, size_t *height, FILE **infp, FILE
 	file_name = "-";
     } else {
 	file_name = argv[bu_optind];
+	bu_optind++;
+	if (argc > bu_optind) {
+	    bu_log("%s: excess argument(s) not supported\n", bu_getprogname());
+	    return 0;
+	}
 	if ((*infp = fopen(file_name, "rb")) == NULL) {
 	    perror(file_name);
 	    bu_exit(1, "%s: cannot open \"%s\" for reading\n", bu_getprogname(), file_name);
@@ -126,8 +138,9 @@ get_args(int argc, char **argv, size_t *width, size_t *height, FILE **infp, FILE
 	bu_log("%s: will not write png data to a tty\n", bu_getprogname());
     if (ttyin || ttyout)
 	return 0; /* usage */
-    if (argc > ++bu_optind) {
-	bu_log("%s: excess argument(s) ignored\n", bu_getprogname());
+    if (argc > bu_optind) {
+	bu_log("%s: excess argument(s) not supported\n", bu_getprogname());
+	return 0;
     }
 
     return 1; /* OK */

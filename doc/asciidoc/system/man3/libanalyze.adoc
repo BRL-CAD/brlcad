@@ -1,0 +1,63 @@
+= LIBANALYZE(3)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+libanalyze - geometry analysis library for BRL-CAD
+
+== SYNOPSIS
+
+[source,c]
+----
+#include <analyze.h>
+----
+
+Link with *-lanalyze*.
+
+The public interface is organized across the headers included by
+_analyze.h_, including _analyze/diff.h_, _analyze/density.h_,
+_analyze/grid.h_, _analyze/heal.h_, _analyze/info.h_, _analyze/pnts.h_,
+_analyze/polygonize.h_, _analyze/nirt.h_, _analyze/voxelize.h_, and
+_analyze/worker.h_.
+
+== DESCRIPTION
+
+LIBANALYZE provides higher-level geometry analysis routines for BRL-CAD
+models. Unlike the lower-level geometry library (libbg), the algorithms
+in this library operate on the BRL-CAD constructive solid geometry (CSG)
+boolean hierarchy and generally rely on solid ray tracing through librt
+to gather the information they need.
+
+Facilities provided by the library include model differencing, material
+density and mass property analysis, ray-based gridding and sampling,
+geometry healing, model information queries, point-cloud generation and
+processing, polygonization and voxelization of geometry, and the
+interactive ray-tracing engine used by the *nirt*(1) command. A parallel
+worker interface supports distributing analysis work across multiple
+threads.
+
+Because these routines build on librt, applications using LIBANALYZE must
+first prepare a ray-tracing instance (see *librt*(3)). The complete API,
+including data structures and function signatures, is documented in the
+headers noted above and in the Doxygen-generated reference for the
+LIBANALYZE module.
+
+== SEE ALSO
+
+*brlcad*(1), *nirt*(1), *librt*(3), *libbg*(3), *libbn*(3), *libbu*(3)
+
+The BRL-CAD Doxygen API reference provides the authoritative,
+up-to-date description of all public LIBANALYZE routines.
+
+== AUTHOR
+
+BRL-CAD Team
+
+== COPYRIGHT
+
+This software is Copyright (c) 2008-2026 United States Government as represented by the U.S. Army Research Laboratory.
+
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

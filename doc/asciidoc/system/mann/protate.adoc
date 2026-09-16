@@ -1,0 +1,80 @@
+= PROTATE(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+protate - rotate a vector attribute of a primitive by Euler angles
+
+== SYNOPSIS
+
+[source]
+----
+protate obj attribute "rx ry rz"
+----
+
+[[description]]
+== DESCRIPTION
+
+The *protate* command rotates a specific vector attribute of the BRL-CAD primitive `obj` by the Euler angles `rx`, `ry`, `rz` (in degrees). The rotation is applied to an individual geometric attribute (a specific vector field) of the primitive rather than to the whole object. The modified object is written back to the database.
+
+The three arguments are:
+
+* *obj* — The name of the primitive to edit. May include a path prefix (e.g. `comb/part.s`), in which case the trailing component name is used. Only BRLCAD-type primitives are supported; combinations are rejected.
+* *attribute* — A single letter identifying which vector field of the primitive to rotate. Valid attributes depend on the primitive type (see table below).
+* *"rx ry rz"* — The rotation angles in degrees, as a single quoted space-separated string of three floating-point values. The rotation matrix is constructed from these Euler angles.
+
+=== Supported primitive types and attributes
+
+[cols="1,1,3"]
+|===
+|Primitive |Attribute |Description
+
+|ETO (Elliptical Torus)
+|`c` or `C`
+|Rotate the semi-minor axis vector of the elliptical cross-section.
+
+|TGC (Truncated General Cone)
+|`h` or `H`
+|Rotate the height vector of the cone.
+
+|EXTRUDE
+|`h` or `H`
+|Rotate the extrusion direction vector.
+
+|HYP (Hyperboloid)
+|`h` or `H`
+|Rotate the height (axis) vector of the hyperboloid.
+
+|===
+
+Other primitive types are not currently supported and will return an error.
+
+[[examples]]
+== EXAMPLES
+
+.Rotate the height vector of a TGC cone by 45° about Z
+[example]
+====
+mged> **protate cone.s h "0 0 45"**
+
+Rotates the height vector of the TGC primitive `cone.s` by 45° about the Z axis.
+====
+
+.Rotate the cross-section axis of an ETO
+[example]
+====
+mged> **protate ring.s c "30 0 0"**
+
+Rotates the semi-minor axis vector of the ETO primitive `ring.s` by 30° about the X axis.
+====
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

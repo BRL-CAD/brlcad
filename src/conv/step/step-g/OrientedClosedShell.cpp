@@ -1,7 +1,7 @@
 /*                 OrientedClosedShell.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2025 United States Government as represented by
+ * Copyright (c) 1994-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -125,18 +125,26 @@ OrientedClosedShell::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
 
 bool OrientedClosedShell::LoadONBrep(ON_Brep *brep)
 {
-    if (ON_id >= 0) {
+    if (GetONId() >= 0) {
 	return true;    //already loaded
     }
 
     if (!closed_shell_element->LoadONBrep(brep)) {
-	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
+	if (step && step->Verbose())
+	    std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
 	return false;
     }
 
-    ON_id = closed_shell_element->GetONId();
+    SetONId(closed_shell_element->GetONId());
 
     return true;
+}
+
+
+size_t
+OrientedClosedShell::FaceCount() const
+{
+    return closed_shell_element ? closed_shell_element->FaceCount() : 0;
 }
 
 // Local Variables:

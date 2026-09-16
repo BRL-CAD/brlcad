@@ -1,7 +1,7 @@
 /*                         C O L O R . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2008-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -112,7 +112,7 @@ color_zaprec(struct ged *gedp, struct mater *mp)
  * used by the 'color' command when provided the -e option
  */
 static int
-edcolor(struct ged *gedp, int argc, const char *argv[])
+_edcolor(struct ged *gedp, int argc, const char *argv[])
 {
     struct mater *mp;
     struct mater *zot;
@@ -154,7 +154,7 @@ edcolor(struct ged *gedp, int argc, const char *argv[])
     }
 
     fprintf(fp, "%s", hdr);
-    for (mp = rt_material_head(); mp != MATER_NULL; mp = mp->mt_forw) {
+    for (mp = db_mater_head(gedp->dbip); mp != MATER_NULL; mp = mp->mt_forw) {
 	fprintf(fp, "%ld\t%ld\t%3d\t%3d\t%3d",
 		      mp->mt_low, mp->mt_high,
 		      mp->mt_r, mp->mt_g, mp->mt_b);
@@ -183,9 +183,9 @@ edcolor(struct ged *gedp, int argc, const char *argv[])
 
     if (db_version(gedp->dbip) < 5) {
 	/* Zap all the current records, both in core and on disk */
-	while (rt_material_head() != MATER_NULL) {
-	    zot = rt_material_head();
-	    rt_new_material_head(zot->mt_forw);
+	while (db_mater_head(gedp->dbip) != MATER_NULL) {
+	    zot = db_mater_head(gedp->dbip);
+	    db_mater_set_head(gedp->dbip, zot->mt_forw);
 	    color_zaprec(gedp, zot);
 	    bu_free((void *)zot, "mater rec");
 	}
@@ -208,14 +208,14 @@ edcolor(struct ged *gedp, int argc, const char *argv[])
 	    mp->mt_g = g;
 	    mp->mt_b = b;
 	    mp->mt_daddr = MATER_NO_ADDR;
-	    rt_insert_color(mp);
+	    db_mater_insert(gedp->dbip, mp);
 	    color_putrec(gedp, mp);
 	}
     } else {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	/* free colors in rt_material_head */
-	rt_color_free();
+	/* free colors in db_mater_head */
+	db_mater_free(gedp->dbip);
 
 	while (bu_fgets(line, sizeof (line), fp) != NULL) {
 	    int cnt;
@@ -234,7 +234,7 @@ edcolor(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	db5_update_attribute("_GLOBAL", "regionid_colortable", bu_vls_addr(&vls), gedp->dbip);
-	db5_import_color_table(bu_vls_addr(&vls));
+	db5_import_color_table(gedp->dbip, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
     }
 
@@ -242,7 +242,7 @@ edcolor(struct ged *gedp, int argc, const char *argv[])
     bu_file_delete(tmpfil);
 
     /* if there are drawables, update their colors */
-    dl_color_soltab((struct bu_list *)ged_dl(gedp));
+    dl_color_soltab((struct bu_list *)ged_dl(gedp), gedp->dbip);
 
     return BRLCAD_OK;
 }
@@ -263,7 +263,7 @@ ged_edcolor_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    return edcolor(gedp, argc, argv);
+    return _edcolor(gedp, argc, argv);
 }
 
 
@@ -296,7 +296,7 @@ ged_color_core(struct ged *gedp, int argc, const char *argv[])
     /* edcolor */
     if (argc == 2) {
 	if (argv[1][0] == '-' && argv[1][1] == 'e' && argv[1][2] == '\0') {
-	    return edcolor(gedp, argc, argv);
+	    return _edcolor(gedp, argc, argv);
 	} else {
 	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	    return BRLCAD_ERROR;
@@ -305,7 +305,7 @@ ged_color_core(struct ged *gedp, int argc, const char *argv[])
 
     if (db_version(gedp->dbip) < 5) {
 	/* Delete all color records from the database */
-	mp = rt_material_head();
+	mp = db_mater_head(gedp->dbip);
 	while (mp != MATER_NULL) {
 	    next_mater = mp->mt_forw;
 	    color_zaprec(gedp, mp);
@@ -322,10 +322,10 @@ ged_color_core(struct ged *gedp, int argc, const char *argv[])
 	newp->mt_daddr = MATER_NO_ADDR;		/* not in database yet */
 
 	/* Insert new color record in the in-memory list */
-	rt_insert_color(newp);
+	db_mater_insert(gedp->dbip, newp);
 
 	/* Write new color records for all colors in the list */
-	mp = rt_material_head();
+	mp = db_mater_head(gedp->dbip);
 	while (mp != MATER_NULL) {
 	    next_mater = mp->mt_forw;
 	    color_putrec(gedp, mp);
@@ -344,13 +344,13 @@ ged_color_core(struct ged *gedp, int argc, const char *argv[])
 	newp->mt_daddr = MATER_NO_ADDR;		/* not in database yet */
 
 	/* Insert new color record in the in-memory list */
-	rt_insert_color(newp);
+	db_mater_insert(gedp->dbip, newp);
 
 	/*
 	 * Gather color records from the in-memory list to build
 	 * the _GLOBAL objects regionid_colortable attribute.
 	 */
-	rt_vls_color_map(&colors);
+	db_mater_to_vls(&colors, gedp->dbip);
 
 	db5_update_attribute("_GLOBAL", "regionid_colortable", bu_vls_addr(&colors), gedp->dbip);
 	bu_vls_free(&colors);
@@ -359,24 +359,14 @@ ged_color_core(struct ged *gedp, int argc, const char *argv[])
     return BRLCAD_OK;
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl color_cmd_impl = {"color", ged_color_core, GED_CMD_DEFAULT};
-const struct ged_cmd color_cmd = { &color_cmd_impl };
 
-struct ged_cmd_impl edcolor_cmd_impl = {"edcolor", ged_edcolor_core, GED_CMD_DEFAULT};
-const struct ged_cmd edcolor_cmd = { &edcolor_cmd_impl };
+#define GED_COLOR_COMMANDS(X, XID) \
+    X(color, ged_color_core, GED_CMD_DEFAULT) \
+    X(edcolor, ged_edcolor_core, GED_CMD_DEFAULT) \
 
-const struct ged_cmd *color_cmds[] = { &color_cmd, &edcolor_cmd, NULL };
-
-static const struct ged_plugin pinfo = { GED_API,  color_cmds, 2 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_COLOR_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_color", 1, GED_COLOR_COMMANDS)
 
 /*
  * Local Variables:

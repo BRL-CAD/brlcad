@@ -1,7 +1,7 @@
 /*               R E N D E R H A N D L E R . C P P
  * BRL-CAD
  *
- * Copyright (c) 2023-2025 United States Government as represented by
+ * Copyright (c) 2023-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -533,6 +533,12 @@ LayoutChoice::getCoordinates(int mapIndex)
     return output;
 }
 
+bool
+LayoutChoice::centerAmbientImage()
+{
+    return (map == "LFRBTb\n....AA\n");
+}
+
 double
 LayoutChoice::getTotalCoverage(double ambientWidth, double ambientHeight)
 {
@@ -694,6 +700,9 @@ makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, int of
     // get ambient occlusion render
     std::string aRender = renderPerspective(DETAILED, opt, info.largestComponents[0].name);
     std::pair<int, int> ambientDims = img.getCroppedImageDims(aRender);
+    if (ambientDims.first <= 0 || ambientDims.second <= 0) {
+	ambientDims = std::pair<int, int>(1, 1);
+    }
 
     // select the layout
     LayoutChoice bestLayout = genLayout(width, height, modelLength, modelDepth, modelHeight, ambientDims);
@@ -763,7 +772,11 @@ makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, int of
     std::vector<int> coords = bestLayout.getCoordinates(-1); // fetch ambient occlusion coordinates
 
     std::string title = info.getInfo("title");
-    size_t countCharDisplayedTitle = img.drawDiagramFitted(offsetX + coords[0], offsetY + coords[1], coords[2] - coords[0], coords[3] - coords[1], aRender, title);
+    bool centerAmbient = bestLayout.centerAmbientImage();
+    size_t countCharDisplayedTitle = title.length();
+    if (!aRender.empty()) {
+	countCharDisplayedTitle = img.drawDiagramFitted(offsetX + coords[0], offsetY + coords[1], coords[2] - coords[0], coords[3] - coords[1], aRender, title, centerAmbient);
+    }
 
     if (countCharDisplayedTitle < title.length()) {
 	std::string continuation = title.substr(countCharDisplayedTitle);

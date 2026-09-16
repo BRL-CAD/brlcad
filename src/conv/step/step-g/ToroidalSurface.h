@@ -1,7 +1,7 @@
 /*                 ToroidalSurface.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2025 United States Government as represented by
+ * Copyright (c) 1994-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -32,11 +32,14 @@ class ToroidalSurface: public ElementarySurface
 {
 private:
     static string entityname;
+    static string degenerate_entityname;
     static EntityInstanceFunc GetInstance;
 
 protected:
     double major_radius;
     double minor_radius;
+    bool is_degenerate;
+    bool select_outer;
 
 
 public:

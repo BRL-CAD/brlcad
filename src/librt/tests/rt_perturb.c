@@ -1,7 +1,7 @@
 /*                      R T _ P E R T U R B . C
  * BRL-CAD
  *
- * Copyright (c) 2018-2025 United States Government as represented by
+ * Copyright (c) 2018-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -53,23 +53,23 @@ main(int UNUSED(argc), char *argv[])
 	VSET(v, -10, -10, 0);
 	VSET(h, 0, 5, 20);
 	mk_rcc(wdbp, "rcc_1.s", v, h, r);
-	db_update_nref(dbip, &rt_uniresource);
+	db_update_nref(dbip);
     }
 
     {
 	/* Make a perturbed version */
 	struct directory *wdp = db_lookup(dbip, "rcc_1.s", LOOKUP_QUIET);
 	struct rt_db_internal intern;
-	rt_db_get_internal(&intern, wdp, dbip, NULL, &rt_uniresource);
+	rt_db_get_internal(&intern, wdp, dbip, NULL);
 
 	struct rt_db_internal *ointern = NULL;
 	if (intern.idb_meth && intern.idb_meth->ft_perturb) {
 	    intern.idb_meth->ft_perturb(&ointern, &intern, 0, 2);
 	    wdp = db_diradd(dbip, "rcc_perturb.s", RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&ointern->idb_type);
-	    rt_db_put_internal(wdp, dbip, ointern, &rt_uniresource);
+	    rt_db_put_internal(wdp, dbip, ointern);
 	    rt_db_free_internal(ointern);
 	    BU_PUT(ointern, struct rt_db_internal);
-	    db_update_nref(dbip, &rt_uniresource);
+	    db_update_nref(dbip);
 	}
     }
 
@@ -115,22 +115,22 @@ main(int UNUSED(argc), char *argv[])
 	VSET(pts8[7], -24.8507, -24.8507, 24.8507 );
 	mk_arb8(wdbp, "arb8_1.s", (const fastf_t *)pts8);
 #endif
-	db_update_nref(dbip, &rt_uniresource);
+	db_update_nref(dbip);
     }
     {
 	/* Make a perturbed version */
 	struct directory *wdp = db_lookup(dbip, "arb8_1.s", LOOKUP_QUIET);
 	struct rt_db_internal intern;
-	rt_db_get_internal(&intern, wdp, dbip, NULL, &rt_uniresource);
+	rt_db_get_internal(&intern, wdp, dbip, NULL);
 
 	struct rt_db_internal *ointern = NULL;
 	if (intern.idb_meth && intern.idb_meth->ft_perturb) {
 	    intern.idb_meth->ft_perturb(&ointern, &intern, 1, 10);
 	    wdp = db_diradd(dbip, "arb_perturb.s", RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&ointern->idb_type);
-	    rt_db_put_internal(wdp, dbip, ointern, &rt_uniresource);
+	    rt_db_put_internal(wdp, dbip, ointern);
 	    rt_db_free_internal(ointern);
 	    BU_PUT(ointern, struct rt_db_internal);
-	    db_update_nref(dbip, &rt_uniresource);
+	    db_update_nref(dbip);
 	}
     }
 

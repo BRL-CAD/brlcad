@@ -1,0 +1,107 @@
+= PIX-PNG(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+pix-png - convert a BRL-CAD PIX image to a PNG image
+
+== SYNOPSIS
+
+[source]
+----
+pix-png [-a] [-w _file_width_] [-n _file_height_] [-s _squaresize_] [-g _gamma_] [-o _file.png_] [_file.pix_] [> _file.png_]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*pix-png* converts a *pix*(5) format image, read from standard input or
+from _file.pix_, into a *PNG* (Portable Network Graphics) format image
+written to standard output (or to the file named with *-o*).  The output
+is an 8-bit RGB PNG.
+
+PIX files carry no dimension information, so the input size must be given
+when it is not the default 512x512.  Use *-w* and *-n*, the shorthand
+*-s* for a square image, or *-a* to read the size from the file name.
+
+By default no gAMA chunk is written; supply *-g* to record a source
+gamma in the PNG.
+
+
+[[options]]
+== OPTIONS
+
+*-a*::
+  Autosize the input by deriving its width and height from the
+  _file.pix_ name (requires a named input file, not a pipe).
+
+*-w* _file_width_::
+  Set the input width, in pixels.
+
+*-n* _file_height_::
+  Set the input height, in scanlines.
+
+*-s* _squaresize_::
+  Set both the width and the height to _squaresize_.
+
+*-g* _gamma_::
+  Write the given gamma value into the PNG gAMA chunk.  A value of 0.6
+  approximates PC display monitors.  A negative value disables the gAMA
+  chunk entirely, which is the default.
+
+*-o* _file.png_::
+  Write the PNG image to _file.png_.  If standard output is also
+  redirected or piped, the same image is written to both destinations.
+  *pix-png* will not write binary image data to a terminal.
+
+
+[[examples]]
+== EXAMPLES
+
+.Convert a non-default-size PIX image to PNG
+====
+[source,bash]
+----
+pix-png -w 1280 -n 1024 render.pix > render.png
+----
+Converts a 1280x1024 PIX rendering to a PNG file, telling *pix-png* the
+input dimensions since PIX files do not store them.
+====
+
+.Render a model and save it directly as PNG
+====
+[source,bash]
+----
+rt -s 512 -o render.pix model.g component
+pix-png -a render.pix -o render.png
+----
+Ray traces a region of _model.g_ with *rt*(1) to a 512x512 PIX file, then
+converts it to PNG.  The *-a* flag autosizes from the file name so the
+width and height need not be repeated.
+====
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *rt*(1), *png-pix*(1), *pix-fb*(1), *pix*(5)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

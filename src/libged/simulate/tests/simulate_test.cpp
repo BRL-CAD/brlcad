@@ -1,7 +1,7 @@
 /*               S I M U L A T E _ T E S T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2017-2025 United States Government as represented by
+ * Copyright (c) 2017-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,7 +28,7 @@
 #include "../utility.hpp"
 
 #include "bu/app.h"
-#include "ged/analyze.h"
+#include "analyze.h"
 #include "ged/commands.h"
 #include "wdb.h"
 
@@ -57,7 +57,7 @@ namespace
 
 	    mat_t matrix = MAT_INIT_IDN;
 
-	    if (1 != db_path_to_mat(const_cast<db_i *>(&db), &full_path, matrix, full_path.fp_len, &rt_uniresource))
+	    if (1 != db_path_to_mat(const_cast<db_i *>(&db), &full_path, matrix, full_path.fp_len))
 		bu_bomb("db_path_to_mat() failed");
 
 	    bn_tol tol = BN_TOL_INIT_ZERO;
@@ -143,7 +143,7 @@ namespace
 
 	    const char *argv[] = {"simulate", "scene.c", "3.0"};
 
-	    if (BRLCAD_OK != ged_exec_simulate(&ged_instance, sizeof(argv) / sizeof(argv[0]), argv))
+	    if (BRLCAD_OK != ged_exec(&ged_instance, sizeof(argv) / sizeof(argv[0]), argv))
 		bu_bomb("ged_simulate() failed");
 
 	    {
@@ -226,7 +226,7 @@ namespace
 
 	    const char *argv[] = {"simulate", "scene.c", "3.0"};
 
-	    if (BRLCAD_OK != ged_exec_simulate(&ged_instance, sizeof(argv) / sizeof(argv[0]), argv))
+	    if (BRLCAD_OK != ged_exec(&ged_instance, sizeof(argv) / sizeof(argv[0]), argv))
 		bu_bomb("ged_simulate() failed");
 
 	    const mat_t expected_falling_matrix = {
@@ -307,7 +307,7 @@ namespace
 
 	    const char *argv[] = {"simulate", "scene.c", "10.0"};
 
-	    if (BRLCAD_OK != ged_exec_simulate(&ged_instance, sizeof(argv) / sizeof(argv[0]), argv))
+	    if (BRLCAD_OK != ged_exec(&ged_instance, sizeof(argv) / sizeof(argv[0]), argv))
 		bu_bomb("ged_simulate() failed");
 
 	    {

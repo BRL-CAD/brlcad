@@ -1,7 +1,7 @@
 /*                       S T A T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2020-2025 United States Government as represented by
+ * Copyright (c) 2020-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,14 +32,13 @@
 #include <sstream>
 
 extern "C" {
-#include "fort.h"
-#define ALPHANUM_IMPL
 #include "../alphanum.h"
 }
 
 #include "bu/opt.h"
 #include "bu/ptbl.h"
 #include "bu/sort.h"
+#include "bu/tbl.h"
 #include "bu/units.h"
 #include "bu/vls.h"
 #include "rt/directory.h"
@@ -130,7 +129,7 @@ type_str(struct bu_vls *n, struct directory *dp, struct db_i *dbip)
 	    return;
 	}
     } else {
-	if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0 || intern.idb_major_type != DB5_MAJORTYPE_BRLCAD) {
+	if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL) < 0 || intern.idb_major_type != DB5_MAJORTYPE_BRLCAD) {
 	    rt_db_free_internal(&intern);
 	    bu_vls_sprintf(n, " ");
 	    return;
@@ -332,25 +331,25 @@ dpath_sort(void *paths, int path_cnt, const char *col_order, struct ged *gedp)
 }
 
 static void
-stat_output(ft_table_t *table, struct ged *gedp, struct directory *dp, const char *key, int raw)
+stat_output(struct bu_tbl *table, struct ged *gedp, struct directory *dp, const char *key, int raw)
 {
     struct bu_vls str = BU_VLS_INIT_ZERO;
 
     if (BU_STR_EQUAL(key, "name")) {
-	ft_write(table, dp->d_namep);
+	bu_tbl_write(table, dp->d_namep);
 	return;
     }
 
     if (BU_STR_EQUAL(key, "uses")) {
 	bu_vls_sprintf(&str, "%ld", dp->d_uses);
-	ft_write(table, bu_vls_cstr(&str));
+	bu_tbl_write(table, bu_vls_cstr(&str));
 	bu_vls_free(&str);
 	return;
     }
 
     if (BU_STR_EQUAL(key, "refs")) {
 	bu_vls_sprintf(&str, "%ld", dp->d_nref);
-	ft_write(table, bu_vls_cstr(&str));
+	bu_tbl_write(table, bu_vls_cstr(&str));
 	bu_vls_free(&str);
 	return;
     }
@@ -358,7 +357,7 @@ stat_output(ft_table_t *table, struct ged *gedp, struct directory *dp, const cha
     if (BU_STR_EQUAL(key, "flags")) {
 	// TODO - some sort of human intuitive printing
 	bu_vls_sprintf(&str, "%d", dp->d_flags);
-	ft_write(table, bu_vls_cstr(&str));
+	bu_tbl_write(table, bu_vls_cstr(&str));
 	bu_vls_free(&str);
 	return;
     }
@@ -366,7 +365,7 @@ stat_output(ft_table_t *table, struct ged *gedp, struct directory *dp, const cha
     if (BU_STR_EQUAL(key, "major_type")) {
 	// TODO - some sort of human intuitive printing
 	bu_vls_sprintf(&str, "%d", dp->d_major_type);
-	ft_write(table, bu_vls_cstr(&str));
+	bu_tbl_write(table, bu_vls_cstr(&str));
 	bu_vls_free(&str);
 	return;
     }
@@ -374,7 +373,7 @@ stat_output(ft_table_t *table, struct ged *gedp, struct directory *dp, const cha
     if (BU_STR_EQUAL(key, "minor_type")) {
 	// TODO - some sort of human intuitive printing
 	bu_vls_sprintf(&str, "%d", dp->d_minor_type);
-	ft_write(table, bu_vls_cstr(&str));
+	bu_tbl_write(table, bu_vls_cstr(&str));
 	bu_vls_free(&str);
 	return;
     }
@@ -383,7 +382,7 @@ stat_output(ft_table_t *table, struct ged *gedp, struct directory *dp, const cha
     if (BU_STR_EQUAL(key, "type")) {
 	struct bu_vls tstr = BU_VLS_INIT_ZERO;
 	type_str(&tstr, dp, gedp->dbip);
-	ft_write(table, bu_vls_cstr(&tstr));
+	bu_tbl_write(table, bu_vls_cstr(&tstr));
 	bu_vls_free(&tstr);
 	return;
     }
@@ -398,7 +397,7 @@ stat_output(ft_table_t *table, struct ged *gedp, struct directory *dp, const cha
 				     BU_HN_B | BU_HN_NOSPACE | BU_HN_DECIMAL);
 	    bu_vls_printf(&str,  "%s", hlen);
 	}
-	ft_write(table, bu_vls_cstr(&str));
+	bu_tbl_write(table, bu_vls_cstr(&str));
 	bu_vls_free(&str);
 	return;
     }
@@ -419,9 +418,9 @@ stat_output(ft_table_t *table, struct ged *gedp, struct directory *dp, const cha
     }
 
     if (bu_avs_get(&avs, bu_vls_cstr(&str))) {
-	ft_write(table, bu_avs_get(&avs, bu_vls_cstr(&str)));
+	bu_tbl_write(table, bu_avs_get(&avs, bu_vls_cstr(&str)));
     } else {
-	ft_write(table, " ");
+	bu_tbl_write(table, " ");
     }
     bu_avs_free(&avs);
     bu_vls_free(&str);
@@ -557,7 +556,7 @@ ged_stat_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 #endif
-    db_update_nref(dbip, &rt_uniresource);
+    db_update_nref(dbip);
 
     // Combine verbosity and quiet flags
     verbosity = verbosity - quiet;
@@ -566,16 +565,16 @@ ged_stat_core(struct ged *gedp, int argc, const char *argv[])
     std::vector<std::string> keys = _stat_keys_split(std::string(bu_vls_cstr(&keys_str)));
 
     // Create table
-    ft_table_t *table = ft_create_table();
-    ft_set_border_style(table, FT_SIMPLE_STYLE);
+    struct bu_tbl *table = bu_tbl_create();
+    bu_tbl_style(table, BU_TBL_STYLE_LIST);
 
     // Set header (depends on verbosity)
     for (size_t i = 0; i < keys.size(); i++) {
 	// TODO - better pretty-printing of header strings - i.e. "Object Name" instead of "name"
-	ft_write(table, stat_key_prettyprint(keys[i].c_str()));
+	bu_tbl_write(table, stat_key_prettyprint(keys[i].c_str()));
     }
-    ft_ln(table);
-    ft_add_separator(table);
+    bu_tbl_style(table, BU_TBL_ROW_END);
+    bu_tbl_style(table, BU_TBL_ROW_SEPARATOR);
 
     // If we're going to filter, build the set of "allowed" objects
     if (bu_vls_strlen(&search_filter)) {
@@ -586,8 +585,11 @@ ged_stat_core(struct ged *gedp, int argc, const char *argv[])
 	// If we're not allowed *any* objects according to the filters, there's no point in
 	// doing any more work - just print the header and exit.
 	if (!BU_PTBL_LEN(&sobjs)) {
-	    bu_vls_printf(gedp->ged_result_str, "%s\n", ft_to_string(table));
-	    ft_destroy_table(table);
+	    struct bu_vls tstr = BU_VLS_INIT_ZERO;
+	    bu_tbl_vls(&tstr, table);
+	    bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_cstr(&tstr));
+	    bu_vls_free(&tstr);
+	    bu_tbl_destroy(table);
 	    bu_ptbl_free(&sobjs);
 	    bu_vls_free(&keys_str);
 	    bu_vls_free(&ofile);
@@ -638,17 +640,20 @@ ged_stat_core(struct ged *gedp, int argc, const char *argv[])
 	for (size_t k = 0; k < keys.size(); k++) {
 	    stat_output(table, gedp, dp, keys[k].c_str(), raw);
 	}
-	ft_ln(table);
+	bu_tbl_style(table, BU_TBL_ROW_END);
     }
     bu_ptbl_free(&objs);
 
+    struct bu_vls tstr = BU_VLS_INIT_ZERO;
+    bu_tbl_vls(&tstr, table);
     if (!fp) {
-	bu_vls_printf(gedp->ged_result_str, "%s\n", ft_to_string(table));
+	bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_cstr(&tstr));
     } else {
-	fprintf(fp, "%s\n", ft_to_string(table));
+	fprintf(fp, "%s\n", bu_vls_cstr(&tstr));
 	fclose(fp);
     }
-    ft_destroy_table(table);
+    bu_vls_free(&tstr);
+    bu_tbl_destroy(table);
     bu_ptbl_free(&sobjs);
     bu_vls_free(&keys_str);
     bu_vls_free(&ofile);
@@ -658,28 +663,13 @@ ged_stat_core(struct ged *gedp, int argc, const char *argv[])
     return BRLCAD_OK;
 }
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-extern "C" {
-struct ged_cmd_impl stat_cmd_impl = {
-    "stat",
-    ged_stat_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd stat_cmd = { &stat_cmd_impl };
-const struct ged_cmd *stat_cmds[] = { &stat_cmd, NULL };
+#define GED_STAT_COMMANDS(X, XID) \
+    XID(statcmd, "stat", ged_stat_core,  GED_CMD_DEFAULT)
 
-static const struct ged_plugin pinfo = { GED_API,  stat_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-}
-#endif /* GED_PLUGIN */
-
-
+GED_DECLARE_COMMAND_SET(GED_STAT_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_stat", 1, GED_STAT_COMMANDS)
 
 // Local Variables:
 // tab-width: 8
@@ -689,4 +679,3 @@ COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

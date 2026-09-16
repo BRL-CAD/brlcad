@@ -1,7 +1,7 @@
 /*                         B W M O D . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2025 United States Government as represented by
+ * Copyright (c) 1986-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -36,6 +36,7 @@
 
 #include "common.h"
 
+#include <errno.h>
 #include <stdlib.h>
 #include <math.h>
 #include "bio.h"
@@ -45,6 +46,7 @@
 #include "bu/file.h"
 #include "bu/malloc.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/exit.h"
 
 
@@ -117,18 +119,26 @@ get_args(int argc, char **argv)
 	switch (c) {
 	case 'a':
 	    op[numop] = ADD;
-	    val[numop++] = atof(bu_optarg);
+	    if (!bu_opt_scan_double(bu_optarg, &val[numop], "add value"))
+		return 0;
+	    numop++;
 	    break;
 	case 's':
 	    op[numop] = ADD;
-	    val[numop++] = - atof(bu_optarg);
+	    if (!bu_opt_scan_double(bu_optarg, &val[numop], "subtract value"))
+		return 0;
+	    val[numop] = -val[numop];
+	    numop++;
 	    break;
 	case 'm':
 	    op[numop] = MULT;
-	    val[numop++] = atof(bu_optarg);
+	    if (!bu_opt_scan_double(bu_optarg, &val[numop], "multiply value"))
+		return 0;
+	    numop++;
 	    break;
 	case 'd':
-	    d = atof(bu_optarg);
+	    if (!bu_opt_scan_double(bu_optarg, &d, "divide value"))
+		return 0;
 	    if (ZERO(d)) {
 		bu_exit(2, "bwmod: cannot divide by zero!\n");
 	    }
@@ -146,10 +156,13 @@ get_args(int argc, char **argv)
 	    break;
 	case 'e':
 	    op[numop] = POW;
-	    val[numop++] = atof(bu_optarg);
+	    if (!bu_opt_scan_double(bu_optarg, &val[numop], "exponent"))
+		return 0;
+	    numop++;
 	    break;
 	case 'r':
-	    d = atof(bu_optarg);
+	    if (!bu_opt_scan_double(bu_optarg, &d, "root"))
+		return 0;
 	    if (ZERO(d)) {
 		bu_exit(2, "bwmod: zero root!\n");
 	    }
@@ -161,19 +174,27 @@ get_args(int argc, char **argv)
 	    break;
 	case 'S':
 	    op[numop] = SHIFT;
-	    val[numop++] = atof(bu_optarg);
+	    if (!bu_opt_scan_double(bu_optarg, &val[numop], "shift value"))
+		return 0;
+	    numop++;
 	    break;
 	case 'M':
 	    op[numop] = AND;
-	    val[numop++] = atof(bu_optarg);
+	    if (!bu_opt_scan_double(bu_optarg, &val[numop], "and value"))
+		return 0;
+	    numop++;
 	    break;
 	case 'O':
 	    op[numop] = OR;
-	    val[numop++] = atof(bu_optarg);
+	    if (!bu_opt_scan_double(bu_optarg, &val[numop], "or value"))
+		return 0;
+	    numop++;
 	    break;
 	case 'X':
 	    op[numop] = XOR;
-	    val[numop++] = atof(bu_optarg);
+	    if (!bu_opt_scan_double(bu_optarg, &val[numop], "xor value"))
+		return 0;
+	    numop++;
 	    break;
 	case 'R':
 	    op[numop] = ROUND;
@@ -213,7 +234,8 @@ get_args(int argc, char **argv)
     }
 
     if (argc > ++bu_optind) {
-	fprintf(stderr, "bwmod: excess argument(s) ignored\n");
+	fprintf(stderr, "bwmod: excess argument(s) not supported\n");
+	return 0;
     }
 
     return 1; /* OK */
