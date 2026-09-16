@@ -177,8 +177,8 @@ runs:
         if command -v cygpath >/dev/null 2>&1; then
           output_dir="$(cygpath -u "$output_dir")"
         fi
-        source_dir="$RUNNER_TEMP/bext-source-$BEXT_SHA"
-        build_dir="$RUNNER_TEMP/bext-build-$BEXT_SHA"
+        source_dir="$RUNNER_TEMP/bext-src"
+        build_dir="$RUNNER_TEMP/bext-build"
         cleanup() {
           cmake -E rm -rf "$source_dir" "$build_dir"
         }
