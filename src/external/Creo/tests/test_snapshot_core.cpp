@@ -7,8 +7,10 @@
 #include <iomanip>
 #include <sstream>
 #include <string>
+#include <utility>
 #include <vector>
 
+#include "wdb.h"
 #include "bu/avs.h"
 #include "conversion_snapshot.h"
 #include "raytrace.h"
@@ -46,11 +48,16 @@ struct fixture_definition {
     const char *fixture_name;
     const char *snapshot_name;
     const char *output_name;
+    const char *log_name;
     const char *manifest_name;
     int expected_result;
     int compare_manifest;
     struct creo_brl_snapshot_settings settings;
     struct creo_brl_snapshot_part part;
+    std::string rename_parameters;
+    std::string preserve_parameters;
+    std::vector<std::pair<std::string, std::string> > attributes;
+    std::vector<std::pair<std::string, std::string> > parameters;
     std::vector<struct creo_brl_snapshot_vector> vertices;
     std::vector<struct creo_brl_snapshot_triangle> triangles;
     std::vector<struct creo_brl_snapshot_vector> normals;
@@ -124,6 +131,49 @@ static int
 replace_record(std::vector<unsigned char> *contents,
                size_t offset,
                const void *record,
+               size_t record_size);
+
+
+static int
+append_named_values(std::vector<unsigned char> *contents,
+                    const std::vector<std::pair<std::string, std::string> >& values,
+                    struct creo_brl_snapshot_range *range,
+                    uint64_t *count)
+{
+    const size_t records_offset = contents->size();
+    std::vector<struct creo_brl_snapshot_named_value> records(values.size());
+
+    if (!contents || !range || !count)
+        return 0;
+
+    *count = values.size();
+    if (values.empty()) {
+        range->offset = 0;
+        range->size = 0;
+        return 1;
+    }
+
+    if (!append_data(contents, records.data(), values.size() * sizeof(records[0]), range))
+        return 0;
+
+    for (size_t index = 0; index < values.size(); ++index) {
+        if (!append_data(contents, values[index].first.data(), values[index].first.size(),
+                         &records[index].name) ||
+            !append_data(contents, values[index].second.data(), values[index].second.size(),
+                         &records[index].value) ||
+            !replace_record(contents, records_offset + index * sizeof(records[index]),
+                            &records[index], sizeof(records[index])))
+            return 0;
+    }
+
+    return 1;
+}
+
+
+static int
+replace_record(std::vector<unsigned char> *contents,
+               size_t offset,
+               const void *record,
                size_t record_size)
 {
     if (!contents || !record || offset > contents->size() ||
@@ -189,6 +239,7 @@ make_mesh_fixture(const char *fixture_name,
     fixture.fixture_name = fixture_name;
     fixture.snapshot_name = snapshot_name;
     fixture.output_name = output_name;
+    fixture.log_name = NULL;
     fixture.manifest_name = manifest_name;
     fixture.expected_result = CREO_BRL_CORE_CONVERT_SUCCESS;
     fixture.compare_manifest = 1;
@@ -224,6 +275,7 @@ make_bbox_fallback_fixture(const char *fixture_name,
     fixture.fixture_name = fixture_name;
     fixture.snapshot_name = snapshot_name;
     fixture.output_name = output_name;
+    fixture.log_name = NULL;
     fixture.manifest_name = manifest_name;
     fixture.expected_result = CREO_BRL_CORE_CONVERT_SUCCESS;
     fixture.compare_manifest = 1;
@@ -244,6 +296,7 @@ make_bbox_fallback_fixture(const char *fixture_name,
 static int
 write_snapshot_fixture(const std::string& snapshot_path,
                        const std::string& output_path,
+                       const std::string& log_path,
                        const fixture_definition& fixture,
                        uint64_t snapshot_size_adjustment)
 {
@@ -267,6 +320,11 @@ write_snapshot_fixture(const std::string& snapshot_path,
         !append_record(&contents, &scene, sizeof(scene)) ||
         !append_record(&contents, &part, sizeof(part)) ||
         !append_data(&contents, output_path.data(), output_path.size(), &scene.settings.output_path) ||
+        !append_data(&contents, log_path.data(), log_path.size(), &scene.settings.log_path) ||
+        !append_data(&contents, fixture.rename_parameters.data(), fixture.rename_parameters.size(),
+                     &scene.settings.rename_parameters) ||
+        !append_data(&contents, fixture.preserve_parameters.data(), fixture.preserve_parameters.size(),
+                     &scene.settings.preserve_parameters) ||
         !append_data(&contents, FIXTURE_MODEL_NAME, std::strlen(FIXTURE_MODEL_NAME), &part.model_name) ||
         !append_data(&contents, FIXTURE_MODEL_VERSION, std::strlen(FIXTURE_MODEL_VERSION),
                      &part.model_version) ||
@@ -284,7 +342,9 @@ write_snapshot_fixture(const std::string& snapshot_path,
         !append_data(&contents,
                      fixture.normal_indices.empty() ? NULL : fixture.normal_indices.data(),
                      fixture.normal_indices.size() * sizeof(fixture.normal_indices[0]),
-                     &part.normal_indices))
+                     &part.normal_indices) ||
+        !append_named_values(&contents, fixture.attributes, &part.attributes, &part.attribute_count) ||
+        !append_named_values(&contents, fixture.parameters, &part.parameters, &part.parameter_count))
         return 0;
 
     part.vertex_count = fixture.vertices.size();
@@ -355,6 +415,252 @@ read_attribute(struct db_i *database,
 
 cleanup:
     bu_avs_free(&attributes);
+    return result;
+}
+
+
+static int
+object_exists(struct db_i *database, const char *object_name)
+{
+    return db_lookup(database, object_name, LOOKUP_QUIET) != RT_DIR_NULL;
+}
+
+
+static int
+write_empty_database(const std::string& output_path)
+{
+    struct db_i *database = db_create(output_path.c_str(), BRLCAD_DB_FORMAT_LATEST);
+
+    if (database == DBI_NULL)
+        return 0;
+
+    db_close(database);
+    return 1;
+}
+
+
+static int
+write_collision_database(const std::string& output_path)
+{
+    struct db_i *database = db_create(output_path.c_str(), BRLCAD_DB_FORMAT_LATEST);
+    struct rt_wdb *writer = RT_WDB_NULL;
+    struct wmember members;
+    point_t min_point = {0.0, 0.0, 0.0};
+    point_t max_point = {1.0, 1.0, 1.0};
+    int result = 0;
+
+    if (database == DBI_NULL)
+        return 0;
+    writer = wdb_dbopen(database, RT_WDB_TYPE_DB_DISK);
+    if (writer == RT_WDB_NULL)
+        goto cleanup;
+
+    if (mk_rpp(writer, "widget_7.s", min_point, max_point) != 0)
+        goto cleanup;
+    BU_LIST_INIT(&members.l);
+    if (mk_addmember("widget_7.s", &members.l, NULL, WMOP_UNION) == WMEMBER_NULL)
+        goto cleanup;
+    if (mk_comb(writer, "widget_7.r", &members.l, 1, NULL, NULL, NULL, 1, 0, 0, 0, 0, 0, 0) != 0)
+        goto cleanup;
+    BU_LIST_INIT(&members.l);
+    if (mk_addmember("widget_7.r", &members.l, NULL, WMOP_UNION) == WMEMBER_NULL)
+        goto cleanup;
+    if (mk_lcomb(writer, "all", &members, 0, NULL, NULL, NULL, 0) != 0)
+        goto cleanup;
+
+    result = 1;
+
+cleanup:
+    if (database != DBI_NULL)
+        db_close(database);
+    return result;
+}
+
+
+static int
+read_text_file(const std::string& path, std::string *contents)
+{
+    std::ifstream input(path.c_str(), std::ios::binary);
+
+    if (!input)
+        return 0;
+
+    *contents = std::string(std::istreambuf_iterator<char>(input), std::istreambuf_iterator<char>());
+    return 1;
+}
+
+
+static int
+expect_phase4_attribute(struct db_i *database,
+                        const char *object_name,
+                        const char *attribute_name,
+                        const char *expected_value,
+                        const char *fixture_name)
+{
+    std::string value;
+
+    if (!read_attribute(database, object_name, attribute_name, &value)) {
+        std::fprintf(stderr, "%s: missing attribute %s on %s\n",
+                     fixture_name, attribute_name, object_name);
+        return 0;
+    }
+    if (value != expected_value) {
+        std::fprintf(stderr, "%s: attribute %s on %s expected '%s' got '%s'\n",
+                     fixture_name, attribute_name, object_name, expected_value, value.c_str());
+        return 0;
+    }
+
+    return 1;
+}
+
+
+static int
+verify_phase4_metadata(const std::string& output_path,
+                       const char *fixture_name,
+                       const char *region_name,
+                       const char *solid_name,
+                       const char *top_name,
+                       int expect_fallback)
+{
+    struct db_i *database = db_open(output_path.c_str(), DB_OPEN_READONLY);
+    std::string value;
+    int result = 0;
+
+    if (database == DBI_NULL || db_dirbuild(database) < 0)
+        goto cleanup;
+
+    if (!object_exists(database, region_name)) {
+        std::fprintf(stderr, "%s: missing region %s\n", fixture_name, region_name);
+        goto cleanup;
+    }
+    if (!object_exists(database, solid_name)) {
+        std::fprintf(stderr, "%s: missing solid %s\n", fixture_name, solid_name);
+        goto cleanup;
+    }
+    if (!object_exists(database, top_name)) {
+        std::fprintf(stderr, "%s: missing top object %s\n", fixture_name, top_name);
+        goto cleanup;
+    }
+
+    result = expect_phase4_attribute(database, region_name, MATERIAL_ATTRIBUTE, FIXTURE_MATERIAL_NAME,
+                                     fixture_name) &&
+             expect_phase4_attribute(database, region_name, "density", "1.25", fixture_name) &&
+             expect_phase4_attribute(database, region_name, "mass", "2.5", fixture_name) &&
+             expect_phase4_attribute(database, region_name, "volume", "3.75", fixture_name) &&
+             expect_phase4_attribute(database, region_name, "surface_area", "4.5", fixture_name) &&
+             expect_phase4_attribute(database, region_name, "custom_attr", "custom_value", fixture_name) &&
+             expect_phase4_attribute(database, region_name, "nomenclature", "Widget 7", fixture_name) &&
+             expect_phase4_attribute(database, region_name, "part_number", "PN-42", fixture_name);
+    if (!result)
+        goto cleanup;
+
+    if (expect_fallback)
+        result = read_attribute(database, solid_name, FALLBACK_ATTRIBUTE, &value) && value == FIXTURE_MODEL_NAME;
+    else
+        result = !read_attribute(database, solid_name, FALLBACK_ATTRIBUTE, &value);
+
+cleanup:
+    if (database != DBI_NULL)
+        db_close(database);
+    return result;
+}
+
+
+static int
+verify_phase4_failed_output(const std::string& output_path)
+{
+    struct db_i *database = db_open(output_path.c_str(), DB_OPEN_READONLY);
+    int result = 1;
+
+    if (database == DBI_NULL)
+        return 1;
+    if (db_dirbuild(database) < 0) {
+        result = 0;
+        goto cleanup;
+    }
+
+    result = !object_exists(database, FIXTURE_REGION_NAME) &&
+             !object_exists(database, FIXTURE_SOLID_NAME) &&
+             !object_exists(database, FIXTURE_TOP_LEVEL_NAME);
+
+cleanup:
+    db_close(database);
+    return result;
+}
+
+
+static int
+run_phase4_log_fixture(const std::string& working_directory,
+                       const fixture_definition& fixture,
+                       const char *expected_log)
+{
+    const std::string snapshot_path = path_join(working_directory, fixture.snapshot_name);
+    const std::string output_path = path_join(working_directory, fixture.output_name);
+    const std::string log_path = fixture.log_name ? path_join(working_directory, fixture.log_name) : std::string();
+    std::string log_contents;
+    int result = 0;
+
+    std::remove(snapshot_path.c_str());
+    std::remove(output_path.c_str());
+    if (!log_path.empty())
+        std::remove(log_path.c_str());
+    if (!write_snapshot_fixture(snapshot_path, output_path, log_path, fixture, VALID_SNAPSHOT_SIZE_DELTA) ||
+        creo_brl_core_convert(snapshot_path.c_str()) != fixture.expected_result ||
+        log_path.empty() || !read_text_file(log_path, &log_contents) ||
+        log_contents.find(expected_log) == std::string::npos ||
+        (fixture.expected_result != CREO_BRL_CORE_CONVERT_SUCCESS &&
+         !verify_phase4_failed_output(output_path))) {
+        test_failuref(fixture.fixture_name, "phase 4 log verification failed");
+        goto cleanup;
+    }
+
+    result = 1;
+
+cleanup:
+    std::remove(snapshot_path.c_str());
+    std::remove(output_path.c_str());
+    if (!log_path.empty())
+        std::remove(log_path.c_str());
+    return result;
+}
+
+
+static int
+run_phase4_fixture(const std::string& working_directory,
+                   const fixture_definition& fixture,
+                   int precreate_output,
+                   const char *expected_region_name,
+                   const char *expected_solid_name,
+                   const char *expected_top_name,
+                   int expect_fallback)
+{
+    const std::string snapshot_path = path_join(working_directory, fixture.snapshot_name);
+    const std::string output_path = path_join(working_directory, fixture.output_name);
+    const std::string log_path = fixture.log_name ? path_join(working_directory, fixture.log_name) : std::string();
+    int result = 0;
+
+    std::remove(snapshot_path.c_str());
+    std::remove(output_path.c_str());
+    if (!log_path.empty())
+        std::remove(log_path.c_str());
+    if (precreate_output && !write_collision_database(output_path))
+        return test_failuref(fixture.fixture_name, "failed to precreate output database");
+    if (!write_snapshot_fixture(snapshot_path, output_path, log_path, fixture, VALID_SNAPSHOT_SIZE_DELTA) ||
+        creo_brl_core_convert(snapshot_path.c_str()) != CREO_BRL_CORE_CONVERT_SUCCESS ||
+        !verify_phase4_metadata(output_path, fixture.fixture_name,
+                                expected_region_name, expected_solid_name,
+                                expected_top_name, expect_fallback)) {
+        test_failuref(fixture.fixture_name, "phase 4 verification failed");
+        goto cleanup;
+    }
+
+    result = 1;
+
+cleanup:
+    std::remove(snapshot_path.c_str());
+    std::remove(output_path.c_str());
+    if (!log_path.empty())
+        std::remove(log_path.c_str());
     return result;
 }
 
@@ -549,6 +855,7 @@ run_fixture(const std::string& working_directory,
 {
     const std::string snapshot_path = path_join(working_directory, fixture.snapshot_name);
     const std::string output_path = path_join(working_directory, fixture.output_name);
+    const std::string log_path = fixture.log_name ? path_join(working_directory, fixture.log_name) : std::string();
     const std::string manifest_path = fixture.manifest_name ?
                                           path_join(fixtures_directory, fixture.manifest_name) :
                                           std::string();
@@ -558,8 +865,10 @@ run_fixture(const std::string& working_directory,
 
     std::remove(snapshot_path.c_str());
     std::remove(output_path.c_str());
+    if (!log_path.empty())
+        std::remove(log_path.c_str());
 
-    if (!write_snapshot_fixture(snapshot_path, output_path, fixture, VALID_SNAPSHOT_SIZE_DELTA)) {
+    if (!write_snapshot_fixture(snapshot_path, output_path, log_path, fixture, VALID_SNAPSHOT_SIZE_DELTA)) {
         test_failuref(fixture.fixture_name, "failed to write snapshot fixture");
         goto cleanup;
     }
@@ -590,6 +899,8 @@ run_fixture(const std::string& working_directory,
 cleanup:
     std::remove(snapshot_path.c_str());
     std::remove(output_path.c_str());
+    if (!log_path.empty())
+        std::remove(log_path.c_str());
     return result;
 }
 
@@ -671,8 +982,61 @@ main(int argument_count, char *arguments[])
         {{{0u, 1u, 9u}}}, {}, {}, 100.0, 100.0, 0.0);
     failure_fixture.expected_result = CREO_BRL_CORE_CONVERT_OUTPUT_FAILED;
     failure_fixture.compare_manifest = 0;
+    failure_fixture.log_name = "creo_phase4_output_failure.log";
+    failure_fixture.settings.log_type = CREO_BRL_SNAPSHOT_LOG_FAILURE;
+    failure_fixture.part.flags |= CREO_BRL_SNAPSHOT_PART_HAS_MASS_PROPERTIES;
+    failure_fixture.part.density = 1.25;
+    failure_fixture.part.mass = 2.5;
+    failure_fixture.part.volume = 3.75;
+    failure_fixture.part.surface_area = 4.5;
+    failure_fixture.rename_parameters = "nomenclature";
+    failure_fixture.preserve_parameters = "part_number";
+    failure_fixture.attributes.push_back(std::make_pair(std::string("custom_attr"), std::string("custom_value")));
+    failure_fixture.parameters.push_back(std::make_pair(std::string("nomenclature"), std::string("Widget 7")));
+    failure_fixture.parameters.push_back(std::make_pair(std::string("part_number"), std::string("PN-42")));
     invalid_triangle_fixture.expected_result = CREO_BRL_CORE_CONVERT_INVALID_SNAPSHOT;
     invalid_triangle_fixture.compare_manifest = 0;
+    fixture_definition metadata_fixture = make_mesh_fixture(
+        "scene_phase4_metadata",
+        "creo_phase4_metadata.snapshot",
+        "creo_phase4_metadata.g",
+        NULL,
+        0u,
+        {{{0.0, 0.0, 0.0}}, {{100.0, 0.0, 0.0}}, {{100.0, 100.0, 0.0}},
+         {{0.0, 0.0, 0.0}}, {{100.0, 100.0, 0.0}}, {{0.0, 100.0, 0.0}}},
+        {{{0u, 1u, 2u}}, {{3u, 4u, 5u}}}, {}, {}, 100.0, 100.0, 0.0);
+    fixture_definition fallback_metadata_fixture = make_bbox_fallback_fixture(
+        "scene_phase4_fallback_metadata",
+        "creo_phase4_fallback.snapshot",
+        "creo_phase4_fallback.g",
+        NULL,
+        0u);
+    metadata_fixture.part.flags |= CREO_BRL_SNAPSHOT_PART_HAS_MASS_PROPERTIES;
+    metadata_fixture.part.density = 1.25;
+    metadata_fixture.part.mass = 2.5;
+    metadata_fixture.part.volume = 3.75;
+    metadata_fixture.part.surface_area = 4.5;
+    metadata_fixture.rename_parameters = "nomenclature";
+    metadata_fixture.preserve_parameters = "part_number";
+    metadata_fixture.attributes.push_back(std::make_pair(std::string("custom_attr"), std::string("custom_value")));
+    metadata_fixture.parameters.push_back(std::make_pair(std::string("nomenclature"), std::string("Widget 7")));
+    metadata_fixture.parameters.push_back(std::make_pair(std::string("part_number"), std::string("PN-42")));
+    fallback_metadata_fixture.part.flags |= CREO_BRL_SNAPSHOT_PART_HAS_MASS_PROPERTIES;
+    fallback_metadata_fixture.part.density = 1.25;
+    fallback_metadata_fixture.part.mass = 2.5;
+    fallback_metadata_fixture.part.volume = 3.75;
+    fallback_metadata_fixture.part.surface_area = 4.5;
+    fallback_metadata_fixture.rename_parameters = "nomenclature";
+    fallback_metadata_fixture.preserve_parameters = "part_number";
+    fallback_metadata_fixture.attributes.push_back(std::make_pair(std::string("custom_attr"), std::string("custom_value")));
+    fallback_metadata_fixture.parameters.push_back(std::make_pair(std::string("nomenclature"), std::string("Widget 7")));
+    fallback_metadata_fixture.parameters.push_back(std::make_pair(std::string("part_number"), std::string("PN-42")));
+    fixture_definition success_log_fixture = metadata_fixture;
+    fixture_definition fallback_log_fixture = fallback_metadata_fixture;
+    success_log_fixture.log_name = "creo_phase4_success.log";
+    success_log_fixture.settings.log_type = CREO_BRL_SNAPSHOT_LOG_SUCCESS;
+    fallback_log_fixture.log_name = "creo_phase4_fallback.log";
+    fallback_log_fixture.settings.log_type = CREO_BRL_SNAPSHOT_LOG_FAILURE;
 
     std::remove(malformed_snapshot_path.c_str());
     std::remove(invalid_size_snapshot_path.c_str());
@@ -684,11 +1048,22 @@ main(int argument_count, char *arguments[])
         !run_fixture(working_directory, fixtures_directory, solid_fixture) ||
         !run_fixture(working_directory, fixtures_directory, fallback_fixture) ||
         !run_fixture(working_directory, fixtures_directory, bbox_fixture) ||
-        !run_fixture(working_directory, fixtures_directory, failure_fixture) ||
+        !run_phase4_fixture(working_directory, metadata_fixture, 0,
+                           "widget_7.r", "widget_7.s", "all", 0) ||
+        !run_phase4_fixture(working_directory, fallback_metadata_fixture, 0,
+                           "widget_7.r", "widget_7.rpp", "all", 1) ||
+        !run_phase4_fixture(working_directory, metadata_fixture, 1,
+                           "widget_7_1.r", "widget_7_1.s", "all_1", 0) ||
+        !run_phase4_log_fixture(working_directory, success_log_fixture,
+                                "SUCCESS: Part \"fixture_part\" converted") ||
+        !run_phase4_log_fixture(working_directory, fallback_log_fixture,
+                                "FAILURE: Part \"fixture_part\" replaced with bounding box") ||
+        !run_phase4_log_fixture(working_directory, failure_fixture,
+                                "FAILURE: Part \"fixture_part\" not converted") ||
         !run_fixture(working_directory, fixtures_directory, invalid_triangle_fixture) ||
         !write_malformed_snapshot(malformed_snapshot_path) ||
         creo_brl_core_convert(malformed_snapshot_path.c_str()) != CREO_BRL_CORE_CONVERT_INVALID_SNAPSHOT ||
-        !write_snapshot_fixture(invalid_size_snapshot_path, invalid_triangle_output_path,
+        !write_snapshot_fixture(invalid_size_snapshot_path, invalid_triangle_output_path, std::string(),
                                 normalized_mesh_fixture, INVALID_SNAPSHOT_SIZE_DELTA) ||
         creo_brl_core_convert(invalid_size_snapshot_path.c_str()) !=
             CREO_BRL_CORE_CONVERT_INVALID_SNAPSHOT ||

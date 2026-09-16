@@ -202,6 +202,44 @@ write_text(FILE *snapshot_file, const std::string& text, struct creo_brl_snapsho
 
 
 static int
+write_named_values(FILE *snapshot_file,
+                   const std::vector<struct snapshot_named_value_capture>& values,
+                   struct creo_brl_snapshot_range *range,
+                   uint64_t *count)
+{
+    std::vector<struct creo_brl_snapshot_named_value> records(values.size());
+    const __int64 records_offset = _ftelli64(snapshot_file);
+
+    if (!range || !count || records_offset < 0)
+        return 0;
+
+    *count = values.size();
+    if (values.empty()) {
+        range->offset = 0;
+        range->size = 0;
+        return 1;
+    }
+
+    range->offset = (uint64_t)records_offset;
+    range->size = values.size() * sizeof(records[0]);
+    if (fwrite(records.data(), 1, (size_t)range->size, snapshot_file) != range->size)
+        return 0;
+
+    for (size_t index = 0; index < values.size(); ++index) {
+        if (!write_text(snapshot_file, values[index].name, &records[index].name) ||
+            !write_text(snapshot_file, values[index].value, &records[index].value))
+            return 0;
+    }
+
+    if (_fseeki64(snapshot_file, records_offset, SEEK_SET) != 0 ||
+        fwrite(records.data(), 1, (size_t)range->size, snapshot_file) != range->size)
+        return 0;
+
+    return _fseeki64(snapshot_file, 0, SEEK_END) == 0;
+}
+
+
+static int
 write_settings_strings(FILE *snapshot_file,
                        struct creo_brl_snapshot_settings *settings,
                        const struct snapshot_settings_strings& strings)
@@ -221,6 +259,8 @@ write_part_capture(FILE *snapshot_file, struct snapshot_part_capture *capture)
     capture->part.triangle_count = capture->triangles.size();
     capture->part.normal_count = capture->normals.size();
     capture->part.normal_index_count = capture->normal_indices.size();
+    capture->part.attribute_count = capture->attributes.size();
+    capture->part.parameter_count = capture->parameters.size();
 
     return write_text(snapshot_file, capture->strings.model_name, &capture->part.model_name) &&
            write_text(snapshot_file, capture->strings.model_version, &capture->part.model_version) &&
@@ -236,7 +276,11 @@ write_part_capture(FILE *snapshot_file, struct snapshot_part_capture *capture)
                        &capture->part.normals) &&
            write_range(snapshot_file, capture->normal_indices.data(),
                        capture->normal_indices.size() * sizeof(capture->normal_indices[0]),
-                       &capture->part.normal_indices);
+                       &capture->part.normal_indices) &&
+           write_named_values(snapshot_file, capture->attributes, &capture->part.attributes,
+                              &capture->part.attribute_count) &&
+           write_named_values(snapshot_file, capture->parameters, &capture->part.parameters,
+                              &capture->part.parameter_count);
 }
 
 

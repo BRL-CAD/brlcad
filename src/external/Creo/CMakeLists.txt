@@ -37,7 +37,9 @@ set(CREO2BRL_CORE_SOURCES
   core.cpp
   conversion.cpp
   conversion/mesh_convert.cpp
+  conversion/name_allocator.cpp
   conversion/profile_reader.cpp
+  conversion/scene_convert.cpp
   ${CREO2BRL_SHARED_SOURCES}
   )
 
@@ -526,6 +528,8 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     creo-brl.dat.in
     creo-brl.h
     conversion_snapshot.h
+    conversion/name_allocator.h
+    conversion/scene_convert.h
     frontend/profile_path.h
     frontend/model_capture.h
     frontend/profile_ui.h

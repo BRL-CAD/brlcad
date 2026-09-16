@@ -17,7 +17,10 @@
 
 #include "common.h"
 
+#include <ctype.h>
 #include <cmath>
+#include <stdio.h>
+#include <sstream>
 
 #include "frontend/model_capture.h"
 
@@ -47,6 +50,236 @@ wide_to_utf8(const wchar_t *wide_text, std::string *text)
 
     text->resize((size_t)size - 1);
     return 1;
+}
+
+
+static std::string
+trim_text(const std::string& text)
+{
+    const size_t begin = text.find_first_not_of(" \t\n\v\f\r");
+
+    if (begin == std::string::npos)
+        return std::string();
+
+    const size_t end = text.find_last_not_of(" \t\n\v\f\r");
+    return text.substr(begin, end - begin + 1);
+}
+
+
+static std::string
+lower_ascii(const std::string& text)
+{
+    std::string lowered = text;
+
+    for (size_t index = 0; index < lowered.size(); ++index)
+        lowered[index] = (char)tolower((unsigned char)lowered[index]);
+
+    return lowered;
+}
+
+
+static ProError
+append_parameter_to_array(void *parameter_object, ProError filter_error, ProAppData app_data)
+{
+    ProArray *parameter_array = NULL;
+
+    (void)filter_error;
+    parameter_array = (ProArray *)((void **)app_data)[0];
+    return ProArrayObjectAdd(parameter_array, PRO_VALUE_UNUSED, 1, parameter_object);
+}
+
+
+static ProError
+collect_model_parameters(ProModelitem *model_item, ProParameter **parameters)
+{
+    ProError error = PRO_TK_GENERAL_ERROR;
+
+    if (!model_item || !parameters)
+        return PRO_TK_BAD_INPUTS;
+
+    error = ProArrayAlloc(0, sizeof(ProParameter), 1, (ProArray *)parameters);
+    if (error != PRO_TK_NO_ERROR)
+        return error;
+
+    error = ProParameterVisit(model_item,
+                              NULL,
+                              (ProParameterAction)append_parameter_to_array,
+                              (ProAppData)&parameters);
+    if (error != PRO_TK_NO_ERROR) {
+        (void)ProArrayFree((ProArray *)parameters);
+        *parameters = NULL;
+    }
+
+    return error;
+}
+
+
+static void
+parse_parameter_list(const std::string& text, std::vector<std::string> *names)
+{
+    std::istringstream lines(text);
+    std::string line;
+
+    if (!names)
+        return;
+
+    while (std::getline(lines, line)) {
+        std::istringstream items(line);
+        std::string item;
+
+        while (std::getline(items, item, ',')) {
+            const std::string trimmed = trim_text(item);
+
+            if (!trimmed.empty())
+                names->push_back(lower_ascii(trimmed));
+        }
+    }
+}
+
+
+static int
+capture_parameter_value(ProMdl model, const std::string& parameter_name, std::string *value)
+{
+    ProModelitem model_item;
+    ProParameter parameter;
+    ProParamvalue parameter_value;
+    ProParamvalueType parameter_type;
+    ProUnititem units;
+    wchar_t wide_name[CREO_NAME_MAX] = {L'\0'};
+
+    if (!value || parameter_name.empty() || parameter_name.size() >= CREO_NAME_MAX)
+        return 0;
+
+    ProStringToWstring(wide_name, (char *)parameter_name.c_str());
+    if (ProMdlToModelitem(model, &model_item) != PRO_TK_NO_ERROR ||
+        ProParameterInit(&model_item, wide_name, &parameter) != PRO_TK_NO_ERROR ||
+        ProParameterValueWithUnitsGet(&parameter, &parameter_value, &units) != PRO_TK_NO_ERROR ||
+        ProParamvalueTypeGet(&parameter_value, &parameter_type) != PRO_TK_NO_ERROR)
+        return 0;
+
+    switch (parameter_type) {
+        case PRO_PARAM_STRING: {
+            wchar_t wide_value[CREO_NAME_MAX] = {L'\0'};
+
+            if (ProParamvalueValueGet(&parameter_value, parameter_type, (void *)wide_value) != PRO_TK_NO_ERROR)
+                return 0;
+            return wide_to_utf8(wide_value, value) && !value->empty();
+        }
+        case PRO_PARAM_INTEGER: {
+            int integer_value = 0;
+            char buffer[64] = {'\0'};
+
+            if (ProParamvalueValueGet(&parameter_value, parameter_type, (void *)&integer_value) != PRO_TK_NO_ERROR)
+                return 0;
+            snprintf(buffer, sizeof(buffer), "%d", integer_value);
+            *value = buffer;
+            return 1;
+        }
+        case PRO_PARAM_DOUBLE: {
+            double double_value = 0.0;
+            char buffer[64] = {'\0'};
+
+            if (ProParamvalueValueGet(&parameter_value, parameter_type, (void *)&double_value) != PRO_TK_NO_ERROR)
+                return 0;
+            snprintf(buffer, sizeof(buffer), "%.15g", double_value);
+            *value = buffer;
+            return 1;
+        }
+        case PRO_PARAM_BOOLEAN: {
+            short boolean_value = 0;
+
+            if (ProParamvalueValueGet(&parameter_value, parameter_type, (void *)&boolean_value) != PRO_TK_NO_ERROR)
+                return 0;
+            *value = boolean_value ? "yes" : "no";
+            return 1;
+        }
+        default:
+            break;
+    }
+
+    return 0;
+}
+
+
+static void
+capture_requested_parameters(ProMdl model,
+                             const std::string& names_text,
+                             std::vector<struct snapshot_named_value_capture> *parameters)
+{
+    std::vector<std::string> names;
+
+    if (!parameters)
+        return;
+
+    parse_parameter_list(names_text, &names);
+    for (size_t index = 0; index < names.size(); ++index) {
+        const std::string& name = names[index];
+        std::string value;
+        int already_captured = 0;
+
+        for (size_t existing = 0; existing < parameters->size(); ++existing) {
+            if ((*parameters)[existing].name == name) {
+                already_captured = 1;
+                break;
+            }
+        }
+        if (already_captured || !capture_parameter_value(model, name, &value))
+            continue;
+
+        struct snapshot_named_value_capture parameter = {};
+        parameter.name = name;
+        parameter.value = value;
+        parameters->push_back(parameter);
+    }
+}
+
+
+static int
+parameter_is_already_captured(const std::vector<struct snapshot_named_value_capture>& parameters,
+                              const std::string& name)
+{
+    for (size_t index = 0; index < parameters.size(); ++index) {
+        if (parameters[index].name == name)
+            return 1;
+    }
+
+    return 0;
+}
+
+
+static void
+capture_all_parameters(ProMdl model,
+                       std::vector<struct snapshot_named_value_capture> *parameters)
+{
+    ProModelitem model_item;
+    ProParameter *collected_parameters = NULL;
+    int count = 0;
+
+    if (!parameters || ProMdlToModelitem(model, &model_item) != PRO_TK_NO_ERROR ||
+        collect_model_parameters(&model_item, &collected_parameters) != PRO_TK_NO_ERROR)
+        return;
+
+    if (ProArraySizeGet((ProArray)collected_parameters, &count) != PRO_TK_NO_ERROR) {
+        (void)ProArrayFree((ProArray *)&collected_parameters);
+        return;
+    }
+
+    for (int index = 0; index < count; ++index) {
+        char parameter_name[CREO_NAME_MAX] = {'\0'};
+        std::string value;
+        struct snapshot_named_value_capture parameter = {};
+
+        ProWstringToString(parameter_name, collected_parameters[index].id);
+        parameter.name = lower_ascii(parameter_name);
+        if (parameter.name.empty() || parameter_is_already_captured(*parameters, parameter.name) ||
+            !capture_parameter_value(model, parameter.name, &value))
+            continue;
+
+        parameter.value = value;
+        parameters->push_back(parameter);
+    }
+
+    (void)ProArrayFree((ProArray *)&collected_parameters);
 }
 
 
@@ -132,6 +365,7 @@ capture_mass_properties(ProMdl model, struct creo_brl_snapshot_part *part)
     part->density = mass_properties.density;
     part->mass = mass_properties.mass;
     part->volume = mass_properties.volume;
+    part->surface_area = mass_properties.surface_area;
     part->flags |= CREO_BRL_SNAPSHOT_PART_HAS_MASS_PROPERTIES;
 }
 
@@ -222,6 +456,7 @@ capture_model_name(ProMdl model, std::string *model_name)
 static int
 capture_part_definition(ProMdl model,
                         const struct creo_brl_snapshot_settings *settings,
+                        const struct snapshot_settings_strings *settings_strings,
                         struct snapshot_part_capture *capture)
 {
     ProName material_name;
@@ -234,6 +469,8 @@ capture_part_definition(ProMdl model,
     capture->triangles.clear();
     capture->normals.clear();
     capture->normal_indices.clear();
+    capture->attributes.clear();
+    capture->parameters.clear();
     capture->strings = snapshot_part_strings();
 
     if (!capture_model_name(model, &capture->strings.model_name) ||
@@ -245,6 +482,14 @@ capture_part_definition(ProMdl model,
     capture_model_version(model, &capture->strings.model_version);
     capture_part_appearance(model, &capture->part);
     capture_mass_properties(model, &capture->part);
+    if (settings_strings) {
+        capture_requested_parameters(model, settings_strings->rename_parameters, &capture->parameters);
+
+        if (trim_text(settings_strings->preserve_parameters).empty())
+            capture_all_parameters(model, &capture->parameters);
+        else
+            capture_requested_parameters(model, settings_strings->preserve_parameters, &capture->parameters);
+    }
 
     if (ProPartMaterialNameGet(ProMdlToPart(model), material_name) == PRO_TK_NO_ERROR &&
         wide_to_utf8(material_name, &capture->strings.material_name) &&
@@ -332,7 +577,7 @@ capture_scene_part(ProMdl model, struct snapshot_scene_capture *scene, uint32_t 
     if (scene->parts.size() >= UINT32_MAX)
         return CREO_BRL_SNAPSHOT_CAPTURE_MODEL_FAILURE;
 
-    result = capture_part_definition(model, &scene->settings, &capture);
+    result = capture_part_definition(model, &scene->settings, &scene->settings_strings, &capture);
     if (result != CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS)
         return result;
 

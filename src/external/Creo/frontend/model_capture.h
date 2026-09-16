@@ -30,9 +30,17 @@ struct snapshot_part_strings {
 };
 
 
+struct snapshot_named_value_capture {
+    std::string name;
+    std::string value;
+};
+
+
 struct snapshot_part_capture {
     struct creo_brl_snapshot_part part;
     struct snapshot_part_strings strings;
+    std::vector<struct snapshot_named_value_capture> attributes;
+    std::vector<struct snapshot_named_value_capture> parameters;
     std::vector<struct creo_brl_snapshot_vector> vertices;
     std::vector<struct creo_brl_snapshot_triangle> triangles;
     std::vector<struct creo_brl_snapshot_vector> normals;

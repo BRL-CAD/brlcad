@@ -31,7 +31,7 @@
 #define CREO_BRL_SNAPSHOT_TRIANGLE_SIZE 12u
 #define CREO_BRL_SNAPSHOT_NAMED_VALUE_SIZE 32u
 #define CREO_BRL_SNAPSHOT_SETTINGS_SIZE 192u
-#define CREO_BRL_SNAPSHOT_PART_SIZE 308u
+#define CREO_BRL_SNAPSHOT_PART_SIZE 316u
 #define CREO_BRL_SNAPSHOT_MATRIX_SIZE 128u
 #define CREO_BRL_SNAPSHOT_ASSEMBLY_MEMBER_SIZE 136u
 #define CREO_BRL_SNAPSHOT_ASSEMBLY_SIZE 56u
@@ -172,6 +172,7 @@ struct creo_brl_snapshot_part {
     double density;
     double mass;
     double volume;
+    double surface_area;
     struct creo_brl_snapshot_vector bbox_min;
     struct creo_brl_snapshot_vector bbox_max;
     struct creo_brl_snapshot_range model_name;
