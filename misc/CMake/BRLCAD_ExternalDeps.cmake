@@ -1922,6 +1922,19 @@ function(find_package_reset pname trigger_var)
   unset(${pname}_LIBRARY_RELEASE CACHE)
   unset(${pname}_VERSION_STRING CACHE)
   unset(${pname}_PREFIX_STR CACHE)
+
+  # Variant- and component-aware find modules may cache results under names
+  # such as ZLIB_STATIC_LIBRARY_RELEASE, OpenCV_core_LIBRARY_RELEASE, or
+  # OpenVDB_openvdb_INCLUDE_DIR.  Clear those along with the package-wide
+  # results so a removed bundled component cannot survive a switch to system
+  # dependencies.
+  get_cmake_property(_find_package_cache_vars CACHE_VARIABLES)
+  foreach(_find_package_cache_var IN LISTS _find_package_cache_vars)
+    if(_find_package_cache_var MATCHES
+       "^${pname}_.+_(INCLUDE_DIR|INCLUDE_DIRS|LIBRARY|LIBRARIES|LIBRARY_DEBUG|LIBRARY_RELEASE)$")
+      unset(${_find_package_cache_var} CACHE)
+    endif()
+  endforeach()
 endfunction(find_package_reset pname trigger_var)
 
 # OpenGL can get complicated.  Define a macro to centralize the "right" way to
@@ -2444,14 +2457,9 @@ macro(find_package_bullet)
 
   find_package_reset(Bullet RESET_TP)
   find_package_reset(BULLET RESET_TP)
-  unset(BULLET_DYNAMICS_LIBRARY CACHE)
-  unset(BULLET_DYNAMICS_LIBRARY_DEBUG CACHE)
-  unset(BULLET_COLLISION_LIBRARY CACHE)
-  unset(BULLET_COLLISION_LIBRARY_DEBUG CACHE)
-  unset(BULLET_MATH_LIBRARY CACHE)
-  unset(BULLET_MATH_LIBRARY_DEBUG CACHE)
-  unset(BULLET_SOFTBODY_LIBRARY CACHE)
-  unset(BULLET_SOFTBODY_LIBRARY_DEBUG CACHE)
+  unset(BULLET_IS_DOUBLE CACHE)
+  unset(BULLET_ALT_IS_DOUBLE CACHE)
+  unset(BULLET_HB_IS_DOUBLE CACHE)
   unset(BULLET_STATUS CACHE)
 
   # Bullet is staged from bext's install tree into the build directory,
@@ -2527,8 +2535,11 @@ int main() {
           message(STATUS "Could not find a double-precision system Bullet. Falling back to bundled Bullet if possible.")
           find_package_reset(Bullet RESET_TP)
           find_package_reset(BULLET RESET_TP)
-          unset(BULLET_LIBRARIES CACHE)
-          unset(Bullet_FOUND CACHE)
+          unset(BULLET_INCLUDE_DIR)
+          unset(BULLET_INCLUDE_DIRS)
+          unset(BULLET_LIBRARIES)
+          set(BULLET_FOUND FALSE)
+          set(Bullet_FOUND FALSE)
           set(BULLET_STATUS "NotFound" CACHE STRING "Bullet bundled status" FORCE)
         endif()
       endif()
