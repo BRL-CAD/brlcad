@@ -77,6 +77,9 @@ add_subdirectory(moss)
 # NACA 4/5/6 wing generator Regression Tests
 add_subdirectory(naca456)
 
+# NASTRAN converter regression tests
+add_subdirectory(nastran)
+
 # NIRT Regression Tests
 add_subdirectory(nirt)
 

@@ -35,6 +35,7 @@
 
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/vls.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rt/geom.h"
@@ -1328,7 +1329,7 @@ main(int argc, char **argv)
     BU_LIST_INIT(&head.l);
     for (BU_LIST_FOR(psh, pshell, &pshell_head.l)) {
 	struct model *m;
-	char name[32];
+	struct bu_vls name = BU_VLS_INIT_ZERO;
 
 	if (!psh->s)
 	    continue;
@@ -1340,13 +1341,14 @@ main(int argc, char **argv)
 	    nmg_model_face_fuse(m, vlfree, &tol);
 	    nmg_hollow_shell(psh->s, psh->thick*conv[units], 1, vlfree, &tol);
 	}
-	snprintf(name, sizeof(name), "pshell.%d", psh->pid);
+	bu_vls_sprintf(&name, "pshell.%d", psh->pid);
 	if (polysolids)
-	    mk_bot_from_nmg(fpout, name, psh->s);
+	    mk_bot_from_nmg(fpout, bu_vls_cstr(&name), psh->s);
 	else
-	    mk_nmg(fpout, name, m);
+	    mk_nmg(fpout, bu_vls_cstr(&name), m);
 
-	mk_addmember(name, &head.l, NULL, WMOP_UNION);
+	mk_addmember(bu_vls_cstr(&name), &head.l, NULL, WMOP_UNION);
+	bu_vls_free(&name);
     }
     if (BU_LIST_NON_EMPTY(&head.l)) {
 	mk_lfcomb(fpout, "shells", &head, 0);
@@ -1355,15 +1357,16 @@ main(int argc, char **argv)
 
     BU_LIST_INIT(&head.l);
     for (BU_LIST_FOR(pbp, pbar, &pbar_head.l)) {
-	char name[32];
+	struct bu_vls name = BU_VLS_INIT_ZERO;
 
 	if (BU_LIST_IS_EMPTY(&pbp->head.l))
 	    continue;
 
-	snprintf(name, sizeof(name), "pbar_group.%d", pbp->pid);
-	mk_lfcomb(fpout, name, &pbp->head, 0);
+	bu_vls_sprintf(&name, "pbar_group.%d", pbp->pid);
+	mk_lfcomb(fpout, bu_vls_cstr(&name), &pbp->head, 0);
 
-	mk_addmember(name, &head.l, NULL, WMOP_UNION);
+	mk_addmember(bu_vls_cstr(&name), &head.l, NULL, WMOP_UNION);
+	bu_vls_free(&name);
     }
     if (BU_LIST_NON_EMPTY(&head.l)) {
 	mk_lfcomb(fpout, "pbars", &head, 0);
