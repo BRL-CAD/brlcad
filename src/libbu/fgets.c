@@ -33,9 +33,9 @@ bu_fgets(char *s, int size, FILE *stream)
     int totBytesRead = 0;
     int isEOF = 0;
 
-    /* if we are not asked to or can't read anything, just return */
+    /* if we are not asked to or can't read anything, return NULL */
     if (UNLIKELY(size < 1 || !s)) {
-	return s;
+	return (char *)NULL;
     }
 
     /* if the buffer size is one, we have no space (we add a null)
@@ -73,7 +73,7 @@ bu_fgets(char *s, int size, FILE *stream)
 
 	    /* check for CR/LF combination */
 	    c = fgetc(stream);
-	    if (c != '\n') {
+	    if (c != EOF && c != '\n') {
 		/* not a CR/LF, so unget the last char */
 		ungetc(c, stream);
 	    }
