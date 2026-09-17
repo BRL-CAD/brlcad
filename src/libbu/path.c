@@ -174,9 +174,13 @@ bu_path_component(struct bu_vls *component, const char *path, bu_path_component_
 	case BU_PATH_EXTLESS:
 	    ret = 1;
 	    if (component) {
+		const char *last_sep = strrchr(path, BU_DIR_SEPARATOR);
+		const char *last_fslash = strrchr(path, '/');
+		if (last_fslash && (!last_sep || last_fslash > last_sep))
+		    last_sep = last_fslash;
 		period_pos = strrchr(path, '.');
 		bu_vls_sprintf(component, "%s", path);
-		if (period_pos && strlen(period_pos) > 0)
+		if (period_pos && (!last_sep || period_pos > last_sep) && strlen(period_pos) > 0)
 		    bu_vls_trunc(component, -1 * (int)strlen(period_pos));
 	    }
 	    break;
@@ -212,8 +216,7 @@ bu_path_component(struct bu_vls *component, const char *path, bu_path_component_
 		if (period_pos && strlen(period_pos) > 1) {
 		    ret = 1;
 		    if (component) {
-			bu_vls_strncpy(component, period_pos, strlen(period_pos)+1);
-			bu_vls_nibble(component, 1);
+			bu_vls_strcpy(component, period_pos + 1);
 		    }
 		}
 	    }
@@ -239,7 +242,10 @@ bu_path_to_argv(const char *path, int *ac)
     char *headpath;
     register int i;
 
-    if (UNLIKELY(path == (char *)0 || path[0] == '\0'))
+    if (ac)
+	*ac = 0;
+
+    if (UNLIKELY(path == (char *)0 || path[0] == '\0' || !ac))
 	return (char **)0;
 
     newstr = bu_strdup(path);

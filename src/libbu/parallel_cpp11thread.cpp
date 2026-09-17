@@ -28,7 +28,8 @@
 extern "C" void
 parallel_cpp11thread(void (*func)(int, void *), size_t ncpu, void *arg)
 {
-    std::vector<std::thread> threads;
+    if (!func)
+	return;
 
     if (!ncpu) {
 	ncpu = std::thread::hardware_concurrency();
@@ -37,17 +38,41 @@ parallel_cpp11thread(void (*func)(int, void *), size_t ncpu, void *arg)
 	 * threads, or they aren't known to the implementation.
 	 * Revert to single threading.
 	 */
-	if (!ncpu)
-	    return func((int)ncpu, arg);
+	if (!ncpu) {
+	    func(0, arg);
+	    return;
+	}
     }
 
-    /* Create and run threads. */
-    for (size_t i = 0; i < ncpu; ++i)
-	threads.emplace_back(func, i, arg);
+    std::vector<std::thread> threads;
+    size_t created = 0;
+    try {
+	threads.reserve(ncpu);
+	/* Create and run threads. */
+	for (size_t i = 0; i < ncpu; ++i) {
+	    threads.emplace_back(func, (int)i, arg);
+	    created++;
+	}
+    } catch (...) {
+	/* If thread creation fails, join any threads that were already spawned
+	 * to prevent std::terminate() in std::thread destructor.
+	 */
+	for (size_t i = 0; i < threads.size(); ++i) {
+	    if (threads[i].joinable())
+		threads[i].join();
+	}
+	/* Fallback: run remaining tasks sequentially */
+	for (size_t i = created; i < ncpu; ++i) {
+	    func((int)i, arg);
+	}
+	return;
+    }
 
     /* Wait for the parallel task to complete. */
-    for (size_t i = 0; i < threads.size(); ++i)
-	threads[i].join();
+    for (size_t i = 0; i < threads.size(); ++i) {
+	if (threads[i].joinable())
+	    threads[i].join();
+    }
 }
 
 

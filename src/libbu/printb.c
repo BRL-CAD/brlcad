@@ -31,26 +31,46 @@ void
 bu_vls_printb(struct bu_vls *vls, const char *s, register long unsigned int v, register const char *bits)
 {
     register int i, any = 0;
-    register char c;
+    register unsigned char c;
 
-    if (*bits++ == 8)
-	bu_vls_printf(vls, "%s=0%lo <", s, v);
-    else
-	bu_vls_printf(vls, "%s=x%lx <", s, v);
-    i = *bits++;
-    while (i) {
-	if (v & (1L << (i-1))) {
-	    if (any)
-		bu_vls_strcat(vls, ",");
-	    any = 1;
-	    for (; (c = *bits) > 32; bits++)
-		bu_vls_printf(vls, "%c", c);
-	} else
-	    for (; *bits > 32; bits++)
-		;
-	i = *bits++;
+    if (!vls)
+	return;
+
+    if (!s)
+	s = "";
+
+    if (!bits) {
+	bu_vls_printf(vls, "%s=x%lx <>", s, v);
+	return;
     }
-    bu_vls_strcat(vls, ">");
+
+    if ((unsigned char)*bits == 8) {
+	bits++;
+	bu_vls_printf(vls, "%s=0%lo <", s, v);
+    } else {
+	if (*bits)
+	    bits++;
+	bu_vls_printf(vls, "%s=x%lx <", s, v);
+    }
+
+    while (*bits) {
+	i = (unsigned char)*bits++;
+	if (i == 0)
+	    break;
+	if (i > 0 && i <= (int)(sizeof(long unsigned int) * 8) && (v & (1UL << (i - 1)))) {
+	    if (any)
+		bu_vls_putc(vls, ',');
+	    any = 1;
+	    while ((c = (unsigned char)*bits) > 32) {
+		bu_vls_putc(vls, (char)c);
+		bits++;
+	    }
+	} else {
+	    while ((unsigned char)*bits > 32)
+		bits++;
+	}
+    }
+    bu_vls_putc(vls, '>');
 }
 
 

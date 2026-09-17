@@ -44,7 +44,7 @@
 const char *
 bu_path_normalize(const char *path)
 {
-    static char resolved[MAXPATHLEN] = {0};
+    static THREADLOCAL char resolved[MAXPATHLEN] = {0};
     const char *q;
     char *p;
     if (!path) return ((const char *)NULL);
@@ -84,7 +84,7 @@ loop:
 	if (path[1] == '.' && q - path == 2) {
 	    /* Trim the last component. */
 	    if (p != resolved)
-		while (*--p != '/')
+		while (p > resolved && *--p != '/')
 		    ;
 	    path = q;
 	    goto loop;
@@ -92,7 +92,7 @@ loop:
     }
 
     /* Append this component. */
-    if (p - resolved + 1 + q - path + 1 > MAXPATHLEN) {
+    if ((size_t)(p - resolved) + 1 + (size_t)(q - path) + 1 > MAXPATHLEN) {
 	if (p == resolved)
 	    *p++ = '/';
 	*p = 0;
