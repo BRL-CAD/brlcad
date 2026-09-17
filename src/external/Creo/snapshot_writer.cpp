@@ -34,6 +34,8 @@ static_assert(sizeof(struct creo_brl_snapshot_header) == CREO_BRL_SNAPSHOT_HEADE
               "Snapshot header layout changed");
 static_assert(sizeof(struct creo_brl_snapshot_settings) == CREO_BRL_SNAPSHOT_SETTINGS_SIZE,
               "Snapshot settings layout changed");
+static_assert(sizeof(struct creo_brl_snapshot_tgc_subtraction) == CREO_BRL_SNAPSHOT_TGC_SUBTRACTION_SIZE,
+              "Snapshot TGC subtraction layout changed");
 static_assert(sizeof(struct creo_brl_snapshot_part) == CREO_BRL_SNAPSHOT_PART_SIZE,
               "Snapshot part layout changed");
 static_assert(sizeof(struct creo_brl_snapshot_assembly_member) ==
@@ -259,6 +261,7 @@ write_part_capture(FILE *snapshot_file, struct snapshot_part_capture *capture)
     capture->part.triangle_count = capture->triangles.size();
     capture->part.normal_count = capture->normals.size();
     capture->part.normal_index_count = capture->normal_indices.size();
+    capture->part.tgc_subtraction_count = capture->tgc_subtractions.size();
     capture->part.attribute_count = capture->attributes.size();
     capture->part.parameter_count = capture->parameters.size();
 
@@ -277,6 +280,9 @@ write_part_capture(FILE *snapshot_file, struct snapshot_part_capture *capture)
            write_range(snapshot_file, capture->normal_indices.data(),
                        capture->normal_indices.size() * sizeof(capture->normal_indices[0]),
                        &capture->part.normal_indices) &&
+           write_range(snapshot_file, capture->tgc_subtractions.data(),
+                       capture->tgc_subtractions.size() * sizeof(capture->tgc_subtractions[0]),
+                       &capture->part.tgc_subtractions) &&
            write_named_values(snapshot_file, capture->attributes, &capture->part.attributes,
                               &capture->part.attribute_count) &&
            write_named_values(snapshot_file, capture->parameters, &capture->part.parameters,

@@ -36,9 +36,9 @@ and a part root.
 | Minimum luminance | `profile_controls.h`; `minimum_luminance` to `settings.min_luminance` | Captured but not consumed by snapshot conversion | Phase 2 profile mapping and replay test |
 | Parameter rename and preserve controls | `snapshot_writer.cpp`; settings string ranges | Captured but not consumed by snapshot conversion | Phase 2 mapping test and Phase 4 output fixture |
 | Chord mode, max angle, max facets, max steps, and min edge | `frontend/model_capture.cpp`; snapshot settings | Captured or defaulted; max chord and min angle affect Creo-side tessellation, and min edge now affects core-side mesh filtering | Phase 2 option mapping plus `scene_normalized_mesh.manifest` replay |
-| Small-feature controls | `snapshot_writer.cpp`; eliminate-small-features flag and minimum hole, chamfer, and round values | Captured but not consumed by snapshot conversion | Phase 2 option mapping and Phase 5 parity fixture |
+| Small-feature controls | `frontend/csg_capture.cpp`; eliminate-small-features flag and minimum hole, chamfer, and round values | Frontend suppresses small holes, rounds, and chamfers before tessellation | Phase 5 replay coverage in `creo_snapshot_core` |
 | Facets-only, STL export, solidity, and box controls | `frontend/model_capture.cpp`; settings flags | Solidity and box fallback now affect snapshot conversion; facets-only and STL export remain capture-only | `scene_solid_mesh.manifest`, `scene_box_fallback.manifest`, and output-failure replay in `creo_snapshot_core` |
-| CSG primitives and boolean structure | `csg.cpp`; absent from the snapshot | Not representable by the current request | Phase 5 request extension and legacy parity fixture |
+| CSG primitives and boolean structure | `frontend/csg_capture.cpp`, `conversion/scene_convert.cpp`, and `conversion/mesh_convert.cpp`; TGC subtraction records on the snapshot | Replays supported hole replacements as TGC subtraction members under the part region while unsupported or facets-only holes remain tessellated | Phase 5 fixtures in `creo_snapshot_core` |
 | Legacy launch and failure behavior | `main.cpp`, `part.cpp`, and `assembly.cpp` | Diagnostic reference only; not a production dependency | Optional Creo smoke test; never a normal repository-test requirement |
 
 ## Phase 0 Exit Evidence

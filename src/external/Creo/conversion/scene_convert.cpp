@@ -25,6 +25,7 @@
 
 
 static const char CREO_BRL_CORE_TOP_LEVEL_NAME[] = "all";
+static const char CREO_BRL_CORE_HOLE_SUFFIX[] = ".s";
 
 
 static int
@@ -56,6 +57,55 @@ snapshot_count_as_size(uint64_t count, size_t multiplier, size_t *size)
 
     *size = (size_t)count * multiplier;
     return 1;
+}
+
+
+static int
+snapshot_read_tgc_subtractions(FILE *snapshot_file,
+                               const struct creo_brl_snapshot_part *part,
+                               const std::string& model_name,
+                               struct db_i *database,
+                               struct rt_wdb *writer,
+                               std::vector<std::string> *subtraction_names)
+{
+    const std::string hole_name_root = creo_brl_snapshot_name_root(model_name) + "_hole";
+
+    if (!snapshot_file || !part || !database || !writer || !subtraction_names)
+        return CREO_BRL_CORE_CONVERT_INVALID_REQUEST;
+
+    subtraction_names->clear();
+    if (part->tgc_subtraction_count == 0)
+        return CREO_BRL_CORE_CONVERT_SUCCESS;
+    if (!snapshot_seek(snapshot_file, part->tgc_subtractions.offset))
+        return CREO_BRL_CORE_CONVERT_INVALID_SNAPSHOT;
+
+    subtraction_names->reserve((size_t)part->tgc_subtraction_count);
+    for (uint64_t index = 0; index < part->tgc_subtraction_count; ++index) {
+        struct creo_brl_snapshot_tgc_subtraction subtraction = {};
+        std::string solid_name;
+        std::string unused_region_name;
+        std::string hole_name = hole_name_root;
+
+        if (!snapshot_read(snapshot_file, &subtraction, sizeof(subtraction)))
+            return CREO_BRL_CORE_CONVERT_INVALID_SNAPSHOT;
+
+        if (part->tgc_subtraction_count > 1)
+            hole_name += "_" + std::to_string(index + 1u);
+        if (!creo_brl_snapshot_object_names(database, hole_name, CREO_BRL_CORE_HOLE_SUFFIX,
+                                            &solid_name, &unused_region_name) ||
+            mk_tgc(writer, solid_name.c_str(),
+                   subtraction.base.coordinates,
+                   subtraction.height.coordinates,
+                   subtraction.a.coordinates,
+                   subtraction.b.coordinates,
+                   subtraction.c.coordinates,
+                   subtraction.d.coordinates) != 0)
+            return CREO_BRL_CORE_CONVERT_OUTPUT_FAILED;
+
+        subtraction_names->push_back(solid_name);
+    }
+
+    return CREO_BRL_CORE_CONVERT_SUCCESS;
 }
 
 
@@ -273,6 +323,7 @@ snapshot_write_part_definition(FILE *snapshot_file,
     std::string material_name;
     std::vector<struct snapshot_named_value> attributes;
     std::vector<struct snapshot_named_value> parameters;
+    std::vector<std::string> subtraction_names;
     std::vector<fastf_t> vertices;
     std::vector<int> triangles;
     std::vector<fastf_t> normals;
@@ -292,15 +343,25 @@ snapshot_write_part_definition(FILE *snapshot_file,
           !snapshot_read_triangles(snapshot_file, &part->triangles, part->triangle_count,
                                    part->vertex_count, &triangles) ||
           (has_normals &&
-           (!snapshot_read_vectors(snapshot_file, &part->normals, part->normal_count, &normals) ||
-            !snapshot_read_indices(snapshot_file, &part->normal_indices,
-                                   part->normal_index_count, part->normal_count,
-                                   &normal_indices))))))
+            (!snapshot_read_vectors(snapshot_file, &part->normals, part->normal_count, &normals) ||
+             !snapshot_read_indices(snapshot_file, &part->normal_indices,
+                                    part->normal_index_count, part->normal_count,
+                                    &normal_indices))))))
         return CREO_BRL_CORE_CONVERT_INVALID_SNAPSHOT;
+
+    if (part->tgc_subtraction_count > 0) {
+        const int csg_result = snapshot_read_tgc_subtractions(snapshot_file, part,
+                                                              model_name,
+                                                              database, writer,
+                                                              &subtraction_names);
+
+        if (csg_result != CREO_BRL_CORE_CONVERT_SUCCESS)
+            return csg_result;
+    }
 
     return creo_brl_convert_snapshot_part(part, settings, rename_parameters,
                                           model_name, model_version, material_name,
-                                          attributes, parameters,
+                                          attributes, parameters, subtraction_names,
                                           vertices, triangles, normals, normal_indices,
                                           log_file,
                                           database, writer, output);

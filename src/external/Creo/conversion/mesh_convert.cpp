@@ -430,6 +430,7 @@ write_part_definition(struct db_i *database,
                       const std::string& material_name,
                       const std::vector<struct snapshot_named_value>& attributes,
                       const std::vector<struct snapshot_named_value>& parameters,
+                      const std::vector<std::string>& subtraction_names,
                       int has_mesh,
                       size_t vertex_count,
                       size_t face_count,
@@ -460,6 +461,12 @@ write_part_definition(struct db_i *database,
     if (mk_addmember(solid_name.c_str(), &members, NULL, WMOP_UNION) == WMEMBER_NULL) {
         mk_freemembers(&members);
         return CREO_BRL_CORE_CONVERT_OUTPUT_FAILED;
+    }
+    for (size_t index = 0; index < subtraction_names.size(); ++index) {
+        if (mk_addmember(subtraction_names[index].c_str(), &members, NULL, WMOP_SUBTRACT) == WMEMBER_NULL) {
+            mk_freemembers(&members);
+            return CREO_BRL_CORE_CONVERT_OUTPUT_FAILED;
+        }
     }
 
     if (mk_comb(writer, region_name.c_str(), &members, 1, NULL, NULL,
@@ -526,6 +533,7 @@ creo_brl_convert_snapshot_part(const struct creo_brl_snapshot_part *part,
                                const std::string& material_name,
                                const std::vector<struct snapshot_named_value>& attributes,
                                const std::vector<struct snapshot_named_value>& parameters,
+                               const std::vector<std::string>& subtraction_names,
                                std::vector<fastf_t>& vertices,
                                std::vector<int>& triangles,
                                std::vector<fastf_t>& normals,
@@ -557,7 +565,8 @@ creo_brl_convert_snapshot_part(const struct creo_brl_snapshot_part *part,
         }
         result = write_part_definition(database, writer, part, rename_parameters,
                                        model_name, model_version, material_name,
-                                       attributes, parameters, 0, 0, 0, NULL, NULL, 0, NULL, NULL,
+                                       attributes, parameters, subtraction_names,
+                                       0, 0, 0, NULL, NULL, 0, NULL, NULL,
                                        output);
         snapshot_log_part_result(log_file, settings, model_name, result, output);
         return result;
@@ -573,7 +582,8 @@ creo_brl_convert_snapshot_part(const struct creo_brl_snapshot_part *part,
 
         result = write_part_definition(database, writer, part, rename_parameters,
                                        model_name, model_version, material_name,
-                                       attributes, parameters, 0, 0, 0, NULL, NULL, 0, NULL, NULL,
+                                       attributes, parameters, subtraction_names,
+                                       0, 0, 0, NULL, NULL, 0, NULL, NULL,
                                        output);
         snapshot_log_part_result(log_file, settings, model_name, result, output);
         return result;
@@ -581,7 +591,7 @@ creo_brl_convert_snapshot_part(const struct creo_brl_snapshot_part *part,
 
     result = write_part_definition(database, writer, part, rename_parameters,
                                    model_name, model_version, material_name,
-                                   attributes, parameters, 1,
+                                   attributes, parameters, subtraction_names, 1,
                                    mesh.vertices.size() / 3,
                                    mesh.faces.size() / 3,
                                    mesh.vertices.data(),

@@ -1,6 +1,7 @@
 #include "common.h"
 
 #include <algorithm>
+#include <cmath>
 #include <cstdio>
 #include <cstring>
 #include <fstream>
@@ -58,6 +59,7 @@ struct fixture_definition {
     std::string preserve_parameters;
     std::vector<std::pair<std::string, std::string> > attributes;
     std::vector<std::pair<std::string, std::string> > parameters;
+    std::vector<struct creo_brl_snapshot_tgc_subtraction> tgc_subtractions;
     std::vector<struct creo_brl_snapshot_vector> vertices;
     std::vector<struct creo_brl_snapshot_triangle> triangles;
     std::vector<struct creo_brl_snapshot_vector> normals;
@@ -343,6 +345,10 @@ write_snapshot_fixture(const std::string& snapshot_path,
                      fixture.normal_indices.empty() ? NULL : fixture.normal_indices.data(),
                      fixture.normal_indices.size() * sizeof(fixture.normal_indices[0]),
                      &part.normal_indices) ||
+        !append_data(&contents,
+                     fixture.tgc_subtractions.empty() ? NULL : fixture.tgc_subtractions.data(),
+                     fixture.tgc_subtractions.size() * sizeof(fixture.tgc_subtractions[0]),
+                     &part.tgc_subtractions) ||
         !append_named_values(&contents, fixture.attributes, &part.attributes, &part.attribute_count) ||
         !append_named_values(&contents, fixture.parameters, &part.parameters, &part.parameter_count))
         return 0;
@@ -351,6 +357,7 @@ write_snapshot_fixture(const std::string& snapshot_path,
     part.triangle_count = fixture.triangles.size();
     part.normal_count = fixture.normals.size();
     part.normal_index_count = fixture.normal_indices.size();
+    part.tgc_subtraction_count = fixture.tgc_subtractions.size();
     if (contents.size() > UINT64_MAX - snapshot_size_adjustment)
         return 0;
     header.snapshot_size = (uint64_t)contents.size() + snapshot_size_adjustment;
@@ -590,6 +597,235 @@ cleanup:
 
 
 static int
+expect_tgc_vector(const vect_t actual,
+                  const double expected_x,
+                  const double expected_y,
+                  const double expected_z,
+                  const char *fixture_name,
+                  const char *label)
+{
+    const double tolerance = 1.0e-9;
+
+    if (std::fabs(actual[0] - expected_x) <= tolerance &&
+        std::fabs(actual[1] - expected_y) <= tolerance &&
+        std::fabs(actual[2] - expected_z) <= tolerance)
+        return 1;
+
+    std::fprintf(stderr, "%s: %s expected (%g,%g,%g) got (%g,%g,%g)\n",
+                 fixture_name, label,
+                 expected_x, expected_y, expected_z,
+                 actual[0], actual[1], actual[2]);
+    return 0;
+}
+
+
+static int
+tree_has_subtract_leaf(const union tree *tree, const char *leaf_name)
+{
+    if (!tree || !leaf_name)
+        return 0;
+
+    if (tree->tr_op == OP_SUBTRACT)
+        return db_find_named_leaf(tree->tr_b.tb_right, leaf_name) != TREE_NULL ||
+               tree_has_subtract_leaf(tree->tr_b.tb_left, leaf_name) ||
+               tree_has_subtract_leaf(tree->tr_b.tb_right, leaf_name);
+    if (tree->tr_op == OP_UNION || tree->tr_op == OP_INTERSECT || tree->tr_op == OP_XOR)
+        return tree_has_subtract_leaf(tree->tr_b.tb_left, leaf_name) ||
+               tree_has_subtract_leaf(tree->tr_b.tb_right, leaf_name);
+
+    return 0;
+}
+
+
+static matp_t
+tree_find_leaf_matrix(const union tree *tree, const char *leaf_name)
+{
+    matp_t matrix = NULL;
+
+    if (!tree || !leaf_name)
+        return NULL;
+
+    if (tree->tr_op == OP_DB_LEAF)
+        return BU_STR_EQUAL(tree->tr_l.tl_name, leaf_name) ? tree->tr_l.tl_mat : NULL;
+    if (tree->tr_op != OP_UNION && tree->tr_op != OP_INTERSECT &&
+        tree->tr_op != OP_XOR && tree->tr_op != OP_SUBTRACT)
+        return NULL;
+
+    matrix = tree_find_leaf_matrix(tree->tr_b.tb_left, leaf_name);
+    return matrix ? matrix : tree_find_leaf_matrix(tree->tr_b.tb_right, leaf_name);
+}
+
+
+static const fastf_t *
+phase5_expected_top_matrix(int32_t xform_mode)
+{
+    static const fastf_t identity[16] = {
+        1.0, 0.0, 0.0, 0.0,
+        0.0, 1.0, 0.0, 0.0,
+        0.0, 0.0, 1.0, 0.0,
+        0.0, 0.0, 0.0, 1.0
+    };
+    static const fastf_t y_to_z[16] = {
+        0.0, 0.0, 1.0, 0.0,
+        1.0, 0.0, 0.0, 0.0,
+        0.0, 1.0, 0.0, 0.0,
+        0.0, 0.0, 0.0, 1.0
+    };
+    static const fastf_t x_to_z[16] = {
+        0.0, 1.0, 0.0, 0.0,
+        0.0, 0.0, 1.0, 0.0,
+        1.0, 0.0, 0.0, 0.0,
+        0.0, 0.0, 0.0, 1.0
+    };
+
+    if (xform_mode == CREO_BRL_SNAPSHOT_XFORM_X_TO_Z)
+        return x_to_z;
+    if (xform_mode == CREO_BRL_SNAPSHOT_XFORM_Y_TO_Z)
+        return y_to_z;
+    return identity;
+}
+
+
+static int
+expect_matrix(const matp_t actual,
+              const fastf_t *expected,
+              const char *fixture_name,
+              const char *label)
+{
+    static const fastf_t identity[16] = {
+        1.0, 0.0, 0.0, 0.0,
+        0.0, 1.0, 0.0, 0.0,
+        0.0, 0.0, 1.0, 0.0,
+        0.0, 0.0, 0.0, 1.0
+    };
+    const fastf_t *observed = actual ? actual : identity;
+    const double tolerance = 1.0e-9;
+
+    for (size_t index = 0; index < 16; ++index) {
+        if (std::fabs(observed[index] - expected[index]) > tolerance) {
+            std::fprintf(stderr, "%s: %s mismatch at element %zu expected %g got %g\n",
+                         fixture_name, label, index, expected[index], observed[index]);
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
+
+static int
+phase5_hole_name(size_t index,
+                 size_t hole_count,
+                 std::string *name)
+{
+    if (!name || index >= hole_count)
+        return 0;
+
+    *name = hole_count == 1 && index == 0 ?
+                std::string("fixture_part_hole.s") :
+                std::string("fixture_part_hole_") + std::to_string(index + 1u) + ".s";
+    return 1;
+}
+
+
+static int
+expect_phase5_tgc(const struct rt_tgc_internal *tgc,
+                  const struct creo_brl_snapshot_tgc_subtraction& subtraction,
+                  const char *fixture_name,
+                  const char *hole_name)
+{
+    return expect_tgc_vector(tgc->v,
+                             subtraction.base.coordinates[0], subtraction.base.coordinates[1], subtraction.base.coordinates[2],
+                             fixture_name, hole_name) &&
+           expect_tgc_vector(tgc->h,
+                             subtraction.height.coordinates[0], subtraction.height.coordinates[1], subtraction.height.coordinates[2],
+                             fixture_name, hole_name) &&
+           expect_tgc_vector(tgc->a,
+                             subtraction.a.coordinates[0], subtraction.a.coordinates[1], subtraction.a.coordinates[2],
+                             fixture_name, hole_name) &&
+           expect_tgc_vector(tgc->b,
+                             subtraction.b.coordinates[0], subtraction.b.coordinates[1], subtraction.b.coordinates[2],
+                             fixture_name, hole_name) &&
+           expect_tgc_vector(tgc->c,
+                             subtraction.c.coordinates[0], subtraction.c.coordinates[1], subtraction.c.coordinates[2],
+                             fixture_name, hole_name) &&
+           expect_tgc_vector(tgc->d,
+                             subtraction.d.coordinates[0], subtraction.d.coordinates[1], subtraction.d.coordinates[2],
+                             fixture_name, hole_name);
+}
+
+
+static int
+verify_phase5_hole_fixture(const std::string& output_path,
+                           const fixture_definition& fixture)
+{
+    struct db_i *database = db_open(output_path.c_str(), DB_OPEN_READONLY);
+    struct directory *region_directory = RT_DIR_NULL;
+    struct directory *top_directory = RT_DIR_NULL;
+    struct rt_db_internal region_internal = RT_DB_INTERNAL_INIT_ZERO;
+    struct rt_db_internal top_internal = RT_DB_INTERNAL_INIT_ZERO;
+    int result = 0;
+
+    if (database == DBI_NULL || db_dirbuild(database) < 0)
+        goto cleanup;
+    region_directory = db_lookup(database, FIXTURE_REGION_NAME, LOOKUP_QUIET);
+    top_directory = db_lookup(database, FIXTURE_TOP_LEVEL_NAME, LOOKUP_QUIET);
+    if (!object_exists(database, FIXTURE_SOLID_NAME) ||
+        region_directory == RT_DIR_NULL || top_directory == RT_DIR_NULL ||
+        rt_db_get_internal(&region_internal, region_directory, database, NULL) < 0 ||
+        rt_db_get_internal(&top_internal, top_directory, database, NULL) < 0 ||
+        region_internal.idb_type != ID_COMBINATION ||
+        top_internal.idb_type != ID_COMBINATION ||
+        !combination_has_leaf(database, FIXTURE_TOP_LEVEL_NAME, FIXTURE_REGION_NAME) ||
+        !combination_has_leaf(database, FIXTURE_REGION_NAME, FIXTURE_SOLID_NAME) ||
+        !expect_matrix(tree_find_leaf_matrix(static_cast<const struct rt_comb_internal *>(top_internal.idb_ptr)->tree,
+                                             FIXTURE_REGION_NAME),
+                       phase5_expected_top_matrix(fixture.settings.xform_mode),
+                       fixture.fixture_name, "top transform")) {
+        std::fprintf(stderr, "%s: missing expected hole subtraction output\n", fixture.fixture_name);
+        goto cleanup;
+    }
+
+    result = 1;
+    for (size_t index = 0; index < fixture.tgc_subtractions.size(); ++index) {
+        std::string hole_name;
+        struct directory *hole_directory = RT_DIR_NULL;
+        struct rt_db_internal hole_internal = RT_DB_INTERNAL_INIT_ZERO;
+
+        if (!phase5_hole_name(index, fixture.tgc_subtractions.size(), &hole_name)) {
+            result = 0;
+            break;
+        }
+
+        hole_directory = db_lookup(database, hole_name.c_str(), LOOKUP_QUIET);
+        if (hole_directory == RT_DIR_NULL ||
+            rt_db_get_internal(&hole_internal, hole_directory, database, NULL) < 0 ||
+            hole_internal.idb_type != ID_TGC ||
+            !tree_has_subtract_leaf(static_cast<const struct rt_comb_internal *>(region_internal.idb_ptr)->tree,
+                                    hole_name.c_str()) ||
+            !expect_phase5_tgc(static_cast<const struct rt_tgc_internal *>(hole_internal.idb_ptr),
+                               fixture.tgc_subtractions[index], fixture.fixture_name,
+                               hole_name.c_str()))
+            result = 0;
+
+        if (hole_internal.idb_ptr)
+            rt_db_free_internal(&hole_internal);
+        if (!result)
+            break;
+    }
+
+cleanup:
+    if (region_internal.idb_ptr)
+        rt_db_free_internal(&region_internal);
+    if (top_internal.idb_ptr)
+        rt_db_free_internal(&top_internal);
+    if (database != DBI_NULL)
+        db_close(database);
+    return result;
+}
+
+
+static int
 run_phase4_log_fixture(const std::string& working_directory,
                        const fixture_definition& fixture,
                        const char *expected_log)
@@ -661,6 +897,34 @@ cleanup:
     std::remove(output_path.c_str());
     if (!log_path.empty())
         std::remove(log_path.c_str());
+    return result;
+}
+
+
+static int
+run_phase5_hole_fixture(const std::string& working_directory,
+                        const fixture_definition& fixture)
+{
+    const std::string snapshot_path = path_join(working_directory, fixture.snapshot_name);
+    const std::string output_path = path_join(working_directory, fixture.output_name);
+    int result = 0;
+
+    std::remove(snapshot_path.c_str());
+    std::remove(output_path.c_str());
+    if (!write_snapshot_fixture(snapshot_path, output_path, std::string(), fixture,
+                                VALID_SNAPSHOT_SIZE_DELTA)) {
+        test_failuref(fixture.fixture_name, "failed to write snapshot");
+        goto cleanup;
+    }
+    if (creo_brl_core_convert(snapshot_path.c_str()) != fixture.expected_result) {
+        test_failuref(fixture.fixture_name, "unexpected conversion result");
+        goto cleanup;
+    }
+    result = verify_phase5_hole_fixture(output_path, fixture);
+
+cleanup:
+    std::remove(snapshot_path.c_str());
+    std::remove(output_path.c_str());
     return result;
 }
 
@@ -1011,6 +1275,16 @@ main(int argument_count, char *arguments[])
         "creo_phase4_fallback.g",
         NULL,
         0u);
+    fixture_definition hole_fixture = make_mesh_fixture(
+        "scene_phase5_hole_subtraction",
+        "creo_phase5_hole.snapshot",
+        "creo_phase5_hole.g",
+        NULL,
+        0u,
+        {{{0.0, 0.0, 0.0}}, {{100.0, 0.0, 0.0}}, {{100.0, 100.0, 0.0}},
+         {{0.0, 0.0, 0.0}}, {{100.0, 100.0, 0.0}}, {{0.0, 100.0, 0.0}}},
+        {{{0u, 1u, 2u}}, {{3u, 4u, 5u}}}, {}, {}, 100.0, 100.0, 0.0);
+    hole_fixture.settings.xform_mode = CREO_BRL_SNAPSHOT_XFORM_Y_TO_Z;
     metadata_fixture.part.flags |= CREO_BRL_SNAPSHOT_PART_HAS_MASS_PROPERTIES;
     metadata_fixture.part.density = 1.25;
     metadata_fixture.part.mass = 2.5;
@@ -1031,6 +1305,12 @@ main(int argument_count, char *arguments[])
     fallback_metadata_fixture.attributes.push_back(std::make_pair(std::string("custom_attr"), std::string("custom_value")));
     fallback_metadata_fixture.parameters.push_back(std::make_pair(std::string("nomenclature"), std::string("Widget 7")));
     fallback_metadata_fixture.parameters.push_back(std::make_pair(std::string("part_number"), std::string("PN-42")));
+    hole_fixture.tgc_subtractions.push_back({{{50.0, 50.0, -10.0}}, {{0.0, 20.0, 20.0}},
+                                             {{10.0, 0.0, 0.0}}, {{0.0, 5.0, -5.0}},
+                                             {{10.0, 0.0, 0.0}}, {{0.0, 5.0, -5.0}}});
+    hole_fixture.tgc_subtractions.push_back({{{20.0, 35.0, -5.0}}, {{0.0, 10.0, 15.0}},
+                                             {{6.0, 0.0, 0.0}}, {{0.0, 3.0, -3.0}},
+                                             {{6.0, 0.0, 0.0}}, {{0.0, 3.0, -3.0}}});
     fixture_definition success_log_fixture = metadata_fixture;
     fixture_definition fallback_log_fixture = fallback_metadata_fixture;
     success_log_fixture.log_name = "creo_phase4_success.log";
@@ -1054,6 +1334,7 @@ main(int argument_count, char *arguments[])
                            "widget_7.r", "widget_7.rpp", "all", 1) ||
         !run_phase4_fixture(working_directory, metadata_fixture, 1,
                            "widget_7_1.r", "widget_7_1.s", "all_1", 0) ||
+        !run_phase5_hole_fixture(working_directory, hole_fixture) ||
         !run_phase4_log_fixture(working_directory, success_log_fixture,
                                 "SUCCESS: Part \"fixture_part\" converted") ||
         !run_phase4_log_fixture(working_directory, fallback_log_fixture,

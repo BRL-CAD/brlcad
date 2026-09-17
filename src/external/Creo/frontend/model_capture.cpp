@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <sstream>
 
+#include "frontend/csg_capture.h"
 #include "frontend/model_capture.h"
 
 
@@ -29,8 +30,6 @@ static const double CREO_BRL_FEET_TO_INCHES = 12.0;
 static const double CREO_BRL_CENTIMETERS_PER_INCH = 2.54;
 static const double CREO_BRL_MILLIMETERS_PER_INCH = 25.4;
 static const double CREO_BRL_METERS_PER_INCH = 0.0254;
-
-
 static int
 wide_to_utf8(const wchar_t *wide_text, std::string *text)
 {
@@ -463,6 +462,8 @@ capture_part_definition(ProMdl model,
     Pro3dPnt bbox[2];
     double scale = 0.0;
     int have_bbox = 0;
+    int suppression_applied = 0;
+    std::vector<int> suppressed_features;
 
     memset(&capture->part, 0, sizeof(capture->part));
     capture->vertices.clear();
@@ -471,6 +472,7 @@ capture_part_definition(ProMdl model,
     capture->normal_indices.clear();
     capture->attributes.clear();
     capture->parameters.clear();
+    capture->tgc_subtractions.clear();
     capture->strings = snapshot_part_strings();
 
     if (!capture_model_name(model, &capture->strings.model_name) ||
@@ -480,8 +482,6 @@ capture_part_definition(ProMdl model,
     capture->part.region_id = settings->region_id;
     capture->part.model_to_mm = scale;
     capture_model_version(model, &capture->strings.model_version);
-    capture_part_appearance(model, &capture->part);
-    capture_mass_properties(model, &capture->part);
     if (settings_strings) {
         capture_requested_parameters(model, settings_strings->rename_parameters, &capture->parameters);
 
@@ -490,6 +490,11 @@ capture_part_definition(ProMdl model,
         else
             capture_requested_parameters(model, settings_strings->preserve_parameters, &capture->parameters);
     }
+
+    (void)creo_brl_capture_feature_suppression(model, scale, settings, capture,
+                                               &suppressed_features, &suppression_applied);
+    capture_part_appearance(model, &capture->part);
+    capture_mass_properties(model, &capture->part);
 
     if (ProPartMaterialNameGet(ProMdlToPart(model), material_name) == PRO_TK_NO_ERROR &&
         wide_to_utf8(material_name, &capture->strings.material_name) &&
@@ -517,15 +522,22 @@ capture_part_definition(ProMdl model,
 
     if (capture_tessellation(model, scale, settings, &capture->vertices, &capture->triangles,
                              &capture->normals, &capture->normal_indices)) {
+        if (suppression_applied)
+            creo_brl_resume_suppressed_features(model, suppressed_features);
         capture->part.flags |= CREO_BRL_SNAPSHOT_PART_HAS_MESH;
         if (!capture->normals.empty())
             capture->part.flags |= CREO_BRL_SNAPSHOT_PART_HAS_NORMALS;
         return CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS;
     }
     if (have_bbox && (settings->flags & CREO_BRL_SNAPSHOT_SETTING_CREATE_BOXES)) {
+        if (suppression_applied)
+            creo_brl_resume_suppressed_features(model, suppressed_features);
         capture->part.flags |= CREO_BRL_SNAPSHOT_PART_HAS_BBOX_FALLBACK;
         return CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS;
     }
+
+    if (suppression_applied)
+        creo_brl_resume_suppressed_features(model, suppressed_features);
 
     return CREO_BRL_SNAPSHOT_CAPTURE_TESSELLATION_FAILURE;
 }

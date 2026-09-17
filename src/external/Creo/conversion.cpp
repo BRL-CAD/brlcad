@@ -41,6 +41,8 @@ static_assert(sizeof(struct creo_brl_snapshot_vector) == CREO_BRL_SNAPSHOT_VECTO
               "Snapshot vector layout changed");
 static_assert(sizeof(struct creo_brl_snapshot_triangle) == CREO_BRL_SNAPSHOT_TRIANGLE_SIZE,
               "Snapshot triangle layout changed");
+static_assert(sizeof(struct creo_brl_snapshot_tgc_subtraction) == CREO_BRL_SNAPSHOT_TGC_SUBTRACTION_SIZE,
+              "Snapshot TGC subtraction layout changed");
 static_assert(sizeof(struct creo_brl_snapshot_named_value) == CREO_BRL_SNAPSHOT_NAMED_VALUE_SIZE,
               "Snapshot name/value layout changed");
 static_assert(sizeof(struct creo_brl_snapshot_settings) == CREO_BRL_SNAPSHOT_SETTINGS_SIZE,
@@ -340,6 +342,43 @@ snapshot_named_values_are_valid(FILE *snapshot_file,
 
 
 static int
+snapshot_tgc_subtractions_are_valid(FILE *snapshot_file,
+                                    const struct creo_brl_snapshot_range *range,
+                                    uint64_t count,
+                                    uint64_t snapshot_size,
+                                    uint64_t data_offset)
+{
+    uint64_t index = 0;
+
+    if (!snapshot_range_has_records(range, count, sizeof(struct creo_brl_snapshot_tgc_subtraction),
+                                    snapshot_size, data_offset) ||
+        !snapshot_seek(snapshot_file, range->offset))
+        return 0;
+
+    for (index = 0; index < count; ++index) {
+        struct creo_brl_snapshot_tgc_subtraction subtraction = {};
+        const struct creo_brl_snapshot_vector *vectors[] = {
+            &subtraction.base,
+            &subtraction.height,
+            &subtraction.a,
+            &subtraction.b,
+            &subtraction.c,
+            &subtraction.d
+        };
+
+        if (!snapshot_read(snapshot_file, &subtraction, sizeof(subtraction)))
+            return 0;
+        for (size_t vector_index = 0; vector_index < sizeof(vectors) / sizeof(vectors[0]); ++vector_index) {
+            if (!snapshot_vector_is_finite(vectors[vector_index]))
+                return 0;
+        }
+    }
+
+    return 1;
+}
+
+
+static int
 snapshot_settings_are_valid(FILE *snapshot_file,
                             const struct creo_brl_snapshot_settings *settings,
                             uint64_t snapshot_size,
@@ -412,6 +451,9 @@ snapshot_part_is_valid(FILE *snapshot_file,
         !snapshot_range_is_valid(&part->model_name, snapshot_size, data_offset) ||
         !snapshot_range_is_valid(&part->model_version, snapshot_size, data_offset) ||
         !snapshot_range_is_valid(&part->material_name, snapshot_size, data_offset) ||
+        !snapshot_range_has_records(&part->tgc_subtractions, part->tgc_subtraction_count,
+                                    sizeof(struct creo_brl_snapshot_tgc_subtraction),
+                                    snapshot_size, data_offset) ||
         !snapshot_range_has_records(&part->attributes, part->attribute_count,
                                     sizeof(struct creo_brl_snapshot_named_value),
                                     snapshot_size, data_offset) ||
@@ -421,6 +463,9 @@ snapshot_part_is_valid(FILE *snapshot_file,
         !snapshot_text_is_valid(snapshot_file, &part->model_name, 1) ||
         !snapshot_text_is_valid(snapshot_file, &part->model_version, 0) ||
         !snapshot_text_is_valid(snapshot_file, &part->material_name, has_material) ||
+        !snapshot_tgc_subtractions_are_valid(snapshot_file, &part->tgc_subtractions,
+                                             part->tgc_subtraction_count,
+                                             snapshot_size, data_offset) ||
         !snapshot_named_values_are_valid(snapshot_file, &part->attributes, part->attribute_count,
                                          snapshot_size, data_offset) ||
         !snapshot_named_values_are_valid(snapshot_file, &part->parameters, part->parameter_count,

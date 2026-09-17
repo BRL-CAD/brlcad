@@ -17,6 +17,7 @@ set(CREO2BRL_FRONTEND_OPTION_SOURCES
   )
 set(CREO2BRL_FRONTEND_CAPTURE_SOURCES
   frontend/model_capture.cpp
+  frontend/csg_capture.cpp
   )
 set(CREO2BRL_FRONTEND_OPTION_SOURCE_PATHS)
 foreach(frontend_option_source ${CREO2BRL_FRONTEND_OPTION_SOURCES})
@@ -520,6 +521,7 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   set(creo_dist_files
     ${CREO2BRL_SOURCES}
     ${CREO2BRL_CORE_SOURCES}
+    ${CREO2BRL_FRONTEND_CAPTURE_SOURCES}
     ${CREO2BRL_FRONTEND_OPTION_SOURCES}
     loader.c
     frontend.cpp
@@ -530,6 +532,7 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     conversion_snapshot.h
     conversion/name_allocator.h
     conversion/scene_convert.h
+    frontend/csg_capture.h
     frontend/profile_path.h
     frontend/model_capture.h
     frontend/profile_ui.h

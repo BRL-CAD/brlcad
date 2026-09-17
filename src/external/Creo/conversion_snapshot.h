@@ -29,9 +29,10 @@
 #define CREO_BRL_SNAPSHOT_RANGE_SIZE 16u
 #define CREO_BRL_SNAPSHOT_VECTOR_SIZE 24u
 #define CREO_BRL_SNAPSHOT_TRIANGLE_SIZE 12u
+#define CREO_BRL_SNAPSHOT_TGC_SUBTRACTION_SIZE 144u
 #define CREO_BRL_SNAPSHOT_NAMED_VALUE_SIZE 32u
 #define CREO_BRL_SNAPSHOT_SETTINGS_SIZE 192u
-#define CREO_BRL_SNAPSHOT_PART_SIZE 316u
+#define CREO_BRL_SNAPSHOT_PART_SIZE 340u
 #define CREO_BRL_SNAPSHOT_MATRIX_SIZE 128u
 #define CREO_BRL_SNAPSHOT_ASSEMBLY_MEMBER_SIZE 136u
 #define CREO_BRL_SNAPSHOT_ASSEMBLY_SIZE 56u
@@ -121,6 +122,15 @@ struct creo_brl_snapshot_triangle {
     uint32_t vertices[CREO_BRL_SNAPSHOT_TRIANGLE_VERTEX_COUNT];
 };
 
+struct creo_brl_snapshot_tgc_subtraction {
+    struct creo_brl_snapshot_vector base;
+    struct creo_brl_snapshot_vector height;
+    struct creo_brl_snapshot_vector a;
+    struct creo_brl_snapshot_vector b;
+    struct creo_brl_snapshot_vector c;
+    struct creo_brl_snapshot_vector d;
+};
+
 struct creo_brl_snapshot_matrix {
     double elements[CREO_BRL_SNAPSHOT_MATRIX_ELEMENT_COUNT];
 };
@@ -186,6 +196,8 @@ struct creo_brl_snapshot_part {
     uint64_t normal_count;
     struct creo_brl_snapshot_range normal_indices;
     uint64_t normal_index_count;
+    struct creo_brl_snapshot_range tgc_subtractions;
+    uint64_t tgc_subtraction_count;
     struct creo_brl_snapshot_range attributes;
     uint64_t attribute_count;
     struct creo_brl_snapshot_range parameters;
