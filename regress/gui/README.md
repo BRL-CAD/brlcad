@@ -37,14 +37,3 @@ consistent.
 The only implemented backend is Xmin.  See [its fixtures](../xmin/README.md)
 for setup and test coverage.  A native backend will also need a CMake session
 provider and working display/input permissions on its runner.
-
-## Windows runner probe
-
-A push that changes the probe or workflow runs `Windows GUI session probe`
-from that branch.  Once the workflow is on the default branch, it can also be
-run manually from GitHub Actions.  It opens a native Windows window, finds
-it by title, and captures the desktop.  The job passes only when the captured
-window color is visible.  Its `windows-gui-probe` artifact contains session
-diagnostics and any screenshot captured, including on failure.  This probe
-needs no BRL-CAD or bext build; it establishes whether the hosted Windows
-desktop can support a GUI backend.
