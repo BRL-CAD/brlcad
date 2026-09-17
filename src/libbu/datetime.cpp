@@ -175,6 +175,9 @@ bu_utctime(struct bu_vls *vls_gmtime, const int64_t time_val)
 {
     static const char *nulltime = "0000-00-00T00:00:00Z";
 
+    if (UNLIKELY(!vls_gmtime))
+	return;
+
     // NOTE - once we bump to C++20 we can used std::format and remove date.h
     std::string iso;
     bu_semaphore_acquire(BU_SEM_DATETIME);
