@@ -259,30 +259,59 @@ bu_semaphore_free(void)
 #else
 
     unsigned int i;
-    unsigned int initialized = semaphore_count();
+    unsigned int initialized;
 
     /* Close out the mutexes already created. */
 #  if defined(SUNOS)
+    if (mutex_lock(&bu_init_lock)) {
+	fprintf(stderr, "bu_semaphore_free(): mutex_lock() failed on init lock\n");
+	bu_bomb("fatal semaphore failure");
+    }
+    initialized = semaphore_count();
     for (i = 0; i < initialized; i++) {
+	bu_semaphores[i].magic = 0;
 	if (mutex_destroy(&bu_semaphores[i].mu)) {
 	    fprintf(stderr, "bu_semaphore_free(): mutex_destroy() failed on [%d] of [%d]\n", i+1, initialized);
 	}
     }
+    semaphore_count_set(0);
+    if (mutex_unlock(&bu_init_lock)) {
+	fprintf(stderr, "bu_semaphore_free(): mutex_unlock() failed on init lock\n");
+	bu_bomb("fatal semaphore failure");
+    }
 
 #  elif defined(HAVE_PTHREAD_H)
+    int ret = pthread_mutex_lock(&bu_init_lock);
+    if (ret) {
+	fprintf(stderr, "bu_semaphore_free(): pthread_mutex_lock() failed on init lock\n");
+	sem_bomb(ret);
+    }
+    initialized = semaphore_count();
     for (i = 0; i < initialized; i++) {
+	bu_semaphores[i].magic = 0;
 	if (pthread_mutex_destroy(&bu_semaphores[i].mu)) {
 	    fprintf(stderr, "bu_semaphore_free(): pthread_mutex_destroy() failed on [%d] of [%d]\n", i+1, initialized);
 	}
     }
+    semaphore_count_set(0);
+    ret = pthread_mutex_unlock(&bu_init_lock);
+    if (ret) {
+	fprintf(stderr, "bu_semaphore_free(): pthread_mutex_unlock() failed on init lock\n");
+	sem_bomb(ret);
+    }
 
 #  elif defined(_WIN32) && !defined(__CYGWIN__)
+    while (InterlockedCompareExchange(&bu_init_lock, 1, 0)) {
+    }
+    initialized = semaphore_count();
     for (i = 0; i < initialized; i++) {
+	bu_semaphores[i].magic = 0;
 	DeleteCriticalSection(&bu_semaphores[i].mu);
     }
+    semaphore_count_set(0);
+    InterlockedExchange(&bu_init_lock, 0);
 #  endif
 
-    semaphore_count_set(0);
 #endif	/* PARALLEL */
 }
 
@@ -295,6 +324,11 @@ bu_semaphore_acquire(unsigned int i)
 	return;
     return;					/* No support on this hardware */
 #else
+
+    if (UNLIKELY(i >= BU_SEMAPHORE_MAX)) {
+	fprintf(stderr, "bu_semaphore_acquire(): semaphore [%u] exceeds max [%d]\n", i, BU_SEMAPHORE_MAX);
+	bu_bomb("bu_semaphore_acquire: semaphore index out of range");
+    }
 
     /* ensure we have this semaphore */
     bu_semaphore_init(i+1);
@@ -337,6 +371,11 @@ bu_semaphore_release(unsigned int i)
     return;					/* No support on this hardware */
 #else
 
+    if (UNLIKELY(i >= BU_SEMAPHORE_MAX)) {
+	fprintf(stderr, "bu_semaphore_release(): semaphore [%u] exceeds max [%d]\n", i, BU_SEMAPHORE_MAX);
+	bu_bomb("bu_semaphore_release: semaphore index out of range");
+    }
+
     /* ensure we have this semaphore */
     bu_semaphore_init(i+1);
     BU_CKMAG(&bu_semaphores[i], SEMAPHORE_MAGIC, "bu_semaphore");
@@ -347,7 +386,7 @@ bu_semaphore_release(unsigned int i)
 
 #  ifdef SUNOS
     if (mutex_unlock(&bu_semaphores[i].mu)) {
-	fprintf(stderr, "bu_semaphore_acquire(): mutex_unlock() failed on [%d]\n", i);
+	fprintf(stderr, "bu_semaphore_release(): mutex_unlock() failed on [%d]\n", i);
 	bu_bomb("fatal semaphore acquisition failure");
     }
 #  endif
@@ -355,7 +394,7 @@ bu_semaphore_release(unsigned int i)
 #  if defined(HAVE_PTHREAD_H)
     int ret = pthread_mutex_unlock(&bu_semaphores[i].mu);
     if (ret) {
-	fprintf(stderr, "bu_semaphore_acquire(): pthread_mutex_unlock() failed on [%d]\n", i);
+	fprintf(stderr, "bu_semaphore_release(): pthread_mutex_unlock() failed on [%d]\n", i);
 	sem_bomb(ret);
     }
 #  endif

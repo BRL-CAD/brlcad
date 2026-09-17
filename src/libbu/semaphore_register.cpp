@@ -61,6 +61,9 @@ semaphore_registry()
 static size_t
 semaphore_registered(const char *name)
 {
+    if (!name)
+	return 0;
+
     const std::vector<std::string> &semaphores = semaphore_registry();
 
     for (size_t i = 0; i < semaphores.size(); ++i) {

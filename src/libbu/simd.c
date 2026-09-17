@@ -43,11 +43,11 @@ bu_simd_level(void)
 	return BU_SIMD_SSE4_1;
     if (c & 0x1)
 	return BU_SIMD_SSE3;
-    if (d & 0x1<<26)
+    if (d & (1U << 26))
 	return BU_SIMD_SSE2;
-    if (d & 0x1<<25)
+    if (d & (1U << 25))
 	return BU_SIMD_SSE;
-    if (d & 0x1<<24)
+    if (d & (1U << 24))
 	return BU_SIMD_MMX;
 #endif
     return BU_SIMD_NONE;
@@ -58,7 +58,7 @@ bu_simd_supported(int level)
 {
     int l;
 
-    if (level == 4)
+    if (level <= BU_SIMD_NONE || level > BU_SIMD_SSE4_2 || level == BU_SIMD_ALTIVEC)
 	return 0;
 
     l = bu_simd_level();

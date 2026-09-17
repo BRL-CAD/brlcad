@@ -37,6 +37,12 @@ extern char *realpath(const char *, char *);
 char *
 bu_file_realpath(const char *path, char *resolved_path)
 {
+    if (UNLIKELY(!path)) {
+	if (resolved_path)
+	    resolved_path[0] = '\0';
+	return NULL;
+    }
+
     if (!resolved_path)
 	resolved_path = (char *) bu_calloc(MAXPATHLEN, sizeof(char), "resolved_path alloc");
 
@@ -57,7 +63,12 @@ bu_file_realpath(const char *path, char *resolved_path)
 #elif defined(HAVE_GETFULLPATHNAME)
     /* Best solution currently available for Windows
      * See https://www.securecoding.cert.org/confluence/display/seccode/FIO02-C.+Canonicalize+path+names+originating+from+untrusted+sources */
-    GetFullPathName(path, MAXPATHLEN, resolved_path, NULL);
+    {
+	DWORD ret = GetFullPathName(path, MAXPATHLEN, resolved_path, NULL);
+	if (ret == 0 || ret >= MAXPATHLEN) {
+	    bu_strlcpy(resolved_path, path, MAXPATHLEN);
+	}
+    }
 #else
     /* Last resort - if NOTHING is defined, do a simple copy */
     bu_strlcpy(resolved_path, path, (size_t)MAXPATHLEN);

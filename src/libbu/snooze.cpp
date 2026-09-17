@@ -34,8 +34,14 @@
 int
 bu_snooze(int64_t useconds)
 {
+    /* Clamp to avoid overflow when converted to nanoseconds internally */
+    constexpr int64_t max_useconds = INT64_MAX / 1000;
+
     if (useconds < 0)
 	return BRLCAD_ERROR;
+
+    if (useconds > max_useconds)
+	useconds = max_useconds;
 
     std::this_thread::sleep_for(std::chrono::microseconds(useconds));
 

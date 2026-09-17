@@ -35,49 +35,44 @@ bu_scan_fastf_t(int *c, const char *src, const char *delim, size_t n, ...)
     va_list ap;
     int offset = 0;
     int current_n = 0, part_n = 0;
-    int len, delim_len;
+    int len = 0, delim_len;
     size_t i;
-    char *delim_fmt;
+
+    if (c)
+	*c = 0;
 
     if (UNLIKELY(!delim || n < 1)) {
 	return 0;
     }
 
-    va_start(ap, n);
-
-    /* TODO: we should just simply skip all occurrences of delim chars
-     * after reading a fastf_t, avoid dynamic memory allocation and
-     * avoid scanf/sscanf (we don't need to scan the delimiter, just
-     * skip chars in a loop until none are found.
-     */
+    if (src && *src == '\0') {
+	return 0;
+    }
 
     delim_len = (int)strlen(delim);
-    /* + 3 here to make room for the two characters '%' and 'n' as
-     * well as the terminating '\0'
-     */
-    delim_fmt = (char *)bu_malloc(delim_len + 3, "bu_scan_fastf_t");
-    bu_strlcpy(delim_fmt, delim, delim_len + 1);
-    bu_strlcat(delim_fmt, "%n", delim_len + 3);
+    va_start(ap, n);
 
     for (i = 0; i < n; i++) {
 	/* Read in the next fastf_t */
 	double scan = 0;
 	fastf_t *arg;
 
+	len = 0;
 	if (src)
 	    part_n = sscanf(src + offset, "%lf%n", &scan, &len);
 	else
 	    part_n = scanf("%lf%n", &scan, &len);
 
-	current_n += part_n;
-	offset += len;
-	if (part_n != 1) {
+	if (part_n != 1 || len <= 0) {
 	    break;
 	}
 
+	current_n += part_n;
+	offset += len;
+
 	arg = va_arg(ap, fastf_t *);
 	if (arg) {
-	    *arg = scan;
+	    *arg = (fastf_t)scan;
 	}
 	/* Don't scan an extra delimiter at the end of the string */
 	if (i == n - 1) {
@@ -85,24 +80,31 @@ bu_scan_fastf_t(int *c, const char *src, const char *delim, size_t n, ...)
 	}
 
 	/* Make sure that a delimiter is present */
-	if (src)
-	    part_n = sscanf(src + offset, delim_fmt, &len);
-	else
-	    part_n = scanf(delim_fmt, &len);
-
-	offset += len;
-
-	/* as delim_fmt should only have a %n and that doesn't get
-	 * counted in the scanf return, make sure the return is 0 as
-	 * no values should be scanned.
-	 */
-	if (part_n != 0 || len != delim_len) {
-	    break;
+	if (src) {
+	    if (bu_strncmp(src + offset, delim, (size_t)delim_len) != 0) {
+		break;
+	    }
+	    offset += delim_len;
+	} else {
+	    int match = 1;
+	    int d;
+	    for (d = 0; d < delim_len; d++) {
+		int ch = getchar();
+		if (ch != (unsigned char)delim[d]) {
+		    if (ch != EOF)
+			ungetc(ch, stdin);
+		    match = 0;
+		    break;
+		}
+		offset++;
+	    }
+	    if (!match) {
+		break;
+	    }
 	}
     }
 
     va_end(ap);
-    bu_free(delim_fmt, "bu_scan_fastf_t");
 
     if (c) {
 	*c = offset;

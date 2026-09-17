@@ -74,10 +74,16 @@ _bu_progname_raw(void)
 const char *
 bu_argv0_full_path(void)
 {
-    static char buffer[MAXPATHLEN] = {0};
+    static THREADLOCAL char buffer[MAXPATHLEN] = {0};
     char tbuf[MAXPATHLEN] = {0};
-    const char *argv0 = bu_progname;
+    char local_progname[MAXPATHLEN] = {0};
+    const char *argv0;
     const char *which;
+
+    bu_semaphore_acquire(BU_SEM_SYSCALL);
+    bu_strlcpy(local_progname, bu_progname, sizeof(local_progname));
+    bu_semaphore_release(BU_SEM_SYSCALL);
+    argv0 = local_progname;
 
 #ifdef HAVE_PROGRAM_INVOCATION_NAME
     /* GLIBC provides a way */
@@ -137,10 +143,14 @@ bu_argv0_full_path(void)
     /* FIXME: this is technically wrong.  if the current working
      * directory is changed, we'll get the wrong path for argv0.
      */
-    bu_getcwd(buffer, sizeof(buffer));
-    snprintf(buffer+strlen(buffer), sizeof(buffer)-strlen(buffer), "%c%s", BU_DIR_SEPARATOR, argv0);
-    if (bu_file_exists(buffer, NULL)) {
-	return buffer;
+    if (bu_getcwd(buffer, sizeof(buffer))) {
+	size_t blen = strlen(buffer);
+	if (blen + 1 < sizeof(buffer)) {
+	    snprintf(buffer + blen, sizeof(buffer) - blen, "%c%s", BU_DIR_SEPARATOR, argv0);
+	    if (bu_file_exists(buffer, NULL)) {
+		return buffer;
+	    }
+	}
     }
 
     /* give up */
@@ -157,9 +167,15 @@ bu_getprogname(void)
      * free the bu_path_basename() memory, so we need to copy the
      * string somewhere before returning.
      */
-    static char buffer[MAXPATHLEN] = {0};
-    const char *name = bu_progname;
+    static THREADLOCAL char buffer[MAXPATHLEN] = {0};
+    char local_progname[MAXPATHLEN] = {0};
+    const char *name;
     char tmp_basename[MAXPATHLEN] = {0};
+
+    bu_semaphore_acquire(BU_SEM_SYSCALL);
+    bu_strlcpy(local_progname, bu_progname, sizeof(local_progname));
+    bu_semaphore_release(BU_SEM_SYSCALL);
+    name = local_progname;
 
 #ifdef HAVE_PROGRAM_INVOCATION_NAME
     /* GLIBC provides a way */
@@ -172,7 +188,7 @@ bu_getprogname(void)
     if (name[0] == '\0') {
 	name = getprogname(); /* not malloc'd memory, may return NULL */
 	if (!name)
-	    name = bu_progname;
+	    name = local_progname;
     }
 #endif
 
@@ -185,9 +201,7 @@ bu_getprogname(void)
     }
 
     /* stash for return */
-    bu_semaphore_acquire(BU_SEM_SYSCALL);
     bu_strlcpy(buffer, name, MAXPATHLEN);
-    bu_semaphore_release(BU_SEM_SYSCALL);
 
     return buffer;
 }

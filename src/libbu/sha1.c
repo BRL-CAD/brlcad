@@ -57,6 +57,9 @@ void SHA1Transform(uint32_t state[5], const unsigned char buffer[64])
 	unsigned char c[64];
 	uint32_t l[16];
     } CHAR64LONG16;
+
+    if (UNLIKELY(!state || !buffer))
+	return;
 #ifdef SHA1HANDSOFF
     CHAR64LONG16 block[1];  /* use array to appear as a pointer */
     memcpy(block, buffer, 64);
@@ -111,6 +114,9 @@ void SHA1Transform(uint32_t state[5], const unsigned char buffer[64])
 
 void SHA1Init(SHA1_CTX* context)
 {
+    if (UNLIKELY(!context))
+	return;
+
     /* SHA1 initialization constants */
     context->state[0] = 0x67452301;
     context->state[1] = 0xEFCDAB89;
@@ -126,6 +132,9 @@ void SHA1Init(SHA1_CTX* context)
 void SHA1Update(SHA1_CTX* context, const unsigned char* data, uint32_t len)
 {
     uint32_t i, j;
+
+    if (UNLIKELY(!context || !data || len == 0))
+	return;
 
     j = context->count[0];
     if ((context->count[0] += len << 3) < j)
@@ -152,6 +161,9 @@ void SHA1Final(unsigned char digest[20], SHA1_CTX* context)
     unsigned i;
     unsigned char finalcount[8];
     unsigned char c;
+
+    if (UNLIKELY(!digest || !context))
+	return;
 
     for (i = 0; i < 8; i++) {
 	finalcount[i] = (unsigned char)((context->count[(i >= 4 ? 0 : 1)]
