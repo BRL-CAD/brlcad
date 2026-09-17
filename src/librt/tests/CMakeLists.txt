@@ -150,6 +150,9 @@ brlcad_addexec(rt_bot_split
 target_include_directories(rt_bot_split PRIVATE ${BRLCAD_SOURCE_DIR}/src/libbg)
 brlcad_add_test(NAME rt_bot_split COMMAND rt_bot_split)
 
+brlcad_addexec(rt_ars_inside ars_inside.c "librt;libwdb;libbu;${M_LIBRARY}" TEST)
+brlcad_add_test(NAME rt_ars_inside COMMAND rt_ars_inside)
+
 # boolweave testing
 brlcad_addexec(rt_boolweave rt_boolweave.c "${RT_TEST_LIBS}" TEST)
 brlcad_add_test(NAME rt_boolweave COMMAND rt_boolweave)
@@ -202,6 +205,7 @@ brlcad_add_test(NAME rt_metaball_adjust COMMAND rt_metaball_adjust)
 set(
   distcheck_files
   CMakeLists.txt
+  ars_inside.c
   arb_intersect.g
   binary_attribute.c
   binunif.c
