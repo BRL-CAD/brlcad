@@ -150,6 +150,29 @@ changes made.  See document footer for additional details.
 * added CSS names, hex, HSL/HSV to libbu color parsing - Sean Morrison
 * improved OpenNURBS B-Rep import and adjustment safety - Cliff Yapp
 * improved Debian application menus and MIME associations - Jordi Sayol
+* updated Clipper2 dependency to v1.5.4 - Cliff Yapp
+* updated Eigen dependency to v5.0.1 - Cliff Yapp
+* updated GDAL dependency to v3.13.3 - Cliff Yapp
+* updated GeometricTools dependency to v8.2 - Cliff Yapp
+* updated Itk dependency to v4.2.7 - Cliff Yapp
+* updated LMDB dependency to v1.0.1 - Cliff Yapp
+* updated Manifold dependency to v3.5.3 - Cliff Yapp
+* updated OpenCV dependency to v5.0.0 - Cliff Yapp
+* updated OpenNURBS dependency to v8.34.26223.11001 - Cliff Yapp
+* updated PROJ dependency to v9.8.1 - Cliff Yapp
+* updated PoissonRecon dependency to v18.75 - Cliff Yapp
+* updated Tcl/Tk dependency to v8.6.18, using bundled Itcl - Cliff Yapp
+* updated libjpeg-turbo dependency to v3.2.0 - Cliff Yapp
+* updated libosmesa dependency to SHA1 bfa90de - Cliff Yapp
+* updated libpng dependency to v1.6.58 - Cliff Yapp
+* updated libtiff dependency to v4.7.2 - Cliff Yapp
+* updated netpbm dependency to v10.86.50 - Cliff Yapp
+* updated oneTBB dependency to v2023.1.0 - Cliff Yapp
+* updated pugixml dependency to v1.16 - Cliff Yapp
+* updated sqlite3 dependency to v3.53.4 - Cliff Yapp
+* updated stepcode dependency to SHA1 ed686ee1d - Cliff Yapp
+* updated tinygltf dependency to v3.0.1 - Cliff Yapp
+* updated zlib dependency to v1.3.2 - Cliff Yapp
 
 
 ----------------------------------------------------------------------
