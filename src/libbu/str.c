@@ -61,18 +61,21 @@ bu_strlcatm(char *dst, const char *src, size_t size, const char *label)
 	label = "bu_strlcat";
     }
 
-    dstsize = strlen(dst);
+    for (dstsize = 0; dstsize < size && dst[dstsize] != '\0'; dstsize++)
+	;
     srcsize = strlen(src);
 
     if (UNLIKELY(dstsize == size - 1)) {
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	fprintf(stderr, "WARNING: [%s] concatenation string is already full at %lu chars\n", label, (unsigned long)size-1);
 	bu_semaphore_release(BU_SEM_SYSCALL);
-    } else if (UNLIKELY(dstsize > size - 1)) {
-	/* probably missing null-termination or is not an initialized buffer */
+    } else if (UNLIKELY(dstsize >= size)) {
+	/* missing null-termination or is not an initialized buffer */
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
-	fprintf(stderr, "WARNING: [%s] concatenation string is already full, exceeds size (%lu > %lu)\n", label, (unsigned long)dstsize, (unsigned long)size-1);
+	fprintf(stderr, "WARNING: [%s] concatenation string is already full, exceeds size (%lu >= %lu)\n", label, (unsigned long)dstsize, (unsigned long)size-1);
 	bu_semaphore_release(BU_SEM_SYSCALL);
+	dst[size-1] = '\0';
+	return size - 1;
     } else if (UNLIKELY(srcsize > size - dstsize - 1)) {
 	if (UNLIKELY(bu_debug)) {
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);
