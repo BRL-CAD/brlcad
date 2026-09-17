@@ -107,6 +107,12 @@ alloc(alloc_t type, size_t cnt, size_t sz, const char *str)
 	size = MINSIZE;
     }
 
+    if (UNLIKELY(size > 0 && cnt > SIZE_MAX / size)) {
+	fprintf(stderr, "ERROR: alloc size overflow (cnt=%llu, sz=%llu) %s\n",
+		(unsigned long long)cnt, (unsigned long long)size, str);
+	bu_bomb("ERROR: bu_malloc/calloc multiplication overflow\n");
+    }
+
 #if defined(MALLOC_NOT_MP_SAFE)
     bu_semaphore_acquire(BU_SEM_MALLOC);
 #endif
@@ -374,11 +380,28 @@ bu_pool_create(size_t block_size)
 void *
 bu_pool_alloc(struct bu_pool *pool, size_t nelem, size_t elsize)
 {
-    const size_t n_bytes = nelem * elsize;
+    size_t n_bytes;
+    size_t inc;
     void *ret;
 
+    if (UNLIKELY(!pool || nelem == 0 || elsize == 0))
+	return NULL;
+
+    if (UNLIKELY(nelem > SIZE_MAX / elsize)) {
+	bu_bomb("ERROR: bu_pool_alloc multiplication overflow\n");
+    }
+    n_bytes = nelem * elsize;
+
+    if (UNLIKELY(n_bytes > SIZE_MAX - pool->block_pos)) {
+	bu_bomb("ERROR: bu_pool_alloc addition overflow\n");
+    }
+
     if (pool->block_pos + n_bytes > pool->alloc_size) {
-	pool->alloc_size += (n_bytes < pool->block_size ? pool->block_size : n_bytes);
+	inc = (n_bytes < pool->block_size ? pool->block_size : n_bytes);
+	if (UNLIKELY(inc > SIZE_MAX - pool->alloc_size)) {
+	    bu_bomb("ERROR: bu_pool_alloc capacity overflow\n");
+	}
+	pool->alloc_size += inc;
 	pool->block = (uint8_t*)bu_realloc(pool->block, pool->alloc_size, "bu_pool_alloc");
     }
 
