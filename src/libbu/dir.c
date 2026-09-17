@@ -69,8 +69,12 @@ static const char DSLASH[2] = {BU_DIR_SEPARATOR, '\0'};
 static void
 nibble_trailing_slash(char *path)
 {
-    if ((strlen(path) > 1) && path[strlen(path)-1] == BU_DIR_SEPARATOR) {
-	path[strlen(path)-1] = '\0'; /* nibble any trailing slash */
+    size_t len;
+    if (!path)
+	return;
+    len = strlen(path);
+    while (len > 1 && path[len - 1] == BU_DIR_SEPARATOR) {
+	path[--len] = '\0'; /* nibble trailing slash */
     }
 }
 
@@ -98,14 +102,14 @@ dir_temp(char *buf, size_t len)
 	}
 
 	if (!BU_STR_EMPTY(env)) {
-	    bu_strlcpy(path, env, MAXPATHLEN);
+	    bu_strlcpy(path, env, sizeof(path));
 	}
     }
 
     /* method 2a: platform standard (macosx) */
 #if defined(HAVE_CONFSTR) && defined(_CS_DARWIN_USER_TEMP_DIR)
     if (BU_STR_EMPTY(path)) {
-	confstr(_CS_DARWIN_USER_TEMP_DIR, path, len);
+	confstr(_CS_DARWIN_USER_TEMP_DIR, path, sizeof(path));
     }
 #endif
 
@@ -162,7 +166,7 @@ dir_home(char *buf, size_t len)
     if (BU_STR_EMPTY(path)) {
 	env = getenv("HOME");
 	if (env && strlen(env)) {
-	    bu_strlcpy(path, env, len);
+	    bu_strlcpy(path, env, sizeof(path));
 	}
     }
 
@@ -171,7 +175,7 @@ dir_home(char *buf, size_t len)
     if (BU_STR_EMPTY(path)) {
 	struct passwd *upwd = getpwuid(getuid());
 	if (upwd && upwd->pw_dir) {
-	    bu_strlcpy(path, upwd->pw_dir, MAXPATHLEN);
+	    bu_strlcpy(path, upwd->pw_dir, sizeof(path));
 	}
     }
 #endif
@@ -179,7 +183,7 @@ dir_home(char *buf, size_t len)
     /* method #2b: platform standard (macosx) */
 #if defined(HAVE_CONFSTR) && defined(_CS_DARWIN_USER_DIR)
     if (BU_STR_EMPTY(path)) {
-	confstr(_CS_DARWIN_USER_DIR, path, len);
+	confstr(_CS_DARWIN_USER_DIR, path, sizeof(path));
     }
 #endif
 
@@ -240,14 +244,14 @@ dir_cache(char *buf, size_t len)
     if (BU_STR_EMPTY(path)) {
 	env = getenv("XDG_CACHE_HOME");
 	if (!BU_STR_EMPTY(env)) {
-	    bu_strlcpy(path, env, len);
+	    bu_strlcpy(path, env, sizeof(path));
 	}
     }
 
     /* method #2b: platform standard (macosx) */
 #if defined(HAVE_CONFSTR) && defined(_CS_DARWIN_CACHE_DIR)
     if (BU_STR_EMPTY(path)) {
-	confstr(_CS_DARWIN_CACHE_DIR, path, len);
+	confstr(_CS_DARWIN_CACHE_DIR, path, sizeof(path));
     }
 #endif
 
@@ -309,7 +313,10 @@ dir_config(char *buf, size_t len)
 static void
 path_append(struct bu_vls *vp, const char *buf)
 {
-    size_t len = bu_vls_strlen(vp);
+    size_t len;
+    if (!vp || !buf || buf[0] == '\0')
+	return;
+    len = bu_vls_strlen(vp);
     if (len && bu_vls_addr(vp)[len-1] != BU_DIR_SEPARATOR)
 	bu_vls_putc(vp, BU_DIR_SEPARATOR);
     bu_vls_strcat(vp, buf);
@@ -392,11 +399,11 @@ _bu_dir_join_path(char result[MAXPATHLEN], const char *lhs, const char *rhs, str
 	return 0;
     }
 
-    if ((*(result+llen-1) != BU_DIR_SEPARATOR) && (rhs[0] != BU_DIR_SEPARATOR)) {
+    if (llen > 0 && (*(result+llen-1) != BU_DIR_SEPARATOR) && (rhs[0] != BU_DIR_SEPARATOR)) {
 	/* let the caller give "/usr/brlcad" and "bin" and get "/usr/brlcad/bin" */
 	*(result+llen) = BU_DIR_SEPARATOR;
 	llen++;
-    } else if ((*(result+llen-1) == BU_DIR_SEPARATOR) && (rhs[0] == BU_DIR_SEPARATOR)) {
+    } else if (llen > 0 && (*(result+llen-1) == BU_DIR_SEPARATOR) && (rhs[0] == BU_DIR_SEPARATOR)) {
 	/* let the caller give "/usr/brlcad/" and "/bin" and get "/usr/brlcad/bin"*/
 	rhs++;
 	rlen--;
@@ -471,25 +478,31 @@ _bu_dir_brlcad_root(const char *rhs, int fail_quietly)
 	if (strlen(plhs)) {
 	    char *dirpath;
 	    char *real_path = bu_file_realpath(plhs, NULL);
-	    dirpath = bu_path_dirname(real_path);
-	    snprintf(real_path, MAXPATHLEN, "%s", dirpath);
-	    bu_free(dirpath, "free bu_path_dirname");
-	    dirpath = bu_path_dirname(real_path);
-	    snprintf(real_path, MAXPATHLEN, "%s", dirpath);
-	    bu_free(dirpath, "free bu_path_dirname");
-	    if (_bu_dir_join_path(result, real_path, rhs, &searched, where)) {
-		if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
-		    bu_log("Found: Run-time path identification [%s]\n", result);
+	    if (real_path) {
+		dirpath = bu_path_dirname(real_path);
+		if (dirpath) {
+		    snprintf(real_path, MAXPATHLEN, "%s", dirpath);
+		    bu_free(dirpath, "free bu_path_dirname");
+		    dirpath = bu_path_dirname(real_path);
+		    if (dirpath) {
+			snprintf(real_path, MAXPATHLEN, "%s", dirpath);
+			bu_free(dirpath, "free bu_path_dirname");
+		    }
 		}
-		bu_vls_free(&searched);
+		if (_bu_dir_join_path(result, real_path, rhs, &searched, where)) {
+		    if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
+			bu_log("Found: Run-time path identification [%s]\n", result);
+		    }
+		    bu_vls_free(&searched);
+		    bu_free(real_path, "free real_path");
+		    bu_free(plhs, "free plhs");
+		    return result;
+		}
+		// TODO - should we verify libbu is present in the expected place
+		// relative to this root to verify that this is in fact a BRL-CAD
+		// path and not something coming from a 3rd party executable?
 		bu_free(real_path, "free real_path");
-		bu_free(plhs, "free plhs");
-		return result;
 	    }
-	    // TODO - should we verify libbu is present in the expected place
-	    // relative to this root to verify that this is in fact a BRL-CAD
-	    // path and not something coming from a 3rd party executable?
-	    bu_free(real_path, "free real_path");
 	} else {
 	    bu_vls_strcat(&searched, where);
 	}
@@ -512,22 +525,28 @@ _bu_dir_brlcad_root(const char *rhs, int fail_quietly)
 	if (strlen(plhs)) {
 	    char *dirpath;
 	    char *real_path = bu_file_realpath(plhs, NULL);
-	    dirpath = bu_path_dirname(real_path);
-	    snprintf(real_path, MAXPATHLEN, "%s", dirpath);
-	    bu_free(dirpath, "free bu_path_dirname");
-	    dirpath = bu_path_dirname(real_path);
-	    snprintf(real_path, MAXPATHLEN, "%s", dirpath);
-	    bu_free(dirpath, "free bu_path_dirname");
-	    if (_bu_dir_join_path(result, real_path, rhs, &searched, where)) {
-		if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
-		    bu_log("Found: Run-time path identification (lib) [%s]\n", result);
+	    if (real_path) {
+		dirpath = bu_path_dirname(real_path);
+		if (dirpath) {
+		    snprintf(real_path, MAXPATHLEN, "%s", dirpath);
+		    bu_free(dirpath, "free bu_path_dirname");
+		    dirpath = bu_path_dirname(real_path);
+		    if (dirpath) {
+			snprintf(real_path, MAXPATHLEN, "%s", dirpath);
+			bu_free(dirpath, "free bu_path_dirname");
+		    }
 		}
-		bu_vls_free(&searched);
+		if (_bu_dir_join_path(result, real_path, rhs, &searched, where)) {
+		    if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
+			bu_log("Found: Run-time path identification (lib) [%s]\n", result);
+		    }
+		    bu_vls_free(&searched);
+		    bu_free(real_path, "free real_path");
+		    bu_free(plhs, "free plhs");
+		    return result;
+		}
 		bu_free(real_path, "free real_path");
-		bu_free(plhs, "free plhs");
-		return result;
 	    }
-	    bu_free(real_path, "free real_path");
 	} else {
 	    bu_vls_strcat(&searched, where);
 	}
@@ -653,7 +672,7 @@ vdir(char *result, size_t len, va_list args)
 	arg = va_arg(args, uintptr_t);
     }
 
-    if (len > 0 && bu_vls_strlen(&vls) > 0) {
+    if (result && len > 0 && bu_vls_strlen(&vls) > 0) {
 	bu_strlcpy(result, bu_vls_cstr(&vls), len);
 	bu_vls_free(&vls);
 	return result;
@@ -683,8 +702,8 @@ bu_dir(char *result, size_t len, .../*, NULL */)
 void
 bu_mkdir(const char *path)
 {
-    // If there's already something there, we can't proceed.
-    if (bu_file_exists(path, NULL) || bu_file_directory(path))
+    // If there's already something there or invalid path, we can't proceed.
+    if (!path || path[0] == '\0' || bu_file_exists(path, NULL) || bu_file_directory(path))
 	return;
 
     /* Make sure the target and any missing parents
@@ -692,10 +711,14 @@ bu_mkdir(const char *path)
     struct bu_ptbl ndirs = BU_PTBL_INIT_ZERO;
     struct bu_vls c = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&c, "%s", path);
-    while (!bu_file_directory(bu_vls_cstr(&c))) {
+    while (bu_vls_strlen(&c) > 0 && !bu_file_directory(bu_vls_cstr(&c))) {
 	char *npath = bu_strdup(bu_vls_cstr(&c));
 	bu_ptbl_ins(&ndirs, (long *)npath);
 	bu_path_component(&c, npath, BU_PATH_DIRNAME);
+	if (BU_STR_EQUAL(bu_vls_cstr(&c), npath)) {
+	    /* No further parent directory component can be extracted */
+	    break;
+	}
     }
 
     for (int i = (int)BU_PTBL_LEN(&ndirs) - 1; i >= 0; i--) {
@@ -716,6 +739,9 @@ bu_mkdir(const char *path)
 void
 bu_dirclear(const char *d)
 {
+    if (!d || d[0] == '\0')
+	return;
+
     if (bu_file_directory(d)) {
 	char **filenames;
 	size_t nfiles = bu_file_list(d, "*", &filenames);
