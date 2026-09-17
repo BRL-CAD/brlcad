@@ -132,6 +132,8 @@ heap_print(void)
     size_t got = 0;
     size_t total_pages = 0;
     size_t ncpu = bu_avail_cpus();
+    if (ncpu > MAX_PSW)
+	ncpu = MAX_PSW;
 
     bu_heap_func_t log = bu_heap_log(NULL);
 
@@ -194,9 +196,13 @@ bu_heap_get(size_t sz)
 
     /* what thread are we? */
     oncpu = bu_parallel_id();
+    if (oncpu < 0 || oncpu >= MAX_PSW)
+	oncpu = 0;
 
-#ifdef DEBUG
-    if (sz > HEAP_BINS || sz == 0) {
+    if (sz == 0)
+	return NULL;
+
+    if (sz > HEAP_BINS) {
 	per_cpu[oncpu].misses++;
 
 	if (bu_debug) {
@@ -208,7 +214,6 @@ bu_heap_get(size_t sz)
 	}
 	return bu_calloc(1, sz, "heap calloc");
     }
-#endif
 
     heap = &per_cpu[oncpu].heap[smo];
 
@@ -247,7 +252,10 @@ bu_heap_get(size_t sz)
 void
 bu_heap_put(void *ptr, size_t sz)
 {
-    if (sz > HEAP_BINS || sz == 0) {
+    if (!ptr || sz == 0)
+	return;
+
+    if (sz > HEAP_BINS) {
 	bu_free(ptr, "heap free");
 	return;
     }

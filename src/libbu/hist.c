@@ -50,6 +50,8 @@ bu_hist_free(struct bu_hist *histp)
 void
 bu_hist_init(struct bu_hist *histp, fastf_t min, fastf_t max, size_t nbins)
 {
+    if (!histp)
+	return;
 
     if (max <= min)
 	max = min+1;
@@ -80,19 +82,35 @@ bu_hist_range(register struct bu_hist *hp, fastf_t low, fastf_t high)
     long b;
     register int i;
 
+    if (!hp)
+	return;
+
     BU_CK_HIST(hp);
+
+    if (isnan(low) || isnan(high) || isnan(hp->hg_clumpsize) || hp->hg_clumpsize <= 0 || !hp->hg_bins)
+	return;
+
     if (low <= hp->hg_min)
 	a = 0;
     else
-	a = (low - hp->hg_min) / hp->hg_clumpsize;
+	a = (long)((low - hp->hg_min) / hp->hg_clumpsize);
+
     if (high >= hp->hg_max)
 	b = (long)hp->hg_nbins-1;
     else
-	b = (high - hp->hg_min) / hp->hg_clumpsize;
+	b = (long)((high - hp->hg_min) / hp->hg_clumpsize);
+
+    if (a < 0)
+	a = 0;
+    if (a >= (long)hp->hg_nbins)
+	a = (long)hp->hg_nbins-1;
     if (b >= (long)hp->hg_nbins)
 	b = (long)hp->hg_nbins-1;
     if (b < 0)
 	b = 0;
+
+    if (a > b)
+	return;
 
     for (i=a; i <= b; i++) {
 	hp->hg_bins[i]++;
@@ -117,7 +135,16 @@ hist_pr_suppress(register const struct bu_hist *histp, const char *title, int ze
     size_t i;
     size_t nbins;
 
+    if (!histp)
+	return;
+
     BU_CK_HIST(histp);
+
+    if (!histp->hg_bins)
+	return;
+
+    if (!title)
+	title = "(untitled)";
 
     /* Find entry with highest count */
     maxcount = 0;

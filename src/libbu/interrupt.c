@@ -77,8 +77,10 @@ volatile bu_sig_t interrupt_signal_func[INTERRUPT_MAX_SIGNUM] = {
 static void
 interrupt_suspend_signal_handler(int signum)
 {
-    if (interrupt_defer_signal[signum])
-	interrupt_signal_pending[signum]++;
+    if (signum >= 0 && signum < INTERRUPT_MAX_SIGNUM) {
+	if (interrupt_defer_signal[signum])
+	    interrupt_signal_pending[signum]++;
+    }
 }
 
 
@@ -99,12 +101,13 @@ interrupt_suspend_signal_handler(int signum)
 static int
 interrupt_suspend_signal(int signum)
 {
-    BU_ASSERT(signum < INTERRUPT_MAX_SIGNUM && "signal number out of range");
+    if (signum < 0 || signum >= INTERRUPT_MAX_SIGNUM)
+	return 2;
 
-    if (interrupt_signal_func[signum] == interrupt_suspend_signal_handler) {
+    if (interrupt_defer_signal[signum] > 0) {
+	interrupt_defer_signal[signum]++;
 	return 1;
     }
-
 
     interrupt_signal_func[signum] = signal(signum, interrupt_suspend_signal_handler);
 
@@ -113,7 +116,7 @@ interrupt_suspend_signal(int signum)
 	return 2;
     }
     interrupt_signal_pending[signum] = 0;
-    interrupt_defer_signal[signum]++;
+    interrupt_defer_signal[signum] = 1;
 
     return 0;
 }
@@ -136,28 +139,30 @@ interrupt_suspend_signal(int signum)
 static int
 interrupt_restore_signal(int signum)
 {
-    BU_ASSERT(signum < INTERRUPT_MAX_SIGNUM && "signal number out of range");
+    if (signum < 0 || signum >= INTERRUPT_MAX_SIGNUM)
+	return 2;
+
+    if (interrupt_defer_signal[signum] <= 0) {
+	interrupt_defer_signal[signum] = 0;
+	return 1;
+    }
 
     /* must be before the test to avoid a race condition */
     interrupt_defer_signal[signum]--;
 
-    if (interrupt_defer_signal[signum] == 0 && interrupt_signal_pending[signum] != 0) {
-	bu_sig_t ret;
-
-	if (interrupt_signal_func[signum] != interrupt_suspend_signal_handler) {
-	    /* unexpected state, how did we get here? */
-	    return 1;
-	}
-
-	ret = signal(signum, interrupt_signal_func[signum]);
+    if (interrupt_defer_signal[signum] == 0) {
+	bu_sig_t prev = interrupt_signal_func[signum];
+	int had_pending = (interrupt_signal_pending[signum] != 0);
 
 	interrupt_signal_func[signum] = (bu_sig_t)0;
 	interrupt_signal_pending[signum] = 0;
 
-	if (ret == SIG_ERR) {
+	if (signal(signum, prev) == SIG_ERR) {
 	    return 2;
 	}
-	raise(signum);
+	if (had_pending) {
+	    raise(signum);
+	}
     }
 
     return 0;

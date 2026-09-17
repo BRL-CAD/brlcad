@@ -36,6 +36,9 @@ bu_cv_htonf(register unsigned char *out, register const unsigned char *in, size_
 {
     register size_t i;
 
+    if (!out || !in || !count || count > (SIZE_MAX / SIZEOF_NETWORK_FLOAT))
+	return;
+
     assert(sizeof(float) == SIZEOF_NETWORK_FLOAT);
 
     switch (bu_byteorder()) {
@@ -72,6 +75,9 @@ void
 bu_cv_ntohf(register unsigned char *out, register const unsigned char *in, size_t count)
 {
     register size_t i;
+
+    if (!out || !in || !count || count > (SIZE_MAX / SIZEOF_NETWORK_FLOAT))
+	return;
 
     assert(sizeof(float) == SIZEOF_NETWORK_FLOAT);
 

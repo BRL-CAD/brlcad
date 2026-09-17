@@ -37,7 +37,7 @@ void
 bu_hook_list_init(struct bu_hook_list *hlp)
 {
     if (UNLIKELY(hlp == (struct bu_hook_list *)NULL))
-	bu_bomb("bu_hook_list_init passed NULL pointer");
+	return;
 
     hlp->capacity = hlp->size =  0;
     hlp->hooks = NULL;
@@ -47,7 +47,7 @@ bu_hook_list_init(struct bu_hook_list *hlp)
 void
 bu_hook_add(struct bu_hook_list *hlp, bu_hook_t func, void *clientdata)
 {
-    if (UNLIKELY(!hlp))
+    if (UNLIKELY(!hlp || !func))
 	return;
 
     if (!hlp->capacity) {
@@ -57,6 +57,8 @@ bu_hook_add(struct bu_hook_list *hlp, bu_hook_t func, void *clientdata)
 	hlp->size = 0;
     }
     if (hlp->size == hlp->capacity) {
+	if (hlp->capacity > (SIZE_MAX / (2 * sizeof(struct bu_hook))))
+	    return;
 	hlp->capacity = (hlp->capacity > 0) ? hlp->capacity * 2 : 1;
 	hlp->hooks = (struct bu_hook *)bu_realloc(hlp->hooks, sizeof (struct bu_hook) * hlp->capacity, "resize hooks");
     }
@@ -102,6 +104,8 @@ bu_hook_call(struct bu_hook_list *hlp, void *buf)
 	return;
 
     for (i = 0; i < hlp->size; i++) {
+	if (UNLIKELY(!hlp->hooks))
+	    break;
 	call_hook = &hlp->hooks[i];
 	if (UNLIKELY(!(call_hook->hookfunc))) {
 	    continue;
@@ -116,7 +120,7 @@ bu_hook_save_all(struct bu_hook_list *from, struct bu_hook_list *to)
 {
     size_t i;
 
-    if (UNLIKELY(!from))
+    if (UNLIKELY(!from || !to))
 	return;
 
     for (i = 0; i < from->size; i++) {
@@ -141,6 +145,9 @@ bu_hook_delete_all(struct bu_hook_list *hlp)
 void
 bu_hook_restore_all(struct bu_hook_list *to, struct bu_hook_list *from)
 {
+    if (UNLIKELY(!to || !from))
+	return;
+
     /* first delete what's there */
     bu_hook_delete_all(to);
 

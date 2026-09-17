@@ -62,6 +62,9 @@ bu_cv_htond(register unsigned char *out, register const unsigned char *in, size_
 {
     register size_t i;
 
+    if (!out || !in || !count || count > (SIZE_MAX / SIZEOF_NETWORK_DOUBLE))
+	return;
+
     assert(sizeof(double) == SIZEOF_NETWORK_DOUBLE);
 
     switch (bu_byteorder()) {
@@ -364,6 +367,9 @@ bu_cv_ntohd(register unsigned char *out, register const unsigned char *in, size_
 {
     register size_t i;
     bu_endian_t order;
+
+    if (!out || !in || !count || count > (SIZE_MAX / SIZEOF_NETWORK_DOUBLE))
+	return;
 
     assert(sizeof(double) == SIZEOF_NETWORK_DOUBLE);
 
