@@ -1,4 +1,4 @@
-#                    I T C L 4 _ G U I . T C L
+#                      I T C L _ G U I . T C L
 # BRL-CAD
 #
 # Copyright (c) 2026 United States Government as represented by
@@ -18,7 +18,7 @@
 #
 ###
 #
-# Exercise the Itcl/Itk/Iwidgets paths that differ between Itcl 3 and 4.
+# Exercise the Itcl/Itk/Iwidgets paths used by BRL-CAD with Itcl 3.
 # The test is run by both btclsh and bwish so libtclcad is checked with
 # Itcl-first and Tk-first initialization orders.
 #
@@ -99,16 +99,16 @@ proc bgerror {message} {
 }
 
 set tk_version [require_at_least Tk 8.6]
-set itcl_version [require_at_least Itcl 4.3.0]
-set itk_version [require_at_least Itk 4.2.3]
+set itcl_version [require_at_least Itcl 3.4]
+set itk_version [require_at_least Itk 3.4]
 set iwidgets_version [require_at_least Iwidgets 4.1.1]
 interp alias {} Hierarchy {} ::iwidgets::Hierarchy
 interp alias {} scrolledlistbox {} ::iwidgets::scrolledlistbox
 
 wm geometry . 900x700+0+0
-wm title . "Itcl 4 GUI compatibility baseline"
+wm title . "Itcl 3 GUI compatibility baseline"
 
-# These classes contain every common-array reference corrected for Itcl 4.
+# Exercise common-array variable bindings used by Iwidgets.
 iwidgets::checkbox .checkbox
 .checkbox add alpha -text Alpha
 .checkbox insert 0 beta -text Beta
@@ -130,19 +130,18 @@ iwidgets::spinint .spinint -labeltext Integer
 ::iwidgets::Labeledwidget::alignlabels .spinner .spinint
 
 set match_result {}
-proc record_match {marker match_point} {
-    set ::match_result [list $marker $match_point]
+proc record_match {match_point} {
+    set ::match_result $match_point
 }
 text .searchtext
 .searchtext insert end "alpha two words omega"
 iwidgets::finddialog .finddialog \
     -textwidget .searchtext \
-    -matchcommand [list record_match {list prefix}]
+    -matchcommand record_match
 set pattern [.finddialog component pattern]
 $pattern insert 0 {two words}
 set match_point [.finddialog find]
-assert_equal "finddialog command prefix" $match_result \
-    [list {list prefix} $match_point]
+assert_equal "finddialog callback" $match_result $match_point
 
 iwidgets::mainwindow .mainwindow
 iwidgets::canvasprintbox .canvasprintbox
@@ -213,7 +212,7 @@ foreach class {::DataUtils ::sdialogs::Stddlgs ::swidgets::Togglearrow} {
     }
 }
 
-rename ::tk_messageBox ::itcl4_tk_messageBox
+rename ::tk_messageBox ::itcl3_tk_messageBox
 proc ::tk_messageBox {args} {
     set ::message_box_arguments $args
     return xmin-answer
@@ -222,7 +221,7 @@ set dialog_status [catch {
     sdialogs::Stddlgs::questiondlg {Xmin title} {Xmin message} yesno -parent .
 } dialog_result dialog_options]
 rename ::tk_messageBox {}
-rename ::itcl4_tk_messageBox ::tk_messageBox
+rename ::itcl3_tk_messageBox ::tk_messageBox
 if {$dialog_status} {
     return -options $dialog_options $dialog_result
 }
@@ -340,8 +339,8 @@ assert_equal "disabled Togglearrow callback" $::toggle_count 1
 unset ::toggle_count
 
 set source_database [file join [bu_dir data] db m35.g]
-set test_database [file join [pwd] itcl4-cadwidgets-[pid].g]
-set copied_database [file join [pwd] itcl4-cadwidgets-copy-[pid].g]
+set test_database [file join [pwd] itcl3-cadwidgets-[pid].g]
+set copied_database [file join [pwd] itcl3-cadwidgets-copy-[pid].g]
 file delete -force $test_database $copied_database
 file copy $source_database $test_database
 
@@ -391,7 +390,7 @@ assert_equal "GeometryIO .g save" \
     $copied_database
 assert_equal "GeometryIO .g copy size" [file size $copied_database] \
     [file size $test_database]
-set unsupported_file [file join [pwd] itcl4-cadwidgets-[pid].unsupported]
+set unsupported_file [file join [pwd] itcl3-cadwidgets-[pid].unsupported]
 if {![catch {
     cadwidgets::geom_save $test_database $unsupported_file .functional_ged
 } unsupported_message] ||

@@ -41,7 +41,7 @@ quadratic display-list or scene-object scans.
 The focused `regress-mged-xmin-gui-controls` fixture drives ViewRing, grid,
 ADC, font persistence, and About through their live Tk widgets and checks the
 resulting MGED state, view, named font, or generated preferences file.  It also
-requires Itcl 4.3.0, Itk 4.2.3, and Iwidgets 4.1.1 from the running
+requires Itcl 3.4, Itk 3.4, and Iwidgets 4.1.1 from the running
 application.  This complements the deeper multi-display-manager fixture with
 fast coverage for stateful controls that are otherwise easy to inventory
 without actually validating.  The semantic MGED fixtures share the Xmin

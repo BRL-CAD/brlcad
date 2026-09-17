@@ -4,14 +4,15 @@ if(BRLCAD_ENABLE_TCL)
   endif(BRLCAD_ENABLE_TK)
   find_package_tcl(REQUIRED)
 
+  set(TCLCAD_PACKAGE_MAJOR_VERSION 3)
   function(tclcad_package_version result package_name)
     file(
       GLOB package_dirs
       LIST_DIRECTORIES true
       RELATIVE "${CMAKE_BINARY_DIR}/${LIB_DIR}"
-      "${CMAKE_BINARY_DIR}/${LIB_DIR}/${package_name}4.*"
+      "${CMAKE_BINARY_DIR}/${LIB_DIR}/${package_name}${TCLCAD_PACKAGE_MAJOR_VERSION}.*"
       )
-    list(FILTER package_dirs INCLUDE REGEX "^${package_name}4\\.[0-9]+(\\.[0-9]+)*$")
+    list(FILTER package_dirs INCLUDE REGEX "^${package_name}${TCLCAD_PACKAGE_MAJOR_VERSION}\\.[0-9]+(\\.[0-9]+)*$")
     if(package_dirs)
       list(SORT package_dirs COMPARE NATURAL ORDER DESCENDING)
       list(GET package_dirs 0 package_dir)

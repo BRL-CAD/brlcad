@@ -13,13 +13,13 @@ changes made.  See document footer for additional details.
 --- 20XX-XX-XX  Release 7.46.0                                     ---
 ----------------------------------------------------------------------
 
-* updated MGED and Archer for Tcl 8.6.18 and Itcl/Itk 4 - Cliff Yapp
+* updated MGED and Archer for Tcl 8.6.18 - Cliff Yapp
 * fixed writes to fileless geometry databases - Cliff Yapp
 * fixed nastran-g handling of large property IDs - Rupesh, Cliff Yapp
 * fixed dxf-g invalid polyface index crashes - Meghna45-code, Cliff Yapp
-* fixed Archer primitive editors under Itcl 4 - Cliff Yapp
+* fixed Archer primitive editors - Cliff Yapp
 * fixed Archer shutdown menu cleanup errors - Cliff Yapp
-* fixed MGED Build Pattern dialog under Itcl 4 - Cliff Yapp
+* fixed MGED Build Pattern dialog - Cliff Yapp
 * fixed TclCAD framebuffer listing and deletion - Cliff Yapp
 * fixed MGED Build Pattern progress updates - Cliff Yapp
 * fixed MGED search -exec reentry and Ctrl-C crashes - Cliff Yapp

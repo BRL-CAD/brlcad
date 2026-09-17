@@ -327,7 +327,7 @@ proc ::mged::xmin::run {} {
     }
 
     set versions {}
-    foreach {package minimum} {Itcl 4.3.0 Itk 4.2.3 Iwidgets 4.1.1} {
+    foreach {package minimum} {Itcl 3.4 Itk 3.4 Iwidgets 4.1.1} {
 	set version [package require $package $minimum]
 	lappend versions "$package $version"
     }

@@ -29,7 +29,7 @@ cmakefiles(
   check_tclcad_cmds.cpp
   check_itcl.cpp
   check_multi_interp.cpp
-  itcl4_gui.tcl
+  itcl_gui.tcl
   )
 
 # Local Variables:

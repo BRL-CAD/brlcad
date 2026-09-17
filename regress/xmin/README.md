@@ -97,7 +97,7 @@ the Qt application starts, its console accepts `draw all.g`, and the OpenGL
 view changes.  qged is not yet stable enough for a menu or widget compatibility
 manifest.
 
-The libtclcad Itcl 4 tests complement application fixtures by loading the GUI
+The libtclcad Itcl 3 tests complement application fixtures by loading the GUI
 package graph in both `btclsh` and `bwish`, checking representative Sdialogs,
 Swidgets, DataUtils, and cadwidgets behavior, and repeating package and object
 initialization in independent, destroyed, and replacement Tcl interpreters.

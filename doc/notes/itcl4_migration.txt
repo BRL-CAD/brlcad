@@ -1,6 +1,10 @@
 BRL-CAD Itcl/Itk 4 migration
 ============================
 
+This records the main branch migration.  The itcl3 branch retains the
+previously bundled Itcl/Itk 3 stack as a rollback option; the version
+requirements below describe the main branch.
+
 Decision
 --------
 
