@@ -119,6 +119,10 @@ bu_avs_add(struct bu_attribute_value_set *avsp, const char *name, const char *va
 
     if (avsp->count >= avsp->max) {
 	/* Allocate more space first */
+	if (UNLIKELY(avsp->max > SIZE_MAX - AVS_ALLOCATION_INCREMENT ||
+		     (avsp->max + AVS_ALLOCATION_INCREMENT) > SIZE_MAX / sizeof(struct bu_attribute_value_pair))) {
+	    bu_bomb("ERROR: bu_avs_add allocation overflow\n");
+	}
 	avsp->max += AVS_ALLOCATION_INCREMENT;
 	if (avsp->avp) {
 	    avsp->avp = (struct bu_attribute_value_pair *)bu_realloc(
@@ -310,6 +314,10 @@ bu_avs_add_nonunique(struct bu_attribute_value_set *avsp, const char *name, cons
 
     if (avsp->count >= avsp->max) {
 	/* Allocate more space first */
+	if (UNLIKELY(avsp->max > SIZE_MAX - AVS_ALLOCATION_INCREMENT ||
+		     (avsp->max + AVS_ALLOCATION_INCREMENT) > SIZE_MAX / sizeof(struct bu_attribute_value_pair))) {
+	    bu_bomb("ERROR: bu_avs_add_nonunique allocation overflow\n");
+	}
 	avsp->max += AVS_ALLOCATION_INCREMENT;
 	if (avsp->avp) {
 	    avsp->avp = (struct bu_attribute_value_pair *)bu_realloc(
