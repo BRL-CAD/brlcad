@@ -13,12 +13,17 @@ changes made.  See document footer for additional details.
 --- 20XX-XX-XX  Release 7.46.0                                     ---
 ----------------------------------------------------------------------
 
+* updated MGED and Archer for Tcl 8.6.18 and Itcl/Itk 4 - Cliff Yapp
+* fixed writes to fileless geometry databases - Cliff Yapp
+* fixed nastran-g handling of large property IDs - Rupesh, Cliff Yapp
+* fixed dxf-g invalid polyface index crashes - Meghna45-code, Cliff Yapp
 * fixed Archer primitive editors under Itcl 4 - Cliff Yapp
 * fixed Archer shutdown menu cleanup errors - Cliff Yapp
 * fixed MGED Build Pattern dialog under Itcl 4 - Cliff Yapp
 * fixed TclCAD framebuffer listing and deletion - Cliff Yapp
 * fixed MGED Build Pattern progress updates - Cliff Yapp
 * fixed MGED search -exec reentry and Ctrl-C crashes - Cliff Yapp
+* fixed MGED asynchronous commands and clone progress - Cliff Yapp
 * accelerated large and repeated MGED path drawing - Cliff Yapp
 * fixed ARB7 inside solid construction - Cliff Yapp
 * fixed direct ARB face and edge-direction editing - Cliff Yapp
@@ -54,30 +59,45 @@ changes made.  See document footer for additional details.
 * fixed embedded Archer display and mode menus - Cliff Yapp
 * added Archer -h and --help command-line options - Cliff Yapp
 * fixed Archer Help opening the documentation menu - Sean Morrison
+* added arrange nest command for packing database objects - Sean Morrison
+* new mkbuilding tool for parametric/OSM/CityJSON models - Sean Morrison
 * cross-platform BINUNIF and DSP byte-order handling - Sean Morrison
 * improved several cv default behaviors (s, 32, 64, n) - Sean Morrison
-* fixed invalid bot handling bug applying matricies - Sean Morrison
+* fixed invalid bot handling bug applying matrices - Sean Morrison
 * improved glTF import robustness via gcv - Sean Morrison
+* fixed bot dump glTF/GLB export; -F is now rejected - Cliff Yapp
 * faster NMG solid ray tracing (10-20x faster) - Sean Morrison
+* preserved primitive colors in shaded BoT and B-Rep drawing - Cliff Yapp
+* preserved B-Rep attributes through in-place geometry edits - Cliff Yapp
+* fixed gcv filter arguments containing one-character values - Cliff Yapp
 * improved iges-g importer robustness - Cliff Yapp
 * expanded g-iges native CSG and B-Rep export support - Cliff Yapp
 * added IGES import and export support to gcv - Cliff Yapp
 * rt -b query option now supports a single value index - Sean Morrison
 * fixed .dpix file format portability and icv support - Sean Morrison
 * expanded pixscale support for piped image data - Sean Morrison
+* fixed HYP volume and ARBN totals reported by analyze - Cliff Yapp
+* corrected rtarea sampling and exposed-area calculations - Cliff Yapp
+* bot split now groups results and preserves mesh data - Cliff Yapp
+* bot decimate now preserves normals, UVs, and plate data - Cliff Yapp
 * added raytracing support for annotation objects - Cliff Yapp
 * fixed MGED X embedded framebuffer display manager crash - Cliff Yapp
 * added annotate command for managing annotation objects - Cliff Yapp
+* added repair command for supported invalid primitives - Cliff Yapp
 * changed default new-region material code from 1 to 0 - Keith Bowman
 * added comb support to bb -o oriented bounding boxes - Cliff Yapp
 * added -t tight bounding box option to bb command - Cliff Yapp
 * added az (-a) and el (-e) option implementations to gqa - Cliff Yapp
 * added center command support for centering on an object - Cliff Yapp
 * greatly expanded JT import and added basic JT export - Sean Morrison
+* added csg-g/g-scad OpenSCAD CSG importer/exporter - Erik Greenwald
 * improved art light, color, output, & region handling - Sean Morrison
 * added preliminary OpenSCAD import support - Sean Morrison
 * expanded IGES BREP/NURBS import and export support - Sean Morrison
 * expanded STEP AP203 import support with faceted BREP - Sean Morrison
+* added STEP AP203e2, AP214, and AP242 import/export - Cliff Yapp
+* added STEP CSG round trips and AP242 PMI import - Cliff Yapp
+* improved STEP assembly, topology repair, and reporting - Cliff Yapp
 * new adrt CLI utility with path, spall, and cut modes - Sean Morrison
 * new CLI+GUI prototype BRL-CAD application launcher - Sean Morrison
 * added option validation to image & framebuffer tools - Sean Morrison
@@ -88,33 +108,48 @@ changes made.  See document footer for additional details.
 * all raytracing apps now report object prep failures - Sean Morrison
 * improved fast4-g robustness and error reporting - Cliff Yapp
 * improved robustness of g-vrml plate mode handling - Cliff Yapp
+* fixed MGED ARB5 point, pipe, and sketch editing - Cliff Yapp
+* added pnts write -f xyz export option - Chris McGregor
 * added support for tick drawing on MGED model axis - Cliff Yapp
+* added naca456 left and paired wing generation - Cliff Yapp
 * added patch-g -j option, specify object thicknesses - Sean Morrison
 * fixed fbcolor color ramp bug drawing the last color - Sean Morrison
 * fixed gist -Q quick preview option - Sean Morrison
 * rt preserves eye_pt setting in command scripts - Sean Morrison
+* rt -l8 heat graphs now measure CPU time - Sean Morrison
 * documented gqa centroid & moments of inertia options - Sean Morrison
 * pixdiff now calculates pixel differences on bw files - Sean Morrison
+* fixed bwcrop single-axis crops and pixembed edge fill - Sean Morrison
+* fixed isize in non-mm databases - Josh Baker
+* fixed metaball adjust clearing points on errors - Sean Morrison
 * fixed benchmark+pixcmp correctness validation bug - Sean Morrison
-* fbhelp writes help  to stdout and rest to stderr - Sean Morrison
+* fbhelp writes help to stdout and rest to stderr - Sean Morrison
 * FB now supports /dev/stdout and /dev/stderr devices - Sean Morrison
 * fixed mged rt -C + -o background color to file bug - Sean Morrison
 * fixed rt -C255/0/0 -o file.pix background color bug - Sean Morrison
 * added rtsil foreground & background -c set options - Sean Morrison
+* added rtsil -o support for bw output - Sean Morrison
 * added cutting plane animation generation to rtwizard - Cliff Yapp
 * fixed pixdiff bug on Windows - Sean Morrison
-* fixed pixborder utilitiy right-side edge bug - Sean Morrison
+* fixed MGED startup window placement on Windows - Chris McGregor
+* fixed pixborder utility right-side edge bug - Sean Morrison
 * fixed 'wavelet' image processing tool on Windows - Sean Morrison
 * quieted mged killtree spurious lookup failure output - Sean Morrison
 * fixed ray tracing small images to disk framebuffers - Sean Morrison
 * improved raytracing performance of CSG-heavy regions - Sean Morrison
 * fixed OBJ conversion bug importing unnamed groups - Sean Morrison
+* fixed k-g conversion of BoT vertex normals - laithaldaeef
 * new doc guide, a visual overview of BRL-CAD objects - Sean Morrison
 * improved triangle quality produced by bot remesh - Cliff Yapp
 * updated numerous manpage command references - Josh Baker
 * fixed submodel paths relative to parent databases - Sean Morrison
 * improved performance making huge combinations - Sean Morrison
+* added make -t primitive type listing - Chris McGregor
 * added gcv import conversion support for vrml/wrl 1.0 - Sean Morrison
+* fixed gcv appending to existing geometry databases - Sean Morrison
+* added CSS names, hex, HSL/HSV to libbu color parsing - Sean Morrison
+* improved OpenNURBS B-Rep import and adjustment safety - Cliff Yapp
+* improved Debian application menus and MIME associations - Jordi Sayol
 
 
 ----------------------------------------------------------------------
