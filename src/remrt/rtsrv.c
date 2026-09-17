@@ -878,27 +878,30 @@ ph_lines(struct pkg_conn *UNUSED(pc), char *buf)
 	fprintf(stderr, "ph_lines: %s\n", buf);
     if (!seen_gettrees) {
 	bu_log("ph_lines:  no MSG_GETTREES yet\n");
+	if (buf) (void)free(buf);
 	return;
     }
     if (!seen_matrix) {
 	bu_log("ph_lines:  no MSG_MATRIX yet\n");
+	if (buf) (void)free(buf);
 	return;
     }
 
     a=0;
     b=0;
     fr=0;
-    if (sscanf(buf, "%d %d %d", &a, &b, &fr) != 3)
-	bu_exit(2, "ph_lines:  %s conversion error\n", buf);
+    if (sscanf(buf, "%d %d %d", &a, &b, &fr) != 3) {
+	if (buf) (void)free(buf);
+	bu_exit(2, "ph_lines: conversion error\n");
+    }
+
+    if (a < 0 || b < a || (size_t)(b - a + 1) > (size_t)srv_scanlen) {
+	bu_log("ph_lines: invalid pixel range [%d..%d]\n", a, b);
+	if (buf) (void)free(buf);
+	return;
+    }
 
     srv_startpix = a;		/* buffer un-offset for view_pixel */
-
-    /* FIXME: if we do less than we were assigned, remrt is just going
-     * to drop us!  If we go over our scanlen, we'll probably overstep
-     * memory in the view front-end.
-     */
-    if (b-a+1 > srv_scanlen)
-	b = a + srv_scanlen - 1;
 
     rtip->stats.rti_nrays = 0;
     info.li_startpix = a;
@@ -971,10 +974,11 @@ ph_lines(struct pkg_conn *UNUSED(pc), char *buf)
     ret = pkg_2send(MSG_PIXELS, (const char *)ext.ext_buf, ext.ext_nbytes, (const char *)scanbuf, (b-a+1)*3, pcsrv);
     if (ret < 0) {
 	fprintf(stderr, "MSG_PIXELS send error\n");
-	bu_free_external(&ext);
     }
 
     bu_free_external(&ext);
+    if (buf)
+	(void)free(buf);
 }
 
 
