@@ -67,11 +67,13 @@ parallel_set_affinity(int cpu)
 #endif
     int ret;
     int ncpus = bu_avail_cpus();
+    if (ncpus <= 0)
+	ncpus = 1;
 
     CPU_ZERO(&set_of_cpus);
 
     /* Set affinity to a single CPU core */
-    CPU_SET(cpu % ncpus, &set_of_cpus);
+    CPU_SET((cpu >= 0 ? cpu : -cpu) % ncpus, &set_of_cpus);
     ret = pthread_setaffinity_np(pthread_self(), sizeof(set_of_cpus), &set_of_cpus);
 
     return ret;
@@ -89,23 +91,35 @@ parallel_set_affinity(int cpu)
     thread_affinity_policy_data_t apolicy;
     thread_t curr_thread = mach_thread_self();
     kern_return_t ret;
+    int ncpus = bu_avail_cpus();
+    if (ncpus <= 0)
+	ncpus = 1;
 
     /* discourage interrupting this thread */
     epolicy.timeshare = FALSE;
     ret = thread_policy_set(curr_thread, THREAD_EXTENDED_POLICY, (thread_policy_t) &epolicy, THREAD_EXTENDED_POLICY_COUNT);
-    if (ret != KERN_SUCCESS)
+    if (ret != KERN_SUCCESS) {
+	(void)mach_port_deallocate(mach_task_self(), curr_thread);
 	return -1;
+    }
 
     /* put each thread into a separate group */
-    apolicy.affinity_tag = cpu % bu_avail_cpus();
-    ret = thread_policy_set(curr_thread, THREAD_EXTENDED_POLICY, (thread_policy_t) &apolicy, THREAD_EXTENDED_POLICY_COUNT);
-    if (ret != KERN_SUCCESS)
+    apolicy.affinity_tag = (cpu >= 0 ? cpu : -cpu) % ncpus;
+    ret = thread_policy_set(curr_thread, THREAD_AFFINITY_POLICY, (thread_policy_t) &apolicy, THREAD_AFFINITY_POLICY_COUNT);
+    (void)mach_port_deallocate(mach_task_self(), curr_thread);
+    if (ret != KERN_SUCCESS && ret != KERN_NOT_SUPPORTED)
 	return -1;
 
     return 0;
 
 #elif defined(HAVE_WINDOWS_H)
-    DWORD_PTR cpumask = (DWORD_PTR)1 << cpu % bu_avail_cpus();
+    int ncpus = bu_avail_cpus();
+    if (ncpus <= 0)
+	ncpus = 1;
+    int core = (cpu >= 0 ? cpu : -cpu) % ncpus;
+    if (core >= (int)(sizeof(DWORD_PTR) * 8))
+	core = core % (sizeof(DWORD_PTR) * 8);
+    DWORD_PTR cpumask = (DWORD_PTR)1 << core;
     BOOL ret = SetThreadAffinityMask(GetCurrentThread(), cpumask);
     if (ret  == 0)
 	return -1;
