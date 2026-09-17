@@ -94,7 +94,6 @@ bu_argv_from_string(char *argv[], size_t lim, char *lp)
 	/* nothing to do, only return NULL in argv[0] */
 	return 0;
     }
-    char *echar = &(lp[strlen(lp)-1]);
 
     /* skip leading whitespace */
     skip_whitespace(&lp);
@@ -172,7 +171,7 @@ nextword:
 	// not the last arg, this replaces the space in the string with a
 	// NULL terminator to allow C to interpret the portion of the string
 	// pointed to by argv[argc] as its own string.
-	if (lp == echar)
+	if (*lp == '\0')
 	    goto nullterm;
 	*lp = '\0';
 	lp++;
@@ -266,7 +265,10 @@ bu_argv_dup(size_t argc, const char *argv[])
     register size_t i;
     char **av;
 
-    if (UNLIKELY((ssize_t)argc < 1))
+    if (UNLIKELY((ssize_t)argc < 1 || !argv))
+	return (char **)0;
+
+    if (UNLIKELY(argc >= SIZE_MAX))
 	return (char **)0;
 
     av = (char **)bu_calloc(argc+1, sizeof(char *), "bu_copy_argv");
@@ -282,13 +284,20 @@ char **
 bu_argv_dupinsert(int insert, size_t insertArgc, const char *insertArgv[], size_t argc, const char *argv[])
 {
     register size_t i, j;
-    size_t ac = argc + insertArgc + 1;
+    size_t ac;
     char **av;
 
     /* Nothing to insert */
-    if ((ssize_t)insertArgc < 1)
+    if ((ssize_t)insertArgc < 1 || !insertArgv)
 	return bu_argv_dup(argc, argv);
 
+    if (UNLIKELY((ssize_t)argc < 1 || !argv))
+	return bu_argv_dup(insertArgc, insertArgv);
+
+    if (UNLIKELY(argc > SIZE_MAX - insertArgc - 1))
+	bu_bomb("ERROR: bu_argv_dupinsert size overflow\n");
+
+    ac = argc + insertArgc + 1;
     av = (char **)bu_calloc(ac, sizeof(char *), "bu_insert_argv");
 
     if (insert <= 0) {			    	/* prepend */
