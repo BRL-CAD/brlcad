@@ -441,26 +441,22 @@ bu_vls_substr(struct bu_vls *dest, const struct bu_vls *src, size_t begin, size_
     len = src->vls_len;
     if (UNLIKELY(len == 0))
 	return;
-    if (UNLIKELY(begin > len))
+    if (UNLIKELY(begin >= len))
 	return;
     if (UNLIKELY(nchars == 0))
 	return;
 
-    if (nchars > len)
-	nchars = len;
-
     bu_vls_trunc(dest, 0);
-    bu_vls_extend(dest, nchars + 1);
 
-    end = begin + nchars;
-    if (end > len)
+    if (SIZE_MAX - begin < nchars || begin + nchars > len)
 	end = len;
+    else
+	end = begin + nchars;
+
+    bu_vls_extend(dest, end - begin + 1);
 
     for (i = begin; i < end; ++i)
 	bu_vls_putc(dest, bu_vls_cstr(src)[i]);
-
-    /* ensure we have an end */
-    bu_vls_putc(dest, '\0');
 }
 
 
@@ -637,13 +633,12 @@ bu_vls_gets(struct bu_vls *vp, FILE *fp)
 	    done = 1;
 	}
 
-	/* strip the trailing EOL (or at least part of it) */
-	if ((bufp[buflen-1] == '\n') || (bufp[buflen-1] == '\r'))
-	    bufp[buflen-1] = '\0';
-
-	/* handle \r\n lines */
-	if (bufp[buflen-1] == '\r')
-	    bufp[buflen-1] = '\0';
+	/* strip trailing EOL (\n, \r, or \r\n) */
+	if (buflen > 0 && ((bufp[buflen-1] == '\n') || (bufp[buflen-1] == '\r'))) {
+	    bufp[--buflen] = '\0';
+	    if (buflen > 0 && bufp[buflen-1] == '\r')
+		bufp[--buflen] = '\0';
+	}
 
 	bu_vls_printf(vp, "%s", bufp);
     } while (!done);
