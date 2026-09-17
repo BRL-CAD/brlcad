@@ -305,6 +305,11 @@ bu_path_match(const char *pattern, const char *string, int flags)
     const char *mismatch = NULL;
     int matchlen = 0;
 
+    if (!pattern && !string)
+	return 0;
+    if (!pattern || !string)
+	return BU_PATH_MATCH_NOMATCH;
+
     if (*pattern == '*')
 	goto firstsegment;
 
