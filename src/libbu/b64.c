@@ -216,8 +216,15 @@ int bu_b64_decode_block_internal(const signed char* code_in, const size_t length
 signed char *
 bu_b64_encode_block(const signed char *input, size_t len)
 {
+    if (UNLIKELY(!input))
+	return NULL;
+
+    if (UNLIKELY(len > (SIZE_MAX - 8) / 8))
+	return NULL;
+
     /* Calculate size of output needed and calloc the memory */
-    signed char *output = (signed char *)bu_calloc((((int)(4*len/3)) + 4), 8, "Calloc b64 buffer");
+    size_t out_elems = (len / 3) * 4 + 8;
+    signed char *output = (signed char *)bu_calloc(out_elems, 8, "Calloc b64 buffer");
     signed char *c = output;
     int cnt = 0;
     bu_b64_encodestate s;
@@ -244,6 +251,8 @@ bu_b64_encode_block(const signed char *input, size_t len)
 signed char *
 bu_b64_encode(const signed char *input)
 {
+    if (UNLIKELY(!input))
+	return NULL;
     return bu_b64_encode_block(input, strlen((const char *)input));
 }
 
@@ -251,12 +260,18 @@ bu_b64_encode(const signed char *input)
 int
 bu_b64_decode_block(signed char **output, const signed char *input, size_t len)
 {
+    if (UNLIKELY(!output || !input))
+	return -1;
+
+    if (UNLIKELY(len > (SIZE_MAX - 8) / 8))
+	return -1;
+
     /* Calculate size of output needed and calloc the memory */
     int cnt = 0;
     signed char* c;
     bu_b64_decodestate s;
-    if (!output) return -1;
-    *output = (signed char *)bu_calloc(((int)(3*len/4) + 4), 8, "Calloc b64 decoding buffer");
+    size_t out_elems = (len / 4) * 3 + 8;
+    *output = (signed char *)bu_calloc(out_elems, 8, "Calloc b64 decoding buffer");
     c = *output;
 
     /*---------- START DECODING ----------*/
@@ -278,6 +293,8 @@ bu_b64_decode_block(signed char **output, const signed char *input, size_t len)
 int
 bu_b64_decode(signed char **output, const signed char *input)
 {
+    if (UNLIKELY(!output || !input))
+	return -1;
     return bu_b64_decode_block(output, input, strlen((const char *)input));
 }
 
