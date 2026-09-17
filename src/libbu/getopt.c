@@ -32,7 +32,8 @@
 #define BADCH ( int)'?'
 #define EMSG ""
 #define tell(s) if (bu_opterr) {		\
-	fputs(*nargv, stderr);			\
+	if (nargv && *nargv)			\
+	    fputs(*nargv, stderr);		\
 	fputs(s, stderr);			\
 	fputc(bu_optopt, stderr);		\
 	fputc('\n', stderr);			\
@@ -45,9 +46,16 @@ bu_getopt(int nargc, char * const nargv[], const char *ostr)
     static const char *place = EMSG;	/* option letter processing */
     register const char *oli;		/* option letter list index */
 
+    if (nargc <= 0 || !nargv || !ostr || bu_optind < 0)
+	return -1;
+
+    if (!place)
+	place = EMSG;
+
     if (*place == '\0') {
 	/* update scanning pointer */
 	if (bu_optind >= nargc
+	    || !nargv[bu_optind]
 	    || *(place = nargv[bu_optind]) != '-'
 	    || !*++place)
 	{
@@ -62,8 +70,8 @@ bu_getopt(int nargc, char * const nargv[], const char *ostr)
 	}
     } /* option letter okay? */
 
-    bu_optopt = (int)*place++;
-    oli = strchr(ostr, bu_optopt);
+    bu_optopt = (int)(unsigned char)*place++;
+    oli = (bu_optopt == '\0') ? NULL : strchr(ostr, bu_optopt);
     if (bu_optopt == (int)':' || !oli) {
 	++bu_optind;
 	place = EMSG;
@@ -81,7 +89,7 @@ bu_getopt(int nargc, char * const nargv[], const char *ostr)
 	if (*place) {
 	    /* no white space */
 	    bu_optarg = (char *)place;
-	} else if (nargc <= bu_optind+1 || (nargv[bu_optind+1][0] == '-' && strchr(ostr, nargv[bu_optind+1][1]))) {
+	} else if (nargc <= bu_optind+1 || !nargv[bu_optind+1] || (nargv[bu_optind+1][0] == '-' && nargv[bu_optind+1][1] != '\0' && strchr(ostr, nargv[bu_optind+1][1]))) {
 	    /* no arg, it's okay */
 	    bu_optarg = NULL;
 	} else {
@@ -95,7 +103,7 @@ bu_getopt(int nargc, char * const nargv[], const char *ostr)
 	if (*place) {
 	    /* no white space */
 	    bu_optarg = (char *)place;
-	} else if (nargc <= ++bu_optind || (nargv[bu_optind][0] == '-' && strchr(ostr, nargv[bu_optind][1]))) {
+	} else if (nargc <= ++bu_optind || !nargv[bu_optind] || (nargv[bu_optind][0] == '-' && nargv[bu_optind][1] != '\0' && strchr(ostr, nargv[bu_optind][1]))) {
 	    /* no arg */
 	    place = EMSG;
 	    tell(": option requires an argument -- ");

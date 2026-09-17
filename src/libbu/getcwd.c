@@ -61,6 +61,9 @@ bu_getcwd(char *buf, size_t size)
     char *pwd = NULL;
     char cbuf[MAXPATHLEN] = {0};
 
+    if (buf && size == 0)
+	return buf;
+
     /* NULL buf means allocate */
     if (!buf) {
 	size = MAXPATHLEN;
@@ -105,7 +108,7 @@ bu_getcwd(char *buf, size_t size)
     {
 #ifdef HAVE_REALPATH
 	char rbuf[MAXPATHLEN] = {0};
-	char *rwd = realpath(pwd, rbuf);
+	char *rwd = bu_file_realpath(pwd, rbuf);
 	if (rwd
 	    && strlen(rwd) > 0
 	    && bu_file_exists(rwd, NULL))
@@ -131,6 +134,9 @@ static char iwd[MAXPATHLEN] = {0};
 char *
 bu_getiwd(char *buf, size_t size)
 {
+    if (buf && size == 0)
+	return buf;
+
     /* first call initializes */
     bu_semaphore_acquire(BU_SEM_DIR);
     if (iwd[0] == '\0')

@@ -63,6 +63,8 @@ static int
 _bu_glob_has_magic(const char *pat, int noescape)
 {
     char c;
+    if (!pat)
+	return 0;
     while ((c = *pat++) != '\0') {
 	if (c == '\\' && !noescape) {
 	    if (*pat == '\0')
@@ -83,7 +85,12 @@ _bu_glob_add(struct bu_glob_context *ctx, const char *path)
 {
     struct bu_vls *entry;
     struct bu_vls **newv;
-    size_t newcnt = (size_t)(ctx->gl_pathc) + 1;
+    size_t newcnt;
+
+    if (!ctx || !path)
+	return 1;
+
+    newcnt = (size_t)(ctx->gl_pathc) + 1;
 
     newv = (struct bu_vls **)bu_realloc(ctx->gl_pathv,
 	    (newcnt + 1) * sizeof(struct bu_vls *),
@@ -108,8 +115,18 @@ _bu_glob_add(struct bu_glob_context *ctx, const char *path)
 static int
 _bu_glob_cmp(const void *a, const void *b, void *UNUSED(u))
 {
-    const struct bu_vls *va = *(const struct bu_vls * const *)a;
-    const struct bu_vls *vb = *(const struct bu_vls * const *)b;
+    const struct bu_vls *va;
+    const struct bu_vls *vb;
+
+    if (!a || !b)
+	return (!a && !b) ? 0 : (!a ? -1 : 1);
+
+    va = *(const struct bu_vls * const *)a;
+    vb = *(const struct bu_vls * const *)b;
+
+    if (!va || !vb)
+	return (!va && !vb) ? 0 : (!va ? -1 : 1);
+
     return bu_strcmp(bu_vls_cstr(va), bu_vls_cstr(vb));
 }
 
@@ -144,7 +161,7 @@ _bu_glob_fs_readdir(struct bu_dirent *de, void *handle)
     struct _bu_fs_dir_ctx *dctx = (struct _bu_fs_dir_ctx *)handle;
     struct dirent *dp;
 
-    if (!dctx || !dctx->dirp)
+    if (!de || !de->name || !dctx || !dctx->dirp)
 	return 1;
 
     /* Skip . and .. automatically */
@@ -177,6 +194,10 @@ static int
 _bu_glob_fs_lstat(const char *path, struct bu_stat *sb, void *UNUSED(data))
 {
     struct stat s;
+
+    if (!path || !sb)
+	return -1;
+
 #ifdef HAVE_LSTAT
     if (lstat(path, &s) < 0) return -1;
 #else
@@ -225,7 +246,11 @@ _glob_closedir(void *handle, struct bu_glob_context *ctx)
 static int
 _glob_lstat(const char *path, struct bu_stat *sb, struct bu_glob_context *ctx)
 {
+    if (!sb)
+	return -1;
     memset(sb, 0, sizeof(*sb));
+    if (!path || !ctx)
+	return -1;
     if (ctx->gl_lstat)
 	return ctx->gl_lstat(path, sb, ctx->data);
     return _bu_glob_fs_lstat(path, sb, NULL);
@@ -243,8 +268,14 @@ _glob_lstat(const char *path, struct bu_stat *sb, struct bu_glob_context *ctx)
 static void
 _glob_path_append(struct bu_vls *pathbuf, const char *seg)
 {
-    size_t plen = bu_vls_strlen(pathbuf);
-    const char *pb = bu_vls_cstr(pathbuf);
+    size_t plen;
+    const char *pb;
+
+    if (!pathbuf || !seg)
+	return;
+
+    plen = bu_vls_strlen(pathbuf);
+    pb = bu_vls_cstr(pathbuf);
     if (plen > 0 && pb[plen - 1] != '/')
 	bu_vls_putc(pathbuf, '/');
     bu_vls_strcat(pathbuf, seg);
@@ -269,8 +300,13 @@ _glob_expand(struct bu_vls *pathbuf,
     char seg[1024];
     const char *rest;
     size_t seglen;
-    int noescape = (flags & BU_GLOB_NOESCAPE) ? 1 : 0;
+    int noescape;
     int has_magic;
+
+    if (!pathbuf || !pattern || !ctx)
+	return 1;
+
+    noescape = (flags & BU_GLOB_NOESCAPE) ? 1 : 0;
 
     /* Find the end of the current segment (up to the next '/') */
     rest = pattern;

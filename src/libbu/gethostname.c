@@ -46,6 +46,9 @@ bu_gethostname(char *result, size_t hostlen)
 {
     char hostname[MAXPATHLEN] = {0};
 
+    if (!result || !hostlen)
+	return -1;
+
 #ifdef HAVE_WINSOCK_H
     /**
      * Windows requires winsock networking library be initialized
@@ -59,7 +62,7 @@ bu_gethostname(char *result, size_t hostlen)
     /* METHOD 1: use gethostname() */
 #ifdef HAVE_GETHOSTNAME
     if (BU_STR_EMPTY(hostname))
-	gethostname(hostname, MAXPATHLEN);
+	gethostname(hostname, sizeof(hostname));
 #endif
 
     /* METHOD 2: use uname() */
@@ -67,7 +70,7 @@ bu_gethostname(char *result, size_t hostlen)
     if (BU_STR_EMPTY(hostname)) {
 	struct utsname name;
 	if (uname(&name) == 0) {
-	    bu_strlcpy(hostname, name.nodename, MAXPATHLEN);
+	    bu_strlcpy(hostname, name.nodename, sizeof(hostname));
 	}
     }
 #endif
@@ -75,8 +78,10 @@ bu_gethostname(char *result, size_t hostlen)
     /* METHOD 3: try procfs, typically on Linux */
     if (BU_STR_EMPTY(hostname) && bu_file_exists("/proc/sys/kernel/hostname", NULL)) {
 	FILE *fp = fopen("/proc/sys/kernel/hostname", "r");
-	bu_fgets(hostname, MAXPATHLEN, fp);
-	fclose(fp);
+	if (fp) {
+	    bu_fgets(hostname, sizeof(hostname), fp);
+	    fclose(fp);
+	}
     }
 
     /* METHOD 4: try GetComputerName, typically on Windows.  it's not
@@ -86,23 +91,23 @@ bu_gethostname(char *result, size_t hostlen)
 #ifdef HAVE_WINSOCK_H
     if (BU_STR_EMPTY(hostname)) {
 	TCHAR buffer[MAXPATHLEN] = {0};
-	if (GetComputerName(buffer, (LPDWORD)MAXPATHLEN) == 0) {
-	    bu_strlcpy(hostname, buffer, hostlen);
+	DWORD nSize = MAXPATHLEN;
+	if (GetComputerName(buffer, &nSize) != 0) {
+	    bu_strlcpy(hostname, buffer, sizeof(hostname));
 	}
     }
 #endif /* HAVE_WINSOCK_H */
 
     if (BU_STR_EMPTY(hostname)) {
 	/* non-NULL fallback */
-	bu_strlcpy(hostname, "unknown", hostlen);
+	bu_strlcpy(hostname, "unknown", sizeof(hostname));
     }
 
 #ifdef HAVE_WINSOCK_H
     WSACleanup();
 #endif
 
-    if (!BU_STR_EMPTY(hostname))
-	bu_strlcpy(result, hostname, hostlen);
+    bu_strlcpy(result, hostname, hostlen);
 
     return (strlen(hostname) == 0) ? -1 : 0;
 }
