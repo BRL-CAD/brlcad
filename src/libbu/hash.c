@@ -125,10 +125,11 @@ bu_hash_create(unsigned long tbl_size)
 	hsh_tbl->mask = power_of_two - 1;
     }
 
-    /* allocate the bins (do not use bu_malloc() as this may be used
-     * for MEM_DEBUG)
-     */
     hsh_tbl->lists = (struct bu_hash_entry **)calloc(hsh_tbl->num_lists, sizeof(struct bu_hash_entry *));
+    if (UNLIKELY(!hsh_tbl->lists)) {
+	free(hsh_tbl);
+	return (struct bu_hash_tbl *)NULL;
+    }
 
     hsh_tbl->semaphore = bu_semaphore_register("SEM_HASH");
 
@@ -181,6 +182,9 @@ bu_hash_get(const struct bu_hash_tbl *hsh_tbl, const uint8_t *key, size_t key_le
     unsigned long idx;
 
     BU_CK_HASH_TBL(hsh_tbl);
+
+    if (UNLIKELY(!key || key_len == 0))
+	return NULL;
 
     /* calculate the index into the bin array */
     idx = _bu_hash(key, key_len) & hsh_tbl->mask;
@@ -269,6 +273,11 @@ bu_hash_set(struct bu_hash_tbl *hsh_tbl, const uint8_t *key, size_t key_len, voi
 	/* make a copy of the key */
 	/* FIXME: should use BU_GET/PUT for small memory allocations */
 	hsh_entry->key = (uint8_t *)malloc((size_t)key_len);
+	if (UNLIKELY(!hsh_entry->key)) {
+	    free(hsh_entry);
+	    bu_semaphore_release(hsh_tbl->semaphore);
+	    return -1;
+	}
 	memcpy(hsh_entry->key, key, (size_t)key_len);
 	if (!end_entry) {
 	    hsh_tbl->lists[idx] = hsh_entry;
