@@ -95,6 +95,17 @@ wait_for_not_value()
     return 1
 }
 
+start_raytrace()
+{
+    # xminctl can return before Tk handles the click.  Wait for the button
+    # callback before enabling the monitor's MGED command polling.
+    click_target raytrace_button
+    if ! wait_for_value "$MGED_XMIN_TEST_DIR/raytrace_invocations" "$1"; then
+	fail "Raytrace Control Panel did not process button click $1"
+    fi
+    printf '%s\n' "$1" > "$MGED_XMIN_TEST_DIR/raytrace_request"
+}
+
 query_database()
 {
     database=$1
@@ -899,8 +910,7 @@ if [ ! -s "$reference_image" ]; then
     fail "standalone reference raytrace did not create an image"
 fi
 record_state "standalone raytrace reference complete"
-click_target raytrace_button
-printf '%s\n' 1 > "$MGED_XMIN_TEST_DIR/raytrace_request"
+start_raytrace 1
 record_state "embedded raytrace started"
 if ! wait_for_value "$MGED_XMIN_TEST_DIR/raytrace_complete" 1; then
     fail "embedded raytrace did not complete"
@@ -978,8 +988,7 @@ if ! replace_entry_text raytrace_size "$file_render_size" \
     fail "Raytrace Control Panel did not restore size $RAYTRACE_SIZE for the file render"
 fi
 record_state "raytrace file size $RAYTRACE_SIZE"
-click_target raytrace_button
-printf '%s\n' 2 > "$MGED_XMIN_TEST_DIR/raytrace_request"
+start_raytrace 2
 record_state "GUI file raytrace started"
 if ! wait_for_value "$MGED_XMIN_TEST_DIR/raytrace_complete" 2; then
     fail "GUI file raytrace did not complete"

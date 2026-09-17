@@ -752,6 +752,8 @@ proc xmin_wait_for_raytrace_panel {id} {
     xmin_publish_target raytrace_button $panel.raytraceB
     xmin_publish_target raytrace_active $panel.fbtoggle
     xmin_publish_target raytrace_dismiss $panel.dismissB
+    set ::xmin_raytrace_invocations 0
+    trace add execution ::do_Raytrace leave ::xmin_record_raytrace_invocation
     xmin_write raytrace_ready 1
     after $xmin_poll_ms [list xmin_monitor_entry raytrace_size $panel.sizeE]
     after $xmin_poll_ms [list xmin_monitor_entry raytrace_destination $panel.destE]
@@ -782,6 +784,14 @@ proc xmin_prepare_raytrace_reference {id} {
     xmin_write raytrace_reference_image $reference_image
     xmin_write raytrace_file_destination $gui_image
     xmin_write raytrace_reference_ready 1
+}
+
+proc xmin_record_raytrace_invocation {_command code _result _operation} {
+    if {$code != 0} {
+	return
+    }
+    incr ::xmin_raytrace_invocations
+    xmin_write raytrace_invocations $::xmin_raytrace_invocations
 }
 
 proc xmin_monitor_raytrace {id} {
