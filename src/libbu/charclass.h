@@ -21,7 +21,7 @@ static inline int
 fnblank(int c)
 {
 #ifdef isblank
-    return isblank(c);
+    return isblank((unsigned char)c);
 #else
     return c == ' ' || c == '\t';
 #endif
@@ -31,77 +31,77 @@ fnblank(int c)
 static inline int
 fnalnum(int c)
 {
-    return isalnum(c);
+    return isalnum((unsigned char)c);
 }
 
 
 static inline int
 fnalpha(int c)
 {
-    return isalpha(c);
+    return isalpha((unsigned char)c);
 }
 
 
 static inline int
 fncntrl(int c)
 {
-    return iscntrl(c);
+    return iscntrl((unsigned char)c);
 }
 
 
 static inline int
 fndigit(int c)
 {
-    return isdigit(c);
+    return isdigit((unsigned char)c);
 }
 
 
 static inline int
 fngraph(int c)
 {
-    return isgraph(c);
+    return isgraph((unsigned char)c);
 }
 
 
 static inline int
 fnlower(int c)
 {
-    return islower(c);
+    return islower((unsigned char)c);
 }
 
 
 static inline int
 fnprint(int c)
 {
-    return isprint(c);
+    return isprint((unsigned char)c);
 }
 
 
 static inline int
 fnpunct(int c)
 {
-    return ispunct(c);
+    return ispunct((unsigned char)c);
 }
 
 
 static inline int
 fnspace(int c)
 {
-    return isspace(c);
+    return isspace((unsigned char)c);
 }
 
 
 static inline int
 fnupper(int c)
 {
-    return isupper(c);
+    return isupper((unsigned char)c);
 }
 
 
 static inline int
 fnxdigit(int c)
 {
-    return isxdigit(c);
+    return isxdigit((unsigned char)c);
 }
 
 

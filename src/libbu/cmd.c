@@ -50,12 +50,15 @@ bu_cmd(const struct bu_cmdtab *cmds, int argc, const char **argv, int cmd_index,
     const struct bu_cmdtab *ctp = NULL;
 
     /* sanity */
-    if (UNLIKELY(cmd_index >= argc)) {
+    if (UNLIKELY(!cmds || !argv || cmd_index < 0 || cmd_index >= argc || !argv[cmd_index])) {
 	return BRLCAD_ERROR;
     }
 
     for (ctp = cmds; ctp->ct_name != (char *)NULL; ctp++) {
 	if (BU_STR_EQUAL(ctp->ct_name, argv[cmd_index])) {
+	    if (!ctp->ct_func) {
+		return BRLCAD_ERROR;
+	    }
 	    if (retval) {
 		*retval = (*ctp->ct_func)(data, argc, argv);
 	    } else {
