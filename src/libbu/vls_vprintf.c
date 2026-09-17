@@ -184,12 +184,15 @@ handle_format_part(const int vp_part, vflags_t *f, const char c, const int print
 	case VP_LENGTH_MOD:
 	    switch (c) {
 		case 'j':
+		    f->flags &= ~ALL_LENGTHMODS;
 		    f->flags |= INTMAX_T;
 		    break;
 		case 't':
+		    f->flags &= ~ALL_LENGTHMODS;
 		    f->flags |= PTRDIFFT;
 		    break;
 		case 'z':
+		    f->flags &= ~ALL_LENGTHMODS;
 		    f->flags |= SIZETINT;
 		    break;
 		case 'l':
@@ -197,10 +200,10 @@ handle_format_part(const int vp_part, vflags_t *f, const char c, const int print
 		    /* clear all length modifiers AFTER we check for the
 		       first 'l' */
 		    if (f->flags & LONG_INT) {
-			f->flags ^= ALL_LENGTHMODS;
+			f->flags &= ~ALL_LENGTHMODS;
 			f->flags |= LLONGINT;
 		    } else {
-			f->flags ^= ALL_LENGTHMODS;
+			f->flags &= ~ALL_LENGTHMODS;
 			f->flags |= LONG_INT;
 		    }
 		    break;
@@ -209,17 +212,17 @@ handle_format_part(const int vp_part, vflags_t *f, const char c, const int print
 		    /* clear all length modifiers AFTER we check for the
 		       first 'h' */
 		    if (f->flags & SHORTINT) {
-			f->flags ^= ALL_LENGTHMODS;
+			f->flags &= ~ALL_LENGTHMODS;
 			f->flags |= SHHRTINT;
 		    } else {
-			f->flags ^= ALL_LENGTHMODS;
+			f->flags &= ~ALL_LENGTHMODS;
 			f->flags |= SHORTINT;
 		    }
 		    break;
 		case 'L':
 		    /* a length modifier for doubles */
 		    /* clear all length modifiers first */
-		    f->flags ^= ALL_LENGTHMODS;
+		    f->flags &= ~ALL_LENGTHMODS;
 		    /* set the new flag */
 		    f->flags |= LONGDBLE;
 		    break;
