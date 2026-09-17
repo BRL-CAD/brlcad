@@ -324,6 +324,10 @@ backtrace_interrupt(int UNUSED(signum))
 static void
 debugger_backtrace(int processid, char args[][MAXPATHLEN], int fd)
 {
+    if (fd < 0) {
+	fd = 1;
+    }
+
     if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
 	bu_log("[BACKTRACE] Invoking debugger: %s %s %s\n\n", args[0], args[1], args[2]);
     }
@@ -593,7 +597,9 @@ debugger_backtrace(int processid, char args[][MAXPATHLEN], int fd)
 	bu_log("[BACKTRACE] debugger_backtrace() waiting for debugger %d to exit\n", pid2);
     }
 #ifndef _WINSOCKAPI_
-    wait(NULL);
+    if (pid2 > 0) {
+	waitpid(pid2, NULL, 0);
+    }
 #endif
 
     if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
@@ -658,7 +664,11 @@ bu_backtrace_app(FILE *fp, const char *argv0)
 	} else {
 	    gdb_path = bu_dir(NULL, 0, BU_DIR_BIN, bu_getprogname(), BU_DIR_EXT, NULL);
 	}
-	bu_strlcpy(debugger_args[1], gdb_path, MAXPATHLEN);
+	if (gdb_path) {
+	    bu_strlcpy(debugger_args[1], gdb_path, MAXPATHLEN);
+	} else {
+	    debugger_args[1][0] = '\0';
+	}
     } else if (have_lldb) {
 	bu_strlcpy(debugger_args[0], path_lldb, MAXPATHLEN);
     }
@@ -729,7 +739,9 @@ bu_backtrace_app(FILE *fp, const char *argv0)
 	}
 
 #ifndef _WINSOCKAPI_
-	wait(NULL);
+	if (pid > 0) {
+	    waitpid(pid, NULL, 0);
+	}
 #endif
     }
 
