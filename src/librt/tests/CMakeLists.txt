@@ -153,6 +153,9 @@ brlcad_add_test(NAME rt_bot_split COMMAND rt_bot_split)
 brlcad_addexec(rt_ars_inside ars_inside.c "librt;libwdb;libbu;${M_LIBRARY}" TEST)
 brlcad_add_test(NAME rt_ars_inside COMMAND rt_ars_inside)
 
+brlcad_addexec(rt_pnts_bounds pnts_bounds.c "${RT_TEST_LIBS}" TEST)
+brlcad_add_test(NAME rt_pnts_bounds COMMAND rt_pnts_bounds)
+
 # boolweave testing
 brlcad_addexec(rt_boolweave rt_boolweave.c "${RT_TEST_LIBS}" TEST)
 brlcad_add_test(NAME rt_boolweave COMMAND rt_boolweave)
@@ -234,6 +237,7 @@ set(
   sketch.g
   submodel_xform.c
   prim_tess.c
+  pnts_bounds.c
   tess_timing.c
   tree_prune.c
   vds_tree.c

@@ -196,6 +196,13 @@ pnts_node_scale(void *node, rt_pnt_type type)
     }
 }
 
+static fastf_t
+pnts_effective_scale(const struct rt_pnts_internal *pnts, struct pnt *point)
+{
+    fastf_t *scale = pnts_node_scale(point, pnts->type);
+    return scale ? *scale : pnts->scale;
+}
+
 static fastf_t *
 pnts_node_normal(void *node, rt_pnt_type type)
 {
@@ -296,12 +303,8 @@ rt_pnts_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct
     pnts = (struct rt_pnts_internal *)ip->idb_ptr;
     RT_PNTS_CK_MAGIC(pnts);
 
-    if (pnts->count <= 0) {
-	return 0;
-    }
-    if (!pnts_type_is_valid(pnts->type)) {
-	return 0;
-    }
+    if (pnts->count == 0 || !pnts_type_is_valid(pnts->type) || !pnts->point)
+	return -1;
 
     VSETALL((*min), INFINITY);
     VSETALL((*max), -INFINITY);
@@ -312,8 +315,10 @@ rt_pnts_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct
      * 'point', so it can't double as the head expression. */
     point = (struct pnt *)pnts->point;
     head = &point->l;
+    if (BU_LIST_IS_EMPTY(head))
+	return -1;
     for (BU_LIST_FOR(point, pnt, head)) {
-	_pnts_calc_bbox(min, max, &(point->v), pnts->scale);
+	_pnts_calc_bbox(min, max, &(point->v), pnts_effective_scale(pnts, point));
     }
 
     return 0;
@@ -369,8 +374,7 @@ rt_pnts_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	point = (struct pnt *)pnts_ip->point;
 	head = &point->l;
 	for (BU_LIST_FOR(point, pnt, head)) {
-	    fastf_t *sp = pnts_node_scale(point, pnts_ip->type);
-	    fastf_t r = sp ? *sp : pnts_ip->scale;
+	    fastf_t r = pnts_effective_scale(pnts_ip, point);
 	    if (r > 0) {
 		VMOVE(spec->centers[spec->count], point->v);
 		spec->radii[spec->count] = r;
