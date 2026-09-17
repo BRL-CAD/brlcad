@@ -34,6 +34,12 @@ bu_mread(int fd, void *bufp, long int n)
     register long int nread;
     char *cbufp = (char *)bufp;
 
+    if (fd < 0 || !bufp)
+	return -1;
+
+    if (n <= 0)
+	return 0;
+
     while (count < n) {
 	nread = read(fd, cbufp, (size_t)(n-count));
 	if (UNLIKELY(nread < 0)) {

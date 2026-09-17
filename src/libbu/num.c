@@ -26,33 +26,43 @@
 #include <stdio.h>
 #include <math.h>
 
+#include "bu/malloc.h"
 #include "bu/num.h"
 
 
 static size_t
 char_length(int64_t num)
 {
-    uint64_t pos = labs((long)num);
+    uint64_t pos;
+
+    if (num < 0) {
+	if (num == INT64_MIN)
+	    pos = (uint64_t)INT64_MAX + 1ULL;
+	else
+	    pos = (uint64_t)(-num);
+    } else {
+	pos = (uint64_t)num;
+    }
 
     return
-	((pos < 10L) ? 1 :
-	 ((pos < 100L) ? 2 :
-	  ((pos < 1000L) ? 3 :
-	   ((pos < 10000L) ? 4 :
-	    ((pos < 100000L) ? 5 :
-	     ((pos < 1000000L) ? 6 :
-	      ((pos < 10000000L) ? 7 :
-	       ((pos < 100000000L) ? 8 :
-		((pos < 1000000000L) ? 9 :
-		 ((pos < 10000000000L) ? 10 :
-		  ((pos < 100000000000L) ? 11 :
-		   ((pos < 1000000000000L) ? 12 :
-		    ((pos < 10000000000000L) ? 13 :
-		     ((pos < 100000000000000L) ? 14 :
-		      ((pos < 1000000000000000L) ? 15 :
-		       ((pos < 10000000000000000L) ? 16 :
-			((pos < 100000000000000000L) ? 17 :
-			 ((pos < 1000000000000000000L) ? 18 :
+	((pos < 10ULL) ? 1 :
+	 ((pos < 100ULL) ? 2 :
+	  ((pos < 1000ULL) ? 3 :
+	   ((pos < 10000ULL) ? 4 :
+	    ((pos < 100000ULL) ? 5 :
+	     ((pos < 1000000ULL) ? 6 :
+	      ((pos < 10000000ULL) ? 7 :
+	       ((pos < 100000000ULL) ? 8 :
+		((pos < 1000000000ULL) ? 9 :
+		 ((pos < 10000000000ULL) ? 10 :
+		  ((pos < 100000000000ULL) ? 11 :
+		   ((pos < 1000000000000ULL) ? 12 :
+		    ((pos < 10000000000000ULL) ? 13 :
+		     ((pos < 100000000000000ULL) ? 14 :
+		      ((pos < 1000000000000000ULL) ? 15 :
+		       ((pos < 10000000000000000ULL) ? 16 :
+			((pos < 100000000000000000ULL) ? 17 :
+			 ((pos < 1000000000000000000ULL) ? 18 :
 			  19)))))))))))))))))) +
 	((num < 0) ? 1 : 0);
 }
@@ -78,13 +88,14 @@ bu_num_print(const double *vals, size_t nvals, size_t cols, const char *tbl_star
 
     if (cols > MAXCOLS) {
 	/* resort to dynamic memory if necessary */
-	colsizes = (size_t *)calloc(cols, sizeof(size_t));
-	colchars = (size_t *)calloc(cols, sizeof(size_t));
+	colsizes = (size_t *)bu_calloc(cols, sizeof(size_t), "colsizes");
+	colchars = (size_t *)bu_calloc(cols, sizeof(size_t), "colchars");
     }
 
     if (tbl_start) {
+	size_t tlen = strlen(tbl_start);
 	printf("%s", tbl_start);
-	while (tbl_start[strlen(tbl_start)-(padding+1)] != '\n' && padding != strlen(tbl_start)) {
+	while (padding < tlen && tbl_start[tlen - (padding + 1)] != '\n') {
 	    padding++;
 	}
     }
@@ -103,7 +114,10 @@ bu_num_print(const double *vals, size_t nvals, size_t cols, const char *tbl_star
 		snprintf(num, sizeof(num), "%.17g", vals[i]);
 	    }
 	    numlen = strlen(num);
-	    charlen = char_length(lround(floor(vals[i])));
+	    if (isnan(vals[i]) || isinf(vals[i]) || vals[i] > (double)INT64_MAX || vals[i] < (double)INT64_MIN)
+		charlen = numlen;
+	    else
+		charlen = char_length((int64_t)lround(floor(vals[i])));
 
 	    if (colsizes[i % cols] < numlen)
 		colsizes[i % cols] = numlen;
@@ -168,9 +182,9 @@ bu_num_print(const double *vals, size_t nvals, size_t cols, const char *tbl_star
 
     /* release if we had to resort to dynamic memory */
     if (colsizes != preallocated_colsizes)
-	free(colsizes);
+	bu_free(colsizes, "colsizes");
     if (colchars != preallocated_colchars)
-	free(colchars);
+	bu_free(colchars, "colchars");
 
     return;
 }

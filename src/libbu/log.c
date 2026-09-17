@@ -145,14 +145,19 @@ log_output(const char *buf, size_t len, int set_line_buffer)
 void
 bu_log_indent_delta(int delta)
 {
-    if ((log_indent_level += delta) < 0)
+    log_indent_level += delta;
+    if (log_indent_level < 0)
 	log_indent_level = 0;
+    else if (log_indent_level > 1000)
+	log_indent_level = 1000;
 }
 
 
 void
 bu_log_indent_vls(struct bu_vls *v)
 {
+    if (!v)
+	return;
     bu_vls_spaces(v, log_indent_level);
 }
 
@@ -201,6 +206,8 @@ log_call_hooks(void *buf)
 void
 bu_log_hook_save_all(struct bu_hook_list *save_hlp)
 {
+    if (!save_hlp)
+	return;
     bu_semaphore_acquire(BU_SEM_LOG_HOOK);
     bu_hook_save_all(&log_hook_list, save_hlp);
     bu_semaphore_release(BU_SEM_LOG_HOOK);
@@ -219,6 +226,8 @@ bu_log_hook_delete_all(void)
 void
 bu_log_hook_restore_all(struct bu_hook_list *restore_hlp)
 {
+    if (!restore_hlp)
+	return;
     bu_semaphore_acquire(BU_SEM_LOG_HOOK);
     bu_hook_restore_all(&log_hook_list, restore_hlp);
     bu_semaphore_release(BU_SEM_LOG_HOOK);
@@ -332,6 +341,11 @@ bu_flog(FILE *fp, const char *fmt, ...)
     va_list ap;
 
     struct bu_vls output = BU_VLS_INIT_ZERO;
+
+    if (UNLIKELY(!fp || !fmt || strlen(fmt) == 0)) {
+	bu_vls_free(&output);
+	return 0;
+    }
 
     va_start(ap, fmt);
     if (log_indent_level > 0) {

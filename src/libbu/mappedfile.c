@@ -357,8 +357,8 @@ bu_open_mapped_file(const char *name, const char *appl)
 	goto fail;
     }
 
-    if (UNLIKELY(sb.st_size == 0)) {
-	bu_log("bu_open_mapped_file(%s) 0-length file\n", name);
+    if (UNLIKELY(sb.st_size <= 0 || (size_t)sb.st_size >= SIZE_MAX)) {
+	bu_log("bu_open_mapped_file(%s) invalid file size\n", name);
 	goto fail;
     }
 
@@ -500,11 +500,14 @@ bu_free_mapped_files(int verbose)
 
     bu_semaphore_acquire(BU_SEM_MAPPEDFILE);
 
-    for (i = 0; i < all_mapped_files.size; i++) {
+    i = 0;
+    while (i < all_mapped_files.size) {
 	mp = all_mapped_files.mapped_files[i];
 
-	if (mp->uses > 0)
+	if (mp->uses > 0) {
+	    i++;
 	    continue;
+	}
 
 	/* Found one that needs to have storage released */
 	if (UNLIKELY(verbose || (bu_debug&BU_DEBUG_MAPPED_FILE)))
@@ -546,8 +549,7 @@ bu_free_mapped_files(int verbose)
 	}
 	all_mapped_files.mapped_files[all_mapped_files.size - 1] = NULL; /* zero out the last (now invalid) pointer */
 	all_mapped_files.size--;
-	/* Next item to inspect is now in the same index as the item we just removed */
-	i--;
+	/* Next item to inspect is now at the current index i */
     }
     /* release the array if we get back to empty */
     if (all_mapped_files.size == 0 && all_mapped_files.capacity > 0) {
@@ -568,8 +570,8 @@ bu_open_mapped_file_with_path(char *const *path, const char *name, const char *a
     struct bu_vls str = BU_VLS_INIT_ZERO;
     struct bu_mapped_file *ret;
 
-    BU_ASSERT(name != NULL);
-    BU_ASSERT(pathp != NULL);
+    if (!path || !name || name[0] == '\0')
+	return NULL;
 
     /* Do not resort to path for a rooted filename.  Tcl and other portable
      * callers commonly use forward slashes in Windows drive paths, so accept

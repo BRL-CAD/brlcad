@@ -42,6 +42,9 @@ lex_getone(int *used, struct bu_vls *rtstr)
     register char *unit;
     int number;
 
+    if (!used || !rtstr)
+	return NULL;
+
     number = 1;
     *used = 0;
 
@@ -129,14 +132,14 @@ lex_getone(int *used, struct bu_vls *rtstr)
      * if we had NUMBER. or NUMBERe{+|-} that has be replaced (cp)
      */
     *used = cp - sp -1;
-    if (*used == 0)
+    if (*used <= 0)
 	*used = 1;
 
     unit = (char *)bu_malloc((size_t)(*used+1), "unit token");
     bu_strlcpy(unit, sp, (size_t)(*used+1));
     *used = sp-bu_vls_addr(rtstr) + *used;
 
-    if (*used == 0)
+    if (*used <= 0)
 	*used = 1;
 
     return unit;
@@ -153,6 +156,9 @@ bu_lex(
     char *unit;
     char *cp;
     int used;
+
+    if (!token || !rtstr)
+	return BU_LEX_NEED_MORE;
 
     /*
      * get a unit of information from rtstr.
@@ -251,7 +257,7 @@ bu_lex(
 	    /* single character, good choice for a symbol. */
 	    register struct bu_lex_key *sp;
 	    for (sp=symbols;sp->tok_val;sp++) {
-		if (*sp->string == *unit) {
+		if (sp->string && *sp->string == *unit) {
 		    token->type = BU_LEX_SYMBOL;
 		    token->t_key.value = sp->tok_val;
 		    bu_free(unit, "unit token");
@@ -263,7 +269,7 @@ bu_lex(
     if (keywords) {
 	register struct bu_lex_key *kp;
 	for (kp=keywords;kp->tok_val; kp++) {
-	    if (BU_STR_EQUAL(kp->string, unit)) {
+	    if (kp->string && BU_STR_EQUAL(kp->string, unit)) {
 		token->type = BU_LEX_KEYWORD;
 		token->t_key.value = kp->tok_val;
 		bu_free(unit, "unit token");
