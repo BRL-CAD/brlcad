@@ -63,6 +63,9 @@ int
 bu_fchmod(int fd,
 	  unsigned long pmode)
 {
+    if (fd < 0)
+	return -1;
+
 #ifdef HAVE_FCHMOD
     return fchmod(fd, (mode_t)pmode);
 #else
