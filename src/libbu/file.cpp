@@ -79,6 +79,10 @@ bu_file_exists(const char *path, int *fd)
 	bu_log("Does [%s] exist? ", path);
     }
 
+    if (fd) {
+	*fd = -1;
+    }
+
     if (!path || path[0] == '\0') {
 	if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 	    bu_log("NO\n");
@@ -98,13 +102,12 @@ bu_file_exists(const char *path, int *fd)
 	return 1;
     }
 
-    /* capture file descriptor if requested */
-    if (fd) {
-	*fd = open(path, O_RDONLY);
-    }
-
     /* does it exist as a filesystem entity? */
     if (stat(path, &sbuf) == 0) {
+	/* capture file descriptor if requested */
+	if (fd) {
+	    *fd = open(path, O_RDONLY);
+	}
 	if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 	    bu_log("YES\n");
 	}
@@ -123,7 +126,7 @@ int
 bu_file_size(const char *path)
 {
     int fbytes = 0;
-    if (!bu_file_exists(path, NULL)) {
+    if (!path || path[0] == '\0' || !bu_file_exists(path, NULL)) {
 	return -1;
     }
 
@@ -142,14 +145,17 @@ bu_file_size(const char *path)
 	if (UNLIKELY(ret < 0)) {
 	    return -1;
 	}
-	fbytes = sbuf.st_size;
+	if (sbuf.st_size > (off_t)INT_MAX) {
+	    return INT_MAX;
+	}
+	fbytes = (int)sbuf.st_size;
     }
 #else
     {
 	char buf[32768] = {0};
 	FILE *fp = fopen(path, "rb");
 	if (UNLIKELY(fp == NULL)) {
-	    return NULL;
+	    return -1;
 	}
 	int got;
 	fbytes = 0;
@@ -160,9 +166,6 @@ bu_file_size(const char *path)
 	}
 	fclose(fp);
 	bu_semaphore_release(BU_SEM_SYSCALL);
-	if (UNLIKELY(fbytes == 0)) {
-	    return NULL;
-	}
     }
 #endif
     return fbytes;
@@ -190,7 +193,7 @@ file_compare_info(HANDLE handle1, HANDLE handle2)
     if (got1 && got2
 	&& (file_info1.dwVolumeSerialNumber == file_info2.dwVolumeSerialNumber)
 	&& (file_info1.nFileIndexLow == file_info2.nFileIndexLow)
-	&& (file_info1.nFileIndexHigh = file_info2.nFileIndexHigh))
+	&& (file_info1.nFileIndexHigh == file_info2.nFileIndexHigh))
     {
 	return 1;
     }
@@ -228,11 +231,21 @@ bu_file_same(const char *fn1, const char *fn2)
     rp1 = bu_file_realpath(fn1, NULL);
     rp2 = bu_file_realpath(fn2, NULL);
 
+    if (!rp1 || !rp2) {
+	if (rp1)
+	    bu_free(rp1, "free rp1");
+	if (rp2)
+	    bu_free(rp2, "free rp2");
+	return 0;
+    }
+
     /* pretend identical paths could be tested atomically.  same name
      * implies they're the same even if lookups would be different on
      * a fast-changing filesystem..
      */
     if (BU_STR_EQUAL(rp1, rp2)) {
+	bu_free(rp1, "free rp1");
+	bu_free(rp2, "free rp2");
 	return 1;
     }
 
@@ -347,7 +360,7 @@ file_access(const char *path, int access_level)
 	if (pwdb && pwdb->pw_name) {
 	    int i;
 	    struct group *grdb = getgrgid(sb.st_gid);
-	    for (i = 0; grdb && grdb->gr_mem[i]; i++) {
+	    for (i = 0; grdb && grdb->gr_mem && grdb->gr_mem[i]; i++) {
 		if (BU_STR_EQUAL(grdb->gr_mem[i], pwdb->pw_name)) {
 		    /* one of our other groups */
 		    in_grp = true;
@@ -590,6 +603,9 @@ bu_fseek(FILE *stream, b_off_t offset, int origin)
 {
     int ret;
 
+    if (!stream)
+	return -1;
+
 #if defined(HAVE__FSEEKI64) && defined(SIZEOF_VOID_P) && SIZEOF_VOID_P == 8
     ret = _fseeki64(stream, offset, origin);
 #else
@@ -604,6 +620,9 @@ bu_lseek(int fd, b_off_t offset, int whence)
 {
     b_off_t ret;
 
+    if (fd < 0)
+	return (b_off_t)-1;
+
 #if defined(HAVE__LSEEKI64) && defined(SIZEOF_VOID_P) && SIZEOF_VOID_P == 8
     ret = _lseeki64(fd, offset, whence);
 #else
@@ -617,6 +636,9 @@ b_off_t
 bu_ftell(FILE *stream)
 {
     b_off_t ret;
+
+    if (!stream)
+	return (b_off_t)-1;
 
 #if defined(HAVE__FTELLI64) && defined(SIZEOF_VOID_P) && SIZEOF_VOID_P == 8
     /* windows 64bit */
