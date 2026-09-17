@@ -29,6 +29,7 @@
 #include <vector>
 
 extern "C" {
+#include "bu/units.h"
 #include "rt/calc.h"
 #include "wdb.h"
 }

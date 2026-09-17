@@ -31,7 +31,10 @@
 __BEGIN_DECLS
 
 
-struct rt_comb_internal;      /* forward declaration */
+struct bu_external;
+struct db_i;
+struct directory;
+struct rt_comb_internal;
 
 
 /* db5_attr.c */
