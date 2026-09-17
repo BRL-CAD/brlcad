@@ -1808,8 +1808,8 @@ _pkg_gethdr(struct pkg_conn *pc, char *buf)
     if (pc->pkc_left == 0)
 	return 1;		/* msg here, no data */
 
-    /* ensure we don't allocate maliciously */
-    if (pc->pkc_len >= SSIZE_MAX-2)
+    /* ensure we don't allocate maliciously or overflow signed int */
+    if (pc->pkc_len >= INT_MAX-2)
 	return -1;
 
     if (buf) {
@@ -1884,11 +1884,17 @@ pkg_waitfor (int type, char *buf, size_t len, struct pkg_conn *pc)
 	    snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE,
 		     "pkg_waitfor: _pkg_inget %ld gave %ld\n", (long)len, (long)i);
 	    (pc->pkc_errlog)(_pkg_errbuf);
+	    pc->pkc_buf = (char *)0;
+	    pc->pkc_curpos = (char *)0;
+	    pc->pkc_left = -1;
 	    return -1;
 	}
 	excess = pc->pkc_len - len;	/* size of excess message */
 	if ((bp = (char *)malloc(excess)) == NULL) {
 	    _pkg_perror(pc->pkc_errlog, "pkg_waitfor: excess message, malloc failed");
+	    pc->pkc_buf = (char *)0;
+	    pc->pkc_curpos = (char *)0;
+	    pc->pkc_left = -1;
 	    return -1;
 	}
 	if ((i = _pkg_inget(pc, bp, excess)) != excess) {
@@ -1897,9 +1903,15 @@ pkg_waitfor (int type, char *buf, size_t len, struct pkg_conn *pc)
 		     (long)excess, (long)i);
 	    (pc->pkc_errlog)(_pkg_errbuf);
 	    (void)free(bp);
+	    pc->pkc_buf = (char *)0;
+	    pc->pkc_curpos = (char *)0;
+	    pc->pkc_left = -1;
 	    return -1;
 	}
 	(void)free(bp);
+	pc->pkc_buf = (char *)0;
+	pc->pkc_curpos = (char *)0;
+	pc->pkc_left = -1;		/* safety */
 	return (int)len;	/* potentially truncated, but OK */
     }
 
@@ -1909,6 +1921,9 @@ pkg_waitfor (int type, char *buf, size_t len, struct pkg_conn *pc)
 		 "pkg_waitfor: _pkg_inget %ld gave %ld\n",
 		 (long)pc->pkc_len, (long)i);
 	(pc->pkc_errlog)(_pkg_errbuf);
+	pc->pkc_buf = (char *)0;
+	pc->pkc_curpos = (char *)0;
+	pc->pkc_left = -1;
 	return -1;
     }
     if (_pkg_debug) {
@@ -1957,14 +1972,19 @@ pkg_bwaitfor (int type, struct pkg_conn *pc)
 
     /* Read the whole message into the dynamic buffer */
     if (pc->pkc_buf != (char *)0) {
-      if ((i = _pkg_inget(pc, pc->pkc_buf, pc->pkc_len)) != pc->pkc_len) {
-	snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE,
-	    "pkg_bwaitfor: _pkg_inget %ld gave %ld\n", (long)pc->pkc_len, (long)i);
-	(pc->pkc_errlog)(_pkg_errbuf);
-      }
+	if ((i = _pkg_inget(pc, pc->pkc_buf, pc->pkc_len)) != pc->pkc_len) {
+	    snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE,
+		"pkg_bwaitfor: _pkg_inget %ld gave %ld\n", (long)pc->pkc_len, (long)i);
+	    (pc->pkc_errlog)(_pkg_errbuf);
+	    (void)free(pc->pkc_buf);
+	    pc->pkc_buf = (char *)0;
+	    pc->pkc_curpos = (char *)0;
+	    pc->pkc_left = -1;
+	    return (char *)0;
+	}
     } else {
-      snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_bwaitfor: tried to read from null pc->pkc_buf!\n");
-      return (char *)0;
+	snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_bwaitfor: tried to read from null pc->pkc_buf!\n");
+	return (char *)0;
     }
     tmpbuf = pc->pkc_buf;
     pc->pkc_buf = (char *)0;
