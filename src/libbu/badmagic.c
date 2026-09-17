@@ -31,21 +31,23 @@ bu_badmagic(const uint32_t *ptr, uint32_t magic, const char *str, const char *fi
 {
 #define MAGICBUFSIZ 512
     char buf[MAGICBUFSIZ] = {'\0'};
+    const char *s = str ? str : "(unknown)";
+    const char *f = file ? file : "unknown";
 
     if (UNLIKELY(!(ptr))) {
 	snprintf(buf, MAGICBUFSIZ, "ERROR: NULL %s pointer, file %s, line %d\n",
-		 str, file, line);
-    } else if (UNLIKELY((uintptr_t)(ptr) & (sizeof(uintptr_t)-1))) {
+		 s, f, line);
+    } else if (UNLIKELY((uintptr_t)(ptr) & (sizeof(uint32_t)-1))) {
 	snprintf(buf, MAGICBUFSIZ, "ERROR: %p mis-aligned %s pointer, file %s, line %d\n",
-		 (void *)ptr, str, file, line);
+		 (void *)ptr, s, f, line);
     } else if (UNLIKELY(*(ptr) != (uint32_t)(magic))) {
 	snprintf(buf, MAGICBUFSIZ, "ERROR: bad pointer %p: s/b %s(x%lx), was %s(x%lx), file %s, line %d\n",
 		 (void *)ptr,
-		 str, (unsigned long)magic,
+		 s, (unsigned long)magic,
 		 bu_identify_magic(*(ptr)), (unsigned long)*(ptr),
-		 file, line);
+		 f, line);
     } else {
-	snprintf(buf, MAGICBUFSIZ, "ERROR: bad %s pointer %p @ file %s:%d\n", str, (void *)ptr, file, line);
+	snprintf(buf, MAGICBUFSIZ, "ERROR: bad %s pointer %p @ file %s:%d\n", s, (void *)ptr, f, line);
     }
 
     bu_bomb(buf);
