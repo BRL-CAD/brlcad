@@ -49,6 +49,9 @@ ptbl_locate(const struct bu_ptbl *b, const long int *p)
 void
 bu_ptbl_init(struct bu_ptbl *b, size_t len, const char *str)
 {
+    if (UNLIKELY(!b))
+	return;
+
     if (UNLIKELY(bu_debug & BU_DEBUG_PTBL))
 	bu_log("bu_ptbl_init(%p, len=%zu, %s)\n", (void *)b, len, str);
 
@@ -56,6 +59,9 @@ bu_ptbl_init(struct bu_ptbl *b, size_t len, const char *str)
 
     if (UNLIKELY(len <= (size_t)0))
 	len = BU_PTBL_DEFAULT_LEN;
+
+    if (UNLIKELY(len > SIZE_MAX / sizeof(long *)))
+	bu_bomb("bu_ptbl_init: allocation size overflow\n");
 
     b->blen = len;
     b->buffer = (long **)bu_calloc(b->blen, sizeof(long *), str);
@@ -90,8 +96,12 @@ bu_ptbl_ins(struct bu_ptbl *b, long int *p)
 	bu_ptbl_init(b, BU_PTBL_DEFAULT_LEN, "bu_ptbl_ins() buffer");
 
     if (b->end >= b->blen) {
+	if (UNLIKELY(b->blen > SIZE_MAX / (4 * sizeof(long *)))) {
+	    bu_bomb("bu_ptbl_ins: table capacity overflow\n");
+	}
+	b->blen *= 4;
 	b->buffer = (long **)bu_realloc((char *)b->buffer,
-					sizeof(long *)*(b->blen *= 4),
+					sizeof(long *)*b->blen,
 					"bu_ptbl.buffer[] (ins)");
     }
 
@@ -195,7 +205,17 @@ bu_ptbl_cat(struct bu_ptbl *dest, const struct bu_ptbl *src)
     if (UNLIKELY(bu_debug & BU_DEBUG_PTBL))
 	bu_log("bu_ptbl_cat(%p, %p)\n", (void *)dest, (void *)src);
 
+    if (src->end == 0 || !src->buffer)
+	return;
+
+    if (dest->blen == 0)
+	bu_ptbl_init(dest, BU_PTBL_DEFAULT_LEN, "bu_ptbl_cat() buffer");
+
     if ((dest->blen - dest->end) < (size_t)src->end) {
+	if (UNLIKELY(dest->blen > SIZE_MAX - src->end - 8 ||
+		     (dest->blen + src->end) > (SIZE_MAX - 8) / (2 * sizeof(long *)))) {
+	    bu_bomb("bu_ptbl_cat: table capacity overflow\n");
+	}
 	dest->blen = (dest->blen + src->end) * 2 + 8;
 	dest->buffer = (long **)bu_realloc((char *)dest->buffer,
 					   dest->blen * sizeof(long *),
@@ -217,10 +237,21 @@ bu_ptbl_cat_uniq(struct bu_ptbl *dest, const struct bu_ptbl *src)
     if (UNLIKELY(bu_debug & BU_DEBUG_PTBL))
 	bu_log("bu_ptbl_cat_uniq(%p, %p)\n", (void *)dest, (void *)src);
 
+    if (src->end == 0 || !src->buffer)
+	return;
+
+    if (dest->blen == 0)
+	bu_ptbl_init(dest, BU_PTBL_DEFAULT_LEN, "bu_ptbl_cat_uniq() buffer");
+
     /* Assume the worst, ensure sufficient space to add all 'src' items */
     if ((dest->blen - dest->end) < (size_t)src->end) {
+	if (UNLIKELY(dest->blen > SIZE_MAX - src->blen - 8 ||
+		     (dest->blen + src->blen + 8) > SIZE_MAX / sizeof(long *))) {
+	    bu_bomb("bu_ptbl_cat_uniq: table capacity overflow\n");
+	}
+	dest->blen += src->blen + 8;
 	dest->buffer = (long **)bu_realloc((char *)dest->buffer,
-					   sizeof(long *)*(dest->blen += src->blen + 8),
+					   sizeof(long *)*dest->blen,
 					   "bu_ptbl.buffer[] (cat_uniq)");
     }
     for (BU_PTBL_FOR(p, (long **), src)) {
@@ -255,7 +286,7 @@ bu_pr_ptbl(const char *title, const struct bu_ptbl *tbl, int verbose)
 
     bu_log("%s: bu_ptbl array with %jd entries\n", title, (intmax_t)tbl->end);
 
-    if (!verbose)
+    if (!verbose || tbl->end == 0 || !tbl->buffer)
 	return;
 
     /* Go in ascending order */
@@ -280,6 +311,9 @@ bu_ptbl_trunc(struct bu_ptbl *tbl, size_t end)
     }
 
     /* expand or reduce accordingly */
+    if (end > tbl->end && tbl->buffer) {
+	memset(&tbl->buffer[tbl->end], 0, (end - tbl->end) * sizeof(long *));
+    }
     tbl->end = end;
     return;
 }

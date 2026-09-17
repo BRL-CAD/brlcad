@@ -102,7 +102,7 @@ typedef struct bu_ptbl bu_ptbl_t;
 /** DEPRECATED */
 #define BU_PTBL_BASEADDR(ptbl)	(((uintptr_t)(ptbl) != (uintptr_t)NULL)?(ptbl)->buffer:NULL)
 /** DEPRECATED */
-#define BU_PTBL_LASTADDR(ptbl)	(((uintptr_t)(ptbl) != (uintptr_t)NULL)?(ptbl)->buffer + (ptbl)->end - 1:NULL)
+#define BU_PTBL_LASTADDR(ptbl)	(((uintptr_t)(ptbl) != (uintptr_t)NULL && (ptbl)->buffer && (ptbl)->end > 0)?(ptbl)->buffer + (ptbl)->end - 1:NULL)
 
 /**
  * A handy way to visit all the elements of the table is:
@@ -117,7 +117,7 @@ typedef struct bu_ptbl bu_ptbl_t;
  * }
  */
 #define BU_PTBL_FOR(ip, cast, ptbl)	\
-    ip = cast BU_PTBL_LASTADDR(ptbl); ip >= cast BU_PTBL_BASEADDR(ptbl); ip--
+    ip = cast BU_PTBL_LASTADDR(ptbl); (ip) != NULL && (ip) >= cast BU_PTBL_BASEADDR(ptbl); (ip)--
 
 /**
  * This collection of routines implements a "pointer table" data
