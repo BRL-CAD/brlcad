@@ -13,16 +13,13 @@ and toolkit code must interpret consistently.
 
 ## Shared architecture
 
-The support has three layers:
-
-1. `brlcad_add_xmin_test` owns the private-server lifecycle, fixed screen,
-   environment, timeout, and CTest registration.
-2. `xmin_gui_smoke.sh` owns the application lifecycle: launch, resolve the
-   mapped top-level to a stable window ID, wait for rendering to settle,
-   capture, run an optional action, compare captures, and close cleanly.
-3. Application fixtures own their semantic oracle.  Tk applications source
-   `xmin_gui_test.tcl` for widget and menu discovery.  XTEST action scripts
-   drive paths that must traverse the actual X input protocol.
+The platform-neutral helpers and controller contract are documented in
+[GUI regression support](../gui/README.md).  `brlcad_add_gui_test` currently
+selects the Xmin backend, which starts a private server at a fixed screen
+size.  `xmin_gui_ctl.sh` translates controller commands to `xminctl`.
+Application fixtures supply their own semantic checks; XTEST action scripts
+exercise real input dispatch.  MGED's deep fixture includes X11 and GLX
+display managers and remains specific to this backend.
 
 Resolving a window name once is important for Qt, which may create mapped and
 unmapped helper windows with the same title.  Repeating a title lookup can
@@ -114,13 +111,13 @@ widget-state assertion.
 For a conventional executable:
 
 ```
-brlcad_add_xmin_test(
+brlcad_add_gui_test(
   NAME regress-example-xmin-smoke
   TIMEOUT 180
   ENVIRONMENT
-    "XMIN_TEST_SHELL=${CMAKE_CURRENT_SOURCE_DIR}/xmin_test.sh"
-    "XMIN_SMOKE_ACTION=${CMAKE_CURRENT_SOURCE_DIR}/example_action.sh"
-  COMMAND "${SH_EXEC}" "${CMAKE_CURRENT_SOURCE_DIR}/xmin_gui_smoke.sh"
+    "GUI_TEST_SHELL=${CMAKE_SOURCE_DIR}/regress/gui/gui_test.sh"
+    "GUI_SMOKE_ACTION=${CMAKE_CURRENT_SOURCE_DIR}/example_action.sh"
+  COMMAND "${SH_EXEC}" "${CMAKE_SOURCE_DIR}/regress/gui/gui_smoke.sh"
     "Expected title" $<TARGET_FILE:example>
 )
 ```

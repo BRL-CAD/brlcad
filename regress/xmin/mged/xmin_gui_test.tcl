@@ -20,15 +20,15 @@
 ###
 # Shared lifecycle and interaction helpers for focused MGED Xmin fixtures.
 
-if {![info exists ::env(XMIN_GUI_LIBRARY)] ||
-    ![info exists ::env(XMIN_TEST_DIR)]} {
-    puts stderr "XMIN_GUI_LIBRARY and XMIN_TEST_DIR are required"
+if {![info exists ::env(GUI_TEST_LIBRARY)] ||
+    ![info exists ::env(GUI_TEST_DIR)]} {
+    puts stderr "GUI_TEST_LIBRARY and GUI_TEST_DIR are required"
     exit 2
 }
-source $::env(XMIN_GUI_LIBRARY)
-::xmin::test::capture_background_errors
+source $::env(GUI_TEST_LIBRARY)
+::gui::test::capture_background_errors
 
-namespace eval ::mged::xmin::test {
+namespace eval ::mged::gui::test {
     variable dialog_error ""
     variable dialog_seen 0
     variable dialog_serial 0
@@ -40,31 +40,31 @@ namespace eval ::mged::xmin::test {
     variable settle_serial 0
 }
 
-proc ::mged::xmin::test::fail {message} {
+proc ::mged::gui::test::fail {message} {
     error $message
 }
 
-proc ::mged::xmin::test::settle {} {
+proc ::mged::gui::test::settle {} {
     variable settle_delay_ms
     variable settle_serial
     set serial [incr settle_serial]
-    after $settle_delay_ms [list set ::mged::xmin::test::settle_serial $serial]
-    vwait ::mged::xmin::test::settle_serial
+    after $settle_delay_ms [list set ::mged::gui::test::settle_serial $serial]
+    vwait ::mged::gui::test::settle_serial
 }
 
-proc ::mged::xmin::test::invoke {root labels} {
-    ::xmin::test::write progress "invoke: [join $labels { > }]"
-    ::xmin::test::invoke_menu_entry $root $labels
+proc ::mged::gui::test::invoke {root labels} {
+    ::gui::test::write progress "invoke: [join $labels { > }]"
+    ::gui::test::invoke_menu_entry $root $labels
     settle
 }
 
-proc ::mged::xmin::test::set_entry {entry value} {
+proc ::mged::gui::test::set_entry {entry value} {
     $entry delete 0 end
     $entry insert 0 $value
 }
 
-proc ::mged::xmin::test::find_descendant {root class} {
-    foreach widget [::xmin::test::descendants $root] {
+proc ::mged::gui::test::find_descendant {root class} {
+    foreach widget [::gui::test::descendants $root] {
 	if {[winfo class $widget] eq $class} {
 	    return $widget
 	}
@@ -72,8 +72,8 @@ proc ::mged::xmin::test::find_descendant {root class} {
     fail "$root has no $class descendant"
 }
 
-proc ::mged::xmin::test::find_widget_by_text {root text} {
-    foreach widget [::xmin::test::descendants $root] {
+proc ::mged::gui::test::find_widget_by_text {root text} {
+    foreach widget [::gui::test::descendants $root] {
 	if {![catch {$widget cget -text} label] && $label eq $text} {
 	    return $widget
 	}
@@ -81,7 +81,7 @@ proc ::mged::xmin::test::find_widget_by_text {root text} {
     fail "$root has no widget labeled '$text'"
 }
 
-proc ::mged::xmin::test::find_toplevel_by_title {title} {
+proc ::mged::gui::test::find_toplevel_by_title {title} {
     foreach widget [winfo children .] {
 	if {![catch {wm title $widget} widget_title] &&
 	    $widget_title eq $title} {
@@ -91,7 +91,7 @@ proc ::mged::xmin::test::find_toplevel_by_title {title} {
     fail "no toplevel has title '$title'"
 }
 
-proc ::mged::xmin::test::require_mapped {widget description} {
+proc ::mged::gui::test::require_mapped {widget description} {
     variable ready_retry_limit
 
     for {set attempt 0} {$attempt < $ready_retry_limit} {incr attempt} {
@@ -104,15 +104,15 @@ proc ::mged::xmin::test::require_mapped {widget description} {
     fail "$description is not mapped"
 }
 
-proc ::mged::xmin::test::return_file_dialog_path {path args} {
+proc ::mged::gui::test::return_file_dialog_path {path args} {
     return $path
 }
 
-proc ::mged::xmin::test::with_file_dialog_path {command path script} {
+proc ::mged::gui::test::with_file_dialog_path {command path script} {
     set saved_command ${command}_xmin_saved
     rename $command $saved_command
     interp alias {} $command {} \
-	::mged::xmin::test::return_file_dialog_path $path
+	::mged::gui::test::return_file_dialog_path $path
 
     set status [catch {uplevel 1 $script} result options]
     rename $command {}
@@ -123,7 +123,7 @@ proc ::mged::xmin::test::with_file_dialog_path {command path script} {
     return $result
 }
 
-proc ::mged::xmin::test::answer_dialog {
+proc ::mged::gui::test::answer_dialog {
     serial path expected_title entry value button
 } {
     variable dialog_error
@@ -134,7 +134,7 @@ proc ::mged::xmin::test::answer_dialog {
 	return
     }
     if {![winfo exists $path] || ![winfo ismapped $path]} {
-	after 25 [list ::mged::xmin::test::answer_dialog $serial $path \
+	after 25 [list ::mged::gui::test::answer_dialog $serial $path \
 	    $expected_title $entry $value $button]
 	return
     }
@@ -155,7 +155,7 @@ proc ::mged::xmin::test::answer_dialog {
     $button invoke
 }
 
-proc ::mged::xmin::test::with_dialog_answer {
+proc ::mged::gui::test::with_dialog_answer {
     path expected_title entry value button script
 } {
     variable dialog_error
@@ -165,7 +165,7 @@ proc ::mged::xmin::test::with_dialog_answer {
     set dialog_error ""
     set dialog_seen 0
     set serial [incr dialog_serial]
-    after 25 [list ::mged::xmin::test::answer_dialog $serial $path \
+    after 25 [list ::mged::gui::test::answer_dialog $serial $path \
 	$expected_title $entry $value $button]
     set status [catch {uplevel 1 $script} result options]
     incr dialog_serial
@@ -183,24 +183,24 @@ proc ::mged::xmin::test::with_dialog_answer {
     return $result
 }
 
-proc ::mged::xmin::test::finish {status message} {
+proc ::mged::gui::test::finish {status message} {
     variable finished
     if {$finished} {
 	return
     }
     set finished 1
     catch {update}
-    lassign [::xmin::test::check_background_errors $status $message] \
+    lassign [::gui::test::check_background_errors $status $message] \
 	status message
     puts $message
-    ::xmin::test::write result $message
+    ::gui::test::write result $message
     if {$status != 0} {
 	puts stderr $message
     }
     _mged_quit
 }
 
-proc ::mged::xmin::test::run_checked {body pass_message failure_prefix} {
+proc ::mged::gui::test::run_checked {body pass_message failure_prefix} {
     global mged_gui mged_players
     variable ready_retries
     variable ready_retry_limit
@@ -211,7 +211,7 @@ proc ::mged::xmin::test::run_checked {body pass_message failure_prefix} {
 	    finish 1 "FAIL: $failure_prefix: MGED did not create a GUI player"
 	    return
 	}
-	after $retry_delay_ms [list ::mged::xmin::test::run_checked \
+	after $retry_delay_ms [list ::mged::gui::test::run_checked \
 	    $body $pass_message $failure_prefix]
 	return
     }
@@ -224,7 +224,7 @@ proc ::mged::xmin::test::run_checked {body pass_message failure_prefix} {
 	    finish 1 "FAIL: $failure_prefix: MGED did not finish mapping its GUI"
 	    return
 	}
-	after $retry_delay_ms [list ::mged::xmin::test::run_checked \
+	after $retry_delay_ms [list ::mged::gui::test::run_checked \
 	    $body $pass_message $failure_prefix]
 	return
     }
@@ -234,7 +234,7 @@ proc ::mged::xmin::test::run_checked {body pass_message failure_prefix} {
 	if {[dict exists $options -errorinfo]} {
 	    set error_info [dict get $options -errorinfo]
 	    puts stderr $error_info
-	    ::xmin::test::write tcl_error_debug $error_info
+	    ::gui::test::write tcl_error_debug $error_info
 	}
 	finish 1 "FAIL: $failure_prefix: $message"
 	return
@@ -242,8 +242,8 @@ proc ::mged::xmin::test::run_checked {body pass_message failure_prefix} {
     finish 0 "PASS: $pass_message"
 }
 
-proc ::mged::xmin::test::start {body pass_message failure_prefix} {
-    after 25 [list ::mged::xmin::test::run_checked \
+proc ::mged::gui::test::start {body pass_message failure_prefix} {
+    after 25 [list ::mged::gui::test::run_checked \
 	$body $pass_message $failure_prefix]
 }
 

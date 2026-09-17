@@ -35,7 +35,7 @@ if(TARGET libtclcad)
 
     set(_itcl4_gui_test "${CMAKE_SOURCE_DIR}/src/libtclcad/tests/itcl4_gui.tcl")
     foreach(_shell btclsh bwish)
-      brlcad_add_xmin_test(
+      brlcad_add_gui_test(
         NAME tclcad_test_itcl4_gui_${_shell}
         SCREEN 1280x960x24
         TIMEOUT 120

@@ -18,12 +18,12 @@
 # information.
 #
 ###
-if {![info exists ::env(XMIN_GUI_LIBRARY)]} {
-    puts stderr "XMIN_GUI_LIBRARY is required"
+if {![info exists ::env(GUI_TEST_LIBRARY)]} {
+    puts stderr "GUI_TEST_LIBRARY is required"
     exit 2
 }
-source $::env(XMIN_GUI_LIBRARY)
-set ::env(ARCHER_PREFS_FILE) [file join $::env(XMIN_TEST_DIR) .archerrc]
+source $::env(GUI_TEST_LIBRARY)
+set ::env(ARCHER_PREFS_FILE) [file join $::env(GUI_TEST_DIR) .archerrc]
 
 # ArcherCore supports embedding in another Itk widget.  Its constructor
 # currently performs a synchronous database load after one update, so inspect
@@ -41,16 +41,16 @@ if {[catch {package require Archer 1.0} message options]} {
     }
     exit 1
 }
-::xmin::test::capture_background_errors
+::gui::test::capture_background_errors
 
 proc ::archer_embedded_check {} {
     if {[catch {
 	set application .embedded
-	::xmin::test::require {[winfo exists $application]} \
+	::gui::test::require {[winfo exists $application]} \
 	    "embedded Archer widget was not created"
 
-	set inventory [::xmin::test::menu_inventory $application]
-	::xmin::test::write embedded_menu_inventory $inventory
+	set inventory [::gui::test::menu_inventory $application]
+	::gui::test::write embedded_menu_inventory $inventory
 
 	foreach labels {
 	    {File Save}
@@ -66,8 +66,8 @@ proc ::archer_embedded_check {} {
 	    {Raytrace rt 512x512}
 	    {Help {About Archer...}}
 	} {
-	    ::xmin::test::require {
-		[::xmin::test::find_menu_entry $application $labels] ne ""
+	    ::gui::test::require {
+		[::gui::test::find_menu_entry $application $labels] ne ""
 	    } "missing embedded Archer menu entry: [join $labels { > }]"
 	}
 
@@ -76,8 +76,8 @@ proc ::archer_embedded_check {} {
 	    {File Revert}
 	    {File Raytrace}
 	} {
-	    ::xmin::test::require {
-		[::xmin::test::find_menu_entry $application $labels] eq ""
+	    ::gui::test::require {
+		[::gui::test::find_menu_entry $application $labels] eq ""
 	    } "unexpected embedded Archer menu entry: [join $labels { > }]"
 	}
     } message options]} {
@@ -90,7 +90,7 @@ proc ::archer_embedded_check {} {
     }
 
     catch {update}
-    lassign [::xmin::test::check_background_errors 0 \
+    lassign [::gui::test::check_background_errors 0 \
 	"PASS: embedded Archer menu construction"] status result
     puts $result
     if {$status != 0} {

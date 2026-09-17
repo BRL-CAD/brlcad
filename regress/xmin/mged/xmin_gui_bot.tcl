@@ -20,35 +20,35 @@
 ###
 # Exercise MGED's BoT editor through its live controls.
 
-source $::env(MGED_XMIN_GUI_LIBRARY)
+source $::env(MGED_GUI_TEST_LIBRARY)
 
 namespace eval ::mged::xmin::bot {}
 
 proc ::mged::xmin::bot::find_combobox {root first_value} {
-    foreach widget [::xmin::test::descendants $root] {
+    foreach widget [::gui::test::descendants $root] {
 	if {[winfo class $widget] eq "TCombobox" &&
 	    [lindex [$widget cget -values] 0] eq $first_value} {
 	    return $widget
 	}
     }
-    ::mged::xmin::test::fail \
+    ::mged::gui::test::fail \
 	"$root has no combobox beginning with '$first_value'"
 }
 
 proc ::mged::xmin::bot::confirm_action {editor button_text} {
-    set button [::mged::xmin::test::find_widget_by_text $editor $button_text]
+    set button [::mged::gui::test::find_widget_by_text $editor $button_text]
     $button invoke
-    ::mged::xmin::test::settle
+    ::mged::gui::test::settle
 
     set confirmation $editor.confirmDialog
-    ::mged::xmin::test::require_mapped $confirmation \
+    ::mged::gui::test::require_mapped $confirmation \
 	"$button_text confirmation"
-    [::mged::xmin::test::find_widget_by_text $confirmation Yes] invoke
-    ::mged::xmin::test::settle
+    [::mged::gui::test::find_widget_by_text $confirmation Yes] invoke
+    ::mged::gui::test::settle
 }
 
 proc ::mged::xmin::bot::require_counts {bot vertices faces description} {
-    ::xmin::test::require {
+    ::gui::test::require {
 	[llength [get $bot V]] == $vertices &&
 	[llength [get $bot F]] == $faces
     } "$description does not have $vertices vertices and $faces faces"
@@ -59,17 +59,17 @@ proc ::mged::xmin::bot::exercise_editor {id top} {
 	{0 0 0} {100 0 0} {0 100 0} {0 0 0} {999 999 999}
     } F {{0 1 2} {3 1 2}}
 
-    ::mged::xmin::test::with_dialog_answer .$id.botname "BoT to Edit" \
+    ::mged::gui::test::with_dialog_answer .$id.botname "BoT to Edit" \
 	.$id.botname.mid.ent xmin_bot.s .$id.botname.bot.button0 \
-	[list ::mged::xmin::test::invoke $top {Tools {BoT Edit Tool}}]
+	[list ::mged::gui::test::invoke $top {Tools {BoT Edit Tool}}]
 
     set editor .botedit
-    ::mged::xmin::test::require_mapped $editor "BoT Edit Tool"
+    ::mged::gui::test::require_mapped $editor "BoT Edit Tool"
     require_counts xmin_bot.s.edit 5 2 "initial working BoT"
 
     set mode [find_combobox $editor Surface]
     set orientation [find_combobox $editor Unoriented]
-    ::xmin::test::require {
+    ::gui::test::require {
 	[$mode current] == 0 && [$orientation current] == 0
     } "BoT Editor did not display the initial mode and orientation"
 
@@ -77,18 +77,18 @@ proc ::mged::xmin::bot::exercise_editor {id top} {
     event generate $mode <<ComboboxSelected>>
     $orientation current 1
     event generate $orientation <<ComboboxSelected>>
-    ::xmin::test::require {
+    ::gui::test::require {
 	[bot get type xmin_bot.s.edit] eq "solid" &&
 	[bot get orientation xmin_bot.s.edit] eq "ccw"
     } "BoT Editor did not apply mode and orientation changes"
 
-    [::mged::xmin::test::find_widget_by_text $editor {Remove Selected}] invoke
-    ::mged::xmin::test::settle
+    [::mged::gui::test::find_widget_by_text $editor {Remove Selected}] invoke
+    ::mged::gui::test::settle
     require_counts xmin_bot.s.edit 3 1 "simplified working BoT"
 
     confirm_action $editor {Start Over}
     require_counts xmin_bot.s.edit 5 2 "reverted working BoT"
-    ::xmin::test::require {
+    ::gui::test::require {
 	[bot get type xmin_bot.s.edit] eq "surface" &&
 	[bot get orientation xmin_bot.s.edit] eq "none" &&
 	[$mode current] == 0 && [$orientation current] == 0
@@ -102,13 +102,13 @@ proc ::mged::xmin::bot::exercise_editor {id top} {
 	{Remove Unused Vertices} {Remove Duplicate Vertices}
 	{Remove Duplicate Faces}
     } {
-	[::mged::xmin::test::find_widget_by_text $editor $option] invoke
+	[::mged::gui::test::find_widget_by_text $editor $option] invoke
     }
-    [::mged::xmin::test::find_widget_by_text $editor {Remove Selected}] invoke
-    ::mged::xmin::test::settle
+    [::mged::gui::test::find_widget_by_text $editor {Remove Selected}] invoke
+    ::mged::gui::test::settle
     confirm_action $editor Accept
 
-    ::xmin::test::require {
+    ::gui::test::require {
 	![winfo exists $editor] && ![exists xmin_bot.s.edit] &&
 	[bot get type xmin_bot.s] eq "solid" &&
 	[bot get orientation xmin_bot.s] eq "ccw"
@@ -117,8 +117,8 @@ proc ::mged::xmin::bot::exercise_editor {id top} {
 }
 
 proc ::mged::xmin::bot::run {id top} {
-    set database [file join $::env(XMIN_TEST_DIR) bot.g]
-    cd $::env(XMIN_TEST_DIR)
+    set database [file join $::env(GUI_TEST_DIR) bot.g]
+    cd $::env(GUI_TEST_DIR)
     file delete -force $database
     opendb $database y
     title {Xmin MGED BoT editor regression}
@@ -126,7 +126,7 @@ proc ::mged::xmin::bot::run {id top} {
     exercise_editor $id $top
 }
 
-::mged::xmin::test::start ::mged::xmin::bot::run \
+::mged::gui::test::start ::mged::xmin::bot::run \
     {MGED BoT editor} {MGED BoT editor regression}
 
 # Local Variables:

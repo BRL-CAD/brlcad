@@ -18,14 +18,15 @@
 # information.
 #
 ###
-if {![info exists ::env(XMIN_GUI_LIBRARY)] ||
+if {![info exists ::env(GUI_TEST_LIBRARY)] ||
     ![info exists ::env(ARCHER_LAUNCH)] ||
     ![info exists ::env(ARCHER_TEST_DATABASE)]} {
-    puts stderr "XMIN_GUI_LIBRARY, ARCHER_LAUNCH, and ARCHER_TEST_DATABASE are required"
+    puts stderr "GUI_TEST_LIBRARY, ARCHER_LAUNCH, and ARCHER_TEST_DATABASE are required"
     exit 2
 }
-source $::env(XMIN_GUI_LIBRARY)
-set ::env(ARCHER_PREFS_FILE) [file join $::env(XMIN_TEST_DIR) .archerrc]
+source $::env(GUI_TEST_LIBRARY)
+source [file join [file dirname $::env(GUI_TEST_LIBRARY)] sketch_test.tcl]
+set ::env(ARCHER_PREFS_FILE) [file join $::env(GUI_TEST_DIR) .archerrc]
 
 namespace eval ::archer::xmin {
     variable application ""
@@ -44,7 +45,7 @@ proc ::archer::xmin::finish {status message} {
     }
     catch {destroy .}
     catch {update}
-    lassign [::xmin::test::check_background_errors $status $message] \
+    lassign [::gui::test::check_background_errors $status $message] \
 	status message
     puts $message
     if {$status != 0} {
@@ -55,7 +56,7 @@ proc ::archer::xmin::finish {status message} {
 
 proc ::archer::xmin::toplevels {} {
     set toplevels {}
-    foreach widget [linsert [::xmin::test::descendants .] 0 .] {
+    foreach widget [linsert [::gui::test::descendants .] 0 .] {
 	if {[winfo toplevel $widget] eq $widget} {
 	    lappend toplevels $widget
 	}
@@ -88,18 +89,18 @@ proc ::archer::xmin::exercise_dialog {root labels {expected_title ""}} {
     variable dialog_timeout_ms
     set dialog_seen ""
     after $dialog_poll_delay_ms ::archer::xmin::dismiss_dialog
-    ::xmin::test::invoke_menu_entry $root $labels
+    ::gui::test::invoke_menu_entry $root $labels
     if {$dialog_seen eq ""} {
 	set timeout [after $dialog_timeout_ms \
 	    [list set ::archer::xmin::dialog_seen $dialog_timeout_marker]]
 	vwait ::archer::xmin::dialog_seen
 	after cancel $timeout
     }
-    ::xmin::test::require {
+    ::gui::test::require {
 	$dialog_seen ne "" && $dialog_seen ne $dialog_timeout_marker} \
 	"menu entry did not display a dialog: [join $labels { > }]"
     if {$expected_title ne ""} {
-	::xmin::test::require {$dialog_seen eq $expected_title} \
+	::gui::test::require {$dialog_seen eq $expected_title} \
 	    "unexpected dialog title '$dialog_seen', expected '$expected_title'"
     }
 }
@@ -112,7 +113,7 @@ proc ::archer::xmin::compare_manifest {actual} {
     set expected [string trim [read $channel]]
     close $channel
     if {$actual ne $expected} {
-	::xmin::test::write menu_inventory_actual $actual
+	::gui::test::write menu_inventory_actual $actual
 	error "live Archer menu inventory differs from its manifest"
     }
 }
@@ -138,7 +139,7 @@ proc ::archer::xmin::exercise_object_lifecycle {
 	    error "$class $cycle initialization failed: $message"
 	}
 	update
-	::xmin::test::require {
+	::gui::test::require {
 	    [llength [info commands $object]] == 1 &&
 	    [winfo exists $object]
 	} "$class $cycle construction did not retain its object and window"
@@ -149,7 +150,7 @@ proc ::archer::xmin::exercise_object_lifecycle {
 	    error "$class $cycle destruction failed: $message"
 	}
 	update
-	::xmin::test::require {
+	::gui::test::require {
 	    [llength [info commands $object]] == 0 &&
 	    ![winfo exists $object]
 	} "$class $cycle destruction retained its object or window"
@@ -182,8 +183,8 @@ proc ::archer::xmin::require_arb_standard_storage {ged geometry_name primitive} 
 	set expected [$ged get $geometry_name [lindex $group 0]]
 	foreach attribute [lrange $group 1 end] {
 	    set actual [$ged get $geometry_name $attribute]
-	    ::xmin::test::require {
-		[::xmin::test::equivalent_values $actual $expected]
+	    ::gui::test::require {
+		[::gui::test::equivalent_values $actual $expected]
 	    } "$primitive storage is nonstandard: [lindex $group 0]=$expected, $attribute=$actual"
 	}
     }
@@ -208,8 +209,8 @@ proc ::archer::xmin::exercise_arb_editor_fields {
 
 	    set storage_attribute [arb_storage_attribute $primitive $logical_vertex]
 	    set actual [lindex [$ged get $geometry_name $storage_attribute] $component_index]
-	    ::xmin::test::require {
-		[::xmin::test::equivalent_values $actual $requested]
+	    ::gui::test::require {
+		[::gui::test::equivalent_values $actual $requested]
 	    } "$primitive $component_name wrote $actual instead of $requested to $storage_attribute"
 	    require_arb_standard_storage $ged $geometry_name $primitive
 
@@ -228,8 +229,8 @@ proc ::archer::xmin::exercise_editor_update {
 	set original [$ged get $geometry_name]
 	$object updateGeometry
 	set updated [$ged get $geometry_name]
-	::xmin::test::require \
-	    [::xmin::test::equivalent_values $updated $original] \
+	::gui::test::require \
+	    [::gui::test::equivalent_values $updated $original] \
 	    "$class changed geometry during an unmodified update: original={$original}, updated={$updated}"
 	if {[regexp {^Arb([4-8])EditFrame$} $class unused arb_type]} {
 	    exercise_arb_editor_fields $object $ged $geometry_name \
@@ -308,29 +309,29 @@ proc ::archer::xmin::exercise_wizard_build {
 	error "$class geometry generation failed: $result"
     }
 
-    ::xmin::test::require {$result eq $top} "$class returned '$result' instead of its top object '$top'"
-    ::xmin::test::require {[$ged exists $top]} "$class did not create its top database object '$top'"
-    ::xmin::test::require {
+    ::gui::test::require {$result eq $top} "$class returned '$result' instead of its top object '$top'"
+    ::gui::test::require {[$ged exists $top]} "$class did not create its top database object '$top'"
+    ::gui::test::require {
 	[$ged attr get $top WizardClass] eq $class
     } "$class did not identify its generated database object"
-    ::xmin::test::require {
+    ::gui::test::require {
 	[llength [$object getWizardState]] > 0
     } "$class did not retain its generation parameters"
-    ::xmin::test::require {
+    ::gui::test::require {
 	[lsearch -exact [$ged who] $top] >= 0
     } "$class did not draw its generated database object"
     if {$class eq "TankWizard"} {
-	::xmin::test::require {
+	::gui::test::require {
 	    [$ged exists ${top}_gun_tube.r]
 	} "TankWizard omitted its transformed gun-barrel region"
 	set xml [$object buildTankXML]
-	::xmin::test::require {
+	::gui::test::require {
 	    [string first "<Name>$top</Name>" $xml] >= 0 &&
 	    [string first "<Name>Gun Barrel</Name>" $xml] >= 0
 	} "TankWizard XML omitted its top system or gun component"
 	set open_systems [llength [regexp -all -inline {<System>} $xml]]
 	set close_systems [llength [regexp -all -inline {</System>} $xml]]
-	::xmin::test::require {
+	::gui::test::require {
 	    $open_systems > 10 && $open_systems == $close_systems
 	} "TankWizard XML has unbalanced system elements"
     }
@@ -385,22 +386,22 @@ proc ::archer::xmin::exercise_attribute_groups_utility {application} {
     AttrGroupsDisplayUtilityP $object $application
     update
     set group_list [$object component glist]
-    ::xmin::test::require {
+    ::gui::test::require {
 	[$group_list get 0 end] eq "Xmin"
     } "attribute-groups utility did not load its database definition"
     $group_list selection set 0
     uplevel #0 [$group_list cget -selectioncommand]
-    ::xmin::test::require {
+    ::gui::test::require {
 	[$object getCurrentGroup] eq "Xmin"
     } "attribute-groups utility did not select its group"
 
     set attribute_list [$object component alist]
-    ::xmin::test::require {
+    ::gui::test::require {
 	[$attribute_list get 0 end] eq "alpha beta"
     } "attribute-groups utility did not load the grouped values"
     $attribute_list selection set 0
     set highlighted [$object highlightSelectedAttr]
-    ::xmin::test::require {
+    ::gui::test::require {
 	[lsearch -exact [lindex $highlighted 0] xmin-attr-alpha.s] >= 0
     } "attribute-groups utility did not resolve and highlight the selected value"
     ::itcl::delete object $object
@@ -416,7 +417,7 @@ proc ::archer::xmin::exercise_lod_utility {application} {
     update
 
     set dialog "$object.lodDialog"
-    ::xmin::test::require {
+    ::gui::test::require {
 	[llength [info commands $dialog]] == 1 && [winfo exists $dialog]
     } "LOD utility did not create its configuration dialog"
     set frame "$dialog.lodFrame"
@@ -428,7 +429,7 @@ proc ::archer::xmin::exercise_lod_utility {application} {
     update
     set updated_points [$ged lod scale points]
     set updated_curves [$ged lod scale curves]
-    ::xmin::test::require {
+    ::gui::test::require {
 	abs($updated_points - 0.7) < 1.0e-9 &&
 	abs($updated_curves - 9.0) < 1.0e-9
     } "LOD utility controls set points=$updated_points and curves=$updated_curves"
@@ -457,7 +458,7 @@ proc ::archer::xmin::exercise_bot_utility {application} {
     BotUtilityP $object $application
     update
     set selector [$object component combo]
-    ::xmin::test::require {
+    ::gui::test::require {
 	[lsearch -exact [$selector cget -values] $bot] >= 0
     } "BoT utility did not list its available mesh"
     $object configure -selectedbot $bot
@@ -471,7 +472,7 @@ proc ::archer::xmin::exercise_bot_utility {application} {
 	    lappend editors $editor
 	}
     }
-    ::xmin::test::require {
+    ::gui::test::require {
 	[llength $editors] == 1 && [$ged exists "$bot.edit"]
     } "BoT utility did not launch an Archer-backed editor with a working copy"
     set editor [lindex $editors 0]
@@ -507,11 +508,11 @@ proc ::archer::xmin::exercise_combination_edit {application} {
     set combination [lrange [$ged get xmin-tree.c] 1 end]
     set original_tree [bu_get_value_by_keyword tree $combination]
     set flattened_tree [ArcherCore::unpackTree $original_tree]
-    ::xmin::test::require {
+    ::gui::test::require {
 	[ArcherCore::packTree $flattened_tree] ne $original_tree
     } "Archer combination fixture does not exercise a lossy tree grouping"
     set spaced_leaf [list l [lindex $members 1]]
-    ::xmin::test::require {
+    ::gui::test::require {
 	[ArcherCore::packTree [ArcherCore::unpackTree $spaced_leaf]] eq $spaced_leaf
     } "Archer tree editor did not preserve a member name containing spaces"
 
@@ -527,9 +528,9 @@ proc ::archer::xmin::exercise_combination_edit {application} {
     set updated [lrange [$ged get xmin-tree.c] 1 end]
     set updated_tree [bu_get_value_by_keyword tree $updated]
     set updated_rgb [bu_get_value_by_keyword rgb $updated]
-    ::xmin::test::require {$updated_tree eq $original_tree} \
+    ::gui::test::require {$updated_tree eq $original_tree} \
 	"editing a combination attribute changed its Boolean tree"
-    ::xmin::test::require {$updated_rgb eq "17 34 51"} \
+    ::gui::test::require {$updated_rgb eq "17 34 51"} \
 	"Archer did not apply the requested combination color"
     ::itcl::delete object $editor
     exercise_object_lifecycle CombEditFrame $editor \
@@ -547,7 +548,7 @@ proc ::archer::xmin::exercise_combination_edit {application} {
 	    break
 	}
     }
-    ::xmin::test::require {$combination_node ne ""} \
+    ::gui::test::require {$combination_node ne ""} \
 	"Archer hierarchy omitted the test combination"
     $tree focus $combination_node
     $tree item $combination_node -open true
@@ -557,7 +558,7 @@ proc ::archer::xmin::exercise_combination_edit {application} {
     foreach child [$tree children $combination_node] {
 	lappend child_names [$tree item $child -text]
     }
-    ::xmin::test::require {[lsort $child_names] eq [lsort $members]} \
+    ::gui::test::require {[lsort $child_names] eq [lsort $members]} \
 	"Archer hierarchy reported the wrong combination members: $child_names"
 }
 
@@ -586,7 +587,7 @@ proc ::archer::xmin::exercise_raytrace_abort {application} {
     set raytrace_button [$toolbar component raytrace]
     set launch_command [$toolbar itemcget raytrace -command]
 
-    ::xmin::test::require {
+    ::gui::test::require {
 	[string first raytracePlus $launch_command] >= 0
     } "Archer raytrace toolbar button does not start a raytrace"
 
@@ -597,14 +598,14 @@ proc ::archer::xmin::exercise_raytrace_abort {application} {
     $raytrace_button invoke
 
     set abort_command [$toolbar itemcget raytrace -command]
-    ::xmin::test::require {
+    ::gui::test::require {
 	$abort_command ne $launch_command &&
 	[string first abort $abort_command] >= 0
     } "Archer did not turn its raytrace toolbar button into Abort"
 
     $raytrace_button invoke
     wait_for {$raytrace_aborted ne ""} "RtWizard abort callback"
-    ::xmin::test::require {$raytrace_aborted} \
+    ::gui::test::require {$raytrace_aborted} \
 	"Archer reported normal completion after the Abort action"
     wait_for {
 	[string first raytracePlus [$toolbar itemcget raytrace -command]] >= 0
@@ -614,22 +615,22 @@ proc ::archer::xmin::exercise_raytrace_abort {application} {
 proc ::archer::xmin::run {} {
     variable application
     set application $::ArcherCore::application
-    ::xmin::test::require {[llength [info commands $application]] == 1} \
+    ::gui::test::require {[llength [info commands $application]] == 1} \
 	"Archer application object was not created"
-    ::xmin::test::require {[winfo ismapped $application]} \
+    ::gui::test::require {[winfo ismapped $application]} \
 	"Archer main window is not mapped"
-    ::xmin::test::require {[string match {Archer *} [wm title $application]]} \
+    ::gui::test::require {[string match {Archer *} [wm title $application]]} \
 	"unexpected Archer main-window title"
 
     set opened_database [$application WhatsOpen]
-    ::xmin::test::require {
+    ::gui::test::require {
 	[file normalize $opened_database] eq [file normalize $::env(ARCHER_WORK_DATABASE)]
     } "Archer did not open the relative database argument"
 
-    set widget_inventory [::xmin::test::widget_inventory $application]
-    set menu_inventory [::xmin::test::menu_inventory $application]
-    ::xmin::test::write widget_inventory $widget_inventory
-    ::xmin::test::write menu_inventory $menu_inventory
+    set widget_inventory [::gui::test::widget_inventory $application]
+    set menu_inventory [::gui::test::menu_inventory $application]
+    ::gui::test::write widget_inventory $widget_inventory
+    ::gui::test::write menu_inventory $menu_inventory
     compare_manifest $menu_inventory
 
     foreach labels {
@@ -641,27 +642,27 @@ proc ::archer::xmin::run {} {
 	{Help {Archer Help...}}
 	{Help {About Archer...}}
     } {
-	::xmin::test::require {
-	    [::xmin::test::find_menu_entry $application $labels] ne ""
+	::gui::test::require {
+	    [::gui::test::find_menu_entry $application $labels] ne ""
 	} "missing Archer menu entry: [join $labels { > }]"
     }
 
     $application draw all.g
     update
-    ::xmin::test::require {
+    ::gui::test::require {
 	[lsearch -exact [$application gedCmd who] all.g] >= 0
     } "Archer did not draw all.g"
 
-    ::xmin::test::invoke_menu_entry $application \
+    ::gui::test::invoke_menu_entry $application \
 	{Display {Standard Views} Front}
     set aet [$application gedCmd aet]
-    ::xmin::test::require {
+    ::gui::test::require {
 	abs([lindex $aet 0]) < 0.001 && abs([lindex $aet 1]) < 0.001
     } "Front menu entry did not set the expected view: $aet"
 
-    ::xmin::test::invoke_menu_entry $application \
+    ::gui::test::invoke_menu_entry $application \
 	{Display {Background Color} Black}
-    ::xmin::test::require {
+    ::gui::test::require {
 	[$application gedCmd bg] eq "0 0 0"
     } "Black background menu entry did not update the display"
 
@@ -672,7 +673,7 @@ proc ::archer::xmin::run {} {
     exercise_dialog $application {Help {About Archer...}} {About Archer}
 
     exercise_combination_edit $application
-    ::xmin::test::exercise_sketch_segments SketchCArc SketchBezier Archer ::archer::xmin
+    ::gui::test::exercise_sketch_segments SketchCArc SketchBezier Archer ::archer::xmin
     exercise_wizard_builds $application
     exercise_editor_lifecycles $application
     exercise_plugin_lifecycles $application
@@ -692,10 +693,10 @@ proc ::archer::xmin::run_checked {} {
     }
 }
 
-set work_database [file join $::env(XMIN_TEST_DIR) archer-relative.g]
+set work_database [file join $::env(GUI_TEST_DIR) archer-relative.g]
 file copy -force $::env(ARCHER_TEST_DATABASE) $work_database
 set ::env(ARCHER_WORK_DATABASE) $work_database
-cd $::env(XMIN_TEST_DIR)
+cd $::env(GUI_TEST_DIR)
 set argv [list [file tail $work_database]]
 set argc 1
 set argv0 [info nameofexecutable]
@@ -707,7 +708,7 @@ if {[catch {source $::env(ARCHER_LAUNCH)} message options]} {
     }
     exit 1
 }
-::xmin::test::capture_background_errors
+::gui::test::capture_background_errors
 
 # Let the splash timer finish so it cannot obscure dialog discovery.
 after 1800 ::archer::xmin::run_checked

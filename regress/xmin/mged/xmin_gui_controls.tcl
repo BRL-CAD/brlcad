@@ -20,13 +20,13 @@
 ###
 # Exercise stateful MGED control panels through their live Tk widgets.
 
-if {![info exists ::env(XMIN_GUI_LIBRARY)] ||
-    ![info exists ::env(XMIN_TEST_DIR)]} {
-    puts stderr "XMIN_GUI_LIBRARY and XMIN_TEST_DIR are required"
+if {![info exists ::env(GUI_TEST_LIBRARY)] ||
+    ![info exists ::env(GUI_TEST_DIR)]} {
+    puts stderr "GUI_TEST_LIBRARY and GUI_TEST_DIR are required"
     exit 2
 }
-source $::env(XMIN_GUI_LIBRARY)
-::xmin::test::capture_background_errors
+source $::env(GUI_TEST_LIBRARY)
+::gui::test::capture_background_errors
 
 namespace eval ::mged::xmin {
     variable adc_distance_tolerance 0.1
@@ -84,10 +84,10 @@ proc ::mged::xmin::set_view {azimuth elevation center_point view_size} {
 }
 
 proc ::mged::xmin::invoke {root labels} {
-    ::xmin::test::write progress "invoke: [join $labels { > }]"
-    ::xmin::test::invoke_menu_entry $root $labels
+    ::gui::test::write progress "invoke: [join $labels { > }]"
+    ::gui::test::invoke_menu_entry $root $labels
     settle
-    ::xmin::test::write progress "invoked: [join $labels { > }]"
+    ::gui::test::write progress "invoked: [join $labels { > }]"
 }
 
 proc ::mged::xmin::exercise_view_ring {id top} {
@@ -99,7 +99,7 @@ proc ::mged::xmin::exercise_view_ring {id top} {
     set second [set_view 40 30 {-4 5 6} 200]
     invoke $top {ViewRing {Add View}}
     set second_id $view_ring($id)
-    ::xmin::test::require {[llength $mged_gui($id,views)] == 2} \
+    ::gui::test::require {[llength $mged_gui($id,views)] == 2} \
 	"ViewRing did not store two views"
 
     set_view 0 0 {0 0 0} 50
@@ -118,9 +118,9 @@ proc ::mged::xmin::exercise_view_ring {id top} {
 
     set delete_menu $top.menubar.viewring.delete
     $delete_menu invoke 0
-    ::xmin::test::require {[llength $mged_gui($id,views)] == 1} \
+    ::gui::test::require {[llength $mged_gui($id,views)] == 1} \
 	"ViewRing did not delete the selected stored view"
-    ::xmin::test::require {$view_ring($id) == $second_id} \
+    ::gui::test::require {$view_ring($id) == $second_id} \
 	"ViewRing deletion left its selection on a deleted view"
     invoke $top {ViewRing {Next View}}
     require_near [view_state] $second "ViewRing traversal after deletion"
@@ -131,9 +131,9 @@ proc ::mged::xmin::exercise_grid {id top} {
 
     invoke $top {Tools {Grid Control Panel}}
     set panel $top.grid_control
-    ::xmin::test::require {[winfo exists $panel] && [winfo ismapped $panel]} \
+    ::gui::test::require {[winfo exists $panel] && [winfo ismapped $panel]} \
 	"Grid Control Panel did not open"
-    ::xmin::test::require {[wm title $panel] eq "Grid Control Panel ($id)"} \
+    ::gui::test::require {[wm title $panel] eq "Grid Control Panel ($id)"} \
 	"Grid Control Panel has an unexpected title"
 
     foreach setting {anchor rh rv mrh mrv draw snap} {
@@ -154,7 +154,7 @@ proc ::mged::xmin::exercise_grid {id top} {
     require_near [rset grid rv] {3.5} "vertical grid spacing"
     require_near [rset grid mrh] {7} "horizontal major-grid spacing"
     require_near [rset grid mrv] {9} "vertical major-grid spacing"
-    ::xmin::test::require {
+    ::gui::test::require {
 	[rset grid draw] == 1 && [rset grid snap] == 1 &&
 	$mged_gui($id,grid_draw) == 1 && $mged_gui($id,grid_snap) == 1
     } "Grid Control Panel did not synchronize its render and GUI state"
@@ -169,7 +169,7 @@ proc ::mged::xmin::exercise_grid {id top} {
     $panel.applyB invoke
     $panel.resetB invoke
     $panel.dismissB invoke
-    ::xmin::test::require {![winfo exists $panel]} \
+    ::gui::test::require {![winfo exists $panel]} \
 	"Grid Control Panel did not dismiss"
 }
 
@@ -179,9 +179,9 @@ proc ::mged::xmin::exercise_adc {id top} {
 
     invoke $top {Tools {ADC Control Panel}}
     set panel $top.adc_control
-    ::xmin::test::require {[winfo exists $panel] && [winfo ismapped $panel]} \
+    ::gui::test::require {[winfo exists $panel] && [winfo ismapped $panel]} \
 	"ADC Control Panel did not open"
-    ::xmin::test::require {[wm title $panel] eq "ADC Control Panel ($id)"} \
+    ::gui::test::require {[wm title $panel] eq "ADC Control Panel ($id)"} \
 	"ADC Control Panel has an unexpected title"
     set reset_position [adc xyz]
 
@@ -205,18 +205,18 @@ proc ::mged::xmin::exercise_adc {id top} {
 	$adc_distance_tolerance
     require_near [adc a1] {15} "ADC first angle"
     require_near [adc a2] {75} "ADC second angle"
-    ::xmin::test::require {[adc draw] == 1} \
+    ::gui::test::require {[adc draw] == 1} \
 	"ADC Control Panel did not enable the cursor"
 
     $panel.resetB invoke
     require_near [adc xyz] $reset_position "reset ADC position"
-    ::xmin::test::require {
+    ::gui::test::require {
 	[adc draw] == 1 && $mged_adc_control($id,draw) == 1
     } "ADC Control Panel reset did not preserve and reload the draw setting"
     set mged_adc_control($id,draw) 0
     $panel.applyB invoke
     $panel.dismissB invoke
-    ::xmin::test::require {![winfo exists $panel]} \
+    ::gui::test::require {![winfo exists $panel]} \
 	"ADC Control Panel did not dismiss"
 }
 
@@ -225,42 +225,42 @@ proc ::mged::xmin::exercise_font_persistence {id top} {
 
     invoke $top {File Preferences Fonts}
     set panel $top.font_scheme
-    ::xmin::test::require {[winfo exists $panel] && [winfo ismapped $panel]} \
+    ::gui::test::require {[winfo exists $panel] && [winfo ismapped $panel]} \
 	"Fonts panel did not open"
-    ::xmin::test::require {[wm title $panel] eq "Fonts"} \
+    ::gui::test::require {[wm title $panel] eq "Fonts"} \
 	"Fonts panel has an unexpected title"
 
     set text_menu $panel._TextMB.menu
     set font_index [$text_menu index {courier 18}]
-    ::xmin::test::require {$font_index ne "none"} \
+    ::gui::test::require {$font_index ne "none"} \
 	"Fonts panel does not offer courier 18"
     $text_menu invoke $font_index
     $panel.applyB invoke
 
-    ::xmin::test::require {[font configure text_font -size] == 18} \
+    ::gui::test::require {[font configure text_font -size] == 18} \
 	"Fonts panel did not apply the text-font size"
-    ::xmin::test::require {[dict get $mged_default(text_font) -size] == 18} \
+    ::gui::test::require {[dict get $mged_default(text_font) -size] == 18} \
 	"Fonts panel did not update the persisted text-font setting"
 
     invoke $top {File {Create/Update .mgedrc}}
-    set rcfile [file join $::env(XMIN_TEST_DIR) .mgedrc]
-    ::xmin::test::require {[file exists $rcfile]} \
+    set rcfile [file join $::env(GUI_TEST_DIR) .mgedrc]
+    ::gui::test::require {[file exists $rcfile]} \
 	"Create/Update .mgedrc did not create the isolated preferences file"
     set channel [open $rcfile r]
     set contents [read $channel]
     close $channel
     set expected [list set mged_default(text_font) $mged_default(text_font)]
-    ::xmin::test::require {[lsearch -exact [split $contents \n] $expected] >= 0} \
+    ::gui::test::require {[lsearch -exact [split $contents \n] $expected] >= 0} \
 	".mgedrc did not contain the applied text-font setting"
 
     $panel.dismissB invoke
-    ::xmin::test::require {![winfo exists $panel]} \
+    ::gui::test::require {![winfo exists $panel]} \
 	"Fonts panel did not dismiss"
 }
 
 proc ::mged::xmin::dismiss_about {expected_title} {
     variable about_seen
-    foreach widget [linsert [::xmin::test::descendants .] 0 .] {
+    foreach widget [linsert [::gui::test::descendants .] 0 .] {
 	if {[winfo toplevel $widget] ne $widget ||
 	    ![winfo ismapped $widget] || [wm title $widget] ne $expected_title} {
 	    continue
@@ -281,7 +281,7 @@ proc ::mged::xmin::exercise_about {top} {
     set about_seen ""
     after 25 [list ::mged::xmin::dismiss_about $expected_title]
     invoke $top {Help {About MGED}}
-    ::xmin::test::require {$about_seen eq $expected_title} \
+    ::gui::test::require {$about_seen eq $expected_title} \
 	"About MGED did not display its dialog"
 }
 
@@ -292,10 +292,10 @@ proc ::mged::xmin::finish {status message} {
     }
     set finished 1
     catch {update}
-    lassign [::xmin::test::check_background_errors $status $message] \
+    lassign [::gui::test::check_background_errors $status $message] \
 	status message
     puts $message
-    ::xmin::test::write result $message
+    ::gui::test::write result $message
     if {$status != 0} {
 	puts stderr $message
     }
@@ -331,8 +331,8 @@ proc ::mged::xmin::run {} {
 	set version [package require $package $minimum]
 	lappend versions "$package $version"
     }
-    ::xmin::test::write package_versions [join $versions \n]
-    set ::env(HOME) $::env(XMIN_TEST_DIR)
+    ::gui::test::write package_versions [join $versions \n]
+    set ::env(HOME) $::env(GUI_TEST_DIR)
 
     exercise_view_ring $id $top
     exercise_grid $id $top
@@ -348,7 +348,7 @@ proc ::mged::xmin::run_checked {} {
 	if {[dict exists $options -errorinfo]} {
 	    set error_info [dict get $options -errorinfo]
 	    puts stderr $error_info
-	    ::xmin::test::write tcl_error_debug $error_info
+	    ::gui::test::write tcl_error_debug $error_info
 	}
 	finish 1 "FAIL: MGED control-panel regression: $message"
     }

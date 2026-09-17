@@ -20,7 +20,7 @@
 ###
 # Exercise the MGED LOD Configuration dialog and its CSG/VDS render paths.
 
-source $::env(MGED_XMIN_GUI_LIBRARY)
+source $::env(MGED_GUI_TEST_LIBRARY)
 
 namespace eval ::mged::xmin::lod {
     variable dense_point_scale 1.5
@@ -33,7 +33,7 @@ proc ::mged::xmin::lod::require_near {actual expected description} {
     variable tolerance
     if {![string is double -strict $actual] ||
 	abs($actual - $expected) > $tolerance} {
-	::mged::xmin::test::fail \
+	::mged::gui::test::fail \
 	    "$description is '$actual', expected '$expected'"
     }
 }
@@ -69,10 +69,10 @@ proc ::mged::xmin::lod::create_adaptive_bot {name} {
 }
 
 proc ::mged::xmin::lod::plot_segment_count {tag} {
-    set plot_path [file join $::env(XMIN_TEST_DIR) "$tag.plot3"]
+    set plot_path [file join $::env(GUI_TEST_DIR) "$tag.plot3"]
     file delete -force $plot_path
     _mged_plot $plot_path
-    ::xmin::test::require {
+    ::gui::test::require {
 	[file exists $plot_path] && [file size $plot_path] > 0
     } "LOD $tag plot was not produced"
 
@@ -85,21 +85,21 @@ proc ::mged::xmin::lod::exercise_dialog {top} {
     lod scale points 0.6
     lod scale curves 7
 
-    ::mged::xmin::test::invoke $top {Tools {LOD Configuration}}
+    ::mged::gui::test::invoke $top {Tools {LOD Configuration}}
     set dialog .loddialog
     set contents $dialog.contents
     set frame $contents.lodFrame
-    ::xmin::test::require {
+    ::gui::test::require {
 	[winfo exists $dialog] && [winfo ismapped $dialog]
     } "LOD Configuration did not open"
-    ::xmin::test::require {[wm title $dialog] eq "LOD Configuration"} \
+    ::gui::test::require {[wm title $dialog] eq "LOD Configuration"} \
 	"LOD Configuration has an unexpected title"
 
     require_near [$frame.pointsScale get] 0.6 \
 	"LOD point scale initial widget value"
     require_near [$frame.curvesScale get] 7 \
 	"LOD curve scale initial widget value"
-    ::xmin::test::require {
+    ::gui::test::require {
 	[lod enabled] == 0 &&
 	[$frame.pointsScale instate disabled] &&
 	[$frame.pointsValueLabel instate disabled] &&
@@ -109,8 +109,8 @@ proc ::mged::xmin::lod::exercise_dialog {top} {
     } "disabled LOD state was not reflected by every dependent widget"
 
     $frame.lodonCheckbutton invoke
-    ::mged::xmin::test::settle
-    ::xmin::test::require {
+    ::mged::gui::test::settle
+    ::gui::test::require {
 	[lod enabled] == 1 &&
 	![$frame.pointsScale instate disabled] &&
 	![$frame.curvesScale instate disabled] &&
@@ -119,22 +119,22 @@ proc ::mged::xmin::lod::exercise_dialog {top} {
 
     $frame.pointsScale set 1.3
     $frame.curvesScale set 11
-    ::mged::xmin::test::settle
+    ::mged::gui::test::settle
     require_near [lod scale points] 1.3 "LOD point scale command value"
     require_near [lod scale curves] 11 "LOD curve scale command value"
 
     $frame.liveUpdateCheckbutton invoke
-    ::xmin::test::require {
+    ::gui::test::require {
 	[$frame.liveUpdateCheckbutton instate selected]
     } "LOD Live Update control did not select"
     $frame.pointsScale set 0.8
-    ::mged::xmin::test::settle
+    ::mged::gui::test::settle
     require_near [lod scale points] 0.8 "live LOD point scale value"
 
     $frame.updateButton invoke
-    ::mged::xmin::test::settle
+    ::mged::gui::test::settle
     destroy $dialog
-    ::xmin::test::require {![winfo exists $dialog]} \
+    ::gui::test::require {![winfo exists $dialog]} \
 	"LOD Configuration did not close"
 }
 
@@ -144,7 +144,7 @@ proc ::mged::xmin::lod::exercise_render_paths {} {
 
     make xmin_lod_ell.s ell
     set face_count [create_adaptive_bot xmin_lod_bot.s]
-    ::xmin::test::require {
+    ::gui::test::require {
 	[exists xmin_lod_bot.s] && [lindex [get xmin_lod_bot.s] 0] eq "bot"
     } "LOD fixture did not produce a BoT"
 
@@ -169,7 +169,7 @@ proc ::mged::xmin::lod::exercise_render_paths {} {
     refresh
     set dense_segments [expr {[plot_segment_count dense-detail] - $background_segments}]
 
-    ::xmin::test::require {
+    ::gui::test::require {
 	$full_segments == $face_count * 3 &&
 	$sparse_segments > 0 &&
 	$sparse_segments < $dense_segments &&
@@ -178,7 +178,7 @@ proc ::mged::xmin::lod::exercise_render_paths {} {
 
     draw xmin_lod_ell.s
     refresh
-    ::xmin::test::require {
+    ::gui::test::require {
 	[lod enabled] == 1 &&
 	[lsearch -exact [who] xmin_lod_ell.s] >= 0
     } "adaptive CSG drawing did not remain active"
@@ -189,8 +189,8 @@ proc ::mged::xmin::lod::exercise_render_paths {} {
 }
 
 proc ::mged::xmin::lod::run {id top} {
-    set database [file join $::env(XMIN_TEST_DIR) lod.g]
-    cd $::env(XMIN_TEST_DIR)
+    set database [file join $::env(GUI_TEST_DIR) lod.g]
+    cd $::env(GUI_TEST_DIR)
     file delete -force $database
     opendb $database y
     title {Xmin MGED LOD regression}
@@ -199,7 +199,7 @@ proc ::mged::xmin::lod::run {id top} {
     exercise_dialog $top
 }
 
-::mged::xmin::test::start ::mged::xmin::lod::run \
+::mged::gui::test::start ::mged::xmin::lod::run \
     {MGED LOD dialog and adaptive rendering} \
     {MGED LOD regression}
 

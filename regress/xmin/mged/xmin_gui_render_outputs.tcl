@@ -20,7 +20,7 @@
 ###
 # Exercise MGED's Render View output dialogs through their live controls.
 
-source $::env(MGED_XMIN_GUI_LIBRARY)
+source $::env(MGED_GUI_TEST_LIBRARY)
 
 namespace eval ::mged::xmin::render {
     variable raytrace_image_size 32
@@ -36,7 +36,7 @@ proc ::mged::xmin::render::read_file {path {translation auto}} {
 }
 
 proc ::mged::xmin::render::require_file {path description} {
-    ::xmin::test::require {
+    ::gui::test::require {
 	[file exists $path] && [file size $path] > 0
     } "$description did not produce a nonempty file"
 }
@@ -55,17 +55,17 @@ proc ::mged::xmin::render::wait_for_file_size {path minimum_size timeout_ms} {
     if {[file exists $path]} {
 	set actual_size [file size $path]
     }
-    ::mged::xmin::test::fail \
+    ::mged::gui::test::fail \
 	"raytrace output has $actual_size bytes, expected at least $minimum_size"
 }
 
 proc ::mged::xmin::render::exercise_rt_script {id top} {
     global rts_control
 
-    set output [file join $::env(XMIN_TEST_DIR) saved-view.sh]
-    ::mged::xmin::test::invoke $top {File {Render View} {RT Script...}}
+    set output [file join $::env(GUI_TEST_DIR) saved-view.sh]
+    ::mged::gui::test::invoke $top {File {Render View} {RT Script...}}
     set dialog .$id.do_rtScript
-    ::xmin::test::require {
+    ::gui::test::require {
 	[winfo exists $dialog] && [winfo ismapped $dialog] &&
 	[wm title $dialog] eq "RT Script Tool"
     } "RT Script did not open its tool"
@@ -73,33 +73,33 @@ proc ::mged::xmin::render::exercise_rt_script {id top} {
     set rts_control($id,file) $output
     set rts_control($id,args) {-A 0.25}
     $dialog.createB invoke
-    ::mged::xmin::test::settle
+    ::mged::gui::test::settle
     require_file $output "RT Script"
     set contents [read_file $output]
-    ::xmin::test::require {
+    ::gui::test::require {
 	[string first "-A 0.25" $contents] >= 0 &&
 	[string first "xmin_render.r" $contents] >= 0
     } "RT Script omitted its requested options or displayed object"
     set initial_size [file size $output]
 
-    ::mged::xmin::test::with_dialog_answer .mged_dialog \
+    ::mged::gui::test::with_dialog_answer .mged_dialog \
 	"Append $output?" "" "" .mged_dialog.bot.button0 \
 	[list $dialog.createB invoke]
-    ::xmin::test::require {[file size $output] > $initial_size} \
+    ::gui::test::require {[file size $output] > $initial_size} \
 	"RT Script overwrite confirmation did not append another view"
 
     $dialog.dismissB invoke
-    ::xmin::test::require {![winfo exists $dialog]} \
+    ::gui::test::require {![winfo exists $dialog]} \
 	"RT Script tool did not dismiss"
 }
 
 proc ::mged::xmin::render::exercise_plot {id top} {
     global pl_control
 
-    set output [file join $::env(XMIN_TEST_DIR) rendered.plot3]
-    ::mged::xmin::test::invoke $top {File {Render View} {Plot...}}
+    set output [file join $::env(GUI_TEST_DIR) rendered.plot3]
+    ::mged::gui::test::invoke $top {File {Render View} {Plot...}}
     set dialog .$id.do_plot
-    ::xmin::test::require {
+    ::gui::test::require {
 	[winfo exists $dialog] && [winfo ismapped $dialog]
     } "Plot did not open its tool"
 
@@ -108,37 +108,37 @@ proc ::mged::xmin::render::exercise_plot {id top} {
     set pl_control($id,2d) 0
     set pl_control($id,float) 0
     $dialog.createB invoke
-    ::mged::xmin::test::settle
+    ::mged::gui::test::settle
     require_file $output "Plot"
     set plot_text [exec $::env(PLOT3_ASC_BIN) $output]
-    ::xmin::test::require {
+    ::gui::test::require {
 	[regexp -line {^L[ \t]} $plot_text] &&
 	[llength [split $plot_text \n]] > 10
     } "Plot output could not be decoded into line records"
 
     $dialog.filterRB invoke
-    ::xmin::test::require {
+    ::gui::test::require {
 	[$dialog.fileE cget -state] eq "disabled" &&
 	[$dialog.filterE cget -state] eq "normal"
     } "Plot filter selection did not update entry states"
     $dialog.fileRB invoke
-    ::xmin::test::require {
+    ::gui::test::require {
 	[$dialog.fileE cget -state] eq "normal" &&
 	[$dialog.filterE cget -state] eq "disabled"
     } "Plot file selection did not restore entry states"
 
     $dialog.dismissB invoke
-    ::xmin::test::require {![winfo exists $dialog]} \
+    ::gui::test::require {![winfo exists $dialog]} \
 	"Plot tool did not dismiss"
 }
 
 proc ::mged::xmin::render::exercise_postscript {id top} {
     global ps_control
 
-    set output [file join $::env(XMIN_TEST_DIR) rendered.ps]
-    ::mged::xmin::test::invoke $top {File {Render View} {PostScript...}}
+    set output [file join $::env(GUI_TEST_DIR) rendered.ps]
+    ::mged::gui::test::invoke $top {File {Render View} {PostScript...}}
     set dialog .$id.do_ps
-    ::xmin::test::require {
+    ::gui::test::require {
 	[winfo exists $dialog] && [winfo ismapped $dialog]
     } "PostScript did not open its tool"
 
@@ -149,14 +149,14 @@ proc ::mged::xmin::render::exercise_postscript {id top} {
     set ps_control($id,linewidth) 2
     set ps_control($id,zclip) 1
     $dialog.fontMB.fontM.helveticaM invoke Bold
-    ::xmin::test::require {$ps_control($id,font) eq "Helvetica-Bold"} \
+    ::gui::test::require {$ps_control($id,font) eq "Helvetica-Bold"} \
 	"PostScript font menu did not update the selected font"
 
     $dialog.createB invoke
-    ::mged::xmin::test::settle
+    ::mged::gui::test::settle
     require_file $output "PostScript"
     set contents [read_file $output]
-    ::xmin::test::require {
+    ::gui::test::require {
 	[string first "%!PS-Adobe" $contents] == 0 &&
 	[string first "Xmin Render Output" $contents] >= 0 &&
 	[string first "MGED regression" $contents] >= 0 &&
@@ -164,7 +164,7 @@ proc ::mged::xmin::render::exercise_postscript {id top} {
     } "PostScript output omitted its header or configured metadata"
 
     $dialog.dismissB invoke
-    ::xmin::test::require {![winfo exists $dialog]} \
+    ::gui::test::require {![winfo exists $dialog]} \
 	"PostScript tool did not dismiss"
 }
 
@@ -173,10 +173,10 @@ proc ::mged::xmin::render::exercise_raytrace {id top} {
     variable raytrace_image_size
     variable raytrace_timeout_ms
 
-    set output [file join $::env(XMIN_TEST_DIR) rendered.pix]
-    ::mged::xmin::test::invoke $top {File Raytrace}
+    set output [file join $::env(GUI_TEST_DIR) rendered.pix]
+    ::mged::gui::test::invoke $top {File Raytrace}
     set dialog .$id.rt
-    ::xmin::test::require {
+    ::gui::test::require {
 	[winfo exists $dialog] && [winfo ismapped $dialog]
     } "File > Raytrace did not open the Raytrace Control Panel"
 
@@ -197,13 +197,13 @@ proc ::mged::xmin::render::exercise_raytrace {id top} {
 	$raytrace_timeout_ms
 
     $dialog.dismissB invoke
-    ::xmin::test::require {![winfo exists $dialog]} \
+    ::gui::test::require {![winfo exists $dialog]} \
 	"Raytrace Control Panel did not dismiss"
 }
 
 proc ::mged::xmin::render::run {id top} {
-    set database [file join $::env(XMIN_TEST_DIR) render.g]
-    cd $::env(XMIN_TEST_DIR)
+    set database [file join $::env(GUI_TEST_DIR) render.g]
+    cd $::env(GUI_TEST_DIR)
     file delete -force $database
     opendb $database y
     title {Xmin MGED render-output regression}
@@ -220,7 +220,7 @@ proc ::mged::xmin::render::run {id top} {
     exercise_raytrace $id $top
 }
 
-::mged::xmin::test::start ::mged::xmin::render::run \
+::mged::gui::test::start ::mged::xmin::render::run \
     {MGED Render View output dialogs} {MGED render-output regression}
 
 # Local Variables:

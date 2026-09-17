@@ -2,12 +2,12 @@
 
 set -eu
 
-: "${XMIN_TEST_SHELL:?XMIN_TEST_SHELL is required}"
-. "$XMIN_TEST_SHELL"
+: "${GUI_TEST_SHELL:?GUI_TEST_SHELL is required}"
+. "$GUI_TEST_SHELL"
 
 window=$1
-geometry=$("$XMIN_CTL" geometry "$window") ||
-    xmin_fail "could not query Archer window geometry"
+geometry=$("$GUI_TEST_CTL" geometry "$window") ||
+    gui_fail "could not query Archer window geometry"
 set -- $geometry
 width=$3
 height=$4
@@ -16,9 +16,9 @@ height=$4
 # relative to the live geometry so the action is independent of screen size.
 command_x=$((width / 4))
 command_y=$((height - 27))
-"$XMIN_CTL" click "$window" "$command_x" "$command_y" 1
-"$XMIN_CTL" type "draw all.g"
-"$XMIN_CTL" key enter
+"$GUI_TEST_CTL" click "$window" "$command_x" "$command_y" 1
+"$GUI_TEST_CTL" type "draw all.g"
+"$GUI_TEST_CTL" key enter
 ARCHER_DRAW_SETTLE_SECONDS=${ARCHER_DRAW_SETTLE_SECONDS:-1}
 sleep "$ARCHER_DRAW_SETTLE_SECONDS"
 

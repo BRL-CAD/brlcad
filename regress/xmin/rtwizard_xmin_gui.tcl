@@ -18,12 +18,12 @@
 # information.
 #
 ###
-if {![info exists ::env(XMIN_GUI_LIBRARY)] ||
+if {![info exists ::env(GUI_TEST_LIBRARY)] ||
     ![info exists ::env(RTWIZARD_TEST_DATABASE)]} {
-    puts stderr "XMIN_GUI_LIBRARY and RTWIZARD_TEST_DATABASE are required"
+    puts stderr "GUI_TEST_LIBRARY and RTWIZARD_TEST_DATABASE are required"
     exit 2
 }
-source $::env(XMIN_GUI_LIBRARY)
+source $::env(GUI_TEST_LIBRARY)
 
 namespace eval ::rtwizard::xmin {
     variable dialog_seen ""
@@ -38,7 +38,7 @@ namespace eval ::rtwizard::xmin {
 proc ::rtwizard::xmin::finish {status message} {
     catch {destroy .}
     catch {update}
-    lassign [::xmin::test::check_background_errors $status $message] \
+    lassign [::gui::test::check_background_errors $status $message] \
 	status message
     puts $message
     if {$status != 0} {
@@ -55,14 +55,14 @@ proc ::rtwizard::xmin::compare_manifest {actual} {
     set expected [string trim [read $channel]]
     close $channel
     if {$actual ne $expected} {
-	::xmin::test::write menu_inventory_actual $actual
+	::gui::test::write menu_inventory_actual $actual
 	error "live rtwizard menu inventory differs from its manifest"
     }
 }
 
 proc ::rtwizard::xmin::toplevels {} {
     set toplevels {}
-    foreach widget [linsert [::xmin::test::descendants .] 0 .] {
+    foreach widget [linsert [::gui::test::descendants .] 0 .] {
 	if {[winfo toplevel $widget] eq $widget} {
 	    lappend toplevels $widget
 	}
@@ -89,18 +89,18 @@ proc ::rtwizard::xmin::exercise_dialog {labels expected_title} {
     variable dialog_poll_delay_ms
     set dialog_seen ""
     after $dialog_poll_delay_ms ::rtwizard::xmin::dismiss_dialog
-    ::xmin::test::invoke_menu_entry . $labels
-    ::xmin::test::require {$dialog_seen ne ""} \
+    ::gui::test::invoke_menu_entry . $labels
+    ::gui::test::require {$dialog_seen ne ""} \
 	"menu entry did not display a dialog: [join $labels { > }]"
     if {$expected_title ne ""} {
-	::xmin::test::require {$dialog_seen eq $expected_title} \
+	::gui::test::require {$dialog_seen eq $expected_title} \
 	    "unexpected dialog title '$dialog_seen', expected '$expected_title'"
     }
 }
 
 proc ::rtwizard::xmin::step_labels {} {
     set labels {}
-    foreach entry [split [::xmin::test::menu_inventory .] "\n"] {
+    foreach entry [split [::gui::test::menu_inventory .] "\n"] {
 	if {[lindex $entry 0] eq "Steps" &&
 	    [lindex $entry end-1] ne "separator"} {
 	    lappend labels [lindex $entry 1]
@@ -111,12 +111,12 @@ proc ::rtwizard::xmin::step_labels {} {
 
 proc ::rtwizard::xmin::set_framebuffer_entry {component variable value} {
     set control [$::fbp component $component]
-    ::xmin::test::require {[winfo exists $control]} \
+    ::gui::test::require {[winfo exists $control]} \
 	"missing framebuffer-page component: $component"
     $control clear
     $control insert 0 $value
     update idletasks
-    ::xmin::test::require {
+    ::gui::test::require {
 	$::RtWizard::wizard_state($variable) eq $value
     } "framebuffer control $component did not update $variable"
 }
@@ -129,12 +129,12 @@ proc ::rtwizard::xmin::exercise_framebuffer_controls {} {
     set height 72
     foreach {component value} [list width $width height $height] {
 	set control [$::fbp component $component]
-	::xmin::test::require {[winfo exists $control]} \
+	::gui::test::require {[winfo exists $control]} \
 	    "missing framebuffer-page component: $component"
 	$control clear
 	$control insert 0 $value
     }
-    ::xmin::test::require {
+    ::gui::test::require {
 	[$::fbp getWidth] == $width && [$::fbp getHeight] == $height
     } "framebuffer dimension controls did not retain their values"
 
@@ -149,23 +149,23 @@ proc ::rtwizard::xmin::exercise_framebuffer_controls {} {
     }
 
     set animation [$::fbp component cutAnimation]
-    ::xmin::test::require {[winfo exists $animation]} \
+    ::gui::test::require {[winfo exists $animation]} \
 	"missing framebuffer-page component: cutAnimation"
     set ::RtWizard::wizard_state(make_animation) 0
     $animation invoke
-    ::xmin::test::require {$::RtWizard::wizard_state(make_animation) == 1} \
+    ::gui::test::require {$::RtWizard::wizard_state(make_animation) == 1} \
 	"cut-animation control did not update its state"
 
     set radiobox [$::fbp component radBox]
     set filename [$::fbp component fileName]
     set browse [$::fbp component browse]
     $radiobox select toScreen
-    ::xmin::test::require {
+    ::gui::test::require {
 	[$filename cget -state] eq "disabled" &&
 	[$browse cget -state] eq "disabled"
     } "screen output did not disable file controls"
     $radiobox select toFile
-    ::xmin::test::require {
+    ::gui::test::require {
 	[$filename cget -state] eq "normal" &&
 	[$browse cget -state] eq "normal"
     } "file output did not enable file controls"
@@ -183,12 +183,12 @@ proc ::rtwizard::xmin::invoke_render_with_port_contention {} {
 	return [::rtwizard::xmin::actual_port_occupied $logical_port]
     }
     try {
-	::xmin::test::invoke_menu_entry . {Render Full-Size}
+	::gui::test::invoke_menu_entry . {Render Full-Size}
     } finally {
 	rename ::rtwiz_port_occupied {}
 	rename ::rtwizard::xmin::actual_port_occupied ::rtwiz_port_occupied
     }
-    ::xmin::test::require {$forced_port_probe} \
+    ::gui::test::require {$forced_port_probe} \
 	"rtwizard did not exercise its occupied framebuffer-port retry"
 }
 
@@ -207,13 +207,13 @@ proc ::rtwizard::xmin::run {} {
     }
 
     set expected_title "RtWizard - [file tail $::env(RTWIZARD_TEST_DATABASE)]"
-    ::xmin::test::require {[wm title .] eq $expected_title} \
+    ::gui::test::require {[wm title .] eq $expected_title} \
 	"unexpected rtwizard main-window title"
 
-    set widget_inventory [::xmin::test::widget_inventory .]
-    set menu_inventory [::xmin::test::menu_inventory .]
-    ::xmin::test::write widget_inventory $widget_inventory
-    ::xmin::test::write menu_inventory $menu_inventory
+    set widget_inventory [::gui::test::widget_inventory .]
+    set menu_inventory [::gui::test::menu_inventory .]
+    ::gui::test::write widget_inventory $widget_inventory
+    ::gui::test::write menu_inventory $menu_inventory
     compare_manifest $menu_inventory
 
     foreach labels {
@@ -224,8 +224,8 @@ proc ::rtwizard::xmin::run {} {
 	{Help Help...}
 	{Help About...}
     } {
-	::xmin::test::require {
-	    [::xmin::test::find_menu_entry . $labels] ne ""
+	::gui::test::require {
+	    [::gui::test::find_menu_entry . $labels] ne ""
 	} "missing rtwizard menu entry: [join $labels { > }]"
     }
 
@@ -241,8 +241,8 @@ proc ::rtwizard::xmin::run {} {
 	    {Configure Ghost Elements} {Configure Full-Color Elements}
 	    {Configure Line-Drawing Elements}}
     } {
-	::xmin::test::invoke_menu_entry . [list Image $title]
-	::xmin::test::require {[$::exp getImageType] eq $title} \
+	::gui::test::invoke_menu_entry . [list Image $title]
+	::gui::test::require {[$::exp getImageType] eq $title} \
 	    "rtwizard did not select image type: $title"
 	foreach page [concat {dbp fbp intro help exp} $pages] {
 	    $::wizardInstance select $page
@@ -251,7 +251,7 @@ proc ::rtwizard::xmin::run {} {
 	set expected_steps [concat $expected_steps \
 	    {Greeting {Configure Framebuffer}}]
 	set actual_steps [step_labels]
-	::xmin::test::require {
+	::gui::test::require {
 	    $actual_steps eq [lsort -dictionary $expected_steps]
 	} "unexpected Steps menu for '$title': $actual_steps"
     }
@@ -262,13 +262,13 @@ proc ::rtwizard::xmin::run {} {
 
     set config_file $::env(RTWIZARD_RCFILE)
     exercise_dialog {File {Write .rtwizardrc}} ""
-    ::xmin::test::require {[file exists $config_file]} \
+    ::gui::test::require {[file exists $config_file]} \
 	"rtwizard did not create the requested configuration file"
     set channel [open $config_file r]
     set config [read $channel]
     close $channel
     foreach setting {wizard_width wizard_height gpane} {
-	::xmin::test::require {
+	::gui::test::require {
 	    [string first "set ::$setting " $config] >= 0
 	} "rtwizard configuration omitted $setting"
     }
@@ -283,7 +283,7 @@ proc ::rtwizard::xmin::run {} {
     set ::RtWizard::wizard_state(make_animation) 0
     set rgb_bytes_per_pixel 3
     set expected_size [expr {$render_dimension * $render_dimension * $rgb_bytes_per_pixel}]
-    ::xmin::test::require {
+    ::gui::test::require {
 	[info exists ::RtWizard::wizard_state(verbose)]
     } "RaytraceWizard did not initialize its optional verbose state"
     set force_port_contention true
@@ -295,18 +295,18 @@ proc ::rtwizard::xmin::run {} {
 	{Ghost Image with Insert} ghost
 	{Ghost Image with Insert and Lines} ghost-line
     } {
-	::xmin::test::invoke_menu_entry . [list Image $title]
-	set render_file [file join $::env(XMIN_TEST_DIR) rtwizard-$basename.pix]
+	::gui::test::invoke_menu_entry . [list Image $title]
+	set render_file [file join $::env(GUI_TEST_DIR) rtwizard-$basename.pix]
 	set ::RtWizard::wizard_state(output_filename) $render_file
 	if {$force_port_contention} {
 	    invoke_render_with_port_contention
 	    set force_port_contention false
 	} else {
-	    ::xmin::test::invoke_menu_entry . {Render Full-Size}
+	    ::gui::test::invoke_menu_entry . {Render Full-Size}
 	}
-	::xmin::test::require {[file exists $render_file]} \
+	::gui::test::require {[file exists $render_file]} \
 	    "rtwizard '$title' render did not create its output file"
-	::xmin::test::require {[file size $render_file] == $expected_size} \
+	::gui::test::require {[file size $render_file] == $expected_size} \
 	    "rtwizard '$title' render has an unexpected byte count"
     }
 
@@ -314,10 +314,10 @@ proc ::rtwizard::xmin::run {} {
     set expected_preview_size [expr {
 	$preview_dimension * $preview_dimension * $rgb_bytes_per_pixel
     }]
-    set preview_file [file join $::env(XMIN_TEST_DIR) rtwizard-preview.pix]
+    set preview_file [file join $::env(GUI_TEST_DIR) rtwizard-preview.pix]
     set ::RtWizard::wizard_state(output_filename) $preview_file
-    ::xmin::test::invoke_menu_entry . {Render Preview}
-    ::xmin::test::require {
+    ::gui::test::invoke_menu_entry . {Render Preview}
+    ::gui::test::require {
 	[file exists $preview_file] && [file size $preview_file] == $expected_preview_size
     } "rtwizard preview did not create the expected half-size image"
 
@@ -337,14 +337,14 @@ proc ::rtwizard::xmin::run_checked {} {
 }
 
 namespace eval ::RtWizard {}
-set ::env(RTWIZARD_RCFILE) [file join $::env(XMIN_TEST_DIR) .rtwizardrc]
+set ::env(RTWIZARD_RCFILE) [file join $::env(GUI_TEST_DIR) .rtwizardrc]
 set ::RtWizard::wizard_state(dbFile) $::env(RTWIZARD_TEST_DATABASE)
 foreach object_list {color_objlist ghost_objlist line_objlist} {
     set ::RtWizard::wizard_state($object_list) {all.g}
 }
 set argv {}
 set argc 0
-::xmin::test::capture_background_errors
+::gui::test::capture_background_errors
 after $::rtwizard::xmin::startup_delay_ms ::rtwizard::xmin::run_checked
 package require RaytraceWizard
 

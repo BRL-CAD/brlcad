@@ -20,7 +20,7 @@
 ###
 # Exercise ShotVis construction, interactive editing, persistence, and reload.
 
-source $::env(MGED_XMIN_GUI_LIBRARY)
+source $::env(MGED_GUI_TEST_LIBRARY)
 
 namespace eval ::mged::xmin::shotvis {
     variable basename xmin_shot
@@ -31,7 +31,7 @@ proc ::mged::xmin::shotvis::require_near {actual expected description} {
     variable tolerance
     if {![string is double -strict $actual] ||
 	abs($actual - $expected) > $tolerance} {
-	::mged::xmin::test::fail \
+	::mged::gui::test::fail \
 	    "$description is '$actual', expected '$expected'"
     }
 }
@@ -39,10 +39,10 @@ proc ::mged::xmin::shotvis::require_near {actual expected description} {
 proc ::mged::xmin::shotvis::root_combination {} {
     set title [wm title .shotvis]
     set prefix {Edit Shotline Visualization - }
-    ::xmin::test::require {[string first $prefix $title] == 0} \
+    ::gui::test::require {[string first $prefix $title] == 0} \
 	"ShotVis window title does not identify its active root"
     set root [string range $title [string length $prefix] end]
-    ::xmin::test::require {[exists $root]} \
+    ::gui::test::require {[exists $root]} \
 	"ShotVis active root '$root' does not exist"
     return $root
 }
@@ -50,7 +50,7 @@ proc ::mged::xmin::shotvis::root_combination {} {
 proc ::mged::xmin::shotvis::threat_combination {} {
     set root [root_combination]
     set threats [search $root -attr shotvis_threat]
-    ::xmin::test::require {[llength $threats] == 1} \
+    ::gui::test::require {[llength $threats] == 1} \
 	"ShotVis root does not contain exactly one threat combination"
     return [lindex $threats 0]
 }
@@ -58,18 +58,18 @@ proc ::mged::xmin::shotvis::threat_combination {} {
 proc ::mged::xmin::shotvis::threat_cylinder {} {
     set threat [threat_combination]
     set cylinders [search $threat -type tgc -name \*.cyl]
-    ::xmin::test::require {[llength $cylinders] == 1} \
+    ::gui::test::require {[llength $cylinders] == 1} \
 	"ShotVis threat does not contain exactly one cylinder"
     return [lindex $cylinders 0]
 }
 
 proc ::mged::xmin::shotvis::set_validated_entry {entry value} {
-    ::xmin::test::require {[winfo exists $entry]} \
+    ::gui::test::require {[winfo exists $entry]} \
 	"ShotVis entry '$entry' is unavailable"
     $entry delete 0 end
     $entry insert 0 $value
-    ::mged::xmin::test::settle
-    ::xmin::test::require {[$entry get] eq $value} \
+    ::mged::gui::test::settle
+    ::gui::test::require {[$entry get] eq $value} \
 	"ShotVis entry '$entry' rejected '$value'"
 }
 
@@ -90,14 +90,14 @@ proc ::mged::xmin::shotvis::exercise_editor {} {
     variable basename
 
     shotvis $basename
-    ::mged::xmin::test::require_mapped .shotvis ShotVis
-    ::xmin::test::require {
+    ::mged::gui::test::require_mapped .shotvis ShotVis
+    ::gui::test::require {
 	[wm title .shotvis] eq "Edit Shotline Visualization - $basename" &&
 	[exists $basename]
     } "ShotVis did not create its window and root combination"
 
     set threat [threat_combination]
-    ::xmin::test::require {
+    ::gui::test::require {
 	[attr get $threat shotvis_threat] == 1
     } "ShotVis threat combination lacks its identifying attribute"
 
@@ -120,15 +120,15 @@ proc ::mged::xmin::shotvis::exercise_editor {} {
 
     set notebook $main.notebook
     $notebook select $notebook.nirt
-    ::mged::xmin::test::settle
+    ::mged::gui::test::settle
     $notebook select $notebook.threat
-    ::mged::xmin::test::settle
-    ::xmin::test::require {
+    ::mged::gui::test::settle
+    ::gui::test::require {
 	[lsearch -exact [who] [threat_combination]] >= 0
     } "ShotVis did not redraw its threat after changing tabs"
 
     ::itcl::delete object .shotvis
-    ::xmin::test::require {
+    ::gui::test::require {
 	![winfo exists .shotvis] && [exists $basename]
     } "ShotVis did not preserve its edited root when closed"
 }
@@ -137,23 +137,23 @@ proc ::mged::xmin::shotvis::exercise_reload {} {
     variable basename
 
     shotvis $basename
-    ::mged::xmin::test::require_mapped .shotvis {reloaded ShotVis}
+    ::mged::gui::test::require_mapped .shotvis {reloaded ShotVis}
     set cylinder [threat_cylinder]
     lassign [get $cylinder V] start_x start_y start_z
     require_near $start_x 25.0 "reloaded ShotVis start X"
     require_near [magnitude [get $cylinder H]] 250.0 \
 	"reloaded ShotVis draw length"
     .shotvis update_shot
-    ::mged::xmin::test::settle
+    ::mged::gui::test::settle
     ::itcl::delete object .shotvis
-    ::xmin::test::require {[exists $basename]} \
+    ::gui::test::require {[exists $basename]} \
 	"reloaded ShotVis did not preserve its updated root"
 }
 
 proc ::mged::xmin::shotvis::run {id top} {
     variable basename
-    set database [file join $::env(XMIN_TEST_DIR) shotvis.g]
-    cd $::env(XMIN_TEST_DIR)
+    set database [file join $::env(GUI_TEST_DIR) shotvis.g]
+    cd $::env(GUI_TEST_DIR)
     file delete -force $database
     opendb $database y
     title {Xmin MGED ShotVis regression}
@@ -163,7 +163,7 @@ proc ::mged::xmin::shotvis::run {id top} {
     exercise_math
 }
 
-::mged::xmin::test::start ::mged::xmin::shotvis::run \
+::mged::gui::test::start ::mged::xmin::shotvis::run \
     {MGED ShotVis editing and persistence} {MGED ShotVis regression}
 
 # Local Variables:

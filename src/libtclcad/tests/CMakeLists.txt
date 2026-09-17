@@ -15,7 +15,7 @@ if(BRLCAD_ENABLE_TCL)
   if(BRLCAD_ENABLE_TK AND
      BRLCAD_X11_PROVIDER_RESOLVED STREQUAL "XMIN" AND
      Xmin_RUN_EXECUTABLE)
-    brlcad_add_xmin_test(
+    brlcad_add_gui_test(
       NAME tclcad_test_multi_interp_gui
       SCREEN 1280x960x24
       TIMEOUT 120

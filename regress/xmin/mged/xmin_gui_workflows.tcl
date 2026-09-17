@@ -21,13 +21,13 @@
 # Exercise MGED creation, browsing, and collaboration workflows through live
 # Tk controls and verify their database or display-state results.
 
-if {![info exists ::env(XMIN_GUI_LIBRARY)] ||
-    ![info exists ::env(XMIN_TEST_DIR)]} {
-    puts stderr "XMIN_GUI_LIBRARY and XMIN_TEST_DIR are required"
+if {![info exists ::env(GUI_TEST_LIBRARY)] ||
+    ![info exists ::env(GUI_TEST_DIR)]} {
+    puts stderr "GUI_TEST_LIBRARY and GUI_TEST_DIR are required"
     exit 2
 }
-source $::env(XMIN_GUI_LIBRARY)
-::xmin::test::capture_background_errors
+source $::env(GUI_TEST_LIBRARY)
+::gui::test::capture_background_errors
 
 namespace eval ::mged::xmin::workflows {
     variable dialog_seen 0
@@ -69,8 +69,8 @@ proc ::mged::xmin::workflows::require_near {actual expected description} {
 }
 
 proc ::mged::xmin::workflows::invoke {root labels} {
-    ::xmin::test::write progress "invoke: [join $labels { > }]"
-    ::xmin::test::invoke_menu_entry $root $labels
+    ::gui::test::write progress "invoke: [join $labels { > }]"
+    ::gui::test::invoke_menu_entry $root $labels
     settle
 }
 
@@ -193,10 +193,10 @@ proc ::mged::xmin::workflows::reject_edit {} {
 }
 
 proc ::mged::xmin::workflows::assert_created {name panel context} {
-    ::xmin::test::require {[exists $name]} "$context did not create $name"
-    ::xmin::test::require {![winfo exists $panel]} \
+    ::gui::test::require {[exists $name]} "$context did not create $name"
+    ::gui::test::require {![winfo exists $panel]} \
 	"$context did not dismiss its creation dialog"
-    ::xmin::test::require {[llength [get $name]] > 1} \
+    ::gui::test::require {[llength [get $name]] > 1} \
 	"$context created an unreadable database object"
     reject_edit
 }
@@ -207,9 +207,9 @@ proc ::mged::xmin::workflows::create_generic_primitive {id top type menu_path} {
     set name xmin_$type.s
     invoke $top [concat $menu_path [list [format "%s..." $type]]]
     set panel .$id.make_solid
-    ::xmin::test::require {[winfo exists $panel] && [winfo ismapped $panel]} \
+    ::gui::test::require {[winfo exists $panel] && [winfo ismapped $panel]} \
 	"Create $type did not open the generic primitive dialog"
-    ::xmin::test::require {
+    ::gui::test::require {
 	[string first $type [$panel.nameL cget -text]] >= 0
     } "Create $type opened a dialog for the wrong primitive type"
 
@@ -272,42 +272,42 @@ proc ::mged::xmin::workflows::write_text_file {path contents} {
 proc ::mged::xmin::workflows::exercise_file_operations {id top database} {
     global ex_control
 
-    set extracted_database [file join $::env(XMIN_TEST_DIR) extracted.g]
+    set extracted_database [file join $::env(GUI_TEST_DIR) extracted.g]
     invoke $top {File Export {Database Objects}}
     set extract_panel .$id.do_extract
-    ::xmin::test::require {
+    ::gui::test::require {
 	[winfo exists $extract_panel] && [winfo ismapped $extract_panel]
     } "Database Objects export did not open the Extract Objects dialog"
     set ex_control($id,file) $extracted_database
     set ex_control($id,objects) xmin_arb8.s
     $extract_panel.okB invoke
     settle
-    ::xmin::test::require {
+    ::gui::test::require {
 	[file exists $extracted_database] && [file size $extracted_database] > 0
     } "Database Objects export did not write a database"
 
-    set ascii_database [file join $::env(XMIN_TEST_DIR) workflows.asc]
+    set ascii_database [file join $::env(GUI_TEST_DIR) workflows.asc]
     with_file_dialog_path ::tk_getSaveFile $ascii_database \
 	[list invoke $top {File Export {Ascii Database}}]
-    ::xmin::test::require {
+    ::gui::test::require {
 	[file exists $ascii_database] && [file size $ascii_database] > 0
     } "Ascii Database export did not write a file"
 
-    set script [file join $::env(XMIN_TEST_DIR) loaded-script.tcl]
+    set script [file join $::env(GUI_TEST_DIR) loaded-script.tcl]
     write_text_file $script \
 	{set ::mged::xmin::workflows::script_loaded 1}
     set ::mged::xmin::workflows::script_loaded 0
     with_file_dialog_path ::tk_getOpenFile $script \
 	[list with_dialog_answer .mged_dialog {Script loaded} "" "" \
 	    [list invoke $top {File {Load Script...}}]]
-    ::xmin::test::require {$::mged::xmin::workflows::script_loaded} \
+    ::gui::test::require {$::mged::xmin::workflows::script_loaded} \
 	"Load Script did not evaluate the selected Tcl file"
 
-    set new_database [file join $::env(XMIN_TEST_DIR) new-database.g]
+    set new_database [file join $::env(GUI_TEST_DIR) new-database.g]
     with_file_dialog_path ::tk_getSaveFile $new_database \
 	[list with_dialog_answer .mged_dialog {File created} "" "" \
 	    [list invoke $top {File {New...}}]]
-    ::xmin::test::require {
+    ::gui::test::require {
 	[file exists $new_database] &&
 	[file normalize [_mged_opendb]] eq [file normalize $new_database]
     } "New did not create and open the selected database"
@@ -315,7 +315,7 @@ proc ::mged::xmin::workflows::exercise_file_operations {id top database} {
     with_file_dialog_path ::tk_getOpenFile $database \
 	[list with_dialog_answer .mged_dialog {File loaded} "" "" \
 	    [list invoke $top {File {Open...}}]]
-    ::xmin::test::require {
+    ::gui::test::require {
 	[file normalize [_mged_opendb]] eq [file normalize $database] &&
 	[exists xmin_arb8.s]
     } "Open did not restore the selected database"
@@ -323,25 +323,25 @@ proc ::mged::xmin::workflows::exercise_file_operations {id top database} {
     with_file_dialog_path ::tk_getOpenFile $extracted_database \
 	[list with_dialog_answer .$id.prefix Prefix .$id.prefix.mid.ent bin_ \
 	    [list invoke $top {File Import {Binary Database}}]]
-    ::xmin::test::require {[exists bin_xmin_arb8.s]} \
+    ::gui::test::require {[exists bin_xmin_arb8.s]} \
 	"Binary Database import did not apply its prefix"
 
     with_file_dialog_path ::tk_getOpenFile $ascii_database \
 	[list with_dialog_answer .$id.prefix Prefix .$id.prefix.mid.ent asc_ \
 	    [list invoke $top {File Import {Ascii Database}}]]
-    ::xmin::test::require {[exists asc_xmin_arb8.s]} \
+    ::gui::test::require {[exists asc_xmin_arb8.s]} \
 	"Ascii Database import did not apply its prefix"
 }
 
 proc ::mged::xmin::workflows::exercise_dsp_creation {id top} {
     global mged_gui
 
-    set data_file [file join $::env(XMIN_TEST_DIR) dsp-data.bw]
+    set data_file [file join $::env(GUI_TEST_DIR) dsp-data.bw]
     write_binary_file $data_file [binary format S* {0 1 2 3}]
 
     invoke $top {Create dsp...}
     set panel .$id.make_dsp
-    ::xmin::test::require {[winfo exists $panel] && [winfo ismapped $panel]} \
+    ::gui::test::require {[winfo exists $panel] && [winfo ismapped $panel]} \
 	"Create dsp did not open its specialized dialog"
 
     set name xmin_dsp.s
@@ -357,12 +357,12 @@ proc ::mged::xmin::workflows::exercise_dsp_creation {id top} {
 }
 
 proc ::mged::xmin::workflows::exercise_binunif_creation {id top} {
-    set data_file [file join $::env(XMIN_TEST_DIR) binunif-data.bin]
+    set data_file [file join $::env(GUI_TEST_DIR) binunif-data.bin]
     write_binary_file $data_file [binary format c* {1 2 3 4}]
 
     invoke $top {Create binunif...}
     set panel .$id.make_binunif
-    ::xmin::test::require {[winfo exists $panel] && [winfo ismapped $panel]} \
+    ::gui::test::require {[winfo exists $panel] && [winfo ismapped $panel]} \
 	"Create binunif did not open its specialized dialog"
 
     set name xmin_binunif
@@ -378,11 +378,11 @@ proc ::mged::xmin::workflows::exercise_binunif_creation {id top} {
 proc ::mged::xmin::workflows::exercise_geometry_browser {id top} {
     invoke $top {Tools {Geometry Browser}}
     set browser .$id.geometree
-    ::xmin::test::require {
+    ::gui::test::require {
 	[llength [info commands $browser]] == 1 &&
 	[winfo exists $browser] && [winfo ismapped $browser]
     } "Geometry Browser did not open"
-    ::xmin::test::require {[wm title $browser] eq "Geometry Browser"} \
+    ::gui::test::require {[wm title $browser] eq "Geometry Browser"} \
 	"Geometry Browser has an unexpected title"
 
     set children [$browser getNodeChildren "" yes]
@@ -390,55 +390,55 @@ proc ::mged::xmin::workflows::exercise_geometry_browser {id top} {
     foreach child $children {
 	lappend roots [lindex $child 0]
     }
-    ::xmin::test::require {
+    ::gui::test::require {
 	[lsearch -exact $roots /xmin_arb8.s] >= 0 &&
 	[lsearch -exact $roots /xmin_binunif] >= 0
     } "Geometry Browser did not populate the isolated database"
 
-    ::xmin::test::write progress "browser: display"
+    ::gui::test::write progress "browser: display"
     $browser displayNode /xmin_arb8.s alone
     settle
-    ::xmin::test::require {[lsearch -exact [who] xmin_arb8.s] >= 0} \
+    ::gui::test::require {[lsearch -exact [who] xmin_arb8.s] >= 0} \
 	"Geometry Browser did not display the selected primitive"
-    ::xmin::test::write progress "browser: autosize"
+    ::gui::test::write progress "browser: autosize"
     $browser autosizeDisplay
-    ::xmin::test::write progress "browser: zoom"
+    ::gui::test::write progress "browser: zoom"
     $browser zoomDisplay in
     $browser zoomDisplay out
-    ::xmin::test::write progress "browser: clear"
+    ::gui::test::write progress "browser: clear"
     $browser clearDisplay
     settle
-    ::xmin::test::require {[who] eq ""} \
+    ::gui::test::require {[who] eq ""} \
 	"Geometry Browser did not clear the display"
 
-    ::xmin::test::write progress "browser: close"
+    ::gui::test::write progress "browser: close"
     set file_menu [$browser.menubar entrycget 0 -menu]
-    ::xmin::test::require {[$file_menu entrycget 0 -label] eq "Close"} \
+    ::gui::test::require {[$file_menu entrycget 0 -label] eq "Close"} \
 	"Geometry Browser does not expose its Close command"
 
     $file_menu invoke 0
     settle
-    ::xmin::test::require {![winfo exists $browser]} "Geometry Browser did not close"
+    ::gui::test::require {![winfo exists $browser]} "Geometry Browser did not close"
 }
 
 proc ::mged::xmin::workflows::exercise_collaboration {id} {
     global mged_collaborators mged_gui mged_players
 
-    ::xmin::test::write progress "collaboration: join primary"
+    ::gui::test::write progress "collaboration: join primary"
     if {[lsearch -exact $mged_collaborators $id] < 0} {
 	collaborate join $id
     }
 
     set peer xmin_peer
-    ::xmin::test::write progress "collaboration: create peer"
+    ::gui::test::write progress "collaboration: create peer"
     set result [gui -config b -dt tkswrast -id $peer -join]
     if {$result ne ""} {
 	fail "could not create collaborating MGED player: $result"
     }
     settle
-    ::xmin::test::write progress "collaboration: peer created"
+    ::gui::test::write progress "collaboration: peer created"
 
-    ::xmin::test::require {
+    ::gui::test::require {
 	[lsearch -exact $mged_players $peer] >= 0 &&
 	[lsearch -exact $mged_collaborators $peer] >= 0 &&
 	$mged_gui($peer,collaborate)
@@ -453,7 +453,7 @@ proc ::mged::xmin::workflows::exercise_collaboration {id} {
     require_near [size] {123} "collaborative view size"
 
     collaborate quit $peer
-    ::xmin::test::require {
+    ::gui::test::require {
 	[lsearch -exact $mged_collaborators $peer] < 0 &&
 	!$mged_gui($peer,collaborate)
     } "second MGED player did not leave the collaborative session"
@@ -461,7 +461,7 @@ proc ::mged::xmin::workflows::exercise_collaboration {id} {
     set mged_gui($peer,show_cmd) 0
     set mged_gui($peer,show_dm) 0
     gui_destroy $peer
-    ::xmin::test::require {[lsearch -exact $mged_players $peer] < 0} \
+    ::gui::test::require {[lsearch -exact $mged_players $peer] < 0} \
 	"second MGED player did not shut down cleanly"
 
     collaborate quit $id
@@ -475,10 +475,10 @@ proc ::mged::xmin::workflows::finish {status message} {
     }
     set finished 1
     catch {update}
-    lassign [::xmin::test::check_background_errors $status $message] \
+    lassign [::gui::test::check_background_errors $status $message] \
 	status message
     puts $message
-    ::xmin::test::write result $message
+    ::gui::test::write result $message
     if {$status != 0} {
 	puts stderr $message
     }
@@ -509,8 +509,8 @@ proc ::mged::xmin::workflows::run {} {
 	return
     }
 
-    set database [file join $::env(XMIN_TEST_DIR) workflows.g]
-    cd $::env(XMIN_TEST_DIR)
+    set database [file join $::env(GUI_TEST_DIR) workflows.g]
+    cd $::env(GUI_TEST_DIR)
     file delete -force $database
     opendb $database y
     title {Xmin MGED workflow regression}
@@ -530,7 +530,7 @@ proc ::mged::xmin::workflows::run_checked {} {
 	if {[dict exists $options -errorinfo]} {
 	    set error_info [dict get $options -errorinfo]
 	    puts stderr $error_info
-	    ::xmin::test::write tcl_error_debug $error_info
+	    ::gui::test::write tcl_error_debug $error_info
 	}
 	finish 1 "FAIL: MGED workflow regression: $message"
     }

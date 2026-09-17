@@ -20,22 +20,22 @@
 ###
 # Exercise MGED's Query Ray and Build Pattern tools through live widgets.
 
-source $::env(MGED_XMIN_GUI_LIBRARY)
+source $::env(MGED_GUI_TEST_LIBRARY)
 
 namespace eval ::mged::xmin::query_pattern {}
 
 proc ::mged::xmin::query_pattern::set_components {dialog values} {
     foreach {component value} $values {
-	::mged::xmin::test::set_entry $dialog.$component $value
+	::mged::gui::test::set_entry $dialog.$component $value
     }
 }
 
 proc ::mged::xmin::query_pattern::require_pattern {
     group first_clone second_clone description
 } {
-    ::xmin::test::require {[exists $group]} "$description group was not created"
+    ::gui::test::require {[exists $group]} "$description group was not created"
     set definition [get $group]
-    ::xmin::test::require {
+    ::gui::test::require {
 	[string first $first_clone $definition] >= 0 &&
 	[string first $second_clone $definition] >= 0
     } "$description group did not contain both requested clones"
@@ -50,21 +50,21 @@ proc ::mged::xmin::query_pattern::exercise_query_ray {id top} {
     qray effects t
     qray basename query_ray
 
-    ::mged::xmin::test::invoke $top {Tools {Query Ray Control Panel}}
+    ::mged::gui::test::invoke $top {Tools {Query Ray Control Panel}}
     set dialog .$id.qray_control
-    ::mged::xmin::test::require_mapped $dialog "Query Ray Control Panel"
+    ::mged::gui::test::require_mapped $dialog "Query Ray Control Panel"
 
     $dialog.activeCB invoke
     $dialog.use_airCB invoke
     $dialog.cmd_echoCB invoke
     $dialog.effectsMB.m invoke 2
-    ::mged::xmin::test::set_entry $dialog.bnameE xmin_qray
+    ::mged::gui::test::set_entry $dialog.bnameE xmin_qray
     set qray_control($id,oddcolor) {12 34 56}
     color_entry_update $dialog oddColor qray_control($id,oddcolor) \
 	$qray_control($id,oddcolor)
     $dialog.applyB invoke
 
-    ::xmin::test::require {
+    ::gui::test::require {
 	$mouse_behavior eq "q" &&
 	$use_air == 1 &&
 	[_mged_qray echo] == 1 &&
@@ -74,31 +74,31 @@ proc ::mged::xmin::query_pattern::exercise_query_ray {id top} {
     } "Query Ray Apply did not persist mouse, air, effect, name, or color settings"
 
     $dialog.advB invoke
-    ::mged::xmin::test::settle
+    ::mged::gui::test::settle
     set advanced .$id.qray_adv
-    ::mged::xmin::test::require_mapped $advanced \
+    ::mged::gui::test::require_mapped $advanced \
 	"Query Ray Advanced Settings"
 
     set applied_format {XMIN RAY FORMAT}
-    ::mged::xmin::test::set_entry $advanced.rayE $applied_format
+    ::mged::gui::test::set_entry $advanced.rayE $applied_format
     $advanced.applyB invoke
-    ::xmin::test::require {[_mged_qray fmt r] eq $applied_format} \
+    ::gui::test::require {[_mged_qray fmt r] eq $applied_format} \
 	"Query Ray advanced Apply did not persist the ray format"
 
-    ::mged::xmin::test::set_entry $advanced.rayE {discarded format}
+    ::mged::gui::test::set_entry $advanced.rayE {discarded format}
     $advanced.resetB invoke
-    ::xmin::test::require {$qray_control($id,fmt_ray) eq $applied_format} \
+    ::gui::test::require {$qray_control($id,fmt_ray) eq $applied_format} \
 	"Query Ray advanced Reset did not restore the applied format"
     $advanced.okB invoke
-    ::xmin::test::require {![winfo exists $advanced]} \
+    ::gui::test::require {![winfo exists $advanced]} \
 	"Query Ray Advanced Settings did not close after OK"
 
-    ::mged::xmin::test::set_entry $dialog.bnameE discarded_name
+    ::mged::gui::test::set_entry $dialog.bnameE discarded_name
     $dialog.resetB invoke
-    ::xmin::test::require {$qray_control($id,basename) eq "xmin_qray"} \
+    ::gui::test::require {$qray_control($id,basename) eq "xmin_qray"} \
 	"Query Ray Reset did not restore the applied base name"
     $dialog.okB invoke
-    ::xmin::test::require {![winfo exists $dialog]} \
+    ::gui::test::require {![winfo exists $dialog]} \
 	"Query Ray Control Panel did not close after OK"
 }
 
@@ -107,9 +107,9 @@ proc ::mged::xmin::query_pattern::exercise_patterns {top} {
     make sph_source.s sph
     make cyl_source.s sph
 
-    ::mged::xmin::test::invoke $top {Tools {Build Pattern Tool}}
-    set dialog [::mged::xmin::test::find_toplevel_by_title "Pattern Control"]
-    ::mged::xmin::test::require_mapped $dialog "Build Pattern Tool"
+    ::mged::gui::test::invoke $top {Tools {Build Pattern Tool}}
+    set dialog [::mged::gui::test::find_toplevel_by_title "Pattern Control"]
+    ::mged::gui::test::require_mapped $dialog "Build Pattern Tool"
 
     set_components $dialog {
 	e_group_r rect_pattern.g
@@ -167,13 +167,13 @@ proc ::mged::xmin::query_pattern::exercise_patterns {top} {
 	"cylindrical pattern"
 
     $dialog.b_dismiss_c invoke
-    ::xmin::test::require {![winfo exists $dialog]} \
+    ::gui::test::require {![winfo exists $dialog]} \
 	"Build Pattern Tool did not dismiss"
 }
 
 proc ::mged::xmin::query_pattern::run {id top} {
-    set database [file join $::env(XMIN_TEST_DIR) query-pattern.g]
-    cd $::env(XMIN_TEST_DIR)
+    set database [file join $::env(GUI_TEST_DIR) query-pattern.g]
+    cd $::env(GUI_TEST_DIR)
     file delete -force $database
     opendb $database y
     title {Xmin MGED specialized-tool regression}
@@ -187,7 +187,7 @@ proc ::mged::xmin::query_pattern::run {id top} {
     exercise_patterns $top
 }
 
-::mged::xmin::test::start ::mged::xmin::query_pattern::run \
+::mged::gui::test::start ::mged::xmin::query_pattern::run \
     {MGED Query Ray and Build Pattern tools} \
     {MGED Query Ray/Build Pattern regression}
 

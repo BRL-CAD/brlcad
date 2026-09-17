@@ -169,23 +169,26 @@ function(BRLCAD_ADD_TEST NAME test_name COMMAND test_prog)
   add_dependencies(check ${_test_dependencies})
 endfunction(BRLCAD_ADD_TEST)
 
-# Register a test whose command needs a private X server.  Keeping Xmin's
-# process setup here lets GUI fixtures concentrate on application behavior and
-# gives every caller the same display geometry, timeout, and dependency
-# handling.  Tests are registered only when the build selected Xmin as its X11
-# provider.
-function(BRLCAD_ADD_XMIN_TEST)
-  if(NOT BUILD_TESTING OR NOT BRLCAD_X11_PROVIDER_RESOLVED STREQUAL "XMIN")
+# Register a GUI test using the selected display backend.  Xmin is currently
+# the only backend; its server and control paths stay here so fixtures only
+# depend on the GUI test controller contract.
+function(BRLCAD_ADD_GUI_TEST)
+  if(NOT BUILD_TESTING)
     return()
   endif()
-
-  cmake_parse_arguments(PARSE_ARGV 0 XMIN "" "NAME;SCREEN;TIMEOUT"
-    "COMMAND;ENVIRONMENT;SERVER_ARGS")
-  if(NOT XMIN_NAME)
-    message(FATAL_ERROR "BRLCAD_ADD_XMIN_TEST requires NAME")
+  if(BRLCAD_X11_PROVIDER_RESOLVED STREQUAL "XMIN")
+    _brlcad_add_xmin_gui_test(${ARGV})
   endif()
-  if(NOT XMIN_COMMAND)
-    message(FATAL_ERROR "BRLCAD_ADD_XMIN_TEST requires COMMAND")
+endfunction()
+
+function(_brlcad_add_xmin_gui_test)
+  cmake_parse_arguments(PARSE_ARGV 0 GUI "" "NAME;SCREEN;TIMEOUT"
+    "COMMAND;ENVIRONMENT;SERVER_ARGS")
+  if(NOT GUI_NAME)
+    message(FATAL_ERROR "BRLCAD_ADD_GUI_TEST requires NAME")
+  endif()
+  if(NOT GUI_COMMAND)
+    message(FATAL_ERROR "BRLCAD_ADD_GUI_TEST requires COMMAND")
   endif()
 
   set(_xmin_server "${Xmin_SERVER_EXECUTABLE}")
@@ -199,36 +202,42 @@ function(BRLCAD_ADD_XMIN_TEST)
     find_program(_xmin_run NAMES xmin-run HINTS "${_xmin_bin_dir}" NO_DEFAULT_PATH NO_CACHE)
   endif()
   if(NOT _xmin_server OR NOT _xmin_run)
-    message(WARNING "Skipping ${XMIN_NAME}: the selected Xmin SDK does not provide its test runner")
+    message(WARNING "Skipping ${GUI_NAME}: the selected Xmin SDK does not provide its test runner")
     return()
   endif()
 
-  if(NOT XMIN_SCREEN)
-    set(XMIN_SCREEN "1280x960x24")
+  if(NOT GUI_SCREEN)
+    set(GUI_SCREEN "1280x960x24")
   endif()
   if(NOT _xmin_bin_dir)
     get_filename_component(_xmin_bin_dir "${_xmin_server}" DIRECTORY)
   endif()
   find_program(_xmin_ctl NAMES xminctl HINTS "${_xmin_bin_dir}"
     NO_DEFAULT_PATH NO_CACHE)
-
-  set(_xmin_environment "XMIN_SCREEN=${XMIN_SCREEN}" ${XMIN_ENVIRONMENT})
+  set(_gui_environment
+    "GUI_TEST_SCREEN=${GUI_SCREEN}"
+    "XMIN_SCREEN=${GUI_SCREEN}"
+    ${GUI_ENVIRONMENT}
+  )
   if(_xmin_ctl)
-    list(PREPEND _xmin_environment "XMIN_CTL=${_xmin_ctl}")
+    list(PREPEND _gui_environment
+      "GUI_TEST_CTL=${CMAKE_SOURCE_DIR}/regress/xmin/xmin_gui_ctl.sh"
+      "XMIN_CTL=${_xmin_ctl}"
+    )
   endif()
-  set(_xmin_command
-    "${CMAKE_COMMAND}" -E env ${_xmin_environment} ${XMIN_COMMAND}
+  set(_gui_command
+    "${CMAKE_COMMAND}" -E env ${_gui_environment} ${GUI_COMMAND}
   )
 
   brlcad_add_test(
-    NAME ${XMIN_NAME}
+    NAME ${GUI_NAME}
     COMMAND "${_xmin_run}" --server "${_xmin_server}"
-      --screen "${XMIN_SCREEN}" ${XMIN_SERVER_ARGS} -- ${_xmin_command}
+      --screen "${GUI_SCREEN}" ${GUI_SERVER_ARGS} -- ${_gui_command}
   )
-  if(XMIN_TIMEOUT)
-    set_tests_properties(${XMIN_NAME} PROPERTIES TIMEOUT "${XMIN_TIMEOUT}")
+  if(GUI_TIMEOUT)
+    set_tests_properties(${GUI_NAME} PROPERTIES TIMEOUT "${GUI_TIMEOUT}")
   endif()
-endfunction(BRLCAD_ADD_XMIN_TEST)
+endfunction()
 
 # Local Variables:
 # mode: cmake

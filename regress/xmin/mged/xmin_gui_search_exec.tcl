@@ -20,13 +20,13 @@
 ###
 # Exercise asynchronous search -exec drawing, serialization, and interruption.
 
-if {![info exists ::env(XMIN_GUI_LIBRARY)] ||
-    ![info exists ::env(XMIN_TEST_DIR)]} {
-    puts stderr "XMIN_GUI_LIBRARY and XMIN_TEST_DIR are required"
+if {![info exists ::env(GUI_TEST_LIBRARY)] ||
+    ![info exists ::env(GUI_TEST_DIR)]} {
+    puts stderr "GUI_TEST_LIBRARY and GUI_TEST_DIR are required"
     exit 2
 }
-source $::env(XMIN_GUI_LIBRARY)
-::xmin::test::capture_background_errors
+source $::env(GUI_TEST_LIBRARY)
+::gui::test::capture_background_errors
 
 namespace eval ::mged::xmin::search_exec {
     variable command_widget ""
@@ -85,7 +85,7 @@ proc ::mged::xmin::search_exec::exercise {} {
     variable nested_status
 
     set paths [_mged_search / -type tgc]
-    ::xmin::test::require {[llength $paths] >= $minimum_tgc_paths} \
+    ::gui::test::require {[llength $paths] >= $minimum_tgc_paths} \
 	"m35.g supplied too few TGC paths for the scaling regression"
 
     set nested_done 0
@@ -99,11 +99,11 @@ proc ::mged::xmin::search_exec::exercise {} {
     } draw_message]
     set draw_elapsed [expr {[clock milliseconds] - $started}]
 
-    ::xmin::test::require {$draw_status == 0} \
+    ::gui::test::require {$draw_status == 0} \
 	"search -exec draw failed: $draw_message"
-    ::xmin::test::require {$nested_done} \
+    ::gui::test::require {$nested_done} \
 	"the event loop did not service the nested search probe"
-    ::xmin::test::require {
+    ::gui::test::require {
 	$nested_status == 1 &&
 	$nested_message eq "another MGED command is already running" &&
 	$nested_error_code eq {BRLCAD MGED COMMAND_BUSY}
@@ -111,9 +111,9 @@ proc ::mged::xmin::search_exec::exercise {} {
     set draw_limit_message [format \
 	"search -exec draw took %dms; expected less than %dms" \
 	$draw_elapsed $draw_time_limit_ms]
-    ::xmin::test::require {$draw_elapsed < $draw_time_limit_ms} \
+    ::gui::test::require {$draw_elapsed < $draw_time_limit_ms} \
 	$draw_limit_message
-    ::xmin::test::require {[llength [_mged_who]] >= $minimum_tgc_paths} \
+    ::gui::test::require {[llength [_mged_who]] >= $minimum_tgc_paths} \
 	"search -exec draw did not populate the display list"
 
     set redraw_started [clock milliseconds]
@@ -121,12 +121,12 @@ proc ::mged::xmin::search_exec::exercise {} {
 	_mged_search / -type tgc -exec draw "{}" ";"
     } redraw_message]
     set redraw_elapsed [expr {[clock milliseconds] - $redraw_started}]
-    ::xmin::test::require {$redraw_status == 0} \
+    ::gui::test::require {$redraw_status == 0} \
 	"repeated search -exec draw failed: $redraw_message"
     set redraw_limit_message [format \
 	"repeated search -exec draw took %dms; expected less than %dms" \
 	$redraw_elapsed $draw_time_limit_ms]
-    ::xmin::test::require {$redraw_elapsed < $draw_time_limit_ms} \
+    ::gui::test::require {$redraw_elapsed < $draw_time_limit_ms} \
 	$redraw_limit_message
 
     _mged_Z
@@ -136,9 +136,9 @@ proc ::mged::xmin::search_exec::exercise {} {
 	_mged_search / -type tgc -exec draw "{}" ";"
     } interrupt_message]
 
-    ::xmin::test::require {$interrupt_requested == 1} \
+    ::gui::test::require {$interrupt_requested == 1} \
 	"the running search did not accept an interrupt request"
-    ::xmin::test::require {
+    ::gui::test::require {
 	$interrupt_status == 1 && $interrupt_message eq "Command interrupted."
     } "interrupted search returned an unexpected result: $interrupt_message"
 
@@ -148,14 +148,14 @@ proc ::mged::xmin::search_exec::exercise {} {
     set followup_status [catch {
 	_mged_search $followup_path -type tgc -exec ls "{}" ";"
     } followup_message]
-    ::xmin::test::require {$followup_status == 0} \
+    ::gui::test::require {$followup_status == 0} \
 	"search -exec failed after interruption: $followup_message"
 
     _mged_Z
     _mged_draw $ancestor
     set ancestor_display [_mged_who]
     _mged_draw $followup_path
-    ::xmin::test::require {[_mged_who] eq $ancestor_display} \
+    ::gui::test::require {[_mged_who] eq $ancestor_display} \
 	"drawing a child path duplicated its displayed ancestor"
 
     _mged_Z
@@ -163,13 +163,13 @@ proc ::mged::xmin::search_exec::exercise {} {
     _mged_draw [lindex $paths 1]
     _mged_draw $ancestor
     set consolidated_display [_mged_who]
-    ::xmin::test::require {
+    ::gui::test::require {
 	[llength $consolidated_display] == 1 &&
 	[lindex $consolidated_display 0] eq $ancestor
     } "drawing an ancestor did not replace its displayed descendants"
 
     set component_paths [_mged_search /component -type tgc]
-    ::xmin::test::require {
+    ::gui::test::require {
 	[llength $component_paths] >= $minimum_tgc_paths
     } "component supplied too few TGC paths for the overlap regression"
 
@@ -180,15 +180,15 @@ proc ::mged::xmin::search_exec::exercise {} {
 	_mged_search /component -type tgc -exec draw "{}" ";"
     } covered_message]
     set covered_elapsed [expr {[clock milliseconds] - $covered_started}]
-    ::xmin::test::require {$covered_status == 0} \
+    ::gui::test::require {$covered_status == 0} \
 	"drawing paths under component failed: $covered_message"
     set covered_limit_message [format \
 	"drawing paths under component took %dms; expected less than %dms" \
 	$covered_elapsed $covered_draw_time_limit_ms]
-    ::xmin::test::require {$covered_elapsed < $covered_draw_time_limit_ms} \
+    ::gui::test::require {$covered_elapsed < $covered_draw_time_limit_ms} \
 	$covered_limit_message
     set covered_display [_mged_who]
-    ::xmin::test::require {
+    ::gui::test::require {
 	[llength $covered_display] == 1 &&
 	[lindex $covered_display 0] eq "component"
     } "drawing covered paths changed the component display root"
@@ -198,7 +198,7 @@ proc ::mged::xmin::search_exec::exercise {} {
     append metrics "\ncovered_elapsed_ms $covered_elapsed"
     puts "MGED search-exec: [llength $paths] paths, first $draw_elapsed ms, \
 	redraw $redraw_elapsed ms"
-    ::xmin::test::write search_exec_metrics $metrics
+    ::gui::test::write search_exec_metrics $metrics
 }
 
 proc ::mged::xmin::search_exec::finish {status message} {
@@ -208,10 +208,10 @@ proc ::mged::xmin::search_exec::finish {status message} {
     }
     set finished 1
     catch {update}
-    lassign [::xmin::test::check_background_errors $status $message] \
+    lassign [::gui::test::check_background_errors $status $message] \
 	status message
     puts $message
-    ::xmin::test::write result $message
+    ::gui::test::write result $message
     if {$status != 0} {
 	puts stderr $message
     }
@@ -265,7 +265,7 @@ proc ::mged::xmin::search_exec::run {} {
 proc ::mged::xmin::search_exec::run_checked {} {
     if {[catch {run} message options]} {
 	if {[dict exists $options -errorinfo]} {
-	    ::xmin::test::write tcl_error_debug [dict get $options -errorinfo]
+	    ::gui::test::write tcl_error_debug [dict get $options -errorinfo]
 	}
 	finish 1 "FAIL: MGED search -exec regression: $message"
     }
