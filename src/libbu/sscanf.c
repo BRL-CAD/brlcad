@@ -312,7 +312,11 @@ bu_vsscanf(const char *src, const char *fmt0, va_list ap)
 		/* FALLTHROUGH */
 	    case '1': case '2': case '3': case '4':
 	    case '5': case '6': case '7': case '8': case '9':
-		width = (width * 10) + NUMERIC_CHAR_TO_INT(c);
+		if (UNLIKELY(width > (SIZE_MAX - 9) / 10)) {
+		    width = SIZE_MAX;
+		} else {
+		    width = (width * 10) + NUMERIC_CHAR_TO_INT(c);
+		}
 		goto again;
 
 
@@ -365,11 +369,12 @@ bu_vsscanf(const char *src, const char *fmt0, va_list ap)
 		    EXIT_DUE_TO_MISC_ERROR;
 		}
 
-		/* skip literal ']' ("[]" or "[^]") */
+		/* copy literal ']' ("[]" or "[^]") into partFmt */
 		if (fmt[0] == ']') {
-		    fmt = &fmt[1];
+		    bu_vls_putc(&partFmt, *fmt++);
 		} else if (fmt[0] == '^' && fmt[1] == ']') {
-		    fmt = &fmt[2];
+		    bu_vls_putc(&partFmt, *fmt++);
+		    bu_vls_putc(&partFmt, *fmt++);
 		}
 
 		/* point fmt after character class */

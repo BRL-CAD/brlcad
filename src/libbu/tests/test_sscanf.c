@@ -346,6 +346,9 @@ test_strings(void)
     check_str("abc123", "%255[^0-9]", 1, "abc");
     check_str("aaabbb", "%255[a]", 1, "aaa");
     check_str("aaaa", "%2[a]", 1, "aa");
+    check_str("]abc", "%255[]a-c]", 1, "]abc");
+    check_str("]", "%255[]]", 1, "]");
+    check_str("123", "%255[^]a-z]", 1, "123");
 }
 
 static void
