@@ -1032,7 +1032,7 @@ const struct rt_functab OBJ[] = {
     {
 	/* 16 */
 	RT_FUNCTAB_MAGIC, "ID_PARTICLE", "part",
-	0,
+	1,
 	RTFUNCTAB_FUNC_PREP_CAST(rt_part_prep),
 	RTFUNCTAB_FUNC_SHOT_CAST(rt_part_shot),
 	RTFUNCTAB_FUNC_PRINT_CAST(rt_part_print),
@@ -1084,7 +1084,7 @@ const struct rt_functab OBJ[] = {
     {
 	/* 17 */
 	RT_FUNCTAB_MAGIC, "ID_RPC", "rpc",
-	0,
+	1,
 	RTFUNCTAB_FUNC_PREP_CAST(rt_rpc_prep),
 	RTFUNCTAB_FUNC_SHOT_CAST(rt_rpc_shot),
 	RTFUNCTAB_FUNC_PRINT_CAST(rt_rpc_print),
@@ -1136,7 +1136,7 @@ const struct rt_functab OBJ[] = {
     {
 	/* 18 */
 	RT_FUNCTAB_MAGIC, "ID_RHC", "rhc",
-	0,
+	1,
 	RTFUNCTAB_FUNC_PREP_CAST(rt_rhc_prep),
 	RTFUNCTAB_FUNC_SHOT_CAST(rt_rhc_shot),
 	RTFUNCTAB_FUNC_PRINT_CAST(rt_rhc_print),
@@ -1188,7 +1188,7 @@ const struct rt_functab OBJ[] = {
     {
 	/* 19 */
 	RT_FUNCTAB_MAGIC, "ID_EPA", "epa",
-	0,
+	1,
 	RTFUNCTAB_FUNC_PREP_CAST(rt_epa_prep),
 	RTFUNCTAB_FUNC_SHOT_CAST(rt_epa_shot),
 	RTFUNCTAB_FUNC_PRINT_CAST(rt_epa_print),
@@ -1240,7 +1240,7 @@ const struct rt_functab OBJ[] = {
     {
 	/* 20 */
 	RT_FUNCTAB_MAGIC, "ID_EHY", "ehy",
-	0,
+	1,
 	RTFUNCTAB_FUNC_PREP_CAST(rt_ehy_prep),
 	RTFUNCTAB_FUNC_SHOT_CAST(rt_ehy_shot),
 	RTFUNCTAB_FUNC_PRINT_CAST(rt_ehy_print),
@@ -1708,7 +1708,7 @@ const struct rt_functab OBJ[] = {
     {
 	/* 29 Fastgen cline solid */
 	RT_FUNCTAB_MAGIC, "ID_CLINE", "cline",
-	0,
+	1,
 	RTFUNCTAB_FUNC_PREP_CAST(rt_cline_prep),
 	RTFUNCTAB_FUNC_SHOT_CAST(rt_cline_shot),
 	RTFUNCTAB_FUNC_PRINT_CAST(rt_cline_print),
@@ -2388,7 +2388,7 @@ const struct rt_functab OBJ[] = {
     {
 	/* 42 */
 	RT_FUNCTAB_MAGIC, "ID_ANNOT", "annot",
-	0, /* ft_use_rpp */
+	1, /* model-space prep supplies BoT bounds; view-space does not shoot */
 	RTFUNCTAB_FUNC_PREP_CAST(rt_annot_prep),
 	RTFUNCTAB_FUNC_SHOT_CAST(rt_annot_shot),
 	RTFUNCTAB_FUNC_PRINT_CAST(rt_annot_print),
