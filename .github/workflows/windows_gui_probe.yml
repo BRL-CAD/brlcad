@@ -1,0 +1,33 @@
+name: Windows GUI session probe
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/windows_gui_probe.yml
+      - regress/gui/windows_gui_probe.ps1
+
+permissions:
+  contents: read
+
+jobs:
+  desktop:
+    runs-on: windows-2025
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Probe desktop session
+        shell: pwsh
+        run: |
+          & powershell.exe -NoProfile -Sta -File "$env:GITHUB_WORKSPACE\regress\gui\windows_gui_probe.ps1" -ArtifactDirectory "$env:GITHUB_WORKSPACE\windows-gui-probe"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Upload probe artifacts
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: windows-gui-probe
+          path: windows-gui-probe/
+          if-no-files-found: warn

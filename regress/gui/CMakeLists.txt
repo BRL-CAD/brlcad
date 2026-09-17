@@ -7,6 +7,7 @@ cmakefiles(
   gui_test.tcl
   gui_test_core.tcl
   sketch_test.tcl
+  windows_gui_probe.ps1
 )
 
 # Local Variables:
