@@ -3800,6 +3800,31 @@ ph_pixels(struct pkg_conn *pc, char *buf)
 
     /* Consider the next assignment to have been sent "now" */
     (void)gettimeofday(&sp->sr_sendtime, (struct timezone *)0);
+
+    if (pc->pkc_len < 8) {
+	bu_log("%s Ignoring malformed MSG_PIXELS (len %zu < 8)\n",
+	       stamp(), pc->pkc_len);
+	drop_server(sp, "malformed MSG_PIXELS");
+	goto out;
+    }
+
+    {
+	unsigned long magic1 =
+	    ((unsigned long)((unsigned char *)buf)[0] << 8) |
+	    ((unsigned long)((unsigned char *)buf)[1]);
+	size_t plen =
+	    ((size_t)((unsigned char *)buf)[2] << 24) |
+	    ((size_t)((unsigned char *)buf)[3] << 16) |
+	    ((size_t)((unsigned char *)buf)[4] << 8) |
+	    (size_t)((unsigned char *)buf)[5];
+
+	if (magic1 != 0x15cb || plen < 8 || plen > pc->pkc_len) {
+	    bu_log("%s Ignoring malformed MSG_PIXELS struct header\n", stamp());
+	    drop_server(sp, "malformed MSG_PIXELS struct header");
+	    goto out;
+	}
+    }
+
     bu_struct_wrap_buf(&ext, (void *) buf);
 
     cnt = bu_struct_import((void *)&info, desc_line_info, &ext, NULL);
