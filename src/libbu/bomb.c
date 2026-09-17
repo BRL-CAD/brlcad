@@ -126,9 +126,10 @@ bu_bomb(const char *str)
 	bu_hook_call(&bomb_hook_list, (void *)str);
     }
 
-    if (bu_setjmp_valid[bu_parallel_id()]) {
+    int psw_id = bu_parallel_id();
+    if (psw_id >= 0 && psw_id < MAX_PSW && bu_setjmp_valid[psw_id]) {
 	/* Application is catching fatal errors */
-	longjmp(bu_jmpbuf[bu_parallel_id()], 1);
+	longjmp(bu_jmpbuf[psw_id], 1);
 	/* NOTREACHED */
     }
 
