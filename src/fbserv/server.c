@@ -232,12 +232,17 @@ fb_server_fb_open(struct pkg_conn *pcp, char *buf)
 	}
     }
 
+    if (pcp->pkc_len < 2*NET_LONG_LEN) {
+	if (buf) (void)free(buf);
+	return;
+    }
+
     width = pkg_glong(&buf[0*NET_LONG_LEN]);
     height = pkg_glong(&buf[1*NET_LONG_LEN]);
 
     if (fb_server_fbp == FB_NULL) {
 	/* Attempt to open new framebuffer */
-	if (strlen(&buf[8]) == 0)
+	if (pcp->pkc_len <= 8 || buf[8] == '\0')
 	    fb_server_fbp = fb_open(NULL, width, height);
 	else
 	    fb_server_fbp = fb_open(&buf[8], width, height);
@@ -363,6 +368,11 @@ fb_server_fb_clear(struct pkg_conn *pcp, char *buf)
 	return;
     if (fbserv_guard(pcp, buf) < 0) return;
 
+    if (pcp->pkc_len < sizeof(RGBpixel)) {
+	if (buf) (void)free(buf);
+	return;
+    }
+
     bg[RED] = buf[0];
     bg[GRN] = buf[1];
     bg[BLU] = buf[2];
@@ -389,6 +399,11 @@ fb_server_fb_read(struct pkg_conn *pcp, char *buf)
     if (pcp == PKC_NULL)
 	return;
     if (fbserv_guard(pcp, buf) < 0) return;
+
+    if (pcp->pkc_len < 3*NET_LONG_LEN) {
+	if (buf) (void)free(buf);
+	return;
+    }
 
     x = pkg_glong(&buf[0*NET_LONG_LEN]);
     y = pkg_glong(&buf[1*NET_LONG_LEN]);
@@ -442,9 +457,25 @@ fb_server_fb_write(struct pkg_conn *pcp, char *buf)
 	return;
     if (fbserv_guard(pcp, buf) < 0) return;
 
+    if (pcp->pkc_len < 3*NET_LONG_LEN) {
+	if (buf) (void)free(buf);
+	return;
+    }
+
     x = pkg_glong(&buf[0*NET_LONG_LEN]);
     y = pkg_glong(&buf[1*NET_LONG_LEN]);
     num = pkg_glong(&buf[2*NET_LONG_LEN]);
+    if (num < 0 || (size_t)num > (SIZE_MAX - 3*NET_LONG_LEN) / sizeof(RGBpixel) ||
+	pcp->pkc_len < 3*NET_LONG_LEN + (size_t)num * sizeof(RGBpixel)) {
+	fb_log("fb_write: packet length %zu too small for %d pixels\n", pcp->pkc_len, num);
+	if (pcp->pkc_type < MSG_NORETURN) {
+	    (void)pkg_plong(&rbuf[0*NET_LONG_LEN], -1);
+	    pkg_send(MSG_RETURN, rbuf, NET_LONG_LEN, pcp);
+	}
+	if (buf) (void)free(buf);
+	return;
+    }
+
     type = pcp->pkc_type;
     ret = fb_write(fb_server_fbp, x, y, (unsigned char *)&buf[3*NET_LONG_LEN], num);
 
@@ -473,11 +504,22 @@ fb_server_fb_readrect(struct pkg_conn *pcp, char *buf)
 	return;
     if (fbserv_guard(pcp, buf) < 0) return;
 
+    if (pcp->pkc_len < 4*NET_LONG_LEN) {
+	if (buf) (void)free(buf);
+	return;
+    }
+
     xmin = pkg_glong(&buf[0*NET_LONG_LEN]);
     ymin = pkg_glong(&buf[1*NET_LONG_LEN]);
     width = pkg_glong(&buf[2*NET_LONG_LEN]);
     height = pkg_glong(&buf[3*NET_LONG_LEN]);
-    num = width * height;
+
+    if (width <= 0 || height <= 0 || (size_t)width > 8192 || (size_t)height > 8192) {
+	fb_log("fb_readrect: invalid dimensions %dx%d\n", width, height);
+	if (buf) (void)free(buf);
+	return;
+    }
+    num = (size_t)width * (size_t)height;
 
     if (num*sizeof(RGBpixel) > buflen) {
 	if (scanbuf != NULL)
@@ -522,10 +564,27 @@ fb_server_fb_writerect(struct pkg_conn *pcp, char *buf)
 	return;
     if (fbserv_guard(pcp, buf) < 0) return;
 
+    if (pcp->pkc_len < 4*NET_LONG_LEN) {
+	if (buf) (void)free(buf);
+	return;
+    }
+
     x = pkg_glong(&buf[0*NET_LONG_LEN]);
     y = pkg_glong(&buf[1*NET_LONG_LEN]);
     width = pkg_glong(&buf[2*NET_LONG_LEN]);
     height = pkg_glong(&buf[3*NET_LONG_LEN]);
+
+    if (width <= 0 || height <= 0 || (size_t)width > 8192 || (size_t)height > 8192 ||
+	pcp->pkc_len < 4*NET_LONG_LEN + (size_t)width * (size_t)height * sizeof(RGBpixel)) {
+	fb_log("fb_writerect: invalid dimensions %dx%d or packet length %zu too small\n",
+	       width, height, pcp->pkc_len);
+	if (pcp->pkc_type < MSG_NORETURN) {
+	    (void)pkg_plong(&rbuf[0*NET_LONG_LEN], -1);
+	    pkg_send(MSG_RETURN, rbuf, NET_LONG_LEN, pcp);
+	}
+	if (buf) (void)free(buf);
+	return;
+    }
 
     type = pcp->pkc_type;
     ret = fb_writerect(fb_server_fbp, x, y, width, height,
@@ -556,11 +615,22 @@ fb_server_fb_bwreadrect(struct pkg_conn *pcp, char *buf)
        	return;
     if (fbserv_guard(pcp, buf) < 0) return;
 
+    if (pcp->pkc_len < 4*NET_LONG_LEN) {
+	if (buf) (void)free(buf);
+	return;
+    }
+
     xmin = pkg_glong(&buf[0*NET_LONG_LEN]);
     ymin = pkg_glong(&buf[1*NET_LONG_LEN]);
     width = pkg_glong(&buf[2*NET_LONG_LEN]);
     height = pkg_glong(&buf[3*NET_LONG_LEN]);
-    num = width * height;
+
+    if (width <= 0 || height <= 0 || (size_t)width > 8192 || (size_t)height > 8192) {
+	fb_log("fb_bwreadrect: invalid dimensions %dx%d\n", width, height);
+	if (buf) (void)free(buf);
+	return;
+    }
+    num = (size_t)width * (size_t)height;
 
     if (num > buflen) {
 	if (scanbuf != NULL)
@@ -605,10 +675,27 @@ fb_server_fb_bwwriterect(struct pkg_conn *pcp, char *buf)
        	return;
     if (fbserv_guard(pcp, buf) < 0) return;
 
+    if (pcp->pkc_len < 4*NET_LONG_LEN) {
+	if (buf) (void)free(buf);
+	return;
+    }
+
     x = pkg_glong(&buf[0*NET_LONG_LEN]);
     y = pkg_glong(&buf[1*NET_LONG_LEN]);
     width = pkg_glong(&buf[2*NET_LONG_LEN]);
     height = pkg_glong(&buf[3*NET_LONG_LEN]);
+
+    if (width <= 0 || height <= 0 || (size_t)width > 8192 || (size_t)height > 8192 ||
+	pcp->pkc_len < 4*NET_LONG_LEN + (size_t)width * (size_t)height) {
+	fb_log("fb_bwwriterect: invalid dimensions %dx%d or packet length %zu too small\n",
+	       width, height, pcp->pkc_len);
+	if (pcp->pkc_type < MSG_NORETURN) {
+	    (void)pkg_plong(&rbuf[0*NET_LONG_LEN], -1);
+	    pkg_send(MSG_RETURN, rbuf, NET_LONG_LEN, pcp);
+	}
+	if (buf) (void)free(buf);
+	return;
+    }
 
     type = pcp->pkc_type;
     ret = fb_bwwriterect(fb_server_fbp, x, y, width, height,
@@ -638,6 +725,11 @@ fb_server_fb_cursor(struct pkg_conn *pcp, char *buf)
     if (pcp == PKC_NULL)
        	return;
     if (fbserv_guard(pcp, buf) < 0) return;
+
+    if (pcp->pkc_len < 3*NET_LONG_LEN) {
+	if (buf) (void)free(buf);
+	return;
+    }
 
     mode = pkg_glong(&buf[0*NET_LONG_LEN]);
     x = pkg_glong(&buf[1*NET_LONG_LEN]);
@@ -684,10 +776,25 @@ fb_server_fb_setcursor(struct pkg_conn *pcp, char *buf)
     if (pcp == PKC_NULL) return;
     if (fbserv_guard(pcp, buf) < 0) return;
 
+    if (pcp->pkc_len < 4*NET_LONG_LEN) {
+	if (buf) (void)free(buf);
+	return;
+    }
+
     xbits = pkg_glong(&buf[0*NET_LONG_LEN]);
     ybits = pkg_glong(&buf[1*NET_LONG_LEN]);
     xorig = pkg_glong(&buf[2*NET_LONG_LEN]);
     yorig = pkg_glong(&buf[3*NET_LONG_LEN]);
+
+    if (xbits < 0 || ybits < 0 || xbits > 1024 || ybits > 1024 ||
+	pcp->pkc_len < 4*NET_LONG_LEN + (((size_t)xbits * (size_t)ybits + 7) >> 3)) {
+	if (pcp->pkc_type < MSG_NORETURN) {
+	    (void)pkg_plong(&rbuf[0*NET_LONG_LEN], -1);
+	    pkg_send(MSG_RETURN, rbuf, NET_LONG_LEN, pcp);
+	}
+	if (buf) (void)free(buf);
+	return;
+    }
 
     ret = fb_setcursor(fb_server_fbp, (unsigned char *)&buf[4*NET_LONG_LEN],
 		       xbits, ybits, xorig, yorig);
@@ -716,6 +823,11 @@ fb_server_fb_scursor(struct pkg_conn *pcp, char *buf)
 	return;
     if (fbserv_guard(pcp, buf) < 0) return;
 
+    if (pcp->pkc_len < 3*NET_LONG_LEN) {
+	if (buf) (void)free(buf);
+	return;
+    }
+
     mode = pkg_glong(&buf[0*NET_LONG_LEN]);
     x = pkg_glong(&buf[1*NET_LONG_LEN]);
     y = pkg_glong(&buf[2*NET_LONG_LEN]);
@@ -742,6 +854,11 @@ fb_server_fb_window(struct pkg_conn *pcp, char *buf)
 	return;
     if (fbserv_guard(pcp, buf) < 0) return;
 
+    if (pcp->pkc_len < 2*NET_LONG_LEN) {
+	if (buf) (void)free(buf);
+	return;
+    }
+
     x = pkg_glong(&buf[0*NET_LONG_LEN]);
     y = pkg_glong(&buf[1*NET_LONG_LEN]);
 
@@ -767,6 +884,11 @@ fb_server_fb_zoom(struct pkg_conn *pcp, char *buf)
 	return;
     if (fbserv_guard(pcp, buf) < 0) return;
 
+    if (pcp->pkc_len < 2*NET_LONG_LEN) {
+	if (buf) (void)free(buf);
+	return;
+    }
+
     x = pkg_glong(&buf[0*NET_LONG_LEN]);
     y = pkg_glong(&buf[1*NET_LONG_LEN]);
 
@@ -789,6 +911,11 @@ fb_server_fb_view(struct pkg_conn *pcp, char *buf)
     if (pcp == PKC_NULL)
 	return;
     if (fbserv_guard(pcp, buf) < 0) return;
+
+    if (pcp->pkc_len < 4*NET_LONG_LEN) {
+	if (buf) (void)free(buf);
+	return;
+    }
 
     xcenter = pkg_glong(&buf[0*NET_LONG_LEN]);
     ycenter = pkg_glong(&buf[1*NET_LONG_LEN]);
@@ -869,6 +996,11 @@ fb_server_fb_wmap(struct pkg_conn *pcp, char *buf)
 	return;
     if (fbserv_guard(pcp, buf) < 0) return;
 
+    if (pcp->pkc_len != 0 && pcp->pkc_len < 3*256*2) {
+	if (buf) (void)free(buf);
+	return;
+    }
+
     if (pcp->pkc_len == 0)
 	ret = fb_wmap(fb_server_fbp, COLORMAP_NULL);
     else {
@@ -934,6 +1066,11 @@ fb_server_fb_help(struct pkg_conn *pcp, char *buf)
     if (buf == NULL)
        	return;
     if (fbserv_guard(pcp, buf) < 0) return;
+
+    if (pcp->pkc_len < NET_LONG_LEN) {
+	if (buf) (void)free(buf);
+	return;
+    }
 
     (void)pkg_glong(&buf[0*NET_LONG_LEN]);
 
