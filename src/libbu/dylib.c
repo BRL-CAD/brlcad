@@ -33,6 +33,7 @@
 
 #include "bu/dylib.h"
 #include "bu/malloc.h"
+#include "bu/parallel.h"
 
 
 static size_t n_handles = 0;
@@ -43,6 +44,9 @@ static void **handles = NULL;
 void *
 bu_dlopen(const char *path, int mode)
 {
+    if (!path || path[0] == '\0')
+	return NULL;
+
 #ifdef HAVE_DLOPEN
     return dlopen(path, mode);
 #elif defined(_WIN32)
@@ -56,6 +60,9 @@ bu_dlopen(const char *path, int mode)
 void *
 bu_dlsym(void *handle, const char *symbol)
 {
+    if (!handle || !symbol || symbol[0] == '\0')
+	return NULL;
+
 #ifdef HAVE_DLOPEN
     return dlsym(handle, symbol);
 #elif defined(_WIN32)
@@ -69,19 +76,20 @@ bu_dlsym(void *handle, const char *symbol)
 int
 bu_dlclose(void *handle)
 {
-    if (++n_handles >= max_handles) {
+    if (!handle)
+	return 0;
 
-	/* start with just a few but then double quickly */
-	if (max_handles < 32) {
-	    max_handles = 32;
-	    handles = (void **)bu_calloc(max_handles, sizeof(void *), "alloc handles");
-	} else {
-	    max_handles *= 2;
-	    handles = (void **)bu_realloc(handles, sizeof(void *) * max_handles, "realloc handles");
-	}
+    bu_semaphore_acquire(BU_SEM_SYSCALL);
 
+    if (n_handles >= max_handles) {
+	size_t new_max = (max_handles < 32) ? 32 : max_handles * 2;
+	void **new_handles = (void **)bu_realloc(handles, sizeof(void *) * new_max, "realloc handles");
+	handles = new_handles;
+	max_handles = new_max;
     }
-    handles[n_handles-1] = handle;
+    handles[n_handles++] = handle;
+
+    bu_semaphore_release(BU_SEM_SYSCALL);
 
     return 0;
 }
@@ -106,16 +114,28 @@ int
 bu_dlunload(void)
 {
     int ret = 0;
-    while (n_handles) {
+
+    bu_semaphore_acquire(BU_SEM_SYSCALL);
+
+    while (n_handles > 0) {
+	void *h = handles[--n_handles];
+	handles[n_handles] = NULL;
+	if (h) {
 #ifdef HAVE_DLOPEN
-	ret += dlclose(handles[n_handles-1]);
+	    ret += dlclose(h);
 #elif defined(_WIN32)
-	ret += !FreeLibrary(handles[n_handles-1]);
+	    ret += !FreeLibrary(h);
 #endif
-	handles[n_handles-1] = NULL;
-	n_handles--;
+	}
     }
-    bu_free(handles, "free handles");
+    if (handles) {
+	bu_free(handles, "free handles");
+	handles = NULL;
+    }
+    max_handles = 0;
+
+    bu_semaphore_release(BU_SEM_SYSCALL);
+
     return ret;
 }
 
