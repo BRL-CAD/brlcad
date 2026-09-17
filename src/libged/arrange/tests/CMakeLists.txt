@@ -3,6 +3,9 @@ brlcad_addexec(arrange_test_masks
   "libanalyze;librt;libbu"
   TEST
 )
+if(TARGET arrange_test_masks)
+  add_dependencies(arrange_test_masks libged)
+endif(TARGET arrange_test_masks)
 brlcad_add_test(NAME arrange_test_masks COMMAND arrange_test_masks)
 
 brlcad_addexec(arrange_test_command arrange_test_command.cpp
