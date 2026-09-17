@@ -24,7 +24,7 @@ read [-f [xyzijksrgb]] [-u unit] [--size #] {input_file} {pnts_obj}
 
 [source]
 ----
-write [-p #] [--ply] {pnts_obj} {output_filepnts}
+write [-p #] [-f xyz] [--ply] {pnts_obj} {output_file}
 ----
 
 
@@ -88,7 +88,11 @@ Writes point data to an output file.
 +
 
 *-p #*::
-Specifies the number of significant digits (defualt 17).
+Specifies the number of significant digits (default 17).
+
+*-f xyz*::
+Writes only point coordinates, omitting normals, sizes, and colors.
+This option cannot be combined with *--ply*.
 
 
 *--ply*::

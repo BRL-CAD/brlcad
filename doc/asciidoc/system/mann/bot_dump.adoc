@@ -41,7 +41,9 @@ Write output in binary format where supported (e.g., binary STL, binary glTF/GLB
 Write per-vertex normals if the output format supports them.
 
 *-F*, *--full-precision*::
-Write full floating-point precision for coordinate values. Non-standard for glTF output.
+Write full floating-point precision for coordinate values where supported.
+glTF and GLB require standard single-precision coordinates and reject
+this option.
 
 *-m dir*, *--output-directory dir*::
 Write each BOT to a separate file in the specified directory `dir`. Mutually exclusive with `-o`.
@@ -88,12 +90,12 @@ mged> **bot_dump -t obj --output-directory ./export/**
 Exports each BOT in the database to its own `.obj` file in the `./export/` directory, including color/material data when available.
 ====
 
-.Export in glTF binary format with full precision
+.Export in glTF binary format
 [example]
 ====
-mged> **bot_dump -t glb -F -o scene.glb**
+mged> **bot_dump -t glb -o scene.glb**
 
-Exports all BOTs to `scene.glb` in binary glTF format with full floating-point precision.
+Exports all BOTs to `scene.glb` in standard binary glTF format.
 ====
 
 .Export in DXF format with unit conversion

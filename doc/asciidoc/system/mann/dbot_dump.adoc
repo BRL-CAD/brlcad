@@ -41,7 +41,8 @@ Write output in binary format where supported.
 Write per-vertex normals if the output format supports them.
 
 *-F*, *--full-precision*::
-Write full floating-point precision for coordinate values.
+Write full floating-point precision for coordinate values where supported.
+glTF and GLB reject this option.
 
 *-m dir*, *--output-directory dir*::
 Write each BOT to a separate file in the specified directory `dir`. Mutually exclusive with `-o`.
