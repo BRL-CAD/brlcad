@@ -96,6 +96,10 @@ bu_bitv_new(size_t nbits)
     size_t extra;
     size_t alloc_bits = nbits;
 
+    if (UNLIKELY(nbits > SIZE_MAX - BU_BITV_MASK)) {
+	bu_bomb("ERROR: bu_bitv_new size overflow\n");
+    }
+
     /* Round up allocation to at least one full machine word so the embedded
      * bits[1] member is always fully usable without extra dynamic allocation. */
     if (alloc_bits < sizeof(bitv_t) * BITS_PER_BYTE)
@@ -284,6 +288,8 @@ bu_bitv_shift_vector(struct bu_bitv *ov, int shift)
             ov->bits[words - 1] &= (((bitv_t)1) << rem) - 1;
         }
     } else {
+	if (UNLIKELY(shift == INT_MIN))
+	    shift = -INT_MAX;
         shift = -shift;
         word_shift = shift / (sizeof(bitv_t) * BITS_PER_BYTE);
         bit_shift = shift % (sizeof(bitv_t) * BITS_PER_BYTE);
@@ -435,6 +441,9 @@ bu_hex_to_bitv(const char *str)
 
     abyte[2] = '\0';
 
+    if (UNLIKELY(!str))
+	return (struct bu_bitv *)NULL;
+
     /* skip over any initial white space */
     while (isspace((int)(*str)))
 	str++;
@@ -525,7 +534,7 @@ bu_bitv_dup(const struct bu_bitv *bv)
 void
 bu_bitv_to_binary(struct bu_vls *v, const struct bu_bitv *bv)
 {
-    int i;
+    size_t i;
     size_t len;
 
     BU_CK_VLS(v);
@@ -541,7 +550,7 @@ bu_bitv_to_binary(struct bu_vls *v, const struct bu_bitv *bv)
     bu_vls_strcat(v, "0b");
 
     /* Visit all the bits from left (len - 1) to right (0) */
-    for (i = (int)len - 1; i >= 0; --i) {
+    for (i = len; i-- > 0;) {
 	if (!BU_BITTEST(bv, i))
 	    bu_vls_strcat(v, "0");
 	else
@@ -617,6 +626,9 @@ bu_binary_to_bitv2(const char *str, const int nbytes)
     size_t chunksize = 0;
     volatile size_t BVS = sizeof(bitv_t); /* should be 1 byte as defined in bu/bitv.h */
     size_t bytes;
+
+    if (UNLIKELY(!str))
+	return (struct bu_bitv *)NULL;
 
     /* copy the input string and remove leading and trailing white space */
     bu_vls_strcpy(&v, str);
