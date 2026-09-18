@@ -69,7 +69,7 @@ static const struct bu_cmd_option draw2_schema_options[] = {
 	"0=wireframe; 1=shaded BoTs; 2=shaded; 3=evaluated; 4=hidden-line; 5=points",
 	BU_CMD_VALUE_INTEGER, offsetof(struct draw2_args, mode), NULL, NULL,
 	"ged.draw_mode", NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL,
-	BU_CMD_INTEGER_RANGE_INIT(0, 5)},
+	BU_CMD_INTEGER_RANGE_INIT(0, 5), BU_CMD_ARG_SHAPE_SCALAR},
     BU_CMD_FLAG(NULL, "wireframe", struct draw2_args, wireframe, "Draw using only wireframes (mode = 0)"),
     BU_CMD_FLAG(NULL, "shaded", struct draw2_args, shaded, "Shade BoTs, B-reps, and polysolids (mode = 1)"),
     BU_CMD_FLAG(NULL, "shaded-all", struct draw2_args, shaded_all, "Shade all solids, not evaluated (mode = 2)"),
@@ -87,7 +87,7 @@ static const struct bu_cmd_option draw2_schema_options[] = {
     {"V", "view", "view", "name", "Draw on the named view",
 	BU_CMD_VALUE_STRING, offsetof(struct draw2_args, view), NULL, NULL,
 	"ged.view", NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL,
-	BU_CMD_VALUE_RANGE_NONE},
+	BU_CMD_VALUE_RANGE_NONE, BU_CMD_ARG_SHAPE_SCALAR},
     BU_CMD_OPTION_NULL
 };
 static const struct bu_cmd_operand draw2_schema_operands[] = {

@@ -17,6 +17,8 @@
 
 #include <cstring>
 
+#include "bu/cmdschema.h"
+
 #include "arrange_private.h"
 #include "../ged_private.h"
 
@@ -95,11 +97,51 @@ ged_arrange_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-#define GED_ARRANGE_COMMANDS(X, XID) \
-    X(arrange, ged_arrange_core, GED_CMD_DEFAULT) \
+static const struct bu_cmd_schema arrange_root_schema =
+    BU_CMD_SCHEMA_BOUND("arrange", "Arrange objects by style", NULL, NULL,
+        BU_CMD_PARSE_OPTIONS_FIRST, NULL, NULL, NULL, NULL);
+static const struct bu_cmd_tree_node arrange_nodes[] = {
+    BU_CMD_TREE_NODE(&arrange::ged_arrange_nest_schema, NULL, NULL,
+        BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE_NULL
+};
+static const struct bu_cmd_tree arrange_tree =
+    BU_CMD_TREE(&arrange_root_schema, arrange_nodes, BU_CMD_TREE_CHILD_AFTER_OPTIONS);
 
-GED_DECLARE_COMMAND_SET(GED_ARRANGE_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_arrange", 1, GED_ARRANGE_COMMANDS)
+static int
+arrange_grammar_validate(struct ged *gedp, const char *input, size_t cursor,
+    struct ged_cmd_validate_result *result)
+{
+    return ged_cmd_tree_validate(gedp, &arrange_tree, input, cursor, result);
+}
+static int
+arrange_grammar_analyze(struct ged *gedp, const char *input,
+    struct ged_cmd_analysis *analysis)
+{
+    return ged_cmd_tree_analyze(gedp, &arrange_tree, input, analysis);
+}
+static char *
+arrange_grammar_json(void)
+{
+    return bu_cmd_tree_describe_json(&arrange_tree);
+}
+static int
+arrange_grammar_lint(struct bu_vls *msgs)
+{
+    return bu_cmd_tree_lint(&arrange_tree, msgs);
+}
+GED_CMD_TREE_HELP(arrange_grammar_help, arrange_tree)
+static const struct ged_cmd_grammar arrange_grammar = {
+    "arrange", "Arrange objects by style", arrange_grammar_validate,
+    arrange_grammar_analyze, arrange_grammar_json, arrange_grammar_lint, NULL,
+    arrange_grammar_help
+};
+
+#define GED_ARRANGE_COMMANDS(X, XID) \
+    X(arrange, ged_arrange_core, GED_CMD_DEFAULT, &arrange_grammar)
+
+GED_DECLARE_COMMAND_SET_WITH_GRAMMAR(GED_ARRANGE_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_GRAMMAR("libged_arrange", 1, GED_ARRANGE_COMMANDS)
 
 /*
  * Local Variables:

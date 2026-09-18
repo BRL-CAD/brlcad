@@ -556,206 +556,42 @@ parse_args(struct ged *gedp, int ac, const char **av)
 			ANALYSIS_MOMENTS | ANALYSIS_OVERLAPS | ANALYSIS_VOLUMES |
 			ANALYSIS_WEIGHTS;
 		    break;
-		}
-	    case 'a':
-		if (bn_decode_angle(&azimuth_deg,bu_optarg) == 0) {
-		    bu_vls_printf(gedp->ged_result_str, "error parsing azimuth \"%s\"\n", bu_optarg);
+		case 'a': new_flags = ANALYSIS_ADJ_AIR; break;
+		case 'b': new_flags = ANALYSIS_BBOX; break;
+		case 'c': new_flags = ANALYSIS_WEIGHTS | ANALYSIS_CENTROIDS; break;
+		case 'e': new_flags = ANALYSIS_EXP_AIR; break;
+		case 'g': new_flags = ANALYSIS_GAPS; break;
+		case 'm': new_flags = ANALYSIS_WEIGHTS | ANALYSIS_CENTROIDS | ANALYSIS_MOMENTS; break;
+		case 'o': new_flags = ANALYSIS_OVERLAPS; break;
+		case 'p': new_flags = ANALYSIS_OVERLAPS | ANALYSIS_PLOT_OVERLAPS; break;
+		case 'v': new_flags = ANALYSIS_VOLUMES; break;
+		case 'w': new_flags = ANALYSIS_WEIGHTS; break;
+		default:
+		    bu_vls_printf(gedp->ged_result_str,
+			"Unknown analysis type \"%c\" requested.\n", *p);
 		    return -1;
-		}
-		/* -a is honored; flag that an oblique az/el view was requested */
-		azel_requested = 1;
-		break;
-	    case 'e':
-		if (bn_decode_angle(&elevation_deg,bu_optarg) == 0) {
-		    bu_vls_printf(gedp->ged_result_str, "error parsing elevation \"%s\"\n", bu_optarg);
-		    return -1;
-		}
-		/* -e is honored; flag that an oblique az/el view was requested */
-		azel_requested = 1;
-		break;
-	    case 'd': debug = 1; break;
-
-	    case 'f': densityFileName = bu_optarg; break;
-
-	    case 'g':
-		{
-		    double value1, value2;
-
-		    /* find out if we have two or one args; user can
-		     * separate them with , or - delimiter
-		     */
-		    p = strchr(bu_optarg, COMMA);
-		    if (p)
-			*p++ = '\0';
-		    else {
-			p = strchr(bu_optarg, '-');
-			if (p)
-			    *p++ = '\0';
-		    }
-
-
-		    if (_gqa_read_units_double(gedp, &value1, bu_optarg, units_tab[0])) {
-			bu_vls_printf(gedp->ged_result_str, "error parsing grid spacing value \"%s\"\n", bu_optarg);
-			return -1;
-		    }
-
-		    if (p) {
-			/* we've got 2 values, they are upper limit
-			 * and lower limit.
-			 */
-			if (_gqa_read_units_double(gedp, &value2, p, units_tab[0])) {
-			    bu_vls_printf(gedp->ged_result_str, "error parsing grid spacing limit value \"%s\"\n", p);
-			    return -1;
-			}
-
-			gridSpacing = value1;
-			gridSpacingLimit = value2;
-		    } else {
-			gridSpacingLimit = value1;
-
-			gridSpacing = 0.0; /* flag it */
-		    }
-		    break;
-		}
-	    case 'G':
-		makeOverlapAssemblies = 1;
-		bu_vls_printf(gedp->ged_result_str, "-G option unimplemented\n");
-		return -1;
-	    case 'n':
-		if (sscanf(bu_optarg, "%d", &c) != 1 || c < 0) {
-		    bu_vls_printf(gedp->ged_result_str, "num_hits must be integer value >= 0, not \"%s\"\n", bu_optarg);
-		    return -1;
-		}
-
-		require_num_hits = (size_t)c;
-		break;
-
-	    case 'N':
-		num_views = atoi(bu_optarg);
-		break;
-	    case 'p':
-		plot_prefix = bu_optarg;
-		break;
-	    case 'P':
-		/* cannot ask for more cpu's than the machine has */
-		c = atoi(bu_optarg);
-		if (c > 0 && c <= max_cpus)
-		    ncpu = c;
-		break;
-	    case 'q':
-		quiet_missed_report = 1;
-		break;
-	    case 'r':
-		print_per_region_stats = 1;
-		break;
-	    case 'S':
-		if (sscanf(bu_optarg, "%lg", &a) != 1 || a <= 1.0) {
-		    bu_vls_printf(gedp->ged_result_str, "error in specifying minimum samples per model axis: \"%s\"\n", bu_optarg);
-		    break;
-		}
-		Samples_per_model_axis = a + 1;
-		break;
-	    case 't':
-		if (_gqa_read_units_double(gedp, &overlap_tolerance, bu_optarg, units_tab[0])) {
-		    bu_vls_printf(gedp->ged_result_str, "error in overlap tolerance distance \"%s\"\n", bu_optarg);
-		    return -1;
-		}
-		break;
-	    case 'v':
-		verbose = 1;
-		break;
-	    case 'V':
-		if (_gqa_read_units_double(gedp, &volume_tolerance, bu_optarg, units_tab[1])) {
-		    bu_vls_printf(gedp->ged_result_str, "error in volume tolerance \"%s\"\n", bu_optarg);
-		    return -1;
-		}
-		break;
-	    case 'W':
-		if (_gqa_read_units_double(gedp, &weight_tolerance, bu_optarg, units_tab[2])) {
-		    bu_vls_printf(gedp->ged_result_str, "error in weight tolerance \"%s\"\n", bu_optarg);
-		    return -1;
-		}
-		break;
-
-	    case 'U':
-		errno = 0;
-		use_air = strtol(bu_optarg, (char **)NULL, 10);
-		if (errno == ERANGE || errno == EINVAL) {
-		    bu_vls_printf(gedp->ged_result_str, "error in air argument %s\n", bu_optarg);
-		    return -1;
-		}
-		break;
-	    case 'u':
-		{
-		    char *ptr = bu_optarg;
-		    const struct cvt_tab *cv;
-		    static const char *dim[3] = {"length", "volume", "weight"};
-		    char *units_name[3] = {NULL, NULL, NULL};
-		    char **units_ap;
-
-		    /* fill in units_name with the names we parse out */
-		    units_ap = units_name;
-
-		    /* acquire unit names */
-		    for (i = 0; i < 3 && ptr; i++) {
-			int found_unit;
-
-			if (i == 0) {
-			    *units_ap = strtok(ptr, CPP_XSTR(COMMA));
-			} else {
-			    *units_ap = strtok(NULL, CPP_XSTR(COMMA));
-			}
-
-			/* got something? */
-			if (*units_ap == NULL)
-			    break;
-
-			/* got something valid? */
-			found_unit = 0;
-			for (cv = &units_tab[i][0]; cv->name[0] != '\0'; cv++) {
-			    if (units_name[i] && BU_STR_EQUAL(cv->name, units_name[i])) {
-				units[i] = cv;
-				found_unit = 1;
-				break;
-			    }
-			}
-
-			if (!found_unit) {
-			    bu_vls_printf(gedp->ged_result_str, "Units \"%s\" not found in conversion table\n", units_name[i]);
-			    return -1;
-			}
-
-			++units_ap;
-		    }
-
-		    bu_vls_printf(gedp->ged_result_str, "Units: ");
-		    for (i = 0; i < 3; i++) {
-			bu_vls_printf(gedp->ged_result_str, " %s: %s", dim[i], units[i]->name);
-		    }
-		    bu_vls_printf(gedp->ged_result_str, "\n");
-		}
-		break;
-
-	    default: /* '?' 'h' */
-		return -1;
+	    }
+	    if (analysis_flags)
+		multiple_analyses = 1;
+	    analysis_flags |= new_flags;
 	}
     }
 
     if (args.azimuth) {
-	bu_vls_printf(gedp->ged_result_str, "azimuth not implemented\n");
 	if (bn_decode_angle(&azimuth_deg, args.azimuth) == 0) {
 	    bu_vls_printf(gedp->ged_result_str,
 		"error parsing azimuth \"%s\"\n", args.azimuth);
 	    return -1;
 	}
+	azel_requested = 1;
     }
     if (args.elevation) {
-	bu_vls_printf(gedp->ged_result_str, "elevation not implemented\n");
 	if (bn_decode_angle(&elevation_deg, args.elevation) == 0) {
 	    bu_vls_printf(gedp->ged_result_str,
 		"error parsing elevation \"%s\"\n", args.elevation);
 	    return -1;
 	}
+	azel_requested = 1;
     }
     debug = args.debug;
     if (args.density_file)

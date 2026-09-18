@@ -27,9 +27,11 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <utility>
 
 extern "C" {
 #include "bu/units.h"
+#include "bu/cmdschema.h"
 #include "rt/calc.h"
 #include "wdb.h"
 }
@@ -47,30 +49,23 @@ const char *usage =
     "             [-g x,y,z] [--value name=value]...\n"
     "             output container object [object ...]";
 
-const char value_prefix[] = "--value=";
 
 void
 print_help(struct ged *gedp)
 {
-    bu_vls_printf(gedp->ged_result_str,
-        "Usage: %s\n\n"
-        "Pack ray-traceable objects into an arbitrary permitted volume.  In 2D\n"
+    char *schema_help = bu_cmd_schema_help(&ged_arrange_nest_schema, "arrange nest");
+    if (schema_help) {
+        bu_vls_strcat(gedp->ged_result_str, schema_help);
+        bu_free(schema_help, "arrange nest schema help");
+    } else {
+        bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage);
+    }
+    bu_vls_strcat(gedp->ged_result_str,
+        "\nPack ray-traceable objects into an arbitrary permitted volume.  In 2D\n"
         "mode, sampled orthographic silhouettes are packed in the plane\n"
-        "normal to -a.  Repeating a name requests another instance.\n\n"
-        "Options:\n"
-        "  -n                         dry run; report without writing output\n"
-        "  -C, --conservative         use full object bounds for collision\n"
-        "  -d 2|3                     planar or spatial nesting (default: 3)\n"
-        "  -a x|y|z                   projection/upright axis (default: z)\n"
-        "  -s size                    isotropic raster cell size in local units\n"
-        "  -c clearance               minimum raster clearance in local units\n"
-        "  -o fixed|upright|orthogonal allowed orientation set\n"
-        "  -q fast|balanced|thorough search work budget\n"
-        "  -g x,y,z                   settle feasible candidates along gravity\n"
-        "  --value name=value         geometric-knapsack value override\n\n"
-        "The output is a non-region combination of transformed source instances.\n"
-        "Containment and separation are guaranteed at the reported raster size.\n",
-        usage);
+        "normal to the selected axis.  Repeating a name requests another\n"
+        "instance.  The output is a non-region combination of transformed\n"
+        "source instances.\n");
 }
 
 bool
@@ -82,30 +77,6 @@ parse_double(const char *text, double &value)
     char *end = nullptr;
     value = std::strtod(text, &end);
     return errno == 0 && end && *end == '\0' && std::isfinite(value);
-}
-
-bool
-parse_axis(const char *text, int &axis)
-{
-    if (BU_STR_EQUAL(text, "x")) axis = X;
-    else if (BU_STR_EQUAL(text, "y")) axis = Y;
-    else if (BU_STR_EQUAL(text, "z")) axis = Z;
-    else return false;
-    return true;
-}
-
-bool
-parse_gravity(const char *text, std::array<double, 3> &gravity)
-{
-    std::string normalized(text ? text : "");
-    std::replace(normalized.begin(), normalized.end(), '/', ',');
-    std::replace(normalized.begin(), normalized.end(), ' ', ',');
-    char trailing = '\0';
-    int matched = std::sscanf(normalized.c_str(), "%lf,%lf,%lf%c",
-        &gravity[X], &gravity[Y], &gravity[Z], &trailing);
-    return matched == 3 && std::isfinite(gravity[X]) &&
-        std::isfinite(gravity[Y]) && std::isfinite(gravity[Z]) &&
-        (!ZERO(gravity[X]) || !ZERO(gravity[Y]) || !ZERO(gravity[Z]));
 }
 
 bool
@@ -122,128 +93,127 @@ parse_value(const std::string &argument, std::map<std::string, double> &values)
     return true;
 }
 
+struct nest_cli_args {
+    int help = 0;
+    int dry_run = 0;
+    int conservative = 0;
+    int dimension = 3;
+    const char *axis = "z";
+    fastf_t cell_size = 0.0;
+    fastf_t clearance = 0.0;
+    const char *orientation = NULL;
+    const char *quality = "balanced";
+    point_t gravity = {0.0, 0.0, -1.0};
+    std::map<std::string, double> values;
+};
+
+static int
+parse_value_option(struct bu_vls *msg, const char *arg, void *storage)
+{
+    std::map<std::string, double> temporary;
+    auto &values = storage ? *static_cast<std::map<std::string, double> *>(storage) : temporary;
+    if (arg && parse_value(arg, values))
+        return 0;
+    if (msg)
+        bu_vls_printf(msg, "value must have the form name=nonnegative-number\n");
+    return -1;
+}
+
+static const struct bu_cmd_value_keyword nest_axes[] = {
+    {"x", NULL, "X axis"}, {"y", NULL, "Y axis"}, {"z", NULL, "Z axis"},
+    {NULL, NULL, NULL}
+};
+static const struct bu_cmd_value_keyword nest_orientations[] = {
+    {"fixed", NULL, "Do not rotate objects"},
+    {"upright", NULL, "Rotate around the upright axis"},
+    {"orthogonal", NULL, "Use orthogonal rotations"},
+    {NULL, NULL, NULL}
+};
+static const struct bu_cmd_value_keyword nest_qualities[] = {
+    {"fast", NULL, "Smaller search budget"},
+    {"balanced", NULL, "Default search budget"},
+    {"thorough", NULL, "Larger search budget"},
+    {NULL, NULL, NULL}
+};
+static const struct bu_cmd_option nest_options[] = {
+    BU_CMD_FLAG("h", "help", struct nest_cli_args, help, "Print help"),
+    BU_CMD_FLAG("n", "dry-run", struct nest_cli_args, dry_run, "Report without writing"),
+    BU_CMD_FLAG("C", "conservative", struct nest_cli_args, conservative,
+        "Use full bounds for collision"),
+    BU_CMD_INTEGER_RANGE("d", "dimension", struct nest_cli_args, dimension,
+        2, 3, "2|3", "Planar or spatial nesting"),
+    BU_CMD_KEYWORD_VALUES("a", "axis", struct nest_cli_args, axis, "x|y|z",
+        "Projection and upright axis", nest_axes),
+    BU_CMD_POSITIVE_NUMBER("s", "cell-size", struct nest_cli_args, cell_size,
+        "size", "Raster cell size in local units"),
+    BU_CMD_NONNEGATIVE_NUMBER("c", "clearance", struct nest_cli_args, clearance,
+        "distance", "Minimum raster clearance"),
+    BU_CMD_KEYWORD_VALUES("o", "orientation", struct nest_cli_args, orientation,
+        "mode", "Allowed orientation set", nest_orientations),
+    BU_CMD_KEYWORD_VALUES("q", "quality", struct nest_cli_args, quality,
+        "level", "Search work budget", nest_qualities),
+    BU_CMD_VECTOR3("g", "gravity", struct nest_cli_args, gravity,
+        "x,y,z", "Gravity direction"),
+    BU_CMD_CUSTOM("", "value", struct nest_cli_args, values, parse_value_option,
+        "name=value", "Geometric-knapsack value override"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_operand nest_operands[] = {
+    BU_CMD_OPERAND("output", BU_CMD_VALUE_STRING, 1, 1,
+        "New combination name", NULL),
+    BU_CMD_OPERAND("container", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+        "Permitted volume", "ged.db_object"),
+    BU_CMD_OPERAND("objects", BU_CMD_VALUE_DB_OBJECT, 1, BU_CMD_COUNT_UNLIMITED,
+        "Objects to pack", "ged.db_object"),
+    BU_CMD_OPERAND_NULL
+};
+
 bool
 parse_options(struct ged *gedp, int argc, const char *argv[], NestOptions &options,
         bool &help)
 {
     help = false;
-    int index = 1;
-    while (index < argc) {
-        const char *argument = argv[index];
-        if (BU_STR_EQUAL(argument, "--")) {
-            ++index;
-            break;
-        }
-        if (argument[0] != '-')
-            break;
-        if (BU_STR_EQUAL(argument, "--help") || BU_STR_EQUAL(argument, "-h")) {
+    /* Help is available even when the required geometry names are absent. */
+    for (int i = 1; i < argc; ++i) {
+        if (BU_STR_EQUAL(argv[i], "--help") || BU_STR_EQUAL(argv[i], "-h")) {
             help = true;
             return true;
         }
-        if (BU_STR_EQUAL(argument, "-n")) {
-            options.dry_run = true;
-            ++index;
-            continue;
-        }
-        if (BU_STR_EQUAL(argument, "-C") ||
-                BU_STR_EQUAL(argument, "--conservative")) {
-            options.conservative = true;
-            ++index;
-            continue;
-        }
-
-        const char *value = nullptr;
-        bool inline_value = false;
-        if (bu_strncmp(argument, value_prefix, sizeof(value_prefix) - 1) == 0) {
-            value = argument + sizeof(value_prefix) - 1;
-            inline_value = true;
-        } else {
-            if (index + 1 >= argc) {
-                bu_vls_printf(gedp->ged_result_str,
-                    "arrange nest: option '%s' requires an argument\n", argument);
-                return false;
-            }
-            value = argv[index + 1];
-        }
-
-        if (BU_STR_EQUAL(argument, "-d")) {
-            if (BU_STR_EQUAL(value, "2")) options.dimension = Dimension::PLANAR;
-            else if (BU_STR_EQUAL(value, "3")) options.dimension = Dimension::SPATIAL;
-            else {
-                bu_vls_printf(gedp->ged_result_str,
-                    "arrange nest: dimension must be 2 or 3\n");
-                return false;
-            }
-        } else if (BU_STR_EQUAL(argument, "-a")) {
-            if (!parse_axis(value, options.axis)) {
-                bu_vls_printf(gedp->ged_result_str,
-                    "arrange nest: axis must be x, y, or z\n");
-                return false;
-            }
-        } else if (BU_STR_EQUAL(argument, "-s")) {
-            if (!parse_double(value, options.cell_size) || options.cell_size <= 0.0) {
-                bu_vls_printf(gedp->ged_result_str,
-                    "arrange nest: cell size must be positive\n");
-                return false;
-            }
-        } else if (BU_STR_EQUAL(argument, "-c")) {
-            if (!parse_double(value, options.clearance) || options.clearance < 0.0) {
-                bu_vls_printf(gedp->ged_result_str,
-                    "arrange nest: clearance must be nonnegative\n");
-                return false;
-            }
-        } else if (BU_STR_EQUAL(argument, "-o")) {
-            options.orientation_set = true;
-            if (BU_STR_EQUAL(value, "fixed"))
-                options.orientation = OrientationMode::FIXED;
-            else if (BU_STR_EQUAL(value, "upright"))
-                options.orientation = OrientationMode::UPRIGHT;
-            else if (BU_STR_EQUAL(value, "orthogonal"))
-                options.orientation = OrientationMode::ORTHOGONAL;
-            else {
-                bu_vls_printf(gedp->ged_result_str,
-                    "arrange nest: unknown orientation set '%s'\n", value);
-                return false;
-            }
-        } else if (BU_STR_EQUAL(argument, "-q")) {
-            if (BU_STR_EQUAL(value, "fast")) options.quality = Quality::FAST;
-            else if (BU_STR_EQUAL(value, "balanced")) options.quality = Quality::BALANCED;
-            else if (BU_STR_EQUAL(value, "thorough")) options.quality = Quality::THOROUGH;
-            else {
-                bu_vls_printf(gedp->ged_result_str,
-                    "arrange nest: quality must be fast, balanced, or thorough\n");
-                return false;
-            }
-        } else if (BU_STR_EQUAL(argument, "-g")) {
-            if (!parse_gravity(value, options.gravity)) {
-                bu_vls_printf(gedp->ged_result_str,
-                    "arrange nest: gravity must be a nonzero x,y,z vector\n");
-                return false;
-            }
-            options.gravity_enabled = true;
-        } else if (BU_STR_EQUAL(argument, "--value") || inline_value) {
-            if (!parse_value(value, options.values)) {
-                bu_vls_printf(gedp->ged_result_str,
-                    "arrange nest: value must have the form name=nonnegative-number\n");
-                return false;
-            }
-        } else {
-            bu_vls_printf(gedp->ged_result_str,
-                "arrange nest: unknown option '%s'\n", argument);
-            return false;
-        }
-        index += inline_value ? 1 : 2;
+        if (argv[i][0] != '-')
+            break;
     }
 
-    if (argc - index < 3) {
-        bu_vls_printf(gedp->ged_result_str,
-            "arrange nest: output, container, and at least one object are required\n");
+    nest_cli_args args;
+    int operand_index = bu_cmd_schema_parse_complete(&ged_arrange_nest_schema,
+        &args, gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0)
+        return false;
+    int first_operand = operand_index + 1;
+    options.dimension = args.dimension == 2 ? Dimension::PLANAR : Dimension::SPATIAL;
+    options.axis = BU_STR_EQUAL(args.axis, "x") ? X : BU_STR_EQUAL(args.axis, "y") ? Y : Z;
+    options.cell_size = args.cell_size;
+    options.clearance = args.clearance;
+    options.dry_run = args.dry_run != 0;
+    options.conservative = args.conservative != 0;
+    options.orientation_set = args.orientation != NULL;
+    if (args.orientation) {
+        options.orientation = BU_STR_EQUAL(args.orientation, "fixed") ? OrientationMode::FIXED :
+            BU_STR_EQUAL(args.orientation, "upright") ? OrientationMode::UPRIGHT : OrientationMode::ORTHOGONAL;
+    }
+    options.quality = BU_STR_EQUAL(args.quality, "fast") ? Quality::FAST :
+        BU_STR_EQUAL(args.quality, "thorough") ? Quality::THOROUGH : Quality::BALANCED;
+    VMOVE(options.gravity.data(), args.gravity);
+    options.gravity_enabled = bu_cmd_schema_option_present(&ged_arrange_nest_schema,
+        (size_t)operand_index, argv + 1, "gravity") != 0;
+    if (options.gravity_enabled && ZERO(MAGNITUDE(args.gravity))) {
+        bu_vls_printf(gedp->ged_result_str, "arrange nest: gravity must be nonzero\n");
         return false;
     }
-    options.output = argv[index++];
-    options.container = argv[index++];
-    while (index < argc)
-        options.objects.emplace_back(argv[index++]);
+    options.values = std::move(args.values);
+    options.output = argv[first_operand++];
+    options.container = argv[first_operand++];
+    while (first_operand < argc)
+        options.objects.emplace_back(argv[first_operand++]);
     if (options.dimension == Dimension::PLANAR && !options.orientation_set)
         options.orientation = OrientationMode::UPRIGHT;
     if (options.dimension == Dimension::PLANAR &&
@@ -311,6 +281,11 @@ build_orientations(const Raster &source, const NestOptions &options,
 }
 
 } // namespace
+
+const struct bu_cmd_schema ged_arrange_nest_schema =
+    BU_CMD_SCHEMA_BOUND("nest", "Pack objects into a permitted volume",
+        nest_options, nest_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
+        NULL, NULL, NULL, NULL);
 
 int
 ged_arrange_nest(struct ged *gedp, int argc, const char *argv[])

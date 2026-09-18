@@ -758,11 +758,14 @@ VDRAW_TREE_EXEC(open, vdraw_open)
 VDRAW_TREE_EXEC(vlist, vdraw_vlist)
 #undef VDRAW_TREE_EXEC
 
+static const struct bu_cmd_arg_shape vdraw_vector3_shape =
+    BU_CMD_ARG_SHAPE(BU_CMD_ARG_SHAPE_VECTOR3, 1, 3,
+	"packed or three-component XYZ point");
 static const struct bu_cmd_operand vdraw_write_operands[] = {
     BU_CMD_OPERAND("index", BU_CMD_VALUE_STRING, 1, 1, "Point index or next", NULL),
     BU_CMD_OPERAND("command", BU_CMD_VALUE_INTEGER, 1, 1, "VList drawing command", NULL),
     BU_CMD_OPERAND_SHAPED("point", BU_CMD_VALUE_VECTOR, 1, 3, NULL,
-	"Point coordinates", NULL, &bu_cmd_vector3_arg_shape),
+	"Point coordinates", NULL, &vdraw_vector3_shape),
     BU_CMD_OPERAND_NULL
 };
 static const struct bu_cmd_operand vdraw_insert_operands[] = {

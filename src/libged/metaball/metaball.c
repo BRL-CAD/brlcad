@@ -103,6 +103,9 @@ static const struct bu_cmd_operand metaball_delete_operands[] = {
 	"Metaball point index", NULL),
     BU_CMD_OPERAND_NULL
 };
+static const struct bu_cmd_arg_shape metaball_vector3_shape =
+    BU_CMD_ARG_SHAPE(BU_CMD_ARG_SHAPE_VECTOR3, 1, 3,
+	"packed or three-component XYZ point");
 static const struct bu_cmd_operand metaball_move_operands[] = {
     BU_CMD_OPERAND("metaball", BU_CMD_VALUE_DB_PATH, 1, 1,
 	"Metaball object or path", "ged.db_path"),
@@ -110,7 +113,7 @@ static const struct bu_cmd_operand metaball_move_operands[] = {
 	"Metaball point index", NULL),
     BU_CMD_OPERAND_SHAPED("point", BU_CMD_VALUE_VECTOR, 1, 3, NULL,
 	"Packed point or three XYZ coordinates", "ged.vector_group",
-	&bu_cmd_vector3_arg_shape),
+	&metaball_vector3_shape),
     BU_CMD_OPERAND_NULL
 };
 static const struct bu_cmd_operand metaball_add_operands[] = {
@@ -118,7 +121,7 @@ static const struct bu_cmd_operand metaball_add_operands[] = {
 	"Metaball object or path", "ged.db_path"),
     BU_CMD_OPERAND_SHAPED("point", BU_CMD_VALUE_VECTOR, 1, 3, NULL,
 	"Packed point or three XYZ coordinates", "ged.vector_group",
-	&bu_cmd_vector3_arg_shape),
+	&metaball_vector3_shape),
     BU_CMD_OPERAND_NULL
 };
 static const struct bu_cmd_option metaball_move_options[] = {
