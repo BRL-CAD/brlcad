@@ -28,6 +28,7 @@
 #include <string.h>
 
 #include <array>
+#include <memory>
 #include <vector>
 #include <Mathematics/MeshHoleFilling.h>
 #include <Mathematics/MeshPreprocessing.h>
@@ -1156,14 +1157,14 @@ test_validated_ear_alternative(void)
     flat_faces.reserve(faces.size() * 3);
     for (const std::array<int32_t, 3> &face : faces)
 	flat_faces.insert(flat_faces.end(), face.begin(), face.end());
-    std::vector<point_t> flat_points(points.size());
+    std::unique_ptr<point_t[]> flat_points(new point_t[points.size()]);
     for (size_t point = 0; point < points.size(); ++point)
 	VSET(flat_points[point], points[point][0], points[point][1],
 	    points[point][2]);
     struct bg_trimesh_solid_errors solid_errors =
 	BG_TRIMESH_SOLID_ERRORS_INIT_NULL;
-    const int solid_result = bg_trimesh_solid2((int)flat_points.size(),
-	(int)faces.size(), (fastf_t *)flat_points.data(), flat_faces.data(),
+    const int solid_result = bg_trimesh_solid2((int)points.size(),
+	(int)faces.size(), flat_points[0], flat_faces.data(),
 	&solid_errors);
     const bool valid = rejected_preferred_ear && faces.size() == 12 &&
 	!solid_result;
@@ -1218,14 +1219,14 @@ test_steiner_hole_fan(void)
     flat_faces.reserve(faces.size() * 3);
     for (const std::array<int32_t, 3> &face : faces)
 	flat_faces.insert(flat_faces.end(), face.begin(), face.end());
-    std::vector<point_t> flat_points(points.size());
+    std::unique_ptr<point_t[]> flat_points(new point_t[points.size()]);
     for (size_t point = 0; point < points.size(); ++point)
 	VSET(flat_points[point], points[point][0], points[point][1],
 	    points[point][2]);
     const bool valid = points.size() == 9 && faces.size() == 14 &&
 	std::fabs(points[8][2] - 1.0) > 1.0e-12 &&
-	!bg_trimesh_solid2((int)flat_points.size(), (int)faces.size(),
-	    (fastf_t *)flat_points.data(), flat_faces.data(), NULL);
+	!bg_trimesh_solid2((int)points.size(), (int)faces.size(),
+	    flat_points[0], flat_faces.data(), NULL);
     if (!valid) {
 	bu_log("FAIL test_steiner_hole_fan: points=%zu faces=%zu\n",
 	    points.size(), faces.size());
