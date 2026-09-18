@@ -187,6 +187,7 @@ distclean(${mged_outfiles})
 
 cmakefiles(
   CMakeLists.txt
+  csg_edit.mged
   mged.tcl
   regression_resources.tcl
   search_exec_procs.tcl

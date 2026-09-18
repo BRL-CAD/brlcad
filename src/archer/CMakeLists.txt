@@ -53,12 +53,23 @@ endif(BRLCAD_ENABLE_TCL)
 # Archer plugins
 set(
   archer_utility_FILES
-  plugins/Utility/attrGroupsDisplayUtilityP.tcl
-  plugins/Utility/botUtilityP.tcl
-  plugins/Utility/lodUtilityP.tcl
   plugins/Utility/README
+  plugins/Utility/attrGroupsDisplayUtilityP.tcl
+  plugins/Utility/attrGroupsDisplayUtilityP/AttrGroupsDisplayUtilityP.tcl
+  plugins/Utility/botUtilityP.tcl
+  plugins/Utility/botUtilityP/BotUtilityP.tcl
+  plugins/Utility/lodUtilityP.tcl
+  plugins/Utility/lodUtilityP/LODUtilityP.tcl
 )
-set(archer_wizard_FILES plugins/Wizards/humanwizard.tcl plugins/Wizards/tankwizard.tcl plugins/Wizards/tirewizard.tcl)
+set(archer_wizard_FILES
+  plugins/Wizards/humanwizard.tcl
+  plugins/Wizards/humanwizard/HumanWizard.tcl
+  plugins/Wizards/tankwizard.tcl
+  plugins/Wizards/tankwizard/TankWizard.tcl
+  plugins/Wizards/tankwizard/images/tank.png
+  plugins/Wizards/tirewizard.tcl
+  plugins/Wizards/tirewizard/TireWizard.tcl
+)
 
 if(BRLCAD_ENABLE_TCL)
   brlcad_adddata(archer_utility_FILES plugins/archer/Utility)
@@ -77,6 +88,8 @@ endif(BRLCAD_ENABLE_TCL)
 set(
   archer_ignore_files
   CMakeLists.txt
+  plugins/Commands/README
+  plugins/Core/README
   ${archer_utility_FILES}
   ${archer_wizard_FILES}
   ${archer_txt}
