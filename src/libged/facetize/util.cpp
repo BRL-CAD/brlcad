@@ -701,7 +701,7 @@ facetize_collect_primitive_summary(struct _ged_facetize_state *s)
     for (m_it = method_sets.begin(); m_it != method_sets.end(); ++m_it) {
 	total += m_it->second.size();
 	if (m_it->first == std::string("FAIL")) fail_cnt += m_it->second.size();
-	if (m_it->first == std::string("REPAIR")) repair_cnt += m_it->second.size();
+	if (m_it->first == std::string("REPAIR") || m_it->first == std::string("REPAIR_OPENVDB")) repair_cnt += m_it->second.size();
 	if (m_it->first == std::string("PLATE")) plate_cnt += m_it->second.size();
     }
     bu_vls_printf(s->primitive_summary, "    %-43s %8zu\n", "Total solids evaluated", total);
@@ -712,6 +712,8 @@ facetize_collect_primitive_summary(struct _ged_facetize_state *s)
     for (m_it = method_sets.begin(); m_it != method_sets.end(); ++m_it) {
 	if (m_it->first == std::string("REPAIR")) {
 	    bu_vls_printf(s->primitive_summary, "      %-41s %8zu\n", "bot repair", m_it->second.size());
+	} else if (m_it->first == std::string("REPAIR_OPENVDB")) {
+	    bu_vls_printf(s->primitive_summary, "      %-41s %8zu\n", "OpenVDB level-set repair", m_it->second.size());
 	} else if (m_it->first == std::string("PLATE")) {
 	    bu_vls_printf(s->primitive_summary, "      %-41s %8zu\n", "plate extrusion", m_it->second.size());
 	} else if (m_it->first == std::string("FAIL")) {

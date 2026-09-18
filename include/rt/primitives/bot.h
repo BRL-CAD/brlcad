@@ -234,10 +234,17 @@ struct rt_bot_repair_info {
     fastf_t max_hole_area_percent;
     int strict;
 
+    /* OpenVDB repair controls.  When force_openvdb is zero OpenVDB is used
+     * only as a fallback after the conventional repair path fails. */
+    int force_openvdb;
+    fastf_t openvdb_voxel_size;
+
     // Info about generated output
     int output_nonmanifold;
     int output_lint_fail;
     fastf_t output_volume;
+    int openvdb_available;
+    int used_openvdb;
     unsigned int output_data_loss;
 };
 
@@ -252,7 +259,7 @@ struct rt_bot_repair_info {
  * tests.  This isn't always desirable - sometimes manifold is enough even if
  * the mesh is not otherwise well behaved - so it is an user settable param.
  */
-#define RT_BOT_REPAIR_INFO_INIT {0.0, 5.0, 1, 0, 0, 0.0, 0};
+#define RT_BOT_REPAIR_INFO_INIT {0.0, 5.0, 1, 0, 0.0, 0, 0, 0.0, 0, 0, 0};
 
 /* Function to attempt repairing a non-manifold BoT.  Returns 1 if ibot was
  * already manifold (obot will contain NULL), 0 if a manifold BoT was created

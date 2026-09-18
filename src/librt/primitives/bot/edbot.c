@@ -1473,13 +1473,15 @@ rt_edit_bot_repair(struct bu_vls *log_str, struct rt_db_internal *ip, const stru
         return -1;
     }
 
-    struct bu_opt_desc d[5];
+    struct bu_opt_desc d[7];
     int options_json = 0;
     BU_OPT(d[0], "h",  "help",                "",             NULL,                     &print_help,  "Print help");
     BU_OPT(d[1], "p",  "max-hole-percent",   "#",   bu_opt_fastf_t, &settings.max_hole_area_percent,  "Maximum hole area to repair (percentage of mesh surface area)");
     BU_OPT(d[2], "a",  "max-hole-area",     " #",   bu_opt_fastf_t,         &settings.max_hole_area,  "Maximum hole area to repair in mm (overrides -p option)");
-    BU_OPT(d[3], "",   "options-json",        "",             NULL,                   &options_json,  "Return JSON of supported options");
-    BU_OPT_NULL(d[4]);
+    BU_OPT(d[3], "",   "openvdb",             "",             NULL,              &settings.force_openvdb,  "Force OpenVDB level-set repair");
+    BU_OPT(d[4], "",   "openvdb-voxel-size", "#",   bu_opt_fastf_t, &settings.openvdb_voxel_size,  "OpenVDB voxel size in model units (default: bbox diagonal/100)");
+    BU_OPT(d[5], "",   "options-json",        "",             NULL,                   &options_json,  "Return JSON of supported options");
+    BU_OPT_NULL(d[6]);
 
     if (argc > 0 && argv) {
         bu_opt_parse(NULL, argc, argv, d);
@@ -1489,7 +1491,9 @@ rt_edit_bot_repair(struct bu_vls *log_str, struct rt_db_internal *ip, const stru
         if (log_str) {
             bu_vls_printf(log_str, "{\"options\":[");
             bu_vls_printf(log_str, "{\"name\":\"max-hole-percent\",\"type\":\"float\",\"description\":\"Maximum hole area to repair (percentage of mesh surface area)\"},");
-            bu_vls_printf(log_str, "{\"name\":\"max-hole-area\",\"type\":\"float\",\"description\":\"Maximum hole area to repair in mm (overrides max-hole-percent)\"}");
+            bu_vls_printf(log_str, "{\"name\":\"max-hole-area\",\"type\":\"float\",\"description\":\"Maximum hole area to repair in mm (overrides max-hole-percent)\"},");
+            bu_vls_printf(log_str, "{\"name\":\"openvdb\",\"type\":\"boolean\",\"description\":\"Force OpenVDB level-set repair\"},");
+            bu_vls_printf(log_str, "{\"name\":\"openvdb-voxel-size\",\"type\":\"float\",\"description\":\"OpenVDB voxel size in model units\"}");
             bu_vls_printf(log_str, "]}");
         }
         return 1;
@@ -1512,7 +1516,8 @@ rt_edit_bot_repair(struct bu_vls *log_str, struct rt_db_internal *ip, const stru
     int rep_ret = rt_bot_repair(&obot, bot, &settings);
 
     if (rep_ret < 0) {
-        if (log_str) bu_vls_printf(log_str, "{\"status\":\"error\",\"message\":\"Unable to repair BoT\"}");
+        if (log_str && settings.force_openvdb && !settings.openvdb_available) bu_vls_printf(log_str, "{\"status\":\"error\",\"message\":\"OpenVDB repair is unavailable in this build\"}");
+        else if (log_str) bu_vls_printf(log_str, "{\"status\":\"error\",\"message\":\"Unable to repair BoT\"}");
         return -1;
     }
 
@@ -1525,7 +1530,9 @@ rt_edit_bot_repair(struct bu_vls *log_str, struct rt_db_internal *ip, const stru
     ip->idb_meth->ft_ifree(ip);
     ip->idb_ptr = (void *)obot;
 
-    if (log_str) {
+    if (log_str && settings.used_openvdb) {
+	bu_vls_printf(log_str, "{\"status\":\"success\",\"message\":\"Successfully repaired BoT using OpenVDB\"}");
+    } else if (log_str) {
 	if (settings.output_data_loss) {
 	    bu_vls_printf(log_str, "{\"status\":\"success\",\"message\":\"Successfully repaired BoT; ");
 	    if (settings.output_data_loss & RT_BOT_REPAIR_LOST_NORMALS)
