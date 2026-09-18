@@ -1931,6 +1931,117 @@ rt_eto_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
 }
 
 
+C_DECL int
+rt_eto_canonicalize(struct rt_db_internal *canonical,
+		    mat_t canonical_to_input,
+		    const struct rt_db_internal *input,
+		    const struct bn_tol *tol,
+		    enum rt_canonicalize_mode mode)
+{
+    const struct rt_eto_internal *eip;
+    struct rt_eto_internal *ceip;
+    vect_t normal, horizontal, xaxis, yaxis;
+    mat_t orientation;
+    mat_t scale_mat;
+    mat_t oriented_scale;
+    mat_t translate;
+    fastf_t normal_mag;
+    fastf_t major_mag;
+    fastf_t vertical_mag;
+    fastf_t horizontal_mag;
+    fastf_t horizontal_sq;
+    fastf_t uniform_scale = 1.0;
+
+    if (!canonical || !canonical_to_input || !input || !tol)
+	return RT_CANONICALIZE_ERROR;
+    if (mode < RT_CANONICALIZE_RIGID || mode > RT_CANONICALIZE_AFFINE)
+	return RT_CANONICALIZE_ERROR;
+    if (input->idb_type != ID_ETO)
+	return RT_CANONICALIZE_ERROR;
+
+    eip = (const struct rt_eto_internal *)input->idb_ptr;
+    RT_ETO_CK_MAGIC(eip);
+    normal_mag = MAGNITUDE(eip->eto_N);
+    major_mag = MAGNITUDE(eip->eto_C);
+    if (!isfinite(eip->eto_V[X]) || !isfinite(eip->eto_V[Y]) ||
+	!isfinite(eip->eto_V[Z]) || !isfinite(normal_mag) ||
+	!isfinite(major_mag) || !isfinite(eip->eto_r) ||
+	!isfinite(eip->eto_rd) || normal_mag <= tol->dist ||
+	major_mag <= tol->dist || eip->eto_r <= tol->dist ||
+	eip->eto_rd <= tol->dist || eip->eto_rd > major_mag)
+	return RT_CANONICALIZE_ERROR;
+
+    VSCALE(normal, eip->eto_N, 1.0 / normal_mag);
+    vertical_mag = VDOT(eip->eto_C, normal);
+    if (vertical_mag < 0.0) {
+	VREVERSE(normal, normal);
+	vertical_mag = -vertical_mag;
+    }
+    VJOIN1(horizontal, eip->eto_C, -vertical_mag, normal);
+    horizontal_sq = MAGSQ(horizontal);
+    horizontal_mag = sqrt(fmax(0.0, horizontal_sq));
+
+    if (horizontal_mag > SMALL_FASTF) {
+	VSCALE(xaxis, horizontal, 1.0 / horizontal_mag);
+    } else {
+	/* A vertical C leaves rotation around N unconstrained.  Project the
+	 * least-aligned world axis so canonical input still produces an identity
+	 * placement while other orientations remain numerically stable. */
+	vect_t reference = VINIT_ZERO;
+	if (fabs(normal[X]) <= fabs(normal[Y]) && fabs(normal[X]) <= fabs(normal[Z]))
+	    reference[X] = 1.0;
+	else if (fabs(normal[Y]) <= fabs(normal[Z]))
+	    reference[Y] = 1.0;
+	else
+	    reference[Z] = 1.0;
+	VJOIN1(xaxis, reference, -VDOT(reference, normal), normal);
+	VUNITIZE(xaxis);
+	VSETALL(horizontal, 0.0);
+	horizontal_mag = 0.0;
+    }
+    VCROSS(yaxis, normal, xaxis);
+    VUNITIZE(yaxis);
+
+    /* rt_eto_mat can apply only rigid and uniform-scale placements to r and
+	 * rd.  AFFINE therefore intentionally uses the strongest transform that
+	 * this primitive can reconstruct exactly: a similarity. */
+    if (mode != RT_CANONICALIZE_RIGID)
+	uniform_scale = eip->eto_r;
+
+    MAT_IDN(orientation);
+    orientation[0] = xaxis[X];
+    orientation[4] = xaxis[Y];
+    orientation[8] = xaxis[Z];
+    orientation[1] = yaxis[X];
+    orientation[5] = yaxis[Y];
+    orientation[9] = yaxis[Z];
+    orientation[2] = normal[X];
+    orientation[6] = normal[Y];
+    orientation[10] = normal[Z];
+    MAT_IDN(scale_mat);
+    scale_mat[15] = 1.0 / uniform_scale;
+    bn_mat_mul(oriented_scale, orientation, scale_mat);
+    MAT_IDN(translate);
+    MAT_DELTAS_VEC(translate, eip->eto_V);
+    bn_mat_mul(canonical_to_input, translate, oriented_scale);
+
+    canonical->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    canonical->idb_minor_type = ID_ETO;
+    canonical->idb_meth = &OBJ[ID_ETO];
+    BU_ALLOC(canonical->idb_ptr, struct rt_eto_internal);
+    ceip = (struct rt_eto_internal *)canonical->idb_ptr;
+    ceip->eto_magic = RT_ETO_INTERNAL_MAGIC;
+    VSETALL(ceip->eto_V, 0.0);
+    VSET(ceip->eto_N, 0.0, 0.0, 1.0);
+    VSET(ceip->eto_C, horizontal_mag / uniform_scale, 0.0,
+	vertical_mag / uniform_scale);
+    ceip->eto_r = eip->eto_r / uniform_scale;
+    ceip->eto_rd = eip->eto_rd / uniform_scale;
+
+    return RT_CANONICALIZE_OK;
+}
+
+
 /**
  * Import a eto from the database format to the internal format.
  * Apply modeling transformations at the same time.

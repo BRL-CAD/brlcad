@@ -444,6 +444,7 @@ Interactive MGED and GED commands. See also link:man1_index.html[Command-Line To
 == U
 
 * link:mann/unhide.html[unhide]
+* link:mann/unpush.html[unpush]
 * link:mann/units.html[units]
 
 == V

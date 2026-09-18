@@ -161,6 +161,7 @@ set(
   primitives/ars/ars_mirror.c
   primitives/bot/bot.c
   primitives/bot/bot_brep.cpp
+  primitives/bot/bot_canonicalize.cpp
   primitives/bot/bot_edge.c
   primitives/bot/bot_mirror.c
   primitives/bot/bot_oriented_bbox.cpp
@@ -176,6 +177,7 @@ set(
   primitives/bspline/bspline.cpp
   primitives/bspline/bspline_brep.cpp
   primitives/bspline/bspline_mirror.c
+  primitives/canonicalize.c
   primitives/crofton.cpp
   primitives/cline/cline.c
   primitives/cline/cline_brep.cpp
@@ -228,6 +230,7 @@ set(
   primitives/nmg/nmg_mirror.c
   primitives/nmg/nmg_tri_mc.c
   primitives/obj_adjust.c
+  primitives/obj_canonicalize.c
   primitives/obj_curve.c
   primitives/obj_describe.c
   primitives/obj_export.c
@@ -325,6 +328,7 @@ set(
   material/materialX.h
   cut_hlbvh.h
   prcomb.c
+  primitives/canonicalize_private.h
   primitives/bot/bot_edge.h
   primitives/bot/decimate_private.h
   primitives/bot/bot_wireframe.cpp
@@ -482,6 +486,7 @@ brlcad_addlib(librt "${LIBRT_SOURCES}" "${RT_INCLUDE_DIRS}" "${RT_LOCAL_INCLUDE_
     primitives/bot/edbot.c
     primitives/bot/bot.c
     primitives/bot/bot_brep.cpp
+    primitives/bot/bot_canonicalize.cpp
     primitives/bot/bot_edge.c
     primitives/bot/bot_mirror.c
     primitives/bot/bot_oriented_bbox.cpp

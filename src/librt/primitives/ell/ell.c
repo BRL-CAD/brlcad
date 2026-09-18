@@ -1423,6 +1423,156 @@ rt_ell_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
     return BRLCAD_OK;
 }
 
+
+struct ell_canonical_axis {
+    vect_t dir;
+    fastf_t length;
+    size_t input_index;
+};
+
+
+static void
+ell_canonical_axis_swap(struct ell_canonical_axis *a, struct ell_canonical_axis *b)
+{
+    struct ell_canonical_axis tmp;
+
+    VMOVE(tmp.dir, a->dir);
+    tmp.length = a->length;
+    tmp.input_index = a->input_index;
+
+    VMOVE(a->dir, b->dir);
+    a->length = b->length;
+    a->input_index = b->input_index;
+
+    VMOVE(b->dir, tmp.dir);
+    b->length = tmp.length;
+    b->input_index = tmp.input_index;
+}
+
+
+static void
+ell_canonical_axes_sort(struct ell_canonical_axis axes[3], const struct bn_tol *tol)
+{
+    for (size_t i = 0; i < 2; i++) {
+	for (size_t j = i + 1; j < 3; j++) {
+	    if (axes[j].length > axes[i].length + tol->dist ||
+		(NEAR_EQUAL(axes[j].length, axes[i].length, tol->dist) &&
+		 axes[j].input_index < axes[i].input_index))
+		ell_canonical_axis_swap(&axes[i], &axes[j]);
+	}
+    }
+}
+
+
+static void
+ell_canonical_orientation(mat_t orientation, const struct ell_canonical_axis axes[3])
+{
+    MAT_IDN(orientation);
+
+    orientation[0] = axes[0].dir[X];
+    orientation[4] = axes[0].dir[Y];
+    orientation[8] = axes[0].dir[Z];
+
+    orientation[1] = axes[1].dir[X];
+    orientation[5] = axes[1].dir[Y];
+    orientation[9] = axes[1].dir[Z];
+
+    orientation[2] = axes[2].dir[X];
+    orientation[6] = axes[2].dir[Y];
+    orientation[10] = axes[2].dir[Z];
+}
+
+
+C_DECL int
+rt_ell_canonicalize(struct rt_db_internal *canonical,
+		    mat_t canonical_to_input,
+		    const struct rt_db_internal *input,
+		    const struct bn_tol *tol,
+		    enum rt_canonicalize_mode mode)
+{
+    const struct rt_ell_internal *eip;
+    struct rt_ell_internal *ceip;
+    struct ell_canonical_axis axes[3];
+    const fastf_t *input_axes[3];
+    vect_t cross;
+    mat_t orientation;
+    mat_t scale_mat;
+    mat_t oriented_scale;
+    mat_t translate;
+    fastf_t canonical_lengths[3];
+    fastf_t uniform_scale = 1.0;
+
+    if (!canonical || !canonical_to_input || !input || !tol)
+	return RT_CANONICALIZE_ERROR;
+    if (mode < RT_CANONICALIZE_RIGID || mode > RT_CANONICALIZE_AFFINE)
+	return RT_CANONICALIZE_ERROR;
+    if (input->idb_type != ID_ELL && input->idb_type != ID_SPH)
+	return RT_CANONICALIZE_ERROR;
+
+    eip = (const struct rt_ell_internal *)input->idb_ptr;
+    RT_ELL_CK_MAGIC(eip);
+
+    input_axes[0] = eip->a;
+    input_axes[1] = eip->b;
+    input_axes[2] = eip->c;
+    for (size_t i = 0; i < 3; i++) {
+	axes[i].length = MAGNITUDE(input_axes[i]);
+	if (axes[i].length <= tol->dist)
+	    return RT_CANONICALIZE_ERROR;
+	VSCALE(axes[i].dir, input_axes[i], 1.0 / axes[i].length);
+	axes[i].input_index = i;
+    }
+
+    if (!NEAR_ZERO(VDOT(axes[0].dir, axes[1].dir), tol->perp) ||
+	!NEAR_ZERO(VDOT(axes[0].dir, axes[2].dir), tol->perp) ||
+	!NEAR_ZERO(VDOT(axes[1].dir, axes[2].dir), tol->perp))
+	return RT_CANONICALIZE_ERROR;
+
+    ell_canonical_axes_sort(axes, tol);
+
+    /* Axis signs do not alter ellipsoid geometry.  Select the sign of the
+     * third axis so the placement matrix is a proper rotation. */
+    VCROSS(cross, axes[0].dir, axes[1].dir);
+    if (VDOT(cross, axes[2].dir) < 0.0)
+	VREVERSE(axes[2].dir, axes[2].dir);
+
+    if (mode == RT_CANONICALIZE_AFFINE) {
+	VSETALL(canonical_lengths, 1.0);
+	for (size_t i = 0; i < 3; i++)
+	    VSCALE(axes[i].dir, axes[i].dir, axes[i].length);
+	ell_canonical_orientation(orientation, axes);
+	MAT_IDN(translate);
+	MAT_DELTAS_VEC(translate, eip->v);
+	bn_mat_mul(canonical_to_input, translate, orientation);
+    } else {
+	if (mode == RT_CANONICALIZE_SIMILARITY)
+	    uniform_scale = axes[0].length;
+	for (size_t i = 0; i < 3; i++)
+	    canonical_lengths[i] = axes[i].length / uniform_scale;
+
+	ell_canonical_orientation(orientation, axes);
+	MAT_IDN(scale_mat);
+	scale_mat[15] = 1.0 / uniform_scale;
+	bn_mat_mul(oriented_scale, orientation, scale_mat);
+	MAT_IDN(translate);
+	MAT_DELTAS_VEC(translate, eip->v);
+	bn_mat_mul(canonical_to_input, translate, oriented_scale);
+    }
+
+    canonical->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    canonical->idb_minor_type = input->idb_minor_type;
+    canonical->idb_meth = &OBJ[input->idb_minor_type];
+    BU_ALLOC(canonical->idb_ptr, struct rt_ell_internal);
+    ceip = (struct rt_ell_internal *)canonical->idb_ptr;
+    ceip->magic = RT_ELL_INTERNAL_MAGIC;
+    VSETALL(ceip->v, 0.0);
+    VSET(ceip->a, canonical_lengths[0], 0.0, 0.0);
+    VSET(ceip->b, 0.0, canonical_lengths[1], 0.0);
+    VSET(ceip->c, 0.0, 0.0, canonical_lengths[2]);
+
+    return RT_CANONICALIZE_OK;
+}
+
 /**
  * Import an ellipsoid/sphere from the database format to the internal
  * structure.  Apply modeling transformations as well.

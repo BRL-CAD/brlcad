@@ -21,7 +21,7 @@
 /*----------------------------------------------------------------------*/
 /** @addtogroup bg_pca
  *
- * Principle Component Analysis
+ * Principal Component Analysis
  *
  * Calculates an XYZ coordinate system such that it aligns with the largest
  * variations in the supplied data.  Intuitively, it "aligns" with the
@@ -61,6 +61,9 @@
 #define BG_PCA_H
 
 #include "common.h"
+
+#include <stddef.h>
+
 #include "vmath.h"
 #include "bg/defines.h"
 
@@ -69,7 +72,7 @@ __BEGIN_DECLS
 
 /**
  * @brief
- * Perform a Principle Component Analysis on a set of points.
+ * Perform a Principal Component Analysis on a set of points.
  *
  * Outputs are a center point and XYZ vectors for the coordinate system.
  *
@@ -86,9 +89,19 @@ __BEGIN_DECLS
  */
 BG_EXPORT extern int bg_pca(point_t *c, vect_t *xaxis, vect_t *yaxis, vect_t *zaxis, size_t npnts, const point_t *pnts);
 
+/**
+ * Perform PCA and also report the singular values of the centered point
+ * matrix, ordered to correspond to xaxis, yaxis, and zaxis.  A zero singular
+ * value identifies a dimension in which the input point set has no extent.
+ * The values scale with the square root of the number of input points.
+ */
+BG_EXPORT extern int bg_pca_svd(point_t *c, vect_t *xaxis, vect_t *yaxis,
+				vect_t *zaxis, vect_t *singular_values,
+				size_t npnts, const point_t *pnts);
+
 __END_DECLS
 
-#endif  /* BG_PLANE_H */
+#endif  /* BG_PCA_H */
 /** @} */
 /*
  * Local Variables:
