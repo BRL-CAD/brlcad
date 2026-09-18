@@ -495,6 +495,31 @@ manifold_to_preserved_bot(const manifold::MeshGL64 &mesh,
 	mesh.NumTri());
 }
 
+static int
+openvdb_repair(struct rt_bot_internal **obot, struct rt_bot_internal *bot,
+	       struct rt_bot_repair_info *rinfo)
+{
+    if (!rinfo->openvdb_available || bot->mode != RT_BOT_SOLID)
+	return -1;
+
+    struct rt_bot_internal *repaired_bot = rt_bot_openvdb_repair(
+	    bot, rinfo->openvdb_voxel_size, &rinfo->output_volume);
+    if (!repaired_bot)
+	return -1;
+
+    rinfo->output_nonmanifold = 0;
+    rinfo->used_openvdb = 1;
+    if (rinfo->strict)
+	rinfo->output_lint_fail = bot_repair_lint(repaired_bot);
+    if (rinfo->output_lint_fail) {
+	rt_bot_internal_free(repaired_bot);
+	BU_PUT(repaired_bot, struct rt_bot_internal);
+	return -1;
+    }
+    *obot = repaired_bot;
+    return 0;
+}
+
 int
 rt_bot_repair(struct rt_bot_internal **obot, struct rt_bot_internal *bot, struct rt_bot_repair_info *rinfo)
 {
@@ -508,6 +533,11 @@ rt_bot_repair(struct rt_bot_internal **obot, struct rt_bot_internal *bot, struct
     rinfo->output_lint_fail = 0;
     rinfo->output_volume = 0.0;
     rinfo->output_data_loss = 0;
+    rinfo->openvdb_available = rt_bot_openvdb_available();
+    rinfo->used_openvdb = 0;
+
+    if (rinfo->force_openvdb)
+	return openvdb_repair(obot, bot, rinfo);
     if (bot->mode != RT_BOT_SOLID || !bot->num_vertices ||
 	!bot->num_faces || bot->num_vertices > INT_MAX ||
 	bot->num_faces > INT_MAX || !bot->vertices || !bot->faces)
@@ -598,9 +628,10 @@ rt_bot_repair(struct rt_bot_internal **obot, struct rt_bot_internal *bot, struct
     if (repair_ret < 0 || !rfaces || !rpnts) {
 	bu_free(rfaces, "rfaces");
 	bu_free(rpnts,  "rpnts");
+	if (rinfo->openvdb_available)
+	    return openvdb_repair(obot, bot, rinfo);
 	return -1;
     }
-
     // Validate the repaired mesh with Manifold.
     manifold::MeshGL64 gmm;
     for (int i = 0; i < n_rpnts; i++) {
@@ -619,11 +650,16 @@ rt_bot_repair(struct rt_bot_internal **obot, struct rt_bot_internal *bot, struct
     manifold::Manifold gmanifold(gmm);
     if (gmanifold.Status() != manifold::Manifold::Error::NoError) {
 	rinfo->output_nonmanifold = 1;
+	if (rinfo->openvdb_available)
+	    return openvdb_repair(obot, bot, rinfo);
 	return -1;
     }
     rinfo->output_volume = gmanifold.Volume();
-    if (rinfo->output_volume < 0)
+    if (rinfo->output_volume < 0) {
+	if (rinfo->openvdb_available)
+	    return openvdb_repair(obot, bot, rinfo);
 	return -1;
+    }
 
     manifold::MeshGL64 omesh = gmanifold.GetMeshGL64();
     struct rt_bot_internal *nbot = manifold_to_bot(omesh);
