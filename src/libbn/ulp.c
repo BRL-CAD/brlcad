@@ -118,7 +118,7 @@ bn_flt_epsilon(void)
 #elif defined(HAVE_IEEE754)
     union flt_bits val;
     val.f = 1.0;
-    val.d += 1;
+    val.i += 1;
     return val.f - 1.0;
 #else
     /* static for computed epsilon so it's only calculated once. */
@@ -149,7 +149,7 @@ bn_dbl_min(void)
     union dbl_bits minVal;
 
     /* set exponent to min non-subnormal value (i.e., 1) */
-    minVal.u = 1 << 52; /* 52 zeros for the fraction*/
+    minVal.u = 1ULL << 52; /* 52 zeros for the fraction*/
 
     return minVal.d;
 #endif
@@ -198,8 +198,8 @@ bn_flt_min(void)
 #else
     union flt_bits minVal;
 
-    // set exponent to min non-subnormal value (i.e., 1)
-    minVal.d = 1 << 23; // 23 zeros for the fraction
+    /* set exponent to min non-subnormal value (i.e., 1) */
+    minVal.u = 1U << 23; /* 23 zeros for the fraction */
 
     return minVal.f;
 #endif

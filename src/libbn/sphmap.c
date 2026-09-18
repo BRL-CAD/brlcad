@@ -35,20 +35,22 @@
 void
 bn_spm_free(bn_spm_map_t *mp)
 {
-    BN_CK_SPM_MAP(mp);
     if (mp == BN_SPM_MAP_NULL)
 	return;
 
-    (void) bu_free((char *)mp->_data, "sph _data");
+    BN_CK_SPM_MAP(mp);
+    mp->magic = 0;
+
+    bu_free((char *)mp->_data, "sph _data");
     mp->_data = NULL;
 
-    (void) bu_free((char *)mp->nx, "sph nx");
+    bu_free((char *)mp->nx, "sph nx");
     mp->nx = NULL;
 
-    (void) bu_free((char *)mp->xbin, "sph xbin");
+    bu_free((char *)mp->xbin, "sph xbin");
     mp->xbin = NULL;
 
-    (void) bu_free((char *)mp, "bn_spm_map_t");
+    bu_free((char *)mp, "bn_spm_map_t");
 }
 
 
@@ -56,9 +58,9 @@ bn_spm_map_t *
 bn_spm_init(int N, int elsize)
 {
     int i, nx, total, idx;
-    register bn_spm_map_t *mapp;
+    bn_spm_map_t *mapp;
 
-    if (!N || !elsize) {
+    if (N < 4 || elsize <= 0) {
 	return BN_SPM_MAP_NULL;
     }
 
@@ -108,16 +110,21 @@ bn_spm_init(int N, int elsize)
 
 
 void
-bn_spm_read(register bn_spm_map_t *mapp, register unsigned char *valp, double u, double v)
+bn_spm_read(bn_spm_map_t *mapp, unsigned char *valp, double u, double v)
 {
     int x, y;
-    register unsigned char *cp;
-    register int i;
+    unsigned char *cp;
+    int i;
+
+    if (!mapp || !valp)
+	return;
 
     BN_CK_SPM_MAP(mapp);
 
-    y = v * mapp->ny;
-    x = u * mapp->nx[y];
+    y = (int)(v * mapp->ny);
+    CLAMP(y, 0, mapp->ny - 1);
+    x = (int)(u * mapp->nx[y]);
+    CLAMP(x, 0, mapp->nx[y] - 1);
     cp = &(mapp->xbin[y][x*mapp->elsize]);
 
     i = mapp->elsize;
@@ -128,16 +135,21 @@ bn_spm_read(register bn_spm_map_t *mapp, register unsigned char *valp, double u,
 
 
 void
-bn_spm_write(register bn_spm_map_t *mapp, register unsigned char *valp, double u, double v)
+bn_spm_write(bn_spm_map_t *mapp, unsigned char *valp, double u, double v)
 {
     int x, y;
-    register unsigned char *cp;
-    register int i;
+    unsigned char *cp;
+    int i;
+
+    if (!mapp || !valp)
+	return;
 
     BN_CK_SPM_MAP(mapp);
 
-    y = v * mapp->ny;
-    x = u * mapp->nx[y];
+    y = (int)(v * mapp->ny);
+    CLAMP(y, 0, mapp->ny - 1);
+    x = (int)(u * mapp->nx[y]);
+    CLAMP(x, 0, mapp->nx[y] - 1);
     cp = &(mapp->xbin[y][x*mapp->elsize]);
 
     i = mapp->elsize;
@@ -148,15 +160,20 @@ bn_spm_write(register bn_spm_map_t *mapp, register unsigned char *valp, double u
 
 
 char *
-bn_spm_get(register bn_spm_map_t *mapp, double u, double v)
+bn_spm_get(bn_spm_map_t *mapp, double u, double v)
 {
     int x, y;
-    register unsigned char *cp;
+    unsigned char *cp;
+
+    if (!mapp)
+	return NULL;
 
     BN_CK_SPM_MAP(mapp);
 
-    y = v * mapp->ny;
-    x = u * mapp->nx[y];
+    y = (int)(v * mapp->ny);
+    CLAMP(y, 0, mapp->ny - 1);
+    x = (int)(u * mapp->nx[y]);
+    CLAMP(x, 0, mapp->nx[y] - 1);
     cp = &(mapp->xbin[y][x*mapp->elsize]);
 
     return (char *)cp;
@@ -168,6 +185,11 @@ bn_spm_load(bn_spm_map_t *mapp, const char *filename)
 {
     int y, total;
     FILE *fp;
+
+    /* Sanity */
+    if (mapp == BN_SPM_MAP_NULL || !filename) {
+	return -1;
+    }
 
     BN_CK_SPM_MAP(mapp);
 
@@ -257,7 +279,7 @@ bn_spm_pix_load(bn_spm_map_t *mapp, const char *filename, int nx, int ny)
     FILE *fp;
 
     /* Sanity */
-    if (mapp == BN_SPM_MAP_NULL || !filename || !nx || !ny) {
+    if (mapp == BN_SPM_MAP_NULL || !filename || nx <= 0 || ny <= 0) {
 	return -1;
     }
 
@@ -274,13 +296,14 @@ bn_spm_pix_load(bn_spm_map_t *mapp, const char *filename, int nx, int ny)
     }
 
     /* Shamelessly suck it all in */
-    buffer = (unsigned char *)bu_malloc((unsigned)(nx*nx*3), "bn_spm_pix_load buffer");
+    buffer = (unsigned char *)bu_malloc((size_t)nx * (size_t)ny * 3, "bn_spm_pix_load buffer");
     bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
-    i = (int)fread((char *)buffer, 3, nx*ny, fp);	/* res_syscall */
+    i = (int)fread((char *)buffer, 3, (size_t)nx * (size_t)ny, fp);	/* res_syscall */
     (void)fclose(fp);
     bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
     if (i != nx*ny) {
 	bu_log("bn_spm_pix_load(%s) read error\n", filename);
+	bu_free((char *)buffer, "bn_spm buffer");
 	return -1;
     }
 
@@ -295,8 +318,12 @@ bn_spm_pix_load(bn_spm_map_t *mapp, const char *filename, int nx, int ny)
 	    /* Average pixels from the input file */
 	    red = green = blue = 0;
 	    count = 0;
-	    for (j = y*j_per_y; j < y*j_per_y+nj; j++) {
-		for (i = x*i_per_x; i < x*i_per_x+ni; i++) {
+	    for (j = (int)(y*j_per_y); j < (int)(y*j_per_y)+nj; j++) {
+		if (j < 0 || j >= ny)
+		    continue;
+		for (i = (int)(x*i_per_x); i < (int)(x*i_per_x)+ni; i++) {
+		    if (i < 0 || i >= nx)
+			continue;
 		    red = red + (unsigned long)buffer[ 3*(j*nx+i) ];
 		    green = green + (unsigned long)buffer[ 3*(j*nx+i)+1 ];
 		    blue = blue + (unsigned long)buffer[ 3*(j*nx+i)+2 ];
@@ -326,7 +353,10 @@ bn_spm_pix_save(bn_spm_map_t *mapp, const char *filename, int nx, int ny)
     unsigned char pixel[3];
     int got;
 
-    BN_CK_SPM_MAP(mapp);
+    /* Sanity */
+    if (mapp == BN_SPM_MAP_NULL || !filename || nx <= 0 || ny <= 0) {
+	return -1;
+    }
 
     if (BU_STR_EQUAL(filename, "-"))
 	fp = stdout;

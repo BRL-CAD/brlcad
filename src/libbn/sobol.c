@@ -149,6 +149,8 @@ static double nlopt_genrand_res53(struct bn_soboldata *sd)
  * it is not public API. */
 BN_EXPORT double _sobol_urand(struct bn_soboldata *sd, double a, double b)
 {
+    if (!sd)
+	return 0.0;
     return(a + (b - a) * nlopt_genrand_res53(sd));
 }
 
@@ -164,9 +166,11 @@ BN_EXPORT double _sobol_urand(struct bn_soboldata *sd, double a, double b)
  */
 static unsigned rightzero32(uint32_t n)
 {
+    if (n == 0xffffffffU)
+	return 32;
 #if defined(__GNUC__) && \
     ((__GNUC__ == 3 && __GNUC_MINOR__ >= 4) || __GNUC__ > 3)
-    return __builtin_ctz(~n); /* gcc builtin for version >= 3.4 */
+    return (unsigned)__builtin_ctz(~n); /* gcc builtin for version >= 3.4 */
 #else
     const uint32_t a = 0x05f66a47; /* magic number, found by brute force */
     static const unsigned decode[32] = {0, 1, 2, 26, 23, 3, 15, 27, 24, 21, 19, 4, 12, 16, 28, 6, 31, 25, 22, 14, 20, 18, 11, 5, 30, 13, 17, 10, 29, 9, 8, 7};
@@ -209,6 +213,9 @@ static int sobol_gen(struct bn_soboldata *sd, double *x)
 /* next vector x[sdim] in Sobol sequence, with each x[i] in (0, 1) */
 static void sobol_next_01(struct bn_soboldata *s)
 {
+    if (!s || !s->cvec)
+	return;
+
     if (!sobol_gen(s, s->cvec)) {
 	/* fall back on pseudo random numbers in the unlikely event
 	   that we exceed 2^32-1 points */
@@ -286,12 +293,16 @@ struct bn_soboldata *
 bn_sobol_create(unsigned int sdim, unsigned long seed)
 {
     struct bn_soboldata *s = NULL;
-    BU_ASSERT(sdim <= BN_SOBOL_MAXDIM);
+    if (!sdim || sdim > BN_SOBOL_MAXDIM)
+	return NULL;
 
     s = (struct bn_soboldata *)bu_calloc(1, sizeof(struct bn_soboldata), "sobol data");
     s->cvec = (double *)bu_calloc(SOBOL_MAXDIM, sizeof(double), "results array");
 
-    sobol_init(s, sdim, seed);
+    if (!sobol_init(s, sdim, seed)) {
+	bn_sobol_destroy(s);
+	return NULL;
+    }
 
     return s;
 }
@@ -315,6 +326,9 @@ double *
 bn_sobol_next(struct bn_soboldata *s, const double *lb, const double *ub)
 {
     unsigned int i;
+
+    if (!s || !s->cvec)
+	return NULL;
 
     sobol_next_01(s);
 

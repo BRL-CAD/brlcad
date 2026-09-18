@@ -1,22 +1,22 @@
 # BRL-CAD RMF/STIG Cat 1 Security Audit Dashboard
-**Last Updated:** 2026-09-18 09:06:37 UTC
+**Last Updated:** 2026-09-18 09:36:27 UTC
 
 ## Overall Progress
 - **Total C/C++ Files:** 3493
-- **Files Reviewed:** 209 (6.0%)
-- **Files Pending Review:** 3284
-- **Total Issues Identified:** 140
+- **Files Reviewed:** 220 (6.3%)
+- **Files Pending Review:** 3273
+- **Total Issues Identified:** 148
 
 ### Issues by Severity Potential
 | Severity Level | Count | Description |
 |:---:|:---:|:---|
 | **3 (High)** | 7 | Likely exploit or crash potential; widespread/library exposure |
-| **2 (Medium)** | 99 | Possible exploit or crash under specific circumstances |
-| **1 (Low)** | 34 | Localized / low-impact vulnerability |
+| **2 (Medium)** | 105 | Possible exploit or crash under specific circumstances |
+| **1 (Low)** | 36 | Localized / low-impact vulnerability |
 
 ### Issues by Verification Status
 - **Confirmed:** 0
-- **Fixed (Committed):** 139
+- **Fixed (Committed):** 147
 - **Pending Verification:** 1
 - **Disproven:** 0
 
@@ -85,7 +85,7 @@
 | `src/launcher` | 8 | 0 | 0.0% | 0 |
 | `src/libanalyze` | 40 | 0 | 0.0% | 0 |
 | `src/libbg` | 232 | 0 | 0.0% | 0 |
-| `src/libbn` | 41 | 11 | 26.8% | 22 |
+| `src/libbn` | 41 | 22 | 53.7% | 30 |
 | `src/libbrep` | 50 | 0 | 0.0% | 0 |
 | `src/libbu` | 176 | 176 | 100.0% | 101 |
 | `src/libbv` | 19 | 0 | 0.0% | 0 |
@@ -257,3 +257,11 @@
 | `SEC-0138` | **Sev 1** | Memory Corruption / Pointer Aliasing | `src/libbn/poly.c:50-168` | `FIXED` | In-place pointer aliasing in bn_poly_mul, bn_poly_add, and bn_poly_sub when destination pointer equaled one of the operand polynomials caused coefficients to be overwritten before being read. |
 | `SEC-0139` | **Sev 1** | Buffer Overflow / Unsigned Underflow | `src/libbn/poly.c:170-197` | `FIXED` | bn_poly_synthetic_division assigned -1 to unsigned size_t quo->dgr when divisor degree exceeded dividend degree, underflowing to SIZE_MAX and triggering an unbounded loop writing past the 7-element coefficient array. |
 | `SEC-0140` | **Sev 2** | Null Pointer Dereference | `src/libbn/poly.c:200-488` | `FIXED` | Missing NULL pointer checks in bn_poly_quadratic_roots, bn_poly_cubic_roots, bn_poly_quartic_roots, bn_pr_poly, and bn_pr_roots. |
+| `SEC-0141` | **Sev 2** | Memory Access Violation / Numerical Robustness | `src/libbn/qmath.c:84-331` | `FIXED` | In quat_mat2quat, negative diagonal difference caused NaN and division-by-zero on non-orthogonal matrices; acos() called on unconstrained dot products causing NaN domain errors; missing NULL pointer checks across quaternion math operations. |
+| `SEC-0142` | **Sev 2** | Denial of Service / Memory Access Violation | `src/libbn/randsph.c:50-120` | `FIXED` | Potential infinite loop in _bn_unit_sph_sample when bn_randmt() yields exactly 0.5; possible NaN from sqrt(1 - S) when S slightly exceeds 1 due to floating-point rounding; unchecked return value from bn_sobol_next in _bn_unit_sph_sample_sobol. |
+| `SEC-0143` | **Sev 2** | Null Pointer Dereference | `src/libbn/sobol.c:148-325` | `FIXED` | bn_sobol_create did not check the return status of sobol_init, creating partially initialized structures with NULL member pointers when sdim was invalid; rightzero32 had undefined behavior if invoked with 0xffffffffU; _sobol_urand and bn_sobol_next lacked NULL pointer checks. |
+| `SEC-0144` | **Sev 1** | Buffer Overflow / Resource Leak | `src/libbn/sphmap.c:35-315` | `FIXED` | Heap buffer overflow in bn_spm_pix_load which allocated nx*nx*3 bytes instead of nx*ny*3 while reading nx*ny*3 bytes; permanent memory leak of buffer on fread failure; out-of-bounds array reads and writes in bn_spm_read, bn_spm_write, and bn_spm_get when u or v >= 1.0 or negative; bn_spm_free checked magic number before checking for NULL pointer. |
+| `SEC-0145` | **Sev 2** | Uninitialized Memory Read | `src/libbn/str.c:42-177` | `FIXED` | bn_decode_mat, bn_decode_quat, and bn_decode_vect copied uninitialized stack memory into destination buffers when sscanf matched fewer items than required or failed; missing NULL pointer checks across decode and encode routines. |
+| `SEC-0146` | **Sev 2** | Null Pointer Dereference / Resource Leak | `src/libbn/tabdata.c:35-1215` | `FIXED` | Second pass fopen in bn_read_table_and_tabdata was unchecked, causing NULL pointer dereference in bu_fgets if reopening failed; memory leak of allocated table/tabdata on read failure; unsigned integer underflow in bn_table_delete_sample_pnts when i > j; NULL pointer dereference in bn_table_free and bn_tabdata_free. |
+| `SEC-0147` | **Sev 2** | Undefined Behavior | `src/libbn/ulp.c:118-204` | `FIXED` | Referenced non-existent union member d in union flt_bits (val.d += 1 and minVal.d = 1 << 23); undefined behavior in signed 32-bit shift 1 << 52 when setting 64-bit exponent. |
+| `SEC-0148` | **Sev 1** | Resource Leak | `src/libbn/wavelet.c:170-625` | `FIXED` | Permanent memory leaks in make_wlt_haar_2d_decompose, make_wlt_haar_2d_reconstruct, and make_wlt_haar_2d_decompose2 when tbuffer/tbuf is NULL because allocated buffers were never freed; missing NULL buffer and zero dimension validation across wavelet routines. |

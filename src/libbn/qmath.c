@@ -64,57 +64,85 @@
 void
 quat_mat2quat(quat_t quat, const mat_t mat)
 {
-    fastf_t		tr;
+    fastf_t	tr;
     fastf_t	s;
+    fastf_t	val;
 
 #define XX	0
 #define YY	5
 #define ZZ	10
 #define MMM(a, b)		mat[4*(a)+(b)]
 
+    if (!quat || !mat)
+	return;
+
     tr = mat[XX] + mat[YY] + mat[ZZ];
-    if ( tr > 0.0 )  {
-	s = sqrt( tr + 1.0 );
+    if (tr > 0.0) {
+	s = sqrt(tr + 1.0);
 	quat[W] = s * 0.5;
 	s = 0.5 / s;
-	quat[X] = ( mat[6] - mat[9] ) * s;
-	quat[Y] = ( mat[8] - mat[2] ) * s;
-	quat[Z] = ( mat[1] - mat[4] ) * s;
+	quat[X] = (mat[6] - mat[9]) * s;
+	quat[Y] = (mat[8] - mat[2]) * s;
+	quat[Z] = (mat[1] - mat[4]) * s;
 	return;
     }
 
     /* Find dominant element of primary diagonal */
-    if ( mat[YY] > mat[XX] )  {
-	if ( mat[ZZ] > mat[YY] )  {
-	    s = sqrt( MMM(Z, Z) - (MMM(X, X)+MMM(Y, Y)) + 1.0 );
+    if (mat[YY] > mat[XX]) {
+	if (mat[ZZ] > mat[YY]) {
+	    val = MMM(Z, Z) - (MMM(X, X) + MMM(Y, Y)) + 1.0;
+	    if (val < 0.0) val = 0.0;
+	    s = sqrt(val);
 	    quat[Z] = s * 0.5;
-	    s = 0.5 / s;
-	    quat[W] = (MMM(X, Y) - MMM(Y, X)) * s;
-	    quat[X] = (MMM(Z, X) + MMM(X, Z)) * s;
-	    quat[Y] = (MMM(Z, Y) + MMM(Y, Z)) * s;
+	    if (!ZERO(s)) {
+		s = 0.5 / s;
+		quat[W] = (MMM(X, Y) - MMM(Y, X)) * s;
+		quat[X] = (MMM(Z, X) + MMM(X, Z)) * s;
+		quat[Y] = (MMM(Z, Y) + MMM(Y, Z)) * s;
+	    } else {
+		quat[W] = quat[X] = quat[Y] = 0.0;
+	    }
 	} else {
-	    s = sqrt( MMM(Y, Y) - (MMM(Z, Z)+MMM(X, X)) + 1.0 );
+	    val = MMM(Y, Y) - (MMM(Z, Z) + MMM(X, X)) + 1.0;
+	    if (val < 0.0) val = 0.0;
+	    s = sqrt(val);
 	    quat[Y] = s * 0.5;
-	    s = 0.5 / s;
-	    quat[W] = (MMM(Z, X) - MMM(X, Z)) * s;
-	    quat[Z] = (MMM(Y, Z) + MMM(Z, Y)) * s;
-	    quat[X] = (MMM(Y, X) + MMM(X, Y)) * s;
+	    if (!ZERO(s)) {
+		s = 0.5 / s;
+		quat[W] = (MMM(Z, X) - MMM(X, Z)) * s;
+		quat[Z] = (MMM(Y, Z) + MMM(Z, Y)) * s;
+		quat[X] = (MMM(Y, X) + MMM(X, Y)) * s;
+	    } else {
+		quat[W] = quat[Z] = quat[X] = 0.0;
+	    }
 	}
     } else {
-	if ( mat[ZZ] > mat[XX] )  {
-	    s = sqrt( MMM(Z, Z) - (MMM(X, X)+MMM(Y, Y)) + 1.0 );
+	if (mat[ZZ] > mat[XX]) {
+	    val = MMM(Z, Z) - (MMM(X, X) + MMM(Y, Y)) + 1.0;
+	    if (val < 0.0) val = 0.0;
+	    s = sqrt(val);
 	    quat[Z] = s * 0.5;
-	    s = 0.5 / s;
-	    quat[W] = (MMM(X, Y) - MMM(Y, X)) * s;
-	    quat[X] = (MMM(Z, X) + MMM(X, Z)) * s;
-	    quat[Y] = (MMM(Z, Y) + MMM(Y, Z)) * s;
+	    if (!ZERO(s)) {
+		s = 0.5 / s;
+		quat[W] = (MMM(X, Y) - MMM(Y, X)) * s;
+		quat[X] = (MMM(Z, X) + MMM(X, Z)) * s;
+		quat[Y] = (MMM(Z, Y) + MMM(Y, Z)) * s;
+	    } else {
+		quat[W] = quat[X] = quat[Y] = 0.0;
+	    }
 	} else {
-	    s = sqrt( MMM(X, X) - (MMM(Y, Y)+MMM(Z, Z)) + 1.0 );
+	    val = MMM(X, X) - (MMM(Y, Y) + MMM(Z, Z)) + 1.0;
+	    if (val < 0.0) val = 0.0;
+	    s = sqrt(val);
 	    quat[X] = s * 0.5;
-	    s = 0.5 / s;
-	    quat[W] = (MMM(Y, Z) - MMM(Z, Y)) * s;
-	    quat[Y] = (MMM(X, Y) + MMM(Y, X)) * s;
-	    quat[Z] = (MMM(X, Z) + MMM(Z, X)) * s;
+	    if (!ZERO(s)) {
+		s = 0.5 / s;
+		quat[W] = (MMM(Y, Z) - MMM(Z, Y)) * s;
+		quat[Y] = (MMM(X, Y) + MMM(Y, X)) * s;
+		quat[Z] = (MMM(X, Z) + MMM(Z, X)) * s;
+	    } else {
+		quat[W] = quat[Y] = quat[Z] = 0.0;
+	    }
 	}
     }
 #undef MMM
@@ -126,8 +154,11 @@ quat_quat2mat(mat_t mat, const quat_t quat)
 {
     quat_t	q;
 
-    QMOVE( q, quat );	/* private copy */
-    QUNITIZE( q );
+    if (!mat || !quat)
+	return;
+
+    QMOVE(q, quat);	/* private copy */
+    QUNITIZE(q);
 
     mat[0] = 1.0 - 2.0*q[Y]*q[Y] - 2.0*q[Z]*q[Z];
     mat[1] = 2.0*q[X]*q[Y] + 2.0*q[W]*q[Z];
@@ -153,8 +184,11 @@ quat_distance(const quat_t q1, const quat_t q2)
 {
     quat_t	qtemp;
 
-    QSUB2( qtemp, q1, q2 );
-    return QMAGNITUDE( qtemp );
+    if (!q1 || !q2)
+	return 0.0;
+
+    QSUB2(qtemp, q1, q2);
+    return QMAGNITUDE(qtemp);
 }
 
 
@@ -164,38 +198,49 @@ quat_double(quat_t qout, const quat_t q1, const quat_t q2)
     quat_t	qtemp;
     double	scale;
 
-    scale = 2.0 * QDOT( q1, q2 );
-    QSCALE( qtemp, q2, scale );
-    QSUB2( qout, qtemp, q1 );
-    QUNITIZE( qout );
+    if (!qout || !q1 || !q2)
+	return;
+
+    scale = 2.0 * QDOT(q1, q2);
+    QSCALE(qtemp, q2, scale);
+    QSUB2(qout, qtemp, q1);
+    QUNITIZE(qout);
 }
 
 
 void
 quat_bisect(quat_t qout, const quat_t q1, const quat_t q2)
 {
-    QADD2( qout, q1, q2 );
-    QUNITIZE( qout );
+    if (!qout || !q1 || !q2)
+	return;
+
+    QADD2(qout, q1, q2);
+    QUNITIZE(qout);
 }
 
 
 void
 quat_slerp(quat_t qout, const quat_t q1, const quat_t q2, double f)
 {
-    double		omega;
-    double		cos_omega;
-    double		invsin;
-    register double	s1, s2;
+    double	omega;
+    double	cos_omega;
+    double	invsin;
+    double	s1, s2;
 
-    cos_omega = QDOT( q1, q2 );
-    if ( (1.0 + cos_omega) > 1.0e-5 )  {
+    if (!qout || !q1 || !q2)
+	return;
+
+    cos_omega = QDOT(q1, q2);
+    CLAMP(cos_omega, -1.0, 1.0);
+
+    if ((1.0 + cos_omega) > 1.0e-5) {
 	/* cos_omega > -0.99999 */
-	if ( (1.0 - cos_omega) > 1.0e-5 )  {
+	if ((1.0 - cos_omega) > 1.0e-5) {
 	    /* usual case */
 	    omega = acos(cos_omega);	/* XXX atan2? */
 	    invsin = 1.0 / sin(omega);
-	    s1 = sin( (1.0-f)*omega ) * invsin;
-	    s2 = sin( f*omega ) * invsin;
+	    s1 = sin((1.0-f)*omega) * invsin;
+	    s2 = sin(f*omega) * invsin;
 	} else {
 	    /*
 	     *  cos_omega > 0.99999
@@ -205,20 +250,18 @@ quat_slerp(quat_t qout, const quat_t q1, const quat_t q2, double f)
 	    s1 = 1.0 - f;
 	    s2 = f;
 	}
-	QBLEND2( qout, s1, q1, s2, q2 );
+	QBLEND2(qout, s1, q1, s2, q2);
     } else {
 	/*
 	 *  cos_omega == -1, omega = M_PI.
 	 *  The ends are nearly opposite, 180 degrees (M_PI) apart.
 	 */
-	/* (I have no idea what permuting the elements accomplishes,
-	 * perhaps it creates a perpendicular? */
 	qout[X] = -q1[Y];
 	qout[Y] =  q1[X];
 	qout[Z] = -q1[W];
-	s1 = sin( (0.5-f) * M_PI );
-	s2 = sin( f * M_PI );
-	VBLEND2( qout, s1, q1, s2, qout );
+	s1 = sin((0.5-f) * M_PI);
+	s2 = sin(f * M_PI);
+	VBLEND2(qout, s1, q1, s2, qout);
 	qout[W] =  q1[Z];
     }
 }
@@ -229,17 +272,20 @@ quat_sberp(quat_t qout, const quat_t q1, const quat_t qa, const quat_t qb, const
 {
     quat_t	p1, p2, p3, p4, p5;
 
+    if (!qout || !q1 || !qa || !qb || !q2)
+	return;
+
     /* Interp down the three segments */
-    quat_slerp( p1, q1, qa, f );
-    quat_slerp( p2, qa, qb, f );
-    quat_slerp( p3, qb, q2, f );
+    quat_slerp(p1, q1, qa, f);
+    quat_slerp(p2, qa, qb, f);
+    quat_slerp(p3, qb, q2, f);
 
     /* Interp down the resulting two */
-    quat_slerp( p4, p1, p2, f );
-    quat_slerp( p5, p2, p3, f );
+    quat_slerp(p4, p1, p2, f);
+    quat_slerp(p5, p2, p3, f);
 
     /* Interp this segment for final quaternion */
-    quat_slerp( qout, p4, p5, f );
+    quat_slerp(qout, p4, p5, f);
 }
 
 
@@ -249,13 +295,16 @@ quat_make_nearest(quat_t q1, const quat_t q2)
     quat_t	qtemp;
     double	d1, d2;
 
-    QSCALE( qtemp, q1, -1.0 );
-    d1 = quat_distance( q1, q2 );
-    d2 = quat_distance( qtemp, q2 );
+    if (!q1 || !q2)
+	return;
+
+    QSCALE(qtemp, q1, -1.0);
+    d1 = quat_distance(q1, q2);
+    d2 = quat_distance(qtemp, q2);
 
     /* Choose smallest distance */
-    if ( d2 < d1 ) {
-	QMOVE( q1, qtemp );
+    if (d2 < d1) {
+	QMOVE(q1, qtemp);
     }
 }
 
@@ -266,17 +315,26 @@ quat_print(const char *title, const quat_t quat)
 {
     int	i;
     vect_t	axis;
+    double	cos_val;
 
-    fprintf( stderr, "QUATERNION: %s\n", title );
-    for ( i = 0; i < 4; i++ )
-	fprintf( stderr, "%8f  ", quat[i] );
-    fprintf( stderr, "\n" );
+    if (!quat)
+	return;
+    if (!title)
+	title = "";
 
-    fprintf( stderr, "rot_angle = %8f deg", RAD2DEG * 2.0 * acos( quat[W] ) );
-    VMOVE( axis, quat );
-    VUNITIZE( axis );
-    fprintf( stderr, ", Axis = (%f, %f, %f)\n",
-	     axis[X], axis[Y], axis[Z] );
+    bu_log("QUATERNION: %s\n", title);
+    for (i = 0; i < 4; i++)
+	bu_log("%8f  ", quat[i]);
+    bu_log("\n");
+
+    cos_val = quat[W];
+    CLAMP(cos_val, -1.0, 1.0);
+    bu_log("rot_angle = %8f deg", RAD2DEG * 2.0 * acos(cos_val));
+    VMOVE(axis, quat);
+    if (!VNEAR_ZERO(axis, SMALL_FASTF)) {
+	VUNITIZE(axis);
+    }
+    bu_log(", Axis = (%f, %f, %f)\n", axis[X], axis[Y], axis[Z]);
 }
 
 
@@ -286,12 +344,15 @@ quat_exp(quat_t out, const quat_t in)
     fastf_t	theta;
     fastf_t	scale;
 
-    if ( (theta = MAGNITUDE( in )) > VDIVIDE_TOL )
+    if (!out || !in)
+	return;
+
+    if ((theta = MAGNITUDE(in)) > VDIVIDE_TOL)
 	scale = sin(theta)/theta;
     else
 	scale = 1.0;
 
-    VSCALE( out, in, scale );
+    VSCALE(out, in, scale);
     out[W] = cos(theta);
 }
 
@@ -302,12 +363,15 @@ quat_log(quat_t out, const quat_t in)
     fastf_t	theta;
     fastf_t	scale;
 
-    if ( (scale = MAGNITUDE(in)) > VDIVIDE_TOL )  {
-	theta = atan2( scale, in[W] );
+    if (!out || !in)
+	return;
+
+    if ((scale = MAGNITUDE(in)) > VDIVIDE_TOL) {
+	theta = atan2(scale, in[W]);
 	scale = theta/scale;
     }
 
-    VSCALE( out, in, scale );
+    VSCALE(out, in, scale);
     out[W] = 0.0;
 }
 

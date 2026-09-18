@@ -42,17 +42,20 @@
 int
 bn_decode_angle(double *ang, const char *str)
 {
-    char unit[5];
+    char unit[5] = {0};
     double val;
     int ret;
 
-    ret = sscanf(str,"%lf%4s",&val,unit);
+    if (!ang || !str)
+	return 0;
+
+    ret = sscanf(str, "%lf%4s", &val, unit);
     if (ret == 1) {
 	*ang = val;
     } else if (ret == 2) {
-	if (BU_STR_EQUAL(unit,"rad")) {
+	if (BU_STR_EQUAL(unit, "rad")) {
 	    *ang = (val * RAD2DEG);
-	} else if (BU_STR_EQUAL(unit,"deg")){
+	} else if (BU_STR_EQUAL(unit, "deg")) {
 	    *ang = val;
 	} else {
 	    ret = 0;
@@ -65,12 +68,14 @@ bn_decode_angle(double *ang, const char *str)
 int
 bn_decode_mat(mat_t mat, const char *str)
 {
-    double m[16];
+    double m[16] = {0.0};
     int ret;
 
+    if (!mat || !str)
+	return 0;
+
     if (BU_STR_EQUAL(str, "I")) {
-	MAT_IDN(m);
-	MAT_COPY(mat, m);
+	MAT_IDN(mat);
 	return 16;
     }
     if (*str == '{') str++;
@@ -79,7 +84,9 @@ bn_decode_mat(mat_t mat, const char *str)
 		 "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf",
 		 &m[0], &m[1], &m[2], &m[3], &m[4], &m[5], &m[6], &m[7],
 		 &m[8], &m[9], &m[10], &m[11], &m[12], &m[13], &m[14], &m[15]);
-    MAT_COPY(mat, m);
+    if (ret == 16) {
+	MAT_COPY(mat, m);
+    }
 
     return ret;
 }
@@ -88,12 +95,17 @@ bn_decode_mat(mat_t mat, const char *str)
 int
 bn_decode_quat(quat_t quat, const char *str)
 {
-    double q[4];
+    double q[4] = {0.0};
     int ret;
+
+    if (!quat || !str)
+	return 0;
 
     if (*str == '{') str++;
     ret = sscanf(str, "%lf %lf %lf %lf", &q[0], &q[1], &q[2], &q[3]);
-    HMOVE(quat, q);
+    if (ret == 4) {
+	HMOVE(quat, q);
+    }
 
     return ret;
 }
@@ -102,12 +114,17 @@ bn_decode_quat(quat_t quat, const char *str)
 int
 bn_decode_vect(vect_t vec, const char *str)
 {
-    double v[3];
+    double v[3] = {0.0};
     int ret;
+
+    if (!vec || !str)
+	return 0;
 
     if (*str == '{') str++;
     ret = sscanf(str, "%lf %lf %lf", &v[0], &v[1], &v[2]);
-    VMOVE(vec, v);
+    if (ret == 3) {
+	VMOVE(vec, v);
+    }
 
     return ret;
 }
@@ -123,6 +140,9 @@ bn_decode_hvect(hvect_t v, const char *str)
 void
 bn_encode_mat(struct bu_vls *vp, const mat_t m, int clamp)
 {
+    if (!vp)
+	return;
+
     if (m == NULL) {
 	bu_vls_putc(vp, 'I');
 	return;
@@ -147,6 +167,9 @@ bn_encode_mat(struct bu_vls *vp, const mat_t m, int clamp)
 void
 bn_encode_quat(struct bu_vls *vp, const quat_t q, int clamp)
 {
+    if (!vp || !q)
+	return;
+
     if (clamp) {
 	bu_vls_printf(vp, "%g %g %g %g", V4INTCLAMPARGS(q));
     } else {
@@ -158,6 +181,9 @@ bn_encode_quat(struct bu_vls *vp, const quat_t q, int clamp)
 void
 bn_encode_vect(struct bu_vls *vp, const vect_t v, int clamp)
 {
+    if (!vp || !v)
+	return;
+
     if (clamp) {
 	bu_vls_printf(vp, "%g %g %g", V3INTCLAMPARGS(v));
     } else {
@@ -169,6 +195,9 @@ bn_encode_vect(struct bu_vls *vp, const vect_t v, int clamp)
 void
 bn_encode_hvect(struct bu_vls *vp, const hvect_t v, int clamp)
 {
+    if (!vp || !v)
+	return;
+
     if (clamp) {
 	bu_vls_printf(vp, "%g %g %g %g", V4INTCLAMPARGS(v));
     } else {

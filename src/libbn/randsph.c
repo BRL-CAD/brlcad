@@ -51,22 +51,20 @@ _bn_unit_sph_sample(point_t pnt)
     while (!have_rand_1 || !have_rand_2) {
 	/* need range from -1 to 1, but bn_randmt is from 0 to 1.  Use
 	 * an initial bn_randmt to decide the sign, and then generate
-	 * another number that constitutes the actual value.  Because
-	 * we don't test for == 0.5, use while loops to make absolutely
-	 * sure an assignment takes place. */
+	 * another number that constitutes the actual value. */
 	while (!have_rand_1) {
 	    fastf_t V1flag = bn_randmt();
-	    if (V1flag > 0.5) {V1 = bn_randmt(); have_rand_1++;}
-	    if (V1flag < 0.5) {V1 = -1*bn_randmt(); have_rand_1++;}
+	    if (V1flag >= 0.5) {V1 = bn_randmt(); have_rand_1++;}
+	    else {V1 = -1*bn_randmt(); have_rand_1++;}
 	}
 	while (!have_rand_2) {
 	    fastf_t V2flag = bn_randmt();
-	    if (V2flag > 0.5) {V2 = bn_randmt(); have_rand_2++;}
-	    if (V2flag < 0.5) {V2 = -1*bn_randmt(); have_rand_2++;}
+	    if (V2flag >= 0.5) {V2 = bn_randmt(); have_rand_2++;}
+	    else {V2 = -1*bn_randmt(); have_rand_2++;}
 	}
 	/* Check that V1^2+V2^2 < 1 */
 	S = V1*V1 + V2*V2;
-	if (S >= 1) {
+	if (S >= 1.0) {
 	    have_rand_1 = 0;
 	    have_rand_2 = 0;
 	}
@@ -74,9 +72,16 @@ _bn_unit_sph_sample(point_t pnt)
 
     /* Given the random numbers, generate the xyz points on the
      * unit sphere */
-    px = 2 * V1 * sqrt(1 - S);
-    py = 2 * V2 * sqrt(1 - S);
-    pz = 1 - 2 * S;
+    {
+	fastf_t rem = 1.0 - S;
+	fastf_t rroot;
+	if (rem < 0.0)
+	    rem = 0.0;
+	rroot = sqrt(rem);
+	px = 2 * V1 * rroot;
+	py = 2 * V2 * rroot;
+	pz = 1 - 2 * S;
+    }
 
     pnt[0] = px;
     pnt[1] = py;
@@ -102,17 +107,30 @@ _bn_unit_sph_sample_sobol(point_t pnt, struct bn_soboldata *s)
 
 	/* Get our next two quasi-random numbers */
 	p = bn_sobol_next(s, (double *)lb, (double *)ub);
+	if (!p) {
+	    pnt[0] = 0.0;
+	    pnt[1] = 0.0;
+	    pnt[2] = 1.0;
+	    return;
+	}
 
 	/* Check that p[0]^2+p[1]^2 < 1 */
 	S = p[0]*p[0] + p[1]*p[1];
-	if (S >= 1) success = 0;
+	if (S >= 1.0) success = 0;
     }
 
     /* Given the random numbers, generate the xyz points on the
      * unit sphere */
-    px = 2 * p[0] * sqrt(1 - S);
-    py = 2 * p[1] * sqrt(1 - S);
-    pz = 1 - 2 * S;
+    {
+	double rem = 1.0 - S;
+	double rroot;
+	if (rem < 0.0)
+	    rem = 0.0;
+	rroot = sqrt(rem);
+	px = 2 * p[0] * rroot;
+	py = 2 * p[1] * rroot;
+	pz = 1 - 2 * S;
+    }
 
     pnt[0] = px;
     pnt[1] = py;

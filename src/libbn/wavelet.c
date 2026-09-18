@@ -172,13 +172,16 @@
     decompose_1d(DATATYPE)						\
 	( DATATYPE *tbuffer, DATATYPE *buffer, size_t dimen, size_t channels, size_t limit ) \
     {									\
-	register DATATYPE *detail;					\
-	register DATATYPE *avg;						\
+	DATATYPE *detail;						\
+	DATATYPE *avg;							\
 	size_t img_size;						\
-	size_t half_size;					\
+	size_t half_size;						\
 	int do_free = 0;						\
-	size_t x, x_tmp, d, i, j_idx;				\
-	register fastf_t onehalf = (fastf_t)0.5;			\
+	size_t x, x_tmp, d, i, j_idx;					\
+	fastf_t onehalf = (fastf_t)0.5;					\
+									\
+	if (!buffer || !channels || !dimen)				\
+	    return;							\
 									\
 	CK_POW_2( dimen );						\
 									\
@@ -231,12 +234,15 @@
     reconstruct(DATATYPE)						\
 	( DATATYPE *tbuffer, DATATYPE *buffer, size_t dimen, size_t channels, size_t subimage_size, size_t limit ) \
     {									\
-	register DATATYPE *detail;					\
-	register DATATYPE *avg;						\
+	DATATYPE *detail;						\
+	DATATYPE *avg;							\
 	size_t img_size;						\
 	size_t dbl_size;						\
 	int do_free = 0;						\
-	size_t x_tmp, d, x, i, j_idx;				\
+	size_t x_tmp, d, x, i, j_idx;					\
+									\
+	if (!buffer || !channels || !dimen)				\
+	    return;							\
 									\
 	CK_POW_2( subimage_size );					\
 	CK_POW_2( dimen );						\
@@ -325,12 +331,16 @@ make_wlt_haar_1d_reconstruct(long)
     decompose_2d(DATATYPE)						\
 	(DATATYPE *tbuffer, DATATYPE *buffer, size_t dimen, size_t channels, size_t limit) \
     {									\
-	register DATATYPE *detail;					\
-	register DATATYPE *avg;						\
+	DATATYPE *detail;						\
+	DATATYPE *avg;							\
 	size_t img_size;						\
-	size_t half_size;					\
-	size_t x, y, x_tmp, y_tmp, d, i, j_idx;			\
-	register fastf_t onehalf = (fastf_t)0.5;			\
+	size_t half_size;						\
+	size_t x, y, x_tmp, y_tmp, d, i, j_idx;				\
+	int do_free = 0;						\
+	fastf_t onehalf = (fastf_t)0.5;					\
+									\
+	if (!buffer || !channels || !dimen)				\
+	    return;							\
 									\
 	CK_POW_2( dimen );						\
 									\
@@ -338,6 +348,7 @@ make_wlt_haar_1d_reconstruct(long)
 	    tbuffer = (DATATYPE *)bu_malloc(				\
 		(dimen/2) * channels * sizeof( *buffer ),		\
 		"1d wavelet buffer");					\
+	    do_free = 1;						\
 	}								\
 									\
 	/* each iteration of this loop decomposes the data into 4 quarters: \
@@ -408,6 +419,9 @@ make_wlt_haar_1d_reconstruct(long)
 		}							\
 	    }								\
 	}								\
+									\
+	if (do_free)							\
+	    bu_free((void *)tbuffer, "1d wavelet buffer");		\
     }
 
 
@@ -418,12 +432,16 @@ make_wlt_haar_1d_reconstruct(long)
     reconstruct_2d(DATATYPE)						\
 	(DATATYPE *tbuf, DATATYPE *buf, size_t width, size_t channels, size_t avg_size, size_t limit) \
     {									\
-	register DATATYPE *detail;					\
-	register DATATYPE *avg;						\
+	DATATYPE *detail;						\
+	DATATYPE *avg;							\
 	size_t img_size;						\
 	size_t dbl_size;						\
-	size_t x_tmp, d, x, i, j_idx;				\
-	size_t y, row_len, row_start;				\
+	size_t x_tmp, d, x, i, j_idx;					\
+	size_t y, row_len, row_start;					\
+	int do_free = 0;						\
+									\
+	if (!buf || !channels || !width)				\
+	    return;							\
 									\
 	CK_POW_2( avg_size );						\
 	CK_POW_2( width );						\
@@ -438,6 +456,7 @@ make_wlt_haar_1d_reconstruct(long)
 	if ( ! tbuf ) {							\
 	    tbuf = ( DATATYPE *)bu_malloc((width/2) * channels * sizeof( *buf ), \
 					  "1d wavelet reconstruct tmp buffer"); \
+	    do_free = 1;						\
 	}								\
 									\
 	row_len = width * channels;					\
@@ -496,7 +515,7 @@ make_wlt_haar_1d_reconstruct(long)
 									\
 		memcpy(tbuf, avg, sizeof(*buf) * d);			\
 		avg = tbuf;						\
-									\
+		\
 		/* reconstruct row */					\
 		for (x=0; x < dbl_size; x += 2 ) {			\
 		    x_tmp = x * channels;				\
@@ -510,6 +529,9 @@ make_wlt_haar_1d_reconstruct(long)
 		}							\
 	    }								\
 	}								\
+									\
+	if (do_free)							\
+	    bu_free((void *)tbuf, "1d wavelet reconstruct tmp buffer");	\
     }
 
 make_wlt_haar_2d_decompose(double)
@@ -534,14 +556,18 @@ make_wlt_haar_2d_reconstruct(long)
     decompose_2d_2(DATATYPE)						\
 	(DATATYPE *tbuffer, DATATYPE *buffer, size_t width, size_t height, size_t channels, size_t limit) \
     {									\
-	register DATATYPE *detail;					\
-	register DATATYPE *avg;						\
-	size_t img_wsize;					\
-	size_t img_hsize;					\
-	size_t half_wsize;					\
-	size_t half_hsize;					\
-	size_t x, y, x_tmp, y_tmp, d, i, j_idx;			\
-	register fastf_t onehalf = (fastf_t)0.5;			\
+	DATATYPE *detail;						\
+	DATATYPE *avg;							\
+	size_t img_wsize;						\
+	size_t img_hsize;						\
+	size_t half_wsize;						\
+	size_t half_hsize;						\
+	size_t x, y, x_tmp, y_tmp, d, i, j_idx;				\
+	int do_free = 0;						\
+	fastf_t onehalf = (fastf_t)0.5;					\
+									\
+	if (!buffer || !channels || !width || !height)			\
+	    return;							\
 									\
 	CK_POW_2( width );						\
 	CK_POW_2( height );						\
@@ -552,6 +578,7 @@ make_wlt_haar_2d_reconstruct(long)
 	    tbuffer = (DATATYPE *)bu_malloc(				\
 		(((width>height)?width:height)/2) * channels * sizeof( *buffer ), \
 		"1d wavelet buffer");					\
+	    do_free = 1;						\
 	}								\
 									\
 	/* each iteration of this loop decomposes the data into 4 quarters: \
@@ -623,6 +650,9 @@ make_wlt_haar_2d_reconstruct(long)
 		}							\
 	    }								\
 	}								\
+									\
+	if (do_free)							\
+	    bu_free((void *)tbuffer, "1d wavelet buffer");		\
     }
 
 make_wlt_haar_2d_decompose2(double)
