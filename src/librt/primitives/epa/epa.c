@@ -218,7 +218,11 @@ clt_epa_pack(struct bu_pool *pool, struct soltab *stp)
  * Create a bounding RPP for an epa
  */
 C_DECL int
-rt_epa_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
+rt_epa_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *tol) {
+    int nu_bbox = _rt_nonuniform_bbox(ip, min, max, tol);
+    if (nu_bbox)
+	return (nu_bbox > 0) ? 0 : -1;
+
     struct rt_epa_internal *xip;
     vect_t epa_A, epa_B, epa_An, epa_Bn, epa_H;
     vect_t pt1, pt2, pt3, pt4, pt5, pt6, pt7, pt8;
@@ -355,7 +359,7 @@ rt_epa_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     /* Calculate bounding box (RPP) */
     if (rt_epa_bbox(ip, &(stp->st_min), &(stp->st_max), &rtip->rti_tol)) return 1;
 
-    return 0;			/* OK */
+    return _rt_nonuniform_prep_finalize(stp, ip, &rtip->rti_tol);
 }
 
 
@@ -390,6 +394,9 @@ rt_epa_print(const struct soltab *stp)
 C_DECL int
 rt_epa_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
+    if (stp && stp->st_nu_inv_matp)
+	return _rt_nonuniform_shot(stp, rp, ap, seghead);
+
     struct epa_specific *epa =
 	(struct epa_specific *)stp->st_specific;
     vect_t dprime;		/* D' */
@@ -631,6 +638,11 @@ rt_epa_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 C_DECL void
 rt_epa_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
+    if (stp && stp->st_nu_inv_matp) {
+	(void)_rt_nonuniform_norm(hitp, stp, rp);
+	return;
+    }
+
     fastf_t scale;
     vect_t can_normal;	/* normal to canonical epa */
     struct epa_specific *epa =
@@ -666,6 +678,11 @@ rt_epa_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 C_DECL void
 rt_epa_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
+    if (stp && stp->st_nu_inv_matp) {
+	(void)_rt_nonuniform_curve(cvp, hitp, stp);
+	return;
+    }
+
     fastf_t a, b, c, scale;
     mat_t M1, M2;
     struct epa_specific *epa =
@@ -721,6 +738,11 @@ rt_epa_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 C_DECL void
 rt_epa_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
+    if (stp && stp->st_nu_inv_matp) {
+	(void)_rt_nonuniform_uv(ap, stp, hitp, uvp);
+	return;
+    }
+
     struct epa_specific *epa =
 	(struct epa_specific *)stp->st_specific;
 
@@ -952,6 +974,7 @@ epa_ellipse_points(
 C_DECL int
 rt_epa_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol), const struct bview *v, fastf_t s_size)
 {
+    struct rt_nonuniform_vlist_state nonuniform_state;
     vect_t epa_H, Hu, Au, Bu;
     fastf_t mag_H, z, z_step, r1, r2;
     int i, num_curve_points, num_ellipse_points, num_curves;
@@ -960,6 +983,7 @@ rt_epa_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    _rt_nonuniform_vlist_state_init(&nonuniform_state, vhead);
 
     struct bu_list *vlfree = &rt_vlfree;
     epa = (struct rt_epa_internal *)ip->idb_ptr;
@@ -1032,12 +1056,13 @@ rt_epa_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 	bu_free(node, "rt_pnt_node");
     }
 
-    return 0;
+    return _rt_nonuniform_plot_finalize(vhead, &nonuniform_state, ip);
 }
 
 C_DECL int
 rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
+    struct rt_nonuniform_vlist_state nonuniform_state;
     struct bu_list *vlfree = &rt_vlfree;
     fastf_t dtol, mag_h, ntol, r1, r2;
     fastf_t min_abs;
@@ -1053,6 +1078,7 @@ rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    _rt_nonuniform_vlist_state_init(&nonuniform_state, vhead);
 
     xip = (struct rt_epa_internal *)ip->idb_ptr;
     if (!epa_is_valid(xip)) {
@@ -1314,7 +1340,7 @@ rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     bu_free((char *)pts_dbl, "dbl ints");
     bu_free((char *)segs_per_ell, "segs_per_ell");
 
-    return 0;
+    return _rt_nonuniform_plot_finalize(vhead, &nonuniform_state, ip);
 }
 
 
@@ -1860,7 +1886,7 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     bu_free((char *)pts_dbl, "dbl ints");
     bu_free((char *)vells, "vertex [][]");
 
-    return 0;
+    return _rt_nonuniform_tess_finalize(*r, ip, tol);
 
  fail:
     /* free mem */
@@ -1964,6 +1990,8 @@ rt_epa_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_EPA) return -1;
+    if (_rt_nonuniform_export4_check("rt_epa_export4", ip) < 0)
+	return -1;
     xip = (struct rt_epa_internal *)ip->idb_ptr;
     RT_EPA_CK_MAGIC(xip);
 
@@ -2020,23 +2048,42 @@ rt_epa_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
     struct rt_epa_internal *top = (struct rt_epa_internal *)rop->idb_ptr;
     RT_EPA_CK_MAGIC(top);
 
+    mat_t effective_mat;
+    int remove_nonuniform = 0;
+    {
+	int nonuniform = _rt_nonuniform_transform_resolve(effective_mat, &remove_nonuniform, ip, mat);
+	if (nonuniform < 0)
+	    return BRLCAD_ERROR;
+	if (nonuniform) {
+	    *top = *tip;
+	    if (_rt_nonuniform_attr_copy(rop, ip) < 0)
+		return BRLCAD_ERROR;
+	    return (_rt_nonuniform_attr_compose(rop, mat) < 0) ? BRLCAD_ERROR : BRLCAD_OK;
+	}
+    }
+
+    if (_rt_nonuniform_attr_copy(rop, ip) < 0)
+	return BRLCAD_ERROR;
+    if (remove_nonuniform && _rt_nonuniform_attr_remove(rop) < 0)
+	return BRLCAD_ERROR;
+
     vect_t eV, eH, eAu;
     double epa_r1, epa_r2;
 
     VMOVE(eV, tip->epa_V);
     VMOVE(eH, tip->epa_H);
     VMOVE(eAu, tip->epa_Au);
-    epa_r1 = tip->epa_r1 / mat[15];
-    epa_r2 = tip->epa_r2 / mat[15];
+    epa_r1 = tip->epa_r1 / effective_mat[15];
+    epa_r2 = tip->epa_r2 / effective_mat[15];
 
     if (epa_r1 <= SMALL_FASTF || epa_r2 <= SMALL_FASTF) {
 	bu_log("rt_epa_mat: r1 or r2 are zero\n");
 	return BRLCAD_ERROR;
     }
 
-    MAT4X3PNT(top->epa_V, mat, eV);
-    MAT4X3VEC(top->epa_H, mat, eH);
-    MAT4X3VEC(top->epa_Au, mat, eAu);
+    MAT4X3PNT(top->epa_V, effective_mat, eV);
+    MAT4X3VEC(top->epa_H, effective_mat, eH);
+    MAT4X3VEC(top->epa_Au, effective_mat, eAu);
     VUNITIZE(top->epa_Au);
     top->epa_r1 = epa_r1;
     top->epa_r2 = epa_r2;
@@ -2075,9 +2122,7 @@ rt_epa_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
     /* Sanity */
     if (mat == NULL) mat = bn_mat_identity;
-    double epa_r1 = vec[3*3] / mat[15];
-    double epa_r2 = vec[3*3+1] / mat[15];
-    if (epa_r1 <= SMALL_FASTF || epa_r2 <= SMALL_FASTF) {
+    if (vec[3*3] <= SMALL_FASTF || vec[3*3+1] <= SMALL_FASTF) {
 	bu_log("rt_epa_import5: r1 or r2 are zero\n");
 	bu_free((char *)ip->idb_ptr, "rt_epa_import5: ip->idb_ptr");
 	return -1;
@@ -2092,20 +2137,7 @@ rt_epa_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     xip->epa_r2 = vec[3*3+1];
 
     /* Apply modeling transformations */
-    MAT4X3PNT(xip->epa_V, mat, &vec[0*3]);
-    MAT4X3VEC(xip->epa_H, mat, &vec[1*3]);
-    MAT4X3VEC(xip->epa_Au, mat, &vec[2*3]);
-    VUNITIZE(xip->epa_Au);
-    xip->epa_r1 = vec[3*3] / mat[15];
-    xip->epa_r2 = vec[3*3+1] / mat[15];
-
-    if (xip->epa_r1 <= SMALL_FASTF || xip->epa_r2 <= SMALL_FASTF) {
-	bu_log("rt_epa_import5: r1 or r2 are zero\n");
-	bu_free((char *)ip->idb_ptr, "rt_epa_import4: ip->idb_ptr");
-	return -1;
-    }
-
-    return 0;			/* OK */
+    return rt_epa_mat(ip, mat, ip);
 }
 
 
@@ -2266,6 +2298,9 @@ rt_epa_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 C_DECL void
 rt_epa_volume(fastf_t *vol, const struct rt_db_internal *ip)
 {
+    if (_rt_nonuniform_volume(vol, ip))
+	return;
+
     fastf_t mag_h;
     struct rt_epa_internal *xip = (struct rt_epa_internal *)ip->idb_ptr;
     RT_EPA_CK_MAGIC(xip);
@@ -2278,6 +2313,9 @@ rt_epa_volume(fastf_t *vol, const struct rt_db_internal *ip)
 C_DECL void
 rt_epa_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
+    if (_rt_nonuniform_centroid(cent, ip))
+	return;
+
     struct rt_epa_internal *xip = (struct rt_epa_internal *)ip->idb_ptr;
     RT_EPA_CK_MAGIC(xip);
     VJOIN1(*cent, xip->epa_V, 1.0/3.0, xip->epa_H);
@@ -2287,6 +2325,9 @@ rt_epa_centroid(point_t *cent, const struct rt_db_internal *ip)
 C_DECL void
 rt_epa_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
+    if (_rt_nonuniform_surf_area(area, ip))
+	return;
+
     fastf_t magsq_h, m;
     struct rt_epa_internal *xip = (struct rt_epa_internal *)ip->idb_ptr;
     RT_EPA_CK_MAGIC(xip);

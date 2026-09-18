@@ -398,6 +398,9 @@ RT_EXPORT extern void rt_crofton_result_free(
  * superell, ETO/TOR spindle) should call this function directly with
  * appropriate params.  Callers that already have a prepared rt_i should
  * call rt_crofton_shoot() instead.
+ *
+ * On failure, each requested output is set to -1, following the metric
+ * functab convention.
  */
 RT_EXPORT extern void rt_crofton_sample(fastf_t *area, fastf_t *vol,
 					const struct rt_db_internal *ip,

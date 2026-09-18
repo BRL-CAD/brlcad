@@ -29,6 +29,7 @@ rt_obj_vshot(struct soltab *stp[], struct xray *rp[], struct seg *segp, int n, s
     int i;
     int id;
     const struct rt_functab *ft;
+    int use_scalar = 0;
 
     if (!stp || !rp || n < 1)
 	return 0;
@@ -39,6 +40,8 @@ rt_obj_vshot(struct soltab *stp[], struct xray *rp[], struct seg *segp, int n, s
 	RT_CK_SOLTAB(stp[i]);
 	if (rp[i])
 	    RT_CK_RAY(rp[i]);
+	if (stp[i]->st_nu_inv_matp)
+	    use_scalar = 1;
     }
     if (segp)
 	RT_CK_SEG(segp);
@@ -53,8 +56,34 @@ rt_obj_vshot(struct soltab *stp[], struct xray *rp[], struct seg *segp, int n, s
     ft = &OBJ[id];
     if (!ft)
 	return -3;
-    if (!ft->ft_vshot)
+    if (use_scalar && !ft->ft_shot)
 	return -4;
+    if (!use_scalar && !ft->ft_vshot)
+	return -4;
+
+    if (use_scalar) {
+	for (i = 0; i < n; i++) {
+	    struct seg seghead;
+	    struct seg *tmp_seg;
+	    int ret;
+
+	    BU_LIST_INIT(&seghead.l);
+	    ret = ft->ft_shot(stp[i], rp[i], ap, &seghead);
+	    if (ret <= 0) {
+		segp[i].seg_stp = (struct soltab *)0;
+		continue;
+	    }
+	    tmp_seg = BU_LIST_FIRST(seg, &seghead.l);
+	    BU_LIST_DEQUEUE(&tmp_seg->l);
+	    segp[i] = *tmp_seg;
+	    RT_FREE_SEG(tmp_seg, ap->a_resource);
+	    while (BU_LIST_WHILE(tmp_seg, seg, &seghead.l)) {
+		BU_LIST_DEQUEUE(&tmp_seg->l);
+		RT_FREE_SEG(tmp_seg, ap->a_resource);
+	    }
+	}
+	return 0;
+    }
 
     ft->ft_vshot(stp, rp, segp, n, ap);
     return 0;

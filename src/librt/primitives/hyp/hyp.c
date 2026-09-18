@@ -161,7 +161,11 @@ clt_hyp_pack(struct bu_pool *pool, struct soltab *stp)
  * Create a bounding RPP for an hyp
  */
 C_DECL int
-rt_hyp_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
+rt_hyp_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *tol) {
+    int nu_bbox = _rt_nonuniform_bbox(ip, min, max, tol);
+    if (nu_bbox)
+	return (nu_bbox > 0) ? 0 : -1;
+
     struct rt_hyp_internal *xip;
     vect_t hyp_Au, hyp_B, hyp_An, hyp_Bn, hyp_H;
     vect_t pt1, pt2, pt3, pt4, pt5, pt6, pt7, pt8;
@@ -250,7 +254,7 @@ rt_hyp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     /* calculate bounding RPP */
     if (rt_hyp_bbox(ip, &(stp->st_min), &(stp->st_max), &rtip->rti_tol)) return 1;
-    return 0;			/* OK */
+    return _rt_nonuniform_prep_finalize(stp, ip, &rtip->rti_tol);
 }
 
 
@@ -285,6 +289,9 @@ rt_hyp_print(const struct soltab *stp)
 C_DECL int
 rt_hyp_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
+    if (stp && stp->st_nu_inv_matp)
+	return _rt_nonuniform_shot(stp, rp, ap, seghead);
+
     struct hyp_specific *hyp =	(struct hyp_specific *)stp->st_specific;
     struct seg *segp;
 
@@ -605,6 +612,11 @@ rt_hyp_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 C_DECL void
 rt_hyp_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
+    if (stp && stp->st_nu_inv_matp) {
+	(void)_rt_nonuniform_norm(hitp, stp, rp);
+	return;
+    }
+
     struct hyp_specific *hyp =
 	(struct hyp_specific *)stp->st_specific;
 
@@ -652,6 +664,11 @@ rt_hyp_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 C_DECL void
 rt_hyp_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
+    if (stp && stp->st_nu_inv_matp) {
+	(void)_rt_nonuniform_curve(cvp, hitp, stp);
+	return;
+    }
+
     struct hyp_specific *hyp =
 	(struct hyp_specific *)stp->st_specific;
     vect_t vert, horiz;
@@ -728,6 +745,11 @@ rt_hyp_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 C_DECL void
 rt_hyp_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
+    if (stp && stp->st_nu_inv_matp) {
+	(void)_rt_nonuniform_uv(ap, stp, hitp, uvp);
+	return;
+    }
+
     struct hyp_specific *hyp =	(struct hyp_specific *)stp->st_specific;
 
     if (ap) RT_CK_APPLICATION(ap);
@@ -784,6 +806,7 @@ rt_hyp_free(struct soltab *stp)
 C_DECL int
 rt_hyp_plot(struct bu_list *vhead, struct rt_db_internal *incoming, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
+    struct rt_nonuniform_vlist_state nonuniform_state;
     int i, j;		/* loop indices */
     struct rt_hyp_internal *hyp_in;
     struct hyp_specific *hyp;
@@ -799,6 +822,7 @@ rt_hyp_plot(struct bu_list *vhead, struct rt_db_internal *incoming, const struct
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(incoming);
+    _rt_nonuniform_vlist_state_init(&nonuniform_state, vhead);
     struct bu_list *vlfree = &rt_vlfree;
     hyp_in = (struct rt_hyp_internal *)incoming->idb_ptr;
     RT_HYP_CK_MAGIC(hyp_in);
@@ -880,7 +904,7 @@ rt_hyp_plot(struct bu_list *vhead, struct rt_db_internal *incoming, const struct
 
     BU_PUT(hyp, struct hyp_specific);
 
-    return 0;
+    return _rt_nonuniform_plot_finalize(vhead, &nonuniform_state, incoming);
 }
 
 
@@ -1435,7 +1459,7 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
     bu_ptbl_free(&vert_tab);
     BU_PUT(xip, struct hyp_specific);
-    return 0;
+    return _rt_nonuniform_tess_finalize(*r, ip, tol);
 
  fail:
     /* free mem */
@@ -1468,15 +1492,34 @@ rt_hyp_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
     struct rt_hyp_internal *top = (struct rt_hyp_internal *)rop->idb_ptr;
     RT_HYP_CK_MAGIC(top);
 
+    mat_t effective_mat;
+    int remove_nonuniform = 0;
+    {
+	int nonuniform = _rt_nonuniform_transform_resolve(effective_mat, &remove_nonuniform, ip, mat);
+	if (nonuniform < 0)
+	    return BRLCAD_ERROR;
+	if (nonuniform) {
+	    *top = *tip;
+	    if (_rt_nonuniform_attr_copy(rop, ip) < 0)
+		return BRLCAD_ERROR;
+	    return (_rt_nonuniform_attr_compose(rop, mat) < 0) ? BRLCAD_ERROR : BRLCAD_OK;
+	}
+    }
+
+    if (_rt_nonuniform_attr_copy(rop, ip) < 0)
+	return BRLCAD_ERROR;
+    if (remove_nonuniform && _rt_nonuniform_attr_remove(rop) < 0)
+	return BRLCAD_ERROR;
+
     vect_t Vi, Hi, A;
     VMOVE(Vi, tip->hyp_Vi);
     VMOVE(Hi, tip->hyp_Hi);
     VMOVE(A, tip->hyp_A);
 
-    MAT4X3PNT(top->hyp_Vi, mat, Vi);
-    MAT4X3VEC(top->hyp_Hi, mat, Hi);
-    MAT4X3VEC(top->hyp_A, mat, A);
-    top->hyp_b = (!ZERO(mat[15])) ? tip->hyp_b / mat[15] : INFINITY;
+    MAT4X3PNT(top->hyp_Vi, effective_mat, Vi);
+    MAT4X3VEC(top->hyp_Hi, effective_mat, Hi);
+    MAT4X3VEC(top->hyp_A, effective_mat, A);
+    top->hyp_b = (!ZERO(effective_mat[15])) ? tip->hyp_b / effective_mat[15] : INFINITY;
 
     return BRLCAD_OK;
 }
@@ -1679,6 +1722,9 @@ rt_hyp_params(struct pc_pc_set * UNUSED(ps), const struct rt_db_internal *ip)
 C_DECL void
 rt_hyp_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
+    if (_rt_nonuniform_centroid(cent, ip))
+	return;
+
     if (cent != NULL && ip != NULL) {
 	struct rt_hyp_internal *hip;
 
@@ -1700,6 +1746,9 @@ rt_hyp_centroid(point_t *cent, const struct rt_db_internal *ip)
 C_DECL void
 rt_hyp_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
+    if (_rt_nonuniform_surf_area(area, ip))
+	return;
+
     if (!area || !ip)
 	return;
     do { static const struct rt_crofton_params _p = {50000u, 0.0, 0.0}; rt_crofton_sample(area, NULL, ip, &_p); } while (0);
@@ -1709,6 +1758,9 @@ rt_hyp_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 C_DECL void
 rt_hyp_volume(fastf_t *volume, const struct rt_db_internal *ip)
 {
+    if (_rt_nonuniform_volume(volume, ip))
+	return;
+
     if (volume != NULL && ip != NULL) {
 	struct rt_hyp_internal *hip;
 	struct hyp_specific *hyp;

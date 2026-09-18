@@ -166,15 +166,15 @@ struct db_full_path;
 // NOT the view plane.
 //
 // Note that the underlying solids do not always support directly expressing
-// the shapes that can be created with these opts using comb instances (for
-// example, a TOR scaled in the X direction) and the edit will be rejected in
-// those cases.  Just because a comb instance of a solid can be stretched, that
-// does not mean the solid itself can support that shape.  Consequently, it is
-// recommended that the _X, _Y and _Z versions of the scale operations be used
-// sparingly if at all.  Even if a comb instance's tree is able to support
-// rendering such an operation at the time the original edit is made, a
-// subsequent editing of that tree could add new geometry and ultimately result
-// in an inability to apply the matrix successfully to all leaf solids.
+// the shapes that can be created with these opts using comb instances, and the
+// edit will be rejected in those cases.  Just because a comb instance of a
+// solid can be stretched, that does not mean the solid itself can support that
+// shape.  Consequently, it is recommended that the _X, _Y and _Z versions of
+// the scale operations be used sparingly if at all.  Even if a comb instance's
+// tree is able to support rendering such an operation at the time the original
+// edit is made, a subsequent editing of that tree could add new geometry and
+// ultimately result in an inability to apply the matrix successfully to all
+// leaf solids.
 #define RT_MATRIX_EDIT_SCALE    10
 #define RT_MATRIX_EDIT_SCALE_X  11
 #define RT_MATRIX_EDIT_SCALE_Y  12
@@ -247,7 +247,7 @@ struct rt_edit {
     //
     // Options:
     // RT_PARAMS_EDIT_TRANS  – free translate
-    // RT_PARAMS_EDIT_SCALE  – uniform or axis scale
+    // RT_PARAMS_EDIT_SCALE  – uniform primitive-parameter scale
     // RT_PARAMS_EDIT_ROT    – rotation
     // RT_PARAMS_EDIT_PICK   – geometric pick (e.g. click to select a vertex)
     //

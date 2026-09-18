@@ -56,6 +56,9 @@ int be_s_illuminate(ClientData, Tcl_Interp *, int, char **);
 int be_s_rotate(ClientData, Tcl_Interp *, int, char **);
 int be_s_scale(ClientData, Tcl_Interp *, int, char **);
 int be_s_trans(ClientData, Tcl_Interp *, int, char **);
+int be_s_xscale(ClientData, Tcl_Interp *, int, char **);
+int be_s_yscale(ClientData, Tcl_Interp *, int, char **);
+int be_s_zscale(ClientData, Tcl_Interp *, int, char **);
 int bv_35_25(ClientData, Tcl_Interp *, int, char **);
 int bv_45_45(ClientData, Tcl_Interp *, int, char **);
 int bv_adcursor(ClientData, Tcl_Interp *, int, char **);
@@ -127,6 +130,9 @@ struct buttons {
     {BE_S_ROTATE,	"srot",		be_s_rotate},
     {BE_S_SCALE,	"sscale",	be_s_scale},
     {BE_S_TRANS,	"sxy",		be_s_trans},
+    {BE_S_XSCALE,	"sxscale",	be_s_xscale},
+    {BE_S_YSCALE,	"syscale",	be_s_yscale},
+    {BE_S_ZSCALE,	"szscale",	be_s_zscale},
     {BV_TOP,		"top",		bv_top},
     {BV_ZOOM_IN,	"zoomin",	bv_zoomin},
     {BV_ZOOM_OUT,	"zoomout",	bv_zoomout},
@@ -755,9 +761,9 @@ be_accept(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), c
 
     if (s->global_editing_state == ST_S_EDIT) {
 	/* Accept a solid edit */
+	if (sedit_accept(s) != TCL_OK)
+	    return TCL_ERROR;
 	edsol = 0;
-
-	sedit_accept(s);		/* zeros "edsol" var */
 
 	mmenu_set_all(s, MENU_L1, NULL);
 	mmenu_set_all(s, MENU_L2, NULL);
@@ -952,12 +958,62 @@ be_s_scale(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), 
 }
 
 
+static int
+be_s_axis_scale(struct mged_state *s, int button_code, int edit_flag, int axis, const char *description)
+{
+    if (not_state(s, ST_S_EDIT, description))
+	return TCL_ERROR;
+
+    edsol = button_code;
+    movedir = SARROW;
+    rt_edit_set_edflag(MEDIT(s), edit_flag);
+    mmenu_set(s, MENU_L1, NULL);
+
+    MEDIT(s)->k.sca_abs = MEDIT(s)->acc_sc[axis] - 1.0;
+    if (MEDIT(s)->k.sca_abs > 0.0)
+	MEDIT(s)->k.sca_abs /= 3.0;
+
+    set_e_axes_pos(s, 1);
+    return TCL_OK;
+}
+
+
+int
+be_s_xscale(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+{
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    return be_s_axis_scale(ctp->s, BE_S_XSCALE, RT_MATRIX_EDIT_SCALE_X, X,
+	    "Primitive Local X Scale");
+}
+
+
+int
+be_s_yscale(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+{
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    return be_s_axis_scale(ctp->s, BE_S_YSCALE, RT_MATRIX_EDIT_SCALE_Y, Y,
+	    "Primitive Local Y Scale");
+}
+
+
+int
+be_s_zscale(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+{
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    return be_s_axis_scale(ctp->s, BE_S_ZSCALE, RT_MATRIX_EDIT_SCALE_Z, Z,
+	    "Primitive Local Z Scale");
+}
+
+
 /*
  * Returns 0 if current state is as desired,
  * Returns !0 and prints error message if state mismatch.
  */
 int
-not_state(struct mged_state *s, int desired, char *str)
+not_state(struct mged_state *s, int desired, const char *str)
 {
     if (s->global_editing_state != desired) {
 	Tcl_AppendResult(s->interp, "Unable to do <", str, "> from ", state_str[s->global_editing_state], " state.\n", (char *)NULL);
@@ -1155,6 +1211,27 @@ int
 f_be_s_scale(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
     return be_s_scale(clientData, interp, argc, (char **)argv);
+}
+
+
+int
+f_be_s_xscale(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
+{
+    return be_s_xscale(clientData, interp, argc, (char **)argv);
+}
+
+
+int
+f_be_s_yscale(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
+{
+    return be_s_yscale(clientData, interp, argc, (char **)argv);
+}
+
+
+int
+f_be_s_zscale(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
+{
+    return be_s_zscale(clientData, interp, argc, (char **)argv);
 }
 
 

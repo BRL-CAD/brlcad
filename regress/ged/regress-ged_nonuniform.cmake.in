@@ -1,0 +1,54 @@
+# Values set at CMake configure time
+set(CBDIR "@CMAKE_CURRENT_BINARY_DIR@")
+set(LOGFILE "${CBDIR}/regress-ged_nonuniform.log")
+
+set(BU_DIR_CACHE ${CBDIR}/cache_nonuniform)
+set(LIBRT_CACHE ${CBDIR}/rtcache_nonuniform)
+set(ENV{BU_DIR_CACHE} ${BU_DIR_CACHE})
+set(ENV{LIBRT_CACHE} ${LIBRT_CACHE})
+file(REMOVE_RECURSE "${BU_DIR_CACHE}")
+file(REMOVE_RECURSE "${LIBRT_CACHE}")
+file(MAKE_DIRECTORY "${BU_DIR_CACHE}")
+file(MAKE_DIRECTORY "${LIBRT_CACHE}")
+
+set(TMPDIR "${CBDIR}/nonuniform_regress_tmp")
+file(REMOVE_RECURSE "${TMPDIR}")
+file(MAKE_DIRECTORY "${TMPDIR}")
+
+file(WRITE "${LOGFILE}" "Starting nonuniform primitive regression test run\n")
+
+string(REPLACE "\\" "" NONUNIFORM_EXEC "${EXEC}")
+if(NOT EXISTS "${NONUNIFORM_EXEC}")
+  file(WRITE "${LOGFILE}" "nonuniform regression program not found at location \"${NONUNIFORM_EXEC}\" - aborting\n")
+  file(READ "${LOGFILE}" LOG)
+  message(FATAL_ERROR "Unable to find nonuniform regression program, aborting.\nSee ${LOGFILE} for more details.\n${LOG}")
+endif(NOT EXISTS "${NONUNIFORM_EXEC}")
+
+file(APPEND "${LOGFILE}" "Running ${NONUNIFORM_EXEC} ${TMPDIR}\n")
+execute_process(
+  COMMAND "${NONUNIFORM_EXEC}" "${TMPDIR}"
+  RESULT_VARIABLE nonuniform_result
+  OUTPUT_VARIABLE nonuniform_log
+  ERROR_VARIABLE nonuniform_log
+  WORKING_DIRECTORY "${CBDIR}"
+)
+file(APPEND "${LOGFILE}" "${nonuniform_log}")
+if(nonuniform_result)
+  file(READ "${LOGFILE}" LOG)
+  message(FATAL_ERROR "[regress-ged_nonuniform] Failure: ${nonuniform_result}. See ${LOGFILE} for more info.\n${LOG}")
+endif(nonuniform_result)
+
+file(REMOVE_RECURSE "${TMPDIR}")
+execute_process(
+  COMMAND "@CMAKE_COMMAND@" -E rm -rf "${BU_DIR_CACHE}"
+)
+execute_process(
+  COMMAND "@CMAKE_COMMAND@" -E rm -rf "${LIBRT_CACHE}"
+)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

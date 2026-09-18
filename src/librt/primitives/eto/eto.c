@@ -193,8 +193,12 @@ clt_eto_pack(struct bu_pool *pool, struct soltab *stp)
  * Calculate bounding RPP of elliptical torus
  */
 C_DECL int
-rt_eto_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol))
+rt_eto_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *tol)
 {
+    int nu_bbox = _rt_nonuniform_bbox(ip, min, max, tol);
+    if (nu_bbox)
+	return (nu_bbox > 0) ? 0 : -1;
+
     vect_t P, Nu, w1;	/* for RPP calculation */
     fastf_t f, eto_rc;
     struct rt_eto_internal *tip;
@@ -320,7 +324,7 @@ rt_eto_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     if (rt_eto_bbox(ip, &(stp->st_min), &(stp->st_max), &rtip->rti_tol)) return 1;
 
-    return 0;			/* OK */
+    return _rt_nonuniform_prep_finalize(stp, ip, &rtip->rti_tol);
 }
 
 
@@ -374,6 +378,9 @@ rt_eto_print(const struct soltab *stp)
 C_DECL int
 rt_eto_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
+    if (stp && stp->st_nu_inv_matp)
+	return _rt_nonuniform_shot(stp, rp, ap, seghead);
+
     struct eto_specific *eto =
 	(struct eto_specific *)stp->st_specific;
     struct seg *segp;
@@ -733,6 +740,11 @@ rt_eto_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 C_DECL void
 rt_eto_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
+    if (stp && stp->st_nu_inv_matp) {
+	(void)_rt_nonuniform_norm(hitp, stp, rp);
+	return;
+    }
+
     struct eto_specific *eto =
 	(struct eto_specific *)stp->st_specific;
     fastf_t sqrt_x2y2, efact, ffact, xcomp, ycomp, zcomp;
@@ -767,6 +779,11 @@ rt_eto_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 C_DECL void
 rt_eto_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
+    if (stp && stp->st_nu_inv_matp) {
+	(void)_rt_nonuniform_curve(cvp, hitp, stp);
+	return;
+    }
+
     fastf_t a, b, ch, cv, dh, dv, k_circ, k_ell, phi, rad, xp,
 	yp1, yp2, work;
     struct eto_specific *eto =
@@ -830,6 +847,11 @@ rt_eto_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 C_DECL void
 rt_eto_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
+    if (stp && stp->st_nu_inv_matp) {
+	(void)_rt_nonuniform_uv(ap, stp, hitp, uvp);
+	return;
+    }
+
     fastf_t horz, theta_u, theta_v, vert;
     vect_t Hit_Ell, Nu, Radius, Ru;
 
@@ -1097,6 +1119,7 @@ eto_ellipse_points(
 C_DECL int
 rt_eto_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *tol, const struct bview *v, fastf_t s_size)
 {
+    struct rt_nonuniform_vlist_state nonuniform_state;
     struct rt_eto_internal *eto;
     fastf_t radian, radian_step;
     vect_t ellipse_A, ellipse_B, contour_A, contour_B, I, J;
@@ -1106,6 +1129,7 @@ rt_eto_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    _rt_nonuniform_vlist_state_init(&nonuniform_state, vhead);
 
     struct bu_list *vlfree = &rt_vlfree;
     eto = (struct rt_eto_internal *)ip->idb_ptr;
@@ -1224,7 +1248,7 @@ rt_eto_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 	radian += radian_step;
     }
 
-    return 0;
+    return _rt_nonuniform_plot_finalize(vhead, &nonuniform_state, ip);
 }
 
 /**
@@ -1239,6 +1263,7 @@ rt_eto_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 C_DECL int
 rt_eto_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
+    struct rt_nonuniform_vlist_state nonuniform_state;
     fastf_t a, b;	/* axis lengths of ellipse */
     fastf_t ang, ch, cv, dh, dv, ntol, dtol, phi, theta;
     fastf_t *eto_ells;
@@ -1250,6 +1275,7 @@ rt_eto_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    _rt_nonuniform_vlist_state_init(&nonuniform_state, vhead);
 
     struct bu_list *vlfree = &rt_vlfree;
     tip = (struct rt_eto_internal *)ip->idb_ptr;
@@ -1362,7 +1388,7 @@ rt_eto_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     }
 
     bu_free((char *)eto_ells, "ells[]");
-    return 0;
+    return _rt_nonuniform_plot_finalize(vhead, &nonuniform_state, ip);
 }
 
 
@@ -1794,7 +1820,7 @@ rt_eto_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     bu_free((char *)faces, "rt_eto_tess *faces[]");
     bu_free((char *)norms, "rt_eto_tess: norms[]");
 
-    return fail;
+    return fail ? fail : _rt_nonuniform_tess_finalize(*r, ip, tol);
 }
 
 
@@ -1878,6 +1904,8 @@ rt_eto_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_ETO) return -1;
+    if (_rt_nonuniform_export4_check("rt_eto_export4", ip) < 0)
+	return -1;
 
     tip = (struct rt_eto_internal *)ip->idb_ptr;
     if (!eto_is_valid(tip)) {
@@ -1913,6 +1941,25 @@ rt_eto_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
     struct rt_eto_internal *top = (struct rt_eto_internal *)rop->idb_ptr;
     RT_ETO_CK_MAGIC(top);
 
+    mat_t effective_mat;
+    int remove_nonuniform = 0;
+    {
+	int nonuniform = _rt_nonuniform_transform_resolve(effective_mat, &remove_nonuniform, ip, mat);
+	if (nonuniform < 0)
+	    return BRLCAD_ERROR;
+	if (nonuniform) {
+	    *top = *tip;
+	    if (_rt_nonuniform_attr_copy(rop, ip) < 0)
+		return BRLCAD_ERROR;
+	    return (_rt_nonuniform_attr_compose(rop, mat) < 0) ? BRLCAD_ERROR : BRLCAD_OK;
+	}
+    }
+
+    if (_rt_nonuniform_attr_copy(rop, ip) < 0)
+	return BRLCAD_ERROR;
+    if (remove_nonuniform && _rt_nonuniform_attr_remove(rop) < 0)
+	return BRLCAD_ERROR;
+
     vect_t eV, eN, eC;
     double er, erd;
     VMOVE(eV, tip->eto_V);
@@ -1921,11 +1968,11 @@ rt_eto_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
     er = tip->eto_r;
     erd = tip->eto_rd;
 
-    MAT4X3PNT(top->eto_V, mat, eV);
-    MAT4X3VEC(top->eto_N, mat, eN);
-    MAT4X3VEC(top->eto_C, mat, eC);
-    top->eto_r  = er / mat[15];
-    top->eto_rd = erd / mat[15];
+    MAT4X3PNT(top->eto_V, effective_mat, eV);
+    MAT4X3VEC(top->eto_N, effective_mat, eN);
+    MAT4X3VEC(top->eto_C, effective_mat, eC);
+    top->eto_r  = er / effective_mat[15];
+    top->eto_rd = erd / effective_mat[15];
 
     return BRLCAD_OK;
 }
@@ -1969,7 +2016,8 @@ rt_eto_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
     /* Apply modeling transformations */
     if (mat == NULL) mat = bn_mat_identity;
-    rt_eto_mat(ip, mat, ip);
+    if (rt_eto_mat(ip, mat, ip) < 0)
+	return -1;
 
     if (!eto_is_valid(tip))
 	return -1;
@@ -2148,6 +2196,9 @@ eto_is_self_intersecting(const struct rt_eto_internal *tip)
 C_DECL void
 rt_eto_volume(fastf_t *vol, const struct rt_db_internal *ip)
 {
+    if (_rt_nonuniform_volume(vol, ip))
+	return;
+
     fastf_t mag_c;
     struct rt_eto_internal *tip = (struct rt_eto_internal *)ip->idb_ptr;
     RT_ETO_CK_MAGIC(tip);
@@ -2170,6 +2221,9 @@ rt_eto_volume(fastf_t *vol, const struct rt_db_internal *ip)
 C_DECL void
 rt_eto_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
+    if (_rt_nonuniform_centroid(cent, ip))
+	return;
+
     struct rt_eto_internal *tip = (struct rt_eto_internal *)ip->idb_ptr;
     RT_ETO_CK_MAGIC(tip);
     VMOVE(*cent, tip->eto_V);
@@ -2179,6 +2233,9 @@ rt_eto_centroid(point_t *cent, const struct rt_db_internal *ip)
 C_DECL void
 rt_eto_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
+    if (_rt_nonuniform_surf_area(area, ip))
+	return;
+
     fastf_t circum, mag_c;
     struct rt_eto_internal *tip = (struct rt_eto_internal *)ip->idb_ptr;
     RT_ETO_CK_MAGIC(tip);

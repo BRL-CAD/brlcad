@@ -48,6 +48,9 @@ Simulates the pressing of a button. All of these button actions can be run direc
 * sedit -- (deprecated) Enters primitive edit mode.
 * srot -- Enters solid (i.e., primitive) rotate mode (must be in primitive edit mode).
 * sscale -- Enters solid (i.e., primitive) scale mode (must be in primitive edit mode).
+* sxscale -- Enters solid scale (x-direction only) mode (must be in primitive edit mode).
+* syscale -- Enters solid scale (y-direction only) mode (must be in primitive edit mode).
+* szscale -- Enters solid scale (z-direction only) mode (must be in primitive edit mode).
 * sxy -- Enters solid (i.e., primitive) translate mode (must be in primitive edit mode).
 * zoomin -- Zooms in, synonym for zoom 2.
 * zoomout -- Zooms out, synonym for zoom 0.5.

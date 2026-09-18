@@ -94,7 +94,7 @@ extern void
 print_faces_table(struct ged *gedp, table_t *table);
 
 
-extern void
+extern int
 analyze_arb8(struct ged *gedp, const struct rt_db_internal *ip);
 
 extern void
@@ -106,10 +106,10 @@ analyze_ars(struct ged *gedp, const struct rt_db_internal *ip);
 extern void
 analyze_superell(struct ged *gedp, const struct rt_db_internal *ip);
 
-extern void
+extern int
 analyze_sketch(struct ged *gedp, const struct rt_db_internal *ip);
 
-extern void
+extern int
 analyze_general(struct ged *gedp, const struct rt_db_internal *ip);
 
 /**

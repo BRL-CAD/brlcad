@@ -156,6 +156,35 @@ struct pipe_bend {
 
 #define RT_PIPE_MAXHITS 128
 
+static struct hit *
+pipe_append_hit(
+    struct hit *hits,
+    int *hit_count,
+    struct soltab *stp)
+{
+    struct hit *hitp;
+
+    if (*hit_count >= RT_PIPE_MAXHITS) {
+	bu_log("Too many hits (%d) on primitive (%s)\n", *hit_count + 1, stp->st_dp->d_namep);
+	return (struct hit *)NULL;
+    }
+
+    hitp = &hits[(*hit_count)++];
+    memset(hitp, 0, sizeof(struct hit));
+    hitp->hit_magic = RT_HIT_MAGIC;
+    return hitp;
+}
+
+
+static void
+pipe_ray_inv_dir(vect_t inv_dir, const struct xray *rp)
+{
+    inv_dir[X] = !ZERO(rp->r_dir[X]) ? 1.0 / rp->r_dir[X] : INFINITY;
+    inv_dir[Y] = !ZERO(rp->r_dir[Y]) ? 1.0 / rp->r_dir[Y] : INFINITY;
+    inv_dir[Z] = !ZERO(rp->r_dir[Z]) ? 1.0 / rp->r_dir[Z] : INFINITY;
+}
+
+
 static fastf_t
 pipe_seg_bend_angle(const struct pipe_segment *seg)
 {
@@ -665,8 +694,12 @@ rt_pipe_bbox(
     struct rt_db_internal *ip,
     point_t *min,
     point_t *max,
-    const struct bn_tol *UNUSED(tol))
+    const struct bn_tol *tol)
 {
+    int nu_bbox = _rt_nonuniform_bbox(ip, min, max, tol);
+    if (nu_bbox)
+	return (nu_bbox > 0) ? 0 : -1;
+
     pipe_elements_calculate(NULL, ip, min, max);
     return 0;
 }
@@ -720,7 +753,7 @@ rt_pipe_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     stp->st_aradius = f;
     stp->st_bradius = sqrt(dx * dx + dy * dy + dz * dz);
 
-    return 0;
+    return _rt_nonuniform_prep_finalize(stp, ip, rtip ? &rtip->rti_tol : NULL);
 }
 
 
@@ -842,8 +875,10 @@ discont_radius_shot(
 	/* if we are within one of the radius ranges, we have a hit */
 	if ((radius_sq <= or2_sq && radius_sq >= ir2_sq) ||
 	    (radius_sq <= or1_sq && radius_sq >= ir1_sq)) {
-	    hitp = &hits[*hit_count];
-	    hitp->hit_magic = RT_HIT_MAGIC;
+	    hitp = pipe_append_hit(hits, hit_count, stp);
+	    if (!hitp)
+		return;
+
 	    hitp->hit_dist = t_tmp;
 	    hitp->hit_surfno = seg_no * 10 + PIPE_RADIUS_CHANGE;
 
@@ -852,10 +887,6 @@ discont_radius_shot(
 		VMOVE(hitp->hit_normal, norm);
 	    } else {
 		VREVERSE(hitp->hit_normal, norm);
-	    }
-	    if ((*hit_count)++ >= RT_PIPE_MAXHITS) {
-		bu_log("Too many hits (%d) on primitive (%s)\n", *hit_count, stp->st_dp->d_namep);
-		return;
 	    }
 	}
     }
@@ -1045,16 +1076,13 @@ bend_pipe_shot(
 		angle += M_2PI;
 	    }
 	    if (angle <= bp->bend_angle) {
-		hitp = &hits[*hit_count];
-		hitp->hit_magic = RT_HIT_MAGIC;
+		hitp = pipe_append_hit(hits, hit_count, stp);
+		if (!hitp)
+		    return;
+
 		hitp->hit_dist = distance;
 		VJOIN1(hitp->hit_vpriv, pprime, normalized_dist, dprime);
 		hitp->hit_surfno = seg_no * 10 + PIPE_BEND_OUTER_BODY;
-
-		if ((*hit_count)++ >= RT_PIPE_MAXHITS) {
-		    bu_log("Too many hits (%d) on primitive (%s)\n", *hit_count, stp->st_dp->d_namep);
-		    return;
-		}
 	    }
 	}
     }
@@ -1137,16 +1165,13 @@ bend_pipe_shot(
 		angle += M_2PI;
 	    }
 	    if (angle <= bp->bend_angle) {
-		hitp = &hits[*hit_count];
-		hitp->hit_magic = RT_HIT_MAGIC;
+		hitp = pipe_append_hit(hits, hit_count, stp);
+		if (!hitp)
+		    return;
+
 		hitp->hit_dist = distance;
 		VJOIN1(hitp->hit_vpriv, pprime, normalized_dist, dprime);
 		hitp->hit_surfno = seg_no * 10 + PIPE_BEND_INNER_BODY;
-
-		if ((*hit_count)++ >= RT_PIPE_MAXHITS) {
-		    bu_log("Too many hits (%d) on primitive (%s)\n", *hit_count, stp->st_dp->d_namep);
-		    return;
-		}
 	    }
 	}
     }
@@ -1242,7 +1267,7 @@ linear_pipe_shot(
 
     descrim = b * b - 4.0 * a * c;
 
-    if (descrim > 0.0) {
+    if (descrim > 0.0 && !NEAR_ZERO(a, SMALL_FASTF)) {
 	fastf_t sqrt_descrim;
 	point_t hit_pt;
 
@@ -1251,35 +1276,29 @@ linear_pipe_shot(
 	t_tmp = (-b - sqrt_descrim) / (2.0 * a);
 	VJOIN1(hit_pt, ray_start, t_tmp, ray_dir);
 	if (hit_pt[Z] >= 0.0 && hit_pt[Z] <= 1.0) {
-	    hitp = &hits[*hit_count];
-	    hitp->hit_magic = RT_HIT_MAGIC;
+	    hitp = pipe_append_hit(hits, hit_count, stp);
+	    if (!hitp)
+		return;
+
 	    hitp->hit_dist = t_tmp;
 	    hitp->hit_surfno = seg_no * 10 + PIPE_LINEAR_OUTER_BODY;
 	    VMOVE(hitp->hit_vpriv, hit_pt);
 	    hitp->hit_vpriv[Z] = (-lp->pipe_robase - hit_pt[Z] * lp->pipe_rodiff) *
 		lp->pipe_rodiff;
-
-	    if ((*hit_count)++ >= RT_PIPE_MAXHITS) {
-		bu_log("Too many hits (%d) on primitive (%s)\n", *hit_count, stp->st_dp->d_namep);
-		return;
-	    }
 	}
 
 	t_tmp = (-b + sqrt_descrim) / (2.0 * a);
 	VJOIN1(hit_pt, ray_start, t_tmp, ray_dir);
 	if (hit_pt[Z] >= 0.0 && hit_pt[Z] <= 1.0) {
-	    hitp = &hits[*hit_count];
-	    hitp->hit_magic = RT_HIT_MAGIC;
+	    hitp = pipe_append_hit(hits, hit_count, stp);
+	    if (!hitp)
+		return;
+
 	    hitp->hit_dist = t_tmp;
 	    hitp->hit_surfno = seg_no * 10 + PIPE_LINEAR_OUTER_BODY;
 	    VMOVE(hitp->hit_vpriv, hit_pt);
 	    hitp->hit_vpriv[Z] = (-lp->pipe_robase - hit_pt[Z] * lp->pipe_rodiff) *
 		lp->pipe_rodiff;
-
-	    if ((*hit_count)++ >= RT_PIPE_MAXHITS) {
-		bu_log("Too many hits (%d) on primitive (%s)\n", *hit_count, stp->st_dp->d_namep);
-		return;
-	    }
 	}
     }
 
@@ -1301,7 +1320,7 @@ linear_pipe_shot(
 
 	descrim = b * b - 4.0 * a * c;
 
-	if (descrim > 0.0) {
+	if (descrim > 0.0 && !NEAR_ZERO(a, SMALL_FASTF)) {
 	    fastf_t sqrt_descrim;
 	    point_t hit_pt;
 
@@ -1310,35 +1329,29 @@ linear_pipe_shot(
 	    t_tmp = (-b - sqrt_descrim) / (2.0 * a);
 	    VJOIN1(hit_pt, ray_start, t_tmp, ray_dir);
 	    if (hit_pt[Z] >= 0.0 && hit_pt[Z] <= 1.0) {
-		hitp = &hits[*hit_count];
-		hitp->hit_magic = RT_HIT_MAGIC;
+		hitp = pipe_append_hit(hits, hit_count, stp);
+		if (!hitp)
+		    return;
+
 		hitp->hit_dist = t_tmp;
 		hitp->hit_surfno = seg_no * 10 + PIPE_LINEAR_INNER_BODY;
 		VMOVE(hitp->hit_vpriv, hit_pt);
 		hitp->hit_vpriv[Z] = (-lp->pipe_ribase - hit_pt[Z] * lp->pipe_ridiff) *
 		    lp->pipe_ridiff;
-
-		if ((*hit_count)++ >= RT_PIPE_MAXHITS) {
-		    bu_log("Too many hits (%d) on primitive (%s)\n", *hit_count, stp->st_dp->d_namep);
-		    return;
-		}
 	    }
 
 	    t_tmp = (-b + sqrt_descrim) / (2.0 * a);
 	    VJOIN1(hit_pt, ray_start, t_tmp, ray_dir);
 	    if (hit_pt[Z] >= 0.0 && hit_pt[Z] <= 1.0) {
-		hitp = &hits[*hit_count];
-		hitp->hit_magic = RT_HIT_MAGIC;
+		hitp = pipe_append_hit(hits, hit_count, stp);
+		if (!hitp)
+		    return;
+
 		hitp->hit_dist = t_tmp;
 		hitp->hit_surfno = seg_no * 10 + PIPE_LINEAR_INNER_BODY;
 		VMOVE(hitp->hit_vpriv, hit_pt);
 		hitp->hit_vpriv[Z] = (-lp->pipe_ribase - hit_pt[Z] * lp->pipe_ridiff) *
 		    lp->pipe_ridiff;
-
-		if ((*hit_count)++ >= RT_PIPE_MAXHITS) {
-		    bu_log("Too many hits (%d) on primitive (%s)\n", *hit_count, stp->st_dp->d_namep);
-		    return;
-		}
 	    }
 	}
     }
@@ -1377,15 +1390,12 @@ pipe_start_shot(
 	    VSUB2(to_center, lin->pipe_V, hit_pt);
 	    radius_sq = MAGSQ(to_center);
 	    if (radius_sq <= lin->pipe_robase_sq && radius_sq >= lin->pipe_ribase_sq) {
-		hitp = &hits[*hit_count];
-		hitp->hit_magic = RT_HIT_MAGIC;
+		hitp = pipe_append_hit(hits, hit_count, stp);
+		if (!hitp)
+		    return;
+
 		hitp->hit_dist = t_tmp;
 		hitp->hit_surfno = seg_no * 10 + PIPE_LINEAR_BASE;
-
-		if ((*hit_count)++ >= RT_PIPE_MAXHITS) {
-		    bu_log("Too many hits (%d) on primitive (%s)\n", *hit_count, stp->st_dp->d_namep);
-		    return;
-		}
 	    }
 	}
     } else if (id_p->pipe_is_bend) {
@@ -1406,15 +1416,12 @@ pipe_start_shot(
 	    VSUB2(to_center, bend->bend_start, hit_pt);
 	    radius_sq = MAGSQ(to_center);
 	    if (radius_sq <= bend->bend_or * bend->bend_or && radius_sq >= bend->bend_ir * bend->bend_ir) {
-		hitp = &hits[*hit_count];
-		hitp->hit_magic = RT_HIT_MAGIC;
+		hitp = pipe_append_hit(hits, hit_count, stp);
+		if (!hitp)
+		    return;
+
 		hitp->hit_dist = t_tmp;
 		hitp->hit_surfno = seg_no * 10 + PIPE_BEND_BASE;
-
-		if ((*hit_count)++ >= RT_PIPE_MAXHITS) {
-		    bu_log("Too many hits (%d) on primitive (%s)\n", *hit_count, stp->st_dp->d_namep);
-		    return;
-		}
 	    }
 	}
     }
@@ -1454,15 +1461,12 @@ pipe_end_shot(
 	    VSUB2(to_center, top, hit_pt);
 	    radius_sq = MAGSQ(to_center);
 	    if (radius_sq <= lin->pipe_rotop_sq && radius_sq >= lin->pipe_ritop_sq) {
-		hitp = &hits[*hit_count];
-		hitp->hit_magic = RT_HIT_MAGIC;
+		hitp = pipe_append_hit(hits, hit_count, stp);
+		if (!hitp)
+		    return;
+
 		hitp->hit_dist = t_tmp;
 		hitp->hit_surfno = seg_no * 10 + PIPE_LINEAR_TOP;
-
-		if ((*hit_count)++ >= RT_PIPE_MAXHITS) {
-		    bu_log("Too many hits (%d) on primitive (%s)\n", *hit_count, stp->st_dp->d_namep);
-		    return;
-		}
 	    }
 	}
     } else if (id_p->pipe_is_bend) {
@@ -1489,15 +1493,12 @@ pipe_end_shot(
 	    VSUB2(to_center, bend->bend_end, hit_pt);
 	    radius_sq = MAGSQ(to_center);
 	    if (radius_sq <= bend->bend_or * bend->bend_or && radius_sq >= bend->bend_ir * bend->bend_ir) {
-		hitp = &hits[*hit_count];
-		hitp->hit_magic = RT_HIT_MAGIC;
+		hitp = pipe_append_hit(hits, hit_count, stp);
+		if (!hitp)
+		    return;
+
 		hitp->hit_dist = t_tmp;
 		hitp->hit_surfno = seg_no * 10 + PIPE_BEND_TOP;
-
-		if ((*hit_count)++ >= RT_PIPE_MAXHITS) {
-		    bu_log("Too many hits (%d) on primitive (%s)\n", *hit_count, stp->st_dp->d_namep);
-		    return;
-		}
 	    }
 	}
     }
@@ -1588,6 +1589,11 @@ rt_pipe_elim_dups(
 C_DECL void
 rt_pipe_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
+    if (stp && stp->st_nu_inv_matp) {
+	(void)_rt_nonuniform_norm(hitp, stp, rp);
+	return;
+    }
+
     struct bu_list *head = (struct bu_list *)stp->st_specific;
     struct id_pipe *pipe_id;
     struct lin_pipe *pipe_lin;
@@ -1682,13 +1688,19 @@ rt_pipe_shot(
     struct application *ap,
     struct seg *seghead)
 {
+    if (stp && stp->st_nu_inv_matp)
+	return _rt_nonuniform_shot(stp, rp, ap, seghead);
+
     struct bu_list *head = (struct bu_list *)stp->st_specific;
     struct id_pipe *pipe_id;
     struct seg *segp;
     struct hit hits[RT_PIPE_MAXHITS];
+    vect_t inv_dir;
     int total_hits = 0;
     int seg_no;
     int i;
+
+    pipe_ray_inv_dir(inv_dir, rp);
 
     pipe_start_shot(stp, rp, BU_LIST_FIRST(id_pipe, head), hits, &total_hits, 1);
     seg_no = 0;
@@ -1703,7 +1715,7 @@ rt_pipe_shot(
 
 	if (!pipe_id->pipe_is_bend) {
 	    struct lin_pipe *lin = (struct lin_pipe *)pipe_id;
-	    if (!rt_in_rpp(rp, ap->a_inv_dir, lin->pipe_min, lin->pipe_max)) {
+	    if (!rt_in_rpp(rp, inv_dir, lin->pipe_min, lin->pipe_max)) {
 		continue;
 	    }
 	    linear_pipe_shot(stp, rp, lin, hits, &total_hits, seg_no);
@@ -1786,6 +1798,12 @@ rt_pipe_vshot(
 C_DECL void
 rt_pipe_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
+    if (stp && stp->st_nu_inv_matp) {
+	if (cvp)
+	    *cvp = (struct curvature)RT_CURVATURE_INIT_ZERO;
+	return;
+    }
+
     if (!cvp || !hitp) {
 	return;
     }
@@ -1813,6 +1831,11 @@ rt_pipe_uv(
     struct hit *hitp,
     struct uvcoord *uvp)
 {
+    if (stp && stp->st_nu_inv_matp) {
+	(void)_rt_nonuniform_uv(ap, stp, hitp, uvp);
+	return;
+    }
+
     if (!ap || !stp || !hitp || !uvp) {
 	return;
     }
@@ -2325,18 +2348,20 @@ draw_pipe_end_adaptive(
 C_DECL int
 rt_pipe_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol), const struct bview *v, fastf_t s_size)
 {
+    struct rt_nonuniform_vlist_state nonuniform_state;
     struct rt_pipe_internal *pipeobj;
     struct pipe_segment *cur_seg;
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    _rt_nonuniform_vlist_state_init(&nonuniform_state, vhead);
     struct bu_list *vlfree = &rt_vlfree;
     pipeobj = (struct rt_pipe_internal *)ip->idb_ptr;
     RT_PIPE_CK_MAGIC(pipeobj);
 
     cur_seg = pipe_seg_first(pipeobj);
     if (cur_seg == NULL) {
-	return 0;
+	return _rt_nonuniform_plot_finalize(vhead, &nonuniform_state, ip);
     }
 
     fastf_t point_spacing = solid_point_spacing(v, s_size);
@@ -2361,7 +2386,7 @@ rt_pipe_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const st
 
     BU_PUT(cur_seg, struct pipe_segment);
 
-    return 0;
+    return _rt_nonuniform_plot_finalize(vhead, &nonuniform_state, ip);
 }
 
 
@@ -2373,18 +2398,20 @@ rt_pipe_plot(
     const struct bn_tol *UNUSED(tol),
     const struct bview *UNUSED(info))
 {
+    struct rt_nonuniform_vlist_state nonuniform_state;
     struct rt_pipe_internal *pip;
     struct pipe_segment *cur_seg;
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    _rt_nonuniform_vlist_state_init(&nonuniform_state, vhead);
     struct bu_list *vlfree = &rt_vlfree;
     pip = (struct rt_pipe_internal *)ip->idb_ptr;
     RT_PIPE_CK_MAGIC(pip);
 
     cur_seg = pipe_seg_first(pip);
     if (cur_seg == NULL) {
-	return 0;
+	return _rt_nonuniform_plot_finalize(vhead, &nonuniform_state, ip);
     }
 
     cur_seg->connecting_arcs = PIPE_CONNECTING_ARCS;
@@ -2407,7 +2434,7 @@ rt_pipe_plot(
 
     BU_PUT(cur_seg, struct pipe_segment);
 
-    return 0;
+    return _rt_nonuniform_plot_finalize(vhead, &nonuniform_state, ip);
 }
 
 
@@ -3803,7 +3830,7 @@ rt_pipe_tess(
     *r = (struct nmgregion *)NULL;
 
     if (BU_LIST_IS_EMPTY(&pip->pipe_segs_head)) {
-	return 0;    /* nothing to tessellate */
+	return _rt_nonuniform_tess_finalize(*r, ip, tol);    /* nothing to tessellate */
     }
 
     /* find max diameter */
@@ -3814,7 +3841,7 @@ rt_pipe_tess(
     }
 
     if (max_diam <= tol->dist) {
-	return 0;    /* nothing to tessellate */
+	return _rt_nonuniform_tess_finalize(*r, ip, tol);    /* nothing to tessellate */
     }
 
     /* calculate number of segments for circles */
@@ -3866,7 +3893,7 @@ rt_pipe_tess(
 
     pp2 = BU_LIST_NEXT(wdb_pipe_pnt, &pp1->l);
     if (BU_LIST_IS_HEAD(&pp2->l, &(pip->pipe_segs_head))) {
-	return 0;
+	return _rt_nonuniform_tess_finalize(*r, ip, tol);
     }
     pp3 = BU_LIST_NEXT(wdb_pipe_pnt, &pp2->l);
     if (BU_LIST_IS_HEAD(&pp3->l, &(pip->pipe_segs_head))) {
@@ -3951,7 +3978,7 @@ rt_pipe_tess(
     nmg_rebound(m, tol);
     nmg_edge_fuse(&s->l.magic, vlfree, tol);
 
-    return 0;
+    return _rt_nonuniform_tess_finalize(*r, ip, tol);
 }
 
 
@@ -4051,6 +4078,8 @@ rt_pipe_export4(
     }
 
     RT_CK_DB_INTERNAL(ip);
+    if (_rt_nonuniform_export4_check("rt_pipe_export4", ip) < 0)
+	return -1;
     pip = (struct rt_pipe_internal *)ip->idb_ptr;
     RT_PIPE_CK_MAGIC(pip);
 
@@ -4125,16 +4154,34 @@ rt_pipe_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inte
     if (tip->pipe_count != top->pipe_count)
 	return BRLCAD_ERROR;
 
+    mat_t effective_mat;
+    int remove_nonuniform = 0;
+    {
+	int nonuniform = _rt_nonuniform_transform_resolve(effective_mat, &remove_nonuniform, ip, mat);
+	if (nonuniform < 0)
+	    return BRLCAD_ERROR;
+	if (nonuniform) {
+	    if (_rt_nonuniform_attr_copy(rop, ip) < 0)
+		return BRLCAD_ERROR;
+	    return (_rt_nonuniform_attr_compose(rop, mat) < 0) ? BRLCAD_ERROR : BRLCAD_OK;
+	}
+    }
+
+    if (_rt_nonuniform_attr_copy(rop, ip) < 0)
+	return BRLCAD_ERROR;
+    if (remove_nonuniform && _rt_nonuniform_attr_remove(rop) < 0)
+	return BRLCAD_ERROR;
+
     struct wdb_pipe_pnt *in_pipe_pnt, *out_pipe_pnt;
     in_pipe_pnt = BU_LIST_FIRST(wdb_pipe_pnt, &tip->pipe_segs_head);
     out_pipe_pnt = BU_LIST_FIRST(wdb_pipe_pnt, &top->pipe_segs_head);
     while (BU_LIST_NOT_HEAD(&in_pipe_pnt->l, &tip->pipe_segs_head)) {
 	vect_t v;
 	VMOVE(v, in_pipe_pnt->pp_coord);
-	MAT4X3PNT(out_pipe_pnt->pp_coord, mat, v);
-	out_pipe_pnt->pp_id         = in_pipe_pnt->pp_id / mat[15];
-	out_pipe_pnt->pp_od         = in_pipe_pnt->pp_od / mat[15];
-	out_pipe_pnt->pp_bendradius = in_pipe_pnt->pp_bendradius / mat[15];
+	MAT4X3PNT(out_pipe_pnt->pp_coord, effective_mat, v);
+	out_pipe_pnt->pp_id         = in_pipe_pnt->pp_id / effective_mat[15];
+	out_pipe_pnt->pp_od         = in_pipe_pnt->pp_od / effective_mat[15];
+	out_pipe_pnt->pp_bendradius = in_pipe_pnt->pp_bendradius / effective_mat[15];
 	in_pipe_pnt = BU_LIST_NEXT(wdb_pipe_pnt, &in_pipe_pnt->l);
 	out_pipe_pnt = BU_LIST_NEXT(wdb_pipe_pnt, &out_pipe_pnt->l);
     }
@@ -5035,6 +5082,9 @@ rt_pipe_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 C_DECL void
 rt_pipe_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
+    if (_rt_nonuniform_surf_area(area, ip))
+	return;
+
     struct bu_list head;
     point_t min, max;
     struct id_pipe *p;
@@ -5047,9 +5097,12 @@ rt_pipe_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     int connected;
     char overlap;
 
+    *area = -1.0;
     BU_LIST_INIT(&head);
 
     pipe_elements_calculate(&head, ip, &min, &max);
+    if (BU_LIST_IS_EMPTY(&head))
+	return;
 
     /* The following calculation establishes if the last pipe segment
      * is in fact connected to the first one. The last end point is
@@ -5157,7 +5210,9 @@ rt_pipe_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 		    break;
 		default:
 		    bu_log("rt_pipe_surf_area: Unexpected cross-section overlap code: (%d)\n", overlap);
-		    break;
+		    *area = -1.0;
+		    pipe_elements_free(&head);
+		    return;
 	    }
 	} else {
 	    /* not connected, both areas are added regardless of overlaps */
@@ -5238,13 +5293,19 @@ pipe_elem_volume_and_centroid(struct id_pipe *p, fastf_t *vol, point_t *cent)
 C_DECL void
 rt_pipe_volume(fastf_t *vol, const struct rt_db_internal *ip)
 {
+    if (_rt_nonuniform_volume(vol, ip))
+	return;
+
     struct bu_list head;
     point_t min, max;
     struct id_pipe *p;
 
+    *vol = -1.0;
     BU_LIST_INIT(&head);
 
     pipe_elements_calculate(&head, ip, &min, &max);
+    if (BU_LIST_IS_EMPTY(&head))
+	return;
 
     *vol = 0;
     for (BU_LIST_FOR(p, id_pipe, &head)) {
@@ -5258,20 +5319,31 @@ rt_pipe_volume(fastf_t *vol, const struct rt_db_internal *ip)
 C_DECL void
 rt_pipe_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
+    if (_rt_nonuniform_centroid(cent, ip))
+	return;
+
     struct bu_list head;
     point_t min, max;
     struct id_pipe *p;
     fastf_t vol;
 
+    VSETALL(*cent, -1.0);
     BU_LIST_INIT(&head);
 
     pipe_elements_calculate(&head, ip, &min, &max);
+    if (BU_LIST_IS_EMPTY(&head))
+	return;
 
     VSETALL(*cent, 0);
     vol = 0;
 
     for (BU_LIST_FOR(p, id_pipe, &head)) {
 	pipe_elem_volume_and_centroid(p, &vol, cent);
+    }
+    if (NEAR_ZERO(vol, SMALL_FASTF)) {
+	VSETALL(*cent, -1.0);
+	pipe_elements_free(&head);
+	return;
     }
     VSCALE(*cent, *cent, 1/vol);
     pipe_elements_free(&head);

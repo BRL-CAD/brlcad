@@ -271,7 +271,11 @@ clt_part_pack(struct bu_pool *pool, struct soltab *stp)
  * Compute the bounding RPP for a particle
  */
 C_DECL int
-rt_part_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
+rt_part_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *tol) {
+    int nu_bbox = _rt_nonuniform_bbox(ip, min, max, tol);
+    if (nu_bbox)
+	return (nu_bbox > 0) ? 0 : -1;
+
     struct rt_part_internal *pip;
     vect_t tip_pt, tmp_min, tmp_max;
     RT_CK_DB_INTERNAL(ip);
@@ -350,7 +354,7 @@ rt_part_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	/* Compute bounding sphere*/
 	VMOVE(stp->st_center, pip->part_V);
 	stp->st_aradius = stp->st_bradius = pip->part_vrad;
-	return 0;		/* OK */
+	return _rt_nonuniform_prep_finalize(stp, ip, &rtip->rti_tol);
     }
 
     /* Compute some essential terms */
@@ -447,7 +451,7 @@ rt_part_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	stp->st_aradius = f;
 	stp->st_bradius = MAGNITUDE(work);
     }
-    return 0;			/* OK */
+    return _rt_nonuniform_prep_finalize(stp, ip, &rtip->rti_tol);
 }
 
 
@@ -495,6 +499,9 @@ rt_part_print(register const struct soltab *stp)
 C_DECL int
 rt_part_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
+    if (stp && stp->st_nu_inv_matp)
+	return _rt_nonuniform_shot(stp, rp, ap, seghead);
+
     register struct part_specific *part =
 	(struct part_specific *)stp->st_specific;
     struct seg *segp;
@@ -1097,6 +1104,11 @@ rt_part_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, st
 C_DECL void
 rt_part_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
 {
+    if (stp && stp->st_nu_inv_matp) {
+	(void)_rt_nonuniform_norm(hitp, stp, rp);
+	return;
+    }
+
     register struct part_specific *part =
 	(struct part_specific *)stp->st_specific;
 
@@ -1146,6 +1158,11 @@ rt_part_norm(register struct hit *hitp, struct soltab *stp, register struct xray
 C_DECL void
 rt_part_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
 {
+    if (stp && stp->st_nu_inv_matp) {
+	(void)_rt_nonuniform_curve(cvp, hitp, stp);
+	return;
+    }
+
     register struct part_specific *part =
 	(struct part_specific *)stp->st_specific;
     point_t hit_local;	/* hit_point, with V as origin */
@@ -1192,6 +1209,11 @@ rt_part_curve(register struct curvature *cvp, register struct hit *hitp, struct 
 C_DECL void
 rt_part_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
 {
+    if (stp && stp->st_nu_inv_matp) {
+	(void)_rt_nonuniform_uv(ap, stp, hitp, uvp);
+	return;
+    }
+
     register const struct part_specific *part =
 	(struct part_specific *)stp->st_specific;
     point_t hit_local;	/* hit_point, with V as origin */
@@ -1278,6 +1300,7 @@ rt_part_hemisphere(register point_t (*ov), register fastf_t *v, fastf_t *a, fast
 C_DECL int
 rt_part_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
+    struct rt_nonuniform_vlist_state nonuniform_state;
     struct rt_part_internal *pip;
     point_t tail;
     point_t sphere_rim[16];
@@ -1290,6 +1313,7 @@ rt_part_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_t
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    _rt_nonuniform_vlist_state_init(&nonuniform_state, vhead);
     struct bu_list *vlfree = &rt_vlfree;
     pip = (struct rt_part_internal *)ip->idb_ptr;
     RT_PART_CK_MAGIC(pip);
@@ -1317,7 +1341,7 @@ rt_part_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_t
 	for (i=0; i<16; i++) {
 	    BV_ADD_VLIST(vlfree, vhead, sphere_rim[i], BV_VLIST_LINE_DRAW);
 	}
-	return 0;		/* OK */
+	return _rt_nonuniform_plot_finalize(vhead, &nonuniform_state, ip);
     }
 
     VMOVE(Hunit, pip->part_H);
@@ -1378,7 +1402,7 @@ rt_part_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_t
     BV_ADD_VLIST(vlfree, vhead, vhemi[6], BV_VLIST_LINE_MOVE);
     BV_ADD_VLIST(vlfree, vhead, hhemi[6], BV_VLIST_LINE_DRAW);
 
-    return 0;
+    return _rt_nonuniform_plot_finalize(vhead, &nonuniform_state, ip);
 }
 
 
@@ -1770,7 +1794,7 @@ rt_part_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 	bu_free((char *)strips[i].fu, "strip faceuse[]");
     }
     bu_free((char *)strips, "strips[]");
-    return 0;
+    return _rt_nonuniform_tess_finalize(*r, ip, tol);
  fail:
     /* Release memory */
     /* All strips have vertices and normals */
@@ -1893,6 +1917,8 @@ rt_part_export4(struct bu_external *ep, const struct rt_db_internal *ip, double 
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_PARTICLE) return -1;
+    if (_rt_nonuniform_export4_check("rt_part_export4", ip) < 0)
+	return -1;
     pip = (struct rt_part_internal *)ip->idb_ptr;
     RT_PART_CK_MAGIC(pip);
 
@@ -1928,11 +1954,30 @@ rt_part_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inte
     struct rt_part_internal *part = (struct rt_part_internal *)rop->idb_ptr;
     RT_PART_CK_MAGIC(part);
 
+    mat_t effective_mat;
+    int remove_nonuniform = 0;
+    {
+	int nonuniform = _rt_nonuniform_transform_resolve(effective_mat, &remove_nonuniform, ip, mat);
+	if (nonuniform < 0)
+	    return BRLCAD_ERROR;
+	if (nonuniform) {
+	    *part = *tip;
+	    if (_rt_nonuniform_attr_copy(rop, ip) < 0)
+		return BRLCAD_ERROR;
+	    return (_rt_nonuniform_attr_compose(rop, mat) < 0) ? BRLCAD_ERROR : BRLCAD_OK;
+	}
+    }
+
+    if (_rt_nonuniform_attr_copy(rop, ip) < 0)
+	return BRLCAD_ERROR;
+    if (remove_nonuniform && _rt_nonuniform_attr_remove(rop) < 0)
+	return BRLCAD_ERROR;
+
     vect_t part_V, part_H;
-    MAT4X3PNT(part_V, mat, tip->part_V);
-    MAT4X3VEC(part_H, mat, tip->part_H);
-    double vrad = tip->part_vrad / mat[15];
-    double hrad = tip->part_hrad / mat[15];
+    MAT4X3PNT(part_V, effective_mat, tip->part_V);
+    MAT4X3VEC(part_H, effective_mat, tip->part_H);
+    double vrad = tip->part_vrad / effective_mat[15];
+    double hrad = tip->part_hrad / effective_mat[15];
     double maxrad = (vrad > hrad) ? vrad : hrad;
     double minrad = (vrad < hrad) ? vrad : hrad;
 
@@ -2203,6 +2248,9 @@ rt_part_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 C_DECL void
 rt_part_volume(fastf_t *vol, const struct rt_db_internal *ip)
 {
+    if (_rt_nonuniform_volume(vol, ip))
+	return;
+
     fastf_t vrad, hrad, mag_h;
     struct rt_part_internal *pip = (struct rt_part_internal *)ip->idb_ptr;
     RT_PART_CK_MAGIC(pip);
@@ -2226,6 +2274,9 @@ rt_part_volume(fastf_t *vol, const struct rt_db_internal *ip)
 C_DECL void
 rt_part_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
+    if (_rt_nonuniform_surf_area(area, ip))
+	return;
+
     fastf_t vrad, hrad, mag_h;
     struct rt_part_internal *pip = (struct rt_part_internal *)ip->idb_ptr;
     RT_PART_CK_MAGIC(pip);
@@ -2247,6 +2298,9 @@ rt_part_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 C_DECL void
 rt_part_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
+    if (_rt_nonuniform_centroid(cent, ip))
+	return;
+
     fastf_t vrad, hrad, mag_h, nm, dm, c_frst, cv_hem, ch_hem;
     vect_t hvec, hvec_n;
     point_t vpt, fcent, hhcent, cvcent;

@@ -1048,4 +1048,3 @@ draw_gather_paths(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

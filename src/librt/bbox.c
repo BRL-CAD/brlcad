@@ -450,12 +450,16 @@ rt_bound_instance(point_t *bmin, point_t *bmax,
 	 */
 	struct bu_list vhead;
 	BU_LIST_INIT(&(vhead));
-	if (ip->idb_meth->ft_plot(&vhead, ip, ttol, tol, NULL) >= 0) {
-	    if (bv_vlist_bbox(&vhead, bmin, bmax, NULL, NULL)) {
+	if (rt_obj_plot(&vhead, ip, ttol, tol) >= 0) {
+	    int bbox_ret = bv_vlist_bbox(&vhead, bmin, bmax, NULL, NULL);
+	    BV_FREE_VLIST(&rt_vlfree, &vhead);
+	    if (bbox_ret) {
 		rt_db_free_internal(&dbintern);
 		return -1;
 	    }
 	    bbret = 0;
+	} else {
+	    BV_FREE_VLIST(&rt_vlfree, &vhead);
 	}
     }
 

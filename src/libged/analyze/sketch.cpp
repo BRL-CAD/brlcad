@@ -25,6 +25,8 @@
 
 #include "common.h"
 
+#include <cmath>
+
 #include "vmath.h"
 
 #include "rt/geom.h"
@@ -32,30 +34,46 @@
 #include "../ged_private.h"
 #include "./ged_analyze.h"
 
-void
+int
 analyze_sketch(struct ged *gedp, const struct rt_db_internal *ip)
 {
-    fastf_t area = -1;
+    const fastf_t metric_error = -1.0;
+    fastf_t area = metric_error;
     point_t centroid;
+    point_t error_centroid;
+    int status = BRLCAD_OK;
 
-    if (OBJ[ID_SKETCH].ft_surf_area)
+    if (OBJ[ID_SKETCH].ft_surf_area) {
 	OBJ[ID_SKETCH].ft_surf_area(&area, ip);
-
-    if (area > 0.0) {
-	bu_vls_printf(gedp->ged_result_str, "\nTotal Area: %10.8f",
-		      area
-		     * gedp->dbip->dbi_local2base
-		     * gedp->dbip->dbi_local2base
-		     );
+	if (!std::isfinite(area) || NEAR_EQUAL(area, metric_error, SMALL_FASTF)) {
+	    bu_vls_printf(gedp->ged_result_str, "\nTotal Area: COULD NOT DETERMINE");
+	    status = BRLCAD_ERROR;
+	} else {
+	    bu_vls_printf(gedp->ged_result_str, "\nTotal Area: %10.8f",
+			  area
+			 * gedp->dbip->dbi_local2base
+			 * gedp->dbip->dbi_local2base
+			 );
+	}
     }
 
     if (OBJ[ID_SKETCH].ft_centroid) {
+	VSETALL(centroid, metric_error);
+	VSETALL(error_centroid, metric_error);
 	OBJ[ID_SKETCH].ft_centroid(&centroid, ip);
-	bu_vls_printf(gedp->ged_result_str, "\n    Centroid: (%g, %g, %g)\n",
-		      centroid[X] * gedp->dbip->dbi_base2local,
-		      centroid[Y] * gedp->dbip->dbi_base2local,
-		      centroid[Z] * gedp->dbip->dbi_base2local);
+	if (std::isfinite(centroid[X]) && std::isfinite(centroid[Y]) &&
+	    std::isfinite(centroid[Z]) &&
+	    !VNEAR_EQUAL(centroid, error_centroid, SMALL_FASTF)) {
+	    bu_vls_printf(gedp->ged_result_str, "\n    Centroid: (%g, %g, %g)\n",
+			  centroid[X] * gedp->dbip->dbi_base2local,
+			  centroid[Y] * gedp->dbip->dbi_base2local,
+			  centroid[Z] * gedp->dbip->dbi_base2local);
+	} else {
+	    bu_vls_printf(gedp->ged_result_str, "\n    Centroid: COULD NOT DETERMINE\n");
+	    status = BRLCAD_ERROR;
+	}
     }
+    return status;
 }
 
 // Local Variables:

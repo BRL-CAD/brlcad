@@ -106,11 +106,12 @@ rt_dsp_volume(fastf_t *vol, const struct rt_db_internal *ip)
 
     if (!vol)
 	return;
-    *vol = 0.0;
+    *vol = -1.0;
 
     dsp = rt_dsp_internal_from_ip(ip);
     if (!dsp)
 	return;
+    *vol = 0.0;
 
     xsiz = (size_t)dsp->dsp_xcnt - 1;
     ysiz = (size_t)dsp->dsp_ycnt - 1;
@@ -135,6 +136,8 @@ rt_dsp_volume(fastf_t *vol, const struct rt_db_internal *ip)
     }
 
     *vol = solid_vol * stom_volume_scale(dsp->dsp_stom);
+    if (!isfinite(*vol))
+	*vol = -1.0;
 }
 
 
@@ -156,11 +159,12 @@ rt_dsp_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 
     if (!area)
 	return;
-    *area = 0.0;
+    *area = -1.0;
 
     dsp = rt_dsp_internal_from_ip(ip);
     if (!dsp)
 	return;
+    *area = 0.0;
 
     stom = dsp->dsp_stom;
     xsiz = (size_t)dsp->dsp_xcnt - 1;
@@ -236,7 +240,7 @@ rt_dsp_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 	}
     }
 
-    *area = total;
+    *area = isfinite(total) ? total : -1.0;
 }
 
 

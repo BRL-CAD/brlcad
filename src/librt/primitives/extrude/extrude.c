@@ -353,7 +353,7 @@ rt_extrude_volume(fastf_t *vol, const struct rt_db_internal *ip)
     struct rt_extrude_internal *eip;
     struct rt_sketch_internal *skt;
     struct rt_db_internal db_skt;
-    fastf_t area;
+    fastf_t area = -1.0;
     fastf_t h_norm;
     fastf_t u_norm;
     fastf_t v_norm;
@@ -365,7 +365,10 @@ rt_extrude_volume(fastf_t *vol, const struct rt_db_internal *ip)
     RT_DB_INTERNAL_INIT(&db_skt);
     db_skt.idb_ptr = (void *)skt;
 
+    *vol = -1.0;
     rt_sketch_surf_area(&area, &db_skt);
+    if (!isfinite(area) || NEAR_EQUAL(area, -1.0, SMALL_FASTF))
+	return;
 
     h_norm = MAGNITUDE(eip->h);
     u_norm = MAGNITUDE(eip->u_vec);
@@ -1508,6 +1511,7 @@ rt_extrude_centroid(point_t *cent, const struct rt_db_internal *ip)
     struct rt_sketch_internal *skt;
     struct rt_db_internal db_skt;
     point_t skt_cent;
+    point_t error_centroid;
     point_t middle_h;
     eip = (struct rt_extrude_internal *)ip->idb_ptr;
     RT_EXTRUDE_CK_MAGIC(eip);
@@ -1517,7 +1521,14 @@ rt_extrude_centroid(point_t *cent, const struct rt_db_internal *ip)
     RT_DB_INTERNAL_INIT(&db_skt);
     db_skt.idb_ptr = (void *)skt;
 
+    VSETALL(*cent, -1.0);
+    VSETALL(skt_cent, -1.0);
+    VSETALL(error_centroid, -1.0);
     rt_sketch_centroid(&skt_cent, &db_skt);
+    if (!isfinite(skt_cent[X]) || !isfinite(skt_cent[Y]) ||
+	!isfinite(skt_cent[Z]) ||
+	VNEAR_EQUAL(skt_cent, error_centroid, SMALL_FASTF))
+	return;
 
     VSCALE(middle_h, eip->h, 0.5);
     VADD2(*cent, skt_cent, middle_h);

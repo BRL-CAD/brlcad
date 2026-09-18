@@ -208,7 +208,7 @@ _analyze_cmd_msgs(void *cs, int argc, const char **argv, const char *us, const c
  * metaball
  * nmg
  */
-static void
+static int
 analyze_do_summary(struct ged *gedp, const struct rt_db_internal *ip)
 {
     /* XXX Could give solid name, and current units, here */
@@ -216,81 +216,66 @@ analyze_do_summary(struct ged *gedp, const struct rt_db_internal *ip)
     switch (ip->idb_type) {
 
 	case ID_ARB8:
-	    analyze_arb8(gedp, ip);
-	    break;
+	    return analyze_arb8(gedp, ip);
 
 	case ID_BOT:
-	    analyze_general(gedp, ip);
-	    break;
+	    return analyze_general(gedp, ip);
 
 	case ID_ARBN:
 	    analyze_arbn(gedp, ip);
-	    break;
+	    return BRLCAD_OK;
 
 	case ID_ARS:
 	    analyze_ars(gedp, ip);
-	    break;
+	    return BRLCAD_OK;
 
 	case ID_TGC:
-	    analyze_general(gedp, ip);
-	    break;
+	    return analyze_general(gedp, ip);
 
 	case ID_ELL:
-	    analyze_general(gedp, ip);
-	    break;
+	    return analyze_general(gedp, ip);
 
 	case ID_TOR:
-	    analyze_general(gedp, ip);
-	    break;
+	    return analyze_general(gedp, ip);
 
 	case ID_RPC:
-	    analyze_general(gedp, ip);
-	    break;
+	    return analyze_general(gedp, ip);
 
 	case ID_ETO:
-	    analyze_general(gedp, ip);
-	    break;
+	    return analyze_general(gedp, ip);
 
 	case ID_EPA:
-	    analyze_general(gedp, ip);
-	    break;
+	    return analyze_general(gedp, ip);
 
 	case ID_PARTICLE:
-	    analyze_general(gedp, ip);
-	    break;
+	    return analyze_general(gedp, ip);
 
 	case ID_SUPERELL:
 	    analyze_superell(gedp, ip);
-	    break;
+	    return BRLCAD_OK;
 
 	case ID_SKETCH:
-	    analyze_sketch(gedp, ip);
-	    break;
+	    return analyze_sketch(gedp, ip);
 
 	case ID_HYP:
-	    analyze_general(gedp, ip);
-	    break;
+	    return analyze_general(gedp, ip);
 
 	case ID_PIPE:
-	    analyze_general(gedp, ip);
-	    break;
+	    return analyze_general(gedp, ip);
 
 	case ID_VOL:
-	    analyze_general(gedp, ip);
-	    break;
+	    return analyze_general(gedp, ip);
 
 	case ID_EXTRUDE:
-	    analyze_general(gedp, ip);
-	    break;
+	    return analyze_general(gedp, ip);
 
 	case ID_RHC:
-	    analyze_general(gedp, ip);
-	    break;
+	    return analyze_general(gedp, ip);
 
 	default:
 	    bu_vls_printf(gedp->ged_result_str, "\nanalyze: unable to process %s solid\n",
 			  OBJ[ip->idb_type].ft_name);
-	    break;
+	    return BRLCAD_ERROR;
     }
 }
 
@@ -306,6 +291,7 @@ _analyze_cmd_summarize(void *bs, int argc, const char **argv)
     struct _ged_analyze_info *gc = (struct _ged_analyze_info *)bs;
     struct ged *gedp = gc->gedp;
     struct rt_db_internal intern;
+    int status = BRLCAD_OK;
 
     argc--; argv++;
     if (!argc) {
@@ -322,17 +308,20 @@ _analyze_cmd_summarize(void *bs, int argc, const char **argv)
     /* use the names that were input */
     for (int i = 0; i < argc; i++) {
 	struct directory *ndp = db_lookup(gedp->dbip,  argv[i], LOOKUP_NOISY);
-	if (ndp == RT_DIR_NULL)
+	if (ndp == RT_DIR_NULL) {
+	    status = BRLCAD_ERROR;
 	    continue;
+	}
 
 	GED_DB_GET_INTERN(gedp, &intern, ndp, bn_mat_identity, BRLCAD_ERROR);
 
 	_ged_do_list(gedp, ndp, 1);
-	analyze_do_summary(gedp, &intern);
+	if (analyze_do_summary(gedp, &intern) != BRLCAD_OK)
+	    status = BRLCAD_ERROR;
 	rt_db_free_internal(&intern);
     }
 
-    return BRLCAD_OK;
+    return status;
 }
 
 extern "C" int

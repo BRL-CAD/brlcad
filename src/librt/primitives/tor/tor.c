@@ -188,7 +188,11 @@ clt_tor_pack(struct bu_pool *pool, struct soltab *stp)
  * Compute the bounding RPP for a circular torus.
  */
 C_DECL int
-rt_tor_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
+rt_tor_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *tol) {
+    int nu_bbox = _rt_nonuniform_bbox(ip, min, max, tol);
+    if (nu_bbox)
+	return (nu_bbox > 0) ? 0 : -1;
+
     vect_t P, w1;	/* for RPP calculation */
     fastf_t f;
     struct rt_tor_internal *tip = (struct rt_tor_internal *)ip->idb_ptr;
@@ -328,7 +332,7 @@ rt_tor_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	return 1;
     }
 
-    return 0;			/* OK */
+    return _rt_nonuniform_prep_finalize(stp, ip, &rtip->rti_tol);
 }
 
 
@@ -401,6 +405,9 @@ inside_overlapping_region(struct tor_specific *tor, point_t hp)
 C_DECL int
 rt_tor_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
+    if (stp && stp->st_nu_inv_matp)
+	return _rt_nonuniform_shot(stp, rp, ap, seghead);
+
     register struct tor_specific *tor =
 	(struct tor_specific *)stp->st_specific;
     register struct seg *segp;
@@ -877,6 +884,11 @@ rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 C_DECL void
 rt_tor_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
 {
+    if (stp && stp->st_nu_inv_matp) {
+	(void)_rt_nonuniform_norm(hitp, stp, rp);
+	return;
+    }
+
     register struct tor_specific *tor =
 	(struct tor_specific *)stp->st_specific;
 
@@ -904,6 +916,11 @@ rt_tor_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 C_DECL void
 rt_tor_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
 {
+    if (stp && stp->st_nu_inv_matp) {
+	(void)_rt_nonuniform_curve(cvp, hitp, stp);
+	return;
+    }
+
     register struct tor_specific *tor =
 	(struct tor_specific *)stp->st_specific;
     vect_t w4, w5;
@@ -947,6 +964,11 @@ rt_tor_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 C_DECL void
 rt_tor_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
+    if (stp && stp->st_nu_inv_matp) {
+	(void)_rt_nonuniform_uv(ap, stp, hitp, uvp);
+	return;
+    }
+
     struct tor_specific *tor = (struct tor_specific *) stp->st_specific;
     vect_t work;
     vect_t pprime;
@@ -1061,6 +1083,7 @@ tor_ellipse_points(
 C_DECL int
 rt_tor_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *tol, const struct bview *v, fastf_t s_size)
 {
+    struct rt_nonuniform_vlist_state nonuniform_state;
     vect_t a, b, tor_a, tor_b, tor_h, center;
     fastf_t mag_a, mag_b, mag_h;
     struct rt_tor_internal *tor;
@@ -1069,6 +1092,7 @@ rt_tor_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    _rt_nonuniform_vlist_state_init(&nonuniform_state, vhead);
     struct bu_list *vlfree = &rt_vlfree;
     tor = (struct rt_tor_internal *)ip->idb_ptr;
     RT_TOR_CK_MAGIC(tor);
@@ -1144,7 +1168,7 @@ rt_tor_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 	radian += radian_step;
     }
 
-    return 0;
+    return _rt_nonuniform_plot_finalize(vhead, &nonuniform_state, ip);
 }
 
 /**
@@ -1156,6 +1180,7 @@ rt_tor_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 C_DECL int
 rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
+    struct rt_nonuniform_vlist_state nonuniform_state;
     fastf_t alpha;
     fastf_t beta;
     fastf_t cos_alpha, sin_alpha;
@@ -1174,6 +1199,7 @@ rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    _rt_nonuniform_vlist_state_init(&nonuniform_state, vhead);
     struct bu_list *vlfree = &rt_vlfree;
     tip = (struct rt_tor_internal *)ip->idb_ptr;
     RT_TOR_CK_MAGIC(tip);
@@ -1247,7 +1273,7 @@ rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     }
 
     bu_free((char *)pts, "rt_tor_plot pts[]");
-    return 0;
+    return _rt_nonuniform_plot_finalize(vhead, &nonuniform_state, ip);
 }
 
 
@@ -1478,7 +1504,7 @@ rt_tor_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	bu_log("rt_tor_tess: tube radius (%g) smaller than calculational tolerance (%g); returning empty mesh\n",
 	       r_h_eff, tol->dist);
 	*r = nmg_mrsv(m);
-	return 0;
+	return _rt_nonuniform_tess_finalize(*r, ip, tol);
     }
 
     /* Compute segment counts for the major circle (nlen, radius r_a) and the
@@ -1514,7 +1540,8 @@ rt_tor_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
      * axis.  Produce the OUTER surface as a closed manifold (sphere topology)
      * rather than the self-intersecting full tube. */
     if (r_h_eff > tip->r_a) {
-	return rt_tor_spindle_tess(r, m, tip, r_h_eff, nw, nlen, tol);
+	int ret = rt_tor_spindle_tess(r, m, tip, r_h_eff, nw, nlen, tol);
+	return ret ? ret : _rt_nonuniform_tess_finalize(*r, ip, tol);
     }
 
     /* Compute the points on the surface of the torus */
@@ -1615,7 +1642,7 @@ rt_tor_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     bu_free((char *)verts, "rt_tor_tess *verts[]");
     bu_free((char *)faces, "rt_tor_tess *faces[]");
     bu_free((char *)norms, "rt_tor_tess norms[]");
-    return 0;
+    return _rt_nonuniform_tess_finalize(*r, ip, tol);
 }
 
 
@@ -1736,6 +1763,8 @@ rt_tor_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     if (ip->idb_type != ID_TOR) return -1;
     tip = (struct rt_tor_internal *)ip->idb_ptr;
     RT_TOR_CK_MAGIC(tip);
+    if (_rt_nonuniform_export4_check("rt_tor_export4", ip) < 0)
+	return -1;
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = sizeof(union record);
@@ -1812,6 +1841,25 @@ rt_tor_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
     struct rt_tor_internal *top = (struct rt_tor_internal *)rop->idb_ptr;
     RT_TOR_CK_MAGIC(top);
 
+    mat_t effective_mat;
+    int remove_nonuniform = 0;
+    {
+	int nonuniform = _rt_nonuniform_transform_resolve(effective_mat, &remove_nonuniform, ip, mat);
+	if (nonuniform < 0)
+	    return BRLCAD_ERROR;
+	if (nonuniform) {
+	    *top = *tip;
+	    if (_rt_nonuniform_attr_copy(rop, ip) < 0)
+		return BRLCAD_ERROR;
+	    return (_rt_nonuniform_attr_compose(rop, mat) < 0) ? BRLCAD_ERROR : BRLCAD_OK;
+	}
+    }
+
+    if (_rt_nonuniform_attr_copy(rop, ip) < 0)
+	return BRLCAD_ERROR;
+    if (remove_nonuniform && _rt_nonuniform_attr_remove(rop) < 0)
+	return BRLCAD_ERROR;
+
     double r_a, r_h;
     vect_t v, h;
     VMOVE(v, tip->v);
@@ -1820,12 +1868,12 @@ rt_tor_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
     r_h = tip->r_h;
 
     /* Apply modeling transformations */
-    MAT4X3PNT(top->v, mat, v);
-    MAT4X3VEC(top->h, mat, h);
+    MAT4X3PNT(top->v, effective_mat, v);
+    MAT4X3VEC(top->h, effective_mat, h);
     VUNITIZE(top->h);			/* just to be sure */
 
-    top->r_a = r_a / mat[15];
-    top->r_h = r_h / mat[15];
+    top->r_a = r_a / effective_mat[15];
+    top->r_h = r_h / effective_mat[15];
 
     /* Prepare the extra information */
     top->r_b = top->r_a;
@@ -1873,9 +1921,6 @@ rt_tor_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     RT_CK_DB_INTERNAL(ip);
 
     if (mat == NULL) mat = bn_mat_identity;
-    if (bn_mat_is_non_unif (mat)) {
-	bu_log("------------------ WARNING ----------------\nNon-uniform matrix transform on torus.  Ignored\n");
-    }
 
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_TOR;
@@ -2010,6 +2055,9 @@ rt_tor_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 C_DECL void
 rt_tor_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
+    if (_rt_nonuniform_surf_area(area, ip))
+	return;
+
     struct rt_tor_internal *tip = (struct rt_tor_internal *)ip->idb_ptr;
     RT_TOR_CK_MAGIC(tip);
 
@@ -2035,6 +2083,9 @@ rt_tor_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 C_DECL void
 rt_tor_volume(fastf_t *vol, const struct rt_db_internal *ip)
 {
+    if (_rt_nonuniform_volume(vol, ip))
+	return;
+
     struct rt_tor_internal *tip = (struct rt_tor_internal *)ip->idb_ptr;
     RT_TOR_CK_MAGIC(tip);
 
@@ -2053,6 +2104,9 @@ rt_tor_volume(fastf_t *vol, const struct rt_db_internal *ip)
 C_DECL void
 rt_tor_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
+    if (_rt_nonuniform_centroid(cent, ip))
+	return;
+
     struct rt_tor_internal *tip = (struct rt_tor_internal *)ip->idb_ptr;
     RT_TOR_CK_MAGIC(tip);
     VMOVE(*cent,tip->v);

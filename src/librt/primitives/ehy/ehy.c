@@ -223,7 +223,11 @@ clt_ehy_pack(struct bu_pool *pool, struct soltab *stp)
  * Create a bounding RPP for an ehy
  */
 C_DECL int
-rt_ehy_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
+rt_ehy_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *tol) {
+    int nu_bbox = _rt_nonuniform_bbox(ip, min, max, tol);
+    if (nu_bbox)
+	return (nu_bbox > 0) ? 0 : -1;
+
     struct rt_ehy_internal *xip;
     vect_t ehy_A, ehy_B, ehy_An, ehy_Bn, ehy_H;
     vect_t pt1, pt2, pt3, pt4, pt5, pt6, pt7, pt8;
@@ -356,7 +360,7 @@ rt_ehy_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     if (rt_ehy_bbox(ip, &(stp->st_min), &(stp->st_max), &rtip->rti_tol)) return 1;
 
-    return 0;			/* OK */
+    return _rt_nonuniform_prep_finalize(stp, ip, &rtip->rti_tol);
 }
 
 
@@ -392,6 +396,9 @@ rt_ehy_print(const struct soltab *stp)
 C_DECL int
 rt_ehy_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
+    if (stp && stp->st_nu_inv_matp)
+	return _rt_nonuniform_shot(stp, rp, ap, seghead);
+
     struct ehy_specific *ehy =
 	(struct ehy_specific *)stp->st_specific;
     vect_t dp;		/* D' */
@@ -654,6 +661,11 @@ rt_ehy_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 C_DECL void
 rt_ehy_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
+    if (stp && stp->st_nu_inv_matp) {
+	(void)_rt_nonuniform_norm(hitp, stp, rp);
+	return;
+    }
+
     vect_t can_normal;	/* normal to canonical ehy */
     fastf_t cp, scale;
     struct ehy_specific *ehy =
@@ -690,6 +702,11 @@ rt_ehy_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 C_DECL void
 rt_ehy_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
+    if (stp && stp->st_nu_inv_matp) {
+	(void)_rt_nonuniform_curve(cvp, hitp, stp);
+	return;
+    }
+
     fastf_t a, b, c, scale;
     mat_t M1, M2;
     struct ehy_specific *ehy =
@@ -749,6 +766,11 @@ rt_ehy_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 C_DECL void
 rt_ehy_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
+    if (stp && stp->st_nu_inv_matp) {
+	(void)_rt_nonuniform_uv(ap, stp, hitp, uvp);
+	return;
+    }
+
     struct ehy_specific *ehy =
 	(struct ehy_specific *)stp->st_specific;
     vect_t work;
@@ -1004,6 +1026,7 @@ ehy_ellipse_points(
 C_DECL int
 rt_ehy_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol), const struct bview *v, fastf_t s_size)
 {
+    struct rt_nonuniform_vlist_state nonuniform_state;
     vect_t ehy_H, Hu, Au, Bu;
     fastf_t mag_H, z, z_step, c, r1, r2;
     int i, num_curve_points, num_ellipse_points, num_curves;
@@ -1015,6 +1038,7 @@ rt_ehy_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    _rt_nonuniform_vlist_state_init(&nonuniform_state, vhead);
     ehy = (struct rt_ehy_internal *)ip->idb_ptr;
     RT_EHY_CK_MAGIC(ehy);
 
@@ -1080,13 +1104,14 @@ rt_ehy_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 	bu_free(node, "rt_pnt_node");
     }
 
-    return 0;
+    return _rt_nonuniform_plot_finalize(vhead, &nonuniform_state, ip);
 }
 
 
 C_DECL int
 rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
+    struct rt_nonuniform_vlist_state nonuniform_state;
     struct bu_list *vlfree = &rt_vlfree;
     fastf_t c, dtol, mag_h, ntol, r1, r2;
     fastf_t min_abs;
@@ -1101,6 +1126,7 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    _rt_nonuniform_vlist_state_init(&nonuniform_state, vhead);
     xip = (struct rt_ehy_internal *)ip->idb_ptr;
 
     if (!ehy_is_valid(xip)) {
@@ -1353,7 +1379,7 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     bu_free((char *)pts_dbl, "dbl ints");
     bu_free((char *)segs_per_ell, "segs_per_ell");
 
-    return 0;
+    return _rt_nonuniform_plot_finalize(vhead, &nonuniform_state, ip);
 }
 
 
@@ -1932,7 +1958,7 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
     bu_ptbl_free(&vert_tab);
     bu_free((char *)segs_per_ell, "segs_per_ell");
-    return 0;
+    return _rt_nonuniform_tess_finalize(*r, ip, tol);
 
 fail:
     /* free mem */
@@ -2036,6 +2062,8 @@ rt_ehy_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_EHY) return -1;
+    if (_rt_nonuniform_export4_check("rt_ehy_export4", ip) < 0)
+	return -1;
     xip = (struct rt_ehy_internal *)ip->idb_ptr;
     RT_EHY_CK_MAGIC(xip);
 
@@ -2093,23 +2121,42 @@ rt_ehy_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
     struct rt_ehy_internal *top = (struct rt_ehy_internal *)rop->idb_ptr;
     RT_EHY_CK_MAGIC(top);
 
+    mat_t effective_mat;
+    int remove_nonuniform = 0;
+    {
+	int nonuniform = _rt_nonuniform_transform_resolve(effective_mat, &remove_nonuniform, ip, mat);
+	if (nonuniform < 0)
+	    return BRLCAD_ERROR;
+	if (nonuniform) {
+	    *top = *tip;
+	    if (_rt_nonuniform_attr_copy(rop, ip) < 0)
+		return BRLCAD_ERROR;
+	    return (_rt_nonuniform_attr_compose(rop, mat) < 0) ? BRLCAD_ERROR : BRLCAD_OK;
+	}
+    }
+
+    if (_rt_nonuniform_attr_copy(rop, ip) < 0)
+	return BRLCAD_ERROR;
+    if (remove_nonuniform && _rt_nonuniform_attr_remove(rop) < 0)
+	return BRLCAD_ERROR;
+
     vect_t eV, eH, eAu;
     double er1, er2, ec;
     VMOVE(eV, tip->ehy_V);
     VMOVE(eH, tip->ehy_H);
     VMOVE(eAu, tip->ehy_Au);
-    er1 = tip->ehy_r1 / mat[15];
-    er2 = tip->ehy_r2 / mat[15];
-    ec = tip->ehy_c / mat[15];
+    er1 = tip->ehy_r1 / effective_mat[15];
+    er2 = tip->ehy_r2 / effective_mat[15];
+    ec = tip->ehy_c / effective_mat[15];
 
     if (er1 <= SMALL_FASTF || er2 <= SMALL_FASTF || ec <= SMALL_FASTF) {
 	bu_log("rt_ehy_mat: r1, r2, or c are zero\n");
 	return BRLCAD_ERROR;
     }
 
-    MAT4X3PNT(top->ehy_V, mat, eV);
-    MAT4X3VEC(top->ehy_H, mat, eH);
-    MAT4X3VEC(top->ehy_Au, mat, eAu);
+    MAT4X3PNT(top->ehy_V, effective_mat, eV);
+    MAT4X3VEC(top->ehy_H, effective_mat, eH);
+    MAT4X3VEC(top->ehy_Au, effective_mat, eAu);
     VUNITIZE(top->ehy_Au);
     top->ehy_r1 = er1;
     top->ehy_r2 = er2;
@@ -2435,6 +2482,9 @@ ehy_is_valid(struct rt_ehy_internal *ehy)
 C_DECL void
 rt_ehy_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
+    if (_rt_nonuniform_surf_area(area, ip))
+	return;
+
     struct rt_ehy_internal *eip;
     fastf_t h, r, c, P, alpha, B, sqrtAlpha;
     fastf_t u_top, u_bot, v_top, v_bot, F_top, F_bot;
@@ -2505,6 +2555,9 @@ rt_ehy_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 C_DECL void
 rt_ehy_volume(fastf_t *volume, const struct rt_db_internal *ip)
 {
+    if (_rt_nonuniform_volume(volume, ip))
+	return;
+
     struct rt_ehy_internal *eip;
     fastf_t h, c;
 
@@ -2543,6 +2596,9 @@ rt_ehy_volume(fastf_t *volume, const struct rt_db_internal *ip)
 C_DECL void
 rt_ehy_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
+    if (_rt_nonuniform_centroid(cent, ip))
+	return;
+
     struct rt_ehy_internal *eip;
     fastf_t h, c, z_c;
     vect_t Hu;

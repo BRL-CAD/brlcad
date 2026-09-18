@@ -1741,8 +1741,8 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_MAKE_CAST(rt_cline_make), /* make */
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_cline_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_cline_bbox),
-	NULL, /* volume */
-	NULL, /* surf_area */
+	RTFUNCTAB_FUNC_VOLUME_CAST(rt_cline_volume),
+	RTFUNCTAB_FUNC_SURF_AREA_CAST(rt_cline_surf_area),
 	NULL, /* centroid */
 	NULL, /* oriented_bbox */
 	NULL, /* find_selections */
@@ -2109,8 +2109,8 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_MAKE_CAST(rt_metaball_make),
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_metaball_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_metaball_bbox),
-	RTFUNCTAB_FUNC_VOLUME_CAST(rt_crofton_volume_implicit),
-	RTFUNCTAB_FUNC_SURF_AREA_CAST(rt_crofton_surf_area_implicit),
+	RTFUNCTAB_FUNC_VOLUME_CAST(rt_metaball_volume),
+	RTFUNCTAB_FUNC_SURF_AREA_CAST(rt_metaball_surf_area),
 	NULL, /* centroid */
 	NULL, /* oriented_bbox */
 	NULL, /* find_selections */

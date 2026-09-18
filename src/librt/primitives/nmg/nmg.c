@@ -2430,6 +2430,10 @@ rt_nmg_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     struct model *m;
     struct nmgregion* r;
     struct bu_list *vlfree = &rt_vlfree;
+    fastf_t total_area = 0.0;
+    int have_faces = 0;
+
+    *area = -1.0;
 
     /*Iterate through all regions and shells */
     m = (struct model *)ip->idb_ptr;
@@ -2444,6 +2448,8 @@ rt_nmg_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 	    /*get faces of this shell*/
 	    nmg_face_tabulate(&nmg_faces, &s->l.magic, vlfree);
 	    num_faces = BU_PTBL_LEN(&nmg_faces);
+	    if (num_faces)
+		have_faces = 1;
 	    faces = (struct poly_face *)bu_calloc(num_faces, sizeof(struct poly_face), "rt_nmg_surf_area: faces");
 
 	    for (i = 0; i < num_faces; i++) {
@@ -2452,7 +2458,7 @@ rt_nmg_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 	    }
 	    rt_nmg_faces_area(faces, s, vlfree);
 	    for (i = 0; i < num_faces; i++) {
-		*area += faces[i].area;
+		total_area += faces[i].area;
 	    }
 	    for (i = 0; i < num_faces; i++) {
 		bu_free((char *)faces[i].pts, "rt_nmg_surf_area: pts");
@@ -2460,6 +2466,8 @@ rt_nmg_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 	    bu_free((char *)faces, "rt_nmg_surf_area: faces");
 	}
     }
+    if (have_faces)
+	*area = total_area;
 }
 
 
@@ -2477,11 +2485,13 @@ rt_nmg_centroid(point_t *cent, const struct rt_db_internal *ip)
     size_t i = 0;
     struct bu_list *vlfree = &rt_vlfree;
 
-    *cent[0] = 0.0;
-    *cent[1] = 0.0;
-    *cent[2] = 0.0;
+    VSETALL(*cent, -1.0);
     m = (struct model *)ip->idb_ptr;
+    if (BU_LIST_IS_EMPTY(&m->r_hd))
+	return;
     r = BU_LIST_FIRST(nmgregion, &m->r_hd);
+    if (BU_LIST_IS_EMPTY(&r->s_hd))
+	return;
     s = BU_LIST_FIRST(shell, &r->s_hd);
 
     /*get faces*/
@@ -2492,6 +2502,8 @@ rt_nmg_centroid(point_t *cent, const struct rt_db_internal *ip)
     if (!num_faces)
 	return;
 
+    VSETALL(*cent, 0.0);
+
     faces = (struct poly_face *)bu_calloc(num_faces, sizeof(struct poly_face), "rt_nmg_centroid: faces");
 
     for (i = 0; i < num_faces; i++) {
@@ -2500,6 +2512,8 @@ rt_nmg_centroid(point_t *cent, const struct rt_db_internal *ip)
     }
     rt_nmg_faces_area(faces, s, vlfree);
     for (i = 0; i < num_faces; i++) {
+	if (faces[i].npts < 3)
+	    goto fail;
 	bg_3d_polygon_centroid(&faces[i].cent, faces[i].npts, (const point_t *) faces[i].pts);
 	VADD2(arbit_point, arbit_point, faces[i].cent);
     }
@@ -2509,7 +2523,6 @@ rt_nmg_centroid(point_t *cent, const struct rt_db_internal *ip)
 	vect_t tmp = VINIT_ZERO;
 
 	/* calculate volume */
-	volume = 0.0;
 	VSCALE(tmp, faces[i].plane_eqn, faces[i].area);
 	faces[i].vol_pyramid = (VDOT(faces[i].pts[0], tmp)/3);
 	volume += faces[i].vol_pyramid;
@@ -2524,12 +2537,22 @@ rt_nmg_centroid(point_t *cent, const struct rt_db_internal *ip)
 	/* add cent_pyramid to the centroid of the polyhedron */
 	VADD2(*cent, *cent, faces[i].cent_pyramid);
     }
+    if (NEAR_ZERO(volume, SMALL_FASTF))
+	goto fail;
     /* reverse the weighting */
     VSCALE(*cent, *cent, (1/volume));
     for (i = 0; i < num_faces; i++) {
 	bu_free((char *)faces[i].pts, "rt_nmg_centroid: pts");
     }
     bu_free((char *)faces, "rt_nmg_centroid: faces");
+    return;
+
+fail:
+    for (i = 0; i < num_faces; i++) {
+	bu_free((char *)faces[i].pts, "rt_nmg_centroid: pts");
+    }
+    bu_free((char *)faces, "rt_nmg_centroid: faces");
+    VSETALL(*cent, -1.0);
 }
 
 
@@ -2539,6 +2562,10 @@ rt_nmg_volume(fastf_t *volume, const struct rt_db_internal *ip)
     struct model *m;
     struct nmgregion* r;
     struct bu_list *vlfree = &rt_vlfree;
+    fastf_t total_volume = 0.0;
+    int have_faces = 0;
+
+    *volume = -1.0;
 
     /*Iterate through all regions and shells */
     m = (struct model *)ip->idb_ptr;
@@ -2553,6 +2580,8 @@ rt_nmg_volume(fastf_t *volume, const struct rt_db_internal *ip)
 	    /*get faces of this shell*/
 	    nmg_face_tabulate(&nmg_faces, &s->l.magic, vlfree);
 	    num_faces = BU_PTBL_LEN(&nmg_faces);
+	    if (num_faces)
+		have_faces = 1;
 	    faces = (struct poly_face *)bu_calloc(num_faces, sizeof(struct poly_face), "rt_nmg_volume: faces");
 
 	    for (i = 0; i < num_faces; i++) {
@@ -2562,10 +2591,17 @@ rt_nmg_volume(fastf_t *volume, const struct rt_db_internal *ip)
 	    rt_nmg_faces_area(faces, s, vlfree);
 	    for (i = 0; i < num_faces; i++) {
 		vect_t tmp = VINIT_ZERO;
+		if (faces[i].npts < 3) {
+		    size_t j;
+		    for (j = 0; j < num_faces; j++)
+			bu_free((char *)faces[j].pts, "rt_nmg_volume: pts");
+		    bu_free((char *)faces, "rt_nmg_volume: faces");
+		    return;
+		}
 
 		/* calculate volume of pyramid*/
 		VSCALE(tmp, faces[i].plane_eqn, faces[i].area);
-		*volume = (VDOT(faces[i].pts[0], tmp)/3);
+		total_volume += (VDOT(faces[i].pts[0], tmp)/3);
 	    }
 	    for (i = 0; i < num_faces; i++) {
 		bu_free((char *)faces[i].pts, "rt_nmg_volume: pts");
@@ -2573,6 +2609,8 @@ rt_nmg_volume(fastf_t *volume, const struct rt_db_internal *ip)
 	    bu_free((char *)faces, "rt_nmg_volume: faces");
 	}
     }
+    if (have_faces)
+	*volume = fabs(total_volume);
 }
 
 /**
