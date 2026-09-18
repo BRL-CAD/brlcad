@@ -13,6 +13,7 @@
 #define LIBRT_PRIMITIVES_REPAIR_H
 
 #include "bu/cmdschema.h"
+#include "bu/malloc.h"
 
 struct rt_repair_common_args {
     int dummy;

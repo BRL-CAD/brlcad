@@ -366,6 +366,10 @@ struct bu_cmd_option {
     bu_cmd_value_consume_t consume;
     const struct bu_cmd_value_keyword *keyword_values;
     struct bu_cmd_value_range range;
+    /** Standard libbu shape used when arg_shape is NULL.  This indirection is
+     * needed by Windows DLL consumers, where imported data addresses are not
+     * valid C static initializers.  SCALAR means no implicit shape. */
+    bu_cmd_arg_shape_kind_t standard_shape;
 };
 
 /** Return an option's stable name, preferring its long spelling. */
@@ -882,20 +886,20 @@ BU_EXPORT extern int bu_cmd_integer_pair_optional_validate(size_t argc,
  * separate RGB components.  Use BU_CMD_RGB for strict 8-bit RGB only.
  */
 #define BU_CMD_COLOR_COMPAT(_short, _long, _record, _field, _arg, _help) \
-    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_COLOR, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, bu_cmd_color_consume, NULL, BU_CMD_VALUE_RANGE_NONE}
+    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_COLOR, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, bu_cmd_color_consume, NULL, BU_CMD_VALUE_RANGE_NONE, BU_CMD_ARG_SHAPE_COLOR}
 /**
  * A standard RGB option bound to a struct bu_color field.  It accepts one
  * packed r/g/b, r,g,b, or r;g;b token, or three separate 0..255 channels.
  */
 #define BU_CMD_RGB(_short, _long, _record, _field, _arg, _help) \
-    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_COLOR, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, bu_cmd_rgb_consume, NULL, BU_CMD_VALUE_RANGE_NONE}
+    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_COLOR, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, bu_cmd_rgb_consume, NULL, BU_CMD_VALUE_RANGE_NONE, BU_CMD_ARG_SHAPE_RGB}
 /**
  * A standard finite XYZ vector option bound to a point_t or vect_t field.
  * It accepts packed x/y/z, x,y,z, or x;y;z input, a quoted x y z token, or
  * three separate numeric arguments.
  */
 #define BU_CMD_VECTOR3(_short, _long, _record, _field, _arg, _help) \
-    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_VECTOR, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, bu_cmd_vector3_consume, NULL, BU_CMD_VALUE_RANGE_NONE}
+    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_VECTOR, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, bu_cmd_vector3_consume, NULL, BU_CMD_VALUE_RANGE_NONE, BU_CMD_ARG_SHAPE_VECTOR3}
 #define BU_CMD_STRING(_short, _long, _record, _field, _arg, _help) \
     {_short, _long, _long, _arg, _help, BU_CMD_VALUE_STRING, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE}
 #define BU_CMD_OPTIONAL_STRING(_short, _long, _record, _field, _arg, _help) \

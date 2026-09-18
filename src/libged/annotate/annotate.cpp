@@ -37,6 +37,7 @@
 
 #include "bu/color.h"
 #include "bu/cmd.h"
+#include "bu/cmdschema.h"
 #include "bu/malloc.h"
 #include "bu/opt.h"
 #include "bu/path.h"
@@ -49,6 +50,8 @@
 #include "../dbi.h"
 #include "../ged_private.h"
 
+
+static void annotate_schema_help(struct ged *gedp, size_t argc, const char * const *path);
 
 namespace {
 
@@ -1457,32 +1460,22 @@ cmd_dimension(void *data, int argc, const char **argv)
 	"annotate dimension TYPE [options] name", "Create a geometric dimension"))
 	return BRLCAD_OK;
     argc--; argv++;
-    int help = 0;
-    struct bu_opt_desc descs[2];
-    BU_OPT(descs[0], "h", "help", "", NULL, &help, "Print help");
-    BU_OPT_NULL(descs[1]);
-    const char *usage = "[options] TYPE [args]";
+    const char *dimension_path[] = {"dimension"};
     if (!argc) {
-	_ged_subcmd_help(gedp, descs, dimension_commands, "annotate dimension", usage,
-	    gedp, 0, NULL);
-	return GED_HELP;
+        annotate_schema_help(gedp, 1, dimension_path);
+        return GED_HELP;
     }
     if (BU_STR_EQUAL(argv[0], "help") || BU_STR_EQUAL(argv[0], "--help") ||
-	BU_STR_EQUAL(argv[0], "-h")) {
-	if (argc > 1)
-	    _ged_subcmd_help(gedp, descs, dimension_commands, "annotate dimension", usage,
-		gedp, argc - 1, argv + 1);
-	else
-	    _ged_subcmd_help(gedp, descs, dimension_commands, "annotate dimension", usage,
-		gedp, 0, NULL);
-	return GED_HELP;
+        BU_STR_EQUAL(argv[0], "-h")) {
+        const char *type_path[] = {"dimension", argc > 1 ? argv[1] : NULL};
+        annotate_schema_help(gedp, argc > 1 ? 2 : 1, type_path);
+        return GED_HELP;
     }
     int ret = BRLCAD_ERROR;
     if (bu_cmd(dimension_commands, argc, argv, 0, gedp, &ret) == BRLCAD_OK)
 	return ret;
     bu_vls_printf(gedp->ged_result_str, "Unknown dimension type '%s'\n", argv[0]);
-    _ged_subcmd_help(gedp, descs, dimension_commands, "annotate dimension", usage,
-	gedp, 0, NULL);
+    annotate_schema_help(gedp, 1, dimension_path);
     return BRLCAD_ERROR;
 }
 
@@ -2942,32 +2935,15 @@ ged_annotate_core(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
     bu_vls_trunc(gedp->ged_result_str, 0);
     argc--; argv++;
-    int help = 0;
-    struct bu_opt_desc descs[2];
-    BU_OPT(descs[0], "h", "help", "", NULL, &help, "Print help");
-    BU_OPT_NULL(descs[1]);
-    const char *usage = "[options] subcommand [args]";
     if (!argc) {
-	_ged_subcmd_help(gedp, descs, annotate_commands, "annotate", usage, gedp, 0, NULL);
-	return GED_HELP;
+        annotate_schema_help(gedp, 0, NULL);
+        return GED_HELP;
     }
-    if (BU_STR_EQUAL(argv[0], "help")) {
-	if (argc > 1)
-	    _ged_subcmd_help(gedp, descs, annotate_commands, "annotate", usage,
-		gedp, argc - 1, argv + 1);
-	else
-	    _ged_subcmd_help(gedp, descs, annotate_commands, "annotate", usage,
-		gedp, 0, NULL);
-	return GED_HELP;
-    }
-    if (BU_STR_EQUAL(argv[0], "-h") || BU_STR_EQUAL(argv[0], "--help")) {
-	if (argc > 1)
-	    _ged_subcmd_help(gedp, descs, annotate_commands, "annotate", usage,
-		gedp, argc - 1, argv + 1);
-	else
-	    _ged_subcmd_help(gedp, descs, annotate_commands, "annotate", usage,
-		gedp, 0, NULL);
-	return GED_HELP;
+    if (BU_STR_EQUAL(argv[0], "help") || BU_STR_EQUAL(argv[0], "-h") ||
+        BU_STR_EQUAL(argv[0], "--help")) {
+        annotate_schema_help(gedp, argc > 1 ? (size_t)(argc - 1) : 0,
+            argc > 1 ? argv + 1 : NULL);
+        return GED_HELP;
     }
     if (!BU_STR_EQUAL(argv[0], "list") && !BU_STR_EQUAL(argv[0], "info") &&
 	!BU_STR_EQUAL(argv[0], "show") && !BU_STR_EQUAL(argv[0], "hide"))
@@ -2976,18 +2952,261 @@ ged_annotate_core(struct ged *gedp, int argc, const char *argv[])
 	if (bu_cmd(annotate_commands, argc, argv, 0, gedp, &ret) == BRLCAD_OK)
 	return ret;
     bu_vls_printf(gedp->ged_result_str, "Unknown annotate subcommand '%s'\n", argv[0]);
-    _ged_subcmd_help(gedp, descs, annotate_commands, "annotate", usage, gedp, 0, NULL);
+    annotate_schema_help(gedp, 0, NULL);
     return BRLCAD_ERROR;
 }
 
 
 #include "../include/plugin.h"
 
-#define GED_ANNOTATE_COMMANDS(X, XID) \
-    X(annotate, ged_annotate_core, GED_CMD_DEFAULT)
+/* The executor still owns the annotation builders; these native descriptions
+ * make every public subcommand visible to command analysis and completion. */
+static const struct bu_cmd_value_keyword annotate_line_styles[] = {
+    {"continuous", NULL, NULL}, {"dashed", NULL, NULL},
+    {"dotted", NULL, NULL}, {"center", NULL, NULL},
+    {"phantom", NULL, NULL}, {NULL, NULL, NULL}
+};
+static const struct bu_cmd_value_keyword annotate_planes[] = {
+    {"xy", NULL, NULL}, {"xz", NULL, NULL}, {"yz", NULL, NULL},
+    {NULL, NULL, NULL}
+};
+static const struct bu_cmd_value_keyword annotate_axes[] = {
+    {"x", NULL, NULL}, {"y", NULL, NULL}, {"z", NULL, NULL},
+    {NULL, NULL, NULL}
+};
+static const struct bu_cmd_value_keyword annotate_bounds[] = {
+    {"aabb", NULL, NULL}, {"obb", NULL, NULL}, {NULL, NULL, NULL}
+};
+#define ANN_KEYWORDS(long_name, argument, description, values) \
+    {"", long_name, long_name, argument, description, BU_CMD_VALUE_KEYWORD, \
+        BU_CMD_STORAGE_NONE, NULL, NULL, NULL, NULL, 0, 0, NULL, \
+        BU_CMD_ARG_REQUIRED, NULL, NULL, values, BU_CMD_VALUE_RANGE_NONE}
+#define ANN_FLAG(short_name, long_name, description) \
+    BU_CMD_FLAG_UNBOUND(short_name, long_name, long_name, description)
+#define ANN_VALUE(short_name, long_name, type, argument, description) \
+    BU_CMD_VALUE_UNBOUND(short_name, long_name, long_name, type, argument, description)
+#define ANN_VECTOR(long_name, description) \
+    BU_CMD_SHAPED_UNBOUND("", long_name, long_name, BU_CMD_VALUE_VECTOR, \
+        "x y z", description, &bu_cmd_vector3_arg_shape)
+#define ANN_COMMON_OPTIONS \
+    ANN_FLAG("h", "help", "Print help"), \
+    ANN_VALUE("", "text-height", BU_CMD_VALUE_NUMBER, "size", "Text height in current units"), \
+    ANN_VALUE("", "font", BU_CMD_VALUE_STRING, "name", "TrueType font name or path"), \
+    BU_CMD_SHAPED_UNBOUND("C", "color", "color", BU_CMD_VALUE_COLOR, "r/g/b", \
+        "Annotation color", &bu_cmd_color_arg_shape), \
+    ANN_VALUE("", "line-width", BU_CMD_VALUE_NUMBER, "width", "Line width"), \
+    ANN_KEYWORDS("line-style", "style", "Line pattern", annotate_line_styles), \
+    ANN_FLAG("", "bold", "Use bold text"), \
+    ANN_FLAG("", "italic", "Use italic text"), \
+    ANN_VALUE("", "for", BU_CMD_VALUE_DB_OBJECT, "object", "Associated geometry object"), \
+    ANN_FLAG("D", "no-draw", "Create without drawing")
+#define ANN_DIMENSION_OPTIONS \
+    ANN_COMMON_OPTIONS, \
+    ANN_VECTOR("from", "First measured point"), \
+    ANN_VECTOR("to", "Second measured point"), \
+    ANN_VECTOR("vertex", "Angular dimension vertex"), \
+    ANN_VECTOR("center", "Circle center"), \
+    ANN_VECTOR("origin", "Ordinate origin"), \
+    ANN_KEYWORDS("axis", "x|y|z", "Ordinate axis", annotate_axes), \
+    ANN_VALUE("", "offset", BU_CMD_VALUE_NUMBER, "distance", "Dimension line offset"), \
+    ANN_VALUE("", "units", BU_CMD_VALUE_STRING, "unit", "Display units"), \
+    ANN_VALUE("", "precision", BU_CMD_VALUE_INTEGER, "digits", "Decimal places"), \
+    ANN_VALUE("", "prefix", BU_CMD_VALUE_STRING, "text", "Text before value"), \
+    ANN_VALUE("", "suffix", BU_CMD_VALUE_STRING, "text", "Text after value"), \
+    ANN_FLAG("", "no-extension-lines", "Suppress extension lines")
 
-GED_DECLARE_COMMAND_SET(GED_ANNOTATE_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_annotate", 1, GED_ANNOTATE_COMMANDS)
+static const struct bu_cmd_option annotate_root_options[] = {
+    ANN_FLAG("h", "help", "Print help"), BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_option annotate_text_options[] = {
+    ANN_COMMON_OPTIONS,
+    ANN_VECTOR("at", "Text anchor point"),
+    ANN_KEYWORDS("plane", "xy|xz|yz", "Model text plane", annotate_planes),
+    ANN_FLAG("", "frame", "Draw a frame around text"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_option annotate_leader_options[] = {
+    ANN_COMMON_OPTIONS,
+    ANN_VECTOR("target", "Leader target point"),
+    ANN_VECTOR("at", "Text anchor point"),
+    ANN_FLAG("", "screen-space", "Keep leader in display plane"),
+    ANN_VALUE("", "dpi", BU_CMD_VALUE_NUMBER, "value", "Display density"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_option annotate_dimension_options[] = {
+    ANN_DIMENSION_OPTIONS, BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_option annotate_autodim_options[] = {
+    ANN_COMMON_OPTIONS,
+    ANN_VALUE("", "axes", BU_CMD_VALUE_STRING, "x,y,z", "Axes to dimension"),
+    ANN_VALUE("", "corner", BU_CMD_VALUE_STRING, "corner", "Box corner or auto"),
+    ANN_KEYWORDS("bounds", "aabb|obb", "Bounds type", annotate_bounds),
+    ANN_VALUE("", "offset", BU_CMD_VALUE_NUMBER, "distance", "Dimension line offset"),
+    ANN_VALUE("", "units", BU_CMD_VALUE_STRING, "unit", "Display units"),
+    ANN_VALUE("", "precision", BU_CMD_VALUE_INTEGER, "digits", "Decimal places"),
+    ANN_FLAG("", "no-axis-labels", "Omit axis labels"),
+    ANN_FLAG("u", "no-air", "Ignore air regions"),
+    ANN_FLAG("t", "tight", "Use evaluated geometry bounds"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_option annotate_update_options[] = {
+    ANN_FLAG("h", "help", "Print help"),
+    ANN_FLAG("", "view-only", "Reuse stored bounds"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_option annotate_visibility_options[] = {
+    ANN_FLAG("h", "help", "Print help"),
+    ANN_FLAG("", "all", "Select all top-level annotations"),
+    BU_CMD_OPTION_NULL
+};
+static const struct bu_cmd_option annotate_inspect_options[] = {
+    ANN_FLAG("h", "help", "Print help"), BU_CMD_OPTION_NULL
+};
+#undef ANN_KEYWORDS
+#undef ANN_DIMENSION_OPTIONS
+#undef ANN_COMMON_OPTIONS
+#undef ANN_VECTOR
+#undef ANN_VALUE
+#undef ANN_FLAG
+
+static const struct bu_cmd_operand annotate_text_operands[] = {
+    BU_CMD_OPERAND("name", BU_CMD_VALUE_STRING, 1, 1, "New annotation name", NULL),
+    BU_CMD_OPERAND("text", BU_CMD_VALUE_STRING, 1, 1, "Annotation text", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_operand annotate_dimension_operands[] = {
+    BU_CMD_OPERAND("name", BU_CMD_VALUE_STRING, 1, 1, "New annotation name", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_operand annotate_autodim_operands[] = {
+    BU_CMD_OPERAND("name", BU_CMD_VALUE_STRING, 1, 1, "New annotation group name", NULL),
+    BU_CMD_OPERAND("objects", BU_CMD_VALUE_DB_OBJECT, 0, BU_CMD_COUNT_UNLIMITED,
+        "Objects to measure", "ged.db_object"),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_operand annotate_names_operands[] = {
+    BU_CMD_OPERAND("names", BU_CMD_VALUE_DB_OBJECT, 1, BU_CMD_COUNT_UNLIMITED,
+        "Annotation names", "ged.db_object"),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_operand annotate_visibility_operands[] = {
+    BU_CMD_OPERAND("names_or_trees", BU_CMD_VALUE_DB_OBJECT, 0, BU_CMD_COUNT_UNLIMITED,
+        "Annotations or geometry trees", "ged.db_object"),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_operand annotate_list_operands[] = {
+    BU_CMD_OPERAND("patterns", BU_CMD_VALUE_STRING, 0, BU_CMD_COUNT_UNLIMITED,
+        "Name patterns", NULL),
+    BU_CMD_OPERAND_NULL
+};
+static const struct bu_cmd_operand annotate_info_operands[] = {
+    BU_CMD_OPERAND("name", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+        "Annotation name", "ged.db_object"),
+    BU_CMD_OPERAND_NULL
+};
+#define ANN_SCHEMA(identifier, command_name, description, options, operands) \
+    static const struct bu_cmd_schema identifier = \
+        BU_CMD_SCHEMA_EXTERNAL(command_name, description, options, operands, \
+            BU_CMD_PARSE_INTERSPERSED, NULL, NULL, NULL)
+ANN_SCHEMA(annotate_root_schema, "annotate", "Create and inspect annotations",
+    annotate_root_options, NULL);
+ANN_SCHEMA(annotate_text_schema, "text", "Create model-space text",
+    annotate_text_options, annotate_text_operands);
+ANN_SCHEMA(annotate_leader_schema, "leader", "Create a text callout with a leader",
+    annotate_leader_options, annotate_text_operands);
+ANN_SCHEMA(annotate_dimension_schema, "dimension", "Create a geometric dimension",
+    annotate_root_options, NULL);
+ANN_SCHEMA(annotate_linear_schema, "linear", "Measures the distance between --from and --to.",
+    annotate_dimension_options, annotate_dimension_operands);
+ANN_SCHEMA(annotate_angular_schema, "angular", "Measure an angle",
+    annotate_dimension_options, annotate_dimension_operands);
+ANN_SCHEMA(annotate_radius_schema, "radius", "Measure a radius",
+    annotate_dimension_options, annotate_dimension_operands);
+ANN_SCHEMA(annotate_diameter_schema, "diameter", "Measure a diameter",
+    annotate_dimension_options, annotate_dimension_operands);
+ANN_SCHEMA(annotate_ordinate_schema, "ordinate", "Measure a coordinate offset",
+    annotate_dimension_options, annotate_dimension_operands);
+ANN_SCHEMA(annotate_autodim_schema, "autodim", "Dimension selected bounds",
+    annotate_autodim_options, annotate_autodim_operands);
+ANN_SCHEMA(annotate_update_schema, "update", "Refresh existing annotations",
+    annotate_update_options, annotate_names_operands);
+ANN_SCHEMA(annotate_show_schema, "show", "Draw annotations",
+    annotate_visibility_options, annotate_visibility_operands);
+ANN_SCHEMA(annotate_hide_schema, "hide", "Erase annotations from view",
+    annotate_visibility_options, annotate_visibility_operands);
+ANN_SCHEMA(annotate_list_schema, "list", "List persistent annotations",
+    annotate_inspect_options, annotate_list_operands);
+ANN_SCHEMA(annotate_info_schema, "info", "Describe an annotation",
+    annotate_inspect_options, annotate_info_operands);
+#undef ANN_SCHEMA
+static const struct bu_cmd_tree_node annotate_dimension_nodes[] = {
+    BU_CMD_TREE_NODE(&annotate_linear_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&annotate_angular_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&annotate_radius_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&annotate_diameter_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&annotate_ordinate_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE_NULL
+};
+static const struct bu_cmd_tree_node annotate_nodes[] = {
+    BU_CMD_TREE_NODE(&annotate_text_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&annotate_leader_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&annotate_dimension_schema, NULL, annotate_dimension_nodes,
+        BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&annotate_autodim_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&annotate_update_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&annotate_show_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&annotate_hide_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&annotate_list_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE(&annotate_info_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_CMD_TREE_NODE_NULL
+};
+static const struct bu_cmd_tree annotate_tree =
+    BU_CMD_TREE(&annotate_root_schema, annotate_nodes, BU_CMD_TREE_CHILD_AFTER_OPTIONS);
+
+static int
+annotate_grammar_validate(struct ged *gedp, const char *input, size_t cursor,
+    struct ged_cmd_validate_result *result)
+{
+    return ged_cmd_tree_validate(gedp, &annotate_tree, input, cursor, result);
+}
+static int
+annotate_grammar_analyze(struct ged *gedp, const char *input,
+    struct ged_cmd_analysis *analysis)
+{
+    return ged_cmd_tree_analyze(gedp, &annotate_tree, input, analysis);
+}
+static char *
+annotate_grammar_json(void)
+{
+    return bu_cmd_tree_describe_json(&annotate_tree);
+}
+static int
+annotate_grammar_lint(struct bu_vls *msgs)
+{
+    return bu_cmd_tree_lint(&annotate_tree, msgs);
+}
+GED_CMD_TREE_HELP(annotate_grammar_help, annotate_tree)
+static void
+annotate_schema_help(struct ged *gedp, size_t argc, const char * const *path)
+{
+    char *help = argc ? bu_cmd_tree_help_path(&annotate_tree, "annotate", argc, path) :
+        bu_cmd_tree_help(&annotate_tree, "annotate");
+    if (help) {
+        bu_vls_strcat(gedp->ged_result_str, help);
+        bu_free(help, "annotate schema help");
+    }
+}
+static const struct ged_cmd_grammar annotate_grammar = {
+    "annotate", "Create and inspect annotations", annotate_grammar_validate,
+    annotate_grammar_analyze, annotate_grammar_json, annotate_grammar_lint, NULL,
+    annotate_grammar_help
+};
+
+#define GED_ANNOTATE_COMMANDS(X, XID) \
+    X(annotate, ged_annotate_core, GED_CMD_DEFAULT, &annotate_grammar)
+
+GED_DECLARE_COMMAND_SET_WITH_GRAMMAR(GED_ANNOTATE_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_GRAMMAR("libged_annotate", 1, GED_ANNOTATE_COMMANDS)
 
 /*
  * Local Variables:

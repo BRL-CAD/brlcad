@@ -144,7 +144,9 @@ const struct bu_cmd_arg_shape bu_cmd_optional_scalar_arg_shape = {
 
 /* Standard option macros intentionally leave arg_shape NULL.  In a Windows
  * DLL consumer, the address of exported data is not a valid C static
- * initializer (MSVC C2099); function pointers remain safe in that context. */
+ * initializer (MSVC C2099), and imported function addresses are not stable
+ * identifiers across DLL boundaries.  Use the explicit standard-shape tag;
+ * retain the function checks for older dynamically assembled schemas. */
 static const struct bu_cmd_arg_shape *
 cmd_schema_option_arg_shape(const struct bu_cmd_option *option)
 {
@@ -152,6 +154,16 @@ cmd_schema_option_arg_shape(const struct bu_cmd_option *option)
 	return NULL;
     if (option->arg_shape)
 	return option->arg_shape;
+    switch (option->standard_shape) {
+	case BU_CMD_ARG_SHAPE_RGB:
+	    return &bu_cmd_rgb_arg_shape;
+	case BU_CMD_ARG_SHAPE_COLOR:
+	    return &bu_cmd_color_arg_shape;
+	case BU_CMD_ARG_SHAPE_VECTOR3:
+	    return &bu_cmd_vector3_arg_shape;
+	default:
+	    break;
+    }
     if (option->consume == bu_cmd_rgb_consume)
 	return &bu_cmd_rgb_arg_shape;
     if (option->consume == bu_cmd_color_consume)
@@ -262,6 +274,14 @@ bu_cmd_color_from_argv(struct bu_color *color, size_t argc, const char * const *
     if (!color || !argv || !argc || !argv[0])
 	return 0;
     if (bu_color_from_str(&parsed, argv[0])) {
+	*color = parsed;
+	return 1;
+    }
+    /* Keep the integer RGB spellings accepted by bu_opt_color, including
+     * semicolon-separated channels, in the schema parser as well. */
+    unsigned char rgb[3];
+    if (bu_rgb_from_argv(rgb, 1, argv) == 1) {
+	(void)bu_color_from_rgb_chars(&parsed, rgb);
 	*color = parsed;
 	return 1;
     }
@@ -1041,12 +1061,15 @@ cmd_schema_set_value(const struct bu_cmd_option *option, void *data, const char 
 		(keyword ? keyword : arg) : arg;
 	    return 0;
 	case BU_CMD_VALUE_COLOR:
-	    if (!bu_color_from_str((struct bu_color *)storage, arg)) {
+	{
+	    const char *parts[] = {arg};
+	    if (bu_cmd_color_from_argv((struct bu_color *)storage, 1, parts) != 1) {
 		if (msg)
 		    bu_vls_printf(msg, "invalid color for --%s: %s\n", cmd_schema_option_name(option), arg);
 		return -1;
 	    }
 	    return 0;
+	}
 	case BU_CMD_VALUE_CUSTOM:
 	    if (!option->custom_parse)
 		return -1;
@@ -1451,7 +1474,8 @@ cmd_schema_value_valid(const struct bu_cmd_option *option, const char *arg)
 	case BU_CMD_VALUE_COLOR:
 	{
 	    struct bu_color color = BU_COLOR_INIT_ZERO;
-	    valid = bu_color_from_str(&color, arg);
+	    const char *parts[] = {arg};
+	    valid = bu_cmd_color_from_argv(&color, 1, parts) == 1;
 	    break;
 	}
 	case BU_CMD_VALUE_CUSTOM:

@@ -453,7 +453,8 @@ desc_1(const char *cgy, int test_num)
 		 * another value, as happens with per-filter argument slices. */
 		av[1] = "outside argc";
 		EXPECT_FAILURE("string", "missing argument");
-		if (!strstr(bu_vls_cstr(&parse_msgs), "Invalid argument supplied to -s: (missing)"))
+		if (!strstr(bu_vls_cstr(&parse_msgs), "missing required argument") ||
+		    !strstr(bu_vls_cstr(&parse_msgs), "invalid argument for option: -s"))
 		    val_ok = 0;
 		break;
 	    case 2:

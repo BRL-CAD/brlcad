@@ -548,9 +548,12 @@ static const struct bu_cmd_operand fp_optional_resolution_operands[] = {
 	"New positive resolution; omit to query", NULL),
     BU_CMD_OPERAND_NULL
 };
+static const struct bu_cmd_arg_shape fp_vector3_shape =
+    BU_CMD_ARG_SHAPE(BU_CMD_ARG_SHAPE_VECTOR3, 1, 3,
+	"packed or three-component XYZ point");
 static const struct bu_cmd_operand fp_optional_vector3_operands[] = {
     BU_CMD_OPERAND_SHAPED("point", BU_CMD_VALUE_VECTOR, 0, 3, NULL,
-	"New XYZ point; omit to query", NULL, &bu_cmd_vector3_arg_shape),
+	"New XYZ point; omit to query", NULL, &fp_vector3_shape),
     BU_CMD_OPERAND_NULL
 };
 static const struct bu_cmd_arg_variant fp_vector2_forms[] = {
@@ -567,9 +570,12 @@ static const struct bu_cmd_operand fp_optional_vector2_operands[] = {
 	"New two-dimensional value; omit to query", NULL, &fp_vector2_shape),
     BU_CMD_OPERAND_NULL
 };
+static const struct bu_cmd_arg_shape fp_color_shape =
+    BU_CMD_ARG_SHAPE(BU_CMD_ARG_SHAPE_COLOR, 1, 3,
+	"packed color or three RGB components");
 static const struct bu_cmd_operand fp_optional_color_operands[] = {
     BU_CMD_OPERAND_SHAPED("color", BU_CMD_VALUE_RAW, 0, 3, NULL,
-	"New color; omit to query", NULL, &bu_cmd_color_arg_shape),
+	"New color; omit to query", NULL, &fp_color_shape),
     BU_CMD_OPERAND_NULL
 };
 static const struct bu_cmd_arg_variant fp_overlay_forms[] = {

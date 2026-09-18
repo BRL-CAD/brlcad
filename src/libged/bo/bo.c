@@ -41,32 +41,23 @@ struct bo_args {
 
 static const char * const bo_major_types[] = {"u", NULL};
 static const char * const bo_minor_types[] = {
-    "f", "d", "c", "s", "i", "l", "C", "S", "I", "L", NULL
+    "f", "d", "c", "s", "i", "l", "C", "S", "I", "L",
+    "hf", "hd", "hc", "hs", "hi", "hl", "hC", "hS", "hI", "hL",
+    "nf", "nd", "nc", "ns", "ni", "nl", "nC", "nS", "nI", "nL",
+    NULL
 };
 
+static int bo_decode_input_type(unsigned int *input_type, const char *type_string);
+
 static int
-bo_minor_type(const char *minor, unsigned int *minor_type)
+bo_input_type_validate(struct bu_vls *msg, const char *value)
 {
     unsigned int type = 0;
-
-    if (!minor || minor[1] != '\0')
-	return -1;
-    switch (minor[0]) {
-	case 'f': type = DB5_MINORTYPE_BINU_FLOAT; break;
-	case 'd': type = DB5_MINORTYPE_BINU_DOUBLE; break;
-	case 'c': type = DB5_MINORTYPE_BINU_8BITINT; break;
-	case 's': type = DB5_MINORTYPE_BINU_16BITINT; break;
-	case 'i': type = DB5_MINORTYPE_BINU_32BITINT; break;
-	case 'l': type = DB5_MINORTYPE_BINU_64BITINT; break;
-	case 'C': type = DB5_MINORTYPE_BINU_8BITINT_U; break;
-	case 'S': type = DB5_MINORTYPE_BINU_16BITINT_U; break;
-	case 'I': type = DB5_MINORTYPE_BINU_32BITINT_U; break;
-	case 'L': type = DB5_MINORTYPE_BINU_64BITINT_U; break;
-	default: return -1;
-    }
-    if (minor_type)
-	*minor_type = type;
-    return 0;
+    if (value && bo_decode_input_type(&type, value) == 0)
+        return 0;
+    if (msg)
+        bu_vls_printf(msg, "unrecognized uniform binary type: %s\n", value ? value : "");
+    return -1;
 }
 
 static const struct bu_cmd_option bo_schema_options[] = {
@@ -77,8 +68,8 @@ static const struct bu_cmd_option bo_schema_options[] = {
 static const struct bu_cmd_operand bo_input_operands[] = {
     BU_CMD_OPERAND_KEYWORDS("major_type", BU_CMD_VALUE_KEYWORD, 1, 1,
 	"Uniform binary major type", NULL, bo_major_types),
-    BU_CMD_OPERAND_KEYWORDS("minor_type", BU_CMD_VALUE_KEYWORD, 1, 1,
-	"Uniform binary element type", NULL, bo_minor_types),
+    BU_CMD_OPERAND_KEYWORDS_VALIDATE("minor_type", BU_CMD_VALUE_KEYWORD, 1, 1,
+        bo_input_type_validate, "Uniform binary element type", NULL, bo_minor_types),
     BU_CMD_OPERAND("output_object", BU_CMD_VALUE_STRING, 1, 1,
 	"Destination object name", NULL),
     GED_CMD_OPERAND_FILE("input_file", 1, 1, "Source binary file"),
@@ -176,8 +167,8 @@ bo_decode_input_type(unsigned int *input_type, const char *type_string)
 int
 ged_bo_core(struct ged *gedp, int argc, const char *argv[])
 {
-    int c;
     unsigned int input_type = 0;
+    int operand_index;
     char *obj_name;
     char *file_name;
     struct bo_args args = {0, 0};
@@ -185,7 +176,6 @@ ged_bo_core(struct ged *gedp, int argc, const char *argv[])
     struct rt_db_internal intern;
     struct directory *dp;
     const char *argv0;
-    static const char *usage = "{-i u [h|n]type | -o} dest source";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -214,11 +204,10 @@ ged_bo_core(struct ged *gedp, int argc, const char *argv[])
 	ged_cmd_help_append(gedp->ged_result_str, argv0, argv0);
 	return BRLCAD_ERROR;
     }
-    argc -= operand_index + 1;
     argv += operand_index + 1;
 
 
-    if (input_mode) {
+    if (args.input_mode) {
 	if (BU_STR_EQUAL(argv[0], "u")) {
 	    if (bo_decode_input_type(&input_type, argv[1]) != 0) {
 		bu_vls_printf(gedp->ged_result_str, "Unrecognized minor type: %s", argv[1]);
@@ -230,12 +219,11 @@ ged_bo_core(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	/* skip past major_type and minor_type */
-	argc -= 2;
 	argv += 2;
 
 	obj_name = (char *)*argv;
 	GED_CHECK_EXISTS(gedp, obj_name, LOOKUP_QUIET, BRLCAD_ERROR);
-	file_name = (char *)argv[3];
+	file_name = (char *)argv[1];
 
 	/* make a binunif of the entire file */
 	struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);

@@ -1169,7 +1169,7 @@ bu_str_to_rgb(const char *str, unsigned char *rgb)
     struct bu_color color = BU_COLOR_INIT_ZERO;
 
     if (!bu_color_from_str(&color, str))
-	return 0;
+        return bu_rgb_parse_packed(rgb, str);
     if (!bu_color_to_rgb_chars(&color, rgb))
 	return 0;
 

@@ -170,6 +170,7 @@ brlcad_addlib(libbu "${LIBBU_SOURCES}" "${BU_INCLUDE_DIRS}" "${BU_LOCAL_INCLUDE_
   bu_init.cpp
   crashreport.c
   dylib.c
+  fort.c
   globals.c
   parallel.c
   progname.c

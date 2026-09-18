@@ -32,8 +32,6 @@
 #include "rt/functab.h"
 #include "rt/edit.h"
 
-struct bu_opt_desc;
-
 __BEGIN_DECLS
 
 void
@@ -79,11 +77,6 @@ edit_parse_sample_count(uint32_t *count, fastf_t value);
 int
 edit_file_has_samples(intmax_t file_size, const uint32_t *dims,
 		size_t count, size_t bytes_per_sample);
-
-/* Reject invalid repair options before a primitive can change geometry. */
-int
-edit_repair_parse_options(struct bu_vls *log_str, int argc,
-			  const char **argv, const struct bu_opt_desc *options);
 
 /* Split a writable LF/CRLF parameter buffer without losing its cursor. */
 char *
