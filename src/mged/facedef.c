@@ -87,6 +87,7 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     struct rt_arb_internal *arbo;
     plane_t planes[6];
     int status;
+    int arb_type;
     struct bu_vls error_msg;
 
     if (argc < 2) {
@@ -125,7 +126,7 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     RT_ARB_CK_MAGIC(arb);
 
     /* find new planes to account for any editing */
-    int arb_type = rt_arb_std_type(&MEDIT(s)->es_int, MEDIT(s)->tol);
+    arb_type = rt_arb_std_type(&MEDIT(s)->es_int, MEDIT(s)->tol);
     if (rt_arb_calc_planes(&error_msg, arb, arb_type, planes, &s->tol.tol)) {
 	Tcl_AppendResult(interp, bu_vls_addr(&error_msg),
 			 "Unable to determine plane equations\n", (char *)NULL);

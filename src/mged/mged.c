@@ -113,9 +113,6 @@ extern struct _mged_variables default_mged_variables;
 /* defined in color_scheme.c */
 extern struct _color_scheme default_color_scheme;
 
-/* defined in grid.c */
-extern struct bv_grid_state default_grid_state;
-
 /* defined in axes.c */
 extern struct _axes_state default_axes_state;
 

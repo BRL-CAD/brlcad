@@ -78,6 +78,10 @@
 #include "bv/defines.h"
 
 __BEGIN_DECLS
+extern struct bv_grid_state default_grid_state;
+__END_DECLS
+
+__BEGIN_DECLS
 #include "tcl.h"
 #ifdef HAVE_TK
 #  include "tk.h"
