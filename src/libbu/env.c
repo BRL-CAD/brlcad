@@ -150,7 +150,7 @@ int
 bu_setenv(const char *name, const char *value, int overwrite)
 {
     /* Sanity check setenv inputs */
-    if (!name || !value)
+    if (!name || !value || *name == '\0' || strchr(name, '=') != NULL)
 	return EINVAL;
     if (strlen(name) > BU_ENV_MAXLEN)
 	return ENOMEM;
@@ -642,21 +642,25 @@ bu_mem(int type, size_t *sz)
 static int
 editor_not_compatible(const char **elist, const char *candidate)
 {
-    if (!elist)
+    if (!elist || !candidate)
 	return 0;
 
     int i = 0;
-    const char *e_str = elist[i];
     char tstr[MAXPATHLEN];
-    struct bu_vls component=BU_VLS_INIT_ZERO;
-    while (e_str) {
+    struct bu_vls component = BU_VLS_INIT_ZERO;
+    while (elist[i]) {
+	const char *e_str = elist[i++];
 
-	if (BU_STR_EQUAL(e_str, candidate))
+	if (BU_STR_EQUAL(e_str, candidate)) {
+	    bu_vls_free(&component);
 	    return 1;
+	}
 
 	bu_dir(tstr, MAXPATHLEN, candidate, BU_DIR_EXT, NULL);
-	if (BU_STR_EQUAL(e_str, tstr))
+	if (BU_STR_EQUAL(e_str, tstr)) {
+	    bu_vls_free(&component);
 	    return 1;
+	}
 
 	bu_path_component(&component, candidate, BU_PATH_BASENAME_EXTLESS);
 	if (BU_STR_EQUAL(e_str, bu_vls_cstr(&component))) {
@@ -669,8 +673,6 @@ editor_not_compatible(const char **elist, const char *candidate)
 	    bu_vls_free(&component);
 	    return 1;
 	}
-
-	e_str = elist[i++];
     }
 
     bu_vls_free(&component);
@@ -681,6 +683,9 @@ editor_not_compatible(const char **elist, const char *candidate)
 static int
 editor_file_check(char *bu_editor, const char *estr, const char **elist)
 {
+    if (!bu_editor || !estr)
+	return 0;
+
     // First check if we have a mode issue
     if (editor_not_compatible(elist, estr))
 	return 0;
@@ -791,7 +796,7 @@ bu_editor(struct bu_ptbl *editor_opts, int etype, int check_for_cnt, const char 
 
     // If the app wants us to check some candidates it has specified, handle
     // them first before investigating our default set.
-    if (check_for_cnt && check_for_editors) {
+    if (check_for_cnt > 0 && check_for_editors) {
 	for (i = 0; i < check_for_cnt; i++) {
 	    if (!check_for_editors[i]) {
 		// If we reached a NULL entry in the list supplied by the

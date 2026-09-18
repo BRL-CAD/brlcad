@@ -31,6 +31,8 @@
 unsigned char *
 bu_pshort(register unsigned char *msgp, register uint16_t s)
 {
+    if (!msgp)
+	return NULL;
 
     msgp[1] = (unsigned char)s;
     msgp[0] = (unsigned char)(s >> 8);
@@ -40,10 +42,13 @@ bu_pshort(register unsigned char *msgp, register uint16_t s)
 uint16_t
 bu_gshort(const unsigned char *msgp)
 {
+    if (!msgp)
+	return 0;
+
     register const unsigned char *p = msgp;
     register uint16_t u;
 
-    u = *p++ << 8;
+    u = (uint16_t)(*p++ << 8);
     return (uint16_t)(u | *p);
 }
 
@@ -51,6 +56,8 @@ bu_gshort(const unsigned char *msgp)
 unsigned char *
 bu_plong(register unsigned char *msgp, register uint32_t l)
 {
+    if (!msgp)
+	return NULL;
 
     msgp[3] = (unsigned char)l;
     msgp[2] = (unsigned char)(l >>= 8);
@@ -62,6 +69,9 @@ bu_plong(register unsigned char *msgp, register uint32_t l)
 uint32_t
 bu_glong(const unsigned char *msgp)
 {
+    if (!msgp)
+	return 0;
+
     register const unsigned char *p = msgp;
     register uint32_t u;
 
@@ -75,6 +85,8 @@ bu_glong(const unsigned char *msgp)
 unsigned char *
 bu_plonglong(register unsigned char *msgp, register uint64_t l)
 {
+    if (!msgp)
+	return NULL;
 
     msgp[7] = (unsigned char)l;
     msgp[6] = (unsigned char)(l >>= 8);

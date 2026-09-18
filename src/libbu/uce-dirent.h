@@ -348,6 +348,10 @@ opendir(
 {
   DIR *dirp;
   assert (dirname != NULL);
+  if (dirname == NULL) {
+    errno = ENOENT;
+    return NULL;
+  }
 
   dirp = (DIR*)malloc (sizeof (struct DIR));
   if (dirp != NULL) {
@@ -576,6 +580,10 @@ rewinddir (DIR *dirp)
     return;
   }
   assert (dirp->dirname != NULL);
+  if (dirp->dirname == NULL) {
+    errno = EBADF;
+    return;
+  }
 
   /* close previous stream */
 #if defined(DIRENT_WIN32_INTERFACE)
@@ -605,6 +613,10 @@ _initdir (DIR *dirp)
 {
   assert (dirp != NULL);
   assert (dirp->dirname != NULL);
+  if (dirp == NULL || dirp->dirname == NULL) {
+    errno = EBADF;
+    return 0;
+  }
   dirp->dirent_filled = 0;
 
 # if defined(DIRENT_WIN32_INTERFACE)

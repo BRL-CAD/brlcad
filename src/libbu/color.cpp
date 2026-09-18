@@ -496,6 +496,9 @@ bu_color_rand(struct bu_color *c, bu_color_rand_t type)
 void
 bu_rgb_to_hsv(const unsigned char *rgb, fastf_t *hsv)
 {
+    if (UNLIKELY(!rgb || !hsv))
+	return;
+
     fastf_t red, grn, blu;
     fastf_t *hue = &hsv[HUE];
     fastf_t *sat = &hsv[SAT];
@@ -557,6 +560,9 @@ bu_rgb_to_hsv(const unsigned char *rgb, fastf_t *hsv)
 int
 bu_hsv_to_rgb(const fastf_t *hsv, unsigned char *rgb)
 {
+    if (UNLIKELY(!hsv || !rgb))
+	return -1;
+
     fastf_t float_rgb[3] = { 0.0, 0.0, 0.0 };
 
     if (_bu_hsv_to_float_rgb((fastf_t *)float_rgb, hsv) < 0) {
@@ -639,7 +645,9 @@ bu_color_from_rgb_floats(struct bu_color *cp, const fastf_t *rgb)
     if (UNLIKELY(!cp || !rgb)) {
 	return 0;
     }
-    if (rgb[RED] > 1.0 || rgb[GRN] > 1.0 || rgb[BLU] > 1.0)
+    if (rgb[RED] < 0.0 || rgb[GRN] < 0.0 || rgb[BLU] < 0.0
+	|| rgb[RED] > 1.0 || rgb[GRN] > 1.0 || rgb[BLU] > 1.0
+	|| !std::isfinite(rgb[RED]) || !std::isfinite(rgb[GRN]) || !std::isfinite(rgb[BLU]))
 	return 0;
 
     VMOVE(cp->buc_rgb, rgb);
@@ -1041,6 +1049,9 @@ bu_color_from_str(struct bu_color *color, const char *str)
 {
     struct bu_color parsed = BU_COLOR_INIT_ZERO;
 
+    if (UNLIKELY(!color || !str))
+	return 0;
+
     if (!bu_color_parse(str, &parsed))
 	return 0;
 
@@ -1055,6 +1066,9 @@ int
 bu_str_to_rgb(const char *str, unsigned char *rgb)
 {
     struct bu_color color = BU_COLOR_INIT_ZERO;
+
+    if (UNLIKELY(!str || !rgb))
+	return 0;
 
     if (!bu_color_from_str(&color, str))
 	return 0;

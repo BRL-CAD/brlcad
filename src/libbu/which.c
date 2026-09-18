@@ -93,12 +93,23 @@ which_path(const char *cmd, const char *path, char *result)
 		bu_log("WARNING: PATH dir is too long (%zu > %zu), skipping.\n"
 		       "         dir = [%s]\n", dirlen, (size_t)MAXPATHLEN-2, directory);
 	    }
+	    if (position) {
+		directory = position + 1;
+	    } else {
+		directory = NULL;
+	    }
 	    continue;
 	}
 
 	if (bu_file_exists(test_result, NULL)) {
-	    if (test_result[0] == '\0')
+	    if (test_result[0] == '\0') {
+		if (position) {
+		    directory = position + 1;
+		} else {
+		    directory = NULL;
+		}
 		continue;
+	    }
 	    bu_free(initial_path, "bu_strdup(path)");
 	    bu_strlcpy(result, test_result, MAXPATHLEN);
 	    return result;
@@ -111,6 +122,7 @@ which_path(const char *cmd, const char *path, char *result)
 	}
     } while (directory);
 
+    bu_free(initial_path, "bu_strdup(path)");
     return NULL;
 }
 

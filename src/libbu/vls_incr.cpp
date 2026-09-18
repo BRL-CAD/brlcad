@@ -134,7 +134,7 @@ bu_vls_incr(struct bu_vls *name, const char *regex_str, const char *incr_spec, b
 
 	    /* Find incrementer. */
 	    std::smatch ivar;
-	    if (!std::regex_search(sline, ivar, cregex)) {
+	    if (!std::regex_search(sline, ivar, cregex) || ivar.size() <= 1) {
 		/* No incrementer string according to the regex - add as a suffix */
 		bu_vls_sprintf(&num_str, "0");
 		prefix = sline;
@@ -146,8 +146,11 @@ bu_vls_incr(struct bu_vls *name, const char *regex_str, const char *incr_spec, b
 		suffix = sline.substr(ivar.position(1)+ivar.length(1), std::string::npos);
 		std::regex nregex("([0-9]+)", std::regex_constants::extended);
 		std::smatch nvar;
-		std::regex_search(incr_str_pre, nvar, nregex);
-		bu_vls_sprintf(&num_str, "%s", nvar.str(1).c_str());
+		if (std::regex_search(incr_str_pre, nvar, nregex) && nvar.size() > 1) {
+		    bu_vls_sprintf(&num_str, "%s", nvar.str(1).c_str());
+		} else {
+		    bu_vls_sprintf(&num_str, "0");
+		}
 	    }
 
 	    /* Either used the supplied incrementing specification or initialize with the default */
@@ -180,8 +183,8 @@ bu_vls_incr(struct bu_vls *name, const char *regex_str, const char *incr_spec, b
 	    bu_vls_trunc(&new_name, 0);
 	}
 
-    } catch (const std::regex_error& e) {
-	bu_log("bu_vls_incr regex error: %s\n", e.what());
+    } catch (const std::exception& e) {
+	bu_log("bu_vls_incr error: %s\n", e.what());
 	ret = -1;
     }
 

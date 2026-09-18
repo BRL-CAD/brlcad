@@ -133,106 +133,44 @@ bu_cv_cookie(const char *in)			/* input format */
 static void
 bu_cv_fmt_cookie(char *buf, size_t buflen, int cookie)
 {
-    register char *cp = buf;
-    size_t len;
+    char tmp[64];
+    const char *type_str = "?";
+    char conv_char = 'X';
 
-    if (UNLIKELY(buflen == 0)) {
+    if (UNLIKELY(!buf || buflen == 0)) {
 	fprintf(stderr, "bu_cv_pr_cookie:  call me with a bigger buffer\n");
 	return;
     }
-    buflen--;
+
     if (UNLIKELY(cookie == 0)) {
-	bu_strlcpy(cp, "bogus!", buflen);
+	bu_strlcpy(buf, "bogus!", buflen);
 	return;
     }
 
-    snprintf(cp, buflen, "%d", cookie & CV_CHANNEL_MASK);
-    len = strlen(cp);
-    cp += len;
-    if (UNLIKELY(buflen < len))
-    {
-	fprintf(stderr, "bu_cv_pr_cookie:  call me with a bigger buffer\n");
-	return;
-    }
-    buflen -= len;
-
-    if (UNLIKELY(buflen == 0)) {
-	fprintf(stderr, "bu_cv_pr_cookie:  call me with a bigger buffer\n");
-	return;
-    }
-    if (cookie & CV_HOST_MASK) {
-	*cp++ = 'h';
-	buflen--;
-    } else {
-	*cp++ = 'n';
-	buflen--;
-    }
-
-    if (UNLIKELY(buflen == 0)) {
-	fprintf(stderr, "bu_cv_pr_cookie:  call me with a bigger buffer\n");
-	return;
-    }
-    if (cookie & CV_SIGNED_MASK) {
-	*cp++ = 's';
-	buflen--;
-    } else {
-	*cp++ = 'u';
-	buflen--;
-    }
-
-    if (UNLIKELY(buflen == 0)) {
-	fprintf(stderr, "bu_cv_pr_cookie:  call me with a bigger buffer\n");
-	return;
-    }
     switch (cookie & CV_TYPE_MASK) {
-	case CV_8:
-	    *cp++ = '8';
-	    buflen--;
-	    break;
-	case CV_16:
-	    bu_strlcpy(cp, "16", buflen);
-	    cp += 2;
-	    buflen -= 2;
-	    break;
-	case CV_32:
-	    bu_strlcpy(cp, "32", buflen);
-	    cp += 2;
-	    buflen -= 2;
-	    break;
-	case CV_64:
-	    bu_strlcpy(cp, "64", buflen);
-	    cp += 2;
-	    buflen -= 2;
-	    break;
-	case CV_D:
-	    *cp++ = 'd';
-	    buflen -= 1;
-	    break;
-	default:
-	    *cp++ = '?';
-	    buflen -= 1;
-	    break;
+	case CV_8:  type_str = "8"; break;
+	case CV_16: type_str = "16"; break;
+	case CV_32: type_str = "32"; break;
+	case CV_64: type_str = "64"; break;
+	case CV_D:  type_str = "d"; break;
+	default:    type_str = "?"; break;
     }
 
-    if (UNLIKELY(buflen == 0)) {
-	fprintf(stderr, "bu_cv_pr_cookie:  call me with a bigger buffer\n");
-	return;
-    }
     switch (cookie & CV_CONVERT_MASK) {
-	case CV_CLIP:
-	    *cp++ = 'C';
-	    break;
-	case CV_NORMAL:
-	    *cp++ = 'N';
-	    break;
-	case CV_LIT:
-	    *cp++ = 'L';
-	    break;
-	default:
-	    *cp++ = 'X';
-	    break;
+	case CV_CLIP:   conv_char = 'C'; break;
+	case CV_NORMAL: conv_char = 'N'; break;
+	case CV_LIT:    conv_char = 'L'; break;
+	default:        conv_char = 'X'; break;
     }
-    *cp = '\0';
+
+    snprintf(tmp, sizeof(tmp), "%d%c%c%s%c",
+	     cookie & CV_CHANNEL_MASK,
+	     (cookie & CV_HOST_MASK) ? 'h' : 'n',
+	     (cookie & CV_SIGNED_MASK) ? 's' : 'u',
+	     type_str,
+	     conv_char);
+
+    bu_strlcpy(buf, tmp, buflen);
 }
 
 
@@ -482,6 +420,9 @@ bu_cv_ntohss(register short int *out, size_t size, register void *in, size_t cou
     size_t limit;
     register size_t i;
 
+    if (UNLIKELY(!out || !in || !size || !count))
+	return 0;
+
     limit = size / sizeof(signed short);
     if (limit < count)
 	count = limit;
@@ -503,6 +444,9 @@ bu_cv_ntohus(register short unsigned int *out, size_t size, register void *in, s
     size_t limit;
     register size_t i;
 
+    if (UNLIKELY(!out || !in || !size || !count))
+	return 0;
+
     limit = size / sizeof(unsigned short);
     if (limit < count)
 	count = limit;
@@ -521,6 +465,9 @@ bu_cv_ntohsl(register long int *out, size_t size, register void *in, size_t coun
 {
     size_t limit;
     register size_t i;
+
+    if (UNLIKELY(!out || !in || !size || !count))
+	return 0;
 
     limit = size / sizeof(signed long int);
     if (limit < count)
@@ -548,6 +495,9 @@ bu_cv_ntohul(register long unsigned int *out, size_t size, register void *in, si
     size_t limit;
     register size_t i;
 
+    if (UNLIKELY(!out || !in || !size || !count))
+	return 0;
+
     limit = size / sizeof(unsigned long int);
     if (limit < count)
 	count = limit;
@@ -572,6 +522,9 @@ bu_cv_htonss(void *out, size_t size, register short int *in, size_t count)
     register unsigned char *cp = (unsigned char *)out;
     register int val;
 
+    if (UNLIKELY(!out || !in || !size || !count))
+	return 0;
+
     limit = size / 2;
     if (count > limit)  count = limit;
 
@@ -590,6 +543,9 @@ bu_cv_htonus(void *out, size_t size, register short unsigned int *in, size_t cou
     register size_t i;
     register unsigned char *cp = (unsigned char *)out;
     register int val;
+
+    if (UNLIKELY(!out || !in || !size || !count))
+	return 0;
 
     limit = size / 2;
     if (count > limit)
@@ -610,6 +566,9 @@ bu_cv_htonsl(void *out, size_t size, register long int *in, size_t count)
     register size_t i;
     register unsigned char *cp = (unsigned char *)out;
     register long val;
+
+    if (UNLIKELY(!out || !in || !size || !count))
+	return 0;
 
     limit = size / 4;
     if (count > limit)
@@ -633,6 +592,9 @@ bu_cv_htonul(void *out, size_t size, register long unsigned int *in, size_t coun
     register unsigned char *cp = (unsigned char *)out;
     register long val;
 
+    if (UNLIKELY(!out || !in || !size || !count))
+	return 0;
+
     limit = size / 4;
     if (count > limit)
 	count = limit;
@@ -653,6 +615,9 @@ bu_cv_w_cookie(void *out, int outcookie, size_t size, void *in, int incookie, si
     size_t work_count = BU_PAGE_SIZE;
     size_t number_done = 0;
     int inIsHost, outIsHost, infmt, outfmt;
+
+    if (UNLIKELY(!out || !in || !size || !count))
+	return 0;
     size_t insize, outsize;
     size_t bufsize;
     void *t1;

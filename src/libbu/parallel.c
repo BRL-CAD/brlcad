@@ -433,8 +433,10 @@ parallel_mapping(parallel_action_t action, int id, size_t max)
 	    break;
 
 	case PARALLEL_PUT:
-	    mapping[id].started = mapping[id].finished = mapping[id].lim = mapping[id].parent = 0;
-	    mapping[id].id = 0;
+	    if (id >= 0 && id < MAX_PSW*MAX_PSW) {
+		mapping[id].started = mapping[id].finished = mapping[id].lim = mapping[id].parent = 0;
+		mapping[id].id = 0;
+	    }
 	    break;
     }
 

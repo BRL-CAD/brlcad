@@ -66,6 +66,7 @@ bu_crashreport_app(const char *filename, const char *argv0)
     }
 
     /* do our own expansion to avoid heap allocation */
+    const char *timestr = ctime(&now);
     snprintf(buffer, CR_BUFSIZE, "******************************************\n\n"
 	     "%s\n"		/* version info */
 	     "Command: %s\n"	/* program name */
@@ -76,12 +77,16 @@ bu_crashreport_app(const char *filename, const char *argv0)
 	     bu_getprogname(),
 	     bu_pid(),
 	     path ? path : "Unknown",
-	     ctime(&now));
+	     timestr ? timestr : "Unknown\n");
 
     fp = fopen(filename, "ab");
     if (UNLIKELY(!fp || ferror(fp))) {
 	perror("unable to open crash report file");
 	bu_log("ERROR: Unable to open crash report file [%s]\n", filename);
+	if (fp) {
+	    (void)fclose(fp);
+	    fp = NULL;
+	}
 	return 0;
     }
 

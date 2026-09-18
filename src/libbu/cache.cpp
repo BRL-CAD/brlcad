@@ -187,7 +187,7 @@ bu_context_fail:
 int
 bu_cache_close(struct bu_cache *c)
 {
-    if (!c)
+    if (!c || !c->i)
 	return BRLCAD_OK;
 
     {
@@ -205,7 +205,7 @@ bu_cache_close(struct bu_cache *c)
     mdb_env_close(c->i->env);
     bu_vls_free(c->i->fname);
     BU_PUT(c->i->fname, struct bu_vls);
-    BU_PUT(c->i, struct bu_cache_impl);
+    delete c->i;
     BU_PUT(c, struct bu_cache);
 
     return BRLCAD_OK;
@@ -226,7 +226,7 @@ static
 MDB_txn *
 cache_get_read_txn(struct bu_cache *c, struct bu_cache_txn **t)
 {
-    if (UNLIKELY(!c))
+    if (UNLIKELY(!c || !c->i))
 	return NULL;
 
     MDB_txn *txn = (t && *t) ? (*t)->txn : NULL;
@@ -275,7 +275,10 @@ cache_get_read_txn(struct bu_cache *c, struct bu_cache_txn **t)
 size_t
 bu_cache_get(void **data, const char *key, struct bu_cache *c, struct bu_cache_txn **t)
 {
-    if (!c || !key || !strlen(key))
+    if (data)
+	(*data) = NULL;
+
+    if (!c || !c->i || !key || !strlen(key))
 	return 0;
 
     int mkeysize = (mdb_env_get_maxkeysize(c->i->env) < BU_CACHE_KEY_MAXLEN) ? mdb_env_get_maxkeysize(c->i->env) : BU_CACHE_KEY_MAXLEN;
@@ -336,7 +339,8 @@ bu_cache_get_done(struct bu_cache_txn **t)
 	return;
 
     struct bu_cache_txn *ctxn = *t;
-    mdb_txn_abort(ctxn->txn);
+    if (ctxn->txn)
+	mdb_txn_abort(ctxn->txn);
     ctxn->cache = NULL;
     BU_PUT(ctxn, struct bu_cache_txn);
     *t = NULL;
@@ -346,7 +350,7 @@ static
 MDB_txn *
 cache_get_write_txn(struct bu_cache *c, struct bu_cache_txn **t)
 {
-    if (UNLIKELY(!c))
+    if (UNLIKELY(!c || !c->i))
 	return NULL;
 
     // We can't have multiple write txns per cache - lock to prevent
@@ -473,7 +477,7 @@ bu_cache_write(void *data, size_t dsize, const char *key, struct bu_cache *c, st
 int
 bu_cache_write_commit(struct bu_cache *c, struct bu_cache_txn **t)
 {
-    if (!c || !t || !(*t) || !(*t)->txn)
+    if (!c || !c->i || !t || !(*t) || !(*t)->txn || !(*t)->cache || !(*t)->cache->i)
 	return BRLCAD_ERROR;
 
     struct bu_cache_txn *ctxn = *t;
@@ -495,8 +499,13 @@ bu_cache_write_commit(struct bu_cache *c, struct bu_cache_txn **t)
 void
 bu_cache_write_abort(struct bu_cache_txn **t)
 {
-    if (!t || !(*t) || !(*t)->txn)
+    if (!t || !(*t) || !(*t)->txn || !(*t)->cache || !(*t)->cache->i) {
+	if (t && *t) {
+	    BU_PUT(*t, struct bu_cache_txn);
+	    *t = NULL;
+	}
 	return;
+    }
 
     struct bu_cache_txn *ctxn = *t;
     {
@@ -514,7 +523,7 @@ bu_cache_write_abort(struct bu_cache_txn **t)
 void
 bu_cache_clear(const char *key, struct bu_cache *c, struct bu_cache_txn **t)
 {
-    if (!key || !c)
+    if (!key || !c || !c->i)
 	return;
 
     int mkeysize = (mdb_env_get_maxkeysize(c->i->env) < BU_CACHE_KEY_MAXLEN) ? mdb_env_get_maxkeysize(c->i->env) : BU_CACHE_KEY_MAXLEN;
@@ -552,7 +561,10 @@ bu_cache_clear(const char *key, struct bu_cache *c, struct bu_cache_txn **t)
 int
 bu_cache_keys(char ***keysv, struct bu_cache *c)
 {
-    if (!c || !keysv)
+    if (keysv)
+	*keysv = NULL;
+
+    if (!c || !c->i || !keysv)
 	return 0;
 
     struct bu_vls keystr = BU_VLS_INIT_ZERO;
@@ -561,6 +573,9 @@ bu_cache_keys(char ***keysv, struct bu_cache *c)
     MDB_cursor *cursor;
 
     MDB_txn *txn = cache_get_read_txn(c, NULL);
+    if (!txn)
+	return 0;
+
     int rc = mdb_cursor_open(txn, c->i->dbi, &cursor);
     if (rc) {
 	mdb_txn_abort(txn);
@@ -573,15 +588,23 @@ bu_cache_keys(char ***keysv, struct bu_cache *c)
 	return 0;
     }
 
-    bu_vls_strncpy(&keystr, (const char *)mdb_key.mv_data, mdb_key.mv_size-1);
-    keys.insert(std::string(bu_vls_cstr(&keystr)));
-
-    while (!mdb_cursor_get(cursor, &mdb_key, &mdb_data, MDB_NEXT)) {
-	bu_vls_strncpy(&keystr, (const char *)mdb_key.mv_data, mdb_key.mv_size-1);
+    if (mdb_key.mv_size > 1) {
+	bu_vls_strncpy(&keystr, (const char *)mdb_key.mv_data, mdb_key.mv_size - 1);
 	keys.insert(std::string(bu_vls_cstr(&keystr)));
     }
+
+    while (!mdb_cursor_get(cursor, &mdb_key, &mdb_data, MDB_NEXT)) {
+	if (mdb_key.mv_size > 1) {
+	    bu_vls_strncpy(&keystr, (const char *)mdb_key.mv_data, mdb_key.mv_size - 1);
+	    keys.insert(std::string(bu_vls_cstr(&keystr)));
+	}
+    }
+    bu_vls_free(&keystr);
     mdb_cursor_close(cursor);
     mdb_txn_abort(txn);
+
+    if (keys.empty())
+	return 0;
 
     char **kv = (char **)bu_calloc(keys.size(), sizeof(const char *), "keys array");
     std::set<std::string>::iterator s_it;

@@ -137,6 +137,11 @@ bu_whereis(const char *cmd)
 		bu_log("WARNING: PATH dir is too long (%zu > %zu), skipping.\n"
 		       "         dir = [%s]\n", dirlen, (size_t)MAXPATHLEN-2, directory);
 	    }
+	    if (position) {
+		directory = position + 1;
+	    } else {
+		directory = NULL;
+	    }
 	    continue;
 	}
 

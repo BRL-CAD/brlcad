@@ -95,6 +95,10 @@ int _bu_getExecutablePath(char* out, int capacity, int* dirname_length)
     const char *pname = _bu_progname_raw();
     struct bu_vls epath = BU_VLS_INIT_ZERO;
 
+    if (!pname) {
+	return -1;
+    }
+
     if (pname[0] == '.') {
         char iwd[MAXPATHLEN];
         char fullpath[MAXPATHLEN];
@@ -115,19 +119,20 @@ int _bu_getExecutablePath(char* out, int capacity, int* dirname_length)
     }
 
     int length = bu_vls_strlen(&epath);
-    if (length <= capacity) {
-
-	memcpy(out, bu_vls_cstr(&epath), length);
-
-	if (dirname_length) {
-	    int i;
-	    for (i = length - 1; i >= 0; --i) {
-		if (out[i] == '/') {
-		    *dirname_length = i;
-		    break;
-		}
+    if (dirname_length) {
+	int i;
+	const char *str = bu_vls_cstr(&epath);
+	*dirname_length = -1;
+	for (i = length - 1; i >= 0; --i) {
+	    if (str[i] == '/' || str[i] == '\\') {
+		*dirname_length = i;
+		break;
 	    }
 	}
+    }
+
+    if (out && length <= capacity && length > 0) {
+	memcpy(out, bu_vls_cstr(&epath), length);
     }
 
     bu_vls_free(&epath);

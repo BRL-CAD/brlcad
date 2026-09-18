@@ -205,7 +205,7 @@ opt_describe_internal_ascii(const struct bu_opt_desc *ds, struct bu_opt_desc_opt
 			    if (!opt_is_filtered(d, filtered_argc, filtered_argv, accept)) {
 				if (d->shortopt && strlen(d->shortopt) > 0) {
 				    struct bu_vls tmp_arg = BU_VLS_INIT_ZERO;
-				    size_t new_len = strlen(d->arg_helpstr);
+				    size_t new_len = d->arg_helpstr ? strlen(d->arg_helpstr) : 0;
 				    if (!new_len) {
 					bu_vls_sprintf(&tmp_arg, "-%s", d->shortopt);
 					new_len = 2;
@@ -223,7 +223,7 @@ opt_describe_internal_ascii(const struct bu_opt_desc *ds, struct bu_opt_desc_opt
 				}
 				/* While we're at it, pick up the string.  The last string with
 				 * a matching key wins, as long as its not empty */
-				if (strlen(d->help_string) > 0) {
+				if (d->help_string && strlen(d->help_string) > 0) {
 				    bu_vls_sprintf(&help_str, "%s", d->help_string);
 				}
 			    }
@@ -241,7 +241,7 @@ opt_describe_internal_ascii(const struct bu_opt_desc *ds, struct bu_opt_desc_opt
 			    if (!opt_is_filtered(d, filtered_argc, filtered_argv, accept)) {
 				if (d->longopt && strlen(d->longopt) > 0) {
 				    struct bu_vls tmp_arg = BU_VLS_INIT_ZERO;
-				    size_t new_len = strlen(d->arg_helpstr);
+				    size_t new_len = d->arg_helpstr ? strlen(d->arg_helpstr) : 0;
 				    if (!new_len) {
 					bu_vls_sprintf(&tmp_arg, "--%s", d->longopt);
 					new_len = strlen(d->longopt) + 2;
@@ -459,7 +459,7 @@ opt_describe_internal_docbook(const struct bu_opt_desc *ds, struct bu_opt_desc_o
 	    /* If we're showing all the opts and we've got both a short and a long, make
 	     * a group */
 	    if (show_all_longopts && !need_group) {
-		if (curr->shortopt && strlen(d->shortopt) > 0 && curr->longopt && strlen(d->longopt) > 0) {
+		if (curr->shortopt && strlen(curr->shortopt) > 0 && curr->longopt && strlen(curr->longopt) > 0) {
 		    need_group = 1;
 		}
 	    }
@@ -576,9 +576,9 @@ opt_process(struct bu_ptbl *opts, const char **eq_arg, const char *opt_candidate
     char *optcpy;
     const char *equal_pos;
 
-    if (!eq_arg && !opt_candidate)
+    if (!opt_candidate || opt_candidate[0] == '\0')
 	return 0;
-    if (opt_candidate[1] == '-')
+    if (opt_candidate[0] == '-' && opt_candidate[1] == '-')
 	offset++;
     equal_pos = strchr(opt_candidate, '=');
 
@@ -638,9 +638,8 @@ opt_process(struct bu_ptbl *opts, const char **eq_arg, const char *opt_candidate
 		if (equal_pos)
 		    varg++;
 
-		BU_ASSERT(eq_arg != NULL);
-
-		(*eq_arg) = varg;
+		if (eq_arg)
+		    (*eq_arg) = varg;
 		opt = bu_strdup(bu_vls_addr(&vopt));
 		bu_ptbl_ins(opts, (long *)opt);
 		bu_vls_free(&vopt);
@@ -658,7 +657,8 @@ opt_process(struct bu_ptbl *opts, const char **eq_arg, const char *opt_candidate
 	    if (equal_pos)
 		varg++;
 
-	    (*eq_arg) = varg;
+	    if (eq_arg)
+		(*eq_arg) = varg;
 	    opt = bu_strdup(bu_vls_addr(&vopt));
 	    bu_ptbl_ins(opts, (long *)opt);
 	    bu_vls_free(&vopt);
@@ -1213,27 +1213,27 @@ int
 bu_opt_color(struct bu_vls *msg, size_t argc, const char **argv, void *set_c)
 {
     struct bu_color *set_color = (struct bu_color *)set_c;
-    unsigned int rgb[3];
+    unsigned char rgb[3] = {0, 0, 0};
 
     BU_OPT_CHECK_ARGV0(msg, argc, argv, "bu_opt_color");
 
     /* First, see if the first string converts to rgb */
-    if (!bu_str_to_rgb((char *)argv[0], (unsigned char *)&rgb)) {
+    if (!bu_str_to_rgb(argv[0], rgb)) {
 	/* nope - maybe we have 3 args? */
 	if (argc >= 3) {
 	    struct bu_vls tmp_color = BU_VLS_INIT_ZERO;
 	    bu_vls_sprintf(&tmp_color, "%s/%s/%s", argv[0], argv[1], argv[2]);
-	    if (!bu_str_to_rgb(bu_vls_addr(&tmp_color), (unsigned char *)&rgb)) {
+	    if (!bu_str_to_rgb(bu_vls_addr(&tmp_color), rgb)) {
 		/* Not valid with 3 */
 		bu_vls_free(&tmp_color);
 		if (msg)
-		    bu_vls_sprintf(msg, "No valid color found.\n");
+			bu_vls_sprintf(msg, "No valid color found.\n");
 		return -1;
 	    } else {
 		/* 3 did the job */
 		bu_vls_free(&tmp_color);
 		if (set_color)
-		    (void)bu_color_from_rgb_chars(set_color, (unsigned char *)&rgb);
+		    (void)bu_color_from_rgb_chars(set_color, rgb);
 		return 3;
 	    }
 	} else {
@@ -1248,7 +1248,7 @@ bu_opt_color(struct bu_vls *msg, size_t argc, const char **argv, void *set_c)
     } else {
 	/* yep, 1 did the job */
 	if (set_color)
-	    (void)bu_color_from_rgb_chars(set_color, (unsigned char *)&rgb);
+	    (void)bu_color_from_rgb_chars(set_color, rgb);
 	return 1;
     }
 

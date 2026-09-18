@@ -360,7 +360,7 @@ bu_process_args(const char **cmd, const char * const **argv, struct bu_process *
 int
 bu_process_read_n(struct bu_process *pinfo, bu_process_io_t d, int n, char *buff)
 {
-    if (!pinfo || !buff || !n)
+    if (!pinfo || !buff || n <= 0)
 	return -1;
 
     int read_fd = -1;
@@ -382,15 +382,23 @@ bu_process_read_n(struct bu_process *pinfo, bu_process_io_t d, int n, char *buff
 int
 bu_process_read(char *buff, int *count, struct bu_process *pinfo, bu_process_io_t d, int n)
 {
+    if (n <= 0) {
+	if (count)
+	    *count = 0;
+	return -1;
+    }
+
     int read_ret = bu_process_read_n(pinfo, d, n, buff);
 
     /* sanity clamping */
-    if (read_ret < 0) {
-	(*count) = 0;
-    } else if (read_ret > n) {
-	(*count) = n;
-    } else {
-	(*count) = read_ret;
+    if (count) {
+	if (read_ret < 0) {
+	    (*count) = 0;
+	} else if (read_ret > n) {
+	    (*count) = n;
+	} else {
+	    (*count) = read_ret;
+	}
     }
 
     // maintain consistent behavior with old read which returned 1 on success and -1 on error
@@ -694,16 +702,19 @@ bu_process_exec(struct bu_process **p, const char *cmd, int argc, const char **a
     if (!p || !cmd)
 	return;
 
+    if (argc < 0)
+	argc = 0;
+
     // make sure cmd starts the argv, and argv is null terminated
     const char **av = NULL;
     av = (const char **)bu_calloc(argc+2, sizeof(char *), "argv array");
-    if (!argc || !BU_STR_EQUAL(cmd, argv[0])) {
+    if (!argc || !argv || !argv[0] || !BU_STR_EQUAL(cmd, argv[0])) {
 	/* By convention the first argument to execvp should match the
 	 * cmd string - if it doesn't we can handle it in av, but it
 	 * means the actual exec av array will be longer by one. */
 	av[0] = cmd;
 	for (int i = 1; i <= argc; i++) {
-	    av[i] = argv[i-1];
+	    av[i] = argv ? argv[i-1] : NULL;
 	}
 	av[argc+1] = (char *)NULL;
     } else {
@@ -719,6 +730,7 @@ bu_process_exec(struct bu_process **p, const char *cmd, int argc, const char **a
     if (hide_window) opts |= BU_PROCESS_HIDE_WINDOW;
 
     bu_process_create(p, av, (bu_process_opts)opts);
+    bu_free((void *)av, "argv array");
 }
 
 
@@ -1207,12 +1219,22 @@ int
 bu_interactive(void)
 {
     int interactive = 1;
+    int sfd = fileno(stdin);
 
     fd_set read_set;
     fd_set exception_set;
     int result;
 
     struct timeval timeout;
+
+    if (sfd < 0) {
+	return 0;
+    }
+#ifdef FD_SETSIZE
+    if (sfd >= FD_SETSIZE) {
+	return isatty(sfd);
+    }
+#endif
 
     /* wait 1/10sec for input, in case we're piped */
     timeout.tv_sec = 0;
@@ -1223,20 +1245,20 @@ bu_interactive(void)
      * a controlling terminal (isatty).
      */
     FD_ZERO(&read_set);
-    FD_SET(fileno(stdin), &read_set);
-    result = select(fileno(stdin)+1, &read_set, NULL, NULL, &timeout);
+    FD_SET(sfd, &read_set);
+    result = select(sfd+1, &read_set, NULL, NULL, &timeout);
     if (bu_debug > 0) {
-	fprintf(stdout, "DEBUG: select result: %d, stdin read: %ld\n", result, (long int)FD_ISSET(fileno(stdin), &read_set));
+	fprintf(stdout, "DEBUG: select result: %d, stdin read: %ld\n", result, (long int)FD_ISSET(sfd, &read_set));
 	if (result < 0) {
 	    fprintf(stdout, "DEBUG: select error: %s\n", strerror(errno));
 	}
     }
 
     if (result <= 0) {
-	if (!isatty(fileno(stdin))) {
+	if (!isatty(sfd)) {
 	    interactive = 0;
 	}
-    } else if (result > 0 && FD_ISSET(fileno(stdin), &read_set)) {
+    } else if (result > 0 && FD_ISSET(sfd, &read_set)) {
 	/* stdin pending, probably not interactive */
 	interactive = 0;
 
@@ -1244,16 +1266,16 @@ bu_interactive(void)
 	 * the case if mged -c is started via desktop GUI.
 	 */
 	FD_ZERO(&exception_set);
-	FD_SET(fileno(stdin), &exception_set);
-	result = select(fileno(stdin)+1, NULL, NULL, &exception_set, &timeout);
+	FD_SET(sfd, &exception_set);
+	result = select(sfd+1, NULL, NULL, &exception_set, &timeout);
 	if (bu_debug > 0)
-	    fprintf(stdout, "DEBUG: select result: %d, stdin exception: %ld\n", result, (long int)FD_ISSET(fileno(stdin), &exception_set));
+	    fprintf(stdout, "DEBUG: select result: %d, stdin exception: %ld\n", result, (long int)FD_ISSET(sfd, &exception_set));
 
 	/* see if there's valid input waiting (more reliable than select) */
-	if (result > 0 && FD_ISSET(fileno(stdin), &exception_set)) {
+	if (result > 0 && FD_ISSET(sfd, &exception_set)) {
 #ifdef HAVE_POLL_H
 	    struct pollfd pfd;
-	    pfd.fd = fileno(stdin);
+	    pfd.fd = sfd;
 	    pfd.events = POLLIN;
 	    pfd.revents = 0;
 
@@ -1266,7 +1288,7 @@ bu_interactive(void)
 	    }
 #else
 	    /* just in case we get input too quickly, see if it's coming from a tty */
-	    if (isatty(fileno(stdin))) {
+	    if (isatty(sfd)) {
 		interactive = 1;
 	    }
 #endif /* HAVE_POLL_H */
