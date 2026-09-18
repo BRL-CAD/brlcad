@@ -66,7 +66,11 @@ EXTERNCPP const struct bu_structparse rt_cline_parse[] = {
  * Calculate bounding RPP for cline
  */
 C_DECL int
-rt_cline_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
+rt_cline_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *tol) {
+    int nu_bbox = _rt_nonuniform_bbox(ip, min, max, tol);
+    if (nu_bbox)
+	return (nu_bbox > 0) ? 0 : -1;
+
     struct rt_cline_internal *cline_ip;
     vect_t rad, work;
     point_t top;
@@ -89,6 +93,26 @@ rt_cline_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struc
     VSUB2(work, top, rad);
     VMINMAX((*min), (*max), work);
     return 0;
+}
+
+
+C_DECL void
+rt_cline_volume(fastf_t *volume, const struct rt_db_internal *ip)
+{
+    if (_rt_nonuniform_volume(volume, ip))
+	return;
+
+    rt_crofton_volume_implicit(volume, ip);
+}
+
+
+C_DECL void
+rt_cline_surf_area(fastf_t *area, const struct rt_db_internal *ip)
+{
+    if (_rt_nonuniform_surf_area(area, ip))
+	return;
+
+    rt_crofton_surf_area_implicit(area, ip);
 }
 
 /**
@@ -132,9 +156,13 @@ rt_cline_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	max_tr = 0.0;
     tmp = MAGNITUDE(cline_ip->h) * 0.5;
     stp->st_aradius = sqrt(tmp*tmp + cline_ip->radius*cline_ip->radius);
-    stp->st_bradius = stp->st_aradius + max_tr;
+    stp->st_bradius = stp->st_aradius;
 
     if (rt_cline_bbox(ip, &(stp->st_min), &(stp->st_max), &rtip->rti_tol)) return 1;
+
+    int ret = _rt_nonuniform_prep_finalize(stp, ip, &rtip->rti_tol);
+    if (ret)
+	return ret;
 
     /* expand the bounding box to include the additional beam radius */
     if (max_tr > 0.0) {
@@ -142,9 +170,10 @@ rt_cline_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	VSETALL(extra, max_tr);
 	VSUB2(stp->st_min, stp->st_min, extra);
 	VADD2(stp->st_max, stp->st_max, extra);
+	stp->st_bradius += max_tr;
     }
 
-    return 0;
+    return _rt_nonuniform_prep_finalize(stp, ip, &rtip->rti_tol);
 }
 
 
@@ -176,6 +205,9 @@ rt_cline_print(register const struct soltab *stp)
 C_DECL int
 rt_cline_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
+    if (stp && stp->st_nu_inv_matp)
+	return _rt_nonuniform_shot(stp, rp, ap, seghead);
+
     register struct cline_specific *cline =
 	(struct cline_specific *)stp->st_specific;
     register struct seg *segp;
@@ -446,6 +478,11 @@ rt_cline_vshot(struct soltab *stp[], struct xray *rp[], struct seg *segp, int n,
 C_DECL void
 rt_cline_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
+    if (stp && stp->st_nu_inv_matp) {
+	(void)_rt_nonuniform_norm(hitp, stp, rp);
+	return;
+    }
+
     vect_t tmp;
     fastf_t dot;
 
@@ -486,6 +523,12 @@ rt_cline_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 C_DECL void
 rt_cline_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
+    if (stp && stp->st_nu_inv_matp) {
+	if (cvp)
+	    *cvp = (struct curvature)RT_CURVATURE_INIT_ZERO;
+	return;
+    }
+
     if (stp) RT_CK_SOLTAB(stp);
     if (hitp) RT_CK_HIT(hitp);
 
@@ -504,6 +547,11 @@ rt_cline_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 C_DECL void
 rt_cline_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
+    if (stp && stp->st_nu_inv_matp) {
+	(void)_rt_nonuniform_uv(ap, stp, hitp, uvp);
+	return;
+    }
+
     if (ap) RT_CK_APPLICATION(ap);
     if (stp) RT_CK_SOLTAB(stp);
     if (hitp) RT_CK_HIT(hitp);
@@ -530,6 +578,7 @@ rt_cline_free(register struct soltab *stp)
 C_DECL int
 rt_cline_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
+    struct rt_nonuniform_vlist_state nonuniform_state;
     struct rt_cline_internal *cline_ip;
     fastf_t top[16*3];
     fastf_t bottom[16*3];
@@ -541,6 +590,7 @@ rt_cline_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    _rt_nonuniform_vlist_state_init(&nonuniform_state, vhead);
     struct bu_list *vlfree = &rt_vlfree;
     cline_ip = (struct rt_cline_internal *)ip->idb_ptr;
     RT_CLINE_CK_MAGIC(cline_ip);
@@ -604,7 +654,7 @@ rt_cline_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_
 
     }
 
-    return 0;
+    return _rt_nonuniform_plot_finalize(vhead, &nonuniform_state, ip);
 }
 
 
@@ -887,7 +937,7 @@ rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
     nmg_region_a(*r, tol);
     bu_ptbl_free(&faces);
 
-    return 0;
+    return _rt_nonuniform_tess_finalize(*r, ip, tol);
 }
 
 
@@ -954,6 +1004,8 @@ rt_cline_export4(struct bu_external *ep, const struct rt_db_internal *ip, double
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_CLINE) return -1;
+    if (_rt_nonuniform_export4_check("rt_cline_export4", ip) < 0)
+	return -1;
     cline_ip = (struct rt_cline_internal *)ip->idb_ptr;
     RT_CLINE_CK_MAGIC(cline_ip);
 
@@ -990,14 +1042,33 @@ rt_cline_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_int
     struct rt_cline_internal *top = (struct rt_cline_internal *)rop->idb_ptr;
     RT_CLINE_CK_MAGIC(top);
 
+    mat_t effective_mat;
+    int remove_nonuniform = 0;
+    {
+	int nonuniform = _rt_nonuniform_transform_resolve(effective_mat, &remove_nonuniform, ip, mat);
+	if (nonuniform < 0)
+	    return BRLCAD_ERROR;
+	if (nonuniform) {
+	    *top = *tip;
+	    if (_rt_nonuniform_attr_copy(rop, ip) < 0)
+		return BRLCAD_ERROR;
+	    return (_rt_nonuniform_attr_compose(rop, mat) < 0) ? BRLCAD_ERROR : BRLCAD_OK;
+	}
+    }
+
+    if (_rt_nonuniform_attr_copy(rop, ip) < 0)
+	return BRLCAD_ERROR;
+    if (remove_nonuniform && _rt_nonuniform_attr_remove(rop) < 0)
+	return BRLCAD_ERROR;
+
     vect_t cv, ch;
     VMOVE(cv, tip->v);
     VMOVE(ch, tip->h);
 
-    MAT4X3PNT(top->v, mat, cv);
-    MAT4X3VEC(top->h, mat, ch);
-    top->thickness = tip->thickness / mat[15];
-    top->radius = tip->radius / mat[15];
+    MAT4X3PNT(top->v, effective_mat, cv);
+    MAT4X3VEC(top->h, effective_mat, ch);
+    top->thickness = tip->thickness / effective_mat[15];
+    top->radius = tip->radius / effective_mat[15];
 
     return BRLCAD_OK;
 }

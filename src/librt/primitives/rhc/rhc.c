@@ -239,8 +239,11 @@ EXTERNCPP const struct bu_structparse rt_rhc_parse[] = {
  * Calculate the bounding RPP for an RHC
  */
 C_DECL int
-rt_rhc_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol))
+rt_rhc_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *tol)
 {
+    int nu_bbox = _rt_nonuniform_bbox(ip, min, max, tol);
+    if (nu_bbox)
+	return (nu_bbox > 0) ? 0 : -1;
 
     struct rt_rhc_internal *xip;
     vect_t rinv, rvect, rv2, working;
@@ -379,7 +382,7 @@ rt_rhc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	return 1;
     }
 
-    return 0;			/* OK */
+    return _rt_nonuniform_prep_finalize(stp, ip, &rtip->rti_tol);
 }
 
 
@@ -416,6 +419,9 @@ rt_rhc_print(const struct soltab *stp)
 C_DECL int
 rt_rhc_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
+    if (stp && stp->st_nu_inv_matp)
+	return _rt_nonuniform_shot(stp, rp, ap, seghead);
+
     struct rhc_specific *rhc =
 	(struct rhc_specific *)stp->st_specific;
     vect_t dprime;		/* D' */
@@ -792,6 +798,11 @@ rt_rhc_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 C_DECL void
 rt_rhc_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
+    if (stp && stp->st_nu_inv_matp) {
+	(void)_rt_nonuniform_norm(hitp, stp, rp);
+	return;
+    }
+
     fastf_t c;
     vect_t can_normal;	/* normal to canonical rhc */
     struct rhc_specific *rhc =
@@ -835,6 +846,11 @@ rt_rhc_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 C_DECL void
 rt_rhc_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
+    if (stp && stp->st_nu_inv_matp) {
+	(void)_rt_nonuniform_curve(cvp, hitp, stp);
+	return;
+    }
+
     fastf_t b, c, rsq, y;
     fastf_t zp1_sq, zp2;	/* 1st deriv sqr, 2nd deriv */
     struct rhc_specific *rhc =
@@ -876,6 +892,11 @@ rt_rhc_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 C_DECL void
 rt_rhc_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
+    if (stp && stp->st_nu_inv_matp) {
+	(void)_rt_nonuniform_uv(ap, stp, hitp, uvp);
+	return;
+    }
+
     struct rhc_specific *rhc = (struct rhc_specific *)stp->st_specific;
 
     vect_t work;
@@ -1144,6 +1165,7 @@ rhc_curve_points(
 C_DECL int
 rt_rhc_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *tol, const struct bview *v, fastf_t s_size)
 {
+    struct rt_nonuniform_vlist_state nonuniform_state;
     point_t p;
     vect_t rhc_R;
     int num_curve_points, num_connections;
@@ -1152,6 +1174,7 @@ rt_rhc_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    _rt_nonuniform_vlist_state_init(&nonuniform_state, vhead);
 
     struct bu_list *vlfree = &rt_vlfree;
     rhc = (struct rt_rhc_internal *)ip->idb_ptr;
@@ -1206,13 +1229,14 @@ rt_rhc_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
     VJOIN1(p, p, 2.0, rhc_R);
     BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_DRAW);
 
-    return 0;
+    return _rt_nonuniform_plot_finalize(vhead, &nonuniform_state, ip);
 }
 
 
 C_DECL int
 rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
+    struct rt_nonuniform_vlist_state nonuniform_state;
     int i, n;
     fastf_t b, c, *back, *front, rh;
     fastf_t dtol, ntol, min_abs;
@@ -1224,6 +1248,7 @@ rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    _rt_nonuniform_vlist_state_init(&nonuniform_state, vhead);
 
     struct bu_list *vlfree = &rt_vlfree;
     xip = (struct rt_rhc_internal *)ip->idb_ptr;
@@ -1328,7 +1353,7 @@ rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     bu_free((char *)front, "fastf_t");
     bu_free((char *)back, "fastf_t");
 
-    return 0;
+    return _rt_nonuniform_plot_finalize(vhead, &nonuniform_state, ip);
 }
 
 
@@ -1781,7 +1806,7 @@ fail:
     bu_free((char *)norms, "rt_rhc_tess: norms");
     bu_free((char *)outfaceuses, "faceuse *");
 
-    return failure;
+    return failure ? failure : _rt_nonuniform_tess_finalize(*r, ip, tol);
 }
 
 
@@ -1876,6 +1901,8 @@ rt_rhc_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     if (ip->idb_type != ID_RHC) {
 	return -1;
     }
+    if (_rt_nonuniform_export4_check("rt_rhc_export4", ip) < 0)
+	return -1;
 
     xip = (struct rt_rhc_internal *)ip->idb_ptr;
     if (!rhc_is_valid(xip)) {
@@ -1911,21 +1938,40 @@ rt_rhc_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
     struct rt_rhc_internal *top = (struct rt_rhc_internal *)rop->idb_ptr;
     RT_RHC_CK_MAGIC(top);
 
+    mat_t effective_mat;
+    int remove_nonuniform = 0;
+    {
+	int nonuniform = _rt_nonuniform_transform_resolve(effective_mat, &remove_nonuniform, ip, mat);
+	if (nonuniform < 0)
+	    return BRLCAD_ERROR;
+	if (nonuniform) {
+	    *top = *tip;
+	    if (_rt_nonuniform_attr_copy(rop, ip) < 0)
+		return BRLCAD_ERROR;
+	    return (_rt_nonuniform_attr_compose(rop, mat) < 0) ? BRLCAD_ERROR : BRLCAD_OK;
+	}
+    }
+
+    if (_rt_nonuniform_attr_copy(rop, ip) < 0)
+	return BRLCAD_ERROR;
+    if (remove_nonuniform && _rt_nonuniform_attr_remove(rop) < 0)
+	return BRLCAD_ERROR;
+
     vect_t rV, rH, rB;
     VMOVE(rV, tip->rhc_V);
     VMOVE(rH, tip->rhc_H);
     VMOVE(rB, tip->rhc_B);
-    double rhc_r = tip->rhc_r / mat[15];
-    double rhc_c = tip->rhc_c / mat[15];
+    double rhc_r = tip->rhc_r / effective_mat[15];
+    double rhc_c = tip->rhc_c / effective_mat[15];
  
     if (rhc_r <= SMALL_FASTF || rhc_c <= SMALL_FASTF) {
 	bu_log("rt_rhc_mat: r or c are zero\n");
 	return BRLCAD_ERROR;
     }
 
-    MAT4X3PNT(top->rhc_V, mat, rV);
-    MAT4X3VEC(top->rhc_H, mat, rH);
-    MAT4X3VEC(top->rhc_B, mat, rB);
+    MAT4X3PNT(top->rhc_V, effective_mat, rV);
+    MAT4X3VEC(top->rhc_H, effective_mat, rH);
+    MAT4X3VEC(top->rhc_B, effective_mat, rB);
     top->rhc_r = rhc_r;
     top->rhc_c = rhc_c;
 
@@ -2166,6 +2212,9 @@ rhc_is_valid(struct rt_rhc_internal *rhc)
 C_DECL void
 rt_rhc_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
+    if (_rt_nonuniform_surf_area(area, ip))
+	return;
+
     struct rt_rhc_internal *rip;
     fastf_t A, arclen, integralArea, a, b, magB, sqrt_ra, height;
 
@@ -2228,6 +2277,9 @@ rt_rhc_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 C_DECL void
 rt_rhc_volume(fastf_t *volume, const struct rt_db_internal *ip)
 {
+    if (_rt_nonuniform_volume(volume, ip))
+	return;
+
     struct rt_rhc_internal *rip;
     fastf_t A, integralArea, a, b, magB, sqrt_ra, height;
     if (volume == NULL || ip == NULL) {
@@ -2256,6 +2308,9 @@ rt_rhc_volume(fastf_t *volume, const struct rt_db_internal *ip)
 C_DECL void
 rt_rhc_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
+    if (_rt_nonuniform_centroid(cent, ip))
+	return;
+
     if (cent != NULL && ip != NULL) {
 	struct rt_rhc_internal *rip;
 	fastf_t totalArea, guessArea, a, b, magB, sqrt_xa, sqrt_ga, xf, epsilon, high, low, scale_factor;

@@ -1050,7 +1050,8 @@ sketch_centroid_with_precision(point_t *cent,
 	    }
 	}
     }
-    VSCALE(*cent, *cent, 1.0 / (fastf_t)n);
+    if (n > 0)
+	VSCALE(*cent, *cent, 1.0 / (fastf_t)n);
     return n;
 }
 
@@ -1083,7 +1084,7 @@ rt_sketch_centroid(point_t *cent, const struct rt_db_internal *ip)
     int i = 1;
     RT_SKETCH_CK_MAGIC(sketch_ip);
 
-    VSETALL(*cent, 0.0);
+    VSETALL(*cent, -1.0);
     VSETALL(current_cents[0], 0.0);
     VSETALL(current_cents[1], 0.0);
 
@@ -1094,6 +1095,8 @@ rt_sketch_centroid(point_t *cent, const struct rt_db_internal *ip)
 
     while (!NEAR_ZERO(MAGNITUDE(difference), TOLERANCE)) {
 	n[i] = sketch_centroid_with_precision(&current_cents[i], sketch_ip, precision, n[i], bounds);
+	if (n[i] == 0)
+	    return;
 	precision *= M_SQRT2;
 	VSUB2(difference, current_cents[i], current_cents[!i]);
 	i = !i;

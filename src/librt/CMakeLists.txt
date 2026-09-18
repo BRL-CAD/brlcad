@@ -145,6 +145,7 @@ set(
   mater.c
   memalloc.c
   mkbundle.c
+  nonuniform.c
   op.c
   pr.c
   prep.cpp

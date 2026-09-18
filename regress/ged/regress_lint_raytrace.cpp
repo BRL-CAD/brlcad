@@ -56,6 +56,11 @@
  *      Facetize may legitimately return an empty solid BoT for an empty CSG
  *      result.  lint --raytrace should treat this as a valid zero-metric
  *      reference instead of reporting facetize failure.
+ *
+ * TC6  Surface-mode BoT metric failure propagation.
+ *      Surface BoTs have a valid area but no solid volume.  Analyze and lint
+ *      must report that failed analytic calculation, and lint must block the
+ *      parent combination from validation.
  */
 
 #include "common.h"
@@ -185,7 +190,8 @@ make_tmp_g(const char *tag)
  *  non-NULL.  Returns ged_exec return value.                           */
 static int
 run_lint_raytrace(const char *gfile, const char *json_out_path,
-		  const char *extra_tol_arg, int argc_objs, const char **objs)
+		  const char *extra_tol_arg, int argc_objs, const char **objs,
+		  std::string *result = NULL)
 {
     struct ged *gedp = ged_open("db", gfile, 1);
     if (!gedp) {
@@ -209,6 +215,8 @@ run_lint_raytrace(const char *gfile, const char *json_out_path,
 	av.push_back(objs[i]);
 
     int ret = ged_exec(gedp, (int)av.size(), av.data());
+    if (result)
+	*result = bu_vls_cstr(gedp->ged_result_str);
     ged_close(gedp);
     return ret;
 }
@@ -584,6 +592,105 @@ tc5_empty_comb_valid(void)
 }
 
 /* ------------------------------------------------------------------ */
+/* TC6 - analytic callback errors reach command-level results          */
+/* ------------------------------------------------------------------ */
+static int
+tc6_metric_error_propagation(void)
+{
+    bu_log("TC6: surface BoT metric failures propagate to GED commands\n");
+
+    std::string gfile = make_tmp_g("tc6");
+    if (gfile.empty()) {
+	bu_log("TC6: FAIL - could not create temp .g file\n");
+	return 1;
+    }
+
+    {
+	struct rt_wdb *wdbp = wdb_fopen(gfile.c_str());
+	if (!wdbp) {
+	    bu_file_delete(gfile.c_str());
+	    bu_log("TC6: FAIL - wdb_fopen failed\n");
+	    return 1;
+	}
+	fastf_t vertices[] = {
+	    0.0, 0.0, 0.0,
+	    10.0, 0.0, 0.0,
+	    0.0, 10.0, 0.0
+	};
+	int faces[] = {0, 1, 2};
+	if (mk_bot(wdbp, "tc6_surface_bot.s", RT_BOT_SURFACE, RT_BOT_CCW, 0,
+		3, 1, vertices, faces, NULL, NULL) != 0) {
+	    db_close(wdbp->dbip);
+	    bu_file_delete(gfile.c_str());
+	    bu_log("TC6: FAIL - mk_bot failed\n");
+	    return 1;
+	}
+	struct wmember head;
+	BU_LIST_INIT(&head.l);
+	mk_addmember("tc6_surface_bot.s", &head.l, NULL, WMOP_UNION);
+	if (mk_lcomb(wdbp, "tc6_comb.c", &head, 0, NULL, NULL, NULL, 0) != 0) {
+	    db_close(wdbp->dbip);
+	    bu_file_delete(gfile.c_str());
+	    bu_log("TC6: FAIL - mk_lcomb failed\n");
+	    return 1;
+	}
+	db_close(wdbp->dbip);
+    }
+
+    int failures = 0;
+    {
+	struct ged *gedp = ged_open("db", gfile.c_str(), 1);
+	if (!gedp) {
+	    bu_file_delete(gfile.c_str());
+	    bu_log("TC6: FAIL - ged_open failed\n");
+	    return 1;
+	}
+	const char *av[] = {"analyze", "summarize", "tc6_surface_bot.s"};
+	int ret = ged_exec(gedp, 3, av);
+	const char *result = bu_vls_cstr(gedp->ged_result_str);
+	if (ret != BRLCAD_ERROR || !strstr(result, "COULD NOT DETERMINE")) {
+	    bu_log("TC6: FAIL - analyze ret=%d result=%s\n", ret, result);
+	    failures++;
+	}
+	ged_close(gedp);
+    }
+
+    char json_path[MAXPATHLEN] = {0};
+    FILE *jfp = bu_temp_file(json_path, MAXPATHLEN);
+    if (!jfp) {
+	bu_file_delete(gfile.c_str());
+	bu_log("TC6: FAIL - could not create temporary JSON output\n");
+	return 1;
+    }
+    fclose(jfp);
+
+    const char *obj = "tc6_comb.c";
+    std::string lint_output;
+    int lint_ret = run_lint_raytrace(gfile.c_str(), json_path,
+	NULL, 1, &obj, &lint_output);
+    std::string jtext = read_file(json_path);
+    int analytic_failed = json_has_pair_in_same_object(
+	jtext.c_str(), "problem_type", "raytrace_analytic_failed",
+	"object_name", "tc6_surface_bot.s");
+    int parent_skipped = json_has_pair_in_same_object(
+	jtext.c_str(), "problem_type", "raytrace_skip",
+	"object_name", obj);
+    int failure_reported = lint_output.find("Analytic metric failures:") != std::string::npos &&
+	lint_output.find("tc6_surface_bot.s") != std::string::npos;
+    if (lint_ret != BRLCAD_ERROR || !analytic_failed || !parent_skipped || !failure_reported) {
+	bu_log("TC6: FAIL - lint ret=%d analytic_failed=%d parent_skipped=%d failure_reported=%d JSON=%.600s\n",
+	       lint_ret, analytic_failed, parent_skipped, failure_reported, jtext.c_str());
+	failures++;
+    }
+
+    bu_file_delete(json_path);
+    bu_file_delete(gfile.c_str());
+    if (!failures)
+	bu_log("TC6: PASS - command and lint failures propagated\n");
+    return failures;
+}
+
+/* ------------------------------------------------------------------ */
 /* main                                                                 */
 /* ------------------------------------------------------------------ */
 int
@@ -602,6 +709,7 @@ main(int argc, char *argv[])
     if (tc_select < 0 || tc_select == 3) failures += tc3_halfspace();
     if (tc_select < 0 || tc_select == 4) failures += tc4_child_blocks_parent();
     if (tc_select < 0 || tc_select == 5) failures += tc5_empty_comb_valid();
+    if (tc_select < 0 || tc_select == 6) failures += tc6_metric_error_propagation();
 
     bu_log("\nRegress-lint-raytrace: %s (%d failure(s))\n",
 	   failures == 0 ? "PASS" : "FAIL", failures);

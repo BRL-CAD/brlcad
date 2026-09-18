@@ -391,6 +391,7 @@ rt_prep_parallel(struct rt_i *rtip, int ncpu)
     }
     /* Malloc the storage and zero the counts */
     for (i=0; i <= ID_MAX_SOLID; i++) {
+	rtip->i->rti_has_nonuniform_by_type[i] = 0;
 	if (rtip->i->rti_nsol_by_type[i] <= 0)
 	    continue;
 	rtip->i->rti_sol_by_type[i] = (struct soltab **)bu_calloc(rtip->i->rti_nsol_by_type[i], sizeof(struct soltab *), "rti_sol_by_type[]");
@@ -401,6 +402,8 @@ rt_prep_parallel(struct rt_i *rtip, int ncpu)
 	int id;
 	id = stp->st_id;
 	rtip->i->rti_sol_by_type[id][rtip->i->rti_nsol_by_type[id]++] = stp;
+	if (stp->st_nu_inv_matp)
+	    rtip->i->rti_has_nonuniform_by_type[id] = 1;
     } RT_VISIT_ALL_SOLTABS_END;
     if (RT_G_DEBUG & (RT_DEBUG_DB|RT_DEBUG_SOLIDS)) {
 	bu_log("rt_prep_parallel(%s, %d) printing number of primitives by type\n",
@@ -1198,6 +1201,7 @@ rt_clean(struct rt_i *rtip)
 
     /* Free array of solid table pointers indexed by solid ID */
     for (i=0; i <= ID_MAX_SOLID; i++) {
+	rtip->i->rti_has_nonuniform_by_type[i] = 0;
 	if (rtip->i->rti_nsol_by_type[i] <= 0)
 	    continue;
 	if (rtip->i->rti_sol_by_type[i]) {
@@ -1929,6 +1933,7 @@ rt_reprep(struct rt_i *rtip, struct rt_reprep_obj_list *objs)
 	    bu_free(rtip->i->rti_sol_by_type[id], "rti_sol_by_type");
 	rtip->i->rti_sol_by_type[id] = NULL;
 	rtip->i->rti_nsol_by_type[id] = 0;
+	rtip->i->rti_has_nonuniform_by_type[id] = 0;
     }
     RT_VISIT_ALL_SOLTABS_START(stp, rtip) {
 	rtip->i->rti_nsol_by_type[stp->st_id]++;
@@ -1946,6 +1951,8 @@ rt_reprep(struct rt_i *rtip, struct rt_reprep_obj_list *objs)
     RT_VISIT_ALL_SOLTABS_START(stp, rtip) {
 	int id = stp->st_id;
 	rtip->i->rti_sol_by_type[id][rtip->i->rti_nsol_by_type[id]++] = stp;
+	if (stp->st_nu_inv_matp)
+	    rtip->i->rti_has_nonuniform_by_type[id] = 1;
     } RT_VISIT_ALL_SOLTABS_END;
 
     for (i=0; i<BU_PTBL_LEN(&rtip->i->rti_new_solids); i++) {

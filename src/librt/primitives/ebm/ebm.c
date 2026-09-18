@@ -205,6 +205,7 @@ rt_ebm_centroid(point_t *cent, const struct rt_db_internal *ip)
     RT_CK_DB_INTERNAL(ip);
     eip = (struct rt_ebm_internal *)ip->idb_ptr;
     RT_EBM_CK_MAGIC(eip);
+    VSETALL(*cent, -1.0);
 
     bu_log("WARNING: EBM centroids have not been verified\n");
 
@@ -220,6 +221,8 @@ rt_ebm_centroid(point_t *cent, const struct rt_db_internal *ip)
 	    }
 	}
     }
+    if (totalcells == 0)
+	return;
     avgx = (fastf_t)xsum / totalcells + 0.5;
     avgy = (fastf_t)ysum / totalcells + 0.5;
     avgz = eip->tallness / 2;

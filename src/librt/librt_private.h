@@ -65,6 +65,8 @@
 
 __BEGIN_DECLS
 
+#define RT_MATRIX_NONUNIFORM_ATTR "matrix:nonuniform"
+
 struct db_i_internal {
     uint32_t dbi_magic;
 
@@ -109,6 +111,46 @@ struct db_i_internal {
 struct db_i_internal * db_i_internal_create(void);
 void db_i_internal_destroy(struct db_i_internal *i);
 
+int _rt_nonuniform_mat_validate(const mat_t mat);
+int _rt_nonuniform_attr_get(mat_t mat, const struct rt_db_internal *ip);
+int _rt_nonuniform_attr_set(struct rt_db_internal *ip, const mat_t mat);
+int _rt_nonuniform_attr_remove(struct rt_db_internal *ip);
+int _rt_nonuniform_attr_compose(struct rt_db_internal *ip, const mat_t mat);
+int _rt_nonuniform_attr_copy(struct rt_db_internal *op, const struct rt_db_internal *ip);
+int _rt_nonuniform_export4_check(const char *func, const struct rt_db_internal *ip);
+int _rt_nonuniform_transform_needed(const struct rt_db_internal *ip, const mat_t mat);
+int _rt_nonuniform_transform_resolve(mat_t effective, int *remove_attr, const struct rt_db_internal *ip, const mat_t mat);
+fastf_t _rt_nonuniform_volume_scale(const mat_t mat);
+int _rt_nonuniform_body_bbox(const struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *tol);
+/* Attribute adapters return zero when the primitive should continue with its
+ * body-space implementation, positive when handled, and negative on failure.
+ * Metric failures leave the functab's -1 output sentinel in place. */
+int _rt_nonuniform_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *tol);
+int _rt_nonuniform_volume(fastf_t *volume, const struct rt_db_internal *ip);
+int _rt_nonuniform_surf_area(fastf_t *area, const struct rt_db_internal *ip);
+int _rt_nonuniform_centroid(point_t *cent, const struct rt_db_internal *ip);
+int _rt_nonuniform_prep_finalize(struct soltab *stp, const struct rt_db_internal *ip, const struct bn_tol *tol);
+int _rt_nonuniform_tess_finalize(struct nmgregion *r, const struct rt_db_internal *ip, const struct bn_tol *tol);
+
+struct rt_nonuniform_vlist_state {
+    struct bv_vlist *last;
+    size_t nused;
+};
+
+void _rt_nonuniform_vlist_state_init(struct rt_nonuniform_vlist_state *state, struct bu_list *vhead);
+int _rt_nonuniform_plot_finalize(struct bu_list *vhead, const struct rt_nonuniform_vlist_state *state, const struct rt_db_internal *ip);
+int _rt_nonuniform_soltab_setup(struct soltab *stp, const mat_t mat, const struct bn_tol *tol);
+void _rt_nonuniform_soltab_free(struct soltab *stp);
+int _rt_nonuniform_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead);
+int _rt_nonuniform_norm(struct hit *hitp, struct soltab *stp, struct xray *rp);
+int _rt_nonuniform_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp);
+int _rt_nonuniform_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp);
+void _rt_nonuniform_transform_bbox(point_t *omin, point_t *omax, const mat_t mat, const point_t imin, const point_t imax);
+void _rt_nonuniform_transform_nmgregion(struct nmgregion *r, const mat_t mat, const struct bn_tol *tol);
+
+void rt_crofton_surf_area_implicit(fastf_t *area, const struct rt_db_internal *ip);
+void rt_crofton_volume_implicit(fastf_t *volume, const struct rt_db_internal *ip);
+
 
 /**
  * Private internal state for struct rt_i.  All fields listed under
@@ -129,6 +171,7 @@ struct rt_i_internal {
     /* Per-type solid tables (filled during prep) */
     struct soltab **    rti_sol_by_type[ID_MAX_SOLID+1];
     size_t              rti_nsol_by_type[ID_MAX_SOLID+1];
+    unsigned char       rti_has_nonuniform_by_type[ID_MAX_SOLID+1];
     size_t              rti_maxsol_by_type;
     struct soltab **    rti_Solids;     	/**< @brief  ptrs to soltab [st_bit] */
 

@@ -340,26 +340,30 @@ dotitles(struct mged_state *s, struct bu_vls *overlay_vls)
 
     dm_set_line_attr(DMP, mged_variables->mv_linewidth, 0);
 
-    /* Label the vertices of the edited solid.  Guard against MEDIT(s)==NULL
-     * which can occur for one draw cycle immediately after sedit_accept()
-     * frees and clears the rt_edit pointer before the next command resets
-     * the editing state. */
-    if (MEDIT(s) && (MEDIT(s)->edit_flag >= 0 || (s->global_editing_state == ST_O_EDIT && illump->s_old.s_Eflag == 0))) {
+    struct rt_edit *edit_state = MEDIT(s);
+    const struct rt_db_internal *edit_ip = edit_state ? &edit_state->es_int : NULL;
+
+    /* Accept resets the persistent edit internal before MGED leaves edit
+     * state.  A refresh in that interval must not dispatch primitive labels. */
+    int have_edit_internal = edit_ip && edit_ip->idb_type > ID_NULL &&
+	edit_ip->idb_type <= ID_MAXIMUM && edit_ip->idb_ptr;
+    if (have_edit_internal && (edit_state->edit_flag >= 0 ||
+	    (s->global_editing_state == ST_O_EDIT && illump && illump->s_old.s_Eflag == 0))) {
 	mat_t xform;
 	struct rt_point_labels pl[8+1] = {RT_POINT_LABELS_INIT};
 	point_t lines[2*4];	/* up to 4 lines to draw */
 	int num_lines=0;
 
 	if (view_state->vs_gvp->gv_perspective <= 0)
-	    bn_mat_mul(xform, view_state->vs_model2objview, MEDIT(s)->e_mat);
+	    bn_mat_mul(xform, view_state->vs_model2objview, edit_state->e_mat);
 	else {
 	    mat_t tmat;
 
-	    bn_mat_mul(tmat, view_state->vs_model2objview, MEDIT(s)->e_mat);
+	    bn_mat_mul(tmat, view_state->vs_model2objview, edit_state->e_mat);
 	    bn_mat_mul(xform, perspective_mat, tmat);
 	}
 
-	label_edited_solid(s, &num_lines, lines,  pl, 8+1, xform, &MEDIT(s)->es_int);
+	label_edited_solid(s, &num_lines, lines,  pl, 8+1, xform, &edit_state->es_int);
 
 	dm_set_fg(DMP,
 		       color_scheme->cs_geo_label[0],

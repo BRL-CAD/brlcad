@@ -25,6 +25,8 @@
 
 #include "common.h"
 
+#include <cmath>
+
 #include "vmath.h"
 
 #include "bg/polygon.h"
@@ -72,14 +74,14 @@ analyze_edge(struct ged *gedp, const int edge, const struct rt_arb_internal *arb
 
 
 
-void
+int
 analyze_arb8(struct ged *gedp, const struct rt_db_internal *ip)
 {
     int i, type;
     int cgtype;     /* COMGEOM arb type: # of vertices */
     table_t table;  /* holds table data from child functions */
-    fastf_t tot_vol = 0.0, tot_area = 0.0;
-    point_t center_pt = VINIT_ZERO;
+    fastf_t tot_vol = -1.0, tot_area = 0.0;
+    point_t center_pt;
     struct poly_face face = POLY_FACE_INIT_ZERO;
     struct rt_arb_internal earb;
     struct rt_arb_internal *arb = (struct rt_arb_internal *)ip->idb_ptr;
@@ -90,7 +92,7 @@ analyze_arb8(struct ged *gedp, const struct rt_db_internal *ip)
     /* find the specific arb type, in GIFT order. */
     if ((cgtype = rt_arb_std_type(ip, &wdbp->wdb_tol)) == 0) {
 	bu_vls_printf(gedp->ged_result_str, "analyze_arb: bad ARB\n");
-	return;
+	return BRLCAD_ERROR;
     }
 
     type = cgtype - 4;
@@ -101,7 +103,18 @@ analyze_arb8(struct ged *gedp, const struct rt_db_internal *ip)
 
     /* TABLE 1 =========================================== */
     /* analyze each face, use center point of arb for reference */
+    VSETALL(center_pt, -1.0);
     rt_arb_centroid(&center_pt, ip);
+    {
+	point_t error_centroid;
+	VSETALL(error_centroid, -1.0);
+	if (!std::isfinite(center_pt[X]) || !std::isfinite(center_pt[Y]) ||
+	    !std::isfinite(center_pt[Z]) ||
+	    VNEAR_EQUAL(center_pt, error_centroid, SMALL_FASTF)) {
+	    bu_vls_printf(gedp->ged_result_str, "analyze_arb: unable to calculate centroid\n");
+	    return BRLCAD_ERROR;
+	}
+    }
 
     /* allocate pts array, maximum 4 verts per arb8 face */
     face.pts = (point_t *)bu_calloc(4, sizeof(point_t), "analyze_arb8: pts");
@@ -185,6 +198,12 @@ analyze_arb8(struct ged *gedp, const struct rt_db_internal *ip)
 
     if (OBJ[ID_ARB8].ft_volume)
 	OBJ[ID_ARB8].ft_volume(&tot_vol, ip);
+    if (!std::isfinite(tot_vol) || NEAR_EQUAL(tot_vol, -1.0, SMALL_FASTF)) {
+	bu_vls_printf(gedp->ged_result_str, "analyze_arb: unable to calculate volume\n");
+	bu_free((char *)face.pts, "analyze_arb8: pts");
+	bu_free((char *)table.rows, "analyze_arb8: rows");
+	return BRLCAD_ERROR;
+    }
 
     print_volume_table(gedp,
 		       tot_vol
@@ -199,6 +218,7 @@ analyze_arb8(struct ged *gedp, const struct rt_db_internal *ip)
 
     bu_free((char *)face.pts, "analyze_arb8: pts");
     bu_free((char *)table.rows, "analyze_arb8: rows");
+    return BRLCAD_OK;
 }
 // Local Variables:
 // tab-width: 8

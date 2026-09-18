@@ -75,6 +75,9 @@ struct rt_edit_menu_item sed_menu[] = {
     { "Rotate", btn_item_hit, BE_S_ROTATE },
     { "Translate", btn_item_hit, BE_S_TRANS },
     { "Scale", btn_item_hit, BE_S_SCALE },
+    { "Scale X", btn_item_hit, BE_S_XSCALE },
+    { "Scale Y", btn_item_hit, BE_S_YSCALE },
+    { "Scale Z", btn_item_hit, BE_S_ZSCALE },
     { "", NULL, 0 }
 };
 

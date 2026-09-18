@@ -45,8 +45,13 @@
 	s->s_edit->e->edit_mode == RT_PARAMS_EDIT_ROT)
 #define SEDIT_TRAN (s->global_editing_state == ST_S_EDIT && \
 	s->s_edit->e->edit_mode == RT_PARAMS_EDIT_TRANS)
-#define SEDIT_SCALE (s->global_editing_state == ST_S_EDIT && \
+#define SEDIT_PARAM_SCALE (s->global_editing_state == ST_S_EDIT && \
 	s->s_edit->e->edit_mode == RT_PARAMS_EDIT_SCALE)
+#define SEDIT_MATRIX_SCALE (s->global_editing_state == ST_S_EDIT && \
+	(s->s_edit->e->edit_mode == RT_MATRIX_EDIT_SCALE_X || \
+	 s->s_edit->e->edit_mode == RT_MATRIX_EDIT_SCALE_Y || \
+	 s->s_edit->e->edit_mode == RT_MATRIX_EDIT_SCALE_Z))
+#define SEDIT_SCALE (SEDIT_PARAM_SCALE || SEDIT_MATRIX_SCALE)
 #define SEDIT_PICK (s->global_editing_state == ST_S_EDIT && \
 	s->s_edit->e->edit_mode == RT_PARAMS_EDIT_PICK)
 
