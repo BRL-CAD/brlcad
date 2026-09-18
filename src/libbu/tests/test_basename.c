@@ -57,7 +57,7 @@ static char *
 get_system_output(const char *input)
 {
     char *in = input ? bu_strdup(input) : NULL;
-    char *out = bu_strdup(basename(in));
+    char *out = in ? bu_strdup(basename(in)) : bu_strdup(".");
 
     bu_free(in, "input copy");
 
@@ -130,11 +130,11 @@ compare_bu_to_system_basename(const char *input)
     char *bu_out = get_bu_output(input);
 
     if (BU_STR_EQUAL(sys_out, bu_out)) {
-	bu_log("%24s -> %24s [PASSED]\n", input, bu_out);
+	bu_log("%24s -> %24s [PASSED]\n", input ? input : "(null)", bu_out);
 	bu_free(bu_out, "bu output");
 	bu_free(sys_out, "system output");
     } else {
-	bu_log("%24s -> %24s (should be: %s) [FAIL]\n", input, bu_out, sys_out);
+	bu_log("%24s -> %24s (should be: %s) [FAIL]\n", input ? input : "(null)", bu_out, sys_out);
 	bu_free(bu_out, "bu output");
 	bu_free(sys_out, "system output");
 	bu_exit(EXIT_FAILURE, "compare_bu_to_system_basename failed");

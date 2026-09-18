@@ -74,7 +74,7 @@ test_encode(const char *str)
 	if (len_s == 0)
 	    len_s = 6;
 	printf("{%*s}%*s -> {%*s}%*s [PASS]\n",
-	       (int)len_s, str, (int)(f_wid - len_s), " ",
+	       (int)len_s, str ? str : "(null)", (int)(f_wid - len_s), " ",
 	       (int)len_d, bu_vls_addr(&decoded), (int)(f_wid - len_d), " "
 	    );
     } else {
@@ -82,9 +82,9 @@ test_encode(const char *str)
 	if (len_s == 0)
 	    len_s = 6;
 	printf("{%*s}%*s -> {%*s}%*s [FAIL]  (should be: {%s})\n",
-	       (int)len_s, str, (int)(f_wid - len_s), " ",
+	       (int)len_s, str ? str : "(null)", (int)(f_wid - len_s), " ",
 	       (int)len_d, bu_vls_addr(&decoded), (int)(f_wid - len_d), " ",
-	       str
+	       str ? str : "(null)"
 	    );
 	status = 1;
     }

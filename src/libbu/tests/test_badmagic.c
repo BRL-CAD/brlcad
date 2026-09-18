@@ -93,7 +93,9 @@ main(int argc, char *argv[])
 
     bu_bomb_add_hook((bu_hook_t)&bomb_callback, (void *)expected_str);
 
-    sscanf(argv[1], "%d", &testnum);
+    if (sscanf(argv[1], "%d", &testnum) != 1) {
+	bu_exit(1, "ERROR: invalid test number %s\n", argv[1]);
+    }
     switch (testnum) {
 	case 1:
 	    *ptr = BU_AVS_MAGIC;

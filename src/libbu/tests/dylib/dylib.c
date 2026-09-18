@@ -18,7 +18,9 @@
 #include "bu/dylib.h"
 #include "bu/file.h"
 #include "bu/log.h"
+#include "bu/malloc.h"
 #include "bu/ptbl.h"
+#include "bu/str.h"
 #include "bu/vls.h"
 
 #include "dylib.h"
@@ -35,6 +37,7 @@ dylib_load_plugins(struct bu_ptbl *plugins, struct bu_ptbl *dl_handles)
     struct bu_vls plugin_pattern = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&plugin_pattern, "*%s", DYLIB_PLUGIN_SUFFIX);
     size_t nfiles = bu_file_list(ppath, bu_vls_cstr(&plugin_pattern), &filenames);
+    bu_vls_free(&plugin_pattern);
     for (size_t i = 0; i < nfiles; i++) {
 	char pfile[MAXPATHLEN] = {0};
 	bu_dir(pfile, MAXPATHLEN, BU_DIR_LIBEXEC, "dylib", filenames[i], (const char *)NULL);
@@ -75,6 +78,7 @@ dylib_load_plugins(struct bu_ptbl *plugins, struct bu_ptbl *dl_handles)
 	const struct dylib_contents *pcontents = plugin->i;
 	bu_ptbl_ins(plugins, (long *)pcontents);
     }
+    bu_argv_free(nfiles, filenames);
 
     return BU_PTBL_LEN(plugins);
 }
@@ -83,6 +87,9 @@ dylib_load_plugins(struct bu_ptbl *plugins, struct bu_ptbl *dl_handles)
 int
 dylib_close_plugins(struct bu_ptbl *plugins)
 {
+    if (!plugins)
+	return 0;
+
     int ret = 0;
     for (size_t i = 0; i < BU_PTBL_LEN(plugins); i++) {
 	if (bu_dlclose((void *)BU_PTBL_GET(plugins, i))) {

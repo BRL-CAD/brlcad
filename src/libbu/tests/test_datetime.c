@@ -243,8 +243,11 @@ main(int argc, char *argv[])
 	bu_exit(1, "ERROR: wrong number of parameters");
     }
 
-    sscanf(argv[1], "%d", &function_num);
+    if (sscanf(argv[1], "%d", &function_num) != 1) {
+	return 1;
+    }
 
+    int ret = 0;
     switch (function_num) {
 	case 0:	{
 	    int64_t time0 = 0;
@@ -283,61 +286,61 @@ main(int argc, char *argv[])
 	    curr_time = 1087449261LL;
 	    bu_utctime(&result, curr_time);
 	    if (!BU_STR_EQUAL(result.vls_str, "2004-06-17T05:14:21Z"))
-		return 1;
+		ret = 1;
 	    break;
 	case 2:
 	    curr_time = 631152000LL;
 	    bu_utctime(&result, curr_time);
 	    if (!BU_STR_EQUAL(result.vls_str, "1990-01-01T00:00:00Z"))
-		return 1;
+		ret = 1;
 	    break;
 	case 3:
 	    curr_time = 936860949LL;
 	    bu_utctime(&result, curr_time);
 	    if (!BU_STR_EQUAL(result.vls_str, "1999-09-09T07:09:09Z"))
-		return 1;
+		ret = 1;
 	    break;
 	case 4:
 	    curr_time = 1388696601LL;
 	    bu_utctime(&result, curr_time);
 	    if (!BU_STR_EQUAL(result.vls_str, "2014-01-02T21:03:21Z"))
-		return 1;
+		ret = 1;
 	    break;
 	case 5:
 	    curr_time = 0LL;
 	    bu_utctime(&result, curr_time);
 	    if (!BU_STR_EQUAL(result.vls_str, "1970-01-01T00:00:00Z"))
-		return 1;
+		ret = 1;
 	    break;
 	case 6:
 	    curr_time = 1LL;
 	    bu_utctime(&result, curr_time);
 	    if (!BU_STR_EQUAL(result.vls_str, "1970-01-01T00:00:01Z"))
-		return 1;
+		ret = 1;
 	    break;
 	case 7:
 	    curr_time = 1431482805LL;
 	    bu_utctime(&result, curr_time);
 	    if (!BU_STR_EQUAL(result.vls_str, "2015-05-13T02:06:45Z"))
-		return 1;
+		ret = 1;
 	    break;
 	case 8:
 	    curr_time = 2147483647LL;
 	    bu_utctime(&result, curr_time);
 	    if (!BU_STR_EQUAL(result.vls_str, "2038-01-19T03:14:07Z"))
-		return 1;
+		ret = 1;
 	    break;
 	case 9:
 	    curr_time = 2147483649LL;
 	    bu_utctime(&result, curr_time);
 	    if (!BU_STR_EQUAL(result.vls_str, "2038-01-19T03:14:09Z"))
-		return 1;
+		ret = 1;
 	    break;
 	case 10:
 	    curr_time = 3147483649LL;
 	    bu_utctime(&result, curr_time);
 	    if (!BU_STR_EQUAL(result.vls_str, "2069-09-27T05:00:49Z"))
-		return 1;
+		ret = 1;
 	    break;
 	case 11:
 	    return test_cpu_timer(bu_timer_cpu, "Process CPU time");
@@ -345,38 +348,9 @@ main(int argc, char *argv[])
 	    return test_cpu_timer(bu_timer_cpu_thread, "Thread CPU time");
 	case 13:
 	    return test_cpu_timer_scope();
-#if 0
-	case 11:
-	    {
-		/* Per POSIX and Microsoft's docs, time should return the time
-		 * as seconds elapsed since the POSIX Epoch (midnight, January
-		 * 1, 1970).  Since bu_utctime is assuming a time offset from
-		 * the epoch, check that bu_gettime and time are more or less
-		 * on the same page. */
-		struct bu_vls result1 = BU_VLS_INIT_ZERO;
-		struct bu_vls result2 = BU_VLS_INIT_ZERO;
-		time_t t = time(NULL);
-		int64_t t_since_epoc_systime = (int64_t)t * 1.0e6;
-		int64_t t_since_epoc_gettime = bu_gettime();
-		if (llabs((long long)(t_since_epoc_gettime - t_since_epoc_systime)) > 1.0e6) {
-		    bu_exit(1, "ERROR: bu_gettime(%lld) and time(%lld) disagree by > 1.0e6", (long long int)t_since_epoc_gettime, (long long int)t_since_epoc_systime);
-		}
-		/* If we got this far, bu_utctime should give us the same
-		 * result - probably redundant to do so given the numerical
-		 * comparison above, but go ahead and make sure the strings
-		 * check out as equal. */
-		bu_utctime(&result1, t_since_epoc_gettime/1.0e6);
-		bu_utctime(&result2, t_since_epoc_systime/1.0e6);
-		if (!BU_STR_EQUAL(bu_vls_cstr(&result1), bu_vls_cstr(&result2))) {
-		    bu_exit(1, "ERROR: bu_gettime(%s) and time(%s) bu_utctime strings differ", bu_vls_cstr(&result1), bu_vls_cstr(&result2));
-		}
-		bu_vls_free(&result1);
-		bu_vls_free(&result2);
-		return 0;
-	    }
-#endif
     }
-    return 0;
+    bu_vls_free(&result);
+    return ret;
 }
 
 

@@ -22,7 +22,7 @@
 extern "C" int
 calc(char **result, int rlen, int input)
 {
-    if (rlen <= 0 || !result) {
+    if (rlen <= 0 || !result || !*result) {
 	return -1;
     }
 

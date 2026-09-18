@@ -57,13 +57,13 @@ automatic_test(const char *input)
     int pass = 0;
 
     if (input) {
-	bu_strlcpy(buf_input, input, strlen(input)+1);
-	bu_strlcpy(dirname_buf_input, input, strlen(input)+1);
+	bu_strlcpy(buf_input, input, sizeof(buf_input));
+	bu_strlcpy(dirname_buf_input, input, sizeof(dirname_buf_input));
     }
 
     /* build UNIX 'dirname' command */
     if (!input)
-	ans = dirname(NULL);
+	ans = (char *)".";
     else
 	ans = dirname(dirname_buf_input);
 
@@ -73,10 +73,10 @@ automatic_test(const char *input)
 	res = bu_path_dirname(buf_input);
 
     if (BU_STR_EQUAL(res, ans)) {
-	printf("%24s -> %24s [PASSED]\n", input, res);
+	printf("%24s -> %24s [PASSED]\n", input ? input : "(null)", res ? res : "(null)");
 	pass = 1;
     } else {
-	printf("%24s -> %24s (should be: %s) [FAIL]\n", input, res, ans);
+	printf("%24s -> %24s (should be: %s) [FAIL]\n", input ? input : "(null)", res ? res : "(null)", ans ? ans : "(null)");
     }
 
     bu_free(res, NULL);
