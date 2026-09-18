@@ -1,5 +1,5 @@
 # BRL-CAD RMF/STIG Cat 1 Vulnerability Tracking Ledger
-**Last Synchronized:** 2026-09-18 09:36:27 UTC
+**Last Synchronized:** 2026-09-18 17:39:16 UTC
 
 | Issue ID | File | Lines | Cat 1 Type | Sev | Verification | Fix Status | 1-Sentence Nature of Issue |
 |:---|:---|:---:|:---|:---:|:---:|:---:|:---|
@@ -151,3 +151,4 @@
 | `SEC-0146` | `src/libbn/tabdata.c` | `35-1215` | Null Pointer Dereference / Resource Leak | 2 | `CONFIRMED` | `FIXED` | Second pass fopen in bn_read_table_and_tabdata was unchecked, causing NULL pointer dereference in bu_fgets if reopening failed; memory leak of allocated table/tabdata on read failure; unsigned integer underflow in bn_table_delete_sample_pnts when i > j; NULL pointer dereference in bn_table_free and bn_tabdata_free. |
 | `SEC-0147` | `src/libbn/ulp.c` | `118-204` | Undefined Behavior | 2 | `CONFIRMED` | `FIXED` | Referenced non-existent union member d in union flt_bits (val.d += 1 and minVal.d = 1 << 23); undefined behavior in signed 32-bit shift 1 << 52 when setting 64-bit exponent. |
 | `SEC-0148` | `src/libbn/wavelet.c` | `170-625` | Resource Leak | 1 | `CONFIRMED` | `FIXED` | Permanent memory leaks in make_wlt_haar_2d_decompose, make_wlt_haar_2d_reconstruct, and make_wlt_haar_2d_decompose2 when tbuffer/tbuf is NULL because allocated buffers were never freed; missing NULL buffer and zero dimension validation across wavelet routines. |
+| `SEC-0149` | `src/libbn/tests/test_util.c` | `48-265` | Null Pointer Dereference | 1 | `CONFIRMED` | `FIXED` | Missing NULL pointer checks in test helper and test dispatch functions (mat_close, vect_close, hvect_close, finite_vec, orthonormal_rotation, normalize_quat, make_table, make_tabdata, bn_api_single, and bn_api_dispatch) when called with NULL pointers or empty argument lists. |

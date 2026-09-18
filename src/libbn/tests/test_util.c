@@ -28,9 +28,9 @@ report_failure(const char *test, const char *fmt, ...)
 {
     va_list ap;
 
-    fprintf(stderr, "FAIL %s: ", test);
+    fprintf(stderr, "FAIL %s: ", test ? test : "(unknown)");
     va_start(ap, fmt);
-    vfprintf(stderr, fmt, ap);
+    vfprintf(stderr, fmt ? fmt : "", ap);
     va_end(ap);
     fprintf(stderr, "\n");
 }
@@ -48,6 +48,9 @@ mat_close(const mat_t a, const mat_t b, double tol)
 {
     size_t i;
 
+    if (!a || !b)
+	return 0;
+
     for (i = 0; i < 16; i++) {
 	if (!scalar_close(a[i], b[i], tol)) {
 	    return 0;
@@ -61,6 +64,9 @@ mat_close(const mat_t a, const mat_t b, double tol)
 int
 vect_close(const vect_t a, const vect_t b, double tol)
 {
+    if (!a || !b)
+	return 0;
+
     return scalar_close(a[X], b[X], tol)
 	&& scalar_close(a[Y], b[Y], tol)
 	&& scalar_close(a[Z], b[Z], tol);
@@ -70,6 +76,9 @@ vect_close(const vect_t a, const vect_t b, double tol)
 int
 hvect_close(const hvect_t a, const hvect_t b, double tol)
 {
+    if (!a || !b)
+	return 0;
+
     return scalar_close(a[X], b[X], tol)
 	&& scalar_close(a[Y], b[Y], tol)
 	&& scalar_close(a[Z], b[Z], tol)
@@ -122,6 +131,8 @@ tabdata_close(const struct bn_tabdata *a, const struct bn_tabdata *b, double tol
 int
 finite_vec(const vect_t v)
 {
+    if (!v)
+	return 0;
     return isfinite(v[X]) && isfinite(v[Y]) && isfinite(v[Z]);
 }
 
@@ -132,6 +143,9 @@ orthonormal_rotation(const mat_t m, double tol)
     vect_t c0, c1, c2;
     vect_t cross;
     fastf_t det;
+
+    if (!m)
+	return 0;
 
     VSET(c0, m[0], m[4], m[8]);
     VSET(c1, m[1], m[5], m[9]);
@@ -156,6 +170,9 @@ normalize_quat(quat_t q)
 {
     fastf_t mag;
 
+    if (!q)
+	return;
+
     mag = sqrt(QMAGSQ(q));
     if (mag > SMALL_FASTF) {
 	q[X] /= mag;
@@ -170,6 +187,9 @@ int
 make_temp_path(char path[MAXPATHLEN])
 {
     FILE *fp;
+
+    if (!path)
+	return 0;
 
     fp = bu_temp_file(path, MAXPATHLEN);
     if (!fp) {
@@ -187,6 +207,9 @@ make_table(const fastf_t *xs, size_t nx)
     struct bn_table *tabp;
     size_t i;
 
+    if (!xs)
+	return NULL;
+
     BN_GET_TABLE(tabp, nx);
     for (i = 0; i <= nx; i++) {
 	tabp->x[i] = xs[i];
@@ -202,6 +225,9 @@ make_tabdata(const struct bn_table *tabp, const fastf_t *ys)
     struct bn_tabdata *data;
     size_t i;
 
+    if (!tabp || !ys)
+	return NULL;
+
     BN_GET_TABDATA(data, tabp);
     for (i = 0; i < data->ny; i++) {
 	data->y[i] = ys[i];
@@ -214,17 +240,21 @@ make_tabdata(const struct bn_table *tabp, const fastf_t *ys)
 int
 bn_api_single(int argc, char *argv[], const char *name, int (*func)(void))
 {
-    bu_setprogname(argv[0]);
+    if (argv && argv[0])
+	bu_setprogname(argv[0]);
 
-    if (argc == 1) {
+    if (!func)
+	return 1;
+
+    if (argc <= 1) {
 	return func();
     }
 
-    if (argc == 2 && (BU_STR_EQUAL(argv[1], name) || BU_STR_EQUAL(argv[1], "all"))) {
+    if (argc == 2 && argv && argv[1] && (BU_STR_EQUAL(argv[1], name) || BU_STR_EQUAL(argv[1], "all"))) {
 	return func();
     }
 
-    fprintf(stderr, "Usage: %s [%s]\n", argv[0], name);
+    fprintf(stderr, "Usage: %s [%s]\n", (argv && argv[0]) ? argv[0] : "test", name ? name : "");
     return 1;
 }
 
@@ -235,17 +265,22 @@ bn_api_dispatch(int argc, char *argv[], const struct bn_api_case *cases)
     size_t i;
     int failures = 0;
 
-    bu_setprogname(argv[0]);
+    if (argv && argv[0])
+	bu_setprogname(argv[0]);
 
-    if (argc == 1 || (argc == 2 && BU_STR_EQUAL(argv[1], "all"))) {
+    if (!cases)
+	return 1;
+
+    if (argc <= 1 || (argc == 2 && argv && argv[1] && BU_STR_EQUAL(argv[1], "all"))) {
 	for (i = 0; cases[i].name != NULL; i++) {
-	    failures += cases[i].func();
+	    if (cases[i].func)
+		failures += cases[i].func();
 	}
 	return failures;
     }
 
-    if (argc != 2) {
-	fprintf(stderr, "Usage: %s <subtest|all>\n", argv[0]);
+    if (argc != 2 || !argv || !argv[1]) {
+	fprintf(stderr, "Usage: %s <subtest|all>\n", (argv && argv[0]) ? argv[0] : "test");
 	fprintf(stderr, "Available subtests:\n");
 	for (i = 0; cases[i].name != NULL; i++) {
 	    fprintf(stderr, "  %s\n", cases[i].name);
@@ -255,7 +290,7 @@ bn_api_dispatch(int argc, char *argv[], const struct bn_api_case *cases)
 
     for (i = 0; cases[i].name != NULL; i++) {
 	if (BU_STR_EQUAL(argv[1], cases[i].name)) {
-	    return cases[i].func();
+	    return cases[i].func ? cases[i].func() : 0;
 	}
     }
 

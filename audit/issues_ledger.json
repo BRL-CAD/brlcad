@@ -2661,6 +2661,24 @@
       "created_at": "2026-09-18T05:30:00Z",
       "verified_at": "2026-09-18T05:30:00Z",
       "fixed_at": "2026-09-18T05:30:00Z"
+    },
+    {
+      "id": "SEC-0149",
+      "file": "src/libbn/tests/test_util.c",
+      "lines": "48-265",
+      "severity": 1,
+      "category": "Null Pointer Dereference",
+      "description": "Missing NULL pointer checks in test helper and test dispatch functions (mat_close, vect_close, hvect_close, finite_vec, orthonormal_rotation, normalize_quat, make_table, make_tabdata, bn_api_single, and bn_api_dispatch) when called with NULL pointers or empty argument lists.",
+      "verification_status": "CONFIRMED",
+      "verification_test": "Code review of test harness functions with NULL arguments.",
+      "test_result": "Confirmed potential segmentation faults on NULL pointer inputs.",
+      "fix_status": "FIXED",
+      "fix_description": "Added defensive NULL pointer checks and safe fallbacks across all test comparison and runner functions.",
+      "commit_hash": "PENDING",
+      "commit_message": "libbn: add defensive null pointer validation in test utility helpers",
+      "created_at": "2026-09-18T13:40:00Z",
+      "verified_at": "2026-09-18T13:40:00Z",
+      "fixed_at": "2026-09-18T13:40:00Z"
     }
   ]
 }
