@@ -414,13 +414,20 @@ flat_dsp_analytic(uint32_t xcnt, uint32_t ycnt, unsigned short h,
 /* Build an in-memory DB, prep, and run comparison                     */
 /* ------------------------------------------------------------------ */
 
+enum dsp_ray_check_mode {
+    DSP_RAY_CHECK_NONE,
+    DSP_RAY_CHECK_FLAT,
+    DSP_RAY_CHECK_SMOOTH,
+    DSP_RAY_CHECK_BC_CUT
+};
+
 struct dsp_case {
     const char     *label;
     uint32_t        xcnt, ycnt;
     const unsigned short *buf;
     int             cuttype;
     int             smooth;
-    int             ray_checks;
+    enum dsp_ray_check_mode ray_checks;
     /* stom diagonal (identity: dx=dy=dz=1): */
     double          dx, dy, dz;
     /* analytic SA/vol (-1 if not available): */
@@ -550,7 +557,7 @@ check_smooth_normal(const struct dsp_case *tc, struct soltab *stp)
 static int
 run_prepped_ray_checks(const struct dsp_case *tc, struct rt_i *rtip)
 {
-    if (!tc->ray_checks)
+    if (tc->ray_checks == DSP_RAY_CHECK_NONE)
 	return 0;
 
     int failures = 0;
@@ -562,16 +569,14 @@ run_prepped_ray_checks(const struct dsp_case *tc, struct rt_i *rtip)
 
     double x_extent = (tc->xcnt - 1) * tc->dx;
     double y_extent = (tc->ycnt - 1) * tc->dy;
-    /* ray_checks == 1 is reserved for flat DSP cases, so buf[0] is the
-     * expected terrain height for the deterministic vertical/side rays.
-     */
-    double top_z = (double)tc->buf[0] * tc->dz;
-    double expected_vertical_in = 10.0;
-    double expected_vertical_out = expected_vertical_in + top_z;
     point_t o;
     vect_t d;
 
-    if (tc->ray_checks == 1) {
+    if (tc->ray_checks == DSP_RAY_CHECK_FLAT) {
+	/* Flat cases use buf[0] as the terrain height for direct rays. */
+	double top_z = (double)tc->buf[0] * tc->dz;
+	double expected_vertical_in = 10.0;
+	double expected_vertical_out = expected_vertical_in + top_z;
 	VSET(o, 0.5 * x_extent, 0.5 * y_extent, top_z + 10.0);
 	VSET(d, 0.0, 0.0, -1.0);
 	failures += check_direct_ray("vertical down flat DSP", stp, rtip,
@@ -598,12 +603,22 @@ run_prepped_ray_checks(const struct dsp_case *tc, struct rt_i *rtip)
 	failures += check_direct_ray("vertical up flat DSP", stp, rtip,
 		o, d, 1, expected_vertical_in,
 		expected_vertical_out, 0);
-    } else if (tc->ray_checks == 2) {
+    } else if (tc->ray_checks == DSP_RAY_CHECK_SMOOTH) {
 	VSET(o, 0.5 * x_extent, 0.5 * y_extent, 10000.0);
 	VSET(d, 0.0, 0.0, -1.0);
 	failures += check_direct_ray("smooth-mode direct vertical shot", stp, rtip,
 		o, d, 1, -1.0, -1.0, 0);
 	failures += check_smooth_normal(tc, stp);
+    } else if (tc->ray_checks == DSP_RAY_CHECK_BC_CUT) {
+	/* In cell (3,3), the B-C triangle rises from 315 at y=3.25 by
+	 * 68 per x.  A horizontal ray at z=330 enters at x=3+15/68
+	 * and exits through the outer wall at x=4.  This also checks
+	 * that the explicit B-C cut gives the top an outward normal.
+	 */
+	VSET(o, 2.5, 3.25, 330.0);
+	VSET(d, 1.0, 0.0, 0.0);
+	failures += check_direct_ray("explicit B-C top-to-side shot", stp, rtip,
+		o, d, 1, 0.5 + 15.0 / 68.0, 1.5, 1);
     }
 
     return failures;
@@ -782,7 +797,7 @@ test_synthetic(void)
 
 	struct dsp_case tc = {
 	    "flat 5x5 h=100 (4x4 cells, identity stom)",
-	    GW, GH, buf, DSP_CUT_DIR_llUR, 0, 1, 1.0, 1.0, 1.0, asa, avol
+	    GW, GH, buf, DSP_CUT_DIR_llUR, 0, DSP_RAY_CHECK_FLAT, 1.0, 1.0, 1.0, asa, avol
 	};
 	failures += run_inmem_case(&tc);
     }
@@ -798,7 +813,7 @@ test_synthetic(void)
 
 	struct dsp_case tc = {
 	    "flat 10x10 h=200 (9x9 cells)",
-	    GW, GH, buf, DSP_CUT_DIR_llUR, 0, 0, 1.0, 1.0, 1.0, asa, avol
+	    GW, GH, buf, DSP_CUT_DIR_llUR, 0, DSP_RAY_CHECK_NONE, 1.0, 1.0, 1.0, asa, avol
 	};
 	failures += run_inmem_case(&tc);
     }
@@ -814,7 +829,7 @@ test_synthetic(void)
 
 	struct dsp_case tc = {
 	    "flat 10x10 h=50 (stom dx=5 dy=5 dz=2)",
-	    GW, GH, buf, DSP_CUT_DIR_llUR, 0, 1, 5.0, 5.0, 2.0, asa, avol
+	    GW, GH, buf, DSP_CUT_DIR_llUR, 0, DSP_RAY_CHECK_FLAT, 5.0, 5.0, 2.0, asa, avol
 	};
 	failures += run_inmem_case(&tc);
     }
@@ -829,7 +844,7 @@ test_synthetic(void)
 
 	struct dsp_case tc = {
 	    "ramp 9x9 (h=100+20x+10y)",
-	    GW, GH, buf, DSP_CUT_DIR_llUR, 0, 0, 1.0, 1.0, 1.0, -1.0, -1.0
+	    GW, GH, buf, DSP_CUT_DIR_llUR, 0, DSP_RAY_CHECK_NONE, 1.0, 1.0, 1.0, -1.0, -1.0
 	};
 	failures += run_inmem_case(&tc);
     }
@@ -844,7 +859,7 @@ test_synthetic(void)
 
 	struct dsp_case tc = {
 	    "asymmetric 5x5 explicit ULlr cut",
-	    GW, GH, buf, DSP_CUT_DIR_ULlr, 0, 0, 1.0, 1.0, 1.0, -1.0, -1.0
+	    GW, GH, buf, DSP_CUT_DIR_ULlr, 0, DSP_RAY_CHECK_BC_CUT, 1.0, 1.0, 1.0, -1.0, -1.0
 	};
 	failures += run_inmem_case(&tc);
     }
@@ -859,7 +874,7 @@ test_synthetic(void)
 
 	struct dsp_case tc = {
 	    "asymmetric 5x5 adaptive cut",
-	    GW, GH, buf, DSP_CUT_DIR_ADAPT, 0, 0, 1.0, 1.0, 1.0, -1.0, -1.0
+	    GW, GH, buf, DSP_CUT_DIR_ADAPT, 0, DSP_RAY_CHECK_NONE, 1.0, 1.0, 1.0, -1.0, -1.0
 	};
 	failures += run_inmem_case(&tc);
     }
@@ -874,7 +889,7 @@ test_synthetic(void)
 
 	struct dsp_case tc = {
 	    "smooth=1 ramp normal check",
-	    GW, GH, buf, DSP_CUT_DIR_llUR, 1, 2, 1.0, 1.0, 1.0, -1.0, -1.0
+	    GW, GH, buf, DSP_CUT_DIR_llUR, 1, DSP_RAY_CHECK_SMOOTH, 1.0, 1.0, 1.0, -1.0, -1.0
 	};
 	failures += run_inmem_case(&tc);
     }
@@ -889,7 +904,7 @@ test_synthetic(void)
 
 	struct dsp_case tc = {
 	    "smooth=2 ramp normal check",
-	    GW, GH, buf, DSP_CUT_DIR_llUR, 2, 2, 1.0, 1.0, 1.0, -1.0, -1.0
+	    GW, GH, buf, DSP_CUT_DIR_llUR, 2, DSP_RAY_CHECK_SMOOTH, 1.0, 1.0, 1.0, -1.0, -1.0
 	};
 	failures += run_inmem_case(&tc);
     }
@@ -908,7 +923,7 @@ test_synthetic(void)
 
 	struct dsp_case tc = {
 	    "sinusoidal 16x16",
-	    GW, GH, buf, DSP_CUT_DIR_llUR, 0, 0, 1.0, 1.0, 1.0, -1.0, -1.0
+	    GW, GH, buf, DSP_CUT_DIR_llUR, 0, DSP_RAY_CHECK_NONE, 1.0, 1.0, 1.0, -1.0, -1.0
 	};
 	failures += run_inmem_case(&tc);
     }
@@ -928,7 +943,7 @@ test_synthetic(void)
 
 	struct dsp_case tc = {
 	    "complex 33x33 wave",
-	    GW, GH, buf, DSP_CUT_DIR_llUR, 0, 0, 1.0, 1.0, 1.0, -1.0, -1.0
+	    GW, GH, buf, DSP_CUT_DIR_llUR, 0, DSP_RAY_CHECK_NONE, 1.0, 1.0, 1.0, -1.0, -1.0
 	};
 	failures += run_inmem_case(&tc);
 	bu_free(buf, "33x33 buf");
@@ -971,7 +986,7 @@ test_synthetic(void)
 
 	struct dsp_case tc = {
 	    "larger 129x129 mixed ramp/wave terrain",
-	    grid_width, grid_height, buf, DSP_CUT_DIR_llUR, 0, 0, 1.0, 1.0, 1.0, -1.0, -1.0
+	    grid_width, grid_height, buf, DSP_CUT_DIR_llUR, 0, DSP_RAY_CHECK_NONE, 1.0, 1.0, 1.0, -1.0, -1.0
 	};
 	failures += run_inmem_case(&tc);
 	bu_free(sin_x, "129x129 sin x");

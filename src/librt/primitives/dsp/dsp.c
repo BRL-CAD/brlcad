@@ -1543,8 +1543,7 @@ permute_cell(point_t A,
 	     struct dsp_specific *dsp,
 	     struct dsp_rpp *dsp_rpp)
 {
-    int x, y;
-
+    point_t tmp;
 
 #ifdef FULL_DSP_DEBUGGING
     if (RT_G_DEBUG & RT_DEBUG_HF) {
@@ -1558,10 +1557,8 @@ permute_cell(point_t A,
     switch (dsp->dsp_i.dsp_cuttype) {
 	case DSP_CUT_DIR_llUR:
 	    return DSP_CUT_DIR_llUR;
-	    break;
 
 	case DSP_CUT_DIR_ADAPT: {
-	    point_t tmp;
 	    size_t cx = (size_t)dsp_rpp->dsp_min[X];
 	    size_t cy = (size_t)dsp_rpp->dsp_min[Y];
 
@@ -1570,28 +1567,8 @@ permute_cell(point_t A,
 		       dsp_rpp->dsp_min[X],
 		       dsp_rpp->dsp_min[Y]);
 
-	    /*
-	     * We look at the points in the diagonal next cells to
-	     * determine the curvature along each diagonal of this
-	     * cell.  This cell is divided into two triangles by
-	     * cutting across the cell in the direction of least
-	     * curvature.
-	     *
-	     *	*  *  *	 *
-	     *	 \      /
-	     *	  \C  D/
-	     *	*  *--*  *
-	     *	   |\/|
-	     *	   |/\|
-	     *	*  *--*  *
-	     *	  /A  B\
-	     *	 /	\
-	     *	*  *  *	 *
-	     */
-
-	    /* leaf-cell precondition: the rpp spans exactly one grid unit, so
-	     * (cx, cy) plus the cell counts fully describe the curvature
-	     * stencil that rt_dsp_cell_cut() recomputes.
+	    /* The rpp spans one grid cell; use its indices to select the
+	     * lower-curvature diagonal.
 	     */
 	    BU_ASSERT(dsp_rpp->dsp_max[X] == dsp_rpp->dsp_min[X] + 1);
 	    BU_ASSERT(dsp_rpp->dsp_max[Y] == dsp_rpp->dsp_min[Y] + 1);
@@ -1599,15 +1576,16 @@ permute_cell(point_t A,
 	    if (rt_dsp_cell_cut(&dsp->dsp_i, cx, cy,
 			     (size_t)dsp->xsiz, (size_t)dsp->ysiz)
 		== DSP_CUT_DIR_llUR) {
-		/* A-D cut is fine, no need to permute */
 		if (RT_G_DEBUG & RT_DEBUG_HF)
 		    bu_log("A-D cut\n");
-
 		return DSP_CUT_DIR_llUR;
-
 	    }
-
-	    /* prefer the B-C cut */
+	}
+	/* fall through */
+	case DSP_CUT_DIR_ULlr:
+	    /* Both B-C modes need the same corner order.  The top triangles
+	     * must keep outward (+Z) normals for the entry/exit state machine.
+	     */
 	    VMOVE(tmp, A);
 	    VMOVE(A, B);
 	    VMOVE(B, D);
@@ -1615,35 +1593,7 @@ permute_cell(point_t A,
 	    VMOVE(C, tmp);
 	    if (RT_G_DEBUG & RT_DEBUG_HF)
 		bu_log("B-C cut\n");
-
 	    return DSP_CUT_DIR_ULlr;
-
-	    break;
-	}
-	case DSP_CUT_DIR_ULlr:
-	    /* assign the values for the corner points
-	     *
-	     *  D----C
-	     *  |    |
-	     *  |    |
-	     *  |    |
-	     *  B----A
-	     */
-	    x = dsp_rpp->dsp_min[X];
-	    y = dsp_rpp->dsp_min[Y];
-	    VSET(B, x, y, DSP(&dsp->dsp_i, x, y));
-
-	    x = dsp_rpp->dsp_max[X];
-	    VSET(A, x, y, DSP(&dsp->dsp_i, x, y));
-
-	    y = dsp_rpp->dsp_max[Y];
-	    VSET(C, x, y, DSP(&dsp->dsp_i, x, y));
-
-	    x = dsp_rpp->dsp_min[X];
-	    VSET(D, x, y, DSP(&dsp->dsp_i, x, y));
-
-	    return DSP_CUT_DIR_ULlr;
-	    break;
     }
     bu_log("%s:%d Unknown DSP cut direction: %d\n",
 	   __FILE__, __LINE__, dsp->dsp_i.dsp_cuttype);
