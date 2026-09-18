@@ -12,6 +12,7 @@ set(
   util.cpp
   ../plan.cpp
   ../process.cpp
+  ../reuse.cpp
   ../tri.cpp
   ../transfer.cpp
   ../util.cpp
