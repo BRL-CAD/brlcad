@@ -162,6 +162,7 @@
 #include "raytrace.h"
 
 #include "../../librt_private.h"
+#include "../canonicalize_private.h"
 
 
 struct ehy_specific {
@@ -2116,6 +2117,48 @@ rt_ehy_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
     top->ehy_c  = ec;
 
     return BRLCAD_OK;
+}
+
+
+C_DECL int
+rt_ehy_canonicalize(struct rt_db_internal *canonical,
+		    mat_t canonical_to_input,
+		    const struct rt_db_internal *input,
+		    const struct bn_tol *tol,
+		    enum rt_canonicalize_mode mode)
+{
+    const struct rt_ehy_internal *eip;
+    struct rt_ehy_internal *ceip;
+    fastf_t lengths[4];
+    fastf_t canonical_lengths[4];
+
+    if (!canonical || !canonical_to_input || !input || !tol ||
+	input->idb_type != ID_EHY)
+	return RT_CANONICALIZE_ERROR;
+    eip = (const struct rt_ehy_internal *)input->idb_ptr;
+    RT_EHY_CK_MAGIC(eip);
+    lengths[0] = MAGNITUDE(eip->ehy_H);
+    lengths[1] = eip->ehy_r1;
+    lengths[2] = eip->ehy_r2;
+    lengths[3] = eip->ehy_c;
+    if (!rt_make_canonical_similarity_frame(canonical_to_input,
+	    canonical_lengths, eip->ehy_V, eip->ehy_Au, eip->ehy_H,
+	    lengths, 4, tol, mode))
+	return RT_CANONICALIZE_ERROR;
+
+    canonical->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    canonical->idb_minor_type = ID_EHY;
+    canonical->idb_meth = &OBJ[ID_EHY];
+    BU_ALLOC(canonical->idb_ptr, struct rt_ehy_internal);
+    ceip = (struct rt_ehy_internal *)canonical->idb_ptr;
+    ceip->ehy_magic = RT_EHY_INTERNAL_MAGIC;
+    VSETALL(ceip->ehy_V, 0.0);
+    VSET(ceip->ehy_H, 0.0, 0.0, canonical_lengths[0]);
+    VSET(ceip->ehy_Au, 1.0, 0.0, 0.0);
+    ceip->ehy_r1 = canonical_lengths[1];
+    ceip->ehy_r2 = canonical_lengths[2];
+    ceip->ehy_c = canonical_lengths[3];
+    return RT_CANONICALIZE_OK;
 }
 
 int

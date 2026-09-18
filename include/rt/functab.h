@@ -63,6 +63,27 @@ __BEGIN_DECLS
 struct rt_piecestate; /* forward declaration for ft_piece_shot / ft_piece_hitsegs */
 
 /**
+ * Transformation classes a primitive canonicalizer may factor out of an
+ * object's stored parameters.  Each successive mode permits all operations
+ * allowed by the preceding mode.
+ */
+enum rt_canonicalize_mode {
+    RT_CANONICALIZE_RIGID = 0,
+    RT_CANONICALIZE_SIMILARITY,
+    RT_CANONICALIZE_AFFINE
+};
+
+/**
+ * Return values for primitive canonicalization.  Unsupported is distinct from
+ * an error so callers may safely skip primitives without an implementation.
+ */
+enum rt_canonicalize_status {
+    RT_CANONICALIZE_OK = 0,
+    RT_CANONICALIZE_ERROR,
+    RT_CANONICALIZE_UNSUPPORTED
+};
+
+/**
  * This needs to be at the end of the raytrace.h header file, so that
  * all the structure names are known.  The "union record" and "struct
  * nmgregion" pointers are problematic, so generic pointers are used
@@ -331,6 +352,22 @@ struct rt_functab {
      */
     int (*ft_validate)(struct bu_vls *error_msg, const struct rt_db_internal *ip, const struct bn_tol *tol);
 #define RTFUNCTAB_FUNC_VALIDATE_CAST(_func) ((int (*)(struct bu_vls *, const struct rt_db_internal *, const struct bn_tol *))((void (*)(void))_func))
+
+    /**
+     * Factor primitive geometry into a deterministic local representation and
+     * a matrix mapping that representation back to the input geometry.
+     *
+     * On success, applying @p canonical_to_input to @p canonical with ft_mat
+     * must reproduce geometry equivalent to @p input within @p tol.  The
+     * callback initializes and owns the contents of @p canonical.  It must not
+     * modify @p input or access database state.
+     */
+    int (*ft_canonicalize)(struct rt_db_internal *canonical,
+			   mat_t canonical_to_input,
+			   const struct rt_db_internal *input,
+			   const struct bn_tol *tol,
+			   enum rt_canonicalize_mode mode);
+#define RTFUNCTAB_FUNC_CANONICALIZE_CAST(_func) ((int (*)(struct rt_db_internal *, mat_t, const struct rt_db_internal *, const struct bn_tol *, enum rt_canonicalize_mode))((void (*)(void))_func))
 
 };
 

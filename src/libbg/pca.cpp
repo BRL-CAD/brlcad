@@ -52,8 +52,9 @@
 #include "bg/pca.h"
 
 // Use SVD algorithm from Soderkvist to fit a plane to vertex points
-extern "C" int
-bg_pca(point_t *c, vect_t *xa, vect_t *ya, vect_t *za, size_t npnts, const point_t *pnts)
+static int
+bg_pca_impl(point_t *c, vect_t *xa, vect_t *ya, vect_t *za,
+	    vect_t *singular_values, size_t npnts, const point_t *pnts)
 {
     if (!c || !xa || !ya || !za || npnts == 0 || !pnts)
 	return BRLCAD_ERROR;
@@ -74,7 +75,9 @@ bg_pca(point_t *c, vect_t *xa, vect_t *ya, vect_t *za, size_t npnts, const point
     }
 
     // 3.  Perform SVD
-    Eigen::JacobiSVD<Eigen::MatrixXd> svd(A, Eigen::ComputeThinU);
+    // Full U supplies a complete 3D frame for one- and two-point inputs as
+    // well as ordinary 3D point sets.
+    Eigen::JacobiSVD<Eigen::MatrixXd> svd(A, Eigen::ComputeFullU);
 
     // 4.  Extract the vectors from the U matrix
     vect_t xaxis, yaxis, zaxis;
@@ -93,8 +96,31 @@ bg_pca(point_t *c, vect_t *xa, vect_t *ya, vect_t *za, size_t npnts, const point
     VMOVE(*xa, xaxis);
     VMOVE(*ya, yaxis);
     VMOVE(*za, zaxis);
+    if (singular_values) {
+	VSETALL(*singular_values, 0.0);
+	for (Eigen::Index i = 0; i < svd.singularValues().size() && i < 3; i++)
+	    (*singular_values)[i] = svd.singularValues()(i);
+    }
 
     return BRLCAD_OK;
+}
+
+
+extern "C" int
+bg_pca_svd(point_t *c, vect_t *xa, vect_t *ya, vect_t *za,
+	   vect_t *singular_values, size_t npnts, const point_t *pnts)
+{
+    if (!singular_values)
+	return BRLCAD_ERROR;
+
+    return bg_pca_impl(c, xa, ya, za, singular_values, npnts, pnts);
+}
+
+
+extern "C" int
+bg_pca(point_t *c, vect_t *xa, vect_t *ya, vect_t *za, size_t npnts, const point_t *pnts)
+{
+    return bg_pca_impl(c, xa, ya, za, NULL, npnts, pnts);
 }
 
 /** @} */

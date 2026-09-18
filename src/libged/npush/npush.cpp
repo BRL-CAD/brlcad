@@ -1708,11 +1708,14 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
+extern "C" int ged_unpush_core(struct ged *gedp, int argc, const char *argv[]);
+
 #define GED_NPUSH_COMMANDS(X, XID) \
     X(npush, ged_npush_core, GED_CMD_DEFAULT) \
+    X(unpush, ged_unpush_core, GED_CMD_DEFAULT) \
 
 GED_DECLARE_COMMAND_SET(GED_NPUSH_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST("libged_npush", 1, GED_NPUSH_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_npush", 2, GED_NPUSH_COMMANDS)
 
 // Local Variables:
 // tab-width: 8
