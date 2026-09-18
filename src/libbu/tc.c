@@ -26,12 +26,16 @@
 
 #include "common.h"
 #include <stdlib.h>
+#include "bu/malloc.h"
 #include "bu/tc.h"
 
 
 int
 bu_mtx_init(bu_mtx_t *mtx)
 {
+    if (!mtx)
+	return bu_thrd_error;
+
 #if defined(HAVE_WINDOWS_H)
     mtx->mAlreadyLocked = FALSE;
     mtx->mRecursive = 0;
@@ -52,6 +56,9 @@ bu_mtx_init(bu_mtx_t *mtx)
 void
 bu_mtx_destroy(bu_mtx_t *mtx)
 {
+    if (!mtx)
+	return;
+
 #if defined(HAVE_WINDOWS_H)
     if (!mtx->mTimed) {
 	DeleteCriticalSection(&(mtx->mHandle.cs));
@@ -73,6 +80,9 @@ bu_mtx_destroy(bu_mtx_t *mtx)
 int
 bu_cnd_init(bu_cnd_t *cond)
 {
+    if (!cond)
+	return bu_thrd_error;
+
 #if defined(HAVE_WINDOWS_H)
     cond->mWaitersCount = 0;
 
@@ -104,6 +114,9 @@ bu_cnd_init(bu_cnd_t *cond)
 void
 bu_cnd_destroy(bu_cnd_t *cond)
 {
+    if (!cond)
+	return;
+
 #if defined(HAVE_WINDOWS_H)
     if (cond->mEvents[_CONDITION_EVENT_ONE] != NULL)
     {
@@ -123,6 +136,9 @@ bu_cnd_destroy(bu_cnd_t *cond)
 int
 bu_mtx_lock(bu_mtx_t *mtx)
 {
+    if (!mtx)
+	return bu_thrd_error;
+
 #if defined(HAVE_WINDOWS_H)
     if (!mtx->mTimed)
     {
@@ -155,6 +171,9 @@ bu_mtx_lock(bu_mtx_t *mtx)
 int
 bu_mtx_unlock(bu_mtx_t *mtx)
 {
+    if (!mtx)
+	return bu_thrd_error;
+
 #if defined(HAVE_WINDOWS_H)
     mtx->mAlreadyLocked = FALSE;
     if (!mtx->mTimed)
@@ -170,7 +189,7 @@ bu_mtx_unlock(bu_mtx_t *mtx)
     }
     return bu_thrd_success;
 #else
-    return pthread_mutex_unlock(mtx) == 0 ? bu_thrd_success : bu_thrd_error;;
+    return pthread_mutex_unlock(mtx) == 0 ? bu_thrd_success : bu_thrd_error;
 #endif
 }
 
@@ -178,6 +197,9 @@ bu_mtx_unlock(bu_mtx_t *mtx)
 int
 bu_mtx_trylock(bu_mtx_t *mtx)
 {
+    if (!mtx)
+	return bu_thrd_error;
+
 #if defined(HAVE_WINDOWS_H)
     int ret;
 
@@ -212,6 +234,9 @@ bu_mtx_trylock(bu_mtx_t *mtx)
 int
 bu_cnd_signal(bu_cnd_t *cond)
 {
+    if (!cond)
+	return bu_thrd_error;
+
 #if defined(HAVE_WINDOWS_H)
     int haveWaiters;
 
@@ -295,6 +320,9 @@ static int _bu_cnd_timedwait_win32(bu_cnd_t *cond, bu_mtx_t *mtx, DWORD timeout)
 int
 bu_cnd_wait(bu_cnd_t *cond, bu_mtx_t *mtx)
 {
+    if (!cond || !mtx)
+	return bu_thrd_error;
+
 #if defined(HAVE_WINDOWS_H)
     return _bu_cnd_timedwait_win32(cond, mtx, INFINITE);
 #else
@@ -404,14 +432,16 @@ static void * _bu_thrd_wrapper_function(void * aArg)
 
     /* Get thread startup information */
     _bu_thread_start_info *ti = (_bu_thread_start_info *) aArg;
+    if (!ti)
+	return 0;
     fun = ti->mFunction;
     arg = ti->mArg;
 
     /* The thread is responsible for freeing the startup information */
-    free((void *)ti);
+    bu_free((void *)ti, "thread_start_info");
 
     /* Call the actual client thread function */
-    res = fun(arg);
+    res = fun ? fun(arg) : 0;
 
 #if defined(HAVE_WINDOWS_H)
     if (_tinycthread_tss_head != NULL)
@@ -427,9 +457,12 @@ static void * _bu_thrd_wrapper_function(void * aArg)
 
 int bu_thrd_create(bu_thrd_t *thr, bu_thrd_start_t func, void *arg)
 {
+    if (!thr || !func)
+	return bu_thrd_error;
+
     /* Fill out the thread startup information (passed to the thread wrapper,
      * which will eventually free it) */
-    _bu_thread_start_info* ti = (_bu_thread_start_info*)malloc(sizeof(_bu_thread_start_info));
+    _bu_thread_start_info* ti = (_bu_thread_start_info*)bu_malloc(sizeof(_bu_thread_start_info), "thread_start_info");
     if (ti == NULL)
     {
 	return bu_thrd_nomem;
@@ -449,7 +482,7 @@ int bu_thrd_create(bu_thrd_t *thr, bu_thrd_start_t func, void *arg)
     /* Did we fail to create the thread? */
     if(!*thr)
     {
-	free((void *)ti);
+	bu_free((void *)ti, "thread_start_info");
 	return bu_thrd_error;
     }
 
@@ -494,6 +527,9 @@ int bu_thrd_join(bu_thrd_t thr, int *res)
 
 int bu_cnd_broadcast(bu_cnd_t *cond)
 {
+    if (!cond)
+	return bu_thrd_error;
+
 #if defined(HAVE_WINDOWS_H)
     int haveWaiters;
 

@@ -45,6 +45,8 @@
 #endif
 #include <errno.h>
 #include <stdlib.h>
+#include <stdint.h>
+#include "bu/malloc.h"
 #include "bu/sort.h"
 
 /***********
@@ -153,7 +155,7 @@ openbsd_heapsort(void *vbase, size_t nmemb, size_t size,
     char tmp, *tmp1, *tmp2;
     char *base, *k, *p, *t;
 
-    if (nmemb <= 1)
+    if (!vbase || !compar || nmemb <= 1)
 	return (0);
 
     if (!size) {
@@ -161,7 +163,7 @@ openbsd_heapsort(void *vbase, size_t nmemb, size_t size,
 	return (-1);
     }
 
-    if ((k = (char *)malloc(size)) == NULL)
+    if ((k = (char *)bu_malloc(size, "heapsort")) == NULL)
 	return (-1);
 
     /*
@@ -184,7 +186,7 @@ openbsd_heapsort(void *vbase, size_t nmemb, size_t size,
 	--nmemb;
 	HEAP_SELECT(i, j, nmemb, t, p, size, k, cnt, tmp1, tmp2, context);
     }
-    free(k);
+    bu_free(k, "heapsort");
     return (0);
 }
 
@@ -197,7 +199,7 @@ static char	*med3(char *, char *, char *, int (*)(const void *, const void *, vo
 static void	 swapfunc(char *, char *, size_t, int);
 
 #ifndef min
-#  define min(a, b)	(a) < (b) ? a : b
+#  define min(a, b)	(((a) < (b)) ? (a) : (b))
 #endif
 
 /*
@@ -382,6 +384,12 @@ bu_sort(void *a, size_t n, size_t es, int (*cmp)(const void *, const void *, voi
 {
     size_t i, maxdepth = 0;
     int swaptype;
+
+    if (UNLIKELY(!a || n <= 1 || es == 0 || !cmp))
+	return;
+
+    if (UNLIKELY(n > SIZE_MAX / es))
+	return;
 
     /* Approximate 2*ceil(lg(n + 1)) */
     for (i = n; i > 0; i >>= 1)

@@ -63,6 +63,9 @@ _bu_tcl_utf_to_ushort(
 {
     register int byte;
 
+    if (!src || !chPtr)
+	return 0;
+
     /*
      * Unroll 1 to 3 byte UTF-8 sequences, use loop to handle longer ones.
      */
@@ -127,6 +130,8 @@ _bu_tcl_ushort_to_utf(
 				 * large enough to hold the UTF-8 character
 				 * (at most 3 bytes). */
 {
+    if (!buf)
+	return 0;
     if ((ch > 0) && (ch < 0x80)) {
 	buf[0] = (char) ch;
 	return 1;
@@ -535,7 +540,7 @@ _bu_tcl_copy_collapse(
 
     for (c = *src;  count > 0;  src++, c = *src, count--) {
 	if (c == '\\') {
-	    backslashCount = _bu_tcl_parse_backslash(src, (int)strlen(src), &numRead, dst);
+	    backslashCount = _bu_tcl_parse_backslash(src, count, &numRead, dst);
 	    dst += backslashCount;
 	    newCount += backslashCount;
 	    src += numRead-1;
@@ -556,6 +561,9 @@ bu_argv_from_tcl_list(const char *list_str, int *argc, const char ***argv)
     const char **largv, *l, *element;
     char *p;
     int length, size, i, result, elSize, brace;
+
+    if (!list_str || !argc || !argv)
+	return 1;
 
     /*
      * Figure out how much space to allocate. There must be enough space for

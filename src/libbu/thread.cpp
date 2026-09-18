@@ -110,6 +110,8 @@ extern "C" {
     void
     thread_set_cpu(int cpu)
     {
+	if (cpu < 0)
+	    cpu = 0;
 	thread_cpu = cpu;
     }
 

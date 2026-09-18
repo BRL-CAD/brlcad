@@ -39,7 +39,7 @@ get_font(const char* fontname, void (*vfont_log)(const char *fmt, ...))
 {
     struct vfont_file font;
     struct header lochdr;
-    static char	fname[FONTNAMESZ];
+    char fname[FONTNAMESZ];
 
     /* Initialize vfont */
     memset(&font, 0, sizeof(struct vfont_file));
@@ -70,6 +70,7 @@ get_font(const char* fontname, void (*vfont_log)(const char *fmt, ...))
     if (fread((char *)&lochdr, (int)sizeof(struct header), 1, font.ffdes) != 1) {
 	if (vfont_log)
 	    vfont_log("get_Font() read failed!\n");
+	fclose(font.ffdes);
 	font.ffdes = NULL;
 	return font;
     }
@@ -83,6 +84,7 @@ get_font(const char* fontname, void (*vfont_log)(const char *fmt, ...))
     if (lochdr.magic != 0436) {
 	if (vfont_log)
 	    vfont_log("Not a font file \"%s\": magic=0%o\n", fname, (int)lochdr.magic);
+	fclose(font.ffdes);
 	font.ffdes = NULL;
 	return font;
     }
@@ -92,6 +94,7 @@ get_font(const char* fontname, void (*vfont_log)(const char *fmt, ...))
     if (fread((char *) font.dir, (int)sizeof(struct dispatch), 256, font.ffdes) != 256) {
 	if (vfont_log)
 	    vfont_log("get_Font() read failed!\n");
+	fclose(font.ffdes);
 	font.ffdes = NULL;
 	return font;
     }
@@ -138,7 +141,11 @@ vfont_get(char *font)
 
     /* Open the file and read in the header information. */
     if ((fp = fopen(const_font, "rb")) == NULL) {
-	snprintf(fname, FONTNAMESZ, "%s/%s", bu_dir(NULL, 0, BU_DIR_DATA, "vfont", NULL), const_font);
+	const char *vdir = bu_dir(NULL, 0, BU_DIR_DATA, "vfont", NULL);
+	if (vdir)
+	    snprintf(fname, FONTNAMESZ, "%s/%s", vdir, const_font);
+	else
+	    bu_strlcpy(fname, const_font, sizeof(fname));
 	if ((fp = fopen(fname, "rb")) == NULL) {
 	    snprintf(fname, FONTNAMESZ, "%s/%s", FONTDIR2, const_font);
 	    if ((fp = fopen(fname, "rb")) == NULL) {
@@ -181,7 +188,7 @@ vfont_get(char *font)
     vfp->vf_maxy = _vax_gshort(&header[3*2]);
     vfp->vf_xtend = _vax_gshort(&header[4*2]);
 
-    for (i=0; i<255; i++) {
+    for (i=0; i<256; i++) {
 	register struct vfont_dispatch *vdp = &(vfp->vf_dispatch[i]);
 	register unsigned char *cp = &dispatch[i*10];
 
@@ -201,7 +208,10 @@ vfont_get(char *font)
 void
 vfont_free(register struct vfont *vfp)
 {
-    bu_free(vfp->vf_bits, "vfont bits");
+    if (!vfp)
+	return;
+    if (vfp->vf_bits)
+	bu_free(vfp->vf_bits, "vfont bits");
     bu_free((char *)vfp, "vfont");
 }
 

@@ -71,13 +71,14 @@ bu_humanize_number(char *buf, size_t len, int64_t quotient,
     size_t	baselen;
     size_t 	i, r;
 
+    /* validate args */
+    if (buf == NULL || suffix == NULL)
+	return (-1);
+
     /* Since so many callers don't check -1, NUL terminate the buffer */
     if (len > 0)
 	buf[0] = '\0';
 
-    /* validate args */
-    if (buf == NULL || suffix == NULL)
-	return (-1);
     if (scale > hn_maxscale &&
 	    ((scale & ~(BU_HN_AUTOSCALE|BU_HN_GETSCALE)) != 0))
 	return (-1);
@@ -127,7 +128,10 @@ bu_humanize_number(char *buf, size_t len, int64_t quotient,
 
     if (quotient < 0) {
 	sign = -1;
-	quotient = -quotient;
+	if (quotient == INT64_MIN)
+	    quotient = INT64_MAX;
+	else
+	    quotient = -quotient;
 	baselen += 2;		/* sign, digit */
     } else {
 	sign = 1;

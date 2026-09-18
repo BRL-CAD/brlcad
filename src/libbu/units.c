@@ -235,10 +235,10 @@ units_name_matches(const char *input, const char *name)
     }
 
     /* trim any trailing 's' for plurality */
-    if (bu_vls_addr(&normalized_input)[bu_vls_strlen(&normalized_input)-1] == 's') {
+    if (bu_vls_strlen(&normalized_input) > 0 && bu_vls_addr(&normalized_input)[bu_vls_strlen(&normalized_input)-1] == 's') {
 	bu_vls_trunc(&normalized_input, -1);
     }
-    if (bu_vls_addr(&normalized_name)[bu_vls_strlen(&normalized_name)-1] == 's') {
+    if (bu_vls_strlen(&normalized_name) > 0 && bu_vls_addr(&normalized_name)[bu_vls_strlen(&normalized_name)-1] == 's') {
 	bu_vls_trunc(&normalized_name, -1);
     }
 
@@ -258,6 +258,9 @@ bu_units_conversion(const char *str)
     const struct cvt_tab *tp;
     const struct conv_table *cvtab;
     double factor = 1.0;
+
+    if (!str)
+	return 0.0;
 
     /* Search for the units string in the table matching by name. */
     for (cvtab=unit_lists; cvtab->cvttab; cvtab++) {
@@ -336,7 +339,9 @@ bu_units_strings_vls(void)
     }
 
     /* Remove the last ", " */
-    bu_vls_trunc(vlsp, -2);
+    if (bu_vls_strlen(vlsp) >= 2) {
+	bu_vls_trunc(vlsp, -2);
+    }
 
     return vlsp;
 }
@@ -384,12 +389,13 @@ bu_nearest_units_string(register const double mm)
 
 double
 bu_mm_value(const char *s)
-
-
 {
     double v;
     char *ptr;
     register const struct cvt_tab *tp;
+
+    if (!s)
+	return -1.0;
 
     v = strtod(s, &ptr);
 
@@ -426,6 +432,9 @@ bu_mm_cvt(const struct bu_structparse *sdp,
 /* beginning of structure */
 /* string containing value */
 {
+    if (UNLIKELY(!sdp || !base))
+	return;
+
     register double *p = (double *)((char *)base + sdp->sp_offset);
 
     if (UNLIKELY(!name)) {

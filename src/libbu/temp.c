@@ -89,7 +89,9 @@ temp_close_files(void)
 #if defined(HAVE_WINDOWS_H)
     _invalid_parameter_handler stdhandler, nhandler;
 #endif
+    bu_semaphore_acquire(BU_SEM_SYSCALL);
     if (all_temp_files.size == 0) {
+	bu_semaphore_release(BU_SEM_SYSCALL);
 	return;
     }
 
@@ -115,11 +117,18 @@ temp_close_files(void)
 	    bu_vls_free(&all_temp_files.temp_files[i].fn);
 	}
     }
+    if (all_temp_files.temp_files != initial_temp_files && all_temp_files.temp_files != NULL) {
+	bu_free(all_temp_files.temp_files, "temp file list");
+	all_temp_files.temp_files = NULL;
+    }
+    all_temp_files.size = 0;
+    all_temp_files.capacity = 0;
 
 #if defined(HAVE_WINDOWS_H)
     /* Now that we're done, restore default behavior */
     (void)_set_invalid_parameter_handler(stdhandler);
 #endif
+    bu_semaphore_release(BU_SEM_SYSCALL);
 
 }
 
@@ -127,12 +136,14 @@ temp_close_files(void)
 static void
 temp_add_to_list(const char *fn, int fd)
 {
+    bu_semaphore_acquire(BU_SEM_SYSCALL);
     if (all_temp_files.capacity == 0) {
 	all_temp_files.capacity = NUM_INITIAL_TEMP_FILES;
 	all_temp_files.temp_files = initial_temp_files;
     } else if (all_temp_files.size == NUM_INITIAL_TEMP_FILES) {
 	all_temp_files.capacity *= 2;
 	all_temp_files.temp_files = (struct temp_file *)bu_malloc(all_temp_files.capacity * sizeof(struct temp_file), "initial resize of temp file list");
+	memcpy(all_temp_files.temp_files, initial_temp_files, NUM_INITIAL_TEMP_FILES * sizeof(struct temp_file));
     } else if (all_temp_files.size == all_temp_files.capacity) {
 	all_temp_files.capacity *= 2;
 	all_temp_files.temp_files = (struct temp_file *)bu_realloc(all_temp_files.temp_files, all_temp_files.capacity * sizeof(struct temp_file), "additional resize of temp file list");
@@ -148,13 +159,14 @@ temp_add_to_list(const char *fn, int fd)
     all_temp_files.temp_files[all_temp_files.size].fd = fd;
 
     all_temp_files.size++;
+    bu_semaphore_release(BU_SEM_SYSCALL);
 }
 
-#define MAX_FILELEN 25	/* arbitrary len */
+#define MAX_FILELEN 128
 const char*
 bu_temp_file_name(char* filename, size_t len)
 {
-    static char buf[MAX_FILELEN] = {0};
+    static THREADLOCAL char buf[MAX_FILELEN] = {0};
 
     memset(buf, 0, MAX_FILELEN);
 
@@ -165,8 +177,8 @@ bu_temp_file_name(char* filename, size_t len)
     snprintf(buf, MAX_FILELEN, "%s_%d_%d", prefix, procID, threadID);
 
     /* if user supplied buffer, copy over */
-    if (len > 0 && strlen(buf) > 0) {
-	int maxlen = len > MAX_FILELEN ? MAX_FILELEN : len; /* cap len at MAX_FILELEN */
+    if (filename && len > 0 && strlen(buf) > 0) {
+	size_t maxlen = len > MAX_FILELEN ? MAX_FILELEN : len;
 	bu_strlcpy(filename, buf, maxlen);
 	return filename;
     }

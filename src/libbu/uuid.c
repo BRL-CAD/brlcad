@@ -50,6 +50,9 @@ bu_uuid_create(uint8_t uuid[STATIC_ARRAY(16)], size_t nbytes, const uint8_t *byt
 {
     int type = 4; /* random */
 
+    if (!uuid)
+	return 0;
+
     if (nbytes > 0 && bytes && namespace_uuid)
 	type = 5;
 
@@ -80,13 +83,18 @@ bu_uuid_create(uint8_t uuid[STATIC_ARRAY(16)], size_t nbytes, const uint8_t *byt
 
 	    SHA1Init(&context);
 	    SHA1Update(&context, (const unsigned char *)namespace_uuid, 16);
-	    SHA1Update(&context, (const unsigned char *)bytes, (uint32_t)nbytes);
+	    while (nbytes > 0) {
+		uint32_t chunk = (nbytes > UINT32_MAX) ? UINT32_MAX : (uint32_t)nbytes;
+		SHA1Update(&context, (const unsigned char *)bytes, chunk);
+		bytes += chunk;
+		nbytes -= chunk;
+	    }
 	    SHA1Final(buffer, &context);
 
 	    memcpy(uuid, buffer, 16);
 
 	    /* set the UUIDv5 reserved bits */
-	    uuid[6] = (uuid[6] & 0x0F) | 0x5F; /* version */
+	    uuid[6] = (uuid[6] & 0x0F) | 0x50; /* version 5 */
 	    uuid[8] = (uuid[8] & 0x3F) | 0x80; /* 0b10 high-order byte */
 	    break;
 	}
@@ -116,6 +124,9 @@ bu_uuid_compare(const void *uuid_left, const void *uuid_right)
 int
 bu_uuid_encode(const uint8_t uuid[STATIC_ARRAY(16)], uint8_t cp[STATIC_ARRAY(37)])
 {
+    if (!uuid || !cp)
+	return -1;
+
     snprintf((char *)cp, 37, "%02X%02X%02X%02X-%02X%02X-%02X%02X-%02X%02X-%02X%02X%02X%02X%02X%02X",
 	     uuid[0], uuid[1], uuid[2], uuid[3], uuid[4], uuid[5], uuid[6], uuid[7],
 	     uuid[8], uuid[9], uuid[10], uuid[11], uuid[12], uuid[13], uuid[14], uuid[15]);
@@ -127,35 +138,34 @@ bu_uuid_encode(const uint8_t uuid[STATIC_ARRAY(16)], uint8_t cp[STATIC_ARRAY(37)
 int
 bu_uuid_decode(const char *cp, uint8_t uuid[STATIC_ARRAY(16)])
 {
-    const char *orig_cp = cp;
-
     size_t count = 0;
 
-    if (!cp)
+    if (!cp || !uuid)
 	return 1;
 
     while (*cp) {
-	if (isxdigit(*cp)) {
-	    count++;
-	}
-	cp++;
-    }
-
-    /* expecting exactly 2 hexchars per byte */
-    if (count != 32)
-	return 2;
-
-    count = 0;
-    cp = orig_cp;
-    while (*cp) {
-	int chars = 1;
-	if (isxdigit(*cp)) {
+	if (isxdigit((unsigned char)*cp)) {
+	    if (!isxdigit((unsigned char)*(cp + 1))) {
+		return 2;
+	    }
+	    if (count >= 16) {
+		return 2;
+	    }
 	    unsigned int value;
-	    bu_sscanf(cp, "%02X%n", &value, &chars);
+	    if (bu_sscanf(cp, "%02X", &value) != 1) {
+		return 2;
+	    }
 	    uuid[count++] = (uint8_t)value;
+	    cp += 2;
+	} else if (*cp == '-' || *cp == '{' || *cp == '}' || *cp == ' ' || *cp == '\t') {
+	    cp++;
+	} else {
+	    return 2;
 	}
-	cp += chars;
     }
+
+    if (count != 16)
+	return 2;
 
     return 0;
 }

@@ -34,6 +34,8 @@
 void
 bu_vlb_init(struct bu_vlb *vlb)
 {
+    if (UNLIKELY(!vlb))
+	return;
     vlb->buf = (uint8_t *)bu_calloc(1, VLB_BLOCK_SIZE, "bu_vlb");
     vlb->bufCapacity = VLB_BLOCK_SIZE;
     vlb->nextByte = 0;
@@ -44,6 +46,8 @@ bu_vlb_init(struct bu_vlb *vlb)
 void
 bu_vlb_initialize(struct bu_vlb *vlb, size_t initialSize)
 {
+    if (UNLIKELY(!vlb))
+	return;
     if (UNLIKELY(initialSize <= 0)) {
 	bu_log("bu_vlb_initialize: WARNING - illegal initial size (%zu), ignored\n", initialSize);
 	bu_vlb_init(vlb);
@@ -62,9 +66,18 @@ bu_vlb_write(struct bu_vlb *vlb, unsigned char *start, size_t len)
     size_t addBlocks = 0;
     size_t currCapacity;
 
+    if (UNLIKELY(!vlb || !start || len == 0))
+	return;
+
     BU_CKMAG(vlb, BU_VLB_MAGIC, "magic for bu_vlb");
+
+    if (UNLIKELY(len > SIZE_MAX - vlb->nextByte))
+	return;
+
     currCapacity = vlb->bufCapacity;
     while (currCapacity <= (vlb->nextByte + len)) {
+	if (UNLIKELY(currCapacity > SIZE_MAX - VLB_BLOCK_SIZE))
+	    return;
 	addBlocks++;
 	currCapacity += VLB_BLOCK_SIZE;
     }
@@ -82,6 +95,8 @@ bu_vlb_write(struct bu_vlb *vlb, unsigned char *start, size_t len)
 void
 bu_vlb_reset(struct bu_vlb *vlb)
 {
+    if (UNLIKELY(!vlb))
+	return;
     BU_CKMAG(vlb, BU_VLB_MAGIC, "magic for bu_vlb");
     vlb->nextByte = 0;
 }
@@ -90,6 +105,8 @@ bu_vlb_reset(struct bu_vlb *vlb)
 unsigned char *
 bu_vlb_addr(struct bu_vlb *vlb)
 {
+    if (UNLIKELY(!vlb))
+	return NULL;
     BU_CKMAG(vlb, BU_VLB_MAGIC, "magic for bu_vlb");
     return vlb->buf;
 }
@@ -98,6 +115,8 @@ bu_vlb_addr(struct bu_vlb *vlb)
 size_t
 bu_vlb_buflen(struct bu_vlb *vlb)
 {
+    if (UNLIKELY(!vlb))
+	return 0;
     BU_CKMAG(vlb, BU_VLB_MAGIC, "magic for bu_vlb");
     return vlb->nextByte;
 }
@@ -106,6 +125,8 @@ bu_vlb_buflen(struct bu_vlb *vlb)
 void
 bu_vlb_free(struct bu_vlb *vlb)
 {
+    if (UNLIKELY(!vlb))
+	return;
     BU_CKMAG(vlb, BU_VLB_MAGIC, "magic for bu_vlb");
     bu_free(vlb->buf, "vlb");
 
@@ -121,6 +142,9 @@ bu_vlb_print(struct bu_vlb *vlb, FILE *fd)
 {
     size_t ret;
 
+    if (UNLIKELY(!vlb || !fd))
+	return;
+
     BU_CKMAG(vlb, BU_VLB_MAGIC, "magic for bu_vlb");
 
     ret = fwrite(vlb->buf, 1, vlb->nextByte, fd);
@@ -135,6 +159,9 @@ bu_pr_vlb(const char *title, const struct bu_vlb *vlb)
     size_t i;
     unsigned char *c;
     struct bu_vls v = BU_VLS_INIT_ZERO;
+
+    if (UNLIKELY(!vlb))
+	return;
 
     BU_CKMAG(vlb, BU_VLB_MAGIC, "magic for bu_vlb");
 

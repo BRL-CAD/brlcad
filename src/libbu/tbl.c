@@ -226,22 +226,22 @@ bu_tbl_create(void)
 void
 bu_tbl_destroy(struct bu_tbl *tbl)
 {
-    BU_ASSERT(tbl);
-    BU_ASSERT(tbl->t);
+    if (!tbl)
+	return;
 
-    ft_destroy_table(tbl->t);
-    tbl->t = NULL;
+    if (tbl->t) {
+	ft_destroy_table(tbl->t);
+	tbl->t = NULL;
+    }
     bu_free(tbl, "bu_tbl free");
-
-    return;
 }
 
 
 int
 bu_tbl_clear(struct bu_tbl *tbl)
 {
-    BU_ASSERT(tbl);
-    BU_ASSERT(tbl->t);
+    if (!tbl || !tbl->t)
+	return -1;
 
     return ft_erase_range(tbl->t, 0, 0, ft_row_count(tbl->t), ft_col_count(tbl->t));
 }
@@ -250,8 +250,8 @@ bu_tbl_clear(struct bu_tbl *tbl)
 struct bu_tbl *
 bu_tbl_style(struct bu_tbl *tbl, enum bu_tbl_style style)
 {
-    BU_ASSERT(tbl);
-    BU_ASSERT(tbl->t);
+    if (!tbl || !tbl->t)
+	return tbl;
 
     switch (style) {
 	case BU_TBL_STYLE_NONE:
@@ -321,8 +321,8 @@ bu_tbl_style(struct bu_tbl *tbl, enum bu_tbl_style style)
 struct bu_tbl *
 bu_tbl_go_to(struct bu_tbl *tbl, size_t row, size_t col)
 {
-    BU_ASSERT(tbl);
-    BU_ASSERT(tbl->t);
+    if (!tbl || !tbl->t)
+	return tbl;
 
     ft_set_cur_cell(tbl->t, row, col);
 
@@ -333,8 +333,8 @@ bu_tbl_go_to(struct bu_tbl *tbl, size_t row, size_t col)
 struct bu_tbl *
 bu_tbl_is_at(struct bu_tbl *tbl, size_t *row, size_t *col)
 {
-    BU_ASSERT(tbl);
-    BU_ASSERT(tbl->t);
+    if (!tbl || !tbl->t)
+	return tbl;
 
     if (row)
 	*row = ft_cur_row(tbl->t);
@@ -348,25 +348,15 @@ bu_tbl_is_at(struct bu_tbl *tbl, size_t *row, size_t *col)
 struct bu_tbl *
 bu_tbl_printf(struct bu_tbl *tbl, const char *fmt, ...)
 {
-    char *cstr = NULL;
-
     va_list ap;
-#define BUFSZ 4096
-    char buf[BUFSZ];
-    char *back = NULL;
-    char *last = NULL;
-    size_t zeros = 0;
+    struct bu_vls v = BU_VLS_INIT_ZERO;
+    char *curr;
 
-    if (!fmt)
+    if (!tbl || !tbl->t || !fmt)
 	return tbl;
 
-    BU_ASSERT(tbl);
-    BU_ASSERT(tbl->t);
-
-    memset(buf, 255, BUFSZ);
-
     va_start(ap, fmt);
-    vsnprintf(buf, BUFSZ, fmt, ap);
+    bu_vls_vprintf(&v, fmt, ap);
     va_end(ap);
 
 #ifdef FT_HAVE_UTF8
@@ -375,72 +365,28 @@ bu_tbl_printf(struct bu_tbl *tbl, const char *fmt, ...)
 #define TBL_WRITE(table, s) ft_nwrite((table)->t, 1, (const char *)(s))
 #endif
 
-    cstr = strtok(buf, "|");
-    if (cstr) {
-	/* strtok collapses empty tokens, so check */
-	back = cstr;
-	zeros = 0;
-	back--;
-	while ((*back == '\0' || *back == '|') && buf <= back) {
-	    zeros++;
-	    back--;
-	}
-	while (zeros--) {
-	    TBL_WRITE(tbl, "");
-	}
-	TBL_WRITE(tbl, cstr);
-	last = cstr;
-    }
-
-    while (cstr) {
-	cstr = strtok(NULL, "|");
-
-	if (cstr) {
-	    /* strtok collapses empty tokens, so check */
-	    back = cstr;
-	    zeros = 0;
-	    back -= 2;
-	    while ((*back == '\0' || *back == '|') && buf <= back) {
-		zeros++;
-		back--;
-	    }
-	    while (zeros--) {
-		TBL_WRITE(tbl, "");
-	    }
-
-	    TBL_WRITE(tbl, cstr);
-	    last = cstr;
+    curr = bu_vls_addr(&v);
+    while (curr) {
+	char *next = strchr(curr, '|');
+	if (next) {
+	    *next = '\0';
+	    TBL_WRITE(tbl, curr);
+	    curr = next + 1;
+	} else {
+	    TBL_WRITE(tbl, curr);
+	    break;
 	}
     }
 
-    if (!last)
-	return tbl;
-
-    zeros = 0;
-    last += 2;
-
-    if (!last)
-	return tbl;
-
-    while ((*last == '\0' || *last == '|')) {
-	zeros++;
-	last++;
-    }
-    while (zeros--) {
-	TBL_WRITE(tbl, "");
-    }
-
+    bu_vls_free(&v);
     return tbl;
 }
 
 struct bu_tbl *
 bu_tbl_write(struct bu_tbl *tbl, const char *str)
 {
-    if (!str)
+    if (!tbl || !tbl->t || !str)
 	return tbl;
-
-    BU_ASSERT(tbl);
-    BU_ASSERT(tbl->t);
 
 #ifdef FT_HAVE_UTF8
     ft_u8nwrite(tbl->t, 1, str);
@@ -455,9 +401,8 @@ bu_tbl_write(struct bu_tbl *tbl, const char *str)
 void
 bu_tbl_vls(struct bu_vls *str, const struct bu_tbl *tbl)
 {
-    if (!tbl || !tbl->t)
+    if (!tbl || !tbl->t || !str)
 	return;
-    BU_ASSERT(str);
 
     const char *tstr = ft_to_string(tbl->t);
     if (tstr) {

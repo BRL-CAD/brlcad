@@ -82,8 +82,13 @@ bu_dehumanize_number(const char *str, int64_t *size)
     char *ep, unit;
     const char *delimit;
     long multiplier;
-    long long tmp, tmp2;
+    long long tmp;
     size_t len;
+
+    if (UNLIKELY(!str || !size)) {
+	errno = EINVAL;
+	return -1;
+    }
 
     len = strlen(str);
     if (len == 0) {
@@ -128,11 +133,11 @@ bu_dehumanize_number(const char *str, int64_t *size)
     else if (errno == ERANGE && (tmp == LLONG_MAX || tmp == LLONG_MIN))
 	return -1; /* Out of range. */
 
-    tmp2 = tmp * multiplier;
-    tmp2 = tmp2 / multiplier;
-    if (tmp != tmp2) {
-	errno = ERANGE;
-	return -1; /* Out of range. */
+    if (multiplier > 1) {
+	if (tmp > LLONG_MAX / multiplier || tmp < LLONG_MIN / multiplier) {
+	    errno = ERANGE;
+	    return -1; /* Out of range. */
+	}
     }
     tmp *= multiplier;
     *size = (int64_t)tmp;
