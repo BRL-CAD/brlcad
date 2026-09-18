@@ -5503,7 +5503,7 @@ cdt_test_developable_clean(void)
 	    !cleanable_developable_chart(face, chart))
 	return 4;
 
-    std::vector<point2d_t> points(chart.points.size());
+    std::unique_ptr<point2d_t[]> points(new point2d_t[chart.points.size()]);
     for (size_t i = 0; i < chart.points.size(); ++i)
 	V2SET(points[i], chart.points[i].first, chart.points[i].second);
     std::vector<int> outline(chart.outer.begin(), chart.outer.end());
@@ -5514,7 +5514,7 @@ cdt_test_developable_clean(void)
     const bool cleaned = topology_preserving_clean_triangulation(&faces,
 	&face_count, NULL, face, chart, points_3d, outline.data(),
 	outline.size(), NULL,
-	NULL, 0, NULL, 0, points.data(), NULL, NULL, false);
+	NULL, 0, NULL, 0, points.get(), NULL, NULL, false);
     if (faces)
 	bu_free(faces, "developable clean test faces");
     return cleaned && face_count > 0 ? 0 : 5;
@@ -5543,7 +5543,7 @@ triangulate_chart_component(cdt_mesh_t *mesh, const ON_BrepFace &face,
 	    "face atlas component has no disk boundary");
 	return false;
     }
-    std::vector<point2d_t> points(chart.points.size());
+    std::unique_ptr<point2d_t[]> points(new point2d_t[chart.points.size()]);
     for (size_t i = 0; i < chart.points.size(); ++i)
 	V2SET(points[i], chart.points[i].first, chart.points[i].second);
 
@@ -5733,7 +5733,7 @@ triangulate_chart_component(cdt_mesh_t *mesh, const ON_BrepFace &face,
 	hole_counts.empty() ? NULL : hole_counts.data(), hole_arrays.size(),
 	steiner.empty() ? NULL : steiner.data(), steiner.size(),
 	constraints.empty() ? NULL : constraints.data(),
-	constraints.size() / 2, points.data(), points.size(), &report);
+	constraints.size() / 2, points.get(), chart.points.size(), &report);
     if (status != BRLCAD_OK) {
 	bu_log("Face %d: atlas component triangulation failed: %s\n",
 	    mesh->f_id, report.message);
