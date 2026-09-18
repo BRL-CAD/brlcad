@@ -444,6 +444,9 @@ DM_EXPORT extern int fb_get_interactive(const struct fb *ifp);
  */
 DM_EXPORT extern int fb_next_event(struct fb *ifp, struct fb_event *e);
 
+/** Dispatch an application-facing event through the framebuffer bindings. */
+DM_EXPORT extern int fb_process_event_bindings(struct fb *ifp, const struct fb_event *e);
+
 
 /* Library entry points */
 

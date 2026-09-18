@@ -53,6 +53,7 @@
 #include "./include/private.h"
 #include "icv.h"
 #include "dm.h"
+#include "bu/binding.h"
 
 
 struct fb *fb_get(void)
@@ -256,6 +257,59 @@ long fb_poll_rate(struct fb *ifp)
     if (!ifp)
 	return 0;
     return ifp->i->if_poll_refresh_rate;
+}
+
+static int
+fb_event_button_to_w3c(int button)
+{
+    return (button >= 1 && button <= 3) ? button - 1 : button;
+}
+
+int
+fb_process_event_bindings(struct fb *ifp, const struct fb_event *event)
+{
+    struct bu_vls event_json = BU_VLS_INIT_ZERO;
+    int handled = 0;
+
+    if (!ifp || !event)
+        return 0;
+
+    switch (event->type) {
+        case FB_EVENT_BUTTON_PRESS:
+            bu_vls_sprintf(&event_json,
+                    "{\"type\": \"mouse-press\", \"button\": %d, \"x\": %d, \"y\": %d}",
+                    fb_event_button_to_w3c(event->button), event->x, event->y);
+            break;
+        case FB_EVENT_BUTTON_RELEASE:
+            bu_vls_sprintf(&event_json,
+                    "{\"type\": \"mouse-release\", \"button\": %d, \"x\": %d, \"y\": %d}",
+                    fb_event_button_to_w3c(event->button), event->x, event->y);
+            break;
+        case FB_EVENT_MOTION:
+            bu_vls_sprintf(&event_json,
+                    "{\"type\": \"mouse-move\", \"x\": %d, \"y\": %d}",
+                    event->x, event->y);
+            break;
+        case FB_EVENT_KEY_PRESS:
+            if (event->keycode == 27) {
+                bu_vls_sprintf(&event_json, "{\"type\": \"key-press\", \"key\": \"Escape\"}");
+            } else if (event->keycode >= 32 && event->keycode <= 126) {
+                bu_vls_sprintf(&event_json,
+                        "{\"type\": \"key-press\", \"key\": \"%c\"}",
+                        event->keycode);
+            }
+            break;
+        case FB_EVENT_CLOSE:
+            bu_vls_sprintf(&event_json, "{\"type\": \"key-press\", \"key\": \"Escape\"}");
+            break;
+        default:
+            break;
+    }
+
+    if (bu_vls_strlen(&event_json) > 0)
+        handled = bu_binding_process_event("fb", bu_vls_cstr(&event_json), ifp);
+    bu_vls_free(&event_json);
+    return handled;
 }
 
 void fb_set_interactive(struct fb *ifp, int on)
