@@ -76,6 +76,7 @@ __BEGIN_DECLS
 /* libbn */
 
 #define BN_GAUSS_MAGIC			0x1e886880 /**< ??h? => 512256128 */
+#define BN_MULTIPOLY_MAGIC		0x4d554c54 /**< MULT */
 #define BN_POLY_MAGIC			0x506f4c79 /**< PoLy */
 #define BN_SPM_MAGIC			0x41278678 /**< A'?x */
 #define BN_TABDATA_MAGIC		0x53736d70 /**< Ssmp */

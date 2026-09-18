@@ -219,8 +219,12 @@ bn_gauss_fill(struct bn_gauss *p)
 void
 bn_gauss_free(struct bn_gauss *p)
 {
+    if (!p)
+	return;
+
     bu_free(p->msr_gauss_doubles, "msr gauss doubles");
     bu_free(p->msr_gausses, "msr gauss table");
+    p->magic = 0;
     bu_free(p, "bn_msr_gauss");
 }
 

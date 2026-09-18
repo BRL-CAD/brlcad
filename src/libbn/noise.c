@@ -248,7 +248,7 @@ bn_noise_init(void)
 double
 bn_noise_perlin(point_t point)
 {
-    register int jx, jy, jz;
+    int jx, jy, jz;
     int ix, iy, iz;	/* lower integer lattice point */
     double x, y, z;	/* corrected point */
     double fx, fy, fz;	/* distance above integer lattice point */
@@ -257,6 +257,9 @@ bn_noise_perlin(point_t point)
     short m;
     point_t p, f;
     int ip[3];
+
+    if (!point)
+	return 0.0;
 
     bn_ensure_initialized();
 
@@ -327,7 +330,7 @@ bn_noise_perlin(point_t point)
 void
 bn_noise_vec(point_t point, point_t result)
 {
-    register int jx, jy, jz;
+    int jx, jy, jz;
     int ix, iy, iz;		/* lower integer lattice point */
     double x, y, z;		/* corrected point */
     double px, py, pz, s;
@@ -335,6 +338,9 @@ bn_noise_vec(point_t point, point_t result)
     short m;
     point_t p, f;
     int ip[3];
+
+    if (!point || !result)
+	return;
 
     bn_ensure_initialized();
 
@@ -463,6 +469,9 @@ build_spec_tbl(double h_val, double lacunarity, double octaves)
     double frequency;
     int i;
 
+    if (octaves < 1.0)
+	octaves = 1.0;
+
     /* The right spectral weights table for these parameters has not
      * been pre-computed.  As a result, we compute the table now and
      * save it with the knowledge that we'll likely want it again
@@ -523,6 +532,9 @@ find_spec_wgt(double h, double l, double o)
     int i;
     int sem_noise_id;
 
+    if (o < 1.0)
+	o = 1.0;
+
     bn_ensure_initialized();
     sem_noise_id = bn_noise_sem();
 
@@ -556,6 +568,9 @@ bn_noise_fbm(point_t point, double h_val, double lacunarity, double octaves)
     double value, noise_remainder, *spec_wgts;
     point_t pt;
     int i, oct;
+
+    if (!point)
+	return 0.0;
 
     /* The first order of business is to see if we have pre-computed
      * the spectral weights table for these parameters in a previous
@@ -601,6 +616,8 @@ bn_noise_turb(point_t point, double h_val, double lacunarity, double octaves)
     point_t pt;
     int i, oct;
 
+    if (!point)
+	return 0.0;
 
     /* The first order of business is to see if we have pre-computed
      * the spectral weights table for these parameters in a previous
@@ -653,6 +670,9 @@ bn_noise_ridged(point_t point, double h_val, double lacunarity, double octaves, 
     double result, weight, noise_signal, *spec_wgts;
     point_t pt;
     int i;
+
+    if (!point)
+	return 0.0;
 
     /* The first order of business is to see if we have pre-computed
      * the spectral weights table for these parameters in a previous
@@ -708,6 +728,9 @@ bn_noise_mf(point_t point, double h_val, double lacunarity, double octaves, doub
     double result, *spec_wgts;
     point_t pt;
 
+    if (!point)
+	return 0.0;
+
     /* The first order of business is to see if we have pre-computed
      * the spectral weights table for these parameters in a previous
      * invocation.  If not, then we compute them and save them for
@@ -725,28 +748,6 @@ bn_noise_mf(point_t point, double h_val, double lacunarity, double octaves, doub
 
     result = (bn_noise_perlin(pt) + offset) * spec_wgts[0];
 
-#if 0
-    /* TODO - the code below doesn't contribute to the result - what
-     * should it be doing? */
-    {
-	double weight = result;
-	double noise_signal;
-	double frequency = 1.0;
-	int i;
-
-	for (i=1; i < octaves; i++) {
-	    PSCALE(pt, lacunarity);
-
-	    V_MIN(weight, 1.0);
-
-	    noise_signal = (bn_noise_perlin(pt) + offset) * spec_wgts[i];
-
-	    noise_signal += fabs(bn_noise_perlin(pt)) * pow(frequency, -h_val);
-	    frequency *= lacunarity;
-	    PSCALE(pt, lacunarity);
-	}
-    }
-#endif
     return result;
 }
 

@@ -31,6 +31,7 @@
 #define BN_MULTIPOLY_H
 
 #include "common.h"
+#include "bu/magic.h"
 #include "bn/defines.h"
 
 __BEGIN_DECLS
@@ -41,6 +42,15 @@ typedef struct bn_multipoly {
     int dgrt;
     double **cf;
 }  bn_multipoly_t;
+
+#define BN_CK_MULTIPOLY(_p) BU_CKMAG(_p, BN_MULTIPOLY_MAGIC, "struct bn_multipoly")
+
+BN_EXPORT extern struct bn_multipoly *bn_multipoly_new(int dgrs, int dgrt);
+BN_EXPORT extern void bn_multipoly_free(struct bn_multipoly *p);
+BN_EXPORT extern struct bn_multipoly *bn_multipoly_grow(struct bn_multipoly *P, int dgrs, int dgrt);
+BN_EXPORT extern struct bn_multipoly *bn_multipoly_set(struct bn_multipoly *P, int s, int t, double val);
+BN_EXPORT extern struct bn_multipoly *bn_multipoly_add(const struct bn_multipoly *p1, const struct bn_multipoly *p2);
+BN_EXPORT extern struct bn_multipoly *bn_multipoly_mul(const struct bn_multipoly *p1, const struct bn_multipoly *p2);
 
 __END_DECLS
 

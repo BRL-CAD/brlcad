@@ -12,10 +12,10 @@
       ".hpp",
       ".hxx"
     ],
-    "reviewed_files": 198,
-    "pending_files": 3315,
-    "last_updated": "2026-09-18T03:58:47Z",
-    "total_issues": 118
+    "reviewed_files": 209,
+    "pending_files": 3284,
+    "last_updated": "2026-09-18T05:00:00Z",
+    "total_issues": 140
   },
   "files": [
     {
@@ -15588,18 +15588,22 @@
       "path": "src/libbn/anim.c",
       "subsystem": "src/libbn",
       "lines": 818,
-      "status": "PENDING",
-      "reviewed_at": null,
-      "issues_count": 0,
-      "issue_ids": []
+      "status": "REVIEWED",
+      "reviewed_at": "2026-09-18T05:00:00Z",
+      "issues_count": 3,
+      "issue_ids": [
+        "SEC-0119",
+        "SEC-0120",
+        "SEC-0121"
+      ]
     },
     {
       "id": 1558,
       "path": "src/libbn/bn_init.cpp",
       "subsystem": "src/libbn",
       "lines": 78,
-      "status": "PENDING",
-      "reviewed_at": null,
+      "status": "REVIEWED",
+      "reviewed_at": "2026-09-18T05:00:00Z",
       "issues_count": 0,
       "issue_ids": []
     },
@@ -15608,18 +15612,20 @@
       "path": "src/libbn/complex.c",
       "subsystem": "src/libbn",
       "lines": 131,
-      "status": "PENDING",
-      "reviewed_at": null,
-      "issues_count": 0,
-      "issue_ids": []
+      "status": "REVIEWED",
+      "reviewed_at": "2026-09-18T05:00:00Z",
+      "issues_count": 1,
+      "issue_ids": [
+        "SEC-0122"
+      ]
     },
     {
       "id": 1560,
       "path": "src/libbn/globals.c",
       "subsystem": "src/libbn",
       "lines": 52,
-      "status": "PENDING",
-      "reviewed_at": null,
+      "status": "REVIEWED",
+      "reviewed_at": "2026-09-18T05:00:00Z",
       "issues_count": 0,
       "issue_ids": []
     },
@@ -15628,70 +15634,95 @@
       "path": "src/libbn/mat.c",
       "subsystem": "src/libbn",
       "lines": 1572,
-      "status": "PENDING",
-      "reviewed_at": null,
-      "issues_count": 0,
-      "issue_ids": []
+      "status": "REVIEWED",
+      "reviewed_at": "2026-09-18T05:00:00Z",
+      "issues_count": 5,
+      "issue_ids": [
+        "SEC-0123",
+        "SEC-0124",
+        "SEC-0125",
+        "SEC-0126",
+        "SEC-0127"
+      ]
     },
     {
       "id": 1562,
       "path": "src/libbn/msr.c",
       "subsystem": "src/libbn",
       "lines": 243,
-      "status": "PENDING",
-      "reviewed_at": null,
-      "issues_count": 0,
-      "issue_ids": []
+      "status": "REVIEWED",
+      "reviewed_at": "2026-09-18T05:00:00Z",
+      "issues_count": 1,
+      "issue_ids": [
+        "SEC-0128"
+      ]
     },
     {
       "id": 1563,
       "path": "src/libbn/mt19937ar.c",
       "subsystem": "src/libbn",
       "lines": 216,
-      "status": "PENDING",
-      "reviewed_at": null,
-      "issues_count": 0,
-      "issue_ids": []
+      "status": "REVIEWED",
+      "reviewed_at": "2026-09-18T05:00:00Z",
+      "issues_count": 1,
+      "issue_ids": [
+        "SEC-0129"
+      ]
     },
     {
       "id": 1564,
       "path": "src/libbn/multipoly.c",
       "subsystem": "src/libbn",
       "lines": 166,
-      "status": "PENDING",
-      "reviewed_at": null,
-      "issues_count": 0,
-      "issue_ids": []
+      "status": "REVIEWED",
+      "reviewed_at": "2026-09-18T05:00:00Z",
+      "issues_count": 5,
+      "issue_ids": [
+        "SEC-0130",
+        "SEC-0131",
+        "SEC-0132",
+        "SEC-0133",
+        "SEC-0134"
+      ]
     },
     {
       "id": 1565,
       "path": "src/libbn/noise.c",
       "subsystem": "src/libbn",
       "lines": 762,
-      "status": "PENDING",
-      "reviewed_at": null,
-      "issues_count": 0,
-      "issue_ids": []
+      "status": "REVIEWED",
+      "reviewed_at": "2026-09-18T05:00:00Z",
+      "issues_count": 2,
+      "issue_ids": [
+        "SEC-0135",
+        "SEC-0136"
+      ]
     },
     {
       "id": 1566,
       "path": "src/libbn/numgen.c",
       "subsystem": "src/libbn",
       "lines": 205,
-      "status": "PENDING",
-      "reviewed_at": null,
-      "issues_count": 0,
-      "issue_ids": []
+      "status": "REVIEWED",
+      "reviewed_at": "2026-09-18T05:00:00Z",
+      "issues_count": 1,
+      "issue_ids": [
+        "SEC-0137"
+      ]
     },
     {
       "id": 1567,
       "path": "src/libbn/poly.c",
       "subsystem": "src/libbn",
       "lines": 498,
-      "status": "PENDING",
-      "reviewed_at": null,
-      "issues_count": 0,
-      "issue_ids": []
+      "status": "REVIEWED",
+      "reviewed_at": "2026-09-18T05:00:00Z",
+      "issues_count": 3,
+      "issue_ids": [
+        "SEC-0138",
+        "SEC-0139",
+        "SEC-0140"
+      ]
     },
     {
       "id": 1568,

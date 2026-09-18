@@ -32,10 +32,13 @@ extern double hypot(double x, double y);
 #endif
 
 void
-bn_cx_div(register bn_complex_t *ap, register const bn_complex_t *bp)
+bn_cx_div(bn_complex_t *ap, const bn_complex_t *bp)
 {
-    register fastf_t r, s;
-    register fastf_t ap__re;
+    fastf_t r, s;
+    fastf_t ap__re;
+
+    if (!ap || !bp)
+	return;
 
     /* Note: classical formula may cause unnecessary overflow */
     ap__re = ap->re;
@@ -68,8 +71,14 @@ err:
 void
 bn_cx_sqrt(bn_complex_t *op, const bn_complex_t *ip)
 {
-    const fastf_t re = ip->re;
-    const fastf_t im = ip->im;
+    fastf_t re;
+    fastf_t im;
+
+    if (!op || !ip)
+	return;
+
+    re = ip->re;
+    im = ip->im;
 
     /* special cases are not necessary; they are here for speed */
     if (ZERO(re)) {

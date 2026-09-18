@@ -38,6 +38,9 @@ anim_v_permute(mat_t m)
     int i;
     fastf_t store;
 
+    if (!m)
+	return;
+
     for (i=0; i<9; i+=4) {
 	store = m[i];
 	m[i] = -m[i+1];
@@ -52,6 +55,9 @@ anim_v_unpermute(mat_t m)
 {
     int i;
     fastf_t store;
+
+    if (!m)
+	return;
 
     for (i=0; i<9; i+=4) {
 	store = m[i+2];
@@ -71,6 +77,9 @@ anim_tran(mat_t m)
     int src[6] = { 1, 2, 3, 6, 7, 11 };
     int dst[6] = { 4, 8, 12, 9, 13, 14};
 
+    if (!m)
+	return;
+
     for (i=0; i<6; i++) {
 	store = m[dst[i]];
 	m[dst[i]] = m[src[i]];
@@ -89,6 +98,9 @@ anim_mat2zyx(const mat_t viewrot, vect_t angle)
     int i, return_value, id_x, id_z;
     fastf_t sin_x, sin_z, cos_x, cos_z, big_x, big_z;
     static fastf_t previous[3];
+
+    if (!viewrot || !angle)
+	return ERROR2;
 
     if (ZERO(viewrot[1]) && ZERO(viewrot[0])) {
 	return_value = ERROR1;
@@ -150,6 +162,9 @@ anim_mat2ypr(mat_t viewrot, vect_t angle)
     fastf_t sin_y, sin_r, cos_y, cos_r, big_y, big_r;
     static fastf_t prev_angle[3];
 
+    if (!viewrot || !angle)
+	return ERROR2;
+
     if (ZERO(viewrot[9]) && ZERO(viewrot[10])) {
 	return_value = ERROR1;
 	angle[2] = 0.0;
@@ -209,25 +224,28 @@ anim_mat2quat(quat_t quat, const mat_t viewrot)
     fastf_t qdiff[4], square, mag1, mag2;
     static fastf_t prev_quat[4];
 
-    square = 0.25 * (1 + viewrot[0] + viewrot[5] + viewrot[10]);
-    if (!ZERO(square)) {
+    if (!quat || !viewrot)
+	return 0;
+
+    square = 0.25 * (1.0 + viewrot[0] + viewrot[5] + viewrot[10]);
+    if (square > SMALL_FASTF) {
 	quat[W] = sqrt(square);
-	quat[X] = 0.25 * (viewrot[9] - viewrot[6])/ quat[W];
-	quat[Y] = 0.25 * (viewrot[2] - viewrot[8])/ quat[W];
-	quat[Z] = 0.25 * (viewrot[4] - viewrot[1])/ quat[W];
+	quat[X] = 0.25 * (viewrot[9] - viewrot[6]) / quat[W];
+	quat[Y] = 0.25 * (viewrot[2] - viewrot[8]) / quat[W];
+	quat[Z] = 0.25 * (viewrot[4] - viewrot[1]) / quat[W];
     } else {
 	quat[W] = 0.0;
 	square = -0.5 * (viewrot[5] + viewrot[10]);
-	if (!ZERO(square)) {
+	if (square > SMALL_FASTF) {
 	    quat[X] = sqrt(square);
 	    quat[Y] = 0.5 * viewrot[4] / quat[X];
 	    quat[Z] = 0.5 * viewrot[8] / quat[X];
 	} else {
 	    quat[X] = 0.0;
-	    square = 0.5 * (1 - viewrot[10]);
-	    if (!ZERO(square)) {
+	    square = 0.5 * (1.0 - viewrot[10]);
+	    if (square > SMALL_FASTF) {
 		quat[Y] = sqrt(square);
-		quat[Z] = 0.5 * viewrot[9]/ quat[Y];
+		quat[Z] = 0.5 * viewrot[9] / quat[Y];
 	    } else {
 		quat[Y] = 0.0;
 		quat[Z] = 1.0;
@@ -376,17 +394,16 @@ anim_dy_p_r2mat(mat_t m, double y, double p, double r)
 void
 anim_dy_p_r2vmat(mat_t m, double yaw, double pch, double rll)
 {
+    fastf_t ryaw = yaw*DEG2RAD;
+    fastf_t rpch = pch*DEG2RAD;
+    fastf_t rrll = rll*DEG2RAD;
 
-    float ryaw = yaw*DEG2RAD;
-    float rpch = pch*DEG2RAD;
-    float rrll = rll*DEG2RAD;
-
-    float cos_y = cos(ryaw);
-    float sin_y = sin(ryaw);
-    float cos_p = cos(rpch);
-    float sin_p = sin(rpch);
-    float cos_r = cos(rrll);
-    float sin_r = sin(rrll);
+    fastf_t cos_y = cos(ryaw);
+    fastf_t sin_y = sin(ryaw);
+    fastf_t cos_p = cos(rpch);
+    fastf_t sin_p = sin(rpch);
+    fastf_t cos_r = cos(rrll);
+    fastf_t sin_r = sin(rrll);
 
     m[0] = -cos_y*sin_p*sin_r-sin_y*cos_r;
     m[1] = -sin_y*sin_p*sin_r+cos_y*cos_r;
@@ -397,10 +414,9 @@ anim_dy_p_r2vmat(mat_t m, double yaw, double pch, double rll)
     m[8] = cos_y*cos_p;
     m[9] = sin_y*cos_p;
     m[10]= sin_p;
-    m[3]=m[7]=m[11]=0;
-    m[12]=m[13]=m[14]=0;
-    m[15]=1;
-
+    m[3]=m[7]=m[11]=0.0;
+    m[12]=m[13]=m[14]=0.0;
+    m[15]=1.0;
 }
 
 
@@ -580,6 +596,9 @@ anim_dir2mat(mat_t m, const vect_t d, const vect_t d2b)
     fastf_t hypotenuse, sign;
     vect_t d2;
 
+    if (!m || !d || !d2b)
+	return;
+
     VMOVE(d2, d2b);
     sign = 1.0;
     hypotenuse = sqrt(d[0]*d[0]+d[1]*d[1]);
@@ -624,6 +643,9 @@ anim_dirn2mat(mat_t m, const vect_t dx2, const vect_t dn)
     vect_t temp;
     fastf_t hyp, sign, inv, mag;
     vect_t dx;
+
+    if (!m || !dx2 || !dn)
+	return;
 
     VMOVE(dx, dx2);
     mag = MAGNITUDE(dx);
@@ -692,6 +714,9 @@ anim_steer_mat(mat_t mat, vect_t point, int end)
     vect_t dir = VINIT_ZERO;
     static vect_t norm;
     static int state = ASM_EMPTY;
+
+    if (!mat || !point)
+	return 0;
 
     VMOVE(p1, p2);
     VMOVE(p2, p3);
@@ -768,6 +793,9 @@ anim_rotatez(fastf_t a, vect_t d)
 void
 anim_mat_print(FILE *fp, const mat_t m, int s_colon)
 {
+    if (!fp || !m)
+	return;
+
     bu_flog(fp, "%.10g %.10g %.10g %.10g\n", m[0], m[1], m[2], m[3]);
     bu_flog(fp, "%.10g %.10g %.10g %.10g\n", m[4], m[5], m[6], m[7]);
     bu_flog(fp, "%.10g %.10g %.10g %.10g\n", m[8], m[9], m[10], m[11]);
@@ -786,8 +814,19 @@ anim_mat_printf(
     const char *linestr,
     const char *endstr)
 {
-    char mystr[80];
-    snprintf(mystr, 80, "%s%s%s%s%%s", formstr, formstr, formstr, formstr);
+    char mystr[256];
+
+    if (!fp || !m)
+	return;
+
+    if (!formstr)
+	formstr = "%g ";
+    if (!linestr)
+	linestr = "\n";
+    if (!endstr)
+	endstr = "\n";
+
+    snprintf(mystr, sizeof(mystr), "%s%s%s%s%%s", formstr, formstr, formstr, formstr);
     bu_flog(fp, mystr, m[0], m[1], m[2], m[3], linestr);
     bu_flog(fp, mystr, m[4], m[5], m[6], m[7], linestr);
     bu_flog(fp, mystr, m[8], m[9], m[10], m[11], linestr);

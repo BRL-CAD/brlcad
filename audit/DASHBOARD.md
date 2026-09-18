@@ -1,22 +1,22 @@
 # BRL-CAD RMF/STIG Cat 1 Security Audit Dashboard
-**Last Updated:** 2026-09-18 03:59:09 UTC
+**Last Updated:** 2026-09-18 09:06:37 UTC
 
 ## Overall Progress
 - **Total C/C++ Files:** 3493
-- **Files Reviewed:** 198 (5.7%)
-- **Files Pending Review:** 3295
-- **Total Issues Identified:** 118
+- **Files Reviewed:** 209 (6.0%)
+- **Files Pending Review:** 3284
+- **Total Issues Identified:** 140
 
 ### Issues by Severity Potential
 | Severity Level | Count | Description |
 |:---:|:---:|:---|
-| **3 (High)** | 6 | Likely exploit or crash potential; widespread/library exposure |
-| **2 (Medium)** | 93 | Possible exploit or crash under specific circumstances |
-| **1 (Low)** | 19 | Localized / low-impact vulnerability |
+| **3 (High)** | 7 | Likely exploit or crash potential; widespread/library exposure |
+| **2 (Medium)** | 99 | Possible exploit or crash under specific circumstances |
+| **1 (Low)** | 34 | Localized / low-impact vulnerability |
 
 ### Issues by Verification Status
 - **Confirmed:** 0
-- **Fixed (Committed):** 117
+- **Fixed (Committed):** 139
 - **Pending Verification:** 1
 - **Disproven:** 0
 
@@ -85,7 +85,7 @@
 | `src/launcher` | 8 | 0 | 0.0% | 0 |
 | `src/libanalyze` | 40 | 0 | 0.0% | 0 |
 | `src/libbg` | 232 | 0 | 0.0% | 0 |
-| `src/libbn` | 41 | 0 | 0.0% | 0 |
+| `src/libbn` | 41 | 11 | 26.8% | 22 |
 | `src/libbrep` | 50 | 0 | 0.0% | 0 |
 | `src/libbu` | 176 | 176 | 100.0% | 101 |
 | `src/libbv` | 19 | 0 | 0.0% | 0 |
@@ -235,3 +235,25 @@
 | `SEC-0116` | **Sev 2** | Memory Management / Resource Leak | `src/libbu/tests/test_vls_incr_uniq.cpp:50-93` | `FIXED` | Memory leak of struct bu_vls name on exit; heap allocation leak of std::set on early exit; potential NULL pointer dereference in StrCmp. |
 | `SEC-0117` | **Sev 2** | Memory Access / Out-of-bounds Read | `src/libbu/tests/test_vls_simplify.c:56-85` | `FIXED` | Unguarded argv dereference before bu_setprogname, potential NULL pointer dereference in bu_log format string. |
 | `SEC-0118` | **Sev 1** | Buffer Overflow / Stack Vulnerability | `src/libbu/tests/test_vls_vprintf.c:55-175` | `FIXED` | Unbounded vsprintf into fixed 1024-byte stack buffer buffer[1024] created an unconstrained stack buffer overflow vulnerability; unchecked sscanf and unguarded argv. |
+| `SEC-0119` | **Sev 1** | Numerical Stability / NaN Generation | `src/libbn/anim.c:304-332` | `FIXED` | anim_mat2quat negative square root NaN generation caused by floating-point rounding when testing !ZERO(square); passed minute negative numbers into sqrt() resulting in NaN quaternion components. |
+| `SEC-0120` | **Sev 1** | Buffer Overflow | `src/libbn/anim.c:153-176` | `FIXED` | anim_mat_printf stack buffer overflow risk with fixed 128-byte character buffer when formatting 16 double-precision float values with custom prefix strings. |
+| `SEC-0121` | **Sev 2** | Null Pointer Dereference | `src/libbn/anim.c:180-680` | `FIXED` | Missing NULL pointer checks across anim_mat_print, anim_dir2mat, anim_dirn2mat, anim_steer_mat, anim_v_permute, anim_v_unpermute, anim_tran, anim_mat2zyx, and anim_mat2ypr. |
+| `SEC-0122` | **Sev 2** | Null Pointer Dereference | `src/libbn/complex.c:54-85` | `FIXED` | bn_cx_div and bn_cx_sqrt dereferenced destination and operand pointers without validating against NULL. |
+| `SEC-0123` | **Sev 1** | Stack Buffer Overflow | `src/libbn/mat.c:1544-1578` | `FIXED` | bn_opt_mat looped up to argc when argc > 15, writing into fixed 16-element stack array fastf_t mtmp[16], overflowing the stack frame on excess arguments. |
+| `SEC-0124` | **Sev 1** | Out-of-bounds Read | `src/libbn/mat.c:1500-1540` | `FIXED` | bn_opt_mat out-of-bounds read when checking trailing closing brace with bu_vls_addr(&str)[bu_vls_strlen(&str)-1] without verifying bu_vls_strlen > 0. |
+| `SEC-0125` | **Sev 1** | Buffer Overflow | `src/libbn/mat.c:80-140` | `FIXED` | bn_mat_print_guts wrote into fixed obuf array without checking remaining capacity against bu_vls length, leading to potential buffer overflow. |
+| `SEC-0126` | **Sev 1** | Concurrency Data Race / Logic Bug | `src/libbn/mat.c:1000-1060` | `FIXED` | bn_wrt_point_direc declared transformation matrices as static local variables, causing data corruption across concurrent raytracing threads, and had inverted translation vector origin_to_pt. |
+| `SEC-0127` | **Sev 2** | Division by Zero | `src/libbn/mat.c:1100-1200` | `FIXED` | persp_mat and deering_persp_mat performed division by near_plane, right-left, and bottom-top without checking for zero denominators. |
+| `SEC-0128` | **Sev 2** | Memory Access / Use-After-Free Prevention | `src/libbn/msr.c:120-135` | `FIXED` | bn_gauss_free lacked NULL pointer guard and failed to clear magic identifier before freeing heap structure. |
+| `SEC-0129` | **Sev 3** | Dead Code | `src/libbn/mt19937ar.c:170-257` | `FIXED` | Dead #if 0 code block with test main function embedded within shared library source file. |
+| `SEC-0130` | **Sev 1** | Heap Memory Corruption | `src/libbn/multipoly.c:80-101` | `FIXED` | bn_multipoly_grow realloc corruption passing outer pointer array P->cf instead of row array P->cf[i] with sizeof(double*) instead of sizeof(double), overwriting row pointers with pointer array address. |
+| `SEC-0131` | **Sev 1** | Out-of-bounds Access | `src/libbn/multipoly.c:80-101` | `FIXED` | bn_multipoly_grow failed to update P->dgrs and P->dgrt dimensions after growing, leaving stale dimensions that caused subsequent operations to access out of bounds or fail to allocate. |
+| `SEC-0132` | **Sev 1** | Out-of-bounds Read | `src/libbn/multipoly.c:120-132` | `FIXED` | bn_multipoly_add out-of-bounds read when polynomials had differing degrees, reading beyond allocated row bounds, and dimension calculation typo Max(p1->dgrt, p2->dgrs) instead of p2->dgrt. |
+| `SEC-0133` | **Sev 1** | Logic / Numerical Error | `src/libbn/multipoly.c:140-155` | `FIXED` | bn_multipoly_mul overwrote accumulated product terms using = instead of +=, destroying earlier polynomial term contributions sharing identical combined powers. |
+| `SEC-0134` | **Sev 1** | Resource Leak | `src/libbn/multipoly.c:70-75` | `FIXED` | Missing bn_multipoly_free function causing 100% memory leak of all 2D dynamically allocated bivariate polynomial matrices. |
+| `SEC-0135` | **Sev 2** | Null Pointer Dereference / Dead Code | `src/libbn/noise.c:248-430` | `FIXED` | Missing NULL pointer validation on point and result in bn_noise_perlin, bn_noise_vec, and spectral functions; 22 lines of dead #if 0 code in bn_noise_mf. |
+| `SEC-0136` | **Sev 1** | Out-of-bounds Access / Allocation Flaw | `src/libbn/noise.c:460-545` | `FIXED` | build_spec_tbl and find_spec_wgt allowed negative or zero octaves, leading to invalid memory allocation size (int)(octaves+1) <= 0 and out-of-bounds weight table indexing. |
+| `SEC-0137` | **Sev 1** | Resource Leak / Typo | `src/libbn/numgen.c:52-72` | `FIXED` | bn_numgen_create allocated generator on the heap before validating dim > 0 and seed < 0, leaking the allocated structure on early return; nperiodic typo in flag check. |
+| `SEC-0138` | **Sev 1** | Memory Corruption / Pointer Aliasing | `src/libbn/poly.c:50-168` | `FIXED` | In-place pointer aliasing in bn_poly_mul, bn_poly_add, and bn_poly_sub when destination pointer equaled one of the operand polynomials caused coefficients to be overwritten before being read. |
+| `SEC-0139` | **Sev 1** | Buffer Overflow / Unsigned Underflow | `src/libbn/poly.c:170-197` | `FIXED` | bn_poly_synthetic_division assigned -1 to unsigned size_t quo->dgr when divisor degree exceeded dividend degree, underflowing to SIZE_MAX and triggering an unbounded loop writing past the 7-element coefficient array. |
+| `SEC-0140` | **Sev 2** | Null Pointer Dereference | `src/libbn/poly.c:200-488` | `FIXED` | Missing NULL pointer checks in bn_poly_quadratic_roots, bn_poly_cubic_roots, bn_poly_quartic_roots, bn_pr_poly, and bn_pr_roots. |

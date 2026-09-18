@@ -52,11 +52,13 @@ typedef struct bn_num_s {
 bn_numgen
 bn_numgen_create(bn_numgen_t type, double seed, int dim)
 {
-    numgen *generator = (numgen *)bu_calloc(1, sizeof(struct bn_numgen_s), "bn_numgen generator state");
-    generator->type = type;
+    numgen *generator;
 
     if (dim > 0) return NULL; /* quell unused until we actually use it */
     if (seed < 0) return NULL; /* quell unused until we actually use it */
+
+    generator = (numgen *)bu_calloc(1, sizeof(numgen), "bn_numgen generator state");
+    generator->type = type;
 
     switch(type) {
 	case BN_NUMGEN_PRAND_MT1337:
@@ -71,7 +73,7 @@ bn_numgen_create(bn_numgen_t type, double seed, int dim)
     return generator;
 }
 
-bu_numgen_t
+bn_numgen_t
 bn_numgen_type(bn_numgen n)
 {
     numgen *g = NULL;
@@ -100,9 +102,9 @@ bn_numgen_periodic(bn_numgen ngen, int flag)
     numgen *g = NULL;
     if (!ngen) return -1;
     g = (numgen *)ngen;
-    if (flag == -1) return !g->nperoidic;
+    if (flag == -1) return !g->nperiodic;
     g->nperiodic = !flag;
-    return !g->nperoidic;
+    return !g->nperiodic;
 }
 
 void
@@ -138,6 +140,7 @@ bn_numgen_next_doubles(double *l, size_t cnt, bn_numgen ngen)
 	default:
 	    break;
     }
+    return -1;
 }
 
 size_t
@@ -168,7 +171,7 @@ bn_sph_pnts(point_t *pnts, size_t cnt, bn_numgen n)
 
 	    /* Get our next two numbers */
 	    if(bn_numgen_next_doubles((double *)p, 2, n) < 2) {
-		bu_log("Error - number generator could not generate 2 points when working on point %d, aborting!\n", i);
+		bu_log("Error - number generator could not generate 2 points when working on point %zu, aborting!\n", i);
 		return 0;
 	    }
 

@@ -57,8 +57,15 @@ bn_mat_print_guts(
     char *obuf,
     int len)
 {
-    register int i;
-    register char *cp;
+    int i;
+    char *cp;
+
+    if (!obuf || len <= 0)
+	return;
+
+    obuf[0] = '\0';
+    if (!title)
+	title = "";
 
     snprintf(obuf, len, "MATRIX %s:\n  ", title);
     cp = obuf + strlen(obuf);
@@ -66,17 +73,26 @@ bn_mat_print_guts(
 	bu_strlcat(obuf, "(Identity)", len);
     } else {
 	for (i = 0; i < 16; i++) {
-	    snprintf(cp, len - (cp - obuf), " %8.3f", m[i]);
+	    int remaining = len - (int)(cp - obuf);
+	    if (remaining <= 1)
+		break;
+	    snprintf(cp, remaining, " %8.3f", m[i]);
 	    cp += strlen(cp);
+	    remaining = len - (int)(cp - obuf);
 	    if (i == 15) {
 		break;
 	    } else if ((i & 3) == 3) {
-		*cp++ = '\n';
-		*cp++ = ' ';
-		*cp++ = ' ';
+		if (remaining > 3) {
+		    *cp++ = '\n';
+		    *cp++ = ' ';
+		    *cp++ = ' ';
+		    *cp = '\0';
+		} else {
+		    break;
+		}
 	    }
 	}
-	*cp++ = '\0';
+	obuf[len - 1] = '\0';
     }
 }
 
@@ -705,16 +721,6 @@ bn_lseg3_lseg3_parallel(const point_t sg1pt1, const point_t sg1pt2,
 	    e_rr[i][1] = e_dif[i][Z] / e_dif[i][X];
 	    e_sc[i][1] = 0;
 	}
-	if ((e_dif_a[i][X] < dist) && (e_dif_a[i][Z] > dist)) {
-	    e_sc[i][1] = 1;
-	} else if ((e_dif_a[i][X] > dist) && (e_dif_a[i][Z] < dist)) {
-	    e_sc[i][1] = 2;
-	} else if ((e_dif_a[i][X] < dist) && (e_dif_a[i][Z] < dist)) {
-	    e_sc[i][1] = 3;
-	} else {
-	    e_rr[i][1] = e_dif[i][Z] / e_dif[i][X];
-	    e_sc[i][1] = 0;
-	}
 	if ((e_dif_a[i][Y] < dist) && (e_dif_a[i][Z] > dist)) {
 	    e_sc[i][2] = 1;
 	} else if ((e_dif_a[i][Y] > dist) && (e_dif_a[i][Z] < dist)) {
@@ -1277,10 +1283,13 @@ bn_mat_is_non_unif(const mat_t m)
 void
 bn_wrt_point_direc(mat_t out, const mat_t change, const mat_t in, const point_t point, const vect_t direc, const struct bn_tol *tol)
 {
-    static mat_t t1;
-    static mat_t pt_to_origin, origin_to_pt;
-    static mat_t d_to_zaxis, zaxis_to_d;
-    static vect_t zaxis;
+    mat_t t1;
+    mat_t pt_to_origin, origin_to_pt;
+    mat_t d_to_zaxis, zaxis_to_d;
+    vect_t zaxis;
+
+    if (!out || !change || !in || !point || !direc)
+	return;
 
     /* build "point to origin" matrix */
     MAT_IDN(pt_to_origin);
@@ -1288,7 +1297,7 @@ bn_wrt_point_direc(mat_t out, const mat_t change, const mat_t in, const point_t 
 
     /* build "origin to point" matrix */
     MAT_IDN(origin_to_pt);
-    MAT_DELTAS_VEC_NEG(origin_to_pt, point);
+    MAT_DELTAS_VEC(origin_to_pt, point);
 
     /* build "direc to zaxis" matrix */
     VSET(zaxis, 0.0, 0.0, 1.0);
@@ -1318,11 +1327,21 @@ void
 persp_mat(mat_t m, fastf_t fovy, fastf_t aspect, fastf_t near1, fastf_t far1, fastf_t backoff)
 {
     mat_t m2, tra;
+    fastf_t sin_fov2;
+
+    if (!m)
+	return;
 
     fovy *= DEG2RAD;
+    sin_fov2 = sin(fovy / 2.0);
 
     MAT_IDN(m2);
-    m2[5] = cos(fovy/2.0) / sin(fovy/2.0);
+    if (ZERO(sin_fov2) || ZERO(aspect) || EQUAL(far1, near1)) {
+	MAT_IDN(m);
+	return;
+    }
+
+    m2[5] = cos(fovy/2.0) / sin_fov2;
     m2[0] = m2[5]/aspect;
     m2[10] = (far1+near1) / (far1-near1);
     m2[11] = 2*far1*near1 / (far1-near1);       /* This should be negative */
@@ -1426,8 +1445,16 @@ deering_persp_mat(fastf_t *m, const fastf_t *l, const fastf_t *h, const fastf_t 
     vect_t diff;        /* H - L */
     vect_t sum; /* H + L */
 
+    if (!m || !l || !h || !eye)
+	return;
+
     VSUB2(diff, h, l);
     VADD2(sum, h, l);
+
+    if (ZERO(diff[X]) || ZERO(diff[Y]) || ZERO(diff[Z])) {
+	MAT_IDN(m);
+	return;
+    }
 
     m[0] = 2 * eye[Z] / diff[X];
     m[1] = 0;
@@ -1483,9 +1510,10 @@ bn_opt_mat(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 	}
 	bu_vls_sprintf(&mvls, "%s", str1);
 	bu_free(str1, "str1");
-	if (bu_vls_cstr(&mvls)[bu_vls_strlen(&mvls) - 1] == '}')
+	size_t mlen = bu_vls_strlen(&mvls);
+	if (mlen > 0 && bu_vls_cstr(&mvls)[mlen - 1] == '}')
 	    bu_vls_trunc(&mvls, -1);
-	if (bu_vls_cstr(&mvls)[0] == '{')
+	if (bu_vls_strlen(&mvls) > 0 && bu_vls_cstr(&mvls)[0] == '{')
 	    bu_vls_nibble(&mvls, 1);
 	str1 = bu_strdup(bu_vls_cstr(&mvls));
 	str1_len = bu_vls_strlen(&mvls);
@@ -1535,10 +1563,10 @@ bn_opt_mat(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
     }
 
     // The other option is 16 individual numbers, if we have that many args...
-    if (argc > 15) {
-	// We have at lest 16 elements - read see if they define a valid matrix
+    if (argc >= 16) {
+	// We have at least 16 elements - read to see if they define a valid matrix
 	size_t i = 0;
-	for (i = 0; i < argc; i++) {
+	for (i = 0; i < 16; i++) {
 	    fastf_t mi = 0.0;
 	    if (bu_opt_fastf_t(msg, 1, &argv[i], &mi) == -1) {
 		if (msg) {
@@ -1550,7 +1578,7 @@ bn_opt_mat(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 	}
 
 	// Have 16 valid numbers - we have a matrix.
-	if (i == 16 && m)
+	if (m)
 	    MAT_COPY(m, mtmp);
 
 	return 16;
