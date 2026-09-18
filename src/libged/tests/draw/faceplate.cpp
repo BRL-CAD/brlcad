@@ -237,7 +237,7 @@ main(int ac, char *av[]) {
     s_av[1] = "faceplate";
     s_av[2] = "params";
     s_av[3] = "fps";
-    s_av[4] = "0";
+    s_av[4] = "1";
     s_av[5] = NULL;
     ged_exec_view(gedp, 5, s_av);
     ret += img_cmp(5, gedp, lcache, false, clear_images, soft_fail, 0, "faceplate_clear", "fp");

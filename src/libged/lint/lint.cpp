@@ -326,7 +326,7 @@ techniques_parse(std::map<std::string, std::set<std::string>> *im_techniques, co
 }
 
 static
-int invalid_opt_read(struct bu_vls *UNUSED(msg), size_t argc, const char **argv, void *set_var)
+int invalid_opt_consume(struct bu_vls *UNUSED(msg), size_t argc, const char **argv, void *set_var)
 {
     struct invalid_shape_methods *m = (struct invalid_shape_methods *)set_var;
 
@@ -340,7 +340,7 @@ int invalid_opt_read(struct bu_vls *UNUSED(msg), size_t argc, const char **argv,
 	if (!strchr(argv[0], ':'))
 	    return 0;
 
-	return techniques_parse(m->im_techniques, argv[0]);
+	return techniques_parse(m->im_techniques, argv[0]) < 0 ? -1 : 0;
     }
 
     return 0;
@@ -389,7 +389,7 @@ static const struct bu_cmd_option lint_schema_options[] = {
     BU_CMD_FLAG("M", "missing", lint_args, missing_check, "Check missing references"),
     BU_CMD_OPTION_SHAPED("I", "invalid-shape", "invalid-shape", lint_args, invalid,
 	BU_CMD_VALUE_CUSTOM, "check", "Check invalid shapes, optionally selecting techniques",
-	BU_CMD_ARG_OPTIONAL, &invalid_opt_shape, invalid_opt_read),
+	BU_CMD_ARG_OPTIONAL, &invalid_opt_shape, invalid_opt_consume),
     BU_CMD_VLS_APPEND("F", "filter", lint_args, filter, "pattern",
 	"Apply search-style object filters"),
     BU_CMD_VLS_APPEND("j", "json-file", lint_args, ofile, "file",
@@ -494,7 +494,7 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_free(&args.filter);
 	bu_vls_free(&args.ofile);
 	bu_vls_free(&args.gname);
-	return BRLCAD_OK;
+	return operand_index < 0 ? BRLCAD_ERROR : BRLCAD_OK;
     }
 
     if (bu_vls_strlen(&args.gname)) {

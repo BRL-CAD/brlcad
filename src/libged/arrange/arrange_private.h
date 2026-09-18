@@ -24,6 +24,7 @@
 
 extern "C" {
 #include "ged.h"
+#include "bu/cmdschema.h"
 #include "vmath.h"
 }
 
@@ -150,6 +151,7 @@ struct CandidateSet {
     int stride = 1;
 };
 
+extern const struct bu_cmd_schema ged_arrange_nest_schema;
 int ged_arrange_nest(struct ged *gedp, int argc, const char *argv[]);
 
 bool rasterize_object(struct db_i *dbip, const std::string &name, double cell_size,

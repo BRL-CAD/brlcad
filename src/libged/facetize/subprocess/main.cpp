@@ -420,10 +420,11 @@ facetize_server_request(struct ged *gedp, struct db_i *result_dbip,
 
     tess_opts options;
     options.method_opts.methods = request.primitive.methods;
+    method_options_t *method_options = &options.method_opts;
     for (const std::string &option_string :
 	    request.primitive.method_options) {
-	const char *option = option_string.c_str();
-	if (_tess_method_opts(NULL, 1, &option, &options.method_opts) != 1)
+	if (tess_method_opts_from_str(NULL, option_string.c_str(),
+		&method_options) != 0)
 	    return BRLCAD_ERROR;
     }
     method_setup(&options);
@@ -1089,7 +1090,7 @@ static const struct bu_cmd_constraint facetize_process_constraints[] = {
 
 static const struct bu_cmd_operand facetize_process_operands[] = {
     BU_CMD_OPERAND("database", BU_CMD_VALUE_FILE, 1, 1, "Input .g database", "ged.file_path"),
-    BU_CMD_OPERAND("object", BU_CMD_VALUE_DB_OBJECT, 1, BU_CMD_COUNT_UNLIMITED,
+    BU_CMD_OPERAND("object", BU_CMD_VALUE_DB_OBJECT, 0, BU_CMD_COUNT_UNLIMITED,
 	"Objects to tessellate", "ged.db_object"),
     BU_CMD_OPERAND_NULL
 };

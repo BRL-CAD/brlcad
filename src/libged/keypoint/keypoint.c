@@ -91,10 +91,13 @@ ged_keypoint_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
+static const struct bu_cmd_arg_shape keypoint_vector3_shape =
+    BU_CMD_ARG_SHAPE(BU_CMD_ARG_SHAPE_VECTOR3, 1, 3,
+	"packed or three-component XYZ point");
 static const struct bu_cmd_operand keypoint_schema_operands[] = {
     BU_CMD_OPERAND_SHAPED("point", BU_CMD_VALUE_VECTOR, 0, 3, NULL,
 	"Packed point or three XYZ coordinates", "ged.vector_group",
-	&bu_cmd_vector3_arg_shape),
+	&keypoint_vector3_shape),
     BU_CMD_OPERAND_NULL
 };
 GED_DEFINE_NATIVE_DISCRETE_COUNT_VALIDATOR(keypoint, 0, 1, 3)

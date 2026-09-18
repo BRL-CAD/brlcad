@@ -95,6 +95,7 @@ extern int ged_bot_smooth_core(struct ged *gedp, int argc, const char **argv);
 extern const struct bu_cmd_schema ged_bot_smooth_schema;
 extern const struct bu_cmd_schema ged_bot_smooth_subcommand_schema;
 extern int ged_bot_split_core(struct ged *gedp, int argc, const char **argv);
+extern const struct bu_cmd_schema ged_bot_split_schema;
 extern int _ged_bot_split_object(struct ged *gedp, const char *object_name,
 	const char *group_name, struct bu_vls *output_names,
 	struct bu_vls *errors);

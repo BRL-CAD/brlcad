@@ -48,10 +48,48 @@
 extern fastf_t brep_est_avg_curve_len(struct rt_brep_internal *bi);
 extern void createDListSolid(struct bv_scene_obj *sp);
 
+/* Prefer the unambiguous full-path syntax, while retaining support for
+ * display-list entries and callers using the historical raw spelling. */
+static int
+dl_path_decode(struct db_full_path *path, struct db_i *dbip, const char *name)
+{
+    if (!path || !dbip || !name)
+	return -1;
+
+    db_full_path_init(path);
+    if (db_full_path_decode(path, dbip, name) == DB_FULL_PATH_OK)
+	return 0;
+    db_free_full_path(path);
+
+    struct db_full_path legacy = DB_FULL_PATH_INIT_ZERO;
+    if (db_string_to_path(&legacy, dbip, name) == 0) {
+	*path = legacy;
+	return 0;
+    }
+    db_free_full_path(&legacy);
+    db_full_path_init(path);
+    return -1;
+}
+
+
+static struct directory *
+dl_lookup_exact(struct db_i *dbip, const char *name)
+{
+    struct directory *dp;
+    if (!dbip || !name || !name[0])
+	return RT_DIR_NULL;
+
+    FOR_ALL_DIRECTORY_START(dp, dbip)
+	if (BU_STR_EQUAL(dp->d_namep, name))
+	    return dp;
+    FOR_ALL_DIRECTORY_END;
+    return RT_DIR_NULL;
+}
+
 static struct display_list *
 dl_add_to_display(struct bu_list *hdlp, struct db_i *dbip,
-		  const char *name, int check_existing, struct display_list *known_existing,
-		  int *created)
+                  const char *name, int check_existing, struct display_list *known_existing,
+                  int *created)
 {
     struct directory *dp = NULL;
     struct display_list *gdlp = NULL;
@@ -59,13 +97,22 @@ dl_add_to_display(struct bu_list *hdlp, struct db_i *dbip,
     struct db_full_path namepath = DB_FULL_PATH_INIT_ZERO;
 
     if (created)
-	*created = 0;
+        *created = 0;
 
-    cp = strrchr(name, '/');
-    if (!cp)
-        cp = (char *)name;
-    else
-        ++cp;
+    if (db_full_path_decode(&namepath, dbip, name) == DB_FULL_PATH_OK) {
+        found_namepath = 1;
+        dp = DB_FULL_PATH_CUR_DIR(&namepath);
+    } else {
+        db_free_full_path(&namepath);
+        if ((dp = dl_lookup_exact(dbip, name)) != RT_DIR_NULL) {
+            db_full_path_init(&namepath);
+            db_add_node_to_full_path(&namepath, dp);
+            found_namepath = 1;
+        } else if (dl_path_decode(&namepath, dbip, name) == 0) {
+            found_namepath = 1;
+            dp = DB_FULL_PATH_CUR_DIR(&namepath);
+        }
+    }
 
     if (!found_namepath || dp == RT_DIR_NULL) {
         gdlp = GED_DISPLAY_LIST_NULL;
@@ -73,32 +120,22 @@ dl_add_to_display(struct bu_list *hdlp, struct db_i *dbip,
     }
 
     if (known_existing) {
-	gdlp = known_existing;
-	goto end;
+        gdlp = known_existing;
+        goto end;
     }
 
-    if (check_existing && db_string_to_path(&namepath, dbip, name) == 0)
-        found_namepath = 1;
-
-    /* Make sure name is not already in the list */
     gdlp = BU_LIST_NEXT(display_list, hdlp);
     while (check_existing && BU_LIST_NOT_HEAD(gdlp, hdlp)) {
         if (BU_STR_EQUAL(name, bu_vls_addr(&gdlp->dl_path)))
             goto end;
-
-	if (found_namepath) {
-            struct db_full_path gdlpath;
-
-            if (dl_path_decode(&gdlpath, dbip, bu_vls_addr(&gdlp->dl_path)) == 0) {
-                if (db_full_path_match_top(&gdlpath, &namepath)) {
-                    db_free_full_path(&gdlpath);
-                    goto end;
-                }
-
+        struct db_full_path gdlpath;
+        if (dl_path_decode(&gdlpath, dbip, bu_vls_addr(&gdlp->dl_path)) == 0) {
+            if (db_full_path_match_top(&gdlpath, &namepath)) {
                 db_free_full_path(&gdlpath);
+                goto end;
             }
+            db_free_full_path(&gdlpath);
         }
-
         gdlp = BU_LIST_PNEXT(display_list, gdlp);
     }
 
@@ -108,14 +145,14 @@ dl_add_to_display(struct bu_list *hdlp, struct db_i *dbip,
     BU_LIST_INIT(&gdlp->dl_head_scene_obj);
     gdlp->dl_dp = (void *)dp;
     bu_vls_init(&gdlp->dl_path);
-    bu_vls_printf(&gdlp->dl_path, "%s", name);
+    if (db_full_path_encode(&gdlp->dl_path, &namepath) != DB_FULL_PATH_OK)
+        bu_vls_printf(&gdlp->dl_path, "%s", name);
     if (created)
-	*created = 1;
+        *created = 1;
 
 end:
     if (found_namepath)
         db_free_full_path(&namepath);
-
     return gdlp;
 }
 
@@ -159,8 +196,8 @@ headsolid_split(struct ged *gedp, struct bv_scene_obj *sp, int newlen)
     (void)db_full_path_encode(&pathname, &bdata->s_fullpath);
     bdata->s_fullpath.fp_len = savelen;
 
-    new_gdlp = _ged_dl_addToDisplay(gedp, pathname);
-    bu_free((void *)pathname, "headsolid_split pathname");
+    new_gdlp = _ged_dl_addToDisplay(gedp, bu_vls_cstr(&pathname));
+    bu_vls_free(&pathname);
 
     BU_LIST_DEQUEUE(&sp->l);
     BU_LIST_INSERT(&new_gdlp->dl_head_scene_obj, &sp->l);

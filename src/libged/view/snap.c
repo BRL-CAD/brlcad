@@ -68,7 +68,7 @@ static const struct bu_cmd_option ged_view_snap_options[] = {
     {"t", "tol", "tol", "number", "Set or report snapping tolerance scale factor",
 	BU_CMD_VALUE_NUMBER, offsetof(struct ged_view_snap_args, tolerance), NULL, NULL,
 	NULL, NULL, 0, 0, NULL, BU_CMD_ARG_OPTIONAL, NULL, NULL, NULL,
-	BU_CMD_VALUE_RANGE_NONE},
+	BU_CMD_VALUE_RANGE_NONE, BU_CMD_ARG_SHAPE_SCALAR},
     BU_CMD_FLAG("g", "grid", struct ged_view_snap_args, use_grid, "Snap to the view grid"),
     BU_CMD_FLAG("l", "lines", struct ged_view_snap_args, use_lines, "Snap to view lines"),
     BU_CMD_FLAG("o", "obj-keypt", struct ged_view_snap_args, use_object_keypoints,

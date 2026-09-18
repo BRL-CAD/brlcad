@@ -134,7 +134,7 @@ static const struct bu_cmd_option test_options[] = {
     {NULL, "list", "list", "[=json]", "List values, optionally as JSON",
 	BU_CMD_VALUE_CUSTOM, offsetof(struct test_args, list_mode), list_mode_parse,
 	NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_OPTIONAL,
-	&attached_only_shape, NULL, NULL, BU_CMD_VALUE_RANGE_NONE},
+	&attached_only_shape, NULL, NULL, BU_CMD_VALUE_RANGE_NONE, BU_CMD_ARG_SHAPE_SCALAR},
     BU_CMD_OPTION_NULL
 };
 
@@ -264,10 +264,10 @@ static const struct bu_cmd_schema invalid_rich_schema = {
 static const struct bu_cmd_option invalid_execution_options[] = {
     {"x", "custom", "custom", "value", "Missing custom parser",
 	BU_CMD_VALUE_CUSTOM, 0, NULL, NULL, NULL, NULL, 0, 0, NULL,
-	BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE},
+	BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE, BU_CMD_ARG_SHAPE_SCALAR},
     {"f", "flag-value", "flag-value", "value", "Flag with an argument",
 	BU_CMD_VALUE_FLAG, 0, NULL, NULL, NULL, NULL, 0, 0, NULL,
-	BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE},
+	BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE, BU_CMD_ARG_SHAPE_SCALAR},
     BU_CMD_OPTION_NULL
 };
 static const struct bu_cmd_operand invalid_execution_operands[] = {

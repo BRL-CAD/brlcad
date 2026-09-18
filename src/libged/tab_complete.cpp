@@ -1357,7 +1357,11 @@ ged_builtin_color_validate(struct ged *UNUSED(gedp), bu_cmd_value_t UNUSED(type)
 {
     if (BU_STR_EMPTY(token)) return GED_CMD_SEMANTIC_INCOMPLETE;
     struct bu_color color = BU_COLOR_INIT_ZERO;
-    return bu_color_from_str(&color, token) ? GED_CMD_SEMANTIC_VALID : GED_CMD_SEMANTIC_INVALID;
+    unsigned char rgb[3] = {0, 0, 0};
+    const char *components[] = {token};
+    return (bu_color_from_str(&color, token) ||
+        bu_rgb_from_argv(rgb, 1, components) == 1) ?
+        GED_CMD_SEMANTIC_VALID : GED_CMD_SEMANTIC_INVALID;
 }
 
 static ged_cmd_semantic_state_t
@@ -1468,9 +1472,16 @@ ged_builtin_force_all_path_complete_query(struct ged *gedp, const char *seed,
 }
 
 
+static unsigned int
+ged_builtin_provider_flags(ged_cmd_semantic_complete_query_func_t query)
+{
+    return query ? GED_CMD_PROVIDER_BOUNDED_QUERY : 0;
+}
+
+
 #define GED_BUILTIN_PROVIDER(_name, _type, _validate, _complete, _data, _query) \
     {_name, _validate, _complete, _data, _query, _type, \
-	(_query) ? GED_CMD_PROVIDER_BOUNDED_QUERY : 0}
+	ged_builtin_provider_flags(_query)}
 
 
 static void
@@ -1965,7 +1976,7 @@ ged_cmd_analysis_publish(struct ged_cmd_analysis *analysis)
 	"analysis string storage");
     for (const auto &entry : offsets)
 	bu_strlcpy(storage + entry.second, entry.first.c_str(),
-	    storage_size - entry.second);
+	    entry.first.size() + 1);
     auto stored_string = [&offsets, storage](const char *value) -> const char * {
 	if (!value)
 	    return NULL;
