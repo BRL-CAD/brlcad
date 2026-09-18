@@ -49,6 +49,9 @@
 
 struct StrCmp {
     bool operator()(const char *str1, const char *str2) const {
+	if (!str1 && !str2) return false;
+	if (!str1) return true;
+	if (!str2) return false;
 	return (bu_strcmp(str1, str2) < 0);
     }
 };
@@ -57,8 +60,11 @@ struct StrCmp {
 static int
 uniq_test(struct bu_vls *n, void *data)
 {
+    if (!n || !data)
+	return 0;
+
     std::set<const char *, StrCmp> *sset = (std::set<const char *, StrCmp> *)data;
-    if (sset->find(bu_vls_addr(n)) == sset->end())
+    if (sset->find(bu_vls_cstr(n)) == sset->end())
 	return 1;
     return 0;
 }
@@ -67,27 +73,28 @@ uniq_test(struct bu_vls *n, void *data)
 int
 main(int argc, char **argv)
 {
-    bu_setprogname(argv[0]);
+    if (argv && argv[0])
+	bu_setprogname(argv[0]);
+
+    /* Sanity check */
+    if (!argv || argc < 3)
+	bu_exit(1, "Usage: %s {initial} {expected}\n", argv ? argv[0] : "test_vls_incr_uniq");
 
     int ret = 1;
     struct bu_vls name = BU_VLS_INIT_ZERO;
-    std::set<const char *, StrCmp> *sset = new std::set<const char *, StrCmp>;
+    std::set<const char *, StrCmp> sset;
     const char *str1 = "test.r2";
-    sset->insert(str1);
-
-    /* Sanity check */
-    if (argc < 3)
-	bu_exit(1, "Usage: %s {initial} {expected}\n", argv[0]);
+    sset.insert(str1);
 
     bu_vls_sprintf(&name, "%s", argv[1]);
-    (void)bu_vls_incr(&name, NULL, NULL, &uniq_test, (void *)sset);
+    (void)bu_vls_incr(&name, NULL, NULL, &uniq_test, (void *)&sset);
 
-    if (BU_STR_EQUAL(bu_vls_addr(&name), argv[2]))
+    if (BU_STR_EQUAL(bu_vls_cstr(&name), argv[2]))
 	ret = 0;
 
-    bu_log("output: %s\n", bu_vls_addr(&name));
+    bu_log("output: %s\n", bu_vls_cstr(&name));
 
-    delete sset;
+    bu_vls_free(&name);
 
     return ret;
 }

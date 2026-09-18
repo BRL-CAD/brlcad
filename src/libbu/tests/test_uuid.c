@@ -36,8 +36,10 @@
 #include "common.h"
 
 #include <stdio.h>
+#include <string.h>
 
 #include "bu/app.h"
+#include "bu/log.h"
 #include "bu/uuid.h"
 #include "bu/str.h"
 #include "bu/exit.h"
@@ -53,7 +55,7 @@ main(int ac, char *av[])
 
     // Normally this file is part of bu_test, so only set this if it
     // looks like the program name is still unset.
-    if (bu_getprogname()[0] == '\0')
+    if (av && av[0] && bu_getprogname()[0] == '\0')
 	bu_setprogname(av[0]);
 
     if (ac > 1 && av)
@@ -61,14 +63,39 @@ main(int ac, char *av[])
 
     switch(test) {
 	case 0:
-	    (void)bu_uuid_encode(uuid, (uint8_t *)(uuidstr+1));
-	    uuidstr[0] = '{';
-	    uuidstr[sizeof(uuidstr)-2] = '}';
-	    uuidstr[sizeof(uuidstr)-1] = '\0';
+	    {
+		const char *expected = "{00112233-4455-6677-8899-AABBCCDDEEFF}";
+		uint8_t decoded[16] = {0};
 
-	    if (!bu_strcmp(uuidstr, "{00112233-4455-6677-8899-00AABBCCDDEEFF}"))
-		return 1;
-	    return 0;
+		if (bu_uuid_encode(uuid, (uint8_t *)(uuidstr+1)) != 0)
+		    return 1;
+		uuidstr[0] = '{';
+		uuidstr[sizeof(uuidstr)-2] = '}';
+		uuidstr[sizeof(uuidstr)-1] = '\0';
+
+		if (bu_strcmp(uuidstr, expected) != 0) {
+		    bu_log("ERROR: uuid_encode mismatch, got '%s', expected '%s'\n", uuidstr, expected);
+		    return 1;
+		}
+
+		/* Test decoding */
+		if (bu_uuid_decode(uuidstr, decoded) != 0 || memcmp(uuid, decoded, 16) != 0) {
+		    bu_log("ERROR: uuid_decode failed or data mismatch\n");
+		    return 1;
+		}
+
+		/* Test invalid / NULL string decode (must return non-zero) */
+		if (bu_uuid_decode(NULL, decoded) == 0) {
+		    bu_log("ERROR: uuid_decode succeeded unexpectedly on NULL input\n");
+		    return 1;
+		}
+		if (bu_uuid_decode("invalid-uuid-string", decoded) == 0) {
+		    bu_log("ERROR: uuid_decode succeeded unexpectedly on invalid input\n");
+		    return 1;
+		}
+
+		return 0;
+	    }
 	default:
 	    bu_exit(1, "ERROR: unrecognized test number\n");
     }

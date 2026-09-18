@@ -48,7 +48,8 @@
 int
 main(int UNUSED(argc), char **argv)
 {
-    bu_setprogname(argv[0]);
+    if (argv && argv[0])
+	bu_setprogname(argv[0]);
 
     const size_t thread_count = 16;
     const size_t reinit_rounds = 32;

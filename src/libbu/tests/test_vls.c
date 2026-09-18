@@ -92,6 +92,7 @@ test_bu_vls_vlsinit(void)
     retval = !compare_vls(actual_vls, &expected_vls);
 
     bu_vls_free(actual_vls);
+    bu_free(actual_vls, "actual_vls");
 
     return retval;
 }
@@ -138,11 +139,12 @@ static int
 test_bu_vls_strncpy(int argc, char *argv[])
 {
     char *expected_result_string;
-    char *actual_result_string;
+    const char *actual_result_string;
     int actual_result_len;
     char *string_orig;
     char *string_new;
     int n;
+    int retval;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (argc != 6) {
@@ -157,19 +159,20 @@ test_bu_vls_strncpy(int argc, char *argv[])
     bu_vls_strcpy(&vls, string_orig);
     bu_vls_strncpy(&vls, string_new, n);
 
-    actual_result_string = bu_vls_strdup(&vls);
+    actual_result_string = bu_vls_cstr(&vls);
     actual_result_len = bu_vls_strlen(&vls);
 
     printf("Result: %s\n", actual_result_string);
     printf("Result len: %d\n", actual_result_len);
 
-    bu_vls_free(&vls);
-
     /* These functions need to return sh-style return values where
      * non-zero is false and zero is true
      */
-    return !(bu_strcmp(actual_result_string, expected_result_string) == 0
+    retval = !(bu_strcmp(actual_result_string, expected_result_string) == 0
 	     && actual_result_len == n);
+
+    bu_vls_free(&vls);
+    return retval;
 }
 
 
@@ -196,6 +199,8 @@ test_bu_vls_strdup(int argc, char *argv[])
     bu_vls_free(&vls);
     printf("Actual strdup_string (after free): %s\n", set_actual_strdup_string);
     retval = retval && bu_strcmp(set_actual_strdup_string, set_expected_string) == 0;
+
+    bu_free(set_actual_strdup_string, "free strdup");
 
     /* These functions need to return sh-style return values where
      * non-zero is false and zero is true
@@ -237,7 +242,8 @@ test_bu_vls_trunc(int argc, char *argv[])
     char *in_string;
     int trunc_len;
     char *expected_out_string;
-    char *actual_out_string;
+    const char *actual_out_string;
+    int retval;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (argc != 5) {
@@ -250,17 +256,15 @@ test_bu_vls_trunc(int argc, char *argv[])
 
     bu_vls_strcpy(&vls, in_string);
     bu_vls_trunc(&vls, trunc_len);
-    actual_out_string = bu_vls_strdup(&vls);
+    actual_out_string = bu_vls_cstr(&vls);
 
     printf("trunc_len: %d\n", trunc_len);
     printf("Result: %s\n", actual_out_string);
 
+    retval = !(bu_strcmp(actual_out_string, expected_out_string) == 0);
     bu_vls_free(&vls);
 
-    /* These functions need to return sh-style return values where
-     * non-zero is false and zero is true
-     */
-    return !(bu_strcmp(actual_out_string, expected_out_string) == 0);
+    return retval;
 }
 
 
@@ -270,7 +274,8 @@ test_bu_vls_nibble(int argc, char *argv[])
     char *in_string;
     int nibble_len;
     char *expected_out_string;
-    char *actual_out_string;
+    const char *actual_out_string;
+    int retval;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (argc != 5) {
@@ -283,16 +288,14 @@ test_bu_vls_nibble(int argc, char *argv[])
 
     bu_vls_strcpy(&vls, in_string);
     bu_vls_nibble(&vls, nibble_len);
-    actual_out_string = bu_vls_strdup(&vls);
+    actual_out_string = bu_vls_cstr(&vls);
 
     printf("Result: %s\n", actual_out_string);
 
+    retval = !(bu_strcmp(actual_out_string, expected_out_string) == 0);
     bu_vls_free(&vls);
 
-    /* These functions need to return sh-style return values where
-     * non-zero is false and zero is true
-     */
-    return !(bu_strcmp(actual_out_string, expected_out_string) == 0);
+    return retval;
 }
 
 
@@ -302,7 +305,8 @@ test_bu_vls_strcat(int argc, char *argv[])
     char *in_string_1;
     char *in_string_2;
     char *expected_out_string;
-    char *actual_out_string;
+    const char *actual_out_string;
+    int retval;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (argc!= 5) {
@@ -315,16 +319,14 @@ test_bu_vls_strcat(int argc, char *argv[])
 
     bu_vls_strcpy(&vls, in_string_1);
     bu_vls_strcat(&vls, in_string_2);
-    actual_out_string = bu_vls_strdup(&vls);
+    actual_out_string = bu_vls_cstr(&vls);
 
     printf("Result: %s\n", actual_out_string);
 
+    retval = !(bu_strcmp(actual_out_string, expected_out_string) == 0);
     bu_vls_free(&vls);
 
-    /* These functions need to return sh-style return values where
-     * non-zero is false and zero is true
-     */
-    return !(bu_strcmp(actual_out_string, expected_out_string) == 0);
+    return retval;
 }
 
 
@@ -370,6 +372,7 @@ test_bu_vls_strncat(int argc, char *argv[])
     }
 
     bu_vls_free(actual_vls);
+    bu_free(actual_vls, "actual_vls");
 
     return test_results;
 }
@@ -381,7 +384,8 @@ test_bu_vls_vlscat(int argc, char *argv[])
     char *in_string_1;
     char *in_string_2;
     char *expected_out_string;
-    char *actual_out_string;
+    const char *actual_out_string;
+    int retval;
     struct bu_vls vls_1 = BU_VLS_INIT_ZERO;
     struct bu_vls vls_2 = BU_VLS_INIT_ZERO;
 
@@ -396,17 +400,16 @@ test_bu_vls_vlscat(int argc, char *argv[])
     bu_vls_strcpy(&vls_1, in_string_1);
     bu_vls_strcpy(&vls_2, in_string_2);
     bu_vls_vlscat(&vls_1, &vls_2);
-    actual_out_string = bu_vls_strdup(&vls_1);
+    actual_out_string = bu_vls_cstr(&vls_1);
 
     printf("Result: %s\n", actual_out_string);
+
+    retval = !(bu_strcmp(actual_out_string, expected_out_string) == 0);
 
     bu_vls_free(&vls_1);
     bu_vls_free(&vls_2);
 
-    /* These functions need to return sh-style return values where
-     * non-zero is false and zero is true
-     */
-    return !(bu_strcmp(actual_out_string, expected_out_string) == 0);
+    return retval;
 }
 
 
@@ -489,40 +492,40 @@ test_bu_vls_strncmp(int argc, char *argv[])
 static int
 test_bu_vls_from_argv(int argc, char *argv[])
 {
-    char *expected_result;
-    char *actual_result;
+    const char *expected_result;
+    const char *actual_result;
+    int ret;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-    if (argc < 4) {
-	bu_exit(1, "ERROR: input format is strings expected_result [%s]\n", argv[0]);
+    if (!argv || argc < 4) {
+	bu_exit(1, "ERROR: input format is strings expected_result [%s]\n", argv ? argv[0] : "test_bu_vls");
     }
 
     expected_result = argv[argc-1];
 
     bu_vls_from_argv(&vls, argc-3, (const char **)argv+2);
-    actual_result = bu_vls_strdup(&vls);
+    actual_result = bu_vls_cstr(&vls);
 
     printf("Result: %s\n", actual_result);
 
+    ret = (bu_strcmp(actual_result, expected_result) != 0);
     bu_vls_free(&vls);
 
-    /* These functions need to return sh-style return values where
-     * non-zero is false and zero is true.
-     */
-    return !(bu_strcmp(actual_result, expected_result) == 0);
+    return ret;
 }
 
 
 static int
 test_bu_vls_trimspace(int argc, char *argv[])
 {
-    char *in_string;
-    char *expected_result;
-    char *actual_result;
+    const char *in_string;
+    const char *expected_result;
+    const char *actual_result;
+    int ret;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-    if (argc != 4) {
-	bu_exit(1, "ERROR: input format is string expected_result [%s]\n", argv[0]);
+    if (!argv || argc != 4) {
+	bu_exit(1, "ERROR: input format is string expected_result [%s]\n", argv ? argv[0] : "test_bu_vls");
     }
 
     in_string = argv[2];
@@ -531,62 +534,62 @@ test_bu_vls_trimspace(int argc, char *argv[])
     bu_vls_strcpy(&vls, in_string);
     bu_vls_trimspace(&vls);
 
-    actual_result = bu_vls_strdup(&vls);
+    actual_result = bu_vls_cstr(&vls);
 
     printf("Result: %s\n", actual_result);
 
+    ret = (bu_strcmp(actual_result, expected_result) != 0);
     bu_vls_free(&vls);
 
-    /* These functions need to return sh-style return values where
-     * non-zero is false and zero is true.
-     */
-    return !(bu_strcmp(actual_result, expected_result) == 0);
+    return ret;
 }
 
 
 static int
 test_bu_vls_spaces(int argc, char *argv[])
 {
-    char *in_string;
-    int num_spaces;
-    char *expected_result;
-    char *actual_result;
+    const char *in_string;
+    int num_spaces = 0;
+    const char *expected_result;
+    const char *actual_result;
+    int ret;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-    if (argc != 5) {
-	bu_exit(1, "ERROR: input format is string num_spaces expected_result [%s]\n", argv[0]);
+    if (!argv || argc != 5) {
+	bu_exit(1, "ERROR: input format is string num_spaces expected_result [%s]\n", argv ? argv[0] : "test_bu_vls");
     }
 
     in_string = argv[2];
-    sscanf(argv[3], "%d", &num_spaces);
+    if (sscanf(argv[3], "%d", &num_spaces) != 1 || num_spaces < 0) {
+	bu_exit(1, "ERROR: invalid num_spaces parameter\n");
+    }
     expected_result = argv[4];
 
     bu_vls_strcpy(&vls, in_string);
     bu_vls_spaces(&vls, num_spaces);
 
-    actual_result = bu_vls_strdup(&vls);
+    actual_result = bu_vls_cstr(&vls);
 
     printf("Result: %s\n", actual_result);
 
+    ret = (bu_strcmp(actual_result, expected_result) != 0);
     bu_vls_free(&vls);
 
-    /* These functions need to return sh-style return values where
-     * non-zero is false and zero is true.
-     */
-    return !(bu_strcmp(actual_result, expected_result) == 0);
+    return ret;
 }
 
 
 static int
 test_bu_vls_detab(int argc, char *argv[])
 {
-    char *in_string;
-    char *expected_result;
-    char *actual_result;
+    const char *in_string;
+    const char *expected_result;
+    const char *actual_result;
+    int ret;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-    if (argc != 4) {
-	bu_exit(1, "ERROR: input format is string expected_result [%s]\n", argv[0]);
+    if (!argv || argc != 4) {
+	bu_exit(1, "ERROR: input format is string expected_result [%s]\n", argv ? argv[0] : "test_bu_vls");
     }
 
     in_string = argv[2];
@@ -595,77 +598,80 @@ test_bu_vls_detab(int argc, char *argv[])
     bu_vls_strcpy(&vls, in_string);
     bu_vls_detab(&vls);
 
-    actual_result = bu_vls_strdup(&vls);
+    actual_result = bu_vls_cstr(&vls);
 
     printf("Result: %s\n", actual_result);
 
+    ret = (bu_strcmp(actual_result, expected_result) != 0);
     bu_vls_free(&vls);
 
-    /* These functions need to return sh-style return values where
-     * non-zero is false and zero is true.
-     */
-    return !(bu_strcmp(actual_result, expected_result) == 0);
+    return ret;
 }
 
 
 static int
 test_bu_vls_prepend(int argc, char *argv[])
 {
-    char *in_string;
-    char *prepend_string;
-    char *expected_result;
-    char *actual_result;
+    const char *in_string;
+    const char *prepend_string;
+    const char *expected_result;
+    const char *actual_result;
+    int ret;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-    if (argc != 5) {
-	bu_exit(1, "ERROR: input format is string string_to_prepend expected_result[%s]\n", argv[0]);
+    if (!argv || argc != 5) {
+	bu_exit(1, "ERROR: input format is string string_to_prepend expected_result[%s]\n", argv ? argv[0] : "test_bu_vls");
     }
 
     in_string = argv[2];
-    prepend_string=  argv[3];
+    prepend_string = argv[3];
     expected_result = argv[4];
 
     bu_vls_strcpy(&vls, in_string);
     bu_vls_prepend(&vls, prepend_string);
 
-    actual_result = bu_vls_strdup(&vls);
+    actual_result = bu_vls_cstr(&vls);
 
     printf("Result: %s\n", actual_result);
 
+    ret = (bu_strcmp(actual_result, expected_result) != 0);
     bu_vls_free(&vls);
 
-    /* These functions need to return sh-style return values where
-     * non-zero is false and zero is true.
-     */
-    return !(bu_strcmp(actual_result, expected_result) == 0);
+    return ret;
 }
 
 
 static int
 test_bu_vls_substr(int argc, char **argv)
 {
-    /*         argv[1]    argv[2]      argv[3]        argv[4]      argv[5]
-     * inputs: <func num> <src string> <substr index> <substr len> <expected string>
-     */
-    const char *src_string      = argv[2];
-    size_t begin                = (size_t)atoi(argv[3]);
-    size_t slen                 = (size_t)atoi(argv[4]);
-    const char *expected_result = argv[5];
+    const char *src_string;
+    size_t begin;
+    size_t slen;
+    const char *expected_result;
 
     struct bu_vls vsrc          = BU_VLS_INIT_ZERO;
     struct bu_vls vsubstr       = BU_VLS_INIT_ZERO;
     int test_results            = BRLCAD_ERROR;
+
+    if (!argv || argc < 5) {
+	bu_exit(1, "ERROR: input format is <func num> <source string> <begin index> <num chars> [expected result string] [%s]\n", argv ? argv[0] : "test_bu_vls");
+    }
 
     /* CMake won't pass empty strings as test parameters properly;
      * assume expected_result is supposed to be empty.
      */
     if (argc == 5) {
 	expected_result = "";
-	argc++;
+    } else {
+	expected_result = argv[5];
     }
 
-    if (argc != 6)
+    if (argc > 6)
 	bu_exit(1, "ERROR: input format is <func num> <source string> <begin index> <num chars> <expected result string> [%s]\n", argv[0]);
+
+    src_string = argv[2];
+    begin = (size_t)atoi(argv[3]);
+    slen = (size_t)atoi(argv[4]);
 
     bu_vls_strcpy(&vsrc, src_string);
 
@@ -696,14 +702,15 @@ main(int argc, char *argv[])
 
     // Normally this file is part of bu_test, so only set this if it
     // looks like the program name is still unset.
-    if (bu_getprogname()[0] == '\0')
+    if (argv && argv[0] && bu_getprogname()[0] == '\0')
 	bu_setprogname(argv[0]);
 
-    if (argc < 2) {
-	bu_exit(1, "Usage: %s {function_num} {args...}\n", argv[0]);
+    if (!argv || argc < 2) {
+	bu_exit(1, "Usage: %s {function_num} {args...}\n", argv ? argv[0] : "test_bu_vls");
     }
 
-    sscanf(argv[1], "%d", &function_num);
+    if (sscanf(argv[1], "%d", &function_num) != 1)
+	bu_exit(1, "Invalid function number specified\n");
     if (function_num < 0 || function_num > INT_MAX - 1)
 	bu_exit(1, "Invalid function number specified\n");
 

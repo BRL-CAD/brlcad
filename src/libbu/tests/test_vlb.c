@@ -129,7 +129,7 @@ test_vlb_api(void)
 int
 main(int UNUSED(argc), char *argv[])
 {
-    if (bu_getprogname()[0] == '\0') {
+    if (argv && argv[0] && bu_getprogname()[0] == '\0') {
 	bu_setprogname(argv[0]);
     }
 

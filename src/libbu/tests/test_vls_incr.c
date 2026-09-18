@@ -57,12 +57,12 @@ main(int argc, char *argv[])
 
     // Normally this file is part of bu_test, so only set this if it
     // looks like the program name is still unset.
-    if (bu_getprogname()[0] == '\0')
+    if (argv && argv[0] && bu_getprogname()[0] == '\0')
 	bu_setprogname(argv[0]);
 
     /* Sanity check */
-    if (argc < 6)
-	bu_exit(1, "Usage: %s {name} {num} {formatting} {incr_count} {expected}\n", argv[0]);
+    if (!argv || argc < 6)
+	bu_exit(1, "Usage: %s {name} {num} {formatting} {incr_count} {expected}\n", argv ? argv[0] : "test_vls_incr");
 
     if (BU_STR_EQUAL(argv[2], "1")) {
 	rs = rs_complex;
@@ -78,7 +78,7 @@ main(int argc, char *argv[])
 
     errno = 0;
     inc_count = strtol(argv[4], &endptr, 10);
-    if (errno == ERANGE || inc_count <= 0) {
+    if (errno == ERANGE || endptr == argv[4] || *endptr != '\0' || inc_count <= 0 || inc_count > 1000000) {
 	bu_exit(1, "invalid increment count: %s\n", argv[4]);
     }
 
@@ -88,9 +88,9 @@ main(int argc, char *argv[])
 	i++;
     }
 
-    if (BU_STR_EQUAL(bu_vls_addr(&name), argv[5])) ret = 0;
+    if (BU_STR_EQUAL(bu_vls_cstr(&name), argv[5])) ret = 0;
 
-    bu_log("output: %s\n", bu_vls_addr(&name));
+    bu_log("output: %s\n", bu_vls_cstr(&name));
 
     bu_vls_free(&name);
 

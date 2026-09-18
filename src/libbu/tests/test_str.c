@@ -89,10 +89,12 @@ test_bu_strlcatm(int argc, char *argv[])
 
     int eqtest1 = BU_STR_EQUAL(expected_result, dst);
     int eqtest2 = (expected_ret == ret);
+    int status = !(eqtest1 && eqtest2
+		   && len <= size
+		   && dst[len] == '\0');
 
-    return !(eqtest1 && eqtest2
-	     && len <= size
-	     && dst[len] == '\0');
+    bu_free(dst, "free test_bu_strlcatm");
+    return status;
 }
 
 
@@ -102,7 +104,7 @@ test_bu_strlcpym(int argc, char *argv[])
     char *dst;
     const char *expected_result = argv[5];
     int ret, expected_ret;
-    int scanned_size;
+    int scanned_size = 0;
     size_t size;
     size_t len;
     const char *empty_result = "";
@@ -119,7 +121,8 @@ test_bu_strlcpym(int argc, char *argv[])
 	bu_exit(1, "ERROR: input format is string result_size expected_ret expected_result [%s]\n", argv[0]);
     }
 
-    sscanf(argv[3], "%d", &scanned_size);
+    if (sscanf(argv[3], "%d", &scanned_size) != 1)
+	scanned_size = 0;
     if (scanned_size < 1)
 	size = 1;
     else if (scanned_size > 1024*1024 /* arbitrary upper limit */)
@@ -127,7 +130,8 @@ test_bu_strlcpym(int argc, char *argv[])
     else
 	size = (size_t)scanned_size;
 
-    sscanf(argv[4], "%d", &expected_ret);
+    if (sscanf(argv[4], "%d", &expected_ret) != 1)
+	expected_ret = 0;
 
     dst = (char *)bu_malloc(size, "test_bu_strlcpym");
     ret = bu_strlcpym(dst, argv[2], size, "test_bu_strlcpym");
@@ -137,10 +141,12 @@ test_bu_strlcpym(int argc, char *argv[])
 
     int eqtest1 = BU_STR_EQUAL(expected_result, dst);
     int eqtest2 = (expected_ret == ret);
+    int status = !(eqtest1 && eqtest2
+		   && len <= size
+		   && dst[len] == '\0');
 
-    return !(eqtest1 && eqtest2
-	     && len <= size
-	     && dst[len] == '\0');
+    bu_free(dst, "free test_bu_strlcpym");
+    return status;
 }
 
 
@@ -148,6 +154,7 @@ static int
 test_bu_strdupm(int argc, char *argv[])
 {
     char *dst;
+    int status;
 
     if (argc != 3) {
 	bu_exit(1, "ERROR: input format is string [%s]\n", argv[0]);
@@ -157,7 +164,9 @@ test_bu_strdupm(int argc, char *argv[])
 
     printf("Result: \"%s\"", dst);
 
-    return !(BU_STR_EQUAL(argv[2], dst));
+    status = !(BU_STR_EQUAL(argv[2], dst));
+    bu_free(dst, "free test_bu_strdupm");
+    return status;
 }
 
 
@@ -169,7 +178,8 @@ test_bu_strcmp_like_functions(int argc, char *argv[], int (*fun)(const char *, c
     if (argc != 5) {
 	bu_exit(1, "ERROR: input format is string1 string2 expected_ret [%s]\n", argv[0]);
     }
-    sscanf(argv[4], "%d", &expected_ret);
+    if (sscanf(argv[4], "%d", &expected_ret) != 1)
+	expected_ret = 0;
 
     ret = (fun)(argv[2], argv[3]);
 
@@ -182,16 +192,18 @@ test_bu_strcmp_like_functions(int argc, char *argv[], int (*fun)(const char *, c
 static int
 test_bu_strncmp_like_functions(int argc, char *argv[], int (*fun)(const char *, const char *, size_t))
 {
-    int n;
+    int n = 0;
     int ret, expected_ret;
 
     if (argc != 6) {
 	bu_exit(1, "ERROR: input format is string1 string2 n expected_ret [%s]\n", argv[0]);
     }
-    sscanf(argv[4], "%d", &n);
-    sscanf(argv[5], "%d", &expected_ret);
+    if (sscanf(argv[4], "%d", &n) != 1 || n < 0)
+	n = 0;
+    if (sscanf(argv[5], "%d", &expected_ret) != 1)
+	expected_ret = 0;
 
-    ret = (*fun)(argv[2], argv[3], n);
+    ret = (*fun)(argv[2], argv[3], (size_t)n);
 
     printf("Result: %d", ret);
 

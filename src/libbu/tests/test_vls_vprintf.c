@@ -55,9 +55,12 @@ vls_vs_sys(const char *fmt, ...)
     char buffer[1024] = {0};
     va_list ap;
 
+    if (!fmt)
+	return BRLCAD_ERROR;
+
     va_start(ap, fmt);
     /* use the libc version */
-    vsprintf(buffer, fmt, ap);
+    vsnprintf(buffer, sizeof(buffer), fmt, ap);
     va_end(ap);
 
     va_start(ap, fmt);
@@ -65,8 +68,8 @@ vls_vs_sys(const char *fmt, ...)
     bu_vls_vprintf(&vls, fmt, ap);
     va_end(ap);
 
-    snprintf(output, sizeof(output), "%-24s -> '%s'", fmt, bu_vls_addr(&vls));
-    if (BU_STR_EQUAL(buffer, bu_vls_addr(&vls))
+    snprintf(output, sizeof(output), "%-24s -> '%s'", fmt, bu_vls_cstr(&vls));
+    if (BU_STR_EQUAL(buffer, bu_vls_cstr(&vls))
 	&& strlen(buffer) == bu_vls_strlen(&vls)) {
 	printf("%-*s[PASS]\n", 60, output);
     } else {
@@ -91,13 +94,16 @@ vls_vs_string(const char *correct, const char *fmt, ...)
     char output[80]   = {0};
     va_list ap;
 
+    if (!correct || !fmt)
+	return BRLCAD_ERROR;
+
     va_start(ap, fmt);
     /* use BRL-CAD bu_vls version for comparison */
     bu_vls_vprintf(&vls, fmt, ap);
     va_end(ap);
 
-    snprintf(output, sizeof(output), "%-24s -> '%s'", fmt, bu_vls_addr(&vls));
-    if (BU_STR_EQUAL(correct, bu_vls_addr(&vls))
+    snprintf(output, sizeof(output), "%-24s -> '%s'", fmt, bu_vls_cstr(&vls));
+    if (BU_STR_EQUAL(correct, bu_vls_cstr(&vls))
 	&& strlen(correct) == bu_vls_strlen(&vls)) {
 	printf("%-*s[PASS]\n", 60, output);
     } else {
@@ -161,15 +167,16 @@ main(int argc, char *argv[])
 
     // Normally this file is part of bu_test, so only set this if it
     // looks like the program name is still unset.
-    if (bu_getprogname()[0] == '\0')
+    if (argv && argv[0] && bu_getprogname()[0] == '\0')
 	bu_setprogname(argv[0]);
 
-    if (argc < 2) {
-	fprintf(stderr, "Usage: %s {test_num}\n", argv[0]);
+    if (!argv || argc < 2) {
+	fprintf(stderr, "Usage: %s {test_num}\n", argv ? argv[0] : "test_vls_vprintf");
 	return 1;
     }
 
-    sscanf(argv[1], "%d", &test_num);
+    if (sscanf(argv[1], "%d", &test_num) != 1)
+	return 1;
 
     switch (test_num) {
 	case 1:

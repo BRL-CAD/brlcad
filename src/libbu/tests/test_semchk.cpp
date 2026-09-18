@@ -72,6 +72,9 @@ trim_whitespace(std::string &s)
 static int
 process_file(std::map<std::string, std::string> *sem_defs, std::map<std::string, std::string> *sem_files, std::string f)
 {
+    if (!sem_defs || !sem_files)
+	return 0;
+
     int ret = 0;
     std::string sline;
     std::ifstream fs(f);
@@ -298,12 +301,13 @@ int
 main(int argc, const char *argv[])
 {
     int ret = 0;
-    if (argc != 2) {
+    if (argc != 2 || !argv || !argv[1]) {
 	std::cerr << "Usage: semchk file_list\n";
 	return -1;
     }
 
-    bu_setprogname(av[0]);
+    if (argv[0])
+	bu_setprogname(argv[0]);
 
     std::map<std::string, std::string> sem_defs;
     std::map<std::string, std::string> sem_files;
@@ -313,6 +317,7 @@ main(int argc, const char *argv[])
     fs.open(argv[1]);
     if (!fs.is_open()) {
 	std::cerr << "Unable to open file list " << argv[1] << "\n";
+	return -1;
     }
     while (std::getline(fs, sfile)) {
 	//std::cout << "Processing " << sfile << "\n";

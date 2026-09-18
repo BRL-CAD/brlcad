@@ -49,7 +49,7 @@ test_str_isprint(const char *inp , int texp)
     if (res == texp) {
 
 	if (res)
-	    printf("Testing with string : %10s is printable->PASSED!\n", inp);
+	    printf("Testing with string : %10s is printable->PASSED!\n", inp ? inp : "(null)");
 	else
 	    printf("Given string not printable->PASSED!\n");
 
@@ -75,7 +75,10 @@ main(int argc, char *argv[])
 	return 1;
     }
 
-    sscanf(argv[1], "%d", &test_num);
+    if (sscanf(argv[1], "%d", &test_num) != 1) {
+	fprintf(stderr, "Usage: %s {test_num}\n", argv[0]);
+	return 1;
+    }
 
     switch (test_num) {
 	case 1:
@@ -96,6 +99,9 @@ main(int argc, char *argv[])
 	case 7:
 	    /* \r is carriage return - not printable */
 	    return !test_str_isprint("#$^\ry", 0);
+	case 8:
+	    /* NULL string should safely report not printable */
+	    return !test_str_isprint(NULL, 0);
     }
 
     return 1;

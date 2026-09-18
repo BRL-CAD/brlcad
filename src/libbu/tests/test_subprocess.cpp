@@ -95,7 +95,7 @@ main(int argc, const char *argv[])
 
     if (BU_STR_EQUAL(argv[1], "echo")) {
 	// echo incoming line on stdout and stderr
-	char line[25];
+	char line[25] = {0};
 	std::cin.get(line, 25);
 
 	fprintf(stdout, "%s", line);

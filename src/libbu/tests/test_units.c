@@ -65,6 +65,9 @@ units_csv_has_token(const char *csv, const char *token)
 {
     const char *segment = csv;
 
+    if (!csv || !token)
+	return 0;
+
     while (segment && *segment) {
 	const char *end = strchr(segment, ',');
 	const char *start = segment;

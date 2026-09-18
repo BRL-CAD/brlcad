@@ -39,16 +39,20 @@
 static void
 temp_filename_thread(int cpu, void* ptr)
 {
-    // unroll ptr into names arr
     char** names = (char**)ptr;
+    const char* buf;
+    size_t len;
 
-    // generate name
-    const char* buf = bu_temp_file_name(NULL, 0);
+    if (UNLIKELY(!names || cpu < 0))
+	return;
 
-    // add to arr
-    size_t len = strlen(buf);
-    names[cpu - 1] = (char*)bu_malloc(len * sizeof(char), "alloc name");
-    bu_strlcpy(names[cpu - 1], buf, len);
+    buf = bu_temp_file_name(NULL, 0);
+    if (!buf)
+	return;
+
+    len = strlen(buf);
+    names[cpu] = (char*)bu_malloc(len + 1, "alloc name");
+    bu_strlcpy(names[cpu], buf, len + 1);
 }
 
 
@@ -108,7 +112,7 @@ main(int argc, char *argv[])
 	     * names[i] = (char*)bu_malloc(25 * sizeof(char), "zero alloc name");
 	     */
 
-	    bu_parallel(temp_filename_thread, threads, &names);
+	    bu_parallel(temp_filename_thread, threads, (void *)names);
 
 	    // check names are all unique, free memory as we go
 	    int failed = 0;

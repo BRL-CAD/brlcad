@@ -60,24 +60,29 @@ main(int ac, char *av[])
 	bu_exit(1, "Usage: %s {test_number}\n", av[0]);
     }
 
-    sscanf(av[1], "%d", &test_num);
+    if (sscanf(av[1], "%d", &test_num) != 1) {
+	bu_exit(1, "ERROR: invalid test number: %s\n", av[1]);
+    }
 
     switch (test_num) {
 	case 1:
 	    {
-		const char *dir = "/tmp/REALPATH_TEST_PATH";
-		dir = bu_file_realpath(dir, NULL);
-		printf("Test 1 result: %s\n", dir);
+		const char *path = "/tmp/REALPATH_TEST_PATH";
+		char *dir = bu_file_realpath(path, NULL);
+		printf("Test 1 result: %s\n", dir ? dir : "(null)");
+		bu_free(dir, "free realpath");
 		return 0;
 	    }
 	case 2:
 	    {
 		struct rp_container RPC = RPC_INIT;
-		const char *dir2 = "/tmp/REALPATH_TEST_PATH";
-		dir2 = bu_file_realpath(dir2, RPC.dir);
-		printf("Test 2 result: %s\n", dir2);
+		const char *path = "/tmp/REALPATH_TEST_PATH";
+		char *dir2 = bu_file_realpath(path, RPC.dir);
+		printf("Test 2 result: %s\n", dir2 ? dir2 : "(null)");
 		return 0;
 	    }
+	default:
+	    bu_exit(1, "ERROR: unrecognized test number: %d\n", test_num);
     }
 
     return 0;

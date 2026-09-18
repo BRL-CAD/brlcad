@@ -55,27 +55,27 @@ main(int argc, char *argv[])
 
     // Normally this file is part of bu_test, so only set this if it
     // looks like the program name is still unset.
-    if (bu_getprogname()[0] == '\0')
+    if (argv && argv[0] && bu_getprogname()[0] == '\0')
 	bu_setprogname(argv[0]);
 
     /* Sanity check */
-    if (argc < 3)
-	bu_exit(1, "Usage: %s {start_str} {expected_str} {keep_chars} {dedup_chars} {trim_chars}\n", argv[0]);
+    if (!argv || argc < 3)
+	bu_exit(1, "Usage: %s {start_str} {expected_str} {keep_chars} {dedup_chars} {trim_chars}\n", argv ? argv[0] : "test_vls_simplify");
 
     bu_vls_sprintf(&vstr, "%s", argv[1]);
     expected = argv[2];
 
-    if (argc > 3 && strlen(argv[3]) > 0)
+    if (argc > 3 && argv[3] && strlen(argv[3]) > 0)
 	keep_chars = argv[3];
-    if (argc > 4 && strlen(argv[4]) > 0)
+    if (argc > 4 && argv[4] && strlen(argv[4]) > 0)
 	dedup_chars = argv[4];
-    if (argc > 5 && strlen(argv[5]) > 0)
+    if (argc > 5 && argv[5] && strlen(argv[5]) > 0)
 	trim_chars = argv[5];
 
     (void)bu_vls_simplify(&vstr, keep_chars, dedup_chars, trim_chars);
 
-    if (!BU_STR_EQUAL(bu_vls_addr(&vstr), expected)) {
-	bu_log("got: %s, expected: %s\n", bu_vls_addr(&vstr), expected);
+    if (!BU_STR_EQUAL(bu_vls_cstr(&vstr), expected)) {
+	bu_log("got: %s, expected: %s\n", bu_vls_cstr(&vstr), expected ? expected : "(null)");
 	ret = 1;
     }
 

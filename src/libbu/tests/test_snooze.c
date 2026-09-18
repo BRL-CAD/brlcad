@@ -52,7 +52,7 @@ main(int UNUSED(ac), char *av[])
 {
     // Normally this file is part of bu_test, so only set this if it
     // looks like the program name is still unset.
-    if (bu_getprogname()[0] == '\0')
+    if (av && av[0] && bu_getprogname()[0] == '\0')
 	bu_setprogname(av[0]);
 
     int64_t start_time = bu_gettime();

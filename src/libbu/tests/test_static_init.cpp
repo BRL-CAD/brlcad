@@ -121,7 +121,8 @@ static early_libbu_client early_client;
 int
 main(int UNUSED(argc), char **argv)
 {
-    bu_setprogname(argv[0]);
+    if (argv && argv[0])
+	bu_setprogname(argv[0]);
 
     int calls_before;
 

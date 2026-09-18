@@ -76,6 +76,9 @@ increment_thread(int cpu, void *pargs)
     struct increment_thread_args *args = (struct increment_thread_args *)pargs;
     size_t i = 0;
 
+    if (UNLIKELY(!args || !args->running || !args->parallel || !args->counter))
+	return;
+
     bu_semaphore_acquire(SEM);
     if (*args->running)
 	*args->parallel = 1;
@@ -140,7 +143,7 @@ parallel_test(size_t ncpu, size_t reps)
     bu_parallel(increment_thread, ncpu, &args);
 
     if (pcounter != expected) {
-	bu_log("bu_semaphore parallel increment test:  counter is %zu, expected %zu\n [FAIL]", pcounter, expected);
+	bu_log("bu_semaphore parallel increment test:  counter is %zu, expected %zu\n[FAIL]\n", pcounter, expected);
 	return 0;
     }
 
