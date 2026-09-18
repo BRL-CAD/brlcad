@@ -155,7 +155,9 @@ run_lint(const char *gfile, const char *object, const char *json_file,
 	"lint", "-I", techniques,
 	"-j", json_file, object
     };
-    const int ret = ged_exec(gedp, 6, argv);
+    const int ret = ged_exec(gedp, (int)(sizeof(argv) / sizeof(argv[0])), argv);
+    if (ret != BRLCAD_OK)
+	bu_log("lint %s failed: %s\n", object, bu_vls_cstr(gedp->ged_result_str));
     ged_close(gedp);
     return ret;
 }

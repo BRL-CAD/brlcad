@@ -255,22 +255,35 @@ _ged_bot_split_object(struct ged *gedp, const char *object_name,
 int
 ged_bot_split_core(struct ged *gedp, int argc, const char *argv[])
 {
-    static const char *usage = "bot [bot2 bot3 ...]";
+    struct bot_split_args args = {0};
+    int operand_index;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
     bu_vls_trunc(gedp->ged_result_str, 0);
-
-    if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+    if (argc == 1 || (argc == 2 &&
+            (BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "--help")))) {
+        bot_split_usage(gedp->ged_result_str, argv[0]);
+        return GED_HELP;
     }
+    operand_index = bu_cmd_schema_parse_complete(&ged_bot_split_schema, &args,
+        gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0) {
+        bot_split_usage(gedp->ged_result_str, argv[0]);
+        return BRLCAD_ERROR;
+    }
+    if (args.print_help) {
+        bot_split_usage(gedp->ged_result_str, argv[0]);
+        return GED_HELP;
+    }
+    argc -= operand_index + 1;
+    argv += operand_index + 1;
 
     struct bu_vls results = BU_VLS_INIT_ZERO;
     struct bu_vls errors = BU_VLS_INIT_ZERO;
     int ret = BRLCAD_OK;
-    for (int i = 1; i < argc; ++i) {
+    for (int i = 0; i < argc; ++i) {
 	char *object_name = bu_path_basename(argv[i], NULL);
 	if (BU_STR_EQUAL(object_name, ".")) {
 	    bu_free(object_name, "BOT split basename");

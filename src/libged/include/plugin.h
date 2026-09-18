@@ -63,7 +63,7 @@ struct ged_cmd_schema {
     const ged_opt_spec *opt_spec;
 };
 
-#define GED_PLUGIN_SCHEMA_ABI_VERSION 4
+#define GED_PLUGIN_SCHEMA_ABI_VERSION 5
 
 struct ged_plugin_schema_manifest {
     const char *plugin_name;

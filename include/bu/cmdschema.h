@@ -366,6 +366,10 @@ struct bu_cmd_option {
     bu_cmd_value_consume_t consume;
     const struct bu_cmd_value_keyword *keyword_values;
     struct bu_cmd_value_range range;
+    /** Standard libbu shape used when arg_shape is NULL.  This indirection is
+     * needed by Windows DLL consumers, where imported data addresses are not
+     * valid C static initializers.  SCALAR means no implicit shape. */
+    bu_cmd_arg_shape_kind_t standard_shape;
 };
 
 /** Return an option's stable name, preferring its long spelling. */
@@ -710,7 +714,7 @@ BU_EXPORT extern int bu_cmd_integer_pair_optional_validate(size_t argc,
 #define BU_CMD_NUMBER_RANGE_INIT(_min, _max) {BU_CMD_RANGE_NUMBER, 1, 1, 1, 1, 0, 0, _min, _max}
 #define BU_CMD_NUMBER_MIN_INIT(_min) {BU_CMD_RANGE_NUMBER, 1, 0, 1, 1, 0, 0, _min, 0.0}
 #define BU_CMD_NUMBER_MAX_INIT(_max) {BU_CMD_RANGE_NUMBER, 0, 1, 1, 1, 0, 0, 0.0, _max}
-#define BU_CMD_OPTION_NULL {NULL, NULL, NULL, NULL, NULL, BU_CMD_VALUE_FLAG, 0, NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_NONE, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE}
+#define BU_CMD_OPTION_NULL {NULL, NULL, NULL, NULL, NULL, BU_CMD_VALUE_FLAG, 0, NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_NONE, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE, BU_CMD_ARG_SHAPE_SCALAR}
 #define BU_CMD_OPERAND(_name, _type, _min, _max, _help, _provider) {_name, _min, _max, _help, _type, NULL, _provider, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE}
 #define BU_CMD_OPERAND_KEYWORDS(_name, _type, _min, _max, _help, _provider, _keywords) {_name, _min, _max, _help, _type, NULL, _provider, _keywords, NULL, NULL, BU_CMD_VALUE_RANGE_NONE}
 /** Publish concise canonical candidates while a validator recognizes the full
@@ -816,22 +820,22 @@ BU_EXPORT extern int bu_cmd_integer_pair_optional_validate(size_t argc,
 
 /** Compact option declaration helpers. */
 #define BU_CMD_FLAG(_short, _long, _record, _field, _help) \
-    {_short, _long, _long, NULL, _help, BU_CMD_VALUE_FLAG, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_NONE, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE}
+    {_short, _long, _long, NULL, _help, BU_CMD_VALUE_FLAG, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_NONE, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE, BU_CMD_ARG_SHAPE_SCALAR}
 /** A no-argument flag whose int storage field counts occurrences. */
 #define BU_CMD_COUNTING_FLAG(_short, _long, _record, _field, _help) \
-    {_short, _long, _long, NULL, _help, BU_CMD_VALUE_FLAG, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 1, 0, NULL, BU_CMD_ARG_NONE, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE}
+    {_short, _long, _long, NULL, _help, BU_CMD_VALUE_FLAG, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 1, 0, NULL, BU_CMD_ARG_NONE, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE, BU_CMD_ARG_SHAPE_SCALAR}
 /** A no-argument flag whose long storage field counts occurrences. */
 #define BU_CMD_COUNTING_LONG_FLAG(_short, _long, _record, _field, _help) \
-    {_short, _long, _long, NULL, _help, BU_CMD_VALUE_LONG, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 1, 0, NULL, BU_CMD_ARG_NONE, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE}
+    {_short, _long, _long, NULL, _help, BU_CMD_VALUE_LONG, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 1, 0, NULL, BU_CMD_ARG_NONE, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE, BU_CMD_ARG_SHAPE_SCALAR}
 /**
  * A no-argument option that invokes a command-specific state transition.
  * The parser receives a NULL argument and the address of the selected field.
  */
 #define BU_CMD_CUSTOM_FLAG(_short, _long, _canonical, _record, _field, _parser, _help) \
-    {_short, _long, _canonical, NULL, _help, BU_CMD_VALUE_CUSTOM, BU_CMD_STORAGE_OFFSET(_record, _field), _parser, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_NONE, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE}
+    {_short, _long, _canonical, NULL, _help, BU_CMD_VALUE_CUSTOM, BU_CMD_STORAGE_OFFSET(_record, _field), _parser, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_NONE, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE, BU_CMD_ARG_SHAPE_SCALAR}
 /** A syntax-only flag for commands whose execution parser owns its state. */
 #define BU_CMD_FLAG_UNBOUND(_short, _long, _canonical, _help) \
-    {_short, _long, _canonical, NULL, _help, BU_CMD_VALUE_FLAG, BU_CMD_STORAGE_NONE, NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_NONE, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE}
+    {_short, _long, _canonical, NULL, _help, BU_CMD_VALUE_FLAG, BU_CMD_STORAGE_NONE, NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_NONE, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE, BU_CMD_ARG_SHAPE_SCALAR}
 /**
  * A syntax-only typed option for a command whose execution parser owns its
  * state.  It participates in native help, validation, and completion but
@@ -840,80 +844,80 @@ BU_EXPORT extern int bu_cmd_integer_pair_optional_validate(size_t argc,
  * being migrated; new parsers should bind an argument record directly.
  */
 #define BU_CMD_VALUE_UNBOUND(_short, _long, _canonical, _type, _arg, _help) \
-    {_short, _long, _canonical, _arg, _help, _type, BU_CMD_STORAGE_NONE, NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE}
+    {_short, _long, _canonical, _arg, _help, _type, BU_CMD_STORAGE_NONE, NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE, BU_CMD_ARG_SHAPE_SCALAR}
 /** A syntax-only variable-width option for an independently owned parser. */
 #define BU_CMD_SHAPED_UNBOUND(_short, _long, _canonical, _type, _arg, _help, _shape) \
-    {_short, _long, _canonical, _arg, _help, _type, BU_CMD_STORAGE_NONE, NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, _shape, NULL, NULL, BU_CMD_VALUE_RANGE_NONE}
+    {_short, _long, _canonical, _arg, _help, _type, BU_CMD_STORAGE_NONE, NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, _shape, NULL, NULL, BU_CMD_VALUE_RANGE_NONE, BU_CMD_ARG_SHAPE_SCALAR}
 #define BU_CMD_BOOL(_short, _long, _record, _field, _arg, _help) \
-    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_BOOL, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE}
+    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_BOOL, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE, BU_CMD_ARG_SHAPE_SCALAR}
 #define BU_CMD_INTEGER(_short, _long, _record, _field, _arg, _help) \
-    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_INTEGER, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE}
+    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_INTEGER, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE, BU_CMD_ARG_SHAPE_SCALAR}
 /** An integer option constrained to the inclusive [_minimum, _maximum] range. */
 #define BU_CMD_INTEGER_RANGE(_short, _long, _record, _field, _minimum, _maximum, _arg, _help) \
-    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_INTEGER, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_INTEGER_RANGE_INIT(_minimum, _maximum)}
+    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_INTEGER, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_INTEGER_RANGE_INIT(_minimum, _maximum), BU_CMD_ARG_SHAPE_SCALAR}
 #define BU_CMD_INTEGER_MIN(_short, _long, _record, _field, _minimum, _arg, _help) \
-    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_INTEGER, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_INTEGER_MIN_INIT(_minimum)}
+    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_INTEGER, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_INTEGER_MIN_INIT(_minimum), BU_CMD_ARG_SHAPE_SCALAR}
 #define BU_CMD_INTEGER_MAX(_short, _long, _record, _field, _maximum, _arg, _help) \
-    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_INTEGER, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_INTEGER_MAX_INIT(_maximum)}
+    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_INTEGER, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_INTEGER_MAX_INIT(_maximum), BU_CMD_ARG_SHAPE_SCALAR}
 #define BU_CMD_HEX_INTEGER(_short, _long, _record, _field, _arg, _help) \
-    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_HEX_INTEGER, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE}
+    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_HEX_INTEGER, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE, BU_CMD_ARG_SHAPE_SCALAR}
 #define BU_CMD_LONG(_short, _long, _record, _field, _arg, _help) \
-    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_LONG, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE}
+    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_LONG, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE, BU_CMD_ARG_SHAPE_SCALAR}
 #define BU_CMD_HEX_LONG(_short, _long, _record, _field, _arg, _help) \
-    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_HEX_LONG, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE}
+    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_HEX_LONG, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE, BU_CMD_ARG_SHAPE_SCALAR}
 #define BU_CMD_CHAR(_short, _long, _record, _field, _arg, _help) \
-    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_CHAR, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE}
+    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_CHAR, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE, BU_CMD_ARG_SHAPE_SCALAR}
 #define BU_CMD_OPTIONAL_INTEGER(_short, _long, _record, _field, _arg, _help) \
-    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_INTEGER, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_OPTIONAL, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE}
+    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_INTEGER, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_OPTIONAL, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE, BU_CMD_ARG_SHAPE_SCALAR}
 #define BU_CMD_NUMBER(_short, _long, _record, _field, _arg, _help) \
-    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_NUMBER, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE}
+    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_NUMBER, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE, BU_CMD_ARG_SHAPE_SCALAR}
 /** A number option constrained to the inclusive [_minimum, _maximum] range. */
 #define BU_CMD_NUMBER_RANGE(_short, _long, _record, _field, _minimum, _maximum, _arg, _help) \
-    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_NUMBER, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_NUMBER_RANGE_INIT(_minimum, _maximum)}
+    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_NUMBER, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_NUMBER_RANGE_INIT(_minimum, _maximum), BU_CMD_ARG_SHAPE_SCALAR}
 #define BU_CMD_NUMBER_MIN(_short, _long, _record, _field, _minimum, _arg, _help) \
-    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_NUMBER, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_NUMBER_MIN_INIT(_minimum)}
+    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_NUMBER, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_NUMBER_MIN_INIT(_minimum), BU_CMD_ARG_SHAPE_SCALAR}
 #define BU_CMD_NUMBER_MAX(_short, _long, _record, _field, _maximum, _arg, _help) \
-    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_NUMBER, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_NUMBER_MAX_INIT(_maximum)}
+    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_NUMBER, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_NUMBER_MAX_INIT(_maximum), BU_CMD_ARG_SHAPE_SCALAR}
 #define BU_CMD_COLOR(_short, _long, _record, _field, _arg, _help) \
-    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_COLOR, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE}
+    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_COLOR, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE, BU_CMD_ARG_SHAPE_SCALAR}
 /**
  * A one-or-three-token color option with bu_opt_color-compatible value
  * grammar.  It accepts any scalar bu_color_from_str spelling or three
  * separate RGB components.  Use BU_CMD_RGB for strict 8-bit RGB only.
  */
 #define BU_CMD_COLOR_COMPAT(_short, _long, _record, _field, _arg, _help) \
-    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_COLOR, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, bu_cmd_color_consume, NULL, BU_CMD_VALUE_RANGE_NONE}
+    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_COLOR, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, bu_cmd_color_consume, NULL, BU_CMD_VALUE_RANGE_NONE, BU_CMD_ARG_SHAPE_COLOR}
 /**
  * A standard RGB option bound to a struct bu_color field.  It accepts one
  * packed r/g/b, r,g,b, or r;g;b token, or three separate 0..255 channels.
  */
 #define BU_CMD_RGB(_short, _long, _record, _field, _arg, _help) \
-    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_COLOR, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, bu_cmd_rgb_consume, NULL, BU_CMD_VALUE_RANGE_NONE}
+    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_COLOR, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, bu_cmd_rgb_consume, NULL, BU_CMD_VALUE_RANGE_NONE, BU_CMD_ARG_SHAPE_RGB}
 /**
  * A standard finite XYZ vector option bound to a point_t or vect_t field.
  * It accepts packed x/y/z, x,y,z, or x;y;z input, a quoted x y z token, or
  * three separate numeric arguments.
  */
 #define BU_CMD_VECTOR3(_short, _long, _record, _field, _arg, _help) \
-    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_VECTOR, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, bu_cmd_vector3_consume, NULL, BU_CMD_VALUE_RANGE_NONE}
+    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_VECTOR, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, bu_cmd_vector3_consume, NULL, BU_CMD_VALUE_RANGE_NONE, BU_CMD_ARG_SHAPE_VECTOR3}
 #define BU_CMD_STRING(_short, _long, _record, _field, _arg, _help) \
-    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_STRING, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE}
+    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_STRING, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE, BU_CMD_ARG_SHAPE_SCALAR}
 #define BU_CMD_OPTIONAL_STRING(_short, _long, _record, _field, _arg, _help) \
-    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_STRING, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_OPTIONAL, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE}
+    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_STRING, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_OPTIONAL, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE, BU_CMD_ARG_SHAPE_SCALAR}
 #define BU_CMD_VLS_APPEND(_short, _long, _record, _field, _arg, _help) \
-    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_VLS, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE}
+    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_VLS, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE, BU_CMD_ARG_SHAPE_SCALAR}
 #define BU_CMD_FILE(_short, _long, _record, _field, _arg, _help) \
-    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_FILE, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE}
+    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_FILE, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE, BU_CMD_ARG_SHAPE_SCALAR}
 #define BU_CMD_DB_OBJECT(_short, _long, _record, _field, _arg, _help) \
-    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_DB_OBJECT, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE}
+    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_DB_OBJECT, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE, BU_CMD_ARG_SHAPE_SCALAR}
 #define BU_CMD_DB_PATH(_short, _long, _record, _field, _arg, _help) \
-    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_DB_PATH, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE}
+    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_DB_PATH, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE, BU_CMD_ARG_SHAPE_SCALAR}
 #define BU_CMD_CUSTOM(_short, _long, _record, _field, _parser, _arg, _help) \
-    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_CUSTOM, BU_CMD_STORAGE_OFFSET(_record, _field), _parser, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE}
+    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_CUSTOM, BU_CMD_STORAGE_OFFSET(_record, _field), _parser, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE, BU_CMD_ARG_SHAPE_SCALAR}
 #define BU_CMD_INTEGER_VALIDATE(_short, _long, _record, _field, _validator, _arg, _help) \
-    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_INTEGER, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, _validator, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE}
+    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_INTEGER, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, _validator, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE, BU_CMD_ARG_SHAPE_SCALAR}
 #define BU_CMD_NUMBER_VALIDATE(_short, _long, _record, _field, _validator, _arg, _help) \
-    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_NUMBER, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, _validator, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE}
+    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_NUMBER, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, _validator, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE, BU_CMD_ARG_SHAPE_SCALAR}
 #define BU_CMD_POSITIVE_INTEGER(_short, _long, _record, _field, _arg, _help) \
     BU_CMD_INTEGER_VALIDATE(_short, _long, _record, _field, bu_cmd_positive_integer_validate, _arg, _help)
 #define BU_CMD_NONNEGATIVE_INTEGER(_short, _long, _record, _field, _arg, _help) \
@@ -925,11 +929,11 @@ BU_EXPORT extern int bu_cmd_integer_pair_optional_validate(size_t argc,
 #define BU_CMD_UNITS(_short, _long, _record, _field, _arg, _help) \
     BU_CMD_STRING_VALIDATE(_short, _long, _record, _field, bu_cmd_units_validate, _arg, _help)
 #define BU_CMD_STRING_VALIDATE(_short, _long, _record, _field, _validator, _arg, _help) \
-    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_STRING, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, _validator, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE}
+    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_STRING, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, _validator, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE, BU_CMD_ARG_SHAPE_SCALAR}
 #define BU_CMD_CHAR_VALIDATE(_short, _long, _record, _field, _validator, _arg, _help) \
-    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_CHAR, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, _validator, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE}
+    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_CHAR, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, _validator, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE, BU_CMD_ARG_SHAPE_SCALAR}
 #define BU_CMD_VLS_APPEND_VALIDATE(_short, _long, _record, _field, _validator, _arg, _help) \
-    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_VLS, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, _validator, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE}
+    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_VLS, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, _validator, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE, BU_CMD_ARG_SHAPE_SCALAR}
 /** Append one validated ISO 639-1 language code to a bu_vls field. */
 #define BU_CMD_ISO639_1(_short, _long, _record, _field, _arg, _help) \
     BU_CMD_VLS_APPEND_VALIDATE(_short, _long, _record, _field, bu_cmd_iso639_1_validate, _arg, _help)
@@ -937,9 +941,9 @@ BU_EXPORT extern int bu_cmd_integer_pair_optional_validate(size_t argc,
 #define BU_CMD_MAN_SECTION(_short, _long, _record, _field, _arg, _help) \
     BU_CMD_CHAR_VALIDATE(_short, _long, _record, _field, bu_cmd_man_section_validate, _arg, _help)
 #define BU_CMD_KEYWORD_VALUES(_short, _long, _record, _field, _arg, _help, _values) \
-    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_KEYWORD, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, _values, BU_CMD_VALUE_RANGE_NONE}
+    {_short, _long, _long, _arg, _help, BU_CMD_VALUE_KEYWORD, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, _values, BU_CMD_VALUE_RANGE_NONE, BU_CMD_ARG_SHAPE_SCALAR}
 #define BU_CMD_OPTION_SHAPED(_short, _long, _canonical, _record, _field, _type, _arg, _help, _requirement, _shape, _consume) \
-    {_short, _long, _canonical, _arg, _help, _type, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, _requirement, _shape, _consume, NULL, BU_CMD_VALUE_RANGE_NONE}
+    {_short, _long, _canonical, _arg, _help, _type, BU_CMD_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, _requirement, _shape, _consume, NULL, BU_CMD_VALUE_RANGE_NONE, BU_CMD_ARG_SHAPE_SCALAR}
 /**
  * The common required multi-token binding.  Use the fully explicit
  * BU_CMD_OPTION_SHAPED only for an optional shape or a canonical spelling
@@ -952,9 +956,9 @@ BU_EXPORT extern int bu_cmd_integer_pair_optional_validate(size_t argc,
     BU_CMD_OPTION_SHAPED(_short, _long, _long, _record, _field, _type, _arg, _help, \
 	BU_CMD_ARG_OPTIONAL, _shape, _consume)
 #define BU_CMD_ALIAS_SHORT(_short, _canonical, _hidden) \
-    {_short, NULL, _canonical, NULL, NULL, BU_CMD_VALUE_FLAG, 0, NULL, NULL, NULL, _canonical, 0, _hidden, NULL, BU_CMD_ARG_NONE, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE}
+    {_short, NULL, _canonical, NULL, NULL, BU_CMD_VALUE_FLAG, 0, NULL, NULL, NULL, _canonical, 0, _hidden, NULL, BU_CMD_ARG_NONE, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE, BU_CMD_ARG_SHAPE_SCALAR}
 #define BU_CMD_ALIAS_LONG(_long, _canonical, _hidden) \
-    {NULL, _long, _canonical, NULL, NULL, BU_CMD_VALUE_FLAG, 0, NULL, NULL, NULL, _canonical, 0, _hidden, NULL, BU_CMD_ARG_NONE, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE}
+    {NULL, _long, _canonical, NULL, NULL, BU_CMD_VALUE_FLAG, 0, NULL, NULL, NULL, _canonical, 0, _hidden, NULL, BU_CMD_ARG_NONE, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE, BU_CMD_ARG_SHAPE_SCALAR}
 
 /**
  * Parse command arguments using a compact schema.
