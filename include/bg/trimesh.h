@@ -120,6 +120,23 @@ BG_EXPORT extern int bg_trimesh_unmatched_edges(int num_edges, struct bg_trimesh
 BG_EXPORT extern int bg_trimesh_misoriented_edges(int num_edges, struct bg_trimesh_halfedge *edge_list, bg_edge_error_funct_t error_edge_func, void *data);
 BG_EXPORT extern int bg_trimesh_excess_edges(int num_edges, struct bg_trimesh_halfedge *edge_list, bg_edge_error_funct_t error_edge_func, void *data);
 BG_EXPORT extern int bg_trimesh_solid2(int vcnt, int fcnt, fastf_t *v, int *f, struct bg_trimesh_solid_errors *errors);
+
+/**
+ * Report geometric intersections between faces of one triangle mesh.
+ * Contact confined to a shared indexed vertex or edge is allowed; overlap
+ * beyond that shared feature and contact between unconnected faces count as
+ * self intersections.  This test does not check manifoldness or closure.
+ *
+ * @param[in] faces flat array of three vertex indices per triangle
+ * @param[in] num_faces number of triangles
+ * @param[in] points array of vertex positions
+ * @param[in] num_points number of vertices
+ *
+ * @return 1 if self intersecting, 0 if not, -1 for malformed input
+ * (invalid indices, non-finite vertices, or degenerate faces) or a failed check.
+ */
+BG_EXPORT extern int bg_trimesh_self_isect(const int *faces, size_t num_faces,
+    const point_t *points, size_t num_points);
 BG_EXPORT extern int bg_trimesh_hanging_nodes(int num_vertices, int num_faces, fastf_t *vertices, int *faces, struct bg_trimesh_solid_errors *errors);
 
 BG_EXPORT extern struct bg_trimesh_halfedge * bg_trimesh_generate_edge_list(int fcnt, int *f);

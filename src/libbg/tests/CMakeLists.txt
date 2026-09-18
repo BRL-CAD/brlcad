@@ -459,6 +459,16 @@ if(BUILD_TESTING AND TARGET bg_trimesh_repair)
   )
 endif()
 
+brlcad_addexec(bg_trimesh_self_isect trimesh_self_isect.cpp "${BG_TEST_LIBS}" TEST)
+if(BUILD_TESTING AND TARGET bg_trimesh_self_isect)
+  target_include_directories(
+    bg_trimesh_self_isect SYSTEM PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/../GTE
+    ${GTE_INCLUDE_DIR}
+  )
+endif()
+brlcad_add_test(NAME bg_trimesh_self_isect COMMAND bg_trimesh_self_isect)
+
 brlcad_add_test(NAME bg_trimesh_repair  COMMAND bg_trimesh_repair)
 if(BUILD_TESTING AND TARGET bg_trimesh_repair)
   set_tests_properties(bg_trimesh_repair PROPERTIES TIMEOUT 30)

@@ -249,23 +249,17 @@ namespace gte
             // should be called by the user when topology cleanup is needed after
             // FillHoles.  This avoids a circular include dependency.
 
-            // Step 5: Optional output validation.  When requireManifold is set
-            // and the result fails the manifold check, restore the pre-fill
-            // snapshot so the caller receives the original (unmodified) mesh.
-            // Validation is only performed when validateOutput is true and at
-            // least one pass/fail criterion (requireManifold or
-            // requireNoSelfIntersections) is enabled, since without a criterion
-            // the result cannot be acted upon.
+            // Step 5: Optional output validation.  Repair callers can accept
+            // self intersections when a usable manifold is more important.
+            // When requested, stop on the first failed criterion and restore
+            // the pre-fill mesh.
             if (numFilled > 0 && params.validateOutput &&
-                (params.requireManifold || params.requireNoSelfIntersections))
+                ((params.requireManifold && !MeshValidation<Real>::IsManifold(triangles)) ||
+                 (params.requireNoSelfIntersections &&
+                  MeshValidation<Real>::HasSelfIntersections(vertices, triangles))))
             {
-                auto validationResult = MeshValidation<Real>::Validate(
-                    vertices, triangles, params.requireNoSelfIntersections);
-                if (params.requireManifold && !validationResult.isManifold)
-                {
-                    vertices  = std::move(savedVertices);
-                    triangles = std::move(savedTriangles);
-                }
+                vertices  = std::move(savedVertices);
+                triangles = std::move(savedTriangles);
             }
         }
 

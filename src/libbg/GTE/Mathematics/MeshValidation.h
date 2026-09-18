@@ -13,14 +13,15 @@
 #pragma once
 
 #include <Mathematics/Vector3.h>
-#include <Mathematics/ETManifoldMesh.h>
-#include <Mathematics/ETNonmanifoldMesh.h>
 #include <Mathematics/IntrTriangle3Triangle3.h>
+#include <Mathematics/DistTriangle3Triangle3.h>
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <cstdint>
+#include <limits>
 #include <map>
-#include <set>
+#include <numeric>
 #include <string>
 #include <vector>
 
@@ -132,9 +133,7 @@ template <typename Real>
 		std::vector<Vector3<Real>> const& vertices,
 		std::vector<std::array<int32_t, 3>> const& triangles)
 	{
-	    ValidationResult result;
-	    CheckSelfIntersections(vertices, triangles, result);
-	    return result.hasSelfIntersections;
+	    return FindSelfIntersections(vertices, triangles, true) > 0;
 	}
 
     private:
@@ -215,107 +214,362 @@ template <typename Real>
 	    result.isOriented = oriented;
 	}
 
-	static bool TriangleBoxesOverlap(
-		std::vector<Vector3<Real>> const& vertices,
-		std::array<int32_t, 3> const& tri1,
-		std::array<int32_t, 3> const& tri2)
+	static constexpr size_t invalidNode = std::numeric_limits<size_t>::max();
+	// Small leaves limit pair tests without creating a node per triangle.
+	static constexpr size_t leafTriangleCount = 4;
+	// Thin facets can amplify FIQuery's shared-vertex drift by over 100 ulps.
+	static constexpr Real contactToleranceFactor = static_cast<Real>(256);
+	// Distance-query contacts need only a much smaller roundoff allowance.
+	static constexpr Real unconnectedContactToleranceFactor = static_cast<Real>(8);
+
+	struct TriangleBounds
 	{
-	    Vector3<Real> min1 = vertices[tri1[0]];
-	    Vector3<Real> max1 = vertices[tri1[0]];
-	    Vector3<Real> min2 = vertices[tri2[0]];
-	    Vector3<Real> max2 = vertices[tri2[0]];
+	    Vector3<Real> min;
+	    Vector3<Real> max;
+	    Vector3<Real> center;
+	};
 
-	    for (int i = 1; i < 3; ++i)
-	    {
-		for (int axis = 0; axis < 3; ++axis)
-		{
-		    min1[axis] = std::min(min1[axis], vertices[tri1[i]][axis]);
-		    max1[axis] = std::max(max1[axis], vertices[tri1[i]][axis]);
-		    min2[axis] = std::min(min2[axis], vertices[tri2[i]][axis]);
-		    max2[axis] = std::max(max2[axis], vertices[tri2[i]][axis]);
-		}
-	    }
+	struct TreeNode
+	{
+	    Vector3<Real> min;
+	    Vector3<Real> max;
+	    size_t begin = 0;
+	    size_t end = 0;
+	    size_t left = invalidNode;
+	    size_t right = invalidNode;
+	};
 
+	static bool BoxesOverlap(Vector3<Real> const& min0, Vector3<Real> const& max0,
+		Vector3<Real> const& min1, Vector3<Real> const& max1)
+	{
 	    for (int axis = 0; axis < 3; ++axis)
 	    {
-		if (max1[axis] < min2[axis] || max2[axis] < min1[axis])
+		if (max0[axis] < min1[axis] || max1[axis] < min0[axis])
 		{
 		    return false;
 		}
 	    }
-
 	    return true;
 	}
 
-	// Check for self-intersecting triangles
+	static void ExpandBounds(Vector3<Real>& min, Vector3<Real>& max,
+		Vector3<Real> const& otherMin, Vector3<Real> const& otherMax)
+	{
+	    for (int axis = 0; axis < 3; ++axis)
+	    {
+		min[axis] = std::min(min[axis], otherMin[axis]);
+		max[axis] = std::max(max[axis], otherMax[axis]);
+	    }
+	}
+
+	static size_t BuildTree(std::vector<TriangleBounds> const& bounds,
+		std::vector<size_t>& order, std::vector<TreeNode>& nodes,
+		size_t begin, size_t end)
+	{
+	    size_t nodeIndex = nodes.size();
+	    nodes.emplace_back();
+	    nodes[nodeIndex].begin = begin;
+	    nodes[nodeIndex].end = end;
+
+	    if (end - begin <= leafTriangleCount)
+	    {
+		auto const& first = bounds[order[begin]];
+		nodes[nodeIndex].min = first.min;
+		nodes[nodeIndex].max = first.max;
+		for (size_t i = begin + 1; i < end; ++i)
+		{
+		    auto const& box = bounds[order[i]];
+		    ExpandBounds(nodes[nodeIndex].min, nodes[nodeIndex].max,
+			box.min, box.max);
+		}
+		return nodeIndex;
+	    }
+
+	    Vector3<Real> centerMin = bounds[order[begin]].center;
+	    Vector3<Real> centerMax = centerMin;
+	    for (size_t i = begin + 1; i < end; ++i)
+	    {
+		auto const& center = bounds[order[i]].center;
+		ExpandBounds(centerMin, centerMax, center, center);
+	    }
+	    int axis = 0;
+	    for (int i = 1; i < 3; ++i)
+	    {
+		if (centerMax[i] - centerMin[i] > centerMax[axis] - centerMin[axis])
+		{
+		    axis = i;
+		}
+	    }
+
+	    size_t middle = begin + (end - begin) / 2;
+	    std::nth_element(order.begin() + begin, order.begin() + middle,
+		order.begin() + end, [&bounds, axis](size_t a, size_t b) {
+		    return bounds[a].center[axis] < bounds[b].center[axis];
+		});
+
+	    size_t left = BuildTree(bounds, order, nodes, begin, middle);
+	    size_t right = BuildTree(bounds, order, nodes, middle, end);
+	    nodes[nodeIndex].left = left;
+	    nodes[nodeIndex].right = right;
+	    nodes[nodeIndex].min = nodes[left].min;
+	    nodes[nodeIndex].max = nodes[left].max;
+	    ExpandBounds(nodes[nodeIndex].min, nodes[nodeIndex].max,
+		nodes[right].min, nodes[right].max);
+	    return nodeIndex;
+	}
+
+	static bool IntersectBeyondSharedFeature(
+		std::vector<Vector3<Real>> const& vertices,
+		std::vector<std::array<int32_t, 3>> const& triangles,
+		size_t i, size_t j)
+	{
+	    auto const& indices0 = triangles[i];
+	    auto const& indices1 = triangles[j];
+	    std::array<int32_t, 3> shared{};
+	    size_t sharedCount = 0;
+	    for (int32_t index0 : indices0)
+	    {
+		for (int32_t index1 : indices1)
+		{
+		    if (index0 == index1)
+		    {
+			shared[sharedCount++] = index0;
+			break;
+		    }
+		}
+	    }
+	    if (sharedCount == 3)
+	    {
+		return true; // Coincident faces overlap, regardless of winding.
+	    }
+	    if (sharedCount == 2)
+	    {
+		// Two planes through the same edge meet only on that edge unless
+		// they are coplanar.  In the coplanar case, the third vertices
+		// must be on opposite sides of the edge to avoid overlap.
+		auto const& a = vertices[shared[0]];
+		Vector3<Real> edge = vertices[shared[1]] - a;
+		int32_t third0 = -1;
+		int32_t third1 = -1;
+		for (int32_t index : indices0)
+		{
+		    if (index != shared[0] && index != shared[1]) third0 = index;
+		}
+		for (int32_t index : indices1)
+		{
+		    if (index != shared[0] && index != shared[1]) third1 = index;
+		}
+		if (third0 < 0 || third1 < 0)
+		{
+		    return true;
+		}
+		Vector3<Real> side0 = Cross(edge, vertices[third0] - a);
+		Vector3<Real> side1 = Cross(edge, vertices[third1] - a);
+		Vector3<Real> planeDifference = Cross(side0, side1);
+		return Dot(planeDifference, planeDifference) <= static_cast<Real>(0) &&
+		    Dot(side0, side1) > static_cast<Real>(0);
+	    }
+
+	    Triangle3<Real> triangle0(vertices[indices0[0]], vertices[indices0[1]],
+		vertices[indices0[2]]);
+	    Triangle3<Real> triangle1(vertices[indices1[0]], vertices[indices1[1]],
+		vertices[indices1[2]]);
+	    if (sharedCount == 0)
+	    {
+		// The separating-axis test can report contact for near-coplanar
+		// disjoint faces.  Confirm positives with the intersection query.
+		TIQuery<Real, Triangle3<Real>, Triangle3<Real>> test;
+		if (!test(triangle0, triangle1).intersect)
+		{
+		    return false;
+		}
+		FIQuery<Real, Triangle3<Real>, Triangle3<Real>> find;
+		if (find(triangle0, triangle1).intersect)
+		{
+		    return true;
+		}
+		// FIQuery can omit isolated boundary contact.  The distance query
+		// distinguishes that from the separating-axis false positives.
+		DCPQuery<Real, Triangle3<Real>, Triangle3<Real>> distance;
+		Real scale = static_cast<Real>(0);
+		for (auto const& triangle : {triangle0, triangle1})
+		{
+		    for (auto const& point : triangle.v)
+		    {
+			for (int axis = 0; axis < 3; ++axis)
+			{
+			    scale = std::max(scale, std::abs(point[axis]));
+			}
+		    }
+		}
+		Real tolerance = unconnectedContactToleranceFactor *
+		    std::numeric_limits<Real>::epsilon() * scale;
+		return distance(triangle0, triangle1).sqrDistance <= tolerance * tolerance;
+	    }
+
+	    FIQuery<Real, Triangle3<Real>, Triangle3<Real>> query;
+	    auto result = query(triangle0, triangle1);
+	    if (!result.intersect)
+	    {
+		return false;
+	    }
+	    if (result.intersection.empty())
+	    {
+		return true;
+	    }
+	    auto const& vertex = vertices[shared[0]];
+	    Real scale = static_cast<Real>(0);
+	    for (auto const& indices : {indices0, indices1})
+	    {
+		for (int32_t index : indices)
+		{
+		    for (int axis = 0; axis < 3; ++axis)
+		    {
+			scale = std::max(scale, std::abs(vertices[index][axis]));
+			scale = std::max(scale, std::abs(vertices[index][axis] - vertex[axis]));
+		    }
+		}
+	    }
+	    // GTE's computed contact can drift from a shared vertex on thin
+	    // triangles or when their extent greatly exceeds its coordinates.
+	    Real tolerance = contactToleranceFactor *
+		std::numeric_limits<Real>::epsilon() * scale;
+	    for (auto const& point : result.intersection)
+	    {
+		Vector3<Real> offset = point - vertex;
+		if (Dot(offset, offset) > tolerance * tolerance)
+		{
+		    return true;
+		}
+	    }
+	    return false;
+	}
+
+	static size_t CountNodePairs(
+		std::vector<Vector3<Real>> const& vertices,
+		std::vector<std::array<int32_t, 3>> const& triangles,
+		std::vector<TriangleBounds> const& bounds,
+		std::vector<size_t> const& order,
+		std::vector<TreeNode> const& nodes,
+		size_t a, size_t b, bool stopAtFirst)
+	{
+	    auto const& nodeA = nodes[a];
+	    auto const& nodeB = nodes[b];
+	    if (!BoxesOverlap(nodeA.min, nodeA.max, nodeB.min, nodeB.max))
+	    {
+		return 0;
+	    }
+
+	    bool leafA = nodeA.left == invalidNode;
+	    bool leafB = nodeB.left == invalidNode;
+	    if (leafA && leafB)
+	    {
+		size_t count = 0;
+		for (size_t ia = nodeA.begin; ia < nodeA.end; ++ia)
+		{
+		    size_t i = order[ia];
+		    for (size_t ib = (a == b ? ia + 1 : nodeB.begin);
+			ib < nodeB.end; ++ib)
+		    {
+			size_t j = order[ib];
+			if (BoxesOverlap(bounds[i].min, bounds[i].max,
+				bounds[j].min, bounds[j].max) &&
+			    IntersectBeyondSharedFeature(vertices, triangles, i, j))
+			{
+			    ++count;
+			    if (stopAtFirst)
+			    {
+				return count;
+			    }
+			}
+		    }
+		}
+		return count;
+	    }
+
+	    if (a == b)
+	    {
+		size_t count = CountNodePairs(vertices, triangles, bounds, order,
+		    nodes, nodeA.left, nodeA.left, stopAtFirst);
+		if (stopAtFirst && count)
+		{
+		    return count;
+		}
+		count += CountNodePairs(vertices, triangles, bounds, order,
+		    nodes, nodeA.left, nodeA.right, stopAtFirst);
+		if (stopAtFirst && count)
+		{
+		    return count;
+		}
+		return count + CountNodePairs(vertices, triangles, bounds, order,
+		    nodes, nodeA.right, nodeA.right, stopAtFirst);
+	    }
+
+	    if (!leafA && (leafB || nodeA.end - nodeA.begin >= nodeB.end - nodeB.begin))
+	    {
+		size_t count = CountNodePairs(vertices, triangles, bounds, order,
+		    nodes, nodeA.left, b, stopAtFirst);
+		if (stopAtFirst && count)
+		{
+		    return count;
+		}
+		return count + CountNodePairs(vertices, triangles, bounds, order,
+		    nodes, nodeA.right, b, stopAtFirst);
+	    }
+
+	    size_t count = CountNodePairs(vertices, triangles, bounds, order,
+		nodes, a, nodeB.left, stopAtFirst);
+	    if (stopAtFirst && count)
+	    {
+		return count;
+	    }
+	    return count + CountNodePairs(vertices, triangles, bounds, order,
+		nodes, a, nodeB.right, stopAtFirst);
+	}
+
+	static size_t FindSelfIntersections(
+		std::vector<Vector3<Real>> const& vertices,
+		std::vector<std::array<int32_t, 3>> const& triangles,
+		bool stopAtFirst)
+	{
+	    if (triangles.size() < 2)
+	    {
+		return 0;
+	    }
+
+	    std::vector<TriangleBounds> bounds(triangles.size());
+	    for (size_t i = 0; i < triangles.size(); ++i)
+	    {
+		auto const& tri = triangles[i];
+		TriangleBounds& box = bounds[i];
+		box.min = vertices[tri[0]];
+		box.max = box.min;
+		for (size_t j = 1; j < 3; ++j)
+		{
+		    ExpandBounds(box.min, box.max, vertices[tri[j]], vertices[tri[j]]);
+		}
+		box.center = box.min / static_cast<Real>(2) +
+		    box.max / static_cast<Real>(2);
+	    }
+
+	    std::vector<size_t> order(triangles.size());
+	    std::iota(order.begin(), order.end(), 0);
+	    std::vector<TreeNode> nodes;
+	    nodes.reserve(triangles.size());
+	    BuildTree(bounds, order, nodes, 0, triangles.size());
+	    return CountNodePairs(vertices, triangles, bounds, order, nodes,
+		0, 0, stopAtFirst);
+	}
+
 	static void CheckSelfIntersections(
 		std::vector<Vector3<Real>> const& vertices,
 		std::vector<std::array<int32_t, 3>> const& triangles,
 		ValidationResult& result)
 	{
-	    result.intersectingTrianglePairs = 0;
-
-	    size_t n = triangles.size();
-
-	    // Brute force check all pairs
-	    // TODO: Could optimize with spatial data structure (octree, BVH) for large meshes
-	    for (size_t i = 0; i < n; ++i)
-	    {
-		auto const& tri1 = triangles[i];
-		Triangle3<Real> triangle1(
-			vertices[tri1[0]],
-			vertices[tri1[1]],
-			vertices[tri1[2]]
-			);
-
-		for (size_t j = i + 1; j < n; ++j)
-		{
-		    auto const& tri2 = triangles[j];
-
-		    // Skip if triangles share a vertex (adjacent triangles)
-		    bool shareVertex = false;
-		    for (int a = 0; a < 3; ++a)
-		    {
-			for (int b = 0; b < 3; ++b)
-			{
-			    if (tri1[a] == tri2[b])
-			    {
-				shareVertex = true;
-				break;
-			    }
-			}
-			if (shareVertex) break;
-		    }
-
-		    if (shareVertex)
-		    {
-			continue;  // Adjacent triangles can touch at edges/vertices
-		    }
-
-		    if (!TriangleBoxesOverlap(vertices, tri1, tri2))
-		    {
-			continue;
-		    }
-
-		    // Check for intersection
-		    Triangle3<Real> triangle2(
-			    vertices[tri2[0]],
-			    vertices[tri2[1]],
-			    vertices[tri2[2]]
-			    );
-
-		    FIQuery<Real, Triangle3<Real>, Triangle3<Real>> query;
-		    auto queryResult = query(triangle1, triangle2);
-
-		    if (queryResult.intersect)
-		    {
-			result.intersectingTrianglePairs++;
-		    }
-		}
-	    }
-
-	    result.hasSelfIntersections = (result.intersectingTrianglePairs > 0);
+	    result.intersectingTrianglePairs = FindSelfIntersections(vertices, triangles, false);
+	    result.hasSelfIntersections = result.intersectingTrianglePairs > 0;
 	}
+
 };
 }
 
