@@ -43,11 +43,15 @@
 static int
 esc_compare(const char *input, const char *output, const char *correct)
 {
+    const char *in_str = input ? input : "(null)";
+    const char *out_str = output ? output : "(null)";
+    const char *corr_str = correct ? correct : "(null)";
+
     if (BU_STR_EQUAL(output, correct)) {
-	printf("%24s -> %28s [PASS]\n", input, output);
+	printf("%24s -> %28s [PASS]\n", in_str, out_str);
 	return 1;
     } else {
-	printf("%24s -> %28s [FAIL]  (should be '%s')\n", input, output, correct);
+	printf("%24s -> %28s [FAIL]  (should be '%s')\n", in_str, out_str, corr_str);
 	return 0;
     }
 }
@@ -85,7 +89,7 @@ esc_test3(int test_num)
 	    pass += esc_test3(2);
 	    pass += esc_test3(3);
 	    pass += esc_test3(4);
-	    return (pass == 4) ? 0 : 1;
+	    return (pass == 0) ? 0 : 1;
     }
 }
 

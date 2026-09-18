@@ -18,6 +18,12 @@
  * information.
  */
 
+#if defined(__APPLE__)
+#  undef _DARWIN_C_SOURCE
+#  define _DARWIN_C_SOURCE 1
+#  define _DARWIN_BETTER_REALPATH 1
+#endif
+
 #include "common.h"
 
 #include <limits.h>

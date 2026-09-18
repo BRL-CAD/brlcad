@@ -609,6 +609,8 @@ main(int argc, char * const argv[])
 	    else
 		printf("ok %zu\n", i + 1);
 	}
+	bu_free(flag_str, "flag_str");
+	bu_free(scale_str, "scale_str");
 	tested++;
     }
     bu_free(buf, "free buf");

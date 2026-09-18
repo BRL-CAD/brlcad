@@ -67,6 +67,9 @@ callback(int cpu, void *d)
 
     /* bu_log("I'm child %d (id=%d)\n", cpu, bu_parallel_id()); */
 
+    if (cpu < 0 || cpu >= MAX_PSW)
+	return;
+
     if (data)
 	iterations = data->iterations;
 
@@ -83,6 +86,10 @@ recursive_callback(int UNUSED(cpu), void *d)
 {
     struct parallel_data *parent = (struct parallel_data *)d;
     struct parallel_data data;
+
+    if (!parent)
+	return;
+
     data.iterations = parent->iterations;
     data.call = NULL;
 
@@ -97,6 +104,9 @@ tally(size_t ncpu)
 {
     size_t total = 0;
     size_t i;
+
+    if (ncpu > MAX_PSW)
+	ncpu = MAX_PSW;
 
     for (i = 0; i < ncpu; i++) {
 	total += counter[i];

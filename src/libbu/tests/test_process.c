@@ -130,18 +130,24 @@ process_func_callback(void *data)
 static int
 test_read(const char* cmd)
 {
-    struct bu_process* p;
+    struct bu_process* p = NULL;
     const char* run_av[3] = {cmd, "output", NULL};
     char line[100] = {0};
 
     bu_process_create(&p, (const char**)run_av, BU_PROCESS_DEFAULT);
+    if (!p)
+	return PROCESS_FAIL;
 
     if (bu_process_read_n(p, BU_PROCESS_STDOUT, 100, (char *)line) <= 0) {
 	fprintf(stderr, "bu_process_test[\"read\"] stdin read failed\n");
+	(void)bu_process_terminate(p);
+	(void)bu_process_wait_n(&p, 0);
 	return PROCESS_FAIL;
     }
     if (bu_process_read_n(p, BU_PROCESS_STDERR, 100, (char *)line) <= 0) {
 	fprintf(stderr, "bu_process_test[\"read\"] stdout read failed\n");
+	(void)bu_process_terminate(p);
+	(void)bu_process_wait_n(&p, 0);
 	return PROCESS_FAIL;
     }
 
@@ -457,6 +463,17 @@ test_streams(const char* cmd)
 {
     struct bu_process* p = NULL;
     const char* run_av[3] = {cmd, "echo", NULL};
+    FILE* f_in = NULL;
+    FILE* f_out = NULL;
+    FILE* f_err = NULL;
+    int fd_out = -1;
+    int fd_err = -1;
+    int64_t pending_start = 0;
+    int64_t start = 0;
+    char line[10] = "echo_test";
+    char out_read[10] = {0};
+    char err_read[10] = {0};
+    int ret = PROCESS_FAIL;
 
     if (bu_process_pending(-1)) {
 	fprintf(stderr, "bu_process_test[\"streams\"] - invalid descriptor reported pending\n");
@@ -464,65 +481,80 @@ test_streams(const char* cmd)
     }
 
     bu_process_create(&p, (const char**)run_av, BU_PROCESS_DEFAULT);
-
-    FILE* f_in = bu_process_file_open(p, BU_PROCESS_STDIN);
-    int fd_out = bu_process_fileno(p, BU_PROCESS_STDOUT);
-    int64_t pending_start = bu_gettime();
-    (void)bu_process_pending(fd_out);
-    if ((bu_gettime() - pending_start) > PROCESS_NONBLOCKING_CALL_LIMIT_USEC) {
-	fprintf(stderr, "bu_process_test[\"streams\"] - process_pending blocked\n");
+    if (!p) {
+	fprintf(stderr, "bu_process_test[\"streams\"] - process create failed\n");
 	return PROCESS_FAIL;
     }
 
+    f_in = bu_process_file_open(p, BU_PROCESS_STDIN);
+    f_out = bu_process_file_open(p, BU_PROCESS_STDOUT);
+    f_err = bu_process_file_open(p, BU_PROCESS_STDERR);
+    if (!f_in || !f_out || !f_err) {
+	fprintf(stderr, "bu_process_test[\"streams\"] - failed to open process stream files\n");
+	goto cleanup;
+    }
+
+    fd_out = bu_process_fileno(p, BU_PROCESS_STDOUT);
+    fd_err = bu_process_fileno(p, BU_PROCESS_STDERR);
+    pending_start = bu_gettime();
+    (void)bu_process_pending(fd_out);
+    if ((bu_gettime() - pending_start) > PROCESS_NONBLOCKING_CALL_LIMIT_USEC) {
+	fprintf(stderr, "bu_process_test[\"streams\"] - process_pending blocked\n");
+	goto cleanup;
+    }
+
     // send a test line through stdin
-    char line[10] = "echo_test";
     fputs(line, f_in);
     // subprocess is using cin.get() -> need to send newline and flush
     // so it'll move on
     fputs("\n", f_in);	fflush(f_in);
 
-    // subprocess should echo on stdout and stderr
-    char out_read[10], err_read[10];
-    FILE* f_out = bu_process_file_open(p, BU_PROCESS_STDOUT);
-    FILE* f_err = bu_process_file_open(p, BU_PROCESS_STDERR);
-    int fd_err = bu_process_fileno(p, BU_PROCESS_STDERR);
-
     // give up to 5 seconds for process_pending to get the echo
-    int64_t start = bu_gettime();
+    start = bu_gettime();
     while (!bu_process_pending(fd_out) || !bu_process_pending(fd_err)) {
 	if ((bu_gettime() - start) > PROCESS_COMPLETION_TIMEOUT_USEC) {
 	    fprintf(stderr, "bu_process_test[\"streams\"] - process_pending check failed\n");
-	    return PROCESS_FAIL;
+	    goto cleanup;
 	}
 	(void)bu_snooze(PROCESS_POLL_INTERVAL_USEC);
     }
 
     if (!bu_process_pending(fd_out) || (bu_fgets(out_read, 10, f_out) == NULL)) {
 	fprintf(stderr, "bu_process_test[\"streams\"] - expected pending data on stdout\n");
-	return PROCESS_FAIL;
+	goto cleanup;
     }
 
     if (!bu_process_pending(fd_err) || (bu_fgets(err_read, 10, f_err) == NULL)) {
 	fprintf(stderr, "bu_process_test[\"streams\"] - expected pending data on stderr\n");
-	return PROCESS_FAIL;
+	goto cleanup;
     }
 
     // verify echo's were correct
     if (bu_strncmp(out_read, err_read, 10) || bu_strncmp(out_read, line, 10)) {
 	fprintf(stderr, "bu_process_test[\"streams\"] - bad echo data\n");
-	return PROCESS_FAIL;
+	goto cleanup;
     }
 
-    bu_process_file_close(p, BU_PROCESS_STDIN);
-    bu_process_file_close(p, BU_PROCESS_STDOUT);
-    bu_process_file_close(p, BU_PROCESS_STDERR);
+    ret = PROCESS_PASS;
 
-    if (bu_process_wait_n(&p, 0)) {
-	fprintf(stderr, "bu_process_test[\"streams\"] - wait failed\n");
-	return PROCESS_FAIL;
+cleanup:
+    if (f_in)
+	bu_process_file_close(p, BU_PROCESS_STDIN);
+    if (f_out)
+	bu_process_file_close(p, BU_PROCESS_STDOUT);
+    if (f_err)
+	bu_process_file_close(p, BU_PROCESS_STDERR);
+
+    if (p) {
+	if (ret != PROCESS_PASS)
+	    (void)bu_process_terminate(p);
+	if (bu_process_wait_n(&p, 0) && ret == PROCESS_PASS) {
+	    fprintf(stderr, "bu_process_test[\"streams\"] - wait failed\n");
+	    ret = PROCESS_FAIL;
+	}
     }
 
-    return PROCESS_PASS;
+    return ret;
 }
 
 
@@ -584,17 +616,20 @@ test_all_args(const char* cmd)
 
     if (ck_argc != 2) {
 	fprintf(stderr, "bu_process_test[\"args\"] - ck_argc got (%d), expected (%d)\n", ck_argc, 2);
+	(void)bu_process_wait_n(&p, 0);
 	return PROCESS_FAIL;
     }
 
     if (bu_strncmp(cmd, ck_cmd, 100)) {
 	fprintf(stderr, "bu_process_test[\"args\"] - ck_cmd got (%s), expected (%s)\n", ck_cmd, cmd);
+	(void)bu_process_wait_n(&p, 0);
 	return PROCESS_FAIL;
     }
 
     for (int i = 0; i < ck_argc; i++) {
 	if (bu_strncmp(run_av[i], ck_argv[i], 100)) {
 	    fprintf(stderr, "bu_process_test[\"args\"] - ck_argv idx (%d) got (%s), expected (%s)\n", i, ck_cmd, run_av[i]);
+	    (void)bu_process_wait_n(&p, 0);
 	    return PROCESS_FAIL;
 	}
     }

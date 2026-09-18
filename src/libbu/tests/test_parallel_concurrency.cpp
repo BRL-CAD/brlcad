@@ -58,6 +58,8 @@ static void
 concurrent_callback(int cpu, void *data)
 {
     struct concurrent_state *state = static_cast<struct concurrent_state *>(data);
+    if (!state)
+	return;
 
     if (cpu != bu_parallel_id())
 	state->failed.store(true, std::memory_order_relaxed);
@@ -83,6 +85,8 @@ static void
 single_callback(int cpu, void *data)
 {
     struct single_state *state = static_cast<struct single_state *>(data);
+    if (!state || !state->failed)
+	return;
 
     if (cpu != 0 || bu_parallel_id() != state->expected_id)
 	state->failed->store(true, std::memory_order_relaxed);
@@ -93,6 +97,9 @@ static void
 reuse_probe(int cpu, void *data)
 {
     struct recursive_state *state = static_cast<struct recursive_state *>(data);
+    if (!state)
+	return;
+
     int id = bu_parallel_id();
 
     if (cpu != id || id < 0 || id >= MAX_PSW) {
@@ -109,6 +116,9 @@ static void
 recursive_callback(int cpu, void *data)
 {
     struct recursive_state *state = static_cast<struct recursive_state *>(data);
+    if (!state)
+	return;
+
     int id = bu_parallel_id();
 
     if (cpu != id || id < 0 || id >= MAX_PSW) {

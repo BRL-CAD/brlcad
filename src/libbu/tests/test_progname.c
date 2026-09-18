@@ -51,7 +51,7 @@ main(int ac, char *av[])
     const char *label;
     const char *ans;
     const char *res;
-    char *tbasename;
+    char tbasename[MAXPATHLEN] = {0};
     int length, dirname_length;
     char *plhs = NULL;
 
@@ -67,8 +67,6 @@ main(int ac, char *av[])
 	wai_getExecutablePath(plhs, length, &dirname_length);
 	plhs[length] = '\0';
     }
-
-    tbasename = (char *)bu_calloc(strlen(av[0]), sizeof(char), "bu_progname basename");
 
     /* pre-define tests */
     printf("Performing pre-defined tests:\n");
@@ -134,7 +132,6 @@ main(int ac, char *av[])
 	printf("plhs string unavailable for CASE 4 [FAIL]\n");
 	fail++;
     } else {
-	tbasename = (char *)bu_calloc(strlen(plhs), sizeof(char), "bu_progname basename");
 	bu_path_basename(ans, tbasename);
 
 	if (BU_STR_EQUAL(res, ans ? ans : "") || BU_STR_EQUAL(res, tbasename)) {
@@ -177,7 +174,7 @@ main(int ac, char *av[])
     label = "CASE 7";
     bu_setprogname(av[0]);
     if (!plhs) {
-	printf("plhs string unavailable for CASE 4 [FAIL]\n");
+	printf("plhs string unavailable for CASE 7 [FAIL]\n");
 	fail++;
     } else {
 
@@ -192,7 +189,6 @@ main(int ac, char *av[])
 	}
     }
 
-    bu_free(tbasename, "bu_progname basename");
     bu_free(plhs, "wai Executable Path");
 
     return fail;

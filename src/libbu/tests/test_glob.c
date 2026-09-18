@@ -134,6 +134,9 @@ _test_readdir(struct bu_dirent *de, void *handle)
         } else {
             /* sub-dir: include names that start with "prefix/" */
             char prefix_slash[512];
+            if (plen + 2 > sizeof(prefix_slash)) {
+                continue;
+            }
             snprintf(prefix_slash, sizeof(prefix_slash), "%s/", pref);
             if (bu_strncmp(nname, prefix_slash, plen + 1) != 0) { continue; }
             /* only one level deeper (no further '/' after the prefix) */
@@ -177,6 +180,8 @@ static struct bu_glob_context *
 _make_test_ctx(void)
 {
     struct bu_glob_context *gp = bu_glob_ctx_create();
+    if (!gp)
+        return NULL;
     gp->gl_opendir  = _test_opendir;
     gp->gl_readdir  = _test_readdir;
     gp->gl_closedir = _test_closedir;
@@ -191,6 +196,8 @@ static int
 _in_results(struct bu_glob_context *gp, const char *name)
 {
     int i;
+    if (!gp || !gp->gl_pathv || !name)
+        return 0;
     for (i = 0; i < gp->gl_pathc; i++)
         if (gp->gl_pathv[i] && bu_strcmp(bu_vls_cstr(gp->gl_pathv[i]), name) == 0)
             return 1;

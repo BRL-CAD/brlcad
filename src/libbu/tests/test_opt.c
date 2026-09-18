@@ -72,7 +72,7 @@ set_msg_str(struct bu_vls *msg, int ac, const char **av)
 {
     int i = 0;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
-    if (!msg || !av) return;
+    if (!msg || !av || ac <= 0) return;
     bu_vls_sprintf(&vls, "Parsing arg string \"");
     for (i = 0; i < ac - 1; i++) {
 	bu_vls_printf(&vls, "%s ", av[i]);
@@ -639,17 +639,17 @@ static int
 dc_color(struct bu_vls *msg, size_t argc, const char **argv, void *set_c)
 {
     struct bu_color *set_color = (struct bu_color *)set_c;
-    unsigned int rgb[3] = {0, 0, 0};
+    unsigned char rgb[3] = {0, 0, 0};
 
     BU_OPT_CHECK_ARGV0(msg, argc, argv, "color");
 
     /* First, see if the first string converts to rgb */
-    if (!bu_str_to_rgb((char *)argv[0], (unsigned char *)&rgb)) {
+    if (!bu_str_to_rgb((char *)argv[0], rgb)) {
 	/* nope - maybe we have 3 args? */
 	if (argc >= 3) {
 	    struct bu_vls tmp_color = BU_VLS_INIT_ZERO;
 	    bu_vls_sprintf(&tmp_color, "%s/%s/%s", argv[0], argv[1], argv[2]);
-	    if (!bu_str_to_rgb(bu_vls_addr(&tmp_color), (unsigned char *)&rgb)) {
+	    if (!bu_str_to_rgb(bu_vls_addr(&tmp_color), rgb)) {
 		/* Not valid with 3 */
 		bu_vls_free(&tmp_color);
 		if (msg)
@@ -659,7 +659,7 @@ dc_color(struct bu_vls *msg, size_t argc, const char **argv, void *set_c)
 		/* 3 did the job */
 		bu_vls_free(&tmp_color);
 		if (set_color)
-		    (void)bu_color_from_rgb_chars(set_color, (unsigned char *)&rgb);
+		    (void)bu_color_from_rgb_chars(set_color, rgb);
 		return 3;
 	    }
 	} else {
@@ -672,7 +672,7 @@ dc_color(struct bu_vls *msg, size_t argc, const char **argv, void *set_c)
     } else {
 	/* yep, 1 did the job */
 	if (set_color)
-	    (void)bu_color_from_rgb_chars(set_color, (unsigned char *)&rgb);
+	    (void)bu_color_from_rgb_chars(set_color, rgb);
 	return 1;
     }
 
@@ -942,7 +942,7 @@ main(int argc, char *argv[])
 
     test_num = strtol(argv[3], &endptr, 0);
     if (endptr && strlen(endptr) != 0) {
-	bu_exit(2, "Invalid test number: %s\n", argv[2]);
+	bu_exit(2, "Invalid test number: %s\n", argv[3]);
     }
 
     switch (desc_num) {

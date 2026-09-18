@@ -45,11 +45,12 @@ test_ext(const char *str, bu_mime_context_t context, int expected)
 {
     int status = 0;
     int type = bu_file_mime(str, context);
+    const char *s = str ? str : "(null)";
 
     if (type == expected) {
-	bu_log("%s -> %d [PASS]\n", str, type);
+	bu_log("%s -> %d [PASS]\n", s, type);
     } else {
-	bu_log("%s -> %d [FAIL]  (should be: {%d})\n", str, type, expected);
+	bu_log("%s -> %d [FAIL]  (should be: {%d})\n", s, type, expected);
 	status = 1;
     }
 
@@ -71,11 +72,12 @@ main(int ac, char *av[])
     if (ac != 4)
 	bu_exit(1, "Usage: %s {extension} {context} {expected}\n", av[0]);
 
-    sscanf(av[2], "%d", &context);
+    if (sscanf(av[2], "%d", &context) != 1)
+	return -1;
 
     expected = bu_file_mime_int(av[3]);
 
-    if (context >= BU_MIME_UNKNOWN)
+    if (context < 0 || context >= BU_MIME_UNKNOWN)
 	return -1;
 
     return test_ext(av[1], (bu_mime_context_t)context, expected);

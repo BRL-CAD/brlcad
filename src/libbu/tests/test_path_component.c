@@ -48,6 +48,8 @@ pc_compare(const char *input, const char *expected_str, bu_path_component_t type
 {
     struct bu_vls component = BU_VLS_INIT_ZERO;
     int found = bu_path_component(&component, input, type);
+    const char *in_str = input ? input : "(null)";
+    const char *exp_str = expected_str ? expected_str : "(null)";
 
     if (!expected_str && found) {
 	bu_log("no result expected, but result found: %s\n", bu_vls_addr(&component));
@@ -55,23 +57,23 @@ pc_compare(const char *input, const char *expected_str, bu_path_component_t type
 	bu_exit(EXIT_FAILURE, "pc_compare: unexpected result");
     }
     if (expected_str && !found) {
-	bu_log("%24s -> %24s (should be: %s) [FAIL]\n", input, bu_vls_addr(&component), expected_str);
+	bu_log("%24s -> %24s (should be: %s) [FAIL]\n", in_str, bu_vls_addr(&component), exp_str);
 	bu_vls_free(&component);
 	bu_exit(EXIT_FAILURE, "pc_compare: FAIL1");
 	return;
     }
     if (!expected_str && !found) {
-	bu_log("%24s -> %24s [PASSED]\n", input, bu_vls_addr(&component));
+	bu_log("%24s -> %24s [PASSED]\n", in_str, bu_vls_addr(&component));
 	bu_vls_free(&component);
 	return;
     }
 
     if (BU_STR_EQUAL(expected_str, bu_vls_addr(&component))) {
-	printf("%24s -> %24s [PASSED]\n", input, bu_vls_addr(&component));
+	printf("%24s -> %24s [PASSED]\n", in_str, bu_vls_addr(&component));
 	bu_vls_free(&component);
 	return;
     } else {
-	bu_log("%24s -> %24s (should be: %s) [FAIL]\n", input, bu_vls_addr(&component), expected_str);
+	bu_log("%24s -> %24s (should be: %s) [FAIL]\n", in_str, bu_vls_addr(&component), exp_str);
 	bu_vls_free(&component);
 	bu_exit(EXIT_FAILURE, "pc_compare: FAIL2");
     }

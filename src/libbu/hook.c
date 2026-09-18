@@ -47,7 +47,7 @@ bu_hook_list_init(struct bu_hook_list *hlp)
 void
 bu_hook_add(struct bu_hook_list *hlp, bu_hook_t func, void *clientdata)
 {
-    if (UNLIKELY(!hlp || !func))
+    if (UNLIKELY(!hlp))
 	return;
 
     if (!hlp->capacity) {

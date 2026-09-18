@@ -47,9 +47,13 @@ static int was_called[NUM_TEST_HOOKS] = {0};
 static int
 test_bu_hook_basic_hook(void *cdata, void *UNUSED(buf))
 {
+    if (!cdata)
+	return 0;
+
     int *which_hook = (int *)cdata;
 
-    was_called[*which_hook] = 1;
+    if (*which_hook >= 0 && *which_hook < NUM_TEST_HOOKS)
+	was_called[*which_hook] = 1;
 
     return 0;
 }
@@ -60,6 +64,7 @@ test_bu_hook_basic(void)
 {
     struct bu_hook_list hl;
     int which_hook = 0;
+    int ret = BRLCAD_ERROR;
 
     bu_hook_list_init(&hl);
 
@@ -70,7 +75,7 @@ test_bu_hook_basic(void)
 
     if (hl.capacity < 1 || hl.size != 1) {
 	printf("\nbu_hook_basic FAILED");
-	return BRLCAD_ERROR;
+	goto cleanup;
     }
 
     /**
@@ -80,7 +85,7 @@ test_bu_hook_basic(void)
 
     if (hl.capacity < 2 || hl.size != 2 || hl.hooks == NULL) {
 	printf("\nbu_hook_basic FAILED");
-	return BRLCAD_ERROR;
+	goto cleanup;
     }
 
     /* Removing the first item from a multi-item list must move only the
@@ -88,14 +93,14 @@ test_bu_hook_basic(void)
     bu_hook_delete(&hl, NULL, NULL);
     if (hl.size != 1 || hl.hooks[0].hookfunc != test_bu_hook_basic_hook) {
 	printf("\nbu_hook_basic FAILED");
-	return BRLCAD_ERROR;
+	goto cleanup;
     }
 
     bu_hook_call(&hl, NULL);
 
     if (!was_called[which_hook]) {
 	printf("\nbu_hook_basic FAILED");
-	return BRLCAD_ERROR;
+	goto cleanup;
     }
 
     /**
@@ -109,13 +114,15 @@ test_bu_hook_basic(void)
 
     if (was_called[which_hook]) {
 	printf("\nbu_hook_basic FAILED");
-	return BRLCAD_ERROR;
+	goto cleanup;
     }
 
-    bu_hook_delete_all(&hl);
-
+    ret = BRLCAD_OK;
     printf("\nbu_hook_basic PASSED");
-    return BRLCAD_OK;
+
+cleanup:
+    bu_hook_delete_all(&hl);
+    return ret;
 }
 
 
@@ -125,11 +132,12 @@ test_bu_hook_multiadd(void)
     struct bu_hook_list hl;
     int which_hook[NUM_TEST_HOOKS];
     size_t i;
+    int ret = BRLCAD_ERROR;
 
     bu_hook_list_init(&hl);
 
     for (i = 0; i < NUM_TEST_HOOKS; i++) {
-	which_hook[i] = i;
+	which_hook[i] = (int)i;
 	was_called[i] = 0;
 	bu_hook_add(&hl, test_bu_hook_basic_hook, &which_hook[i]);
     }
@@ -139,7 +147,7 @@ test_bu_hook_multiadd(void)
     for (i = 0; i < NUM_TEST_HOOKS; i++) {
 	if (!was_called[which_hook[i]]) {
 	    printf("\nbu_hook_multiadd FAILED");
-	    return BRLCAD_ERROR;
+	    goto cleanup;
 	}
     }
 
@@ -154,12 +162,16 @@ test_bu_hook_multiadd(void)
     for (i = 0; i < NUM_TEST_HOOKS; i++) {
 	if (was_called[which_hook[i]]) {
 	    printf("\nbu_hook_multiadd FAILED");
-	    return BRLCAD_ERROR;
+	    goto cleanup;
 	}
     }
 
+    ret = BRLCAD_OK;
     printf("\nbu_hook_multiadd PASSED");
-    return BRLCAD_OK;
+
+cleanup:
+    bu_hook_delete_all(&hl);
+    return ret;
 }
 
 
@@ -169,12 +181,13 @@ test_bu_hook_saverestore(void)
     struct bu_hook_list from_hl, to_hl;
     int which_hook[NUM_TEST_HOOKS];
     size_t i;
+    int ret = BRLCAD_ERROR;
 
     bu_hook_list_init(&from_hl);
     bu_hook_list_init(&to_hl);
 
     for (i = 0; i < NUM_TEST_HOOKS; i++) {
-	which_hook[i] = i;
+	which_hook[i] = (int)i;
 	was_called[i] = 0;
 	bu_hook_add(&from_hl, test_bu_hook_basic_hook, &which_hook[i]);
     }
@@ -187,7 +200,7 @@ test_bu_hook_saverestore(void)
     for (i = 0; i < NUM_TEST_HOOKS; i++) {
 	if (was_called[which_hook[i]]) {
 	    printf("\nbu_hook_saverestore FAILED");
-	    return BRLCAD_ERROR;
+	    goto cleanup;
 	}
     }
 
@@ -197,12 +210,17 @@ test_bu_hook_saverestore(void)
     for (i = 0; i < NUM_TEST_HOOKS; i++) {
 	if (!was_called[which_hook[i]]) {
 	    printf("\nbu_hook_saverestore FAILED");
-	    return BRLCAD_ERROR;
+	    goto cleanup;
 	}
     }
 
+    ret = BRLCAD_OK;
     printf("\nbu_hook_saverestore PASSED");
-    return BRLCAD_OK;
+
+cleanup:
+    bu_hook_delete_all(&from_hl);
+    bu_hook_delete_all(&to_hl);
+    return ret;
 }
 
 

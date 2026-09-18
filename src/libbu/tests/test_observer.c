@@ -51,7 +51,7 @@ observer_capture_append(void *data, const char *cmd)
 {
     struct observer_notify_capture *capture = (struct observer_notify_capture *)data;
 
-    if (capture->count >= ARRAY_LEN(capture->commands)) {
+    if (!capture || !cmd || capture->count >= ARRAY_LEN(capture->commands)) {
 	return;
     }
 
@@ -64,6 +64,10 @@ static int
 observer_capture_has(const struct observer_notify_capture *capture, const char *cmd)
 {
     size_t i;
+
+    if (!capture || !cmd) {
+	return 0;
+    }
 
     for (i = 0; i < capture->count; i++) {
 	if (BU_STR_EQUAL(capture->commands[i], cmd)) {

@@ -70,6 +70,7 @@ cleanup(const char *dir, int file_cnt)
 	(void)bu_file_delete(dir);
     }
 
+    bu_vls_free(&fname);
     return;
 }
 
@@ -232,8 +233,8 @@ main(int ac, char *av[])
     /* realpath */
     {
 	char *rpath = bu_file_realpath(bu_vls_cstr(&fname), NULL);
-	if (BU_STR_EQUAL(rpath, bu_vls_cstr(&fname))) {
-	    bu_exit(1, "%s [FAIL] path %s was not successfully expanded by bu_file_realpath (got %s)\n", av[0], bu_vls_cstr(&fname), rpath);
+	if (!rpath || BU_STR_EQUAL(rpath, bu_vls_cstr(&fname))) {
+	    bu_exit(1, "%s [FAIL] path %s was not successfully expanded by bu_file_realpath (got %s)\n", av[0], bu_vls_cstr(&fname), rpath ? rpath : "(null)");
 	}
 	bu_free(rpath, "free realpath");
     }

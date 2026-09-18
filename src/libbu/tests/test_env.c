@@ -331,8 +331,10 @@ editor_tests(void)
 	char epath[MAXPATHLEN] = {'\0'};
 	bu_dir(epath, MAXPATHLEN, bu_vls_cstr(&bp), "emacs", NULL);
 	FILE *fp = fopen(epath, "w");
-	fprintf(fp, "BRL-CAD");
-	fclose(fp);
+	if (fp) {
+	    fprintf(fp, "BRL-CAD");
+	    fclose(fp);
+	}
 	bu_setenv("EDITOR", epath, 1);
 	e = bu_editor(&eopts, 1, 0, NULL);
 	bu_file_delete(epath);
@@ -365,7 +367,8 @@ editor_tests(void)
 
     // Unset the EDITOR env var and prepare a list of "editors" to provide.
     bu_setenv("EDITOR", "", 1);
-    char *de = bu_strdup(bu_editor(&eopts, 0, 0, NULL));
+    const char *default_ed = bu_editor(&eopts, 0, 0, NULL);
+    char *de = default_ed ? bu_strdup(default_ed) : NULL;
     const char *elist[4] = {NULL};
     elist[0] = "non-existent-editor1";
     elist[1] = btest_path;

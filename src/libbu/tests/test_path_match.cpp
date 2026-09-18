@@ -39,21 +39,25 @@ main(int argc, char **argv)
     std::string sline;
     struct bu_vls lcpy = BU_VLS_INIT_ZERO;
     while (std::getline(fs, sline)) {
-	int lflags, want, got;
+	unsigned int lflags = 0;
+	int want = 0, got = 0;
 	char pattern[1024] = {'\0'};
 	char sbuf[1024] = {'\0'};
+	if (sline.empty()) {
+	    continue;
+	}
 	bu_vls_sprintf(&lcpy, "%s", sline.c_str());
-	got = bu_sscanf(bu_vls_cstr(&lcpy), "%1023s %1023s 0x%x %d", pattern, sbuf, (unsigned int *)&lflags, &want);
+	got = bu_sscanf(bu_vls_cstr(&lcpy), "%1023s %1023s 0x%x %d", pattern, sbuf, &lflags, &want);
 	if (got == EOF) {
 	    break;
 	}
-	if (pattern[0] == '#') {
+	if (pattern[0] == '#' || pattern[0] == '\0') {
 	    continue;
 	}
 	if (got == 4) {
-	    got = bu_path_match(pattern, sbuf, lflags);
+	    got = bu_path_match(pattern, sbuf, (int)lflags);
 	    if (got != want) {
-		bu_log("%s %s %d: want %d, got %d", pattern, sbuf, lflags, want, got);
+		bu_log("%s %s %u: want %d, got %d\n", pattern, sbuf, lflags, want, got);
 		error_cnt++;
 	    }
 	} else {
@@ -62,6 +66,7 @@ main(int argc, char **argv)
 	}
 
     }
+    fs.close();
     bu_vls_free(&lcpy);
 
     return error_cnt;
