@@ -233,7 +233,7 @@ _bot_cmd_decimate(void* bs, int argc, const char** argv)
 	int *face_sources = NULL;
 	int n_ofaces = 0;
 	struct bg_trimesh_decimation_settings s= BG_TRIMESH_DECIMATION_SETTINGS_INIT;
-	s.feature_size = merge_tol;
+	s.feature_size = args.merge_tol;
 	int ret = bg_trimesh_run_decimater(&ofaces, &face_sources,
 	    &n_ofaces, input_bot->faces, (int)input_bot->num_faces,
 	    (point_t *)input_bot->vertices, (int)input_bot->num_vertices, &s);

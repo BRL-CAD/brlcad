@@ -41,6 +41,7 @@ list(SORT source_files)
 # one in another command, must be an explicit audit update rather than silent
 # grammar drift.
 set(unbound_adapter_allowlist
+  "src/libged/annotate/annotate.cpp|4"
   "src/libged/attr/attr.cpp|1"
   "src/libged/check/check.c|24"
   "src/libged/comb/comb.c|1"
@@ -61,7 +62,11 @@ set(unbound_adapter_allowlist
 # source-audit decision rather than being accepted merely because a native
 # schema is registered somewhere in the file.
 set(bu_opt_native_adapter_allowlist
+  "src/libged/annotate/annotate.cpp"
+  "src/libged/bot/dump/bot_dump.cpp"
   "src/libged/draw/draw.c"
+  "src/libged/edit/edarb.c"
+  "src/libged/facetize/subprocess/main.cpp"
 )
 
 set(violations)

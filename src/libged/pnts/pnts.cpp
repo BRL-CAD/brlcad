@@ -176,7 +176,7 @@ struct pnts_read_args {
     struct bu_vls units;
     fastf_t size;
 };
-struct pnts_write_args { int help; int precision; int ply; };
+struct pnts_write_args { int help; int precision; int ply; const char *format; };
 
 static int _pnts_opt_radius(struct bu_vls *, const char *, void *);
 static int _pnts_opt_radii(struct bu_vls *, const char *, void *);
@@ -314,6 +314,7 @@ static const struct bu_cmd_option pnts_write_options[] = {
     BU_CMD_FLAG("h", "help", pnts_write_args, help, "Print help"),
     BU_CMD_INTEGER("p", "precision", pnts_write_args, precision, "digits", "Digits after the decimal point"),
     BU_CMD_FLAG(NULL, "ply", pnts_write_args, ply, "Write ASCII PLY format"),
+    BU_CMD_STRING("f", "format", pnts_write_args, format, "fields", "Output fields (currently xyz)"),
     BU_CMD_OPTION_NULL
 };
 static const struct bu_cmd_operand pnts_write_operands[] = {
@@ -1202,7 +1203,7 @@ static int
 _ged_pnts_cmd_write(void *bs, int argc, const char **argv)
 {
     struct ged *gedp = (struct ged *)bs;
-    struct pnts_write_args args = {0, 0, 0};
+    struct pnts_write_args args = {0, 0, 0, NULL};
     FILE *fp;
     struct rt_db_internal intern;
     struct rt_pnts_internal *pnts = NULL;
@@ -1210,46 +1211,32 @@ _ged_pnts_cmd_write(void *bs, int argc, const char **argv)
     struct bu_vls pnt_str = BU_VLS_INIT_ZERO;
     const char *pnt_prim = NULL;
     const char *filename = NULL;
-    const char *usage = "Usage: pnts write [options] <pnts_obj> <output_file>\n\nWrites out data based on the point type, one row per point, using a format of x y z [i j k] [scale] [R G B] (bracketed groups may or may not be present depending on point type.)  Use -f/--format to restrict the output fields (currently \"xyz\" is supported for XYZ-only output).\n\n";
     struct bu_vls fmt = BU_VLS_INIT_ZERO;
-    struct bu_opt_desc d[5];
-    int precis = 0;
-    BU_OPT(d[0], "h", "help",      "",     NULL,         &print_help,   "Print help and exit");
-    BU_OPT(d[1], "p", "precision", "#",    &bu_opt_int,  &precis,       "Number of digits after decimal to use when printing out numbers (default 17)");
-    BU_OPT(d[2], "",  "ply",       "",     NULL,         &ply_out,      "Write output using PLY format instead of x y z [i j k] [scale] [R G B] text file");
-    BU_OPT(d[3], "f", "format",    "[xyz]", &bu_opt_vls, &fmt,          "Format of output data (currently supports xyz for XYZ-only output)");
-    BU_OPT_NULL(d[4]);
 
     argc-=(argc>0); argv+=(argc>0); /* skip command name argv[0] */
 
-    /* must be wanting help */
     if (argc < 1) {
-	_ged_cmd_help(gedp, usage, d);
-	bu_vls_free(&fmt);
-	return BRLCAD_OK;
+        pnts_show_schema_help(gedp, "pnts write", &pnts_write_schema);
+        return BRLCAD_OK;
     }
-
     int opt_ret = bu_cmd_schema_parse(&pnts_write_schema, &args,
-	gedp->ged_result_str, argc, argv);
-
-    if (print_help) {
-	_ged_cmd_help(gedp, usage, d);
-	bu_vls_free(&fmt);
-	return BRLCAD_OK;
+        gedp->ged_result_str, argc, argv);
+    if (opt_ret < 0) {
+        pnts_show_schema_help(gedp, "pnts write", &pnts_write_schema);
+        return BRLCAD_ERROR;
     }
-	if (opt_ret < 0) {
-	pnts_show_schema_help(gedp, "pnts write", &pnts_write_schema);
-	return BRLCAD_ERROR;
-	}
-
+    if (args.help) {
+        pnts_show_schema_help(gedp, "pnts write", &pnts_write_schema);
+        return BRLCAD_OK;
+    }
     argc -= opt_ret;
     argv += opt_ret;
-
     if (argc != 2) {
-	_ged_cmd_help(gedp, usage, d);
-	bu_vls_free(&fmt);
-	return BRLCAD_ERROR;
+        pnts_show_schema_help(gedp, "pnts write", &pnts_write_schema);
+        return BRLCAD_ERROR;
     }
+    if (args.format)
+        bu_vls_strcpy(&fmt, args.format);
 
     pnt_prim = argv[0];
     filename = argv[1];
@@ -1298,7 +1285,7 @@ _ged_pnts_cmd_write(void *bs, int argc, const char **argv)
 	int obj_has_col = (pnts->type == RT_PNT_TYPE_COL || pnts->type == RT_PNT_TYPE_COL_SCA
 			   || pnts->type == RT_PNT_TYPE_COL_NRM || pnts->type == RT_PNT_TYPE_COL_SCA_NRM);
 
-	if (ply_out) {
+	if (args.ply) {
 	    bu_vls_sprintf(gedp->ged_result_str, "Error: -f/--format cannot be combined with --ply\n");
 	    rt_db_free_internal(&intern);
 	    bu_vls_free(&fmt);
@@ -1338,7 +1325,7 @@ _ged_pnts_cmd_write(void *bs, int argc, const char **argv)
 	    for (BU_LIST_FOR(pn, pnt, &(pl->l))) {
 		int i = 0;
 		for (i = 0; i < 3; i++) {
-		    _pnts_fastf_t_to_vls(&pnt_str, pn->v[i], precis);
+		    _pnts_fastf_t_to_vls(&pnt_str, pn->v[i], args.precision);
 		    if (i != 2) {
 			fprintf(fp, "%s ", bu_vls_addr(&pnt_str));
 		    } else {

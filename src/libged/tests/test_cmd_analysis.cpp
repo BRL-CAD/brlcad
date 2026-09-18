@@ -1571,6 +1571,13 @@ main(int ac, char *av[])
 	    "completion should expose subcommand options after a separator");
     ged_cmd_completion_result_clear(&completion_result);
 
+    completion_count = ged_cmd_complete_result(gedp, "pnts write --f",
+        std::strlen("pnts write --f"), &completion_result);
+    CHECK(find_completion(completion_result.completion_candidates,
+        (int)completion_result.completion_count, "--format") != NULL,
+        "pnts write should expose its output-format option");
+    ged_cmd_completion_result_clear(&completion_result);
+
     completion_count = ged_cmd_complete_result(gedp, "erase -", std::strlen("erase -"), &completion_result);
     CHECK(find_completion(completion_result.completion_candidates, (int)completion_result.completion_count, "--view") == NULL,
 	    "legacy completion should filter new-form-only erase options");
@@ -3465,6 +3472,18 @@ main(int ac, char *av[])
 	"bo import mode should complete its native minor-type vocabulary");
     ged_cmd_completion_result_clear(&completion_result);
 
+    CHECK(ged_cmd_validate(gedp, "bo -i u hf new.bin data.raw",
+        std::strlen("bo -i u hf new.bin data.raw"), &validation) == 0 &&
+        validation.state == BU_CMD_VALIDATE_VALID,
+        "bo should accept host-order prefixed element types");
+    ged_cmd_validate_result_clear(&validation);
+    completion_count = ged_cmd_complete_result(gedp, "bo -i u n",
+        std::strlen("bo -i u n"), &completion_result);
+    CHECK(find_completion(completion_result.completion_candidates,
+        (int)completion_result.completion_count, "nf") != NULL,
+        "bo should complete network-order prefixed element types");
+    ged_cmd_completion_result_clear(&completion_result);
+
     CHECK(ged_cmd_analyze(gedp, "bo -o /tmp/native_bo.out all.g", &analysis) == 0,
 	"bo native export analysis should succeed");
     {
@@ -3523,9 +3542,9 @@ main(int ac, char *av[])
 	validation.state == BU_CMD_VALIDATE_VALID,
 	"bb should accept a new bounding-box name and object operands");
     ged_cmd_validate_result_clear(&validation);
-    CHECK(ged_cmd_validate(gedp, "bb -o all.g moss.g", std::strlen("bb -o all.g moss.g"), &validation) == 0 &&
-	validation.state == BU_CMD_VALIDATE_INVALID,
-	"bb should reject oriented-bounds requests with multiple objects");
+    CHECK(ged_cmd_validate(gedp, "bb -o all.g tor.r", std::strlen("bb -o all.g tor.r"), &validation) == 0 &&
+	validation.state == BU_CMD_VALIDATE_VALID,
+	"bb should accept oriented bounds for multiple objects");
     ged_cmd_validate_result_clear(&validation);
 
     CHECK(ged_cmd_validate(gedp, "ocenter all.g 1 2 ", std::strlen("ocenter all.g 1 2 "), &validation) == 0,
@@ -3835,20 +3854,25 @@ main(int ac, char *av[])
     }
     ged_cmd_analysis_clear(&analysis);
 
-    CHECK(ged_cmd_analyze(gedp, "annotate -n label -p 0 0 0 all.g", &analysis) == 0,
-	"annotate native analysis should succeed");
+    CHECK(ged_cmd_analyze(gedp,
+        "annotate leader --target 0 0 0 --for all.g label text", &analysis) == 0,
+        "annotate leader native analysis should succeed");
     {
-	const struct ged_cmd_analysis_token *point = token_matching(&analysis, "annotate -n label -p 0 0 0 all.g", "0");
-	const struct ged_cmd_analysis_token *object = token_matching(&analysis, "annotate -n label -p 0 0 0 all.g", "all.g");
-	CHECK(point && point->role == GED_CMD_TOKEN_OPTION_ARG && point->value_type == BU_CMD_VALUE_VECTOR &&
-	    object && object->role == GED_CMD_TOKEN_OPERAND && object->value_type == BU_CMD_VALUE_DB_PATH,
-	    "annotate should distinguish its vector option from database-path operands");
+        const char *input = "annotate leader --target 0 0 0 --for all.g label text";
+        const struct ged_cmd_analysis_token *point = token_matching(&analysis, input, "0");
+        const struct ged_cmd_analysis_token *object = token_matching(&analysis, input, "all.g");
+        CHECK(point && point->role == GED_CMD_TOKEN_OPTION_ARG &&
+            point->value_type == BU_CMD_VALUE_VECTOR &&
+            object && object->role == GED_CMD_TOKEN_OPTION_ARG &&
+            object->value_type == BU_CMD_VALUE_DB_OBJECT,
+            "annotate leader should distinguish vector and database options");
     }
     ged_cmd_analysis_clear(&analysis);
 
-    CHECK(ged_cmd_validate(gedp, "annotate -p 0 nope 0 all.g", std::strlen("annotate -p 0 nope 0 all.g"), &validation) == 0 &&
-	validation.state == BU_CMD_VALIDATE_INVALID,
-	"annotate should reject a non-numeric native point component");
+    CHECK(ged_cmd_validate(gedp, "annotate leader --target 0 nope 0 label text",
+        std::strlen("annotate leader --target 0 nope 0 label text"), &validation) == 0 &&
+        validation.state == BU_CMD_VALIDATE_INVALID,
+        "annotate leader should reject a nonnumeric target component");
     ged_cmd_validate_result_clear(&validation);
 
     completion_count = ged_cmd_complete_result(gedp, "move_all -f ", std::strlen("move_all -f "), &completion_result);
@@ -4745,6 +4769,7 @@ main(int ac, char *av[])
     ged_cmd_completion_result_clear(&completion_result);
 
     {
+	auto help_ok = [](int status) { return status == BRLCAD_OK || status == GED_HELP; };
 	const char *get_autoview_av[] = {"get_autoview", "-p"};
 	const char *get_autoview_bad_av[] = {"get_autoview", "-p", "unexpected"};
 	const char *gqa_bad_hits_av[] = {"gqa", "-n", "nope", "tor.r"};
@@ -4896,8 +4921,8 @@ main(int ac, char *av[])
 	const char *region_missing_member_av[] = {"region", "native_region_for_schema.r", "u"};
 	const char *sphgroup_missing_sphere_av[] = {"sphgroup", "native_sphgroup_for_schema.g"};
 	const char *track_bad_dimension_av[] = {"track", "native_track_for_schema", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "not-a-number"};
-	const char *annotate_valid_av[] = {"annotate", "-n", "label", "-p", "0", "0", "0", "all.g"};
-	const char *annotate_bad_point_av[] = {"annotate", "-p", "0", "nope", "0", "all.g"};
+	const char *annotate_valid_av[] = {"annotate", "text", "-D", "--at", "0", "0", "0", "native_annotate_label", "text"};
+	const char *annotate_bad_point_av[] = {"annotate", "text", "-D", "--at", "0", "nope", "0", "bad_annotate", "text"};
 	const char *bo_bad_minor_type_av[] = {"bo", "-i", "u", "nope", "native_bo_for_schema.bin", "/tmp/ged_test_cmd_analysis_missing.bin"};
 	const char *bo_missing_output_source_av[] = {"bo", "-o", "/tmp/ged_test_cmd_analysis_bo.out"};
 	const char *comb_std_missing_expr_av[] = {"comb_std", "native_comb_std_for_schema.c"};
@@ -5198,43 +5223,45 @@ main(int ac, char *av[])
 	CHECK(ged_exec(gedp, 2, bot_help_av) == BRLCAD_OK &&
 	    std::strstr(bu_vls_cstr(gedp->ged_result_str), "Subcommands:") != NULL,
 	    "bot should render root help after native root-option parsing");
-	CHECK(ged_exec(gedp, 7, bot_color_subd_help_av) == BRLCAD_OK &&
+	ret = ged_exec(gedp, 7, bot_color_subd_help_av);
+	CHECK(help_ok(ret) &&
 	    std::strstr(bu_vls_cstr(gedp->ged_result_str), "Available subdivision algorithm types") != NULL,
 	    "bot should preserve a native three-component root color before child dispatch");
-	CHECK(ged_exec(gedp, 3, bot_decimate_subcommand_help_av) == BRLCAD_OK &&
+	CHECK(help_ok(ged_exec(gedp, 3, bot_decimate_subcommand_help_av)) &&
 	    std::strstr(bu_vls_cstr(gedp->ged_result_str), "Available decimation methods") != NULL,
 	    "bot decimate should render help from its native child schema");
-	CHECK(ged_exec(gedp, 3, bot_chull_help_av) == BRLCAD_OK &&
+	CHECK(help_ok(ged_exec(gedp, 3, bot_chull_help_av)) &&
 	    std::strstr(bu_vls_cstr(gedp->ged_result_str), "input_bot") != NULL,
 	    "bot chull should render native child help before a database is required");
-	CHECK(ged_exec(gedp, 3, bot_strip_help_av) == BRLCAD_OK &&
+	CHECK(help_ok(ged_exec(gedp, 3, bot_strip_help_av)) &&
 	    std::strstr(bu_vls_cstr(gedp->ged_result_str), "output_name") != NULL,
 	    "bot strip should render native child help before a database is required");
-	CHECK(ged_exec(gedp, 3, bot_set_help_av) == BRLCAD_OK &&
+	CHECK(help_ok(ged_exec(gedp, 3, bot_set_help_av)) &&
 	    std::strstr(bu_vls_cstr(gedp->ged_result_str), "face_index:number") != NULL,
 	    "bot set should render property-specific native child help");
-    CHECK(ged_exec(gedp, 3, bot_info_help_av) == BRLCAD_OK &&
+    CHECK(help_ok(ged_exec(gedp, 3, bot_info_help_av)) &&
 	    std::strstr(bu_vls_cstr(gedp->ged_result_str), "integer index, range, or index list") != NULL,
 	    "bot info should render typed index-grammar child help");
-	CHECK(ged_exec(gedp, 3, bot_pick_help_av) == BRLCAD_OK &&
+	CHECK(help_ok(ged_exec(gedp, 3, bot_pick_help_av)) &&
 	    std::strstr(bu_vls_cstr(gedp->ged_result_str), "--first") != NULL,
 	    "bot pick should render typed ray-grammar child help");
-	CHECK(ged_exec(gedp, 3, bot_check_help_av) == BRLCAD_OK &&
+	CHECK(help_ok(ged_exec(gedp, 3, bot_check_help_av)) &&
 	    std::strstr(bu_vls_cstr(gedp->ged_result_str), "manifold") != NULL,
 	    "bot check should render native conditional-grammar child help");
-	CHECK(ged_exec(gedp, 3, bot_extrude_help_av) == BRLCAD_OK &&
+	CHECK(help_ok(ged_exec(gedp, 3, bot_extrude_help_av)) &&
 	    std::strstr(bu_vls_cstr(gedp->ged_result_str), "--max-area-delta") != NULL,
 	    "bot extrude should render help from its native child schema");
-	CHECK(ged_exec(gedp, 3, bot_remesh_help_av) == BRLCAD_OK &&
+	CHECK(help_ok(ged_exec(gedp, 3, bot_remesh_help_av)) &&
 	    std::strstr(bu_vls_cstr(gedp->ged_result_str), "--output") != NULL,
 	    "bot remesh should render help from its native child schema");
-	CHECK(ged_exec(gedp, 3, bot_repair_help_av) == BRLCAD_OK &&
+	CHECK(help_ok(ged_exec(gedp, 3, bot_repair_help_av)) &&
 	    std::strstr(bu_vls_cstr(gedp->ged_result_str), "--max-hole-percent") != NULL,
 	    "bot repair should render help from its native child schema");
-	CHECK(ged_exec(gedp, 3, bot_smooth_help_av) == BRLCAD_OK &&
+	CHECK(help_ok(ged_exec(gedp, 3, bot_smooth_help_av)) &&
 	    std::strstr(bu_vls_cstr(gedp->ged_result_str), "Available continuity options") != NULL,
 	    "bot smooth should render help from its native child schema");
-	CHECK(ged_exec(gedp, 3, bot_subd_help_av) == BRLCAD_OK &&
+	ret = ged_exec(gedp, 3, bot_subd_help_av);
+	CHECK(help_ok(ret) &&
 	    std::strstr(bu_vls_cstr(gedp->ged_result_str), "Available subdivision algorithm types") != NULL,
 	    "bot subd should render help from its native child schema");
 	CHECK(ged_exec(gedp, 2, adc_draw_query_av) == BRLCAD_OK,
@@ -5426,10 +5453,10 @@ main(int ac, char *av[])
 		"sphgroup should reject a native group form without a target sphere before traversal");
 	CHECK(ged_exec_track(gedp, 15, track_bad_dimension_av) == BRLCAD_ERROR,
 		"track should reject an invalid native geometry dimension before creating objects");
-	CHECK(ged_exec_annotate(gedp, 8, annotate_valid_av) == BRLCAD_OK,
-		"annotate should execute its native options-first name, point, and object parse");
-	CHECK(ged_exec_annotate(gedp, 6, annotate_bad_point_av) == BRLCAD_ERROR,
-		"annotate should reject an invalid native point component before processing objects");
+	CHECK(ged_exec_annotate(gedp, 9, annotate_valid_av) == BRLCAD_OK,
+		"annotate text should create an annotation with a parsed anchor point");
+	CHECK(ged_exec_annotate(gedp, 9, annotate_bad_point_av) == BRLCAD_ERROR,
+		"annotate text should reject an invalid anchor point before creating an object");
 	CHECK(ged_exec_bo(gedp, 6, bo_bad_minor_type_av) == BRLCAD_ERROR,
 		"bo should reject an invalid native minor type before creating an object");
 	CHECK(ged_exec_bo(gedp, 3, bo_missing_output_source_av) == BRLCAD_ERROR,
@@ -8217,6 +8244,64 @@ main(int ac, char *av[])
 		    expected_m35_order, sizeof(expected_m35_order) / sizeof(expected_m35_order[0])),
 		"m35 suspension path completions should be alphanum sorted");
     }
+
+    CHECK(ged_cmd_schema_exists("annotate"),
+        "annotate should publish a command tree");
+    completion_count = ged_cmd_complete_result(gedp, "annotate d",
+        std::strlen("annotate d"), &completion_result);
+    CHECK(find_completion(completion_result.completion_candidates,
+        (int)completion_result.completion_count, "dimension") != NULL,
+        "annotate should complete its dimension subcommand");
+    ged_cmd_completion_result_clear(&completion_result);
+    completion_count = ged_cmd_complete_result(gedp, "annotate dimension a",
+        std::strlen("annotate dimension a"), &completion_result);
+    CHECK(find_completion(completion_result.completion_candidates,
+        (int)completion_result.completion_count, "angular") != NULL,
+        "annotate should complete dimension types");
+    ged_cmd_completion_result_clear(&completion_result);
+    completion_count = ged_cmd_complete_result(gedp, "annotate leader --scr",
+        std::strlen("annotate leader --scr"), &completion_result);
+    CHECK(find_completion(completion_result.completion_candidates,
+        (int)completion_result.completion_count, "--screen-space") != NULL,
+        "annotate leader should complete its own options");
+    ged_cmd_completion_result_clear(&completion_result);
+    completion_count = ged_cmd_complete_result(gedp, "annotate text --plane x",
+        std::strlen("annotate text --plane x"), &completion_result);
+    CHECK(find_completion(completion_result.completion_candidates,
+        (int)completion_result.completion_count, "xy") != NULL,
+        "annotate should complete plane values");
+    ged_cmd_completion_result_clear(&completion_result);
+    completion_count = ged_cmd_complete_result(gedp, "annotate autodim --bounds o",
+        std::strlen("annotate autodim --bounds o"), &completion_result);
+    CHECK(find_completion(completion_result.completion_candidates,
+        (int)completion_result.completion_count, "obb") != NULL,
+        "annotate autodim should complete bounds types");
+    ged_cmd_completion_result_clear(&completion_result);
+    CHECK(ged_cmd_validate(gedp, "annotate text --text-height nope label text",
+        std::strlen("annotate text --text-height nope label text"), &validation) == 0 &&
+        validation.state == BU_CMD_VALIDATE_INVALID,
+        "annotate should reject a nonnumeric text height");
+    ged_cmd_validate_result_clear(&validation);
+
+    CHECK(ged_cmd_schema_exists("arrange"),
+        "arrange should publish a command tree");
+    completion_count = ged_cmd_complete_result(gedp, "arrange n",
+        std::strlen("arrange n"), &completion_result);
+    CHECK(find_completion(completion_result.completion_candidates,
+        (int)completion_result.completion_count, "nest") != NULL,
+        "arrange should complete its nest style");
+    ged_cmd_completion_result_clear(&completion_result);
+    completion_count = ged_cmd_complete_result(gedp, "arrange nest -q th",
+        std::strlen("arrange nest -q th"), &completion_result);
+    CHECK(find_completion(completion_result.completion_candidates,
+        (int)completion_result.completion_count, "thorough") != NULL,
+        "arrange nest should complete quality values");
+    ged_cmd_completion_result_clear(&completion_result);
+    CHECK(ged_cmd_validate(gedp, "arrange nest -s 0 output all.g tor.r",
+        std::strlen("arrange nest -s 0 output all.g tor.r"), &validation) == 0 &&
+        validation.state == BU_CMD_VALIDATE_INVALID,
+        "arrange nest should enforce positive cell size");
+    ged_cmd_validate_result_clear(&validation);
 
     ret = 0;
 

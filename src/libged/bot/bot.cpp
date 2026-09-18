@@ -1103,8 +1103,19 @@ static const struct bu_cmd_schema bot_sync_subcommand_schema = {
     bot_single_object_operands, BU_CMD_PARSE_INTERSPERSED,
     BU_CMD_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
 };
+struct bot_split_subcommand_args {
+    int print_help;
+    const char *group_name;
+};
+static const struct bu_cmd_option bot_split_subcommand_options[] = {
+    BU_CMD_FLAG("h", "help", struct bot_split_subcommand_args, print_help,
+        "Print command help"),
+    BU_CMD_STRING("", "grp", struct bot_split_subcommand_args, group_name,
+        "name", "Name the combination containing split BoTs"),
+    BU_CMD_OPTION_NULL
+};
 static const struct bu_cmd_schema bot_split_subcommand_schema = {
-    "split", "Split disconnected BoT components", bot_help_options,
+    "split", "Split disconnected BoT components", bot_split_subcommand_options,
     bot_single_object_operands, BU_CMD_PARSE_INTERSPERSED,
     BU_CMD_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
 };
@@ -1456,43 +1467,27 @@ _bot_cmd_split(void *bs, int argc, const char **argv)
 
     struct _ged_bot_info *gb = (struct _ged_bot_info *)bs;
 
-    int print_help = 0;
-    const char *requested_group = NULL;
-    struct bu_opt_desc d[3];
-    BU_OPT(d[0], "h", "help", "", NULL, &print_help, "Print help");
-    BU_OPT(d[1], "", "grp", "name", &bu_opt_str, &requested_group,
-	"Name of the combination containing the split BoTs");
-    BU_OPT_NULL(d[2]);
-
+    struct bot_split_subcommand_args args = {0, NULL};
     argc--; argv++;
-
-    int parsed_argc = bu_opt_parse(gb->gedp->ged_result_str, argc, argv, d);
-    if (print_help) {
-	char *option_help = bu_opt_describe(d, NULL);
-	bu_vls_printf(gb->gedp->ged_result_str, "Usage: %s\nOptions:\n",
-	    usage_string);
-	if (option_help) {
-	    bu_vls_strcat(gb->gedp->ged_result_str, option_help);
-	    bu_free(option_help, "BOT split option help");
-	}
-	return GED_HELP;
+    if (!argc) {
+        bot_single_object_usage(gb->gedp->ged_result_str,
+            &bot_split_subcommand_schema, "bot split", "objname");
+        return GED_HELP;
     }
-    if (parsed_argc < 0) {
-	bu_vls_printf(gb->gedp->ged_result_str, "Usage: %s", usage_string);
-	return BRLCAD_ERROR;
-    }
-    argc = parsed_argc;
-
-    if (argc != 1) {
-	bu_vls_printf(gb->gedp->ged_result_str, "Usage: %s", usage_string);
-	return BRLCAD_ERROR;
+    int operand_index = bu_cmd_schema_parse_complete(&bot_split_subcommand_schema,
+        &args, gb->gedp->ged_result_str, argc, argv);
+    if (operand_index < 0) {
+        bot_single_object_usage(gb->gedp->ged_result_str,
+            &bot_split_subcommand_schema, "bot split", "objname");
+        return BRLCAD_ERROR;
     }
     if (args.print_help) {
-	bot_single_object_usage(gb->gedp->ged_result_str, &bot_split_subcommand_schema,
-	    "bot split", "objname");
-	return GED_HELP;
+        bot_single_object_usage(gb->gedp->ged_result_str,
+            &bot_split_subcommand_schema, "bot split", "objname");
+        return GED_HELP;
     }
-    operands = argv + operand_index;
+    const char *requested_group = args.group_name;
+    const char **operands = argv + operand_index;
 
     if (requested_group && !requested_group[0]) {
 	bu_vls_printf(gb->gedp->ged_result_str,
@@ -1512,7 +1507,7 @@ _bot_cmd_split(void *bs, int argc, const char **argv)
 	    return BRLCAD_ERROR;
 	}
     } else {
-	bu_vls_sprintf(&group_name, "%s_bots", argv[0]);
+	bu_vls_sprintf(&group_name, "%s_bots", operands[0]);
 	if (db_lookup(gb->gedp->dbip, bu_vls_cstr(&group_name),
 		LOOKUP_QUIET) != RT_DIR_NULL) {
 	    if (bu_vls_incr(&group_name, NULL, NULL,
@@ -1527,7 +1522,7 @@ _bot_cmd_split(void *bs, int argc, const char **argv)
     }
 
     struct bu_vls output_names = BU_VLS_INIT_ZERO;
-    int split_count = _ged_bot_split_object(gb->gedp, argv[0],
+    int split_count = _ged_bot_split_object(gb->gedp, operands[0],
 	bu_vls_cstr(&group_name), &output_names, gb->gedp->ged_result_str);
     if (split_count < 0) {
 	bu_vls_free(&output_names);

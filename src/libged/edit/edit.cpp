@@ -509,11 +509,11 @@ static const struct bu_cmd_schema edit_mat_schema =
 
 static const struct bu_cmd_operand edit_perturb_operands[] = {
     BU_CMD_OPERAND_VALIDATE("factor", BU_CMD_VALUE_NUMBER, 1, 1,
-	bu_cmd_positive_number_validate, "Positive perturbation factor", NULL),
+	bu_cmd_nonnegative_number_validate, "Nonnegative perturbation factor", NULL),
     BU_CMD_OPERAND_NULL
 };
 static const struct bu_cmd_schema edit_perturb_schema =
-    BU_CMD_SCHEMA("perturb", "Perturb primitives by a positive factor", NULL,
+    BU_CMD_SCHEMA("perturb", "Perturb primitives by a nonnegative factor", NULL,
 	edit_perturb_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
 	BU_CMD_SCHEMA_META(NULL, NULL, NULL, NULL));
 
@@ -1786,7 +1786,7 @@ cmd_mat::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
 // Perturb command
 class cmd_perturb : public ged_subcmd {
     public:
-	std::string purpose() { return std::string("perturb primitive or primitives below comb by the specified factor (must be greater than 0)"); }
+	std::string purpose() { return std::string("perturb primitives by the specified factor (zero leaves geometry unchanged)"); }
 	int exec(struct ged *, void *, int, const char **);
 	struct ged_edit_ctx *ctx;
     private:
@@ -1863,6 +1863,8 @@ cmd_perturb::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
     if (factor <= 0.0) {
+	if (NEAR_ZERO(factor, SMALL_FASTF))
+	    return BRLCAD_OK;
 	bu_vls_printf(gedp->ged_result_str,
 	    "perturb: factor must be greater than zero\n");
 	return BRLCAD_ERROR;

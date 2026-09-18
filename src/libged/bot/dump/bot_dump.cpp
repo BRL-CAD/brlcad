@@ -695,27 +695,17 @@ ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct bu_opt_desc od[14];
-    BU_OPT(od[ 0], "h", "help",             "",      NULL,          &print_help,          "Print help and exit");
-    BU_OPT(od[ 1], "?", "",                 "",      NULL,          &print_help,          "");
-    BU_OPT(od[ 2], "b", "",                 "",      NULL,          &d->binary,           "Use binary version of output format");
-    BU_OPT(od[ 3], "n", "normals",          "",      NULL,          &d->normals,          "If supported, write out normals");
-    BU_OPT(od[ 4], "m", "output-directory", "dir",   &bu_opt_vls,   &d->output_directory, "Output multiple files into this directory");
-    BU_OPT(od[ 5], "o", "output-file",      "file",  &bu_opt_vls,   &d->output_file,      "Specify an output filename");
-    BU_OPT(od[ 6], "t", "",                 "fmt",   &bot_opt_fmt,  &d->output_type,      "Specify an output format type");
-    BU_OPT(od[ 7], "u", "",                 "unit",  &bot_opt_unit, &d->cfactor,          "Specify an output unit");
-    BU_OPT(od[ 8], "F", "full-precision",   "",      NULL,          &d->full_precision,   "Write full floating point precision when supported (not glTF/GLB).");
-    // TODO - use these options to fold dbot variations into the core function, and then
-    // rework dbot version to just construct a new argc/argv array and call this.
-    BU_OPT(od[ 9], "",  "displayed",        "",      NULL,          &write_displayed,     "Write out displayed geometry");
-    BU_OPT(od[10], "",  "viewdata",         "",      NULL,          &d->view_data,        "Write out non-geometry view data");
-    BU_OPT(od[11], "",  "materials",        "",      NULL,          &d->material_info,    "Write out material and color info (default when supported)");
-    BU_OPT(od[12], "",  "no-materials",     "",      NULL,          &no_material_info,    "Do not write out material or color info");
-    BU_OPT_NULL(od[13]);
+    struct bot_dump_args args = {};
+    args.material_info = 1;
+    int operand_index;
+    bu_vls_init(&args.output_file);
+    bu_vls_init(&args.output_directory);
 
     /* must be wanting help */
     if (!argc) {
 	bot_dump_usage(gedp->ged_result_str, cmd_name);
+	bu_vls_free(&args.output_file);
+	bu_vls_free(&args.output_directory);
 	bot_client_data_cleanup(d);
 	return GED_HELP;
     }

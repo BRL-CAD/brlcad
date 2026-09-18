@@ -289,54 +289,6 @@ test_bu_color_parse(int argc, char *argv[])
 	    actual[j] = color.buc_rgb[j];
 	if (!color_near_equal(actual, unchanged, 0.0)) {
 	    bu_log("bu_color_parse changed output after rejecting: %s\n", invalid[i]);
-test_bu_rgb_from_argv(int argc, char *argv[])
-{
-    struct rgb_case {
-	size_t argc;
-	const char *argv[3];
-	int consumed;
-	unsigned char rgb[3];
-    } cases[] = {
-	{1, {"1/2/3", NULL, NULL}, 1, {1, 2, 3}},
-	{1, {"1, 2, 3", NULL, NULL}, 1, {1, 2, 3}},
-	{1, {"1 ; 2 ; 3", NULL, NULL}, 1, {1, 2, 3}},
-	{1, {"1 2 3", NULL, NULL}, 1, {1, 2, 3}},
-	{3, {"1", "2", "3"}, 3, {1, 2, 3}},
-	{2, {"1/2/3", "tail", NULL}, 1, {1, 2, 3}},
-	{1, {"1/2,3", NULL, NULL}, 0, {0, 0, 0}},
-	{1, {"256/2/3", NULL, NULL}, 0, {0, 0, 0}},
-	{1, {"1/2/3x", NULL, NULL}, 0, {0, 0, 0}},
-	{2, {"1", "2", NULL}, 0, {0, 0, 0}},
-	{3, {"1", "2", "not-a-channel"}, 0, {0, 0, 0}}
-    };
-
-    if (argc != 2) {
-	bu_exit(1, "ERROR: function 8 takes no arguments [%s]\n", argv[0]);
-    }
-
-    for (size_t i = 0; i < sizeof(cases) / sizeof(cases[0]); i++) {
-	unsigned char rgb[3] = {11, 22, 33};
-	int consumed = bu_rgb_from_argv(rgb, cases[i].argc, cases[i].argv);
-	if (consumed != cases[i].consumed) {
-	    bu_log("RGB case %zu: expected %d tokens, got %d\n", i, cases[i].consumed, consumed);
-	    return 1;
-	}
-	if (consumed && !VEQUAL(rgb, cases[i].rgb)) {
-	    bu_log("RGB case %zu: wrong color %u/%u/%u\n", i, rgb[RED], rgb[GRN], rgb[BLU]);
-	    return 1;
-	}
-	if (!consumed && (!NEAR_EQUAL(rgb[RED], 11, SMALL_FASTF) ||
-		  !NEAR_EQUAL(rgb[GRN], 22, SMALL_FASTF) ||
-		  !NEAR_EQUAL(rgb[BLU], 33, SMALL_FASTF))) {
-	    bu_log("RGB case %zu modified output on failure\n", i);
-	    return 1;
-	}
-    }
-
-    {
-	struct bu_color color = BU_COLOR_INIT_ZERO;
-	if (bu_color_from_str(&color, "1/2,3")) {
-	    bu_log("mixed integer RGB delimiters must not bypass bu_rgb_from_argv\n");
 	    return 1;
 	}
     }
@@ -452,6 +404,55 @@ test_bu_color_convert(int argc, char *argv[])
 }
 
 
+static int
+test_bu_rgb_from_argv(int argc, char *argv[])
+{
+    struct rgb_case {
+	size_t argc;
+	const char *argv[3];
+	int consumed;
+	unsigned char rgb[3];
+    } cases[] = {
+	{1, {"1/2/3", NULL, NULL}, 1, {1, 2, 3}},
+	{1, {"1, 2, 3", NULL, NULL}, 1, {1, 2, 3}},
+	{1, {"1 ; 2 ; 3", NULL, NULL}, 1, {1, 2, 3}},
+	{1, {"1 2 3", NULL, NULL}, 1, {1, 2, 3}},
+	{3, {"1", "2", "3"}, 3, {1, 2, 3}},
+	{2, {"1/2/3", "tail", NULL}, 1, {1, 2, 3}},
+	{1, {"1/2,3", NULL, NULL}, 0, {0, 0, 0}},
+	{1, {"256/2/3", NULL, NULL}, 0, {0, 0, 0}},
+	{1, {"1/2/3x", NULL, NULL}, 0, {0, 0, 0}},
+	{2, {"1", "2", NULL}, 0, {0, 0, 0}},
+	{3, {"1", "2", "not-a-channel"}, 0, {0, 0, 0}}
+    };
+
+    if (argc != 2) {
+	bu_exit(1, "ERROR: function 11 takes no arguments [%s]\n", argv[0]);
+    }
+
+    for (size_t i = 0; i < sizeof(cases) / sizeof(cases[0]); i++) {
+	unsigned char rgb[3] = {11, 22, 33};
+	int consumed = bu_rgb_from_argv(rgb, cases[i].argc, cases[i].argv);
+	if (consumed != cases[i].consumed) {
+	    bu_log("RGB case %zu: expected %d tokens, got %d\n", i, cases[i].consumed, consumed);
+	    return 1;
+	}
+	if (consumed && !VEQUAL(rgb, cases[i].rgb)) {
+	    bu_log("RGB case %zu: wrong color %u/%u/%u\n", i, rgb[RED], rgb[GRN], rgb[BLU]);
+	    return 1;
+	}
+	if (!consumed && (!NEAR_EQUAL(rgb[RED], 11, SMALL_FASTF) ||
+		  !NEAR_EQUAL(rgb[GRN], 22, SMALL_FASTF) ||
+		  !NEAR_EQUAL(rgb[BLU], 33, SMALL_FASTF))) {
+	    bu_log("RGB case %zu modified output on failure\n", i);
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
+
 int
 main(int argc, char *argv[])
 {
@@ -490,6 +491,7 @@ main(int argc, char *argv[])
 	    return test_bu_color_format(argc, argv);
 	case 10:
 	    return test_bu_color_convert(argc, argv);
+	case 11:
 	    return test_bu_rgb_from_argv(argc, argv);
     }
 

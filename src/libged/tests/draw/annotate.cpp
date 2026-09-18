@@ -237,7 +237,7 @@ static void
 verify_help_output(struct ged *gedp)
 {
     const char *root_argv[] = {"annotate", "--help", NULL};
-    verify_help(gedp, 2, root_argv, "Available subcommands:");
+    verify_help(gedp, 2, root_argv, "Subcommands:");
     const char *targeted_leader_argv[] = {"annotate", "help", "leader", NULL};
     verify_help(gedp, 3, targeted_leader_argv,
 	"Create a text callout with a leader");
@@ -249,7 +249,7 @@ verify_help_output(struct ged *gedp)
     verify_help(gedp, 4, dimension_argv,
 	"Measures the distance between --from and --to.");
     const char *dimension_root_argv[] = {"annotate", "dimension", "--help", NULL};
-    verify_help(gedp, 3, dimension_root_argv, "Available subcommands:");
+    verify_help(gedp, 3, dimension_root_argv, "Subcommands:");
     const char *update_argv[] = {"annotate", "update", "--help", NULL};
     verify_help(gedp, 3, update_argv, "--view-only");
 }

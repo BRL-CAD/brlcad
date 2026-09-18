@@ -21,6 +21,7 @@
 #include "common.h"
 
 #include <stdio.h>
+#include <ctype.h>
 #include <string.h>
 #include <stdlib.h> /* for strtol */
 #include <limits.h> /* for INT_MAX */
@@ -1089,149 +1090,7 @@ opt_desc_attached_value(const struct bu_opt_desc *descs,
 		return token + ti + 1;
 	    }
 
-	    /* record the option in known args - any remaining
-	     * processing is on args, if any
-	     */
-	    bu_ptbl_ins(&known_args, (long *)argv[i]);
-
-	    /* any remaining processing is on trailing args, if any */
-	    i = i + 1;
-
-	    /* If we might have args and we have a validator function,
-	     * construct the greediest possible interpretation of the
-	     * option description and run the validator to determine
-	     * the number of argv entries associated with this option
-	     * (can_be_opt is not enough if the option is number
-	     * based, since -9 may be both a valid option and a valid
-	     * argument - the validator must make the decision.  If we
-	     * do not have a validator, the best we can do is the
-	     * can_be_opt test as a terminating trigger.
-	     */
-	    if (desc->arg_process) {
-		/* Construct the greedy interpretation of the option argv */
-		int k = 0;
-		int arg_offset = 0;
-		size_t g_argc = argc - i;
-		const char *prev_opt = argv[i-1];
-		const char **g_argv = argv + i;
-		/* If we have an arg hiding in the previous option,
-		 * temporarily rework the argv array for this purpose
-		 */
-		if (eq_arg) {
-		    g_argv--;
-		    g_argv[0] = eq_arg;
-		    g_argc++;
-		}
-		arg_offset = (*desc->arg_process)(msgs, g_argc, g_argv, desc->set_var);
-		if (arg_offset == -1) {
-		    /* This isn't just an unknown option to be passed
-		     * through for possible later processing.  If the
-		     * arg_process callback returns -1, something has
-		     * gone seriously awry and a known-to-be-invalid
-		     * arg was seen.  Fail early and hard.
-		     */
-		    if (msgs) {
-			bu_vls_printf(msgs, "Invalid argument supplied to %s: %s - halting.\n",
-			    prev_opt, g_argc && g_argv[0] ? g_argv[0] : "(missing)");
-		    }
-		    if (eq_arg)
-			g_argv[0] = prev_opt;
-		    bu_ptbl_free(&unknown_args);
-		    bu_ptbl_free(&known_args);
-
-		    for(j = 0; j < BU_PTBL_LEN(&opts); j++) {
-			char *o = (char *)BU_PTBL_GET(&opts, j);
-			bu_free(o, "free arg cpy");
-		    }
-		    bu_ptbl_free(&opts);
-		    return -1;
-		}
-		/* Put the original opt back and adjust the
-		 * arg_offset, if we substituted the eq_arg pointer
-		 * into the argv array
-		 */
-		if (eq_arg) {
-		    /* If the arg_process callback did nothing with
-		     * the arg, but the arg was sent to this option
-		     * with an = assignment, something is wrong - the
-		     * most likely scenario is an = assignment forced
-		     * an argument to be sent to an option that
-		     * doesn't take arguments.
-		     */
-		    if (!arg_offset) {
-			if (msgs) {
-			    bu_vls_printf(msgs, "Option %s did not successfully use the supplied argument %s - halting.\n", argv[i-1], eq_arg);
-			}
-			bu_ptbl_free(&unknown_args);
-			bu_ptbl_free(&known_args);
-			for(j = 0; j < BU_PTBL_LEN(&opts); j++) {
-			    char *o = (char *)BU_PTBL_GET(&opts, j);
-			    bu_free(o, "free arg cpy");
-			}
-			bu_ptbl_free(&opts);
-			return -1;
-		    }
-
-		    g_argv[0] = prev_opt;
-		    if (arg_offset > 0) {
-			arg_offset--;
-		    }
-		}
-		/* If we used any of the argv entries, accumulate them
-		 * for later reordering and increment i */
-		for (k = (int)i; k < (int)(i + arg_offset); k++) {
-		    bu_ptbl_ins(&known_args, (long *)argv[k]);
-		}
-		i = i + arg_offset;
-	    } else {
-		/* no arg_process means this is a flag - try to set an int */
-		int *flag_var = (int *)desc->set_var;
-		if (flag_var)
-		    *flag_var = 1;
-
-		/* If we already got an arg from the equals mechanism
-		 * and we aren't supposed to have one, we're invalid -
-		 * halt.
-		 */
-		if (eq_arg) {
-		    if (msgs) {
-			bu_vls_printf(msgs, "Option %s does not take an argument, but %s was supplied - halting.\n", argv[i-1], eq_arg);
-		    }
-		    bu_ptbl_free(&unknown_args);
-		    bu_ptbl_free(&known_args);
-		    for(j = 0; j < BU_PTBL_LEN(&opts); j++) {
-			char *o = (char *)BU_PTBL_GET(&opts, j);
-			bu_free(o, "free arg cpy");
-		    }
-		    bu_ptbl_free(&opts);
-		    return -1;
-		}
-	    }
-	}
-
-	for(j = 0; j < BU_PTBL_LEN(&opts); j++) {
-	    char *o = (char *)BU_PTBL_GET(&opts, j);
-	    bu_free(o, "free arg cpy");
-	}
-	bu_ptbl_free(&opts);
-    }
-
-    /* Rearrange argv so the unused options are ordered at the front
-     * of the array.
-     */
-    ret_argc = (int)BU_PTBL_LEN(&unknown_args);
-    if (ret_argc > 0) {
-	size_t avc = 0;
-	size_t akc = BU_PTBL_LEN(&known_args);
-	for (avc = 0; avc < (size_t)ret_argc; avc++) {
-	    argv[avc] = (const char *)BU_PTBL_GET(&unknown_args, avc);
-	}
-	/* Put the known option argv pointers at the end of the array,
-	 * in case they are still needed for memory freeing by the
-	 * caller
-	 */
-	for (avc = 0; avc < akc; avc++) {
-	    argv[avc+ret_argc] = (const char *)BU_PTBL_GET(&known_args, avc);
+	    break;
 	}
     }
     return NULL;

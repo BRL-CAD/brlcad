@@ -64,6 +64,7 @@ facetize_process_output(struct bu_vls *output, const char **command)
     int status = bu_process_wait_n(&process, 0);
     return (status == 0 && bu_vls_strlen(output)) ?
 	BRLCAD_OK : BRLCAD_ERROR;
+}
 
 struct facetize_parse_args {
     int print_help = 0;

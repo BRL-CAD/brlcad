@@ -53,6 +53,7 @@ struct facetize_process_args {
     method_options_t *method_options = NULL;
     int max_time = 0;
     int max_pnts = 0;
+    int server_mode = 0;
     const char *cache_dir = NULL;
 };
 
@@ -475,22 +476,7 @@ facetize_process(int argc, const char **argv)
     tess_opts s;
     struct facetize_process_args args;
 
-    int list_methods = 0;
-    int server_mode = 0;
-    int max_time = 0;
-    int max_pnts = 0;
-
-    struct bu_opt_desc d[10];
-    BU_OPT(d[ 0],  "h",         "help",                         "",                  NULL,           &print_help, "Print help and exit");
-    BU_OPT(d[ 1],   "", "list-methods",                         "",                  NULL,         &list_methods, "List available tessellation methods.  When used with -h, print an informational summary of each method.");
-    BU_OPT(d[ 2],  "O",    "overwrite",                         "",                  NULL,    &(s.overwrite_obj), "Replace original object with BoT");
-    BU_OPT(d[ 3],   "",      "methods",                "m1 m2 ...", &_tess_active_methods,        &s.method_opts, "List of active methods to use for this tessellation attempt");
-    BU_OPT(d[ 4],   "",  "method-opts",  "M opt1=val opt2=val ...",    &_tess_method_opts,        &s.method_opts, "Set options for method M.  If specified just a method M and the -h option, print documentation about method options.");
-    BU_OPT(d[ 5],   "",     "max-time",                        "#",           &bu_opt_int,             &max_time, "Maximum number of seconds to allow for runtime (not supported by all methods).");
-    BU_OPT(d[ 6],   "",     "max-pnts",                        "#",           &bu_opt_int,             &max_pnts, "Maximum number of pnts to use when applying ray sampling methods.");
-    BU_OPT(d[ 7],   "",     "cache-dir",                     "dir",           &bu_opt_vls,            &cache_dir, "Directory to use for cached outputs (default is libbu cache directory).");
-    BU_OPT(d[ 8],   "",          "server",                        "",                  NULL,          &server_mode, "Run as a persistent worker, overwriting requested objects in the working database.");
-    BU_OPT_NULL(d[ 9]);
+    args.method_options = &s.method_opts;
 
     /* parse options */
     struct bu_vls omsg = BU_VLS_INIT_ZERO;
@@ -543,7 +529,7 @@ facetize_process(int argc, const char **argv)
     // Do the setup for the various methods
     method_setup(&s);
 
-    if (server_mode) {
+    if (args.server_mode) {
 	int ret = (argc == 1 && s.overwrite_obj) ?
 	    facetize_server(argv[0], &s) : BRLCAD_ERROR;
 	bu_vls_free(&cache_dir);
@@ -551,7 +537,7 @@ facetize_process(int argc, const char **argv)
     }
 
     if (argc < 2) {
-	bu_log("%s", usage);
+	bu_log("facetize_process requires a database and at least one object\n");
 	bu_vls_free(&cache_dir);
 	return BRLCAD_ERROR;
     }
@@ -643,12 +629,14 @@ static const struct bu_cmd_option facetize_process_options[] = {
 	"Maximum sampling points"),
     BU_CMD_FILE(NULL, "cache-dir", facetize_process_args, cache_dir, "directory",
 	"Cache directory"),
+    BU_CMD_FLAG(NULL, "server", facetize_process_args, server_mode,
+	"Run as a persistent worker for the database"),
     BU_CMD_OPTION_NULL
 };
 
 static const struct bu_cmd_operand facetize_process_operands[] = {
     BU_CMD_OPERAND("database", BU_CMD_VALUE_FILE, 1, 1, "Input .g database", "ged.file_path"),
-    BU_CMD_OPERAND("object", BU_CMD_VALUE_DB_OBJECT, 1, BU_CMD_COUNT_UNLIMITED,
+    BU_CMD_OPERAND("object", BU_CMD_VALUE_DB_OBJECT, 0, BU_CMD_COUNT_UNLIMITED,
 	"Objects to tessellate", "ged.db_object"),
     BU_CMD_OPERAND_NULL
 };

@@ -1357,7 +1357,11 @@ ged_builtin_color_validate(struct ged *UNUSED(gedp), bu_cmd_value_t UNUSED(type)
 {
     if (BU_STR_EMPTY(token)) return GED_CMD_SEMANTIC_INCOMPLETE;
     struct bu_color color = BU_COLOR_INIT_ZERO;
-    return bu_color_from_str(&color, token) ? GED_CMD_SEMANTIC_VALID : GED_CMD_SEMANTIC_INVALID;
+    unsigned char rgb[3] = {0, 0, 0};
+    const char *components[] = {token};
+    return (bu_color_from_str(&color, token) ||
+        bu_rgb_from_argv(rgb, 1, components) == 1) ?
+        GED_CMD_SEMANTIC_VALID : GED_CMD_SEMANTIC_INVALID;
 }
 
 static ged_cmd_semantic_state_t

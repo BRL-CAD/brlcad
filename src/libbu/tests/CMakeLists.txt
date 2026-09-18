@@ -468,7 +468,6 @@ brlcad_add_test(NAME bu_str_to_rgb_12 COMMAND bu_test test_color 3 "#C4D" 204,68
 
 # Function #8 verifies the shared one-or-three-token RGB parser, including
 # all supported packed delimiters and rejected ambiguous or out-of-range forms.
-brlcad_add_test(NAME bu_rgb_from_argv COMMAND bu_test test_color 8)
 
 # For function #4 (bu_color_to_rgb_floats) the <args> format is as follows:
 #
@@ -483,6 +482,7 @@ brlcad_add_test(NAME bu_color_to_rgb_floats_1 COMMAND bu_test test_color 4 192,7
 brlcad_add_test(NAME bu_color_parse COMMAND bu_test test_color 8)
 brlcad_add_test(NAME bu_color_format COMMAND bu_test test_color 9)
 brlcad_add_test(NAME bu_color_convert COMMAND bu_test test_color 10)
+brlcad_add_test(NAME bu_rgb_from_argv COMMAND bu_test test_color 11)
 
 #
 # ************ test_str.c tests ************
