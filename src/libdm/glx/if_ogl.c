@@ -831,79 +831,122 @@ ogl_do_event(struct fb *ifp)
     XEvent event;
 
     while (XCheckWindowEvent(OGL(ifp)->dispp, OGL(ifp)->wind,
-			     OGL(ifp)->event_mask, &event)) {
-	switch (event.type) {
-	    case Expose:
-		if (!OGL(ifp)->use_ext_ctrl)
-		    expose_callback(ifp);
-		break;
-	    case ButtonPress:
-		{
-		    int button = (int) event.xbutton.button;
-		    int w3c_button = 0;
-		    if (button == Button1) {
-			/* Check for single button mouse remap.
-			 * ctrl-1 => 2
-			 * meta-1 => 3
-			 * cmdkey => 3
-			 */
-			if (event.xbutton.state & ControlMask) {
-			    button = Button2;
-			} else if (event.xbutton.state & Mod1Mask) {
-			    button = Button3;
-			} else if (event.xbutton.state & Mod2Mask) {
-			    button = Button3;
-			}
-		    }
-
-		    /* Map X11 button to W3C button:
-		       X11: Button1(1)=Left, Button2(2)=Middle, Button3(3)=Right
-		       W3C: Left=0, Middle=1, Right=2 */
-		    if (button == Button1) w3c_button = 0;
-		    else if (button == Button2) w3c_button = 1;
-		    else if (button == Button3) w3c_button = 2;
-		    else w3c_button = button;
-
-		    struct bu_vls ev_json = BU_VLS_INIT_ZERO;
-		    int x = event.xbutton.x;
-		    int y = ifp->i->if_height - event.xbutton.y - 1;
-
-		    bu_vls_sprintf(&ev_json, "{\"type\": \"mouse-press\", \"button\": %d, \"x\": %d, \"y\": %d}", w3c_button, x, y);
-		    
-		    if (!bu_binding_process_event("fb", bu_vls_cstr(&ev_json), ifp)) {
-			fb_log("unhandled mouse event\n");
-		    }
-		    bu_vls_free(&ev_json);
-		    break;
-		}
-	    case KeyPress:
-		{
-		    KeySym keysym = XLookupKeysym(&event.xkey, 0);
-		    char *key_str = XKeysymToString(keysym);
-		    
-		    if (key_str) {
-			struct bu_vls ev_json = BU_VLS_INIT_ZERO;
-			bu_vls_sprintf(&ev_json, "{\"type\": \"key-press\", \"key\": \"%s\"}", key_str);
-			if (!bu_binding_process_event("fb", bu_vls_cstr(&ev_json), ifp)) {
-			    /* optionally log unhandled key event */
-			}
-			bu_vls_free(&ev_json);
-		    }
-		    break;
-		}
-	    case ConfigureNotify:
-		{
-		    XConfigureEvent *conf = (XConfigureEvent *)&event;
-
-		    if (conf->width == OGL(ifp)->win_width &&
-			conf->height == OGL(ifp)->win_height)
-			return;
-
-		    ogl_configureWindow(ifp, conf->width, conf->height);
-		}
-	    default:
-		break;
-	}
+                             OGL(ifp)->event_mask, &event)) {
+        switch (event.type) {
+            case Expose:
+                if (!OGL(ifp)->use_ext_ctrl)
+                    expose_callback(ifp);
+                if (fb_get_interactive(ifp)) {
+                    struct fb_event ev = {FB_EVENT_EXPOSE, 0, 0, 0, 0, 0};
+                    fb_enqueue_event(ifp, &ev);
+                }
+                break;
+            case ButtonPress:
+                if (fb_get_interactive(ifp)) {
+                    struct fb_event ev;
+                    memset(&ev, 0, sizeof(ev));
+                    ev.type = FB_EVENT_BUTTON_PRESS;
+                    ev.button = (int)event.xbutton.button;
+                    ev.x = event.xbutton.x;
+                    ev.y = ifp->i->if_height - event.xbutton.y - 1;
+                    ev.state = (int)event.xbutton.state;
+                    fb_enqueue_event(ifp, &ev);
+                } else {
+                    int button = (int)event.xbutton.button;
+                    int w3c_button = 0;
+                    if (button == Button1) {
+                        if (event.xbutton.state & ControlMask) button = Button2;
+                        else if (event.xbutton.state & Mod1Mask) button = Button3;
+                        else if (event.xbutton.state & Mod2Mask) button = Button3;
+                    }
+                    if (button == Button1) w3c_button = 0;
+                    else if (button == Button2) w3c_button = 1;
+                    else if (button == Button3) w3c_button = 2;
+                    else w3c_button = button;
+                    struct bu_vls ev_json = BU_VLS_INIT_ZERO;
+                    bu_vls_sprintf(&ev_json,
+                            "{\"type\": \"mouse-press\", \"button\": %d, \"x\": %d, \"y\": %d}",
+                            w3c_button, event.xbutton.x,
+                            ifp->i->if_height - event.xbutton.y - 1);
+                    bu_binding_process_event("fb", bu_vls_cstr(&ev_json), ifp);
+                    bu_vls_free(&ev_json);
+                }
+                break;
+            case ButtonRelease:
+                if (fb_get_interactive(ifp)) {
+                    struct fb_event ev;
+                    memset(&ev, 0, sizeof(ev));
+                    ev.type = FB_EVENT_BUTTON_RELEASE;
+                    ev.button = (int)event.xbutton.button;
+                    ev.x = event.xbutton.x;
+                    ev.y = ifp->i->if_height - event.xbutton.y - 1;
+                    ev.state = (int)event.xbutton.state;
+                    fb_enqueue_event(ifp, &ev);
+                }
+                break;
+            case MotionNotify:
+                if (fb_get_interactive(ifp)) {
+                    struct fb_event ev;
+                    memset(&ev, 0, sizeof(ev));
+                    ev.type = FB_EVENT_MOTION;
+                    ev.x = event.xmotion.x;
+                    ev.y = ifp->i->if_height - event.xmotion.y - 1;
+                    ev.state = (int)event.xmotion.state;
+                    fb_enqueue_event(ifp, &ev);
+                }
+                break;
+            case KeyPress:
+                if (fb_get_interactive(ifp)) {
+                    struct fb_event ev;
+                    char keybuf[8] = {0};
+                    KeySym keysym;
+                    int n;
+                    memset(&ev, 0, sizeof(ev));
+                    ev.type = FB_EVENT_KEY_PRESS;
+                    n = XLookupString(&event.xkey, keybuf, sizeof(keybuf), &keysym, NULL);
+                    ev.keycode = (n > 0) ? (unsigned char)keybuf[0] : (int)keysym;
+                    ev.state = (int)event.xkey.state;
+                    fb_enqueue_event(ifp, &ev);
+                } else {
+                    KeySym keysym = XLookupKeysym(&event.xkey, 0);
+                    char *key_str = XKeysymToString(keysym);
+                    if (key_str) {
+                        struct bu_vls ev_json = BU_VLS_INIT_ZERO;
+                        bu_vls_sprintf(&ev_json,
+                                "{\"type\": \"key-press\", \"key\": \"%s\"}", key_str);
+                        bu_binding_process_event("fb", bu_vls_cstr(&ev_json), ifp);
+                        bu_vls_free(&ev_json);
+                    }
+                }
+                break;
+            case ClientMessage:
+                if (fb_get_interactive(ifp)) {
+                    struct fb_event ev = {FB_EVENT_CLOSE, 0, 0, 0, 0, 0};
+                    fb_enqueue_event(ifp, &ev);
+                } else {
+                    OGL(ifp)->alive = 0;
+                }
+                break;
+            case ConfigureNotify:
+                {
+                    XConfigureEvent *conf = (XConfigureEvent *)&event;
+                    if (conf->width == OGL(ifp)->win_width &&
+                        conf->height == OGL(ifp)->win_height)
+                        break;
+                    ogl_configureWindow(ifp, conf->width, conf->height);
+                    if (fb_get_interactive(ifp)) {
+                        struct fb_event ev;
+                        memset(&ev, 0, sizeof(ev));
+                        ev.type = FB_EVENT_RESIZE;
+                        ev.x = conf->width;
+                        ev.y = conf->height;
+                        fb_enqueue_event(ifp, &ev);
+                    }
+                }
+                break;
+            default:
+                break;
+        }
     }
 }
 
@@ -1268,7 +1311,7 @@ fb_ogl_open(struct fb *ifp, const char *file, int width, int height)
 				  OGL(ifp)->vip->screen);
     swa.event_mask = OGL(ifp)->event_mask =
 	ExposureMask | KeyPressMask | KeyReleaseMask |
-	ButtonPressMask | ButtonReleaseMask;
+	ButtonPressMask | ButtonReleaseMask | PointerMotionMask | StructureNotifyMask;
     swa.colormap = OGL(ifp)->xcmap;
 
 #define XCreateWindowDebug(display, parent, x, y, width, height, border_width, depth, class, visual, valuemask, attributes) \
