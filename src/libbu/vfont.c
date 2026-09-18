@@ -26,11 +26,10 @@
 #include "bu/app.h"
 #include "bu/malloc.h"
 #include "bu/vfont.h"
+#include "bu/vls.h"
 
 #define FONTDIR2 "/usr/lib/vfont"
 #define DEFAULT_FONT "nonie.r.12"
-#define FONTNAMESZ 128
-
 #include "./vfont.h"
 
 
@@ -127,7 +126,7 @@ vfont_get(char *font)
     register struct vfont *vfp = VFONT_NULL;
     register FILE *fp = NULL;
     register int i;
-    char fname[FONTNAMESZ] = {'\0'};
+    struct bu_vls fname = BU_VLS_INIT_ZERO;
     unsigned char header[2*5];		/* 5 16-bit vax shorts */
     unsigned char dispatch[10*256];	/* 256 10-byte structs */
     uint16_t magic;
@@ -135,21 +134,24 @@ vfont_get(char *font)
     const char *const_font;
 
     const_font = (font == NULL) ? DEFAULT_FONT : (const char *)font;
+    bu_vls_strcpy(&fname, const_font);
 
     /* Open the file and read in the header information. */
     if ((fp = fopen(const_font, "rb")) == NULL) {
-	snprintf(fname, FONTNAMESZ, "%s/%s", bu_dir(NULL, 0, BU_DIR_DATA, "vfont", NULL), const_font);
-	if ((fp = fopen(fname, "rb")) == NULL) {
-	    snprintf(fname, FONTNAMESZ, "%s/%s", FONTDIR2, const_font);
-	    if ((fp = fopen(fname, "rb")) == NULL) {
+	bu_vls_sprintf(&fname, "%s/%s", bu_dir(NULL, 0, BU_DIR_DATA, "vfont", NULL), const_font);
+	if ((fp = fopen(bu_vls_addr(&fname), "rb")) == NULL) {
+	    bu_vls_sprintf(&fname, "%s/%s", FONTDIR2, const_font);
+	    if ((fp = fopen(bu_vls_addr(&fname), "rb")) == NULL) {
+		bu_vls_free(&fname);
 		return VFONT_NULL;
 	    }
 	}
     }
     if (fread((char *)header, sizeof(header), 1, fp) != 1 ||
 	fread((char *)dispatch, sizeof(dispatch), 1, fp) != 1) {
-	fprintf(stderr, "vfont_get(%s):  header read error\n", fname);
+	fprintf(stderr, "vfont_get(%s):  header read error\n", bu_vls_addr(&fname));
 	fclose(fp);
+	bu_vls_free(&fname);
 	return VFONT_NULL;
     }
     magic = _vax_gshort(&header[0*2]) & 0xFFFF;
@@ -157,8 +159,9 @@ vfont_get(char *font)
 
     if (UNLIKELY(magic != 0436)) {
 	fprintf(stderr, "vfont_get(%s):  bad magic number 0%o\n",
-		fname, magic);
+		bu_vls_addr(&fname), magic);
 	fclose(fp);
+	bu_vls_free(&fname);
 	return VFONT_NULL;
     }
 
@@ -166,10 +169,11 @@ vfont_get(char *font)
     BU_ALLOC(vfp, struct vfont);
     vfp->vf_bits = (char *)bu_malloc((size_t)size, "vfont bits");
     if (fread(vfp->vf_bits, (size_t)size, 1, fp) != 1) {
-	fprintf(stderr, "vfont_get(%s):  bitmap read error\n", fname);
+	fprintf(stderr, "vfont_get(%s):  bitmap read error\n", bu_vls_addr(&fname));
 	fclose(fp);
 	bu_free(vfp->vf_bits, "vfont bits");
 	bu_free((char *)vfp, "vfont");
+	bu_vls_free(&fname);
 	return VFONT_NULL;
     }
 
@@ -194,6 +198,7 @@ vfont_get(char *font)
 	vdp->vd_width = _vax_gshort(&cp[8]);
     }
     fclose(fp);
+    bu_vls_free(&fname);
     return vfp;
 }
 
