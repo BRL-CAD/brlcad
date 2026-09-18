@@ -60,6 +60,9 @@ coplanar_2d_coord_sys(point_t *origin_pnt, vect_t *u_axis, vect_t *v_axis, const
     vect_t normal = VINIT_ZERO;
     const struct bn_tol tol = {BN_TOL_MAGIC, BN_TOL_DIST/2.0, BN_TOL_DIST*BN_TOL_DIST/4.0, 1.0e-6, 1.0-1.0e-6};
 
+    if (UNLIKELY(!origin_pnt || !u_axis || !v_axis || !points_3d || n < 3))
+	return -1;
+
     /* Step 1 - find center point */
     VSETALL(*origin_pnt, 0.0);
     for (i = 0; i < n; i++) {
@@ -117,6 +120,10 @@ coplanar_3d_to_2d(point2d_t **points_2d, const point_t *origin_pnt,
 		  const point_t *points_3d, int n)
 {
     int i = 0;
+
+    if (UNLIKELY(!points_2d || !*points_2d || !origin_pnt || !u_axis || !v_axis || !points_3d || n <= 0))
+	return -1;
+
     for (i = 0; i < n; i++) {
 	vect_t temp, c, d;
 	fastf_t u, v;
@@ -143,6 +150,9 @@ coplanar_2d_to_3d(point_t **points_3d, const point_t *origin_pnt,
     vect_t temp;
     fastf_t mag_u_x, mag_u_y, mag_u_z;
     fastf_t mag_v_x, mag_v_y, mag_v_z;
+
+    if (UNLIKELY(!points_3d || !*points_3d || !origin_pnt || !u_axis || !v_axis || !points_2d || n <= 0))
+	return -1;
     VSET(x_axis, 1.0, 0.0, 0.0);
     VSET(y_axis, 0.0, 1.0, 0.0);
     VSET(z_axis, 0.0, 0.0, 1.0);

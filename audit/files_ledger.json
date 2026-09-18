@@ -13398,10 +13398,12 @@
       "path": "src/libbg/aabb_ray.c",
       "subsystem": "src/libbg",
       "lines": 153,
-      "status": "PENDING",
-      "reviewed_at": null,
-      "issues_count": 0,
-      "issue_ids": []
+      "status": "REVIEWED",
+      "reviewed_at": "2026-09-18T19:02:00Z",
+      "issues_count": 1,
+      "issue_ids": [
+        "SEC-0158"
+      ]
     },
     {
       "id": 1339,
@@ -13418,8 +13420,8 @@
       "path": "src/libbg/bg_private.h",
       "subsystem": "src/libbg",
       "lines": 102,
-      "status": "PENDING",
-      "reviewed_at": null,
+      "status": "REVIEWED",
+      "reviewed_at": "2026-09-18T19:02:00Z",
       "issues_count": 0,
       "issue_ids": []
     },
@@ -15018,20 +15020,24 @@
       "path": "src/libbg/lseg_lseg.cpp",
       "subsystem": "src/libbg",
       "lines": 78,
-      "status": "PENDING",
-      "reviewed_at": null,
-      "issues_count": 0,
-      "issue_ids": []
+      "status": "REVIEWED",
+      "reviewed_at": "2026-09-18T19:02:00Z",
+      "issues_count": 1,
+      "issue_ids": [
+        "SEC-0153"
+      ]
     },
     {
       "id": 1501,
       "path": "src/libbg/lseg_pt.cpp",
       "subsystem": "src/libbg",
       "lines": 66,
-      "status": "PENDING",
-      "reviewed_at": null,
-      "issues_count": 0,
-      "issue_ids": []
+      "status": "REVIEWED",
+      "reviewed_at": "2026-09-18T19:02:00Z",
+      "issues_count": 1,
+      "issue_ids": [
+        "SEC-0154"
+      ]
     },
     {
       "id": 1502,
@@ -15048,20 +15054,24 @@
       "path": "src/libbg/obr.cpp",
       "subsystem": "src/libbg",
       "lines": 221,
-      "status": "PENDING",
-      "reviewed_at": null,
-      "issues_count": 0,
-      "issue_ids": []
+      "status": "REVIEWED",
+      "reviewed_at": "2026-09-18T19:02:00Z",
+      "issues_count": 1,
+      "issue_ids": [
+        "SEC-0159"
+      ]
     },
     {
       "id": 1504,
       "path": "src/libbg/pca.cpp",
       "subsystem": "src/libbg",
       "lines": 108,
-      "status": "PENDING",
-      "reviewed_at": null,
-      "issues_count": 0,
-      "issue_ids": []
+      "status": "REVIEWED",
+      "reviewed_at": "2026-09-18T19:02:00Z",
+      "issues_count": 1,
+      "issue_ids": [
+        "SEC-0150"
+      ]
     },
     {
       "id": 1505,
@@ -15078,10 +15088,12 @@
       "path": "src/libbg/pointgen.c",
       "subsystem": "src/libbg",
       "lines": 71,
-      "status": "PENDING",
-      "reviewed_at": null,
-      "issues_count": 0,
-      "issue_ids": []
+      "status": "REVIEWED",
+      "reviewed_at": "2026-09-18T19:02:00Z",
+      "issues_count": 1,
+      "issue_ids": [
+        "SEC-0151"
+      ]
     },
     {
       "id": 1507,
@@ -15138,10 +15150,12 @@
       "path": "src/libbg/sat.cpp",
       "subsystem": "src/libbg",
       "lines": 187,
-      "status": "PENDING",
-      "reviewed_at": null,
-      "issues_count": 0,
-      "issue_ids": []
+      "status": "REVIEWED",
+      "reviewed_at": "2026-09-18T19:02:00Z",
+      "issues_count": 1,
+      "issue_ids": [
+        "SEC-0152"
+      ]
     },
     {
       "id": 1513,
@@ -15458,20 +15472,24 @@
       "path": "src/libbg/tri_pt.cpp",
       "subsystem": "src/libbg",
       "lines": 71,
-      "status": "PENDING",
-      "reviewed_at": null,
-      "issues_count": 0,
-      "issue_ids": []
+      "status": "REVIEWED",
+      "reviewed_at": "2026-09-18T19:02:00Z",
+      "issues_count": 1,
+      "issue_ids": [
+        "SEC-0155"
+      ]
     },
     {
       "id": 1545,
       "path": "src/libbg/tri_ray.cpp",
       "subsystem": "src/libbg",
       "lines": 135,
-      "status": "PENDING",
-      "reviewed_at": null,
-      "issues_count": 0,
-      "issue_ids": []
+      "status": "REVIEWED",
+      "reviewed_at": "2026-09-18T19:02:00Z",
+      "issues_count": 1,
+      "issue_ids": [
+        "SEC-0156"
+      ]
     },
     {
       "id": 1546,
@@ -15568,10 +15586,12 @@
       "path": "src/libbg/util.c",
       "subsystem": "src/libbg",
       "lines": 184,
-      "status": "PENDING",
-      "reviewed_at": null,
-      "issues_count": 0,
-      "issue_ids": []
+      "status": "REVIEWED",
+      "reviewed_at": "2026-09-18T19:02:00Z",
+      "issues_count": 1,
+      "issue_ids": [
+        "SEC-0157"
+      ]
     },
     {
       "id": 1556,
@@ -27188,8 +27208,8 @@
       "path": "src/libpkg/example/ncp.h",
       "subsystem": "src/libpkg",
       "lines": 50,
-      "status": "PENDING",
-      "reviewed_at": null,
+      "status": "REVIEWED",
+      "reviewed_at": "2026-09-18T19:02:00Z",
       "issues_count": 0,
       "issue_ids": []
     },

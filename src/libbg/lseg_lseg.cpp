@@ -37,10 +37,12 @@
 #include "vmath.h"
 #include "bg/lseg.h"
 
-double
+extern "C" double
 bg_distsq_lseg3_lseg3(point_t *c1, point_t *c2,
 		  const point_t P0, const point_t P1, const point_t Q0, const point_t Q1)
 {
+    if (UNLIKELY(!P0 || !P1 || !Q0 || !Q1))
+	return -1.0;
 
     // TODO - In principle, we could also use the Rational version of this, but
     // it might be significantly slower... probably worth testing, since if

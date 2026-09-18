@@ -37,6 +37,9 @@ using Vec3 = gte::Vector<3, GTF>;
 extern "C" double
 bg_tri_closest_pt(point_t *closest_pt, const point_t tp, const point_t V0, const point_t V1, const point_t V2)
 {
+    if (UNLIKELY(!tp || !V0 || !V1 || !V2))
+	return -1.0;
+
     gte::DCPPoint3Triangle3<GTF> query;
 
     Vec3 P;
@@ -57,7 +60,7 @@ bg_tri_closest_pt(point_t *closest_pt, const point_t tp, const point_t V0, const
     }
 
     // Original API returns distance (not squared)
-    return std::sqrt(result.sqrDistance);
+    return (result.sqrDistance <= 0.0) ? 0.0 : std::sqrt(result.sqrDistance);
 }
 
 /*

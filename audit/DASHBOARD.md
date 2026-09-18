@@ -1,22 +1,22 @@
 # BRL-CAD RMF/STIG Cat 1 Security Audit Dashboard
-**Last Updated:** 2026-09-18 17:39:16 UTC
+**Last Updated:** 2026-09-18 19:03:02 UTC
 
 ## Overall Progress
 - **Total C/C++ Files:** 3493
-- **Files Reviewed:** 239 (6.8%)
-- **Files Pending Review:** 3254
-- **Total Issues Identified:** 149
+- **Files Reviewed:** 251 (7.2%)
+- **Files Pending Review:** 3242
+- **Total Issues Identified:** 159
 
 ### Issues by Severity Potential
 | Severity Level | Count | Description |
 |:---:|:---:|:---|
-| **3 (High)** | 7 | Likely exploit or crash potential; widespread/library exposure |
-| **2 (Medium)** | 105 | Possible exploit or crash under specific circumstances |
-| **1 (Low)** | 37 | Localized / low-impact vulnerability |
+| **3 (High)** | 9 | Likely exploit or crash potential; widespread/library exposure |
+| **2 (Medium)** | 112 | Possible exploit or crash under specific circumstances |
+| **1 (Low)** | 38 | Localized / low-impact vulnerability |
 
 ### Issues by Verification Status
 - **Confirmed:** 0
-- **Fixed (Committed):** 148
+- **Fixed (Committed):** 158
 - **Pending Verification:** 1
 - **Disproven:** 0
 
@@ -84,7 +84,7 @@
 | `src/isst` | 9 | 0 | 0.0% | 0 |
 | `src/launcher` | 8 | 0 | 0.0% | 0 |
 | `src/libanalyze` | 40 | 0 | 0.0% | 0 |
-| `src/libbg` | 232 | 0 | 0.0% | 0 |
+| `src/libbg` | 232 | 11 | 4.7% | 10 |
 | `src/libbn` | 41 | 41 | 100.0% | 31 |
 | `src/libbrep` | 50 | 0 | 0.0% | 0 |
 | `src/libbu` | 176 | 176 | 100.0% | 101 |
@@ -97,7 +97,7 @@
 | `src/libnmg` | 54 | 0 | 0.0% | 0 |
 | `src/liboptical` | 46 | 0 | 0.0% | 0 |
 | `src/libpc` | 6 | 0 | 0.0% | 0 |
-| `src/libpkg` | 10 | 9 | 90.0% | 3 |
+| `src/libpkg` | 10 | 10 | 100.0% | 3 |
 | `src/libqtcad` | 29 | 0 | 0.0% | 0 |
 | `src/librt` | 373 | 0 | 0.0% | 0 |
 | `src/libtclcad` | 31 | 0 | 0.0% | 0 |
@@ -266,3 +266,13 @@
 | `SEC-0147` | **Sev 2** | Undefined Behavior | `src/libbn/ulp.c:118-204` | `FIXED` | Referenced non-existent union member d in union flt_bits (val.d += 1 and minVal.d = 1 << 23); undefined behavior in signed 32-bit shift 1 << 52 when setting 64-bit exponent. |
 | `SEC-0148` | **Sev 1** | Resource Leak | `src/libbn/wavelet.c:170-625` | `FIXED` | Permanent memory leaks in make_wlt_haar_2d_decompose, make_wlt_haar_2d_reconstruct, and make_wlt_haar_2d_decompose2 when tbuffer/tbuf is NULL because allocated buffers were never freed; missing NULL buffer and zero dimension validation across wavelet routines. |
 | `SEC-0149` | **Sev 1** | Null Pointer Dereference | `src/libbn/tests/test_util.c:48-265` | `FIXED` | Missing NULL pointer checks in test helper and test dispatch functions (mat_close, vect_close, hvect_close, finite_vec, orthonormal_rotation, normalize_quat, make_table, make_tabdata, bn_api_single, and bn_api_dispatch) when called with NULL pointers or empty argument lists. |
+| `SEC-0150` | **Sev 1** | Out-of-Bounds Read | `src/libbg/pca.cpp:55-80` | `FIXED` | bg_pca computed Thin U on a 3xnpnts matrix using JacobiSVD. When npnts < 3, Thin U has fewer than 3 columns, causing out-of-bounds column reads and assertions when indexing svd.matrixU()(row, 1) and svd.matrixU()(row, 2). |
+| `SEC-0151` | **Sev 2** | Logic / Format String Flaw | `src/libbg/pointgen.c:35-60` | `FIXED` | bg_sph_sample referenced undeclared variable sample instead of pnts[i], used %d format specifier for size_t integers in bu_log, checked sample instead of center for translation offset, and lacked defensive NULL pointer validation on pnts. |
+| `SEC-0152` | **Sev 2** | NULL Pointer Dereference | `src/libbg/sat.cpp:44-175` | `FIXED` | bg_sat_line_aabb, bg_sat_line_obb, bg_sat_tri_aabb, bg_sat_tri_obb, bg_sat_aabb_obb, and bg_sat_obb_obb called v3_from_array and axis_and_extent_from_vect without verifying point_t and vect_t pointer arguments, leading to null pointer dereferences. |
+| `SEC-0153` | **Sev 2** | NULL Pointer Dereference | `src/libbg/lseg_lseg.cpp:37-45` | `FIXED` | bg_distsq_lseg3_lseg3 unpacked input point arrays without null pointer validation and lacked extern C linkage in its C++ definition. |
+| `SEC-0154` | **Sev 2** | NULL Pointer Dereference | `src/libbg/lseg_pt.cpp:36-45` | `FIXED` | bg_distsq_lseg3_pt indexed point coordinates without checking for null pointers. |
+| `SEC-0155` | **Sev 2** | NULL Pointer Dereference / Domain Error | `src/libbg/tri_pt.cpp:37-60` | `FIXED` | bg_tri_closest_pt indexed triangle vertices and sample points without null pointer checks and computed std::sqrt(result.sqrDistance) without non-negative clamping. |
+| `SEC-0156` | **Sev 2** | NULL Pointer Dereference | `src/libbg/tri_ray.cpp:43-70` | `FIXED` | intersect_triangle and vec3_from_array dereferenced point and vector arguments without checking for null pointers. |
+| `SEC-0157` | **Sev 2** | Divide by Zero / NULL Pointer Dereference | `src/libbg/util.c:50-145` | `FIXED` | coplanar_2d_coord_sys scaled origin by 1.0/n without verifying n >= 3, leading to division by zero if n <= 0 and undefined behavior for degenerate point sets. coplanar_3d_to_2d and coplanar_2d_to_3d lacked null checks on pointer parameters and count validation. |
+| `SEC-0158` | **Sev 3** | NULL Pointer Dereference / Deprecated Keyword | `src/libbg/aabb_ray.c:31-143` | `FIXED` | bg_ray_invdir lacked null check on dir; bg_isect_aabb_ray lacked null checks on invdir, aabb_min, aabb_max, and opt; wrote into *r_min and *r_max without verifying destination pointers were non-null; used deprecated register storage class keywords. |
+| `SEC-0159` | **Sev 3** | Validation Flaw | `src/libbg/obr.cpp:95-100` | `FIXED` | bg_3d_coplanar_obr accepted point count < 3 even though a 3D coplanar coordinate system requires at least 3 points to determine a plane normal. |

@@ -36,6 +36,9 @@ using Vec3 = gte::Vector<3, GTF>;
 extern "C" double
 bg_distsq_lseg3_pt(point_t *c, const point_t P0, const point_t P1, const point_t Q)
 {
+    if (UNLIKELY(!P0 || !P1 || !Q))
+	return -1.0;
+
     gte::Segment3<GTF> seg;
     seg.p[0][0] = P0[0]; seg.p[0][1] = P0[1]; seg.p[0][2] = P0[2];
     seg.p[1][0] = P1[0]; seg.p[1][1] = P1[1]; seg.p[1][2] = P1[2];

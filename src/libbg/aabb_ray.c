@@ -31,7 +31,7 @@
 void
 bg_ray_invdir(vect_t *invdir, const vect_t dir)
 {
-    if (UNLIKELY(!invdir))
+    if (UNLIKELY(!invdir || !dir))
 	return;
 
 	/* Compute the inverse of the direction cosines */
@@ -65,11 +65,14 @@ bg_isect_aabb_ray(fastf_t *r_min, fastf_t *r_max,
 	const fastf_t *aabb_min,
 	const fastf_t *aabb_max)
 {
-    register const fastf_t *pt = &opt[0];
-    register fastf_t aabb_sv;
-#define aabb_st aabb_sv                   /* reuse the register */
-    register fastf_t rmin = -MAX_FASTF;
-    register fastf_t rmax =  MAX_FASTF;
+    const fastf_t *pt = &opt[0];
+    fastf_t aabb_sv;
+    fastf_t aabb_st;
+    fastf_t rmin = -MAX_FASTF;
+    fastf_t rmax =  MAX_FASTF;
+
+    if (UNLIKELY(!invdir || !aabb_min || !aabb_max || !opt))
+	return 0;
 
     /* Start with infinite ray, and trim it down */
 
@@ -137,8 +140,10 @@ bg_isect_aabb_ray(fastf_t *r_min, fastf_t *r_max,
 	return 0;       /* MISS */
 
     /* HIT.  Only now do r_min and r_max have to be written */
-    (*r_min) = rmin;
-    (*r_max) = rmax;
+    if (r_min)
+	(*r_min) = rmin;
+    if (r_max)
+	(*r_max) = rmax;
     return 1;           /* HIT */
 }
 

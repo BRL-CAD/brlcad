@@ -38,22 +38,25 @@ bg_sph_sample(point_t *pnts, size_t cnt, const point_t center, const fastf_t rad
     size_t i = 0;
     size_t ret = 0;
 
+    if (UNLIKELY(!pnts || cnt == 0))
+	return 0;
+
     ret = bn_sph_sample(pnts, cnt, n);
 
     if (ret != cnt) {
-	bu_log("Unable to generate %d points (%d generated), aborting\n", cnt, ret);
+	bu_log("Unable to generate %zu points (%zu generated), aborting\n", cnt, ret);
 	return 0;
     }
 
     for (i = 0; i < cnt; i++) {
 	/* If we've got a non-unit sph radius, scale the point */
 	if (!NEAR_EQUAL(radius, 1.0, SMALL_FASTF)) {
-	    VSCALE(sample, sample, radius);
+	    VSCALE(pnts[i], pnts[i], radius);
 	}
 
 	/* If we've got a non-zero sph center, translate the point */
-	if (!VNEAR_ZERO(sample, SMALL_FASTF)) {
-	    VADD2(sample, sample, center);
+	if (center && !VNEAR_ZERO(center, SMALL_FASTF)) {
+	    VADD2(pnts[i], pnts[i], center);
 	}
     }
 

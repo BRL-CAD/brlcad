@@ -43,6 +43,8 @@ using Triangle = gte::Triangle3<GTF>;
 static Vec3
 vec3_from_array(const fastf_t values[3])
 {
+    if (UNLIKELY(!values))
+	return Vec3{(GTF)0, (GTF)0, (GTF)0};
     return Vec3{values[0], values[1], values[2]};
 }
 
@@ -64,6 +66,9 @@ intersect_triangle(const point_t origin, const vect_t direction,
 		   const point_t vert0, const point_t vert1, const point_t vert2,
 		   fastf_t *intersection)
 {
+    if (UNLIKELY(!origin || !direction || !vert0 || !vert1 || !vert2))
+	return 0;
+
     Vec3 gte_direction = vec3_from_array(direction);
     const GTF direction_length = gte::Normalize(gte_direction, true);
     if (direction_length <= (GTF)0)

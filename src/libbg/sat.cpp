@@ -43,6 +43,8 @@ using Vec3 = gte::Vector3<GTF>;
 
 static inline Vec3 v3_from_array(const GTF v[3])
 {
+    if (UNLIKELY(!v))
+	return Vec3{(GTF)0, (GTF)0, (GTF)0};
     return Vec3{v[0], v[1], v[2]};
 }
 
@@ -53,6 +55,11 @@ static inline Vec3 v3_from_array(const GTF v[3])
  * degenerate axes would have produced a zero vector post-VUNITIZE. */
 static inline void axis_and_extent_from_vect(const vect_t v, Vec3 &axis, GTF &extent)
 {
+    if (UNLIKELY(!v)) {
+	axis = Vec3{(GTF)1, (GTF)0, (GTF)0};
+	extent = (GTF)0;
+	return;
+    }
     const GTF x = v[0], y = v[1], z = v[2];
     extent = std::sqrt(x * x + y * y + z * z);
     if (extent > (GTF)VUNITIZE_TOL) {
@@ -80,6 +87,9 @@ extern "C" {
 int
 bg_sat_line_aabb(const point_t origin, const vect_t ldir, const point_t aabb_center, const vect_t aabb_extent)
 {
+    if (UNLIKELY(!origin || !ldir || !aabb_center || !aabb_extent))
+	return 0;
+
     gte::Line3<GTF> line;
     line.origin = v3_from_array(origin);
     line.direction = v3_from_array(ldir); // Need not be unit length.
@@ -99,6 +109,9 @@ int
 bg_sat_line_obb(const point_t origin, const vect_t ldir, const point_t obb_center,
 		const vect_t obb_extent1, const vect_t obb_extent2, const vect_t obb_extent3)
 {
+    if (UNLIKELY(!origin || !ldir || !obb_center || !obb_extent1 || !obb_extent2 || !obb_extent3))
+	return 0;
+
     gte::Line3<GTF> line;
     line.origin = v3_from_array(origin);
     line.direction = v3_from_array(ldir);
@@ -114,6 +127,9 @@ int
 bg_sat_tri_aabb(const point_t v1, const point_t v2, const point_t v3,
 		const point_t center, const vect_t extent)
 {
+    if (UNLIKELY(!v1 || !v2 || !v3 || !center || !extent))
+	return 0;
+
     gte::OrientedBox3<GTF> obb;
     obb.center = v3_from_array(center);
     obb.axis[0] = Vec3{(GTF)1, (GTF)0, (GTF)0};
@@ -135,6 +151,9 @@ int
 bg_sat_tri_obb(const point_t v1, const point_t v2, const point_t v3,
 	       const point_t obb_center, const vect_t obb_extent1, const vect_t obb_extent2, const vect_t obb_extent3)
 {
+    if (UNLIKELY(!v1 || !v2 || !v3 || !obb_center || !obb_extent1 || !obb_extent2 || !obb_extent3))
+	return 0;
+
     auto obb = make_obb(obb_center, obb_extent1, obb_extent2, obb_extent3);
 
     gte::Triangle3<GTF> tri;
@@ -151,6 +170,9 @@ int
 bg_sat_aabb_obb(const point_t aabb_min, const point_t aabb_max,
 		const point_t obb_center, const vect_t obb_extent1, const vect_t obb_extent2, const vect_t obb_extent3)
 {
+    if (UNLIKELY(!aabb_min || !aabb_max || !obb_center || !obb_extent1 || !obb_extent2 || !obb_extent3))
+	return 0;
+
     gte::AlignedBox3<GTF> abox;
     abox.min = v3_from_array(aabb_min);
     abox.max = v3_from_array(aabb_max);
@@ -166,6 +188,10 @@ int
 bg_sat_obb_obb(const point_t obb1_center, const vect_t obb1_extent1, const vect_t obb1_extent2, const vect_t obb1_extent3,
 	       const point_t obb2_center, const vect_t obb2_extent1, const vect_t obb2_extent2, const vect_t obb2_extent3)
 {
+    if (UNLIKELY(!obb1_center || !obb1_extent1 || !obb1_extent2 || !obb1_extent3 ||
+		 !obb2_center || !obb2_extent1 || !obb2_extent2 || !obb2_extent3))
+	return 0;
+
     auto obb0 = make_obb(obb1_center, obb1_extent1, obb1_extent2, obb1_extent3);
     auto obb1 = make_obb(obb2_center, obb2_extent1, obb2_extent2, obb2_extent3);
 
