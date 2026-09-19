@@ -10,6 +10,7 @@
 
 #include "common.h"
 
+#include "bu/app.h"
 #include <algorithm>
 #include <cfloat>
 #include <cmath>
@@ -1605,8 +1606,9 @@ exercise_weakly_simple_cylinder()
 }
 
 int
-main()
+main(int, const char **argv)
 {
+    bu_setprogname(argv[0]);
     if (!exercise_cylinder(ON_3dPoint::Origin,
 	    ON_3dVector(0.0, 0.0, 1.0), 2.0, 5.0))
 	return 1;

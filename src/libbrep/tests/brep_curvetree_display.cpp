@@ -10,6 +10,7 @@
 
 #include "common.h"
 
+#include "bu/app.h"
 #include <list>
 #include <vector>
 
@@ -35,8 +36,9 @@ tiny_closed_trim()
 }
 
 int
-main()
+main(int, const char **argv)
 {
+    bu_setprogname(argv[0]);
     ON_Brep brep;
     ON_PlaneSurface *surface = new ON_PlaneSurface(ON_xy_plane);
     surface->SetDomain(0, -1.0, 1.0);

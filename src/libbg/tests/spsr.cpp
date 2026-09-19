@@ -20,14 +20,16 @@
 
 #include "common.h"
 
+#include "bu/app.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bg/spsr.h"
 #include "bg/trimesh.h"
 
 int
-main()
+main(int, const char **argv)
 {
+    bu_setprogname(argv[0]);
     const int side = 8;
     const int sample_count = 6 * side * side;
     point_t *samples = (point_t *)bu_calloc(sample_count,

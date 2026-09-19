@@ -1,16 +1,19 @@
-/*                     R T R E E . C P P
+/*                       R T R E E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2026 United States Government as represented by
- * the U.S. Army Research Laboratory.
+ * Published in 2026 by the United States Government.
+ * This work is in the public domain.
  *
- * This file is in the public domain.
+ */
+/** @file rtree.cpp
+ *
  */
 
 #include "common.h"
 
 #include <cstddef>
 
+#include "bu/app.h"
 #include "../RTree.h"
 
 
@@ -24,8 +27,9 @@ count_hit(const std::size_t &, void *context)
 
 
 int
-main()
+main(int, const char **argv)
 {
+    bu_setprogname(argv[0]);
     // A volume this large has an ulp much greater than one.  Identical
     // rectangles used to leave PickSeeds' two indices at zero because
     // -(cover volume) - 1 rounded back to -(cover volume).

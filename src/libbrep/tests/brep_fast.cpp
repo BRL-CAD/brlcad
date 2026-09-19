@@ -10,6 +10,7 @@
 
 #include "common.h"
 
+#include "bu/app.h"
 #include <cstring>
 #include <vector>
 
@@ -214,6 +215,7 @@ planar_winding_matches_source(const ON_Brep &brep)
 int
 main(int argc, const char **argv)
 {
+    bu_setprogname(argv[0]);
     if (argc != 3)
 	return 2;
     if (cdt_test_fast_display_normals())

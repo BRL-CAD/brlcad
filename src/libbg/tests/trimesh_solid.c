@@ -10,6 +10,7 @@
 
 #include "common.h"
 
+#include "bu/app.h"
 #include "bu/malloc.h"
 #include "bg/trimesh.h"
 
@@ -33,8 +34,10 @@ check(int *faces, int count, int unmatched, int misoriented, int excess)
 }
 
 int
-main(void)
+main(int argc, char **argv)
 {
+    bu_setprogname(argv[0]);
+    (void)argc;
     /* Reverse one face of a tetrahedron, then attach a fin to an edge.
      * Boundary, orientation, and overuse defects must be reported together. */
     int faces[15] = {0, 1, 2, 0, 1, 3, 1, 2, 3, 2, 0, 3, 0, 1, 4};

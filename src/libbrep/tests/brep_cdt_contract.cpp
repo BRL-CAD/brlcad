@@ -10,6 +10,7 @@
 
 #include "common.h"
 
+#include "bu/app.h"
 #include <limits>
 #include <vector>
 
@@ -788,6 +789,7 @@ component_poisson_repair_contract()
 int
 main(int argc, const char **argv)
 {
+    bu_setprogname(argv[0]);
     if (argc != 3)
 	return 2;
 
