@@ -36,39 +36,48 @@
 void
 bg_polygon_free(struct bg_polygon *gpp)
 {
-    if (gpp->num_contours == 0)
+    if (!gpp || gpp->num_contours == 0)
 	return;
 
-    for (size_t j = 0; j < gpp->num_contours; ++j) {
-	if (gpp->contour[j].num_points > 0) {
-	    bu_free((void *)gpp->contour[j].point, "contour points");
+    if (gpp->contour) {
+	for (size_t j = 0; j < gpp->num_contours; ++j) {
+	    if (gpp->contour[j].num_points > 0 && gpp->contour[j].point) {
+		bu_free((void *)gpp->contour[j].point, "contour points");
+		gpp->contour[j].point = NULL;
+		gpp->contour[j].num_points = 0;
+	    }
 	}
+	bu_free((void *)gpp->contour, "contour");
+	gpp->contour = NULL;
     }
 
-    bu_free((void *)gpp->contour, "contour");
-    bu_free((void *)gpp->hole, "hole");
+    if (gpp->hole) {
+	bu_free((void *)gpp->hole, "hole");
+	gpp->hole = NULL;
+    }
     gpp->num_contours = 0;
 }
 
 void
 bg_polygons_free(struct bg_polygons *gpp)
 {
-    if (gpp->num_polygons == 0)
+    if (!gpp || gpp->num_polygons == 0)
 	return;
 
-    for (size_t i = 0; i < gpp->num_polygons; ++i) {
-	bg_polygon_free(&gpp->polygon[i]);
+    if (gpp->polygon) {
+	for (size_t i = 0; i < gpp->num_polygons; ++i) {
+	    bg_polygon_free(&gpp->polygon[i]);
+	}
+	bu_free((void *)gpp->polygon, "data polygons");
+	gpp->polygon = (struct bg_polygon *)0;
     }
-
-    bu_free((void *)gpp->polygon, "data polygons");
-    gpp->polygon = (struct bg_polygon *)0;
     gpp->num_polygons = 0;
 }
 
 void
 bg_polygon_view_bbox(point2d_t *bmin, point2d_t *bmax, struct bg_polygon *p, matp_t model2view)
 {
-    if (!bmin || !bmax || !p)
+    if (!bmin || !bmax || !p || !model2view)
 	return;
 
     // Initialize
@@ -83,7 +92,7 @@ bg_polygon_view_bbox(point2d_t *bmin, point2d_t *bmax, struct bg_polygon *p, mat
     // contours.  ONLY considering positive contour points.
     for (size_t i = 0; i < p->num_contours; i++) {
 	struct bg_poly_contour *c = &p->contour[i];
-	if (!c->num_points)
+	if (!c->num_points || !c->point)
 	    continue;
 	for (size_t j = 0; j < c->num_points; j++) {
 	    point_t vpoint;
@@ -144,63 +153,69 @@ int
 bg_3d_polygon_centroid(point_t *cent, size_t npts, const point_t *pts)
 {
     size_t i;
-    fastf_t x_0 = 0.0;
-    fastf_t x_1 = 0.0;
-    fastf_t y_0 = 0.0;
-    fastf_t y_1 = 0.0;
-    fastf_t z_0 = 0.0;
-    fastf_t z_1 = 0.0;
-    fastf_t a = 0.0;
-    fastf_t signedArea = 0.0;
+    vect_t normal = VINIT_ZERO;
+    point_t c_acc = VINIT_ZERO;
+    fastf_t total_weight = 0.0;
+    fastf_t mag_normal;
 
     if (!pts || !cent || npts < 3)
 	return 1;
-    /* Calculate Centroid projection for face for x-y-plane */
-    for (i = 0; i < npts-1; i++) {
-	x_0 = pts[i][0];
-	y_0 = pts[i][1];
-	x_1 = pts[i+1][0];
-	y_1 = pts[i+1][1];
-	a = x_0 *y_1 - x_1*y_0;
-	signedArea += a;
-	*cent[0] += (x_0 + x_1)*a;
-	*cent[1] += (y_0 + y_1)*a;
+
+    VSETALL(*cent, 0.0);
+
+    /* Compute normal vector using Newell's method */
+    for (i = 0; i < npts; i++) {
+	size_t next = (i + 1 == npts) ? 0 : i + 1;
+	normal[0] += (pts[i][1] - pts[next][1]) * (pts[i][2] + pts[next][2]);
+	normal[1] += (pts[i][2] - pts[next][2]) * (pts[i][0] + pts[next][0]);
+	normal[2] += (pts[i][0] - pts[next][0]) * (pts[i][1] + pts[next][1]);
     }
-    x_0 = pts[i][0];
-    y_0 = pts[i][1];
-    x_1 = pts[0][0];
-    y_1 = pts[0][1];
-    a = x_0 *y_1 - x_1*y_0;
-    signedArea += a;
-    *cent[0] += (x_0 + x_1)*a;
-    *cent[1] += (y_0 + y_1)*a;
 
-    signedArea *= 0.5;
-    *cent[0] /= (6.0*signedArea);
-    *cent[1] /= (6.0*signedArea);
-
-    /* calculate Centroid projection for face for x-z-plane */
-
-    signedArea = 0.0;
-    for (i = 0; i < npts-1; i++) {
-	x_0 = pts[i][0];
-	z_0 = pts[i][2];
-	x_1 = pts[i+1][0];
-	z_1 = pts[i+1][2];
-	a = x_0 *z_1 - x_1*z_0;
-	signedArea += a;
-	*cent[2] += (z_0 + z_1)*a;
+    mag_normal = MAGNITUDE(normal);
+    if (mag_normal < VDIVIDE_TOL) {
+	/* Degenerate polygon; fall back to vertex average */
+	for (i = 0; i < npts; i++) {
+	    VADD2(*cent, *cent, pts[i]);
+	}
+	VSCALE(*cent, *cent, 1.0 / (fastf_t)npts);
+	return 0;
     }
-    x_0 = pts[i][0];
-    z_0 = pts[i][2];
-    x_1 = pts[0][0];
-    z_1 = pts[0][2];
-    a = x_0 *z_1 - x_1*z_0;
-    signedArea += a;
-    *cent[2] += (z_0 + z_1)*a;
 
-    signedArea *= 0.5;
-    *cent[2] /= (6.0*signedArea);
+    VSCALE(normal, normal, 1.0 / mag_normal);
+
+    /* Triangulate fan from pts[0] and compute weighted area centroid */
+    for (i = 1; i < npts - 1; i++) {
+	vect_t edge1, edge2, cross;
+	fastf_t area;
+	point_t tri_cent;
+
+	VSUB2(edge1, pts[i], pts[0]);
+	VSUB2(edge2, pts[i + 1], pts[0]);
+	VCROSS(cross, edge1, edge2);
+	area = 0.5 * VDOT(cross, normal);
+
+	/* Triangle centroid */
+	VADD2(tri_cent, pts[0], pts[i]);
+	VADD2(tri_cent, tri_cent, pts[i + 1]);
+	VSCALE(tri_cent, tri_cent, 1.0 / 3.0);
+
+	/* Accumulate */
+	c_acc[0] += area * tri_cent[0];
+	c_acc[1] += area * tri_cent[1];
+	c_acc[2] += area * tri_cent[2];
+	total_weight += area;
+    }
+
+    if (fabs(total_weight) < VDIVIDE_TOL) {
+	/* Degenerate fan or self-cancelling areas; fall back to vertex average */
+	for (i = 0; i < npts; i++) {
+	    VADD2(*cent, *cent, pts[i]);
+	}
+	VSCALE(*cent, *cent, 1.0 / (fastf_t)npts);
+	return 0;
+    }
+
+    VSCALE(*cent, c_acc, 1.0 / total_weight);
     return 0;
 }
 
@@ -337,11 +352,15 @@ bg_polygon_direction(size_t npts, const point2d_t *pts, const int *pt_indices)
     double sum = 0;
     const int *pt_order = NULL;
     int *tmp_pt_order = NULL;
+
+    if (!pts || npts < 3)
+	return 0;
+
     /* If no array of indices into pts is supplied, construct a
      * temporary version based on the point order in the array */
     if (pt_indices) pt_order = pt_indices;
     if (!pt_order) {
-	tmp_pt_order = (int *)bu_calloc(npts, sizeof(size_t), "temp ordering array");
+	tmp_pt_order = (int *)bu_calloc(npts, sizeof(int), "temp ordering array");
 	for (i = 0; i < npts; i++)
 	    tmp_pt_order[i] = (int)i;
 	pt_order = (const int *)tmp_pt_order;
@@ -390,7 +409,15 @@ void
 bg_polygon_plot_2d(const char *filename, const point2d_t *pnts, int npnts, int r, int g, int b)
 {
     point_t bnp;
-    FILE* plot_file = fopen(filename, "wb");
+    FILE* plot_file;
+
+    if (!filename || !pnts || npnts <= 0)
+	return;
+
+    plot_file = fopen(filename, "wb");
+    if (!plot_file)
+	return;
+
     pl_color(plot_file, r, g, b);
 
     VSET(bnp, pnts[0][X], pnts[0][Y], 0);
@@ -411,7 +438,15 @@ void
 bg_polygon_plot(const char *filename, const point_t *pnts, int npnts, int r, int g, int b)
 {
     point_t bnp;
-    FILE* plot_file = fopen(filename, "wb");
+    FILE* plot_file;
+
+    if (!filename || !pnts || npnts <= 0)
+	return;
+
+    plot_file = fopen(filename, "wb");
+    if (!plot_file)
+	return;
+
     pl_color(plot_file, r, g, b);
 
     VSET(bnp, pnts[0][X], pnts[0][Y], 0);

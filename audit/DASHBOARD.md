@@ -1,22 +1,22 @@
 # BRL-CAD RMF/STIG Cat 1 Security Audit Dashboard
-**Last Updated:** 2026-09-18 19:03:02 UTC
+**Last Updated:** 2026-09-18 19:12:20 UTC
 
 ## Overall Progress
 - **Total C/C++ Files:** 3493
-- **Files Reviewed:** 251 (7.2%)
-- **Files Pending Review:** 3242
-- **Total Issues Identified:** 159
+- **Files Reviewed:** 262 (7.5%)
+- **Files Pending Review:** 3231
+- **Total Issues Identified:** 168
 
 ### Issues by Severity Potential
 | Severity Level | Count | Description |
 |:---:|:---:|:---|
-| **3 (High)** | 9 | Likely exploit or crash potential; widespread/library exposure |
-| **2 (Medium)** | 112 | Possible exploit or crash under specific circumstances |
-| **1 (Low)** | 38 | Localized / low-impact vulnerability |
+| **3 (High)** | 10 | Likely exploit or crash potential; widespread/library exposure |
+| **2 (Medium)** | 119 | Possible exploit or crash under specific circumstances |
+| **1 (Low)** | 39 | Localized / low-impact vulnerability |
 
 ### Issues by Verification Status
 - **Confirmed:** 0
-- **Fixed (Committed):** 158
+- **Fixed (Committed):** 167
 - **Pending Verification:** 1
 - **Disproven:** 0
 
@@ -84,7 +84,7 @@
 | `src/isst` | 9 | 0 | 0.0% | 0 |
 | `src/launcher` | 8 | 0 | 0.0% | 0 |
 | `src/libanalyze` | 40 | 0 | 0.0% | 0 |
-| `src/libbg` | 232 | 11 | 4.7% | 10 |
+| `src/libbg` | 232 | 22 | 9.5% | 19 |
 | `src/libbn` | 41 | 41 | 100.0% | 31 |
 | `src/libbrep` | 50 | 0 | 0.0% | 0 |
 | `src/libbu` | 176 | 176 | 100.0% | 101 |
@@ -276,3 +276,12 @@
 | `SEC-0157` | **Sev 2** | Divide by Zero / NULL Pointer Dereference | `src/libbg/util.c:50-145` | `FIXED` | coplanar_2d_coord_sys scaled origin by 1.0/n without verifying n >= 3, leading to division by zero if n <= 0 and undefined behavior for degenerate point sets. coplanar_3d_to_2d and coplanar_2d_to_3d lacked null checks on pointer parameters and count validation. |
 | `SEC-0158` | **Sev 3** | NULL Pointer Dereference / Deprecated Keyword | `src/libbg/aabb_ray.c:31-143` | `FIXED` | bg_ray_invdir lacked null check on dir; bg_isect_aabb_ray lacked null checks on invdir, aabb_min, aabb_max, and opt; wrote into *r_min and *r_max without verifying destination pointers were non-null; used deprecated register storage class keywords. |
 | `SEC-0159` | **Sev 3** | Validation Flaw | `src/libbg/obr.cpp:95-100` | `FIXED` | bg_3d_coplanar_obr accepted point count < 3 even though a 3D coplanar coordinate system requires at least 3 points to determine a plane normal. |
+| `SEC-0160` | **Sev 1** | Buffer Overflow / Stack Buffer Corruption & Divide by Zero | `src/libbg/polygon.c:144-205` | `FIXED` | Operator precedence flaw in bg_3d_polygon_centroid where *cent[1] and *cent[2] evaluate to *(cent[1]) and *(cent[2]), writing 24 and 48 bytes out of bounds past caller's point_t stack/heap memory; uninitialized accumulation; division by zero when polygon is perpendicular to XY or XZ projection planes. |
+| `SEC-0161` | **Sev 2** | Out-of-bounds Read / Memory Leak | `src/libbg/chull.c:50-185` | `FIXED` | Out-of-bounds read and negative deque index in bg_polyline_2d_chull when vertex count n < 3; permanent memory leaks in bg_3d_coplanar_chull of points_tmp and overwritten hull_2d pointer; missing NULL checks. |
+| `SEC-0162` | **Sev 2** | Out-of-bounds Read / Memory Leak | `src/libbg/chull2.cpp:50-230` | `FIXED` | Out-of-bounds read and negative deque index in bg_polyline_2d_chull2 for n < 3; permanent memory leak of polyline in bg_2d_chull2; missing NULL parameter checks. |
+| `SEC-0163` | **Sev 2** | Divide by Zero / Thread-Safety Race Condition | `src/libbg/clip.c:60-140` | `FIXED` | Division by zero in bg_lseg_clip for vertical or horizontal line segments; thread-safety race condition in bg_ray_vclip due to static local variables diff, sv, st, mindist, maxdist causing concurrent raytracing thread conflicts. |
+| `SEC-0164` | **Sev 2** | Memory Leak / Unchecked Return Value | `src/libbg/polygon_triangulate.cpp:873-970` | `FIXED` | Unchecked return value of fopen in bg_tri_plot_2d causing NULL pointer dereference; permanent memory leaks of holes_array container and tri_out_pts in bg_polygon_triangulate; missing validation on polygon contour points. |
+| `SEC-0165` | **Sev 2** | NULL Pointer Dereference | `src/libbg/tri_tri.c:180-715` | `FIXED` | bg_tri_tri_isect_with_line unconditionally wrote to *coplanar, *isectpt1, and *isectpt2 without verifying destination pointers were non-null; missing NULL vertex validation across all triangle-triangle intersection routines. |
+| `SEC-0166` | **Sev 2** | NULL Pointer Dereference / Divide by Zero | `src/libbg/polygon_op.cpp:45-470` | `FIXED` | Unchecked NULL pointer dereferences in bg_find_polygon_area, bg_polygons_overlap, load_polygon, and clipping routines; potential division by zero on zero scale factor. |
+| `SEC-0167` | **Sev 2** | Integer Underflow / Out-of-bounds Read | `src/libbg/polygon_point_in.c:40-51` | `FIXED` | bg_pnt_in_polygon underflows j = nvert - 1 when nvert == 0 and allows nvert < 3 which is geometrically invalid for polygons; missing NULL pointer checks on pnts and test. |
+| `SEC-0168` | **Sev 3** | Out-of-bounds Read / Degenerate Buffer Access | `src/libbg/chull3d.cpp:115-210` | `FIXED` | bg_3d_chull and bg_3d_chull2 did not check for empty vertexBuffer or undersized indexBuffer before allocating and indexing; out-of-bounds access in bg_3d_chull2 if face index exceeded vmap size. |

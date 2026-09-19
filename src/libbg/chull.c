@@ -46,17 +46,33 @@ int
 bg_polyline_2d_chull(point2d_t** hull, const point2d_t* polyline, int n)
 {
     int i;
+    int h;
+    int bot;
+    int top;
+    point2d_t* D;
+
+    if (UNLIKELY(!hull || !polyline || n <= 0))
+	return 0;
+
+    if (n == 1) {
+	*hull = (point2d_t *)bu_calloc(1, sizeof(point2d_t), "hull");
+	V2MOVE((*hull)[0], polyline[0]);
+	return 1;
+    }
+    if (n == 2) {
+	*hull = (point2d_t *)bu_calloc(2, sizeof(point2d_t), "hull");
+	V2MOVE((*hull)[0], polyline[0]);
+	V2MOVE((*hull)[1], polyline[1]);
+	return 2;
+    }
 
     /* initialize a deque D[] from bottom to top so that the
        1st three vertices of P[] are a ccw triangle */
-    point2d_t* D = (point2d_t *)bu_calloc(2*n+1, sizeof(fastf_t)*3, "dequeue");
-
-    /* hull vertex counter */
-    int h;
+    D = (point2d_t *)bu_calloc(2*n+1, sizeof(point2d_t), "dequeue");
 
     /* initial bottom and top deque indices */
-    int bot = n-2;
-    int top = bot+3;
+    bot = n-2;
+    top = bot+3;
 
     /* 3rd vertex is a both bottom and top */
     V2MOVE(D[top], polyline[2]);
@@ -78,21 +94,25 @@ bg_polyline_2d_chull(point2d_t** hull, const point2d_t* polyline, int n)
 
 	/* incrementally add an exterior vertex to the deque hull
 	   get the rightmost tangent at the deque bot */
-	while (isLeft(D[bot], D[bot+1], polyline[i]) <= 0)
+	while (bot < top && isLeft(D[bot], D[bot+1], polyline[i]) <= 0)
 	    bot = bot + 1;                      /* remove bot of deque */
-	V2MOVE(D[bot-1],polyline[i]);    /* insert P[i] at bot of deque */
-	bot = bot - 1;
+	if (bot > 0) {
+	    V2MOVE(D[bot-1],polyline[i]);    /* insert P[i] at bot of deque */
+	    bot = bot - 1;
+	}
 
 	/* get the leftmost tangent at the deque top */
-	while (isLeft(D[top-1], D[top], polyline[i]) <= 0)
+	while (top > bot && isLeft(D[top-1], D[top], polyline[i]) <= 0)
 	    top = top - 1;                      /* pop top of deque */
-	V2MOVE(D[top+1],polyline[i]);    /* push P[i] onto top of deque */
-	top = top + 1;
+	if (top < 2*n) {
+	    V2MOVE(D[top+1],polyline[i]);    /* push P[i] onto top of deque */
+	    top = top + 1;
+	}
     }
 
     /* transcribe deque D[] to the output hull array hull[] */
 
-    (*hull) = (point2d_t *)bu_calloc(top - bot + 2, sizeof(fastf_t)*3, "hull");
+    (*hull) = (point2d_t *)bu_calloc(top - bot + 2, sizeof(point2d_t), "hull");
     for (h=0; h <= (top-bot); h++)
 	V2MOVE((*hull)[h],D[bot + h]);
 
@@ -125,8 +145,13 @@ bg_2d_chull(point2d_t **hull, const point2d_t *points_2d, int n)
 {
     int i = 0;
     int retval = 0;
-    point2d_t *points = (point2d_t *)bu_calloc(n + 1, sizeof(point2d_t), "sorted points_2d");
+    point2d_t *points;
     const point2d_t *const_points;
+
+    if (UNLIKELY(!hull || !points_2d || n <= 0))
+	return 0;
+
+    points = (point2d_t *)bu_calloc(n + 1, sizeof(point2d_t), "sorted points_2d");
 
     /* copy points_2d array to something
        that can be sorted and sort it */
@@ -154,26 +179,44 @@ bg_3d_coplanar_chull(point_t **hull, const point_t *points_3d, int n)
     int hull_cnt = 0;
     point_t origin_pnt;
     vect_t u_axis, v_axis;
-    point2d_t *hull_2d = (point2d_t *)bu_malloc(sizeof(point2d_t *), "hull pointer");
-    point2d_t *points_tmp = (point2d_t *)bu_calloc(n + 1, sizeof(point2d_t), "points_2d");
-
+    point2d_t *hull_2d = NULL;
+    point2d_t *points_tmp;
     const point2d_t *const_points_tmp;
+
+    if (UNLIKELY(!hull || !points_3d || n < 3))
+	return 0;
+
+    points_tmp = (point2d_t *)bu_calloc(n + 1, sizeof(point2d_t), "points_2d");
 
     ret += coplanar_2d_coord_sys(&origin_pnt, &u_axis, &v_axis, points_3d, n);
     ret += coplanar_3d_to_2d(&points_tmp, (const point_t *)&origin_pnt, (const vect_t *)&u_axis, (const vect_t *)&v_axis, points_3d, n);
 
-    if (ret)
+    if (ret) {
+	bu_free(points_tmp, "points_2d");
 	return 0;
+    }
 
     const_points_tmp = (const point2d_t *)points_tmp;
 
     hull_cnt = bg_2d_chull(&hull_2d, const_points_tmp, n);
+    if (hull_cnt <= 0) {
+	bu_free(points_tmp, "points_2d");
+	if (hull_2d) bu_free(hull_2d, "hull_2d");
+	return 0;
+    }
+
     (*hull) = (point_t *)bu_calloc(hull_cnt + 1, sizeof(point_t), "hull array");
 
     ret = coplanar_2d_to_3d(hull, (const point_t *)&origin_pnt, (const vect_t *)&u_axis, (const vect_t *)&v_axis, (const point2d_t *)hull_2d, hull_cnt);
 
-    if (ret)
+    bu_free(points_tmp, "points_2d");
+    bu_free(hull_2d, "hull_2d");
+
+    if (ret) {
+	bu_free(*hull, "hull array");
+	*hull = NULL;
 	return 0;
+    }
 
     return hull_cnt;
 }

@@ -42,6 +42,10 @@ bg_pnt_in_polygon(size_t nvert, const point2d_t *pnts, const point2d_t *test)
     size_t i = 0;
     size_t j = 0;
     int c = 0;
+
+    if (UNLIKELY(!pnts || !test || nvert < 3))
+	return 0;
+
     for (i = 0, j = nvert-1; i < nvert; j = i++) {
 	if ( ((pnts[i][1] > (*test)[1]) != (pnts[j][1] > (*test)[1])) &&
 	     ((*test)[0] < (pnts[j][0]-pnts[i][0]) * ((*test)[1]-pnts[i][1]) / (pnts[j][1]-pnts[i][1]) + pnts[i][0]) )

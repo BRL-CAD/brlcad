@@ -50,17 +50,33 @@ int
 bg_polyline_2d_chull2(int** hull, const int *polyline, int n, const point2d_t* pnts)
 {
     int i;
+    int h;
+    int bot;
+    int top;
+    int* D;
+
+    if (UNLIKELY(!hull || !polyline || !pnts || n <= 0))
+	return 0;
+
+    if (n == 1) {
+	*hull = (int *)bu_calloc(1, sizeof(int), "hull");
+	(*hull)[0] = polyline[0];
+	return 1;
+    }
+    if (n == 2) {
+	*hull = (int *)bu_calloc(2, sizeof(int), "hull");
+	(*hull)[0] = polyline[0];
+	(*hull)[1] = polyline[1];
+	return 2;
+    }
 
     /* initialize a deque D[] from bottom to top so that the
        1st three vertices of P[] are a ccw triangle */
-    int* D = (int *)bu_calloc(2*n+1, sizeof(int), "dequeue");
-
-    /* hull vertex counter */
-    int h;
+    D = (int *)bu_calloc(2*n+1, sizeof(int), "dequeue");
 
     /* initial bottom and top deque indices */
-    int bot = n-2;
-    int top = bot+3;
+    bot = n-2;
+    top = bot+3;
 
     /* 3rd vertex is a both bottom and top */
     D[top] = polyline[2];
@@ -82,18 +98,22 @@ bg_polyline_2d_chull2(int** hull, const int *polyline, int n, const point2d_t* p
 
 	/* incrementally add an exterior vertex to the deque hull
 	   get the rightmost tangent at the deque bot */
-	while (isLeft(pnts[D[bot]], pnts[D[bot+1]], pnts[polyline[i]]) <= 0) {
+	while (bot < top && isLeft(pnts[D[bot]], pnts[D[bot+1]], pnts[polyline[i]]) <= 0) {
 	    bot = bot + 1;                      /* remove bot of deque */
 	}
-	D[bot-1] = polyline[i];    /* insert P[i] at bot of deque */
-	bot = bot - 1;
+	if (bot > 0) {
+	    D[bot-1] = polyline[i];    /* insert P[i] at bot of deque */
+	    bot = bot - 1;
+	}
 
 	/* get the leftmost tangent at the deque top */
-	while (isLeft(pnts[D[top-1]], pnts[D[top]], pnts[polyline[i]]) <= 0) {
+	while (top > bot && isLeft(pnts[D[top-1]], pnts[D[top]], pnts[polyline[i]]) <= 0) {
 	    top = top - 1;                      /* pop top of deque */
 	}
-	D[top+1] = polyline[i];    /* push P[i] onto top of deque */
-	top = top + 1;
+	if (top < 2*n) {
+	    D[top+1] = polyline[i];    /* push P[i] onto top of deque */
+	    top = top + 1;
+	}
     }
 
     /* transcribe deque D[] to the output hull array hull[] */
@@ -148,6 +168,14 @@ bg_2d_chull2(int **hull, const point2d_t *points_2d, int n)
 {
     int i = 0;
     int retval = 0;
+    int *polyline;
+    int *pchull;
+    point2d_t **pointers;
+    point2d_t *psorted;
+    std::map<point2d_t *, int> p2int;
+
+    if (UNLIKELY(!hull || !points_2d || n <= 0))
+	return 0;
 
     // Because we must sort points_2d to make a polyline for the hull builder,
     // we need to map points in their sorted positions to their original
@@ -156,9 +184,8 @@ bg_2d_chull2(int **hull, const point2d_t *points_2d, int n)
     // that uses individual point containers as uniquely identifiable
     // representations of those points to achieve a post-sort index lookup
     // capability via pointer mapping.
-    point2d_t **pointers = (point2d_t **)bu_calloc(n + 1, sizeof(point2d_t *), "sorted points_2d pointers");
-    point2d_t *psorted = (point2d_t *)bu_calloc(n + 1, sizeof(point2d_t), "sorted points_2d");
-    std::map<point2d_t *, int> p2int;
+    pointers = (point2d_t **)bu_calloc(n + 1, sizeof(point2d_t *), "sorted points_2d pointers");
+    psorted = (point2d_t *)bu_calloc(n + 1, sizeof(point2d_t), "sorted points_2d");
     for (i = 0; i < n; i++) {
 	pointers[i] = (point2d_t *)bu_calloc(1, sizeof(point2d_t), "point");
 	V2MOVE(*pointers[i], points_2d[i]);
@@ -172,11 +199,10 @@ bg_2d_chull2(int **hull, const point2d_t *points_2d, int n)
     /* Once sorted, the points can be viewed as describing a simple polyline
      * and the Melkman algorithm works for a simple polyline even if it
      * isn't closed. */
-    int *polyline = (int *)bu_calloc(n, sizeof(int), "polyline");
+    polyline = (int *)bu_calloc(n, sizeof(int), "polyline");
     for (i = 0; i < n; i++) {
 	polyline[i] = i;
     }
-    int *pchull;
     retval = bg_polyline_2d_chull2(&pchull, (const int *)polyline, n, (const point2d_t *)psorted);
 
     /* Map sorted indices back to original unsorted points_2d array indices */
@@ -187,6 +213,7 @@ bg_2d_chull2(int **hull, const point2d_t *points_2d, int n)
 
     bu_argv_free(n, (char **)pointers);
     bu_free(psorted, "free sorted points");
+    bu_free(polyline, "free polyline");
     bu_free(pchull, "free unmapped hull");
 
     return retval;
@@ -217,7 +244,12 @@ bg_3d_coplanar_chull2(int **hull, const point_t *points_3d, int n)
     int hull_cnt = 0;
     point_t origin_pnt;
     vect_t u_axis, v_axis;
-    point2d_t *points_tmp = (point2d_t *)bu_calloc(n + 1, sizeof(point2d_t), "points_2d");
+    point2d_t *points_tmp;
+
+    if (UNLIKELY(!hull || !points_3d || n < 3))
+	return 0;
+
+    points_tmp = (point2d_t *)bu_calloc(n + 1, sizeof(point2d_t), "points_2d");
 
     /* Project 3D points into temporary 2D point array.  Indices need to match up - points_3d[0]
      * needs to have its projected point in points_tmp[0], etc. */

@@ -872,7 +872,13 @@ bg_poly_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *num_o
 extern "C" void
 bg_tri_plot_2d(const char *filename, const int *faces, int num_faces, const point2d_t *pnts, int r, int g, int b)
 {
+    if (!filename || !faces || num_faces <= 0 || !pnts)
+	return;
+
     FILE* plot_file = fopen(filename, "wb");
+    if (!plot_file)
+	return;
+
     pl_color(plot_file, r, g, b);
 
     for (int k = 0; k < num_faces; k++) {
@@ -895,7 +901,8 @@ extern "C" int
 bg_polygon_triangulate(int **faces, int *num_faces, point_t **out_pts, int *num_outpts,
 	struct bg_polygon *p, triangulation_t type)
 {
-    if (!faces || !num_faces || !out_pts || !num_outpts || !p)
+    if (!faces || !num_faces || !out_pts || !num_outpts || !p ||
+	p->num_contours < 1 || !p->contour || p->contour[0].num_points < 3 || !p->contour[0].point)
 	return -1;
 
     // Fit the outer contour to get a 2D plane (bg_polygon is in principle a 3D data structure)
@@ -917,12 +924,12 @@ bg_polygon_triangulate(int **faces, int *num_faces, point_t **out_pts, int *num_
     point2d_t *pnts_2d = (point2d_t *)bu_calloc(pnt_cnt, sizeof(point2d_t), "projected points");
     int *ocontour = NULL;
     int ocontour_cnt = 0;
-    int **holes_array = (int **)bu_calloc(p->num_contours - 1, sizeof(int *), "holes");
-    size_t *holes_npts = (size_t *)bu_calloc(p->num_contours - 1, sizeof(size_t), "holes_cnt");
+    int **holes_array = (p->num_contours > 1) ? (int **)bu_calloc(p->num_contours - 1, sizeof(int *), "holes") : NULL;
+    size_t *holes_npts = (p->num_contours > 1) ? (size_t *)bu_calloc(p->num_contours - 1, sizeof(size_t), "holes_cnt") : NULL;
     int curr_pnt = 0;
     for (size_t i = 0; i < p->num_contours; ++i) {
 	int *cpnts = (int *)bu_calloc(p->contour[i].num_points, sizeof(int), "point indices");
-	if (i > 0) {
+	if (i > 0 && holes_array && holes_npts) {
 	    holes_array[i-1] = cpnts;
 	    holes_npts[i-1] = p->contour[i].num_points;
 	} else {
@@ -944,6 +951,28 @@ bg_polygon_triangulate(int **faces, int *num_faces, point_t **out_pts, int *num_
     int tri_num_outpts = 0;
     int ret = bg_nested_poly_triangulate(&tri_faces, &tri_num_faces, &tri_out_pts, &tri_num_outpts, ocontour, ocontour_cnt, (const int **)holes_array, (const size_t *)holes_npts, p->num_contours - 1, NULL, 0, pnts_2d, pnt_cnt, type);
 
+    if (tri_out_pts) {
+	bu_free(tri_out_pts, "tri_out_pts");
+    }
+
+    if (ret != 0) {
+	*faces = NULL;
+	*num_faces = 0;
+	*out_pts = NULL;
+	*num_outpts = 0;
+	bu_free(ocontour, "free ocontour");
+	if (holes_array) {
+	    for (size_t i = 0; i < p->num_contours - 1; i++) {
+		bu_free(holes_array[i], "free holes array");
+	    }
+	    bu_free(holes_array, "holes array container");
+	}
+	if (holes_npts) {
+	    bu_free(holes_npts, "hole cnts");
+	}
+	bu_free(pnts_2d, "2d pnts");
+	return ret;
+    }
 
     // Translate 2D plane points into 3D points
     point_t *pnts_3d = (point_t *)bu_calloc(pnt_cnt, sizeof(point_t), "3D points");
@@ -959,10 +988,15 @@ bg_polygon_triangulate(int **faces, int *num_faces, point_t **out_pts, int *num_
 
     // Clean up 2D and translation arrays
     bu_free(ocontour, "free ocontour");
-    for (size_t i = 0; i < p->num_contours - 1; i++) {
-	bu_free(holes_array[i], "free holes array");
+    if (holes_array) {
+	for (size_t i = 0; i < p->num_contours - 1; i++) {
+	    bu_free(holes_array[i], "free holes array");
+	}
+	bu_free(holes_array, "free holes array container");
     }
-    bu_free(holes_npts, "hole cnts");
+    if (holes_npts) {
+	bu_free(holes_npts, "hole cnts");
+    }
     bu_free(pnts_2d, "2d pnts");
 
     return ret;

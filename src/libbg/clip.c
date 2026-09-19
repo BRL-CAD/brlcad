@@ -60,6 +60,9 @@ bg_lseg_clip(fastf_t *xp1, fastf_t *yp1, fastf_t *xp2, fastf_t *yp2, fastf_t cli
 {
     char code1, code2;
 
+    if (UNLIKELY(!xp1 || !yp1 || !xp2 || !yp2))
+	return 1;
+
     code1 = clip_code(*xp1, *yp1, clip_min, clip_max);
     code2 = clip_code(*xp2, *yp2, clip_min, clip_max);
 
@@ -87,18 +90,26 @@ bg_lseg_clip(fastf_t *xp1, fastf_t *yp1, fastf_t *xp2, fastf_t *yp2, fastf_t cli
 
 	if (code1 & 01) {
 	    /* Push toward left edge */
+	    if (ZERO(*xp2 - *xp1))
+		return 1;
 	    *yp1 = *yp1 + (*yp2-*yp1)*(clip_min-*xp1)/(*xp2-*xp1);
 	    *xp1 = clip_min;
 	} else if (code1 & 02) {
 	    /* Push toward right edge */
+	    if (ZERO(*xp2 - *xp1))
+		return 1;
 	    *yp1 = *yp1 + (*yp2-*yp1)*(clip_max-*xp1)/(*xp2-*xp1);
 	    *xp1 = clip_max;
 	} else if (code1 & 04) {
 	    /* Push toward bottom edge */
+	    if (ZERO(*yp2 - *yp1))
+		return 1;
 	    *xp1 = *xp1 + (*xp2-*xp1)*(clip_min-*yp1)/(*yp2-*yp1);
 	    *yp1 = clip_min;
 	} else if (code1 & 010) {
 	    /* Push toward top edge */
+	    if (ZERO(*yp2 - *yp1))
+		return 1;
 	    *xp1 = *xp1 + (*xp2-*xp1)*(clip_max-*yp1)/(*yp2-*yp1);
 	    *yp1 = clip_max;
 	}
@@ -113,14 +124,19 @@ bg_lseg_clip(fastf_t *xp1, fastf_t *yp1, fastf_t *xp2, fastf_t *yp2, fastf_t cli
 int
 bg_ray_vclip(point_t a, point_t b, const fastf_t *min_pt, const fastf_t *max_pt)
 {
-    static vect_t diff;
-    static double sv;
-    static double st;
-    static double mindist, maxdist;
-    fastf_t *pt = &a[0];
-    fastf_t *dir = &diff[0];
+    vect_t diff;
+    double sv;
+    double st;
+    double mindist, maxdist;
+    fastf_t *pt;
+    fastf_t *dir;
     int i;
 
+    if (UNLIKELY(!a || !b || !min_pt || !max_pt))
+	return 0;
+
+    pt = &a[0];
+    dir = &diff[0];
     mindist = -CLIP_DISTANCE;
     maxdist = CLIP_DISTANCE;
     VSUB2(diff, b, a);

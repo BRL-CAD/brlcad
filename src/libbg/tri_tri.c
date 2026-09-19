@@ -189,6 +189,9 @@ int bg_tri_tri_isect_coplanar(const point_t V0, const point_t V1, const point_t 
 	BN_TOL_MAGIC, EPSILON, EPSILON*EPSILON, 1e-6, 1-1e-6
     };
 
+    if (UNLIKELY(!V0 || !V1 || !V2 || !U0 || !U1 || !U2))
+	return -1;
+
     /* compute plane of triangle (V0, V1, V2) */
     ret = bg_make_plane_3pnts(P1, V0, V1, V2, &tol);
     if (ret) return -1;
@@ -215,8 +218,7 @@ int bg_tri_tri_isect_coplanar(const point_t V0, const point_t V1, const point_t 
 	    i0=0;      /* A[2] is greatest */
 	    i1=1;
 	}
-    } else {
-	/* A[0]<=A[1] */
+    } else {   /* A[0]<=A[1] */
 	if (A[2]>A[1]) {
 	    i0=0;      /* A[2] is greatest */
 	    i1=1;
@@ -227,14 +229,14 @@ int bg_tri_tri_isect_coplanar(const point_t V0, const point_t V1, const point_t 
     }
 
     /* test all edges of triangle 1 against the edges of triangle 2 */
-    if (!area_flag) {
-	EDGE_AGAINST_TRI_EDGES(V0, V1, U0, U1, U2);
-	EDGE_AGAINST_TRI_EDGES(V1, V2, U0, U1, U2);
-	EDGE_AGAINST_TRI_EDGES(V2, V0, U0, U1, U2);
-    } else {
+    if (area_flag) {
 	EDGE_AGAINST_TRI_EDGES_AREA(V0, V1, U0, U1, U2);
 	EDGE_AGAINST_TRI_EDGES_AREA(V1, V2, U0, U1, U2);
 	EDGE_AGAINST_TRI_EDGES_AREA(V2, V0, U0, U1, U2);
+    } else {
+	EDGE_AGAINST_TRI_EDGES(V0, V1, U0, U1, U2);
+	EDGE_AGAINST_TRI_EDGES(V1, V2, U0, U1, U2);
+	EDGE_AGAINST_TRI_EDGES(V2, V0, U0, U1, U2);
     }
 
     /* finally, test if tri1 is totally contained in tri2 or vice versa */
@@ -281,6 +283,9 @@ int bg_tri_tri_isect_coplanar2(const point_t V0, const point_t V1, const point_t
     static const struct bn_tol tol = {
 	BN_TOL_MAGIC, EPSILON, EPSILON*EPSILON, 1e-6, 1-1e-6
     };
+
+    if (UNLIKELY(!V0 || !V1 || !V2 || !U0 || !U1 || !U2))
+	return -1;
 
     /* compute plane of triangle (V0, V1, V2) */
     ret = bg_make_plane_3pnts(P1, V0, V1, V2, &tol);
@@ -440,6 +445,9 @@ int bg_tri_tri_isect(const point_t V0, const point_t V1, const point_t V2,
     fastf_t d, e, f, tri_y0, tri_y1;
 
     fastf_t xx, yy, xxyy, tmp;
+
+    if (UNLIKELY(!V0 || !V1 || !V2 || !U0 || !U1 || !U2))
+	return 0;
 
     /* compute plane equation of triangle(V0, V1, V2) */
     VSUB2(E1, V1, V0);
@@ -601,6 +609,13 @@ int bg_tri_tri_isect_with_line(const point_t V0, const point_t V1, const point_t
     fastf_t up0, up1, up2;
     fastf_t b, c, max;
     int smallest1, smallest2;
+    int is_coplanar = 0;
+
+    if (coplanar)
+	*coplanar = 0;
+
+    if (UNLIKELY(!V0 || !V1 || !V2 || !U0 || !U1 || !U2))
+	return 0;
 
     /* compute plane equation of triangle(V0, V1, V2) */
     VSUB2(E1, V1, V0);
@@ -671,9 +686,10 @@ int bg_tri_tri_isect_with_line(const point_t V0, const point_t V1, const point_t
     up2=U2[index];
 
     /* compute interval for triangle 1 */
-    *coplanar=compute_intervals_isectline(V0, V1, V2, vp0, vp1, vp2, dv0, dv1, dv2,
-					  dv0dv1, dv0dv2, &isect1[0], &isect1[1], isectpointA1, isectpointA2);
-    if (*coplanar) return coplanar_tri_tri(N1, V0, V1, V2, U0, U1, U2);
+    is_coplanar=compute_intervals_isectline(V0, V1, V2, vp0, vp1, vp2, dv0, dv1, dv2,
+					    dv0dv1, dv0dv2, &isect1[0], &isect1[1], isectpointA1, isectpointA2);
+    if (coplanar) *coplanar = is_coplanar;
+    if (is_coplanar) return coplanar_tri_tri(N1, V0, V1, V2, U0, U1, U2);
 
 
     /* compute interval for triangle 2 */
@@ -688,20 +704,28 @@ int bg_tri_tri_isect_with_line(const point_t V0, const point_t V1, const point_t
     /* at this point, we know that the triangles intersect */
 
     if (isect2[0]<isect1[0]) {
-	if (smallest1==0) { VMOVE(*isectpt1, isectpointA1); } else { VMOVE(*isectpt1, isectpointA2); }
+	if (isectpt1) {
+	    if (smallest1==0) { VMOVE(*isectpt1, isectpointA1); } else { VMOVE(*isectpt1, isectpointA2); }
+	}
 
-	if (isect2[1]<isect1[1]) {
-	    if (smallest2==0) { VMOVE(*isectpt2, isectpointB2); } else { VMOVE(*isectpt2, isectpointB1); }
-	} else {
-	    if (smallest1==0) { VMOVE(*isectpt2, isectpointA2); } else { VMOVE(*isectpt2, isectpointA1); }
+	if (isectpt2) {
+	    if (isect2[1]<isect1[1]) {
+		if (smallest2==0) { VMOVE(*isectpt2, isectpointB2); } else { VMOVE(*isectpt2, isectpointB1); }
+	    } else {
+		if (smallest1==0) { VMOVE(*isectpt2, isectpointA2); } else { VMOVE(*isectpt2, isectpointA1); }
+	    }
 	}
     } else {
-	if (smallest2==0) { VMOVE(*isectpt1, isectpointB1); } else { VMOVE(*isectpt1, isectpointB2); }
+	if (isectpt1) {
+	    if (smallest2==0) { VMOVE(*isectpt1, isectpointB1); } else { VMOVE(*isectpt1, isectpointB2); }
+	}
 
-	if (isect2[1]>isect1[1]) {
-	    if (smallest1==0) { VMOVE(*isectpt2, isectpointA2); } else { VMOVE(*isectpt2, isectpointA1); }
-	} else {
-	    if (smallest2==0) { VMOVE(*isectpt2, isectpointB2); } else { VMOVE(*isectpt2, isectpointB1); }
+	if (isectpt2) {
+	    if (isect2[1]>isect1[1]) {
+		if (smallest1==0) { VMOVE(*isectpt2, isectpointA2); } else { VMOVE(*isectpt2, isectpointA1); }
+	    } else {
+		if (smallest2==0) { VMOVE(*isectpt2, isectpointB2); } else { VMOVE(*isectpt2, isectpointB1); }
+	    }
 	}
     }
     return 1;

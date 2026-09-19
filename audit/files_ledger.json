@@ -13430,40 +13430,48 @@
       "path": "src/libbg/chull.c",
       "subsystem": "src/libbg",
       "lines": 189,
-      "status": "PENDING",
-      "reviewed_at": null,
-      "issues_count": 0,
-      "issue_ids": []
+      "status": "REVIEWED",
+      "reviewed_at": "2026-09-18T19:12:00Z",
+      "issues_count": 1,
+      "issue_ids": [
+        "SEC-0161"
+      ]
     },
     {
       "id": 1342,
       "path": "src/libbg/chull2.cpp",
       "subsystem": "src/libbg",
       "lines": 247,
-      "status": "PENDING",
-      "reviewed_at": null,
-      "issues_count": 0,
-      "issue_ids": []
+      "status": "REVIEWED",
+      "reviewed_at": "2026-09-18T19:12:00Z",
+      "issues_count": 1,
+      "issue_ids": [
+        "SEC-0162"
+      ]
     },
     {
       "id": 1343,
       "path": "src/libbg/chull3d.cpp",
       "subsystem": "src/libbg",
       "lines": 229,
-      "status": "PENDING",
-      "reviewed_at": null,
-      "issues_count": 0,
-      "issue_ids": []
+      "status": "REVIEWED",
+      "reviewed_at": "2026-09-18T19:12:00Z",
+      "issues_count": 1,
+      "issue_ids": [
+        "SEC-0168"
+      ]
     },
     {
       "id": 1344,
       "path": "src/libbg/clip.c",
       "subsystem": "src/libbg",
       "lines": 183,
-      "status": "PENDING",
-      "reviewed_at": null,
-      "issues_count": 0,
-      "issue_ids": []
+      "status": "REVIEWED",
+      "reviewed_at": "2026-09-18T19:12:00Z",
+      "issues_count": 1,
+      "issue_ids": [
+        "SEC-0163"
+      ]
     },
     {
       "id": 1345,
@@ -15078,8 +15086,8 @@
       "path": "src/libbg/plane.cpp",
       "subsystem": "src/libbg",
       "lines": 2770,
-      "status": "PENDING",
-      "reviewed_at": null,
+      "status": "REVIEWED",
+      "reviewed_at": "2026-09-18T19:12:00Z",
       "issues_count": 0,
       "issue_ids": []
     },
@@ -15100,48 +15108,56 @@
       "path": "src/libbg/polygon.c",
       "subsystem": "src/libbg",
       "lines": 439,
-      "status": "PENDING",
-      "reviewed_at": null,
-      "issues_count": 0,
-      "issue_ids": []
+      "status": "REVIEWED",
+      "reviewed_at": "2026-09-18T19:12:00Z",
+      "issues_count": 1,
+      "issue_ids": [
+        "SEC-0160"
+      ]
     },
     {
       "id": 1508,
       "path": "src/libbg/polygon_op.cpp",
       "subsystem": "src/libbg",
       "lines": 492,
-      "status": "PENDING",
-      "reviewed_at": null,
-      "issues_count": 0,
-      "issue_ids": []
+      "status": "REVIEWED",
+      "reviewed_at": "2026-09-18T19:12:00Z",
+      "issues_count": 1,
+      "issue_ids": [
+        "SEC-0166"
+      ]
     },
     {
       "id": 1509,
       "path": "src/libbg/polygon_point_in.c",
       "subsystem": "src/libbg",
       "lines": 61,
-      "status": "PENDING",
-      "reviewed_at": null,
-      "issues_count": 0,
-      "issue_ids": []
+      "status": "REVIEWED",
+      "reviewed_at": "2026-09-18T19:12:00Z",
+      "issues_count": 1,
+      "issue_ids": [
+        "SEC-0167"
+      ]
     },
     {
       "id": 1510,
       "path": "src/libbg/polygon_triangulate.cpp",
       "subsystem": "src/libbg",
       "lines": 978,
-      "status": "PENDING",
-      "reviewed_at": null,
-      "issues_count": 0,
-      "issue_ids": []
+      "status": "REVIEWED",
+      "reviewed_at": "2026-09-18T19:12:00Z",
+      "issues_count": 1,
+      "issue_ids": [
+        "SEC-0164"
+      ]
     },
     {
       "id": 1511,
       "path": "src/libbg/predicates.h",
       "subsystem": "src/libbg",
       "lines": 904,
-      "status": "PENDING",
-      "reviewed_at": null,
+      "status": "REVIEWED",
+      "reviewed_at": "2026-09-18T19:12:00Z",
       "issues_count": 0,
       "issue_ids": []
     },
@@ -15496,10 +15512,12 @@
       "path": "src/libbg/tri_tri.c",
       "subsystem": "src/libbg",
       "lines": 719,
-      "status": "PENDING",
-      "reviewed_at": null,
-      "issues_count": 0,
-      "issue_ids": []
+      "status": "REVIEWED",
+      "reviewed_at": "2026-09-18T19:12:00Z",
+      "issues_count": 1,
+      "issue_ids": [
+        "SEC-0165"
+      ]
     },
     {
       "id": 1547,

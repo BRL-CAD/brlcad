@@ -48,7 +48,7 @@ bg_find_polygon_area(struct bg_polygon *gpoly, fastf_t sf, plane_t *vp, fastf_t 
     ClipperLib::Path poly;
     fastf_t area = 0.0;
 
-    if (NEAR_ZERO(sf, SMALL_FASTF))
+    if (!gpoly || !gpoly->contour || !vp || gpoly->num_contours == 0 || NEAR_ZERO(sf, SMALL_FASTF))
 	return 0.0;
 
     for (j = 0; j < gpoly->num_contours; ++j) {
@@ -91,7 +91,8 @@ bg_polygons_overlap(struct bg_polygon *polyA, struct bg_polygon *polyB, plane_t 
     polygon_2d polyB_2d;
     int ret = 0;
 
-    if (polyA->num_contours < 1 || polyA->contour[0].num_points < 1 ||
+    if (!polyA || !polyB || !polyA->contour || !polyB->contour || !polyA->hole || !polyB->hole || !vp ||
+	polyA->num_contours < 1 || polyA->contour[0].num_points < 1 ||
 	polyB->num_contours < 1 || polyB->contour[0].num_points < 1)
 	return 0;
 
@@ -316,6 +317,9 @@ load_polygon(ClipperLib::Clipper &clipper, ClipperLib::PolyType ptype, struct bg
     ClipperLib::Path curr_poly;
     fastf_t vZ = 1.0;
 
+    if (!gpoly || !gpoly->contour || gpoly->num_contours == 0)
+	return vZ;
+
     for (j = 0; j < gpoly->num_contours; ++j) {
 	n = gpoly->contour[j].num_points;
 	curr_poly.resize(n);
@@ -344,6 +348,9 @@ load_polygons(ClipperLib::Clipper &clipper, ClipperLib::PolyType ptype, struct b
 {
     size_t i;
     fastf_t vZ = 1.0;
+
+    if (!subj || !subj->polygon || subj->num_polygons == 0)
+	return vZ;
 
     for (i = 0; i < subj->num_polygons; ++i)
 	vZ = load_polygon(clipper, ptype, &subj->polygon[i], sf, vp);
@@ -407,6 +414,9 @@ bg_clip_polygon(bg_clip_t op, struct bg_polygon *subj, struct bg_polygon *clip, 
     ClipperLib::PolyTree result_clipper_polys;
     ClipperLib::ClipType ctOp;
 
+    if (!subj || !clip || NEAR_ZERO(sf, SMALL_FASTF))
+	return NULL;
+
     /* need to scale the points up/down and then convert to/from long64 */
     /* need a matrix to rotate into a plane */
     /* need the inverse of the matrix above to put things back after clipping */
@@ -448,6 +458,9 @@ bg_clip_polygons(bg_clip_t op, struct bg_polygons *subj, struct bg_polygons *cli
     ClipperLib::Clipper clipper;
     ClipperLib::PolyTree result_clipper_polys;
     ClipperLib::ClipType ctOp;
+
+    if (!subj || !clip || NEAR_ZERO(sf, SMALL_FASTF))
+	return NULL;
 
     /* need to scale the points up/down and then convert to/from long64 */
     /* need a matrix to rotate into a plane */

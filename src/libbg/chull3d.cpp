@@ -117,6 +117,14 @@ bg_3d_chull(int **faces, int *num_faces, point_t **vertices, int *num_vertices,
     auto indexBuffer = hull.getIndexBuffer();
     auto vertexBuffer = hull.getVertexBuffer();
 
+    if (vertexBuffer.size() == 0 || indexBuffer.size() < 3) {
+	*vertices = NULL;
+	*faces = NULL;
+	*num_vertices = 0;
+	*num_faces = 0;
+	return 0;
+    }
+
     (*num_vertices) = (int)vertexBuffer.size();
     (*num_faces) = (int)(indexBuffer.size()/3);
     (*vertices) = (point_t *)bu_calloc(*num_vertices, sizeof(point_t), "new pnt array");
@@ -176,6 +184,14 @@ bg_3d_chull2(int **faces, int *num_faces, int **vertices, int *num_vertices,
     auto indexBuffer = hull.getIndexBuffer();
     auto vertexBuffer = hull.getVertexBuffer();
 
+    if (vertexBuffer.size() == 0 || indexBuffer.size() < 3) {
+	*vertices = NULL;
+	*faces = NULL;
+	*num_vertices = 0;
+	*num_faces = 0;
+	return 0;
+    }
+
     std::unordered_map<std::string, std::vector<int>> input_idx_map;
     for (int i = 0; i < num_input_pnts; i++) {
 	input_idx_map[_chull3d_point_key(input_points_3d[i][0], input_points_3d[i][1], input_points_3d[i][2])].push_back(i);
@@ -197,7 +213,14 @@ bg_3d_chull2(int **faces, int *num_faces, int **vertices, int *num_vertices,
     (*num_faces) = (int)(indexBuffer.size() / 3);
     (*faces) = (int *)bu_calloc(indexBuffer.size(), sizeof(int), "new face array");
     for (auto it = indexBuffer.begin(); it != indexBuffer.end(); it++) {
-	(*faces)[f_ind] = vmap[(size_t)(*it)];
+	size_t idx = (size_t)(*it);
+	if (idx >= vmap.size()) {
+	    bu_free(*faces, "new face array");
+	    *faces = NULL;
+	    *num_faces = 0;
+	    return 0;
+	}
+	(*faces)[f_ind] = vmap[idx];
 	f_ind++;
     }
 
