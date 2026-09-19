@@ -35,14 +35,26 @@ int bg_3d_ballpivot(
 	const point_t *input_points_3d, const vect_t *input_normals_3d,
 	int num_input_pnts, const double *radii, int radii_cnt)
 {
+    if (faces)
+	*faces = NULL;
+    if (num_faces)
+	*num_faces = 0;
+    if (vertices)
+	*vertices = NULL;
+    if (num_vertices)
+	*num_vertices = 0;
+
     if (!faces || !num_faces || !vertices || !num_vertices || !input_points_3d || !input_normals_3d || num_input_pnts < 3)
+	return -1;
+
+    if (radii_cnt < 0 || (radii_cnt > 0 && !radii))
 	return -1;
 
     // Run the Ball Pivoting Algorithm (radius selection is handled inside)
     std::vector<int> face_vec;
     int nfaces = ball_pivoting_run(face_vec, input_points_3d, input_normals_3d, num_input_pnts, radii, radii_cnt);
 
-    if (nfaces == 0) {
+    if (nfaces <= 0) {
 	*faces = NULL;
 	*num_faces = 0;
 	*vertices = NULL;

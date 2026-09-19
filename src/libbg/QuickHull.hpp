@@ -287,7 +287,7 @@ namespace quickhull {
 	    size_t m_count;
 
 	    public:
-	    VertexDataSource(const Vector3<T>* ptr, size_t count) : m_ptr(ptr), m_count(count) {
+	    VertexDataSource(const Vector3<T>* ptr, size_t count) : m_ptr(ptr), m_count(ptr ? count : 0) {
 
 	    }
 

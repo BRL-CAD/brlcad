@@ -464,6 +464,9 @@ public:
 
     bool OpenRead(const char* a_fileName)
     {
+	if (!a_fileName) {
+	    return false;
+	}
 	m_file = fopen(a_fileName, "rb");
 	if (!m_file) {
 	    return false;
@@ -473,6 +476,9 @@ public:
 
     bool OpenWrite(const char* a_fileName)
     {
+	if (!a_fileName) {
+	    return false;
+	}
 	m_file = fopen(a_fileName, "wb");
 	if (!m_file) {
 	    return false;
@@ -1736,11 +1742,13 @@ size_t RTREE_QUAL::Intersects(Ray *a_ray, std::set<DataType> *result)
 RTREE_TEMPLATE
 void RTREE_QUAL::plot(const char *fname)
 {
-    if (!m_root) return;
+    if (!m_root || !fname) return;
 
     if (kNumDimensions != 3) return;
 
     FILE* plot_file = fopen(fname, "w");
+    if (!plot_file) return;
+
     struct bu_color c = BU_COLOR_INIT_ZERO;
     bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
     pl_color_buc(plot_file, &c);
@@ -1777,11 +1785,13 @@ void RTREE_QUAL::plot(const char *fname)
 RTREE_TEMPLATE
 void RTREE_QUAL::plot2d(const char *fname)
 {
-    if (!m_root) return;
+    if (!m_root || !fname) return;
 
     if (kNumDimensions != 2) return;
 
     FILE* plot_file = fopen(fname, "w");
+    if (!plot_file) return;
+
     struct bu_color c = BU_COLOR_INIT_ZERO;
     bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
     pl_color_buc(plot_file, &c);

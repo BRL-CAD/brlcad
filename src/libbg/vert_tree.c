@@ -130,6 +130,9 @@ clean_vert_tree_recurse( union vert_tree *ptr )
 void
 bg_vert_tree_clean( struct bg_vert_tree *tree )
 {
+    if ( !tree )
+	return;
+
     BN_CK_VERT_TREE( tree );
 
     if ( !tree->the_tree ) return;
@@ -139,43 +142,28 @@ bg_vert_tree_clean( struct bg_vert_tree *tree )
     tree->curr_vert = 0;
 }
 
-/**
- * static recursive routine used by "free_vert_tree"
- */
-static void
-free_vert_tree_recurse( union vert_tree *ptr )
-{
-    if ( ptr->type == VERT_NODE ) {
-	free_vert_tree_recurse( ptr->vnode.higher );
-	free_vert_tree_recurse( ptr->vnode.lower );
-    }
-
-    bu_free( (char *)ptr, "vert_tree" );
-
-}
-
 void
 bg_vert_tree_destroy( struct bg_vert_tree *tree )
 {
-    union vert_tree *ptr;
-
     if ( !tree )
 	return;
 
     BN_CK_VERT_TREE( tree );
 
-    ptr = tree->the_tree;
-    if ( !ptr )
-	return;
+    if ( tree->the_tree ) {
+	clean_vert_tree_recurse( tree->the_tree );
+	tree->the_tree = (union vert_tree *)NULL;
+    }
 
-    free_vert_tree_recurse( ptr );
+    if ( tree->the_array ) {
+	bu_free( (char *)tree->the_array, "vertex array" );
+	tree->the_array = (fastf_t *)NULL;
+    }
 
-    bu_free( (char *)tree->the_array, "vertex array" );
-
-    tree->the_tree = (union vert_tree *)NULL;
-    tree->the_array = (fastf_t *)NULL;
     tree->curr_vert = 0;
     tree->max_vert = 0;
+    tree->magic = 0;
+    bu_free( (char *)tree, "vert_tree" );
 }
 
 size_t
@@ -184,6 +172,9 @@ bg_vert_tree_add( struct bg_vert_tree *tree, double x, double y, double z, fastf
     union vert_tree *ptr, *prev=NULL, *new_leaf, *new_node;
     vect_t diff = VINIT_ZERO;
     vect_t vertex;
+
+    if ( !tree )
+	return 0;
 
     BN_CK_VERT_TREE( tree );
 
@@ -290,7 +281,7 @@ bg_vert_tree_add( struct bg_vert_tree *tree, double x, double y, double z, fastf
 	    prev->vnode.lower = new_leaf;
 	}
     } else {
-	fprintf( stderr, "*********ERROR********\n" );
+	bu_log( "bg_vert_tree: internal error in vertex tree search\n" );
     }
 
     /* return the index into the vertex array */
@@ -304,6 +295,9 @@ bg_vert_tree_add_w_norm( struct bg_vert_tree *tree, double x, double y, double z
     fastf_t diff[6];
     fastf_t vertex[6];
     double d1_sq=0.0, d2_sq=0.0;
+
+    if ( !tree )
+	return 0;
 
     BN_CK_VERT_TREE( tree );
 
@@ -388,11 +382,11 @@ bg_vert_tree_add_w_norm( struct bg_vert_tree *tree, double x, double y, double z
 
 	/* set the cut value to the mid value between the two vertices or normals */
 	new_node->vnode.cut_val = (vertex[new_node->vnode.coord] +
-				   tree->the_array[ptr->vleaf.index * 3 + new_node->vnode.coord]) * 0.5;
+				   tree->the_array[ptr->vleaf.index * 6 + new_node->vnode.coord]) * 0.5;
 
 	/* set the node "lower" and "higher" pointers */
 	if ( vertex[new_node->vnode.coord] >=
-	     tree->the_array[ptr->vleaf.index * 3 + new_node->vnode.coord] ) {
+	     tree->the_array[ptr->vleaf.index * 6 + new_node->vnode.coord] ) {
 	    new_node->vnode.higher = new_leaf;
 	    new_node->vnode.lower = ptr;
 	} else {
@@ -426,7 +420,7 @@ bg_vert_tree_add_w_norm( struct bg_vert_tree *tree, double x, double y, double z
 	    prev->vnode.lower = new_leaf;
 	}
     } else {
-	fprintf( stderr, "*********ERROR********\n" );
+	bu_log( "bg_vert_tree: internal error in vertex tree search\n" );
     }
 
     /* return the index into the vertex array */

@@ -567,6 +567,22 @@ bg_detria(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
 	const int *steiner, const size_t steiner_npts,
 	const point2d_t *pts)
 {
+    if (faces)
+	*faces = NULL;
+    if (num_faces)
+	*num_faces = 0;
+    if (out_pts)
+	*out_pts = NULL;
+    if (num_outpts)
+	*num_outpts = 0;
+
+    if (!faces || !num_faces || !poly || poly_pnts < 3 || !pts)
+	return 1;
+    if (nholes > 0 && (!holes_array || !holes_npts))
+	return 1;
+    if (steiner_npts > 0 && !steiner)
+	return 1;
+
     std::unordered_map<int, int> det2pts, pts2det;
     std::set<int> active_pts;
 
@@ -707,18 +723,22 @@ bg_nested_poly_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int
 	    coords.push_back(pts[i][X]);
 	    coords.push_back(pts[i][Y]);
 	}
-	delaunator::Delaunator d(coords);
+	try {
+	    delaunator::Delaunator d(coords);
 
-	(*num_faces) = d.triangles.size()/3;
-	(*faces) = (int *)bu_calloc(d.triangles.size(), sizeof(int), "faces");
+	    (*num_faces) = d.triangles.size()/3;
+	    (*faces) = (int *)bu_calloc(d.triangles.size(), sizeof(int), "faces");
 
-	for (size_t i = 0; i < d.triangles.size()/3; i++) {
-	    (*faces)[3*i] = (int)d.triangles[3*i];
-	    (*faces)[3*i+1] = (int)d.triangles[3*i+1];
-	    (*faces)[3*i+2] = (int)d.triangles[3*i+2];
+	    for (size_t i = 0; i < d.triangles.size()/3; i++) {
+		(*faces)[3*i] = (int)d.triangles[3*i];
+		(*faces)[3*i+1] = (int)d.triangles[3*i+1];
+		(*faces)[3*i+2] = (int)d.triangles[3*i+2];
+	    }
+
+	    return 0;
+	} catch (...) {
+	    return -1;
 	}
-
-	return 0;
     }
 
     if (type == TRI_EAR_CLIPPING) {

@@ -84,12 +84,28 @@ main(int UNUSED(argc), const char **argv)
     vect_t *normals = (vect_t *)bu_calloc(num_points, sizeof(vect_t), "sphere normals");
     generate_sphere_points(points, normals, num_points);
 
-    /* Run ball pivot */
+    /* Defensive input validation tests */
     int *faces = NULL;
     int num_faces = 0;
     point_t *verts = NULL;
     int num_verts = 0;
     const double radii[] = {BALL_RADIUS};
+    if (bg_3d_ballpivot(NULL, &num_faces, &verts, &num_verts, (const point_t *)points, (const vect_t *)normals, num_points, radii, 1) != -1 ||
+	bg_3d_ballpivot(&faces, NULL, &verts, &num_verts, (const point_t *)points, (const vect_t *)normals, num_points, radii, 1) != -1 ||
+	bg_3d_ballpivot(&faces, &num_faces, NULL, &num_verts, (const point_t *)points, (const vect_t *)normals, num_points, radii, 1) != -1 ||
+	bg_3d_ballpivot(&faces, &num_faces, &verts, NULL, (const point_t *)points, (const vect_t *)normals, num_points, radii, 1) != -1 ||
+	bg_3d_ballpivot(&faces, &num_faces, &verts, &num_verts, NULL, (const vect_t *)normals, num_points, radii, 1) != -1 ||
+	bg_3d_ballpivot(&faces, &num_faces, &verts, &num_verts, (const point_t *)points, NULL, num_points, radii, 1) != -1 ||
+	bg_3d_ballpivot(&faces, &num_faces, &verts, &num_verts, (const point_t *)points, (const vect_t *)normals, 2, radii, 1) != -1 ||
+	bg_3d_ballpivot(&faces, &num_faces, &verts, &num_verts, (const point_t *)points, (const vect_t *)normals, num_points, radii, -1) != -1 ||
+	bg_3d_ballpivot(&faces, &num_faces, &verts, &num_verts, (const point_t *)points, (const vect_t *)normals, num_points, NULL, 1) != -1) {
+	bu_log("Defensive input test failed in bg_3d_ballpivot\n");
+	bu_free(points, "sphere points");
+	bu_free(normals, "sphere normals");
+	return -1;
+    }
+
+    /* Run ball pivot */
     int result = bg_3d_ballpivot(&faces, &num_faces, &verts, &num_verts,
 				 (const point_t *)points, (const vect_t *)normals, num_points, radii, 1);
 

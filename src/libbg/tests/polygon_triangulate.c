@@ -33,6 +33,7 @@
 #include "bu.h"
 #include "vmath.h"
 #include "bg.h"
+#include "bg/vert_tree.h"
 #include "bv/plot3.h"
 
 /* TODO - the examples below are run, but no check is made to determine
@@ -298,6 +299,45 @@ main(int argc, const char **argv)
 	}
     }
 
+    {
+	/* Test TRI_DELAUNAY with collinear points - should return error cleanly */
+	point2d_t col_pts[3];
+	int *col_faces = NULL;
+	int col_num_faces = 0;
+	int dret;
+	V2SET(col_pts[0], 0.0, 0.0);
+	V2SET(col_pts[1], 1.0, 1.0);
+	V2SET(col_pts[2], 2.0, 2.0);
+	dret = bg_poly_triangulate(&col_faces, &col_num_faces, NULL, NULL, NULL, 0, (const point2d_t *)col_pts, 3, TRI_DELAUNAY);
+	if (dret == 0) {
+	    bu_log("Unexpected success for collinear points with TRI_DELAUNAY\n");
+	    bu_free(col_faces, "faces");
+	    return 1;
+	}
+    }
+
+    {
+	/* Test bg_vert_tree_create_w_norms and bg_vert_tree_add_w_norm */
+	struct bg_vert_tree *vtree = bg_vert_tree_create_w_norms();
+	size_t idx0, idx1, idx2, idx3;
+	if (!vtree) return 1;
+	idx0 = bg_vert_tree_add_w_norm(vtree, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1e-6);
+	idx1 = bg_vert_tree_add_w_norm(vtree, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1e-6);
+	idx2 = bg_vert_tree_add_w_norm(vtree, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1e-6);
+	idx3 = bg_vert_tree_add_w_norm(vtree, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1e-6); /* duplicate of idx0 */
+	if (idx0 != 0 || idx1 != 1 || idx2 != 2 || idx3 != 0) {
+	    bu_log("bg_vert_tree_add_w_norm indexing error: %zu, %zu, %zu, %zu\n", idx0, idx1, idx2, idx3);
+	    bg_vert_tree_destroy(vtree);
+	    return 1;
+	}
+	bg_vert_tree_destroy(vtree);
+
+	/* Test destroy on empty tree */
+	{
+	    struct bg_vert_tree *empty_tree = bg_vert_tree_create();
+	    bg_vert_tree_destroy(empty_tree);
+	}
+    }
 
     return 0;
 }

@@ -1184,7 +1184,8 @@ extern "C" {
 	    )
     {
 	using fastf = fastf_t;
-	if (!pts3 || !nrms3 || n_pts <= 0)
+	faces.clear();
+	if (!pts3 || !nrms3 || n_pts < 3)
 	    return 0;
 
 	std::vector<std::array<fastf, 3>> pts(n_pts);

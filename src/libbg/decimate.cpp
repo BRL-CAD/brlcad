@@ -57,7 +57,7 @@ int trimesh_decimate_simple(
 	int **ofaces, int **face_sources, int *n_ofaces,
 	int *ifaces, int n_ifaces, point_t *p, int n_p, struct bg_trimesh_decimation_settings *s)
 {
-    if (!ofaces || !n_ofaces || !ifaces || n_ifaces <= 0 || !p ||
+    if (!ofaces || !n_ofaces || !ifaces || n_ifaces <= 0 || n_ifaces > INT_MAX / 3 || !p ||
 	n_p <= 0 || !s)
 	return BRLCAD_ERROR;
 
@@ -163,7 +163,7 @@ int trimesh_decimate_simple(
 		    for (b_it = cbin.begin(); b_it != cbin.end(); ++b_it) {
 			VADD2(vavg, vavg, p[*b_it]);
 		    }
-		    VSCALE(vavg, vavg, 1/cbin.size());
+		    VSCALE(vavg, vavg, 1.0 / static_cast<double>(cbin.size()));
 		    // Find the actual point closest to the average
 		    int cavg = *cbin.begin();
 		    double dsqd = DIST_PNT_PNT_SQ(vavg, p[*cbin.begin()]);

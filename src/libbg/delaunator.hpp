@@ -42,6 +42,7 @@ inline size_t fast_mod(const size_t i, const size_t c) {
 
 // Kahan and Babuska summation, Neumaier variant; accumulates less FP error
 inline double sum(const std::vector<double>& x) {
+    if (x.empty()) return 0.0;
     double sum = x[0];
     double err = 0.0;
 
@@ -242,6 +243,9 @@ Delaunator::Delaunator(std::vector<double> const& in_coords)
       m_hash_size(),
       m_edge_stack() {
     std::size_t n = coords.size() >> 1;
+    if (n < 3) {
+        throw std::runtime_error("not triangulation");
+    }
 
     double max_x = std::numeric_limits<double>::min();
     double max_y = std::numeric_limits<double>::min();
@@ -278,6 +282,10 @@ Delaunator::Delaunator(std::vector<double> const& in_coords)
         }
     }
 
+    if (i0 == INVALID_INDEX) {
+        throw std::runtime_error("not triangulation");
+    }
+
     const double i0x = coords[2 * i0];
     const double i0y = coords[2 * i0 + 1];
 
@@ -291,6 +299,10 @@ Delaunator::Delaunator(std::vector<double> const& in_coords)
             i1 = i;
             min_dist = d;
         }
+    }
+
+    if (i1 == INVALID_INDEX) {
+        throw std::runtime_error("not triangulation");
     }
 
     double i1x = coords[2 * i1];
