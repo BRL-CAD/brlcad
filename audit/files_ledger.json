@@ -13268,10 +13268,12 @@
       "path": "src/libbg/BallPivot.hpp",
       "subsystem": "src/libbg",
       "lines": 1251,
-      "status": "PENDING",
-      "reviewed_at": null,
-      "issues_count": 0,
-      "issue_ids": []
+      "status": "REVIEWED",
+      "reviewed_at": "2026-09-18T22:50:00Z",
+      "issues_count": 1,
+      "issue_ids": [
+        "SEC-0172"
+      ]
     },
     {
       "id": 1326,
@@ -13368,8 +13370,8 @@
       "path": "src/libbg/QuickHull.cpp",
       "subsystem": "src/libbg",
       "lines": 516,
-      "status": "PENDING",
-      "reviewed_at": null,
+      "status": "REVIEWED",
+      "reviewed_at": "2026-09-18T22:50:00Z",
       "issues_count": 0,
       "issue_ids": []
     },
@@ -13378,20 +13380,24 @@
       "path": "src/libbg/QuickHull.hpp",
       "subsystem": "src/libbg",
       "lines": 996,
-      "status": "PENDING",
-      "reviewed_at": null,
-      "issues_count": 0,
-      "issue_ids": []
+      "status": "REVIEWED",
+      "reviewed_at": "2026-09-18T22:50:00Z",
+      "issues_count": 1,
+      "issue_ids": [
+        "SEC-0173"
+      ]
     },
     {
       "id": 1337,
       "path": "src/libbg/RTree.h",
       "subsystem": "src/libbg",
       "lines": 1816,
-      "status": "PENDING",
-      "reviewed_at": null,
-      "issues_count": 0,
-      "issue_ids": []
+      "status": "REVIEWED",
+      "reviewed_at": "2026-09-18T22:50:00Z",
+      "issues_count": 1,
+      "issue_ids": [
+        "SEC-0173"
+      ]
     },
     {
       "id": 1338,
@@ -13410,10 +13416,12 @@
       "path": "src/libbg/ballpivot.cpp",
       "subsystem": "src/libbg",
       "lines": 85,
-      "status": "PENDING",
-      "reviewed_at": null,
-      "issues_count": 0,
-      "issue_ids": []
+      "status": "REVIEWED",
+      "reviewed_at": "2026-09-18T22:50:00Z",
+      "issues_count": 1,
+      "issue_ids": [
+        "SEC-0172"
+      ]
     },
     {
       "id": 1340,
@@ -13478,8 +13486,8 @@
       "path": "src/libbg/clipper.cpp",
       "subsystem": "src/libbg",
       "lines": 4664,
-      "status": "PENDING",
-      "reviewed_at": null,
+      "status": "REVIEWED",
+      "reviewed_at": "2026-09-18T22:50:00Z",
       "issues_count": 0,
       "issue_ids": []
     },
@@ -13488,8 +13496,8 @@
       "path": "src/libbg/clipper.hpp",
       "subsystem": "src/libbg",
       "lines": 419,
-      "status": "PENDING",
-      "reviewed_at": null,
+      "status": "REVIEWED",
+      "reviewed_at": "2026-09-18T22:50:00Z",
       "issues_count": 0,
       "issue_ids": []
     },
@@ -13498,28 +13506,32 @@
       "path": "src/libbg/decimate.cpp",
       "subsystem": "src/libbg",
       "lines": 259,
-      "status": "PENDING",
-      "reviewed_at": null,
-      "issues_count": 0,
-      "issue_ids": []
+      "status": "REVIEWED",
+      "reviewed_at": "2026-09-18T22:50:00Z",
+      "issues_count": 1,
+      "issue_ids": [
+        "SEC-0170"
+      ]
     },
     {
       "id": 1348,
       "path": "src/libbg/delaunator.hpp",
       "subsystem": "src/libbg",
       "lines": 604,
-      "status": "PENDING",
-      "reviewed_at": null,
-      "issues_count": 0,
-      "issue_ids": []
+      "status": "REVIEWED",
+      "reviewed_at": "2026-09-18T22:50:00Z",
+      "issues_count": 1,
+      "issue_ids": [
+        "SEC-0171"
+      ]
     },
     {
       "id": 1349,
       "path": "src/libbg/detria.hpp",
       "subsystem": "src/libbg",
       "lines": 4660,
-      "status": "PENDING",
-      "reviewed_at": null,
+      "status": "REVIEWED",
+      "reviewed_at": "2026-09-18T22:50:00Z",
       "issues_count": 0,
       "issue_ids": []
     },
@@ -13528,8 +13540,8 @@
       "path": "src/libbg/earcut.hpp",
       "subsystem": "src/libbg",
       "lines": 889,
-      "status": "PENDING",
-      "reviewed_at": null,
+      "status": "REVIEWED",
+      "reviewed_at": "2026-09-18T22:50:00Z",
       "issues_count": 0,
       "issue_ids": []
     },
@@ -15146,9 +15158,10 @@
       "lines": 978,
       "status": "REVIEWED",
       "reviewed_at": "2026-09-18T19:12:00Z",
-      "issues_count": 1,
+      "issues_count": 2,
       "issue_ids": [
-        "SEC-0164"
+        "SEC-0164",
+        "SEC-0174"
       ]
     },
     {
@@ -15616,10 +15629,12 @@
       "path": "src/libbg/vert_tree.c",
       "subsystem": "src/libbg",
       "lines": 444,
-      "status": "PENDING",
-      "reviewed_at": null,
-      "issues_count": 0,
-      "issue_ids": []
+      "status": "REVIEWED",
+      "reviewed_at": "2026-09-18T22:50:00Z",
+      "issues_count": 1,
+      "issue_ids": [
+        "SEC-0169"
+      ]
     },
     {
       "id": 1557,

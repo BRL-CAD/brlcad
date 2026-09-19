@@ -1,22 +1,22 @@
 # BRL-CAD RMF/STIG Cat 1 Security Audit Dashboard
-**Last Updated:** 2026-09-19 02:38:12 UTC
+**Last Updated:** 2026-09-19 03:23:59 UTC
 
 ## Overall Progress
 - **Total C/C++ Files:** 3493
-- **Files Reviewed:** 262 (7.5%)
-- **Files Pending Review:** 3231
-- **Total Issues Identified:** 168
+- **Files Reviewed:** 274 (7.8%)
+- **Files Pending Review:** 3219
+- **Total Issues Identified:** 174
 
 ### Issues by Severity Potential
 | Severity Level | Count | Description |
 |:---:|:---:|:---|
-| **3 (High)** | 10 | Likely exploit or crash potential; widespread/library exposure |
-| **2 (Medium)** | 119 | Possible exploit or crash under specific circumstances |
-| **1 (Low)** | 39 | Localized / low-impact vulnerability |
+| **3 (High)** | 11 | Likely exploit or crash potential; widespread/library exposure |
+| **2 (Medium)** | 122 | Possible exploit or crash under specific circumstances |
+| **1 (Low)** | 41 | Localized / low-impact vulnerability |
 
 ### Issues by Verification Status
 - **Confirmed:** 0
-- **Fixed (Committed):** 167
+- **Fixed (Committed):** 173
 - **Pending Verification:** 1
 - **Disproven:** 0
 
@@ -84,7 +84,7 @@
 | `src/isst` | 9 | 0 | 0.0% | 0 |
 | `src/launcher` | 8 | 0 | 0.0% | 0 |
 | `src/libanalyze` | 40 | 0 | 0.0% | 0 |
-| `src/libbg` | 232 | 22 | 9.5% | 19 |
+| `src/libbg` | 232 | 34 | 14.7% | 27 |
 | `src/libbn` | 41 | 41 | 100.0% | 31 |
 | `src/libbrep` | 50 | 0 | 0.0% | 0 |
 | `src/libbu` | 176 | 176 | 100.0% | 101 |
@@ -285,3 +285,9 @@
 | `SEC-0166` | **Sev 2** | NULL Pointer Dereference / Divide by Zero | `src/libbg/polygon_op.cpp:45-470` | `FIXED` | Unchecked NULL pointer dereferences in bg_find_polygon_area, bg_polygons_overlap, load_polygon, and clipping routines; potential division by zero on zero scale factor. |
 | `SEC-0167` | **Sev 2** | Integer Underflow / Out-of-bounds Read | `src/libbg/polygon_point_in.c:40-51` | `FIXED` | bg_pnt_in_polygon underflows j = nvert - 1 when nvert == 0 and allows nvert < 3 which is geometrically invalid for polygons; missing NULL pointer checks on pnts and test. |
 | `SEC-0168` | **Sev 3** | Out-of-bounds Read / Degenerate Buffer Access | `src/libbg/chull3d.cpp:115-210` | `FIXED` | bg_3d_chull and bg_3d_chull2 did not check for empty vertexBuffer or undersized indexBuffer before allocating and indexing; out-of-bounds access in bg_3d_chull2 if face index exceeded vmap size. |
+| `SEC-0169` | **Sev 3** | Spatial Partitioning Stride Corruption / Resource Leak | `src/libbg/vert_tree.c:140-180, 260-430` | `FIXED` | Stride indexing corruption in bg_vert_tree_add_w_norm where vertex coordinate data was accessed with stride 3 instead of stride 6 (ptr->vleaf.index * 3 vs index * 6), causing spatial partitioning corruption and reading wrong coordinate/normal data; permanent memory leaks in bg_vert_tree_destroy which failed to free the_array when the_tree was NULL and failed to free the bg_vert_tree container structure. |
+| `SEC-0170` | **Sev 2** | Truncated Integer Division / Overflow | `src/libbg/decimate.cpp:55-70, 160-175` | `FIXED` | Truncated integer division in trimesh_decimate_simple (1/cbin.size()) where 1 / cbin.size() evaluated to integer 0 for any bin with >1 point, collapsing the point accumulator to world origin [0,0,0] instead of the bin centroid; missing n_ifaces integer overflow guard. |
+| `SEC-0171` | **Sev 2** | Out-of-bounds Read / Unhandled Exception | `src/libbg/delaunator.hpp:40-55, 240-305` | `FIXED` | Out-of-bounds vector read in sum() on empty vector (indexing x[0]); out-of-bounds vector read and crash in Delaunator constructor when n < 3 or when seed points i0 or i1 are uninitialized (accessing coords[2 * INVALID_INDEX]); unhandled exception in bg_polygon_triangulate when Delaunator encounters degenerate collinear input. |
+| `SEC-0172` | **Sev 2** | Unchecked Error Code / Parameter Validation | `src/libbg/ballpivot.cpp:30-75` | `FIXED` | Unchecked negative return code in bg_3d_ballpivot (if (nfaces == 0) instead of if (nfaces <= 0)), allowing negative face count to be passed into bg_trimesh_3d_gc; missing validation for radii_cnt < 0 or radii_cnt > 0 with NULL radii; missing initial NULL assignment to output pointers. |
+| `SEC-0173` | **Sev 1** | Unchecked File Operation / Null Dereference | `src/libbg/RTree.h:465-480, 1740-1800` | `FIXED` | Unchecked fopen() return value in RTree::plot() and RTree::plot2d() leading to NULL pointer dereference on file write failure; missing NULL check on filename in RTFileStream::OpenRead and RTFileStream::OpenWrite; unguarded VertexDataSource count on NULL pointer in QuickHull.hpp. |
+| `SEC-0174` | **Sev 1** | Defensive Parameter Validation | `src/libbg/polygon_triangulate.cpp:560-585` | `FIXED` | Missing parameter validation in bg_detria for faces, num_faces, poly, poly_pnts, pts, holes_array, holes_npts, and steiner, which could cause segmentation faults when called with NULL or undersized inputs. |
