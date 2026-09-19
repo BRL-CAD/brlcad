@@ -10,6 +10,7 @@
 
 #include "common.h"
 
+#include "bu/app.h"
 #include <algorithm>
 #include <cmath>
 #include <map>
@@ -526,8 +527,9 @@ cap_contracts()
 }
 
 int
-main()
+main(int, const char **argv)
 {
+    bu_setprogname(argv[0]);
     if (cdt_test_planar_cap_hulls()) {
 	bu_log("planar cap curve hull contracts failed\n");
 	return 1;

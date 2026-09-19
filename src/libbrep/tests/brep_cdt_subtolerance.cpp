@@ -10,12 +10,14 @@
 
 #include "common.h"
 
+#include "bu/app.h"
 #include "brep/cdt.h"
 #include "cdt/test_api.h"
 
 int
-main(int, char **)
+main(int, const char **argv)
 {
+    bu_setprogname(argv[0]);
     const int edge_result = cdt_test_subtolerance_edge_collapse();
     if (edge_result)
 	return edge_result;

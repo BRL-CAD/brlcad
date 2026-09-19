@@ -10,12 +10,14 @@
 
 #include "common.h"
 
+#include "bu/app.h"
 #include "brep/cdt.h"
 #include "cdt/test_api.h"
 
 int
-main(int argc, const char **UNUSED(argv))
+main(int argc, const char **argv)
 {
+    bu_setprogname(argv[0]);
     if (argc != 1)
 	return 1;
     int result = cdt_test_repair_nearest_triangle();

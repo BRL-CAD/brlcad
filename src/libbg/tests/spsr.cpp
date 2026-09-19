@@ -63,6 +63,10 @@ test_boundary_modes(void)
 {
     const int side = 8;
     const int sample_count = 6 * side * side;
+    /* Use a solver regime known to distinguish the boundary modes instead of
+     * relying on library defaults, which may change independently. */
+    const fastf_t boundary_samples_per_node = 1.1;
+    const fastf_t boundary_point_weight = 8.0;
     point_t *samples = static_cast<point_t *>(bu_calloc(sample_count,
         sizeof(point_t), "SPSR boundary test samples"));
     vect_t *normals = static_cast<vect_t *>(bu_calloc(sample_count,
@@ -92,7 +96,9 @@ test_boundary_modes(void)
         options.depth = 5;
         options.full_depth = 3;
         options.threads = 1;
+        options.samples_per_node = boundary_samples_per_node;
         options.scale = 1.2;
+        options.point_weight = boundary_point_weight;
         options.btype = boundary;
 
         int *faces = NULL;

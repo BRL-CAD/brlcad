@@ -2288,8 +2288,10 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
      * repaired result. */
     if (run_quality && quality.repair_succeeded && ref_valid &&
 	    boundary_valid) {
-	top_issues.erase(std::remove(top_issues.begin(), top_issues.end(),
-	    "trimmed_bbox_face_failures"), top_issues.end());
+	const auto issue = std::find(top_issues.begin(), top_issues.end(),
+	    "trimmed_bbox_face_failures");
+	if (issue != top_issues.end())
+	    top_issues.erase(issue);
     }
     vect_t ref_dims = VINIT_ZERO;
     vect_t boundary_dims = VINIT_ZERO;

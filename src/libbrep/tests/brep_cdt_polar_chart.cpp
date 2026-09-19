@@ -10,6 +10,7 @@
 
 #include "common.h"
 
+#include "bu/app.h"
 #include <cmath>
 #include <iostream>
 #include <memory>
@@ -487,8 +488,9 @@ exercise_sphere(const ON_3dPoint &center, double radius)
 }
 
 int
-main()
+main(int, const char **argv)
 {
+    bu_setprogname(argv[0]);
 
     if (!exercise_coincident_seams())
 	return 1;

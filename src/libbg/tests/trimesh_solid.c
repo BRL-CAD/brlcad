@@ -16,8 +16,9 @@
 
 #include "common.h"
 
-#include "bu.h"
-#include "bg.h"
+#include "bu/app.h"
+#include "bu/malloc.h"
+#include "bg/trimesh.h"
 
 
 static int

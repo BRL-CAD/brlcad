@@ -10,6 +10,7 @@
 
 #include "common.h"
 
+#include "bu/app.h"
 #include <algorithm>
 #include <cmath>
 #include <iostream>
@@ -650,8 +651,9 @@ exercise_cone(const ON_3dPoint &origin, ON_3dVector axis, double height,
 }
 
 int
-main()
+main(int, const char **argv)
 {
+    bu_setprogname(argv[0]);
     const ON_3dPoint origins[10] = {
 	ON_3dPoint(0.0, 0.0, 0.0),
 	ON_3dPoint(10.0, -20.0, 30.0),
