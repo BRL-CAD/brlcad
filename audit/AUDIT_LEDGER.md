@@ -1,5 +1,5 @@
 # BRL-CAD RMF/STIG Cat 1 Vulnerability Tracking Ledger
-**Last Synchronized:** 2026-09-18 19:12:20 UTC
+**Last Synchronized:** 2026-09-19 02:38:12 UTC
 
 | Issue ID | File | Lines | Cat 1 Type | Sev | Verification | Fix Status | 1-Sentence Nature of Issue |
 |:---|:---|:---:|:---|:---:|:---:|:---:|:---|
