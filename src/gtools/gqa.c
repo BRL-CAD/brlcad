@@ -21,8 +21,6 @@
  *
  * Perform quantitative analysis checks on geometry.
  *
- * XXX need to look at gap computation
- *
  * plot the points where overlaps start/stop
  *
  * Designed to be a framework for 3d sampling of the geometry volume.
@@ -30,6 +28,7 @@
 
 #include "common.h"
 
+#include "analyze/gqa.h"
 #include "bu/app.h"
 #include "bu/cmd.h"
 #include "bu/getopt.h"
@@ -50,6 +49,30 @@ main(int argc, char *argv[])
 
     bu_opterr = 0;
     bu_optind = 1;
+
+    if (argc > 1 && bu_strcmp(argv[1], "--analyze") == 0) {
+        int model_index = analyze_gqa_model_argument(argc,
+            (const char **)argv);
+        if (model_index < 0 || model_index + 1 >= argc)
+            bu_exit(1, "Usage: %s --analyze [options] model object [objects...]\n", argv[0]);
+        av = (const char **)bu_calloc(argc, sizeof(char *), "analysis argv");
+        for (i = j = 0; i < argc; i++) {
+            if (i != model_index)
+                av[j++] = argv[i];
+        }
+        av[0] = "gqa";
+        gedp = ged_open("db", argv[model_index], 1);
+        if (gedp == GED_NULL) {
+            bu_free((void *)av, "analysis argv");
+            bu_exit(1, "Cannot open %s\n", argv[model_index]);
+        }
+        c = ged_exec_gqa(gedp, j, av);
+        if (bu_vls_strlen(gedp->ged_result_str) > 0)
+            bu_log("%s", bu_vls_addr(gedp->ged_result_str));
+        ged_close(gedp);
+        bu_free((void *)av, "analysis argv");
+        return c == BRLCAD_OK ? 0 : 1;
+    }
 
     /* Get past command line options. */
     while ((c = bu_getopt(argc, argv, "A:a:de:f:g:Gn:N:p:P:qrS:t:U:u:vV:W:h?")) != -1) {

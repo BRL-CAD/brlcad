@@ -35,14 +35,16 @@
 #include "analyze/debug.h"
 #include "analyze/diff.h"
 #include "analyze/density.h"
+#include "analyze/gqa.h"
 #include "analyze/grid.h"
 #include "analyze/heal.h"
 #include "analyze/info.h"
+#include "analyze/nirt.h"
 #include "analyze/pnts.h"
 #include "analyze/polygonize.h"
-#include "analyze/nirt.h"
-#include "analyze/worker.h"
+#include "analyze/sampling.h"
 #include "analyze/voxelize.h"
+#include "analyze/worker.h"
 
 #endif /* ANALYZE_H */
 

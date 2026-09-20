@@ -1,7 +1,8 @@
-set(PLUGIN_LIBS libged libbu)
+set(PLUGIN_LIBS libged libanalyze libbu)
 
 ged_plugin_library(ged-gqa
   gqa.cpp
+  gqa_analyze.cpp
   LIBS ${PLUGIN_LIBS}
 )
 

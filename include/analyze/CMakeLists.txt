@@ -5,12 +5,14 @@ set(
   defines.h
   density.h
   diff.h
+  gqa.h
   grid.h
   heal.h
   info.h
   nirt.h
   pnts.h
   polygonize.h
+  sampling.h
   voxelize.h
   worker.h
 )

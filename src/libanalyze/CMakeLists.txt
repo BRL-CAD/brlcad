@@ -32,6 +32,7 @@ set(
   contour.cpp
   density.cpp
   globals.c
+  gqa.cpp
   inside.c
   mass.c
   moments.c
@@ -42,6 +43,7 @@ set(
   overlaps.c
   polygonizer.c
   raydiff.c
+  sampling.c
   #find_subtracted_shapes.cpp
   surf_area.c
   util.cpp

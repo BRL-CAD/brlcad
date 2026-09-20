@@ -4,6 +4,7 @@ brlcad_add_test(NAME analyze_contour COMMAND analyze_contour)
 brlcad_addexec(analyze_raydiff raydiff.c "libanalyze;librt;libbu" TEST)
 brlcad_addexec(analyze_sp solid_partitions.c "libanalyze;librt;libbu" TEST)
 brlcad_addexec(analyze_nhit nhit.cpp "libanalyze;librt;libbu" TEST_USESDATA)
+brlcad_addexec(analyze_sampling sampling_test.c "libanalyze;libbn" TEST)
 
 #####################################
 #      analyze_densities testing    #
@@ -12,12 +13,14 @@ brlcad_addexec(analyze_densities density.cpp "libanalyze;libbu" TEST)
 
 brlcad_add_test(NAME analyze_densities_null        COMMAND analyze_densities)
 brlcad_add_test(NAME analyze_densities_std        COMMAND analyze_densities std)
+brlcad_add_test(NAME analyze_sampling_interval    COMMAND analyze_sampling)
 
 cmakefiles(
   CMakeLists.txt
   arbs.g
   contour.cpp
   raydiff.g
+  sampling_test.c
 )
 
 # Local Variables:

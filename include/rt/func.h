@@ -196,12 +196,12 @@ RT_EXPORT extern int rt_obj_prep_serialize(struct soltab *stp, const struct rt_d
 /**
  * Stopping-criteria parameters for rt_crofton_shoot() and rt_crofton_sample().
  *
- * All fields default to zero.  Behaviour when all three are zero (or the
- * pointer is NULL) is identical to the historical default: fire 2 000 rays
- * and stop when two successive 1 %-threshold iterations agree.
+ * All stopping fields default to zero.  Behaviour when all three are zero
+ * (or the pointer is NULL) is identical to the historical default: fire
+ * 2 000 rays and stop when two successive 1 %-threshold iterations agree.
  *
- * When one or more non-zero fields are provided, sampling continues until
- * the FIRST criterion that is met:
+ * When one or more non-zero stopping fields are provided, sampling continues
+ * until the FIRST criterion that is met:
  *
  *   n_rays > 0        Stop once this many rays have been fired in total.
  *
@@ -211,30 +211,65 @@ RT_EXPORT extern int rt_obj_prep_serialize(struct soltab *stp, const struct rt_d
  *                     iterations: r_sa = sqrt(SA / (4*pi)) for surface area
  *                     and r_v = cbrt(3*V / (4*pi)) for volume.  Sampling
  *                     stops when both |Δr_sa| and |Δr_v| (for whichever
- *                     outputs are requested) remain < stability_mm for
+ *                     outputs are requested) remain <= stability_mm for
  *                     consecutive stable windows.
  *
  *   time_ms > 0       Stop once this many wall-clock milliseconds have
  *                     elapsed, returning the best estimate accumulated so far.
  *
- * When multiple fields are non-zero the first criterion to fire wins,
- * giving callers fine control over the accuracy / speed trade-off.
+ * When multiple stopping fields are non-zero, the first criterion to fire
+ * wins, giving callers fine control over the accuracy / speed trade-off.
  *
+ * @c stability_metrics selects which estimates must meet @c stability_mm.
+ * The default derives them from the requested output arguments; visitor APIs
+ * return both statistics and therefore consider both unless told otherwise.
+ *
+ * The optional progress callback runs serially after completed ray batches.
+ * It is informational and must not call back into the active Crofton
+ * session.
  */
+typedef void (*rt_crofton_progress_fn)(size_t ray_count,
+                                      size_t crossing_count,
+                                      double surface_area,
+                                      double volume,
+                                      double stability_mm,
+                                      int stability_evaluated,
+                                      double elapsed_ms,
+                                      void *data);
+
+/** Estimates considered by stability-based stopping. */
+enum rt_crofton_stability_metric {
+    RT_CROFTON_STABILITY_DEFAULT = 0,
+    RT_CROFTON_STABILITY_SURFACE_AREA = 1,
+    RT_CROFTON_STABILITY_VOLUME = 2,
+    RT_CROFTON_STABILITY_ALL =
+        RT_CROFTON_STABILITY_SURFACE_AREA | RT_CROFTON_STABILITY_VOLUME
+};
+
 struct rt_crofton_params {
     size_t n_rays;       /**< max total rays; 0 = no limit via this criterion */
     double stability_mm; /**< equivalent-radius stability target (mm); 0 = disabled */
     double time_ms;      /**< wall-clock time budget (ms); 0 = disabled */
+    unsigned int stability_metrics; /**< rt_crofton_stability_metric bitmask */
+    rt_crofton_progress_fn progress; /**< optional serial progress callback */
+    void *progress_data; /**< caller data for progress */
 };
 
 /** One solid partition observed by a Crofton ray. */
 struct rt_crofton_segment {
+    point_t ray_origin;       /**< sampled line origin */
+    vect_t ray_direction;     /**< sampled unit line direction */
     point_t in_point;
     vect_t in_normal;
     point_t out_point;
     vect_t out_normal;
+    fastf_t in_distance;      /**< distance from ray_origin to in_point */
+    fastf_t out_distance;     /**< distance from ray_origin to out_point */
     fastf_t thickness;
     size_t ray_id;
+    const struct region *region; /**< owning region, valid while rtip lives */
+    const struct soltab *in_solid;  /**< solid producing the entry hit */
+    const struct soltab *out_solid; /**< solid producing the exit hit */
 };
 
 /**
@@ -250,9 +285,83 @@ struct rt_crofton_result {
     double volume;
 };
 
-/** Initialize an rt_crofton_result before first use. */
 #define RT_CROFTON_RESULT_INIT { NULL, 0, 0, 0, 0.0, 0.0 }
 
+/** Explicit sequence selection for experimental Crofton callers. */
+enum rt_crofton_sequence {
+    RT_CROFTON_SEQUENCE_DEFAULT = 0,
+    RT_CROFTON_SEQUENCE_RANDOM,
+    RT_CROFTON_SEQUENCE_QMC
+};
+
+/** Criterion that ended a Crofton sampling call. */
+enum rt_crofton_stop_reason {
+    RT_CROFTON_STOP_NONE = 0,
+    RT_CROFTON_STOP_RAYS,
+    RT_CROFTON_STOP_STABILITY,
+    RT_CROFTON_STOP_TIME
+};
+
+/** Estimates from a Crofton run that does not retain every segment. */
+struct rt_crofton_stats {
+    size_t ray_count;
+    size_t crossing_count;
+    double surface_area;
+    double volume;
+    double stability_mm; /**< last observed equivalent-radius change */
+    int stability_evaluated; /**< non-zero when stability_mm was observed */
+    size_t invalid_partition_count; /**< rejected non-finite partitions */
+    enum rt_crofton_stop_reason stop_reason; /**< criterion that ended sampling */
+};
+
+/** Opaque reusable worker session for serial Crofton sampling calls. */
+struct rt_crofton_session;
+
+/** Called serially after each ray batch; the segment is borrowed. */
+typedef void (*rt_crofton_segment_fn)(
+    const struct rt_crofton_segment *segment, void *data);
+
+/** A complete sampled ray and its valid positive-length partitions. */
+struct rt_crofton_ray {
+    size_t ray_id;
+    point_t origin;
+    vect_t direction;
+    const struct rt_crofton_segment *segments;
+    size_t segment_count;
+};
+
+/** Called serially after each ray batch; the ray and segments are borrowed. */
+typedef void (*rt_crofton_ray_fn)(const struct rt_crofton_ray *ray, void *data);
+
+/** A raw overlap event observed before boolean overlap resolution. */
+struct rt_crofton_overlap {
+    size_t ray_id;
+    point_t origin;
+    vect_t direction;
+    point_t in_point;
+    point_t out_point;
+    fastf_t depth;
+    const struct region *first_region;
+    const struct region *second_region;
+};
+
+/** Called serially after each ray batch for each raw overlap event. */
+typedef void (*rt_crofton_overlap_fn)(const struct rt_crofton_overlap *overlap,
+                                      void *data);
+
+struct rt_crofton_invalid_ray {
+    size_t ray_id;
+    point_t origin;
+    vect_t direction;
+    fastf_t in_distance;
+    fastf_t out_distance;
+    fastf_t thickness;
+    const struct region *region;
+    const char *reason;
+};
+
+typedef void (*rt_crofton_invalid_fn)(const struct rt_crofton_invalid_ray *ray,
+                                      void *data);
 
 /**
  * Run the Cauchy-Crofton ray-sampling estimator on an already-prepared
@@ -398,6 +507,136 @@ RT_EXPORT extern int rt_crofton_collect(struct rt_crofton_result *result,
 					size_t ray_offset,
 					const fastf_t *bbox_min,
 					const fastf_t *bbox_max);
+
+/** Whether the librt build supports the QMC Crofton sequence. */
+RT_EXPORT extern int rt_crofton_qmc_available(void);
+
+/** Resolve DEFAULT to the sequence selected by this process. */
+RT_EXPORT extern enum rt_crofton_sequence rt_crofton_resolve_sequence(
+                                            enum rt_crofton_sequence sequence);
+
+/**
+ * Visit region-attributed segments without retaining the full sample set.
+ * The callback runs serially between bounded ray batches.  It receives every
+ * positive-length partition; a normal may be zero when the raytracer cannot
+ * calculate one.  Borrowed pointers are valid only during the callback,
+ * except for the region pointer, which remains valid while @p rtip is alive.
+ */
+RT_EXPORT extern int rt_crofton_visit(struct rt_crofton_stats *stats,
+                                     struct rt_i *rtip,
+                                     const struct rt_crofton_params *params,
+                                     size_t ray_offset,
+                                     const fastf_t *bbox_min,
+                                     const fastf_t *bbox_max,
+                                     enum rt_crofton_sequence sequence,
+                                     rt_crofton_segment_fn visitor,
+                                     rt_crofton_invalid_fn invalid_visitor,
+                                     void *data);
+
+/**
+ * Seeded form of rt_crofton_visit().  A zero seed selects the library default;
+ * distinct stream identifiers select reproducible randomized replications.
+ * Independent replications, rather than offsets within one point set, are
+ * required when estimating randomized-QMC sampling error.
+ */
+RT_EXPORT extern int rt_crofton_visit_seeded(
+                                     struct rt_crofton_stats *stats,
+                                     struct rt_i *rtip,
+                                     const struct rt_crofton_params *params,
+                                     size_t ray_offset,
+                                     const fastf_t *bbox_min,
+                                     const fastf_t *bbox_max,
+                                     enum rt_crofton_sequence sequence,
+                                     uint64_t seed,
+                                     uint64_t stream_id,
+                                     rt_crofton_segment_fn visitor,
+                                     rt_crofton_invalid_fn invalid_visitor,
+                                     void *data);
+
+/**
+ * Create a reusable Crofton worker session for one prepared raytrace instance.
+ *
+ * A session retains its parallel worker pool and per-CPU raytrace resources
+ * across calls.  Calls using a session must be serialized, and @p rtip must
+ * remain alive and unchanged until rt_crofton_session_destroy() returns.
+ * This facility avoids repeatedly starting an all-CPU worker pool when a
+ * caller evaluates several independent randomized replications.
+ */
+RT_EXPORT extern struct rt_crofton_session *rt_crofton_session_create(
+                                     struct rt_i *rtip);
+
+/** Release a reusable Crofton worker session and its raytrace resources. */
+RT_EXPORT extern void rt_crofton_session_destroy(
+                                     struct rt_crofton_session *session);
+
+/**
+ * Session-backed form of rt_crofton_visit_seeded().
+ *
+ * The seed and stream semantics are identical to
+ * rt_crofton_visit_seeded().  Keeping replications on distinct stream
+ * identifiers is required for randomized-QMC error estimation; reusing the
+ * worker session does not combine or otherwise correlate their samples.
+ */
+RT_EXPORT extern int rt_crofton_session_visit_seeded(
+                                     struct rt_crofton_session *session,
+                                     struct rt_crofton_stats *stats,
+                                     const struct rt_crofton_params *params,
+                                     size_t ray_offset,
+                                     const fastf_t *bbox_min,
+                                     const fastf_t *bbox_max,
+                                     enum rt_crofton_sequence sequence,
+                                     uint64_t seed,
+                                     uint64_t stream_id,
+                                     rt_crofton_segment_fn visitor,
+                                     rt_crofton_invalid_fn invalid_visitor,
+                                     void *data);
+
+/**
+ * Visit complete rays, including rays with no valid partitions.  Segment
+ * pointers are borrowed and valid only during the callback.  The ray record
+ * contains only positive-length partitions; rejected partitions are reported
+ * through @p invalid_visitor when supplied.
+ */
+RT_EXPORT extern int rt_crofton_visit_rays(struct rt_crofton_stats *stats,
+                                           struct rt_i *rtip,
+                                           const struct rt_crofton_params *params,
+                                           size_t ray_offset,
+                                           const fastf_t *bbox_min,
+                                           const fastf_t *bbox_max,
+                                           enum rt_crofton_sequence sequence,
+                                           rt_crofton_ray_fn ray_visitor,
+                                           rt_crofton_invalid_fn invalid_visitor,
+                                           void *data);
+
+/** Extended ray visitor with raw overlap events. */
+RT_EXPORT extern int rt_crofton_visit_rays_ex(struct rt_crofton_stats *stats,
+                                              struct rt_i *rtip,
+                                              const struct rt_crofton_params *params,
+                                              size_t ray_offset,
+                                              const fastf_t *bbox_min,
+                                              const fastf_t *bbox_max,
+                                              enum rt_crofton_sequence sequence,
+                                              rt_crofton_ray_fn ray_visitor,
+                                              rt_crofton_overlap_fn overlap_visitor,
+                                              rt_crofton_invalid_fn invalid_visitor,
+                                              void *data);
+
+/** Seeded form of rt_crofton_visit_rays_ex(). */
+RT_EXPORT extern int rt_crofton_visit_rays_seeded_ex(
+                                              struct rt_crofton_stats *stats,
+                                              struct rt_i *rtip,
+                                              const struct rt_crofton_params *params,
+                                              size_t ray_offset,
+                                              const fastf_t *bbox_min,
+                                              const fastf_t *bbox_max,
+                                              enum rt_crofton_sequence sequence,
+                                              uint64_t seed,
+                                              uint64_t stream_id,
+                                              rt_crofton_ray_fn ray_visitor,
+                                              rt_crofton_overlap_fn overlap_visitor,
+                                              rt_crofton_invalid_fn invalid_visitor,
+                                              void *data);
+
 
 /** Release storage owned by a structured Crofton result. */
 RT_EXPORT extern void rt_crofton_result_free(

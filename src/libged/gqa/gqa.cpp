@@ -19,14 +19,12 @@
  */
 /** @file libged/gqa.c
  *
- * performs a set of quantitative analyses on geometry.
+ * Performs quantitative analyses on geometry and optionally plots detected
+ * conditions.
  *
- * XXX need to look at gap computation
- *
- * plot the points where overlaps start/stop
- *
- * Designed to be a framework for 3d sampling of the geometry volume.
- * TODO: Need to move the sample pattern logic into LIBRT.
+ * This file retains the historical grid implementation for compatibility.
+ * The experimental samplers are shared by the standalone and GED commands
+ * through libanalyze, with Crofton ray generation supplied by librt.
  *
  */
 
@@ -294,7 +292,8 @@ static struct region_pair overlapList = {
  *
  * The standard units are millimeters, cubic millimeters, and grams.
  *
- * XXX this section should be extracted to libbu/units.c
+ * Keep this legacy command-output table local: its volume and mass aliases
+ * extend beyond libbu's general length-unit conversions.
  */
 struct cvt_tab {
     double val;
@@ -840,8 +839,6 @@ _gqa_overlap(struct application *ap,
 	bu_semaphore_release(state->sem_worker);
     }
 
-    /* XXX We should somehow flag the volume/weight calculations as invalid */
-
     /* since we have no basis to pick one over the other, just pick */
     return 1;	/* No further consideration to this partition */
 }
@@ -951,16 +948,12 @@ _gqa_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 	 */
 	if (analysis_flags & ANALYSIS_EXP_AIR) {
 
-	    /* FIXME: verify that the next partition is never
-	     * overlapping numerically with the current partition.
-	     * otherwise, we'll need to account for it. This debug
-	     * statement should be removed after confirming.
-	     * CSM@20220516
-	     */
+	    /* Boolean cleanup may leave the next partition beginning before
+	     * the current one exits.  Clip the exposed-air segment to that
+	     * entry rather than reporting a path through the overlap. */
 	    if (pp->pt_forw != PartHeadp) {
 		double next_dist = pp->pt_forw->pt_inhit->hit_dist - pp->pt_inhit->hit_dist;
 		if (next_dist < dist) {
-		    bu_log("DEBUG: next partition's entry is prior to current partition's exit\n");
 		    VJOIN1(opt, ap->a_ray.r_pt, pp->pt_forw->pt_inhit->hit_dist, ap->a_ray.r_dir);
 		}
 	    }
@@ -2551,7 +2544,14 @@ summary_reports(struct ged *gedp, struct cstate *state)
 	avg_mass /= num_views;
 	bu_vls_printf(gedp->ged_result_str, "  Average total volume: %g %s\n", avg_mass / units[VOL]->val, units[VOL]->name);
     }
-    if (analysis_flags & ANALYSIS_OVERLAPS) list_report(gedp, &overlapList);
+    if (analysis_flags & ANALYSIS_OVERLAPS) {
+	list_report(gedp, &overlapList);
+	if (BU_LIST_NON_EMPTY(&overlapList.l) &&
+	    (analysis_flags & (ANALYSIS_VOLUMES | ANALYSIS_WEIGHTS |
+		ANALYSIS_CENTROIDS | ANALYSIS_MOMENTS)))
+	    bu_vls_printf(gedp->ged_result_str,
+		"WARNING: overlaps invalidate reported volume and mass properties.\n");
+    }
     if (analysis_flags & ANALYSIS_ADJ_AIR) list_report(gedp, &adjAirList);
     if (analysis_flags & ANALYSIS_GAPS) list_report(gedp, &gapList);
     if (analysis_flags & ANALYSIS_EXP_AIR) list_report(gedp, &exposedAirList);
@@ -2596,9 +2596,13 @@ summary_reports(struct ged *gedp, struct cstate *state)
 }
 
 
+extern "C" int ged_gqa_analyze(struct ged *, int, const char **);
+
 extern "C" int
 ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
 {
+    if (argc > 1 && !bu_strcmp(argv[1], "--analyze"))
+	return ged_gqa_analyze(gedp, argc, argv);
     int arg_count;
     struct rt_i *rtip;
     int i;
@@ -2632,16 +2636,12 @@ ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
     azel_requested = 0;
     densityFileName = (char *)0;
 
-    /* FIXME: this is completely arbitrary, should probably be based
-     * on the model size.
-     */
+    /* Preserve the historical default for existing command lines.  The
+     * experimental interface derives its initial spacing from model scale. */
     gridSpacing = 50.0;
 
-    /* default grid spacing limit is based on the current distance
-     * tolerance, one order of magnitude greater.
-     *
-     * FIXME: should probably be based on the model size.
-     */
+    /* Preserve the historical tolerance-derived refinement limit.  The
+     * experimental interface instead uses dimensional stability. */
     gridSpacingLimit = 10.0 * wdbp->wdb_tol.dist;
 
     makeOverlapAssemblies = 0;
