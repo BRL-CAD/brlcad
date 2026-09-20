@@ -281,7 +281,7 @@ crofton_on_obj(struct db_i *dbip, const char *obj_name, size_t n_rays,
      * default).  A fixed ray count can be requested for reproducibility
      * or timing studies, but for reliable SA/volume estimates the
      * convergence path is strongly preferred.                           */
-    struct rt_crofton_params crp;
+    struct rt_crofton_params crp = {};
     if (n_rays > 0) {
 	crp.n_rays       = n_rays;
 	crp.stability_mm = 0.0;

@@ -300,7 +300,9 @@ crofton_estimate(const char *gfile, const char *obj_name,
     rt_prep_parallel(rtip, 1);
 
     /* REGRESS_CROFTON_SAMPLES rays, REGRESS_CROFTON_PCT% convergence threshold */
-    struct rt_crofton_params p = { REGRESS_CROFTON_SAMPLES, REGRESS_CROFTON_STABLE_TARGET, 0.0};
+    struct rt_crofton_params p = {
+        REGRESS_CROFTON_SAMPLES, REGRESS_CROFTON_STABLE_TARGET, 0.0,
+        RT_CROFTON_STABILITY_DEFAULT, NULL, NULL};
     int ret = rt_crofton_shoot(sa, vol, NULL, NULL, NULL, NULL, NULL,
 			       rtip, &p, NULL, NULL);
     rt_i_destroy(rtip);

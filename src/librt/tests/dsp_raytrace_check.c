@@ -321,7 +321,8 @@ compare_paths(const char  *label,
 
     /* fixed ray count for deterministic regression behavior. */
     static const struct rt_crofton_params acc_p =
-        { CROFTON_ACCURACY_RAYS, 0.0, 0.0 };
+        {CROFTON_ACCURACY_RAYS, 0.0, 0.0,
+	 RT_CROFTON_STABILITY_DEFAULT, NULL, NULL};
     struct crofton_result dda_acc = run_crofton(rtip, &acc_p);
 
     printf("\n    %-12s  %14s  %14s  %10s  %10s\n",

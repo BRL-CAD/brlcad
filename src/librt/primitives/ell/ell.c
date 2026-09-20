@@ -2098,7 +2098,11 @@ rt_ell_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     default:
 	/* General triaxial ellipsoid: no closed-form solution exists.
 	 * Fall back to the Cauchy-Crofton ray-sampling estimator. */
-	do { static const struct rt_crofton_params _p = {50000u, 0.0, 0.0}; rt_crofton_sample(area, NULL, ip, &_p); } while (0);
+	do {
+	    static const struct rt_crofton_params params = {
+		50000u, 0.0, 0.0, RT_CROFTON_STABILITY_DEFAULT, NULL, NULL};
+	    rt_crofton_sample(area, NULL, ip, &params);
+	} while (0);
 	break;
     }
 }

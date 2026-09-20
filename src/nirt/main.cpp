@@ -25,13 +25,16 @@
 
 #include "common.h"
 
-#include <vector>
-#include <set>
-#include <string>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <iostream>
 #include <limits>
-#include <cstdio>
-#include <cstring>
+#include <set>
+#include <string>
+#include <vector>
 
 /* needed on mac in c90 mode */
 #ifndef HAVE_DECL_FSEEKO
@@ -50,6 +53,7 @@ extern "C" b_off_t ftello(FILE *);
 #include "bu/process.h"
 #include "bu/units.h"
 #include "analyze.h"
+#include "../libbu/json.hpp"
 
 #include "linenoise.hpp"
 
@@ -422,6 +426,18 @@ nirt_app_exec(struct nirt_state *ns, struct bu_vls *iline, struct bu_vls *state_
     return nret;
 }
 
+static bool
+parse_replay_id(const char *value, unsigned long long &id)
+{
+    if (!value || !value[0] || value[0] == '-')
+	return false;
+
+    char *end = NULL;
+    errno = 0;
+    id = std::strtoull(value, &end, 10);
+    return errno == 0 && end != value && *end == '\0';
+}
+
 
 int
 main(int argc, const char **argv)
@@ -453,6 +469,12 @@ main(int argc, const char **argv)
     struct db_i *dbip;
     struct nirt_io_data io_data = IO_DATA_NULL;
     struct nirt_state *ns = NULL;
+    std::string replay_file;
+    unsigned long long replay_id = 0;
+    bool replay_requested = false;
+    bool replay_id_set = false;
+    std::vector<const char *> filtered_argv;
+    fastf_t replay_base2local = 1.0;
 
     /* These bu_opt_desc_opts settings approximate the old struct nirt_state help formatting */
     struct bu_opt_desc_opts dopts = { BU_OPT_ASCII, 1, 15, 65, NULL, NULL, NULL, 1, NULL, NULL };
@@ -478,9 +500,51 @@ main(int argc, const char **argv)
 	bu_vls_printf(&launch_cmd, "%s", argv[argc-1]);
     }
 
+    /* Extract replay controls before libbu parses the normal nirt options.  They
+     * are application-level controls and should not alter the established
+     * nirt option structure or its existing command line behavior. */
+    filtered_argv.push_back(argv[0]);
+    for (int ic = 1; ic < argc; ic++) {
+	const char *arg = argv[ic];
+	if (BU_STR_EQUAL(arg, "--replay")) {
+	    if (ic + 1 >= argc)
+		bu_exit(EXIT_FAILURE,
+		    "--replay requires a JSON file\n");
+	    replay_file = argv[++ic];
+	    replay_requested = true;
+	} else if (BU_STR_EQUAL(arg, "--ray-id")) {
+	    if (ic + 1 >= argc)
+		bu_exit(EXIT_FAILURE,
+		    "--ray-id requires an integer\n");
+	    if (!parse_replay_id(argv[++ic], replay_id))
+		bu_exit(EXIT_FAILURE,
+		    "--ray-id requires a nonnegative integer\n");
+	    replay_requested = true;
+	    replay_id_set = true;
+	} else if (bu_strncmp(arg, "--replay=", 9) == 0) {
+	    replay_file = arg + 9;
+	    replay_requested = true;
+	} else if (bu_strncmp(arg, "--ray-id=", 9) == 0) {
+	    if (!parse_replay_id(arg + 9, replay_id))
+		bu_exit(EXIT_FAILURE,
+		    "--ray-id requires a nonnegative integer\n");
+	    replay_requested = true;
+	    replay_id_set = true;
+	} else {
+	    filtered_argv.push_back(arg);
+	}
+    }
+
+    if (replay_requested && replay_file.empty())
+	bu_exit(EXIT_FAILURE, "--ray-id requires --replay FILE\n");
+    if (replay_requested && !replay_id_set)
+	bu_exit(EXIT_FAILURE, "--replay requires --ray-id N\n");
+
     /* Let libbu know where we are */
     bu_setprogname(argv[0]);
 
+    argv = filtered_argv.data();
+    argc = (int)filtered_argv.size();
     argv++; argc--;
 
     ac = bu_opt_parse(&optparse_msg, argc, (const char **)argv, d);
@@ -720,6 +784,7 @@ main(int argc, const char **argv)
 	ret = EXIT_FAILURE;
 	goto done;
     }
+    replay_base2local = dbip->dbi_base2local;
     db_close(dbip); /* nirt will now manage its own copies of the dbip */
 
     /* Report Database info */
@@ -742,6 +807,106 @@ main(int argc, const char **argv)
 	    if (nirt_exec(ns, a) == 1) {
 		goto done;
 	    }
+	}
+    }
+
+    if (replay_requested) {
+	try {
+	    std::ifstream replay_stream(replay_file.c_str());
+	    if (!replay_stream) {
+		bu_vls_sprintf(&msg, "Unable to open replay file %s\n",
+		    replay_file.c_str());
+		nirt_err(&io_data, bu_vls_cstr(&msg));
+		ret = EXIT_FAILURE;
+		goto done;
+	    }
+	    nlohmann::json replay_json;
+	    replay_stream >> replay_json;
+	    if (!replay_json.is_object() ||
+		!replay_json.contains("schema_version") ||
+		!replay_json["schema_version"].is_number_unsigned() ||
+		(replay_json["schema_version"].get<unsigned int>() != 1 &&
+		 replay_json["schema_version"].get<unsigned int>() != 2) ||
+		!replay_json.contains("rays") || !replay_json["rays"].is_array()) {
+		nirt_err(&io_data,
+		    "Replay file must use schema version 1 or 2 and contain a rays array\n");
+		ret = EXIT_FAILURE;
+		goto done;
+	    }
+	    const nlohmann::json *ray = NULL;
+	    for (const auto &candidate : replay_json["rays"]) {
+		if (candidate.contains("ray_id") &&
+		    candidate["ray_id"].is_number_unsigned() &&
+		    candidate["ray_id"].get<unsigned long long>() == replay_id) {
+		    if (ray) {
+			bu_vls_sprintf(&msg,
+			    "Ray ID %llu occurs more than once in %s\n",
+			    replay_id, replay_file.c_str());
+			nirt_err(&io_data, bu_vls_cstr(&msg));
+			ret = EXIT_FAILURE;
+			goto done;
+		    }
+		    ray = &candidate;
+		}
+	    }
+	    if (!ray || !ray->contains("origin_mm") || !ray->contains("direction") ||
+		!(*ray)["origin_mm"].is_array() || !(*ray)["direction"].is_array() ||
+		(*ray)["origin_mm"].size() != 3 || (*ray)["direction"].size() != 3) {
+		bu_vls_sprintf(&msg,
+		    "Ray %llu was not found or is malformed in %s\n",
+		    replay_id, replay_file.c_str());
+		nirt_err(&io_data, bu_vls_cstr(&msg));
+		ret = EXIT_FAILURE;
+		goto done;
+	    }
+	    point_t origin;
+	    vect_t direction;
+	    for (int coord = 0; coord < 3; coord++) {
+		if (!(*ray)["origin_mm"][coord].is_number() ||
+		    !(*ray)["direction"][coord].is_number()) {
+		    nirt_err(&io_data, "Replay ray coordinates must be numeric\n");
+		    ret = EXIT_FAILURE;
+		    goto done;
+		}
+		origin[coord] = (*ray)["origin_mm"][coord].get<double>() *
+		    replay_base2local;
+		direction[coord] = (*ray)["direction"][coord].get<double>();
+		if (!std::isfinite(origin[coord]) ||
+		    !std::isfinite(direction[coord])) {
+		    nirt_err(&io_data,
+			"Replay ray contains non-finite coordinates\n");
+		    ret = EXIT_FAILURE;
+		    goto done;
+		}
+	    }
+	    const fastf_t direction_magnitude = MAGNITUDE(direction);
+	    if (!std::isfinite(direction_magnitude) ||
+		direction_magnitude <= VUNITIZE_TOL) {
+		nirt_err(&io_data, "Replay ray has a zero direction\n");
+		ret = EXIT_FAILURE;
+		goto done;
+	    }
+	    bu_vls_sprintf(&msg, "Replaying ray %llu from %s\n",
+		replay_id, replay_file.c_str());
+	    nirt_msg(&io_data, bu_vls_cstr(&msg));
+	    bu_vls_sprintf(&ncmd,
+		"backout 0; xyz %.17g %.17g %.17g; "
+		"dir %.17g %.17g %.17g; s",
+		origin[0], origin[1], origin[2],
+		direction[0], direction[1], direction[2]);
+	    if (nirt_exec(ns, bu_vls_cstr(&ncmd)) < 0) {
+		nirt_err(&io_data, "Replay shot failed\n");
+		ret = EXIT_FAILURE;
+		goto done;
+	    }
+	    ret = EXIT_SUCCESS;
+	    goto done;
+	} catch (const std::exception &e) {
+	    bu_vls_sprintf(&msg, "Unable to parse replay file %s: %s\n",
+		replay_file.c_str(), e.what());
+	    nirt_err(&io_data, bu_vls_cstr(&msg));
+	    ret = EXIT_FAILURE;
+	    goto done;
 	}
     }
 
@@ -889,4 +1054,3 @@ done:
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

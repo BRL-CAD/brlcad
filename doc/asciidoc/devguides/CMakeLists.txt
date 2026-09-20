@@ -4,6 +4,7 @@ set(
   api_reference.adoc
   bool_eval_development.adoc
   getting_started_as_contributor.adoc
+  gqa_analysis.adoc
   iterate_geometry.adoc
   libged_command_authoring.adoc
   raytracing_pipeline.adoc

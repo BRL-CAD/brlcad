@@ -1,0 +1,184 @@
+= GQA Analysis Design
+
+The experimental `gqa --analyze` path separates geometric observations from
+reporting.  Ray callbacks accumulate region-attributed raw moments, boundary
+crossings, and diagnostic events; the command layer applies units, object
+rollups, and schema-versioned output.  The engine is exposed through the
+C-compatible `analyze_gqa` libanalyze API; libged supplies only its open
+database, result string, and density-loader adapter.  The reusable sampling
+interval calculation is separately exposed as
+`analyze_sampling_interval95`; paired ratio estimates use
+`analyze_sampling_ratio_interval95`.
+
+== Measurement conventions
+
+Lengths use millimetres internally, mass uses grams, surface area counts region
+partition boundaries, and inertia is about the model origin.  Modeled air is
+included by default and can be excluded explicitly.  Grid boundary cells are
+clipped to the model bounds.  These choices are written to JSON so a consumer
+does not have to infer them from command options.
+
+== Grid sampling
+
+The experimental grid implementation has two modes.  The `grid` mode is an
+axis-aligned three-view control.  The `grid-rotated` mode constructs an
+orthonormal direction triad from an azimuth and elevation, projects all eight
+corners of the tight model bounding box into each perpendicular view plane,
+and traces the resulting rectangular grids.  Both modes clip boundary cells
+to their projection intervals and weight each chord by its cell's actual
+area.  Rotated-cell covariance is included when accumulating mass moments;
+otherwise an oblique cell would incorrectly be treated as having only
+axis-aligned transverse extent.
+
+The rotated mode changes the two-dimensional grid phase between refinements.
+The general shifted-lattice technique is described by R. Cranley and T. N. L.
+Patterson, _Randomization of Number Theoretic Methods for Multiple
+Integration_ (1976), https://doi.org/10.1137/0713071.  GQA uses deterministic
+irrational shifts for reproducibility, so they are an anti-aliasing measure,
+not the randomized construction or an uncertainty estimate from that paper.
+
+Grid rays execute in parallel using one librt resource and one GQA accumulator
+per worker.  Region metrics, problem observations, and material errors are
+merged only after a batch completes.  This preserves the existing serial
+bookkeeping semantics without locking every partition callback.  A refinement
+is publishable only after all three views finish; rays from an incomplete pass
+at the deadline are counted and reported as discarded rather than mixed into
+the preceding complete estimate.
+
+Grid convergence uses dimensional quantities.  The change between successive
+area and volume estimates is expressed as the corresponding sphere-radius
+change, and the maximum-minus-minimum directional volume radius measures
+view-dependent aliasing.  Both must be below the requested distance for two
+successive refinements.  Stability across levels alone is insufficient:
+axis-aligned geometry can produce a nearly unchanged average while one view
+remains anomalous.  When a half-spacing pass will not fit the remaining time,
+the planner may choose an intermediate spacing that is still at least 1.05
+times finer; it stops instead of starting a refinement too small to add useful
+resolution.
+
+== Crofton sampling
+
+An oriented line needs four uniform coordinates: two for direction and two for
+the perpendicular offset.  The default QMC implementation uses a randomized
+rank-one lattice when OpenQMC is available; ordinary pseudorandom sampling is
+also available as a diagnostic cross-check.  A ray offset continues one point
+set.  A seed and stream identifier select a separately randomized point set.
+The distinction matters because consecutive points from one QMC sequence are
+dependent and cannot be treated as independent error replicates.
+
+The implementation follows Art Owen's _Error estimation for quasi-Monte Carlo_
+(2025), especially section 5:
+https://arxiv.org/abs/2501.00150v3.  Owen recommends independent randomizations,
+at least ten replications, and a Student-t interval across replicate estimates.
+GQA uses 16 replications.  Libanalyze uses the conservative 95 percent
+Student-t critical value for nine degrees of freedom for any accepted replicate
+count, avoiding intervals that are too narrow because a normal critical value
+was used for a small replication count.
+
+The reported intervals are approximate and pointwise.  Selecting
+`--accuracy-scope all` requires each selected model, unambiguous object, and
+region metric to pass, but does not claim simultaneous 95 percent family-wise
+coverage.
+
+== Adaptive accuracy
+
+Adaptive accuracy has two statistically separate stages:
+
+. A pilot set of 16 randomized replications estimates the production budget.
+  The normal deadline-driven pilot uses 100000 rays.  A root-n squared-error
+  scaling and an empirically calibrated safety factor are used only as planning
+  heuristics.
+. The pilot estimates are discarded.  Sixteen fresh streams produce the
+  published estimates, intervals, and pass/fail result.
+
+Fresh validation prevents the stopping decision and the reported interval from
+using the same favorable random fluctuation.  QMC convergence need not follow a
+stable power law, so the production interval is authoritative: an optimistic
+pilot can reduce work, but it cannot assert success.  This separation, the use
+of independently randomized replications, and the Student-t interval follow
+A. B. Owen, _Error estimation for quasi-Monte Carlo_ (2025), section 5:
+https://arxiv.org/abs/2501.00150v3.  The root-n forecast and safety factor are
+engineering policy, not claims attributed to Owen.
+
+When an adaptive target is combined with `--time` and no explicit `--rays`,
+the pilot also measures throughput.  The forecast is clamped to 80 percent of
+the ray count expected to fit in the remaining wall time, reserving headroom
+for variation and reporting.  An explicit ray count remains an additional hard
+cap.  A deadline-constrained production estimate that misses its target is
+reported with `time_limit`; it is not promoted to success.
+
+The 16 streams execute serially through one reusable Crofton worker session.
+Each stream's rays use the session's all-CPU worker pool.  Worker-local events
+are merged and delivered to libanalyze callbacks serially, preserving GQA's
+per-region bookkeeping without launching competing all-CPU replications.
+
+== Default resource and stability policy
+
+Grid and Crofton measurement-only runs use elapsed time as their default
+resource limit.  Unless the caller supplies the sampler's explicit work limit
+(`--refine` or `--rays`) or `--time`, the analysis deadline is 60000 ms.  An
+explicit ray count remains available as a Crofton hard cap for reproducibility
+and specialized testing, but ray count is not the ordinary user-facing
+resource control.
+
+For non-uncertainty measurement runs without an explicit stability target,
+the automatic equivalent-radius target is
+
+`min(0.1 * BN_TOL_DIST, 0.001 * smallest_positive_tight_model_span)`.
+
+The first term asks for stability an order of magnitude below librt's normal
+0.0005 mm modeling tolerance.  The scale-relative term begins tightening the
+target for models below 0.05 mm, before the fixed tolerance becomes large
+relative to the selected geometry.  Tight soltab bounds are used because the
+prepared model RPP is deliberately rounded outward.  This stopping rule is an
+engineering convergence heuristic and is reported as `stable`; it does not
+claim the pointwise coverage of the independent-replication intervals.
+
+For Crofton sampling, only estimates needed by the selected measurements
+participate in the test: area requests stabilize the surface-area radius,
+while volume, mass, centroid, and moment requests stabilize the volume radius.
+Stability is evaluated at 20,000 rays and then whenever the cumulative ray
+count doubles.  Two successive doubling intervals must meet the target.
+Comparing fixed 2,000-ray increments would be misleading because each
+increment becomes a vanishing fraction of the cumulative estimate and its
+apparent change eventually tends to zero even when sampling error remains
+material.
+
+Grid sampling applies the selected area or volume-radius refinement change and
+always checks directional volume-radius spread as an aliasing diagnostic.
+
+The Crofton progress callback runs serially after completed parallel ray
+batches.  GQA throttles those callbacks to approximately one report per second
+and includes elapsed time, total rays, throughput, the current volume estimate,
+and observed versus requested stability.  A callback never reads worker-local
+state while rays are in flight.
+
+Relative and absolute tolerances may be combined.  For a scalar estimate
+`theta`, the accepted half-width is the larger of
+`relative_error * abs(theta)` and the applicable absolute tolerance.  This
+lets absolute tolerances govern quantities near zero.  A centroid point
+estimate is the ratio of the replicate-mean first moment to replicate-mean
+mass.  Its interval uses paired first-moment and mass residuals in a
+first-order delta calculation, retaining their covariance; zero-mass
+centroids remain unavailable.
+
+== Diagnostic evidence
+
+Overlap, gap, and modeled-air results are sampled observations, not proofs of
+absence.  Crofton overlap-only runs first find positive-volume intersections of
+region-instance bounding boxes and divide rays evenly among those candidates.
+Raw overlap events are clipped to their candidate box and filtered by the
+requested depth tolerance.  For an ordinary randomized sequence with zero
+events, the report includes the exact one-sided 95 percent binomial upper bound
+`1 - 0.05^(1/N)` on the per-ray event probability.
+
+Invalid partitions are rejected deliberately and may be written to a separate
+replay file.  Publication uses temporary sibling files followed by rename so a
+failed write does not leave a new partial report at the requested path.
+
+== Reproducibility and schema
+
+The seed, resolved sequence, total pilot and production ray counts, unused
+budget, measurement conventions, and every interval are recorded in JSON
+schema version 2.  Each diagnostic observation retains its actual ray ID,
+origin, and direction.  Invalid-ray files can be replayed by `nirt --replay`.

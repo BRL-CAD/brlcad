@@ -38,6 +38,89 @@ region.  Overlaps and other geometry errors invalidate reported volume and
 mass properties.
 
 
+[[experimental_analysis]]
+== EXPERIMENTAL ANALYSIS
+
+The separate `--analyze` interface preserves the behavior of existing *gqa*
+invocations.  It reports a concise summary and can write all region results and
+individual problem observations as structured JSON.  The JSON includes
+per-object rollups when every region belongs unambiguously to one requested
+object.  This interface requires an explicit object list, including when used
+inside MGED.
+
+[source]
+----
+gqa --analyze [analysis options] object [object ...]
+----
+
+`--measure` accepts a comma-separated selection from
+`volume,mass,area,centroid,moments`.  With no measurement or check selection,
+the default is `volume,area`.  A check-only selection does not require density
+data.  Centroid and moments require mass.  `--check` accepts
+`overlaps,gaps,adjacent-air,exposed-air` and defaults to no checks.
+The model totals and region measurements use mm, mm^3^, mm^2^, and grams.
+Mass needs a density table, selected with `--density file` or found using the
+normal gqa density search.
+
+`--sampler grid`, the experimental interface's default, is the axis-aligned
+three-view control.  `--sampler grid-rotated` uses a non-axis-aligned
+orthonormal view triad and deterministically shifts the plane grids between
+refinements to reduce alignment aliasing.  Its first direction defaults to 35
+degrees azimuth and 25 degrees elevation and may be changed with `--azimuth`
+and `--elevation`.
+Both grid modes use `--spacing mm`; when omitted, the initial spacing is the
+larger of 50 mm and one 128th of the tight model diagonal.  `--refine levels`
+sets a maximum number of additional passes.  `--sampler crofton` uses
+isotropic rays.  Measurement-only runs without an explicit resource control
+use a 60000 ms budget and stop sooner when the automatic stability target is
+reached.  The planner may stop before the exact deadline when there is not
+enough time for another complete sampling checkpoint.  `--rays count`
+supplies a Crofton hard ray cap;
+`--sequence random|qmc` chooses an explicit sequence.  A QMC request requires
+a build with OpenQMC.  `--seed value` makes randomized sampling reproducible.
+`--stability mm` requests equivalent-radius convergence.  A grid must meet the
+target for both refinement change and three-view directional spread twice in
+succession.  `--time ms` sets an internal wall-clock budget.
+The automatic target is the smaller of `BN_TOL_DIST / 10` (0.00005 mm)
+and 0.1 percent of the smallest positive tight model span, allowing valid small
+objects to use a proportionally smaller target.  Only estimates needed by the
+requested measurements participate in Crofton convergence, and two
+comparisons at doubling ray-count checkpoints must be stable.  Time-controlled
+runs report progress at approximately one-second intervals.  The summary and
+JSON identify `stable`, `time_limit`, or an explicitly requested ray or
+refinement limit as appropriate.
+`--tolerance mm` ignores overlap and gap depths at or below the threshold
+(default 0).  Gaps between two
+partitions of the same region are labeled `internal-void` in the summary.
+The measurements are
+sampled estimates, and diagnostic checks can miss problems that no ray hits.
+
+`--air include|exclude` controls whether modeled air contributes to
+measurements; inclusion is the default.  Surface area counts region partition
+boundaries and inertia is about the model origin.
+
+`--uncertainty` reports approximate pointwise 95 percent intervals from 16
+independently randomized Crofton replications.
+`--relative-error fraction` and
+`--absolute-error measure=value[,measure=value...]` request adaptive accuracy;
+`--accuracy-scope model|all` controls which reported measurements must meet
+the target.  A pilot estimates the required production budget, but only fresh
+independent production streams determine the reported accuracy status.
+With `--time ms` and no explicit `--rays`, measured throughput limits the
+production plan to the remaining time.  If both are specified, the ray count
+is also a hard cap.  With neither specified, the default deadline is 60000 ms.
+Results distinguish `target_met`, `target_not_met`,
+`time_limit`, and `insufficient_evidence`, and JSON records the pilot,
+forecast, production timing, deadline state, and achieved interval.
+
+`--json file` writes a versioned JSON record with model and region measurements
+and every observed problem, including full region paths and ray information.
+`--invalid-rays file` writes a separate replay-oriented JSON file for rejected
+Crofton partitions.  Each record includes the ray ID, origin, direction, hit
+distances, thickness, region path, and rejection reason.
+Without `--json`, the command prints only the summary.  Reported surface area
+counts region partition boundaries, including internal interfaces.
+
 [[how_gqa_works]]
 == HOW GQA WORKS
 

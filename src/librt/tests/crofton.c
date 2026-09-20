@@ -34,6 +34,188 @@
 #include "wdb.h"
 
 
+struct region_visit_counts {
+    size_t segments;
+    double chord;
+};
+
+struct ray_visit_counts {
+    size_t rays;
+    size_t segments;
+    int valid;
+};
+
+struct progress_counts {
+    size_t calls;
+    size_t last_rays;
+    int valid;
+};
+
+static void
+visit_progress(size_t ray_count, size_t UNUSED(crossing_count),
+    double UNUSED(surface_area), double UNUSED(volume),
+    double UNUSED(stability_mm), int UNUSED(stability_evaluated),
+    double elapsed_ms, void *data)
+{
+    struct progress_counts *counts = (struct progress_counts *)data;
+    counts->calls++;
+    counts->last_rays = ray_count;
+    if (ray_count == 0 || elapsed_ms < 0.0)
+        counts->valid = 0;
+}
+
+static void
+visit_ray(const struct rt_crofton_ray *ray, void *data)
+{
+    struct ray_visit_counts *counts = (struct ray_visit_counts *)data;
+    counts->rays++;
+    for (size_t i = 0; i < ray->segment_count; i++) {
+	const struct rt_crofton_segment *segment = &ray->segments[i];
+	counts->segments++;
+	if (segment->ray_id != ray->ray_id ||
+	    !VNEAR_EQUAL(segment->ray_origin, ray->origin, SMALL_FASTF) ||
+	    !VNEAR_EQUAL(segment->ray_direction, ray->direction, SMALL_FASTF) ||
+	    !NEAR_EQUAL(segment->out_distance - segment->in_distance,
+		segment->thickness, SMALL_FASTF))
+	    counts->valid = 0;
+    }
+}
+
+static void
+visit_region_segment(const struct rt_crofton_segment *segment, void *data)
+{
+    struct region_visit_counts *counts = (struct region_visit_counts *)data;
+    const struct region *region = segment->region;
+    if (!region || !region->reg_name) return;
+    counts->segments++;
+    counts->chord += segment->thickness;
+}
+
+static int
+check_seeded_streams(struct rt_i *rtip, const char *label,
+    enum rt_crofton_sequence sequence)
+{
+    struct progress_counts progress = {0, 0, 1};
+    struct rt_crofton_params params = {
+        2048u, 0.0, 0.0, RT_CROFTON_STABILITY_DEFAULT, visit_progress, &progress};
+    struct rt_crofton_stats first_stats, repeated_stats, other_stats;
+    struct rt_crofton_stats session_stats = {0};
+    struct region_visit_counts first_counts = {0, 0.0};
+    struct region_visit_counts repeated_counts = {0, 0.0};
+    struct region_visit_counts other_counts = {0, 0.0};
+    struct region_visit_counts session_counts = {0, 0.0};
+    int first_ret = rt_crofton_visit_seeded(&first_stats, rtip,
+	&params, 0, NULL, NULL, sequence,
+	1234u, 7u, visit_region_segment, NULL, &first_counts);
+    int repeated_ret = rt_crofton_visit_seeded(&repeated_stats, rtip,
+	&params, 0, NULL, NULL, sequence,
+	1234u, 7u, visit_region_segment, NULL, &repeated_counts);
+    int other_ret = rt_crofton_visit_seeded(&other_stats, rtip,
+	&params, 0, NULL, NULL, sequence,
+	1234u, 8u, visit_region_segment, NULL, &other_counts);
+    struct rt_crofton_session *session = rt_crofton_session_create(rtip);
+    int session_ret = session ?
+        rt_crofton_session_visit_seeded(session, &session_stats, &params,
+            0, NULL, NULL, sequence, 1234u, 7u, visit_region_segment,
+            NULL, &session_counts) : -1;
+    rt_crofton_session_destroy(session);
+    const int session_match = session_ret == first_ret &&
+        session_stats.ray_count == first_stats.ray_count &&
+        session_stats.crossing_count == first_stats.crossing_count &&
+        EQUAL(session_stats.volume, first_stats.volume) &&
+        EQUAL(session_stats.surface_area, first_stats.surface_area) &&
+        session_counts.segments == first_counts.segments &&
+        EQUAL(session_counts.chord, first_counts.chord);
+    const int repeated_match = first_ret == repeated_ret &&
+	first_stats.ray_count == repeated_stats.ray_count &&
+	first_stats.crossing_count == repeated_stats.crossing_count &&
+	EQUAL(first_stats.volume, repeated_stats.volume) &&
+	EQUAL(first_stats.surface_area, repeated_stats.surface_area) &&
+	first_counts.segments == repeated_counts.segments &&
+	EQUAL(first_counts.chord, repeated_counts.chord);
+    const int independent_stream = other_ret >= 0 &&
+	(!EQUAL(first_stats.volume, other_stats.volume) ||
+	 !EQUAL(first_stats.surface_area, other_stats.surface_area));
+    const int stopped_at_limit =
+        first_stats.stop_reason == RT_CROFTON_STOP_RAYS &&
+        repeated_stats.stop_reason == RT_CROFTON_STOP_RAYS &&
+        other_stats.stop_reason == RT_CROFTON_STOP_RAYS &&
+        session_stats.stop_reason == RT_CROFTON_STOP_RAYS;
+    if (first_ret < 0 || !session_match || !repeated_match ||
+        !independent_stream || !stopped_at_limit || progress.calls != 4 ||
+        progress.last_rays != params.n_rays || !progress.valid) {
+	printf("  %-24s  invalid %s seeded Crofton streams\n", label,
+	    sequence == RT_CROFTON_SEQUENCE_QMC ? "QMC" : "random");
+	return 1;
+    }
+    return 0;
+}
+
+static int
+check_invalid_inputs(struct rt_i *rtip, const char *label)
+{
+    struct rt_crofton_stats stats = {0};
+    struct region_visit_counts counts = {0, 0.0};
+    struct rt_crofton_params params = {
+        1u, NAN, 0.0, RT_CROFTON_STABILITY_DEFAULT, NULL, NULL};
+    point_t bbox_min, bbox_max;
+    VSETALL(bbox_min, 1.0);
+    VSETALL(bbox_max, 0.0);
+
+    const int nonfinite = rt_crofton_visit(&stats, rtip, &params,
+        0, NULL, NULL, RT_CROFTON_SEQUENCE_RANDOM,
+        visit_region_segment, NULL, &counts);
+    params.stability_mm = 0.0;
+    const int missing_bound = rt_crofton_visit(&stats, rtip, &params,
+        0, bbox_min, NULL, RT_CROFTON_SEQUENCE_RANDOM,
+        visit_region_segment, NULL, &counts);
+    const int reversed_bounds = rt_crofton_visit(&stats, rtip, &params,
+        0, bbox_min, bbox_max, RT_CROFTON_SEQUENCE_RANDOM,
+        visit_region_segment, NULL, &counts);
+    params.stability_metrics = 1u << 31;
+    const int unknown_metric = rt_crofton_visit(&stats, rtip, &params,
+        0, NULL, NULL, RT_CROFTON_SEQUENCE_RANDOM,
+        visit_region_segment, NULL, &counts);
+    if (nonfinite != -1 || missing_bound != -1 || reversed_bounds != -1 ||
+        unknown_metric != -1) {
+        printf("  %-24s  accepted invalid Crofton controls\n", label);
+        return 1;
+    }
+    return 0;
+}
+
+static int
+check_stopping_controls(struct rt_i *rtip, const char *label)
+{
+    const size_t expected_stability_rays = 80000u;
+    struct region_visit_counts counts = {0, 0.0};
+    struct rt_crofton_stats stats = {0};
+    struct rt_crofton_params params = {
+        100000u, 0.0, 10000.0, RT_CROFTON_STABILITY_VOLUME, NULL, NULL};
+    int ret = rt_crofton_visit(&stats, rtip, &params, 0, NULL, NULL,
+        RT_CROFTON_SEQUENCE_RANDOM, visit_region_segment, NULL, &counts);
+    if (ret <= 0 || stats.stop_reason != RT_CROFTON_STOP_RAYS ||
+        stats.ray_count != params.n_rays) {
+        printf("  %-24s  time-only run did not honor its ray limit\n", label);
+        return 1;
+    }
+
+    params.n_rays = 0;
+    params.stability_mm = MAX_FASTF;
+    params.time_ms = 1000.0;
+    counts.segments = 0;
+    counts.chord = 0.0;
+    ret = rt_crofton_visit(&stats, rtip, &params, 0, NULL, NULL,
+        RT_CROFTON_SEQUENCE_RANDOM, visit_region_segment, NULL, &counts);
+    if (ret <= 0 || stats.stop_reason != RT_CROFTON_STOP_STABILITY ||
+        stats.ray_count != expected_stability_rays) {
+        printf("  %-24s  invalid doubling-checkpoint stop (%zu rays)\n",
+            label, stats.ray_count);
+        return 1;
+    }
+    return check_invalid_inputs(rtip, label);
+}
+
 static double
 rel_err(double estimated, double exact)
 {
@@ -48,7 +230,14 @@ crofton_segments_equal(const struct rt_crofton_segment *left,
 		       const struct rt_crofton_segment *right)
 {
     return left->ray_id == right->ray_id &&
+	left->region == right->region &&
+	left->in_solid == right->in_solid &&
+	left->out_solid == right->out_solid &&
+	NEAR_EQUAL(left->in_distance, right->in_distance, SMALL_FASTF) &&
+	NEAR_EQUAL(left->out_distance, right->out_distance, SMALL_FASTF) &&
 	NEAR_EQUAL(left->thickness, right->thickness, SMALL_FASTF) &&
+	VNEAR_EQUAL(left->ray_origin, right->ray_origin, SMALL_FASTF) &&
+	VNEAR_EQUAL(left->ray_direction, right->ray_direction, SMALL_FASTF) &&
 	VNEAR_EQUAL(left->in_point, right->in_point, SMALL_FASTF) &&
 	VNEAR_EQUAL(left->in_normal, right->in_normal, SMALL_FASTF) &&
 	VNEAR_EQUAL(left->out_point, right->out_point, SMALL_FASTF) &&
@@ -63,7 +252,7 @@ verify_crofton_estimates(void)
 
     printf("\n--- Crofton estimator verification ---\n");
 
-    struct rt_crofton_params cparams = {0, 0.0, 0.0};
+    struct rt_crofton_params cparams = {0, 0.0, 0.0, RT_CROFTON_STABILITY_DEFAULT, NULL, NULL};
 
 #define CROFTON_CHECK(label, ip_ptr, analytic_sa, analytic_vol) \
     do { \
@@ -378,7 +567,7 @@ run_convergence_case(struct db_i *dbip,
 	rt_prep_parallel(rtip, 1);
 
 	/* Convergence-based stopping with a per-target wall-clock budget. */
-	struct rt_crofton_params p = { 0u, 0.05, 1000.0 };
+	struct rt_crofton_params p = { 0u, 0.05, 1000.0, RT_CROFTON_STABILITY_DEFAULT, NULL, NULL };
 	if (target_pct <= 7.0)
 	    p.time_ms = 1500.0;
 	if (target_pct <= 5.0)
@@ -397,7 +586,7 @@ run_convergence_case(struct db_i *dbip,
 	    const size_t ray_offset = 4096u;
 	    const size_t continuation_rays = 256u;
 	    struct rt_crofton_params sample_params =
-		{ray_offset + continuation_rays, 0.0, 0.0};
+		{ray_offset + continuation_rays, 0.0, 0.0, RT_CROFTON_STABILITY_DEFAULT, NULL, NULL};
 	    int sample_ret = rt_crofton_collect(&samples, rtip,
 		&sample_params, 0, NULL, NULL);
 	    int full_samples_valid = sample_ret > 0 && samples.segments &&
@@ -426,10 +615,43 @@ run_convergence_case(struct db_i *dbip,
 		}
 	    }
 
+	    {
+		struct rt_crofton_stats stats;
+		struct region_visit_counts counts = {0, 0.0};
+		int visit_ret = rt_crofton_visit(&stats, rtip, &sample_params,
+		    0, NULL, NULL, RT_CROFTON_SEQUENCE_RANDOM,
+		    visit_region_segment, NULL, &counts);
+		if (visit_ret <= 0 || counts.segments * 2 != stats.crossing_count ||
+		    stats.ray_count != sample_params.n_rays ||
+		    counts.chord <= 0.0 || stats.volume <= 0.0) {
+		    printf("  %-24s  invalid streaming Crofton output\n", label);
+		    failures++;
+		}
+
+		struct ray_visit_counts ray_counts = {0, 0, 1};
+		visit_ret = rt_crofton_visit_rays(&stats, rtip, &sample_params,
+		    0, NULL, NULL, RT_CROFTON_SEQUENCE_RANDOM,
+		    visit_ray, NULL, &ray_counts);
+		if (visit_ret <= 0 || ray_counts.rays != sample_params.n_rays ||
+		    ray_counts.segments * 2 != stats.crossing_count ||
+		    !ray_counts.valid) {
+		    printf("  %-24s  invalid ray streaming Crofton output\n",
+			label);
+		    failures++;
+		}
+	    }
+
+	    failures += check_seeded_streams(rtip, label,
+		RT_CROFTON_SEQUENCE_RANDOM);
+	    if (rt_crofton_qmc_available())
+		failures += check_seeded_streams(rtip, label,
+		    RT_CROFTON_SEQUENCE_QMC);
+	    failures += check_stopping_controls(rtip, label);
+
 	    struct rt_crofton_result offset_samples =
 		RT_CROFTON_RESULT_INIT;
 	    struct rt_crofton_params offset_params =
-		{continuation_rays, 0.0, 0.0};
+		{continuation_rays, 0.0, 0.0, RT_CROFTON_STABILITY_DEFAULT, NULL, NULL};
 	    sample_ret = rt_crofton_collect(&offset_samples, rtip,
 		&offset_params, ray_offset, NULL, NULL);
 	    int offset_samples_valid = sample_ret > 0 &&

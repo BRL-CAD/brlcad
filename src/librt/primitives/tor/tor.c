@@ -2021,7 +2021,11 @@ rt_tor_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     if (tip->r_h > tip->r_a) {
 	struct rt_db_internal ip_meth = *ip;
 	ip_meth.idb_meth = &OBJ[ID_TOR];
-	do { static const struct rt_crofton_params _p = {50000u, 0.0, 0.0}; rt_crofton_sample(area, NULL, &ip_meth, &_p); } while (0);
+	do {
+	    static const struct rt_crofton_params params = {
+		50000u, 0.0, 0.0, RT_CROFTON_STABILITY_DEFAULT, NULL, NULL};
+	    rt_crofton_sample(area, NULL, &ip_meth, &params);
+	} while (0);
 	return;
     }
 
@@ -2042,7 +2046,11 @@ rt_tor_volume(fastf_t *vol, const struct rt_db_internal *ip)
     if (tip->r_h > tip->r_a) {
 	struct rt_db_internal ip_meth = *ip;
 	ip_meth.idb_meth = &OBJ[ID_TOR];
-	do { static const struct rt_crofton_params _p = {50000u, 0.0, 0.0}; rt_crofton_sample(NULL, vol, &ip_meth, &_p); } while (0);
+	do {
+	    static const struct rt_crofton_params params = {
+		50000u, 0.0, 0.0, RT_CROFTON_STABILITY_DEFAULT, NULL, NULL};
+	    rt_crofton_sample(NULL, vol, &ip_meth, &params);
+	} while (0);
 	return;
     }
 

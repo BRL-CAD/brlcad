@@ -37,6 +37,152 @@ For error and interface calculations, the grid is refined until an error is foun
 When multiple calculations are performed, the most extensive path is taken. For example, if weight and overlap calculations are performed, then the grid will be refined until the refinement limit is reached, or an overlap is detected.
 
 
+[[experimental_analysis]]
+== EXPERIMENTAL ANALYSIS
+
+The separate `--analyze` interface preserves the behavior of existing *gqa*
+invocations.  It reports a concise summary and can write all region results and
+individual problem observations as structured JSON.  The JSON includes
+per-object rollups when every region belongs unambiguously to one requested
+object.  This interface requires an explicit object list, including when used
+inside MGED.
+
+[source]
+----
+gqa --analyze [analysis options] model.g object [object ...]
+----
+
+`--measure` accepts a comma-separated selection from
+`volume,mass,area,centroid,moments`.  With no measurement or check selection,
+the default is `volume,area`.  A check-only selection does not require density
+data.  Centroid and moments require mass.  `--check` accepts
+`overlaps,gaps,adjacent-air,exposed-air` and defaults to no checks.
+The model totals and region measurements use mm, mm^3^, mm^2^, and grams.
+Mass needs a density table, selected with `--density file` or found using the
+normal gqa density search.
+
+`--sampler grid`, the experimental interface's default, is the axis-aligned
+control corresponding to the traditional three-view method.  `--sampler
+grid-rotated` uses a non-axis-aligned orthonormal view triad.  Its first
+direction defaults to 35 degrees azimuth and 25 degrees elevation and may be
+set with `--azimuth degrees` and
+`--elevation degrees`; the other two directions are derived orthogonally.
+Rotated refinements use deterministic plane-grid shifts so successive passes
+do not repeatedly sample the same alignment.  These shifts reduce aliasing but
+do not make grid results statistical confidence estimates.
+
+Both grid modes use `--spacing mm`.  When it is omitted, the initial spacing
+is the larger of 50 mm and one 128th of the tight model bounding-box diagonal.
+This keeps the first pass tractable for exceptionally large models while
+preserving the familiar 50 mm start for ordinary models.  `--refine levels`
+sets the maximum number of additional grid passes and disables the default
+time control when used alone.  Each normal refinement halves the spacing;
+under a time limit, a final intermediate spacing may be selected so a complete
+three-view pass fits the remaining budget.  Boundary cells are clipped and
+weighted by their actual projected area rather than counted as full cells.
+
+`--sampler crofton` uses isotropic rays.  For a measurement-only run with
+either grid or Crofton sampling and no explicit resource control, sampling has
+a 60000 ms budget and stops sooner when its automatic equivalent-radius
+stability target is reached.  The planner may stop before the exact deadline
+when there is not enough time for another complete sampling checkpoint.
+For Crofton sampling, `--rays count` replaces that time-first default with an
+explicit hard ray cap; `--sequence random|qmc` chooses an explicit sequence.
+If omitted, the standard librt sequence selection is used.  A QMC request
+requires a build with OpenQMC.
+`--seed value` makes the selected randomized sequence reproducible.
+`--stability mm` requests equivalent-radius convergence.  For a grid, both the
+change from the preceding refinement and the spread among its three
+directional volume estimates must meet the target for two successive passes.
+For Crofton sampling, two successive doubling checkpoints must meet the
+target.  `--time ms` sets an internal wall-clock budget.  A time-controlled run
+reports progress at approximately one-second intervals.  Grid progress
+includes the level, spacing, completed rays, throughput, and directional
+volumes; Crofton progress includes the current volume and stability when
+available.
+
+The automatic stability target for either measurement sampler is the smaller
+of `BN_TOL_DIST / 10` (0.00005 mm) and 0.1 percent of the smallest positive
+tight model-bounding-box span.  The scale-dependent term prevents the fixed
+modeling tolerance from becoming coarse relative to a small valid object.
+This is a convergence heuristic, not a confidence interval.  It applies only
+to estimates needed by the requested measurements and requires two stable
+comparisons at doubling ray-count checkpoints for Crofton sampling.  Grid
+refinement applies the same two-interval policy to complete three-view passes
+and also requires its directional spread to meet the target.  The result
+distinguishes `stable`, `time_limit`, and an explicitly requested ray or
+refinement limit stopping condition.
+`--tolerance mm` ignores overlap and gap depths at or below the threshold
+(default 0).  Crofton diagnostic checks use the observed ray partition paths
+and therefore remain sampling evidence rather than exhaustive proofs.  Gaps
+between two partitions of the same region are labeled `internal-void` in the
+summary.
+When Crofton is used for an overlap-only request (that is, `--check overlaps`
+with no `--measure`), the experimental path first indexes finite region-instance
+bounding boxes and samples only their intersecting candidate boxes.  The summary
+and JSON record report the number of candidate boxes considered.  This is a
+broad-phase acceleration and does not establish that two solids actually
+intersect; the targeted rays still provide the overlap evidence.
+
+For targeted overlap checks, `--stability mm` compares successive equivalent-radius
+estimates of each candidate box, using the same rays that test the geometry.  The
+known box volume and surface area provide calibration checks, and the sampled rays
+must cover all three dominant direction classes.  A candidate stops only when the
+radius change and these calibration checks meet the requested target, subject to
+the ray budget.  JSON records the calibration errors and whether the target was
+reached in `box_stability_reached` and `box_calibration_reached`.
+
+For randomized sequences, a candidate with no observed overlap event also reports
+a 95 percent upper bound on the per-ray event probability.  This quantifies the
+strength of a sampling-negative result; it is not an exhaustive proof of absence.
+
+The measurements are
+sampled estimates, and diagnostic checks can miss problems that no ray hits.
+
+`--air include|exclude` controls whether modeled air contributes to
+measurement totals; the default is `include`.  Diagnostic air checks still
+trace modeled air when it is excluded from measurements.  Surface area counts
+region partition boundaries, including internal interfaces, and moments of
+inertia are reported about the model origin.
+
+`--uncertainty` divides the Crofton ray budget among 16 independently
+randomized replications and reports approximate pointwise 95 percent
+Student-t intervals.  It applies only to measurement-only Crofton runs.
+`--relative-error fraction` requests adaptive accuracy and
+`--absolute-error measure=value[,measure=value...]` sets absolute targets for
+`volume` (mm^3^), `mass` (g), `area` (mm^2^), `centroid` (mm), or
+`moments` (g mm^2^).  When both forms apply, the larger tolerance is used.
+`--accuracy-scope model|all` selects model totals only or model, object, and
+region results.  The `all` intervals remain pointwise rather than a
+simultaneous family-wise confidence statement.
+
+Adaptive accuracy uses a pilot stage to forecast a production ray count, then
+discards the pilot estimates and evaluates the target with fresh independent
+production streams.  With `--time ms` and no explicit `--rays`, the deadline
+is the resource limit: the pilot measures ray throughput and the production
+forecast is restricted to fit the remaining time with scheduling headroom.
+When both are specified, the ray count is also a hard cap.  When neither is
+specified, adaptive accuracy uses the default 60000 ms deadline.  A bare
+`--uncertainty` request without an accuracy target retains the 100000-ray
+budget because it has no accuracy condition with which to plan a deadline.
+
+The result explicitly reports `target_met`, `target_not_met`, `time_limit`, or
+`insufficient_evidence`.  `time_limit` means the deadline constrained a
+production result that did not meet the requested interval width; the estimate
+and its achieved interval are still reported.  The pilot, forecast, production
+count and timing, planning safety factor, deadline state, and actual interval
+are recorded in JSON.  The planning heuristic and safety factor do not alter
+the published interval: only the fresh production replications determine it.
+
+`--json file` writes a schema-version 2 JSON record with model and region
+measurements and every observed problem, including full region paths and ray
+information.
+`--invalid-rays file` writes a separate replay-oriented JSON file for rejected
+Crofton partitions.  Each record includes the ray ID, origin, direction, hit
+distances, thickness, region path, and rejection reason.
+Without `--json`, the command prints only the summary.  Reported surface area
+counts region partition boundaries, including internal interfaces.
+
 [[volume_and_weight_calculation]]
 == VOLUME AND WEIGHT CALCULATION
 

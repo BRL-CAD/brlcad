@@ -1245,7 +1245,11 @@ rt_superell_volume(fastf_t *volume, const struct rt_db_internal *ip)
     *volume = 2.0 * mag_a * mag_b * mag_c * sip->e * sip->n * (tgamma(sip->n/2.0 + 1.0) * tgamma(sip->n) / tgamma(3.0 * sip->n/2.0 + 1.0)) * (tgamma(sip->e / 2.0) * tgamma(sip->e / 2.0) / tgamma(sip->e));
 #else
     /* tgamma unavailable: fall back to Cauchy-Crofton estimation */
-    do { static const struct rt_crofton_params _p = {50000u, 0.0, 0.0}; rt_crofton_sample(NULL, volume, ip, &_p); } while (0);
+    do {
+	static const struct rt_crofton_params params = {
+	    50000u, 0.0, 0.0, RT_CROFTON_STABILITY_DEFAULT, NULL, NULL};
+	rt_crofton_sample(NULL, volume, ip, &params);
+    } while (0);
 #endif
 }
 
