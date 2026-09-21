@@ -86,23 +86,56 @@ struct brep_edge_record {
 };
 
 
+struct brep_surface_control_layout {
+    int stride[2] = {0, 0};
+    int order[2] = {0, 0};
+    bool direct = false;
+    bool rational = false;
+};
+
+
 struct brep_surface_span {
     ON_BezierSurface surface;
+    brep_surface_control_layout control_layout;
     ON_BoundingBox bbox;
+    double bbox_coordinate_scale = 0.0;
     ON_Interval surface_domain[2];
     int face_index = -1;
     int span_index = -1;
     unsigned int singular_side_mask = 0;
+    bool control_points_valid = false;
+    bool bbox_coordinate_scale_valid = false;
 };
 
 
 struct brep_face_record {
+    ON_BoundingBox bbox;
+    double bbox_coordinate_scale = 0.0;
     size_t span_begin = 0;
     size_t span_count = 0;
     int face_index = -1;
     int nurb_form_status = 0;
     bool status2_revolution_singular_map = false;
     bool supported = false;
+    bool bbox_coordinate_scale_valid = false;
+};
+
+
+/* A balanced hierarchy over contiguous face records.  Keeping the original
+ * order avoids perturbing the bounded prepared-root collection. */
+struct brep_prepared_face_node {
+    ON_BoundingBox bbox;
+    double bbox_coordinate_scale = 0.0;
+    size_t face_begin = 0;
+    size_t span_count = 0;
+    size_t supported_face_count = 0;
+    size_t reparameterized_face_count = 0;
+    size_t unsupported_face_count = 0;
+    size_t left_child = 0;
+    size_t right_child = 0;
+    bool cullable = false;
+    bool leaf = false;
+    bool bbox_coordinate_scale_valid = false;
 };
 
 
@@ -143,6 +176,7 @@ struct brep_specific {
     std::vector<brep_trim_span> edge_trim_spans;
     std::vector<brep_face_record> face_records;
     std::vector<brep_surface_span> surface_spans;
+    std::vector<brep_prepared_face_node> prepared_face_nodes;
     std::vector<brep_vertex_record> vertex_records;
     int surface_tree_depth_limit = 0;
     int surface_tree_maximum_depth = 0;
