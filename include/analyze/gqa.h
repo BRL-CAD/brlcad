@@ -24,6 +24,8 @@
 #ifndef ANALYZE_GQA_H
 #define ANALYZE_GQA_H
 
+#include <stddef.h>
+
 #include "common.h"
 #include "analyze/defines.h"
 
@@ -49,12 +51,52 @@ typedef int (*analyze_gqa_density_loader)(
 /** Receive an informational progress line during a long analysis. */
 typedef void (*analyze_gqa_progress_handler)(const char *message, void *data);
 
+/** Categories used to separate quantitative-analysis plot output. */
+enum analyze_gqa_plot_category {
+    ANALYZE_GQA_PLOT_VOLUME = 0,
+    ANALYZE_GQA_PLOT_GAP,
+    ANALYZE_GQA_PLOT_OVERLAP,
+    ANALYZE_GQA_PLOT_ADJACENT_AIR,
+    ANALYZE_GQA_PLOT_EXPOSED_AIR,
+    ANALYZE_GQA_PLOT_CATEGORY_COUNT
+};
+
+/** Whether a plot batch extends or replaces the preceding visualization. */
+enum analyze_gqa_plot_action {
+    ANALYZE_GQA_PLOT_APPEND = 0,
+    ANALYZE_GQA_PLOT_REPLACE
+};
+
+/** One colored line in model coordinates. */
+struct analyze_gqa_plot_line {
+    int category;
+    unsigned char color[3];
+    double start[3];
+    double end[3];
+};
+
+/**
+ * Immutable plot update.  Storage is valid only for the duration of the
+ * callback.  An empty replacement clears a previous visualization.
+ */
+struct analyze_gqa_plot_batch {
+    int action;
+    const struct analyze_gqa_plot_line *lines;
+    size_t line_count;
+};
+
+/** Receive a serialized plot update after a completed ray batch. */
+typedef void (*analyze_gqa_plot_handler)(
+    const struct analyze_gqa_plot_batch *batch,
+    void *data);
+
 /**
  * Invocation-local services needed by the quantitative analysis engine.
  *
  * The database and result string remain caller-owned.  A density loader is
  * required only for analyses that request mass-dependent measurements.  The
- * progress handler is optional.
+ * progress and plot handlers are optional.  Plot handlers run serially after
+ * completed ray batches and must not call back into the active analysis.
  */
 struct analyze_gqa_context {
     struct db_i *dbip;
@@ -63,6 +105,8 @@ struct analyze_gqa_context {
     void *density_data;
     analyze_gqa_progress_handler report_progress;
     void *progress_data;
+    analyze_gqa_plot_handler report_plot;
+    void *plot_data;
 };
 
 /**

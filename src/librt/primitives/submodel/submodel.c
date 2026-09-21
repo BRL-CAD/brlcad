@@ -70,6 +70,28 @@ struct submodel_specific {
 #define RT_CK_SUBMODEL_SPECIFIC(_p) BU_CKMAG(_p, RT_SUBMODEL_SPECIFIC_MAGIC, "submodel_specific")
 
 static int
+rt_submodel_is_unbounded(struct rt_i *rtip)
+{
+    struct region *regp;
+
+    for (BU_LIST_FOR(regp, region, &rtip->HeadRegion)) {
+	point_t region_min, region_max;
+
+	if (!regp->reg_treetop)
+	    continue;
+	if (rt_bound_tree(regp->reg_treetop, region_min, region_max) < 0)
+	    return 1;
+	for (int axis = 0; axis < 3; axis++) {
+	    if (INVALID(region_min[axis]) || INVALID(region_max[axis]))
+		return 1;
+	}
+    }
+
+    return 0;
+}
+
+
+static int
 rt_submodel_is_absolute_path(const char *path)
 {
     if (!path || !path[0])
@@ -306,15 +328,24 @@ rt_submodel_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
     bn_mat_inv(submodel->m2subm, sip->root2leaf);
     submodel->rtip = sub_rtip;
 
-    /* Propagate submodel bounding box back upwards, rotated&scaled. */
-    bg_rotate_bbox(stp->st_min, stp->st_max,
-		   submodel->subm2m,
-		   sub_rtip->mdl_min, sub_rtip->mdl_max);
+    /* mdl_min and mdl_max intentionally exclude infinite solids.  Preserve
+     * that distinction across the submodel boundary so a parent Boolean can
+     * either clip the submodel or recognize that its result is unbounded. */
+    if (rt_submodel_is_unbounded(sub_rtip)) {
+	VSETALL(stp->st_min, -INFINITY);
+	VSETALL(stp->st_max, INFINITY);
+	VSETALL(stp->st_center, 0.0);
+	stp->st_aradius = stp->st_bradius = INFINITY;
+    } else {
+	bg_rotate_bbox(stp->st_min, stp->st_max,
+		       submodel->subm2m,
+		       sub_rtip->mdl_min, sub_rtip->mdl_max);
 
-    VSUB2(diam, stp->st_max, stp->st_min);
-    VADD2SCALE(stp->st_center, stp->st_min, stp->st_max, 0.5);
-    VSCALE(radvec, diam, 0.5);
-    stp->st_aradius = stp->st_bradius = MAGNITUDE(radvec);
+	VSUB2(diam, stp->st_max, stp->st_min);
+	VADD2SCALE(stp->st_center, stp->st_min, stp->st_max, 0.5);
+	VSCALE(radvec, diam, 0.5);
+	stp->st_aradius = stp->st_bradius = MAGNITUDE(radvec);
+    }
 
     if (RT_G_DEBUG & (RT_DEBUG_DB|RT_DEBUG_SOLIDS)) {
 	bu_log("rt_submodel_prep(%s): finished loading database %s\n",

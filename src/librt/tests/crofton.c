@@ -226,6 +226,75 @@ rel_err(double estimated, double exact)
 
 
 static int
+check_halfspace_clipping(void)
+{
+    const fastf_t cube_extent = 1000.0;
+    const fastf_t split_offset = 0.5 * cube_extent;
+    const size_t ray_count = 20000u;
+    const double exact_volume = 500000000.0;
+    const double maximum_relative_error = 0.05;
+    struct db_i *dbip;
+    struct rt_wdb *wdbp;
+    struct rt_i *rtip = NULL;
+    point_t minimum = VINIT_ZERO;
+    point_t maximum = {cube_extent, cube_extent, cube_extent};
+    vect_t normal = {1.0, 0.0, 0.0};
+    struct wmember members;
+    double volume = 0.0;
+    int failures = 0;
+
+    dbip = db_create_inmem();
+    if (!dbip) return 1;
+    wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_INMEM);
+    if (!wdbp) {
+	db_close(dbip);
+	return 1;
+    }
+
+    if (mk_rpp(wdbp, "half_cube.s", minimum, maximum) ||
+	mk_half(wdbp, "clip.s", normal, split_offset)) {
+	failures++;
+	goto done;
+    }
+    BU_LIST_INIT(&members.l);
+    if (!mk_addmember("half_cube.s", &members.l, NULL, WMOP_UNION) ||
+	!mk_addmember("clip.s", &members.l, NULL, WMOP_INTERSECT)) {
+	mk_freemembers(&members.l);
+	failures++;
+	goto done;
+    }
+    if (mk_lcomb(wdbp, "half_cube.r", &members, 1, NULL, NULL, NULL, 0)) {
+	failures++;
+	goto done;
+    }
+
+    db_update_nref(dbip);
+    rtip = rt_i_create(dbip);
+    if (!rtip || rt_gettree(rtip, "half_cube.r")) {
+	failures++;
+	goto done;
+    }
+    rt_prep_parallel(rtip, 1);
+    {
+	struct rt_crofton_params params = {
+	    ray_count, 0.0, 0.0, RT_CROFTON_STABILITY_DEFAULT, NULL, NULL};
+	const int result = rt_crofton_shoot(NULL, &volume, NULL, NULL, NULL,
+	    NULL, NULL, rtip, &params, NULL, NULL);
+	if (result < 1 ||
+	    rel_err(volume, exact_volume) > maximum_relative_error)
+	    failures++;
+    }
+
+done:
+    if (rtip) rt_i_destroy(rtip);
+    db_close(dbip);
+    if (failures)
+	printf("  half-space clipping       Crofton estimate failed\n");
+    return failures;
+}
+
+
+static int
 crofton_segments_equal(const struct rt_crofton_segment *left,
 		       const struct rt_crofton_segment *right)
 {
@@ -793,6 +862,7 @@ main(int argc, char *argv[])
 
     int failures = 0;
     failures += verify_crofton_estimates();
+    failures += check_halfspace_clipping();
     failures += test_crofton_convergence_timing();
 
     printf("\n=== Summary: %d failure(s) ===\n", failures);

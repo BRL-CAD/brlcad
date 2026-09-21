@@ -53,13 +53,18 @@ gqa --analyze [analysis options] model.g object [object ...]
 ----
 
 `--measure` accepts a comma-separated selection from
-`volume,mass,area,centroid,moments`.  With no measurement or check selection,
+`volume,mass,area,centroid,moments,bounds`.  With no measurement or check selection,
 the default is `volume,area`.  A check-only selection does not require density
 data.  Centroid and moments require mass.  `--check` accepts
 `overlaps,gaps,adjacent-air,exposed-air` and defaults to no checks.
 The model totals and region measurements use mm, mm^3^, mm^2^, and grams.
 Mass needs a density table, selected with `--density file` or found using the
 normal gqa density search.
+The `bounds` measure reports the finite, conservative region-tree bounding box
+and its three face areas without firing sampling rays.  It can be combined
+with the sampled measures.  Subtraction does not shrink the reported box.  A
+bounded intersection or subtraction involving a half-space is supported; a
+selected region whose region-tree bound is unbounded is rejected.
 
 `--sampler grid`, the experimental interface's default, is the axis-aligned
 control corresponding to the traditional three-view method.  `--sampler
@@ -138,6 +143,28 @@ strength of a sampling-negative result; it is not an exhaustive proof of absence
 
 The measurements are
 sampled estimates, and diagnostic checks can miss problems that no ray hits.
+
+`--plot-prefix prefix` writes the selected observations as binary Plot3 files
+named `prefixvolume.plot3`, `prefixgaps.plot3`, `prefixoverlaps.plot3`,
+`prefixadj_air.plot3`, and `prefixexp_air.plot3`.  Only files corresponding to
+requested measurements or checks are created.  `--plot-mode all` writes every
+sampled chord, matching the legacy plotting intent and retaining all grid
+refinement passes.  The default, `--plot-mode representative`, keeps one
+deterministic sample per occupied spatial cell, direction class, category, and
+region pair.  It draws the actual projected grid-cell footprint; a Crofton
+glyph represents its average `pi R^2/N` transverse sampling area.  This bounded-detail
+mode preserves visible coverage as refinement proceeds instead of making the
+plot grow in direct proportion to the ray count.  `--plot-resolution mm`
+overrides the automatic representative cell size of one 128th of the model
+diagonal.  Plot selection never changes the rays or numerical estimates.
+
+Inside MGED, `--plot-view` displays the same output in the active view as
+`gqa::analysis` and refreshes it incrementally at approximately one-second
+intervals.  Representative mode replaces the overlay with its latest bounded
+snapshot; all mode appends new rays and can become expensive.  Adjacent-air
+snapshots mark the sampled interface with a footprint and a short directional
+tick, avoiding an invisible zero-length line without implying that the whole
+air chord is defective.  `--plot-view` is unavailable to standalone *gqa*.
 
 `--air include|exclude` controls whether modeled air contributes to
 measurement totals; the default is `include`.  Diagnostic air checks still

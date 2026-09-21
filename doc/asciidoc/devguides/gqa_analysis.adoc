@@ -18,6 +18,14 @@ included by default and can be excluded explicitly.  Grid boundary cells are
 clipped to the model bounds.  These choices are written to JSON so a consumer
 does not have to infer them from command options.
 
+The optional `bounds` measurement is not sampled.  Conservative bounds are
+combined from the prepared region Boolean trees rather than directly unioning
+raw primitive boxes.  This keeps finite intersections and subtractions
+involving half-spaces usable while rejecting a result whose region-tree bound
+is unbounded.  As elsewhere in librt, subtraction does not shrink this
+conservative box.  The same bounds define the sampling domain and the
+automatic plot scale.
+
 == Grid sampling
 
 The experimental grid implementation has two modes.  The `grid` mode is an
@@ -29,6 +37,10 @@ to their projection intervals and weight each chord by its cell's actual
 area.  Rotated-cell covariance is included when accumulating mass moments;
 otherwise an oblique cell would incorrectly be treated as having only
 axis-aligned transverse extent.
+
+The grid worker also records the clipped width and orientation of every
+sampled cell.  These are visualization metadata only: volume and moment
+accumulation continues to use the same clipped area and covariance.
 
 The rotated mode changes the two-dimensional grid phase between refinements.
 The general shifted-lattice technique is described by R. Cranley and T. N. L.
@@ -129,8 +141,9 @@ the automatic equivalent-radius target is
 The first term asks for stability an order of magnitude below librt's normal
 0.0005 mm modeling tolerance.  The scale-relative term begins tightening the
 target for models below 0.05 mm, before the fixed tolerance becomes large
-relative to the selected geometry.  Tight soltab bounds are used because the
-prepared model RPP is deliberately rounded outward.  This stopping rule is an
+relative to the selected geometry.  Finite region-tree bounds are used because
+the prepared model RPP is deliberately rounded outward and raw half-space
+bounds are infinite.  This stopping rule is an
 engineering convergence heuristic and is reported as `stable`; it does not
 claim the pointwise coverage of the independent-replication intervals.
 
@@ -152,6 +165,53 @@ batches.  GQA throttles those callbacks to approximately one report per second
 and includes elapsed time, total rays, throughput, the current volume estimate,
 and observed versus requested stability.  A callback never reads worker-local
 state while rays are in flight.
+
+== Plot publication and live views
+
+Plotting is downstream of sampling.  Grid workers append immutable sample
+records to worker-local accumulators, and Crofton visitors append records
+while librt is in its serialized delivery phase.  Libanalyze publishes only
+after a parallel batch completes.  Consequently Plot3 output and live-view
+output consume the same ordered line batches and cannot alter ray selection,
+partition bookkeeping, or numerical estimates.
+
+The `all` policy preserves every chord and diagnostic line, including rays
+from successive complete grid refinements.  It is useful for exact debugging
+but its storage and display cost grows with sample count.  The default
+`representative` policy quantizes sample centers in model space and retains a
+deterministic one-element min-hash reservoir for each category, direction
+class, region pair, and occupied cell.  The reservoir construction follows
+the mergeable fixed-size sampling idea in J. S. Vitter, _Random Sampling with
+a Reservoir_ (1985), https://doi.org/10.1145/3147.3165.  Severity wins first
+for diagnostic observations so the most significant issue in a cell remains
+visible; deterministic priority resolves equal-severity samples.
+
+Representative samples are rendered as finite-support glyphs.  Grid glyphs
+use the exact clipped pixel footprint.  Crofton glyphs use the representative
+side length corresponding to their average `pi R^2/N` transverse sampling
+area, where `R` is the bounding-sphere radius and `N` is the ray count.  The
+spatial-cell scale independently limits how many glyphs are retained.  This
+follows the visual principle of surfels, which draw
+sample support instead of infinitesimal points: H. Pfister et al., _Surfels:
+Surface Elements as Rendering Primitives_ (2000),
+https://doi.org/10.1145/344779.344936.  Bounding the number of displayed
+samples by occupied spatial cells applies the fixed-detail motivation of S.
+Rusinkiewicz and M. Levoy, _QSplat: A Multiresolution Point Rendering System
+for Large Meshes_ (2000), https://doi.org/10.1145/344779.344940, without
+claiming to implement its hierarchy.
+
+An incomplete grid refinement never replaces the last complete
+representative snapshot.  Adjacent-air samples use an interface-centered
+footprint and a bounded directional tick; the full following air chord would
+overstate the location of the transition.
+
+The libanalyze callback contains plain immutable model-coordinate lines and
+has no display-system dependency.  MGED copies each batch, synchronously
+marshals the update through its existing GUI-event bridge, rebuilds the named
+`gqa::analysis` view object on the display-owning thread, and requests a
+refresh.  This is the same ownership rule used for other asynchronous GED
+work: worker threads calculate data, while all view-list mutation remains on
+the GUI thread.
 
 Relative and absolute tolerances may be combined.  For a scalar estimate
 `theta`, the accepted half-width is the larger of

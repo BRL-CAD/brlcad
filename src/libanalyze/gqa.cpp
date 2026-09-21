@@ -34,10 +34,12 @@
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
+#include <iterator>
 #include <limits>
 #include <map>
 #include <set>
 #include <string>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -45,9 +47,11 @@
 #include "analyze/gqa.h"
 #include "bn/mat.h"
 #include "bn/tol.h"
+#include "bv/plot3.h"
 #include "bu/app.h"
 #include "bu/datetime.h"
 #include "bu/file.h"
+#include "bu/hash.h"
 #include "bu/malloc.h"
 #include "bu/opt.h"
 #include "bu/parallel.h"
@@ -86,11 +90,22 @@ static const double MIN_GRID_REFINEMENT_FACTOR = 1.05;
 static const double GRID_PHASE_U_INCREMENT = 0.6180339887498948482;
 static const double GRID_PHASE_V_INCREMENT = 0.4142135623730950488;
 static const double DEFAULT_ISSUE_TOLERANCE = 0.0; /* mm */
+static const double DEFAULT_PLOT_BINS_PER_DIAGONAL = 128.0;
+static const double ADJACENT_AIR_PLOT_FRACTION = 0.25;
+static const size_t REPRESENTATIVE_GLYPH_LINE_COUNT = 5;
 static const char REPORT_TEMP_MARKER[] = ".gqa-tmp-";
 
-enum Measure { VOLUME = 1, MASS = 2, AREA = 4, CENTROID = 8, MOMENTS = 16 };
+enum Measure {
+    VOLUME = 1,
+    MASS = 2,
+    AREA = 4,
+    CENTROID = 8,
+    MOMENTS = 16,
+    BOUNDS = 32
+};
 enum Check { OVERLAPS = 1, GAPS = 2, ADJACENT_AIR = 4, EXPOSED_AIR = 8 };
 enum Sampler { GRID_AXIS, GRID_ROTATED, CROFTON };
+enum PlotMode { PLOT_REPRESENTATIVE, PLOT_ALL };
 enum GridStopReason {
     GRID_STOP_NONE,
     GRID_STOP_REFINEMENT_LIMIT,
@@ -132,8 +147,24 @@ struct Options {
     std::string json_path;
     std::string invalid_path;
     std::string density_path;
+    std::string plot_prefix;
+    PlotMode plot_mode = PLOT_REPRESENTATIVE;
+    bool plot_view = false;
+    double plot_resolution = 0.0;
     std::vector<std::string> objects;
 };
+
+static const char * const PLOT_FILE_NAMES[
+    ANALYZE_GQA_PLOT_CATEGORY_COUNT] = {
+    "volume.plot3", "gaps.plot3", "overlaps.plot3", "adj_air.plot3",
+    "exp_air.plot3"
+};
+
+static std::string
+plot_file_path(const Options &opts, int category)
+{
+    return opts.plot_prefix + PLOT_FILE_NAMES[category];
+}
 
 struct Metric {
     double volume = 0.0;
@@ -155,9 +186,54 @@ struct Issue {
     double depth;
     std::array<double, 3> start;
     std::array<double, 3> end;
+    std::array<double, 3> plot_end;
     std::array<double, 3> ray_origin;
     std::array<double, 3> ray_direction;
     size_t ray_id;
+};
+
+struct PlotSample {
+    int category = ANALYZE_GQA_PLOT_VOLUME;
+    int direction = 0;
+    int first_bit = -1;
+    int second_bit = -1;
+    long first_instance = -1;
+    long second_instance = -1;
+    double severity = 0.0;
+    std::array<double, 3> start = {{0.0, 0.0, 0.0}};
+    std::array<double, 3> end = {{0.0, 0.0, 0.0}};
+    std::array<double, 3> u = {{0.0, 0.0, 0.0}};
+    std::array<double, 3> v = {{0.0, 0.0, 0.0}};
+    double u_width = 0.0;
+    double v_width = 0.0;
+    size_t ray_id = 0;
+    bool exact_footprint = false;
+};
+
+struct PlotKey {
+    int category;
+    int direction;
+    int first_bit;
+    int second_bit;
+    long first_instance;
+    long second_instance;
+    int64_t x;
+    int64_t y;
+    int64_t z;
+
+    bool operator<(const PlotKey &other) const
+    {
+	return std::tie(category, direction, first_bit, second_bit,
+	    first_instance, second_instance, x, y, z) <
+	    std::tie(other.category, other.direction, other.first_bit,
+	    other.second_bit, other.first_instance, other.second_instance,
+	    other.x, other.y, other.z);
+    }
+};
+
+struct PlotRepresentative {
+    PlotSample sample;
+    uint64_t priority = 0;
 };
 
 struct OverlapCandidate {
@@ -287,6 +363,17 @@ struct Run {
     analyze_gqa_progress_handler report_progress = NULL;
     void *progress_data = NULL;
     int64_t last_progress_us = 0;
+    analyze_gqa_plot_handler report_plot = NULL;
+    void *plot_data = NULL;
+    std::vector<PlotSample> pending_plot_samples;
+    std::map<PlotKey, PlotRepresentative> plot_representatives;
+    std::map<PlotKey, PlotRepresentative> completed_plot_representatives;
+    std::vector<analyze_gqa_plot_line> pending_plot_lines;
+    std::array<FILE *, ANALYZE_GQA_PLOT_CATEGORY_COUNT> plot_files = {};
+    double plot_bin_size = 0.0;
+    size_t plotted_ray_extent = 0;
+    int64_t last_plot_us = 0;
+    bool plot_error = false;
 };
 
 static double
@@ -302,6 +389,359 @@ remaining_deadline_ms(const Run &run)
         return std::numeric_limits<double>::infinity();
     return std::max(0.0,
         static_cast<double>(run.deadline_us - bu_gettime()) / 1000.0);
+}
+
+static bool
+plot_category_requested(const Options &opts, int category)
+{
+    switch (category) {
+	case ANALYZE_GQA_PLOT_VOLUME:
+	    return (opts.measures & VOLUME) != 0;
+	case ANALYZE_GQA_PLOT_GAP:
+	    return (opts.checks & GAPS) != 0;
+	case ANALYZE_GQA_PLOT_OVERLAP:
+	    return (opts.checks & OVERLAPS) != 0;
+	case ANALYZE_GQA_PLOT_ADJACENT_AIR:
+	    return (opts.checks & ADJACENT_AIR) != 0;
+	case ANALYZE_GQA_PLOT_EXPOSED_AIR:
+	    return (opts.checks & EXPOSED_AIR) != 0;
+	default:
+	    return false;
+    }
+}
+
+static bool
+plot_category_requested(const Run &run, int category)
+{
+    return plot_category_requested(run.opts, category);
+}
+
+static bool
+plot_enabled(const Run &run)
+{
+    return !run.opts.plot_prefix.empty() || run.report_plot;
+}
+
+static void
+plot_color(int category, int direction, unsigned char color[3])
+{
+    static const unsigned char colors[ANALYZE_GQA_PLOT_CATEGORY_COUNT][3] = {
+	{128, 192, 255}, {128, 192, 255}, {255, 255, 0},
+	{128, 255, 192}, {255, 128, 255}
+    };
+    const unsigned char *selected = colors[category];
+    if (category == ANALYZE_GQA_PLOT_VOLUME && (direction & 1))
+	selected = colors[ANALYZE_GQA_PLOT_ADJACENT_AIR];
+    VMOVE(color, selected);
+}
+
+static analyze_gqa_plot_line
+plot_line(const PlotSample &sample, const std::array<double, 3> &start,
+    const std::array<double, 3> &end)
+{
+    analyze_gqa_plot_line line = {};
+    line.category = sample.category;
+    plot_color(sample.category, sample.direction, line.color);
+    VMOVE(line.start, start.data());
+    VMOVE(line.end, end.data());
+    return line;
+}
+
+static void
+append_representative_lines(const Run &run, const PlotSample &sample,
+    std::vector<analyze_gqa_plot_line> &lines)
+{
+    std::array<double, 3> center;
+    for (int axis = 0; axis < 3; axis++)
+	center[axis] = sample.category == ANALYZE_GQA_PLOT_ADJACENT_AIR ?
+	    sample.start[axis] :
+	    0.5 * (sample.start[axis] + sample.end[axis]);
+
+    double u_width = sample.u_width;
+    double v_width = sample.v_width;
+    if (!sample.exact_footprint) {
+	const double dx = run.grid_max[X] - run.grid_min[X];
+	const double dy = run.grid_max[Y] - run.grid_min[Y];
+	const double dz = run.grid_max[Z] - run.grid_min[Z];
+	const double radius = 0.5 * std::sqrt(dx * dx + dy * dy + dz * dz);
+	const double ray_count = static_cast<double>(
+	    std::max(static_cast<size_t>(1), run.plotted_ray_extent));
+	/* Crofton samples cover pi*R^2/N transverse area on average.  A
+	 * square with this side length communicates the current sampling
+	 * support without implying a persistent grid pixel. */
+	u_width = std::sqrt(M_PI) * radius / std::sqrt(ray_count);
+	v_width = u_width;
+    }
+    const double half_u = 0.5 * u_width;
+    const double half_v = 0.5 * v_width;
+    std::array<std::array<double, 3>, 4> corner;
+    for (int axis = 0; axis < 3; axis++) {
+	corner[0][axis] = center[axis] - half_u * sample.u[axis] -
+	    half_v * sample.v[axis];
+	corner[1][axis] = center[axis] + half_u * sample.u[axis] -
+	    half_v * sample.v[axis];
+	corner[2][axis] = center[axis] + half_u * sample.u[axis] +
+	    half_v * sample.v[axis];
+	corner[3][axis] = center[axis] - half_u * sample.u[axis] +
+	    half_v * sample.v[axis];
+    }
+    for (size_t i = 0; i < corner.size(); i++)
+	lines.push_back(plot_line(sample, corner[i],
+	    corner[(i + 1) % corner.size()]));
+
+    if (sample.category == ANALYZE_GQA_PLOT_ADJACENT_AIR) {
+	/* A bounded tick makes a zero-separation air transition visible without
+	 * suggesting that the whole following air chord is defective. */
+	std::array<double, 3> tick_end;
+	vect_t direction;
+	VSUB2(direction, sample.end.data(), sample.start.data());
+	if (MAGNITUDE(direction) < SMALL_FASTF) {
+	    VCROSS(direction, sample.u.data(), sample.v.data());
+	}
+	VUNITIZE(direction);
+	const double tick_length = 0.5 * std::min(u_width, v_width);
+	for (int axis = 0; axis < 3; axis++)
+	    tick_end[axis] = center[axis] + tick_length * direction[axis];
+	lines.push_back(plot_line(sample, center, tick_end));
+    } else {
+	lines.push_back(plot_line(sample, sample.start, sample.end));
+    }
+}
+
+static uint64_t
+plot_priority(const PlotSample &sample)
+{
+    /* A deterministic min-hash sample gives each occupied cell a mergeable
+     * one-element reservoir.  See J. S. Vitter, "Random Sampling with a
+     * Reservoir" (1985), https://doi.org/10.1145/3147.3165. */
+    const std::array<uint64_t, 4> input = {{
+	static_cast<uint64_t>(sample.ray_id),
+	static_cast<uint64_t>(sample.category),
+	static_cast<uint64_t>(sample.first_bit),
+	static_cast<uint64_t>(sample.second_bit)}};
+    return bu_data_hash(input.data(), sizeof(input));
+}
+
+static PlotKey
+plot_key(const Run &run, const PlotSample &sample)
+{
+    PlotKey key = {sample.category, sample.direction, sample.first_bit,
+	sample.second_bit, sample.first_instance, sample.second_instance,
+	0, 0, 0};
+    const double minimum = static_cast<double>(
+	std::numeric_limits<int64_t>::min());
+    const double maximum = std::nextafter(static_cast<double>(
+	std::numeric_limits<int64_t>::max()), 0.0);
+    for (int axis = 0; axis < 3; axis++) {
+	const double midpoint =
+	    sample.category == ANALYZE_GQA_PLOT_ADJACENT_AIR ?
+	    sample.start[axis] :
+	    0.5 * (sample.start[axis] + sample.end[axis]);
+	const double raw_coordinate = std::floor(
+	    (midpoint - run.grid_min[axis]) / run.plot_bin_size);
+	const int64_t coordinate = static_cast<int64_t>(std::fmax(minimum,
+	    std::fmin(maximum, raw_coordinate)));
+	if (axis == X) key.x = coordinate;
+	if (axis == Y) key.y = coordinate;
+	if (axis == Z) key.z = coordinate;
+    }
+    return key;
+}
+
+static void
+consume_representative_samples(Run &run)
+{
+    for (const PlotSample &sample : run.pending_plot_samples) {
+	if (sample.ray_id < SIZE_MAX)
+	    run.plotted_ray_extent = std::max(run.plotted_ray_extent,
+		sample.ray_id + 1);
+	const PlotKey key = plot_key(run, sample);
+	const uint64_t priority = plot_priority(sample);
+	auto found = run.plot_representatives.find(key);
+	const bool diagnostic =
+	    sample.category != ANALYZE_GQA_PLOT_VOLUME;
+	if (found == run.plot_representatives.end() ||
+	    (diagnostic &&
+		sample.severity > found->second.sample.severity) ||
+	    ((!diagnostic || EQUAL(sample.severity,
+		found->second.sample.severity)) &&
+		priority < found->second.priority))
+	    run.plot_representatives[key] = {sample, priority};
+    }
+    run.pending_plot_samples.clear();
+}
+
+static bool
+write_plot_lines(Run &run,
+    const std::vector<analyze_gqa_plot_line> &lines)
+{
+    for (const auto &line : lines) {
+	FILE *file = run.plot_files.at(static_cast<size_t>(line.category));
+	if (!file) continue;
+	pl_color(file, line.color[0], line.color[1], line.color[2]);
+	pdv_3line(file, line.start, line.end);
+	if (ferror(file)) return false;
+    }
+    return true;
+}
+
+static std::vector<analyze_gqa_plot_line>
+representative_plot_lines(const Run &run)
+{
+    std::vector<analyze_gqa_plot_line> lines;
+    lines.reserve(run.plot_representatives.size() *
+	REPRESENTATIVE_GLYPH_LINE_COUNT);
+    /* Footprint glyphs follow the surfel/point-rendering convention of
+     * showing a finite sample support, rather than an infinitely thin ray:
+     * Pfister et al. (2000), https://doi.org/10.1145/344779.344936.  The
+     * spatial cells are a single-level form of the bounded-detail principle
+     * used by QSplat: Rusinkiewicz and Levoy (2000),
+     * https://doi.org/10.1145/344779.344940. */
+    for (const auto &item : run.plot_representatives)
+	append_representative_lines(run, item.second.sample, lines);
+    return lines;
+}
+
+static void
+publish_plot(Run &run, bool force, bool final)
+{
+    if (!plot_enabled(run)) return;
+
+    if (run.opts.plot_mode == PLOT_ALL) {
+	std::vector<analyze_gqa_plot_line> new_lines;
+	new_lines.reserve(run.pending_plot_samples.size());
+	for (const PlotSample &sample : run.pending_plot_samples)
+	    new_lines.push_back(
+		plot_line(sample, sample.start, sample.end));
+	run.pending_plot_samples.clear();
+	if (!run.opts.plot_prefix.empty() &&
+	    !write_plot_lines(run, new_lines))
+	    run.plot_error = true;
+	run.pending_plot_lines.insert(run.pending_plot_lines.end(),
+	    new_lines.begin(), new_lines.end());
+    } else {
+	consume_representative_samples(run);
+    }
+
+    const int64_t now_us = bu_gettime();
+    const bool due = !run.last_plot_us ||
+	static_cast<double>(now_us - run.last_plot_us) / 1000.0 >
+	PROGRESS_INTERVAL_MS;
+    if (!force && !due) return;
+    run.last_plot_us = now_us;
+
+    if (run.opts.plot_mode == PLOT_ALL) {
+	if (run.report_plot && !run.pending_plot_lines.empty()) {
+	    const analyze_gqa_plot_batch batch = {
+		ANALYZE_GQA_PLOT_APPEND, run.pending_plot_lines.data(),
+		run.pending_plot_lines.size()};
+	    run.report_plot(&batch, run.plot_data);
+	}
+	run.pending_plot_lines.clear();
+    } else {
+	const std::vector<analyze_gqa_plot_line> lines =
+	    representative_plot_lines(run);
+	if (final && !run.opts.plot_prefix.empty() &&
+	    !write_plot_lines(run, lines))
+	    run.plot_error = true;
+	if (run.report_plot) {
+	    const analyze_gqa_plot_batch batch = {
+		ANALYZE_GQA_PLOT_REPLACE,
+		lines.empty() ? NULL : lines.data(), lines.size()};
+	    run.report_plot(&batch, run.plot_data);
+	}
+    }
+}
+
+static bool
+open_plot_files(Run &run)
+{
+    if (run.opts.plot_prefix.empty()) return true;
+    for (int category = 0; category < ANALYZE_GQA_PLOT_CATEGORY_COUNT;
+	 category++) {
+	if (!plot_category_requested(run, category)) continue;
+	const std::string path = plot_file_path(run.opts, category);
+	run.plot_files[category] = fopen(path.c_str(), "wb");
+	if (!run.plot_files[category]) {
+	    bu_vls_printf(run.result, "Cannot open plot output %s: %s\n",
+		path.c_str(), strerror(errno));
+	    return false;
+	}
+    }
+    return true;
+}
+
+static void
+close_plot_files(Run &run)
+{
+    for (FILE *&file : run.plot_files) {
+	if (!file) continue;
+	if (fclose(file) != 0) run.plot_error = true;
+	file = NULL;
+    }
+}
+
+static void
+set_plot_basis(PlotSample &sample, const vect_t direction)
+{
+    vect_t u, v;
+    bn_vec_perp(u, direction);
+    VUNITIZE(u);
+    VCROSS(v, direction, u);
+    VUNITIZE(v);
+    VMOVE(sample.u.data(), u);
+    VMOVE(sample.v.data(), v);
+}
+
+static int
+plot_direction(const vect_t direction)
+{
+    int axis = X;
+    if (std::fabs(direction[Y]) > std::fabs(direction[axis])) axis = Y;
+    if (std::fabs(direction[Z]) > std::fabs(direction[axis])) axis = Z;
+    return 3 + 2 * axis + (direction[axis] < 0.0 ? 1 : 0);
+}
+
+static int
+issue_plot_category(const char *type)
+{
+    if (!bu_strcmp(type, "overlap")) return ANALYZE_GQA_PLOT_OVERLAP;
+    if (!bu_strcmp(type, "adjacent-air"))
+	return ANALYZE_GQA_PLOT_ADJACENT_AIR;
+    if (!bu_strcmp(type, "exposed-air"))
+	return ANALYZE_GQA_PLOT_EXPOSED_AIR;
+    return ANALYZE_GQA_PLOT_GAP;
+}
+
+static PlotSample
+issue_plot_sample(const Issue &issue, int direction)
+{
+    PlotSample sample;
+    sample.category = issue_plot_category(issue.type.c_str());
+    sample.direction = direction;
+    sample.first_bit = issue.first_bit;
+    sample.second_bit = issue.second_bit;
+    sample.first_instance = issue.first_instance;
+    sample.second_instance = issue.second_instance;
+    sample.severity = issue.depth;
+    sample.start = issue.start;
+    sample.end = issue.plot_end;
+    sample.ray_id = issue.ray_id;
+    set_plot_basis(sample, issue.ray_direction.data());
+    return sample;
+}
+
+static PlotSample
+grid_issue_plot_sample(const Issue &issue, const vect_t u, const vect_t v,
+    double u_width, double v_width, int direction)
+{
+    PlotSample sample = issue_plot_sample(issue, direction);
+    sample.exact_footprint = true;
+    sample.u_width = u_width;
+    sample.v_width = v_width;
+    VMOVE(sample.u.data(), u);
+    VMOVE(sample.v.data(), v);
+    return sample;
 }
 
 static bool
@@ -455,6 +895,9 @@ enum AnalysisOption {
     ANALYSIS_JSON,
     ANALYSIS_INVALID_RAYS,
     ANALYSIS_DENSITY,
+    ANALYSIS_PLOT_PREFIX,
+    ANALYSIS_PLOT_MODE,
+    ANALYSIS_PLOT_RESOLUTION,
     ANALYSIS_OPTION_COUNT
 };
 
@@ -469,7 +912,10 @@ struct AnalysisOptionState {
     bool time_set = false;
     bool refine_set = false;
     bool accuracy_scope_set = false;
+    bool plot_mode_set = false;
+    bool plot_resolution_set = false;
     int uncertainty = 0;
+    int plot_view = 0;
 };
 
 struct AnalysisOptionTarget {
@@ -491,7 +937,7 @@ parse_analysis_option(struct bu_vls *msg, size_t argc, const char **argv,
 {
     static const std::map<std::string, int> measures = {
 	{"volume", VOLUME}, {"mass", MASS}, {"area", AREA},
-	{"centroid", CENTROID}, {"moments", MOMENTS}};
+	{"centroid", CENTROID}, {"moments", MOMENTS}, {"bounds", BOUNDS}};
     static const std::map<std::string, int> checks = {
 	{"overlaps", OVERLAPS}, {"gaps", GAPS},
 	{"adjacent-air", ADJACENT_AIR}, {"exposed-air", EXPOSED_AIR}};
@@ -605,6 +1051,22 @@ parse_analysis_option(struct bu_vls *msg, size_t argc, const char **argv,
 	    opts.density_path = value;
 	    valid = value[0] != '\0';
 	    break;
+	case ANALYSIS_PLOT_PREFIX:
+	    opts.plot_prefix = value;
+	    valid = value[0] != '\0';
+	    break;
+	case ANALYSIS_PLOT_MODE:
+	    state.plot_mode_set = true;
+	    valid = !bu_strcmp(value, "all") ||
+		!bu_strcmp(value, "representative");
+	    opts.plot_mode = !bu_strcmp(value, "all") ?
+		PLOT_ALL : PLOT_REPRESENTATIVE;
+	    break;
+	case ANALYSIS_PLOT_RESOLUTION:
+	    state.plot_resolution_set = true;
+	    valid = parse_finite_double(value, opts.plot_resolution) &&
+		opts.plot_resolution > 0.0;
+	    break;
 	case ANALYSIS_OPTION_COUNT:
 	    valid = false;
 	    break;
@@ -658,9 +1120,14 @@ parse_analysis_arguments(struct bu_vls *msg, std::vector<const char *> &args,
 	{ANALYSIS_TOLERANCE, "tolerance", "mm", "Set issue tolerance"},
 	{ANALYSIS_JSON, "json", "file", "Write JSON report"},
 	{ANALYSIS_INVALID_RAYS, "invalid-rays", "file", "Write invalid rays"},
-	{ANALYSIS_DENSITY, "density", "file", "Read density table"}
+	{ANALYSIS_DENSITY, "density", "file", "Read density table"},
+	{ANALYSIS_PLOT_PREFIX, "plot-prefix", "prefix", "Write Plot3 files"},
+	{ANALYSIS_PLOT_MODE, "plot-mode", "all|representative",
+	    "Select plot detail"},
+	{ANALYSIS_PLOT_RESOLUTION, "plot-resolution", "mm",
+	    "Set representative plot cell size"}
     };
-    struct bu_opt_desc descriptors[ANALYSIS_OPTION_COUNT + 2];
+    struct bu_opt_desc descriptors[ANALYSIS_OPTION_COUNT + 3];
     AnalysisOptionTarget targets[ANALYSIS_OPTION_COUNT];
 
     for (size_t i = 0; i < ANALYSIS_OPTION_COUNT; i++) {
@@ -670,7 +1137,9 @@ parse_analysis_arguments(struct bu_vls *msg, std::vector<const char *> &args,
     }
     BU_OPT(descriptors[ANALYSIS_OPTION_COUNT], "", "uncertainty", "", NULL,
 	&state.uncertainty, "Report uncertainty");
-    BU_OPT_NULL(descriptors[ANALYSIS_OPTION_COUNT + 1]);
+    BU_OPT(descriptors[ANALYSIS_OPTION_COUNT + 1], "", "plot-view", "", NULL,
+	&state.plot_view, "Update the active view while sampling");
+    BU_OPT_NULL(descriptors[ANALYSIS_OPTION_COUNT + 2]);
 
     const char *empty = NULL;
     return bu_opt_parse(msg, args.size(), args.empty() ? &empty : args.data(),
@@ -699,6 +1168,7 @@ parse_options(struct db_i *dbip, struct bu_vls *result, int argc,
     const int positional = parse_analysis_arguments(result, args, state);
     if (positional < 0) return false;
     opts.uncertainty = opts.uncertainty || state.uncertainty;
+    opts.plot_view = state.plot_view;
     for (int i = 0; i < positional; i++) {
 	if (is_unknown_analysis_option(args[i])) {
 	    bu_vls_printf(result, "Invalid analysis option: %s\n", args[i]);
@@ -730,13 +1200,17 @@ parse_options(struct db_i *dbip, struct bu_vls *result, int argc,
 	    opts.relative_error <= 0.0 && opts.absolute_error.empty()) ||
 	(opts.uncertainty && (!crofton || opts.checks ||
 	    opts.stability > 0.0 || opts.measures == 0 ||
+	    !(opts.measures & (VOLUME | MASS | AREA | CENTROID | MOMENTS)) ||
 	    opts.rays < 2 * UNCERTAINTY_REPLICATES ||
 	    !opts.invalid_path.empty())) ||
         !absolute_targets_valid ||
 	(state.accuracy_scope_set && !opts.uncertainty) ||
+	((state.plot_mode_set || state.plot_resolution_set) &&
+	    opts.plot_prefix.empty() && !opts.plot_view) ||
+	(state.plot_resolution_set && opts.plot_mode == PLOT_ALL) ||
 	((opts.measures & (CENTROID | MOMENTS)) && !(opts.measures & MASS))) {
 	bu_vls_printf(result,
-	    "Usage: gqa --analyze [--measure volume,mass,area,centroid,moments] "
+	    "Usage: gqa --analyze [--measure volume,mass,area,centroid,moments,bounds] "
 	    "[--check overlaps,gaps,adjacent-air,exposed-air] "
 	    "[--sampler grid|grid-rotated|crofton] [--sequence random|qmc] "
 	    "[--spacing mm|--rays count] [--stability mm] [--time ms] "
@@ -745,7 +1219,30 @@ parse_options(struct db_i *dbip, struct bu_vls *result, int argc,
 	    "[--uncertainty] [--relative-error fraction] "
 	    "[--absolute-error measure=value[,measure=value...]] "
 	    "[--accuracy-scope model|all] [--tolerance mm] [--density file] "
-	    "[--json file] [--invalid-rays file] object [objects...]\n");
+	    "[--json file] [--invalid-rays file] [--plot-prefix prefix] "
+	    "[--plot-view] [--plot-mode all|representative] "
+	    "[--plot-resolution mm] object [objects...]\n");
+	return false;
+    }
+    if (!opts.plot_prefix.empty()) {
+	for (int category = 0; category < ANALYZE_GQA_PLOT_CATEGORY_COUNT;
+	     category++) {
+	    if (!plot_category_requested(opts, category)) continue;
+	    const std::string path = plot_file_path(opts, category);
+	    if (paths_conflict(path, dbip->dbi_filename) ||
+		paths_conflict(path, opts.density_path.c_str()) ||
+		paths_conflict(path, opts.json_path.c_str()) ||
+		paths_conflict(path, opts.invalid_path.c_str())) {
+		bu_vls_printf(result,
+		    "Analysis plot files must be distinct from inputs and other outputs.\n");
+		return false;
+	    }
+	}
+    }
+    if ((!opts.plot_prefix.empty() || opts.plot_view) &&
+	!(opts.measures & VOLUME) && !opts.checks) {
+	bu_vls_printf(result,
+	    "Plot output requires the volume measure or a geometry check.\n");
 	return false;
     }
     if (paths_conflict(opts.json_path, dbip->dbi_filename) ||
@@ -779,7 +1276,8 @@ issue_key(const Issue &issue)
 static Issue
 make_issue(const char *type, const struct region *first,
     const struct region *second, double depth, const point_t start,
-    const point_t end, const struct xray *ray, size_t ray_id)
+    const point_t end, const struct xray *ray, size_t ray_id,
+    const fastf_t *plot_end = NULL)
 {
     Issue issue;
     issue.type = type;
@@ -799,6 +1297,9 @@ make_issue(const char *type, const struct region *first,
     issue.depth = depth;
     issue.start = {{start[X], start[Y], start[Z]}};
     issue.end = {{end[X], end[Y], end[Z]}};
+    issue.plot_end = plot_end ?
+	std::array<double, 3>{{plot_end[X], plot_end[Y], plot_end[Z]}} :
+	issue.end;
     issue.ray_origin = {{ray->r_pt[X], ray->r_pt[Y], ray->r_pt[Z]}};
     issue.ray_direction = {{ray->r_dir[X], ray->r_dir[Y], ray->r_dir[Z]}};
     issue.ray_id = ray_id;
@@ -830,11 +1331,17 @@ static void
 record_issue(Run *run, const char *type, const struct region *first,
 		     const struct region *second,
 		     double depth, const point_t start, const point_t end,
-             const struct xray *ray, size_t ray_id)
+             const struct xray *ray, size_t ray_id,
+		     const fastf_t *plot_end = NULL)
 {
     const Issue issue = make_issue(type, first, second, depth, start, end,
-	ray, ray_id);
+	ray, ray_id, plot_end);
     store_issue(run->issues, run->groups, !run->opts.json_path.empty(), issue);
+    const int category = issue_plot_category(type);
+    if (plot_enabled(*run) && plot_category_requested(*run, category)) {
+	run->pending_plot_samples.push_back(issue_plot_sample(issue,
+	    plot_direction(ray->r_dir)));
+    }
 }
 
 static double
@@ -914,6 +1421,7 @@ struct GridView {
 
 struct GridAccumulator {
     Run *run = NULL;
+    const GridView *grid = NULL;
     std::map<const struct region *, Metric> regions;
     std::vector<Issue> issues;
     std::map<std::string, std::pair<size_t, size_t>> groups;
@@ -921,10 +1429,13 @@ struct GridAccumulator {
     double view_volume[3] = {0.0, 0.0, 0.0};
     double view_mass[3] = {0.0, 0.0, 0.0};
     double cell_area = 0.0;
+    double cell_u_width = 0.0;
+    double cell_v_width = 0.0;
     double cell_covariance[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
     size_t ray_count = 0;
     size_t ray_id = 0;
     int view = 0;
+    std::vector<PlotSample> plot_samples;
 };
 
 struct GridWorker {
@@ -946,12 +1457,20 @@ struct GridParallelState {
 static void
 record_grid_issue(GridAccumulator *accumulator, const char *type,
     const struct region *first, const struct region *second, double depth,
-    const point_t start, const point_t end, const struct xray *ray)
+    const point_t start, const point_t end, const struct xray *ray,
+    const fastf_t *plot_end = NULL)
 {
     const Issue issue = make_issue(type, first, second, depth, start, end,
-	ray, accumulator->ray_id);
+	ray, accumulator->ray_id, plot_end);
     store_issue(accumulator->issues, accumulator->groups,
 	!accumulator->run->opts.json_path.empty(), issue);
+    const int category = issue_plot_category(type);
+    if (plot_enabled(*accumulator->run) &&
+	plot_category_requested(*accumulator->run, category))
+	accumulator->plot_samples.push_back(grid_issue_plot_sample(issue,
+	    accumulator->grid->u, accumulator->grid->v,
+	    accumulator->cell_u_width, accumulator->cell_v_width,
+	    accumulator->view));
 }
 
 static int
@@ -1005,10 +1524,14 @@ grid_hit(struct application *ap, struct partition *head,
 	    if ((run->opts.checks & ADJACENT_AIR) &&
 		previous->pt_regionp->reg_aircode && region->reg_aircode &&
 		previous->pt_regionp->reg_aircode != region->reg_aircode &&
-		gap <= run->opts.tolerance)
+		gap <= run->opts.tolerance) {
+		    point_t adjacent_end;
+		    VJOIN1(adjacent_end, in_point,
+			ADJACENT_AIR_PLOT_FRACTION * depth, ap->a_ray.r_dir);
 		    record_grid_issue(accumulator, "adjacent-air",
 			previous->pt_regionp, region, gap, previous_out, in_point,
-			&ap->a_ray);
+			&ap->a_ray, adjacent_end);
+	    }
 	}
 	if ((run->opts.checks & EXPOSED_AIR) && region->reg_aircode &&
 	    (!previous || part->pt_inhit->hit_dist > previous->pt_outhit->hit_dist))
@@ -1016,6 +1539,23 @@ grid_hit(struct application *ap, struct partition *head,
 		depth, in_point, out_point, &ap->a_ray);
 	previous = part;
 	if (!run->opts.include_air && region->reg_aircode) continue;
+	if (plot_enabled(*run) && (run->opts.measures & VOLUME)) {
+	    PlotSample sample;
+	    sample.category = ANALYZE_GQA_PLOT_VOLUME;
+	    sample.direction = view;
+	    sample.first_bit = region->reg_bit;
+	    sample.first_instance = region->reg_instnum;
+	    sample.severity = depth;
+	    sample.start = {{in_point[X], in_point[Y], in_point[Z]}};
+	    sample.end = {{out_point[X], out_point[Y], out_point[Z]}};
+	    VMOVE(sample.u.data(), accumulator->grid->u);
+	    VMOVE(sample.v.data(), accumulator->grid->v);
+	    sample.u_width = accumulator->cell_u_width;
+	    sample.v_width = accumulator->cell_v_width;
+	    sample.ray_id = accumulator->ray_id;
+	    sample.exact_footprint = true;
+	    accumulator->plot_samples.push_back(sample);
+	}
 	const double volume = depth * cell_area / 3.0;
 	const double mass = volume * density_for(run,
 	    accumulator->bad_materials, region);
@@ -1156,7 +1696,7 @@ setup_grid_view(GridView &grid, const Run &run, int view, size_t level,
 
 static void
 grid_cell(const GridView &grid, size_t index, struct xray &ray,
-    double &area, double covariance[6])
+    double &area, double covariance[6], double &u_width, double &v_width)
 {
     const size_t u_index = index / grid.v_count;
     const size_t v_index = index % grid.v_count;
@@ -1168,8 +1708,8 @@ grid_cell(const GridView &grid, size_t index, struct xray &ray,
 	grid.v_start + v_index * grid.spacing);
     const double cell_v_max = std::min(grid.v_max,
 	grid.v_start + (v_index + 1) * grid.spacing);
-    const double u_width = cell_u_max - cell_u_min;
-    const double v_width = cell_v_max - cell_v_min;
+    u_width = cell_u_max - cell_u_min;
+    v_width = cell_v_max - cell_v_min;
     const double u_coordinate = 0.5 * (cell_u_min + cell_u_max);
     const double v_coordinate = 0.5 * (cell_v_min + cell_v_max);
     VJOIN3(ray.r_pt, grid.center, u_coordinate, grid.u,
@@ -1207,6 +1747,7 @@ grid_worker(int cpu, void *data)
 	rt_init_resource(&worker.resource, cpu, state->run->rtip);
     }
     accumulator.view = state->view;
+    accumulator.grid = state->grid;
     struct application ap;
     RT_APPLICATION_INIT(&ap);
     ap.a_rt_i = accumulator.run->rtip;
@@ -1222,7 +1763,8 @@ grid_worker(int cpu, void *data)
 	const size_t end = std::min(begin + GRID_WORK_CHUNK_RAYS, state->end);
 	for (size_t index = begin; index < end; index++) {
 	    grid_cell(*state->grid, index, ap.a_ray, accumulator.cell_area,
-		accumulator.cell_covariance);
+		accumulator.cell_covariance, accumulator.cell_u_width,
+		accumulator.cell_v_width);
 	    accumulator.ray_id = state->ray_id_base + index;
 	    rt_shootray(&ap);
 	    accumulator.ray_count++;
@@ -1248,6 +1790,18 @@ grid_accumulated_view_volumes(const std::vector<GridWorker> &workers)
 	    volumes[view] += worker.accumulator.view_volume[view];
     }
     return volumes;
+}
+
+static void
+collect_grid_plot_samples(Run &run, std::vector<GridWorker> &workers)
+{
+    for (auto &worker : workers) {
+	std::vector<PlotSample> &samples = worker.accumulator.plot_samples;
+	run.pending_plot_samples.insert(run.pending_plot_samples.end(),
+	    std::make_move_iterator(samples.begin()),
+	    std::make_move_iterator(samples.end()));
+	samples.clear();
+    }
 }
 
 static void
@@ -1326,6 +1880,8 @@ enum GridPassStatus { GRID_PASS_ERROR, GRID_PASS_COMPLETE, GRID_PASS_TIME };
 static GridPassStatus
 run_grid_pass(Run &run, size_t level, double spacing, GridPass &pass)
 {
+    if (plot_enabled(run) && run.opts.plot_mode == PLOT_REPRESENTATIVE)
+	run.plot_representatives.clear();
     GridView views[3];
     size_t pass_total = 0;
     for (int view = 0; view < 3; view++) {
@@ -1361,6 +1917,8 @@ run_grid_pass(Run &run, size_t level, double spacing, GridPass &pass)
 	    state.ray_id_base = initial_ray_count + view_ray_offset;
 	    state.view = view;
 	    bu_parallel(grid_worker, parallel_count, &state);
+	    collect_grid_plot_samples(run, workers);
+	    publish_plot(run, false, false);
 	    const size_t accumulated = grid_accumulated_rays(workers);
 	    run.ray_id = initial_ray_count + accumulated;
 	    report_grid_progress(run, level, spacing, view, accumulated,
@@ -1378,8 +1936,11 @@ run_grid_pass(Run &run, size_t level, double spacing, GridPass &pass)
 	merge_grid_issues(run, worker.accumulator);
     if (status == GRID_PASS_COMPLETE)
 	merge_grid_measurements(run, workers);
-    else
+    else {
 	run.discarded_grid_rays += run.ray_id - initial_ray_count;
+	if (plot_enabled(run) && run.opts.plot_mode == PLOT_REPRESENTATIVE)
+	    run.plot_representatives = run.completed_plot_representatives;
+    }
 
     for (size_t i = 0; i < workers.size(); i++) {
 	if (workers[i].active &&
@@ -1390,6 +1951,10 @@ run_grid_pass(Run &run, size_t level, double spacing, GridPass &pass)
     }
     pass.spacing = spacing;
     pass.ray_count = run.ray_id - initial_ray_count;
+    if (status == GRID_PASS_COMPLETE && plot_enabled(run) &&
+	run.opts.plot_mode == PLOT_REPRESENTATIVE)
+	run.completed_plot_representatives = run.plot_representatives;
+    publish_plot(run, true, false);
     return status;
 }
 
@@ -1522,6 +2087,26 @@ run_grid(Run &run)
 }
 
 static void
+append_crofton_volume_plot(Run &run,
+    const struct rt_crofton_segment &segment)
+{
+    if (!plot_enabled(run) || !(run.opts.measures & VOLUME)) return;
+    PlotSample sample;
+    sample.category = ANALYZE_GQA_PLOT_VOLUME;
+    sample.direction = plot_direction(segment.ray_direction);
+    sample.first_bit = segment.region->reg_bit;
+    sample.first_instance = segment.region->reg_instnum;
+    sample.severity = segment.thickness;
+    sample.start = {{segment.in_point[X], segment.in_point[Y],
+	segment.in_point[Z]}};
+    sample.end = {{segment.out_point[X], segment.out_point[Y],
+	segment.out_point[Z]}};
+    sample.ray_id = segment.ray_id;
+    set_plot_basis(sample, segment.ray_direction);
+    run.pending_plot_samples.push_back(sample);
+}
+
+static void
 visit_segment(const struct rt_crofton_segment *segment, void *data)
 {
     Run *run = static_cast<Run *>(data);
@@ -1532,6 +2117,7 @@ visit_segment(const struct rt_crofton_segment *segment, void *data)
     const double thickness = segment->thickness;
     run->crofton_total_chord += thickness;
     if (!run->opts.include_air && region->reg_aircode) return;
+    append_crofton_volume_plot(*run, *segment);
     Metric &metric = run->regions[region];
     accumulate_segment(metric, thickness,
 	thickness * density_for(run, region), segment->in_point,
@@ -1600,6 +2186,7 @@ visit_ray(const struct rt_crofton_ray *ray, void *data)
 	const double thickness = segment->thickness;
 	run->crofton_total_chord += thickness;
 	if (run->opts.include_air || !region->reg_aircode) {
+	    append_crofton_volume_plot(*run, *segment);
 	    Metric &metric = run->regions[region];
 	    accumulate_segment(metric, thickness,
 		thickness * density_for(run, region), segment->in_point,
@@ -1618,9 +2205,13 @@ visit_ray(const struct rt_crofton_ray *ray, void *data)
 		previous->region->reg_aircode && region->reg_aircode &&
 		previous->region->reg_aircode != region->reg_aircode &&
 		gap <= run->opts.tolerance) {
+		point_t adjacent_end;
+		VJOIN1(adjacent_end, segment->in_point,
+		    ADJACENT_AIR_PLOT_FRACTION * thickness,
+		    ray->direction);
 		record_issue(run, "adjacent-air", previous->region, region, gap,
 		    previous->out_point, segment->in_point, &sampled_ray,
-		    ray->ray_id);
+		    ray->ray_id, adjacent_end);
 	    }
 	}
 	if ((run->opts.checks & EXPOSED_AIR) && region->reg_aircode &&
@@ -1843,6 +2434,7 @@ run_crofton_targeted_overlaps(Run &run, const std::vector<OverlapCandidate> &can
                 run.active_candidate_second = NULL;
                 return false;
             }
+            publish_plot(run, false, false);
             ray_offset += stats.ray_count;
             run.invalid_partitions += stats.invalid_partition_count;
             candidate_fired += stats.ray_count;
@@ -1919,6 +2511,7 @@ report_crofton_progress(size_t ray_count, size_t UNUSED(crossing_count),
     int stability_evaluated, double UNUSED(sampling_elapsed_ms), void *data)
 {
     Run *run = static_cast<Run *>(data);
+    publish_plot(*run, false, false);
     if (!run->report_progress)
         return;
     const int64_t now_us = bu_gettime();
@@ -1962,8 +2555,9 @@ run_crofton_single(Run &run, size_t ray_count, uint64_t stream_id,
     struct rt_crofton_params params = {
         ray_count, run.opts.stability, sampling_time_ms,
         stability_metrics,
-        run.report_progress ? report_crofton_progress : NULL,
-        run.report_progress ? &run : NULL};
+        (run.report_progress || plot_enabled(run)) ?
+	    report_crofton_progress : NULL,
+        (run.report_progress || plot_enabled(run)) ? &run : NULL};
     const size_t initial_ray_count = run.ray_id;
     const bool use_ray_diagnostics = run.opts.checks != 0;
     int visit_result;
@@ -1988,6 +2582,7 @@ run_crofton_single(Run &run, size_t ray_count, uint64_t stream_id,
 	    "Crofton sampling failed.\n");
 	return false;
     }
+    publish_plot(run, true, false);
     if (!std::isfinite(stats.volume) || !std::isfinite(stats.surface_area)) {
 	bu_vls_printf(run.result,
 	    "Crofton time budget produced a non-finite estimate.\n");
@@ -2649,6 +3244,16 @@ report(Run &run)
     if (run.opts.measures & VOLUME) bu_vls_printf(out, "Volume: %.9g mm^3\n", run.model_volume);
     if (run.opts.measures & MASS) bu_vls_printf(out, "Mass: %.9g g\n", run.model_mass);
     if (run.opts.measures & AREA) bu_vls_printf(out, "Area: %.9g mm^2\n", run.model_area);
+    if (run.opts.measures & BOUNDS) {
+	const double dx = run.grid_max[X] - run.grid_min[X];
+	const double dy = run.grid_max[Y] - run.grid_min[Y];
+	const double dz = run.grid_max[Z] - run.grid_min[Z];
+	bu_vls_printf(out,
+	    "Bounding box: %.9g %.9g %.9g  %.9g %.9g %.9g mm\n",
+	    V3ARGS(run.grid_min), V3ARGS(run.grid_max));
+	bu_vls_printf(out, "Bounding-box face areas: %.9g %.9g %.9g mm^2\n",
+	    dy * dz, dz * dx, dx * dy);
+    }
     if (run.opts.measures & CENTROID) {
 	if (total.mass > 0.0)
 	    bu_vls_printf(out, "Centroid: %.9g %.9g %.9g mm\n",
@@ -2860,6 +3465,15 @@ report(Run &run)
 	    nlohmann::json(run.observed_stability) : nlohmann::json(nullptr)},
 	{"invalid_partition_count", run.invalid_partitions},
 	{"discarded_grid_rays", run.discarded_grid_rays}};
+    j["settings"]["plot_mode"] = plot_enabled(run) ?
+	nlohmann::json(run.opts.plot_mode == PLOT_ALL ? "all" :
+	    "representative") : nlohmann::json(nullptr);
+    j["settings"]["plot_resolution_mm"] =
+	plot_enabled(run) && run.opts.plot_mode == PLOT_REPRESENTATIVE ?
+	nlohmann::json(run.plot_bin_size) : nlohmann::json(nullptr);
+    j["settings"]["plot_view"] = run.opts.plot_view;
+    j["settings"]["plot_prefix"] = run.opts.plot_prefix.empty() ?
+	nlohmann::json(nullptr) : nlohmann::json(run.opts.plot_prefix);
     j["grid_view_directions"] = nlohmann::json::array();
     if (!crofton) {
 	for (const auto &direction : run.grid_directions)
@@ -2971,6 +3585,18 @@ report(Run &run)
 	j["overlap_candidates"].push_back(entry);
     }
     j["model"] = metric_json(total, run.opts.measures);
+    if (run.opts.measures & BOUNDS) {
+	const std::array<double, 3> minimum = {{run.grid_min[X],
+	    run.grid_min[Y], run.grid_min[Z]}};
+	const std::array<double, 3> maximum = {{run.grid_max[X],
+	    run.grid_max[Y], run.grid_max[Z]}};
+	const std::array<double, 3> span = {{maximum[X] - minimum[X],
+	    maximum[Y] - minimum[Y], maximum[Z] - minimum[Z]}};
+	j["bounds"] = {{"minimum_mm", minimum}, {"maximum_mm", maximum},
+	    {"span_mm", span},
+	    {"face_areas_mm2", {span[Y] * span[Z], span[Z] * span[X],
+		span[X] * span[Y]}}};
+    }
     j["object_results"] = nlohmann::json::array();
     std::map<std::string, Metric> object_totals;
     bool object_membership_clear = true;
@@ -3026,6 +3652,51 @@ report(Run &run)
     return true;
 }
 
+static bool
+set_sampling_bounds(Run &run)
+{
+    point_t bounds_min, bounds_max;
+    bool have_bounds = false;
+    struct region *region;
+
+    /* librt keeps half-spaces in the prepared model for Boolean evaluation.
+     * Region-tree bounds retain finite intersections and subtractions while
+     * still identifying results that are genuinely unbounded. */
+    VSETALL(bounds_min, MAX_FASTF);
+    VSETALL(bounds_max, -MAX_FASTF);
+    for (BU_LIST_FOR (region, region, &run.rtip->HeadRegion)) {
+	point_t region_min, region_max;
+	bool empty = false;
+
+	if (!region->reg_treetop ||
+	    rt_bound_tree(region->reg_treetop, region_min, region_max) < 0) {
+	    bu_vls_printf(run.result, "Cannot determine bounds for region %s.\n",
+		region->reg_name);
+	    return false;
+	}
+	for (int axis = 0; axis < 3; axis++) {
+	    if (INVALID(region_min[axis]) || INVALID(region_max[axis])) {
+		bu_vls_printf(run.result,
+		    "Cannot analyze unbounded region %s.\n", region->reg_name);
+		return false;
+	    }
+	    if (region_min[axis] > region_max[axis]) empty = true;
+	}
+	if (empty) continue;
+	VMIN(bounds_min, region_min);
+	VMAX(bounds_max, region_max);
+	have_bounds = true;
+    }
+    if (!have_bounds) {
+	bu_vls_printf(run.result,
+	    "Cannot determine finite sampling bounds for selected objects.\n");
+	return false;
+    }
+    VMOVE(run.grid_min, bounds_min);
+    VMOVE(run.grid_max, bounds_max);
+    return true;
+}
+
 } // namespace
 
 extern "C" int
@@ -3062,13 +3733,28 @@ analyze_gqa(const struct analyze_gqa_context *context, int argc,
     run.result = context->result;
     if (!parse_options(run.dbip, run.result, argc, argv, run.opts))
 	return ANALYZE_ERROR;
+    if (run.opts.plot_view && !context->report_plot) {
+	bu_vls_printf(run.result,
+	    "--plot-view requires a caller with an active drawable view.\n");
+	return ANALYZE_ERROR;
+    }
+    run.report_plot = run.opts.plot_view ? context->report_plot : NULL;
+    run.plot_data = context->plot_data;
+    if (run.report_plot) {
+	const analyze_gqa_plot_batch clear = {
+	    ANALYZE_GQA_PLOT_REPLACE, NULL, 0};
+	run.report_plot(&clear, run.plot_data);
+    }
     const bool accuracy_requested = run.opts.relative_error > 0.0 ||
         !run.opts.absolute_error.empty();
     const bool crofton = run.opts.sampler == CROFTON;
+    const int sampled_measures = VOLUME | MASS | AREA | CENTROID | MOMENTS;
+    const bool sampling_requested =
+	(run.opts.measures & sampled_measures) || run.opts.checks;
     const bool resource_control_set = crofton ? run.opts.rays_set :
 	run.opts.refine_set;
     const bool default_control_eligible =
-        run.opts.measures != 0 && run.opts.checks == 0 &&
+        sampling_requested && run.opts.checks == 0 &&
 	!resource_control_set && (!run.opts.uncertainty || accuracy_requested);
     if (default_control_eligible && !run.opts.time_set) {
 	run.opts.time_ms = crofton ? DEFAULT_CROFTON_TIME_MS :
@@ -3109,6 +3795,19 @@ analyze_gqa(const struct analyze_gqa_context *context, int argc,
 	    analyze_densities_destroy(run.densities);
 	    return ANALYZE_ERROR;
 	}
+	if (source && !run.opts.plot_prefix.empty()) {
+	    for (int category = 0;
+		 category < ANALYZE_GQA_PLOT_CATEGORY_COUNT; category++) {
+		if (!plot_category_requested(run.opts, category)) continue;
+		if (paths_conflict(plot_file_path(run.opts, category), source)) {
+		    bu_vls_printf(run.result,
+			"Analysis plot output cannot replace the density source.\n");
+		    bu_free(source, "density source");
+		    analyze_densities_destroy(run.densities);
+		    return ANALYZE_ERROR;
+		}
+	    }
+	}
 	if (source) bu_free(source, "density source");
     }
     run.rtip = rt_i_create(run.dbip);
@@ -3128,27 +3827,23 @@ analyze_gqa(const struct analyze_gqa_context *context, int argc,
     }
     if (valid) {
 	rt_prep_parallel(run.rtip, bu_avail_cpus());
-	struct soltab *solid;
-	bool has_halfspace = false;
-	point_t tight_min, tight_max;
-	VSETALL(tight_min, MAX_FASTF);
-	VSETALL(tight_max, -MAX_FASTF);
-	RT_VISIT_ALL_SOLTABS_START(solid, run.rtip) {
-	    if (solid->st_id == ID_HALF) has_halfspace = true;
-	    VMIN(tight_min, solid->st_min);
-	    VMAX(tight_max, solid->st_max);
-	} RT_VISIT_ALL_SOLTABS_END;
-	VMOVE(run.grid_min, tight_min);
-	VMOVE(run.grid_max, tight_max);
-	if (has_halfspace) {
-	    bu_vls_printf(run.result,
-		"Experimental analysis does not support half-space primitives.\n");
-	    valid = false;
+	valid = set_sampling_bounds(run);
+	if (valid && plot_enabled(run)) {
+	    vect_t diagonal;
+	    VSUB2(diagonal, run.grid_max, run.grid_min);
+	    const double diagonal_length = MAGNITUDE(diagonal);
+	    run.plot_bin_size = run.opts.plot_resolution > 0.0 ?
+		run.opts.plot_resolution : diagonal_length /
+		DEFAULT_PLOT_BINS_PER_DIAGONAL;
+	    if (!(run.plot_bin_size > 0.0) ||
+		!std::isfinite(run.plot_bin_size))
+		run.plot_bin_size = BN_TOL_DIST;
+	    valid = open_plot_files(run);
 	}
 	if (valid && run.opts.stability_defaulted) {
 	    double smallest_span = std::numeric_limits<double>::infinity();
 	    for (int axis = 0; axis < 3; axis++) {
-		const double span = tight_max[axis] - tight_min[axis];
+		const double span = run.grid_max[axis] - run.grid_min[axis];
 		if (std::isfinite(span) && span > 0.0)
 		    smallest_span = std::min(smallest_span, span);
 	    }
@@ -3167,7 +3862,7 @@ analyze_gqa(const struct analyze_gqa_context *context, int argc,
 	}
 	if (valid && !crofton && !run.opts.spacing_set) {
 	    vect_t diagonal;
-	    VSUB2(diagonal, tight_max, tight_min);
+	    VSUB2(diagonal, run.grid_max, run.grid_min);
 	    const double scale_spacing = MAGNITUDE(diagonal) /
 		DEFAULT_GRID_SAMPLES_PER_DIAGONAL;
 	    if (!std::isfinite(scale_spacing)) {
@@ -3189,9 +3884,16 @@ analyze_gqa(const struct analyze_gqa_context *context, int argc,
 		    "No regions found in selected objects.\n");
 		valid = false;
 	    } else {
-		valid = crofton ? run_crofton(run) : run_grid(run);
+		if (sampling_requested)
+		    valid = crofton ? run_crofton(run) : run_grid(run);
 	    }
 	}
+    }
+    if (valid && plot_enabled(run)) publish_plot(run, true, true);
+    close_plot_files(run);
+    if (run.plot_error) {
+	bu_vls_printf(run.result, "Failed while writing analysis plot output.\n");
+	valid = false;
     }
     if (valid) valid = report(run);
     rt_i_destroy(run.rtip);
