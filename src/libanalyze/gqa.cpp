@@ -2443,7 +2443,7 @@ static bool
 run_crofton(Run &run)
 {
     if (run.opts.checks == OVERLAPS && run.opts.measures == 0 &&
-        run.opts.time_ms == 0.0) {
+        ZERO(run.opts.time_ms)) {
         const std::vector<OverlapCandidate> candidates =
             find_overlap_candidates(run.rtip, run.opts.tolerance);
         return run_crofton_targeted_overlaps(run, candidates);

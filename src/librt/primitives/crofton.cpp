@@ -1099,7 +1099,8 @@ crofton_shoot_impl(struct rt_crofton_session      *session,
     shared.invalid_visitor = invalid_visitor;
     shared.visitor_data = visitor_data;
     const unsigned int stability_metrics = params ?
-        params->stability_metrics : RT_CROFTON_STABILITY_DEFAULT;
+        params->stability_metrics :
+        static_cast<unsigned int>(RT_CROFTON_STABILITY_DEFAULT);
     const bool infer_stability_metrics =
         stability_metrics == RT_CROFTON_STABILITY_DEFAULT;
     const bool stabilize_surface = infer_stability_metrics ?
