@@ -315,11 +315,30 @@ fi
 
 # The shared bu_opt parser must recognize assignment syntax and options on
 # either side of positional database and object arguments.
-run_capture gqa.modern.options.out $GQABIN --analyze --measure=volume gqa.g --sampler=crofton mass_solid.r --rays=1000
-if ! grep -q '^gqa analysis (crofton, qmc), 1000 rays$' gqa.modern.options.out ||
+run_capture gqa.modern.options.out $GQABIN --analyze --measure=volume gqa.g --sampler=crofton --sequence=random mass_solid.r --rays=1000
+if ! grep -q '^gqa analysis (crofton, random), 1000 rays$' gqa.modern.options.out ||
    ! grep -q '^Stopping condition: ray_limit$' gqa.modern.options.out ; then
     log "FAIL: experimental bu_opt syntax and positional argument handling"
     STATUS="`expr $STATUS + 1`"
+fi
+
+# Exercise QMC when this build provides it.  A failed probe is a valid skip
+# only when gqa explicitly reports that QMC support is unavailable.
+log "... checking for QMC support"
+QMC_STATUS=0
+$GQABIN --analyze --measure=volume --sampler=crofton --sequence=qmc --rays=1000 gqa.g mass_solid.r > gqa.modern.qmc.out 2>&1 || QMC_STATUS=$?
+cat gqa.modern.qmc.out >> "$LOGFILE"
+if test $QMC_STATUS -eq 0 ; then
+    if ! grep -q '^gqa analysis (crofton, qmc), 1000 rays$' gqa.modern.qmc.out ||
+       ! grep -q '^Stopping condition: ray_limit$' gqa.modern.qmc.out ; then
+	log "FAIL: experimental QMC analysis"
+	STATUS="`expr $STATUS + 1`"
+    fi
+else
+    if ! grep -q '^QMC is unavailable in this build\.$' gqa.modern.qmc.out ; then
+	log "FAIL: experimental QMC availability check"
+	STATUS="`expr $STATUS + 1`"
+    fi
 fi
 
 if $GQABIN --analyze --measure=invalid gqa.g mass_solid.r > gqa.modern.invalid_value.out 2>&1 ; then
