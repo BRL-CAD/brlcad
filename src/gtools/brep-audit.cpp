@@ -236,11 +236,36 @@ struct ray_audit_telemetry {
     size_t prepared_selected = 0;
     size_t fallback[RT_BREP_PREPARED_FALLBACK_COUNT] = {};
     size_t solver_calls = 0;
+    size_t manifold_edges = 0;
+    size_t prepared_edge_spans = 0;
+    size_t candidate_edge_spans = 0;
     size_t candidate_surface_spans = 0;
     size_t surface_subdivision_boxes = 0;
     size_t surface_isolated_boxes = 0;
     size_t surface_fold_attempts = 0;
     size_t surface_fold_certified = 0;
+    size_t surface_fold_candidates = 0;
+    size_t surface_fold_krawczyk_attempts = 0;
+    size_t surface_fold_krawczyk_available = 0;
+    size_t surface_fold_krawczyk_certified = 0;
+    size_t surface_fold_expansion_attempts = 0;
+    size_t surface_fold_expansion_available = 0;
+    size_t surface_fold_expansion_certified = 0;
+    size_t surface_fold_expansion_contraction_attempts = 0;
+    size_t surface_fold_expansion_contracted = 0;
+    size_t surface_fold_corridor_attempts = 0;
+    size_t surface_fold_corridor_available = 0;
+    size_t surface_fold_corridor_unique = 0;
+    size_t surface_fold_corridor_graph_attempts = 0;
+    size_t surface_fold_corridor_graph_certified = 0;
+    size_t surface_fold_corridor_graph_boxes = 0;
+    size_t surface_fold_corridor_graph_interval_attempts = 0;
+    size_t surface_fold_corridor_graph_interval_signed = 0;
+    size_t surface_fold_corridor_graph_interval_excluded = 0;
+    size_t surface_fold_corridor_graph_exact_fallbacks = 0;
+    size_t surface_fold_corridor_graph_parent_restrictions = 0;
+    size_t surface_fold_strip_build_attempts = 0;
+    size_t surface_fold_strip_build_avoided = 0;
     size_t surface_workspace_exhausted = 0;
     size_t surface_box_overflow = 0;
     size_t local_root_overflow = 0;
@@ -1698,11 +1723,56 @@ ray_audit_accumulate(ray_audit_telemetry &total,
 		RT_BREP_PREPARED_FALLBACK_COUNT)
 	total.fallback[trace.prepared_production_fallback]++;
     total.solver_calls += trace.solver_calls;
+    total.manifold_edges += trace.manifold_edges;
+    total.prepared_edge_spans += trace.prepared_edge_spans;
+    total.candidate_edge_spans += trace.candidate_edge_spans;
     total.candidate_surface_spans += trace.candidate_surface_spans;
     total.surface_subdivision_boxes += trace.surface_subdivision_boxes;
     total.surface_isolated_boxes += trace.surface_isolated_boxes;
     total.surface_fold_attempts += trace.surface_fold_attempts;
     total.surface_fold_certified += trace.surface_fold_complete;
+    total.surface_fold_candidates += trace.surface_fold_candidates;
+    total.surface_fold_krawczyk_attempts +=
+	trace.surface_fold_krawczyk_attempts;
+    total.surface_fold_krawczyk_available +=
+	trace.surface_fold_krawczyk_available;
+    total.surface_fold_krawczyk_certified +=
+	trace.surface_fold_krawczyk_certified;
+    total.surface_fold_expansion_attempts +=
+	trace.surface_fold_expansion_attempts;
+    total.surface_fold_expansion_available +=
+	trace.surface_fold_expansion_available;
+    total.surface_fold_expansion_certified +=
+	trace.surface_fold_expansion_certified;
+    total.surface_fold_expansion_contraction_attempts +=
+	trace.surface_fold_expansion_contraction_attempts;
+    total.surface_fold_expansion_contracted +=
+	trace.surface_fold_expansion_contracted;
+    total.surface_fold_corridor_attempts +=
+	trace.surface_fold_corridor_attempts;
+    total.surface_fold_corridor_available +=
+	trace.surface_fold_corridor_available;
+    total.surface_fold_corridor_unique += trace.surface_fold_corridor_unique;
+    total.surface_fold_corridor_graph_attempts +=
+	trace.surface_fold_corridor_graph_attempts;
+    total.surface_fold_corridor_graph_certified +=
+	trace.surface_fold_corridor_graph_certified;
+    total.surface_fold_corridor_graph_boxes +=
+	trace.surface_fold_corridor_graph_boxes;
+    total.surface_fold_corridor_graph_interval_attempts +=
+	trace.surface_fold_corridor_graph_interval_attempts;
+    total.surface_fold_corridor_graph_interval_signed +=
+	trace.surface_fold_corridor_graph_interval_signed;
+    total.surface_fold_corridor_graph_interval_excluded +=
+	trace.surface_fold_corridor_graph_interval_excluded;
+    total.surface_fold_corridor_graph_exact_fallbacks +=
+	trace.surface_fold_corridor_graph_exact_fallbacks;
+    total.surface_fold_corridor_graph_parent_restrictions +=
+	trace.surface_fold_corridor_graph_parent_restrictions;
+    total.surface_fold_strip_build_attempts +=
+	trace.surface_fold_strip_build_attempts;
+    total.surface_fold_strip_build_avoided +=
+	trace.surface_fold_strip_build_avoided;
     total.surface_workspace_exhausted += trace.surface_workspace_exhausted;
     total.surface_box_overflow += trace.surface_box_overflow;
     total.local_root_overflow += trace.local_root_overflow;
@@ -1895,6 +1965,10 @@ print_ray_audit_telemetry(const ray_audit_telemetry &total)
 	    << total.fallback[fallback];
     }
     std::cout << "},\"solver_calls\":" << total.solver_calls
+	<< ",\"edges\":{\"manifold\":" << total.manifold_edges
+	<< ",\"prepared_spans\":" << total.prepared_edge_spans
+	<< ",\"candidate_spans\":" << total.candidate_edge_spans
+	<< "}"
 	<< ",\"candidate_surface_spans\":"
 	<< total.candidate_surface_spans
 	<< ",\"surface_subdivision_boxes\":"
@@ -1902,6 +1976,39 @@ print_ray_audit_telemetry(const ray_audit_telemetry &total)
 	<< ",\"surface_isolated_boxes\":" << total.surface_isolated_boxes
 	<< ",\"surface_fold_attempts\":" << total.surface_fold_attempts
 	<< ",\"surface_fold_certified\":" << total.surface_fold_certified
+	<< ",\"fold\":{\"candidates\":" << total.surface_fold_candidates
+	<< ",\"binary_krawczyk\":{\"attempts\":"
+	<< total.surface_fold_krawczyk_attempts << ",\"available\":"
+	<< total.surface_fold_krawczyk_available << ",\"certified\":"
+	<< total.surface_fold_krawczyk_certified << "}"
+	<< ",\"expansion_krawczyk\":{\"attempts\":"
+	<< total.surface_fold_expansion_attempts << ",\"available\":"
+	<< total.surface_fold_expansion_available << ",\"certified\":"
+	<< total.surface_fold_expansion_certified << ",\"contraction_attempts\":"
+	<< total.surface_fold_expansion_contraction_attempts
+	<< ",\"contracted\":" << total.surface_fold_expansion_contracted
+	<< "}"
+	<< ",\"corridors\":{\"attempts\":"
+	<< total.surface_fold_corridor_attempts << ",\"available\":"
+	<< total.surface_fold_corridor_available << ",\"unique\":"
+	<< total.surface_fold_corridor_unique << "}"
+	<< ",\"graph\":{\"attempts\":"
+	<< total.surface_fold_corridor_graph_attempts << ",\"certified\":"
+	<< total.surface_fold_corridor_graph_certified << ",\"boxes\":"
+	<< total.surface_fold_corridor_graph_boxes
+	<< ",\"interval_attempts\":"
+	<< total.surface_fold_corridor_graph_interval_attempts
+	<< ",\"interval_signed\":"
+	<< total.surface_fold_corridor_graph_interval_signed
+	<< ",\"interval_excluded\":"
+	<< total.surface_fold_corridor_graph_interval_excluded
+	<< ",\"exact_fallbacks\":"
+	<< total.surface_fold_corridor_graph_exact_fallbacks
+	<< ",\"parent_restrictions\":"
+	<< total.surface_fold_corridor_graph_parent_restrictions << "}"
+	<< ",\"strip_build\":{\"attempts\":"
+	<< total.surface_fold_strip_build_attempts << ",\"avoided\":"
+	<< total.surface_fold_strip_build_avoided << "}}"
 	<< ",\"workspace\":{\"surface_exhausted\":"
 	<< total.surface_workspace_exhausted
 	<< ",\"surface_box_overflow\":" << total.surface_box_overflow

@@ -8,6 +8,7 @@
 
 #include <cmath>
 #include <cstdio>
+#include <vector>
 
 #include "bu/app.h"
 #include "bu/malloc.h"
@@ -258,11 +259,24 @@ disable_prepared_span_tree(struct soltab *solid)
 
 
 static bool
-disable_prepared_face_tree(struct soltab *solid)
+disable_prepared_face_bvh(struct soltab *solid)
 {
     brep_specific *specific = solid ?
 	static_cast<brep_specific *>(solid->st_specific) : NULL;
     if (!specific)
+	return false;
+    specific->prepared_face_bvh_nodes.clear();
+    specific->prepared_face_bvh_root = (size_t)-1;
+    return true;
+}
+
+
+static bool
+disable_prepared_face_tree(struct soltab *solid)
+{
+    brep_specific *specific = solid ?
+	static_cast<brep_specific *>(solid->st_specific) : NULL;
+    if (!specific || !disable_prepared_face_bvh(solid))
 	return false;
     specific->prepared_face_nodes.clear();
     return true;
@@ -334,6 +348,65 @@ prepared_face_tree_available(const struct soltab *solid)
 	!specific->prepared_face_nodes.empty() &&
 	prepared_face_tree_node_valid(*specific, 0, 0,
 	    specific->face_records.size());
+}
+
+
+static bool
+prepared_face_bvh_node_valid(const brep_specific &specific,
+    size_t node_index, std::vector<bool> &seen_faces)
+{
+    if (node_index >= specific.prepared_face_bvh_nodes.size())
+	return false;
+    const brep_face_bvh_node &node =
+	specific.prepared_face_bvh_nodes[node_index];
+    if (!node.bbox.IsValid())
+	return false;
+    if (node.leaf) {
+	if (node.index >= specific.face_records.size() ||
+		seen_faces[node.index])
+	    return false;
+	const brep_face_record &record = specific.face_records[node.index];
+	if (!record.supported || !record.span_count || !record.bbox.IsValid() ||
+		!bbox_contains(node.bbox, record.bbox))
+	    return false;
+	seen_faces[node.index] = true;
+	return true;
+    }
+    if (node.left_child <= node_index || node.right_child <= node_index ||
+	node.left_child >= specific.prepared_face_bvh_nodes.size() ||
+	node.right_child >= specific.prepared_face_bvh_nodes.size())
+	return false;
+    const brep_face_bvh_node &left =
+	specific.prepared_face_bvh_nodes[node.left_child];
+    const brep_face_bvh_node &right =
+	specific.prepared_face_bvh_nodes[node.right_child];
+    return bbox_contains(node.bbox, left.bbox) &&
+	bbox_contains(node.bbox, right.bbox) &&
+	prepared_face_bvh_node_valid(specific, node.left_child, seen_faces) &&
+	prepared_face_bvh_node_valid(specific, node.right_child, seen_faces);
+}
+
+
+static bool
+prepared_face_bvh_available(const struct soltab *solid)
+{
+    const brep_specific *specific = solid ?
+	static_cast<const brep_specific *>(solid->st_specific) : NULL;
+    if (!specific || specific->prepared_face_bvh_nodes.empty() ||
+	specific->prepared_face_bvh_root >=
+	specific->prepared_face_bvh_nodes.size())
+	return false;
+    std::vector<bool> seen_faces(specific->face_records.size(), false);
+    if (!prepared_face_bvh_node_valid(*specific,
+	specific->prepared_face_bvh_root, seen_faces))
+	return false;
+    for (size_t record_index = 0;
+	record_index < specific->face_records.size(); ++record_index) {
+	if (specific->face_records[record_index].supported !=
+		seen_faces[record_index])
+	    return false;
+    }
+    return true;
 }
 
 
@@ -582,7 +655,8 @@ main(int argc, char **argv)
 	if (hierarchy_solid) {
 	    const bool hierarchy_tree_valid =
 		prepared_span_tree_available(hierarchy_solid) &&
-		prepared_face_tree_available(hierarchy_solid);
+		prepared_face_tree_available(hierarchy_solid) &&
+		prepared_face_bvh_available(hierarchy_solid);
 	    struct rt_brep_shot_trace hierarchy_forward_trace = {};
 	    const int hierarchy_forward_hits = shoot_trace(hierarchy_solid, rtip,
 		&resource, forward_origin, forward_direction,
@@ -597,11 +671,32 @@ main(int argc, char **argv)
 		    distance_tolerance) && trace_has_hierarchy_pruning(hierarchy_solid,
 		    hierarchy_reverse_trace, hierarchy_reverse_hits,
 		    distance_tolerance);
+	    bool spatial_fallback_valid = false;
+	    if (disable_prepared_face_bvh(hierarchy_solid)) {
+		const bool spatial_fallback_tree_valid =
+		    prepared_span_tree_available(hierarchy_solid) &&
+		    prepared_face_tree_available(hierarchy_solid) &&
+		    !prepared_face_bvh_available(hierarchy_solid);
+		struct rt_brep_shot_trace fallback_forward_trace = {};
+		const int fallback_forward_hits = shoot_trace(hierarchy_solid,
+		    rtip, &resource, forward_origin, forward_direction,
+		    fallback_forward_trace);
+		struct rt_brep_shot_trace fallback_reverse_trace = {};
+		const int fallback_reverse_hits = shoot_trace(hierarchy_solid,
+		    rtip, &resource, reverse_origin, reverse_direction,
+		    fallback_reverse_trace);
+		spatial_fallback_valid = spatial_fallback_tree_valid &&
+		    trace_has_hierarchy_pruning(hierarchy_solid, fallback_forward_trace,
+		    fallback_forward_hits, distance_tolerance) &&
+		    trace_has_hierarchy_pruning(hierarchy_solid, fallback_reverse_trace,
+		    fallback_reverse_hits, distance_tolerance);
+	    }
 	    bool face_fallback_valid = false;
 	    if (disable_prepared_face_tree(hierarchy_solid)) {
 		const bool face_fallback_tree_valid =
 		    prepared_span_tree_available(hierarchy_solid) &&
-		    !prepared_face_tree_available(hierarchy_solid);
+		    !prepared_face_tree_available(hierarchy_solid) &&
+		    !prepared_face_bvh_available(hierarchy_solid);
 		struct rt_brep_shot_trace fallback_forward_trace = {};
 		const int fallback_forward_hits = shoot_trace(hierarchy_solid,
 		    rtip, &resource, forward_origin, forward_direction,
@@ -631,8 +726,8 @@ main(int argc, char **argv)
 		    trace_has_expected_events(fallback_reverse_trace,
 		    fallback_reverse_hits, distance_tolerance);
 	    }
-	    hierarchy_valid = hierarchy_pruned && face_fallback_valid &&
-		span_fallback_valid;
+	    hierarchy_valid = hierarchy_pruned && spatial_fallback_valid &&
+		face_fallback_valid && span_fallback_valid;
 	    free_solid(hierarchy_solid);
 	} else {
 	    delete hierarchy_brep;
