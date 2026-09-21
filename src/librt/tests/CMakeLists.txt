@@ -189,6 +189,24 @@ brlcad_add_test(NAME rt_brep_io COMMAND rt_brep_io)
 # Directed analytic primitive vs converted-BRep ray intersections
 brlcad_addexec(rt_brep_ray brep_ray.cpp "librt;libbrep;libwdb;libbu;${M_LIBRARY}" TEST)
 brlcad_add_test(NAME rt_brep_ray COMMAND rt_brep_ray --directed-only)
+
+# Mixed collapsed-pole and regular BREP ray events
+brlcad_addexec(rt_brep_mixed_pole brep_mixed_pole.cpp librt;libbrep;libbu;${M_LIBRARY} TEST)
+brlcad_add_test(NAME rt_brep_mixed_pole COMMAND rt_brep_mixed_pole)
+
+# Internal Bezier-span duplicate BREP ray events
+brlcad_addexec(rt_brep_adjacent_span brep_adjacent_span.cpp "librt;libbrep;libbu;${M_LIBRARY}" TEST)
+brlcad_add_test(NAME rt_brep_adjacent_span COMMAND rt_brep_adjacent_span)
+
+# Internal Bezier-span junction BREP ray events
+brlcad_addexec(rt_brep_span_junction brep_span_junction.cpp "librt;libbrep;libbu;${M_LIBRARY}" TEST)
+brlcad_add_test(NAME rt_brep_span_junction COMMAND rt_brep_span_junction)
+foreach(span_junction_face_index 0 1 2 3 4)
+  brlcad_add_test(
+    NAME rt_brep_span_junction_face_${span_junction_face_index}
+    COMMAND rt_brep_span_junction ${span_junction_face_index})
+endforeach()
+
 brlcad_add_test(
   NAME rt_brep_ray_pole
   COMMAND rt_brep_ray --pole-only --surface-tree-depth=2
@@ -281,6 +299,7 @@ set(
   arb_intersect.g
   binary_attribute.c
   binunif.c
+  brep_mixed_pole.cpp
   brep_io.cpp
   bound_internal.c
   crofton.c
