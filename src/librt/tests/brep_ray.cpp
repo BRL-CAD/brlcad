@@ -808,6 +808,14 @@ report_grazing_trace(const char *label, double chord_ratio, int reverse,
 	trace.physical_event_regular_stream_boxes,
 	trace.physical_event_regular_stream_roots,
 	trace.physical_event_regular_stream_failure_stage);
+    std::printf("  periodic self-seam attempt/certified/boxes/roots/fold="
+	"%zu/%zu/%zu/%zu/%zu failure-stage=%d\n",
+	trace.physical_event_periodic_self_seam_attempts,
+	trace.physical_event_periodic_self_seam_certified,
+	trace.physical_event_periodic_self_seam_boxes,
+	trace.physical_event_periodic_self_seam_roots,
+	trace.physical_event_periodic_self_seam_fold_roots,
+	trace.physical_event_periodic_self_seam_failure_stage);
     std::printf("  solver status:");
     for (size_t status = 0; status < RT_BREP_TRACE_SOLVER_STATUS_COUNT;
 	    ++status)
@@ -4445,7 +4453,8 @@ replay_paired_crofton_indices(const char *label,
     prepared_model &implicit_model, prepared_model &brep_model,
     const struct bn_tol *tol, const point_t bbox_min,
     const point_t bbox_max, size_t ray_count, const size_t *indices,
-    size_t index_count, bool require_regular_stream = false)
+    size_t index_count, bool require_regular_stream = false,
+    bool require_prepared_production = false)
 {
     if (!tol || !indices || !index_count)
 	return 1;
@@ -4480,41 +4489,57 @@ replay_paired_crofton_indices(const char *label,
 	    brep_result, ray.direction, tol);
 	struct rt_brep_shot_trace required_trace = {};
 	int required_hits = 0;
-	bool stream_valid = true;
-	if (require_regular_stream) {
-	    stream_valid = brep_solids.size() == 1;
-	    if (stream_valid) {
+	bool required_trace_valid = true;
+	if (require_regular_stream || require_prepared_production) {
+	    required_trace_valid = brep_solids.size() == 1;
+	    if (required_trace_valid) {
 		required_hits = shoot_brep_trace(brep_solids[0],
 		    brep_model.rtip, &brep_model.resp, ray, required_trace);
-		stream_valid = required_hits == 2 &&
-		    required_trace.prepared_production_selected == 1 &&
-		    required_trace.prepared_production_fallback ==
-			RT_BREP_PREPARED_FALLBACK_NONE &&
-		    required_trace.prepared_production_hits == 2 &&
-		    required_trace.physical_event_regular_stream_attempts == 1 &&
-		    required_trace.physical_event_regular_stream_certified == 1 &&
-		    required_trace.physical_event_regular_stream_components == 2 &&
-		    required_trace.physical_event_regular_stream_boxes ==
-			required_trace.stored_surface_boxes &&
-		    required_trace.physical_event_regular_stream_roots == 2 &&
-		    !required_trace.physical_event_regular_stream_failure_stage &&
-		    required_trace.physical_event_complete == 1 &&
-		    required_trace.physical_event_material_segments == 1 &&
-		    required_trace.stored_physical_events == 2;
+		if (require_regular_stream)
+		    required_trace_valid = required_trace_valid &&
+			required_hits == 2 &&
+			required_trace.prepared_production_selected == 1 &&
+			required_trace.prepared_production_fallback ==
+			    RT_BREP_PREPARED_FALLBACK_NONE &&
+			required_trace.prepared_production_hits == 2 &&
+			required_trace.physical_event_regular_stream_attempts == 1 &&
+			required_trace.physical_event_regular_stream_certified == 1 &&
+			required_trace.physical_event_regular_stream_components == 2 &&
+			required_trace.physical_event_regular_stream_boxes ==
+			    required_trace.stored_surface_boxes &&
+			required_trace.physical_event_regular_stream_roots == 2 &&
+			!required_trace.physical_event_regular_stream_failure_stage &&
+			required_trace.physical_event_complete == 1 &&
+			required_trace.physical_event_material_segments == 1 &&
+			required_trace.stored_physical_events == 2;
+		if (require_prepared_production)
+		    required_trace_valid = required_trace_valid &&
+			required_hits >= 0 &&
+			(size_t)required_hits == 2 * implicit_result.partitions &&
+			required_trace.prepared_production_selected == 1 &&
+			required_trace.prepared_production_fallback ==
+			    RT_BREP_PREPARED_FALLBACK_NONE &&
+			required_trace.prepared_production_hits ==
+			(size_t)required_hits &&
+			required_trace.physical_event_complete == 1;
 	    }
 	}
-	if (equivalent && stream_valid)
+	if (equivalent && required_trace_valid)
 	    continue;
 
 	std::printf("FAIL: %s hard Crofton ray %zu%s origin="
 	    "(%.17g %.17g %.17g) direction=(%.17g %.17g %.17g)\n",
-	    label, ray_index, equivalent ? " stream ratchet" : "",
+	    label, ray_index, !equivalent ? "" : require_regular_stream ?
+	    " stream ratchet" : " production ratchet",
 	    V3ARGS(ray.origin), V3ARGS(ray.direction));
 	report_partition_result("implicit", implicit_result);
 	report_partition_result("BREP", brep_result);
-	if (require_regular_stream && brep_solids.size() == 1)
+	if ((require_regular_stream || require_prepared_production) &&
+		brep_solids.size() == 1)
 	    report_grazing_trace(label, 0.0, 0, required_trace);
-	for (size_t solid_index = require_regular_stream ? brep_solids.size() : 0;
+	for (size_t solid_index =
+		(require_regular_stream || require_prepared_production) ?
+		brep_solids.size() : 0;
 		solid_index < brep_solids.size();
 		solid_index++) {
 	    struct rt_brep_shot_trace trace = {};
@@ -5104,7 +5129,8 @@ static int
 replay_converted_crofton_indices(const char *label,
     struct rt_db_internal *implicit_intern, const struct bn_tol *tol,
     const point_t bbox_min, const point_t bbox_max, const size_t *indices,
-    size_t index_count, bool require_regular_stream = false)
+    size_t index_count, bool require_regular_stream = false,
+    bool require_prepared_production = false)
 {
     ON_Brep *brep = ON_Brep::New();
     OBJ[implicit_intern->idb_minor_type].ft_brep(&brep, implicit_intern,
@@ -5138,7 +5164,8 @@ replay_converted_crofton_indices(const char *label,
     }
     const int failures = replay_paired_crofton_indices(label,
 	implicit_model, brep_model, tol, bbox_min, bbox_max, 8000,
-	indices, index_count, require_regular_stream);
+	indices, index_count, require_regular_stream,
+	require_prepared_production);
     free_prepared_model(brep_model);
     free_prepared_model(implicit_model);
     delete brep;
@@ -5150,7 +5177,7 @@ static int
 replay_directed_crofton_rays(const char *label,
     prepared_model &implicit_model, prepared_model &brep_model,
     const struct bn_tol *tol, const directed_partition_ray *rays,
-    size_t ray_count)
+    size_t ray_count, bool require_periodic_self_seam = false)
 {
     const std::vector<struct soltab *> brep_solids =
 	prepared_model_brep_solids(brep_model);
@@ -5165,8 +5192,45 @@ replay_directed_crofton_rays(const char *label,
 	const partition_result implicit_result = shoot_partitions(
 	    implicit_model, ray);
 	const partition_result brep_result = shoot_partitions(brep_model, ray);
-	if (partition_results_equivalent(implicit_result, brep_result,
-		ray.direction, tol))
+	bool valid = partition_results_equivalent(implicit_result, brep_result,
+	    ray.direction, tol);
+	if (valid && require_periodic_self_seam) {
+	    valid = brep_solids.size() == 1;
+	    if (valid) {
+		struct rt_brep_shot_trace trace = {};
+		const int hits = shoot_brep_trace(brep_solids[0],
+		    brep_model.rtip, &brep_model.resp, ray, trace);
+		size_t periodic_events = 0;
+		for (size_t event_index = 0;
+			event_index < trace.stored_physical_events; ++event_index)
+		    periodic_events += trace.physical_events[event_index].certificate ==
+			RT_BREP_TRACE_EVENT_PERIODIC_SELF_SEAM ? 1 : 0;
+		for (size_t box_index = 0; valid &&
+			box_index < trace.stored_surface_boxes; ++box_index)
+		    valid = trace.surface_boxes[box_index].disposition ==
+			RT_BREP_TRACE_BOX_RESOLVED_PERIODIC_SELF_SEAM &&
+			!trace.surface_boxes[box_index].determinant_sign;
+		valid = valid && hits == 2 * rays[ray_index].partitions &&
+		    trace.prepared_production_selected == 1 &&
+		    trace.prepared_production_fallback ==
+			RT_BREP_PREPARED_FALLBACK_NONE &&
+		    trace.physical_event_complete == 1 &&
+		    trace.physical_event_periodic_self_seam_attempts == 1 &&
+		    trace.physical_event_periodic_self_seam_certified == 1 &&
+		    !trace.physical_event_periodic_self_seam_failures &&
+		    !trace.physical_event_periodic_self_seam_failure_stage &&
+		    trace.physical_event_periodic_self_seam_boxes ==
+			trace.stored_surface_boxes &&
+		    trace.physical_event_periodic_self_seam_roots ==
+			trace.stored_local_roots &&
+		    trace.physical_event_periodic_self_seam_fold_roots ==
+			trace.stored_surface_fold_roots &&
+		    periodic_events == trace.stored_physical_events &&
+		    trace.stored_physical_events ==
+			2 * trace.physical_event_material_segments;
+	    }
+	}
+	if (valid)
 	    continue;
 	std::printf("FAIL: %s hard directed ray %s origin="
 	    "(%.17g %.17g %.17g) direction=(%.17g %.17g %.17g)\n",
@@ -5219,6 +5283,14 @@ check_crofton_hard_case_corpus(const struct bn_tol *tol,
 	tol, cylinder_min, cylinder_max, cylinder_indices,
 	sizeof(cylinder_indices) / sizeof(cylinder_indices[0]),
 	regular_stream_only);
+    if (!regular_stream_only) {
+	const size_t near_trim_indices[] = {2293, 3059, 3706, 5452, 7430};
+	failures += replay_converted_crofton_indices("rcc-near-trim",
+	    &cylinder_intern, tol, cylinder_min, cylinder_max,
+	    near_trim_indices,
+	    sizeof(near_trim_indices) / sizeof(near_trim_indices[0]), false,
+	    true);
+    }
 
     struct rt_tgc_internal cone = cylinder;
     VSET(cone.c, 3.0, 0.0, 0.0);
@@ -5233,6 +5305,14 @@ check_crofton_hard_case_corpus(const struct bn_tol *tol,
     failures += replay_converted_crofton_indices("truncated-cone",
 	&cone_intern, tol, cylinder_min, cylinder_max, cone_indices,
 	sizeof(cone_indices) / sizeof(cone_indices[0]), regular_stream_only);
+    if (!regular_stream_only) {
+	const size_t near_trim_indices[] = {5055, 5736, 7431};
+	failures += replay_converted_crofton_indices(
+	    "truncated-cone-near-trim", &cone_intern, tol, cylinder_min,
+	    cylinder_max, near_trim_indices,
+	    sizeof(near_trim_indices) / sizeof(near_trim_indices[0]), false,
+	    true);
+    }
 
     struct rt_tor_internal torus = {};
     torus.magic = RT_TOR_INTERNAL_MAGIC;
@@ -5252,6 +5332,20 @@ check_crofton_hard_case_corpus(const struct bn_tol *tol,
     failures += replay_converted_crofton_indices("torus", &torus_intern,
 	tol, torus_min, torus_max, torus_indices,
 	sizeof(torus_indices) / sizeof(torus_indices[0]), regular_stream_only);
+    const size_t torus_rootless_stream_indices[] = {6206};
+    failures += replay_converted_crofton_indices("torus-rootless-stream",
+	&torus_intern, tol, torus_min, torus_max,
+	torus_rootless_stream_indices,
+	sizeof(torus_rootless_stream_indices) /
+	sizeof(torus_rootless_stream_indices[0]), true);
+    if (!regular_stream_only) {
+	    const size_t mapped_regular_indices[] = {7393};
+	    failures += replay_converted_crofton_indices("torus-mapped-regular",
+		&torus_intern, tol, torus_min, torus_max,
+		mapped_regular_indices,
+		sizeof(mapped_regular_indices) /
+		sizeof(mapped_regular_indices[0]), false, true);
+    }
 
     if (regular_stream_only)
 	return failures;
@@ -5293,7 +5387,7 @@ check_crofton_hard_case_corpus(const struct bn_tol *tol,
 	};
 	failures += replay_directed_crofton_rays("torus",
 	    torus_implicit_model, torus_brep_model, tol, torus_rays,
-	    sizeof(torus_rays) / sizeof(torus_rays[0]));
+	    sizeof(torus_rays) / sizeof(torus_rays[0]), true);
     }
     free_prepared_model(torus_brep_model);
     free_prepared_model(torus_implicit_model);
@@ -6096,6 +6190,8 @@ struct cobb_throughput_family {
     double chord_ratio = 0.0;
     int expected_segments = 0;
     bool require_continuation = false;
+    bool expect_tight_source = false;
+    bool expect_untightened_source = false;
 };
 
 
@@ -6159,6 +6255,8 @@ check_cobb_production_throughput(const struct bn_tol *tol,
     const char *name[] = {
 	"grazing-100T", "grazing-2T", "grazing-1.1T", "tangent"
     };
+    const bool expect_tight_source[] = {false, true, true, false};
+    const bool expect_untightened_source[] = {true, false, false, false};
     for (size_t i = 0; i < sizeof(chord_ratio) /
 	    sizeof(chord_ratio[0]); ++i) {
 	const double chord = chord_ratio[i] * tol->dist;
@@ -6167,6 +6265,9 @@ check_cobb_production_throughput(const struct bn_tol *tol,
 	family[i + 1].chord_ratio = chord_ratio[i];
 	family[i + 1].expected_segments = chord_ratio[i] > 1.0 ? 1 : 0;
 	family[i + 1].require_continuation = chord_ratio[i] > 1.0;
+	family[i + 1].expect_tight_source = expect_tight_source[i];
+	family[i + 1].expect_untightened_source =
+	    expect_untightened_source[i];
 	for (int reverse = 0; reverse <= 1; ++reverse)
 	    family[i + 1].ray[reverse] = cobb_seam_grazing_ray(frame,
 		origin, radius, clearance, reverse != 0);
@@ -6204,6 +6305,29 @@ check_cobb_production_throughput(const struct bn_tol *tol,
 
 	struct rt_brep_shot_trace trace;
 	(void)shoot_brep_trace(stp, rtip, resource, test.ray[0], trace);
+	const bool require_tight_source = test.expect_tight_source;
+	struct rt_brep_shot_trace reverse_trace = {};
+	if (require_tight_source)
+	    (void)shoot_brep_trace(stp, rtip, resource, test.ray[1],
+		reverse_trace);
+	const bool tight_source_valid = !require_tight_source ||
+	    (trace.prepared_production_selected == 1 &&
+	     trace.prepared_production_fallback == RT_BREP_PREPARED_FALLBACK_NONE &&
+	     trace.physical_event_complete == 1 &&
+	     trace.physical_event_seam_tight_source_attempts == 1 &&
+	     trace.physical_event_seam_tight_source_certified == 1);
+	const bool tight_source_reverse_valid = !require_tight_source ||
+	    (reverse_trace.final_segments == (size_t)test.expected_segments &&
+	     reverse_trace.prepared_production_selected == 1 &&
+	     reverse_trace.prepared_production_fallback ==
+		RT_BREP_PREPARED_FALLBACK_NONE &&
+	     reverse_trace.physical_event_complete == 1 &&
+	     reverse_trace.physical_event_seam_tight_source_attempts == 1 &&
+	     reverse_trace.physical_event_seam_tight_source_certified == 1);
+	const bool resolved_source_untightened =
+	    !test.expect_untightened_source ||
+	    (!trace.physical_event_seam_tight_source_attempts &&
+	     !trace.physical_event_seam_tight_source_certified);
 	const bool expect_continuation = test.require_continuation;
 	const bool certificate_valid = !expect_continuation ||
 	    (trace.continuation_candidates == 1 &&
@@ -6302,11 +6426,13 @@ check_cobb_production_throughput(const struct bn_tol *tol,
 		trace.continuation_certificate_t_max);
 	    failures++;
 	}
-	if (!certificate_valid || !tangent_valid) {
+	if (!certificate_valid || !tangent_valid || !tight_source_valid ||
+		!tight_source_reverse_valid || !resolved_source_untightened) {
 	    std::printf("FAIL: Cobb production-throughput certificate %s "
 		"continuation=%zu/%zu Krawczyk=%zu/%zu/%zu "
 		"root/isolated=%zu/%zu complement=%zu/%zu depth=%zu "
-		"exhausted/overlap/shadow=%zu/%zu/%zu\n", test.name,
+		"exhausted/overlap/shadow=%zu/%zu/%zu tight=%zu/%zu "
+		"reverse-tight=%zu/%zu selected=%zu/%zu\n", test.name,
 		trace.continuation_candidates,
 		trace.continuation_certified_candidates,
 		trace.continuation_certificate_krawczyk_attempts,
@@ -6319,7 +6445,13 @@ check_cobb_production_throughput(const struct bn_tol *tol,
 		trace.continuation_certificate_complement_max_depth,
 		trace.continuation_certificate_exhausted,
 		trace.continuation_certificate_existing_overlap,
-		trace.closure_shadow_segments);
+		trace.closure_shadow_segments,
+		trace.physical_event_seam_tight_source_attempts,
+		trace.physical_event_seam_tight_source_certified,
+		reverse_trace.physical_event_seam_tight_source_attempts,
+		reverse_trace.physical_event_seam_tight_source_certified,
+		trace.prepared_production_selected,
+		reverse_trace.prepared_production_selected);
 	    failures++;
 	}
 	if (!contraction_accounted || !contact_contracts ||
