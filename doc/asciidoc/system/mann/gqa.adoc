@@ -54,13 +54,17 @@ gqa --analyze [analysis options] object [object ...]
 ----
 
 `--measure` accepts a comma-separated selection from
-`volume,mass,area,centroid,moments`.  With no measurement or check selection,
+`volume,mass,area,centroid,moments,bounds`.  With no measurement or check selection,
 the default is `volume,area`.  A check-only selection does not require density
 data.  Centroid and moments require mass.  `--check` accepts
 `overlaps,gaps,adjacent-air,exposed-air` and defaults to no checks.
 The model totals and region measurements use mm, mm^3^, mm^2^, and grams.
 Mass needs a density table, selected with `--density file` or found using the
 normal gqa density search.
+The `bounds` measure reports the finite, conservative region-tree bounding box
+and its three face areas without firing rays.  Subtraction does not shrink the
+reported box.  Bounded results involving half-spaces are supported; regions
+whose region-tree bounds are unbounded are rejected.
 
 `--sampler grid`, the experimental interface's default, is the axis-aligned
 three-view control.  `--sampler grid-rotated` uses a non-axis-aligned
@@ -94,6 +98,21 @@ refinement limit as appropriate.
 partitions of the same region are labeled `internal-void` in the summary.
 The measurements are
 sampled estimates, and diagnostic checks can miss problems that no ray hits.
+
+`--plot-prefix prefix` writes selected results to the traditional
+`volume.plot3`, `gaps.plot3`, `overlaps.plot3`, `adj_air.plot3`, and
+`exp_air.plot3` suffixes.  `--plot-mode all` records every sampled chord and
+all grid refinements.  The default `representative` mode keeps one
+deterministic sample per occupied spatial cell, direction, category, and
+region pair, and draws finite sample footprints so the plot remains visually
+useful as refinement increases.  `--plot-resolution mm` overrides the default
+cell size of one 128th of the model diagonal.  Plotting does not change the
+sampling calculation.
+
+In MGED, `--plot-view` incrementally refreshes a `gqa::analysis` overlay.  The
+representative overlay is replaced by each bounded snapshot; all mode appends
+rays and can be expensive.  Adjacent-air snapshots show an interface footprint
+and a short directional tick.  Standalone *gqa* does not provide a live view.
 
 `--air include|exclude` controls whether modeled air contributes to
 measurements; inclusion is the default.  Surface area counts region partition

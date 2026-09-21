@@ -554,6 +554,8 @@ ged_init(struct ged *gedp)
     BU_GET(gedp->ged_cbs, struct ged_callback_state);
     gedp->ged_refresh_handler = NULL;
     gedp->ged_refresh_clientdata = NULL;
+    gedp->ged_run_on_main_thread = NULL;
+    gedp->ged_main_thread_clientdata = NULL;
     gedp->ged_output_handler = NULL;
     gedp->ged_create_vlist_scene_obj_callback = NULL;
     gedp->ged_create_vlist_display_list_callback = NULL;

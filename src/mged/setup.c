@@ -602,6 +602,15 @@ mged_refresh_handler(void *clientdata)
     mged_run_on_gui_thread(s, mged_refresh_handler_impl, clientdata);
 }
 
+static void
+mged_main_thread_handler(void *clientdata, ged_main_thread_callback_t callback,
+	void *data)
+{
+    struct mged_state *s = (struct mged_state *)clientdata;
+    MGED_CK_STATE(s);
+    mged_run_on_gui_thread(s, callback, data);
+}
+
 /*
  * Initialize mged, configure the path, set up the tcl interpreter.
  */
@@ -660,6 +669,8 @@ mged_setup(struct mged_state *s)
     s->gedp->ged_output_handler = mged_output_handler;
     s->gedp->ged_refresh_clientdata = (void *)s;
     s->gedp->ged_refresh_handler = mged_refresh_handler;
+    s->gedp->ged_main_thread_clientdata = (void *)s;
+    s->gedp->ged_run_on_main_thread = mged_main_thread_handler;
     s->gedp->vlist_ctx = (void *)s;
     s->gedp->ged_create_vlist_scene_obj_callback = createDListSolid;
     s->gedp->ged_create_vlist_display_list_callback = createDListAll;

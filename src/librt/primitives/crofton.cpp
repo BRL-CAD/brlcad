@@ -1016,19 +1016,32 @@ crofton_shoot_impl(struct rt_crofton_session      *session,
      * that already spans integer-mm boundaries the result is identical to the
      * old rti_radius / mdl_min / mdl_max path.                              */
     point_t tight_min, tight_max;
+    bool have_finite_solid = false;
     VSETALL(tight_min,  MAX_FASTF);
     VSETALL(tight_max, -MAX_FASTF);
     {
         struct soltab *stp;
         RT_VISIT_ALL_SOLTABS_START(stp, rtip) {
+            /* librt excludes infinite solids from model bounds and keeps them
+             * in rti_inf_box so they still participate in Boolean clipping.
+             * Mirror that policy here or a half-space makes the sampling
+             * sphere non-finite. */
+            if (!std::isfinite(stp->st_min[X]) ||
+                !std::isfinite(stp->st_min[Y]) ||
+                !std::isfinite(stp->st_min[Z]) ||
+                !std::isfinite(stp->st_max[X]) ||
+                !std::isfinite(stp->st_max[Y]) ||
+                !std::isfinite(stp->st_max[Z]))
+                continue;
             VMIN(tight_min, stp->st_min);
             VMAX(tight_max, stp->st_max);
+            have_finite_solid = true;
         } RT_VISIT_ALL_SOLTABS_END;
     }
 
     double model_radius;
     point_t model_center;
-    if (tight_min[X] < MAX_FASTF) {
+    if (have_finite_solid) {
         VADD2SCALE(model_center, tight_max, tight_min, 0.5);
         vect_t tight_diag;
         VSUB2(tight_diag, tight_max, tight_min);

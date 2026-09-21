@@ -82,6 +82,10 @@ typedef int (*ged_func_ptr)(struct ged *, int, const char *[]);
 /* Callback related definitions */
 typedef void (*ged_io_func_t)(void *, int);
 typedef void (*ged_refresh_func_t)(void *);
+typedef void (*ged_main_thread_callback_t)(void *);
+/** Run callback synchronously on the display-owning thread. */
+typedef void (*ged_run_on_main_thread_func_t)(void *,
+	ged_main_thread_callback_t, void *);
 typedef void (*ged_create_vlist_solid_func_t)(void *, struct bv_scene_obj *);
 typedef void (*ged_create_vlist_display_list_func_t)(void *, struct display_list *);
 typedef void (*ged_destroy_vlist_func_t)(void *, unsigned int, int);
@@ -235,6 +239,8 @@ struct ged {
     struct ged_callback_state *ged_cbs;
     void (*ged_refresh_handler)(void *);	/**< @brief  function for handling refresh requests */
     void *ged_refresh_clientdata;	/**< @brief  client data passed to refresh handler */
+    ged_run_on_main_thread_func_t ged_run_on_main_thread; /**< @brief run display-affine work on the owning thread */
+    void *ged_main_thread_clientdata; /**< @brief client data passed to the main-thread handler */
     void (*ged_output_handler)(struct ged *, char *);	/**< @brief  function for handling output */
     void (*ged_create_vlist_scene_obj_callback)(void *, struct bv_scene_obj *);	/**< @brief  function to call after creating a vlist to create display list for solid */
     void (*ged_create_vlist_display_list_callback)(void *, struct display_list *);	/**< @brief  function to call after all vlist created that loops through creating display list for each solid  */

@@ -174,6 +174,18 @@ in mass_solid.s rpp 0 1 0 1 0 1
 r mass_solid.r u mass_solid.s
 adjust mass_solid.r GIFTmater 5
 
+# Half-spaces may split finite geometry but do not independently define a
+# measurable volume.
+in split.s half 1 0 0 0.5
+r split_intersection.r u mass_solid.s + split.s
+r split_subtraction.r u mass_solid.s - split.s
+g split.g split_intersection.r split_subtraction.r
+r unbounded.r u split.s
+in bounded_submodel.s submodel split_intersection.r 0 ""
+r bounded_submodel.r u bounded_submodel.s
+in unbounded_submodel.s submodel unbounded.r 0 ""
+r unbounded_submodel.r u unbounded_submodel.s
+
 # A 0.01 mm solid verifies that automatic stability scales below
 # BN_TOL_DIST rather than treating sub-tolerance geometry as ordinary size.
 in tiny.s rpp 0 0.00001 0 0.00001 0 0.00001
@@ -293,6 +305,55 @@ if test ! -s gqa.modern.grid.json || ! grep -q '"schema_version": 2' gqa.modern.
     STATUS="`expr $STATUS + 1`"
 fi
 
+run_capture gqa.modern.bounds.out $GQABIN --analyze --measure bounds --json gqa.modern.bounds.json gqa.g mass_solid.r
+if ! grep -q '^gqa analysis (grid), 0 rays$' gqa.modern.bounds.out ||
+   ! grep -q '^Bounding box: 0 0 0  1000 1000 1000 mm$' gqa.modern.bounds.out ||
+   ! grep -q '"face_areas_mm2":' gqa.modern.bounds.json ; then
+    log "FAIL: experimental Boolean bounds report"
+    STATUS="`expr $STATUS + 1`"
+fi
+
+run_capture gqa.modern.plot_all.out $GQABIN --analyze --measure volume --spacing 50 --refine 1 --plot-prefix gqa.modern.plot.all. --plot-mode all gqa.g mass_solid.r
+run_capture gqa.modern.plot_representative.out $GQABIN --analyze --measure volume --spacing 50 --refine 1 --plot-prefix gqa.modern.plot.representative. --plot-mode representative --plot-resolution 250 gqa.g mass_solid.r
+ALL_PLOT_SIZE="`wc -c < gqa.modern.plot.all.volume.plot3 | tr -d ' '`"
+REPRESENTATIVE_PLOT_SIZE="`wc -c < gqa.modern.plot.representative.volume.plot3 | tr -d ' '`"
+if ! cmp -s gqa.modern.plot_all.out gqa.modern.plot_representative.out ||
+   test ! -s gqa.modern.plot.all.volume.plot3 ||
+   test ! -s gqa.modern.plot.representative.volume.plot3 ||
+   test "$REPRESENTATIVE_PLOT_SIZE" -ge "$ALL_PLOT_SIZE" ; then
+    log "FAIL: experimental all and representative volume plots"
+    STATUS="`expr $STATUS + 1`"
+fi
+
+run_capture gqa.modern.plot_overlap.out $GQABIN --analyze --check overlaps --spacing 250 --refine 0 --plot-prefix gqa.modern.plot.overlap. gqa.g overlaps
+run_capture gqa.modern.plot_gap.out $GQABIN --analyze --check gaps --spacing 50 --refine 0 --plot-prefix gqa.modern.plot.gap. gqa.g gap.g
+run_capture gqa.modern.plot_adj_air.out $GQABIN --analyze --check adjacent-air --spacing 250 --refine 0 --plot-prefix gqa.modern.plot.air. gqa.g adj_air.g
+run_capture gqa.modern.plot_exp_air.out $GQABIN --analyze --check exposed-air --spacing 250 --refine 0 --plot-prefix gqa.modern.plot.air. gqa.g exposed_air.g
+if test ! -s gqa.modern.plot.overlap.overlaps.plot3 ||
+   test ! -s gqa.modern.plot.gap.gaps.plot3 ||
+   test ! -s gqa.modern.plot.air.adj_air.plot3 ||
+   test ! -s gqa.modern.plot.air.exp_air.plot3 ; then
+    log "FAIL: experimental diagnostic Plot3 output"
+    STATUS="`expr $STATUS + 1`"
+fi
+
+if $GQABIN --analyze --measure volume --spacing 50 --refine 0 --plot-view gqa.g mass_solid.r > gqa.modern.plot_view.out 2>&1 ; then
+    log "FAIL: standalone gqa accepted --plot-view"
+    STATUS="`expr $STATUS + 1`"
+fi
+
+$MGED -c gqa.g > gqa.modern.mged_plot_view.out 2>&1 <<EOF
+gqa --analyze --measure volume --spacing 100 --refine 0 --plot-view mass_solid.r
+view objs
+quit
+EOF
+cat gqa.modern.mged_plot_view.out >> "$LOGFILE"
+if ! grep -q '^Volume: 1e+09 mm\^3$' gqa.modern.mged_plot_view.out ||
+   ! grep -q '^gqa::analysis$' gqa.modern.mged_plot_view.out ; then
+    log "FAIL: MGED live analysis plot"
+    STATUS="`expr $STATUS + 1`"
+fi
+
 GQA_DB_CHECKSUM_BEFORE="`cksum gqa.g`"
 if $GQABIN --analyze --measure volume --json gqa.g gqa.g mass_solid.r > gqa.modern.collision.out 2>&1 ; then
     log "FAIL: analysis accepted the database as its JSON output"
@@ -355,6 +416,41 @@ MODERN_GRID_EDGE_VOLUME="`extract_last_number 'Volume:' gqa.modern.grid_edge.out
 MODERN_GRID_EDGE_AREA="`extract_last_number 'Area:' gqa.modern.grid_edge.out`"
 assert_close 1000000000 "$MODERN_GRID_EDGE_VOLUME" 1000 "experimental clipped grid-cell volume"
 assert_close 6000000 "$MODERN_GRID_EDGE_AREA" 1 "experimental clipped grid-cell area"
+
+run_capture gqa.modern.half_intersection.out $GQABIN --analyze --measure volume --spacing 50 --refine 0 gqa.g split_intersection.r
+run_capture gqa.modern.half_subtraction.out $GQABIN --analyze --measure volume --spacing 50 --refine 0 gqa.g split_subtraction.r
+run_capture gqa.modern.half_split.out $GQABIN --analyze --measure volume --spacing 50 --refine 0 gqa.g split.g
+HALF_INTERSECTION_VOLUME="`extract_last_number 'Volume:' gqa.modern.half_intersection.out`"
+HALF_SUBTRACTION_VOLUME="`extract_last_number 'Volume:' gqa.modern.half_subtraction.out`"
+HALF_SPLIT_VOLUME="`extract_last_number 'Volume:' gqa.modern.half_split.out`"
+assert_close 500000000 "$HALF_INTERSECTION_VOLUME" 1000 "experimental half-space intersection volume"
+assert_close 500000000 "$HALF_SUBTRACTION_VOLUME" 1000 "experimental half-space subtraction volume"
+assert_close 1000000000 "$HALF_SPLIT_VOLUME" 1000 "experimental half-space split volume"
+
+run_capture gqa.modern.half_crofton.out $GQABIN --analyze --measure volume --sampler crofton --sequence random --seed 42 --rays 20000 gqa.g split.g
+HALF_CROFTON_VOLUME="`extract_last_number 'Volume:' gqa.modern.half_crofton.out`"
+assert_close 1000000000 "$HALF_CROFTON_VOLUME" 50000000 "Crofton half-space split volume"
+
+run_capture gqa.modern.half_submodel.out $GQABIN --analyze --measure volume --sampler crofton --sequence random --seed 42 --rays 20000 gqa.g bounded_submodel.r
+HALF_SUBMODEL_VOLUME="`extract_last_number 'Volume:' gqa.modern.half_submodel.out`"
+assert_close 500000000 "$HALF_SUBMODEL_VOLUME" 25000000 "Crofton submodel half-space clipping volume"
+
+if $GQABIN --analyze --measure volume --spacing 50 --refine 0 gqa.g unbounded.r > gqa.modern.unbounded.out 2>&1 ; then
+    log "FAIL: experimental analysis accepted an unbounded region"
+    STATUS="`expr $STATUS + 1`"
+fi
+if ! grep -q '^Cannot analyze unbounded region /unbounded.r\.$' gqa.modern.unbounded.out ; then
+    log "FAIL: experimental unbounded-region diagnostic"
+    STATUS="`expr $STATUS + 1`"
+fi
+if $GQABIN --analyze --measure volume --sampler crofton --rays 100 gqa.g unbounded_submodel.r > gqa.modern.unbounded_submodel.out 2>&1 ; then
+    log "FAIL: experimental analysis accepted an unbounded submodel"
+    STATUS="`expr $STATUS + 1`"
+fi
+if ! grep -q '^Cannot analyze unbounded region /unbounded_submodel.r\.$' gqa.modern.unbounded_submodel.out ; then
+    log "FAIL: experimental unbounded-submodel diagnostic"
+    STATUS="`expr $STATUS + 1`"
+fi
 
 run_capture gqa.modern.refine.out $GQABIN --analyze --measure volume,area --spacing 600 --refine 1 --json gqa.modern.refine.json gqa.g mass_solid.r
 if ! grep -q '^Final refinement volume change:' gqa.modern.refine.out ||

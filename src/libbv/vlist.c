@@ -595,6 +595,11 @@ bv_vlblock_obj(struct bv_vlblock *vbp, struct bview *v, const char *name)
 	s = bv_obj_get(v, BV_VIEW_OBJS);
     }
 
+    /* Reset clears both fields, but replacement objects must retain their
+     * identity and view ownership before children are allocated. */
+    s->s_v = v;
+    bu_vls_sprintf(&s->s_name, "%s", name);
+
     for (size_t i = 0; i < vbp->nused; i++) {
 	if (!BU_LIST_IS_EMPTY(&(vbp->head[i]))) {
 	    struct bv_scene_obj *sc = bv_obj_get_child(s);
