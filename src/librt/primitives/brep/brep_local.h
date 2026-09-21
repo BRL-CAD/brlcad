@@ -113,10 +113,23 @@ struct brep_face_record {
     double bbox_coordinate_scale = 0.0;
     size_t span_begin = 0;
     size_t span_count = 0;
+    size_t span_tree_root = 0;
     int face_index = -1;
     int nurb_form_status = 0;
     bool status2_revolution_singular_map = false;
     bool supported = false;
+    bool bbox_coordinate_scale_valid = false;
+    bool span_tree_available = false;
+};
+
+
+/* A balanced hierarchy over one face's contiguous Bezier spans.  Traversal
+ * retains span order so bounded root collection stays deterministic. */
+struct brep_prepared_span_node {
+    ON_BoundingBox bbox;
+    double bbox_coordinate_scale = 0.0;
+    size_t span_count = 0;
+    bool cullable = false;
     bool bbox_coordinate_scale_valid = false;
 };
 
@@ -176,6 +189,7 @@ struct brep_specific {
     std::vector<brep_trim_span> edge_trim_spans;
     std::vector<brep_face_record> face_records;
     std::vector<brep_surface_span> surface_spans;
+    std::vector<brep_prepared_span_node> prepared_span_nodes;
     std::vector<brep_prepared_face_node> prepared_face_nodes;
     std::vector<brep_vertex_record> vertex_records;
     int surface_tree_depth_limit = 0;
