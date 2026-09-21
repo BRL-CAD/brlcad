@@ -17,11 +17,13 @@
 #include "brep/cobb.h"
 #include "../librt_private.h"
 
+#include "../primitives/brep/brep_local.h"
 
 static const int ADJACENT_SPAN_SURFACE_TREE_DEPTH = 0;
 static const double ADJACENT_SPAN_RADIUS = 10.0;
 static const double ADJACENT_SPAN_RADIAL_OFFSET = 8.0;
 static const double ADJACENT_SPAN_ORIGIN_DISTANCE = 20.0;
+static const int ADJACENT_SPAN_HIERARCHY_SPAN_COUNT = 16;
 static const double ADJACENT_SPAN_ENTRY_DISTANCE =
     ADJACENT_SPAN_ORIGIN_DISTANCE - std::sqrt(
 	ADJACENT_SPAN_RADIUS * ADJACENT_SPAN_RADIUS -
@@ -99,9 +101,47 @@ make_adjacent_span_sphere()
 	    return NULL;
 	}
 	const ON_Interval domain = surface->Domain(1);
-	if (!domain.IsIncreasing() || !surface->InsertKnot(1, domain.Mid())) {
+	const double span_width = 0.25 * (domain.Max() - domain.Min());
+	if (!domain.IsIncreasing() || !(span_width > 0.0) ||
+		!surface->InsertKnot(1, domain.Min() + span_width) ||
+		!surface->InsertKnot(1, domain.Mid())) {
 	    delete brep;
 	    return NULL;
+	}
+    }
+    return brep;
+}
+
+
+static ON_Brep *
+make_hierarchy_span_sphere()
+{
+    const ON_3dPoint center(0.0, 0.0, 0.0);
+    ON_Brep *brep = ON_Brep_CobbSphereSewn(ADJACENT_SPAN_RADIUS, center);
+    if (!brep)
+	return NULL;
+    for (int face_index = 0; face_index < brep->m_F.Count(); ++face_index) {
+	const int surface_index = brep->m_F[face_index].m_si;
+	ON_NurbsSurface *surface = surface_index >= 0 &&
+	    surface_index < brep->m_S.Count() ? ON_NurbsSurface::Cast(
+	brep->m_S[surface_index]) : NULL;
+	if (!surface) {
+	    delete brep;
+	    return NULL;
+	}
+	const ON_Interval domain = surface->Domain(1);
+	const double span_width = (domain.Max() - domain.Min()) /
+	    ADJACENT_SPAN_HIERARCHY_SPAN_COUNT;
+	if (!domain.IsIncreasing() || !(span_width > 0.0)) {
+	    delete brep;
+	    return NULL;
+	}
+	for (int span = 1; span < ADJACENT_SPAN_HIERARCHY_SPAN_COUNT;
+		++span) {
+	    if (!surface->InsertKnot(1, domain.Min() + span * span_width)) {
+		delete brep;
+		return NULL;
+	    }
 	}
     }
     return brep;
@@ -123,6 +163,177 @@ prepare_brep_solid(struct rt_i *rtip, ON_Brep *brep)
     database_internal.idb_meth = &OBJ[ID_BREP];
     database_internal.idb_ptr = &brep_internal;
     return prepare_solid(rtip, &database_internal, ID_BREP);
+}
+
+
+static bool
+bbox_contains(const ON_BoundingBox &outer, const ON_BoundingBox &inner)
+{
+    if (!outer.IsValid() || !inner.IsValid())
+	return false;
+    for (int axis = 0; axis < 3; ++axis) {
+	if (outer.m_min[axis] > inner.m_min[axis] ||
+		outer.m_max[axis] < inner.m_max[axis])
+	    return false;
+    }
+    return true;
+}
+
+
+static bool
+prepared_span_tree_node_valid(const brep_specific &specific,
+    size_t node_index, size_t span_begin, size_t span_count)
+{
+    if (!span_count || node_index >= specific.prepared_span_nodes.size() ||
+	span_begin > specific.surface_spans.size() ||
+	span_count > specific.surface_spans.size() - span_begin)
+	return false;
+    const brep_prepared_span_node &node =
+	specific.prepared_span_nodes[node_index];
+    if (node.span_count != span_count || !node.cullable || !node.bbox.IsValid())
+	return false;
+    if (span_count == 1)
+	return bbox_contains(node.bbox, specific.surface_spans[span_begin].bbox);
+    const size_t left_count = span_count / 2;
+    const size_t left_child = node_index + 1;
+    const size_t right_child = left_child + 2 * left_count - 1;
+    if (right_child >= specific.prepared_span_nodes.size() ||
+	!prepared_span_tree_node_valid(specific, left_child, span_begin,
+	    left_count) ||
+	!prepared_span_tree_node_valid(specific, right_child,
+	    span_begin + left_count, span_count - left_count))
+	return false;
+    return bbox_contains(node.bbox,
+	specific.prepared_span_nodes[left_child].bbox) &&
+	bbox_contains(node.bbox,
+	specific.prepared_span_nodes[right_child].bbox);
+}
+
+
+static bool
+prepared_span_tree_available(const struct soltab *solid)
+{
+    const brep_specific *specific = solid ?
+	static_cast<const brep_specific *>(solid->st_specific) : NULL;
+    if (!specific)
+	return false;
+    size_t multi_span_faces = 0;
+    bool multi_level_tree = false;
+    for (std::vector<brep_face_record>::const_iterator record_it =
+	    specific->face_records.begin();
+	    record_it != specific->face_records.end(); ++record_it) {
+	const brep_face_record &record = *record_it;
+	if (!record.supported || record.span_count < 2)
+	    continue;
+	multi_span_faces++;
+	if (record.span_count >= 3)
+	    multi_level_tree = true;
+	if (!record.span_tree_available ||
+		record.span_tree_root >= specific->prepared_span_nodes.size())
+	    return false;
+	if (!prepared_span_tree_node_valid(*specific, record.span_tree_root,
+		record.span_begin, record.span_count))
+	    return false;
+    }
+    return multi_span_faces > 0 && multi_level_tree;
+}
+
+
+static bool
+disable_prepared_span_tree(struct soltab *solid)
+{
+    brep_specific *specific = solid ?
+	static_cast<brep_specific *>(solid->st_specific) : NULL;
+    if (!specific)
+	return false;
+    for (std::vector<brep_face_record>::iterator record_it =
+	    specific->face_records.begin();
+	    record_it != specific->face_records.end(); ++record_it) {
+	record_it->span_tree_root = 0;
+	record_it->span_tree_available = false;
+    }
+    specific->prepared_span_nodes.clear();
+    return true;
+}
+
+
+static bool
+disable_prepared_face_tree(struct soltab *solid)
+{
+    brep_specific *specific = solid ?
+	static_cast<brep_specific *>(solid->st_specific) : NULL;
+    if (!specific)
+	return false;
+    specific->prepared_face_nodes.clear();
+    return true;
+}
+
+
+static bool
+prepared_face_tree_node_valid(const brep_specific &specific,
+    size_t node_index, size_t face_begin, size_t face_count)
+{
+    if (!face_count || node_index >= specific.prepared_face_nodes.size() ||
+	face_begin > specific.face_records.size() ||
+	face_count > specific.face_records.size() - face_begin)
+	return false;
+    const brep_prepared_face_node &node =
+	specific.prepared_face_nodes[node_index];
+    if (node.face_begin != face_begin)
+	return false;
+    if (face_count == 1) {
+	const brep_face_record &record = specific.face_records[face_begin];
+	const size_t supported = record.supported ? 1 : 0;
+	const size_t reparameterized = record.supported &&
+	    record.nurb_form_status == 2 ? 1 : 0;
+	const size_t unsupported = record.supported ? 0 : 1;
+	const bool cullable = record.supported && record.span_count &&
+	    record.bbox.IsValid();
+	return node.leaf && node.span_count ==
+	    (record.supported ? record.span_count : 0) &&
+	    node.supported_face_count == supported &&
+	    node.reparameterized_face_count == reparameterized &&
+	    node.unsupported_face_count == unsupported &&
+	    node.cullable == cullable && (!record.supported ||
+	    !record.bbox.IsValid() ||
+	    bbox_contains(node.bbox, record.bbox));
+    }
+    const size_t left_count = face_count / 2;
+    const size_t right_count = face_count - left_count;
+    if (node.leaf || node.left_child >= specific.prepared_face_nodes.size() ||
+	node.right_child >= specific.prepared_face_nodes.size() ||
+	!prepared_face_tree_node_valid(specific, node.left_child, face_begin,
+	    left_count) || !prepared_face_tree_node_valid(specific,
+	    node.right_child, face_begin + left_count, right_count))
+	return false;
+    const brep_prepared_face_node &left =
+	specific.prepared_face_nodes[node.left_child];
+    const brep_prepared_face_node &right =
+	specific.prepared_face_nodes[node.right_child];
+    const bool left_complete = !left.supported_face_count || left.cullable;
+    const bool right_complete = !right.supported_face_count || right.cullable;
+    const bool cullable = node.span_count && left_complete && right_complete &&
+	node.bbox.IsValid();
+    return node.span_count == left.span_count + right.span_count &&
+	node.supported_face_count == left.supported_face_count +
+	right.supported_face_count && node.reparameterized_face_count ==
+	left.reparameterized_face_count + right.reparameterized_face_count &&
+	node.unsupported_face_count == left.unsupported_face_count +
+	right.unsupported_face_count && node.cullable == cullable &&
+	(!left.bbox.IsValid() || bbox_contains(node.bbox, left.bbox)) &&
+	(!right.bbox.IsValid() || bbox_contains(node.bbox, right.bbox));
+}
+
+
+static bool
+prepared_face_tree_available(const struct soltab *solid)
+{
+    const brep_specific *specific = solid ?
+	static_cast<const brep_specific *>(solid->st_specific) : NULL;
+    return specific && !specific->face_records.empty() &&
+	!specific->prepared_face_nodes.empty() &&
+	prepared_face_tree_node_valid(*specific, 0, 0,
+	    specific->face_records.size());
 }
 
 
@@ -259,6 +470,35 @@ trace_has_expected_events(const struct rt_brep_shot_trace &trace, int hits,
 }
 
 
+static bool
+trace_has_hierarchy_pruning(const struct soltab *solid,
+    const struct rt_brep_shot_trace &trace, int hits,
+    double distance_tolerance)
+{
+    const brep_specific *specific = solid ?
+	static_cast<const brep_specific *>(solid->st_specific) : NULL;
+    if (!specific || !trace_has_expected_events(trace, hits,
+	distance_tolerance))
+	return false;
+    size_t largest_face_span_count = 0;
+    for (std::vector<brep_face_record>::const_iterator record_it =
+	    specific->face_records.begin();
+	    record_it != specific->face_records.end(); ++record_it) {
+	const brep_face_record &record = *record_it;
+	if (record.supported && record.span_count > largest_face_span_count)
+	    largest_face_span_count = record.span_count;
+    }
+    const size_t prepared_span_count = specific->surface_spans.size();
+    return largest_face_span_count >= ADJACENT_SPAN_HIERARCHY_SPAN_COUNT &&
+	trace.prepared_surface_spans == prepared_span_count &&
+	trace.candidate_surface_spans + trace.excluded_surface_spans ==
+	prepared_span_count && trace.excluded_surface_spans >
+	3 * prepared_span_count / 4 && trace.candidate_surface_spans <
+	prepared_span_count / 4 && trace.surface_coefficient_expansion_avoided >=
+	trace.excluded_surface_spans;
+}
+
+
 int
 main(int argc, char **argv)
 {
@@ -297,6 +537,11 @@ main(int argc, char **argv)
 	return 1;
     }
 
+    const bool span_tree_valid = prepared_span_tree_available(solid) &&
+	prepared_face_tree_available(solid);
+    if (!span_tree_valid)
+	std::printf("FAIL: adjacent-span hierarchy preparation\n");
+
     const point_t forward_origin = {
 	ADJACENT_SPAN_RADIAL_OFFSET, 0.0,
 	-ADJACENT_SPAN_ORIGIN_DISTANCE
@@ -330,9 +575,76 @@ main(int argc, char **argv)
 	report_trace(reverse_trace);
     }
 
+    bool hierarchy_valid = false;
+    ON_Brep *hierarchy_brep = make_hierarchy_span_sphere();
+    if (hierarchy_brep && hierarchy_brep->IsSolid()) {
+	struct soltab *hierarchy_solid = prepare_brep_solid(rtip, hierarchy_brep);
+	if (hierarchy_solid) {
+	    const bool hierarchy_tree_valid =
+		prepared_span_tree_available(hierarchy_solid) &&
+		prepared_face_tree_available(hierarchy_solid);
+	    struct rt_brep_shot_trace hierarchy_forward_trace = {};
+	    const int hierarchy_forward_hits = shoot_trace(hierarchy_solid, rtip,
+		&resource, forward_origin, forward_direction,
+		hierarchy_forward_trace);
+	    struct rt_brep_shot_trace hierarchy_reverse_trace = {};
+	    const int hierarchy_reverse_hits = shoot_trace(hierarchy_solid, rtip,
+		&resource, reverse_origin, reverse_direction,
+		hierarchy_reverse_trace);
+	    const bool hierarchy_pruned = hierarchy_tree_valid &&
+		trace_has_hierarchy_pruning(hierarchy_solid,
+		    hierarchy_forward_trace, hierarchy_forward_hits,
+		    distance_tolerance) && trace_has_hierarchy_pruning(hierarchy_solid,
+		    hierarchy_reverse_trace, hierarchy_reverse_hits,
+		    distance_tolerance);
+	    bool face_fallback_valid = false;
+	    if (disable_prepared_face_tree(hierarchy_solid)) {
+		const bool face_fallback_tree_valid =
+		    prepared_span_tree_available(hierarchy_solid) &&
+		    !prepared_face_tree_available(hierarchy_solid);
+		struct rt_brep_shot_trace fallback_forward_trace = {};
+		const int fallback_forward_hits = shoot_trace(hierarchy_solid,
+		    rtip, &resource, forward_origin, forward_direction,
+		    fallback_forward_trace);
+		struct rt_brep_shot_trace fallback_reverse_trace = {};
+		const int fallback_reverse_hits = shoot_trace(hierarchy_solid,
+		    rtip, &resource, reverse_origin, reverse_direction,
+		    fallback_reverse_trace);
+		face_fallback_valid = face_fallback_tree_valid &&
+		    trace_has_hierarchy_pruning(hierarchy_solid, fallback_forward_trace,
+		    fallback_forward_hits, distance_tolerance) &&
+		    trace_has_hierarchy_pruning(hierarchy_solid, fallback_reverse_trace,
+		    fallback_reverse_hits, distance_tolerance);
+	    }
+	    bool span_fallback_valid = false;
+	    if (disable_prepared_span_tree(hierarchy_solid)) {
+		struct rt_brep_shot_trace fallback_forward_trace = {};
+		const int fallback_forward_hits = shoot_trace(hierarchy_solid,
+		    rtip, &resource, forward_origin, forward_direction,
+		    fallback_forward_trace);
+		struct rt_brep_shot_trace fallback_reverse_trace = {};
+		const int fallback_reverse_hits = shoot_trace(hierarchy_solid,
+		    rtip, &resource, reverse_origin, reverse_direction,
+		    fallback_reverse_trace);
+		span_fallback_valid = trace_has_expected_events(fallback_forward_trace,
+		    fallback_forward_hits, distance_tolerance) &&
+		    trace_has_expected_events(fallback_reverse_trace,
+		    fallback_reverse_hits, distance_tolerance);
+	    }
+	    hierarchy_valid = hierarchy_pruned && face_fallback_valid &&
+		span_fallback_valid;
+	    free_solid(hierarchy_solid);
+	} else {
+	    delete hierarchy_brep;
+	}
+    } else {
+	delete hierarchy_brep;
+    }
+
     free_solid(solid);
     free_rtip(rtip, &resource);
-    return forward_valid && reverse_valid ? 0 : 1;
+    return span_tree_valid && forward_valid && reverse_valid &&
+	hierarchy_valid ? 0 : 1;
 }
 
 
