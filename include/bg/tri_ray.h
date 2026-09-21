@@ -54,7 +54,7 @@ BG_EXPORT extern int bg_isect_tri_line(point_t *isect,
  * If isect is non-NULL, it is written only when an intersection is found.
  */
 BG_EXPORT extern int bg_isect_tri_ray(const point_t orig,
-				      const point_t dir,
+				      const vect_t dir,
 				      const point_t vert0,
 				      const point_t vert1,
 				      const point_t vert2,

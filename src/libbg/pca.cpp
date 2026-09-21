@@ -22,7 +22,7 @@
 /** @file libbg/pca.cpp
  *
  * @brief
- * Principle Component Analysis.
+ * Principal Component Analysis.
  *
  */
 
@@ -74,7 +74,7 @@ bg_pca(point_t *c, vect_t *xa, vect_t *ya, vect_t *za, size_t npnts, const point
     }
 
     // 3.  Perform SVD
-    Eigen::JacobiSVD<Eigen::MatrixXd> svd(A, Eigen::ComputeThinU);
+    Eigen::JacobiSVD<Eigen::MatrixXd> svd(A, Eigen::ComputeFullU);
 
     // 4.  Extract the vectors from the U matrix
     vect_t xaxis, yaxis, zaxis;

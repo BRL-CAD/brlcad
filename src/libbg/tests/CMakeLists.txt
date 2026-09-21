@@ -146,7 +146,7 @@ brlcad_add_test(NAME bg_plane_mk_plane_3pts_succeed          COMMAND bg_test pla
 #
 #  A-D are plane equation parameters, and P is the test point.
 brlcad_add_test(NAME bg_plane_pt_project_1  COMMAND bg_test plane_pt 6  0,0,1,1 2,2,1)
-brlcad_add_test(NAME bg_plane_pt_project_2  COMMAND bg_test plane_pt 6  0.737397,0.461098,0.493593,236.3 77.526016919831704,185.674010580054585,189.465011325663767)
+brlcad_add_test(NAME bg_plane_pt_project_2  COMMAND bg_test plane_pt 6  0.737397,0.461098,0.493593,236.3 77.526016919831704,185.674010580054585,189.465070961146)
 
 # For function #7 (bg_coplanar_pts), the <args> format is as follows:
 #
@@ -310,7 +310,24 @@ brlcad_addexec(bg_line_distance line_distance.c "${BG_TEST_LIBS}" TEST)
 
 brlcad_add_test(NAME bg_line_distance COMMAND bg_line_distance)
 
+#  ************ plane coordinate tests ***********
+
+brlcad_addexec(bg_plane_coordinates plane_coordinates.c "${BG_TEST_LIBS}" TEST)
+
+brlcad_add_test(NAME bg_plane_coordinates COMMAND bg_plane_coordinates)
+
+#  ************ pca.c tests ***********
+
+brlcad_addexec(bg_pca pca.c "${BG_TEST_LIBS}" TEST)
+
+brlcad_add_test(NAME bg_pca COMMAND bg_pca)
+
 #  ************ polygon.c tests ***********
+
+brlcad_addexec(bg_polygon polygon.c "${BG_TEST_LIBS}" TEST)
+
+brlcad_add_test(NAME bg_polygon COMMAND bg_polygon)
+
 brlcad_addexec(bg_polygon_triangulate polygon_triangulate.c "${BG_TEST_LIBS}" TEST)
 
 brlcad_add_test(NAME bg_polygon_triangulate	    COMMAND bg_polygon_triangulate)
@@ -451,6 +468,10 @@ brlcad_addexec(bg_tri_area tri_area.c "${BG_TEST_LIBS}" TEST)
 brlcad_addexec(bg_trimesh_area trimesh_area.c "${BG_TEST_LIBS}" TEST)
 
 #BRLCAD_ADD_TEST(NAME bg_trimesh_area  COMMAND bg_trimesh_area)
+
+brlcad_addexec(bg_trimesh_solid trimesh_solid.c "${BG_TEST_LIBS}" TEST)
+
+brlcad_add_test(NAME bg_trimesh_solid COMMAND bg_trimesh_solid)
 
 #  ************ trimesh_repair tests ***********
 

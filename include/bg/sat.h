@@ -39,7 +39,9 @@
 __BEGIN_DECLS
 
 /**
- * Test for an intersection between a line and an Axis-Aligned Bounding Box (AABB).
+ * Test for an intersection between an infinite line and an Axis-Aligned
+ * Bounding Box (AABB).  ldir need not be unit length, but must be nonzero.
+ * aabb_extent supplies the positive half extents along the coordinate axes.
  *
  * Returns 1 if they intersect, 0 otherwise.
  */
@@ -50,7 +52,10 @@ bg_sat_line_aabb(
 	);
 
 /**
- * Test for an intersection between a line and an Oriented Bounding Box (OBB).
+ * Test for an intersection between an infinite line and an Oriented Bounding
+ * Box (OBB).  ldir need not be unit length, but must be nonzero.  Each OBB
+ * extent vector points from the center to a face center; nonzero vectors must
+ * be mutually perpendicular, and a zero vector represents a degenerate axis.
  *
  * Returns 1 if they intersect, 0 otherwise.
  */
@@ -61,7 +66,9 @@ bg_sat_line_obb(
 	);
 
 /**
- * Test for an intersection between a triangle and an Axis-Aligned Bounding Box (AABB).
+ * Test for an intersection between a triangle and an Axis-Aligned Bounding
+ * Box (AABB).  extent supplies the positive half extents along the coordinate
+ * axes.
  *
  * Returns 1 if they intersect, 0 otherwise.
  */
@@ -72,7 +79,10 @@ bg_sat_tri_aabb(
 	);
 
 /**
- * Test for an intersection between a triangle and an Oriented Bounding Box (OBB).
+ * Test for an intersection between a triangle and an Oriented Bounding Box
+ * (OBB).  Each extent vector points from the center to a face center; nonzero
+ * vectors must be mutually perpendicular, and a zero vector represents a
+ * degenerate axis.
  *
  * Returns 1 if they intersect, 0 otherwise.
  */
@@ -85,8 +95,9 @@ bg_sat_tri_obb(
 /**
  * Test for an intersection between an Axis-Aligned Bounding Box (AABB) and an
  * Oriented Bounding Box (OBB). The latter is defined by a center point and
- * three perpendicular vectors from the center to the centers of the various
- * faces.
+ * three extent vectors from the center to the centers of the various faces.
+ * Nonzero extent vectors must be mutually perpendicular; a zero vector
+ * represents a degenerate axis.
  *
  * Returns 1 if they intersect, 0 otherwise.
  */
@@ -98,8 +109,9 @@ bg_sat_aabb_obb(
 
 /**
  * Test for an intersection between two Oriented Bounding Boxes (OBBs). The
- * boxes are defined by a center point and three perpendicular vectors from the
- * center to the centers of the various faces.
+ * boxes are defined by a center point and three extent vectors from the center
+ * to the centers of the various faces.  Nonzero extent vectors must be
+ * mutually perpendicular; a zero vector represents a degenerate axis.
  *
  * Returns 1 if they intersect, 0 otherwise.
  */

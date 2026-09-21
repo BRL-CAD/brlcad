@@ -87,7 +87,11 @@ BG_EXPORT extern int bg_trimesh_oriented(int vcnt, int fcnt, fastf_t *v, int *f)
 /**
  * Check if a mesh is topologically solid. Returns 1 if the mesh is NOT SOLID
  * and 0 if the mesh is SOLID. A SOLID (0) outcome indicates the mesh satisfies
- * all three criteria:  Closed, Manifold, Oriented
+ * all three criteria:  Closed, Manifold, Oriented.  If @p bedges is non-NULL,
+ * it is set to NULL when no edge diagnostics are present, or to a bu_calloc()
+ * allocated array of vertex-index pairs for unmatched, misoriented, and excess
+ * edges.  The caller must bu_free() a non-NULL result.  Use
+ * bg_trimesh_solid2() when structured diagnostics and their counts are needed.
  */
 BG_EXPORT extern int bg_trimesh_solid(int vcnt, int fcnt, fastf_t *v, int *f, int **bedges);
 

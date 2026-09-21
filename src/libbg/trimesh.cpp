@@ -285,10 +285,20 @@ bg_trimesh_solid2(int vcnt, int fcnt, fastf_t *v, int *f, struct bg_trimesh_soli
 
     bad_edge_func = errors ? bg_trimesh_edge_continue : bg_trimesh_edge_exit;
 
-    if ((unmatched_edges = bg_trimesh_unmatched_edges(num_edges, edge_list, bad_edge_func, NULL)) ||
-	(misoriented_edges = bg_trimesh_misoriented_edges(num_edges, edge_list, bad_edge_func, NULL)) ||
-	(excess_edges = bg_trimesh_excess_edges(num_edges, edge_list, bad_edge_func, NULL)))
-    {
+    unmatched_edges = bg_trimesh_unmatched_edges(num_edges, edge_list, bad_edge_func, NULL);
+    if (!errors && unmatched_edges) {
+	bu_free(edge_list, "edge_list");
+	return 1;
+    }
+
+    misoriented_edges = bg_trimesh_misoriented_edges(num_edges, edge_list, bad_edge_func, NULL);
+    if (!errors && misoriented_edges) {
+	bu_free(edge_list, "edge_list");
+	return 1;
+    }
+
+    excess_edges = bg_trimesh_excess_edges(num_edges, edge_list, bad_edge_func, NULL);
+    if (unmatched_edges || misoriented_edges || excess_edges) {
 	if (!errors) {
 	    bu_free(edge_list, "edge_list");
 	    return 1;
@@ -329,6 +339,7 @@ bg_free_trimesh_edges(struct bg_trimesh_edges *edges)
     if (!edges) return;
 
     bu_free(edges->edges, "bg trimesh edges");
+    edges->edges = NULL;
     edges->count = 0;
 }
 
@@ -338,6 +349,7 @@ bg_free_trimesh_faces(struct bg_trimesh_faces *faces)
     if (!faces) return;
 
     bu_free(faces->faces, "bg trimesh faces");
+    faces->faces = NULL;
     faces->count = 0;
 }
 
@@ -355,34 +367,42 @@ bg_free_trimesh_solid_errors(struct bg_trimesh_solid_errors *errors)
 int
 bg_trimesh_solid(int vcnt, int fcnt, fastf_t *v, int *f, int **bedges)
 {
-    int bedge_cnt = 0;
+    int not_solid;
 
     if (bedges) {
-	int copy_cnt = 0;
+	int copy_count = 0;
+	int edge_count;
 	struct bg_trimesh_solid_errors errors = BG_TRIMESH_SOLID_ERRORS_INIT_NULL;
 
-	bedge_cnt = bg_trimesh_solid2(vcnt, fcnt, v, f, &errors);
+	*bedges = NULL;
+	not_solid = bg_trimesh_solid2(vcnt, fcnt, v, f, &errors);
+	edge_count = errors.unmatched.count + errors.misoriented.count + errors.excess.count;
+	if (edge_count) {
+	    *bedges = (int *)bu_calloc(edge_count * 2, sizeof(int), "bad edges");
 
-	*bedges = (int *)bu_calloc(bedge_cnt * 2, sizeof(int), "bad edges");
-
-	if (!errors.unmatched.edges || !errors.unmatched.count)
-	    return 0;
-
-	memcpy(*bedges, errors.unmatched.edges, errors.unmatched.count * 2 * sizeof(int));
-	copy_cnt += errors.unmatched.count * 2;
-
-	memcpy(*bedges + copy_cnt, errors.misoriented.edges, errors.misoriented.count * 2 * sizeof(int));
-	copy_cnt += errors.misoriented.count * 2;
-
-	memcpy(*bedges + copy_cnt, errors.excess.edges, errors.excess.count * 2 * sizeof(int));
+	    if (errors.unmatched.count) {
+		memcpy(*bedges + copy_count, errors.unmatched.edges,
+		       errors.unmatched.count * 2 * sizeof(int));
+		copy_count += errors.unmatched.count * 2;
+	    }
+	    if (errors.misoriented.count) {
+		memcpy(*bedges + copy_count, errors.misoriented.edges,
+		       errors.misoriented.count * 2 * sizeof(int));
+		copy_count += errors.misoriented.count * 2;
+	    }
+	    if (errors.excess.count) {
+		memcpy(*bedges + copy_count, errors.excess.edges,
+		       errors.excess.count * 2 * sizeof(int));
+	    }
+	}
 
 	bg_free_trimesh_solid_errors(&errors);
     } else {
-	bedge_cnt = bg_trimesh_solid2(vcnt, fcnt, v, f, NULL);
+	not_solid = bg_trimesh_solid2(vcnt, fcnt, v, f, NULL);
     }
 
     /* returns true when not solid */
-    return (bedge_cnt > 0) ? 1 : 0;
+    return not_solid ? 1 : 0;
 }
 
 int

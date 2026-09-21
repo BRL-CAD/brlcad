@@ -52,7 +52,7 @@ BG_EXPORT extern double bg_tri_closest_pt(
 
 __END_DECLS
 
-#endif  /* BG_TRI_TRI_H */
+#endif  /* BG_TRI_PT_H */
 /** @} */
 /*
  * Local Variables:

@@ -1171,9 +1171,10 @@ BG_EXPORT extern int bg_isect_planes(point_t pt,
 
 /**
  * @brief
- * Given an origin and a normal, create a plane_t.
+ * Given an origin and a normal, create a plane_t with a unit normal.
+ * The input point and normal are not modified.  A zero-length normal fails.
  */
-BG_EXPORT extern int bg_plane_pt_nrml(plane_t *p, point_t pt, vect_t nrml);
+BG_EXPORT extern int bg_plane_pt_nrml(plane_t *p, const point_t pt, const vect_t nrml);
 
 /**
  * @brief
@@ -1188,15 +1189,17 @@ BG_EXPORT extern int bg_fit_plane(point_t *c, vect_t *n, size_t npnts, point_t *
 
 /**
  * @brief
- * Find the closest U,V point on the plane p to 3d point pt.
+ * Find the closest U,V point on the plane p to 3d point pt.  The plane normal
+ * need not be unit length.
  */
-BG_EXPORT extern int bg_plane_closest_pt(fastf_t *u, fastf_t *v, plane_t *p, point_t *pt);
+BG_EXPORT extern int bg_plane_closest_pt(fastf_t *u, fastf_t *v, const plane_t *p, const point_t *pt);
 
 /**
  * @brief
- * Return the 3D point on the plane at parametric coordinates u, v.
+ * Return the 3D point on the plane at parametric coordinates u, v.  The plane
+ * normal need not be unit length.
  */
-BG_EXPORT extern int bg_plane_pt_at(point_t *pt, plane_t *p, fastf_t u, fastf_t v);
+BG_EXPORT extern int bg_plane_pt_at(point_t *pt, const plane_t *p, fastf_t u, fastf_t v);
 
 
 

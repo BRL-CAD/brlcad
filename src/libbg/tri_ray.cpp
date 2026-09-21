@@ -88,7 +88,7 @@ intersect_triangle(const point_t origin, const vect_t direction,
 extern "C" {
 
 int
-bg_isect_tri_ray(const point_t orig, const point_t dir,
+bg_isect_tri_ray(const point_t orig, const vect_t dir,
 		 const point_t vert0, const point_t vert1, const point_t vert2,
 		 point_t *isect)
 {

@@ -126,9 +126,12 @@ BG_EXPORT extern int bg_3d_coplanar_obr(point_t *center,
  * \endverbatim
  *
  *
- * @param[out] pnts     eight points of oriented bounding box
- * @param points_3d	array of 3D points
- * @param pnt_cnt	number of points in pnts array
+ * @param[out] pnts     eight non-NULL, caller-provided point_t storage
+ *                       locations for the oriented bounding box vertices
+ * @param[in] points_3d flat array containing 3 * pnt_cnt coordinate values
+ * @param[in] pnt_cnt   number of points in points_3d
+ *
+ * @return 0 on success and -1 for invalid input or when no box can be fit
  */
 BG_EXPORT extern int bg_3d_obb(point_t **pnts,
 			       const fastf_t *points_3d,

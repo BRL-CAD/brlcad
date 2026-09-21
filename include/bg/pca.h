@@ -21,7 +21,7 @@
 /*----------------------------------------------------------------------*/
 /** @addtogroup bg_pca
  *
- * Principle Component Analysis
+ * Principal Component Analysis
  *
  * Calculates an XYZ coordinate system such that it aligns with the largest
  * variations in the supplied data.  Intuitively, it "aligns" with the
@@ -50,7 +50,7 @@
  * point_t p;
  * for (size_t i = 0; i < pntcnt; i++) {
  *     MAT4X3PNT(p, RT, pnts[i]);
- *     VMOVE(pnts[i], v);
+ *     VMOVE(pnts[i], p);
  * }
  * @endcode
  */
@@ -69,7 +69,7 @@ __BEGIN_DECLS
 
 /**
  * @brief
- * Perform a Principle Component Analysis on a set of points.
+ * Perform a Principal Component Analysis on a set of points.
  *
  * Outputs are a center point and XYZ vectors for the coordinate system.
  *
@@ -88,7 +88,7 @@ BG_EXPORT extern int bg_pca(point_t *c, vect_t *xaxis, vect_t *yaxis, vect_t *za
 
 __END_DECLS
 
-#endif  /* BG_PLANE_H */
+#endif  /* BG_PCA_H */
 /** @} */
 /*
  * Local Variables:

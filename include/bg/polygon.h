@@ -293,6 +293,7 @@ BG_EXPORT extern int bg_3d_polygon_area(fastf_t *area, size_t npts, const point_
  * @param[in] npts Number of point_ts, stored in pts
  * @param[in] pts all points of the polygon, sorted counter-clockwise.
  * The array mustn't contain duplicated points or non-coplanar points.
+ * A zero-area polygon fails.
  *
  * @return 0 if calculation was successful
  * @return 1 if calculation failed, e.g. because one in-parameter is a NULL-pointer
@@ -307,7 +308,7 @@ BG_EXPORT extern int bg_3d_polygon_centroid(point_t *cent, size_t npts, const po
  *@param[in] npts Number of points, pts contains
  *@param pts Array of point_ts, building a convex polygon. Duplicated points
  *aren't allowed. The points in the array will be sorted counter-clockwise.
- *@param[in] cmp Plane equation of the polygon
+ *@param[in] cmp Plane equation of the polygon.  Its normal must be nonzero.
  *
  *@return 0 if calculation was successful
  *@return 1 if calculation failed, e.g. because pts is a NULL-pointer

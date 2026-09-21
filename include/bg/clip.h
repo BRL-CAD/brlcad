@@ -50,12 +50,12 @@ BG_EXPORT extern int bg_lseg_clip(fastf_t *xp1, fastf_t *yp1, fastf_t *xp2, fast
  * The RPP has faces parallel to the coordinate planes and is defined
  * by a minimum point and a maximum point.
  *
- * FIXME: the function name implies this takes a point,dir for a,b but
- * it actually takes a line segment going from points a to b!
+ * Despite its historical name, this function clips the finite line segment
+ * from a to b.
  *
  * Returns -
- * 0 if ray does not hit RPP,
- * !0 if ray hits RPP.
+ * 0 if the segment does not hit the RPP,
+ * !0 if the segment hits the RPP.
  *
  * Implicit Return -
  * if !0 was returned, "a" and "b" have been clipped to the RPP.
