@@ -797,6 +797,7 @@ struct rt_brep_shot_trace {
     size_t surface_regular_orientation_signed;
     size_t surface_regular_orientation_uncertain;
     size_t surface_regular_orientation_failures;
+    size_t surface_fold_certificates_deferred;
     size_t surface_fold_attempts;
     size_t surface_fold_candidates;
     size_t surface_fold_krawczyk_attempts;

@@ -6350,9 +6350,16 @@ check_cobb_production_throughput(const struct bn_tol *tol,
 	    trace.surface_fold_interval_contractions +
 	    trace.surface_fold_interval_exclusions +
 	    trace.surface_fold_exact_contract_fallbacks;
-	const bool contact_contracts = family_index != contact_index ||
-	    (trace.surface_fold_interval_contract_attempts > 0 &&
-	     trace.surface_fold_interval_contractions > 0);
+	const bool contact_fold_certificates_deferred =
+	    family_index != contact_index ||
+	    (trace.surface_fold_certificates_deferred > 0 &&
+	     !trace.surface_fold_attempts &&
+	     !trace.surface_coefficient_expansion_requests &&
+	     !trace.surface_expansion_restriction_attempts &&
+	     !trace.surface_fold_interval_contract_attempts &&
+	     !trace.surface_fold_corridor_graph_interval_attempts &&
+	     !trace.surface_fold_strip_build_attempts &&
+	     !trace.stored_surface_fold_roots);
 	const bool coefficient_expansions_accounted =
 	    trace.surface_coefficient_expansion_requests ==
 	    trace.surface_coefficient_expansion_available +
@@ -6369,20 +6376,9 @@ check_cobb_production_throughput(const struct bn_tol *tol,
 	    trace.surface_fold_corridor_graph_interval_signed +
 	    trace.surface_fold_corridor_graph_interval_excluded +
 	    trace.surface_fold_corridor_graph_exact_fallbacks;
-	const bool contact_graph_intervals = family_index != contact_index ||
-	    trace.surface_fold_corridor_graph_interval_attempts > 0;
-	const bool contact_graph_parent_restrictions =
-	    family_index != contact_index ||
-	    (trace.surface_fold_corridor_graph_exact_fallbacks > 0 &&
-	     trace.surface_fold_corridor_graph_parent_restrictions + 1 ==
-		trace.surface_fold_corridor_graph_exact_fallbacks &&
-	     trace.surface_expansion_endpoint_restrictions >=
-		2 * trace.surface_fold_corridor_graph_exact_fallbacks);
 	const bool strip_builds_accounted =
 	    trace.surface_fold_strip_build_attempts >=
 	    trace.surface_fold_strip_build_available;
-	const bool contact_strip_deferred = family_index != contact_index ||
-	    trace.surface_fold_strip_build_avoided > 0;
 	if (trace.final_segments != (size_t)test.expected_segments) {
 	    std::printf("FAIL: Cobb production-throughput trace %s "
 		"segments=%zu/%d fallback=%d\n", test.name,
@@ -6454,13 +6450,11 @@ check_cobb_production_throughput(const struct bn_tol *tol,
 		reverse_trace.prepared_production_selected);
 	    failures++;
 	}
-	if (!contraction_accounted || !contact_contracts ||
+	if (!contraction_accounted || !contact_fold_certificates_deferred ||
 		!coefficient_expansions_accounted ||
 		!coefficient_expansions_deferred ||
 		!expansion_restrictions_accounted ||
-		!graph_intervals_accounted || !contact_graph_intervals ||
-		!contact_graph_parent_restrictions ||
-		!strip_builds_accounted || !contact_strip_deferred) {
+		!graph_intervals_accounted || !strip_builds_accounted) {
 	    std::printf("FAIL: Cobb production-throughput fold contraction %s "
 		"attempt/contract/exclude/fallback=%zu/%zu/%zu/%zu "
 		"coefficient-expansion=%zu/%zu/%zu/%zu "
