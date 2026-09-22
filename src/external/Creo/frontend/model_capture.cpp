@@ -24,6 +24,7 @@
 
 #include "frontend/csg_capture.h"
 #include "frontend/model_capture.h"
+#include "frontend/snapshot_writer.h"
 
 
 static const double CREO_BRL_FEET_TO_INCHES = 12.0;

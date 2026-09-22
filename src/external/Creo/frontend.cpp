@@ -35,8 +35,8 @@
 #if !defined(CREO_EXEC_PLUGIN)
 #include "frontend/profile_ui.h"
 #endif
+#include "frontend/snapshot_writer.h"
 #include "shared/core_api.h"
-#include "snapshot_writer.h"
 
 extern "C" void creo_brl_show_status(const char *message);
 extern "C" void creo_brl_core_load_profile_shim(void);

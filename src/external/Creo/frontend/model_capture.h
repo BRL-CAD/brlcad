@@ -11,7 +11,6 @@
 
 #include "creo-brl.h"
 #include "conversion_snapshot.h"
-#include "snapshot_writer.h"
 
 
 struct snapshot_settings_strings {

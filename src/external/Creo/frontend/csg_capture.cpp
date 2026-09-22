@@ -8,7 +8,6 @@
 #include <stdio.h>
 
 #include "frontend/csg_capture.h"
-
 #include "frontend/model_capture.h"
 
 

@@ -18,6 +18,7 @@ set(CREO2BRL_FRONTEND_OPTION_SOURCES
 set(CREO2BRL_FRONTEND_CAPTURE_SOURCES
   frontend/model_capture.cpp
   frontend/csg_capture.cpp
+  frontend/snapshot_writer.cpp
   )
 set(CREO2BRL_FRONTEND_OPTION_SOURCE_PATHS)
 foreach(frontend_option_source ${CREO2BRL_FRONTEND_OPTION_SOURCES})
@@ -350,7 +351,6 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   add_library(creo-brl SHARED
     loader.c
     frontend.cpp
-    snapshot_writer.cpp
     ${CREO2BRL_FRONTEND_CAPTURE_SOURCES}
     ${CREO2BRL_FRONTEND_OPTION_SOURCE_PATHS})
   target_include_directories(creo-brl PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
@@ -536,12 +536,11 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     frontend/profile_path.h
     frontend/model_capture.h
     frontend/profile_ui.h
+    frontend/snapshot_writer.h
     part_writer.h
     profile_controls.h
     shared/core_api.h
     shared/conversion_options.h
-    snapshot_writer.cpp
-    snapshot_writer.h
     resources/creo-brl-msg.txt
     resources/creo_brl.res
     resources/ptc_materials.mtl

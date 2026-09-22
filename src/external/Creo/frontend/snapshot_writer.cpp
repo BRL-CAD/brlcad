@@ -17,9 +17,7 @@
 
 #include "common.h"
 
-#include <cmath>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string>
 #include <vector>
 
@@ -27,7 +25,7 @@
 #include "conversion_snapshot.h"
 #include "frontend/model_capture.h"
 #include "frontend/profile_ui.h"
-#include "snapshot_writer.h"
+#include "frontend/snapshot_writer.h"
 
 
 static_assert(sizeof(struct creo_brl_snapshot_header) == CREO_BRL_SNAPSHOT_HEADER_SIZE,
@@ -48,33 +46,27 @@ static_assert(sizeof(struct creo_brl_snapshot_scene) == CREO_BRL_SNAPSHOT_SCENE_
 
 
 static int
-wide_to_utf8(const wchar_t *wide_text, std::string *text)
-{
-    int size = 0;
-
-    if (!wide_text || !text)
-        return 0;
-
-    size = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, wide_text, -1, NULL, 0, NULL, NULL);
-    if (size <= 0)
-        return 0;
-
-    text->resize((size_t)size);
-    if (WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, wide_text, -1,
-                            &(*text)[0], size, NULL, NULL) != size)
-        return 0;
-
-    text->resize((size_t)size - 1);
-    return 1;
-}
-
-
-static int
 dialog_text(const char *name, std::string *text)
 {
     wchar_t *wide_text = NULL;
+    std::string converted_text;
+    int size = 0;
     const ProError err = ProUIInputpanelValueGet(CREO_UI_NAME, (char *)name, &wide_text);
-    const int converted = err == PRO_TK_NO_ERROR && wide_to_utf8(wide_text, text);
+    int converted = 0;
+
+    if (err == PRO_TK_NO_ERROR && wide_text && text) {
+        size = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, wide_text, -1,
+                                   NULL, 0, NULL, NULL);
+        if (size > 0) {
+            converted_text.resize((size_t)size);
+            converted = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, wide_text, -1,
+                                             &converted_text[0], size, NULL, NULL) == size;
+            if (converted) {
+                converted_text.resize((size_t)size - 1);
+                *text = converted_text;
+            }
+        }
+    }
 
     if (wide_text)
         (void)ProWstringFree(wide_text);
