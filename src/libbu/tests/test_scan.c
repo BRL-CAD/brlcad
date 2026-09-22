@@ -17,9 +17,9 @@ scan_fastf_repeated_delimiters(void)
     return bu_scan_fastf_t(&chars, input, ",", 3,
 	&first, &second, &third) == 3
 	&& chars == (int)strlen(input)
-	&& first == 0.0
-	&& second == 0.0
-	&& third == 1.0;
+	&& ZERO(first)
+	&& ZERO(second)
+	&& EQUAL(third, 1.0);
 }
 
 
@@ -35,9 +35,9 @@ scan_fastf_mixed_delimiters(void)
     return bu_scan_fastf_t(&chars, input, ",; ", 3,
 	&first, &second, &third) == 3
 	&& chars == (int)strlen(input)
-	&& first == 1.0
-	&& second == 2.0
-	&& third == 3.0;
+	&& EQUAL(first, 1.0)
+	&& EQUAL(second, 2.0)
+	&& EQUAL(third, 3.0);
 }
 
 
@@ -53,9 +53,9 @@ scan_fastf_percent_delimiter(void)
     return bu_scan_fastf_t(&chars, input, "%", 3,
 	&first, &second, &third) == 3
 	&& chars == (int)strlen(input)
-	&& first == 1.0
-	&& second == 2.0
-	&& third == 3.0;
+	&& EQUAL(first, 1.0)
+	&& EQUAL(second, 2.0)
+	&& EQUAL(third, 3.0);
 }
 
 
@@ -69,8 +69,8 @@ scan_fastf_reports_consumed_prefix(void)
     return bu_scan_fastf_t(&chars, "1,not-a-number", ",", 2,
 	&first, &second) == 1
 	&& chars == 2
-	&& first == 1.0
-	&& second == -1.0;
+	&& EQUAL(first, 1.0)
+	&& EQUAL(second, -1.0);
 }
 
 
@@ -83,7 +83,7 @@ scan_fastf_accepts_null_destinations(void)
     return bu_scan_fastf_t(&chars, "1,2", ",", 2,
 	NULL, &second) == 2
 	&& chars == 3
-	&& second == 2.0;
+	&& EQUAL(second, 2.0);
 }
 
 
@@ -94,12 +94,12 @@ scan_fastf_rejects_invalid_configuration(void)
     int chars = -1;
 
     if (bu_scan_fastf_t(&chars, "1", NULL, 1, &value) != 0
-	|| chars != 0 || value != -1.0)
+	|| chars != 0 || !EQUAL(value, -1.0))
 	return 0;
 
     chars = -1;
     if (bu_scan_fastf_t(&chars, "1", "", 1, &value) != 0
-	|| chars != 0 || value != -1.0)
+	|| chars != 0 || !EQUAL(value, -1.0))
 	return 0;
 
     chars = -1;
