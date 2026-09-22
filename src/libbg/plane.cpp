@@ -2688,7 +2688,7 @@ bg_fit_plane(point_t *c, vect_t *n, size_t npnts, point_t *pnts)
 
 /* Translate the OpenNURBS algorithm to VMATH types */
 extern "C" int
-bg_plane_closest_pt(fastf_t *u, fastf_t *v, const plane_t *p, const point_t *pt)
+bg_plane_closest_pt(fastf_t *u, fastf_t *v, plane_t *p, point_t *pt)
 {
     if (!u || !v || !p || !pt)
 	return -1;
@@ -2710,7 +2710,7 @@ bg_plane_closest_pt(fastf_t *u, fastf_t *v, const plane_t *p, const point_t *pt)
 
 /* Translate the OpenNURBS algorithm to VMATH types */
 extern "C" int
-bg_plane_pt_at(point_t *pt, const plane_t *p, fastf_t u, fastf_t v)
+bg_plane_pt_at(point_t *pt, plane_t *p, fastf_t u, fastf_t v)
 {
     if (!pt || !p)
 	return -1;
