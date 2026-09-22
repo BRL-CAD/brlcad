@@ -65,17 +65,6 @@ main(int argc, char **argv)
 	return BRLCAD_ERROR;
     }
 
-    if (ged_cmd_valid("find", NULL) != 0 ||
-	ged_cmd_valid("find", "dbfind") != 0 ||
-	ged_cmd_valid("find", "version") != 2 ||
-	ged_cmd_valid("find", "not_a_command") != 1 ||
-	ged_cmd_valid("not_a_command", NULL) != 1 ||
-	ged_cmd_valid(NULL, "find") != 1) {
-	bu_log("deprecated ged_cmd_valid compatibility behavior is incorrect\n");
-	ged_close(gedp);
-	return BRLCAD_ERROR;
-    }
-
     const char *version_av[] = {"dbversion"};
     int direct_ret = ged_exec(gedp, 1, version_av);
     char *direct_result = bu_strdup(bu_vls_cstr(gedp->ged_result_str));
