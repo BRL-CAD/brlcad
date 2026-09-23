@@ -21,10 +21,6 @@
  *
  * Functions -
  *
- * pipe_split_pnt - split a pipe segment at a given point
- *
- * find_pipe_pnt_nearest_pnt - find which segment of a pipe is nearest
- * the ray from "pt" in the viewing direction (for segment selection)
  */
 
 #include "common.h"
@@ -427,7 +423,7 @@ rt_edit_pipe_edit_desc(void)
 }
 
 
-static void
+static int
 pipe_split_pnt(struct bu_list *pipe_hd, struct wdb_pipe_pnt *ps, point_t new_pt)
 {
     struct wdb_pipe_pnt *next;
@@ -437,8 +433,7 @@ pipe_split_pnt(struct bu_list *pipe_hd, struct wdb_pipe_pnt *ps, point_t new_pt)
 
     next = BU_LIST_NEXT(wdb_pipe_pnt, &ps->l);
     if (next->l.magic == BU_LIST_HEAD_MAGIC) {
-	bu_log("pipe_split_pnt: cannot split after the last point\n");
-	return;
+	return BRLCAD_ERROR;
     }
 
     /* Allocate and initialise a new point between ps and next. */
@@ -458,7 +453,9 @@ pipe_split_pnt(struct bu_list *pipe_hd, struct wdb_pipe_pnt *ps, point_t new_pt)
     if (rt_pipe_ck(pipe_hd)) {
 	BU_LIST_DEQUEUE(&new_ps->l);
 	bu_free(new_ps, "pipe_split_pnt: new_ps");
+	return BRLCAD_ERROR;
     }
+    return BRLCAD_OK;
 }
 
 
@@ -689,183 +686,6 @@ pipe_scale_radius(struct rt_edit *s, struct rt_db_internal *db_int, fastf_t scal
 }
 
 
-struct wdb_pipe_pnt *
-find_pipe_pnt_nearest_pnt(struct rt_edit *s, const struct bu_list *pipe_hd, const point_t pt)
-{
-    struct wdb_pipe_pnt *ps;
-    struct wdb_pipe_pnt *nearest=(struct wdb_pipe_pnt *)NULL;
-    struct bn_tol tmp_tol;
-    fastf_t min_dist = MAX_FASTF;
-    vect_t dir, work;
-
-    tmp_tol.magic = BN_TOL_MAGIC;
-    tmp_tol.dist = 0.0;
-    tmp_tol.dist_sq = tmp_tol.dist * tmp_tol.dist;
-    tmp_tol.perp = 0.0;
-    tmp_tol.para = 1.0 - tmp_tol.perp;
-
-    /* get a direction vector in model space corresponding to z-direction in view */
-    VSET(work, 0.0, 0.0, 1.0);
-    MAT4X3VEC(dir, s->vp->gv_view2model, work);
-
-    for (BU_LIST_FOR(ps, wdb_pipe_pnt, pipe_hd)) {
-	fastf_t dist;
-
-	dist = bg_dist_line3_pnt3(pt, dir, ps->pp_coord);
-	if (dist < min_dist) {
-	    min_dist = dist;
-	    nearest = ps;
-	}
-    }
-    return nearest;
-}
-
-
-struct wdb_pipe_pnt *
-pipe_add_pnt(struct rt_pipe_internal *pipeip, struct wdb_pipe_pnt *pp, const point_t new_pt)
-{
-    struct wdb_pipe_pnt *last;
-    struct wdb_pipe_pnt *newpp;
-
-    RT_PIPE_CK_MAGIC(pipeip);
-    if (pp)
-	BU_CKMAG(pp, WDB_PIPESEG_MAGIC, "pipe point");
-
-    if (pp)
-	last = pp;
-    else {
-	/* add new point to end of pipe solid */
-	last = BU_LIST_LAST(wdb_pipe_pnt, &pipeip->pipe_segs_head);
-	if (last->l.magic == BU_LIST_HEAD_MAGIC) {
-	    BU_ALLOC(newpp, struct wdb_pipe_pnt);
-	    newpp->l.magic = WDB_PIPESEG_MAGIC;
-	    newpp->pp_od = 30.0;
-	    newpp->pp_id = 0.0;
-	    newpp->pp_bendradius = 40.0;
-	    VMOVE(newpp->pp_coord, new_pt);
-	    BU_LIST_INSERT(&pipeip->pipe_segs_head, &newpp->l);
-	    return newpp;
-	}
-    }
-
-    /* build new point */
-    BU_ALLOC(newpp, struct wdb_pipe_pnt);
-    newpp->l.magic = WDB_PIPESEG_MAGIC;
-    newpp->pp_od = last->pp_od;
-    newpp->pp_id = last->pp_id;
-    newpp->pp_bendradius = last->pp_bendradius;
-    VMOVE(newpp->pp_coord, new_pt);
-
-    if (!pp)	/* add to end of pipe solid */
-	BU_LIST_INSERT(&pipeip->pipe_segs_head, &newpp->l)
-	    else		/* append after current point */
-		BU_LIST_APPEND(&pp->l, &newpp->l)
-
-		    if (rt_pipe_ck(&pipeip->pipe_segs_head)) {
-			/* won't work here, so refuse to do it */
-			BU_LIST_DEQUEUE(&newpp->l);
-			bu_free((void *)newpp, "pipe_add_pnt: newpp ");
-			return pp;
-		    } else
-			return newpp;
-}
-
-
-void
-pipe_ins_pnt(struct rt_pipe_internal *pipeip, struct wdb_pipe_pnt *pp, const point_t new_pt)
-{
-    struct wdb_pipe_pnt *first;
-    struct wdb_pipe_pnt *newpp;
-
-    RT_PIPE_CK_MAGIC(pipeip);
-    if (pp)
-	BU_CKMAG(pp, WDB_PIPESEG_MAGIC, "pipe point");
-
-    if (pp)
-	first = pp;
-    else {
-	/* insert new point at start of pipe solid */
-	first = BU_LIST_FIRST(wdb_pipe_pnt, &pipeip->pipe_segs_head);
-	if (first->l.magic == BU_LIST_HEAD_MAGIC) {
-	    BU_ALLOC(newpp, struct wdb_pipe_pnt);
-	    newpp->l.magic = WDB_PIPESEG_MAGIC;
-	    newpp->pp_od = 30.0;
-	    newpp->pp_id = 0.0;
-	    newpp->pp_bendradius = 40.0;
-	    VMOVE(newpp->pp_coord, new_pt);
-	    BU_LIST_APPEND(&pipeip->pipe_segs_head, &newpp->l);
-	    return;
-	}
-    }
-
-    /* build new point */
-    BU_ALLOC(newpp, struct wdb_pipe_pnt);
-    newpp->l.magic = WDB_PIPESEG_MAGIC;
-    newpp->pp_od = first->pp_od;
-    newpp->pp_id = first->pp_id;
-    newpp->pp_bendradius = first->pp_bendradius;
-    VMOVE(newpp->pp_coord, new_pt);
-
-    if (!pp)	/* add to start of pipe */
-	BU_LIST_APPEND(&pipeip->pipe_segs_head, &newpp->l)
-	    else		/* insert before current point */
-		BU_LIST_INSERT(&pp->l, &newpp->l)
-
-		    if (rt_pipe_ck(&pipeip->pipe_segs_head)) {
-			/* won't work here, so refuse to do it */
-			BU_LIST_DEQUEUE(&newpp->l);
-			bu_free((void *)newpp, "pipe_ins_pnt: newpp ");
-		    }
-}
-
-
-struct wdb_pipe_pnt *
-pipe_del_pnt(struct rt_edit *s, struct wdb_pipe_pnt *ps)
-{
-    struct wdb_pipe_pnt *next;
-    struct wdb_pipe_pnt *prev;
-    struct wdb_pipe_pnt *head;
-
-    BU_CKMAG(ps, WDB_PIPESEG_MAGIC, "pipe segment");
-
-    head = ps;
-    while (head->l.magic != BU_LIST_HEAD_MAGIC)
-	head = BU_LIST_NEXT(wdb_pipe_pnt, &head->l);
-
-    next = BU_LIST_NEXT(wdb_pipe_pnt, &ps->l);
-    if (next->l.magic == BU_LIST_HEAD_MAGIC)
-	next = (struct wdb_pipe_pnt *)NULL;
-
-    prev = BU_LIST_PREV(wdb_pipe_pnt, &ps->l);
-    if (prev->l.magic == BU_LIST_HEAD_MAGIC)
-	prev = (struct wdb_pipe_pnt *)NULL;
-
-    if (!prev && !next) {
-	bu_vls_printf(s->log_str, "Cannot delete last point in pipe\n");
-	return ps;
-    }
-
-    BU_LIST_DEQUEUE(&ps->l);
-
-    if (rt_pipe_ck(&head->l)) {
-	bu_vls_printf(s->log_str, "Cannot delete this point, it will result in an illegal pipe\n");
-	if (next)
-	    BU_LIST_INSERT(&next->l, &ps->l)
-		else if (prev)
-		    BU_LIST_APPEND(&prev->l, &ps->l)
-			else
-			    BU_LIST_INSERT(&head->l, &ps->l)
-
-				return ps;
-    } else
-	bu_free((void *)ps, "pipe_del_pnt: ps");
-
-    if (prev)
-	return prev;
-    else
-	return next;
-
-}
 
 
 void
@@ -947,463 +767,338 @@ rt_edit_pipe_labels(
 }
 
 /* scale OD of one pipe segment */
-int
+static fastf_t
+pipe_input_length(const struct rt_edit *s)
+{
+    /* Numeric lengths are local; e_mat[15] accounts for path scaling. */
+    return s->e_para[0] * s->local2base * s->e_mat[15];
+}
+
+static int
+pipe_set_selected_dimension(struct rt_edit *s, enum rt_constraint_edit_op_kind kind)
+{
+    struct rt_pipe_edit *p = (struct rt_pipe_edit *)s->ipe_ptr;
+    if (!p->es_pipe_pnt) {
+	bu_vls_printf(s->log_str, "No pipe segment selected\n");
+	return BRLCAD_ERROR;
+    }
+    if (s->e_inpara && (s->e_para[0] < 0.0 ||
+	(kind == RT_CONSTRAINT_EDIT_OP_SET_BEND && ZERO(s->e_para[0])))) {
+	bu_vls_printf(s->log_str, "Pipe dimension must be positive\n");
+	return BRLCAD_ERROR;
+    }
+
+    fastf_t current;
+    switch (kind) {
+	case RT_CONSTRAINT_EDIT_OP_SET_OD:
+	    current = p->es_pipe_pnt->pp_od;
+	    break;
+	case RT_CONSTRAINT_EDIT_OP_SET_ID:
+	    current = p->es_pipe_pnt->pp_id;
+	    break;
+	case RT_CONSTRAINT_EDIT_OP_SET_BEND:
+	    current = p->es_pipe_pnt->pp_bendradius;
+	    break;
+	default:
+	    return BRLCAD_ERROR;
+    }
+
+    struct rt_constraint_edit_op op;
+    memset(&op, 0, sizeof(op));
+    op.kind = kind;
+    op.point_index = rt_pipe_get_i_seg(
+	(struct rt_pipe_internal *)s->es_int.idb_ptr, p->es_pipe_pnt);
+    if (s->e_inpara) {
+	op.proposed_scalar = pipe_input_length(s);
+	s->es_scale = current > 0.0 ? op.proposed_scalar / current : 1.0;
+    } else {
+	op.proposed_scalar = current * s->es_scale;
+    }
+    return pipe_apply_cedit(s, &op);
+}
+
+static int
 ecmd_pipe_pt_od(struct rt_edit *s)
 {
-    struct rt_pipe_edit *p = (struct rt_pipe_edit *)s->ipe_ptr;
-    struct rt_constraint_edit_op op;
-    int seg_i;
-
-    if (s->e_para[0] < 0.0) {
-	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR < 0\n");
-	s->e_inpara = 0;
-	return BRLCAD_ERROR;
-    }
-
-    if (!p->es_pipe_pnt) {
-	bu_vls_printf(s->log_str, "pscale: no pipe segment selected for scaling\n");
-	return BRLCAD_ERROR;
-    }
-
-    if (s->e_inpara) {
-	/* take s->e_mat[15] (path scaling) into account */
-	if (p->es_pipe_pnt->pp_od > 0.0)
-	    s->es_scale = s->e_para[0] * s->e_mat[15]/p->es_pipe_pnt->pp_od;
-	else
-	    s->es_scale = (-s->e_para[0] * s->e_mat[15]);
-    }
-    seg_i = rt_pipe_get_i_seg((struct rt_pipe_internal *)s->es_int.idb_ptr, p->es_pipe_pnt);
-    memset(&op, 0, sizeof(op));
-    op.kind = RT_CONSTRAINT_EDIT_OP_SET_OD;
-    op.point_index = seg_i;
-    op.proposed_scalar = p->es_pipe_pnt->pp_od * s->es_scale;
-    return pipe_apply_cedit(s, &op);
+    return pipe_set_selected_dimension(s, RT_CONSTRAINT_EDIT_OP_SET_OD);
 }
 
-/* scale ID of one pipe segment */
-int
+static int
 ecmd_pipe_pt_id(struct rt_edit *s)
 {
-    struct rt_pipe_edit *p = (struct rt_pipe_edit *)s->ipe_ptr;
-    struct rt_constraint_edit_op op;
-    int seg_i;
-
-    if (s->e_para[0] < 0.0) {
-	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR < 0\n");
-	s->e_inpara = 0;
-	return BRLCAD_ERROR;
-    }
-
-    if (!p->es_pipe_pnt) {
-	bu_vls_printf(s->log_str, "pscale: no pipe segment selected for scaling\n");
-	return BRLCAD_ERROR;
-    }
-
-    if (s->e_inpara) {
-	/* take s->e_mat[15] (path scaling) into account */
-	if (p->es_pipe_pnt->pp_id > 0.0)
-	    s->es_scale = s->e_para[0] * s->e_mat[15]/p->es_pipe_pnt->pp_id;
-	else
-	    s->es_scale = (-s->e_para[0] * s->e_mat[15]);
-    }
-
-    seg_i = rt_pipe_get_i_seg((struct rt_pipe_internal *)s->es_int.idb_ptr, p->es_pipe_pnt);
-    memset(&op, 0, sizeof(op));
-    op.kind = RT_CONSTRAINT_EDIT_OP_SET_ID;
-    op.point_index = seg_i;
-    op.proposed_scalar = p->es_pipe_pnt->pp_id * s->es_scale;
-    return pipe_apply_cedit(s, &op);
+    return pipe_set_selected_dimension(s, RT_CONSTRAINT_EDIT_OP_SET_ID);
 }
 
-/* scale bend radius at selected point */
-int
+static int
 ecmd_pipe_pt_radius(struct rt_edit *s)
 {
-    struct rt_pipe_edit *p = (struct rt_pipe_edit *)s->ipe_ptr;
+    return pipe_set_selected_dimension(s, RT_CONSTRAINT_EDIT_OP_SET_BEND);
+}
+
+static int
+pipe_set_all_dimension(struct rt_edit *s, enum rt_constraint_edit_op_kind scale_kind)
+{
+    struct rt_pipe_internal *pipeip =
+	(struct rt_pipe_internal *)s->es_int.idb_ptr;
+    enum rt_constraint_edit_op_kind absolute_kind;
     struct rt_constraint_edit_op op;
-    int seg_i;
+    struct wdb_pipe_pnt *point;
 
-    if (s->e_para[0] <= 0.0) {
-	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
-	s->e_inpara = 0;
-	return BRLCAD_ERROR;
+    RT_PIPE_CK_MAGIC(pipeip);
+
+    switch (scale_kind) {
+	case RT_CONSTRAINT_EDIT_OP_SCALE_OD:
+	    absolute_kind = RT_CONSTRAINT_EDIT_OP_SET_ALL_OD;
+	    break;
+	case RT_CONSTRAINT_EDIT_OP_SCALE_ID:
+	    absolute_kind = RT_CONSTRAINT_EDIT_OP_SET_ALL_ID;
+	    break;
+	case RT_CONSTRAINT_EDIT_OP_SCALE_BEND:
+	    absolute_kind = RT_CONSTRAINT_EDIT_OP_SET_ALL_BEND;
+	    break;
+	default:
+	    return BRLCAD_ERROR;
     }
 
-    if (!p->es_pipe_pnt) {
-	bu_vls_printf(s->log_str, "pscale: no pipe segment selected for scaling\n");
-	return BRLCAD_ERROR;
-    }
+    memset(&op, 0, sizeof(op));
+    op.point_index = -1;
+    op.kind = scale_kind;
+    op.proposed_scalar = s->es_scale;
 
     if (s->e_inpara) {
-	/* take s->e_mat[15] (path scaling) into account */
-	if (p->es_pipe_pnt->pp_id > 0.0)
-	    s->es_scale = s->e_para[0] * s->e_mat[15]/p->es_pipe_pnt->pp_bendradius;
-	else
-	    s->es_scale = (-s->e_para[0] * s->e_mat[15]);
+	if (s->e_para[0] < 0.0 ||
+	    (scale_kind != RT_CONSTRAINT_EDIT_OP_SCALE_ID && ZERO(s->e_para[0]))) {
+	    bu_vls_printf(s->log_str, "Invalid pipe dimension\n");
+	    return BRLCAD_ERROR;
+	}
+	if (BU_LIST_IS_EMPTY(&pipeip->pipe_segs_head)) {
+	    bu_vls_printf(s->log_str, "Pipe has no points\n");
+	    return BRLCAD_ERROR;
+	}
+
+	fastf_t reference = 0.0;
+	for (BU_LIST_FOR(point, wdb_pipe_pnt, &pipeip->pipe_segs_head)) {
+	    switch (scale_kind) {
+		case RT_CONSTRAINT_EDIT_OP_SCALE_OD:
+		    reference = point->pp_od;
+		    break;
+		case RT_CONSTRAINT_EDIT_OP_SCALE_ID:
+		    reference = point->pp_id;
+		    break;
+		case RT_CONSTRAINT_EDIT_OP_SCALE_BEND:
+		    reference = point->pp_bendradius;
+		    break;
+		default:
+		    break;
+	    }
+	    if (reference > 0.0)
+		break;
+	}
+
+	fastf_t target = pipe_input_length(s);
+	if (reference > 0.0) {
+	    s->es_scale = target / reference;
+	    op.proposed_scalar = s->es_scale;
+	} else {
+	    /* A factor cannot change an all-zero dimension. */
+	    s->es_scale = 1.0;
+	    op.kind = absolute_kind;
+	    op.proposed_scalar = target;
+	}
     }
 
-    seg_i = rt_pipe_get_i_seg((struct rt_pipe_internal *)s->es_int.idb_ptr, p->es_pipe_pnt);
-    memset(&op, 0, sizeof(op));
-    op.kind = RT_CONSTRAINT_EDIT_OP_SET_BEND;
-    op.point_index = seg_i;
-    op.proposed_scalar = p->es_pipe_pnt->pp_bendradius * s->es_scale;
     return pipe_apply_cedit(s, &op);
 }
 
-/* scale entire pipe OD */
-int
+static int
 ecmd_pipe_scale_od(struct rt_edit *s)
 {
-    struct rt_constraint_edit_op op;
-    if (s->e_para[0] <= 0.0) {
-	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
-	s->e_inpara = 0;
-	return BRLCAD_ERROR;
-    }
-
-    if (s->e_inpara) {
-	struct rt_pipe_internal *pipeip =
-	    (struct rt_pipe_internal *)s->es_int.idb_ptr;
-	struct wdb_pipe_pnt *ps;
-
-	RT_PIPE_CK_MAGIC(pipeip);
-
-	ps = BU_LIST_FIRST(wdb_pipe_pnt, &pipeip->pipe_segs_head);
-	BU_CKMAG(ps, WDB_PIPESEG_MAGIC, "wdb_pipe_pnt");
-
-	if (ps->pp_od > 0.0) {
-	    s->es_scale = s->e_para[0] * s->e_mat[15]/ps->pp_od;
-	} else {
-	    while (ps->l.magic != BU_LIST_HEAD_MAGIC && ps->pp_od <= 0.0)
-		ps = BU_LIST_NEXT(wdb_pipe_pnt, &ps->l);
-
-	    if (ps->l.magic == BU_LIST_HEAD_MAGIC) {
-		bu_vls_printf(s->log_str, "Entire pipe solid has zero OD!\n");
-		return BRLCAD_ERROR;
-	    }
-
-	    s->es_scale = s->e_para[0] * s->e_mat[15]/ps->pp_od;
-	}
-    }
-
-    memset(&op, 0, sizeof(op));
-    op.kind = RT_CONSTRAINT_EDIT_OP_SCALE_OD;
-    op.point_index = -1;
-    op.proposed_scalar = s->es_scale;
-    return pipe_apply_cedit(s, &op);
+    return pipe_set_all_dimension(s, RT_CONSTRAINT_EDIT_OP_SCALE_OD);
 }
 
-/* scale entire pipe ID */
-int
+static int
 ecmd_pipe_scale_id(struct rt_edit *s)
 {
-    struct rt_constraint_edit_op op;
-    if (s->e_para[0] < 0.0) {
-	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR < 0\n");
-	s->e_inpara = 0;
-	return BRLCAD_ERROR;
-    }
-
-    if (s->e_inpara) {
-	struct rt_pipe_internal *pipeip =
-	    (struct rt_pipe_internal *)s->es_int.idb_ptr;
-	struct wdb_pipe_pnt *ps;
-
-	RT_PIPE_CK_MAGIC(pipeip);
-
-	ps = BU_LIST_FIRST(wdb_pipe_pnt, &pipeip->pipe_segs_head);
-	BU_CKMAG(ps, WDB_PIPESEG_MAGIC, "wdb_pipe_pnt");
-
-	if (ps->pp_id > 0.0) {
-	    s->es_scale = s->e_para[0] * s->e_mat[15]/ps->pp_id;
-	} else {
-	    while (ps->l.magic != BU_LIST_HEAD_MAGIC && ps->pp_id <= 0.0)
-		ps = BU_LIST_NEXT(wdb_pipe_pnt, &ps->l);
-
-	    /* Check if entire pipe has zero ID */
-	    if (ps->l.magic == BU_LIST_HEAD_MAGIC)
-		s->es_scale = (-s->e_para[0] * s->e_mat[15]);
-	    else
-		s->es_scale = s->e_para[0] * s->e_mat[15]/ps->pp_id;
-	}
-    }
-    memset(&op, 0, sizeof(op));
-    op.kind = RT_CONSTRAINT_EDIT_OP_SCALE_ID;
-    op.point_index = -1;
-    op.proposed_scalar = s->es_scale;
-    return pipe_apply_cedit(s, &op);
+    return pipe_set_all_dimension(s, RT_CONSTRAINT_EDIT_OP_SCALE_ID);
 }
 
-/* scale entire pipe bend radius */
-int
+static int
 ecmd_pipe_scale_radius(struct rt_edit *s)
 {
-    struct rt_constraint_edit_op op;
-    if (s->e_para[0] <= 0.0) {
-	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
-	s->e_inpara = 0;
+    return pipe_set_all_dimension(s, RT_CONSTRAINT_EDIT_OP_SCALE_BEND);
+}
+
+enum pipe_point_input_result {
+    PIPE_POINT_INPUT_ERROR,
+    PIPE_POINT_INPUT_NONE,
+    PIPE_POINT_INPUT_READY
+};
+
+static enum pipe_point_input_result
+pipe_point_from_edit(struct rt_edit *s, point_t point, const char *operation)
+{
+    if (s->e_mvalid) {
+	VMOVE(point, s->e_mparam);
+	return PIPE_POINT_INPUT_READY;
+    }
+
+    if (!s->e_inpara)
+	return PIPE_POINT_INPUT_NONE;
+    if (s->e_inpara != 3) {
+	bu_vls_printf(s->log_str, "%s: x y z coordinates required\n", operation);
+	return PIPE_POINT_INPUT_ERROR;
+    }
+
+    point_t input_base;
+    VSCALE(input_base, s->e_para, s->local2base);
+    if (s->mv_context)
+	MAT4X3PNT(point, s->e_invmat, input_base);
+    else
+	VMOVE(point, input_base);
+    return PIPE_POINT_INPUT_READY;
+}
+
+static int
+ecmd_pipe_pick(struct rt_edit *s)
+{
+    struct rt_pipe_internal *pipeip =
+	(struct rt_pipe_internal *)s->es_int.idb_ptr;
+    struct rt_pipe_edit *p = (struct rt_pipe_edit *)s->ipe_ptr;
+    point_t new_pt;
+
+    RT_PIPE_CK_MAGIC(pipeip);
+
+    enum pipe_point_input_result input =
+	pipe_point_from_edit(s, new_pt, "select point");
+    if (input != PIPE_POINT_INPUT_READY)
+	return input == PIPE_POINT_INPUT_NONE ? BRLCAD_OK : BRLCAD_ERROR;
+
+    p->es_pipe_pnt = rt_pipe_find_pnt_nearest_pnt(
+	&pipeip->pipe_segs_head, new_pt, s->vp->gv_view2model);
+    if (!p->es_pipe_pnt) {
+	bu_vls_printf(s->log_str, "No PIPE segment selected\n");
+	return BRLCAD_ERROR;
+    }
+    rt_pipe_pnt_print(p->es_pipe_pnt, s->base2local);
+    return BRLCAD_OK;
+}
+
+static int
+ecmd_pipe_split(struct rt_edit *s)
+{
+    struct rt_pipe_internal *pipeip =
+	(struct rt_pipe_internal *)s->es_int.idb_ptr;
+    struct rt_pipe_edit *p = (struct rt_pipe_edit *)s->ipe_ptr;
+    point_t new_pt;
+
+    RT_PIPE_CK_MAGIC(pipeip);
+
+    enum pipe_point_input_result input =
+	pipe_point_from_edit(s, new_pt, "split segment");
+    if (input != PIPE_POINT_INPUT_READY)
+	return input == PIPE_POINT_INPUT_NONE ? BRLCAD_OK : BRLCAD_ERROR;
+    if (!p->es_pipe_pnt) {
+	bu_vls_printf(s->log_str, "No pipe segment selected\n");
 	return BRLCAD_ERROR;
     }
 
-    if (s->e_inpara) {
-	struct rt_pipe_internal *pipeip =
-	    (struct rt_pipe_internal *)s->es_int.idb_ptr;
-	struct wdb_pipe_pnt *ps;
+    if (pipe_split_pnt(&pipeip->pipe_segs_head, p->es_pipe_pnt, new_pt) != BRLCAD_OK) {
+	bu_vls_printf(s->log_str, "Cannot split this pipe segment\n");
+	return BRLCAD_ERROR;
+    }
+    return BRLCAD_OK;
+}
 
-	RT_PIPE_CK_MAGIC(pipeip);
+static int
+ecmd_pipe_pt_move(struct rt_edit *s)
+{
+    struct rt_pipe_internal *pipeip =
+	(struct rt_pipe_internal *)s->es_int.idb_ptr;
+    struct rt_pipe_edit *p = (struct rt_pipe_edit *)s->ipe_ptr;
+    point_t new_pt;
 
-	ps = BU_LIST_FIRST(wdb_pipe_pnt, &pipeip->pipe_segs_head);
-	BU_CKMAG(ps, WDB_PIPESEG_MAGIC, "wdb_pipe_pnt");
+    RT_PIPE_CK_MAGIC(pipeip);
 
-	if (ps->pp_bendradius > 0.0) {
-	    s->es_scale = s->e_para[0] * s->e_mat[15]/ps->pp_bendradius;
-	} else {
-	    while (ps->l.magic != BU_LIST_HEAD_MAGIC && ps->pp_bendradius <= 0.0)
-		ps = BU_LIST_NEXT(wdb_pipe_pnt, &ps->l);
-
-	    /* Check if entire pipe has zero ID */
-	    if (ps->l.magic == BU_LIST_HEAD_MAGIC)
-		s->es_scale = (-s->e_para[0] * s->e_mat[15]);
-	    else
-		s->es_scale = s->e_para[0] * s->e_mat[15]/ps->pp_bendradius;
-	}
+    enum pipe_point_input_result input =
+	pipe_point_from_edit(s, new_pt, "move point");
+    if (input != PIPE_POINT_INPUT_READY)
+	return input == PIPE_POINT_INPUT_NONE ? BRLCAD_OK : BRLCAD_ERROR;
+    if (!p->es_pipe_pnt) {
+	bu_vls_printf(s->log_str, "No pipe segment selected\n");
+	return BRLCAD_ERROR;
     }
 
+    struct rt_constraint_edit_op op;
     memset(&op, 0, sizeof(op));
-    op.kind = RT_CONSTRAINT_EDIT_OP_SCALE_BEND;
-    op.point_index = -1;
-    op.proposed_scalar = s->es_scale;
+    op.kind = RT_CONSTRAINT_EDIT_OP_MOVE_POINT;
+    op.point_index = rt_pipe_get_i_seg(pipeip, p->es_pipe_pnt);
+    VMOVE(op.proposed_coord, new_pt);
     return pipe_apply_cedit(s, &op);
 }
 
-void ecmd_pipe_pick(struct rt_edit *s)
+static int
+ecmd_pipe_pt_add(struct rt_edit *s)
 {
     struct rt_pipe_internal *pipeip =
 	(struct rt_pipe_internal *)s->es_int.idb_ptr;
     struct rt_pipe_edit *p = (struct rt_pipe_edit *)s->ipe_ptr;
     point_t new_pt;
-    bu_clbk_t f = NULL;
-    void *d = NULL;
 
     RT_PIPE_CK_MAGIC(pipeip);
 
-    /* must convert to base units */
-    s->e_para[0] *= s->local2base;
-    s->e_para[1] *= s->local2base;
-    s->e_para[2] *= s->local2base;
+    enum pipe_point_input_result input =
+	pipe_point_from_edit(s, new_pt, "append point");
+    if (input != PIPE_POINT_INPUT_READY)
+	return input == PIPE_POINT_INPUT_NONE ? BRLCAD_OK : BRLCAD_ERROR;
 
-    if (s->e_mvalid) {
-	VMOVE(new_pt, s->e_mparam);
-    } else if (s->e_inpara == 3) {
-	if (s->mv_context) {
-	    /* apply s->e_invmat to convert to real model space */
-	    MAT4X3PNT(new_pt, s->e_invmat, s->e_para);
-	} else {
-	    VMOVE(new_pt, s->e_para);
-	}
-    } else if (s->e_inpara && s->e_inpara != 3) {
-	bu_vls_printf(s->log_str, "x y z coordinates required for segment selection\n");
-	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-	if (f)
-	    (*f)(0, NULL, d, NULL);
-	return;
-    } else if (!s->e_mvalid && !s->e_inpara)
-	return;
-
-    p->es_pipe_pnt = find_pipe_pnt_nearest_pnt(s, &pipeip->pipe_segs_head, new_pt);
-    if (!p->es_pipe_pnt) {
-	bu_vls_printf(s->log_str, "No PIPE segment selected\n");
-	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-	if (f)
-	    (*f)(0, NULL, d, NULL);
-    } else
-	rt_pipe_pnt_print(p->es_pipe_pnt, s->base2local);
+    struct wdb_pipe_pnt *added = rt_pipe_add_pnt(pipeip, p->es_pipe_pnt, new_pt);
+    if (!added || added == p->es_pipe_pnt) {
+	bu_vls_printf(s->log_str, "Cannot append point to pipe\n");
+	return BRLCAD_ERROR;
+    }
+    p->es_pipe_pnt = added;
+    return BRLCAD_OK;
 }
 
-void ecmd_pipe_split(struct rt_edit *s)
+static int
+ecmd_pipe_pt_ins(struct rt_edit *s)
 {
     struct rt_pipe_internal *pipeip =
 	(struct rt_pipe_internal *)s->es_int.idb_ptr;
     struct rt_pipe_edit *p = (struct rt_pipe_edit *)s->ipe_ptr;
     point_t new_pt;
-    bu_clbk_t f = NULL;
-    void *d = NULL;
 
     RT_PIPE_CK_MAGIC(pipeip);
 
-    /* must convert to base units */
-    s->e_para[0] *= s->local2base;
-    s->e_para[1] *= s->local2base;
-    s->e_para[2] *= s->local2base;
+    enum pipe_point_input_result input =
+	pipe_point_from_edit(s, new_pt, "prepend point");
+    if (input != PIPE_POINT_INPUT_READY)
+	return input == PIPE_POINT_INPUT_NONE ? BRLCAD_OK : BRLCAD_ERROR;
 
-    if (s->e_mvalid) {
-	VMOVE(new_pt, s->e_mparam);
-    } else if (s->e_inpara == 3) {
-	if (s->mv_context) {
-	    /* apply s->e_invmat to convert to real model space */
-	    MAT4X3PNT(new_pt, s->e_invmat, s->e_para);
-	} else {
-	    VMOVE(new_pt, s->e_para);
-	}
-    } else if (s->e_inpara && s->e_inpara != 3) {
-	bu_vls_printf(s->log_str, "x y z coordinates required for segment split\n");
-	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-	if (f)
-	    (*f)(0, NULL, d, NULL);
-	return;
-    } else if (!s->e_mvalid && !s->e_inpara)
-	return;
+    struct wdb_pipe_pnt *inserted = rt_pipe_ins_pnt(pipeip, p->es_pipe_pnt, new_pt);
+    if (!inserted || inserted == p->es_pipe_pnt) {
+	bu_vls_printf(s->log_str, "Cannot prepend point to pipe\n");
+	return BRLCAD_ERROR;
+    }
+    return BRLCAD_OK;
+}
 
+static int
+ecmd_pipe_pt_del(struct rt_edit *s)
+{
+    struct rt_pipe_edit *p = (struct rt_pipe_edit *)s->ipe_ptr;
     if (!p->es_pipe_pnt) {
 	bu_vls_printf(s->log_str, "No pipe segment selected\n");
-	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-	if (f)
-	    (*f)(0, NULL, d, NULL);
-	return;
+	return BRLCAD_ERROR;
     }
 
-    pipe_split_pnt(&pipeip->pipe_segs_head, p->es_pipe_pnt, new_pt);
-}
-
-void ecmd_pipe_pt_move(struct rt_edit *s)
-{
-    struct rt_pipe_internal *pipeip =
-	(struct rt_pipe_internal *)s->es_int.idb_ptr;
-    struct rt_pipe_edit *p = (struct rt_pipe_edit *)s->ipe_ptr;
-    point_t new_pt;
-    bu_clbk_t f = NULL;
-    void *d = NULL;
-
-    RT_PIPE_CK_MAGIC(pipeip);
-
-    /* must convert to base units */
-    s->e_para[0] *= s->local2base;
-    s->e_para[1] *= s->local2base;
-    s->e_para[2] *= s->local2base;
-
-    if (s->e_mvalid) {
-	VMOVE(new_pt, s->e_mparam);
-    } else if (s->e_inpara == 3) {
-	if (s->mv_context) {
-	    /* apply s->e_invmat to convert to real model space */
-	    MAT4X3PNT(new_pt, s->e_invmat, s->e_para);
-	} else {
-	    VMOVE(new_pt, s->e_para);
-	}
-    } else if (s->e_inpara && s->e_inpara != 3) {
-	bu_vls_printf(s->log_str, "x y z coordinates required for segment movement\n");
-	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-	if (f)
-	    (*f)(0, NULL, d, NULL);
-	return;
-    } else if (!s->e_mvalid && !s->e_inpara)
-	return;
-
-    if (!p->es_pipe_pnt) {
-	bu_vls_printf(s->log_str, "No pipe segment selected\n");
-	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-	if (f)
-	    (*f)(0, NULL, d, NULL);
-	return;
+    struct wdb_pipe_pnt *selected = p->es_pipe_pnt;
+    p->es_pipe_pnt = rt_pipe_delete_pnt(selected);
+    if (p->es_pipe_pnt == selected) {
+	bu_vls_printf(s->log_str, "Cannot delete this pipe point\n");
+	return BRLCAD_ERROR;
     }
-
-    {
-	struct rt_constraint_edit_op op;
-	memset(&op, 0, sizeof(op));
-	op.kind = RT_CONSTRAINT_EDIT_OP_MOVE_POINT;
-	op.point_index = rt_pipe_get_i_seg(pipeip, p->es_pipe_pnt);
-	VMOVE(op.proposed_coord, new_pt);
-	(void)pipe_apply_cedit(s, &op);
-    }
-}
-
-void ecmd_pipe_pt_add(struct rt_edit *s)
-{
-    struct rt_pipe_internal *pipeip =
-	(struct rt_pipe_internal *)s->es_int.idb_ptr;
-    struct rt_pipe_edit *p = (struct rt_pipe_edit *)s->ipe_ptr;
-    point_t new_pt;
-    bu_clbk_t f = NULL;
-    void *d = NULL;
-
-    RT_PIPE_CK_MAGIC(pipeip);
-
-    /* must convert to base units */
-    s->e_para[0] *= s->local2base;
-    s->e_para[1] *= s->local2base;
-    s->e_para[2] *= s->local2base;
-
-    if (s->e_mvalid) {
-	VMOVE(new_pt, s->e_mparam);
-    } else if (s->e_inpara == 3) {
-	if (s->mv_context) {
-	    /* apply s->e_invmat to convert to real model space */
-	    MAT4X3PNT(new_pt, s->e_invmat, s->e_para);
-	} else {
-	    VMOVE(new_pt, s->e_para);
-	}
-    } else if (s->e_inpara && s->e_inpara != 3) {
-	bu_vls_printf(s->log_str, "x y z coordinates required for 'append segment'\n");
-	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-	if (f)
-	    (*f)(0, NULL, d, NULL);
-	return;
-    } else if (!s->e_mvalid && !s->e_inpara)
-	return;
-
-    p->es_pipe_pnt = pipe_add_pnt(pipeip, p->es_pipe_pnt, new_pt);
-}
-
-void ecmd_pipe_pt_ins(struct rt_edit *s)
-{
-    struct rt_pipe_internal *pipeip =
-	(struct rt_pipe_internal *)s->es_int.idb_ptr;
-    struct rt_pipe_edit *p = (struct rt_pipe_edit *)s->ipe_ptr;
-    point_t new_pt;
-    bu_clbk_t f = NULL;
-    void *d = NULL;
-
-    RT_PIPE_CK_MAGIC(pipeip);
-
-    /* must convert to base units */
-    s->e_para[0] *= s->local2base;
-    s->e_para[1] *= s->local2base;
-    s->e_para[2] *= s->local2base;
-
-    if (s->e_mvalid) {
-	VMOVE(new_pt, s->e_mparam);
-    } else if (s->e_inpara == 3) {
-	if (s->mv_context) {
-	    /* apply s->e_invmat to convert to real model space */
-	    MAT4X3PNT(new_pt, s->e_invmat, s->e_para);
-	} else {
-	    VMOVE(new_pt, s->e_para);
-	}
-    } else if (s->e_inpara && s->e_inpara != 3) {
-	bu_vls_printf(s->log_str, "x y z coordinates required for 'prepend segment'\n");
-	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-	if (f)
-	    (*f)(0, NULL, d, NULL);
-	return;
-    } else if (!s->e_mvalid && !s->e_inpara)
-	return;
-
-    pipe_ins_pnt(pipeip, p->es_pipe_pnt, new_pt);
-}
-
-void ecmd_pipe_pt_del(struct rt_edit *s)
-{
-    struct rt_pipe_edit *p = (struct rt_pipe_edit *)s->ipe_ptr;
-    bu_clbk_t f = NULL;
-    void *d = NULL;
-    if (!p->es_pipe_pnt) {
-	bu_vls_printf(s->log_str, "No pipe segment selected\n");
-	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-	if (f)
-	    (*f)(0, NULL, d, NULL);
-	return;
-    }
-    p->es_pipe_pnt = pipe_del_pnt(s, p->es_pipe_pnt);
+    return BRLCAD_OK;
 }
 
 static int
@@ -1413,13 +1108,6 @@ rt_edit_pipe_pscale(struct rt_edit *s)
 	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
 	s->e_inpara = 0;
 	return BRLCAD_ERROR;
-    }
-
-    if (s->e_inpara) {
-	/* must convert to base units */
-	s->e_para[0] *= s->local2base;
-	s->e_para[1] *= s->local2base;
-	s->e_para[2] *= s->local2base;
     }
 
     switch (s->edit_flag) {
@@ -1460,8 +1148,7 @@ rt_edit_pipe_edit(struct rt_edit *s)
 	    edit_srot(s);
 	    break;
 	case ECMD_PIPE_SELECT:
-	    ecmd_pipe_pick(s);
-	    break;
+	    return ecmd_pipe_pick(s);
 	case ECMD_PIPE_NEXT_PT:
 	{
 	    bu_clbk_t f = NULL;
@@ -1515,20 +1202,15 @@ rt_edit_pipe_edit(struct rt_edit *s)
 	    break;
 	}
 	case ECMD_PIPE_SPLIT:
-	    ecmd_pipe_split(s);
-	    break;
+	    return ecmd_pipe_split(s);
 	case ECMD_PIPE_PT_MOVE:
-	    ecmd_pipe_pt_move(s);
-	    break;
+	    return ecmd_pipe_pt_move(s);
 	case ECMD_PIPE_PT_ADD:
-	    ecmd_pipe_pt_add(s);
-	    break;
+	    return ecmd_pipe_pt_add(s);
 	case ECMD_PIPE_PT_INS:
-	    ecmd_pipe_pt_ins(s);
-	    break;
+	    return ecmd_pipe_pt_ins(s);
 	case ECMD_PIPE_PT_DEL:
-	    ecmd_pipe_pt_del(s);
-	    break;
+	    return ecmd_pipe_pt_del(s);
 	case ECMD_PIPE_PT_OD:
 	case ECMD_PIPE_PT_ID:
 	case ECMD_PIPE_PT_RADIUS:

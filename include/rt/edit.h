@@ -708,7 +708,11 @@ enum rt_constraint_edit_op_kind {
     RT_CONSTRAINT_EDIT_OP_SET_BEND,
     RT_CONSTRAINT_EDIT_OP_SCALE_OD,
     RT_CONSTRAINT_EDIT_OP_SCALE_ID,
-    RT_CONSTRAINT_EDIT_OP_SCALE_BEND
+    RT_CONSTRAINT_EDIT_OP_SCALE_BEND,
+    /* Set every point when an all-zero dimension has no scale reference. */
+    RT_CONSTRAINT_EDIT_OP_SET_ALL_OD,
+    RT_CONSTRAINT_EDIT_OP_SET_ALL_ID,
+    RT_CONSTRAINT_EDIT_OP_SET_ALL_BEND
 };
 
 struct rt_constraint_edit_param_ref {

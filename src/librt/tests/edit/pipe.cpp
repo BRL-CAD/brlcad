@@ -56,6 +56,9 @@ struct rt_pipe_edit_local {
 };
 
 /* ECMD constants from edpipe.c */
+#define ECMD_PIPE_SELECT	15028
+#define ECMD_PIPE_NEXT_PT	15062
+#define ECMD_PIPE_PREV_PT	15063
 #define ECMD_PIPE_SPLIT		15029	/* Split a pipe segment into two */
 #define ECMD_PIPE_PT_ADD	15030
 #define ECMD_PIPE_PT_INS	15031	/* Prepend a pipe point at start */
@@ -151,6 +154,7 @@ pipe_reset(struct rt_edit *s, struct rt_pipe_edit_local *pe)
     VSETALL(s->e_keypoint, 0.0);
     MAT_IDN(s->acc_rot_sol);
     MAT_IDN(s->incr_change);
+    s->e_mvalid = 0;
     s->acc_sc_sol = 1.0;
     s->e_inpara   = 0;
     s->es_scale   = 0.0;
@@ -816,6 +820,180 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
 	       p2->pp_bendradius, p3->pp_bendradius);
 	rt_constraint_edit_result_free(&res);
     }
+
+
+    const fastf_t inch = 25.4;
+    pipe_full_reset(s, pe);
+    s->local2base = inch;
+    s->base2local = 1.0 / inch;
+    rt_edit_set_edflag(s, ECMD_PIPE_SELECT);
+    s->e_inpara = 3;
+    VSET(s->e_para, 0.0, 0.0, 10.0 / inch);
+    if (rt_edit_process(s) != BRLCAD_OK ||
+	pe->es_pipe_pnt != pipe_second(s) ||
+	!NEAR_EQUAL(s->e_para[Z], 10.0 / inch, SMALL_FASTF))
+	bu_exit(1, "ERROR: inch pipe point selection converted its input in place\n");
+
+    rt_edit_set_edflag(s, ECMD_PIPE_NEXT_PT);
+    s->e_inpara = 0;
+    if (rt_edit_process(s) != BRLCAD_ERROR ||
+	pe->es_pipe_pnt != pipe_second(s))
+	bu_exit(1, "ERROR: pipe next_point accepted the last point\n");
+    rt_edit_set_edflag(s, ECMD_PIPE_PREV_PT);
+    if (rt_edit_process(s) != BRLCAD_OK ||
+	pe->es_pipe_pnt != pipe_first(s))
+	bu_exit(1, "ERROR: pipe previous_point did not select the first point\n");
+
+    pipe_full_reset(s, pe);
+    pe->es_pipe_pnt = pipe_second(s);
+    rt_edit_set_edflag(s, ECMD_PIPE_PT_MOVE);
+    s->e_inpara = 3;
+    VSET(s->e_para, 0.0, 0.0, 1.0);
+    for (int repeat = 0; repeat < 2; repeat++) {
+	s->e_inpara = 3;
+	if (rt_edit_process(s) != BRLCAD_OK ||
+	    !NEAR_EQUAL(pipe_second(s)->pp_coord[Z], inch, SMALL_FASTF) ||
+	    !NEAR_EQUAL(s->e_para[Z], 1.0, SMALL_FASTF))
+	    bu_exit(1, "ERROR: repeated inch pipe move reconverted its input\n");
+    }
+    s->e_mvalid = 1;
+    VSET(s->e_mparam, 0.0, 0.0, 20.0);
+    if (rt_edit_process(s) != BRLCAD_OK ||
+	!NEAR_EQUAL(pipe_second(s)->pp_coord[Z], 20.0, SMALL_FASTF) ||
+	!NEAR_EQUAL(s->e_para[Z], 1.0, SMALL_FASTF))
+	bu_exit(1, "ERROR: mouse pipe move converted numeric input\n");
+    s->e_mvalid = 0;
+    s->e_inpara = 2;
+    if (rt_edit_process(s) != BRLCAD_ERROR ||
+	!NEAR_EQUAL(pipe_second(s)->pp_coord[Z], 20.0, SMALL_FASTF))
+	bu_exit(1, "ERROR: malformed pipe move did not fail without mutation\n");
+
+    pipe_full_reset(s, pe);
+    rt_edit_set_edflag(s, ECMD_PIPE_PT_ADD);
+    s->e_inpara = 3;
+    VSET(s->e_para, 0.0, 0.0, 2.0);
+    if (rt_edit_process(s) != BRLCAD_OK || pipe_npts(s) != 3 ||
+	!NEAR_EQUAL(pe->es_pipe_pnt->pp_coord[Z], 2.0 * inch, SMALL_FASTF) ||
+	!NEAR_EQUAL(s->e_para[Z], 2.0, SMALL_FASTF))
+	bu_exit(1, "ERROR: inch pipe append did not add a base-unit point\n");
+
+    pipe_full_reset(s, pe);
+    rt_edit_set_edflag(s, ECMD_PIPE_PT_INS);
+    s->e_inpara = 3;
+    VSET(s->e_para, 0.0, 0.0, -1.0);
+    if (rt_edit_process(s) != BRLCAD_OK || pipe_npts(s) != 3 ||
+	!NEAR_EQUAL(pipe_first(s)->pp_coord[Z], -inch, SMALL_FASTF) ||
+	!NEAR_EQUAL(s->e_para[Z], -1.0, SMALL_FASTF))
+	bu_exit(1, "ERROR: inch pipe prepend did not add a base-unit point\n");
+
+    pipe_full_reset(s, pe);
+    pe->es_pipe_pnt = pipe_first(s);
+    rt_edit_set_edflag(s, ECMD_PIPE_SPLIT);
+    s->e_inpara = 3;
+    VSET(s->e_para, 0.0, 0.0, 5.0 / inch);
+    if (rt_edit_process(s) != BRLCAD_OK || pipe_npts(s) != 3 ||
+	!NEAR_EQUAL(pipe_second(s)->pp_coord[Z], 5.0, SMALL_FASTF) ||
+	!NEAR_EQUAL(s->e_para[Z], 5.0 / inch, SMALL_FASTF))
+	bu_exit(1, "ERROR: inch pipe split did not preserve local input\n");
+    pe->es_pipe_pnt = BU_LIST_NEXT(wdb_pipe_pnt, &pipe_second(s)->l);
+    s->e_inpara = 3;
+    int split_last_ret = rt_edit_process(s);
+    if (split_last_ret != BRLCAD_ERROR || pipe_npts(s) != 3)
+	bu_exit(1, "ERROR: pipe split last point returned %d with %d points: %s\n",
+	    split_last_ret, pipe_npts(s), bu_vls_cstr(s->log_str));
+
+    struct pipe_length_case {
+	int command;
+	fastf_t local_input;
+	fastf_t expected_base;
+	bool all_points;
+    };
+    const struct pipe_length_case length_cases[] = {
+	{ECMD_PIPE_PT_OD, 0.1, 0.1 * inch, false},
+	{ECMD_PIPE_PT_ID, 0.02, 0.02 * inch, false},
+	{ECMD_PIPE_PT_RADIUS, 0.5, 0.5 * inch, false},
+	{ECMD_PIPE_SCALE_OD, 0.1, 0.1 * inch, true},
+	{ECMD_PIPE_SCALE_ID, 0.02, 0.02 * inch, true},
+	{ECMD_PIPE_SCALE_RADIUS, 0.5, 0.5 * inch, true}
+    };
+    auto dimension = [](const struct wdb_pipe_pnt *pt, int command) {
+	switch (command) {
+	    case ECMD_PIPE_PT_OD:
+	    case ECMD_PIPE_SCALE_OD:
+		return pt->pp_od;
+	    case ECMD_PIPE_PT_ID:
+	    case ECMD_PIPE_SCALE_ID:
+		return pt->pp_id;
+	    default:
+		return pt->pp_bendradius;
+	}
+    };
+    for (const auto &test : length_cases) {
+	pipe_full_reset(s, pe);
+	if (!test.all_points)
+	    pe->es_pipe_pnt = pipe_first(s);
+	rt_edit_set_edflag(s, test.command);
+	s->e_inpara = 1;
+	s->e_para[0] = test.local_input;
+	fastf_t other_before = dimension(pipe_second(s), test.command);
+	for (int repeat = 0; repeat < 2; repeat++) {
+	    s->e_inpara = 1;
+	    if (rt_edit_process(s) != BRLCAD_OK ||
+		!NEAR_EQUAL(dimension(pipe_first(s), test.command),
+		    test.expected_base, SMALL_FASTF) ||
+		!NEAR_EQUAL(dimension(pipe_second(s), test.command),
+		    test.all_points ? test.expected_base : other_before,
+		    SMALL_FASTF) ||
+		!NEAR_EQUAL(s->e_para[0], test.local_input, SMALL_FASTF))
+		bu_exit(1, "ERROR: inch pipe dimension command %d reconverted input\n",
+		    test.command);
+	}
+    }
+
+    pipe_full_reset(s, pe);
+    pipe_first(s)->pp_id = 0.0;
+    pe->es_pipe_pnt = pipe_first(s);
+    rt_edit_set_edflag(s, ECMD_PIPE_PT_ID);
+    s->e_inpara = 1;
+    s->e_para[0] = 0.02;
+    if (rt_edit_process(s) != BRLCAD_OK ||
+	!NEAR_EQUAL(pipe_first(s)->pp_id, 0.02 * inch, SMALL_FASTF))
+	bu_exit(1, "ERROR: inch pipe ID could not be set from zero\n");
+
+    pipe_full_reset(s, pe);
+    pipe_first(s)->pp_id = 0.0;
+    pipe_second(s)->pp_id = 0.0;
+    rt_edit_set_edflag(s, ECMD_PIPE_SCALE_ID);
+    s->e_inpara = 1;
+    s->e_para[0] = 0.02;
+    if (rt_edit_process(s) != BRLCAD_OK ||
+	!NEAR_EQUAL(pipe_first(s)->pp_id, 0.02 * inch, SMALL_FASTF) ||
+	!NEAR_EQUAL(pipe_second(s)->pp_id, 0.02 * inch, SMALL_FASTF))
+	bu_exit(1, "ERROR: inch whole-pipe ID could not be set from zero\n");
+
+    pipe_full_reset(s, pe);
+    pipe_first(s)->pp_od = 0.0;
+    pipe_second(s)->pp_od = 0.0;
+    pipe_first(s)->pp_id = 0.0;
+    pipe_second(s)->pp_id = 0.0;
+    rt_edit_set_edflag(s, ECMD_PIPE_SCALE_OD);
+    s->e_inpara = 1;
+    s->e_para[0] = 0.1;
+    if (rt_edit_process(s) != BRLCAD_OK ||
+	!NEAR_EQUAL(pipe_first(s)->pp_od, 0.1 * inch, SMALL_FASTF) ||
+	!NEAR_EQUAL(pipe_second(s)->pp_od, 0.1 * inch, SMALL_FASTF))
+	bu_exit(1, "ERROR: inch whole-pipe OD could not be set from zero\n");
+
+    pipe_full_reset(s, pe);
+    pipe_first(s)->pp_bendradius = 0.0;
+    pipe_second(s)->pp_bendradius = 0.0;
+    rt_edit_set_edflag(s, ECMD_PIPE_SCALE_RADIUS);
+    s->e_inpara = 1;
+    s->e_para[0] = 0.5;
+    if (rt_edit_process(s) != BRLCAD_OK ||
+	!NEAR_EQUAL(pipe_first(s)->pp_bendradius, 0.5 * inch, SMALL_FASTF) ||
+	!NEAR_EQUAL(pipe_second(s)->pp_bendradius, 0.5 * inch, SMALL_FASTF))
+	bu_exit(1, "ERROR: inch whole-pipe bend could not be set from zero\n");
 
     rt_edit_destroy(s);
     db_close(dbip);

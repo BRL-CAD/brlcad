@@ -4686,6 +4686,18 @@ rt_pipe_project_apply(
                 for (BU_LIST_FOR(ps, wdb_pipe_pnt, &pip->pipe_segs_head))
                     ps->pp_bendradius *= op->proposed_scalar;
                 break;
+            case RT_CONSTRAINT_EDIT_OP_SET_ALL_OD:
+                for (BU_LIST_FOR(ps, wdb_pipe_pnt, &pip->pipe_segs_head))
+                    ps->pp_od = op->proposed_scalar;
+                break;
+            case RT_CONSTRAINT_EDIT_OP_SET_ALL_ID:
+                for (BU_LIST_FOR(ps, wdb_pipe_pnt, &pip->pipe_segs_head))
+                    ps->pp_id = op->proposed_scalar;
+                break;
+            case RT_CONSTRAINT_EDIT_OP_SET_ALL_BEND:
+                for (BU_LIST_FOR(ps, wdb_pipe_pnt, &pip->pipe_segs_head))
+                    ps->pp_bendradius = op->proposed_scalar;
+                break;
             default:
                 break;
         }
