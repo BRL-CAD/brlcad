@@ -2200,7 +2200,11 @@ macro(find_package_opencv)
   set(OpenCV_DIR_TMP "${OpenCV_DIR}")
   set(OpenCV_DIR "${CMAKE_BINARY_DIR}/${LIB_DIR}/cmake/opencv4")
   set(OpenCV_ROOT ${CMAKE_BINARY_DIR})
-  find_package(OpenCV COMPONENTS core features2d imgproc highgui)
+  find_package(OpenCV CONFIG COMPONENTS core imgproc imgcodecs highgui)
+  if(OpenCV_FOUND AND OpenCV_VERSION_MAJOR GREATER_EQUAL 5)
+    # OpenCV 5 moved boundingRect from imgproc to geometry.
+    find_package(OpenCV CONFIG COMPONENTS geometry)
+  endif()
   unset(OpenCV_ROOT)
 
   # If no bundled copy, see what the system has

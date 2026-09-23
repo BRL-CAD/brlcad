@@ -34,6 +34,9 @@
 
 // OpenCV header files
 #include <opencv2/opencv.hpp>
+#if CV_VERSION_MAJOR >= 5
+#include <opencv2/geometry.hpp>
+#endif
 #include <opencv2/core/core.hpp>
 #include "opencv2/highgui/highgui.hpp"
 
