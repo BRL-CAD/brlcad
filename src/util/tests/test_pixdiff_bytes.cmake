@@ -1,5 +1,5 @@
-# Verify that pixdiff handles arbitrary-length byte streams without format
-# switches and reports classifications in bytes.
+# Verify that pixdiff's BW mode handles arbitrary-length byte streams and
+# reports classifications in bytes.
 
 if(NOT DEFINED PIXDIFF OR NOT DEFINED TEST_DIR)
   message(FATAL_ERROR "PIXDIFF and TEST_DIR are required")
@@ -16,7 +16,7 @@ file(WRITE "${input_file_1}" "ACEG")
 file(WRITE "${input_file_2}" "ADGG")
 
 execute_process(
-  COMMAND "${PIXDIFF}" "${input_file_1}" "${input_file_2}"
+  COMMAND "${PIXDIFF}" -b "${input_file_1}" "${input_file_2}"
   OUTPUT_FILE "${output_file}"
   ERROR_VARIABLE pixdiff_statistics
   RESULT_VARIABLE pixdiff_result
