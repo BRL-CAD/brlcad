@@ -102,6 +102,9 @@ brlcad_add_test(NAME rt_search_stress COMMAND rt_search_stress)
 # Tessellation timing utility (no automated test, just a tool)
 brlcad_addexec(rt_tess_timing tess_timing.c "librt;libnmg;libwdb;libbu;${M_LIBRARY}" NO_INSTALL)
 
+brlcad_addexec(rt_bot_inside bot_inside.c "librt;libwdb;libbu;${M_LIBRARY}" TEST)
+brlcad_add_test(NAME rt_bot_inside COMMAND rt_bot_inside)
+
 brlcad_addexec(bot_match bot_match.cpp "librt;libbg;${M_LIBRARY}" TEST)
 
 # boolweave testing
@@ -140,6 +143,7 @@ set(
   arb_intersect.g
   binary_attribute.c
   bound_internal.c
+  bot_inside.c
   crofton.c
   default_object.c
   dsp_raytrace_check.c

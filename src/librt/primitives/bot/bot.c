@@ -701,8 +701,46 @@ rt_bot_makesegs(hit_da *hits,
 		struct rt_piecestate *psp);
 
 
+/* r_min may be the start of a spatial partition cell inside this solid.
+ * Start BVH traversal just before the ray enters the BoT root box so its
+ * entrance triangles are considered when assembling solid segments. */
+static void
+bot_backed_origin(point_t b_pt, const struct xray *rp, const struct bvh_flat_node *root,
+                  const vect_t inv_dir, const struct soltab *stp)
+{
+    fastf_t backout = MAX_FASTF;
+    int axis;
+
+    for (axis = X; axis <= Z; axis++) {
+        if (rp->r_pt[axis] < root->bounds[axis] ||
+            rp->r_pt[axis] > root->bounds[axis + 3]) {
+            VMOVE(b_pt, rp->r_pt);
+            return;
+        }
+    }
+
+    for (axis = X; axis <= Z; axis++) {
+        fastf_t distance;
+        if (rp->r_dir[axis] > 0.0)
+            distance = (rp->r_pt[axis] - root->bounds[axis]) * inv_dir[axis];
+        else if (rp->r_dir[axis] < 0.0)
+            distance = (root->bounds[axis + 3] - rp->r_pt[axis]) * -inv_dir[axis];
+        else
+            continue;
+        backout = FMIN(backout, distance);
+    }
+
+    if (backout < MAX_FASTF) {
+        fastf_t padding = stp->st_rtip ? stp->st_rtip->rti_tol.dist : BN_TOL_DIST;
+        VJOIN1(b_pt, rp->r_pt, -(backout + padding), rp->r_dir);
+    } else {
+        VMOVE(b_pt, rp->r_pt);
+    }
+}
+
+
 void
-bot_shot_hlbvh_flat(struct bvh_flat_node *root, struct xray* rp, triangle_s *tris, size_t ntris, hit_da* hits, fastf_t toldist)
+bot_shot_hlbvh_flat(struct bvh_flat_node *root, struct xray* rp, triangle_s *tris, size_t ntris, hit_da* hits, fastf_t toldist, const struct soltab *stp)
 {
     struct bvh_flat_node *stack_node[HLBVH_STACK_SIZE];
     unsigned char stack_child_index[HLBVH_STACK_SIZE];
@@ -718,25 +756,10 @@ bot_shot_hlbvh_flat(struct bvh_flat_node *root, struct xray* rp, triangle_s *tri
     inverse_r_dir[1] = RAYDIR_INV(rp->r_dir[1]);
     inverse_r_dir[2] = RAYDIR_INV(rp->r_dir[2]);
 
-    // Because we are doing solid shotlining, we need to intersect all
-    // triangles on the line of the ray, even when the r_pt is inside the mesh.
-    // This means we DON'T want to cull hlbvh leaves behind our r_pt when the
-    // r_pt is inside the mesh.  To avoid this, we back our r_pt up to the
-    // bounding sphere if needed. This incurs a slight
-    // performance penalty when r_pt is past the mesh but still within the
-    // bounding sphere diameter distance, since backing up will cause false
-    // bbox intersect matches in those cases.   This is necessary to ensure we
-    // get the intersections needed for solid segment creation - the subsequent
-    // full intersection solves will still produce the correct results.
-    //
-    // NOTE:  We DO, however, need to use the real rp->r_pt when doing the
-    // actual intersection solve math so our segments end up in the right
-    // place.
-    fastf_t backout = FMAX(0.0, -rp->r_min);
+    /* Only BVH culling uses the backed origin.  Triangle intersections must
+     * remain relative to the original ray origin. */
     point_t b_pt;
-    b_pt[X] = rp->r_pt[X] - backout * rp->r_dir[X];
-    b_pt[Y] = rp->r_pt[Y] - backout * rp->r_dir[Y];
-    b_pt[Z] = rp->r_pt[Z] - backout * rp->r_dir[Z];
+    bot_backed_origin(b_pt, rp, root, inverse_r_dir, stp);
 
     while (stack_ind >= 0) {
 	if (UNLIKELY(stack_ind >= HLBVH_STACK_SIZE)) {
@@ -899,7 +922,7 @@ rt_bot_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 	toldist = (DBL_EPSILON * stp->st_aradius * 10);
     }
 
-    bot_shot_hlbvh_flat(sps->root, rp, sps->tris, bot->bot_ntri, &hits_per_cpu, toldist);
+    bot_shot_hlbvh_flat(sps->root, rp, sps->tris, bot->bot_ntri, &hits_per_cpu, toldist, stp);
 
     if (hits_per_cpu.count == 0) {
 	return 0;
