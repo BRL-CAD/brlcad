@@ -51,6 +51,7 @@
 #include "bu/malloc.h"
 #include "bu/str.h"
 #include "raytrace.h"
+#include "test_utils.h"
 #include "rt/rt_ecmds.h"
 
 
@@ -58,15 +59,6 @@
 #define ECMD_EBM_FNAME		12053
 #define ECMD_EBM_FSIZE		12054
 #define ECMD_EBM_HEIGHT		12055
-
-
-static int
-ebm_filename_callback(int UNUSED(argc), const char **UNUSED(argv),
-                      void *data, void *result)
-{
-    *(const char **)result = (const char *)data;
-    return BRLCAD_OK;
-}
 
 
 static void
@@ -345,7 +337,7 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
 
     /* File selection and bitmap dimensions are independent of length units. */
     if (rt_edit_map_clbk_set(s->m, ECMD_GET_FILENAME, BU_CLBK_DURING,
-                             ebm_filename_callback, data_path) != BRLCAD_OK)
+                             edit_test_filename_callback, data_path) != BRLCAD_OK)
         bu_exit(1, "ERROR: Unable to register EBM filename callback\n");
     EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_EBM_FNAME);
     if (!BU_STR_EQUAL(edit_ebm->name, data_path))

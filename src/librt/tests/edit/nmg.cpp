@@ -379,6 +379,83 @@ rt_edit_test_nmg(void)
 	ws->local2base = local2base;
 	ws->base2local = 1.0 / local2base;
 	MAT_IDN(ws->e_invmat);
+	struct rt_nmg_edit *wne = (struct rt_nmg_edit *)ws->ipe_ptr;
+	struct model *wire_model = (struct model *)ws->es_int.idb_ptr;
+	struct nmgregion *wire_region = BU_LIST_FIRST(nmgregion, &wire_model->r_hd);
+	struct shell *wire_shell = BU_LIST_FIRST(shell, &wire_region->s_hd);
+	struct loopuse *wire_loop = BU_LIST_FIRST(loopuse, &wire_shell->lu_hd);
+	struct edgeuse *first_edge = BU_LIST_FIRST(edgeuse, &wire_loop->down_hd);
+	point_t edge_midpoint, pick_view;
+	VADD2SCALE(edge_midpoint, first_edge->vu_p->v_p->vg_p->coord,
+		first_edge->eumate_p->vu_p->v_p->vg_p->coord, 0.5);
+	MAT4X3PNT(pick_view, wv->gv_model2view, edge_midpoint);
+	EDOBJ[wdp->d_minor_type].ft_set_edit_mode(ws, ECMD_NMG_EPICK);
+	EDOBJ[wdp->d_minor_type].ft_edit_xy(ws, pick_view);
+	if (!wne->es_eu)
+	    bu_exit(1, "ERROR: NMG edge pick did not select an edge\n");
+
+	struct edgeuse *picked_edge = wne->es_eu;
+	struct edgeuse *next_edge = BU_LIST_PNEXT_CIRC(edgeuse, picked_edge);
+	ws->e_inpara = 0;
+	EDOBJ[wdp->d_minor_type].ft_set_edit_mode(ws, ECMD_NMG_FORW);
+	if (wne->es_eu != next_edge)
+	    bu_exit(1, "ERROR: NMG forward traversal selected the wrong edge\n");
+	EDOBJ[wdp->d_minor_type].ft_set_edit_mode(ws, ECMD_NMG_BACK);
+	if (wne->es_eu != picked_edge)
+	    bu_exit(1, "ERROR: NMG backward traversal selected the wrong edge\n");
+	struct edgeuse *radial_edge = picked_edge->eumate_p->radial_p;
+	EDOBJ[wdp->d_minor_type].ft_set_edit_mode(ws, ECMD_NMG_RADIAL);
+	if (wne->es_eu != radial_edge)
+	    bu_exit(1, "ERROR: NMG radial traversal selected the wrong edge\n");
+	point_t start_before, end_before, move_target, start_expected, end_expected;
+	vect_t edge_dir, edge_shift;
+	VMOVE(start_before, first_edge->vu_p->v_p->vg_p->coord);
+	VMOVE(end_before, first_edge->eumate_p->vu_p->v_p->vg_p->coord);
+	VSUB2(edge_dir, end_before, start_before);
+	VSET(edge_shift, -edge_dir[Y], edge_dir[X], 0.0);
+	VUNITIZE(edge_shift);
+	VSCALE(edge_shift, edge_shift, 0.1);
+	VADD2(move_target, edge_midpoint, edge_shift);
+	VADD2(start_expected, start_before, edge_shift);
+	VADD2(end_expected, end_before, edge_shift);
+	wne->es_eu = first_edge;
+	EDOBJ[wdp->d_minor_type].ft_set_edit_mode(ws, ECMD_NMG_EMOVE);
+	ws->e_inpara = 3;
+	VSCALE(ws->e_para, move_target, 1.0 / local2base);
+	rt_edit_process(ws);
+	if (!VNEAR_EQUAL(first_edge->vu_p->v_p->vg_p->coord,
+			 start_expected, VUNITIZE_TOL) ||
+		!VNEAR_EQUAL(first_edge->eumate_p->vu_p->v_p->vg_p->coord,
+			     end_expected, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: NMG edge move: start=(%g,%g,%g), expected "
+		    "(%g,%g,%g), end=(%g,%g,%g), expected (%g,%g,%g)\n",
+		    V3ARGS(first_edge->vu_p->v_p->vg_p->coord),
+		    V3ARGS(start_expected),
+		    V3ARGS(first_edge->eumate_p->vu_p->v_p->vg_p->coord),
+		    V3ARGS(end_expected));
+	VMOVE(edge_midpoint, move_target);
+
+	int edge_count = bu_list_len(&wire_loop->down_hd);
+	wne->es_eu = first_edge;
+	EDOBJ[wdp->d_minor_type].ft_set_edit_mode(ws, ECMD_NMG_ESPLIT);
+	ws->e_inpara = 3;
+	VSCALE(ws->e_para, edge_midpoint, 1.0 / local2base);
+	rt_edit_process(ws);
+	if (bu_list_len(&wire_loop->down_hd) != edge_count + 1 ||
+		!wne->es_eu ||
+		!VNEAR_EQUAL(wne->es_eu->vu_p->v_p->vg_p->coord,
+			     edge_midpoint, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: NMG edge split did not insert the requested point\n");
+
+	/* Delete ignores parameter values left over from another edit. */
+	EDOBJ[wdp->d_minor_type].ft_set_edit_mode(ws, ECMD_NMG_EKILL);
+	ws->e_inpara = 3;
+	VSCALE(ws->e_para, edge_midpoint, 1.0 / local2base);
+	rt_edit_process(ws);
+	if (bu_list_len(&wire_loop->down_hd) != edge_count)
+	    bu_exit(1, "ERROR: NMG edge delete also changed another edge\n");
+
+	wne->es_eu = NULL;
 
 	/* Set up LEXTRU_DIR: scans for the wire loop, copies it */
 	bu_vls_trunc(ws->log_str, 0);
@@ -389,7 +466,6 @@ rt_edit_test_nmg(void)
 		    bu_vls_cstr(ws->log_str));
 	}
 
-	struct rt_nmg_edit *wne = (struct rt_nmg_edit *)ws->ipe_ptr;
 	if (!wne->lu_copy)
 	    bu_exit(1, "ERROR: ECMD_NMG_LEXTRU_DIR: lu_copy not set\n");
 	if (!wne->es_s)
@@ -415,6 +491,20 @@ rt_edit_test_nmg(void)
 
 	bu_log("ECMD_NMG_LEXTRU_DIR SUCCESS: shell has faceuses after extrusion\n");
 
+	/* The scalar-distance form must work after an earlier extrusion. */
+	EDOBJ[wdp->d_minor_type].ft_set_edit_mode(ws, ECMD_NMG_LEXTRU);
+	if (!wne->lu_copy || !wne->es_s)
+	    bu_exit(1, "ERROR: NMG scalar extrusion setup failed\n");
+	ws->e_inpara = 1;
+	ws->e_para[0] = 1.0;
+	rt_edit_process(ws);
+	if (!NEAR_EQUAL(ws->e_para[0], local2base, VUNITIZE_TOL) ||
+		BU_LIST_IS_EMPTY(&wne->es_s->fu_hd))
+	    bu_exit(1, "ERROR: NMG scalar extrusion lost units or geometry\n");
+
+	EDOBJ[wdp->d_minor_type].ft_prim_edit_reset(ws);
+	if (wne->lu_copy)
+	    bu_exit(1, "ERROR: NMG edit reset retained the extrusion template\n");
 	rt_edit_destroy(ws);
 	db_close(wdbip);
     }

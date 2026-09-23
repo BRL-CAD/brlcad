@@ -60,7 +60,7 @@ foreach(edit_case IN LISTS edit_cases)
 endforeach()
 brlcad_add_test(NAME rt_edit_test_inventory COMMAND rt_edit_test --check-inventory)
 
-set(distcheck_files CMakeLists.txt cases.inc.in operations.inc ${edit_sources})
+set(distcheck_files CMakeLists.txt cases.inc.in operations.inc test_utils.h ${edit_sources})
 cmakefiles(${distcheck_files})
 
 # Local Variables:

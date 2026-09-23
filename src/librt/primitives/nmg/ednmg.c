@@ -99,6 +99,18 @@ rt_edit_nmg_prim_edit_create(struct rt_edit *UNUSED(s))
     return (void *)e;
 }
 
+/* The extrusion template owns a separate temporary model. */
+static void
+nmg_edit_free_loop_copy(struct rt_nmg_edit *e)
+{
+    if (!e->lu_copy)
+	return;
+
+    struct model *m = nmg_find_model(&e->lu_copy->l.magic);
+    nmg_km(m);
+    e->lu_copy = NULL;
+}
+
 C_DECL void
 rt_edit_nmg_prim_edit_destroy(void *ptr)
 {
@@ -106,13 +118,7 @@ rt_edit_nmg_prim_edit_destroy(void *ptr)
     if (!e)
 	return;
 
-    // Sanity
-    e->es_eu = NULL;
-    if (e->lu_copy) {
-	struct model *m = nmg_find_model(&e->lu_copy->l.magic);
-	nmg_km(m);
-	e->lu_copy = (struct loopuse *)NULL;
-    }
+    nmg_edit_free_loop_copy(e);
 
     BU_PUT(e, struct rt_nmg_edit);
 }
@@ -121,6 +127,7 @@ C_DECL void
 rt_edit_nmg_prim_edit_reset(struct rt_edit *s)
 {
     struct rt_nmg_edit *n = (struct rt_nmg_edit *)s->ipe_ptr;
+    nmg_edit_free_loop_copy(n);
     n->es_eu = NULL;
     n->es_s = NULL;
     n->es_v = NULL;
@@ -361,6 +368,7 @@ rt_edit_nmg_set_edit_mode(struct rt_edit *s, int mode)
 		m_tmp = nmg_mm();
 		r_tmp = nmg_mrsv(m_tmp);
 		s_tmp = BU_LIST_FIRST(shell, &r_tmp->s_hd);
+		nmg_edit_free_loop_copy(n);
 		n->lu_copy = nmg_dup_loop(lu, &s_tmp->l.magic, (long **)0);
 		if (!n->lu_copy) {
 		    bu_vls_printf(s->log_str, "Failed to make copy of loop\n");
@@ -1333,7 +1341,7 @@ rt_edit_nmg_edit(struct rt_edit *s)
 	    break;
 	case ECMD_NMG_EKILL:
 	    ecmd_nmg_ekill(s);
-	    /* fall through */
+	    break;
 	case ECMD_NMG_ESPLIT:
 	    ecmd_nmg_esplit(s);
 	    break;

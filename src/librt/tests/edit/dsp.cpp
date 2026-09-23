@@ -58,6 +58,7 @@
 #include "bu/str.h"
 #include "bu/vls.h"
 #include "raytrace.h"
+#include "test_utils.h"
 #include "rt/rt_ecmds.h"
 
 
@@ -475,6 +476,44 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
 		    dsp2->dsp_smooth);
 	bu_log("ECMD_DSP_SET_SMOOTH set=0 SUCCESS\n");
     }
+    /* Filename and sample counts must not be scaled as lengths. */
+    {
+	struct rt_dsp_internal *dsp = (struct rt_dsp_internal *)s->es_int.idb_ptr;
+	const fastf_t local2base = 25.4;
+	s->local2base = local2base;
+	s->base2local = 1.0 / local2base;
+
+	if (rt_edit_map_clbk_set(s->m, ECMD_GET_FILENAME, BU_CLBK_DURING,
+				 edit_test_filename_callback, data_path) != BRLCAD_OK)
+	    bu_exit(1, "ERROR: Unable to register DSP filename callback\n");
+	bu_vls_strcpy(&dsp->dsp_name, "unselected");
+	s->e_inpara = 0;
+	EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_DSP_FNAME);
+	if (!BU_STR_EQUAL(bu_vls_cstr(&dsp->dsp_name), data_path))
+	    bu_exit(1, "ERROR: DSP filename command did not select the file\n");
+
+	s->e_inpara = 2;
+	s->e_para[0] = 4.0;
+	s->e_para[1] = 16.0;
+	EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_DSP_FSIZE);
+	if (dsp->dsp_xcnt != 4 || dsp->dsp_ycnt != 16)
+	    bu_exit(1, "ERROR: DSP sample counts were converted as lengths\n");
+
+	s->e_inpara = 2;
+	s->e_para[0] = 0.0;
+	s->e_para[1] = 16.0;
+	if (EDOBJ[dp->d_minor_type].ft_edit(s) == BRLCAD_OK ||
+		dsp->dsp_xcnt != 4 || dsp->dsp_ycnt != 16)
+	    bu_exit(1, "ERROR: DSP accepted a zero sample count\n");
+
+	s->e_inpara = 2;
+	s->e_para[0] = 8.0;
+	s->e_para[1] = 8.0;
+	EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_DSP_FSIZE);
+	if (dsp->dsp_xcnt != 8 || dsp->dsp_ycnt != 8)
+	    bu_exit(1, "ERROR: DSP sample counts could not be restored\n");
+    }
+
 
     /* ================================================================
      * ECMD_DSP_SET_DATASRC: switch from file to object data source
