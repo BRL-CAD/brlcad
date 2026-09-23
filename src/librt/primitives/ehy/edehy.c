@@ -320,50 +320,39 @@ ecmd_ehy_h(struct rt_edit *s)
 	(struct rt_ehy_internal *)s->es_int.idb_ptr;
 
     RT_EHY_CK_MAGIC(ehy);
-    if (s->e_inpara) {
-	/* take s->e_mat[15] (path scaling) into account */
-	s->e_para[0] *= s->e_mat[15];
-	s->es_scale = s->e_para[0] / MAGNITUDE(ehy->ehy_H);
-    }
     VSCALE(ehy->ehy_H, ehy->ehy_H, s->es_scale);
 }
 
 /* scale semimajor axis of EHY */
-void
+static int
 ecmd_ehy_r1(struct rt_edit *s)
 {
     struct rt_ehy_internal *ehy =
 	(struct rt_ehy_internal *)s->es_int.idb_ptr;
 
     RT_EHY_CK_MAGIC(ehy);
-    if (s->e_inpara) {
-	/* take s->e_mat[15] (path scaling) into account */
-	s->e_para[0] *= s->e_mat[15];
-	s->es_scale = s->e_para[0] / ehy->ehy_r1;
-    }
-    if (ehy->ehy_r1 * s->es_scale >= ehy->ehy_r2)
+    if (ehy->ehy_r1 * s->es_scale >= ehy->ehy_r2) {
 	ehy->ehy_r1 *= s->es_scale;
-    else
-	bu_log("pscale:  semi-minor axis cannot be longer than semi-major axis!");
+	return BRLCAD_OK;
+    }
+    bu_vls_printf(s->log_str, "Semi-major axis cannot be shorter than semi-minor axis\n");
+    return BRLCAD_ERROR;
 }
 
 /* scale semiminor axis of EHY */
-void
+static int
 ecmd_ehy_r2(struct rt_edit *s)
 {
     struct rt_ehy_internal *ehy =
 	(struct rt_ehy_internal *)s->es_int.idb_ptr;
 
     RT_EHY_CK_MAGIC(ehy);
-    if (s->e_inpara) {
-	/* take s->e_mat[15] (path scaling) into account */
-	s->e_para[0] *= s->e_mat[15];
-	s->es_scale = s->e_para[0] / ehy->ehy_r2;
-    }
-    if (ehy->ehy_r2 * s->es_scale <= ehy->ehy_r1)
+    if (ehy->ehy_r2 * s->es_scale <= ehy->ehy_r1) {
 	ehy->ehy_r2 *= s->es_scale;
-    else
-	bu_log("pscale:  semi-minor axis cannot be longer than semi-major axis!");
+	return BRLCAD_OK;
+    }
+    bu_vls_printf(s->log_str, "Semi-minor axis cannot be longer than semi-major axis\n");
+    return BRLCAD_ERROR;
 }
 
 /* scale distance between apex of EHY & asymptotic cone */
@@ -374,46 +363,45 @@ ecmd_ehy_c(struct rt_edit *s)
 	(struct rt_ehy_internal *)s->es_int.idb_ptr;
 
     RT_EHY_CK_MAGIC(ehy);
-    if (s->e_inpara) {
-	/* take s->e_mat[15] (path scaling) into account */
-	s->e_para[0] *= s->e_mat[15];
-	s->es_scale = s->e_para[0] / ehy->ehy_c;
-    }
     ehy->ehy_c *= s->es_scale;
 }
 
 static int
 rt_edit_ehy_pscale(struct rt_edit *s)
 {
-    if (s->e_inpara > 1) {
-	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
-	s->e_inpara = 0;
-	return BRLCAD_ERROR;
-    }
+    struct rt_ehy_internal *ehy = (struct rt_ehy_internal *)s->es_int.idb_ptr;
+    RT_EHY_CK_MAGIC(ehy);
+    if (!s->e_inpara && ZERO(s->es_scale))
+	return BRLCAD_OK;
 
-    if (s->e_inpara) {
-	if (s->e_para[0] <= 0.0) {
-	    bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
-	    s->e_inpara = 0;
+    fastf_t current;
+    switch (s->edit_flag) {
+	case ECMD_EHY_H:
+	    current = MAGNITUDE(ehy->ehy_H);
+	    break;
+	case ECMD_EHY_R1:
+	    current = ehy->ehy_r1;
+	    break;
+	case ECMD_EHY_R2:
+	    current = ehy->ehy_r2;
+	    break;
+	case ECMD_EHY_C:
+	    current = ehy->ehy_c;
+	    break;
+	default:
 	    return BRLCAD_ERROR;
-	}
-
-	/* must convert to base units */
-	s->e_para[0] *= s->local2base;
-	s->e_para[1] *= s->local2base;
-	s->e_para[2] *= s->local2base;
     }
+    if (edit_prepare_length_scale(s, current) != BRLCAD_OK)
+	return BRLCAD_ERROR;
 
     switch (s->edit_flag) {
 	case ECMD_EHY_H:
 	    ecmd_ehy_h(s);
 	    break;
 	case ECMD_EHY_R1:
-	    ecmd_ehy_r1(s);
-	    break;
+	    return ecmd_ehy_r1(s);
 	case ECMD_EHY_R2:
-	    ecmd_ehy_r2(s);
-	    break;
+	    return ecmd_ehy_r2(s);
 	case ECMD_EHY_C:
 	    ecmd_ehy_c(s);
 	    break;

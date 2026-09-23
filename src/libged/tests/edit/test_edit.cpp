@@ -117,6 +117,35 @@ read_hrt(struct ged *gedp, const char *name, struct rt_hrt_internal *out)
     return BRLCAD_OK;
 }
 
+static int
+read_conic_semiaxes(struct ged *gedp, const char *name,
+	fastf_t *major, fastf_t *minor)
+{
+    struct directory *dp = db_lookup(gedp->dbip, name, LOOKUP_QUIET);
+    if (dp == RT_DIR_NULL)
+	return BRLCAD_ERROR;
+
+    struct rt_db_internal intern;
+    RT_DB_INTERNAL_INIT(&intern);
+    int id = rt_db_get_internal(&intern, dp, gedp->dbip, NULL);
+    if (id == ID_EPA) {
+	struct rt_epa_internal *epa = (struct rt_epa_internal *)intern.idb_ptr;
+	*major = epa->epa_r1;
+	*minor = epa->epa_r2;
+    } else if (id == ID_EHY) {
+	struct rt_ehy_internal *ehy = (struct rt_ehy_internal *)intern.idb_ptr;
+	*major = ehy->ehy_r1;
+	*minor = ehy->ehy_r2;
+    } else {
+	if (id > 0)
+	    rt_db_free_internal(&intern);
+	return BRLCAD_ERROR;
+    }
+
+    rt_db_free_internal(&intern);
+    return BRLCAD_OK;
+}
+
 
 /* ------------------------------------------------------------------ *
  * Shared helper: open a fixture database with a freshly constructed
@@ -505,6 +534,37 @@ test_p0_hrt_descriptor_ops(struct ged *gedp)
         bu_vls_trunc(gedp->ged_result_str, 0);
         int ret = ged_exec(gedp, 4, av);
         CHECK(ret == BRLCAD_ERROR, "edit hrt.s set_d 0 returns error");
+    }
+}
+
+static void
+test_p0_conic_semiaxis_errors(struct ged *gedp)
+{
+    const struct {
+	const char *name;
+	const char *operation;
+	const char *value;
+	const char *message;
+    } cases[] = {
+	{"epa.s", "r1", "1", "EPA rejects a semi-major axis below the semi-minor axis"},
+	{"epa.s", "r2", "10", "EPA rejects a semi-minor axis above the semi-major axis"},
+	{"ehy.s", "r1", "1", "EHY rejects a semi-major axis below the semi-minor axis"},
+	{"ehy.s", "r2", "10", "EHY rejects a semi-minor axis above the semi-major axis"}
+    };
+
+    for (const auto &c : cases) {
+	fastf_t before_major = 0.0, before_minor = 0.0;
+	fastf_t after_major = 0.0, after_minor = 0.0;
+	int have_before = read_conic_semiaxes(gedp, c.name,
+		&before_major, &before_minor);
+	const char *argv[] = {"edit", c.name, c.operation, c.value, NULL};
+	int ret = ged_exec(gedp, 4, argv);
+	int have_after = read_conic_semiaxes(gedp, c.name,
+		&after_major, &after_minor);
+	CHECK(have_before == BRLCAD_OK && ret == BRLCAD_ERROR &&
+	      have_after == BRLCAD_OK &&
+	      NEAR_EQUAL(before_major, after_major, NEAR_ENOUGH) &&
+	      NEAR_EQUAL(before_minor, after_minor, NEAR_ENOUGH), c.message);
     }
 }
 
@@ -3949,6 +4009,7 @@ main(int ac, char *av[])
         test_p0_obj_nosubcmd(gedp);
         test_p0_perturb(gedp);
         test_p0_hrt_descriptor_ops(gedp);
+        test_p0_conic_semiaxis_errors(gedp);
         test_p0_obj_help_descriptor_ops(gedp);
         test_p0_desc_coverage();
         test_p0_no_desc_returns_error();

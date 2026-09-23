@@ -19,7 +19,7 @@
  */
 /** @file arb8.cpp
  *
- * Test editing of ARB8 primitive parameters.
+ * Test editing of ARB primitive parameters.
  *
  * Reference ARB8: unit cube, pt[0]=(0,0,0)..pt[7]=(1,1,1).
  * Keypoint = pt[0] = (0,0,0) = V1.
@@ -277,6 +277,66 @@ test_arb_point_knob(struct rt_edit *s, struct rt_arb_internal *arb,
 	bu_exit(1, "ERROR: %s knob edit moved the base\n", test_name);
 
     bu_log("%s menu and knob edit SUCCESS\n", test_name);
+}
+
+
+static void
+test_arb_geometry_helpers(struct rt_edit *s, struct rt_arb_internal *arb,
+	struct rt_arb8_edit *a, const struct bn_tol *tol)
+{
+    enum {
+	ARB4_TRI_FACE = 123,
+	ARB8_BOTTOM_FACE = 1234,
+	ARB8_TOP_FACE = 5678
+    };
+    const fastf_t half_height = 0.5;
+    plane_t peqn[7] = {{0}};
+
+    arb8_reset(s, arb, a);
+    if (arb_extrude(arb, ARB8_BOTTOM_FACE, half_height, tol, peqn))
+	bu_exit(1, "ERROR: ARB8 face extrusion failed\n");
+    for (int i = 0; i < 4; i++) {
+	if (!NEAR_EQUAL(arb->pt[i][Z], 0.0, VUNITIZE_TOL) ||
+	    !NEAR_EQUAL(arb->pt[i + 4][Z], half_height, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: ARB8 face extrusion moved the wrong vertices\n");
+    }
+
+    arb8_reset(s, arb, a);
+    if (arb_permute(arb, "2143", tol))
+	bu_exit(1, "ERROR: ARB8 vertex permutation failed\n");
+    point_t first = {1.0, 0.0, 0.0};
+    point_t second = {0.0, 0.0, 0.0};
+    if (!VNEAR_EQUAL(arb->pt[0], first, VUNITIZE_TOL) ||
+	!VNEAR_EQUAL(arb->pt[1], second, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: ARB8 vertex permutation produced wrong points\n");
+    if (!arb_permute(arb, "9999", tol) ||
+	!VNEAR_EQUAL(arb->pt[0], first, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: invalid ARB8 permutation changed geometry\n");
+
+    arb8_reset(s, arb, a);
+    if (arb_mirror_face_axis(arb, peqn, ARB8_TOP_FACE, "z", tol))
+	bu_exit(1, "ERROR: ARB8 face mirroring failed\n");
+    if (!NEAR_EQUAL(arb->pt[0][Z], -1.0, VUNITIZE_TOL) ||
+	!NEAR_EQUAL(arb->pt[4][Z], 1.0, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: ARB8 face mirroring produced wrong points\n");
+    if (!arb_mirror_face_axis(arb, peqn, ARB8_TOP_FACE, "bad", tol) ||
+	!NEAR_EQUAL(arb->pt[0][Z], -1.0, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: invalid ARB8 mirror axis changed geometry\n");
+
+    arb8_reset(s, arb, a);
+    VSET(arb->pt[2], 0.0, 1.0, 0.0);
+    VMOVE(arb->pt[3], arb->pt[0]);
+    VSET(arb->pt[4], 0.0, 0.0, 1.0);
+    for (int i = 5; i < 8; i++)
+	VMOVE(arb->pt[i], arb->pt[4]);
+    int type = 0;
+    int uvec[8], svec[11];
+    if (!rt_arb_get_cgtype(&type, arb, tol, uvec, svec) || type != ARB4)
+	bu_exit(1, "ERROR: ARB4 extrusion fixture is not an ARB4\n");
+    if (arb_extrude(arb, ARB4_TRI_FACE, 1.0, tol, peqn))
+	bu_exit(1, "ERROR: ARB4 face extrusion failed\n");
+    if (!rt_arb_get_cgtype(&type, arb, tol, uvec, svec) || type != ARB6)
+	bu_exit(1, "ERROR: ARB4 extrusion did not create an ARB6\n");
 }
 
 
@@ -682,6 +742,8 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
     if (VEQUAL(a->es_peqn[a->edit_menu], knob_orig_peqn))
 	bu_exit(1, "ERROR: ECMD_ARB_ROTATE_FACE knob edit did not rotate face\n");
     bu_log("ECMD_ARB_ROTATE_FACE knob edit SUCCESS\n");
+
+    test_arb_geometry_helpers(s, arb, a, &tol);
 
     /* The public editing entry point must reject invalid type and menu indexes
      * before using them to address the type-specific editing tables. */

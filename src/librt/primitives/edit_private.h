@@ -51,6 +51,10 @@ edit_keypoint(
 int
 edit_sscale(struct rt_edit *s);
 
+/* Prepare a scale factor for a length-valued primitive parameter. */
+int
+edit_prepare_length_scale(struct rt_edit *s, fastf_t current);
+
 /* translate solid */
 void
 edit_stra(struct rt_edit *s);

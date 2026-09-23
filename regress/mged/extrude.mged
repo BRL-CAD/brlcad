@@ -43,4 +43,37 @@ foreach {arb_type face expected_type} $arb_extrude_cases {
     arb_standard_storage_check $expected_type $prim
 }
 
+# A one-inch extrusion must extend a face by 25.4 base millimeters through
+# both the direct libged command and MGED's interactive solid editor.
+set inch_in_mm 25.4
+set tolerance 0.001
+foreach mode {direct interactive} {
+    set suffix "_inch_$mode"
+    in_arb8 extrude $suffix
+    set prim "extrude_arb8${suffix}.s"
+    set base_x [lindex [db get $prim V1] 0]
+
+    units in
+    if {$mode eq "direct"} {
+	if {[catch {edarb extrude $prim 1234 1} result]} {
+	    error "inch edarb extrusion failed: $result"
+	}
+    } else {
+	Z
+	e $prim
+	sed $prim
+	if {[catch {extrude 1234 1} result]} {
+	    error "inch MGED extrusion failed: $result"
+	}
+	accept
+	Z
+    }
+    units mm
+
+    set new_x [lindex [db get $prim V5] 0]
+    if {abs($new_x - $base_x - $inch_in_mm) > $tolerance} {
+	error "inch $mode extrusion moved V5 by [expr {$new_x - $base_x}] mm"
+    }
+}
+
 puts "*** 'extrude' testing completed ***"

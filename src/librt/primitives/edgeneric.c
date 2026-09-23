@@ -104,6 +104,36 @@ edit_sscale(struct rt_edit *s)
     return 0;
 }
 
+int
+edit_prepare_length_scale(struct rt_edit *s, fastf_t current)
+{
+    if (s->e_inpara != 0 && s->e_inpara != 1) {
+	bu_vls_printf(s->log_str, "Exactly one length value is required\n");
+	return BRLCAD_ERROR;
+    }
+    if (!isfinite(current) || current <= 0.0) {
+	bu_vls_printf(s->log_str, "Cannot scale an invalid length\n");
+	return BRLCAD_ERROR;
+    }
+
+    if (s->e_inpara) {
+	/* Numeric lengths are local; e_mat[15] accounts for path scaling. */
+	fastf_t requested = s->e_para[0] * s->local2base * s->e_mat[15];
+	if (!isfinite(s->e_para[0]) || s->e_para[0] <= 0.0 ||
+	    !isfinite(requested) || requested <= 0.0) {
+	    bu_vls_printf(s->log_str, "Length must be finite and positive\n");
+	    return BRLCAD_ERROR;
+	}
+	s->es_scale = requested / current;
+    }
+
+    if (!isfinite(s->es_scale) || s->es_scale <= 0.0) {
+	bu_vls_printf(s->log_str, "Scale must be finite and positive\n");
+	return BRLCAD_ERROR;
+    }
+    return BRLCAD_OK;
+}
+
 void
 edit_stra(struct rt_edit *s)
 {

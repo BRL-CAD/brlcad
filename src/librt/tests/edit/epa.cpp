@@ -449,6 +449,69 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
        "keypoint maps to (%g,%g,%g)\n", V3ARGS(kp_world));
     }
 
+    const fastf_t inch = 25.4;
+    epa_reset(s, edit_epa, orig_epa, cmp_epa);
+    s->local2base = inch;
+    s->base2local = 1.0 / inch;
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_EPA_R1);
+    s->e_inpara = 1;
+    s->e_para[0] = 0.2;
+    if (rt_edit_process(s) != BRLCAD_OK ||
+	!NEAR_EQUAL(edit_epa->epa_r1, 0.2 * inch, VUNITIZE_TOL) ||
+	!NEAR_EQUAL(s->e_para[0], 0.2, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: EPA semi-major radius ignored local units\n");
+
+    s->e_inpara = 1;
+    if (rt_edit_process(s) != BRLCAD_OK ||
+	!NEAR_EQUAL(edit_epa->epa_r1, 0.2 * inch, VUNITIZE_TOL) ||
+	!NEAR_EQUAL(s->e_para[0], 0.2, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: EPA reinterpreted a reused local length\n");
+
+    epa_reset(s, edit_epa, orig_epa, cmp_epa);
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_EPA_R2);
+    s->e_inpara = 1;
+    s->e_para[0] = 0.1;
+    if (rt_edit_process(s) != BRLCAD_OK ||
+	!NEAR_EQUAL(edit_epa->epa_r2, 0.1 * inch, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: EPA semi-minor radius ignored local units\n");
+
+    epa_reset(s, edit_epa, orig_epa, cmp_epa);
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_EPA_R1);
+    s->es_scale = 1.5;
+    if (rt_edit_process(s) != BRLCAD_OK ||
+	!NEAR_EQUAL(edit_epa->epa_r1, 1.5 * orig_epa->epa_r1, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: EPA dimensionless radius scale used local units\n");
+
+    epa_reset(s, edit_epa, orig_epa, cmp_epa);
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_EPA_R1);
+    s->e_inpara = 1;
+    s->e_para[0] = 0.1;
+    if (rt_edit_process(s) != BRLCAD_ERROR ||
+	!NEAR_EQUAL(edit_epa->epa_r1, orig_epa->epa_r1, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: EPA accepted a semi-major radius below the semi-minor radius\n");
+
+    epa_reset(s, edit_epa, orig_epa, cmp_epa);
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_EPA_R2);
+    s->e_inpara = 1;
+    s->e_para[0] = 0.25;
+    if (rt_edit_process(s) != BRLCAD_ERROR ||
+	!NEAR_EQUAL(edit_epa->epa_r2, orig_epa->epa_r2, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: EPA accepted a semi-minor radius above the semi-major radius\n");
+
+    epa_reset(s, edit_epa, orig_epa, cmp_epa);
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_EPA_H);
+    if (rt_edit_process(s) != BRLCAD_OK ||
+	!VNEAR_EQUAL(edit_epa->epa_H, orig_epa->epa_H, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: EPA empty height edit changed geometry\n");
+
+    epa_reset(s, edit_epa, orig_epa, cmp_epa);
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_EPA_H);
+    s->e_inpara = 1;
+    s->e_para[0] = NAN;
+    if (rt_edit_process(s) != BRLCAD_ERROR ||
+	!VNEAR_EQUAL(edit_epa->epa_H, orig_epa->epa_H, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: EPA accepted a non-finite height\n");
+
     rt_edit_destroy(s);
     db_close(dbip);
     return 0;
