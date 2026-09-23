@@ -28,7 +28,6 @@
 #include "bu/malloc.h"
 #include "raytrace.h"
 #include "rt/geom.h"
-#include "rt/primitives/bot.h"
 #include "wdb.h"
 
 #define RING_SIDES 8
@@ -42,8 +41,6 @@ check_shot(const struct rt_functab *ftp, struct soltab *stp, struct application 
     struct resource *resp = ap->a_resource;
     int nhits;
     int failed = 0;
-    struct bot_specific *bot = (struct bot_specific *)stp->st_specific;
-    fastf_t expected_in = bot->bot_parity_shot ? 0.0 : -9.0;
 
     BU_LIST_INIT(&seghead.l);
     nhits = ftp->ft_shot(stp, ray, ap, &seghead);
@@ -52,23 +49,11 @@ check_shot(const struct rt_functab *ftp, struct soltab *stp, struct application 
         failed = 1;
     } else {
         segp = BU_LIST_FIRST(seg, &seghead.l);
-        if (!NEAR_EQUAL(segp->seg_in.hit_dist, expected_in, SMALL_FASTF) ||
+        if (!NEAR_EQUAL(segp->seg_in.hit_dist, -9.0, SMALL_FASTF) ||
             !NEAR_EQUAL(segp->seg_out.hit_dist, 7.0, SMALL_FASTF)) {
-            bu_log("%s: interval %g..%g, expected %g..7\n", label,
-                segp->seg_in.hit_dist, segp->seg_out.hit_dist, expected_in);
+            bu_log("%s: interval %g..%g, expected -9..7\n", label,
+                segp->seg_in.hit_dist, segp->seg_out.hit_dist);
             failed = 1;
-        }
-        if (bot->bot_parity_shot) {
-            if (segp->seg_in.hit_surfno != RT_BOT_SURFNO_INTERIOR ||
-                segp->seg_in.hit_private != NULL) {
-                bu_log("%s: missing interior entry marker\n", label);
-                failed = 1;
-            }
-            ftp->ft_norm(&segp->seg_in, stp, ray);
-            if (!NEAR_EQUAL(segp->seg_in.hit_normal[X], -1.0, SMALL_FASTF)) {
-                bu_log("%s: wrong interior entry normal\n", label);
-                failed = 1;
-            }
         }
     }
 
@@ -83,7 +68,7 @@ check_shot(const struct rt_functab *ftp, struct soltab *stp, struct application 
         struct seg vseg = {0};
         ftp->ft_vshot(stps, rays, &vseg, 1, ap);
         if (vseg.seg_stp != stp ||
-            !NEAR_EQUAL(vseg.seg_in.hit_dist, expected_in, SMALL_FASTF) ||
+            !NEAR_EQUAL(vseg.seg_in.hit_dist, -9.0, SMALL_FASTF) ||
             !NEAR_EQUAL(vseg.seg_out.hit_dist, 7.0, SMALL_FASTF)) {
             bu_log("%s: vector shot missed or returned wrong interval\n", label);
             failed = 1;
@@ -94,7 +79,6 @@ check_shot(const struct rt_functab *ftp, struct soltab *stp, struct application 
 
 struct scene_result {
     int subject_hits;
-    fastf_t in_dist;
     fastf_t out_dist;
 };
 
@@ -108,7 +92,6 @@ scene_hit(struct application *ap, struct partition *part_head,
     for (part = part_head->pt_forw; part != part_head; part = part->pt_forw) {
         if (strstr(part->pt_regionp->reg_name, "subject.r")) {
             result->subject_hits++;
-            result->in_dist = part->pt_inhit->hit_dist;
             result->out_dist = part->pt_outhit->hit_dist;
         }
     }
@@ -201,9 +184,9 @@ check_scene(int subject_id, const fastf_t *const curve_data[3],
     rt_shootray(&ap);
     if (result.subject_hits != 1 ||
         !NEAR_EQUAL(result.out_dist, 5.0, rtip->rti_tol.dist)) {
-        bu_log("%s scene: %d subject partitions, interval %.17g..%.17g; expected one exit at 5\n",
+        bu_log("%s scene: %d subject partitions, exit %.17g; expected one exit at 5\n",
             subject_id == ID_ARS ? "ARS" : "BoT",
-            result.subject_hits, result.in_dist, result.out_dist);
+            result.subject_hits, result.out_dist);
         failed = 1;
     }
 

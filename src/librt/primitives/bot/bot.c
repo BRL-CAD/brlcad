@@ -514,11 +514,6 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     bot->bot_mode = bot_ip->mode;
     bot->bot_orientation = bot_ip->orientation;
     bot->bot_flags = bot_ip->bot_flags;
-    /* Experimental: assume a closed, non-self-intersecting solid.  The
-     * caller accepts that parity can give false interiors on bad meshes. */
-    const char *parity_shot = getenv("LIBRT_BOT_PARITY_SHOT");
-    bot->bot_parity_shot = (bot->bot_mode == RT_BOT_SOLID &&
-	parity_shot && bu_str_true(parity_shot));
     bot->bot_ntri = 0;	    // set after validating faces
 
     // set up thickness if requested
@@ -732,17 +727,6 @@ bot_makesegs_specific(hit_da *hits,
 		      struct rt_piecestate *psp);
 
 
-static inline int
-bot_origin_in_bounds(const struct xray *rp, const struct bvh_flat_node *root)
-{
-    for (int axis = X; axis <= Z; axis++) {
-	if (rp->r_pt[axis] < root->bounds[axis] ||
-	    rp->r_pt[axis] > root->bounds[axis + 3])
-	    return 0;
-    }
-    return 1;
-}
-
 /* r_min can describe a spatial partition cell that begins inside this
  * solid.  Start BVH traversal just before the ray enters the BoT's own
  * root box so entrance triangles behind the ray origin remain visible. */
@@ -753,9 +737,12 @@ bot_backed_origin(point_t b_pt, const struct xray *rp, const struct bvh_flat_nod
     fastf_t backout = MAX_FASTF;
     int axis;
 
-    if (!bot_origin_in_bounds(rp, root)) {
-        VMOVE(b_pt, rp->r_pt);
-        return;
+    for (axis = X; axis <= Z; axis++) {
+        if (rp->r_pt[axis] < root->bounds[axis] ||
+            rp->r_pt[axis] > root->bounds[axis + 3]) {
+            VMOVE(b_pt, rp->r_pt);
+            return;
+        }
     }
 
     for (axis = X; axis <= Z; axis++) {
@@ -778,18 +765,6 @@ bot_backed_origin(point_t b_pt, const struct xray *rp, const struct bvh_flat_nod
 }
 
 
-static inline void
-bot_forward_hits(hit_da *hits)
-{
-    size_t kept = 0;
-    for (size_t i = 0; i < hits->count; i++) {
-	if (hits->items[i].hit_dist >= 0.0)
-	    hits->items[kept++] = hits->items[i];
-    }
-    hits->count = kept;
-}
-
-
 void
 bot_shot_hlbvh_flat(struct bvh_flat_node *root, struct xray* rp, triangle_s *tris, size_t ntris, hit_da* hits, fastf_t toldist, const struct soltab *stp)
 {
@@ -808,11 +783,7 @@ bot_shot_hlbvh_flat(struct bvh_flat_node *root, struct xray* rp, triangle_s *tri
     inverse_r_dir[2] = RAYDIR_INV(rp->r_dir[2]);
 
     point_t b_pt;
-    const struct bot_specific *bot = (const struct bot_specific *)stp->st_specific;
-    if (bot->bot_parity_shot)
-	VMOVE(b_pt, rp->r_pt);
-    else
-	bot_backed_origin(b_pt, rp, root, inverse_r_dir, stp);
+    bot_backed_origin(b_pt, rp, root, inverse_r_dir, stp);
 
     while (stack_ind >= 0) {
 	if (UNLIKELY(stack_ind >= HLBVH_STACK_SIZE)) {
@@ -975,8 +946,6 @@ rt_bot_shot_specific(struct bot_specific *bot, struct soltab *stp, struct xray *
     }
 
     bot_shot_hlbvh_flat(sps->root, rp, sps->tris, bot->bot_ntri, &hits_per_cpu, toldist, stp);
-    if (bot->bot_parity_shot)
-	bot_forward_hits(&hits_per_cpu);
 
     if (hits_per_cpu.count == 0) {
 	return 0;
@@ -1081,10 +1050,7 @@ bot_vshot_packet(struct soltab *stp, struct bot_specific *bot,
 	inv_dir[k][0] = bot_vshot_rdinv(rp[k]->r_dir[0]);
 	inv_dir[k][1] = bot_vshot_rdinv(rp[k]->r_dir[1]);
 	inv_dir[k][2] = bot_vshot_rdinv(rp[k]->r_dir[2]);
-	if (bot->bot_parity_shot)
-	    VMOVE(b_pt[k], rp[k]->r_pt);
-	else
-	    bot_backed_origin(b_pt[k], rp[k], sps->root, inv_dir[k], stp);
+	bot_backed_origin(b_pt[k], rp[k], sps->root, inv_dir[k], stp);
 	vhits[k].count = 0;
 	segp[k].seg_stp = (struct soltab *)0;
     }
@@ -1184,8 +1150,6 @@ bot_vshot_packet(struct soltab *stp, struct bot_specific *bot,
 
     /* Per-ray: sort hits, build segments, collapse to the outer span. */
     for (k = 0; k < m; k++) {
-	if (bot->bot_parity_shot)
-	    bot_forward_hits(&vhits[k]);
 	size_t nhits = vhits[k].count;
 	struct hit *hh = vhits[k].items;
 	struct seg seghd;
@@ -1308,10 +1272,6 @@ rt_bot_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
     triangle_s *trip=(triangle_s *)hitp->hit_private;
 
     VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir);
-    if (hitp->hit_surfno == RT_BOT_SURFNO_INTERIOR) {
-	VREVERSE(hitp->hit_normal, rp->r_dir);
-	return;
-    }
     VMOVE(old_norm, hitp->hit_normal);
 
     if ((bot->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) && (bot->bot_flags & RT_BOT_USE_NORMALS) && trip->norms) {
@@ -1562,38 +1522,13 @@ rt_bot_surface_segs(struct hit *hits, size_t nhits, struct soltab *stp, struct a
 }
 
 
-/* The parity experiment represents an interior ray start explicitly.  This
- * hit has no triangle: its surface number records why its normal is -dir. */
-static void
-bot_interior_segment(struct soltab *stp, struct xray *rp, struct application *ap,
-                     struct seg *seghead, const struct hit *exit_hit)
-{
-    struct seg *segp;
-    triangle_s *trip = (triangle_s *)exit_hit->hit_private;
-    static const int OUT_SEG = 1;
-
-    RT_GET_SEG(segp, ap->a_resource);
-    segp->seg_stp = stp;
-    segp->seg_in = (struct hit)RT_HIT_INIT_ZERO;
-    segp->seg_in.hit_surfno = RT_BOT_SURFNO_INTERIOR;
-    segp->seg_in.hit_private = NULL;
-    segp->seg_in.hit_rayp = rp;
-    segp->seg_in.hit_vpriv[X] = -1.0;
-    VREVERSE(segp->seg_in.hit_normal, rp->r_dir);
-    VMOVE(segp->seg_in.hit_point, rp->r_pt);
-    segp->seg_out = *exit_hit;
-    BOT_UNORIENTED_NORM(ap, &segp->seg_out, trip->face_norm, OUT_SEG);
-    BU_LIST_INSERT(&(seghead->l), &(segp->l));
-}
-
 static int
 rt_bot_unoriented_segs(struct hit *hits,
 		       size_t nhits,
 		       struct soltab *stp,
 		       struct xray *rp,
 		       struct application *ap,
-		       struct seg *seghead,
-		       int parity_origin)
+		       struct seg *seghead)
 {
     register struct seg *segp;
     register size_t i, j;
@@ -1603,17 +1538,12 @@ rt_bot_unoriented_segs(struct hit *hits,
      */
     fastf_t rm_dist = 0.0;
     int removed = 0;
-    int synthetic_hits = 0;
     static const int IN_SEG = 0;
     static const int OUT_SEG = 1;
     const fastf_t toldist = (ap && ap->a_rt_i)?ap->a_rt_i->rti_tol.dist:BN_TOL_DIST;
 
     if (nhits == 1) {
 	triangle_s *trip = (triangle_s *)hits[0].hit_private;
-	if (parity_origin) {
-	    bot_interior_segment(stp, rp, ap, seghead, &hits[0]);
-	    return 2;
-	}
 
 	/* make a zero length partition */
 	RT_GET_SEG(segp, ap->a_resource);
@@ -1646,13 +1576,8 @@ rt_bot_unoriented_segs(struct hit *hits,
 	}
     }
 
-    if (nhits == 1) {
-	if (parity_origin) {
-	    bot_interior_segment(stp, rp, ap, seghead, &hits[0]);
-	    return 2;
-	}
+    if (nhits == 1)
 	return 0;
-    }
 
     if (nhits&1 && removed) {
 	/* If we have an odd number of hits and have removed a
@@ -1668,14 +1593,6 @@ rt_bot_unoriented_segs(struct hit *hits,
 		break;
 	    }
 	}
-    }
-
-    if ((nhits & 1) && parity_origin) {
-	bot_interior_segment(stp, rp, ap, seghead, &hits[0]);
-	for (j = 1; j < nhits; j++)
-	    hits[j-1] = hits[j];
-	nhits--;
-	synthetic_hits = 2;
     }
 
     for (i = 0; i < (nhits&~1); i += 2) {
@@ -1704,12 +1621,12 @@ rt_bot_unoriented_segs(struct hit *hits,
 	}
 	nhits--;
     }
-    return nhits + synthetic_hits;
+    return nhits;
 }
 
 
 int
-rt_bot_oriented_segs(hit_da *hits_da, struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead, struct rt_piecestate *psp, int parity_origin)
+rt_bot_oriented_segs(hit_da *hits_da, struct soltab *stp, struct application *ap, struct seg *seghead, struct rt_piecestate *psp)
 {
     register struct seg *segp;
     register ssize_t i;
@@ -1718,7 +1635,6 @@ rt_bot_oriented_segs(hit_da *hits_da, struct soltab *stp, struct xray *rp, struc
     /* TODO: review the use of a signed tmp var. Var i was changed to be signed in
      * r44239 as a bug in another project was segfaulting. */
     ssize_t snhits = (ssize_t)hits_da->count;
-    int synthetic_hits = 0;
     struct hit *hits = hits_da->items;
     const fastf_t toldist = (ap && ap->a_rt_i)?ap->a_rt_i->rti_tol.dist:BN_TOL_DIST;
 
@@ -1992,18 +1908,6 @@ rt_bot_oriented_segs(hit_da *hits_da, struct soltab *stp, struct xray *rp, struc
 	 */
     }
 
-    /* A valid closed solid with an interior origin has an unmatched first
-     * exit in the forward hit list.  Construct its entry after duplicate
-     * and grazing-hit cleanup, before the normal stray-exit handling. */
-    if (parity_origin && (snhits & 1) && hits[0].hit_vpriv[X] > 0.0) {
-	ssize_t j;
-	bot_interior_segment(stp, rp, ap, seghead, &hits[0]);
-	for (j = 1; j < snhits; j++)
-	    hits[j-1] = hits[j];
-	snhits--;
-	synthetic_hits = 2;
-    }
-
     /* if first hit is an exit, it is likely due to the "piece" for
      * the corresponding entrance not being processed (this is OK, but
      * we need to eliminate the stray exit hit)
@@ -2101,7 +2005,7 @@ rt_bot_oriented_segs(hit_da *hits_da, struct soltab *stp, struct xray *rp, struc
 	BU_LIST_INSERT(&(seghead->l), &(segp->l));
     }
 
-    return snhits + synthetic_hits;	/* HIT */
+    return snhits;			/* HIT */
 }
 /**
  * Given an array of hits, make sebgents out of them.  Exactly how
@@ -2123,13 +2027,11 @@ bot_makesegs_specific(hit_da *hits, struct bot_specific *bot, struct soltab *stp
 
     BU_ASSERT(bot->bot_mode == RT_BOT_SOLID);
 
-    int parity_origin = bot->bot_parity_shot &&
-	bot_origin_in_bounds(rp, ((struct spatial_partition_s *)bot->tie)->root);
     if (bot->bot_orientation == RT_BOT_UNORIENTED) {
-	return rt_bot_unoriented_segs(hits->items, hits->count, stp, rp, ap, seghead, parity_origin);
+	return rt_bot_unoriented_segs(hits->items, hits->count, stp, rp, ap, seghead);
     }
 
-    return rt_bot_oriented_segs(hits, stp, rp, ap, seghead, psp, parity_origin);
+    return rt_bot_oriented_segs(hits, stp, ap, seghead, psp);
 }
 
 

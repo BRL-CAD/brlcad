@@ -55,14 +55,11 @@ struct clt_tri_specific {
 };
 #endif
 
-#define RT_BOT_SURFNO_INTERIOR (-1)
-
 /* Shared between bot and ars at the moment */
 struct bot_specific {
     unsigned char bot_mode;
     unsigned char bot_orientation;
     unsigned char bot_flags;
-    unsigned char bot_parity_shot;
     size_t bot_ntri;
     fastf_t *bot_thickness;
     struct bu_bitv *bot_facemode;

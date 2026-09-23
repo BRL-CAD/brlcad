@@ -152,8 +152,6 @@ brlcad_add_test(NAME rt_bot_split COMMAND rt_bot_split)
 
 brlcad_addexec(rt_ars_inside ars_inside.c "librt;libwdb;libbu;${M_LIBRARY}" TEST)
 brlcad_add_test(NAME rt_ars_inside COMMAND rt_ars_inside)
-brlcad_add_test(NAME rt_ars_inside_parity COMMAND rt_ars_inside)
-set_tests_properties(rt_ars_inside_parity PROPERTIES ENVIRONMENT "LIBRT_BOT_PARITY_SHOT=1")
 
 brlcad_addexec(rt_pnts_bounds pnts_bounds.c "${RT_TEST_LIBS}" TEST)
 brlcad_add_test(NAME rt_pnts_bounds COMMAND rt_pnts_bounds)
