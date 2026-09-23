@@ -75,7 +75,7 @@ read_bytes(FILE *input, unsigned char *buffer, size_t capacity)
 
 static void
 write_byte_diff(int c1, int c2, int matching_intensity, FILE *output,
-	size_t *offmany, size_t *off1, size_t *matching)
+		size_t *offmany, size_t *off1, size_t *matching)
 {
     if (c1 != c2) {
 	int difference = abs(c1 - c2);
@@ -97,8 +97,8 @@ static void
 write_pix_match(const unsigned char *pixel, FILE *output)
 {
     long intensity = ((GRAYSCALE_RED_WEIGHT * pixel[0] +
-	GRAYSCALE_GREEN_WEIGHT * pixel[1] +
-	GRAYSCALE_BLUE_WEIGHT * pixel[2]) >> GRAYSCALE_SHIFT) / CONTEXT_DIVISOR;
+		       GRAYSCALE_GREEN_WEIGHT * pixel[1] +
+		       GRAYSCALE_BLUE_WEIGHT * pixel[2]) >> GRAYSCALE_SHIFT) / CONTEXT_DIVISOR;
     size_t channel;
 
     for (channel = 0; channel < PIX_CHANNELS; channel++)
@@ -179,10 +179,10 @@ main(int argc, char *argv[])
 	if (bw_mode) {
 	    for (i = 0; i < count1; i++)
 		write_byte_diff(buffer1[i], buffer2[i], buffer1[i] / CONTEXT_DIVISOR,
-			stdout, &offmany, &off1, &matching);
+				stdout, &offmany, &off1, &matching);
 	} else {
 	    for (i = 0; i < count1; i += PIX_CHANNELS) {
-	d	if (buffer1[i] == buffer2[i] &&
+		if (buffer1[i] == buffer2[i] &&
 		    buffer1[i + 1] == buffer2[i + 1] &&
 		    buffer1[i + 2] == buffer2[i + 2]) {
 		    write_pix_match(buffer1 + i, stdout);
@@ -191,7 +191,7 @@ main(int argc, char *argv[])
 		    size_t channel;
 		    for (channel = 0; channel < PIX_CHANNELS; channel++)
 			write_byte_diff(buffer1[i + channel], buffer2[i + channel], 0,
-				stdout, &offmany, &off1, &matching);
+					stdout, &offmany, &off1, &matching);
 		}
 	    }
 	}
