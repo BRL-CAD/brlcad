@@ -270,10 +270,12 @@ rt_hlf_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
     /* We are expected to compute hit_point here.  May be infinite. */
     f = hitp->hit_dist;
     if (f <= -INFINITY) {
-	bu_log("rt_hlf_norm:  hit_dist = -INFINITY, unable to compute pt.\n");
+	if (RT_G_DEBUG & RT_DEBUG_ARB8)
+	    bu_log("rt_hlf_norm:  hit_dist = -INFINITY, unable to compute pt.\n");
 	VSETALL(hitp->hit_point, -INFINITY);
     } else if (f >= INFINITY) {
-	bu_log("rt_hlf_norm:  hit_dist = +INFINITY, unable to compute pt.\n");
+	if (RT_G_DEBUG & RT_DEBUG_ARB8)
+	    bu_log("rt_hlf_norm:  hit_dist = +INFINITY, unable to compute pt.\n");
 	VSETALL(hitp->hit_point, INFINITY);
     } else {
 	VJOIN1(hitp->hit_point, rp->r_pt, f, rp->r_dir);
