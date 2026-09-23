@@ -39,8 +39,6 @@
 
 #define ECMD_TGC_MV_H		2005
 #define ECMD_TGC_MV_HH		2006
-#define ECMD_TGC_MV_H_CD	2081 /* move end of tgc, while scaling CD */
-#define ECMD_TGC_MV_H_V_AB	2082 /* move vertex end of tgc, while scaling AB */
 #define ECMD_TGC_ROT_AB		2008
 #define ECMD_TGC_ROT_H		2007
 #define ECMD_TGC_SCALE_A	2029
@@ -68,8 +66,6 @@ rt_edit_tgc_set_edit_mode(struct rt_edit *s, int mode)
     switch(mode) {
 	case ECMD_TGC_MV_H:
 	case ECMD_TGC_MV_HH:
-	case ECMD_TGC_MV_H_CD:
-	case ECMD_TGC_MV_H_V_AB:
 	    s->edit_mode = RT_PARAMS_EDIT_TRANS;
 	    break;
 	case ECMD_TGC_ROT_AB:
@@ -386,24 +382,6 @@ static const struct rt_edit_cmd_desc tgc_cmds[] = {
 	130 /* display_order */, "tgc,trc,tec,rec,rcc" /* req_types */
     },
     {
-	ECMD_TGC_MV_H_CD,     /* cmd_id       */
-	"Move End H (adj C,D)", /* label      */
-	"move",               /* category     */
-	1,                    /* nparam       */
-	tgc_endpoint_params,  /* params       */
-	1,                    /* interactive  */
-	140 /* display_order */, "tgc,trc,tec,rec,rcc" /* req_types */
-    },
-    {
-	ECMD_TGC_MV_H_V_AB,   /* cmd_id       */
-	"Move End H (move V, adj A,B)", /* label */
-	"move",               /* category     */
-	1,                    /* nparam       */
-	tgc_endpoint_params,  /* params       */
-	1,                    /* interactive  */
-	150 /* display_order */, "tgc,trc,tec,rec,rcc" /* req_types */
-    },
-    {
 	ECMD_TGC_ROT_H,       /* cmd_id       */
 	"Rotate H",           /* label        */
 	"rotation",           /* category     */
@@ -430,7 +408,7 @@ static const struct rt_edit_opt_desc tgc_opts[] = {
 static const struct rt_edit_prim_desc tgc_prim_desc = {
     "tgc",                /* prim_type    */
     "Truncated General Cone", /* prim_label */
-    17,                   /* ncmd         */
+    15,                   /* ncmd         */
     tgc_cmds,             /* cmds         */
     1,                    /* nopt         */
     tgc_opts              /* opts         */
@@ -1234,8 +1212,6 @@ rt_edit_tgc_edit_xy(
 	    break;
 	case ECMD_TGC_MV_H:
 	case ECMD_TGC_MV_HH:
-	case ECMD_TGC_MV_H_CD:
-	case ECMD_TGC_MV_H_V_AB:
 	    ecmd_tgc_mv_h_mousevec(s, mousevec);
 	    break;
 	case ECMD_TGC_ROT_H:

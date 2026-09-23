@@ -472,31 +472,17 @@ ecmd_extrude_skt_name_clbk(int UNUSED(ac), const char **UNUSED(av), void *d, voi
 	return BRLCAD_ERROR;
     }
 
-    if (atoi(Tcl_GetStringResult(s->interp)) == 1)
+    if (atoi(Tcl_GetStringResult(s->interp)) == 1) {
+	bu_vls_free(&tcl_cmd);
 	return BRLCAD_ERROR;
-
-    bu_vls_free(&tcl_cmd);
-
-    if (extr->sketch_name)
-	bu_free((char *)extr->sketch_name, "extr->sketch_name");
-
-    extr->sketch_name = bu_strdup(Tcl_GetVar(s->interp, "final_sketch_name", TCL_GLOBAL_ONLY));
-
-    struct directory *dp = RT_DIR_NULL;
-    if ((dp = db_lookup(s->dbip, extr->sketch_name, 0)) == RT_DIR_NULL) {
-	bu_log("Warning: %s does not exist!\n",	extr->sketch_name);
-	extr->skt = (struct rt_sketch_internal *)NULL;
-    } else {
-	/* import the new sketch */
-	struct rt_db_internal tmp_ip;
-	if (rt_db_get_internal(&tmp_ip, dp, s->dbip, bn_mat_identity) != ID_SKETCH) {
-	    bu_log("rt_extrude_import: ERROR: Cannot import sketch (%.16s) for extrusion\n", extr->sketch_name);
-	    extr->skt = (struct rt_sketch_internal *)NULL;
-	} else {
-	    extr->skt = (struct rt_sketch_internal *)tmp_ip.idb_ptr;
-	}
     }
 
+    bu_vls_free(&tcl_cmd);
+    const char *name = Tcl_GetVar(s->interp, "final_sketch_name", TCL_GLOBAL_ONLY);
+    if (!name)
+	return BRLCAD_ERROR;
+
+    rt_edit_set_str(se, 0, name);
     return BRLCAD_OK;
 }
 

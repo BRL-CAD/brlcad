@@ -283,6 +283,66 @@ rt_edit_test_sketch(void)
     bu_log("ECMD_SKETCH_APPEND_ARC SUCCESS: curve now has %zu segments\n",
 	   skt->curve.count);
 
+    /* Exercise the selected arc's orientation and radius in inch units. */
+    {
+	struct carc_seg *arc = (struct carc_seg *)skt->curve.segment[2];
+	se->curr_seg = 2;
+	rt_edit_set_edflag(s, ECMD_SKETCH_TOGGLE_ARC_ORIENT);
+	s->e_inpara = 0;
+	if (EDOBJ[dp->d_minor_type].ft_edit(s) != BRLCAD_OK || arc->center_is_left != 0)
+	    bu_exit(1, "ERROR: sketch arc orientation was not toggled\n");
+	if (EDOBJ[dp->d_minor_type].ft_edit(s) != BRLCAD_OK || arc->center_is_left != 1)
+	    bu_exit(1, "ERROR: sketch arc orientation was not restored\n");
+
+	s->local2base = 25.4;
+	s->base2local = 1.0 / s->local2base;
+	rt_edit_set_edflag(s, ECMD_SKETCH_SET_ARC_RADIUS);
+	s->e_inpara = 1;
+	s->e_para[0] = 1.0;
+	if (EDOBJ[dp->d_minor_type].ft_edit(s) != BRLCAD_OK ||
+	    !NEAR_EQUAL(arc->radius, 25.4, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: sketch arc radius did not convert local units\n");
+	s->e_inpara = 1;
+	s->e_para[0] = 8.0 / s->local2base;
+	if (EDOBJ[dp->d_minor_type].ft_edit(s) != BRLCAD_OK ||
+	    !NEAR_EQUAL(arc->radius, 8.0, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: sketch arc radius was not restored\n");
+	s->local2base = 1.0;
+	s->base2local = 1.0;
+
+	rt_edit_set_edflag(s, ECMD_SKETCH_TOGGLE_SEGMENT_REVERSE);
+	s->e_inpara = 0;
+	if (EDOBJ[dp->d_minor_type].ft_edit(s) != BRLCAD_OK ||
+	    skt->curve.reverse[2] != 1)
+	    bu_exit(1, "ERROR: sketch segment reverse was not toggled\n");
+	if (EDOBJ[dp->d_minor_type].ft_edit(s) != BRLCAD_OK ||
+	    skt->curve.reverse[2] != 0)
+	    bu_exit(1, "ERROR: sketch segment reverse was not restored\n");
+
+	rt_edit_set_edflag(s, ECMD_SKETCH_SET_TANGENCY);
+	s->e_inpara = 2;
+	s->e_para[0] = 1.0;
+	s->e_para[1] = 0.0;
+	if (EDOBJ[dp->d_minor_type].ft_edit(s) != BRLCAD_OK ||
+	    !NEAR_EQUAL(arc->radius, 5.0, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: sketch arc tangency did not set the expected radius\n");
+	rt_edit_set_edflag(s, ECMD_SKETCH_SET_ARC_RADIUS);
+	s->e_inpara = 1;
+	s->e_para[0] = 8.0;
+	if (EDOBJ[dp->d_minor_type].ft_edit(s) != BRLCAD_OK)
+	    bu_exit(1, "ERROR: sketch arc radius could not be restored\n");
+
+	s->e_inpara = 2;
+	s->e_para[0] = 999.0;
+	s->e_para[1] = 1.0;
+	if (rt_edit_process(s) != BRLCAD_ERROR ||
+	    !NEAR_EQUAL(arc->radius, 8.0, VUNITIZE_TOL) ||
+	    !bu_vls_strlen(s->log_str))
+	    bu_exit(1, "ERROR: invalid sketch segment did not report a failure\n");
+	bu_vls_trunc(s->log_str, 0);
+	s->e_inpara = 0;
+    }
+
     /* ================================================================
      * ECMD_SKETCH_APPEND_BEZIER  (quadratic Bezier: verts 0, 1, 2)
      * e_inpara=3 → degree=2; e_para[0..2] are control point indices
@@ -892,7 +952,7 @@ rt_edit_test_sketch(void)
 	 * without a crash (valgrind would catch leaks in CI).
 	 * ============================================================*/
 	se->curr_seg = (int)nurb_idx;
-	EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_SKETCH_DELETE_SEGMENT);
+	rt_edit_set_edflag(s, ECMD_SKETCH_DELETE_SEGMENT);
 	s->e_inpara = 0;
 	bu_vls_trunc(s->log_str, 0);
 
@@ -946,6 +1006,20 @@ rt_edit_test_sketch(void)
 	}
     }
 
+    /* New vertex coordinates are lengths, but its index is unitless. */
+    s->local2base = 25.4;
+    s->base2local = 1.0 / s->local2base;
+    size_t old_vert_count = skt->vert_count;
+    rt_edit_set_edflag(s, ECMD_SKETCH_ADD_VERTEX);
+    s->e_inpara = 2;
+    s->e_para[0] = 1.0;
+    s->e_para[1] = 2.0;
+    if (EDOBJ[dp->d_minor_type].ft_edit(s) != BRLCAD_OK ||
+	skt->vert_count != old_vert_count + 1 ||
+	se->curr_vert != (int)old_vert_count ||
+	!NEAR_EQUAL(skt->verts[old_vert_count][0], 25.4, VUNITIZE_TOL) ||
+	!NEAR_EQUAL(skt->verts[old_vert_count][1], 50.8, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: sketch add vertex did not convert local units\n");
     rt_edit_destroy(s);
     db_close(dbip);
     return 0;

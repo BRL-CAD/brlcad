@@ -2049,7 +2049,7 @@ _exec_desc_cmd_on_edit(struct rt_edit *s, struct ged *gedp,
 
     s->e_inpara = _desc_cmd_inpara(cmd_desc);
     rt_edit_set_edflag(s, cmd_desc->cmd_id);
-    rt_edit_process(s);
+    int edit_ret = rt_edit_process(s);
 
     /* Forward any error message logged by the edit handler */
     if (s->log_str && bu_vls_strlen(s->log_str) > 0) {
@@ -2059,7 +2059,7 @@ _exec_desc_cmd_on_edit(struct rt_edit *s, struct ged *gedp,
 	return BRLCAD_ERROR;
     }
 
-    return BRLCAD_OK;
+    return edit_ret;
 }
 
 

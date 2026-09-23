@@ -510,8 +510,8 @@ rt_knob_edit_sca(
 	int matrix_edit);
 
 /* Equivalent to sedit - run editing logic after input data is set in
- * rt_edit container */
-RT_EXPORT extern void
+ * rt_edit container.  Returns BRLCAD_ERROR if the primitive edit fails. */
+RT_EXPORT extern int
 rt_edit_process(struct rt_edit *s);
 
 /**

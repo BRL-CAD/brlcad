@@ -192,29 +192,57 @@ rt_edit_extrude_e_axes_pos(
     }
 }
 
-void
+static int
 ecmd_extr_skt_name(struct rt_edit *s)
 {
     struct rt_extrude_internal *extr = (struct rt_extrude_internal *)s->es_int.idb_ptr;
-    struct rt_db_internal tmp_ip;
-
     RT_EXTRUDE_CK_MAGIC(extr);
 
-    if (extr->skt) {
-	/* free the old sketch */
-	RT_DB_INTERNAL_INIT(&tmp_ip);
-	tmp_ip.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-	tmp_ip.idb_type = ID_SKETCH;
-	tmp_ip.idb_ptr = (void *)extr->skt;
-	tmp_ip.idb_meth = &OBJ[ID_SKETCH];
-	rt_db_free_internal(&tmp_ip);
+    if (!s->e_nstr) {
+	bu_clbk_t f = NULL;
+	void *d = NULL;
+	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_EXTR_SKT_NAME, BU_CLBK_DURING);
+	if (f)
+	    (*f)(0, NULL, d, s);
     }
 
-    bu_clbk_t f = NULL;
-    void *d = NULL;
-    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_EXTR_SKT_NAME, BU_CLBK_DURING);
-    if (f)
-	(*f)(0, NULL, d, s);
+    if (!s->e_nstr || !s->e_str[0][0] || !s->dbip) {
+	s->e_nstr = 0;
+	bu_vls_printf(s->log_str, "ERROR: a sketch name and database are required\n");
+	return BRLCAD_ERROR;
+    }
+
+    const char *name = s->e_str[0];
+    s->e_nstr = 0;
+    struct directory *dp = db_lookup(s->dbip, name, LOOKUP_QUIET);
+    if (dp == RT_DIR_NULL) {
+	bu_vls_printf(s->log_str, "ERROR: sketch %s does not exist\n", name);
+	return BRLCAD_ERROR;
+    }
+
+    struct rt_db_internal new_ip;
+    RT_DB_INTERNAL_INIT(&new_ip);
+    int id = rt_db_get_internal(&new_ip, dp, s->dbip, bn_mat_identity);
+    if (id != ID_SKETCH) {
+	if (id > 0)
+	    rt_db_free_internal(&new_ip);
+	bu_vls_printf(s->log_str, "ERROR: %s is not a sketch\n", name);
+	return BRLCAD_ERROR;
+    }
+
+    struct rt_db_internal old_ip;
+    RT_DB_INTERNAL_INIT(&old_ip);
+    old_ip.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    old_ip.idb_type = ID_SKETCH;
+    old_ip.idb_ptr = (void *)extr->skt;
+    old_ip.idb_meth = &OBJ[ID_SKETCH];
+    if (extr->skt)
+	rt_db_free_internal(&old_ip);
+
+    bu_free(extr->sketch_name, "extr->sketch_name");
+    extr->sketch_name = bu_strdup(name);
+    extr->skt = (struct rt_sketch_internal *)new_ip.idb_ptr;
+    return BRLCAD_OK;
 }
 
 int
@@ -582,8 +610,7 @@ rt_edit_extrude_edit(struct rt_edit *s)
 	    edit_srot(s);
 	    break;
 	case ECMD_EXTR_SKT_NAME:
-	    ecmd_extr_skt_name(s);
-	    break;
+	    return ecmd_extr_skt_name(s);
 	case ECMD_EXTR_MOV_H:
 	    return ecmd_extr_mov_h(s);
 	case ECMD_EXTR_SCALE_H:

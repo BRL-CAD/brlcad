@@ -172,7 +172,9 @@ rt_edit_test_extrude(void)
     struct rt_wdb *wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_INMEM);
 
     const char *skt_name = "test_sketch";
+    const char *other_sketch = "other_sketch";
     make_sketch(wdbp, skt_name);
+    make_sketch(wdbp, other_sketch);
 
     struct directory *dp = make_extrude(wdbp, skt_name);
 
@@ -546,6 +548,25 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
     if (VNEAR_EQUAL(edit_extr->v_vec, orig->v_vec, VUNITIZE_TOL))
 	bu_exit(1, "ERROR: ECMD_EXTR_ROT_B: v_vec did not change\n");
     bu_log("ECMD_EXTR_ROT_B SUCCESS: v_vec=%g,%g,%g\n", V3ARGS(edit_extr->v_vec));
+
+    rt_edit_set_edflag(s, ECMD_EXTR_SKT_NAME);
+    rt_edit_set_str(s, 0, other_sketch);
+    if (rt_edit_process(s) != BRLCAD_OK ||
+	!BU_STR_EQUAL(edit_extr->sketch_name, other_sketch) ||
+	!edit_extr->skt)
+	bu_exit(1, "ERROR: extrusion sketch reference was not replaced\n");
+
+    rt_edit_set_str(s, 0, "missing_sketch");
+    if (rt_edit_process(s) != BRLCAD_ERROR ||
+	!BU_STR_EQUAL(edit_extr->sketch_name, other_sketch) ||
+	!edit_extr->skt)
+	bu_exit(1, "ERROR: missing sketch changed extrusion reference\n");
+
+    rt_edit_set_str(s, 0, "extrude");
+    if (rt_edit_process(s) != BRLCAD_ERROR ||
+	!BU_STR_EQUAL(edit_extr->sketch_name, other_sketch) ||
+	!edit_extr->skt)
+	bu_exit(1, "ERROR: non-sketch reference changed extrusion\n");
 
     rt_edit_destroy(s);
     db_close(dbip);

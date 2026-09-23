@@ -1112,7 +1112,7 @@ rt_knob_edit_sca(struct rt_edit *s, int matrix_edit)
  * A lot of processing is deferred to here, so that the "p" command
  * can operate on an equal footing to mouse events.
  */
-void
+int
 rt_edit_process(struct rt_edit *s)
 {
     bu_clbk_t f = NULL;
@@ -1129,9 +1129,8 @@ rt_edit_process(struct rt_edit *s)
 		rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_STR, BU_CLBK_DURING);
 		if (f)
 		    (*f)(0, NULL, d, NULL);
-		bu_vls_trunc(s->log_str, 0);
 	    }
-	    return;
+	    return BRLCAD_ERROR;
 	}
 	if (bu_vls_strlen(s->log_str)) {
 	    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_STR, BU_CLBK_DURING);
@@ -1163,6 +1162,7 @@ rt_edit_process(struct rt_edit *s)
 		rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 		if (f)
 		    (*f)(0, NULL, d, NULL);
+		return BRLCAD_ERROR;
 	    }
     }
 
@@ -1194,6 +1194,7 @@ rt_edit_process(struct rt_edit *s)
     // Inputs processed, reset
     s->e_inpara = 0;
     s->e_mvalid = 0;
+    return BRLCAD_OK;
 }
 
 void

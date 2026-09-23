@@ -167,8 +167,8 @@
  * switching between the arc and its complement (the other arc sharing the
  * same start vertex, end vertex, and radius).
  *
- * No parameters needed (curr_seg must reference a non-full-circle CARC).
- * e_inpara = 0.
+ * Use curr_seg with e_inpara = 0, or provide a segment index in
+ * e_para[0] with e_inpara = 1.  The arc must not be a full circle.
  * Returns BRLCAD_ERROR if no CARC is selected or if it is a full circle
  * (radius < 0), since full circles have no complement.
  */
@@ -176,11 +176,9 @@
 /**
  * Set the radius of the currently selected arc or full-circle segment.
  *
- * e_para[0] = new radius in local units.
- *             Positive  → circular arc (partial).
- *             Negative  → full circle (end vertex is the centre).
- * e_inpara  = 1.
- * curr_seg must point to a CARC segment.
+ * With e_inpara = 1, curr_seg identifies the arc and e_para[0] is the
+ * radius in local units.  With e_inpara = 2, e_para[0] is the arc index
+ * and e_para[1] is the radius.  A negative radius denotes a full circle.
  */
 #define ECMD_SKETCH_SET_ARC_RADIUS    26017
 /**
@@ -196,11 +194,10 @@
  *   4. The radius and center_is_left / orientation flags of curr_seg are
  *      updated so the arc starts or ends tangentially.
  *
- * e_para layout:
- *   e_para[0]  = index of the *adjacent* segment (the one to be tangent to)
- *   e_para[1]  = tangency angle in radians (0 = direct tangency, i.e. smooth join)
- * e_inpara    = 2
- * curr_seg    must be the CARC segment to be modified (se->curr_seg >= 0).
+ * With e_inpara = 2, curr_seg selects the arc, e_para[0] selects the
+ * adjacent segment, and e_para[1] is the angle in radians.  With
+ * e_inpara = 3, e_para[0] selects the arc, e_para[1] the adjacent
+ * segment, and e_para[2] the angle.
  *
  * Returns BRLCAD_OK on success, BRLCAD_ERROR with a message if the geometry
  * is degenerate (no shared vertex, zero-length chord, etc.).
@@ -229,8 +226,8 @@
  * assembling closed contours so that segments can be shared between curves
  * drawn in opposite directions.
  *
- * e_inpara = 0; curr_seg must be >= 0.
- * Returns BRLCAD_OK on success, BRLCAD_ERROR if no segment is selected.
+ * Use curr_seg with e_inpara = 0, or provide a segment index in
+ * e_para[0] with e_inpara = 1.  Invalid indices return BRLCAD_ERROR.
  */
 #define ECMD_SKETCH_TOGGLE_SEGMENT_REVERSE 26020
 
@@ -350,6 +347,29 @@ static const struct rt_edit_param_desc sketch_point_param[] = {
       RT_EDIT_PARAM_NO_LIMIT, RT_EDIT_PARAM_NO_LIMIT, "length", 0, NULL, NULL, NULL }
 };
 
+static const struct rt_edit_param_desc sketch_uv_params[] = {
+    { "u", "U", RT_EDIT_PARAM_SCALAR, 0,
+      RT_EDIT_PARAM_NO_LIMIT, RT_EDIT_PARAM_NO_LIMIT, "length", 0, NULL, NULL, NULL },
+    { "v", "V", RT_EDIT_PARAM_SCALAR, 1,
+      RT_EDIT_PARAM_NO_LIMIT, RT_EDIT_PARAM_NO_LIMIT, "length", 0, NULL, NULL, NULL }
+};
+
+static const struct rt_edit_param_desc sketch_arc_radius_params[] = {
+    { "segment", "Arc Segment", RT_EDIT_PARAM_INTEGER, 0,
+      0.0, RT_EDIT_PARAM_NO_LIMIT, "count", 0, NULL, NULL, NULL },
+    { "radius", "Radius", RT_EDIT_PARAM_SCALAR, 1,
+      RT_EDIT_PARAM_NO_LIMIT, RT_EDIT_PARAM_NO_LIMIT, "length", 0, NULL, NULL, NULL }
+};
+
+static const struct rt_edit_param_desc sketch_tangency_params[] = {
+    { "segment", "Arc Segment", RT_EDIT_PARAM_INTEGER, 0,
+      0.0, RT_EDIT_PARAM_NO_LIMIT, "count", 0, NULL, NULL, NULL },
+    { "adjacent", "Adjacent Segment", RT_EDIT_PARAM_INTEGER, 1,
+      0.0, RT_EDIT_PARAM_NO_LIMIT, "count", 0, NULL, NULL, NULL },
+    { "angle", "Tangency Angle", RT_EDIT_PARAM_SCALAR, 2,
+      RT_EDIT_PARAM_NO_LIMIT, RT_EDIT_PARAM_NO_LIMIT, "radians", 0, NULL, NULL, NULL }
+};
+
 static const struct rt_edit_cmd_desc sketch_cmds[] = {
     { ECMD_SKETCH_PICK_VERTEX,           "Pick Vertex",          "selection", 1, sketch_idx_param,   1, 10, NULL },
     { ECMD_SKETCH_MOVE_VERTEX,           "Move Vertex",          "movement",  1, sketch_point_param, 1, 20, NULL },
@@ -365,10 +385,10 @@ static const struct rt_edit_cmd_desc sketch_cmds[] = {
     { ECMD_SKETCH_APPEND_NURB,           "Append NURB",          "topology",  0, NULL,               1, 120, NULL },
     { ECMD_SKETCH_NURB_EDIT_KV,          "NURB Edit KV",         "topology",  0, NULL,               1, 130, NULL },
     { ECMD_SKETCH_NURB_EDIT_WEIGHTS,     "NURB Edit Weights",    "topology",  0, NULL,               1, 140, NULL },
-    { ECMD_SKETCH_ADD_VERTEX,            "Add Vertex",           "topology",  1, sketch_point_param, 1, 150, NULL },
+    { ECMD_SKETCH_ADD_VERTEX,            "Add Vertex",           "topology",  2, sketch_uv_params,    1, 150, NULL },
     { ECMD_SKETCH_TOGGLE_ARC_ORIENT,     "Toggle Arc Orient",    "topology",  1, sketch_idx_param,   1, 160, NULL },
-    { ECMD_SKETCH_SET_ARC_RADIUS,        "Set Arc Radius",       "topology",  1, sketch_idx_param,   1, 170, NULL },
-    { ECMD_SKETCH_SET_TANGENCY,          "Set Arc Tangency",     "topology",  0, NULL,               1, 180, NULL },
+    { ECMD_SKETCH_SET_ARC_RADIUS,        "Set Arc Radius",       "topology",  2, sketch_arc_radius_params, 1, 170, NULL },
+    { ECMD_SKETCH_SET_TANGENCY,          "Set Arc Tangency",     "topology",  3, sketch_tangency_params,   1, 180, NULL },
     { ECMD_SKETCH_SET_PLANE,             "Set Sketch Plane",     "geometry",  0, NULL,               1, 190, NULL },
     { ECMD_SKETCH_TOGGLE_SEGMENT_REVERSE,"Toggle Seg Reverse",   "topology",  1, sketch_idx_param,   1, 200, NULL }
 };
@@ -1537,20 +1557,44 @@ ecmd_sketch_add_vertex(struct rt_edit *s)
 }
 
 static int
-ecmd_sketch_toggle_arc_orient(struct rt_edit *s)
+sketch_edit_segment_index(struct rt_edit *s, int parameter_index, const char *command)
 {
     struct rt_sketch_edit *se = (struct rt_sketch_edit *)s->ipe_ptr;
     struct rt_sketch_internal *skt =
 	(struct rt_sketch_internal *)s->es_int.idb_ptr;
-    RT_SKETCH_CK_MAGIC(skt);
+    int index = se->curr_seg;
 
-    if (se->curr_seg < 0) {
-	bu_vls_printf(s->log_str,
-		"ERROR: ECMD_SKETCH_TOGGLE_ARC_ORIENT: no segment selected\n");
-	return BRLCAD_ERROR;
+    if (parameter_index >= 0) {
+	fastf_t requested = s->e_para[parameter_index];
+	if (!isfinite(requested) || requested < 0.0 ||
+	    requested >= (fastf_t)skt->curve.count ||
+	    !EQUAL(requested, floor(requested))) {
+	    bu_vls_printf(s->log_str, "ERROR: %s: invalid segment index\n", command);
+	    return -1;
+	}
+	index = (int)requested;
     }
 
-    void *seg = skt->curve.segment[se->curr_seg];
+    if (index < 0 || (size_t)index >= skt->curve.count) {
+	bu_vls_printf(s->log_str, "ERROR: %s: no segment selected\n", command);
+	return -1;
+    }
+
+    return index;
+}
+
+static int
+ecmd_sketch_toggle_arc_orient(struct rt_edit *s)
+{
+    struct rt_sketch_internal *skt =
+	(struct rt_sketch_internal *)s->es_int.idb_ptr;
+    RT_SKETCH_CK_MAGIC(skt);
+
+    int segment_index = sketch_edit_segment_index(s, s->e_inpara ? 0 : -1,
+	    "ECMD_SKETCH_TOGGLE_ARC_ORIENT");
+    if (segment_index < 0)
+	return BRLCAD_ERROR;
+    void *seg = skt->curve.segment[segment_index];
     if (!seg || *(uint32_t *)seg != CURVE_CARC_MAGIC) {
 	bu_vls_printf(s->log_str,
 		"ERROR: ECMD_SKETCH_TOGGLE_ARC_ORIENT: "
@@ -1575,42 +1619,36 @@ ecmd_sketch_toggle_arc_orient(struct rt_edit *s)
 static int
 ecmd_sketch_set_arc_radius(struct rt_edit *s)
 {
-    struct rt_sketch_edit *se = (struct rt_sketch_edit *)s->ipe_ptr;
     struct rt_sketch_internal *skt =
 	(struct rt_sketch_internal *)s->es_int.idb_ptr;
     RT_SKETCH_CK_MAGIC(skt);
 
-    if (se->curr_seg < 0) {
+    if (s->e_inpara < 1) {
 	bu_vls_printf(s->log_str,
-		"ERROR: ECMD_SKETCH_SET_ARC_RADIUS: no segment selected\n");
+		"ERROR: ECMD_SKETCH_SET_ARC_RADIUS: radius parameter required\n");
 	return BRLCAD_ERROR;
     }
 
-    if (!s->e_inpara || s->e_inpara < 1) {
-	bu_vls_printf(s->log_str,
-		"ERROR: ECMD_SKETCH_SET_ARC_RADIUS: "
-		"radius parameter required (e_para[0] in local units)\n");
-	s->e_inpara = 0;
+    int radius_parameter = s->e_inpara >= 2 ? 1 : 0;
+    int segment_index = sketch_edit_segment_index(s, s->e_inpara >= 2 ? 0 : -1,
+	    "ECMD_SKETCH_SET_ARC_RADIUS");
+    if (segment_index < 0)
 	return BRLCAD_ERROR;
-    }
 
-    void *seg = skt->curve.segment[se->curr_seg];
+    void *seg = skt->curve.segment[segment_index];
     if (!seg || *(uint32_t *)seg != CURVE_CARC_MAGIC) {
 	bu_vls_printf(s->log_str,
 		"ERROR: ECMD_SKETCH_SET_ARC_RADIUS: "
 		"selected segment is not a CARC\n");
-	s->e_inpara = 0;
 	return BRLCAD_ERROR;
     }
 
     struct carc_seg *cs = (struct carc_seg *)seg;
-    fastf_t new_r = s->e_para[0] * s->local2base;
-
-    cs->radius = new_r;
+    cs->radius = s->e_para[radius_parameter] * s->local2base;
     cs->center = -1;  /* force recompute during tessellation */
 
     s->e_inpara = 0;
-    return 0;
+    return BRLCAD_OK;
 }
 
 /*
@@ -1752,26 +1790,22 @@ sketch_tangent_at_vertex(const struct rt_sketch_internal *skt,
 static int
 ecmd_sketch_set_tangency(struct rt_edit *s)
 {
-    struct rt_sketch_edit *se = (struct rt_sketch_edit *)s->ipe_ptr;
     struct rt_sketch_internal *skt =
 	(struct rt_sketch_internal *)s->es_int.idb_ptr;
     RT_SKETCH_CK_MAGIC(skt);
 
-    if (se->curr_seg < 0) {
+    if (s->e_inpara < 2) {
 	bu_vls_printf(s->log_str,
-		"ERROR: ECMD_SKETCH_SET_TANGENCY: no segment selected\n");
+		"ERROR: ECMD_SKETCH_SET_TANGENCY: adjacent index and angle required\n");
 	return BRLCAD_ERROR;
     }
 
-    if (!s->e_inpara || s->e_inpara < 2) {
-	bu_vls_printf(s->log_str,
-		"ERROR: ECMD_SKETCH_SET_TANGENCY: "
-		"e_para[0]=adj_seg, e_para[1]=angle required\n");
-	s->e_inpara = 0;
+    int arc_index = sketch_edit_segment_index(s, s->e_inpara >= 3 ? 0 : -1,
+	    "ECMD_SKETCH_SET_TANGENCY");
+    if (arc_index < 0)
 	return BRLCAD_ERROR;
-    }
 
-    void *arc_seg = skt->curve.segment[se->curr_seg];
+    void *arc_seg = skt->curve.segment[arc_index];
     if (!arc_seg || *(uint32_t *)arc_seg != CURVE_CARC_MAGIC) {
 	bu_vls_printf(s->log_str,
 		"ERROR: ECMD_SKETCH_SET_TANGENCY: "
@@ -1789,18 +1823,14 @@ ecmd_sketch_set_tangency(struct rt_edit *s)
 	return BRLCAD_ERROR;
     }
 
-    int adj_seg = (int)s->e_para[0];
-    fastf_t angle_rad = s->e_para[1];
-
-    if (adj_seg < 0 || (size_t)adj_seg >= skt->curve.count) {
-	bu_vls_printf(s->log_str,
-		"ERROR: ECMD_SKETCH_SET_TANGENCY: "
-		"adjacent segment index %d out of range [0,%zu)\n",
-		adj_seg, skt->curve.count);
-	s->e_inpara = 0;
+    int adjacent_parameter = s->e_inpara >= 3 ? 1 : 0;
+    int adj_seg = sketch_edit_segment_index(s, adjacent_parameter,
+	    "ECMD_SKETCH_SET_TANGENCY");
+    if (adj_seg < 0)
 	return BRLCAD_ERROR;
-    }
-    if (adj_seg == se->curr_seg) {
+    fastf_t angle_rad = s->e_para[adjacent_parameter + 1];
+
+    if (adj_seg == arc_index) {
 	bu_vls_printf(s->log_str,
 		"ERROR: ECMD_SKETCH_SET_TANGENCY: "
 		"adjacent segment is the same as curr_seg\n");
@@ -1977,27 +2007,20 @@ ecmd_sketch_set_plane(struct rt_edit *s)
 static int
 ecmd_sketch_toggle_segment_reverse(struct rt_edit *s)
 {
-    struct rt_sketch_edit *se = (struct rt_sketch_edit *)s->ipe_ptr;
     struct rt_sketch_internal *skt =
 	(struct rt_sketch_internal *)s->es_int.idb_ptr;
     RT_SKETCH_CK_MAGIC(skt);
 
-    if (se->curr_seg < 0 || (size_t)se->curr_seg >= skt->curve.count) {
-	bu_vls_printf(s->log_str,
-		"ERROR: ECMD_SKETCH_TOGGLE_SEGMENT_REVERSE: "
-		"no segment selected\n");
+    int segment_index = sketch_edit_segment_index(s, s->e_inpara ? 0 : -1,
+	    "ECMD_SKETCH_TOGGLE_SEGMENT_REVERSE");
+    if (segment_index < 0)
 	return BRLCAD_ERROR;
-    }
 
-    /* Allocate the reverse array if it does not yet exist */
     if (!skt->curve.reverse) {
 	skt->curve.reverse = (int *)bu_calloc(skt->curve.count,
-					      sizeof(int),
-					      "sketch reverse array");
+		sizeof(int), "sketch reverse array");
     }
-
-    skt->curve.reverse[se->curr_seg] ^= 1;
-
+    skt->curve.reverse[segment_index] ^= 1;
     return BRLCAD_OK;
 }
 

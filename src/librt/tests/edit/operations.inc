@@ -42,8 +42,6 @@ static const struct expected_operation expected_operations[] = {
     {"tgc", 2035},
     {"tgc", 2005},
     {"tgc", 2006},
-    {"tgc", 2081},
-    {"tgc", 2082},
     {"tgc", 2007},
     {"tgc", 2008},
     {"ell", 3039},
