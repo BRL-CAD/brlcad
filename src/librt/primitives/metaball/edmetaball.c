@@ -510,7 +510,7 @@ rt_edit_metaball_get_params(struct rt_edit *s, int cmd_id, fastf_t *vals)
 	case ECMD_METABALL_PT_FLDSTR:
 	    if (!m->es_metaball_pnt)
 		return 0;
-	    vals[0] = m->es_metaball_pnt->field_strength;
+	    vals[0] = m->es_metaball_pnt->field_strength * s->base2local;
 	    return 1;
 	case ECMD_METABALL_PT_SCALE_BLOBBINESS:
 	case ECMD_METABALL_PT_SET_BLOBBINESS:
@@ -523,7 +523,7 @@ rt_edit_metaball_get_params(struct rt_edit *s, int cmd_id, fastf_t *vals)
 	case ECMD_METABALL_PT_ADD:
 	    if (!m->es_metaball_pnt)
 		return 0;
-	    VMOVE(vals, m->es_metaball_pnt->coord);
+	    VSCALE(vals, m->es_metaball_pnt->coord, s->base2local);
 	    return 3;
 	default:
 	    return 0;
@@ -552,7 +552,7 @@ rt_edit_metaball_write_params(
 	bu_vls_printf(p, "point[%d]: %.9f %.9f %.9f field_strength=%.9f blobbiness=%.9f\n",
 		      n,
 		      V3BASE2LOCAL(mbpt->coord),
-		      mbpt->field_strength,
+		      mbpt->field_strength * base2local,
 		      mbpt->blobbiness);
 	n++;
     }
@@ -643,7 +643,7 @@ rt_edit_metaball_read_params(
 	    }
 	    point_t loc;
 	    VSET(loc, x * local2base, y * local2base, z * local2base);
-	    rt_metaball_add_point(ball, (const point_t *)&loc, (fastf_t)fs, (fastf_t)bl);
+	    rt_metaball_add_point(ball, (const point_t *)&loc, (fastf_t)(fs * local2base), (fastf_t)bl);
 	}
     }
 
@@ -752,6 +752,13 @@ ecmd_metaball_set_method(struct rt_edit *s)
     return 0;
 }
 
+static fastf_t
+metaball_point_scale(const struct rt_edit *s)
+{
+    /* No interactive multiplier leaves es_scale at zero. */
+    return s->e_para[0] * ((s->es_scale > SMALL_FASTF) ? s->es_scale : 1.0);
+}
+
 int
 ecmd_metaball_pt_set_goo(struct rt_edit *s)
 {
@@ -766,7 +773,7 @@ ecmd_metaball_pt_set_goo(struct rt_edit *s)
 	bu_vls_printf(s->log_str, "pscale: no metaball point selected for scaling blobbiness\n");
 	return BRLCAD_ERROR;
     }
-    m->es_metaball_pnt->blobbiness *= *s->e_para * ((s->es_scale > -SMALL_FASTF) ? s->es_scale : 1.0);
+    m->es_metaball_pnt->blobbiness *= metaball_point_scale(s);
 
     return 0;
 }
@@ -804,7 +811,7 @@ ecmd_metaball_pt_fldstr(struct rt_edit *s)
 	return BRLCAD_ERROR;
     }
 
-    m->es_metaball_pnt->field_strength *= *s->e_para * ((s->es_scale > -SMALL_FASTF) ? s->es_scale : 1.0);
+    m->es_metaball_pnt->field_strength *= metaball_point_scale(s);
 
     return 0;
 }
@@ -961,11 +968,6 @@ rt_edit_metaball_pscale(struct rt_edit *s)
 	    s->e_inpara = 0;
 	    return BRLCAD_ERROR;
 	}
-
-	/* must convert to base units */
-	s->e_para[0] *= s->local2base;
-	s->e_para[1] *= s->local2base;
-	s->e_para[2] *= s->local2base;
     }
 
     switch (s->edit_flag) {

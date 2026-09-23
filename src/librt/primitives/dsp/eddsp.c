@@ -309,41 +309,45 @@ rt_edit_dsp_edit_desc(void)
     return &dsp_prim_desc;
 }
 
-static void
-dsp_scale(struct rt_edit *s, struct rt_dsp_internal *dsp, int idx)
+static int
+dsp_scale(struct rt_edit *s, struct rt_dsp_internal *dsp, int axis)
 {
     mat_t m, scalemat;
+    vect_t column, solid_keypoint;
+    const int diagonal[] = {MSX, MSY, MSZ};
+    const int idx = diagonal[axis];
 
     RT_DSP_CK_MAGIC(dsp);
 
     MAT_IDN(m);
 
-    if (s->e_mvalid) {
-	bu_log("s->e_mvalid %g %g %g\n", V3ARGS(s->e_mparam));
-    }
-
-    /* must convert to base units */
-    s->e_para[0] *= s->local2base;
-    s->e_para[1] *= s->local2base;
-    s->e_para[2] *= s->local2base;
-
     if (s->e_inpara > 0) {
-	m[idx] = s->e_para[0];
-	bu_log("Keyboard %g\n", s->e_para[0]);
+	/* The matrix column gives the current cell dimension in base units. */
+	VSET(column, dsp->dsp_stom[axis], dsp->dsp_stom[axis + 4],
+	    dsp->dsp_stom[axis + 8]);
+	if (NEAR_ZERO(dsp->dsp_stom[15], SMALL_FASTF)) {
+	    bu_vls_printf(s->log_str, "ERROR: DSP transform is singular\n");
+	    return BRLCAD_ERROR;
+	}
+	fastf_t current = MAGNITUDE(column) / fabs(dsp->dsp_stom[15]);
+	if (current <= SMALL_FASTF) {
+	    bu_vls_printf(s->log_str, "ERROR: DSP cell size is zero\n");
+	    return BRLCAD_ERROR;
+	}
+	m[idx] = s->e_para[0] * s->local2base / current;
     } else if (!ZERO(s->es_scale)) {
 	m[idx] *= s->es_scale;
-	bu_log("s->es_scale %g\n", s->es_scale);
 	s->es_scale = 0.0;
     }
 
-    bn_mat_xform_about_pnt(scalemat, m, s->e_keypoint);
+    MAT4X3PNT(solid_keypoint, dsp->dsp_mtos, s->e_keypoint);
+    bn_mat_xform_about_pnt(scalemat, m, solid_keypoint);
 
     bn_mat_mul(m, dsp->dsp_stom, scalemat);
     MAT_COPY(dsp->dsp_stom, m);
+    bn_mat_inv(dsp->dsp_mtos, dsp->dsp_stom);
 
-    bn_mat_mul(m, scalemat, dsp->dsp_mtos);
-    MAT_COPY(dsp->dsp_mtos, m);
-
+    return BRLCAD_OK;
 }
 
 int
@@ -363,9 +367,7 @@ ecmd_dsp_scale_x(struct rt_edit *s)
 	return BRLCAD_ERROR;
     }
 
-    dsp_scale(s, (struct rt_dsp_internal *)s->es_int.idb_ptr, MSX);
-
-    return 0;
+    return dsp_scale(s, (struct rt_dsp_internal *)s->es_int.idb_ptr, X);
 }
 
 int
@@ -385,9 +387,7 @@ ecmd_dsp_scale_y(struct rt_edit *s)
 	return BRLCAD_ERROR;
     }
 
-    dsp_scale(s, (struct rt_dsp_internal *)s->es_int.idb_ptr, MSY);
-
-    return 0;
+    return dsp_scale(s, (struct rt_dsp_internal *)s->es_int.idb_ptr, Y);
 }
 
 int
@@ -407,9 +407,7 @@ ecmd_dsp_scale_alt(struct rt_edit *s)
 	return BRLCAD_ERROR;
     }
 
-    dsp_scale(s, (struct rt_dsp_internal *)s->es_int.idb_ptr, MSZ);
-
-    return 0;
+    return dsp_scale(s, (struct rt_dsp_internal *)s->es_int.idb_ptr, Z);
 }
 
 int

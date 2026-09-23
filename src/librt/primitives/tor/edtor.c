@@ -187,7 +187,7 @@ rt_edit_tor_write_params(
     RT_TOR_CK_MAGIC(tor);
 
     bu_vls_printf(p, "Vertex: %.9f %.9f %.9f\n", V3BASE2LOCAL(tor->v));
-    bu_vls_printf(p, "Normal: %.9f %.9f %.9f\n", V3BASE2LOCAL(tor->h));
+    bu_vls_printf(p, "Normal: %.9f %.9f %.9f\n", V3ARGS(tor->h));
     bu_vls_printf(p, "radius_1: %.9f\n", tor->r_a*base2local);
     bu_vls_printf(p, "radius_2: %.9f\n", tor->r_h*base2local);
 }

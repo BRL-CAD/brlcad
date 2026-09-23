@@ -713,6 +713,28 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
 	bu_vls_free(&capture.candidates);
     }
 
+    {
+	const fastf_t local2base = 25.4;
+	bot_reset(s, bot, b);
+	s->local2base = local2base;
+	s->base2local = 1.0 / local2base;
+	EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_BOT_MOVEV);
+	b->bot_verts[0] = 2;
+	b->bot_verts[1] = -1;
+	b->bot_verts[2] = -1;
+	s->e_inpara = 3;
+	VSET(s->e_para, 1.0, 2.0, 3.0);
+	rt_edit_process(s);
+	vect_t expected, actual;
+	VSET(expected, local2base, 2.0 * local2base, 3.0 * local2base);
+	if (!VNEAR_EQUAL(&bot->vertices[6], expected, VUNITIZE_TOL) ||
+	    EDOBJ[ID_BOT].ft_edit_get_params(s, ECMD_BOT_MOVEV, actual) != 3)
+	    bu_exit(1, "ERROR: BOT vertex move did not use local units\n");
+	VSET(expected, 1.0, 2.0, 3.0);
+	if (!VNEAR_EQUAL(actual, expected, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: BOT vertex getter did not use local units\n");
+    }
+
     bu_log("All BOT tests PASSED\n");
 
     rt_edit_destroy(s);

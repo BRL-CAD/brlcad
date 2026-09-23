@@ -572,6 +572,48 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
 	bu_exit(1, "ERROR: ECMD_METABALL_PT_SET_BLOBBINESS with no point: expected error in log from set_edit_mode\n");
     bu_log("ECMD_METABALL_PT_SET_BLOBBINESS no-point correctly refused\n");
 
+    /* Threshold, method, blobbiness and scale factors are dimensionless. */
+    {
+	const fastf_t local2base = 25.4;
+	mb_reset(s, edit_mb);
+	s->local2base = local2base;
+	s->base2local = 1.0 / local2base;
+	m->es_metaball_pnt = mb_first_pt(s);
+
+	EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_METABALL_SET_THRESHOLD);
+	s->e_inpara = 1;
+	s->e_para[0] = 0.7;
+	rt_edit_process(s);
+	if (!NEAR_EQUAL(edit_mb->threshold, 0.7, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: non-mm metaball threshold changed units\n");
+
+	EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_METABALL_SET_METHOD);
+	s->e_inpara = 1;
+	s->e_para[0] = 1.0;
+	rt_edit_process(s);
+	if (edit_mb->method != 1)
+	    bu_exit(1, "ERROR: non-mm metaball method changed units\n");
+
+	EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_METABALL_PT_SET_BLOBBINESS);
+	s->e_inpara = 1;
+	s->e_para[0] = 0.5;
+	rt_edit_process(s);
+	EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_METABALL_PT_SCALE_BLOBBINESS);
+	s->e_inpara = 1;
+	s->e_para[0] = 2.0;
+	rt_edit_process(s);
+	if (!NEAR_EQUAL(m->es_metaball_pnt->blobbiness, 1.0, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: non-mm metaball blobbiness changed units\n");
+
+	EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_METABALL_PT_FLDSTR);
+	s->e_inpara = 1;
+	s->e_para[0] = 2.0;
+	rt_edit_process(s);
+	if (!NEAR_EQUAL(m->es_metaball_pnt->field_strength, 2.0, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: non-mm metaball strength factor changed units\n");
+	bu_log("Metaball non-mm dimensionless edits SUCCESS\n");
+    }
+
     /* ================================================================
      * write_params / read_params round-trip
      *
@@ -580,11 +622,26 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
      * that threshold, method, and both control points survive.
      * ================================================================*/
     mb_reset(s, edit_mb);
+    const fastf_t inch = 25.4;
+    s->local2base = inch;
+    s->base2local = 1.0 / inch;
+    m->es_metaball_pnt = mb_first_pt(s);
+    VSET(m->es_metaball_pnt->coord, inch, 0.0, 0.0);
+    m->es_metaball_pnt->field_strength = 2.0 * inch;
+    fastf_t point_values[3] = {0.0, 0.0, 0.0};
+    if (EDOBJ[dp->d_minor_type].ft_edit_get_params(s, ECMD_METABALL_PT_MOV, point_values) != 3 ||
+	!NEAR_EQUAL(point_values[X], 1.0, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: metaball point getter did not return local units\n");
+    if (EDOBJ[dp->d_minor_type].ft_edit_get_params(s, ECMD_METABALL_PT_FLDSTR, point_values) != 1 ||
+	!NEAR_EQUAL(point_values[0], 2.0, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: metaball strength getter did not return local units\n");
 
     struct bu_vls param_str = BU_VLS_INIT_ZERO;
     EDOBJ[dp->d_minor_type].ft_write_params(&param_str, &s->es_int, NULL, s->base2local);
     if (bu_vls_strlen(&param_str) == 0)
 	bu_exit(1, "ERROR: write_params returned empty string\n");
+    if (!strstr(bu_vls_cstr(&param_str), "field_strength=2.000000000"))
+	bu_exit(1, "ERROR: metaball parameters did not display local strength\n");
     bu_log("write_params output:\n%s", bu_vls_cstr(&param_str));
 
     /* Build a fresh rt_db_internal with a blank metaball, then read params into it. */
@@ -619,6 +676,11 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
 	npts++;
     if (npts != 2)
 	bu_exit(1, "ERROR: read_params point count mismatch: %d (expected 2)\n", npts);
+    struct wdb_metaball_pnt *first_read =
+	BU_LIST_FIRST(wdb_metaball_pnt, &fresh_mb->metaball_ctrl_head);
+    if (!NEAR_EQUAL(first_read->coord[X], inch, VUNITIZE_TOL) ||
+	!NEAR_EQUAL(first_read->field_strength, 2.0 * inch, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: metaball parameter round-trip changed base-unit values\n");
 
     bu_log("write_params/read_params round-trip SUCCESS: threshold=%g method=%d npts=%d\n",
 	   fresh_mb->threshold, fresh_mb->method, npts);

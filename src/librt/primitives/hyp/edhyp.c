@@ -95,20 +95,20 @@ rt_edit_hyp_menu_item(const struct bn_tol *UNUSED(tol))
 /* ft_edit_desc descriptor for the Hyperboloid of One Sheet primitive */
 
 static const struct rt_edit_param_desc hyp_h_params[] = {
-    { "h", "Height (magnitude)", RT_EDIT_PARAM_SCALAR, 0, 1e-10, RT_EDIT_PARAM_NO_LIMIT,
-      "length", 0, NULL, NULL, NULL }
+    { "h", "Height Scale Factor", RT_EDIT_PARAM_SCALAR, 0, 1e-10, RT_EDIT_PARAM_NO_LIMIT,
+      "", 0, NULL, NULL, NULL }
 };
 static const struct rt_edit_param_desc hyp_a_params[] = {
-    { "a", "Semi-Axis A", RT_EDIT_PARAM_SCALAR, 0, 1e-10, RT_EDIT_PARAM_NO_LIMIT,
-      "length", 0, NULL, NULL, NULL }
+    { "a", "A Scale Factor", RT_EDIT_PARAM_SCALAR, 0, 1e-10, RT_EDIT_PARAM_NO_LIMIT,
+      "", 0, NULL, NULL, NULL }
 };
 static const struct rt_edit_param_desc hyp_b_params[] = {
-    { "b", "Semi-Axis B", RT_EDIT_PARAM_SCALAR, 0, 1e-10, RT_EDIT_PARAM_NO_LIMIT,
-      "length", 0, NULL, NULL, NULL }
+    { "b", "B Scale Factor", RT_EDIT_PARAM_SCALAR, 0, 1e-10, RT_EDIT_PARAM_NO_LIMIT,
+      "", 0, NULL, NULL, NULL }
 };
 static const struct rt_edit_param_desc hyp_c_params[] = {
-    { "c", "Neck Ratio c (0..1)", RT_EDIT_PARAM_SCALAR, 0, 1e-10, 1.0,
-      "fraction", 0, NULL, NULL, NULL }
+    { "c", "Neck Ratio Scale Factor", RT_EDIT_PARAM_SCALAR, 0, 1e-10, RT_EDIT_PARAM_NO_LIMIT,
+      "", 0, NULL, NULL, NULL }
 };
 static const struct rt_edit_param_desc hyp_rot_deg_params[] = {
     { "rot_xyz", "Rotation X Y Z (deg)", RT_EDIT_PARAM_VECTOR, 0,
@@ -247,8 +247,6 @@ ecmd_hyp_h(struct rt_edit *s)
 
     RT_HYP_CK_MAGIC(hyp);
     if (s->e_inpara) {
-	/* take s->e_mat[15] (path scaling) into account */
-	s->e_para[0] *= s->e_mat[15];
 	s->es_scale = s->e_para[0];
     }
     VSCALE(hyp->hyp_Hi, hyp->hyp_Hi, s->es_scale);
@@ -263,8 +261,6 @@ ecmd_hyp_scale_a(struct rt_edit *s)
 
     RT_HYP_CK_MAGIC(hyp);
     if (s->e_inpara) {
-	/* take s->e_mat[15] (path scaling) into account */
-	s->e_para[0] *= s->e_mat[15];
 	s->es_scale = s->e_para[0];
     }
     VSCALE(hyp->hyp_A, hyp->hyp_A, s->es_scale);
@@ -279,8 +275,6 @@ ecmd_hyp_scale_b(struct rt_edit *s)
 
     RT_HYP_CK_MAGIC(hyp);
     if (s->e_inpara) {
-	/* take s->e_mat[15] (path scaling) into account */
-	s->e_para[0] *= s->e_mat[15];
 	s->es_scale = s->e_para[0];
     }
     hyp->hyp_b = hyp->hyp_b * s->es_scale;
@@ -295,8 +289,6 @@ ecmd_hyp_c(struct rt_edit *s)
 
     RT_HYP_CK_MAGIC(hyp);
     if (s->e_inpara) {
-	/* take s->e_mat[15] (path scaling) into account */
-	s->e_para[0] *= s->e_mat[15];
 	s->es_scale = s->e_para[0];
     }
     if (hyp->hyp_bnr * s->es_scale <= 1.0) {
@@ -382,18 +374,10 @@ rt_edit_hyp_pscale(struct rt_edit *s)
 	s->e_inpara = 0;
 	return BRLCAD_ERROR;
     }
-
-    if (s->e_inpara) {
-	if (s->e_para[0] <= 0.0) {
-	    bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
-	    s->e_inpara = 0;
-	    return BRLCAD_ERROR;
-	}
-
-	/* must convert to base units */
-	s->e_para[0] *= s->local2base;
-	s->e_para[1] *= s->local2base;
-	s->e_para[2] *= s->local2base;
+    if (s->e_inpara && s->e_para[0] <= 0.0) {
+	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
+	s->e_inpara = 0;
+	return BRLCAD_ERROR;
     }
 
     switch (s->edit_flag) {

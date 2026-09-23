@@ -145,6 +145,29 @@ main(int argc, char *argv[])
     bu_log("SKETCH initial state SUCCESS: curr_vert=%d curr_seg=%d\n",
 	   se->curr_vert, se->curr_seg);
 
+    /* The plane origin is a local length; its axes are unitless directions. */
+    const fastf_t local2base = 25.4;
+    s->local2base = local2base;
+    s->base2local = 1.0 / local2base;
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_SKETCH_SET_PLANE);
+    s->e_inpara = 9;
+    VSET(&s->e_para[0], 1, 2, 3);
+    VSET(&s->e_para[3], 2, 0, 0);
+    VSET(&s->e_para[6], 0, 3, 0);
+    rt_edit_process(s);
+    point_t expected_origin = {25.4, 50.8, 76.2};
+    vect_t expected_u = {1, 0, 0};
+    vect_t expected_v = {0, 1, 0};
+    if (!VNEAR_EQUAL(skt->V, expected_origin, VUNITIZE_TOL) ||
+	!VNEAR_EQUAL(skt->u_vec, expected_u, VUNITIZE_TOL) ||
+	!VNEAR_EQUAL(skt->v_vec, expected_v, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: non-mm sketch plane: origin=(%g,%g,%g)\n",
+		V3ARGS(skt->V));
+    VSET(skt->V, 0, 0, 0);
+    s->local2base = 1.0;
+    s->base2local = 1.0;
+    bu_log("ECMD_SKETCH_SET_PLANE non-mm units SUCCESS\n");
+
     /* ================================================================
      * ECMD_SKETCH_PICK_VERTEX  (select vertex 2)
      * ================================================================*/

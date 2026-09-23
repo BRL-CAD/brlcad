@@ -191,8 +191,10 @@ ecmd_annot_vert_move(struct rt_edit *s)
 	return;
     }
 
-    aip->verts[vi][0] += s->e_para[1] * s->local2base;
-    aip->verts[vi][1] += s->e_para[2] * s->local2base;
+    /* Model-space UVs multiply the basis vectors; screen-space UVs are lengths. */
+    const fastf_t scale = (aip->flags & RT_ANNOT_MODEL_SPACE) ? 1.0 : s->local2base;
+    aip->verts[vi][0] += s->e_para[1] * scale;
+    aip->verts[vi][1] += s->e_para[2] * scale;
 }
 
 
@@ -294,14 +296,14 @@ static const struct rt_edit_param_desc annot_pos_param[] = {
 
 static const struct rt_edit_param_desc annot_txtsize_param[] = {
     { "txt_size", "Text size", RT_EDIT_PARAM_SCALAR, 0,
-      0.0, RT_EDIT_PARAM_NO_LIMIT, "length", 0, NULL, NULL, NULL }
+      0.0, RT_EDIT_PARAM_NO_LIMIT, "", 0, NULL, NULL, NULL }
 };
 
 static const struct rt_edit_param_desc annot_vert_move_params[] = {
     { "vert_index", "Vertex index",  RT_EDIT_PARAM_SCALAR, 0,
       0.0, RT_EDIT_PARAM_NO_LIMIT, "count", 0, NULL, NULL, NULL },
     { "delta",      "2-D delta (du,dv)", RT_EDIT_PARAM_VECTOR, 1,
-      RT_EDIT_PARAM_NO_LIMIT, RT_EDIT_PARAM_NO_LIMIT, "length",
+      RT_EDIT_PARAM_NO_LIMIT, RT_EDIT_PARAM_NO_LIMIT, "",
       0, NULL, NULL, NULL }
 };
 

@@ -352,6 +352,21 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
        "keypoint maps to (%g,%g,%g)\n", V3ARGS(kp_world));
     }
 
+    {
+	const fastf_t local2base = 25.4;
+	vol_reset(s, edit_vol);
+	s->local2base = local2base;
+	s->base2local = 1.0 / local2base;
+	EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_VOL_CSIZE);
+	s->e_inpara = 3;
+	VSET(s->e_para, 1.0, 2.0, 3.0);
+	rt_edit_process(s);
+	vect_t expected;
+	VSET(expected, local2base, 2.0 * local2base, 3.0 * local2base);
+	if (!VNEAR_EQUAL(edit_vol->cellsize, expected, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: VOL cell size did not use local units\n");
+    }
+
     rt_edit_destroy(s);
     db_close(dbip);
     return 0;

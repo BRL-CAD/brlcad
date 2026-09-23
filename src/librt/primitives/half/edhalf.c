@@ -34,7 +34,6 @@
 
 #include "../edit_private.h"
 
-#define V4BASE2LOCAL(_pt) (_pt)[X]*base2local, (_pt)[Y]*base2local, (_pt)[Z]*base2local, (_pt)[W]*base2local
 
 C_DECL void
 rt_edit_hlf_write_params(
@@ -46,7 +45,7 @@ rt_edit_hlf_write_params(
     struct rt_half_internal *half = (struct rt_half_internal *)ip->idb_ptr;
     RT_HALF_CK_MAGIC(half);
 
-    bu_vls_printf(p, "Plane: %.9f %.9f %.9f %.9f\n", V4BASE2LOCAL(half->eqn));
+    bu_vls_printf(p, "Plane: %.9f %.9f %.9f %.9f\n", V3ARGS(half->eqn), half->eqn[W] * base2local);
 }
 
 C_DECL int

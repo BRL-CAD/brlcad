@@ -140,10 +140,12 @@ get_cv_pos(struct rt_edit *s, int face_index, int cv_i, int cv_j,
     const ON_NurbsSurface *ns = dynamic_cast<const ON_NurbsSurface *>(surf);
     if (!ns)
 	bu_exit(1, "ERROR: face %d has no NURBS surface\n", face_index);
-    double *cv = ns->CV(cv_i, cv_j);
-    *x = cv[0];
-    *y = cv[1];
-    *z = cv[2];
+    ON_3dPoint cv;
+    if (!ns->GetCV(cv_i, cv_j, cv))
+	bu_exit(1, "ERROR: cannot read face %d CV (%d,%d)\n", face_index, cv_i, cv_j);
+    *x = cv.x;
+    *y = cv.y;
+    *z = cv.z;
 }
 
 
@@ -370,6 +372,75 @@ test_brep_edit_desc(struct directory *dp)
 	   desc->prim_type, desc->ncmd);
 }
 
+static void
+test_brep_rational_cv_local_units(struct rt_edit *s)
+{
+    const double local2base = 25.4;
+    struct rt_brep_internal *bip = (struct rt_brep_internal *)s->es_int.idb_ptr;
+    ON_Brep *brep = bip->brep;
+    int face_index = -1, cv_i = -1, cv_j = -1;
+    double weight = 0.0;
+
+    for (int f = 0; f < brep->m_F.Count() && face_index < 0; ++f) {
+	const ON_NurbsSurface *ns = dynamic_cast<const ON_NurbsSurface *>(brep->Face(f)->SurfaceOf());
+	if (!ns || !ns->IsRational())
+	    continue;
+	for (int i = 0; i < ns->m_cv_count[0] && face_index < 0; ++i) {
+	    for (int j = 0; j < ns->m_cv_count[1]; ++j) {
+		if (!NEAR_EQUAL(ns->Weight(i, j), 1.0, VUNITIZE_TOL)) {
+		    face_index = f;
+		    cv_i = i;
+		    cv_j = j;
+		    weight = ns->Weight(i, j);
+		    break;
+		}
+	    }
+	}
+    }
+    if (face_index < 0)
+	bu_exit(1, "ERROR: sphere has no weighted control vertex\n");
+
+    s->local2base = local2base;
+    s->base2local = 1.0 / local2base;
+    EDOBJ[ID_BREP].ft_set_edit_mode(s, ECMD_BREP_SRF_SELECT);
+    s->e_inpara = 3;
+    VSET(s->e_para, face_index, cv_i, cv_j);
+    rt_edit_process(s);
+
+    double x, y, z;
+    get_cv_pos(s, face_index, cv_i, cv_j, &x, &y, &z);
+    fastf_t vals[3] = {0.0, 0.0, 0.0};
+    if (EDOBJ[ID_BREP].ft_edit_get_params(s, ECMD_BREP_SRF_CV_SET, vals) != 3 ||
+	!NEAR_EQUAL(vals[0], x / local2base, VUNITIZE_TOL) ||
+	!NEAR_EQUAL(vals[1], y / local2base, VUNITIZE_TOL) ||
+	!NEAR_EQUAL(vals[2], z / local2base, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: rational BREP CV getter did not return local coordinates\n");
+
+    EDOBJ[ID_BREP].ft_set_edit_mode(s, ECMD_BREP_SRF_CV_MOVE);
+    s->e_inpara = 3;
+    VSET(s->e_para, 1.0, 2.0, 3.0);
+    rt_edit_process(s);
+    double mx, my, mz;
+    get_cv_pos(s, face_index, cv_i, cv_j, &mx, &my, &mz);
+    if (!NEAR_EQUAL(mx, x + local2base, VUNITIZE_TOL) ||
+	!NEAR_EQUAL(my, y + 2.0 * local2base, VUNITIZE_TOL) ||
+	!NEAR_EQUAL(mz, z + 3.0 * local2base, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: rational BREP CV move did not preserve Euclidean delta\n");
+
+    EDOBJ[ID_BREP].ft_set_edit_mode(s, ECMD_BREP_SRF_CV_SET);
+    s->e_inpara = 3;
+    VSET(s->e_para, 2.0, 3.0, 4.0);
+    rt_edit_process(s);
+    get_cv_pos(s, face_index, cv_i, cv_j, &x, &y, &z);
+    const ON_NurbsSurface *ns = dynamic_cast<const ON_NurbsSurface *>(brep->Face(face_index)->SurfaceOf());
+    if (!NEAR_EQUAL(x, 2.0 * local2base, VUNITIZE_TOL) ||
+	!NEAR_EQUAL(y, 3.0 * local2base, VUNITIZE_TOL) ||
+	!NEAR_EQUAL(z, 4.0 * local2base, VUNITIZE_TOL) ||
+	!NEAR_EQUAL(ns->Weight(cv_i, cv_j), weight, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: rational BREP CV set changed position or weight\n");
+    bu_log("Rational BREP CV local-unit move/set/get PASS\n");
+}
+
 
 /* ------------------------------------------------------------------ *
  * main
@@ -399,6 +470,7 @@ main(int argc, char *argv[])
     test_brep_cv_set(s);
     test_brep_cv_move_no_selection(s);
     test_brep_get_params_select(s);
+    test_brep_rational_cv_local_units(s);
 
     rt_edit_destroy(s);
     db_close(dbip);

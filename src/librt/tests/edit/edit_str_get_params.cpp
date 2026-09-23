@@ -33,6 +33,7 @@
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/magic.h"
+#include "bu/vls.h"
 #include "raytrace.h"
 #include "rt/functab.h"   /* EDOBJ */
 #include "rt/geom.h"      /* rt_tor_internal, rt_ell_internal */
@@ -253,6 +254,78 @@ test_get_params_ell(void)
     bu_free(ell, "ell");
 }
 
+/* Dimensionless plane normals must not change with database units. */
+static void
+test_write_params_units(void)
+{
+    const fastf_t local2base = 25.4;
+    const fastf_t base2local = 1.0 / local2base;
+    struct rt_db_internal ip;
+    struct bu_vls params = BU_VLS_INIT_ZERO;
+    RT_DB_INTERNAL_INIT(&ip);
+
+    struct rt_half_internal half = {};
+    half.magic = RT_HALF_INTERNAL_MAGIC;
+    VSET(half.eqn, 0, 0, 1);
+    half.eqn[W] = 50.8;
+    ip.idb_ptr = &half;
+    EDOBJ[ID_HALF].ft_write_params(&params, &ip, NULL, base2local);
+    CHECK(BU_STR_EQUAL(bu_vls_addr(&params),
+	"Plane: 0.000000000 0.000000000 1.000000000 2.000000000\n"),
+	"HALF text: normal is unitless; distance is local");
+    CHECK(EDOBJ[ID_HALF].ft_read_params(&ip, bu_vls_addr(&params), NULL, local2base) == BRLCAD_OK &&
+	NEAR_EQUAL(half.eqn[Z], 1.0, SMALL_FASTF) &&
+	NEAR_EQUAL(half.eqn[W], 50.8, SMALL_FASTF),
+	"HALF text: non-mm roundtrip preserves plane");
+    bu_vls_trunc(&params, 0);
+
+    struct rt_grip_internal grip = {};
+    grip.magic = RT_GRIP_INTERNAL_MAGIC;
+    VSET(grip.center, 25.4, 0, 0);
+    VSET(grip.normal, 0, 0, 1);
+    grip.mag = 50.8;
+    ip.idb_ptr = &grip;
+    EDOBJ[ID_GRIP].ft_write_params(&params, &ip, NULL, base2local);
+    CHECK(strstr(bu_vls_addr(&params), "Center: 1.000000000 0.000000000 0.000000000\n") != NULL &&
+	strstr(bu_vls_addr(&params), "Normal: 0.000000000 0.000000000 1.000000000\n") != NULL &&
+	strstr(bu_vls_addr(&params), "Magnitude: 2.000000000\n") != NULL,
+	"GRIP text: only center and magnitude use local units");
+    CHECK(EDOBJ[ID_GRIP].ft_read_params(&ip, bu_vls_addr(&params), NULL, local2base) == BRLCAD_OK &&
+	NEAR_EQUAL(grip.normal[Z], 1.0, SMALL_FASTF),
+	"GRIP text: non-mm roundtrip preserves normal");
+    bu_vls_trunc(&params, 0);
+
+    struct rt_tor_internal tor = {};
+    tor.magic = RT_TOR_INTERNAL_MAGIC;
+    VSET(tor.v, 25.4, 0, 0);
+    VSET(tor.h, 0, 0, 1);
+    tor.r_a = 50.8;
+    tor.r_h = 25.4;
+    ip.idb_ptr = &tor;
+    EDOBJ[ID_TOR].ft_write_params(&params, &ip, NULL, base2local);
+    CHECK(strstr(bu_vls_addr(&params), "Vertex: 1.000000000 0.000000000 0.000000000\n") != NULL &&
+	strstr(bu_vls_addr(&params), "Normal: 0.000000000 0.000000000 1.000000000\n") != NULL &&
+	strstr(bu_vls_addr(&params), "radius_1: 2.000000000\n") != NULL,
+	"TOR text: normal is unitless; dimensions are local");
+    bu_vls_trunc(&params, 0);
+
+    struct rt_eto_internal eto = {};
+    eto.eto_magic = RT_ETO_INTERNAL_MAGIC;
+    VSET(eto.eto_V, 25.4, 0, 0);
+    VSET(eto.eto_N, 0, 0, 1);
+    VSET(eto.eto_C, 50.8, 0, 0);
+    eto.eto_r = 76.2;
+    eto.eto_rd = 25.4;
+    ip.idb_ptr = &eto;
+    EDOBJ[ID_ETO].ft_write_params(&params, &ip, NULL, base2local);
+    CHECK(strstr(bu_vls_addr(&params), "Normal: 0.000000000 0.000000000 1.000000000\n") != NULL &&
+	strstr(bu_vls_addr(&params), "Semi-major axis: 2.000000000 0.000000000 0.000000000\n") != NULL &&
+	strstr(bu_vls_addr(&params), "Radius of rotation: 3.000000000\n") != NULL,
+	"ETO text: normal is unitless; dimensions are local");
+
+    bu_vls_free(&params);
+}
+
 
 /* ======================================================================
  * main
@@ -276,6 +349,9 @@ main(int argc, char **argv)
 
     bu_log("=== Test: ft_edit_get_params (ELL) ===\n");
     test_get_params_ell();
+
+    bu_log("=== Test: non-mm primitive parameter text ===\n");
+    test_write_params_units();
 
     if (fail_count) {
 	bu_log("edit_str_get_params: %d test(s) FAILED\n", fail_count);

@@ -270,6 +270,60 @@ main(int argc, char *argv[])
     bu_log("ECMD_DSP_SCALE_X(es_scale) SUCCESS: dsp_stom[0]=%g\n",
 	   edit_dsp->dsp_stom[MSX]);
 
+    /* Typed cell sizes are absolute local-unit lengths, unlike mouse factors. */
+    {
+	const fastf_t local2base = 25.4;
+	point_t solid_keypoint, model_keypoint, moved_keypoint;
+	mat_t product;
+	dsp_reset(s, edit_dsp);
+	s->local2base = local2base;
+	s->base2local = 1.0 / local2base;
+	edit_dsp->dsp_stom[MSX] = 2.0;
+	edit_dsp->dsp_stom[MSY] = 3.0;
+	edit_dsp->dsp_stom[MSZ] = 4.0;
+	bn_mat_inv(edit_dsp->dsp_mtos, edit_dsp->dsp_stom);
+	VSET(solid_keypoint, 5.0, 0.0, 0.0);
+	MAT4X3PNT(model_keypoint, edit_dsp->dsp_stom, solid_keypoint);
+	EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_DSP_SCALE_X);
+	VMOVE(s->e_keypoint, model_keypoint);
+	s->e_inpara = 1;
+	s->e_para[0] = 1.0;
+	rt_edit_process(s);
+	if (!NEAR_EQUAL(edit_dsp->dsp_stom[MSX], local2base, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: DSP X cell size did not use local units\n");
+	MAT4X3PNT(moved_keypoint, edit_dsp->dsp_stom, solid_keypoint);
+	if (!VNEAR_EQUAL(model_keypoint, moved_keypoint, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: DSP cell scale moved model keypoint\n");
+
+	s->e_inpara = 1;
+	s->e_para[0] = 2.0;
+	rt_edit_process(s);
+	if (!NEAR_EQUAL(edit_dsp->dsp_stom[MSX], 2.0 * local2base, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: DSP X cell size compounded an absolute value\n");
+
+	EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_DSP_SCALE_Y);
+	s->e_inpara = 1;
+	s->e_para[0] = 3.0;
+	rt_edit_process(s);
+	if (!NEAR_EQUAL(edit_dsp->dsp_stom[MSY], 3.0 * local2base, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: DSP Y cell size did not use local units\n");
+
+	EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_DSP_SCALE_ALT);
+	s->e_inpara = 1;
+	s->e_para[0] = 4.0;
+	rt_edit_process(s);
+	if (!NEAR_EQUAL(edit_dsp->dsp_stom[MSZ], 4.0 * local2base, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: DSP altitude size did not use local units\n");
+
+	bn_mat_mul(product, edit_dsp->dsp_stom, edit_dsp->dsp_mtos);
+	for (int i = 0; i < 16; ++i) {
+	    const fastf_t expected = (i == MSX || i == MSY || i == MSZ || i == 15) ? 1.0 : 0.0;
+	    if (!NEAR_EQUAL(product[i], expected, VUNITIZE_TOL))
+		bu_exit(1, "ERROR: DSP model/solid matrices are not inverses\n");
+	}
+	bu_log("DSP absolute local-unit cell sizes and inverse matrices PASS\n");
+    }
+
     /* ================================================================
      * RT_PARAMS_EDIT_SCALE (uniform scale=2 about (0,0,0))
      *

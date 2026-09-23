@@ -175,17 +175,20 @@ main(int argc, char *argv[])
     /* REC: ECMD_REC_SET_V = 7001 */
     fail += check_prim("REC",  ID_REC,      "\"rec\"",      7001);
 
+    /* ARB8: ECMD_ARB_MOVE_FACE = 4013 */
+    fail += check_prim("ARB8", ID_ARB8,     "\"arb8\"",     4013);
+
     /* ------------------------------------------------------------------
      * Verify that primitives without ft_edit_desc return BRLCAD_ERROR.
      * ------------------------------------------------------------------ */
     {
 	struct bu_vls json = BU_VLS_INIT_ZERO;
-	/* ARB8 (ID=4) has no ft_edit_desc */
-	int ret = rt_edit_type_to_json(&json, 4 /* ID_ARB8 */);
+	/* HF has no ft_edit_desc. */
+	int ret = rt_edit_type_to_json(&json, ID_HF);
 	if (ret == BRLCAD_ERROR) {
-	    bu_log("PASS [ARB8-no-desc]: correctly returned BRLCAD_ERROR\n");
+	    bu_log("PASS [HF-no-desc]: correctly returned BRLCAD_ERROR\n");
 	} else {
-	    bu_log("FAIL [ARB8-no-desc]: expected BRLCAD_ERROR, got BRLCAD_OK\n");
+	    bu_log("FAIL [HF-no-desc]: expected BRLCAD_ERROR, got BRLCAD_OK\n");
 	    fail++;
 	}
 	bu_vls_free(&json);

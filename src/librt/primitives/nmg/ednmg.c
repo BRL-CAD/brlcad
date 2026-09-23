@@ -1044,16 +1044,14 @@ ecmd_nmg_lextru_dir(struct rt_edit *s)
     }
     VSCALE(dir, dir, 1.0 / mag);
 
-    fastf_t dist = s->e_para[3] * s->local2base;
-
-    /* Build the target point and pass to the standard path */
-    point_t to_pt;
-    VJOIN1(to_pt, n->lu_keypoint, dist, dir);
+    /* The standard path converts its target point from local to base units. */
+    point_t local_keypoint, to_pt;
+    VSCALE(local_keypoint, n->lu_keypoint, s->base2local);
+    VJOIN1(to_pt, local_keypoint, s->e_para[3], dir);
 
     /* Override e_para/e_inpara to use the x,y,z form */
     VMOVE(s->e_para, to_pt);
     s->e_inpara = 3;
-    s->local2base = 1.0;  /* already converted above */
 
     ecmd_nmg_lextru(s);
 }

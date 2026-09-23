@@ -210,10 +210,10 @@
  * Edit the sketch plane parameters: origin (V), u-direction vector (A),
  * and v-direction vector (B).
  *
- * e_para layout (all values in model base units / radians as appropriate):
- *   e_para[0..2]  = new V (3-D origin in model space)
- *   e_para[3..5]  = new A (u_vec, will be normalised)
- *   e_para[6..8]  = new B (v_vec, will be normalised)
+ * e_para layout:
+ *   e_para[0..2]  = new V (3-D origin in local units)
+ *   e_para[3..5]  = new A (unitless direction, will be normalised)
+ *   e_para[6..8]  = new B (unitless direction, will be normalised)
  * e_inpara       = 9.
  *
  * The function normalises A and B and ensures they are mutually
@@ -1930,14 +1930,17 @@ ecmd_sketch_set_plane(struct rt_edit *s)
     if (!s->e_inpara || s->e_inpara < 9) {
 	bu_vls_printf(s->log_str,
 		"ERROR: ECMD_SKETCH_SET_PLANE: "
-		"9 parameters required (V[3] A[3] B[3] in base units)\n");
+		"9 parameters required (V[3] in local units, A[3] B[3] directions)\n");
 	s->e_inpara = 0;
 	return BRLCAD_ERROR;
     }
 
     point_t origin;
     vect_t a, b;
-    VSET(origin, s->e_para[0], s->e_para[1], s->e_para[2]);
+    VSET(origin,
+	 s->e_para[0] * s->local2base,
+	 s->e_para[1] * s->local2base,
+	 s->e_para[2] * s->local2base);
     VSET(a, s->e_para[3], s->e_para[4], s->e_para[5]);
     VSET(b, s->e_para[6], s->e_para[7], s->e_para[8]);
 

@@ -183,7 +183,7 @@ ecmd_datum_set_w(struct rt_edit *s)
 	return;
     }
 
-    dp->w = s->e_para[0] * s->local2base;
+    dp->w = s->e_para[0];
 }
 
 
@@ -301,7 +301,7 @@ static const struct rt_edit_param_desc datum_dir_param[] = {
 static const struct rt_edit_param_desc datum_w_param[] = {
     { "w", "Scale factor (PLANE only; set to non-zero to make datum a plane)",
       RT_EDIT_PARAM_SCALAR, 0,
-      RT_EDIT_PARAM_NO_LIMIT, RT_EDIT_PARAM_NO_LIMIT, "length",
+      RT_EDIT_PARAM_NO_LIMIT, RT_EDIT_PARAM_NO_LIMIT, "",
       0, NULL, NULL, NULL }
 };
 
@@ -353,7 +353,7 @@ rt_edit_datum_get_params(struct rt_edit *s, int cmd_id, fastf_t *vals)
 	    return 3;
 
 	case ECMD_DATUM_SET_W:
-	    vals[0] = dp->w * s->base2local;
+	    vals[0] = dp->w;
 	    return 1;
 
 	default:

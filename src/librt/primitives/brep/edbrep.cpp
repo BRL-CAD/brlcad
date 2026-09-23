@@ -185,18 +185,25 @@ ecmd_brep_srf_select(struct rt_edit *s)
 	return;
     }
 
+    ON_3dPoint cv;
+    if (!ns->GetCV(cv_i, cv_j, cv)) {
+	bu_vls_printf(s->log_str, "ECMD_BREP_SRF_SELECT: cannot read CV\n");
+	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+	if (f) (*f)(0, NULL, d, NULL);
+	return;
+    }
+
     b->face_index = face_index;
     b->srf_cv_i   = cv_i;
     b->srf_cv_j   = cv_j;
 
     /* Report the selected CV position. */
-    double *cv = ns->CV(cv_i, cv_j);
     bu_vls_printf(s->log_str,
 	    "Selected brep face %d CV (%d,%d) at (%.9f, %.9f, %.9f)\n",
 	    face_index, cv_i, cv_j,
-	    cv[0] * s->base2local,
-	    cv[1] * s->base2local,
-	    cv[2] * s->base2local);
+	    cv.x * s->base2local,
+	    cv.y * s->base2local,
+	    cv.z * s->base2local);
     rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
     if (f) (*f)(0, NULL, d, NULL);
 }
@@ -295,15 +302,21 @@ ecmd_brep_srf_cv_set(struct rt_edit *s)
 	return;
     }
 
-    double *cv = ns->CV(b->srf_cv_i, b->srf_cv_j);
+    ON_3dPoint cv;
+    if (!ns->GetCV(b->srf_cv_i, b->srf_cv_j, cv)) {
+	bu_vls_printf(s->log_str, "ECMD_BREP_SRF_CV_SET: cannot read CV\n");
+	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+	if (f) (*f)(0, NULL, d, NULL);
+	return;
+    }
 
     fastf_t new_x = s->e_para[0] * s->local2base;
     fastf_t new_y = s->e_para[1] * s->local2base;
     fastf_t new_z = s->e_para[2] * s->local2base;
 
-    fastf_t dx = new_x - cv[0];
-    fastf_t dy = new_y - cv[1];
-    fastf_t dz = new_z - cv[2];
+    fastf_t dx = new_x - cv.x;
+    fastf_t dy = new_y - cv.y;
+    fastf_t dz = new_z - cv.z;
 
     int ret = brep_translate_scv(brep, surface_index, b->srf_cv_i, b->srf_cv_j,
 	    dx, dy, dz);
@@ -535,10 +548,12 @@ rt_edit_brep_get_params(struct rt_edit *s, int cmd_id, fastf_t *vals)
 		    dynamic_cast<const ON_NurbsSurface *>(surf);
 		if (!ns)
 		    return 0;
-		double *cv = ns->CV(b->srf_cv_i, b->srf_cv_j);
-		vals[0] = cv[0] * s->base2local;
-		vals[1] = cv[1] * s->base2local;
-		vals[2] = cv[2] * s->base2local;
+		ON_3dPoint cv;
+		if (!ns->GetCV(b->srf_cv_i, b->srf_cv_j, cv))
+		    return 0;
+		vals[0] = cv.x * s->base2local;
+		vals[1] = cv.y * s->base2local;
+		vals[2] = cv.z * s->base2local;
 		return 3;
 	    }
 

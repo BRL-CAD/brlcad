@@ -330,6 +330,19 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
        "keypoint maps to (%g,%g,%g)\n", V3ARGS(kp_world));
     }
 
+    {
+	const fastf_t local2base = 25.4;
+	ebm_reset(s, edit_ebm);
+	s->local2base = local2base;
+	s->base2local = 1.0 / local2base;
+	EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_EBM_HEIGHT);
+	s->e_inpara = 1;
+	s->e_para[0] = 2.0;
+	rt_edit_process(s);
+	if (!NEAR_EQUAL(edit_ebm->tallness, 2.0 * local2base, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: EBM height did not use local units\n");
+    }
+
     rt_edit_destroy(s);
     db_close(dbip);
     return 0;

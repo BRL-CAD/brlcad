@@ -238,6 +238,44 @@ main(int argc, char *argv[])
     bu_log("TEST 6 PASS: get_params(SET_POS) = (%g,%g,%g)\n",
 	   vals[0], vals[1], vals[2]);
 
+    /* Screen-space offsets are lengths; model-space offsets use the basis. */
+    const fastf_t local2base = 25.4;
+    s->local2base = local2base;
+    s->base2local = 1.0 / local2base;
+    (*EDOBJ[dp->d_minor_type].ft_set_edit_mode)(s, ECMD_ANNOT_VERT_MOVE);
+    s->e_inpara = 3;
+    VSET(s->e_para, 0, 1, 2);
+    V2SET(aip->verts[0], 0, 0);
+    rt_edit_process(s);
+    if (!NEAR_EQUAL(aip->verts[0][X], 25.4, SMALL_FASTF) ||
+	!NEAR_EQUAL(aip->verts[0][Y], 50.8, SMALL_FASTF))
+	bu_exit(1, "ERROR: screen-space vertex move: got (%g,%g)\n",
+		aip->verts[0][X], aip->verts[0][Y]);
+
+    aip->flags |= RT_ANNOT_MODEL_SPACE;
+    VSET(aip->u_vec, 25.4, 0, 0);
+    VSET(aip->v_vec, 0, 25.4, 0);
+    V2SET(aip->verts[0], 0, 0);
+    s->e_inpara = 3;
+    VSET(s->e_para, 0, 1, 2);
+    rt_edit_process(s);
+    if (!NEAR_EQUAL(aip->verts[0][X], 1.0, SMALL_FASTF) ||
+	!NEAR_EQUAL(aip->verts[0][Y], 2.0, SMALL_FASTF))
+	bu_exit(1, "ERROR: model-space vertex move: got (%g,%g)\n",
+		aip->verts[0][X], aip->verts[0][Y]);
+    bu_log("TEST 7 PASS: non-mm vertex offsets use placement units\n");
+
+    (*EDOBJ[dp->d_minor_type].ft_set_edit_mode)(s, ECMD_ANNOT_SET_TSEG_TXT_SIZE);
+    s->e_inpara = 1;
+    s->e_para[0] = 3.5;
+    rt_edit_process(s);
+    struct txt_seg *tsg = (struct txt_seg *)aip->ant.segments[0];
+    nv = (*EDOBJ[dp->d_minor_type].ft_edit_get_params)(s, ECMD_ANNOT_SET_TSEG_TXT_SIZE, vals);
+    if (!NEAR_EQUAL(tsg->txt_size, 3.5, SMALL_FASTF) || nv != 1 ||
+	!NEAR_EQUAL(vals[0], 3.5, SMALL_FASTF))
+	bu_exit(1, "ERROR: non-mm text size: got %g\n", tsg->txt_size);
+    bu_log("TEST 8 PASS: non-mm text size is independent of database units\n");
+
     bu_log("All ANNOT edit tests PASSED\n");
 
     rt_edit_destroy(s);

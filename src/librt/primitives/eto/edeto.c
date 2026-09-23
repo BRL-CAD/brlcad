@@ -139,7 +139,7 @@ rt_edit_eto_write_params(
     RT_ETO_CK_MAGIC(eto);
 
     bu_vls_printf(p, "Vertex: %.9f %.9f %.9f\n", V3BASE2LOCAL(eto->eto_V));
-    bu_vls_printf(p, "Normal: %.9f %.9f %.9f\n", V3BASE2LOCAL(eto->eto_N));
+    bu_vls_printf(p, "Normal: %.9f %.9f %.9f\n", V3ARGS(eto->eto_N));
     bu_vls_printf(p, "Semi-major axis: %.9f %.9f %.9f\n", V3BASE2LOCAL(eto->eto_C));
     bu_vls_printf(p, "Semi-minor length: %.9f\n", eto->eto_rd * base2local);
     bu_vls_printf(p, "Radius of rotation: %.9f\n", eto->eto_r * base2local);

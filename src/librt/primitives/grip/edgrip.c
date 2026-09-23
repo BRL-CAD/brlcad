@@ -64,7 +64,7 @@ rt_edit_grp_write_params(
     RT_GRIP_CK_MAGIC(grip);
 
     bu_vls_printf(p, "Center: %.9f %.9f %.9f\n", V3BASE2LOCAL(grip->center));
-    bu_vls_printf(p, "Normal: %.9f %.9f %.9f\n", V3BASE2LOCAL(grip->normal));
+    bu_vls_printf(p, "Normal: %.9f %.9f %.9f\n", V3ARGS(grip->normal));
     bu_vls_printf(p, "Magnitude: %.9f\n", grip->mag*base2local);
 }
 

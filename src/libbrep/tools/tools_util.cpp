@@ -250,22 +250,28 @@ brep_translate_scv(
         return -1;
     }
 
-    double *cv = NULL;
-    if (nurbsSurface) {
-        cv = nurbsSurface->CV(i, j);
-    } else {
+    if (!nurbsSurface)
         return -2;
-    }
 
-    if (cv) {
-        ON_3dPoint newPt;
-        newPt.x = cv[X] + dx;
-        newPt.y = cv[Y] + dy;
-        newPt.z = cv[Z] + dz;
-        nurbsSurface->SetCV(i, j, newPt);
-    } else {
+    ON_3dPoint point;
+    if (!nurbsSurface->GetCV(i, j, point))
         return -3;
+
+    point.x += dx;
+    point.y += dy;
+    point.z += dz;
+
+    bool updated;
+    if (nurbsSurface->IsRational()) {
+        const double weight = nurbsSurface->Weight(i, j);
+        updated = nurbsSurface->SetCV(i, j,
+            ON_4dPoint(point.x * weight, point.y * weight,
+                point.z * weight, weight));
+    } else {
+        updated = nurbsSurface->SetCV(i, j, point);
     }
+    if (!updated)
+        return -3;
 
     return 0;
 }

@@ -380,8 +380,9 @@ main(int argc, char *argv[])
 
 	struct rt_edit *ws = rt_edit_create(&wfp, wdbip, &tol, wv);
 	ws->mv_context = 0;
-	ws->local2base = 1.0;
-	ws->base2local = 1.0;
+	const fastf_t local2base = 25.4;
+	ws->local2base = local2base;
+	ws->base2local = 1.0 / local2base;
 	MAT_IDN(ws->e_invmat);
 
 	/* Set up LEXTRU_DIR: scans for the wire loop, copies it */
@@ -408,6 +409,10 @@ main(int argc, char *argv[])
 
 	bu_vls_trunc(ws->log_str, 0);
 	rt_edit_process(ws);
+
+	if (!NEAR_EQUAL(ws->local2base, local2base, VUNITIZE_TOL) ||
+	    !NEAR_EQUAL(ws->e_para[Z], 2.0 * local2base, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: ECMD_NMG_LEXTRU_DIR lost database units or extrusion distance\n");
 
 	/* After extrusion the shell should have at least one faceuse */
 	if (BU_LIST_IS_EMPTY(&wne->es_s->fu_hd))

@@ -2885,7 +2885,11 @@ rt_brep_find_selections(const struct rt_db_internal *ip, const struct rt_selecti
 	int num_cols = nurbs_surface->m_cv_count[1];
 	for (int i = 0; i < num_rows; ++i) {
 	    for (int j = 0; j < num_cols; ++j) {
-		double *cv = nurbs_surface->CV(i, j);
+		ON_3dPoint point;
+		if (!nurbs_surface->GetCV(i, j, point))
+		    continue;
+		point_t cv;
+		VSET(cv, point.x, point.y, point.z);
 
 		brep_selectable_cv *scv = new brep_selectable_cv;
 		scv->face_index = face_index;
