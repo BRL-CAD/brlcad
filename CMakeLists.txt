@@ -678,8 +678,13 @@ endif(MSVC)
 # before use so platforms without GNU/LLVM-style linker options are skipped.
 brlcad_check_linker_flag(C "LINKER:--no-undefined" BRLCAD_LINKER_NO_UNDEFINED_C_FLAG_FOUND)
 brlcad_check_linker_flag(CXX "LINKER:--no-undefined" BRLCAD_LINKER_NO_UNDEFINED_CXX_FLAG_FOUND)
-if(BRLCAD_LINKER_NO_UNDEFINED_C_FLAG_FOUND AND BRLCAD_LINKER_NO_UNDEFINED_CXX_FLAG_FOUND)
+if(BRLCAD_LINKER_NO_UNDEFINED_C_FLAG_FOUND AND BRLCAD_LINKER_NO_UNDEFINED_CXX_FLAG_FOUND
+   AND NOT BRLCAD_ENABLE_ADDRESS_SANITIZER)
   set(BRLCAD_LINKER_NO_UNDEFINED_FLAG "LINKER:--no-undefined" CACHE STRING "Linker flag requiring resolved shared library symbols" FORCE)
+else()
+  # Clang links the AddressSanitizer runtime into executables, leaving its
+  # shared-library instrumentation symbols unresolved until then.
+  set(BRLCAD_LINKER_NO_UNDEFINED_FLAG "" CACHE STRING "Linker flag requiring resolved shared library symbols" FORCE)
 endif()
 brlcad_check_linker_flags(C BRLCAD_LINKER_WHOLE_ARCHIVE_GROUP_C_FLAG_FOUND "LINKER:--whole-archive" "LINKER:--no-whole-archive")
 brlcad_check_linker_flags(CXX BRLCAD_LINKER_WHOLE_ARCHIVE_GROUP_CXX_FLAG_FOUND "LINKER:--whole-archive" "LINKER:--no-whole-archive")
@@ -1642,21 +1647,31 @@ if(NOT MSVC)
   endif(BRLCAD_WARNINGS OR BRLCAD_ENABLE_STRICT)
 
   if(BRLCAD_ENABLE_COVERAGE)
-    # TODO: These seem to GCC specific flags - should probably set up for clang
-    # as well if that's our compiler...
-    # https://clang.llvm.org/docs/SourceBasedCodeCoverage.html
-    # If we need different settings for different tools, should
-    # encapsulate each tool's setup in a function
-    check_c_flag(ftest-coverage)
-    check_cxx_flag(ftest-coverage)
-    if(FTEST_COVERAGE_C_FLAG_FOUND)
-      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ftest-coverage -fprofile-arcs -fprofile-update=atomic")
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ftest-coverage -fprofile-arcs -fprofile-update=atomic")
-      set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -lgcov -ftest-coverage -fprofile-arcs -fprofile-update=atomic")
-      set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lgcov -ftest-coverage -fprofile-arcs -fprofile-update=atomic")
-    else(FTEST_COVERAGE_C_FLAG_FOUND)
-      message(SEND_ERROR "Building with coverage is not supported by BRL-CAD on this platform.")
-    endif(FTEST_COVERAGE_C_FLAG_FOUND)
+    if(CMAKE_C_COMPILER_ID MATCHES "Clang" AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+      check_c_flag(fprofile-instr-generate)
+      check_cxx_flag(fprofile-instr-generate)
+      check_c_flag(fcoverage-mapping)
+      check_cxx_flag(fcoverage-mapping)
+      if(NOT FPROFILE_INSTR_GENERATE_C_FLAG_FOUND OR
+         NOT FPROFILE_INSTR_GENERATE_CXX_FLAG_FOUND OR
+         NOT FCOVERAGE_MAPPING_C_FLAG_FOUND OR
+         NOT FCOVERAGE_MAPPING_CXX_FLAG_FOUND)
+        message(FATAL_ERROR "Clang source-based coverage is not supported by this toolchain.")
+      endif()
+      add_compile_options(-fprofile-instr-generate -fcoverage-mapping)
+      add_link_options(-fprofile-instr-generate)
+    else()
+      check_c_flag(ftest-coverage)
+      check_cxx_flag(ftest-coverage)
+      if(FTEST_COVERAGE_C_FLAG_FOUND AND FTEST_COVERAGE_CXX_FLAG_FOUND)
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ftest-coverage -fprofile-arcs -fprofile-update=atomic")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ftest-coverage -fprofile-arcs -fprofile-update=atomic")
+        set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -lgcov -ftest-coverage -fprofile-arcs -fprofile-update=atomic")
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lgcov -ftest-coverage -fprofile-arcs -fprofile-update=atomic")
+      else()
+        message(FATAL_ERROR "GCC coverage is not supported by this toolchain.")
+      endif()
+    endif()
   endif(BRLCAD_ENABLE_COVERAGE)
 
   if(BRLCAD_ENABLE_STRICT)
