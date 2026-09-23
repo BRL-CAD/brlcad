@@ -341,7 +341,7 @@ cache_init(struct rt_cache *cache)
 }
 
 
-static void
+static int
 compress_external(const struct rt_cache *cache, struct bu_external *external)
 {
     int ret;
@@ -352,8 +352,16 @@ compress_external(const struct rt_cache *cache, struct bu_external *external)
 
     BU_CK_EXTERNAL(external);
 
-    BU_ASSERT(external->ext_nbytes < INT_MAX);
+    if (external->ext_nbytes >= INT_MAX) {
+	CACHE_DEBUG("++++++ [%lu.%lu] Compression input is too large (%zu bytes)\n", bu_pid(), bu_parallel_id(), external->ext_nbytes);
+	return 0;
+    }
+
     compressed_size = brl_LZ4_compressBound((int)external->ext_nbytes);
+    if (compressed_size <= 0) {
+	CACHE_DEBUG("++++++ [%lu.%lu] Compression input is unsupported (%zu bytes)\n", bu_pid(), bu_parallel_id(), external->ext_nbytes);
+	return 0;
+    }
 
     /* buffer is uncompsize + maxcompsize + compressed_data */
     buffer = (uint8_t *)bu_malloc((size_t)compressed_size + SIZEOF_NETWORK_LONG, "buffer");
@@ -367,12 +375,14 @@ compress_external(const struct rt_cache *cache, struct bu_external *external)
 
     if (!compressed) {
 	CACHE_DEBUG("++++++ [%lu.%lu] Compression failed (ret %d, %zu bytes @ %p to %d bytes max)\n", bu_pid(), bu_parallel_id(), ret, external->ext_nbytes, (void *) external->ext_buf, compressed_size);
-	return;
+	bu_free(buffer, "buffer");
+	return 0;
     }
 
     bu_free(external->ext_buf, "ext_buf");
     external->ext_nbytes = compressed_size + SIZEOF_NETWORK_LONG;
     external->ext_buf = buffer;
+    return 1;
 }
 
 
@@ -569,7 +579,10 @@ cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_int
 	return 0; /* can't serialize */
     }
 
-    compress_external(cache, &data_external);
+    if (!compress_external(cache, &data_external)) {
+	bu_free_external(&data_external);
+	return 0;
+    }
 
     {
 	struct bu_attribute_value_set attributes = BU_AVS_INIT_ZERO;
