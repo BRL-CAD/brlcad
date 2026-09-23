@@ -29,7 +29,6 @@
 #include <string.h>
 #include <math.h>
 
-#include "bu/app.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/magic.h"
@@ -328,19 +327,12 @@ test_write_params_units(void)
 
 
 /* ======================================================================
- * main
+ * Test entry
  * ====================================================================== */
 
 int
-main(int argc, char **argv)
+rt_edit_test_edit_str_get_params(void)
 {
-    bu_setprogname(argv[0]);
-
-    if (argc > 1) {
-	bu_log("Usage: %s\n", argv[0]);
-	return 1;
-    }
-
     bu_log("=== Test: rt_edit_set_str / e_str / e_nstr ===\n");
     test_set_str();
 

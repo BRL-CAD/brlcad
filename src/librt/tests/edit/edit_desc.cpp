@@ -34,7 +34,6 @@
 
 #include <string.h>
 
-#include "bu/app.h"
 #include "bu/log.h"
 #include "bu/str.h"
 #include "bu/vls.h"
@@ -101,12 +100,8 @@ check_prim(const char *name, int prim_type_id,
 
 
 int
-main(int argc, char *argv[])
+rt_edit_test_edit_desc(void)
 {
-    bu_setprogname(argv[0]);
-    if (argc != 1)
-	return BRLCAD_ERROR;
-
     int fail = 0;
 
     /* ------------------------------------------------------------------

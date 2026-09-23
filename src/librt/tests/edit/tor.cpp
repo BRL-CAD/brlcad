@@ -25,7 +25,6 @@
 #include "common.h"
 
 #include "vmath.h"
-#include "bu/app.h"
 #include "bu/avs.h"
 #include "bu/env.h"
 #include "bu/log.h"
@@ -110,12 +109,8 @@ tor_reset(struct rt_edit *s, struct rt_tor_internal *edit_tor,
 }
 
 int
-main(int argc, char *argv[])
+rt_edit_test_tor(void)
 {
-    bu_setprogname(argv[0]);
-    if (argc != 1)
-	return BRLCAD_ERROR;
-
     struct db_i *dbip = db_open_inmem();
     if (dbip == DBI_NULL)
         bu_exit(1, "ERROR: Unable to create database instance\n");

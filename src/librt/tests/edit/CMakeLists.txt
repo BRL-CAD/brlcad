@@ -1,80 +1,62 @@
-brlcad_addexec(rt_edit_test_arbn arbn.cpp "librt" TEST)
-brlcad_addexec(rt_edit_test_datum datum.cpp "librt;libwdb" TEST)
-brlcad_addexec(rt_edit_test_annot annot.cpp "librt;libwdb" TEST)
-brlcad_addexec(rt_edit_test_revolve revolve.cpp "librt;libwdb" TEST)
-brlcad_addexec(rt_edit_test_tor tor.cpp "librt" TEST)
-brlcad_addexec(rt_edit_test_ell ell.cpp "librt" TEST)
-brlcad_addexec(rt_edit_test_tgc tgc.cpp "librt" TEST)
-brlcad_addexec(rt_edit_test_epa epa.cpp "librt" TEST)
-brlcad_addexec(rt_edit_test_ehy ehy.cpp "librt" TEST)
-brlcad_addexec(rt_edit_test_eto eto.cpp "librt" TEST)
-brlcad_addexec(rt_edit_test_hyp hyp.cpp "librt" TEST)
-brlcad_addexec(rt_edit_test_rpc rpc.cpp "librt" TEST)
-brlcad_addexec(rt_edit_test_rhc rhc.cpp "librt" TEST)
-brlcad_addexec(rt_edit_test_part part.cpp "librt" TEST)
-brlcad_addexec(rt_edit_test_superell superell.cpp "librt" TEST)
-brlcad_addexec(rt_edit_test_cline cline.cpp "librt" TEST)
-brlcad_addexec(rt_edit_test_extrude extrude.cpp "librt" TEST)
-brlcad_addexec(rt_edit_test_metaball metaball.cpp "librt" TEST)
-brlcad_addexec(rt_edit_test_hrt hrt.cpp "librt" TEST)
-brlcad_addexec(rt_edit_test_ars ars.cpp "librt" TEST)
-brlcad_addexec(rt_edit_test_pipe pipe.cpp "librt" TEST)
-brlcad_addexec(rt_edit_test_dsp dsp.cpp "librt;${WINSOCK_LIB}" TEST)
-brlcad_addexec(rt_edit_test_vol vol.cpp "librt" TEST)
-brlcad_addexec(rt_edit_test_ebm ebm.cpp "librt" TEST)
-brlcad_addexec(rt_edit_test_sph sph.cpp "librt" TEST)
-brlcad_addexec(rt_edit_test_arb8 arb8.cpp "librt" TEST)
-brlcad_addexec(rt_edit_test_bot bot.cpp "librt" TEST)
-brlcad_add_test(NAME rt_edit_test_bot COMMAND rt_edit_test_bot)
-
-brlcad_addexec(rt_edit_test_sketch sketch.cpp "librt" TEST)
-brlcad_addexec(rt_edit_test_bspline bspline.cpp "librt" TEST)
-brlcad_addexec(rt_edit_test_brep brep.cpp "librt;libbrep" TEST)
-brlcad_addexec(rt_edit_test_nmg nmg.cpp "librt;libnmg;libwdb" TEST)
-brlcad_addexec(rt_edit_test_comb comb.cpp "librt;libwdb" TEST)
-
-brlcad_addexec(rt_edit_test_edit_desc edit_desc.cpp "librt" TEST)
-brlcad_addexec(rt_edit_test_str_get_params edit_str_get_params.cpp "librt" TEST)
-
 set(
-  distcheck_files
-  CMakeLists.txt
-  arbn.cpp
-  annot.cpp
-  datum.cpp
-  revolve.cpp
-  tor.cpp
-  ell.cpp
-  tgc.cpp
-  epa.cpp
-  ehy.cpp
-  eto.cpp
-  hyp.cpp
-  rpc.cpp
-  rhc.cpp
-  part.cpp
-  superell.cpp
-  cline.cpp
-  extrude.cpp
-  sketch.cpp
-  bspline.cpp
-  brep.cpp
-  metaball.cpp
-  hrt.cpp
-  ars.cpp
-  pipe.cpp
-  dsp.cpp
-  vol.cpp
-  ebm.cpp
-  sph.cpp
-  arb8.cpp
-  bot.cpp
-  nmg.cpp
-  comb.cpp
-  edit_desc.cpp
-  edit_str_get_params.cpp
+  edit_cases
+  annot
+  arb8
+  arbn
+  ars
+  bot
+  brep
+  bspline
+  cline
+  comb
+  datum
+  dsp
+  ebm
+  edit_desc
+  edit_str_get_params
+  ehy
+  ell
+  epa
+  eto
+  extrude
+  hrt
+  hyp
+  metaball
+  nmg
+  part
+  pipe
+  revolve
+  rhc
+  rpc
+  sketch
+  sph
+  superell
+  tgc
+  tor
+  vol
 )
 
+set(edit_sources main.cpp)
+set(edit_test_declarations "")
+set(edit_test_entries "")
+foreach(edit_case IN LISTS edit_cases)
+  list(APPEND edit_sources "${edit_case}.cpp")
+  string(APPEND edit_test_declarations "int rt_edit_test_${edit_case}(void);\n")
+  string(APPEND edit_test_entries "    {\"${edit_case}\", rt_edit_test_${edit_case}},\n")
+endforeach()
+
+configure_file(cases.inc.in "${CMAKE_CURRENT_BINARY_DIR}/cases.inc" @ONLY)
+
+brlcad_addexec(rt_edit_test "${edit_sources}" "librt;libnmg;libwdb;libbrep;${WINSOCK_LIB}" TEST)
+# The cases have translation-unit-local fixture helpers with shared names.
+set_target_properties(rt_edit_test PROPERTIES UNITY_BUILD OFF)
+target_include_directories(rt_edit_test PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
+
+foreach(edit_case IN LISTS edit_cases)
+  brlcad_add_test(NAME rt_edit_test_${edit_case} COMMAND rt_edit_test ${edit_case})
+endforeach()
+
+set(distcheck_files CMakeLists.txt cases.inc.in ${edit_sources})
 cmakefiles(${distcheck_files})
 
 # Local Variables:
