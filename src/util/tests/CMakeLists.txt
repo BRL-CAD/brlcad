@@ -13,6 +13,13 @@ brlcad_add_test(
 )
 
 brlcad_add_test(
+  NAME util_pixdiff_pix
+  COMMAND
+    "${CMAKE_COMMAND}" "-DPIXDIFF=$<TARGET_FILE:pixdiff>" "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}"
+    -P "${CMAKE_CURRENT_SOURCE_DIR}/test_pixdiff_pix.cmake"
+)
+
+brlcad_add_test(
   NAME util_pixembed_edge_replication
   COMMAND
     "${CMAKE_COMMAND}" "-DPIXEMBED=$<TARGET_FILE:pixembed>" "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}"
@@ -33,12 +40,21 @@ brlcad_add_test(
     -P "${CMAKE_CURRENT_SOURCE_DIR}/test_dpix_pix_byte_order.cmake"
 )
 
+brlcad_add_test(
+  NAME util_bwscale_endpoints
+  COMMAND
+    "${CMAKE_COMMAND}" "-DBWSCALE=$<TARGET_FILE:bwscale>" "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}"
+    -P "${CMAKE_CURRENT_SOURCE_DIR}/test_bwscale_endpoints.cmake"
+)
+
 cmakefiles(
   CMakeLists.txt
   test_bwcrop_single_axis.cmake
+  test_bwscale_endpoints.cmake
   test_bwstat_statistics.cmake
   test_dpix_pix_byte_order.cmake
   test_pixdiff_bytes.cmake
+  test_pixdiff_pix.cmake
   test_pixembed_edge_replication.cmake
 )
 
