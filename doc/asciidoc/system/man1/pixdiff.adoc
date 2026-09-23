@@ -4,38 +4,54 @@
 :manmanual: BRL-CAD
 
 == NAME
-pixdiff - highlight samples which differ between two pix or bw files
+pixdiff - highlight differences between two pix or bw images
 
 == SYNOPSIS
 
 [source]
 ----
 pixdiff _file1.pix_ _file2.pix_ > _out.pix_
-pixdiff _file1.bw_ _file2.bw_ > _out.bw_
+pixdiff -b _file1.bw_ _file2.bw_ > _out.bw_
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-*pixdiff* compares two raw *pix*(5) or *bw*(5) images byte by byte and
-writes a difference image of the same size to standard output. Bytes that
-differ by +/-1 are written at intensity 192, while larger differences are
-written at full intensity 255. Matching bytes are written at half their
-original intensity, providing visual context for locating differences.
+By default, *pixdiff* compares raw *pix*(5) images as RGB pixels and writes
+a PIX difference image to standard output. When all three channels of a
+pixel match, it writes a dim grayscale version of that pixel to all three
+output channels. When any channel differs, each matching channel is written
+as zero, each channel differing by one is written as 192, and each channel
+differing by more than one is written as 255.
 
-Because the comparison does not interpret pixel structure, no format option
-is needed and *pixdiff* is independent of image resolution. The two inputs
-must be the same size in bytes; otherwise the program reports the mismatch
-and exits. Either input file may be given as
+With *-b*, *pixdiff* compares raw *bw*(5) images one byte at a time and
+writes a BW difference image. Differing samples use the same 192 and 255
+intensities; matching samples are written at half their original intensity.
+
+No image dimensions are needed. The two inputs must be the same size in
+bytes, and PIX input must contain complete three-byte pixels. Otherwise,
+*pixdiff* reports an error. Either input file may be given as
 *-* to read from standard input. Output must be redirected; *pixdiff*
 refuses to write a raw image stream to a terminal.
 
-Upon completion, the count of bytes that matched, that were off by 1, and
-that were off by many is reported on standard error.
+Upon completion, *pixdiff* reports matching, off-by-one, and larger-difference
+channel or sample counts on standard error.
 
-Also see *bwdiff*(1), which can also operate on *pix*(5) files and can
-produce other kinds of difference output.
+*bwdiff -n -b* produces a similar BW highlight image, but writes 255 rather
+than 192 for off-by-one differences. The default *bwdiff*(1) output instead
+shows signed differences around a neutral gray.
+
+
+[[options]]
+== OPTIONS
+
+*-b*::
+Treat both inputs and the output as one-byte-per-pixel BW images. Without
+this option, use three-byte-per-pixel PIX images.
+
+*-h*::
+Show usage information.
 
 
 [[examples]]
@@ -59,10 +75,10 @@ on standard error give a quick quantitative sense of how much changed.
 ====
 [source,bash]
 ----
-pixdiff depth_a.bw depth_b.bw > depth_diff.bw
+pixdiff -b depth_a.bw depth_b.bw > depth_diff.bw
 ----
-Writes a grayscale highlight image using the same byte comparison and
-statistics as the color example; no format option is needed.
+Writes a grayscale highlight image using byte-wise comparison. Matching
+samples retain half their input intensity as context.
 ====
 
 
