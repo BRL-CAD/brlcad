@@ -41,14 +41,16 @@
 #include "common.h"
 
 #include <cmath>
-#include <cstring>
 
 #include "vmath.h"
 #include "bu/log.h"
+#include "bu/str.h"
 #include "bu/malloc.h"
 #include "bu/vls.h"
 #include "raytrace.h"
 #include "rt/geom.h"
+
+#include "test_utils.h"
 
 /* ECMD numbers from edrevolve.c */
 #define ECMD_REVOLVE_SET_V    40010
@@ -86,12 +88,17 @@ reset_s(struct rt_edit *s, struct rt_revolve_internal *rip)
     VSET(rip->axis3d, 0, 0, 1);
     VSET(rip->r,      1, 0, 0);
     rip->ang = M_2PI;
-    bu_vls_trunc(&rip->sketch_name, 0);
-    bu_vls_strcpy(&rip->sketch_name, "unit_sketch");
     s->e_inpara = 0;
     VSETALL(s->e_para, 0.0);
 }
 
+static void
+expect_edit_success(struct rt_edit *s, const char *operation)
+{
+    if (rt_edit_process(s) != BRLCAD_OK)
+	bu_exit(1, "ERROR: %s failed: %s\n", operation,
+		bu_vls_cstr(s->log_str));
+}
 
 int
 rt_edit_test_revolve(void)
@@ -101,6 +108,9 @@ rt_edit_test_revolve(void)
 	bu_exit(1, "ERROR: Unable to create database\n");
 
     struct rt_wdb *wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_INMEM);
+    if (edit_test_make_sketch(wdbp, "unit_sketch", 1.0) != 0 ||
+	edit_test_make_sketch(wdbp, "my_sketch", 2.0) != 0)
+	bu_exit(1, "ERROR: Unable to create revolve sketch fixtures\n");
     struct directory *dp = make_revolve(wdbp);
 
     struct bn_tol tol = BN_TOL_INIT_TOL;
@@ -143,7 +153,7 @@ rt_edit_test_revolve(void)
     (*EDOBJ[dp->d_minor_type].ft_set_edit_mode)(s, ECMD_REVOLVE_SET_V);
     s->e_inpara = 3;
     VSET(s->e_para, 5, 6, 7);
-    rt_edit_process(s);
+    expect_edit_success(s, "set_v");
 
     {
 	vect_t expected = {5, 6, 7};
@@ -160,7 +170,7 @@ rt_edit_test_revolve(void)
     (*EDOBJ[dp->d_minor_type].ft_set_edit_mode)(s, ECMD_REVOLVE_SET_AXIS);
     s->e_inpara = 3;
     VSET(s->e_para, 0, 1, 0);
-    rt_edit_process(s);
+    expect_edit_success(s, "set_axis");
 
     {
 	vect_t expected = {0, 1, 0};
@@ -177,7 +187,7 @@ rt_edit_test_revolve(void)
     (*EDOBJ[dp->d_minor_type].ft_set_edit_mode)(s, ECMD_REVOLVE_SET_R);
     s->e_inpara = 3;
     VSET(s->e_para, 0, 1, 0);
-    rt_edit_process(s);
+    expect_edit_success(s, "set_r");
 
     {
 	vect_t expected = {0, 1, 0};
@@ -194,7 +204,7 @@ rt_edit_test_revolve(void)
     (*EDOBJ[dp->d_minor_type].ft_set_edit_mode)(s, ECMD_REVOLVE_SET_ANG);
     s->e_inpara = 1;
     s->e_para[0] = 180.0;   /* degrees */
-    rt_edit_process(s);
+    expect_edit_success(s, "set_ang");
 
     if (!NEAR_EQUAL(rip->ang, M_PI, 1e-9))
 	bu_exit(1, "ERROR: set_ang: got %g rad expected %g rad (180 deg)\n",
@@ -207,14 +217,26 @@ rt_edit_test_revolve(void)
      * ================================================================*/
     reset_s(s, rip);
     (*EDOBJ[dp->d_minor_type].ft_set_edit_mode)(s, ECMD_REVOLVE_SET_SKT);
-    bu_strlcpy(s->e_str[0], "my_sketch", RT_EDIT_MAXSTR_LEN);
-    s->e_nstr = 1;
-    s->e_inpara = 0;
-    rt_edit_process(s);
+    rt_edit_set_str(s, 0, "my_sketch");
+    if (rt_edit_process(s) != BRLCAD_OK ||
+	!BU_STR_EQUAL(bu_vls_cstr(&rip->sketch_name), "my_sketch") ||
+	!rip->skt ||
+	!NEAR_EQUAL(rip->skt->verts[0][X], 2.0, SMALL_FASTF))
+	bu_exit(1, "ERROR: set_skt did not load the new sketch\n");
 
-    if (bu_strcmp(bu_vls_cstr(&rip->sketch_name), "my_sketch") != 0)
-	bu_exit(1, "ERROR: set_skt: got '%s' expected 'my_sketch'\n",
-		bu_vls_cstr(&rip->sketch_name));
+    rt_edit_set_str(s, 0, "missing_sketch");
+    if (rt_edit_process(s) != BRLCAD_ERROR ||
+	!BU_STR_EQUAL(bu_vls_cstr(&rip->sketch_name), "my_sketch") ||
+	!rip->skt ||
+	!NEAR_EQUAL(rip->skt->verts[0][X], 2.0, SMALL_FASTF))
+	bu_exit(1, "ERROR: missing sketch changed the revolve reference\n");
+
+    rt_edit_set_str(s, 0, "revolve");
+    if (rt_edit_process(s) != BRLCAD_ERROR ||
+	!BU_STR_EQUAL(bu_vls_cstr(&rip->sketch_name), "my_sketch") ||
+	!rip->skt ||
+	!NEAR_EQUAL(rip->skt->verts[0][X], 2.0, SMALL_FASTF))
+	bu_exit(1, "ERROR: non-sketch reference changed the revolve\n");
     bu_log("TEST 6 PASS: sketch_name = '%s'\n", bu_vls_cstr(&rip->sketch_name));
 
     /* ================================================================
@@ -226,6 +248,106 @@ rt_edit_test_revolve(void)
     if (nv != 1 || !NEAR_EQUAL(vals[0], 360.0, 1e-9))
 	bu_exit(1, "ERROR: get_params(SET_ANG): nv=%d vals[0]=%g\n", nv, vals[0]);
     bu_log("TEST 7 PASS: get_params(SET_ANG) = %g deg\n", vals[0]);
+
+    const fastf_t inch = 25.4;
+    s->local2base = inch;
+    s->base2local = 1.0 / inch;
+    reset_s(s, rip);
+
+    rt_edit_set_edflag(s, ECMD_REVOLVE_SET_V);
+    s->e_inpara = 3;
+    VSET(s->e_para, 1.0, 2.0, 3.0);
+    if (rt_edit_process(s) != BRLCAD_OK ||
+	!NEAR_EQUAL(rip->v3d[X], inch, SMALL_FASTF) ||
+	!NEAR_EQUAL(rip->v3d[Y], 2.0 * inch, SMALL_FASTF) ||
+	!NEAR_EQUAL(rip->v3d[Z], 3.0 * inch, SMALL_FASTF))
+	bu_exit(1, "ERROR: set_v did not convert local coordinates\n");
+
+    rt_edit_set_edflag(s, ECMD_REVOLVE_SET_AXIS);
+    s->e_inpara = 3;
+    VSET(s->e_para, 0.0, 0.0, 2.0);
+    if (rt_edit_process(s) != BRLCAD_OK ||
+	!NEAR_EQUAL(rip->axis3d[Z], 2.0 * inch, SMALL_FASTF))
+	bu_exit(1, "ERROR: set_axis did not convert local length\n");
+
+    rt_edit_set_edflag(s, ECMD_REVOLVE_SET_R);
+    s->e_inpara = 3;
+    VSET(s->e_para, 3.0, 0.0, 0.0);
+    if (rt_edit_process(s) != BRLCAD_OK ||
+	!NEAR_EQUAL(rip->r[X], 3.0 * inch, SMALL_FASTF))
+	bu_exit(1, "ERROR: set_r did not convert local length\n");
+
+    nv = (*EDOBJ[dp->d_minor_type].ft_edit_get_params)(s, ECMD_REVOLVE_SET_R, vals);
+    if (nv != 3 || !NEAR_EQUAL(vals[X], 3.0, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: get_params(SET_R) returned count %d, x %g, base x %g, factor %g\n",
+		nv, vals[X], rip->r[X], s->base2local);
+
+    rt_edit_set_edflag(s, ECMD_REVOLVE_SET_AXIS);
+    s->e_inpara = 2;
+    if (rt_edit_process(s) != BRLCAD_ERROR ||
+	!NEAR_EQUAL(rip->axis3d[Z], 2.0 * inch, SMALL_FASTF) ||
+	!bu_vls_strlen(s->log_str))
+	bu_exit(1, "ERROR: invalid axis input did not fail without mutation\n");
+
+    struct rt_db_internal copied;
+    RT_DB_INTERNAL_INIT(&copied);
+    if (OBJ[ID_REVOLVE].ft_xform(&copied, bn_mat_identity,
+	    &s->es_int, 0, dbip) != BRLCAD_OK)
+	bu_exit(1, "ERROR: revolve copy transform failed\n");
+    struct rt_revolve_internal *copy =
+	(struct rt_revolve_internal *)copied.idb_ptr;
+    if (!copy || copy->skt == rip->skt || !copy->skt ||
+	!NEAR_EQUAL(copy->skt->verts[0][X], 2.0, SMALL_FASTF) ||
+	!NEAR_EQUAL(copy->r[X], 3.0 * inch, SMALL_FASTF) ||
+	!NEAR_EQUAL(copy->ang, rip->ang, SMALL_FASTF))
+	bu_exit(1, "ERROR: revolve copy lost its sketch, start vector, or angle\n");
+    rt_db_free_internal(&copied);
+
+    struct rt_sketch_internal *current_sketch = rip->skt;
+    if (OBJ[ID_REVOLVE].ft_xform(&s->es_int, bn_mat_identity,
+	    &s->es_int, 0, dbip) != BRLCAD_OK ||
+	rip->skt != current_sketch ||
+	!NEAR_EQUAL(rip->r[X], 3.0 * inch, SMALL_FASTF))
+	bu_exit(1, "ERROR: in-place revolve transform replaced the sketch\n");
+
+    struct rt_db_internal source, moved;
+    RT_DB_INTERNAL_INIT(&source);
+    RT_DB_INTERNAL_INIT(&moved);
+    if (rt_db_get_internal(&source, dp, dbip, NULL) != ID_REVOLVE)
+	bu_exit(1, "ERROR: revolve transfer fixture could not be imported\n");
+    struct rt_revolve_internal *source_rip =
+	(struct rt_revolve_internal *)source.idb_ptr;
+    struct rt_sketch_internal *transferred_sketch = source_rip->skt;
+    if (OBJ[ID_REVOLVE].ft_xform(&moved, bn_mat_identity,
+	    &source, 1, dbip) != BRLCAD_OK)
+	bu_exit(1, "ERROR: revolve transfer transform failed\n");
+    struct rt_revolve_internal *moved_rip =
+	(struct rt_revolve_internal *)moved.idb_ptr;
+    if (!moved_rip || !moved_rip->skt ||
+	moved_rip->skt != transferred_sketch ||
+	!NEAR_EQUAL(moved_rip->skt->verts[0][X], 1.0, SMALL_FASTF) ||
+	!NEAR_EQUAL(moved_rip->r[X], 1.0, SMALL_FASTF) ||
+	!NEAR_EQUAL(moved_rip->ang, M_2PI, SMALL_FASTF))
+	bu_exit(1, "ERROR: revolve transfer lost geometry or sketch ownership\n");
+    rt_db_free_internal(&moved);
+
+    struct rt_db_internal prepared_ip;
+    RT_DB_INTERNAL_INIT(&prepared_ip);
+    if (rt_db_get_internal(&prepared_ip, dp, dbip, NULL) != ID_REVOLVE)
+	bu_exit(1, "ERROR: revolve prep fixture could not be imported\n");
+    struct rt_revolve_internal *prepared_rip =
+	(struct rt_revolve_internal *)prepared_ip.idb_ptr;
+    struct soltab st = RT_SOLTAB_INIT_ZERO;
+    st.l.magic = RT_SOLTAB_MAGIC;
+    st.l2.magic = RT_SOLTAB2_MAGIC;
+    if (OBJ[ID_REVOLVE].ft_prep(&st, &prepared_ip, NULL) != 0 ||
+	!st.st_specific || !prepared_rip->skt)
+	bu_exit(1, "ERROR: revolve prep did not preserve its input sketch\n");
+    rt_db_free_internal(&prepared_ip);
+    OBJ[ID_REVOLVE].ft_print(&st);
+    OBJ[ID_REVOLVE].ft_free(&st);
+    if (st.st_specific)
+	bu_exit(1, "ERROR: revolve free retained prepared state\n");
 
     bu_log("All REVOLVE edit tests PASSED\n");
 

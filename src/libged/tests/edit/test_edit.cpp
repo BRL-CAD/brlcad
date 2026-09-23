@@ -3175,6 +3175,22 @@ read_unit_sketch(struct ged *gedp, struct unit_sketch_state *out)
 }
 
 static int
+create_unit_revolve(struct rt_wdb *wdbp)
+{
+    struct rt_revolve_internal *rip;
+    BU_ALLOC(rip, struct rt_revolve_internal);
+    rip->magic = RT_REVOLVE_INTERNAL_MAGIC;
+    VSET(rip->v3d, 0.0, 0.0, 0.0);
+    VSET(rip->axis3d, 0.0, 0.0, 1.0);
+    VSET(rip->r, 1.0, 0.0, 0.0);
+    rip->ang = M_2PI;
+    bu_vls_init(&rip->sketch_name);
+    bu_vls_strcpy(&rip->sketch_name, "sketch.s");
+    rip->skt = NULL;
+    return wdb_export(wdbp, "revolve.s", (void *)rip, ID_REVOLVE, 1.0);
+}
+
+static int
 create_unit_fixture(const char *dbpath)
 {
     const fastf_t inch = 25.4;
@@ -3196,7 +3212,8 @@ create_unit_fixture(const char *dbpath)
 	create_unit_sketch(wdbp, "sketch.s", inch) != 0 ||
 	create_unit_sketch(wdbp, "sketch_other.s", inch) != 0 ||
 	mk_extrusion(wdbp, "extrude.s", "sketch.s", extr_v,
-		extr_h, extr_u, extr_w, 0) != 0) {
+		extr_h, extr_u, extr_w, 0) != 0 ||
+	create_unit_revolve(wdbp) != 0) {
         wdb_close(wdbp);
         return BRLCAD_ERROR;
     }
@@ -3372,6 +3389,108 @@ test_unit_extrude_reference(struct ged *gedp)
 	  "non-sketch reference leaves extrusion unchanged");
 }
 
+struct unit_revolve_state {
+    point_t vertex;
+    vect_t axis;
+    vect_t start;
+    fastf_t angle;
+    std::string sketch_name;
+    bool sketch_loaded;
+};
+
+static int
+read_unit_revolve(struct ged *gedp, struct unit_revolve_state *out)
+{
+    struct directory *dp = db_lookup(gedp->dbip, "revolve.s", LOOKUP_QUIET);
+    if (dp == RT_DIR_NULL)
+	return BRLCAD_ERROR;
+
+    struct rt_db_internal intern;
+    RT_DB_INTERNAL_INIT(&intern);
+    int id = rt_db_get_internal(&intern, dp, gedp->dbip, NULL);
+    if (id != ID_REVOLVE) {
+	if (id > 0)
+	    rt_db_free_internal(&intern);
+	return BRLCAD_ERROR;
+    }
+
+    struct rt_revolve_internal *rip =
+	(struct rt_revolve_internal *)intern.idb_ptr;
+    VMOVE(out->vertex, rip->v3d);
+    VMOVE(out->axis, rip->axis3d);
+    VMOVE(out->start, rip->r);
+    out->angle = rip->ang;
+    out->sketch_name = bu_vls_cstr(&rip->sketch_name);
+    out->sketch_loaded = rip->skt != NULL;
+    rt_db_free_internal(&intern);
+    return BRLCAD_OK;
+}
+
+static void
+test_unit_revolve_edits(struct ged *gedp)
+{
+    const fastf_t inch = 25.4;
+    struct unit_revolve_state rev = {};
+
+    const char *vertex[] = {
+	"edit", "revolve.s", "set_vertex", "1", "2", "3", NULL
+    };
+    CHECK(ged_exec(gedp, 6, vertex) == BRLCAD_OK &&
+	  read_unit_revolve(gedp, &rev) == BRLCAD_OK &&
+	  NEAR_EQUAL(rev.vertex[X], inch, NEAR_ENOUGH) &&
+	  NEAR_EQUAL(rev.vertex[Y], 2.0 * inch, NEAR_ENOUGH) &&
+	  NEAR_EQUAL(rev.vertex[Z], 3.0 * inch, NEAR_ENOUGH),
+	  "inch revolve vertex edit persists in base units");
+
+    const char *axis[] = {
+	"edit", "revolve.s", "set_axis", "0", "0", "2", NULL
+    };
+    CHECK(ged_exec(gedp, 6, axis) == BRLCAD_OK &&
+	  read_unit_revolve(gedp, &rev) == BRLCAD_OK &&
+	  NEAR_EQUAL(rev.axis[Z], 2.0 * inch, NEAR_ENOUGH),
+	  "inch revolve axis edit persists in base units");
+
+    const char *start[] = {
+	"edit", "revolve.s", "set_start_vector", "3", "0", "0", NULL
+    };
+    CHECK(ged_exec(gedp, 6, start) == BRLCAD_OK &&
+	  read_unit_revolve(gedp, &rev) == BRLCAD_OK &&
+	  NEAR_EQUAL(rev.start[X], 3.0 * inch, NEAR_ENOUGH),
+	  "inch revolve start vector persists in base units");
+
+    const char *angle[] = {
+	"edit", "revolve.s", "set_sweep_angle", "180", NULL
+    };
+    CHECK(ged_exec(gedp, 4, angle) == BRLCAD_OK &&
+	  read_unit_revolve(gedp, &rev) == BRLCAD_OK &&
+	  NEAR_EQUAL(rev.angle, M_PI, NEAR_ENOUGH),
+	  "revolve sweep angle remains unitless");
+
+    const char *sketch[] = {
+	"edit", "revolve.s", "set_sketch_name", "sketch_other.s", NULL
+    };
+    CHECK(ged_exec(gedp, 4, sketch) == BRLCAD_OK &&
+	  read_unit_revolve(gedp, &rev) == BRLCAD_OK &&
+	  rev.sketch_name == "sketch_other.s" && rev.sketch_loaded,
+	  "revolve sketch reference persists and loads");
+
+    const char *missing[] = {
+	"edit", "revolve.s", "set_sketch_name", "missing.s", NULL
+    };
+    CHECK(ged_exec(gedp, 4, missing) == BRLCAD_ERROR &&
+	  read_unit_revolve(gedp, &rev) == BRLCAD_OK &&
+	  rev.sketch_name == "sketch_other.s" && rev.sketch_loaded,
+	  "missing revolve sketch leaves persisted reference unchanged");
+
+    const char *wrong_type[] = {
+	"edit", "revolve.s", "set_sketch_name", "sph.s", NULL
+    };
+    CHECK(ged_exec(gedp, 4, wrong_type) == BRLCAD_ERROR &&
+	  read_unit_revolve(gedp, &rev) == BRLCAD_OK &&
+	  rev.sketch_name == "sketch_other.s" && rev.sketch_loaded,
+	  "non-sketch revolve reference leaves geometry unchanged");
+}
+
 static void
 test_unit_sensitive_knob_translation(struct ged *gedp)
 {
@@ -3437,6 +3556,7 @@ main(int ac, char *av[])
         test_unit_sensitive_edits(gedp);
 	test_unit_sketch_descriptor_edits(gedp);
 	test_unit_extrude_reference(gedp);
+	test_unit_revolve_edits(gedp);
         test_unit_sensitive_knob_translation(gedp);
         ged_close(gedp);
     }
@@ -3463,6 +3583,14 @@ main(int ac, char *av[])
 	CHECK(read_unit_extrude_reference(gedp, &sketch_name) == BRLCAD_OK &&
 	      sketch_name == "sketch_other.s",
 	      "extrude sketch reference survives database reopen");
+	struct unit_revolve_state rev = {};
+	CHECK(read_unit_revolve(gedp, &rev) == BRLCAD_OK &&
+	      NEAR_EQUAL(rev.vertex[X], inch, NEAR_ENOUGH) &&
+	      NEAR_EQUAL(rev.axis[Z], 2.0 * inch, NEAR_ENOUGH) &&
+	      NEAR_EQUAL(rev.start[X], 3.0 * inch, NEAR_ENOUGH) &&
+	      NEAR_EQUAL(rev.angle, M_PI, NEAR_ENOUGH) &&
+	      rev.sketch_name == "sketch_other.s" && rev.sketch_loaded,
+	      "inch revolve edits survive database reopen");
         ged_close(gedp);
     }
     bu_vls_free(&units_path);

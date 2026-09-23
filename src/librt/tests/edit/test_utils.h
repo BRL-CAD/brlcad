@@ -24,6 +24,29 @@
 #include "common.h"
 
 #include "bu/defines.h"
+#include "bu/malloc.h"
+#include "vmath.h"
+#include "raytrace.h"
+#include "wdb.h"
+
+static inline int
+edit_test_make_sketch(struct rt_wdb *wdbp, const char *name, fastf_t marker)
+{
+    struct rt_sketch_internal *skt;
+    BU_ALLOC(skt, struct rt_sketch_internal);
+    skt->magic = RT_SKETCH_INTERNAL_MAGIC;
+    VSET(skt->V, 0, 0, 0);
+    VSET(skt->u_vec, 1, 0, 0);
+    VSET(skt->v_vec, 0, 1, 0);
+    skt->vert_count = 1;
+    skt->verts = (point2d_t *)bu_calloc(1, sizeof(point2d_t), "edit test sketch vertex");
+    skt->verts[0][X] = marker;
+    skt->curve.count = 0;
+    skt->curve.reverse = NULL;
+    skt->curve.segment = NULL;
+
+    return wdb_export(wdbp, name, (void *)skt, ID_SKETCH, 1.0);
+}
 
 static inline int
 edit_test_filename_callback(int UNUSED(argc), const char **UNUSED(argv),

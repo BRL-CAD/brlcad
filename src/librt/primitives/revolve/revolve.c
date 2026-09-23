@@ -35,6 +35,7 @@
 #include "vmath.h"
 #include "bu/cv.h"
 #include "bu/debug.h"
+#include "bu/str.h"
 #include "rt/db4.h"
 #include "nmg.h"
 #include "rt/geom.h"
@@ -244,8 +245,8 @@ rt_revolve_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
     VUNITIZE(rev->zUnit);
 
     rev->ang = rip->ang;
-    rev->sketch_name = bu_vls_addr(&rip->sketch_name);
-    rev->skt = rip->skt;
+    rev->sketch_name = bu_strdup(bu_vls_addr(&rip->sketch_name));
+    rev->skt = rt_copy_sketch(rip->skt);
 
     /* calculate end plane */
     VSCALE(xEnd, rev->xUnit, cos(rev->ang));
@@ -1203,13 +1204,35 @@ rt_revolve_uv(struct application *ap, struct soltab *stp, struct hit *hitp, stru
 }
 
 
+static void
+revolve_free_sketch(struct rt_sketch_internal *skt)
+{
+    if (!skt)
+	return;
+
+    struct rt_db_internal sketch_ip;
+    RT_DB_INTERNAL_INIT(&sketch_ip);
+    sketch_ip.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    sketch_ip.idb_type = ID_SKETCH;
+    sketch_ip.idb_ptr = skt;
+    sketch_ip.idb_meth = &OBJ[ID_SKETCH];
+    rt_db_free_internal(&sketch_ip);
+}
+
+
 C_DECL void
 rt_revolve_free(struct soltab *stp)
 {
     struct revolve_specific *revolve =
 	(struct revolve_specific *)stp->st_specific;
+    if (!revolve)
+	return;
+
     bu_free(revolve->ends, "endcount");
+    bu_free(revolve->sketch_name, "revolve sketch name");
+    revolve_free_sketch(revolve->skt);
     BU_PUT(revolve, struct revolve_specific);
+    stp->st_specific = NULL;
 }
 
 #define VVECT_INIT16 {VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO}
@@ -1566,17 +1589,20 @@ rt_revolve_import5(struct rt_db_internal *ip, const struct bu_external *ep, cons
     if (!dbip)
 	rip->skt = (struct rt_sketch_internal *)NULL;
     else if ((dp=db_lookup(dbip, sketch_name, LOOKUP_NOISY)) == RT_DIR_NULL) {
-	bu_log("ERROR: Cannot find sketch (%s) for extrusion\n",
-	       sketch_name);
+	bu_log("ERROR: Cannot find sketch (%s) for revolve\n", sketch_name);
 	rip->skt = (struct rt_sketch_internal *)NULL;
     } else {
-	if (rt_db_get_internal(&tmp_ip, dp, dbip, bn_mat_identity) != ID_SKETCH) {
-	    bu_log("ERROR: Cannot import sketch (%s) for extrusion\n",
-		   sketch_name);
-	    bu_free(ip->idb_ptr, "extrusion");
+	RT_DB_INTERNAL_INIT(&tmp_ip);
+	int id = rt_db_get_internal(&tmp_ip, dp, dbip, bn_mat_identity);
+	if (id != ID_SKETCH) {
+	    if (id > 0)
+		rt_db_free_internal(&tmp_ip);
+	    bu_log("ERROR: Cannot import sketch (%s) for revolve\n", sketch_name);
+	    bu_free(ip->idb_ptr, "revolve");
+	    ip->idb_ptr = NULL;
 	    return -1;
-	} else
-	    rip->skt = (struct rt_sketch_internal *)tmp_ip.idb_ptr;
+	}
+	rip->skt = (struct rt_sketch_internal *)tmp_ip.idb_ptr;
     }
 
     bu_cv_ntohd((unsigned char *)&vv, (unsigned char *)ep->ext_buf, ELEMENTS_PER_VECT*3 + 1);
@@ -1639,17 +1665,22 @@ rt_revolve_xform(
     VMOVE(rop->v3d, tmp_vec);
     MAT4X3VEC(tmp_vec, mat, rip->axis3d);
     VMOVE(rop->axis3d, tmp_vec);
+    MAT4X3VEC(tmp_vec, mat, rip->r);
+    VMOVE(rop->r, tmp_vec);
+    rop->ang = rip->ang;
     V2MOVE(rop->v2d, rip->v2d);
     V2MOVE(rop->axis2d, rip->axis2d);
 
-    if (release && ip != op) {
-	rop->skt = rip->skt;
-	rip->skt = (struct rt_sketch_internal *)NULL;
-	rt_db_free_internal(ip);
-    } else if (rip->skt) {
-	rop->skt = rt_copy_sketch(rip->skt);
-    } else {
-	rop->skt = (struct rt_sketch_internal *)NULL;
+    if (op != ip) {
+	if (release) {
+	    rop->skt = rip->skt;
+	    rip->skt = (struct rt_sketch_internal *)NULL;
+	    rt_db_free_internal(ip);
+	} else if (rip->skt) {
+	    rop->skt = rt_copy_sketch(rip->skt);
+	} else {
+	    rop->skt = (struct rt_sketch_internal *)NULL;
+	}
     }
 
     return 0;
@@ -1765,6 +1796,8 @@ rt_revolve_ifree(struct rt_db_internal *ip)
     revolve_ip = (struct rt_revolve_internal *)ip->idb_ptr;
     RT_REVOLVE_CK_MAGIC(revolve_ip);
     revolve_ip->magic = 0;			/* sanity */
+
+    revolve_free_sketch(revolve_ip->skt);
 
     if (BU_VLS_IS_INITIALIZED(&revolve_ip->sketch_name))
 	bu_vls_free(&revolve_ip->sketch_name);

@@ -62,115 +62,80 @@
  * Operation handlers
  * ------------------------------------------------------------------ */
 
-static void
-ecmd_revolve_set_v(struct rt_edit *s)
+static int
+revolve_set_length_vector(struct rt_edit *s, fastf_t *dest, const char *operation)
 {
-    struct rt_revolve_internal *rip =
-	(struct rt_revolve_internal *)s->es_int.idb_ptr;
-    RT_REVOLVE_CK_MAGIC(rip);
-    bu_clbk_t f = NULL;
-    void *d = NULL;
-
     if (s->e_inpara != 3) {
-	bu_vls_printf(s->log_str,
-		"ECMD_REVOLVE_SET_V: x y z required\n");
-	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-	if (f) (*f)(0, NULL, d, NULL);
-	return;
+	bu_vls_printf(s->log_str, "%s: x y z required\n", operation);
+	return BRLCAD_ERROR;
     }
 
-    VSET(rip->v3d,
-	 s->e_para[0] * s->local2base,
-	 s->e_para[1] * s->local2base,
-	 s->e_para[2] * s->local2base);
+    VSCALE(dest, s->e_para, s->local2base);
+    return BRLCAD_OK;
 }
 
-static void
-ecmd_revolve_set_axis(struct rt_edit *s)
-{
-    struct rt_revolve_internal *rip =
-	(struct rt_revolve_internal *)s->es_int.idb_ptr;
-    RT_REVOLVE_CK_MAGIC(rip);
-    bu_clbk_t f = NULL;
-    void *d = NULL;
-
-    if (s->e_inpara != 3) {
-	bu_vls_printf(s->log_str,
-		"ECMD_REVOLVE_SET_AXIS: nx ny nz required\n");
-	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-	if (f) (*f)(0, NULL, d, NULL);
-	return;
-    }
-
-    VSET(rip->axis3d,
-	 s->e_para[0] * s->local2base,
-	 s->e_para[1] * s->local2base,
-	 s->e_para[2] * s->local2base);
-}
-
-static void
-ecmd_revolve_set_r(struct rt_edit *s)
-{
-    struct rt_revolve_internal *rip =
-	(struct rt_revolve_internal *)s->es_int.idb_ptr;
-    RT_REVOLVE_CK_MAGIC(rip);
-    bu_clbk_t f = NULL;
-    void *d = NULL;
-
-    if (s->e_inpara != 3) {
-	bu_vls_printf(s->log_str,
-		"ECMD_REVOLVE_SET_R: rx ry rz required\n");
-	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-	if (f) (*f)(0, NULL, d, NULL);
-	return;
-    }
-
-    VSET(rip->r,
-	 s->e_para[0] * s->local2base,
-	 s->e_para[1] * s->local2base,
-	 s->e_para[2] * s->local2base);
-}
-
-static void
+static int
 ecmd_revolve_set_ang(struct rt_edit *s)
 {
     struct rt_revolve_internal *rip =
 	(struct rt_revolve_internal *)s->es_int.idb_ptr;
     RT_REVOLVE_CK_MAGIC(rip);
-    bu_clbk_t f = NULL;
-    void *d = NULL;
 
     if (s->e_inpara != 1) {
 	bu_vls_printf(s->log_str,
 		"ECMD_REVOLVE_SET_ANG: angle (degrees) required\n");
-	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-	if (f) (*f)(0, NULL, d, NULL);
-	return;
+	return BRLCAD_ERROR;
     }
 
     rip->ang = s->e_para[0] * DEG2RAD;
+    return BRLCAD_OK;
 }
 
-static void
+static int
 ecmd_revolve_set_skt(struct rt_edit *s)
 {
     struct rt_revolve_internal *rip =
 	(struct rt_revolve_internal *)s->es_int.idb_ptr;
     RT_REVOLVE_CK_MAGIC(rip);
-    bu_clbk_t f = NULL;
-    void *d = NULL;
 
-    const char *skt = (s->e_nstr > 0 && s->e_str[0][0]) ? s->e_str[0] : NULL;
-    if (!skt) {
+    if (!s->e_nstr || !s->e_str[0][0] || !s->dbip) {
+	s->e_nstr = 0;
 	bu_vls_printf(s->log_str,
-		"ECMD_REVOLVE_SET_SKT: sketch name required\n");
-	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-	if (f) (*f)(0, NULL, d, NULL);
-	return;
+		"ECMD_REVOLVE_SET_SKT: sketch name and database required\n");
+	return BRLCAD_ERROR;
     }
 
-    bu_vls_trunc(&rip->sketch_name, 0);
-    bu_vls_strcat(&rip->sketch_name, skt);
+    const char *name = s->e_str[0];
+    s->e_nstr = 0;
+    struct directory *dp = db_lookup(s->dbip, name, LOOKUP_QUIET);
+    if (dp == RT_DIR_NULL) {
+	bu_vls_printf(s->log_str, "ECMD_REVOLVE_SET_SKT: %s does not exist\n", name);
+	return BRLCAD_ERROR;
+    }
+
+    struct rt_db_internal new_ip;
+    RT_DB_INTERNAL_INIT(&new_ip);
+    int id = rt_db_get_internal(&new_ip, dp, s->dbip, bn_mat_identity);
+    if (id != ID_SKETCH) {
+	if (id > 0)
+	    rt_db_free_internal(&new_ip);
+	bu_vls_printf(s->log_str, "ECMD_REVOLVE_SET_SKT: %s is not a sketch\n", name);
+	return BRLCAD_ERROR;
+    }
+
+    if (rip->skt) {
+	struct rt_db_internal old_ip;
+	RT_DB_INTERNAL_INIT(&old_ip);
+	old_ip.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	old_ip.idb_type = ID_SKETCH;
+	old_ip.idb_ptr = rip->skt;
+	old_ip.idb_meth = &OBJ[ID_SKETCH];
+	rt_db_free_internal(&old_ip);
+    }
+
+    bu_vls_strcpy(&rip->sketch_name, name);
+    rip->skt = (struct rt_sketch_internal *)new_ip.idb_ptr;
+    return BRLCAD_OK;
 }
 
 
@@ -210,6 +175,10 @@ rt_edit_revolve_set_edit_mode(struct rt_edit *s, int mode)
 C_DECL int
 rt_edit_revolve_edit(struct rt_edit *s)
 {
+    struct rt_revolve_internal *rip =
+	(struct rt_revolve_internal *)s->es_int.idb_ptr;
+    RT_REVOLVE_CK_MAGIC(rip);
+
     switch (s->edit_flag) {
 	case RT_PARAMS_EDIT_SCALE:
 	    return edit_sscale(s);
@@ -220,24 +189,19 @@ rt_edit_revolve_edit(struct rt_edit *s)
 	    edit_srot(s);
 	    break;
 	case ECMD_REVOLVE_SET_V:
-	    ecmd_revolve_set_v(s);
-	    break;
+	    return revolve_set_length_vector(s, rip->v3d, "ECMD_REVOLVE_SET_V");
 	case ECMD_REVOLVE_SET_AXIS:
-	    ecmd_revolve_set_axis(s);
-	    break;
+	    return revolve_set_length_vector(s, rip->axis3d, "ECMD_REVOLVE_SET_AXIS");
 	case ECMD_REVOLVE_SET_R:
-	    ecmd_revolve_set_r(s);
-	    break;
+	    return revolve_set_length_vector(s, rip->r, "ECMD_REVOLVE_SET_R");
 	case ECMD_REVOLVE_SET_ANG:
-	    ecmd_revolve_set_ang(s);
-	    break;
+	    return ecmd_revolve_set_ang(s);
 	case ECMD_REVOLVE_SET_SKT:
-	    ecmd_revolve_set_skt(s);
-	    break;
+	    return ecmd_revolve_set_skt(s);
 	default:
 	    return edit_generic(s);
     }
-    return 0;
+    return BRLCAD_OK;
 }
 
 C_DECL int

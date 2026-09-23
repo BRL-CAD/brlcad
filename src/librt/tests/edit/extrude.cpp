@@ -58,27 +58,7 @@
 #include "raytrace.h"
 #include "rt/rt_ecmds.h"
 
-
-/* Create a minimal sketch so the extrude import does not print warnings */
-static void
-make_sketch(struct rt_wdb *wdbp, const char *skt_name)
-{
-    struct rt_sketch_internal *skt;
-    BU_ALLOC(skt, struct rt_sketch_internal);
-    skt->magic = RT_SKETCH_INTERNAL_MAGIC;
-    VSET(skt->V,     0, 0, 0);
-    VSET(skt->u_vec, 1, 0, 0);
-    VSET(skt->v_vec, 0, 1, 0);
-    skt->vert_count = 0;
-    skt->verts = NULL;
-    skt->curve.count = 0;
-    skt->curve.reverse = NULL;
-    skt->curve.segment = NULL;
-
-    /* wdb_export → rt_db_free_internal → rt_sketch_ifree frees skt;
-     * do NOT free it manually. */
-    wdb_export(wdbp, skt_name, (void *)skt, ID_SKETCH, 1.0);
-}
+#include "test_utils.h"
 
 struct directory *
 make_extrude(struct rt_wdb *wdbp, const char *skt_name)
@@ -173,8 +153,9 @@ rt_edit_test_extrude(void)
 
     const char *skt_name = "test_sketch";
     const char *other_sketch = "other_sketch";
-    make_sketch(wdbp, skt_name);
-    make_sketch(wdbp, other_sketch);
+    if (edit_test_make_sketch(wdbp, skt_name, 0.0) != 0 ||
+	edit_test_make_sketch(wdbp, other_sketch, 2.0) != 0)
+	bu_exit(1, "ERROR: Unable to create sketch fixtures\n");
 
     struct directory *dp = make_extrude(wdbp, skt_name);
 
@@ -553,19 +534,22 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
     rt_edit_set_str(s, 0, other_sketch);
     if (rt_edit_process(s) != BRLCAD_OK ||
 	!BU_STR_EQUAL(edit_extr->sketch_name, other_sketch) ||
-	!edit_extr->skt)
+	!edit_extr->skt ||
+	!NEAR_EQUAL(edit_extr->skt->verts[0][X], 2.0, SMALL_FASTF))
 	bu_exit(1, "ERROR: extrusion sketch reference was not replaced\n");
 
     rt_edit_set_str(s, 0, "missing_sketch");
     if (rt_edit_process(s) != BRLCAD_ERROR ||
 	!BU_STR_EQUAL(edit_extr->sketch_name, other_sketch) ||
-	!edit_extr->skt)
+	!edit_extr->skt ||
+	!NEAR_EQUAL(edit_extr->skt->verts[0][X], 2.0, SMALL_FASTF))
 	bu_exit(1, "ERROR: missing sketch changed extrusion reference\n");
 
     rt_edit_set_str(s, 0, "extrude");
     if (rt_edit_process(s) != BRLCAD_ERROR ||
 	!BU_STR_EQUAL(edit_extr->sketch_name, other_sketch) ||
-	!edit_extr->skt)
+	!edit_extr->skt ||
+	!NEAR_EQUAL(edit_extr->skt->verts[0][X], 2.0, SMALL_FASTF))
 	bu_exit(1, "ERROR: non-sketch reference changed extrusion\n");
 
     rt_edit_destroy(s);
