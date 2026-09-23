@@ -465,6 +465,17 @@ rt_get_solid_keypoint(struct rt_edit *s, point_t *pt, const char **strp, fastf_t
 RT_EXPORT extern void
 rt_edit_set_edflag(struct rt_edit *s, int edflag);
 
+/**
+ * Set a parameter-edit translation target expressed in model base units.
+ *
+ * rt_edit's parameter-edit handlers consume e_para in database local units,
+ * while keypoints and edit axes are maintained in model base units.  This
+ * helper performs the boundary conversion for callers that have computed a
+ * target from a keypoint, axis, or view transform.
+ */
+RT_EXPORT extern void
+rt_edit_set_translation_target(struct rt_edit *s, const point_t target);
+
 RT_EXPORT extern int
 rt_edit_knob_cmd_process(
 	struct rt_edit *s,

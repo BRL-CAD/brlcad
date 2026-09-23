@@ -463,6 +463,9 @@ cmd_translate::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
     return _edit_xform_apply(ctx,
 	[&](struct rt_edit *s) -> int
 	{
+	    vect_t to_vec_base;
+	    VSCALE(to_vec_base, to_vec, s->local2base);
+
 	    /* Resolve FROM position (k) */
 	    point_t from_kp = VINIT_ZERO;
 	    bool     have_from = false;
@@ -514,7 +517,7 @@ cmd_translate::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
 		}
 	    } else if (do_abs) {
 		/* Absolute translate: to_vec IS the target position */
-		VMOVE(target, to_vec);
+		VMOVE(target, to_vec_base);
 		/* Keep unspecified axes at the current keypoint */
 		if (n_coord_flags > 0) {
 		    if (!x_only) target[X] = s->e_keypoint[X];
@@ -532,17 +535,16 @@ cmd_translate::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
 		/* Relative translate (default): to_vec is a delta */
 		vect_t delta = VINIT_ZERO;
 		if (n_coord_flags > 0) {
-		    if (x_only) delta[X] = to_vec[X];
-		    if (y_only) delta[Y] = to_vec[Y];
-		    if (z_only) delta[Z] = to_vec[Z];
+		    if (x_only) delta[X] = to_vec_base[X];
+		    if (y_only) delta[Y] = to_vec_base[Y];
+		    if (z_only) delta[Z] = to_vec_base[Z];
 		} else {
-		    VMOVE(delta, to_vec);
+		    VMOVE(delta, to_vec_base);
 		}
 		VADD2(target, s->e_keypoint, delta);
 	    }
 
-	    VMOVE(s->e_para, target);
-	    s->e_inpara = 3;
+	    rt_edit_set_translation_target(s, target);
 	    rt_edit_set_edflag(s, RT_PARAMS_EDIT_TRANS);
 	    rt_edit_process(s);
 	    return BRLCAD_OK;
@@ -583,10 +585,11 @@ cmd_tra::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
     return _edit_xform_apply(ctx,
 	[&](struct rt_edit *s) -> int
 	{
-	    vect_t target;
-	    VADD2(target, s->e_keypoint, delta);
-	    VMOVE(s->e_para, target);
-	    s->e_inpara = 3;
+	    vect_t delta_base;
+	    point_t target;
+	    VSCALE(delta_base, delta, s->local2base);
+	    VADD2(target, s->e_keypoint, delta_base);
+	    rt_edit_set_translation_target(s, target);
 	    rt_edit_set_edflag(s, RT_PARAMS_EDIT_TRANS);
 	    rt_edit_process(s);
 	    return BRLCAD_OK;
@@ -618,6 +621,7 @@ _parse_pos_or_obj(point_t *pos, const char **argv, int argc, struct ged *gedp)
 		n++;
 	    }
 	}
+	VSCALE(*pos, *pos, gedp->dbip->dbi_local2base);
 	return n;
     }
 
@@ -1169,6 +1173,15 @@ cmd_scale::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
 	    i++;   /* unknown flag — skip */
 	}
     }
+
+    /* Scale references define factors, so normalize model coordinates to
+     * the database-local numeric values used by this command. */
+    if (have_k)
+	VSCALE(k_vec, k_vec, gedp->dbip->dbi_base2local);
+    if (have_a)
+	VSCALE(a_vec, a_vec, gedp->dbip->dbi_base2local);
+    if (have_r)
+	VSCALE(r_vec, r_vec, gedp->dbip->dbi_base2local);
 
     /* ---- Determine scale factors from whatever was provided -------- */
     /* Helper: detect if the three vector components are all nearly equal */

@@ -3064,6 +3064,115 @@ test_p6_all_prim_ops_has_brep(struct ged *gedp)
 }
 
 
+/* ------------------------------------------------------------------ *
+ * Database unit coverage
+ * ------------------------------------------------------------------ */
+static int
+create_unit_fixture(const char *dbpath)
+{
+    const fastf_t inch = 25.4;
+    struct rt_wdb *wdbp = wdb_fopen(dbpath);
+    if (!wdbp)
+        return BRLCAD_ERROR;
+
+    point_t sph_v = {inch, 0.0, 0.0};
+    point_t other_v = {3.0 * inch, 0.0, 0.0};
+    if (mk_id_units(wdbp, "ged edit unit test", "in") != 0 ||
+        mk_sph(wdbp, "sph.s", sph_v, inch) != 0 ||
+        mk_sph(wdbp, "other.s", other_v, inch) != 0 ||
+        mk_sph(wdbp, "scale.s", sph_v, inch) != 0 ||
+        mk_sph(wdbp, "knob.s", sph_v, inch) != 0) {
+        wdb_close(wdbp);
+        return BRLCAD_ERROR;
+    }
+
+    wdb_close(wdbp);
+    return BRLCAD_OK;
+}
+
+static void
+test_unit_sensitive_edits(struct ged *gedp)
+{
+    const fastf_t inch = 25.4;
+    struct rt_ell_internal ell;
+
+    const char *tra[] = { "edit", "sph.s", "tra", "1", "0", "0", NULL };
+    CHECK(ged_exec(gedp, 6, tra) == BRLCAD_OK, "inch edit tra returns OK");
+    CHECK(read_ell(gedp, "sph.s", &ell) == BRLCAD_OK &&
+          NEAR_EQUAL(ell.v[X], 2.0 * inch, NEAR_ENOUGH),
+          "inch edit tra translates by one inch");
+
+    const char *rel[] = { "edit", "sph.s", "translate", "-r", "1", "0", "0", NULL };
+    CHECK(ged_exec(gedp, 7, rel) == BRLCAD_OK, "inch edit translate -r returns OK");
+    CHECK(read_ell(gedp, "sph.s", &ell) == BRLCAD_OK &&
+          NEAR_EQUAL(ell.v[X], 3.0 * inch, NEAR_ENOUGH),
+          "inch edit translate -r translates by one inch");
+
+    const char *abs[] = { "edit", "sph.s", "translate", "-a", "2", "0", "0", NULL };
+    CHECK(ged_exec(gedp, 7, abs) == BRLCAD_OK, "inch edit translate -a returns OK");
+    CHECK(read_ell(gedp, "sph.s", &ell) == BRLCAD_OK &&
+          NEAR_EQUAL(ell.v[X], 2.0 * inch, NEAR_ENOUGH),
+          "inch edit translate -a uses local coordinates");
+
+    const char *obj[] = { "edit", "sph.s", "translate", "other.s", NULL };
+    CHECK(ged_exec(gedp, 4, obj) == BRLCAD_OK, "inch edit translate object returns OK");
+    CHECK(read_ell(gedp, "sph.s", &ell) == BRLCAD_OK &&
+          NEAR_EQUAL(ell.v[X], 3.0 * inch, NEAR_ENOUGH),
+          "inch edit translate object preserves base keypoint units");
+
+    const char *rot[] = { "edit", "sph.s", "rotate", "-c", "0", "0", "0", "-z", "90", NULL };
+    CHECK(ged_exec(gedp, 9, rot) == BRLCAD_OK, "inch edit rotate center returns OK");
+    CHECK(read_ell(gedp, "sph.s", &ell) == BRLCAD_OK &&
+          NEAR_EQUAL(ell.v[X], 0.0, NEAR_ENOUGH) &&
+          NEAR_EQUAL(ell.v[Y], 3.0 * inch, NEAR_ENOUGH),
+          "inch edit rotate center uses local coordinates");
+
+    const char *scale[] = { "edit", "scale.s", "scale", "-c", "0", "0", "0", "2", NULL };
+    CHECK(ged_exec(gedp, 8, scale) == BRLCAD_OK, "inch edit scale center returns OK");
+    CHECK(read_ell(gedp, "scale.s", &ell) == BRLCAD_OK &&
+          NEAR_EQUAL(ell.v[X], 2.0 * inch, NEAR_ENOUGH) &&
+          NEAR_EQUAL(MAGNITUDE(ell.a), 2.0 * inch, NEAR_ENOUGH),
+          "inch edit scale center uses local coordinates");
+
+    const char *scale_ref[] = { "edit", "scale.s", "scale", "-k", "0", "0", "0", "-a", "2", "2", "2", NULL };
+    CHECK(ged_exec(gedp, 11, scale_ref) == BRLCAD_OK, "inch edit scale reference returns OK");
+    CHECK(read_ell(gedp, "scale.s", &ell) == BRLCAD_OK &&
+          NEAR_EQUAL(MAGNITUDE(ell.a), 4.0 * inch, NEAR_ENOUGH),
+          "inch edit scale reference remains a factor");
+
+    const char *set_a[] = { "edit", "sph.s", "set_a", "2", NULL };
+    CHECK(ged_exec(gedp, 4, set_a) == BRLCAD_OK, "inch descriptor set_a returns OK");
+    CHECK(read_ell(gedp, "sph.s", &ell) == BRLCAD_OK &&
+          NEAR_EQUAL(MAGNITUDE(ell.a), 2.0 * inch, NEAR_ENOUGH),
+          "inch descriptor length input uses local coordinates");
+}
+
+static void
+test_unit_sensitive_knob_translation(struct ged *gedp)
+{
+    const fastf_t inch = 25.4;
+    struct db_full_path dfp;
+    db_full_path_init(&dfp);
+    db_add_node_to_full_path(&dfp, db_lookup(gedp->dbip, "knob.s", LOOKUP_QUIET));
+    struct bn_tol tol = BN_TOL_INIT_TOL;
+    struct bview view;
+    bv_init(&view, NULL);
+    struct rt_edit *edit = rt_edit_create(&dfp, gedp->dbip, &tol, &view);
+    vect_t delta = {1.0, 0.0, 0.0};
+
+    CHECK(edit != NULL, "inch rt_edit knob fixture created");
+    if (edit) {
+        VMOVE(edit->curr_e_axes_pos, edit->e_keypoint);
+        rt_knob_edit_tran(edit, 'm', 0, delta);
+        struct rt_ell_internal *ell = (struct rt_ell_internal *)edit->es_int.idb_ptr;
+        CHECK(NEAR_EQUAL(ell->v[X], 2.0 * inch, NEAR_ENOUGH),
+              "inch rt_edit knob translation converts once");
+        rt_edit_destroy(edit);
+    }
+
+    db_free_full_path(&dfp);
+}
+
 /* ================================================================== *
  * main
  * ================================================================== */
@@ -3084,6 +3193,27 @@ main(int ac, char *av[])
         bu_log("Usage: %s [-h]\n", av[0]);
         return (need_help) ? 0 : 1;
     }
+
+    /* ---------------------------------------------------------------- *
+     * Database-unit handling
+     * ---------------------------------------------------------------- */
+    struct bu_vls units_path = BU_VLS_INIT_ZERO;
+    if (make_temp_path(&units_path) != BRLCAD_OK) {
+        bu_log("ERROR: cannot create temp file for unit coverage\n"); return 1;
+    }
+    if (create_unit_fixture(bu_vls_cstr(&units_path)) != BRLCAD_OK) {
+        bu_log("ERROR: unit fixture creation failed\n");
+        bu_vls_free(&units_path); return 1;
+    }
+    {
+        struct ged *gedp = open_fixture(bu_vls_cstr(&units_path));
+        if (!gedp) { bu_log("ERROR: ged_open failed (unit coverage)\n"); bu_vls_free(&units_path); return 1; }
+        bu_log("\n--- Database-unit handling ---\n");
+        test_unit_sensitive_edits(gedp);
+        test_unit_sensitive_knob_translation(gedp);
+        ged_close(gedp);
+    }
+    bu_vls_free(&units_path);
 
     /* ---------------------------------------------------------------- *
      * Section 0 — Infrastructure / smoke tests

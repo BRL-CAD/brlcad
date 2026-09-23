@@ -572,6 +572,16 @@ rt_edit_set_edflag(struct rt_edit *s, int edflag)
     }
 }
 
+void
+rt_edit_set_translation_target(struct rt_edit *s, const point_t target)
+{
+    if (!s)
+	return;
+
+    VSCALE(s->e_para, target, s->base2local);
+    s->e_inpara = 3;
+}
+
 /* Processing of editing knob twists. */
 int
 rt_edit_knob_cmd_process(
@@ -967,8 +977,9 @@ rt_knob_edit_tran(struct rt_edit *s,
 
 	rt_edit_set_knob_edflag(s, RT_PARAMS_EDIT_TRANS);
 
-	VADD2(s->e_para, delta, s->curr_e_axes_pos);
-	s->e_inpara = 3;
+	point_t target;
+	VADD2(target, delta, s->curr_e_axes_pos);
+	rt_edit_set_translation_target(s, target);
 	rt_edit_process(s);
 	s->edit_flag = save_edflag;
 	s->edit_mode = save_mode;
