@@ -23,7 +23,9 @@
 
 #include "common.h"
 
+#include <limits.h>
 #include <math.h>
+#include <stdint.h>
 #include <string.h>
 #include <sys/stat.h>
 
@@ -303,163 +305,137 @@ rt_edit_vol_edit_desc(void)
 }
 
 /* set voxel size */
-void
+static int
 ecmd_vol_csize(struct rt_edit *s)
 {
     struct rt_vol_internal *vol = (struct rt_vol_internal *)s->es_int.idb_ptr;
-    bu_clbk_t f = NULL;
-    void *d = NULL;
 
     RT_VOL_CK_MAGIC(vol);
 
-    // Specified numerical input
     if (s->e_inpara) {
-	if (s->e_inpara != 3) {
+	if (s->e_inpara != ELEMENTS_PER_VECT) {
 	    bu_vls_printf(s->log_str, "x, y, and z cell sizes are required\n");
-	    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-	    if (f)
-		(*f)(0, NULL, d, NULL);
-	    return;
-	} else {
-	    VMOVE(vol->cellsize, s->e_para);
-	    return;
+	    return BRLCAD_ERROR;
 	}
+	for (int i = 0; i < ELEMENTS_PER_VECT; i++) {
+	    if (!isfinite(s->e_para[i]) || s->e_para[i] <= 0.0) {
+		bu_vls_printf(s->log_str, "Cell sizes must be finite and positive\n");
+		return BRLCAD_ERROR;
+	    }
+	}
+	VSCALE(vol->cellsize, s->e_para, s->local2base);
+	return BRLCAD_OK;
     }
 
-    // XY coord (usually mouse) based scaling
+    if (!isfinite(s->es_scale)) {
+	bu_vls_printf(s->log_str, "Invalid cell-size scale\n");
+	return BRLCAD_ERROR;
+    }
     if (s->es_scale > 0.0) {
 	VSCALE(vol->cellsize, vol->cellsize, s->es_scale);
 	s->es_scale = 0.0;
     }
-}
-
-/* set file size */
-int
-ecmd_vol_fsize(struct rt_edit *s)
-{
-    struct rt_vol_internal *vol =
-	(struct rt_vol_internal *)s->es_int.idb_ptr;
-    struct stat stat_buf;
-    b_off_t need_size;
-    bu_clbk_t f = NULL;
-    void *d = NULL;
-
-    RT_VOL_CK_MAGIC(vol);
-
-    if (s->e_inpara == 3) {
-	if (stat(vol->name, &stat_buf)) {
-	    bu_vls_printf(s->log_str, "Cannot get status of file %s\n", vol->name);
-	    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-	    if (f)
-		(*f)(0, NULL, d, NULL);
-	    return BRLCAD_ERROR;
-	}
-	need_size = s->e_para[0] * s->e_para[1] * s->e_para[2] * sizeof(unsigned char);
-	if (stat_buf.st_size < need_size) {
-	    bu_vls_printf(s->log_str, "File (%s) is too small, set file name first", vol->name);
-	    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-	    if (f)
-		(*f)(0, NULL, d, NULL);
-	    return BRLCAD_ERROR;
-	}
-	vol->xdim = s->e_para[0];
-	vol->ydim = s->e_para[1];
-	vol->zdim = s->e_para[2];
-    } else if (s->e_inpara > 0) {
-	bu_vls_printf(s->log_str, "x, y, and z file sizes are required\n");
-	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-	if (f)
-	    (*f)(0, NULL, d, NULL);
-	return BRLCAD_ERROR;
-    }
-
     return BRLCAD_OK;
 }
 
-int
-ecmd_vol_thresh_lo(struct rt_edit *s)
+static int
+vol_file_has_voxels(const struct stat *file, const uint32_t dims[ELEMENTS_PER_VECT])
 {
-    if (!s->e_inpara && s->es_scale <= 0.0) {
-	return BRLCAD_OK;
+    if (file->st_size < 0)
+	return 0;
+
+    uintmax_t available = (uintmax_t)file->st_size / sizeof(unsigned char);
+    for (int i = 0; i < ELEMENTS_PER_VECT; i++) {
+	if (!dims[i] || dims[i] > available)
+	    return 0;
+	available /= dims[i];
     }
-    if (s->e_inpara > 1) {
-	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
-	s->e_inpara = 0;
-	return BRLCAD_ERROR;
-    }
-
-    if (s->e_para[0] <= 0.0) {
-	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
-	s->e_inpara = 0;
-	return BRLCAD_ERROR;
-    }
-
-    struct rt_vol_internal *vol =
-	(struct rt_vol_internal *)s->es_int.idb_ptr;
-
-    RT_VOL_CK_MAGIC(vol);
-
-    size_t i = vol->lo;
-    if (s->e_inpara) {
-	i = s->e_para[0];
-    } else if (s->es_scale > 0.0) {
-	i = vol->lo * s->es_scale;
-	if (i == vol->lo && s->es_scale > 1.0) {
-	    i++;
-	} else if (i == vol->lo && s->es_scale < 1.0) {
-	    i--;
-	}
-    }
-
-    if (i > 255)
-	i = 255;
-
-    vol->lo = i;
-
-    return 0;
+    return 1;
 }
 
-int
-ecmd_vol_thresh_hi(struct rt_edit *s)
+/* File dimensions are voxel counts, not lengths in database units. */
+static int
+ecmd_vol_fsize(struct rt_edit *s)
 {
-    if (!s->e_inpara && s->es_scale <= 0.0) {
-	return BRLCAD_OK;
-    }
-    if (s->e_inpara > 1) {
-	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
-	s->e_inpara = 0;
-	return BRLCAD_ERROR;
-    }
-
-    if (s->e_para[0] <= 0.0) {
-	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
-	s->e_inpara = 0;
-	return BRLCAD_ERROR;
-    }
-
-    struct rt_vol_internal *vol =
-	(struct rt_vol_internal *)s->es_int.idb_ptr;
-
+    struct rt_vol_internal *vol = (struct rt_vol_internal *)s->es_int.idb_ptr;
     RT_VOL_CK_MAGIC(vol);
 
-    size_t i = vol->hi;
-    if (s->e_inpara) {
-	i = s->e_para[0];
-    } else if (s->es_scale > 0.0) {
-	i = vol->hi * s->es_scale;
-	if (i == vol->hi && s->es_scale > 1.0) {
-	    i++;
-	} else if (i == vol->hi && s->es_scale < 1.0) {
-	    i--;
-	}
+    if (!s->e_inpara)
+	return BRLCAD_OK;
+    if (s->e_inpara != ELEMENTS_PER_VECT) {
+	bu_vls_printf(s->log_str, "x, y, and z file sizes are required\n");
+	return BRLCAD_ERROR;
     }
 
-    if (i > 255)
-	i = 255;
+    uint32_t dims[ELEMENTS_PER_VECT];
+    for (int i = 0; i < ELEMENTS_PER_VECT; i++) {
+	fastf_t value = s->e_para[i];
+	if (!isfinite(value) || value < 1.0 || value > UINT32_MAX ||
+	    value > floor(value)) {
+	    bu_vls_printf(s->log_str, "File dimensions must be positive integers\n");
+	    return BRLCAD_ERROR;
+	}
+	dims[i] = (uint32_t)value;
+    }
 
-    vol->hi = i;
+    struct stat stat_buf;
+    if (stat(vol->name, &stat_buf)) {
+	bu_vls_printf(s->log_str, "Cannot get status of file %s\n", vol->name);
+	return BRLCAD_ERROR;
+    }
+    if (!vol_file_has_voxels(&stat_buf, dims)) {
+	bu_vls_printf(s->log_str, "File (%s) is too small for these dimensions\n",
+	    vol->name);
+	return BRLCAD_ERROR;
+    }
 
-    return 0;
+    vol->xdim = dims[X];
+    vol->ydim = dims[Y];
+    vol->zdim = dims[Z];
+    return BRLCAD_OK;
+}
+
+static int
+vol_set_threshold(struct rt_edit *s, uint32_t *threshold)
+{
+    if (s->e_inpara > 1) {
+	bu_vls_printf(s->log_str, "Only one threshold value is allowed\n");
+	return BRLCAD_ERROR;
+    }
+    if (!s->e_inpara && s->es_scale <= 0.0)
+	return BRLCAD_OK;
+
+    fastf_t proposed = s->e_inpara ? s->e_para[0] : *threshold * s->es_scale;
+    if (!isfinite(proposed) || proposed < 0.0) {
+	bu_vls_printf(s->log_str, "Invalid VOL threshold\n");
+	return BRLCAD_ERROR;
+    }
+
+    uint32_t value = proposed >= UCHAR_MAX ? UCHAR_MAX : (uint32_t)proposed;
+    if (!s->e_inpara && value == *threshold) {
+	if (s->es_scale > 1.0 && value < UCHAR_MAX)
+	    value++;
+	else if (s->es_scale < 1.0 && value > 0)
+	    value--;
+    }
+    *threshold = value;
+    return BRLCAD_OK;
+}
+
+static int
+ecmd_vol_thresh_lo(struct rt_edit *s)
+{
+    struct rt_vol_internal *vol = (struct rt_vol_internal *)s->es_int.idb_ptr;
+    RT_VOL_CK_MAGIC(vol);
+    return vol_set_threshold(s, &vol->lo);
+}
+
+static int
+ecmd_vol_thresh_hi(struct rt_edit *s)
+{
+    struct rt_vol_internal *vol = (struct rt_vol_internal *)s->es_int.idb_ptr;
+    RT_VOL_CK_MAGIC(vol);
+    return vol_set_threshold(s, &vol->hi);
 }
 
 int
@@ -469,7 +445,6 @@ ecmd_vol_fname(struct rt_edit *s)
 	(struct rt_vol_internal *)s->es_int.idb_ptr;
     char *fname = NULL;
     struct stat stat_buf;
-    b_off_t need_size;
     bu_clbk_t f = NULL;
     void *d = NULL;
 
@@ -492,8 +467,10 @@ ecmd_vol_fname(struct rt_edit *s)
 		(*f)(0, NULL, d, NULL);
 	    return BRLCAD_ERROR;
 	}
-	need_size = vol->xdim * vol->ydim * vol->zdim * sizeof(unsigned char);
-	if (stat_buf.st_size < need_size) {
+	const uint32_t dims[ELEMENTS_PER_VECT] = {
+	    vol->xdim, vol->ydim, vol->zdim
+	};
+	if (!vol_file_has_voxels(&stat_buf, dims)) {
 	    // We were calling Tcl_SetResult here, which reset the result str, so zero out log_str
 	    bu_vls_trunc(s->log_str, 0);
 	    bu_vls_printf(s->log_str, "File (%s) is too small, adjust the file size parameters first", fname);
@@ -509,37 +486,6 @@ ecmd_vol_fname(struct rt_edit *s)
     return BRLCAD_OK;
 }
 
-static int
-rt_edit_vol_pscale(struct rt_edit *s)
-{
-    /* ECMD_VOL_CSIZE needs 3 params (x, y, z); all others need exactly 1 */
-    if (s->edit_flag != ECMD_VOL_CSIZE && s->e_inpara > 1) {
-	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
-	s->e_inpara = 0;
-	return BRLCAD_ERROR;
-    }
-
-    if (s->e_inpara) {
-	if (s->e_para[0] <= 0.0) {
-	    bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
-	    s->e_inpara = 0;
-	    return BRLCAD_ERROR;
-	}
-
-	/* must convert to base units */
-	s->e_para[0] *= s->local2base;
-	s->e_para[1] *= s->local2base;
-	s->e_para[2] *= s->local2base;
-    }
-
-    switch (s->edit_flag) {
-	case ECMD_VOL_CSIZE:
-	    ecmd_vol_csize(s);
-	    break;
-    };
-
-    return 0;
-}
 
 C_DECL int
 rt_edit_vol_edit(struct rt_edit *s)
@@ -554,7 +500,7 @@ rt_edit_vol_edit(struct rt_edit *s)
 	case ECMD_VOL_FNAME:
 	    return ecmd_vol_fname(s);
 	case ECMD_VOL_CSIZE:
-	    return rt_edit_vol_pscale(s);
+	    return ecmd_vol_csize(s);
 	default:
 	    return edit_generic(s);
     }

@@ -3246,6 +3246,26 @@ create_unit_pipe(struct rt_wdb *wdbp, fastf_t inch)
 }
 
 static int
+create_unit_vol(struct rt_wdb *wdbp, fastf_t inch)
+{
+    struct rt_vol_internal *vol;
+    BU_ALLOC(vol, struct rt_vol_internal);
+    vol->magic = RT_VOL_INTERNAL_MAGIC;
+    bu_strlcpy(vol->name, "unit_vol.data", RT_VOL_NAME_LEN);
+    vol->datasrc = RT_VOL_SRC_FILE;
+    vol->xdim = 4;
+    vol->ydim = 4;
+    vol->zdim = 4;
+    vol->lo = 5;
+    vol->hi = 250;
+    VSETALL(vol->cellsize, inch);
+    MAT_IDN(vol->mat);
+    vol->map = NULL;
+    vol->bip = NULL;
+    return wdb_export(wdbp, "unit_vol.s", (void *)vol, ID_VOL, 1.0);
+}
+
+static int
 create_unit_fixture(const char *dbpath)
 {
     const fastf_t inch = 25.4;
@@ -3269,7 +3289,8 @@ create_unit_fixture(const char *dbpath)
 	mk_extrusion(wdbp, "extrude.s", "sketch.s", extr_v,
 		extr_h, extr_u, extr_w, 0) != 0 ||
 	create_unit_revolve(wdbp) != 0 ||
-	create_unit_pipe(wdbp, inch) != 0) {
+	create_unit_pipe(wdbp, inch) != 0 ||
+	create_unit_vol(wdbp, inch) != 0) {
         wdb_close(wdbp);
         return BRLCAD_ERROR;
     }
@@ -3714,6 +3735,74 @@ test_unit_pipe_edits(struct ged *gedp)
 	"inch pipe bend sets the reference point and scales the pipe");
 }
 
+struct unit_vol_state {
+    vect_t cellsize;
+    uint32_t lo;
+    uint32_t hi;
+};
+
+static int
+read_unit_vol(struct ged *gedp, struct unit_vol_state *out)
+{
+    struct directory *dp = db_lookup(gedp->dbip, "unit_vol.s", LOOKUP_QUIET);
+    if (dp == RT_DIR_NULL)
+	return BRLCAD_ERROR;
+
+    struct rt_db_internal intern;
+    RT_DB_INTERNAL_INIT(&intern);
+    int id = rt_db_get_internal(&intern, dp, gedp->dbip, NULL);
+    if (id != ID_VOL) {
+	if (id > 0)
+	    rt_db_free_internal(&intern);
+	return BRLCAD_ERROR;
+    }
+
+    struct rt_vol_internal *vol = (struct rt_vol_internal *)intern.idb_ptr;
+    VMOVE(out->cellsize, vol->cellsize);
+    out->lo = vol->lo;
+    out->hi = vol->hi;
+    rt_db_free_internal(&intern);
+    return BRLCAD_OK;
+}
+
+static void
+test_unit_vol_edits(struct ged *gedp)
+{
+    const fastf_t inch = 25.4;
+    struct unit_vol_state vol = {};
+    const vect_t expected = {2.0 * inch, 3.0 * inch, 4.0 * inch};
+
+    const char *size[] = {
+	"edit", "unit_vol.s", "voxel_size_x_y_z", "2", "3", "4", NULL
+    };
+    CHECK(ged_exec(gedp, 7, size) == BRLCAD_OK &&
+	read_unit_vol(gedp, &vol) == BRLCAD_OK &&
+	VNEAR_EQUAL(vol.cellsize, expected, NEAR_ENOUGH),
+	"inch VOL voxel sizes persist in base units");
+
+    const char *invalid_size[] = {
+	"edit", "unit_vol.s", "voxel_size_x_y_z", "2", "-3", "4", NULL
+    };
+    CHECK(ged_exec(gedp, 7, invalid_size) == BRLCAD_ERROR &&
+	read_unit_vol(gedp, &vol) == BRLCAD_OK &&
+	VNEAR_EQUAL(vol.cellsize, expected, NEAR_ENOUGH),
+	"invalid VOL voxel size leaves persisted geometry unchanged");
+
+    const char *low[] = {
+	"edit", "unit_vol.s", "threshold_low", "0", NULL
+    };
+    CHECK(ged_exec(gedp, 4, low) == BRLCAD_OK &&
+	read_unit_vol(gedp, &vol) == BRLCAD_OK && vol.lo == 0,
+	"inch VOL accepts a unitless zero low threshold");
+
+    const char *high[] = {
+	"edit", "unit_vol.s", "threshold_hi", "200", NULL
+    };
+    CHECK(ged_exec(gedp, 4, high) == BRLCAD_OK &&
+	read_unit_vol(gedp, &vol) == BRLCAD_OK && vol.hi == 200,
+	"inch VOL high threshold remains unitless");
+}
+
 static void
 test_unit_sensitive_knob_translation(struct ged *gedp)
 {
@@ -3781,6 +3870,7 @@ main(int ac, char *av[])
 	test_unit_extrude_reference(gedp);
 	test_unit_revolve_edits(gedp);
 	test_unit_pipe_edits(gedp);
+	test_unit_vol_edits(gedp);
         test_unit_sensitive_knob_translation(gedp);
         ged_close(gedp);
     }
@@ -3825,6 +3915,14 @@ main(int ac, char *av[])
 	      NEAR_EQUAL(pipe.first_id, 0.06 * inch, NEAR_ENOUGH) &&
 	      NEAR_EQUAL(pipe.first_bend, 0.7 * inch, NEAR_ENOUGH),
 	      "inch pipe edits survive database reopen");
+	struct unit_vol_state vol = {};
+	const vect_t expected_vol_cellsize = {
+	    2.0 * inch, 3.0 * inch, 4.0 * inch
+	};
+	CHECK(read_unit_vol(gedp, &vol) == BRLCAD_OK &&
+	      VNEAR_EQUAL(vol.cellsize, expected_vol_cellsize, NEAR_ENOUGH) &&
+	      vol.lo == 0 && vol.hi == 200,
+	      "inch VOL edits survive database reopen");
         ged_close(gedp);
     }
     bu_vls_free(&units_path);
