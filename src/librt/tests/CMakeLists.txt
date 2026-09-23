@@ -80,6 +80,10 @@ brlcad_addexec(rt_arb8 arb8_tests.c "librt;libwdb;libbg;libbu" TEST)
 
 brlcad_addexec(bot_match bot_match.cpp "librt;libbg" TEST)
 
+# BoT rays starting inside the mesh, including a spatially partitioned scene
+brlcad_addexec(rt_bot_inside bot_inside.c "librt;libwdb;libbu;${M_LIBRARY}" TEST)
+brlcad_add_test(NAME rt_bot_inside COMMAND rt_bot_inside)
+
 # boolweave testing
 brlcad_addexec(rt_boolweave rt_boolweave.c "librt" TEST)
 
@@ -91,6 +95,7 @@ set(
   CMakeLists.txt
   arb_intersect.g
   binary_attribute.c
+  bot_inside.c
   brep_boolean_tests.g
   cyclic_tests.g
   extreme_ssi_test.g
